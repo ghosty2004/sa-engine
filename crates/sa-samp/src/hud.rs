@@ -10,10 +10,7 @@ use sa_samp_api::*;
 use crate::addr;
 use crate::script::op;
 
-sa_core::orig! {
-    /// `CMessages::AddBigMessage(text, time, style)` (0x69F2B0).
-    fn add_big_message(text: GPtr<u8>, time: u32, style: u32) = cdecl 0x69F2B0 => unported;
-}
+use sa_core::bindings::add_big_message;
 use crate::{NativeGame, View};
 
 impl<V: View> Hud for NativeGame<V> {

@@ -11,11 +11,10 @@ use sa_math::x87::X87;
 
 use super::common::{ftol32, g, x, xi};
 
+use sa_core::bindings::text_get;
 orig! {
     /// `CStats::FindCriminalRatingNumber()` (0x559080)
     fn find_criminal_rating_number() -> i32 = cdecl 0x559080 => super::stats::find_criminal_rating_number;
-    /// `CText::Get(const char*)` (0x6A0050)
-    fn text_get(this: GPtr<u8>, key: GPtr<u8>) -> GPtr<u8> = thiscall 0x6A0050 => unported;
 }
 
 /// `TheText`
@@ -126,9 +125,12 @@ pub fn find_criminal_rating_string() -> GPtr<u8> {
 
 // ------------------------------------------------------------------------- ConstructStatLine ----
 
+use crate::bindings::german_game;
+use crate::bindings::metric;
+use sa_core::bindings::ascii_to_gxt_char;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::sprintf1 as sprintf_i;
 orig! {
-    /// CRT `sprintf(buf, fmt, int)` (0x821BB5)
-    fn sprintf_i(buf: GPtr<u8>, fmt: GPtr<u8>, v: i32) -> i32 = cdecl 0x821BB5 => unported;
     /// CRT `sprintf(buf, fmt)` (0x821BB5)
     fn sprintf_0(buf: GPtr<u8>, fmt: GPtr<u8>) -> i32 = cdecl 0x821BB5 => unported;
     /// CRT `sprintf(buf, fmt, double)` (0x821BB5)
@@ -161,22 +163,14 @@ orig! {
     fn find_least_favorite_radio_station() -> i32 = cdecl 0x559010 => unported;
     /// `CAudioEngine::GetRadioStationNameKey(int32, char*)` (0x507010)
     fn get_radio_station_name_key(this: GPtr<u8>, id: i32, out: GPtr<u8>) = thiscall 0x507010 => unported;
-    /// `FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
     /// `CPed::GetWeaponSkill(eWeaponType)` (0x5E3B60, AL)
     fn get_weapon_skill(ped: GPtr<u8>, ty: u32) -> u8 = thiscall 0x5E3B60 => unported;
-    /// `CLocalisation::GermanGame()` (0x56D200)
-    fn german_game() -> u8 = cdecl 0x56D200 => unported;
-    /// `CLocalisation::Metric()` (0x56D220)
-    fn metric() -> u8 = cdecl 0x56D220 => unported;
     /// `GxtCharToAscii(const GxtChar*, uint8 start)` (0x69F7E0)
     fn gxt_char_to_ascii(s: GPtr<u8>, start: u32) -> GPtr<u8> = cdecl 0x69F7E0 => unported;
     /// `GxtCharStrcpy(GxtChar* dst, const GxtChar* src)` (0x718660)
     fn gxt_char_strcpy(dst: GPtr<u8>, src: GPtr<u8>) = cdecl 0x718660 => unported;
     /// 0x719240: removes every `~...~` token from a GXT string in place
     fn strip_tokens(s: GPtr<u8>) = cdecl 0x719240 => unported;
-    /// `Common::AsciiToGxtChar(const char*, GxtChar*)` (0x718600)
-    fn ascii_to_gxt_char(src: GPtr<u8>, dst: GPtr<u8>) = cdecl 0x718600 => unported;
 }
 
 /// `gString` / `gString2` / `gGxtString` / `gGxtString2`

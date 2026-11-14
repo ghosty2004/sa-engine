@@ -11,6 +11,9 @@ use crate::waterlevel::{
     TEX_SEABD32, TEX_WATERCLEAR256, TEX_WATERWAKE, WATER_CONFIGURATION, WATERCLEAR256_RASTER, WATERWAKE_RASTER,
 };
 
+use sa_core::bindings::pop_current_txd;
+use sa_core::bindings::push_current_txd;
+use sa_core::bindings::set_current_txd;
 orig! {
     /// `CFileMgr::OpenFile(name, mode)` (0x538900)
     fn open_file(name: GPtr<u8>, mode: GPtr<u8>) -> i32 = cdecl 0x538900 => unported;
@@ -26,14 +29,8 @@ orig! {
     fn add_triangle(x1: i32, y1: i32, a0: u32, a1: u32, a2: u32, a3: u32, x2: i32, y2: i32, b0: u32, b1: u32, b2: u32, b3: u32, x3: i32, y3: i32, c0: u32, c1: u32, c2: u32, c3: u32, flags: u32) = cdecl 0x6E7D40 => crate::waterlevel::add_water_level_triangle;
     /// `CWaterLevel::FillQuadsAndTrianglesList` (0x6E7B30)
     fn fill_lists() = cdecl 0x6E7B30 => crate::waterlevel::fill_quads_and_triangles_list;
-    /// `CTxdStore::PushCurrentTxd` (0x7316A0)
-    fn push_current_txd() = cdecl 0x7316A0 => unported;
     /// `CTxdStore::FindTxdSlot(name)` (0x731850)
     fn find_txd_slot(name: GPtr<u8>) -> i32 = cdecl 0x731850 => unported;
-    /// `CTxdStore::SetCurrentTxd(slot)` (0x7319C0)
-    fn set_current_txd(slot: i32) = cdecl 0x7319C0 => unported;
-    /// `CTxdStore::PopCurrentTxd` (0x7316B0)
-    fn pop_current_txd() = cdecl 0x7316B0 => unported;
     /// `RwTextureRead(name, mask)` (0x7F3AC0)
     fn rw_texture_read(name: GPtr<u8>, mask: u32) -> u32 = cdecl 0x7F3AC0 => unported;
 }

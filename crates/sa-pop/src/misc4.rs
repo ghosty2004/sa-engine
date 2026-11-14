@@ -26,19 +26,14 @@ pub fn query_models_killed_by_player(model: i32, player: i32) -> u32 {
     (player as u32 & 0xFFFF_0000) | u32::from(k)
 }
 
+use sa_core::bindings::matrix_update_rw_matrix;
+use sa_core::bindings::object_new;
+use sa_core::bindings::world_add;
+use sa_world::bindings::object_ctor;
+use sa_world::bindings::simple_transform_update_rw_matrix;
 orig! {
-    /// `CObject::operator new(uint32)` (0x5A1EE0)
-    fn object_new(size: u32) -> GPtr<u8> = cdecl 0x5A1EE0 => unported;
-    /// `CObject::CObject(int32 model, bool create)` (0x5A1D70)
-    fn object_ctor(o: GPtr<u8>, model: u32, create: u32) -> GPtr<u8> = thiscall 0x5A1D70 => unported;
-    /// `CMatrix::UpdateRwMatrix(RwMatrix*)` (0x59AD70)
-    fn matrix_update_rw_matrix(m: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x59AD70 => unported;
-    /// `CSimpleTransform::UpdateRwMatrix(RwMatrix*)` (0x54EF40)
-    fn simple_transform_update_rw_matrix(t: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x54EF40 => unported;
     /// virtual `CEntity::SetIsStatic(bool)` (vtable +0x10)
     fn entity_set_is_static(e: GPtr<u8>, s: u32) = thiscall vslot 0x10 => unported;
-    /// `CWorld::Add(CEntity*)` (0x563220)
-    fn world_add(e: GPtr<u8>) = cdecl 0x563220 => unported;
 }
 
 /// `CWaterLevel::CreateBeachToy(const CVector& pos, eBeachToy type)` (0x6EABA0): no toy with 150 or more
@@ -128,11 +123,9 @@ pub fn create_beach_toy(pos: GPtr<f32>, toy: i32) -> GPtr<u8> {
     obj
 }
 
+use sa_stream::bindings::load_data_from_work_buffer as load_data;
+use sa_stream::bindings::save_data_to_work_buffer as save_data;
 orig! {
-    /// `CGenericGameStorage::SaveDataToWorkBuffer(void*, int32)` (0x5D1270)
-    fn save_data(p: GPtr<u8>, n: i32) -> u8 = cdecl 0x5D1270 => unported;
-    /// `CGenericGameStorage::LoadDataFromWorkBuffer(void*, int32)` (0x5D1300)
-    fn load_data(p: GPtr<u8>, n: i32) -> u8 = cdecl 0x5D1300 => unported;
     /// `CTheCarGenerators::Init()` (0x6F3270)
     fn car_generators_init() = cdecl 0x6F3270 => crate::cargen::init;
 }

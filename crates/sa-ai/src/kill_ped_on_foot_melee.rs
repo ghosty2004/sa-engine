@@ -12,6 +12,12 @@ use sa_world::world::common::entity_pos;
 
 use crate::common::*;
 
+use crate::bindings::stand_still_dtor;
+use crate::bindings::stand_still_process_ped;
+use sa_world::bindings::seek_entity_standard_ctor;
+use sa_world::bindings::sequence_ctor;
+use sa_world::bindings::shake_fist_ctor;
+use sa_world::bindings::turn_to_face_entity_ctor;
 orig! {
     /// `CTaskComplexKillPedOnFootMelee::CreateSubTask(eTaskType, CPed*)` (0x626AC0)
     fn create_sub_task(t: GPtr<u8>, ty: u32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x626AC0 => kill_ped_on_foot_melee_create_sub_task;
@@ -21,24 +27,12 @@ orig! {
     fn task_create_first_sub_task(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x24 => unported;
     /// `CTaskSimpleFightingControl::CTaskSimpleFightingControl(CEntity*, float angle, float range)` (0x61DC10)
     fn fighting_control_ctor(t: GPtr<u8>, target: GPtr<u8>, angle: u32, range: u32) -> GPtr<u8> = thiscall 0x61DC10 => fighting_control_ctor_61dc10;
-    /// `CTaskComplexSeekEntity<CEntitySeekPosCalculatorStandard>` constructor (0x46AC10)
-    fn seek_entity_standard_ctor(t: GPtr<u8>, e: GPtr<u8>, a: u32, b: u32, c: u32, d: u32, f: u32, b7: u32, b8: u32) -> GPtr<u8> = thiscall 0x46AC10 => unported;
     /// `CTaskSimpleStandStill::CTaskSimpleStandStill(int32 time, bool looped, bool useAnimIdleStance, float delta)` (0x62F310)
     fn stand_still_ctor(t: GPtr<u8>, time: u32, looped: u32, idle: u32, delta: f32) -> GPtr<u8> = thiscall 0x62F310 => unported;
-    /// `CTaskSimpleStandStill::ProcessPed(CPed*)` (0x62F370)
-    fn stand_still_process_ped(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x62F370 => unported;
-    /// `CTaskSimpleStandStill::~CTaskSimpleStandStill()` (0x62F360)
-    fn stand_still_dtor(t: GPtr<u8>) = thiscall 0x62F360 => unported;
     /// `CTaskSimplePause::CTaskSimplePause(int32 time)` (0x48E750)
     fn pause_ctor(t: GPtr<u8>, time: u32) -> GPtr<u8> = thiscall 0x48E750 => unported;
-    /// `CTaskComplexSequence::CTaskComplexSequence()` (0x632BD0)
-    fn sequence_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x632BD0 => unported;
     /// `CTaskComplexSequence::AddTask(CTask*)` (0x632D10)
     fn sequence_add_task(t: GPtr<u8>, task: GPtr<u8>) -> u8 = thiscall 0x632D10 => unported;
-    /// `CTaskComplexTurnToFaceEntityOrCoord(CEntity*, float, float)` constructor (0x66B890)
-    fn turn_to_face_entity_ctor(t: GPtr<u8>, e: GPtr<u8>, rate: u32, tol: u32) -> GPtr<u8> = thiscall 0x66B890 => unported;
-    /// `CTaskSimpleShakeFist::CTaskSimpleShakeFist()` (0x690B80)
-    fn shake_fist_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x690B80 => unported;
 }
 
 /// `CTaskSimpleFightingControl::CTaskSimpleFightingControl(CEntity* target, float angle, float range)` (0x61DC10,

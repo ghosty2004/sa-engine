@@ -106,6 +106,7 @@ pub fn temp_col_models_shutdown() {
 
 use sa_core::field::pa as temp_model;
 
+pub use crate::bindings::col_model_allocate_data as col_model_allocate_data_call;
 orig! {
     /// `CSphere::Set(float radius, const CVector& center)` (stub 0x40FCF0, `ret 8`)
     pub fn sphere_set_call(s: GPtr<u8>, radius: u32, center: GPtr<u32>) = thiscall 0x40FCF0 => sphere_set;
@@ -117,10 +118,6 @@ orig! {
         = thiscall 0x40FD10 => col_sphere_set;
     /// `CColLine::Set(const CVector& start, const CVector& end)` (stub 0x40EF10, `ret 8`)
     pub fn col_line_set_call(l: GPtr<u8>, start: GPtr<u32>, end: GPtr<u32>) = thiscall 0x40EF10 => col_line_set;
-    /// `CColModel::AllocateData(numSpheres, numBoxes, numLines, numVertices, numTriangles, disks)` (0x40F870,
-    /// `ret 0x18`; the counts pushed as dwords)
-    pub fn col_model_allocate_data_call(cm: GPtr<u8>, a: u32, b: u32, c: u32, d: u32, e: u32, f: u32)
-        = thiscall 0x40F870 => unported;
 }
 
 fn copy3(dst: GPtr<u8>, src: GPtr<u32>) {

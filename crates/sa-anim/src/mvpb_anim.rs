@@ -18,29 +18,34 @@ const CLUMP_DATA_OFFSET: usize = 0xB5F878;
 /// the frame `ForAllFramesF` callbacks store the match in
 const FOUND_FRAME: usize = 0xB5F87C;
 
+use crate::bindings::camera_get_cut_scene_finish_time;
+use crate::bindings::convert_ped_node_2_bone_tag;
+use crate::bindings::rp_skin_get_num_bones;
+use sa_core::bindings::base_model_info_set_col_model;
+use sa_core::bindings::entity_register_reference as register_reference;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::get_anim_hierarchy_from_skin_clump;
+use sa_core::bindings::get_first_atomic;
+use sa_core::bindings::get_model_info as model_info_get_model_info;
+use sa_core::bindings::object_ctor;
+use sa_core::bindings::object_new;
+use sa_core::bindings::object_set_is_static;
+use sa_core::bindings::player_info_make_player_safe;
+use sa_core::bindings::rp_hanim_id_get_index;
+use sa_core::bindings::rp_skin_geometry_get_skin;
+use sa_core::bindings::streaming_i_have_used_streaming_memory as i_have_used_streaming_memory;
+use sa_core::bindings::streaming_im_gonna_use_streaming_memory as im_gonna_use_streaming_memory;
 orig! {
     /// `RpAnimBlendAllocateData(RpClump*)` (0x4D5F50, cdecl)
     fn rp_anim_blend_allocate_data(c: GPtr<u8>) = cdecl 0x4D5F50 => unported;
-    /// `GetFirstAtomic(RpClump*)` (0x734820, cdecl)
-    fn get_first_atomic(c: GPtr<u8>) -> GPtr<u8> = cdecl 0x734820 => unported;
-    /// `RpSkinGeometryGetSkin(RpGeometry*)` (0x7C7550, cdecl)
-    fn rp_skin_geometry_get_skin(g: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C7550 => unported;
-    /// `RpSkinGetNumBones(RpSkin*)` (0x7C77E0, cdecl)
-    fn rp_skin_get_num_bones(s: GPtr<u8>) -> i32 = cdecl 0x7C77E0 => unported;
     /// `CAnimBlendClumpData::SetNumberOfBones(int32)` (0x4CF140, `ret 4`)
     fn clump_data_set_number_of_bones(d: GPtr<u8>, n: i32) = thiscall 0x4CF140 => unported;
     /// `CAnimBlendClumpData::ForAllFrames(cb, data)` (0x4CF190, `ret 8`)
     fn clump_data_for_all_frames(d: GPtr<u8>, cb: u32, data: u32) = thiscall 0x4CF190 => unported;
-    /// `GetAnimHierarchyFromSkinClump(RpClump*)` (0x734A40, cdecl)
-    fn get_anim_hierarchy_from_skin_clump(c: GPtr<u8>) -> GPtr<u8> = cdecl 0x734A40 => unported;
     /// `SkinGetBonePositionsToTable(RpClump*, RwV3d*)` (0x735360, cdecl)
     fn skin_get_bone_positions_to_table(c: GPtr<u8>, t: GPtr<u8>) = cdecl 0x735360 => unported;
     /// `RwFrameForAllChildren(RwFrame*, cb, void*)` (0x7F0DC0, cdecl)
     fn rw_frame_for_all_children(f: GPtr<u8>, cb: u32, data: GPtr<u32>) -> GPtr<u8> = cdecl 0x7F0DC0 => unported;
-    /// `ConvertPedNode2BoneTag(int32)` (0x4D58A0, cdecl)
-    fn convert_ped_node_2_bone_tag(n: i32) -> i32 = cdecl 0x4D58A0 => unported;
-    /// `RpHAnimIDGetIndex(RpHAnimHierarchy*, int32)` (0x7C51A0, cdecl)
-    fn rp_hanim_id_get_index(h: GPtr<u8>, id: i32) -> i32 = cdecl 0x7C51A0 => unported;
     /// `ConvertBoneTag2BoneName(int32)` (0x4D56F0, cdecl)
     fn convert_bone_tag_2_bone_name_o(t: i32) -> u32 = cdecl 0x4D56F0 => crate::mvpb_anim::convert_bone_tag_2_bone_name;
     /// `CKeyGen::GetUppercaseKey(const char*)` (0x53CF30, cdecl)
@@ -49,36 +54,14 @@ orig! {
     fn get_frame_node_name(f: GPtr<u8>) -> u32 = cdecl 0x72FB30 => unported;
     /// `CAnimBlendNode::FindKeyFrame(float)` (0x4D0240, `ret 4`)
     fn anim_blend_node_find_key_frame(n: GPtr<u8>, t: f32) -> u8 = thiscall 0x4D0240 => unported;
-    /// `CCamera::GetCutSceneFinishTime` (0x50AD90)
-    fn camera_get_cut_scene_finish_time(c: GPtr<u8>) -> u32 = thiscall 0x50AD90 => unported;
     /// `CCamera::FinishCutscene` (0x514950)
     fn camera_finish_cutscene(c: GPtr<u8>) = thiscall 0x514950 => unported;
-    /// `FindPlayerPed(int32)` (0x56E210, cdecl)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CPlayerInfo::MakePlayerSafe(bool, float)` (0x56E870, `ret 8`)
-    fn player_info_make_player_safe(p: GPtr<u8>, safe: u32, r: f32) = thiscall 0x56E870 => unported;
-    /// `CModelInfo::GetModelInfo(const char*, int32*)` (0x4C5940, cdecl)
-    fn model_info_get_model_info(name: GPtr<u8>, idx: GPtr<i32>) -> GPtr<u8> = cdecl 0x4C5940 => unported;
     /// `CWorld::FindObjectsOfTypeInRange(...)` (0x564C70, cdecl, 12 arguments)
     fn world_find_objects_of_type_in_range(mi: i32, pos: GPtr<f32>, r: f32, b2d: u32, n: GPtr<i16>, max: i16, out: GPtr<u32>, b: u32, v: u32, p: u32, o: u32, d: u32) = cdecl 0x564C70 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70, `ret 4`)
-    fn register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
-    /// `CStreaming::ImGonnaUseStreamingMemory` (0x407BE0)
-    fn im_gonna_use_streaming_memory() = cdecl 0x407BE0 => unported;
-    /// `CStreaming::IHaveUsedStreamingMemory` (0x407BF0)
-    fn i_have_used_streaming_memory() = cdecl 0x407BF0 => unported;
-    /// `CBaseModelInfo::SetColModel(CColModel*, bool)` (0x4C4BC0, `ret 8`)
-    fn base_model_info_set_col_model(mi: GPtr<u8>, c: GPtr<u8>, owns: u32) = thiscall 0x4C4BC0 => unported;
     /// `CCutsceneMgr::UpdateCutsceneObjectBoundingBox(RpClump*, int32)` (0x5B01E0, cdecl)
     fn update_cutscene_object_bounding_box(c: GPtr<u8>, id: i32) = cdecl 0x5B01E0 => unported;
-    /// `CObject::operator new(uint32)` (0x5A1EE0, cdecl)
-    fn object_new(size: u32) -> GPtr<u8> = cdecl 0x5A1EE0 => unported;
     /// `CCutsceneObject::CCutsceneObject` (0x5B19D0)
     fn cutscene_object_ctor_o(o: GPtr<u8>) -> GPtr<u8> = thiscall 0x5B19D0 => crate::mvpb_anim::cutscene_object_ctor;
-    /// `CObject::CObject` (0x5A1D10)
-    fn object_ctor(o: GPtr<u8>) -> GPtr<u8> = thiscall 0x5A1D10 => unported;
-    /// `CObject::SetIsStatic(bool)` (0x5A0760, `ret 4`)
-    fn object_set_is_static(o: GPtr<u8>, b: u32) = thiscall 0x5A0760 => unported;
     /// `CEntity::SetModelIndex(uint32)` (vtable +0x14)
     fn v_set_model_index(e: GPtr<u8>, id: i32) = thiscall vslot 0x14 => unported;
 }

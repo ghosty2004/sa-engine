@@ -162,6 +162,12 @@ pub mod k {
 
 use sa_math::fpu::fbits as kf;
 
+pub use crate::bindings::get_ambient_blue as tc_get_ambient_blue;
+pub use crate::bindings::get_ambient_blue_obj as tc_get_ambient_blue_obj;
+pub use crate::bindings::get_ambient_green as tc_get_ambient_green;
+pub use crate::bindings::get_ambient_green_obj as tc_get_ambient_green_obj;
+pub use crate::bindings::get_ambient_red as tc_get_ambient_red;
+pub use crate::bindings::get_ambient_red_obj as tc_get_ambient_red_obj;
 orig! {
     /// `RpLightSetColor` (0x751A90)
     pub fn rp_light_set_color(light: GPtr<RpLight>, color: GPtr<RwRGBAReal>) -> GPtr<RpLight> = cdecl 0x751A90 => unported;
@@ -193,18 +199,6 @@ orig! {
     pub fn cross_product(out: GPtr<RwV3d>, a: GPtr<RwV3d>, b: GPtr<RwV3d>) -> GPtr<RwV3d> = cdecl 0x59C730 => unported;
     /// `CVector::Normalise` (0x59C910)
     pub fn vector_normalise(v: GPtr<RwV3d>) = thiscall 0x59C910 => unported;
-    /// `CTimeCycle::GetAmbientRed` (0x560330, ST0)
-    pub fn tc_get_ambient_red() -> f64 = cdecl 0x560330 => unported;
-    /// `CTimeCycle::GetAmbientGreen` (0x560340, ST0)
-    pub fn tc_get_ambient_green() -> f64 = cdecl 0x560340 => unported;
-    /// `CTimeCycle::GetAmbientBlue` (0x560350, ST0)
-    pub fn tc_get_ambient_blue() -> f64 = cdecl 0x560350 => unported;
-    /// `CTimeCycle::GetAmbientRed_Obj` (0x560360, ST0)
-    pub fn tc_get_ambient_red_obj() -> f64 = cdecl 0x560360 => unported;
-    /// `CTimeCycle::GetAmbientGreen_Obj` (0x560370, ST0)
-    pub fn tc_get_ambient_green_obj() -> f64 = cdecl 0x560370 => unported;
-    /// `CTimeCycle::GetAmbientBlue_Obj` (0x560380, ST0)
-    pub fn tc_get_ambient_blue_obj() -> f64 = cdecl 0x560380 => unported;
     /// `Light::SetAmbientAndDirectionalColours` (0x735A20)
     pub fn call_set_ambient_and_directional_colours(mult: f32) = cdecl 0x735A20 => set_ambient_and_directional_colours;
 }

@@ -25,6 +25,9 @@ const TEX_NAMES: usize = 0x8D4950;
 const TEX_MASKS: usize = 0x8D4A58;
 const PARTICLE_TXD: usize = 0x85C648;
 
+pub use sa_stream::bindings::find_txd_slot;
+pub use sa_stream::bindings::rw_texture_destroy;
+pub use sa_stream::bindings::rw_texture_read;
 orig! {
     /// `CTxdStore::PushCurrentTxd()` (0x7316A0)
     pub fn push_current_txd() = cdecl 0x7316A0 => sa_stream::txdstore::push_current_txd;
@@ -32,12 +35,6 @@ orig! {
     pub fn pop_current_txd() = cdecl 0x7316B0 => sa_stream::txdstore::pop_current_txd;
     /// `CTxdStore::SetCurrentTxd(int)` (0x7319C0)
     pub fn set_current_txd(slot: i32) = cdecl 0x7319C0 => sa_stream::txdstore::set_current_txd;
-    /// `CTxdStore::FindTxdSlot(const char*)` (0x731850)
-    pub fn find_txd_slot(name: GPtr<u8>) -> i32 = cdecl 0x731850 => sa_stream::txdstore::find_txd_slot_name;
-    /// `RwTextureRead(const char* name, const char* mask)` (0x7F3AC0)
-    pub fn rw_texture_read(name: GPtr<u8>, mask: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F3AC0 => unported;
-    /// `RwTextureDestroy(RwTexture*)` (0x7F3820)
-    pub fn rw_texture_destroy(tex: GPtr<u8>) -> i32 = cdecl 0x7F3820 => unported;
 }
 
 /// `CCoronas::Init()` (0x6FAA70): with the "particle" TXD current, every corona texture not yet loaded

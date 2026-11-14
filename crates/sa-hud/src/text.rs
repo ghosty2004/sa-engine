@@ -23,13 +23,11 @@ const FMT_EMPTY: usize = 0x858B54;
 /// byte tested by `CText::Get` before searching the mission table (with +0x23)
 const GET_MISSION_FLAG: usize = 0xB72910;
 
+pub use sa_core::bindings::crt_free as crt_delete;
+pub use sa_core::bindings::get_uppercase_key;
 orig! {
-    /// CRT `operator delete` / `free` (0x8213AE)
-    pub fn crt_delete(p: GPtr<u8>) = cdecl 0x8213AE => unported;
     /// CRT `sprintf(buf, fmt)` (0x821BB5)
     pub fn sprintf0(buf: GPtr<u8>, fmt: GPtr<u8>) -> i32 = cdecl 0x821BB5 => unported;
-    /// `CKeyGen::GetUppercaseKey(const char*)` (0x53CF30)
-    pub fn get_uppercase_key(key: GPtr<u8>) -> u32 = cdecl 0x53CF30 => unported;
     /// `CKeyArray::BinarySearch(uint32 key, CKeyEntry* entries, int16 low, int16 high)` (0x69F570)
     pub fn binary_search_call(this: GPtr<u8>, key: u32, entries: GPtr<u8>, low: i32, high: i32) -> GPtr<u8> = thiscall 0x69F570 => binary_search;
     /// `CKeyArray::Search(const char* key, bool* found)` (0x6A0000)

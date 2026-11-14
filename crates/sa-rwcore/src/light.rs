@@ -42,29 +42,21 @@ const ONE: f32 = 1.0;
 
 const E_RW_BADVERSION: u32 = 0x8000_0004;
 
+use crate::bindings::free_list_for_all_used as rw_free_list_for_all_used;
+use crate::bindings::object_release_frame;
+use crate::bindings::plugin_add;
+use crate::bindings::plugin_deinit_object;
+use crate::bindings::plugin_init_object;
+use crate::bindings::plugin_read_data_chunks;
+use crate::bindings::rw_sqrt;
+use crate::bindings::rw_stream_find_chunk_call;
 orig! {
     /// `RwFrameUpdateObjects(frame)` (0x7F0910)
     fn rw_frame_update_objects(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0910 => crate::frame::update_objects;
-    /// `_rwObjectHasFrameReleaseFrame(object)` (0x804F40)
-    fn object_release_frame(o: GPtr<u8>) -> GPtr<u8> = cdecl 0x804F40 => crate::frame::object_has_frame_release_frame;
-    /// `_rwPluginRegistryInitObject(reg, obj)` (0x8086E0)
-    fn plugin_init_object(reg: GPtr<u8>, obj: GPtr<u8>) -> GPtr<u8> = cdecl 0x8086E0 => crate::plugin::registry_init_object;
-    /// `_rwPluginRegistryDeInitObject(reg, obj)` (0x808740)
-    fn plugin_deinit_object(reg: GPtr<u8>, obj: GPtr<u8>) -> GPtr<u8> = cdecl 0x808740 => crate::plugin::registry_deinit_object;
-    /// `_rwPluginRegistryAddPlugin(reg, size, id, ctor, dtor, copy)` (0x8084A0)
-    fn plugin_add(reg: GPtr<u8>, size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x8084A0 => crate::plugin::registry_add_plugin;
-    /// `_rwPluginRegistryReadDataChunks(reg, stream, obj)` (0x808980)
-    fn plugin_read_data_chunks(reg: GPtr<u8>, s: GPtr<u8>, obj: GPtr<u8>) -> GPtr<u8> = cdecl 0x808980 => crate::plugin::registry_read_data_chunks;
-    /// `RwFreeListForAllUsed(fl, cb, data)` (0x801E90)
-    fn rw_free_list_for_all_used(fl: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> = cdecl 0x801E90 => unported;
     /// `RwFreeListDestroy(fl)` (0x801B80)
     fn rw_free_list_destroy(fl: GPtr<u8>) -> u32 = cdecl 0x801B80 => crate::memory::rw_freelist_destroy;
-    /// `RwStreamFindChunk(stream, type, length, version)` (0x7ED2D0)
-    fn rw_stream_find_chunk_call(s: GPtr<u8>, ty: u32, len: GPtr<u32>, ver: GPtr<u32>) -> u32 = cdecl 0x7ED2D0 => crate::stream::rw_stream_find_chunk;
     /// `RwStreamRead(stream, buf, len)` (0x7EC9D0)
     fn rw_stream_read_call(s: GPtr<u8>, buf: GPtr<u8>, len: u32) -> u32 = cdecl 0x7EC9D0 => crate::stream::rw_stream_read;
-    /// `_rwSqrt(x)` (0x7EDB30), result in ST0
-    fn rw_sqrt(v: f32) -> f64 = cdecl 0x7EDB30 => crate::vector::rw_sqrt_f64;
     /// `RpLightCreate(type)` (0x752110)
     fn rp_light_create_call(ty: u32) -> GPtr<u8> = cdecl 0x752110 => rp_light_create;
 }

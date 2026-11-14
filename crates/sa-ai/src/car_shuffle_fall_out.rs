@@ -25,23 +25,15 @@ const SHUFFLE_CB: u32 = 0x646970;
 /// `CTaskSimpleCarFallOut::FinishAnimFallOutCB`
 const FALL_OUT_CB: u32 = 0x648EE0;
 
+use crate::bindings::anim_blend_animation;
+use crate::bindings::assoc_set_finish_callback;
+use crate::bindings::car_enter_exit_remove_car_sit_anim;
+use crate::bindings::damage_get_door_status_component as damage_get_door_status;
+use crate::bindings::damage_manager_set_door_status as damage_set_door_status;
+use crate::bindings::line_up_ped_with_car_process_ped as line_up_process_ped;
+use crate::bindings::vehicle_anim_group_get_group as veh_anim_group_get_group;
+use sa_world::bindings::ped_set_ped_position_in_car;
 orig! {
-    /// `CVehicleAnimGroup::GetGroup(int32 animId)` (0x6E3B00, `ret 4`)
-    fn veh_anim_group_get_group(g: GPtr<u8>, anim: u32) -> u32 = thiscall 0x6E3B00 => unported;
-    /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float)` (0x4D4610, cdecl)
-    fn anim_blend_animation(clump: u32, group: u32, anim: u32, delta: u32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
-    /// `CAnimBlendAssociation::SetFinishCallback(cb, data)` (0x4CEBE0, `ret 8`)
-    fn assoc_set_finish_callback(a: GPtr<u8>, cb: u32, data: u32) = thiscall 0x4CEBE0 => unported;
-    /// `CPed::SetPedPositionInCar` (0x5DF910)
-    fn ped_set_ped_position_in_car(p: GPtr<u8>) = thiscall 0x5DF910 => unported;
-    /// `CTaskUtilityLineUpPedWithCar::ProcessPed(CPed*, CVehicle*, CAnimBlendAssociation*)` (0x6513A0, `ret 0xC`)
-    fn line_up_process_ped(u: GPtr<u8>, ped: GPtr<u8>, veh: GPtr<u8>, a: GPtr<u8>) = thiscall 0x6513A0 => unported;
-    /// `CCarEnterExit::RemoveCarSitAnim(const CPed*)` (0x64F680, cdecl)
-    fn car_enter_exit_remove_car_sit_anim(ped: GPtr<u8>) = cdecl 0x64F680 => unported;
-    /// `CDamageManager::GetDoorStatus(eDoors)` (0x6C2250, `ret 4`)
-    fn damage_get_door_status(d: GPtr<u8>, door: u32) -> u32 = thiscall 0x6C2250 => unported;
-    /// `CDamageManager::SetDoorStatus(eDoors, eDoorStatus)` (0x6C21E0, `ret 8`)
-    fn damage_set_door_status(d: GPtr<u8>, door: u32, st: u32) = thiscall 0x6C21E0 => unported;
     /// `CVehicle` virtual +0x70 (`ProcessOpenDoor(CPed*, uint32 door, uint32 animGroup, uint32 animId, float time)`,
     /// `ret 0x14`)
     fn v_process_open_door(v: GPtr<u8>, ped: GPtr<u8>, door: u32, group: u32, anim: u32, t: u32) = thiscall vslot 0x70 => unported;

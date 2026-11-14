@@ -35,10 +35,7 @@ const ARM_MIN: f32 = f32::from_bits(0xBF86_0A92); // 0x86C868 (-pi/3)
 const ARM_MIN_CLAMP: f32 = f32::from_bits(0xBEB2_B8C3); // 0x86C86C
 const RATIO_LIMIT: f32 = f32::from_bits(0x3F66_6666); // 0x858C20 (0.9)
 
-orig! {
-    /// `RwMatrixTransform(matrix, transform, combineOp)` (0x7F25A0)
-    pub fn rw_matrix_transform(m: GPtr<u8>, t: GPtr<u8>, op: i32) -> GPtr<u8> = cdecl 0x7F25A0 => unported;
-}
+pub use sa_core::bindings::rw_matrix_transform;
 
 /// `CPedIK::CPedIK(CPed* ped)` (0x5FD8C0): `m_pPed = ped`, everything else 0; returns this.
 #[hook(addr = 0x5FD8C0, conv = thiscall, name = "CPedIK::Constructor", expect = "8B C1 8B 4C 24 04", this = "CPedIK")]
@@ -218,31 +215,20 @@ pub fn rotate_torso_for_arm(this: GPtr<u8>, target: GPtr<f32>) {
     rt_quat_rotate(q, g(X_AXIS), d.fmul_m(RAD2DEG).to_f32(), 2);
 }
 
+use sa_core::bindings::entity_update_rw_frame;
+use sa_core::bindings::get_anim_hierarchy_from_skin_clump;
+use sa_core::bindings::matrix_dtor;
+use sa_core::bindings::matrix_mul_assign;
+use sa_core::bindings::matrix_rotate_x;
+use sa_core::bindings::matrix_rotate_y;
+use sa_core::bindings::matrix_set_translate;
+use sa_core::bindings::matrix_update_rw;
+use sa_core::bindings::rp_hanim_hierarchy_get_matrix_array;
+use sa_core::bindings::rp_hanim_id_get_index;
+use sa_core::bindings::tm_get_active_task;
 orig! {
-    /// `GetAnimHierarchyFromSkinClump(RpClump*)` (0x734A40)
-    fn get_anim_hierarchy_from_skin_clump(c: GPtr<u8>) -> GPtr<u8> = cdecl 0x734A40 => unported;
-    /// `RpHAnimIDGetIndex(RpHAnimHierarchy*, int32 id)` (0x7C51A0)
-    fn rp_hanim_id_get_index(h: GPtr<u8>, id: i32) -> i32 = cdecl 0x7C51A0 => unported;
-    /// `RpHAnimHierarchyGetMatrixArray(RpHAnimHierarchy*)` (0x7C5120)
-    fn rp_hanim_hierarchy_get_matrix_array(h: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C5120 => unported;
     /// `CMatrix::CMatrix(RwMatrix*, bool ownsAttached)` (0x59C050, `ret 8`)
     fn matrix_ctor_attach(m: GPtr<u8>, rw: GPtr<u8>, owns: u32) = thiscall 0x59C050 => unported;
-    /// `CMatrix::SetTranslate(float, float, float)` (0x59AF40, `ret 0xC`)
-    fn matrix_set_translate(m: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x59AF40 => unported;
-    /// `CMatrix::RotateX(float)` (0x59B1E0, `ret 4`)
-    fn matrix_rotate_x(m: GPtr<u8>, a: f32) = thiscall 0x59B1E0 => unported;
-    /// `CMatrix::RotateY(float)` (0x59B2C0, `ret 4`)
-    fn matrix_rotate_y(m: GPtr<u8>, a: f32) = thiscall 0x59B2C0 => unported;
-    /// `CMatrix::operator*=(const CMatrix&)` (0x411A80, `ret 4`)
-    fn matrix_mul_assign(m: GPtr<u8>, r: GPtr<u8>) = thiscall 0x411A80 => unported;
-    /// `CMatrix::UpdateRW()` (0x59BBB0)
-    fn matrix_update_rw(m: GPtr<u8>) = thiscall 0x59BBB0 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
-    /// `CEntity::UpdateRwFrame()` (0x532B00)
-    fn entity_update_rw_frame(e: GPtr<u8>) = thiscall 0x532B00 => unported;
-    /// `CTaskManager::GetActiveTask()` (0x681720)
-    fn tm_get_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x681720 => unported;
     /// `CTask::GetTaskType()` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
     /// `CGeneral::LimitRadianAngle(float)` (0x53CB50, ST0)

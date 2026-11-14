@@ -26,35 +26,26 @@ const AUDIO_ENGINE: usize = 0xB6BC90;
 const SFX_VOLUME: usize = 0xBA6797;
 const RADIO_VOLUME: usize = 0xBA6798;
 
+use crate::bindings::audio_retune_radio;
+use crate::bindings::audio_set_effects_master_volume;
+use crate::bindings::audio_set_music_master_volume;
+use crate::bindings::get_level_from_position;
+use crate::bindings::mark_everything_as_new;
+use sa_core::bindings::camera_process_fade;
+use sa_core::bindings::camera_set_fade_colour;
+use sa_core::bindings::collision_sort_out_collision_after_load as sort_out_collision_after_load;
+use sa_core::bindings::replay_init;
 orig! {
     /// `CReplay::RestoreStuffFromMem()` (0x45ECD0)
     fn restore_stuff_from_mem() = cdecl 0x45ECD0 => unported;
-    /// `CTheZones::GetLevelFromPosition(const CVector&)` (0x572300)
-    fn get_level_from_position(p: GPtr<u32>) -> u32 = cdecl 0x572300 => unported;
-    /// `CCollision::SortOutCollisionAfterLoad()` (0x411E30)
-    fn sort_out_collision_after_load() = cdecl 0x411E30 => unported;
     /// `CStreaming::LoadScene(const CVector&)` (0x40EB70)
     fn load_scene(p: GPtr<u32>) = cdecl 0x40EB70 => unported;
-    /// `CReplay::Init()` (0x45E220)
-    fn replay_init() = cdecl 0x45E220 => unported;
-    /// `CReplay::MarkEverythingAsNew()` (0x45D430)
-    fn mark_everything_as_new() = cdecl 0x45D430 => unported;
-    /// `CCamera::SetFadeColour(uint8, uint8, uint8)` (0x50BF00)
-    fn camera_set_fade_colour(cam: GPtr<u8>, r: u32, gg: u32, b: u32) = thiscall 0x50BF00 => unported;
     /// `CCamera::Fade(float, int16)` (0x50AC20)
     fn camera_fade(cam: GPtr<u8>, t: u32, dir: u32) = thiscall 0x50AC20 => unported;
-    /// `CCamera::ProcessFade()` (0x50B5D0)
-    fn camera_process_fade(cam: GPtr<u8>) = thiscall 0x50B5D0 => unported;
     /// `CFireManager::CreateAllFxSystems()` (0x539D50)
     fn fire_manager_create_all_fx_systems(m: GPtr<u8>) = thiscall 0x539D50 => unported;
-    /// `CAudioEngine::SetEffectsMasterVolume(int8)` (0x506E10)
-    fn audio_set_effects_master_volume(e: GPtr<u8>, v: u32) = thiscall 0x506E10 => unported;
-    /// `CAudioEngine::SetMusicMasterVolume(int8)` (0x506DE0)
-    fn audio_set_music_master_volume(e: GPtr<u8>, v: u32) = thiscall 0x506DE0 => unported;
     /// `CAEVehicleAudioEntity::TurnOnRadioForVehicle()` (0x4F5B20)
     fn turn_on_radio_for_vehicle(a: GPtr<u8>) = thiscall 0x4F5B20 => unported;
-    /// `CAudioEngine::RetuneRadio(int8)` (0x507E10)
-    fn audio_retune_radio(e: GPtr<u8>, station: u32) = thiscall 0x507E10 => unported;
 }
 
 /// `CReplay::FinishPlayback()` (0x45F050, cdecl): only in playback mode (1). `RestoreStuffFromMem()`,

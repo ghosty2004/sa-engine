@@ -7,23 +7,15 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 
 use crate::common::{g, rd};
 
-orig! {
-    /// `RwFrameGetLTM(frame)` (0x7F0990)
-    fn frame_get_ltm(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0990 => unported;
-    /// `AtomicDefaultRenderCallBack(atomic)` (0x7491C0)
-    fn atomic_default_render(a: GPtr<u8>) -> GPtr<u8> = cdecl 0x7491C0 => unported;
-    /// `CVisibilityPlugins::GetDotProductWithCameraVector(ltm, carLtm, atomicId)` (0x7326D0, ST0; computed from f32
-    /// operands under precision control 24, so the double carries it exactly)
-    fn dot_with_camera(m: GPtr<u8>, car: GPtr<u8>, id: u32) -> f64 = cdecl 0x7326D0 => unported;
-    /// The alpha-atomic list's sorted insert (`CLinkList<AlphaObjectInfo>::InsertSorted`, 0x733910, thiscall);
-    /// NULL when the list is full
-    fn alpha_list_insert_sorted(list: GPtr<u8>, info: GPtr<u8>) -> GPtr<u8> = thiscall 0x733910 => crate::render_lists::sorted_list_insert;
-}
+use crate::bindings::alpha_list_insert_sorted;
+use crate::bindings::atomic_default_render;
+use crate::bindings::dot_with_camera;
+use sa_core::bindings::frame_get_ltm;
 
 /// `gVehicleAngleToCamera`, `gVehicleDistanceFromCamera`, `ms_vehicleLod0Dist`... (`CVisibilityPlugins`):
 /// the small-vehicle LOD distance (0xC8802C), the big-vehicle LOD0 distance (0xC88038), `ms_vehicleLod1Dist`

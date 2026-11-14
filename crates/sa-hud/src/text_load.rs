@@ -45,35 +45,26 @@ const S_MPACK_NAME: usize = 0x870F58;
 /// ITALIAN, SPANISH.
 const GXT_NAMES: [usize; 5] = [0x870FA0, 0x870F94, 0x870F88, 0x870F7C, 0x870F70];
 
+pub use sa_core::bindings::crt_free;
+pub use sa_core::bindings::file_close;
+pub use sa_core::bindings::file_read;
+pub use sa_core::bindings::file_set_dir;
+pub use sa_core::bindings::open_file as file_open;
+pub use sa_core::bindings::strncmp as crt_strncmp;
+pub use sa_core::bindings::timer_resume;
+pub use sa_core::bindings::timer_suspend;
+pub use sa_world::bindings::check_mission_pack_valid_menu;
 orig! {
     /// CRT `operator new` (0x821195)
     pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x821195 => unported;
-    /// CRT `free` (0x8213AE)
-    pub fn crt_free(p: GPtr<u8>) = cdecl 0x8213AE => unported;
-    /// CRT `strncmp` (0x8214D0)
-    pub fn crt_strncmp(a: GPtr<u8>, b: GPtr<u8>, n: u32) -> i32 = cdecl 0x8214D0 => unported;
     /// CRT `sprintf(buf, fmt)` (0x821BB5)
     pub fn sprintf0(buf: GPtr<u8>, fmt: GPtr<u8>) -> i32 = cdecl 0x821BB5 => unported;
     /// CRT `sprintf(buf, fmt, a)` (0x821BB5)
     pub fn sprintf1(buf: GPtr<u8>, fmt: GPtr<u8>, a: u32) -> i32 = cdecl 0x821BB5 => unported;
-    /// `CFileMgr::Read(file, buf, size)` (0x538950)
-    pub fn file_read(f: GPtr<u8>, buf: GPtr<u8>, size: u32) -> u32 = cdecl 0x538950 => sa_core::filemgr::read;
     /// `CFileMgr::Seek(file, offset, origin)` (0x538990)
     pub fn file_seek(f: GPtr<u8>, offset: i32, origin: i32) -> bool = cdecl 0x538990 => sa_core::filemgr::seek;
-    /// `CFileMgr::SetDir(const char*)` (0x5387D0)
-    pub fn file_set_dir(dir: GPtr<u8>) -> i32 = cdecl 0x5387D0 => sa_core::filemgr::set_dir;
     /// `CFileMgr::SetDirMyDocuments()` (0x538860)
     pub fn file_set_dir_my_documents() -> i32 = cdecl 0x538860 => sa_core::filemgr::set_dir_my_documents;
-    /// `CFileMgr::OpenFile(const char* path, const char* mode)` (0x538900)
-    pub fn file_open(path: GPtr<u8>, mode: GPtr<u8>) -> GPtr<u8> = cdecl 0x538900 => sa_core::filemgr::open_file;
-    /// `CFileMgr::CloseFile(FILE*)` (0x5389D0)
-    pub fn file_close(f: GPtr<u8>) -> i32 = cdecl 0x5389D0 => sa_core::filemgr::close_file;
-    /// `CTimer::Suspend()` (0x5619D0)
-    pub fn timer_suspend() = cdecl 0x5619D0 => unported;
-    /// `CTimer::Resume()` (0x561A00)
-    pub fn timer_resume() = cdecl 0x561A00 => unported;
-    /// `CMenuManager::CheckMissionPackValidMenu()` (0x57D720, thiscall)
-    pub fn check_mission_pack_valid_menu(this: GPtr<u8>) -> u8 = thiscall 0x57D720 => unported;
     /// `CMessages::ClearAllMessagesDisplayedByGame(bool)` (0x69EDC0)
     pub fn clear_all_messages_displayed_by_game_call(flag: u32) = cdecl 0x69EDC0 => crate::messages::clear_all_messages_displayed_by_game;
     /// `CText::Unload(bool)` (0x69FF20, thiscall)

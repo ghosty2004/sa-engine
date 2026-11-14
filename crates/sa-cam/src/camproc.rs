@@ -12,27 +12,29 @@ use crate::common::{f32_of, ftol32, g, k, rd, the_camera, wr, x};
 /// `_CIpow` (0x822130: `st1 ^ st0`, both operands and the result on the x87 stack)
 const CI_POW: usize = 0x822130;
 
+pub use crate::bindings::aim_weapon_left_right;
+pub use crate::bindings::aim_weapon_up_down;
+pub use crate::bindings::get_vectors_ready_for_rw;
+pub use crate::bindings::idle_cam_reset_call as idle_reset;
+pub use crate::bindings::round_decimals as round_decimals_call;
+pub use sa_core::bindings::cross_product;
+pub use sa_core::bindings::crt_free_8214bd as crt_free;
+pub use sa_core::bindings::eh_vector_dtor;
+pub use sa_core::bindings::find_player_ped;
+pub use sa_core::bindings::get_pad;
+pub use sa_core::bindings::matrix_dtor;
+pub use sa_core::bindings::rgba_ctor;
+pub use sa_core::bindings::sprite_draw_rect;
+pub use sa_core::bindings::vector_normalise;
+pub use sa_world::bindings::entity_get_col_model as get_col_model;
+pub use sa_world::bindings::pad_get_accelerate as get_accelerate;
+pub use sa_world::bindings::pad_get_brake as get_brake;
+pub use sa_world::bindings::placeable_dtor;
 orig! {
     /// CRT `modf(double, double*)` (0x8232F0), result (the fraction) in ST0
     pub fn crt_modf(v: f64, ip: GPtr<f64>) -> f64 = cdecl 0x8232F0 => unported;
-    /// `round to n decimals` (0x50A0A0, cdecl, ST0); the float travels as its bit pattern
-    pub fn round_decimals_call(v: u32, n: i32) -> f64 = cdecl 0x50A0A0 => unported;
-    /// CRT `eh vector destructor iterator` (0x821E02, stdcall)
-    pub fn eh_vector_dtor(arr: GPtr<u8>, size: u32, n: u32, dtor: u32) = stdcall 0x821E02 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    pub fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
     /// `CCamera::~CCamera()` (0x50A870)
     pub fn camera_dtor_call(this: GPtr<u8>) = thiscall 0x50A870 => camera_dtor;
-    /// `CPlaceable::~CPlaceable()` (0x54F490)
-    pub fn placeable_dtor(p: GPtr<u8>) = thiscall 0x54F490 => unported;
-    /// `operator delete` (0x8214BD, the CRT `free` the scalar deleting destructors call)
-    pub fn crt_free(p: GPtr<u8>) = cdecl 0x8214BD => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    pub fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
-    /// `CrossProduct(CVector* out, const CVector*, const CVector*)` (0x59C730), returns `out`
-    pub fn cross_product(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C730 => unported;
-    /// `CCam::GetVectorsReadyForRW()` (0x509CE0)
-    pub fn get_vectors_ready_for_rw(cam: GPtr<u8>) = thiscall 0x509CE0 => crate::cam::get_vectors_ready_for_rw;
     /// `CWaterLevel::GetWaterLevel(float x, float y, float z, float* level, bool waves, CVector* normal)`
     /// (0x6EB690, AL); the coordinates are pushed as dwords
     pub fn get_water_level(xb: u32, yb: u32, zb: u32, level: GPtr<f32>, waves: u8, normal: GPtr<u8>) -> u8 = cdecl 0x6EB690 => unported;
@@ -40,28 +42,14 @@ orig! {
     pub fn find_player_vehicle(id: i32, remote: u8) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
     /// `cHandlingDataMgr::GetBoatPointer(int32)` (0x6F5300, thiscall on `gHandlingDataMgr` 0xC2B9C8)
     pub fn get_boat_pointer(mgr: GPtr<u8>, id: i32) -> GPtr<u8> = thiscall 0x6F5300 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    pub fn get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
     /// `CTask::GetSubTask()` (vtable +0x8)
     fn v_get_sub_task(t: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x8 => unported;
     /// `CTask::GetTaskType()` (vtable +0x10)
     fn v_get_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CPad::AimWeaponLeftRight(CPed*)` (0x541040, AX)
-    pub fn aim_weapon_left_right(pad: GPtr<u8>, ped: GPtr<u8>) -> i16 = thiscall 0x541040 => unported;
-    /// `CPad::AimWeaponUpDown(CPed*)` (0x5410C0, AX)
-    pub fn aim_weapon_up_down(pad: GPtr<u8>, ped: GPtr<u8>) -> i16 = thiscall 0x5410C0 => unported;
-    /// `CPad::GetAccelerate()` (0x5403F0, AX)
-    pub fn get_accelerate(pad: GPtr<u8>) -> i16 = thiscall 0x5403F0 => unported;
-    /// `CPad::GetBrake()` (0x540080, AX)
-    pub fn get_brake(pad: GPtr<u8>) -> i16 = thiscall 0x540080 => unported;
     /// `CIdleCam::ProcessIdleCamTicker()` (0x50A200)
     pub fn idle_process_ticker(this: GPtr<u8>) = thiscall 0x50A200 => crate::idlecam::process_idle_cam_ticker;
-    /// `CIdleCam::Reset(bool)` (0x50A160)
-    pub fn idle_reset(this: GPtr<u8>, reset_controls: u8) = thiscall 0x50A160 => crate::idlecam::reset;
     /// `CIdleCam::SetTarget(CEntity*)` (0x50A280)
     pub fn idle_set_target(this: GPtr<u8>, e: GPtr<u8>) = thiscall 0x50A280 => idle_cam_set_target;
-    /// `FindPlayerPed(int32)` (0x56E210)
-    pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
     /// `CIdleCam::Run()` (0x51D3E0)
     pub fn idle_run(this: GPtr<u8>) = thiscall 0x51D3E0 => idle_cam_run;
     /// `CIdleCam::ProcessTargetSelection()` (0x517870)
@@ -76,12 +64,6 @@ orig! {
     pub fn get_screen_rect(this: GPtr<u8>, r: GPtr<u8>) = thiscall 0x50AB50 => crate::camctl::get_screen_rect;
     /// `RwRenderStateSet(RwRenderState, void*)` (`RwEngineInstance` +0x20)
     fn rw_render_state_set(state: u32, v: u32) -> u32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `CRGBA::CRGBA(r, g, b, a)` (0x7170C0)
-    pub fn rgba_ctor(c: GPtr<u8>, r: u32, gr: u32, b: u32, a: u32) -> GPtr<u8> = thiscall 0x7170C0 => unported;
-    /// `CSprite2d::DrawRect(const CRect&, const CRGBA&)` (0x727B60)
-    pub fn sprite_draw_rect(r: GPtr<u8>, c: GPtr<u8>) = cdecl 0x727B60 => unported;
-    /// `CEntity::GetColModel()` (0x535300)
-    pub fn get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => unported;
     /// `CCamera::ConeCastCollisionResolve(const CVector&, const CVector&, CVector&, float, float, float&)`
     /// (0x51A5D0, AL); radius and angle are pushed as immediates
     pub fn cone_cast_collision_resolve(this: GPtr<u8>, src: GPtr<u8>, tgt: GPtr<u8>, out: GPtr<u8>, radius: u32, angle: u32, dist: GPtr<f32>) -> u8 = thiscall 0x51A5D0 => unported;
@@ -668,6 +650,20 @@ pub fn draw_borders_for_wide_screen(this: GPtr<u8>) {
     sprite_draw_rect(qp, c);
 }
 
+pub use crate::bindings::get_look_behind_for_ped as pad_look_behind_for_ped;
+pub use sa_core::bindings::entity_register_reference as register_reference;
+pub use sa_pop::bindings::clear_cross_hair_immediately;
+pub use sa_pop::bindings::get_look_behind_for_car as pad_look_behind_for_car;
+pub use sa_pop::bindings::pad_get_look_left as pad_look_left;
+pub use sa_pop::bindings::pad_get_look_right as pad_look_right;
+pub use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
+pub use sa_stream::bindings::simple_transform_update_matrix;
+pub use sa_world::bindings::cam_follow_car_sa;
+pub use sa_world::bindings::cam_follow_ped_sa;
+pub use sa_world::bindings::get_task_climb;
+pub use sa_world::bindings::get_vehicle_appearance;
+pub use sa_world::bindings::intel_get_task_fighting as get_task_fighting;
+pub use sa_world::bindings::vector_add as vec_add;
 orig! {
     /// `CCam` mode processors taking `(const CVector& target, float orientation, float speedVar,
     /// float speedVarWanted)` (the floats pushed as dwords)
@@ -681,9 +677,6 @@ orig! {
     pub fn cam_fly_by(c: GPtr<u8>, t: GPtr<u8>, o: u32, sv: u32, svw: u32) = thiscall 0x5B25F0 => unported;
     pub fn cam_editor(c: GPtr<u8>, t: GPtr<u8>, o: u32, sv: u32, svw: u32) = thiscall 0x50F3F0 => unported;
     pub fn cam_1rst_person_ped_on_pc(c: GPtr<u8>, t: GPtr<u8>, o: u32, sv: u32, svw: u32) = thiscall 0x50EB70 => unported;
-    /// ... and the ones with a trailing bool
-    pub fn cam_follow_car_sa(c: GPtr<u8>, t: GPtr<u8>, o: u32, sv: u32, svw: u32, b: u32) = thiscall 0x5245B0 => unported;
-    pub fn cam_follow_ped_sa(c: GPtr<u8>, t: GPtr<u8>, o: u32, sv: u32, svw: u32, b: u32) = thiscall 0x522D40 => unported;
     pub fn cam_rocket(c: GPtr<u8>, t: GPtr<u8>, o: u32, sv: u32, svw: u32, b: u32) = thiscall 0x511B50 => unported;
     /// `CCam` mode processors without arguments
     pub fn cam_peds_dead_baby(c: GPtr<u8>) = thiscall 0x519250 => unported;
@@ -701,24 +694,8 @@ orig! {
     pub fn cam_dw_plane_cam1(c: GPtr<u8>, b: u32) = thiscall 0x51C760 => unported;
     pub fn cam_dw_plane_cam2(c: GPtr<u8>, b: u32) = thiscall 0x51CC30 => unported;
     pub fn cam_dw_plane_cam3(c: GPtr<u8>, b: u32) = thiscall 0x51D100 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    pub fn register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
-    /// `CWeaponEffects::ClearCrossHairImmediately(int32)` (0x742CA0)
-    pub fn clear_cross_hair_immediately(n: i32) = cdecl 0x742CA0 => unported;
-    /// `CPlaceable::AllocateMatrix()` (0x54F560)
-    pub fn allocate_matrix(e: GPtr<u8>) = thiscall 0x54F560 => unported;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*)` (0x54F1B0, on the placement)
-    pub fn simple_transform_update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => unported;
     /// `CGeneral::GetATanOfXY(float, float)` (0x53CC70, ST0); dwords
     pub fn get_atan_of_xy_bits(xb: u32, yb: u32) -> f64 = cdecl 0x53CC70 => unported;
-    /// `CPad::GetLookBehindForCar()` / `GetLookLeft()` / `GetLookRight()` / `GetLookBehindForPed()` (AL)
-    pub fn pad_look_behind_for_car(p: GPtr<u8>) -> u8 = thiscall 0x53FE70 => unported;
-    pub fn pad_look_left(p: GPtr<u8>) -> u8 = thiscall 0x53FDD0 => unported;
-    pub fn pad_look_right(p: GPtr<u8>) -> u8 = thiscall 0x53FE10 => unported;
-    pub fn pad_look_behind_for_ped(p: GPtr<u8>) -> u8 = thiscall 0x53FEC0 => unported;
-    /// `CPedIntelligence::GetTaskClimb()` (0x601180) / `GetTaskFighting()` (0x600F30)
-    pub fn get_task_climb(i: GPtr<u8>) -> GPtr<u8> = thiscall 0x601180 => unported;
-    pub fn get_task_fighting(i: GPtr<u8>) -> GPtr<u8> = thiscall 0x600F30 => unported;
     /// `CTaskSimpleClimb::GetCameraTargetPos(CPed*, CVector&)` (0x67A390)
     pub fn climb_get_camera_target_pos(t: GPtr<u8>, ped: GPtr<u8>, out: GPtr<u8>) = thiscall 0x67A390 => unported;
     /// `CCam::Using3rdPersonMouseCam()` (0x50A850, AL)
@@ -727,12 +704,9 @@ orig! {
     /// `out = v * (1 / s)` (0x4119D0); each returns `out`
     pub fn vec_s_mul(out: GPtr<u8>, s: u32, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE90 => unported;
     pub fn vec_mul_s(out: GPtr<u8>, v: GPtr<u8>, s: u32) -> GPtr<u8> = cdecl 0x40FEC0 => unported;
-    pub fn vec_add(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE30 => unported;
     pub fn vec_div_s(out: GPtr<u8>, v: GPtr<u8>, s: u32) -> GPtr<u8> = cdecl 0x4119D0 => unported;
     /// `a > b ? a : b` (0x420800, cdecl floats, ST0); dwords
     pub fn max_f(a: u32, b: u32) -> f64 = cdecl 0x420800 => unported;
-    /// `CVehicle::GetVehicleAppearance()` (0x6D1080)
-    pub fn get_vehicle_appearance(veh: GPtr<u8>) -> i32 = thiscall 0x6D1080 => unported;
     /// `CCam::KeepTrackOfTheSpeed(...)` (0x509DF0)
     pub fn keep_track_of_the_speed(c: GPtr<u8>, s: GPtr<u8>, t: GPtr<u8>, u: GPtr<u8>, a: GPtr<f32>, b: GPtr<f32>, f: GPtr<f32>) = thiscall 0x509DF0 => crate::cam::keep_track_of_the_speed;
     /// `CCam::LookBehind()` (0x520690) / `CCam::LookRight(bool)` (0x520E40)
@@ -1264,14 +1238,9 @@ fn process_player_target(this: GPtr<u8>, tgt: &mut [u32; 3]) -> u32 {
     nz
 }
 
-orig! {
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
-    pub fn clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CIdleCam::GetLookAtPositionOnTarget(CEntity*, CVector*)` (0x50EAE0)
-    pub fn idle_get_look_at_position_on_target(this: GPtr<u8>, e: GPtr<u8>, out: GPtr<u8>) = thiscall 0x50EAE0 => crate::idlecam::get_look_at_position_on_target;
-    /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, bool x7)` (0x56A490, AL)
-    pub fn get_is_line_of_sight_clear(a: GPtr<u8>, b: GPtr<u8>, bb: u32, v: u32, p: u32, o: u32, d: u32, s: u32, c: u32) -> u8 = cdecl 0x56A490 => unported;
-}
+pub use crate::bindings::get_look_at_position_on_target as idle_get_look_at_position_on_target;
+pub use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+pub use sa_world::bindings::world_get_is_line_of_sight_clear as get_is_line_of_sight_clear;
 
 /// `CIdleCam::SetTarget(CEntity*)` (0x50A280, `ret 4`). The entry `jmp 0x403961` is a protection
 /// fragment that loads `eax = [rol([0x156077C], [0x5E4224] & 31)]` = `[0xB7CB84]`

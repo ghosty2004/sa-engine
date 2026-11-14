@@ -12,20 +12,12 @@ use crate::common::{ftol32, g, jne_mask, jp5, rand_at, rd, wr, x, xi};
 /// Globals owned by this module: none.
 pub const GLOBALS: &[GlobalDesc] = &[];
 
-orig! {
-    /// `CWorld::FindPlayerWanted(int32)` (0x56E230)
-    fn find_player_wanted(id: i32) -> GPtr<u8> = cdecl 0x56E230 => unported;
-    /// `CWorld::FindPlayerVehicle(int32, bool)` (0x56E0D0)
-    fn find_player_vehicle(id: i32, b: u32) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
-    /// `CGeneral::GetRandomNumberInRange<float>(float, float)` (0x41BD90; its own rand, ST0)
-    fn random_float_in_range(min: f32, max: f32) -> f64 = cdecl 0x41BD90 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70, `ret 4`)
-    fn entity_register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
-    /// `CCarCtrl::JoinCarWithRoadSystem(CVehicle*)` (0x42F5A0)
-    fn join_car_with_road_system(v: GPtr<u8>) = cdecl 0x42F5A0 => unported;
-    /// `CLoadedCarGroup::PickLeastUsedModel(int32)` (0x611E90, `ret 4`)
-    fn loaded_car_group_pick_least_used_model(this: GPtr<u8>, n: i32) -> i32 = thiscall 0x611E90 => unported;
-}
+use sa_core::bindings::entity_register_reference;
+use sa_core::bindings::find_player_vehicle;
+use sa_core::bindings::random_float_in_range;
+use sa_stream::bindings::car_group_pick_least_used_model as loaded_car_group_pick_least_used_model;
+use sa_stream::bindings::find_player_wanted;
+use sa_world::bindings::join_car_with_road_system;
 
 /// `ThePaths.m_pPathNodes[area]` (0x96F854) is loaded.
 fn area_loaded(area: u32) -> bool {
@@ -242,27 +234,25 @@ pub fn auto_pilot_speed_step(this: GPtr<u8>) {
     wr::<u8>(this, 0x50, if v >= 120 { 120 } else { v as u8 });
 }
 
+use sa_core::bindings::general_random_int_in_range as random_int_in_range;
+use sa_stream::bindings::are_army_required;
+use sa_stream::bindings::are_fbi_required;
+use sa_stream::bindings::are_swat_required;
+use sa_stream::bindings::get_default_cop_car_model;
+use sa_stream::bindings::has_collision_loaded;
+use sa_world::bindings::automobile_place_on_road_properly;
+use sa_world::bindings::bike_place_on_road_properly;
+use sa_world::bindings::car_ctrl_possibly_remove_vehicle as possibly_remove_vehicle;
+use sa_world::bindings::find_player_centre_of_world;
+use sa_world::bindings::is_law_enforcement_vehicle;
+use sa_world::bindings::la_riots_active_here;
 orig! {
-    /// `CColStore::HasCollisionLoaded(const CVector&, int32 area)` (0x410CE0)
-    fn has_collision_loaded(pos: GPtr<f32>, area: i32) -> u8 = cdecl 0x410CE0 => unported;
     /// `CDamageManager::SetWheelStatus(int32, eCarWheelStatus)` (0x6C21A0, `ret 8`)
     fn damage_set_wheel_status(this: GPtr<u8>, wheel: i32, status: i32) = thiscall 0x6C21A0 => unported;
-    /// `CAutomobile::PlaceOnRoadProperly()` (0x6AF420)
-    fn automobile_place_on_road_properly(this: GPtr<u8>) = thiscall 0x6AF420 => unported;
-    /// `CBike::PlaceOnRoadProperly()` (0x6BEEB0)
-    fn bike_place_on_road_properly(this: GPtr<u8>) = thiscall 0x6BEEB0 => unported;
-    /// `CWorld::FindPlayerCentreOfWorld(int32)` (0x56E250)
-    fn find_player_centre_of_world(id: i32) -> GPtr<f32> = cdecl 0x56E250 => unported;
-    /// `CCarCtrl::PossiblyRemoveVehicle(CVehicle*)` (0x424F80)
-    fn possibly_remove_vehicle(v: GPtr<u8>) = cdecl 0x424F80 => unported;
-    /// `CVehicle::IsLawEnforcementVehicle()` (0x6D2370)
-    fn is_law_enforcement_vehicle(v: GPtr<u8>) -> u8 = thiscall 0x6D2370 => unported;
     /// `CRoadBlocks::GenerateRoadBlockPedsForCar(CVehicle*, int32, ePedType)` (0x461170)
     fn generate_road_block_peds_for_car(v: GPtr<u8>, n: i32, pt: i32) = cdecl 0x461170 => unported;
     /// `CGangWars::DontCreateCivilians()` (0x4439C0)
     fn dont_create_civilians() -> u8 = cdecl 0x4439C0 => unported;
-    /// `CGameLogic::LaRiotsActiveHere()` (0x441C10)
-    fn la_riots_active_here() -> u8 = cdecl 0x441C10 => unported;
     /// `CCarCtrl::GenerateOneRandomCar()` (0x430050)
     fn generate_one_random_car() = cdecl 0x430050 => unported;
     /// `CTrain::DoTrainGenerationAndRemoval()` (0x6F7900)
@@ -271,16 +261,6 @@ orig! {
     fn do_plane_generation_and_removal() = cdecl 0x6CD2F0 => unported;
     /// `CCarCtrl::GenerateEmergencyServicesCar()` (0x42F9C0)
     fn generate_emergency_services_car_o() = cdecl 0x42F9C0 => unported;
-    /// `CWanted::AreSwatRequired()` (0x561F40)
-    fn are_swat_required(w: GPtr<u8>) -> u8 = thiscall 0x561F40 => unported;
-    /// `CWanted::AreFbiRequired()` (0x561F60)
-    fn are_fbi_required(w: GPtr<u8>) -> u8 = thiscall 0x561F60 => unported;
-    /// `CWanted::AreArmyRequired()` (0x561F80)
-    fn are_army_required(w: GPtr<u8>) -> u8 = thiscall 0x561F80 => unported;
-    /// `CGeneral::GetRandomNumberInRange(int32, int32)` (0x407180; its own rand)
-    fn random_int_in_range(min: i32, max: i32) -> i32 = cdecl 0x407180 => unported;
-    /// `CStreaming::GetDefaultCopCarModel(int32)` (0x407C50)
-    fn get_default_cop_car_model(ignore_lvpd: u32) -> i32 = cdecl 0x407C50 => unported;
 }
 
 use sa_world::world::common::entity_pos_f as entity_pos;
@@ -481,23 +461,16 @@ pub fn choose_police_car_model(ignore_lvpd: u32) -> i32 {
     get_default_cop_car_model(ignore_lvpd)
 }
 
+use crate::bindings::set_up_driver as vehicle_set_up_driver;
+use crate::bindings::setup_passenger as vehicle_setup_passenger;
+use sa_core::bindings::world_remove;
+use sa_world::bindings::is_this_car_being_targetted_by_any_crane;
+use sa_world::bindings::ped_give_object_to_hold;
+use sa_world::bindings::ped_update_stat_entering_vehicle;
+use sa_world::bindings::vehicle_can_be_deleted;
 orig! {
-    /// `CVehicle::CanBeDeleted()` (0x6D1180)
-    fn vehicle_can_be_deleted(v: GPtr<u8>) -> u8 = thiscall 0x6D1180 => unported;
-    /// `CCranes::IsThisCarBeingTargettedByAnyCrane(CVehicle*)` (0x6F4000)
-    fn is_this_car_being_targetted_by_any_crane(v: GPtr<u8>) -> u8 = cdecl 0x6F4000 => unported;
-    /// `CWorld::Remove(CEntity*)` (0x563280)
-    fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
     /// vtable slot 0 (scalar deleting destructor, `ret 4`)
     fn delete_entity(e: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
-    /// `CVehicle::SetUpDriver(int32, bool, bool)` (0x6D1A50, `ret 0xC`)
-    fn vehicle_set_up_driver(v: GPtr<u8>, pt: i32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x6D1A50 => unported;
-    /// `CVehicle::SetupPassenger(int32, int32, bool, bool)` (0x6D1AA0, `ret 0x10`)
-    fn vehicle_setup_passenger(v: GPtr<u8>, i: i32, pt: i32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x6D1AA0 => unported;
-    /// `CPed::GiveObjectToPedToHold(int32, uint8)` (0x5E4390, `ret 8`)
-    fn ped_give_object_to_hold(p: GPtr<u8>, mi: i32, b: u32) = thiscall 0x5E4390 => unported;
-    /// `CPed::UpdateStatEnteringVehicle()` (0x5E01A0)
-    fn ped_update_stat_entering_vehicle(p: GPtr<u8>) = thiscall 0x5E01A0 => unported;
     /// `CModelInfo::IsCarModel(int32)` (0x4C5AA0)
     fn is_car_model(mi: i32) -> u8 = cdecl 0x4C5AA0 => unported;
     /// `CAnimManager::GetAnimationBlockIndex(const char*)` (0x4D3990)
@@ -635,6 +608,10 @@ pub fn set_up_driver_and_passengers_for_vehicle(veh: GPtr<u8>, pt: i32, min: i32
     }
 }
 
+use crate::bindings::auto_pilot_modify_speed;
+use sa_core::bindings::find_player_ped;
+use sa_world::bindings::accident_manager_get_instance;
+use sa_world::bindings::gang_war_fighting_going_on;
 orig! {
     /// `CTrafficLights::ShouldCarStopForLight(CVehicle*, bool)` (0x49D610)
     fn should_car_stop_for_light(v: GPtr<u8>, b: u32) -> u8 = cdecl 0x49D610 => unported;
@@ -644,16 +621,8 @@ orig! {
     fn car_has_reason_to_stop(v: GPtr<u8>) = cdecl 0x41C050 => unported;
     /// `CCarCtrl::FindMaximumSpeedForThisCarInTraffic(CVehicle*)` (0x434400, ST0)
     fn find_maximum_speed_for_this_car_in_traffic(v: GPtr<u8>) -> f64 = cdecl 0x434400 => unported;
-    /// `CAutoPilot::ModifySpeed(float)` (0x41B980, `ret 4`)
-    fn auto_pilot_modify_speed(ap: GPtr<u8>, s: f32) = thiscall 0x41B980 => unported;
-    /// `CGangWars::GangWarFightingGoingOn()` (0x443AC0)
-    fn gang_war_fighting_going_on() -> u8 = cdecl 0x443AC0 => unported;
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
     /// `CWorld::FindPlayerCoors(CVector* out, int32)` (0x56E010)
     fn find_player_coors(out: GPtr<f32>, id: i32) -> GPtr<f32> = cdecl 0x56E010 => unported;
-    /// `CAccidentManager::GetInstance()` (0x56CF20)
-    fn accident_manager_get_instance() -> GPtr<u8> = cdecl 0x56CF20 => unported;
     /// `CAccidentManager::GetNumberOfFreeAccidents()` (0x56CEE0)
     fn accident_get_number_of_free_accidents(m: GPtr<u8>) -> i32 = thiscall 0x56CEE0 => unported;
     /// `CAccidentManager::GetNearestFreeAccident(CVector&, bool)` (0x56D050, `ret 8`)

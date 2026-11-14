@@ -14,27 +14,18 @@ use sa_world::world::common::entity_pos;
 /// `CModelInfo::ms_modelInfoPtrs`
 const MODEL_INFO_PTRS: usize = 0xA9B0C8;
 
+use crate::bindings::bbox_corners_uncached as compute_entity_bounding_box_corners_uncached;
+use crate::bindings::bbox_planes_uncached as compute_entity_bounding_box_planes_uncached;
+use sa_core::bindings::tm_get_active_task;
+use sa_core::bindings::tm_get_simplest_active_task;
+use sa_world::bindings::get_task_jet_pack as intel_get_task_jet_pack;
+use sa_world::bindings::get_task_swim as intel_get_task_swim;
+use sa_world::bindings::vector_ctor_iterator;
+use sa_world::bindings::world_process_vertical_line;
+use sa_world::bindings::world_test_sphere_against_world;
 orig! {
-    /// `CTaskManager::GetActiveTask()` (0x681720)
-    fn tm_get_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x681720 => unported;
-    /// `CTaskManager::GetSimplestActiveTask()` (0x6819D0)
-    fn tm_get_simplest_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x6819D0 => unported;
-    /// `CPedIntelligence::GetTaskSwim()` (0x601070)
-    fn intel_get_task_swim(i: GPtr<u8>) -> GPtr<u8> = thiscall 0x601070 => unported;
-    /// `CPedIntelligence::GetTaskJetPack()` (0x601110)
-    fn intel_get_task_jet_pack(i: GPtr<u8>) -> GPtr<u8> = thiscall 0x601110 => unported;
     /// `CTask::GetTaskType()` (vtable slot 0x10)
     fn task_get_type(t: GPtr<u8>) -> u32 = thiscall vslot 0x10 => unported;
-    /// `CWorld::ProcessVerticalLine(const CVector&, float z, CColPoint&, CEntity*&, bool x6, CStoredCollPoly*)` (0x5674E0)
-    fn world_process_vertical_line(pos: GPtr<u8>, z: u32, cp: GPtr<u8>, ent: GPtr<u8>, b: u32, v: u32, p: u32, o: u32, d: u32, s: u32, l: u32) -> u8 = cdecl 0x5674E0 => unported;
-    /// `CWorld::TestSphereAgainstWorld(CVector, float, CEntity* ignore, bool x6)` (0x569E20)
-    /// `CPedGeometryAnalyser::ComputeEntityBoundingBoxCornersUncached(float z, CEntity&, CVector* corners)` (0x5F1FA0)
-    fn compute_entity_bounding_box_corners_uncached(z: u32, e: GPtr<u8>, corners: GPtr<u8>) = cdecl 0x5F1FA0 => unported;
-    /// `CPedGeometryAnalyser::ComputeEntityBoundingBoxPlanesUncached(float z, const CVector* corners, CVector* normals, float* ds)` (0x5F1670)
-    fn compute_entity_bounding_box_planes_uncached(z: u32, corners: GPtr<u8>, normals: GPtr<u8>, ds: GPtr<u8>) = cdecl 0x5F1670 => unported;
-    /// `eh vector constructor iterator(void*, size, count, ctor)` (0x403D60, stdcall)
-    fn vector_ctor_iterator(p: GPtr<u8>, size: u32, count: i32, ctor: u32) = stdcall 0x403D60 => unported;
-    fn world_test_sphere_against_world(cx: u32, cy: u32, cz: u32, r: u32, ignore: GPtr<u8>, b: u32, v: u32, p: u32, o: u32, d: u32, c: u32) -> GPtr<u8> = cdecl 0x569E20 => unported;
 }
 
 /// `CPedGeometryAnalyser::IsInAir(const CPed&)` (0x5F1CB0, cdecl). Not in air (AL = 0, EAX's upper
@@ -166,24 +157,14 @@ const K_CLEAR_RADIUS: usize = 0x86C6A4;
 /// `CWorld::ms_iProcessLineNumCrossings` (0xB7CD60)
 const PROCESS_LINE_NUM_CROSSINGS: usize = 0xB7CD60;
 
-orig! {
-    /// CRT `floor(double)` (0x8219F0)
-    fn crt_floor(v: f64) -> f64 = cdecl 0x8219F0 => unported;
-    /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, bool x7)` (0x56A490)
-    fn world_get_is_line_of_sight_clear(a: GPtr<u8>, b: GPtr<u8>, bld: u32, veh: u32, ped: u32, obj: u32, dum: u32, see: u32, cam: u32) -> u8 = cdecl 0x56A490 => unported;
-    /// `CWorld::ProcessLineOfSight(const CVector&, const CVector&, CColPoint&, CEntity*&, bool x8)` (0x56BA00)
-    fn world_process_line_of_sight(a: GPtr<u8>, b: GPtr<u8>, cp: GPtr<u8>, ent: GPtr<u8>, bld: u32, veh: u32, ped: u32, obj: u32, dum: u32, see: u32, cam: u32, shoot: u32) -> u8 = cdecl 0x56BA00 => unported;
-    /// `CWaterLevel::GetWaterLevel(float x, float y, float z, float* level, bool waves, CVector* normal)` (0x6EB690)
-    fn water_get_water_level(px: u32, py: u32, pz: u32, level: GPtr<u8>, waves: u32, normal: u32) -> u8 = cdecl 0x6EB690 => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
-    /// `CVector::NormaliseAndMag()` (0x59C970, ST0)
-    fn vector_normalise_and_mag(v: GPtr<u8>) -> f64 = thiscall 0x59C970 => unported;
-    /// `CPedGeometryAnalyser::ComputeEntityBoundingSphere(const CPed&, CEntity&, CColSphere&)` (0x5F3C20)
-    fn compute_entity_bounding_sphere(ped: GPtr<u8>, e: GPtr<u8>, s: GPtr<u8>) = cdecl 0x5F3C20 => unported;
-    /// `CColSphere::IntersectRay(const CVector& start, const CVector& dir, CVector& p1, CVector& p2)` (0x40FF20, `ret 0x10`)
-    fn col_sphere_intersect_ray(s: GPtr<u8>, start: GPtr<u8>, dir: GPtr<u8>, p1: GPtr<u8>, p2: GPtr<u8>) -> u8 = thiscall 0x40FF20 => unported;
-}
+use crate::bindings::bounding_sphere as compute_entity_bounding_sphere;
+use sa_core::bindings::sphere_intersect_ray as col_sphere_intersect_ray;
+use sa_core::bindings::vector_normalise;
+use sa_core::bindings::vector_normalise_and_mag;
+use sa_world::bindings::crt_floor;
+use sa_world::bindings::get_water_level as water_get_water_level;
+use sa_world::bindings::process_line_of_sight as world_process_line_of_sight;
+use sa_world::bindings::world_get_is_line_of_sight_clear;
 
 use sa_core::field::ptr_of as fp;
 

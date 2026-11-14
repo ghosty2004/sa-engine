@@ -12,11 +12,10 @@ use crate::world::common::{ftol32, x};
 
 use sa_math::fpu::st0;
 
+use crate::bindings::get_task_swim;
+use sa_core::bindings::matrix_mul_vec;
+use sa_core::bindings::vector_normalise as normalise;
 orig! {
-    /// `CMatrix * CVector` (0x59C890, `out = m * v`)
-    fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
-    /// `CVector::Normalise()` (0x59C910, thiscall)
-    fn normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
     /// `FxPrtMult_c::FxPrtMult_c(r, g, b, a, size, spin, life)` (0x4AB290)
     #[allow(clippy::too_many_arguments)]
     fn fx_prt_mult_ctor(p: GPtr<u8>, r: f32, g: f32, b: f32, a: f32, size: f32, spin: f32, life: f32) -> GPtr<u8> = thiscall 0x4AB290 => unported;
@@ -27,8 +26,6 @@ orig! {
     fn get_angle_between_points(x1: f32, y1: f32, x2: f32, y2: f32) -> f64 = cdecl 0x53CEA0 => unported;
     /// `CGeneral::LimitAngle(float)` (0x53CB00, ST0)
     fn limit_angle(a: f32) -> f64 = cdecl 0x53CB00 => unported;
-    /// `CPedIntelligence::GetTaskSwim()` (0x601070, thiscall)
-    fn get_task_swim(intel: GPtr<u8>) -> GPtr<u8> = thiscall 0x601070 => unported;
     /// `CAEPedAudioEntity::AddAudioEvent(int32, float, float, CPhysical*, uint8, int32, uint32)` (0x4E2BB0)
     #[allow(clippy::too_many_arguments)]
     fn ped_audio_add_event(ae: GPtr<u8>, ev: i32, vol: f32, speed: f32, e: GPtr<u8>, a: u32, b: i32, c: u32) = thiscall 0x4E2BB0 => unported;

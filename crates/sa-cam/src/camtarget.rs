@@ -26,15 +26,12 @@ const PED_INTELLIGENCE: isize = 0x47C;
 /// `CCam::m_pCamTargetEntity` (+0x21C).
 const CAM_TARGET: isize = 0x21C;
 
+pub use sa_core::bindings::tm_get_simplest_active_task as get_simplest_active_task;
+pub use sa_world::bindings::can_ped_open_locks;
+pub use sa_world::bindings::is_coop_game_going_on;
 orig! {
-    /// `CGameLogic::IsCoopGameGoingOn()` (0x441390, `.HOODLUM` stub; AL)
-    pub fn is_coop_game_going_on() -> u8 = cdecl 0x441390 => unported;
-    /// `CTaskManager::GetSimplestActiveTask()` (0x6819D0)
-    pub fn get_simplest_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x6819D0 => unported;
     /// `CTask::GetTaskType()` (vtable +0x10)
     pub fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CVehicle::CanPedOpenLocks(const CPed*)` (0x6D1E20; AL)
-    pub fn can_ped_open_locks(veh: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x6D1E20 => unported;
 }
 
 /// `CWorld::Players[CWorld::PlayerInFocus].m_pPed` (both re-read at every use, as the original).

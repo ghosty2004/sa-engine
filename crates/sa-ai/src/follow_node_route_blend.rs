@@ -3,16 +3,12 @@
 //! keeps them in registers.
 
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
-orig! {
-    /// `CTaskComplexFollowNodeRoute::GetLastWaypoint(CPed*)` (0x6698E0, hidden result first)
-    fn fnr_get_last_waypoint(t: GPtr<u8>, out: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x6698E0 => unported;
-    /// `CTaskSimpleGoToPointFine::BaseRatio(eMoveState)` (0x65EF30, ST0)
-    fn go_to_point_fine_base_ratio(ms: u32) -> f64 = cdecl 0x65EF30 => unported;
-}
+use crate::bindings::fnr_get_last_waypoint;
+use crate::bindings::go_to_point_fine_base_ratio;
 
 use sa_core::field::gf as c;
 

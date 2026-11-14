@@ -11,6 +11,7 @@ use sa_math::x87::X87;
 
 use super::common::{ftol32, g, rd, x, xi};
 
+use crate::bindings::crt_ceil;
 orig! {
     /// `CStats::IncrementStat(uint16, float)` (0x55C180)
     fn stats_increment_stat(stat: u32, v: u32) = cdecl 0x55C180 => unported;
@@ -18,8 +19,6 @@ orig! {
     fn display_script_stat_update_message(state: u32, stat: u32, v: u32) = cdecl 0x55B980 => unported;
     /// `CStats::UpdateFatAndMuscleStats(uint32)` (0x55C470)
     fn update_fat_and_muscle_stats(v: i32) = cdecl 0x55C470 => unported;
-    /// CRT `ceil(double)` (0x823820), ST0
-    fn crt_ceil(v: f64) -> f64 = cdecl 0x823820 => unported;
 }
 
 /// `fild` of an unsigned dword (`+ 2^32` when the sign bit is set, 0x858C54).

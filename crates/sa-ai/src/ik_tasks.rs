@@ -59,17 +59,14 @@ pub fn ik_look_at_create_ik_chain(this: GPtr<u8>, ped: GPtr<u8>) -> u32 {
     (c.addr() as u32 & 0xFFFF_FF00) | 1
 }
 
+use crate::bindings::ik_chain_update_target;
+use crate::bindings::ik_manager_remove_ik_chain;
+use sa_core::bindings::ik_chain_task_blend_out;
 orig! {
     /// `CTask::CreateIKChain(CPed*)`-style virtual of `CTaskSimpleIKChain` (vtable +0x24, `ret 4`)
     fn v_ik_create_chain(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall vslot 0x24 => unported;
     /// `IKChain_c::SetBlend(float)` (0x617C10, `ret 4`)
     fn ik_chain_set_blend(c: GPtr<u8>, b: u32) = thiscall 0x617C10 => unported;
-    /// `IKChain_c::UpdateTarget(bool)` (0x617E50, `ret 4`)
-    fn ik_chain_update_target(c: GPtr<u8>, b: u32) = thiscall 0x617E50 => unported;
-    /// `IKChainManager_c::RemoveIKChain(IKChain_c*)` (0x618170, `ret 4`)
-    fn ik_manager_remove_ik_chain(m: GPtr<u8>, c: GPtr<u8>) = thiscall 0x618170 => unported;
-    /// `CTaskSimpleIKChain::BlendOut(int32 time)` (0x633C40, `ret 4`)
-    fn ik_chain_task_blend_out(t: GPtr<u8>, time: i32) = thiscall 0x633C40 => unported;
 }
 
 /// `CTimer::ms_fTimeStep` (0xB7CB5C)

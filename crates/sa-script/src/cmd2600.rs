@@ -59,15 +59,19 @@ const RAIL_RESISTANCE_BASE: usize = 0x8D34B0;
 const MOUSE_X: usize = 0xB73424;
 const MOUSE_Y: usize = 0xB73428;
 
+use crate::bindings::conversations_done_setting_up_conversation;
+use crate::bindings::player_ped_force_group_to_never_follow;
+use crate::bindings::vehicle_get_ref;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::get_pad as pad_get_pad;
+use sa_core::bindings::task_new;
+use sa_core::bindings::text_get;
+use sa_world::bindings::apply_cheat;
+use sa_world::bindings::get_task_climb as intel_get_task_climb;
+use sa_world::bindings::get_task_swim as intel_get_task_swim;
+use sa_world::bindings::hud_help_message_displayed;
+use sa_world::bindings::ped_groups_get_peds_group as get_peds_group;
 orig! {
-    /// `CPedIntelligence::GetTaskSwim()` (0x601070)
-    fn intel_get_task_swim(i: GPtr<u8>) -> GPtr<u8> = thiscall 0x601070 => unported;
-    /// `CPedIntelligence::GetTaskClimb()` (0x601180)
-    fn intel_get_task_climb(i: GPtr<u8>) -> GPtr<u8> = thiscall 0x601180 => unported;
-    /// `CText::Get(const char* key)` (0x6A0050)
-    fn text_get(t: GPtr<u8>, key: GPtr<u8>) -> GPtr<u8> = thiscall 0x6A0050 => unported;
-    /// `CHud::HelpMessageDisplayed()` (0x588B50), AL
-    fn hud_help_message_displayed() -> u8 = cdecl 0x588B50 => unported;
     /// `CMessages::StringCopy(char16* dst, const char16* src, uint16 size)` (0x69DB70)
     fn messages_string_copy(dst: GPtr<u8>, src: GPtr<u8>, size: u32) = cdecl 0x69DB70 => unported;
     /// `CMessages::InsertPlayerControlKeysInString(char16*)` (0x69E160)
@@ -76,8 +80,6 @@ orig! {
     fn messages_get_string_length(s: GPtr<u8>) -> u32 = cdecl 0x69DB50 => unported;
     /// `CMessages::StringCompare(const char16*, const char16*, uint16)` (0x69DBD0), AL
     fn messages_string_compare(a: GPtr<u8>, b: GPtr<u8>, len: u32) -> u8 = cdecl 0x69DBD0 => unported;
-    /// `CTask::operator new(uint32)` (0x61A5A0)
-    fn task_new(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => unported;
     /// `CTaskComplexFollowNodeRoute::CTaskComplexFollowNodeRoute(int32 moveState, const CVector& target, float radius,
     /// float slowDownDist, float heightChange, bool keepNodesHeadingAway, int32 time, bool useBlending)` (0x66EA30,
     /// `ret 0x20`)
@@ -87,12 +89,6 @@ orig! {
     fn give_ped_scripted_task(s: Scr, ped: i32, task: GPtr<u8>, command: u32) = thiscall 0x465C20 => crate::script_tasks::give_ped_scripted_task;
     /// `CVehicle::Fix()` (vtable +0xC8)
     fn v_vehicle_fix(v: GPtr<u8>) = thiscall vslot 0xC8 => unported;
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CPlayerPed::ForceGroupToNeverFollow(bool)` (0x60C800, `ret 4`)
-    fn player_ped_force_group_to_never_follow(p: GPtr<u8>, b: u32) = thiscall 0x60C800 => unported;
-    /// `CPool<CVehicle>::GetRef(CVehicle*)` (0x424160), ECX = the vehicle pool
-    fn vehicle_get_ref(pool: GPtr<u8>, v: GPtr<u8>) -> i32 = thiscall 0x424160 => unported;
     /// `CGameLogic::SetUpSkip(CVector coors, float angle, bool afterMission, CEntity* vehicle, bool finishedByScript)`
     /// (0x4423C0, the vector by value)
     fn game_logic_set_up_skip(x: u32, y: u32, z: u32, angle: u32, after_mission: u32, veh: GPtr<u8>, by_script: u32) = cdecl 0x4423C0 => unported;
@@ -101,14 +97,8 @@ orig! {
     /// `CConversations::SetUpConversationNode(const char* name, int32 yes, int32 no, int32 speech, int32 yesSpeech,
     /// int32 noSpeech)` (0x43A870)
     fn conversations_set_up_conversation_node(name: GPtr<u8>, a: i32, b: i32, c: i32, d: i32, e: i32) = cdecl 0x43A870 => unported;
-    /// `CConversations::DoneSettingUpConversation(bool suppressSubtitles)` (0x43ADB0)
-    fn conversations_done_setting_up_conversation(b: u32) = cdecl 0x43ADB0 => unported;
-    /// `CCheat::ApplyCheat(eCheats)` (0x438370)
-    fn apply_cheat(id: u32) = cdecl 0x438370 => unported;
     /// `CRunningScript::IsPedDead(CPed*)` (0x464D70), AL
     fn is_ped_dead(s: Scr, p: GPtr<u8>) -> u8 = thiscall 0x464D70 => unported;
-    /// `CPedGroups::GetPedsGroup(const CPed*)` (0x5F7E80)
-    fn get_peds_group(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x5F7E80 => unported;
     /// `C3dMarkers::User3dMarkerSet(float x, float y, float z, int32 colour)` (0x720FD0)
     fn user_3d_marker_set(x: u32, y: u32, z: u32, colour: u32) -> i32 = cdecl 0x720FD0 => unported;
     /// `C3dMarkers::User3dMarkerDelete(int32)` (0x721090)
@@ -117,8 +107,6 @@ orig! {
     fn get_rid_of_player_prostitute() = cdecl 0x661D30 => unported;
     /// `CScriptsForBrains::SwitchAllObjectBrainsWithThisID(int8 id, bool)` (0x46A900, `ret 8`)
     fn switch_all_object_brains_with_this_id(b: GPtr<u8>, id: u32, on: u32) = thiscall 0x46A900 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    fn pad_get_pad(id: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
 }
 
 use sa_core::field::pa as gp;

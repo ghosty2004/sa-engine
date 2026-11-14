@@ -21,19 +21,14 @@ sa_core::globals! {
     pub static CROSS_HAIRS @ 0xC8A838: [u8; NUM_CROSS_HAIRS * CROSS_HAIR_SIZE] = [0; NUM_CROSS_HAIRS * CROSS_HAIR_SIZE];
 }
 
+pub use sa_core::bindings::pop_current_txd as txd_pop_current;
+pub use sa_core::bindings::push_current_txd as txd_push_current;
+pub use sa_core::bindings::set_current_txd as txd_set_current;
+pub use sa_stream::bindings::rw_texture_destroy;
+pub use sa_stream::bindings::rw_texture_read;
 orig! {
-    /// `CTxdStore::PushCurrentTxd()` (0x7316A0)
-    pub fn txd_push_current() = cdecl 0x7316A0 => unported;
-    /// `CTxdStore::PopCurrentTxd()` (0x7316B0)
-    pub fn txd_pop_current() = cdecl 0x7316B0 => unported;
     /// `CTxdStore::FindTxdSlot(const char*)` (0x731850)
     pub fn txd_find_slot(name: GPtr<u8>) -> i32 = cdecl 0x731850 => unported;
-    /// `CTxdStore::SetCurrentTxd(int32)` (0x7319C0)
-    pub fn txd_set_current(slot: i32) = cdecl 0x7319C0 => unported;
-    /// `RwTextureRead(const char* name, const char* mask)` (0x7F3AC0)
-    pub fn rw_texture_read(name: GPtr<u8>, mask: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F3AC0 => unported;
-    /// `RwTextureDestroy(RwTexture*)` (0x7F3820)
-    pub fn rw_texture_destroy(t: GPtr<u8>) -> i32 = cdecl 0x7F3820 => unported;
 }
 
 pub fn cross_hair(i: i32) -> GPtr<u8> {

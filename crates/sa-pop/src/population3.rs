@@ -9,61 +9,42 @@ use crate::common::{g, jne_mask, jp5, model_info, rand_at, rd, wr, x};
 /// Globals owned by this module: none.
 pub const GLOBALS: &[GlobalDesc] = &[];
 
+use sa_core::bindings::general_random_int_in_range as random_int_in_range;
+use sa_core::bindings::get_weapon_info;
+use sa_core::bindings::stricmp as crt_stricmp;
+use sa_core::bindings::task_new;
+use sa_core::bindings::world_add;
+use sa_world::bindings::civilian_ped_ctor;
+use sa_world::bindings::cop_ped_ctor;
+use sa_world::bindings::emergency_ped_ctor;
+use sa_world::bindings::event_attractor_ctor;
+use sa_world::bindings::event_attractor_dtor;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::get_ped_attractor_manager;
+use sa_world::bindings::give_delayed_weapon as ped_give_delayed_weapon;
+use sa_world::bindings::intel_process;
+use sa_world::bindings::ped_new;
+use sa_world::bindings::set_char_created_by as ped_set_char_created_by;
+use sa_world::bindings::set_ped_decision_maker_type as intel_set_ped_decision_maker_type;
+use sa_world::bindings::task_wander_cop_ctor;
+use sa_world::bindings::wander_get_wander_task_by_ped_type as get_wander_task_by_ped_type;
 orig! {
-    /// `CPed::operator new(uint32)` (0x5E4720)
-    fn ped_new(size: u32) -> GPtr<u8> = cdecl 0x5E4720 => unported;
-    /// `CCivilianPed::CCivilianPed(ePedType, uint32 model)` (0x5DDB70, `ret 8`)
-    fn civilian_ped_ctor(this: GPtr<u8>, ty: u32, model: u32) -> GPtr<u8> = thiscall 0x5DDB70 => unported;
-    /// `CCopPed::CCopPed(eCopType)` (0x5DDC60, `ret 4`)
-    fn cop_ped_ctor(this: GPtr<u8>, cop_type: u32) -> GPtr<u8> = thiscall 0x5DDC60 => unported;
-    /// `CEmergencyPed::CEmergencyPed(ePedType, uint32 model)` (0x5DE340, `ret 8`)
-    fn emergency_ped_ctor(this: GPtr<u8>, ty: u32, model: u32) -> GPtr<u8> = thiscall 0x5DE340 => unported;
-    /// `CPed::GiveDelayedWeapon(eWeaponType, uint32 ammo)` (0x5E89B0, `ret 8`)
-    fn ped_give_delayed_weapon(ped: GPtr<u8>, w: u32, ammo: u32) = thiscall 0x5E89B0 => unported;
-    /// `CWeaponInfo::GetWeaponInfo(eWeaponType, eWeaponSkill)` (0x743C60)
-    fn get_weapon_info(w: u32, skill: u32) -> GPtr<u8> = cdecl 0x743C60 => unported;
     /// `CPed::SetCurrentWeapon(int32 slot)` (0x5E61F0, `ret 4`)
     fn ped_set_current_weapon_slot(ped: GPtr<u8>, slot: u32) = thiscall 0x5E61F0 => unported;
     /// `CPlaceable::SetOrientation(float, float, float)` (0x439A80, `ret 0xC`)
     fn placeable_set_orientation(e: GPtr<u8>, xr: f32, yr: f32, zr: f32) = thiscall 0x439A80 => unported;
-    /// `CWorld::Add(CEntity*)` (0x563220)
-    fn world_add(e: GPtr<u8>) = cdecl 0x563220 => unported;
-    /// `CTask::operator new(uint32)` (0x61A5A0)
-    fn task_new(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => unported;
-    /// `CTaskComplexWanderCop::CTaskComplexWanderCop(int32 moveState, uint8 dir)` (0x460C80, `ret 8`)
-    fn task_wander_cop_ctor(this: GPtr<u8>, move_state: u32, dir: u32) -> GPtr<u8> = thiscall 0x460C80 => unported;
     /// `CTaskSimpleStandStill::CTaskSimpleStandStill(int32, bool, bool, float)` (0x62F310, `ret 0x10`)
     fn task_stand_still_ctor(this: GPtr<u8>, time: u32, looped: u32, b: u32, f: f32) -> GPtr<u8> = thiscall 0x62F310 => unported;
     /// `CTaskManager::SetTask(CTask*, int32 slot, bool)` (0x681AF0, `ret 0xC`)
     fn task_manager_set_task(tm: GPtr<u8>, task: GPtr<u8>, slot: u32, b: u32) = thiscall 0x681AF0 => unported;
-    /// `CTaskComplexWander::GetWanderTaskByPedType(CPed*)` (0x673D00)
-    fn get_wander_task_by_ped_type(ped: GPtr<u8>) -> GPtr<u8> = cdecl 0x673D00 => unported;
-    /// `CGeneral::GetRandomNumberInRange(int32, int32)` (0x407180)
-    fn random_int_in_range(min: i32, max: i32) -> i32 = cdecl 0x407180 => unported;
-    /// CRT `_stricmp` (0x8229B6)
-    fn crt_stricmp(a: GPtr<u8>, b: GPtr<u8>) -> i32 = cdecl 0x8229B6 => unported;
-    /// `GetPedAttractorManager()` (0x5EE190)
-    fn get_ped_attractor_manager() -> GPtr<u8> = cdecl 0x5EE190 => unported;
     /// `CPedAttractorManager::HasQueueTailArrivedAtSlot(const C2dEffect*, const CEntity*)` (0x5EBBA0, `ret 8`)
     fn has_queue_tail_arrived_at_slot(mgr: GPtr<u8>, fx: GPtr<u8>, ent: GPtr<u8>) -> u8 = thiscall 0x5EBBA0 => unported;
     /// `CPopulation::AddPed(ePedType, uint32, const CVector&, bool)` (0x612710)
     fn add_ped_call(ty: u32, model: u32, pos: GPtr<f32>, make_wander: u8) -> GPtr<u8> = cdecl 0x612710 => add_ped;
-    /// `CPed::SetCharCreatedBy(uint8)` (0x5E47E0, `ret 4`)
-    fn ped_set_char_created_by(ped: GPtr<u8>, by: u32) = thiscall 0x5E47E0 => unported;
-    /// `CPedIntelligence::SetPedDecisionMakerType(int32)` (0x600B50, `ret 4`)
-    fn intel_set_ped_decision_maker_type(intel: GPtr<u8>, t: i32) = thiscall 0x600B50 => unported;
     /// `CPedAttractorPedPlacer::PlacePedAtEffect(const C2dEffect&, CEntity*, CPed*, float)` (0x5EA390)
     fn place_ped_at_effect(fx: GPtr<u8>, ent: GPtr<u8>, ped: GPtr<u8>, f: f32) = cdecl 0x5EA390 => unported;
-    /// `CEventAttractor::CEventAttractor(C2dEffect*, CEntity*, bool)` (0x4AF350, `ret 0xC`)
-    fn event_attractor_ctor(this: GPtr<u8>, fx: GPtr<u8>, ent: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4AF350 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, `ret 8`)
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, valid: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
     /// `CPedIntelligence::ProcessEventHandler()` (0x601BB0)
     fn intel_process_event_handler(intel: GPtr<u8>) = thiscall 0x601BB0 => unported;
-    /// `CPedIntelligence::Process()` (0x608260)
-    fn intel_process(intel: GPtr<u8>) = thiscall 0x608260 => unported;
-    /// `CEventAttractor::~CEventAttractor` (0x4AF400)
-    fn event_attractor_dtor(this: GPtr<u8>) = thiscall 0x4AF400 => unported;
 }
 
 /// `GiveDelayedWeapon(w, 25001)` + `SetCurrentWeapon(GetWeaponInfo(w, 1)->m_nSlot)` (AddPed's weapon tail).

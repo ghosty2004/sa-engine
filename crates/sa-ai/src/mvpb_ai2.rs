@@ -12,79 +12,57 @@ use crate::common::*;
 /// `CTimer::m_snTimeInMilliseconds`
 const TIME_MS: usize = 0xB7CB84;
 
+use crate::bindings::get_group_id;
+use crate::bindings::pause_ctor as task_simple_pause_ctor;
+use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+use sa_core::bindings::entity_register_reference as register_reference;
+use sa_core::bindings::entity_update_rw_frame;
+use sa_core::bindings::matrix_update_rw_matrix;
+use sa_core::bindings::ped_is_alive;
+use sa_stream::bindings::anim_add_block_ref as add_anim_block_ref;
+use sa_stream::bindings::anim_remove_block_ref as remove_anim_block_ref;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::entity_get_col_model;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::event_group_event_ctor;
+use sa_world::bindings::event_group_event_dtor;
+use sa_world::bindings::get_animation_block;
+use sa_world::bindings::get_event_global_group;
+use sa_world::bindings::membership_is_member as group_membership_is_member;
+use sa_world::bindings::ped_groups_get_peds_group as get_peds_group;
+use sa_world::bindings::physical_add_to_moving_list as add_to_moving_list;
+use sa_world::bindings::remove_from_moving_list;
+use sa_world::bindings::simple_transform_update_rw_matrix;
+use sa_world::bindings::task_simple_ctor;
 orig! {
-    /// `CPed::IsAlive` (0x5E0170)
-    fn ped_is_alive(p: GPtr<u8>) -> u8 = thiscall 0x5E0170 => unported;
-    /// `CPed::IsPlayer` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CTaskSimple::CTaskSimple` (0x61A390)
-    fn task_simple_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A390 => unported;
-    /// `CTaskSimplePause::CTaskSimplePause(int32)` (0x48E750, `ret 4`)
-    fn task_simple_pause_ctor(t: GPtr<u8>, ms: i32) -> GPtr<u8> = thiscall 0x48E750 => unported;
     /// `CTaskSimpleFacial::CTaskSimpleFacial(int32 type, int32 duration)` (0x690C70, `ret 8`)
     fn task_simple_facial_ctor(t: GPtr<u8>, ty: i32, ms: i32) -> GPtr<u8> = thiscall 0x690C70 => unported;
     /// `CTaskSimpleFacial::GetAnimId(int32)` (0x690CC0, cdecl)
     fn facial_get_anim_id(ty: i32) -> i32 = cdecl 0x690CC0 => crate::mvpb_ai2::task_simple_facial_get_anim_id;
     /// `RpAnimBlendClumpGetAssociation(RpClump*, uint32 animId)` (0x4D68B0, cdecl)
     fn clump_get_association(c: GPtr<u8>, id: u32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00, `ret 4`)
-    fn clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70, `ret 4`)
-    fn register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
     /// `CAnimManager::BlendAnimation(RpClump*, CAnimBlendHierarchy*, int32 flags, float)` (0x4D4410, cdecl)
     fn blend_animation_hier(c: GPtr<u8>, h: GPtr<u8>, flags: u32, d: f32) -> GPtr<u8> = cdecl 0x4D4410 => unported;
     /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float)` (0x4D4610, cdecl)
     fn blend_animation(c: GPtr<u8>, g: u32, a: u32, d: f32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
     /// `CAnimManager::GetAnimBlockName(AssocGroupId)` (0x4D3A30, cdecl)
     fn get_anim_block_name(g: u32) -> GPtr<u8> = cdecl 0x4D3A30 => unported;
-    /// `CAnimManager::GetAnimationBlock(const char*)` (0x4D3940, cdecl)
-    fn get_animation_block(n: GPtr<u8>) -> GPtr<u8> = cdecl 0x4D3940 => unported;
-    /// `CAnimManager::AddAnimBlockRef(int32)` (0x4D3FB0, cdecl)
-    fn add_anim_block_ref(i: i32) = cdecl 0x4D3FB0 => unported;
     /// `CAnimManager::GetAnimationBlockIndex(const char*)` (0x4D3990, cdecl)
     fn get_animation_block_index(n: u32) -> i32 = cdecl 0x4D3990 => unported;
-    /// `CAnimManager::RemoveAnimBlockRef(int32)` (0x4D3FD0, cdecl)
-    fn remove_anim_block_ref(i: i32) = cdecl 0x4D3FD0 => unported;
     /// `CStreaming::RequestModel(int32, int32)` (0x4087E0, cdecl)
     fn request_model(id: i32, flags: u32) = cdecl 0x4087E0 => unported;
     /// `CAnimBlendAssociation::SetFinishCallback(cb, data)` (0x4CEBE0, `ret 8`)
     fn assoc_set_finish_callback(a: GPtr<u8>, cb: u32, d: GPtr<u8>) = thiscall 0x4CEBE0 => unported;
     /// `CAnimBlendAssociation::SetDeleteCallback(cb, data)` (0x4CEBC0, `ret 8`)
     fn assoc_set_delete_callback(a: GPtr<u8>, cb: u32, d: GPtr<u8>) = thiscall 0x4CEBC0 => unported;
-    /// `CPhysical::AddToMovingList` (0x542800)
-    fn add_to_moving_list(e: GPtr<u8>) = thiscall 0x542800 => unported;
-    /// `CPhysical::RemoveFromMovingList` (0x542860)
-    fn remove_from_moving_list(e: GPtr<u8>) = thiscall 0x542860 => unported;
     /// `CEventSoundQuiet::CEventSoundQuiet(CEntity*, float, uint32, const CVector&)` (0x5E05B0, `ret 0x10`)
     fn event_sound_quiet_ctor(e: GPtr<u8>, ent: GPtr<u8>, vol: f32, t: u32, pos: GPtr<f32>) -> GPtr<u8> = thiscall 0x5E05B0 => unported;
-    /// `GetEventGlobalGroup()` (0x4ABA50, cdecl)
-    fn get_event_global_group() -> GPtr<u8> = cdecl 0x4ABA50 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, `ret 8`)
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
     /// `FUN_005dea00` (0x5DEA00): `CEventSoundQuiet` destructor body
     fn event_sound_quiet_dtor(e: GPtr<u8>) = thiscall 0x5DEA00 => crate::mvpb_ai::event_dtor_5dea00;
-    /// `CEntity::GetColModel` (0x535300)
-    fn entity_get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => unported;
     /// `CPlaceable::SetPosn(const CVector&)` (0x4241C0, `ret 4`)
     fn placeable_set_posn(e: GPtr<u8>, v: GPtr<f32>) = thiscall 0x4241C0 => unported;
-    /// `CMatrix::UpdateRwMatrix(RwMatrix*)` (0x59AD70, `ret 4`)
-    fn matrix_update_rw_matrix(m: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x59AD70 => unported;
-    /// `CSimpleTransform::UpdateRwMatrix(RwMatrix*)` (0x54EF40, `ret 4`)
-    fn simple_transform_update_rw_matrix(t: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x54EF40 => unported;
-    /// `CEntity::UpdateRwFrame` (0x532B00)
-    fn entity_update_rw_frame(e: GPtr<u8>) = thiscall 0x532B00 => unported;
-    /// `CPedGroupMembership::IsMember(const CPed*)` (0x5F6A10, `ret 4`)
-    fn group_membership_is_member(m: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x5F6A10 => unported;
     /// `CGroupEventHandler::ComputeEventResponseTasks(const CPedGroupEvent*... )` (0x5FC200, cdecl, 2 args)
     fn group_event_handler_compute(a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x5FC200 => unported;
-    /// `CPedGroups::GetPedsGroup(const CPed*)` (0x5F7E80, cdecl)
-    fn get_peds_group(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x5F7E80 => unported;
-    /// `CPedGroups::GetGroupId(CPedGroup*)` (0x5F7EE0, cdecl)
-    fn get_group_id(g: GPtr<u8>) -> i32 = cdecl 0x5F7EE0 => unported;
-    /// `CEventGroupEvent::CEventGroupEvent(CPed*, CEvent*)` (0x4ADFD0, `ret 8`)
-    fn event_group_event_ctor(e: GPtr<u8>, ped: GPtr<u8>, ev: GPtr<u8>) -> GPtr<u8> = thiscall 0x4ADFD0 => unported;
-    /// `CEventGroupEvent::~CEventGroupEvent` (0x4AE070)
-    fn event_group_event_dtor(e: GPtr<u8>) = thiscall 0x4AE070 => unported;
     /// `CPedGroupIntelligence::AddEvent(CEvent*)` (0x5F7470, `ret 4`)
     fn pgi_add_event(g: GPtr<u8>, e: GPtr<u8>) -> u8 = thiscall 0x5F7470 => crate::mvpb_ai::pgi_add_event;
     /// `FUN_0061a3d0` (0x61A3D0): `CTaskComplex` base destructor

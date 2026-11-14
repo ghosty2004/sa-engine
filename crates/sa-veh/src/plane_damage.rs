@@ -8,45 +8,32 @@ use sa_math::x87::{Cmp, X87};
 
 use crate::common::{f32_of, g, jne_mask, rd, wr, x};
 
+use crate::bindings::fx_set_vel_add;
+use crate::bindings::set_component_visibility;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::find_player_vehicle;
+use sa_core::bindings::fx_play;
+use sa_core::bindings::general_random_int_in_range as random_in_range_i;
+use sa_world::bindings::fx_create_system as create_fx_system;
+use sa_world::bindings::fx_kill;
+use sa_world::bindings::fx_set_local_particles;
+use sa_world::bindings::get_modelling_matrix;
+use sa_world::bindings::multiply3x3_vm as multiply_3x3_t;
+use sa_world::bindings::vector_magnitude_sqr as magnitude_sqr;
+use sa_world::bindings::vector_sub as vec_sub;
 orig! {
     /// `CAutomobile::VehicleDamage(float, eVehicleCollisionComponent, CEntity*, CVector*, CVector*, eWeaponType)` (0x6A7650)
     fn automobile_vehicle_damage(v: GPtr<u8>, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32) = thiscall 0x6A7650 => unported;
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(n: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CWorld::FindPlayerVehicle(int32, bool)` (0x56E0D0)
-    fn find_player_vehicle(n: i32, remote: u32) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
     /// `CVehicle::CanVehicleBeDamaged(CEntity*, eWeaponType, bool*)` (0x6D1280, AL)
     fn can_vehicle_be_damaged(v: GPtr<u8>, e: u32, weapon: u32, out: GPtr<u8>) -> u8 = thiscall 0x6D1280 => unported;
-    /// `operator-(const CVector&, const CVector&)` (0x40FE60, the result through `out`)
-    fn vec_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => unported;
-    /// `Multiply3x3(const CVector&, const CMatrix&)` (0x59C810, the transposed product through `out`)
-    fn multiply_3x3_t(out: GPtr<u8>, v: GPtr<u8>, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C810 => unported;
-    /// `CVector::MagnitudeSqr()` (0x406DA0): ST0
-    fn magnitude_sqr(v: GPtr<u8>) -> f64 = thiscall 0x406DA0 => unported;
     /// `CDamageManager::ProgressAeroplaneDamage(uint8)` (0x6C2460, AL)
     fn progress_aeroplane_damage(d: GPtr<u8>, node: u32) -> u8 = thiscall 0x6C2460 => unported;
     /// `CDamageManager::GetAeroplaneCompStatus(int32)` (0x6C2300)
     fn get_aeroplane_comp_status(d: GPtr<u8>, node: u32) -> u32 = thiscall 0x6C2300 => unported;
     /// `CBouncingPanel::SetPanel(int16 frame, int16 axis, float limit)` (0x6F4920)
     fn bouncing_panel_set_panel(p: GPtr<u8>, frame: u32, axis: u32, limit: u32) = thiscall 0x6F4920 => unported;
-    /// `CVehicle::SetComponentVisibility(RwFrame*, uint32)` (0x6D2700)
-    fn set_component_visibility(v: GPtr<u8>, frame: GPtr<u8>, state: u32) = thiscall 0x6D2700 => unported;
     /// `CAutomobile::dmgDrawCarCollidingParticles(const CVector&, float, eWeaponType)` (0x6A6DC0)
     fn dmg_draw_car_colliding_particles(v: GPtr<u8>, coors: u32, intensity: f32, weapon: u32) = thiscall 0x6A6DC0 => unported;
-    /// `FxSystem_c::Kill()` (0x4AA3F0)
-    fn fx_kill(fx: GPtr<u8>) = thiscall 0x4AA3F0 => unported;
-    /// `CEntity::GetModellingMatrix()` (0x46A2D0)
-    fn get_modelling_matrix(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x46A2D0 => unported;
-    /// `FxManager_c::CreateFxSystem(const char*, RwV3d*, RwMatrix*, bool)` (0x4A9BE0) on `g_fxMan` (0xA9AE80)
-    fn create_fx_system(mgr: GPtr<u8>, name: u32, pos: GPtr<u8>, m: GPtr<u8>, ignore_bbox: u32) -> GPtr<u8> = thiscall 0x4A9BE0 => unported;
-    /// `FxSystem_c::Play()` (0x4AA2F0)
-    fn fx_play(fx: GPtr<u8>) = thiscall 0x4AA2F0 => unported;
-    /// `FxSystem_c::SetVelAdd(RwV3d*)` (0x4AA730)
-    fn fx_set_vel_add(fx: GPtr<u8>, v: GPtr<u8>) = thiscall 0x4AA730 => unported;
-    /// `FxSystem_c::SetLocalParticles(bool)` (0x4AA910)
-    fn fx_set_local_particles(fx: GPtr<u8>, b: u32) = thiscall 0x4AA910 => unported;
-    /// `CGeneral::GetRandomNumberInRange(int32, int32)` (0x407180)
-    fn random_in_range_i(lo: i32, hi: i32) -> i32 = cdecl 0x407180 => unported;
     /// virtual `CVehicle::BlowUpCar(CEntity*, bool)` (vtable +0xA4)
     fn v_blow_up_car(v: GPtr<u8>, damager: GPtr<u8>, hide: u32) = thiscall vslot 0xA4 => unported;
 }

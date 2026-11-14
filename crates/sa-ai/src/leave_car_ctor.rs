@@ -3,16 +3,12 @@
 //! regenerated `gen_ctors.rs`. Reached by the road-rage task on the native walk.
 
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
-orig! {
-    /// `CTaskComplex::CTaskComplex()` (0x61A3B0)
-    fn task_complex_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A3B0 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    fn entity_register_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571B70 => unported;
-}
+use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::task_complex_ctor;
 
 /// `CTaskComplexLeaveCar::CTaskComplexLeaveCar(CVehicle*, int32 door, int32 delay, bool sensible, bool
 /// forceGetOut)` (0x63B8C0, `ret 0x14`, SEH frame): `CTaskComplex` base, +0x10 = door, +0x14 = delay, +0x18 =

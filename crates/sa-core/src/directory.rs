@@ -65,25 +65,18 @@ pub const MSG_TOO_MANY: u32 = 0x863880;
 /// "rb" (0x859C6C)
 pub const MODE_RB: u32 = 0x859C6C;
 
+pub use crate::bindings::crt_free_8214bd as free;
+pub use crate::bindings::file_close as close_file;
+pub use crate::bindings::file_read as read;
+pub use crate::bindings::file_write as write;
+pub use crate::bindings::open_file;
+pub use crate::bindings::open_file_for_writing;
+pub use crate::bindings::stricmp;
 orig! {
     /// CRT `operator new` (0x82119A)
     pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
-    /// CRT `free` (0x8214BD; the destructor's `delete[]`)
-    pub fn free(p: GPtr<u8>) = cdecl 0x8214BD => unported;
     /// CRT `printf` (0x821982), one-argument form
     pub fn printf(fmt: GPtr<u8>) -> i32 = cdecl 0x821982 => unported;
-    /// CRT `_stricmp` (0x8229B6)
-    pub fn stricmp(a: GPtr<u8>, b: GPtr<u8>) -> i32 = cdecl 0x8229B6 => unported;
-    /// `CFileMgr::OpenFile` (0x538900)
-    pub fn open_file(path: GPtr<u8>, mode: GPtr<u8>) -> GPtr<u8> = cdecl 0x538900 => crate::filemgr::open_file;
-    /// `CFileMgr::OpenFileForWriting` (0x538910)
-    pub fn open_file_for_writing(path: GPtr<u8>) -> GPtr<u8> = cdecl 0x538910 => crate::filemgr::open_file_for_writing;
-    /// `CFileMgr::Read` (0x538950)
-    pub fn read(f: GPtr<u8>, buf: GPtr<u8>, size: u32) -> u32 = cdecl 0x538950 => crate::filemgr::read;
-    /// `CFileMgr::Write` (0x538970)
-    pub fn write(f: GPtr<u8>, buf: GPtr<u8>, size: u32) -> u32 = cdecl 0x538970 => crate::filemgr::write;
-    /// `CFileMgr::CloseFile` (0x5389D0)
-    pub fn close_file(f: GPtr<u8>) -> i32 = cdecl 0x5389D0 => crate::filemgr::close_file;
     /// `CDirectory::FindItem(name)` (0x532450)
     pub fn find_item_call(dir: GPtr<CDirectory>, name: GPtr<u8>) -> GPtr<DirectoryInfo> = thiscall 0x532450 => find_item;
     /// `CKeyGen::GetUppercaseKey` (0x53CF30)

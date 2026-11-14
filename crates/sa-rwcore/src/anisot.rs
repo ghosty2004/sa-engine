@@ -17,10 +17,7 @@ pub fn texture_get_max_anisotropy(tex: GPtr<u8>) -> u8 {
     tex.byte_add(off as i32 as isize).read()
 }
 
-sa_core::orig! {
-    /// `RwD3D9GetCaps()` (0x7FAD20)
-    fn an_get_caps() -> GPtr<u8> = cdecl 0x7FAD20 => unported;
-}
+use sa_core::bindings::rw_d3d9_get_caps as an_get_caps;
 
 /// `RpAnisotGetMaxSupportedMaxAnisotropy()` (0x748F20, cdecl, AL): the byte at `RwD3D9GetCaps() + 0x6C`
 /// (the low byte of `MaxAnisotropy`; the upper EAX bits are the caps pointer's).

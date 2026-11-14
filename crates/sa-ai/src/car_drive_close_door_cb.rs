@@ -7,11 +7,9 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::vehicle_anim_group_get_group;
+use crate::bindings::vehicle_clear_getting_out_flags;
 orig! {
-    /// `CVehicle::ClearGettingOutFlags(uint8 doors)` (0x6D3060, `ret 4`)
-    fn vehicle_clear_getting_out_flags(v: GPtr<u8>, doors: u32) = thiscall 0x6D3060 => unported;
-    /// `CVehicleAnimGroup::GetGroup(int32 animId)` (0x6E3B00, `ret 4`)
-    fn vehicle_anim_group_get_group(g: GPtr<u8>, anim: u32) -> u32 = thiscall 0x6E3B00 => unported;
     /// `CVehicle::ProcessOpenDoor(CPed*, uint32 door, uint32 group, uint32 anim, float time)` (vtable +0x70)
     fn v_vehicle_process_open_door(v: GPtr<u8>, ped: GPtr<u8>, door: u32, group: u32, anim: u32, time: u32) = thiscall vslot 0x70 => unported;
 }

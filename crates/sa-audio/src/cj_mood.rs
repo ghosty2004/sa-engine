@@ -9,15 +9,12 @@ use sa_math::x87::Cmp;
 
 use crate::common::*;
 
+use sa_core::bindings::find_player_ped;
+use sa_world::bindings::get_stat_value;
+use sa_world::bindings::membership_get_member;
 orig! {
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210, cdecl)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CStats::GetStatValue(uint16)` (0x558E40, cdecl, ST0)
-    fn get_stat_value(stat: u32) -> f64 = cdecl 0x558E40 => unported;
     /// `CPedGroupMembership::CountMembersExcludingLeader` (0x5F6AA0): a 16-bit result
     fn membership_count_excluding_leader(m: GPtr<u8>) -> u32 = thiscall 0x5F6AA0 => unported;
-    /// `CPedGroupMembership::GetMember(int32)` (0x5F69B0, `ret 4`)
-    fn membership_get_member(m: GPtr<u8>, i: i32) -> GPtr<u8> = thiscall 0x5F69B0 => unported;
     /// `CAEPedSpeechAudioEntity::IsCJDressedInForGangSpeech()` (0x4E4270, static)
     fn is_cj_dressed_in_for_gang_speech() -> u8 = cdecl 0x4E4270 => unported;
 }

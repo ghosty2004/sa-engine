@@ -69,52 +69,65 @@ const DECISION_MAKER_USED: u32 = 0xC0B01C;
 const ACTIVE_CAM: usize = 0xB6F081;
 const CAMS: u32 = 0xB6F19C;
 
+use crate::bindings::enable_ped_speech_for_script_speech;
+use crate::bindings::force_group_to_always_follow;
+use crate::bindings::our_ped_can_see_this_entity;
+use crate::bindings::remove_n_followers;
+use crate::bindings::set_up_conversation_node;
+use sa_core::bindings::car_set_ped_out_ctor as task_car_set_ped_out_ctor;
+use sa_core::bindings::car_set_ped_out_dtor as task_car_set_ped_out_dtor_647950;
+use sa_core::bindings::car_set_ped_out_process_ped as task_car_set_ped_out_process_ped;
+use sa_core::bindings::clear_this_print_big_now;
+use sa_core::bindings::disable_all_ped_speech;
+use sa_core::bindings::enable_all_ped_speech;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::find_player_vehicle;
+use sa_core::bindings::task_new;
+use sa_core::bindings::text_get;
+use sa_core::bindings::timer_stop;
+use sa_core::bindings::timer_update;
+use sa_stream::bindings::find_player_wanted;
+use sa_stream::bindings::manage_all_population;
+use sa_world::bindings::all_resprays_close_or_open;
+use sa_world::bindings::audio_retune_radio as retune_radio;
+use sa_world::bindings::cam_follow_car_sa as cam_process_follow_car_sa;
+use sa_world::bindings::cam_follow_ped_sa as cam_process_follow_ped_sa;
+use sa_world::bindings::clear_wanted_level_and_go_on_parole;
+use sa_world::bindings::compute_target_door_to_exit;
+use sa_world::bindings::count_members_excluding_leader;
+use sa_world::bindings::decision_maker_types_get_instance;
+use sa_world::bindings::do_weapon_stuff_at_start_of_2p_game;
+use sa_world::bindings::enable_burglary_houses;
+use sa_world::bindings::font_get_string_width_st0 as get_string_width;
+use sa_world::bindings::gang_war_fighting_going_on;
+use sa_world::bindings::get_has_collided_with;
+use sa_world::bindings::get_ped_attractor_manager;
+use sa_world::bindings::get_task_jet_pack;
+use sa_world::bindings::hud_set_zone_name as set_zone_name;
+use sa_world::bindings::nitrous_control;
+use sa_world::bindings::pickup_get_posn;
+use sa_world::bindings::task_use_goggles_ctor;
+use sa_world::bindings::use_detonator;
 orig! {
     /// `CMenuSystem::SetColumnWidth(uint8 menu, uint8 column, uint16 width)` (0x582050)
     fn set_column_width(menu: u32, column: u32, width: u32) = cdecl 0x582050 => unported;
-    /// `GetPedAttractorManager()` (0x5EE190)
-    fn get_ped_attractor_manager() -> GPtr<u8> = cdecl 0x5EE190 => unported;
     /// `CPedAttractorManager::IsPedRegisteredWithEffect(CPed*)` (0x5EBCB0), AL
     fn is_ped_registered_with_effect(m: GPtr<u8>, p: GPtr<u8>) -> u8 = thiscall 0x5EBCB0 => unported;
     /// `CEntity` virtual slot 8 (+0x20, `DeleteRwObject()`) / slot 5 (+0x14, `SetModelIndex(uint32)`)
     fn entity_delete_rw_object(e: GPtr<u8>) = thiscall vslot 0x20 => unported;
     fn entity_set_model_index(e: GPtr<u8>, m: u32) = thiscall vslot 0x14 => unported;
-    /// `CCarEnterExit::ComputeTargetDoorToExit(const CVehicle*, const CPed*)` (0x64F110)
-    fn compute_target_door_to_exit(v: GPtr<u8>, p: GPtr<u8>) -> u32 = cdecl 0x64F110 => unported;
-    /// `CTaskSimpleCarSetPedOut::CTaskSimpleCarSetPedOut(CVehicle*, int32 door, bool)` (0x6478B0)
-    fn task_car_set_ped_out_ctor(t: GPtr<u8>, v: GPtr<u8>, door: u32, b: u32) -> GPtr<u8> = thiscall 0x6478B0 => unported;
-    /// `CTaskSimpleCarSetPedOut::ProcessPed(CPed*)` (0x647D10), AL (discarded)
-    fn task_car_set_ped_out_process_ped(t: GPtr<u8>, p: GPtr<u8>) -> u8 = thiscall 0x647D10 => unported;
-    /// The `CTaskSimpleCarSetPedOut` destructor at 0x647950 (unnamed in the catalogue)
-    fn task_car_set_ped_out_dtor_647950(t: GPtr<u8>) = thiscall 0x647950 => unported;
     /// `CPlaceable::SetPosn(const CVector&)` (0x4241C0)
     fn set_posn_v(e: GPtr<u8>, pos: GPtr<u32>) = thiscall 0x4241C0 => unported;
-    /// `CPhysical::GetHasCollidedWith(CEntity*)` (0x543540), AL
-    fn get_has_collided_with(p: GPtr<u8>, e: GPtr<u8>) -> u8 = thiscall 0x543540 => unported;
     /// `CPickups::GetActualPickupIndex(int32)` (0x4552A0)
     fn get_actual_pickup_index(h: u32) -> i32 = cdecl 0x4552A0 => unported;
-    /// `CWorld::FindPlayerWanted(int32)` (0x56E230)
-    fn find_player_wanted(id: i32) -> GPtr<u8> = cdecl 0x56E230 => unported;
-    /// `CWanted::ClearWantedLevelAndGoOnParole()` (0x5625A0)
-    fn clear_wanted_level_and_go_on_parole(w: GPtr<u8>) = thiscall 0x5625A0 => unported;
     /// `CPed::Say(uint16, uint32, float, uint8, uint8, uint8)` (0x5EFFE0), AX; the float raw
     fn ped_say(p: GPtr<u8>, id: u32, a: u32, vol: u32, b: u32, c: u32, d: u32) -> u16 = thiscall 0x5EFFE0 => unported;
     /// `CPed::SayScript(int32, uint8, uint8, uint8)` (0x5EFFB0)
     fn ped_say_script(p: GPtr<u8>, id: u32, a: u32, b: u32, c: u32) = thiscall 0x5EFFB0 => unported;
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CWorld::UseDetonator(CPed*)` (0x5660B0)
-    fn use_detonator(p: GPtr<u8>) = cdecl 0x5660B0 => unported;
-    /// `CPickup::GetPosn()` (0x4549A0), the vector returned through the hidden pointer
-    fn pickup_get_posn(p: GPtr<u8>, out: GPtr<u32>) -> GPtr<u32> = thiscall 0x4549A0 => unported;
     /// `operator-(const CVector&, const CVector&)` (0x40FE60, `VectorSub`), the result through the hidden pointer
     fn vector_sub(out: GPtr<u32>, a: GPtr<u32>, b: GPtr<u32>) -> GPtr<u32> = cdecl 0x40FE60 => unported;
     /// `CVector::Magnitude()` (0x4082C0), ST0 (an `fsqrt` result under PC=24: exact as f64)
     fn vector_magnitude(v: GPtr<u32>) -> f64 = thiscall 0x4082C0 => unported;
-    /// `CPedGroupMembership::CountMembersExcludingLeader()` (0x5F6AA0)
-    fn count_members_excluding_leader(m: GPtr<u8>) -> i32 = thiscall 0x5F6AA0 => unported;
-    /// `CPedGroupMembership::RemoveNFollowers(int32)` (0x5FB1D0)
-    fn remove_n_followers(m: GPtr<u8>, n: i32) = thiscall 0x5FB1D0 => unported;
     /// `CTaskManager::FindActiveTaskByType(int32)` (0x681740)
     fn find_active_task_by_type(tm: GPtr<u8>, ty: u32) -> GPtr<u8> = thiscall 0x681740 => unported;
     /// `CGameLogic::SetUpSkip(CVector, float, bool, CVehicle*, bool)` (0x4423C0); the vector by value, raw
@@ -133,46 +146,23 @@ orig! {
         ty: u32, x: u32, y: u32, z: u32, dx: u32, dy: u32, dz: u32, radius: u32, r: f32, g: f32, b: f32, fog: u32,
         shadows: u32, e: u32
     ) = cdecl 0x7000E0 => unported;
-    /// `CEntryExitManager::EnableBurglaryHouses(bool)` (0x43F180)
-    fn enable_burglary_houses(on: u32) = cdecl 0x43F180 => unported;
     /// `CPad::GetPad(int32)` (0x53FB70)
     fn get_pad(n: u32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CAutomobile::NitrousControl(int8)` (0x6A3EA0)
-    fn nitrous_control(v: GPtr<u8>, n: u32) = thiscall 0x6A3EA0 => unported;
-    /// `CTask::operator new(uint32)` (0x61A5A0)
-    fn task_new(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => unported;
-    /// `CTaskComplexUseGoggles::CTaskComplexUseGoggles()` (0x634EF0)
-    fn task_use_goggles_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x634EF0 => unported;
     /// `CTaskManager::SetTask(CTask*, int32 slot, bool)` (0x681AF0)
     fn task_manager_set_task(tm: GPtr<u8>, t: GPtr<u8>, slot: u32, b: u32) = thiscall 0x681AF0 => unported;
     /// `CPed::TakeOffGoggles()` (0x5E6010)
     fn take_off_goggles(p: GPtr<u8>) = thiscall 0x5E6010 => unported;
-    /// `CPed::OurPedCanSeeThisEntity(CEntity*, bool)` (0x5E1660), AL
-    fn our_ped_can_see_this_entity(p: GPtr<u8>, e: GPtr<u8>, b: u32) -> u8 = thiscall 0x5E1660 => unported;
     /// `CAudioEngine::ReportMissionAudioEvent(uint16, CPed*)` (0x507370) / `(uint16, CVehicle*)` (0x507390)
     fn report_mission_audio_event_ped(a: GPtr<u8>, ev: u32, p: GPtr<u8>) = thiscall 0x507370 => unported;
     fn report_mission_audio_event_veh(a: GPtr<u8>, ev: u32, v: GPtr<u8>) = thiscall 0x507390 => unported;
     /// `CTheScripts::GetActualScriptThingIndex(int32 ref, uint8 type)` (0x4839A0)
     fn get_actual_script_thing_index(r: u32, ty: u32) -> i32 = cdecl 0x4839A0 => unported;
-    /// `CDecisionMakerTypes::GetInstance()` (0x4684F0)
-    fn decision_maker_types_get_instance() -> GPtr<u8> = cdecl 0x4684F0 => unported;
-    /// `CAEPedSpeechAudioEntity::DisableAllPedSpeech()` (0x4E3EB0) / `EnableAllPedSpeech()` (0x4E3EC0)
-    fn disable_all_ped_speech() = cdecl 0x4E3EB0 => unported;
-    fn enable_all_ped_speech() = cdecl 0x4E3EC0 => unported;
-    /// `CGameLogic::DoWeaponStuffAtStartOf2PlayerGame(bool)` (0x4428B0)
-    fn do_weapon_stuff_at_start_of_2p_game(b: u32) = cdecl 0x4428B0 => unported;
     /// `CEntity` virtual slot 13 (+0x34, `TestCollision(bool)`), AL
     fn entity_test_collision(e: GPtr<u8>, b: u32) -> u8 = thiscall vslot 0x34 => unported;
-    /// `CText::Get(const char*)` (0x6A0050), ECX = `TheText`
-    fn text_get(t: GPtr<u8>, key: GPtr<u8>) -> GPtr<u8> = thiscall 0x6A0050 => unported;
-    /// `CFont::GetStringWidth(const char*, bool, bool)` (0x71A0E0), ST0 (read as f64: exact)
-    fn get_string_width(s: GPtr<u8>, a: u32, b: u32) -> f64 = cdecl 0x71A0E0 => unported;
     /// `CRestart::SetRespawnPointForDurationOfMission(CVector)` (0x460810); the vector by value
     fn set_respawn_point_for_duration_of_mission(x: u32, y: u32, z: u32) = cdecl 0x460810 => unported;
     /// `CModelInfo::IsCarModel(int32)` (0x4C5AA0), AL
     fn is_car_model(m: u32) -> u8 = cdecl 0x4C5AA0 => unported;
-    /// `CGangWars::GangWarFightingGoingOn()` (0x443AC0), AL
-    fn gang_war_fighting_going_on() -> u8 = cdecl 0x443AC0 => unported;
     /// `CTrain::IsNextStationAllowed(CTrain*)` (0x6F7260), AL / `SkipToNextAllowedStation(CTrain*)` (0x6F72F0)
     fn is_next_station_allowed(v: GPtr<u8>) -> u8 = cdecl 0x6F7260 => unported;
     fn skip_to_next_allowed_station(v: GPtr<u8>) = cdecl 0x6F72F0 => unported;
@@ -180,32 +170,16 @@ orig! {
     fn insert_number_in_string(s: GPtr<u8>, n1: u32, n2: u32, n3: u32, n4: u32, n5: u32, n6: u32, out: GPtr<u8>) = cdecl 0x69DE90 => unported;
     /// `CPed::DisablePedSpeechForScriptSpeech(bool)` (0x5EFF80) / `EnablePedSpeechForScriptSpeech()` (0x5EFF90)
     fn disable_ped_speech_for_script_speech(p: GPtr<u8>, b: u32) = thiscall 0x5EFF80 => unported;
-    fn enable_ped_speech_for_script_speech(p: GPtr<u8>) = thiscall 0x5EFF90 => unported;
-    /// `CTimer::Stop()` (0x561AA0) / `CTimer::Update()` (0x561B10)
-    fn timer_stop() = cdecl 0x561AA0 => unported;
-    fn timer_update() = cdecl 0x561B10 => unported;
     /// `CRenderer::RequestObjectsInDirection(const CVector&, float, int32)` (0x555CB0); the float raw
     fn request_objects_in_direction(pos: GPtr<u32>, angle: u32, flags: u32) = cdecl 0x555CB0 => unported;
     /// `CStreaming::LoadScene(const CVector&)` (0x40EB70)
     fn load_scene(pos: GPtr<u32>) = cdecl 0x40EB70 => unported;
-    /// `CPedIntelligence::GetTaskJetPack()` (0x601110)
-    fn get_task_jet_pack(i: GPtr<u8>) -> GPtr<u8> = thiscall 0x601110 => unported;
-    /// `CMessages::ClearThisPrintBigNow(eMessageStyle)` (0x69ED80)
-    fn clear_this_print_big_now(style: u32) = cdecl 0x69ED80 => unported;
     /// `CMenuManager::HasLanguageChanged()` (0x573CD0), AL
     fn has_language_changed(m: GPtr<u8>) -> u8 = thiscall 0x573CD0 => unported;
     /// `CStats::IncrementStat(uint16, float)` (0x55C180); the float raw
     fn increment_stat(stat: u32, v: u32) = cdecl 0x55C180 => unported;
-    /// `CPopulation::ManageAllPopulation()` (0x6160A0)
-    fn manage_all_population() = cdecl 0x6160A0 => unported;
-    /// `CGarages::AllRespraysCloseOrOpen(bool)` (0x448B30)
-    fn all_resprays_close_or_open(b: u32) = cdecl 0x448B30 => unported;
     /// `CAudioEngine::AttachMissionAudioToPhysical(uint8 slot, CPhysical*)` (0x507330)
     fn attach_mission_audio_to_physical(a: GPtr<u8>, slot: u32, p: GPtr<u8>) = thiscall 0x507330 => unported;
-    /// `CConversations::SetUpConversationNode(char*, char*, char*, int32, int32, int32)` (0x43A870)
-    fn set_up_conversation_node(a: GPtr<u8>, b: GPtr<u8>, c: GPtr<u8>, x: u32, y: u32, z: u32) = cdecl 0x43A870 => unported;
-    /// `CHud::SetZoneName(const char*, bool)` (0x588BB0)
-    fn set_zone_name(s: GPtr<u8>, b: u32) = cdecl 0x588BB0 => unported;
     /// `CRunningScript::PlayAnimScriptCommand(int32 command)` (0x470150; reads its own parameters)
     fn play_anim_script_command(s: Scr, command: u32) = thiscall 0x470150 => unported;
     /// `CAEVehicleAudioEntity::EnableHelicoptor()` (0x4F5C00) / `DisableHelicoptor()` (0x4F5BF0)
@@ -215,22 +189,12 @@ orig! {
     fn task_signal_at_ped_ctor(t: GPtr<u8>, p: GPtr<u8>, a: u32, b: u32) -> GPtr<u8> = thiscall 0x660A30 => unported;
     /// `CRunningScript::GivePedScriptedTask(int32 ped, CTask*, int32 command)` (0x465C20)
     fn give_ped_scripted_task(s: Scr, ped: u32, task: GPtr<u8>, command: u32) = thiscall 0x465C20 => unported;
-    /// `CPlayerPed::ForceGroupToAlwaysFollow(bool)` (0x60C7C0)
-    fn force_group_to_always_follow(p: GPtr<u8>, b: u32) = thiscall 0x60C7C0 => unported;
     /// `CMenuSystem::GetCarColourFromGrid(uint8, uint8)` (0x5822B0), AL
     fn get_car_colour_from_grid(menu: u32, item: u32) -> u8 = cdecl 0x5822B0 => unported;
     /// `CMenuSystem::HighlightOneItem(uint8, uint8, bool)` (0x581C10)
     fn highlight_one_item(menu: u32, item: u32, b: u32) = cdecl 0x581C10 => unported;
-    /// `CCam::Process_FollowPed_SA(const CVector&, float, float, float, bool)` (0x522D40); raw floats
-    fn cam_process_follow_ped_sa(c: GPtr<u8>, pos: GPtr<u8>, a: u32, b: u32, d: u32, e: u32) = thiscall 0x522D40 => unported;
-    /// `CCam::Process_FollowCar_SA(const CVector&, float, float, float, bool)` (0x5245B0); raw floats
-    fn cam_process_follow_car_sa(c: GPtr<u8>, pos: GPtr<u8>, a: u32, b: u32, d: u32, e: u32) = thiscall 0x5245B0 => unported;
-    /// `CWorld::FindPlayerVehicle(int32, bool)` (0x56E0D0)
-    fn find_player_vehicle(id: i32, b: u32) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
     /// `CStats::FindMostFavoriteRadioStation()` (0x558FA0)
     fn find_most_favorite_radio_station() -> u32 = cdecl 0x558FA0 => unported;
-    /// `CAudioEngine::RetuneRadio(int8)` (0x507E10); the whole EAX is pushed
-    fn retune_radio(a: GPtr<u8>, station: u32) = thiscall 0x507E10 => unported;
 }
 
 /// `PED(h)` / `VEH(h)` / `OBJ(h)`.

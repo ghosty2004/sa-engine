@@ -8,43 +8,26 @@ use sa_core::abi::{HookReg, NativeReg};
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
+use crate::bindings::streaming_remove_current_zones_models;
+use sa_core::bindings::clear_exciting_stuff_from_area;
+use sa_core::bindings::col_store_remove_all_collision;
+use sa_core::bindings::find_player_coors;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::game_drastic_tidy_up_memory;
+use sa_core::bindings::get_weapon_info as weapon_info_get;
+use sa_core::bindings::load_all_requested_models as streaming_load_all_requested_models;
+use sa_core::bindings::ped_clear_weapons;
+use sa_core::bindings::ped_give_weapon;
+use sa_core::bindings::ped_remove_weapon_anims;
+use sa_core::bindings::radar_remove_radar_sections;
+use sa_core::bindings::set_model_is_deletable as streaming_set_model_is_deletable;
+use sa_core::bindings::set_model_txd_is_deletable as streaming_set_model_txd_is_deletable;
+use sa_core::bindings::streaming_load_initial_peds;
+use sa_core::bindings::streaming_load_initial_weapons;
+use sa_core::bindings::streaming_request_model;
 orig! {
-    /// `CGame::DrasticTidyUpMemory(bool)` (0x53C810)
-    fn game_drastic_tidy_up_memory(b: u32) = cdecl 0x53C810 => unported;
-    /// `CWorld::FindPlayerCoors(CVector* out, int32)` (0x56E010)
-    fn find_player_coors(out: GPtr<u8>, id: i32) -> GPtr<u8> = cdecl 0x56E010 => unported;
-    /// `CWorld::ClearExcitingStuffFromArea(const CVector&, float, bool)` (0x56A0D0)
-    fn clear_exciting_stuff_from_area(pos: GPtr<u8>, radius: f32, b: u32) = cdecl 0x56A0D0 => unported;
-    /// `CColStore::RemoveAllCollision()` (0x410E00)
-    fn col_store_remove_all_collision() = cdecl 0x410E00 => unported;
-    /// `CStreaming::RemoveCurrentZonesModels()` (0x40B080)
-    fn streaming_remove_current_zones_models() = cdecl 0x40B080 => unported;
     /// `CStreaming::RemoveLoadedVehicle()` (0x40C020, bool in AL)
     fn streaming_remove_loaded_vehicle() -> u8 = cdecl 0x40C020 => unported;
-    /// `CRadar::RemoveRadarSections()` (0x584BF0)
-    fn radar_remove_radar_sections() = cdecl 0x584BF0 => unported;
-    /// `CStreaming::SetModelIsDeletable(int32)` (0x409C10)
-    fn streaming_set_model_is_deletable(model: i32) = cdecl 0x409C10 => unported;
-    /// `CStreaming::SetModelTxdIsDeletable(int32)` (0x409C70)
-    fn streaming_set_model_txd_is_deletable(model: i32) = cdecl 0x409C70 => unported;
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CPed::RemoveWeaponAnims(int32, float)` (0x5F0250, `ret 8`)
-    fn ped_remove_weapon_anims(p: GPtr<u8>, ty: i32, delta: f32) = thiscall 0x5F0250 => unported;
-    /// `CPed::ClearWeapons()` (0x5E6320)
-    fn ped_clear_weapons(p: GPtr<u8>) = thiscall 0x5E6320 => unported;
-    /// `CPed::GiveWeapon(eWeaponType, uint32 ammo, bool)` (0x5E6080, `ret 0xC`)
-    fn ped_give_weapon(p: GPtr<u8>, ty: u32, ammo: u32, b: u32) -> u32 = thiscall 0x5E6080 => unported;
-    /// `CStreaming::LoadInitialPeds()` (0x40D3D0)
-    fn streaming_load_initial_peds() = cdecl 0x40D3D0 => unported;
-    /// `CStreaming::LoadInitialWeapons()` (0x40A120)
-    fn streaming_load_initial_weapons() = cdecl 0x40A120 => unported;
-    /// `CStreaming::RequestModel(int32, int32 flags)` (0x4087E0)
-    fn streaming_request_model(model: i32, flags: i32) = cdecl 0x4087E0 => unported;
-    /// `CStreaming::LoadAllRequestedModels(bool)` (0x40EA10)
-    fn streaming_load_all_requested_models(b: u32) = cdecl 0x40EA10 => unported;
-    /// `CWeaponInfo::GetWeaponInfo(eWeaponType, eWeaponSkill)` (0x743C60)
-    fn weapon_info_get(ty: u32, skill: u32) -> GPtr<u8> = cdecl 0x743C60 => unported;
 }
 
 /// `CCutsceneMgr::ms_hasFileInfo`-like flag 0xB5F85C: set while everything is removed

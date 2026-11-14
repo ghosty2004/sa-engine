@@ -23,6 +23,12 @@ fn a32<T: sa_core::mem::GameData>(p: GPtr<T>) -> u32 {
 /// E_RW_STRING_TRUNCATION.
 const E_RW_TRUNCATED: u32 = 0x8000_001E;
 
+use crate::bindings::image_allocate_pixels as rw_image_allocate_pixels;
+use crate::bindings::image_destroy as rw_image_destroy;
+use crate::bindings::image_find_format;
+use crate::bindings::plugin_deinit_object;
+use crate::bindings::plugin_init_object;
+use sa_core::bindings::rw_error1;
 orig! {
     /// `_rwerror(code, a)` (0x8088D0, two arguments)
     fn rw_error2(code: u32, a: u32) -> u32 = cdecl 0x8088D0 => unported;
@@ -32,8 +38,6 @@ orig! {
     fn rw_strncpy(dst: GPtr<u8>, src: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl table 0xC97B24 0xFC => unported;
     /// `G->stringFuncs.rwstrlen(s)` (G+0x120)
     fn rw_strlen(s: GPtr<u8>) -> u32 = cdecl table 0xC97B24 0x120 => unported;
-    /// `_rwPluginRegistryInitObject(reg, obj)` (0x8086E0)
-    fn plugin_init_object(reg: GPtr<u8>, obj: GPtr<u8>) -> GPtr<u8> = cdecl 0x8086E0 => crate::plugin::registry_init_object;
     /// `_rwTextureReadAutoMipmap(name, mask)` (0x7F4AE0)
     fn texture_read_auto_mipmap(name: GPtr<u8>, mask: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F4AE0 => unported;
     /// The texture module's mipmap name callback (M+0x30)
@@ -52,8 +56,6 @@ orig! {
     fn rw_raster_lock_palette(r: GPtr<u8>, mode: u32) -> u32 = cdecl 0x7FB0E0 => crate::raster::rw_raster_lock_palette;
     /// `RwRasterUnlockPalette(raster)` (0x7FAFF0)
     fn rw_raster_unlock_palette(r: GPtr<u8>) -> GPtr<u8> = cdecl 0x7FAFF0 => crate::raster::rw_raster_unlock_palette;
-    /// `RwImageDestroy(image)` (0x802740)
-    fn rw_image_destroy(img: GPtr<u8>) -> u32 = cdecl 0x802740 => crate::image::rw_image_destroy;
     /// `RwImageGammaCorrect(image)` (0x803E30)
     fn rw_image_gamma_correct(img: GPtr<u8>) -> GPtr<u8> = cdecl 0x803E30 => crate::image::rw_image_gamma_correct;
     /// `RwRasterSetFromImage(raster, image)` (0x804290)
@@ -65,8 +67,6 @@ orig! {
     fn images_make_shared_palette(pal: GPtr<u8>, unused: u32, images: GPtr<u32>, count: i32, bits: u32) -> u32 = cdecl 0x7F44C0 => unported;
     /// `FUN_007ff450(image, raster)`: a 32-bit image from the raster pixels (0x7FF450)
     fn d3d9_image_get_raster32(img: GPtr<u8>, r: GPtr<u8>) -> u32 = cdecl 0x7FF450 => unported;
-    /// `_rwD3D9ImageFindFormat(image)` (0x7FFFF0)
-    fn image_find_format(img: GPtr<u8>) -> u32 = cdecl 0x7FFFF0 => unported;
     /// `RwImageCreateResample(image, w, h)` (0x80CD10)
     fn rw_image_create_resample(img: GPtr<u8>, w: i32, h: i32) -> GPtr<u8> = cdecl 0x80CD10 => crate::image::rw_image_create_resample_port;
     /// `FUN_00800810(d3dFormat)`: the RGBA -> pixel converter for a D3D format (0x800810)
@@ -77,12 +77,6 @@ orig! {
     fn raster_set_image_pal(r: GPtr<u8>, img: GPtr<u8>) -> u32 = cdecl 0x800C80 => unported;
     /// `FUN_00801390(raster, image)`: 24/32-bit raster from an image (0x801390)
     fn raster_set_image_32(r: GPtr<u8>, img: GPtr<u8>) -> u32 = cdecl 0x801390 => unported;
-    /// `_rwerror(code)` (0x8088D0, one argument)
-    fn rw_error1(code: u32) -> u32 = cdecl 0x8088D0 => unported;
-    /// `_rwPluginRegistryDeInitObject(reg, obj)` (0x808740)
-    fn plugin_deinit_object(reg: GPtr<u8>, obj: GPtr<u8>) -> GPtr<u8> = cdecl 0x808740 => crate::plugin::registry_deinit_object;
-    /// `RwImageAllocatePixels(image)` (0x8027A0)
-    fn rw_image_allocate_pixels(img: GPtr<u8>) -> GPtr<u8> = cdecl 0x8027A0 => crate::image::rw_image_allocate_pixels;
     /// `FUN_00803790(dst, src)`: image copy for equal depths (0x803790)
     fn image_copy_same_depth(dst: GPtr<u8>, src: GPtr<u8>) -> u32 = cdecl 0x803790 => unported;
     /// `FUN_00803840(dst, src)`: image copy with depth conversion (0x803840)

@@ -16,42 +16,31 @@ const TIME_MS: usize = 0xB7CB84;
 /// `CTaskSimpleDie::FinishAnimDieCB`
 const DIE_CB: u32 = 0x62FC10;
 
+use crate::bindings::anim_blend_animation;
+use crate::bindings::anim_blend_animation_hier;
+use crate::bindings::assoc_set_finish_callback;
+use crate::bindings::death_dtor as event_death_dtor;
+use crate::bindings::simple_die_ctor;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::intel_clear_tasks;
+use sa_world::bindings::leave_car_ctor;
+use sa_world::bindings::ped_set_ped_state;
+use sa_world::bindings::ped_stop_non_partial_anims;
+use sa_world::bindings::task_complex_ctor;
 orig! {
     /// `CTask::GetSubTask` (vtable +8)
     fn v_sub_task(t: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x8 => unported;
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CAnimManager::BlendAnimation(RpClump*, CAnimBlendHierarchy*, int32 flags, float delta)` (0x4D4410, cdecl)
-    fn anim_blend_animation_hier(clump: u32, hier: u32, flags: u32, delta: u32) -> GPtr<u8> = cdecl 0x4D4410 => unported;
-    /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float delta)` (0x4D4610, cdecl)
-    fn anim_blend_animation(clump: u32, group: u32, anim: u32, delta: u32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
-    /// `CAnimBlendAssociation::SetFinishCallback(cb, data)` (0x4CEBE0, `ret 8`)
-    fn assoc_set_finish_callback(a: GPtr<u8>, cb: u32, data: u32) = thiscall 0x4CEBE0 => unported;
     /// `CPed::ClearAll` (0x5E5320)
     fn ped_clear_all(p: GPtr<u8>) = thiscall 0x5E5320 => unported;
-    /// `CPed::StopNonPartialAnims` (0x5DED10)
-    fn ped_stop_non_partial_anims(p: GPtr<u8>) = thiscall 0x5DED10 => unported;
-    /// `CPed::SetPedState(ePedState)` (0x5E4500, `ret 4`)
-    fn ped_set_ped_state(p: GPtr<u8>, s: u32) = thiscall 0x5E4500 => unported;
-    /// `CPed::IsPlayer` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
     /// `CEventDeath::CEventDeath(bool drowning)` (0x4ADDF0, `ret 4`)
     fn event_death_ctor(e: GPtr<u8>, drowning: u32) -> GPtr<u8> = thiscall 0x4ADDF0 => unported;
-    /// `CEventDeath::~CEventDeath` (`FUN_004ade90`)
-    fn event_death_dtor(e: GPtr<u8>) = thiscall 0x4ADE90 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, `ret 8`)
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
     /// `CTaskSimpleDie::StartAnim(CPed*)` (0x637520, `ret 4`)
     fn o_die_start_anim(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x637520 => unported;
     /// `CTaskComplexDie::SayDeathSample(CPed*)` (0x630100, `ret 4`)
     fn o_say_death_sample(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x630100 => unported;
-    /// `CTaskComplexLeaveCar::CTaskComplexLeaveCar(CVehicle*, int32 door, int32 delay, bool, bool)` (0x63B8C0,
-    /// `ret 0x14`)
-    fn leave_car_ctor(t: GPtr<u8>, veh: GPtr<u8>, door: u32, delay: u32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x63B8C0 => unported;
-    /// `CPedIntelligence::ClearTasks(bool primary, bool secondary)` (0x601420, `ret 8`)
-    fn intel_clear_tasks(i: GPtr<u8>, a: u32, b: u32) = thiscall 0x601420 => unported;
-    /// `CTaskComplex::CTaskComplex` (0x61A3B0)
-    fn task_complex_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A3B0 => unported;
     /// `CTaskSimpleDrown::CTaskSimpleDrown` (0x62FEC0)
     fn drown_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x62FEC0 => unported;
     /// `operator*(const CVector&, float)` (`FUN_0040fec0`, cdecl, result through the hidden pointer)
@@ -59,9 +48,6 @@ orig! {
     /// `CTaskComplexFallToDeath::CTaskComplexFallToDeath(int32 dir, const CVector&, bool, bool)` (0x679040,
     /// `ret 0x10`)
     fn fall_to_death_ctor(t: GPtr<u8>, dir: u32, v: GPtr<u8>, a: u32, b: u32) -> GPtr<u8> = thiscall 0x679040 => unported;
-    /// `CTaskSimpleDie::CTaskSimpleDie(AssocGroupId, AnimationId, float blendDelta, float animSpeed)` (0x62FA00,
-    /// `ret 0x10`)
-    fn simple_die_ctor(t: GPtr<u8>, group: u32, anim: u32, delta: u32, speed: u32) -> GPtr<u8> = thiscall 0x62FA00 => unported;
 }
 
 /// `CTaskSimpleDie::StartAnim(CPed*)` (0x637520, `ret 4`): blends the death anim (from the hierarchy +0x10 with

@@ -23,6 +23,7 @@ sa_core::globals! {
     pub static CANNONS @ 0xC80740: [u8; NUM_CANNONS * CANNON_SIZE] = [0; NUM_CANNONS * CANNON_SIZE];
 }
 
+pub use crate::bindings::extinguish_point_with_water;
 orig! {
     /// `CAEWaterCannonAudioEntity::Initialise(CWaterCannon*)` (0x503060, thiscall)
     pub fn audio_initialise(ae: GPtr<u8>, wc: GPtr<u8>) = thiscall 0x503060 => unported;
@@ -34,8 +35,6 @@ orig! {
     pub fn init_call(this: GPtr<u8>) = thiscall 0x728B40 => init;
     /// `CWaterCannon::Update_NewInput(CVector*, CVector*)` (0x728C20)
     pub fn update_new_input_call(this: GPtr<u8>, pos: GPtr<u8>, vel: GPtr<u8>) = thiscall 0x728C20 => update_new_input;
-    /// `CFireManager::ExtinguishPointWithWater(CVector, float, float)` (0x5394C0, thiscall)
-    pub fn extinguish_point_with_water(man: GPtr<u8>, x: f32, y: f32, z: f32, r: f32, w: f32) -> u8 = thiscall 0x5394C0 => crate::fire::extinguish_point_with_water;
     /// `CWaterCannon::PushPeds()` (0x7295E0)
     pub fn push_peds_call(this: GPtr<u8>) = thiscall 0x7295E0 => unported;
     /// `CWaterCannon::Render()` (0x728DA0)

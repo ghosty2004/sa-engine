@@ -6,7 +6,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 /// `CPools::ms_pObjectPool` (0xB7449C): objects +0, flag bytes +4; objects are 0x19C bytes.
 const OBJECT_POOL: usize = 0xB7449C;
@@ -15,14 +15,9 @@ const TIME_MS: usize = 0xB7CB84;
 /// `CObject::nNoTempObjects` (0xBB4A70, int16)
 const NO_TEMP_OBJECTS: usize = 0xBB4A70;
 
-orig! {
-    /// `CWorld::Remove(CEntity*)` (0x563280)
-    fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
-    /// `CWorld::Add(CEntity*)` (0x563220)
-    fn world_add(e: GPtr<u8>) = cdecl 0x563220 => unported;
-    /// `CEntity::SetupBigBuilding()` (0x533150)
-    fn setup_big_building(e: GPtr<u8>) = thiscall 0x533150 => unported;
-}
+use sa_core::bindings::world_add;
+use sa_core::bindings::world_remove;
+use sa_stream::bindings::setup_big_building;
 
 use sa_core::field::at;
 

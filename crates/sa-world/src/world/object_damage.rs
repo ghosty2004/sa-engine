@@ -13,39 +13,27 @@ use sa_core::{hook, orig};
 
 use super::common::{g, rd, wr, x};
 
+use crate::bindings::audio_report_object_destruction as report_object_destruction;
+use crate::bindings::can_physical_be_damaged;
+use crate::bindings::entity_get_is_static as get_is_static;
+use crate::bindings::fx_play_and_kill as play_and_kill;
+use crate::bindings::matrix_copy_ctor;
+use crate::bindings::multiply3x3 as multiply3x3_mv;
+use crate::bindings::remove_from_moving_list;
+use crate::bindings::try_to_explode;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::find_player_vehicle;
+use sa_core::bindings::fx_create_mat_from_vec as create_mat_from_vec;
+use sa_core::bindings::matrix_dtor;
 orig! {
-    /// `CPhysical::CanPhysicalBeDamaged(eWeaponType, bool*)` (0x5448B0)
-    fn can_physical_be_damaged(e: GPtr<u8>, weapon: u32, out: u32) -> u8 = thiscall 0x5448B0 => unported;
-    /// `FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `FindPlayerVehicle(int32, bool)` (0x56E0D0)
-    fn find_player_vehicle(id: i32, remote: u32) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
     /// `BreakManager_c::Add(CObject*, RwV3d* velocity, float velocityRand, bool justFaces)` (0x59E9B0) on `g_breakMan` (0xBB4240)
     fn break_manager_add(man: GPtr<u8>, o: GPtr<u8>, vel: GPtr<u8>, rand: u32, just_faces: u32) -> u8 = thiscall 0x59E9B0 => unported;
-    /// `CEntity::GetIsStatic()` (0x4633E0)
-    fn get_is_static(e: GPtr<u8>) -> u8 = thiscall 0x4633E0 => unported;
-    /// `CPhysical::RemoveFromMovingList()` (0x542860)
-    fn remove_from_moving_list(e: GPtr<u8>) = thiscall 0x542860 => unported;
     /// `CEntity::DeleteRwObject()` (vtable +0x20)
     fn v_delete_rw_object(e: GPtr<u8>) = thiscall vslot 0x20 => unported;
-    /// `CObject::TryToExplode()` (0x59F2D0)
-    fn try_to_explode(o: GPtr<u8>) -> u8 = thiscall 0x59F2D0 => unported;
-    /// `CAudioEngine::ReportObjectDestruction(CEntity*)` (0x506ED0) on `AudioEngine` (0xB6BC90)
-    fn report_object_destruction(ae: GPtr<u8>, e: GPtr<u8>) = thiscall 0x506ED0 => unported;
-    /// `Fx_c::CreateMatFromVec(RwMatrix*, CVector* origin, CVector* direction)` (0x49E950) on `g_fx` (0xA9AE00)
-    fn create_mat_from_vec(fx: GPtr<u8>, m: GPtr<u8>, origin: GPtr<u8>, dir: GPtr<u8>) = thiscall 0x49E950 => unported;
     /// `FxManager_c::CreateFxSystem(FxSystemBP_c*, RwMatrix*, RwMatrix*, bool)` (0x4A95C0) on `g_fxMan` (0xA9AE80)
     fn create_fx_system_mat(man: GPtr<u8>, bp: GPtr<u8>, m: GPtr<u8>, parent: u32, local: u32) -> GPtr<u8> = thiscall 0x4A95C0 => unported;
     /// `FxManager_c::CreateFxSystem(FxSystemBP_c*, CVector*, RwMatrix*, bool)` (0x4A96B0) on `g_fxMan`
     fn create_fx_system_pos(man: GPtr<u8>, bp: GPtr<u8>, pos: GPtr<u8>, parent: u32, local: u32) -> GPtr<u8> = thiscall 0x4A96B0 => unported;
-    /// `FxSystem_c::PlayAndKill()` (0x4AA3D0)
-    fn play_and_kill(s: GPtr<u8>) = thiscall 0x4AA3D0 => unported;
-    /// `CMatrix::CMatrix(const CMatrix&)` (0x59BCF0)
-    fn matrix_copy_ctor(m: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = thiscall 0x59BCF0 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
-    /// `Multiply3x3(CVector* out, const CMatrix&, const CVector&)` (0x59C790)
-    fn multiply3x3_mv(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C790 => unported;
     /// `CVector::operator+=(const CVector&)` (0x411A00)
     fn vec_add_assign(v: GPtr<u8>, o: GPtr<u8>) -> GPtr<u8> = thiscall 0x411A00 => unported;
 }

@@ -23,18 +23,15 @@ const GROUP_SIZE: u32 = 0x2D4;
 /// 0.0f
 const K_ZERO: usize = 0x858B50;
 
+use crate::bindings::assoc_set_finish_callback;
+use sa_world::bindings::sequence_flush;
 orig! {
     /// Virtual slot +0 (scalar deleting destructor, `ret 4`).
     fn v_delete(o: GPtr<u8>, flags: u32) -> u32 = thiscall vslot 0x0 => unported;
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CTaskComplexSequence::Flush` (0x632C10)
-    fn sequence_flush(s: GPtr<u8>) = thiscall 0x632C10 => unported;
     /// `CPedGroup::RemoveAllFollowers` (0x5FB7D0)
     fn group_remove_all_followers(g: GPtr<u8>) = thiscall 0x5FB7D0 => unported;
-    /// `CAnimBlendAssociation::SetFinishCallback(void (*)(CAnimBlendAssociation*, void*), void*)` (0x4CEBE0,
-    /// `ret 8`)
-    fn assoc_set_finish_callback(a: GPtr<u8>, cb: u32, data: u32) = thiscall 0x4CEBE0 => unported;
 }
 
 /// `CDefaultAnimCallback::DefaultAnimCB` (the callback the duck task restores on its associations)

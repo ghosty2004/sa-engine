@@ -19,27 +19,26 @@ const K_ZERO: usize = 0x858B50;
 /// pi (f32)
 const K_PI: usize = 0x858CB8;
 
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_core::bindings::general_limit_radian_angle;
+use sa_core::bindings::matrix_set_rotate_z_only;
+use sa_core::bindings::tm_get_active_task;
+use sa_core::bindings::tm_get_simplest_active_task;
+use sa_core::bindings::vector2d_normalise;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::intel_get_task_fighting;
+use sa_world::bindings::ped_get_bone_position;
+use sa_world::bindings::ped_set_ped_position_in_car;
+use sa_world::bindings::physical_apply_move_force;
+use sa_world::bindings::physical_apply_move_force_5429f0 as physical_apply_move_force_v;
+use sa_world::bindings::placeable_set_posn;
 orig! {
     /// `CGeneral::GetRandomNumberInRange(float min, float max)` (0x41BD90, cdecl, ST0)
     fn general_random_float_in_range(lo: u32, hi: u32) -> f64 = cdecl 0x41BD90 => unported;
-    /// `CPhysical::ApplyMoveForce(float x, float y, float z)` (0x4ABBA0, `ret 0xC`)
-    fn physical_apply_move_force(p: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x4ABBA0 => unported;
-    /// `CPhysical::ApplyMoveForce(CVector)` (0x5429F0, `ret 0xC`; the vector by value)
-    fn physical_apply_move_force_v(p: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x5429F0 => unported;
-    /// `CPed::IsPlayer` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CTaskManager::GetActiveTask` (0x681720)
-    fn tm_get_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x681720 => unported;
-    /// `CTaskManager::GetSimplestActiveTask` (0x6819D0)
-    fn tm_get_simplest_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x6819D0 => unported;
     /// `CTask::MakeAbortable(CPed*, int32 priority, const CEvent*)` (vtable +0x18, `ret 0xC`)
     fn v_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, prio: i32, ev: GPtr<u8>) -> u8 = thiscall vslot 0x18 => unported;
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CPedIntelligence::GetTaskFighting` (0x600F30)
-    fn intel_get_task_fighting(i: GPtr<u8>) -> GPtr<u8> = thiscall 0x600F30 => unported;
-    /// `CPed::GetBonePosition(RwV3d&, uint32 bone, bool)` (0x5E4280, `ret 0xC`)
-    fn ped_get_bone_position(p: GPtr<u8>, out: GPtr<u8>, bone: u32, b: u32) = thiscall 0x5E4280 => unported;
     /// `RpAnimBlendClumpGetFirstAssociation(RpClump*, uint32 flags)` (0x4D6A70, cdecl)
     fn clump_get_first_association(clump: u32, flags: u32) -> GPtr<u8> = cdecl 0x4D6A70 => unported;
     /// `CTaskSimpleFight::IsComboSet` (0x4ABDC0)
@@ -48,26 +47,14 @@ orig! {
     fn fight_get_combo_anim_group_id(t: GPtr<u8>) -> u32 = thiscall 0x4ABDA0 => unported;
     /// `CStats::GetFatAndMuscleModifier(eStatModAbilities)` (0x559AF0, cdecl, ST0)
     fn stats_get_fat_and_muscle_modifier(i: u32) -> f64 = cdecl 0x559AF0 => unported;
-    /// `CVector2D::Normalise` (0x44E480)
-    fn vector2d_normalise(v: GPtr<u8>) = thiscall 0x44E480 => unported;
-    /// `CPed::SetPedPositionInCar` (0x5DF910)
-    fn ped_set_ped_position_in_car(p: GPtr<u8>) = thiscall 0x5DF910 => unported;
-    /// `CGeneral::LimitRadianAngle(float)` (0x53CB50, cdecl, ST0)
-    fn general_limit_radian_angle(a: u32) -> f64 = cdecl 0x53CB50 => unported;
-    /// `CMatrix::SetRotateZOnly(float)` (0x59B020, `ret 4`)
-    fn matrix_set_rotate_z_only(m: GPtr<u8>, a: u32) = thiscall 0x59B020 => unported;
     /// `CPhysical::TestCollision(bool applySpeed)` (vtable +0x34, `ret 4`)
     fn v_test_collision(p: GPtr<u8>, b: u32) -> u8 = thiscall vslot 0x34 => unported;
     /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, bool buildings, bool vehicles, bool peds,
     /// bool objects, bool dummies, bool seeThrough, bool ignoreSomeObjects)` (0x56A490, cdecl)
     #[allow(clippy::too_many_arguments)]
     fn world_los_clear(a: GPtr<u8>, b: GPtr<u8>, bu: u32, ve: u32, pe: u32, ob: u32, du: u32, st: u32, ig: u32) -> u8 = cdecl 0x56A490 => unported;
-    /// `CPlaceable::SetPosn(const CVector&)` (0x4241C0, `ret 4`)
-    fn placeable_set_posn(p: GPtr<u8>, v: GPtr<u8>) = thiscall 0x4241C0 => unported;
     /// `CPed::PositionPedOutOfCollision(int32 door, CVehicle*, bool)` (0x5E0820, `ret 0xC`)
     fn ped_position_ped_out_of_collision(p: GPtr<u8>, door: i32, veh: GPtr<u8>, b: u32) -> u8 = thiscall 0x5E0820 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00, `ret 4`)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
 }
 
 use sa_core::field::ptr_of as local;

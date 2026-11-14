@@ -10,13 +10,14 @@ use sa_world::world::common::{find_player_ped, find_player_vehicle};
 
 use crate::common::{ftol32, g, rand_at, rd, x, xi};
 
+use sa_core::bindings::vector_magnitude;
+use sa_world::bindings::fx_prt_mult_ctor;
+use sa_world::bindings::get_friction_effect;
 orig! {
     /// `SurfaceInfos_c::IsWater(uint32)` (0x55E710): bool in AL
     fn is_water(si: GPtr<u8>, id: u32) -> u32 = thiscall 0x55E710 => unported;
     /// `CWaterLevel::GetWaterLevel(float, float, float, float*, bool, CVector*)` (0x6EB690)
     fn get_water_level(px: f32, py: f32, pz: f32, out: GPtr<f32>, waves: u32, normal: u32) -> u8 = cdecl 0x6EB690 => unported;
-    /// `SurfaceInfos_c::GetFrictionEffect(uint32)` (0x55E650)
-    fn get_friction_effect(si: GPtr<u8>, id: u32) -> u32 = thiscall 0x55E650 => unported;
     /// `operator*(const CVector&, float)` (0x40FEC0, cdecl, hidden return pointer)
     fn vector_mul_scalar(out: GPtr<u8>, v: GPtr<u8>, s: f32) -> GPtr<u8> = cdecl 0x40FEC0 => sa_world::world::mvpa_math::vector_mul_scalar;
     /// `CVector::NormaliseAndMag()` (0x59C970), ST0
@@ -33,10 +34,6 @@ orig! {
     fn vector_add_assign(v: GPtr<u8>, o: GPtr<u8>) -> GPtr<u8> = thiscall 0x411A00 => sa_world::world::mvpa_math::vector_add_assign;
     /// `CVector::operator-=(const CVector&)` (0x406D70)
     fn vector_sub_assign(v: GPtr<u8>, o: GPtr<u8>) -> GPtr<u8> = thiscall 0x406D70 => sa_world::world::mvpa_math::vector_sub_assign;
-    /// `FxPrtMult_c::FxPrtMult_c(float r, float g, float b, float a, float size, float, float life)` (0x4AB290)
-    fn fx_prt_mult_ctor(p: GPtr<u8>, r: f32, gg: f32, b: f32, a: f32, size: f32, rot: f32, life: f32) -> GPtr<u8> = thiscall 0x4AB290 => unported;
-    /// `CVector::Magnitude()` (0x4082C0), ST0
-    fn vector_magnitude(v: GPtr<u8>) -> f64 = thiscall 0x4082C0 => unported;
     /// `CGeneral::GetRandomNumberInRange(float, float)` (0x41BD90), ST0
     fn random_in_range(min: f32, max: f32) -> f64 = cdecl 0x41BD90 => random_in_range_native;
     /// `VectorSub(CVector*, const CVector*, const CVector*)` (0x40FE60)

@@ -8,9 +8,11 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use sa_core::bindings::tm_get_active_task;
+use sa_world::bindings::event_attractor_ctor;
+use sa_world::bindings::event_attractor_dtor;
+use sa_world::bindings::event_group_add;
 orig! {
-    /// `CTaskManager::GetActiveTask()` (0x681720)
-    fn tm_get_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x681720 => unported;
     /// `CTask::GetTaskType()` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
     /// `CAttractorScanner::Clear()` (0x5FFF90)
@@ -26,12 +28,6 @@ orig! {
     fn get_closest_attractor(s: GPtr<u8>, effect: GPtr<u8>, entity: GPtr<u8>) = thiscall 0x600180 => unported;
     /// `FUN_00603570(C2dEffect*)` (0x603570): the ped a scripted attractor (type 7) is meant for
     fn scripted_attractor_ped(effect: GPtr<u8>) -> GPtr<u8> = cdecl 0x603570 => unported;
-    /// `CEventAttractor::CEventAttractor(C2dEffect*, CEntity*, bool)` (0x4AF350, `ret 0xC`)
-    fn event_attractor_ctor(e: GPtr<u8>, effect: GPtr<u8>, entity: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4AF350 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, `ret 8`)
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
-    /// `CEventAttractor::~CEventAttractor()` (`FUN_004af400`)
-    fn event_attractor_dtor(e: GPtr<u8>) = thiscall 0x4AF400 => unported;
 }
 
 /// `CTimer::m_snTimeInMilliseconds` (0xB7CB84)
@@ -191,25 +187,17 @@ pub fn attractor_scanner_scan_in_range(this: GPtr<u8>, ped: GPtr<u8>) {
     event_attractor_dtor(ev_p);
 }
 
+use crate::bindings::scripted_2d_effects_get_index;
+use sa_core::bindings::matrix_assign;
+use sa_core::bindings::matrix_dtor;
+use sa_core::bindings::matrix_set_scale;
+use sa_world::bindings::attractor_manager_has_empty_slot;
+use sa_world::bindings::get_ped_attractor_manager;
+use sa_world::bindings::placeable_get_matrix;
+use sa_world::bindings::transform_from_object_space as entity_transform_from_object_space;
 orig! {
-    /// `CEntity::TransformFromObjectSpace(CVector& out, const CVector& offset)` (0x5334F0, `ret 8`)
-    fn entity_transform_from_object_space(e: GPtr<u8>, out: GPtr<u8>, offset: GPtr<u8>) -> GPtr<u8> = thiscall 0x5334F0 => unported;
-    /// `CScripted2dEffects::GetIndex(const C2dEffect*)` (0x6F9F60)
-    fn scripted_2d_effects_get_index(effect: GPtr<u8>) -> i32 = cdecl 0x6F9F60 => unported;
-    /// `GetPedAttractorManager()` (0x5EE190)
-    fn get_ped_attractor_manager() -> GPtr<u8> = cdecl 0x5EE190 => unported;
-    /// `CPedAttractorManager::HasEmptySlot(const C2dEffect*, const CEntity*)` (0x5EBB00, `ret 8`)
-    fn attractor_manager_has_empty_slot(m: GPtr<u8>, effect: GPtr<u8>, entity: GPtr<u8>) -> u8 = thiscall 0x5EBB00 => unported;
-    /// `CPlaceable::GetMatrix()` (0x411990)
-    fn placeable_get_matrix(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x411990 => unported;
-    /// `CMatrix::operator=(const CMatrix&)` (0x59BBC0, `ret 4`)
-    fn matrix_assign(m: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = thiscall 0x59BBC0 => unported;
-    /// `CMatrix::SetScale(float)` (0x59AED0, `ret 4`)
-    fn matrix_set_scale(m: GPtr<u8>, s: u32) = thiscall 0x59AED0 => unported;
     /// `CPedAttractorManager::IsApproachable(C2dEffect*, const CMatrix&, int32, CPed*)` (0x5EA220)
     fn attractor_manager_is_approachable(effect: GPtr<u8>, m: GPtr<u8>, unused: u32, ped: GPtr<u8>) -> u8 = cdecl 0x5EA220 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
 }
 
 /// `CWeather::Rain` (0xC81324) and the rain level (0x858CC4) from which only shelter attractors (type 4) count

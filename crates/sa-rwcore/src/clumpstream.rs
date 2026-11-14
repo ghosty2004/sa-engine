@@ -18,17 +18,23 @@ const CAMERA_EXT: usize = 0xC924D8;
 const E_READ: u32 = 0x8000_001A;
 const E_VERSION: u32 = 0x8000_0004;
 
+use crate::bindings::resources_free_res_entry;
+use sa_core::bindings::geometry_add_ref;
+use sa_core::bindings::geometry_stream_read;
+use sa_core::bindings::object_has_frame_set_frame;
+use sa_core::bindings::rp_atomic_create as atomic_create;
+use sa_core::bindings::rp_atomic_destroy as atomic_destroy;
+use sa_core::bindings::rp_clump_create as clump_create;
+use sa_core::bindings::rp_clump_destroy as clump_destroy;
+use sa_core::bindings::rp_clump_for_all_atomics as clump_for_all_atomics;
+use sa_core::bindings::rw_error1 as rw_error;
+use sa_core::bindings::rw_frame_update_objects as frame_update_objects;
+use sa_core::bindings::stream_read;
 orig! {
     fn stream_find_chunk(s: GPtr<u8>, ty: u32, len: GPtr<u32>, ver: GPtr<u32>) -> i32 = cdecl 0x7ED2D0 => unported;
-    fn stream_read(s: GPtr<u8>, buf: GPtr<u8>, len: u32) -> u32 = cdecl 0x7EC9D0 => unported;
     fn stream_read_int32(s: GPtr<u8>, buf: GPtr<u8>, len: u32) -> GPtr<u8> = cdecl 0x7ED540 => unported;
-    fn rw_error(code: u32) -> u32 = cdecl 0x8088D0 => unported;
     fn rw_error2(code: u32, a: u32) -> u32 = cdecl 0x8088D0 => unported;
     fn rw_error_set(e: GPtr<RwError>) -> GPtr<RwError> = cdecl 0x808820 => unported;
-    fn clump_create() -> GPtr<u8> = cdecl 0x74A290 => unported;
-    fn clump_destroy(c: GPtr<u8>) -> i32 = cdecl 0x74A310 => unported;
-    fn atomic_create() -> GPtr<u8> = cdecl 0x749C50 => unported;
-    fn atomic_destroy(a: GPtr<u8>) -> i32 = cdecl 0x749DC0 => unported;
     fn atomic_get_world(a: GPtr<u8>) -> GPtr<u8> = cdecl 0x751050 => unported;
     fn registry_deinit_object(reg: u32, obj: GPtr<u8>) -> GPtr<u8> = cdecl 0x808740 => unported;
     fn registry_read_data_chunks(reg: u32, s: GPtr<u8>, obj: GPtr<u8>) -> GPtr<u8> = cdecl 0x808980 => unported;
@@ -36,17 +42,11 @@ orig! {
     fn frame_list_stream_read(s: GPtr<u8>, fl: GPtr<u8>) -> GPtr<u8> = cdecl 0x807970 => unported;
     fn frame_list_deinitialize(fl: GPtr<u8>) -> GPtr<u8> = cdecl 0x807720 => unported;
     fn frame_destroy_hierarchy(f: GPtr<u8>) -> i32 = cdecl 0x7F08A0 => unported;
-    fn frame_update_objects(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0910 => unported;
-    fn object_has_frame_set_frame(o: GPtr<u8>, f: GPtr<u8>) -> GPtr<u8> = cdecl 0x804EF0 => unported;
     fn object_has_frame_release_frame(o: GPtr<u8>) -> GPtr<u8> = cdecl 0x804F40 => unported;
-    fn resources_free_res_entry(e: GPtr<u8>) -> i32 = cdecl 0x807DE0 => unported;
-    fn geometry_stream_read(s: GPtr<u8>) -> GPtr<u8> = cdecl 0x74D190 => unported;
     fn geometry_destroy(g: GPtr<u8>) -> i32 = cdecl 0x74CCC0 => unported;
-    fn geometry_add_ref(g: GPtr<u8>) -> GPtr<u8> = cdecl 0x74CCB0 => unported;
     fn geometry_list_destroy(l: GPtr<u8>) -> GPtr<u8> = cdecl 0x74AE50 => unported;
     fn light_stream_read(s: GPtr<u8>) -> GPtr<u8> = cdecl 0x751F00 => unported;
     fn camera_stream_read(s: GPtr<u8>) -> GPtr<u8> = cdecl 0x808DE0 => unported;
-    fn clump_for_all_atomics(c: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> = cdecl 0x749B70 => unported;
     fn clump_for_all_lights(c: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> = cdecl 0x749C00 => unported;
     fn clump_for_all_cameras(c: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> = cdecl 0x749BB0 => unported;
     fn atomic_stream_read_call(s: GPtr<u8>, fl: GPtr<u8>, gl: GPtr<u8>) -> GPtr<u8> = cdecl 0x74B060 => atomic_stream_read;
@@ -438,8 +438,8 @@ pub fn force_linear_filtering_cb(m: GPtr<u8>, filter: u32) -> GPtr<u8> {
     m
 }
 
+use crate::bindings::engine_get_plugin_offset;
 orig! {
-    fn engine_get_plugin_offset(id: u32) -> i32 = cdecl 0x7F2BE0 => unported;
     fn atomic_get_plugin_offset(id: u32) -> i32 = cdecl 0x74BEC0 => unported;
     fn skin_atomic_set_pipeline(a: GPtr<u8>, ty: u32) -> GPtr<u8> = cdecl 0x7C89B0 => unported;
 }

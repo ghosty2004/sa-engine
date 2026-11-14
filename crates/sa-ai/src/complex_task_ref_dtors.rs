@@ -1,14 +1,11 @@
 //! Destructors of complex tasks that hold one entity reference (batch `frontier-1-2`), ported from the 1.0 US bytes.
 
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
-orig! {
-    /// `CTaskComplex::~CTaskComplex()` (0x61A3D0)
-    fn task_complex_dtor(t: GPtr<u8>) = thiscall 0x61A3D0 => unported;
-}
+use crate::bindings::task_complex_dtor;
 
 /// `FUN_006833d0` (0x6833D0): the complete destructor of the complex task with vtable 0x8706F8 (slot 0, its scalar
 /// deleting destructor, calls it): `vtbl = 0x8706F8`, the entity reference at +0xC cleaned up when set, then

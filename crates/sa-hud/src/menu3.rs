@@ -29,22 +29,13 @@ const K_1_448: u32 = 0x3B12_4925;
 
 use sa_math::fpu::fbits as k;
 
-orig! {
-    /// `CPad::GetAnaloguePadLeft()` (0x5409B0, AL)
-    fn pad_analogue_left(pad: GPtr<u8>) -> u8 = thiscall 0x5409B0 => unported;
-    /// `CPad::GetAnaloguePadRight()` (0x5409E0, AL)
-    fn pad_analogue_right(pad: GPtr<u8>) -> u8 = thiscall 0x5409E0 => unported;
-    /// `CRGBA::CRGBA(uint8, uint8, uint8, uint8)` (0x7170C0)
-    fn rgba_ctor(this: GPtr<u8>, r: u32, gg: u32, bb: u32, a: u32) -> GPtr<u8> = thiscall 0x7170C0 => unported;
-    /// `CSprite2d::DrawRect(const CRect&, const CRGBA&)` (0x727B60)
-    fn sprite_draw_rect(rect: GPtr<u8>, colour: GPtr<u8>) = cdecl 0x727B60 => unported;
-    /// `CMenuManager::DrawWindow(const CRect&, const char*, uint8, CRGBA, bool, bool)` (0x573EE0)
-    fn draw_window_call(this: GPtr<u8>, rect: GPtr<u8>, key: GPtr<u8>, colour: u32, back: u32, unused: u32, bg: u32) = thiscall 0x573EE0 => crate::menu_mgr::draw_window;
-    /// MSVC `eh vector constructor iterator(void*, size, count, ctor, dtor)` (0x821D30, stdcall)
-    fn eh_vector_ctor(p: GPtr<u8>, size: u32, count: u32, ctor: u32, dtor: u32) = stdcall 0x821D30 => unported;
-    /// MSVC `eh vector destructor iterator(void*, size, count, dtor)` (0x821E02, stdcall)
-    fn eh_vector_dtor(p: GPtr<u8>, size: u32, count: u32, dtor: u32) = stdcall 0x821E02 => unported;
-}
+use crate::bindings::analogue_pad_left as pad_analogue_left;
+use crate::bindings::analogue_pad_right as pad_analogue_right;
+use crate::bindings::draw_window_call;
+use sa_core::bindings::eh_vector_ctor;
+use sa_core::bindings::eh_vector_dtor;
+use sa_core::bindings::rgba_ctor;
+use sa_core::bindings::sprite_draw_rect;
 
 /// The original's stack temporaries as game pointers.
 fn local<T, const N: usize>(buf: &mut [T; N]) -> GPtr<T> {
@@ -234,29 +225,24 @@ pub fn display_grid_menu(menu: u32, bright: u32) {
     }
 }
 
+use crate::bindings::font_set_drop_color;
+use crate::bindings::font_set_drop_shadow_position;
+use crate::bindings::font_set_scale;
+use crate::bindings::msg_insert_player_control_keys as insert_player_control_keys;
+use sa_world::bindings::font_get_string_width_st0;
 orig! {
     /// `CFont::SetFontStyle(eFontStyle)` (0x719490)
     fn font_set_font_style(v: u32) = cdecl 0x719490 => crate::font::set_font_style;
-    /// `CFont::SetScale(float, float)` (0x719380)
-    fn font_set_scale(w: u32, h: u32) = cdecl 0x719380 => crate::font::set_scale;
-    /// `CFont::SetDropShadowPosition(int8)` (0x719570)
-    fn font_set_drop_shadow_position(v: u32) = cdecl 0x719570 => crate::font::set_drop_shadow_position;
-    /// `CFont::SetDropColor(CRGBA)` (0x719510)
-    fn font_set_drop_color(c: u32) = cdecl 0x719510 => crate::font::set_drop_color;
     /// `CFont::SetOrientation(eFontAlignment)` (0x719610)
     fn font_set_orientation(v: u32) = cdecl 0x719610 => crate::font::set_orientation;
     /// `CFont::SetColor(CRGBA)` (0x719430)
     fn font_set_color(c: u32) = cdecl 0x719430 => crate::font::set_color;
     /// `CFont::PrintString(float x, float y, const GxtChar*)` (0x71A700)
     fn font_print_string(px: f32, py: f32, text: GPtr<u8>) = cdecl 0x71A700 => crate::font_print::print_string;
-    /// `CFont::GetStringWidth(const GxtChar*, bool full, bool scriptText)` (0x71A0E0), ST0
-    fn font_get_string_width_st0(text: GPtr<u8>, full: u32, script: u32) -> f64 = cdecl 0x71A0E0 => unported;
     /// `CText::Get(const char*)` (0x6A0050)
     fn text_get(this: GPtr<u8>, key: GPtr<u8>) -> GPtr<u8> = thiscall 0x6A0050 => crate::text::text_get;
     /// `CMessages::InsertNumberInString(text, n1..n6, out)` (0x69DE90)
     fn insert_number_in_string(text: GPtr<u8>, n1: i32, n2: i32, n3: i32, n4: i32, n5: i32, n6: i32, out: GPtr<u8>) = cdecl 0x69DE90 => crate::messages::insert_number_in_string;
-    /// `CMessages::InsertPlayerControlKeysInString(GxtChar*)` (0x69E160)
-    fn insert_player_control_keys(s: GPtr<u8>) = cdecl 0x69E160 => crate::messages::insert_player_control_keys_in_string;
 }
 
 /// `TheText`

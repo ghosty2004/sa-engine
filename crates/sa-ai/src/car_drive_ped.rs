@@ -8,31 +8,23 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::anim_blend_animation;
+use crate::bindings::car_enter_exit_car_has_door_to_close;
+use crate::bindings::clump_get_association;
+use crate::bindings::damage_get_door_status_component;
+use crate::bindings::rt_quat_rotate;
+use sa_core::bindings::general_random_int_in_range;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::compute_target_door_to_exit as car_enter_exit_compute_target_door_to_exit;
 orig! {
-    /// `CPed::IsPlayer()` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
     /// `CVehicle::ClearWindowOpenFlag(uint8)` (0x6D30B0, `ret 4`)
     fn vehicle_clear_window_open_flag(v: GPtr<u8>, door: u32) = thiscall 0x6D30B0 => unported;
     /// `CVehicle::SetWindowOpenFlag(uint8)` (0x6D3080, `ret 4`)
     fn vehicle_set_window_open_flag(v: GPtr<u8>, door: u32) = thiscall 0x6D3080 => unported;
-    /// `RpAnimBlendClumpGetAssociation(RpClump*, AnimationId)` (0x4D68B0)
-    fn clump_get_association(clump: u32, id: u32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
-    /// `CGeneral::GetRandomNumberInRange(int32, int32)` (0x407180)
-    fn general_random_int_in_range(lo: i32, hi: i32) -> i32 = cdecl 0x407180 => unported;
-    /// `CCarEnterExit::ComputeTargetDoorToExit(const CVehicle*, const CPed*)` (0x64F110)
-    fn car_enter_exit_compute_target_door_to_exit(v: GPtr<u8>, ped: GPtr<u8>) -> u32 = cdecl 0x64F110 => unported;
-    /// `CDamageManager::GetDoorStatus(eDoors)` (0x6C2250, `ret 4`)
-    fn damage_get_door_status_component(d: GPtr<u8>, door: u32) -> u32 = thiscall 0x6C2250 => unported;
-    /// `CCarEnterExit::CarHasDoorToClose(const CVehicle*, int32 door)` (0x64EE10)
-    fn car_enter_exit_car_has_door_to_close(v: GPtr<u8>, door: u32) -> u8 = cdecl 0x64EE10 => unported;
     /// `CVehicle::CanPedLeanOut(CPed*)` (0x6D5CF0, `ret 4`)
     fn vehicle_can_ped_lean_out(v: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x6D5CF0 => unported;
-    /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float)` (0x4D4610)
-    fn anim_blend_animation(clump: u32, group: u32, id: u32, delta: u32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
     /// `CTaskSimpleCarDrive::StartBopping(CPed*)` (0x642760, `ret 4`)
     fn car_drive_start_bopping(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x642760 => unported;
-    /// `RtQuatRotate(RtQuat*, const RwV3d* axis, float angle, RwOpCombineType)` (0x7EB7C0)
-    fn rt_quat_rotate(q: GPtr<u8>, axis: u32, angle: f32, op: u32) -> GPtr<u8> = cdecl 0x7EB7C0 => unported;
 }
 
 /// The bopping switch value (0xC81324, float): above 0 every window closes and nothing bops
@@ -184,50 +176,43 @@ pub fn car_drive_process_arm_bopping(this: GPtr<u8>, ped: GPtr<u8>, enable: u8, 
     wr::<u8>(this, 0x5C, rd::<u8>(this, 0x5C) | 2);
 }
 
+use crate::bindings::event_cop_car_being_stolen_ctor;
+use crate::bindings::event_cop_car_being_stolen_dtor;
+use crate::bindings::gang_drive_by_ctor;
+use crate::bindings::ik_abort_look_at;
+use crate::bindings::task_timer_is_out_of_time;
+use crate::bindings::vehicle_is_passenger;
+use crate::bindings::vehicle_set_getting_out_flags;
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_core::bindings::entity_register_reference;
+use sa_core::bindings::find_player_ped as world_find_player_ped;
+use sa_world::bindings::car_drive_wander_ctor;
+use sa_world::bindings::damage_get_door_status;
+use sa_world::bindings::door_is_closed;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::event_script_command_ctor;
+use sa_world::bindings::event_script_command_dtor;
+use sa_world::bindings::get_event_global_group;
+use sa_world::bindings::get_pad_from_player as player_get_pad;
+use sa_world::bindings::ik_is_looking;
+use sa_world::bindings::is_coop_game_going_on as game_logic_is_coop_game_going_on;
+use sa_world::bindings::is_law_enforcement_vehicle as vehicle_is_law_enforcement_vehicle;
+use sa_world::bindings::leave_car_ctor;
+use sa_world::bindings::membership_is_leader;
+use sa_world::bindings::ped_get_held_entity;
+use sa_world::bindings::ped_groups_get_peds_group;
+use sa_world::bindings::ped_say;
+use sa_world::bindings::sequence_add_task;
+use sa_world::bindings::sequence_ctor;
+use sa_world::bindings::tm_find_active_task_by_type;
+use sa_world::bindings::upside_down_car_check_is_car_upside_down as upside_down_is_car_upside_down;
 orig! {
     /// `CAudioEngine::HasRadioRetuneJustStarted()` (0x506FE0)
     fn audio_has_radio_retune_just_started(ae: GPtr<u8>) -> u8 = thiscall 0x506FE0 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00, `ret 4`)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70, `ret 4`)
-    fn entity_register_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571B70 => unported;
-    /// `CPedGroups::GetPedsGroup(const CPed*)` (0x5F7E80)
-    fn ped_groups_get_peds_group(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x5F7E80 => unported;
-    /// `CUpsideDownCarCheck::IsCarUpsideDown(const CVehicle*)` (0x463830, `ret 4`)
-    fn upside_down_is_car_upside_down(c: GPtr<u8>, v: GPtr<u8>) -> u8 = thiscall 0x463830 => unported;
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210)
-    fn world_find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CPed::Say(uint16, uint32, float, uint8, uint8, uint8)` (0x5EFFE0, `ret 0x18`)
-    fn ped_say(p: GPtr<u8>, id: u32, off: u32, vol: u32, a: u32, b: u32, c: u32) -> u32 = thiscall 0x5EFFE0 => unported;
-    /// `CPedGroupMembership::IsLeader(const CPed*)` (0x5F69C0, `ret 4`)
-    fn membership_is_leader(m: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x5F69C0 => unported;
     /// `CEventCarUpsideDown::CEventCarUpsideDown(CVehicle*)` (0x4B1CC0, `ret 4`)
     fn event_car_upside_down_ctor(e: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = thiscall 0x4B1CC0 => unported;
     /// `CEventCarUpsideDown::~CEventCarUpsideDown()` (0x4B1D50)
     fn event_car_upside_down_dtor(e: GPtr<u8>) = thiscall 0x4B1D50 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, `ret 8`)
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
-    /// `CVehicle::IsLawEnforcementVehicle()` (0x6D2370)
-    fn vehicle_is_law_enforcement_vehicle(v: GPtr<u8>) -> u8 = thiscall 0x6D2370 => unported;
-    /// `CTaskTimer::IsOutOfTime()` (0x420E30)
-    fn task_timer_is_out_of_time(t: GPtr<u8>) -> u8 = thiscall 0x420E30 => unported;
-    /// `CEventCopCarBeingStolen::CEventCopCarBeingStolen(CPed*, CVehicle*)` (0x4B1740, `ret 8`)
-    fn event_cop_car_being_stolen_ctor(e: GPtr<u8>, ped: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = thiscall 0x4B1740 => unported;
-    /// `CEventCopCarBeingStolen::~CEventCopCarBeingStolen()` (0x4B17F0)
-    fn event_cop_car_being_stolen_dtor(e: GPtr<u8>) = thiscall 0x4B17F0 => unported;
-    /// `GetEventGlobalGroup()` (0x4ABA50)
-    fn get_event_global_group() -> GPtr<u8> = cdecl 0x4ABA50 => unported;
-    /// `CPlayerPed::GetPadFromPlayer()` (0x609560)
-    fn player_get_pad(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x609560 => unported;
-    /// `CTaskSimpleGangDriveBy::CTaskSimpleGangDriveBy(CEntity*, const CVector*, float, int8, int8, bool)` (0x6217D0,
-    /// `ret 0x18`; the bool goes as a whole dword)
-    fn gang_drive_by_ctor(t: GPtr<u8>, target: GPtr<u8>, pos: u32, range: u32, freq: u32, style: u32, rhs: u32) -> GPtr<u8> = thiscall 0x6217D0 => unported;
-    /// `CEventScriptCommand::CEventScriptCommand(int32, CTask*, bool)` (0x4B0A00, `ret 0xC`)
-    fn event_script_command_ctor(e: GPtr<u8>, idx: u32, t: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4B0A00 => unported;
-    /// `CEventScriptCommand::~CEventScriptCommand()` (0x4B0A50)
-    fn event_script_command_dtor(e: GPtr<u8>) = thiscall 0x4B0A50 => unported;
-    /// `CDoor::IsClosed()` (0x6F4800)
-    fn door_is_closed(d: GPtr<u8>) -> u8 = thiscall 0x6F4800 => unported;
     /// `CPad::GetAccelerate()` (0x5403F0; int16 in AX)
     fn pad_get_accelerate(pad: GPtr<u8>) -> u32 = thiscall 0x5403F0 => unported;
     /// `CPad::GetSteeringLeftRight()` (0x53FB80; int16 in AX)
@@ -244,38 +229,14 @@ orig! {
     fn v_vehicle_process_driving_anims(v: GPtr<u8>, ped: GPtr<u8>, b: u32) = thiscall vslot 0xB8 => unported;
     /// `CVehicle::GetRideAnimData()` (vtable +0xBC)
     fn v_vehicle_get_ride_anim_data(v: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0xBC => unported;
-    /// `CDamageManager::GetDoorStatus(eDoors)` (0x6C2230, `ret 4`)
-    fn damage_get_door_status(d: GPtr<u8>, door: u32) -> u32 = thiscall 0x6C2230 => unported;
-    /// `CVehicle::SetGettingOutFlags(uint8)` (0x6D3020, `ret 4`)
-    fn vehicle_set_getting_out_flags(v: GPtr<u8>, f: u32) = thiscall 0x6D3020 => unported;
     /// 0x642700 (`CTaskSimpleCarDrive`, `ret 4`): starts the door-close after getting out (this, ped)
     fn car_drive_642700(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x642700 => unported;
     /// `CTaskSimpleCarDrive::ProcessBopping(CPed*, bool)` (0x642E70, `ret 8`)
     fn car_drive_process_bopping(t: GPtr<u8>, ped: GPtr<u8>, b: u32) = thiscall 0x642E70 => unported;
-    /// `CVehicle::IsPassenger(const CPed*)` (0x6D1BD0, `ret 4`)
-    fn vehicle_is_passenger(v: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x6D1BD0 => unported;
-    /// `CGameLogic::IsCoopGameGoingOn()` (0x441390)
-    fn game_logic_is_coop_game_going_on() -> u8 = cdecl 0x441390 => unported;
-    /// `CPed::GetEntityThatThisPedIsHolding()` (0x5E02E0)
-    fn ped_get_held_entity(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x5E02E0 => unported;
-    /// `IKChainManager_c::IsLooking(CPed*)` (0x6181A0, `ret 4`)
-    fn ik_is_looking(m: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x6181A0 => unported;
-    /// `IKChainManager_c::AbortLookAt(CPed*, int32)` (0x618280, `ret 8`)
-    fn ik_abort_look_at(m: GPtr<u8>, ped: GPtr<u8>, blend: i32) = thiscall 0x618280 => unported;
-    /// `CTaskManager::FindActiveTaskByType(int32)` (0x681740, `ret 4`)
-    fn tm_find_active_task_by_type(tm: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x681740 => unported;
     /// `CTaskSimpleHoldEntity::PlayAnim(AnimationId, AssocGroupId)` (0x691720, `ret 8`)
     fn hold_entity_play_anim(t: GPtr<u8>, anim: u32, group: u32) = thiscall 0x691720 => unported;
     /// `CTaskSimpleCarDrive::TriggerIK(CPed*)` (0x63C500, `ret 4`)
     fn car_drive_trigger_ik(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x63C500 => unported;
-    /// `CTaskComplexSequence::CTaskComplexSequence()` (0x632BD0)
-    fn sequence_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x632BD0 => unported;
-    /// `CTaskComplexSequence::AddTask(CTask*)` (0x632D10, `ret 4`)
-    fn sequence_add_task(s: GPtr<u8>, t: GPtr<u8>) = thiscall 0x632D10 => unported;
-    /// `CTaskComplexLeaveCar::CTaskComplexLeaveCar(CVehicle*, int32 door, int32 delay, bool, bool)` (0x63B8C0, `ret 0x14`)
-    fn leave_car_ctor(t: GPtr<u8>, v: GPtr<u8>, door: u32, delay: u32, sensible: u32, force: u32) -> GPtr<u8> = thiscall 0x63B8C0 => unported;
-    /// `CTaskComplexCarDriveWander::CTaskComplexCarDriveWander(CVehicle*, int32 style, float speed)` (0x63CB10, `ret 0xC`)
-    fn car_drive_wander_ctor(t: GPtr<u8>, v: GPtr<u8>, style: u32, speed: u32) -> GPtr<u8> = thiscall 0x63CB10 => unported;
 }
 
 /// `AudioEngine` (0xB6BC90)

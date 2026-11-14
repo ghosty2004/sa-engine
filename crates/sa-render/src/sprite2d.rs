@@ -52,15 +52,11 @@ const RS_SRCBLEND: u32 = 0xA;
 const RS_DESTBLEND: u32 = 0xB;
 const RS_VERTEXALPHAENABLE: u32 = 0xC;
 
+pub use crate::bindings::rw_im2d_render_indexed_primitive;
+pub use sa_core::bindings::rw_im2d_render_primitive;
+pub use sa_stream::bindings::rw_texture_destroy;
+pub use sa_stream::bindings::rw_texture_read;
 orig! {
-    /// `RwTextureDestroy(RwTexture*)` (0x7F3820)
-    pub fn rw_texture_destroy(tex: GPtr<u8>) -> i32 = cdecl 0x7F3820 => unported;
-    /// `RwTextureRead(const char* name, const char* mask)` (0x7F3AC0)
-    pub fn rw_texture_read(name: GPtr<u8>, mask: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F3AC0 => unported;
-    /// `RwIm2DRenderPrimitive(type, vertices, n)` (0x734E90)
-    pub fn rw_im2d_render_primitive(ty: u32, verts: GPtr<u8>, n: i32) -> i32 = cdecl 0x734E90 => unported;
-    /// `RwIm2DRenderIndexedPrimitive(type, vertices, nv, indices, ni)` (0x734EA0)
-    pub fn rw_im2d_render_indexed_primitive(ty: u32, verts: GPtr<u8>, nv: i32, idx: GPtr<u16>, ni: i32) -> i32 = cdecl 0x734EA0 => unported;
     /// `RwRenderStateSet(state, value)` through `RwEngineInstance` +0x20
     pub fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
     /// `CSprite2d::SetVertices(const CRect&, const CRGBA&, x4)` (0x727420)
@@ -546,23 +542,19 @@ pub fn add_to_buffer(r: GPtr<u8>, c: GPtr<u8>, u1: u32, v1: u32, u2: u32, v2: u3
 /// Every `#[native]` of this module.
 pub const NATIVES: &[sa_core::abi::NativeReg] = &[NATIVE_DRAW_RECT];
 
+use sa_core::bindings::ascii_to_gxt_char as bc_ascii_to_gxt_char;
+use sa_core::bindings::font_print_string as bc_font_print_string;
+use sa_core::bindings::font_set_color as bc_font_set_color;
+use sa_core::bindings::font_set_edge as bc_font_set_edge;
+use sa_core::bindings::font_set_font_style as bc_font_set_font_style;
+use sa_core::bindings::font_set_orientation as bc_font_set_orientation;
+use sa_core::bindings::rgba_ctor as bc_rgba;
+use sa_core::bindings::sprintf1 as bc_sprintf;
+use sa_core::bindings::sprite_draw_rect as bc_draw_rect;
 sa_core::orig! {
-    /// `CSprite2d::DrawRect(const CRect&, const CRGBA&)` (0x727B60)
-    fn bc_draw_rect(rect: GPtr<u8>, colour: GPtr<u8>) = cdecl 0x727B60 => unported;
-    /// `CRGBA::CRGBA(r, g, b, a)` (0x7170C0, thiscall; the bytes pushed as dwords)
-    fn bc_rgba(c: GPtr<u8>, r: u32, g: u32, b: u32, a: u32) -> GPtr<u8> = thiscall 0x7170C0 => unported;
-    /// CRT `sprintf(buf, "%d%%", n)` (0x821BB5)
-    fn bc_sprintf(buf: GPtr<u8>, fmt: GPtr<u8>, n: i32) -> i32 = cdecl 0x821BB5 => unported;
-    fn bc_ascii_to_gxt_char(src: GPtr<u8>, dst: GPtr<u8>) = cdecl 0x718600 => unported;
     fn bc_font_set_wrapx(x: f32) = cdecl 0x7194D0 => unported;
     fn bc_font_set_right_justify_wrap(x: f32) = cdecl 0x7194F0 => unported;
-    /// `CFont::SetColor(CRGBA)` (the colour by value)
-    fn bc_font_set_color(c: u32) = cdecl 0x719430 => unported;
-    fn bc_font_set_edge(e: u32) = cdecl 0x719590 => unported;
-    fn bc_font_set_font_style(s: u32) = cdecl 0x719490 => unported;
     fn bc_font_set_scale(w: f32, h: f32) = cdecl 0x719380 => unported;
-    fn bc_font_set_orientation(o: u32) = cdecl 0x719610 => unported;
-    fn bc_font_print_string(x: f32, y: f32, text: GPtr<u8>) = cdecl 0x71A700 => unported;
 }
 
 /// `CSprite2d::DrawBarChart(float x, float y, uint16 width, uint8 height, float progress, int8 progressAdd,

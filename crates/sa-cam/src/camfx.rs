@@ -35,6 +35,7 @@ const CAM_COL_VARS: u32 = 0x8CC8E0;
 /// `AudioEngine` (CAudioEngine).
 const AUDIO_ENGINE: usize = 0xB6BC90;
 
+pub use sa_world::bindings::engine_is_loading_tune_active as audio_is_loading_tune_active;
 orig! {
     /// `CCamera::SetCamCollisionVarDataSet(int)` (0x50CB60)
     pub fn set_cam_collision_var_data_set_call(idx: i32) = cdecl 0x50CB60 => set_cam_collision_var_data_set;
@@ -52,8 +53,6 @@ orig! {
     pub fn get_task_duck(intel: GPtr<u8>, ignore_check: u8) -> GPtr<u8> = thiscall 0x6010A0 => unported;
     /// `RwCameraSetNearClipPlane(RwCamera*, RwReal)` (0x7EE1D0)
     pub fn rw_camera_set_near_clip_plane(cam: GPtr<u8>, near: f32) -> GPtr<u8> = cdecl 0x7EE1D0 => unported;
-    /// `CAudioEngine::IsLoadingTuneActive()` (0x506D90)
-    pub fn audio_is_loading_tune_active(ae: GPtr<u8>) -> u8 = thiscall 0x506D90 => unported;
     /// `CAudioEngine::SetMusicFaderScalingFactor(float)` (0x506E40)
     pub fn audio_set_music_fader_scaling_factor(ae: GPtr<u8>, v: u32) = thiscall 0x506E40 => unported;
     /// `CAudioEngine::SetEffectsFaderScalingFactor(float)` (0x506E50)

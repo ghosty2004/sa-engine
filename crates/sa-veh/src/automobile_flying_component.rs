@@ -9,60 +9,40 @@ use sa_math::x87::X87;
 
 use crate::common::{f32_of, ftol32, g, jne_mask, rd, wr, x, xi};
 
+use sa_core::bindings::frame_get_ltm;
+use sa_core::bindings::matrix_dtor;
+use sa_core::bindings::object_ctor;
+use sa_core::bindings::object_new;
+use sa_core::bindings::rp_atomic_clone;
+use sa_core::bindings::rp_atomic_set_frame;
+use sa_core::bindings::rw_frame_create;
+use sa_core::bindings::vector_dot_product as dot_product;
+use sa_core::bindings::vector_normalise;
+use sa_core::bindings::world_add;
+use sa_stream::bindings::entity_is_visible;
+use sa_stream::bindings::frame_for_all_objects;
+use sa_stream::bindings::set_atomic_render_callback;
+use sa_world::bindings::entity_attach_to_rw_object;
+use sa_world::bindings::entity_get_col_model;
+use sa_world::bindings::matrix_ctor_rw;
+use sa_world::bindings::process_col_models;
+use sa_world::bindings::vector_scale as scalar_mul_vec;
+use sa_world::bindings::vector_sub as vec_sub;
 orig! {
-    /// `RwFrameForAllObjects(RwFrame*, RwObjectCallBack, void*)` (0x7F1200)
-    fn frame_for_all_objects(f: GPtr<u8>, cb: u32, data: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F1200 => unported;
-    /// `CObject::operator new(uint32)` (0x5A1EE0)
-    fn object_new(size: u32) -> GPtr<u8> = cdecl 0x5A1EE0 => unported;
-    /// `CObject::CObject()` (0x5A1D10)
-    fn object_ctor(o: GPtr<u8>) -> GPtr<u8> = thiscall 0x5A1D10 => unported;
-    /// `RwFrameGetLTM(RwFrame*)` (0x7F0990)
-    fn frame_get_ltm(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0990 => unported;
     /// virtual `CEntity::SetModelIndexNoCreate(uint32)` (vtable +0x18)
     fn v_set_model_index_no_create(e: GPtr<u8>, mi: u32) = thiscall vslot 0x18 => unported;
     /// virtual `CEntity::SetIsStatic(bool)` (vtable +0x10)
     fn v_set_is_static(e: GPtr<u8>, s: u32) = thiscall vslot 0x10 => unported;
     /// `CObject::SetObjectCentreOfMass`-style offset setter `FUN_005a2cb0(float, float, float)` (0x5A2CB0)
     fn object_set_centre_offset(o: GPtr<u8>, x: f32, y: f32, z: f32) = thiscall 0x5A2CB0 => unported;
-    /// `CMatrix::CMatrix(RwMatrix*, bool)` (0x59C050)
-    fn matrix_ctor_rw(m: GPtr<u8>, rw: GPtr<u8>, owns: u32) -> GPtr<u8> = thiscall 0x59C050 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
-    /// `operator-(const CVector&, const CVector&)` (0x40FE60, the result through `out`)
-    fn vec_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => unported;
-    /// `operator*(float, const CVector&)` (0x40FE90, the result through `out`)
-    fn scalar_mul_vec(out: GPtr<u8>, s: f32, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE90 => unported;
-    /// `DotProduct(const CVector&, const CVector&)` (0x40FDB0): ST0
-    fn dot_product(a: GPtr<u8>, b: GPtr<u8>) -> f64 = cdecl 0x40FDB0 => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
     /// `CObject::RefModelInfo(int32)` (0x59F330)
     fn object_ref_model_info(o: GPtr<u8>, mi: i32) = thiscall 0x59F330 => unported;
-    /// `RwFrameCreate()` (0x7F0410)
-    fn rw_frame_create() -> GPtr<u8> = cdecl 0x7F0410 => unported;
-    /// `RpAtomicClone(RpAtomic*)` (0x749E60)
-    fn rp_atomic_clone(a: GPtr<u8>) -> GPtr<u8> = cdecl 0x749E60 => unported;
-    /// `RpAtomicSetFrame(RpAtomic*, RwFrame*)` (0x74BF20)
-    fn rp_atomic_set_frame(a: GPtr<u8>, f: GPtr<u8>) -> GPtr<u8> = cdecl 0x74BF20 => unported;
-    /// `CVisibilityPlugins::SetAtomicRenderCallback(RpAtomic*, RpAtomicCallBackRender)` (0x7328A0)
-    fn set_atomic_render_callback(a: GPtr<u8>, cb: u32) = cdecl 0x7328A0 => unported;
-    /// `CEntity::AttachToRwObject(RwObject*, bool)` (0x533ED0)
-    fn entity_attach_to_rw_object(e: GPtr<u8>, rw: GPtr<u8>, update: u32) = thiscall 0x533ED0 => unported;
     /// `CObject::SetRemapTexture(RwTexture*, int16 txd)` (0x59F350)
     fn object_set_remap_texture(o: GPtr<u8>, tex: u32, txd: i32) = thiscall 0x59F350 => unported;
     /// `CMatrix::operator+=(const CVector&)` (0x46AE00): adds to the position
     fn matrix_add_pos(m: GPtr<u8>, v: GPtr<u8>) = thiscall 0x46AE00 => unported;
     /// `CPhysical::ApplyMoveForce(CVector)` (0x5429F0)
     fn apply_move_force(e: GPtr<u8>, force: CVector) = thiscall 0x5429F0 => unported;
-    /// `CEntity::IsVisible()` (0x536BC0, AL)
-    fn entity_is_visible(e: GPtr<u8>) -> u8 = thiscall 0x536BC0 => unported;
-    /// `CEntity::GetColModel()` (0x535300)
-    fn entity_get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => unported;
-    /// `CCollision::ProcessColModels(const CMatrix&, CColModel&, const CMatrix&, CColModel&, CColPoint*,
-    /// CColPoint*, float*, bool)` (0x4185C0)
-    fn process_col_models(m1: GPtr<u8>, c1: GPtr<u8>, m2: GPtr<u8>, c2: GPtr<u8>, cps: u32, lcps: u32, dists: u32, b: u32) -> i32 = cdecl 0x4185C0 => unported;
-    /// `CWorld::Add(CEntity*)` (0x563220)
-    fn world_add(e: GPtr<u8>) = cdecl 0x563220 => unported;
 }
 
 use sa_core::field::ptr_of as buf;

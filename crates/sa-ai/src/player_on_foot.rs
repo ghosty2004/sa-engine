@@ -51,17 +51,34 @@ const K_STICK_SCALE: usize = 0x859044;
 /// 0.07 (0x858CA8): the move blend ratio step per time step
 const K_BLEND_STEP: usize = 0x858CA8;
 
+use crate::bindings::anim_blend_animation;
+use crate::bindings::assoc_group_get_animation;
+use crate::bindings::clump_get_association;
+use crate::bindings::pad_jump_just_down;
+use crate::bindings::ped_set_move_state;
+use crate::bindings::player_control_button_sprint;
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_core::bindings::general_random_int_in_range;
+use sa_core::bindings::get_weapon_info as weapon_info_get;
+use sa_core::bindings::intel_get_task_use_gun;
+use sa_core::bindings::set_model_is_deletable as streaming_set_model_is_deletable;
+use sa_core::bindings::streaming_request_model;
+use sa_core::bindings::tm_get_active_task;
+use sa_world::bindings::anim_get_next_association;
+use sa_world::bindings::camera_clear_player_weapon_mode;
+use sa_world::bindings::camera_using_1st_person_weapon_mode;
+use sa_world::bindings::complex_jump_ctor;
+use sa_world::bindings::get_pad_from_player as player_get_pad;
+use sa_world::bindings::get_stat_value as stats_get_stat_value;
+use sa_world::bindings::intel_get_task_fighting;
+use sa_world::bindings::intel_get_task_hold;
+use sa_world::bindings::pad_get_sprint;
+use sa_world::bindings::pad_get_target;
+use sa_world::bindings::ped_say;
+use sa_world::bindings::player_clear_weapon_target;
+use sa_world::bindings::player_set_real_move_anim;
+use sa_world::bindings::surface_cant_sprint_on;
 orig! {
-    /// `CPlayerPed::GetPadFromPlayer()` (0x609560)
-    fn player_get_pad(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x609560 => unported;
-    /// `CPed::SetMoveState(eMoveState)` (0x5DEC00, `ret 4`)
-    fn ped_set_move_state(p: GPtr<u8>, s: u32) = thiscall 0x5DEC00 => unported;
-    /// `CPedIntelligence::GetTaskFighting()` (0x600F30)
-    fn intel_get_task_fighting(i: GPtr<u8>) -> GPtr<u8> = thiscall 0x600F30 => unported;
-    /// `CPedIntelligence::GetTaskUseGun()` (0x600F70)
-    fn intel_get_task_use_gun(i: GPtr<u8>) -> GPtr<u8> = thiscall 0x600F70 => unported;
-    /// `CPedIntelligence::GetTaskHold(bool)` (0x600FF0, `ret 4`)
-    fn intel_get_task_hold(i: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x600FF0 => unported;
     /// `CPedIntelligence::SetTaskDuckSecondary(uint16)` (0x601230, `ret 4`)
     fn intel_set_task_duck_secondary(i: GPtr<u8>, t: u32) = thiscall 0x601230 => unported;
     /// `CTaskSimplePlayerOnFoot::PlayerControlDucked(CPlayerPed*)` (0x687F30, `ret 4`)
@@ -74,8 +91,6 @@ orig! {
     fn on_foot_process_player_weapon(t: GPtr<u8>, p: GPtr<u8>) = thiscall 0x6859A0 => unported;
     /// `CTaskManager::GetTaskSecondary(int32)` (0x681810, `ret 4`)
     fn tm_get_task_secondary(tm: GPtr<u8>, i: u32) -> GPtr<u8> = thiscall 0x681810 => unported;
-    /// `CTaskManager::GetActiveTask()` (0x681720)
-    fn tm_get_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x681720 => unported;
     /// `CTaskManager::SetTask(CTask*, int32 slot, bool)` (0x681AF0, `ret 0xC`)
     fn tm_set_task(tm: GPtr<u8>, t: GPtr<u8>, slot: u32, b: u32) = thiscall 0x681AF0 => unported;
     /// `CEvent::GetEventType` (vtable +4)
@@ -86,28 +101,14 @@ orig! {
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
     /// `CTask::MakeAbortable(CPed*, int32, const CEvent*)` (vtable +0x18, `ret 0xC`)
     fn v_task_make_abortable(t: GPtr<u8>, p: GPtr<u8>, prio: u32, e: GPtr<u8>) -> u8 = thiscall vslot 0x18 => unported;
-    /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float)` (0x4D4610)
-    fn anim_blend_animation(clump: u32, group: u32, id: u32, delta: u32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
-    /// `CCamera::Using1stPersonWeaponMode()` (0x50BFF0)
-    fn camera_using_1st_person_weapon_mode(c: GPtr<u8>) -> u8 = thiscall 0x50BFF0 => unported;
-    /// `CCamera::ClearPlayerWeaponMode()` (0x50AB10)
-    fn camera_clear_player_weapon_mode(c: GPtr<u8>) = thiscall 0x50AB10 => unported;
     /// `CWeaponEffects::ClearCrossHair(int32 player)` (0x742C60)
     fn weapon_effects_clear_cross_hair(n: u32) = cdecl 0x742C60 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00, `ret 4`)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
     /// `CPad::GetPedWalkLeftRight()` (0x53FC90; int16 in AX)
     fn pad_get_ped_walk_left_right(pad: GPtr<u8>) -> u32 = thiscall 0x53FC90 => unported;
     /// `CPad::GetPedWalkUpDown()` (0x53FD30; int16 in AX)
     fn pad_get_ped_walk_up_down(pad: GPtr<u8>) -> u32 = thiscall 0x53FD30 => unported;
-    /// `CPad::GetSprint()` (0x5407A0)
-    fn pad_get_sprint(pad: GPtr<u8>) -> u8 = thiscall 0x5407A0 => unported;
     /// `CPad::DuckJustDown(CPed*)` (0x540720; the argument is not pushed here)
     fn pad_duck_just_down(pad: GPtr<u8>) -> u8 = thiscall 0x540720 => unported;
-    /// `CPad::JumpJustDown()` (0x540770)
-    fn pad_jump_just_down(pad: GPtr<u8>) -> u8 = thiscall 0x540770 => unported;
-    /// `CPad::GetTarget()` (0x540670)
-    fn pad_get_target(pad: GPtr<u8>) -> u8 = thiscall 0x540670 => unported;
     /// `CPad::SetTouched()` (0x53F200)
     fn pad_set_touched(pad: GPtr<u8>) = thiscall 0x53F200 => unported;
     /// `CPad::GetTouchedTimeDelta()` (0x53F210)
@@ -116,40 +117,12 @@ orig! {
     fn general_get_radian_angle_between_points(x1: f32, y1: f32, x2: f32, y2: f32) -> f64 = cdecl 0x53CBE0 => unported;
     /// `CGeneral::LimitRadianAngle(float)` (0x53CB50, ST0)
     fn general_limit_radian_angle(a: f32) -> f64 = cdecl 0x53CB50 => unported;
-    /// `CGeneral::GetRandomNumberInRange(int32, int32)` (0x407180)
-    fn general_random_int_in_range(lo: i32, hi: i32) -> i32 = cdecl 0x407180 => unported;
     /// `CGameLogic::IsPlayerAllowedToGoInThisDirection(CPed*, CVector dir, float limit)` (0x441E10)
     fn game_logic_is_player_allowed_to_go_in_this_direction(p: GPtr<u8>, dx: f32, dy: f32, dz: f32, limit: f32) -> u8 = cdecl 0x441E10 => unported;
-    /// `CWeaponInfo::GetWeaponInfo(eWeaponType, eWeaponSkill)` (0x743C60)
-    fn weapon_info_get(ty: u32, skill: u32) -> GPtr<u8> = cdecl 0x743C60 => unported;
-    /// `SurfaceInfos_c::CantSprintOn(uint32)` (0x55E870, `ret 4`)
-    fn surface_cant_sprint_on(s: GPtr<u8>, id: u32) -> u8 = thiscall 0x55E870 => unported;
-    /// `CAnimBlendAssocGroup::GetAnimation(AnimationId)` (0x4CE090, `ret 4`)
-    fn assoc_group_get_animation(g: GPtr<u8>, id: u32) -> GPtr<u8> = thiscall 0x4CE090 => unported;
-    /// `CPlayerPed::ControlButtonSprint(eSprintType)` (0x60A610, `ret 4`, ST0)
-    fn player_control_button_sprint(p: GPtr<u8>, ty: u32) -> f64 = thiscall 0x60A610 => unported;
-    /// `CPlayerPed::SetRealMoveAnim()` (0x60A9C0)
-    fn player_set_real_move_anim(p: GPtr<u8>) = thiscall 0x60A9C0 => unported;
-    /// `RpAnimBlendClumpGetAssociation(RpClump*, AnimationId)` (0x4D68B0)
-    fn clump_get_association(clump: u32, id: u32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
     /// `RpAnimBlendClumpGetFirstAssociation(RpClump*)` (0x4D15E0)
     fn clump_get_first_association(clump: u32) -> GPtr<u8> = cdecl 0x4D15E0 => unported;
-    /// `RpAnimBlendGetNextAssociation(CAnimBlendAssociation*)` (0x4D6AB0)
-    fn anim_get_next_association(a: GPtr<u8>) -> GPtr<u8> = cdecl 0x4D6AB0 => unported;
     /// `CTaskSimpleDuck::CanPedDuck(CPed*)` (0x692610)
     fn duck_can_ped_duck(p: GPtr<u8>) -> u8 = cdecl 0x692610 => unported;
-    /// `CPlayerPed::ClearWeaponTarget()` (0x609C80)
-    fn player_clear_weapon_target(p: GPtr<u8>) = thiscall 0x609C80 => unported;
-    /// `CTaskComplexJump::CTaskComplexJump(eForceClimb)` (0x67A030, `ret 4`)
-    fn complex_jump_ctor(t: GPtr<u8>, climb: u32) -> GPtr<u8> = thiscall 0x67A030 => unported;
-    /// `CStreaming::RequestModel(int32, int32 flags)` (0x4087E0)
-    fn streaming_request_model(id: i32, flags: i32) = cdecl 0x4087E0 => unported;
-    /// `CStreaming::SetModelIsDeletable(int32)` (0x409C10)
-    fn streaming_set_model_is_deletable(id: i32) = cdecl 0x409C10 => unported;
-    /// `CStats::GetStatValue(eStats)` (0x558E40, ST0)
-    fn stats_get_stat_value(id: u32) -> f64 = cdecl 0x558E40 => unported;
-    /// `CPed::Say(uint16, uint32, float, uint8, uint8, uint8)` (0x5EFFE0, `ret 0x18`)
-    fn ped_say(p: GPtr<u8>, id: u32, off: u32, prob: u32, a: u32, b: u32, c: u32) -> u32 = thiscall 0x5EFFE0 => unported;
 }
 
 fn intel(ped: GPtr<u8>) -> GPtr<u8> {
@@ -502,21 +475,16 @@ pub fn on_foot_play_idle_animations(this: GPtr<u8>, ped: GPtr<u8>) {
     g::<i32>(LAST_TOUCH_TIME_DELTA).write(0);
 }
 
+use crate::bindings::duck_control_duck_move;
+use sa_world::bindings::game_logic_is_player_use_2player_controls;
+use sa_world::bindings::pad_exit_vehicle_just_down;
+use sa_world::bindings::vector_sub;
+use sa_world::bindings::weapon_is_type_melee;
 orig! {
-    /// `CWeapon::IsTypeMelee()` (0x73B1C0)
-    fn weapon_is_type_melee(w: GPtr<u8>) -> u8 = thiscall 0x73B1C0 => unported;
-    /// `CGameLogic::IsPlayerUse2PlayerControls(CPed*)` (0x442020)
-    fn game_logic_is_player_use_2player_controls(p: GPtr<u8>) -> u8 = cdecl 0x442020 => unported;
     /// `CPedIntelligence::ClearTaskDuckSecondary()` (0x601390)
     fn intel_clear_task_duck_secondary(i: GPtr<u8>) = thiscall 0x601390 => unported;
-    /// `CTaskSimpleDuck::ControlDuckMove(float x, float y)` (0x6923F0, `ret 8`)
-    fn duck_control_duck_move(d: GPtr<u8>, mx: f32, my: f32) = thiscall 0x6923F0 => unported;
     /// `CTaskSimpleUseGun::ControlGunMove(const CVector2D&)` (0x61E0C0, `ret 4`)
     fn use_gun_control_gun_move(t: GPtr<u8>, v: GPtr<u8>) -> u8 = thiscall 0x61E0C0 => unported;
-    /// `CPad::ExitVehicleJustDown()` (0x540120)
-    fn pad_exit_vehicle_just_down(pad: GPtr<u8>) -> u8 = thiscall 0x540120 => unported;
-    /// `VectorSub(CVector* out, const CVector* a, const CVector* b)` (0x40FE60): out = a - b
-    fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => unported;
 }
 
 /// `CAnimManager` blend delta used by the duck/gun/stand-up blends (0x8D2FF0, 4.0)
@@ -974,91 +942,77 @@ fn fighter_idle_direction(fight: GPtr<u8>, pd: GPtr<u8>) {
     }
 }
 
+use crate::bindings::duck_is_task_in_use_by_other_tasks;
+use crate::bindings::fight_ctor;
+use crate::bindings::ik_abort_look_at;
+use crate::bindings::intel_is_in_seeing_range;
+use crate::bindings::stealth_kill_ctor;
+use crate::bindings::ug_abort_ik_orig as use_gun_abort_ik;
+use sa_core::bindings::matrix_mul_vec;
+use sa_world::bindings::camera_set_new_player_weapon_mode;
+use sa_world::bindings::damage_calc_compute_damage_response;
+use sa_world::bindings::damage_calc_ctor;
+use sa_world::bindings::damage_calc_dtor;
+use sa_world::bindings::event_damage_affects_ped;
+use sa_world::bindings::event_damage_ctor;
+use sa_world::bindings::event_damage_dtor;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::event_group_event_ctor;
+use sa_world::bindings::event_group_event_dtor;
+use sa_world::bindings::event_gun_aimed_at_ctor;
+use sa_world::bindings::event_gun_aimed_at_dtor;
+use sa_world::bindings::ik_is_looking;
+use sa_world::bindings::ik_look_at;
+use sa_world::bindings::intel_get_task_duck;
+use sa_world::bindings::intel_get_task_throw;
+use sa_world::bindings::is_coop_game_going_on as game_logic_is_coop_game_going_on;
+use sa_world::bindings::localisation_kicking_when_down;
+use sa_world::bindings::pad_get_enter_targeting;
+use sa_world::bindings::pad_get_weapon;
+use sa_world::bindings::pad_melee_attack_just_down;
+use sa_world::bindings::ped_get_weapon_skill;
+use sa_world::bindings::ped_groups_are_in_same_group;
+use sa_world::bindings::ped_groups_get_peds_group;
+use sa_world::bindings::ped_set_ped_state;
+use sa_world::bindings::ped_weapon_audio_add_audio_event;
+use sa_world::bindings::placeable_get_top_direction;
+use sa_world::bindings::report_crime as crime_report_crime;
+use sa_world::bindings::task_use_goggles_ctor as use_goggles_ctor;
 orig! {
-    /// `CPed::GetWeaponSkill()` (0x5E6580; the current weapon's skill)
-    fn ped_get_weapon_skill(p: GPtr<u8>) -> u32 = thiscall 0x5E6580 => unported;
     /// `CPad::WeaponJustDown(CPed*)` (0x540250, `ret 4`; AL, EAX passed on whole once)
     fn pad_weapon_just_down(pad: GPtr<u8>, ped: GPtr<u8>) -> u32 = thiscall 0x540250 => unported;
     /// `CPlayerPed::PlayerHasJustAttackedSomeone()` (0x60D5A0)
     fn player_has_just_attacked_someone(p: GPtr<u8>) = thiscall 0x60D5A0 => unported;
-    /// `CPad::GetEnterTargeting()` (0x5406B0)
-    fn pad_get_enter_targeting(pad: GPtr<u8>) -> u8 = thiscall 0x5406B0 => unported;
     /// `CTaskSimpleUseGun::PlayerPassiveControlGun()` (0x61E0A0)
     fn use_gun_player_passive_control_gun(t: GPtr<u8>) -> u8 = thiscall 0x61E0A0 => unported;
-    /// `CCamera::SetNewPlayerWeaponMode(int16 mode, int16 maxZoom, int16 minZoom)` (0x50BFB0, `ret 0xC`)
-    fn camera_set_new_player_weapon_mode(cam: GPtr<u8>, mode: u32, max: u32, min: u32) = thiscall 0x50BFB0 => unported;
-    /// `CPed::SetPedState(ePedState)` (0x5E4500, `ret 4`)
-    fn ped_set_ped_state(p: GPtr<u8>, s: u32) = thiscall 0x5E4500 => unported;
-    /// `CPad::MeleeAttackJustDown(bool)` (0x540390, `ret 4`)
-    fn pad_melee_attack_just_down(pad: GPtr<u8>, b: u32) -> u8 = thiscall 0x540390 => unported;
     /// `CPad::GetMeleeAttack(bool)` (0x540340, `ret 4`)
     fn pad_get_melee_attack(pad: GPtr<u8>, b: u32) -> u8 = thiscall 0x540340 => unported;
-    /// `CTaskSimpleStealthKill::CTaskSimpleStealthKill(bool, CPed*, AssocGroupId)` (0x6225F0, `ret 0xC`)
-    fn stealth_kill_ctor(t: GPtr<u8>, b: u32, target: GPtr<u8>, group: u32) -> GPtr<u8> = thiscall 0x6225F0 => unported;
     /// `CPedIntelligence::TestForStealthKill(CPed*, bool)` (0x601E00, `ret 8`)
     fn intel_test_for_stealth_kill(i: GPtr<u8>, target: GPtr<u8>, full: u32) -> u8 = thiscall 0x601E00 => unported;
-    /// `CPedIntelligence::GetTaskDuck(bool)` (0x6010A0, `ret 4`)
-    fn intel_get_task_duck(i: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x6010A0 => unported;
-    /// `CTaskSimpleDuck::IsTaskInUseByOtherTasks()` (0x61C3D0)
-    fn duck_is_task_in_use_by_other_tasks(d: GPtr<u8>) -> u8 = thiscall 0x61C3D0 => unported;
-    /// `CTaskSimpleFight::CTaskSimpleFight(CEntity*, int32 command, uint32 idlePeriod)` (0x61C470, `ret 0xC`)
-    fn fight_ctor(t: GPtr<u8>, target: GPtr<u8>, cmd: u32, idle: u32) -> GPtr<u8> = thiscall 0x61C470 => unported;
     /// `CTaskManager::SetTaskSecondary(CTask*, int32)` (0x681B60, `ret 8`)
     fn tm_set_task_secondary(tm: GPtr<u8>, t: GPtr<u8>, slot: u32) = thiscall 0x681B60 => unported;
-    /// `CPedDamageResponseCalculator::CPedDamageResponseCalculator(CEntity*, float, eWeaponType, ePedPieceTypes,
-    /// bool)` (0x4AD3F0, `ret 0x14`)
-    fn damage_calc_ctor(c: GPtr<u8>, src: GPtr<u8>, dmg: u32, wt: u32, piece: u32, b: u32) -> GPtr<u8> = thiscall 0x4AD3F0 => unported;
-    /// `CPedDamageResponseCalculator::~CPedDamageResponseCalculator()` (0x4AD420)
-    fn damage_calc_dtor(c: GPtr<u8>) = thiscall 0x4AD420 => unported;
-    /// `CPedDamageResponseCalculator::ComputeDamageResponse(CPed*, CPedDamageResponse&, bool)` (0x4B5AC0, `ret 0xC`)
-    fn damage_calc_compute_damage_response(c: GPtr<u8>, ped: GPtr<u8>, r: GPtr<u8>, b: u32) = thiscall 0x4B5AC0 => unported;
-    /// `CEventDamage::CEventDamage(CEntity*, uint32 time, eWeaponType, ePedPieceTypes, uint8 direction, bool, bool)`
-    /// (0x4AD830, `ret 0x1C`; the last bool goes as a whole dword)
-    fn event_damage_ctor(e: GPtr<u8>, src: GPtr<u8>, time: u32, wt: u32, piece: u32, dir: u32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x4AD830 => unported;
-    /// `CEventDamage::~CEventDamage()` (0x4AD960)
-    fn event_damage_dtor(e: GPtr<u8>) = thiscall 0x4AD960 => unported;
-    /// `CEventDamage::AffectsPed(CPed*)` (0x4B35A0, `ret 4`)
-    fn event_damage_affects_ped(e: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x4B35A0 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, `ret 8`)
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
-    /// `CCrime::ReportCrime(eCrimeType, CEntity*, CPed*)` (0x532010)
-    fn crime_report_crime(ty: i32, victim: GPtr<u8>, by: GPtr<u8>) = cdecl 0x532010 => unported;
-    /// `CAEPedWeaponAudioEntity::AddAudioEvent(eAudioEvents)` (0x4E69F0, `ret 4`)
-    fn ped_weapon_audio_add_audio_event(e: GPtr<u8>, ev: u32) = thiscall 0x4E69F0 => unported;
     /// `CTaskSimpleUseGun::ControlGun(CPed*, CEntity*, int8 command)` (0x61E040, `ret 0xC`)
     fn use_gun_control_gun(t: GPtr<u8>, ped: GPtr<u8>, target: GPtr<u8>, cmd: u32) -> u8 = thiscall 0x61E040 => unported;
-    /// `CPad::GetWeapon(CPed*)` (0x540180, `ret 4`; the whole EAX is tested)
-    fn pad_get_weapon(pad: GPtr<u8>, ped: GPtr<u8>) -> u32 = thiscall 0x540180 => unported;
     /// `CTaskSimpleUseGun::RequirePistolWhip(CPed*, CEntity*)` (0x61E200)
     fn use_gun_require_pistol_whip(ped: GPtr<u8>, target: GPtr<u8>) -> u8 = cdecl 0x61E200 => unported;
     /// `CTaskSimpleUseGun::CTaskSimpleUseGun(CEntity*, CVector, uint8 command, uint16 burst, bool aimImmediate)`
     /// (0x61DE60, `ret 0x1C`; the command goes as a whole dword)
     fn use_gun_ctor(t: GPtr<u8>, target: GPtr<u8>, x: u32, y: u32, z: u32, cmd: u32, burst: u32, aim: u32) -> GPtr<u8> = thiscall 0x61DE60 => unported;
-    /// `CTaskComplexUseGoggles::CTaskComplexUseGoggles()` (0x634EF0)
-    fn use_goggles_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x634EF0 => unported;
     /// `CWeapon::Fire(CEntity*, CVector* origin, CVector* muzzle, CEntity* target, CVector* targetPos, CVector*)`
     /// (0x742300, `ret 0x18`)
     fn weapon_fire(w: GPtr<u8>, owner: GPtr<u8>, origin: GPtr<u8>, muzzle: GPtr<u8>, target: GPtr<u8>, tpos: GPtr<u8>, alt: GPtr<u8>) -> u8 = thiscall 0x742300 => unported;
-    /// `CPedIntelligence::GetTaskThrow()` (0x600FB0)
-    fn intel_get_task_throw(i: GPtr<u8>) -> GPtr<u8> = thiscall 0x600FB0 => unported;
     /// `CTaskSimpleThrowProjectile::ControlThrow(bool, CEntity*, CVector*)` (0x61F810, `ret 0xC`)
     fn throw_control_throw(t: GPtr<u8>, b: u32, target: GPtr<u8>, pos: GPtr<u8>) -> u8 = thiscall 0x61F810 => unported;
     /// `CTaskSimpleThrowProjectile::CTaskSimpleThrowProjectile(CEntity*, CVector)` (0x61F660, `ret 0x10`)
     fn throw_projectile_ctor(t: GPtr<u8>, target: GPtr<u8>, x: u32, y: u32, z: u32) -> GPtr<u8> = thiscall 0x61F660 => unported;
-    /// `CMatrix::operator*(CVector* out, const CMatrix&, const CVector&)` (0x59C890)
-    fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
     /// `CWeaponInfo::GetCrouchReloadAnimationID()` (0x685700)
     fn weapon_info_get_crouch_reload_anim_id(wi: GPtr<u8>) -> u32 = thiscall 0x685700 => unported;
     /// `CPad::AimWeaponLeftRight(CPed*)` (0x541040, `ret 4`; int16 in AX)
     fn pad_aim_weapon_left_right(pad: GPtr<u8>, ped: GPtr<u8>) -> u32 = thiscall 0x541040 => unported;
     /// `CPad::AimWeaponUpDown(CPed*)` (0x5410C0, `ret 4`; int16 in AX)
     fn pad_aim_weapon_up_down(pad: GPtr<u8>, ped: GPtr<u8>) -> u32 = thiscall 0x5410C0 => unported;
-    /// `CGameLogic::IsCoopGameGoingOn()` (0x441390)
-    fn game_logic_is_coop_game_going_on() -> u8 = cdecl 0x441390 => unported;
     /// `CPlayerPed::PedCanBeTargettedVehicleWise(CPed*)` (0x609D90)
     fn player_ped_can_be_targetted_vehicle_wise(p: GPtr<u8>) -> u8 = cdecl 0x609D90 => unported;
-    /// `CLocalisation::KickingWhenDown()` (0x56D270)
-    fn localisation_kicking_when_down() -> u8 = cdecl 0x56D270 => unported;
     /// `CPlayerPed::DoesTargetHaveToBeBroken(CEntity*, CWeapon*)` (0x60C0C0, `ret 8`)
     fn player_does_target_have_to_be_broken(p: GPtr<u8>, t: GPtr<u8>, w: GPtr<u8>) -> u8 = thiscall 0x60C0C0 => unported;
     /// `CPad::ShiftTargetLeftJustDown()` (0x540850; AL, EAX passed on whole once)
@@ -1069,22 +1023,8 @@ orig! {
     fn player_find_next_weapon_lock_on_target(p: GPtr<u8>, t: GPtr<u8>, left: u32) -> u8 = thiscall 0x60E530 => unported;
     /// `CPlayerPed::FindWeaponLockOnTarget()` (0x60DC50)
     fn player_find_weapon_lock_on_target(p: GPtr<u8>) -> u8 = thiscall 0x60DC50 => unported;
-    /// `CPedIntelligence::IsInSeeingRange(const CVector&)` (0x600C60, `ret 4`)
-    fn intel_is_in_seeing_range(i: GPtr<u8>, pos: GPtr<u8>) -> u8 = thiscall 0x600C60 => unported;
     /// `CPedIntelligence::GetActivePrimaryTask()` (0x4B85B0)
     fn intel_get_active_primary_task(i: GPtr<u8>) -> GPtr<u8> = thiscall 0x4B85B0 => unported;
-    /// `CPedGroups::GetPedsGroup(const CPed*)` (0x5F7E80)
-    fn ped_groups_get_peds_group(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x5F7E80 => unported;
-    /// `CPedGroups::AreInSameGroup(const CPed*, const CPed*)` (0x5F7F40)
-    fn ped_groups_are_in_same_group(a: GPtr<u8>, b: GPtr<u8>) -> u8 = cdecl 0x5F7F40 => unported;
-    /// `CEventGunAimedAt::CEventGunAimedAt(CPed*)` (0x4B0700, `ret 4`)
-    fn event_gun_aimed_at_ctor(e: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x4B0700 => unported;
-    /// `CEventGunAimedAt::~CEventGunAimedAt()` (0x4B07B0)
-    fn event_gun_aimed_at_dtor(e: GPtr<u8>) = thiscall 0x4B07B0 => unported;
-    /// `CEventGroupEvent::CEventGroupEvent(CPed*, CEvent*)` (0x4ADFD0, `ret 8`)
-    fn event_group_event_ctor(g: GPtr<u8>, ped: GPtr<u8>, e: GPtr<u8>) -> GPtr<u8> = thiscall 0x4ADFD0 => unported;
-    /// `CEventGroupEvent::~CEventGroupEvent()` (0x4AE070)
-    fn event_group_event_dtor(g: GPtr<u8>) = thiscall 0x4AE070 => unported;
     /// `CPedGroupIntelligence::AddEvent(CEvent*)` (0x5F7470, `ret 4`)
     fn group_intel_add_event(gi: GPtr<u8>, e: GPtr<u8>) -> u8 = thiscall 0x5F7470 => unported;
     /// `CPlayerPed::Compute3rdPersonMouseTarget(bool)` (0x60B650, `ret 4`; the bool goes as a whole dword)
@@ -1093,20 +1033,10 @@ orig! {
     fn camera_update_aiming_coors(cam: GPtr<u8>, v: GPtr<u8>) = thiscall 0x50CB10 => unported;
     /// `CVector::operator+=(const CVector&)` (0x411A00, `ret 4`)
     fn vector_add_assign(v: GPtr<u8>, o: GPtr<u8>) -> GPtr<u8> = thiscall 0x411A00 => unported;
-    /// `CTaskSimpleUseGun::AbortIK(CPed*)` (0x61DFA0, `ret 4`)
-    fn use_gun_abort_ik(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x61DFA0 => unported;
     /// `CPlayerPed::Clear3rdPersonMouseTarget()` (0x609ED0)
     fn player_clear_3rd_person_mouse_target(p: GPtr<u8>) = thiscall 0x609ED0 => unported;
-    /// `CPlaceable::GetTopDirection()` (0x41CCB0, `ret 4`; returns the out vector)
-    fn placeable_get_top_direction(p: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall 0x41CCB0 => unported;
-    /// `IKChainManager_c::IsLooking(CPed*)` (0x6181A0, `ret 4`)
-    fn ik_is_looking(m: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x6181A0 => unported;
     /// `IKChainManager_c::GetLookAtEntity(CPed*)` (0x6181D0, `ret 4`)
     fn ik_get_look_at_entity(m: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x6181D0 => unported;
-    /// `IKChainManager_c::LookAt(...)` (0x618970, `ret 0x2C`)
-    fn ik_look_at(m: GPtr<u8>, name: u32, ped: GPtr<u8>, target: GPtr<u8>, time: i32, bone: i32, pos: u32, b: u32, speed: u32, blend: i32, prio: i32, b2: u32) = thiscall 0x618970 => unported;
-    /// `IKChainManager_c::AbortLookAt(CPed*, int32 blendOut)` (0x618280, `ret 8`)
-    fn ik_abort_look_at(m: GPtr<u8>, ped: GPtr<u8>, blend: i32) = thiscall 0x618280 => unported;
 }
 
 /// `CCamera::m_bUseMouse3rdPerson` (0xB6EC2E)

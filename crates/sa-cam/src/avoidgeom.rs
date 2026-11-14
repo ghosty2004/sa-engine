@@ -8,7 +8,7 @@
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::platform::SCENE_CAMERA;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::camcol::{set_near_clip_raw, vector_sub};
 use crate::cammodes::test_sphere_against_world;
@@ -16,17 +16,9 @@ use crate::camproc::{cross_product, find_player_ped, get_atan_of_xy_bits, vector
 use crate::common::{Fpu, g, k, rd, wr};
 use crate::followped::{ci_pow, copy3, d, fcos, fsin, push_st0};
 
-orig! {
-    /// `CWorld::ProcessLineOfSight(const CVector&, const CVector&, CColPoint&, CEntity*&, bool buildings,
-    /// bool vehicles, bool peds, bool objects, bool dummies, bool seeThrough, bool camIgnore,
-    /// bool shootThrough)` (0x56BA00, AL)
-    pub fn process_line_of_sight(a: GPtr<u8>, b: GPtr<u8>, cp: GPtr<u8>, hit: GPtr<u8>, bu: u32, ve: u32, pe: u32, ob: u32, du: u32, st: u32, cam: u32, sh: u32) -> u8 = cdecl 0x56BA00 => unported;
-    /// `CPlaceable::GetMatrix()` (0x411990)
-    pub fn placeable_get_matrix(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x411990 => unported;
-    /// `CCam::WellBufferMe(float target, float* value, float* speed, float topSpeed, float step, bool angle)`
-    /// (0x509AE0, cdecl); the floats as dwords
-    pub fn well_buffer_me(target: u32, value: GPtr<u8>, speed: GPtr<u8>, top: u32, step: u32, angle: u32) = cdecl 0x509AE0 => unported;
-}
+pub use crate::bindings::cc_well_buffer_me as well_buffer_me;
+pub use sa_world::bindings::placeable_get_matrix;
+pub use sa_world::bindings::process_line_of_sight;
 
 /// `CWorld::pIgnoreEntity` (0xB7CD68).
 const IGNORE_ENTITY: usize = 0xB7CD68;

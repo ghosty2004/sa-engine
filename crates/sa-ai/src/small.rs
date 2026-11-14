@@ -7,24 +7,18 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_core::bindings::entity_register_reference;
+use sa_core::bindings::ped_is_alive;
+use sa_world::bindings::task_complex_ctor;
+use sa_world::bindings::task_simple_ctor;
+use sa_world::bindings::task_simple_dtor;
 orig! {
     fn v_delete(t: GPtr<u8>, flags: u32) -> GPtr<u8> = thiscall vslot 0x0 => unported;
     /// `CTask::Clone` (vtable +4)
     fn v_task_clone(t: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x4 => unported;
-    /// `CTaskSimple::CTaskSimple` (0x61A390)
-    fn task_simple_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A390 => unported;
-    /// `CTaskComplex::CTaskComplex` (0x61A3B0)
-    fn task_complex_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A3B0 => unported;
-    /// `CPed::IsAlive` (0x5E0170)
-    fn ped_is_alive(p: GPtr<u8>) -> u8 = thiscall 0x5E0170 => unported;
-    /// `CTaskSimple::~CTaskSimple` (0x61A3A0)
-    fn task_simple_dtor(t: GPtr<u8>) = thiscall 0x61A3A0 => unported;
     /// `CTaskSimple::ProcessPed(CPed*)` (vtable +0x1C)
     fn v_process_ped(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall vslot 0x1C => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00, `ret 4`)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70, `ret 4`)
-    fn entity_register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
 }
 
 /// `CTimer::m_snTimeInMilliseconds`

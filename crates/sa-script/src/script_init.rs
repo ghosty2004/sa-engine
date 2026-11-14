@@ -6,15 +6,10 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
-orig! {
-    /// CRT `free` (0x8213AE)
-    fn crt_free(p: GPtr<u8>) = cdecl 0x8213ae => unported;
-    /// `CModelInfo::GetModelInfo(const char* name, int32* index)` (0x4C5940)
-    /// (ported in sa-stream, which sa-script does not depend on)
-    fn get_model_info(name: GPtr<u8>, index: GPtr<i32>) -> GPtr<u8> = cdecl 0x4c5940 => unported;
-}
+use sa_core::bindings::crt_free;
+use sa_core::bindings::get_model_info;
 
 use sa_core::field::at;
 

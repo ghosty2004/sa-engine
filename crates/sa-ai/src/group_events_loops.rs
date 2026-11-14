@@ -8,17 +8,13 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::membership_get_leader;
+use sa_world::bindings::membership_get_member;
+use sa_world::bindings::sequence_flush;
 orig! {
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00, `ret 4`)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CTaskComplexSequence::Flush` (0x632C10)
-    fn sequence_flush(s: GPtr<u8>) = thiscall 0x632C10 => unported;
     /// `CEventPlayerCommandToGroup::AffectsPedGroup(CPedGroup*)` (0x4B24D0, `ret 4`; AL)
     fn player_command_to_group_affects(e: GPtr<u8>, g: GPtr<u8>) -> u8 = thiscall 0x4B24D0 => unported;
-    /// `CPedGroupMembership::GetMember(int32)` (0x5F69B0, `ret 4`)
-    fn membership_get_member(m: GPtr<u8>, i: i32) -> GPtr<u8> = thiscall 0x5F69B0 => unported;
-    /// `CPedGroupMembership::GetLeader` (0x5F69A0)
-    fn membership_get_leader(m: GPtr<u8>) -> GPtr<u8> = thiscall 0x5F69A0 => unported;
     /// `CPedIntelligence::FindTaskByType(int32)` (0x600EE0, `ret 4`)
     fn intel_find_task_by_type(i: GPtr<u8>, ty: i32) -> u32 = thiscall 0x600EE0 => unported;
     /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, bool buildings, bool vehicles, bool peds,

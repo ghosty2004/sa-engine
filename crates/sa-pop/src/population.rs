@@ -68,13 +68,12 @@ pub fn loaded_gang_cars(gang: i32) -> GPtr<CLoadedCarGroup> {
         .cast()
 }
 
+pub use sa_core::bindings::world_remove;
 orig! {
     /// `CLoadedCarGroup::PickRandomCar(bool, bool)` (0x611C50)
     pub fn pick_random_car(g: GPtr<CLoadedCarGroup>, a: u8, b: u8) -> i32 = thiscall 0x611C50 => sa_stream::loaded_car_group::pick_random_car;
     /// `CLoadedCarGroup::Clear()` (0x611B90)
     pub fn loaded_car_group_clear(g: GPtr<CLoadedCarGroup>) = thiscall 0x611B90 => sa_stream::loaded_car_group::clear;
-    /// `CWorld::Remove(CEntity*)` (0x563280)
-    pub fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
     /// virtual slot 0 (scalar deleting destructor) of a `CPed`
     pub fn delete_entity(e: GPtr<u8>, flags: i32) = thiscall vslot 0 => unported;
     /// `CPedGroupPlacer::PlaceGroup(ePedType, int32, const CVector&, ePedGroupDefaultTaskAllocatorType)` (0x5FD810)

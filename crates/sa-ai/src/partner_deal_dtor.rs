@@ -3,14 +3,11 @@
 #![allow(clippy::unreadable_literal)]
 
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
-orig! {
-    /// `CTaskComplexPartner::~CTaskComplexPartner()` (0x683A40)
-    fn partner_dtor(t: GPtr<u8>) = thiscall 0x683A40 => unported;
-}
+use crate::bindings::partner_dtor;
 
 /// `CTaskComplexPartnerDeal::~CTaskComplexPartnerDeal()` (0x684200, catalogue `FUN_00684200`, thiscall): vtable 0x870754, then a tail jump to
 /// `CTaskComplexPartner::~CTaskComplexPartner`.

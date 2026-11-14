@@ -9,13 +9,14 @@ use sa_math::x87::X87;
 
 use super::common::{ftol32, g, rd, wr, x, xi};
 
+use crate::bindings::is_vision_fx_active;
+use crate::bindings::pick_up_should_be_invisible;
+use sa_core::bindings::text_get;
+use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
+use sa_stream::bindings::simple_transform_update_matrix;
 orig! {
     /// `CPickups::FindPickUpForThisObject(CObject*)` (0x4551C0)
     fn find_pick_up_for_this_object(o: GPtr<u8>) -> GPtr<u8> = cdecl 0x4551C0 => unported;
-    /// `CPickup::PickUpShouldBeInvisible()` (0x454D20), AL
-    fn pick_up_should_be_invisible(p: GPtr<u8>) -> u8 = thiscall 0x454D20 => unported;
-    /// `CPostEffects::IsVisionFXActive()` (0x7034F0), AL
-    fn is_vision_fx_active() -> u8 = cdecl 0x7034F0 => unported;
     /// `CCoronas::RegisterCorona(id, attachTo, r, g, b, a, pos, size, farClip, texture, flare, reflection,
     /// checkObstacles, unused, angle, longDistance, nearClip, fadeState, fadeSpeed, onlyFromBelow, reflectionDelay)`
     /// (0x6FC580, the texture-index overload; floats as bits)
@@ -28,12 +29,6 @@ orig! {
     fn calc_screen_coors(p: GPtr<u8>, out: GPtr<u8>, w: GPtr<u8>, h: GPtr<u8>, max: u32, min: u32) -> u8 = cdecl 0x70CE30 => unported;
     /// `CPickup::FindStringForTextIndex(int32)` (0x455540)
     fn find_string_for_text_index(i: u32) -> GPtr<u8> = cdecl 0x455540 => unported;
-    /// `CText::Get(const char*)` (0x6A0050) on `TheText` (0xC1B340)
-    fn text_get(t: GPtr<u8>, key: GPtr<u8>) -> GPtr<u8> = thiscall 0x6A0050 => unported;
-    /// `CPlaceable::AllocateMatrix()` (0x54F560)
-    fn allocate_matrix(e: GPtr<u8>) = thiscall 0x54F560 => unported;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*)` (0x54F1B0)
-    fn simple_transform_update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => unported;
 }
 
 /// `MI_PICKUP_CAMERA` .. the pickup model index words (`.data`).

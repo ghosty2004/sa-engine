@@ -25,13 +25,10 @@ sa_core::globals! {
     pub static INFOS @ 0xC891A8: [u8; NUM_PROJECTILES * INFO_SIZE] = [0; NUM_PROJECTILES * INFO_SIZE];
 }
 
+pub use sa_core::bindings::destroy_fx_system;
+pub use sa_core::bindings::world_remove;
+pub use sa_world::bindings::clear_blip_for_entity;
 orig! {
-    /// `FxManager_c::DestroyFxSystem(FxSystem_c*)` (0x4A9810, thiscall)
-    pub fn destroy_fx_system(man: GPtr<u8>, fx: GPtr<u8>) = thiscall 0x4A9810 => unported;
-    /// `CRadar::ClearBlipForEntity(eBlipType, int32 handle)` (0x587C60)
-    pub fn clear_blip_for_entity(ty: i32, handle: i32) = cdecl 0x587C60 => unported;
-    /// `CWorld::Remove(CEntity*)` (0x563280)
-    pub fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
     /// `CEntity` scalar deleting destructor (vtable slot 0)
     pub fn entity_vdelete(e: GPtr<u8>, flag: i32) = thiscall vslot 0x0 => unported;
     /// `CExplosion::AddExplosion(CEntity* victim, CEntity* creator, eExplosionType, CVector pos,
@@ -253,29 +250,23 @@ pub fn scalar_deleting_destructor(this: GPtr<u8>, flags: u8) -> GPtr<u8> {
     this
 }
 
+pub use sa_core::bindings::cross_product;
+pub use sa_core::bindings::vector_normalise as normalise;
+pub use sa_stream::bindings::ped_is_player;
+pub use sa_world::bindings::audio_report_object_destruction;
+pub use sa_world::bindings::ped_get_weapon_slot;
+pub use sa_world::bindings::ped_is_pointer_valid;
 orig! {
     /// `FindPlayerPed(int32)` (0x56E210)
     pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
     /// `FindPlayerVehicle(int32, bool)` (0x56E0D0)
     pub fn find_player_vehicle(id: i32, b: u8) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
-    /// `CAudioEngine::ReportObjectDestruction(CEntity*)` (0x506ED0, thiscall)
-    pub fn audio_report_object_destruction(ae: GPtr<u8>, e: GPtr<u8>) = thiscall 0x506ED0 => unported;
     /// `CAudioEngine::ReportFrontendAudioEvent(eAudioEvents, float volume, float speed)` (0x506EA0, thiscall)
     pub fn audio_report_frontend_event(ae: GPtr<u8>, ev: i32, vol: f32, speed: f32) = thiscall 0x506EA0 => unported;
     /// `CProjectileInfo::RemoveProjectile(CProjectileInfo*, CProjectile*)` (0x7388F0)
     pub fn remove_projectile_call(info: GPtr<u8>, obj: GPtr<u8>) = cdecl 0x7388F0 => remove_projectile;
-    /// `CPed::IsPointerValid()` (0x5E4220, thiscall)
-    pub fn ped_is_pointer_valid(ped: GPtr<u8>) -> u8 = thiscall 0x5E4220 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0, thiscall)
-    pub fn ped_is_player(ped: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CPed::GetWeaponSlot(eWeaponType)` (0x5DF200, thiscall)
-    pub fn ped_get_weapon_slot(ped: GPtr<u8>, ty: i32) -> i32 = thiscall 0x5DF200 => unported;
     /// `CWorld::SetPedsChoking(float x, y, z, float radius, CEntity*)` (0x565800); raw position words
     pub fn set_peds_choking(x: u32, y: u32, z: u32, r: f32, e: GPtr<u8>) = cdecl 0x565800 => unported;
-    /// `CVector::Normalise()` (0x59C910, thiscall)
-    pub fn normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
-    /// `CrossProduct(CVector* out, const CVector* a, const CVector* b)` (0x59C730): `a x b`
-    pub fn cross_product(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C730 => unported;
     /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, bool buildings, vehicles, peds,
     /// objects, dummies, seeThrough, ignoreSomeObjects)` (0x56A490)
     #[allow(clippy::too_many_arguments)]

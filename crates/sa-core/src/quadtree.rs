@@ -27,13 +27,10 @@ globals! {
 
 pub mod call {
     use super::*;
+    pub use crate::bindings::list_add_item_5335e0 as list_add_item;
+    pub use crate::bindings::list_delete_item;
+    pub use crate::bindings::ptr_node_single_new;
     orig! {
-        /// `CPtrListSingleLink::AddItem(void*)` (thiscall)
-        pub fn list_add_item(list: GPtr<u8>, item: GPtr<u8>) -> GPtr<u8> = thiscall 0x5335E0 => unported;
-        /// `CPtrListSingleLink::DeleteItem(void*)` (thiscall)
-        pub fn list_delete_item(list: GPtr<u8>, item: GPtr<u8>) = thiscall 0x533610 => unported;
-        /// `CPtrNodeSingleLink::operator new` (0x552380: `mov ecx, ms_pPtrNodeSingleLinkPool; jmp New`)
-        pub fn ptr_node_single_new(size: u32) -> GPtr<u8> = cdecl 0x552380 => unported;
         /// The quad-tree node pool's `New` (0x552B50, slot 0x28)
         pub fn quad_tree_pool_new(pool: GPtr<u8>) -> GPtr<u8> = thiscall 0x552B50 => unported;
         /// `operator new` (0x82119A)

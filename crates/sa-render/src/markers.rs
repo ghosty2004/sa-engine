@@ -95,47 +95,56 @@ const K_0_65: u32 = 0x3F26_6666;
 /// 0.8 (0x858C98)
 const K_0_8: u32 = 0x3F4C_CCCD;
 
+pub use crate::bindings::camera_is_sphere_visible_m as is_sphere_visible;
+pub use sa_core::bindings::activate_directional;
+pub use sa_core::bindings::atexit;
+pub use sa_core::bindings::cross_product;
+pub use sa_core::bindings::eh_vector_ctor;
+pub use sa_core::bindings::eh_vector_dtor;
+pub use sa_core::bindings::load_all_requested_models;
+pub use sa_core::bindings::matrix_assign;
+pub use sa_core::bindings::matrix_attach;
+pub use sa_core::bindings::matrix_dtor;
+pub use sa_core::bindings::matrix_mul;
+pub use sa_core::bindings::matrix_mul_assign;
+pub use sa_core::bindings::matrix_rotate_z;
+pub use sa_core::bindings::matrix_scale;
+pub use sa_core::bindings::matrix_set_translate;
+pub use sa_core::bindings::matrix_set_unity;
+pub use sa_core::bindings::matrix_update_rw;
+pub use sa_core::bindings::pop_current_txd;
+pub use sa_core::bindings::push_current_txd;
+pub use sa_core::bindings::rp_atomic_clone;
+pub use sa_core::bindings::rp_atomic_destroy;
+pub use sa_core::bindings::rp_atomic_set_frame;
+pub use sa_core::bindings::rp_clump_create;
+pub use sa_core::bindings::rp_clump_destroy;
+pub use sa_core::bindings::rw_frame_create;
+pub use sa_core::bindings::rw_frame_destroy;
+pub use sa_core::bindings::rw_frame_update_objects;
+pub use sa_core::bindings::set_current_txd;
+pub use sa_core::bindings::streaming_request_model as request_model;
+pub use sa_core::bindings::vector_normalise;
+pub use sa_stream::bindings::has_collision_loaded;
+pub use sa_stream::bindings::load_data_from_work_buffer;
+pub use sa_stream::bindings::model_info_add_ref as model_add_ref;
+pub use sa_stream::bindings::rp_clump_add_atomic;
+pub use sa_stream::bindings::save_data_to_work_buffer;
+pub use sa_stream::bindings::set_atomic_render_callback;
+pub use sa_world::bindings::get_water_level_no_waves;
+pub use sa_world::bindings::matrix_ctor_rw;
+pub use sa_world::bindings::process_line_of_sight;
+pub use sa_world::bindings::rp_clump_render;
+pub use sa_world::bindings::rw_frame_set_identity;
 orig! {
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    pub fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
-    /// `CMatrix::SetUnity()` (0x59AE70)
-    pub fn matrix_set_unity(m: GPtr<u8>) = thiscall 0x59AE70 => unported;
-    /// `CMatrix::Attach(RwMatrix*, bool owns)` (0x59BD10)
-    pub fn matrix_attach(m: GPtr<u8>, rw: GPtr<u8>, owns: u32) = thiscall 0x59BD10 => unported;
-    /// `CMatrix::UpdateRW()` (0x59BBB0)
-    pub fn matrix_update_rw(m: GPtr<u8>) = thiscall 0x59BBB0 => unported;
     /// `RpClumpForAllAtomics(RpClump*, callback, void* data)` (0x749B70)
     pub fn rp_clump_for_all_atomics(c: GPtr<u8>, cb: u32, data: GPtr<u8>) -> GPtr<u8> = cdecl 0x749B70 => unported;
-    /// `RpAtomicClone(RpAtomic*)` (0x749E60)
-    pub fn rp_atomic_clone(a: GPtr<u8>) -> GPtr<u8> = cdecl 0x749E60 => unported;
-    /// `RwFrameCreate()` (0x7F0410)
-    pub fn rw_frame_create() -> GPtr<u8> = cdecl 0x7F0410 => unported;
-    /// `RpAtomicSetFrame(RpAtomic*, RwFrame*)` (0x74BF20)
-    pub fn rp_atomic_set_frame(a: GPtr<u8>, f: GPtr<u8>) -> GPtr<u8> = cdecl 0x74BF20 => unported;
-    /// `CVisibilityPlugins::SetAtomicRenderCallback(RpAtomic*, callback)` (0x7328A0)
-    pub fn set_atomic_render_callback(a: GPtr<u8>, cb: u32) = cdecl 0x7328A0 => unported;
-    /// `RpAtomicDestroy(RpAtomic*)` (0x749DC0)
-    pub fn rp_atomic_destroy(a: GPtr<u8>) -> i32 = cdecl 0x749DC0 => unported;
-    /// `RwFrameDestroy(RwFrame*)` (0x7F05A0)
-    pub fn rw_frame_destroy(f: GPtr<u8>) -> i32 = cdecl 0x7F05A0 => unported;
-    /// `RwFrameUpdateObjects(RwFrame*)` (0x7F0910)
-    pub fn rw_frame_update_objects(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0910 => unported;
     /// `RwRenderStateSet` (`RwEngineInstance` slot 0x20)
     pub fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
     /// `RwRenderStateGet` (`RwEngineInstance` slot 0x24)
     pub fn rw_render_state_get(state: u32, out: GPtr<u8>) -> i32 = cdecl table 0xC97B24 0x24 => unported;
     /// `RwFrameTranslate(RwFrame*, const RwV3d*, RwOpCombineType)` (0x7F0E30)
     pub fn rw_frame_translate(f: GPtr<u8>, v: GPtr<u8>, combine: u32) -> GPtr<u8> = cdecl 0x7F0E30 => unported;
-    /// `RpClumpRender(RpClump*)` (0x749B20)
-    pub fn rp_clump_render(c: GPtr<u8>) -> GPtr<u8> = cdecl 0x749B20 => unported;
-    /// `CVector::CrossProduct(CVector* out, const CVector* a, const CVector* b)` (0x59C730, returns `out`)
-    pub fn cross_product(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C730 => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    pub fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
-    /// `CMatrix::operator*=(const CMatrix&)` (0x411A80)
-    pub fn matrix_mul_assign(m: GPtr<u8>, r: GPtr<u8>) = thiscall 0x411A80 => unported;
-    /// `CMatrix::Scale(float)` (0x459350)
-    pub fn matrix_scale(m: GPtr<u8>, s: u32) = thiscall 0x459350 => unported;
     /// `CMatrix` per-axis scale `(x, y, z)` (0x5A2E60, unnamed in the catalogue)
     pub fn matrix_scale_xyz(m: GPtr<u8>, sx: u32, sy: u32, sz: u32) = thiscall 0x5A2E60 => unported;
     /// `Light::SetBrightMarkerColours(float)` (0x735BD0)
@@ -146,39 +155,14 @@ orig! {
     pub fn atomic_render_callback(f: u32, a: GPtr<u8>) -> GPtr<u8> = cdecl dyn => unported;
     /// `CWorld::FindPlayerCentreOfWorld(int32)` (0x56E250, returns a CVector*)
     pub fn find_player_centre_of_world(id: i32) -> GPtr<u8> = cdecl 0x56E250 => unported;
-    /// `CWorld::ProcessLineOfSight(start, end, CColPoint&, CEntity*&, buildings, vehicles, peds, objects,
-    /// dummies, seeThrough, cameraIgnore, shootThrough)` (0x56BA00)
-    pub fn process_line_of_sight(s: GPtr<u8>, e: GPtr<u8>, cp: GPtr<u8>, ent: GPtr<u8>, b: u32, v: u32, p: u32, o: u32, d: u32, st: u32, ci: u32, sh: u32) -> u8 = cdecl 0x56BA00 => unported;
-    /// `CWaterLevel::GetWaterLevelNoWaves(float x, float y, float z, float* out, float*, float*)` (0x6E8580)
-    pub fn get_water_level_no_waves(x: u32, y: u32, z: u32, out: GPtr<u8>, a: u32, b: u32) -> u8 = cdecl 0x6E8580 => unported;
-    /// `CMatrix::RotateZ(float)` (0x59B390)
-    pub fn matrix_rotate_z(m: GPtr<u8>, a: u32) = thiscall 0x59B390 => unported;
-    /// `CMatrix::SetTranslate(float x, float y, float z)` (0x59AF40)
-    pub fn matrix_set_translate(m: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x59AF40 => unported;
     /// `C3dMarker::UpdateZCoordinate(CVector, float)` (0x724D40)
     pub fn update_z_coordinate_call(m: GPtr<u8>, x: u32, y: u32, z: u32, d: u32) = thiscall 0x724D40 => unported;
     /// `C3dMarker::AddMarker(...)` (0x722230)
     pub fn add_marker_call(m: GPtr<u8>, id: u32, ty: u32, size: u32, r: u32, g: u32, b: u32, a: u32, pp: u32, pf: u32, rr: u32) -> u8 = thiscall 0x722230 => unported;
-    /// `CMatrix::CMatrix(RwMatrix*, bool owns)` (0x59C050)
-    pub fn matrix_ctor_rw(m: GPtr<u8>, rw: GPtr<u8>, owns: u32) -> GPtr<u8> = thiscall 0x59C050 => unported;
-    /// `CMatrix operator*(const CMatrix&, const CMatrix&)` (0x59BE30, result through `out`)
-    pub fn matrix_mul(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x59BE30 => unported;
-    /// `CMatrix::operator=(const CMatrix&)` (0x59BBC0)
-    pub fn matrix_assign(m: GPtr<u8>, r: GPtr<u8>) -> GPtr<u8> = thiscall 0x59BBC0 => unported;
-    /// `RpClumpDestroy(RpClump*)` (0x74A310)
-    pub fn rp_clump_destroy(c: GPtr<u8>) -> i32 = cdecl 0x74A310 => unported;
-    /// `CColStore::HasCollisionLoaded(const CVector&, int32 area)` (0x410CE0)
-    pub fn has_collision_loaded(p: GPtr<f32>, area: i32) -> u8 = cdecl 0x410CE0 => unported;
     /// `CWorld::FindGroundZFor3DCoord(float x, float y, float z, bool* found, CEntity** out)` (0x5696C0, ST0)
     pub fn find_ground_z_for_3d_coord_st0(x: u32, y: u32, z: f32, found: GPtr<u8>, out: u32) -> f64 = cdecl 0x5696C0 => unported;
     /// `CHudColours::GetRGB(CRGBA* ret, eHudColours)` (0x58FEA0, struct returned through `ret`)
     pub fn hud_get_rgb(this: GPtr<u8>, ret: GPtr<u8>, colour: u32) -> GPtr<u8> = thiscall 0x58FEA0 => unported;
-    /// `CGenericGameStorage::LoadDataFromWorkBuffer(void*, int32)` (0x5D1300)
-    pub fn load_data_from_work_buffer(d: GPtr<u8>, n: i32) -> u8 = cdecl 0x5D1300 => unported;
-    /// `CGenericGameStorage::SaveDataToWorkBuffer(void*, int32)` (0x5D1270)
-    pub fn save_data_to_work_buffer(d: GPtr<u8>, n: i32) -> u8 = cdecl 0x5D1270 => unported;
-    /// `Light::ActivateDirectional()` (0x735C80)
-    pub fn activate_directional() = cdecl 0x735C80 => unported;
     /// `Light::SetAmbientColours(RwRGBAReal*)` (0x735D50)
     pub fn set_ambient_colours(c: u32) = cdecl 0x735D50 => unported;
     /// `Light::SetDirectionalColours(RwRGBAReal*)` (0x735D70)
@@ -187,45 +171,19 @@ orig! {
     pub fn user_3d_markers_draw_call() = cdecl 0x723240 => unported;
     /// `C3dMarkers::DirectionArrowsDraw()` (0x7211F0)
     pub fn direction_arrows_draw_call() = cdecl 0x7211F0 => unported;
-    /// `CCamera::IsSphereVisible(const CVector&, float, const CMatrix*)` (0x420C40)
-    pub fn is_sphere_visible(cam: GPtr<u8>, c: GPtr<u8>, r: u32, m: u32) -> u8 = thiscall 0x420C40 => unported;
     /// `C3dMarker::Render()` (0x7223D0)
     pub fn marker_render_call(m: GPtr<u8>) = thiscall 0x7223D0 => unported;
     /// `C3dMarkers::PlaceMarker(id, type, CVector& pos, size, r, g, b, a, pulsePeriod, pulseFraction,
     /// rotateRate, nrm x, nrm y, nrm z, zCheck)` (0x725120)
     pub fn place_marker_call(id: u32, ty: u32, pos: u32, size: u32, r: u32, g: u32, b: u32, a: u32, pp: u32, pf: u32, rr: u32, nx: u32, ny: u32, nz: u32, zc: u32) -> GPtr<u8> = cdecl 0x725120 => unported;
-    /// CRT `eh vector constructor iterator` (0x821D30, stdcall)
-    pub fn eh_vector_ctor(arr: GPtr<u8>, size: u32, n: u32, ctor: u32, dtor: u32) = stdcall 0x821D30 => unported;
-    /// CRT `eh vector destructor iterator` (0x821E02, stdcall)
-    pub fn eh_vector_dtor(arr: GPtr<u8>, size: u32, n: u32, dtor: u32) = stdcall 0x821E02 => unported;
-    /// CRT `_atexit` (0x821D1E)
-    pub fn atexit(f: u32) -> i32 = cdecl 0x821D1E => unported;
     /// `CTxdStore::FindTxdSlot(const char*)` (0x731850)
     pub fn find_txd_slot(name: u32) -> i32 = cdecl 0x731850 => unported;
-    /// `CTxdStore::PushCurrentTxd()` (0x7316A0)
-    pub fn push_current_txd() = cdecl 0x7316A0 => unported;
-    /// `CTxdStore::SetCurrentTxd(int32)` (0x7319C0)
-    pub fn set_current_txd(slot: i32) = cdecl 0x7319C0 => unported;
-    /// `CTxdStore::PopCurrentTxd()` (0x7316B0)
-    pub fn pop_current_txd() = cdecl 0x7316B0 => unported;
     /// `CFileMgr::ChangeDir(const char*)` (0x538730)
     pub fn change_dir(d: u32) = cdecl 0x538730 => unported;
     /// `CModelInfo::GetModelInfo(const char*, int32* index)` (0x4C5940)
     pub fn get_model_info(name: u32, idx: GPtr<i32>) -> GPtr<u8> = cdecl 0x4C5940 => unported;
-    /// `CStreaming::RequestModel(int32, int32 flags)` (0x4087E0)
-    pub fn request_model(idx: i32, flags: i32) = cdecl 0x4087E0 => unported;
-    /// `CStreaming::LoadAllRequestedModels(bool)` (0x40EA10)
-    pub fn load_all_requested_models(prio: u32) = cdecl 0x40EA10 => unported;
     /// `CBaseModelInfo::CreateInstance()` (virtual, slot 0x2C)
     pub fn model_create_instance(mi: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x2C => unported;
-    /// `CBaseModelInfo::AddRef()` (0x4C4BA0)
-    pub fn model_add_ref(mi: GPtr<u8>) = thiscall 0x4C4BA0 => unported;
-    /// `RpClumpCreate()` (0x74A290)
-    pub fn rp_clump_create() -> GPtr<u8> = cdecl 0x74A290 => unported;
-    /// `RwFrameSetIdentity(RwFrame*)` (0x7F10B0)
-    pub fn rw_frame_set_identity(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F10B0 => unported;
-    /// `RpClumpAddAtomic(RpClump*, RpAtomic*)` (0x74A490)
-    pub fn rp_clump_add_atomic(c: GPtr<u8>, a: GPtr<u8>) -> GPtr<u8> = cdecl 0x74A490 => unported;
 }
 
 fn marker(i: i32) -> GPtr<u8> {

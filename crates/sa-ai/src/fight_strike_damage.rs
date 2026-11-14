@@ -10,12 +10,8 @@ use sa_world::world::common::entity_pos;
 
 use crate::common::*;
 
-orig! {
-    /// `CPed::IsPlayer()` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CStats::GetFatAndMuscleModifier(int32)` (0x559AF0, ST0)
-    fn stats_get_fat_and_muscle_modifier(i: i32) -> f64 = cdecl 0x559AF0 => unported;
-}
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::stats_get_fat_and_muscle_modifier;
 
 /// `float CTaskSimpleFight::<strike damage>(CPed* ped)` (0x61C740, `ret 4`, ST0).
 ///
@@ -46,36 +42,27 @@ pub fn fight_strike_damage(this: GPtr<u8>, ped: GPtr<u8>) -> X87 {
 
 // ---- FRONTIER-1 (batch `frontier-1-2`): a punch that reaches a ped ---------------------------------------------
 
+use sa_core::bindings::get_weapon_info as weapon_info_get;
+use sa_core::bindings::ped_is_alive;
+use sa_core::bindings::tm_get_active_task;
+use sa_core::bindings::vector_normalise;
+use sa_world::bindings::event_sound_quiet_dtor;
+use sa_world::bindings::fx_add_blood;
+use sa_world::bindings::get_event_global_group;
+use sa_world::bindings::intel_get_task_fighting;
+use sa_world::bindings::ped_weapon_audio_add_audio_event;
 orig! {
-    /// `CTaskManager::GetActiveTask()` (0x681720)
-    fn tm_get_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x681720 => unported;
-    /// `CPedIntelligence::GetTaskFighting()` (0x600F30)
-    fn intel_get_task_fighting(i: GPtr<u8>) -> GPtr<u8> = thiscall 0x600F30 => unported;
     /// `FUN_0061c650` (0x61C650): the victim's fight task blocks the hit
     fn fight_block_hit_o(t: GPtr<u8>, victim: GPtr<u8>, attacker: GPtr<u8>, combo: u32, level: u32) -> u8 = thiscall 0x61C650 => fight_block_hit;
     /// `FUN_0061c740` (0x61C740): the strike damage (ST0)
     fn fight_strike_damage_o(t: GPtr<u8>, ped: GPtr<u8>) -> X87 = reg("args = ecx stack") 0x61C740 => unported;
-    /// `CWeaponInfo::GetWeaponInfo(eWeaponType, eWeaponSkill)` (0x743C60)
-    fn weapon_info_get(ty: u32, skill: u32) -> GPtr<u8> = cdecl 0x743C60 => unported;
     /// `CPedGeometryAnalyser::ComputePedShotSide(CPed&, const CVector&)` (0x5F13F0)
     fn compute_ped_shot_side(ped: GPtr<u8>, pos: GPtr<u8>) -> i32 = cdecl 0x5F13F0 => crate::ped_geometry::compute_ped_shot_side;
     /// `CWeapon::GenerateDamageEvent(CPed* victim, CEntity* creator, eWeaponType, int32 damage, ePedPieceTypes,
     /// uint8 direction)` (0x73A530, AL)
     fn weapon_generate_damage_event(victim: GPtr<u8>, creator: GPtr<u8>, ty: u32, damage: i32, piece: i32, dir: i32) -> u8 = cdecl 0x73A530 => unported;
-    /// `CAEPedWeaponAudioEntity::AddAudioEvent(int32)` (0x4E69F0)
-    fn ped_weapon_audio_add_audio_event(a: GPtr<u8>, event: u32) = thiscall 0x4E69F0 => unported;
     /// `CEventSoundQuiet::CEventSoundQuiet(CEntity*, float, uint32 time, const CVector&)` (0x5E05B0)
     fn event_sound_quiet_ctor(e: GPtr<u8>, ent: GPtr<u8>, level: f32, time: i32, pos: GPtr<u8>) -> GPtr<u8> = thiscall 0x5E05B0 => unported;
-    /// `CEventSoundQuiet::~CEventSoundQuiet()` (0x5DEA00)
-    fn event_sound_quiet_dtor(e: GPtr<u8>) = thiscall 0x5DEA00 => unported;
-    /// `GetEventGlobalGroup()` (0x4ABA50)
-    fn get_event_global_group() -> GPtr<u8> = cdecl 0x4ABA50 => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
-    /// `CPed::IsAlive()` (0x5E0170)
-    fn ped_is_alive(p: GPtr<u8>) -> u8 = thiscall 0x5E0170 => unported;
-    /// `Fx_c::AddBlood(CVector&, CVector&, int32, float)` (0x49EB00, on `g_fx` 0xA9AE00)
-    fn fx_add_blood(fx: GPtr<u8>, pos: GPtr<u8>, dir: GPtr<u8>, amount: i32, light: f32) = thiscall 0x49EB00 => unported;
 }
 
 /// The fight move table entry of the task's combo (+0x24): `0xC170D0 + (combo - 4) * 0x88`.

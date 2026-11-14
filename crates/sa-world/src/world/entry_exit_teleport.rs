@@ -8,11 +8,10 @@ use sa_math::x87::X87;
 
 use super::common::{g, rd, wr, x, xi};
 
+use crate::bindings::world_get_is_line_of_sight_clear as get_is_line_of_sight_clear;
 orig! {
     /// `CWorld::TestSphereAgainstWorld(CVector, float, CEntity*, bool x5, bool)` (0x569E20)
     fn test_sphere_against_world(px: u32, py: u32, pz: u32, r: u32, ignore: u32, b0: u32, b1: u32, b2: u32, b3: u32, b4: u32, b5: u32) -> GPtr<u8> = cdecl 0x569E20 => unported;
-    /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, bool x7)` (0x56A490)
-    fn get_is_line_of_sight_clear(a: GPtr<u8>, b: GPtr<u8>, b0: u32, b1: u32, b2: u32, b3: u32, b4: u32, b5: u32, b6: u32) -> u8 = cdecl 0x56A490 => unported;
 }
 
 /// 0.35 (0x3EB33333): the test sphere radius.

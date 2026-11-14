@@ -10,20 +10,16 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::stand_still_dtor;
+use crate::bindings::stand_still_process_ped;
+use sa_core::bindings::general_limit_radian_angle as limit_radian_angle;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::stand_still_ctor;
 orig! {
     /// `CTaskSimpleRunNamedAnim::ProcessPed(CPed*)` (0x61BF20)
     fn run_named_anim_process_ped(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x61BF20 => unported;
-    /// `CTaskSimpleStandStill(int ms, bool looped, bool useAnimIdle, float blend)` (0x62F310, `ret 0x10`)
-    fn stand_still_ctor(t: GPtr<u8>, ms: u32, looped: u32, idle: u32, blend: u32) -> GPtr<u8> = thiscall 0x62F310 => unported;
-    /// `CTaskSimpleStandStill::ProcessPed(CPed*)` (0x62F370)
-    fn stand_still_process_ped(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x62F370 => unported;
-    /// `CTaskSimpleStandStill::~CTaskSimpleStandStill()` (0x62F360)
-    fn stand_still_dtor(t: GPtr<u8>) = thiscall 0x62F360 => unported;
     /// `CTask::MakeAbortable(CPed*, int, const CEvent*)` (vtable +0x18)
     fn v_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, pri: i32, ev: GPtr<u8>) -> u8 = thiscall vslot 0x18 => unported;
-    fn ped_is_player(ped: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CGeneral::LimitRadianAngle(float)` (0x53CB50, ST0)
-    fn limit_radian_angle(a: u32) -> f64 = cdecl 0x53CB50 => unported;
 }
 
 const TIME_MS: usize = 0xB7CB84;

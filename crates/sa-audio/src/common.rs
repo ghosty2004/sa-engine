@@ -2,7 +2,6 @@
 //! singletons' addresses and the calls several modules make.
 
 pub use sa_core::mem::GPtr;
-use sa_core::orig;
 
 pub use sa_math::x87::X87;
 pub use sa_world::world::common::{at, f32_of, ftol32, g, rd, wr, x, xi};
@@ -38,10 +37,5 @@ pub fn sound_manager() -> GPtr<u8> {
     g(AE_SOUND_MANAGER)
 }
 
-orig! {
-    /// `CAEAudioUtility::GetRandomNumberInRange(int, int)` (0x4D9C10): the audio code's own RNG wrapper
-    /// (CRT rand, return address 0x4D9C17); several functions use it where gta-reversed calls `CGeneral`.
-    pub fn ae_random_int(min: i32, max: i32) -> i32 = cdecl 0x4D9C10 => crate::utility::get_random_number_in_range_int;
-    /// `CAEAudioUtility::ResolveProbability(float)` (0x4D9C80)
-    pub fn ae_resolve_probability(p: f32) -> u8 = cdecl 0x4D9C80 => crate::utility::resolve_probability;
-}
+pub use crate::bindings::ae_random_int;
+pub use crate::bindings::ae_resolve_probability;

@@ -17,39 +17,30 @@ const STATS_INT: usize = 0xB78E20;
 const PLAYER_INFO: usize = 0xB7CD98;
 const K1000: f32 = 1000.0;
 
+use crate::bindings::get_stat_value;
+use crate::bindings::hud_help_message_displayed;
+use crate::bindings::is_stat_capped;
+use crate::bindings::update_stats_add_to_health;
+use sa_core::bindings::entity_register_reference as register_reference;
+use sa_core::bindings::find_player_vehicle;
+use sa_core::bindings::get_pad as pad_get_pad;
+use sa_core::bindings::tag_manager_get_percentage_tagged;
+use sa_core::bindings::text_get;
 orig! {
-    /// `CStats::IsStatCapped(uint16)` (0x559630, cdecl)
-    fn is_stat_capped(id: u32) -> u8 = cdecl 0x559630 => unported;
     /// `CStats::ProcessReactionStatsOnIncrement(uint8)` (0x55B900, cdecl)
     fn process_reaction_stats_on_increment(id: u32) = cdecl 0x55B900 => unported;
     /// `CStats::CheckForStatsMessage` (0x559760, cdecl)
     fn check_for_stats_message_o() = cdecl 0x559760 => crate::world::mvpb_stats::check_for_stats_message;
     /// `CStats::IncrementStat(uint16, float)` (0x55C180, cdecl)
     fn increment_stat_o(id: u32, v: f32) = cdecl 0x55C180 => crate::world::mvpb_stats::increment_stat;
-    /// `CStats::UpdateStatsAddToHealth(uint32)` (0x55D030, cdecl)
-    fn update_stats_add_to_health(v: i32) = cdecl 0x55D030 => unported;
-    /// `CStats::GetStatValue(uint16)` (0x558E40, cdecl, float in ST0)
-    fn get_stat_value(id: u32) -> f64 = cdecl 0x558E40 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70, cdecl)
-    fn pad_get_pad(i: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CHud::HelpMessageDisplayed` (0x588B50, cdecl)
-    fn hud_help_message_displayed() -> u8 = cdecl 0x588B50 => unported;
-    /// `CText::Get(const char*)` (0x6A0050, `ret 4`)
-    fn text_get(t: GPtr<u8>, key: GPtr<u8>) -> GPtr<u8> = thiscall 0x6A0050 => unported;
     /// `CHud::SetHelpMessage(const char*, bool, bool, bool)` (0x588BE0, cdecl)
     fn hud_set_help_message(s: GPtr<u8>, a: u32, b: u32, c: u32) = cdecl 0x588BE0 => unported;
-    /// `CWorld::FindPlayerVehicle(int32, bool)` (0x56E0D0, cdecl)
-    fn find_player_vehicle(id: i32, remote: u32) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
     /// `CWorld::FindPlayerCoors(CVector* out, int32)` (0x56E010, cdecl)
     fn find_player_coors(out: GPtr<f32>, id: i32) -> GPtr<f32> = cdecl 0x56E010 => unported;
-    /// `CTagManager::GetPercentageTagged()` (0x49CDA0, cdecl)
-    fn tag_manager_get_percentage_tagged() -> i32 = cdecl 0x49CDA0 => unported;
     /// `CStats::CheckForThreshold(float*, float)` (0x5595F0, cdecl)
     fn check_for_threshold(stat: GPtr<u32>, t: u32) -> u8 = cdecl 0x5595F0 => crate::world::stats::check_for_threshold;
     /// `CStats::DisplayScriptStatUpdateMessage(uint8, uint32, float)` (0x55B980, cdecl)
     fn display_script_stat_update_message(up: u32, stat: u32, v: u32) = cdecl 0x55B980 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70, `ret 4`)
-    fn register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
 }
 
 fn info() -> GPtr<u8> {

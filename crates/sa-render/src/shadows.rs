@@ -19,6 +19,8 @@ sa_core::globals! {
     pub static STATIC_SHADOWS @ 0xC4A030: [u8; 48 * 0x40] = [0; 48 * 0x40];
 }
 
+pub use sa_core::bindings::rw_camera_begin_update;
+pub use sa_core::bindings::rw_camera_end_update;
 orig! {
     /// `RwRenderStateSet` (`RwEngineInstance` slot 0x20)
     pub fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
@@ -31,10 +33,6 @@ orig! {
     /// `RwIm2DRenderLine(verts, numVerts, vert1, vert2)` (`RwEngineInstance` slot 0x28; the thunk
     /// 0x734EC0 jumps there)
     pub fn rw_im2d_render_line(verts: GPtr<u8>, n: i32, v1: i32, v2: i32) -> i32 = cdecl table 0xC97B24 0x28 => unported;
-    /// `RwCameraBeginUpdate(RwCamera*)` (0x7EE190)
-    pub fn rw_camera_begin_update(cam: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EE190 => unported;
-    /// `RwCameraEndUpdate(RwCamera*)` (0x7EE180)
-    pub fn rw_camera_end_update(cam: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EE180 => unported;
     /// `CRealTimeShadow::SetupForThisEntity(CPhysical*)` (0x706520)
     pub fn real_time_shadow_setup_for_this_entity(this: GPtr<u8>, e: GPtr<u8>) -> u8 = thiscall 0x706520 => unported;
 }

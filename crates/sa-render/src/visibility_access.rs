@@ -12,15 +12,13 @@ use sa_core::{hook, orig};
 
 use crate::common::{g, rd, wr};
 
+use sa_core::bindings::frame_get_ltm;
+use sa_core::bindings::rp_clump_for_all_atomics as clump_for_all_atomics;
 orig! {
-    /// `RpClumpForAllAtomics(clump, cb, data)` (0x749B70)
-    fn clump_for_all_atomics(c: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> = cdecl 0x749B70 => unported;
     /// `CBaseModelInfo::GetModelType` (vtable slot 0x10)
     fn mi_get_model_type(mi: GPtr<u8>) -> u8 = thiscall vslot 0x10 => unported;
     /// A clump visibility callback `cb(clump)`
     fn call_visibility_cb(f: u32, clump: GPtr<u8>) -> u32 = cdecl dyn => unported;
-    /// `RwFrameGetLTM(frame)` (0x7F0990)
-    fn frame_get_ltm(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0990 => unported;
     /// `RwV3dTransformPoints(out, in, n, matrix)` (0x7EDD90)
     fn v3d_transform_points(out: GPtr<f32>, inp: GPtr<f32>, n: i32, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EDD90 => unported;
     /// `RwCameraFrustumTestSphere(camera, sphere)` (0x7EE2D0)

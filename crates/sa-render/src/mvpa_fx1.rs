@@ -14,13 +14,12 @@ use sa_math::x87::X87;
 
 use crate::common::{Fpu, ftol32, k, rd, wr};
 
+pub use crate::bindings::interp_u255_get_val;
 orig! {
     /// `FxInterpInfo32_c::GetVal(float* out, float t)` (0x4A89C0)
     pub fn interp_32_get_val(this: GPtr<u8>, out: GPtr<u8>, t: u32) = thiscall 0x4A89C0 => unported;
     /// `FxInterpInfoFloat_c::GetVal(float* out, float t)` (0x4A8470)
     pub fn interp_float_get_val_call(this: GPtr<u8>, out: GPtr<u8>, t: u32) = thiscall 0x4A8470 => interp_float_get_val;
-    /// `FxInterpInfoU255_c::GetVal(float* out, float t)` (0x4A8800)
-    pub fn interp_u255_get_val(this: GPtr<u8>, out: GPtr<u8>, t: u32) = thiscall 0x4A8800 => unported;
     /// `FxInterpInfoFloat_c::GetVal(int index, float t0, float t1)` (0x4A85C0): the second overload,
     /// result in ST0
     pub fn interp_float_get_val2(this: GPtr<u8>, index: i32, t0: u32, t1: u32) -> f64 = thiscall 0x4A85C0 => crate::fx_interp_integral::interp_float_get_val_range_host;

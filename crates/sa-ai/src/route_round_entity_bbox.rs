@@ -15,29 +15,21 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::bbox_planes_uncached as planes_uncached;
+use crate::bindings::bounding_sphere;
+use sa_core::bindings::sphere_intersect_ray;
+use sa_core::bindings::vector_normalise;
+use sa_stream::bindings::placeable_allocate_matrix;
+use sa_stream::bindings::simple_transform_update_matrix;
+use sa_world::bindings::process_line_of_sight;
 orig! {
     /// `CPedGeometryAnalyser::ComputeEntityBoundingBoxCornersUncached(float z, CEntity&, CVector* corners)` (0x5F1FA0)
     fn corners_uncached(z: u32, e: GPtr<u8>, corners: GPtr<u8>) -> u8 = cdecl 0x5F1FA0 => unported;
-    /// `CPedGeometryAnalyser::ComputeEntityBoundingBoxPlanesUncached(float z, const CVector* corners, CVector* normals,
-    /// float* ds)` (0x5F1670)
-    fn planes_uncached(z: u32, corners: GPtr<u8>, normals: GPtr<u8>, ds: GPtr<u8>) = cdecl 0x5F1670 => unported;
     /// `CPedGeometryAnalyser::ComputeEntityBoundingBoxSegmentPlanesUncached(const CVector* corners, CVector& centre,
     /// CVector* normals, float* ds)` (0x5F1750)
     fn segment_planes_uncached(corners: GPtr<u8>, centre: GPtr<u8>, normals: GPtr<u8>, ds: GPtr<u8>) = cdecl 0x5F1750 => unported;
     /// `CPedGeometryAnalyser::ComputeEntityHitSide(const CVector&, const CVector* normals, const float* ds)` (0x5F1450)
     fn hit_side(pos: GPtr<u8>, normals: GPtr<u8>, ds: GPtr<u8>) -> i32 = cdecl 0x5F1450 => unported;
-    /// `CPedGeometryAnalyser::ComputeEntityBoundingSphere(const CPed&, CEntity&, CColSphere&)` (0x5F3C20)
-    fn bounding_sphere(ped: GPtr<u8>, e: GPtr<u8>, s: GPtr<u8>) = cdecl 0x5F3C20 => unported;
-    /// `CColSphere::IntersectRay(const CVector& start, const CVector& dir, CVector& p1, CVector& p2)` (0x40FF20, `ret 0x10`)
-    fn sphere_intersect_ray(s: GPtr<u8>, start: GPtr<u8>, dir: GPtr<u8>, p1: GPtr<u8>, p2: GPtr<u8>) -> u8 = thiscall 0x40FF20 => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
-    /// `CWorld::ProcessLineOfSight(const CVector&, const CVector&, CColPoint&, CEntity*&, bool x8)` (0x56BA00)
-    fn process_line_of_sight(a: GPtr<u8>, b: GPtr<u8>, cp: GPtr<u8>, ent: GPtr<u8>, bld: u32, veh: u32, ped: u32, obj: u32, dum: u32, see: u32, cam: u32, shoot: u32) -> u8 = cdecl 0x56BA00 => unported;
-    /// `CPlaceable::AllocateMatrix()` (0x54F560)
-    fn placeable_allocate_matrix(p: GPtr<u8>) = thiscall 0x54F560 => unported;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*)` (0x54F1B0, `ret 4`)
-    fn simple_transform_update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => unported;
 }
 
 /// `CPedGeometryAnalyser::ms_fPedNominalRadius`

@@ -17,35 +17,22 @@ const VEH_ANIM_GROUPS: u32 = 0xC1CDC0;
 /// `CDefaultAnimCallback::DefaultAnimCB`
 const DEFAULT_ANIM_CB: u32 = 0x4D1390;
 
+use crate::bindings::assoc_set_finish_callback;
+use crate::bindings::line_up_dtor;
+use crate::bindings::task_complex_dtor;
+use crate::bindings::vehicle_anim_group_get_group as veh_anim_group_get_group;
+use crate::bindings::vehicle_clear_getting_in_flags;
+use sa_core::bindings::car_set_ped_out_ctor;
+use sa_core::bindings::crt_free_8214bd as crt_free;
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_core::bindings::entity_register_reference;
+use sa_core::bindings::find_player_ped;
+use sa_world::bindings::task_complex_ctor;
+use sa_world::bindings::task_simple_ctor;
+use sa_world::bindings::task_simple_dtor;
 orig! {
     /// `CTask::MakeAbortable(CPed*, int32 priority, const CEvent*)` (vtable +0x18, `ret 0xC`)
     fn v_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, prio: i32, ev: u32) -> u8 = thiscall vslot 0x18 => unported;
-    /// `CTaskComplex::CTaskComplex` (0x61A3B0)
-    fn task_complex_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A3B0 => unported;
-    /// `CTaskComplex::~CTaskComplex` (`FUN_0061a3d0`)
-    fn task_complex_dtor(t: GPtr<u8>) = thiscall 0x61A3D0 => unported;
-    /// `CTaskSimple::CTaskSimple` (`FUN_0061a390`)
-    fn task_simple_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A390 => unported;
-    /// `CTaskSimple::~CTaskSimple` (`FUN_0061a3a0`)
-    fn task_simple_dtor(t: GPtr<u8>) = thiscall 0x61A3A0 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00, `ret 4`)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70, `ret 4`)
-    fn entity_register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
-    /// `CTaskUtilityLineUpPedWithCar::~CTaskUtilityLineUpPedWithCar` (0x64FC00)
-    fn line_up_dtor(u: GPtr<u8>) = thiscall 0x64FC00 => unported;
-    /// CRT `free` (0x8214BD; `operator delete` of the line-up utility)
-    fn crt_free(p: GPtr<u8>) = cdecl 0x8214BD => unported;
-    /// `CVehicle::ClearGettingInFlags(uint8)` (0x6D3040, `ret 4`)
-    fn vehicle_clear_getting_in_flags(v: GPtr<u8>, f: u32) = thiscall 0x6D3040 => unported;
-    /// `CTaskSimpleCarSetPedOut::CTaskSimpleCarSetPedOut(CVehicle*, int32 door, bool)` (0x6478B0, `ret 0xC`)
-    fn car_set_ped_out_ctor(t: GPtr<u8>, veh: GPtr<u8>, door: u32, b: u32) -> GPtr<u8> = thiscall 0x6478B0 => unported;
-    /// `CAnimBlendAssociation::SetFinishCallback(cb, data)` (0x4CEBE0, `ret 8`)
-    fn assoc_set_finish_callback(a: GPtr<u8>, cb: u32, data: u32) = thiscall 0x4CEBE0 => unported;
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210, cdecl)
-    fn find_player_ped(i: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CVehicleAnimGroup::GetGroup(int32 animId)` (0x6E3B00, `ret 4`)
-    fn veh_anim_group_get_group(g: GPtr<u8>, anim: u32) -> u32 = thiscall 0x6E3B00 => unported;
     /// `CVehicleAnimGroup::ComputeCriticalBlendTime(int32 animId)` (0x6E3C80, `ret 4`, ST0)
     fn veh_anim_group_compute_critical_blend_time(g: GPtr<u8>, anim: u32) -> f64 = thiscall 0x6E3C80 => unported;
 }

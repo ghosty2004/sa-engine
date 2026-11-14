@@ -3,14 +3,11 @@
 #![allow(clippy::unreadable_literal)]
 
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
-orig! {
-    /// `CEntity::RegisterReference(CEntity** ref)` (0x571B70, `ret 4`)
-    fn entity_register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
-}
+use sa_core::bindings::entity_register_reference;
 
 /// `CConversations::m_SettingUpConversationNumNodes`, `m_pSettingUpConversationPed`, `m_bSettingUpConversation`
 const NUM_TEMP_NODES: usize = 0x9691C8;

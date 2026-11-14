@@ -18,6 +18,40 @@ use sa_math::x87::Cmp;
 
 use crate::common::*;
 
+use crate::bindings::anim_blend_animation;
+use crate::bindings::assoc_set_finish_callback as anim_set_finish_callback;
+use crate::bindings::car_enter_exit_compute_door_flag;
+use crate::bindings::car_enter_exit_compute_passenger_index_from_car_door as compute_passenger_index_from_car_door;
+use crate::bindings::car_enter_exit_is_room_for_ped_to_leave_car;
+use crate::bindings::car_enter_exit_remove_car_sit_anim;
+use crate::bindings::clump_get_association as rp_anim_blend_clump_get_association;
+use crate::bindings::damage_get_door_status_component as damage_manager_get_door_status;
+use crate::bindings::damage_manager_set_door_status;
+use crate::bindings::line_up_ped_with_car_ctor as line_up_ctor;
+use crate::bindings::ped_placement_find_z_coor_for_ped;
+use crate::bindings::ped_position_ped_out_of_collision;
+use crate::bindings::ped_replace_weapon_when_exiting_vehicle;
+use crate::bindings::ped_set_radio_station;
+use crate::bindings::ped_update_stat_leaving_vehicle;
+use crate::bindings::say_jacked;
+use crate::bindings::slow_be_dragged_out_compute_anim_id;
+use crate::bindings::vehicle_anim_group_get_group;
+use sa_core::bindings::find_player_ped;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::anim_door_offsets as vehicle_anim_group_compute_anim_door_offsets;
+use sa_world::bindings::get_vehicle_type_for_audio as vehicle_audio_get_vehicle_type_for_audio;
+use sa_world::bindings::is_law_enforcement_vehicle as vehicle_is_law_enforcement_vehicle;
+use sa_world::bindings::multiply3x3;
+use sa_world::bindings::ped_audio_add_audio_event;
+use sa_world::bindings::ped_restart_non_partial_anims;
+use sa_world::bindings::ped_say;
+use sa_world::bindings::player_on_foot_ctor;
+use sa_world::bindings::stand_still_ctor;
+use sa_world::bindings::vehicle_audio_player_about_to_exit_as_driver;
+use sa_world::bindings::vehicle_change_law_enforcer_state;
+use sa_world::bindings::vehicle_remove_driver;
+use sa_world::bindings::vehicle_remove_passenger;
+use sa_world::bindings::wander_get_wander_task_by_ped_type;
 orig! {
     /// `CTask::MakeAbortable(CPed*, int32 priority, const CEvent*)` (vtable +0x18)
     fn v_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, priority: i32, event: GPtr<u8>) -> u8 = thiscall vslot 0x18 => unported;
@@ -27,47 +61,16 @@ orig! {
     fn v_vehicle_process_open_door(v: GPtr<u8>, ped: GPtr<u8>, door: u32, group: u32, anim: u32, time: u32) = thiscall vslot 0x70 => unported;
     /// `CPed::SetMoveAnim` (vtable +0x5C)
     fn v_ped_set_move_anim(p: GPtr<u8>) = thiscall vslot 0x5C => unported;
-
-    /// `CVehicleAnimGroup::GetGroup(int32 animId)` (0x6E3B00, `ret 4`)
-    fn vehicle_anim_group_get_group(g: GPtr<u8>, anim: u32) -> u32 = thiscall 0x6E3B00 => unported;
-    /// `CVehicleAnimGroup::ComputeAnimDoorOffsets(CVector* out, int32 door)` (0x6E3D10, `ret 8`)
-    fn vehicle_anim_group_compute_anim_door_offsets(g: GPtr<u8>, out: GPtr<u8>, door: u32) -> GPtr<u8> = thiscall 0x6E3D10 => unported;
-    /// `CDamageManager::GetDoorStatus(int32 door)` (0x6C2250, `ret 4`)
-    fn damage_manager_get_door_status(d: GPtr<u8>, door: u32) -> u32 = thiscall 0x6C2250 => unported;
-    /// `CDamageManager::SetDoorStatus(int32 door, uint32 status)` (0x6C21E0, `ret 8`)
-    fn damage_manager_set_door_status(d: GPtr<u8>, door: u32, status: u32) = thiscall 0x6C21E0 => unported;
     /// `CTaskSimpleCarSlowDragPedOut::StartAnim(const CPed*)` (0x64C010, `ret 4`)
     fn slow_drag_ped_out_start_anim(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x64C010 => unported;
     /// `CTaskSimpleCarSlowDragPedOut::ComputeAnimID_Wrapper(int32* group, int32* anim)` (0x648100, `ret 8`)
     fn slow_drag_ped_out_compute_anim_id_o(t: GPtr<u8>, group: GPtr<u8>, anim: GPtr<u8>) = thiscall 0x648100 => slow_drag_ped_out_compute_anim_id;
-    /// `CTaskSimpleCarSlowBeDraggedOut::ComputeAnimID(int32* group, int32* anim)` (0x648330, `ret 8`)
-    fn slow_be_dragged_out_compute_anim_id(t: GPtr<u8>, group: GPtr<u8>, anim: GPtr<u8>) = thiscall 0x648330 => unported;
     /// `CTaskSimpleCarSlowBeDraggedOut::StartAnim(const CPed*)` (0x64C190, `ret 4`)
     fn slow_be_dragged_out_start_anim_o(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x64C190 => slow_be_dragged_out_start_anim;
-    /// `CCarEnterExit::ComputePassengerIndexFromCarDoor(const CVehicle*, int32)` (0x64F1E0, cdecl)
-    fn compute_passenger_index_from_car_door(v: GPtr<u8>, door: u32) -> i32 = cdecl 0x64F1E0 => unported;
-    /// `CCarEnterExit::RemoveCarSitAnim(const CPed*)` (0x64F680, cdecl)
-    fn car_enter_exit_remove_car_sit_anim(p: GPtr<u8>) = cdecl 0x64F680 => unported;
-    /// `CCarEnterExit::ComputeDoorFlag(CVehicle*, int32 door, bool)` (0x64E550, cdecl)
-    fn car_enter_exit_compute_door_flag(v: GPtr<u8>, door: u32, b: u32) -> u32 = cdecl 0x64E550 => unported;
-    /// `CCarEnterExit::IsRoomForPedToLeaveCar(const CVehicle*, int32 door, CVector* offset)` (0x6504C0, cdecl)
-    fn car_enter_exit_is_room_for_ped_to_leave_car(v: GPtr<u8>, door: u32, offset: GPtr<u8>) -> u8 = cdecl 0x6504C0 => unported;
-    /// `SayJacked(CPed* jacked, CVehicle*, uint32 offset)` (0x6497A0, cdecl)
-    fn say_jacked(jacked: GPtr<u8>, v: GPtr<u8>, offset: u32) -> u8 = cdecl 0x6497A0 => unported;
     /// `SayJacking(CPed* jacker, CPed* jacked, CVehicle*, uint32 offset)` (0x6497F0, cdecl)
     fn say_jacking_o(jacker: GPtr<u8>, jacked: GPtr<u8>, v: GPtr<u8>, offset: u32) -> u8 = cdecl 0x6497F0 => say_jacking;
-    /// `CAEVehicleAudioEntity::GetVehicleTypeForAudio` (0x4F4F00): a 16-bit result
-    fn vehicle_audio_get_vehicle_type_for_audio(a: GPtr<u8>) -> u32 = thiscall 0x4F4F00 => unported;
-    /// `CPed::Say(uint16 id, uint32 offset, float, uint8, uint8, uint8)` (0x5EFFE0, `ret 0x18`): a 16-bit result
-    fn ped_say(p: GPtr<u8>, id: u32, offset: u32, vol: u32, a: u32, b: u32, c: u32) -> u32 = thiscall 0x5EFFE0 => unported;
     /// `CAEPedSpeechAudioEntity` vtable +0x1C (the jacked ped's speech entity, a bool)
     fn v_speech_1c(s: GPtr<u8>) -> u8 = thiscall vslot 0x1C => unported;
-    /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float delta)` (0x4D4610, cdecl)
-    fn anim_blend_animation(clump: u32, group: u32, id: u32, delta: u32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
-    /// `CAnimBlendAssociation::SetFinishCallback(cb, data)` (0x4CEBE0, `ret 8`)
-    fn anim_set_finish_callback(a: GPtr<u8>, cb: u32, data: u32) = thiscall 0x4CEBE0 => unported;
-    /// `RpAnimBlendClumpGetAssociation(RpClump*, AnimationId)` (0x4D68B0, cdecl)
-    fn rp_anim_blend_clump_get_association(clump: u32, anim: u32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
 
     /// `CTaskSimpleCarSlowBeDraggedOut::Constructor(veh, door, lineUp, flag)` (0x648230, `ret 0x10`)
     fn slow_be_dragged_out_ctor(t: GPtr<u8>, veh: u32, door: u32, line_up: u32, flag: u32) -> GPtr<u8> = thiscall 0x648230 => unported;
@@ -83,49 +86,10 @@ orig! {
     fn stand_up_create_sub_task(t: GPtr<u8>, ty: u32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x648710 => unported;
     /// CRT `operator new` (0x82119A, cdecl)
     fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
-    /// `CTaskUtilityLineUpPedWithCar::CTaskUtilityLineUpPedWithCar(const CVector&, int32, int32, int32 door)` (0x64FBB0, `ret 0x10`)
-    fn line_up_ctor(u: GPtr<u8>, offset: GPtr<u8>, time: u32, a: u32, door: u32) -> GPtr<u8> = thiscall 0x64FBB0 => unported;
-
-    /// `CPed::IsPlayer` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CPed::SetRadioStation` (0x5DFD90)
-    fn ped_set_radio_station(p: GPtr<u8>) = thiscall 0x5DFD90 => unported;
-    /// `CPed::RestartNonPartialAnims` (0x5DED50)
-    fn ped_restart_non_partial_anims(p: GPtr<u8>) = thiscall 0x5DED50 => unported;
-    /// `CPed::UpdateStatLeavingVehicle` (0x5E01B0)
-    fn ped_update_stat_leaving_vehicle(p: GPtr<u8>) = thiscall 0x5E01B0 => unported;
-    /// `CPed::ReplaceWeaponWhenExitingVehicle` (0x5E6490)
-    fn ped_replace_weapon_when_exiting_vehicle(p: GPtr<u8>) = thiscall 0x5E6490 => unported;
     /// `CPed::CalculateNewOrientation` (0x5E52E0)
     fn ped_calculate_new_orientation(p: GPtr<u8>) = thiscall 0x5E52E0 => unported;
-    /// `CPed::PositionPedOutOfCollision(int32 door, CVehicle*, bool)` (0x5E0820, `ret 0xC`)
-    fn ped_position_ped_out_of_collision(p: GPtr<u8>, door: u32, veh: GPtr<u8>, b: u32) -> u8 = thiscall 0x5E0820 => unported;
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210, cdecl)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CAEVehicleAudioEntity::PlayerAboutToExitVehicleAsDriver` (0x4F5BA0)
-    fn vehicle_audio_player_about_to_exit_as_driver(a: GPtr<u8>) = thiscall 0x4F5BA0 => unported;
-    /// `CAEPedAudioEntity::AddAudioEvent(id, volume, speed, …)` (0x4E2BB0, `ret 0x1C`)
-    fn ped_audio_add_audio_event(e: GPtr<u8>, ev: u32, vol: u32, speed: u32, a3: u32, a4: u32, a5: u32, a6: u32) = thiscall 0x4E2BB0 => unported;
-    /// `CVehicle::RemoveDriver(bool)` (0x6D1950, `ret 4`)
-    fn vehicle_remove_driver(v: GPtr<u8>, b: u32) = thiscall 0x6D1950 => unported;
-    /// `CVehicle::RemovePassenger(CPed*)` (0x6D1610, `ret 4`)
-    fn vehicle_remove_passenger(v: GPtr<u8>, p: GPtr<u8>) = thiscall 0x6D1610 => unported;
-    /// `CVehicle::IsLawEnforcementVehicle` (0x6D2370)
-    fn vehicle_is_law_enforcement_vehicle(v: GPtr<u8>) -> u8 = thiscall 0x6D2370 => unported;
-    /// `CVehicle::ChangeLawEnforcerState(bool)` (0x6D2330, `ret 4`)
-    fn vehicle_change_law_enforcer_state(v: GPtr<u8>, b: u32) = thiscall 0x6D2330 => unported;
-    /// `CTaskSimplePlayerOnFoot::Constructor` (0x685750)
-    fn player_on_foot_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x685750 => unported;
-    /// `CTaskSimpleStandStill::Constructor(time, looped, useAnimIdleStance, blend)` (0x62F310, `ret 0x10`)
-    fn stand_still_ctor(t: GPtr<u8>, time: u32, looped: u32, idle: u32, blend: u32) -> GPtr<u8> = thiscall 0x62F310 => unported;
-    /// `CTaskComplexWander::GetWanderTaskByPedType(CPed*)` (0x673D00, cdecl)
-    fn wander_get_wander_task_by_ped_type(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x673D00 => unported;
     /// `CTaskManager::SetTask(CTask*, int32 slot, bool)` (0x681AF0, `ret 0xC`)
     fn task_manager_set_task(tm: GPtr<u8>, t: GPtr<u8>, slot: u32, b: u32) = thiscall 0x681AF0 => unported;
-    /// `Multiply3x3(CVector* out, const CMatrix*, const CVector*)` (0x59C790, cdecl)
-    fn multiply3x3(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C790 => unported;
-    /// `CPedPlacement::FindZCoorForPed(CVector*)` (0x616920, cdecl)
-    fn ped_placement_find_z_coor_for_ped(p: GPtr<u8>) -> u8 = cdecl 0x616920 => unported;
 }
 
 /// `CVehicleAnimGroup` array (`CVehicleAnimGroupData::m_vehicleAnimGroups`, 0x94 bytes each).

@@ -24,35 +24,25 @@ const VEHICLE_SIZE: u32 = 0xA18;
 /// `gCurCamColVars` (owner: CCamera)
 const CUR_CAM_COL_VARS: usize = 0x8CCB80;
 
+pub use crate::bindings::ped_can_be_deleted;
+pub use crate::bindings::physical_add_to_moving_list as add_to_moving_list;
+pub use crate::bindings::population_remove_ped;
+pub use crate::bindings::remove_from_moving_list;
+pub use crate::bindings::simple_transform_update_rw_matrix;
+pub use sa_core::bindings::eh_vector_ctor;
+pub use sa_core::bindings::eh_vector_dtor;
+pub use sa_core::bindings::entity_update_rw_frame;
+pub use sa_core::bindings::matrix_update_rw_matrix;
+pub use sa_stream::bindings::ped_is_player;
 orig! {
     /// `CIplStore::Initialise` (0x405EC0)
     pub fn ipl_store_initialise() = cdecl 0x405EC0 => unported;
-    /// CRT `eh vector constructor iterator` (0x821D30, stdcall)
-    pub fn eh_vector_ctor(arr: GPtr<u8>, size: u32, n: u32, ctor: u32, dtor: u32) = stdcall 0x821D30 => unported;
-    /// `CPed::IsPlayer` (0x5DF8F0)
-    pub fn ped_is_player(ped: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CPed::CanBeDeleted` (0x5DF100)
-    pub fn ped_can_be_deleted(ped: GPtr<u8>) -> u8 = thiscall 0x5DF100 => unported;
-    /// `CPopulation::RemovePed(CPed*)` (0x610F20)
-    pub fn population_remove_ped(ped: GPtr<u8>) = cdecl 0x610F20 => unported;
     /// CRT `printf` (0x821982) with three integer arguments
     pub fn printf4(fmt: GPtr<u8>, a: u32, b: i32, c: i32) -> i32 = cdecl 0x821982 => unported;
-    /// `CMatrix::UpdateRwMatrix(RwMatrix*)` (0x59AD70)
-    pub fn matrix_update_rw_matrix(m: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x59AD70 => unported;
-    /// `CSimpleTransform::UpdateRwMatrix(RwMatrix*)` (0x54EF40)
-    pub fn simple_transform_update_rw_matrix(t: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x54EF40 => unported;
-    /// `CEntity::UpdateRwFrame` (0x532B00)
-    pub fn entity_update_rw_frame(e: GPtr<u8>) = thiscall 0x532B00 => unported;
     /// `CEntity::Add` (vtable slot 8)
     pub fn entity_add(e: GPtr<u8>) = thiscall vslot 0x8 => unported;
-    /// `CPhysical::AddToMovingList` (0x542800)
-    pub fn add_to_moving_list(e: GPtr<u8>) = thiscall 0x542800 => unported;
-    /// CRT `eh vector destructor iterator` (0x821E02, stdcall)
-    pub fn eh_vector_dtor(arr: GPtr<u8>, size: u32, n: u32, dtor: u32) = stdcall 0x821E02 => unported;
     /// `CEntity::Remove` (vtable slot 0xC)
     pub fn entity_remove(e: GPtr<u8>) = thiscall vslot 0xC => unported;
-    /// `CPhysical::RemoveFromMovingList` (0x542860)
-    pub fn remove_from_moving_list(e: GPtr<u8>) = thiscall 0x542860 => unported;
     /// `CPedIntelligence::ProcessAfterPreRender` (0x6019B0)
     pub fn process_after_pre_render(intel: GPtr<u8>) = thiscall 0x6019B0 => unported;
 }

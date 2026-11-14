@@ -10,10 +10,7 @@ use sa_math::x87::X87;
 
 use crate::common::{g, jp, rd, wr, x};
 
-orig! {
-    /// `CSprite::FlushSpriteBuffer()` (0x70CF20)
-    fn sprite_flush_sprite_buffer() = cdecl 0x70CF20 => unported;
-}
+use sa_world::bindings::sprite_flush_sprite_buffer;
 
 /// `CSprite::RenderBufferedOneXLUSprite_Rotate_Dimension(CVector pos, float w, float h, uint8 r, g, b,
 /// int16 intensity, float recipNearZ, float angle, uint8 alpha)` (0x70EAB0): 3D mode (0xC6A15C = 0); the
@@ -92,29 +89,23 @@ pub fn render_buffered_one_xlu_sprite_rotate_dimension(px: f32, py: f32, pz: f32
     }
 }
 
+use crate::bindings::transform_points;
+use sa_core::bindings::box_set;
+use sa_core::bindings::sphere_set;
+use sa_stream::bindings::placeable_allocate_matrix;
+use sa_world::bindings::entity_get_col_model as get_col_model;
+use sa_world::bindings::test_sphere_box;
 orig! {
-    /// `CEntity::GetColModel()` (0x535300)
-    fn get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => unported;
     /// `CPlantMgr::_ProcessEntryCollisionDataSections_RemoveLocTris(entry, center, iTriMax, first, last)`
     /// (0x5DBF20; bool in AL)
     fn plant_remove_loc_tris(entry: GPtr<u8>, center: GPtr<u8>, max: u32, first: i32, last: i32) -> u8 = cdecl 0x5DBF20 => unported;
     /// `CPlantMgr::_ProcessEntryCollisionDataSections_AddLocTris(entry, center, iTriMax, first, last)`
     /// (0x5DC8B0; bool in AL)
     fn plant_add_loc_tris(entry: GPtr<u8>, center: GPtr<u8>, max: u32, first: i32, last: i32) -> u8 = cdecl 0x5DC8B0 => unported;
-    /// `CPlaceable::AllocateMatrix()` (0x54F560)
-    fn placeable_allocate_matrix(this: GPtr<u8>) = thiscall 0x54F560 => unported;
     /// `CSimpleTransform::UpdateMatrix(CMatrix*) const` (0x54F1B0)
     fn simple_transform_update_matrix(this: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => crate::mvpd_unk::simple_transform_update_matrix;
-    /// `TransformPoints(RwV3d* out, int32 n, const CMatrix&, const RwV3d* in)` (0x54EEF0)
-    fn transform_points(out: GPtr<u8>, n: u32, m: GPtr<u8>, inp: GPtr<u8>) = cdecl 0x54EEF0 => crate::mvpb_r1::transform_points;
-    /// `CBox::Set(const CVector&, const CVector&)` (0x40EDE0)
-    fn box_set(b: GPtr<u8>, min: GPtr<u8>, max: GPtr<u8>) = thiscall 0x40EDE0 => unported;
     /// `CBox::Recalc()` (0x40EE20)
     fn box_recalc(b: GPtr<u8>) = thiscall 0x40EE20 => unported;
-    /// `CSphere::Set(float radius, const CVector& center)` (0x40FCF0)
-    fn sphere_set(s: GPtr<u8>, r: u32, c: GPtr<u8>) = thiscall 0x40FCF0 => unported;
-    /// `CCollision::TestSphereBox(const CSphere&, const CBox&)` (0x4120C0, bool in AL)
-    fn test_sphere_box(s: GPtr<u8>, b: GPtr<u8>) -> u8 = cdecl 0x4120C0 => unported;
 }
 
 /// `CPlantMgr::_ProcessEntryCollisionDataSections(const CPlantColEntEntry&, const CVector& center, int32
@@ -169,9 +160,8 @@ pub fn plant_process_entry_collision_data_sections(entry: GPtr<u8>, center: GPtr
 
 use sa_core::field::ptr_of as lp;
 
+use crate::bindings::proc_object_process_triangle_added;
 orig! {
-    /// `ProcObjectMan_c::ProcessTriangleAdded(CPlantLocTri*)` (0x5A3F20, bool in AL)
-    fn proc_object_process_triangle_added(this: GPtr<u8>, t: GPtr<u8>) -> u8 = thiscall 0x5A3F20 => unported;
     /// `CPlantLocTri::Release()` (0x5DB6D0)
     fn plant_loc_tri_release(this: GPtr<u8>) = thiscall 0x5DB6D0 => unported;
 }
@@ -233,10 +223,7 @@ pub fn plant_remove_loc_tris_port(entry: GPtr<u8>, center: GPtr<u8>, max: u32, f
     }
 }
 
-orig! {
-    /// `RwIm2DRenderPrimitive(type, verts, n)` (0x734E90)
-    fn im2d_render_primitive(prim: u32, verts: GPtr<u8>, n: i32) -> i32 = cdecl 0x734E90 => unported;
-}
+use sa_core::bindings::rw_im2d_render_primitive as im2d_render_primitive;
 
 /// `CSprite::RenderOneXLUSprite_Rotate_Aspect(float x, y, z, w, h, uint8 r, g, b, int16 intensity, float
 /// recipNearZ, float angle, uint8 alpha)` (0x70D490): nothing below z 1.3; between 1.3 and 2.3 the

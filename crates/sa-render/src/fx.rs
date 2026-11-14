@@ -69,15 +69,30 @@ const K_1000: u32 = 0x447A_0000;
 /// 256.0 (0x858FB4)
 const K_256: u32 = 0x4380_0000;
 
+pub use crate::bindings::frustum_info_ctor;
+pub use crate::bindings::update_particle;
+pub use sa_core::bindings::crt_free as operator_delete;
+pub use sa_core::bindings::crt_free_8214bd as crt_free;
+pub use sa_core::bindings::destroy_fx_system;
+pub use sa_core::bindings::get_uppercase_key;
+pub use sa_core::bindings::list_add_item;
+pub use sa_core::bindings::list_get_num_items;
+pub use sa_core::bindings::list_item_dtor as list_item_dtor_b;
+pub use sa_core::bindings::list_remove_head;
+pub use sa_core::bindings::list_remove_item;
+pub use sa_core::bindings::memory_free;
+pub use sa_core::bindings::memory_malloc;
+pub use sa_core::bindings::rw_matrix_create;
+pub use sa_core::bindings::rw_matrix_destroy;
+pub use sa_core::bindings::rw_matrix_multiply;
+pub use sa_core::bindings::rw_matrix_update;
+pub use sa_core::bindings::rw_v3d_transform_points;
+pub use sa_world::bindings::sound_dtor as ae_sound_dtor;
 orig! {
     /// `List_c::List_c()` (0x4A8DD0): head, tail, count = 0
     pub fn list_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4A8DD0 => list_ctor_port;
     /// `ListItem_c::ListItem_c()` (0x4A8DB0): prev, next = 0
     pub fn list_item_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4A8DB0 => list_item_ctor_port;
-    /// `List_c::AddItem(ListItem_c*)` (0x4A8DF0)
-    pub fn list_add_item(this: GPtr<u8>, item: GPtr<u8>) = thiscall 0x4A8DF0 => unported;
-    /// `List_c::RemoveHead()` (0x4A8E70)
-    pub fn list_remove_head(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4A8E70 => unported;
     /// `FxManager_c::Update(RwCamera*, float)` (0x4A9A80)
     pub fn fx_manager_update(this: GPtr<u8>, cam: GPtr<u8>, dt: u32) = thiscall 0x4A9A80 => fx_manager_update_port;
     /// `FxManager_c::FindFxSystemBP(const char*)` (0x4A9360)
@@ -106,46 +121,18 @@ orig! {
     pub fn prim_vstop(this: GPtr<u8>) = thiscall vslot 0xC => unported;
     /// `CMemoryMgr::Realloc(void*, uint32, const char*)` (0x72F440)
     pub fn memory_realloc(p: GPtr<u8>, size: u32, hint: u32) -> GPtr<u8> = cdecl 0x72F440 => unported;
-    /// `RwMatrixUpdate(RwMatrix*)` (0x7F18A0)
-    pub fn rw_matrix_update(m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F18A0 => unported;
-    /// `RwMatrixMultiply(RwMatrix* out, const RwMatrix* a, const RwMatrix* b)` (0x7F18B0)
-    pub fn rw_matrix_multiply(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F18B0 => unported;
-    /// `RwMatrixCreate()` (0x7F2A50)
-    pub fn rw_matrix_create() -> GPtr<u8> = cdecl 0x7F2A50 => unported;
-    /// `RwMatrixDestroy(RwMatrix*)` (0x7F2A20)
-    pub fn rw_matrix_destroy(m: GPtr<u8>) -> i32 = cdecl 0x7F2A20 => unported;
-    /// `RwV3dTransformPoints(RwV3d* out, const RwV3d* in, int32 n, const RwMatrix* m)` (0x7EDD90)
-    pub fn rw_v3d_transform_points(out: GPtr<u8>, inp: GPtr<u8>, n: i32, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EDD90 => unported;
     /// `RwRenderStateSet` (`RwEngineInstance` slot 0x20)
     pub fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
     /// `RwRenderStateGet` (`RwEngineInstance` slot 0x24)
     pub fn rw_render_state_get(state: u32, out: GPtr<u8>) -> i32 = cdecl table 0xC97B24 0x24 => unported;
-    /// `List_c::GetNumItems()` (0x4A8EC0)
-    pub fn list_get_num_items(this: GPtr<u8>) -> i32 = thiscall 0x4A8EC0 => unported;
-    /// `List_c::RemoveItem(ListItem_c*)` (0x4A8E30)
-    pub fn list_remove_item(this: GPtr<u8>, item: GPtr<u8>) = thiscall 0x4A8E30 => unported;
     /// `ListItem_c::~ListItem_c()` (0x49EA70)
     pub fn list_item_dtor(this: GPtr<u8>) = thiscall 0x49EA70 => unported;
-    /// `ListItem_c` base destructor as `FxSystem_c::~FxSystem_c` calls it (0x4A8DC0, a lone `ret`)
-    pub fn list_item_dtor_b(this: GPtr<u8>) = thiscall 0x4A8DC0 => unported;
     /// CRT `operator new` (0x82119A)
     pub fn operator_new(n: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
-    /// CRT `operator delete` (0x8213AE)
-    pub fn operator_delete(p: GPtr<u8>) = cdecl 0x8213AE => unported;
-    /// CRT `free` (0x8214BD)
-    pub fn crt_free(p: GPtr<u8>) = cdecl 0x8214BD => unported;
     /// CRT `sprintf(buf, fmt, arg)` (0x821BB5)
     pub fn sprintf1(buf: GPtr<u8>, fmt: GPtr<u8>, a: u32) -> i32 = cdecl 0x821BB5 => unported;
-    /// `CKeyGen::GetUppercaseKey(const char*)` (0x53CF30)
-    pub fn get_uppercase_key(s: GPtr<u8>) -> u32 = cdecl 0x53CF30 => unported;
-    /// `CMemoryMgr::Malloc(uint32, const char*)` (0x72F420)
-    pub fn memory_malloc(size: u32, hint: u32) -> GPtr<u8> = cdecl 0x72F420 => unported;
-    /// `CMemoryMgr::Free(void*)` (0x72F430)
-    pub fn memory_free(p: GPtr<u8>) = cdecl 0x72F430 => unported;
     /// `FxPrim_c::FxPrim_c()` (0x4A9F20)
     pub fn prim_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4A9F20 => unported;
-    /// `FxFrustumInfo_c::FxFrustumInfo_c()` (0x4A9F70)
-    pub fn frustum_info_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4A9F70 => unported;
     /// `FxMemoryPool_c::FxMemoryPool_c()` (0x4A9C10)
     pub fn memory_pool_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4A9C10 => fx_memory_pool_ctor;
     /// `FxManager_c::Init()` (0x4A98E0)
@@ -156,8 +143,6 @@ orig! {
     pub fn set_wind_data(this: GPtr<u8>, dir: u32, strength: u32) = thiscall 0x4A93E0 => fx_manager_set_wind_data;
     /// `FxManager_c::CalcFrustumInfo(RwCamera*)` (0x4A9140)
     pub fn calc_frustum_info(this: GPtr<u8>, cam: GPtr<u8>) = thiscall 0x4A9140 => unported;
-    /// `FxManager_c::DestroyFxSystem(FxSystem_c*)` (0x4A9810)
-    pub fn destroy_fx_system(this: GPtr<u8>, sys: GPtr<u8>) = thiscall 0x4A9810 => unported;
     /// `FxManager_c::CreateFxSystem(const char*, ...)` (0x4A9BE0)
     pub fn create_fx_system_name(this: GPtr<u8>, name: GPtr<u8>, m: GPtr<u8>, parent: GPtr<u8>, ignore_bounds: u32) -> GPtr<u8> = thiscall 0x4A9BE0 => fx_manager_create_fx_system_name;
     /// `FxManager_c::FxRwMatrixCreate()` (0x4A9440)
@@ -176,10 +161,6 @@ orig! {
     pub fn system_kill(this: GPtr<u8>) = thiscall 0x4AA3F0 => fx_system_kill;
     /// `FxSystem_c::PlayAndKill()` (0x4AA3D0)
     pub fn system_play_and_kill(this: GPtr<u8>) = thiscall 0x4AA3D0 => fx_system_play_and_kill;
-    /// `FxEmitterBP_c::UpdateParticle(float, FxEmitterPrt_c*)` (0x4A21D0)
-    pub fn update_particle(this: GPtr<u8>, dt: u32, prt: GPtr<u8>) -> u8 = thiscall 0x4A21D0 => unported;
-    /// `CAESound::~CAESound()` (0x4EF660)
-    pub fn ae_sound_dtor(this: GPtr<u8>) = thiscall 0x4EF660 => unported;
     /// `CAEFireAudioEntity::Terminate()` (0x4DCF40)
     pub fn fire_audio_terminate(this: GPtr<u8>) = thiscall 0x4DCF40 => unported;
     /// `FxPrimBP_c` virtual slot 0x14 (render) as `FxSystemBP_c::Render` calls it: `(a1, 0, a2, a3)`

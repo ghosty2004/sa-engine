@@ -45,13 +45,17 @@ sa_core::globals! {
     pub static CAMERA_FREELIST_PARAMS @ 0x8E2244: [i32; 2] = [4, 1];
 }
 
+pub use crate::bindings::bbox_calculate;
+pub use crate::bindings::object_release_frame;
+pub use crate::bindings::plugin_add as registry_add_plugin;
+pub use crate::bindings::plugin_deinit_object as registry_deinit_object;
+pub use crate::bindings::plugin_init_object as registry_init_object;
+pub use crate::bindings::registry_get_plugin_offset;
 orig! {
     /// `RwFreeListCreateAndPreallocateSpace` (0x801B70)
     pub fn free_list_create_and_preallocate_space(size: i32, per_block: i32, align: i32, blocks: i32, space: GPtr<u8>, hint: u32) -> GPtr<u8> = cdecl 0x801B70 => unported;
     /// `RwMatrixOptimize(m, tolerance)` (0x7F17E0)
     pub fn matrix_optimize(m: GPtr<u8>, tol: GPtr<f32>) -> GPtr<u8> = cdecl 0x7F17E0 => crate::matrix::rw_matrix_optimize;
-    /// `RwBBoxCalculate(bbox, verts, n)` (0x808F60)
-    pub fn bbox_calculate(bx: GPtr<u8>, verts: GPtr<u8>, n: i32) -> GPtr<u8> = cdecl 0x808F60 => crate::matrix::rw_bbox_calculate;
     /// `_rwCameraBuildPerspClipPlanes(camera)` (0x7EE740)
     pub fn build_persp_clip_planes(c: GPtr<u8>) = cdecl 0x7EE740 => rw_camera_build_persp_clip_planes;
     /// Parallel corners and planes (0x7EEDE0)
@@ -64,16 +68,6 @@ orig! {
     pub fn frame_sync_dirty() -> u32 = cdecl 0x809550 => crate::frame::sync_dirty;
     /// `RwFrameUpdateObjects` (0x7F0910)
     pub fn frame_update_objects(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0910 => crate::frame::update_objects;
-    /// `_rwObjectHasFrameReleaseFrame` (0x804F40)
-    pub fn object_release_frame(obj: GPtr<u8>) -> GPtr<u8> = cdecl 0x804F40 => crate::frame::object_has_frame_release_frame;
-    /// `_rwPluginRegistryInitObject` (0x8086E0)
-    pub fn registry_init_object(reg: GPtr<u8>, obj: GPtr<u8>) -> GPtr<u8> = cdecl 0x8086E0 => crate::plugin::registry_init_object;
-    /// `_rwPluginRegistryDeInitObject` (0x808740)
-    pub fn registry_deinit_object(reg: GPtr<u8>, obj: GPtr<u8>) -> GPtr<u8> = cdecl 0x808740 => crate::plugin::registry_deinit_object;
-    /// `_rwPluginRegistryAddPlugin` (0x8084A0)
-    pub fn registry_add_plugin(reg: GPtr<u8>, size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x8084A0 => crate::plugin::registry_add_plugin;
-    /// `_rwPluginRegistryGetPluginOffset` (0x808470)
-    pub fn registry_get_plugin_offset(reg: GPtr<u8>, id: u32) -> i32 = cdecl 0x808470 => crate::plugin::registry_get_plugin_offset;
 
     /// `_rwCameraUpdateZShiftScale` (0x7EE200)
     pub fn update_z_shift_scale_call(c: GPtr<u8>) = cdecl 0x7EE200 => update_z_shift_scale;

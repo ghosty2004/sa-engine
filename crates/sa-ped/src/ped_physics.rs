@@ -41,122 +41,76 @@ const EIGHT_THOUSANDTHS: u32 = 0x3C03_126F;
 /// original's inlined default constructor leaves them, the rest uninitialised there and 0 here).
 type LocalMatrix = [u32; 18];
 
+use sa_core::bindings::cross_product;
+use sa_core::bindings::get_ambient_blue;
+use sa_core::bindings::get_ambient_green;
+use sa_core::bindings::get_ambient_red;
+use sa_core::bindings::matrix_attach;
+use sa_core::bindings::matrix_detach;
+use sa_core::bindings::matrix_dtor;
+use sa_core::bindings::matrix_mul_assign;
+use sa_core::bindings::matrix_rotate_z;
+use sa_core::bindings::matrix_set_rotate_z_only;
+use sa_core::bindings::matrix_set_translate;
+use sa_core::bindings::matrix_set_unity;
+use sa_core::bindings::tm_get_simplest_active_task as task_mgr_get_simplest_active_task;
+use sa_core::bindings::vector2d_normalise;
+use sa_core::bindings::world_add;
+use sa_core::bindings::world_remove;
+use sa_world::bindings::bike_calculate_lean_matrix;
+use sa_world::bindings::buoyancy_process;
+use sa_world::bindings::clump_get_first_association_4d6a70 as clump_get_first_association_flags;
+use sa_world::bindings::crt_ceil;
+use sa_world::bindings::event_base_dtor as event_in_water_dtor;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::flush_immediately as intel_flush_immediately;
+use sa_world::bindings::fx_trigger_water_splash;
+use sa_world::bindings::get_next_association as get_next_association_flags;
+use sa_world::bindings::get_task_climb;
+use sa_world::bindings::get_task_jet_pack;
+use sa_world::bindings::get_task_swim;
+use sa_world::bindings::get_water_level;
+use sa_world::bindings::groups_is_in_players_group as is_in_players_group;
+use sa_world::bindings::is_steep_slope;
+use sa_world::bindings::membership_get_leader as group_get_leader;
+use sa_world::bindings::ped_groups_get_peds_group as get_peds_group;
+use sa_world::bindings::physical_apply_move_force_5429f0 as apply_move_force;
+use sa_world::bindings::physical_get_speed;
+use sa_world::bindings::placeable_get_matrix as get_matrix;
+use sa_world::bindings::placeable_set_matrix;
+use sa_world::bindings::player_handle_breath;
+use sa_world::bindings::vector_add;
+use sa_world::bindings::vector_add_assign;
+use sa_world::bindings::vector_magnitude_sqr as magnitude_sqr;
+use sa_world::bindings::vector_mul_scalar;
+use sa_world::bindings::vector_scale as scalar_mul_vector;
+use sa_world::bindings::vector_sub_assign;
+use sa_world::bindings::world_process_vertical_line as process_vertical_line;
 orig! {
     /// `CMatrix::CMatrix(const CMatrix&)` (0x59BCF0, `ret 4`)
     fn matrix_copy_ctor(m: GPtr<u8>, src: GPtr<u8>) = thiscall 0x59BCF0 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
     /// `CMatrix::operator=(const CMatrix&)` (0x59BBC0)
     fn matrix_assign(dst: GPtr<u8>, src: GPtr<u8>) = thiscall 0x59BBC0 => unported;
-    /// `CMatrix::Attach(RwMatrix*, bool)` (0x59BD10)
-    fn matrix_attach(m: GPtr<u8>, rw: GPtr<u8>, owns: u32) = thiscall 0x59BD10 => unported;
-    /// `CMatrix::Detach()` (0x59ACF0)
-    fn matrix_detach(m: GPtr<u8>) = thiscall 0x59ACF0 => unported;
-    /// `CMatrix::SetTranslate(float, float, float)` (0x59AF40; raw float words)
-    fn matrix_set_translate(m: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x59AF40 => unported;
     /// `CMatrix::RotateY(float)` (0x59B2C0)
     fn matrix_rotate_y(m: GPtr<u8>, a: u32) = thiscall 0x59B2C0 => unported;
-    /// `CMatrix::RotateZ(float)` (0x59B390)
-    fn matrix_rotate_z(m: GPtr<u8>, a: u32) = thiscall 0x59B390 => unported;
-    /// `CMatrix::SetUnity()` (0x59AE70)
-    fn matrix_set_unity(m: GPtr<u8>) = thiscall 0x59AE70 => unported;
-    /// `CMatrix::operator*=(const CMatrix&)` (0x411A80)
-    fn matrix_mul_assign(dst: GPtr<u8>, rhs: GPtr<u8>) = thiscall 0x411A80 => unported;
     /// `Multiply3x3(CVector* out, const CMatrix&, const CVector&)` (0x59C790, cdecl, returns out)
     fn multiply_3x3(out: GPtr<f32>, m: GPtr<u8>, v: GPtr<f32>) -> GPtr<f32> = cdecl 0x59C790 => unported;
-    /// `CPlaceable::SetMatrix(const CMatrix&)` (0x54F610)
-    fn placeable_set_matrix(e: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F610 => unported;
-    /// `CBike::CalculateLeanMatrix()` (0x6B7150)
-    fn bike_calculate_lean_matrix(bike: GPtr<u8>) = thiscall 0x6B7150 => unported;
-    /// `CMatrix::SetRotateZOnly(float)` (0x59B020, `ret 4`)
-    fn matrix_set_rotate_z_only(m: GPtr<u8>, h: u32) = thiscall 0x59B020 => unported;
-    /// `CPedIntelligence::GetTaskSwim` (0x601070)
-    fn get_task_swim(intel: GPtr<u8>) -> GPtr<u8> = thiscall 0x601070 => unported;
-    /// `CPedIntelligence::GetTaskJetPack` (0x601110)
-    fn get_task_jet_pack(intel: GPtr<u8>) -> GPtr<u8> = thiscall 0x601110 => unported;
     /// `CTask::GetTaskType` (vtable slot 0x10)
     fn task_get_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CVector::operator-=(const CVector&)` (0x406D70, `ret 4`)
-    fn vector_sub_assign(v: GPtr<u8>, o: GPtr<u8>) = thiscall 0x406D70 => unported;
-    /// `CVector::operator+=(const CVector&)` (0x411A00, `ret 4`)
-    fn vector_add_assign(v: GPtr<u8>, o: GPtr<u8>) = thiscall 0x411A00 => unported;
-    /// `CVector::MagnitudeSqr()` (0x406DA0, ST0)
-    fn magnitude_sqr(v: GPtr<u8>) -> f64 = thiscall 0x406DA0 => unported;
-    /// `CrossProduct(CVector* out, const CVector&, const CVector&)` (0x59C730, cdecl, returns out)
-    fn cross_product(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C730 => unported;
-    /// `operator+(const CVector&, const CVector&)` (0x40FE30, cdecl, hidden return pointer)
-    fn vector_add(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE30 => unported;
-    /// `operator*(float, const CVector&)` (0x40FE90, cdecl, hidden return pointer)
-    fn scalar_mul_vector(out: GPtr<u8>, s: f32, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE90 => unported;
-    /// `operator*(const CVector&, float)` (0x40FEC0, cdecl, hidden return pointer)
-    fn vector_mul_scalar(out: GPtr<u8>, v: GPtr<u8>, s: f32) -> GPtr<u8> = cdecl 0x40FEC0 => unported;
-    /// `CPhysical::GetSpeed(CVector point)` (0x542CE0, hidden return pointer, `ret 0x10`)
-    fn physical_get_speed(e: GPtr<u8>, out: GPtr<u8>, x: u32, y: u32, z: u32) -> GPtr<u8> = thiscall 0x542CE0 => unported;
-    /// `SurfaceInfos_c::IsSteepSlope(uint32 surface)` (0x55E770, AL)
-    fn is_steep_slope(si: GPtr<u8>, surface: u32) -> u8 = thiscall 0x55E770 => unported;
-    /// `CVector2D::Normalise()` (0x44E480)
-    fn vector2d_normalise(v: GPtr<u8>) = thiscall 0x44E480 => unported;
-    /// `cBuoyancy::ProcessBuoyancy(CPhysical*, float, CVector* turnPoint, CVector* force)` (0x6C3EF0, AL)
-    fn buoyancy_process(b: GPtr<u8>, e: GPtr<u8>, buoyancy: u32, turn: GPtr<u8>, force: GPtr<u8>) -> u8 = thiscall 0x6C3EF0 => unported;
-    /// `CTaskManager::GetSimplestActiveTask()` (0x6819D0)
-    fn task_mgr_get_simplest_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x6819D0 => unported;
-    /// `CWorld::ProcessVerticalLine(const CVector&, float, CColPoint&, CEntity*&, bool x6, CStoredCollPoly*)`
-    /// (0x5674E0, AL)
-    fn process_vertical_line(pos: GPtr<u8>, z: u32, cp: GPtr<u8>, ent: GPtr<u8>, b1: u32, b2: u32, b3: u32, b4: u32, b5: u32, b6: u32, poly: u32) -> u8 = cdecl 0x5674E0 => unported;
-    /// `CPlaceable::GetMatrix()` (0x411990)
-    fn get_matrix(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x411990 => unported;
-    /// `CTimeCycle::GetAmbientRed()` (0x560330, ST0)
-    fn get_ambient_red() -> f64 = cdecl 0x560330 => unported;
-    /// `CTimeCycle::GetAmbientGreen()` (0x560340, ST0)
-    fn get_ambient_green() -> f64 = cdecl 0x560340 => unported;
-    /// `CTimeCycle::GetAmbientBlue()` (0x560350, ST0)
-    fn get_ambient_blue() -> f64 = cdecl 0x560350 => unported;
-    /// `CWaterLevel::GetWaterLevel(float x, float y, float z, float* level, bool, CVector*)` (0x6EB690, AL)
-    fn get_water_level(x: u32, y: u32, z: u32, level: GPtr<u8>, touching: u32, normal: u32) -> u8 = cdecl 0x6EB690 => unported;
-    /// `Fx_c::TriggerWaterSplash(CVector&)` (0x4A1070)
-    fn fx_trigger_water_splash(fx: GPtr<u8>, pos: GPtr<u8>) = thiscall 0x4A1070 => unported;
     /// `CAudioEngine::ReportWaterSplash(CPhysical*, float, bool)` (0x506F00)
     fn audio_report_water_splash(a: GPtr<u8>, e: GPtr<u8>, volume: u32, force: u32) = thiscall 0x506F00 => unported;
-    /// `CPhysical::ApplyMoveForce(CVector)` (0x5429F0, `ret 0xC`)
-    fn apply_move_force(e: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x5429F0 => unported;
     /// `CPed::GetTransformedBonePosition(CVector&, ePedBones, bool)` (0x5E01C0)
     fn get_transformed_bone_position(ped: GPtr<u8>, v: GPtr<u8>, bone: i32, update: u32) = thiscall 0x5E01C0 => unported;
-    /// `CPlayerPed::HandlePlayerBreath(bool, float)` (0x60A8D0)
-    fn player_handle_breath(ped: GPtr<u8>, b: u32, f: u32) = thiscall 0x60A8D0 => unported;
     /// `CEventInWater::CEventInWater(float)` (0x4B1370, `ret 4`)
     fn event_in_water_ctor(e: GPtr<u8>, acc: u32) = thiscall 0x4B1370 => unported;
-    /// `CEventInWater::~CEventInWater()` (0x4B13C0)
-    fn event_in_water_dtor(e: GPtr<u8>) = thiscall 0x4B13C0 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420)
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
-    /// `CPedIntelligence::GetTaskClimb()` (0x601180)
-    fn get_task_climb(intel: GPtr<u8>) -> GPtr<u8> = thiscall 0x601180 => unported;
-    /// CRT `ceil(double)` (0x823820, ST0)
-    fn crt_ceil(v: f64) -> f64 = cdecl 0x823820 => unported;
-    /// `CPedIntelligence::FlushImmediately(bool)` (0x601640)
-    fn intel_flush_immediately(intel: GPtr<u8>, b: u32) = thiscall 0x601640 => unported;
-    /// `CWorld::Remove(CEntity*)` (0x563280)
-    fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
-    /// `CWorld::Add(CEntity*)` (0x563220)
-    fn world_add(e: GPtr<u8>) = cdecl 0x563220 => unported;
     /// `RpAnimBlendClumpGetAssociation(RpClump*, AnimationId)` (0x4D68B0)
     fn clump_get_association(c: GPtr<u8>, id: i32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
-    /// `RpAnimBlendClumpGetFirstAssociation(RpClump*, uint32 flags)` (0x4D6A70)
-    fn clump_get_first_association_flags(c: GPtr<u8>, flags: u32) -> GPtr<u8> = cdecl 0x4D6A70 => unported;
-    /// `RpAnimBlendGetNextAssociation(CAnimBlendAssociation*, uint32 flags)` (0x4D6AD0)
-    fn get_next_association_flags(a: GPtr<u8>, flags: u32) -> GPtr<u8> = cdecl 0x4D6AD0 => unported;
     /// `CPed::ClearAimFlag` (0x5DEF20)
     fn clear_aim_flag(ped: GPtr<u8>) = thiscall 0x5DEF20 => crate::ped::clear_aim_flag;
     /// `CPed::SetMoveAnimSpeed(CAnimBlendAssociation*)` (0x5DEC10)
     fn set_move_anim_speed(ped: GPtr<u8>, a: GPtr<u8>) = thiscall 0x5DEC10 => crate::ped::set_move_anim_speed;
     /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float)` (0x4D4610)
     fn blend_animation(c: GPtr<u8>, group: i32, id: i32, delta: u32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
-    /// `CPedGroups::IsInPlayersGroup(CPed*)` (0x5F7F10, AL)
-    fn is_in_players_group(ped: GPtr<u8>) -> u8 = cdecl 0x5F7F10 => unported;
-    /// `CPedGroups::GetPedsGroup(const CPed*)` (0x5F7E80)
-    fn get_peds_group(ped: GPtr<u8>) -> GPtr<u8> = cdecl 0x5F7E80 => unported;
-    /// `CPedGroupMembership::GetLeader()` (0x5F69A0)
-    fn group_get_leader(m: GPtr<u8>) -> GPtr<u8> = thiscall 0x5F69A0 => unported;
 }
 
 /// `CPlaceable::GetHeading()` as the bytes inline it: `atan2(-fwd.x, fwd.y)` of the matrix (FPATAN, the

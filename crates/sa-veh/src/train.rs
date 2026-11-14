@@ -19,9 +19,8 @@ sa_core::globals! {
     pub static DISABLE_RANDOM_TRAINS @ 0xC38010: u8 = 0;
 }
 
+pub use sa_core::bindings::world_remove;
 orig! {
-    /// `CWorld::Remove(CEntity*)` (0x563280)
-    pub fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
     /// Virtual slot 0 (`scalar deleting destructor`)
     pub fn entity_vdelete(e: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
 }

@@ -39,19 +39,25 @@ sa_core::globals! {
     pub static FREELIST_PARAMS @ 0x8D627C: [i32; 4] = [0x80, 1, 0x80, 1];
 }
 
+pub use crate::bindings::free_list_destroy;
+pub use crate::bindings::object_release_frame;
+pub use crate::bindings::plugin_add as registry_add_plugin;
+pub use crate::bindings::plugin_add_stream as registry_add_plugin_stream;
+pub use crate::bindings::plugin_deinit_object as registry_deinit_object;
+pub use crate::bindings::plugin_init_object as registry_init_object;
+pub use crate::bindings::registry_add_always_cb;
+pub use crate::bindings::registry_copy_object;
+pub use crate::bindings::registry_get_plugin_offset;
+pub use crate::bindings::resources_free_res_entry;
+pub use sa_core::bindings::light_destroy;
+pub use sa_core::bindings::rw_camera_destroy as camera_destroy;
 orig! {
     /// `RwFreeListCreateAndPreallocateSpace` (0x801B70)
     pub fn free_list_create_and_preallocate_space(size: i32, per_block: i32, align: i32, blocks: i32, space: GPtr<u8>, hint: u32) -> GPtr<u8> = cdecl 0x801B70 => unported;
-    /// `RwFreeListDestroy` (0x801B80)
-    pub fn free_list_destroy(fl: GPtr<u8>) -> u32 = cdecl 0x801B80 => unported;
     /// `RwCameraRegisterPlugin(size, id, ctor, dtor, copy)` (0x7EE450)
     pub fn camera_register_plugin(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x7EE450 => unported;
     /// `RpLightRegisterPlugin(size, id, ctor, dtor, copy)` (0x751D60)
     pub fn light_register_plugin(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x751D60 => unported;
-    /// `RpLightDestroy(light)` (0x7520D0)
-    pub fn light_destroy(l: GPtr<u8>) -> i32 = cdecl 0x7520D0 => unported;
-    /// `RwCameraDestroy(camera)` (0x7EE4B0)
-    pub fn camera_destroy(c: GPtr<u8>) -> i32 = cdecl 0x7EE4B0 => unported;
     /// `atomic->renderCallBack(atomic)` (the frame pushed for `RwFrameGetLTM` is still on the stack as a
     /// second argument)
     pub fn call_render_cb(f: u32, a: GPtr<u8>, frame: GPtr<u8>) -> GPtr<u8> = cdecl dyn => unported;
@@ -62,22 +68,12 @@ orig! {
     pub fn frame_get_ltm(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0990 => crate::frame::get_ltm;
     /// `RwFrameDestroyHierarchy` (0x7F08A0)
     pub fn frame_destroy_hierarchy(f: GPtr<u8>) -> u32 = cdecl 0x7F08A0 => crate::frame::destroy_hierarchy;
-    /// `_rwPluginRegistryInitObject` (0x8086E0)
-    pub fn registry_init_object(reg: GPtr<u8>, obj: GPtr<u8>) -> GPtr<u8> = cdecl 0x8086E0 => crate::plugin::registry_init_object;
-    /// `_rwPluginRegistryDeInitObject` (0x808740)
-    pub fn registry_deinit_object(reg: GPtr<u8>, obj: GPtr<u8>) -> GPtr<u8> = cdecl 0x808740 => crate::plugin::registry_deinit_object;
-    /// `_rwPluginRegistryCopyObject` (0x808770)
-    pub fn registry_copy_object(reg: GPtr<u8>, dst: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = cdecl 0x808770 => crate::plugin::registry_copy_object;
     /// `_rwFrameCloneAndLinkClones` (0x7EFFB0)
     pub fn frame_clone_and_link_clones(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EFFB0 => crate::frame::clone_and_link_clones;
     /// `_rwFramePurgeClone` (0x7F01A0)
     pub fn frame_purge_clone(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F01A0 => crate::frame::purge_clone;
     /// `_rwObjectHasFrameSetFrame` (0x804EF0)
     pub fn object_set_frame(obj: GPtr<u8>, f: GPtr<u8>) = cdecl 0x804EF0 => crate::frame::object_has_frame_set_frame;
-    /// `_rwObjectHasFrameReleaseFrame` (0x804F40)
-    pub fn object_release_frame(obj: GPtr<u8>) -> GPtr<u8> = cdecl 0x804F40 => crate::frame::object_has_frame_release_frame;
-    /// `RwResourcesFreeResEntry(entry)` (0x807DE0)
-    pub fn resources_free_res_entry(e: GPtr<u8>) -> i32 = cdecl 0x807DE0 => unported;
     /// `RpAtomicClone` (0x749E60)
     pub fn atomic_clone(a: GPtr<u8>) -> GPtr<u8> = cdecl 0x749E60 => crate::atomic::clone;
     /// `RpAtomicDestroy` (0x749DC0)
@@ -94,14 +90,6 @@ orig! {
     pub fn remove_and_destroy_light_call(l: GPtr<u8>, data: u32) -> GPtr<u8> = cdecl 0x74A1C0 => remove_and_destroy_light;
     /// `RpClumpForAllCameras` (0x749BB0)
     pub fn for_all_cameras_call(c: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> = cdecl 0x749BB0 => for_all_cameras;
-    /// `_rwPluginRegistryAddPlugin` (0x8084A0)
-    pub fn registry_add_plugin(reg: GPtr<u8>, size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x8084A0 => crate::plugin::registry_add_plugin;
-    /// `_rwPluginRegistryAddPluginStream` (0x8088E0)
-    pub fn registry_add_plugin_stream(reg: GPtr<u8>, id: u32, read: u32, write: u32, get_size: u32) -> i32 = cdecl 0x8088E0 => crate::plugin::registry_add_plugin_stream;
-    /// `_rwPluginRegistryAddPlgnStrmlwysCB` (0x808920)
-    pub fn registry_add_always_cb(reg: GPtr<u8>, id: u32, cb: u32) -> i32 = cdecl 0x808920 => crate::plugin::registry_add_plugin_stream_always_cb;
-    /// `_rwPluginRegistryGetPluginOffset` (0x808470)
-    pub fn registry_get_plugin_offset(reg: GPtr<u8>, id: u32) -> i32 = cdecl 0x808470 => crate::plugin::registry_get_plugin_offset;
 }
 
 use sa_core::field::addr32 as a32;

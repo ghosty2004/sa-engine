@@ -9,43 +9,28 @@ use sa_core::{hook, orig};
 
 use super::common::{rd, wr, x, xi};
 
+use crate::bindings::matrix_ctor_rw as m_ctor_rw;
+use crate::bindings::placeable_set_matrix as set_matrix;
+use crate::bindings::set_tiles_status;
+use sa_core::bindings::general_random_int_in_range as random_in_range;
+use sa_core::bindings::list_add_item;
+use sa_core::bindings::list_get_num_items as list_num_items;
+use sa_core::bindings::list_remove_head;
+use sa_core::bindings::matrix_assign as m_assign;
+use sa_core::bindings::matrix_dtor as m_dtor;
+use sa_core::bindings::matrix_mul as m_mul;
+use sa_core::bindings::matrix_set_translate as m_set_translate;
+use sa_core::bindings::matrix_set_unity as m_set_unity;
+use sa_core::bindings::world_add;
+use sa_stream::bindings::building_ctor;
+use sa_stream::bindings::building_new;
 orig! {
-    /// `List_c::GetNumItems()` (0x4A8EC0) on the free furniture item list (0xBAD3EC)
-    fn list_num_items(l: GPtr<u8>) -> i32 = thiscall 0x4A8EC0 => unported;
-    /// `List_c::RemoveHead()` (0x4A8E70)
-    fn list_remove_head(l: GPtr<u8>) -> GPtr<u8> = thiscall 0x4A8E70 => unported;
-    /// `List_c::AddItem(ListItem_c*)` (0x4A8DF0)
-    fn list_add_item(l: GPtr<u8>, item: GPtr<u8>) = thiscall 0x4A8DF0 => unported;
     /// `Interior_c::CheckTilesEmpty(int32 x, int32 y, int32 w, int32 d, bool)` (0x591680)
     fn check_tiles_empty(this: GPtr<u8>, tx: i32, ty: i32, w: i32, d: i32, b: u32) -> u8 = thiscall 0x591680 => unported;
-    /// `CMatrix::SetUnity()` (0x59AE70)
-    fn m_set_unity(m: GPtr<u8>) = thiscall 0x59AE70 => unported;
-    /// `CMatrix::SetTranslate(float, float, float)` (0x59AF40)
-    fn m_set_translate(m: GPtr<u8>, tx: u32, ty: u32, tz: u32) = thiscall 0x59AF40 => unported;
     /// `CMatrix::SetRotateZ(float)` (0x59B390)
     fn m_set_rotate_z(m: GPtr<u8>, a: f32) = thiscall 0x59B390 => unported;
-    /// `operator*(const CMatrix&, const CMatrix&)` (0x59BE30): the product constructed at `out`
-    fn m_mul(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x59BE30 => unported;
-    /// `CMatrix::operator=(const CMatrix&)` (0x59BBC0)
-    fn m_assign(m: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = thiscall 0x59BBC0 => unported;
-    /// `CMatrix::CMatrix(RwMatrix*, bool)` (0x59C050)
-    fn m_ctor_rw(m: GPtr<u8>, rw: GPtr<u8>, owns: u32) -> GPtr<u8> = thiscall 0x59C050 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    fn m_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
-    /// `CGeneral::GetRandomNumberInRange(int32, int32)` (0x407180)
-    fn random_in_range(lo: i32, hi: i32) -> i32 = cdecl 0x407180 => unported;
-    /// `CBuilding::operator new(uint32)` (0x404090)
-    fn building_new(size: u32) -> GPtr<u8> = cdecl 0x404090 => unported;
-    /// `CBuilding::CBuilding()` (0x403E00)
-    fn building_ctor(b: GPtr<u8>) -> GPtr<u8> = thiscall 0x403E00 => unported;
     /// `CEntity::SetModelIndex(uint32)` (vtable +0x18)
     fn v_set_model_index(e: GPtr<u8>, mi: u32) = thiscall vslot 0x18 => unported;
-    /// `CPlaceable::SetMatrix(const CMatrix&)` (0x54F610)
-    fn set_matrix(e: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F610 => unported;
-    /// `CWorld::Add(CEntity*)` (0x563220)
-    fn world_add(e: GPtr<u8>) = cdecl 0x563220 => unported;
-    /// `Interior_c::SetTilesStatus(int32 x, int32 y, int32 w, int32 d, int32 status, bool)` (0x591700)
-    fn set_tiles_status(this: GPtr<u8>, x: i32, y: i32, w: i32, d: i32, status: i32, force: u32) = thiscall 0x591700 => unported;
 }
 
 /// The free furniture item list (0xBAD3EC).

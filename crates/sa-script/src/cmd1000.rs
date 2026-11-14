@@ -37,53 +37,40 @@ const K_M2FT: u32 = 0x4055_5555;
 /// The immediate 03EF pushes as the radius: 10000.0f (`push 0x461C4000`).
 const K_10000: u32 = 0x461C_4000;
 
+use crate::bindings::audio_engine_clear_mission_audio as clear_mission_audio;
+use crate::bindings::pad_set_drunk_input_delay as set_drunk_input_delay;
+use sa_core::bindings::camera_set_near_clip_script as set_near_clip_script;
+use sa_core::bindings::get_pad;
+use sa_core::bindings::player_info_make_player_safe as make_player_safe;
+use sa_world::bindings::audio_retune_radio as retune_radio;
+use sa_world::bindings::can_player_start_mission;
+use sa_world::bindings::clear_small_messages_only;
+use sa_world::bindings::compute_target_door_to_enter_as_passenger;
+use sa_world::bindings::extinguish_car_fire;
+use sa_world::bindings::flush_immediately;
+use sa_world::bindings::german_game;
+use sa_world::bindings::metric;
+use sa_world::bindings::set_ped_in_as_passenger_ctor;
+use sa_world::bindings::set_ped_in_as_passenger_dtor;
+use sa_world::bindings::set_ped_in_as_passenger_process_ped;
+use sa_world::bindings::set_stat_value;
 orig! {
-    /// `CMessages::ClearSmallMessagesOnly()` (0x69DD30)
-    fn clear_small_messages_only() = cdecl 0x69DD30 => unported;
-    /// `CPlayerPed::CanPlayerStartMission()` (0x609590), AL
-    fn can_player_start_mission(p: GPtr<u8>) -> u8 = thiscall 0x609590 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    fn get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CPlayerInfo::MakePlayerSafe(bool, float radius)` (0x56E870)
-    fn make_player_safe(info: GPtr<u8>, safe: u32, radius: f32) = thiscall 0x56E870 => unported;
-    /// `CVehicle::ExtinguishCarFire()` (0x6D2460)
-    fn extinguish_car_fire(v: GPtr<u8>) = thiscall 0x6D2460 => unported;
-    /// `CPad::SetDrunkInputDelay(int32)` (0x53F910)
-    fn set_drunk_input_delay(pad: GPtr<u8>, d: i32) = thiscall 0x53F910 => unported;
-    /// `CLocalisation::GermanGame()` (0x56D200), AL
-    fn german_game() -> u8 = cdecl 0x56D200 => unported;
-    /// `CLocalisation::Metric()` (0x56D220), AL
-    fn metric() -> u8 = cdecl 0x56D220 => unported;
-    /// `CAudioEngine::ClearMissionAudio(uint8)` (0x5072F0)
-    fn clear_mission_audio(a: GPtr<u8>, slot: u32) = thiscall 0x5072F0 => unported;
-    /// `CCamera::SetNearClipScript(float)` (0x50BF90); the float as its raw dword
-    fn set_near_clip_script(cam: GPtr<u8>, v: u32) = thiscall 0x50BF90 => unported;
-    /// `CAudioEngine::RetuneRadio(int8)` (0x507E10)
-    fn retune_radio(a: GPtr<u8>, ch: u32) = thiscall 0x507E10 => unported;
-    /// `CStats::SetStatValue(uint16 stat, float value)` (0x55A070); the float as its raw dword
-    fn set_stat_value(stat: u32, value: u32) = cdecl 0x55A070 => unported;
     /// `CStats::RegisterFastestTime(int32 stat, int32 time)` (0x55A0B0)
     fn register_fastest_time(stat: i32, time: i32) = cdecl 0x55A0B0 => unported;
     /// `CCredits::Start()` (0x7170E0)
     fn credits_start() = cdecl 0x7170E0 => unported;
     /// `CCredits::Stop()` (0x717100)
     fn credits_stop() = cdecl 0x717100 => unported;
-    /// `CCarEnterExit::ComputeTargetDoorToEnterAsPassenger(const CVehicle*, int32 seat)` (0x64F190)
-    fn compute_target_door_to_enter_as_passenger(veh: GPtr<u8>, seat: i32) -> i32 = cdecl 0x64F190 => unported;
-    /// `CPedIntelligence::FlushImmediately(bool)` (0x601640)
-    fn flush_immediately(i: GPtr<u8>, set_primary_default: u32) = thiscall 0x601640 => unported;
-    /// `CTaskSimpleCarSetPedInAsPassenger::CTaskSimpleCarSetPedInAsPassenger(CVehicle*, int32 door,
-    /// CTaskUtilityLineUpPedWithCar*)` (0x646FE0)
-    fn set_ped_in_as_passenger_ctor(t: GPtr<u8>, veh: GPtr<u8>, door: i32, line_up: GPtr<u8>) -> GPtr<u8> = thiscall 0x646FE0 => unported;
-    /// `CTaskSimpleCarSetPedInAsPassenger::ProcessPed(CPed*)` (0x64B5D0)
-    fn set_ped_in_as_passenger_process_ped(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x64B5D0 => unported;
-    /// `CTaskSimpleCarSetPedInAsPassenger::~CTaskSimpleCarSetPedInAsPassenger()` (0x647080)
-    fn set_ped_in_as_passenger_dtor(t: GPtr<u8>) = thiscall 0x647080 => unported;
 }
 
+use sa_core::bindings::clear_skip;
+use sa_core::bindings::file_set_dir_my_documents;
+use sa_core::bindings::timer_resume;
+use sa_core::bindings::timer_suspend;
+use sa_core::bindings::tm_get_simplest_active_task as get_simplest_active_task;
+use sa_world::bindings::check_mission_pack_valid_menu;
+use sa_world::bindings::set_all_cars_can_be_damaged;
 orig! {
-    /// `CWorld::SetAllCarsCanBeDamaged(bool)` (0x5668F0)
-    fn set_all_cars_can_be_damaged(b: u32) = cdecl 0x5668F0 => unported;
     /// `CWorld::FindPlayerCoors(int32 player)` (0x56E010): the CVector returned through the hidden
     /// pointer (first argument), which is also returned in EAX
     fn find_player_coors(out: GPtr<u32>, player: i32) -> GPtr<u32> = cdecl 0x56E010 => unported;
@@ -97,24 +84,14 @@ orig! {
     /// `CWorld::ClearPedsFromArea(float x1, float y1, float z1, float x2, float y2, float z2)` (0x5667F0);
     /// floats as raw dwords
     fn clear_peds_from_area(x1: u32, y1: u32, z1: u32, x2: u32, y2: u32, z2: u32) = cdecl 0x5667F0 => unported;
-    /// `CTaskManager::GetSimplestActiveTask()` (0x6819D0)
-    fn get_simplest_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x6819D0 => unported;
     /// `CTaskManager::FindActiveTaskByType(int32)` (0x681740)
     fn find_active_task_by_type(tm: GPtr<u8>, ty: u32) -> GPtr<u8> = thiscall 0x681740 => unported;
     /// `CTask::GetTaskType()` (vtable slot 0x10)
     fn task_get_type(t: GPtr<u8>) -> u32 = thiscall vslot 0x10 => unported;
-    /// `CTimer::Suspend()` (0x5619D0)
-    fn timer_suspend() = cdecl 0x5619D0 => unported;
-    /// `CTimer::Resume()` (0x561A00)
-    fn timer_resume() = cdecl 0x561A00 => unported;
     /// `CFileMgr::ChangeDir(const char*)` (0x538730)
     fn file_change_dir(d: GPtr<u8>) = cdecl 0x538730 => unported;
     /// `CFileMgr::SetDir(const char*)` (0x5387D0)
     fn file_set_dir(d: GPtr<u8>) = cdecl 0x5387D0 => unported;
-    /// `CFileMgr::SetDirMyDocuments()` (0x538860)
-    fn file_set_dir_my_documents() = cdecl 0x538860 => unported;
-    /// `CMenuManager::CheckMissionPackValidMenu()` (0x57D720), AL
-    fn check_mission_pack_valid_menu(m: GPtr<u8>) -> u8 = thiscall 0x57D720 => unported;
     /// CRT `sprintf` (0x821BB5), called with one `%d` argument
     fn sprintf1(buf: GPtr<u8>, fmt: GPtr<u8>, a: u32) -> i32 = cdecl 0x821BB5 => unported;
     /// `CFileMgr::OpenFile(const char*, const char* mode)` (0x538900)
@@ -129,8 +106,6 @@ orig! {
     fn wipe_local_variable_memory_for_mission_script() = cdecl 0x464BB0 => unported;
     /// `CTheScripts::StartNewScript(uint8* ip)` (0x464C20)
     fn start_new_script(ip: GPtr<u8>) -> GPtr<u8> = cdecl 0x464C20 => crate::script_brains::start_new_script;
-    /// `CGameLogic::ClearSkip(bool)` (0x441560)
-    fn clear_skip(b: u32) = cdecl 0x441560 => unported;
 }
 
 /// `CTheScripts::NumberOfExclusiveMissionScripts` (int16) 0xA444B8.

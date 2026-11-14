@@ -7,51 +7,31 @@ use sa_core::{hook, orig};
 
 use crate::common::{f32_of, ftol32, g, jne_mask, jp5, rd, wr, x};
 
+use crate::bindings::door_process;
+use crate::bindings::vehicle_pre_render;
+use sa_core::bindings::frame_get_ltm;
+use sa_core::bindings::fx_play;
+use sa_core::bindings::fx_stop;
+use sa_core::bindings::matrix_attach;
+use sa_core::bindings::matrix_dtor;
+use sa_core::bindings::matrix_set_rotate;
+use sa_core::bindings::matrix_update_rw;
+use sa_core::bindings::rw_matrix_update;
+use sa_stream::bindings::frame_for_all_objects;
+use sa_stream::bindings::get_first_object;
+use sa_stream::bindings::set_component_atomic_alpha;
+use sa_world::bindings::fx_copy_parent_matrix;
+use sa_world::bindings::fx_create_system as create_fx_system;
+use sa_world::bindings::fx_get_play_status;
+use sa_world::bindings::fx_set_const_time;
+use sa_world::bindings::fx_set_local_particles;
+use sa_world::bindings::fx_system_set_matrix as fx_set_matrix;
+use sa_world::bindings::multiply3x3 as multiply_3x3;
 orig! {
-    /// `CVehicle::PreRender()` (0x6D6480)
-    fn vehicle_pre_render(v: GPtr<u8>) = thiscall 0x6D6480 => unported;
     /// `CVehicle::SetComponentRotation(RwFrame*, eRotationAxis, float, bool)` (0x6DBA30)
     fn set_component_rotation(v: GPtr<u8>, frame: GPtr<u8>, axis: u32, angle: f32, set: u32) = thiscall 0x6DBA30 => unported;
-    /// `RwFrameForAllObjects(RwFrame*, RwObjectCallBack, void*)` (0x7F1200)
-    fn frame_for_all_objects(f: GPtr<u8>, cb: u32, data: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F1200 => unported;
-    /// `CVehicle::SetComponentAtomicAlpha(RpAtomic*, int32)` (0x6D2960)
-    fn set_component_atomic_alpha(a: GPtr<u8>, alpha: i32) = cdecl 0x6D2960 => unported;
-    /// `CMatrix::Attach(RwMatrix*, bool)` (0x59BD10)
-    fn matrix_attach(m: GPtr<u8>, rw: GPtr<u8>, owns: u32) = thiscall 0x59BD10 => unported;
-    /// `Multiply3x3(const CMatrix&, const CVector&)` (0x59C790, the result through `out`)
-    fn multiply_3x3(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C790 => unported;
-    /// `CDoor::Process(CVehicle*, CVector& moveSpeed, CVector& turnSpeed, const CVector& offset)` (0x6F4040, AL)
-    fn door_process(d: GPtr<u8>, v: GPtr<u8>, ms: GPtr<u8>, ts: GPtr<u8>, off: GPtr<u8>) -> u8 = thiscall 0x6F4040 => unported;
-    /// `CMatrix::SetRotate(float x, float y, float z)` (0x59B120)
-    fn matrix_set_rotate(m: GPtr<u8>, rx: f32, ry: f32, rz: f32) = thiscall 0x59B120 => unported;
-    /// `CMatrix::UpdateRW()` (0x59BBB0)
-    fn matrix_update_rw(m: GPtr<u8>) = thiscall 0x59BBB0 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
-    /// `GetFirstObject(RwFrame*)` (0x7348C0)
-    fn get_first_object(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7348C0 => unported;
     /// An atomic's render callback (`RpAtomic` +0x48), called with the atomic
     fn call_render_cb(f: u32, atomic: GPtr<u8>) -> GPtr<u8> = cdecl dyn => unported;
-    /// `RwFrameGetLTM(RwFrame*)` (0x7F0990)
-    fn frame_get_ltm(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0990 => unported;
-    /// `RwMatrixUpdate(RwMatrix*)` (0x7F18A0)
-    fn rw_matrix_update(m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F18A0 => unported;
-    /// `FxManager_c::CreateFxSystem(const char*, RwV3d*, RwMatrix*, bool)` (0x4A9BE0) on `g_fxMan` (0xA9AE80)
-    fn create_fx_system(mgr: GPtr<u8>, name: u32, pos: GPtr<u8>, m: GPtr<u8>, ignore_bbox: u32) -> GPtr<u8> = thiscall 0x4A9BE0 => unported;
-    /// `FxSystem_c::Play()` (0x4AA2F0)
-    fn fx_play(fx: GPtr<u8>) = thiscall 0x4AA2F0 => unported;
-    /// `FxSystem_c::SetLocalParticles(bool)` (0x4AA910)
-    fn fx_set_local_particles(fx: GPtr<u8>, b: u32) = thiscall 0x4AA910 => unported;
-    /// `FxSystem_c::CopyParentMatrix()` (0x4AA890)
-    fn fx_copy_parent_matrix(fx: GPtr<u8>) = thiscall 0x4AA890 => unported;
-    /// `FxSystem_c::GetPlayStatus()` (0x4AA900)
-    fn fx_get_play_status(fx: GPtr<u8>) -> u32 = thiscall 0x4AA900 => unported;
-    /// `FxSystem_c::Stop()` (0x4AA390)
-    fn fx_stop(fx: GPtr<u8>) = thiscall 0x4AA390 => unported;
-    /// `FxSystem_c::SetMatrix(RwMatrix*)` (0x4AA630)
-    fn fx_set_matrix(fx: GPtr<u8>, m: GPtr<u8>) = thiscall 0x4AA630 => unported;
-    /// `FxSystem_c::SetConstTime(bool, float)` (0x4AA6C0)
-    fn fx_set_const_time(fx: GPtr<u8>, on: u32, t: f32) = thiscall 0x4AA6C0 => unported;
     /// `CVehicle::DoBoatSplashes(float)` (0x6DD130)
     fn do_boat_splashes(v: GPtr<u8>, speed: f32) = thiscall 0x6DD130 => unported;
 }

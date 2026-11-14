@@ -23,6 +23,12 @@ const ENTRY_EXIT_POOL: usize = 0x96A7D8;
 /// `CPedType::ms_apPedTypes` (pointer to 32 `CAcquaintance` of 5 dwords)
 const PED_TYPES: usize = 0xC0BBE8;
 
+use crate::bindings::clothes_desc_ctor;
+use sa_core::bindings::get_weapon_info;
+use sa_core::bindings::load_all_requested_models;
+use sa_core::bindings::ped_give_weapon as give_weapon;
+use sa_world::bindings::ped_set_current_weapon_slot as set_current_weapon;
+use sa_world::bindings::set_char_created_by;
 orig! {
     /// `CGenericGameStorage::SaveDataToWorkBuffer(void*, int32)` (0x5D1270)
     fn save_data(p: GPtr<u8>, n: i32) -> u8 = cdecl 0x5D1270 => sa_core::save::save_data_to_work_buffer;
@@ -44,20 +50,8 @@ orig! {
     fn ped_save_call(ped: GPtr<u8>) -> u8 = thiscall 0x5D5730 => ped_save;
     /// `CPed::Load()` (0x5D4640)
     fn ped_load_call(ped: GPtr<u8>) -> u8 = thiscall 0x5D4640 => ped_load;
-    /// `CPedClothesDesc::CPedClothesDesc()` (0x5A8020)
-    fn clothes_desc_ctor(d: GPtr<u8>) -> GPtr<u8> = thiscall 0x5A8020 => crate::clothes::desc_constructor;
-    /// `CPed::SetCharCreatedBy(uint8)` (0x5E47E0)
-    fn set_char_created_by(ped: GPtr<u8>, by: u32) = thiscall 0x5E47E0 => unported;
-    /// `CWeaponInfo::GetWeaponInfo(eWeaponType, eWeaponSkill)` (0x743C60)
-    fn get_weapon_info(ty: u32, skill: u32) -> GPtr<u8> = cdecl 0x743C60 => unported;
     /// `CStreaming::RequestModel(int32, int32)` (0x4087E0)
     fn request_model(model: i32, flags: u32) = cdecl 0x4087E0 => unported;
-    /// `CStreaming::LoadAllRequestedModels(bool)` (0x40EA10)
-    fn load_all_requested_models(priority: u32) = cdecl 0x40EA10 => unported;
-    /// `CPed::GiveWeapon(eWeaponType, uint32, bool)` (0x5E6080)
-    fn give_weapon(ped: GPtr<u8>, ty: u32, ammo: u32, likely_to_be_held: u32) -> u32 = thiscall 0x5E6080 => unported;
-    /// `CPed::SetCurrentWeapon(int32 slot)` (0x5E61F0)
-    fn set_current_weapon(ped: GPtr<u8>, slot: i32) = thiscall 0x5E61F0 => unported;
 }
 
 /// A residue-filled local: byte k of the returned array is the original's stack byte at entry ESP + `base`

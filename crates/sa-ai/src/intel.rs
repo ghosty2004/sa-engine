@@ -8,29 +8,20 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::acquaintance_get;
+use crate::bindings::task_is_go_to_task;
+use sa_core::bindings::tm_get_simplest_active_task;
+use sa_core::bindings::tm_get_task_secondary;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::anim_get_next_association;
+use sa_world::bindings::get_ped_flag as ped_type_get_ped_flag;
+use sa_world::bindings::tm_find_task_by_type;
+use sa_world::bindings::tm_set_task;
 orig! {
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CTaskManager::GetTaskSecondary(int32)` (0x681810, `ret 4`)
-    fn tm_get_task_secondary(tm: GPtr<u8>, i: i32) -> GPtr<u8> = thiscall 0x681810 => unported;
-    /// `CTaskManager::GetSimplestActiveTask` (0x6819D0)
-    fn tm_get_simplest_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x6819D0 => unported;
-    /// `CTaskManager::FindTaskByType(int32 slot, int32 type)` (0x6817D0, `ret 8`)
-    fn tm_find_task_by_type(tm: GPtr<u8>, slot: i32, ty: i32) -> GPtr<u8> = thiscall 0x6817D0 => unported;
-    /// `CTaskManager::SetTask(CTask*, int32 slot, bool)` (0x681AF0, `ret 0xC`)
-    fn tm_set_task(tm: GPtr<u8>, t: GPtr<u8>, slot: i32, b: u32) = thiscall 0x681AF0 => unported;
-    /// `CPed::IsPlayer` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CAcquaintance::GetAcquaintances(int32)` (0x608970, `ret 4`)
-    fn acquaintance_get(a: GPtr<u8>, i: i32) -> u32 = thiscall 0x608970 => unported;
-    /// `CPedType::GetPedFlag(ePedType)` (0x608830, cdecl)
-    fn ped_type_get_ped_flag(t: u32) -> u32 = cdecl 0x608830 => unported;
-    /// `CTask::IsGoToTask(CTask*)` (0x61A360, cdecl)
-    fn task_is_go_to_task(t: GPtr<u8>) -> u8 = cdecl 0x61A360 => unported;
     /// `RpAnimBlendClumpGetFirstAssociation(RpClump*, uint32 flags)` (0x4D6A70)
     fn clump_get_first_association_flags(clump: u32, flags: u32) -> GPtr<u8> = cdecl 0x4D6A70 => unported;
-    /// `RpAnimBlendGetNextAssociation(CAnimBlendAssociation*)` (0x4D6AB0)
-    fn anim_get_next_association(a: GPtr<u8>) -> GPtr<u8> = cdecl 0x4D6AB0 => unported;
     /// CRT `_stricmp` (0x8229B6)
     fn crt_stricmp(a: u32, b: u32) -> i32 = cdecl 0x8229B6 => unported;
 }

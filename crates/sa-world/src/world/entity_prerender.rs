@@ -60,6 +60,12 @@ const F_2: u32 = 0x40000000;
 const F_M2: u32 = 0xC0000000;
 const F_16: u32 = 0x41800000;
 
+use crate::bindings::get_water_level_no_waves;
+use crate::bindings::update_rw_matrix;
+use sa_core::bindings::rp_geometry_for_all_materials;
+use sa_core::bindings::rw_frame_update_objects;
+use sa_core::bindings::vector_magnitude;
+use sa_stream::bindings::is_object_glass;
 orig! {
     /// `CBaseModelInfo::AsAtomicModelInfoPtr()` (vtable slot 4)
     fn mi_as_atomic(mi: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x4 => unported;
@@ -69,8 +75,6 @@ orig! {
     fn process_lights_for_entity(e: GPtr<u8>) = thiscall 0x6fc7a0 => super::entity_lights::process_lights_for_entity;
     /// `RpMatFXAtomicQueryEffects(RpAtomic*)` (0x811c30)
     fn rp_matfx_atomic_query_effects(a: GPtr<u8>) -> u32 = cdecl 0x811c30 => unported;
-    /// `RpGeometryForAllMaterials(RpGeometry*, cb, data)` (0x74c790)
-    fn rp_geometry_for_all_materials(geo: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> = cdecl 0x74c790 => unported;
     /// `CCustomBuildingDNPipeline::PreRenderUpdate(RpAtomic*, bool)` (0x5d7200)
     fn dn_pre_render_update_atomic(a: GPtr<u8>, b: u32) -> GPtr<u8> = cdecl 0x5d7200 => unported;
     /// `CCustomBuildingDNPipeline::PreRenderUpdate(RpClump*, bool)` (0x5d72c0)
@@ -87,14 +91,8 @@ orig! {
     fn do_mine_effects(e: GPtr<u8>) = cdecl 0x4560e0 => unported;
     /// `CPickups::DoPickUpEffects(CEntity*)` (0x455720)
     fn do_pick_up_effects(e: GPtr<u8>) = cdecl 0x455720 => unported;
-    /// `CEntity::UpdateRwMatrix()` (0x446f90)
-    fn update_rw_matrix(e: GPtr<u8>) = thiscall 0x446f90 => unported;
     /// `CEntity::UpdateRwFrame()` (0x532b00)
     fn update_rw_frame(e: GPtr<u8>) = thiscall 0x532b00 => super::entity::update_rw_frame;
-    /// `RwFrameUpdateObjects(RwFrame*)` (0x7f0910)
-    fn rw_frame_update_objects(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7f0910 => unported;
-    /// `CGlass::IsObjectGlass(CEntity*)` (0x46a760, AL)
-    fn is_object_glass(e: GPtr<u8>) -> u8 = cdecl 0x46a760 => unported;
     /// `CEntity::PreRenderForGlassWindow()` (0x533240)
     fn pre_render_for_glass_window(e: GPtr<u8>) = thiscall 0x533240 => super::entity::pre_render_for_glass_window;
     /// `CEntity::BuildWindSockMatrix()` (0x532db0)
@@ -134,12 +132,8 @@ orig! {
     fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40fe60 => super::mvpa_math::vector_sub;
     /// `operator+(const CVector&, const CVector&)` (0x40fe30)
     fn vector_add(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40fe30 => super::mvpa_math::vector_add;
-    /// `CVector::Magnitude()` (0x4082c0, ST0)
-    fn vector_magnitude(v: GPtr<u8>) -> f64 = thiscall 0x4082c0 => unported;
     /// `max(float, float)` (0x420800, ST0)
     fn max_f(a: f32, b: f32) -> f64 = cdecl 0x420800 => max_f_port;
-    /// `CWaterLevel::GetWaterLevelNoWaves(float x, y, z, float* level, float*, float*)` (0x6e8580, AL)
-    fn get_water_level_no_waves(px: u32, py: u32, pz: u32, level: GPtr<u8>, a: u32, b: u32) -> u8 = cdecl 0x6e8580 => unported;
 }
 
 /// Phases B/C path of `max(float, float)`: the ST0 as an f64.

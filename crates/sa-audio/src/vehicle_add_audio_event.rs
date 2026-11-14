@@ -9,7 +9,7 @@
 #![allow(clippy::unreadable_literal)]
 
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::{GPtr, g, rd, wr, x};
 
@@ -29,23 +29,13 @@ const ONE_HALF: u32 = 0x3FC0_0000;
 const VAR_006: u32 = 0x3D75_C290;
 const VAR_005: u32 = 0x3D4C_CCCD;
 
-orig! {
-    /// `CAEAudioHardware::IsSoundBankLoaded(uint16 bankId, int16 slot)` (0x4D88C0)
-    fn is_sound_bank_loaded(hw: GPtr<u8>, bank: u32, slot: u32) -> u8 = thiscall 0x4D88C0 => unported;
-    /// `CAESoundManager::AreSoundsOfThisEventPlayingForThisEntity(int16 event, CAEAudioEntity*)` (0x4EF570);
-    /// callers test AX only
-    fn are_sounds_playing(sm: GPtr<u8>, event: u32, entity: GPtr<u8>) -> u32 = thiscall 0x4EF570 => unported;
-    /// `CAEAudioUtility::GetRandomNumberInRange(int, int)` (0x4D9C10)
-    fn ae_random_int(min: i32, max: i32) -> i32 = cdecl 0x4D9C10 => crate::utility::get_random_number_in_range_int;
-    /// `CAESound::Initialise(...)` (0x4EFE50, 14 argument dwords, `ret 0x38`)
-    fn sound_initialise(sound: GPtr<u8>, slot: u32, id: u32, entity: u32, px: u32, py: u32, pz: u32, volume: u32, max_distance: u32, speed: u32, time_scale: u32, ignored_cycles: u32, flags: u32, speed_variance: u32, play_pos: u32) = thiscall 0x4EFE50 => crate::sound::initialise;
-    /// `CAESoundManager::RequestNewSound(CAESound*)` (0x4EFB10)
-    fn sm_request_new_sound(sm: GPtr<u8>, sound: GPtr<u8>) -> u32 = thiscall 0x4EFB10 => unported;
-    /// `CAESound::RegisterWithPhysicalEntity(CEntity*)` (0x4EF820)
-    fn sound_register_with_physical_entity(sound: GPtr<u8>, entity: GPtr<u8>) = thiscall 0x4EF820 => crate::sound::register_with_physical_entity;
-    /// `CAESound::~CAESound()` (0x4EF660): drops the physical-entity reference (+8) when set
-    fn sound_dtor(sound: GPtr<u8>) = thiscall 0x4EF660 => unported;
-}
+use crate::bindings::ae_random_int;
+use crate::bindings::are_sounds_of_this_event_playing_for_this_entity as are_sounds_playing;
+use crate::bindings::hw_is_sound_bank_loaded as is_sound_bank_loaded;
+use crate::bindings::sm_request_new_sound;
+use crate::bindings::sound_initialise;
+use crate::bindings::sound_register_with_physical_entity;
+use sa_world::bindings::sound_dtor;
 
 use sa_core::field::gf;
 

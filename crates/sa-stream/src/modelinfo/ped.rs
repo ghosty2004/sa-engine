@@ -60,6 +60,11 @@ sa_core::globals! {
 /// `CGame::m_pWorkingMatrix1` / `2` (owner: CGame, declared in `sa_core::game`).
 use sa_core::game::{WORKING_MATRIX_1, WORKING_MATRIX_2};
 
+pub use crate::bindings::col_model_ctor as col_model_constructor;
+pub use crate::bindings::col_model_new as col_model_operator_new;
+pub use crate::bindings::get_anim_hierarchy_from_clump;
+pub use sa_core::bindings::get_anim_hierarchy_from_skin_clump;
+pub use sa_core::bindings::rp_hanim_id_get_index;
 orig! {
     /// `CClumpModelInfo::SetClump` (0x4C4F70)
     pub fn clump_set_clump(this: MiPtr, clump: GPtr<u8>) = thiscall 0x4C4F70 => super::clump::set_clump;
@@ -73,14 +78,6 @@ orig! {
     pub fn create_hit_col_model_skinned_call(this: MiPtr, clump: GPtr<u8>) = thiscall 0x4C6D90 => create_hit_col_model_skinned;
     /// `CPedModelInfo::~CPedModelInfo` (0x4C62F0)
     pub fn ped_destructor_call(this: MiPtr) = thiscall 0x4C62F0 => destructor;
-    /// `RwHelper::GetAnimHierarchyFromSkinClump` (0x734A40)
-    pub fn get_anim_hierarchy_from_skin_clump(clump: GPtr<u8>) -> GPtr<u8> = cdecl 0x734A40 => unported;
-    /// `RwHelper::GetAnimHierarchyFromClump` (0x734B10)
-    pub fn get_anim_hierarchy_from_clump(clump: GPtr<u8>) -> GPtr<u8> = cdecl 0x734B10 => unported;
-    /// `CColModel::operator new` (0x40FC30)
-    pub fn col_model_operator_new(size: u32) -> GPtr<u8> = cdecl 0x40FC30 => unported;
-    /// `CColModel::CColModel` (0x40FB60)
-    pub fn col_model_constructor(col: GPtr<u8>) -> GPtr<u8> = thiscall 0x40FB60 => unported;
     /// `CColModel::AllocateData(int, int, int, int, int, bool)` (0x40F870)
     pub fn col_model_allocate_data(col: GPtr<u8>, spheres: i32, boxes: i32, lines: i32, verts: i32, tris: i32, disks: u32) = thiscall 0x40F870 => unported;
     /// `CSphere::Set(float, const CVector&)` (0x40FCF0)
@@ -93,8 +90,6 @@ orig! {
     pub fn rw_matrix_transform(m: GPtr<RwMatrix>, t: GPtr<RwMatrix>, op: i32) -> GPtr<RwMatrix> = cdecl 0x7F25A0 => unported;
     /// `RwV3dTransformPoints` (0x7EDD90)
     pub fn rw_v3d_transform_points(out: GPtr<RwV3d>, inp: GPtr<RwV3d>, n: i32, m: GPtr<RwMatrix>) -> GPtr<RwV3d> = cdecl 0x7EDD90 => unported;
-    /// `RpHAnimIDGetIndex` (0x7C51A0)
-    pub fn rp_hanim_id_get_index(hier: GPtr<u8>, id: i32) -> i32 = cdecl 0x7C51A0 => unported;
     /// `RpHAnimHierarchyGetMatrixArray` (0x7C5120)
     pub fn rp_hanim_hierarchy_get_matrix_array(hier: GPtr<u8>) -> GPtr<RwMatrix> = cdecl 0x7C5120 => unported;
 }

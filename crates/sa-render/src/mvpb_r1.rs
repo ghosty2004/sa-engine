@@ -18,6 +18,11 @@ fn f(bits: u32) -> f32 {
     f32::from_bits(bits)
 }
 
+use sa_core::bindings::crt_pow;
+use sa_core::bindings::entity_register_reference;
+use sa_core::bindings::matrix_mul_vec;
+use sa_stream::bindings::placeable_allocate_matrix;
+use sa_stream::bindings::simple_transform_update_matrix;
 orig! {
     /// `RwD3D9GetCurrentD3DDevice()` (0x7F9D50)
     fn rw_d3d9_get_current_d3d_device() -> GPtr<GPtr<u32>> = cdecl 0x7F9D50 => unported;
@@ -25,8 +30,6 @@ orig! {
     fn d3d_get_gamma_ramp(dev: GPtr<GPtr<u32>>, swap_chain: u32, ramp: GPtr<u8>) = stdcall vslot 0x58 => unported;
     /// `IDirect3DDevice9::SetGammaRamp(iSwapChain, flags, const D3DGAMMARAMP*)` (COM slot 0x54)
     fn d3d_set_gamma_ramp(dev: GPtr<GPtr<u32>>, swap_chain: u32, flags: u32, ramp: GPtr<u8>) = stdcall vslot 0x54 => unported;
-    /// CRT `pow(double, double)` (0x8220F0)
-    fn crt_pow(x: f64, y: f64) -> f64 = cdecl 0x8220F0 => unported;
     /// `SurfaceInfos_c::CreatesPlants(surface)` (0x55E9D0, bool in AL)
     fn surface_creates_plants(this: GPtr<u8>, surface: u32) -> u8 = thiscall 0x55E9D0 => unported;
     /// `SurfaceInfos_c::CreatesObjects(surface)` (0x55E9F0, bool in AL)
@@ -40,14 +43,6 @@ orig! {
     fn im2d_render_primitive(prim: u32, verts: GPtr<u8>, n: u32) -> i32 = cdecl 0x734E90 => unported;
     /// `CStats::IncrementStat(uint16 stat, float value)` (0x55C180; stat pushed as a dword)
     fn stats_increment_stat(stat: u32, value: u32) = cdecl 0x55C180 => unported;
-    /// `CPlaceable::AllocateMatrix()` (0x54F560)
-    fn placeable_allocate_matrix(this: GPtr<u8>) = thiscall 0x54F560 => unported;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*) const` (0x54F1B0)
-    fn simple_transform_update_matrix(this: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => unported;
-    /// `operator*(const CMatrix&, const CVector&)` (0x59C890, cdecl, result through a hidden pointer)
-    fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    fn entity_register_reference(this: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571B70 => unported;
 }
 
 orig! {
@@ -477,6 +472,7 @@ pub fn affect_colour_with_lighting(kind: u32, lighting: u32, r: u32, gg: u32, b:
 
 // ------------------------------------------------------------------ CMovingThings / CPlaneTrails --
 
+use sa_core::bindings::vector_normalise;
 orig! {
     /// `CPlaneTrails::Update()` (0x7174F0)
     fn plane_trails_update_o() = cdecl 0x7174F0 => crate::mvpb_r1::plane_trails_update;
@@ -489,8 +485,6 @@ orig! {
     fn register_corona_by_type_o(id: u32, attach: GPtr<u8>, r: u32, g: u32, b: u32, a: u32, pos: GPtr<u8>, size: u32, range: u32, kind: u32, flare: u32, refl: u32, los: u32, trail: u32, normal_angle: u32, neon_fade: u32, pull: u32, full_bright: u32, fade_speed: u32, only_from_below: u32, refl_delay: u32) = cdecl 0x6FC580 => crate::mvpb_r1::register_corona_by_type;
     /// `CCoronas::UpdateCoronaCoors(id, const CVector&, range, normalAngle)` (0x6FC4D0)
     fn update_corona_coors_o(id: u32, pos: GPtr<u8>, range: u32, normal_angle: u32) = cdecl 0x6FC4D0 => crate::mvpb_r1::update_corona_coors;
-    /// `CVector::Normalise()` (0x59C910)
-    fn vector_normalise(this: GPtr<u8>) = thiscall 0x59C910 => unported;
     /// `CCollision::DistToLine(const CVector* lineStart, const CVector* lineEnd, const CVector* point)`
     /// (0x417610, float in ST0)
     fn collision_dist_to_line(a: GPtr<u8>, b: GPtr<u8>, p: GPtr<u8>) -> f32 = cdecl 0x417610 => unported;
@@ -710,27 +704,22 @@ pub fn update_in_tunnelness() {
 
 // ------------------------------------------------------------------ CCoronas::Update -------------
 
+use crate::bindings::grass_set_global_camera_pos;
+use crate::bindings::grass_set_global_wind_bending;
+use crate::bindings::plant_col_entity_cache_update;
+use crate::bindings::plant_process_entry_col_data_sections as plant_process_entry_collision_data_sections;
+use sa_world::bindings::camera_get_look_direction;
 orig! {
-    /// `CCamera::GetLookDirection()` (0x50AE90)
-    fn camera_get_look_direction(this: GPtr<u8>) -> i32 = thiscall 0x50AE90 => unported;
     /// `CRegisteredCorona::Update()` (0x6FABF0)
     fn registered_corona_update_o(this: GPtr<u8>) = thiscall 0x6FABF0 => crate::mvpb_r1::registered_corona_update;
     /// `CRope::Update()` (0x557530)
     fn rope_update(this: GPtr<u8>) = thiscall 0x557530 => unported;
     /// `CGrassRenderer::SetCurrentScanCode(uint16)` (0x5DABB0; pushed as a dword)
     fn grass_set_current_scan_code_o(code: u32) = cdecl 0x5DABB0 => crate::mvpb_r1::grass_set_current_scan_code;
-    /// `CGrassRenderer::SetGlobalCameraPos(const CVector&)` (0x5DABC0)
-    fn grass_set_global_camera_pos(pos: GPtr<u8>) = cdecl 0x5DABC0 => unported;
     /// `CPlantMgr::UpdateAmbientColor()` (0x5DB310)
     fn plant_update_ambient_color_o() = cdecl 0x5DB310 => crate::mvpb_r1::plant_update_ambient_color;
     /// `CPlantMgr::CalculateWindBending()` (0x5DB3D0, float in ST0)
     fn plant_calculate_wind_bending_o() -> f32 = cdecl 0x5DB3D0 => crate::mvpb_r1::plant_calculate_wind_bending_f32;
-    /// `CGrassRenderer::SetGlobalWindBending(float)` (0x5DAC00)
-    fn grass_set_global_wind_bending(v: u32) = cdecl 0x5DAC00 => unported;
-    /// `CPlantMgr::_ColEntityCache_Update(const CVector&, bool quick)` (0x5DC510)
-    fn plant_col_entity_cache_update(pos: GPtr<u8>, quick: u32) = cdecl 0x5DC510 => unported;
-    /// `CPlantMgr::_ProcessEntryCollisionDataSections(CPlantColEntEntry*, const CVector&, int)` (0x5DCD80)
-    fn plant_process_entry_collision_data_sections(e: GPtr<u8>, pos: GPtr<u8>, n: u32) = cdecl 0x5DCD80 => unported;
     /// `CTimeCycle::GetAmbientRed/Green/Blue()` (floats in ST0)
     fn time_cycle_get_ambient_red() -> f32 = cdecl 0x560330 => unported;
     fn time_cycle_get_ambient_green() -> f32 = cdecl 0x560340 => unported;
@@ -865,19 +854,14 @@ pub fn plant_update_ambient_color() {
 
 // ------------------------------------------------------------------ CPlantMgr (wind, entries) -----
 
+use crate::bindings::loc_tri_release as plant_loc_tri_release_o;
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_core::bindings::memory_free;
+use sa_core::bindings::memory_malloc;
+use sa_world::bindings::entity_get_col_model;
 orig! {
     /// CRT `rand()` (0x821B1E)
     fn crt_rand() -> i32 = cdecl 0x821B1E => unported;
-    /// `CPlantLocTri::Release()` (0x5DB6D0)
-    fn plant_loc_tri_release_o(this: GPtr<u8>) = thiscall 0x5DB6D0 => crate::mvpb_r1::plant_loc_tri_release;
-    /// `CMemoryMgr::Free(void*)` (0x72F430)
-    fn memory_free(p: GPtr<u8>) = cdecl 0x72F430 => unported;
-    /// `CMemoryMgr::Malloc(uint32 size, uint32 hint)` (0x72F420)
-    fn memory_malloc(size: u32, hint: u32) -> GPtr<u8> = cdecl 0x72F420 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
-    fn entity_clean_up_old_reference(this: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CEntity::GetColModel()` (0x535300)
-    fn entity_get_col_model(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => unported;
     /// `ProcObjectMan_c::ProcessTriangleRemoved(CPlantLocTri*)` (0x5A3F70)
     fn proc_obj_man_process_triangle_removed(this: GPtr<u8>, tri: GPtr<u8>) = thiscall 0x5A3F70 => unported;
     /// `CPlantSurfPropMgr::GetSurfProperties(uint16)` (0x6F9DE0; the id pushed from `movzx dx, byte`)
@@ -1052,18 +1036,10 @@ pub fn plant_col_ent_entry_add_entry(this: GPtr<u8>, entity: GPtr<u8>) -> GPtr<u
 
 // ------------------------------------------------------------------ plant geometry helpers --------
 
-orig! {
-    /// `CVector::CrossProduct(CVector* out, const CVector* a, const CVector* b)` (0x59C730)
-    fn vector_cross_product(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C730 => unported;
-    /// `CMatrix::CopyToRwMatrix(RwMatrix*) const` (0x59B8B0)
-    fn matrix_copy_to_rw_matrix(this: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x59B8B0 => unported;
-    /// `RwMatrixUpdate(RwMatrix*)` (0x7F18A0)
-    fn rw_matrix_update(m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F18A0 => unported;
-    /// `RwV3dTransformPoint(RwV3d* out, const RwV3d* in, const RwMatrix*)` (0x7EDD60)
-    fn rw_v3d_transform_point(out: GPtr<u8>, inp: GPtr<u8>, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EDD60 => unported;
-    /// `RwV3dTransformVector(RwV3d* out, const RwV3d* in, const RwMatrix*)` (0x7EDDC0)
-    fn rw_v3d_transform_vector(out: GPtr<u8>, inp: GPtr<u8>, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EDDC0 => unported;
-}
+use sa_core::bindings::cross_product as vector_cross_product;
+use sa_core::bindings::matrix_copy_to_rw_matrix;
+use sa_core::bindings::rw_matrix_update;
+use sa_core::bindings::rw_v3d_transform_point;
 
 /// `CPlantLocTri::GetPlantDensity()` (0x5DC210; `this` in EAX, the 80-bit result in ST0): half the
 /// length of `cross(V2 - V1, V3 - V1)` (differences rounded to f32, `|c| = sqrt(z*z + y*y + x*x)` via
@@ -1140,20 +1116,17 @@ pub fn grass_gen_point_in_triangle(out: GPtr<f32>, v0: GPtr<f32>, v1: GPtr<f32>,
 
 // ------------------------------------------------------------------ FxSystem_c / CRope -----------
 
+use sa_core::bindings::object_new;
+use sa_core::bindings::world_add;
+use sa_stream::bindings::fx_get_fx_quality;
 orig! {
-    /// `Fx_c::GetFxQuality()` (0x49EA50)
-    fn fx_get_fx_quality(this: GPtr<u8>) -> i32 = thiscall 0x49EA50 => unported;
     /// `FxPrim_c::AddParticle(pos, vel, timeSince, mult, zRot, brightness, createLocal)` (vtable slot 0x14)
     #[allow(clippy::too_many_arguments)]
     fn fx_prim_add_particle(prim: GPtr<u8>, pos: GPtr<u8>, vel: GPtr<u8>, time: u32, mult: GPtr<u8>, zrot: u32, bright: u32, local: u32) = thiscall vslot 0x14 => unported;
-    /// `CObject::operator new(uint32)` (0x5A1EE0)
-    fn object_new(size: u32) -> GPtr<u8> = cdecl 0x5A1EE0 => unported;
     /// `CObject::CObject(int modelId, bool create)` (0x5A1D70)
     fn object_ctor(this: GPtr<u8>, model: i32, create: u32) -> GPtr<u8> = thiscall 0x5A1D70 => unported;
     /// `CEntity::SetIsStatic(bool)` (vtable slot 0x10)
     fn entity_set_is_static(this: GPtr<u8>, v: u32) = thiscall vslot 0x10 => unported;
-    /// `CWorld::Add(CEntity*)` (0x563220)
-    fn world_add(e: GPtr<u8>) = cdecl 0x563220 => unported;
 }
 
 /// `FxSystem_c::AddParticle(RwV3d* pos, RwV3d* vel, float timeSince, FxPrtMult_c* mult, float zRot,

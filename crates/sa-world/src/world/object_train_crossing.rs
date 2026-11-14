@@ -9,19 +9,15 @@ use sa_math::x87::ci_acos;
 
 use super::common::{entity_pos as pos, g, rd, wr, x};
 
+use crate::bindings::path_set_links_bridge_lights;
+use crate::bindings::simple_transform_update_rw_matrix;
+use sa_core::bindings::entity_update_rw_frame;
+use sa_core::bindings::matrix_update_rw_matrix;
 orig! {
     /// `CTrain::FindNearestTrain(CVector pos, bool enginesOnly)` (0x6F7090, cdecl, by value)
     fn find_nearest_train(px: f32, py: f32, pz: f32, engines_only: u32) -> GPtr<u8> = cdecl 0x6F7090 => unported;
-    /// `CPathFind::SetLinksBridgeLights(float x0, float x1, float y0, float y1, bool)` (0x44D960)
-    fn path_set_links_bridge_lights(paths: GPtr<u8>, x0: f32, x1: f32, y0: f32, y1: f32, on: u32) = thiscall 0x44D960 => unported;
     /// `CObject::SetMatrixForTrainCrossing(CMatrix*, float)` (0x59F200, cdecl)
     fn set_matrix_for_train_crossing(m: GPtr<u8>, angle: f32) = cdecl 0x59F200 => super::object::set_matrix_for_train_crossing;
-    /// `CMatrix::UpdateRwMatrix(RwMatrix*)` (0x59AD70)
-    fn matrix_update_rw_matrix(m: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x59AD70 => unported;
-    /// `CSimpleTransform::UpdateRwMatrix(RwMatrix*)` (0x54EF40)
-    fn simple_transform_update_rw_matrix(t: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x54EF40 => unported;
-    /// `CEntity::UpdateRwFrame()` (0x532B00)
-    fn entity_update_rw_frame(e: GPtr<u8>) = thiscall 0x532B00 => unported;
 }
 
 /// `ThePaths` (0x96F050)

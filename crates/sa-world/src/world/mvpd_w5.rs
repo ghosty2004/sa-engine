@@ -13,11 +13,11 @@ use super::pickups::{
     localisation_kill_frenzy, pad_get_target, world_add, DISPLAY_HELP_MESSAGE,
 };
 
+use crate::bindings::find_player_speed;
+use crate::bindings::go_to_point_and_stand_still_ctor;
+use crate::bindings::player_get_wanted_level as player_ped_get_wanted_level;
+use sa_core::bindings::task_new;
 orig! {
-    /// `CPlayerPed::GetWantedLevel()` (0x41BE60)
-    fn player_ped_get_wanted_level(p: GPtr<u8>) -> i32 = thiscall 0x41BE60 => unported;
-    /// `CWorld::FindPlayerSpeed(int32 playerId)` (0x56E090, cdecl): pointer to the move speed
-    fn find_player_speed(id: i32) -> GPtr<u8> = cdecl 0x56E090 => crate::world::cworld::find_player_speed;
     /// `CSetPiece::GetSpawnCoord1(CVector2D* out)` (0x4997A0, `ret 4`); returns `out`
     fn set_piece_get_spawn_coord1(sp: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall 0x4997A0 => unported;
     /// `CSetPiece::GetSpawnCoord2(CVector2D* out)` (0x4997E0, `ret 4`); returns `out`
@@ -37,11 +37,6 @@ orig! {
     fn vec_mul_scalar(out: GPtr<u8>, v: GPtr<u8>, s: u32) -> GPtr<u8> = cdecl 0x40FEC0 => unported;
     /// `CWorld::FindGroundZForCoord(float x, float y)` (0x569660, cdecl, float in ST0)
     fn world_find_ground_z_for_coord(x: f32, y: f32) -> f64 = cdecl 0x569660 => unported;
-    /// `CTask::operator new(uint32)` (0x61A5A0, cdecl)
-    fn task_new(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => unported;
-    /// `CTaskComplexGoToPointAndStandStill::CTaskComplexGoToPointAndStandStill(int32 moveState, const CVector&,
-    /// float radius, float moveStateRadius, bool, bool)` (0x668120, `ret 0x18`); the floats as pushed dwords
-    fn go_to_point_and_stand_still_ctor(t: GPtr<u8>, ms: u32, p: GPtr<u8>, r: u32, s: u32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x668120 => unported;
     /// `CTaskComplexBeCop::CTaskComplexBeCop(int32 moveState, bool, CTask*)` (0x4993D0, `ret 0xC`)
     fn task_complex_be_cop_ctor(t: GPtr<u8>, ms: u32, b: u32, sub: GPtr<u8>) -> GPtr<u8> = thiscall 0x4993D0 => unported;
     /// `CTaskManager::SetTask(CTask*, int32 slot, bool)` (0x681AF0, `ret 0xC`)
@@ -287,54 +282,46 @@ pub fn set_piece_update(this: GPtr<u8>) {
     }
 }
 
-
 // ---------------------------------------------------------------------------------------------------------
 // CPickup::Update
 // ---------------------------------------------------------------------------------------------------------
 
+use crate::bindings::audio_report_frontend_event as audio_report_frontend_audio_event;
+use crate::bindings::can_player_start_mission as player_ped_can_player_start_mission;
+use crate::bindings::get_pad_from_player as player_ped_get_pad_from_player;
+use crate::bindings::give_player_goodies as pickups_give_player_goodies_with_pick_up_mi;
+use crate::bindings::hud_help_message_displayed;
+use crate::bindings::pad_start_shake;
+use crate::bindings::ped_get_weapon_slot;
+use crate::bindings::ped_say;
+use crate::bindings::placeable_get_heading;
+use crate::bindings::placeable_set_posn;
+use crate::bindings::update_rw_matrix as entity_update_rw_matrix;
+use crate::bindings::vector_add as vec_add;
+use crate::bindings::weapon_reload;
+use sa_core::bindings::entity_update_rw_frame;
+use sa_core::bindings::ped_is_alive;
+use sa_core::bindings::text_get;
 orig! {
     /// `CVehicle::IsSphereTouchingVehicle(float x, float y, float z, float radius)` (0x6D84D0, `ret 0x10`); the
     /// floats are the dwords the original pushes
     fn vehicle_is_sphere_touching_vehicle(v: GPtr<u8>, x: u32, y: u32, z: u32, r: u32) -> u8 = thiscall 0x6D84D0 => unported;
-    /// `CPlayerPed::CanPlayerStartMission()` (0x609590)
-    fn player_ped_can_player_start_mission(p: GPtr<u8>) -> u8 = thiscall 0x609590 => unported;
-    /// `CPed::IsAlive()` (0x5E0170)
-    fn ped_is_alive(p: GPtr<u8>) -> u8 = thiscall 0x5E0170 => unported;
-    /// `CPlayerPed::GetPadFromPlayer()` (0x609560)
-    fn player_ped_get_pad_from_player(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x609560 => unported;
     /// `CPickups::WeaponForModel(int32)` (0x454AE0, cdecl)
     fn weapon_for_model(model: i32) -> i32 = cdecl 0x454AE0 => crate::world::pickups::weapon_for_model;
     /// `thunk_FUN_0156f730` (0x454920, cdecl): true for weapon slots 3, 4, 5
     fn is_slot_3_4_5(slot: i32) -> u32 = cdecl 0x454920 => crate::world::pickups::is_type_3_4_5;
     /// `CPickup::ExtractAmmoFromPickup(CPlayerPed*)` (0x454BE0, `ret 4`)
     fn pickup_extract_ammo_from_pickup(pk: GPtr<u8>, p: GPtr<u8>) = thiscall 0x454BE0 => unported;
-    /// `CWeapon::Reload(CPed*)` (0x73AEB0, `ret 4`)
-    fn weapon_reload(w: GPtr<u8>, owner: GPtr<u8>) = thiscall 0x73AEB0 => unported;
     /// `CPickups::PlayerCanPickUpThisWeaponTypeAtThisMoment(eWeaponType)` (0x4554C0, cdecl)
     fn player_can_pick_up_this_weapon_type_at_this_moment(w: i32) -> u8 = cdecl 0x4554C0 => crate::world::pickups::player_can_pick_up_this_weapon_type_at_this_moment;
-    /// `CText::Get(const char*)` (0x6A0050, `ret 4`)
-    fn text_get(t: GPtr<u8>, key: GPtr<u8>) -> GPtr<u8> = thiscall 0x6A0050 => unported;
     /// `CHud::SetHelpMessage(const char*, bool quick, bool permanent, bool addToBrief)` (0x588BE0, cdecl)
     fn hud_set_help_message(s: GPtr<u8>, a: u32, b: u32, c: u32) = cdecl 0x588BE0 => unported;
-    /// `CHud::HelpMessageDisplayed()` (0x588B50, cdecl)
-    fn hud_help_message_displayed() -> u8 = cdecl 0x588B50 => unported;
-    /// `CPad::StartShake(int16 time, uint8 freq, uint32)` (0x53F920, `ret 0xC`)
-    fn pad_start_shake(pad: GPtr<u8>, time: u32, freq: u32, c: u32) = thiscall 0x53F920 => unported;
     /// `CPad::GetTouchedTimeDelta()` (0x53F210)
     fn pad_get_touched_time_delta(pad: GPtr<u8>) -> u32 = thiscall 0x53F210 => unported;
-    /// `CPickups::GivePlayerGoodiesWithPickUpMI(uint16 modelIndex, int32 playerId)` (0x4564F0, cdecl)
-    fn pickups_give_player_goodies_with_pick_up_mi(mi: u32, id: i32) -> u8 = cdecl 0x4564F0 => unported;
     /// `CPlayerPed::DoesPlayerWantNewWeapon(eWeaponType, bool)` (0x609710, `ret 8`)
     fn player_ped_does_player_want_new_weapon(p: GPtr<u8>, w: i32, b: u32) -> u8 = thiscall 0x609710 => unported;
     /// `CPed::GiveDelayedWeapon(eWeaponType, uint32 ammo)` (0x5E89B0, `ret 8`)
     fn ped_give_delayed_weapon(p: GPtr<u8>, w: i32, ammo: u32) = thiscall 0x5E89B0 => unported;
-    /// `CPed::GetWeaponSlot(eWeaponType)` (0x5DF200, `ret 4`)
-    fn ped_get_weapon_slot(p: GPtr<u8>, w: i32) -> i32 = thiscall 0x5DF200 => unported;
-    /// `CAudioEngine::ReportFrontendAudioEvent(eAudioEvents, float volumeChange, float speed)` (0x506EA0,
-    /// `ret 0xC`); the floats as pushed dwords
-    fn audio_report_frontend_audio_event(ae: GPtr<u8>, ev: u32, vol: u32, speed: u32) = thiscall 0x506EA0 => unported;
-    /// `CPed::Say(uint16, uint32, float, bool, bool, bool)` (0x5EFFE0, `ret 0x18`); the float as a pushed dword
-    fn ped_say(p: GPtr<u8>, id: u32, off: u32, vol: u32, a: u32, b: u32, c: u32) -> u32 = thiscall 0x5EFFE0 => unported;
     /// `CPickup::FindStringForTextIndex(int32)` (0x455540, cdecl)
     fn find_string_for_text_index(i: i32) -> GPtr<u8> = cdecl 0x455540 => crate::world::pickups::find_string_for_text_index;
     /// `CPickups::ModifyStringLabelForControlSetting(char*)` (0x454B70, cdecl)
@@ -345,22 +332,12 @@ orig! {
     fn pickup_remove(pk: GPtr<u8>) = thiscall 0x4556C0 => crate::world::pickups::remove;
     /// `CPickup::GetRidOfObjects()` (0x454CF0)
     fn pickup_get_rid_of_objects(pk: GPtr<u8>) = thiscall 0x454CF0 => crate::world::pickups::get_rid_of_objects;
-    /// `CPlaceable::GetHeading()` (0x441DB0, float in ST0)
-    fn placeable_get_heading(p: GPtr<u8>) -> f64 = thiscall 0x441DB0 => unported;
     /// `CWaterLevel::GetWaterLevel(float x, float y, float z, float* level, bool touchy, CVector* normal)`
     /// (0x6EB690, cdecl); x, y as the pushed dwords
     fn water_level_get_water_level(x: u32, y: u32, z: f32, level: GPtr<u8>, touchy: u32, normal: u32) -> u8 = cdecl 0x6EB690 => unported;
-    /// `CEntity::UpdateRwMatrix()` (0x446F90)
-    fn entity_update_rw_matrix(e: GPtr<u8>) = thiscall 0x446F90 => unported;
-    /// `CEntity::UpdateRwFrame()` (0x532B00)
-    fn entity_update_rw_frame(e: GPtr<u8>) = thiscall 0x532B00 => unported;
     /// `CExplosion::AddExplosion(CEntity* victim, CEntity* creator, eExplosionType, CVector pos, uint32 time,
     /// bool makeSound, float camShake, bool invisible)` (0x736A50, cdecl); all as pushed dwords
     fn explosion_add_explosion(v: u32, c: u32, ty: u32, x: u32, y: u32, z: u32, time: u32, snd: u32, shake: u32, inv: u32) -> u8 = cdecl 0x736A50 => unported;
-    /// `operator+(CVector* out, const CVector&, const CVector&)` (0x40FE30, cdecl); returns `out`
-    fn vec_add(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE30 => unported;
-    /// `CPlaceable::SetPosn(const CVector&)` (0x4241C0, `ret 4`)
-    fn placeable_set_posn(p: GPtr<u8>, v: GPtr<u8>) = thiscall 0x4241C0 => unported;
 }
 
 /// `TheText` (0xC1B340)
@@ -968,32 +945,24 @@ pub fn pickup_update(this: GPtr<u8>, player: GPtr<u8>, vehicle: GPtr<u8>, id: i3
     removed
 }
 
-
 // ---------------------------------------------------------------------------------------------------------
 // CPickups::RenderPickUpText
 // ---------------------------------------------------------------------------------------------------------
 
+use sa_core::bindings::ascii_to_gxt_char;
+use sa_core::bindings::font_set_background;
+use sa_core::bindings::font_set_color;
+use sa_core::bindings::font_set_font_style;
+use sa_core::bindings::font_set_orientation;
+use sa_core::bindings::font_set_proportional;
+use sa_core::bindings::rgba_ctor;
 orig! {
     /// CRT `sprintf(buf, fmt, int)` (0x821BB5, cdecl)
     fn sprintf_int(buf: GPtr<u8>, fmt: GPtr<u8>, v: u32) -> i32 = cdecl 0x821BB5 => unported;
-    /// `AsciiToGxtChar(const char*, GxtChar*)` (0x718600, cdecl)
-    fn ascii_to_gxt_char(src: GPtr<u8>, dst: GPtr<u8>) = cdecl 0x718600 => unported;
-    /// `CFont::SetProportional(bool)` (0x7195B0, cdecl)
-    fn font_set_proportional(p: u32) = cdecl 0x7195B0 => unported;
-    /// `CFont::SetBackground(bool, bool)` (0x7195C0, cdecl)
-    fn font_set_background(a: u32, b: u32) = cdecl 0x7195C0 => unported;
     /// `CFont::SetScale(float w, float h)` (0x719380, cdecl); the floats as pushed dwords
     fn font_set_scale(w: u32, h: u32) = cdecl 0x719380 => unported;
-    /// `CFont::SetOrientation(eFontAlignment)` (0x719610, cdecl)
-    fn font_set_orientation(o: u32) = cdecl 0x719610 => unported;
     /// `CFont::SetCentreSize(float)` (0x7194E0, cdecl)
     fn font_set_centre_size(s: f32) = cdecl 0x7194E0 => unported;
-    /// `CRGBA::CRGBA(uint8 r, g, b, a)` (0x7170C0, `ret 0x10`); returns `this`
-    fn rgba_ctor(c: GPtr<u8>, r: u32, g: u32, b: u32, a: u32) -> GPtr<u8> = thiscall 0x7170C0 => unported;
-    /// `CFont::SetColor(CRGBA)` (0x719430, cdecl)
-    fn font_set_color(c: u32) = cdecl 0x719430 => unported;
-    /// `CFont::SetFontStyle(eFontStyle)` (0x719490, cdecl)
-    fn font_set_font_style(s: u32) = cdecl 0x719490 => unported;
     /// `CFont::PrintString(float x, float y, const GxtChar*)` (0x71A700, cdecl); x, y as pushed dwords
     fn font_print_string(x: u32, y: u32, s: GPtr<u8>) = cdecl 0x71A700 => unported;
 }

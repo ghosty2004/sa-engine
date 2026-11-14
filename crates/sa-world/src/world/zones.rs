@@ -65,6 +65,7 @@ fn f_inv600() -> f32 {
     f32::from_bits(0x3ADA_740E)
 }
 
+pub use crate::bindings::can_player_start_a_gang_war_here;
 orig! {
     /// `CTheZones::PointLiesWithinZone(const CVector*, CZone*)` (0x572270)
     pub fn point_lies_within_zone_call(p: GPtr<f32>, z: GPtr<u8>) -> u8 = cdecl 0x572270 => point_lies_within_zone;
@@ -80,8 +81,6 @@ orig! {
     pub fn set_current_zone_as_unlocked_call() = cdecl 0x572800 => set_current_zone_as_unlocked;
     /// `CTheZones::Init` (0x572670)
     pub fn init_call() = cdecl 0x572670 => init;
-    /// `CGangWars::CanPlayerStartAGangWarHere(CZoneInfo*)` (0x443F80)
-    pub fn can_player_start_a_gang_war_here(info: GPtr<u8>) -> u8 = cdecl 0x443F80 => unported;
 }
 
 fn nav_zone(i: u32) -> GPtr<u8> {

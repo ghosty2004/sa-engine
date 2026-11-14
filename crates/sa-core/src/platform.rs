@@ -206,15 +206,15 @@ fn keyboard_used() -> GPtr<u32> {
 /// Calls into other functions (original or Rust, decided by their hooks) and imports.
 pub mod call {
     use super::*;
+    pub use crate::bindings::camera_size;
+    pub use crate::bindings::draw_calculate_aspect_ratio;
+    pub use crate::bindings::rw_camera_clear;
+    pub use crate::bindings::rw_d3d9_get_caps;
+    pub use crate::bindings::sprite2d_draw_rect4;
+    pub use crate::bindings::sprite2d_init_per_frame;
+    pub use crate::bindings::visibility_plugins_set_render_ware_camera;
     orig! {
-        /// `CDraw::CalculateAspectRatio()` (result in ST0)
-        pub fn draw_calculate_aspect_ratio() -> f64 = cdecl 0x6FF420 => unported;
         pub fn font_set_alpha_fade(alpha: f32) = cdecl 0x719500 => unported;
-        pub fn visibility_plugins_set_render_ware_camera(camera: GPtr<u8>) = cdecl 0x7328C0 => unported;
-        pub fn rw_camera_clear(camera: GPtr<u8>, colour: GPtr<u8>, mode: i32) -> GPtr<u8> = cdecl 0x7EE340 => unported;
-        pub fn sprite2d_init_per_frame() = cdecl 0x727350 => unported;
-        /// `CSprite2d::DrawRect(const CRect&, const CRGBA&, const CRGBA&, const CRGBA&, const CRGBA&)`
-        pub fn sprite2d_draw_rect4(rect: GPtr<u8>, c1: GPtr<u8>, c2: GPtr<u8>, c3: GPtr<u8>, c4: GPtr<u8>) = cdecl 0x727C10 => unported;
         /// `Ps::psTimer` (0x745270)
         pub fn ps_timer() -> u32 = cdecl 0x745270 => super::ps_timer;
         /// `Ps::psWindowSetText` (0x7451B0)
@@ -259,8 +259,6 @@ pub mod call {
         pub fn ps_camera_show_raster_call(camera: GPtr<u8>) -> GPtr<u8> = cdecl 0x745240 => super::ps_camera_show_raster;
         /// `App::AppEventHandler` (0x53EC10)
         pub fn app_event_handler(event: i32, param: GPtr<u8>) -> i32 = cdecl 0x53EC10 => super::app_event_handler;
-        /// `CameraSize(RwCamera*, RwRect*, float viewWindow, float aspectRatio)` (0x72FC70)
-        pub fn camera_size(camera: GPtr<u8>, rect: GPtr<u8>, view_window: f32, aspect: f32) = cdecl 0x72FC70 => crate::camerasize::camera_size;
         /// `Input::AttachInputDevices` (0x744A20)
         pub fn attach_input_devices() -> u32 = cdecl 0x744A20 => crate::input::attach_input_devices;
         /// `Game::RwInitialize(void*)` (0x5BF390)
@@ -293,8 +291,6 @@ pub mod call {
         pub fn rw_texture_set_mipmapping(enable: i32) -> i32 = cdecl 0x7F3530 => unported;
         /// `RwTextureSetAutoMipmapping(RwBool)` (0x7F3560)
         pub fn rw_texture_set_auto_mipmapping(enable: i32) -> i32 = cdecl 0x7F3560 => unported;
-        /// `RwD3D9GetCaps()` (0x7FAD20, `const D3DCAPS9*`)
-        pub fn rw_d3d9_get_caps() -> GPtr<u8> = cdecl 0x7FAD20 => unported;
         /// `IDirect3DDevice9::GetDeviceCaps(D3DCAPS9*)`
         pub fn d3d_device_get_device_caps(dev: GPtr<u32>, caps: GPtr<u8>) -> i32 = stdcall vslot 0x1C => unported;
         /// the handler stored in `RsGlobal.keyboard.inputEventHandler`
@@ -304,12 +300,13 @@ pub mod call {
         /// `RsGlobal.pad.inputEventHandler`
         pub fn pad_handler(event: i32, param: GPtr<u8>) -> i32 = cdecl cell 0xC17078 => unported;
     }
+    pub use crate::bindings::debug_display_text_buffer;
+    pub use crate::bindings::memory_malloc;
+    pub use crate::bindings::rw_camera_begin_update;
+    pub use crate::bindings::rw_camera_end_update;
+    pub use crate::bindings::text_load;
+    pub use crate::bindings::text_unload;
     orig! {
-        // RenderWare
-        /// `RwCameraBeginUpdate` (0x7EE190)
-        pub fn rw_camera_begin_update(camera: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EE190 => unported;
-        /// `RwCameraEndUpdate` (0x7EE180)
-        pub fn rw_camera_end_update(camera: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EE180 => unported;
         /// `RwCameraShowRaster` (0x7EE370)
         pub fn rw_camera_show_raster(camera: GPtr<u8>, dev: u32, flags: u32) -> GPtr<u8> = cdecl 0x7EE370 => unported;
         /// `RwEngineStop` (0x7F2E20)
@@ -330,17 +327,8 @@ pub mod call {
         pub fn rw_strchr(s: GPtr<u8>, c: i32) -> GPtr<u8> = cdecl table 0xC97B24 0x10C => unported;
         /// `RwEngineInstance->memoryFuncs.rwfree` (+0x138)
         pub fn rw_free(p: GPtr<u8>) = cdecl table 0xC97B24 0x138 => unported;
-        /// `CMemoryMgr::Malloc` (0x72F420) as psPathnameCreate calls it: `(size, 0)` (RwMalloc's hint
-        /// argument stays on the stack)
-        pub fn memory_malloc(size: u32, hint: u32) -> GPtr<u8> = cdecl 0x72F420 => unported;
-        /// `CDebug::DebugDisplayTextBuffer` (0x532260, a lone `ret`)
-        pub fn debug_display_text_buffer() = cdecl 0x532260 => unported;
         /// `FlushObrsPrintfs` (0x734640, a lone `ret`)
         pub fn flush_obrs_printfs() = cdecl 0x734640 => super::flush_obrs_printfs;
-        /// `CText::Unload(bool)` (0x69FF20)
-        pub fn text_unload(text: GPtr<u8>, keep_mission_packs: u32) = thiscall 0x69FF20 => unported;
-        /// `CText::Load(bool)` (0x6A01A0)
-        pub fn text_load(text: GPtr<u8>, keep_mission_packs: u32) = thiscall 0x6A01A0 => unported;
         /// `Input::diPadSetRanges(LPDIRECTINPUTDEVICE8, DWORD)` (0x746D80)
         pub fn di_pad_set_ranges(dev: u32, num: u32) -> i32 = cdecl 0x746D80 => unported;
     }
@@ -475,45 +463,35 @@ pub mod call {
         /// KERNEL32 `CloseHandle` (IAT 0x858078 in EBP)
         pub fn close_handle(h: u32) -> i32 = stdcall cell 0x858078 => unported;
     }
+    pub use crate::bindings::ascii_to_gxt_char;
+    pub use crate::bindings::font_print_string;
+    pub use crate::bindings::font_set_color;
+    pub use crate::bindings::font_set_edge;
+    pub use crate::bindings::font_set_font_style;
+    pub use crate::bindings::font_set_orientation;
+    pub use crate::bindings::font_set_proportional;
+    pub use crate::bindings::sprintf1 as crt_sprintf1;
     orig! {
         // Securom::SecuromStateDisplay
         /// `CRGBA::CRGBA(r, g, b, a)` (0x7170C0)
         pub fn crgba_ctor(this: GPtr<u32>, r: u32, g: u32, b: u32, a: u32) -> GPtr<u32> = thiscall 0x7170C0 => unported;
-        /// `CFont::SetColor(CRGBA)` (0x719430)
-        pub fn font_set_color(c: u32) = cdecl 0x719430 => unported;
-        /// `CFont::SetFontStyle` (0x719490)
-        pub fn font_set_font_style(s: u32) = cdecl 0x719490 => unported;
         /// `CFont::SetScale(w, h)` (0x719380)
         pub fn font_set_scale(w: f32, h: f32) = cdecl 0x719380 => unported;
-        /// `CFont::SetEdge` (0x719590)
-        pub fn font_set_edge(e: u32) = cdecl 0x719590 => unported;
         /// `CFont::SetDropColor(CRGBA)` (0x719510)
         pub fn font_set_drop_color(c: u32) = cdecl 0x719510 => unported;
-        /// `CFont::SetProportional` (0x7195B0)
-        pub fn font_set_proportional(p: u32) = cdecl 0x7195B0 => unported;
         /// `CFont::SetWrapx` (0x7194D0)
         pub fn font_set_wrapx(x: f32) = cdecl 0x7194D0 => unported;
         /// `CFont::SetRightJustifyWrap` (0x7194F0)
         pub fn font_set_right_justify_wrap(x: u32) = cdecl 0x7194F0 => unported;
-        /// `CFont::SetOrientation` (0x719610)
-        pub fn font_set_orientation(o: u32) = cdecl 0x719610 => unported;
-        /// CRT `sprintf` (0x821BB5) with one integer
-        pub fn crt_sprintf1(buf: GPtr<u8>, fmt: GPtr<u8>, n: i32) -> i32 = cdecl 0x821BB5 => unported;
-        /// `Common::AsciiToGxtChar(src, dst)` (0x718600)
-        pub fn ascii_to_gxt_char(src: GPtr<u8>, dst: GPtr<u8>) = cdecl 0x718600 => unported;
-        /// `CFont::PrintString(x, y, text)` (0x71A700)
-        pub fn font_print_string(x: f32, y: f32, s: GPtr<u8>) = cdecl 0x71A700 => unported;
     }
+    pub use crate::bindings::crt_pow;
+    pub use crate::bindings::rw_d3d9_get_current_d3d_device;
+    pub use crate::bindings::rw_image_create;
     orig! {
-        // Ps::psGrabScreen
-        /// `RwD3D9GetCurrentD3DDevice` (0x7F9D50)
-        pub fn rw_d3d9_get_current_d3d_device() -> u32 = cdecl 0x7F9D50 => unported;
         /// `IDirect3DDevice9::SetGammaRamp(swapchain, flags, ramp)` (+0x54)
         pub fn d3d_dev_set_gamma_ramp(dev: GPtr<u32>, swap: u32, flags: u32, ramp: GPtr<u8>) = stdcall vslot 0x54 => unported;
         /// `IDirect3DDevice9::GetGammaRamp(swapchain, ramp)` (+0x58)
         pub fn d3d_dev_get_gamma_ramp(dev: GPtr<u32>, swap: u32, ramp: GPtr<u8>) = stdcall vslot 0x58 => unported;
-        /// CRT `pow(double, double)` (0x8220F0, result in ST0)
-        pub fn crt_pow(x: f64, y: f64) -> f64 = cdecl 0x8220F0 => unported;
         /// `IDirect3DDevice9::GetDisplayMode` (+0x20)
         pub fn d3d_dev_get_display_mode(dev: GPtr<u32>, swap: u32, mode: GPtr<[u32; 4]>) -> i32 = stdcall vslot 0x20 => unported;
         /// `IDirect3DDevice9::GetFrontBufferData` (+0x84)
@@ -524,8 +502,6 @@ pub mod call {
         pub fn d3d_surface_lock_rect(surface: GPtr<u32>, locked: GPtr<[u32; 2]>, rect: GPtr<[i32; 4]>, flags: u32) -> i32 = stdcall vslot 0x34 => unported;
         /// USER32 `GetWindowRect` at 0x74530B
         pub fn get_window_rect_grab(hwnd: u32, rect: GPtr<[i32; 4]>) -> i32 = stdcall site 0x74530B => unported;
-        /// `RwImageCreate(w, h, depth)` (0x8026E0)
-        pub fn rw_image_create(w: i32, h: i32, depth: i32) -> GPtr<u8> = cdecl 0x8026E0 => unported;
         /// `RwImageAllocatePixels` (0x8027A0)
         pub fn rw_image_allocate_pixels(image: GPtr<u8>) -> GPtr<u8> = cdecl 0x8027A0 => unported;
     }

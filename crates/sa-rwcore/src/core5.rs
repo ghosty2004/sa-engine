@@ -17,6 +17,9 @@ const TEXDICT_TK_LIST: u32 = 0x8E23E4;
 const TEXTURE_TK_LIST: u32 = 0x8E23CC;
 const FRAME_TK_LIST: u32 = 0x8E2270;
 
+use crate::bindings::rw_stream_find_chunk_call as stream_find_chunk;
+use sa_core::bindings::rp_geometry_destroy as geometry_destroy;
+use sa_core::bindings::rw_tex_dictionary_for_all_textures as tex_dictionary_for_all_textures;
 orig! {
     /// `_rwPluginRegistryGetSize(registry, object)` (0x808B00)
     fn plugin_get_size(reg: u32, obj: GPtr<u8>) -> i32 = cdecl 0x808B00 => unported;
@@ -32,22 +35,16 @@ orig! {
     fn atomic_stream_write_internal(a: GPtr<u8>, info: GPtr<u8>) -> GPtr<u8> = cdecl 0x74A880 => unported;
     /// `_rpClumpAtomicStreamRead(stream, geometryList, frameList)` (0x74B060)
     fn clump_atomic_stream_read(s: GPtr<u8>, geos: GPtr<u8>, frames: GPtr<u8>) -> GPtr<u8> = cdecl 0x74B060 => unported;
-    /// `RpGeometryDestroy(geometry)` (0x74CCC0)
-    fn geometry_destroy(g: GPtr<u8>) -> u32 = cdecl 0x74CCC0 => unported;
     /// `RpLightStreamGetSize(light)` (0x751E10)
     fn light_stream_get_size(l: GPtr<u8>) -> u32 = cdecl 0x751E10 => unported;
     /// `RwCameraStreamGetSize(camera)` (0x808CE0)
     fn camera_stream_get_size(c: GPtr<u8>) -> u32 = cdecl 0x808CE0 => unported;
-    /// `RwStreamFindChunk(stream, type, lengthOut, versionOut)` (0x7ED2D0)
-    fn stream_find_chunk(s: GPtr<u8>, ty: u32, len: GPtr<u32>, ver: GPtr<u32>) -> u32 = cdecl 0x7ED2D0 => crate::stream::rw_stream_find_chunk;
     /// `RwStreamRead(stream, buffer, length)` (0x7EC9D0)
     fn stream_read(s: GPtr<u8>, buf: GPtr<u8>, len: u32) -> u32 = cdecl 0x7EC9D0 => crate::stream::rw_stream_read;
     /// `RwStreamWrite(stream, buffer, length)` (0x7ECB30)
     fn stream_write(s: GPtr<u8>, buf: GPtr<u8>, len: u32) -> GPtr<u8> = cdecl 0x7ECB30 => crate::stream::rw_stream_write;
     /// `RwStreamWriteInt32(stream, ints, numBytes)` (0x7ED460)
     fn stream_write_int32(s: GPtr<u8>, ints: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x7ED460 => unported;
-    /// `RwTexDictionaryForAllTextures(dict, callback, data)` (0x7F3730)
-    fn tex_dictionary_for_all_textures(d: GPtr<u8>, cb: u32, data: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F3730 => unported;
     /// The native texture size query through `RwGlobals` +0xAC `(out, texture, 0)`
     fn native_texture_get_size(out: GPtr<u32>, t: GPtr<u8>, z: u32) -> u32 = cdecl table 0xC97B24 0xAC => unported;
     /// `_rwFrameListFlattenRecurse(cursor, frame)` (0x8076A0)
@@ -435,9 +432,8 @@ const MATFX_FREE_LIST: usize = 0xC9AB80;
 const MATFX_ATOMIC_OFFSET: usize = 0xC9AB84;
 const MATFX_SECTOR_OFFSET: usize = 0xC9AB88;
 
+use crate::bindings::free_list_destroy;
 orig! {
-    /// `RwFreeListDestroy(freelist)` (0x801B80)
-    fn free_list_destroy(fl: GPtr<u8>) -> u32 = cdecl 0x801B80 => unported;
     /// `RwStreamReadInt32(stream, ints, numBytes)` (0x7ED540)
     fn stream_read_int32(s: GPtr<u8>, ints: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x7ED540 => unported;
     /// `_rpMatFXPipelinesDestroy()` (0x816190)

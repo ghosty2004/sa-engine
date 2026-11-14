@@ -8,15 +8,13 @@ use sa_core::{hook, orig};
 
 use crate::common::{g, rd, wr, xi};
 
+use sa_core::bindings::streaming_request_model;
+use sa_core::bindings::world_add;
+use sa_stream::bindings::has_vehicle_upgrade_loaded as streaming_has_vehicle_upgrade_loaded;
+use sa_stream::bindings::request_vehicle_upgrade as streaming_request_vehicle_upgrade;
+use sa_world::bindings::set_remap as vehicle_set_remap;
+use sa_world::bindings::vehicle_new;
 orig! {
-    /// `CStreaming::RequestModel(int32, int32 flags)` (0x4087E0)
-    fn streaming_request_model(id: i32, flags: i32) = cdecl 0x4087E0 => unported;
-    /// `CStreaming::RequestVehicleUpgrade(int32, int32 flags)` (0x408C70)
-    fn streaming_request_vehicle_upgrade(id: i32, flags: i32) = cdecl 0x408C70 => unported;
-    /// `CStreaming::HasVehicleUpgradeLoaded(int32)` (0x407820)
-    fn streaming_has_vehicle_upgrade_loaded(id: i32) -> u8 = cdecl 0x407820 => unported;
-    /// `CVehicle::operator new(uint32)` (0x6E2D50)
-    fn vehicle_new(size: u32) -> GPtr<u8> = cdecl 0x6E2D50 => unported;
     /// `CMonsterTruck(int32 modelIndex, eVehicleCreatedBy)` (0x6C8D60)
     fn monster_truck_ctor(v: GPtr<u8>, mi: u32, by: u32) -> GPtr<u8> = thiscall 0x6C8D60 => unported;
     /// `CQuadBike(int32, eVehicleCreatedBy)` (0x6CE370)
@@ -37,12 +35,8 @@ orig! {
     fn automobile_ctor(v: GPtr<u8>, mi: u32, by: u32, b: u32) -> GPtr<u8> = thiscall 0x6B0A90 => unported;
     /// `CVehicle::SetupUpgradesAfterLoad()` (0x6E3400)
     fn vehicle_setup_upgrades_after_load(v: GPtr<u8>) = thiscall 0x6E3400 => unported;
-    /// `CVehicle::SetRemap(int32)` (0x6D0C00)
-    fn vehicle_set_remap(v: GPtr<u8>, i: i32) = thiscall 0x6D0C00 => unported;
     /// `CStoredCar::RestoreCar()` (0x447E40)
     fn stored_car_restore_c(s: GPtr<u8>) -> GPtr<u8> = thiscall 0x447E40 => stored_car_restore;
-    /// `CWorld::Add(CEntity*)` (0x563220)
-    fn world_add(e: GPtr<u8>) = cdecl 0x563220 => unported;
 }
 
 /// `CVehicle* CStoredCar::RestoreCar()` (0x447E40, SEH frame).

@@ -15,17 +15,14 @@ use crate::camproc::{cross_product, get_pad, vec_add, vec_mul_s, vector_normalis
 use crate::common::{Fpu, THE_CAMERA, ftol32, g, k, rd, wr};
 use crate::followped::{copy3, d, entity_pos, vector_add_assign};
 
+pub use sa_world::bindings::bike_calculate_lean_matrix;
+pub use sa_world::bindings::vehicle_is_upside_down;
+pub use sa_world::bindings::world_get_is_line_of_sight_clear as get_is_line_of_sight_clear;
 orig! {
     /// `CCam::Process_WheelCam(const CVector&, float, float, float)` (0x512110, AL); the floats as dwords
     pub fn cam_process_wheel_cam(c: GPtr<u8>, t: GPtr<u8>, o: u32, sv: u32, svw: u32) -> u8 = thiscall 0x512110 => unported;
-    /// `CBike::CalculateLeanMatrix()` (0x6B7150)
-    pub fn bike_calculate_lean_matrix(b: GPtr<u8>) = thiscall 0x6B7150 => unported;
-    /// `CVehicle::IsUpsideDown()` (0x6D1D90, AL)
-    pub fn vehicle_is_upside_down(v: GPtr<u8>) -> u8 = thiscall 0x6D1D90 => unported;
     /// `CVector::operator*=(float)` (0x40FEF0); the float as a dword
     pub fn vector_scale_assign(v: GPtr<u8>, s: u32) -> GPtr<u8> = thiscall 0x40FEF0 => unported;
-    /// `CWorld::GetIsLineOfSightClear(...)` (0x56A490, AL)
-    pub fn get_is_line_of_sight_clear(a: GPtr<u8>, b: GPtr<u8>, bu: u32, ve: u32, pe: u32, ob: u32, du: u32, st: u32, ig: u32) -> u8 = cdecl 0x56A490 => unported;
 }
 
 /// `CCam::m_bFirstPersonRunThisFrame`-ish byte (0xB6EC20), the upside-down rise (0xB7004C), the

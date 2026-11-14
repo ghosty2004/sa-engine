@@ -11,19 +11,13 @@ use sa_core::{hook, orig};
 
 use crate::world::common::{g, rd, wr};
 
+use crate::bindings::col_model_allocate_data;
+use sa_core::bindings::box_set;
+use sa_core::bindings::col_sphere_set;
+use sa_core::bindings::sphere_set;
 orig! {
-    /// `CSphere::Set(float radius, const CVector& centre)` (0x40FCF0, `ret 8`)
-    fn sphere_set(s: GPtr<u8>, r: u32, c: GPtr<u8>) = thiscall 0x40fcf0 => unported;
-    /// `CBox::Set(const CVector& min, const CVector& max)` (0x40EDE0, `ret 8`)
-    fn box_set(b: GPtr<u8>, min: GPtr<u8>, max: GPtr<u8>) = thiscall 0x40ede0 => unported;
-    /// `CColSphere::Set(float radius, const CVector& centre, uint8 material, uint8 flags, uint8 lighting)`
-    /// (0x40FD10, `ret 0x14`)
-    fn col_sphere_set(s: GPtr<u8>, r: u32, c: GPtr<u8>, m: u32, f: u32, l: u32) = thiscall 0x40fd10 => unported;
     /// `CColLine::Set(const CVector& start, const CVector& end)` (0x40EF10, `ret 8`)
     fn col_line_set(l: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) = thiscall 0x40ef10 => unported;
-    /// `CColModel::AllocateData(int32 spheres, int32 boxes, int32 lines, int32 vertices, int32 triangles,
-    /// bool disks)` (0x40F870, `ret 0x18`)
-    fn col_model_allocate_data(cm: GPtr<u8>, s: u32, b: u32, l: u32, v: u32, t: u32, d: u32) = thiscall 0x40f870 => unported;
 }
 
 fn local(b: &mut [u32; 3]) -> GPtr<u8> {

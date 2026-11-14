@@ -8,17 +8,12 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::{Cmp, X87};
 
-orig! {
-    /// `CTheScripts::GetActualScriptThingIndex(int32 ref, uint8 type)` (0x4839A0)
-    fn get_actual_script_thing_index(r: i32, ty: u32) -> i32 = cdecl 0x4839A0 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
-    fn clean_up_old_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    fn register_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571B70 => unported;
-}
+use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+use sa_core::bindings::entity_register_reference as register_reference;
+use sa_world::bindings::get_actual_script_thing_index;
 
 /// `CTheScripts::ScriptSearchLightArray` 0xA94D68 (0x7C bytes per light).
 const SEARCH_LIGHTS: u32 = 0xA94D68;

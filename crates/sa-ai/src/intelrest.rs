@@ -23,13 +23,47 @@ const LOAD_MONITOR: usize = 0xB72978;
 /// `0.0f` (.rdata)
 const F_ZERO: usize = 0x858B50;
 
+use crate::bindings::attractor_scanner_clear;
+use crate::bindings::eh_handle_events;
+use crate::bindings::entity_scanner_clear;
+use crate::bindings::entity_scanner_scan;
+use crate::bindings::ped_set_move_state;
+use crate::bindings::task_is_go_to_task;
+use crate::bindings::use_gun_clear_anim;
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_core::bindings::entity_get_is_on_screen;
+use sa_core::bindings::entity_update_rw_frame;
+use sa_core::bindings::general_random_int_in_range as random_in_range;
+use sa_core::bindings::intel_get_task_use_gun;
+use sa_core::bindings::load_monitor_end;
+use sa_core::bindings::load_monitor_start;
+use sa_core::bindings::matrix_update_rw_matrix;
+use sa_core::bindings::ped_is_alive;
+use sa_core::bindings::rw_matrix_update;
+use sa_core::bindings::tm_get_active_task;
+use sa_core::bindings::tm_get_simplest_active_task;
+use sa_core::bindings::tm_get_task_secondary;
+use sa_core::bindings::tm_set_task_secondary;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::eg_flush;
+use sa_world::bindings::event_group_add as eg_add;
+use sa_world::bindings::event_script_command_ctor as script_command_ctor;
+use sa_world::bindings::event_script_command_dtor as script_command_dtor;
+use sa_world::bindings::fx_system_set_matrix;
+use sa_world::bindings::ik_is_looking;
+use sa_world::bindings::intel_is_friendly_with;
+use sa_world::bindings::ped_groups_get_peds_group;
+use sa_world::bindings::ped_scripted_task_record_process as scripted_task_record_process;
+use sa_world::bindings::physical_get_lighting_total;
+use sa_world::bindings::player_on_foot_ctor;
+use sa_world::bindings::simple_car_drive_ctor as car_drive_ctor;
+use sa_world::bindings::simple_transform_update_rw_matrix;
+use sa_world::bindings::stand_still_ctor;
+use sa_world::bindings::tm_set_task;
+use sa_world::bindings::wander_get_wander_task_by_ped_type as wander_task_by_ped_type;
 orig! {
     /// `CPedIntelligencePool::New` (0x605EC0, thiscall on the pool)
     fn intel_pool_new(pool: u32) -> GPtr<u8> = thiscall 0x605EC0 => unported;
-    /// `CLoadMonitor::StartTimer(int32)` (0x53D050, `ret 4`)
-    fn load_monitor_start(m: GPtr<u8>, i: u32) = thiscall 0x53D050 => unported;
-    /// `CLoadMonitor::EndTimer(int32)` (0x53D070, `ret 4`)
-    fn load_monitor_end(m: GPtr<u8>, i: u32) = thiscall 0x53D070 => unported;
     /// `CTaskManager::CTaskManager(CPed*)` (0x6816A0, `ret 4`)
     fn tm_ctor(tm: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x6816A0 => unported;
     /// `CTaskManager::~CTaskManager` (0x6816D0)
@@ -40,24 +74,12 @@ orig! {
     fn tm_flush_immediately(tm: GPtr<u8>) = thiscall 0x6818A0 => unported;
     /// `CTaskManager::ManageTasks` (0x681C10)
     fn tm_manage_tasks(tm: GPtr<u8>) = thiscall 0x681C10 => unported;
-    /// `CTaskManager::GetTaskSecondary(int32)` (0x681810, `ret 4`)
-    fn tm_get_task_secondary(tm: GPtr<u8>, i: i32) -> GPtr<u8> = thiscall 0x681810 => unported;
-    /// `CTaskManager::SetTaskSecondary(CTask*, int32)` (0x681B60, `ret 8`)
-    fn tm_set_task_secondary(tm: GPtr<u8>, t: GPtr<u8>, i: i32) = thiscall 0x681B60 => unported;
-    /// `CTaskManager::SetTask(CTask*, int32, bool)` (0x681AF0, `ret 0xC`)
-    fn tm_set_task(tm: GPtr<u8>, t: GPtr<u8>, slot: i32, b: u32) = thiscall 0x681AF0 => unported;
-    /// `CTaskManager::GetSimplestActiveTask` (0x6819D0)
-    fn tm_get_simplest_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x6819D0 => unported;
     /// `CTaskManager::GetLastTaskOf` (at index; 0x681A00, `ret 4`)
     fn tm_get_simplest_task_at(tm: GPtr<u8>, i: i32) -> GPtr<u8> = thiscall 0x681A00 => unported;
-    /// `CTaskManager::GetActiveTask` (0x681720)
-    fn tm_get_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x681720 => unported;
     /// `CEventHandler::CEventHandler(CPed*)` (0x4C3E80, `ret 4`)
     fn eh_ctor(eh: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x4C3E80 => unported;
     /// `CEventHandler::~CEventHandler` (0x4C3EC0)
     fn eh_dtor(eh: GPtr<u8>) = thiscall 0x4C3EC0 => unported;
-    /// `CEventHandler::HandleEvents` (0x4C3F10)
-    fn eh_handle_events(eh: GPtr<u8>) = thiscall 0x4C3F10 => unported;
     /// `CEventHandler::FlushImmediately` (0x4C3820)
     fn eh_flush_immediately(eh: GPtr<u8>) = thiscall 0x4C3820 => unported;
     /// `CEventHandlerHistory::ClearAllEvents` (0x4BC550)
@@ -66,28 +88,14 @@ orig! {
     fn eg_ctor(eg: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x4AB340 => unported;
     /// `CEventGroup::~CEventGroup` (0x4AB980)
     fn eg_dtor(eg: GPtr<u8>) = thiscall 0x4AB980 => unported;
-    /// `CEventGroup::Flush(bool)` (0x4AB370, `ret 4`)
-    fn eg_flush(eg: GPtr<u8>, b: u32) = thiscall 0x4AB370 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, `ret 8`)
-    fn eg_add(eg: GPtr<u8>, e: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
     /// `CEventGroup::HasScriptCommandOfTaskType(int32)` (0x4AB840, `ret 4`)
     fn eg_has_script_command_of_task_type(eg: GPtr<u8>, ty: i32) -> u8 = thiscall 0x4AB840 => unported;
-    /// `CEventScriptCommand::CEventScriptCommand(int32, CTask*, bool)` (0x4B0A00, `ret 0xC`)
-    fn script_command_ctor(e: GPtr<u8>, index: u32, task: GPtr<u8>, dead: u32) -> GPtr<u8> = thiscall 0x4B0A00 => unported;
-    /// `CEventScriptCommand::~CEventScriptCommand` (0x4B0A50)
-    fn script_command_dtor(e: GPtr<u8>) = thiscall 0x4B0A50 => unported;
     /// `CEventScanner::CEventScanner` (0x605300)
     fn event_scanner_ctor(s: GPtr<u8>) = thiscall 0x605300 => unported;
     /// `CEventScanner::ScanForEvents(CPed&)` (0x607E30, `ret 4`)
     fn event_scanner_scan(s: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x607E30 => unported;
-    /// `CEntityScanner::Clear` (0x5FF9D0)
-    fn entity_scanner_clear(s: GPtr<u8>) = thiscall 0x5FF9D0 => unported;
-    /// `CEntityScanner::ScanForEntitiesInRange(int32, const CPed&)` (0x5FFA20, `ret 8`)
-    fn entity_scanner_scan(s: GPtr<u8>, ty: u32, ped: GPtr<u8>) = thiscall 0x5FFA20 => unported;
     /// `CVehicleScanner::ScanForVehiclesInRange(const CPed&)` (0x5FFE60, `ret 4`)
     fn vehicle_scanner_scan(s: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x5FFE60 => unported;
-    /// `CAttractorScanner::Clear` (0x5FFF90)
-    fn attractor_scanner_clear(s: GPtr<u8>) = thiscall 0x5FFF90 => unported;
     /// `CPedStuckChecker::TestPedStuck(CPed*, CEventGroup*)` (0x602C00, `ret 8`)
     fn stuck_checker_test(s: GPtr<u8>, ped: GPtr<u8>, eg: GPtr<u8>) -> u8 = thiscall 0x602C00 => unported;
     /// `CCollisionEventScanner::ScanForCollisionEvents(CPed*, CEventGroup*)` (0x604500, `ret 8`)
@@ -108,34 +116,10 @@ orig! {
     fn intel_process_static_counter(i: GPtr<u8>) = thiscall 0x605650 => unported;
     /// `CPedIntelligence::IsInterestingEntity(CEntity*)` (0x6020A0, `ret 4`)
     fn intel_is_interesting_entity(i: GPtr<u8>, e: GPtr<u8>) -> u8 = thiscall 0x6020A0 => unported;
-    /// `CPedScriptedTaskRecord::Process` (0x6085E0, cdecl)
-    fn scripted_task_record_process() = cdecl 0x6085E0 => unported;
-    /// `CPed::IsAlive` (0x5E0170)
-    fn ped_is_alive(p: GPtr<u8>) -> u8 = thiscall 0x5E0170 => unported;
-    /// `CPed::IsPlayer` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CPedGroups::GetPedsGroup(const CPed*)` (0x5F7E80, cdecl)
-    fn ped_groups_get_peds_group(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x5F7E80 => unported;
     /// `CPedGroupIntelligence::ComputeDefaultTasks(CPed*)` (0x5F88D0, `ret 4`)
     fn pgi_compute_default_tasks(i: GPtr<u8>, p: GPtr<u8>) = thiscall 0x5F88D0 => unported;
     /// `CTaskSimpleCarDriveTimed::CTaskSimpleCarDriveTimed(CVehicle*, int32)` (0x5FF940, `ret 8`)
     fn car_drive_timed_ctor(t: GPtr<u8>, veh: GPtr<u8>, ms: u32) -> GPtr<u8> = thiscall 0x5FF940 => unported;
-    /// `CTaskSimpleCarDrive::CTaskSimpleCarDrive(CVehicle*, CTaskUtilityLineUpPedWithCar*, bool)` (0x63C340, `ret 0xC`)
-    fn car_drive_ctor(t: GPtr<u8>, veh: GPtr<u8>, u: u32, b: u32) -> GPtr<u8> = thiscall 0x63C340 => unported;
-    /// `CTaskSimpleStandStill::CTaskSimpleStandStill(int32, bool, bool, float)` (0x62F310, `ret 0x10`)
-    fn stand_still_ctor(t: GPtr<u8>, ms: u32, looped: u32, b: u32, blend: u32) -> GPtr<u8> = thiscall 0x62F310 => unported;
-    /// `CTaskSimplePlayerOnFoot::CTaskSimplePlayerOnFoot` (0x685750)
-    fn player_on_foot_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x685750 => unported;
-    /// `CTaskComplexWander::GetWanderTaskByPedType(CPed*)` (0x673D00, cdecl)
-    fn wander_task_by_ped_type(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x673D00 => unported;
-    /// `CMatrix::UpdateRwMatrix(RwMatrix*)` (0x59AD70, `ret 4`)
-    fn matrix_update_rw_matrix(m: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x59AD70 => unported;
-    /// `CSimpleTransform::UpdateRwMatrix(RwMatrix*)` (0x54EF40, `ret 4`)
-    fn simple_transform_update_rw_matrix(t: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x54EF40 => unported;
-    /// `CEntity::UpdateRwFrame` (0x532B00)
-    fn entity_update_rw_frame(e: GPtr<u8>) = thiscall 0x532B00 => unported;
-    /// `CEntity::GetIsOnScreen` (0x534540)
-    fn entity_get_is_on_screen(e: GPtr<u8>) -> u8 = thiscall 0x534540 => unported;
     /// `GetAnimHierarchyFromSkinClump(RpClump*)` (0x734A40, cdecl)
     fn get_anim_hierarchy_from_skin_clump(c: u32) -> u32 = cdecl 0x734A40 => unported;
     /// `RpHAnimIDGetIndex(RpHAnimHierarchy*, int32)` (0x7C51A0, cdecl)
@@ -144,16 +128,8 @@ orig! {
     fn hanim_get_matrix_array(h: u32) -> u32 = cdecl 0x7C5120 => unported;
     /// `RwV3dTransformPoint(RwV3d* out, const RwV3d* in, const RwMatrix*)` (0x7EDD60, cdecl)
     fn rw_v3d_transform_point(out: GPtr<u8>, inp: GPtr<u8>, m: u32) -> GPtr<u8> = cdecl 0x7EDD60 => unported;
-    /// `RwMatrixUpdate(RwMatrix*)` (0x7F18A0, cdecl)
-    fn rw_matrix_update(m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F18A0 => unported;
-    /// `FxSystem_c::SetMatrix(RwMatrix*)` (0x4AA630, `ret 4`)
-    fn fx_system_set_matrix(fx: GPtr<u8>, m: GPtr<u8>) = thiscall 0x4AA630 => unported;
     /// `CBike::FixHandsToBars(CPed*)` (0x6B7F90, `ret 4`)
     fn bike_fix_hands_to_bars(b: GPtr<u8>, p: GPtr<u8>) = thiscall 0x6B7F90 => unported;
-    /// `CTask::IsGoToTask(CTask*)` (0x61A360, cdecl)
-    fn task_is_go_to_task(t: GPtr<u8>) -> u8 = cdecl 0x61A360 => unported;
-    /// `CIKChainManager_c::IsLooking(CPed*)` (0x6181A0, `ret 4`)
-    fn ik_is_looking(m: GPtr<u8>, p: GPtr<u8>) -> u8 = thiscall 0x6181A0 => unported;
     /// `CIKChainManager_c::LookAt(char*, CPed*, CEntity*, int32, int32, RwV3d*, bool, float, int32, int32, bool)`
     /// (0x618970, `ret 0x2C`)
     #[allow(clippy::too_many_arguments)]
@@ -164,8 +140,6 @@ orig! {
     #[allow(clippy::too_many_arguments)]
     fn world_find_objects_in_range(pos: GPtr<u8>, range: u32, b2d: u32, count: GPtr<u8>, max: u32, out: GPtr<u8>,
         b: u32, v: u32, p: u32, o: u32, d: u32) = cdecl 0x564A20 => unported;
-    /// `CGeneral::GetRandomNumberInRange(int32, int32)` (0x407180, cdecl; its `rand` returns to 0x407187)
-    fn random_in_range(lo: i32, hi: i32) -> i32 = cdecl 0x407180 => unported;
     /// `CTask::Clone` (vtable +4)
     fn v_clone(t: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x4 => unported;
     /// `CTask::IsSimple` (vtable +0xC)
@@ -182,22 +156,10 @@ orig! {
     fn v_delete(t: GPtr<u8>, flags: u32) -> GPtr<u8> = thiscall vslot 0x0 => unported;
     /// `CEventHandlerHistory::IsRespondingToEvent(int32)` (0x4B8B90, `ret 4`)
     fn ehh_is_responding_to_event(h: GPtr<u8>, ty: i32) -> u8 = thiscall 0x4B8B90 => unported;
-    /// `CPedIntelligence::IsFriendlyWith(const CPed&)` (0x601BC0, `ret 4`)
-    fn intel_is_friendly_with(i: GPtr<u8>, p: GPtr<u8>) -> u8 = thiscall 0x601BC0 => unported;
-    /// `CPhysical::GetLightingTotal` (0x544850, ST0)
-    fn physical_get_lighting_total(p: GPtr<u8>) -> f64 = thiscall 0x544850 => unported;
     /// `CTaskSimpleDuck::CTaskSimpleDuck(eDuckControlType, uint16, int16)` (0x691FC0, `ret 0xC`)
     fn duck_ctor(t: GPtr<u8>, control: u32, len: u32, shots: u32) -> GPtr<u8> = thiscall 0x691FC0 => unported;
-    /// `CTaskSimpleUseGun::ClearAnim(CPed*)` (0x61E190, `ret 4`)
-    fn use_gun_clear_anim(t: GPtr<u8>, p: GPtr<u8>) = thiscall 0x61E190 => unported;
-    /// `CPedIntelligence::GetTaskUseGun` (0x600F70)
-    fn intel_get_task_use_gun(i: GPtr<u8>) -> GPtr<u8> = thiscall 0x600F70 => unported;
-    /// `CPed::SetMoveState(eMoveState)` (0x5DEC00, `ret 4`)
-    fn ped_set_move_state(p: GPtr<u8>, s: u32) = thiscall 0x5DEC00 => unported;
     /// `CEventGroup::HasEvent(CEvent*)` (0x4AB6A0, `ret 4`)
     fn eg_has_event(eg: GPtr<u8>, e: GPtr<u8>) -> u8 = thiscall 0x4AB6A0 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00, `ret 4`)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
     /// `CScriptedBrainTaskStore::GetTask(const CPed*)` (0x6357C0, cdecl)
     fn brain_task_store_get_task(p: GPtr<u8>) -> u32 = cdecl 0x6357C0 => unported;
     /// `CPedScriptedTaskRecordData::Flush` (0x608350)
@@ -834,7 +796,6 @@ fn record(this: GPtr<u8>, p: GPtr<u8>, kind: u8) {
         wr(this, 0, p);
     }
 }
-
 
 /// `CPedIntelligence::RestorePedDecisionMakerType` (0x600BC0): +0xB4 = +0xB8 when +0xB4 is 0; returns +0xB4 (EAX).
 #[hook(addr = 0x600BC0, conv = thiscall, name = "CPedIntelligence::RestorePedDecisionMakerType", expect = "8B 81 B4 00 00 00")]

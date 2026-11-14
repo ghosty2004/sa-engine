@@ -14,6 +14,7 @@ use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 use sa_math::x87::X87;
 
+use sa_stream::bindings::load_line;
 orig! {
     /// `CFileMgr::SetDir(const char*)` (0x5387D0)
     fn file_set_dir(dir: u32) = cdecl 0x5387D0 => unported;
@@ -21,8 +22,6 @@ orig! {
     fn file_open(path: GPtr<u8>, mode: u32) -> GPtr<u8> = cdecl 0x538900 => unported;
     /// `CFileMgr::CloseFile(FILE*)` (0x5389D0)
     fn file_close(f: GPtr<u8>) -> u32 = cdecl 0x5389D0 => unported;
-    /// `CFileLoader::LoadLine(FILE*)` (0x536F80)
-    fn load_line(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x536F80 => unported;
     /// CRT `sscanf` (0x8220AD) with the 24 conversions of the object.dat format
     #[allow(clippy::too_many_arguments)]
     fn sscanf24(s: GPtr<u8>, fmt: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, a8: u32, a9: u32, a10: u32, a11: u32, a12: u32, a13: u32, a14: u32, a15: u32, a16: u32, a17: u32, a18: u32, a19: u32, a20: u32, a21: u32, a22: u32, a23: u32) -> i32 = cdecl 0x8220AD => unported;

@@ -10,45 +10,35 @@ use sa_core::{hook, orig};
 
 use super::common::{g, rd, wr};
 
+use crate::bindings::entity_set_model_index;
+use crate::bindings::matrix_ctor_rw as matrix_ctor_attach;
+use crate::bindings::object_render;
+use sa_core::bindings::entity_update_rp_hanim as entity_update_rp_h_anim;
+use sa_core::bindings::entity_update_rw_frame;
+use sa_core::bindings::matrix_dtor;
+use sa_core::bindings::object_ctor;
+use sa_core::bindings::object_set_is_static;
+use sa_core::bindings::rp_hanim_hierarchy_get_matrix_array as rp_h_anim_hierarchy_get_matrix_array;
+use sa_core::bindings::rp_hanim_id_get_index as rp_h_anim_id_get_index;
 orig! {
-    /// `CObject::CObject()` (0x5A1D10)
-    fn object_ctor(o: GPtr<u8>) -> GPtr<u8> = thiscall 0x5A1D10 => unported;
     /// `GetAnimHierarchyFromSkinClump(RpClump*)` (0x734A40)
     fn anim_hierarchy_from_skin_clump(clump: u32) -> GPtr<u8> = cdecl 0x734A40 => unported;
-    /// `CEntity::UpdateRpHAnim()` (0x532B20)
-    fn entity_update_rp_h_anim(e: GPtr<u8>) = thiscall 0x532B20 => unported;
-    /// `RpHAnimIDGetIndex(RpHAnimHierarchy*, int32 id)` (0x7C51A0)
-    fn rp_h_anim_id_get_index(h: GPtr<u8>, id: i32) -> i32 = cdecl 0x7C51A0 => unported;
-    /// `CEntity::SetModelIndex(uint32)` (0x532AE0, `ret 4`)
-    fn entity_set_model_index(e: GPtr<u8>, mi: u32) = thiscall 0x532AE0 => unported;
     /// `RpAnimBlendClumpInit(RpClump*)` (0x4D6720)
     fn rp_anim_blend_clump_init(clump: u32) = cdecl 0x4D6720 => unported;
     /// `RwTexDictionaryFindHashNamedTexture(RwTexDictionary*, uint32)` (0x734E50)
     fn tex_dict_find_hash_named_texture(dict: u32, hash: u32) -> u32 = cdecl 0x734E50 => unported;
     /// `GetFirstTexture(RwTexDictionary*)` (0x734940)
     fn get_first_texture(dict: u32) -> u32 = cdecl 0x734940 => unported;
-    /// `CObject::SetIsStatic(bool)` (0x5A0760, `ret 4`)
-    fn object_set_is_static(o: GPtr<u8>, s: u32) = thiscall 0x5A0760 => unported;
-    /// `RpHAnimHierarchyGetMatrixArray(RpHAnimHierarchy*)` (0x7C5120)
-    fn rp_h_anim_hierarchy_get_matrix_array(h: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C5120 => unported;
-    /// `CMatrix::CMatrix(RwMatrix*, bool owner)` (0x59C050, `ret 8`)
-    fn matrix_ctor_attach(m: GPtr<u8>, rw: GPtr<u8>, owner: u32) -> GPtr<u8> = thiscall 0x59C050 => unported;
     /// `CMatrix::operator=(const CMatrix&)` (0x59BBC0, `ret 4`)
     fn matrix_assign(dst: GPtr<u8>, src: GPtr<u8>) = thiscall 0x59BBC0 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
     /// `CMatrix::UpdateRwMatrix(RwMatrix*)` (0x59AD70, `ret 4`)
     fn matrix_update_rw_matrix(m: GPtr<u8>, rw: u32) = thiscall 0x59AD70 => unported;
     /// `CSimpleTransform::UpdateRwMatrix(RwMatrix*)` (0x54EF40, `ret 4`)
     fn simple_transform_update_rw_matrix(t: GPtr<u8>, rw: u32) = thiscall 0x54EF40 => unported;
-    /// `CEntity::UpdateRwFrame()` (0x532B00)
-    fn entity_update_rw_frame(e: GPtr<u8>) = thiscall 0x532B00 => unported;
     /// `GetFirstAtomic(RpClump*)` (0x734820)
     fn get_first_atomic(clump: u32) -> GPtr<u8> = cdecl 0x734820 => unported;
     /// `RpMaterialSetTexture(RpMaterial*, RwTexture*)` (0x74DBC0)
     fn rp_material_set_texture(mat: u32, tex: u32) -> u32 = cdecl 0x74DBC0 => unported;
-    /// `CObject::Render()` (0x59F180)
-    fn object_render(o: GPtr<u8>) = thiscall 0x59F180 => unported;
 }
 
 /// `CModelInfo::ms_modelInfoPtrs`

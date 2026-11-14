@@ -55,6 +55,7 @@ const MOUSE_WHEEL_DOWN: (usize, usize) = (0xB7341C, 0xB73430);
 const F1_BITS: u32 = 0x3F80_0000;
 const K_388: f32 = f32::from_bits(0x43C2_0000);
 
+pub use sa_world::bindings::pad_get_ped_walk_left_right;
 orig! {
     /// `CMenuManager::CheckFrontEndUpInput()` (0x573840, thiscall)
     pub fn check_front_end_up_input_call(this: GPtr<u8>) -> u8 = thiscall 0x573840 => crate::menu_mgr::check_front_end_up_input;
@@ -70,8 +71,6 @@ orig! {
     pub fn additional_option_input_call(this: GPtr<u8>, up: GPtr<u8>, down: GPtr<u8>) = thiscall 0x5773D0 => crate::menu_map_input::additional_option_input;
     /// `CMenuManager::ProcessUserInput(bool down, bool up, bool accept, bool back, int8 lr)` (0x57B480, thiscall)
     pub fn process_user_input_call(this: GPtr<u8>, down: u32, up: u32, accept: u32, back: u32, lr: u32) = thiscall 0x57B480 => crate::menu_mgr::process_user_input;
-    /// `CPad::GetPedWalkLeftRight()` (0x53FC90, thiscall; AX)
-    pub fn pad_get_ped_walk_left_right(pad: GPtr<u8>) -> i16 = thiscall 0x53FC90 => unported;
     /// Unnamed `CPad` thunk (0x4410E0, thiscall; `jmp` into `.HOODLUM`): d-pad right just pressed,
     /// `[pad+0x16] != 0 && [pad+0x46] == 0` (AL)
     pub fn pad_dpad_right_just_pressed(pad: GPtr<u8>) -> u8 = thiscall 0x4410E0 => unported;

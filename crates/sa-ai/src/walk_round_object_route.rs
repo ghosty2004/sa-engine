@@ -7,13 +7,11 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::bbox_planes;
 orig! {
     /// `CPedGeometryAnalyser::ComputeRouteRoundEntityBoundingBox(CPed*, CEntity*, CVector& target, CPointRoute*,
     /// int32)` (0x5F6110)
     fn route_round_entity_bbox(ped: GPtr<u8>, e: GPtr<u8>, target: GPtr<u8>, route: GPtr<u8>, flag: u32) -> u32 = cdecl 0x5F6110 => unported;
-    /// `CPedGeometryAnalyser::ComputeEntityBoundingBoxPlanes(float z, CEntity*, CVector (*normals)[4], float* d)`
-    /// (0x5F3660), z as bits
-    fn bbox_planes(z: u32, e: GPtr<u8>, normals: GPtr<u8>, d: GPtr<u8>) = cdecl 0x5F3660 => unported;
     /// `CPedGeometryAnalyser::ComputeEntityHitSide(const CVector&, CEntity*)` (0x5F3AC0)
     fn hit_side(p: GPtr<u8>, e: GPtr<u8>) -> u32 = cdecl 0x5F3AC0 => unported;
 }

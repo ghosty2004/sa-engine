@@ -9,30 +9,21 @@ use sa_math::x87::X87;
 
 use crate::common::{model_info, rd, wr, x};
 
+use sa_core::bindings::get_anim_hierarchy_from_skin_clump;
+use sa_core::bindings::matrix_attach;
+use sa_core::bindings::matrix_dtor;
+use sa_core::bindings::matrix_mul_assign;
+use sa_core::bindings::matrix_mul_vec;
+use sa_core::bindings::rp_hanim_hierarchy_get_matrix_array;
+use sa_core::bindings::rp_hanim_id_get_index;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::multiply3x3 as multiply3x3_mv;
+use sa_world::bindings::multiply3x3_vm;
 orig! {
-    /// `CMatrix::Attach(RwMatrix*, bool owns)` (0x59BD10)
-    fn matrix_attach(m: GPtr<u8>, rw: GPtr<u8>, owns: u32) = thiscall 0x59BD10 => unported;
     /// `CMatrix::operator=(const CMatrix&)` (0x59BBC0)
     fn matrix_assign(m: GPtr<u8>, src: GPtr<u8>) = thiscall 0x59BBC0 => unported;
-    /// `CMatrix::operator*=(const CMatrix&)` (0x411A80)
-    fn matrix_mul_assign(m: GPtr<u8>, o: GPtr<u8>) = thiscall 0x411A80 => unported;
     /// `CMatrix::CMatrix(RwMatrix*, bool temporary)` (0x59C050)
     fn matrix_ctor_rw(m: GPtr<u8>, rw: GPtr<u8>, temp: u32) = thiscall 0x59C050 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
-    /// `Multiply3x3(CVector* out, const CMatrix*, const CVector*)` (0x59C790) and `(out, const CVector*, const
-    /// CMatrix*)` (0x59C810, the transposed rotation)
-    fn multiply3x3_mv(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C790 => unported;
-    fn multiply3x3_vm(out: GPtr<u8>, v: GPtr<u8>, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C810 => unported;
-    /// `operator*(const CMatrix&, const CVector&)` (0x59C890), hidden result pointer first
-    fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
-    /// `GetAnimHierarchyFromSkinClump(RpClump*)` (0x734A40)
-    fn get_anim_hierarchy_from_skin_clump(c: GPtr<u8>) -> GPtr<u8> = cdecl 0x734A40 => unported;
-    /// `RpHAnimIDGetIndex(RpHAnimHierarchy*, int32)` (0x7C51A0), `RpHAnimHierarchyGetMatrixArray` (0x7C5120)
-    fn rp_hanim_id_get_index(h: GPtr<u8>, id: i32) -> i32 = cdecl 0x7C51A0 => unported;
-    fn rp_hanim_hierarchy_get_matrix_array(h: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C5120 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0), AL
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
 }
 
 use sa_core::field::gf as k;

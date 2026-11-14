@@ -20,23 +20,18 @@ const SOUND_SIZE: isize = 0x74;
 /// `CAESoundManager::m_aSounds` length
 const NUM_SOUNDS: isize = 300;
 
+pub use crate::bindings::ae_random_float;
+pub use crate::bindings::position_relative_to_camera_vec;
+pub use sa_core::bindings::eh_vector_ctor;
+pub use sa_core::bindings::entity_clean_up_old_reference as cleanup_old_reference;
+pub use sa_core::bindings::entity_register_reference as register_reference;
 orig! {
-    /// `CEntity::CleanUpOldReference(CEntity** ref)` (0x571A00)
-    pub fn cleanup_old_reference(entity: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CEntity::RegisterReference(CEntity** ref)` (0x571B70)
-    pub fn register_reference(entity: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
-    /// CRT `eh vector constructor iterator` (0x821D30, stdcall)
-    pub fn eh_vector_ctor(arr: GPtr<u8>, size: u32, n: u32, ctor: u32, dtor: u32) = stdcall 0x821D30 => unported;
     /// `CAEAudioHardware::GetSoundHeadroom(uint16 soundId, int16 bankSlot)` (0x4D8E30, ST0)
     pub fn hw_get_sound_headroom(hw: GPtr<u8>, sound: u32, slot: u32) -> f32 = thiscall 0x4D8E30 => unported;
-    /// `CAEAudioUtility::GetRandomNumberInRange<float>(float, float)` (0x4D9C50, ST0)
-    pub fn ae_random_float(min: f32, max: f32) -> f32 = cdecl 0x4D9C50 => crate::utility::random_float_f32;
     /// `CAESound::SetPosition(CVector)` (0x4EF880; the vector by value = three dwords)
     pub fn sound_set_position(this: GPtr<u8>, px: u32, py: u32, pz: u32) = thiscall 0x4EF880 => set_position;
     /// `CAEAudioEntity::UpdateParameters(CAESound*, int16 curPlayPos)` (virtual, vtable slot 0)
     pub fn entity_update_parameters(entity: GPtr<u8>, sound: GPtr<u8>, cur: u32) = thiscall vslot 0x00 => unported;
-    /// `CAEAudioEnvironment::GetPositionRelativeToCamera(CVector* out, const CVector* pos)` (0x4D80B0)
-    pub fn position_relative_to_camera_vec(out: GPtr<u8>, pos: GPtr<u8>) -> u32 = cdecl 0x4D80B0 => unported;
     /// `CAEAudioEnvironment::GetDistanceAttenuation(float)` (0x4D7F20, ST0)
     pub fn distance_attenuation(dist: f32) -> f32 = cdecl 0x4D7F20 => crate::utility::distance_attenuation_f32;
     /// `CAEAudioEnvironment::GetDirectionalMikeAttenuation(const CVector&)` (0x4D7F60, ST0)

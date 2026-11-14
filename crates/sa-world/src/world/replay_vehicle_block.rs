@@ -4,15 +4,12 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 
 use crate::world::common::{find_player_vehicle, g, rd, wr, x};
 
-orig! {
-    /// `CCompressedMatrixNotAligned::CompressFromFullMatrix(CMatrix&)` (0x59BAD0, `ret 4`)
-    fn compressed_matrix_compress_from_full(c: GPtr<u8>, m: GPtr<u8>) = thiscall 0x59BAD0 => unported;
-}
+use sa_core::bindings::compress_from_full_matrix as compressed_matrix_compress_from_full;
 
 /// `CReplay` "player vehicle recorded without its siren" byte (0xB6EC20)
 const PLAYER_VEHICLE_FLAG: usize = 0xB6EC20;

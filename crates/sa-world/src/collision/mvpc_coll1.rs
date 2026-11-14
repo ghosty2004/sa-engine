@@ -33,30 +33,25 @@ const K_1_128: u32 = 0x858B88;
 /// `0.0f` (0x858B50)
 const K_0: u32 = 0x858B50;
 
+use crate::bindings::col_line_ctor;
+use crate::bindings::multiply3x3 as multiply_3x3;
+use crate::bindings::process_line_sphere;
+use crate::bindings::test_line_sphere;
+use crate::bindings::vector_add;
+use crate::bindings::vector_sub;
+use sa_core::bindings::atexit;
+use sa_core::bindings::matrix_invert;
+use sa_core::bindings::matrix_mul_vec;
 orig! {
-    /// CRT `_atexit` (0x821D1E)
-    fn atexit(f: u32) -> i32 = cdecl 0x821D1E => unported;
     /// the no-CD protection VM entry (0xCB73E0, pops its two arguments), called from the static
     /// initialiser of `TestLineOfSight`'s inverse matrix
     #[cfg_attr(not(sa_phase_a), allow(dead_code))]
     fn protection_vm(code: u32, n: u32) = stdcall 0xCB73E0 => unported;
-    /// `CMatrix::Invert(const CMatrix& src, CMatrix& dst)` (0x59B920, cdecl, returns `dst`)
-    fn matrix_invert(src: GPtr<u8>, dst: GPtr<u8>) -> GPtr<u8> = cdecl 0x59B920 => unported;
-    /// `operator*(const CMatrix&, const CVector&)` (0x59C890, cdecl, out first)
-    fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
-    /// `Multiply3x3(const CMatrix&, const CVector&)` (0x59C790, cdecl, out first)
-    fn multiply_3x3(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C790 => unported;
-    /// `CColLine::CColLine(const CVector& start, const CVector& end)` (0x40EF50, `ret 8`)
-    fn col_line_ctor(l: GPtr<u8>, start: GPtr<u8>, end: GPtr<u8>) -> GPtr<u8> = thiscall 0x40EF50 => unported;
     /// `CCollision::TestLineBox_DW(const CColLine&, const CBox&)` (0x412C70, AL)
     fn test_line_box_dw(line: GPtr<u8>, bx: GPtr<u8>) -> u8 = cdecl 0x412C70 => unported;
-    /// `CCollision::TestLineSphere(const CColLine&, const CColSphere&)` (0x417470, AL)
-    fn test_line_sphere(line: GPtr<u8>, sp: GPtr<u8>) -> u8 = cdecl 0x417470 => unported;
     /// `CCollision::TestLineTriangle(const CColLine&, const CompressedVector*, const CColTriangle&,
     /// const CColTrianglePlane&)` (0x413AC0, AL)
     fn test_line_triangle(line: GPtr<u8>, verts: GPtr<u8>, tri: GPtr<u8>, plane: GPtr<u8>) -> u8 = cdecl 0x413AC0 => unported;
-    /// `CCollision::ProcessLineSphere(const CColLine&, const CColSphere&, CColPoint&, float&)` (0x412AA0, AL)
-    fn process_line_sphere(line: GPtr<u8>, sp: GPtr<u8>, cp: GPtr<u8>, min: GPtr<u8>) -> u8 = cdecl 0x412AA0 => unported;
     /// `CCollision::ProcessLineBox(const CColLine&, const CColBox&, CColPoint&, float&)` (0x413100, AL)
     fn process_line_box_call(line: GPtr<u8>, bx: GPtr<u8>, cp: GPtr<u8>, min: GPtr<u8>) -> u8 = cdecl 0x413100 => unported;
     /// `CCollision::ProcessLineTriangle(...)` (0x4140F0, AL)
@@ -68,12 +63,8 @@ orig! {
     fn is_see_through(si: u32, id: u32) -> u8 = thiscall 0x55E6B0 => unported;
     /// `SurfaceInfos_c::IsShootThrough(uint32)` (0x55E6D0, AL)
     fn is_shoot_through(si: u32, id: u32) -> u8 = thiscall 0x55E6D0 => unported;
-    /// `VectorSub(CVector* out, const CVector* a, const CVector* b)` (0x40FE60)
-    fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => unported;
     /// `operator*(const CVector&, float)` (0x40FEC0, cdecl, out first; no catalogue name)
     fn vector_scale(out: GPtr<u8>, v: GPtr<u8>, f: u32) -> GPtr<u8> = cdecl 0x40FEC0 => unported;
-    /// `operator+(const CVector&, const CVector&)` (0x40FE30, cdecl, out first; no catalogue name)
-    fn vector_add(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE30 => unported;
     /// `CompressedVector` -> `CVector` (0x411590, cdecl `(CVector* out, const CompressedVector*)`; no
     /// catalogue name)
     fn uncompress_vector(out: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x411590 => unported;

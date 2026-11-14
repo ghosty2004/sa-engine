@@ -12,6 +12,12 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::decision_maker_types_remove;
+use crate::bindings::editable_response_ctor;
+use crate::bindings::editable_response_dtor;
+use sa_world::bindings::decision_maker_types_add;
+use sa_world::bindings::decision_maker_types_get_instance;
+use sa_world::bindings::event_group_add as eg_add;
 orig! {
     /// `CDecision::SetDefault` (0x600530)
     fn decision_set_default(d: GPtr<u8>) = thiscall 0x600530 => unported;
@@ -19,20 +25,8 @@ orig! {
     fn decision_ctor(d: GPtr<u8>) -> GPtr<u8> = thiscall 0x6040C0 => unported;
     /// `CDecisionMaker::CDecisionMaker` (0x4650A0)
     fn decision_maker_ctor(d: GPtr<u8>) -> GPtr<u8> = thiscall 0x4650A0 => unported;
-    /// `CDecisionMakerTypes::GetInstance` (0x4684F0, cdecl)
-    fn decision_maker_types_get_instance() -> GPtr<u8> = cdecl 0x4684F0 => unported;
-    /// `CDecisionMakerTypes::RemoveDecisionMaker(int32)` (0x6043A0, `ret 4`)
-    fn decision_maker_types_remove(t: GPtr<u8>, i: i32) = thiscall 0x6043A0 => unported;
-    /// `CDecisionMakerTypes::AddDecisionMaker(CDecisionMaker*, int32, bool)` (0x607050, `ret 0xC`)
-    fn decision_maker_types_add(t: GPtr<u8>, dm: GPtr<u8>, ty: u32, b: u32) -> u32 = thiscall 0x607050 => unported;
     /// `CDecisionMakerTypesFileLoader::LoadDecisionMaker(const char*, CDecisionMaker*)` (0x6076B0, cdecl)
     fn file_loader_load_decision_maker_ptr(name: u32, dm: GPtr<u8>) = cdecl 0x6076B0 => unported;
-    /// `CEventEditableResponse::CEventEditableResponse` (0x4AC450)
-    fn editable_response_ctor(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x4AC450 => unported;
-    /// `CEventEditableResponse::~CEventEditableResponse` (0x4AC480)
-    fn editable_response_dtor(e: GPtr<u8>) = thiscall 0x4AC480 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, `ret 8`)
-    fn eg_add(eg: GPtr<u8>, e: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
 }
 
 /// `CDecision::SetDefault` (0x600530): types -1, probabilities 0, flags 0. The caller `CDecision::CDecision`
@@ -171,7 +165,8 @@ pub fn mental_state_process(this: GPtr<u8>, ped: GPtr<u8>) {
     wr::<u8>(this, 0x13, vh);
 }
 
-
+use crate::bindings::decision_from as dm_decision_from;
+use sa_world::bindings::dm_load_enum;
 orig! {
     /// `CFileMgr::SetDir(dir)` (0x5387D0)
     fn dm_set_dir(dir: GPtr<u8>) = cdecl 0x5387D0 => unported;
@@ -185,12 +180,8 @@ orig! {
     fn dm_sscanf(line: GPtr<u8>, fmt: GPtr<u8>, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, a8: u32, a9: u32, a10: u32, a11: u32, a12: u32, a13: u32, a14: u32, a15: u32, a16: u32, a17: u32, a18: u32, a19: u32, a20: u32, a21: u32, a22: u32, a23: u32, a24: u32, a25: u32, a26: u32, a27: u32, a28: u32, a29: u32, a30: u32, a31: u32, a32: u32, a33: u32, a34: u32, a35: u32, a36: u32, a37: u32, a38: u32, a39: u32, a40: u32, a41: u32, a42: u32, a43: u32, a44: u32, a45: u32, a46: u32, a47: u32, a48: u32, a49: u32, a50: u32, a51: u32, a52: u32, a53: u32, a54: u32, a55: u32, a56: u32, a57: u32, a58: u32, a59: u32, a60: u32, a61: u32, a62: u32, a63: u32, a64: u32, a65: u32, a66: u32, a67: u32, a68: u32, a69: u32, a70: u32, a71: u32, a72: u32, a73: u32, a74: u32, a75: u32, a76: u32, a77: u32, a78: u32, a79: u32) -> i32 = cdecl 0x8220AD => unported;
     /// `CDecision::Set(types, probs, bools, facial)` (0x600570)
     fn dm_decision_set(d: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, c: GPtr<u8>, e: GPtr<u8>) = thiscall 0x600570 => unported;
-    /// `CDecision::From(const CDecision&)` (0x6006B0)
-    fn dm_decision_from(d: GPtr<u8>, src: GPtr<u8>) = thiscall 0x6006B0 => unported;
     /// `CDecisionMakerTypes::LoadEventIndices()` (0x600840)
     fn dm_load_event_indices(t: GPtr<u8>) = thiscall 0x600840 => unported;
-    /// `CDecisionMakerTypesFileLoader::LoadDecisionMaker(const char*, int32, bool)` (0x607D30)
-    fn dm_load_enum(name: GPtr<u8>, ty: u32, b: u32) -> u32 = cdecl 0x607D30 => unported;
 }
 
 /// `CDecision::From(const CDecision&)` (0x6006B0, thiscall, `ret 4`; the loop count 6 is set in the no-CD island

@@ -4,24 +4,14 @@
 //! SEH frames have no other effect. Unverified (docs/verify/HOWTO.md).
 
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
-orig! {
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00, `ret 4`)
-    fn clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70, `ret 4`)
-    fn register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
-    /// `CTaskSimple::CTaskSimple()` (0x61A390)
-    fn task_simple_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A390 => unported;
-    /// `CTaskSimple::~CTaskSimple()` (0x61A3A0)
-    fn task_simple_dtor(t: GPtr<u8>) = thiscall 0x61A3A0 => unported;
-    /// `CTaskSimpleCarDrive::~CTaskSimpleCarDrive()` (0x63C460)
-    fn task_simple_car_drive_dtor(t: GPtr<u8>) = thiscall 0x63C460 => unported;
-    /// `CTaskComplexEnterCar::~CTaskComplexEnterCar()` (0x63DFA0)
-    fn task_complex_enter_car_dtor(t: GPtr<u8>) = thiscall 0x63DFA0 => unported;
-}
+use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+use sa_core::bindings::entity_register_reference as register_reference;
+use sa_world::bindings::task_simple_ctor;
+use sa_world::bindings::task_simple_dtor;
 
 /// `FUN_00647710` (0x647710), proposed `CTaskSimpleCarForcePedOut::CTaskSimpleCarForcePedOut(CVehicle*, int32
 /// door)` (thiscall, `ret 8`): `CTaskSimple`'s constructor, vtable 0x86EE94, the vehicle at +8 and the door at +0xC,

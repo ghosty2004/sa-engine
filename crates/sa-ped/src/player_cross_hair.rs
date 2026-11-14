@@ -10,15 +10,11 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use sa_world::bindings::cam_shake_no_pos as camera_cam_shake_no_pos;
+use sa_world::bindings::pad_get_car_gun_fired;
+use sa_world::bindings::pad_get_steering_left_right;
+use sa_world::bindings::pad_get_steering_up_down;
 orig! {
-    /// `CPad::GetSteeringLeftRight()` (0x53FB80), AX
-    fn pad_get_steering_left_right(pad: GPtr<u8>) -> i16 = thiscall 0x53FB80 => unported;
-    /// `CPad::GetSteeringUpDown()` (0x53FBD0), AX
-    fn pad_get_steering_up_down(pad: GPtr<u8>) -> i16 = thiscall 0x53FBD0 => unported;
-    /// `CPad::GetCarGunFired()` (0x53FF90), AX tested
-    fn pad_get_car_gun_fired(pad: GPtr<u8>) -> i16 = thiscall 0x53FF90 => unported;
-    /// `CCamera::CamShakeNoPos(CCamera*, float)` (0x50A970, cdecl)
-    fn camera_cam_shake_no_pos(cam: GPtr<u8>, strength: f32) = cdecl 0x50A970 => unported;
     /// `CCamera::FindCamFOV()` (0x50AD20, ST0)
     fn camera_find_cam_fov(cam: GPtr<u8>) -> f64 = thiscall 0x50AD20 => unported;
     /// `CWeapon::CWeapon(eWeaponType, int32 ammo)` (0x73B430, `ret 8`)

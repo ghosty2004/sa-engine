@@ -59,6 +59,45 @@ const FM1: f32 = -1.0;
 /// 0x858B14: 1/32768
 const F_1_32768: f32 = 3.051_757_8e-5;
 
+pub use crate::bindings::attractor_manager_has_empty_slot as attractor_has_empty_slot;
+pub use crate::bindings::clump_get_first_association as rp_anim_blend_clump_get_first_association;
+pub use crate::bindings::double_node_add_to_list;
+pub use crate::bindings::double_node_delete;
+pub use crate::bindings::double_node_new;
+pub use crate::bindings::entity_create_effects;
+pub use crate::bindings::escalator_switch_off;
+pub use crate::bindings::flush_single as single_link_flush;
+pub use crate::bindings::get_ped_attractor_manager;
+pub use crate::bindings::is_ped_pointer_valid;
+pub use crate::bindings::physical_add_to_moving_list;
+pub use crate::bindings::ptr_list_double_link_flush as double_link_flush;
+pub use crate::bindings::remove_lights_affecting_object;
+pub use crate::bindings::vehicle_is_pointer_valid as is_vehicle_pointer_valid;
+pub use sa_core::bindings::activate_directional;
+pub use sa_core::bindings::crt_free_8214bd as crt_free;
+pub use sa_core::bindings::deactivate_directional;
+pub use sa_core::bindings::entity_destructor;
+pub use sa_core::bindings::entity_get_is_on_screen as get_is_on_screen;
+pub use sa_core::bindings::get_anim_hierarchy_from_skin_clump as rw_get_anim_hierarchy_from_skin_clump;
+pub use sa_core::bindings::get_first_atomic as rw_get_first_atomic;
+pub use sa_core::bindings::matrix_dtor;
+pub use sa_core::bindings::matrix_mul_vec;
+pub use sa_core::bindings::matrix_set_rotate;
+pub use sa_core::bindings::matrix_update_matrix;
+pub use sa_core::bindings::matrix_update_rw as matrix_update_rw_attached;
+pub use sa_core::bindings::ptr_node_single_new as single_node_new;
+pub use sa_core::bindings::rp_clump_for_all_atomics;
+pub use sa_core::bindings::rp_geometry_for_all_materials;
+pub use sa_core::bindings::rp_skin_geometry_get_skin;
+pub use sa_core::bindings::rw_frame_update_objects;
+pub use sa_core::bindings::set_ambient_colours;
+pub use sa_core::bindings::streaming_remove_model;
+pub use sa_stream::bindings::get_2d_effect as model_info_get_2d_effect;
+pub use sa_stream::bindings::is_object_glass;
+pub use sa_stream::bindings::model_info_add_ref;
+pub use sa_stream::bindings::model_info_remove_ref;
+pub use sa_stream::bindings::simple_transform_update_matrix;
+pub use sa_stream::bindings::streaming_add_entity;
 orig! {
     /// `RpAtomicDestroy(RpAtomic*)` (0x749DC0)
     pub fn rp_atomic_destroy(a: GPtr<u8>) -> u32 = cdecl 0x749DC0 => unported;
@@ -66,32 +105,12 @@ orig! {
     pub fn rw_frame_destroy(f: GPtr<u8>) -> u32 = cdecl 0x7F05A0 => unported;
     /// `RpClumpDestroy(RpClump*)` (0x74A310)
     pub fn rp_clump_destroy(c: GPtr<u8>) -> u32 = cdecl 0x74A310 => unported;
-    /// `RpAnimBlendClumpGetFirstAssociation(RpClump*)` (0x4D15E0)
-    pub fn rp_anim_blend_clump_get_first_association(c: GPtr<u8>) -> GPtr<u8> = cdecl 0x4D15E0 => unported;
     /// `RpAnimBlendClumpUpdateAnimations(RpClump*, float, bool)` (0x4D34F0)
     pub fn rp_anim_blend_clump_update_animations(c: GPtr<u8>, step: f32, visible: u32) = cdecl 0x4D34F0 => unported;
-    /// `CMatrix::UpdateMatrix(RwMatrix*)` (0x59AD20)
-    pub fn matrix_update_matrix(m: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x59AD20 => unported;
-    /// `CPhysical::AddToMovingList()` (0x542800)
-    pub fn physical_add_to_moving_list(p: GPtr<u8>) = thiscall 0x542800 => unported;
     /// `CEntity::SetIsStatic(bool)` (vtable slot 0x10)
     pub fn entity_vset_is_static(e: GPtr<u8>, v: u8) = thiscall vslot 0x10 => unported;
-    /// `CPtrNodeDoubleLink::AddToList(CPtrListDoubleLink*)` (0x5329A0)
-    pub fn double_node_add_to_list(n: GPtr<u8>, l: GPtr<u8>) = thiscall 0x5329A0 => unported;
-    /// `CBaseModelInfo::AddRef()` (0x4C4BA0)
-    pub fn model_info_add_ref(mi: GPtr<u8>) = thiscall 0x4C4BA0 => unported;
-    /// `CStreaming::AddEntity(CEntity*)` (0x409650)
-    pub fn streaming_add_entity(e: GPtr<u8>) -> GPtr<u8> = cdecl 0x409650 => unported;
-    /// `CEntity::CreateEffects()` (0x533790)
-    pub fn entity_create_effects(e: GPtr<u8>) = thiscall 0x533790 => unported;
-    /// `CVehicle::IsVehiclePointerValid(CVehicle*)` (0x6E38F0)
-    pub fn is_vehicle_pointer_valid(e: GPtr<u8>) -> u8 = cdecl 0x6E38F0 => unported;
-    /// `IsPedPointerValid(CPed*)` (0x5E8A30)
-    pub fn is_ped_pointer_valid(e: GPtr<u8>) -> u8 = cdecl 0x5E8A30 => unported;
     /// `CObject::IsObjectPointerValid(CObject*)` (0x5A2C20)
     pub fn object_is_object_pointer_valid(e: GPtr<u8>) -> u8 = cdecl 0x5A2C20 => crate::world::object::is_object_pointer_valid;
-    /// `CBaseModelInfo::RemoveRef()` (0x4C4BB0)
-    pub fn model_info_remove_ref(mi: GPtr<u8>) = thiscall 0x4C4BB0 => unported;
     /// `CStreaming::RemoveEntity(CLink<CEntity*>*)` (0x409710)
     pub fn streaming_remove_entity(l: GPtr<u8>) = cdecl 0x409710 => unported;
     /// `CBaseModelInfo::GetModelType` (vtable slot 0x10)
@@ -104,20 +123,10 @@ orig! {
     pub fn rp_material_uv_anim_add_anim_time(m: GPtr<u8>, t: f32) -> GPtr<u8> = cdecl 0x7CC4B0 => unported;
     /// `RpMaterialUVAnimApplyUpdate(RpMaterial*)` (0x7CC110)
     pub fn rp_material_uv_anim_apply_update(m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7CC110 => unported;
-    /// `RwHelper::GetFirstAtomic(RpClump*)` (0x734820)
-    pub fn rw_get_first_atomic(c: GPtr<u8>) -> GPtr<u8> = cdecl 0x734820 => unported;
-    /// `RpSkinGeometryGetSkin(RpGeometry*)` (0x7C7550)
-    pub fn rp_skin_geometry_get_skin(g: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C7550 => unported;
-    /// `RwHelper::GetAnimHierarchyFromSkinClump(RpClump*)` (0x734A40)
-    pub fn rw_get_anim_hierarchy_from_skin_clump(c: GPtr<u8>) -> GPtr<u8> = cdecl 0x734A40 => unported;
     /// `RpHAnimHierarchyUpdateMatrices(RpHAnimHierarchy*)` (0x7C51D0)
     pub fn rp_h_anim_hierarchy_update_matrices(h: GPtr<u8>) -> u32 = cdecl 0x7C51D0 => unported;
     /// `CMatrix::CMatrix(RwMatrix*, bool owner)` (0x59C050)
     pub fn matrix_ctor_attach(m: GPtr<u8>, rw: GPtr<u8>, owner: u32) = thiscall 0x59C050 => unported;
-    /// `CMatrix::UpdateRW()` (0x59BBB0)
-    pub fn matrix_update_rw_attached(m: GPtr<u8>) = thiscall 0x59BBB0 => unported;
-    /// `CMatrix::~CMatrix` (0x59ACD0)
-    pub fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
     /// `CCamera::IsSphereVisible(const CVector&, float, const RwMatrix*)` (0x420C40)
     pub fn camera_is_sphere_visible(cam: GPtr<u8>, c: GPtr<u8>, r: f32, m: GPtr<u8>) -> u8 = thiscall 0x420C40 => unported;
     /// `CRect::StretchToPoint(float, float)` (0x5327F0)
@@ -126,82 +135,34 @@ orig! {
     pub fn entity_vset_model_index_no_create(e: GPtr<u8>, m: u32) = thiscall vslot 0x18 => unported;
     /// `CEntity::CreateRwObject` (vtable slot 0x1C)
     pub fn entity_vcreate_rw_object(e: GPtr<u8>) = thiscall vslot 0x1C => unported;
-    /// `CGlass::IsObjectGlass(CEntity*)` (0x46A760)
-    pub fn is_object_glass(e: GPtr<u8>) -> u8 = cdecl 0x46A760 => unported;
     /// `CTrafficLights::IsMITrafficLight(int32)` (0x49D5A0)
     pub fn is_mi_traffic_light(m: i32) -> u8 = cdecl 0x49D5A0 => unported;
     /// `CBaseModelInfo::AsAtomicModelInfoPtr` (vtable slot 4)
     pub fn model_info_as_atomic(mi: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x4 => unported;
     /// `CTagManager::AddTag(CEntity*)` (0x49CC90)
     pub fn tag_manager_add_tag(e: GPtr<u8>) = cdecl 0x49CC90 => unported;
-    /// `operator delete` / CRT `free` (0x8214BD)
-    pub fn crt_free(p: GPtr<u8>) = cdecl 0x8214BD => unported;
     /// `eh vector destructor iterator(void*, uint32 size, int32 count, void (__thiscall*)(void*))` (0x821E02, stdcall)
     pub fn eh_vector_destructor_iterator(p: GPtr<u8>, size: u32, count: i32, dtor: u32) = stdcall 0x821E02 => unported;
-    /// `RpClumpForAllAtomics(RpClump*, cb, void*)` (0x749B70)
-    pub fn rp_clump_for_all_atomics(c: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> = cdecl 0x749B70 => unported;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*)` (0x54F1B0)
-    pub fn simple_transform_update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => unported;
     /// `CEntity::GetBoundRect()` (vtable slot 0x24, hidden return pointer)
     pub fn entity_get_bound_rect(e: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x24 => unported;
     /// `CEntity::Add(const CRect&)` (vtable slot 4)
     pub fn entity_add_rect(e: GPtr<u8>, r: GPtr<u8>) = thiscall vslot 0x4 => unported;
-    /// `CPtrListSingleLink::Flush()` (0x552400)
-    pub fn single_link_flush(l: GPtr<u8>) = thiscall 0x552400 => unported;
-    /// `CPtrListDoubleLink::Flush()` (0x552470)
-    pub fn double_link_flush(l: GPtr<u8>) = thiscall 0x552470 => unported;
-    /// `CEntity::~CEntity` body (0x535E90)
-    pub fn entity_destructor(e: GPtr<u8>) = thiscall 0x535E90 => unported;
     /// `CMatrixLinkList::Init(int32)` (0x54F0D0)
     pub fn matrix_link_list_init(l: GPtr<u8>, n: i32) = thiscall 0x54F0D0 => unported;
     /// `CMatrixLinkList::AddToList1()` (0x54E9D0)
     pub fn matrix_link_list_add_to_list1(l: GPtr<u8>) -> GPtr<u8> = thiscall 0x54E9D0 => crate::world::entity::matrix_link_list_add_to_list1_port;
-    /// `operator*(const CMatrix&, const CVector&)` (0x59C890, cdecl, returns `out`)
-    pub fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
-    /// `CPointLights::RemoveLightsAffectingObject()` (0x6FFFE0)
-    pub fn remove_lights_affecting_object() = cdecl 0x6FFFE0 => unported;
-    /// `Light::SetAmbientColours()` (0x735D30)
-    pub fn set_ambient_colours() = cdecl 0x735D30 => unported;
-    /// `Light::DeActivateDirectional()` (0x735C70)
-    pub fn deactivate_directional() = cdecl 0x735C70 => unported;
-    /// `Light::ActivateDirectional()` (0x735C80)
-    pub fn activate_directional() = cdecl 0x735C80 => unported;
     /// `CPointLights::GenerateLightsAffectingObject(const CVector*, float*, CEntity*)` (0x6FFBB0, ST0)
     pub fn generate_lights_affecting_object(pos: GPtr<u8>, out: GPtr<u8>, e: GPtr<u8>) -> f64 = cdecl 0x6FFBB0 => unported;
     /// `Light::SetLightColoursForPedsCarsAndObjects(float)` (0x735D90)
     pub fn set_light_colours_for_peds_cars_and_objects(l: f32) = cdecl 0x735D90 => unported;
-    /// `CPtrNodeSingleLink::operator new` (0x552380)
-    pub fn single_node_new(size: u32) -> GPtr<u8> = cdecl 0x552380 => unported;
-    /// `CPtrNodeDoubleLink::operator new` (0x5523C0)
-    pub fn double_node_new(size: u32) -> GPtr<u8> = cdecl 0x5523C0 => unported;
-    /// `CPtrNodeDoubleLink::operator delete` (0x5523D0)
-    pub fn double_node_delete(p: GPtr<u8>) = cdecl 0x5523D0 => unported;
-    /// `CEntity::GetIsOnScreen()` (0x534540)
-    pub fn get_is_on_screen(e: GPtr<u8>) -> u8 = thiscall 0x534540 => unported;
-    /// `RpGeometryForAllMaterials(RpGeometry*, cb, void*)` (0x74C790)
-    pub fn rp_geometry_for_all_materials(g: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> = cdecl 0x74C790 => unported;
     /// `CGlass::AskForObjectToBeRenderedInGlass(CEntity*)` (0x71ACD0)
     pub fn ask_for_object_to_be_rendered_in_glass(e: GPtr<u8>) = cdecl 0x71ACD0 => unported;
-    /// `CStreaming::RemoveModel(int32)` (0x4089A0)
-    pub fn streaming_remove_model(i: i32) = cdecl 0x4089A0 => unported;
     /// `CEntity::DeleteRwObject` (vtable slot 0x20)
     pub fn entity_delete_rw_object(e: GPtr<u8>) = thiscall vslot 0x20 => unported;
     /// `CMatrix::SetRotateZOnly(float)` (0x59B020)
     pub fn matrix_set_rotate_z_only(m: GPtr<u8>, h: f32) = thiscall 0x59B020 => unported;
-    /// `CMatrix::SetRotate(float, float, float)` (0x59B120)
-    pub fn matrix_set_rotate(m: GPtr<u8>, ax: f32, ay: f32, az: f32) = thiscall 0x59B120 => unported;
-    /// `RwFrameUpdateObjects(RwFrame*)` (0x7F0910)
-    pub fn rw_frame_update_objects(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0910 => unported;
-    /// `CEscalator::SwitchOff` (0x717860)
-    pub fn escalator_switch_off(e: GPtr<u8>) = thiscall 0x717860 => crate::world::escalators::switch_off;
     /// `CBuildingPool::New` (0x403FA0, thiscall on the pool)
     pub fn building_pool_new(pool: GPtr<u8>) -> GPtr<u8> = thiscall 0x403FA0 => unported;
-    /// `CBaseModelInfo::Get2dEffect(int32)` (0x4C4C70)
-    pub fn model_info_get_2d_effect(mi: GPtr<u8>, i: i32) -> GPtr<u8> = thiscall 0x4C4C70 => unported;
-    /// `GetPedAttractorManager()` (0x5EE190)
-    pub fn get_ped_attractor_manager() -> GPtr<u8> = cdecl 0x5EE190 => unported;
-    /// `CPedAttractorManager::HasEmptySlot(const C2dEffect*, const CEntity*)` (0x5EBB00)
-    pub fn attractor_has_empty_slot(m: GPtr<u8>, e: GPtr<u8>, ent: GPtr<u8>) -> u8 = thiscall 0x5EBB00 => unported;
 }
 
 pub use crate::world::common::entity_pos as pos_ptr;

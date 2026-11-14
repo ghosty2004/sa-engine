@@ -26,11 +26,10 @@ pub const GLOBALS: &[GlobalDesc] = &[];
 const MENU_NUMBER: usize = 0xBA82D8;
 const MENU_IN_USE: usize = 0xBA82E0;
 
+pub use sa_world::bindings::switch_off_menu_call;
 orig! {
     /// `operator new(uint32)` (0x82119A)
     pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
-    /// `CMenuSystem::SwitchOffMenu(uint8)` (0x580750)
-    pub fn switch_off_menu_call(menu: u32) = cdecl 0x580750 => unported;
     /// `CMenuSystem::InputStandardMenu(uint8)` (0x580800)
     pub fn input_standard_menu(menu: u32) = cdecl 0x580800 => input_standard_menu_port;
     /// `CMenuSystem::InputGridMenu(uint8)` (0x580BD0)
@@ -371,16 +370,10 @@ pub fn process(menu: u32) {
     }
 }
 
-orig! {
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    pub fn get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CPad::GetAnaloguePadUp()` (0x540950, AL)
-    pub fn pad_analogue_up(pad: GPtr<u8>) -> u8 = thiscall 0x540950 => unported;
-    /// `CPad::GetAnaloguePadDown()` (0x540980, AL)
-    pub fn pad_analogue_down(pad: GPtr<u8>) -> u8 = thiscall 0x540980 => unported;
-    /// `CAudioEngine::ReportFrontendAudioEvent(eAudioEvents, float volume, float speed)` (0x506EA0)
-    pub fn report_frontend_audio_event(this: GPtr<u8>, event: u32, volume: u32, speed: u32) = thiscall 0x506EA0 => unported;
-}
+pub use crate::bindings::analogue_pad_down as pad_analogue_down;
+pub use crate::bindings::analogue_pad_up as pad_analogue_up;
+pub use sa_core::bindings::get_pad;
+pub use sa_world::bindings::audio_report_frontend_event as report_frontend_audio_event;
 
 /// `AudioEngine`
 const AUDIO_ENGINE: usize = 0xB6BC90;

@@ -7,19 +7,16 @@ use sa_core::{hook, orig};
 
 use crate::common::{g, p8, rd, rw_free, rw_malloc, rw_memory_alloc, rw_memory_free, wr};
 
+use crate::bindings::read_int32;
+use crate::bindings::read_real;
+use crate::bindings::skin_deinitialize;
 orig! {
-    /// `RwStreamReadInt32(stream, buf, size)` (0x7ED540)
-    fn read_int32(s: GPtr<u8>, p: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x7ED540 => crate::stream::rw_stream_read_int32;
-    /// `RwStreamReadReal(stream, buf, size)` (0x7ED4F0)
-    fn read_real(s: GPtr<u8>, p: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x7ED4F0 => crate::stream::rw_stream_read_real;
     /// `RwStreamRead(stream, buf, len)` (0x7EC9D0)
     fn stream_read(s: GPtr<u8>, buf: GPtr<u8>, len: u32) -> u32 = cdecl 0x7EC9D0 => crate::stream::rw_stream_read;
     /// `RwStreamSkip(stream, offset)` (0x7ECD00)
     fn stream_skip(s: GPtr<u8>, offset: u32) -> GPtr<u8> = cdecl 0x7ECD00 => crate::stream::rw_stream_skip;
     /// `_rpSkinGeometryNativeRead(stream, geometry)` (0x7C88B0)
     fn geometry_native_read(s: GPtr<u8>, geom: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C88B0 => unported;
-    /// `_rpSkinDeinitialize(geometry)` (0x7C8820)
-    fn skin_deinitialize(geom: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C8820 => crate::skin::rp_skin_deinitialize;
     /// `_rpSkinInitialize(geometry)` (0x7C8740)
     fn skin_initialize(geom: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C8740 => crate::skin::rp_skin_initialize;
     /// `_rpSkinGetBonesUsed(skin, indices, weights, list, count, numVertices)` (0x7C70C0)

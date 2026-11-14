@@ -13,9 +13,8 @@ use super::forces::{apply_turn_force_call, get_speed_call};
 use super::shared::*;
 use crate::world::common::x;
 
+use sa_core::bindings::matrix_assign;
 orig! {
-    /// `CMatrix::operator=(const CMatrix&)` (0x59BBC0, thiscall)
-    fn matrix_assign(m: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = thiscall 0x59BBC0 => unported;
     /// `cBuoyancy::FindWaterLevelNorm(const CVector&, CVector*, tWaterLevel*, CVector*)` (0x6C28C0)
     fn find_water_level_norm_call(b: GPtr<u8>, initial: GPtr<u8>, offset: GPtr<u8>, state: GPtr<u32>, normal: GPtr<u8>) = thiscall 0x6C28C0 => super::buoyancy::find_water_level_norm;
 }

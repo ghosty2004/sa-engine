@@ -20,13 +20,11 @@ const SCENE_CAMERA: usize = 0xC1703C;
 /// `g_fx` (0xA9AE00).
 const FX: usize = 0xA9AE00;
 
+pub use sa_core::bindings::rw_raster_create;
+pub use sa_core::bindings::rw_raster_destroy;
 orig! {
     /// `Fx_c::GetFxQuality()` (0x49EA50)
     pub fn get_fx_quality(this: GPtr<u8>) -> u32 = thiscall 0x49EA50 => crate::fx::fx_get_fx_quality;
-    /// `RwRasterCreate(int32 w, int32 h, int32 depth, int32 flags)` (0x7FB230)
-    pub fn rw_raster_create(w: i32, h: i32, depth: i32, flags: i32) -> GPtr<u8> = cdecl 0x7FB230 => unported;
-    /// `RwRasterDestroy(RwRaster*)` (0x7FB020)
-    pub fn rw_raster_destroy(r: GPtr<u8>) -> i32 = cdecl 0x7FB020 => unported;
 }
 
 /// `CMirrors::CreateBuffer()` (0x7230A0): once (`pBuffer` null), with the frame buffer's depth

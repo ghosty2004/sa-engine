@@ -12,13 +12,11 @@ use sa_core::{hook, orig};
 
 use crate::common::{k, rd, wr};
 
+use sa_core::bindings::vector_normalise;
+use sa_world::bindings::find_player_centre_of_world;
 orig! {
-    /// `CWorld::FindPlayerCentreOfWorld(int32)` (0x56E250): a pointer to the position
-    fn find_player_centre_of_world(id: i32) -> GPtr<f32> = cdecl 0x56E250 => unported;
     /// `CWorld::FindPlayerCoors(CVector* out, int32)` (0x56E010): returns `out`
     fn find_player_coors(out: GPtr<f32>, id: i32) -> GPtr<f32> = cdecl 0x56E010 => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
 }
 
 const CHECKPOINTS: usize = 0xC7_F158;

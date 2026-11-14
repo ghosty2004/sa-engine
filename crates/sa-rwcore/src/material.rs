@@ -41,34 +41,24 @@ const RIGHTS_EXTRA_DATA: usize = 0xC924E8;
 const E_RW_BADVERSION: u32 = 0x8000_0004;
 const E_RW_NOMEM: u32 = 0x8000_0013;
 
+use crate::bindings::free_list_destroy as rw_free_list_destroy;
+use crate::bindings::plugin_add;
+use crate::bindings::plugin_add_stream;
+use crate::bindings::plugin_deinit_object;
+use crate::bindings::plugin_init_object;
+use crate::bindings::plugin_read_data_chunks;
+use crate::bindings::read_int32 as rw_stream_read_int32_call;
+use crate::bindings::registry_copy_object as plugin_copy_object;
+use crate::bindings::rw_stream_find_chunk_call;
+use crate::bindings::rw_texture_stream_read_call;
 orig! {
-    /// `RwFreeListDestroy(fl)` (0x801B80)
-    fn rw_free_list_destroy(fl: GPtr<u8>) -> u32 = cdecl 0x801B80 => unported;
-    /// `_rwPluginRegistryInitObject(reg, obj)` (0x8086E0)
-    fn plugin_init_object(reg: GPtr<u8>, obj: GPtr<u8>) -> GPtr<u8> = cdecl 0x8086E0 => crate::plugin::registry_init_object;
-    /// `_rwPluginRegistryDeInitObject(reg, obj)` (0x808740)
-    fn plugin_deinit_object(reg: GPtr<u8>, obj: GPtr<u8>) -> GPtr<u8> = cdecl 0x808740 => crate::plugin::registry_deinit_object;
-    /// `_rwPluginRegistryCopyObject(reg, dst, src)` (0x808770)
-    fn plugin_copy_object(reg: GPtr<u8>, dst: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = cdecl 0x808770 => crate::plugin::registry_copy_object;
-    /// `_rwPluginRegistryAddPlugin(reg, size, id, ctor, dtor, copy)` (0x8084A0)
-    fn plugin_add(reg: GPtr<u8>, size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x8084A0 => crate::plugin::registry_add_plugin;
-    /// `_rwPluginRegistryAddPluginStream(reg, id, read, write, getSize)` (0x8088E0)
-    fn plugin_add_stream(reg: GPtr<u8>, id: u32, read: u32, write: u32, get_size: u32) -> i32 = cdecl 0x8088E0 => crate::plugin::registry_add_plugin_stream;
-    /// `_rwPluginRegistryReadDataChunks(reg, stream, obj)` (0x808980)
-    fn plugin_read_data_chunks(reg: GPtr<u8>, s: GPtr<u8>, obj: GPtr<u8>) -> GPtr<u8> = cdecl 0x808980 => crate::plugin::registry_read_data_chunks;
     /// `_rwPluginRegistryInvokeRights(reg, id, obj, extra)` (0x808AB0)
     fn plugin_invoke_rights(reg: GPtr<u8>, id: u32, obj: GPtr<u8>, extra: u32) -> GPtr<u8> = cdecl 0x808AB0 => crate::plugin::registry_invoke_rights;
 
     /// `RwTextureDestroy(texture)` (0x7F3820)
     fn rw_texture_destroy_call(t: GPtr<u8>) -> u32 = cdecl 0x7F3820 => crate::texture::rw_texture_destroy;
-    /// `RwTextureStreamRead(stream)` (0x8046E0)
-    fn rw_texture_stream_read_call(s: GPtr<u8>) -> GPtr<u8> = cdecl 0x8046E0 => crate::texture::rw_texture_stream_read;
-    /// `RwStreamFindChunk(stream, type, length, version)` (0x7ED2D0)
-    fn rw_stream_find_chunk_call(s: GPtr<u8>, ty: u32, len: GPtr<u32>, ver: GPtr<u32>) -> u32 = cdecl 0x7ED2D0 => crate::stream::rw_stream_find_chunk;
     /// `RwStreamRead(stream, buf, len)` (0x7EC9D0)
     fn rw_stream_read_call(s: GPtr<u8>, buf: GPtr<u8>, len: u32) -> u32 = cdecl 0x7EC9D0 => crate::stream::rw_stream_read;
-    /// `RwStreamReadInt32(stream, p, numBytes)` (0x7ED540)
-    fn rw_stream_read_int32_call(s: GPtr<u8>, p: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x7ED540 => crate::stream::rw_stream_read_int32;
     /// `RpMaterialDestroy(material)` (0x74DA20)
     fn rp_material_destroy_call(m: GPtr<u8>) -> u32 = cdecl 0x74DA20 => rp_material_destroy;
     /// `RpMaterialStreamRead(stream)` (0x74DD30)

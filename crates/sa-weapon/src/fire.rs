@@ -53,6 +53,13 @@ const K_858C58: u32 = 0x3C23_D70A;
 /// 0x858B4C: 0.005
 const K_858B4C: u32 = 0x3BA3_D70A;
 
+pub use sa_core::bindings::destroy_fx_system;
+pub use sa_stream::bindings::ped_is_player;
+pub use sa_world::bindings::fx_prt_mult_ctor as fx_prt_mult;
+pub use sa_world::bindings::get_engine_status;
+pub use sa_world::bindings::ped_is_ped_in_control;
+pub use sa_world::bindings::report_crime;
+pub use sa_world::bindings::set_engine_status;
 orig! {
     /// `CFire::Extinguish()` (0x5393F0)
     pub fn extinguish_call(fire: GPtr<u8>) = thiscall 0x5393F0 => extinguish;
@@ -68,26 +75,12 @@ orig! {
     pub fn start_fire_no_target_call(this: GPtr<u8>, x: f32, y: f32, z: f32, size: f32, unk: u8, creator: GPtr<u8>, time: u32, gens: i8, unk2: u8) -> GPtr<u8> = thiscall 0x539F00 => start_fire_no_target;
     /// `FxManager_c::CreateFxSystem(const char*, CVector*, RwMatrix*, bool)` (0x4A9BE0, thiscall)
     pub fn create_fx_system(man: GPtr<u8>, name: GPtr<u8>, pos: GPtr<u8>, m: GPtr<u8>, flag: u8) -> GPtr<u8> = thiscall 0x4A9BE0 => unported;
-    /// `FxManager_c::DestroyFxSystem(FxSystem_c*)` (0x4A9810, thiscall)
-    pub fn destroy_fx_system(man: GPtr<u8>, fx: GPtr<u8>) = thiscall 0x4A9810 => unported;
     /// `CWaterLevel::GetWaterLevelNoWaves(float, float, float, float*, float*, float*)` (0x6E8580)
     pub fn get_water_level_no_waves(x: f32, y: f32, z: f32, out: GPtr<f32>, a: GPtr<f32>, b: GPtr<f32>) -> u8 = cdecl 0x6E8580 => unported;
-    /// `CDamageManager::GetEngineStatus()` (0x6C22C0, thiscall)
-    pub fn get_engine_status(dm: GPtr<u8>) -> u32 = thiscall 0x6C22C0 => unported;
-    /// `CDamageManager::SetEngineStatus(uint32)` (0x6C22A0, thiscall)
-    pub fn set_engine_status(dm: GPtr<u8>, s: u32) = thiscall 0x6C22A0 => unported;
-    /// `CPed::IsPedInControl()` (0x5E3960, thiscall)
-    pub fn ped_is_ped_in_control(ped: GPtr<u8>) -> u8 = thiscall 0x5E3960 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0, thiscall)
-    pub fn ped_is_player(ped: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
     /// `FindPlayerPed(int32)` (0x56E210)
     pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
-    /// `CCrime::ReportCrime(eCrimeType, CEntity* victim, CPed* commitedBy)` (0x532010)
-    pub fn report_crime(ty: i32, victim: GPtr<u8>, by: GPtr<u8>) = cdecl 0x532010 => unported;
     /// `CTheScripts::GetNewUniqueScriptThingIndex(int32 index, uint8 type)` (0x483720)
     pub fn get_new_unique_script_thing_index(i: i32, ty: u8) -> i32 = cdecl 0x483720 => unported;
-    /// `FxPrtMult_c::FxPrtMult_c(float r, g, b, a, size, spin, life)` (0x4AB290, thiscall)
-    pub fn fx_prt_mult(this: GPtr<u8>, r: f32, g: f32, b: f32, a: f32, size: f32, spin: f32, life: f32) -> GPtr<u8> = thiscall 0x4AB290 => unported;
     /// `FxSystem_c::AddParticle(CVector*, CVector*, float, FxPrtMult_c*, float, float, float, uint8)` (0x4AA440)
     pub fn fx_add_particle(fx: GPtr<u8>, pos: GPtr<u8>, vel: GPtr<u8>, t: f32, mult: GPtr<u8>, a: f32, b: f32, c: f32, d: u8) = thiscall 0x4AA440 => unported;
     /// `CWorld::ProcessVerticalLine(const CVector&, float, CColPoint&, CEntity*&, bool, bool, bool, bool, bool, bool, CStoredCollPoly*)` (0x5674E0)
@@ -887,17 +880,14 @@ pub fn start_fire_target(this: GPtr<u8>, target: GPtr<u8>, creator: GPtr<u8>, _s
 
 // ---- CFireManager::Update (PORT-WEAPON-2) --------------------------------------------------------
 
+pub use sa_core::bindings::vector_normalise;
+pub use sa_world::bindings::crt_ceil;
+pub use sa_world::bindings::la_riots_active_here;
 orig! {
     /// `CFire::ProcessFire()` (0x53A570, thiscall)
     pub fn process_fire_call(fire: GPtr<u8>) = thiscall 0x53A570 => process_fire;
-    /// `CGameLogic::LaRiotsActiveHere()` (0x441C10)
-    pub fn la_riots_active_here() -> u8 = cdecl 0x441C10 => unported;
     /// `CWorld::FindGroundZFor3DCoord(CVector, bool*, CEntity**)` (0x5696C0, ST0)
     pub fn find_ground_z_for_3d_coord(x: f32, y: f32, z: f32, hit: GPtr<u8>, e: GPtr<GPtr<u8>>) -> f64 = cdecl 0x5696C0 => unported;
-    /// `CVector::Normalise()` (0x59C910, thiscall)
-    pub fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
-    /// CRT `ceil(double)` (0x823820, ST0)
-    pub fn crt_ceil(v: f64) -> f64 = cdecl 0x823820 => unported;
     /// `CShadows::StoreStaticShadow(uint32 id, uint8 type, RwTexture*, const CVector*, float frontX, float frontY,
     /// float sideX, float sideY, int16 intensity, uint8 r, g, b, float zDistance, float scale, float drawDistance,
     /// bool temporary, float upDistance)` (0x70BA00; every argument a pushed dword)
@@ -1101,21 +1091,20 @@ fn riot(this: GPtr<u8>) {
 
 // ---- CFire::ProcessFire (PORT-WEAPON-2) ------------------------------------------------------------
 
+pub use sa_core::bindings::find_player_vehicle;
+pub use sa_core::bindings::matrix_mul_vec;
+pub use sa_core::bindings::ped_is_alive;
+pub use sa_core::bindings::vector_magnitude;
+pub use sa_world::bindings::fx_set_const_time as pf_fx_set_const_time;
+pub use sa_world::bindings::fx_set_offset_pos;
+pub use sa_world::bindings::placeable_get_matrix;
+pub use sa_world::bindings::vector_add as pf_vector_add;
+pub use sa_world::bindings::vector_scale as pf_vector_scale;
+pub use sa_world::bindings::vector_sub as pf_vector_sub;
+pub use sa_world::bindings::vehicle_inflict_damage as pf_vehicle_inflict_damage;
 orig! {
     /// `CFireManager::StartFire(CEntity* target, CEntity* creator, float, uint8, uint32 time, int8 gens)` (0x53A050)
     pub fn start_fire_target_call(man: GPtr<u8>, target: GPtr<u8>, creator: GPtr<u8>, size: f32, unk: u8, time: u32, gens: i8) -> GPtr<u8> = thiscall 0x53A050 => start_fire_target;
-    /// `CPed::IsAlive()` (0x5E0170, thiscall)
-    pub fn ped_is_alive(ped: GPtr<u8>) -> u8 = thiscall 0x5E0170 => unported;
-    /// `CVehicle::InflictDamage(CEntity*, eWeaponType, float, CVector)` (0x6D7C90, thiscall)
-    pub fn pf_vehicle_inflict_damage(veh: GPtr<u8>, by: GPtr<u8>, ty: i32, dmg: f32, x: f32, y: f32, z: f32) = thiscall 0x6D7C90 => unported;
-    /// `CPlaceable::GetMatrix()` (0x411990, thiscall)
-    pub fn placeable_get_matrix(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x411990 => unported;
-    /// `operator*(CVector* out, const CMatrix&, const CVector&)` (0x59C890, returns out)
-    pub fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
-    /// `FxSystem_c::SetOffsetPos(CVector*)` (0x4AA660, thiscall)
-    pub fn fx_set_offset_pos(fx: GPtr<u8>, v: GPtr<u8>) = thiscall 0x4AA660 => unported;
-    /// `FindPlayerVehicle(int32, bool)` (0x56E0D0)
-    pub fn find_player_vehicle(id: i32, b: u32) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
     /// `CPlayerPed::DoStuffToGoOnFire()` (0x60A020, thiscall)
     pub fn do_stuff_to_go_on_fire(ped: GPtr<u8>) = thiscall 0x60A020 => unported;
     /// `CVehicle::FindTyreNearestPoint(float x, float y)` (0x6D7BC0, thiscall; EAX)
@@ -1126,16 +1115,6 @@ orig! {
     pub fn object_fire_damage(obj: GPtr<u8>, dmg: f32, by: GPtr<u8>) = thiscall 0x5A1580 => unported;
     /// `CCreepingFire::TryToStartFireAtCoors(CVector, int8 gens, bool, bool script, float zDist)` (0x53A450; dwords as pushed)
     pub fn try_to_start_fire_at_coors_call(x: f32, y: f32, z: f32, gens: u32, a: u32, script: u32, zd: f32) -> u8 = cdecl 0x53A450 => unported;
-    /// `VectorSub(CVector* out, const CVector*, const CVector*)` (0x40FE60)
-    pub fn pf_vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => unported;
-    /// `operator*(CVector* out, float, const CVector*)` (0x40FE90)
-    pub fn pf_vector_scale(out: GPtr<u8>, k: f32, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE90 => unported;
-    /// `operator+(CVector* out, const CVector*, const CVector*)` (0x40FE30)
-    pub fn pf_vector_add(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE30 => unported;
-    /// `CVector::Magnitude()` (0x4082C0, thiscall, ST0)
-    pub fn vector_magnitude(v: GPtr<u8>) -> f64 = thiscall 0x4082C0 => unported;
-    /// `FxSystem_c::SetConstTime(bool, float)` (0x4AA6C0, thiscall)
-    pub fn pf_fx_set_const_time(fx: GPtr<u8>, b: u32, t: f32) = thiscall 0x4AA6C0 => unported;
     /// `CPointLights::AddLight(type, CVector pos, CVector dir, radius, r, g, b, fog, shadows, attachedTo)` (0x7000E0)
     pub fn point_lights_add_light(ty: u32, px: f32, py: f32, pz: f32, dx: f32, dy: f32, dz: f32, radius: f32, r: f32, g: f32, b: f32, fog: u32, shadows: u32, attached: u32) = cdecl 0x7000E0 => unported;
 }

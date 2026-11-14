@@ -24,47 +24,41 @@ use sa_math::x87::X87;
 
 use super::common::{ftol32, g, rd, wr, x};
 
+use crate::bindings::damage_calc_compute_damage_response;
+use crate::bindings::damage_calc_dtor;
+use crate::bindings::entity_get_col_model as get_col_model;
+use crate::bindings::event_damage_affects_ped;
+use crate::bindings::event_damage_ctor;
+use crate::bindings::event_damage_dtor;
+use crate::bindings::event_group_add;
+use crate::bindings::get_local_direction;
+use crate::bindings::kob_ctor;
+use crate::bindings::kob_dtor;
+use crate::bindings::max_f;
+use crate::bindings::min_f;
+use crate::bindings::multiply3x3 as multiply3x3_mv;
+use crate::bindings::multiply3x3_vm;
+use crate::bindings::object_damage;
+use crate::bindings::physical_add_to_moving_list as add_to_moving_list;
+use crate::bindings::report_crime;
+use crate::bindings::switch_vehicle_to_real_physics;
+use crate::bindings::try_to_explode;
+use crate::bindings::vec_mul_assign;
+use crate::bindings::vehicle_inflict_damage;
+use sa_core::bindings::col_box_set;
+use sa_core::bindings::find_player_ped;
+use sa_stream::bindings::is_object_glass;
 orig! {
-    /// `CObject::TryToExplode()` (0x59F2D0)
-    fn try_to_explode(o: GPtr<u8>) -> u8 = thiscall 0x59F2D0 => unported;
-    /// `CGlass::IsObjectGlass(CEntity*)` (0x46A760)
-    fn is_object_glass(e: GPtr<u8>) -> u8 = cdecl 0x46A760 => unported;
     /// `CGlass::WindowRespondsToExplosion(CEntity*, CVector point)` (0x71C1A0)
     fn window_responds_to_explosion(e: GPtr<u8>, point: CVector) = cdecl 0x71C1A0 => unported;
     /// `CEntity::SetIsStatic(bool)` (vtable +0x10)
     fn v_set_is_static(e: GPtr<u8>, s: u32) = thiscall vslot 0x10 => unported;
-    /// `CPhysical::AddToMovingList()` (0x542800)
-    fn add_to_moving_list(e: GPtr<u8>) = thiscall 0x542800 => unported;
     /// `Fx_c::TriggerWaterHydrant(CVector&)` (0x4A0D70) on `g_fx` (0xA9AE00)
     fn trigger_water_hydrant(fx: GPtr<u8>, pos: GPtr<u8>) = thiscall 0x4A0D70 => unported;
-    /// `FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CObject::ObjectDamage(float, CVector*, CVector*, CEntity*, eWeaponType)` (0x5A0D90)
-    fn object_damage(o: GPtr<u8>, dmg: f32, origin: GPtr<u8>, dir: GPtr<u8>, damager: GPtr<u8>, weapon: u32) = thiscall 0x5A0D90 => unported;
-    /// `CEventKnockOffBike::CEventKnockOffBike(CVehicle*, CVector*, CVector*, float, float, uint8, uint8, int32, CPed*, bool, bool)` (0x4AFCF0)
-    fn kob_ctor(e: GPtr<u8>, veh: GPtr<u8>, speed: GPtr<u8>, impact: GPtr<u8>, dmg: u32, a5: u32, kind: u32, dir: u32, time: u32, ped: u32, driver: u32, force: u32) -> GPtr<u8> = thiscall 0x4AFCF0 => unported;
-    /// `CEventKnockOffBike::~CEventKnockOffBike()` (0x4AFE70)
-    fn kob_dtor(e: GPtr<u8>) = thiscall 0x4AFE70 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420)
-    fn event_group_add(grp: GPtr<u8>, ev: GPtr<u8>, valid: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
-    /// `CPed::GetLocalDirection(const CVector2D&)` (0x5DEF60)
-    fn get_local_direction(ped: GPtr<u8>, v: GPtr<u8>) -> i32 = thiscall 0x5DEF60 => unported;
     /// `CWeapon::GenerateDamageEvent(CPed*, CEntity*, eWeaponType, int32, ePedPieceTypes, int32)` (0x73A530)
     fn generate_damage_event(victim: GPtr<u8>, creator: GPtr<u8>, ty: i32, damage: i32, piece: i32, dir: u32) -> u8 = cdecl 0x73A530 => unported;
-    /// `CCarCtrl::SwitchVehicleToRealPhysics(CVehicle*)` (0x423FC0)
-    fn switch_vehicle_to_real_physics(veh: GPtr<u8>) = cdecl 0x423FC0 => unported;
-    /// `CVehicle::InflictDamage(CEntity*, eWeaponType, float, CVector)` (0x6D7C90)
-    fn vehicle_inflict_damage(veh: GPtr<u8>, by: GPtr<u8>, ty: i32, dmg: f32, x: f32, y: f32, z: f32) = thiscall 0x6D7C90 => unported;
-    /// `Multiply3x3(CVector* out, const CVector&, const CMatrix&)` (0x59C810): `v * M` (transposed)
-    fn multiply3x3_vm(out: GPtr<u8>, v: GPtr<u8>, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C810 => unported;
-    /// `Multiply3x3(CVector* out, const CMatrix&, const CVector&)` (0x59C790): `M * v`
-    fn multiply3x3_mv(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C790 => unported;
     /// `CColSphere::Set(float radius, const CVector& centre, uint8 material, uint8 flags, uint8 lighting)` (0x40FD10)
     fn col_sphere_set(s: GPtr<u8>, radius: f32, center: GPtr<u8>, mat: u32, flags: u32, light: u32) = thiscall 0x40FD10 => unported;
-    /// `CColBox::Set(const CVector& min, const CVector& max, uint8 material, uint8 flags, uint8 lighting)` (0x40EE70)
-    fn col_box_set(b: GPtr<u8>, min: GPtr<u8>, max: GPtr<u8>, mat: u32, flags: u32, light: u32) = thiscall 0x40EE70 => unported;
-    /// `CEntity::GetColModel()` (0x535300)
-    fn get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => unported;
     /// `CCollision::ProcessSphereBox(const CColSphere&, const CColBox&, CColPoint&, float& maxTouchDist)` (0x412130)
     fn process_sphere_box(sp: GPtr<u8>, bx: GPtr<u8>, cp: GPtr<u8>, max_dist: GPtr<u8>) -> u8 = cdecl 0x412130 => unported;
     /// `CPhysical::GetSpeed(CVector point)` (0x542CE0): the result through the hidden pointer
@@ -79,24 +73,6 @@ orig! {
     fn v_vehicle_damage(v: GPtr<u8>, dmg: u32, comp: u32, e: GPtr<u8>, p: GPtr<u8>, d: GPtr<u8>, weapon: u32) = thiscall vslot 0xE0 => unported;
     /// `CPedDamageResponseCalculator::CPedDamageResponseCalculator(CEntity*, float, eWeaponType, ePedPieceTypes, bool)` (0x4AD3F0)
     fn damage_calc_ctor(c: GPtr<u8>, e: GPtr<u8>, dmg: f32, wt: u32, piece: u32, speak: u32) -> GPtr<u8> = thiscall 0x4AD3F0 => unported;
-    /// `CPedDamageResponseCalculator::~CPedDamageResponseCalculator()` (0x4AD420)
-    fn damage_calc_dtor(c: GPtr<u8>) = thiscall 0x4AD420 => unported;
-    /// `CEventDamage::CEventDamage(CEntity*, uint32, eWeaponType, ePedPieceTypes, uint8, bool, bool)` (0x4AD830)
-    fn event_damage_ctor(e: GPtr<u8>, src: GPtr<u8>, time: u32, wt: u32, piece: u32, dir: u32, a6: u32, a7: u32) -> GPtr<u8> = thiscall 0x4AD830 => unported;
-    /// `CEventDamage::~CEventDamage()` (0x4AD960)
-    fn event_damage_dtor(e: GPtr<u8>) = thiscall 0x4AD960 => unported;
-    /// `CEventDamage::AffectsPed(CPed*)` (0x4B35A0)
-    fn event_damage_affects_ped(e: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x4B35A0 => unported;
-    /// `CPedDamageResponseCalculator::ComputeDamageResponse(CPed*, CPedDamageResponse&, bool)` (0x4B5AC0)
-    fn damage_calc_compute_damage_response(c: GPtr<u8>, ped: GPtr<u8>, r: GPtr<u8>, speak: u32) = thiscall 0x4B5AC0 => unported;
-    /// `CCrime::ReportCrime(eCrimeType, CEntity*, CPed*)` (0x532010)
-    fn report_crime(ty: i32, victim: GPtr<u8>, offender: GPtr<u8>) = cdecl 0x532010 => unported;
-    /// `std::max<float>(const float&, const float&)` (0x420800, by value here), ST0
-    fn max_f(a: f32, b: f32) -> f64 = cdecl 0x420800 => unported;
-    /// `std::min<float>(const float&, const float&)` (0x404330, by value here), ST0
-    fn min_f(a: f32, b: f32) -> f64 = cdecl 0x404330 => unported;
-    /// `CVector::operator*=(float)` (0x40FEF0)
-    fn vec_mul_assign(v: GPtr<u8>, f: f32) = thiscall 0x40FEF0 => unported;
 }
 
 /// `MI_FENCE` / `MI_FENCE2` (0x8CD600 / 0x8CD604), `MI_FIRE_HYDRANT` (0x8CD594), `MI_ATM` (0x8CD710).

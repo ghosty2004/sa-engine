@@ -60,23 +60,20 @@ const AUDIO_PED_TYPE_NAMES: usize = 0x8C8108;
 /// +0xE bank u16, +0x10 start time, +0x18 flag); constructed by statics.rs, accessed by address here.
 const PED_SPEECH_SLOTS: usize = 0xB61C38;
 
+pub use crate::bindings::hw_is_sound_loaded;
+pub use crate::bindings::ped_speech_reset as speech_reset_call;
+pub use crate::bindings::speech_stop_current_speech;
+pub use crate::bindings::twin_loop_stop_sound_and_forget;
 orig! {
     /// `CAEPedAudioEntity::StopJetPackSound()` (0x4E1120)
     pub fn ped_stop_jet_pack_sound_call(this: GPtr<u8>) = thiscall 0x4E1120 => ped_stop_jet_pack_sound;
-    /// `CAETwinLoopSoundEntity::StopSoundAndForget()` (0x4F2960)
-    pub fn twin_loop_stop_sound_and_forget(this: GPtr<u8>) = thiscall 0x4F2960 => crate::entities::twin_loop_stop_sound_and_forget;
     /// `CAEWeaponAudioEntity::Terminate()` (0x503480)
     pub fn weapon_terminate(this: GPtr<u8>) = thiscall 0x503480 => crate::entities::weapon_terminate;
-    /// `CAEPedSpeechAudioEntity::Reset()` (0x4E37B0; not hookable, see `speech_reset`)
-    pub fn speech_reset_call() = cdecl 0x4E37B0 => unported;
     /// `CAEPedSpeechAudioEntity::StopCurrentSpeech()` (0x4E3FB0)
     /// `CAEPedSpeechAudioEntity::CAEPedSpeechAudioEntity()` (0x4E4F10)
     pub fn speech_constructor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4E4F10 => unported;
-    /// `CAEAudioHardware::IsSoundLoaded(uint16 bank, uint16 sfx, int16 slot)` (0x4D8EF0)
-    pub fn hw_is_sound_loaded(hw: GPtr<u8>, bank: u32, sfx: u32, slot: u32) -> u8 = thiscall 0x4D8EF0 => unported;
     /// Virtual slot 0xC of the speech slot's owner (`CAEPedSpeechAudioEntity::PlayLoadedSound`)
     pub fn vcall_speech_play_loaded_sound(this: GPtr<u8>) = thiscall vslot 0x0C => unported;
-    pub fn speech_stop_current_speech(this: GPtr<u8>) = thiscall 0x4E3FB0 => unported;
 }
 
 // ---- CAEPedAudioEntity ----------------------------------------------------------------------------
@@ -440,12 +437,8 @@ pub fn pedless_initialise(this: GPtr<u8>) {
     wr::<u8>(this, 0x90, 1);
 }
 
-orig! {
-    /// `CAETwinLoopSoundEntity::~CAETwinLoopSoundEntity()` (0x4F2B80)
-    fn twin_loop_dtor(this: GPtr<u8>) = thiscall 0x4F2B80 => crate::entities::twin_loop_destructor;
-    /// `CAESound::~CAESound()` (0x4EF660)
-    fn sound_dtor(this: GPtr<u8>) = thiscall 0x4EF660 => unported;
-}
+use crate::bindings::twin_destructor as twin_loop_dtor;
+use sa_world::bindings::sound_dtor;
 
 /// `CAEPedAudioEntity::~CAEPedAudioEntity()` (0x5DE920, thiscall; batch `mvpl-audio-1`): vtable 0x86C2A8, the
 /// twin-loop sound entity member (+0xA8) destructor, then the `CAEAudioEntity` part: vtable 0x859988 and the

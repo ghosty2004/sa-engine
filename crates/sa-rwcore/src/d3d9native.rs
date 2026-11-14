@@ -20,6 +20,15 @@ const CAPS_OFFSETS: usize = 0xC9BFD4;
 /// The entry destroy notify (`_rpD3D9...ResEntryDestroy`, 0x4C9990).
 const ENTRY_DESTROY: u32 = 0x4C_9990;
 
+use crate::bindings::create_vertex_buffer;
+use crate::bindings::create_vertex_declaration;
+use crate::bindings::dynamic_vertex_buffer_create;
+use crate::bindings::index_buffer_create;
+use crate::bindings::material_list_find_call as material_list_find_index;
+use crate::bindings::material_list_get_material_call as material_list_get;
+use crate::bindings::rw_stream_find_chunk_call as stream_find_chunk;
+use crate::bindings::stream_write_chunk_header;
+use sa_core::bindings::rw_error1 as rw_error;
 orig! {
     /// `IDirect3DVertexDeclaration9::GetDeclaration(elements, count)` (+0x10)
     fn decl_get_declaration(decl: GPtr<u8>, elements: GPtr<u8>, count: GPtr<u32>) -> i32 = stdcall vslot 0x10 => unported;
@@ -27,33 +36,14 @@ orig! {
     fn buffer_lock(b: GPtr<u8>, offset: u32, size: u32, data: GPtr<u32>, flags: u32) -> i32 = stdcall vslot 0x2C => unported;
     /// `IDirect3DIndexBuffer9 / IDirect3DVertexBuffer9::Unlock()` (+0x30)
     fn buffer_unlock(b: GPtr<u8>) -> i32 = stdcall vslot 0x30 => unported;
-
-    /// `RwStreamFindChunk(stream, type, lengthOut, versionOut)` (0x7ED2D0)
-    fn stream_find_chunk(s: GPtr<u8>, ty: u32, len: GPtr<u32>, ver: GPtr<u32>) -> u32 = cdecl 0x7ED2D0 => crate::stream::rw_stream_find_chunk;
     /// `RwStreamRead(stream, buffer, length)` (0x7EC9D0)
     fn stream_read(s: GPtr<u8>, buf: GPtr<u8>, len: u32) -> u32 = cdecl 0x7EC9D0 => crate::stream::rw_stream_read;
     /// `RwStreamWrite(stream, buffer, length)` (0x7ECB30)
     fn stream_write(s: GPtr<u8>, buf: GPtr<u8>, len: u32) -> GPtr<u8> = cdecl 0x7ECB30 => crate::stream::rw_stream_write;
-    /// `_rwStreamWriteVersionedChunkHeader(stream, type, size, version, build)` (0x7ED270)
-    fn stream_write_chunk_header(s: GPtr<u8>, ty: u32, size: u32, version: u32, build: u32) -> GPtr<u8> = cdecl 0x7ED270 => unported;
-    /// `_rpMaterialListFindMaterialIndex(list, material)` (0x74E420)
-    fn material_list_find_index(l: GPtr<u8>, m: GPtr<u8>) -> i32 = cdecl 0x74E420 => crate::material::material_list_find_material_index;
-    /// `_rpMaterialListGetMaterial(list, index)` (0x74E2B0)
-    fn material_list_get(l: GPtr<u8>, i: i32) -> GPtr<u8> = cdecl 0x74E2B0 => crate::material::material_list_get_material;
-    /// `RwD3D9CreateVertexDeclaration(elements, out)` (0x7FAA30)
-    fn create_vertex_declaration(elements: GPtr<u8>, out: GPtr<u32>) -> u32 = cdecl 0x7FAA30 => crate::d3d9dev::create_vertex_declaration;
-    /// `RwD3D9IndexBufferCreate(numIndices, out)` (0x4C9970)
-    fn index_buffer_create(num: u32, out: u32) -> u32 = cdecl 0x4C9970 => crate::d3d9vb::index_buffer_create;
-    /// `RwD3D9DynamicVertexBufferCreate(size, out)` (0x7F5A00)
-    fn dynamic_vertex_buffer_create(size: u32, out: GPtr<u32>) -> u32 = cdecl 0x7F5A00 => crate::d3d9vb::dynamic_vertex_buffer_create;
-    /// `RwD3D9CreateVertexBuffer(stride, size, vbOut, offsetOut)` (0x7F5500)
-    fn create_vertex_buffer(stride: u32, size: u32, vb: GPtr<u32>, offset: GPtr<u32>) -> u32 = cdecl 0x7F5500 => crate::d3d9vb::create_vertex_buffer;
     /// The resource entry destroy notify `(entry)` (0x4C9990)
     fn entry_destroy(e: GPtr<u8>) = cdecl 0x4C9990 => unported;
     /// `RpWorldSectorGetWorld(sector)` (0x74F4E0)
     fn world_sector_get_world(s: GPtr<u8>) -> GPtr<u8> = cdecl 0x74F4E0 => unported;
-    /// `_rwerror(code)` (0x8088D0)
-    fn rw_error(code: u32) -> u32 = cdecl 0x8088D0 => unported;
     /// `_rpD3D9NativeDataWorldSectorStreamRead(stream, sector)` (0x7641C0)
     fn native_data_world_sector_stream_read(s: GPtr<u8>, sector: GPtr<u8>) -> GPtr<u8> = cdecl 0x7641C0 => unported;
 }

@@ -34,6 +34,13 @@ const VERTEX_UV: u32 = 1;
 const ALL_OPAQUE: u32 = 2;
 const NO_CLIP: u32 = 4;
 
+use crate::bindings::dynamic_vertex_buffer_lock;
+use crate::bindings::flush_cache;
+use crate::bindings::get_current_texture;
+use crate::bindings::set_render_state;
+use crate::bindings::set_stream_source;
+use crate::bindings::set_transform_world;
+use crate::bindings::set_tss;
 orig! {
     fn dev_set_vertex_declaration(dev: GPtr<u8>, decl: u32) -> i32 = stdcall vslot 0x15C => unported;
     fn dev_set_vertex_shader(dev: GPtr<u8>, vs: u32) -> i32 = stdcall vslot 0x170 => unported;
@@ -48,22 +55,8 @@ orig! {
 
     /// `_rwD3D9RenderStateVertexAlphaEnable(enable)` (0x7FE0A0)
     fn vertex_alpha_enable(v: u32) -> u32 = cdecl 0x7FE0A0 => crate::d3d9state::rs_vertex_alpha_enable;
-    /// `RwD3D9SetTransformWorld(matrix)` (0x7FA520)
-    fn set_transform_world(m: GPtr<u8>) -> u32 = cdecl 0x7FA520 => crate::d3d9dev::set_transform_world;
-    /// `RwD3D9SetRenderState(state, value)` (0x7FC2D0)
-    fn set_render_state(state: u32, value: u32) -> u32 = cdecl 0x7FC2D0 => crate::d3d9state::set_render_state;
-    /// `RwD3D9GetCurrentTexture(stage)`-like (0x7FDE50)
-    fn get_current_texture(stage: u32) -> u32 = cdecl 0x7FDE50 => crate::d3d9state::get_current_texture;
-    /// `RwD3D9SetTextureStageState(stage, type, value)` (0x7FC340)
-    fn set_tss(stage: u32, ty: u32, value: u32) = cdecl 0x7FC340 => crate::d3d9state::set_texture_stage_state;
-    /// `RwD3D9DynamicVertexBufferLock(stride, numVertices, &vb, &data, &baseIndex)` (0x7F5B10)
-    fn dynamic_vertex_buffer_lock(stride: u32, n: u32, vb: GPtr<u32>, data: u32, base: GPtr<u32>) -> u32 = cdecl 0x7F5B10 => crate::d3d9vb::dynamic_vertex_buffer_lock;
     /// `RwD3D9DynamicVertexBufferUnlock(vb)` (0x7F5C90)
     fn dynamic_vertex_buffer_unlock(vb: GPtr<u8>) -> u32 = cdecl 0x7F5C90 => crate::d3d9vb::dynamic_vertex_buffer_unlock;
-    /// `RwD3D9SetStreamSource(stream, vb, offset, stride)` (0x7FA030)
-    fn set_stream_source(stream: u32, vb: u32, offset: u32, stride: u32) = cdecl 0x7FA030 => crate::d3d9dev::set_stream_source;
-    /// `_rwD3D9RenderStateFlushCache()` (0x7FC200)
-    fn flush_cache() = cdecl 0x7FC200 => crate::d3d9state::flush_cache;
 }
 
 use sa_core::field::gr32 as gu;

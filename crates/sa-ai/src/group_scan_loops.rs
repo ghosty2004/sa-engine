@@ -8,27 +8,25 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::close_door_inside_compute_anim_id;
+use crate::bindings::close_door_outside_compute_anim_id;
+use crate::bindings::slow_be_dragged_out_compute_anim_id;
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_core::bindings::ped_is_alive;
+use sa_core::bindings::task_new as task_new_o;
+use sa_world::bindings::membership_get_leader;
+use sa_world::bindings::membership_get_member;
+use sa_world::bindings::sequence_ctor;
+use sa_world::bindings::task_simple_ctor;
 orig! {
-    /// `CPedGroupMembership::GetMember(int32)` (0x5F69B0, `ret 4`)
-    fn membership_get_member(m: GPtr<u8>, i: i32) -> GPtr<u8> = thiscall 0x5F69B0 => unported;
-    /// `CPedGroupMembership::GetLeader` (0x5F69A0)
-    fn membership_get_leader(m: GPtr<u8>) -> GPtr<u8> = thiscall 0x5F69A0 => unported;
     /// `CTaskManager::FindActiveTaskByType(int32)` (0x681740, `ret 4`)
     fn tm_find_active_task_by_type(tm: GPtr<u8>, ty: i32) -> u32 = thiscall 0x681740 => unported;
-    /// `CPed::IsAlive` (0x5E0170)
-    fn ped_is_alive(p: GPtr<u8>) -> u8 = thiscall 0x5E0170 => unported;
     /// `CEntity::RegisterReference(CEntity**)` (0x571B70, `ret 4`)
     fn entity_register_reference(e: GPtr<u8>, r: GPtr<u8>) -> u32 = thiscall 0x571B70 => unported;
     /// the scalar deleting destructor (vtable +0, `ret 4`)
     fn v_delete(t: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
     /// `CTask::Clone` (vtable +4)
     fn v_clone(t: GPtr<u8>) -> u32 = thiscall vslot 0x4 => unported;
-    /// `CTask::operator new(uint32)` (0x61A5A0, cdecl)
-    fn task_new_o(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => unported;
-    /// `CTaskComplexSequence::CTaskComplexSequence` (0x632BD0)
-    fn sequence_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x632BD0 => unported;
-    /// `CTaskSimple::CTaskSimple` (`FUN_0061a390`)
-    fn task_simple_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A390 => unported;
     /// `CScriptedBrainTaskStore::Clear(CTask*)` (0x6357F0, cdecl)
     fn brain_store_clear_task(t: u32) = cdecl 0x6357F0 => unported;
     /// `CTask::GetTaskType` (vtable +0x10)
@@ -39,21 +37,13 @@ orig! {
     fn event_get_sound_level(e: GPtr<u8>, ent: u32, pos: u32) -> f64 = thiscall 0x4B2850 => unported;
     /// `CEvent::CalcSoundLevelIncrement(float level, float increment)` (0x4AC050, cdecl, ST0)
     fn event_calc_sound_level_increment(a: u32, b: u32) -> f64 = cdecl 0x4AC050 => unported;
-    /// `CTaskSimpleCarCloseDoorFromInside::ComputeAnimID(int32& group, int32& anim)` (0x646410, `ret 8`)
-    fn close_door_inside_compute_anim_id(t: GPtr<u8>, g: GPtr<u8>, a: GPtr<u8>) = thiscall 0x646410 => unported;
-    /// `CTaskSimpleCarCloseDoorFromOutside::ComputeAnimID(int32& group, int32& anim)` (0x646600, `ret 8`)
-    fn close_door_outside_compute_anim_id(t: GPtr<u8>, g: GPtr<u8>, a: GPtr<u8>) = thiscall 0x646600 => unported;
     /// `CTaskSimpleCarSlowDragPedOut::ComputeAnimID_Wrapper(int32& group, int32& anim)` (0x648100, `ret 8`)
     fn slow_drag_ped_out_compute_anim_id(t: GPtr<u8>, g: GPtr<u8>, a: GPtr<u8>) = thiscall 0x648100 => unported;
-    /// `CTaskSimpleCarSlowBeDraggedOut::ComputeAnimID(int32& group, int32& anim)` (0x648330, `ret 8`)
-    fn slow_be_dragged_out_compute_anim_id(t: GPtr<u8>, g: GPtr<u8>, a: GPtr<u8>) = thiscall 0x648330 => unported;
     /// the vehicle's door-anim virtual (vtable +0x70: `(CPed*, int32 door, int32 group, int32 anim, float)`,
     /// `ret 0x14`)
     fn v_vehicle_door_anim(v: GPtr<u8>, ped: u32, door: u32, group: u32, anim: u32, f: u32) = thiscall vslot 0x70 => unported;
     /// `CTaskSimpleGoTo::CTaskSimpleGoTo(int32 moveState, const CVector&, float radius)` (0x6679C0, `ret 0xC`)
     fn simple_go_to_ctor(t: GPtr<u8>, ms: u32, pos: GPtr<u8>, radius: u32) -> GPtr<u8> = thiscall 0x6679C0 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00, `ret 4`)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
 }
 
 /// `CEventLeaderEnteredCarAsDriver::AffectsPedGroup(CPedGroup*)` (0x4B0EF0, `ret 4`; AL): with a vehicle (+0x14)

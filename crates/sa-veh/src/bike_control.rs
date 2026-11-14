@@ -11,19 +11,39 @@ use sa_world::world::common::find_player_ped;
 
 use crate::common::{ftol32, g, rd, wr, x, xi};
 
+use crate::bindings::audio_service;
+use crate::bindings::calculate_drive_acceleration;
+use crate::bindings::event_vehicle_on_fire_ctor;
+use crate::bindings::event_vehicle_on_fire_dtor;
+use crate::bindings::process_car_alarm;
+use crate::bindings::process_siren_and_horn;
+use crate::bindings::reset_player_breath;
+use crate::bindings::update_clump_alpha;
+use sa_core::bindings::fx_play;
+use sa_core::bindings::get_pad;
+use sa_pop::bindings::scan_for_ped_danger;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::apply_spring_collision;
+use sa_world::bindings::apply_spring_collision_alt;
+use sa_world::bindings::apply_spring_dampening;
+use sa_world::bindings::do_extra_air_resistance_for_player;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::fx_create_system as create_fx_system;
+use sa_world::bindings::fx_kill;
+use sa_world::bindings::get_adhesion_group;
+use sa_world::bindings::get_adhesive_limit;
+use sa_world::bindings::get_event_global_group;
+use sa_world::bindings::get_roughness;
+use sa_world::bindings::get_skidmark_type;
+use sa_world::bindings::get_wet_multiplier;
+use sa_world::bindings::pad_start_shake as start_shake;
+use sa_world::bindings::physical_process_control;
+use sa_world::bindings::vector_magnitude_sqr;
 orig! {
     /// `CEntity::GetColModel()` (0x535300)
     fn get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => sa_world::world::entity::get_col_model;
-    /// `CAEVehicleAudioEntity::Service()` (0x502280)
-    fn audio_service(a: GPtr<u8>) = thiscall 0x502280 => unported;
-    /// `CVehicle::ProcessCarAlarm()` (0x6D21F0)
-    fn process_car_alarm(v: GPtr<u8>) = thiscall 0x6D21F0 => crate::vehicle2::process_car_alarm;
     /// `CVehicle::ActivateBombWhenEntered()` (0x6D2570)
     fn activate_bomb_when_entered(v: GPtr<u8>) = thiscall 0x6D2570 => crate::vehicle2::activate_bomb_when_entered;
-    /// `CVehicle::UpdateClumpAlpha()` (0x6D2980)
-    fn update_clump_alpha(v: GPtr<u8>) = thiscall 0x6D2980 => crate::vehicle2::update_clump_alpha;
-    /// `CPed::IsPlayer()` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
     /// `Multiply3x3(CVector*, const CVector&, const CMatrix&)` (0x59C810): the transposed product
     fn multiply3x3_transposed(out: GPtr<u8>, v: GPtr<u8>, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C810 => sa_world::world::mvpa_math::multiply3x3_transposed;
     /// `CStats::GetFatAndMuscleModifier(eStatModAbilities)` (0x559AF0), ST0
@@ -36,78 +56,30 @@ orig! {
     fn vector_add(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE30 => sa_world::world::mvpa_math::vector_add;
     /// `operator/(const CVector&, float)` (0x4119D0, hidden return pointer)
     fn vector_div_scalar(out: GPtr<u8>, v: GPtr<u8>, s: f32) -> GPtr<u8> = cdecl 0x4119D0 => sa_world::world::mvpa_math::vector_div_scalar;
-    /// `CVector::SquaredMagnitude()` (0x406DA0), ST0
-    fn vector_magnitude_sqr(v: GPtr<u8>) -> f64 = thiscall 0x406DA0 => unported;
     /// `FUN_00424100(float x, float y)` (0x424100): `xor al, al; ret`
     fn area_check_stub(px: u32, py: u32) -> u8 = cdecl 0x424100 => crate::train_control::area_check_stub_native;
     /// `CPhysical::SkipPhysics()` (0x5433B0)
     fn skip_physics(v: GPtr<u8>) = thiscall 0x5433B0 => sa_world::physical::base::skip_physics;
     /// `RpAnimBlendClumpGetAssociation(RpClump*, AnimationId)` (0x4D68B0)
     fn get_association(clump: GPtr<u8>, id: u32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
-    /// `CCullZones::DoExtraAirResistanceForPlayer()` (0x72DDD0)
-    fn do_extra_air_resistance_for_player() -> u8 = cdecl 0x72DDD0 => unported;
     /// `DotProduct(const RwV3d*, const RwV3d*)` (0x40FDB0), ST0
     fn dot_product(a: GPtr<u8>, b: GPtr<u8>) -> f64 = cdecl 0x40FDB0 => crate::automobile_ai::dot_native;
     /// `operator*(float, const CVector&)` (0x40FE90, cdecl, hidden return pointer)
     fn scalar_mul_vector(out: GPtr<u8>, s: f32, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE90 => sa_world::world::mvpa_math::scalar_mul_vector;
     /// `CPhysical::ApplyMoveForce(CVector)` (0x5429F0)
     fn apply_move_force(e: GPtr<u8>, force: CVector) = thiscall 0x5429F0 => sa_world::physical::forces::apply_move_force;
-    /// `CPhysical::ProcessControl()` (0x5485E0)
-    fn physical_process_control(v: GPtr<u8>) = thiscall 0x5485E0 => sa_world::physical::attach::process_control;
     /// `CBike::ProcessBuoyancy()` (0x6B5FB0)
     fn bike_process_buoyancy(v: GPtr<u8>) = thiscall 0x6B5FB0 => crate::mvpd_v3::bike_process_buoyancy;
-    /// `CPlayerPed::ResetPlayerBreath()` (0x60A8A0)
-    fn reset_player_breath(p: GPtr<u8>) = thiscall 0x60A8A0 => unported;
     /// `CVector::Normalise()` (0x59C910)
     fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => crate::train_control::normalise_native;
-    /// `CPhysical::ApplySpringCollisionAlt(float, CVector&, CVector&, float, float, CVector&, float&)` (0x543D60)
-    fn apply_spring_collision_alt(e: GPtr<u8>, level: f32, dir: GPtr<u8>, point: GPtr<u8>, len: f32, bias: f32, normal: GPtr<u8>, out: GPtr<f32>) -> u8 = thiscall 0x543D60 => sa_world::physical::spring::apply_spring_collision_alt;
-    /// `CPhysical::ApplySpringCollision(float, CVector&, CVector&, float, float, float&)` (0x543C90)
-    fn apply_spring_collision(e: GPtr<u8>, level: f32, dir: GPtr<u8>, point: GPtr<u8>, len: f32, bias: f32, out: GPtr<f32>) -> u8 = thiscall 0x543C90 => sa_world::physical::spring::apply_spring_collision;
-    /// `SurfaceInfos_c::GetSkidmarkType(uint32)` (0x55E630)
-    fn get_skidmark_type(si: GPtr<u8>, id: u32) -> u32 = thiscall 0x55E630 => unported;
     /// `CPhysical::GetSpeed(CVector)` (0x542CE0)
     fn get_speed(e: GPtr<u8>, out: GPtr<CVector>, point: CVector) -> GPtr<CVector> = thiscall 0x542CE0 => sa_world::physical::forces::get_speed;
-    /// `CPhysical::ApplySpringDampening(float, float, CVector&, CVector&, CVector&)` (0x543E90)
-    fn apply_spring_dampening(e: GPtr<u8>, damping: f32, force: f32, dir: GPtr<u8>, point: GPtr<u8>, speed: GPtr<u8>) -> u8 = thiscall 0x543E90 => sa_world::physical::spring::apply_spring_dampening;
-    /// `cTransmission::CalculateDriveAcceleration(...)` (0x6D05E0), ST0
-    fn calculate_drive_acceleration(t: GPtr<u8>, gas: GPtr<u8>, gear: GPtr<u8>, change: GPtr<u8>, velocity: GPtr<u8>, i1: GPtr<u8>, i2: GPtr<u8>, wheels: u32, cheat: u32) -> f64 = thiscall 0x6D05E0 => unported;
-    /// `SurfaceInfos_c::GetAdhesiveLimit(CColPoint&)` (0x55EB50), ST0
-    fn get_adhesive_limit(si: GPtr<u8>, cp: GPtr<u8>) -> f64 = thiscall 0x55EB50 => unported;
-    /// `SurfaceInfos_c::GetAdhesionGroup(uint32)` (0x55E5C0)
-    fn get_adhesion_group(si: GPtr<u8>, id: u32) -> u32 = thiscall 0x55E5C0 => unported;
     /// `CrossProduct(CVector*, const CVector*, const CVector*)` (0x59C730)
     fn cross_product(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C730 => crate::train_control::cross_native;
-    /// `SurfaceInfos_c::GetWetMultiplier(uint32)` (0x55E600), ST0
-    fn get_wet_multiplier(si: GPtr<u8>, id: u32) -> f64 = thiscall 0x55E600 => unported;
     /// `CVehicle::ProcessBikeWheel(...)` (0x6D73B0)
     fn process_bike_wheel(v: GPtr<u8>, fwd: GPtr<u8>, right: GPtr<u8>, speed: GPtr<u8>, point: GPtr<u8>, wheels: i32, thrust: f32, brake: f32, adhesion: f32, destab: f32, wheel: u32, wheel_speed: GPtr<u8>, state: GPtr<i32>, special: u32, status: u32) = thiscall 0x6D73B0 => crate::mvpd_v1::vehicle_process_bike_wheel;
-    /// `CVehicle::ProcessSirenAndHorn(bool)` (0x6E0950)
-    fn process_siren_and_horn(v: GPtr<u8>, check: u32) = thiscall 0x6E0950 => crate::vehicle2::process_siren_and_horn;
-    /// `FxManager_c::CreateFxSystem(const char*, RwV3d*, RwMatrix*, bool)` (0x4A9BE0) on `g_fxMan` (0xA9AE80)
-    fn create_fx_system(mgr: GPtr<u8>, name: u32, pos: GPtr<u8>, m: GPtr<u8>, ignore_bbox: u32) -> GPtr<u8> = thiscall 0x4A9BE0 => unported;
-    /// `FxSystem_c::Play()` (0x4AA2F0)
-    fn fx_play(fx: GPtr<u8>) = thiscall 0x4AA2F0 => unported;
-    /// `CEventVehicleOnFire::CEventVehicleOnFire(CVehicle*)` (0x4B10C0)
-    fn event_vehicle_on_fire_ctor(ev: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = thiscall 0x4B10C0 => unported;
-    /// `GetEventGlobalGroup()` (0x4ABA50)
-    fn get_event_global_group() -> GPtr<u8> = cdecl 0x4ABA50 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420)
-    fn event_group_add(grp: GPtr<u8>, ev: GPtr<u8>, valid: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
-    /// `CEventVehicleOnFire::~CEventVehicleOnFire()` (0x4B1170)
-    fn event_vehicle_on_fire_dtor(ev: GPtr<u8>) = thiscall 0x4B1170 => unported;
-    /// `FxSystem_c::Kill()` (0x4AA3F0)
-    fn fx_kill(fx: GPtr<u8>) = thiscall 0x4AA3F0 => unported;
     /// `CVehicle::ProcessDelayedExplosion()` (0x6D1340)
     fn process_delayed_explosion(v: GPtr<u8>) = thiscall 0x6D1340 => crate::vehicle2::process_delayed_explosion;
-    /// `SurfaceInfos_c::GetRoughness(uint32)` (0x55E810)
-    fn get_roughness(si: GPtr<u8>, id: u32) -> u32 = thiscall 0x55E810 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    fn get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CPad::StartShake(int16, uint8, uint32)` (0x53F920)
-    fn start_shake(pad: GPtr<u8>, time: u32, freq: u32, delay: u32) = thiscall 0x53F920 => unported;
-    /// `CCarCtrl::ScanForPedDanger(CVehicle*)` (0x42CE40)
-    fn scan_for_ped_danger(v: GPtr<u8>) = cdecl 0x42CE40 => sa_pop::carctrl4::scan_for_ped_danger;
     /// `CBike::ProcessAI(uint32&)` (vtable +0x108)
     fn v_process_ai(v: GPtr<u8>, flags: GPtr<u32>) -> u8 = thiscall vslot 0x108 => unported;
     /// `CBike::VehicleDamage(...)` (vtable +0xE0)

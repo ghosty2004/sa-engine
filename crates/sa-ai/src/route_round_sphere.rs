@@ -12,13 +12,11 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use sa_core::bindings::sphere_intersect_ray;
+use sa_core::bindings::vector_normalise;
 orig! {
     /// `CColSphere::IntersectPoint(const CVector&)` (0x410040, `ret 4`)
     fn sphere_intersect_point(s: GPtr<u8>, p: GPtr<u8>) -> u8 = thiscall 0x410040 => unported;
-    /// `CColSphere::IntersectRay(const CVector& start, const CVector& dir, CVector& p1, CVector& p2)` (0x40FF20, `ret 0x10`)
-    fn sphere_intersect_ray(s: GPtr<u8>, start: GPtr<u8>, dir: GPtr<u8>, p1: GPtr<u8>, p2: GPtr<u8>) -> u8 = thiscall 0x40FF20 => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
 }
 
 use sa_core::field::ptr_of as p3;

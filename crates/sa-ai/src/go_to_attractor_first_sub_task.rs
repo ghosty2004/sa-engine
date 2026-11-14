@@ -10,20 +10,15 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::ped_placement_find_z_coor_for_ped as find_z_coor_for_ped;
+use sa_world::bindings::go_to_point_and_stand_still_ctor;
+use sa_world::bindings::sequence_add_task;
+use sa_world::bindings::sequence_ctor;
 orig! {
     /// `CPedAttractor::GetType()` (vtable slot 0)
     fn attractor_get_type(a: GPtr<u8>) -> u32 = thiscall vslot 0x0 => unported;
-    /// `CPedPlacement::FindZCoorForPed(CVector*)` (0x616920)
-    fn find_z_coor_for_ped(v: GPtr<u8>) -> u8 = cdecl 0x616920 => unported;
     /// `CTaskSimpleStandStill(int ms, bool looped, bool useAnimIdle, float blend)` (0x62F310, `ret 0x10`)
     fn stand_still_ctor(t: GPtr<u8>, ms: i32, looped: u32, idle: u32, blend: u32) -> GPtr<u8> = thiscall 0x62F310 => unported;
-    /// `CTaskComplexSequence::CTaskComplexSequence()` (0x632BD0)
-    fn sequence_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x632BD0 => unported;
-    /// `CTaskComplexSequence::AddTask(CTask*)` (0x632D10, `ret 4`)
-    fn sequence_add_task(t: GPtr<u8>, task: GPtr<u8>) = thiscall 0x632D10 => unported;
-    /// `CTaskComplexGoToPointAndStandStill(int moveState, const CVector&, float radius, float moveStateRadius, bool,
-    /// bool)` (0x668120, `ret 0x18`)
-    fn go_to_point_and_stand_still_ctor(t: GPtr<u8>, ms: u32, pos: GPtr<u8>, radius: u32, ms_radius: u32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x668120 => unported;
     /// `CTaskComplexTurnToFaceEntityOrCoord`-like heading task ctor (0x66C3E0: `(const CVector&, float heading, float)`,
     /// `ret 0xC`)
     fn heading_task_ctor(t: GPtr<u8>, pos: GPtr<u8>, heading: u32, f: u32) -> GPtr<u8> = thiscall 0x66C3E0 => unported;

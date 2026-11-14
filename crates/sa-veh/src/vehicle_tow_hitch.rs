@@ -8,13 +8,10 @@ use sa_core::{hook, orig};
 
 use crate::common::{model_info, rd, wr, x};
 
+use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+use sa_core::bindings::matrix_mul_vec;
+use sa_world::bindings::audio_add_event;
 orig! {
-    /// `operator*(const CMatrix&, const CVector&)` (0x59C890): hidden return pointer first
-    fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
-    /// `CAEVehicleAudioEntity::AddAudioEvent(eAudioEvents, float)` (0x4F6420)
-    fn audio_add_event(a: GPtr<u8>, event: u32, volume: f32) = thiscall 0x4F6420 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
-    fn clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
     /// `CAutomobile::CAutomobile(int32, eVehicleCreatedBy, bool)` (0x6B0A90)
     fn automobile_ctor(v: GPtr<u8>, mi: u32, created_by: u32, setup_susp: u8) -> GPtr<u8> = thiscall 0x6B0A90 => crate::mvpd_v7::automobile_constructor;
     /// `CMonsterTruck::SetupSuspensionLines()` (0x6C7FB0)

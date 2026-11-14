@@ -10,9 +10,19 @@ use sa_math::x87::X87;
 
 use super::common::{ftol32, g, rd, wr, x, xi};
 
+use crate::bindings::apply_move_speed as physical_apply_move_speed;
+use crate::bindings::apply_turn_speed as physical_apply_turn_speed;
+use crate::bindings::eg_flush as event_group_flush;
+use crate::bindings::entity_update_anim;
+use crate::bindings::get_event_global_group;
+use crate::bindings::ped_scripted_task_record_process;
+use crate::bindings::population_remove_ped;
+use crate::bindings::simple_transform_update_rw_matrix;
+use sa_core::bindings::entity_update_rw_frame;
+use sa_core::bindings::load_monitor_end as load_monitor_end_timer;
+use sa_core::bindings::load_monitor_start as load_monitor_start_timer;
+use sa_core::bindings::matrix_update_rw_matrix;
 orig! {
-    /// `RwHelper::GetEventGlobalGroup()` (0x4ABA50, cdecl)
-    fn get_event_global_group() -> GPtr<u8> = cdecl 0x4ABA50 => unported;
     /// `CEventGlobalGroup::AddEventsToPed(CPed*)` (0x4AB9C0, `ret 4`)
     fn add_events_to_ped(grp: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x4AB9C0 => unported;
     /// `CEventGlobalGroup::AddEventsToGroup(CPedGroup*)` (0x4AB8A0, `ret 4`)
@@ -21,18 +31,8 @@ orig! {
     fn inform_friends_process() = cdecl 0x4AC2E0 => unported;
     /// `CInformGroupEventQueue::Process()` (0x4B2AE0, cdecl)
     fn inform_group_process() = cdecl 0x4B2AE0 => unported;
-    /// `CEventGroup::Flush(bool)` (0x4AB370, `ret 4`)
-    fn event_group_flush(grp: GPtr<u8>, b: u32) = thiscall 0x4AB370 => unported;
     /// `CReferences::PruneAllReferencesInWorld()` (0x571CC0, cdecl)
     fn prune_all_references_in_world() = cdecl 0x571CC0 => unported;
-    /// `CEntity::UpdateAnim()` (0x535F00)
-    fn entity_update_anim(e: GPtr<u8>) = thiscall 0x535F00 => unported;
-    /// `CEntity::UpdateRwFrame()` (0x532B00)
-    fn entity_update_rw_frame(e: GPtr<u8>) = thiscall 0x532B00 => unported;
-    /// `CMatrix::UpdateRwMatrix(RwMatrix*)` (0x59AD70, `ret 4`)
-    fn matrix_update_rw_matrix(m: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x59AD70 => unported;
-    /// `CSimpleTransform::UpdateRwMatrix(RwMatrix*)` (0x54EF40, `ret 4`)
-    fn simple_transform_update_rw_matrix(t: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x54EF40 => unported;
     /// entity virtual +0x0 (scalar deleting destructor)
     fn v_delete(e: GPtr<u8>, flags: u32) -> GPtr<u8> = thiscall vslot 0x0 => unported;
     /// entity virtual +0xC (`Remove`)
@@ -47,18 +47,8 @@ orig! {
     fn remove_from_moving_list(e: GPtr<u8>) = thiscall 0x542860 => crate::physical::base::remove_from_moving_list;
     /// `CWorld::FindPlayerPed(int32)` (0x56E210, cdecl)
     fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => crate::world::cworld::find_player_ped_port;
-    /// `CPopulation::RemovePed(CPed*)` (0x610F20, cdecl)
-    fn population_remove_ped(ped: GPtr<u8>) = cdecl 0x610F20 => unported;
     /// `CObject::ProcessControlLogic()` (0x5A29A0)
     fn object_process_control_logic(o: GPtr<u8>) = thiscall 0x5A29A0 => unported;
-    /// `CLoadMonitor::StartTimer(uint32)` (0x53D050, `ret 4`)
-    fn load_monitor_start_timer(m: GPtr<u8>, t: u32) = thiscall 0x53D050 => unported;
-    /// `CLoadMonitor::EndTimer(uint32)` (0x53D070, `ret 4`)
-    fn load_monitor_end_timer(m: GPtr<u8>, t: u32) = thiscall 0x53D070 => unported;
-    /// `CPhysical::ApplyMoveSpeed()` (0x542DD0)
-    fn physical_apply_move_speed(e: GPtr<u8>) = thiscall 0x542DD0 => unported;
-    /// `CPhysical::ApplyTurnSpeed()` (0x542E20)
-    fn physical_apply_turn_speed(e: GPtr<u8>) = thiscall 0x542E20 => unported;
     /// `CVehicleRecording::SaveOrRetrieveDataForThisFrame()` (0x45A610, cdecl)
     fn vehicle_recording_save_or_retrieve() = cdecl 0x45A610 => unported;
     /// `IKChainManager_c::Update(float)` (0x6186D0, `ret 4`)
@@ -73,8 +63,6 @@ orig! {
     fn messages_process() = cdecl 0x69EE60 => unported;
     /// `CPlayerInfo::Process(int32)` (0x56F8D0, `ret 4`)
     fn player_info_process(p: GPtr<u8>, id: i32) = thiscall 0x56F8D0 => unported;
-    /// `CPedScriptedTaskRecord::Process()` (0x6085E0, cdecl)
-    fn ped_scripted_task_record_process() = cdecl 0x6085E0 => unported;
     /// `CPedGroups::Process()` (0x5FC800, cdecl)
     fn ped_groups_process() = cdecl 0x5FC800 => unported;
     /// `CWorld::RemoveFallenPeds()` (0x565CB0, cdecl)
@@ -330,12 +318,22 @@ pub fn world_process() {
     }
 }
 
-
+use crate::bindings::make_vehicle_update_data;
+use crate::bindings::mark_everything_as_new as replay_mark_everything_as_new;
+use sa_core::bindings::find_player_coors;
+use sa_core::bindings::font_print_string;
+use sa_core::bindings::font_set_background;
+use sa_core::bindings::font_set_color;
+use sa_core::bindings::font_set_font_style;
+use sa_core::bindings::font_set_orientation;
+use sa_core::bindings::font_set_proportional;
+use sa_core::bindings::get_pad as pad_get_pad;
+use sa_core::bindings::replay_finish_playback;
+use sa_core::bindings::replay_init;
+use sa_core::bindings::rgba_ctor;
+use sa_core::bindings::text_get;
+use sa_stream::bindings::ped_is_player;
 orig! {
-    /// `CPad::GetPad(int32)` (0x53FB70, cdecl)
-    fn pad_get_pad(id: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CReplay::Init()` (0x45E220, cdecl)
-    fn replay_init() = cdecl 0x45E220 => unported;
     /// `CReplay::PlayBackThisFrame()` (0x4604A0, cdecl)
     fn replay_play_back_this_frame() = cdecl 0x4604A0 => unported;
     /// `CReplay::RecordThisFrame()` (0x45E300, cdecl)
@@ -348,38 +346,12 @@ orig! {
     fn replay_save_replay_to_hd() = cdecl 0x45C340 => unported;
     /// `CReplay::PlayReplayFromHD()` (0x460390, cdecl)
     fn replay_play_replay_from_hd() = cdecl 0x460390 => unported;
-    /// `CReplay::FinishPlayback()` (0x45F050, cdecl)
-    fn replay_finish_playback() = cdecl 0x45F050 => unported;
     /// `CFont::SetScale(float, float)` (0x719380, cdecl)
     fn font_set_scale(w: f32, h: f32) = cdecl 0x719380 => unported;
-    /// `CFont::SetOrientation(eFontAlignment)` (0x719610, cdecl)
-    fn font_set_orientation(o: u32) = cdecl 0x719610 => unported;
-    /// `CFont::SetBackground(bool, bool)` (0x7195C0, cdecl)
-    fn font_set_background(a: u32, b: u32) = cdecl 0x7195C0 => unported;
     /// `CFont::SetCentreSize(float)` (0x7194E0, cdecl)
     fn font_set_centre_size(v: f32) = cdecl 0x7194E0 => unported;
-    /// `CFont::SetProportional(bool)` (0x7195B0, cdecl)
-    fn font_set_proportional(v: u32) = cdecl 0x7195B0 => unported;
-    /// `CRGBA::CRGBA(uint8, uint8, uint8, uint8)` (0x7170C0, `ret 0x10`); returns `this`
-    fn rgba_ctor(c: GPtr<u8>, r: u32, g: u32, b: u32, a: u32) -> GPtr<u8> = thiscall 0x7170C0 => unported;
-    /// `CFont::SetColor(CRGBA)` (0x719430, cdecl)
-    fn font_set_color(c: u32) = cdecl 0x719430 => unported;
-    /// `CFont::SetFontStyle(eFontStyle)` (0x719490, cdecl)
-    fn font_set_font_style(s: u32) = cdecl 0x719490 => unported;
-    /// `CText::Get(const char*)` (0x6A0050, `ret 4`)
-    fn text_get(t: GPtr<u8>, key: GPtr<u8>) -> GPtr<u8> = thiscall 0x6A0050 => unported;
-    /// `CFont::PrintString(float, float, const char*)` (0x71A700, cdecl)
-    fn font_print_string(px: f32, py: f32, s: GPtr<u8>) = cdecl 0x71A700 => unported;
-    /// `CReplay::MarkEverythingAsNew()` (0x45D430, cdecl)
-    fn replay_mark_everything_as_new() = cdecl 0x45D430 => unported;
     /// `CMatrix::CopyOnlyMatrix(const CMatrix&)` (0x59ADD0, `ret 4`)
     fn matrix_copy_only_matrix(m: GPtr<u8>, src: GPtr<u8>) = thiscall 0x59ADD0 => unported;
-    /// `FindPlayerCoors(CVector* out, int32 playerId)` (0x56E010, cdecl); returns `out`
-    fn find_player_coors(out: GPtr<u8>, id: i32) -> GPtr<u8> = cdecl 0x56E010 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `tReplayVehicleBlock::MakeVehicleUpdateData(CVehicle*, int32)` (0x45B730, `ret 8`)
-    fn make_vehicle_update_data(b: GPtr<u8>, v: GPtr<u8>, i: i32) = thiscall 0x45B730 => unported;
     /// `tReplayBmxBlock::MakeBmxUpdateData(CBmx*, int32)` (0x45BF90, `ret 8`)
     fn make_bmx_update_data(b: GPtr<u8>, v: GPtr<u8>, i: i32) = thiscall 0x45BF90 => crate::world::mvpb_world::replay_make_bmx_update_data;
     /// `tReplayBikeBlock::MakeBikeUpdateData(CBike*, int32)` (0x45C070, `ret 8`)
@@ -810,25 +782,19 @@ pub fn replay_store_ped_animation(ped: GPtr<u8>, st: GPtr<u8>) {
     }
 }
 
+use crate::bindings::double_node_delete;
+use crate::bindings::single_node_delete;
+use sa_core::bindings::font_set_edge;
+use sa_core::bindings::insert_number_in_string;
+use sa_core::bindings::list_add_item_5335e0 as single_add_item;
+use sa_core::bindings::list_delete_item as single_delete_item;
 orig! {
     /// `CHudColours::GetRGB(eHudColours)` (0x58FEA0, `ret 8`: hidden result pointer, colour); returns the pointer
     fn hud_colours_get_rgb(h: GPtr<u8>, out: GPtr<u8>, c: u32) -> GPtr<u8> = thiscall 0x58FEA0 => unported;
-    /// `CFont::SetEdge(int8)` (0x719590, cdecl)
-    fn font_set_edge(v: u32) = cdecl 0x719590 => unported;
     /// `CFont::SetDropColor(CRGBA)` (0x719510, cdecl)
     fn font_set_drop_color(c: u32) = cdecl 0x719510 => unported;
-    /// `CMessages::InsertNumberInString(const char*, int32 x6, char* out)` (0x69DE90, cdecl)
-    fn insert_number_in_string(s: GPtr<u8>, n1: i32, n2: i32, n3: i32, n4: i32, n5: i32, n6: i32, out: GPtr<u8>) = cdecl 0x69DE90 => unported;
-    /// `CPtrListSingleLink::AddItem(void*)` (0x5335E0, `ret 4`)
-    fn single_add_item(l: GPtr<u8>, item: GPtr<u8>) -> GPtr<u8> = thiscall 0x5335E0 => unported;
     /// `CPtrListDoubleLink::AddItem(void*)` (0x533670, `ret 4`)
     fn double_add_item(l: GPtr<u8>, item: GPtr<u8>) -> GPtr<u8> = thiscall 0x533670 => unported;
-    /// `CPtrListSingleLink::DeleteItem(void*)` (0x533610, `ret 4`)
-    fn single_delete_item(l: GPtr<u8>, item: GPtr<u8>) = thiscall 0x533610 => unported;
-    /// `CPtrNodeSingleLink::operator delete(void*)` (0x552390, cdecl; catalogue name `delete`)
-    fn single_node_delete(n: GPtr<u8>) = cdecl 0x552390 => unported;
-    /// `CPtrNodeDoubleLink::operator delete(void*)` (0x5523D0, cdecl; catalogue name `delete`)
-    fn double_node_delete(n: GPtr<u8>) = cdecl 0x5523D0 => unported;
     /// entity virtual +0x24 (`GetBoundRect`, hidden result pointer); returns the pointer
     fn v_get_bound_rect(e: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x24 => unported;
 }

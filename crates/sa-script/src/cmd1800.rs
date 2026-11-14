@@ -48,23 +48,50 @@ const NONE_STR: usize = 0x859E38;
 /// The 9999.9f immediate (0x461C3F9A) of the random car/char searches.
 const K_9999_9: u32 = 0x461C_3F9A;
 
+use crate::bindings::clump_is_initialized as rp_anim_blend_clump_is_initialized;
+use crate::bindings::conversations_done_setting_up_conversation as done_setting_up_conversation;
+use crate::bindings::object_has_been_damaged as object_is_damaged;
+use crate::bindings::phone_task_stop;
+use crate::bindings::rgba_set_463370;
+use crate::bindings::task_gun_control_ctor;
+use crate::bindings::task_use_effect_ctor;
+use crate::bindings::tell_heli_to_go_to_coors;
+use crate::bindings::vehicle_41bdd0 as set_engine_on;
+use crate::bindings::vehicle_get_ref;
+use crate::bindings::vehicle_pool_get_at;
+use sa_core::bindings::clothes_rebuild_player as rebuild_player;
+use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+use sa_core::bindings::entity_register_reference as register_reference;
+use sa_core::bindings::replay_init;
+use sa_core::bindings::rgba_ctor;
+use sa_core::bindings::rp_anim_blend_clump_init;
+use sa_core::bindings::streaming_disable_cop_bikes as disable_cop_bikes;
+use sa_core::bindings::task_new;
+use sa_stream::bindings::is_object_glass;
+use sa_world::bindings::anim_get_animation as get_animation;
+use sa_world::bindings::decision_maker_types_get_instance as dm_types_instance;
+use sa_world::bindings::entity_get_is_static as get_is_static;
+use sa_world::bindings::find_ground_z_for_coord as find_ground_z;
+use sa_world::bindings::find_zone_by_label;
+use sa_world::bindings::get_animation_block;
+use sa_world::bindings::get_ped_flag;
+use sa_world::bindings::get_vehicle_appearance;
+use sa_world::bindings::hold_entity_drop_entity as drop_entity;
+use sa_world::bindings::intel_get_task_hold as get_task_hold;
+use sa_world::bindings::load_shop;
+use sa_world::bindings::ped_groups_get_peds_group as get_peds_group;
+use sa_world::bindings::placeable_get_heading as get_heading;
+use sa_world::bindings::remove_from_moving_list;
+use sa_world::bindings::set_char_created_by;
+use sa_world::bindings::vehicle_can_be_deleted as can_be_deleted;
+use sa_world::bindings::window_responds_to_collision;
 orig! {
     /// `CRunningScript::ReadTextLabelFromScript(char*, uint8)` (0x463D50)
     fn read_label(s: Scr, buf: GPtr<u8>, len: u32) = thiscall 0x463D50 => crate::vm::read_text_label_from_script;
-    /// `CAnimManager::GetAnimationBlock(const char*)` (0x4D3940)
-    fn get_animation_block(name: GPtr<u8>) -> GPtr<u8> = cdecl 0x4D3940 => unported;
-    /// `CAnimManager::GetAnimation(const char*, const CAnimBlock*)` (0x4D42F0)
-    fn get_animation(name: GPtr<u8>, block: GPtr<u8>) -> GPtr<u8> = cdecl 0x4D42F0 => unported;
-    /// `RpAnimBlendClumpIsInitialized(RpClump*)` (0x4D6760), AL
-    fn rp_anim_blend_clump_is_initialized(clump: GPtr<u8>) -> u8 = cdecl 0x4D6760 => unported;
-    /// `RpAnimBlendClumpInit(RpClump*)` (0x4D6720)
-    fn rp_anim_blend_clump_init(clump: GPtr<u8>) = cdecl 0x4D6720 => unported;
     /// `CAnimManager::BlendAnimation(RpClump*, CAnimBlendHierarchy*, int32 flags, float blendDelta)` (0x4D4410)
     fn blend_animation(clump: GPtr<u8>, anim: GPtr<u8>, flags: u32, delta: u32) -> GPtr<u8> = cdecl 0x4D4410 => unported;
     /// `CRunningScript::ScriptTaskPickUpObject(int32 command)` (0x46AF50; reads its own parameters)
     fn script_task_pick_up_object(s: Scr, command: u32) = thiscall 0x46AF50 => unported;
-    /// `CTask::operator new(uint32)` (0x61A5A0)
-    fn task_new(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => unported;
     /// `CRunningScript::GivePedScriptedTask(int32 pedHandle, CTask*, int32 opcode)` (0x465C20)
     fn give_ped_scripted_task(s: Scr, ped: u32, task: GPtr<u8>, command: u32) = thiscall 0x465C20 => unported;
     /// A virtual `CTask` method without arguments returning EAX (`GetTaskType`, vtable +0x10), read at run time
@@ -76,59 +103,26 @@ orig! {
     fn task_use_mobile_phone_ctor(t: GPtr<u8>, duration: u32) -> GPtr<u8> = thiscall 0x6348A0 => unported;
     /// `CTaskManager::FindTaskByType(int32 slot, int32 type)` (0x6817D0)
     fn find_task_by_type(tm: GPtr<u8>, slot: u32, ty: u32) -> GPtr<u8> = thiscall 0x6817D0 => unported;
-    /// 0x634A40 (thiscall on the phone task, `CPed*`): ends the mobile phone task
-    fn phone_task_stop(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x634A40 => unported;
-    /// `CClothes::RebuildPlayer(CPlayerPed*, bool bIgnoreFatAndMuscle)` (0x5A82C0)
-    fn rebuild_player(ped: GPtr<u8>, ignore: u32) = cdecl 0x5A82C0 => unported;
-    /// `CReplay::Init()` (0x45E220)
-    fn replay_init() = cdecl 0x45E220 => unported;
     /// `CTheScripts::GetActualScriptThingIndex(int32 ref, uint8 type)` (0x4839A0)
     fn get_actual_script_thing_index(r: u32, ty: u32) -> i32 = cdecl 0x4839A0 => unported;
-    /// `CDecisionMakerTypes::GetInstance()` (0x4684F0)
-    fn dm_types_instance() -> GPtr<u8> = cdecl 0x4684F0 => unported;
     /// `CDecisionMakerTypes::FlushDecisionMakerEventResponse(int32 dm, int32 event)` (0x604490)
     fn flush_dm_event_response(t: GPtr<u8>, i: i32, ev: u32) = thiscall 0x604490 => unported;
     /// `CDecisionMakerTypes::AddEventResponse(int32 dm, eEventType, eTaskType, float* chances, int32* flags)`
     /// (0x6044C0; reads 4 floats and 2 ints)
     fn add_dm_event_response(t: GPtr<u8>, i: i32, ev: u32, task: u32, chances: GPtr<u32>, flags: GPtr<u32>) = thiscall 0x6044C0 => unported;
-    /// `CPedIntelligence::GetTaskHold(bool)` (0x600FF0)
-    fn get_task_hold(intel: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x600FF0 => unported;
-    /// `CTaskSimpleHoldEntity::DropEntity(CPed*, bool)` (0x6930F0)
-    fn drop_entity(t: GPtr<u8>, ped: GPtr<u8>, b: u32) = thiscall 0x6930F0 => unported;
     /// `CVehicle` virtual slot 0xA4 (`BlowUpCar(CEntity* damager, bool inCutscene)`)
     fn blow_up_car(v: GPtr<u8>, damager: u32, in_cutscene: u32) = thiscall vslot 0xA4 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
-    fn clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    fn register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
-    /// 0x41BDD0 (thiscall on the vehicle, bool; a `.HOODLUM` stub, gr `CVehicle::SetEngineOn`)
-    fn set_engine_on(v: GPtr<u8>, on: u32) = thiscall 0x41BDD0 => unported;
     /// 0x45AD40 (cdecl, `CVehicle*`; a `.HOODLUM` stub: takes remote control of the car)
     fn take_remote_control(v: GPtr<u8>) = cdecl 0x45AD40 => unported;
-    /// `CWorld::FindGroundZForCoord(float, float)` (0x569660), ST0 (read as f64: exact); floats raw
-    fn find_ground_z(x: u32, y: u32) -> f64 = cdecl 0x569660 => unported;
     /// `CWorld::FindNearestObjectOfType(int32 model, const CVector&, float radius, bool 2d, bool buildings,
     /// bool vehicles, bool peds, bool objects, bool dummies)` (0x5693F0); radius raw
     fn find_nearest_object_of_type(model: u32, pos: GPtr<u32>, radius: u32, a: u32, b: u32, c: u32, d: u32, e: u32, f: u32) -> GPtr<u8> = cdecl 0x5693F0 => unported;
-    /// 0x46A2F0 (thiscall on the object, AL; a `.HOODLUM` stub: the object's damaged-state query)
-    fn object_is_damaged(o: GPtr<u8>) -> u8 = thiscall 0x46A2F0 => unported;
     /// `CConversations::StartSettingUpConversation(CPed*)` (0x43A840)
     fn start_setting_up_conversation(p: GPtr<u8>) = cdecl 0x43A840 => unported;
-    /// `CConversations::DoneSettingUpConversation(bool)` (0x43ADB0)
-    fn done_setting_up_conversation(b: u32) = cdecl 0x43ADB0 => unported;
     /// `CConversations::IsConversationAtNode(char*, CPed*)` (0x43B000), AL
     fn is_conversation_at_node(label: GPtr<u8>, p: GPtr<u8>) -> u8 = cdecl 0x43B000 => unported;
-    /// `CGlass::IsObjectGlass(CEntity*)` (0x46A760), AL
-    fn is_object_glass(o: GPtr<u8>) -> u8 = cdecl 0x46A760 => unported;
-    /// `CGlass::WindowRespondsToCollision(CEntity*, float, CVector speed, CVector point, bool)` (0x71BC40);
-    /// the float and both vectors by value as raw dwords
-    fn window_responds_to_collision(o: GPtr<u8>, f: u32, sx: u32, sy: u32, sz: u32, px: u32, py: u32, pz: u32, b: u32) = cdecl 0x71BC40 => unported;
     /// `BreakManager_c::Add(CObject*, RwV3d*, float, bool)` (0x59E9B0), ECX = g_breakMan 0xBB4240; float raw
     fn break_manager_add(m: GPtr<u8>, o: GPtr<u8>, v: GPtr<u32>, f: u32, b: u32) = thiscall 0x59E9B0 => unported;
-    /// `CEntity::GetIsStatic()` (0x4633E0), AL
-    fn get_is_static(o: GPtr<u8>) -> u8 = thiscall 0x4633E0 => unported;
-    /// `CPhysical::RemoveFromMovingList()` (0x542860)
-    fn remove_from_moving_list(o: GPtr<u8>) = thiscall 0x542860 => unported;
     /// `CEntity` virtual slot 0x20 without arguments (called on the broken object)
     fn entity_vslot_20(o: GPtr<u8>) = thiscall vslot 0x20 => unported;
     /// 0x6470E0 (thiscall; the 0x1C-byte warp-as-driver task constructor `(CVehicle*, CTaskUtilityLineUpPedWithCar*)`)
@@ -138,8 +132,6 @@ orig! {
     /// 0x646FE0 (thiscall; the 0x20-byte warp-as-passenger task constructor `(CVehicle*, int32 door,
     /// CTaskUtilityLineUpPedWithCar*)`)
     fn task_set_ped_in_as_passenger_ctor(t: GPtr<u8>, v: GPtr<u8>, door: u32, u: u32) -> GPtr<u8> = thiscall 0x646FE0 => unported;
-    /// `CStreaming::DisableCopBikes(bool)` (0x407D10)
-    fn disable_cop_bikes(b: u32) = cdecl 0x407D10 => unported;
     /// `CRunningScript::FlameInAngledAreaCheckCommand(int32)` (0x488780)
     fn flame_in_angled_area_check_command(s: Scr, command: u32) = thiscall 0x488780 => unported;
     /// `CStuckCarCheck::AddCarToCheck(int32, float, uint32, bool, bool, bool, bool, int8)` (0x465970), ECX =
@@ -147,8 +139,6 @@ orig! {
     fn add_car_to_check(m: GPtr<u8>, h: u32, dist: u32, time: u32, a: u32, b: u32, c: u32, d: u32, e: u32) = thiscall 0x465970 => unported;
     /// `CDamageManager::ApplyDamage(CAutomobile*, tComponent, float, float)` (0x6C24B0); floats raw
     fn apply_damage(dm: GPtr<u8>, v: GPtr<u8>, comp: u32, intensity: u32, mult: u32) = thiscall 0x6C24B0 => unported;
-    /// `CPlaceable::GetHeading()` (0x441DB0), ST0 (an FPATAN result read as f64, the MATH-2 model)
-    fn get_heading(e: GPtr<u8>) -> f64 = thiscall 0x441DB0 => unported;
     /// `CMatrix::SetRotateZ(float)` (0x59B0E0) / `CMatrix::RotateY(float)` (0x59B2C0); raw floats
     fn matrix_set_rotate_z(m: GPtr<u8>, a: u32) = thiscall 0x59B0E0 => unported;
     fn matrix_rotate_y(m: GPtr<u8>, a: u32) = thiscall 0x59B2C0 => unported;
@@ -166,43 +156,18 @@ orig! {
     fn ped_pool_get_at(pool: GPtr<u8>, i: u32) -> GPtr<u8> = thiscall 0x4082A0 => unported;
     /// `CTaskSimpleHoldEntity` virtual slot 0x20 `(CPed*)`, AL
     fn task_vslot_20(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall vslot 0x20 => unported;
-    /// `CPool<CVehicle>` slot accessor 0x41CC10 (thiscall on the pool, slot index; a `.HOODLUM` stub)
-    fn vehicle_pool_get_at(pool: GPtr<u8>, i: u32) -> GPtr<u8> = thiscall 0x41CC10 => unported;
-    /// `CVehicle::GetVehicleAppearance()` (0x6D1080)
-    fn get_vehicle_appearance(v: GPtr<u8>) -> i32 = thiscall 0x6D1080 => unported;
-    /// `CVehicle::CanBeDeleted()` (0x6D1180), AL
-    fn can_be_deleted(v: GPtr<u8>) -> u8 = thiscall 0x6D1180 => unported;
     /// `CVector::Magnitude()` (0x4082C0), ST0 (an `fsqrt` result under PC=24: exact as f64)
     fn vector_magnitude(v: GPtr<u32>) -> f64 = thiscall 0x4082C0 => unported;
-    /// `CPool<CVehicle>::GetRef(CVehicle*)` (0x424160)
-    fn vehicle_get_ref(pool: GPtr<u8>, v: GPtr<u8>) -> i32 = thiscall 0x424160 => unported;
     /// `CRunningScript::IsPedDead(CPed*)` (0x464D70), AL
     fn script_is_ped_dead(s: Scr, p: GPtr<u8>) -> u8 = thiscall 0x464D70 => unported;
     /// `CRunningScript::ThisIsAValidRandomPed(ePedType, bool civ, bool gang, bool criminal)` (0x489490), AL
     fn this_is_a_valid_random_ped(s: Scr, ty: u32, civ: u32, gang: u32, crim: u32) -> u8 = thiscall 0x489490 => unported;
-    /// `CPedGroups::GetPedsGroup(const CPed*)` (0x5F7E80)
-    fn get_peds_group(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x5F7E80 => unported;
-    /// `CPed::SetCharCreatedBy(uint8)` (0x5E47E0)
-    fn set_char_created_by(p: GPtr<u8>, by: u32) = thiscall 0x5E47E0 => unported;
-    /// `CAutomobile::TellHeliToGoToCoors(float, float, float, float, float)` (0x6A2390); raw floats
-    fn tell_heli_to_go_to_coors(v: GPtr<u8>, x: u32, y: u32, z: u32, a: u32, b: u32) = thiscall 0x6A2390 => unported;
     /// `CPlane::IsAlreadyFlying()` (0x6CAB90), AL (ignored)
     fn plane_is_already_flying(v: GPtr<u8>) -> u8 = thiscall 0x6CAB90 => unported;
-    /// `CPedType::GetPedFlag(ePedType)` (0x608830)
-    fn get_ped_flag(t: u32) -> u32 = cdecl 0x608830 => unported;
     /// `CPedType::SetPedTypeAsAcquaintance(int32, ePedType, int32)` (0x608E20) / `ClearPedTypeAsAcquaintance`
     /// (0x6089F0)
     fn set_ped_type_as_acquaintance(a: u32, t: u32, f: u32) = cdecl 0x608E20 => unported;
     fn clear_ped_type_as_acquaintance(a: u32, t: u32, f: u32) = cdecl 0x6089F0 => unported;
-    /// `CRGBA::CRGBA(uint8, uint8, uint8, uint8)` (0x7170C0), returns this
-    fn rgba_ctor(c: GPtr<u8>, r: u32, g: u32, b: u32, a: u32) -> GPtr<u8> = thiscall 0x7170C0 => unported;
-    /// 0x463370 (thiscall on the rectangle's colour, `const CRGBA*`; a `.HOODLUM` stub): copies the colour
-    fn rgba_set_463370(c: GPtr<u8>, from: GPtr<u8>) = thiscall 0x463370 => unported;
-    /// `CTaskComplexUseEffect::CTaskComplexUseEffect(C2dEffect*, CEntity*)` (0x6321F0)
-    fn task_use_effect_ctor(t: GPtr<u8>, effect: u32, entity: u32) -> GPtr<u8> = thiscall 0x6321F0 => unported;
-    /// `CTaskSimpleGunControl::CTaskSimpleGunControl(CEntity*, const CVector*, const CVector*, int8, int16,
-    /// int32)` (0x61F3F0)
-    fn task_gun_control_ctor(t: GPtr<u8>, target: GPtr<u8>, a: u32, b: u32, c: u32, d: u32, e: u32) -> GPtr<u8> = thiscall 0x61F3F0 => unported;
     /// `CPedIntelligence::IsRespondingToEvent(eEventType)` (0x600DB0), AL
     fn is_responding_to_event(intel: GPtr<u8>, ev: u32) -> u8 = thiscall 0x600DB0 => unported;
     /// `CTaskComplexFleeAnyMeans::CTaskComplexFleeAnyMeans(CEntity*, bool, float, int32, int32, float, float,
@@ -217,7 +182,6 @@ orig! {
     fn patrol_route_add(r: GPtr<u8>, pos: GPtr<u32>, rec: GPtr<u8>) -> u8 = thiscall 0x46AE80 => unported;
     /// `CShopping::LoadPrices(const char*)` (0x49B8D0) / `LoadShop(const char*)` (0x49BBE0)
     fn load_prices(s: GPtr<u8>) = cdecl 0x49B8D0 => unported;
-    fn load_shop(s: GPtr<u8>) = cdecl 0x49BBE0 => unported;
     /// `CShopping::GetPrice(uint32)` (0x49AD50)
     fn get_price(i: u32) -> u32 = cdecl 0x49AD50 => unported;
     /// `CTaskComplexDie::CTaskComplexDie(eWeaponType, AssocGroupId, AnimationId, float, float, bool, bool,
@@ -226,8 +190,6 @@ orig! {
     fn task_die_ctor(t: GPtr<u8>, a: u32, b: u32, c: u32, d: u32, e: u32, f: u32, g: u32, h: u32, i: u32) -> GPtr<u8> = thiscall 0x630040 => unported;
     /// `CVehicle::SetVehicleCreatedBy(int32)` (0x6D5D70)
     fn set_vehicle_created_by(v: GPtr<u8>, by: u32) = thiscall 0x6D5D70 => unported;
-    /// `CTheZones::FindZoneByLabel(const char*, eZoneType)` (0x572C40), AX
-    fn find_zone_by_label(label: GPtr<u8>, ty: u32) -> u16 = cdecl 0x572C40 => unported;
 }
 
 /// `VEH(h)` (`CPool<CVehicle>::GetAtRef`, no null check by the callers).

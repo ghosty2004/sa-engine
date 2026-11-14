@@ -8,31 +8,23 @@ use sa_core::{hook, orig};
 
 use crate::common::{ftol32, g, k, xi};
 
+use sa_core::bindings::font_print_string;
+use sa_core::bindings::font_set_background;
+use sa_core::bindings::font_set_color;
+use sa_core::bindings::font_set_font_style;
+use sa_core::bindings::font_set_orientation;
+use sa_core::bindings::font_set_proportional;
+use sa_core::bindings::rgba_ctor;
+use sa_core::bindings::rw_im2d_render_primitive as im2d_render_primitive;
 orig! {
     /// `RwRenderStateSet(state, value)` (`RwGlobals` +0x20)
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xc97b24 0x20 => unported;
-    /// `RwIm2DRenderPrimitive(type, verts, n)` (0x734e90)
-    fn im2d_render_primitive(prim: u32, verts: GPtr<u8>, n: i32) -> i32 = cdecl 0x734e90 => unported;
-    /// `CRGBA::CRGBA(r, g, b, a)` (0x7170c0); returns `this`
-    fn rgba_ctor(this: GPtr<u8>, r: u32, gg: u32, b: u32, a: u32) -> GPtr<u8> = thiscall 0x7170c0 => unported;
     /// `CSprite2d::Draw2DPolygon(x1, y1, .. y4, const CRGBA&)` (0x7285b0; floats as raw dwords)
     fn draw_2d_polygon_call(x1: u32, y1: u32, x2: u32, y2: u32, x3: u32, y3: u32, x4: u32, y4: u32, c: GPtr<u8>) = cdecl 0x7285b0 => self::draw_2d_polygon;
     /// `CSprite2d::DrawRect(const CRect&, const CRGBA&)` (0x727b60)
     fn draw_rect(r: GPtr<u8>, c: GPtr<u8>) = cdecl 0x727b60 => crate::sprite2d::draw_rect;
     /// `CFont::SetScale(float, float)` (0x719380)
     fn font_set_scale(w: f32, h: f32) = cdecl 0x719380 => unported;
-    /// `CFont::SetBackground(bool, bool)` (0x7195c0)
-    fn font_set_background(a: u32, b: u32) = cdecl 0x7195c0 => unported;
-    /// `CFont::SetProportional(bool)` (0x7195b0)
-    fn font_set_proportional(on: u32) = cdecl 0x7195b0 => unported;
-    /// `CFont::SetOrientation(eFontAlignment)` (0x719610)
-    fn font_set_orientation(o: u32) = cdecl 0x719610 => unported;
-    /// `CFont::SetColor(CRGBA)` (0x719430; the colour as a dword)
-    fn font_set_color(c: u32) = cdecl 0x719430 => unported;
-    /// `CFont::SetFontStyle(eFontStyle)` (0x719490)
-    fn font_set_font_style(s: u32) = cdecl 0x719490 => unported;
-    /// `CFont::PrintString(float x, float y, const GxtChar*)` (0x71a700)
-    fn font_print_string(px: f32, py: f32, s: GPtr<u8>) = cdecl 0x71a700 => unported;
     /// CRT `sprintf(buf, fmt, int)` (0x821bb5)
     fn sprintf1(buf: GPtr<u8>, fmt: GPtr<u8>, v: u32) -> i32 = cdecl 0x821bb5 => unported;
     /// `AsciiToGxtChar(const char*, GxtChar*)` (0x718600)

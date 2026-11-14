@@ -9,11 +9,12 @@ use sa_math::x87::X87;
 
 use crate::common::{ftol32, g, jne, jp, k, rd, x, xi};
 
+use crate::bindings::rw_im3d_render_indexed_primitive;
+use crate::bindings::rw_im3d_transform;
+use sa_world::bindings::entity_get_col_model as get_col_model;
 orig! {
     /// `CBoat::FillBoatList()` (0x6F2710)
     fn fill_boat_list() = cdecl 0x6F2710 => unported;
-    /// `CEntity::GetColModel()` (0x535300)
-    fn get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => unported;
     /// `CWaterLevel::RenderWakeSegment(CVector2D& a, b, c, d, float& sizeA, float& sizeB, float& alphaA,
     /// float& alphaB, float& wakeZ)` (0x6EA260)
     fn render_wake_segment(a: GPtr<f32>, b: GPtr<f32>, c: GPtr<f32>, d: GPtr<f32>, s0: GPtr<f32>, s1: GPtr<f32>, a0: GPtr<f32>, a1: GPtr<f32>, z: GPtr<f32>) = cdecl 0x6EA260 => unported;
@@ -21,10 +22,6 @@ orig! {
     fn little_test() = cdecl 0x541330 => sa_core::common::little_test;
     /// `RwRenderStateSet(state, value)` (`RwGlobals` +0x20)
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `RwIm3DTransform(verts, count, ltm, flags)` (0x7EF450)
-    fn rw_im3d_transform(verts: u32, count: u32, ltm: u32, flags: u32) -> GPtr<u8> = cdecl 0x7EF450 => unported;
-    /// `RwIm3DRenderIndexedPrimitive(primType, indices, numIndices)` (0x7EF550)
-    fn rw_im3d_render_indexed_primitive(prim: u32, indices: u32, n: u32) -> u32 = cdecl 0x7EF550 => unported;
     /// `RwIm3DEnd()` (0x7EF520)
     fn rw_im3d_end() -> u32 = cdecl 0x7EF520 => unported;
 }
@@ -190,6 +187,7 @@ pub const HOOKS: &[HookReg] = &[HOOK_RENDER_BOAT_WAKES, HOOK_RENDER_WATER];
 
 // ---- WRITER-RENDER-BIG: CWaterLevel::RenderWater ----
 
+use crate::bindings::o_render_water_rectangle as rw_rectangle;
 orig! {
     /// `CGame::CanSeeWaterFromCurrArea()` (0x53C4B0, bool in AL)
     fn rw_can_see_water() -> u32 = cdecl 0x53C4B0 => sa_core::game::can_see_water_from_curr_area;
@@ -203,8 +201,6 @@ orig! {
     fn rw_segment(bx: i32, by: i32, fx0: f32, fx1: f32, fy0: f32, fy1: f32) = cdecl 0x6E6870 => crate::waterlevel::render_sea_bed_segment;
     /// `CWaterLevel::RenderWaterTriangle(x1, y1, CRenPar, x2, y2, CRenPar, x3, y3, CRenPar)` (0x6EE240)
     fn rw_triangle(x1: i32, y1: i32, p1z: u32, p1b: u32, p1s: u32, p1f: u32, x2: i32, y2: i32, p2z: u32, p2b: u32, p2s: u32, p2f: u32, x3: i32, y3: i32, p3z: u32, p3b: u32, p3s: u32, p3f: u32) = cdecl 0x6EE240 => crate::waterlevel::render_water_triangle;
-    /// `CWaterLevel::RenderWaterRectangle(x1, x2, y1, y2, CRenPar x4)` (0x6EC5D0)
-    fn rw_rectangle(x1: i32, x2: i32, y1: i32, y2: i32, p1z: u32, p1b: u32, p1s: u32, p1f: u32, p2z: u32, p2b: u32, p2s: u32, p2f: u32, p3z: u32, p3b: u32, p3s: u32, p3f: u32, p4z: u32, p4b: u32, p4s: u32, p4f: u32) = cdecl 0x6EC5D0 => crate::waterlevel::render_water_rectangle;
 }
 
 /// The visible water blocks (count, x and y as int16).

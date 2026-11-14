@@ -7,31 +7,23 @@ use sa_core::{hook, orig};
 
 use super::common::{ftol32, g, rd, wr, x, xi};
 
+use crate::bindings::furnish_bedroom as interior_furnish_bedroom;
+use crate::bindings::furnish_kitchen as interior_furnish_kitchen;
+use crate::bindings::furnish_lounge as interior_furnish_lounge;
+use crate::bindings::ig_get_entity;
+use crate::bindings::matrix_copy_ctor;
+use sa_core::bindings::matrix_dtor;
+use sa_stream::bindings::placeable_allocate_matrix;
+use sa_stream::bindings::simple_transform_update_matrix;
 orig! {
     /// `Interior_c::CalcMatrix(const CVector*)` (0x5914D0)
     fn interior_calc_matrix(i: GPtr<u8>, pos: GPtr<u8>) = thiscall 0x5914D0 => super::interior_info::interior_calc_matrix;
     /// `Interior_c::ResetTiles()` (0x593910)
     fn interior_reset_tiles(i: GPtr<u8>) = thiscall 0x593910 => unported;
-    /// `InteriorGroup_c::GetEntity()` (0x594BD0)
-    fn ig_get_entity(ig: GPtr<u8>) -> GPtr<u8> = thiscall 0x594BD0 => unported;
-    /// `CPlaceable::AllocateMatrix()` (0x54F560)
-    fn placeable_allocate_matrix(p: GPtr<u8>) = thiscall 0x54F560 => unported;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*)` (0x54F1B0)
-    fn simple_transform_update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => unported;
-    /// `CMatrix::CMatrix(const CMatrix&)` (0x59BCF0)
-    fn matrix_copy_ctor(m: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = thiscall 0x59BCF0 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
     /// `Interior_c::FurnishShop(int32)` (0x59A790)
     fn interior_furnish_shop(i: GPtr<u8>, kind: u32) = thiscall 0x59A790 => unported;
     /// `Interior_c::FurnishOffice()` (0x599AF0)
     fn interior_furnish_office(i: GPtr<u8>) = thiscall 0x599AF0 => unported;
-    /// `Interior_c::FurnishLounge()` (0x597740)
-    fn interior_furnish_lounge(i: GPtr<u8>) = thiscall 0x597740 => unported;
-    /// `Interior_c::FurnishBedroom()` (0x593FC0)
-    fn interior_furnish_bedroom(i: GPtr<u8>) = thiscall 0x593FC0 => unported;
-    /// `Interior_c::FurnishKitchen()` (0x5970B0)
-    fn interior_furnish_kitchen(i: GPtr<u8>) = thiscall 0x5970B0 => unported;
     /// `Interior_c::CalcExitPts()` (0x5924A0)
     fn interior_calc_exit_pts(i: GPtr<u8>) = thiscall 0x5924A0 => unported;
     /// `InteriorManager_c::HasInteriorHadStealDataSetup(Interior_c*)` (0x5982B0) on `g_interiorMan` (0xBAF670)

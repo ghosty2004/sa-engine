@@ -2,16 +2,12 @@
 //! Ported from the 1.0 US bytes.
 
 use sa_core::mem::GPtr;
-use sa_core::{native, orig};
+use sa_core::native;
 
 use crate::common::{g, rd, wr, x};
 
-orig! {
-    /// `CEntity::CleanUpOldReference(CEntity** ref)` (0x571A00)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CEntity::RegisterReference(CEntity** ref)` (0x571B70)
-    fn entity_register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
-}
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_core::bindings::entity_register_reference;
 
 /// `CIdleCam::SetTarget(CEntity* target)` (0x50A280, thiscall, `ret 4`). The entry jumps into the protection chunk
 /// 0x403961, which loads `EAX = [rol([0x156077C], [0x5E4224])]` = `[0xB7CB84]` (`CTimer::m_snTimeInMilliseconds`,

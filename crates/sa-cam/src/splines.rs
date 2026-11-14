@@ -64,6 +64,10 @@ const SPLINE_LOOK: usize = 0xB6F994;
 const FMT_INT: usize = 0x859508;
 const DELIMS: usize = 0x868B10;
 
+pub use sa_core::bindings::atof;
+pub use sa_core::bindings::cross_product;
+pub use sa_core::bindings::strtok;
+pub use sa_core::bindings::vector_normalise;
 orig! {
     /// `FUN_005b2090` (vector spline evaluator)
     pub fn spline_vector_call(out: GPtr<u8>, spline: GPtr<u8>, time: f32, index: GPtr<i32>) = cdecl 0x5B2090 => spline_vector;
@@ -77,14 +81,6 @@ orig! {
     pub fn sscanf_int(s: GPtr<u8>, fmt: GPtr<u8>, out: GPtr<i32>) -> i32 = cdecl 0x8220AD => unported;
     /// CRT `operator new` (0x82119A)
     pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
-    /// CRT `strtok` (0x82244B)
-    pub fn strtok(s: GPtr<u8>, delim: GPtr<u8>) -> GPtr<u8> = cdecl 0x82244B => unported;
-    /// CRT `atof` (0x823CEE), result in ST0
-    pub fn atof(s: GPtr<u8>) -> f64 = cdecl 0x823CEE => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    pub fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
-    /// `CrossProduct(CVector* out, const CVector*, const CVector*)` (0x59C730), returns `out`
-    pub fn cross_product(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C730 => unported;
 }
 
 /// `spline[i]` (`[esi+i*4]`, 32-bit index arithmetic).

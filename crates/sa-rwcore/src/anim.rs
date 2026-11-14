@@ -55,6 +55,7 @@ const UV_DICT_SCHEMA: u32 = 0x8DED50;
 const UV_SCHEME_A: u32 = 0x8DED84;
 const UV_SCHEME_B: u32 = 0x8DEDB4;
 
+use crate::bindings::free_list_create_prealloc;
 orig! {
     /// `RwEngineRegisterPlugin(size, id, open, close)` (0x7F2BB0)
     fn engine_register_plugin(size: i32, id: u32, open: u32, close: u32) -> i32 = cdecl 0x7F2BB0 => crate::plugin::engine_register_plugin;
@@ -66,8 +67,6 @@ orig! {
     fn material_register_plugin(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x74DBF0 => crate::material::rp_material_register_plugin;
     /// `RpMaterialRegisterPluginStream` (0x74DC20)
     fn material_register_plugin_stream(id: u32, read: u32, write: u32, get_size: u32) -> i32 = cdecl 0x74DC20 => crate::material::rp_material_register_plugin_stream;
-    /// `RwFreeListCreateAndPreallocateSpace` (0x801B70)
-    fn free_list_create_prealloc(size: u32, per_block: u32, align: u32, n: u32, space: GPtr<u8>, hint: u32) -> GPtr<u8> = cdecl 0x801B70 => crate::memory::rw_freelist_create_and_preallocate_space;
     /// `RwFreeListDestroy(fl)` (0x801B80)
     fn free_list_destroy(fl: GPtr<u8>) -> u32 = cdecl 0x801B80 => crate::memory::rw_freelist_destroy;
     /// `RwMatrixDestroy(m)` (0x7F2A20)

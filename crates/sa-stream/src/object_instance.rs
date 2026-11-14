@@ -12,33 +12,28 @@ use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 use sa_math::x87::X87;
 
+use crate::bindings::building_ctor;
+use crate::bindings::building_new;
+use crate::bindings::is_object_glass;
+use crate::bindings::placeable_allocate_matrix as allocate_matrix;
+use crate::bindings::simple_transform_update_matrix as update_matrix;
 orig! {
     /// `CDummy::operator new(size)` (0x5326E0)
     fn dummy_new(size: u32) -> GPtr<u8> = cdecl 0x5326E0 => unported;
     /// `CDummyObject::CDummyObject()` (0x59EA00)
     fn dummy_object_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x59EA00 => unported;
-    /// `CBuilding::operator new(size)` (0x404090)
-    fn building_new(size: u32) -> GPtr<u8> = cdecl 0x404090 => unported;
     /// `CAnimatedBuilding::CAnimatedBuilding()` (0x537A10)
     fn animated_building_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x537A10 => unported;
-    /// `CBuilding::CBuilding()` (0x403E00)
-    fn building_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x403E00 => unported;
     /// virtual `CEntity::SetModelIndexNoCreate(uint32)` (+0x18)
     fn set_model_index_no_create(this: GPtr<u8>, model: u32) = thiscall vslot 0x18 => unported;
     /// virtual `CEntity::GetBoundRect()` (+0x24, the CRect returned through a hidden pointer)
     fn get_bound_rect(this: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x24 => unported;
     /// virtual `CBaseModelInfo::GetModelType()` (+0x10, AL)
     fn model_type(this: GPtr<u8>) -> u8 = thiscall vslot 0x10 => unported;
-    /// `CGlass::IsObjectGlass(CEntity*)` (0x46A760)
-    fn is_object_glass(e: GPtr<u8>) -> u8 = cdecl 0x46A760 => unported;
     /// `CMatrix::SetRotateZOnly(float)` (0x59B020)
     fn set_rotate_z_only(m: GPtr<u8>, angle: f32) = thiscall 0x59B020 => unported;
     /// `CPlaceable::AllocateStaticMatrix()` (0x54F4C0)
     fn allocate_static_matrix(this: GPtr<u8>) = thiscall 0x54F4C0 => unported;
-    /// `CPlaceable::AllocateMatrix()` (0x54F560)
-    fn allocate_matrix(this: GPtr<u8>) = thiscall 0x54F560 => unported;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*)` (0x54F1B0)
-    fn update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => unported;
     /// `CMatrix::SetRotate(const CQuaternion&)` (0x59BBF0)
     fn set_rotate_quat(m: GPtr<u8>, q: GPtr<u8>) = thiscall 0x59BBF0 => unported;
     /// `CObject::SetMatrixForTrainCrossing(CMatrix*, float)` (0x59F200)

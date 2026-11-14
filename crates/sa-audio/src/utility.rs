@@ -52,11 +52,10 @@ const RAND_RET_FLOAT: u32 = 0x4D9C56;
 /// Return address of the `call rand` in `ResolveProbability` (0x4D9C92).
 const RAND_RET_PROB: u32 = 0x4D9C97;
 
+pub use sa_core::bindings::find_player_ped;
 orig! {
     /// `CAEAudioUtility::AudioLog10(float)` (0x4D9E50) as callers reach it (80-bit ST0 result)
     pub fn call_audio_log10(v: f32) -> X87 = reg("args = stack") 0x4D9E50 => audio_log10;
-    /// `FindPlayerPed(int32 playerId)` (0x56E210)
-    pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
     /// `FindPlayerVehicle(int32 playerId, bool bIncludeRemote)` (0x56E0D0)
     pub fn find_player_vehicle(id: i32, remote: u8) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
     /// `CAEAudioUtility::ConvertFromBytesToMS(uint32, uint32, uint16)` (0x4D9EF0)
@@ -380,13 +379,11 @@ const MIKE_FRONT: usize = 0x8AC258;
 const MIKE_REAR: usize = 0x8AC25C;
 const MIKE_REAR_ATTENUATION: usize = 0x8AC260;
 
+pub use crate::bindings::position_relative_to_camera_vec;
+pub use sa_core::bindings::vector_normalise;
 orig! {
-    /// `CVector::Normalise()` (0x59C910)
-    pub fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
     /// `CCamera::Get_Just_Switched_Status()` (0x50AE10)
     pub fn camera_just_switched(cam: GPtr<u8>) -> u8 = thiscall 0x50AE10 => unported;
-    /// `CAEAudioEnvironment::GetPositionRelativeToCamera(CVector* out, const CVector* pos)` (0x4D80B0)
-    pub fn position_relative_to_camera_vec(out: GPtr<u8>, pos: GPtr<u8>) -> u32 = cdecl 0x4D80B0 => unported;
 }
 
 /// `TheCamera`

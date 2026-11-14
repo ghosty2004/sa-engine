@@ -7,11 +7,10 @@ use sa_core::{hook, orig};
 
 use crate::common::{X87, rd, wr, x};
 
+use sa_core::bindings::vector_normalise;
 orig! {
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
 }
 
 /// `0.7f` (0x858CB0): the minimum 2D distance of the meeting point from either ped

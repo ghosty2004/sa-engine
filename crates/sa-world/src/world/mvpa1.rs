@@ -22,101 +22,75 @@ const THE_CAMERA: usize = 0xB6F028;
 /// `CGameLogic::SkipState`
 const SKIP_STATE: usize = 0x96A8A0;
 
+use crate::bindings::brains_check_if_new_entity_needs_script;
+use crate::bindings::clear_blip_for_entity as pickups_clear_blip_for_entity;
+use crate::bindings::clump_get_first_association;
+use crate::bindings::crt_ceil;
+use crate::bindings::cutscene_delete_cutscene_data;
+use crate::bindings::double_node_add_to_list as link_insert;
+use crate::bindings::double_node_new as link_new;
+use crate::bindings::enable_burglary_houses;
+use crate::bindings::entity_create_effects;
+use crate::bindings::entity_render;
+use crate::bindings::extinguish_car_fire as vehicle_extinguish_car_fire;
+use crate::bindings::interior_group_exit;
+use crate::bindings::interior_manager_return_interior_to_pool as interior_return_to_pool;
+use crate::bindings::physical_add_to_moving_list;
+use crate::bindings::remove_all_projectiles;
+use crate::bindings::remove_from_moving_list as physical_remove_from_moving_list;
+use crate::bindings::reset_area_code_for_visible_objects;
+use crate::bindings::set_user_value as vis_set_user_value;
+use crate::bindings::simple_transform_update_rw_matrix;
+use crate::bindings::tag_manager_is_tag;
+use sa_core::bindings::assoc_set_current_time;
+use sa_core::bindings::camera_set_fade_colour;
+use sa_core::bindings::crt_strlwr as crt_strupr;
+use sa_core::bindings::file_close;
+use sa_core::bindings::file_set_dir;
+use sa_core::bindings::get_first_atomic;
+use sa_core::bindings::get_pad;
+use sa_core::bindings::list_add_item;
+use sa_core::bindings::list_remove_all;
+use sa_core::bindings::list_remove_item;
+use sa_core::bindings::matrix_update_rw_matrix;
+use sa_core::bindings::open_file as file_open;
+use sa_core::bindings::quad_tree_delete_item;
+use sa_core::bindings::stats_check_for_stats_message;
+use sa_core::bindings::world_remove;
+use sa_stream::bindings::load_line;
+use sa_stream::bindings::model_info_add_ref as mi_add_ref;
+use sa_stream::bindings::streaming_add_entity;
+use sa_stream::bindings::strnicmp;
+use sa_stream::bindings::vmi_set_vehicle_colour;
 orig! {
     /// `CShopping::LoadStats()` (0x49B6A0)
     fn shopping_load_stats() = cdecl 0x49B6A0 => unported;
     /// `BreakObject_c::Exit()` (0x59DDD0)
     fn break_object_exit(o: GPtr<u8>) = thiscall 0x59DDD0 => unported;
-    /// `List_c::RemoveAll()` (0x4A8EB0; no catalogue name: clears a `List_c` head/tail/count)
-    fn list_remove_all(l: GPtr<u8>) = thiscall 0x4A8EB0 => unported;
-    /// `InteriorGroup_c::Exit()` (0x595290)
-    fn interior_group_exit(g: GPtr<u8>) = thiscall 0x595290 => unported;
     /// `FurnitureManager_c::Exit()` (0x5911A0)
     fn furniture_manager_exit(m: GPtr<u8>) = thiscall 0x5911A0 => furniture_manager_exit_port;
-    /// CRT `_strnicmp` (0x835AC7)
-    fn strnicmp(a: GPtr<u8>, b: GPtr<u8>, n: u32) -> i32 = cdecl 0x835AC7 => unported;
-    /// `CCamera::SetFadeColour(uint8 r, uint8 g, uint8 b)` (0x50BF00, `ret 0xC`)
-    fn camera_set_fade_colour(c: GPtr<u8>, r: u32, gg: u32, b: u32) = thiscall 0x50BF00 => unported;
     /// `CCamera::Fade(float duration, eFadeFlag)` (0x50AC20, `ret 8`)
     fn camera_fade(c: GPtr<u8>, t: u32, dir: u32) = thiscall 0x50AC20 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    fn get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CVehicle::ExtinguishCarFire()` (0x6D2460)
-    fn vehicle_extinguish_car_fire(v: GPtr<u8>) = thiscall 0x6D2460 => unported;
     /// `CObject::Create(CDummyObject*)` (0x5A2070)
     fn object_create_from_dummy(d: GPtr<u8>) -> GPtr<u8> = cdecl 0x5A2070 => unported;
-    /// `CScriptsForBrains::CheckIfNewEntityNeedsScript(CEntity*, int8 type, void*)` (0x46FF20, `ret 0xC`)
-    fn brains_check_if_new_entity_needs_script(b: GPtr<u8>, e: GPtr<u8>, t: u32, u: u32) = thiscall 0x46FF20 => unported;
-    /// `CVehicleModelInfo::SetVehicleColour(uint8, uint8, uint8, uint8)` (0x4C84B0, `ret 0x10`)
-    fn vmi_set_vehicle_colour(mi: GPtr<u8>, a: u32, b: u32, c: u32, d: u32) = thiscall 0x4C84B0 => unported;
-    /// `CEntity::Render()` (0x534310)
-    fn entity_render(e: GPtr<u8>) = thiscall 0x534310 => unported;
-    /// `CVisibilityPlugins::SetUserValue(RpAtomic*, uint16)` (0x732380)
-    fn vis_set_user_value(a: GPtr<u8>, v: u32) = cdecl 0x732380 => unported;
-    /// CRT `ceil(double)` (0x823820, ST0)
-    fn crt_ceil(v: f64) -> f64 = cdecl 0x823820 => unported;
-    /// `List_c::RemoveItem(ListItem_c*)` (0x4A8E30, `ret 4`)
-    fn list_remove_item(l: GPtr<u8>, item: GPtr<u8>) = thiscall 0x4A8E30 => unported;
-    /// `List_c::AddItem(ListItem_c*)` (0x4A8DF0, `ret 4`: inserts at the head)
-    fn list_add_item(l: GPtr<u8>, item: GPtr<u8>) = thiscall 0x4A8DF0 => unported;
-    /// `CWorld::Remove(CEntity*)` (0x563280)
-    fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
     /// virtual `CEntity::~CEntity` deleting destructor (vtable +0)
     fn v_delete(e: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
     /// virtual `CBaseModelInfo::CreateInstance()` (vtable +0x2C)
     fn v_mi_create_instance(mi: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x2C => unported;
     /// virtual `CPhysical::SetIsStatic(bool)` (vtable +0x10)
     fn v_set_is_static(e: GPtr<u8>, b: u32) = thiscall vslot 0x10 => unported;
-    /// `CMatrix::UpdateRwMatrix(RwMatrix*)` (0x59AD70, `ret 4`)
-    fn matrix_update_rw_matrix(m: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x59AD70 => unported;
-    /// `CSimpleTransform::UpdateRwMatrix(RwMatrix*)` (0x54EF40, `ret 4`)
-    fn simple_transform_update_rw_matrix(t: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x54EF40 => unported;
-    /// `CTagManager::IsTag(const CEntity*)` (0x49CCE0, AL)
-    fn tag_manager_is_tag(e: GPtr<u8>) -> u8 = cdecl 0x49CCE0 => unported;
     /// `CTagManager` user-value setter (0x49CD50; no catalogue name)
     fn tag_set_user_value(e: GPtr<u8>) = cdecl 0x49CD50 => tag_manager_setup_atomic;
     /// `CCustomBuildingDNPipeline::PreRenderUpdate(RpAtomic*, bool)` (0x5D7200)
     fn dn_pre_render_update(a: GPtr<u8>, b: u32) = cdecl 0x5D7200 => unported;
-    /// `CPhysical::AddToMovingList()` (0x542800)
-    fn physical_add_to_moving_list(e: GPtr<u8>) = thiscall 0x542800 => unported;
-    /// `operator new` of the 0xC-byte list links (0x5523C0)
-    fn link_new(size: u32) -> GPtr<u8> = cdecl 0x5523C0 => unported;
-    /// insert of a 0xC-byte link into the list given as argument (0x5329A0, `ret 4`; no catalogue name)
-    fn link_insert(link: GPtr<u8>, list: GPtr<u8>) = thiscall 0x5329A0 => unported;
-    /// `RpAnimBlendClumpGetFirstAssociation(RpClump*)` (0x4D15E0)
-    fn clump_get_first_association(c: GPtr<u8>) -> GPtr<u8> = cdecl 0x4D15E0 => unported;
-    /// `CAnimBlendAssociation::SetCurrentTime(float)` (0x4CEA80, `ret 4`)
-    fn assoc_set_current_time(a: GPtr<u8>, t: f32) = thiscall 0x4CEA80 => unported;
-    /// `CBaseModelInfo::AddRef()` (0x4C4BA0)
-    fn mi_add_ref(mi: GPtr<u8>) = thiscall 0x4C4BA0 => unported;
-    /// `CStreaming::AddEntity(CEntity*)` (0x409650)
-    fn streaming_add_entity(e: GPtr<u8>) -> GPtr<u8> = cdecl 0x409650 => unported;
-    /// `CEntity::CreateEffects()` (0x533790)
-    fn entity_create_effects(e: GPtr<u8>) = thiscall 0x533790 => unported;
-    /// `GetFirstAtomic(RpClump*)` (0x734820)
-    fn get_first_atomic(c: GPtr<u8>) -> GPtr<u8> = cdecl 0x734820 => unported;
     /// `CCustomBuildingRenderer::IsCBPCPipelineAttached(RpAtomic*)` (0x5D7F40, AL)
     fn is_cbpc_pipeline_attached(a: GPtr<u8>) -> u8 = cdecl 0x5D7F40 => unported;
     /// `CReplay::MarkEverythingAsNew()` (0x45D430)
     fn replay_mark_everything_as_new() = cdecl 0x45D430 => mark_everything_as_new;
     /// `CEntryExitManager::GetEntryExitIndex(const char*, uint16, uint16)` (0x43EFD0)
     fn get_entry_exit_index_call(name: GPtr<u8>, en: u32, dis: u32) -> i32 = cdecl 0x43EFD0 => get_entry_exit_index;
-    /// `CRadar::ClearBlipForEntity(eBlipType, int32 handle)` (0x587C60)
-    fn pickups_clear_blip_for_entity(ty: i32, handle: i32) = cdecl 0x587C60 => unported;
-    /// `CFileMgr::SetDir` (0x5387D0)
-    fn file_set_dir(path: GPtr<u8>) -> i32 = cdecl 0x5387D0 => sa_core::filemgr::set_dir;
-    /// `CFileMgr::OpenFile` (0x538900)
-    fn file_open(path: GPtr<u8>, mode: GPtr<u8>) -> GPtr<u8> = cdecl 0x538900 => sa_core::filemgr::open_file;
-    /// `CFileMgr::CloseFile` (0x5389D0)
-    fn file_close(f: GPtr<u8>) -> i32 = cdecl 0x5389D0 => sa_core::filemgr::close_file;
-    /// `CFileLoader::LoadLine(FILE*)` (0x536F80)
-    fn load_line(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x536F80 => unported;
     /// CRT `sscanf` (0x8220AD) with three targets
     fn sscanf3(s: GPtr<u8>, fmt: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, c: GPtr<u8>) -> i32 = cdecl 0x8220AD => unported;
-    /// CRT `_strupr` (0x836C58)
-    fn crt_strupr(s: GPtr<u8>) -> GPtr<u8> = cdecl 0x836C58 => unported;
-    /// `CStats::CheckForStatsMessage()` (0x559760)
-    fn stats_check_for_stats_message() = cdecl 0x559760 => unported;
     /// `CStats::PopulateFavoriteRadioStationList()` (0x558EC0)
     fn stats_populate_favorite_radio_station_list() -> u8 = cdecl 0x558EC0 => crate::world::misc2::populate_favorite_radio_station_list;
     /// `CStats::LoadActionReactionStats()` (0x5599B0)
@@ -125,22 +99,10 @@ orig! {
     fn stats_load_stat_update_conditions() = cdecl 0x559860 => load_stat_update_conditions;
     /// CRT `sscanf` (0x8220AD) with five targets
     fn sscanf5(s: GPtr<u8>, fmt: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, c: GPtr<u8>, d: GPtr<u8>, e: GPtr<u8>) -> i32 = cdecl 0x8220AD => unported;
-    /// `InteriorManager_c::ReturnInteriorToPool(Interior_c*)` (0x5984B0, `ret 4`)
-    fn interior_return_to_pool(m: GPtr<u8>, i: GPtr<u8>) = thiscall 0x5984B0 => unported;
     /// `FurnitureGroup_c::Init()` (0x5910A0)
     fn furniture_group_init(gr: GPtr<u8>) -> u8 = thiscall 0x5910A0 => unported;
     /// `FurnitureManager_c::LoadFurniture()` (0x5C0280)
     fn furniture_load_furniture(m: GPtr<u8>) -> u8 = thiscall 0x5C0280 => unported;
-    /// `CQuadTreeNode::DeleteItem(void*)` (0x552A40, `ret 4`)
-    fn quad_tree_delete_item(q: GPtr<u8>, item: GPtr<u8>) = thiscall 0x552A40 => unported;
-    /// `CEntryExitManager::EnableBurglaryHouses(bool)` (0x43F180)
-    fn enable_burglary_houses(b: u32) = cdecl 0x43F180 => unported;
-    /// `CEntryExitManager::ResetAreaCodeForVisibleObjects()` (0x43ED80)
-    fn reset_area_code_for_visible_objects() = cdecl 0x43ED80 => unported;
-    /// `CCutsceneMgr::DeleteCutsceneData()` (0x4D5ED0)
-    fn cutscene_delete_cutscene_data() = cdecl 0x4D5ED0 => unported;
-    /// `CProjectileInfo::RemoveAllProjectiles()` (0x7399B0)
-    fn remove_all_projectiles() = cdecl 0x7399B0 => unported;
     /// `CObject::DeleteAllTempObjects()` (0x5A18B0)
     fn object_delete_all_temp_objects() = cdecl 0x5A18B0 => unported;
     /// `CObject::DeleteAllMissionObjects()` (0x5A1910)
@@ -149,8 +111,6 @@ orig! {
     fn population_convert_all_objects_to_dummy_objects() = cdecl 0x616420 => unported;
     /// virtual `CEntity::Remove()` (vtable +0xC)
     fn v_entity_remove(e: GPtr<u8>) = thiscall vslot 0xC => unported;
-    /// `CPhysical::RemoveFromMovingList()` (0x542860)
-    fn physical_remove_from_moving_list(e: GPtr<u8>) = thiscall 0x542860 => unported;
     /// `CPickups::ReInit()` (0x456E60)
     fn pickups_re_init_call() = cdecl 0x456E60 => pickups_re_init;
     /// `CPools::CheckPoolsEmpty()` (0x551950)

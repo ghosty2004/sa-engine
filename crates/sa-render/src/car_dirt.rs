@@ -6,27 +6,22 @@ use sa_core::abi::{HookReg, NativeReg};
 use sa_core::mem::GPtr;
 use sa_core::{hook, native, orig};
 
+use sa_core::bindings::pop_current_txd as txd_pop_current;
+use sa_core::bindings::push_current_txd as txd_push_current;
+use sa_core::bindings::rw_texture_create as texture_create;
+use sa_core::bindings::set_current_txd as txd_set_current;
+use sa_world::bindings::rw_raster_unlock as raster_unlock;
 orig! {
     /// `CTxdStore::FindTxdSlot(const char*)` (0x731850)
     fn txd_find_slot(name: u32) -> i32 = cdecl 0x731850 => unported;
-    /// `CTxdStore::PushCurrentTxd()` (0x7316A0)
-    fn txd_push_current() = cdecl 0x7316A0 => unported;
-    /// `CTxdStore::PopCurrentTxd()` (0x7316B0)
-    fn txd_pop_current() = cdecl 0x7316B0 => unported;
-    /// `CTxdStore::SetCurrentTxd(int32)` (0x7319C0)
-    fn txd_set_current(slot: i32) = cdecl 0x7319C0 => unported;
     /// `RwTextureRead(name, mask)` (0x7F3AC0)
     fn texture_read(name: u32, mask: u32) -> GPtr<u8> = cdecl 0x7F3AC0 => unported;
     /// `RwTextureSetName(texture, name)` (0x7F38A0)
     fn texture_set_name(t: GPtr<u8>, name: u32) -> GPtr<u8> = cdecl 0x7F38A0 => unported;
-    /// `RwTextureCreate(raster)` (0x7F37C0)
-    fn texture_create(r: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F37C0 => unported;
     /// `RwRasterCreate(width, height, depth, flags)` (0x7FB230)
     fn raster_create(w: u32, h: u32, d: u32, flags: u32) -> GPtr<u8> = cdecl 0x7FB230 => unported;
     /// `RwRasterLock(raster, level, mode)` (0x7FB2D0)
     fn raster_lock(r: GPtr<u8>, level: u32, mode: u32) -> GPtr<u8> = cdecl 0x7FB2D0 => unported;
-    /// `RwRasterUnlock(raster)` (0x7FAEC0)
-    fn raster_unlock(r: GPtr<u8>) -> GPtr<u8> = cdecl 0x7FAEC0 => unported;
     /// `CClothesBuilder::CopyTexture(RwTexture*)` (0x5A5730)
     fn copy_texture_call(t: GPtr<u8>) -> GPtr<u8> = cdecl 0x5A5730 => copy_texture;
 }

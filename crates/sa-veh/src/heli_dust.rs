@@ -8,36 +8,25 @@ use sa_math::x87::Cmp;
 
 use crate::common::{f32_of, g, jne_mask, jp5, rd, wr, x};
 
+use crate::bindings::event_danger_ctor;
+use crate::bindings::event_danger_dtor;
+use sa_core::bindings::fx_play;
+use sa_pop::bindings::fx_enable_prim;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::fx_kill;
+use sa_world::bindings::fx_set_const_time;
+use sa_world::bindings::fx_set_local_particles;
+use sa_world::bindings::fx_set_offset_pos;
+use sa_world::bindings::get_event_global_group;
+use sa_world::bindings::surface_is_sand;
 orig! {
     /// `CWorld::ProcessVerticalLine(const CVector&, float, CColPoint&, CEntity*&, bool buildings,
     /// bool vehicles, bool peds, bool objects, bool dummies, bool seeThrough, CStoredCollPoly*)` (0x5674E0, AL)
     fn process_vertical_line(p: GPtr<u8>, z: f32, cp: GPtr<u8>, ent: GPtr<u8>, b0: u32, b1: u32, b2: u32, b3: u32, b4: u32, b5: u32, poly: u32) -> u8 = cdecl 0x5674E0 => unported;
-    /// `SurfaceInfos_c::IsSand(uint32)` (0x55E6F0, AL) on `g_surfaceInfos` (0xB79538)
-    fn surface_is_sand(s: GPtr<u8>, surf: u32) -> u8 = thiscall 0x55E6F0 => unported;
     /// `CWaterLevel::GetWaterLevel(float, float, float, float*, bool, CVector*)` (0x6EB690, AL)
     fn water_get_level(x: f32, y: f32, z: f32, level: GPtr<u8>, touching: u32, normal: u32) -> u8 = cdecl 0x6EB690 => unported;
-    /// `CEventDanger::CEventDanger(CEntity*, float)` (0x4B2600)
-    fn event_danger_ctor(ev: GPtr<u8>, e: GPtr<u8>, radius: f32) -> GPtr<u8> = thiscall 0x4B2600 => unported;
-    /// `CEventDanger::~CEventDanger()` (0x4B26A0)
-    fn event_danger_dtor(ev: GPtr<u8>) = thiscall 0x4B26A0 => unported;
-    /// `GetEventGlobalGroup()` (0x4ABA50)
-    fn get_event_global_group() -> GPtr<u8> = cdecl 0x4ABA50 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420)
-    fn event_group_add(grp: GPtr<u8>, ev: GPtr<u8>, valid: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
     /// `FxManager_c::CreateFxSystem(const char*, RwV3d*, RwMatrix*, bool)` (0x4A9BE0) on `g_fxMan` (0xA9AE80)
     fn create_fx_system(mgr: GPtr<u8>, name: u32, pos: GPtr<u8>, m: u32, ignore_bbox: u32) -> GPtr<u8> = thiscall 0x4A9BE0 => unported;
-    /// `FxSystem_c::SetLocalParticles(bool)` (0x4AA910)
-    fn fx_set_local_particles(fx: GPtr<u8>, b: u32) = thiscall 0x4AA910 => unported;
-    /// `FxSystem_c::Play()` (0x4AA2F0)
-    fn fx_play(fx: GPtr<u8>) = thiscall 0x4AA2F0 => unported;
-    /// `FxSystem_c::SetConstTime(bool, float)` (0x4AA6C0)
-    fn fx_set_const_time(fx: GPtr<u8>, on: u32, t: f32) = thiscall 0x4AA6C0 => unported;
-    /// `FxSystem_c::SetOffsetPos(const RwV3d&)` (0x4AA660)
-    fn fx_set_offset_pos(fx: GPtr<u8>, v: GPtr<u8>) = thiscall 0x4AA660 => unported;
-    /// `FxSystem_c::EnablePrim(int32, bool)` (0x4AA610)
-    fn fx_enable_prim(fx: GPtr<u8>, prim: i32, on: u32) = thiscall 0x4AA610 => unported;
-    /// `FxSystem_c::Kill()` (0x4AA3F0)
-    fn fx_kill(fx: GPtr<u8>) = thiscall 0x4AA3F0 => unported;
 }
 
 use sa_core::field::ptr_of as buf;

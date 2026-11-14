@@ -5,12 +5,9 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
-orig! {
-    /// `CDecisionMakerTypes::GetInstance()` (0x4684F0; creates the instance on first use)
-    fn decision_maker_types_get_instance() -> GPtr<u8> = cdecl 0x4684F0 => unported;
-}
+use sa_world::bindings::decision_maker_types_get_instance;
 
 fn rd8(a: u32) -> u8 {
     GPtr::<u8>::from_addr(a as usize).read()

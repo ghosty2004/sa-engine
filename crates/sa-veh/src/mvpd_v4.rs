@@ -9,11 +9,9 @@ use sa_math::x87::X87;
 
 use crate::common::{f32_of, ftol32, g, model_info, rd, wr, x};
 
+use sa_core::bindings::matrix_mul_vec;
+use sa_core::bindings::vector_normalise_and_mag as normalise_and_mag;
 orig! {
-    /// `operator*(const CMatrix&, const CVector&)` (0x59C890, hidden result pointer)
-    fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
-    /// `CVector::NormaliseAndMag()` (0x59C970, ST0)
-    fn normalise_and_mag(v: GPtr<u8>) -> f64 = thiscall 0x59C970 => unported;
     /// `CVector::Normalise()` (0x59C910)
     fn normalise(v: GPtr<CVector>) = thiscall 0x59C910 => sa_world::collision::data::normalise_port;
     /// `CVector::CrossProduct(CVector* out, const CVector* a, const CVector* b)` (0x59C730)
@@ -179,35 +177,25 @@ pub fn vehicle_do_head_light_beam(this: GPtr<u8>, light_id: u32, mat: GPtr<u8>, 
         rw_render_state_set(s, v);
     }
 }
+use crate::bindings::get_wheel_status as dm_get_wheel_status;
+use sa_core::bindings::matrix_attach;
+use sa_core::bindings::matrix_dtor;
+use sa_core::bindings::matrix_rotate_y;
+use sa_core::bindings::matrix_update_rw;
+use sa_world::bindings::fx_add_particle;
+use sa_world::bindings::surface_is_sand;
+use sa_world::bindings::surface_is_water;
+use sa_world::bindings::vector_add;
+use sa_world::bindings::vector_scale;
 orig! {
-    /// `CMatrix::Attach(RwMatrix*, bool)` (0x59BD10)
-    fn matrix_attach(m: GPtr<u8>, rw: GPtr<u8>, owns: u32) = thiscall 0x59BD10 => unported;
     /// `CMatrix::SetScale(float, float, float)` (0x59AF00)
     fn matrix_set_scale(m: GPtr<u8>, sx: f32, sy: f32, sz: f32) = thiscall 0x59AF00 => unported;
     /// `CMatrix::Rotate(float, float, float)` (0x59B460)
     fn matrix_rotate(m: GPtr<u8>, rx: f32, ry: f32, rz: f32) = thiscall 0x59B460 => unported;
-    /// `CMatrix::RotateY(float)` (0x59B2C0)
-    fn matrix_rotate_y(m: GPtr<u8>, a: f32) = thiscall 0x59B2C0 => unported;
-    /// `CMatrix::UpdateRW()` (0x59BBB0)
-    fn matrix_update_rw(m: GPtr<u8>) = thiscall 0x59BBB0 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
-    /// `CDamageManager::GetWheelStatus(int32)` (0x6C21B0)
-    fn dm_get_wheel_status(dm: GPtr<u8>, wheel: i32) -> u32 = thiscall 0x6C21B0 => crate::damage::get_wheel_status;
     /// `CVehicleModelInfo::GetWheelSize(bool front)` (0x6A06F0, ST0)
     fn get_wheel_size(mi: GPtr<u8>, front: u32) -> f64 = thiscall 0x6A06F0 => unported;
-    /// `SurfaceInfos_c::IsWater(uint32)` (0x55E710)
-    fn surface_is_water(s: GPtr<u8>, surf: u32) -> u8 = thiscall 0x55E710 => unported;
-    /// `SurfaceInfos_c::IsSand(uint32)` (0x55E6F0)
-    fn surface_is_sand(s: GPtr<u8>, surf: u32) -> u8 = thiscall 0x55E6F0 => unported;
-    /// `operator*(float, const CVector&)` (0x40FE90, hidden result pointer)
-    fn vector_scale(out: GPtr<u8>, k: f32, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE90 => unported;
-    /// `operator+(const CVector&, const CVector&)` (0x40FE30, hidden result pointer)
-    fn vector_add(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE30 => unported;
     /// `FxPrtMult_c::FxPrtMult_c(float x7)` (0x4AB290), the floats as bits
     fn fx_prt_mult_ctor(p: GPtr<u8>, r: u32, g: u32, b: u32, a: u32, size: u32, unk: u32, life: u32) -> GPtr<u8> = thiscall 0x4AB290 => unported;
-    /// `FxSystem_c::AddParticle(CVector*, CVector*, float, FxPrtMult_c*, float, float, float, int32)` (0x4AA440)
-    fn fx_add_particle(fx: GPtr<u8>, pos: GPtr<u8>, vel: GPtr<u8>, time: u32, mult: GPtr<u8>, rot: u32, bright: u32, cam: u32, local: u32) = thiscall 0x4AA440 => unported;
 }
 
 /// CRT `_CIasin` (0x821E70) of ST0.

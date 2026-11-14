@@ -3,15 +3,12 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 
 use crate::common::rd;
 
-orig! {
-    /// `CCam::Using3rdPersonMouseCam()` (0x50A850, on `TheCamera.Cams[0]` 0xB6F19C)
-    fn cam_using_3rd_person_mouse_cam(cam: GPtr<u8>) -> u8 = thiscall 0x50A850 => unported;
-}
+use sa_core::bindings::cam_using_3rd_person_mouse_cam;
 
 use sa_core::field::gf;
 

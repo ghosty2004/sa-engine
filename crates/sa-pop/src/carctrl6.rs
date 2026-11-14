@@ -579,20 +579,16 @@ pub fn fly_ai_heli_to_target_fixed_orientation(heli: GPtr<u8>, orientation: f32,
 // ---------------------------------------------------------------------------------------------------------
 // Parking
 
+use crate::bindings::get_position;
+use sa_core::bindings::task_new;
+use sa_world::bindings::task_complex_ctor;
+use sa_world::bindings::tm_set_task as task_manager_set_task;
 orig! {
-    /// `CPathNode::GetPosition(CVector*)` (0x420A10, thiscall, returns `out`)
-    fn get_position(node: GPtr<u8>, out: GPtr<f32>) -> GPtr<f32> = thiscall 0x420A10 => crate::pathfind::get_position;
     /// `CCarCtrl::SteerAICarWithPhysicsHeadingForTarget(CVehicle*, CPhysical*, float x, float y, float*, float*, float*, bool*)` (0x433280)
     #[allow(clippy::too_many_arguments)]
     fn steer_heading_for_target(v: GPtr<u8>, target: GPtr<u8>, x: f32, y: f32, steer: GPtr<f32>, gas: GPtr<f32>, brake: GPtr<f32>, hb: GPtr<u8>) = cdecl 0x433280 => crate::carctrl3::steer_ai_car_with_physics_heading_for_target;
-    /// `CTask::operator new(uint32)` (0x61A5A0)
-    fn task_new(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => unported;
     /// `CTaskComplexLeaveAnyCar::CTaskComplexLeaveAnyCar(int32 delay, bool sensible, bool forceGetOut)` (stub 0x421150, thiscall, returns `this`)
     fn task_leave_any_car_ctor(t: GPtr<u8>, delay: i32, sensible: u32, force: u32) -> GPtr<u8> = thiscall 0x421150 => unported;
-    /// `CTaskComplex::CTaskComplex()` (0x61A3B0, thiscall)
-    fn task_complex_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A3B0 => unported;
-    /// `CTaskManager::SetTask(CTask*, int32 slot, bool)` (0x681AF0, thiscall)
-    fn task_manager_set_task(m: GPtr<u8>, t: GPtr<u8>, slot: i32, b: u32) = thiscall 0x681AF0 => unported;
     /// `CCollision::DistToMathematicalLine(const CVector*, const CVector*, const CVector*)` (0x412970, ST0)
     fn dist_to_mathematical_line(a: GPtr<f32>, b: GPtr<f32>, p: GPtr<f32>) -> f64 = cdecl 0x412970 => dist_to_mathematical_line_abi;
 }
@@ -1179,12 +1175,11 @@ pub fn drag_car_to_point(veh: GPtr<u8>, target: GPtr<f32>) {
 // ---------------------------------------------------------------------------------------------------------
 // Planes
 
+use sa_world::bindings::plane_set_gear_up;
 orig! {
     /// `FUN_00422F80(CVehicle* plane, float heading)` (0x422F80, cdecl, ST0): the terrain probe of the plane
     /// route planner (the highest ground ahead along `heading`; 100000 when the first probe is blocked)
     fn plane_probe_heading(v: GPtr<u8>, heading: f32) -> f64 = cdecl 0x422F80 => unported;
-    /// `CPlane::SetGearUp()` (0x6CAC20, thiscall)
-    fn plane_set_gear_up(v: GPtr<u8>) = thiscall 0x6CAC20 => unported;
 }
 
 /// CRT `_CIasin` (0x821E70; operand and result in ST0) on an f32 operand: exact through
@@ -1690,28 +1685,22 @@ pub fn deal_with_bend_racing(
     1
 }
 
+use crate::bindings::car_has_reason_to_stop;
+use crate::bindings::node_eq;
+use crate::bindings::node_lt;
+use crate::bindings::remove_one_path_node;
+use crate::bindings::should_car_stop_for_bridge;
+use crate::bindings::stop_car_if_nodes_are_invalid;
 orig! {
-    /// `CCarCtrl::StopCarIfNodesAreInvalid(CVehicle*)` (0x422590)
-    fn stop_car_if_nodes_are_invalid(v: GPtr<u8>) -> u8 = cdecl 0x422590 => crate::carctrl2::stop_car_if_nodes_are_invalid;
     /// `CPathFind::DoPathSearch(...)` (0x4515D0, thiscall on ThePaths, gr parameter order)
     #[allow(clippy::too_many_arguments)]
     fn do_path_search(this: GPtr<u8>, path_type: u32, ox: f32, oy: f32, oz: f32, origin_addr: u32, tx: f32, ty: f32, tz: f32, out_nodes: GPtr<u32>, out_count: GPtr<i16>, max_nodes: i32, out_distance: GPtr<f32>, max_search: f32, target_addr: GPtr<u32>, max_depth: f32, same_lane: u32, forbidden: u32, allow_water: u32, for_boats: u32) = thiscall 0x4515D0 => crate::pathfind::do_path_search;
-    /// `CAutoPilot::RemoveOnePathNode()` (0x41B950, thiscall)
-    fn remove_one_path_node(ap: GPtr<u8>) = thiscall 0x41B950 => crate::carctrl2::auto_pilot_remove_one_path_node;
-    /// `CNodeAddress::operator==` (0x420920, thiscall)
-    fn node_eq(a: GPtr<u16>, b: GPtr<u16>) -> u32 = thiscall 0x420920 => crate::pathfind::node_address_eq;
-    /// `CNodeAddress::operator<` (0x420980, thiscall)
-    fn node_lt(a: GPtr<u16>, b: GPtr<u16>) -> u32 = thiscall 0x420980 => crate::pathfind::node_address_lt;
     /// `CPathFind::FindLinkBetweenNodes(CNodeAddress, CNodeAddress)` (0x451350, thiscall, hidden return pointer)
     fn find_link_between_nodes(this: GPtr<u8>, out: GPtr<u16>, a: u32, b: u32) -> GPtr<u16> = thiscall 0x451350 => crate::pathfind::find_link_between_nodes;
     /// `CCarCtrl::ClitargetOrientationToLink(CVehicle*, CCarPathLinkAddress, int8 side, float* heading, float x, float y)` (0x422760)
     fn clitarget_orientation_to_link(v: GPtr<u8>, link: u32, side: u32, heading: GPtr<f32>, x: f32, y: f32) = cdecl 0x422760 => unported;
     /// `CCarCtrl::FindPercDependingOnDistToLink(CVehicle*, CCarPathLinkAddress)` (0x422620, ST0)
     fn find_perc_depending_on_dist_to_link(v: GPtr<u8>, link: u16) -> f64 = cdecl 0x422620 => find_perc_abi;
-    /// `CTrafficLights::ShouldCarStopForBridge(CVehicle*)` (0x49D420)
-    fn should_car_stop_for_bridge(v: GPtr<u8>) -> u8 = cdecl 0x49D420 => crate::misc2::should_car_stop_for_bridge;
-    /// `CCarAI::CarHasReasonToStop(CVehicle*)` (0x41C050)
-    fn car_has_reason_to_stop(v: GPtr<u8>) = cdecl 0x41C050 => crate::carctrl::car_has_reason_to_stop;
 }
 
 #[cfg_attr(sa_phase_a, allow(dead_code))]

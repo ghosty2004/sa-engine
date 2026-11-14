@@ -10,19 +10,14 @@ use sa_math::x87::X87;
 
 use crate::common::{g, rd, wr, x};
 
+use crate::bindings::get_look_at_position_on_target;
+use sa_core::bindings::cross_product;
+use sa_core::bindings::get_atan_of_xy as general_get_atan_of_xy;
+use sa_core::bindings::vector_normalise;
+use sa_world::bindings::multiply3x3_vm;
 orig! {
-    /// `CIdleCam::GetLookAtPositionOnTarget(CEntity*, CVector*)` (0x50EAE0)
-    fn get_look_at_position_on_target(this: GPtr<u8>, target: GPtr<u8>, out: GPtr<u8>) = thiscall 0x50EAE0 => crate::idlecam::get_look_at_position_on_target;
-    /// `CGeneral::GetATanOfXY(float x, float y)` (0x53CC70, ST0)
-    fn general_get_atan_of_xy(x: f32, y: f32) -> f64 = cdecl 0x53CC70 => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
     /// `CHandShaker::Process(float)` (0x50D930) on `gHandShaker[0]` (0xB6ECA0)
     fn hand_shaker_process(h: GPtr<u8>, f: f32) = thiscall 0x50D930 => unported;
-    /// `Multiply3x3(CVector* out, const CVector*, const CMatrix*)` (0x59C810, cdecl)
-    fn multiply3x3_vm(out: GPtr<u8>, v: GPtr<u8>, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C810 => unported;
-    /// `CrossProduct(CVector* out, const CVector*, const CVector*)` (0x59C730, cdecl)
-    fn cross_product(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C730 => unported;
     /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, bool x7)` (0x56A490)
     #[allow(clippy::too_many_arguments)]
     fn world_get_is_line_of_sight_clear(a: GPtr<u8>, b: GPtr<u8>, bu: u32, ve: u32, pe: u32, ob: u32, du: u32, st: u32, ig: u32) -> u8 = cdecl 0x56A490 => unported;

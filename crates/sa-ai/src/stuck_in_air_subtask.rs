@@ -8,35 +8,27 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::fall_and_get_up_ctor;
+use crate::bindings::flee_point_ctor as go_to_point_ctor;
+use crate::bindings::pad_jump_just_down;
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_core::bindings::general_get_radian_angle_between_points;
+use sa_world::bindings::get_pad_from_player;
+use sa_world::bindings::stand_still_ctor;
+use sa_world::bindings::task_complex_ctor;
 orig! {
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00, thiscall, `ret 4`)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CTaskSimpleFallAndGetUp(int32 anim, int32 group, int32 time)` (0x6786C0)
-    fn fall_and_get_up_ctor(t: GPtr<u8>, anim: u32, group: u32, time: i32) -> GPtr<u8> = thiscall 0x6786C0 => unported;
-    /// `CTaskSimpleStandStill(int32 time, bool looped, bool keep, float delta)` (0x62F310)
-    fn stand_still_ctor(t: GPtr<u8>, time: u32, looped: u32, keep: u32, delta: u32) -> GPtr<u8> = thiscall 0x62F310 => unported;
-    /// `CTaskComplex::CTaskComplex()` (0x61A3B0)
-    fn task_complex_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A3B0 => unported;
-    /// `CTaskComplexGoToPointAndStandStill(...)`-style constructor (0x65B390): (target, mode, radius, time)
-    fn go_to_point_ctor(t: GPtr<u8>, target: GPtr<u8>, mode: u32, radius: u32, time: u32) -> GPtr<u8> = thiscall 0x65B390 => unported;
     /// `CTask::GetSubTask()` (vtable slot 8)
     fn task_get_sub_task(t: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x8 => unported;
     /// `CTask::GetTaskType()` (vtable slot 0x10)
     fn task_get_type(t: GPtr<u8>) -> u32 = thiscall vslot 0x10 => unported;
     /// `CTask::MakeAbortable(CPed*, eAbortPriority, const CEvent*)` (vtable slot 0x18)
     fn task_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, prio: i32, ev: u32) -> u8 = thiscall vslot 0x18 => unported;
-    /// `CPed::GetPadFromPlayer()` (0x609560)
-    fn get_pad_from_player(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x609560 => unported;
     /// `CPad::GetPedWalkLeftRight()` (0x53FC90)
     fn pad_get_ped_walk_left_right(p: GPtr<u8>) -> u16 = thiscall 0x53FC90 => unported;
     /// `CPad::GetPedWalkUpDown()` (0x53FD30)
     fn pad_get_ped_walk_up_down(p: GPtr<u8>) -> u16 = thiscall 0x53FD30 => unported;
-    /// `CGeneral::GetRadianAngleBetweenPoints(float x1, float y1, float x2, float y2)` (0x53CBE0, ST0)
-    fn general_get_radian_angle_between_points(x1: u32, y1: u32, x2: u32, y2: u32) -> f64 = cdecl 0x53CBE0 => unported;
     /// `CGeneral::LimitRadianAngle(float)` (0x53CB50, ST0)
     fn general_limit_radian_angle(a: f32) -> f64 = cdecl 0x53CB50 => unported;
-    /// `CPad::JumpJustDown()` (0x540770)
-    fn pad_jump_just_down(pad: GPtr<u8>) -> u8 = thiscall 0x540770 => unported;
     /// `RpAnimBlendClumpGetAssociation(RpClump*, AnimationId)` (0x4D68B0)
     fn clump_get_association(clump: GPtr<u8>, anim: i32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
 }

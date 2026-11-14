@@ -14,6 +14,18 @@ use sa_math::x87::X87;
 
 use super::common::{g, rd, wr, x, xi};
 
+use crate::bindings::clear_wanted_level_and_go_on_parole;
+use crate::bindings::fx_prt_mult_ctor;
+use crate::bindings::garage_is_entity_entirely_inside_3d_o as is_entity_entirely_inside_3d;
+use crate::bindings::garage_is_entity_touching_3d as is_entity_touching_3d;
+use crate::bindings::garages_trigger_message as trigger_message;
+use crate::bindings::get_remap_index;
+use crate::bindings::get_vehicle_appearance;
+use crate::bindings::remove_cars_blocking_door_not_inside;
+use crate::bindings::set_remap;
+use sa_core::bindings::get_pad;
+use sa_core::bindings::hud_set_help_message as set_help_message;
+use sa_core::bindings::random_float_in_range;
 orig! {
     /// `CWorld::FindPlayerPed(int32)` (0x56E210)
     fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => crate::world::cworld::find_player_ped;
@@ -23,16 +35,12 @@ orig! {
     fn find_player_coors(out: GPtr<f32>, id: i32) -> GPtr<f32> = cdecl 0x56E010 => crate::world::cworld::find_player_coors;
     /// `CWorld::FindPlayerWanted(int32)` (0x56E230)
     fn find_player_wanted(id: i32) -> GPtr<u8> = cdecl 0x56E230 => crate::world::cworld::find_player_wanted;
-    /// `CGarage::IsEntityEntirelyInside3D(CEntity*, float)` (0x448BE0)
-    fn is_entity_entirely_inside_3d(gp: GPtr<u8>, e: GPtr<u8>, margin: f32) -> u8 = thiscall 0x448BE0 => crate::world::mvpb_world3::garage_is_entity_entirely_inside_3d;
     /// `CGarage::IsEntityEntirelyOutside(CEntity*, float)` (0x448D30)
     fn is_entity_entirely_outside(gp: GPtr<u8>, e: GPtr<u8>, margin: f32) -> u8 = thiscall 0x448D30 => crate::world::mvpb_world2::garage_is_entity_entirely_outside;
     /// `CGarage::IsStaticPlayerCarEntirelyInside()` (0x44A830)
     fn is_static_player_car_entirely_inside(gp: GPtr<u8>) -> u8 = thiscall 0x44A830 => crate::world::mvpb_world3::garage_is_static_player_car_entirely_inside;
     /// `thunk_FUN_01569180(float margin)` (0x448E50): the player (vehicle) entirely outside
     fn is_player_entirely_outside(gp: GPtr<u8>, margin: f32) -> u32 = thiscall 0x448E50 => crate::world::mvpb_world::garage_is_player_entirely_outside;
-    /// `CGarage::IsEntityTouching3D(CEntity*)` (0x448EE0)
-    fn is_entity_touching_3d(gp: GPtr<u8>, e: GPtr<u8>) -> u8 = thiscall 0x448EE0 => unported;
     /// `CGarage::IsGarageEmpty()` (0x44A9C0)
     fn is_garage_empty(gp: GPtr<u8>) -> u8 = thiscall 0x44A9C0 => unported;
     /// `FUN_00447d80(float x, float y)` (0x447D80): squared 2D distance to the garage box, ST0
@@ -61,8 +69,6 @@ orig! {
     fn hideout_restore(gp: GPtr<u8>, stored: GPtr<u8>) -> u8 = thiscall 0x4485C0 => unported;
     /// `thunk_FUN_0156d8d0(CStoredCar*)` (0x448550)
     fn hideout_restore_cars(gp: GPtr<u8>, stored: GPtr<u8>) -> u8 = thiscall 0x448550 => unported;
-    /// `CGarage::RemoveCarsBlockingDoorNotInside()` (0x449690)
-    fn remove_cars_blocking_door_not_inside(gp: GPtr<u8>) = thiscall 0x449690 => unported;
     /// `CGarage::StoreAndRemoveCarsForThisHideOut(CStoredCar*, int32)` (0x449900)
     fn store_and_remove_cars(gp: GPtr<u8>, stored: GPtr<u8>, max: i32) = thiscall 0x449900 => super::garage_store_cars::store_and_remove_cars_for_this_hide_out;
     /// `CGarages::FindSafeHouseIndexForGarageType(eGarageType)` (0x4489F0)
@@ -73,44 +79,26 @@ orig! {
     fn give_player_detonator() = cdecl 0x448660 => unported;
     /// `CGarages::IsCarSprayable(CVehicle*)` (0x4479A0)
     fn is_car_sprayable(veh: GPtr<u8>) -> u8 = cdecl 0x4479A0 => crate::world::misc2::is_car_sprayable;
-    /// `CGarages::TriggerMessage(const char*, int16, uint16, int16)` (0x447B80)
-    fn trigger_message(msg: u32, a: i32, time: u32, b: i32) = cdecl 0x447B80 => unported;
     /// `CAudioEngine::ReportFrontendAudioEvent(eAudioEvents, float, float)` (0x506EA0) on `AudioEngine`
     fn report_frontend_audio_event(ae: GPtr<u8>, ev: u32, vol: f32, speed: f32) = thiscall 0x506EA0 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    fn get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
     /// `CStats::GetStatValue(eStats)` (0x558E40), ST0
     fn get_stat_value(stat: u16) -> f64 = cdecl 0x558E40 => crate::world::restart::stat_value_port;
     /// `CStats::IncrementStat(eStats, float)` (0x55C180)
     fn increment_stat(stat: u32, v: f32) = cdecl 0x55C180 => crate::world::mvpb_stats::increment_stat;
     /// `CStats::SetStatValue(eStats, float)` (0x55A070)
     fn set_stat_value(stat: u16, v: f32) = cdecl 0x55A070 => crate::world::stats::set_stat_value;
-    /// `CWanted::ClearWantedLevelAndGoOnParole()` (0x5625A0)
-    fn clear_wanted_level_and_go_on_parole(w: GPtr<u8>) = thiscall 0x5625A0 => unported;
     /// `std::max<float>` (0x420800), ST0
     fn max_f(a: f32, b: f32) -> f64 = cdecl 0x420800 => crate::world::entity_prerender::max_f_port;
-    /// `CVehicle::GetRemapIndex()` (0x6D0B70)
-    fn get_remap_index(veh: GPtr<u8>) -> i32 = thiscall 0x6D0B70 => unported;
-    /// `CVehicle::SetRemap(int32)` (0x6D0C00)
-    fn set_remap(veh: GPtr<u8>, idx: i32) = thiscall 0x6D0C00 => unported;
     /// `CVehicleModelInfo::ChooseVehicleColour(uint8&, uint8&, uint8&, uint8&, int32)` (0x4C8500)
     fn choose_vehicle_colour(mi: GPtr<u8>, c1: GPtr<u8>, c2: GPtr<u8>, c3: GPtr<u8>, c4: GPtr<u8>, shift: i32) = thiscall 0x4C8500 => sa_stream::modelinfo::vehicle::choose_vehicle_colour;
-    /// `FxPrtMult_c::FxPrtMult_c(float r, g, b, a, size, lastFactor, life)` (0x4AB290)
-    fn fx_prt_mult_ctor(p: GPtr<u8>, r: f32, gg: f32, b: f32, a: f32, size: f32, last: f32, life: f32) -> GPtr<u8> = thiscall 0x4AB290 => unported;
     /// `FxSystem_c::AddParticle(RwV3d*, RwV3d*, float, FxPrtMult_c*, float, float, float, uint8)` (0x4AA440)
     fn fx_add_particle(fx: GPtr<u8>, pos: GPtr<f32>, vel: GPtr<f32>, time: f32, mult: GPtr<u8>, brightness: f32, zf: f32, camf: f32, local: u32) = thiscall 0x4AA440 => unported;
-    /// `CGeneral::GetRandomNumberInRange(float, float)` (0x41BD90), ST0
-    fn random_float_in_range(lo: f32, hi: f32) -> f64 = cdecl 0x41BD90 => unported;
     /// `CVehicle::DestroyVehicleAndDriverAndPassengers(CVehicle*)` (0x6D2250)
     fn destroy_vehicle_and_occupants(veh: GPtr<u8>) = cdecl 0x6D2250 => unported;
     /// `CWorld::CallOffChaseForArea(float, float, float, float)` (0x566A60)
     fn call_off_chase_for_area(x1: f32, y1: f32, x2: f32, y2: f32) = cdecl 0x566A60 => unported;
-    /// `CVehicle::GetVehicleAppearance()` (0x6D1080)
-    fn get_vehicle_appearance(veh: GPtr<u8>) -> i32 = thiscall 0x6D1080 => unported;
     /// `CText::Get(const char*)` (0x6A0050) on `TheText`
     fn text_get(t: GPtr<u8>, key: u32) -> u32 = thiscall 0x6A0050 => unported;
-    /// `CHud::SetHelpMessage(const char*, bool, bool, bool)` (0x588BE0)
-    fn set_help_message(text: u32, quick: u32, permanent: u32, brief: u32) = cdecl 0x588BE0 => unported;
     /// `CStreaming::RequestModel(int32, int32)` (0x4087E0)
     fn request_model(id: i32, flags: i32) = cdecl 0x4087E0 => sa_stream::streaming::request_model;
     /// `CVehicle::Fix()` (vtable +0xC8)

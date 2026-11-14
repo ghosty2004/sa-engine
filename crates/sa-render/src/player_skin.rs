@@ -5,11 +5,11 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
+use sa_core::bindings::pop_current_txd as txd_pop_current;
+use sa_core::bindings::push_current_txd as txd_push_current;
+use sa_core::bindings::rw_texture_create as texture_create;
+use sa_core::bindings::rw_texture_set_name as texture_set_name;
 orig! {
-    /// `CTxdStore::PushCurrentTxd()` (0x7316A0)
-    fn txd_push_current() = cdecl 0x7316A0 => unported;
-    /// `CTxdStore::PopCurrentTxd()` (0x7316B0)
-    fn txd_pop_current() = cdecl 0x7316B0 => unported;
     /// `CTxdStore::SetCurrentTxd(int32)` (0x7319C0)
     fn txd_set_current(slot: u32) = cdecl 0x7319C0 => unported;
     /// `RwTextureRead(name, mask)` (0x7F3AC0)
@@ -24,10 +24,6 @@ orig! {
     fn raster_create(w: u32, h: u32, d: u32, f: u32) -> GPtr<u8> = cdecl 0x7FB230 => unported;
     /// `RwRasterSetFromImage(raster, image)` (0x804290)
     fn raster_set_from_image(r: GPtr<u8>, img: GPtr<u8>) -> GPtr<u8> = cdecl 0x804290 => unported;
-    /// `RwTextureCreate(raster)` (0x7F37C0)
-    fn texture_create(r: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F37C0 => unported;
-    /// `RwTextureSetName(texture, name)` (0x7F38A0)
-    fn texture_set_name(t: GPtr<u8>, name: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F38A0 => unported;
     /// `RwTexDictionaryAddTexture(dict, texture)` (0x7F3980)
     fn tex_dictionary_add_texture(d: u32, t: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F3980 => unported;
     /// `RwImageDestroy(image)` (0x802740)

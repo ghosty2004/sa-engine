@@ -9,29 +9,19 @@ use sa_math::x87::Cmp;
 
 use crate::common::*;
 
+use crate::bindings::bbox_planes as compute_entity_bbox_planes;
+use crate::bindings::compute_entity_hit_side as compute_entity_hit_side_pos;
+use crate::bindings::compute_entity_hit_side_ped;
+use crate::bindings::task_is_go_to_task;
+use crate::bindings::walk_round_car_set_new_vehicle;
+use sa_core::bindings::ped_is_alive;
+use sa_core::bindings::tm_get_active_task as get_active_task;
+use sa_core::bindings::tm_get_simplest_active_task as get_simplest_active_task;
+use sa_core::bindings::vector_dot_product;
+use sa_world::bindings::vector_ctor_iterator;
 orig! {
-    /// `CPed::IsAlive` (0x5E0170)
-    fn ped_is_alive(ped: GPtr<u8>) -> u8 = thiscall 0x5E0170 => unported;
-    /// `DotProduct(const CVector&, const CVector&)` (0x40FDB0, cdecl, ST0)
-    fn vector_dot_product(a: GPtr<u8>, b: GPtr<u8>) -> f64 = cdecl 0x40FDB0 => unported;
-    /// `CTaskManager::GetSimplestActiveTask` (0x6819D0)
-    fn get_simplest_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x6819D0 => unported;
-    /// `CTaskManager::GetActiveTask` (0x681720)
-    fn get_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x681720 => unported;
-    /// `CTask::IsGoToTask(CTask*)` (0x61A360, cdecl)
-    fn task_is_go_to_task(t: GPtr<u8>) -> u8 = cdecl 0x61A360 => unported;
-    /// `CPedGeometryAnalyser::ComputeEntityHitSide(const CPed&, CEntity&)` (0x5F3BC0, cdecl)
-    fn compute_entity_hit_side_ped(ped: GPtr<u8>, e: GPtr<u8>) -> i32 = cdecl 0x5F3BC0 => unported;
-    /// `CPedGeometryAnalyser::ComputeEntityHitSide(const CVector&, CEntity&)` (0x5F3AC0, cdecl)
-    fn compute_entity_hit_side_pos(pos: GPtr<u8>, e: GPtr<u8>) -> i32 = cdecl 0x5F3AC0 => unported;
-    /// `` `eh vector constructor iterator' `` (0x403D60, stdcall)
-    fn vector_ctor_iterator(p: GPtr<u8>, size: u32, count: i32, ctor: u32) = stdcall 0x403D60 => unported;
-    /// `CPedGeometryAnalyser::ComputeEntityBoundingBoxPlanes(float z, CEntity&, CVector (*)[4], float*)` (0x5F3660, cdecl)
-    fn compute_entity_bbox_planes(z: u32, e: GPtr<u8>, planes: GPtr<u8>, dots: GPtr<u8>) = cdecl 0x5F3660 => unported;
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_get_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CTaskComplexWalkRoundCar::SetNewVehicle(CVehicle*, int8)` (0x654290, `ret 8`)
-    fn walk_round_car_set_new_vehicle(t: GPtr<u8>, v: GPtr<u8>, f: i32) = thiscall 0x654290 => unported;
 }
 
 /// The facing threshold (0.35) and 0.0.

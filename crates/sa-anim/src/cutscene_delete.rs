@@ -10,25 +10,36 @@ use sa_core::{hook, orig};
 
 use crate::common::{g, rd, wr};
 
+use sa_core::bindings::camera_get_screen_fade_status;
+use sa_core::bindings::camera_restore_with_jump_cut;
+use sa_core::bindings::camera_set_wide_screen_off;
+use sa_core::bindings::destroy_fx_system as fx_manager_destroy_fx_system;
+use sa_core::bindings::enable_all_ped_speech as ped_speech_enable_all;
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_core::bindings::find_player_coors;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::game_drastic_tidy_up_memory;
+use sa_core::bindings::get_pad as pad_get_pad;
+use sa_core::bindings::get_weapon_info as weapon_info_get;
+use sa_core::bindings::load_all_requested_models as streaming_load_all_requested_models;
+use sa_core::bindings::messages_clear_messages;
+use sa_core::bindings::pad_clear;
+use sa_core::bindings::ped_give_weapon;
+use sa_core::bindings::player_info_make_player_safe;
+use sa_core::bindings::rubbish_set_visibility;
+use sa_core::bindings::set_mission_doesnt_require_model as streaming_set_mission_doesnt_require_model;
+use sa_core::bindings::set_model_is_deletable as streaming_set_model_is_deletable;
+use sa_core::bindings::start_extra_colour as time_cycle_start_extra_colour;
+use sa_core::bindings::stream_zone_models as streaming_stream_zone_models;
+use sa_core::bindings::streaming_load_initial_peds;
+use sa_core::bindings::streaming_load_initial_vehicles;
+use sa_core::bindings::streaming_load_initial_weapons;
+use sa_core::bindings::stricmp as crt_stricmp;
+use sa_core::bindings::time_cycle_stop_extra_colour;
+use sa_core::bindings::timer_resume;
+use sa_core::bindings::timer_suspend;
+use sa_core::bindings::world_remove;
 orig! {
-    /// `CTimer::Suspend()` (0x5619D0)
-    fn timer_suspend() = cdecl 0x5619D0 => unported;
-    /// `CTimer::Resume()` (0x561A00)
-    fn timer_resume() = cdecl 0x561A00 => unported;
-    /// `CTimeCycle::StartExtraColour(int32, bool)` (0x55FEC0)
-    fn time_cycle_start_extra_colour(c: u32, b: u32) = cdecl 0x55FEC0 => unported;
-    /// `CTimeCycle::StopExtraColour(bool)` (0x55FF20)
-    fn time_cycle_stop_extra_colour(b: u32) = cdecl 0x55FF20 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00, `ret 4`)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `FxManager_c::DestroyFxSystem(FxSystem_c*)` (0x4A9810, `ret 4`)
-    fn fx_manager_destroy_fx_system(m: GPtr<u8>, s: GPtr<u8>) = thiscall 0x4A9810 => unported;
-    /// `CMessages::ClearMessages(bool)` (0x69DCD0)
-    fn messages_clear_messages(b: u32) = cdecl 0x69DCD0 => unported;
-    /// `CRubbish::SetVisibility(bool)` (0x7204C0)
-    fn rubbish_set_visibility(b: u32) = cdecl 0x7204C0 => unported;
-    /// `CWorld::Remove(CEntity*)` (0x563280)
-    fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
     /// `CEntity::DeleteRwObject()` (vtable +0x20)
     fn v_delete_rw_object(e: GPtr<u8>) = thiscall vslot 0x20 => unported;
     /// scalar deleting destructor (vtable +0, `ret 4`)
@@ -37,58 +48,18 @@ orig! {
     fn anim_manager_remove_last_anim_file() = cdecl 0x4D3ED0 => unported;
     /// `CAnimBlendAssocGroup::DestroyAssociations()` (0x4CDFF0)
     fn assoc_group_destroy_associations(g: GPtr<u8>) = thiscall 0x4CDFF0 => unported;
-    /// `CCamera::RestoreWithJumpCut()` (0x50BAB0)
-    fn camera_restore_with_jump_cut(c: GPtr<u8>) = thiscall 0x50BAB0 => unported;
-    /// `CCamera::SetWideScreenOff()` (0x50C150)
-    fn camera_set_wide_screen_off(c: GPtr<u8>) = thiscall 0x50C150 => unported;
     /// `CCamera::DeleteCutSceneCamDataMemory()` (0x5B24A0)
     fn camera_delete_cut_scene_cam_data_memory(c: GPtr<u8>) = thiscall 0x5B24A0 => unported;
     /// `CIplStore::ClearIplsNeededAtPosn()` (0x4045E0)
     fn ipl_store_clear_ipls_needed_at_posn() = cdecl 0x4045E0 => unported;
-    /// `FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    fn pad_get_pad(id: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CPad::Clear(bool, bool)` (0x541A70, `ret 8`)
-    fn pad_clear(pad: GPtr<u8>, a: u32, b: u32) = thiscall 0x541A70 => unported;
-    /// `CPlayerInfo::MakePlayerSafe(bool, float)` (0x56E870, `ret 8`)
-    fn player_info_make_player_safe(pi: GPtr<u8>, safe: u32, radius: f32) = thiscall 0x56E870 => unported;
-    /// CRT `_stricmp` (0x8229B6)
-    fn crt_stricmp(a: GPtr<u8>, b: GPtr<u8>) -> i32 = cdecl 0x8229B6 => unported;
     /// `CAudioEngine::StopCutsceneTrack(bool)` (0x507080, `ret 4`)
     fn audio_stop_cutscene_track(e: GPtr<u8>, b: u32) = thiscall 0x507080 => unported;
     /// `CAudioEngine::EnableEffectsLoading()` (0x506E90)
     fn audio_enable_effects_loading(e: GPtr<u8>) = thiscall 0x506E90 => unported;
-    /// `CAEPedSpeechAudioEntity::EnableAllPedSpeech()` (0x4E3EC0)
-    fn ped_speech_enable_all() = cdecl 0x4E3EC0 => unported;
-    /// `CCamera::GetScreenFadeStatus()` (0x50AE20)
-    fn camera_get_screen_fade_status(c: GPtr<u8>) -> i32 = thiscall 0x50AE20 => unported;
-    /// `CGame::DrasticTidyUpMemory(bool)` (0x53C810)
-    fn game_drastic_tidy_up_memory(b: u32) = cdecl 0x53C810 => unported;
-    /// `CStreaming::LoadInitialPeds()` (0x40D3D0)
-    fn streaming_load_initial_peds() = cdecl 0x40D3D0 => unported;
-    /// `CStreaming::LoadInitialWeapons()` (0x40A120)
-    fn streaming_load_initial_weapons() = cdecl 0x40A120 => unported;
-    /// `CStreaming::LoadInitialVehicles()` (0x407F20)
-    fn streaming_load_initial_vehicles() = cdecl 0x407F20 => unported;
-    /// `CWeaponInfo::GetWeaponInfo(eWeaponType, eWeaponSkill)` (0x743C60)
-    fn weapon_info_get(ty: u32, skill: u32) -> GPtr<u8> = cdecl 0x743C60 => unported;
     /// `CStreaming::RequestModel(int32, int32)` (0x4087E0)
     fn streaming_request_model(id: i32, flags: u32) = cdecl 0x4087E0 => unported;
-    /// `CStreaming::LoadAllRequestedModels(bool)` (0x40EA10)
-    fn streaming_load_all_requested_models(b: u32) = cdecl 0x40EA10 => unported;
-    /// `CStreaming::SetModelIsDeletable(int32)` (0x409C10)
-    fn streaming_set_model_is_deletable(id: i32) = cdecl 0x409C10 => unported;
-    /// `CPed::GiveWeapon(eWeaponType, uint32 ammo, bool)` (0x5E6080, `ret 0xC`)
-    fn ped_give_weapon(ped: GPtr<u8>, ty: u32, ammo: u32, b: u32) -> u32 = thiscall 0x5E6080 => unported;
     /// `CScriptResourceManager::HasResourceBeenRequested(int32, int32)` (0x470620, `ret 8`), AL
     fn script_resource_has_been_requested(m: GPtr<u8>, id: i32, ty: u32) -> u8 = thiscall 0x470620 => unported;
-    /// `CStreaming::SetMissionDoesntRequireModel(int32)` (0x409C90)
-    fn streaming_set_mission_doesnt_require_model(id: i32) = cdecl 0x409C90 => unported;
-    /// `FindPlayerCoors(CVector* out, int32)` (0x56E010)
-    fn find_player_coors(out: GPtr<u8>, id: i32) -> GPtr<u8> = cdecl 0x56E010 => unported;
-    /// `CStreaming::StreamZoneModels(const CVector&)` (0x40A560)
-    fn streaming_stream_zone_models(p: GPtr<u8>) = cdecl 0x40A560 => unported;
     /// `CStreaming::ForceLayerToRead(int32)` (0x407A10)
     fn streaming_force_layer_to_read(layer: i32) = cdecl 0x407A10 => unported;
 }

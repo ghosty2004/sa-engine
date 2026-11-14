@@ -8,27 +8,19 @@ use sa_core::{hook, orig};
 
 use crate::common::{model_info, rd, wr};
 
+use crate::bindings::vis_get_model_info;
+use sa_core::bindings::rp_atomic_destroy;
+use sa_core::bindings::rp_clump_for_all_atomics;
+use sa_core::bindings::rw_frame_destroy;
+use sa_stream::bindings::find_other_upgrade;
+use sa_stream::bindings::get_atomic_id as vis_get_atomic_id;
+use sa_stream::bindings::model_info_remove_ref;
+use sa_stream::bindings::rp_clump_remove_atomic;
 orig! {
     /// `CVehicle::ClearVehicleUpgradeFlags(int32, int32)` (0x6D3210)
     fn clear_vehicle_upgrade_flags(v: GPtr<u8>, unused: u32, comp: u32) -> u8 = thiscall 0x6D3210 => crate::vehicle2::clear_vehicle_upgrade_flags;
-    /// `CLinkedUpgradeList::FindOtherUpgrade(int16)` (0x4C74D0) on `CVehicleModelInfo::ms_linkedUpgrades` (0xB4E6D8): int16 in AX
-    fn find_other_upgrade(list: GPtr<u8>, model: i32) -> i16 = thiscall 0x4C74D0 => unported;
     /// `CVehicle::RemoveReplacementUpgrade(int32)` (0x6D39E0)
     fn remove_replacement_upgrade(v: GPtr<u8>, node: u32) = thiscall 0x6D39E0 => crate::vehicle2::remove_replacement_upgrade;
-    /// `RpClumpForAllAtomics(RpClump*, callback, void*)` (0x749B70)
-    fn rp_clump_for_all_atomics(clump: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> = cdecl 0x749B70 => unported;
-    /// `CVisibilityPlugins::GetAtomicId(RpAtomic*)` (0x732370)
-    fn vis_get_atomic_id(atomic: GPtr<u8>) -> u32 = cdecl 0x732370 => unported;
-    /// `CVisibilityPlugins::GetModelInfo(RpAtomic*)` (0x732260)
-    fn vis_get_model_info(atomic: GPtr<u8>) -> GPtr<u8> = cdecl 0x732260 => unported;
-    /// `RpClumpRemoveAtomic(RpClump*, RpAtomic*)` (0x74A4C0)
-    fn rp_clump_remove_atomic(clump: GPtr<u8>, atomic: GPtr<u8>) -> GPtr<u8> = cdecl 0x74A4C0 => unported;
-    /// `RpAtomicDestroy(RpAtomic*)` (0x749DC0)
-    fn rp_atomic_destroy(atomic: GPtr<u8>) -> i32 = cdecl 0x749DC0 => unported;
-    /// `RwFrameDestroy(RwFrame*)` (0x7F05A0)
-    fn rw_frame_destroy(f: GPtr<u8>) -> i32 = cdecl 0x7F05A0 => unported;
-    /// `CBaseModelInfo::RemoveRef()` (0x4C4BB0)
-    fn model_info_remove_ref(mi: GPtr<u8>) = thiscall 0x4C4BB0 => unported;
 }
 
 /// `CVehicle::RemoveUpgradeCB` (0x6D3300).

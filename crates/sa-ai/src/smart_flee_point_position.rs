@@ -2,12 +2,9 @@
 //! reached when an ambient ped flees from a point near CJ. Unreversed in gta-reversed; ported from the 1.0 US bytes. Unverified (docs/verify/HOWTO.md).
 
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
-orig! {
-    /// `CGeneral::GetNodeHeadingFromVector(float x, float y)` (0x53CDC0), floats as bits
-    fn node_heading_from_vector(x: u32, y: u32) -> u32 = cdecl 0x53CDC0 => unported;
-}
+use sa_core::bindings::general_get_node_heading_from_vector as node_heading_from_vector;
 
 use crate::common::*;
 

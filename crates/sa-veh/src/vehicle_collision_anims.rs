@@ -15,15 +15,14 @@ use sa_world::physical::attach::{
 };
 use sa_world::physical::shared::*;
 
+pub use crate::bindings::get_wheel_status;
+pub use sa_core::bindings::get_atan_of_xy;
+pub use sa_world::bindings::vector_ctor_iterator;
 orig! {
     /// `CPhysical::AddCollisionRecord(CEntity*)` (0x543490)
     pub fn add_collision_record(e: Ent, other: Ent) = thiscall 0x543490 => sa_world::physical::base::add_collision_record;
     /// `CColPoint::operator=(const CColPoint&)` (stub 0x40FC80 → 0x15637E0)
     pub fn col_point_assign(dst: Ent, src: Ent) -> Ent = thiscall 0x40fc80 => unported;
-    /// `eh vector constructor iterator(void* p, uint32 size, int32 count, void (*ctor)(void*))` (0x403D60)
-    pub fn vector_ctor_iterator(p: GPtr<u8>, size: u32, count: i32, ctor: u32) = stdcall 0x403d60 => unported;
-    /// `CDamageManager::GetWheelStatus(int32)` (0x6C21B0)
-    pub fn get_wheel_status(dm: GPtr<u8>, wheel: i32) -> u32 = thiscall 0x6c21b0 => crate::damage::get_wheel_status;
     /// `SurfaceInfos_c::GetAdhesionGroup(uint32)` (0x55E5C0)
     pub fn get_adhesion_group(si: Ent, id: u32) -> u32 = thiscall 0x55e5c0 => sa_world::physical::mvpe_phys1::get_adhesion_group_port;
     /// `CPed::IsPlayer()` (0x5DF8F0, AL)
@@ -50,8 +49,6 @@ orig! {
     pub fn assoc_set_current_time(a: Ent, t: f32) = thiscall 0x4cea80 => unported;
     /// `CBike::ProcessRiderAnims(CPed*, CVehicle*, CRideAnimData*, tBikeHandlingData*, int16)` (0x6B7280)
     pub fn process_rider_anims(ped: Ent, v: Ent, data: Ent, handling: u32, a5: u32) = cdecl 0x6b7280 => unported;
-    /// `CGeneral::GetATanOfXY(float, float)` (0x53CC70, ST0)
-    pub fn get_atan_of_xy(x: f32, y: f32) -> f64 = cdecl 0x53cc70 => unported;
 }
 /// `TheCamera.m_nActiveCam` (0xB6F081, byte)
 const CAM_ACTIVE: usize = 0xB6F081;

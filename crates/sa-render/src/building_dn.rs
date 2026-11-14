@@ -9,12 +9,10 @@ use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 use sa_math::x87::{Cmp, X87};
 
+use sa_core::bindings::rp_clump_for_all_atomics as clump_for_all_atomics;
+use sa_core::bindings::rp_geometry_lock as geometry_lock;
+use sa_core::bindings::rp_geometry_unlock as geometry_unlock;
 orig! {
-    /// `RpGeometryLock(geometry, flags)` (0x74C7D0), `RpGeometryUnlock(geometry)` (0x74C800)
-    fn geometry_lock(g: GPtr<u8>, flags: u32) -> GPtr<u8> = cdecl 0x74C7D0 => unported;
-    fn geometry_unlock(g: GPtr<u8>) -> GPtr<u8> = cdecl 0x74C800 => unported;
-    /// `RpClumpForAllAtomics(clump, cb, data)` (0x749B70)
-    fn clump_for_all_atomics(c: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> = cdecl 0x749B70 => unported;
     /// `CCustomBuildingDNPipeline::NVCPipelineProcess(atomic, balance)` (0x5D6850)
     fn nvc_pipeline_process_call(a: GPtr<u8>, balance: f32) = cdecl 0x5D6850 => nvc_pipeline_process;
     /// `CCustomBuildingDNPipeline::PreRenderUpdate(atomic, force)` (0x5D7200)

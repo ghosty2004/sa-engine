@@ -4,15 +4,11 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::{ftol32, g, rand_at, rand_frac, rd};
 
-orig! {
-    /// `IKChainManager_c::LookAt(name, ped, target, time, bone, pos, bool, speed, blend, priority, bool)` (0x618970,
-    /// `ret 0x2C`)
-    fn ik_look_at(m: GPtr<u8>, name: u32, ped: GPtr<u8>, target: GPtr<u8>, time: i32, bone: i32, pos: u32, b: u32, speed: u32, blend: i32, prio: i32, b2: u32) = thiscall 0x618970 => unported;
-}
+use sa_world::bindings::ik_look_at;
 
 /// `g_ikChainMan`
 const IK_CHAIN_MAN: usize = 0xC15448;

@@ -10,13 +10,20 @@ use sa_math::x87::X87;
 
 use crate::common::{g, rd, wr, x, xi};
 
+use crate::bindings::calculate_gear_for_simple_car;
+use crate::bindings::do_drive_by_shootings;
+use crate::bindings::do_soft_ground_resistance;
+use crate::bindings::process_wheel_rotation;
+use sa_core::bindings::vector_magnitude;
+use sa_pop::bindings::car_gun_just_down;
+use sa_pop::bindings::steer_ai_car_with_physics;
+use sa_pop::bindings::update_car_ai;
+use sa_pop::bindings::update_car_on_rails;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::get_button_sprint_results;
+use sa_world::bindings::get_pad_from_player;
+use sa_world::bindings::physical_process_control;
 orig! {
-    /// `CPed::IsPlayer()` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CPlayerPed::GetPadFromPlayer()` (0x609560)
-    fn get_pad_from_player(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x609560 => unported;
-    /// `CVector::Magnitude()` (0x4082C0), ST0
-    fn vector_magnitude(v: GPtr<u8>) -> f64 = thiscall 0x4082C0 => unported;
     /// `VectorAdd(CVector*, const CVector*, const CVector*)` (0x40FE30)
     fn vector_add(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE30 => sa_world::world::mvpa_math::vector_add;
     /// `operator*(float, const CVector&)` (0x40FE90, cdecl, hidden return pointer)
@@ -27,10 +34,6 @@ orig! {
     fn apply_move_force(e: GPtr<u8>, force: CVector) = thiscall 0x5429F0 => sa_world::physical::forces::apply_move_force;
     /// `CEntity::PruneReferences()` (0x571A90)
     fn prune_references(e: GPtr<u8>) = thiscall 0x571A90 => sa_world::world::entity::prune_references;
-    /// `CVehicle::DoDriveByShootings()` (0x741FD0)
-    fn do_drive_by_shootings(v: GPtr<u8>) = thiscall 0x741FD0 => unported;
-    /// `CBike::DoSoftGroundResistance(uint32&)` (0x6B6D40)
-    fn do_soft_ground_resistance(v: GPtr<u8>, flags: GPtr<u32>) = thiscall 0x6B6D40 => unported;
     /// `DotProduct(const RwV3d*, const RwV3d*)` (0x40FDB0), ST0
     fn dot_product(a: GPtr<u8>, b: GPtr<u8>) -> f64 = cdecl 0x40FDB0 => dot_native;
     /// `CPad::GetSteeringLeftRight()` (0x53FB80): int16 in AX
@@ -41,8 +44,6 @@ orig! {
     fn get_association(clump: GPtr<u8>, id: u32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
     /// `CPlayerPed::ControlButtonSprint(eSprintType)` (0x60A610), ST0
     fn control_button_sprint(p: GPtr<u8>, ty: i32) -> f64 = thiscall 0x60A610 => unported;
-    /// `CPlayerPed::GetButtonSprintResults(eSprintType)` (0x60A820), ST0
-    fn get_button_sprint_results(p: GPtr<u8>, ty: i32) -> f64 = thiscall 0x60A820 => unported;
     /// `CPad::GetAccelerate()` (0x5403F0): int16 in AX
     fn get_accelerate(pad: GPtr<u8>) -> u32 = thiscall 0x5403F0 => unported;
     /// `max(float, float)` (0x420800), ST0
@@ -53,26 +54,12 @@ orig! {
     fn get_accelerate_just_down(pad: GPtr<u8>) -> u32 = thiscall 0x540440 => unported;
     /// `CStats::UpdateStatsWhenCycling(bool, CBmx*)` (0x55C780)
     fn update_stats_when_cycling(sprint: u32, v: GPtr<u8>) = cdecl 0x55C780 => unported;
-    /// `CPad::CarGunJustDown()` (0x53FFE0): the caller tests AX
-    fn car_gun_just_down(pad: GPtr<u8>) -> u32 = thiscall 0x53FFE0 => unported;
     /// `CVehicle::ActivateBomb()` (0x6D24F0)
     fn activate_bomb(v: GPtr<u8>) = thiscall 0x6D24F0 => crate::vehicle2::activate_bomb;
-    /// `CCarAI::UpdateCarAI(CVehicle*)` (0x41DA30)
-    fn update_car_ai(v: GPtr<u8>) = cdecl 0x41DA30 => sa_pop::carctrl4::update_car_ai;
-    /// `CPhysical::ProcessControl()` (0x5485E0)
-    fn physical_process_control(v: GPtr<u8>) = thiscall 0x5485E0 => sa_world::physical::attach::process_control;
-    /// `CCarCtrl::UpdateCarOnRails(CVehicle*)` (0x436540)
-    fn update_car_on_rails(v: GPtr<u8>) = cdecl 0x436540 => sa_pop::carctrl4::update_car_on_rails;
-    /// `cTransmission::CalculateGearForSimpleCar(float, uint8&)` (0x6D0530)
-    fn calculate_gear_for_simple_car(t: GPtr<u8>, speed: f32, gear: GPtr<u8>) = thiscall 0x6D0530 => crate::mvpb_a2::calculate_gear_for_simple_car;
-    /// `CVehicle::ProcessWheelRotation(tWheelState, const CVector&, const CVector&, float)` (0x6D1230), ST0
-    fn process_wheel_rotation(v: GPtr<u8>, state: u32, fwd: GPtr<u8>, speed: GPtr<u8>, radius: f32) -> f64 = thiscall 0x6D1230 => unported;
     /// `CBike::PlayHornIfNecessary()` (0x6B7130)
     fn play_horn_if_necessary(v: GPtr<u8>) = thiscall 0x6B7130 => crate::bike::play_horn_if_necessary;
     /// `CBike::ReduceHornCounter()` (0x6B5F90)
     fn reduce_horn_counter(v: GPtr<u8>) = thiscall 0x6B5F90 => crate::bike::reduce_horn_counter;
-    /// `CCarCtrl::SteerAICarWithPhysics(CVehicle*)` (0x437C20)
-    fn steer_ai_car_with_physics(v: GPtr<u8>) = cdecl 0x437C20 => sa_pop::carctrl3::steer_ai_car_with_physics;
     /// `CStats::GetFatAndMuscleModifier(eStatModAbilities)` (0x559AF0), ST0
     fn get_fat_and_muscle_modifier(ability: u32) -> f64 = cdecl 0x559AF0 => unported;
     /// `CBike::ProcessControlInputs(uint8)` (vtable +0x60)

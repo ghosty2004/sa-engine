@@ -10,11 +10,15 @@ use sa_math::x87::Cmp;
 
 use crate::common::*;
 
+use crate::bindings::conversation_node_clear_recursively;
+use crate::bindings::go_to_vehicle_and_lean_do_tidy_up as go_to_vehicle_and_lean_tidy_up;
+use crate::bindings::should_load_gang_anims;
+use crate::bindings::walk_alongside_create_sub_task as walk_alongside_create_sub_task_o;
+use sa_core::bindings::entity_get_is_on_screen;
+use sa_stream::bindings::anim_add_block_ref as add_anim_block_ref;
+use sa_stream::bindings::anim_remove_block_ref as remove_anim_block_ref;
+use sa_world::bindings::leave_car_ctor;
 orig! {
-    /// `CConversationNode::ClearRecursively` (0x43A710)
-    fn conversation_node_clear_recursively(n: GPtr<u8>) = thiscall 0x43A710 => crate::mvpb_ai::conversation_node_clear_recursively;
-    /// `CEntity::GetIsOnScreen` (0x534540)
-    fn entity_get_is_on_screen(e: GPtr<u8>) -> u8 = thiscall 0x534540 => unported;
     /// `CTaskManager::GetTaskSecondary(int32)` (0x681810, `ret 4`)
     fn task_manager_get_task_secondary(tm: GPtr<u8>, i: u32) -> GPtr<u8> = thiscall 0x681810 => unported;
     /// `CTaskManager::SetTaskSecondary(CTask*, int32)` (0x681B60, `ret 8`)
@@ -31,30 +35,18 @@ orig! {
     fn pgi_get_task_secondary(g: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x5F8620 => unported;
     /// `CPedGroupIntelligence::GetTaskSecondarySlot(const CPed*)` (0x5F8650, `ret 4`)
     fn pgi_get_task_secondary_slot(g: GPtr<u8>, ped: GPtr<u8>) -> u32 = thiscall 0x5F8650 => unported;
-    /// `CTaskComplexLeaveCar::CTaskComplexLeaveCar(CVehicle*, int32, int32, bool, bool)` (0x63B8C0, `ret 0x14`)
-    fn leave_car_ctor(t: GPtr<u8>, v: GPtr<u8>, door: u32, delay: u32, sensible: u32, force: u32) -> GPtr<u8> = thiscall 0x63B8C0 => unported;
     /// `CTaskComplexSeekEntity<CEntitySeekPosCalculatorXYOffset>::CTaskComplexSeekEntity(...)` (0x661DC0, `ret 0x20`)
     fn seek_entity_xy_offset_ctor(t: GPtr<u8>, e: GPtr<u8>, a: u32, b: u32, c: u32, d: u32, f: u32, g: u32, h: u32) -> GPtr<u8> = thiscall 0x661DC0 => unported;
     /// `CTaskSimpleStandStill::CTaskSimpleStandStill(int32, bool, bool, float)` (0x62F310, `ret 0x10`)
     fn stand_still_ctor(t: GPtr<u8>, ms: u32, a: u32, b: u32, f: f32) -> GPtr<u8> = thiscall 0x62F310 => unported;
-    /// `CTaskComplexWalkAlongsidePed::CreateSubTask(int32, CPed*)` (0x685000, `ret 8`)
-    fn walk_alongside_create_sub_task_o(t: GPtr<u8>, ty: u32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x685000 => crate::mvpb_ai3::walk_alongside_create_sub_task;
     /// `FUN_00664770(CVector* out, CPed*)` (0x664770, `ret 8`): the lean target position
     fn go_to_vehicle_and_lean_target(t: GPtr<u8>, out: GPtr<f32>, ped: GPtr<u8>) -> GPtr<f32> = thiscall 0x664770 => unported;
     /// `CTaskComplexGoToPointAndStandStill::CTaskComplexGoToPointAndStandStill(int32, const CVector&, float, float, bool, bool)` (0x668120, `ret 0x18`)
     fn go_to_point_and_stand_still_ctor(t: GPtr<u8>, ms: u32, p: GPtr<u8>, r: f32, s: f32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x668120 => unported;
     /// `CPhysical::GetSpeed(CVector point)` (0x542CE0, `ret 0x10`, returns the out pointer)
     fn physical_get_speed(e: GPtr<u8>, out: GPtr<f32>, x: f32, y: f32, z: f32) -> GPtr<f32> = thiscall 0x542CE0 => unported;
-    /// `CTaskGoToVehicleAndLean::DoTidyUp(CPed*)` (0x660F60, `ret 4`)
-    fn go_to_vehicle_and_lean_tidy_up(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x660F60 => unported;
-    /// `CTaskComplexGangLeader::ShouldLoadGangAnims` (0x65E7F0, cdecl)
-    fn should_load_gang_anims() -> u8 = cdecl 0x65E7F0 => unported;
     /// `CAnimManager::GetAnimationBlockIndex(const char*)` (0x4D3990, cdecl)
     fn get_animation_block_index(n: u32) -> i32 = cdecl 0x4D3990 => unported;
-    /// `CAnimManager::AddAnimBlockRef(int32)` (0x4D3FB0, cdecl)
-    fn add_anim_block_ref(i: i32) = cdecl 0x4D3FB0 => unported;
-    /// `CAnimManager::RemoveAnimBlockRef(int32)` (0x4D3FD0, cdecl)
-    fn remove_anim_block_ref(i: i32) = cdecl 0x4D3FD0 => unported;
     /// `CStreaming::RequestModel(int32, int32)` (0x4087E0, cdecl)
     fn request_model(id: i32, flags: u32) = cdecl 0x4087E0 => unported;
     /// `CTask::Clone` (vtable +0x4)

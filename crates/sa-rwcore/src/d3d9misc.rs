@@ -24,41 +24,28 @@ const VS_COUNT: usize = 0xC94BF8;
 const VS_ENTRIES: u32 = 0xC92700;
 const VS_LIGHT_TABLE: u32 = 0xC94AF8;
 
+pub use crate::bindings::atomic_set_default_pipeline as set_default_atomic_pipeline;
+pub use crate::bindings::delete_vertex_shader;
+pub use crate::bindings::free_list_create;
+pub use crate::bindings::light_local_enable;
+pub use crate::bindings::lights_enable;
+pub use crate::bindings::node_def_atomic;
+pub use crate::bindings::node_def_d3d9_sector_all_in_one as node_def_world_sector;
+pub use crate::bindings::rx_locked_pipe_add_fragment;
+pub use crate::bindings::rx_locked_pipe_unlock;
+pub use crate::bindings::rx_pipeline_create;
+pub use crate::bindings::rx_pipeline_destroy;
+pub use crate::bindings::rx_pipeline_lock;
+pub use crate::bindings::set_default_sector_pipeline;
 orig! {
-    /// `_rwFreeListCreate(entrySize, entriesPerBlock, alignment, hint)` (0x801980)
-    pub fn free_list_create(size: u32, per_block: u32, align: u32, hint: u32) -> GPtr<u8> = cdecl 0x801980 => unported;
     /// The saved device restore callback, through its pointer
     pub fn call_restore_cb(f: u32) = cdecl dyn => unported;
-    /// `RxPipelineCreate()` (0x8057B0)
-    pub fn rx_pipeline_create() -> GPtr<u8> = cdecl 0x8057B0 => unported;
-    /// `RxPipelineLock(pipeline)` (0x806990)
-    pub fn rx_pipeline_lock(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x806990 => unported;
-    /// `RxLockedPipeAddFragment(pipeline, firstIndex, nodeDef, NULL)` (0x806BE0, varargs)
-    pub fn rx_locked_pipe_add_fragment(p: GPtr<u8>, first: u32, node: GPtr<u8>, end: u32) -> GPtr<u8> = cdecl 0x806BE0 => unported;
-    /// `RxLockedPipeUnlock(pipeline)` (0x805F40)
-    pub fn rx_locked_pipe_unlock(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x805F40 => unported;
-    /// `_rxPipelineDestroy(pipeline)` (0x805820)
-    pub fn rx_pipeline_destroy(p: GPtr<u8>) = cdecl 0x805820 => unported;
-    /// `RxNodeDefinitionGetD3D9WorldSectorAllInOne()` (0x75E9F0)
-    pub fn node_def_world_sector() -> GPtr<u8> = cdecl 0x75E9F0 => unported;
-    /// `RxNodeDefinitionGetD3D9AtomicAllInOne()` (0x7582E0)
-    pub fn node_def_atomic() -> GPtr<u8> = cdecl 0x7582E0 => unported;
-    /// `RpWorldSetDefaultSectorPipeline(pipeline)` (0x75E270)
-    pub fn set_default_sector_pipeline(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x75E270 => unported;
-    /// `RpAtomicSetDefaultPipeline(pipeline)` (0x75E2A0)
-    pub fn set_default_atomic_pipeline(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x75E2A0 => unported;
     /// `_rwD3D9LightsOpen()` (0x755D80)
     pub fn lights_open() -> u32 = cdecl 0x755D80 => unported;
     /// 0x760CF0 (vertex-shader module open, result unused)
     pub fn vs_open() -> u32 = cdecl 0x760CF0 => unported;
     /// `_rwD3D9LightsGlobalEnable(flags)` (0x756070)
     pub fn lights_global_enable(flags: u32) -> u32 = cdecl 0x756070 => unported;
-    /// `_rwD3D9LightLocalEnable(light)` (0x756390)
-    pub fn light_local_enable(l: GPtr<u8>) -> u32 = cdecl 0x756390 => unported;
-    /// `_rwD3D9LightsEnable(enable, type)` (0x756600)
-    pub fn lights_enable(enable: u32, ty: u32) = cdecl 0x756600 => unported;
-    /// `RwD3D9DeleteVertexShader(vs)` (0x7FAC90)
-    pub fn delete_vertex_shader(vs: GPtr<u8>) -> u32 = cdecl 0x7FAC90 => crate::d3d9dev::delete_vertex_shader;
     /// `_rpD3D9GetVertexShader(desc, callbacks)` (0x75EED0)
     pub fn get_vertex_shader(desc: u32, cbs: u32) -> u32 = cdecl 0x75EED0 => unported;
     /// `RwRasterShowRaster(raster, dev, flags)` (0x7FB1A0)

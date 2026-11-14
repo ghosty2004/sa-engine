@@ -72,11 +72,12 @@ type MemoryStatus = [u32; 8];
 
 pub mod call {
     use super::*;
+    pub use crate::bindings::init_user_directories;
+    pub use crate::bindings::text_get;
+    pub use crate::bindings::text_unload;
     orig! {
         /// `CFileMgr::Initialise` (0x5386F0)
         pub fn file_mgr_initialise() = cdecl 0x5386F0 => crate::filemgr::initialise;
-        /// `InitUserDirectories` (0x744FB0)
-        pub fn init_user_directories() -> GPtr<u8> = cdecl 0x744FB0 => crate::platform::init_user_directories;
         /// `C_PcSave::SetSaveDirectory(const char*)` (0x619040)
         pub fn set_save_directory(path: GPtr<u8>) = cdecl 0x619040 => super::set_save_directory;
         /// `Ps::InitialiseLanguage` (0x7465B0)
@@ -85,34 +86,27 @@ pub mod call {
         pub fn menu_load_settings(this: GPtr<u8>) = thiscall 0x57C8F0 => unported;
         /// `FUN_00745650` (DirectX version check)
         pub fn check_dx_version() -> u32 = cdecl 0x745650 => crate::platform::check_dx_version;
-        /// `CText::Get(const char*)` (0x6A0050; ported in sa-hud, not reachable from sa-core)
-        pub fn text_get(text: GPtr<u8>, key: GPtr<u8>) -> GPtr<u8> = thiscall 0x6A0050 => unported;
         /// `Ps::GetVideoMemInfo(LPDWORD total, LPDWORD available)` (0x7455E0)
         pub fn get_video_mem_info(total: GPtr<u32>, available: GPtr<u32>) -> i32 = cdecl 0x7455E0 => crate::platform::get_video_mem_info;
         /// `Ps::CheckDirectSound` (0x745840)
         pub fn check_direct_sound() -> i32 = cdecl 0x745840 => crate::platform::check_direct_sound;
-        /// `CText::Unload(bool)` (0x69FF20; ported in sa-hud, not reachable from sa-core)
-        pub fn text_unload(text: GPtr<u8>, keep_mission_packs: u32) = thiscall 0x69FF20 => unported;
         /// CRT `sprintf(buf, fmt, s1, s2)` (0x821BB5)
         pub fn sprintf_ss(buf: GPtr<u8>, fmt: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> i32 = cdecl 0x821BB5 => unported;
     }
+    pub use crate::bindings::ascii_to_gxt_char;
+    pub use crate::bindings::file_mgr_seek;
+    pub use crate::bindings::insert_number_in_string;
+    pub use crate::bindings::strncmp;
     orig! {
         /// CRT `sprintf(buf, fmt, char*, int, char*)`
         pub fn sprintf_sis(buf: GPtr<u8>, fmt: GPtr<u8>, a: GPtr<u8>, n: i32, b: GPtr<u8>) -> i32 = cdecl 0x821BB5 => unported;
         /// CRT `sprintf(buf, fmt, day, month text, year, hour, minute, second)`
         pub fn sprintf_date(buf: GPtr<u8>, fmt: GPtr<u8>, d: u32, m: u32, y: u32, h: u32, mi: u32, s: u32) -> i32 = cdecl 0x821BB5 => unported;
         pub fn file_mgr_open_file(path: GPtr<u8>, mode: GPtr<u8>) -> u32 = cdecl 0x538900 => unported;
-        pub fn file_mgr_seek(file: u32, offset: i32, origin: i32) -> i32 = cdecl 0x538990 => unported;
         pub fn file_mgr_read(file: u32, buf: GPtr<u8>, size: i32) -> i32 = cdecl 0x538950 => unported;
         pub fn file_mgr_close_file(file: u32) -> i32 = cdecl 0x5389D0 => unported;
-        /// CRT `strncmp`
-        pub fn strncmp(a: GPtr<u8>, b: GPtr<u8>, n: u32) -> i32 = cdecl 0x8214D0 => unported;
         /// `CGenericGameStorage::CheckDataNotCorrupt(slot, path)` (bool in AL)
         pub fn check_data_not_corrupt(slot: i32, path: GPtr<u8>) -> u8 = cdecl 0x5D1170 => unported;
-        /// `CMessages::InsertNumberInString(src, n1..n6, dst)`
-        pub fn insert_number_in_string(src: GPtr<u8>, n1: i32, n2: i32, n3: i32, n4: i32, n5: i32, n6: i32, dst: GPtr<u8>) = cdecl 0x69DE90 => unported;
-        /// `Common::AsciiToGxtChar(src, dst)`
-        pub fn ascii_to_gxt_char(src: GPtr<u8>, dst: GPtr<u8>) = cdecl 0x718600 => unported;
         // Win32 (import name, call site)
         /// KERNEL32 `GetVersionExA` at 0x7474D3
         pub fn get_version_ex_a(info: GPtr<OsVersionInfoA>) -> i32 = stdcall site 0x7474D3 => unported;

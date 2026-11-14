@@ -18,24 +18,21 @@ const CB_SKINNED: u32 = 0x4D2B90;
 const CB_NON_SKINNED: u32 = 0x4D30A0;
 const CB_OFFSCREEN: u32 = 0x4D2E10;
 
+use sa_core::bindings::get_first_atomic;
+use sa_core::bindings::rp_skin_geometry_get_skin;
+use sa_core::bindings::rw_frame_update_objects;
+use sa_core::bindings::uncompress_animation;
 orig! {
     /// `CAnimBlendAssociation::UpdateBlend(float timeStep)` (0x4D1490), AL
     fn assoc_update_blend(a: GPtr<u8>, step: f32) -> u8 = thiscall 0x4D1490 => unported;
-    /// `CAnimManager::UncompressAnimation(CAnimBlendHierarchy*)` (0x4D41C0)
-    fn uncompress_animation(h: GPtr<u8>) = cdecl 0x4D41C0 => unported;
     /// `CAnimBlendAssociation::GetNode(int32)` (0x4CEB60)
     fn assoc_get_node(a: GPtr<u8>, i: i32) -> u32 = thiscall 0x4CEB60 => unported;
     /// `CAnimBlendAssociation::UpdateTime(float timeStep, float timeMult)` (0x4D13D0)
     fn assoc_update_time(a: GPtr<u8>, step: f32, mult: f32) = thiscall 0x4D13D0 => unported;
-    /// `GetFirstAtomic(RpClump*)` (0x734820), `RpSkinGeometryGetSkin(RpGeometry*)` (0x7C7550)
-    fn get_first_atomic(c: GPtr<u8>) -> GPtr<u8> = cdecl 0x734820 => unported;
-    fn rp_skin_geometry_get_skin(g: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C7550 => unported;
     /// `CAnimBlendClumpData::ForAllFrames(cb, data)` (0x4CF190)
     fn for_all_frames(d: GPtr<u8>, cb: u32, data: GPtr<u8>) = thiscall 0x4CF190 => unported;
     /// `RpAnimBlendNodeUpdateKeyFrames(frames, n)` (0x4D1570, the update data in EAX)
     fn update_key_frames(data: GPtr<u8>, frames: GPtr<u8>, n: i32) = reg("args = eax stack stack") 0x4D1570 => update_key_frames_b;
-    /// `RwFrameUpdateObjects(RwFrame*)` (0x7F0910)
-    fn rw_frame_update_objects(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0910 => unported;
 }
 
 /// Phase B side of [`update_key_frames`]: the port reads its EAX argument from `sa_core::abi::ENTRY_EAX`

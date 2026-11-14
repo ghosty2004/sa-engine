@@ -18,31 +18,22 @@ use sa_math::vector::CVector;
 
 use super::common::{g, rd, wr, x};
 
+use crate::bindings::cop_ped_ctor;
+use crate::bindings::entity_get_col_model as get_col_model;
+use crate::bindings::garage_is_entity_touching_3d;
+use crate::bindings::multiply3x3_vm;
+use crate::bindings::ped_new;
+use crate::bindings::test_sphere_box;
+use sa_core::bindings::matrix_mul_vec;
+use sa_core::bindings::vector_normalise as vec_normalise;
+use sa_core::bindings::world_add;
 orig! {
-    /// `Multiply3x3(CVector* out, const CVector&, const CMatrix&)` (0x59C810): `v * M` (transposed)
-    fn multiply3x3_vm(out: GPtr<u8>, v: GPtr<u8>, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C810 => unported;
-    /// `CCollision::TestSphereBox(const CColSphere&, const CColBox&)` (0x4120C0)
-    fn test_sphere_box(s: GPtr<u8>, b: GPtr<u8>) -> u8 = cdecl 0x4120C0 => unported;
     /// `CWorld::ProcessVerticalLine(...)` (0x5674E0)
     fn process_vertical_line(pos: GPtr<u8>, len: f32, cp: GPtr<u8>, ent: GPtr<u8>, b: u32, v: u32, p: u32, o: u32, d: u32, s: u32, poly: u32) -> u8 = cdecl 0x5674E0 => unported;
     /// `CWorld::FindObjectsKindaColliding(const CVector&, float, bool, int16*, int16, CEntity**, bool x5)` (0x568B80)
     fn find_objects_kinda_colliding(pos: GPtr<u8>, radius: f32, b2d: u32, count: GPtr<u8>, max: u32, out: u32, b: u32, v: u32, p: u32, o: u32, d: u32) = cdecl 0x568B80 => unported;
-    /// `CPed::operator new(uint32)` (0x5E4720)
-    fn ped_new(size: u32) -> GPtr<u8> = cdecl 0x5E4720 => unported;
-    /// `CCopPed::CCopPed(eCopType)` (0x5DDC60)
-    fn cop_ped_ctor(p: GPtr<u8>, ty: u32) -> GPtr<u8> = thiscall 0x5DDC60 => unported;
-    /// `CWorld::Add(CEntity*)` (0x563220)
-    fn world_add(e: GPtr<u8>) = cdecl 0x563220 => unported;
-    /// `CGarage::IsEntityTouching3D(CEntity*)` (0x448EE0)
-    fn garage_is_entity_touching_3d(gr: GPtr<u8>, e: GPtr<u8>) -> u8 = thiscall 0x448EE0 => unported;
-    /// `CEntity::GetColModel()` (0x535300)
-    fn get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => unported;
-    /// `operator*(const CMatrix&, const CVector&)` (0x59C890): the result through the hidden pointer
-    fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
     /// `CGarage::IsPointInsideGarage(CVector, float margin)` (0x4487D0)
     fn garage_is_point_inside(gr: GPtr<u8>, p: CVector, margin: f32) -> u8 = thiscall 0x4487D0 => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    fn vec_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
 }
 
 /// `CWorld::ms_nCurrentScanCode` (0xB7CD78), `CModelInfo::ms_modelInfoPtrs` (0xA9B0C8),

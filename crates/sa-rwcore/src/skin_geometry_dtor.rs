@@ -7,9 +7,8 @@ use sa_core::{hook, orig};
 
 use crate::common::{g, p8, rd, rw_free, rw_memory_free, wr};
 
+use crate::bindings::skin_deinitialize;
 orig! {
-    /// `_rpSkinDeinitialize(geometry)` (0x7C8820)
-    fn skin_deinitialize(geom: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C8820 => crate::skin::rp_skin_deinitialize;
     /// `_rpSkinSplitDataDestroy(skin)` (0x7C8B10)
     fn skin_split_data_destroy(skin: GPtr<u8>) -> u32 = cdecl 0x7C8B10 => crate::skin::rp_skin_split_data_destroy;
 }

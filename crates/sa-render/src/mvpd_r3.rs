@@ -12,6 +12,10 @@ use sa_math::x87::X87;
 
 use crate::common::{g, jp, k, rd, wr, x};
 
+use crate::bindings::camera_is_sphere_visible_m;
+use sa_core::bindings::defined_state;
+use sa_core::bindings::rp_geometry_for_all_materials;
+use sa_world::bindings::rw_im3d_end;
 orig! {
     /// `RwRenderStateSet` (`RwEngineInstance` slot 0x20)
     fn rs(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
@@ -29,18 +33,10 @@ orig! {
     fn fx_manager_render_o(this: GPtr<u8>, cam: u32, haze: u32) = thiscall 0x4A92A0 => crate::mvpd_r3::fx_manager_render;
     /// `CPlaneTrail::Render(float)` (0x717180)
     fn plane_trail_render_o(this: GPtr<u8>, intensity: u32) = thiscall 0x717180 => crate::mvpd_r3::plane_trail_render;
-    /// `CCamera::IsSphereVisible(const CVector&, float, const RwMatrix*)` (0x420C40, bool in AL)
-    fn camera_is_sphere_visible_m(this: GPtr<u8>, c: GPtr<u8>, r: u32, m: u32) -> u8 = thiscall 0x420C40 => unported;
-    /// `DefinedState()` (0x734650)
-    fn defined_state() = cdecl 0x734650 => unported;
     /// `RwIm3DTransform(verts, n, ltm, flags)` (0x7EF450)
     fn rw_im3d_transform(verts: GPtr<u8>, n: u32, ltm: u32, flags: u32) -> GPtr<u8> = cdecl 0x7EF450 => unported;
     /// `RwIm3DRenderIndexedPrimitive(type, indices, n)` (0x7EF550)
     fn rw_im3d_render_indexed_primitive(ty: u32, idx: GPtr<u8>, n: u32) -> i32 = cdecl 0x7EF550 => unported;
-    /// `RwIm3DEnd()` (0x7EF520)
-    fn rw_im3d_end() -> i32 = cdecl 0x7EF520 => unported;
-    /// `RpGeometryForAllMaterials(RpGeometry*, callback, data)` (0x74C790)
-    fn rp_geometry_for_all_materials(geom: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> = cdecl 0x74C790 => unported;
     /// `RpAtomic::renderCallBack` (the atomic's +0x48 function pointer, cdecl)
     fn atomic_render_cb(cb: u32, atomic: GPtr<u8>) -> GPtr<u8> = cdecl dyn => unported;
 }
@@ -327,12 +323,11 @@ pub fn render_roadsign_atomic(atomic: GPtr<u8>, cam: GPtr<u8>) -> GPtr<u8> {
     atomic
 }
 
+use sa_world::bindings::sprite_flush_sprite_buffer;
 orig! {
     /// `CSprite::Set4Vertices2D(RwD3D9Vertex*, const CRect&, const CRGBA& ×4)` (0x70E1C0)
     #[allow(clippy::too_many_arguments)]
     fn sprite_set4_vertices_2d_rect(v: GPtr<u8>, rect: GPtr<u8>, c1: GPtr<u8>, c2: GPtr<u8>, c3: GPtr<u8>, c4: GPtr<u8>) = cdecl 0x70E1C0 => unported;
-    /// `CSprite::FlushSpriteBuffer()` (0x70CF20)
-    fn sprite_flush_sprite_buffer() = cdecl 0x70CF20 => unported;
 }
 
 /// `CSprite::nSpriteBufferIndex`, the sprite vertex buffer (4 × 0x1C per sprite) and the shared index list.
@@ -456,6 +451,7 @@ pub fn render_buffered_one_xlu_sprite(px: f32, py: f32, pz: f32, w: f32, h: f32,
     sprite_buffer_tail(idx);
 }
 
+use sa_core::bindings::find_player_coors;
 orig! {
     /// `CGrassRenderer::DrawTriPlants(PPTriPlant*, int32 count, RpAtomic** models, RwMatrix*)` (0x5DAD00)
     fn grass_draw_tri_plants(plants: GPtr<u8>, n: i32, models: u32, m: u32) = cdecl 0x5DAD00 => unported;
@@ -463,8 +459,6 @@ orig! {
     fn tri_plant_buffer_flush_o(this: GPtr<u8>) = thiscall 0x5DB0C0 => crate::mvpd_r3::tri_plant_buffer_flush;
     /// `RwIm2DRenderIndexedPrimitive` (`RwEngineInstance` slot 0x34)
     fn im2d_render_indexed(prim: u32, verts: GPtr<u8>, nv: i32, idx: GPtr<u8>, ni: i32) -> i32 = cdecl table 0xC97B24 0x34 => unported;
-    /// `FindPlayerCoors(CVector* out, int32)` (0x56E010)
-    fn find_player_coors(out: GPtr<u8>, id: i32) -> GPtr<u8> = cdecl 0x56E010 => unported;
     /// `CWaterLevel::GetWaterLevelNoWaves(x, y, z, float* level, float* bigWaves, float* smallWaves)` (0x6E8580)
     fn water_level_no_waves(px: u32, py: u32, pz: u32, out: GPtr<u8>, big: GPtr<u8>, small: GPtr<u8>) -> u8 = cdecl 0x6E8580 => unported;
 }
@@ -614,11 +608,10 @@ pub fn sun_reflection_fade(px: f32, py: f32, _unused: u32, r: f32) -> X87 {
     x(d).fsub_m(r).fmul_m(k(0x3C23_D70A))
 }
 
+use sa_core::bindings::little_test;
 orig! {
     /// `CShinyTexts::RenderOutGeometryBuffer()` (0x7221C0)
     fn shiny_render_out_geometry_buffer() = cdecl 0x7221C0 => unported;
-    /// `LittleTest()` (0x541330)
-    fn little_test() = cdecl 0x541330 => unported;
 }
 
 /// `CShinyTexts::Render()` (0x724890): with registered texts (0xC7C6F8): states (20,1), (8,0), (10,2),
@@ -822,21 +815,17 @@ pub fn skidmarks_render() {
     rs(6, 1);
 }
 
+use sa_core::bindings::fx_play as fx_system_play;
+use sa_core::bindings::fx_stop as fx_system_stop;
+use sa_core::bindings::rw_matrix_multiply;
+use sa_world::bindings::rw_v3d_length;
 orig! {
     /// `FxManager_c::FxRwMatrixCreate()` (0x4A9440)
     fn fx_rw_matrix_create(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4A9440 => unported;
     /// `FxManager_c::FxRwMatrixDestroy(RwMatrix*)` (0x4A9460)
     fn fx_rw_matrix_destroy(this: GPtr<u8>, m: GPtr<u8>) = thiscall 0x4A9460 => unported;
-    /// `RwMatrixMultiply(RwMatrix* out, const RwMatrix* a, const RwMatrix* b)` (0x7F18B0)
-    fn rw_matrix_multiply(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F18B0 => unported;
-    /// `RwV3dLength(const RwV3d*)` (0x7EDAC0, ST0)
-    fn rw_v3d_length(v: GPtr<u8>) -> f64 = cdecl 0x7EDAC0 => unported;
     /// `FxSystem_c::IsVisible()` (0x4AAF30, bool in AL)
     fn fx_system_is_visible(this: GPtr<u8>) -> u8 = thiscall 0x4AAF30 => unported;
-    /// `FxSystem_c::Play()` (0x4AA2F0)
-    fn fx_system_play(this: GPtr<u8>) = thiscall 0x4AA2F0 => unported;
-    /// `FxSystem_c::Stop()` (0x4AA390)
-    fn fx_system_stop(this: GPtr<u8>) = thiscall 0x4AA390 => unported;
     /// `FxSystem_c::DoFxAudio(CVector)` (0x4AAC90; by value)
     fn fx_system_do_fx_audio_o(this: GPtr<u8>, px: u32, py: u32, pz: u32) = thiscall 0x4AAC90 => crate::mvpd_r3::fx_system_do_fx_audio;
     /// `FxPrimBP_c::Update(float time, float dt)` (vtable slot 8)

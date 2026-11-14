@@ -2,7 +2,6 @@
 //! its original call site, and the `orig!` declarations several modules call.
 
 use sa_core::mem::GPtr;
-use sa_core::orig;
 use sa_math::x87::X87;
 
 pub use sa_world::world::common::{at, f32_of, find_player_coors, find_player_ped, ftol32, g, rd, wr, x, xi};
@@ -30,7 +29,4 @@ pub fn model_info(mi: i32) -> GPtr<u8> {
         .read()
 }
 
-orig! {
-    /// `_ftol` (0x821B40) is modelled by `X87::ftol`; `CGeneral::GetATanOfXY(float, float)` (0x53CC70)
-    pub fn get_atan_of_xy(x: f32, y: f32) -> f64 = cdecl 0x53CC70 => unported;
-}
+pub use sa_core::bindings::get_atan_of_xy;

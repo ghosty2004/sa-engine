@@ -14,21 +14,17 @@ use sa_math::fpu::x;
 use sa_math::fpu::xi;
 use sa_core::crt::rand_at;
 
+use crate::bindings::fx_prt_mult_default_ctor;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::find_player_vehicle;
+use sa_pop::bindings::fx_enable_prim;
 orig! {
-    /// `FxPrtMult_c::FxPrtMult_c()` (0x4AB270)
-    fn fx_prt_mult_default_ctor(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x4AB270 => unported;
     /// `FxPrtMult_c::FxPrtMult_c(r, g, b, a, size, spin, life)` (0x4AB290)
     #[allow(clippy::too_many_arguments)]
     fn fx_prt_mult_ctor(p: GPtr<u8>, r: f32, g: f32, b: f32, a: f32, size: f32, spin: f32, life: f32) -> GPtr<u8> = thiscall 0x4AB290 => unported;
     /// `FxSystem_c::AddParticle(RwV3d*, RwV3d*, float, FxPrtMult_c*, float, float, float, uint8)` (0x4AA440)
     #[allow(clippy::too_many_arguments)]
     fn fx_add_particle(fx: GPtr<u8>, pos: GPtr<u8>, vel: GPtr<u8>, time: f32, mult: GPtr<u8>, rot: f32, bright: f32, cam: f32, local: u32) = thiscall 0x4AA440 => unported;
-    /// `FxSystem_c::EnablePrim(int32 prim, bool on)` (0x4AA610)
-    fn fx_enable_prim(fx: GPtr<u8>, prim: i32, on: u32) = thiscall 0x4AA610 => unported;
-    /// `FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `FindPlayerVehicle(int32, bool)` (0x56E0D0)
-    fn find_player_vehicle(id: i32, remote: u32) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
 }
 
 /// `TheCamera` matrix (+0x14); null: the placement position `TheCamera` +4 (0xB6F02C).

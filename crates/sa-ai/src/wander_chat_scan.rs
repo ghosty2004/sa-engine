@@ -8,38 +8,26 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::dtor_4aed60 as event_chat_partner_dtor;
+use crate::bindings::wander_set_next_min_scan_time;
+use sa_core::bindings::tm_get_active_task;
+use sa_core::bindings::vector_difference;
+use sa_stream::bindings::streaming_is_very_busy;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::event_group_get_event_of_type;
+use sa_world::bindings::intel_find_task_by_type;
+use sa_world::bindings::la_riots_active_here;
+use sa_world::bindings::vector_magnitude_sqr;
+use sa_world::bindings::world_get_is_line_of_sight_clear;
 orig! {
     /// `SurfaceInfos_c::IsPavement(uint32 surface)` (0x55E7F0, `ret 4`)
     fn surface_is_pavement(si: GPtr<u8>, surface: u32) -> u8 = thiscall 0x55E7F0 => unported;
-    /// `CStreaming::IsVeryBusy()` (0x4076A0)
-    fn streaming_is_very_busy() -> u8 = cdecl 0x4076A0 => unported;
-    /// `CGameLogic::LaRiotsActiveHere()` (0x441C10)
-    fn la_riots_active_here() -> u8 = cdecl 0x441C10 => unported;
-    /// `CTaskManager::GetActiveTask()` (0x681720)
-    fn tm_get_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x681720 => unported;
     /// `CTask::GetTaskType()` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CPedIntelligence::FindTaskByType(int32)` (0x600EE0, `ret 4`)
-    fn intel_find_task_by_type(i: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x600EE0 => unported;
-    /// `CEventGroup::GetEventOfType(int32)` (0x4AB650, `ret 4`)
-    fn event_group_get_event_of_type(g: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x4AB650 => unported;
     /// `CTaskComplexWanderStandard::WillChat(const CPed&, const CPed&)` (0x66AED0, `ret 8`)
     fn wander_will_chat(t: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> u8 = thiscall 0x66AED0 => unported;
-    /// `CVector::Difference(const CVector& a, const CVector& b)` (0x40FE00, `ret 8`): `this = a - b`
-    fn vector_difference(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) = thiscall 0x40FE00 => unported;
-    /// `CVector::MagnitudeSqr()` (0x406DA0, ST0)
-    fn vector_magnitude_sqr(v: GPtr<u8>) -> f64 = thiscall 0x406DA0 => unported;
-    /// `CWorld::GetIsLineOfSightClear(start, end, buildings, vehicles, peds, objects, dummies, seeThrough,
-    /// ignoreSomeObjects)` (0x56A490)
-    fn world_get_is_line_of_sight_clear(a: GPtr<u8>, b: GPtr<u8>, bld: u32, veh: u32, ped: u32, obj: u32, dum: u32, see: u32, ign: u32) -> u8 = cdecl 0x56A490 => unported;
     /// `CEventChatPartner::CEventChatPartner(bool leader, CPed* partner)` (`FUN_004aecd0`, `ret 8`)
     fn event_chat_partner_ctor(e: GPtr<u8>, leader: u32, partner: GPtr<u8>) -> GPtr<u8> = thiscall 0x4AECD0 => unported;
-    /// `CEventChatPartner::~CEventChatPartner()` (`FUN_004aed60`)
-    fn event_chat_partner_dtor(e: GPtr<u8>) = thiscall 0x4AED60 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, `ret 8`)
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
-    /// `CTaskComplexWanderStandard::SetNextMinScanTime(CPed*)` (0x66AF60, `ret 4`)
-    fn wander_set_next_min_scan_time(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x66AF60 => unported;
 }
 
 /// `g_surfaceInfos` (0xB79538)

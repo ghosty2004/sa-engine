@@ -1,7 +1,6 @@
 //! Helpers shared by the PORT-RENDER modules: raw field access (sa-world's), the x87 machine and compare
 //! shorthands.
 
-
 pub use sa_world::collision::fpu::Fpu;
 pub use sa_world::world::common::{at, f32_of, ftol32, g, rd, wr, x, xi};
 
@@ -14,6 +13,7 @@ pub use sa_math::fpu::fcom_parity as jp;
 
 pub use sa_math::fpu::fcom_any as jne;
 
+pub use sa_world::bindings::localisation_blood;
 sa_core::orig! {
     /// `FxPrtMult_c::FxPrtMult_c(r, g, b, a, size, spin, life)` (0x4AB290)
     #[allow(clippy::too_many_arguments)]
@@ -22,8 +22,6 @@ sa_core::orig! {
     /// float zNear, uint8 local)` (0x4AA440)
     #[allow(clippy::too_many_arguments)]
     pub fn fx_add_particle(sys: sa_core::mem::GPtr<u8>, pos: sa_core::mem::GPtr<u8>, vel: sa_core::mem::GPtr<u8>, time: f32, mult: sa_core::mem::GPtr<u8>, rot: f32, bright: f32, near: f32, local: u32) = thiscall 0x4AA440 => unported;
-    /// `CLocalisation::Blood()` (0x56D230, AL)
-    pub fn localisation_blood() -> u8 = cdecl 0x56D230 => unported;
     /// `CShadows::AddPermanentShadow(type, RwTexture*, CVector*, frontX, frontY, sideX, sideY, intensity, r, g, b,
     /// drawDistance, time, upDistance)` (0x706F60)
     #[allow(clippy::too_many_arguments)]

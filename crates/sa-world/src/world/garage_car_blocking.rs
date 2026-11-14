@@ -8,17 +8,13 @@ use sa_core::{hook, orig};
 
 use super::common::{g, rd, x};
 
+use crate::bindings::entity_get_col_model;
+use crate::bindings::garage_is_point_inside_r;
+use crate::bindings::placeable_get_matrix;
+use sa_core::bindings::matrix_mul_vec;
 orig! {
     /// `CGarage::IsEntityTouching3D(CEntity*)` (0x448EE0, `ret 4`)
     fn garage_is_entity_touching_3d(g: GPtr<u8>, e: GPtr<u8>) -> u8 = thiscall 0x448EE0 => garage_is_entity_touching_3d_port;
-    /// `CEntity::GetColModel()` (0x535300)
-    fn entity_get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => unported;
-    /// `CPlaceable::GetMatrix()` (0x411990)
-    fn placeable_get_matrix(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x411990 => unported;
-    /// `CMatrix * CVector` (0x59C890, `(CVector* out, const CMatrix*, const CVector*)`)
-    fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
-    /// `CGarage::IsPointInsideGarage(CVector, float)` (0x4487D0, `ret 0x10`)
-    fn garage_is_point_inside_r(g: GPtr<u8>, x: u32, y: u32, z: u32, r: u32) -> u8 = thiscall 0x4487D0 => unported;
 }
 
 /// `CPools::ms_pVehiclePool` (0xB74494): slots +0, flags +4, size +8; 0xA18-byte vehicles.

@@ -50,25 +50,19 @@ const E_READ_FAILED: u32 = 0x16;
 /// E_RW_STRING_TRUNCATION (name longer than 31 chars).
 const E_RW_TRUNCATED: u32 = 0x8000_001E;
 
+use crate::bindings::free_list_destroy as rw_free_list_destroy;
+use crate::bindings::plugin_add;
+use crate::bindings::plugin_add_stream;
+use crate::bindings::plugin_deinit_object;
+use crate::bindings::plugin_init_object;
+use crate::bindings::plugin_read_data_chunks;
+use crate::bindings::registry_get_plugin_offset as plugin_get_offset;
+use crate::bindings::rw_stream_find_chunk_call;
 orig! {
     /// `_rwerror(code, a, b)` (0x8088D0, varargs; three arguments)
     fn rw_error3(code: u32, a: u32, b: u32) -> u32 = cdecl 0x8088D0 => unported;
     /// `_rwerror(code, a, b, c, d)` (0x8088D0, varargs; five arguments)
     fn rw_error5(code: u32, a: u32, b: u32, c: u32, d: i32) -> u32 = cdecl 0x8088D0 => unported;
-    /// `RwFreeListDestroy(fl)` (0x801B80)
-    fn rw_free_list_destroy(fl: GPtr<u8>) -> u32 = cdecl 0x801B80 => unported;
-    /// `_rwPluginRegistryInitObject(reg, obj)` (0x8086E0)
-    fn plugin_init_object(reg: GPtr<u8>, obj: GPtr<u8>) -> GPtr<u8> = cdecl 0x8086E0 => crate::plugin::registry_init_object;
-    /// `_rwPluginRegistryDeInitObject(reg, obj)` (0x808740)
-    fn plugin_deinit_object(reg: GPtr<u8>, obj: GPtr<u8>) -> GPtr<u8> = cdecl 0x808740 => crate::plugin::registry_deinit_object;
-    /// `_rwPluginRegistryAddPlugin(reg, size, id, ctor, dtor, copy)` (0x8084A0)
-    fn plugin_add(reg: GPtr<u8>, size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x8084A0 => crate::plugin::registry_add_plugin;
-    /// `_rwPluginRegistryGetPluginOffset(reg, id)` (0x808470)
-    fn plugin_get_offset(reg: GPtr<u8>, id: u32) -> i32 = cdecl 0x808470 => crate::plugin::registry_get_plugin_offset;
-    /// `_rwPluginRegistryAddPluginStream(reg, id, read, write, getSize)` (0x8088E0)
-    fn plugin_add_stream(reg: GPtr<u8>, id: u32, read: u32, write: u32, get_size: u32) -> i32 = cdecl 0x8088E0 => crate::plugin::registry_add_plugin_stream;
-    /// `_rwPluginRegistryReadDataChunks(reg, stream, obj)` (0x808980)
-    fn plugin_read_data_chunks(reg: GPtr<u8>, s: GPtr<u8>, obj: GPtr<u8>) -> GPtr<u8> = cdecl 0x808980 => crate::plugin::registry_read_data_chunks;
     /// `_rwPluginRegistrySkipDataChunks(reg, stream)` (0x808C10)
     fn plugin_skip_data_chunks(reg: GPtr<u8>, s: GPtr<u8>) -> GPtr<u8> = cdecl 0x808C10 => crate::plugin::registry_skip_data_chunks;
     /// `RwRasterDestroy(raster)` (0x7FB020)
@@ -100,8 +94,6 @@ orig! {
     fn get_auto_mipmapping_call() -> u32 = cdecl 0x7F3580 => rw_texture_get_auto_mipmapping;
     /// `RwTextureSetAutoMipmapping(enable)` (0x7F3560)
     fn set_auto_mipmapping_call(v: u32) -> u32 = cdecl 0x7F3560 => rw_texture_set_auto_mipmapping;
-    /// `RwStreamFindChunk(stream, type, length, version)` (0x7ED2D0)
-    fn rw_stream_find_chunk_call(s: GPtr<u8>, ty: u32, len: GPtr<u32>, ver: GPtr<u32>) -> u32 = cdecl 0x7ED2D0 => crate::stream::rw_stream_find_chunk;
     /// `RwStreamRead(stream, buf, len)` (0x7EC9D0)
     fn rw_stream_read_call(s: GPtr<u8>, buf: GPtr<u8>, len: u32) -> u32 = cdecl 0x7EC9D0 => crate::stream::rw_stream_read;
     /// `_rwStringStreamFindAndRead(string, stream)` (0x80A510)

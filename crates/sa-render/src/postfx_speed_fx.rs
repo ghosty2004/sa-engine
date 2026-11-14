@@ -7,17 +7,15 @@ use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 use sa_math::x87::X87;
 
+use crate::bindings::im_render_states_store;
+use sa_core::bindings::rw_im2d_render_primitive;
 orig! {
-    /// `CPostEffects::ImmediateModeRenderStatesStore()` (0x700CC0)
-    fn im_render_states_store() = cdecl 0x700CC0 => unported;
     /// `CPostEffects::ImmediateModeRenderStatesSet()` (0x700D70)
     fn im_render_states_set() = cdecl 0x700D70 => unported;
     /// `CPostEffects::ImmediateModeRenderStatesReStore()` (0x700E00)
     fn im_render_states_restore() = cdecl 0x700E00 => unported;
     /// `RwRenderStateSet(state, value)` (RwEngineInstance +0x20)
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `RwIm2DRenderPrimitive(type, verts, n)` (0x734E90)
-    fn rw_im2d_render_primitive(ty: u32, verts: GPtr<u8>, n: i32) -> i32 = cdecl 0x734E90 => unported;
 }
 
 use sa_core::field::gr32 as gu;

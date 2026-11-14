@@ -16,23 +16,17 @@ use sa_math::x87::X87;
 
 use crate::common::{ftol32, g, jne, jp, k, rd, wr, x, xi};
 
+use sa_core::bindings::matrix_assign;
+use sa_core::bindings::matrix_mul;
+use sa_core::bindings::matrix_mul_vec;
+use sa_core::bindings::matrix_set_rotate_x;
+use sa_core::bindings::matrix_set_rotate_y;
+use sa_core::bindings::matrix_set_rotate_z;
 orig! {
     /// `Common::CalcScreenCoors(const CVector&, CVector*, float*, float*)` (0x71da00)
     fn calc_screen_coors_scaled(input: GPtr<[f32; 3]>, out: GPtr<[f32; 3]>, sx: GPtr<f32>, sy: GPtr<f32>) -> bool = cdecl 0x71da00 => sa_core::common::calc_screen_coors_scaled;
-    /// `CMatrix::SetRotateX(float)` (0x59b060)
-    fn matrix_set_rotate_x(m: GPtr<u8>, a: f32) = thiscall 0x59b060 => unported;
-    /// `CMatrix::SetRotateY(float)` (0x59b0a0)
-    fn matrix_set_rotate_y(m: GPtr<u8>, a: f32) = thiscall 0x59b0a0 => unported;
-    /// `CMatrix::SetRotateZ(float)` (0x59b0e0)
-    fn matrix_set_rotate_z(m: GPtr<u8>, a: f32) = thiscall 0x59b0e0 => unported;
-    /// `operator*(const CMatrix&, const CMatrix&)` (0x59be30, result through a hidden pointer)
-    fn matrix_mul(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x59be30 => unported;
-    /// `CMatrix::operator=(const CMatrix&)` (0x59bbc0)
-    fn matrix_assign(m: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = thiscall 0x59bbc0 => unported;
     /// `CMatrix::~CMatrix()` (0x59acd0)
     fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59acd0 => sa_world::world::mvpa_math::matrix_dtor;
-    /// `operator*(const CMatrix&, const CVector&)` (0x59c890, result through a hidden pointer)
-    fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59c890 => unported;
     /// `CVector::Normalise()` (0x59c910)
     fn normalise(v: GPtr<CVector>) = thiscall 0x59c910 => sa_world::collision::data::normalise_port;
     /// `CVector::CrossProduct(CVector* out, const CVector* a, const CVector* b)` (0x59c730)

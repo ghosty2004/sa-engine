@@ -14,29 +14,23 @@ use crate::common::*;
 /// `CTimer::m_snTimeInMilliseconds`
 const TIME_MS: usize = 0xB7CB84;
 
+use crate::bindings::event_pool_new;
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::event_base_dtor;
+use sa_world::bindings::localisation_blood;
+use sa_world::bindings::task_simple_ctor;
 orig! {
     /// `CEvent::GetEventType` (vtable +4)
     fn v_event_type(e: GPtr<u8>) -> i32 = thiscall vslot 0x4 => unported;
     /// `CEvent::GetEventPriority` (vtable +8)
     fn v_event_priority(e: GPtr<u8>) -> i32 = thiscall vslot 0x8 => unported;
-    /// `CEvent::~CEvent` (`FUN_004b13c0`: `vtbl = 0x85AB38`)
-    fn event_base_dtor(e: GPtr<u8>) = thiscall 0x4B13C0 => unported;
-    /// `CEventPool::New` (0x4B5570, on the pool in ECX)
-    fn event_pool_new(pool: GPtr<u8>) -> GPtr<u8> = thiscall 0x4B5570 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00, `ret 4`)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70, `ret 4`)
-    fn entity_register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
     /// `CPed::Say(uint16 id, uint32 offset, float volume, bool, bool, bool)` (0x5EFFE0, `ret 0x18`)
     fn ped_say(p: GPtr<u8>, id: u32, off: u32, vol: u32, a: u32, b: u32, c: u32) = thiscall 0x5EFFE0 => unported;
-    /// `CLocalisation::Blood` (0x56D230, AL)
-    fn localisation_blood() -> u8 = cdecl 0x56D230 => unported;
     /// `CAEPedAudioEntity::AddAudioEvent(int32 event, float volume, float speed, CPhysical*, uint8, int32, uint32)`
     /// (0x4E2BB0, `ret 0x1C`)
     #[allow(clippy::too_many_arguments)]
     fn ped_audio_add_audio_event(a: GPtr<u8>, ev: u32, vol: u32, speed: u32, ent: GPtr<u8>, b: u32, c: u32, d: u32) = thiscall 0x4E2BB0 => unported;
-    /// `CTaskSimple::CTaskSimple` (`FUN_0061a390`)
-    fn task_simple_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A390 => unported;
 }
 
 // ---- vt_85b4c8 (an event with a float at +0xC) -------------------------------------------------------------------

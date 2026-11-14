@@ -3,28 +3,18 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::{g, rd, wr};
 
-orig! {
-    /// `CTaskManager::FindActiveTaskByType(int32)` (0x681740)
-    fn tm_find_active_task_by_type(tm: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x681740 => unported;
-    /// `CPedDamageResponseCalculator::CPedDamageResponseCalculator(CEntity*, float, eWeaponType, ePedPieceTypes, bool)` (0x4AD3F0)
-    fn damage_calc_ctor(c: GPtr<u8>, e: GPtr<u8>, dmg: u32, wt: u32, piece: u32, speak: u32) -> GPtr<u8> = thiscall 0x4AD3F0 => unported;
-    /// `CPedDamageResponseCalculator::~CPedDamageResponseCalculator()` (0x4AD420)
-    fn damage_calc_dtor(c: GPtr<u8>) = thiscall 0x4AD420 => unported;
-    /// `CEventDamage::CEventDamage(CEntity*, uint32, eWeaponType, ePedPieceTypes, uint8, bool, bool)` (0x4AD830)
-    fn event_damage_ctor(e: GPtr<u8>, src: GPtr<u8>, time: u32, wt: u32, piece: u32, dir: u32, a6: u32, a7: u32) -> GPtr<u8> = thiscall 0x4AD830 => unported;
-    /// `CEventDamage::AffectsPed(CPed*)` (0x4B35A0)
-    fn event_damage_affects_ped(e: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x4B35A0 => unported;
-    /// `CPedDamageResponseCalculator::ComputeDamageResponse(CPed*, CPedDamageResponse&, bool)` (0x4B5AC0)
-    fn damage_calc_compute_damage_response(c: GPtr<u8>, ped: GPtr<u8>, r: GPtr<u8>, speak: u32) = thiscall 0x4B5AC0 => unported;
-    /// `CEventDamage::~CEventDamage()` (0x4AD960)
-    fn event_damage_dtor(e: GPtr<u8>) = thiscall 0x4AD960 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420)
-    fn event_group_add(grp: GPtr<u8>, ev: GPtr<u8>, valid: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
-}
+use sa_world::bindings::damage_calc_compute_damage_response;
+use sa_world::bindings::damage_calc_ctor;
+use sa_world::bindings::damage_calc_dtor;
+use sa_world::bindings::event_damage_affects_ped;
+use sa_world::bindings::event_damage_ctor;
+use sa_world::bindings::event_damage_dtor;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::tm_find_active_task_by_type;
 
 /// `CVehicle::KillPedsGettingInVehicle()` (0x6D82F0): every ped not in a vehicle (+0x46C bit 8) and
 /// without entity flag +0x1C bit 0 whose active enter-car task (701 as driver, else 700 as passenger)

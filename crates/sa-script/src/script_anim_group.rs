@@ -9,6 +9,7 @@ use sa_core::{hook, orig};
 /// `CModelInfo::ms_modelInfoPtrs`
 const MODEL_INFO_PTRS: usize = 0xA9B0C8;
 
+use sa_stream::bindings::get_animation_block_index;
 orig! {
     /// `CBaseModelInfo::GetAnimFileIndex()` (vtable +0x38)
     fn mi_get_anim_file_index(mi: GPtr<u8>) -> i32 = thiscall vslot 0x38 => unported;
@@ -16,8 +17,6 @@ orig! {
     fn mi_set_anim_file(mi: GPtr<u8>, name: GPtr<u8>) = thiscall vslot 0x30 => unported;
     /// `CBaseModelInfo::ConvertAnimFileIndex()` (vtable +0x34)
     fn mi_convert_anim_file_index(mi: GPtr<u8>) = thiscall vslot 0x34 => unported;
-    /// `CAnimManager::GetAnimationBlockIndex(const char*)` (0x4D3990)
-    fn get_animation_block_index(name: GPtr<u8>) -> i32 = cdecl 0x4D3990 => unported;
 }
 
 /// `CTheScripts::ScriptAttachAnimGroupToCharModel(int32 model, const char* ifp)` (0x474800, cdecl): the model's

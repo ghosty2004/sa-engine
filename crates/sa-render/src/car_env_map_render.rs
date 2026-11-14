@@ -22,31 +22,25 @@ use sa_math::x87::X87;
 
 use crate::common::{ftol32, g, rd, wr, x, xi};
 
+use crate::bindings::env_atm_pool_new;
+use crate::bindings::set_indices;
+use crate::bindings::set_texture;
+use crate::bindings::set_vertex_declaration;
+use sa_core::bindings::enable_clipping_if_needed;
+use sa_core::bindings::frame_get_ltm;
+use sa_core::bindings::get_render_state;
+use sa_core::bindings::set_streams;
+use sa_core::bindings::vector_normalise;
+use sa_core::bindings::vertex_alpha_enable;
+use sa_stream::bindings::fx_get_fx_quality as get_fx_quality;
+use sa_stream::bindings::get_atomic_id;
 orig! {
-    /// `CVisibilityPlugins::GetAtomicId(atomic)` (0x732370): the atomic plugin word +2, zero-extended
-    fn get_atomic_id(a: GPtr<u8>) -> u32 = cdecl 0x732370 => unported;
-    /// `_rwD3D9EnableClippingIfNeeded(object, type)` (0x756D90)
-    fn enable_clipping_if_needed(object: GPtr<u8>, ty: u32) = cdecl 0x756D90 => unported;
-    /// `RwD3D9GetRenderState(state, void* value)` (0x7FC320)
-    fn get_render_state(state: u32, value: GPtr<u32>) = cdecl 0x7FC320 => unported;
     /// `RwD3D9SetRenderState(state, value)` (0x7FC2D0)
     fn set_render_state(state: u32, value: u32) -> u32 = cdecl 0x7FC2D0 => unported;
     /// `RwD3D9SetTextureStageState(stage, type, value)` (0x7FC340)
     fn set_tss(stage: u32, ty: u32, value: u32) = cdecl 0x7FC340 => unported;
-    /// `RwD3D9SetTexture(texture, stage)` (0x7FDE70)
-    fn set_texture(t: u32, stage: u32) -> u32 = cdecl 0x7FDE70 => unported;
-    /// `_rwD3D9SetIndices(ib)` (0x7FA1C0)
-    fn set_indices(ib: u32) = cdecl 0x7FA1C0 => unported;
-    /// `_rwD3D9SetStreams(streams, useOffsets)` (0x7FA090)
-    fn set_streams(streams: GPtr<u8>, use_offsets: u32) = cdecl 0x7FA090 => unported;
-    /// `_rwD3D9SetVertexDeclaration(decl)` (0x7F9F70)
-    fn set_vertex_declaration(decl: u32) = cdecl 0x7F9F70 => unported;
     /// `G->dOpenDevice.fpRenderStateSet(state, value)` (`[G] + 0x20`)
     fn rw_render_state_set(state: u32, value: u32) -> u32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `_rwD3D9RenderStateVertexAlphaEnable(enable)` (0x7FE0A0)
-    fn vertex_alpha_enable(on: u32) = cdecl 0x7FE0A0 => unported;
-    /// `Fx_c::GetFxQuality()` (0x49EA50) on `g_fx` (0xA9AE00)
-    fn get_fx_quality(fx: GPtr<u8>) -> i32 = thiscall 0x49EA50 => unported;
     /// `RwD3D9SetLight(index, const void* light)` (0x7FA660)
     fn set_light(index: u32, light: GPtr<u8>) -> u32 = cdecl 0x7FA660 => unported;
     /// `RwD3D9EnableLight(index, enable)` (0x7FA860)
@@ -55,18 +49,12 @@ orig! {
     fn set_transform(state: u32, matrix: GPtr<u8>) -> u32 = cdecl 0x7FA390 => unported;
     /// `RwD3D9SetMaterial(const void* material)` (0x7FC430)
     fn set_material(m: GPtr<u8>) -> u32 = cdecl 0x7FC430 => unported;
-    /// The environment-map atomic data pool's `New()` (0x5D9260, thiscall, catalogue `FUN_005d9260`)
-    fn env_atm_pool_new(pool: GPtr<u8>) -> GPtr<u8> = thiscall 0x5D9260 => unported;
     /// `RxD3D9InstanceDataRender(header, inst)` (0x5DA640)
     fn instance_data_render(h: GPtr<u8>, inst: GPtr<u8>) = cdecl 0x5DA640 => unported;
     /// `RxD3D9InstanceDataRenderLighting(header, inst, flags, texture)` (0x5DA6A0)
     fn instance_data_render_lighting(h: GPtr<u8>, inst: GPtr<u8>, flags: u32, tex: u32) = cdecl 0x5DA6A0 => unported;
     /// The pipeline's stage reset after the meshes (0x5DAAC0, catalogue `FUN_005daac0`)
     fn render_cb_end() = cdecl 0x5DAAC0 => unported;
-    /// `RwFrameGetLTM(frame)` (0x7F0990)
-    fn frame_get_ltm(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0990 => unported;
-    /// `CVector::Normalise()` (0x59C910, thiscall)
-    fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
     /// The environment-camera UV helper (0x5D84C0), register arguments
     fn env_cam_uv_call(env: GPtr<u8>, atomic: GPtr<u8>, out: GPtr<u8>) -> u32 = reg("args = eax ecx esi") 0x5D84C0 => env_cam_uv;
     /// The environment-wave UV helper (0x5D8590), register arguments plus one stack word

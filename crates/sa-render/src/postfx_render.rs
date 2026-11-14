@@ -10,15 +10,19 @@ use sa_math::x87::X87;
 
 use crate::common::{ftol32, g, jne, jp, k, rd, x, xi};
 
+use crate::bindings::rw_raster_push_context;
+use crate::bindings::rw_raster_render_fast;
+use sa_core::bindings::file_set_dir as set_dir;
+use sa_core::bindings::link_list_clear;
+use sa_core::bindings::render_weapon_peds_for_pc;
+use sa_core::bindings::rw_camera_end_update;
+use sa_core::bindings::vector_dot_product as dot_product;
+use sa_core::bindings::vector_magnitude;
+use sa_world::bindings::find_player_speed;
+use sa_world::bindings::get_lighting_from_col;
 orig! {
     /// `RwRenderStateSet(state, value)` (`RwGlobals` +0x20)
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xc97b24 0x20 => unported;
-    /// `RwCameraEndUpdate(camera)` (0x7ee180)
-    fn rw_camera_end_update(cam: GPtr<u8>) -> GPtr<u8> = cdecl 0x7ee180 => unported;
-    /// `RwRasterPushContext(raster)` (0x7fb060)
-    fn rw_raster_push_context(r: GPtr<u8>) -> GPtr<u8> = cdecl 0x7fb060 => unported;
-    /// `RwRasterRenderFast(raster, x, y)` (0x7faf50)
-    fn rw_raster_render_fast(r: GPtr<u8>, px: i32, py: i32) -> GPtr<u8> = cdecl 0x7faf50 => unported;
     /// `RwRasterPopContext()` (0x7fb110)
     fn rw_raster_pop_context() -> u32 = cdecl 0x7fb110 => unported;
     /// `RsCameraBeginUpdate(camera)` (0x619450)
@@ -29,10 +33,6 @@ orig! {
     fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56e210 => sa_world::world::cworld::find_player_ped;
     /// `FindPlayerVehicle(int, bool)` (0x56e0d0)
     fn find_player_vehicle(id: i32, include_remote: u8) -> GPtr<u8> = cdecl 0x56e0d0 => sa_world::world::cworld::find_player_vehicle;
-    /// `FindPlayerSpeed(int)` (0x56e090)
-    fn find_player_speed(id: i32) -> GPtr<u8> = cdecl 0x56e090 => sa_world::world::cworld::find_player_speed;
-    /// `CPhysical::GetLightingFromCol(bool)` (0x5447b0, ST0; the dword the original pushes)
-    fn get_lighting_from_col(e: GPtr<u8>, interior: u32) -> f64 = thiscall 0x5447b0 => unported;
     /// `CPostEffects::ColourFilter(RwRGBA pass1, RwRGBA pass2)` (0x703650)
     fn colour_filter(pass1: u32, pass2: u32) = cdecl 0x703650 => crate::mvpd_r3::colour_filter;
     /// `CPostEffects::DarknessFilter(int alpha)` (0x702f00)
@@ -43,10 +43,6 @@ orig! {
     fn set_speed_fx_manual(v: u32) = cdecl 0x700be0 => unported;
     /// `CPostEffects::SpeedFX(float)` (0x7030a0; the float as a raw dword)
     fn speed_fx(v: u32) = cdecl 0x7030a0 => unported;
-    /// `DotProduct(const CVector&, const CVector&)` (0x40fdb0, ST0)
-    fn dot_product(a: GPtr<u8>, b: GPtr<u8>) -> f64 = cdecl 0x40fdb0 => unported;
-    /// `CVector::Magnitude()` (0x4082c0, ST0)
-    fn vector_magnitude(v: GPtr<u8>) -> f64 = thiscall 0x4082c0 => unported;
     /// `CPostEffects::NightVision(RwRGBA)` (0x7011c0)
     fn night_vision(col: u32) = cdecl 0x7011c0 => unported;
     /// `CPostEffects::Grain(int strength, bool)` (0x7037c0)
@@ -68,14 +64,8 @@ orig! {
     fn timer_suspend() = cdecl 0x5619d0 => sa_core::timer::suspend;
     /// `CTimer::Resume()` (0x561a00)
     fn timer_resume() = cdecl 0x561a00 => sa_core::timer::resume;
-    /// `CVisibilityPlugins::RenderWeaponPedsForPC()` (0x732f30)
-    fn render_weapon_peds_for_pc() = cdecl 0x732f30 => unported;
-    /// `CLinkList<CPed*>::Clear()` (0x53e8d0; `ResetWeaponPedsForPC` inlined)
-    fn link_list_clear(this: GPtr<u8>) = thiscall 0x53e8d0 => sa_core::mvpb_app::link_list_clear;
     /// `CFileMgr::SetDirMyDocuments()` (0x538860)
     fn set_dir_my_documents() -> i32 = cdecl 0x538860 => sa_core::filemgr::set_dir_my_documents;
-    /// `CFileMgr::SetDir(const char*)` (0x5387d0)
-    fn set_dir(path: GPtr<u8>) -> i32 = cdecl 0x5387d0 => sa_core::filemgr::set_dir;
     /// CRT `sprintf(buf, fmt, int)` (0x821bb5)
     fn sprintf1(buf: GPtr<u8>, fmt: GPtr<u8>, v: u32) -> i32 = cdecl 0x821bb5 => unported;
     /// CRT `fopen` (0x8232d8)

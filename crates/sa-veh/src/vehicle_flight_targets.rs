@@ -4,21 +4,15 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 
 use crate::common::{b, g, rd, wr, x};
 
-orig! {
-    /// `CGeneral::GetATanOfXY(float, float)` (0x53CC70), ST0
-    fn get_atan_of_xy(x: f32, y: f32) -> f64 = cdecl 0x53CC70 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    fn get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CPad::GetCarGunFired()` (0x53FF90): int16 in AX
-    fn pad_get_car_gun_fired(pad: GPtr<u8>) -> i16 = thiscall 0x53FF90 => unported;
-    /// `CVehicle::FireFixedMachineGuns()` (0x73DF00)
-    fn fire_fixed_machine_guns(v: GPtr<u8>) = thiscall 0x73DF00 => unported;
-}
+use sa_core::bindings::get_atan_of_xy;
+use sa_core::bindings::get_pad;
+use sa_pop::bindings::fire_fixed_machine_guns;
+use sa_world::bindings::pad_get_car_gun_fired;
 
 /// The common part of the two orders: the target (+0x3EC/+0x3F0/+0x3F4), the altitude (+0x9B0),
 /// the creation state (+0x36 bits 3..7) = 3.

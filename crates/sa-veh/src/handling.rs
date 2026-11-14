@@ -11,14 +11,9 @@ use sa_core::{hook, orig};
 use crate::common::{g, rd, wr, x};
 use sa_math::x87::X87;
 
-orig! {
-    /// CRT `strncmp` (0x8214D0)
-    pub fn strncmp(a: GPtr<u8>, b: GPtr<u8>, n: u32) -> i32 = cdecl 0x8214D0 => unported;
-    /// CRT `strncpy` (0x821F40)
-    pub fn strncpy(dst: GPtr<u8>, src: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x821F40 => unported;
-    /// `cHandlingDataMgr::LoadHandlingData()` (0x5BD830)
-    pub fn load_handling_data(mgr: GPtr<u8>) = thiscall 0x5BD830 => unported;
-}
+pub use sa_core::bindings::crt_strncpy as strncpy;
+pub use sa_core::bindings::handling_load_handling_data as load_handling_data;
+pub use sa_core::bindings::strncmp;
 
 /// `VehicleNames[210][14]` (0x8D3978), the handling.cfg identifiers.
 const VEHICLE_NAMES: usize = 0x8D3978;
@@ -166,20 +161,16 @@ pub fn initialise(mgr: GPtr<u8>) {
     wr::<u32>(mgr, 0x10, 0x3F7A_E148);
 }
 
+use sa_core::bindings::atof as hd_atof;
+use sa_core::bindings::atol as hd_atol;
+use sa_core::bindings::sscanf1 as hd_sscanf_x;
+use sa_core::bindings::strtok as hd_strtok;
 orig! {
     fn hd_set_dir(dir: GPtr<u8>) = cdecl 0x5387D0 => unported;
     fn hd_open_file(path: GPtr<u8>, mode: GPtr<u8>) -> u32 = cdecl 0x538900 => unported;
     fn hd_close_file(file: u32) -> i32 = cdecl 0x5389D0 => unported;
     /// `CFileLoader::LoadLine(FILE*)` (0x536F80)
     fn hd_load_line(file: u32) -> GPtr<u8> = cdecl 0x536F80 => unported;
-    /// CRT `strtok(s, delims)` (0x82244B)
-    fn hd_strtok(s: GPtr<u8>, delims: GPtr<u8>) -> GPtr<u8> = cdecl 0x82244B => unported;
-    /// CRT `atof` (0x823CEE, result in ST0)
-    fn hd_atof(s: GPtr<u8>) -> f64 = cdecl 0x823CEE => unported;
-    /// CRT `atol` (0x82258E)
-    fn hd_atol(s: GPtr<u8>) -> i32 = cdecl 0x82258E => unported;
-    /// CRT `sscanf(s, "%x", out)` (0x8220AD)
-    fn hd_sscanf_x(s: GPtr<u8>, fmt: GPtr<u8>, out: GPtr<u8>) -> i32 = cdecl 0x8220AD => unported;
     /// `cHandlingDataMgr::FindExactWord(word, names, nameLen, count)` (0x6F4F30)
     fn hd_find_exact_word(mgr: GPtr<u8>, word: GPtr<u8>, names: GPtr<u8>, len: u32, count: u32) -> u32 = thiscall 0x6F4F30 => unported;
     fn hd_get_boat_pointer(mgr: GPtr<u8>, id: u32) -> GPtr<u8> = thiscall 0x6F5300 => unported;

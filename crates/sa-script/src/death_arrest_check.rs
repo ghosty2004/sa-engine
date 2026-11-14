@@ -14,12 +14,11 @@ const SCRIPT_SPACE: usize = 0xA49960;
 const PLAYER_IN_FOCUS: usize = 0xB7CD74;
 const PLAYERS: usize = 0xB7CD98;
 
+use sa_world::bindings::clear_small_messages_only;
 orig! {
     /// `CPlayerInfo::IsRestartingAfterDeath()` (0x56E550), `CPlayerInfo::IsRestartingAfterArrest()` (0x56E560)
     fn is_restarting_after_death(p: GPtr<u8>) -> u8 = thiscall 0x56E550 => unported;
     fn is_restarting_after_arrest(p: GPtr<u8>) -> u8 = thiscall 0x56E560 => unported;
-    /// `CMessages::ClearSmallMessagesOnly()` (0x69DD30)
-    fn clear_small_messages_only() = cdecl 0x69DD30 => unported;
 }
 
 fn mission_flag_cell() -> GPtr<u32> {

@@ -4,19 +4,14 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 /// The shared work `RwMatrix*` (0xB72920)
 const WORK_RW_MATRIX: usize = 0xB72920;
 
-orig! {
-    /// `CMatrix::CopyToRwMatrix(RwMatrix*)` (0x59B8B0, `ret 4`)
-    fn matrix_copy_to_rw_matrix(m: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x59B8B0 => unported;
-    /// `RwMatrixUpdate(RwMatrix*)` (0x7F18A0)
-    fn rw_matrix_update(m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F18A0 => unported;
-    /// `RwV3dTransformVector(RwV3d* out, const RwV3d* in, const RwMatrix*)` (0x7EDDC0)
-    fn rw_v3d_transform_vector(out: GPtr<u8>, inp: GPtr<u8>, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EDDC0 => unported;
-}
+use sa_core::bindings::matrix_copy_to_rw_matrix;
+use sa_core::bindings::rw_matrix_update;
+use sa_world::bindings::rw_v3d_transform_vector;
 
 fn work_matrix() -> GPtr<u8> {
     GPtr::<GPtr<u8>>::from_addr(WORK_RW_MATRIX).read()

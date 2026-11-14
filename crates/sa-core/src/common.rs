@@ -40,11 +40,10 @@ pub mod k {
     pub const SEVENTY: u32 = 0x428C_0000;
 }
 
+pub use crate::bindings::rw_image_create;
 orig! {
     /// `operator*(const CMatrix&, const CVector&)` (0x59C890, cdecl, hidden return pointer)
     pub fn matrix_mul_vector(out: GPtr<[f32; 3]>, m: GPtr<u8>, v: GPtr<[f32; 3]>) -> GPtr<[f32; 3]> = cdecl 0x59C890 => unported;
-    /// `RwImageCreate` (0x8026E0)
-    pub fn rw_image_create(width: i32, height: i32, depth: i32) -> GPtr<u8> = cdecl 0x8026E0 => unported;
     /// `RwImageAllocatePixels` (0x8027A0)
     pub fn rw_image_allocate_pixels(img: GPtr<u8>) -> GPtr<u8> = cdecl 0x8027A0 => unported;
     /// `RwImageSetFromRaster` (0x804250)

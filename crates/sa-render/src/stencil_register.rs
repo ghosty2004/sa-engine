@@ -12,6 +12,7 @@ use sa_math::x87::X87;
 use crate::common::{ftol32, g, k, rd, wr, x};
 use crate::stencilshadows::{ACTIVE_OBJECTS, FREE_OBJECTS};
 
+use sa_world::bindings::entity_get_col_model as get_col_model;
 orig! {
     /// `CStencilShadowObject::Destroy()` (0x711310)
     fn destroy(o: GPtr<u8>) = thiscall 0x711310 => crate::stencilshadows::destroy;
@@ -23,8 +24,6 @@ orig! {
     fn sq_dist_object(e: GPtr<u8>, p: GPtr<u8>) -> X87 = reg("args = ebx esi") 0x711160 => crate::harness5::signed_sq_dist_object;
     /// The vehicle shadow distance 0x7111F0: EBX = entity, ESI = point, ST0 result
     fn sq_dist_vehicle(e: GPtr<u8>, p: GPtr<u8>) -> X87 = reg("args = ebx esi") 0x7111F0 => crate::harness5::signed_sq_dist_vehicle;
-    /// `CEntity::GetColModel()` (0x535300)
-    fn get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => unported;
     /// `CWorld::ClearScanCodes()` (0x563470; the port is unhookable)
     fn clear_scan_codes() = cdecl 0x563470 => sa_world::world::cworld::clear_scan_codes;
     /// `CBaseModelInfo::GetModelType()` (vtable +0x10)

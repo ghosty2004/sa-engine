@@ -6,17 +6,15 @@ use sa_core::abi::{HookReg, NativeReg};
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
+use sa_core::bindings::base_model_info_set_col_model as set_col_model;
+use sa_core::bindings::stream_read;
+use sa_stream::bindings::col_model_ctor;
+use sa_stream::bindings::col_model_new;
 orig! {
     /// `CMemoryMgr::LockScratchPad` (0x72F4A0)
     fn lock_scratch_pad() = cdecl 0x72F4A0 => lock_scratch_pad_port;
     /// `CMemoryMgr::ReleaseScratchPad` (0x72F4B0)
     fn release_scratch_pad() = cdecl 0x72F4B0 => release_scratch_pad_port;
-    /// `RwStreamRead(stream, buf, len)` (0x7EC9D0)
-    fn stream_read(s: GPtr<u8>, buf: GPtr<u8>, len: u32) -> u32 = cdecl 0x7EC9D0 => unported;
-    /// `CColModel::operator new(size)` (0x40FC30)
-    fn col_model_new(size: u32) -> GPtr<u8> = cdecl 0x40FC30 => unported;
-    /// `CColModel::CColModel()` (0x40FB60)
-    fn col_model_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x40FB60 => unported;
     /// `CFileLoader::LoadCollisionModel(data, colModel, name)` (0x537580)
     fn load_collision_model(data: GPtr<u8>, cm: GPtr<u8>, name: u32) = cdecl 0x537580 => unported;
     /// `CFileLoader::LoadCollisionModelVer2(data, size, colModel, name)` (0x537EE0)
@@ -25,8 +23,6 @@ orig! {
     fn load_collision_model_ver3(data: GPtr<u8>, size: u32, cm: GPtr<u8>, name: u32) = cdecl 0x537CE0 => unported;
     /// `CColModel::MakeMultipleAlloc()` (0x40F740)
     fn make_multiple_alloc(this: GPtr<u8>) = thiscall 0x40F740 => unported;
-    /// `CBaseModelInfo::SetColModel(colModel, owns)` (0x4C4BC0)
-    fn set_col_model(mi: GPtr<u8>, cm: GPtr<u8>, owns: u32) = thiscall 0x4C4BC0 => unported;
 }
 
 /// The collision chunk buffer (`gCollisionFileBuffer`-style static at 0xC8E0C8: fourcc, size, name,

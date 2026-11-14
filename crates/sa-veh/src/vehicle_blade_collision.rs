@@ -8,17 +8,12 @@ use sa_math::x87::X87;
 
 use crate::common::{f32_of, ftol32, g, x};
 
+use sa_core::bindings::box_set;
+use sa_core::bindings::col_sphere_set;
+use sa_core::bindings::matrix_mul_vec;
+use sa_core::bindings::sphere_set;
+use sa_core::bindings::world_clear_scan_codes as clear_scan_codes;
 orig! {
-    /// `CBox::Set(const CVector& min, const CVector& max)` (0x40EDE0)
-    fn box_set(b: GPtr<u8>, min: GPtr<u8>, max: GPtr<u8>) = thiscall 0x40EDE0 => unported;
-    /// `CSphere::Set(float radius, const CVector& center)` (0x40FCF0, a `.HOODLUM` stub)
-    fn sphere_set(s: GPtr<u8>, radius: u32, center: GPtr<u8>) = thiscall 0x40FCF0 => unported;
-    /// `CColSphere::Set(float radius, const CVector& center, uint8 material, uint8 flags, uint8 lighting)` (0x40FD10)
-    fn col_sphere_set(s: GPtr<u8>, radius: u32, center: GPtr<u8>, material: u32, flags: u32, light: u32) = thiscall 0x40FD10 => unported;
-    /// `operator*(const CMatrix&, const CVector&)` (0x59C890, the result through `out`)
-    fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
-    /// `CWorld::ClearScanCodes()` (0x563470)
-    fn clear_scan_codes() = cdecl 0x563470 => unported;
     /// `CVehicle::BladeColSectorList(CPtrListSingleLink&, CColModel&, CMatrix&, int16 rotorType, float
     /// damageMult)` (0x6DAF00, AL)
     fn blade_col_sector_list(v: GPtr<u8>, list: GPtr<u8>, col: GPtr<u8>, m: GPtr<u8>, rotor: u32, mult: u32) -> u8 = thiscall 0x6DAF00 => unported;

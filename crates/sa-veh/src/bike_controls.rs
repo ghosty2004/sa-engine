@@ -3,31 +3,20 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::{Cmp, X87};
 
 use crate::common::{f32_of, g, jne_mask, rd, wr, x, xi};
 
-orig! {
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    fn pad_get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CPad::GetExitVehicle()` (0x5400D0, AL)
-    fn pad_get_exit_vehicle(pad: GPtr<u8>) -> u8 = thiscall 0x5400D0 => unported;
-    /// `CPad::GetHandBrake()` (0x540040): int16 in AX
-    fn pad_get_hand_brake(pad: GPtr<u8>) -> i16 = thiscall 0x540040 => unported;
-    /// `CPad::GetSteeringLeftRight()` (0x53FB80): int16 in AX
-    fn pad_get_steering_left_right(pad: GPtr<u8>) -> i16 = thiscall 0x53FB80 => unported;
-    /// `CPad::GetSteeringUpDown()` (0x53FBD0): int16 in AX
-    fn pad_get_steering_up_down(pad: GPtr<u8>) -> i16 = thiscall 0x53FBD0 => unported;
-    /// `CPad::GetAccelerate()` (0x5403F0): int16 in AX
-    fn pad_get_accelerate(pad: GPtr<u8>) -> i16 = thiscall 0x5403F0 => unported;
-    /// `CPad::GetBrake()` (0x540080): int16 in AX
-    fn pad_get_brake(pad: GPtr<u8>) -> i16 = thiscall 0x540080 => unported;
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(n: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CPlayerPed::KeepAreaAroundPlayerClear()` (0x60C1E0)
-    fn keep_area_around_player_clear(p: GPtr<u8>) = thiscall 0x60C1E0 => unported;
-}
+use crate::bindings::keep_area_around_player_clear;
+use crate::bindings::pad_get_hand_brake;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::get_pad as pad_get_pad;
+use sa_world::bindings::pad_get_accelerate;
+use sa_world::bindings::pad_get_brake;
+use sa_world::bindings::pad_get_exit_vehicle;
+use sa_world::bindings::pad_get_steering_left_right;
+use sa_world::bindings::pad_get_steering_up_down;
 
 /// `CTimer::ms_fTimeStep`.
 fn ts() -> f32 {

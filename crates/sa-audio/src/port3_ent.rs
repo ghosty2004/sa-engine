@@ -47,25 +47,17 @@ fn volume_offset() -> i32 {
     rd::<i8>(g(p as usize), 0x74) as i32
 }
 
+use crate::bindings::hw_is_sound_bank_loaded;
+use crate::bindings::sm_request_new_sound;
+use crate::bindings::sound_initialise;
+use crate::bindings::sound_set_position;
+use sa_world::bindings::entity_get_is_type_physical;
+use sa_world::bindings::get_friction_effect as surface_get_friction_effect;
+use sa_world::bindings::sound_dtor as sound_destructor;
+use sa_world::bindings::surface_55ea50 as surface_is_audio_grass;
+use sa_world::bindings::surface_55ead0 as surface_is_audio_water;
 orig! {
-    /// `CAEAudioHardware::IsSoundBankLoaded(uint16 bankId, int16 slot)` (0x4D88C0)
-    fn hw_is_sound_bank_loaded(hw: GPtr<u8>, bank: u32, slot: u32) -> u8 = thiscall 0x4D88C0 => unported;
-    /// `CAESound::Initialise(...)` (0x4EFE50, 14 argument dwords)
-    fn sound_initialise(sound: GPtr<u8>, slot: u32, id: u32, entity: u32, px: u32, py: u32, pz: u32, volume: u32, max_distance: u32, speed: u32, time_scale: u32, ignored_cycles: u32, flags: u32, speed_variance: u32, play_pos: u32) = thiscall 0x4EFE50 => crate::sound::initialise;
-    /// `CAESoundManager::RequestNewSound(CAESound*)` (0x4EFB10)
-    fn sm_request_new_sound(sm: GPtr<u8>, sound: GPtr<u8>) -> u32 = thiscall 0x4EFB10 => unported;
-    /// `CAESound::~CAESound()` (0x4EF660)
-    fn sound_destructor(sound: GPtr<u8>) = thiscall 0x4EF660 => unported;
-    /// `CAESound::SetPosition(CVector)` (0x4EF880, the vector by value)
-    fn sound_set_position(sound: GPtr<u8>, px: u32, py: u32, pz: u32) = thiscall 0x4EF880 => unported;
-    /// `SurfaceInfos_c::GetFrictionEffect(uint32 surface)` (0x55E650)
-    fn surface_get_friction_effect(infos: GPtr<u8>, surface: u32) -> u32 = thiscall 0x55E650 => unported;
-    /// `SurfaceInfos_c::IsAudioGrass / IsAudioWater / IsAudioMetal(uint32 surface)` (AL)
-    fn surface_is_audio_grass(infos: GPtr<u8>, s: u32) -> u8 = thiscall 0x55EA50 => unported;
-    fn surface_is_audio_water(infos: GPtr<u8>, s: u32) -> u8 = thiscall 0x55EAD0 => unported;
     fn surface_is_audio_metal(infos: GPtr<u8>, s: u32) -> u8 = thiscall 0x55EAF0 => unported;
-    /// `CEntity::GetIsTypePhysical()` (0x4DA030, AL)
-    fn entity_get_is_type_physical(e: GPtr<u8>) -> u8 = thiscall 0x4DA030 => unported;
     /// `CAECollisionAudioEntity::ChooseCollisionSoundID(uint8 surface)` (0x4DAA50, EAX)
     fn collision_choose_collision_sound_id(this: GPtr<u8>, surface: u32) -> u32 = thiscall 0x4DAA50 => crate::entities::collision_choose_collision_sound_id;
     /// `CAECollisionAudioEntity::AddCollisionSoundToList(CEntity*, CEntity*, uint8, uint8, CAESound*, int32)` (0x4DAAC0)
@@ -573,25 +565,19 @@ pub fn collision_report_collision(
 
 // ---- CAEPedAudioEntity: Service / shirt flap ------------------------------------------------------
 
+use crate::bindings::twin_initialise;
+use crate::bindings::twin_loop_stop_sound_and_forget as twin_stop_sound_and_forget;
+use crate::bindings::twin_play;
+use crate::bindings::twin_update;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::get_using_parachute as intelligence_get_using_parachute;
 orig! {
-    /// `CPed::IsPlayer()` (0x5DF8F0, AL)
-    fn ped_is_player(ped: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
     /// `CVehicle` virtual slot 0x9C (AL; asked of automobiles before the wind-rush volume)
     fn vcall_vehicle_9c(veh: GPtr<u8>) -> u8 = thiscall vslot 0x9C => unported;
-    /// `CPedIntelligence::GetUsingParachute()` (0x6011B0, AL)
-    fn intelligence_get_using_parachute(intel: GPtr<u8>) -> u8 = thiscall 0x6011B0 => unported;
     /// `RpAnimBlendClumpGetAssociation(RpClump*, const char* name)` (0x4D6870, cdecl)
     fn anim_get_association(clump: u32, name: u32) -> u32 = cdecl 0x4D6870 => unported;
     /// `CAEPedAudioEntity::PlayShirtFlap(float volume, float speed)` (0x4E2A90)
     fn ped_play_shirt_flap_call(this: GPtr<u8>, volume: u32, speed: u32) = thiscall 0x4E2A90 => ped_play_shirt_flap;
-    /// `CAETwinLoopSoundEntity::StopSoundAndForget()` (0x4F2960)
-    fn twin_stop_sound_and_forget(twin: GPtr<u8>) = thiscall 0x4F2960 => crate::entities::twin_loop_stop_sound_and_forget;
-    /// `CAETwinLoopSoundEntity::Initialise(int16 slot, int16 sfx1, int16 sfx2, CAEAudioEntity*, int16, int16, int16, int16)` (0x4F28A0)
-    fn twin_initialise(twin: GPtr<u8>, slot: u32, sfx1: u32, sfx2: u32, ent: u32, min_time: u32, max_time: u32, a: u32, b: u32) = thiscall 0x4F28A0 => unported;
-    /// `CAETwinLoopSoundEntity::UpdateTwinLoopSound(CVector pos, float volume, float speed)` (0x4F29A0)
-    fn twin_update(twin: GPtr<u8>, px: u32, py: u32, pz: u32, volume: u32, speed: u32) = thiscall 0x4F29A0 => unported;
-    /// `CAETwinLoopSoundEntity::PlayTwinLoopSound(CVector pos, float volume, float speed, float maxDistance, float timeScale, eSoundEnvironment)` (0x4F2CB0)
-    fn twin_play(twin: GPtr<u8>, px: u32, py: u32, pz: u32, volume: u32, speed: u32, max_distance: u32, time_scale: u32, flags: u32) = thiscall 0x4F2CB0 => unported;
 }
 
 /// `|v|` of the vector at `e + off` as the bytes compute it: `fld z; fld y; fld x`, then
@@ -779,20 +765,17 @@ pub fn ped_service(this: GPtr<u8>) {
 
 // ---- CAEWeatherAudioEntity::Service ---------------------------------------------------------------
 
+use crate::bindings::ae_resolve_probability;
+use crate::bindings::hw_load_sound_bank;
+use sa_world::bindings::cam_no_rain as cull_cam_no_rain;
+use sa_world::bindings::player_no_rain as cull_player_no_rain;
 orig! {
     /// `CAESoundManager::AreSoundsOfThisEventPlayingForThisEntity(int16 event, CAEAudioEntity*)` (0x4EF570, AX)
     fn sm_are_sounds_of_this_event_playing(sm: GPtr<u8>, event: u32, entity: u32) -> u32 = thiscall 0x4EF570 => unported;
-    /// `CAEAudioHardware::LoadSoundBank(uint16 bankId, int16 slot)` (0x4D88A0)
-    fn hw_load_sound_bank(hw: GPtr<u8>, bank: u32, slot: u32) = thiscall 0x4D88A0 => unported;
-    /// `CCullZones::PlayerNoRain()` / `CamNoRain()` (AL)
-    fn cull_player_no_rain() -> u8 = cdecl 0x72DDC0 => unported;
-    fn cull_cam_no_rain() -> u8 = cdecl 0x72DDB0 => unported;
     /// `CAETwinLoopSoundEntity::DoSoundsSwitchThisFrame()` (0x4F2CA0, AL)
     fn twin_do_sounds_switch_this_frame(twin: GPtr<u8>) -> u8 = thiscall 0x4F2CA0 => unported;
     /// `CAEAudioUtility::GetRandomNumberInRange(float, float)` (0x4D9C50, ST0)
     fn ae_random_float_st0(min: u32, max: u32) -> f64 = cdecl 0x4D9C50 => unported;
-    /// `CAEAudioUtility::ResolveProbability(float)` (0x4D9C80, AL)
-    fn ae_resolve_probability(p: f32) -> u8 = cdecl 0x4D9C80 => crate::utility::resolve_probability;
 }
 
 /// `CAEWeatherAudioEntity::m_sfRainVolume` (0x8CC30C) and `m_snLastRainDropSoundID` (0x8CC310, int16)
@@ -1051,22 +1034,20 @@ pub fn user_radio_free_decoder_library() {
 
 // ---- CAEPedSpeechAudioEntity: ped conversations ---------------------------------------------------
 
+use crate::bindings::ae_random_int;
+use sa_world::bindings::ped_get_ped_talking;
+use sa_world::bindings::vector_magnitude_sqr as vector_magnitude_sqr_st0;
 orig! {
     /// `CAEPedSpeechAudioEntity` virtual slot 0x10 (`GetPedType`, AX)
     fn vcall_speech_get_ped_type(speech: GPtr<u8>) -> u32 = thiscall vslot 0x10 => unported;
     /// `CPed::CanPedHoldConversation()` (0x5EFFA0, AL) / `CPed::GetPedTalking()` (0x5EFF50, AL)
     fn ped_can_ped_hold_conversation(ped: GPtr<u8>) -> u8 = thiscall 0x5EFFA0 => unported;
-    fn ped_get_ped_talking(ped: GPtr<u8>) -> u8 = thiscall 0x5EFF50 => unported;
     /// `VectorSub(CVector* out, const CVector* a, const CVector* b)` (0x40FE60, cdecl, returns out)
     fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> u32 = cdecl 0x40FE60 => unported;
-    /// `CVector::MagnitudeSqr()` (0x406DA0, ST0)
-    fn vector_magnitude_sqr_st0(v: GPtr<u8>) -> f64 = thiscall 0x406DA0 => unported;
     /// `CAEPedSpeechAudioEntity::ReservePedConversationSpeechSlots()` (0x4E37F0, AL)
     fn speech_reserve_ped_conversation_speech_slots() -> u8 = cdecl 0x4E37F0 => crate::port2_b::speech_reserve_ped_conversation_speech_slots;
     /// `CAEPedSpeechAudioEntity::SetUpConversation()` (0x4E3A00)
     fn speech_set_up_conversation_call() = cdecl 0x4E3A00 => speech_set_up_conversation;
-    /// `CAEAudioUtility::GetRandomNumberInRange(int, int)` (0x4D9C10)
-    fn ae_random_int(min: i32, max: i32) -> i32 = cdecl 0x4D9C10 => crate::utility::get_random_number_in_range_int;
 }
 
 /// `CAEPedSpeechAudioEntity` conversation statics: `s_bPedConversationHappening` 0xB613FD,
@@ -1205,19 +1186,16 @@ pub fn speech_request_ped_conversation(ped1: u32, ped2: u32) -> u8 {
 
 // ---- CAEPedSpeechAudioEntity: StopCurrentSpeech / Initialise --------------------------------------
 
+use crate::bindings::sound_stop_and_forget as sound_stop_sound_and_forget;
+use sa_stream::bindings::ped_model_info_increment_voice;
+use sa_world::bindings::task_facial_stop_all;
 orig! {
     /// `CTaskManager::GetTaskSecondary(int32)` (0x681810, EAX)
     fn task_manager_get_task_secondary(tm: GPtr<u8>, slot: u32) -> u32 = thiscall 0x681810 => unported;
-    /// `CTaskComplexFacial::StopAll()` (0x691250)
-    fn task_facial_stop_all(task: GPtr<u8>) = thiscall 0x691250 => unported;
-    /// `CAESound::StopSoundAndForget()` (0x4EF850)
-    fn sound_stop_sound_and_forget(sound: GPtr<u8>) = thiscall 0x4EF850 => unported;
     /// `FUN_004e3350` (0x4E3350): the ped-speech slot initialiser
     fn speech_slot_init(slot: GPtr<u8>) -> u32 = thiscall 0x4E3350 => crate::port2_a::ped_speech_slot_init;
     /// `CAEPedSpeechAudioEntity::GetVoiceAndTypeForSpecialPed(uint32 modelHash)` (0x4E4170, AL)
     fn speech_get_voice_and_type_for_special_ped(this: GPtr<u8>, hash: u32) -> u8 = thiscall 0x4E4170 => crate::port2_b::speech_get_voice_and_type_for_special_ped;
-    /// `CPedModelInfo::IncrementVoice()` (0x4C7300)
-    fn ped_model_info_increment_voice(mi: GPtr<u8>) = thiscall 0x4C7300 => unported;
 }
 
 /// `CAEPedSpeechAudioEntity::s_PedSpeechSlots` (0xB61C38, 6 * 0x1C) entry `i` (int16 index).
@@ -1377,10 +1355,7 @@ pub fn global_weapon_constructor(this: GPtr<u8>) -> GPtr<u8> {
 
 // ---- CAEWaterCannonAudioEntity::UpdateGenericWaterCannonSound -------------------------------------
 
-orig! {
-    /// `CAESound::StopSound()` (0x4EF1C0)
-    fn sound_stop_sound(sound: GPtr<u8>) = thiscall 0x4EF1C0 => crate::sound::stop_sound;
-}
+use crate::bindings::sound_stop_sound;
 
 /// `CAEWaterCannonAudioEntity::UpdateGenericWaterCannonSound(bool play, int16 index, int16 slot, int16
 /// sfx, float speed, float volume, CVector pos, float maxDistance)` (0x502F80, `ret 0x28`; one load
@@ -1601,11 +1576,11 @@ pub fn speech_is_cj_dressed_in_for_gang_speech() -> u8 {
 
 // ---- CAECollisionAudioEntity::PlayBulletHitCollisionSound -----------------------------------------
 
+use sa_world::bindings::surface_55ea90 as surface_is_audio_gravel;
 orig! {
     /// `SurfaceInfos_c::IsAudioWood / IsAudioConcrete / IsAudioGravel / IsAudioTile(uint32)` (AL)
     fn surface_is_audio_wood(infos: GPtr<u8>, s: u32) -> u8 = thiscall 0x55EAB0 => unported;
     fn surface_is_audio_concrete(infos: GPtr<u8>, s: u32) -> u8 = thiscall 0x55EA30 => unported;
-    fn surface_is_audio_gravel(infos: GPtr<u8>, s: u32) -> u8 = thiscall 0x55EA90 => unported;
     fn surface_is_audio_tile(infos: GPtr<u8>, s: u32) -> u8 = thiscall 0x55EB30 => unported;
 }
 
@@ -1693,15 +1668,13 @@ fn volume_offset_at(off: isize) -> i32 {
 
 // ---- CAECollisionAudioEntity::ReportWaterSplash(CPhysical*, float, bool) --------------------------
 
+use sa_core::bindings::vector_magnitude as vector_magnitude_st0;
+use sa_world::bindings::engine_is_loading_tune_active;
 orig! {
     /// `CAESoundManager::AreSoundsOfThisEventPlayingForThisEntityAndPhysical(int16, CAEAudioEntity*, CPhysical*)` (0x4EF5D0, AX)
     fn sm_are_sounds_playing_for_entity_and_physical(sm: GPtr<u8>, event: u32, entity: u32, physical: u32) -> u32 = thiscall 0x4EF5D0 => unported;
-    /// `CAudioEngine::IsLoadingTuneActive()` (0x506D90, AL)
-    fn engine_is_loading_tune_active(engine: GPtr<u8>) -> u8 = thiscall 0x506D90 => unported;
     /// `CPedIntelligence::GetTaskSwim()` (0x601070, EAX)
     fn intelligence_get_task_swim(intel: GPtr<u8>) -> u32 = thiscall 0x601070 => unported;
-    /// `CVector::Magnitude()` (0x4082C0, ST0)
-    fn vector_magnitude_st0(v: GPtr<u8>) -> f64 = thiscall 0x4082C0 => unported;
     /// `CAESound::RegisterWithPhysicalEntity(CEntity*)` (0x4EF820)
     fn sound_register_with_physical_entity(sound: GPtr<u8>, physical: u32) = thiscall 0x4EF820 => unported;
 }
@@ -1985,12 +1958,8 @@ pub fn weapon_report_stealth_kill(this: GPtr<u8>, ty: u32, physical: u32, event:
 
 // ---- CAEWeaponAudioEntity::ReportChainsawEvent ----------------------------------------------------
 
-orig! {
-    /// `CAESoundManager::AreSoundsPlayingInBankSlot(int16)` (0x4EF520, AX)
-    fn sm_are_sounds_playing_in_bank_slot(sm: GPtr<u8>, slot: u32) -> u32 = thiscall 0x4EF520 => unported;
-    /// `CAESoundManager::CancelSoundsInBankSlot(int16, bool)` (0x4EFC60)
-    fn sm_cancel_sounds_in_bank_slot(sm: GPtr<u8>, slot: u32, b: u32) = thiscall 0x4EFC60 => unported;
-}
+use crate::bindings::sm_are_sounds_playing_in_bank_slot;
+use crate::bindings::sm_cancel_sounds_in_bank_slot;
 
 /// `CAEWeaponAudioEntity::ReportChainsawEvent(CPhysical*, eAudioEvents)` (0x503910, `ret 8`): bank 0x24
 /// in slot 0x28, else sounds playing in that slot are cancelled and the bank is loaded (a tail call
@@ -2055,10 +2024,7 @@ pub fn weapon_report_chainsaw_event(this: GPtr<u8>, physical: u32, event: u32) {
 
 // ---- destructors ----------------------------------------------------------------------------------
 
-orig! {
-    /// `CAETwinLoopSoundEntity::~CAETwinLoopSoundEntity()` (0x4F2B80)
-    fn twin_destructor(twin: GPtr<u8>) = thiscall 0x4F2B80 => crate::entities::twin_loop_destructor;
-}
+use crate::bindings::twin_destructor;
 
 /// `CAEAudioEntity`'s vtable (0x859988), stored last by every audio-entity destructor.
 const AUDIO_ENTITY_VTABLE: u32 = 0x859988;

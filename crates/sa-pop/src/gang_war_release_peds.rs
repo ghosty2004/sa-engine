@@ -7,21 +7,15 @@ use sa_core::{hook, orig};
 
 use crate::common::{g, rd, wr};
 
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::event_script_command_ctor;
+use sa_world::bindings::event_script_command_dtor;
+use sa_world::bindings::get_ped_type_acquaintances as ped_type_acquaintances;
+use sa_world::bindings::set_char_created_by as ped_set_char_created_by;
+use sa_world::bindings::wander_get_wander_task_by_ped_type as wander_task_by_ped_type;
 orig! {
-    /// `CPed::SetCharCreatedBy(uint8)` (0x5E47E0, `ret 4`)
-    fn ped_set_char_created_by(ped: GPtr<u8>, by: u32) = thiscall 0x5E47E0 => unported;
     /// `CRadar::ClearBlipForEntity(eBlipType, int32 handle)` (0x587C60)
     fn radar_clear_blip_for_entity(ty: u32, handle: u32) = cdecl 0x587C60 => unported;
-    /// `CTaskComplexWander::GetWanderTaskByPedType(CPed*)` (0x673D00)
-    fn wander_task_by_ped_type(ped: GPtr<u8>) -> GPtr<u8> = cdecl 0x673D00 => unported;
-    /// `CEventScriptCommand::CEventScriptCommand(int32 primaryTaskIndex, CTask*, bool)` (0x4B0A00, `ret 0xC`)
-    fn event_script_command_ctor(ev: GPtr<u8>, index: u32, task: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4B0A00 => unported;
-    /// `CEventScriptCommand::~CEventScriptCommand()` (0x4B0A50)
-    fn event_script_command_dtor(ev: GPtr<u8>) = thiscall 0x4B0A50 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, `ret 8`)
-    fn event_group_add(group: GPtr<u8>, ev: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
-    /// `CPedType::GetPedTypeAcquaintances(ePedType)` (0x6089B0, returns the 20-byte acquaintance block)
-    fn ped_type_acquaintances(pt: u32) -> GPtr<u8> = cdecl 0x6089B0 => unported;
 }
 
 /// `CPools::ms_pPedPool` (0xB74490)

@@ -45,39 +45,25 @@ const SKIN_ID: u32 = 0x116;
 /// Allocation hint.
 const HINT: u32 = 0x30116;
 
+use crate::bindings::atomic_set_stream_always_cb as rp_atomic_set_stream_always_callback;
+use crate::bindings::atomic_set_stream_rights_cb as rp_atomic_set_stream_rights_callback;
+use crate::bindings::crt_qsort as qsort;
+use crate::bindings::engine_get_plugin_offset as rw_engine_get_plugin_offset;
+use crate::bindings::rw_engine_register_plugin;
+use crate::bindings::rx_locked_pipe_add_fragment;
+use crate::bindings::rx_locked_pipe_unlock;
+use crate::bindings::rx_pipeline_create;
+use crate::bindings::rx_pipeline_destroy;
+use crate::bindings::rx_pipeline_lock;
+use sa_core::bindings::frame_get_ltm as rw_frame_get_ltm;
+use sa_core::bindings::rp_atomic_register_plugin;
+use sa_core::bindings::rp_atomic_register_plugin_stream;
+use sa_core::bindings::rp_geometry_register_plugin;
+use sa_core::bindings::rp_geometry_register_plugin_stream;
+use sa_core::bindings::rw_d3d9_get_caps;
 orig! {
-    /// `RwEngineRegisterPlugin(size, id, open, close)` (0x7F2BB0)
-    fn rw_engine_register_plugin(size: i32, id: u32, open: u32, close: u32) -> i32 = cdecl 0x7F2BB0 => unported;
-    /// `RwEngineGetPluginOffset(id)` (0x7F2BE0)
-    fn rw_engine_get_plugin_offset(id: u32) -> i32 = cdecl 0x7F2BE0 => unported;
-    /// `RpAtomicRegisterPlugin(size, id, ctor, dtor, copy)` (0x74BDA0)
-    fn rp_atomic_register_plugin(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x74BDA0 => unported;
-    /// `RpAtomicRegisterPluginStream(id, read, write, getSize)` (0x74BE00)
-    fn rp_atomic_register_plugin_stream(id: u32, read: u32, write: u32, size: u32) -> i32 = cdecl 0x74BE00 => unported;
-    /// `RpAtomicSetStreamAlwaysCallBack(id, cb)` (0x74BE30)
-    fn rp_atomic_set_stream_always_callback(id: u32, cb: u32) -> i32 = cdecl 0x74BE30 => unported;
-    /// `RpAtomicSetStreamRightsCallBack(id, cb)` (0x74BE50)
-    fn rp_atomic_set_stream_rights_callback(id: u32, cb: u32) -> i32 = cdecl 0x74BE50 => unported;
-    /// `RpGeometryRegisterPlugin(size, id, ctor, dtor, copy)` (0x74CD70)
-    fn rp_geometry_register_plugin(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x74CD70 => unported;
-    /// `RpGeometryRegisterPluginStream(id, read, write, getSize)` (0x74CDA0)
-    fn rp_geometry_register_plugin_stream(id: u32, read: u32, write: u32, size: u32) -> i32 = cdecl 0x74CDA0 => unported;
     /// Bone-usage scan of `RpSkinCreate` (0x7C70C0): (skin, indices, weights, usedList, &usedCount, numVertices)
     fn skin_find_used_bones(skin: GPtr<u8>, idx: GPtr<u8>, w: GPtr<u8>, used: GPtr<u8>, count: GPtr<u32>, n: u32) = cdecl 0x7C70C0 => unported;
-    /// CRT `qsort(base, n, size, cmp)` (0x8247E0)
-    fn qsort(base: GPtr<u8>, n: u32, size: u32, cmp: u32) = cdecl 0x8247E0 => unported;
-    /// `RwD3D9GetCaps()` (0x7FAD20)
-    fn rw_d3d9_get_caps() -> GPtr<u8> = cdecl 0x7FAD20 => unported;
-    /// `RxPipelineCreate()` (0x8057B0)
-    fn rx_pipeline_create() -> GPtr<u8> = cdecl 0x8057B0 => unported;
-    /// `RxPipelineLock(pipeline)` (0x806990)
-    fn rx_pipeline_lock(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x806990 => unported;
-    /// `RxLockedPipeAddFragment(pipeline, firstIndex, nodeDef, NULL)` (0x806BE0, varargs; as called here)
-    fn rx_locked_pipe_add_fragment(p: GPtr<u8>, first: u32, node: GPtr<u8>, end: u32) -> GPtr<u8> = cdecl 0x806BE0 => unported;
-    /// `RxLockedPipeUnlock(pipeline)` (0x805F40)
-    fn rx_locked_pipe_unlock(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x805F40 => unported;
-    /// `_rxPipelineDestroy(pipeline)` (0x805820)
-    fn rx_pipeline_destroy(p: GPtr<u8>) = cdecl 0x805820 => unported;
 
     /// `_rpSkinDeinitialize(geometry)` (0x7C8820)
     fn skin_deinitialize_call(geom: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C8820 => rp_skin_deinitialize;
@@ -89,8 +75,6 @@ orig! {
     fn atomic_set_pipeline_call(atomic: GPtr<u8>, ty: u32) -> GPtr<u8> = cdecl 0x7C89B0 => rp_skin_atomic_set_pipeline;
     /// `RpSkinGetSkinToBoneMatrices(skin)` (0x7C7810)
     fn get_skin_to_bone_matrices_call(skin: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C7810 => skin_to_bone_ptr;
-    /// `RwFrameGetLTM(frame)` (0x7F0990)
-    fn rw_frame_get_ltm(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0990 => unported;
     /// `RwMatrixMultiply(dst, a, b)` (0x7F18B0)
     fn rw_matrix_multiply(dst: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F18B0 => crate::matrix::rw_matrix_multiply;
     /// `_rwD3D9VSGetInverseWorldMatrix(out)` (0x7647B0)
@@ -632,9 +616,8 @@ pub fn rp_d3d9_skin_pipeline_create() -> GPtr<u8> {
     p
 }
 
+use crate::bindings::free_list_create_prealloc as freelist_create_prealloc;
 orig! {
-    /// `RwFreeListCreateAndPreallocateSpace(size, perBlock, align, n, space, hint)` (0x801B70)
-    fn freelist_create_prealloc(size: u32, per_block: u32, align: u32, n: u32, space: GPtr<u8>, hint: u32) -> GPtr<u8> = cdecl 0x801B70 => crate::memory::rw_freelist_create_and_preallocate_space;
     /// `RwFreeListDestroy(fl)` (0x801B80)
     fn freelist_destroy(fl: GPtr<u8>) -> u32 = cdecl 0x801B80 => crate::memory::rw_freelist_destroy;
     /// `_rpSkinPipelinesCreate(flags)` (0x7C8980)

@@ -10,6 +10,7 @@ use sa_math::x87::X87;
 
 use crate::common::{f32_of, ftol32, g, x, xi};
 
+use sa_pop::bindings::store_shadow_to_be_rendered;
 orig! {
     /// `CVector::Normalise()` (0x59C910)
     fn normalise(v: GPtr<CVector>) = thiscall 0x59C910 => sa_world::collision::data::normalise_port;
@@ -27,8 +28,6 @@ orig! {
     fn rw_im3d_render_indexed_primitive(prim: u32, indices: GPtr<u8>, num: i32) -> u32 = cdecl 0x7EF550 => unported;
     /// `RwIm3DEnd` (0x7EF520)
     fn rw_im3d_end() -> u32 = cdecl 0x7EF520 => unported;
-    /// `CShadows::StoreShadowToBeRendered(uint8, RwTexture*, CVector*, float x4, int16, uint8 x3, float, bool, float, CRealTimeShadow*, bool)` (0x707390)
-    fn store_shadow_to_be_rendered(ty: u32, tex: u32, pos: GPtr<u8>, fx: u32, fy: u32, sx: u32, sy: u32, intensity: u32, r: u32, gg: u32, b: u32, zd: u32, water: u32, scale: u32, rts: u32, bld: u32) = cdecl 0x707390 => unported;
 }
 
 /// `TempBufferVerticesStored` / `TempBufferIndicesStored`.

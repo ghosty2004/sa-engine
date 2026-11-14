@@ -71,6 +71,13 @@ sa_core::globals! {
     pub static WORLD_DEVICE_SECTOR_OFFSET @ 0xC926EC: i32 = 0;
 }
 
+use crate::bindings::free_list_create_prealloc;
+use crate::bindings::free_list_for_all_used;
+use crate::bindings::light_register_plugin;
+use crate::bindings::plugin_add;
+use crate::bindings::plugin_add_stream;
+use sa_core::bindings::d3d9_device_get_restore_callback;
+use sa_core::bindings::d3d9_device_set_restore_callback;
 orig! {
     /// `RwEngineRegisterPlugin(size, id, open, close)` (0x7F2BB0)
     fn engine_register_plugin(size: i32, id: u32, open: u32, close: u32) -> i32 = cdecl 0x7F2BB0 => crate::plugin::engine_register_plugin;
@@ -82,8 +89,6 @@ orig! {
     fn atomic_register_plugin_stream(id: u32, read: u32, write: u32, get_size: u32) -> i32 = cdecl 0x74BE00 => crate::atomic::register_plugin_stream;
     /// `RpClumpRegisterPlugin` (0x74BDD0)
     fn clump_register_plugin(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x74BDD0 => crate::clump::register_plugin;
-    /// `RpLightRegisterPlugin` (0x751D60)
-    fn light_register_plugin(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x751D60 => crate::light::rp_light_register_plugin;
     /// `RpGeometryRegisterPlugin` (0x74CD70)
     fn geometry_register_plugin(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x74CD70 => crate::geometry::rp_geometry_register_plugin;
     /// `RpGeometryRegisterPluginStream` (0x74CDA0)
@@ -100,10 +105,6 @@ orig! {
     fn sector_register_plugin_call(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x761C90 => rp_world_sector_register_plugin;
     /// `RpWorldSectorRegisterPluginStream` (0x761CC0)
     fn sector_register_plugin_stream_call(id: u32, read: u32, write: u32, get_size: u32) -> i32 = cdecl 0x761CC0 => rp_world_sector_register_plugin_stream;
-    /// `_rwPluginRegistryAddPlugin` (0x8084A0)
-    fn plugin_add(reg: GPtr<u8>, size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x8084A0 => crate::plugin::registry_add_plugin;
-    /// `_rwPluginRegistryAddPluginStream` (0x8088E0)
-    fn plugin_add_stream(reg: GPtr<u8>, id: u32, read: u32, write: u32, get_size: u32) -> i32 = cdecl 0x8088E0 => crate::plugin::registry_add_plugin_stream;
 
     /// `_rpWorldObjRegisterPlugins()` (0x750050)
     fn world_obj_register_plugins_call() -> i32 = cdecl 0x750050 => rp_world_obj_register_plugins;
@@ -117,10 +118,6 @@ orig! {
     fn d3d9_light_register_plugin_call() -> i32 = cdecl 0x755B90 => unported;
     /// `_rpWorldDeviceRegisterPlugins2()` (0x7587D0)
     fn world_device_register_plugins2_call() -> i32 = cdecl 0x7587D0 => rp_world_device_register_plugins2;
-    /// `_rwD3D9DeviceGetRestoreCallback()` (0x7FAE30, D3D9 driver)
-    fn d3d9_device_get_restore_callback() -> u32 = cdecl 0x7FAE30 => unported;
-    /// `_rwD3D9DeviceSetRestoreCallback(cb)` (0x7FAE20, D3D9 driver)
-    fn d3d9_device_set_restore_callback(cb: u32) = cdecl 0x7FAE20 => unported;
 
     /// `_rpWorldPipeOpen()` (0x75E310)
     fn world_pipe_open_call() -> i32 = cdecl 0x75E310 => rp_world_pipe_open;
@@ -138,13 +135,8 @@ orig! {
     fn destroy_d3d9_sector_pipe() = cdecl 0x74EB40 => unported;
     /// `_rpD3D9GeometryListDestroy()` (0x74EC00, D3D9; its EAX is `_rpWorldPipeClose`'s)
     fn d3d9_geometry_list_destroy() -> u32 = cdecl 0x74EC00 => unported;
-
-    /// `RwFreeListCreateAndPreallocateSpace` (0x801B70)
-    fn free_list_create_prealloc(size: u32, per_block: u32, align: u32, n: u32, space: GPtr<u8>, hint: u32) -> GPtr<u8> = cdecl 0x801B70 => crate::memory::rw_freelist_create_and_preallocate_space;
     /// `RwFreeListDestroy(fl)` (0x801B80)
     fn free_list_destroy(fl: GPtr<u8>) -> u32 = cdecl 0x801B80 => crate::memory::rw_freelist_destroy;
-    /// `RwFreeListForAllUsed(fl, cb, data)` (0x801E90)
-    fn free_list_for_all_used(fl: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> = cdecl 0x801E90 => unported;
     /// `RwFrameUpdateObjects(frame)` (0x7F0910)
     fn frame_update_objects(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0910 => crate::frame::update_objects;
     /// `RpWorldAddClump(world, clump)` (0x751300)

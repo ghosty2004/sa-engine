@@ -7,15 +7,12 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::task_simple_dtor;
 orig! {
     /// `CTaskSimple::CTaskSimple()` (0x61A390)
     fn task_simple_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A390 => crate::mvpa_ai1::task_simple_ctor;
-    /// `CTaskSimple::~CTaskSimple()` (0x61A3A0)
-    fn task_simple_dtor(t: GPtr<u8>) = thiscall 0x61A3A0 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    fn entity_register_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571B70 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571A00 => unported;
 }
 
 /// `CTaskSimpleCarSetPedOut` vtable

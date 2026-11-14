@@ -10,21 +10,14 @@ use sa_core::{hook, orig};
 
 use crate::common::{f32_of, g, jne_mask, jp5, rd, wr, x};
 
+use sa_pop::bindings::get_look_behind_for_car as pad_get_look_behind_for_car;
+use sa_pop::bindings::pad_get_look_left;
+use sa_pop::bindings::pad_get_look_right;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::fx_kill;
+use sa_world::bindings::get_pad_from_player;
+use sa_world::bindings::pad_get_car_gun_fired;
 orig! {
-    /// `CPed::IsPlayer()` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CPlayerPed::GetPadFromPlayer()` (0x609560)
-    fn get_pad_from_player(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x609560 => unported;
-    /// `CPad::GetCarGunFired()` (0x53FF90): int16 in AX
-    fn pad_get_car_gun_fired(pad: GPtr<u8>) -> i16 = thiscall 0x53FF90 => unported;
-    /// `CPad::GetLookLeft()` (0x53FDD0)
-    fn pad_get_look_left(pad: GPtr<u8>) -> u8 = thiscall 0x53FDD0 => unported;
-    /// `CPad::GetLookRight()` (0x53FE10)
-    fn pad_get_look_right(pad: GPtr<u8>) -> u8 = thiscall 0x53FE10 => unported;
-    /// `CPad::GetLookBehindForCar()` (0x53FE70)
-    fn pad_get_look_behind_for_car(pad: GPtr<u8>) -> u8 = thiscall 0x53FE70 => unported;
-    /// `FxSystem_c::Kill()` (0x4AA3F0)
-    fn fx_kill(fx: GPtr<u8>) = thiscall 0x4AA3F0 => unported;
     /// `CVehicle::RemoveUpgrade(int32 upgradeId)` (0x6D3630)
     fn vehicle_remove_upgrade(v: GPtr<u8>, id: u32) = thiscall 0x6D3630 => unported;
     /// `CAutomobile::DoNitroEffect(float power)` (0x6A3BD0)

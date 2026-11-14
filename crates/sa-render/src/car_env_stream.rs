@@ -7,9 +7,8 @@ use sa_core::{hook, orig};
 
 use crate::common::{g, wr};
 
+use sa_core::bindings::stream_read;
 orig! {
-    /// `RwStreamRead(stream, buf, len)` (0x7EC9D0)
-    fn stream_read(s: GPtr<u8>, buf: GPtr<u8>, len: u32) -> u32 = cdecl 0x7EC9D0 => unported;
     /// `RwTextureRead(name, mask)` (0x7F3AC0)
     fn texture_read(name: GPtr<u8>, mask: u32) -> u32 = cdecl 0x7F3AC0 => unported;
     /// The specular-material pool's `New` (0x5D93B0, thiscall)

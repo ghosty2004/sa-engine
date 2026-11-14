@@ -50,6 +50,21 @@ const K_INV_32768: u32 = 0x3800_0000;
 const K_M23: u32 = 0xC1B8_0000;
 const K_M9: u32 = 0xC110_0000;
 
+pub use sa_core::bindings::atol;
+pub use sa_core::bindings::pop_current_txd;
+pub use sa_core::bindings::push_current_txd;
+pub use sa_core::bindings::rp_clump_for_all_atomics;
+pub use sa_core::bindings::rp_geometry_for_all_materials;
+pub use sa_core::bindings::rw_raster_create;
+pub use sa_core::bindings::rw_raster_destroy;
+pub use sa_core::bindings::rw_texture_create;
+pub use sa_core::bindings::set_current_txd;
+pub use sa_core::bindings::strtok;
+pub use sa_pop::bindings::create_plate_texture as create_plate_texture_call;
+pub use sa_stream::bindings::remove_txd;
+pub use sa_stream::bindings::rp_material_set_texture;
+pub use sa_stream::bindings::rw_texture_destroy;
+pub use sa_world::bindings::rw_raster_unlock;
 orig! {
     /// `CCustomCarPlateMgr::GetCharacterPositionInCharSet(char c (AL), uint32& col, uint32& row)` (0x6FD7C0)
     fn char_position(c: u8, col: GPtr<u32>, row: GPtr<u32>) = reg("args = al stack stack") 0x6FD7C0 => get_character_position_in_char_set;
@@ -61,50 +76,20 @@ orig! {
     pub fn file_mgr_close_file(f: u32) -> i32 = cdecl 0x5389D0 => unported;
     /// `CFileLoader::LoadLine(FILE*)` (0x536F80)
     pub fn load_line(f: u32) -> GPtr<u8> = cdecl 0x536F80 => unported;
-    /// CRT `strtok` (0x82244B)
-    pub fn strtok(s: GPtr<u8>, delim: GPtr<u8>) -> GPtr<u8> = cdecl 0x82244B => unported;
-    /// CRT `atol` (0x82258E)
-    pub fn atol(s: GPtr<u8>) -> i32 = cdecl 0x82258E => unported;
     /// `CTxdStore::FindTxdSlot(const char*)` (0x731850)
     pub fn find_txd_slot(name: u32) -> i32 = cdecl 0x731850 => unported;
-    /// `CTxdStore::PushCurrentTxd()` (0x7316A0)
-    pub fn push_current_txd() = cdecl 0x7316A0 => unported;
-    /// `CTxdStore::SetCurrentTxd(int32)` (0x7319C0)
-    pub fn set_current_txd(slot: i32) = cdecl 0x7319C0 => unported;
-    /// `CTxdStore::PopCurrentTxd()` (0x7316B0)
-    pub fn pop_current_txd() = cdecl 0x7316B0 => unported;
-    /// `CTxdStore::RemoveTxd(int32)` (0x731E90)
-    pub fn remove_txd(slot: i32) = cdecl 0x731E90 => unported;
     /// `RwTextureRead(const char* name, const char* mask)` (0x7F3AC0)
     pub fn rw_texture_read(name: u32, mask: u32) -> GPtr<u8> = cdecl 0x7F3AC0 => unported;
-    /// `RwTextureDestroy(RwTexture*)` (0x7F3820)
-    pub fn rw_texture_destroy(t: GPtr<u8>) -> i32 = cdecl 0x7F3820 => unported;
-    /// `RwTextureCreate(RwRaster*)` (0x7F37C0)
-    pub fn rw_texture_create(r: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F37C0 => unported;
     /// `RwTextureSetName(RwTexture*, const char*)` (0x7F38A0)
     pub fn rw_texture_set_name(t: GPtr<u8>, name: u32) -> GPtr<u8> = cdecl 0x7F38A0 => unported;
-    /// `RwRasterCreate(int32 w, int32 h, int32 depth, int32 flags)` (0x7FB230)
-    pub fn rw_raster_create(w: i32, h: i32, depth: i32, flags: i32) -> GPtr<u8> = cdecl 0x7FB230 => unported;
-    /// `RwRasterDestroy(RwRaster*)` (0x7FB020)
-    pub fn rw_raster_destroy(r: GPtr<u8>) -> i32 = cdecl 0x7FB020 => unported;
     /// `RwRasterLock(RwRaster*, uint8 level, int32 mode)` (0x7FB2D0)
     pub fn rw_raster_lock(r: GPtr<u8>, level: u32, mode: i32) -> GPtr<u8> = cdecl 0x7FB2D0 => unported;
-    /// `RwRasterUnlock(RwRaster*)` (0x7FAEC0)
-    pub fn rw_raster_unlock(r: GPtr<u8>) -> GPtr<u8> = cdecl 0x7FAEC0 => unported;
-    /// `RpMaterialSetTexture(RpMaterial*, RwTexture*)` (0x74DBC0)
-    pub fn rp_material_set_texture(m: GPtr<u8>, t: GPtr<u8>) -> GPtr<u8> = cdecl 0x74DBC0 => unported;
     /// CRT `_stricmp` (0x8229B6)
     pub fn stricmp(a: u32, b: GPtr<u8>) -> i32 = cdecl 0x8229B6 => unported;
     /// `RpGeometryReplaceOldMaterialWithNewMaterial(RpGeometry*, RpMaterial* old, RpMaterial* new)` (0x734DE0)
     pub fn rp_geometry_replace_material(g: GPtr<u8>, old: GPtr<u8>, new: u32) = cdecl 0x734DE0 => unported;
-    /// `RpGeometryForAllMaterials(RpGeometry*, callback, void* data)` (0x74C790)
-    pub fn rp_geometry_for_all_materials(g: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> = cdecl 0x74C790 => unported;
-    /// `RpClumpForAllAtomics(RpClump*, callback, void* data)` (0x749B70)
-    pub fn rp_clump_for_all_atomics(c: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> = cdecl 0x749B70 => unported;
     /// `CCustomCarPlateMgr::RenderLicenseplateTextToRaster(text, charset, palette, raster)` (0x6FDD70)
     pub fn render_text_to_raster_call(text: GPtr<u8>, charset: GPtr<u8>, pal: u32, raster: GPtr<u8>) -> u8 = cdecl 0x6FDD70 => unported;
-    /// `CCustomCarPlateMgr::CreatePlateTexture(const char* text, uint8 design)` (0x6FDEA0)
-    pub fn create_plate_texture_call(text: GPtr<u8>, design: u32) -> GPtr<u8> = cdecl 0x6FDEA0 => unported;
     /// `CCustomCarPlateMgr::SetupMaterialPlatebackTexture(RpMaterial*, uint8 design)` (0x6FDE50)
     pub fn setup_material_plateback_texture_call(m: GPtr<u8>, design: u32) -> GPtr<u8> = cdecl 0x6FDE50 => unported;
     /// `CCustomCarPlateMgr::SetupMaterialPlateTexture(RpMaterial*, const char*, uint8 design)` (0x6FE020)

@@ -9,13 +9,10 @@ use sa_math::x87::X87;
 
 use crate::common::{g, rd, x};
 
+use crate::bindings::stencil_graphics_high_quality;
+use sa_stream::bindings::placeable_allocate_matrix;
+use sa_stream::bindings::simple_transform_update_matrix;
 orig! {
-    /// `CStencilShadows::GraphicsHighQuality()` (0x70F9B0)
-    fn stencil_graphics_high_quality() -> u8 = cdecl 0x70F9B0 => unported;
-    /// `CPlaceable::AllocateMatrix()` (0x54F560)
-    fn placeable_allocate_matrix(e: GPtr<u8>) = thiscall 0x54F560 => unported;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*)` (0x54F1B0, `ret 4`)
-    fn simple_transform_update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => unported;
     /// `CShadows::StoreStaticShadow(id, type, texture, pos, frontX, frontY, sideX, sideY, intensity, r, g, b, zDistance,
     /// scale, drawDistance, temporary, upDistance)` (0x70BA00)
     fn store_static_shadow(id: u32, ty: u32, tex: u32, pos: GPtr<u8>, fx: u32, fy: u32, sx: u32, sy: u32, intensity: u32, r: u32, gr: u32, b: u32, zd: u32, scale: u32, dd: u32, temp: u32, up: u32) -> u8 = cdecl 0x70BA00 => unported;

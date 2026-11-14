@@ -12,23 +12,23 @@ use sa_world::world::common::find_player_ped;
 
 use crate::common::{g, rand_at, rd, wr, x, xi};
 
+use crate::bindings::audio_service;
+use crate::bindings::find_maximum_speed_to_stop_at_stations;
+use sa_core::bindings::get_pad;
+use sa_core::bindings::matrix_update_rw_matrix as matrix_update_rw;
+use sa_pop::bindings::scan_for_ped_danger;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::audio_add_event as add_audio_event;
+use sa_world::bindings::get_pad_from_player;
+use sa_world::bindings::pad_start_shake as start_shake;
+use sa_world::bindings::physical_process_control;
 orig! {
-    /// `CAEVehicleAudioEntity::Service()` (0x502280)
-    fn audio_service(a: GPtr<u8>) = thiscall 0x502280 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    fn get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CPlayerPed::GetPadFromPlayer()` (0x609560)
-    fn get_pad_from_player(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x609560 => unported;
     /// `CTrain::FindNumCarriagesPulled()` (0x6F5CD0)
     fn find_num_carriages_pulled(t: GPtr<u8>) -> u32 = thiscall 0x6F5CD0 => crate::train::find_num_carriages_pulled;
     /// `CPad::GetAccelerate()` (0x5403F0): int16 in AX
     fn get_accelerate(pad: GPtr<u8>) -> u32 = thiscall 0x5403F0 => unported;
     /// `CPad::GetBrake()` (0x540080): int16 in AX
     fn get_brake(pad: GPtr<u8>) -> u32 = thiscall 0x540080 => unported;
-    /// `CTrain::FindMaximumSpeedToStopAtStations(float*)` (0x6F5BA0)
-    fn find_maximum_speed_to_stop_at_stations(t: GPtr<u8>, out: GPtr<f32>) -> u8 = thiscall 0x6F5BA0 => crate::mvpb_a1::find_maximum_speed_to_stop_at_stations;
     /// `CGameLogic::CalcDistanceToForbiddenTrainCrossing(CVector, CVector, bool, CVector&)` (0x4418E0), ST0
     fn calc_distance_to_forbidden_train_crossing(px: f32, py: f32, pz: f32, mx: f32, my: f32, mz: f32, ignore: u8, out: GPtr<u8>) -> f64 = cdecl 0x4418E0 => calc_distance_native;
     /// `CPlaceable::GetTopDirection(CVector*)`-style accessor (0x41CCB0)
@@ -37,8 +37,6 @@ orig! {
     fn min_f(a: f32, b: f32) -> f64 = cdecl 0x404330 => min_native;
     /// `max(float, float)` (0x420800), ST0
     fn max_f(a: f32, b: f32) -> f64 = cdecl 0x420800 => max_native;
-    /// `CPad::StartShake(int16, uint8, uint32)` (0x53F920)
-    fn start_shake(pad: GPtr<u8>, time: u32, freq: u32, delay: u32) = thiscall 0x53F920 => unported;
     /// `CCamera::CamShake(float, float, float, float)` (0x50A9F0) on `TheCamera` (0xB6F028)
     fn cam_shake(cam: GPtr<u8>, strength: f32, px: f32, py: f32, pz: f32) = thiscall 0x50A9F0 => unported;
     /// `CTrainNode::GetPosn()` (0x6F5440, hidden return pointer)
@@ -49,14 +47,10 @@ orig! {
     fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => normalise_native;
     /// `CTrain::IsInTunnel()` (0x6F6320)
     fn is_in_tunnel(t: GPtr<u8>) -> u8 = thiscall 0x6F6320 => unported;
-    /// `CPhysical::ProcessControl()` (0x5485E0)
-    fn physical_process_control(v: GPtr<u8>) = thiscall 0x5485E0 => sa_world::physical::attach::process_control;
     /// `CTrain::RemoveRandomPassenger()` (0x6F6850)
     fn remove_random_passenger(t: GPtr<u8>) = thiscall 0x6F6850 => unported;
     /// `CTrain::AddNearbyPedAsRandomPassenger()` (0x6F8170)
     fn add_nearby_ped_as_random_passenger(t: GPtr<u8>) = thiscall 0x6F8170 => unported;
-    /// `CAEVehicleAudioEntity::AddAudioEvent(eAudioEvents, float)` (0x4F6420)
-    fn add_audio_event(a: GPtr<u8>, event: u32, volume: f32) = thiscall 0x4F6420 => unported;
     /// `CrossProduct(CVector*, const CVector*, const CVector*)` (0x59C730)
     fn cross_product(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C730 => cross_native;
     /// `CTrainNode::GetLightingFromCollision()` (0x6F5F80): the lighting byte in AL
@@ -65,8 +59,6 @@ orig! {
     fn get_current_lighting(l: u8, scale: f32) -> f64 = cdecl 0x59F0C0 => current_lighting_native;
     /// `CPhysical::ApplyMoveSpeed()` (0x542DD0)
     fn apply_move_speed(v: GPtr<u8>) = thiscall 0x542DD0 => sa_world::physical::forces::apply_move_speed;
-    /// `CMatrix::UpdateRW(RwMatrix*)` (0x59AD70)
-    fn matrix_update_rw(m: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x59AD70 => unported;
     /// `CSimpleTransform::UpdateRwMatrix(RwMatrix*)` (0x54EF40)
     fn simple_transform_update_rw_matrix(t: GPtr<u8>, rw: GPtr<u8>) -> u32 = thiscall 0x54EF40 => sa_world::world::mvpa_math::simple_transform_update_rw_matrix;
     /// `CEntity::UpdateRwFrame()` (0x532B00)
@@ -75,8 +67,6 @@ orig! {
     fn remove_and_add(e: GPtr<u8>) = thiscall 0x542560 => sa_world::physical::base::remove_and_add;
     /// `CTrain::MarkSurroundingEntitiesForCollisionWithTrain(CVector, float, CEntity*, bool)` (0x6F6640)
     fn mark_surrounding_entities_for_collision_with_train(px: f32, py: f32, pz: f32, radius: f32, train: GPtr<u8>, only: u32) = cdecl 0x6F6640 => crate::train2::mark_surrounding_entities_for_collision_with_train;
-    /// `CCarCtrl::ScanForPedDanger(CVehicle*)` (0x42CE40)
-    fn scan_for_ped_danger(v: GPtr<u8>) = cdecl 0x42CE40 => sa_pop::carctrl4::scan_for_ped_danger;
     /// `FUN_00424100(float x, float y)` (0x424100): `xor al, al; ret`
     fn area_check_stub(px: u32, py: u32) -> u8 = cdecl 0x424100 => area_check_stub_native;
     /// `CPhysical::SkipPhysics()` (0x5433B0)

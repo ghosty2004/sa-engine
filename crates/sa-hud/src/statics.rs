@@ -10,11 +10,9 @@ use crate::common::{g, x};
 /// No globals of its own (the constructed objects belong to their classes).
 pub const GLOBALS: &[GlobalDesc] = &[];
 
+pub use sa_core::bindings::atexit;
+pub use sa_core::bindings::eh_vector_ctor;
 orig! {
-    /// CRT `eh vector constructor iterator` (0x821D30, stdcall)
-    pub fn eh_vector_ctor(arr: GPtr<u8>, size: u32, n: u32, ctor: u32, dtor: u32) = stdcall 0x821D30 => unported;
-    /// CRT `_atexit` (0x821D1E)
-    pub fn atexit(f: u32) -> i32 = cdecl 0x821D1E => unported;
     /// `CHudColours::CHudColours()` (0x58FDA0)
     pub fn hud_colours_ctor(this: GPtr<u8>) = thiscall 0x58FDA0 => unported;
     /// `CMenuManager::CMenuManager()` (0x574350)

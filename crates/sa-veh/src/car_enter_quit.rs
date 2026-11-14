@@ -9,17 +9,13 @@ use sa_math::x87::X87;
 
 use crate::common::{g, rd, x, xi};
 
+use sa_world::bindings::get_pad_from_player;
+use sa_world::bindings::pad_get_ped_walk_left_right;
+use sa_world::bindings::pad_get_ped_walk_up_down;
+use sa_world::bindings::pad_melee_attack_just_down;
 orig! {
-    /// `CPlayerPed::GetPadFromPlayer()` (0x609560)
-    fn get_pad_from_player(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x609560 => unported;
     /// virtual `CTask::GetTaskType()` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CPad::MeleeAttackJustDown(bool)` (0x540390)
-    fn pad_melee_attack_just_down(pad: GPtr<u8>, b: u32) -> u8 = thiscall 0x540390 => unported;
-    /// `CPad::GetPedWalkUpDown()` (0x53FD30): int16 in AX
-    fn pad_get_ped_walk_up_down(pad: GPtr<u8>) -> i16 = thiscall 0x53FD30 => unported;
-    /// `CPad::GetPedWalkLeftRight()` (0x53FC90): int16 in AX
-    fn pad_get_ped_walk_left_right(pad: GPtr<u8>) -> i16 = thiscall 0x53FC90 => unported;
     /// `CGeneral::GetRadianAngleBetweenPoints(float, float, float, float)` (0x53CBE0), ST0
     fn get_radian_angle_between_points(x1: f32, y1: f32, x2: f32, y2: f32) -> f64 = cdecl 0x53CBE0 => unported;
 }

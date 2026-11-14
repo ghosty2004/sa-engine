@@ -5,10 +5,7 @@ use sa_core::abi::{HookReg, NativeReg};
 use sa_core::mem::GPtr;
 use sa_core::{hook, native, orig};
 
-orig! {
-    /// `FxMemoryPool_c::GetMem(size, align)` (0x4A9CA0)
-    fn pool_get_mem(this: GPtr<u8>, size: u32, align: u32) -> GPtr<u8> = thiscall 0x4A9CA0 => crate::fx::fx_memory_pool_get_mem;
-}
+use crate::bindings::pool_get_mem;
 
 /// `g_fxMan`'s memory pool (0xA9AF2C).
 const FX_MEMORY_POOL: usize = 0xA9AF2C;

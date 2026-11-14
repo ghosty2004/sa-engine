@@ -9,41 +9,28 @@ use sa_math::vector::CVector;
 
 use crate::common::{f32_of, g, rd, wr, x};
 
+use crate::bindings::audio_add_event_entity;
+use crate::bindings::dm_set_door_status;
+use crate::bindings::door_process;
+use crate::bindings::set_component_visibility;
+use crate::bindings::spawn_flying_component;
+use sa_core::bindings::matrix_dtor;
+use sa_core::bindings::matrix_set_rotate;
+use sa_core::bindings::matrix_update_rw;
+use sa_world::bindings::audio_add_event;
+use sa_world::bindings::multiply3x3 as multiply_3x3;
+use sa_world::bindings::vector_add;
+use sa_world::bindings::vector_scale;
+use sa_world::bindings::vector_sub;
 orig! {
     /// `CDamageManager::GetDoorStatus(eDoors)` (0x6C2230)
     fn dm_get_door_status(dm: GPtr<u8>, door: i32) -> u32 = thiscall 0x6C2230 => crate::damage::get_door_status;
-    /// `CDamageManager::SetDoorStatus(eDoors, eDoorStatus)` (0x6C21C0)
-    fn dm_set_door_status(dm: GPtr<u8>, door: i32, status: u32) = thiscall 0x6C21C0 => crate::damage::set_door_status;
     /// `CMatrix::CMatrix(RwMatrix*, bool)` (0x59C050)
     fn matrix_ctor_attach(m: GPtr<u8>, rw: GPtr<u8>, owns: u32) = thiscall 0x59C050 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
-    /// `CMatrix::SetRotate(float, float, float)` (0x59B120)
-    fn matrix_set_rotate(m: GPtr<u8>, rx: f32, ry: f32, rz: f32) = thiscall 0x59B120 => unported;
-    /// `CMatrix::UpdateRW()` (0x59BBB0)
-    fn matrix_update_rw(m: GPtr<u8>) = thiscall 0x59BBB0 => unported;
-    /// `Multiply3x3(CVector* out, const CMatrix&, const CVector&)` (0x59C790)
-    fn multiply_3x3(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C790 => unported;
     /// `CVehicle::CanDoorsBeDamaged()` (0x6D1E60)
     fn can_doors_be_damaged(v: GPtr<u8>) -> u8 = thiscall 0x6D1E60 => crate::vehicle::can_doors_be_damaged;
     /// `CDoor::ProcessImpact(CVehicle*, CVector&, CVector&, CVector&)` (0x6F4540)
     fn door_process_impact(d: GPtr<u8>, v: GPtr<u8>, mf: GPtr<u8>, tf: GPtr<u8>, off: GPtr<u8>) -> u8 = thiscall 0x6F4540 => crate::door2::process_impact;
-    /// `CDoor::Process(CVehicle*, CVector&, CVector&, CVector&)` (0x6F4040)
-    fn door_process(d: GPtr<u8>, v: GPtr<u8>, mf: GPtr<u8>, tf: GPtr<u8>, off: GPtr<u8>) -> u8 = thiscall 0x6F4040 => unported;
-    /// `CAEVehicleAudioEntity::AddAudioEvent(eAudioEvents, float)` (0x4F6420)
-    fn audio_add_event(a: GPtr<u8>, event: u32, volume: f32) = thiscall 0x4F6420 => unported;
-    /// `CAEVehicleAudioEntity::AddAudioEvent(eAudioEvents, CVehicle*)` (0x4F7580)
-    fn audio_add_event_entity(a: GPtr<u8>, event: u32, e: GPtr<u8>) = thiscall 0x4F7580 => unported;
-    /// `CAutomobile::SpawnFlyingComponent(int32, uint32)` (0x6A8580)
-    fn spawn_flying_component(car: GPtr<u8>, node: i32, kind: u32) -> GPtr<u8> = thiscall 0x6A8580 => unported;
-    /// `CVehicle::SetComponentVisibility(RwFrame*, uint32)` (0x6D2700)
-    fn set_component_visibility(v: GPtr<u8>, frame: GPtr<u8>, state: u32) = thiscall 0x6D2700 => unported;
-    /// `operator*(float, const CVector&)` into `out` (0x40FE90)
-    fn vector_scale(out: GPtr<u8>, k: f32, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE90 => unported;
-    /// `operator+(const CVector&, const CVector&)` into `out` (0x40FE30)
-    fn vector_add(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE30 => unported;
-    /// `VectorSub` into `out` (0x40FE60)
-    fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => unported;
     /// `CPhysical::ApplyTurnForce(CVector force, CVector point)` (0x542A50)
     fn apply_turn_force(p: GPtr<u8>, force: CVector, point: CVector) = thiscall 0x542A50 => sa_world::physical::forces::apply_turn_force;
 }
@@ -177,29 +164,23 @@ pub fn process_swinging_door(this: GPtr<u8>, node: i32, door: i32) {
     matrix_dtor(m1p);
 }
 
+use crate::bindings::find_closest_track_node;
+use crate::bindings::train_find_position_on_track_from_coors;
+use sa_core::bindings::entity_register_reference;
+use sa_core::bindings::matrix_set_translate;
+use sa_pop::bindings::add_ped_in_car;
+use sa_world::bindings::set_ped_decision_maker_type as intel_set_ped_decision_maker_type;
 orig! {
-    /// `CTrain::FindClosestTrackNode(CVector, int32* track)` (0x6F6BD0)
-    fn find_closest_track_node(x: f32, y: f32, z: f32, track: GPtr<i32>) -> i32 = cdecl 0x6F6BD0 => crate::train2::find_closest_track_node;
     /// `CVehicle::operator new(uint32)` (0x6E2D50)
     fn vehicle_new(size: u32) -> GPtr<u8> = cdecl 0x6E2D50 => crate::vehicle2::operator_new;
     /// `CTrain::CTrain(int32 model, eVehicleCreatedBy)` (0x6F6030)
     fn train_ctor(t: GPtr<u8>, mi: u32, created_by: u32) -> GPtr<u8> = thiscall 0x6F6030 => crate::train2::train_ctor;
-    /// `CMatrix::SetTranslate(float, float, float)` (0x59AF40), the floats as bits
-    fn matrix_set_translate(m: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x59AF40 => unported;
-    /// `CTrain::FindPositionOnTrackFromCoors()` (0x6F6CC0)
-    fn train_find_position_on_track_from_coors(t: GPtr<u8>) = thiscall 0x6F6CC0 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    fn entity_register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
     /// `CVehicle::ProcessControl()` (virtual, vtable +0x28)
     fn process_control_virtual(v: GPtr<u8>) = thiscall vslot 0x28 => unported;
     /// `CWorld::Remove(CEntity*)` (0x563280)
     fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => sa_world::world::cworld2::remove;
     /// `CWorld::Add(CEntity*)` (0x563220)
     fn world_add(e: GPtr<u8>) = cdecl 0x563220 => sa_world::world::cworld2::add;
-    /// `CPopulation::AddPedInCar(CVehicle*, bool driver, int32 gang, int32 seat, bool male, bool criminal)` (0x613A00)
-    fn add_ped_in_car(veh: GPtr<u8>, driver: u8, gang: i32, seat: i32, male: u8, criminal: u8) -> GPtr<u8> = cdecl 0x613A00 => sa_pop::population2::add_ped_in_car;
-    /// `CPedIntelligence::SetPedDecisionMakerType(int32)` (0x600B50)
-    fn intel_set_ped_decision_maker_type(i: GPtr<u8>, t: i32) = thiscall 0x600B50 => unported;
 }
 
 /// `colModel.bbox.max.y - min.y` of the model of `t` (model info +0x14, +0x10 / +4), x87.
@@ -358,11 +339,9 @@ pub fn create_mission_train(
     }
 }
 
+use sa_core::bindings::memory_malloc;
+use sa_world::bindings::entity_get_col_model as get_col_model;
 orig! {
-    /// `CEntity::GetColModel()` (0x535300)
-    fn get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => unported;
-    /// `CMemoryMgr::Malloc(uint32, uint32)` (0x72F420)
-    fn memory_malloc(size: u32, hint: u32) -> GPtr<u8> = cdecl 0x72F420 => unported;
     /// `CVehicleModelInfo::GetWheelPosn(int32, CVector&, bool)` (0x4C7D20)
     fn get_wheel_posn(mi: GPtr<u8>, wheel: i32, out: GPtr<u8>, local: u8) = thiscall 0x4C7D20 => sa_stream::modelinfo::vehicle::get_wheel_posn;
     /// `CVehicle::GetVehicleAppearance()` (0x6D1080)

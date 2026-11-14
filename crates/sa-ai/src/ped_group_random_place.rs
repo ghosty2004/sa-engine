@@ -9,9 +9,19 @@ use sa_world::world::common::find_player_ped;
 
 use crate::common::*;
 
+use crate::bindings::group_intel_process;
+use crate::bindings::membership_process;
+use crate::bindings::wander_gang_ctor;
+use sa_core::bindings::membership_set_leader;
+use sa_world::bindings::add_ped as population_add_ped;
+use sa_world::bindings::be_in_group_ctor;
+use sa_world::bindings::choose_gang_occupation as population_choose_gang_occupation;
+use sa_world::bindings::membership_add_follower;
+use sa_world::bindings::ped_groups_add_group;
+use sa_world::bindings::population_remove_ped;
+use sa_world::bindings::tm_set_task;
+use sa_world::bindings::world_get_is_line_of_sight_clear;
 orig! {
-    /// `CPedGroups::AddGroup()` (0x5FB800), the new group id or -1
-    fn ped_groups_add_group() -> i32 = cdecl 0x5FB800 => unported;
     /// `CCamera::IsSphereVisible(const CVector&, float)` (0x420D40, `ret 8`), AL
     fn camera_is_sphere_visible(cam: GPtr<u8>, c: GPtr<u8>, r: f32) -> u8 = thiscall 0x420D40 => unported;
     /// `CPopulation::PedCreationDistMultiplier()` (0x6116C0, ST0)
@@ -21,36 +31,12 @@ orig! {
     fn ped_placement_is_position_clear(p: GPtr<u8>, r: f32, max: i32, objs: GPtr<u8>, v: u32, pe: u32, o: u32) -> u8 = cdecl 0x616860 => unported;
     /// `CWorld::FindGroundZFor3DCoord(float x, float y, float z, bool* found, CEntity** hit)` (0x5696C0, ST0)
     fn world_find_ground_z_for_3d_coord(x: f32, y: f32, z: f32, found: GPtr<u8>, hit: u32) -> f64 = cdecl 0x5696C0 => unported;
-    /// `CPopulation::ChooseGangOccupation(int32 gang)` (0x611550)
-    fn population_choose_gang_occupation(gang: i32) -> i32 = cdecl 0x611550 => unported;
-    /// `CWorld::GetIsLineOfSightClear(start, end, buildings, vehicles, peds, objects, dummies, seeThrough,
-    /// ignoreSomeObjects)` (0x56A490), AL
-    fn world_get_is_line_of_sight_clear(a: GPtr<u8>, b: GPtr<u8>, bld: u32, veh: u32, ped: u32, obj: u32, dum: u32, see: u32, ign: u32) -> u8 = cdecl 0x56A490 => unported;
-    /// `CPopulation::AddPed(ePedType, int32 model, const CVector&, bool)` (0x612710)
-    fn population_add_ped(ty: u32, model: i32, pos: GPtr<u8>, b: u32) -> GPtr<u8> = cdecl 0x612710 => unported;
-    /// `CPopulation::RemovePed(CPed*)` (0x610F20)
-    fn population_remove_ped(p: GPtr<u8>) = cdecl 0x610F20 => unported;
     /// `CGeneral::GetRadianAngleBetweenPoints(x1, y1, x2, y2)` (0x53CBE0, ST0)
     fn general_get_radian_angle_between_points(x1: f32, y1: f32, x2: f32, y2: f32) -> f64 = cdecl 0x53CBE0 => unported;
     /// `CVisibilityPlugins::SetClumpAlpha(RpClump*, int32)` (0x732B00)
     fn visibility_set_clump_alpha(c: u32, a: i32) = cdecl 0x732B00 => unported;
     /// `CPedGroupIntelligence::SetDefaultTaskAllocator(const CPedGroupDefaultTaskAllocator&)` (0x5FB280, `ret 4`)
     fn group_intel_set_default_task_allocator(i: GPtr<u8>, a: u32) = thiscall 0x5FB280 => unported;
-    /// `CPedGroupMembership::SetLeader(CPed*)` (0x5FB9C0, `ret 4`)
-    fn membership_set_leader(m: GPtr<u8>, p: GPtr<u8>) = thiscall 0x5FB9C0 => unported;
-    /// `CPedGroupMembership::AddFollower(CPed*)` (0x5F8020, `ret 4`)
-    fn membership_add_follower(m: GPtr<u8>, p: GPtr<u8>) = thiscall 0x5F8020 => unported;
-    /// `CPedGroupMembership::Process()` (0x5FBA60)
-    fn membership_process(m: GPtr<u8>) = thiscall 0x5FBA60 => unported;
-    /// `CPedGroupIntelligence::Process()` (0x5FC4A0)
-    fn group_intel_process(i: GPtr<u8>) = thiscall 0x5FC4A0 => unported;
-    /// `CTaskComplexWanderGang::CTaskComplexWanderGang(int32 moveState, uint8 dir, int32 time, bool, float)` (0x66F5C0,
-    /// `ret 0x14`)
-    fn wander_gang_ctor(t: GPtr<u8>, ms: i32, dir: i32, time: i32, b: u32, f: u32) -> GPtr<u8> = thiscall 0x66F5C0 => unported;
-    /// `CTaskComplexBeInGroup::CTaskComplexBeInGroup(int32 groupId, bool)` (0x632E50, `ret 8`)
-    fn be_in_group_ctor(t: GPtr<u8>, id: i32, b: u32) -> GPtr<u8> = thiscall 0x632E50 => unported;
-    /// `CTaskManager::SetTask(CTask*, int32, bool)` (0x681AF0, `ret 0xC`)
-    fn tm_set_task(tm: GPtr<u8>, t: GPtr<u8>, slot: i32, b: u32) = thiscall 0x681AF0 => unported;
 }
 
 /// 2*pi (0x858CBC), 1.0 (0x858624), 0.5 (0x858B8C), 1/32767 (0x858C7C)

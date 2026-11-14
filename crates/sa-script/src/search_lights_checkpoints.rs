@@ -18,15 +18,17 @@ use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 use sa_math::x87::X87;
 
+use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+use sa_core::bindings::entity_register_reference as register_reference;
+use sa_stream::bindings::placeable_allocate_matrix;
+use sa_stream::bindings::simple_transform_update_matrix;
+use sa_world::bindings::find_ground_z_for_coord;
+use sa_world::bindings::get_actual_script_thing_index;
+use sa_world::bindings::heli_search_light_cone;
+use sa_world::bindings::multiply3x3;
 orig! {
     /// `CTheScripts::GetNewUniqueScriptThingIndex(int32 index, uint8 type)` (0x483720, cdecl)
     fn get_new_unique_script_thing_index(index: i32, ty: u32) -> i32 = cdecl 0x483720 => crate::script_things::get_new_unique_script_thing_index;
-    /// `CTheScripts::GetActualScriptThingIndex(int32 handle, uint8 type)` (0x4839A0, cdecl)
-    fn get_actual_script_thing_index(handle: i32, ty: u32) -> i32 = cdecl 0x4839A0 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00, `ret 4`)
-    fn clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70, `ret 4`)
-    fn register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
     /// `CCheckpoints::DeleteCP(uint32 id, uint16 type)` (0x722FC0, cdecl)
     fn checkpoints_delete_cp(id: u32, ty: u32) = cdecl 0x722FC0 => unported;
     /// `CCheckpoints::PlaceMarker(uint32 id, uint16 type, CVector& pos, CVector& dir, float size, uint8 r, g, b, a,
@@ -34,24 +36,10 @@ orig! {
     /// 16-bit arguments are pushed as whole dwords
     fn checkpoints_place_marker(id: i32, ty: u32, pos: GPtr<u8>, dir: GPtr<u8>, size: u32, r: u32, g: u32, b: u32,
         a: u32, period: u32, fraction: u32, rotate: u32) -> GPtr<u8> = cdecl 0x722C40 => unported;
-    /// `CWorld::FindGroundZForCoord(float x, float y)` (0x569660, cdecl, ST0; exact as f64)
-    fn find_ground_z_for_coord(x: u32, y: u32) -> f64 = cdecl 0x569660 => unported;
     /// `CShadows::RenderIndicatorShadow(uint32 id, uint8 type, RwTexture*, CVector* pos, float frontX, float frontY,
     /// float sideX, float sideY, int16 intensity)` (0x70CCB0, cdecl)
     fn shadows_render_indicator_shadow(id: u32, ty: u32, tex: u32, pos: GPtr<u8>, fx: u32, fy: u32, sx: u32, sy: u32,
         intensity: u32) = cdecl 0x70CCB0 => unported;
-    /// `CHeli::SearchLightCone(int32 id, CVector start, CVector end, float targetRadius, float power, uint8
-    /// clipIfColliding, uint8 drawShadow, CVector& coneSpot0, CVector& coneSpot1, CVector& coneSpot2, bool,
-    /// float baseRadius, float, float, float)` (0x6C58E0, cdecl; the vectors by value as three dwords each)
-    fn heli_search_light_cone(id: u32, sx: u32, sy: u32, sz: u32, ex: u32, ey: u32, ez: u32, target_radius: u32,
-        power: u32, clip: u32, shadow: u32, c0: GPtr<u8>, c1: GPtr<u8>, c2: GPtr<u8>, flag: u32, base_radius: u32,
-        a: u32, b: u32, c: u32) = cdecl 0x6C58E0 => unported;
-    /// `CPlaceable::AllocateMatrix()` (0x54F560)
-    fn placeable_allocate_matrix(e: GPtr<u8>) = thiscall 0x54F560 => unported;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*)` (0x54F1B0, `ret 4`)
-    fn simple_transform_update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => unported;
-    /// `Multiply3x3(CVector* out, const CMatrix*, const CVector*)` (0x59C790, cdecl): returns `out`
-    fn multiply3x3(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C790 => unported;
 }
 
 const SEARCH_LIGHTS: usize = 0xA9_4D68;

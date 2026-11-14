@@ -117,12 +117,8 @@ pub fn get_current_perc_other_peds() -> i32 {
     ftol32(xi(perc).fmul(X87::from_f32(f)))
 }
 
-sa_core::orig! {
-    /// `CTheScripts::IsPlayerOnAMission()` (0x464D50)
-    pub fn is_player_on_a_mission() -> u8 = cdecl 0x464D50 => unported;
-    /// `CGameLogic::LaRiotsActiveHere()` (0x441C10)
-    pub fn la_riots_active_here() -> u8 = cdecl 0x441C10 => unported;
-}
+pub use sa_world::bindings::is_player_on_a_mission;
+pub use sa_world::bindings::la_riots_active_here;
 
 /// `CPopCycle::PickARandomGroupOfOtherPeds()` (0x610420): a random percentage walked down the current
 /// row while `p[g] < r` (`r -= p[g]`).
@@ -287,11 +283,10 @@ pub fn pick_ped_mi_to_stream_in_for_current_zone() -> i32 {
     -1
 }
 
+pub use sa_world::bindings::get_zone_info;
 sa_core::orig! {
     /// `CWorld::FindPlayerCentreOfWorld(int32)` (0x56E250)
     pub fn find_player_centre_of_world(id: i32) -> GPtr<u8> = cdecl 0x56E250 => sa_world::world::cworld::find_player_centre_of_world;
-    /// `CTheZones::GetZoneInfo(const CVector&, CZone**)` (0x572400)
-    pub fn get_zone_info(p: GPtr<f32>, out: GPtr<GPtr<u8>>) -> GPtr<u8> = cdecl 0x572400 => sa_world::world::zones::get_zone_info;
     /// `CPopCycle::UpdatePercentages()` (0x610770)
     pub fn update_percentages_call() = cdecl 0x610770 => crate::population2::update_percentages;
     /// `CPopCycle::UpdateDealerStrengths()` (0x6104B0)

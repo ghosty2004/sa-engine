@@ -8,27 +8,19 @@ use sa_math::x87::X87;
 
 use crate::common::{f32_of, g, model_info, rd, wr, x};
 
+use crate::bindings::get_car_gun_left_right;
+use sa_pop::bindings::get_car_gun_up_down;
+use sa_stream::bindings::get_wheel_posn;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::audio_add_event;
+use sa_world::bindings::get_pad_from_player;
+use sa_world::bindings::get_special_col_model;
+use sa_world::bindings::max_f;
 orig! {
-    /// `CPed::IsPlayer()` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CVehicle::GetSpecialColModel()` (0x6DF3D0)
-    fn get_special_col_model(v: GPtr<u8>) -> u8 = thiscall 0x6DF3D0 => unported;
-    /// `CVehicleModelInfo::GetWheelPosn(int32, CVector&, bool)` (0x4C7D20)
-    fn get_wheel_posn(mi: GPtr<u8>, wheel: i32, out: GPtr<u8>, local: u32) = thiscall 0x4C7D20 => unported;
-    /// `CAEVehicleAudioEntity::AddAudioEvent(eAudioEvents, float)` (0x4F6420)
-    fn audio_add_event(a: GPtr<u8>, event: u32, volume: f32) = thiscall 0x4F6420 => unported;
-    /// `CPlayerPed::GetPadFromPlayer()` (0x609560)
-    fn get_pad_from_player(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x609560 => unported;
     /// `CPad::HornJustDown()` (0x53FF30)
     fn horn_just_down(p: GPtr<u8>) -> u8 = thiscall 0x53FF30 => unported;
     /// `CPad::GetHydraulicJump()` (0x53FF70)
     fn get_hydraulic_jump(p: GPtr<u8>) -> u8 = thiscall 0x53FF70 => unported;
-    /// `CPad::GetCarGunLeftRight()` (0x53FC50), int16 in AX
-    fn get_car_gun_left_right(p: GPtr<u8>) -> u32 = thiscall 0x53FC50 => unported;
-    /// `CPad::GetCarGunUpDown()` (0x53FC10), int16 in AX
-    fn get_car_gun_up_down(p: GPtr<u8>) -> u32 = thiscall 0x53FC10 => unported;
-    /// `std::max<float>` (0x420800, ST0)
-    fn max_f(a: f32, b: f32) -> f64 = cdecl 0x420800 => unported;
 }
 
 /// `CVehicle::m_aSpecialHydraulicData[idx]` (0xC1CB60, stride 0x28).

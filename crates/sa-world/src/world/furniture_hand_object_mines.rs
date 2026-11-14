@@ -8,15 +8,8 @@ use sa_core::{hook, orig};
 
 use super::common::rd;
 
+use sa_core::bindings::list_remove_all;
 orig! {
-    /// `List_c::RemoveAll()` (0x4A8EB0)
-    fn list_remove_all(l: GPtr<u8>) = thiscall 0x4A8EB0 => unported;
-    /// `RwHelper::GetFirstAtomic(RpClump*)` (0x734820)
-    fn get_first_atomic(clump: GPtr<u8>) -> GPtr<u8> = cdecl 0x734820 => unported;
-    /// `RpMaterialSetTexture(RpMaterial*, RwTexture*)` (0x74DBC0)
-    fn rp_material_set_texture(m: GPtr<u8>, t: GPtr<u8>) -> GPtr<u8> = cdecl 0x74DBC0 => unported;
-    /// `CObject::Render()` (0x59F180)
-    fn object_render(o: GPtr<u8>) = thiscall 0x59F180 => unported;
     /// `CPickup::ProcessGunShot(CVector* start, CVector* end)` (0x4588B0)
     fn pickup_process_gun_shot(p: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) = thiscall 0x4588B0 => unported;
 }

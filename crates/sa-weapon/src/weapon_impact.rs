@@ -29,68 +29,65 @@ const CALC_SIZE: usize = 0x14;
 /// `sizeof(CEventDamage)`
 const EVENT_DAMAGE_SIZE: usize = 0x44;
 
+pub use crate::bindings::audio_report_bullet_hit;
+pub use crate::bindings::col_lighting_get_current as get_current_lighting;
+pub use crate::bindings::fx_add_tyre_burst;
+pub use crate::bindings::pad_start_shake_distance;
+pub use sa_core::bindings::assoc_set_current_time;
+pub use sa_core::bindings::get_pad as pad_get_pad;
+pub use sa_core::bindings::ped_is_alive;
+pub use sa_core::bindings::stats_increment_stat;
+pub use sa_core::bindings::tm_get_active_task as task_manager_get_active_task;
+pub use sa_core::bindings::tm_get_simplest_active_task as task_manager_get_simplest_active_task;
+pub use sa_core::bindings::vector_magnitude as magnitude;
+pub use sa_core::bindings::vector_normalise as normalise;
+pub use sa_stream::bindings::ped_is_player;
+pub use sa_world::bindings::add_animation;
+pub use sa_world::bindings::clump_get_first_association_4d6a70 as clump_get_first_association_flags;
+pub use sa_world::bindings::damage_calc_dtor as calc_dtor;
+pub use sa_world::bindings::entity_get_is_static;
+pub use sa_world::bindings::event_damage_affects_ped;
+pub use sa_world::bindings::event_damage_dtor;
+pub use sa_world::bindings::event_vehicle_damage_dtor;
+pub use sa_world::bindings::get_stat_value as stats_get_stat_value;
+pub use sa_world::bindings::localisation_blood;
+pub use sa_world::bindings::localisation_kicking_when_down;
+pub use sa_world::bindings::min_f as min_f32;
+pub use sa_world::bindings::ped_groups_are_in_same_group as are_in_same_group;
+pub use sa_world::bindings::physical_add_to_moving_list;
+pub use sa_world::bindings::report_crime;
+pub use sa_world::bindings::vector_scale;
+pub use sa_world::bindings::vector_sub;
 orig! {
     /// `CPedDamageResponseCalculator::CPedDamageResponseCalculator(CEntity*, float, eWeaponType, ePedPieceTypes, bool)` (0x4AD3F0, thiscall)
     pub fn calc_ctor(this: GPtr<u8>, creator: GPtr<u8>, damage: f32, ty: i32, piece: i32, b: u8) -> GPtr<u8> = thiscall 0x4AD3F0 => unported;
-    /// `CPedDamageResponseCalculator::~CPedDamageResponseCalculator()` (0x4AD420, thiscall)
-    pub fn calc_dtor(this: GPtr<u8>) = thiscall 0x4AD420 => unported;
     /// `CPedDamageResponseCalculator::ComputeDamageResponse(CPed*, CPedDamageResponse&, bool speak)` (0x4B5AC0, thiscall)
     pub fn calc_compute_damage_response(this: GPtr<u8>, ped: GPtr<u8>, resp: GPtr<u8>, speak: u8) = thiscall 0x4B5AC0 => unported;
     /// `CEventDamage::CEventDamage(CEntity* source, uint32 time, eWeaponType, ePedPieceTypes, uint8 dir, bool, bool inVehicle)`
     /// (0x4AD830, thiscall); the last word is pushed as `(flags >> 8) & 0xFFFFFF01`
     pub fn event_damage_ctor(this: GPtr<u8>, source: GPtr<u8>, time: u32, ty: i32, piece: i32, dir: u32, a: u32, in_veh: u32) -> GPtr<u8> = thiscall 0x4AD830 => unported;
-    /// `CEventDamage::~CEventDamage()` (non-virtual body, 0x4AD960, thiscall)
-    pub fn event_damage_dtor(this: GPtr<u8>) = thiscall 0x4AD960 => unported;
-    /// `CEventDamage::AffectsPed(CPed*)` (0x4B35A0, thiscall)
-    pub fn event_damage_affects_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x4B35A0 => unported;
     /// `CEventDamage::ComputeDeathAnim(CPed*, bool)` (0x4B3A60, thiscall)
     pub fn event_damage_compute_death_anim(this: GPtr<u8>, ped: GPtr<u8>, b: u8) = thiscall 0x4B3A60 => unported;
     /// `CEventDamage::ComputeDamageAnim(CPed*, bool)` (0x4B3FC0, thiscall)
     pub fn event_damage_compute_damage_anim(this: GPtr<u8>, ped: GPtr<u8>, b: u8) = thiscall 0x4B3FC0 => unported;
     /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, thiscall)
     pub fn event_group_add(this: GPtr<u8>, ev: GPtr<u8>, b: u8) -> GPtr<u8> = thiscall 0x4AB420 => unported;
-    /// `CLocalisation::Blood()` (0x56D230)
-    pub fn localisation_blood() -> u8 = cdecl 0x56D230 => unported;
-    /// `CLocalisation::KickingWhenDown()` (0x56D270)
-    pub fn localisation_kicking_when_down() -> u8 = cdecl 0x56D270 => unported;
-    /// `CTaskManager::GetSimplestActiveTask()` (0x6819D0, thiscall)
-    pub fn task_manager_get_simplest_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x6819D0 => unported;
-    /// `CTaskManager::GetActiveTask()` (0x681720, thiscall)
-    pub fn task_manager_get_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x681720 => unported;
     /// `CTask::GetTaskType()` (vtable slot 0x10, thiscall)
     pub fn task_get_type(task: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `RpAnimBlendClumpGetFirstAssociation(RpClump*, uint32 flags)` (0x4D6A70)
-    pub fn clump_get_first_association_flags(clump: GPtr<u8>, flags: u32) -> GPtr<u8> = cdecl 0x4D6A70 => unported;
     /// `RpAnimBlendClumpGetAssociation(RpClump*, uint32 animId)` (0x4D68B0)
     pub fn clump_get_association(clump: GPtr<u8>, id: u32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
     /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float delta)` (0x4D4610)
     pub fn blend_animation(clump: GPtr<u8>, group: u32, id: u32, delta: u32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
-    /// `CAnimManager::AddAnimation(RpClump*, AssocGroupId, AnimationId)` (0x4D3AA0)
-    pub fn add_animation(clump: GPtr<u8>, group: u32, id: u32) -> GPtr<u8> = cdecl 0x4D3AA0 => unported;
-    /// `CAnimBlendAssociation::SetCurrentTime(float)` (0x4CEA80, thiscall)
-    pub fn assoc_set_current_time(assoc: GPtr<u8>, t: f32) = thiscall 0x4CEA80 => unported;
-    /// `CPed::IsAlive()` (0x5E0170, thiscall)
-    pub fn ped_is_alive(ped: GPtr<u8>) -> u8 = thiscall 0x5E0170 => unported;
     /// `FindPlayerPed(int32)` (0x56E210)
     pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
-    /// `CCrime::ReportCrime(eCrimeType, CEntity* victim, CPed* criminal)` (0x532010)
-    pub fn report_crime(ty: i32, victim: GPtr<u8>, criminal: GPtr<u8>) = cdecl 0x532010 => unported;
     /// `CWeapon::GenerateDamageEvent(...)` (0x73A530)
     pub fn generate_damage_event_call(victim: GPtr<u8>, creator: GPtr<u8>, ty: i32, damage: i32, piece: i32, dir: u32) -> u8 = cdecl 0x73A530 => generate_damage_event;
     /// `CPed::GetWeaponSkill()` (current weapon, 0x5E6580, thiscall)
     pub fn ped_get_weapon_skill_current(ped: GPtr<u8>) -> u8 = thiscall 0x5E6580 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0, thiscall)
-    pub fn ped_is_player(ped: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
     /// `CPed::GetLocalDirection(const CVector2D&)` (0x5DEF60, thiscall)
     pub fn ped_get_local_direction(ped: GPtr<u8>, v: GPtr<u8>) -> u32 = thiscall 0x5DEF60 => unported;
-    /// `CPedGroups::AreInSameGroup(const CPed*, const CPed*)` (0x5F7F40)
-    pub fn are_in_same_group(a: GPtr<u8>, b: GPtr<u8>) -> u8 = cdecl 0x5F7F40 => unported;
     /// `CBulletTraces::AddTrace(const CVector* from, const CVector* to, eWeaponType, CEntity*)` (0x726AF0)
     pub fn bullet_traces_add_trace(from: GPtr<u8>, to: GPtr<u8>, ty: i32, e: GPtr<u8>) = cdecl 0x726AF0 => unported;
-    /// `CStats::GetStatValue(eStats)` (0x558E40, ST0)
-    pub fn stats_get_stat_value(stat: u32) -> f64 = cdecl 0x558E40 => unported;
-    /// `CStats::IncrementStat(eStats, float)` (0x55C180)
-    pub fn stats_increment_stat(stat: u32, v: f32) = cdecl 0x55C180 => unported;
     /// `CStats::UpdateStatsWhenWeaponHit(eWeaponType)` (0x55CEB0)
     pub fn stats_update_when_weapon_hit(ty: i32) = cdecl 0x55CEB0 => unported;
     /// `CVehicle::BurstTyre(uint8 component, bool)` (vtable slot 0xB0, thiscall); the component dword is
@@ -98,48 +95,22 @@ orig! {
     pub fn vehicle_burst_tyre(veh: GPtr<u8>, component: u32, b: u8) -> u8 = thiscall vslot 0xB0 => unported;
     /// `CEntity::SetIsStatic(bool)` (vtable slot 0x10, thiscall)
     pub fn entity_set_is_static(e: GPtr<u8>, b: u8) = thiscall vslot 0x10 => unported;
-    /// `CVector::Normalise()` (0x59C910, thiscall)
-    pub fn normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
-    /// `CVector::Magnitude()` (0x4082C0, thiscall, ST0)
-    pub fn magnitude(v: GPtr<u8>) -> f64 = thiscall 0x4082C0 => unported;
-    /// `operator-(const CVector&, const CVector&)` (0x40FE60, returns into `out`)
-    pub fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => unported;
-    /// `operator*(float, const CVector&)` (0x40FE90, returns into `out`)
-    pub fn vector_scale(out: GPtr<u8>, f: f32, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE90 => unported;
-    /// `std::min<float>(a, b)` (0x404330, ST0: `a < b ? a : b`)
-    pub fn min_f32(a: f32, b: f32) -> f64 = cdecl 0x404330 => unported;
-    /// `tColLighting::GetCurrentLighting(float scale)` (0x59F0C0, the lighting byte passed by value, ST0)
-    pub fn get_current_lighting(lighting: u32, scale: f32) -> f64 = cdecl 0x59F0C0 => unported;
-    /// `CAudioEngine::ReportBulletHit(CEntity*, eSurfaceType, const CVector&, float angle)` (0x506EC0, thiscall)
-    pub fn audio_report_bullet_hit(ae: GPtr<u8>, e: GPtr<u8>, surface: u32, pos: GPtr<u8>, angle: f32) = thiscall 0x506EC0 => unported;
     /// `Fx_c::AddBlood(CVector&, CVector&, int32, float lighting)` (0x49EB00, thiscall); lighting pushed as the raw word
     pub fn fx_add_blood(fx: GPtr<u8>, pos: GPtr<u8>, dir: GPtr<u8>, amount: u32, lighting: u32) = thiscall 0x49EB00 => unported;
     /// `Fx_c::AddBulletImpact(CVector&, CVector&, int32 surface, int32 amount, float lighting)` (0x49F3D0, thiscall)
     pub fn fx_add_bullet_impact(fx: GPtr<u8>, pos: GPtr<u8>, dir: GPtr<u8>, surface: u32, amount: u32, lighting: f32) = thiscall 0x49F3D0 => unported;
-    /// `Fx_c::AddTyreBurst(CVector&, CVector&)` (0x49F300, thiscall)
-    pub fn fx_add_tyre_burst(fx: GPtr<u8>, pos: GPtr<u8>, dir: GPtr<u8>) = thiscall 0x49F300 => unported;
     /// `CCamera::IsSphereVisible(const CVector&, float)` (0x420D40, thiscall)
     pub fn camera_is_sphere_visible(cam: GPtr<u8>, c: GPtr<u8>, r: f32) -> u8 = thiscall 0x420D40 => unported;
     /// `CGlass::WasGlassHitByBullet(CEntity*, CVector)` (0x71C0D0)
     pub fn glass_was_hit_by_bullet(e: GPtr<u8>, x: u32, y: u32, z: u32) = cdecl 0x71C0D0 => unported;
     /// `CObject::ObjectDamage(float, const CVector*, const CVector*, CEntity*, eWeaponType)` (0x5A0D90, thiscall)
     pub fn object_damage(obj: GPtr<u8>, dmg: f32, pos: GPtr<u8>, dir: GPtr<u8>, damager: GPtr<u8>, ty: i32) = thiscall 0x5A0D90 => unported;
-    /// `CEntity::GetIsStatic()` (0x4633E0, thiscall)
-    pub fn entity_get_is_static(e: GPtr<u8>) -> u8 = thiscall 0x4633E0 => unported;
-    /// `CPhysical::AddToMovingList()` (0x542800, thiscall)
-    pub fn physical_add_to_moving_list(e: GPtr<u8>) = thiscall 0x542800 => unported;
     /// `CPhysical::ApplyForce(CVector force, CVector point, bool)` (0x542B50, thiscall); raw words
     pub fn physical_apply_force(e: GPtr<u8>, fx: u32, fy: u32, fz: u32, px: u32, py: u32, pz: u32, b: u8) = thiscall 0x542B50 => unported;
     /// `CVehicle::InflictDamage(CEntity*, eWeaponType, float, CVector)` (0x6D7C90, thiscall); raw position words
     pub fn vehicle_inflict_damage(veh: GPtr<u8>, e: GPtr<u8>, ty: i32, dmg: f32, x: u32, y: u32, z: u32) = thiscall 0x6D7C90 => unported;
     /// `CEventVehicleDamageWeapon::CEventVehicleDamageWeapon(CVehicle*, CEntity*, eWeaponType)` (0x61C2E0, thiscall)
     pub fn event_vehicle_damage_weapon_ctor(ev: GPtr<u8>, veh: GPtr<u8>, e: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x61C2E0 => unported;
-    /// `CEventVehicleDamage::~CEventVehicleDamage()` (base body, 0x4B1990, thiscall)
-    pub fn event_vehicle_damage_dtor(ev: GPtr<u8>) = thiscall 0x4B1990 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    pub fn pad_get_pad(id: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CPad::StartShake_Distance(int16 time, uint8 freq, float x, y, z)` (0x53F9A0, thiscall); raw words
-    pub fn pad_start_shake_distance(pad: GPtr<u8>, time: u32, freq: u32, x: u32, y: u32, z: u32) = thiscall 0x53F9A0 => unported;
 }
 
 /// CRT `_CIasin` (0x821E70): ST0 in, ST0 out (`sa_core::orig::x87_unary`; unported in phases B/C).

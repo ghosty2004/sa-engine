@@ -20,11 +20,10 @@ pub const IMAGE_MODULE: usize = 0xC9A65C;
 /// Image plugin registry.
 pub const IMAGE_REGISTRY: u32 = 0x8E2670;
 
+use crate::bindings::image_find_format;
+use crate::bindings::plugin_deinit_object;
+use crate::bindings::plugin_init_object;
 orig! {
-    /// `_rwPluginRegistryInitObject(reg, obj)` (0x8086E0)
-    fn plugin_init_object(reg: GPtr<u8>, obj: GPtr<u8>) -> GPtr<u8> = cdecl 0x8086E0 => crate::plugin::registry_init_object;
-    /// `_rwPluginRegistryDeInitObject(reg, obj)` (0x808740)
-    fn plugin_deinit_object(reg: GPtr<u8>, obj: GPtr<u8>) -> GPtr<u8> = cdecl 0x808740 => crate::plugin::registry_deinit_object;
     /// `_rwerror(code, a)` (0x8088D0, two arguments)
     fn rw_error2(code: u32, a: u32) -> u32 = cdecl 0x8088D0 => unported;
     /// `RwImageRead(name)` (0x802FD0)
@@ -41,8 +40,6 @@ orig! {
     fn rgb_to_pixel_call(out: GPtr<u32>, rgba: GPtr<u8>, format: u32) -> u32 = cdecl 0x7FEE20 => d3d9_rgb_to_pixel;
     /// `_rwD3D9ClampRasterSize(&w, &h, flags)` (0x7FED70)
     fn clamp_raster_size(w: GPtr<u8>, h: GPtr<u8>, flags: u32) -> u32 = cdecl 0x7FED70 => unported;
-    /// `_rwD3D9ImageFindFormat(image)` (0x7FFFF0)
-    fn image_find_format(img: GPtr<u8>) -> u32 = cdecl 0x7FFFF0 => unported;
     /// `FUN_004cc580(raster, format)`: sets type/flags/format and depth of the raster (0x4CC580)
     fn raster_set_format(r: GPtr<u8>, format: u32) -> u32 = cdecl 0x4CC580 => unported;
 

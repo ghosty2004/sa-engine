@@ -7,23 +7,17 @@ use sa_math::x87::X87;
 
 use crate::common::{g, k, rd};
 
+use sa_core::bindings::fx_create_mat_from_vec;
+use sa_stream::bindings::placeable_allocate_matrix;
+use sa_stream::bindings::simple_transform_update_matrix;
+use sa_world::bindings::fx_copy_parent_matrix as fx_system_copy_parent_matrix;
+use sa_world::bindings::fx_create_system;
+use sa_world::bindings::fx_play_and_kill as fx_system_play_and_kill;
+use sa_world::bindings::multiply3x3_vm as multiply3x3_transposed;
 orig! {
-    /// `CPlaceable::AllocateMatrix()` (0x54F560)
-    fn placeable_allocate_matrix(e: GPtr<u8>) = thiscall 0x54F560 => unported;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*)` (0x54F1B0, `ret 4`)
-    fn simple_transform_update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => unported;
-    /// `Multiply3x3(CVector* out, const CVector& v, const CMatrix& m)` (0x59C810): the transposed product; returns `out`
-    fn multiply3x3_transposed(out: GPtr<u8>, v: GPtr<u8>, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C810 => unported;
     /// `FxManager_c::FxRwMatrixCreate()` (0x4A9440) / `FxRwMatrixDestroy(RwMatrix*)` (0x4A9460)
     fn fx_rw_matrix_create(fx: GPtr<u8>) -> GPtr<u8> = thiscall 0x4A9440 => unported;
     fn fx_rw_matrix_destroy(fx: GPtr<u8>, m: GPtr<u8>) = thiscall 0x4A9460 => unported;
-    /// `Fx_c::CreateMatFromVec(RwMatrix* out, CVector* origin, CVector* direction)` (0x49E950, thiscall)
-    fn fx_create_mat_from_vec(this: GPtr<u8>, out: GPtr<u8>, origin: GPtr<u8>, dir: GPtr<u8>) = thiscall 0x49E950 => unported;
-    /// `FxManager_c::CreateFxSystem(const char* name, CVector* point, RwMatrix* parent, bool)` (0x4A9BE0, thiscall)
-    fn fx_create_system(fx: GPtr<u8>, name: u32, point: GPtr<u8>, parent: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4A9BE0 => unported;
-    /// `FxSystem_c::CopyParentMatrix()` (0x4AA890) / `PlayAndKill()` (0x4AA3D0)
-    fn fx_system_copy_parent_matrix(s: GPtr<u8>) = thiscall 0x4AA890 => unported;
-    fn fx_system_play_and_kill(s: GPtr<u8>) = thiscall 0x4AA3D0 => unported;
 }
 
 /// `g_fxMan` (0xA9AE80); the effect names "gunflash" (0x85A728) and "gunsmoke" (0x85A71C).

@@ -9,17 +9,15 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::ped_set_move_state;
+use sa_world::bindings::stats_get_fat_and_muscle_modifier;
 orig! {
     /// `CAnimBlendAssociation::SetDeleteCallback(void (*)(CAnimBlendAssociation*, void*), void*)` (0x4CEBC0)
     fn assoc_set_delete_callback(a: GPtr<u8>, cb: u32, data: GPtr<u8>) = thiscall 0x4CEBC0 => unported;
     /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float)` (0x4D4610)
     fn anim_blend_animation(clump: u32, group: u32, id: u32, delta: f32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
-    /// `CPed::SetMoveState(eMoveState)` (0x5DEC00)
-    fn ped_set_move_state(p: GPtr<u8>, s: u32) = thiscall 0x5DEC00 => unported;
     /// `CPed::SetMoveAnim()` (vtable slot 0x5C)
     fn ped_set_move_anim(p: GPtr<u8>) = thiscall vslot 0x5C => unported;
-    /// `CStats::GetFatAndMuscleModifier(int32)` (0x559AF0, ST0)
-    fn stats_get_fat_and_muscle_modifier(i: i32) -> f64 = cdecl 0x559AF0 => unported;
 }
 
 /// `CDefaultAnimCallback::DefaultAnimCB` (0x4D1390) and `CTaskSimpleClimb::DeleteAnimCB` (0x67A380), passed as

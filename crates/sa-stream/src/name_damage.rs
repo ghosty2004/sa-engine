@@ -3,12 +3,9 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
-orig! {
-    /// CRT `strncpy` (0x821F40)
-    fn crt_strncpy(d: GPtr<u8>, s: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x821F40 => unported;
-}
+use sa_core::bindings::crt_strncpy;
 
 use sa_core::field::rd8 as at;
 

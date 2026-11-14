@@ -55,6 +55,9 @@ const PP_MS_QUALITY: usize = 0xC9C054;
 const D3DERR_OUTOFVIDEOMEMORY: i32 = 0x8876_017Cu32 as i32;
 const HINT: u32 = 0x30411;
 
+use crate::bindings::d3d_resource_create_texture as resource_create_texture;
+use crate::bindings::free_list_create as freelist_create;
+use crate::bindings::get_current_texture;
 orig! {
     /// `IUnknown::Release()` (+8)
     fn release(o: GPtr<u8>) -> u32 = stdcall vslot 0x8 => unported;
@@ -87,14 +90,8 @@ orig! {
     fn clamp_raster_size(w: GPtr<i32>, h: GPtr<i32>, flags: u32) = cdecl 0x7FED70 => crate::d3d9state::clamp_raster_size;
     /// `_rxD3D9VideoMemoryRasterListAdd(raster)` (0x4CB530)
     fn vm_list_add(r: GPtr<u8>) = cdecl 0x4CB530 => crate::raster::vm_raster_list_add;
-    /// `_rwFreeListCreate(entrySize, entriesPerBlock, alignment, hint)` (0x801980)
-    fn freelist_create(size: u32, per_block: u32, align: u32, hint: u32) -> GPtr<u8> = cdecl 0x801980 => unported;
-    /// `D3DResourceSystem::CreateTexture(w, h, levels, format, out)` (0x730510)
-    fn resource_create_texture(w: u32, h: u32, levels: u32, f: u32, out: GPtr<u8>) -> i32 = cdecl 0x730510 => unported;
     /// `D3DResourceSystem::DestroyTexture(texture)` (0x730B70)
     fn resource_destroy_texture(t: GPtr<u8>) = cdecl 0x730B70 => unported;
-    /// `_rwD3D9GetCurrentTexture(stage)` (0x7FDE50)
-    fn get_current_texture(stage: u32) -> u32 = cdecl 0x7FDE50 => crate::d3d9state::get_current_texture;
     /// `FUN_007fdcd0(raster, stage)`: the stage's texture set
     fn set_texture_internal(r: GPtr<u8>, stage: u32) -> u32 = cdecl 0x7FDCD0 => crate::d3d9state::set_texture_internal;
 }
@@ -656,16 +653,14 @@ orig! {
     fn swap_chain_get_back_buffer(sc: GPtr<u8>, index: u32, ty: u32, out: GPtr<u8>) -> i32 = stdcall vslot 0x14 => unported;
 }
 
+use crate::bindings::image_allocate_pixels;
+use crate::bindings::image_destroy;
 orig! {
     /// `FUN_004cc0c0` (0x4CC0C0, proposed `_rwD3D9CheckValidFormatForRasterType`): EAX = cube flag,
     /// ECX = raster type, EDX = `D3DFORMAT`; non-zero when the device takes the format for the type
     fn check_format_for_type(cube: u32, ty: u32, f: u32) -> u32 = reg("args = eax ecx edx") 0x4CC0C0 => unported;
     /// `RwImageCreate(width, height, depth)` (0x8026E0)
     fn image_create(w: i32, h: i32, depth: i32) -> GPtr<u8> = cdecl 0x8026E0 => crate::image::rw_image_create;
-    /// `RwImageAllocatePixels(image)` (0x8027A0)
-    fn image_allocate_pixels(img: GPtr<u8>) -> GPtr<u8> = cdecl 0x8027A0 => crate::image::rw_image_allocate_pixels;
-    /// `RwImageDestroy(image)` (0x802740)
-    fn image_destroy(img: GPtr<u8>) -> u32 = cdecl 0x802740 => crate::image::rw_image_destroy;
     /// `_rwD3D9ImageGetRaster(image, raster, flags)` (0x7FF270)
     fn image_get_raster(img: GPtr<u8>, r: GPtr<u8>, flags: u32) -> u32 = cdecl 0x7FF270 => crate::image2::d3d9_image_get_raster;
     /// `_rwD3D9RasterSetImage(raster, image, flags)` (0x8001E0)

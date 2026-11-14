@@ -10,85 +10,67 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::car_drive_mission_flee_scene_ctor;
+use crate::bindings::duck_ctor;
+use crate::bindings::evasive_step_ctor;
+use crate::bindings::flee_any_means_ctor;
+use crate::bindings::handler_is_kill_task_appropriate;
+use crate::bindings::hands_up_ctor;
+use crate::bindings::kill_criminal_ctor;
+use crate::bindings::kill_ped_on_foot_stealth_ctor;
+use crate::bindings::task_is_go_to_task;
+use crate::bindings::use_attractor_ctor;
+use crate::bindings::use_attractor_run_ctor;
+use crate::bindings::use_attractor_sprint_ctor;
+use crate::bindings::vehicle_is_driver;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::general_random_int_in_range;
+use sa_core::bindings::vector_dot_product as vector_dot;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::cower_ctor;
+use sa_world::bindings::destroy_car_ctor;
+use sa_world::bindings::dive_from_attached_ctor;
+use sa_world::bindings::flee_entity_ctor;
+use sa_world::bindings::ik_look_at;
+use sa_world::bindings::intel_get_task_duck;
+use sa_world::bindings::intel_is_friendly_with;
+use sa_world::bindings::interesting_events_add;
+use sa_world::bindings::is_player_on_a_mission as scripts_is_player_on_a_mission;
+use sa_world::bindings::kill_ped_on_foot_ctor;
+use sa_world::bindings::mental_state_increment_anger;
+use sa_world::bindings::ped_groups_get_peds_group;
+use sa_world::bindings::ped_say;
+use sa_world::bindings::player_ped_annoy_player_ped;
+use sa_world::bindings::shake_fist_ctor;
+use sa_world::bindings::smart_flee_entity_ctor;
+use sa_world::bindings::turn_to_face_entity_ctor;
+use sa_world::bindings::use_sequence_ctor;
+use sa_world::bindings::weapon_is_type_melee;
 orig! {
-    /// `CPed::IsPlayer` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CVehicle::IsDriver(CPed*)` (0x6D1C40, `ret 4`)
-    fn vehicle_is_driver(v: GPtr<u8>, p: GPtr<u8>) -> u8 = thiscall 0x6D1C40 => unported;
-    /// `CPedIntelligence::GetTaskDuck(bool)` (0x6010A0, `ret 4`)
-    fn intel_get_task_duck(i: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x6010A0 => unported;
-    /// `CEventHandler::IsKillTaskAppropriate(CPed*, CPed*, const CEvent&)` (0x4BC3E0, static)
-    fn handler_is_kill_task_appropriate(ped: GPtr<u8>, other: GPtr<u8>, e: GPtr<u8>) -> u8 = cdecl 0x4BC3E0 => crate::event_responses_simple::handler_is_kill_task_appropriate;
-    /// `CInterestingEvents::Add(int32 type, CEntity*)` (0x602590, `ret 8`)
-    fn interesting_events_add(ie: GPtr<u8>, ty: u32, e: GPtr<u8>) = thiscall 0x602590 => unported;
-    /// `CGeneral::GetRandomNumberInRange<int32>(min, max)` (0x407180; draws its own rand)
-    fn general_random_int_in_range(min: i32, max: i32) -> i32 = cdecl 0x407180 => unported;
-    /// `CTheScripts::IsPlayerOnAMission()` (0x464D50)
-    fn scripts_is_player_on_a_mission() -> u8 = cdecl 0x464D50 => unported;
-    fn smart_flee_entity_ctor(t: GPtr<u8>, e: GPtr<u8>, b: u32, d: u32, time: u32, period: u32, f: u32) -> GPtr<u8> = thiscall 0x65C430 => unported;
-    fn duck_ctor(t: GPtr<u8>, ty: u32, time: u32, counter: i32) -> GPtr<u8> = thiscall 0x691FC0 => unported;
-    fn car_drive_mission_flee_scene_ctor(t: GPtr<u8>, veh: GPtr<u8>) -> GPtr<u8> = thiscall 0x4B8920 => unported;
-    fn kill_ped_on_foot_ctor(t: GPtr<u8>, ped: GPtr<u8>, time: i32, a: u32, b: u32, c: u32, d: u32) -> GPtr<u8> = thiscall 0x620E30 => unported;
-    fn kill_ped_on_foot_stealth_ctor(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x620F70 => unported;
-    fn kill_criminal_ctor(t: GPtr<u8>, ped: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x68BE70 => unported;
-    fn turn_to_face_entity_ctor(t: GPtr<u8>, e: GPtr<u8>, a: u32, b: u32) -> GPtr<u8> = thiscall 0x66B890 => unported;
     fn leave_car_ctor(t: GPtr<u8>, veh: GPtr<u8>, a: i32, b: i32, c: u32, d: u32) -> GPtr<u8> = thiscall 0x63B8C0 => unported;
     fn leave_car_and_flee_ctor(t: GPtr<u8>, veh: GPtr<u8>, pos: GPtr<u8>, a: i32, b: i32, c: u32) -> GPtr<u8> = thiscall 0x63BF90 => unported;
     fn leave_car_and_wander_ctor(t: GPtr<u8>, veh: GPtr<u8>, a: i32, b: i32, c: u32) -> GPtr<u8> = thiscall 0x63BDD0 => unported;
     fn scream_in_car_then_leave_ctor(t: GPtr<u8>, veh: GPtr<u8>, a: i32) -> GPtr<u8> = thiscall 0x63C240 => unported;
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CTask::IsGoToTask(CTask*)` (0x61A360, static)
-    fn task_is_go_to_task(t: GPtr<u8>) -> u8 = cdecl 0x61A360 => unported;
-    /// `CMentalState::IncrementAnger(int32)` (0x421050, `ret 4`; called with the ped's intelligence)
-    fn mental_state_increment_anger(m: GPtr<u8>, n: i32) = thiscall 0x421050 => unported;
     /// `CTaskComplexHitPedWithCar::ComputeEvasiveStepMoveDir(CVector* out, const CPed&, const CVehicle&)` (0x653B40)
     fn hit_ped_with_car_compute_evasive_step_move_dir(out: GPtr<u8>, ped: GPtr<u8>, veh: GPtr<u8>) -> GPtr<u8> = cdecl 0x653B40 => unported;
     /// `operator*(CVector* out, float, const CVector&)` (0x40FE90, cdecl)
     fn vector_scale(out: GPtr<u8>, f: u32, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE90 => unported;
-    /// `DotProduct(const CVector&, const CVector&)` (0x40FDB0, ST0)
-    fn vector_dot(a: GPtr<u8>, b: GPtr<u8>) -> f64 = cdecl 0x40FDB0 => unported;
     /// `CPedGeometryAnalyser::CanPedJumpObstacle(const CPed&, const CEntity&)` (0x5F1B00)
     fn geometry_can_ped_jump_obstacle_los(ped: GPtr<u8>, e: GPtr<u8>) -> u8 = cdecl 0x5F1B00 => unported;
-    /// `CPedGroups::GetPedsGroup(CPed*)` (0x5F7E80)
-    fn ped_groups_get_peds_group(ped: GPtr<u8>) -> GPtr<u8> = cdecl 0x5F7E80 => unported;
     /// `CPedIntelligence::IsPedGoingForCarDoor` (0x602350)
     fn intel_is_ped_going_for_car_door(i: GPtr<u8>) -> u8 = thiscall 0x602350 => unported;
-    /// `CPlayerPed::AnnoyPlayerPed(bool)` (0x60A040, `ret 4`)
-    fn player_ped_annoy_player_ped(p: GPtr<u8>, b: u32) = thiscall 0x60A040 => unported;
     /// `CPed::GetWeaponSlot(eWeaponType)` (0x5DF200, `ret 4`)
     fn ped_get_weapon_slot(p: GPtr<u8>, ty: u32) -> i32 = thiscall 0x5DF200 => unported;
-    /// `IKChainManager_c::LookAt(...)` (0x618970, `ret 0x2C`)
-    fn ik_look_at(m: GPtr<u8>, name: u32, ped: GPtr<u8>, target: GPtr<u8>, time: i32, bone: i32, pos: u32, torso: u32,
-                  speed: u32, blend: i32, prio: i32, b: u32) = thiscall 0x618970 => unported;
-    fn evasive_step_ctor(t: GPtr<u8>, e: GPtr<u8>, dir: GPtr<u8>) -> GPtr<u8> = thiscall 0x6532D0 => unported;
     fn hit_ped_with_car_ctor(t: GPtr<u8>, veh: GPtr<u8>, impulse: u32) -> GPtr<u8> = thiscall 0x6539A0 => unported;
     fn complex_jump_ctor(t: GPtr<u8>, a: i32) -> GPtr<u8> = thiscall 0x67A030 => unported;
     fn walk_round_car_ctor(t: GPtr<u8>, ms: i32, target: GPtr<u8>, veh: GPtr<u8>, door: u32, n: i32) -> GPtr<u8> = thiscall 0x6541B0 => unported;
-    fn shake_fist_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x690B80 => unported;
     /// `CEvent::GetSourceEntity` (vtable +0x28)
     fn v_event_source(e: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x28 => unported;
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    fn use_sequence_ctor(t: GPtr<u8>, idx: i32) -> GPtr<u8> = thiscall 0x635450 => unported;
     fn car_drive_mission_kill_ped_ctor(t: GPtr<u8>, veh: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x4B8A00 => unported;
     fn road_rage_ctor(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x6220A0 => unported;
-    /// `CWeapon::IsTypeMelee` (0x73B1C0)
-    fn weapon_is_type_melee(w: GPtr<u8>) -> u8 = thiscall 0x73B1C0 => unported;
-    /// `CPedIntelligence::IsFriendlyWith(const CPed&)` (0x601BC0, `ret 4`)
-    fn intel_is_friendly_with(i: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x601BC0 => unported;
-    fn flee_entity_ctor(t: GPtr<u8>, e: GPtr<u8>, b: u32, d: u32, time: u32, period: u32, f: u32) -> GPtr<u8> = thiscall 0x65B930 => unported;
-    fn flee_any_means_ctor(t: GPtr<u8>, e: GPtr<u8>, b: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, a8: u32) -> GPtr<u8> = thiscall 0x65CC60 => unported;
-    fn cower_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x48DE70 => unported;
-    fn hands_up_ctor(t: GPtr<u8>, time: i32) -> GPtr<u8> = thiscall 0x48E970 => unported;
-    fn use_attractor_ctor(t: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x6346F0 => unported;
-    fn use_attractor_run_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x4B8790 => unported;
-    fn use_attractor_sprint_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x4B8850 => unported;
     fn react_to_gun_aimed_at_ctor(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x6971B0 => unported;
-    /// `CPed::Say(context, offset, volume, b, b, b)` (0x5EFFE0, `ret 0x18`)
-    fn ped_say(p: GPtr<u8>, ctx: u32, offset: u32, vol: u32, a: u32, b: u32, c: u32) -> u32 = thiscall 0x5EFFE0 => unported;
-    fn dive_from_attached_ctor(t: GPtr<u8>, time: u32) -> GPtr<u8> = thiscall 0x492E20 => unported;
-    fn destroy_car_ctor(t: GPtr<u8>, veh: GPtr<u8>, a: u32, b: u32, c: u32) -> GPtr<u8> = thiscall 0x621C00 => unported;
 }
 
 /// `g_InterestingEvents`

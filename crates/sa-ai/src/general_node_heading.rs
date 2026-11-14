@@ -2,16 +2,12 @@
 //! wander and flee paths). Ported from the 1.0 US bytes; unverified (docs/verify/HOWTO.md).
 
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
-orig! {
-    /// `CGeneral::GetRadianAngleBetweenPoints(float x1, float y1, float x2, float y2)` (0x53CBE0, ST0)
-    fn general_get_radian_angle_between_points(x1: u32, y1: u32, x2: u32, y2: u32) -> f64 = cdecl 0x53CBE0 => unported;
-    /// CRT `floor(double)` (0x8219F0, ST0)
-    fn crt_floor(v: f64) -> f64 = cdecl 0x8219F0 => unported;
-}
+use sa_core::bindings::general_get_radian_angle_between_points;
+use sa_world::bindings::crt_floor;
 
 use sa_core::field::gf as k;
 

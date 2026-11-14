@@ -7,17 +7,13 @@ use sa_core::{hook, orig};
 
 use crate::common::{g, rd, wr};
 
+use crate::bindings::anim_get_anim_block_name as anim_block_name;
+use sa_core::bindings::get_weapon_info as weapon_info;
+use sa_stream::bindings::anim_add_block_ref as add_anim_block_ref;
+use sa_stream::bindings::anim_remove_block_ref as remove_anim_block_ref;
 orig! {
-    /// `CWeaponInfo::GetWeaponInfo(eWeaponType, eWeaponSkill)` (0x743C60)
-    fn weapon_info(ty: u32, skill: u32) -> GPtr<u8> = cdecl 0x743C60 => unported;
-    /// `CAnimManager::GetAnimBlockName(AssocGroupId)` (0x4D3A30)
-    fn anim_block_name(grp: u32) -> u32 = cdecl 0x4D3A30 => unported;
     /// `CAnimManager::GetAnimationBlock(const char*)` (0x4D3940)
     fn animation_block(name: u32) -> GPtr<u8> = cdecl 0x4D3940 => unported;
-    /// `CAnimManager::AddAnimBlockRef(int32)` (0x4D3FB0)
-    fn add_anim_block_ref(i: i32) = cdecl 0x4D3FB0 => unported;
-    /// `CAnimManager::RemoveAnimBlockRef(int32)` (0x4D3FD0)
-    fn remove_anim_block_ref(i: i32) = cdecl 0x4D3FD0 => unported;
     /// `CStreaming::RequestModel(int32, int32 flags)` (0x4087E0)
     fn request_model(model: i32, flags: u32) = cdecl 0x4087E0 => unported;
 }

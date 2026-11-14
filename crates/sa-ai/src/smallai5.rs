@@ -13,19 +13,13 @@ use crate::common::*;
 /// `CInformGroupEventQueue::ms_entries` (8 x 0x10: +0 ped, +4, +8 event, +0xC time)
 const INFORM_GROUP_QUEUE: usize = 0xA9B018;
 
+use crate::bindings::decision_maker_types_remove;
+use crate::bindings::entity_scanner_scan;
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_core::bindings::ped_is_alive;
+use sa_world::bindings::decision_maker_types_get_instance;
+use sa_world::bindings::task_complex_ctor;
 orig! {
-    /// `CPed::IsAlive` (0x5E0170)
-    fn ped_is_alive(p: GPtr<u8>) -> u8 = thiscall 0x5E0170 => unported;
-    /// `CEntityScanner::ScanForEntitiesInRange(int32, const CPed&)` (0x5FFA20, `ret 8`)
-    fn entity_scanner_scan(s: GPtr<u8>, ty: u32, ped: GPtr<u8>) = thiscall 0x5FFA20 => unported;
-    /// `CDecisionMakerTypes::GetInstance` (0x4684F0, cdecl)
-    fn decision_maker_types_get_instance() -> GPtr<u8> = cdecl 0x4684F0 => unported;
-    /// `CDecisionMakerTypes::RemoveDecisionMaker(int32)` (0x6043A0, `ret 4`)
-    fn decision_maker_types_remove(t: GPtr<u8>, i: i32) = thiscall 0x6043A0 => unported;
-    /// `CTaskComplex::CTaskComplex` (0x61A3B0)
-    fn task_complex_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A3B0 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00, `ret 4`)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
     /// `CInformGroupEvent::Process` (0x4B29E0)
     fn inform_group_event_process(e: GPtr<u8>) = thiscall 0x4B29E0 => unported;
     /// `CTask::MakeAbortable(CPed*, int32, const CEvent*)` (vtable +0x18)

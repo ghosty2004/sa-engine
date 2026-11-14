@@ -4,12 +4,9 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
-orig! {
-    /// The `ListItem_c` base destructor 0x4A8DC0 (a lone `ret`)
-    fn list_item_base_dtor(this: GPtr<u8>) = thiscall 0x4A8DC0 => unported;
-}
+use sa_core::bindings::list_item_dtor as list_item_base_dtor;
 
 /// `ListItem_c::~ListItem_c()` (0x49EA70, thiscall): `jmp 0x4A8DC0` (ECX passes through unchanged).
 #[hook(addr = 0x49ea70, conv = thiscall, name = "ListItem_c::~ListItem_c", expect = "E9 4B A3 00 00 90",

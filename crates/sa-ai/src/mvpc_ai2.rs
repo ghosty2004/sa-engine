@@ -10,11 +10,12 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::intel_can_see_entity_with_lights;
+use sa_core::bindings::ped_is_alive;
+use sa_core::bindings::vector_normalise;
+use sa_stream::bindings::get_2d_effect as model_get_2d_effect;
+use sa_world::bindings::event_acquaintance_ped_dtor;
 orig! {
-    /// `CPed::IsAlive` (0x5E0170, AL)
-    fn ped_is_alive(p: GPtr<u8>) -> u8 = thiscall 0x5E0170 => unported;
-    /// `CVector::Normalise` (0x59C910)
-    fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
     /// `CAcquaintance::GetAcquaintances(int32 type)` (0x608970, `ret 4`)
     fn acquaintance_get(a: u32, ty: u32) -> u32 = thiscall 0x608970 => crate::gen_leaves::g_cacquaintance_get_acquaintances_608970;
     /// `CPedType::GetPedFlag(ePedType)` (0x608830, cdecl)
@@ -34,22 +35,16 @@ orig! {
     fn acq_probe_o(s: GPtr<u8>, ped: GPtr<u8>, ty: i32, best: i32, other: GPtr<u8>, out_ped: GPtr<u8>, out_ty: GPtr<u8>) -> i32 = thiscall 0x607560 => crate::mvpc_ai2::acq_scanner_probe;
     /// `FUN_00606ba0` (0x606BA0, `ret 0xC`, AL)
     fn acq_raise_o(s: GPtr<u8>, ped: GPtr<u8>, ty: i32, other: GPtr<u8>) -> u8 = thiscall 0x606BA0 => crate::mvpc_ai2::acq_scanner_raise_event;
-    /// `CPedIntelligence::CanSeeEntityWithLights(const CEntity*, bool)` (0x605550, `ret 8`, ST0)
-    fn intel_can_see_entity_with_lights(i: GPtr<u8>, e: GPtr<u8>, b: u32) -> f64 = thiscall 0x605550 => unported;
     /// `CEventAcquaintancePed::CEventAcquaintancePed(CPed*)` (0x4AF820, `ret 4`)
     fn event_acquaintance_ped_ctor(e: u32, ped: u32) -> u32 = thiscall 0x4AF820 => crate::gen_ctors::g_event_acquaintance_ped_constructor_4af820;
     /// `CEventAcquaintancePedHate::CEventAcquaintancePedHate(CPed*)` (0x420E70, `ret 4`)
     fn event_acquaintance_ped_hate_ctor(e: u32, ped: u32) -> u32 = thiscall 0x420E70 => crate::gen_ctors::g_event_acquaintance_ped_hate_constructor2_420e70;
-    /// `CEventAcquaintancePed::~CEventAcquaintancePed` (0x4AF890)
-    fn event_acquaintance_ped_dtor(e: GPtr<u8>) = thiscall 0x4AF890 => unported;
     /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, `ret 8`)
     fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, valid: u8) -> GPtr<u8> = thiscall 0x4AB420 => crate::group::event_group_add;
     /// `CPedGroups::GetPedsGroup(const CPed*)` (0x5F7E80, cdecl)
     fn get_peds_group(ped: u32) -> u32 = cdecl 0x5F7E80 => crate::misc::ped_groups_get_peds_group_5f7e80;
     /// `CPedGroupIntelligence::AddEvent(CEvent*)` (0x5F7470, `ret 4`, AL)
     fn pgi_add_event(pgi: GPtr<u8>, e: GPtr<u8>) -> u8 = thiscall 0x5F7470 => unported;
-    /// `CBaseModelInfo::Get2dEffect(int32)` (0x4C4C70, `ret 4`)
-    fn model_get_2d_effect(mi: GPtr<u8>, i: i32) -> GPtr<u8> = thiscall 0x4C4C70 => unported;
     /// `FUN_005fffd0` (0x5FFFD0, `ret 0xC`): offers one ped-attractor effect of an entity to the attractor scanner
     fn attractor_scanner_offer(s: GPtr<u8>, fx: GPtr<u8>, e: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x5FFFD0 => unported;
 }

@@ -33,6 +33,8 @@ const ACTION_NAMES: usize = 0xB703BC;
 /// byte compared with `Display`'s argument before the brief is shown
 const DISPLAY_BRIEF_FLAG: usize = 0xA44488;
 
+pub use sa_core::bindings::ascii_to_gxt_char;
+pub use sa_world::bindings::hud_set_message;
 orig! {
     /// `CMessages::StringCopy(GxtChar*, const GxtChar*, uint16)` (0x69DB70)
     pub fn string_copy_call(dst: GPtr<u8>, src: GPtr<u8>, len: u32) = cdecl 0x69DB70 => string_copy;
@@ -50,14 +52,10 @@ orig! {
     pub fn insert_player_control_keys_in_string_call(s: GPtr<u8>) = cdecl 0x69E160 => insert_player_control_keys_in_string;
     /// `CHud::GetRidOfAllHudMessages(bool)` (0x588A50)
     pub fn hud_get_rid_of_all_hud_messages(flag: u32) = cdecl 0x588A50 => unported;
-    /// `CHud::SetMessage(const char*)` (0x588F60)
-    pub fn hud_set_message(text: GPtr<u8>) = cdecl 0x588F60 => unported;
     /// `CHud::SetBigMessage(const char*, eMessageStyle)` (0x588FC0)
     pub fn hud_set_big_message(text: GPtr<u8>, style: u32) = cdecl 0x588FC0 => unported;
     /// `CControllerConfigManager::GetGxtStringOfCommandKeys(action, buf, size)` (0x5303D0)
     pub fn get_gxt_string_of_command_keys(this: GPtr<u8>, action: u32, buf: GPtr<u8>, size: u32) = thiscall 0x5303D0 => unported;
-    /// `AsciiToGxtChar(const char*, GxtChar*)` (0x718600)
-    pub fn ascii_to_gxt_char(src: GPtr<u8>, dst: GPtr<u8>) = cdecl 0x718600 => unported;
 }
 
 /// `BriefMessages[i]`

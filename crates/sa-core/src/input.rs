@@ -70,9 +70,9 @@ pub const CONTROLS_MANAGER: u32 = 0xB70198;
 /// `TheCamera.m_aCams[0].m_nMode` (stride 0x238).
 pub const CAMERA_CAM0_MODE: u32 = 0xB6F1A8;
 
+pub use crate::bindings::get_pad;
+pub use crate::bindings::is_video_mode_exclusive;
 orig! {
-    /// `CPad::GetPad(n)` (0x53FB70)
-    pub fn get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
     /// `RsKeyboardEventHandler(event, param)` (0x619560)
     pub fn rs_keyboard_event_handler(event: i32, param: GPtr<i32>) -> i32 = cdecl 0x619560 => unported;
     /// `RsInputDeviceAttach(device, handler)` (0x6194C0)
@@ -93,8 +93,6 @@ orig! {
     pub fn ccm_update_joy_in_config_menus_button_up(this: GPtr<u8>, button: i32, pad: i32) = thiscall 0x52DC20 => unported;
     /// `CControllerConfigManager::InitDefaultControlConfigJoyPad(buttons)` (0x530B00)
     pub fn ccm_init_default_control_config_joy_pad(this: GPtr<u8>, buttons: u32) = thiscall 0x530B00 => unported;
-    /// `VideoMode::IsVideoModeExclusive()` (0x745CA0, AL)
-    pub fn is_video_mode_exclusive() -> u8 = cdecl 0x745CA0 => unported;
     /// `Input::diMouseInit(exclusive)` (0x7469A0)
     pub fn call_di_mouse_init(exclusive: u32) -> i32 = cdecl 0x7469A0 => di_mouse_init;
     /// `FUN_007477C0`: `EnumDevices(GAMECTRL, EnumDevicesCallback)` + `diPadSetRanges` for both pads
@@ -731,6 +729,9 @@ pub fn defined_state_2d() {
     }
 }
 
+use crate::bindings::pad_clear as wp_pad_clear;
+use crate::bindings::rw_d3d9_get_current_d3d_device as wp_rw_d3d9_get_current_d3d_device;
+use crate::bindings::setup_back_buffer_vertex as wp_setup_back_buffer_vertex;
 orig! {
     // __MainWndProc's imports, through its own call sites
     fn wp_release_capture() -> i32 = stdcall site 0x747F52 => unported;
@@ -750,12 +751,9 @@ orig! {
     fn wp_rs_event_handler(event: i32, param: u32) -> i32 = cdecl 0x619B60 => unported;
     fn wp_pause_all_sounds(this: GPtr<u8>) = thiscall 0x507430 => unported;
     fn wp_resume_all_sounds(this: GPtr<u8>) = thiscall 0x507440 => unported;
-    /// `CPad::Clear(bool, bool)` (bytes pushed as dwords)
-    fn wp_pad_clear(this: GPtr<u8>, a: u32, b: u32) = thiscall 0x541A70 => unported;
     /// `WinInput` shutdown (0x747000)
     fn wp_win_input_shutdown() -> i32 = cdecl 0x747000 => unported;
     fn wp_init_after_lost_focus() = cdecl 0x53BC60 => unported;
-    fn wp_rw_d3d9_get_current_d3d_device() -> u32 = cdecl 0x7F9D50 => unported;
     /// `IDirect3DDevice9::SetGammaRamp(swapchain, flags, ramp)` (+0x54)
     fn wp_dev_set_gamma_ramp(dev: GPtr<u8>, swap: u32, flags: u32, ramp: u32) = stdcall vslot 0x54 => unported;
     /// `IMediaControl::GetState(timeout, &state)` (+0x28)
@@ -767,7 +765,6 @@ orig! {
     fn wp_video_wait_state(state: i32) = cdecl 0x745F90 => unported;
     fn wp_video_update_window() = cdecl 0x7466D0 => unported;
     fn wp_video_on_graph_notify() = cdecl 0x745FB0 => unported;
-    fn wp_setup_back_buffer_vertex() = cdecl 0x7043D0 => unported;
     fn wp_is_streaming_from_dvd(this: GPtr<u8>) -> u8 = thiscall 0x4D95C0 => unported;
     fn wp_get_dvd_drive_letter(this: GPtr<u8>) -> u8 = thiscall 0x4D95D0 => unported;
     fn wp_check_dvd(this: GPtr<u8>) -> u8 = thiscall 0x4D95E0 => unported;
@@ -1015,7 +1012,6 @@ fn device_change(wparam: u32, lparam: u32) {
     }
     wp_output_debug_string_a(crate::platform::rdata(0x874B58));
 }
-
 
 /// This module's registrations (collected by [`crate::hooks`]).
 pub const HOOKS: &[crate::abi::HookReg] = &[

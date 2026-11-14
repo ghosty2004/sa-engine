@@ -24,9 +24,10 @@ const ENTRY_EXIT_POOL: usize = 0x96A7D8;
 /// `RADTODEG(1)` (0x859878, f32 57.29578)
 const K_RAD_TO_DEG: usize = 0x859878;
 
+use crate::bindings::rw_frame_set_identity;
+use sa_core::bindings::rw_frame_update_objects;
+use sa_stream::bindings::get_2d_effect;
 orig! {
-    /// `CBaseModelInfo::Get2dEffect(int32)` (0x4C4C70, `ret 4`)
-    fn get_2d_effect(mi: GPtr<u8>, i: i32) -> GPtr<u8> = thiscall 0x4c4c70 => unported;
     /// `CScriptsForBrains::RequestAttractorScriptBrainWithThisName(const char*)` (0x46AA80, `ret 4`)
     fn request_attractor_brain(b: u32, name: GPtr<u8>) = thiscall 0x46aa80 => unported;
     /// `Fx_c::CreateEntityFx(CEntity*, char* name, RwV3d* pos, RwMatrix*)` (0x4A11E0, `ret 0x10`)
@@ -42,14 +43,10 @@ orig! {
     #[allow(clippy::too_many_arguments)]
     fn create_roadsign_atomic(sx: u32, sy: u32, lines: u32, l1: GPtr<u8>, l2: GPtr<u8>, l3: GPtr<u8>, l4: GPtr<u8>,
         letters: u32, pal: u32) -> GPtr<u8> = cdecl 0x6ff2d0 => unported;
-    /// `RwFrameSetIdentity(RwFrame*)` (0x7F10B0)
-    fn rw_frame_set_identity(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7f10b0 => unported;
     /// `RwFrameRotate(RwFrame*, const RwV3d* axis, RwReal angle, RwOpCombineType)` (0x7F1010)
     fn rw_frame_rotate(f: GPtr<u8>, axis: GPtr<u8>, angle: u32, op: i32) -> GPtr<u8> = cdecl 0x7f1010 => unported;
     /// `RwFrameTranslate(RwFrame*, const RwV3d*, RwOpCombineType)` (0x7F0E30)
     fn rw_frame_translate(f: GPtr<u8>, v: GPtr<u8>, op: i32) -> GPtr<u8> = cdecl 0x7f0e30 => unported;
-    /// `RwFrameUpdateObjects(RwFrame*)` (0x7F0910)
-    fn rw_frame_update_objects(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7f0910 => unported;
     /// `CEntity::TransformFromObjectSpace(CVector& out, const CVector& offset)` (0x5334F0, `ret 8`)
     fn transform_ref(e: GPtr<u8>, out: GPtr<u8>, off: GPtr<u8>) -> GPtr<u8> = thiscall 0x5334f0 => super::entity::transform_from_object_space_ref;
     /// `CEntity::TransformFromObjectSpace(const CVector&)` (0x533560, hidden result pointer, `ret 8`)
@@ -255,6 +252,8 @@ fn create_roadsign(this: GPtr<u8>, eff: GPtr<u8>) {
     wr::<GPtr<u8>>(eff, 0x2C, atomic);
 }
 
+use crate::bindings::physical_process_control;
+use crate::bindings::vector_magnitude_sqr as vector_sq_mag;
 orig! {
     /// `CBaseModelInfo::GetModelType()` (vtable +0x24)
     fn v_model_type(mi: GPtr<u8>) -> u32 = thiscall vslot 0x24 => unported;
@@ -275,14 +274,10 @@ orig! {
     fn vector_add(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40fe30 => super::mvpa_math::vector_add;
     /// `operator/(const CVector&, float)` (0x4119D0, cdecl, out first)
     fn vector_div(out: GPtr<u8>, v: GPtr<u8>, s: f32) -> GPtr<u8> = cdecl 0x4119d0 => super::mvpa_math::vector_div_scalar;
-    /// `CVector::SquaredMagnitude()` (0x406DA0, thiscall, ST0)
-    fn vector_sq_mag(v: GPtr<u8>) -> f64 = thiscall 0x406da0 => unported;
     /// `CPhysical::GetSpeed(CVector point)` (0x542CE0, hidden result pointer, `ret 0x10`)
     fn physical_get_speed(e: GPtr<u8>, out: GPtr<CVector>, point: CVector) -> GPtr<CVector> = thiscall 0x542ce0 => crate::physical::forces::get_speed;
     /// `CPhysical::AttachEntityToEntity(CPhysical*, CVector* offset, RtQuat* rotation)` (0x54D690, `ret 0xC`)
     fn attach_quat(e: GPtr<u8>, to: GPtr<u8>, off: GPtr<u8>, rot: GPtr<u8>) -> GPtr<u8> = thiscall 0x54d690 => crate::physical::attach::attach_entity_to_entity_quat;
-    /// `CPhysical::ProcessControl()` (0x5485E0)
-    fn physical_process_control(e: GPtr<u8>) = thiscall 0x5485e0 => crate::physical::attach::process_control;
     /// `cBuoyancy::ProcessBuoyancy(CPhysical*, float, CVector* turnPoint, CVector* force)` (0x6C3EF0, `ret 0x10`, AL)
     fn process_buoyancy(b: GPtr<u8>, e: GPtr<u8>, buoy: f32, turn: GPtr<CVector>, force: GPtr<CVector>) -> u8 = thiscall 0x6c3ef0 => crate::physical::buoyancy::process_buoyancy;
     /// `CPhysical::ApplyMoveForce(CVector)` (0x5429F0, `ret 0xC`)

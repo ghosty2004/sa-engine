@@ -24,6 +24,8 @@ const HW: u32 = 0xB5F8B8;
 const USER_RADIO: u32 = 0xB6B970;
 const SMOOTH_FADE: u32 = 0xB608D0;
 
+use crate::bindings::track_ctor;
+use sa_world::bindings::crt_printf;
 orig! {
     // Win32 / CRT
     fn co_initialize(r: u32) -> i32 = stdcall cell 0x858350 => unported;
@@ -50,8 +52,6 @@ orig! {
     fn crt_free(p: u32) = cdecl 0x8214BD => unported;
     /// CRT `free` (0x8213AE, `operator delete[]`)
     fn crt_free_array(p: u32) = cdecl 0x8213AE => unported;
-    /// CRT `printf` (0x821982; the release build's debug print)
-    fn crt_printf(fmt: u32) -> i32 = cdecl 0x821982 => unported;
 
     // game functions
     fn loading_screen_pause() = cdecl 0x590310 => loading_screen_pause_native;
@@ -69,7 +69,6 @@ orig! {
     fn bank_load_slot_file(this: u32) -> bool = thiscall 0x4E0590 => bank_loader_load_bank_slot_file;
     fn bank_load_lookup_file(this: u32) -> bool = thiscall 0x4DFBD0 => bank_loader_load_bank_lookup_file;
     fn bank_load_sfx_pak_lookup_file(this: u32) -> bool = thiscall 0x4DFC70 => bank_loader_load_sfx_pak_lookup_file;
-    fn track_ctor(this: u32) -> u32 = thiscall 0x4E0930 => unported;
     fn track_initialise(this: u32) -> bool = thiscall 0x4E0C50 => mp3_track_loader_initialise;
     fn track_load_stream_pack_table(this: u32) -> bool = thiscall 0x4E0970 => mp3_track_loader_load_stream_pack_table;
     fn track_load_lookup_table(this: u32) -> bool = thiscall 0x4E09F0 => mp3_track_loader_load_track_lookup_table;

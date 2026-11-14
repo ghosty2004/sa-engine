@@ -1049,23 +1049,15 @@ pub fn find_format_v2d(uv: GPtr<u8>, n: i32) -> u32 {
     }
 }
 
+pub use crate::bindings::add_dynamic_geometry as add_dynamic_geometry_call;
+pub use crate::bindings::create_vertex_buffer as create_vertex_buffer_call;
+pub use crate::bindings::create_vertex_declaration as create_vertex_declaration_call;
+pub use crate::bindings::crt_qsort;
+pub use crate::bindings::destroy_vertex_buffer as destroy_vertex_buffer_call;
+pub use crate::bindings::dynamic_vertex_buffer_create as dynamic_vertex_buffer_create_call;
+pub use crate::bindings::dynamic_vertex_buffer_destroy as dynamic_vertex_buffer_destroy_call;
+pub use crate::bindings::geometry_get_usage_flags as geometry_get_usage_flags_call;
 orig! {
-    /// `RpD3D9GeometryGetUsageFlags(geometry)` (0x7588D0)
-    pub fn geometry_get_usage_flags_call(g: GPtr<u8>) -> u32 = cdecl 0x7588D0 => crate::d3d9misc::geometry_get_usage_flags;
-    /// `RwD3D9DestroyVertexBuffer(stride, size, vb, offset)` (0x7F56A0)
-    pub fn destroy_vertex_buffer_call(stride: u32, size: u32, vb: u32, offset: u32) = cdecl 0x7F56A0 => crate::d3d9vb::destroy_vertex_buffer;
-    /// `RwD3D9DynamicVertexBufferDestroy(vb)` (0x7F5AE0)
-    pub fn dynamic_vertex_buffer_destroy_call(vb: u32) = cdecl 0x7F5AE0 => crate::d3d9vb::dynamic_vertex_buffer_destroy;
-    /// `RwD3D9CreateVertexBuffer(stride, size, &vb, &offset)` (0x7F5500)
-    pub fn create_vertex_buffer_call(stride: u32, size: u32, vb: GPtr<u32>, offset: GPtr<u32>) -> u32 = cdecl 0x7F5500 => crate::d3d9vb::create_vertex_buffer;
-    /// `RwD3D9DynamicVertexBufferCreate(size, &vb)` (0x7F5A00)
-    pub fn dynamic_vertex_buffer_create_call(size: u32, vb: GPtr<u32>) -> u32 = cdecl 0x7F5A00 => crate::d3d9vb::dynamic_vertex_buffer_create;
-    /// `_rpD3D9AddDynamicGeometry(geometry)` (0x74E970)
-    pub fn add_dynamic_geometry_call(g: u32) = cdecl 0x74E970 => crate::d3d9misc::add_dynamic_geometry;
-    /// CRT `qsort(base, n, size, cmp)` (0x8247E0)
-    pub fn crt_qsort(base: GPtr<u8>, n: u32, size: u32, cmp: u32) = cdecl 0x8247E0 => unported;
-    /// `RwD3D9CreateVertexDeclaration(elements, &decl)` (0x7FAA30)
-    pub fn create_vertex_declaration_call(e: GPtr<u8>, out: GPtr<u32>) -> u32 = cdecl 0x7FAA30 => crate::d3d9dev::create_vertex_declaration;
     /// `IDirect3DVertexDeclaration9::GetDeclaration(this, elements, &n)` (vtbl +0x10)
     pub fn decl_get_declaration(d: GPtr<u8>, e: GPtr<u8>, n: GPtr<u32>) -> i32 = stdcall vslot 0x10 => unported;
     /// `IDirect3DVertexBuffer9::Lock(this, offset, size, &data, flags)` (vtbl +0x2C)

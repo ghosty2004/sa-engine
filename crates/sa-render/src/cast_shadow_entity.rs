@@ -10,33 +10,26 @@ use sa_world::collision::data::CdPtr;
 
 use crate::common::{g, k, rd, wr, x, xi};
 
+use sa_core::bindings::matrix_copy_to_rw_matrix as copy_to_rw_matrix;
+use sa_core::bindings::rw_matrix_invert;
+use sa_core::bindings::rw_v3d_transform_points;
+use sa_world::bindings::calculate_triangle_planes;
+use sa_world::bindings::rw_matrix_scale;
+use sa_world::bindings::rw_matrix_translate;
+use sa_world::bindings::test_sphere_triangle;
 orig! {
     /// `CRealTimeShadow::GetShadowCamera()` (0x7059E0)
     fn get_shadow_camera(rt: GPtr<u8>) -> GPtr<u8> = thiscall 0x7059E0 => unported;
-    /// `CCollision::CalculateTrianglePlanes(CColModel*)` (0x418580)
-    fn calculate_triangle_planes(cm: GPtr<u8>) = cdecl 0x418580 => unported;
     /// `RwMatrixRotate(RwMatrix*, const RwV3d* axis, float angle, RwOpCombineType)` (0x7F1FD0)
     fn rw_matrix_rotate(m: GPtr<u8>, axis: GPtr<u8>, angle: f32, op: u32) -> GPtr<u8> = cdecl 0x7F1FD0 => unported;
     /// `CPlaceable::AllocateMatrix()` (0x54F560)
     fn allocate_matrix(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x54F560 => sa_world::world::entity::allocate_matrix;
     /// `CSimpleTransform::UpdateMatrix(CMatrix*) const` (0x54F1B0)
     fn simple_transform_update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => crate::mvpd_unk::simple_transform_update_matrix;
-    /// `CMatrix::CopyToRwMatrix(RwMatrix*) const` (0x59B8B0)
-    fn copy_to_rw_matrix(m: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x59B8B0 => unported;
-    /// `RwMatrixInvert(RwMatrix* dst, const RwMatrix* src)` (0x7F2070)
-    fn rw_matrix_invert(dst: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F2070 => unported;
-    /// `RwMatrixScale(RwMatrix*, const RwV3d*, RwOpCombineType)` (0x7F22C0)
-    fn rw_matrix_scale(m: GPtr<u8>, v: GPtr<u8>, op: u32) -> GPtr<u8> = cdecl 0x7F22C0 => unported;
-    /// `RwMatrixTranslate(RwMatrix*, const RwV3d*, RwOpCombineType)` (0x7F2450)
-    fn rw_matrix_translate(m: GPtr<u8>, v: GPtr<u8>, op: u32) -> GPtr<u8> = cdecl 0x7F2450 => unported;
-    /// `RwV3dTransformPoints(RwV3d* out, const RwV3d* in, int n, const RwMatrix*)` (0x7EDD90)
-    fn rw_v3d_transform_points(out: GPtr<u8>, inp: GPtr<u8>, n: i32, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EDD90 => unported;
     /// `CColSphere::Set(float radius, const CVector& centre, uint8 material, uint8 piece, uint8 lighting)` (0x40FD10)
     fn col_sphere_set(s: GPtr<u8>, radius: u32, centre: GPtr<u32>, material: u32, piece: u32, light: u32) = thiscall 0x40FD10 => sa_world::collision::misc::col_sphere_set;
     /// `CCollisionData::GetTrianglePoint(CVector&, int)` (0x40F5E0)
     fn get_triangle_point(cd: CdPtr, out: GPtr<sa_math::vector::CVector>, idx: i32) = thiscall 0x40F5E0 => sa_world::collision::data::get_triangle_point;
-    /// `CCollision::TestSphereTriangle(const CColSphere&, const CompressedVector*, const CColTriangle&, const CColTrianglePlane&)` (0x4165B0)
-    fn test_sphere_triangle(sphere: GPtr<u8>, verts: GPtr<u8>, tri: GPtr<u8>, plane: GPtr<u8>) -> u8 = cdecl 0x4165B0 => sa_world::collision::mvpe_coll1::test_sphere_triangle;
     /// `ShadowRenderTriangleCB` (0x709CF0): EAX = normal, EBX = triangle, EDI = projection param; returns EBX
     fn shadow_render_triangle_cb(normal: GPtr<u8>, tri: GPtr<u8>, param: GPtr<u8>) -> GPtr<u8> = reg("args = eax ebx edi") 0x709CF0 => crate::harness5::shadow_render_triangle_cb;
 }

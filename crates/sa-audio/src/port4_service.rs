@@ -30,6 +30,9 @@ fn game_paused() -> bool {
     r8(0xB7CB49) != 0 || r8(0xB7CB48) != 0
 }
 
+use sa_core::bindings::is_foreground_app;
+use sa_core::bindings::timer_get_is_slow_motion_active as timer_is_slow_motion_active;
+use sa_stream::bindings::cd_stream_get_status;
 orig! {
     // CAEAudioHardware / channels
     fn hw_get_track_play_time(this: u32) -> u32 = thiscall 0x4D8F60 => unported;
@@ -59,7 +62,6 @@ orig! {
     fn ch_set_reverb_and_depth(ch: u32, env: u32, depth: u32) -> u8 = thiscall 0x4D7AA0 => unported;
     fn ch_set_not_in_room(ch: u32, v: u32) = thiscall 0x4D7B50 => unported;
     fn li_commit_raw(l: GPtr<u8>) -> i32 = stdcall vslot 0x44 => unported;
-    fn is_foreground_app() -> u8 = cdecl 0x746060 => unported;
     fn bank_get_sound_buffer(this: u32, sfx: u32, bank: u32, size: u32, rate: u32) -> u32 = thiscall 0x4E0280 => unported;
     fn bank_get_loop_offset(this: u32, sfx: u32, bank: u32) -> u32 = thiscall 0x4E0380 => unported;
     fn bank_update_virtual_channels(this: u32, a: u32, b: u32, c: u32) = thiscall 0x4E0450 => unported;
@@ -103,10 +105,8 @@ orig! {
     fn script_service(this: u32) = thiscall 0x4EC900 => unported;
     fn ped_speech_service() = cdecl 0x4E3710 => unported;
     fn police_scanner_service() = cdecl 0x4E7630 => unported;
-    fn timer_is_slow_motion_active() -> u8 = cdecl 0x561AD0 => unported;
     fn ae_random_int(a: i32, b: i32) -> i32 = cdecl 0x4D9C10 => unported;
     fn ae_resolve_probability(p: u32) -> u8 = cdecl 0x4D9C80 => unported;
-    fn cd_stream_get_status(ch: i32) -> i32 = cdecl 0x4063E0 => unported;
     fn cd_stream_read(ch: i32, buf: u32, off: u32, n: u32) -> i32 = cdecl 0x406A20 => unported;
     fn memory_malloc(n: u32, hint: u32) -> u32 = cdecl 0x72F420 => unported;
     fn memory_free(p: u32) = cdecl 0x72F430 => unported;

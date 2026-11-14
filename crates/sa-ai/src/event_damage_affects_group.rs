@@ -7,17 +7,13 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::intel_can_see_entity_with_lights;
+use sa_core::bindings::tm_get_active_task as task_manager_get_active_task;
+use sa_core::bindings::vector_normalise;
+use sa_world::bindings::membership_get_member;
 orig! {
-    /// `CTaskManager::GetActiveTask()` (0x681720)
-    fn task_manager_get_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x681720 => unported;
     /// `CTask::GetTaskType()` (vtable +0x10)
     fn v_get_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CPedGroupMembership::GetMember(int32)` (0x5F69B0, `ret 4`)
-    fn membership_get_member(m: GPtr<u8>, i: i32) -> GPtr<u8> = thiscall 0x5F69B0 => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
-    /// `CPedIntelligence::CanSeeEntityWithLights(const CEntity*, bool)` (0x605550, `ret 8`; ST0 result)
-    fn intel_can_see_entity_with_lights(i: GPtr<u8>, e: GPtr<u8>, b: u32) -> f64 = thiscall 0x605550 => unported;
 }
 
 use sa_world::world::common::entity_pos;

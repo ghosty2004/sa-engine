@@ -16,9 +16,10 @@ use sa_core::{hook, orig};
 
 use crate::common::{g, rd, wr, x, GPtr, X87};
 
+use crate::bindings::hw_is_sound_bank_loaded;
+use crate::bindings::sound_set_flags;
+use sa_world::bindings::do_extra_air_resistance_for_player;
 orig! {
-    /// `CAEAudioHardware::IsSoundBankLoaded(uint16 bank, int16 slot)` (0x4D88C0)
-    fn hw_is_sound_bank_loaded(hw: GPtr<u8>, bank: u32, slot: u32) -> u8 = thiscall 0x4D88C0 => unported;
     /// `CAEVehicleAudioEntity::GetAccelAndBrake(cVehicleParams&)` (0x4F5080)
     fn get_accel_and_brake(this: GPtr<u8>, p: GPtr<u8>) = thiscall 0x4F5080 => unported;
     /// `CAEVehicleAudioEntity::IsAccInhibited(cVehicleParams&)` (0x4F4F70)
@@ -33,12 +34,8 @@ orig! {
     fn request_new_player_car_engine_sound(this: GPtr<u8>, ty: u32, speed: u32, vol: u32) -> u32 = thiscall 0x4F7A50 => unported;
     /// `CAEVehicleAudioEntity::AddAudioEvent(eAudioEvents, float)` (0x4F6420)
     fn add_audio_event(this: GPtr<u8>, ev: u32, vol: u32) = thiscall 0x4F6420 => unported;
-    /// `CAESound::SetFlags(uint16, uint16)` (0x4EF2B0)
-    fn sound_set_flags(s: GPtr<u8>, mask: u32, on: u32) = thiscall 0x4EF2B0 => unported;
     /// `CAESound::StopSound()` (0x4EF1C0)
     fn sound_stop(s: GPtr<u8>) = thiscall 0x4EF1C0 => unported;
-    /// `CCullZones::DoExtraAirResistanceForPlayer()` (0x72DDD0)
-    fn do_extra_air_resistance_for_player() -> u8 = cdecl 0x72DDD0 => unported;
 }
 
 const AE_AUDIO_HARDWARE: usize = 0xB5F8B8;

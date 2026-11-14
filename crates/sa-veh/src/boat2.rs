@@ -19,37 +19,22 @@ sa_core::globals! {
     pub static FRAME_WAKE_GENERATING_BOATS @ 0xC27994: [GPtr<u8>; 4] = [GPtr::NULL; 4];
 }
 
+pub use crate::bindings::audio_initialise;
+pub use crate::bindings::get_boat_pointer;
+pub use crate::bindings::get_flying_pointer;
+pub use crate::bindings::vehicle_ctor;
+pub use crate::bindings::vehicle_delete;
+pub use crate::bindings::vehicle_destructor;
+pub use crate::bindings::vehicle_set_model_index;
+pub use sa_core::bindings::get_pad;
+pub use sa_stream::bindings::choose_vehicle_colour;
+pub use sa_stream::bindings::fill_frame_array;
+pub use sa_world::bindings::audio_terminate;
+pub use sa_world::bindings::fx_kill;
+pub use sa_world::bindings::pad_get_accelerate;
+pub use sa_world::bindings::pad_get_brake;
+pub use sa_world::bindings::pad_get_steering_left_right;
 orig! {
-    /// `FxSystem_c::Kill()` (0x4AA3F0)
-    pub fn fx_kill(fx: GPtr<u8>) = thiscall 0x4AA3F0 => unported;
-    /// `CAEVehicleAudioEntity::Terminate()` (0x4FB8C0)
-    pub fn audio_terminate(a: GPtr<u8>) = thiscall 0x4FB8C0 => unported;
-    /// `CVehicle::~CVehicle` body (0x6E2B40)
-    pub fn vehicle_destructor(v: GPtr<u8>) = thiscall 0x6E2B40 => unported;
-    /// `CVehicle::operator delete(void*)` (0x6E2D90)
-    pub fn vehicle_delete(p: GPtr<u8>) = cdecl 0x6E2D90 => crate::vehicle2::operator_delete;
-    /// `CVehicle::CVehicle(eVehicleCreatedBy)` (0x6D5F10)
-    pub fn vehicle_ctor(v: GPtr<u8>, created_by: u32) -> GPtr<u8> = thiscall 0x6D5F10 => unported;
-    /// `CVehicle::SetModelIndex(uint32)` (0x6D6A40)
-    pub fn vehicle_set_model_index(v: GPtr<u8>, mi: u32) = thiscall 0x6D6A40 => unported;
-    /// `CClumpModelInfo::FillFrameArray(RpClump*, RwFrame**)` (0x4C5440)
-    pub fn fill_frame_array(clump: GPtr<u8>, frames: GPtr<u8>) = cdecl 0x4C5440 => unported;
-    /// `CVehicleModelInfo::ChooseVehicleColour(uint8&, uint8&, uint8&, uint8&, int32)` (0x4C8500)
-    pub fn choose_vehicle_colour(mi: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, c: GPtr<u8>, d: GPtr<u8>, inc: i32) = thiscall 0x4C8500 => unported;
-    /// `CAEVehicleAudioEntity::Initialise(CEntity*)` (0x4F7670)
-    pub fn audio_initialise(a: GPtr<u8>, e: GPtr<u8>) = thiscall 0x4F7670 => unported;
-    /// `cHandlingDataMgr::GetFlyingPointer(uint8)` (0x6F52D0)
-    pub fn get_flying_pointer(mgr: GPtr<u8>, id: u32) -> GPtr<u8> = thiscall 0x6F52D0 => crate::handling::get_flying_pointer;
-    /// `cHandlingDataMgr::GetBoatPointer(uint8)` (0x6F5300)
-    pub fn get_boat_pointer(mgr: GPtr<u8>, id: u32) -> GPtr<u8> = thiscall 0x6F5300 => crate::handling::get_boat_pointer;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    pub fn get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CPad::GetBrake()` (0x540080)
-    pub fn pad_get_brake(pad: GPtr<u8>) -> i16 = thiscall 0x540080 => unported;
-    /// `CPad::GetAccelerate()` (0x5403F0)
-    pub fn pad_get_accelerate(pad: GPtr<u8>) -> i16 = thiscall 0x5403F0 => unported;
-    /// `CPad::GetSteeringLeftRight()` (0x53FB80)
-    pub fn pad_get_steering_left_right(pad: GPtr<u8>) -> i16 = thiscall 0x53FB80 => unported;
     /// `CBoat::~CBoat` (0x6F00F0)
     pub fn boat_destructor_o(b: GPtr<u8>) = thiscall 0x6F00F0 => crate::boat2::destructor;
 }

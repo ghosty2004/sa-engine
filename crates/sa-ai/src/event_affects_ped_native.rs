@@ -7,13 +7,10 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use sa_core::bindings::ped_is_alive;
+use sa_core::bindings::tm_get_active_task as task_manager_get_active_task;
+use sa_stream::bindings::ped_is_player;
 orig! {
-    /// `CPed::IsPlayer()` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CPed::IsAlive()` (0x5E0170)
-    fn ped_is_alive(p: GPtr<u8>) -> u8 = thiscall 0x5E0170 => unported;
-    /// `CTaskManager::GetActiveTask()` (0x681720)
-    fn task_manager_get_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x681720 => unported;
     /// `CTask::GetTaskType()` (vtable slot 0x10)
     fn task_get_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
 }

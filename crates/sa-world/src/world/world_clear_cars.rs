@@ -7,25 +7,16 @@ use sa_core::{hook, orig};
 
 use super::common::{rd, wr, x};
 
+use crate::bindings::car_ctrl_is_this_vehicle_interesting as is_this_vehicle_interesting;
+use crate::bindings::garages_store_car_in_nearest_impounding_garage as store_car_in_nearest_impounding_garage;
+use crate::bindings::population_remove_ped as remove_ped;
+use crate::bindings::remove_from_interesting_vehicle_list;
+use crate::bindings::vehicle_can_be_deleted as can_be_deleted;
+use crate::bindings::vehicle_remove_passenger as remove_passenger;
+use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::world_remove;
 orig! {
-    /// `FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CVehicle::CanBeDeleted()` (0x6D1180)
-    fn can_be_deleted(v: GPtr<u8>) -> u8 = thiscall 0x6D1180 => unported;
-    /// `CPopulation::RemovePed(CPed*)` (0x610F20)
-    fn remove_ped(p: GPtr<u8>) = cdecl 0x610F20 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
-    fn clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CVehicle::RemovePassenger(CPed*)` (0x6D1610)
-    fn remove_passenger(v: GPtr<u8>, p: GPtr<u8>) = thiscall 0x6D1610 => unported;
-    /// `CCarCtrl::IsThisVehicleInteresting(CVehicle*)` (0x423EA0)
-    fn is_this_vehicle_interesting(v: GPtr<u8>) -> u8 = cdecl 0x423EA0 => unported;
-    /// `CGarages::StoreCarInNearestImpoundingGarage(CVehicle*)` (0x44A3C0)
-    fn store_car_in_nearest_impounding_garage(v: GPtr<u8>) = cdecl 0x44A3C0 => unported;
-    /// `CCarCtrl::RemoveFromInterestingVehicleList(CVehicle*)` (0x423ED0)
-    fn remove_from_interesting_vehicle_list(v: GPtr<u8>) = cdecl 0x423ED0 => unported;
-    /// `CWorld::Remove(CEntity*)` (0x563280)
-    fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
     /// the deleting destructor (vtable +0)
     fn v_delete(e: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
 }

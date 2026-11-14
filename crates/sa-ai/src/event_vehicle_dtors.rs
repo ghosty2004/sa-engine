@@ -3,16 +3,12 @@
 //! FRAMELIMIT's, in `mvpb_ai`). Ported from the 1.0 US bytes. The SEH frames are not reproduced.
 
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
-orig! {
-    /// `CEntity::CleanUpOldReference(CEntity** ref)` (0x571A00, `ret 4`)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CEventPedCollisionWithPed::~CEventPedCollisionWithPed()` (0x4ACA70)
-    fn ped_collision_with_ped_dtor(e: GPtr<u8>) = thiscall 0x4ACA70 => unported;
-}
+use crate::bindings::dtor_4aca70 as ped_collision_with_ped_dtor;
+use sa_core::bindings::entity_clean_up_old_reference;
 
 /// The shared body: vtable `vt`, `CleanUpOldReference(&+0x14)` when the vehicle (+0x14) is set, `CEvent`'s vtable.
 fn vehicle_event_dtor(this: GPtr<u8>, vt: u32) {

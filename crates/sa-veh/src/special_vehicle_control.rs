@@ -8,15 +8,13 @@ use sa_math::x87::X87;
 
 use crate::common::{g, rd, wr, x};
 
+use crate::bindings::automobile_process_control;
+use sa_world::bindings::ped_say;
 orig! {
-    /// `CAutomobile::ProcessControl()` (0x6B1880)
-    fn automobile_process_control(a: GPtr<u8>) = thiscall 0x6B1880 => unported;
     /// `CMonsterTruck::ExtendSuspension()` (0x6C7D80)
     fn monster_truck_extend_suspension(a: GPtr<u8>) = thiscall 0x6C7D80 => crate::vehicle_suspension_nodes::monster_truck_extend_suspension_port;
     /// `min(float, float)` (0x404330), ST0
     fn min_f(a: f32, b: f32) -> f64 = cdecl 0x404330 => crate::train_control::min_native;
-    /// `CPed::Say(uint16, uint32, float, uint8, uint8, uint8)` (0x5EFFE0)
-    fn ped_say(p: GPtr<u8>, id: u32, delay: u32, prob: u32, a: u32, b: u32, c: u32) -> u32 = thiscall 0x5EFFE0 => unported;
 }
 
 /// `CMonsterTruck::ProcessControl()` (0x6C8250): per wheel a ratio +0x7D4 below 1.0 becomes

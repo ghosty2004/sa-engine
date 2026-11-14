@@ -8,27 +8,18 @@ use sa_core::{hook, orig};
 
 use crate::common::{f32_of, g, jne_mask, rd, wr, x};
 
+use sa_core::bindings::matrix_attach;
+use sa_core::bindings::matrix_dtor;
+use sa_core::bindings::matrix_rotate_x;
+use sa_core::bindings::matrix_rotate_y;
+use sa_core::bindings::matrix_set_rotate_x;
+use sa_core::bindings::matrix_set_rotate_y;
+use sa_core::bindings::matrix_set_rotate_z;
+use sa_core::bindings::matrix_update_rw;
+use sa_stream::bindings::ped_is_player;
 orig! {
-    /// `CPed::IsPlayer()` (0x5DF8F0, AL)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CMatrix::Attach(RwMatrix*, bool)` (0x59BD10)
-    fn matrix_attach(m: GPtr<u8>, rw: GPtr<u8>, owns: u32) = thiscall 0x59BD10 => unported;
-    /// `CMatrix::SetRotateX(float)` (0x59B060)
-    fn matrix_set_rotate_x(m: GPtr<u8>, a: f32) = thiscall 0x59B060 => unported;
-    /// `CMatrix::SetRotateY(float)` (0x59B0A0)
-    fn matrix_set_rotate_y(m: GPtr<u8>, a: f32) = thiscall 0x59B0A0 => unported;
-    /// `CMatrix::SetRotateZ(float)` (0x59B0E0)
-    fn matrix_set_rotate_z(m: GPtr<u8>, a: f32) = thiscall 0x59B0E0 => unported;
-    /// `CMatrix::RotateX(float)` (0x59B1E0)
-    fn matrix_rotate_x(m: GPtr<u8>, a: f32) = thiscall 0x59B1E0 => unported;
-    /// `CMatrix::RotateY(float)` (0x59B2C0)
-    fn matrix_rotate_y(m: GPtr<u8>, a: f32) = thiscall 0x59B2C0 => unported;
     /// `CMatrix::RotateZ(float)` (0x59B390)
     fn matrix_rotate_z(m: GPtr<u8>, a: f32) = thiscall 0x59B390 => unported;
-    /// `CMatrix::UpdateRW()` (0x59BBB0)
-    fn matrix_update_rw(m: GPtr<u8>) = thiscall 0x59BBB0 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
 }
 
 /// `CBoat::PruneWakeTrail()` (0x6F0E20): the wake points' remaining times (+0x748, 32 floats) count

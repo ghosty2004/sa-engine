@@ -14,6 +14,33 @@ use sa_math::x87::Cmp;
 
 use crate::common::*;
 
+use crate::bindings::area_codes_dtor;
+use crate::bindings::car_drive_timed_ctor;
+use crate::bindings::is_vehicle_healthy;
+use crate::bindings::leave_group_ctor;
+use crate::bindings::ped_set_move_state;
+use crate::bindings::stand_still_dtor;
+use crate::bindings::stand_still_process_ped;
+use crate::bindings::task_complex_dtor;
+use crate::bindings::task_timer_is_out_of_time as timer_is_out_of_time;
+use crate::bindings::vehicle_is_driver;
+use crate::bindings::vehicle_is_passenger;
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::general_random_int_in_range as random_in_range;
+use sa_core::bindings::ped_give_weapon;
+use sa_stream::bindings::find_player_wanted;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::area_codes_ctor;
+use sa_world::bindings::can_ped_open_locks as vehicle_can_ped_open_locks;
+use sa_world::bindings::compute_target_door_to_exit;
+use sa_world::bindings::cull_zones_no_police;
+use sa_world::bindings::membership_get_leader;
+use sa_world::bindings::ped_drop_held_entity as ped_drop_entity_held;
+use sa_world::bindings::ped_groups_get_peds_group as peds_group;
+use sa_world::bindings::ped_say;
+use sa_world::bindings::stand_still_ctor;
+use sa_world::bindings::weapon_is_type_melee;
 orig! {
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_get_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
@@ -21,31 +48,16 @@ orig! {
     fn v_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, priority: i32, event: GPtr<u8>) -> u8 = thiscall vslot 0x18 => unported;
     /// `CTaskComplex::CreateFirstSubTask(CPed*)` (vtable +0x24)
     fn v_create_first_sub_task(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x24 => unported;
-    /// `CTaskComplex::~CTaskComplex()` (0x61A3D0)
-    fn task_complex_dtor(t: GPtr<u8>) = thiscall 0x61A3D0 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571A00 => unported;
     /// `CTaskComplexKillPedOnFoot::CreateSubTask(int32, CPed*)` (0x625E70, `ret 8`)
     fn create_sub_task_o(t: GPtr<u8>, ty: u32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x625E70 => kill_ped_on_foot_create_sub_task;
     /// `FUN_0065e9a0(CPed*, CPed*)` (cdecl)
     fn taunt_o(ped: GPtr<u8>, target: GPtr<u8>) = cdecl 0x65E9A0 => kill_ped_on_foot_taunt;
-
-    /// `CTaskSimpleStandStill::CTaskSimpleStandStill(time, looped, idle, blend)` (0x62F310, `ret 0x10`)
-    fn stand_still_ctor(t: GPtr<u8>, time: u32, looped: u32, idle: u32, blend: u32) -> GPtr<u8> = thiscall 0x62F310 => unported;
-    /// `CTaskSimpleStandStill::ProcessPed(CPed*)` (0x62F370, `ret 4`)
-    fn stand_still_process_ped(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x62F370 => unported;
-    /// `CTaskSimpleStandStill::~CTaskSimpleStandStill()` (0x62F360)
-    fn stand_still_dtor(t: GPtr<u8>) = thiscall 0x62F360 => unported;
     /// `CTaskSimplePause::CTaskSimplePause(int32 time)` (0x48E750, `ret 4`)
     fn pause_ctor(t: GPtr<u8>, time: u32) -> GPtr<u8> = thiscall 0x48E750 => unported;
-    /// `CTaskSimpleLeaveGroup::CTaskSimpleLeaveGroup()` (0x463540; an 8-byte simple task)
-    fn leave_group_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x463540 => unported;
     /// `CTaskComplexLeaveCar::CTaskComplexLeaveCar(veh, door, delay, sensible, forceGetOut)` (0x63B8C0, `ret 0x14`)
     fn leave_car_ctor(t: GPtr<u8>, veh: u32, door: u32, delay: u32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x63B8C0 => unported;
     /// `CTaskComplexDragPedFromCar::CTaskComplexDragPedFromCar(CPed*, int32)` (0x640430, `ret 8`)
     fn drag_ped_from_car_ctor(t: GPtr<u8>, ped: u32, a: u32) -> GPtr<u8> = thiscall 0x640430 => unported;
-    /// `CTaskSimpleCarDriveTimed::CTaskSimpleCarDriveTimed(veh, time)` (0x5FF940, `ret 8`)
-    fn car_drive_timed_ctor(t: GPtr<u8>, veh: u32, time: u32) -> GPtr<u8> = thiscall 0x5FF940 => unported;
     /// `CTaskComplexKillPedOnFootMelee::CTaskComplexKillPedOnFootMelee(CPed*)` (0x621000, `ret 4`)
     fn kill_melee_ctor(t: GPtr<u8>, target: u32) -> GPtr<u8> = thiscall 0x621000 => unported;
     /// `CTaskComplexKillPedOnFootArmed::CTaskComplexKillPedOnFootArmed(...)` (0x621190, `ret 0x14`)
@@ -54,55 +66,14 @@ orig! {
     fn destroy_car_ctor(t: GPtr<u8>, veh: u32, a: u32, b: u32, c: u32) -> GPtr<u8> = thiscall 0x621C00 => unported;
     /// `CTaskComplexSignalAtPed::CTaskComplexSignalAtPed(CPed*, int32 time, bool)` (0x660A30, `ret 0xC`)
     fn signal_at_ped_ctor(t: GPtr<u8>, ped: u32, time: u32, b: u32) -> GPtr<u8> = thiscall 0x660A30 => unported;
-
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210, cdecl)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CWorld::FindPlayerWanted(int32)` (0x56E230, cdecl)
-    fn find_player_wanted(id: i32) -> GPtr<u8> = cdecl 0x56E230 => unported;
-    /// `CPedGroups::GetPedsGroup(CPed*)` (0x5F7E80, cdecl)
-    fn peds_group(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x5F7E80 => unported;
-    /// `CPedGroupMembership::GetLeader()` (0x5F69A0)
-    fn membership_get_leader(m: GPtr<u8>) -> GPtr<u8> = thiscall 0x5F69A0 => unported;
-    /// `CGeneral::GetRandomNumberInRange(int32, int32)` (0x407180, cdecl)
-    fn random_in_range(a: i32, b: i32) -> i32 = cdecl 0x407180 => unported;
-    /// `CPed::Say(uint16, uint32, float, uint8, uint8, uint8)` (0x5EFFE0, `ret 0x18`)
-    fn ped_say(p: GPtr<u8>, id: u32, offset: u32, vol: u32, a: u32, b: u32, c: u32) -> u32 = thiscall 0x5EFFE0 => unported;
-    /// `CPed::IsPlayer` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CPed::GiveWeapon(eWeaponType, uint32 ammo, bool)` (0x5E6080, `ret 0xC`)
-    fn ped_give_weapon(p: GPtr<u8>, ty: u32, ammo: u32, b: u32) -> u32 = thiscall 0x5E6080 => unported;
     /// `CPed::SetCurrentWeapon(eWeaponType)` (0x5E6280, `ret 4`)
     fn ped_set_current_weapon_type(p: GPtr<u8>, ty: u32) = thiscall 0x5E6280 => unported;
     /// `CPed::SetCurrentWeapon(int32 slot)` (0x5E61F0, `ret 4`)
     fn ped_set_current_weapon_slot(p: GPtr<u8>, slot: u32) = thiscall 0x5E61F0 => unported;
-    /// `CPed::SetMoveState(eMoveState)` (0x5DEC00, `ret 4`)
-    fn ped_set_move_state(p: GPtr<u8>, s: u32) = thiscall 0x5DEC00 => unported;
-    /// `CPed::DropEntityThatThisPedIsHolding(bool)` (0x5E0360, `ret 4`)
-    fn ped_drop_entity_held(p: GPtr<u8>, b: u32) = thiscall 0x5E0360 => unported;
     /// `FUN_005fe9c0(int32 pedType)` (cdecl; a gang ped type test)
     fn is_gang_ped_type(t: u32) -> u8 = cdecl 0x5FE9C0 => unported;
-    /// `CCullZones::NoPolice()` (0x72DD50)
-    fn cull_zones_no_police() -> u8 = cdecl 0x72DD50 => unported;
-    /// `CWeapon::IsTypeMelee()` (0x73B1C0)
-    fn weapon_is_type_melee(w: GPtr<u8>) -> u8 = thiscall 0x73B1C0 => unported;
-    /// `CVehicle::IsDriver(CPed*)` (0x6D1C40, `ret 4`)
-    fn vehicle_is_driver(v: GPtr<u8>, p: GPtr<u8>) -> u8 = thiscall 0x6D1C40 => unported;
-    /// `CVehicle::IsPassenger(CPed*)` (0x6D1BD0, `ret 4`)
-    fn vehicle_is_passenger(v: GPtr<u8>, p: GPtr<u8>) -> u8 = thiscall 0x6D1BD0 => unported;
-    /// `CVehicle::CanPedOpenLocks(CPed*)` (0x6D1E20, `ret 4`)
-    fn vehicle_can_ped_open_locks(v: GPtr<u8>, p: GPtr<u8>) -> u8 = thiscall 0x6D1E20 => unported;
-    /// `CCarEnterExit::ComputeTargetDoorToExit(CVehicle*, CPed*)` (0x64F110, cdecl)
-    fn compute_target_door_to_exit(v: GPtr<u8>, p: GPtr<u8>) -> u32 = cdecl 0x64F110 => unported;
     /// `CCarEnterExit::IsRoomForPedToLeaveCar(CVehicle*, int32 door, CVector*)` (0x6504C0, cdecl)
     fn is_room_for_ped_to_leave_car(v: GPtr<u8>, door: u32, offset: u32) -> u8 = cdecl 0x6504C0 => unported;
-    /// `CCarEnterExit::IsVehicleHealthy(CVehicle*)` (0x64EEC0, cdecl)
-    fn is_vehicle_healthy(v: GPtr<u8>) -> u8 = cdecl 0x64EEC0 => unported;
-    /// `CTaskTimer::IsOutOfTime()` (0x420E30)
-    fn timer_is_out_of_time(t: GPtr<u8>) -> u8 = thiscall 0x420E30 => unported;
-    /// `CEventAreaCodes::CEventAreaCodes(CPed*)` (0x4B2190, `ret 4`)
-    fn area_codes_ctor(e: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x4B2190 => unported;
-    /// `CEventAreaCodes` destructor (0x4B2210)
-    fn area_codes_dtor(e: GPtr<u8>) = thiscall 0x4B2210 => unported;
     /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, `ret 8`)
     fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, b: u32) -> u32 = thiscall 0x4AB420 => unported;
 }

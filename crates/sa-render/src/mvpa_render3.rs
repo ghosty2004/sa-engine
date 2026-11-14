@@ -9,33 +9,25 @@ use sa_math::x87::X87;
 
 use crate::common::{Fpu, ftol32, g, k, rd, wr};
 
+pub use crate::bindings::grass_set_global_camera_pos;
+pub use crate::bindings::grass_set_global_wind_bending;
+pub use crate::bindings::plant_col_entity_cache_update;
+pub use crate::bindings::plant_process_entry_col_data_sections;
+pub use crate::bindings::rw_im3d_render_primitive;
+pub use sa_core::bindings::rp_atomic_resync_interpolated_sphere;
+pub use sa_core::bindings::rw_v3d_transform_points;
+pub use sa_world::bindings::rw_im3d_end;
 orig! {
     /// `CGrassRenderer::SetCurrentScanCode(uint16)` (0x5DABB0)
     pub fn grass_set_current_scan_code(code: u32) = cdecl 0x5DABB0 => unported;
-    /// `CGrassRenderer::SetGlobalCameraPos(const CVector&)` (0x5DABC0)
-    pub fn grass_set_global_camera_pos(pos: GPtr<u8>) = cdecl 0x5DABC0 => unported;
     /// `CPlantMgr::UpdateAmbientColor()` (0x5DB310)
     pub fn plant_update_ambient_color() = cdecl 0x5DB310 => unported;
     /// `CPlantMgr::CalculateWindBending()` (0x5DB3D0): result in ST0
     pub fn plant_calculate_wind_bending() -> f64 = cdecl 0x5DB3D0 => unported;
-    /// `CGrassRenderer::SetGlobalWindBending(float)` (0x5DAC00)
-    pub fn grass_set_global_wind_bending(v: u32) = cdecl 0x5DAC00 => unported;
-    /// `CPlantMgr::_ColEntityCache_Update(const CVector&, bool)` (0x5DC510)
-    pub fn plant_col_entity_cache_update(pos: GPtr<u8>, all: u32) = cdecl 0x5DC510 => unported;
-    /// `CPlantMgr::_ProcessEntryCollisionDataSections(CPlantColEntEntry*, const CVector&, int)` (0x5DCD80)
-    pub fn plant_process_entry_col_data_sections(e: GPtr<u8>, pos: GPtr<u8>, i: u32) = cdecl 0x5DCD80 => unported;
     /// `RwIm3DTransform(RwIm3DVertex*, RwUInt32 n, RwMatrix*, RwUInt32 flags)` (0x7EF450)
     pub fn rw_im3d_transform(v: GPtr<u8>, n: u32, m: u32, flags: u32) -> GPtr<u8> = cdecl 0x7EF450 => unported;
-    /// `RwIm3DRenderPrimitive(RwPrimitiveType)` (0x7EF6B0)
-    pub fn rw_im3d_render_primitive(ty: u32) -> i32 = cdecl 0x7EF6B0 => unported;
-    /// `RwIm3DEnd()` (0x7EF520)
-    pub fn rw_im3d_end() -> i32 = cdecl 0x7EF520 => unported;
     /// `RpClumpGetBoundingSphere(RpClump*, RwSphere*, bool useLTM)` (0x734FC0)
     pub fn rp_clump_get_bounding_sphere(c: GPtr<u8>, s: GPtr<u8>, ltm: u32) -> GPtr<u8> = cdecl 0x734FC0 => unported;
-    /// `_rpAtomicResyncInterpolatedSphere(RpAtomic*)` (0x7491F0)
-    pub fn rp_atomic_resync_interpolated_sphere(a: GPtr<u8>) = cdecl 0x7491F0 => unported;
-    /// `RwV3dTransformPoints(RwV3d* out, const RwV3d* in, RwInt32 n, const RwMatrix*)` (0x7EDD90)
-    pub fn rw_v3d_transform_points(out: GPtr<u8>, inp: GPtr<u8>, n: i32, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EDD90 => unported;
     /// `CShadowCamera::SetFrustum(float)` (0x7054C0)
     pub fn shadow_camera_set_frustum(this: GPtr<u8>, size: u32) -> GPtr<u8> = thiscall 0x7054C0 => crate::mvpa_render2::shadow_camera_set_frustum;
     /// `CShadowCamera::SetCenter(RwV3d*)` (0x705590)

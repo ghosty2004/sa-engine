@@ -11,15 +11,15 @@ use sa_world::world::common::find_player_vehicle;
 
 use crate::common::{ftol32, g, rd, wr, x};
 
+use crate::bindings::get_light_status;
+use crate::bindings::has_valid_45c;
+use crate::bindings::register_corona;
+use sa_world::bindings::add_light;
 orig! {
     /// `CVehicle::GetVehicleLightsStatus()` (0x6D55C0)
     fn get_vehicle_lights_status(v: GPtr<u8>) -> u8 = thiscall 0x6D55C0 => crate::vehicle2::get_vehicle_lights_status;
-    /// `CVehicle::CanUpdateHornCounter()`-like check (0x4F4CE0)
-    fn has_valid_45c(v: GPtr<u8>) -> u32 = thiscall 0x4F4CE0 => crate::vehicle2::has_valid_45c;
     /// `max(float, float)` (0x420800), ST0
     fn max_f(a: f32, b: f32) -> f64 = cdecl 0x420800 => max_native;
-    /// `CDamageManager::GetLightStatus(eLights)` (0x6C2130)
-    fn get_light_status(dm: GPtr<u8>, light: u32) -> u32 = thiscall 0x6C2130 => crate::damage::get_light_status;
     /// `CVehicle::DoTailLightEffect(int32, CMatrix&, uint8, uint8, uint32, uint8)` (0x6E1780)
     fn do_tail_light_effect(v: GPtr<u8>, id: i32, m: GPtr<u8>, right: u8, forced_off: u8, flags: u32, on: u8) -> u8 = thiscall 0x6E1780 => crate::mvpb_a2::do_tail_light_effect;
     /// `CVehicle::DoHeadLightEffect(int32, CMatrix&, uint8, uint8)` (0x6E0A50)
@@ -28,12 +28,8 @@ orig! {
     fn matrix_mul_vector(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => matrix_mul_vector_native;
     /// `CVector::NormaliseAndMag()` (0x59C970), ST0
     fn normalise_and_mag(v: GPtr<u8>) -> f64 = thiscall 0x59C970 => normalise_and_mag_native;
-    /// `CCoronas::RegisterCorona(id, attachTo, r, g, b, a, pos, size, range, eCoronaType, ...)` (0x6FC580)
-    fn register_corona(id: u32, attach: GPtr<u8>, r: u32, gg: u32, b: u32, a: u32, pos: GPtr<u8>, size: u32, range: u32, kind: u32, flare: u32, refl: u32, los: u32, trail: u32, angle: u32, neon: u32, pull: u32, bright: u32, fade: u32, below: u32, delay: u32) = cdecl 0x6FC580 => unported;
     /// `CVehicle::DoHeadLightReflection(CMatrix&, uint32, uint8, uint8)` (0x6E1720)
     fn do_head_light_reflection(v: GPtr<u8>, m: GPtr<u8>, flags: u32, left: u32, right: u32) = thiscall 0x6E1720 => crate::vehicle2::do_head_light_reflection;
-    /// `CPointLights::AddLight(uint8, CVector, CVector, float, float, float, float, uint8, bool, CEntity*)` (0x7000E0), floats as bits
-    fn add_light(kind: u32, px: u32, py: u32, pz: u32, dx: u32, dy: u32, dz: u32, radius: u32, r: u32, gg: u32, b: u32, fog: u32, shadows: u32, attached: u32) = cdecl 0x7000E0 => unported;
 }
 
 /// Phases B/C side of `max` 0x420800: `a` when `a > b`, else `b`.

@@ -11,13 +11,10 @@ sa_core::globals! {
     list GLOBALS;
 }
 
+pub use sa_core::bindings::atexit;
+pub use sa_core::bindings::eh_vector_ctor;
+pub use sa_core::bindings::eh_vector_dtor;
 orig! {
-    /// CRT `eh vector constructor iterator` (0x821D30, stdcall)
-    pub fn eh_vector_ctor(arr: GPtr<u8>, size: u32, n: u32, ctor: u32, dtor: u32) = stdcall 0x821D30 => unported;
-    /// CRT `eh vector destructor iterator` (0x821E02, stdcall)
-    pub fn eh_vector_dtor(arr: GPtr<u8>, size: u32, n: u32, dtor: u32) = stdcall 0x821E02 => unported;
-    /// CRT `_atexit` (0x821D1E)
-    pub fn atexit(f: u32) -> i32 = cdecl 0x821D1E => unported;
     /// `CControllerConfigManager::CControllerConfigManager()` (0x531EE0)
     pub fn ccm_constructor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x531EE0 => unported;
 }

@@ -11,6 +11,19 @@ use sa_math::x87::Cmp;
 
 use crate::common::*;
 
+use crate::bindings::leave_car_and_flee_ctor;
+use crate::bindings::vehicle_is_driver;
+use crate::bindings::vehicle_is_passenger;
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_core::bindings::entity_register_reference;
+use sa_core::bindings::get_weapon_info as weapon_info_get;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::compute_target_door_to_exit;
+use sa_world::bindings::is_player_on_a_mission;
+use sa_world::bindings::ped_get_weapon_skill;
+use sa_world::bindings::task_complex_ctor;
+use sa_world::bindings::wander_get_wander_task_by_ped_type;
+use sa_world::bindings::weapon_is_type_melee;
 orig! {
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_get_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
@@ -20,40 +33,14 @@ orig! {
     fn v_create_first_sub_task(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x24 => unported;
     /// `CTaskComplexDestroyCar::CreateSubTask(int32, CPed*)` (0x6287A0, `ret 8`)
     fn destroy_car_create_sub_task(t: GPtr<u8>, ty: u32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x6287A0 => unported;
-    /// `CWeapon::IsTypeMelee()` (0x73B1C0)
-    fn weapon_is_type_melee(w: GPtr<u8>) -> u8 = thiscall 0x73B1C0 => unported;
-    /// `CPed::IsPlayer` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
     /// `CPed::SetCurrentWeapon(int32 slot)` (0x5E61F0, `ret 4`)
     fn ped_set_current_weapon_slot(p: GPtr<u8>, slot: u32) = thiscall 0x5E61F0 => unported;
-    /// `CVehicle::IsPassenger(CPed*)` (0x6D1BD0, `ret 4`)
-    fn vehicle_is_passenger(v: GPtr<u8>, p: GPtr<u8>) -> u8 = thiscall 0x6D1BD0 => unported;
-    /// `CVehicle::IsDriver(CPed*)` (0x6D1C40, `ret 4`)
-    fn vehicle_is_driver(v: GPtr<u8>, p: GPtr<u8>) -> u8 = thiscall 0x6D1C40 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    fn entity_register_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571B70 => unported;
-    /// `CCarEnterExit::ComputeTargetDoorToExit(CVehicle*, CPed*)` (0x64F110, cdecl)
-    fn compute_target_door_to_exit(v: GPtr<u8>, p: GPtr<u8>) -> u32 = cdecl 0x64F110 => unported;
     /// `CTaskComplexEnterCar::CreateFirstSubTask(CPed*)` (0x643A60, `ret 4`)
     fn enter_car_create_first_sub_task(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x643A60 => unported;
     /// `CTaskComplexEnterCar::CreateSubTask(int32, CPed*)` (0x63E040, `ret 8`)
     fn enter_car_create_sub_task(t: GPtr<u8>, ty: u32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x63E040 => unported;
-    /// `CPed::GetWeaponSkill()` (0x5E6580)
-    fn ped_get_weapon_skill(p: GPtr<u8>) -> u32 = thiscall 0x5E6580 => unported;
-    /// `CWeaponInfo::GetWeaponInfo(eWeaponType, eWeaponSkill)` (0x743C60, cdecl)
-    fn weapon_info_get(ty: u32, skill: u32) -> GPtr<u8> = cdecl 0x743C60 => unported;
-    /// `CTaskComplex::CTaskComplex()` (0x61A3B0)
-    fn task_complex_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A3B0 => unported;
-    /// `CTheScripts::IsPlayerOnAMission()` (0x464D50)
-    fn is_player_on_a_mission() -> u8 = cdecl 0x464D50 => unported;
-    /// `CTaskComplexLeaveCarAndFlee::CTaskComplexLeaveCarAndFlee(veh, point, door, delay, wait)` (0x63BF90, `ret 0x14`)
-    fn leave_car_and_flee_ctor(t: GPtr<u8>, veh: GPtr<u8>, point: GPtr<u8>, door: u32, delay: u32, wait: u32) -> GPtr<u8> = thiscall 0x63BF90 => unported;
     /// `CTaskSimpleCarDrive::CTaskSimpleCarDrive(veh, a, b)` (0x63C340, `ret 0xC`)
     fn car_drive_ctor(t: GPtr<u8>, veh: u32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x63C340 => unported;
-    /// `CTaskComplexWander::GetWanderTaskByPedType(CPed*)` (0x673D00, cdecl)
-    fn wander_get_wander_task_by_ped_type(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x673D00 => unported;
     /// `CTaskManager::SetTask(CTask*, int32 slot, bool)` (0x681AF0, `ret 0xC`)
     fn task_manager_set_task(tm: GPtr<u8>, t: GPtr<u8>, slot: u32, b: u32) = thiscall 0x681AF0 => unported;
 }

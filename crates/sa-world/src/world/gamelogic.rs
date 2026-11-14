@@ -53,22 +53,18 @@ const PLAYER_PED_IN_FOCUS_2: usize = 0x8A5E50;
 const PLAYER0_PED: usize = 0xB7CD98;
 const PLAYER1_PED: usize = 0xB7CF28;
 
+pub use crate::bindings::camera_get_game_cam_position;
+pub use sa_core::bindings::camera_set_fade_colour;
+pub use sa_core::bindings::entity_get_is_on_screen;
+pub use sa_core::bindings::get_pad;
 orig! {
     /// `CPed::GetTransformedBonePosition(RwV3d& inOut, uint32 bone, bool updateSkin)` (0x5E01C0)
     pub fn ped_get_transformed_bone_position(ped: GPtr<u8>, v: GPtr<f32>, bone: u32, update: u32) = thiscall 0x5E01C0 => unported;
-    /// `CEntity::GetIsOnScreen()` (0x534540, AL)
-    pub fn entity_get_is_on_screen(e: GPtr<u8>) -> u8 = thiscall 0x534540 => unported;
-    /// `CCamera::GetGameCamPosition()` (0x50AE50)
-    pub fn camera_get_game_cam_position(cam: GPtr<u8>) -> GPtr<u8> = thiscall 0x50AE50 => unported;
     /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, bool x7)` (0x56A490)
     pub fn get_is_line_of_sight_clear(a: GPtr<u8>, b: GPtr<u8>, b0: i32, b1: i32, b2: i32, b3: i32, b4: i32, b5: i32, b6: i32) -> u8
         = cdecl 0x56A490 => unported;
-    /// `CCamera::SetFadeColour(uint8, uint8, uint8)` (0x50BF00)
-    pub fn camera_set_fade_colour(cam: GPtr<u8>, r: u32, gg: u32, b: u32) = thiscall 0x50BF00 => unported;
     /// `CCamera::Fade(float, int16)` (0x50AC20)
     pub fn camera_fade(cam: GPtr<u8>, t: u32, dir: u32) = thiscall 0x50AC20 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    pub fn get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
     /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
     pub fn register_reference(e: GPtr<u8>, r: GPtr<GPtr<u8>>) = thiscall 0x571B70 => unported;
     /// `CCollision::Test2DLineAgainst2DLine` (0x4138D0)

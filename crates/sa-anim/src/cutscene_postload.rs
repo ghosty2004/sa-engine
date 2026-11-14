@@ -6,30 +6,23 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
+use crate::bindings::load_anim_file;
+use crate::bindings::wanted_clear_qd_crimes;
+use sa_core::bindings::clear_this_print_big_now as messages_clear_this_print_big_now;
+use sa_core::bindings::directory_find_item;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::rw_stream_close;
+use sa_core::bindings::rw_stream_open;
+use sa_core::bindings::rw_stream_skip;
+use sa_core::bindings::streaming_i_have_used_streaming_memory;
+use sa_core::bindings::streaming_im_gonna_use_streaming_memory;
+use sa_core::bindings::streaming_make_space_for;
 orig! {
-    /// `CMessages::ClearThisPrintBigNow(eMessageStyle)` (0x69ED80)
-    fn messages_clear_this_print_big_now(style: u32) = cdecl 0x69ED80 => unported;
-    /// `RwStreamOpen(type, access, data)` (0x7ECEF0)
-    fn rw_stream_open(ty: u32, access: u32, data: GPtr<u8>) -> GPtr<u8> = cdecl 0x7ECEF0 => unported;
     /// CRT `sprintf(buf, fmt, const char*)` (0x821BB5)
     fn sprintf_s(buf: GPtr<u8>, fmt: GPtr<u8>, s: GPtr<u8>) -> i32 = cdecl 0x821BB5 => unported;
-    /// `CDirectory::FindItem(const char* name, uint32& offset, uint32& size)` (0x5324A0, `ret 0xC`), AL
-    fn directory_find_item(dir: GPtr<u8>, name: GPtr<u8>, offset: GPtr<u32>, size: GPtr<u32>) -> u8 = thiscall 0x5324A0 => unported;
-    /// `CStreaming::MakeSpaceFor(int32)` (0x40E120)
-    fn streaming_make_space_for(n: u32) = cdecl 0x40E120 => unported;
-    /// `CStreaming::ImGonnaUseStreamingMemory()` (0x407BE0)
-    fn streaming_im_gonna_use_streaming_memory() = cdecl 0x407BE0 => unported;
-    /// `CStreaming::IHaveUsedStreamingMemory()` (0x407BF0)
-    fn streaming_i_have_used_streaming_memory() = cdecl 0x407BF0 => unported;
-    /// `RwStreamSkip(RwStream*, uint32)` (0x7ECD00)
-    fn rw_stream_skip(s: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x7ECD00 => unported;
-    /// `CAnimManager::LoadAnimFile(RwStream*, bool, const char (*)[32])` (0x4D47F0)
-    fn load_anim_file(s: GPtr<u8>, compressed: u32, names: GPtr<u8>) = cdecl 0x4D47F0 => crate::anim_file_load::load_anim_file;
     /// `CAnimBlendAssocGroup::CreateAssociations(const char* block, const char (*)[32], const char (*)[32], int32)`
     /// (0x4CE3B0, `ret 0x10`)
     fn group_create_associations_3(g: GPtr<u8>, block: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, n: i32) = thiscall 0x4CE3B0 => unported;
-    /// `RwStreamClose(RwStream*, void*)` (0x7ECE20)
-    fn rw_stream_close(s: GPtr<u8>, data: u32) -> i32 = cdecl 0x7ECE20 => unported;
     /// `CFileMgr::OpenFile(const char*, const char*)` (0x538900)
     fn file_mgr_open_file(name: GPtr<u8>, mode: GPtr<u8>) -> u32 = cdecl 0x538900 => unported;
     /// `CFileMgr::Seek(FILESTREAM, int32, int32)` (0x538990)
@@ -38,10 +31,6 @@ orig! {
     fn camera_load_path_splines(cam: GPtr<u8>, f: u32) = thiscall 0x5B24D0 => unported;
     /// `CFileMgr::CloseFile(FILESTREAM)` (0x5389D0)
     fn file_mgr_close_file(f: u32) -> i32 = cdecl 0x5389D0 => unported;
-    /// `FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CWanted::ClearQdCrimes()` (0x561FE0)
-    fn wanted_clear_qd_crimes(w: GPtr<u8>) = thiscall 0x561FE0 => unported;
 }
 
 use sa_core::field::p8 as ga;

@@ -8,6 +8,7 @@ use sa_core::{hook, orig};
 
 use crate::common::{ACTIVE_CAM, CAMS, CCAM_SIZE, g, rd, wr};
 
+pub use sa_core::bindings::text_get;
 orig! {
     /// `CCamera::IsItTimeForNewcam(int32 seq, int32 startTimeMs)` (0x51D770, AL)
     pub fn is_it_time_for_newcam(this: GPtr<u8>, seq: i32, start: u32) -> u8 = thiscall 0x51D770 => unported;
@@ -15,8 +16,6 @@ orig! {
     pub fn try_to_start_new_cam_mode(this: GPtr<u8>, seq: i32) -> u8 = thiscall 0x51E560 => unported;
     /// "active camera under water" (0x50B830, cdecl, AL)
     pub fn active_cam_under_water() -> u8 = cdecl 0x50B830 => unported;
-    /// `CText::Get(const char*)` (0x6A0050)
-    pub fn text_get(text: GPtr<u8>, key: GPtr<u8>) -> GPtr<u8> = thiscall 0x6A0050 => unported;
     /// `CHud::SetHelpMessage(const char*, bool, bool, bool)` (0x588BE0)
     pub fn hud_set_help_message(msg: GPtr<u8>, quick: u32, permanent: u32, add_to_brief: u32) = cdecl 0x588BE0 => unported;
 }

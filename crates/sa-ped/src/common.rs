@@ -45,6 +45,10 @@ pub fn pool_size(pool: GPtr<u8>) -> i32 {
     rd::<i32>(pool, 8)
 }
 
+pub use sa_core::bindings::set_model_is_deletable;
+pub use sa_core::bindings::stats_increment_stat as increment_stat;
+pub use sa_core::bindings::streaming_request_model as request_model;
+pub use sa_world::bindings::get_stat_value;
 orig! {
     /// `FindPlayerPed(int32 playerId)` (0x56E210)
     pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
@@ -52,16 +56,8 @@ orig! {
     pub fn find_player_vehicle(id: i32, remote: u8) -> GPtr<u8> = cdecl 0x56E0D0 => sa_world::world::cworld::find_player_vehicle_port;
     /// `FindPlayerWanted(int32 playerId)` (0x56E230)
     pub fn find_player_wanted(id: i32) -> GPtr<u8> = cdecl 0x56E230 => sa_world::world::cworld::find_player_wanted;
-    /// `CStats::IncrementStat(uint16 stat, float value)` (0x55C180)
-    pub fn increment_stat(stat: u32, v: f32) = cdecl 0x55C180 => unported;
     /// `CPed::IsAlive` (0x5E0170)
     pub fn ped_is_alive(ped: GPtr<u8>) -> u32 = thiscall 0x5E0170 => crate::ped::is_alive;
     /// `CWeaponInfo::GetWeaponInfo(eWeaponType, eWeaponSkill)` (0x743C60)
     pub fn get_weapon_info(ty: i32, skill: i32) -> GPtr<u8> = cdecl 0x743C60 => unported;
-    /// `CStats::GetStatValue(uint16)` (0x558E40)
-    pub fn get_stat_value(stat: u32) -> f64 = cdecl 0x558E40 => unported;
-    /// `CStreaming::RequestModel(int32 model, int32 flags)` (0x4087E0)
-    pub fn request_model(model: i32, flags: i32) = cdecl 0x4087E0 => unported;
-    /// `CStreaming::SetModelIsDeletable(int32 model)` (0x409C10)
-    pub fn set_model_is_deletable(model: i32) = cdecl 0x409C10 => unported;
 }

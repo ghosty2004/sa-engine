@@ -12,19 +12,17 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
+use sa_core::bindings::crt_strncpy;
+use sa_core::bindings::eh_vector_ctor;
+use sa_core::bindings::get_uppercase_key;
+use sa_core::bindings::memory_malloc as mgr_malloc;
+use sa_core::bindings::stream_read;
+use sa_core::bindings::strncmp as crt_strncmp;
 orig! {
-    /// `RwStreamRead(stream, buf, len)` (0x7EC9D0)
-    fn stream_read(s: GPtr<u8>, buf: GPtr<u8>, len: u32) -> u32 = cdecl 0x7EC9D0 => unported;
-    /// CRT `strncmp` (0x8214D0)
-    fn crt_strncmp(a: GPtr<u8>, b: GPtr<u8>, n: u32) -> i32 = cdecl 0x8214D0 => unported;
-    /// CRT `strncpy` (0x821F40)
-    fn crt_strncpy(d: GPtr<u8>, s: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x821F40 => unported;
     /// `CAnimManager::GetAnimationBlock(name)` (0x4D3940)
     fn get_animation_block(name: GPtr<u8>) -> GPtr<u8> = cdecl 0x4D3940 => crate::manager::get_animation_block;
     /// `CAnimManager::GetFirstAssocGroup(name)` (0x4D39B0)
     fn get_first_assoc_group(name: GPtr<u8>) -> i32 = cdecl 0x4D39B0 => crate::manager::get_first_assoc_group;
-    /// `CMemoryMgr::Malloc(size, hint)` (0x72F420)
-    fn mgr_malloc(size: u32, hint: u32) -> GPtr<u8> = cdecl 0x72F420 => unported;
     /// `CAnimBlendHierarchy::SetName(name)` (0x4CF2D0)
     fn hier_set_name(h: GPtr<u8>, name: GPtr<u8>) = thiscall 0x4CF2D0 => crate::hierarchy::set_name;
     /// `CAnimBlendHierarchy::RemoveQuaternionFlips()` (0x4CF4E0)
@@ -39,10 +37,6 @@ orig! {
     fn seq_set_num_frames(s: GPtr<u8>, n: i32, trans: u8, compressed: u8, data: GPtr<u8>) = thiscall 0x4D0CD0 => crate::sequence::set_num_frames;
     /// `operator new(size)` (0x82119A)
     fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
-    /// `eh vector constructor iterator(ptr, size, count, ctor, dtor)` (0x821D30)
-    fn eh_vector_ctor(p: GPtr<u8>, size: u32, n: u32, ctor: u32, dtor: u32) = stdcall 0x821D30 => unported;
-    /// `CKeyGen::GetUppercaseKey(const char*)` (0x53CF30)
-    fn get_uppercase_key(s: GPtr<u8>) -> u32 = cdecl 0x53CF30 => unported;
 }
 
 /// `CAnimManager::ms_numAnimBlocks`, `ms_numAnimations`, `ms_aAnimBlocks`, `ms_aAnimations`.

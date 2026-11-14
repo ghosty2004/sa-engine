@@ -50,13 +50,10 @@ const CB_CTOR: u32 = 0x755BC0;
 const CB_DTOR: u32 = 0x755BF0;
 const CB_COPY: u32 = 0x755CE0;
 
+use crate::bindings::light_register_plugin as rp_light_register_plugin;
+use sa_core::bindings::frame_get_ltm as rw_frame_get_ltm;
+use sa_core::bindings::rw_d3d9_get_caps;
 orig! {
-    /// `RpLightRegisterPlugin(size, id, ctor, dtor, copy)` (0x751D60)
-    fn rp_light_register_plugin(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x751D60 => crate::light::rp_light_register_plugin;
-    /// `RwD3D9GetCaps()` (0x7FAD20)
-    fn rw_d3d9_get_caps() -> GPtr<u8> = cdecl 0x7FAD20 => unported;
-    /// `RwFrameGetLTM(frame)` (0x7F0990)
-    fn rw_frame_get_ltm(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0990 => unported;
     /// `RwD3D9SetLight(index, light)` (0x7FA660)
     fn rw_d3d9_set_light(index: i32, light: GPtr<u8>) -> i32 = cdecl 0x7FA660 => unported;
     /// `RwD3D9EnableLight(index, enable)` (0x7FA860)

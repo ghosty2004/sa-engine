@@ -33,37 +33,31 @@ const TIME_MS: usize = 0xB7CB84;
 /// 1.0f as bits
 const ONE: u32 = 0x3F80_0000;
 
+use crate::bindings::ae_random_int;
+use crate::bindings::hw_is_sound_bank_loaded as is_sound_bank_loaded;
+use crate::bindings::just_wrecked_vehicle;
+use crate::bindings::sm_request_new_sound;
+use crate::bindings::sound_initialise;
+use crate::bindings::sound_register_with_physical_entity;
+use crate::bindings::sound_stop_sound;
+use crate::bindings::twin_initialise;
+use crate::bindings::twin_loop_stop_sound_and_forget as twin_stop_sound_and_forget;
+use crate::bindings::twin_play;
+use crate::bindings::twin_update;
+use sa_world::bindings::surface_55ea50;
+use sa_world::bindings::surface_55ea90;
+use sa_world::bindings::surface_55ead0;
 orig! {
-    /// `CAEAudioHardware::IsSoundBankLoaded(uint16 bankId, int16 slot)` (0x4D88C0)
-    fn is_sound_bank_loaded(hw: GPtr<u8>, bank: u32, slot: u32) -> u8 = thiscall 0x4D88C0 => unported;
     /// `CAudioEngine::StopRadio(tVehicleAudioSettings*, bool)` (0x506F70)
     fn engine_stop_radio(engine: GPtr<u8>, settings: GPtr<u8>, duck: u32) = thiscall 0x506F70 => unported;
-    /// `CAEAudioUtility::GetRandomNumberInRange(int, int)` (0x4D9C10)
-    fn ae_random_int(min: i32, max: i32) -> i32 = cdecl 0x4D9C10 => crate::utility::get_random_number_in_range_int;
-    /// `CAESound::Initialise(...)` (0x4EFE50, 14 argument dwords)
-    fn sound_initialise(sound: GPtr<u8>, slot: u32, id: u32, entity: u32, px: u32, py: u32, pz: u32, volume: u32, max_distance: u32, speed: u32, time_scale: u32, ignored_cycles: u32, flags: u32, speed_variance: u32, play_pos: u32) = thiscall 0x4EFE50 => crate::sound::initialise;
-    /// `CAESoundManager::RequestNewSound(CAESound*)` (0x4EFB10)
-    fn sm_request_new_sound(sm: GPtr<u8>, sound: GPtr<u8>) -> u32 = thiscall 0x4EFB10 => unported;
     /// `CAESound::SetFlags(uint16 flags, uint16 enabled)` (0x4EF2B0)
     fn sound_set_flags(sound: GPtr<u8>, flags: u32, enabled: u32) = thiscall 0x4EF2B0 => crate::sound::set_flags;
-    /// `CAESound::StopSound()` (0x4EF1C0)
-    fn sound_stop_sound(sound: GPtr<u8>) = thiscall 0x4EF1C0 => crate::sound::stop_sound;
-    /// `CAETwinLoopSoundEntity::Initialise(int16 slot, int16 sfx1, int16 sfx2, CAEAudioEntity*, int16, int16, int16, int16)` (0x4F28A0)
-    fn twin_initialise(twin: GPtr<u8>, slot: u32, sfx1: u32, sfx2: u32, ent: u32, min_time: u32, max_time: u32, a: u32, b: u32) = thiscall 0x4F28A0 => unported;
-    /// `CAETwinLoopSoundEntity::StopSoundAndForget()` (0x4F2960)
-    fn twin_stop_sound_and_forget(twin: GPtr<u8>) = thiscall 0x4F2960 => crate::entities::twin_loop_stop_sound_and_forget;
-    /// `CAETwinLoopSoundEntity::UpdateTwinLoopSound(CVector pos, float volume, float speed)` (0x4F29A0)
-    fn twin_update(twin: GPtr<u8>, px: u32, py: u32, pz: u32, volume: u32, speed: u32) = thiscall 0x4F29A0 => unported;
-    /// `CAETwinLoopSoundEntity::PlayTwinLoopSound(CVector pos, float volume, float speed, float maxDistance, float timeScale, eSoundEnvironment)` (0x4F2CB0)
-    fn twin_play(twin: GPtr<u8>, px: u32, py: u32, pz: u32, volume: u32, speed: u32, max_distance: u32, time_scale: u32, flags: u32) = thiscall 0x4F2CB0 => unported;
     /// `CAEVehicleAudioEntity::GetSirenState(bool&, bool&, cVehicleParams&)` (0x4F62A0)
     fn get_siren_state(this: GPtr<u8>, siren: GPtr<u8>, fast: GPtr<u8>, params: GPtr<u8>) = thiscall 0x4F62A0 => crate::vehicle::get_siren_state;
     /// `CAEVehicleAudioEntity::GetHornState(bool*, cVehicleParams&)` (0x4F61E0)
     fn get_horn_state(this: GPtr<u8>, out: GPtr<u8>, params: GPtr<u8>) = thiscall 0x4F61E0 => crate::vehicle::get_horn_state;
     /// `CAEVehicleAudioEntity::PlayHornOrSiren(bool horn, bool siren, bool fastSiren, cVehicleParams&)` (0x4F99D0)
     fn play_horn_or_siren_call(this: GPtr<u8>, horn: u32, siren: u32, fast: u32, params: GPtr<u8>) = thiscall 0x4F99D0 => play_horn_or_siren;
-    /// `CAEVehicleAudioEntity::JustWreckedVehicle()` (0x4FD0B0)
-    fn just_wrecked_vehicle(this: GPtr<u8>) = thiscall 0x4FD0B0 => unported;
     /// `CAEVehicleAudioEntity::ProcessPlayerSeaPlane(cVehicleParams&)` (0x4FF320)
     fn pa_process_player_sea_plane(this: GPtr<u8>, params: GPtr<u8>) = thiscall 0x4FF320 => unported;
     /// `CAEVehicleAudioEntity::ProcessDummySeaPlane(cVehicleParams&)` (0x4FF7C0)
@@ -86,13 +80,8 @@ orig! {
     fn pa_process_dummy_heli(this: GPtr<u8>, params: GPtr<u8>) = thiscall 0x4FE940 => process_dummy_heli;
     /// `CDamageManager::GetWheelStatus(int32)` (0x6C21B0)
     fn get_wheel_status(dm: GPtr<u8>, wheel: u32) -> u32 = thiscall 0x6C21B0 => unported;
-    /// `SurfaceInfos_c` audio surface tests (`g_surfaceInfos` 0xB79538): 0x55EA50, 0x55EB10 (group 1),
-    /// 0x55EA90, 0x55EA70, 0x55EAD0 (group 2; 0x55EAD0 = `IsAudioWater`)
-    fn surface_55ea50(infos: GPtr<u8>, s: u32) -> u8 = thiscall 0x55EA50 => unported;
     fn surface_55eb10(infos: GPtr<u8>, s: u32) -> u8 = thiscall 0x55EB10 => unported;
-    fn surface_55ea90(infos: GPtr<u8>, s: u32) -> u8 = thiscall 0x55EA90 => unported;
     fn surface_55ea70(infos: GPtr<u8>, s: u32) -> u8 = thiscall 0x55EA70 => unported;
-    fn surface_55ead0(infos: GPtr<u8>, s: u32) -> u8 = thiscall 0x55EAD0 => unported;
     /// `CAEVehicleAudioEntity::GetVehicleDriveWheelSkidValue(CVehicle*, tWheelState, float, cTransmission&, float)` (0x4F5F30), ST0
     fn drive_wheel_skid_value_st0(this: GPtr<u8>, veh: u32, state: u32, gas: u32, tr: u32, vel: u32) -> f64 = thiscall 0x4F5F30 => unported;
     /// `CAEVehicleAudioEntity::GetVehicleNonDriveWheelSkidValue(CVehicle*, tWheelState, cTransmission&, float)` (0x4F6000), ST0
@@ -105,8 +94,6 @@ orig! {
     fn play_skid_sound_call(this: GPtr<u8>, sfx: u32, speed: u32, volume: u32) = thiscall 0x4F8360 => play_skid_sound;
     /// `CAESound::SetPosition(CVector)` (0x4EF880)
     fn sound_set_position(sound: GPtr<u8>, px: u32, py: u32, pz: u32) = thiscall 0x4EF880 => crate::sound::set_position;
-    /// `CAESound::RegisterWithPhysicalEntity(CEntity*)` (0x4EF820)
-    fn sound_register_with_physical_entity(sound: GPtr<u8>, entity: GPtr<u8>) = thiscall 0x4EF820 => crate::sound::register_with_physical_entity;
     /// `CAEVehicleAudioEntity::GetAircraftNearPosition(CVector* out)` (0x4F96A0): returns `out`
     fn get_aircraft_near_position(this: GPtr<u8>, out: GPtr<u8>) -> u32 = thiscall 0x4F96A0 => unported;
     /// `CAEVehicleAudioEntity::Process*(cVehicleParams&)` bodies `ProcessVehicle` dispatches to
@@ -1329,10 +1316,7 @@ pub fn get_freq_for_player_engine_sound(this: GPtr<u8>, params: GPtr<u8>, state:
     f
 }
 
-orig! {
-    /// `CAESound::StopSoundAndForget()` (0x4EF850)
-    fn sound_stop_sound_and_forget(sound: GPtr<u8>) = thiscall 0x4EF850 => unported;
-}
+use crate::bindings::sound_stop_and_forget as sound_stop_sound_and_forget;
 
 /// Stops and forgets the sound at `this + off` when there is one.
 fn forget(this: GPtr<u8>, off: isize) {
@@ -1569,10 +1553,7 @@ pub fn process_moving_parts(this: GPtr<u8>, params: GPtr<u8>) {
     }
 }
 
-orig! {
-    /// `CAEVehicleAudioEntity::CancelVehicleEngineSound(int16)` (0x4F55C0)
-    fn cancel_vehicle_engine_sound(this: GPtr<u8>, ty: u32) = thiscall 0x4F55C0 => crate::vehicle::cancel_vehicle_engine_sound;
-}
+use crate::bindings::cancel_vehicle_engine_sound;
 
 /// `fild` of a dword the original treats as unsigned: `+ 2^32` (`[0x858C54]`) when negative.
 fn fild_u32(v: u32) -> X87 {
@@ -2111,9 +2092,8 @@ pub fn process_dummy_sea_plane(this: GPtr<u8>, params: GPtr<u8>) {
     play_aircraft_sound_call(this, 3, 0x13, 0x11, vol.to_bits(), ONE);
 }
 
+use crate::bindings::request_bank_slot;
 orig! {
-    /// `CAEVehicleAudioEntity::RequestBankSlot(int16)` (0x4F4D10, static)
-    fn request_bank_slot(bank: u32) -> u32 = cdecl 0x4F4D10 => crate::vehicle::request_bank_slot;
     /// `CAEAudioUtility::GetPiecewiseLinear(float, int16, const float (*)[2])` (0x4D9D90)
     fn get_piecewise_linear(v: u32, n: u32, table: u32) -> f32 = cdecl 0x4D9D90 => unported;
     /// `CAEVehicleAudioEntity::ProcessGenericJet(bool, cVehicleParams&, float, float, float, float, float)` (0x4FF900)
@@ -3112,10 +3092,7 @@ pub fn process_dummy_hovercraft(this: GPtr<u8>, params: GPtr<u8>) {
     update_generic_vehicle_sound_call(this, 1, slot, bank, 0, s.to_bits(), vol.to_bits(), 0x4060_0000);
 }
 
-orig! {
-    /// `CVector::Normalise()` (0x59C910)
-    fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
-}
+use sa_core::bindings::vector_normalise;
 
 /// `CAEVehicleAudioEntity::ProcessGenericJet(bool engineOn, cVehicleParams&, float throttle, float
 /// accel, float brake, float volumeOffset, float speedFactor)` (0x4FF900): with bank 0x8A in slot 0x13;

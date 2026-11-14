@@ -71,35 +71,33 @@ const STR_COLLISION_FILES: u32 = 0x858BE4;
 /// "LOADCOL" (0x858B88)
 const STR_LOADCOL: u32 = 0x858B88;
 
+pub use crate::bindings::col_accel_is_cache_loading;
+pub use crate::bindings::col_model_remove_collision_volumes;
+pub use crate::bindings::menu_message_screen;
+pub use crate::bindings::quad_dtor as quad_tree_dtor;
+pub use crate::bindings::quad_operator_delete as quad_tree_operator_delete;
+pub use crate::bindings::quad_operator_new as quad_tree_operator_new;
+pub use crate::bindings::strnicmp;
+pub use sa_core::bindings::camera_get_screen_fade_status;
+pub use sa_core::bindings::crt_free as operator_delete_array;
+pub use sa_core::bindings::crt_free_8214bd as free;
+pub use sa_core::bindings::find_player_ped;
+pub use sa_core::bindings::stricmp;
 orig! {
-    /// CRT `_stricmp` (0x8229B6)
-    pub fn stricmp(a: GPtr<u8>, b: GPtr<u8>) -> i32 = cdecl 0x8229B6 => unported;
-    /// CRT `_strnicmp` (0x835AC7)
-    pub fn strnicmp(a: GPtr<u8>, b: GPtr<u8>, n: u32) -> i32 = cdecl 0x835AC7 => unported;
     /// CRT `operator new` (0x82119A)
     pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
-    /// CRT `free` (0x8214BD)
-    pub fn free(p: GPtr<u8>) = cdecl 0x8214BD => unported;
     /// `CPool<ColDef>::New` (0x411030)
     pub fn col_pool_new(pool: GPtr<ColPool>) -> GPtr<ColDef> = thiscall 0x411030 => col_pool_new_rust;
     /// `CPool<ColDef>::CPool(size, name)` (stub 0x410F80)
     pub fn col_pool_ctor(pool: GPtr<ColPool>, size: i32, name: GPtr<u8>) -> GPtr<ColPool> = thiscall 0x410F80 => unported;
-    /// `CQuadTreeNode::operator new` (0x552C80)
-    pub fn quad_tree_operator_new(size: u32) -> GPtr<u8> = cdecl 0x552C80 => unported;
     /// `CQuadTreeNode::CQuadTreeNode(const CRect&, int32 level)` (0x552830)
     pub fn quad_tree_ctor(node: GPtr<u8>, rect: GPtr<f32>, level: i32) -> GPtr<u8> = thiscall 0x552830 => unported;
-    /// `CQuadTreeNode::~CQuadTreeNode` (0x552520)
-    pub fn quad_tree_dtor(node: GPtr<u8>) = thiscall 0x552520 => unported;
-    /// `CQuadTreeNode::operator delete` (0x552C90)
-    pub fn quad_tree_operator_delete(p: GPtr<u8>) = cdecl 0x552C90 => unported;
     /// `CQuadTreeNode::ForAllMatching(const CVector2D&, cb)` (0x5529F0)
     pub fn quad_tree_for_all_matching(node: GPtr<u8>, v: GPtr<f32>, cb: u32) = thiscall 0x5529F0 => for_all_matching_vec;
     /// `CQuadTreeNode::AddItem(item, const CRect&)` (0x552CD0)
     pub fn quad_tree_add_item(node: GPtr<u8>, item: GPtr<ColDef>, rect: GPtr<ColDef>) = thiscall 0x552CD0 => add_item;
     /// `CQuadTreeNode::DeleteItem(item)` (0x552A40)
     pub fn quad_tree_delete_item(node: GPtr<u8>, item: GPtr<ColDef>) = thiscall 0x552A40 => delete_item;
-    /// `FindPlayerPed(int32)` (0x56E210)
-    pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
     /// `FindPlayerVehicle(int32, bool)` (0x56E0D0)
     pub fn find_player_vehicle(id: i32, include_remote: u8) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
     /// `CStreaming::RequestModel(id, flags)` (0x4087E0)
@@ -114,10 +112,6 @@ orig! {
     pub fn load_collision_file_buf(data: GPtr<u8>, size: i32, slot: i32) -> u8 = cdecl 0x538440 => unported;
     /// `CFileLoader::LoadCollisionFileFirstTime(uint8*, uint32, uint8)` (0x5B5000)
     pub fn load_collision_file_first_time(data: GPtr<u8>, size: i32, slot: i32) -> u8 = cdecl 0x5B5000 => unported;
-    /// `CColModel::RemoveCollisionVolumes` (0x40F9E0)
-    pub fn col_model_remove_collision_volumes(cm: GPtr<u8>) = thiscall 0x40F9E0 => unported;
-    /// `CColAccel::isCacheLoading` (0x5B2AC0)
-    pub fn col_accel_is_cache_loading() -> u8 = cdecl 0x5B2AC0 => unported;
     /// `CColAccel::addColDef(ColDef)` (0x5B2DD0, the 0x2C-byte ColDef by value)
     pub fn col_accel_add_col_def(def: ColDef) = cdecl 0x5B2DD0 => unported;
     /// `CColAccel::getColDef(ColDef&)` (0x5B2E60)
@@ -127,18 +121,12 @@ orig! {
     /// `CColStore::LoadAllCollision` (0x410E60): LoadAllBoundingBoxes' `jmp`, through the hooked entry
     /// as in the original (a split-run L2 recording then sees the same nested call)
     pub fn load_all_collision_call() = cdecl 0x410E60 => load_all_collision;
-    /// `CCamera::GetScreenFadeStatus` (0x50AE20, `TheCamera`)
-    pub fn camera_get_screen_fade_status(cam: GPtr<u8>) -> i32 = thiscall 0x50AE20 => unported;
-    /// `CMenuManager::MessageScreen(const char*, bool, bool)` (0x579330, `FrontEndMenuManager`)
-    pub fn menu_message_screen(menu: GPtr<u8>, text: GPtr<u8>, black: u8, camera_update: u8) = thiscall 0x579330 => unported;
     /// `CTimer::Suspend` (0x5619D0)
     pub fn timer_suspend() = cdecl 0x5619D0 => sa_core::timer::suspend;
     /// `CTimer::Resume` (0x561A00)
     pub fn timer_resume() = cdecl 0x561A00 => sa_core::timer::resume;
     /// `CRect::IsPointInside(const CVector2D&, float tolerance)` (0x4042D0)
     pub fn rect_is_point_inside(rect: GPtr<ColDef>, pos: GPtr<f32>, tolerance: f32) -> u8 = thiscall 0x4042D0 => unported;
-    /// CRT `operator delete[]` (0x8213AE)
-    pub fn operator_delete_array(p: GPtr<u8>) = cdecl 0x8213AE => unported;
 }
 
 /// `TheCamera` (0xB6F028), `FrontEndMenuManager` (0xBA6748)

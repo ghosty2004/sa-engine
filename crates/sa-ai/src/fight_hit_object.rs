@@ -6,20 +6,17 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use sa_world::bindings::object_damage;
+use sa_world::bindings::ped_weapon_audio_add_audio_event as ped_weapon_audio_event;
+use sa_world::bindings::physical_add_to_moving_list;
 orig! {
     /// The fight strike damage (0x61C740, ST0)
     fn fight_strike_damage_c(t: GPtr<u8>, ped: GPtr<u8>) -> f64 = thiscall 0x61C740 => unported;
     /// `CEntity::SetIsStatic(bool)` (vtable slot 0x10)
     fn entity_set_is_static(e: GPtr<u8>, b: u32) = thiscall vslot 0x10 => unported;
-    /// `CPhysical::AddToMovingList()` (0x542800)
-    fn physical_add_to_moving_list(p: GPtr<u8>) = thiscall 0x542800 => unported;
     /// `CPhysical::ApplyForce(CVector force, CVector point, bool)` (0x542B50)
     #[allow(clippy::too_many_arguments)]
     fn physical_apply_force(p: GPtr<u8>, fx: u32, fy: u32, fz: u32, px: u32, py: u32, pz: u32, b: u32) = thiscall 0x542B50 => unported;
-    /// `CObject::ObjectDamage(float, CVector* origin, CVector* dir, CEntity* damager, eWeaponType)` (0x5A0D90)
-    fn object_damage(o: GPtr<u8>, dmg: f32, origin: GPtr<u8>, dir: GPtr<u8>, damager: GPtr<u8>, weapon: u32) = thiscall 0x5A0D90 => unported;
-    /// `CAEPedWeaponAudioEntity::AddAudioEvent(eAudioEvents)` (0x4E69F0)
-    fn ped_weapon_audio_event(a: GPtr<u8>, ev: u32) = thiscall 0x4E69F0 => unported;
     /// `CAEPedAudioEntity::AddAudioEvent(eAudioEvents, float volume, float speed, CPhysical*, uint8 surface, int32,
     /// uint32)` (0x4E2BB0)
     #[allow(clippy::too_many_arguments)]

@@ -12,21 +12,15 @@ use sa_math::x87::X87;
 
 use crate::common::{rd, wr, x};
 
+use sa_core::bindings::matrix_attach;
+use sa_core::bindings::matrix_set_rotate_z_only;
+use sa_core::bindings::matrix_set_translate;
+use sa_core::bindings::rp_atomic_clone;
+use sa_core::bindings::rw_tex_dictionary_for_all_textures;
+use sa_stream::bindings::rp_clump_add_atomic;
 orig! {
-    /// `CMatrix::Attach(RwMatrix*, bool)` (0x59BD10)
-    fn matrix_attach(m: GPtr<u8>, rw: GPtr<u8>, owns: u32) = thiscall 0x59BD10 => unported;
-    /// `CMatrix::SetTranslate(float, float, float)` (0x59AF40)
-    fn matrix_set_translate(m: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x59AF40 => unported;
-    /// `CMatrix::SetRotateZOnly(float)` (0x59B020)
-    fn matrix_set_rotate_z_only(m: GPtr<u8>, h: u32) = thiscall 0x59B020 => unported;
-    /// `RwTexDictionaryForAllTextures(RwTexDictionary*, callback, data)` (0x7F3730)
-    fn rw_tex_dictionary_for_all_textures(d: GPtr<u8>, cb: u32, data: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F3730 => unported;
-    /// `RpAtomicClone(RpAtomic*)` (0x749E60)
-    fn rp_atomic_clone(a: GPtr<u8>) -> GPtr<u8> = cdecl 0x749E60 => unported;
     /// `RpAtomicSetFrame(RpAtomic*, RwFrame*)` (0x74BF20)
     fn rp_atomic_set_frame(a: GPtr<u8>, f: u32) -> GPtr<u8> = cdecl 0x74BF20 => unported;
-    /// `RpClumpAddAtomic(RpClump*, RpAtomic*)` (0x74A490)
-    fn rp_clump_add_atomic(c: GPtr<u8>, a: GPtr<u8>) -> GPtr<u8> = cdecl 0x74A490 => unported;
 }
 
 /// `CMatrix::CMatrix(RwMatrix*, bool owns)` (0x59C050, thiscall, `ret 8`): `m_pAttachMatrix` (+0x40) =

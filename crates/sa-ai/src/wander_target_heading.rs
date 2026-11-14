@@ -6,10 +6,8 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::path_take_width_for_wandering;
 orig! {
-    /// `CPathFind::TakeWidthIntoAccountForWandering(CVector* out, CNodeAddress, uint16 seed)` (0x4509A0) on
-    /// `ThePaths` (0x96F050)
-    fn path_take_width_for_wandering(p: GPtr<u8>, out: GPtr<u8>, node: u32, seed: u32) -> GPtr<u8> = thiscall 0x4509A0 => unported;
     /// `CGeneral::GetRadianAngleBetweenPoints(x1, y1, x2, y2)` (0x53CBE0, ST0)
     fn general_radian_angle_between_points(x1: f32, y1: f32, x2: f32, y2: f32) -> f64 = cdecl 0x53CBE0 => unported;
     /// `CGeneral::LimitRadianAngle(float)` (0x53CB50, ST0)

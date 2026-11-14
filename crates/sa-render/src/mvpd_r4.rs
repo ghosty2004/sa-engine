@@ -11,27 +11,21 @@ use sa_math::x87::X87;
 
 use crate::common::{g, jp, k, rd, x};
 
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::get_pad as pad_get_pad;
+use sa_core::bindings::tm_get_simplest_active_task as task_manager_simplest_active;
+use sa_world::bindings::cam_no_rain;
+use sa_world::bindings::pad_start_shake;
+use sa_world::bindings::player_no_rain;
 orig! {
     /// `CWeather::UpdateWeatherRegion(CVector*)` (0x72A640)
     fn update_weather_region(pos: u32) = cdecl 0x72A640 => unported;
     /// `CWeather::FindWeatherTypesList()` (0x72A520)
     fn find_weather_types_list() -> GPtr<u8> = cdecl 0x72A520 => unported;
-    /// `CCullZones::CamNoRain()` (0x72DDB0, bool in AL)
-    fn cam_no_rain() -> u8 = cdecl 0x72DDB0 => unported;
-    /// `CCullZones::PlayerNoRain()` (0x72DDC0, bool in AL)
-    fn player_no_rain() -> u8 = cdecl 0x72DDC0 => unported;
     /// `CAEWeatherAudioEntity::AddAudioEvent(eAudioEvents)` (0x506800)
     fn weather_audio_add_event(this: GPtr<u8>, ev: u32) = thiscall 0x506800 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    fn pad_get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CPad::StartShake(int16 time, uint8 freq, uint32)` (0x53F920)
-    fn pad_start_shake(this: GPtr<u8>, time: u32, freq: u32, a: u32) = thiscall 0x53F920 => unported;
-    /// `FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
     /// `CWeather::AddRain()` (0x72A9A0)
     fn add_rain() = cdecl 0x72A9A0 => crate::mvpd_r2::add_rain;
-    /// `CTaskManager::GetSimplestActiveTask()` (0x6819D0)
-    fn task_manager_simplest_active(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x6819D0 => unported;
     /// `CTask::GetTaskType()` (vtable slot 0x10)
     fn v_task_type(this: GPtr<u8>) -> u32 = thiscall vslot 0x10 => unported;
     /// `CWeather::UpdateInTunnelness()` (0x72B630)
@@ -437,14 +431,9 @@ pub fn weather_update() {
     weather_audio_service(g(0xC81360));
 }
 
-orig! {
-    /// `FindPlayerCoors(CVector* out, int32)` (0x56E010)
-    fn find_player_coors(out: GPtr<u8>, id: i32) -> GPtr<u8> = cdecl 0x56E010 => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    fn vector_normalise(this: GPtr<u8>) = thiscall 0x59C910 => unported;
-    /// CRT `printf` (0x821982)
-    fn crt_printf(fmt: u32) -> i32 = cdecl 0x821982 => unported;
-}
+use sa_core::bindings::find_player_coors;
+use sa_core::bindings::vector_normalise;
+use sa_world::bindings::crt_printf;
 
 /// The oscillation used by `CCheckpoints::Update`: above `hi` with the flag set the flag clears; below
 /// `lo` with the flag clear it sets; then the speed is stepped up (flag) or down by `d`.
@@ -536,15 +525,13 @@ pub fn checkpoints_update() {
     }
 }
 
+use crate::bindings::camera_is_sphere_visible_m;
+use crate::bindings::get_surf_properties as plant_get_surf_properties;
 orig! {
     /// `Fx_c::GetFxQuality()` (0x49EA50)
     fn fx_get_fx_quality(this: GPtr<u8>) -> u32 = thiscall 0x49EA50 => unported;
     /// `RwRenderStateSet` (`RwEngineInstance` slot 0x20)
     fn rs(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `CPlantSurfPropMgr::GetSurfProperties(uint16)` (0x6F9DE0; pushed as a dword)
-    fn plant_get_surf_properties(surface: u32) -> GPtr<u8> = cdecl 0x6F9DE0 => unported;
-    /// `CCamera::IsSphereVisible(const CVector&, float, const RwMatrix*)` (0x420C40, bool in AL)
-    fn camera_is_sphere_visible_m(this: GPtr<u8>, c: GPtr<u8>, r: u32, m: u32) -> u8 = thiscall 0x420C40 => unported;
     /// `CGrassRenderer::AddTriPlant(PPTriPlant*, uint32)` (0x5DB1D0)
     fn grass_add_tri_plant(plant: GPtr<u8>, mode: u32) = cdecl 0x5DB1D0 => crate::mvpd_r3::grass_add_tri_plant;
     /// `CGrassRenderer::FlushTriPlantBuffer()` (0x5DB250)
@@ -632,13 +619,10 @@ pub fn plant_mgr_render() {
     rs(0x1E, 0);
 }
 
+use sa_core::bindings::entity_register_reference;
+use sa_core::bindings::memory_malloc as memory_mgr_malloc;
+use sa_world::bindings::entity_get_col_model as get_col_model;
 orig! {
-    /// `CEntity::GetColModel()` (0x535300)
-    fn get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => unported;
-    /// `CMemoryMgr::Malloc(uint32 size, uint32 hint)` (0x72F420)
-    fn memory_mgr_malloc(size: u32, hint: u32) -> GPtr<u8> = cdecl 0x72F420 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    fn entity_register_reference(this: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571B70 => unported;
     /// `CStencilShadows::UpdateHierarchy(CStencilShadowObject** first, CStencilShadowObject** last,
     /// CStencilShadowObject*)` (0x710BC0)
     fn stencil_update_hierarchy(a: GPtr<u8>, b: GPtr<u8>, o: GPtr<u8>) = cdecl 0x710BC0 => unported;

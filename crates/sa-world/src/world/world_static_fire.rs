@@ -7,19 +7,15 @@ use sa_core::{hook, orig};
 
 use super::common::{rd, x};
 
+use crate::bindings::flush_single;
+use crate::bindings::ptr_list_double_link_flush as flush_double;
+use crate::bindings::remove_from_moving_list;
+use crate::bindings::start_fire_on;
 orig! {
     /// `CEntity::Remove()` (vtable +0xC)
     fn v_remove(e: GPtr<u8>) = thiscall vslot 0xC => unported;
     /// the deleting destructor (vtable +0)
     fn v_delete(e: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
-    /// `CPhysical::RemoveFromMovingList()` (0x542860)
-    fn remove_from_moving_list(e: GPtr<u8>) = thiscall 0x542860 => unported;
-    /// the single-link pointer list flush (0x552400)
-    fn flush_single(l: GPtr<u8>) = thiscall 0x552400 => unported;
-    /// the double-link pointer list flush (0x552470)
-    fn flush_double(l: GPtr<u8>) = thiscall 0x552470 => unported;
-    /// `CFireManager::StartFire(CEntity* target, CEntity* creator, float size, uint8, uint32 time, int8 gens)` (0x53A050) on `gFireManager` (0xB71F80)
-    fn start_fire_on(fm: GPtr<u8>, target: GPtr<u8>, creator: GPtr<u8>, size: f32, a: u32, time: u32, gens: u32) -> GPtr<u8> = thiscall 0x53A050 => unported;
 }
 
 /// `|v - c| < limit` the way the bytes test it: the difference negated when below 0, compared

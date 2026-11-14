@@ -24,6 +24,7 @@ sa_core::globals! {
     list GLOBALS;
 }
 
+pub use sa_core::bindings::get_model_info as get_model_info_by_name;
 orig! {
     /// the static association's vector deleting destructor (vtable slot 0)
     pub fn static_vdelete(this: GPtr<u8>, fl: u32) -> GPtr<u8> = thiscall vslot 0x0 => unported;
@@ -39,8 +40,6 @@ orig! {
     pub fn manager_get_animation_name(name: GPtr<u8>, block: GPtr<u8>) -> GPtr<u8> = cdecl 0x4D42F0 => crate::manager::get_animation_name;
     /// `CModelInfo::GetModelInfoFromHashKey(uint32, int32*)` (0x4C59B0)
     pub fn get_model_info_from_hash_key(key: u32, idx: GPtr<i32>) -> GPtr<u8> = cdecl 0x4C59B0 => unported;
-    /// `CModelInfo::GetModelInfo(const char*, int32*)` (0x4C5940)
-    pub fn get_model_info_by_name(name: GPtr<u8>, idx: GPtr<i32>) -> GPtr<u8> = cdecl 0x4C5940 => unported;
 }
 
 #[inline]

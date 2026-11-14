@@ -23,13 +23,11 @@ const WAITING_FOR_BRAIN: usize = 0xA476B0;
 /// The default script-brain activation radius (0x859D9C, f32 read as a dword).
 const BRAIN_RADIUS: usize = 0x859D9C;
 
+use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+use sa_core::bindings::set_mission_doesnt_require_model;
 orig! {
     /// `CRunningScript::Init()` (0x4648E0)
     fn running_script_init(s: GPtr<u8>) = thiscall 0x4648e0 => crate::script_init::running_script_init;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
-    fn clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571a00 => unported;
-    /// `CStreaming::SetMissionDoesntRequireModel(int32)` (0x409C90)
-    fn set_mission_doesnt_require_model(model: i32) = cdecl 0x409c90 => unported;
 }
 
 use sa_core::field::at;

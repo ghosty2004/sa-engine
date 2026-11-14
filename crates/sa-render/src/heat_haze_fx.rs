@@ -10,26 +10,20 @@ use sa_core::{hook, orig};
 
 use crate::common::{ftol32, g, rd, x, xi};
 
+use crate::bindings::draw_quad;
+use crate::bindings::im_render_states_store as rs_store;
+use crate::bindings::rw_raster_push_context;
+use crate::bindings::rw_raster_render_fast;
+use sa_core::bindings::rw_camera_clear;
+use sa_core::bindings::rw_camera_end_update;
 orig! {
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `RwCameraClear(RwCamera*, RwRGBA*, int32)` (0x7EE340)
-    fn rw_camera_clear(cam: GPtr<u8>, col: GPtr<u8>, mode: i32) -> GPtr<u8> = cdecl 0x7EE340 => unported;
-    /// `CPostEffects::ImmediateModeRenderStatesStore()` (0x700CC0), `...Set()` (0x700D70), `...ReStore()` (0x700E00)
-    fn rs_store() = cdecl 0x700CC0 => unported;
     fn rs_set() = cdecl 0x700D70 => unported;
     fn rs_restore() = cdecl 0x700E00 => unported;
-    /// `CPostEffects::DrawQuad(x, y, w, h, r, g, b, a, raster)` (0x700EC0), floats as bits
-    fn draw_quad(x0: u32, y0: u32, w: u32, h: u32, r: u32, gr: u32, b: u32, a: u32, raster: u32) = cdecl 0x700EC0 => unported;
     /// `Fx_c::Render(RwCamera*, bool)` (0x49E650; ECX = `g_fx` is ignored by the callee)
     fn fx_render(cam: u32, haze: u32) = stdcall 0x49E650 => unported;
     /// `CPostEffects::HeatHazeFXInit()` (0x701450)
     fn heat_haze_fx_init() = cdecl 0x701450 => unported;
-    /// `RwCameraEndUpdate(RwCamera*)` (0x7EE180)
-    fn rw_camera_end_update(cam: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EE180 => unported;
-    /// `RwRasterPushContext(RwRaster*)` (0x7FB060), `RwRasterRenderFast(RwRaster*, int32, int32)` (0x7FAF50),
-    /// `RwRasterPopContext()` (0x7FB110)
-    fn rw_raster_push_context(r: GPtr<u8>) -> GPtr<u8> = cdecl 0x7FB060 => unported;
-    fn rw_raster_render_fast(r: GPtr<u8>, x0: i32, y0: i32) -> GPtr<u8> = cdecl 0x7FAF50 => unported;
     fn rw_raster_pop_context() -> GPtr<u8> = cdecl 0x7FB110 => unported;
     /// `RsCameraBeginUpdate(RwCamera*)` (0x619450)
     fn rs_camera_begin_update(cam: GPtr<u8>) -> u32 = cdecl 0x619450 => unported;

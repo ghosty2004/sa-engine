@@ -56,10 +56,15 @@ const REPLAY_MODE: usize = 0xA43088;
 const AUDIO_ENGINE: usize = 0xB6BC90;
 const GAMMA: usize = 0xC92134;
 
+use sa_core::bindings::di_mouse_init;
+use sa_core::bindings::get_mouse_set_up;
+use sa_core::bindings::get_pad;
+use sa_core::bindings::pad_update_pads as update_pads;
+use sa_core::bindings::rs_event_handler;
+use sa_core::bindings::rw_d3d9_get_caps;
 sa_core::orig! {
     fn system_parameters_info_a(action: u32, p1: u32, p2: GPtr<u8>, win_ini: u32) -> i32 = stdcall cell 0x85826C => unported;
     fn is_already_running() -> i32 = cdecl 0x7468E0 => unported;
-    fn rs_event_handler(event: i32, param: GPtr<u8>) -> i32 = cdecl 0x619B60 => unported;
     fn win32_init_application(instance: u32) -> u32 = cdecl 0x7486A0 => unported;
     fn get_command_line_a() -> GPtr<u8> = stdcall cell 0x858148 => unported;
     fn win32_init_instance(instance: u32) -> u32 = cdecl 0x745560 => unported;
@@ -67,9 +72,7 @@ sa_core::orig! {
     fn init_default_control_configuration(this: GPtr<u8>) = thiscall 0x530640 => unported;
     fn get_module_handle_a(name: GPtr<u8>) -> u32 = stdcall cell 0x858068 => unported;
     fn direct_input8_create(inst: u32, version: u32, iid: GPtr<u8>, out: GPtr<u32>, outer: u32) -> i32 = stdcall 0x817523 => unported;
-    fn di_mouse_init(exclusive: u32) -> i32 = cdecl 0x7469A0 => unported;
     fn di_pad_init() = cdecl 0x7485C0 => unported;
-    fn get_mouse_set_up(out: GPtr<u8>) -> GPtr<u8> = stdcall 0x53F2D0 => unported;
     fn init_default_control_config_mouse(this: GPtr<u8>, set_up: GPtr<u8>, controls: u32) = thiscall 0x52F6F0 => unported;
     fn destroy_window(hwnd: u32) -> i32 = stdcall cell 0x858270 => unported;
     fn set_window_long_a(hwnd: u32, index: i32, value: u32) -> i32 = stdcall cell 0x858274 => unported;
@@ -96,9 +99,7 @@ sa_core::orig! {
     fn loading_screen_shutdown(unk: u8) = cdecl 0x58FF10 => unported;
     fn video_player_play(cmd_show: i32, file: GPtr<u8>) = cdecl 0x747660 => unported;
     fn video_player_release() = cdecl 0x746740 => unported;
-    fn update_pads() = cdecl 0x541DD0 => unported;
     fn get_joy_button_just_down(this: GPtr<u8>) -> i32 = thiscall 0x52D1E0 => unported;
-    fn get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
     fn check_for_input(state: GPtr<u8>) -> u8 = thiscall 0x53EFF0 => unported;
     fn is_enter_just_pressed(pad: GPtr<u8>) -> u8 = thiscall 0x4D5980 => unported;
     fn is_standard_key_just_pressed(pad: GPtr<u8>, key: u32) -> u8 = thiscall 0x4D59B0 => unported;
@@ -107,7 +108,6 @@ sa_core::orig! {
     fn video_graph_release(graph: GPtr<u8>) -> u32 = stdcall vslot 0x24 => unported;
     fn initialise_essentials_after_rw() -> u8 = cdecl 0x5BA160 => unported;
     fn initialise_core_data_after_rw() = cdecl 0x5BFA90 => unported;
-    fn rw_d3d9_get_caps() -> GPtr<u8> = cdecl 0x7FAD20 => unported;
     fn get_window_placement(hwnd: u32, wp: GPtr<u8>) -> i32 = stdcall cell 0x85828C => unported;
     fn start_loading_tune(this: GPtr<u8>) = thiscall 0x507410 => unported;
     fn initialise_game() = cdecl 0x53E580 => unported;
@@ -116,11 +116,11 @@ sa_core::orig! {
     fn get_cycles_per_millisecond() -> u32 = cdecl 0x561A40 => unported;
     fn is_beat_info_present(this: GPtr<u8>) -> u8 = thiscall 0x5071D0 => unported;
 }
+use sa_core::bindings::cheat_reset_cheats as reset_cheats;
+use sa_core::bindings::timer_stop;
+use sa_stream::bindings::pad_stop_pads_shaking as stop_pads_shaking;
 sa_core::orig! {
     fn menu_unload_textures(this: GPtr<u8>) = thiscall 0x574630 => unported;
-    fn reset_cheats() = cdecl 0x438450 => unported;
-    fn stop_pads_shaking() = cdecl 0x541D70 => unported;
-    fn timer_stop() = cdecl 0x561AA0 => unported;
     fn shut_down_for_restart() = cdecl 0x53C550 => unported;
     fn initialise_when_restarting() = cdecl 0x53C680 => unported;
 }
@@ -557,6 +557,4 @@ pub fn frame_step() -> Step {
     s.probe = true;
     s
 }
-
-
 

@@ -10,21 +10,42 @@ use sa_world::world::common::{cam_pos, find_player_coors, find_player_vehicle};
 
 use crate::common::{f32_of, g, jp5, rand_at, rd, wr, x, xi};
 
+use crate::bindings::audio_initialise;
+use crate::bindings::bouncing_panel_set_panel;
+use crate::bindings::dm_reset_damage_status as reset_damage_status;
+use crate::bindings::dm_set_door_status as set_door_status;
+use crate::bindings::event_danger_ctor;
+use crate::bindings::event_danger_dtor;
+use crate::bindings::find_maximum_speed_to_stop_at_stations;
+use crate::bindings::get_flying_pointer;
+use crate::bindings::vehicle_ctor;
+use crate::bindings::vehicle_set_model_index;
+use sa_core::bindings::entity_register_reference as register_reference;
+use sa_core::bindings::matrix_attach;
+use sa_core::bindings::matrix_dtor;
+use sa_core::bindings::matrix_set_translate;
+use sa_core::bindings::matrix_update_rw;
+use sa_core::bindings::set_model_is_deletable;
+use sa_core::bindings::set_model_txd_is_deletable;
+use sa_core::bindings::streaming_request_model as request_model;
+use sa_core::bindings::world_remove;
+use sa_stream::bindings::choose_vehicle_colour;
+use sa_stream::bindings::fill_frame_array;
+use sa_stream::bindings::get_first_object;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::is_law_enforcement_vehicle;
+use sa_world::bindings::is_player_on_a_mission;
+use sa_world::bindings::join_car_with_road_system;
+use sa_world::bindings::la_riots_active_here;
+use sa_world::bindings::matrix_ctor_rw;
+use sa_world::bindings::ped_groups_get_peds_group as get_peds_group;
+use sa_world::bindings::player_get_wanted_level as get_wanted_level;
 orig! {
-    /// `CWorld::Remove(CEntity*)` (0x563280)
-    fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
     /// Virtual slot 0 (`scalar deleting destructor`)
     fn entity_vdelete(e: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
-    /// `CStreaming::RequestModel(int32, int32)` (0x4087E0)
-    fn request_model(id: i32, flags: i32) = cdecl 0x4087E0 => unported;
-    /// `CStreaming::SetModelIsDeletable(int32)` (0x409C10)
-    fn set_model_is_deletable(id: i32) = cdecl 0x409C10 => unported;
-    /// `CStreaming::SetModelTxdIsDeletable(int32)` (0x409C70)
-    fn set_model_txd_is_deletable(id: i32) = cdecl 0x409C70 => unported;
     /// `CTrain::CreateMissionTrain(CVector, bool, uint32, CTrain**, CTrain**, int32, int32, bool)` (0x6F7550)
     fn create_mission_train(px: f32, py: f32, pz: f32, clockwise: u8, kind: u32, out_first: GPtr<GPtr<u8>>, out_last: GPtr<GPtr<u8>>, node: i32, track: i32, mission: u8) = cdecl 0x6F7550 => crate::mvpb_a5::create_mission_train;
-    /// `CTrain::FindMaximumSpeedToStopAtStations(float*)` (0x6F5BA0)
-    fn find_maximum_speed_to_stop_at_stations(t: GPtr<u8>, out: GPtr<f32>) -> u8 = thiscall 0x6F5BA0 => crate::mvpb_a1::find_maximum_speed_to_stop_at_stations;
     /// `CTrain::SetTrainSpeed(CTrain*, float)` (0x6F5E20)
     fn set_train_speed(t: GPtr<u8>, speed: f32) = cdecl 0x6F5E20 => crate::train::set_train_speed;
     /// `CCullZones::FindTunnelAttributesForCoors(CVector)` (0x72D9F0)
@@ -48,8 +69,6 @@ orig! {
     fn set_posn(e: GPtr<u8>, v: GPtr<f32>) = thiscall 0x4241C0 => sa_world::world::entity::set_posn_vector;
     /// `0x6C4130`: the matrix of a heading (`sin`/`cos` of the argument, no roll or pitch)
     fn set_heading_matrix(v: GPtr<u8>, heading: f32) = thiscall 0x6C4130 => unported;
-    /// `CCarCtrl::JoinCarWithRoadSystem(CVehicle*)` (0x42F5A0)
-    fn join_car_with_road_system(v: GPtr<u8>) = cdecl 0x42F5A0 => unported;
     /// `CWorld::Add(CEntity*)` (0x563220)
     fn world_add(e: GPtr<u8>) = cdecl 0x563220 => sa_world::world::cworld2::add;
     /// `CPhysical::SetVelocity(CVector)` (0x441130, the vector by value as bits)
@@ -62,68 +81,18 @@ orig! {
     fn find_unsuspecting_target_ped(px: f32, py: f32, pz: f32, qx: f32, qy: f32, qz: f32) -> GPtr<u8> = cdecl 0x566DA0 => unported;
     /// `CWorld::FindUnsuspectingTargetCar(CVector, CVector)` (0x566C90)
     fn find_unsuspecting_target_car(px: f32, py: f32, pz: f32, qx: f32, qy: f32, qz: f32) -> GPtr<u8> = cdecl 0x566C90 => sa_world::world::cworld2::find_unsuspecting_target_car;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    fn register_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571B70 => unported;
-    /// `CPedGroups::GetPedsGroup(CPed*)` (0x5F7E80)
-    fn get_peds_group(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x5F7E80 => unported;
-    /// `CEventDanger::CEventDanger(CEntity*, float)` (0x4B2600)
-    fn event_danger_ctor(ev: GPtr<u8>, e: GPtr<u8>, radius: f32) -> GPtr<u8> = thiscall 0x4B2600 => unported;
-    /// `CEventDanger` destructor (0x4B26A0)
-    fn event_danger_dtor(ev: GPtr<u8>) = thiscall 0x4B26A0 => unported;
     /// `CPedGroupIntelligence::AddEvent(CEvent*)` (0x5F7470)
     fn pgi_add_event(i: GPtr<u8>, ev: GPtr<u8>) -> u8 = thiscall 0x5F7470 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420)
-    fn event_group_add(grp: GPtr<u8>, ev: GPtr<u8>, valid: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
     /// `FindPlayerPed(int32)` (0x56E210)
     fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
-    /// `CPlayerPed::GetWantedLevel()` (0x41BE60)
-    fn get_wanted_level(p: GPtr<u8>) -> i32 = thiscall 0x41BE60 => unported;
     /// `CPool<CVehicle>::GetAt(int32)` (0x41CC10)
     fn vehicle_pool_get_at(pool: GPtr<u8>, i: i32) -> GPtr<u8> = thiscall 0x41CC10 => unported;
     /// `CVehicle::GetVehicleAppearance()` (0x6D1080)
     fn get_vehicle_appearance(v: GPtr<u8>) -> u32 = thiscall 0x6D1080 => crate::vehicle2::get_vehicle_appearance;
-    /// `CTheScripts::IsPlayerOnAMission()` (0x464D50)
-    fn is_player_on_a_mission() -> u8 = cdecl 0x464D50 => unported;
-    /// `CGameLogic::LaRiotsActiveHere()` (0x441C10)
-    fn la_riots_active_here() -> u8 = cdecl 0x441C10 => unported;
-    /// `CVehicle::CVehicle(eVehicleCreatedBy)` (0x6D5F10)
-    fn vehicle_ctor(v: GPtr<u8>, created_by: u32) -> GPtr<u8> = thiscall 0x6D5F10 => unported;
-    /// `CDamageManager::ResetDamageStatus()` (0x6C20E0)
-    fn reset_damage_status(dm: GPtr<u8>) = thiscall 0x6C20E0 => crate::damage::reset_damage_status;
-    /// `CVehicle::SetModelIndex(uint32)` (0x6D6A40)
-    fn vehicle_set_model_index(v: GPtr<u8>, mi: u32) = thiscall 0x6D6A40 => unported;
-    /// `CClumpModelInfo::FillFrameArray(RpClump*, RwFrame**)` (0x4C5440)
-    fn fill_frame_array(clump: GPtr<u8>, frames: GPtr<u8>) = cdecl 0x4C5440 => unported;
     /// `CVehicle::AddVehicleUpgrade(int32)` (0x6E3290)
     fn add_vehicle_upgrade(v: GPtr<u8>, model: u32) = thiscall 0x6E3290 => unported;
-    /// `cHandlingDataMgr::GetFlyingPointer(uint8)` (0x6F52D0)
-    fn get_flying_pointer(mgr: GPtr<u8>, id: u32) -> GPtr<u8> = thiscall 0x6F52D0 => crate::handling::get_flying_pointer;
-    /// `CVehicleModelInfo::ChooseVehicleColour(uint8&, uint8&, uint8&, uint8&, int32)` (0x4C8500)
-    fn choose_vehicle_colour(mi: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, c: GPtr<u8>, d: GPtr<u8>, inc: i32) = thiscall 0x4C8500 => unported;
-    /// `RwHelper::GetFirstObject(RwFrame*)` (0x7348C0)
-    fn get_first_object(frame: GPtr<u8>) -> GPtr<u8> = cdecl 0x7348C0 => unported;
-    /// `CDamageManager::SetDoorStatus(eDoors, eDoorStatus)` (0x6C21C0)
-    fn set_door_status(dm: GPtr<u8>, door: i32, status: u32) = thiscall 0x6C21C0 => crate::damage::set_door_status;
-    /// `CBouncingPanel::SetPanel(int16, int16, float)` (0x6F4920; the float as bits)
-    fn bouncing_panel_set_panel(p: GPtr<u8>, frame: u32, axis: u32, limit: u32) = thiscall 0x6F4920 => crate::door::set_panel;
     /// `CAutomobile::SetupSuspensionLines()` (0x6A65D0)
     fn setup_suspension_lines(a: GPtr<u8>) = thiscall 0x6A65D0 => crate::mvpb_a5::setup_suspension_lines;
-    /// `CVehicle::IsLawEnforcementVehicle()` (0x6D2370)
-    fn is_law_enforcement_vehicle(v: GPtr<u8>) -> u8 = thiscall 0x6D2370 => unported;
-    /// `CMatrix::Attach(RwMatrix*, bool)` (0x59BD10)
-    fn matrix_attach(m: GPtr<u8>, rw: GPtr<u8>, owns: u32) = thiscall 0x59BD10 => unported;
-    /// `CMatrix::CMatrix(RwMatrix*, bool)` (0x59C050)
-    fn matrix_ctor_rw(m: GPtr<u8>, rw: GPtr<u8>, owns: u32) -> GPtr<u8> = thiscall 0x59C050 => unported;
-    /// `CMatrix::SetTranslate(CVector)` (0x59AF40, the vector by value as bits)
-    fn matrix_set_translate(m: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x59AF40 => unported;
-    /// `CMatrix::UpdateRW()` (0x59BBB0)
-    fn matrix_update_rw(m: GPtr<u8>) = thiscall 0x59BBB0 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
-    /// `CAEVehicleAudioEntity::Initialise(CEntity*)` (0x4F7670)
-    fn audio_initialise(a: GPtr<u8>, e: GPtr<u8>) = thiscall 0x4F7670 => unported;
 }
 
 use sa_math::fpu::le_or_nan as le;

@@ -13,6 +13,21 @@ const PARTICLE_TXD: usize = 0x85C648;
 /// `RwRenderState` values used here.
 const RS_TEXTURERASTER: u32 = 1;
 
+pub use sa_core::bindings::crt_free_8214bd as crt_free;
+pub use sa_core::bindings::destroy_fx_system;
+pub use sa_core::bindings::get_surface_id_from_name;
+pub use sa_core::bindings::list_add_item;
+pub use sa_core::bindings::list_remove_all;
+pub use sa_core::bindings::list_remove_item;
+pub use sa_core::bindings::rgba_ctor as crgba_ctor;
+pub use sa_core::bindings::rw_d3d9_get_caps;
+pub use sa_core::bindings::rw_im2d_render_primitive;
+pub use sa_core::bindings::rw_raster_destroy;
+pub use sa_core::bindings::world_remove;
+pub use sa_stream::bindings::find_txd_slot;
+pub use sa_stream::bindings::rw_texture_destroy;
+pub use sa_stream::bindings::rw_texture_read;
+pub use sa_world::bindings::escalator_switch_off;
 orig! {
     /// `CTxdStore::PushCurrentTxd()` (0x7316A0)
     pub fn push_current_txd() = cdecl 0x7316A0 => sa_stream::txdstore::push_current_txd;
@@ -20,26 +35,12 @@ orig! {
     pub fn pop_current_txd() = cdecl 0x7316B0 => sa_stream::txdstore::pop_current_txd;
     /// `CTxdStore::SetCurrentTxd(int)` (0x7319C0)
     pub fn set_current_txd(slot: i32) = cdecl 0x7319C0 => sa_stream::txdstore::set_current_txd;
-    /// `CTxdStore::FindTxdSlot(const char*)` (0x731850)
-    pub fn find_txd_slot(name: GPtr<u8>) -> i32 = cdecl 0x731850 => sa_stream::txdstore::find_txd_slot_name;
-    /// `RwTextureRead(const char* name, const char* mask)` (0x7F3AC0)
-    pub fn rw_texture_read(name: GPtr<u8>, mask: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F3AC0 => unported;
-    /// `RwTextureDestroy(RwTexture*)` (0x7F3820)
-    pub fn rw_texture_destroy(tex: GPtr<u8>) -> i32 = cdecl 0x7F3820 => unported;
-    /// `RwRasterDestroy(RwRaster*)` (0x7FB020)
-    pub fn rw_raster_destroy(r: GPtr<u8>) -> i32 = cdecl 0x7FB020 => unported;
     /// `RwRasterLock(RwRaster*, RwUInt8 level, RwInt32 lockMode)` (0x7FB2D0)
     pub fn rw_raster_lock(r: GPtr<u8>, level: u32, mode: u32) -> GPtr<u8> = cdecl 0x7FB2D0 => unported;
     /// `RwRenderStateSet(state, value)`: `RwEngineInstance->dOpenDevice.fpRenderStateSet` (slot +0x20)
     pub fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `RwIm2DRenderPrimitive(type, verts, n)` (0x734E90)
-    pub fn rw_im2d_render_primitive(ty: u32, verts: GPtr<u8>, n: i32) -> i32 = cdecl 0x734E90 => unported;
-    /// `RwD3D9GetCaps()` (0x7FAD20): the device's `D3DCAPS9`
-    pub fn rw_d3d9_get_caps() -> GPtr<u8> = cdecl 0x7FAD20 => unported;
     /// `operator new(size_t)` (0x82119A)
     pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
-    /// CRT `free` (0x8214BD)
-    pub fn crt_free(p: GPtr<u8>) = cdecl 0x8214BD => unported;
     /// `CSprite2d::SetVertices(RwD3D9Vertex*, const CRect&, const CRGBA& c1..c4, float u1, v1 .. u4, v4)`
     /// (0x727A00)
     pub fn set_vertices_d3d9(v: GPtr<u8>, r: GPtr<u8>, c1: GPtr<u8>, c2: GPtr<u8>, c3: GPtr<u8>, c4: GPtr<u8>,
@@ -48,8 +49,6 @@ orig! {
     pub fn set_vertices_rect(r: GPtr<u8>, c1: GPtr<u8>, c2: GPtr<u8>, c3: GPtr<u8>, c4: GPtr<u8>) = cdecl 0x727420 => crate::sprite2d::set_vertices_rect;
     /// `CSprite2d::RenderVertexBuffer()` (0x7273D0)
     pub fn render_vertex_buffer() = cdecl 0x7273D0 => crate::sprite2d::render_vertex_buffer;
-    /// `CRGBA::CRGBA(u8 r, u8 g, u8 b, u8 a)` (0x7170C0, thiscall, returns this)
-    pub fn crgba_ctor(this: GPtr<u8>, r: u32, g: u32, b: u32, a: u32) -> GPtr<u8> = thiscall 0x7170C0 => unported;
     /// `CPlantSurfPropMgr::LoadPlantsDat(const char*)` (0x5DD3B0)
     pub fn load_plants_dat(name: GPtr<u8>) -> u8 = cdecl 0x5DD3B0 => unported;
     /// `C3dMarkers::Shutdown()` (0x722710)
@@ -58,36 +57,22 @@ orig! {
     pub fn point_lights_init() = cdecl 0x6FFB40 => crate::pointlights::init;
     /// `CEscalators::Init()` (0x717C50)
     pub fn escalators_init() = cdecl 0x717C50 => sa_world::world::escalators::init;
-    /// `CEscalator::SwitchOff()` (0x717860)
-    pub fn escalator_switch_off(e: GPtr<u8>) = thiscall 0x717860 => sa_world::world::escalators::switch_off;
     /// `CClouds::VolumetricCloudsInit()` (0x7131C0)
     pub fn volumetric_clouds_init() = cdecl 0x7131C0 => crate::clouds::volumetric_clouds_init;
     /// `CClouds::MovingFogInit()` (0x713660)
     pub fn moving_fog_init() = cdecl 0x713660 => crate::clouds::moving_fog_init;
-    /// `CWorld::Remove(CEntity*)` (0x563280)
-    pub fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
     /// `CEntity` virtual slot +0x20 (`Remove()`-style no-argument virtual called before CWorld::Remove)
     pub fn entity_vslot_20(e: GPtr<u8>) = thiscall vslot 0x20 => unported;
     /// virtual slot 0: the scalar deleting destructor (`delete this` with flag 1)
     pub fn entity_delete(e: GPtr<u8>, flags: u32) -> GPtr<u8> = thiscall vslot 0 => unported;
-    /// `List_c::AddItem(ListItem_c*)` (0x4A8DF0)
-    pub fn list_add_item(l: GPtr<u8>, item: GPtr<u8>) = thiscall 0x4A8DF0 => unported;
-    /// `List_c::RemoveItem(ListItem_c*)` (0x4A8E30)
-    pub fn list_remove_item(l: GPtr<u8>, item: GPtr<u8>) = thiscall 0x4A8E30 => unported;
-    /// `List_c::RemoveAll()` (0x4A8EB0)
-    pub fn list_remove_all(l: GPtr<u8>) = thiscall 0x4A8EB0 => unported;
     /// `ProcObjectMan_c::LoadDataFile()` (0x5A3140)
     pub fn proc_object_man_load_data_file(this: GPtr<u8>) = thiscall 0x5A3140 => unported;
     /// `ProcSurfaceInfo_c::Exit()` (0x5A3270)
     pub fn proc_surface_info_exit_call(this: GPtr<u8>) = thiscall 0x5A3270 => proc_surface_info_exit;
-    /// `SurfaceInfos_c::GetSurfaceIdFromName(const char*)` (0x55D220, on g_surfaceInfos 0xB79538)
-    pub fn get_surface_id_from_name(this: GPtr<u8>, name: GPtr<u8>) -> u32 = thiscall 0x55D220 => unported;
     /// `CModelInfo::GetModelInfo(const char* name, int* index)` (0x4C5940)
     pub fn get_model_info_full(name: GPtr<u8>, index: GPtr<u8>) -> GPtr<u8> = cdecl 0x4C5940 => unported;
     /// `CRope::Remove()` (0x556780)
     pub fn rope_remove_call(this: GPtr<u8>) = thiscall 0x556780 => rope_remove;
-    /// `FxManager_c::DestroyFxSystem(FxSystem_c*)` (0x4A9810)
-    pub fn destroy_fx_system(this: GPtr<u8>, sys: GPtr<u8>) = thiscall 0x4A9810 => unported;
     /// `CRealTimeShadow::~CRealTimeShadow()` (0x706440)
     pub fn real_time_shadow_destructor(this: GPtr<u8>) = thiscall 0x706440 => unported;
     /// `CShadowCamera::Destroy()` (0x705400)

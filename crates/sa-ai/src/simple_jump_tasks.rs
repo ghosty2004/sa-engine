@@ -7,40 +7,35 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::climb_test_for_climb;
+use crate::bindings::clump_get_association;
+use crate::bindings::event_handler_current_type;
+use sa_core::bindings::matrix_mul_vec;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::event_sound_quiet_dtor;
+use sa_world::bindings::get_event_global_group;
+use sa_world::bindings::is_steep_slope as surface_is_steep_slope;
+use sa_world::bindings::physical_apply_move_force_5429f0 as physical_apply_move_force;
+use sa_world::bindings::stats_get_fat_and_muscle_modifier;
 orig! {
-    /// `RpAnimBlendClumpGetAssociation(RpClump*, AnimationId)` (0x4D68B0)
-    fn clump_get_association(clump: u32, id: u32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
-    /// `SurfaceInfos_c::IsSteepSlope(surface)` (0x55E770) on `g_surfaceInfos` (0xB79538)
-    fn surface_is_steep_slope(s: GPtr<u8>, surface: u32) -> u8 = thiscall 0x55E770 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
     /// `CGameLogic::IsPlayerAllowedToGoInThisDirection(CPed*, CVector dir, float)` (0x441E10)
     fn game_logic_player_allowed_direction(ped: GPtr<u8>, x: u32, y: u32, z: u32, dist: f32) -> u8 = cdecl 0x441E10 => unported;
     /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float)` (0x4D4610)
     fn anim_blend_animation(clump: u32, group: u32, id: u32, delta: f32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
-    /// `CStats::GetFatAndMuscleModifier(int32)` (0x559AF0, ST0)
-    fn stats_get_fat_and_muscle_modifier(i: i32) -> f64 = cdecl 0x559AF0 => unported;
     /// `CAnimBlendAssociation::SetFinishCallback(void (*)(CAnimBlendAssociation*, void*), void*)` (0x4CEBE0)
     fn assoc_set_finish_callback(a: GPtr<u8>, cb: u32, data: GPtr<u8>) = thiscall 0x4CEBE0 => unported;
     /// `CTaskSimpleJump::StartLaunchAnim(CPed*)` (0x67D7A0)
     fn start_launch_anim_c(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x67D7A0 => start_launch_anim;
-    /// `CTaskSimpleClimb::TestForClimb(CPed*, CVector& pos, float& angle, uint8& surface, bool)` (0x6803A0)
-    fn climb_test_for_climb(ped: GPtr<u8>, pos: GPtr<u8>, angle: GPtr<u8>, surface: GPtr<u8>, b: u32) -> GPtr<u8> = cdecl 0x6803A0 => unported;
     /// `CTaskSimpleJump::CheckIfJumpBlocked(CPed*)` (0x67D590)
     fn check_if_jump_blocked(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x67D590 => check_if_jump_blocked_port;
-    /// `CEventHandler::GetCurrentEventType()` (0x4B8CC0)
-    fn event_handler_current_type(h: GPtr<u8>) -> i32 = thiscall 0x4B8CC0 => unported;
     /// `CWorld::TestSphereAgainstWorld(CVector, float, CEntity*, bool, bool, bool, bool, bool, bool)` (0x569E20)
     #[allow(clippy::too_many_arguments)]
     fn world_test_sphere(x: u32, y: u32, z: u32, r: f32, ignore: u32, b: u32, v: u32, p: u32, o: u32, d: u32, c: u32) -> GPtr<u8> = cdecl 0x569E20 => unported;
-    /// `CMatrix * CVector` (0x59C890, `(CVector* out, const CMatrix*, const CVector*)`)
-    fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
     /// `CEntity::TestCollision(bool)` (vtable slot 0x34)
     fn entity_test_collision(e: GPtr<u8>, b: u32) -> u8 = thiscall vslot 0x34 => unported;
     /// `CTaskSimpleJump::Launch(CPed*)` (0x679B80)
     fn launch(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x679B80 => launch_port;
-    /// `CPhysical::ApplyMoveForce(CVector)` (0x5429F0)
-    fn physical_apply_move_force(p: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x5429F0 => unported;
     /// `CLocalisation::Blood()` (0x56D230)
     fn localisation_blood() -> u8 = cdecl 0x56D230 => crate::fight_ground_target::localisation_blood_native;
     /// `GetAnimHierarchyFromSkinClump(RpClump*)` (0x734A40)
@@ -58,12 +53,6 @@ orig! {
     /// `CEventSoundQuiet(CEntity*, float, uint32, CVector)` (0x5E05B0)
     #[allow(clippy::too_many_arguments)]
     fn event_sound_quiet_ctor(e: GPtr<u8>, ent: GPtr<u8>, volume: f32, time: u32, pos: GPtr<u8>) -> GPtr<u8> = thiscall 0x5E05B0 => unported;
-    /// `GetEventGlobalGroup()` (0x4ABA50)
-    fn get_event_global_group() -> GPtr<u8> = cdecl 0x4ABA50 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420)
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
-    /// `CEventSoundQuiet::~CEventSoundQuiet()` body (0x5DEA00)
-    fn event_sound_quiet_dtor(e: GPtr<u8>) = thiscall 0x5DEA00 => unported;
 }
 
 /// `CTaskSimpleJump::JumpAnimFinishCB` (0x67A020), passed as the original address.

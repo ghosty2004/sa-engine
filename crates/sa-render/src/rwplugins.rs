@@ -76,61 +76,43 @@ const ID_NODE_NAME: u32 = 0x253F2FE;
 /// `CVisibilityPlugins::DefaultVisibilityCB` (0x732A30), the clump constructor's callback.
 const DEFAULT_VISIBILITY_CB: u32 = 0x732A30;
 
+pub use crate::bindings::env_atm_pool_new;
+pub use sa_core::bindings::crt_free_8214bd as operator_delete;
+pub use sa_core::bindings::crt_strncpy as strncpy;
+pub use sa_core::bindings::memory_free;
+pub use sa_core::bindings::memory_malloc;
+pub use sa_core::bindings::rp_atomic_destroy;
+pub use sa_core::bindings::rp_atomic_register_plugin;
+pub use sa_core::bindings::rp_atomic_register_plugin_stream;
+pub use sa_core::bindings::rp_atomic_set_frame;
+pub use sa_core::bindings::rp_geometry_register_plugin;
+pub use sa_core::bindings::rp_geometry_register_plugin_stream;
+pub use sa_core::bindings::rp_material_register_plugin;
+pub use sa_core::bindings::rp_material_register_plugin_stream;
+pub use sa_core::bindings::rw_frame_destroy;
+pub use sa_core::bindings::rw_stream_write;
+pub use sa_core::bindings::stream_read as rw_stream_read;
+pub use sa_stream::bindings::rw_texture_destroy;
+pub use sa_world::bindings::anim_blend_clump_remove_all_associations;
 orig! {
     /// `RwFrameRegisterPlugin(size, id, ctor, dtor, copy)` (0x7F1260)
     pub fn rw_frame_register_plugin(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x7F1260 => unported;
     /// `RwFrameRegisterPluginStream(id, read, write, getSize)` (0x807580)
     pub fn rw_frame_register_plugin_stream(id: u32, read: u32, write: u32, size: u32) -> i32 = cdecl 0x807580 => unported;
-    /// `RpAtomicRegisterPlugin` (0x74BDA0)
-    pub fn rp_atomic_register_plugin(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x74BDA0 => unported;
-    /// `RpAtomicRegisterPluginStream` (0x74BE00)
-    pub fn rp_atomic_register_plugin_stream(id: u32, read: u32, write: u32, size: u32) -> i32 = cdecl 0x74BE00 => unported;
     /// `RpClumpRegisterPlugin` (0x74BDD0)
     pub fn rp_clump_register_plugin(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x74BDD0 => unported;
     /// `RpClumpRegisterPluginStream` (0x74BE70)
     pub fn rp_clump_register_plugin_stream(id: u32, read: u32, write: u32, size: u32) -> i32 = cdecl 0x74BE70 => unported;
-    /// `RpGeometryRegisterPlugin` (0x74CD70)
-    pub fn rp_geometry_register_plugin(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x74CD70 => unported;
-    /// `RpGeometryRegisterPluginStream` (0x74CDA0)
-    pub fn rp_geometry_register_plugin_stream(id: u32, read: u32, write: u32, size: u32) -> i32 = cdecl 0x74CDA0 => unported;
-    /// `RpMaterialRegisterPlugin` (0x74DBF0)
-    pub fn rp_material_register_plugin(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x74DBF0 => unported;
-    /// `RpMaterialRegisterPluginStream` (0x74DC20)
-    pub fn rp_material_register_plugin_stream(id: u32, read: u32, write: u32, size: u32) -> i32 = cdecl 0x74DC20 => unported;
     /// `RtAnimRegisterInterpolationScheme(RtAnimInterpolatorInfo*)` (0x7CCD40)
     pub fn rt_anim_register_interpolation_scheme(info: GPtr<u8>) -> i32 = cdecl 0x7CCD40 => unported;
-    /// `RwStreamRead(stream, buffer, length)` (0x7EC9D0)
-    pub fn rw_stream_read(s: GPtr<u8>, buf: GPtr<u8>, len: u32) -> u32 = cdecl 0x7EC9D0 => unported;
-    /// `RwStreamWrite(stream, buffer, length)` (0x7ECB30)
-    pub fn rw_stream_write(s: GPtr<u8>, buf: GPtr<u8>, len: u32) -> GPtr<u8> = cdecl 0x7ECB30 => unported;
     /// `rwstrlen` through `RwEngineInstance` +0x120
     pub fn rw_strlen(s: GPtr<u8>) -> i32 = cdecl table 0xC97B24 0x120 => unported;
-    /// CRT `strncpy` (0x821F40)
-    pub fn strncpy(d: GPtr<u8>, s: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x821F40 => unported;
     /// `operator new` (0x821195, the `new[]` jump)
     pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x821195 => unported;
-    /// `operator delete` (0x8214BD)
-    pub fn operator_delete(p: GPtr<u8>) = cdecl 0x8214BD => unported;
-    /// `CMemoryMgr::Malloc(size, hint)` (0x72F420; the callers push a second 0)
-    pub fn memory_malloc(size: u32, hint: u32) -> GPtr<u8> = cdecl 0x72F420 => unported;
-    /// `CMemoryMgr::Free(p)` (0x72F430)
-    pub fn memory_free(p: GPtr<u8>) = cdecl 0x72F430 => unported;
-    /// `RwTextureDestroy` (0x7F3820)
-    pub fn rw_texture_destroy(t: GPtr<u8>) -> i32 = cdecl 0x7F3820 => unported;
-    /// `RpAtomicSetFrame(atomic, frame)` (0x74BF20)
-    pub fn rp_atomic_set_frame(a: GPtr<u8>, f: GPtr<u8>) -> GPtr<u8> = cdecl 0x74BF20 => unported;
-    /// `RwFrameDestroy` (0x7F05A0)
-    pub fn rw_frame_destroy(f: GPtr<u8>) -> i32 = cdecl 0x7F05A0 => unported;
-    /// `RpAtomicDestroy` (0x749DC0)
-    pub fn rp_atomic_destroy(a: GPtr<u8>) -> i32 = cdecl 0x749DC0 => unported;
-    /// `RpAnimBlendClumpRemoveAllAssociations(clump)` (0x4D6C00)
-    pub fn anim_blend_clump_remove_all_associations(c: GPtr<u8>) = cdecl 0x4D6C00 => unported;
     /// `CAnimBlendClumpData::~CAnimBlendClumpData()` (0x4CF100)
     pub fn anim_blend_clump_data_dtor(this: GPtr<u8>) = thiscall 0x4CF100 => unported;
     /// `CPool<CustomEnvMapPipeMaterialDataStruct>::New()` (0x5D9110)
     pub fn env_mat_pool_new(pool: GPtr<u8>) -> GPtr<u8> = thiscall 0x5D9110 => unported;
-    /// `CPool<CustomEnvMapPipeAtomicDataStruct>::New()` (0x5D9260)
-    pub fn env_atm_pool_new(pool: GPtr<u8>) -> GPtr<u8> = thiscall 0x5D9260 => unported;
     /// `CPool<CustomSpecMapPipeMaterialDataStruct>::New()` (0x5D93B0)
     pub fn spec_mat_pool_new(pool: GPtr<u8>) -> GPtr<u8> = thiscall 0x5D93B0 => unported;
 }

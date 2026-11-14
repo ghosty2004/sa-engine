@@ -2,14 +2,11 @@
 //! the 1.0 US bytes.
 
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
-orig! {
-    /// `CEntity::CleanUpOldReference(CEntity** ref)` (0x571A00, `ret 4`)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
-}
+use sa_core::bindings::entity_clean_up_old_reference;
 
 /// `CEventPedToFlee::~CEventPedToFlee()` (0x4AF2D0, thiscall; entry `push -1; jmp 0x402297`, the protection chunk
 /// that pushes the SEH handler): vtable 0x85B178, `CleanUpOldReference(&+0xC)` when the ped (+0xC) is set, then

@@ -19,49 +19,37 @@ use sa_math::x87::X87;
 
 use crate::common::{f32_of, g, rd, wr, x, xi};
 
+use sa_core::bindings::entity_register_reference;
+use sa_core::bindings::get_pad as pad_get;
+use sa_core::bindings::matrix_dtor;
+use sa_core::bindings::vector_normalise;
+use sa_pop::bindings::car_gun_just_down as pad_car_gun_just_down;
+use sa_pop::bindings::get_car_gun_up_down as pad_car_gun_up_down;
+use sa_pop::bindings::rope_remove;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::max_f;
+use sa_world::bindings::physical_add_to_moving_list;
+use sa_world::bindings::placeable_set_posn;
+use sa_world::bindings::rope_release_picked_up_object;
 orig! {
     /// `CWorld::FindGroundZFor3DCoord(x, y, z, bool*, CEntity**)` (0x5696C0, ST0)
     fn find_ground_z_for_3d_coord(px: f32, py: f32, pz: f32, found: u32, entity: u32) -> f64 = cdecl 0x5696C0 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    fn pad_get(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CPad::GetCarGunUpDown()` (0x53FC10, AX)
-    fn pad_car_gun_up_down(pad: GPtr<u8>) -> u32 = thiscall 0x53FC10 => unported;
-    /// `CPad::CarGunJustDown()` (0x53FFE0, AX)
-    fn pad_car_gun_just_down(pad: GPtr<u8>) -> u32 = thiscall 0x53FFE0 => unported;
     /// `CAudioEngine::ReportMissionAudioEvent(int32 event, CPhysical*, float, float)` (0x5073B0)
     fn report_mission_audio_event(engine: GPtr<u8>, event: u32, physical: u32, a3: u32, a4: u32) = thiscall 0x5073B0 => unported;
     /// `CRope::UpdateWeightInRope(CVector pos, float, CVector* out)` (0x5561B0, AL)
     fn rope_update_weight_call(rope: GPtr<u8>, px: u32, py: u32, pz: u32, a5: u32, out: GPtr<u8>) -> u8 = thiscall 0x5561B0 => rope_update_weight;
     /// `CPhysical::GetSpeed(CVector* out, CVector point)` (0x542CE0, returns `out`)
     fn physical_get_speed(e: GPtr<u8>, out: GPtr<u8>, px: u32, py: u32, pz: u32) -> u32 = thiscall 0x542CE0 => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
     /// `CMatrix::CMatrix(const CMatrix&)` (0x59BCF0)
     fn matrix_copy_ctor(this: GPtr<u8>, src: GPtr<u8>) -> u32 = thiscall 0x59BCF0 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    fn matrix_dtor(this: GPtr<u8>) = thiscall 0x59ACD0 => unported;
     /// `CMatrix::ForceUpVector(CVector up)` (0x59B7E0)
     fn matrix_force_up_vector(m: GPtr<u8>, ux: u32, uy: u32, uz: u32) = thiscall 0x59B7E0 => unported;
     /// `CMatrix::operator=(const CMatrix&)` (0x59BBC0)
     fn matrix_assign(m: GPtr<u8>, src: GPtr<u8>) -> u32 = thiscall 0x59BBC0 => unported;
     /// `operator*(const CMatrix&, const CVector&)` (0x59C890, the hidden `out` first)
     fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> u32 = cdecl 0x59C890 => unported;
-    /// `CRope::ReleasePickedUpObject()` (0x556030)
-    fn rope_release_picked_up_object(rope: GPtr<u8>) = thiscall 0x556030 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    fn entity_register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0, AL)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CPlaceable::SetPosn(const CVector&)` (0x4241C0)
-    fn placeable_set_posn(e: GPtr<u8>, v: GPtr<u8>) = thiscall 0x4241C0 => unported;
     /// `CEntity::SetIsStatic(bool)` (virtual slot 4)
     fn entity_set_is_static(e: GPtr<u8>, v: u32) = thiscall vslot 0x10 => unported;
-    /// `CPhysical::AddToMovingList()` (0x542800)
-    fn physical_add_to_moving_list(e: GPtr<u8>) = thiscall 0x542800 => unported;
-    /// `std::max<float>` (0x420800, ST0)
-    fn max_f(a: f32, b: f32) -> f64 = cdecl 0x420800 => unported;
-    /// `CRope::Remove()` (0x556780)
-    fn rope_remove(rope: GPtr<u8>) = thiscall 0x556780 => unported;
 }
 
 /// `CTimer::ms_fTimeStep`, `CTimer::m_snTimeInMilliseconds`, `CTimer::m_FrameCounter`

@@ -5,14 +5,10 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
-orig! {
-    /// `CRGBA::CRGBA(uint8 r, uint8 g, uint8 b, uint8 a)` (0x7170C0, thiscall, the bytes pushed as dwords); returns `this`
-    fn rgba_ctor(this: GPtr<u8>, r: u32, g: u32, b: u32, a: u32) -> GPtr<u8> = thiscall 0x7170C0 => unported;
-    /// CRT `_atexit` (0x821D1E)
-    fn atexit(f: u32) -> i32 = cdecl 0x821D1E => unported;
-}
+use sa_core::bindings::atexit;
+use sa_core::bindings::rgba_ctor;
 
 /// `CGrassRenderer::PlantModelsTab` (`RpAtomic*[4]`, 0xC03970; catalogue `g_c03970`).
 const PLANT_MODELS_TAB: usize = 0xC0_3970;

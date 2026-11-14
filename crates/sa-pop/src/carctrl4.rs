@@ -11,9 +11,13 @@ use crate::common::{ftol32, g, model_info, rand_at, rd, wr, x, xi};
 /// Globals owned by this module: none.
 pub const GLOBALS: &[GlobalDesc] = &[];
 
+use crate::bindings::auto_pilot_modify_speed as modify_speed;
+use crate::bindings::calc_speed_scale_factor;
+use crate::bindings::get_position;
+use crate::bindings::init_sequence;
+use crate::bindings::one_way_lane_offset;
+use sa_world::bindings::is_law_enforcement_vehicle;
 orig! {
-    /// `CPathNode::GetPosition(CVector*)` (0x420A10, thiscall, returns `out`)
-    fn get_position(node: GPtr<u8>, out: GPtr<f32>) -> GPtr<f32> = thiscall 0x420A10 => crate::pathfind::get_position;
     /// `VectorSub(CVector* out, const CVector* a, const CVector* b)` (0x40FE60): `out = a - b`
     fn vector_sub(out: GPtr<f32>, a: GPtr<f32>, b: GPtr<f32>) -> GPtr<f32> = cdecl 0x40FE60 => unported;
     /// `CrossProduct(CVector* out, const CVector* a, const CVector* b)` (0x59C730)
@@ -22,27 +26,17 @@ orig! {
     fn dot_product(a: GPtr<f32>, b: GPtr<f32>) -> f64 = cdecl 0x40FDB0 => unported;
     /// `CPlaceable::GetRightDirection(CVector* out)` (0x41CC70, thiscall, returns `out`)
     fn get_right_direction(e: GPtr<u8>, out: GPtr<f32>) -> GPtr<f32> = thiscall 0x41CC70 => unported;
-    /// `CVehicle::IsLawEnforcementVehicle()` (0x6D2370)
-    fn is_law_enforcement_vehicle(v: GPtr<u8>) -> u8 = thiscall 0x6D2370 => unported;
     /// `CCarCtrl::IsAnyoneParking()` (0x42C250)
     fn is_anyone_parking() -> u8 = cdecl 0x42C250 => crate::carctrl2::is_anyone_parking;
     /// `CWorld::FindObjectsKindaColliding(const CVector&, float, bool, int16*, int16, CEntity**, bool, bool, bool,
     /// bool, bool)` (0x568B80; sets `*count = 0` first)
     /// `CCarCtrl::ThisVehicleShouldTryNotToTurn(CVehicle*)` (0x421FE0)
     fn this_vehicle_should_try_not_to_turn(v: GPtr<u8>) -> u8 = cdecl 0x421FE0 => crate::carctrl::this_vehicle_should_try_not_to_turn;
-    /// `CCarCtrl::InitSequence(int32)` (0x421740)
-    fn init_sequence(n: i32) = cdecl 0x421740 => crate::carctrl::init_sequence;
     /// `CCarCtrl::FindPathDirection(CNodeAddress, CNodeAddress, CNodeAddress, bool*)` (0x422090)
     fn find_path_direction_call(a: u32, b: u32, c: u32, sharp: GPtr<u8>) -> u8 = cdecl 0x422090 => find_path_direction;
     /// `CCarCtrl::IsThisAnAppropriateNode(CVehicle*, CNodeAddress, CNodeAddress, CNodeAddress, bool)` (0x42DAB0;
     /// the caller pushes a sixth dword the callee never reads)
     fn is_this_an_appropriate_node_call(v: GPtr<u8>, n1: u32, n2: u32, n3: u32, wrong: u32, other: u32) -> u8 = cdecl 0x42DAB0 => unported;
-    /// `CAutoPilot::ModifySpeed(float)` (0x41B980, thiscall on `veh + 0x390`)
-    fn modify_speed(ap: GPtr<u8>, s: f32) = thiscall 0x41B980 => unported;
-    /// `CCarPathLink::OneWayLaneOffset()` (0x44DB00, thiscall, ST0)
-    fn one_way_lane_offset(l: GPtr<u8>) -> f64 = thiscall 0x44DB00 => unported;
-    /// `CCurves::CalcSpeedScaleFactor(CVector*, CVector*, float, float, float, float)` (0x43C710, ST0)
-    fn calc_speed_scale_factor(p1: GPtr<f32>, p2: GPtr<f32>, d1x: f32, d1y: f32, d2x: f32, d2y: f32) -> f64 = cdecl 0x43C710 => unported;
     fn find_objects_kinda_colliding(p: GPtr<f32>, r: f32, b2d: u32, count: GPtr<i16>, max: u32, out: GPtr<u8>, buildings: u32, vehicles: u32, peds: u32, objects: u32, dummies: u32) = cdecl 0x568B80 => unported;
 }
 
@@ -735,11 +729,10 @@ pub fn pick_next_node_according_strategy(veh: GPtr<u8>) -> u8 {
     }
 }
 
+use crate::bindings::stop_car_if_nodes_are_invalid;
 orig! {
     /// `CPathFind::DoPathSearch(...)` (0x4515D0, thiscall on ThePaths, `ret 0x4C`)
     fn do_path_search(this: GPtr<u8>, path_type: u32, ox: f32, oy: f32, oz: f32, origin_addr: u32, tx: f32, ty: f32, tz: f32, out_nodes: GPtr<u32>, out_count: GPtr<i16>, max_nodes: i32, out_distance: GPtr<f32>, max_search: f32, target_addr: GPtr<u32>, max_depth: f32, same_lane: u32, forbidden: u32, allow_water: u32, for_boats: u32) = thiscall 0x4515D0 => crate::pathfind::do_path_search;
-    /// `CCarCtrl::StopCarIfNodesAreInvalid(CVehicle*)` (0x422590)
-    fn stop_car_if_nodes_are_invalid(v: GPtr<u8>) -> u8 = cdecl 0x422590 => crate::carctrl2::stop_car_if_nodes_are_invalid;
 }
 
 /// `ThePaths` (0x96F050).
@@ -976,9 +969,8 @@ pub fn pick_next_node_to_chase_car(veh: GPtr<u8>, dx: f32, dy: f32, dz: f32, _ta
     0
 }
 
+use crate::bindings::remove_one_path_node;
 orig! {
-    /// `CAutoPilot::RemoveOnePathNode()` (0x41B950, thiscall on `veh + 0x390`)
-    fn remove_one_path_node(ap: GPtr<u8>) = thiscall 0x41B950 => crate::carctrl2::auto_pilot_remove_one_path_node;
     /// `CCarCtrl::SwitchVehicleToRealPhysics(CVehicle*)` (0x423FC0)
     fn switch_vehicle_to_real_physics(v: GPtr<u8>) = cdecl 0x423FC0 => crate::carctrl::switch_vehicle_to_real_physics;
 }
@@ -1106,9 +1098,8 @@ pub fn pick_next_node_to_follow_path(veh: GPtr<u8>) -> u8 {
     0
 }
 
+use crate::bindings::join_car_with_road_system_goto_coors;
 orig! {
-    /// `CCarCtrl::JoinCarWithRoadSystemGotoCoors(CVehicle*, const CVector&, bool, bool)` (0x42F870)
-    fn join_car_with_road_system_goto_coors(v: GPtr<u8>, c: GPtr<f32>, a: u32, b: u32) -> u8 = cdecl 0x42F870 => unported;
     /// `CCarAI::GetCarToGoToCoors(CVehicle*, const CVector&, eCarDrivingStyle, bool)` (0x41CE30, ST0)
     fn get_car_to_go_to_coors_call(v: GPtr<u8>, c: GPtr<f32>, style: u32, cruise: u32) -> f64 = cdecl 0x41CE30 => get_car_to_go_to_coors_abi;
 }
@@ -1244,13 +1235,11 @@ pub fn get_car_to_park_at_coors(veh: GPtr<u8>, c: GPtr<f32>) -> X87 {
     dist2d_to(veh, c)
 }
 
+use sa_stream::bindings::find_player_wanted;
+use sa_world::bindings::cull_zones_no_police;
 orig! {
     /// `CVector::Normalise()` (0x59C910, thiscall)
     fn vector_normalise(v: GPtr<f32>) = thiscall 0x59C910 => unported;
-    /// `CWorld::FindPlayerWanted(int32)` (0x56E230)
-    fn find_player_wanted(id: i32) -> GPtr<u8> = cdecl 0x56E230 => unported;
-    /// `CCullZones::NoPolice()` (0x72DD50)
-    fn cull_zones_no_police() -> u8 = cdecl 0x72DD50 => unported;
     /// `CCarCtrl::JoinCarWithRoadSystem(CVehicle*)` (0x42F5A0)
     fn join_car_with_road_system_call(v: GPtr<u8>) = cdecl 0x42F5A0 => join_car_with_road_system;
 }
@@ -1551,33 +1540,22 @@ pub fn make_way_for_car_with_siren(siren: GPtr<u8>) {
     }
 }
 
+use crate::bindings::set_up_driver;
+use crate::bindings::setup_passenger;
+use sa_core::bindings::car_set_ped_out_dtor as task_car_set_ped_out_dtor;
+use sa_core::bindings::car_set_ped_out_process_ped as task_car_set_ped_out_process_ped;
+use sa_core::bindings::general_random_int_in_range as random_int_in_range;
+use sa_core::bindings::random_float_in_range;
+use sa_core::bindings::task_new;
+use sa_world::bindings::give_delayed_weapon;
+use sa_world::bindings::intel_clear_tasks;
+use sa_world::bindings::player_get_wanted_level as ped_get_wanted_level;
+use sa_world::bindings::tm_set_task as task_manager_set_task;
 orig! {
-    /// `CVehicle::SetUpDriver(int32 pedType, bool, bool)` (0x6D1A50, thiscall)
-    fn set_up_driver(v: GPtr<u8>, ty: i32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x6D1A50 => unported;
-    /// `CVehicle::SetupPassenger(int32 seat, int32 pedType, bool, bool)` (0x6D1AA0, thiscall)
-    fn setup_passenger(v: GPtr<u8>, seat: i32, ty: i32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x6D1AA0 => unported;
-    /// `CPed::GetWantedLevel()` (0x41BE60, thiscall)
-    fn ped_get_wanted_level(p: GPtr<u8>) -> i32 = thiscall 0x41BE60 => unported;
-    /// `CGeneral::GetRandomNumberInRange<float>(float, float)` (0x41BD90, ST0)
-    fn random_float_in_range(a: f32, b: f32) -> f64 = cdecl 0x41BD90 => unported;
-    /// `CGeneral::GetRandomNumberInRange<int32>(int32, int32)` (0x407180)
-    fn random_int_in_range(a: i32, b: i32) -> i32 = cdecl 0x407180 => unported;
-    /// `CPed::GiveDelayedWeapon(eWeaponType, uint32 ammo)` (0x5E89B0, thiscall)
-    fn give_delayed_weapon(p: GPtr<u8>, w: u32, ammo: u32) = thiscall 0x5E89B0 => unported;
-    /// `CPedIntelligence::ClearTasks(bool, bool)` (0x601420, thiscall)
-    fn intel_clear_tasks(i: GPtr<u8>, a: u32, b: u32) = thiscall 0x601420 => unported;
-    /// `CTask::operator new(uint32)` (0x61A5A0)
-    fn task_new(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => unported;
     /// `CTaskComplexCopInCar::CTaskComplexCopInCar(CVehicle*, CPed* partner, CPed* target, bool driver)` (0x68C7F0)
     fn task_cop_in_car_ctor(t: GPtr<u8>, v: GPtr<u8>, partner: GPtr<u8>, target: GPtr<u8>, driver: u32) -> GPtr<u8> = thiscall 0x68C7F0 => unported;
-    /// `CTaskManager::SetTask(CTask*, int32 slot, bool)` (0x681AF0, thiscall)
-    fn task_manager_set_task(m: GPtr<u8>, t: GPtr<u8>, slot: i32, b: u32) = thiscall 0x681AF0 => unported;
     /// `CTaskSimpleCarSetPedOut::CTaskSimpleCarSetPedOut(CVehicle*, int32 door, bool)` (0x6478B0)
     fn task_car_set_ped_out_ctor(t: GPtr<u8>, v: GPtr<u8>, door: i32, b: u32) -> GPtr<u8> = thiscall 0x6478B0 => unported;
-    /// `CTaskSimpleCarSetPedOut::ProcessPed(CPed*)` (0x647D10)
-    fn task_car_set_ped_out_process_ped(t: GPtr<u8>, p: GPtr<u8>) -> u8 = thiscall 0x647D10 => unported;
-    /// `CTaskSimpleCarSetPedOut::~CTaskSimpleCarSetPedOut()` (0x647950)
-    fn task_car_set_ped_out_dtor(t: GPtr<u8>) = thiscall 0x647950 => unported;
     /// `CPed::AttachPedToEntity(CEntity*, CVector offset, uint16 dir, float limit, eWeaponType)` (0x5E7CB0)
     fn attach_ped_to_entity(p: GPtr<u8>, e: GPtr<u8>, ox: f32, oy: f32, oz: f32, dir: u32, lim: f32, w: u32) = thiscall 0x5E7CB0 => unported;
     /// `CTaskComplexKillPedFromBoat::CTaskComplexKillPedFromBoat(CPed*)` (0x6227C0)
@@ -1671,11 +1649,9 @@ pub fn add_police_car_occupants(veh: GPtr<u8>, always: u8) {
     }
 }
 
+use crate::bindings::find_speed_multiplier_with_speed_from_nodes;
+use crate::bindings::should_car_stop_for_bridge;
 orig! {
-    /// `CCarCtrl::FindSpeedMultiplierWithSpeedFromNodes(int8)` (0x424130, ST0)
-    fn find_speed_multiplier_with_speed_from_nodes(s: u32) -> f64 = cdecl 0x424130 => unported;
-    /// `CTrafficLights::ShouldCarStopForBridge(CVehicle*)` (0x49D420)
-    fn should_car_stop_for_bridge(v: GPtr<u8>) -> u8 = cdecl 0x49D420 => crate::misc2::should_car_stop_for_bridge;
     /// virtual `CVehicle::PlayCarHorn()` (vtable +0xD8)
     fn play_car_horn(v: GPtr<u8>) = thiscall vslot 0xD8 => unported;
 }
@@ -1911,14 +1887,12 @@ orig! {
     fn police_vector_magnitude(v: GPtr<f32>) -> f64 = thiscall 0x4082C0 => unported;
 }
 
+use crate::bindings::calc_curve_point;
 orig! {
     /// `CCarCtrl::SlowCarOnRailsDownForTrafficAndLights(CVehicle*)` (0x434790)
     fn slow_car_on_rails_down_for_traffic_and_lights(v: GPtr<u8>) = cdecl 0x434790 => crate::carctrl2::slow_car_on_rails_down_for_traffic_and_lights;
     /// `CCarCtrl::PickNextNodeAccordingStrategy(CVehicle*)` (0x432B10)
     fn pick_next_node_according_strategy_call(v: GPtr<u8>) -> u8 = cdecl 0x432B10 => pick_next_node_according_strategy;
-    /// `CCurves::CalcCurvePoint(const CVector*, const CVector*, const CVector*, const CVector*, float, int32,
-    /// CVector*, CVector*)` (0x43C900)
-    fn calc_curve_point(s: GPtr<f32>, e: GPtr<f32>, sd: GPtr<f32>, ed: GPtr<f32>, t: f32, ms: i32, out: GPtr<f32>, speed: GPtr<f32>) = cdecl 0x43C900 => unported;
     /// `CCarCtrl::DragCarToPoint(CVehicle*, CVector*)` (0x42EC90)
     fn drag_car_to_point(v: GPtr<u8>, p: GPtr<f32>) = cdecl 0x42EC90 => unported;
 }
@@ -2051,11 +2025,9 @@ pub fn update_car_on_rails(veh: GPtr<u8>) {
     }
 }
 
+use sa_core::bindings::world_clear_scan_codes as clear_scan_codes;
+use sa_world::bindings::crt_floor;
 orig! {
-    /// CRT `floor(double)` (0x8219F0)
-    fn crt_floor(v: f64) -> f64 = cdecl 0x8219F0 => unported;
-    /// `CWorld::ClearScanCodes()` (0x563470)
-    fn clear_scan_codes() = cdecl 0x563470 => unported;
     /// `CCarCtrl::SlowCarDownForPedsSectorList(CPtrListDoubleLink*, CVehicle*, float, float, float, float, float*,
     /// float)` (0x425440)
     fn slow_car_down_for_peds_sector_list(list: GPtr<u8>, veh: GPtr<u8>, min_x: f32, min_y: f32, max_x: f32, max_y: f32, cur: GPtr<f32>, speed: f32) = cdecl 0x425440 => unported;
@@ -2128,10 +2100,7 @@ pub fn scan_for_ped_danger(veh: GPtr<u8>) {
     wr(veh, 0x3DB, bl ^ (((saved << 1) ^ bl) & 2));
 }
 
-orig! {
-    /// `CCollision::DistToLine(const CVector*, const CVector*, const CVector*)` (0x417610, ST0)
-    fn dist_to_line(a: GPtr<f32>, b: GPtr<f32>, p: GPtr<f32>) -> f64 = cdecl 0x417610 => unported;
-}
+use sa_world::bindings::dist_to_line;
 
 /// `(a < b)` of two node addresses as unsigned (area, node) words.
 fn addr_less(a: u32, b: u32) -> bool {

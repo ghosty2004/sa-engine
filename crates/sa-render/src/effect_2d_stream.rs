@@ -9,22 +9,19 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
+use sa_core::bindings::crt_strncpy;
+use sa_core::bindings::memory_malloc as mgr_malloc;
+use sa_core::bindings::pop_current_txd;
+use sa_core::bindings::push_current_txd;
+use sa_core::bindings::rw_stream_skip as stream_skip;
+use sa_core::bindings::set_current_txd;
+use sa_core::bindings::stream_read;
 orig! {
     /// `CTxdStore::FindTxdSlot(name)` (0x731850), `PushCurrentTxd` (0x7316A0), `SetCurrentTxd` (0x7319C0),
     /// `PopCurrentTxd` (0x7316B0)
     fn find_txd_slot(name: GPtr<u8>) -> i32 = cdecl 0x731850 => unported;
-    fn push_current_txd() = cdecl 0x7316A0 => unported;
-    fn set_current_txd(slot: i32) = cdecl 0x7319C0 => unported;
-    fn pop_current_txd() = cdecl 0x7316B0 => unported;
-    /// `RwStreamRead(stream, buf, len)` (0x7EC9D0), `RwStreamSkip(stream, n)` (0x7ECD00)
-    fn stream_read(s: GPtr<u8>, buf: GPtr<u8>, len: u32) -> u32 = cdecl 0x7EC9D0 => unported;
-    fn stream_skip(s: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x7ECD00 => unported;
-    /// `CMemoryMgr::Malloc(size, hint)` (0x72F420)
-    fn mgr_malloc(size: u32, hint: u32) -> GPtr<u8> = cdecl 0x72F420 => unported;
     /// `RwTextureRead(name, mask)` (0x7F3AC0)
     fn texture_read(name: GPtr<u8>, mask: u32) -> u32 = cdecl 0x7F3AC0 => unported;
-    /// CRT `strncpy` (0x821F40)
-    fn crt_strncpy(d: GPtr<u8>, s: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x821F40 => unported;
 }
 
 /// `C2dEffect::ms_nTxdSlot` (.data, -1) and the geometry plugin offset.

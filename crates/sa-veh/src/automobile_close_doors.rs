@@ -52,13 +52,11 @@ pub fn automobile_close_all_doors(this: GPtr<u8>) {
     close(5, 9);
 }
 
+use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::apply_turn_force_6;
 orig! {
     /// `CPhysical::ApplyTurnForce(CVector force, CVector point)` (0x542A50)
     fn apply_turn_force(e: GPtr<u8>, force: CVector, point: CVector) = thiscall 0x542A50 => sa_world::physical::forces::apply_turn_force;
-    /// The six-float `CPhysical::ApplyTurnForce(fx, fy, fz, px, py, pz)` wrapper (0x65DA70, `ret 0x18`; ported in mvpb_a1)
-    fn apply_turn_force_6(e: GPtr<u8>, fx: f32, fy: f32, fz: f32, px: f32, py: f32, pz: f32) = thiscall 0x65DA70 => unported;
-    /// `CEntity::RegisterReference(CEntity** slot)` (0x571B70, `ret 4`)
-    fn entity_register_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571B70 => unported;
 }
 
 /// `.rdata` -0.1f (0x858EF4), -0.02f (0x85904C), -0.2f (0x858FDC)
@@ -69,7 +67,6 @@ const K_M0_2: u32 = 0xBE4C_CCCD;
 fn f(p: GPtr<u8>, off: isize) -> f32 {
     p.byte_add(off).cast::<f32>().read()
 }
-
 
 /// `CVehicle::AddPassenger(CPed*)` (0x6D13A0, thiscall, `ret 4`; the automatic-seat overload).
 ///

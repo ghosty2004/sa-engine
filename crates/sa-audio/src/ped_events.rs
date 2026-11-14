@@ -12,6 +12,9 @@ use crate::entities::{are_sounds_of_this_event_playing_for_this_entity, hw_is_so
 /// The per-event volume table pointer (`[0xBD00F8]`, one int8 per event).
 const EVENT_VOLUMES: usize = 0xBD00F8;
 
+use crate::bindings::ae_random_int;
+use crate::bindings::sm_request_new_sound;
+use sa_world::bindings::sound_dtor;
 orig! {
     /// `CAEPedAudioEntity::HandleFootstepEvent(event, volume, speed, surface)` (0x4E13A0)
     fn handle_footstep_event(this: GPtr<u8>, event: u32, vol: f32, speed: u32, surface: u32) = thiscall 0x4E13A0 => crate::port2_b::ped_handle_footstep_event;
@@ -33,12 +36,6 @@ orig! {
     /// maxDistance, float speed, float doppler, uint8 frameDelay, uint32 flags, float freqVariance, int16
     /// playTime)` (0x4EFE50, `ret 0x38`)
     fn sound_initialise(sound: GPtr<u8>, slot: u32, sfx: u32, entity: GPtr<u8>, px: u32, py: u32, pz: u32, vol: u32, max_dist: u32, speed: u32, doppler: u32, delay: u32, flags: u32, freq_var: u32, play_time: u32) = thiscall 0x4EFE50 => unported;
-    /// `CAESoundManager::RequestNewSound(CAESound*)` (0x4EFB10)
-    fn sm_request_new_sound(sm: GPtr<u8>, sound: GPtr<u8>) -> u32 = thiscall 0x4EFB10 => unported;
-    /// `CAESound::~CAESound()` (0x4EF660)
-    fn sound_dtor(sound: GPtr<u8>) = thiscall 0x4EF660 => unported;
-    /// `CAEAudioUtility::GetRandomNumberInRange<int32>(min, max)` (0x4D9C10)
-    fn ae_random_int(min: i32, max: i32) -> i32 = cdecl 0x4D9C10 => crate::utility::get_random_number_in_range_int;
 }
 
 use sa_world::world::common::entity_pos_u as entity_pos;

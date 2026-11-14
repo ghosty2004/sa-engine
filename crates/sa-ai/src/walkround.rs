@@ -10,6 +10,16 @@ use sa_math::x87::Cmp;
 
 use crate::common::*;
 
+use crate::bindings::compute_closest_surface_point_ped;
+use crate::bindings::compute_entity_hit_side;
+use crate::bindings::is_player_to_quit_car_enter;
+use crate::bindings::point_route_add as point_route_add_48e180;
+use crate::bindings::task_timer_is_out_of_time;
+use sa_core::bindings::vector_normalise;
+use sa_stream::bindings::ped_is_player;
+use sa_stream::bindings::placeable_allocate_matrix;
+use sa_stream::bindings::simple_transform_update_matrix;
+use sa_world::bindings::go_to_point_and_stand_still_ctor;
 orig! {
     // ---- virtual slots ----
     /// `CTask::GetTaskType` (vtable +0x10)
@@ -29,35 +39,12 @@ orig! {
     /// `CTaskComplexFollowPointRoute::Constructor(ms, route, mode, radius, slowDown, overshoot, blending,
     /// standStill)` (0x671510, `ret 0x20`)
     fn follow_point_route_ctor(t: GPtr<u8>, ms: u32, route: GPtr<u8>, mode: u32, radius: u32, slow: u32, a5: u32, a6: u32, a7: u32) -> GPtr<u8> = thiscall 0x671510 => unported;
-    /// `CTaskComplexGoToPointAndStandStill::Constructor(ms, const CVector*, radius, slowDown, bool, bool)`
-    /// (0x668120, `ret 0x18`)
-    fn go_to_point_and_stand_still_ctor(t: GPtr<u8>, ms: u32, pt: GPtr<u8>, radius: u32, slow: u32, a4: u32, a5: u32) -> GPtr<u8> = thiscall 0x668120 => unported;
-    /// `CTaskTimer::IsOutOfTime` (0x420E30)
-    fn task_timer_is_out_of_time(t: GPtr<u8>) -> u8 = thiscall 0x420E30 => unported;
-
-    // ---- other ----
-    /// `CPed::IsPlayer` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CCarEnterExit::IsPlayerToQuitCarEnter(CPed*, CVehicle*, int32 startTime, CTask*)` (0x64F240, cdecl)
-    fn is_player_to_quit_car_enter(ped: GPtr<u8>, veh: GPtr<u8>, start: u32, task: GPtr<u8>) -> u8 = cdecl 0x64F240 => unported;
-    /// `CPedGeometryAnalyser::ComputeClosestSurfacePoint-ped(CPed*, CEntity*, CVector*)` (0x5F3B70, cdecl)
-    fn compute_closest_surface_point_ped(ped: GPtr<u8>, e: GPtr<u8>, out: GPtr<u8>) = cdecl 0x5F3B70 => unported;
     /// `CPedGeometryAnalyser::ComputeClosestSurfacePoint-pos(const CVector*, CEntity*, CVector*)` (0x5F36F0, cdecl)
     fn compute_closest_surface_point_pos(pos: GPtr<u8>, e: GPtr<u8>, out: GPtr<u8>) = cdecl 0x5F36F0 => unported;
-    /// `CPedGeometryAnalyser::ComputeEntityHitSide-3(const CVector*, CEntity*)` (0x5F3AC0, cdecl)
-    fn compute_entity_hit_side(pos: GPtr<u8>, e: GPtr<u8>) -> i32 = cdecl 0x5F3AC0 => unported;
-    /// 0x48E180 (`.HOODLUM` stub: `CPointRoute` add point, `ret 4`)
-    fn point_route_add_48e180(r: GPtr<u8>, p: GPtr<u8>) = thiscall 0x48E180 => unported;
     /// `CTaskComplexWalkRoundBuildingAttempt::ComputeRoute(CPed*)` (0x657BA0, `ret 4`)
     fn building_compute_route(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x657BA0 => unported;
-    /// `CPlaceable::AllocateMatrix()` (0x54F560)
-    fn placeable_allocate_matrix(e: GPtr<u8>) = thiscall 0x54F560 => unported;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*)` (0x54F1B0, `ret 4`)
-    fn simple_transform_update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => unported;
     /// `CVector::FromMultiply(const CMatrix&, const CVector&)` (0x59C670, `ret 8`)
     fn vector_from_multiply(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) = thiscall 0x59C670 => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
 }
 
 use sa_core::field::ptr_of as buf;
@@ -321,13 +308,10 @@ pub fn building_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     ret
 }
 
+use crate::bindings::bbox_planes as compute_entity_bounding_box_planes;
+use crate::bindings::compute_entity_bounding_box_corners;
+use crate::bindings::compute_entity_hit_side_ped;
 orig! {
-    /// `CPedGeometryAnalyser::ComputeEntityBoundingBoxCorners(float z, CEntity&, CVector* corners)` (0x5F3650)
-    fn compute_entity_bounding_box_corners(z: u32, e: GPtr<u8>, corners: GPtr<u8>) = cdecl 0x5F3650 => unported;
-    /// `CPedGeometryAnalyser::ComputeEntityBoundingBoxPlanes(float z, CEntity&, CVector* normals, float* ds)` (0x5F3660)
-    fn compute_entity_bounding_box_planes(z: u32, e: GPtr<u8>, normals: GPtr<u8>, ds: GPtr<u8>) = cdecl 0x5F3660 => unported;
-    /// `CPedGeometryAnalyser::ComputeEntityHitSide(const CPed&, CEntity&)` (0x5F3BC0)
-    fn compute_entity_hit_side_ped(ped: GPtr<u8>, e: GPtr<u8>) -> i32 = cdecl 0x5F3BC0 => unported;
     /// `CPedGeometryAnalyser::ComputeRouteRoundEntityBoundingBox(const CPed&, CEntity&, const CVector&, CPointRoute&,
     /// int32)` (0x5F6110)
     fn compute_route_round_entity_bounding_box(ped: GPtr<u8>, e: GPtr<u8>, target: GPtr<u8>, route: u32, dir: i32) -> u32 = cdecl 0x5F6110 => unported;
@@ -406,15 +390,12 @@ pub fn car_compute_route_round_small_car(this: GPtr<u8>, ped: GPtr<u8>) -> X87 {
     x(dist)
 }
 
+use crate::bindings::hit_wall_ctor;
+use sa_core::bindings::vector_dot_product;
+use sa_world::bindings::ctor_48df30 as scratch_head_ctor;
 orig! {
     /// `CTaskComplexWalkRoundObject::CreateSubTask(int32 type, CPed*)` (`FUN_00655290`, `ret 8`)
     fn object_create_sub_task(t: GPtr<u8>, ty: u32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x655290 => unported;
-    /// `CVector::DotProduct(const CVector*, const CVector*)` (0x40FDB0, ST0)
-    fn vector_dot_product(a: GPtr<u8>, b: GPtr<u8>) -> f64 = cdecl 0x40FDB0 => unported;
-    /// `CTaskSimpleScratchHead::CTaskSimpleScratchHead()` (thunk 0x48DF30)
-    fn scratch_head_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x48DF30 => unported;
-    /// `CTaskSimpleHitWall::CTaskSimpleHitWall()` (0x652F90)
-    fn hit_wall_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x652F90 => unported;
 }
 
 /// `CTaskComplexWalkRoundObject::ControlSubTask(CPed*)` (0x6575F0, thiscall, `ret 4`). x87. Abort (→ when the
@@ -522,28 +503,22 @@ pub fn building_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8>
     }
 }
 
+use crate::bindings::stand_still_dtor;
+use crate::bindings::stand_still_process_ped;
+use sa_core::bindings::vector_normalise_and_mag;
+use sa_world::bindings::achieve_heading_ctor;
+use sa_world::bindings::tm_find_task_by_type;
 orig! {
     /// `CTaskComplexWalkRoundCar::ComputeRouteRoundBigCar(CPed*)` (0x656BB0, `ret 4`, ST0)
     fn car_compute_route_round_big_car(t: GPtr<u8>, ped: GPtr<u8>) -> f64 = thiscall 0x656BB0 => unported;
     /// `CTaskComplexWalkRoundCar::ComputeRouteRoundSmallCar(CPed*)` (0x6544F0, `ret 4`, ST0)
     fn car_compute_route_round_small_car_st0(t: GPtr<u8>, ped: GPtr<u8>) -> f64 = thiscall 0x6544F0 => unported;
-    /// `CVector::NormaliseAndMag()` (0x59C970, ST0)
-    fn vector_normalise_and_mag(v: GPtr<u8>) -> f64 = thiscall 0x59C970 => unported;
-    /// `CTaskManager::FindTaskByType(int32 slot, int32 type)` (0x6817D0, `ret 8`)
-    fn tm_find_task_by_type(tm: GPtr<u8>, slot: i32, ty: i32) -> GPtr<u8> = thiscall 0x6817D0 => unported;
     /// `CTaskSimpleStandStill::CTaskSimpleStandStill(int32, bool, bool, float)` (0x62F310, `ret 0x10`)
     fn stand_still_ctor(t: GPtr<u8>, time: i32, looped: u32, b: u32, delta: u32) -> GPtr<u8> = thiscall 0x62F310 => unported;
-    /// `CTaskSimpleStandStill::ProcessPed(CPed*)` (0x62F370, `ret 4`)
-    fn stand_still_process_ped(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x62F370 => unported;
-    /// `CTaskSimpleStandStill` complete destructor (`FUN_0062F360`)
-    fn stand_still_dtor(t: GPtr<u8>) = thiscall 0x62F360 => unported;
     /// `CGeneral::GetRadianAngleBetweenPoints(float, float, float, float)` (0x53CBE0, ST0)
     fn general_get_radian_angle_between_points(x1: f32, y1: f32, x2: f32, y2: f32) -> f64 = cdecl 0x53CBE0 => unported;
     /// `CGeneral::LimitRadianAngle(float)` (0x53CB50, ST0)
     fn general_limit_radian_angle(a: f32) -> f64 = cdecl 0x53CB50 => unported;
-    /// `CTaskSimpleAchieveHeading::CTaskSimpleAchieveHeading(float heading, float changeRate, float tolerance)`
-    /// (0x667E20, `ret 0xC`)
-    fn achieve_heading_ctor(t: GPtr<u8>, heading: u32, rate: u32, tol: u32) -> GPtr<u8> = thiscall 0x667E20 => unported;
 }
 
 /// `CTaskComplexWalkRoundCar::CreateFirstSubTask(CPed*)` (0x658200, thiscall, `ret 4`). x87. Route (+0x20) count =
@@ -735,13 +710,8 @@ pub fn object_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     achieve_heading_ctor(tk, h.to_bits(), 0x3F80_0000, 0x3E4C_CCCD)
 }
 
-orig! {
-    /// `CVector::CrossProduct(CVector* out, const CVector* a, const CVector* b)` (0x59C730): `out = a × b`
-    fn vector_cross_product(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C730 => unported;
-    /// `CWorld::ProcessLineOfSight(start, end, CColPoint&, CEntity*&, buildings, vehicles, peds, objects, dummies,
-    /// seeThrough, camera, shootThrough)` (0x56BA00)
-    fn world_process_line_of_sight(s: GPtr<u8>, e: GPtr<u8>, cp: GPtr<u8>, ent: GPtr<u8>, b: u32, v: u32, p: u32, o: u32, d: u32, st: u32, c: u32, sh: u32) -> u8 = cdecl 0x56BA00 => unported;
-}
+use sa_core::bindings::cross_product as vector_cross_product;
+use sa_world::bindings::process_line_of_sight as world_process_line_of_sight;
 
 use sa_world::world::common::entity_pos as entity_pos_ptr;
 
@@ -834,16 +804,13 @@ pub fn building_attempt_compute_crap_route(this: GPtr<u8>, ped: GPtr<u8>) {
     wr::<u8>(this, 0x49, rd::<u8>(this, 0x49) | 8);
 }
 
+use crate::bindings::point_route_assign;
+use sa_world::bindings::world_get_is_line_of_sight_clear;
 orig! {
     /// `CTaskComplexWalkRoundBuildingAttempt::ComputeMoveDir(CPed*, CVector* out)` (0x654B80, `ret 8`)
     fn building_compute_move_dir_orig(t: GPtr<u8>, ped: GPtr<u8>, out: GPtr<u8>) = thiscall 0x654B80 => unported;
-    /// `CWorld::GetIsLineOfSightClear(start, end, buildings, vehicles, peds, objects, dummies, seeThrough,
-    /// ignoreSomeObjects)` (0x56A490)
-    fn world_get_is_line_of_sight_clear(a: GPtr<u8>, b: GPtr<u8>, bld: u32, veh: u32, ped: u32, obj: u32, dum: u32, see: u32, ign: u32) -> u8 = cdecl 0x56A490 => unported;
     /// `CTaskComplexWalkRoundBuildingAttempt::ComputeCrapRoute(const CPed&)` (0x656F80, `ret 4`)
     fn building_compute_crap_route_orig(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x656F80 => unported;
-    /// `CPointRoute::operator=(const CPointRoute&)` (0x63A040, `ret 4`)
-    fn point_route_assign(r: GPtr<u8>, src: GPtr<u8>) = thiscall 0x63A040 => unported;
 }
 
 /// 0.4 (0x858EE8) and 0.2 (0x858CC4): the random spread of the step around the building

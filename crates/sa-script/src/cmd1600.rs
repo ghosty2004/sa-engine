@@ -42,44 +42,34 @@ const SCRIPT_EFFECT_FX: usize = 0xA44114;
 const G_FX: usize = 0xA9AE00;
 const G_FX_MAN: usize = 0xA9AE80;
 
+use crate::bindings::remove_script_effect_system;
+use sa_core::bindings::fx_play;
+use sa_world::bindings::find_ground_z_for_coord as find_ground_z_raw;
+use sa_world::bindings::fx_kill;
+use sa_world::bindings::get_actual_script_thing_index;
+use sa_world::bindings::get_modelling_matrix;
 orig! {
     /// `Fx_c::CreateMatFromVec(RwMatrix* out, CVector* pos, CVector* dir)` (0x49E950)
     fn create_mat_from_vec(fx: GPtr<u8>, out: GPtr<u8>, pos: GPtr<u32>, dir: GPtr<u32>) = thiscall 0x49E950 => unported;
     /// `CEntity` virtual slot 7 (+0x1C, `CreateRwObject`)
     fn entity_create_rw_object(e: GPtr<u8>) = thiscall vslot 0x1C => unported;
-    /// `CEntity::GetModellingMatrix()` (0x46A2D0)
-    fn get_modelling_matrix(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x46A2D0 => unported;
     /// `FxManager_c::CreateFxSystem(const char*, RwMatrix*, RwMatrix* parent, bool)` (0x4A9BB0)
     fn create_fx_system_mat(m: GPtr<u8>, name: GPtr<u8>, mat: GPtr<u8>, parent: GPtr<u8>, local: u32) -> GPtr<u8> = thiscall 0x4A9BB0 => unported;
     /// `CTheScripts::AddScriptEffectSystem(FxSystem_c*)` (0x492F90)
     fn add_script_effect_system(fx: GPtr<u8>) -> i32 = cdecl 0x492F90 => unported;
-    /// `CWorld::FindGroundZForCoord(float, float)` (0x569660), raw dwords, ST0 (read as f64: exact)
-    fn find_ground_z_raw(x: u32, y: u32) -> f64 = cdecl 0x569660 => unported;
-    /// `CTheScripts::GetActualScriptThingIndex(int32 ref, uint8 type)` (0x4839A0)
-    fn get_actual_script_thing_index(r: i32, ty: u32) -> i32 = cdecl 0x4839A0 => unported;
-    /// `FxSystem_c::Play()` (0x4AA2F0)
-    fn fx_play(fx: GPtr<u8>) = thiscall 0x4AA2F0 => unported;
-    /// `FxSystem_c::Kill()` (0x4AA3F0)
-    fn fx_kill(fx: GPtr<u8>) = thiscall 0x4AA3F0 => unported;
-    /// `CTheScripts::RemoveScriptEffectSystem(int32)` (0x492FD0)
-    fn remove_script_effect_system(h: i32) = cdecl 0x492FD0 => unported;
     /// `CPhysical::AttachEntityToEntity(CPhysical*, CVector offset, CVector rotation)` (0x54D570; both vectors by value)
     fn attach_entity_to_entity(e: GPtr<u8>, target: GPtr<u8>, ox: u32, oy: u32, oz: u32, rx: f32, ry: f32, rz: f32) = thiscall 0x54D570 => unported;
     /// `CPhysical::DettachEntityFromEntity(float x, float y, float z, bool useCollision)` (0x5442F0)
     fn dettach_entity_from_entity(e: GPtr<u8>, x: f32, y: f32, z: u32, use_collision: u32) = thiscall 0x5442F0 => unported;
 }
 
+use crate::bindings::get_car_node_index_from_door as node_from_door;
+use sa_core::bindings::fx_stop;
+use sa_world::bindings::get_stat_value;
+use sa_world::bindings::intel_clear_tasks as clear_tasks;
 orig! {
-    /// `CPedIntelligence::ClearTasks(bool primary, bool secondary)` (0x601420)
-    fn clear_tasks(i: GPtr<u8>, a: u32, b: u32) = thiscall 0x601420 => unported;
     /// `CAutomobile::FixTyre(eWheels)` (0x6A3580)
     fn fix_tyre(v: GPtr<u8>, w: u32) = thiscall 0x6A3580 => unported;
-    /// `CStats::GetStatValue(uint16)` (0x558E40), ST0 (a stored float: exact as f64)
-    fn get_stat_value(stat: u32) -> f64 = cdecl 0x558E40 => unported;
-    /// `FxSystem_c::Stop()` (0x4AA390)
-    fn fx_stop(fx: GPtr<u8>) = thiscall 0x4AA390 => unported;
-    /// `CDamageManager::GetCarNodeIndexFromDoor(eDoors)` (0x6C26F0)
-    fn node_from_door(d: u32) -> u32 = cdecl 0x6C26F0 => unported;
     /// `CAutomobile::FixDoor(int32 node, eDoors)` (0x6A35A0)
     fn fix_door(v: GPtr<u8>, node: u32, d: u32) = thiscall 0x6A35A0 => unported;
     /// `CDamageManager::GetCarNodeIndexFromPanel(ePanels)` (0x6C26A0)
@@ -93,31 +83,28 @@ orig! {
     fn get_index_of_global_variable(s: Scr) -> u16 = thiscall 0x464700 => crate::vm::get_index_of_global_variable;
 }
 
+use crate::bindings::scripted_task_status;
+use sa_world::bindings::fx_play_and_kill;
+use sa_world::bindings::get_actual_pickup_index;
+use sa_world::bindings::pickup_get_posn;
 orig! {
     /// `CAutomobile::PopDoor(int32 node, eDoors, bool showVisualEffect)` (0x6ADEF0)
     fn pop_door(v: GPtr<u8>, node: u32, d: u32, fx: u32) = thiscall 0x6ADEF0 => unported;
     /// `CAutomobile::PopPanel(int32 node, ePanels, bool showVisualEffect)` (0x6ADF80)
     fn pop_panel(v: GPtr<u8>, node: u32, p: u32, fx: u32) = thiscall 0x6ADF80 => unported;
-    /// `FxSystem_c::PlayAndKill()` (0x4AA3D0)
-    fn fx_play_and_kill(fx: GPtr<u8>) = thiscall 0x4AA3D0 => unported;
-    /// `CPedScriptedTaskRecord::GetStatus(CPed*, int32 opcode)` (0x608710)
-    fn scripted_task_status(ped: GPtr<u8>, opcode: u32) -> u32 = cdecl 0x608710 => unported;
     /// `CVehicle::IsDoorMissing(eDoors)` (vtable slot 0x98), AL
     fn is_door_missing(v: GPtr<u8>, d: u32) -> u8 = thiscall vslot 0x98 => unported;
     /// `CVehicle::OpenDoor(CPed*, int32 node, eDoors, float ratio, bool playSound)` (vtable slot 0x6C);
     /// the float raw
     fn open_door(v: GPtr<u8>, ped: u32, node: u32, d: u32, ratio: u32, sound: u32) = thiscall vslot 0x6C => unported;
-    /// `CPickups::GetActualPickupIndex(int32)` (0x4552A0)
-    fn get_actual_pickup_index(h: i32) -> i32 = cdecl 0x4552A0 => unported;
-    /// `CPickup::GetPosn()` (0x4549A0): the CVector through the hidden pointer, returned in EAX
-    fn pickup_get_posn(p: GPtr<u8>, ret: GPtr<u32>) -> GPtr<u32> = thiscall 0x4549A0 => unported;
 }
 
+use crate::bindings::decision_maker_unload as unload_decision_maker;
+use sa_core::bindings::task_new;
+use sa_stream::bindings::set_custom_car_plate_text;
 orig! {
     /// `CVector::Normalise()` (0x59C910)
     fn vector_normalise(v: GPtr<u32>) = thiscall 0x59C910 => unported;
-    /// `CTask::operator new(uint32)` (0x61A5A0)
-    fn task_new(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => unported;
     /// `CTaskComplexEvasiveDiveAndGetUp::CTaskComplexEvasiveDiveAndGetUp(CVehicle*, int32 time, const CVector*,
     /// bool)` (0x6536B0)
     fn dive_and_get_up_ctor(t: GPtr<u8>, veh: u32, time: u32, dir: GPtr<u32>, b: u32) -> GPtr<u8> = thiscall 0x6536B0 => unported;
@@ -127,36 +114,28 @@ orig! {
     fn give_ped_scripted_task(s: Scr, ped: u32, task: GPtr<u8>, command: u32) = thiscall 0x465C20 => unported;
     /// `CScriptResourceManager::RemoveFromResourceManager(int32, uint32 type, CRunningScript*)` (0x470510), AL
     fn remove_from_resource_manager(m: GPtr<u8>, h: i32, ty: u32, s: Scr) -> u8 = thiscall 0x470510 => unported;
-    /// `CDecisionMakerTypesFileLoader::UnloadDecisionMaker(int32)` (0x607A70)
-    fn unload_decision_maker(i: i32) = cdecl 0x607A70 => unported;
     /// `CBaseModelInfo::GetModelType()` (vtable slot 0x10), AL
     fn model_type(mi: GPtr<u8>) -> u8 = thiscall vslot 0x10 => unported;
-    /// `CVehicleModelInfo::SetCustomCarPlateText(const char*)` (0x4C8980)
-    fn set_custom_car_plate_text(mi: GPtr<u8>, text: GPtr<u8>) = thiscall 0x4C8980 => unported;
 }
 
 /// `CTheScripts::ScriptResourceManager` 0xA485A8; `CModelInfo::ms_modelInfoPtrs` 0xA9B0C8.
 const SCRIPT_RESOURCE_MANAGER: usize = 0xA485A8;
 const MODEL_INFO_PTRS: u32 = 0xA9B0C8;
 
+use sa_world::bindings::destroy_car_ctor;
+use sa_world::bindings::get_ped_attractor_manager;
+use sa_world::bindings::ik_is_looking;
+use sa_world::bindings::sequence_add_task;
 orig! {
-    /// `IKChainManager_c::IsLooking(CPed*)` (0x6181A0), AL
-    fn ik_is_looking(m: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x6181A0 => unported;
     /// `IKChainManager_c::AbortLookAt(CPed*, int32 blendOutTime)` (0x618280)
     fn ik_abort_look_at(m: GPtr<u8>, ped: GPtr<u8>, t: u32) = thiscall 0x618280 => unported;
     /// `CTaskSimpleClearLookAt::CTaskSimpleClearLookAt()` (0x634670)
     fn clear_look_at_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x634670 => unported;
-    /// `CTaskComplexSequence::AddTask(CTask*)` (0x632D10)
-    fn sequence_add_task(seq: GPtr<u8>, t: GPtr<u8>) = thiscall 0x632D10 => unported;
-    /// `CTaskComplexDestroyCar::CTaskComplexDestroyCar(CVehicle*, uint32, uint32, uint32)` (0x621C00)
-    fn destroy_car_ctor(t: GPtr<u8>, v: GPtr<u8>, a: u32, b: u32, c: u32) -> GPtr<u8> = thiscall 0x621C00 => unported;
     /// `CCamera::TakeControlAttached(CEntity* target, CEntity* attached, CVector* offset, CVector* lookAt,
     /// float tilt, int16 switchType, int32 whoIsInControl)` (0x50C910); the float raw
     fn take_control_attached(cam: GPtr<u8>, target: GPtr<u8>, attached: GPtr<u8>, offset: GPtr<u32>, look: GPtr<u32>, tilt: u32, sw: u32, who: u32) = thiscall 0x50C910 => unported;
     /// `CPhysical::AttachEntityToEntity(CPhysical*, RwV3d* offset, RtQuat* rot)` (0x54D690)
     fn attach_entity_to_entity_quat(e: GPtr<u8>, target: GPtr<u8>, off: u32, rot: u32) = thiscall 0x54D690 => unported;
-    /// `CPedAttractorManager* GetPedAttractorManager()` (0x5EE190)
-    fn get_ped_attractor_manager() -> GPtr<u8> = cdecl 0x5EE190 => unported;
     /// `CPedAttractorManager::GetPedUsingEffect(const C2dEffect*, const CEntity*)` (0x5EBE50)
     fn get_ped_using_effect(m: GPtr<u8>, fx: GPtr<u8>, e: u32) -> GPtr<u8> = thiscall 0x5EBE50 => unported;
     /// `CTaskSimpleGunControl::CTaskSimpleGunControl(CEntity*, const CVector*, const CVector*, int16, int16,
@@ -166,19 +145,19 @@ orig! {
     fn create_fx_system_vec(m: GPtr<u8>, name: GPtr<u8>, pos: GPtr<u32>, parent: GPtr<u8>, local: u32) -> GPtr<u8> = thiscall 0x4A9BE0 => unported;
 }
 
+use crate::bindings::task_trigger_look_at_ctor as trigger_look_at_ctor;
+use sa_core::bindings::get_weapon_info;
 orig! {
     /// `IKChainManager_c::LookAt(const char* purpose, CPed*, CEntity* target, int32 time, int32 bone, CVector*
     /// pos, bool, float speed, int32 blendTime, int32 priority, bool)` (0x618970); the float raw
     fn ik_look_at(m: GPtr<u8>, purpose: GPtr<u8>, ped: GPtr<u8>, target: GPtr<u8>, time: u32, bone: u32, pos: u32, a: u32, speed: u32, blend: u32, prio: u32, b: u32) = thiscall 0x618970 => unported;
-    /// Unnamed thiscall constructor at 0x634440 (`CTaskSimpleTriggerLookAt(CEntity*, int32 time, int32 bone,
-    /// CVector offset, bool, float speed, int32 blendTime, int32 priority)`, the vector by value); floats raw
-    fn trigger_look_at_ctor(t: GPtr<u8>, e: GPtr<u8>, time: u32, bone: u32, x: u32, y: u32, z: u32, a: u32, speed: u32, blend: u32, prio: u32) -> GPtr<u8> = thiscall 0x634440 => unported;
-    /// `CWeaponInfo::GetWeaponInfo(eWeaponType, eWeaponSkill)` (0x743C60)
-    fn get_weapon_info(ty: u32, skill: u32) -> GPtr<u8> = cdecl 0x743C60 => unported;
     /// `CTaskSimpleThrowControl::CTaskSimpleThrowControl(CEntity*, const CVector*)` (0x61F8B0)
     fn throw_control_ctor(t: GPtr<u8>, e: u32, pos: GPtr<u32>) -> GPtr<u8> = thiscall 0x61F8B0 => unported;
 }
 
+use sa_core::bindings::general_random_int_in_range as random_int_in_range;
+use sa_world::bindings::leave_any_car_ctor;
+use sa_world::bindings::task_simple_dtor as task_base_dtor;
 orig! {
     /// `CTaskComplexPartnerChat::CTaskComplexPartnerChat(const char*, CPed*, bool lead, float, int32, bool, bool,
     /// CVector)` (0x684290); the float and the by-value vector raw
@@ -187,12 +166,6 @@ orig! {
     fn threat_scanner_ctor(t: GPtr<u8>, a: u32, b: u32, c: u32) -> GPtr<u8> = thiscall 0x492D10 => unported;
     /// `CTaskSimpleTogglePedThreatScanner::ProcessPed(CPed*)` (0x6337A0)
     fn threat_scanner_process_ped(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x6337A0 => unported;
-    /// `CTask::~CTask()` (0x61A3A0, unnamed in the catalogue; the base destructor the inlined derived one ends in)
-    fn task_base_dtor(t: GPtr<u8>) = thiscall 0x61A3A0 => unported;
-    /// `CTaskComplexLeaveAnyCar::CTaskComplexLeaveAnyCar(int32 delay, bool, bool)` (0x421150)
-    fn leave_any_car_ctor(t: GPtr<u8>, delay: u32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x421150 => unported;
-    /// `CGeneral::GetRandomNumberInRange(int32, int32)` (0x407180)
-    fn random_int_in_range(lo: i32, hi: i32) -> i32 = cdecl 0x407180 => unported;
 }
 
 /// "COMMAND_TASK_CHAT_WITH_CHAR" (`.rdata` 0x85A3B8).

@@ -50,11 +50,12 @@ const K_1E6_BITS: u32 = 0x4974_2400;
 /// -1000000.0 (immediate 0xC9742400)
 const K_M1E6_BITS: u32 = 0xC974_2400;
 
+pub use crate::bindings::get_string_length_call;
+pub use crate::bindings::hud_colours_get_rgba as hud_get_rgba;
+pub use crate::bindings::msg_insert_player_control_keys as insert_player_control_keys_call;
+pub use sa_core::bindings::rgba_ctor;
+pub use sa_world::bindings::min_f as min_f_st0;
 orig! {
-    /// `CMessages::GetStringLength(const GxtChar*)` (0x69DB50)
-    pub fn get_string_length_call(s: GPtr<u8>) -> u32 = cdecl 0x69DB50 => crate::messages::get_string_length;
-    /// `CMessages::InsertPlayerControlKeysInString(GxtChar*)` (0x69E160)
-    pub fn insert_player_control_keys_call(s: GPtr<u8>) = cdecl 0x69E160 => crate::messages::insert_player_control_keys_in_string;
     /// `CFont::GetCharacterSize(uint8)` (0x719750)
     pub fn get_character_size_call_st0(c: u32) -> f64 = cdecl 0x719750 => get_character_size_call_st0_rust;
     /// `CFont::FindSubFontCharacter(uint8 c, uint8 style)` (0x7192C0)
@@ -83,14 +84,8 @@ orig! {
     pub fn draw_window(this: GPtr<u8>, rect: GPtr<f32>, key: u32, colour: u32, back: u32, unused: u32, bg: u32) = thiscall 0x573EE0 => unported;
     /// `CSprite2d::DrawRect(const CRect&, const CRGBA&)` (0x727B60)
     pub fn sprite_draw_rect(rect: GPtr<f32>, colour: GPtr<u8>) = cdecl 0x727B60 => unported;
-    /// `CHudColours::GetRGBA(CRGBA* out, uint8 colour, uint8 alpha)` (0x58FEE0, thiscall)
-    pub fn hud_get_rgba(this: GPtr<u8>, out: GPtr<u8>, colour: u32, alpha: u32) -> GPtr<u8> = thiscall 0x58FEE0 => crate::hud::get_rgba;
     /// `CRGBA::operator=(const CRGBA&)` (stub 0x463370, thiscall)
     pub fn rgba_assign(this: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = thiscall 0x463370 => unported;
-    /// `CRGBA::CRGBA(uint8 r, uint8 g, uint8 b, uint8 a)` (0x7170C0, thiscall)
-    pub fn rgba_ctor(this: GPtr<u8>, r: u32, g: u32, b: u32, a: u32) -> GPtr<u8> = thiscall 0x7170C0 => unported;
-    /// `std::min<float>(a, b)` instance (0x404330): ST0 = `a` when `a < b`, else `b`.
-    pub fn min_f_st0(a: f32, b: f32) -> f64 = cdecl 0x404330 => unported;
 }
 
 fn det_ptr() -> GPtr<u8> {
@@ -977,6 +972,7 @@ const K_17: f32 = f32::from_bits(0x4188_0000);
 /// `CFontChar` (render state) +0x2A, proportional
 const RS_PROP_ON: isize = 0x2A;
 
+pub use sa_world::bindings::sprite_flush_sprite_buffer as flush_sprite_buffer;
 orig! {
     /// `CSprite2d::SetRenderState()` (0x727B30, thiscall)
     pub fn sprite2d_set_render_state(this: GPtr<u8>) = thiscall 0x727B30 => unported;
@@ -986,8 +982,6 @@ orig! {
     pub fn font_char_set_call(this: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = thiscall 0x718E50 => crate::font::font_char_set;
     /// `CFont::PrintChar(float x, float y, uint8 c)` (0x718A10)
     pub fn print_char_call(px: f32, py: f32, c: u32) = cdecl 0x718A10 => print_char;
-    /// `CSprite::FlushSpriteBuffer()` (0x70CF20)
-    pub fn flush_sprite_buffer() = cdecl 0x70CF20 => unported;
     /// `CSprite2d::RenderVertexBuffer()` (0x7273D0)
     pub fn render_vertex_buffer() = cdecl 0x7273D0 => unported;
 }
@@ -1128,9 +1122,8 @@ pub fn render_font_buffer() {
     crate::font::RENDER_END_PTR.set(crate::font::RENDER_FONT_BUFFER);
 }
 
+pub use sa_core::bindings::sprite2d_draw;
 orig! {
-    /// `CSprite2d::Draw(const CRect&, const CRGBA&)` (0x728350, thiscall)
-    pub fn sprite2d_draw(this: GPtr<u8>, rect: GPtr<u8>, colour: GPtr<u8>) = thiscall 0x728350 => unported;
     /// `CSprite2d::AddToBuffer(const CRect&, const CRGBA&, u1, v1, u2, v2, u3, v3, u4, v4)` (0x728200)
     pub fn sprite2d_add_to_buffer(rect: GPtr<u8>, colour: GPtr<u8>, u1: f32, v1: f32, u2: f32, v2: f32, u3: f32, v3: f32, u4: f32, v4: f32) = cdecl 0x728200 => unported;
     /// `CFont::GetLetterIdPropValue(uint8)` (0x718770)
@@ -1282,11 +1275,27 @@ pub fn print_char(px: f32, py: f32, c: u32) {
 // Start-up / shut-down
 // ---------------------------------------------------------------------------------------------------
 
+pub use crate::bindings::font_set_alpha_fade as set_alpha_fade_call;
+pub use crate::bindings::font_set_background_color as set_background_color_call;
+pub use crate::bindings::font_set_centre_size as set_centre_size_call;
+pub use crate::bindings::font_set_drop_shadow_position as set_drop_shadow_position_call;
+pub use crate::bindings::font_set_justify as set_justify_call;
+pub use crate::bindings::font_set_right_justify_wrap as set_right_justify_wrap_call;
+pub use crate::bindings::font_set_scale as set_scale_call;
+pub use crate::bindings::font_set_slant as set_slant_call;
+pub use crate::bindings::font_set_wrapx as set_wrapx_call;
+pub use crate::bindings::sprite2d_set_texture;
+pub use sa_core::bindings::file_close;
+pub use sa_core::bindings::file_set_dir;
+pub use sa_core::bindings::open_file as file_open;
+pub use sa_core::bindings::sscanf1;
+pub use sa_stream::bindings::add_txd_slot;
+pub use sa_stream::bindings::find_txd_slot;
+pub use sa_stream::bindings::load_line;
+pub use sa_stream::bindings::load_txd;
+pub use sa_stream::bindings::remove_txd_slot;
+pub use sa_stream::bindings::sprite2d_delete;
 orig! {
-    /// `CTxdStore::AddTxdSlot(const char*)` (0x731C80)
-    pub fn add_txd_slot(name: GPtr<u8>) -> i32 = cdecl 0x731C80 => sa_stream::txdstore::add_txd_slot;
-    /// `CTxdStore::LoadTxd(int32, const char* filename)` (0x7320B0)
-    pub fn load_txd(slot: i32, name: GPtr<u8>) -> u8 = cdecl 0x7320B0 => sa_stream::txdstore::load_txd_filename;
     /// `CTxdStore::AddRef(int32)` (0x731A00)
     pub fn txd_add_ref(slot: i32) = cdecl 0x731A00 => sa_stream::txdstore::add_ref;
     /// `CTxdStore::PushCurrentTxd()` (0x7316A0)
@@ -1295,54 +1304,18 @@ orig! {
     pub fn set_current_txd(slot: i32) = cdecl 0x7319C0 => sa_stream::txdstore::set_current_txd;
     /// `CTxdStore::PopCurrentTxd()` (0x7316B0)
     pub fn pop_current_txd() = cdecl 0x7316B0 => sa_stream::txdstore::pop_current_txd;
-    /// `CTxdStore::FindTxdSlot(const char*)` (0x731850)
-    pub fn find_txd_slot(name: GPtr<u8>) -> i32 = cdecl 0x731850 => sa_stream::txdstore::find_txd_slot_name;
-    /// `CTxdStore::RemoveTxdSlot(int32)` (0x731CD0)
-    pub fn remove_txd_slot(slot: i32) = cdecl 0x731CD0 => sa_stream::txdstore::remove_txd_slot;
-    /// `CSprite2d::SetTexture(const char* name, const char* mask)` (0x7272B0, thiscall)
-    pub fn sprite2d_set_texture(this: GPtr<u8>, name: GPtr<u8>, mask: GPtr<u8>) = thiscall 0x7272B0 => unported;
-    /// `CSprite2d::Delete()` (0x727240, thiscall)
-    pub fn sprite2d_delete(this: GPtr<u8>) = thiscall 0x727240 => unported;
     /// `CFont::LoadFontValues()` (0x7187C0)
     pub fn load_font_values_call() = cdecl 0x7187C0 => load_font_values;
-    /// `CFont::SetScale(float, float)` (0x719380)
-    pub fn set_scale_call(w: u32, h: u32) = cdecl 0x719380 => crate::font::set_scale;
     /// `CFont::SetSlantRefPoint(float, float)` (0x719400)
     pub fn set_slant_ref_point_call(px: u32, py: u32) = cdecl 0x719400 => crate::font::set_slant_ref_point;
-    /// `CFont::SetSlant(float)` (0x719420)
-    pub fn set_slant_call(v: u32) = cdecl 0x719420 => crate::font::set_slant;
     /// `CFont::SetOrientation(eFontAlignment)` (0x719610)
     pub fn set_orientation_call(v: u32) = cdecl 0x719610 => crate::font::set_orientation;
-    /// `CFont::SetJustify(bool)` (0x719600)
-    pub fn set_justify_call(v: u32) = cdecl 0x719600 => crate::font::set_justify;
-    /// `CFont::SetWrapx(float)` (0x7194D0)
-    pub fn set_wrapx_call(v: u32) = cdecl 0x7194D0 => crate::font::set_wrapx;
-    /// `CFont::SetCentreSize(float)` (0x7194E0)
-    pub fn set_centre_size_call(v: u32) = cdecl 0x7194E0 => crate::font::set_centre_size;
     /// `CFont::SetBackground(bool, bool)` (0x7195C0)
     pub fn set_background_call(on: u32, outline: u32) = cdecl 0x7195C0 => crate::font::set_background;
-    /// `CFont::SetBackgroundColor(CRGBA)` (0x7195E0)
-    pub fn set_background_color_call(c: u32) = cdecl 0x7195E0 => crate::font::set_background_color;
     /// `CFont::SetProportional(bool)` (0x7195B0)
     pub fn set_proportional_call(v: u32) = cdecl 0x7195B0 => crate::font::set_proportional;
     /// `CFont::SetFontStyle(eFontStyle)` (0x719490)
     pub fn set_font_style_call(v: u32) = cdecl 0x719490 => crate::font::set_font_style;
-    /// `CFont::SetRightJustifyWrap(float)` (0x7194F0)
-    pub fn set_right_justify_wrap_call(v: u32) = cdecl 0x7194F0 => crate::font::set_right_justify_wrap;
-    /// `CFont::SetAlphaFade(float)` (0x719500)
-    pub fn set_alpha_fade_call(v: u32) = cdecl 0x719500 => crate::font::set_alpha_fade;
-    /// `CFont::SetDropShadowPosition(int8)` (0x719570)
-    pub fn set_drop_shadow_position_call(v: u32) = cdecl 0x719570 => crate::font::set_drop_shadow_position;
-    /// `CFileMgr::SetDir(const char*)` (0x5387D0)
-    pub fn file_set_dir(dir: GPtr<u8>) -> i32 = cdecl 0x5387D0 => sa_core::filemgr::set_dir;
-    /// `CFileMgr::OpenFile(const char* path, const char* mode)` (0x538900)
-    pub fn file_open(path: GPtr<u8>, mode: GPtr<u8>) -> GPtr<u8> = cdecl 0x538900 => sa_core::filemgr::open_file;
-    /// `CFileMgr::CloseFile(FILE*)` (0x5389D0)
-    pub fn file_close(f: GPtr<u8>) -> i32 = cdecl 0x5389D0 => sa_core::filemgr::close_file;
-    /// `CFileLoader::LoadLine(FILE*)` (0x536F80)
-    pub fn load_line(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x536F80 => unported;
-    /// CRT `sscanf(s, fmt, p)` (0x8220AD)
-    pub fn sscanf1(s: GPtr<u8>, fmt: GPtr<u8>, a: GPtr<u8>) -> i32 = cdecl 0x8220AD => unported;
     /// CRT `sscanf(s, fmt, p0..p7)` (0x8220AD)
     pub fn sscanf8(s: GPtr<u8>, fmt: GPtr<u8>, a0: GPtr<u8>, a1: GPtr<u8>, a2: GPtr<u8>, a3: GPtr<u8>, a4: GPtr<u8>, a5: GPtr<u8>, a6: GPtr<u8>, a7: GPtr<u8>) -> i32 = cdecl 0x8220AD => unported;
 }

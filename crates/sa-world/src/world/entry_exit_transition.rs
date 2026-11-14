@@ -13,125 +13,92 @@ use sa_math::x87::X87;
 
 use super::common::{f32_of, g, rd, wr, x};
 
+use crate::bindings::add_entry_exit_to_stack;
+use crate::bindings::area_codes_ctor as event_area_codes_ctor;
+use crate::bindings::camera_get_fading;
+use crate::bindings::camera_set_cam_position_for_fixed_mode as set_cam_position_for_fixed_mode;
+use crate::bindings::can_player_start_mission;
+use crate::bindings::clock_get_is_time_in_range;
+use crate::bindings::entry_exit_delete_one as entry_exit_manager_delete_one;
+use crate::bindings::event_group_add;
+use crate::bindings::event_group_event_ctor;
+use crate::bindings::event_group_event_dtor;
+use crate::bindings::event_new;
+use crate::bindings::event_script_command_ctor;
+use crate::bindings::event_script_command_dtor;
+use crate::bindings::find_far_clip_for_coors;
+use crate::bindings::garages_close_hide_out_garages_before_save as garages_close_hideouts_before_save;
+use crate::bindings::group_intelligence_add_event;
+use crate::bindings::hud_set_zone_name;
+use crate::bindings::load_shop as shopping_load_shop;
+use crate::bindings::ped_get_held_entity;
+use crate::bindings::ped_groups_get_peds_group as get_peds_group;
+use crate::bindings::population_remove_all_random_peds;
+use crate::bindings::reset_area_code_for_visible_objects;
+use crate::bindings::shopping_remove_loaded_shop;
+use crate::bindings::task_facial_stop_all;
+use crate::bindings::vector_add as vec_add;
+use crate::bindings::vector_mul_scalar as vec_mul_scalar;
+use crate::bindings::vector_sub as vec_sub;
+use crate::bindings::water_find_nearest_water_and_flow;
+use sa_core::bindings::audio_zones_update;
+use sa_core::bindings::camera_fade;
+use sa_core::bindings::camera_restore_with_jump_cut;
+use sa_core::bindings::camera_set_fade_colour;
+use sa_core::bindings::clothes_rebuild_player_if_needed;
+use sa_core::bindings::game_tidy_up_memory;
+use sa_core::bindings::get_pad as pad_get_pad;
+use sa_core::bindings::ipl_store_add_ipls_needed_at_posn as ipl_store_add_ipls_needed;
+use sa_core::bindings::load_all_requested_models as streaming_load_all_requested_models;
+use sa_core::bindings::rubbish_set_visibility as fun_7204c0;
+use sa_core::bindings::scripts_process as the_scripts_process;
+use sa_core::bindings::streaming_load_scene;
+use sa_core::bindings::streaming_set_flag_407a30;
+use sa_core::bindings::task_new;
+use sa_core::bindings::text_get;
+use sa_core::bindings::time_cycle_stop_extra_colour;
+use sa_core::bindings::timer_resume;
+use sa_core::bindings::timer_suspend;
+use sa_core::bindings::vector_magnitude;
+use sa_core::bindings::vector_normalise;
+use sa_stream::bindings::manage_all_population as population_manage_all;
 orig! {
-    /// `CClock::GetIsTimeInRange(uint8 from, uint8 to)` (0x52CEE0, AL)
-    fn clock_get_is_time_in_range(from: u32, to: u32) -> u8 = cdecl 0x52CEE0 => unported;
-    /// `CPlayerPed::CanPlayerStartMission()` (0x609590, AL)
-    fn can_player_start_mission(p: GPtr<u8>) -> u8 = thiscall 0x609590 => unported;
-    /// `CVector::Magnitude()` (0x4082C0): ST0
-    fn vector_magnitude(v: GPtr<u8>) -> f64 = thiscall 0x4082C0 => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
     /// `CEntryExitManager::FindNearestDoor(const CEntryExit&, float)` (0x43F630)
     fn find_nearest_door(enex: GPtr<u8>, range: f32) -> GPtr<u8> = cdecl 0x43F630 => unported;
-    /// `CTask::operator new(uint32)` (0x61A5A0)
-    fn task_new(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => unported;
     /// `CTaskComplexGotoDoorAndOpen::CTaskComplexGotoDoorAndOpen(CObject* door)` (0x66BB20)
     fn task_goto_door_ctor_door(t: GPtr<u8>, door: GPtr<u8>) -> GPtr<u8> = thiscall 0x66BB20 => unported;
     /// `CTaskComplexGotoDoorAndOpen::CTaskComplexGotoDoorAndOpen(const CVector& start, const CVector& end)` (0x66BBA0)
     fn task_goto_door_ctor_points(t: GPtr<u8>, start: GPtr<u8>, end: GPtr<u8>) -> GPtr<u8> = thiscall 0x66BBA0 => unported;
     /// `CTaskSimpleUninterruptable::CTaskSimpleUninterruptable()` (0x43E2E0)
     fn task_uninterruptable_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x43E2E0 => unported;
-    /// `CEventScriptCommand::CEventScriptCommand(int32, CTask*, bool)` (0x4B0A00)
-    fn event_script_command_ctor(e: GPtr<u8>, index: u32, task: GPtr<u8>, dead: u32) -> GPtr<u8> = thiscall 0x4B0A00 => unported;
-    /// `CEventScriptCommand::~CEventScriptCommand()` (0x4B0A50)
-    fn event_script_command_dtor(e: GPtr<u8>) = thiscall 0x4B0A50 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420)
-    fn event_group_add(grp: GPtr<u8>, ev: GPtr<u8>, valid: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
-    /// `operator-(const CVector&, const CVector&)` (0x40FE60, the result through `out`)
-    fn vec_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => unported;
-    /// `operator+(const CVector&, const CVector&)` (0x40FE30, the result through `out`)
-    fn vec_add(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE30 => unported;
-    /// `operator*(const CVector&, float)` (0x40FEC0, the result through `out`)
-    fn vec_mul_scalar(out: GPtr<u8>, v: GPtr<u8>, s: f32) -> GPtr<u8> = cdecl 0x40FEC0 => unported;
-    /// `CCamera::SetCamPositionForFixedMode(const CVector&, const CVector&)` (0x50BEC0) on `TheCamera`
-    fn set_cam_position_for_fixed_mode(cam: GPtr<u8>, pos: GPtr<u8>, up: GPtr<u8>) = thiscall 0x50BEC0 => unported;
     /// `CCamera::TakeControlNoEntity(const CVector&, eSwitchType, int32)` (0x50C8B0) on `TheCamera`
     fn take_control_no_entity(cam: GPtr<u8>, pos: GPtr<u8>, switch: u32, who: i32) = thiscall 0x50C8B0 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    fn pad_get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CPed::GetEntityThatThisPedIsHolding()` (0x5E02E0)
-    fn ped_get_held_entity(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x5E02E0 => unported;
     /// `CColStore::AddCollisionNeededAtPosn(const CVector&)` (0x4103A0)
     fn col_store_add_collision_needed(p: GPtr<u8>) = cdecl 0x4103A0 => unported;
-    /// `CIplStore::AddIplsNeededAtPosn(const CVector&)` (0x4045B0)
-    fn ipl_store_add_ipls_needed(p: GPtr<u8>) = cdecl 0x4045B0 => unported;
     /// `CStreaming::AddModelsToRequestList(const CVector&, int32 flags)` (0x40D3F0)
     fn streaming_add_models_to_request_list(p: GPtr<u8>, flags: u32) = cdecl 0x40D3F0 => unported;
     /// `CEntryExit::RequestObjectsInFrustum()` (0x43E690)
     fn entry_exit_request_objects_in_frustum(e: GPtr<u8>) = thiscall 0x43E690 => unported;
     /// `CPathFind::SetPathsNeededAtPosition(const CVector&)` (0x44DCD0) on `ThePaths`
     fn paths_set_needed_at_position(paths: GPtr<u8>, p: GPtr<u8>) = thiscall 0x44DCD0 => unported;
-    /// `CCamera::GetFading()` (0x50ADE0, AL)
-    fn camera_get_fading(cam: GPtr<u8>) -> u8 = thiscall 0x50ADE0 => unported;
-    /// `CCamera::SetFadeColour(uint8, uint8, uint8)` (0x50BF00)
-    fn camera_set_fade_colour(cam: GPtr<u8>, r: u32, g: u32, b: u32) = thiscall 0x50BF00 => unported;
-    /// `CCamera::Fade(float, int16 direction)` (0x50AC20)
-    fn camera_fade(cam: GPtr<u8>, t: f32, dir: u32) = thiscall 0x50AC20 => unported;
-    /// `CCamera::RestoreWithJumpCut()` (0x50BAB0)
-    fn camera_restore_with_jump_cut(cam: GPtr<u8>) = thiscall 0x50BAB0 => unported;
     /// `CEntryExitManager::SetAreaCodeForVisibleObjects()` (0x43ECF0)
     fn set_area_code_for_visible_objects() = cdecl 0x43ECF0 => unported;
-    /// `CEntryExitManager::ResetAreaCodeForVisibleObjects()` (0x43ED80)
-    fn reset_area_code_for_visible_objects() = cdecl 0x43ED80 => unported;
-    /// `CEntryExitManager::AddEntryExitToStack(CEntryExit*)` (0x43E410)
-    fn add_entry_exit_to_stack(e: GPtr<u8>) = cdecl 0x43E410 => unported;
-    /// `CEntryExitManager::DeleteOne(int32)` (0x43FD50)
-    fn entry_exit_manager_delete_one(i: i32) = cdecl 0x43FD50 => unported;
-    /// `CPedGroups::GetPedsGroup(const CPed*)` (0x5F7E80)
-    fn get_peds_group(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x5F7E80 => unported;
-    /// `CEvent::operator new(uint32)` (0x4B5620)
-    fn event_new(size: u32) -> GPtr<u8> = cdecl 0x4B5620 => unported;
     /// `CEventLeaderEntryExit::CEventLeaderEntryExit(CPed*)` (0x43E1C0)
     fn event_leader_entry_exit_ctor(e: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x43E1C0 => unported;
-    /// `CEventAreaCodes::CEventAreaCodes(CPed*)` (0x4B2190)
-    fn event_area_codes_ctor(e: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x4B2190 => unported;
-    /// `CEventGroupEvent::CEventGroupEvent(CPed*, CEvent*)` (0x4ADFD0)
-    fn event_group_event_ctor(e: GPtr<u8>, ped: GPtr<u8>, ev: GPtr<u8>) -> GPtr<u8> = thiscall 0x4ADFD0 => unported;
-    /// `CEventGroupEvent::~CEventGroupEvent()` (0x4AE070)
-    fn event_group_event_dtor(e: GPtr<u8>) = thiscall 0x4AE070 => unported;
-    /// `CPedGroupIntelligence::AddEvent(CEvent*)` (0x5F7470)
-    fn group_intelligence_add_event(gi: GPtr<u8>, ev: GPtr<u8>) = thiscall 0x5F7470 => unported;
-    /// `CClothes::RebuildPlayerIfNeeded(CPlayerPed*)` (0x5A8390)
-    fn clothes_rebuild_player_if_needed(p: GPtr<u8>) = cdecl 0x5A8390 => unported;
-    /// `CAudioZones::Update(bool, CVector)` (0x5083C0)
-    fn audio_zones_update(force: u32, px: u32, py: u32, pz: u32) = cdecl 0x5083C0 => unported;
-    /// `CWaterLevel::FindNearestWaterAndItsFlow()` (0x6E9D70)
-    fn water_find_nearest_water_and_flow() = cdecl 0x6E9D70 => unported;
-    /// `CGarages::CloseHideOutGaragesBeforeSave()` (0x44A170)
-    fn garages_close_hideouts_before_save() = cdecl 0x44A170 => unported;
     /// `InteriorManager_c::SetEntryExitPtr(CEntryExit*)` (0x598180) on `g_interiorMan` (0xBAF670)
     fn interior_manager_set_entry_exit_ptr(m: GPtr<u8>, e: GPtr<u8>) = thiscall 0x598180 => unported;
     /// `InteriorManager_c::Update()` (0x598F50, AL)
     fn interior_manager_update(m: GPtr<u8>) -> u8 = thiscall 0x598F50 => unported;
-    /// `CPopulation::RemoveAllRandomPeds()` (0x6122C0)
-    fn population_remove_all_random_peds() = cdecl 0x6122C0 => unported;
     /// `CEntryExit::RequestAmbientPeds()` (0x43E6D0)
     fn entry_exit_request_ambient_peds(e: GPtr<u8>) = thiscall 0x43E6D0 => unported;
-    /// `CStreaming::LoadAllRequestedModels(bool)` (0x40EA10)
-    fn streaming_load_all_requested_models(b: u32) = cdecl 0x40EA10 => unported;
-    /// `CTimer::Suspend()` (0x5619D0)
-    fn timer_suspend() = cdecl 0x5619D0 => unported;
-    /// `CTimer::Resume()` (0x561A00)
-    fn timer_resume() = cdecl 0x561A00 => unported;
-    /// `CTimeCycle::FindFarClipForCoors(CVector)` (0x5616E0): ST0
-    fn find_far_clip_for_coors(x: u32, y: u32, z: u32) -> f64 = cdecl 0x5616E0 => unported;
     /// `RwCameraSetFarClipPlane(RwCamera*, float)` (0x7EE2A0)
     fn rw_camera_set_far_clip_plane(cam: GPtr<u8>, far: f32) -> GPtr<u8> = cdecl 0x7EE2A0 => unported;
-    /// `CStreaming::LoadScene(const CVector&)` (0x40EB70)
-    fn streaming_load_scene(p: GPtr<u8>) = cdecl 0x40EB70 => unported;
     /// `CEntryExit::GenerateAmbientPeds(const CVector&)` (0x43E8B0)
     fn entry_exit_generate_ambient_peds(e: GPtr<u8>, p: GPtr<u8>) = thiscall 0x43E8B0 => unported;
-    /// `FUN_00407a30(bool)` (0x407A30, CStreaming: the load-scene vehicle flag)
-    fn streaming_set_flag_407a30(b: u32) = cdecl 0x407A30 => unported;
     /// `CStreaming::ClearFlagForAll(uint32)` (0x407A40)
     fn streaming_clear_flag_for_all(f: u32) = cdecl 0x407A40 => unported;
     /// `CTimeCycle::StartExtraColour(int32, bool)` (0x55FEC0)
     fn time_cycle_start_extra_colour(c: i32, b: u32) = cdecl 0x55FEC0 => unported;
-    /// `CTimeCycle::StopExtraColour(bool)` (0x55FF20)
-    fn time_cycle_stop_extra_colour(b: u32) = cdecl 0x55FF20 => unported;
-    /// `FUN_007204c0(bool)` (0x7204C0)
-    fn fun_7204c0(b: u32) = cdecl 0x7204C0 => unported;
     /// virtual `CEntity::GetHeightAboveRoad()` (vtable +0xD4): ST0
     fn v_get_height_above_road(v: GPtr<u8>) -> f64 = thiscall vslot 0xD4 => unported;
     /// virtual `CPlaceable::Teleport(CVector, bool)` (vtable +0x38)
@@ -144,30 +111,14 @@ orig! {
     fn entry_exit_find_valid_teleport_point(e: GPtr<u8>, p: GPtr<u8>) = thiscall 0x43EAF0 => unported;
     /// `CTheScripts::ClearSpaceForMissionEntity(const CVector&, CEntity*)` (0x486B00)
     fn clear_space_for_mission_entity(p: GPtr<u8>, e: GPtr<u8>) = cdecl 0x486B00 => unported;
-    /// `CShopping::RemoveLoadedShop()` (0x49AE30)
-    fn shopping_remove_loaded_shop() = cdecl 0x49AE30 => unported;
-    /// `CShopping::LoadShop(CEntryExit*)` (0x49BBE0)
-    fn shopping_load_shop(e: GPtr<u8>) = cdecl 0x49BBE0 => unported;
-    /// `CPopulation::ManageAllPopulation()` (0x6160A0)
-    fn population_manage_all() = cdecl 0x6160A0 => unported;
-    /// `CTheScripts::Process()` (0x46A000)
-    fn the_scripts_process() = cdecl 0x46A000 => unported;
     /// `CEntryExit::WarpGangWithPlayer(CPed*)` (0x43F1F0)
     fn entry_exit_warp_gang_with_player(e: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x43F1F0 => unported;
     /// `CEntryExit::ProcessStealableObjects(CPed*)` (0x43E990)
     fn entry_exit_process_stealable_objects(e: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x43E990 => unported;
     /// `CTaskManager::GetTaskSecondary(int32)` (0x681810)
     fn task_manager_get_task_secondary(tm: GPtr<u8>, slot: u32) -> GPtr<u8> = thiscall 0x681810 => unported;
-    /// `CTaskComplexFacial::StopAll()` (0x691250)
-    fn task_facial_stop_all(t: GPtr<u8>) = thiscall 0x691250 => unported;
-    /// `CGame::TidyUpMemory(bool, bool)` (0x53C500)
-    fn game_tidy_up_memory(a: u32, b: u32) = cdecl 0x53C500 => unported;
     /// `CEntryExit::GetEntryExitToDisplayNameOf()` (0x43E650)
     fn entry_exit_get_display_name_of(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x43E650 => unported;
-    /// `CText::Get(const char*)` (0x6A0050) on `TheText` (0xC1B340)
-    fn text_get(t: GPtr<u8>, key: GPtr<u8>) -> GPtr<u8> = thiscall 0x6A0050 => unported;
-    /// `CHud::SetZoneName(const char*, bool)` (0x588BB0)
-    fn hud_set_zone_name(name: GPtr<u8>, force: u32) = cdecl 0x588BB0 => unported;
 }
 
 use sa_core::field::ptr_of as buf;

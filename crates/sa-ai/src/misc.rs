@@ -23,15 +23,13 @@ sa_core::globals! {
 /// `CTimer::m_snTimeInMilliseconds` (owned by CTimer).
 const TIME_MS: usize = 0xB7CB84;
 
+use crate::bindings::task_complex_dtor;
+use sa_core::bindings::atexit;
+use sa_core::bindings::crt_new;
+use sa_core::bindings::eh_vector_ctor;
+use sa_stream::bindings::col_model_ctor;
+use sa_world::bindings::compute_target_door_to_exit;
 orig! {
-    /// CRT `_atexit` (0x821D1E)
-    fn atexit(f: u32) -> i32 = cdecl 0x821D1E => unported;
-    /// CRT `eh vector constructor iterator` (0x821D30, stdcall)
-    fn eh_vector_ctor(arr: GPtr<u8>, size: u32, n: u32, ctor: u32, dtor: u32) = stdcall 0x821D30 => unported;
-    /// CRT `operator new` (0x82119A)
-    fn crt_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
-    /// `CColModel::CColModel` (0x40FB60)
-    fn col_model_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x40FB60 => unported;
     /// `CTaskSimpleAnim::~CTaskSimpleAnim` (0x61A6F0)
     fn task_simple_anim_dtor(this: GPtr<u8>) = thiscall 0x61A6F0 => unported;
     /// `FUN_005bb9f0` (0x5BB9F0, stdcall): loads an event index table from a file.
@@ -42,8 +40,6 @@ orig! {
     fn place_chat_group(this: GPtr<u8>, a0: u32, a1: u32, a2: u32, a3: u32) -> u8 = thiscall 0x5FCE80 => unported;
     /// `CPedGroupPlacer::PlaceRandomGroup` (0x5FD330)
     fn place_random_group(this: GPtr<u8>, a0: u32, a1: u32, a2: u32, a3: u32) -> u8 = thiscall 0x5FD330 => unported;
-    /// `CCarEnterExit::ComputeTargetDoorToExit(CVehicle*, CPed*)` (0x64F110)
-    fn compute_target_door_to_exit(veh: GPtr<u8>, ped: GPtr<u8>) -> u32 = cdecl 0x64F110 => unported;
     /// `CDecision::MakeDecision` (0x6040D0)
     #[allow(clippy::too_many_arguments)]
     fn decision_make_decision(this: GPtr<u8>, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, a8: u32) = thiscall 0x6040D0 => unported;
@@ -53,8 +49,6 @@ orig! {
     fn scan_vehicle_potential_collision(this: GPtr<u8>, ped: GPtr<u8>, vehs: GPtr<u8>, n: u32) = thiscall 0x603720 => unported;
     /// `CPointRoute::operator delete` (0x41B7D0)
     fn point_route_delete(p: GPtr<u8>) = cdecl 0x41B7D0 => unported;
-    /// `FUN_0061a3d0` (0x61A3D0): `CTaskComplex` base destructor
-    fn task_complex_dtor(this: GPtr<u8>) = thiscall 0x61A3D0 => unported;
 }
 
 // ---- static initialisers -----------------------------------------------------------------------
@@ -558,6 +552,12 @@ pub fn fun_0066e050(this: GPtr<u8>) {
 
 // ---- batch 2 -------------------------------------------------------------------------------------
 
+use crate::bindings::line_up_ped_with_car_ctor;
+use crate::bindings::membership_remove_member;
+use crate::bindings::pgi_flush as group_intelligence_flush;
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_core::bindings::vector_normalise;
+use sa_core::bindings::world_remove;
 orig! {
     /// `FUN_005eec90` (0x5EEC90): `CPedStepAttractor` complete destructor
     fn step_attractor_dtor(this: GPtr<u8>) = thiscall 0x5EEC90 => unported;
@@ -565,16 +565,6 @@ orig! {
     fn attractor_manager_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x5EDF10 => unported;
     /// `CPedAttractor::Constructor` (0x5EDFB0)
     fn ped_attractor_ctor(this: GPtr<u8>, a0: u32, a1: u32, a2: u32, a3: u32, c0: u32, c1: u32, c2: u32, c3: u32, c4: u32, c5: u32, c6: u32) -> GPtr<u8> = thiscall 0x5EDFB0 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CTaskUtilityLineUpPedWithCar::Constructor(const CVector&, int, int, int)` (0x64FBB0)
-    fn line_up_ped_with_car_ctor(this: GPtr<u8>, offset: GPtr<u8>, a: u32, b: u32, c: u32) -> GPtr<u8> = thiscall 0x64FBB0 => unported;
-    /// `CVector::Normalise` (0x59C910)
-    fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
-    /// `CPedGroupMembership::RemoveMember(int)` (0x5F80D0)
-    fn membership_remove_member(this: GPtr<u8>, i: i32) = thiscall 0x5F80D0 => unported;
-    /// `CPedGroupIntelligence::Flush` (0x5F7350)
-    fn group_intelligence_flush(this: GPtr<u8>) = thiscall 0x5F7350 => unported;
     /// `thunk_FUN_01567930` (0x4650F0): `CDecisionMakerTypes` constructor
     fn decision_maker_types_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4650F0 => unported;
     /// `CPedAttractorManager::FindAssociatedAttractor<CPedAttractor>` (0x5EB6F0, `ret 0xC`)
@@ -583,8 +573,6 @@ orig! {
     fn ped_attractor_has_empty_slot(this: GPtr<u8>) -> u8 = thiscall 0x5EAF10 => unported;
     /// `CPedAttractor::IsRegisteredWithPed(CPed*)` (0x5EB4C0)
     fn ped_attractor_is_registered_with_ped(this: GPtr<u8>, ped: u32) -> u8 = thiscall 0x5EB4C0 => unported;
-    /// `CWorld::Remove(CEntity*)` (0x563280)
-    fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
     /// scalar deleting destructor (vtable +0)
     fn entity_delete(e: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
 }
@@ -905,25 +893,17 @@ pub fn ped_groups_are_in_same_group_5f7f40(a: u32, b: u32) -> u8 {
 
 // ---- batch 3 -------------------------------------------------------------------------------------
 
+use crate::bindings::assoc_set_finish_callback;
+use crate::bindings::attractor_scanner_clear;
+use crate::bindings::decision_from;
+use sa_core::bindings::entity_register_reference;
+use sa_core::bindings::ped_is_alive;
+use sa_stream::bindings::anim_remove_block_ref as remove_anim_block_ref;
+use sa_world::bindings::task_simple_dtor;
+use sa_world::bindings::tm_find_active_task_by_type as task_manager_find_active_task_by_type;
 orig! {
-    /// `CTaskManager::FindActiveTaskByType(int)` (0x681740)
-    fn task_manager_find_active_task_by_type(tm: GPtr<u8>, t: i32) -> GPtr<u8> = thiscall 0x681740 => unported;
-    /// `CAttractorScanner::Clear` (0x5FFF90)
-    fn attractor_scanner_clear(this: GPtr<u8>) = thiscall 0x5FFF90 => unported;
-    /// `CPed::IsAlive` (0x5E0170)
-    fn ped_is_alive(ped: GPtr<u8>) -> u8 = thiscall 0x5E0170 => unported;
     /// `CEntityScanner::ScanForEntitiesInRange(int, const CPed&)` (0x5FFA20)
     fn entity_scanner_scan_in_range(this: GPtr<u8>, kind: i32, ped: GPtr<u8>) = thiscall 0x5FFA20 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    fn entity_register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
-    /// `CAnimBlendAssociation::SetFinishCallback(cb, data)` (0x4CEBE0)
-    fn assoc_set_finish_callback(a: GPtr<u8>, cb: u32, data: u32) = thiscall 0x4CEBE0 => unported;
-    /// `CAnimManager::RemoveAnimBlockRef(int)` (0x4D3FD0)
-    fn remove_anim_block_ref(i: i32) = cdecl 0x4D3FD0 => unported;
-    /// `FUN_0061a3a0` (0x61A3A0): `CTaskSimple` base destructor
-    fn task_simple_dtor(this: GPtr<u8>) = thiscall 0x61A3A0 => unported;
-    /// `CDecision::From(const CDecision&)` (0x6006B0)
-    fn decision_from(this: GPtr<u8>, src: GPtr<u8>) = thiscall 0x6006B0 => unported;
 }
 
 /// `(missed by ghidra: cat7-call)` (0x6822B0; the body continues through the straight protection stub
@@ -1205,12 +1185,8 @@ pub fn decision_maker_types_add_decision_maker_607050(
     -1
 }
 
-orig! {
-    /// `CPedIntelligence::SetPedDecisionMakerType(int)` (0x600B50)
-    fn intel_set_ped_decision_maker_type(intel: GPtr<u8>, t: i32) = thiscall 0x600B50 => unported;
-    /// `CPedGroupIntelligence::SetGroupDecisionMakerType(int)` (0x5F7340)
-    fn group_intel_set_decision_maker_type(intel: GPtr<u8>, t: i32) = thiscall 0x5F7340 => unported;
-}
+use sa_world::bindings::group_intel_set_decision_maker_type;
+use sa_world::bindings::set_ped_decision_maker_type as intel_set_ped_decision_maker_type;
 
 /// `CDecisionMakerTypes::RemoveDecisionMaker(int)` (0x6043A0): only for an active slot. A ped maker
 /// (type 0): every ped of the pool (scanned from the last slot down, free slots and a null object
@@ -1258,13 +1234,11 @@ pub fn decision_maker_types_remove_decision_maker_6043a0(this: GPtr<u8>, idx: i3
 
 // ---- batch 5 -------------------------------------------------------------------------------------
 
+use crate::bindings::vehicle_set_getting_out_flags;
+use sa_stream::bindings::ped_is_player as ped_is_player_m;
 orig! {
     /// `CCarEnterExit::ComputeDoorFlag(CVehicle*, int door, bool)` (0x64E550)
     fn compute_door_flag(veh: GPtr<u8>, door: u32, b: u32) -> u8 = cdecl 0x64E550 => unported;
-    /// `CVehicle::SetGettingOutFlags(uint8)` (0x6D3020)
-    fn vehicle_set_getting_out_flags(veh: GPtr<u8>, flags: u32) = thiscall 0x6D3020 => unported;
-    /// `CPed::IsPlayer` (0x5DF8F0)
-    fn ped_is_player_m(ped: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
     /// `CDecisionSimple::MakeDecision(int, int16*, int*)` (0x6007A0), through its hook toggle
     fn decision_simple_make_decision(this: GPtr<u8>, ev: i32, task: GPtr<u8>, index: GPtr<u8>) = thiscall 0x6007A0 => unported;
 }
@@ -1418,11 +1392,10 @@ pub fn interesting_events_ctor_6023a0(this: GPtr<u8>) -> GPtr<u8> {
     this
 }
 
+use crate::bindings::attractor_get_head_of_queue as ped_attractor_get_head_of_queue;
 orig! {
     /// `CPedAttractor::GetTailOfQueue` (0x5EB5B0)
     fn ped_attractor_get_tail_of_queue(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x5EB5B0 => unported;
-    /// `CPedAttractor::GetHeadOfQueue` (0x5EB590)
-    fn ped_attractor_get_head_of_queue(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x5EB590 => unported;
 }
 
 /// `CPedAttractorManager::HasQueueTailArrivedAtSlot(const C2dEffect*, const CEntity*)` (0x5EBBA0):

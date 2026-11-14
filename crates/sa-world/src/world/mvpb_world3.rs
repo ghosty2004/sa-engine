@@ -9,31 +9,22 @@ use sa_math::x87::{Cmp, X87};
 
 use super::common::{rd, wr, x};
 
+use crate::bindings::entity_get_col_model;
+use crate::bindings::garage_is_entity_entirely_inside_3d_o;
+use crate::bindings::placeable_get_matrix;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::find_player_vehicle;
+use sa_core::bindings::matrix_dtor;
+use sa_core::bindings::matrix_set_rotate_z;
+use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
+use sa_stream::bindings::simple_transform_update_matrix;
 orig! {
-    /// `CEntity::GetColModel` (0x535300)
-    fn entity_get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => unported;
-    /// `CPlaceable::GetMatrix` (0x411990)
-    fn placeable_get_matrix(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x411990 => unported;
     /// `operator*(CVector* out, const CMatrix*, const CVector*)` (0x59C890, cdecl)
     fn matrix_mul_vec(out: GPtr<f32>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<f32> = cdecl 0x59C890 => unported;
     /// `CGarage::IsPointInsideGarage(CVector, float)` (0x4487D0, `ret 0x10`)
     fn garage_is_point_inside_r(g: GPtr<u8>, x: f32, y: f32, z: f32, r: f32) -> u8 = thiscall 0x4487D0 => unported;
-    /// `CGarage::IsEntityEntirelyInside3D(CEntity*, float)` (0x448BE0, `ret 8`)
-    fn garage_is_entity_entirely_inside_3d_o(g: GPtr<u8>, e: GPtr<u8>, m: f32) -> u8 = thiscall 0x448BE0 => crate::world::mvpb_world3::garage_is_entity_entirely_inside_3d;
-    /// `CWorld::FindPlayerVehicle(int32, bool)` (0x56E0D0, cdecl)
-    fn find_player_vehicle(id: i32, remote: u32) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210, cdecl)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
     /// `CTaskManager::FindActiveTaskByType(int32)` (0x681740, `ret 4`)
     fn task_manager_find_active_task_by_type(tm: GPtr<u8>, ty: u32) -> GPtr<u8> = thiscall 0x681740 => unported;
-    /// `CPlaceable::AllocateMatrix` (0x54F560)
-    fn allocate_matrix(e: GPtr<u8>) = thiscall 0x54F560 => unported;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*)` (0x54F1B0, `ret 4`)
-    fn simple_transform_update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => unported;
-    /// `CMatrix::SetRotateZ(float)` (0x59B0E0, `ret 4`)
-    fn matrix_set_rotate_z(m: GPtr<u8>, a: f32) = thiscall 0x59B0E0 => unported;
-    /// `CMatrix::~CMatrix` (0x59ACD0)
-    fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
     /// `CrossProduct(CVector* out, const CVector*, const CVector*)` (0x59C730, cdecl)
     fn cross_product(out: GPtr<f32>, a: GPtr<u8>, b: GPtr<f32>) -> GPtr<f32> = cdecl 0x59C730 => unported;
 }

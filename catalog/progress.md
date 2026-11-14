@@ -6,21 +6,21 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 
 | Subsystem | unknown | specified | implemented | L1 | L2 | L3 | excluded | total | ≥L2 % |
 |---|---|---|---|---|---|---|---|---|---|
-| AI | 10 | 342 | 2687 | 0 | 1008 | 0 | 0 | 4047 | 24.9 |
-| UNK-game | 646 | 437 | 479 | 3 | 1318 | 0 | 0 | 2883 | 45.7 |
+| AI | 10 | 343 | 2686 | 0 | 1008 | 0 | 0 | 4047 | 24.9 |
+| UNK-game | 646 | 443 | 473 | 3 | 1318 | 0 | 0 | 2883 | 45.7 |
 | RW | 116 | 286 | 962 | 19 | 422 | 0 | 0 | 1805 | 23.4 |
 | WORLD | 12 | 177 | 454 | 22 | 253 | 0 | 0 | 918 | 27.6 |
-| AUDIO | 0 | 60 | 343 | 0 | 439 | 0 | 0 | 842 | 52.1 |
+| AUDIO | 0 | 91 | 312 | 0 | 439 | 0 | 0 | 842 | 52.1 |
 | RENDER | 3 | 158 | 383 | 15 | 273 | 0 | 0 | 832 | 32.8 |
 | VEH | 1 | 110 | 412 | 0 | 190 | 1 | 0 | 714 | 26.8 |
 | STREAM | 0 | 3 | 210 | 70 | 270 | 0 | 0 | 553 | 48.8 |
-| POP | 2 | 0 | 291 | 0 | 137 | 0 | 0 | 430 | 31.9 |
+| POP | 2 | 11 | 280 | 0 | 137 | 0 | 0 | 430 | 31.9 |
 | PED | 0 | 8 | 179 | 20 | 163 | 2 | 0 | 372 | 44.4 |
 | HUD | 0 | 0 | 139 | 24 | 179 | 0 | 0 | 342 | 52.3 |
 | CORE | 0 | 3 | 138 | 56 | 108 | 14 | 0 | 319 | 38.2 |
 | ANIM | 0 | 1 | 126 | 34 | 104 | 0 | 0 | 265 | 39.2 |
 | SCRIPT | 12 | 56 | 92 | 4 | 59 | 0 | 0 | 223 | 26.5 |
-| CAM | 0 | 18 | 98 | 5 | 97 | 0 | 0 | 218 | 44.5 |
+| CAM | 0 | 21 | 95 | 5 | 97 | 0 | 0 | 218 | 44.5 |
 | WEAPON | 1 | 17 | 67 | 11 | 62 | 0 | 0 | 158 | 39.2 |
 | INPUT | 0 | 0 | 43 | 81 | 31 | 0 | 0 | 155 | 20.0 |
 | COLL | 0 | 1 | 22 | 25 | 97 | 0 | 0 | 145 | 66.9 |
@@ -36,11 +36,11 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | X-libpng-1.0.12+zlib-1.1.3 | 0 | 0 | 0 | 0 | 0 | 0 | 197 | 197 | - |
 | X-quicktime-qtml | 0 | 0 | 0 | 0 | 0 | 0 | 38 | 38 | - |
 | X-linker-thunk | 0 | 0 | 0 | 0 | 0 | 0 | 26 | 26 | - |
-| **total** | 807 | 1705 | 7176 | 476 | 5296 | 19 | 6683 | 22162 | 34.34 |
+| **total** | 807 | 1757 | 7124 | 476 | 5296 | 19 | 6683 | 22162 | 34.34 |
 
-`specified` by source: REA 975, gta-reversed 730
+`specified` by source: REA 998, gta-reversed 759
 
-## Functions above `specified` (12967)
+## Functions above `specified` (12915)
 
 | address | name | subsystem | state | evidence | updated |
 |---|---|---|---|---|---|
@@ -427,14 +427,10 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x41bfa0 | CCarAI::BackToCruisingIfNoWantedLevel | POP | L2 | split pop3L2-car-ai; pop3L2-police-gang 100/100 each; 0 mismatches; 0 undeclared | 2026-11-11 |
 | 0x41c050 | CCarAI::CarHasReasonToStop | POP | implemented | PORT-POP (2026-11-11): ported-unhookable; stub bytes read as data by protection code (lea at 0x14B2FB5, 0x14B2FC3, 0x14B5ED1, 0x14B5EDF); main-session all-ports L3 IDENTICAL on grove 5200, c-bug 3220, cheats 3276 | 2026-11-11 |
 | 0x41c070 | CCarAI::AddPoliceCarOccupants | POP | implemented | pop-port-3 ported; L2-split (undeclared writes to review) | 2026-11-11 |
-| 0x41c4a0 | CCarAI::AddAmbulanceOccupants | POP | implemented | pop-port-3 ported; not-ported | 2026-11-11 |
-| 0x41c600 | CCarAI::AddFiretruckOccupants | POP | implemented | pop-port-3 ported; not-ported | 2026-11-11 |
-| 0x41c760 | CCarAI::TellOccupantsToLeaveCar | POP | implemented | pop-port-3 ported; not-ported | 2026-11-11 |
 | 0x41c8a0 | CCarAI::TellCarToRamOtherCar | POP | implemented | POP-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x41c900 | CCarAI::TellCarToBlockOtherCar | POP | implemented | POP-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x41c960 | CCarAI::TellCarToFollowOtherCar | POP | implemented | POP-2 ported; ported-unhookable | 2026-11-11 |
 | 0x41c9d0 | CCarAI::FindPoliceCarMissionForWantedLevel | POP | implemented | POP-2 ported; ported-unhookable | 2026-11-11 |
-| 0x41ca40 | CCarAI::FindPoliceBikeMissionForWantedLevel | POP | implemented | pop-port-3 ported; not-ported | 2026-11-11 |
 | 0x41ca50 | CCarAI::FindPoliceBoatMissionForWantedLevel | POP | implemented | POP-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x41caa0 | CCarAI::FindPoliceCarSpeedForWantedLevel | POP | implemented | POP-2 ported; ported-unhookable | 2026-11-11 |
 | 0x41cb70 | CCarAI::MellowOutChaseSpeedBoat | POP | implemented | POP-2 ported; implemented-needs-L2 | 2026-11-11 |
@@ -500,7 +496,6 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x421900 | CCarCtrl::ChooseCarModelToLoad | POP | L2 | PORT-POP (2026-11-11): L2; split grove:18/18 PASS (0 mismatches, 0 undeclared); split pr:19/19 PASS (0 mismatches, 0 undeclared); split cheats:17/17 PASS (0 mismatches, 0 undeclared); main-session all-ports L3 IDENTICAL on grove 5200, c-bug 3220, cheats 3276 | 2026-11-11 |
 | 0x421970 | CCarCtrl::ChooseBoatModel | POP | implemented | POP-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x421980 | CCarCtrl::ChoosePoliceCarModel | POP | L2 | split car-ai-final:100/100 (0 mismatches; 0 undeclared); split police-gang-a:87/87 (0 mismatches; 0 undeclared); all-ports L3 IDENTICAL on all 11 recordings (verify-all pop2c) | 2026-11-11 |
-| 0x421a40 | CCarCtrl::ChooseGangCarModel | POP | implemented | pop-port-3 ported; not-ported | 2026-11-11 |
 | 0x421a50 |  | POP | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x421fe0 | CCarCtrl::ThisVehicleShouldTryNotToTurn | POP | L2 | PORT-POP (2026-11-11): L2; L2 grove:378/378 PASS (0 mismatches, 0 undeclared); L2 pr:113/113 PASS (0 mismatches, 0 undeclared); L2 cheats:182/182 PASS (0 mismatches, 0 undeclared); main-session all-ports L3 IDENTICAL on grove 5200, c-bug 3220, cheats 3276 | 2026-11-11 |
 | 0x422090 | CCarCtrl::FindPathDirection | POP | L2 | split pop3L-driving 100/100; pop3L-police-gang 100/100; pop3L2-grove 100/100; pop3-fpd (alone; driving) 40/40: 0 mismatches; 0 undeclared (sharp-turn out byte declared arg3); in the pop3-L3 batch runs | 2026-11-11 |
@@ -510,7 +505,6 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x422590 | CCarCtrl::StopCarIfNodesAreInvalid | POP | L2 | split car-ai-final:100/100 (0 mismatches; 0 undeclared); split police-gang-a:598/602 (0 mismatches; 0 undeclared) COUNT (spool quota cut); all-ports L3 IDENTICAL on all 11 recordings (verify-all pop2c | 2026-11-11 |
 | 0x422620 | CCarCtrl::FindPercDependingOnDistToLink | POP | implemented | POP-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x4226f0 | CCarCtrl::FindIntersection2Lines | POP | implemented | POP-2 ported; implemented-needs-L2 | 2026-11-11 |
-| 0x422760 | CCarCtrl::ClitargetOrientationToLink | POP | implemented | pop-port-3 ported; not-ported | 2026-11-11 |
 | 0x422b20 | CCarCtrl::SteerAICarBlockingPlayerForwardAndBack | POP | implemented | pop-port-3 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x423000 | CCarCtrl::FlyAIPlaneInCertainDirection | POP | implemented | pop-port-3 ported; not-ported | 2026-11-11 |
 | 0x423790 | CCarCtrl::SteerAIPlaneTowardsTargetCoors | POP | implemented | pop-port-3 ported; implemented-needs-L2 | 2026-11-11 |
@@ -712,7 +706,6 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x43e050 | CRect::GetCenter- | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x43e090 |  | SCRIPT | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x43e0c0 | CPlaceable::SetHeading | WORLD | L2 | L2 grove:34/55 (0 mismatches; 0 undeclared) | 2026-11-11 |
-| 0x43e0e0 |  | UNK-game | implemented | hud-port-2 ported; not-ported-unhookable | 2026-11-11 |
 | 0x43e110 | CVector2D::operator= | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x43e1a0 |  | UNK-game | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x43e1c0 | CEventLeaderEntryExit::Constructor | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
@@ -813,7 +806,6 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4442d0 |  | UNK-game | L2 | VERIFIER-9: split/L2 0 mismatches + all-ports IDENTICAL 13/13 (docs/verify/verdicts-native.tsv) | 2026-11-12 |
 | 0x444300 | CGangWars::StartDefensiveGangWar | POP | implemented | pop-port-3 ported; not-ported | 2026-11-11 |
 | 0x4444b0 | CGangWars::ClearTheStreets | POP | implemented | POP-2 ported; implemented-needs-L2 | 2026-11-11 |
-| 0x444530 | CGangWars::TellGangMembersTo | POP | implemented | pop-port-3 ported; not-ported | 2026-11-11 |
 | 0x444810 | CGangWars::CreateAttackWave | POP | implemented | pop-port-3 ported; not-ported | 2026-11-11 |
 | 0x4453d0 | CGangWars::CreateDefendingGroup | POP | implemented | pop-port-3 ported; not-ported | 2026-11-11 |
 | 0x445b30 | CGangWars::AttackWaveOvercome | POP | implemented | pop-port-3 ported; implemented-needs-L2 | 2026-11-11 |
@@ -922,7 +914,6 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x44de80 | CPathFind::StartNewInterior | POP | implemented | POP-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x44ded0 | CPathFind::AddInteriorLink | POP | implemented | POP-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x44df30 | CPathFind::AddInteriorLinkToExternalNode | POP | implemented | POP-2 ported; implemented-needs-L2 | 2026-11-11 |
-| 0x44df60 | CPathFind::RemoveInteriorLinks | POP | implemented | pop-port-3 ported; not-ported | 2026-11-11 |
 | 0x44e000 | CPathFind::AddDynamicLinkBetween2Nodes_For1Node | POP | implemented | POP-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x44e1a0 | CPathFind::RemoveInterior | POP | implemented | POP-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x44e480 | CVector2D::Normalise | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
@@ -1087,13 +1078,11 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x460d50 | CTaskComplexWanderCop::GetWanderType | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x460d60 | CTaskComplexWanderCop::~CTaskComplexWanderCop | AI | L2 | PORT-AI-1 (2026-11-11): L2; split grove: PASS-FP 1 cases (0 mismatches, 0 undeclared); split c-bug: PASS-FP 4 cases (0 mismatches, 0 undeclared); split grove: PASS 1 cases (0 mismatches, 0 undeclared); split weapon-combat: PASS-FP 4 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x460d80 | CTaskComplexWanderCop::CTaskComplexWanderCop | AI | L2 | PORT-AI-1 (2026-11-11): L2; split c-bug: PASS-FP 4 cases (0 mismatches, 0 undeclared); split grove: PASS 1 cases (0 mismatches, 0 undeclared); split weapon-combat: PASS-FP 4 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
-| 0x460df0 | CRoadBlocks::RegisterScriptRoadBlock | POP | implemented | pop-port-3 ported; not-ported | 2026-11-11 |
 | 0x460ec0 | CRoadBlocks::ClearScriptRoadBlocks | POP | L2 | PORT-POP (2026-11-11): L2; L2 grove:1/1 PASS (0 mismatches, 0 undeclared); L2 pr:1/1 PASS (0 mismatches, 0 undeclared); L2 cheats:1/1 PASS (0 mismatches, 0 undeclared); main-session all-ports L3 IDENTICAL on grove 5200, c-bug 3220, cheats 3276 | 2026-11-11 |
 | 0x460ee0 | CRoadBlocks::GetRoadBlockNodeInfo | POP | implemented | pop-port-3 ported; not-ported | 2026-11-11 |
 | 0x461020 | CRoadBlocks::ClearSpaceForRoadBlockObject | POP | implemented | pop-port-3 ported; not-ported | 2026-11-11 |
 | 0x461100 | CRoadBlocks::Init | POP | implemented | POP-2 ported; L2-split (undeclared writes to review) | 2026-11-11 |
 | 0x461170 | CRoadBlocks::GenerateRoadBlockPedsForCar | POP | implemented | pop-port-3 ported; not-ported | 2026-11-11 |
-| 0x4619c0 | CRoadBlocks::CreateRoadBlockBetween2Points | POP | implemented | pop-port-3 ported; not-ported | 2026-11-11 |
 | 0x4629e0 | CRoadBlocks::GenerateRoadBlocks | POP | implemented | pop-port-3 ported; partial-fallback | 2026-11-11 |
 | 0x463360 |  | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x463370 |  | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
@@ -1442,7 +1431,6 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x49ccb0 | CTagManager::FindTagDesc | POP | implemented | POP-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x49cce0 | CTagManager::IsTag | POP | L2 | PORT-POP (2026-11-11): L2; L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared); main-session all-ports L3 IDENTICAL on grove 5200, c-bug 3220, cheats 3276 | 2026-11-11 |
 | 0x49cd30 | CTagManager::SetAlpha-RpAtomic | POP | implemented | POP-2 ported; implemented-needs-L2 | 2026-11-11 |
-| 0x49cd40 | CTagManager::GetAlpha-RpAtomic | POP | implemented | pop-port-3 ported; not-ported | 2026-11-11 |
 | 0x49cd50 |  | WORLD | L2 | verifier mvpa: split split-cold pause-restart: PASS compared=2 mismatches=0 undeclared_cases=0; L3: all 206 mvpa hooks on Rust on top of the verified set; MATCH on all 11 recordings; verify-all promote-mvpa-v1: all-ports run of the new default set IDENTICAL on all 11 recordings (car-ai as promote-mvpa-v1-carai after a disk-check skip) | 2026-11-11 |
 | 0x49cda0 | CTagManager::GetPercentageTagged | POP | L2 | PORT-POP (2026-11-11): L2; L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared); main-session all-ports L3 IDENTICAL on grove 5200, c-bug 3220, cheats 3276 | 2026-11-11 |
 | 0x49cde0 | CTagManager::UpdateNumTagged | POP | implemented | POP-2 ported; implemented-needs-L2 | 2026-11-11 |
@@ -2898,7 +2886,6 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4d7bd0 | CAEAudioChannel::UpdateStatus | AUDIO | L2 | INTEGRATE-6/VERIFIER-10/11: L2 evidence (docs/verify/verdicts-samp.tsv, verdicts-gen2b.tsv) + all-ports IDENTICAL 13/13 | 2026-11-12 |
 | 0x4d7c60 | CAEAudioChannel::SetVolume | AUDIO | L2 | INTEGRATE-6/VERIFIER-10/11: L2 evidence (docs/verify/verdicts-samp.tsv, verdicts-gen2b.tsv) + all-ports IDENTICAL 13/13 | 2026-11-12 |
 | 0x4d7d00 | CAEAudioChannel::SetFrequencyScalingFactor | AUDIO | L2 | INTEGRATE-6/VERIFIER-10/11: L2 evidence (docs/verify/verdicts-samp.tsv, verdicts-gen2b.tsv) + all-ports IDENTICAL 13/13 | 2026-11-12 |
-| 0x4d7e30 |  | UNK-game | implemented | audio-port-3 ported; not-ported | 2026-11-11 |
 | 0x4d7e40 | CAEAudioEnvironment::GetDopplerRelativeFrequency | AUDIO | L2 | PORT-AUDIO-1 (2026-11-11): L2; L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 driving:1000/1001 PASS (0 mismatches, 0 undeclared); L2 weapon-combat:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pause-restart:1000/1001 PASS (0 mismatches, 0 undeclared); L2 world-cheats:1000/1001 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4d7f20 | CAEAudioEnvironment::GetDistanceAttenuation | AUDIO | L2 | PORT-AUDIO-1 (2026-11-11): L2; L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 driving:1000/1001 PASS (0 mismatches, 0 undeclared); L2 weapon-combat:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pause-restart:1000/1001 PASS (0 mismatches, 0 undeclared); L2 world-cheats:1000/1001 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4d7f60 | CAEAudioEnvironment::GetDirectionalMikeAttenuation | AUDIO | L2 | PORT-AUDIO-1 (2026-11-11): L2; L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 driving:1000/1001 PASS (0 mismatches, 0 undeclared); L2 weapon-combat:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pause-restart:1000/1001 PASS (0 mismatches, 0 undeclared); L2 world-cheats:1000/1001 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -2958,7 +2945,6 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4d95f0 | CAEAudioHardware::PauseAllSounds | AUDIO | implemented | PORT-AUDIO-1 (2026-11-11): implemented-needs-L2; no call in grove, driving, weapon-combat, pause-restart, world-cheats; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4d9630 | CAEAudioHardware::ResumeAllSounds | AUDIO | implemented | PORT-AUDIO-1 (2026-11-11): implemented-needs-L2; no call in grove, driving, weapon-combat, pause-restart, world-cheats; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4d9640 | CAEAudioHardware::InitDirectSoundListener | AUDIO | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
-| 0x4d97a0 | CAEAudioHardware::Terminate | AUDIO | implemented | audio-port-3 ported; not-ported | 2026-11-11 |
 | 0x4d9870 | CAEAudioHardware::Service | AUDIO | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x4d9930 | CAEAudioHardware::Initialise | AUDIO | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x4d9c10 | CAEAudioUtility::GetRandomNumberInRange<int32>-int | AUDIO | L2 | PORT-AUDIO-1 (2026-11-11): L2; L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 driving:1000/1001 PASS (0 mismatches, 0 undeclared); L2 weapon-combat:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pause-restart:1000/1001 PASS (0 mismatches, 0 undeclared); L2 world-cheats:1000/1001 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -3006,7 +2992,6 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4dc250 | CAEDataStream::Seek-OG | AUDIO | L2 | INTEGRATE-6/VERIFIER-10/11: L2 evidence (docs/verify/verdicts-samp.tsv, verdicts-gen2b.tsv) + all-ports IDENTICAL 13/13 | 2026-11-12 |
 | 0x4dc2b0 | CAEDataStream::Initialise | AUDIO | L2 | VERIFIER-8: split PASS + all-ports IDENTICAL 13/13 (docs/verify/verdicts-writers.tsv) | 2026-11-12 |
 | 0x4dc490 | CAEDataStream::Destructor | AUDIO | L2 | INTEGRATE-6/VERIFIER-10/11: L2 evidence (docs/verify/verdicts-samp.tsv, verdicts-gen2b.tsv) + all-ports IDENTICAL 13/13 | 2026-11-12 |
-| 0x4dc550 |  | UNK-game | implemented | audio-port-3 ported; not-ported | 2026-11-11 |
 | 0x4dc670 |  | AUDIO | L2 | L2 air-water:300/301 PASS; L2 driving:300/301 PASS; L2 inf4:300/301 PASS; L2 menus-hud:300/301 PASS; L2 police-gang:300/301 PASS; L2 weapon-combat:300/301 PASS; L2 air-water:300/301 PASS; L2 driving:3 | 2026-11-11 |
 | 0x4dc6b0 | CAEDoorAudioEntity::Reset | AUDIO | L2 | PORT-AUDIO-1 (2026-11-11): L2; L2 grove:50/50 PASS (0 mismatches, 0 undeclared); L2 driving:50/50 PASS (0 mismatches, 0 undeclared); L2 weapon-combat:50/50 PASS (0 mismatches, 0 undeclared); L2 pause-restart:100/100 PASS (0 mismatches, 0 undeclared); L2 world-cheats:50/50 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4dc6d0 | CAEDoorAudioEntity::PlayDoorSound | AUDIO | implemented | audio-port-2 ported; implemented-needs-L2 | 2026-11-11 |
@@ -3014,7 +2999,6 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4dc9f0 | CAEDoorAudioEntity::AddAudioEvent-1 | AUDIO | implemented | PORT-AUDIO-1 (2026-11-11): implemented-needs-L2; no call in grove, driving, weapon-combat, pause-restart, world-cheats; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4dca60 | CAEDoorAudioEntity::UpdateParameters | AUDIO | implemented | PORT-AUDIO-1 (2026-11-11): implemented-needs-L2; no call in grove, driving, weapon-combat, pause-restart, world-cheats; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4dcb90 | CAEExplosionAudioEntity::UpdateParameters | AUDIO | implemented | PORT-AUDIO-1 (2026-11-11): implemented-needs-L2; no call in grove, driving, weapon-combat, pause-restart, world-cheats; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
-| 0x4dcbe0 | CAEExplosionAudioEntity::AddAudioEvent | AUDIO | implemented | audio-port-3 ported; protection | 2026-11-11 |
 | 0x4dcf20 | CAEFireAudioEntity::Initialise | AUDIO | L2 | PORT-AUDIO-1 (2026-11-11): L2; L2 grove:90/90 PASS (0 mismatches, 0 undeclared); L2 driving:145/145 PASS (0 mismatches, 0 undeclared); L2 weapon-combat:132/132 PASS (0 mismatches, 0 undeclared); L2 pause-restart:81/81 PASS (0 mismatches, 0 undeclared); L2 world-cheats:39/39 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4dcf40 | CAEFireAudioEntity::Terminate | AUDIO | L2 | PORT-AUDIO-1 (2026-11-11): L2; split grove: PASS; split driving: PASS; split weapon-combat: PASS; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4dcf60 | CAEFireAudioEntity::UpdateParameters | AUDIO | L2 | L2 driving:300/527 PASS; L2 weapon-combat:213/213 PASS; L3: verify-all a2final (h6) IDENTICAL on all 11 recordings | 2026-11-11 |
@@ -3057,11 +3041,9 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4e0970 | CAEMP3TrackLoader::LoadStreamPackTable | AUDIO | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x4e09f0 | CAEMP3TrackLoader::LoadTrackLookupTable | AUDIO | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x4e0a70 | CAEMP3TrackLoader::GetTrackInfo | AUDIO | implemented | audio-port-3 ported; not-ported | 2026-11-11 |
-| 0x4e0bd0 | CAEMP3TrackLoader::IsCurrentAudioStreamAvailable | AUDIO | implemented | audio-port-3 ported; not-ported | 2026-11-11 |
 | 0x4e0c50 | CAEMP3TrackLoader::Initialise | AUDIO | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x4e0d20 | CAETrackLoader::GetDataStream | AUDIO | L2 | INTEGRATE-6/VERIFIER-10/11: L2 evidence (docs/verify/verdicts-samp.tsv, verdicts-gen2b.tsv) + all-ports IDENTICAL 13/13 | 2026-11-12 |
 | 0x4e0e80 | CAEPedAudioEntity::Initialise | AUDIO | L2 | PORT-AUDIO-1 (2026-11-11): L2; L2 grove:206/206 PASS (0 mismatches, 0 undeclared); L2 driving:81/81 PASS (0 mismatches, 0 undeclared); L2 weapon-combat:146/146 PASS (0 mismatches, 0 undeclared); L2 pause-restart:93/93 PASS (0 mismatches, 0 undeclared); L2 world-cheats:118/118 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
-| 0x4e0ee0 | CAEPedAudioEntity::UpdateJetPack | AUDIO | implemented | audio-port-3 ported; not-ported | 2026-11-11 |
 | 0x4e1120 | CAEPedAudioEntity::StopJetPackSound | AUDIO | L2 | PORT-AUDIO-1 (2026-11-11): L2; L2 grove:187/187 PASS (0 mismatches, 0 undeclared); L2 driving:72/72 PASS (0 mismatches, 0 undeclared); L2 weapon-combat:131/131 PASS (0 mismatches, 0 undeclared); L2 pause-restart:72/72 PASS (0 mismatches, 0 undeclared); L2 world-cheats:95/95 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4e1170 | CAEPedAudioEntity::PlayWindRush | AUDIO | implemented | audio-port-2 ported; ported-unhookable | 2026-11-11 |
 | 0x4e1180 | CAEPedAudioEntity::UpdateParameters | AUDIO | L2 | L2 air-water:300/301 PASS; L2 driving:287/287 PASS; L3: verify-all a2final (h6) IDENTICAL on all 11 recordings | 2026-11-11 |
@@ -3070,7 +3052,6 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4e17e0 | CAEPedAudioEntity::HandleSkateEvent | AUDIO | implemented | audio-port-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x4e18e0 | CAEPedAudioEntity::HandleLandingEvent | AUDIO | L2 | L2 air-water:3/3 PASS; L2 driving:8/8 PASS; L2 inf4:2/2 PASS; L2 menus-hud:2/2 PASS; L2 police-gang:2/2 PASS; L2 weapon-combat:2/2 PASS; L3: verify-all a2final (h6) IDENTICAL on all 11 recordings | 2026-11-11 |
 | 0x4e1a40 | CAEPedAudioEntity::HandlePedSwing | AUDIO | L2 | L2 driving:4/4 PASS; L2 weapon-combat:11/11 PASS; L3: verify-all a2final (h6) IDENTICAL on all 11 recordings | 2026-11-11 |
-| 0x4e1cc0 | CAEPedAudioEntity::HandlePedHit | AUDIO | implemented | audio-port-3 ported; not-ported | 2026-11-11 |
 | 0x4e2350 | CAEPedAudioEntity::HandlePedJacked | AUDIO | L2 | l2 driving:3/3 PASS | 2026-11-11 |
 | 0x4e26a0 | CAEPedAudioEntity::HandleSwimSplash | AUDIO | L2 | L2 air-water:116/116 PASS; L3: verify-all a2final (h6) IDENTICAL on all 11 recordings | 2026-11-11 |
 | 0x4e2790 | CAEPedAudioEntity::HandleSwimWake | AUDIO | L2 | L2 air-water:300/301 PASS; L3: verify-all a2final (h6) IDENTICAL on all 11 recordings | 2026-11-11 |
@@ -3146,9 +3127,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4e60a0 | CAEPedlessSpeechAudioEntity::WillPedChatAboutTopic | AUDIO | implemented | audio-port-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x4e60b0 | CAEPedlessSpeechAudioEntity::GetPedType | AUDIO | implemented | audio-port-2 ported; ported-unhookable | 2026-11-11 |
 | 0x4e60c0 | CAEPedlessSpeechAudioEntity::IsPedFemaleForAudio | AUDIO | implemented | audio-port-2 ported; ported-unhookable | 2026-11-11 |
-| 0x4e60d0 | CAEPedlessSpeechAudioEntity::AddSayEvent | AUDIO | implemented | audio-port-3 ported; not-ported | 2026-11-11 |
 | 0x4e6300 | CAEPedlessSpeechAudioEntity::Terminate | AUDIO | implemented | audio-port-2 ported; implemented-needs-L2 | 2026-11-11 |
-| 0x4e6380 | CAEPedlessSpeechAudioEntity::PlayLoadedSound | AUDIO | implemented | audio-port-3 ported; not-ported | 2026-11-11 |
 | 0x4e6550 | CAEPedSpeechAudioEntity::AddSayEvent | AUDIO | L2 | L2 air-water:300/301 PASS; L2 driving:300/301 PASS; L2 inf4:300/301 PASS; L2 menus-hud:300/301 PASS; L2 police-gang:300/301 PASS; L2 weapon-combat:300/301 PASS; L3: verify-all a2final (h6) IDENTICAL o | 2026-11-11 |
 | 0x4e68d0 | CAEPedSpeechAudioEntity::Initialise | AUDIO | L2 | l2 air-water:300/301 PASS; l2 driving:81/81 PASS; l2 inf4:206/206 PASS; l2 police-gang:221/228 PASS; l2 weapon-combat:140/146 PASS | 2026-11-11 |
 | 0x4e69e0 | CAEPedSpeechAudioEntity::CanPedHoldConversation | AUDIO | L2 | L2 air-water:66/66 PASS; L2 driving:2/2 PASS; L2 inf4:8/8 PASS; L2 menus-hud:6/6 PASS; L2 police-gang:18/18 PASS; L2 weapon-combat:30/30 PASS; L2 air-water:66/66 PASS; L2 driving:2/2 PASS; L2 inf4:8/8 | 2026-11-11 |
@@ -3171,9 +3150,6 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4e71e0 | CAEPoliceScannerAudioEntity::AddAudioEvent | AUDIO | implemented | audio-port-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x4e7590 | CAEPoliceScannerAudioEntity::UpdateParameters | AUDIO | implemented | audio-port-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x4e7630 | CAEPoliceScannerAudioEntity::Service | AUDIO | L2 | L2 air-water:300/301 PASS; L2 driving:300/301 PASS; L2 inf4:300/301 PASS; L2 menus-hud:300/301 PASS; L2 police-gang:300/301 PASS; L2 weapon-combat:300/301 PASS; L2 air-water:300/301 PASS; L2 driving:3 | 2026-11-11 |
-| 0x4e7990 |  | AUDIO | implemented | audio-port-3 ported; not-ported | 2026-11-11 |
-| 0x4e7a80 |  | AUDIO | implemented | audio-port-3 ported; not-ported | 2026-11-11 |
-| 0x4e7b80 |  | UNK-game | implemented | audio-port-3 ported; not-ported | 2026-11-11 |
 | 0x4e7c70 | CAEMFDecoder::InitLibrary | AUDIO | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x4e7f20 | CPad::IsRadioTrackSkipPressed | AUDIO | implemented | audio-port-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x4e7f80 | CAERadioTrackManager::Reset | AUDIO | L2 | L2 air-water:1/1 PASS; L2 driving:1/1 PASS; L2 inf4:1/1 PASS; L2 menus-hud:1/1 PASS; L2 police-gang:1/1 PASS; L2 weapon-combat:1/1 PASS; L2 air-water:1/1 PASS; L2 driving:1/1 PASS; L2 inf4:1/1 PASS; L | 2026-11-11 |
@@ -3278,7 +3254,6 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4effd0 | CAESound::SoundHasFinished | AUDIO | implemented | audio-port-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x4f0000 | CAESoundManager::Service | AUDIO | L2 | INTEGRATE-6/VERIFIER-10/11: L2 evidence (docs/verify/verdicts-samp.tsv, verdicts-gen2b.tsv) + all-ports IDENTICAL 13/13 | 2026-11-12 |
 | 0x4f0b10 |  | AUDIO | L2 | INTEGRATE-6/VERIFIER-10/11: L2 evidence (docs/verify/verdicts-samp.tsv, verdicts-gen2b.tsv) + all-ports IDENTICAL 13/13 | 2026-11-12 |
-| 0x4f0b50 |  | AUDIO | implemented | audio-port-3 ported; not-ported | 2026-11-11 |
 | 0x4f0bd0 | CAEStaticChannel::Play | AUDIO | L2 | INTEGRATE-6/VERIFIER-10/11: L2 evidence (docs/verify/verdicts-samp.tsv, verdicts-gen2b.tsv) + all-ports IDENTICAL 13/13 | 2026-11-12 |
 | 0x4f0c40 | CAEStaticChannel::SetAudioBuffer | AUDIO | L2 | INTEGRATE-6/VERIFIER-10/11: L2 evidence (docs/verify/verdicts-samp.tsv, verdicts-gen2b.tsv) + all-ports IDENTICAL 13/13 | 2026-11-12 |
 | 0x4f0f40 | CAEStaticChannel::IsSoundPlaying | AUDIO | L2 | INTEGRATE-6/VERIFIER-10/11: L2 evidence (docs/verify/verdicts-samp.tsv, verdicts-gen2b.tsv) + all-ports IDENTICAL 13/13 | 2026-11-12 |
@@ -3333,21 +3308,11 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4f2ca0 | CAETwinLoopSoundEntity::DoSoundsSwitchThisFrame | AUDIO | implemented | audio-port-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x4f2cb0 | CAETwinLoopSoundEntity::PlayTwinLoopSound | AUDIO | L2 | l2 air-water:32/32 PASS; l2 driving:53/53 PASS; l2 inf4:9/9 PASS; l2 police-gang:103/103 PASS; l2 weapon-combat:43/43 PASS | 2026-11-11 |
 | 0x4f2e90 | CAETwinLoopSoundEntity::UpdateParameters | AUDIO | L2 | PORT-AUDIO-1 (2026-11-11): L2; split driving: PASS; split weapon-combat: PASS; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
-| 0x4f2fb0 | CAEUserRadioTrackManager::Shutdown | AUDIO | implemented | audio-port-3 ported; not-ported | 2026-11-11 |
 | 0x4f2fd0 | CAEUserRadioTrackManager::ReadUserTracks | AUDIO | implemented | PORT-AUDIO-1 (2026-11-11): implemented-needs-L2; no call in grove, driving, weapon-combat, pause-restart, world-cheats; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
-| 0x4f3050 | CAEUserRadioTrackManager::GetTrackPath | AUDIO | implemented | audio-port-3 ported; not-ported | 2026-11-11 |
-| 0x4f30f0 | CAEUserRadioTrackManager::ResolveShortcut- | AUDIO | implemented | audio-port-3 ported; not-ported | 2026-11-11 |
-| 0x4f31f0 | CAEUserRadioTrackManager::GetAudioFileType | AUDIO | implemented | audio-port-3 ported; not-ported | 2026-11-11 |
 | 0x4f3250 | CAEUserRadioTrackManager::SelectUserTrackIndex | AUDIO | implemented | audio-port-2 ported; implemented-needs-L2 | 2026-11-11 |
-| 0x4f32c0 | CAEUserRadioTrackManager::IsShortcut | AUDIO | implemented | audio-port-3 ported; not-ported | 2026-11-11 |
-| 0x4f32f0 | CAEUserRadioTrackManager::DeleteUserTracksInfo | AUDIO | implemented | audio-port-3 ported; not-ported | 2026-11-11 |
 | 0x4f3330 | CAEUserRadioTrackManager::GetUserTrackPlayMode | AUDIO | implemented | PORT-AUDIO-1 (2026-11-11): implemented-needs-L2; no call in grove, driving, weapon-combat, pause-restart, world-cheats; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4f3340 | CAEUserRadioTrackManager::SetUserTrackIndex | AUDIO | implemented | audio-port-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x4f35b0 | CAEUserRadioTrackManager::Initialise | AUDIO | L2 | PORT-AUDIO-1 (2026-11-11): L2; L2 grove:1/1 PASS (0 mismatches, 0 undeclared); L2 driving:1/1 PASS (0 mismatches, 0 undeclared); L2 weapon-combat:1/1 PASS (0 mismatches, 0 undeclared); L2 pause-restart:1/1 PASS (0 mismatches, 0 undeclared); L2 world-cheats:1/1 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
-| 0x4f35f0 | CAEUserRadioTrackManager::LoadUserTrack | AUDIO | implemented | audio-port-3 ported; not-ported | 2026-11-11 |
-| 0x4f4620 |  | UNK-game | implemented | audio-port-3 ported; not-ported | 2026-11-11 |
-| 0x4f4690 | CAEUserRadioTrackManager::WriteUserTracksFile- | AUDIO | implemented | audio-port-3 ported; not-ported | 2026-11-11 |
-| 0x4f4a20 | CAEUserRadioTrackManager::WriteUserTracksThread | AUDIO | implemented | audio-port-3 ported; not-ported | 2026-11-11 |
 | 0x4f4ba0 | CAEUserRadioTrackManager::ScanUserTracks | AUDIO | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x4f4ca0 |  | UNK-game | L2 | L2 veh2-a-l2: 1000/1001 PASS (0 mismatches, 0 undeclared) | 2026-11-11 |
 | 0x4f4ce0 |  | VEH | L2 | L2 veh2-a-l2: 1000/1001 PASS (0 mismatches, 0 undeclared) | 2026-11-11 |
@@ -3431,13 +3396,9 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4fca10 | CAEVehicleAudioEntity::ProcessDummyStateTransition | AUDIO | L2 | l2 air-water:300/301 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS; l2 police-gang:300/301 PASS; l2 air-water:300/301 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS; l2 police-gang:300/ | 2026-11-11 |
 | 0x4fcf40 | CAEVehicleAudioEntity::JustGotOutOfVehicleAsDriver | AUDIO | L2 | PORT-AUDIO-1 (2026-11-11): L2; split driving: PASS; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4fd0b0 | CAEVehicleAudioEntity::JustWreckedVehicle | AUDIO | L2 | L2 driving:10/13 PASS; L2 weapon-combat:1/1 PASS; L3: verify-all a2final (h6) IDENTICAL on all 11 recordings | 2026-11-11 |
-| 0x4fd290 | CAEVehicleAudioEntity::ProcessPlayerProp | AUDIO | implemented | audio-port-3 ported; not-ported | 2026-11-11 |
-| 0x4fd8f0 | CAEVehicleAudioEntity::ProcessDummyProp | AUDIO | implemented | audio-port-3 ported; not-ported | 2026-11-11 |
 | 0x4fdfd0 | CAEVehicleAudioEntity::ProcessAIProp | AUDIO | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
-| 0x4fe420 | CAEVehicleAudioEntity::ProcessPlayerHeli | AUDIO | implemented | audio-port-3 ported; not-ported | 2026-11-11 |
 | 0x4fe940 | CAEVehicleAudioEntity::ProcessDummyHeli | AUDIO | L2 | l2 air-water:300/301 PASS; l2 driving:300/301 PASS | 2026-11-11 |
 | 0x4fee20 | CAEVehicleAudioEntity::ProcessAIHeli | AUDIO | L2 | l2 police-gang:300/301 PASS | 2026-11-11 |
-| 0x4ff320 | CAEVehicleAudioEntity::ProcessPlayerSeaPlane | AUDIO | implemented | audio-port-3 ported; not-ported | 2026-11-11 |
 | 0x4ff7c0 | CAEVehicleAudioEntity::ProcessDummySeaPlane | AUDIO | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x4ff900 | CAEVehicleAudioEntity::ProcessGenericJet | AUDIO | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x4ffdc0 | CAEVehicleAudioEntity::ProcessDummyBicycle | AUDIO | L2 | l2 air-water:300/301 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS; l2 police-gang:300/301 PASS; l2 air-water:300/301 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS; l2 police-gang:300/ | 2026-11-11 |
@@ -3500,7 +3461,6 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x5052b0 | CAEWeatherAudioEntity::StaticReset | AUDIO | L2 | L2 air-water:1/1 PASS; L2 driving:1/1 PASS; L2 inf4:1/1 PASS; L2 menus-hud:1/1 PASS; L2 police-gang:1/1 PASS; L2 weapon-combat:1/1 PASS; L3: verify-all a2final (h6) IDENTICAL on all 11 recordings | 2026-11-11 |
 | 0x5052f0 | CAEWeatherAudioEntity::Service | AUDIO | L2 | l2 air-water:300/301 PASS; l2 driving:300/301 PASS; l2 inf4:300/301 PASS; l2 police-gang:300/301 PASS; l2 weapon-combat:300/301 PASS | 2026-11-11 |
 | 0x505a00 | CAEWeatherAudioEntity::UpdateParameters | AUDIO | implemented | audio-port-3 ported; not-ported | 2026-11-11 |
-| 0x506800 | CAEWeatherAudioEntity::AddAudioEvent | AUDIO | implemented | audio-port-3 ported; not-ported | 2026-11-11 |
 | 0x506b20 |  | UNK-game | implemented | audio-port-3 ported; ported-unhookable | 2026-11-11 |
 | 0x506ba0 |  | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x506c30 |  | UNK-game | implemented | audio-port-2 ported; implemented-needs-L2 | 2026-11-11 |
@@ -3588,7 +3548,6 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x5078f0 | CAudioEngine::InitialisePostLoading | AUDIO | implemented | audio-port-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x507a90 | CAudioEngine::Reset | AUDIO | implemented | audio-port-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x507c30 | CAudioEngine::ResetSoundEffects | AUDIO | implemented | audio-port-2 ported; implemented-needs-L2 | 2026-11-11 |
-| 0x507cb0 | CAudioEngine::Shutdown | AUDIO | implemented | audio-port-3 ported; not-ported | 2026-11-11 |
 | 0x507dc0 | CAudioEngine::StartRadio-1 | AUDIO | implemented | audio-port-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x507df0 | CAudioEngine::StartRadio- | AUDIO | L2 | L2 air-water:1/1 PASS; L2 driving:3/3 PASS; L2 menus-hud:1/1 PASS; L2 air-water:1/1 PASS; L2 driving:3/3 PASS; L2 menus-hud:1/1 PASS; L2 air-water:1/1 PASS; L2 driving:3/3 PASS; L2 menus-hud:1/1 PASS; | 2026-11-11 |
 | 0x507e10 | CAudioEngine::RetuneRadio | AUDIO | L2 | L2 air-water:1/1 PASS; L2 driving:1/1 PASS; L2 inf4:1/1 PASS; L2 menus-hud:1/1 PASS; L2 police-gang:1/1 PASS; L2 weapon-combat:1/1 PASS; L2 air-water:1/1 PASS; L2 driving:1/1 PASS; L2 inf4:1/1 PASS; L | 2026-11-11 |
@@ -3717,7 +3676,6 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x50eb50 | CIdleCam::SetTargetPlayer | CAM | implemented | PORT-CAM (2026-11-11): implemented-needs-L2; no call in grove / pr / cheats / cbug / wc / anim; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x50eb70 | CCam::Process_1rstPersonPedOnPC | CAM | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x50f970 | CCam::Process_FollowPedWithMouse | CAM | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
-| 0x5105c0 | CCam::Process_M16_1stPerson | CAM | implemented | cam-port-3 ported; not-ported | 2026-11-11 |
 | 0x511b50 | CCam::Process_Rocket | CAM | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x512b10 | CCam::Process_AttachedCam | CAM | implemented | cam-port-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x512ef0 |  | CAM | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
@@ -3760,9 +3718,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x51a5a0 | CCamera::RestoreCameraAfterMirror | CAM | implemented | PORT-CAM (2026-11-11): implemented-needs-L2; no call in grove / pr / cheats / cbug / wc / anim; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x51a5d0 | CCamera::ConeCastCollisionResolve | CAM | L2 | PORT-CAM (2026-11-11): L2; split grove:1000/1000 PASS (0 mismatches, 0 undeclared); split pr:1000/1000 PASS (0 mismatches, 0 undeclared); split cheats:1000/1000 PASS (0 mismatches, 0 undeclared); split cbug:1000/1000 PASS (0 mismatches, 0 undeclared); split wc:1000/1000 PASS (0 mismatches, 0 undeclared); split anim:1000/1000 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x51a6f0 | CCamera::ProcessShake-void | CAM | implemented | PORT-CAM (2026-11-11): implemented-needs-L2; no call in grove / pr / cheats / cbug / wc / anim; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
-| 0x51a740 | CCam::Process_DW_HeliChaseCam | CAM | implemented | cam-port-3 ported; not-ported | 2026-11-11 |
 | 0x51b120 | CCam::Process_DW_CamManCam | CAM | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
-| 0x51b850 | CCam::Process_DW_BirdyCam | CAM | implemented | cam-port-3 ported; not-ported | 2026-11-11 |
 | 0x51c250 | CCam::Process_DW_PlaneSpotterCam | CAM | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x51c760 | CCam::Process_DW_PlaneCam1 | CAM | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x51cc30 | CCam::Process_DW_PlaneCam2 | CAM | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
@@ -5029,13 +4985,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x59c890 | CMatrix::operator*-Vec | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (CPU-decided, interim authority i7-14700F under Wine) | 2026-11-05 |
 | 0x59c910 | CVector::Normalise | MATH | L2 | INF-8 inf8-l2.sh: 1000 in-game cases (grove-walk replay), 0 mismatches, 0 undeclared writes | 2026-11-05 |
 | 0x59c970 | CVector::NormaliseAndMag | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
-| 0x59cb70 | vt_866db0::Destructor | AUDIO | implemented | audio-port-3 ported; not-ported | 2026-11-11 |
 | 0x59cba0 |  | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
-| 0x59cc70 | vt_866db0::SynchPlayback | AUDIO | implemented | audio-port-3 ported; not-ported | 2026-11-11 |
-| 0x59ccc0 | vt_866db0::Stop | AUDIO | implemented | audio-port-3 ported; not-ported | 2026-11-11 |
-| 0x59cce0 | vt_866db0::SetFrequencyScalingFactor | AUDIO | implemented | audio-port-3 ported; not-ported | 2026-11-11 |
-| 0x59cd10 | vt_866db0::vfunc_9 | AUDIO | implemented | audio-port-3 ported; not-ported | 2026-11-11 |
-| 0x59cd50 | vt_866db0::Play | AUDIO | implemented | audio-port-3 ported; not-ported | 2026-11-11 |
 | 0x59cd70 | BreakablePlugin::BreakableConstructor | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x59cd90 | BreakablePlugin::BreakableDestructor | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x59cec0 | BreakablePlugin::BreakableStreamRead | RW | L2 | INTEGRATE-6/VERIFIER-10/11: L2 evidence (docs/verify/verdicts-samp.tsv, verdicts-gen2b.tsv) + all-ports IDENTICAL 13/13 | 2026-11-12 |
@@ -5284,7 +5234,6 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x5b8ad0 | CStreaming::Init2 | STREAM | L2 | L2-EXTRAS (2026-11-11, lane 6, extras completed): STREAM split grove PASS compared=1 mismatches=0 undeclared_cases=0 fingerprint_pairs=0; evidence target/l2extras/evidence | 2026-11-11 |
 | 0x5b8f00 | CVehicleModelInfo::SetupCommonData | STREAM | L2 | L2-EXTRAS (2026-11-11, lane 6, extras completed): STREAM split grove PASS compared=1 mismatches=0 undeclared_cases=0 fingerprint_pairs=0; evidence target/l2extras/evidence | 2026-11-11 |
 | 0x5b9030 | CFileLoader::LoadLevel | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
-| 0x5b9330 |  | UNK-game | implemented | audio-port-3 ported; not-ported | 2026-11-11 |
 | 0x5b9340 | CAEAudioHardware::AllocateChannels | AUDIO | L2 | L2 air-water:1/1 PASS; L2 driving:1/1 PASS; L2 inf4:1/1 PASS; L2 menus-hud:1/1 PASS; L2 police-gang:1/1 PASS; L2 weapon-combat:1/1 PASS; L2 air-water:1/1 PASS; L2 driving:1/1 PASS; L2 inf4:1/1 PASS; L | 2026-11-11 |
 | 0x5b9390 | CAERadioTrackManager::Initialise | AUDIO | L2 | PORT-AUDIO-1 (2026-11-11): L2; L2 grove:1/1 PASS (0 mismatches, 0 undeclared); L2 driving:1/1 PASS (0 mismatches, 0 undeclared); L2 weapon-combat:1/1 PASS (0 mismatches, 0 undeclared); L2 pause-restart:1/1 PASS (0 mismatches, 0 undeclared); L2 world-cheats:1/1 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x5b9630 | CAECutsceneTrackManager::Initialise | AUDIO | implemented | audio-port-2 ported; implemented-needs-L2 | 2026-11-11 |
@@ -7631,7 +7580,6 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x647770 | vt_86ee94::GetTaskType | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x647780 | vt_86ee94::MakeAbortable | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x647790 |  | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
-| 0x6477f0 | vt_86ee94::ProcessPed | AI | implemented | PORT-AI-3 (2026-11-11): deferred (not examined, time box); ; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x6478b0 | CTaskSimpleCarSetPedOut | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x647930 | CTaskSimpleCarSetPedOut::GetTaskType | AI | L2 | PORT-AI-1 (2026-11-11): L2; l2 anim-input: PASS 6 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 7 cases (0 mismatches, 0 undeclared); l2 grove: PASS 2 cases (0 mismatches, 0 undeclared); l2 grove: PASS 2 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 6 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 7 cases (0 mismatches, 0 undeclared); l2 driving: PASS 3 cases (0 mismatches, 0 undeclared); l2 weapon-combat:; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x647940 | CTaskSimpleCarSetPedOut::MakeAbortable | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |

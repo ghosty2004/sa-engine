@@ -8,21 +8,14 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::ped_type_police_dont_care as police_dont_care;
+use crate::bindings::vehicle_is_passenger;
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::ped_is_alive;
+use sa_stream::bindings::find_player_wanted;
+use sa_stream::bindings::ped_is_player;
 orig! {
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CPed::IsAlive()` (0x5E0170)
-    fn ped_is_alive(ped: GPtr<u8>) -> u8 = thiscall 0x5E0170 => unported;
-    /// `CVehicle::IsPassenger(CPed*)` (0x6D1BD0, `ret 4`)
-    fn vehicle_is_passenger(v: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x6D1BD0 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0)
-    fn ped_is_player(ped: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `FindPlayerPed(int)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CPedType::PoliceDontCareAboutCrimesAgainstPedType(int)` (0x608A40)
-    fn police_dont_care(ty: u32) -> u8 = cdecl 0x608A40 => unported;
-    /// `FindPlayerWanted(int)` (0x56E230)
-    fn find_player_wanted(id: i32) -> GPtr<u8> = cdecl 0x56E230 => unported;
     /// `CWanted::RegisterCrime(eCrimeType, const CVector&, uint32 ped, bool)` (0x562410, `ret 0x10`)
     fn wanted_register_crime(w: GPtr<u8>, crime: u32, pos: GPtr<u8>, ped: u32, flag: u32) = thiscall 0x562410 => unported;
     /// `CEvent::IsCriminalEvent()` (vtable slot 0x1C)

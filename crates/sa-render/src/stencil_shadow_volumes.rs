@@ -15,27 +15,21 @@ use sa_math::x87::X87;
 
 use crate::common::{g, rd, wr, x};
 
+use sa_core::bindings::matrix_dtor;
+use sa_core::bindings::matrix_invert;
+use sa_core::bindings::matrix_mul_vec;
+use sa_stream::bindings::simple_transform_update_matrix;
+use sa_world::bindings::bike_calculate_lean_matrix;
+use sa_world::bindings::entity_get_col_model;
 orig! {
-    /// `CEntity::GetColModel()` (0x535300)
-    fn entity_get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => unported;
     /// `CPlaceable::AllocateMatrix()` (0x54F560)
     fn placeable_allocate_matrix(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x54F560 => unported;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*) const` (0x54F1B0, `ret 4`)
-    fn simple_transform_update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => unported;
-    /// `CBike::CalculateLeanMatrix()` (0x6B7150)
-    fn bike_calculate_lean_matrix(b: GPtr<u8>) = thiscall 0x6B7150 => unported;
-    /// `Invert(const CMatrix& src, CMatrix& dst)` (0x59B920, cdecl)
-    fn matrix_invert(src: GPtr<u8>, dst: GPtr<u8>) -> GPtr<u8> = cdecl 0x59B920 => unported;
-    /// `operator*(const CMatrix&, const CVector&)` (0x59C890, cdecl, hidden result pointer first)
-    fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
     /// `CCollisionData::GetShadTrianglePoint(CVector& out, int32 i)` (0x40F640, `ret 8`)
     fn col_data_get_shad_triangle_point(cd: GPtr<u8>, out: GPtr<u8>, i: i32) = thiscall 0x40F640 => unported;
     /// `TransformPoints(RwV3d* out, int32 n, const CMatrix&, const RwV3d* in)` (0x54EEF0, cdecl)
     fn transform_points(out: GPtr<u8>, n: i32, m: GPtr<u8>, inp: GPtr<u8>) = cdecl 0x54EEF0 => unported;
     /// `ToggleEdge` (0x70FA70): edges in ECX, the u16 count pointer in EDX, vertex a in DI, vertex b on the stack
     fn toggle_edge(edges: GPtr<u8>, count: GPtr<u16>, a: u16, b: u16) = reg("args = ecx edx di stack; keep = ecx edx") 0x70FA70 => crate::harness5::toggle_edge;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
 }
 
 /// `s_ShadowTrianglePointsUnk` (edge pairs, 0xC6A170), `s_ShadowTrianglePoints` (0xC6A174),

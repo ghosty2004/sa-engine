@@ -6,31 +6,20 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use sa_math::x87::X87;
 
 use crate::common::{g, jne_mask, jp5, rd, wr, x, xi};
 
-orig! {
-    /// `CPhysical::GetSpeed(CVector)` (0x542CE0), hidden return pointer first
-    pub fn physical_get_speed(p: GPtr<u8>, out: GPtr<u8>, x: u32, y: u32, z: u32) -> GPtr<u8> = thiscall 0x542CE0 => unported;
-    /// `CrossProduct(CVector* out, const CVector*, const CVector*)` (0x59C730)
-    pub fn cross_product(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C730 => unported;
-    /// `CMatrix::CMatrix(const CMatrix&)` (0x59BCF0)
-    pub fn matrix_copy_ctor(m: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = thiscall 0x59BCF0 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    pub fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
-    /// `Multiply3x3(CVector* out, const CVector*, const CMatrix*)` (0x59C810: vector times matrix, the
-    /// inverse rotation)
-    /// `Multiply3x3(CVector* out, const CMatrix*, const CVector*)` (0x59C790: matrix times vector)
-    pub fn multiply3x3_mv(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C790 => unported;
-    /// `CMatrix::CMatrix(RwMatrix*, bool)` (0x59C050)
-    pub fn matrix_ctor_rw(m: GPtr<u8>, rw: GPtr<u8>, temp: u32) -> GPtr<u8> = thiscall 0x59C050 => unported;
-    /// `CMatrix::UpdateRW()` (0x59BBB0)
-    pub fn matrix_update_rw(m: GPtr<u8>) = thiscall 0x59BBB0 => unported;
-    pub fn multiply3x3_vm(out: GPtr<u8>, v: GPtr<u8>, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C810 => unported;
-}
+pub use sa_core::bindings::cross_product;
+pub use sa_core::bindings::matrix_dtor;
+pub use sa_core::bindings::matrix_update_rw;
+pub use sa_world::bindings::matrix_copy_ctor;
+pub use sa_world::bindings::matrix_ctor_rw;
+pub use sa_world::bindings::multiply3x3 as multiply3x3_mv;
+pub use sa_world::bindings::multiply3x3_vm;
+pub use sa_world::bindings::physical_get_speed;
 
 /// `CTimer::ms_fTimeStep`.
 fn time_step() -> f32 {

@@ -11,13 +11,28 @@ use sa_world::world::common::{find_player_coors, find_player_ped, find_player_ve
 
 use crate::common::{g, rd, wr, x, xi};
 
+use crate::bindings::calculate_gear_for_simple_car;
+use crate::bindings::do_drive_by_shootings;
+use crate::bindings::has_valid_45c;
+use crate::bindings::process_wheel_rotation;
+use sa_core::bindings::get_pad;
+use sa_core::bindings::vector_magnitude;
+use sa_pop::bindings::car_gun_just_down;
+use sa_pop::bindings::steer_ai_car_with_physics;
+use sa_pop::bindings::update_car_ai;
+use sa_pop::bindings::update_car_on_rails;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::find_player_speed;
+use sa_world::bindings::get_adhesion_group;
+use sa_world::bindings::get_pad_from_player;
+use sa_world::bindings::physical_process_control;
+use sa_world::bindings::process_line_of_sight;
+use sa_world::bindings::take_remote_controlled_car_from_player;
+use sa_world::bindings::tm_find_active_task_by_type as find_active_task_by_type;
+use sa_world::bindings::vector_magnitude_sqr;
 orig! {
     /// `CEntity::GetColModel()` (0x535300)
     fn get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => sa_world::world::entity::get_col_model;
-    /// `CWorld::FindPlayerSpeed(int32)` (0x56E090)
-    fn find_player_speed(id: i32) -> GPtr<u8> = cdecl 0x56E090 => sa_world::world::cworld::find_player_speed;
-    /// `CVector::Magnitude()` (0x4082C0), ST0
-    fn vector_magnitude(v: GPtr<u8>) -> f64 = thiscall 0x4082C0 => unported;
     /// `VectorSub(CVector*, const CVector*, const CVector*)` (0x40FE60)
     fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => sa_world::world::mvpa_math::vector_sub;
     /// `CAutomobile::ScanForCrimes()` (0x6ADFF0)
@@ -26,26 +41,14 @@ orig! {
     fn vector_mul_scalar(out: GPtr<u8>, v: GPtr<u8>, s: f32) -> GPtr<u8> = cdecl 0x40FEC0 => sa_world::world::mvpa_math::vector_mul_scalar;
     /// `VectorAdd(CVector*, const CVector*, const CVector*)` (0x40FE30)
     fn vector_add(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE30 => sa_world::world::mvpa_math::vector_add;
-    /// `CWorld::ProcessLineOfSight(...)` (0x56BA00)
-    fn process_line_of_sight(a: GPtr<u8>, b: GPtr<u8>, cp: GPtr<u8>, e: GPtr<u8>, b1: u32, v: u32, p: u32, o: u32, d: u32, s: u32, ic: u32, sc: u32) -> u8 = cdecl 0x56BA00 => unported;
     /// `CCarAI::GetCarToParkAtCoors(CVehicle*, CVector*)` (0x41D350), ST0 (dropped)
     fn get_car_to_park_at_coors(v: GPtr<u8>, p: GPtr<u8>) -> f64 = cdecl 0x41D350 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    fn get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CPad::CarGunJustDown()` (0x53FFE0): the caller tests AX
-    fn car_gun_just_down(pad: GPtr<u8>) -> u32 = thiscall 0x53FFE0 => unported;
-    /// `CRemote::TakeRemoteControlledCarFromPlayer(bool)` (0x45AE80)
-    fn take_remote_controlled_car_from_player(b: u32) = cdecl 0x45AE80 => unported;
     /// `CAutomobile::RcbanditCheckHitWheels()` (0x6B45E0): the caller tests AX
     fn rcbandit_check_hit_wheels(v: GPtr<u8>) -> u32 = thiscall 0x6B45E0 => unported;
-    /// `CPlayerPed::GetPadFromPlayer()` (0x609560)
-    fn get_pad_from_player(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x609560 => unported;
     /// `CEntity::PruneReferences()` (0x571A90)
     fn prune_references(e: GPtr<u8>) = thiscall 0x571A90 => sa_world::world::entity::prune_references;
     /// `CWorld::FindPlayerSlotWithRemoteVehiclePointer(CEntity*)` (0x563FD0)
     fn find_player_slot_with_remote_vehicle_pointer(v: GPtr<u8>) -> i32 = cdecl 0x563FD0 => sa_world::world::cworld::find_player_slot_with_remote_vehicle_pointer;
-    /// `CVehicle::DoDriveByShootings()` (0x741FD0)
-    fn do_drive_by_shootings(v: GPtr<u8>) = thiscall 0x741FD0 => unported;
     /// `CPad::GetSteeringLeftRight()` (0x53FB80): int16 in AX
     fn get_steering_left_right(pad: GPtr<u8>) -> u32 = thiscall 0x53FB80 => unported;
     /// `CPad::GetSteeringUpDown()` (0x53FBD0): int16 in AX
@@ -70,32 +73,10 @@ orig! {
     fn apply_move_force(e: GPtr<u8>, force: CVector) = thiscall 0x5429F0 => sa_world::physical::forces::apply_move_force;
     /// `CAutomobile::DoSoftGroundResistance(uint32&)` (0x6A4AF0)
     fn do_soft_ground_resistance(v: GPtr<u8>, flags: GPtr<u32>) = thiscall 0x6A4AF0 => unported;
-    /// `CCarAI::UpdateCarAI(CVehicle*)` (0x41DA30)
-    fn update_car_ai(v: GPtr<u8>) = cdecl 0x41DA30 => sa_pop::carctrl4::update_car_ai;
-    /// `CPhysical::ProcessControl()` (0x5485E0)
-    fn physical_process_control(v: GPtr<u8>) = thiscall 0x5485E0 => sa_world::physical::attach::process_control;
-    /// `CCarCtrl::UpdateCarOnRails(CVehicle*)` (0x436540)
-    fn update_car_on_rails(v: GPtr<u8>) = cdecl 0x436540 => sa_pop::carctrl4::update_car_on_rails;
-    /// `cTransmission::CalculateGearForSimpleCar(float, uint8&)` (0x6D0530)
-    fn calculate_gear_for_simple_car(t: GPtr<u8>, speed: f32, gear: GPtr<u8>) = thiscall 0x6D0530 => crate::mvpb_a2::calculate_gear_for_simple_car;
-    /// `CVehicle::ProcessWheelRotation(tWheelState, const CVector&, const CVector&, float)` (0x6D1230), ST0
-    fn process_wheel_rotation(v: GPtr<u8>, state: u32, fwd: GPtr<u8>, speed: GPtr<u8>, radius: f32) -> f64 = thiscall 0x6D1230 => unported;
     /// `CAutomobile::PlayHornIfNecessary()` (0x6A3820)
     fn play_horn_if_necessary(v: GPtr<u8>) = thiscall 0x6A3820 => crate::mvpb_a1::play_horn_if_necessary;
-    /// `CCarCtrl::SteerAICarWithPhysics(CVehicle*)` (0x437C20)
-    fn steer_ai_car_with_physics(v: GPtr<u8>) = cdecl 0x437C20 => sa_pop::carctrl3::steer_ai_car_with_physics;
     /// `CCarCtrl::ReconsiderRoute(CVehicle*)` (0x42FC40)
     fn reconsider_route(v: GPtr<u8>) = cdecl 0x42FC40 => sa_pop::carctrl4::reconsider_route;
-    /// `SurfaceInfos_c::GetAdhesionGroup(uint32)` (0x55E5C0)
-    fn get_adhesion_group(si: GPtr<u8>, id: u32) -> u32 = thiscall 0x55E5C0 => unported;
-    /// `CVector::SquaredMagnitude()` (0x406DA0), ST0
-    fn vector_magnitude_sqr(v: GPtr<u8>) -> f64 = thiscall 0x406DA0 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CTaskManager::FindActiveTaskByType(int32)` (0x681740)
-    fn find_active_task_by_type(tm: GPtr<u8>, kind: i32) -> GPtr<u8> = thiscall 0x681740 => unported;
-    /// `CVehicle::CanUpdateHornCounter()`-like check (0x4F4CE0)
-    fn has_valid_45c(v: GPtr<u8>) -> u32 = thiscall 0x4F4CE0 => crate::vehicle2::has_valid_45c;
     /// `CAutomobile::ProcessControlInputs(uint8)` (vtable +0x60)
     fn v_process_control_inputs(v: GPtr<u8>, player: u32) = thiscall vslot 0x60 => unported;
     /// `CAutomobile::BlowUpCar(CEntity*, bool)` (vtable +0xA4)

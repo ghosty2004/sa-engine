@@ -7,11 +7,9 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
+use sa_core::bindings::rw_raster_lock;
+use sa_world::bindings::rw_raster_unlock;
 orig! {
-    /// `RwRasterLock(RwRaster*, uint8 level, int32 mode)` (0x7FB2D0)
-    fn rw_raster_lock(r: GPtr<u8>, level: u32, mode: u32) -> u32 = cdecl 0x7FB2D0 => unported;
-    /// `RwRasterUnlock(RwRaster*)` (0x7FAEC0)
-    fn rw_raster_unlock(r: GPtr<u8>) -> GPtr<u8> = cdecl 0x7FAEC0 => unported;
     /// `RoadsignGetLineAndRow(char c (AL), int32* col, int32* row)` (0x6FE260, register convention, caller pops)
     fn roadsign_get_line_and_row(c: u8, col: GPtr<i32>, row: GPtr<i32>) = reg("args = al stack stack") 0x6FE260 => crate::roadsign_line_row::roadsign_get_line_and_row;
 }

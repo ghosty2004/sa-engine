@@ -22,6 +22,7 @@ sa_core::globals! {
 /// `CVehicleModelInfo::CVehicleStructure` storage (0x314 bytes).
 pub type VehicleStructureSlot = Slot<0x314>;
 
+pub use crate::bindings::building_ctor;
 orig! {
     /// CRT `operator new` (0x82119A)
     pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
@@ -29,8 +30,6 @@ orig! {
     pub fn operator_new_array(size: u32) -> GPtr<u8> = cdecl 0x821195 => unported;
     /// `CDummyPool::New()` (0x532630)
     pub fn dummy_pool_new(p: GPtr<CPool<DummySlot>>) -> GPtr<DummySlot> = thiscall 0x532630 => unported;
-    /// `CBuilding::CBuilding()` (0x403E00)
-    pub fn building_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x403E00 => unported;
     /// `CDummy::CDummy()` (0x532540)
     pub fn dummy_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x532540 => unported;
 }

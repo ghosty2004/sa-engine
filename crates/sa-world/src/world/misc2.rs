@@ -31,49 +31,38 @@ const CURR_AREA: usize = 0xB72914;
 /// end of `CGarages::aGarages`
 const GARAGES_END: usize = 0x96EA78;
 
+pub use crate::bindings::get_engine_status;
+pub use crate::bindings::get_task_jet_pack;
+pub use crate::bindings::get_task_swim;
+pub use crate::bindings::is_law_enforcement_vehicle;
+pub use crate::bindings::ped_get_held_entity as get_entity_that_this_ped_is_holding;
+pub use crate::bindings::population_remove_ped;
+pub use crate::bindings::set_engine_status;
+pub use sa_core::bindings::eh_vector_ctor;
+pub use sa_core::bindings::get_pad;
+pub use sa_core::bindings::list_dtor;
+pub use sa_core::bindings::list_item_ctor;
+pub use sa_core::bindings::list_item_dtor;
+pub use sa_core::bindings::list_remove_head;
+pub use sa_core::bindings::load_all_requested_models;
+pub use sa_core::bindings::quad_tree_delete_item;
+pub use sa_core::bindings::set_model_is_deletable;
+pub use sa_core::bindings::set_wanted_level;
+pub use sa_core::bindings::streaming_request_model as request_model;
+pub use sa_stream::bindings::anim_add_block_ref as add_anim_block_ref;
+pub use sa_stream::bindings::anim_remove_block_ref as remove_anim_block_ref;
+pub use sa_stream::bindings::get_2d_effect;
+pub use sa_stream::bindings::get_animation_block_index;
+pub use sa_stream::bindings::stream_peds_for_interior;
 orig! {
     /// `CAudioEngine::GetRadioStationListenTimes` (0x507020) on `AudioEngine` (0xB6BC90)
     pub fn get_radio_station_listen_times(ae: GPtr<u8>) -> GPtr<u32> = thiscall 0x507020 => unported;
-    /// `CQuadTreeNode::DeleteItem(void*)` (0x552A40)
-    pub fn quad_tree_delete_item(node: GPtr<u8>, item: GPtr<u8>) = thiscall 0x552A40 => unported;
     /// `CRenderer::GetObjectsInFrustum(CEntity** out, float farPlane, RwMatrix*)` (0x554C60)
     pub fn get_objects_in_frustum(out: GPtr<GPtr<u8>>, far: f32, m: GPtr<u8>) -> i32 = cdecl 0x554C60 => unported;
-    /// `CAnimManager::GetAnimationBlockIndex(const char*)` (0x4D3990)
-    pub fn get_animation_block_index(name: GPtr<u8>) -> i32 = cdecl 0x4D3990 => unported;
-    /// `CStreaming::SetModelIsDeletable(int32)` (0x409C10)
-    pub fn set_model_is_deletable(id: i32) = cdecl 0x409C10 => unported;
-    /// `CStreaming::StreamPedsForInterior(int32)` (0x40BBB0)
-    pub fn stream_peds_for_interior(ty: i32) = cdecl 0x40BBB0 => unported;
-    /// `CStreaming::LoadAllRequestedModels(bool)` (0x40EA10)
-    pub fn load_all_requested_models(prio: u32) = cdecl 0x40EA10 => unported;
-    /// `CVehicle::IsLawEnforcementVehicle` (0x6D2370)
-    pub fn is_law_enforcement_vehicle(veh: GPtr<u8>) -> u8 = thiscall 0x6D2370 => unported;
-    /// `CDamageManager::GetEngineStatus` (0x6C22C0)
-    pub fn get_engine_status(dm: GPtr<u8>) -> u32 = thiscall 0x6C22C0 => unported;
-    /// `CDamageManager::SetEngineStatus(uint32)` (0x6C22A0)
-    pub fn set_engine_status(dm: GPtr<u8>, s: u32) = thiscall 0x6C22A0 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    pub fn get_pad(i: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CPopulation::RemovePed(CPed*)` (0x610F20)
-    pub fn population_remove_ped(ped: GPtr<u8>) = cdecl 0x610F20 => unported;
-    /// `CPedIntelligence::GetTaskSwim` (0x601070)
-    pub fn get_task_swim(intel: GPtr<u8>) -> GPtr<u8> = thiscall 0x601070 => unported;
-    /// `CPlayerPed::SetWantedLevel(int32)` (0x609F10)
-    pub fn set_wanted_level(ped: GPtr<u8>, level: i32) = thiscall 0x609F10 => unported;
-    /// `CAnimManager::RemoveAnimBlockRef(int32)` (0x4D3FD0)
-    pub fn remove_anim_block_ref(i: i32) = cdecl 0x4D3FD0 => unported;
     /// `CWeaponInfo::GetWeaponInfo(eWeaponType, eWeaponSkill)` (0x743C60)
     pub fn get_weapon_info(w: i32, skill: i32) -> GPtr<u8> = cdecl 0x743C60 => unported;
-    /// `CPedIntelligence::GetTaskJetPack` (0x601110)
-    pub fn get_task_jet_pack(intel: GPtr<u8>) -> GPtr<u8> = thiscall 0x601110 => unported;
     /// `RwV3dTransformPoints(out, in, n, matrix)` (0x7EDD90)
     pub fn rw_v3d_transform_points(out: GPtr<f32>, inp: GPtr<f32>, n: i32, m: GPtr<u8>) -> GPtr<f32> = cdecl 0x7EDD90 => unported;
-    /// `CBaseModelInfo::Get2dEffect(int32)` (0x4C4C70)
-    pub fn get_2d_effect(mi: GPtr<u8>, i: i32) -> GPtr<u8> = thiscall 0x4C4C70 => unported;
-    /// `CStreaming::RequestModel(int32, int32 flags)` (0x4087E0)
-    pub fn request_model(id: i32, flags: i32) = cdecl 0x4087E0 => unported;
-    /// `CAnimManager::AddAnimBlockRef(int32)` (0x4D3FB0)
-    pub fn add_anim_block_ref(i: i32) = cdecl 0x4D3FB0 => unported;
     /// `CStats::IncrementStat(uint16, float)` (0x55C180)
     pub fn increment_stat(id: u32, v: u32) = cdecl 0x55C180 => unported;
     /// `CStats::DisplayScriptStatUpdateMessage(uint8, uint32 stat, float)` (0x55B980)
@@ -84,14 +73,8 @@ orig! {
     pub fn rw_render_state_set(state: i32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
     /// `BreakObject_c::Render(bool)` (0x59E480)
     pub fn break_object_render(o: GPtr<u8>, flag: u32) = thiscall 0x59E480 => unported;
-    /// `CPed::GetEntityThatThisPedIsHolding` (0x5E02E0)
-    pub fn get_entity_that_this_ped_is_holding(ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x5E02E0 => unported;
     /// `CRenderer::RequestObjectsInDirection(const CVector&, float, int32)` (0x555CB0)
     pub fn request_objects_in_direction(v: GPtr<f32>, angle: u32, flags: i32) = cdecl 0x555CB0 => unported;
-    /// `List_c::~List_c` (0x4A8DE0)
-    pub fn list_dtor(l: GPtr<u8>) = thiscall 0x4A8DE0 => unported;
-    /// `ListItem_c::~ListItem_c` (0x4A8DC0)
-    pub fn list_item_dtor(i: GPtr<u8>) = thiscall 0x4A8DC0 => unported;
     /// `FurnitureSubGroup_c::GetRandomId(uint8 rating)` (0x590FD0)
     pub fn sub_group_get_random_id(sg: GPtr<u8>, rating: u32) -> i32 = thiscall 0x590FD0 => unported;
     /// `FurnitureSubGroup_c::GetFurniture(int16 id, uint8 rating)` (0x590EE0)
@@ -100,12 +83,6 @@ orig! {
     pub fn list_ctor(l: GPtr<u8>) = thiscall 0x4A8DD0 => unported;
     /// `List_c::AddItem(ListItem_c*)` (0x4A8DF0); EAX passed through
     pub fn list_add_item(l: GPtr<u8>, item: GPtr<u8>) -> u32 = thiscall 0x4A8DF0 => unported;
-    /// `List_c::RemoveHead` (0x4A8E70)
-    pub fn list_remove_head(l: GPtr<u8>) -> GPtr<u8> = thiscall 0x4A8E70 => unported;
-    /// `ListItem_c::ListItem_c` (0x4A8DB0)
-    pub fn list_item_ctor(i: GPtr<u8>) -> GPtr<u8> = thiscall 0x4A8DB0 => unported;
-    /// CRT `eh vector constructor iterator` (0x821D30, stdcall)
-    pub fn eh_vector_ctor(arr: GPtr<u8>, size: u32, n: u32, ctor: u32, dtor: u32) = stdcall 0x821D30 => unported;
     /// `BreakObject_c::Update(float)` (0x59E220)
     pub fn break_object_update(o: GPtr<u8>, step: u32) = thiscall 0x59E220 => unported;
     /// `BreakObject_c::Init(CObject*, ...)` (0x59E750)

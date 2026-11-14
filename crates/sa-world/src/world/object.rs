@@ -51,43 +51,48 @@ const CLUMP_ANIM_OFFSET: usize = 0xB5F878;
 /// `ModelIndices::MI_FIRE_HYDRANT`
 const MI_FIRE_HYDRANT: usize = 0x8CD594;
 
+pub use crate::bindings::clear_blip_for_entity as radar_clear_blip_for_entity;
+pub use crate::bindings::entity_attach_to_rw_object;
+pub use crate::bindings::fire_extinguish;
+pub use crate::bindings::path_set_links_bridge_lights;
+pub use crate::bindings::physical_ctor;
+pub use crate::bindings::physical_remove_and_add;
+pub use crate::bindings::placeable_set_matrix;
+pub use crate::bindings::remove_from_waiting_for_script_brain_array;
+pub use crate::bindings::rope_release_picked_up_object;
+pub use crate::bindings::ropes_find_rope as find_rope;
+pub use crate::bindings::simple_transform_update_rw_matrix;
+pub use sa_core::bindings::activate_directional;
+pub use sa_core::bindings::cross_product;
+pub use sa_core::bindings::get_uppercase_key as key_gen_get_uppercase_key;
+pub use sa_core::bindings::matrix_update_rw_matrix as matrix_update_rw;
+pub use sa_core::bindings::object_save_construct as save_structure_construct;
+pub use sa_core::bindings::object_save_extract as save_structure_extract;
+pub use sa_core::bindings::rp_anim_blend_clump_init;
+pub use sa_core::bindings::rp_hanim_hierarchy_get_matrix_array as rp_h_anim_hierarchy_get_matrix_array;
+pub use sa_core::bindings::set_mission_doesnt_require_model;
+pub use sa_core::bindings::txd_add_ref as txd_store_add_ref;
+pub use sa_core::bindings::world_add;
+pub use sa_core::bindings::world_remove;
+pub use sa_stream::bindings::model_info_add_ref;
+pub use sa_stream::bindings::model_info_remove_ref;
+pub use sa_stream::bindings::model_info_sways_in_wind;
+pub use sa_stream::bindings::txd_store_remove_ref;
 orig! {
-    /// `CStreaming::SetMissionDoesntRequireModel(int32)` (0x409C90)
-    pub fn set_mission_doesnt_require_model(m: i32) = cdecl 0x409C90 => unported;
-    /// `CTheScripts::RemoveFromWaitingForScriptBrainArray(CEntity*, int16)` (0x46ABC0)
-    pub fn remove_from_waiting_for_script_brain_array(e: GPtr<u8>, i: u32) = cdecl 0x46ABC0 => unported;
     /// `CColStore::RemoveRef(int32)` (0x4107D0)
     pub fn col_store_remove_ref(i: i32) = cdecl 0x4107D0 => unported;
-    /// `CRadar::ClearBlipForEntity(eBlipType, int32 handle)` (0x587C60)
-    pub fn radar_clear_blip_for_entity(ty: i32, h: i32) = cdecl 0x587C60 => unported;
-    /// `CBaseModelInfo::RemoveRef()` (0x4C4BB0)
-    pub fn model_info_remove_ref(mi: GPtr<u8>) = thiscall 0x4C4BB0 => unported;
-    /// `CTxdStore::RemoveRef(int32)` (0x731A30)
-    pub fn txd_store_remove_ref(i: i32) = cdecl 0x731A30 => unported;
     /// `CObject::RemoveFromControlCodeList()` (0x59F450)
     pub fn remove_from_control_code_list_call(o: GPtr<u8>) = thiscall 0x59F450 => remove_from_control_code_list;
-    /// `CPathFind::SetLinksBridgeLights(float xMin, float xMax, float yMin, float yMax, bool)` (0x44D960)
-    pub fn path_set_links_bridge_lights(pf: GPtr<u8>, x0: f32, x1: f32, y0: f32, y1: f32, b: u32) = thiscall 0x44D960 => unported;
-    /// `CFire::Extinguish()` (0x5393F0)
-    pub fn fire_extinguish(f: GPtr<u8>) = thiscall 0x5393F0 => unported;
     /// `CPhysical::~CPhysical()` (0x542450): EAX of `CEntity::~CEntity`
     pub fn physical_destructor(p: GPtr<u8>) -> u32 = thiscall 0x542450 => crate::physical::base::destructor;
     /// `CColStore::AddRef(int32)` (0x4107A0)
     pub fn col_store_add_ref(i: i32) = cdecl 0x4107A0 => unported;
-    /// `CBaseModelInfo::SwaysInWind()` (0x4212C0)
-    pub fn model_info_sways_in_wind(mi: GPtr<u8>) -> u32 = thiscall 0x4212C0 => unported;
     /// `CGarages::IsModelIndexADoor(int32)` (0x448AF0)
     pub fn garages_is_model_index_a_door(m: i32) -> u8 = cdecl 0x448AF0 => unported;
-    /// `CPlaceable::SetMatrix(const CMatrix&)` (0x54F610)
-    pub fn placeable_set_matrix(p: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F610 => unported;
     /// `CCustomBuildingRenderer::IsCBPCPipelineAttached(RpAtomic*)` (0x5D7F40)
     pub fn is_cbpc_pipeline_attached(a: GPtr<u8>) -> u32 = cdecl 0x5D7F40 => unported;
-    /// `RpHAnimHierarchyGetMatrixArray(RpHAnimHierarchy*)` (0x7C5120)
-    pub fn rp_h_anim_hierarchy_get_matrix_array(h: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C5120 => unported;
     /// `CMatrix::operator=(const CMatrix&)` (0x59BBC0)
     pub fn matrix_assign(m: GPtr<u8>, o: GPtr<u8>) = thiscall 0x59BBC0 => unported;
-    /// `CPhysical::RemoveAndAdd()` (0x542560)
-    pub fn physical_remove_and_add(p: GPtr<u8>) = thiscall 0x542560 => unported;
     /// `CObject::CObject(CDummyObject*)` (0x5A1DF0)
     pub fn object_ctor_dummy(o: GPtr<u8>, d: GPtr<u8>) -> GPtr<u8> = thiscall 0x5A1DF0 => unported;
     /// `WaterCreatureManager_c::TryToFreeUpWaterCreatures(int32)` (0x6E40E0)
@@ -96,32 +101,12 @@ orig! {
     pub fn ropes_find_pickup_height(e: GPtr<u8>) -> f64 = cdecl 0x556760 => unported;
     /// `CIplStore::IncludeEntity(int32, CEntity*)` (0x404C90)
     pub fn ipl_store_include_entity(i: i32, e: GPtr<u8>) = cdecl 0x404C90 => unported;
-    /// `CKeyGen::GetUppercaseKey(const char*)` (0x53CF30)
-    pub fn key_gen_get_uppercase_key(s: GPtr<u8>) -> u32 = cdecl 0x53CF30 => unported;
-    /// `RpAnimBlendClumpInit(RpClump*)` (0x4D6720)
-    pub fn rp_anim_blend_clump_init(c: GPtr<u8>) = cdecl 0x4D6720 => unported;
-    /// `CObjectSaveStructure::Construct(CObject*)` (0x5D2160)
-    pub fn save_structure_construct(s: GPtr<u8>, o: GPtr<u8>) = thiscall 0x5D2160 => unported;
-    /// `CObjectSaveStructure::Extract(CObject*)` (0x5D2220)
-    pub fn save_structure_extract(s: GPtr<u8>, o: GPtr<u8>) = thiscall 0x5D2220 => unported;
-    /// `CWorld::Add(CEntity*)` (0x563220)
-    pub fn world_add(e: GPtr<u8>) = cdecl 0x563220 => unported;
-    /// `CEntity::AttachToRwObject(RwObject*, bool)` (0x533ED0)
-    pub fn entity_attach_to_rw_object(e: GPtr<u8>, rw: GPtr<u8>, update: u32) = thiscall 0x533ED0 => unported;
-    /// `CWorld::Remove(CEntity*)` (0x563280)
-    pub fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
     /// scalar deleting destructor (vtable slot 0)
     pub fn entity_vdelete(e: GPtr<u8>, flag: i32) = thiscall vslot 0x0 => unported;
     /// `CEntity::SetIsStatic(bool)` (vtable slot 0x10)
     pub fn entity_vset_is_static(e: GPtr<u8>, v: u8) = thiscall vslot 0x10 => unported;
-    /// `CSimpleTransform::UpdateRwMatrix(RwMatrix*)` (0x54EF40)
-    pub fn simple_transform_update_rw_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54EF40 => unported;
-    /// `CMatrix::UpdateRW(RwMatrix*)` (0x59AD70)
-    pub fn matrix_update_rw(m: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x59AD70 => unported;
     /// `CWorld::ProcessVerticalLine(const CVector&, float, CColPoint&, CEntity*&, bool x7)` (0x5674E0)
     pub fn world_process_vertical_line(p: GPtr<u8>, z: f32, cp: GPtr<u8>, e: GPtr<u8>, a: u32, b: u32, c: u32, d: u32, f: u32, h: u32, i: u32) -> u8 = cdecl 0x5674E0 => unported;
-    /// `CPhysical::CPhysical` (0x542260)
-    pub fn physical_ctor(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x542260 => unported;
     /// `CObject::Init()` (0x59F840)
     pub fn object_init(o: GPtr<u8>) = thiscall 0x59F840 => unported;
     /// `0x5A2CB0` (unnamed, thiscall, `ret 0xC`): `SetObjectData`'s centre-of-mass setter `(0, 0, z)`
@@ -130,10 +115,6 @@ orig! {
     pub fn object_explode(o: GPtr<u8>) = thiscall 0x5A1340 => unported;
     /// `CObject::~CObject` (0x59F660)
     pub fn object_dtor(o: GPtr<u8>) = thiscall 0x59F660 => unported;
-    /// `CRopes::FindRope(uint32 id)` (0x556000)
-    pub fn find_rope(id: u32) -> i32 = cdecl 0x556000 => unported;
-    /// `CRope::ReleasePickedUpObject()` (0x556030)
-    pub fn rope_release_picked_up_object(r: GPtr<u8>) = thiscall 0x556030 => unported;
     /// `CObject::ResetDoorAngle()` (0x59F4B0)
     pub fn object_reset_door_angle(o: GPtr<u8>) = thiscall 0x59F4B0 => unported;
     /// `CPool<CObject>::CreateAtRef(int32 handle)` (0x59F610)
@@ -146,16 +127,8 @@ orig! {
     pub fn object_pool_new(pool: GPtr<u8>) -> GPtr<u8> = thiscall 0x5A1C20 => unported;
     /// `Light::WorldReplaceNormalLightsWithScorched(RpWorld*, float)` (0x7357E0)
     pub fn world_replace_normal_lights_with_scorched(w: GPtr<u8>, l: f32) = cdecl 0x7357E0 => unported;
-    /// `Light::ActivateDirectional()` (0x735C80)
-    pub fn activate_directional() = cdecl 0x735C80 => unported;
     /// `CRenderer::SetupLightingForEntity(CEntity*)` (0x553E40)
     pub fn setup_lighting_for_entity(e: GPtr<u8>) -> u8 = cdecl 0x553E40 => unported;
-    /// `CBaseModelInfo::AddRef` (0x4C4BA0)
-    pub fn model_info_add_ref(mi: GPtr<u8>) = thiscall 0x4C4BA0 => unported;
-    /// `CTxdStore::AddRef(int32)` (0x731A00)
-    pub fn txd_store_add_ref(i: i32) = cdecl 0x731A00 => unported;
-    /// `CVector::CrossProduct(CVector* out, const CVector*, const CVector*)` (0x59C730)
-    pub fn cross_product(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C730 => unported;
 }
 
 /// `CObject::operator new(uint32)` (0x5A1EE0): `ms_pObjectPool->New()` (tail jump, size ignored).

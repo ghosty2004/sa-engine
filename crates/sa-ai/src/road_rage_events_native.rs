@@ -8,11 +8,9 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::task_complex_ctor;
 orig! {
-    /// `CTaskComplex::CTaskComplex()` (0x61A3B0)
-    fn task_complex_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A3B0 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    fn entity_register_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571B70 => unported;
     /// `CEventVehicleDamage::~CEventVehicleDamage()` body (0x4B1990)
     fn event_vehicle_damage_dtor(e: GPtr<u8>) = thiscall 0x4B1990 => crate::event_vehicle_damage::event_vehicle_damage_dtor;
 }

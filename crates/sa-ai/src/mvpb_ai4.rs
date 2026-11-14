@@ -7,13 +7,10 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use sa_core::bindings::find_player_ped;
+use sa_stream::bindings::find_player_wanted;
+use sa_world::bindings::ped_groups_get_peds_group as get_peds_group;
 orig! {
-    /// `CWorld::FindPlayerWanted(int32)` (0x56E230, cdecl)
-    fn find_player_wanted(id: i32) -> GPtr<u8> = cdecl 0x56E230 => unported;
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210, cdecl)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CPedGroups::GetPedsGroup(const CPed*)` (0x5F7E80, cdecl)
-    fn get_peds_group(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x5F7E80 => unported;
     /// `CEvent::GetEventType` (vtable +0x4)
     fn v_get_event_type(e: GPtr<u8>) -> u32 = thiscall vslot 0x4 => unported;
     /// `CEvent::GetSourceEntity` (vtable +0x28)

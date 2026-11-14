@@ -8,91 +8,57 @@ use sa_core::{hook, orig};
 
 use super::common::{g, rd, wr, x, xi};
 
+use crate::bindings::camera_set_directly_behind;
+use crate::bindings::car_ctrl_clear_interesting_vehicle_list;
+use crate::bindings::clear_drunk_blur as mblur_clear_drunk_blur;
+use crate::bindings::clothes_desc_set_texture_and_model;
+use crate::bindings::fire_extinguish;
+use crate::bindings::get_ped_type_acquaintances;
+use crate::bindings::get_player_info as get_player_info_for_this_player_ped;
+use crate::bindings::ped_restart_non_partial_anims;
+use crate::bindings::ped_restore_heading_rate;
+use crate::bindings::player_clear_weapon_target as player_ped_clear_weapon_target;
+use crate::bindings::player_ped_clear_adrenaline;
+use crate::bindings::player_ped_set_initial_state;
+use crate::bindings::set_stat_value;
+use crate::bindings::shopping_remove_loaded_shop;
+use crate::bindings::water_find_nearest_water_and_flow as water_level_find_nearest_water_and_its_flow;
+use sa_core::bindings::audio_zones_update;
+use sa_core::bindings::camera_fade;
+use sa_core::bindings::camera_restore_with_jump_cut;
+use sa_core::bindings::camera_set_fade_colour;
+use sa_core::bindings::clear_exciting_stuff_from_area;
+use sa_core::bindings::clothes_rebuild_player;
+use sa_core::bindings::clothes_rebuild_player_if_needed;
+use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+use sa_core::bindings::get_pad;
+use sa_core::bindings::matrix_set_rotate_z_only;
+use sa_core::bindings::player_info_make_player_safe;
+use sa_core::bindings::player_ped_reset_sprint_energy;
+use sa_core::bindings::post_effects_script_reset_for_effects;
+use sa_core::bindings::references_remove_references_to_player;
+use sa_core::bindings::stream_zone_models;
+use sa_core::bindings::time_cycle_stop_extra_colour;
+use sa_core::bindings::world_add;
+use sa_core::bindings::world_remove;
+use sa_stream::bindings::remove_buildings_not_in_area;
 orig! {
-    /// `CCamera::SetFadeColour(uint8, uint8, uint8)` (0x50BF00)
-    fn camera_set_fade_colour(c: GPtr<u8>, r: u32, gg: u32, b: u32) = thiscall 0x50BF00 => unported;
-    /// `CCamera::Fade(float, int16)` (0x50AC20)
-    fn camera_fade(c: GPtr<u8>, t: f32, dir: u32) = thiscall 0x50AC20 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    fn get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
     /// `CStats::UpdateStatsOnRespawn()` (0x55CFC0)
     fn stats_update_stats_on_respawn() = cdecl 0x55CFC0 => unported;
-    /// `CPlayerPed::GetPlayerInfoForThisPlayerPed()` (0x609FF0)
-    fn get_player_info_for_this_player_ped(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x609FF0 => unported;
-    /// `CMBlur::ClearDrunkBlur()` (0x71D780)
-    fn mblur_clear_drunk_blur() = cdecl 0x71D780 => unported;
-    /// `CPlayerPed::ClearAdrenaline()` (0x60A070)
-    fn player_ped_clear_adrenaline(p: GPtr<u8>) = thiscall 0x60A070 => unported;
-    /// `CPlayerPed::ResetSprintEnergy()` (0x60A530)
-    fn player_ped_reset_sprint_energy(p: GPtr<u8>) = thiscall 0x60A530 => unported;
-    /// `CFire::Extinguish()` (0x5393F0)
-    fn fire_extinguish(f: GPtr<u8>) = thiscall 0x5393F0 => unported;
     /// `CAEPedAudioEntity::TurnOffJetPack()` (0x4E2A70)
     fn ped_audio_turn_off_jet_pack(a: GPtr<u8>) = thiscall 0x4E2A70 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
-    fn clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
     /// `CWanted::Reset()` (0x562400)
     fn wanted_reset(w: GPtr<u8>) = thiscall 0x562400 => unported;
-    /// `CPed::RestartNonPartialAnims()` (0x5DED50)
-    fn ped_restart_non_partial_anims(p: GPtr<u8>) = thiscall 0x5DED50 => unported;
-    /// `CPlayerInfo::MakePlayerSafe(bool, float)` (0x56E870)
-    fn player_info_make_player_safe(pi: GPtr<u8>, safe: u32, radius: f32) = thiscall 0x56E870 => unported;
-    /// `CPlayerPed::ClearWeaponTarget()` (0x609C80)
-    fn player_ped_clear_weapon_target(p: GPtr<u8>) = thiscall 0x609C80 => unported;
-    /// `CPlayerPed::SetInitialState(bool)` (0x60CD20)
-    fn player_ped_set_initial_state(p: GPtr<u8>, b: u32) = thiscall 0x60CD20 => unported;
-    /// `CPedType::GetPedTypeAcquaintances(ePedType)` (0x6089B0)
-    fn get_ped_type_acquaintances(ty: u32) -> GPtr<u8> = cdecl 0x6089B0 => unported;
-    /// `CCarCtrl::ClearInterestingVehicleList()` (0x423F00)
-    fn car_ctrl_clear_interesting_vehicle_list() = cdecl 0x423F00 => unported;
     /// virtual `CEntity::Teleport(CVector, bool)` (vtable +0x38)
     fn v_teleport(e: GPtr<u8>, px: u32, py: u32, pz: u32, reset_rot: u32) = thiscall vslot 0x38 => unported;
-    /// `CMatrix::SetRotateZOnly(float)` (0x59B020)
-    fn matrix_set_rotate_z_only(m: GPtr<u8>, h: u32) = thiscall 0x59B020 => unported;
     /// `CTheScripts::ClearSpaceForMissionEntity(const CVector&, CEntity*)` (0x486B00)
     fn clear_space_for_mission_entity(pos: GPtr<u8>, e: GPtr<u8>) = cdecl 0x486B00 => unported;
-    /// `CWorld::ClearExcitingStuffFromArea(const CVector&, float, bool)` (0x56A0D0)
-    fn clear_exciting_stuff_from_area(pos: GPtr<u8>, radius: f32, b: u32) = cdecl 0x56A0D0 => unported;
-    /// `CPed::RestoreHeadingRate()` (0x5DFD60)
-    fn ped_restore_heading_rate(p: GPtr<u8>) = thiscall 0x5DFD60 => unported;
-    /// `CStreaming::RemoveBuildingsNotInArea(int32)` (0x4094B0)
-    fn remove_buildings_not_in_area(area: i32) = cdecl 0x4094B0 => unported;
-    /// `CCamera::SetCameraDirectlyBehindForFollowPed_CamOnAString()` (0x50BD40)
-    fn camera_set_directly_behind(c: GPtr<u8>) = thiscall 0x50BD40 => unported;
-    /// `CCamera::RestoreWithJumpCut()` (0x50BAB0)
-    fn camera_restore_with_jump_cut(c: GPtr<u8>) = thiscall 0x50BAB0 => unported;
-    /// `CReferences::RemoveReferencesToPlayer()` (0x571AD0)
-    fn references_remove_references_to_player() = cdecl 0x571AD0 => unported;
     /// `CGarages::PlayerArrestedOrDied()` (0x449E60)
     fn garages_player_arrested_or_died() = cdecl 0x449E60 => unported;
-    /// `CStats::SetStatValue(uint16, float)` (0x55A070)
-    fn set_stat_value(stat: u32, v: u32) = cdecl 0x55A070 => unported;
-    /// `CShopping::RemoveLoadedShop()` (0x49AE30)
-    fn shopping_remove_loaded_shop() = cdecl 0x49AE30 => unported;
-    /// `CWorld::Remove(CEntity*)` (0x563280)
-    fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
-    /// `CWorld::Add(CEntity*)` (0x563220)
-    fn world_add(e: GPtr<u8>) = cdecl 0x563220 => unported;
     /// `CHud::ResetWastedText()` (0x589070)
     fn hud_reset_wasted_text() = cdecl 0x589070 => unported;
-    /// `CStreaming::StreamZoneModels(const CVector&)` (0x40A560)
-    fn stream_zone_models(p: GPtr<u8>) = cdecl 0x40A560 => unported;
-    /// `CTimeCycle::StopExtraColour(bool)` (0x55FF20)
-    fn time_cycle_stop_extra_colour(b: u32) = cdecl 0x55FF20 => unported;
-    /// `CPostEffects::ScriptResetForEffects()` (0x7010F0)
-    fn post_effects_script_reset_for_effects() = cdecl 0x7010F0 => unported;
-    /// `CPedClothesDesc::SetTextureAndModel(uint32, uint32, eClothesTexturePart)` (0x5A8050)
-    fn clothes_desc_set_texture_and_model(d: GPtr<u8>, tex: u32, model: u32, part: u32) = thiscall 0x5A8050 => unported;
-    /// `CClothes::RebuildPlayer(CPlayerPed*, bool)` (0x5A82C0)
-    fn clothes_rebuild_player(ped: GPtr<u8>, ignore: u32) = cdecl 0x5A82C0 => unported;
-    /// `CClothes::RebuildPlayerIfNeeded(CPlayerPed*)` (0x5A8390)
-    fn clothes_rebuild_player_if_needed(ped: GPtr<u8>) = cdecl 0x5A8390 => unported;
-    /// `CAudioZones::Update(bool, CVector)` (0x5083C0)
-    fn audio_zones_update(force: u32, px: u32, py: u32, pz: u32) = cdecl 0x5083C0 => unported;
     /// `CAudioEngine::StopPoliceScanner(uint8)` (0x507400) on `AudioEngine` (0xB6BC90)
     fn audio_engine_stop_police_scanner(e: GPtr<u8>, b: u32) = thiscall 0x507400 => unported;
-    /// `CWaterLevel::FindNearestWaterAndItsFlow()` (0x6E9D70)
-    fn water_level_find_nearest_water_and_its_flow() = cdecl 0x6E9D70 => unported;
 }
 
 /// `TheCamera` (0xB6F028).

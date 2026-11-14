@@ -7,17 +7,15 @@ use sa_core::{hook, orig};
 
 use super::common::{g, rd, wr};
 
+use crate::bindings::garage_is_point_inside;
+use sa_core::bindings::world_remove;
 orig! {
-    /// `CGarage::IsPointInsideGarage(CVector)` (0x448740, `ret 0xC`)
-    fn garage_is_point_inside(g: GPtr<u8>, x: u32, y: u32, z: u32) -> u8 = thiscall 0x448740 => unported;
     /// `CGarage::EntityHasASphereWayOutsideGarage(CEntity*, float)` (0x449050)
     fn garage_entity_has_sphere_way_outside(g: GPtr<u8>, e: GPtr<u8>, margin: f32) -> u8 = thiscall 0x449050 => unported;
     /// `CStoredCar::StoreCar(CVehicle*)` (0x449760)
     fn stored_car_store(s: GPtr<u8>, v: GPtr<u8>) = thiscall 0x449760 => unported;
     /// `CPlayerInfo::CancelPlayerEnteringCars(CVehicle*)` (0x56E860)
     fn player_info_cancel_entering_cars(p: GPtr<u8>, v: GPtr<u8>) = thiscall 0x56E860 => unported;
-    /// `CWorld::Remove(CEntity*)` (0x563280)
-    fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
     /// the vehicle's scalar deleting destructor (vtable +0x00)
     fn entity_scalar_deleting_destructor(e: GPtr<u8>, flags: u32) -> GPtr<u8> = thiscall vslot 0x00 => unported;
 }

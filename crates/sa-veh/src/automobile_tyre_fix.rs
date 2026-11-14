@@ -9,39 +9,26 @@ use sa_math::x87::X87;
 
 use crate::common::{rd, wr};
 
+use crate::bindings::dm_reset_damage_status;
+use crate::bindings::dm_set_door_status;
+use crate::bindings::dm_set_wheel_status;
+use crate::bindings::get_wheel_status as dm_get_wheel_status;
+use sa_core::bindings::matrix_dtor;
+use sa_core::bindings::matrix_set_translate;
+use sa_core::bindings::matrix_update_rw;
+use sa_core::bindings::random_float_in_range;
+use sa_core::bindings::rp_clump_for_all_atomics;
+use sa_core::bindings::stats_increment_stat;
+use sa_world::bindings::audio_add_event;
+use sa_world::bindings::matrix_ctor_rw;
+use sa_world::bindings::switch_vehicle_to_real_physics;
 orig! {
-    /// `CDamageManager::GetWheelStatus(eCarWheel)` (0x6C21B0)
-    fn dm_get_wheel_status(dm: GPtr<u8>, wheel: i32) -> u32 = thiscall 0x6C21B0 => crate::damage::get_wheel_status;
-    /// `CDamageManager::SetWheelStatus(eCarWheel, uint32)` (0x6C21A0)
-    fn dm_set_wheel_status(dm: GPtr<u8>, wheel: i32, status: u32) = thiscall 0x6C21A0 => crate::damage::set_wheel_status;
-    /// `CDamageManager::SetDoorStatus(eDoors, uint32)` (0x6C21C0)
-    fn dm_set_door_status(dm: GPtr<u8>, door: i32, status: u32) = thiscall 0x6C21C0 => crate::damage::set_door_status;
-    /// `CDamageManager::ResetDamageStatus()` (0x6C20E0)
-    fn dm_reset_damage_status(dm: GPtr<u8>) = thiscall 0x6C20E0 => crate::damage::reset_damage_status;
-    /// `CStats::IncrementStat(uint16, float)` (0x55C180)
-    fn stats_increment_stat(stat: u32, v: f32) = cdecl 0x55C180 => unported;
-    /// `CAEVehicleAudioEntity::AddAudioEvent(eAudioEvents, float)` (0x4F6420)
-    fn audio_add_event(a: GPtr<u8>, event: u32, volume: f32) = thiscall 0x4F6420 => unported;
-    /// `CCarCtrl::SwitchVehicleToRealPhysics(CVehicle*)` (0x423FC0)
-    fn switch_vehicle_to_real_physics(v: GPtr<u8>) = cdecl 0x423FC0 => unported;
-    /// `CGeneral::GetRandomNumberInRange(float, float)` (0x41BD90), ST0
-    fn random_float_in_range(lo: f32, hi: f32) -> f64 = cdecl 0x41BD90 => unported;
     /// `operator*(float, const CVector&)` (0x40FE90): hidden return pointer first
     fn scalar_mul_vector(out: GPtr<u8>, s: f32, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE90 => sa_world::world::mvpa_math::scalar_mul_vector;
     /// `CPhysical::ApplyMoveForce(CVector)` (0x5429F0)
     fn apply_move_force(e: GPtr<u8>, force: CVector) = thiscall 0x5429F0 => sa_world::physical::forces::apply_move_force;
     /// `CPhysical::ApplyTurnForce(CVector, CVector)` (0x542A50)
     fn apply_turn_force(e: GPtr<u8>, force: CVector, point: CVector) = thiscall 0x542A50 => sa_world::physical::forces::apply_turn_force;
-    /// `RpClumpForAllAtomics(RpClump*, callback, void*)` (0x749B70)
-    fn rp_clump_for_all_atomics(clump: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> = cdecl 0x749B70 => unported;
-    /// `CMatrix::CMatrix(RwMatrix*, bool)` (0x59C050)
-    fn matrix_ctor_rw(m: GPtr<u8>, rw: GPtr<u8>, owns: u32) -> GPtr<u8> = thiscall 0x59C050 => unported;
-    /// `CMatrix::SetTranslate(CVector)` (0x59AF40)
-    fn matrix_set_translate(m: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x59AF40 => unported;
-    /// `CMatrix::UpdateRW()` (0x59BBB0)
-    fn matrix_update_rw(m: GPtr<u8>) = thiscall 0x59BBB0 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
 }
 
 /// `matrix row * (rand(-0.03, 0.03) * mass_at)` (a temporary `CVector`).

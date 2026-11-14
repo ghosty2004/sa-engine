@@ -16,24 +16,17 @@ use sa_math::x87::X87;
 
 use crate::common::{f32_of, g, rand_at, rd, wr, x, xi};
 
+use crate::bindings::ped_get_bike_riding_skill;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::add_animation;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::kob_ctor;
+use sa_world::bindings::kob_dtor;
 orig! {
-    /// `CPed::IsPlayer()` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
     /// `RpAnimBlendClumpGetAssociation(RpClump*, AnimationId)` (0x4D68B0)
     fn clump_get_association(clump: GPtr<u8>, id: u32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
-    /// `CPed::GetBikeRidingSkill()` (0x5DF510, ST0)
-    fn ped_get_bike_riding_skill(p: GPtr<u8>) -> f64 = thiscall 0x5DF510 => unported;
-    /// `CEventKnockOffBike::CEventKnockOffBike(CVehicle*, CVector* moveSpeed, CVector* impact, float, float, uint8,
-    /// uint8, uint16, CPed*, bool, bool)` (0x4AFCF0, `ret 0x2C`)
-    fn kob_ctor(e: GPtr<u8>, veh: GPtr<u8>, speed: GPtr<u8>, impact: GPtr<u8>, dmg: u32, a5: u32, kind: u32, dir: u32, time: u32, ped: u32, driver: u32, force: u32) -> GPtr<u8> = thiscall 0x4AFCF0 => unported;
-    /// `CEventKnockOffBike::~CEventKnockOffBike()` (0x4AFE70)
-    fn kob_dtor(e: GPtr<u8>) = thiscall 0x4AFE70 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, `ret 8`)
-    fn event_group_add(grp: GPtr<u8>, ev: GPtr<u8>, valid: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
     /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float delta)` (0x4D4610)
     fn blend_animation(clump: GPtr<u8>, group: u32, id: u32, delta: u32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
-    /// `CAnimManager::AddAnimation(RpClump*, AssocGroupId, AnimationId)` (0x4D3AA0)
-    fn add_animation(clump: GPtr<u8>, group: u32, id: u32) -> GPtr<u8> = cdecl 0x4D3AA0 => unported;
     /// `CAnimBlendAssociation::SetCurrentTime(float)` (0x4CEA80, `ret 4`)
     fn assoc_set_current_time(a: GPtr<u8>, t: u32) = thiscall 0x4CEA80 => unported;
     /// `RtQuatRotate(RtQuat*, const RwV3d* axis, RwReal angle, RwOpCombineType)` (0x7EB7C0)

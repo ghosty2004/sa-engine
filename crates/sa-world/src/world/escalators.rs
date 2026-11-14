@@ -40,9 +40,9 @@ sa_core::globals! {
     pub static SJ_NUM_COMPLETED @ 0xA9A8A0: u32 = 0;
 }
 
+pub use crate::bindings::stunt_jump_pool_new;
+pub use sa_core::bindings::matrix_dtor;
 orig! {
-    /// `CMatrix::~CMatrix` (0x59ACD0)
-    pub fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
     /// `CEscalator::SwitchOff` (0x717860)
     pub fn switch_off_call(e: GPtr<u8>) = thiscall 0x717860 => switch_off;
     /// `CEscalator::AddThisOne(...)` (0x717970)
@@ -55,8 +55,6 @@ orig! {
     pub fn stunt_jump_pool_ctor(p: GPtr<u8>, size: i32, name: GPtr<u8>) -> GPtr<u8> = thiscall 0x49C8F0 => unported;
     /// `CPool<CStuntJump>::Clear` (0x49C9A0)
     pub fn stunt_jump_pool_clear(p: GPtr<u8>) = thiscall 0x49C9A0 => unported;
-    /// `CPool<CStuntJump>::New` (`thunk_FUN_01566280`, 0x49C9E0)
-    pub fn stunt_jump_pool_new(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x49C9E0 => unported;
 }
 
 fn escalator(i: usize) -> GPtr<u8> {

@@ -49,42 +49,25 @@ const K_5: u32 = 0x40A0_0000;
 const K_30: u32 = 0x41F0_0000;
 const K_10000: u32 = 0x461C_4000;
 
+pub use crate::bindings::hand_shaker_process;
+pub use sa_core::bindings::col_sphere_set;
+pub use sa_core::bindings::cross_product;
+pub use sa_core::bindings::matrix_mul_vec;
+pub use sa_core::bindings::rw_camera_set_near_clip_plane;
+pub use sa_core::bindings::vector_normalise;
+pub use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
+pub use sa_stream::bindings::simple_transform_update_matrix;
+pub use sa_world::bindings::entity_get_bound_centre as get_bound_centre;
+pub use sa_world::bindings::entity_get_col_model as get_col_model;
+pub use sa_world::bindings::find_objects_in_range;
+pub use sa_world::bindings::multiply3x3_vm;
+pub use sa_world::bindings::process_line_of_sight;
+pub use sa_world::bindings::world_get_is_line_of_sight_clear as get_is_line_of_sight_clear;
 orig! {
-    /// `CVector::Normalise()` (0x59C910)
-    pub fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
-    /// `CrossProduct(CVector* out, const CVector*, const CVector*)` (0x59C730), returns `out`
-    pub fn cross_product(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C730 => unported;
-    /// `RwCameraSetNearClipPlane(RwCamera*, RwReal)` (0x7EE1D0)
-    pub fn rw_camera_set_near_clip_plane(cam: GPtr<u8>, near: u32) -> GPtr<u8> = cdecl 0x7EE1D0 => unported;
     /// `CCam::CacheLastSettingsDWCineyCam()` (0x50D7A0)
     pub fn cache_last_settings_dw_ciney_cam(cam: GPtr<u8>) = thiscall 0x50D7A0 => crate::cam::cache_last_settings_dw_ciney_cam;
-    /// `CHandShaker::Process(float intensity)` (0x50D930), the intensity as the dword pushed
-    pub fn hand_shaker_process(hs: GPtr<u8>, intensity: u32) = thiscall 0x50D930 => unported;
-    /// `Multiply3x3(CVector* out, const CVector* v, const CMatrix* m)` (0x59C810, cdecl), returns `out`
-    pub fn multiply3x3_vm(out: GPtr<u8>, v: GPtr<u8>, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C810 => unported;
-    /// `CEntity::GetBoundCentre(CVector* out)` (0x534250), returns `out`
-    pub fn get_bound_centre(e: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall 0x534250 => unported;
-    /// `CColSphere::Set(float radius, const CVector& centre, uint8 material, uint8 flags, uint8 lighting)`
-    /// (0x40FD10); the radius as its dword
-    pub fn col_sphere_set(sph: GPtr<u8>, r: u32, c: GPtr<u8>, material: u32, flags: u32, lighting: u32) = thiscall 0x40FD10 => unported;
-    /// `CWorld::ProcessLineOfSight(const CVector&, const CVector&, CColPoint&, CEntity*&, bool x8)`
-    /// (0x56BA00, AL)
-    pub fn process_line_of_sight(a: GPtr<u8>, b: GPtr<u8>, cp: GPtr<u8>, hit: GPtr<u8>, bu: u32, ve: u32, pe: u32, ob: u32, du: u32, st: u32, cam: u32, sh: u32) -> u8 = cdecl 0x56BA00 => unported;
-    /// `CWorld::FindObjectsInRange(const CVector&, float, bool ignoreZ, int16* count, int16 max,
-    /// CEntity** out, bool buildings, bool vehicles, bool peds, bool objects, bool dummies)` (0x564A20)
-    pub fn find_objects_in_range(c: GPtr<u8>, r: u32, ignore_z: u32, count: GPtr<u8>, max: u32, out: GPtr<u8>, bu: u32, ve: u32, pe: u32, ob: u32, du: u32) = cdecl 0x564A20 => unported;
     /// `IsLampPost(int32 modelId)` (0x509A30, AL)
     pub fn is_lamp_post(model: i32) -> u8 = cdecl 0x509A30 => unported;
-    /// `CPlaceable::AllocateMatrix()` (0x54F560)
-    pub fn allocate_matrix(e: GPtr<u8>) = thiscall 0x54F560 => unported;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*)` (0x54F1B0)
-    pub fn simple_transform_update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => unported;
-    /// `CEntity::GetColModel()` (0x535300)
-    pub fn get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => unported;
-    /// `operator*(CVector* out, const CMatrix&, const CVector&)` (0x59C890, cdecl), returns `out`
-    pub fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
-    /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, bool x7)` (0x56A490, AL)
-    pub fn get_is_line_of_sight_clear(a: GPtr<u8>, b: GPtr<u8>, bu: u32, ve: u32, pe: u32, ob: u32, du: u32, st: u32, ig: u32) -> u8 = cdecl 0x56A490 => unported;
 }
 
 use sa_core::field::ptr_of as vp;
@@ -1444,11 +1427,10 @@ pub fn process_dw_plane_spotter_cam(this: GPtr<u8>, _arg: u32) -> u8 {
     1
 }
 
+pub use sa_world::bindings::placeable_get_matrix as get_matrix;
 orig! {
     /// `CHandShaker::Reset()` (0x50D860)
     pub fn hand_shaker_reset(hs: GPtr<u8>) = thiscall 0x50D860 => crate::handshaker::hand_shaker_reset;
-    /// `CPlaceable::GetMatrix()` (0x411990)
-    pub fn get_matrix(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x411990 => unported;
     /// `a > b ? a : b` (0x420800, cdecl floats as dwords, ST0)
     pub fn max_f(a: u32, b: u32) -> f64 = cdecl 0x420800 => unported;
 }

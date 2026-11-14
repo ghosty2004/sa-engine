@@ -15,13 +15,11 @@ use crate::common::*;
 /// `CTaskSimpleRunNamedAnim` vtable (0x86D54C).
 const VT_RUN_NAMED_ANIM: u32 = 0x86D54C;
 
+use sa_world::bindings::anim_get_animation;
+use sa_world::bindings::get_animation_block as anim_get_animation_block;
 orig! {
     /// `CTaskSimple::CTaskSimple` (0x61A390)
     fn task_simple_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A390 => crate::mvpa_ai1::task_simple_ctor;
-    /// `CAnimManager::GetAnimationBlock(const char*)` (0x4D3940)
-    fn anim_get_animation_block(name: GPtr<u8>) -> GPtr<u8> = cdecl 0x4D3940 => unported;
-    /// `CAnimManager::GetAnimation(const char*, const CAnimBlock*)` (0x4D42F0)
-    fn anim_get_animation(name: GPtr<u8>, block: GPtr<u8>) -> GPtr<u8> = cdecl 0x4D42F0 => unported;
 }
 
 /// The byte loop the compiler emits for `strcpy(dst, src)` (the terminating NUL included).

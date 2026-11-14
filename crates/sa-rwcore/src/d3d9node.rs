@@ -28,6 +28,13 @@ const VS_LAST: usize = 0xC94BFC;
 /// The f32 0.0 the morph test compares against.
 const ZERO_ADDR: usize = 0x858B50;
 
+use crate::bindings::d3d9_instance;
+use crate::bindings::delete_vertex_shader;
+use crate::bindings::flush_cache;
+use crate::bindings::geometry_get_usage_flags;
+use crate::bindings::set_render_state;
+use crate::bindings::set_transform_world;
+use crate::bindings::set_tss;
 orig! {
     /// `IDirect3DDevice9::SetPixelShader` (+0x1AC)
     fn dev_set_pixel_shader(dev: GPtr<u8>, ps: u32) -> i32 = stdcall vslot 0x1AC => unported;
@@ -40,26 +47,12 @@ orig! {
 
     /// `RwResourcesFreeResEntry(entry)` (0x807DE0)
     fn res_free(e: GPtr<u8>) -> u32 = cdecl 0x807DE0 => crate::memory::rw_resources_free_res_entry;
-    /// `_rxD3D9Instance(object, owner, type, &repEntry, meshHeader, instanceCb, allocateNative)` (0x756960)
-    fn d3d9_instance(obj: GPtr<u8>, owner: GPtr<u8>, ty: u32, rep: GPtr<u8>, mesh: GPtr<u8>, cb: u32, native: u32) -> GPtr<u8> = cdecl 0x756960 => unported;
-    /// `RwD3D9SetTransformWorld(matrix)` (0x7FA520)
-    fn set_transform_world(m: GPtr<u8>) -> u32 = cdecl 0x7FA520 => crate::d3d9dev::set_transform_world;
-    /// `RwD3D9SetRenderState(state, value)` (0x7FC2D0)
-    fn set_render_state(state: u32, value: u32) -> u32 = cdecl 0x7FC2D0 => crate::d3d9state::set_render_state;
     /// `RwD3D9GetRenderState(state, out)` (0x7FC320)
     fn get_render_state(state: u32, out: GPtr<u32>) = cdecl 0x7FC320 => crate::d3d9state::get_render_state;
-    /// `RwD3D9SetTextureStageState(stage, type, value)` (0x7FC340)
-    fn set_tss(stage: u32, ty: u32, value: u32) = cdecl 0x7FC340 => crate::d3d9state::set_texture_stage_state;
     /// `RwD3D9SetTexture(texture, stage)` (0x7FDE70)
     fn set_texture(t: GPtr<u8>, stage: u32) -> u32 = cdecl 0x7FDE70 => crate::d3d9state::set_texture;
-    /// `_rwD3D9RenderStateFlushCache()` (0x7FC200)
-    fn flush_cache() = cdecl 0x7FC200 => crate::d3d9state::flush_cache;
     /// `RwFrameGetLTM(frame)` (0x7F0990)
     fn frame_get_ltm(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0990 => crate::frame::get_ltm;
-    /// `RpD3D9GeometryGetUsageFlags(geometry)` (0x7588D0)
-    fn geometry_get_usage_flags(geo: GPtr<u8>) -> u32 = cdecl 0x7588D0 => crate::d3d9misc::geometry_get_usage_flags;
-    /// `RwD3D9DeleteVertexShader(shader)` (0x7FAC90)
-    fn delete_vertex_shader(vs: GPtr<u8>) -> u32 = cdecl 0x7FAC90 => crate::d3d9dev::delete_vertex_shader;
     /// `_rpD3D9VertexShaderGenerate(desc, out)` (0x75F0B0): returns the shader, fills two dwords
     fn create_vertex_shader(desc: GPtr<u32>, out: GPtr<u32>) -> u32 = cdecl 0x75F0B0 => crate::d3d9vsgen::vertex_shader_generate;
     /// CRT `memmove(dst, src, n)` (0x822A20)

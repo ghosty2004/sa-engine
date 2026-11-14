@@ -7,27 +7,29 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
+use crate::bindings::clear_all_suppressed_car_models;
+use crate::bindings::effect_2d_init;
+use crate::bindings::stuck_car_check_init;
+use sa_core::bindings::file_set_dir_my_documents as set_dir_my_documents;
+use sa_core::bindings::inform_friends_event_queue_init;
+use sa_core::bindings::inform_group_event_queue_init;
+use sa_core::bindings::ped_groups_init;
+use sa_core::bindings::scripts_for_brains_init;
+use sa_core::bindings::stricmp as crt_stricmp;
+use sa_core::bindings::text_load;
+use sa_stream::bindings::remove_txd;
+use sa_stream::bindings::sprite2d_delete as sprite_delete;
+use sa_world::bindings::check_mission_pack_valid_menu;
 orig! {
     /// `CRunningScript::Init()` (0x4648E0)
     fn running_script_init(s: GPtr<u8>) = thiscall 0x4648E0 => unported;
-    /// `CStuckCarCheck::Init()` (0x4639E0), `CScriptsForBrains::Init()` (0x46A8C0),
-    /// `CScriptResourceManager::Initialise()` (0x470480)
-    fn stuck_car_check_init(this: GPtr<u8>) = thiscall 0x4639E0 => unported;
-    fn scripts_for_brains_init(this: GPtr<u8>) = thiscall 0x46A8C0 => unported;
     fn script_resource_manager_initialise(this: GPtr<u8>) = thiscall 0x470480 => unported;
-    /// `CMenuManager::CheckMissionPackValidMenu()` (0x57D720)
-    fn check_mission_pack_valid_menu(menu: GPtr<u8>) -> u8 = thiscall 0x57D720 => unported;
-    /// `CFileMgr::SetDirMyDocuments()` (0x538860), `SetDir(dir)` (0x5387D0), `OpenFile` (0x538900),
-    /// `Read(file, buf, size)` (0x538950), `CloseFile` (0x5389D0)
-    fn set_dir_my_documents() = cdecl 0x538860 => unported;
     fn set_dir(dir: GPtr<u8>) = cdecl 0x5387D0 => unported;
     fn open_file(name: GPtr<u8>, mode: GPtr<u8>) -> i32 = cdecl 0x538900 => unported;
     fn file_read(f: i32, buf: GPtr<u8>, size: u32) -> i32 = cdecl 0x538950 => unported;
     fn close_file(f: i32) -> i32 = cdecl 0x5389D0 => unported;
     /// CRT `sprintf(buf, fmt, n)` (0x821BB5)
     fn crt_sprintf(buf: GPtr<u8>, fmt: GPtr<u8>, n: u32) -> i32 = cdecl 0x821BB5 => unported;
-    /// `CText::Load(keepMissionPack)` (0x6A01A0)
-    fn text_load(this: GPtr<u8>, b: u32) = thiscall 0x6A01A0 => unported;
     /// `CTheScripts::ReadObjectNamesFromScript()` (0x486720), `UpdateObjectIndices()` (0x486780),
     /// `ReadMultiScriptFileOffsetsFromScript()` (0x4867C0)
     fn read_object_names_call() = cdecl 0x486720 => read_object_names_from_script;
@@ -35,15 +37,8 @@ orig! {
     fn read_multi_script_file_offsets() = cdecl 0x4867C0 => unported;
     /// `CStreamedScripts::ReadStreamedScriptData()` (0x470750)
     fn read_streamed_script_data_call(this: GPtr<u8>) = thiscall 0x470750 => unported;
-    /// `CSprite2d::Delete()` (0x727240)
-    fn sprite_delete(this: GPtr<u8>) = thiscall 0x727240 => unported;
     /// `CTxdStore::FindTxdSlot(name)` (0x731850), `RemoveTxd(slot)` (0x731E90)
     fn find_txd_slot(name: GPtr<u8>) -> i32 = cdecl 0x731850 => unported;
-    fn remove_txd(slot: i32) = cdecl 0x731E90 => unported;
-    /// `CTheScripts::ClearAllSuppressedCarModels()` (0x46A7C0), `ClearAllVehicleModelsBlockedByScript()`
-    /// (0x46A840), `InitialiseAllConnectLodObjects()` (0x470960),
-    /// `InitialiseSpecialAnimGroupsAttachedToCharModels()` (0x474730)
-    fn clear_all_suppressed_car_models() = cdecl 0x46A7C0 => unported;
     fn clear_all_vehicle_models_blocked_by_script() = cdecl 0x46A840 => unported;
     fn initialise_all_connect_lod_objects_call() = cdecl 0x470960 => unported;
     fn initialise_special_anim_groups_call() = cdecl 0x474730 => unported;
@@ -52,14 +47,7 @@ orig! {
     /// (0x4B2AD0), `CDecisionMakerTypes::GetInstance()` (0x4684F0)
     fn scripted_2d_effects_init_call() = cdecl 0x6FA6F0 => unported;
     fn task_sequences_init() = cdecl 0x632D90 => unported;
-    fn ped_groups_init() = cdecl 0x5FB8C0 => unported;
-    fn inform_friends_event_queue_init() = cdecl 0x4B2990 => unported;
-    fn inform_group_event_queue_init() = cdecl 0x4B2AD0 => unported;
     fn decision_maker_types_get_instance() -> u32 = cdecl 0x4684F0 => unported;
-    /// `C2dEffect` default initialiser (0x6F9EB0, thiscall)
-    fn effect_2d_init(this: GPtr<u8>) = thiscall 0x6F9EB0 => unported;
-    /// CRT `_stricmp` (0x8229B6)
-    fn crt_stricmp(a: GPtr<u8>, b: GPtr<u8>) -> i32 = cdecl 0x8229B6 => unported;
 }
 
 /// `CTheScripts::ScriptSpace` and `CGame::bMissionPackGame`.
@@ -524,29 +512,22 @@ pub fn reinitialise_switch_statement_data() {
     w16(0xA43F50, 0);
 }
 
+use sa_core::bindings::world_remove;
+use sa_stream::bindings::ped_is_player;
+use sa_stream::bindings::placeable_allocate_matrix;
+use sa_stream::bindings::simple_transform_update_matrix;
+use sa_world::bindings::entity_get_col_model;
+use sa_world::bindings::ped_can_be_deleted;
+use sa_world::bindings::population_remove_ped;
+use sa_world::bindings::process_col_models;
+use sa_world::bindings::remove_from_interesting_vehicle_list;
+use sa_world::bindings::vehicle_can_be_deleted;
+use sa_world::bindings::vehicle_remove_passenger;
 orig! {
     /// `CWorld::FindObjectsKindaColliding(pos, radius, b2d, count, max, out, b, v, p, o, d)` (0x568B80)
     fn find_objects_kinda_colliding(pos: GPtr<u8>, radius: u32, b2d: u32, count: GPtr<i16>, max: i32, out: GPtr<u32>, b: u32, v: u32, p: u32, o: u32, d: u32) = cdecl 0x568B80 => unported;
-    /// `CEntity::GetColModel()` (0x535300)
-    fn entity_get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => unported;
-    /// `CPlaceable::AllocateMatrix()` (0x54F560), `CSimpleTransform::UpdateMatrix(matrix)` (0x54F1B0)
-    fn placeable_allocate_matrix(e: GPtr<u8>) = thiscall 0x54F560 => unported;
-    fn simple_transform_update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => unported;
-    /// `CCollision::ProcessColModels(m1, cm1, m2, cm2, points, lines, depths, b)` (0x4185C0)
-    fn process_col_models(m1: GPtr<u8>, c1: GPtr<u8>, m2: GPtr<u8>, c2: GPtr<u8>, pts: u32, lines: u32, depths: u32, b: u32) -> i32 = cdecl 0x4185C0 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0), `CPed::CanBeDeleted()` (0x5DF100), `CVehicle::CanBeDeleted()` (0x6D1180)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    fn ped_can_be_deleted(p: GPtr<u8>) -> u8 = thiscall 0x5DF100 => unported;
-    fn vehicle_can_be_deleted(v: GPtr<u8>) -> u8 = thiscall 0x6D1180 => unported;
-    /// `CPopulation::RemovePed(ped)` (0x610F20)
-    fn population_remove_ped(p: GPtr<u8>) = cdecl 0x610F20 => unported;
     /// `CEntity::CleanUpOldReference(slot)` (0x571A00)
     fn clean_up_old_reference(e: GPtr<u8>, slot: GPtr<u32>) = thiscall 0x571A00 => unported;
-    /// `CVehicle::RemovePassenger(ped)` (0x6D1610)
-    fn vehicle_remove_passenger(v: GPtr<u8>, p: GPtr<u8>) = thiscall 0x6D1610 => unported;
-    /// `CCarCtrl::RemoveFromInterestingVehicleList(v)` (0x423ED0), `CWorld::Remove(e)` (0x563280)
-    fn remove_from_interesting_vehicle_list(v: GPtr<u8>) = cdecl 0x423ED0 => unported;
-    fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
     /// The entity's virtual deleting destructor (vtable slot 0)
     fn entity_vdtor(e: GPtr<u8>, flags: u32) = thiscall vslot 0 => unported;
 }

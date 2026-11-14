@@ -31,23 +31,23 @@ const TEMP_COL_PTS: u32 = 0xB9B250;
 /// `CModelInfo::ms_modelInfoPtrs`
 const MODEL_INFO_PTRS: usize = 0xA9B0C8;
 
+use crate::bindings::col_line_ctor;
+use crate::bindings::coll_test_line_of_sight;
+use crate::bindings::entity_get_bound_centre as get_bound_centre;
+use crate::bindings::entity_get_col_model as get_col_model;
+use sa_core::bindings::matrix_dtor;
+use sa_stream::bindings::col_model_ctor;
+use sa_stream::bindings::col_model_dtor;
+use sa_stream::bindings::collision_data_ctor as col_data_ctor;
+use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
+use sa_stream::bindings::simple_transform_update_matrix;
 orig! {
-    /// `CPlaceable::AllocateMatrix()` (0x54F560)
-    fn allocate_matrix(e: GPtr<u8>) = thiscall 0x54F560 => unported;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*)` (0x54F1B0, `ret 4`)
-    fn simple_transform_update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => unported;
-    /// `CEntity::GetColModel()` (0x535300)
-    fn get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => unported;
     /// `CCollision::ProcessVerticalLine(...)` (0x417BF0, AL)
     #[allow(clippy::too_many_arguments)]
     fn coll_process_vertical_line(line: GPtr<u8>, m: GPtr<u8>, model: GPtr<u8>, cp: GPtr<u8>, min: GPtr<u8>,
         see: u32, shoot: u32, poly: GPtr<u8>) -> u8 = cdecl 0x417BF0 => unported;
-    /// `CCollision::TestLineOfSight(...)` (0x417730, AL)
-    fn coll_test_line_of_sight(line: GPtr<u8>, m: GPtr<u8>, model: GPtr<u8>, see: u32, shoot: u32) -> u8 = cdecl 0x417730 => unported;
     /// `CWorld::CameraToIgnoreThisObject(CEntity*)` (0x563F40, AL)
     fn camera_to_ignore_this_object(e: GPtr<u8>) -> u8 = cdecl 0x563F40 => unported;
-    /// `CColLine::CColLine(const CVector&, const CVector&)` (0x40EF50, `ret 8`)
-    fn col_line_ctor(l: GPtr<u8>, start: GPtr<u8>, end: GPtr<u8>) -> GPtr<u8> = thiscall 0x40EF50 => unported;
     /// `CWorld::ProcessVerticalLineSector(...)` (0x564500, AL)
     #[allow(clippy::too_many_arguments)]
     fn process_vertical_line_sector_call(s: GPtr<u8>, r: GPtr<u8>, line: GPtr<u8>, cp: GPtr<u8>, out: GPtr<u8>,
@@ -82,18 +82,8 @@ orig! {
         out: GPtr<u8>) = cdecl 0x5635C0 => unported;
     /// `CWorld::ClearScanCodes()` (0x563470; the port is unhookable)
     fn clear_scan_codes() = cdecl 0x563470 => super::cworld::clear_scan_codes;
-    /// `CColModel::CColModel()` (0x40FB60)
-    fn col_model_ctor(m: GPtr<u8>) -> GPtr<u8> = thiscall 0x40FB60 => unported;
-    /// `CColModel::~CColModel()` (0x40F700)
-    fn col_model_dtor(m: GPtr<u8>) = thiscall 0x40F700 => unported;
-    /// `CCollisionData::CCollisionData()` (0x40F030)
-    fn col_data_ctor(d: GPtr<u8>) -> GPtr<u8> = thiscall 0x40F030 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
     /// `CMatrix::SetTranslate(float, float, float)` (0x59AF40, `ret 0xC`)
     fn matrix_set_translate(m: GPtr<u8>, x: f32, y: f32, z: f32) = thiscall 0x59AF40 => unported;
-    /// `CEntity::GetBoundCentre(CVector& out)` (0x534250, `ret 4`, returns `out`)
-    fn get_bound_centre(e: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall 0x534250 => unported;
     /// `CCollision::ProcessColModels(...)` (0x4185C0, count of colpoints)
     #[allow(clippy::too_many_arguments)]
     fn process_col_models(m1: GPtr<u8>, c1: GPtr<u8>, m2: GPtr<u8>, c2: GPtr<u8>, cps: u32, lcps: u32, ld: u32,

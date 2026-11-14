@@ -7,6 +7,9 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::attractor_manager_deregister_ped;
+use sa_world::bindings::get_ped_attractor_manager;
+use sa_world::bindings::vector_magnitude_sqr as vector_magnitude;
 orig! {
     /// `CTask::MakeAbortable(CPed*, eAbortPriority, const CEvent*)` (vtable +0x18), AL
     fn v_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, prio: u32, event: GPtr<u8>) -> u8 = thiscall vslot 0x18 => unported;
@@ -14,14 +17,8 @@ orig! {
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
     /// `CEvent::GetEventType()` (vtable +4)
     fn v_event_type(e: GPtr<u8>) -> i32 = thiscall vslot 0x4 => unported;
-    /// `GetPedAttractorManager()` (0x5EE190)
-    fn get_ped_attractor_manager() -> GPtr<u8> = cdecl 0x5EE190 => unported;
-    /// `CPedAttractorManager::DeRegisterPed(CPed*, CPedAttractor*)` (0x5EC850, `ret 8`), AL
-    fn attractor_manager_deregister_ped(m: GPtr<u8>, ped: GPtr<u8>, a: GPtr<u8>) -> u8 = thiscall 0x5EC850 => unported;
     /// `CVector::operator-` into `out` (0x40FE00, thiscall `out`, `ret 8`)
     fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = thiscall 0x40FE00 => unported;
-    /// `CVector::Magnitude()` (0x406DA0, ST0)
-    fn vector_magnitude(v: GPtr<u8>) -> f64 = thiscall 0x406DA0 => unported;
 }
 
 /// `CTaskComplexCarDrive::~CTaskComplexCarDrive` (0x63CA40, the base destructor)
@@ -29,9 +26,7 @@ fn task_car_drive_dtor(this: GPtr<u8>) {
     car_drive_dtor(this);
 }
 
-orig! {
-    fn car_drive_dtor(t: GPtr<u8>) = thiscall 0x63CA40 => unported;
-}
+use crate::bindings::car_drive_dtor_63ca40 as car_drive_dtor;
 
 /// `FUN_0063ce70` (0x63CE70, thiscall): the complete destructor of the `CTaskComplexCarDrive` subclass with the
 /// vtable 0x86E9DC (`CTaskComplexDriveToPoint`'s base, reached from its destructor 0x643280): the vtable stored,

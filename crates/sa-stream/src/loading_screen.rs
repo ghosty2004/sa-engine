@@ -107,61 +107,44 @@ pub const SPRITE_DTOR: u32 = 0x7281E0;
 /// `__dtor_CLoadingScreen__m_aSplashes` (registered with `_atexit`)
 pub const DTOR_SPLASHES: u32 = 0x8565E0;
 
+pub use crate::bindings::add_txd_slot;
+pub use crate::bindings::find_txd_slot;
+pub use crate::bindings::load_txd;
+pub use crate::bindings::remove_txd_slot;
+pub use crate::bindings::sprite2d_delete as sprite_delete;
+pub use crate::bindings::sprite2d_draw_bar_chart as sprite_draw_bar_chart;
+pub use sa_core::bindings::ascii_to_gxt_char;
+pub use sa_core::bindings::atexit;
+pub use sa_core::bindings::defined_state_2d;
+pub use sa_core::bindings::eh_vector_ctor;
+pub use sa_core::bindings::eh_vector_dtor;
+pub use sa_core::bindings::file_set_dir as set_dir;
+pub use sa_core::bindings::rgba_ctor;
+pub use sa_core::bindings::rs_camera_show_raster;
+pub use sa_core::bindings::rs_timer;
+pub use sa_core::bindings::rw_camera_begin_update;
+pub use sa_core::bindings::rw_camera_end_update;
+pub use sa_core::bindings::sprite2d_draw as sprite_draw;
+pub use sa_core::bindings::sprite2d_init_per_frame as sprite_init_per_frame;
+pub use sa_core::bindings::sprite2d_set_texture as sprite_set_texture;
+pub use sa_core::bindings::sprite_draw_rect;
 orig! {
-    /// `RsTimer()` (0x619410)
-    pub fn rs_timer() -> u32 = cdecl 0x619410 => unported;
-    /// `RsCameraShowRaster(camera)` (0x619440)
-    pub fn rs_camera_show_raster(cam: GPtr<u8>) -> GPtr<u8> = cdecl 0x619440 => unported;
-    /// `RwCameraBeginUpdate(camera)` (0x7EE190)
-    pub fn rw_camera_begin_update(cam: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EE190 => unported;
-    /// `RwCameraEndUpdate(camera)` (0x7EE180)
-    pub fn rw_camera_end_update(cam: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EE180 => unported;
     /// `RwRenderStateSet(state, value)` (`RwEngineInstance` +0x20)
     pub fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `DefinedState2d()` (0x734750)
-    pub fn defined_state_2d() = cdecl 0x734750 => unported;
-    /// `CSprite2d::InitPerFrame()` (0x727350)
-    pub fn sprite_init_per_frame() = cdecl 0x727350 => unported;
-    /// `CSprite2d::Draw(const CRect&, const CRGBA&)` (0x728350)
-    pub fn sprite_draw(s: GPtr<u8>, r: GPtr<u8>, c: GPtr<u8>) = thiscall 0x728350 => unported;
-    /// `CSprite2d::DrawRect(const CRect&, const CRGBA&)` (0x727B60)
-    pub fn sprite_draw_rect(r: GPtr<u8>, c: GPtr<u8>) = cdecl 0x727B60 => unported;
-    /// `CSprite2d::Delete()` (0x727240)
-    pub fn sprite_delete(s: GPtr<u8>) = thiscall 0x727240 => unported;
-    /// `CSprite2d::SetTexture(const char*)` (0x727270)
-    pub fn sprite_set_texture(s: GPtr<u8>, name: GPtr<u8>) = thiscall 0x727270 => unported;
-    /// `CSprite2d::DrawBarChart(x, y, width, height, progress, progressAdd, drawPercentage, drawBlackBorder, color, addColor)` (0x728640)
-    pub fn sprite_draw_bar_chart(x: f32, y: f32, w: u32, h: u32, p: f32, add: u32, pct: u32, border: u32, color: u32, add_color: u32) = cdecl 0x728640 => unported;
-    /// `CRGBA::CRGBA(r, g, b, a)` (0x7170C0)
-    pub fn rgba_ctor(c: GPtr<u8>, r: u32, g: u32, b: u32, a: u32) -> GPtr<u8> = thiscall 0x7170C0 => unported;
     /// `CHudColours::GetRGB(CRGBA* out, uint8 colour)` (0x58FEA0, returns `out`)
     pub fn hud_get_rgb(h: GPtr<u8>, out: GPtr<u8>, colour: u32) -> GPtr<u8> = thiscall 0x58FEA0 => unported;
     /// `CAudioEngine::ServiceLoadingTune(float)` (0x5078A0)
     pub fn service_loading_tune(a: GPtr<u8>, amp: f32) = thiscall 0x5078A0 => unported;
-    /// `AsciiToGxtChar(const char*, GxtChar*)` (0x718600)
-    pub fn ascii_to_gxt_char(src: GPtr<u8>, dst: GPtr<u8>) = cdecl 0x718600 => unported;
-    /// `CFileMgr::SetDir(const char*)` (0x5387D0)
-    pub fn set_dir(path: GPtr<u8>) -> i32 = cdecl 0x5387D0 => sa_core::filemgr::set_dir;
-    /// `CTxdStore::*`
-    pub fn add_txd_slot(name: GPtr<u8>) -> i32 = cdecl 0x731C80 => crate::txdstore::add_txd_slot;
-    pub fn load_txd(slot: i32, name: GPtr<u8>) -> u8 = cdecl 0x7320B0 => crate::txdstore::load_txd_filename;
     pub fn txd_add_ref(slot: i32) = cdecl 0x731A00 => crate::txdstore::add_ref;
     pub fn push_current_txd() = cdecl 0x7316A0 => crate::txdstore::push_current_txd;
     pub fn pop_current_txd() = cdecl 0x7316B0 => crate::txdstore::pop_current_txd;
     pub fn set_current_txd(slot: i32) = cdecl 0x7319C0 => crate::txdstore::set_current_txd;
-    pub fn find_txd_slot(name: GPtr<u8>) -> i32 = cdecl 0x731850 => crate::txdstore::find_txd_slot_name;
     pub fn remove_txd(slot: i32) = cdecl 0x731E90 => crate::txdstore::remove_txd;
-    pub fn remove_txd_slot(slot: i32) = cdecl 0x731CD0 => crate::txdstore::remove_txd_slot;
     /// KERNEL32 `QueryPerformanceCounter` (IAT 0x8580C8)
     pub fn query_performance_counter(out: GPtr<u64>) -> i32 = stdcall site 0x5900FF => unported;
     /// CRT `sprintf(buf, fmt)` / `sprintf(buf, fmt, int)` (0x821BB5)
     pub fn sprintf0(buf: GPtr<u8>, fmt: GPtr<u8>) -> i32 = cdecl 0x821BB5 => unported;
     pub fn sprintf1(buf: GPtr<u8>, fmt: GPtr<u8>, v: u32) -> i32 = cdecl 0x821BB5 => unported;
-    /// CRT `eh vector constructor iterator` (0x821D30, stdcall) and `destructor iterator` (0x821E02, stdcall)
-    pub fn eh_vector_ctor(arr: GPtr<u8>, size: u32, n: u32, ctor: u32, dtor: u32) = stdcall 0x821D30 => unported;
-    pub fn eh_vector_dtor(arr: GPtr<u8>, size: u32, n: u32, dtor: u32) = stdcall 0x821E02 => unported;
-    /// CRT `_atexit` (0x821D1E)
-    pub fn atexit(f: u32) -> i32 = cdecl 0x821D1E => unported;
     /// internal calls through the hook table
     pub fn set_loading_bar_msg_call(m1: GPtr<u8>, m2: GPtr<u8>) = cdecl 0x590240 => set_loading_bar_msg;
     pub fn new_chunk_loaded_call() = cdecl 0x590D00 => new_chunk_loaded;

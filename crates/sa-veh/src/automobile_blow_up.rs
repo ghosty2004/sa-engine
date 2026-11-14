@@ -8,39 +8,28 @@ use sa_math::x87::X87;
 
 use crate::common::{f32_of, g, rd, wr, x, xi};
 
+use crate::bindings::car_set_panel_damage as set_bumper_damage;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::find_player_vehicle;
+use sa_core::bindings::stats_increment_stat;
+use sa_pop::bindings::darkel_register_car_blown_up;
+use sa_stream::bindings::frame_for_all_objects;
+use sa_world::bindings::cam_shake;
+use sa_world::bindings::entity_get_col_model;
+use sa_world::bindings::set_door_damage;
+use sa_world::bindings::start_fire_on as start_fire;
+use sa_world::bindings::vehicle_change_law_enforcer_state as change_law_enforcer_state;
 orig! {
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(n: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CWorld::FindPlayerVehicle(int32, bool)` (0x56E0D0)
-    fn find_player_vehicle(n: i32, remote: u32) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
-    /// `CStats::IncrementStat(uint16, float)` (0x55C180)
-    fn stats_increment_stat(stat: u32, v: f32) = cdecl 0x55C180 => unported;
     /// `FUN_007322f0(RpClump*, uint32)` (0x7322F0, the clump's atomic flags)
     fn clump_set_flags_7322f0(clump: GPtr<u8>, flags: u32) = cdecl 0x7322F0 => unported;
     /// `CDamageManager::FuckCarCompletely(bool)` (0x6C25D0)
     fn damage_fuck_car_completely(d: GPtr<u8>, b: u32) = thiscall 0x6C25D0 => unported;
-    /// `CAutomobile::SetBumperDamage(ePanels, bool)` (0x6B1350)
-    fn set_bumper_damage(v: GPtr<u8>, panel: u32, b: u32) = thiscall 0x6B1350 => unported;
-    /// `CAutomobile::SetDoorDamage(eDoors, bool)` (0x6B1600)
-    fn set_door_damage(v: GPtr<u8>, door: u32, b: u32) = thiscall 0x6B1600 => unported;
     /// `CAutomobile::SpawnFlyingComponent(int32, uint32)` (0x6A8580)
     fn spawn_flying_component(v: GPtr<u8>, node: i32, kind: u32) -> GPtr<u8> = thiscall 0x6A8580 => crate::automobile_flying_component::automobile_spawn_flying_component;
-    /// `RwFrameForAllObjects(RwFrame*, RwObjectCallBack, void*)` (0x7F1200)
-    fn frame_for_all_objects(f: GPtr<u8>, cb: u32, data: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F1200 => unported;
-    /// `CCamera::CamShake(float, float x, float y, float z)` (0x50A9F0) on `TheCamera`
-    fn cam_shake(cam: GPtr<u8>, strength: f32, px: u32, py: u32, pz: u32) = thiscall 0x50A9F0 => unported;
     /// `CVehicle::KillPedsInVehicle()` (0x6D1C80)
     fn kill_peds_in_vehicle(v: GPtr<u8>) = thiscall 0x6D1C80 => unported;
     /// `CVehicle::KillPedsGettingInVehicle()` (0x6D82F0)
     fn kill_peds_getting_in_vehicle(v: GPtr<u8>) = thiscall 0x6D82F0 => unported;
-    /// `CVehicle::ChangeLawEnforcerState(bool)` (0x6D2330)
-    fn change_law_enforcer_state(v: GPtr<u8>, on: u32) = thiscall 0x6D2330 => unported;
-    /// `CFireManager::StartFire(CEntity*, CEntity*, float, uint8, uint32, int8)` (0x53A050) on `gFireManager` (0xB71F80)
-    fn start_fire(mgr: GPtr<u8>, target: GPtr<u8>, creator: GPtr<u8>, size: f32, a: u32, time: u32, generation: u32) -> GPtr<u8> = thiscall 0x53A050 => unported;
-    /// `CDarkel::RegisterCarBlownUpByPlayer(CVehicle*, int32)` (0x43DF20)
-    fn darkel_register_car_blown_up(v: GPtr<u8>, player: i32) = cdecl 0x43DF20 => unported;
-    /// `CEntity::GetColModel()` (0x535300)
-    fn entity_get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => unported;
     /// `CExplosion::AddExplosion(CEntity* victim, CEntity* creator, eExplosionType, CVector, uint32
     /// lifetime, bool makeSound, float camShake, bool invisible)` (0x736A50)
     fn add_explosion(victim: GPtr<u8>, creator: GPtr<u8>, ty: u32, x: u32, y: u32, z: u32, life: u32, sound: u32, shake: u32, invisible: u32) -> u8 = cdecl 0x736A50 => unported;

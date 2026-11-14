@@ -9,25 +9,17 @@ use sa_core::{hook, orig};
 use crate::common::{f32_of, g, rd, wr, x};
 use sa_math::x87::X87;
 
+use crate::bindings::dm_get_panel_status;
+use crate::bindings::vehicle_render;
+use sa_core::bindings::matrix_dtor;
+use sa_core::bindings::matrix_mul_vec;
+use sa_core::bindings::matrix_rotate_y;
+use sa_core::bindings::matrix_set_rotate_x;
+use sa_core::bindings::matrix_update_rw;
+use sa_world::bindings::player_set_wanted_level_no_drop;
 orig! {
-    /// `CVehicle::Render()` (0x6D0E60)
-    fn vehicle_render(v: GPtr<u8>) = thiscall 0x6D0E60 => crate::vehicle2::render;
-    /// `CPlayerPed::SetWantedLevelNoDrop(int32)` (0x609F30)
-    fn player_set_wanted_level_no_drop(p: GPtr<u8>, level: i32) = thiscall 0x609F30 => unported;
     /// `CMatrix::Attach(RwMatrix*, bool)` (0x59BD10)
     fn matrix_attach(m: GPtr<u8>, rw: GPtr<u8>, owns: u8) = thiscall 0x59BD10 => unported;
-    /// `CMatrix::SetRotateX(float)` (0x59B060)
-    fn matrix_set_rotate_x(m: GPtr<u8>, a: f32) = thiscall 0x59B060 => unported;
-    /// `CMatrix::RotateY(float)` (0x59B2C0)
-    fn matrix_rotate_y(m: GPtr<u8>, a: f32) = thiscall 0x59B2C0 => unported;
-    /// `CMatrix::UpdateRW()` (0x59BBB0)
-    fn matrix_update_rw(m: GPtr<u8>) = thiscall 0x59BBB0 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
-    /// `CDamageManager::GetPanelStatus(ePanels)` (0x6C2180)
-    fn dm_get_panel_status(dm: GPtr<u8>, panel: u32) -> u32 = thiscall 0x6C2180 => crate::damage::get_panel_status;
-    /// `operator*(const CMatrix&, const CVector&)` (0x59C890, returns the out pointer)
-    fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
     /// `CVector::NormaliseAndMag()` (0x59C970, ST0)
     fn normalise_and_mag(v: GPtr<u8>) -> f32 = thiscall 0x59C970 => unported;
     /// `CCoronas::RegisterCorona(...)` (0x6FC580, 21 arguments)

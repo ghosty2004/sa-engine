@@ -8,13 +8,12 @@ use sa_math::vector::CVector;
 
 use super::common::{g, rd, x};
 
+use sa_core::bindings::stricmp as crt_stricmp;
 orig! {
     /// `CPopulation::CreateWaitingCoppers(CVector, float)` (0x6133F0)
     fn create_waiting_coppers(pos: CVector, angle: f32) = cdecl 0x6133F0 => unported;
     /// `CPopulation::PopulateInterior(int32, CVector)` (0x616470)
     fn populate_interior(area: i32, pos: CVector) = cdecl 0x616470 => unported;
-    /// CRT `_stricmp` (0x8229B6)
-    fn crt_stricmp(a: GPtr<u8>, b: GPtr<u8>) -> i32 = cdecl 0x8229B6 => unported;
 }
 
 /// `CEntryExit::GenerateAmbientPeds(const CVector& pos)` (0x43E8B0): clears the police-station

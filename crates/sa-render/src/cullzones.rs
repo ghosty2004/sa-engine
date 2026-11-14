@@ -45,15 +45,13 @@ const MIRROR_STRIDE: isize = 0x18;
 const ZERO: u32 = 0x0000_0000;
 const HUNDRED: u32 = 0x42C8_0000;
 
+pub use sa_core::bindings::ped_is_alive;
+pub use sa_world::bindings::player_set_wanted_level_no_drop as set_wanted_level_no_drop;
 orig! {
     /// `CZoneDef::IsPointWithin(CVector)` (0x72D850, thiscall, vector by value)
     pub fn zone_is_point_within(zone: GPtr<u8>, px: f32, py: f32, pz: f32) -> u8 = thiscall 0x72D850 => sa_world::world::zones::zone_def_is_point_within;
     /// `CCamera::GetGameCamPosition()` (0x50AE50, returns `CVector*`)
     pub fn get_game_cam_position(cam: GPtr<u8>) -> GPtr<f32> = thiscall 0x50AE50 => unported;
-    /// `CPed::IsAlive()` (0x5E0170)
-    pub fn ped_is_alive(ped: GPtr<u8>) -> u8 = thiscall 0x5E0170 => unported;
-    /// `CPlayerPed::SetWantedLevelNoDrop(int)` (0x609F30)
-    pub fn set_wanted_level_no_drop(ped: GPtr<u8>, level: i32) = thiscall 0x609F30 => unported;
     /// `CCullZones::FindAttributesForCoors(CVector)` (0x72D970)
     pub fn find_attributes_for_coors_call(px: f32, py: f32, pz: f32) -> i32 = cdecl 0x72D970 => find_attributes_for_coors;
     /// `CCullZones::AddTunnelAttributeZone(...)` (0x72DB50)

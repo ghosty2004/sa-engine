@@ -4,17 +4,13 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 
 use crate::common::{rd, wr};
 
-orig! {
-    /// `FxInterpInfoFloat_c::GetVal(float* out, float t)` (0x4A8470)
-    fn interp_float_get_val(this: GPtr<u8>, out: GPtr<u8>, t: u32) = thiscall 0x4A8470 => unported;
-    /// `RwV3dLength(const RwV3d*)` (0x7EDAC0): the length in ST0
-    fn rw_v3d_length(v: GPtr<u8>) -> f64 = cdecl 0x7EDAC0 => unported;
-}
+use crate::bindings::interp_float_get_val;
+use sa_world::bindings::rw_v3d_length;
 
 /// `FxInfoDir_c::GetValue(float currTime, float mult, float timeStep, float totalTime, bool useConst, void* out)`
 /// (0x4A64D0, thiscall, `ret 0x18`; vtable 0x85A914 slot 2): the key time is `mult` when byte +6 is set, else

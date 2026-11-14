@@ -7,13 +7,12 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use sa_core::bindings::general_limit_radian_angle;
 orig! {
     /// `CTask::GetTaskType()` (vtable +0x10)
     fn v_get_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
     /// `CTaskComplexEvasiveDiveAndGetUp::CreateSubTask(int32 taskType)` (0x653820, `ret 4`)
     fn create_sub_task(t: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x653820 => unported;
-    /// `CGeneral::LimitRadianAngle(float)` (0x53CB50, cdecl, ST0)
-    fn general_limit_radian_angle(a: u32) -> f64 = cdecl 0x53CB50 => unported;
 }
 
 /// `CTaskComplexEvasiveDiveAndGetUp::CreateNextSubTask(CPed*)` (0x656000, thiscall, `ret 4`).

@@ -9,57 +9,37 @@ use sa_math::x87::X87;
 
 use super::common::{ftol32, g, rd, wr, x};
 
+use crate::bindings::automobile_place_on_road_properly;
+use crate::bindings::bike_place_on_road_properly;
+use crate::bindings::get_task_swim as ped_intelligence_get_task_swim;
+use crate::bindings::hud_set_message;
+use crate::bindings::placeable_get_heading;
+use crate::bindings::tm_find_active_task_by_type as task_manager_find_active_task_by_type;
+use crate::bindings::vector_mul_scalar as vector_mul;
+use sa_core::bindings::add_big_message as messages_add_big_message;
+use sa_core::bindings::camera_fade;
+use sa_core::bindings::camera_set_fade_colour;
+use sa_core::bindings::find_player_coors;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::find_player_vehicle;
+use sa_core::bindings::game_logic_pass_time;
+use sa_core::bindings::get_pad as pad_get_pad;
+use sa_core::bindings::streaming_load_scene;
+use sa_core::bindings::streaming_load_scene_collision;
+use sa_core::bindings::text_get;
+use sa_core::bindings::timer_resume;
+use sa_core::bindings::timer_suspend;
 orig! {
-    /// `CWorld::FindPlayerVehicle(int32, bool)` (0x56E0D0, cdecl)
-    fn find_player_vehicle(id: i32, remote: u32) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210, cdecl)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `FindPlayerCoors(CVector* out, int32 playerId)` (0x56E010, cdecl); returns `out`
-    fn find_player_coors(out: GPtr<u8>, id: i32) -> GPtr<u8> = cdecl 0x56E010 => unported;
-    /// `CPedIntelligence::GetTaskSwim()` (0x601070)
-    fn ped_intelligence_get_task_swim(i: GPtr<u8>) -> GPtr<u8> = thiscall 0x601070 => unported;
     /// `CGameLogic::SkipCanBeActivated()` (0x4415C0, cdecl)
     fn skip_can_be_activated_o() -> u8 = cdecl 0x4415C0 => crate::world::mvpd_w2::game_logic_skip_can_be_activated;
-    /// `CPad::GetPad(int32)` (0x53FB70, cdecl)
-    fn pad_get_pad(id: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CTaskManager::FindActiveTaskByType(int32)` (0x681740, `ret 4`)
-    fn task_manager_find_active_task_by_type(tm: GPtr<u8>, t: i32) -> GPtr<u8> = thiscall 0x681740 => unported;
-    /// `CCamera::SetFadeColour(uint8, uint8, uint8)` (0x50BF00, `ret 0xC`)
-    fn camera_set_fade_colour(c: GPtr<u8>, r: u32, g: u32, b: u32) = thiscall 0x50BF00 => unported;
-    /// `CCamera::Fade(float, int16)` (0x50AC20, `ret 8`)
-    fn camera_fade(c: GPtr<u8>, t: f32, dir: u32) = thiscall 0x50AC20 => unported;
-    /// `CText::Get(const char*)` (0x6A0050, `ret 4`)
-    fn text_get(t: GPtr<u8>, key: GPtr<u8>) -> GPtr<u8> = thiscall 0x6A0050 => unported;
-    /// `CMessages::AddBigMessage(const char*, uint32 time, eMessageStyle)` (0x69F2B0, cdecl)
-    fn messages_add_big_message(s: GPtr<u8>, time: u32, style: u32) = cdecl 0x69F2B0 => unported;
-    /// `CTimer::Suspend()` (0x5619D0, cdecl)
-    fn timer_suspend() = cdecl 0x5619D0 => unported;
-    /// `CTimer::Resume()` (0x561A00, cdecl)
-    fn timer_resume() = cdecl 0x561A00 => unported;
-    /// `CStreaming::LoadSceneCollision(const CVector&)` (0x40ED80, cdecl)
-    fn streaming_load_scene_collision(p: GPtr<u8>) = cdecl 0x40ED80 => unported;
-    /// `CStreaming::LoadScene(const CVector&)` (0x40EB70, cdecl)
-    fn streaming_load_scene(p: GPtr<u8>) = cdecl 0x40EB70 => unported;
     /// `CTheScripts::ClearSpaceForMissionEntity(const CVector&, CEntity*)` (0x486B00, cdecl)
     fn clear_space_for_mission_entity(p: GPtr<u8>, e: GPtr<u8>) = cdecl 0x486B00 => unported;
     /// entity virtual +0x38 (`Teleport(CVector, bool)`)
     fn v_teleport(e: GPtr<u8>, x: f32, y: f32, z: f32, b: u32) = thiscall vslot 0x38 => unported;
     /// `CPlaceable::SetHeading(float)` (0x43E0C0, `ret 4`)
     fn placeable_set_heading(e: GPtr<u8>, h: f32) = thiscall 0x43E0C0 => unported;
-    /// `CPlaceable::GetHeading()` (0x441DB0, float in ST0)
-    fn placeable_get_heading(e: GPtr<u8>) -> f64 = thiscall 0x441DB0 => unported;
-    /// `CBike::PlaceOnRoadProperly()` (0x6BEEB0)
-    fn bike_place_on_road_properly(v: GPtr<u8>) = thiscall 0x6BEEB0 => unported;
-    /// `CAutomobile::PlaceOnRoadProperly()` (0x6AF420)
-    fn automobile_place_on_road_properly(v: GPtr<u8>) = thiscall 0x6AF420 => unported;
-    /// `operator*(const CVector&, float)` (0x40FEC0, cdecl, hidden result pointer); returns `out`
-    fn vector_mul(out: GPtr<u8>, v: GPtr<u8>, k: f32) -> GPtr<u8> = cdecl 0x40FEC0 => unported;
     /// `CWorld::FindGroundZForCoord(float, float)` (0x569660, cdecl, float in ST0)
     fn find_ground_z_for_coord(x: f32, y: f32) -> f64 = cdecl 0x569660 => unported;
-    /// `CHud::SetMessage(const char*)` (0x588F60, cdecl)
-    fn hud_set_message(s: GPtr<u8>) = cdecl 0x588F60 => unported;
-    /// `CGameLogic::PassTime(uint32 minutes)` (0x4414C0, cdecl)
-    fn game_logic_pass_time(m: u32) = cdecl 0x4414C0 => unported;
 }
 
 /// `CGameLogic::SkipState` (0x96A8A0): 0 none, 1 available, 2 fading out, 3 fading in, 4 available (swim), 5
@@ -257,6 +237,14 @@ fn dist2d_rev(p: GPtr<u8>) -> X87 {
     dy.fmul(dy).fadd(dx.fmul(dx)).fsqrt()
 }
 
+use crate::bindings::get_stat_value as stats_get_stat_value;
+use crate::bindings::hud_help_message_displayed;
+use crate::bindings::is_stat_capped as stats_is_stat_capped;
+use crate::bindings::simple_transform_update_rw_matrix;
+use crate::bindings::stats_find_max_number_of_group_members;
+use sa_core::bindings::entity_update_rw_frame;
+use sa_core::bindings::matrix_mul_vec;
+use sa_core::bindings::matrix_update_rw_matrix;
 orig! {
     /// `CSetPiece::Update()` (0x499A80)
     fn set_piece_update(p: GPtr<u8>) = thiscall 0x499A80 => unported;
@@ -269,8 +257,6 @@ orig! {
     /// `CRopes::RegisterRope(CEntity* id, uint32 type, CVector pos, bool expires, uint8 segments, uint8 flags,
     /// CPhysical* holder, uint32 expireTime)` (0x556B40, cdecl)
     fn ropes_register_rope(id: GPtr<u8>, ty: u32, x: f32, y: f32, z: f32, expires: u32, segs: u32, flags: u32, holder: GPtr<u8>, t: u32) -> u8 = cdecl 0x556B40 => unported;
-    /// `CMatrix::operator*(const CMatrix&, const CVector&)` (0x59C890, cdecl, hidden result pointer); returns `out`
-    fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
     /// `CGarages::IsModelIndexADoor(int32)` (0x448AF0, cdecl)
     fn garages_is_model_index_a_door(m: i32) -> u8 = cdecl 0x448AF0 => crate::world::garages::is_model_index_a_door;
     /// `CObject::ProcessGarageDoorBehaviour()` (0x44A4D0)
@@ -279,22 +265,8 @@ orig! {
     fn garages_find_garage_for_object(o: GPtr<u8>) -> u32 = cdecl 0x44A240 => unported;
     /// `CGarage::BuildRotatedDoorMatrix(CEntity*, float)` (0x4479F0, cdecl)
     fn garage_build_rotated_door_matrix(e: GPtr<u8>, t: f32) = cdecl 0x4479F0 => crate::world::mvpb_world3::garage_build_rotated_door_matrix;
-    /// `CMatrix::UpdateRwMatrix(RwMatrix*)` (0x59AD70, `ret 4`)
-    fn matrix_update_rw_matrix(m: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x59AD70 => unported;
-    /// `CSimpleTransform::UpdateRwMatrix(RwMatrix*)` (0x54EF40, `ret 4`)
-    fn simple_transform_update_rw_matrix(t: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x54EF40 => unported;
-    /// `CEntity::UpdateRwFrame()` (0x532B00)
-    fn entity_update_rw_frame(e: GPtr<u8>) = thiscall 0x532B00 => unported;
-    /// `CHud::HelpMessageDisplayed()` (0x588B50, cdecl)
-    fn hud_help_message_displayed() -> u8 = cdecl 0x588B50 => unported;
-    /// `CStats::IsStatCapped(eStats)` (0x559630, cdecl)
-    fn stats_is_stat_capped(s: u32) -> u8 = cdecl 0x559630 => unported;
-    /// `CStats::GetStatValue(eStats)` (0x558E40, cdecl, float in ST0)
-    fn stats_get_stat_value(s: u32) -> f64 = cdecl 0x558E40 => unported;
     /// `CHud::SetHelpMessageStatUpdate(eStatUpdateState, uint16 stat, float change, float max)` (0x588D40, cdecl)
     fn hud_set_help_message_stat_update(state: u32, stat: u32, change: f32, max: f32) = cdecl 0x588D40 => unported;
-    /// `CStats::FindMaxNumberOfGroupMembers()` (0x559A50, cdecl)
-    fn stats_find_max_number_of_group_members() -> i32 = cdecl 0x559A50 => unported;
 }
 
 /// `CSetPieces::Update()` (0x49AA00 -> .HOODLUM 0x1569C50, cdecl): every frame updates the eighth of the set
@@ -545,12 +517,8 @@ pub fn game_logic_calc_distance_to_forbidden_train_crossing(
     x(min)
 }
 
-orig! {
-    /// `FUN_00420800(float a, float b)` (0x420800, cdecl, float in ST0): `a > b ? a : b`
-    fn max_f(a: f32, b: f32) -> f64 = cdecl 0x420800 => unported;
-    /// `FUN_00404330(float a, float b)` (0x404330, cdecl, float in ST0): `a < b ? a : b`
-    fn min_f(a: f32, b: f32) -> f64 = cdecl 0x404330 => unported;
-}
+use crate::bindings::max_f;
+use crate::bindings::min_f;
 
 /// `CStats::GetFatAndMuscleModifier(eStatModAbilities)` (0x559AF0, cdecl, float in ST0): the ability modifiers
 /// built from fat (0xB793D4), muscle (0xB793DC), stamina-like 0xB793D8, the int stats 0xB791B8 / 0xB791A4 /

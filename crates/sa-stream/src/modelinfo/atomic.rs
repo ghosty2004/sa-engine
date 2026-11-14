@@ -32,6 +32,14 @@ sa_core::globals! {
     pub static LOD_DIST_MULTIPLIER @ 0xB6F118: f32 = 0.0;
 }
 
+pub use crate::bindings::anim_add_block_ref as add_anim_block_ref;
+pub use crate::bindings::anim_remove_block_ref as remove_anim_block_ref;
+pub use sa_core::bindings::rp_atomic_clone;
+pub use sa_core::bindings::rp_atomic_destroy;
+pub use sa_core::bindings::rp_atomic_set_frame;
+pub use sa_core::bindings::rw_frame_create;
+pub use sa_core::bindings::rw_frame_destroy;
+pub use sa_core::bindings::strncmp;
 orig! {
     /// `CBaseModelInfo::Init` (0x4C4B10)
     pub fn base_init(this: MiPtr) = thiscall 0x4C4B10 => super::base::init;
@@ -57,10 +65,6 @@ orig! {
     pub fn damage_atomic_destructor(this: MiPtr) = thiscall 0x4C55D0 => damage_destructor;
     /// `CLodAtomicModelInfo::~CLodAtomicModelInfo` (0x4C5620)
     pub fn lod_atomic_destructor(this: MiPtr) = thiscall 0x4C5620 => lod_destructor;
-    /// `CAnimManager::AddAnimBlockRef` (0x4D3FB0)
-    pub fn add_anim_block_ref(index: i32) = cdecl 0x4D3FB0 => unported;
-    /// `CAnimManager::RemoveAnimBlockRef` (0x4D3FD0)
-    pub fn remove_anim_block_ref(index: i32) = cdecl 0x4D3FD0 => unported;
     /// `CCustomBuildingRenderer::IsCBPCPipelineAttached` (0x5D7F40)
     pub fn is_cbpc_pipeline_attached(atomic: GPtr<u8>) -> i32 = cdecl 0x5D7F40 => unported;
     /// `CCustomBuildingRenderer::AtomicSetup` (0x5D7F00)
@@ -71,18 +75,6 @@ orig! {
     pub fn set_custom_fx_atomic_render_pipelines_vmicb(atomic: GPtr<u8>, data: u32) -> GPtr<u8> = cdecl 0x5D5B60 => unported;
     /// `CTagManager::SetupAtomic` (0x49CE10)
     pub fn tag_manager_setup_atomic(atomic: GPtr<u8>) = cdecl 0x49CE10 => unported;
-    /// `RpAtomicClone` (0x749E60)
-    pub fn rp_atomic_clone(atomic: GPtr<u8>) -> GPtr<u8> = cdecl 0x749E60 => unported;
-    /// `RpAtomicDestroy` (0x749DC0)
-    pub fn rp_atomic_destroy(atomic: GPtr<u8>) -> i32 = cdecl 0x749DC0 => unported;
-    /// `RpAtomicSetFrame` (0x74BF20)
-    pub fn rp_atomic_set_frame(atomic: GPtr<u8>, frame: GPtr<u8>) -> GPtr<u8> = cdecl 0x74BF20 => unported;
-    /// `RwFrameCreate` (0x7F0410)
-    pub fn rw_frame_create() -> GPtr<u8> = cdecl 0x7F0410 => unported;
-    /// `RwFrameDestroy` (0x7F05A0)
-    pub fn rw_frame_destroy(frame: GPtr<u8>) -> i32 = cdecl 0x7F05A0 => unported;
-    /// CRT `strncmp` (0x8214D0)
-    pub fn strncmp(a: GPtr<u8>, b: GPtr<u8>, n: u32) -> i32 = cdecl 0x8214D0 => unported;
 }
 
 fn rw(this: MiPtr) -> GPtr<u8> {

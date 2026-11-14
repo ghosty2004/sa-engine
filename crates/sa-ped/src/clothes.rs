@@ -26,6 +26,15 @@ const MODEL_INFO_PTRS: usize = 0xA9B0C8;
 /// `CTxdStore::ms_pTxdPool`
 const TXD_POOL: usize = 0xC8800C;
 
+pub use sa_core::bindings::load_all_requested_models;
+pub use sa_core::bindings::stricmp as crt_stricmp;
+pub use sa_core::bindings::strncmp as crt_strncmp;
+pub use sa_core::bindings::strtok as crt_strtok;
+pub use sa_core::bindings::timer_resume;
+pub use sa_core::bindings::timer_suspend;
+pub use sa_core::bindings::tm_get_task_secondary as get_task_secondary;
+pub use sa_core::bindings::world_remove;
+pub use sa_stream::bindings::load_line;
 orig! {
     /// `CKeyGen::GetUppercaseKey(const char*)` (0x53CF30)
     pub fn get_uppercase_key(s: u32) -> u32 = cdecl 0x53CF30 => unported;
@@ -39,24 +48,12 @@ orig! {
     pub fn file_open(path: GPtr<u8>, mode: GPtr<u8>) -> GPtr<u8> = cdecl 0x538900 => unported;
     /// `CFileMgr::CloseFile(FILE*)` (0x5389D0)
     pub fn file_close(f: GPtr<u8>) -> i32 = cdecl 0x5389D0 => unported;
-    /// `CFileLoader::LoadLine(FILE*)` (0x536F80)
-    pub fn load_line(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x536F80 => unported;
-    /// CRT `strncmp` (0x8214D0)
-    pub fn crt_strncmp(a: GPtr<u8>, b: GPtr<u8>, n: u32) -> i32 = cdecl 0x8214D0 => unported;
-    /// CRT `strtok` (0x82244B)
-    pub fn crt_strtok(s: GPtr<u8>, delim: GPtr<u8>) -> GPtr<u8> = cdecl 0x82244B => unported;
-    /// CRT `_stricmp` (0x8229B6)
-    pub fn crt_stricmp(a: GPtr<u8>, b: GPtr<u8>) -> i32 = cdecl 0x8229B6 => unported;
     /// `GetClothesModelFromName(const char*)` (0x5A7A20)
     pub fn clothes_model_from_name(name: GPtr<u8>) -> i32 = cdecl 0x5A7A20 => get_clothes_model_from_name;
     /// `CClothes::GetPlayerMotionGroupToLoad` (0x5A7FB0)
     pub fn get_player_motion_group_to_load_call() -> i32 = cdecl 0x5A7FB0 => get_player_motion_group_to_load;
     /// `CAnimManager::GetAnimationBlockIndex(const char*)` (0x4D3990)
     pub fn get_animation_block_index(name: u32) -> i32 = cdecl 0x4D3990 => unported;
-    /// `CTimer::Suspend` (0x5619D0)
-    pub fn timer_suspend() = cdecl 0x5619D0 => unported;
-    /// `CTimer::Resume` (0x561A00)
-    pub fn timer_resume() = cdecl 0x561A00 => unported;
     /// `CClothesBuilder::CreateSkinnedClump(RpClump*, RwTexDictionary*, CPedClothesDesc&, const CPedClothesDesc*, bool)` (0x5A69D0)
     pub fn create_skinned_clump(c: GPtr<u8>, txd: GPtr<u8>, d: GPtr<u8>, old: GPtr<u8>, cut: u32) -> GPtr<u8> = cdecl 0x5A69D0 => unported;
     /// `CClothes::RequestMotionGroupAnims` (0x5A8120)
@@ -69,8 +66,6 @@ orig! {
     pub fn mi_delete_rw_object(mi: GPtr<u8>) = thiscall vslot 0x20 => unported;
     /// `CClumpModelInfo::SetClump(RpClump*)` (vtable slot 0x40)
     pub fn mi_set_clump(mi: GPtr<u8>, c: GPtr<u8>) = thiscall vslot 0x40 => unported;
-    /// `CStreaming::LoadAllRequestedModels(bool)` (0x40EA10)
-    pub fn load_all_requested_models(b: u32) = cdecl 0x40EA10 => unported;
     /// `CClothes::ConstructPedModel(uint32, CPedClothesDesc&, const CPedClothesDesc*, bool)` (0x5A81E0)
     pub fn construct_ped_model_call(model: u32, d: GPtr<u8>, old: GPtr<u8>, cut: u32) = cdecl 0x5A81E0 => construct_ped_model;
     /// `CClothes::RebuildPlayer(CPlayerPed*, bool)` (0x5A82C0)
@@ -79,14 +74,10 @@ orig! {
     pub fn clump_extract_associations(c: GPtr<u8>) -> GPtr<u8> = cdecl 0x4D6BE0 => unported;
     /// `RpAnimBlendClumpGiveAssociations(RpClump*, CAnimBlendAssociation*)` (0x4D6C30)
     pub fn clump_give_associations(c: GPtr<u8>, a: GPtr<u8>) = cdecl 0x4D6C30 => unported;
-    /// `CTaskManager::GetTaskSecondary(int32)` (0x681810)
-    pub fn get_task_secondary(tm: GPtr<u8>, i: i32) -> GPtr<u8> = thiscall 0x681810 => unported;
     /// `CTask::MakeAbortable(CPed*, eAbortPriority, const CEvent*)` (vtable slot 0x18)
     pub fn task_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, prio: i32, ev: u32) -> u8 = thiscall vslot 0x18 => unported;
     /// `CEntity::DeleteRwObject` (vtable slot 0x20)
     pub fn entity_delete_rw_object(e: GPtr<u8>) = thiscall vslot 0x20 => unported;
-    /// `CWorld::Remove(CEntity*)` (0x563280)
-    pub fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
     /// `CPed::Dress` (0x5E0130)
     pub fn ped_dress(p: GPtr<u8>) = thiscall 0x5E0130 => unported;
 }

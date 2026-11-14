@@ -17,6 +17,8 @@ sa_core::globals! {
     pub static G_C8A7D8 @ 0xC8A7D8: f32 = 0.0;
 }
 
+pub use sa_stream::bindings::col_model_ctor;
+pub use sa_stream::bindings::col_model_dtor;
 orig! {
     /// `CAEExplosionAudioEntity::CAEExplosionAudioEntity()` (0x5074B0, thiscall)
     pub fn explosion_audio_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x5074B0 => unported;
@@ -26,10 +28,6 @@ orig! {
     pub fn fire_manager_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x539DA0 => crate::fire::manager_constructor;
     /// `CFireManager::Destructor()` (0x538BB0)
     pub fn fire_manager_dtor(this: GPtr<u8>) = thiscall 0x538BB0 => crate::fire::manager_destructor;
-    /// `CColModel::CColModel()` (0x40FB60, thiscall)
-    pub fn col_model_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x40FB60 => unported;
-    /// `CColModel::~CColModel()` (0x40F700, thiscall)
-    pub fn col_model_dtor(this: GPtr<u8>) = thiscall 0x40F700 => unported;
 }
 
 const K_005: f32 = f32::from_bits(0x3BA3_D70A);

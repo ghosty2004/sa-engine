@@ -22,11 +22,9 @@ const FLAGS_C0B184: usize = 0xC0B184;
 /// `GetLookAtPositionOnTarget` (read as a variable, as the bytes).
 const LOOK_AT_PED_LOW_Z: usize = 0x8CCC8C;
 
+pub use sa_core::bindings::find_player_ped;
+pub use sa_core::bindings::get_pad;
 orig! {
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    pub fn get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `FindPlayerPed(int32)` (0x56E210)
-    pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
     /// `CIdleCam::SetTarget(CEntity*)` (0x50A280)
     pub fn set_target(this: GPtr<u8>, e: GPtr<u8>) = thiscall 0x50A280 => unported;
     /// `CIdleCam::Init()` (0x50E6D0)

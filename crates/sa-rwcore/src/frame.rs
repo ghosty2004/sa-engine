@@ -42,23 +42,26 @@ const MATRIX_ERROR_TOL: f32 = f32::from_bits(0x3C23_D70A);
 /// `[0x862CD0]` = 0.99f: minimum determinant of `_rwFrameListStreamRead`.
 const MATRIX_DET_MIN: f32 = f32::from_bits(0x3F7D_70A4);
 
+pub use crate::bindings::free_list_destroy;
+pub use crate::bindings::matrix_ortho_normalize;
+pub use crate::bindings::plugin_add as registry_add_plugin;
+pub use crate::bindings::plugin_add_stream as registry_add_plugin_stream;
+pub use crate::bindings::plugin_deinit_object as registry_deinit_object;
+pub use crate::bindings::plugin_init_object as registry_init_object;
+pub use crate::bindings::plugin_read_data_chunks as registry_read_data_chunks;
+pub use crate::bindings::registry_copy_object;
+pub use sa_core::bindings::rw_matrix_multiply as matrix_multiply;
+pub use sa_core::bindings::rw_matrix_transform as matrix_transform;
+pub use sa_core::bindings::stream_read;
 orig! {
     /// `RwFreeListCreateAndPreallocateSpace(entrySize, entriesPerBlock, alignment, numBlocks, space, hint)` (0x801B70)
     pub fn free_list_create_and_preallocate_space(size: i32, per_block: i32, align: i32, blocks: i32, space: GPtr<u8>, hint: u32) -> GPtr<u8> = cdecl 0x801B70 => unported;
-    /// `RwFreeListDestroy(freelist)` (0x801B80)
-    pub fn free_list_destroy(fl: GPtr<u8>) -> u32 = cdecl 0x801B80 => unported;
-    /// `RwMatrixMultiply(dst, a, b)` (0x7F18B0)
-    pub fn matrix_multiply(dst: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F18B0 => unported;
-    /// `RwMatrixOrthoNormalize(dst, src)` (0x7F1920)
-    pub fn matrix_ortho_normalize(dst: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F1920 => unported;
     /// `RwMatrixRotate(m, axis, angle, op)` (0x7F1FD0; the angle is passed as its raw dword)
     pub fn matrix_rotate(m: GPtr<u8>, axis: GPtr<u8>, angle: u32, op: i32) -> GPtr<u8> = cdecl 0x7F1FD0 => unported;
     /// `RwMatrixScale(m, v, op)` (0x7F22C0)
     pub fn matrix_scale(m: GPtr<u8>, v: GPtr<u8>, op: i32) -> GPtr<u8> = cdecl 0x7F22C0 => unported;
     /// `RwMatrixTranslate(m, v, op)` (0x7F2450)
     pub fn matrix_translate(m: GPtr<u8>, v: GPtr<u8>, op: i32) -> GPtr<u8> = cdecl 0x7F2450 => unported;
-    /// `RwMatrixTransform(m, t, op)` (0x7F25A0)
-    pub fn matrix_transform(m: GPtr<u8>, t: GPtr<u8>, op: i32) -> GPtr<u8> = cdecl 0x7F25A0 => unported;
     /// `_rwMatrixNormalError(m)` (0x7F1500, ST0 result)
     pub fn matrix_normal_error(m: GPtr<u8>) -> f64 = cdecl 0x7F1500 => unported;
     /// `_rwMatrixOrthogonalError(m)` (0x7F14A0, ST0 result)
@@ -67,27 +70,12 @@ orig! {
     pub fn matrix_determinant(m: GPtr<u8>) -> f64 = cdecl 0x7F1450 => unported;
     /// `RwStreamFindChunk(stream, type, lengthOut, versionOut)` (0x7ED2D0)
     pub fn stream_find_chunk(s: GPtr<u8>, ty: u32, len: GPtr<u32>, ver: GPtr<u32>) -> i32 = cdecl 0x7ED2D0 => unported;
-    /// `RwStreamRead(stream, buffer, length)` (0x7EC9D0)
-    pub fn stream_read(s: GPtr<u8>, buf: GPtr<u8>, len: u32) -> u32 = cdecl 0x7EC9D0 => unported;
     /// `RwObjectHasFrame` sync callback `obj->sync(obj)` (stored at obj + 0x10)
     pub fn call_object_sync(f: u32, obj: GPtr<u8>) -> GPtr<u8> = cdecl dyn => unported;
     /// `RwFrameForAllChildren` callback `cb(frame, data)`
     pub fn call_frame_cb(f: u32, frame: GPtr<u8>, data: u32) -> GPtr<u8> = cdecl dyn => unported;
     /// `RwFrameForAllObjects` callback `cb(object, data)`
     pub fn call_object_cb(f: u32, obj: GPtr<u8>, data: u32) -> GPtr<u8> = cdecl dyn => unported;
-
-    /// `_rwPluginRegistryInitObject(reg, obj)` (0x8086E0)
-    pub fn registry_init_object(reg: GPtr<u8>, obj: GPtr<u8>) -> GPtr<u8> = cdecl 0x8086E0 => crate::plugin::registry_init_object;
-    /// `_rwPluginRegistryDeInitObject(reg, obj)` (0x808740)
-    pub fn registry_deinit_object(reg: GPtr<u8>, obj: GPtr<u8>) -> GPtr<u8> = cdecl 0x808740 => crate::plugin::registry_deinit_object;
-    /// `_rwPluginRegistryCopyObject(reg, dst, src)` (0x808770)
-    pub fn registry_copy_object(reg: GPtr<u8>, dst: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = cdecl 0x808770 => crate::plugin::registry_copy_object;
-    /// `_rwPluginRegistryAddPlugin(reg, size, id, ctor, dtor, copy)` (0x8084A0)
-    pub fn registry_add_plugin(reg: GPtr<u8>, size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x8084A0 => crate::plugin::registry_add_plugin;
-    /// `_rwPluginRegistryAddPluginStream(reg, id, read, write, getSize)` (0x8088E0)
-    pub fn registry_add_plugin_stream(reg: GPtr<u8>, id: u32, read: u32, write: u32, get_size: u32) -> i32 = cdecl 0x8088E0 => crate::plugin::registry_add_plugin_stream;
-    /// `_rwPluginRegistryReadDataChunks(reg, stream, obj)` (0x808980)
-    pub fn registry_read_data_chunks(reg: GPtr<u8>, s: GPtr<u8>, obj: GPtr<u8>) -> GPtr<u8> = cdecl 0x808980 => crate::plugin::registry_read_data_chunks;
 
     /// `_rwFrameCloneRecurse` (0x7F0050)
     pub fn clone_recurse_call(old: GPtr<u8>, new_root: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0050 => clone_recurse;

@@ -3,14 +3,11 @@
 //! Ported from the 1.0 US bytes; gta-reversed `TaskSimpleSetPedAsAutoDriver.cpp` as a reading aid.
 
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
-orig! {
-    /// `CCarCtrl::JoinCarWithRoadSystem(CVehicle*)` (0x42F5A0)
-    fn join_car_with_road_system(veh: GPtr<u8>) = cdecl 0x42F5A0 => unported;
-}
+use sa_world::bindings::join_car_with_road_system;
 
 /// `CTaskSimpleSetPedAsAutoDriver::ProcessPed(CPed*)` (0x649020, thiscall, `ret 4`; the ped is unused). With the
 /// vehicle at +8 (read again before every store, no NULL check): `CCarCtrl::JoinCarWithRoadSystem(vehicle)`; the

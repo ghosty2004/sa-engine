@@ -72,11 +72,11 @@ const F_FADE_RATE: u32 = 0x3A6B_F405; // 0x872538 (0.0009)
 
 use sa_math::fpu::fbits as cf;
 
+use crate::bindings::la_riots_active_here;
+use sa_stream::bindings::get_2d_effect;
 orig! {
     /// `Light::GetDayNightBalance()` (0x6FAB30, ST0)
     fn get_day_night_balance() -> f64 = cdecl 0x6fab30 => unported;
-    /// `CBaseModelInfo::Get2dEffect(int32)` (0x4C4C70)
-    fn get_2d_effect(mi: GPtr<u8>, i: i32) -> GPtr<u8> = thiscall 0x4c4c70 => unported;
     /// `CEntity::TransformFromObjectSpace(CVector& out, const CVector& offset)` (0x5334F0)
     fn transform_ref(e: GPtr<u8>, out: GPtr<u8>, off: GPtr<u8>) -> GPtr<u8>
         = thiscall 0x5334f0 => super::entity::transform_from_object_space_ref;
@@ -100,8 +100,6 @@ orig! {
     fn store_static_shadow(id: u32, ty: u32, tex: u32, pos: GPtr<u8>, fx: f32, fy: f32, sx: f32, sy: f32,
         intensity: u32, r: u32, gr: u32, b: u32, zd: f32, scale: f32, draw: f32, temporary: u32, up: f32)
         = cdecl 0x70ba00 => unported;
-    /// `CGameLogic::LaRiotsActiveHere()` (0x441C10, AL)
-    fn la_riots_active_here() -> u8 = cdecl 0x441c10 => unported;
     /// `CBridge::ShouldLightsBeFlashing()` (0x41BC90, AL)
     fn bridge_should_lights_be_flashing() -> u8 = cdecl 0x41bc90 => unported;
 }

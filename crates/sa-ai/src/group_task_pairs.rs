@@ -19,6 +19,7 @@ const PAIR: isize = 0x14;
 /// Pairs per array.
 const PAIRS: isize = 8;
 
+use sa_world::bindings::sequence_flush;
 orig! {
     /// Virtual slot +0 (scalar deleting destructor, `ret 4`): `delete obj` with flags 1.
     fn v_delete(o: GPtr<u8>, flags: u32) -> u32 = thiscall vslot 0x0 => unported;
@@ -34,8 +35,6 @@ orig! {
     fn o_report_pairs(i: GPtr<u8>, pairs: GPtr<u8>) = thiscall 0x5F7730 => unported;
     /// `CPedGroupIntelligence::FlushTasks(CPedTaskPair*, CPed*)` (0x5F79C0, `ret 8`; ECX unused)
     fn o_flush_tasks(i: GPtr<u8>, pairs: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x5F79C0 => unported;
-    /// `CTaskComplexSequence::Flush` (0x632C10)
-    fn sequence_flush(s: GPtr<u8>) = thiscall 0x632C10 => unported;
 }
 
 /// The task of `ped` in the 8 pairs at `pairs`, or null (the first pair whose ped matches).

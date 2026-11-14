@@ -8,17 +8,13 @@ use sa_math::x87::X87;
 
 use crate::common::{ftol32, rd, wr};
 
+pub use crate::bindings::fx_rw_matrix_create;
+pub use crate::bindings::fx_rw_matrix_destroy;
+pub use sa_core::bindings::rw_matrix_multiply;
+pub use sa_core::bindings::rw_matrix_update;
 orig! {
     /// `FxInfoManager_c::ProcessEmissionInfo(currTime, timeStep, totalTime, useConst, out)` (0x4A4960)
     pub fn process_emission_info(this: GPtr<u8>, curr: u32, step: u32, total: u32, use_const: u32, out: GPtr<u8>) = thiscall 0x4A4960 => crate::mvpc_fx1::info_manager_process_emission_info;
-    /// `FxManager_c::FxRwMatrixCreate()` (0x4A9440)
-    pub fn fx_rw_matrix_create(this: GPtr<u8>) -> u32 = thiscall 0x4A9440 => crate::fx::fx_manager_fx_rw_matrix_create;
-    /// `FxManager_c::FxRwMatrixDestroy(RwMatrix*)` (0x4A9460)
-    pub fn fx_rw_matrix_destroy(this: GPtr<u8>, m: u32) = thiscall 0x4A9460 => crate::fx::fx_manager_fx_rw_matrix_destroy;
-    /// `RwMatrixUpdate(RwMatrix*)` (0x7F18A0)
-    pub fn rw_matrix_update(m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F18A0 => unported;
-    /// `RwMatrixMultiply(out, a, b)` (0x7F18B0)
-    pub fn rw_matrix_multiply(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F18B0 => unported;
     /// `FxPrimBP_c::GetRWMatrix(RwMatrix* out)` (0x4A9DC0)
     pub fn prim_bp_get_rw_matrix(this: GPtr<u8>, out: GPtr<u8>) = thiscall 0x4A9DC0 => unported;
     /// `FxEmitter_c::CreateParticle(EmissionInfo_t*, RwMatrix*, a2, a3, a4, a6, a7)` (0x4A2580)
@@ -98,21 +94,17 @@ pub fn emitter_add_particle(this: GPtr<u8>, pos: GPtr<u8>, a2: u32, a3: u32, a4:
     mdestroy(m1);
 }
 
+pub use crate::bindings::update_particle;
+pub use sa_core::bindings::list_add_item;
+pub use sa_world::bindings::rw_v3d_normalize;
+pub use sa_world::bindings::rw_v3d_transform_vectors;
 orig! {
     /// `FxManager_c::GetParticle(bool)` (0x4A93C0)
     pub fn get_particle(this: GPtr<u8>, flag: u32) -> GPtr<u8> = thiscall 0x4A93C0 => crate::fx::fx_manager_get_particle;
     /// `FxManager_c::FreeUpParticle()` (0x4A9400)
     pub fn free_up_particle(this: GPtr<u8>) = thiscall 0x4A9400 => unported;
-    /// `RwV3dNormalize(RwV3d* out, const RwV3d* in)` (0x7ED9B0): the length in ST0
-    pub fn rw_v3d_normalize(out: GPtr<u8>, inp: GPtr<u8>) -> f64 = cdecl 0x7ED9B0 => unported;
-    /// `RwV3dTransformVectors(out, in, n, m)` (0x7EDDF0)
-    pub fn rw_v3d_transform_vectors(out: GPtr<u8>, inp: GPtr<u8>, n: i32, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EDDF0 => unported;
     /// `Fx_c::RotateVecIntoVec(out, in, dir)` (0x4A1660)
     pub fn rotate_vec_into_vec(out: GPtr<u8>, inp: GPtr<u8>, dir: GPtr<u8>) = cdecl 0x4A1660 => crate::mvpc_fx1::fx_rotate_vec_into_vec;
-    /// `FxEmitterBP_c::UpdateParticle(float time, FxEmitterPrt_c*)` (0x4A21D0)
-    pub fn update_particle(this: GPtr<u8>, t: u32, prt: GPtr<u8>) -> u8 = thiscall 0x4A21D0 => unported;
-    /// `List_c::AddItem(ListItem_c*)` (0x4A8DF0)
-    pub fn list_add_item(this: GPtr<u8>, item: GPtr<u8>) = thiscall 0x4A8DF0 => unported;
 }
 
 use sa_math::fpu::x as xf;
@@ -270,9 +262,8 @@ pub fn emitter_create_particle(this: GPtr<u8>, ei: GPtr<u8>, m: GPtr<u8>, vel: G
     p
 }
 
+pub use crate::bindings::fx_prt_mult_default_ctor as prt_mult_ctor;
 orig! {
-    /// `FxPrtMult_c::FxPrtMult_c()` (0x4AB270)
-    pub fn prt_mult_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4AB270 => unported;
     /// `FxEmitter_c::CreateParticle(...)` (0x4A2580)
     pub fn create_particle_call(this: GPtr<u8>, ei: GPtr<u8>, m: GPtr<u8>, vel: GPtr<u8>, time: u32, mult: GPtr<u8>, brightness: u32, local: u32) -> GPtr<u8> = thiscall 0x4A2580 => emitter_create_particle;
 }
@@ -353,11 +344,10 @@ pub fn emitter_create_particles(this: GPtr<u8>, curr: u32, step: u32) {
     mdestroy(m1);
 }
 
+pub use sa_world::bindings::get_water_level;
 orig! {
     /// `FxInfoManager_c::ProcessMovementInfo(a1, a2, a3, a4, a5, MovementInfo_t*)` (0x4A4A10)
     pub fn process_movement_info(this: GPtr<u8>, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, out: GPtr<u8>) = thiscall 0x4A4A10 => crate::fx::fx_info_manager_process_movement_info;
-    /// `CWaterLevel::GetWaterLevel(x, y, z, float* level, bool touchingWater, bool)` (0x6EB690)
-    pub fn get_water_level(x: u32, y: u32, z: u32, level: GPtr<u8>, a: u32, b: u32) -> u8 = cdecl 0x6EB690 => unported;
 }
 
 /// `FxEmitterBP_c::UpdateParticle(float time, FxEmitterPrt_c* p)` (0x4A21D0, thiscall, `ret 8`, AL = 1
@@ -441,13 +431,12 @@ pub fn emitter_bp_update_particle(this: GPtr<u8>, time: u32, p: GPtr<u8>) -> u8 
     0
 }
 
+pub use sa_world::bindings::rw_im3d_end;
 orig! {
     /// `RwIm3DTransform(verts, n, ltm, flags)` (0x7EF450)
     pub fn rw_im3d_transform(v: GPtr<u8>, n: i32, ltm: u32, flags: u32) -> GPtr<u8> = cdecl 0x7EF450 => unported;
     /// `RwIm3DRenderPrimitive(type)` (0x7EF6B0)
     pub fn rw_im3d_render_primitive(ty: i32) -> i32 = cdecl 0x7EF6B0 => unported;
-    /// `RwIm3DEnd()` (0x7EF520)
-    pub fn rw_im3d_end() -> i32 = cdecl 0x7EF520 => unported;
 }
 
 use sa_core::field::g as gp;

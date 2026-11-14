@@ -27,6 +27,7 @@ pub fn group(i: i32) -> GPtr<u8> {
     VEHICLE_ANIM_GROUPS.ptr().cast::<u8>().byte_add(i.wrapping_mul(0x94) as isize)
 }
 
+pub use sa_core::bindings::uncompress_animation;
 orig! {
     /// `CVehicleAnimGroup::GetGroup(animId)` (0x6E3B00)
     pub fn call_get_group(this: GPtr<u8>, anim: i32) -> i32 = thiscall 0x6E3B00 => get_group;
@@ -36,8 +37,6 @@ orig! {
     pub fn crt_pow(a: f64, b: f64) -> f64 = cdecl 0x8220F0 => crt_pow_host;
     /// `CAnimManager::GetAnimAssociation(groupId, animId)` (0x4D3A60)
     pub fn get_anim_association(group: i32, anim: i32) -> GPtr<u8> = cdecl 0x4D3A60 => unported;
-    /// `CAnimManager::UncompressAnimation(hierarchy)` (0x4D41C0)
-    pub fn uncompress_animation(h: GPtr<u8>) = cdecl 0x4D41C0 => unported;
 }
 
 /// Phase B/C path of [`crt_pow`]: only `pow(2.0, integer)` is used here, which is exact

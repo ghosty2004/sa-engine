@@ -28,13 +28,10 @@ const G_STRING: usize = 0xB71670;
 /// the byte `FindCriminalRatingNumber` tests at 0x96918C (gr: `CCheat::...`-independent flag; unnamed)
 const RATING_FLAG_96918C: usize = 0x96918C;
 
+pub use crate::bindings::german_game;
+pub use sa_core::bindings::sprintf1 as sprintf_i;
+pub use sa_core::bindings::stats_check_for_stats_message as check_for_stats_message;
 orig! {
-    /// CRT `sprintf` (0x821BB5) with one int argument
-    pub fn sprintf_i(buf: GPtr<u8>, fmt: GPtr<u8>, v: i32) -> i32 = cdecl 0x821BB5 => unported;
-    /// `CLocalisation::GermanGame` (0x56D200)
-    pub fn german_game() -> u8 = cdecl 0x56D200 => unported;
-    /// `CStats::CheckForStatsMessage` (0x559760)
-    pub fn check_for_stats_message() = cdecl 0x559760 => unported;
     /// `CStats::IncrementStat(uint16, float)` (0x55C180)
     pub fn increment_stat_call(id: u32, v: u32) = cdecl 0x55C180 => unported;
     /// `CStats::DecrementStat(uint16, float)` (0x559FA0)

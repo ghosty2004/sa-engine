@@ -16,6 +16,10 @@ use sa_math::x87::X87;
 
 use crate::common::{g, rd, wr, x};
 
+use crate::bindings::get_wheel_status;
+use sa_world::bindings::get_adhesion_group;
+use sa_world::bindings::get_adhesive_limit;
+use sa_world::bindings::get_wet_multiplier;
 orig! {
     /// `cHandlingDataMgr::HasFrontWheelDrive(uint8)` (0x6A0480)
     fn has_front_wheel_drive(mgr: GPtr<u8>, id: u32) -> u32 = thiscall 0x6A0480 => crate::handling::has_front_wheel_drive;
@@ -37,16 +41,8 @@ orig! {
     fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => sa_world::world::mvpa_math::vector_sub;
     /// `VectorAdd(CVector*, const CVector*, const CVector*)` (0x40FE30)
     fn vector_add(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE30 => sa_world::world::mvpa_math::vector_add;
-    /// `SurfaceInfos_c::GetAdhesiveLimit(CColPoint&)` (0x55EB50), ST0
-    fn get_adhesive_limit(si: GPtr<u8>, cp: GPtr<u8>) -> f64 = thiscall 0x55EB50 => unported;
     /// `CEntity::TreatAsPlayerForCollisions()` (0x541F70)
     fn treat_as_player_for_collisions(e: GPtr<u8>) -> u8 = thiscall 0x541F70 => sa_world::world::entity::treat_as_player_for_collisions;
-    /// `SurfaceInfos_c::GetWetMultiplier(uint32)` (0x55E600), ST0
-    fn get_wet_multiplier(si: GPtr<u8>, id: u32) -> f64 = thiscall 0x55E600 => unported;
-    /// `SurfaceInfos_c::GetAdhesionGroup(uint32)` (0x55E5C0)
-    fn get_adhesion_group(si: GPtr<u8>, id: u32) -> u32 = thiscall 0x55E5C0 => unported;
-    /// `CDamageManager::GetWheelStatus(int32)` (0x6C21B0)
-    fn get_wheel_status(dm: GPtr<u8>, wheel: i32) -> u32 = thiscall 0x6C21B0 => crate::damage::get_wheel_status;
     /// `CVehicle::ProcessWheel(...)` (0x6D6C00)
     fn process_wheel(v: GPtr<u8>, fwd: GPtr<u8>, right: GPtr<u8>, speed: GPtr<u8>, point: GPtr<u8>, wheels: i32, thrust: f32, brake: f32, adhesion: f32, wheel: u32, wheel_speed: GPtr<u8>, state: GPtr<i32>, status: u32) = thiscall 0x6D6C00 => crate::mvpd_v1::vehicle_process_wheel;
 }

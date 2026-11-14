@@ -15,21 +15,16 @@ const SCAN_CODE: usize = 0xB7CD78;
 /// `CModelInfo::ms_modelInfoPtrs`
 const MODEL_INFO_PTRS: usize = 0xA9B0C8;
 
+use sa_core::bindings::get_pad;
+use sa_core::bindings::matrix_mul_vec;
+use sa_world::bindings::localisation_blood;
+use sa_world::bindings::pad_start_shake;
+use sa_world::bindings::physical_apply_move_force;
 orig! {
-    /// `operator*(const CMatrix&, const CVector&)` (0x59C890, cdecl, returns out)
-    fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
-    /// `CLocalisation::Blood()` (0x56D230)
-    fn localisation_blood() -> u8 = cdecl 0x56D230 => unported;
     /// `CAEVehicleAudioEntity::AddAudioEvent(eAudioEvents, float)` (0x4F6420)
     fn add_audio_event(a: GPtr<u8>, ev: u32, vol: u32) = thiscall 0x4F6420 => unported;
-    /// `CPhysical::ApplyMoveForce(CVector)` (0x4ABBA0; raw float words)
-    fn physical_apply_move_force(p: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x4ABBA0 => unported;
     /// `FUN_0065da70(CVector force, CVector point)` (0x65DA70): re-pushes its vectors to `ApplyTurnForce` (raw float words)
     fn apply_turn_force_65da70(p: GPtr<u8>, fx: u32, fy: u32, fz: u32, px: u32, py: u32, pz: u32) = thiscall 0x65DA70 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    fn get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CPad::StartShake(int16 time, uint8 freq, uint32 delay)` (0x53F920)
-    fn pad_start_shake(pad: GPtr<u8>, time: u32, freq: u32, delay: u32) = thiscall 0x53F920 => unported;
 }
 
 /// `|a - b| < lim` as the original tests it: the difference negated when below 0 (`test ah, 5; jp`), then

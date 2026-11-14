@@ -8,6 +8,9 @@ use sa_core::{hook, orig};
 
 use crate::common::{g, rd, wr, xi};
 
+use sa_world::bindings::clump_get_first_association_4d6a70 as clump_get_first_association;
+use sa_world::bindings::fx_kill;
+use sa_world::bindings::get_next_association;
 orig! {
     /// virtual `CVehicle::IsDoorMissing(eDoors)` (vtable +0x98)
     fn v_is_door_missing(v: GPtr<u8>, d: u32) -> u8 = thiscall vslot 0x98 => unported;
@@ -15,12 +18,6 @@ orig! {
     fn v_is_door_closed(v: GPtr<u8>, d: u32) -> u8 = thiscall vslot 0x90 => unported;
     /// virtual `CVehicle::OpenDoor(CPed*, int32, eDoors, float, bool)` (vtable +0x6C)
     fn v_open_door(v: GPtr<u8>, ped: u32, comp: u32, door: u32, ratio: f32, sound: u32) = thiscall vslot 0x6C => unported;
-    /// `FxSystem_c::Kill()` (0x4AA3F0)
-    fn fx_kill(fx: GPtr<u8>) = thiscall 0x4AA3F0 => unported;
-    /// `RpAnimBlendClumpGetFirstAssociation(RpClump*, uint32)` (0x4D6A70)
-    fn clump_get_first_association(clump: GPtr<u8>, flags: u32) -> GPtr<u8> = cdecl 0x4D6A70 => unported;
-    /// `RpAnimBlendGetNextAssociation(CAnimBlendAssociation*, uint32)` (0x4D6AD0)
-    fn get_next_association(assoc: GPtr<u8>, flags: u32) -> GPtr<u8> = cdecl 0x4D6AD0 => unported;
 }
 
 /// `CTimer::m_snTimeInMilliseconds`.

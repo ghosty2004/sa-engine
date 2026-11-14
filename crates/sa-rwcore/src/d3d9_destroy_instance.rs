@@ -12,17 +12,14 @@ use sa_core::{hook, orig};
 
 use crate::common::{rd, wr};
 
+use crate::bindings::delete_vertex_declaration;
+use crate::bindings::destroy_vertex_buffer;
+use crate::bindings::dynamic_vertex_buffer_destroy;
 orig! {
     /// `_rpD3D9RemoveDynamicGeometry(geometry)` (0x74E9E0)
     fn remove_dynamic_geometry(geo: u32) = cdecl 0x74E9E0 => crate::d3d9misc::remove_dynamic_geometry;
     /// `D3DResourceSystem::DestroyIndexBuffer(ib)` (0x730D30, sa-render)
     fn destroy_index_buffer(ib: u32) = cdecl 0x730D30 => unported;
-    /// `RwD3D9DeleteVertexDeclaration(decl)` (0x7FAC10)
-    fn delete_vertex_declaration(decl: u32) = cdecl 0x7FAC10 => crate::d3d9dev::delete_vertex_declaration;
-    /// `RwD3D9DestroyVertexBuffer(stride, size, vb, offset)` (0x7F56A0)
-    fn destroy_vertex_buffer(stride: u32, size: u32, vb: u32, offset: u32) = cdecl 0x7F56A0 => crate::d3d9vb::destroy_vertex_buffer;
-    /// `RwD3D9DynamicVertexBufferDestroy(vb)` (0x7F5AE0)
-    fn dynamic_vertex_buffer_destroy(vb: u32) = cdecl 0x7F5AE0 => crate::d3d9vb::dynamic_vertex_buffer_destroy;
 }
 
 /// `_rxD3D9DefaultDestroyInstanceCallback(RwResEntry* entry)` (0x4C9990, cdecl; catalogue `FUN_004c9990`, rw-names).

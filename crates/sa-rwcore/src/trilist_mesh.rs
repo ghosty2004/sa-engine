@@ -12,13 +12,11 @@ use sa_core::{hook, orig};
 
 use crate::common::{RwError, module, p8, rd, rw_error_set, rw_error2, rw_free, rw_malloc, wr};
 
+use crate::bindings::crt_qsort;
+use crate::bindings::mesh_header_for_all_meshes;
 orig! {
-    /// CRT `qsort(base, n, size, cmp)` (0x8247E0)
-    fn crt_qsort(base: GPtr<u8>, n: u32, size: u32, cmp: u32) = cdecl 0x8247E0 => unported;
     /// `_rpMeshHeaderCreate(size)` (0x758920)
     fn mesh_header_create(size: u32) -> GPtr<u8> = cdecl 0x758920 => crate::mesh::rp_mesh_header_create;
-    /// `_rpMeshHeaderForAllMeshes(header, callback, data)` (0x758D30)
-    fn mesh_header_for_all_meshes(h: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> = cdecl 0x758D30 => crate::mesh::rp_mesh_header_for_all_meshes;
 }
 
 /// MESHMODULE offset global (+0 u16: the next mesh header serial number).

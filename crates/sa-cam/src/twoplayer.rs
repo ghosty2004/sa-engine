@@ -5,7 +5,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::{Fpu, g, k, rd, wr};
 
@@ -21,13 +21,8 @@ const K_HALF: u32 = 0x3F00_0000;
 const K_ONE: u32 = 0x3F80_0000;
 const K_0_1: u32 = 0x3DCC_CCCD;
 
-orig! {
-    /// `CWorld::ProcessLineOfSight(const CVector&, const CVector&, CColPoint&, CEntity*&, bool x8)`
-    /// (0x56BA00, AL)
-    pub fn process_line_of_sight(a: GPtr<u8>, b: GPtr<u8>, cp: GPtr<u8>, hit: GPtr<u8>, bu: u32, ve: u32, pe: u32, ob: u32, du: u32, st: u32, cam: u32, sh: u32) -> u8 = cdecl 0x56BA00 => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    pub fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
-}
+pub use sa_core::bindings::vector_normalise;
+pub use sa_world::bindings::process_line_of_sight;
 
 use sa_world::world::common::entity_pos as pos_of;
 

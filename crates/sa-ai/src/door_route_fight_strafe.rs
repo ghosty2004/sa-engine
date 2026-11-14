@@ -14,32 +14,20 @@ const TIME_MS: usize = 0xB7CB84;
 /// 0.0f
 const K_ZERO: usize = 0x858B50;
 
+use crate::bindings::anim_blend_animation;
+use crate::bindings::area_codes_dtor as event_area_codes_dtor;
+use crate::bindings::clump_get_association;
+use crate::bindings::go_to_point_ctor;
+use crate::bindings::point_route_new;
+use sa_core::bindings::get_pad as pad_get_pad;
+use sa_core::bindings::task_new as task_new_o;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::area_codes_ctor as event_area_codes_ctor;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::get_event_global_group;
 orig! {
-    /// `CPed::IsPlayer` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70, cdecl)
-    fn pad_get_pad(i: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CEventAreaCodes::CEventAreaCodes(CPed*)` (0x4B2190, `ret 4`)
-    fn event_area_codes_ctor(e: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x4B2190 => unported;
-    /// `CEventAreaCodes::~CEventAreaCodes` (`FUN_004b2210`)
-    fn event_area_codes_dtor(e: GPtr<u8>) = thiscall 0x4B2210 => unported;
-    /// `GetEventGlobalGroup()` (0x4ABA50, cdecl)
-    fn get_event_global_group() -> GPtr<u8> = cdecl 0x4ABA50 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, `ret 8`)
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
-    /// `RpAnimBlendClumpGetAssociation(RpClump*, AnimationId)` (0x4D68B0, cdecl)
-    fn clump_get_association(clump: u32, anim: u32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
-    /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float delta)` (0x4D4610, cdecl)
-    fn anim_blend_animation(clump: u32, group: u32, anim: u32, delta: u32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
     /// `CAnimManager::AddAnimation(RpClump*, AssocGroupId, AnimationId)` (0x4D3AA0, cdecl)
     fn anim_add_animation(clump: u32, group: u32, anim: u32) -> GPtr<u8> = cdecl 0x4D3AA0 => unported;
-    /// `CTask::operator new(uint32)` (0x61A5A0, cdecl)
-    fn task_new_o(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => unported;
-    /// `CTaskSimpleGoToPoint::CTaskSimpleGoToPoint(int32 moveState, const CVector&, float radius, bool, bool)`
-    /// (0x667CD0, `ret 0x14`)
-    fn go_to_point_ctor(t: GPtr<u8>, ms: u32, pos: GPtr<u8>, radius: u32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x667CD0 => unported;
-    /// `CPointRoute::operator new(uint32)` (0x41B7C0, cdecl)
-    fn point_route_new(size: u32) -> GPtr<u8> = cdecl 0x41B7C0 => unported;
     /// `CPedGeometryAnalyser::ComputeEntityHitSide(const CVector&, CEntity&)` (0x5F3AC0, cdecl)
     fn geom_compute_entity_hit_side(p: GPtr<u8>, e: u32) -> i32 = cdecl 0x5F3AC0 => unported;
     /// `CPedGeometryAnalyser::ComputeEntityBoundingBoxPlanes(float z, CEntity&, CVector (*planes)[4], float* ds)`

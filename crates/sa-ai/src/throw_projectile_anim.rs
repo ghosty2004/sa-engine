@@ -13,19 +13,14 @@ const THROW_CB: u32 = 0x61F890;
 /// The near-throw distance² (0x858628)
 const K_NEAR_SQ: usize = 0x858628;
 
+use crate::bindings::anim_blend_animation;
+use crate::bindings::assoc_set_finish_callback;
+use sa_core::bindings::get_weapon_info as weapon_info_get;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::vector_ne;
 orig! {
-    /// `CWeaponInfo::GetWeaponInfo(eWeaponType, eWeaponSkill)` (0x743C60, cdecl)
-    fn weapon_info_get(w: u32, skill: u32) -> GPtr<u8> = cdecl 0x743C60 => unported;
-    /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float delta)` (0x4D4610, cdecl)
-    fn anim_blend_animation(clump: u32, group: u32, anim: u32, delta: u32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
-    /// `CAnimBlendAssociation::SetFinishCallback(cb, data)` (0x4CEBE0, `ret 8`)
-    fn assoc_set_finish_callback(a: GPtr<u8>, cb: u32, data: u32) = thiscall 0x4CEBE0 => unported;
-    /// `operator!=(const CVector&, const CVector&)` (`FUN_00509760`, cdecl; AL)
-    fn vector_ne(a: GPtr<u8>, b: GPtr<u8>) -> u8 = cdecl 0x509760 => unported;
     /// `CTaskSimpleThrowProjectile::StartAnim(CPed*)` (0x6259E0, `ret 4`)
     fn o_start_anim(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x6259E0 => unported;
-    /// `CPed::IsPlayer` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
     /// `GetAnimHierarchyFromSkinClump(RpClump*)` (0x734A40, cdecl)
     fn get_anim_hierarchy_from_skin_clump(clump: u32) -> u32 = cdecl 0x734A40 => unported;
     /// `RpHAnimIDGetIndex(RpHAnimHierarchy*, int32)` (0x7C51A0, cdecl)

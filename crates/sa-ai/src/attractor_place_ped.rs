@@ -8,29 +8,20 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::ped_placement_find_z_coor_for_ped as find_z_coor_for_ped;
+use sa_core::bindings::general_get_radian_angle_between_points as radian_angle_between_points;
+use sa_core::bindings::general_limit_radian_angle as limit_radian_angle;
+use sa_core::bindings::matrix_dtor;
+use sa_core::bindings::matrix_set_rotate_z_only;
+use sa_core::bindings::matrix_set_unity;
+use sa_stream::bindings::placeable_allocate_matrix;
+use sa_stream::bindings::simple_transform_update_matrix;
+use sa_world::bindings::multiply3x3;
 orig! {
-    /// `CMatrix::SetUnity()` (0x59AE70)
-    fn matrix_set_unity(m: GPtr<u8>) = thiscall 0x59AE70 => unported;
     /// `CMatrix::operator=(const CMatrix&)` (0x59BBC0, `ret 4`)
     fn matrix_assign(dst: GPtr<u8>, src: GPtr<u8>) = thiscall 0x59BBC0 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
-    /// `CPlaceable::AllocateMatrix()` (0x54F560)
-    fn placeable_allocate_matrix(p: GPtr<u8>) = thiscall 0x54F560 => unported;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*)` (0x54F1B0, `ret 4`)
-    fn simple_transform_update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => unported;
     /// `CVector::FromMultiply(const CMatrix&, const CVector&)` (0x59C670, `ret 8`): `this = m * v` (with position)
     fn vector_from_multiply(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) = thiscall 0x59C670 => unported;
-    /// `Multiply3x3(const CMatrix&, const CVector&)` (0x59C790, cdecl, result through the first argument)
-    fn multiply3x3(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C790 => unported;
-    /// `CPedPlacement::FindZCoorForPed(CVector&)` (0x616920)
-    fn find_z_coor_for_ped(v: GPtr<u8>) -> u8 = cdecl 0x616920 => unported;
-    /// `CGeneral::GetRadianAngleBetweenPoints(float x1, float y1, float x2, float y2)` (0x53CBE0, ST0)
-    fn radian_angle_between_points(x1: u32, y1: u32, x2: u32, y2: u32) -> f64 = cdecl 0x53CBE0 => unported;
-    /// `CGeneral::LimitRadianAngle(float)` (0x53CB50, ST0)
-    fn limit_radian_angle(a: u32) -> f64 = cdecl 0x53CB50 => unported;
-    /// `CMatrix::SetRotateZOnly(float)` (0x59B020, `ret 4`)
-    fn matrix_set_rotate_z_only(m: GPtr<u8>, a: u32) = thiscall 0x59B020 => unported;
 }
 
 use sa_core::field::ptr_of as pa;

@@ -9,35 +9,23 @@ use sa_math::x87::X87;
 
 use crate::common::{f32_of, g, rd, wr, x};
 
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::buoyancy_process;
+use sa_world::bindings::damage_calc_compute_damage_response;
+use sa_world::bindings::damage_calc_ctor;
+use sa_world::bindings::damage_calc_dtor;
+use sa_world::bindings::event_damage_affects_ped;
+use sa_world::bindings::event_damage_ctor;
+use sa_world::bindings::event_damage_dtor;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::kob_ctor;
+use sa_world::bindings::kob_dtor;
+use sa_world::bindings::player_handle_breath;
 orig! {
-    /// `cBuoyancy::ProcessBuoyancy(CPhysical*, float, CVector*, CVector*)` (0x6C3EF0) on `mod_Buoyancy` (0xC1C890)
-    fn buoyancy_process(b: GPtr<u8>, e: GPtr<u8>, buoyancy: u32, centre: GPtr<u8>, force: GPtr<u8>) -> u8 = thiscall 0x6C3EF0 => unported;
     /// `CPhysical::ApplyMoveForce(CVector)` (0x5429F0)
     fn apply_move_force(p: GPtr<u8>, force: CVector) = thiscall 0x5429F0 => sa_world::physical::forces::apply_move_force;
     /// `CPhysical::ApplyTurnForce(CVector force, CVector point)` (0x542A50)
     fn apply_turn_force(p: GPtr<u8>, force: CVector, point: CVector) = thiscall 0x542A50 => sa_world::physical::forces::apply_turn_force;
-    /// `CPed::IsPlayer()` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CPlayerPed::HandlePlayerBreath(bool, float)` (0x60A8D0), the float as bits
-    fn player_handle_breath(ped: GPtr<u8>, b: u32, f: u32) = thiscall 0x60A8D0 => unported;
-    /// `CEventKnockOffBike::CEventKnockOffBike(CVehicle*, CVector*, CVector*, float, float, uint8, uint8, int32, CPed*, bool, bool)` (0x4AFCF0)
-    fn kob_ctor(e: GPtr<u8>, veh: GPtr<u8>, speed: GPtr<u8>, impact: GPtr<u8>, dmg: u32, a5: u32, kind: u32, dir: u32, time: u32, ped: u32, driver: u32, force: u32) -> GPtr<u8> = thiscall 0x4AFCF0 => unported;
-    /// `CEventKnockOffBike::~CEventKnockOffBike()` (0x4AFE70)
-    fn kob_dtor(e: GPtr<u8>) = thiscall 0x4AFE70 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420)
-    fn event_group_add(grp: GPtr<u8>, ev: GPtr<u8>, valid: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
-    /// `CPedDamageResponseCalculator::CPedDamageResponseCalculator(CEntity*, float, eWeaponType, ePedPieceTypes, bool)` (0x4AD3F0)
-    fn damage_calc_ctor(c: GPtr<u8>, e: GPtr<u8>, dmg: u32, wt: u32, piece: u32, speak: u32) -> GPtr<u8> = thiscall 0x4AD3F0 => unported;
-    /// `CPedDamageResponseCalculator::~CPedDamageResponseCalculator()` (0x4AD420)
-    fn damage_calc_dtor(c: GPtr<u8>) = thiscall 0x4AD420 => unported;
-    /// `CEventDamage::CEventDamage(CEntity*, uint32, eWeaponType, ePedPieceTypes, uint8, bool, bool)` (0x4AD830)
-    fn event_damage_ctor(e: GPtr<u8>, src: GPtr<u8>, time: u32, wt: u32, piece: u32, dir: u32, a6: u32, a7: u32) -> GPtr<u8> = thiscall 0x4AD830 => unported;
-    /// `CEventDamage::~CEventDamage()` (0x4AD960)
-    fn event_damage_dtor(e: GPtr<u8>) = thiscall 0x4AD960 => unported;
-    /// `CEventDamage::AffectsPed(CPed*)` (0x4B35A0)
-    fn event_damage_affects_ped(e: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x4B35A0 => unported;
-    /// `CPedDamageResponseCalculator::ComputeDamageResponse(CPed*, CPedDamageResponse&, bool)` (0x4B5AC0)
-    fn damage_calc_compute_damage_response(c: GPtr<u8>, ped: GPtr<u8>, r: GPtr<u8>, speak: u32) = thiscall 0x4B5AC0 => unported;
 }
 
 const TIME_STEP: usize = 0xB7_CB5C;

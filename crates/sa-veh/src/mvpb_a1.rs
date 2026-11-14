@@ -9,39 +9,29 @@ use sa_math::vector::CVector;
 
 use crate::common::{f32_of, g, model_info, rand_at, rd, wr, x};
 
+use crate::bindings::audio_set_radio_bass_setting;
+use sa_core::bindings::task_new;
+use sa_pop::bindings::add_ped_in_car;
+use sa_world::bindings::car_drive_ctor;
+use sa_world::bindings::get_ped_flag as ped_type_get_ped_flag;
+use sa_world::bindings::set_ped_in_as_driver_ctor as set_in_as_driver_ctor;
+use sa_world::bindings::set_ped_in_as_driver_dtor as set_in_as_driver_dtor;
+use sa_world::bindings::set_ped_in_as_driver_process_ped as set_in_as_driver_process_ped;
+use sa_world::bindings::set_ped_in_as_passenger_ctor as set_in_as_passenger_ctor;
+use sa_world::bindings::set_ped_in_as_passenger_dtor as set_in_as_passenger_dtor;
+use sa_world::bindings::set_ped_in_as_passenger_process_ped as set_in_as_passenger_process_ped;
+use sa_world::bindings::tm_set_task;
 orig! {
-    /// `CTaskSimpleCarSetPedInAsDriver::CTaskSimpleCarSetPedInAsDriver(CVehicle*, CTaskUtilityLineUpPedWithCar*)` (0x6470E0)
-    fn set_in_as_driver_ctor(t: GPtr<u8>, veh: GPtr<u8>, line_up: GPtr<u8>) -> GPtr<u8> = thiscall 0x6470E0 => unported;
-    /// `CTaskSimpleCarSetPedInAsDriver::ProcessPed(CPed*)` (0x64B950)
-    fn set_in_as_driver_process_ped(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x64B950 => unported;
-    /// `CTaskSimpleCarSetPedInAsDriver::~CTaskSimpleCarSetPedInAsDriver()` (0x647170)
-    fn set_in_as_driver_dtor(t: GPtr<u8>) = thiscall 0x647170 => unported;
-    /// `CTaskSimpleCarSetPedInAsPassenger::CTaskSimpleCarSetPedInAsPassenger(CVehicle*, int32, CTaskUtilityLineUpPedWithCar*)` (0x646FE0)
-    fn set_in_as_passenger_ctor(t: GPtr<u8>, veh: GPtr<u8>, door: i32, line_up: GPtr<u8>) -> GPtr<u8> = thiscall 0x646FE0 => unported;
-    /// `CTaskSimpleCarSetPedInAsPassenger::ProcessPed(CPed*)` (0x64B5D0)
-    fn set_in_as_passenger_process_ped(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x64B5D0 => unported;
-    /// `CTaskSimpleCarSetPedInAsPassenger::~CTaskSimpleCarSetPedInAsPassenger()` (0x647080)
-    fn set_in_as_passenger_dtor(t: GPtr<u8>) = thiscall 0x647080 => unported;
-    /// `CTask::operator new(uint32)` (0x61A5A0)
-    fn task_new(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => unported;
     /// `CTaskComplexCarDriveWander::CTaskComplexCarDriveWander(CVehicle*, int32, float)` (0x63CB10)
     fn car_drive_wander_ctor(t: GPtr<u8>, veh: GPtr<u8>, style: i32, speed: f32) -> GPtr<u8> = thiscall 0x63CB10 => unported;
-    /// `CTaskComplexCarDrive::CTaskComplexCarDrive(CVehicle*)` (0x63C9D0)
-    fn car_drive_ctor(t: GPtr<u8>, veh: GPtr<u8>) -> GPtr<u8> = thiscall 0x63C9D0 => unported;
-    /// `CTaskManager::SetTask(CTask*, int32, bool)` (0x681AF0)
-    fn tm_set_task(tm: GPtr<u8>, t: GPtr<u8>, slot: i32, b: u32) = thiscall 0x681AF0 => unported;
     /// `CCarEnterExit::ComputePassengerIndexFromCarDoor(const CVehicle*, int32)` (0x64F1E0)
     fn compute_passenger_index_from_car_door(veh: GPtr<u8>, door: i32) -> i32 = cdecl 0x64F1E0 => crate::enterexit::compute_passenger_index_from_car_door;
-    /// `CPedType::GetPedFlag(ePedType)` (0x608830)
-    fn ped_type_get_ped_flag(t: u32) -> u32 = cdecl 0x608830 => unported;
     /// `CAcquaintance::SetAsAcquaintance(int32, uint32)` (0x608DA0)
     fn acquaintance_set(a: GPtr<u8>, kind: i32, bits: u32) = thiscall 0x608DA0 => unported;
     /// `CPhysical::ApplyTurnForce(CVector force, CVector point)` (0x542A50)
     fn apply_turn_force(p: GPtr<u8>, force: CVector, point: CVector) = thiscall 0x542A50 => sa_world::physical::forces::apply_turn_force;
     /// `CVehicle::RemovePassenger(CPed*)` (0x6D1610, called directly)
     fn remove_passenger(v: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x6D1610 => crate::vehicle2::remove_passenger;
-    /// `CPopulation::AddPedInCar(CVehicle*, bool driver, int32 gang, int32 seat, bool male, bool criminal)` (0x613A00)
-    fn add_ped_in_car(veh: GPtr<u8>, driver: u8, gang: i32, seat: i32, male: u8, criminal: u8) -> GPtr<u8> = cdecl 0x613A00 => sa_pop::population2::add_ped_in_car;
     /// `CPopulation::RemovePed(CPed*)` (0x610F20)
     fn remove_ped(ped: GPtr<u8>) = cdecl 0x610F20 => sa_pop::population::remove_ped;
     /// `CLinkedUpgradeList::FindOtherUpgrade(int16)` (0x4C74D0) on `CVehicleModelInfo::ms_linkedUpgrades`
@@ -58,8 +48,6 @@ orig! {
     fn set_vehicle_upgrade_flags_call(v: GPtr<u8>, model: i32, kind: u32, out: GPtr<i32>) -> u8 = thiscall 0x6D30E0 => set_vehicle_upgrade_flags;
     /// `CAutomobile::NitrousControl(int8)` (0x6A3EA0)
     fn nitrous_control(a: GPtr<u8>, v: i32) = thiscall 0x6A3EA0 => unported;
-    /// `CAudioEngine::SetRadioBassSetting(int8)` (0x506FA0)
-    fn audio_set_radio_bass_setting(ae: GPtr<u8>, v: u32) = thiscall 0x506FA0 => unported;
     /// `CPed::Say(uint16, uint32, float, bool, bool, bool)` (0x5EFFE0), the float as its bits
     fn ped_say(p: GPtr<u8>, id: u32, delay: u32, prob: u32, a4: u32, a5: u32, a6: u32) = thiscall 0x5EFFE0 => unported;
     /// `CAutomobile::HasCarStoppedBecauseOfLight()` (0x44D520)

@@ -9,27 +9,23 @@ use sa_math::x87::X87;
 
 use crate::common::{THE_CAMERA, ftol32, g, jne, jp, k, rd, wr, x, xi};
 
+use crate::bindings::rs_restore;
+use crate::bindings::rs_set_immediate;
+use crate::bindings::rw_im3d_transform;
+use sa_core::bindings::find_player_ped;
 orig! {
     /// `CCullZones::CamNoRain()` (0x72DDB0, bool in AL)
     fn cam_no_rain() -> u8 = cdecl 0x72DDB0 => crate::cullzones::cam_no_rain;
     /// `CCullZones::PlayerNoRain()` (0x72DDC0, bool in AL)
     fn player_no_rain() -> u8 = cdecl 0x72DDC0 => crate::cullzones::player_no_rain;
-    /// `FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
     /// `CPlaceable::GetAtDirection()` (0x50E420, CVector by hidden pointer)
     fn get_at_direction(this: GPtr<u8>, out: GPtr<f32>) -> GPtr<f32> = thiscall 0x50E420 => sa_world::world::entity::get_at_direction;
     /// `CPlaceable::GetRightDirection()` (0x41CC70, CVector by hidden pointer)
     fn get_right_direction(this: GPtr<u8>, out: GPtr<f32>) -> GPtr<f32> = thiscall 0x41CC70 => sa_world::world::entity::get_right_direction;
     /// `CPostEffects::ImmediateModeRenderStatesStore()` (0x700CC0)
     fn rs_store() = cdecl 0x700CC0 => crate::mvpd_r3::immediate_mode_render_states_store;
-    /// `CPostEffects::ImmediateModeRenderStatesSet()` (0x700D70)
-    fn rs_set_immediate() = cdecl 0x700D70 => crate::posteffects::immediate_mode_render_states_set;
-    /// `CPostEffects::ImmediateModeRenderStatesReStore()` (0x700E00)
-    fn rs_restore() = cdecl 0x700E00 => crate::posteffects::immediate_mode_render_states_restore;
     /// `RwRenderStateSet(state, value)` (`RwGlobals` +0x20)
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `RwIm3DTransform(verts, count, ltm, flags)` (0x7EF450)
-    fn rw_im3d_transform(verts: u32, count: u32, ltm: u32, flags: u32) -> GPtr<u8> = cdecl 0x7EF450 => unported;
     /// `RwIm3DRenderPrimitive(primType)` (0x7EF6B0)
     fn rw_im3d_render_primitive(prim: u32) -> u32 = cdecl 0x7EF6B0 => unported;
     /// `RwIm3DEnd()` (0x7EF520)
@@ -217,27 +213,23 @@ pub const HOOKS: &[HookReg] = &[HOOK_MOVING_FOG_RENDER, HOOK_CLOUDS_RENDER, HOOK
 
 // ---- WRITER-RENDER-BIG: CClouds::Render, RenderSkyPolys, RenderBottomFromHeight, VolumetricCloudsRender ----
 
+use crate::bindings::calc_screen_coors;
+use crate::bindings::init_sprite_buffer;
+use crate::bindings::render_buffered_one_xlu_sprite;
+use crate::bindings::rw_im3d_render_indexed_primitive;
 orig! {
     /// `CGame::CanSeeOutSideFromCurrArea()` (0x53C4A0, bool in AL)
     fn can_see_outside_from_curr_area() -> u32 = cdecl 0x53C4A0 => sa_core::game::can_see_outside_from_curr_area;
-    /// `CSprite::InitSpriteBuffer()` (0x70CFB0)
-    fn init_sprite_buffer() = cdecl 0x70CFB0 => crate::sprite::init_sprite_buffer;
     /// `CSprite::FlushSpriteBuffer()` (0x70CF20)
     fn flush_sprite_buffer() = cdecl 0x70CF20 => crate::sprite::flush_sprite_buffer;
-    /// `CSprite::CalcScreenCoors(const RwV3d&, RwV3d* out, float* w, float* h, bool, bool)` (0x70CE30)
-    fn calc_screen_coors(inp: GPtr<f32>, out: GPtr<f32>, w: GPtr<f32>, h: GPtr<f32>, max_vis: u8, min_vis: u8) -> u8 = cdecl 0x70CE30 => crate::sprite::calc_screen_coors;
     /// `CSprite::RenderOneXLUSprite(x, y, z, halfW, halfH, r, g, b, intensity, rhw, a, uDir, vDir)`
     /// (0x70D000); every argument as the raw dword the original pushes
     fn render_one_xlu_sprite(px: u32, py: u32, pz: u32, hw: u32, hh: u32, r: u32, gg: u32, b: u32, intensity: u32, rhw: u32, a: u32, u_dir: u32, v_dir: u32) = cdecl 0x70D000 => unported;
-    /// `CSprite::RenderBufferedOneXLUSprite(x, y, z, w, h, r, g, b, intensity, recipNearZ, alpha)` (0x70E4A0)
-    fn render_buffered_one_xlu_sprite(px: f32, py: f32, pz: f32, w: f32, h: f32, r: u32, gg: u32, b: u32, intensity: u32, recip_z: u32, alpha: u32) = cdecl 0x70E4A0 => crate::mvpd_r3::render_buffered_one_xlu_sprite;
     /// `CSprite::RenderBufferedOneXLUSprite_Rotate_Dimension(x, y, z, w, h, r, g, b, intensity, recipNearZ,
     /// angle, alpha)` (0x70EAB0)
     fn render_buffered_one_xlu_sprite_rotate_dimension(px: f32, py: f32, pz: f32, w: f32, h: f32, r: u32, gg: u32, b: u32, intensity: u32, recip_z: u32, angle: f32, alpha: u32) = cdecl 0x70EAB0 => crate::mvpd_r5::render_buffered_one_xlu_sprite_rotate_dimension;
     /// `CVector::Normalise()` (0x59C910)
     fn vector_normalise(v: GPtr<sa_math::vector::CVector>) = thiscall 0x59C910 => sa_world::collision::data::normalise_port;
-    /// `RwIm3DRenderIndexedPrimitive(primType, indices, numIndices)` (0x7EF550)
-    fn rw_im3d_render_indexed_primitive(prim: u32, indices: u32, n: u32) -> u32 = cdecl 0x7EF550 => unported;
 }
 
 /// `CClock` game clock: seconds (u16), minutes, hours, days (bytes).
@@ -633,11 +625,10 @@ const SKY_BOTTOM_BLUE: usize = 0xB7_C4CE;
 const TEMP_INDICES_STORED: usize = 0xC4_B954;
 const TEMP_VERTICES_STORED: usize = 0xC4_B950;
 
+use crate::bindings::bright_lights_render_out_geometry_buffer;
 orig! {
     /// `CClouds::SetUpOneSkyPoly(CVector, CVector, CVector, CVector, uint8 r1, g1, b1, r2, g2, b2)` (0x713060)
     fn set_up_one_sky_poly(v1x: u32, v1y: u32, v1z: u32, v2x: u32, v2y: u32, v2z: u32, v3x: u32, v3y: u32, v3z: u32, v4x: u32, v4y: u32, v4z: u32, r1: u8, g1: u8, b1: u8, r2: u8, g2: u8, b2: u8) = cdecl 0x713060 => crate::clouds::set_up_one_sky_poly;
-    /// `CBrightLights::RenderOutGeometryBuffer()` (0x722150)
-    fn bright_lights_render_out_geometry_buffer() = cdecl 0x722150 => unported;
 }
 
 /// `CClouds::RenderSkyPolys()` (0x714650). The camera's forward vector (matrix +0x10, copied raw; without

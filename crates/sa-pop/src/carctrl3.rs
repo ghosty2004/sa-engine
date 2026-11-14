@@ -97,11 +97,10 @@ fn navi_node(a: u16) -> GPtr<u8> {
         .byte_add(((a & 0x3FF) * 14) as isize)
 }
 
+use crate::bindings::calc_speed_scale_factor;
 orig! {
     /// `CCarPathLink::OneWayLaneOffset()` (0x44DB00, ST0)
     fn one_way_lane_offset(link: GPtr<u8>) -> f64 = thiscall 0x44DB00 => one_way_lane_offset_abi;
-    /// `CCurves::CalcSpeedScaleFactor(const CVector&, const CVector&, float, float, float, float)` (0x43C710, ST0)
-    fn calc_speed_scale_factor(start: GPtr<f32>, end: GPtr<f32>, sdx: f32, sdy: f32, edx: f32, edy: f32) -> f64 = cdecl 0x43C710 => unported;
 }
 
 /// The `orig!` routing target of 0x44DB00 (an ST0 result crosses `orig!` as an f64).
@@ -499,17 +498,12 @@ pub fn test_collision_between_2_moving_rects_only_front_bumper(
 // ---------------------------------------------------------------------------------------------------------
 // Slowing down for other cars, peds and objects
 
+use sa_core::bindings::entity_register_reference;
+use sa_core::bindings::find_player_vehicle;
+use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
+use sa_stream::bindings::simple_transform_update_matrix as update_matrix;
+use sa_world::bindings::placeable_get_matrix as get_matrix;
 orig! {
-    /// `CPlaceable::AllocateMatrix()` (0x54F560)
-    fn allocate_matrix(e: GPtr<u8>) = thiscall 0x54F560 => unported;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*)` (0x54F1B0, thiscall on the placement)
-    fn update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => unported;
-    /// `CPlaceable::GetMatrix()` (0x411990)
-    fn get_matrix(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x411990 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70, `ret 4`)
-    fn entity_register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
-    /// `CWorld::FindPlayerVehicle(int32, bool)` (0x56E0D0)
-    fn find_player_vehicle(id: i32, remote: u32) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
     /// `CCarCtrl::SwitchVehicleToRealPhysics(CVehicle*)` (0x423FC0)
     fn switch_vehicle_to_real_physics(v: GPtr<u8>) = cdecl 0x423FC0 => crate::carctrl::switch_vehicle_to_real_physics;
     /// `CCarCtrl::TestCollisionBetween2MovingRects_OnlyFrontBumper` (0x425F70, ST0)
@@ -866,11 +860,9 @@ pub fn slow_car_down_for_object(obj: GPtr<u8>, veh: GPtr<u8>, max_speed: GPtr<f3
     max_speed.write(if ge5(x_(ms), v) { v.to_f32() } else { ms });
 }
 
+use sa_core::bindings::world_clear_scan_codes;
+use sa_world::bindings::crt_floor;
 orig! {
-    /// CRT `floor(double)` (0x8219F0)
-    fn crt_floor(v: f64) -> f64 = cdecl 0x8219F0 => unported;
-    /// `CWorld::ClearScanCodes()` (0x563470)
-    fn world_clear_scan_codes() = cdecl 0x563470 => unported;
     /// `CCarCtrl::SlowCarDownForPedsSectorList` (0x425440)
     #[allow(clippy::too_many_arguments)]
     fn slow_car_down_for_peds_sector_list_call(list: GPtr<u8>, veh: GPtr<u8>, min_x: f32, min_y: f32, max_x: f32, max_y: f32, ms: GPtr<f32>, speed: f32) = cdecl 0x425440 => slow_car_down_for_peds_sector_list;
@@ -993,13 +985,11 @@ pub fn find_maximum_speed_for_this_car_in_traffic(veh: GPtr<u8>) -> X87 {
 // ---------------------------------------------------------------------------------------------------------
 // SteerAICarWithPhysics
 
+use crate::bindings::are_nodes_loaded_for_area;
+use crate::bindings::join_car_with_road_according_to_mission;
 orig! {
     /// `CCarCtrl::SwitchBetweenPhysicsAndGhost(CVehicle*)` (0x4222A0)
     fn switch_between_physics_and_ghost(v: GPtr<u8>) = cdecl 0x4222A0 => crate::carctrl2::switch_between_physics_and_ghost;
-    /// `CPathFind::AreNodesLoadedForArea(float x0, float x1, float y0, float y1)` (0x44DD10, thiscall on ThePaths)
-    fn are_nodes_loaded_for_area(this: GPtr<u8>, x0: f32, x1: f32, y0: f32, y1: f32) -> u8 = thiscall 0x44DD10 => crate::pathfind::are_nodes_loaded_for_area;
-    /// `CCarCtrl::JoinCarWithRoadAccordingToMission(CVehicle*)` (0x432CB0)
-    fn join_car_with_road_according_to_mission(v: GPtr<u8>) = cdecl 0x432CB0 => unported;
     /// `CCarCtrl::SteerAICarWithPhysics_OnlyMission(CVehicle*, float* steer, float* gas, float* brake, bool* handbrake)` (0x436A90)
     fn steer_only_mission(v: GPtr<u8>, steer: GPtr<f32>, gas: GPtr<f32>, brake: GPtr<f32>, hb: GPtr<u8>) = cdecl 0x436A90 => steer_ai_car_with_physics_only_mission;
     /// `CCarCtrl::FindMaxSteerAngle(CVehicle*)` (0x427FE0, ST0)
@@ -1682,10 +1672,7 @@ pub fn find_angle_to_weave_through_traffic(
     if ge5(a, b) { x_(rp.read()) } else { x_(lp.read()) }
 }
 
-orig! {
-    /// `CBaseModelInfo::SwaysInWind()` (stub 0x4212C0; the caller tests the whole EAX)
-    fn sways_in_wind(mi: GPtr<u8>) -> u32 = thiscall 0x4212C0 => unported;
-}
+use sa_stream::bindings::model_info_sways_in_wind as sways_in_wind;
 
 /// `CPlaceable::GetMatrix` inlined: allocate and update the matrix from the placement when there is none.
 fn ensure_matrix(e: GPtr<u8>) {
@@ -1951,10 +1938,7 @@ pub fn steer_ai_car_with_physics_trying_to_block_target(
     wr::<u8>(veh, 0x3BA, if m == 0x12 { 0x13 } else { 6 });
 }
 
-orig! {
-    /// `CPathNode::GetPosition(CVector* out)` (0x420A10, thiscall, `ret 4`)
-    fn path_node_get_position(node: GPtr<u8>, out: GPtr<f32>) -> GPtr<f32> = thiscall 0x420A10 => crate::pathfind::get_position;
-}
+use crate::bindings::get_position as path_node_get_position;
 
 /// `ThePaths.m_pPathNodes[area] + node * 0x1C` of a `CNodeAddress` dword (area low word, node high word).
 fn path_node(a: u32) -> GPtr<u8> {
@@ -2003,13 +1987,11 @@ pub fn find_ghost_road_height(veh: GPtr<u8>) -> X87 {
     x_(d1).fmul_m(z2).fadd(d2.fmul_m(z1)).fdiv(d2.fadd_m(d1))
 }
 
+use sa_core::bindings::tm_get_active_task as task_manager_get_active_task;
+use sa_world::bindings::vehicle_is_upside_down;
 orig! {
-    /// `CTaskManager::GetActiveTask()` (0x681720)
-    fn task_manager_get_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x681720 => unported;
     /// `CTask` vtable +0x10 (`GetTaskType`)
     fn task_get_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CVehicle::IsUpsideDown()` (0x6D1D90)
-    fn vehicle_is_upside_down(v: GPtr<u8>) -> u8 = thiscall 0x6D1D90 => unported;
     /// `CCarAI::TellOccupantsToLeaveCar(CVehicle*)` (0x41C760)
     fn tell_occupants_to_leave_car(v: GPtr<u8>) = cdecl 0x41C760 => unported;
 }
@@ -2107,21 +2089,17 @@ pub fn steer_ai_car_with_physics_trying_to_block_target_stop(
 // ---------------------------------------------------------------------------------------------------------
 // SteerAICarWithPhysicsFollowPath
 
+use crate::bindings::car_has_reason_to_stop;
+use crate::bindings::should_car_stop_for_bridge;
+use crate::bindings::should_car_stop_for_light;
+use crate::bindings::stop_car_if_nodes_are_invalid;
 orig! {
-    /// `CCarCtrl::StopCarIfNodesAreInvalid(CVehicle*)` (0x422590)
-    fn stop_car_if_nodes_are_invalid(v: GPtr<u8>) -> u8 = cdecl 0x422590 => crate::carctrl2::stop_car_if_nodes_are_invalid;
     /// `CCarCtrl::PickNextNodeAccordingStrategy(CVehicle*)` (0x432B10)
     fn pick_next_node_according_strategy(v: GPtr<u8>) -> u8 = cdecl 0x432B10 => crate::carctrl4::pick_next_node_according_strategy;
     /// `CWorld::FindPlayerCoors(CVector* out, int32)` (0x56E010)
     fn find_player_coors(out: GPtr<f32>, id: i32) -> GPtr<f32> = cdecl 0x56E010 => unported;
     /// `CCarCtrl::FindMaximumSpeedForThisCarInTraffic(CVehicle*)` (0x434400, ST0)
     fn find_maximum_speed_call(v: GPtr<u8>) -> f64 = cdecl 0x434400 => find_maximum_speed_abi;
-    /// `CTrafficLights::ShouldCarStopForLight(CVehicle*, bool)` (0x49D610)
-    fn should_car_stop_for_light(v: GPtr<u8>, ignore: u8) -> u8 = cdecl 0x49D610 => crate::misc2::should_car_stop_for_light;
-    /// `CTrafficLights::ShouldCarStopForBridge(CVehicle*)` (0x49D420)
-    fn should_car_stop_for_bridge(v: GPtr<u8>) -> u8 = cdecl 0x49D420 => crate::misc2::should_car_stop_for_bridge;
-    /// `CCarAI::CarHasReasonToStop(CVehicle*)` (0x41C050)
-    fn car_has_reason_to_stop(v: GPtr<u8>) = cdecl 0x41C050 => crate::carctrl::car_has_reason_to_stop;
     /// `operator-(const CVector&, const CVector&)` (0x40FE60, hidden result pointer first)
     fn vector_sub(out: GPtr<f32>, a: GPtr<f32>, b: GPtr<f32>) -> GPtr<f32> = cdecl 0x40FE60 => unported;
     /// `CVector::Magnitude()` (0x4082C0, ST0)
@@ -2662,11 +2640,10 @@ pub fn steer_ai_boat_with_physics_circling_player(
     hb.write(0);
 }
 
+use crate::bindings::fire_fixed_machine_guns;
 orig! {
     /// `CWorld::FindPlayerSpeed(int32)` (0x56E090, returns `CVector*`)
     fn find_player_speed(id: i32) -> GPtr<f32> = cdecl 0x56E090 => unported;
-    /// `CVehicle::FireFixedMachineGuns()` (0x73DF00)
-    fn fire_fixed_machine_guns(v: GPtr<u8>) = thiscall 0x73DF00 => unported;
 }
 
 /// `CCarCtrl::SteerAIBoatWithPhysicsAttackingPlayer(CVehicle* veh, float* steer, float* gas, float* brake,
@@ -2713,11 +2690,10 @@ pub fn steer_ai_boat_with_physics_attacking_player(
     }
 }
 
+use sa_world::bindings::get_vehicle_appearance;
 orig! {
     /// `CCarCtrl::FlyAIHeliToTarget_FixedOrientation(CHeli*, float orientation, CVector target, bool)` (0x423940)
     fn fly_ai_heli_to_target_fixed_orientation(v: GPtr<u8>, orient: f32, x: f32, y: f32, z: f32, b: u8) = cdecl 0x423940 => unported;
-    /// `CVehicle::GetVehicleAppearance()` (0x6D1080)
-    fn get_vehicle_appearance(v: GPtr<u8>) -> i32 = thiscall 0x6D1080 => unported;
     /// `CCarCtrl::TriggerDogFightMoves(CAutomobile*, CVehicle*)` (0x429300)
     fn trigger_dog_fight_moves_call(v: GPtr<u8>, t: GPtr<u8>) = cdecl 0x429300 => trigger_dog_fight_moves;
     /// `CCarCtrl::TestWhetherToFirePlaneGuns(CVehicle*, CEntity*)` (0x429520)
@@ -3302,24 +3278,19 @@ pub fn steer_ai_car_blocking_player_forward_and_back(
     brake.write(0.0);
 }
 
+use crate::bindings::fabsf;
+use sa_core::bindings::find_player_ped;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::mental_state_increment_anger as increment_anger;
 orig! {
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
     /// `CVector::MagnitudeSqr()` (0x406DA0, ST0)
     fn vector_magnitude_sqr(v: GPtr<f32>) -> f64 = thiscall 0x406DA0 => unported;
-    /// `fabsf` (0x406D10, ST0)
-    fn fabsf(v: f32) -> f64 = cdecl 0x406D10 => unported;
     /// The vehicle event constructor of 0x4AE1A0 (`(CVehicle*)`, `ret 4`; 0x18 bytes, vtable 0x85AE88, a
     /// registered reference to the vehicle at +0x14)
     fn event_vehicle_ctor(ev: GPtr<u8>, veh: GPtr<u8>) -> GPtr<u8> = thiscall 0x4AE1A0 => unported;
     /// Its destructor (0x4AE270)
     fn event_vehicle_dtor(ev: GPtr<u8>) = thiscall 0x4AE270 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, `ret 8`)
-    fn event_group_add(group: GPtr<u8>, ev: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// 0x421050 (`CMentalState::IncrementAnger`-like, thiscall on the ped's +0x47C, `ret 4`)
-    fn increment_anger(p: GPtr<u8>, n: i32) = thiscall 0x421050 => unported;
 }
 
 /// Constructs the 0x4AE1A0 vehicle event in a local, adds it to the ped's event group (+0x47C → +0x68)

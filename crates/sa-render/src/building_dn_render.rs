@@ -11,27 +11,20 @@ use sa_core::{hook, orig};
 
 use crate::common::{f32_of, ftol32, g, rd, xi};
 
+use crate::bindings::set_indices;
+use crate::bindings::set_texture;
+use crate::bindings::set_vertex_declaration;
+use sa_core::bindings::enable_clipping_if_needed;
+use sa_core::bindings::get_render_state;
+use sa_core::bindings::set_streams;
+use sa_core::bindings::vertex_alpha_enable;
 orig! {
-    /// `_rwD3D9EnableClippingIfNeeded(object, type)` (0x756D90)
-    fn enable_clipping_if_needed(object: GPtr<u8>, ty: u32) = cdecl 0x756D90 => unported;
-    /// `RwD3D9GetRenderState(state, void* value)` (0x7FC320)
-    fn get_render_state(state: u32, value: GPtr<u32>) = cdecl 0x7FC320 => unported;
     /// `RwD3D9SetRenderState(state, value)` (0x7FC2D0)
     fn set_render_state(state: u32, value: u32) -> u32 = cdecl 0x7FC2D0 => unported;
     /// `RwD3D9SetTextureStageState(stage, type, value)` (0x7FC340)
     fn set_tss(stage: u32, ty: u32, value: u32) = cdecl 0x7FC340 => unported;
-    /// `RwD3D9SetTexture(texture, stage)` (0x7FDE70)
-    fn set_texture(t: u32, stage: u32) -> u32 = cdecl 0x7FDE70 => unported;
-    /// `_rwD3D9SetIndices(ib)` (0x7FA1C0)
-    fn set_indices(ib: u32) = cdecl 0x7FA1C0 => unported;
-    /// `_rwD3D9SetStreams(streams, useOffsets)` (0x7FA090)
-    fn set_streams(streams: GPtr<u8>, use_offsets: u32) = cdecl 0x7FA090 => unported;
-    /// `_rwD3D9SetVertexDeclaration(decl)` (0x7F9F70)
-    fn set_vertex_declaration(decl: u32) = cdecl 0x7F9F70 => unported;
     /// `G->dOpenDevice.fpRenderStateSet(state, value)` (`[G] + 0x20`)
     fn rw_render_state_set(state: u32, value: u32) -> u32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `_rwD3D9RenderStateVertexAlphaEnable(enable)` (0x7FE0A0)
-    fn vertex_alpha_enable(on: u32) = cdecl 0x7FE0A0 => unported;
     /// `RwD3D9SetSurfaceProperties(surfaceProps, color, flags)` (0x7FC4D0)
     fn set_surface_properties(surf: GPtr<u8>, color: GPtr<u8>, flags: u32) -> u32 = cdecl 0x7FC4D0 => unported;
     /// `_rwD3D9SetPixelShader(shader)` (0x7F9FF0) / `_rwD3D9SetVertexShader(shader)` (0x7F9FB0)

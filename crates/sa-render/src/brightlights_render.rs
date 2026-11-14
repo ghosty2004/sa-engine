@@ -13,17 +13,14 @@ use sa_math::x87::X87;
 
 use crate::common::{ftol32, g, jp, k, rd, x, xi};
 
+use crate::bindings::bright_lights_render_out_geometry_buffer as render_out_geometry_buffer;
+use crate::bindings::rw_im3d_render_indexed_primitive;
+use crate::bindings::rw_im3d_transform;
 orig! {
     /// `RwRenderStateSet(state, value)` (`RwGlobals` +0x20)
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `CBrightLights::RenderOutGeometryBuffer()` (0x722150)
-    fn render_out_geometry_buffer() = cdecl 0x722150 => unported;
     /// `Common::LittleTest()` (0x541330)
     fn little_test() = cdecl 0x541330 => sa_core::common::little_test;
-    /// `RwIm3DTransform(verts, count, ltm, flags)` (0x7EF450)
-    fn rw_im3d_transform(verts: u32, count: u32, ltm: u32, flags: u32) -> GPtr<u8> = cdecl 0x7EF450 => unported;
-    /// `RwIm3DRenderIndexedPrimitive(primType, indices, numIndices)` (0x7EF550)
-    fn rw_im3d_render_indexed_primitive(prim: u32, indices: u32, n: u32) -> u32 = cdecl 0x7EF550 => unported;
     /// `RwIm3DEnd()` (0x7EF520)
     fn rw_im3d_end() -> u32 = cdecl 0x7EF520 => unported;
 }

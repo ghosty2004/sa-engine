@@ -9,21 +9,17 @@ use sa_math::x87::X87;
 
 use super::common::{rd, wr, x, xi};
 
+use crate::bindings::single_node_delete;
+use sa_core::bindings::crt_free_8214bd as crt_free;
+use sa_core::bindings::memory_free as memory_mgr_free;
+use sa_core::bindings::rw_matrix_destroy;
 orig! {
-    /// `RwMatrixDestroy(RwMatrix*)` (0x7F2A20)
-    fn rw_matrix_destroy(m: GPtr<u8>) -> i32 = cdecl 0x7F2A20 => unported;
-    /// `operator delete` of the 8-byte list nodes (0x552390)
-    fn single_node_delete(n: GPtr<u8>) = cdecl 0x552390 => unported;
     /// `RwMatrixUpdate(RwMatrix*)` (0x7F18A0)
     fn rw_matrix_update(m: GPtr<u8>) -> u32 = cdecl 0x7F18A0 => unported;
     /// `CCollision::RemoveTrianglePlanes(CCollisionData*)` (0x416400)
     fn remove_triangle_planes(d: GPtr<u8>) = cdecl 0x416400 => unported;
-    /// `CMemoryMgr::Free(void*)` (0x72F430)
-    fn memory_mgr_free(p: GPtr<u8>) = cdecl 0x72F430 => unported;
     /// `CCollisionData::RemoveCollisionVolumes()` (0x40F070)
     fn remove_collision_volumes(d: GPtr<u8>) = thiscall 0x40F070 => unported;
-    /// CRT `free` (0x8214BD)
-    fn crt_free(p: GPtr<u8>) = cdecl 0x8214BD => unported;
     /// CRT `operator new` (0x82119A)
     fn operator_new(n: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
     /// CRT `eh vector constructor iterator(void*, size, count, ctor, dtor)` (0x821D30, stdcall)

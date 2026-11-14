@@ -9,11 +9,10 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::bbox_planes_uncached;
 orig! {
     /// `CPedGeometryAnalyser::ComputeEntityBoundingBoxCornersUncached(float z, CEntity&, CVector* corners)` (0x5F1FA0, cdecl)
     fn bbox_corners_uncached(z: u32, e: GPtr<u8>, corners: GPtr<u8>) -> u8 = cdecl 0x5F1FA0 => unported;
-    /// `CPedGeometryAnalyser::ComputeEntityBoundingBoxPlanesUncached(float z, const CVector* corners, CVector* normals, float* ds)` (0x5F1670, cdecl)
-    fn bbox_planes_uncached(z: u32, corners: GPtr<u8>, normals: GPtr<u8>, ds: GPtr<u8>) = cdecl 0x5F1670 => unported;
     /// `CPedGeometryAnalyser::ComputeEntityBoundingBoxCentreUncached(float z, const CVector* corners, CVector& out)` (0x5F1600, cdecl)
     fn bbox_centre_uncached(z: u32, corners: GPtr<u8>, out: GPtr<u8>) = cdecl 0x5F1600 => unported;
 }

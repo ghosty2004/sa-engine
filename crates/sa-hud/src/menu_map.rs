@@ -157,70 +157,54 @@ fn local<T, const N: usize>(buf: &mut [T; N]) -> GPtr<T> {
     GPtr::from_raw(buf.as_mut_ptr())
 }
 
+use crate::bindings::display_helper_text_call;
+use crate::bindings::draw_blips_call;
+use crate::bindings::draw_window_call;
+use crate::bindings::font_set_drop_color;
+use crate::bindings::font_set_drop_shadow_position;
+use crate::bindings::font_set_right_justify_wrap;
+use crate::bindings::font_set_scale;
+use crate::bindings::font_set_wrapx;
+use crate::bindings::small_message_screen_call;
+use crate::bindings::transform_radar_point_to_screen_space_call;
+use crate::bindings::transform_real_world_point_to_radar_space_call;
+use sa_core::bindings::font_print_string;
+use sa_core::bindings::get_pad;
+use sa_core::bindings::rgba_ctor;
+use sa_world::bindings::switch_off_menu_call;
 orig! {
-    /// `CPad::GetPad(int32)` (0x53FB70; the result is unused by `PrintMap`)
-    fn get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
     /// `CRadar::InitFrontEndMap()` (0x585960)
     fn init_front_end_map_call() = cdecl 0x585960 => crate::radar_draw::init_front_end_map;
-    /// `CMenuSystem::SwitchOffMenu(uint8)` (0x580750)
-    fn switch_off_menu_call(menu: u32) = cdecl 0x580750 => unported;
     /// `FindPlayerCentreOfWorld_NoSniperShift(int32)` (0x56E320; returns a `CVector*`)
     fn find_player_centre_of_world_no_sniper_shift(id: i32) -> GPtr<u8> = cdecl 0x56E320 => sa_world::world::cworld::find_player_centre_of_world_no_sniper_shift;
-    /// `CRadar::TransformRealWorldPointToRadarSpace(CVector2D& out, const CVector2D& in)` (0x583530)
-    fn transform_real_world_point_to_radar_space_call(out: GPtr<f32>, inp: GPtr<f32>) = cdecl 0x583530 => crate::radar::transform_real_world_point_to_radar_space;
     /// `CRadar::LimitRadarPoint(CVector2D&)` (0x5832F0, ST0; discarded here)
     fn limit_radar_point_call_st0(p: GPtr<f32>) -> f64 = cdecl 0x5832F0 => limit_radar_point_st0_rust;
-    /// `CRadar::TransformRadarPointToScreenSpace(CVector2D& out, const CVector2D& in)` (0x583480; preserves EDX)
-    fn transform_radar_point_to_screen_space_call(out: GPtr<f32>, inp: GPtr<f32>) = cdecl 0x583480 => crate::radar::transform_radar_point_to_screen_space;
-    /// `CRGBA::CRGBA(r, g, b, a)` (0x7170C0)
-    fn rgba_ctor(this: GPtr<u8>, r: u32, gg: u32, bb: u32, a: u32) -> GPtr<u8> = thiscall 0x7170C0 => unported;
     /// `CSprite2d::DrawRect(const CRect&, const CRGBA&)` (0x727B60)
     fn sprite2d_draw_rect_static(rect: GPtr<f32>, colour: GPtr<u8>) = cdecl 0x727B60 => unported;
     /// `CSprite2d::Draw(const CRect&, const CRGBA&)` (0x728350)
     fn sprite2d_draw_rect(this: GPtr<u8>, rect: GPtr<f32>, colour: GPtr<u8>) = thiscall 0x728350 => unported;
-    /// `CMenuManager::SmallMessageScreen(const char*)` (0x574010)
-    fn small_message_screen_call(this: GPtr<u8>, key: GPtr<u8>) = thiscall 0x574010 => crate::menu_mgr::small_message_screen;
     /// `CRadar::DrawRadarSectionMap(int32 x, int32 y, CRect rect)` (0x586520; the rect by value)
     fn draw_radar_section_map_call(tx: i32, ty: i32, left: f32, bottom: f32, right: f32, top: f32) = cdecl 0x586520 => crate::radar_draw2::draw_radar_section_map;
     /// `CRadar::DrawRadarGangOverlay(bool inMenu)` (0x586650)
     fn draw_radar_gang_overlay_call(in_menu: u32) = cdecl 0x586650 => crate::radar_draw2::draw_radar_gang_overlay;
-    /// `CRadar::DrawBlips()` (0x588050)
-    fn draw_blips_call() = cdecl 0x588050 => crate::radar_draw2::draw_blips;
     /// `CPlaceName::GetForMap(float x, float y)` (0x571D90, `ret 8`; the original loads ECX = 0xBA18F4, which the
     /// callee does not read)
     fn place_name_get_for_map(px: u32, py: u32) -> GPtr<u8> = stdcall 0x571D90 => crate::place::get_for_map;
     /// `CTheZones::GetCurrentZoneLockedOrUnlocked(float x, float y)` (0x572130)
     fn zone_locked_or_unlocked(px: u32, py: u32) -> u8 = cdecl 0x572130 => unported;
-    /// `CMenuManager::DrawWindow(const CRect&, const char* key, uint8 colour, CRGBA back, bool unused, bool
-    /// background)` (0x573EE0, thiscall)
-    fn draw_window_call(this: GPtr<u8>, rect: GPtr<u8>, key: GPtr<u8>, colour: u32, back: u32, unused: u32, bg: u32) = thiscall 0x573EE0 => crate::menu_mgr::draw_window;
     /// `CRadar::DrawLegend(int32 x, int32 y, eRadarSprite)` (0x5828A0)
     fn draw_legend_call(px: i32, py: i32, sprite: i32) = cdecl 0x5828A0 => crate::radar_draw3::draw_legend;
     /// `CMenuSystem::Process(uint8 menu)` (0x582630)
     fn menu_system_process(menu: u32) = cdecl 0x582630 => crate::menu2::process;
-    /// `CMenuManager::DisplayHelperText(const char*)` (0x57E240)
-    fn display_helper_text_call(this: GPtr<u8>, key: GPtr<u8>) = thiscall 0x57E240 => crate::menu_mgr::display_helper_text;
 
     /// `CFont::SetFontStyle(eFontStyle)` (0x719490)
     fn font_set_font_style(v: u32) = cdecl 0x719490 => crate::font::set_font_style;
-    /// `CFont::SetWrapx(float)` (0x7194D0)
-    fn font_set_wrapx(v: u32) = cdecl 0x7194D0 => crate::font::set_wrapx;
-    /// `CFont::SetDropColor(CRGBA)` (0x719510)
-    fn font_set_drop_color(c: u32) = cdecl 0x719510 => crate::font::set_drop_color;
-    /// `CFont::SetScale(float w, float h)` (0x719380)
-    fn font_set_scale(w: u32, h: u32) = cdecl 0x719380 => crate::font::set_scale;
     /// `CFont::SetColor(CRGBA)` (0x719430)
     fn font_set_color(c: u32) = cdecl 0x719430 => crate::font::set_color;
     /// `CFont::SetEdge(int8)` (0x719590)
     fn font_set_edge(v: u32) = cdecl 0x719590 => crate::font::set_edge;
     /// `CFont::SetOrientation(eFontAlignment)` (0x719610)
     fn font_set_orientation(v: u32) = cdecl 0x719610 => crate::font::set_orientation;
-    /// `CFont::SetRightJustifyWrap(float)` (0x7194F0)
-    fn font_set_right_justify_wrap(v: u32) = cdecl 0x7194F0 => crate::font::set_right_justify_wrap;
-    /// `CFont::SetDropShadowPosition(int8)` (0x719570)
-    fn font_set_drop_shadow_position(v: u32) = cdecl 0x719570 => crate::font::set_drop_shadow_position;
-    /// `CFont::PrintString(float x, float y, const GxtChar*)` (0x71A700)
-    fn font_print_string(px: f32, py: f32, text: GPtr<u8>) = cdecl 0x71A700 => unported;
 }
 
 /// The Rust path of [`limit_radar_point_call_st0`] (phases B/C).

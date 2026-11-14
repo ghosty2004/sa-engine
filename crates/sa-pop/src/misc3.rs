@@ -11,26 +11,22 @@ use crate::common::{g, jne_mask, jp5, model_info, rd, wr, x, xi};
 /// Globals owned by this module: none.
 pub const GLOBALS: &[GlobalDesc] = &[];
 
+use sa_core::bindings::display_script_stat_update_message;
+use sa_core::bindings::matrix_dtor;
+use sa_core::bindings::stats_increment_stat as increment_stat;
+use sa_stream::bindings::find_player_wanted;
+use sa_world::bindings::find_objects_kinda_colliding;
+use sa_world::bindings::is_player_on_a_mission;
+use sa_world::bindings::set_char_created_by as ped_set_char_created_by;
 orig! {
-    /// `CTheScripts::IsPlayerOnAMission()` (0x464D50)
-    fn is_player_on_a_mission() -> u8 = cdecl 0x464D50 => unported;
     /// `CGangWars::EndGangWar(bool)` (0x4464C0; ported unhookable in misc2)
     fn end_gang_war(b: u32) = cdecl 0x4464C0 => crate::misc2::end_gang_war;
     /// `CGangWars::UpdateTerritoryUnderControlPercentage()` (0x443DE0)
     fn update_territory_under_control_percentage() = cdecl 0x443DE0 => crate::misc2::update_territory_under_control_percentage;
-    /// `CWorld::FindPlayerWanted(int32)` (0x56E230)
-    fn find_player_wanted(id: i32) -> GPtr<u8> = cdecl 0x56E230 => unported;
     /// `CWorld::FindPlayerVehicle(int32, bool)` (0x56E0D0)
     fn find_player_vehicle(id: i32, remote: u8) -> GPtr<u8> = cdecl 0x56E0D0 => sa_world::world::cworld::find_player_vehicle_port;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
-    /// `CWorld::FindObjectsKindaColliding(const CVector&, float, bool, int16*, int16, CEntity**, bool x5)` (0x568B80)
-    /// `CStats::IncrementStat(uint16, float)` (0x55C180)
-    fn increment_stat(id: u32, v: f32) = cdecl 0x55C180 => unported;
     /// `CStats::DecrementStat(uint16, float)` (0x559FA0; float as raw bits)
     fn decrement_stat(id: u16, v: u32) = cdecl 0x559FA0 => sa_world::world::stats::decrement_stat;
-    /// `CStats::DisplayScriptStatUpdateMessage(uint8, uint32, float)` (0x55B980)
-    fn display_script_stat_update_message(state: u32, stat: u32, v: f32) = cdecl 0x55B980 => unported;
     /// `CWorld::FindPlayerPed(int32)` (0x56E210)
     fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
     /// `CPedGroupMembership::IsMember(CPed*)` (0x5F6A10)
@@ -45,9 +41,6 @@ orig! {
     fn add_kill_to_provocation(pt: i32) = cdecl 0x443950 => crate::misc2::add_kill_to_provocation;
     /// `CPopCycle::PlayerKilledADealer()` (0x610490)
     fn player_killed_a_dealer() = cdecl 0x610490 => crate::population2::player_killed_a_dealer;
-    /// `CPed::SetCharCreatedBy(uint8)` (0x5E47E0, `ret 4`)
-    fn ped_set_char_created_by(ped: GPtr<u8>, by: u32) = thiscall 0x5E47E0 => unported;
-    fn find_objects_kinda_colliding(pos: GPtr<f32>, r: f32, b2d: u32, cnt: GPtr<i16>, max: i32, out: GPtr<u32>, bld: u32, veh: u32, ped: u32, obj: u32, dum: u32) = cdecl 0x568B80 => unported;
 }
 
 use sa_world::world::common::entity_pos_f as entity_pos;
@@ -170,45 +163,35 @@ pub fn check_for_blockage(this: GPtr<u8>, model: i32) -> u8 {
     0
 }
 
+use sa_core::bindings::add_big_message;
+use sa_core::bindings::ascii_to_gxt_char;
+use sa_core::bindings::font_print_string;
+use sa_core::bindings::font_set_background;
+use sa_core::bindings::font_set_color;
+use sa_core::bindings::font_set_edge;
+use sa_core::bindings::font_set_font_style;
+use sa_core::bindings::font_set_orientation;
+use sa_core::bindings::font_set_proportional;
+use sa_core::bindings::text_get;
 orig! {
-    /// `CMessages::AddBigMessage(const GxtChar*, uint32, eMessageStyle)` (0x69F2B0)
-    fn add_big_message(text: GPtr<u8>, time: u32, style: u32) = cdecl 0x69F2B0 => unported;
-    /// `CText::Get(const char*)` (0x6A0050, on `TheText` 0xC1B340)
-    fn text_get(this: GPtr<u8>, key: GPtr<u8>) -> GPtr<u8> = thiscall 0x6A0050 => unported;
-    /// `CFont::SetProportional(bool)` (0x7195B0)
-    fn font_set_proportional(b: u32) = cdecl 0x7195B0 => unported;
-    /// `CFont::SetBackground(bool, bool)` (0x7195C0)
-    fn font_set_background(a: u32, b: u32) = cdecl 0x7195C0 => unported;
     /// `CFont::SetScale(float, float)` (0x719380)
     fn font_set_scale(w: f32, h: f32) = cdecl 0x719380 => unported;
-    /// `CFont::SetOrientation(eFontAlignment)` (0x719610)
-    fn font_set_orientation(o: u32) = cdecl 0x719610 => unported;
     /// `CFont::SetRightJustifyWrap(float)` (0x7194F0)
     fn font_set_right_justify_wrap(v: u32) = cdecl 0x7194F0 => unported;
-    /// `CFont::SetFontStyle(eFontStyle)` (0x719490)
-    fn font_set_font_style(s: u32) = cdecl 0x719490 => unported;
     /// `CFont::SetWrapx(float)` (0x7194D0)
     fn font_set_wrapx(v: f32) = cdecl 0x7194D0 => unported;
-    /// `CFont::SetEdge(int8)` (0x719590)
-    fn font_set_edge(v: u32) = cdecl 0x719590 => unported;
     /// `CRGBA::CRGBA(uint8, uint8, uint8, uint8)` (0x7170C0)
     fn rgba_ctor(this: GPtr<u32>, r: u32, gg: u32, b: u32, a: u32) -> GPtr<u32> = thiscall 0x7170C0 => unported;
     /// `CFont::SetDropColor(CRGBA)` (0x719510)
     fn font_set_drop_color(c: u32) = cdecl 0x719510 => unported;
     /// `CHudColours::GetRGB(CRGBA* out, uint8)` (0x58FEA0, on `HudColour` 0xBAB22C)
     fn hud_colours_get_rgb(this: GPtr<u8>, out: GPtr<u32>, colour: u32) -> GPtr<u32> = thiscall 0x58FEA0 => unported;
-    /// `CFont::SetColor(CRGBA)` (0x719430)
-    fn font_set_color(c: u32) = cdecl 0x719430 => unported;
     /// `CHud::GetYPosBasedOnHealth(uint8, float, int8)` (0x588B60, ST0)
     fn get_y_pos_based_on_health(player: u32, y: f32, offset: u32) -> f64 = cdecl 0x588B60 => unported;
     /// CRT `sprintf` (0x821BB5) with two int arguments
     fn sprintf2(buf: GPtr<u8>, fmt: GPtr<u8>, a: u32, b: u32) -> i32 = cdecl 0x821BB5 => unported;
     /// CRT `sprintf` (0x821BB5) with one int argument
     fn sprintf1(buf: GPtr<u8>, fmt: GPtr<u8>, a: u32) -> i32 = cdecl 0x821BB5 => unported;
-    /// `AsciiToGxtChar(const char*, GxtChar*)` (0x718600)
-    fn ascii_to_gxt_char(s: GPtr<u8>, out: GPtr<u8>) = cdecl 0x718600 => unported;
-    /// `CFont::PrintString(float, float, const GxtChar*)` (0x71A700)
-    fn font_print_string(px: f32, py: f32, text: GPtr<u8>) = cdecl 0x71A700 => unported;
 }
 
 /// `GetYPosBasedOnHealth(1, GetYPosBasedOnHealth(focusPlayer, y, 12), 12)` stored f32 (the first result is the
@@ -389,63 +372,48 @@ pub fn register_kill_by_player(ped: GPtr<u8>, weapon: i32, head_shot: u8, player
     }
 }
 
+use crate::bindings::boat_ctor;
+use crate::bindings::find_node_closest_to_coors;
+use crate::bindings::set_up_driver_and_passengers_for_vehicle;
+use crate::bindings::train_ctor;
+use sa_core::bindings::general_random_int_in_range as random_int_in_range;
+use sa_core::bindings::world_add;
+use sa_stream::bindings::is_boat_model;
+use sa_stream::bindings::pick_random_car;
+use sa_stream::bindings::set_custom_car_plate_text;
+use sa_world::bindings::automobile_ctor;
+use sa_world::bindings::bike_ctor;
+use sa_world::bindings::bmx_ctor;
+use sa_world::bindings::get_distance_from_centre_of_mass_to_base_of_model;
+use sa_world::bindings::get_zone_info;
+use sa_world::bindings::heli_ctor;
+use sa_world::bindings::monster_truck_ctor;
+use sa_world::bindings::plane_ctor;
+use sa_world::bindings::quad_bike_ctor;
+use sa_world::bindings::set_clump_alpha;
+use sa_world::bindings::set_posn as placeable_set_posn;
+use sa_world::bindings::trailer_ctor;
+use sa_world::bindings::vehicle_new;
+use sa_world::bindings::vehicle_set_created_by;
 orig! {
     /// `CWorld::FindPlayerCoors(CVector* out, int32)` (0x56E010)
     fn find_player_coors_out(out: GPtr<f32>, id: i32) -> GPtr<f32> = cdecl 0x56E010 => unported;
-    /// `CTheZones::GetZoneInfo(const CVector&, CZone**)` (0x572400)
-    fn get_zone_info(p: GPtr<f32>, out: GPtr<GPtr<u8>>) -> GPtr<u8> = cdecl 0x572400 => sa_world::world::zones::get_zone_info;
-    /// `CLoadedCarGroup::PickRandomCar(bool, bool)` (0x611C50, `ret 8`)
-    fn pick_random_car(this: GPtr<u8>, a: u32, b: u32) -> i32 = thiscall 0x611C50 => unported;
     /// `CCarGenerator::CheckForBlockage(int32)` (0x6F32E0)
     fn check_for_blockage_call(this: GPtr<u8>, model: i32) -> u8 = thiscall 0x6F32E0 => check_for_blockage;
     /// `CStreaming::RequestModel(int32, int32)` (0x4087E0)
     fn request_model(m: i32, flags: i32) = cdecl 0x4087E0 => sa_stream::streaming::request_model;
-    /// `CModelInfo::IsBoatModel(int32)` (0x4C5A70)
-    fn is_boat_model(id: i32) -> bool = cdecl 0x4C5A70 => sa_stream::modelinfo::model_info::is_boat_model;
     /// `CWorld::ProcessVerticalLine(const CVector&, float, CColPoint&, CEntity*&, bool x6, CStoredCollPoly*)` (0x5674E0)
     fn process_vertical_line(o: GPtr<f32>, z: f32, cp: GPtr<u8>, ent: GPtr<u32>, b: u32, v: u32, p: u32, ob: u32, d: u32, see: u32, poly: u32) -> u8 = cdecl 0x5674E0 => unported;
     /// `CSpecialPlateHandler::Find(int32 index, char* out)` (0x6F2D30, `ret 8`)
     fn special_plate_find(this: GPtr<u8>, index: u32, out: GPtr<u8>) -> i32 = thiscall 0x6F2D30 => unported;
-    /// `CVehicleModelInfo::SetCustomCarPlateText(char*)` (0x4C8980, `ret 4`)
-    fn set_custom_car_plate_text(mi: GPtr<u8>, text: GPtr<u8>) = thiscall 0x4C8980 => unported;
-    /// `CVehicle::operator new(uint32)` (0x6E2D50)
-    fn vehicle_new(size: u32) -> GPtr<u8> = cdecl 0x6E2D50 => unported;
-    /// vehicle constructors `(int32 model, uint8 createdBy)` (`ret 8`)
-    fn monster_truck_ctor(this: GPtr<u8>, mi: i32, by: u32) -> GPtr<u8> = thiscall 0x6C8D60 => unported;
-    fn quad_bike_ctor(this: GPtr<u8>, mi: i32, by: u32) -> GPtr<u8> = thiscall 0x6CE370 => unported;
-    fn heli_ctor(this: GPtr<u8>, mi: i32, by: u32) -> GPtr<u8> = thiscall 0x6C4190 => unported;
-    fn plane_ctor(this: GPtr<u8>, mi: i32, by: u32) -> GPtr<u8> = thiscall 0x6C8E20 => unported;
-    fn boat_ctor(this: GPtr<u8>, mi: i32, by: u32) -> GPtr<u8> = thiscall 0x6F2940 => unported;
-    fn train_ctor(this: GPtr<u8>, mi: i32, by: u32) -> GPtr<u8> = thiscall 0x6F6030 => unported;
-    fn bike_ctor(this: GPtr<u8>, mi: i32, by: u32) -> GPtr<u8> = thiscall 0x6BF430 => unported;
-    fn bmx_ctor(this: GPtr<u8>, mi: i32, by: u32) -> GPtr<u8> = thiscall 0x6BF820 => unported;
-    fn trailer_ctor(this: GPtr<u8>, mi: i32, by: u32) -> GPtr<u8> = thiscall 0x6D03A0 => unported;
-    /// `CAutomobile::CAutomobile(int32, uint8, bool)` (0x6B0A90, `ret 0xC`)
-    fn automobile_ctor(this: GPtr<u8>, mi: i32, by: u32, setup: u32) -> GPtr<u8> = thiscall 0x6B0A90 => unported;
-    /// `CEntity::GetDistanceFromCentreOfMassToBaseOfModel()` (0x536BE0, ST0)
-    fn get_distance_from_centre_of_mass_to_base_of_model(e: GPtr<u8>) -> f64 = thiscall 0x536BE0 => unported;
     /// `CVehicle::SetCollisionLighting(tColLighting)` (0x6D0CA0, `ret 4`)
     fn vehicle_set_collision_lighting(v: GPtr<u8>, l: u32) = thiscall 0x6D0CA0 => unported;
     /// `CWorld::FindGroundZForCoord(float, float)` (0x569660, ST0)
     fn find_ground_z_for_coord(x: f32, y: f32) -> f64 = cdecl 0x569660 => unported;
     /// `CEntity` vtable slot 0x10 with one argument (0)
     fn entity_vslot_10(e: GPtr<u8>, a: u32) = thiscall vslot 0x10 => unported;
-    /// `CPlaceable::SetPosn(float, float, float)` (0x420B80, `ret 0xC`)
-    fn placeable_set_posn(e: GPtr<u8>, x: f32, y: f32, z: f32) = thiscall 0x420B80 => unported;
     /// `CPlaceable::SetOrientation(float, float, float)` (0x439A80, `ret 0xC`)
     fn placeable_set_orientation(e: GPtr<u8>, xr: f32, yr: f32, zr: f32) = thiscall 0x439A80 => unported;
-    /// `CPathFind::FindNodeClosestToCoors(CNodeAddress*, CVector, ...)` (0x44F460, `ret 0x2C`)
-    fn find_node_closest_to_coors(this: GPtr<u8>, out: GPtr<u32>, px: f32, py: f32, pz: f32, node_type: u32, max_dist: f32, low_traffic: u32, unused: u32, unkn: u32, boats: u32, ignore_interior: u32) -> GPtr<u32> = thiscall 0x44F460 => crate::pathfind::find_node_closest_to_coors;
-    /// `CVehicle::SetVehicleCreatedBy(int32)` (0x6D5D70, `ret 4`)
-    fn vehicle_set_created_by(veh: GPtr<u8>, by: i32) = thiscall 0x6D5D70 => unported;
-    /// `CWorld::Add(CEntity*)` (0x563220)
-    fn world_add(e: GPtr<u8>) = cdecl 0x563220 => unported;
-    /// `CCarCtrl::SetUpDriverAndPassengersForVehicle(CVehicle*, int32, int32, bool, bool, int32)` (0x4217C0)
-    fn set_up_driver_and_passengers_for_vehicle(veh: GPtr<u8>, pt: i32, min: i32, a: u32, b: u32, max: i32) = cdecl 0x4217C0 => crate::carctrl2::set_up_driver_and_passengers_for_vehicle;
-    /// `CGeneral::GetRandomNumberInRange(int32, int32)` (0x407180)
-    fn random_int_in_range(min: i32, max: i32) -> i32 = cdecl 0x407180 => unported;
-    /// `CVisibilityPlugins::SetClumpAlpha(RpClump*, int32)` (0x732B00)
-    fn set_clump_alpha(clump: GPtr<u8>, alpha: i32) = cdecl 0x732B00 => unported;
 }
 
 /// `CStreaming::ms_aInfoForModel[mi].m_nLoadState == LOADSTATE_LOADED` (0x8E4CC0 + 0x10, stride 0x14).

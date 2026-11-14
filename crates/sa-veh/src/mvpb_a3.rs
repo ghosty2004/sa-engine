@@ -9,11 +9,9 @@ use sa_math::x87::X87;
 
 use crate::common::{f32_of, g, rd, wr, x, xi};
 
+use crate::bindings::vehicle_render;
+use sa_core::bindings::matrix_mul_vec;
 orig! {
-    /// `CVehicle::Render()` (0x6D0E60)
-    fn vehicle_render(v: GPtr<u8>) = thiscall 0x6D0E60 => crate::vehicle2::render;
-    /// `operator*(const CMatrix&, const CVector&)` (0x59C890, returns the out pointer)
-    fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
     /// `CVector::NormaliseAndMag()` (0x59C970, ST0)
     fn normalise_and_mag(v: GPtr<u8>) -> f32 = thiscall 0x59C970 => unported;
     /// `CCoronas::RegisterCorona(...)` (0x6FC580, 21 arguments)
@@ -314,21 +312,17 @@ pub fn do_head_light_effect(this: GPtr<u8>, id: i32, mat: GPtr<u8>, right: u8, f
     1
 }
 
+use sa_core::bindings::rw_frame_update_objects;
+use sa_stream::bindings::get_first_object;
+use sa_world::bindings::entity_get_col_model as get_col_model;
+use sa_world::bindings::rw_matrix_translate;
 orig! {
     /// `RwEngineInstance->fpRenderStateGet(state, void*)` (`[0xC97B24] + 0x24`)
     fn rw_render_state_get(state: u32, out: GPtr<u32>) -> u32 = cdecl table 0xC97B24 0x24 => unported;
     /// `RwEngineInstance->fpRenderStateSet(state, value)` (`[0xC97B24] + 0x20`)
     fn rw_render_state_set(state: u32, v: u32) -> u32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `RwHelper::GetFirstObject(RwFrame*)` (0x7348C0)
-    fn get_first_object(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7348C0 => unported;
     /// `atomic->renderCallBack(atomic)` (the pointer at RpAtomic +0x48)
     fn atomic_render_callback(f: u32, a: GPtr<u8>) -> GPtr<u8> = cdecl dyn => unported;
-    /// `CEntity::GetColModel()` (0x535300)
-    fn get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => unported;
-    /// `RwMatrixTranslate(RwMatrix*, const RwV3d*, RwOpCombineType)` (0x7F2450)
-    fn rw_matrix_translate(m: GPtr<u8>, v: GPtr<u8>, combine: u32) -> GPtr<u8> = cdecl 0x7F2450 => unported;
-    /// `RwFrameUpdateObjects(RwFrame*)` (0x7F0910)
-    fn rw_frame_update_objects(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0910 => unported;
     /// `CVehicle::GetVehicleAppearance()` (0x6D1080)
     fn get_vehicle_appearance(v: GPtr<u8>) -> u32 = thiscall 0x6D1080 => unported;
     /// `CVehicle::DoHeadLightBeam(int32 lightId, CMatrix&, bool isRight)` (0x6E0E20)

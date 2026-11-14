@@ -4,14 +4,11 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::rd;
 
-orig! {
-    /// `CKeyGen::GetUppercaseKey(const char*)` (0x53CF30)
-    fn get_uppercase_key(s: GPtr<u8>) -> u32 = cdecl 0x53CF30 => unported;
-}
+use sa_core::bindings::get_uppercase_key;
 
 /// `RwTexDictionaryFindHashNamedTexture(RwTexDictionary*, uint32 hash)` (0x734E50, cdecl): walks the dictionary's
 /// texture list (head at +8, each texture linked at its +8) and returns the first texture whose name (+0x10) has

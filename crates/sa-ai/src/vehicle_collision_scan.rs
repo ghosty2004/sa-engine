@@ -8,27 +8,19 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::dtor_4ae3c0 as event_walk_into_vehicle_dtor;
+use crate::bindings::geometry_line_of_sight_clear;
+use crate::bindings::intel_get_move_state_from_go_to_task;
+use crate::bindings::task_is_go_to_task;
+use sa_core::bindings::tm_get_simplest_active_task;
+use sa_world::bindings::entity_get_col_model;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::vector_magnitude_sqr as vector_squared_magnitude;
 orig! {
-    /// `CTaskManager::GetSimplestActiveTask()` (0x6819D0)
-    fn tm_get_simplest_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x6819D0 => unported;
-    /// `CTask::IsGoToTask(CTask*)` (0x61A360)
-    fn task_is_go_to_task(t: GPtr<u8>) -> u8 = cdecl 0x61A360 => unported;
-    /// `CEntity::GetColModel()` (0x535300)
-    fn entity_get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => unported;
     /// `CVector::FromMultiply(const CMatrix&, const CVector&)` (0x59C670, `ret 8`)
     fn vector_from_multiply(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) = thiscall 0x59C670 => unported;
-    /// `CVector::SquaredMagnitude()` (0x406DA0, ST0)
-    fn vector_squared_magnitude(v: GPtr<u8>) -> f64 = thiscall 0x406DA0 => unported;
-    /// `CPedGeometryAnalyser::GetIsLineOfSightClear(const CPed&, const CVector&, CEntity&, float& dist)` (0x5F5A30)
-    fn geometry_line_of_sight_clear(ped: GPtr<u8>, target: GPtr<u8>, e: GPtr<u8>, dist: GPtr<u8>) -> u8 = cdecl 0x5F5A30 => unported;
-    /// `CPedIntelligence::GetMoveStateFromGoToTask()` (0x601D70)
-    fn intel_get_move_state_from_go_to_task(i: GPtr<u8>) -> u32 = thiscall 0x601D70 => unported;
     /// `CEventPotentialWalkIntoVehicle::CEventPotentialWalkIntoVehicle(CVehicle*, int32 moveState)` (0x4AE320, `ret 8`)
     fn event_walk_into_vehicle_ctor(e: GPtr<u8>, v: GPtr<u8>, ms: u32) -> GPtr<u8> = thiscall 0x4AE320 => unported;
-    /// `CEventPotentialWalkIntoVehicle::~CEventPotentialWalkIntoVehicle()` (0x4AE3C0)
-    fn event_walk_into_vehicle_dtor(e: GPtr<u8>) = thiscall 0x4AE3C0 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, `ret 8`)
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
 }
 
 /// `CTimer::m_snTimeInMilliseconds` (0xB7CB84)

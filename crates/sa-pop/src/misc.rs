@@ -35,29 +35,22 @@ sa_core::globals! {
 /// `CCheat::m_aCheatsActive` entry 0x1E ("all traffic lights green"), 0x96914E (sa-world's cheat table)
 const CHEAT_GREEN_LIGHTS: usize = 0x96914E;
 
+pub use crate::bindings::deal_with_weapon_change_at_end_of_frenzy;
+pub use sa_core::bindings::entity_register_reference as register_reference;
+pub use sa_core::bindings::get_atan_of_xy;
+pub use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
+pub use sa_stream::bindings::simple_transform_update_matrix as update_matrix;
+pub use sa_world::bindings::la_riots_active_here;
+pub use sa_world::bindings::set_user_value;
 orig! {
     /// `CHud::SetHelpMessage(const char*, bool, bool, bool)` (0x588BE0)
     pub fn hud_set_help_message(text: GPtr<u8>, quick: u8, permanent: u8, add_to_brief: u8) = cdecl 0x588BE0 => unported;
-    /// `CDarkel::DealWithWeaponChangeAtEndOfFrenzy()` (0x43D7A0)
-    pub fn deal_with_weapon_change_at_end_of_frenzy() = cdecl 0x43D7A0 => unported;
     /// `CDarkel::FrenzyOnGoing()` (0x43D1F0)
     pub fn frenzy_on_going_call() -> u8 = cdecl 0x43D1F0 => frenzy_on_going;
-    /// `CVisibilityPlugins::SetUserValue(RpAtomic*, uint16)` (0x732380)
-    pub fn set_user_value(atomic: GPtr<u8>, v: u32) = cdecl 0x732380 => unported;
-    /// `CGameLogic::LaRiotsActiveHere()` (0x441C10)
-    pub fn la_riots_active_here() -> u8 = cdecl 0x441C10 => unported;
     /// virtual slot 9 (`GetModelType`) of a `CBaseModelInfo`
     pub fn model_info_get_type(mi: GPtr<u8>) -> i32 = thiscall vslot 0x24 => unported;
     /// virtual slot 1 (`AsAtomicModelInfoPtr`) of a `CBaseModelInfo`
     pub fn model_info_as_atomic(mi: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x4 => unported;
-    /// `CPlaceable::AllocateMatrix()` (0x54F560)
-    pub fn allocate_matrix(e: GPtr<u8>) = thiscall 0x54F560 => unported;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*)` (0x54F1B0)
-    pub fn update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => unported;
-    /// `CGeneral::GetATanOfXY(float, float)` (0x53CC70)
-    pub fn get_atan_of_xy(x: f32, y: f32) -> f64 = cdecl 0x53CC70 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    pub fn register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
 }
 
 fn frenzy_active() -> bool {

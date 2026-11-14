@@ -61,74 +61,47 @@ const RC_DETONATE_DISABLED: usize = 0xC1CC00;
 /// `.rdata` 0x8595EC: 0.017453292f (degrees to radians)
 const K_DEG2RAD: u32 = 0x3C8E_FA35;
 
+use crate::bindings::tell_heli_to_go_to_coors;
+use crate::bindings::vehicle_get_ref as vehicle_pool_ref_424160;
+use sa_core::bindings::entity_update_rw_frame as update_rw_frame;
+use sa_core::bindings::get_pad;
+use sa_core::bindings::ped_clear_weapons as clear_weapons;
+use sa_core::bindings::ped_is_alive;
+use sa_core::bindings::text_get;
+use sa_world::bindings::attach_ped_to_entity;
+use sa_world::bindings::can_ped_target_ped;
+use sa_world::bindings::dettach_ped_from_entity;
+use sa_world::bindings::disable_ped_speech;
+use sa_world::bindings::enable_ped_speech;
+use sa_world::bindings::find_ground_z_for_coord;
+use sa_world::bindings::generate_new_one;
+use sa_world::bindings::get_actual_pickup_index;
+use sa_world::bindings::get_engine_status;
+use sa_world::bindings::get_pad_from_player;
+use sa_world::bindings::get_vehicle_appearance;
+use sa_world::bindings::membership_is_leader;
+use sa_world::bindings::pad_get_target;
+use sa_world::bindings::ped_groups_get_peds_group as get_peds_group;
+use sa_world::bindings::pickup_get_posn;
+use sa_world::bindings::update_rw_matrix;
 orig! {
     /// `CCamera::SetParametersForScriptInterpolation(float stopMoving, float catchUp, uint32 time)` (0x50C030);
     /// the floats as raw dwords
     fn set_parameters_for_script_interpolation(cam: GPtr<u8>, stop: u32, catch_up: u32, time: u32) = thiscall 0x50C030 => unported;
-    /// `CPed::DettachPedFromEntity()` (0x5E7EC0)
-    fn dettach_ped_from_entity(p: GPtr<u8>) = thiscall 0x5E7EC0 => unported;
     /// `CRunningScript::LocateCharObjectCommand(int32 command)` (0x487720)
     fn locate_char_object_command(s: Scr, command: u32) = thiscall 0x487720 => unported;
-    /// Unnamed thiscall on the vehicle pool taking the vehicle (0x424160, a `.HOODLUM` stub; the handle
-    /// GET_REMOTE_CONTROLLED_CAR stores, i.e. `CPool<CVehicle>::GetRef`)
-    fn vehicle_pool_ref_424160(pool: GPtr<u8>, v: GPtr<u8>) -> i32 = thiscall 0x424160 => unported;
-    /// `CPed::ClearWeapons()` (0x5E6320)
-    fn clear_weapons(p: GPtr<u8>) = thiscall 0x5E6320 => unported;
-    /// `CVehicle::GetVehicleAppearance()` (0x6D1080)
-    fn get_vehicle_appearance(v: GPtr<u8>) -> i32 = thiscall 0x6D1080 => unported;
     /// `CPlaceable::SetOrientation(float x, float y, float z)` (0x439A80)
     fn set_orientation(e: GPtr<u8>, x: f32, y: f32, z: f32) = thiscall 0x439A80 => unported;
-    /// `CEntity::UpdateRwMatrix()` (0x446F90)
-    fn update_rw_matrix(e: GPtr<u8>) = thiscall 0x446F90 => unported;
-    /// `CEntity::UpdateRwFrame()` (0x532B00)
-    fn update_rw_frame(e: GPtr<u8>) = thiscall 0x532B00 => unported;
-    /// `CPlayerPed::GetPadFromPlayer()` (0x609560)
-    fn get_pad_from_player(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x609560 => unported;
-    /// `CPad::GetTarget()` (0x540670), AL
-    fn pad_get_target(pad: GPtr<u8>) -> u8 = thiscall 0x540670 => unported;
-    /// `CText::Get(const char* key)` (0x6A0050)
-    fn text_get(t: GPtr<u8>, key: GPtr<u8>) -> GPtr<u8> = thiscall 0x6A0050 => unported;
-    /// `CPed::AttachPedToEntity(CEntity*, CVector offset, uint16 position, float angleLimit, eWeaponType)`
-    /// (0x5E7CB0); the vector and float as raw dwords
-    fn attach_ped_to_entity(p: GPtr<u8>, e: GPtr<u8>, x: u32, y: u32, z: u32, pos: u32, angle: u32, weapon: u32) = thiscall 0x5E7CB0 => unported;
-    /// `CPedGroups::GetPedsGroup(const CPed*)` (0x5F7E80)
-    fn get_peds_group(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x5F7E80 => unported;
-    /// `CPedGroupMembership::IsLeader(const CPed*)` (0x5F69C0), AL
-    fn membership_is_leader(m: GPtr<u8>, p: GPtr<u8>) -> u8 = thiscall 0x5F69C0 => unported;
     /// `CPedGroupMembership::CountMembersExcludingLeader()` (0x5F6AA0), AL
     fn count_members_excluding_leader(m: GPtr<u8>) -> u8 = thiscall 0x5F6AA0 => unported;
-    /// `CWorld::FindGroundZForCoord(float, float)` (0x569660), floats as raw dwords, ST0 (exact as f64)
-    fn find_ground_z_for_coord(x: u32, y: u32) -> f64 = cdecl 0x569660 => unported;
     /// `CRemote::GivePlayerRemoteControlledCar(float x, float y, float z, float angle, uint16 model)` (0x45AB10)
     fn give_player_remote_controlled_car(x: u32, y: u32, z: u32, angle: u32, model: u32) = cdecl 0x45AB10 => unported;
-    /// `CPed::IsAlive()` (0x5E0170), AL
-    fn ped_is_alive(p: GPtr<u8>) -> u8 = thiscall 0x5E0170 => unported;
-    /// `CPedGeometryAnalyser::CanPedTargetPed(CPed&, CPed&, bool)` (0x5F1C40), AL
-    fn can_ped_target_ped(a: GPtr<u8>, b: GPtr<u8>, c: u32) -> u8 = cdecl 0x5F1C40 => unported;
-    /// `CPed::DisablePedSpeech(bool)` (0x5EFF60)
-    fn disable_ped_speech(p: GPtr<u8>, stop_now: u32) = thiscall 0x5EFF60 => unported;
-    /// `CPed::EnablePedSpeech()` (0x5EFF70)
-    fn enable_ped_speech(p: GPtr<u8>) = thiscall 0x5EFF70 => unported;
-    /// `CPickup::GetPosn()` (0x4549A0), the vector returned through the hidden pointer
-    fn pickup_get_posn(p: GPtr<u8>, out: GPtr<u32>) -> GPtr<u32> = thiscall 0x4549A0 => unported;
     /// `CVector::Magnitude()` (0x4082C0), ST0 (an FSQRT result under PC=24: exact as f64)
     fn vector_magnitude(v: GPtr<u32>) -> f64 = thiscall 0x4082C0 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    fn get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CDamageManager::GetEngineStatus()` (0x6C22C0)
-    fn get_engine_status(dm: GPtr<u8>) -> u32 = thiscall 0x6C22C0 => unported;
     /// `CDamageManager::GetWheelStatus(int32)` (0x6C21B0)
     fn get_wheel_status(dm: GPtr<u8>, w: u32) -> u32 = thiscall 0x6C21B0 => unported;
-    /// `CAutomobile::TellHeliToGoToCoors(float x, float y, float z, float altMin, float altMax)` (0x6A2390),
-    /// floats as raw dwords
-    fn tell_heli_to_go_to_coors(v: GPtr<u8>, x: u32, y: u32, z: u32, a: u32, b: u32) = thiscall 0x6A2390 => unported;
     /// `CPed::CreateDeadPedPickupCoors(float&, float&, float&)` (0x459180)
     fn create_dead_ped_pickup_coors(p: GPtr<u8>, x: GPtr<u32>, y: GPtr<u32>, z: GPtr<u32>) = thiscall 0x459180 => unported;
-    /// `CPickups::GetActualPickupIndex(int32)` (0x4552A0), result discarded
-    fn get_actual_pickup_index(h: i32) -> i32 = cdecl 0x4552A0 => unported;
-    /// `CPickups::GenerateNewOne(CVector, uint32 model, ePickupType, uint32 ammo, uint32 moneyPerDay,
-    /// bool isEmpty, const char* message)` (0x456F20)
-    fn generate_new_one(x: u32, y: u32, z: u32, model: u32, ty: u32, ammo: u32, money: u32, empty: u32, msg: u32) -> i32 = cdecl 0x456F20 => unported;
 }
 
 /// The two DISPLAY_TEXT_WITH_*NUMBER* cases (0x48A5B5 / 0x48A660): CollectParameters(2) (x, y);

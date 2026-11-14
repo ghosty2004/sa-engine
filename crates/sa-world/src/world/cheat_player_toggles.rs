@@ -8,27 +8,27 @@ use sa_core::{hook, orig};
 
 use super::common::{g, rd, wr, xi};
 
+use crate::bindings::event_group_add;
+use crate::bindings::event_script_command_ctor;
+use crate::bindings::event_script_command_dtor;
+use crate::bindings::get_task_jet_pack as intelligence_get_task_jet_pack;
+use crate::bindings::give_player_goodies;
+use crate::bindings::ped_set_current_weapon;
+use crate::bindings::task_jetpack_ctor;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::load_all_requested_models;
+use sa_core::bindings::streaming_request_model as request_model;
+use sa_core::bindings::task_new;
+use sa_stream::bindings::stream_peds_into_random_slots;
 orig! {
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
     /// `CCheat::HealthCheat()` (0x438D60)
     fn health_cheat() = cdecl 0x438D60 => unported;
-    /// `CStreaming::RequestModel(int32, int32 flags)` (0x4087E0)
-    fn request_model(id: i32, flags: i32) = cdecl 0x4087E0 => unported;
-    /// `CStreaming::LoadAllRequestedModels(bool)` (0x40EA10)
-    fn load_all_requested_models(only_priority: u32) = cdecl 0x40EA10 => unported;
     /// `CPed::GiveWeapon(eWeaponType, uint32 ammo, bool likeUnlimited)` (0x5E6080)
     fn ped_give_weapon(ped: GPtr<u8>, ty: i32, ammo: u32, unlimited: u32) -> i32 = thiscall 0x5E6080 => unported;
-    /// `CPed::SetCurrentWeapon(eWeaponType)` (0x5E6280)
-    fn ped_set_current_weapon(ped: GPtr<u8>, ty: i32) = thiscall 0x5E6280 => unported;
     /// `CPed::GiveDelayedWeapon(eWeaponType, uint32 ammo)` (0x5E89B0)
     fn ped_give_delayed_weapon(ped: GPtr<u8>, ty: i32, ammo: u32) = thiscall 0x5E89B0 => unported;
-    /// `CPickups::GivePlayerGoodiesWithPickUpMI(int16 model, int32 player)` (0x4564F0)
-    fn give_player_goodies(model: u32, player: i32) -> u8 = cdecl 0x4564F0 => unported;
     /// virtual slot +0xA4 (`CVehicle::BlowUpCar(CEntity*, bool)`)
     fn v_blow_up_car(v: GPtr<u8>, culprit: u32, in_cutscene: u32) = thiscall vslot 0xA4 => unported;
-    /// `CStreaming::StreamPedsIntoRandomSlots(int32 models[8])` (0x40BDA0)
-    fn stream_peds_into_random_slots(m: GPtr<u8>) = cdecl 0x40BDA0 => unported;
     /// `CCheat::BeachPartyCheat()` (0x439230)
     fn beach_party_cheat() = cdecl 0x439230 => unported;
     /// `CCheat::FunhouseCheat()` (0x439720)
@@ -37,18 +37,6 @@ orig! {
     fn countryside_invasion_cheat() = cdecl 0x439F60 => unported;
     /// `CCheat::EverybodyAttacksPlayerCheat()` (0x439C70)
     fn everybody_attacks_player_cheat() = cdecl 0x439C70 => unported;
-    /// `CPedIntelligence::GetTaskJetPack()` (0x601110)
-    fn intelligence_get_task_jet_pack(i: GPtr<u8>) -> GPtr<u8> = thiscall 0x601110 => unported;
-    /// `CTask::operator new(uint32)` (0x61A5A0)
-    fn task_new(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => unported;
-    /// `CTaskSimpleJetPack::CTaskSimpleJetPack(const CVector*, float, int32, CEntity*)` (0x67B4E0)
-    fn task_jetpack_ctor(t: GPtr<u8>, pos: u32, h: u32, a: u32, e: u32) -> GPtr<u8> = thiscall 0x67B4E0 => unported;
-    /// `CEventScriptCommand::CEventScriptCommand(int32, CTask*, bool)` (0x4B0A00)
-    fn event_script_command_ctor(e: GPtr<u8>, index: u32, task: GPtr<u8>, dead: u32) -> GPtr<u8> = thiscall 0x4B0A00 => unported;
-    /// `CEventScriptCommand::~CEventScriptCommand()` (0x4B0A50)
-    fn event_script_command_dtor(e: GPtr<u8>) = thiscall 0x4B0A50 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420)
-    fn event_group_add(grp: GPtr<u8>, ev: GPtr<u8>, valid: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
 }
 
 /// Flips a cheat flag byte (`sete`): the new value.

@@ -11,54 +11,35 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::anim_blend_animation;
+use crate::bindings::assoc_set_finish_callback as anim_set_finish_callback;
+use crate::bindings::ik_is_arm_pointing;
+use crate::bindings::play_hand_signal_anim_ctor;
+use crate::bindings::task_complex_dtor;
+use sa_core::bindings::general_random_int_in_range as random_int;
+use sa_core::bindings::object_new;
+use sa_core::bindings::streaming_remove_model;
+use sa_core::bindings::streaming_request_model;
+use sa_core::bindings::world_add;
+use sa_stream::bindings::anim_add_block_ref;
+use sa_stream::bindings::anim_remove_block_ref;
+use sa_stream::bindings::get_animation_block_index as anim_get_block_index;
+use sa_stream::bindings::model_info_add_ref;
+use sa_stream::bindings::model_info_remove_ref;
+use sa_world::bindings::anim_get_anim_association;
+use sa_world::bindings::ped_get_held_entity;
+use sa_world::bindings::sequence_add_task;
+use sa_world::bindings::sequence_ctor;
 orig! {
-    /// `CTaskComplexSequence::CTaskComplexSequence()` (0x632BD0)
-    fn sequence_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x632BD0 => unported;
-    /// `CTaskComplexSequence::AddTask(CTask*)` (0x632D10, `ret 4`)
-    fn sequence_add_task(t: GPtr<u8>, task: GPtr<u8>) = thiscall 0x632D10 => unported;
     /// `CTaskSimpleStandStill(int ms, bool looped, bool useAnimIdle, float blend)` (0x62F310, `ret 0x10`)
     fn stand_still_ctor(t: GPtr<u8>, ms: i32, looped: u32, idle: u32, blend: u32) -> GPtr<u8> = thiscall 0x62F310 => unported;
-    /// `CTaskSimplePlayHandSignalAnim(AnimationId, float blend, bool fatHands, bool)` (0x61AE50, `ret 0x10`)
-    fn play_hand_signal_anim_ctor(t: GPtr<u8>, anim: u32, blend: u32, fat: u32, b: u32) -> GPtr<u8> = thiscall 0x61AE50 => unported;
-    /// `CGeneral::GetRandomNumberInRange(int, int)` (0x407180; draws its own rand)
-    fn random_int(lo: i32, hi: i32) -> i32 = cdecl 0x407180 => unported;
-    /// `CBaseModelInfo::AddRef()` (0x4C4BA0)
-    fn model_info_add_ref(mi: GPtr<u8>) = thiscall 0x4C4BA0 => unported;
-    /// `CStreaming::RequestModel(int32 id, int32 flags)` (0x4087E0)
-    fn streaming_request_model(id: i32, flags: i32) = cdecl 0x4087E0 => unported;
-    /// `CAnimManager::GetAnimationBlockIndex(const char*)` (0x4D3990)
-    fn anim_get_block_index(name: GPtr<u8>) -> i32 = cdecl 0x4D3990 => unported;
-    /// `CAnimManager::AddAnimBlockRef(int32)` (0x4D3FB0)
-    fn anim_add_block_ref(i: i32) = cdecl 0x4D3FB0 => unported;
     /// `CTask::GetTaskType()` (vtable slot 0x10)
     fn task_get_type(t: GPtr<u8>) -> u32 = thiscall vslot 0x10 => unported;
     fn create_sub_task_o(t: GPtr<u8>, ty: u32) -> GPtr<u8> = thiscall 0x61B2F0 => hand_signal_create_sub_task;
-    /// `CPed::GetEntityThatThisPedIsHolding()` (0x5E02E0)
-    fn ped_get_held_entity(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x5E02E0 => unported;
-    /// `IKChainManager_c::IsArmPointing(int arm, CPed*)` (0x6182B0, `ret 8`)
-    fn ik_is_arm_pointing(m: GPtr<u8>, arm: i32, ped: GPtr<u8>) -> u8 = thiscall 0x6182B0 => unported;
-    /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float delta)` (0x4D4610)
-    fn anim_blend_animation(clump: u32, group: u32, id: u32, delta: u32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
-    /// `CAnimBlendAssociation::SetFinishCallback(cb, data)` (0x4CEBE0, `ret 8`)
-    fn anim_set_finish_callback(a: GPtr<u8>, cb: u32, data: u32) = thiscall 0x4CEBE0 => unported;
-    /// `CObject::operator new(uint32)` (0x5A1EE0)
-    fn object_new(size: u32) -> GPtr<u8> = cdecl 0x5A1EE0 => unported;
     /// `CHandObject::CHandObject(int32 model, CPed*, bool left)` (0x59EEB0, `ret 0xC`)
     fn hand_object_ctor(o: GPtr<u8>, model: u32, ped: GPtr<u8>, left: u32) -> GPtr<u8> = thiscall 0x59EEB0 => unported;
-    /// `CWorld::Add(CEntity*)` (0x563220)
-    fn world_add(e: GPtr<u8>) = cdecl 0x563220 => unported;
-    /// `CAnimManager::GetAnimAssociation(AssocGroupId, AnimationId)` (0x4D3A60)
-    fn anim_get_anim_association(group: u32, id: u32) -> GPtr<u8> = cdecl 0x4D3A60 => unported;
     /// `CAnimManager::AddAnimation(RpClump*, CAnimBlendHierarchy*, int flags)` (0x4D4330)
     fn anim_add_animation(clump: u32, hier: u32, flags: u32) -> GPtr<u8> = cdecl 0x4D4330 => unported;
-    /// `CBaseModelInfo::RemoveRef()` (0x4C4BB0)
-    fn model_info_remove_ref(mi: GPtr<u8>) = thiscall 0x4C4BB0 => unported;
-    /// `CAnimManager::RemoveAnimBlockRef(int32)` (0x4D3FD0)
-    fn anim_remove_block_ref(i: i32) = cdecl 0x4D3FD0 => unported;
-    /// `CStreaming::RemoveModel(int32)` (0x4089A0)
-    fn streaming_remove_model(id: i32) = cdecl 0x4089A0 => unported;
-    /// `CTaskComplex::~CTaskComplex()` (0x61A3D0)
-    fn task_complex_dtor(t: GPtr<u8>) = thiscall 0x61A3D0 => unported;
 }
 
 /// `g_ikChainMan`

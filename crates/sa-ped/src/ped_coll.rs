@@ -26,43 +26,32 @@ const GUN_FLASH_AXIS: u32 = 0x8D232C;
 /// `CWorld::m_aTempColPts` (CColPoint[32], 0xC102A0)
 const TEMP_COL_PTS: u32 = 0xC102A0;
 
+use sa_core::bindings::entity_update_rp_hanim;
+use sa_core::bindings::get_anim_hierarchy_from_skin_clump;
+use sa_core::bindings::rp_hanim_hierarchy_get_matrix_array as rp_hanim_get_matrix_array;
+use sa_core::bindings::rp_hanim_id_get_index;
+use sa_core::bindings::world_remove;
+use sa_stream::bindings::get_first_object;
+use sa_stream::bindings::set_component_atomic_alpha;
+use sa_world::bindings::hold_entity_drop_entity as hold_drop_entity;
+use sa_world::bindings::process_col_models;
+use sa_world::bindings::tm_find_active_task_by_type as find_active_task_by_type;
 orig! {
-    /// `CTaskManager::FindActiveTaskByType(int32)` (0x681740)
-    fn find_active_task_by_type(tm: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x681740 => unported;
-    /// `CTaskSimpleHoldEntity::DropEntity(CPed*, bool)` (0x6930F0)
-    fn hold_drop_entity(t: GPtr<u8>, ped: GPtr<u8>, add_to_world: u32) = thiscall 0x6930F0 => unported;
     /// `CEntity::DeleteRwObject` (vtable slot 0x20)
     fn entity_delete_rw_object(e: GPtr<u8>) = thiscall vslot 0x20 => unported;
     /// scalar deleting destructor (vtable slot 0)
     fn entity_vdelete(e: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
-    /// `CWorld::Remove(CEntity*)` (0x563280)
-    fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
-    /// `RwHelper::GetAnimHierarchyFromSkinClump(RpClump*)` (0x734A40)
-    fn get_anim_hierarchy_from_skin_clump(c: GPtr<u8>) -> GPtr<u8> = cdecl 0x734A40 => unported;
-    /// `RpHAnimIDGetIndex(RpHAnimHierarchy*, int32)` (0x7C51A0)
-    fn rp_hanim_id_get_index(h: GPtr<u8>, id: i32) -> i32 = cdecl 0x7C51A0 => unported;
-    /// `RpHAnimHierarchyGetMatrixArray(RpHAnimHierarchy*)` (0x7C5120)
-    fn rp_hanim_get_matrix_array(h: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C5120 => unported;
     /// `RwV3dTransformPoints(out, in, n, matrix)` (0x7EDD90)
     fn rw_v3d_transform_points(out: GPtr<f32>, inp: GPtr<f32>, n: i32, m: GPtr<u8>) -> GPtr<f32> = cdecl 0x7EDD90 => unported;
-    /// `CEntity::UpdateRpHAnim()` (0x532B20)
-    fn entity_update_rp_hanim(e: GPtr<u8>) = thiscall 0x532B20 => unported;
     /// `operator*(const CMatrix&, const CVector&)` (0x59C890, cdecl, hidden return pointer)
     fn matrix_mul_vec(out: GPtr<f32>, m: GPtr<u8>, v: GPtr<f32>) -> GPtr<f32> = cdecl 0x59C890 => unported;
     /// `RwMatrixRotate(RwMatrix*, const RwV3d* axis, float angle, RwOpCombineType)` (0x7F1FD0)
     fn rw_matrix_rotate(m: GPtr<u8>, axis: u32, angle: u32, combine: u32) -> GPtr<u8> = cdecl 0x7F1FD0 => unported;
-    /// `RwHelper::GetFirstObject(RwFrame*)` (0x7348C0)
-    fn get_first_object(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7348C0 => unported;
-    /// `CVehicle::SetComponentAtomicAlpha(RpAtomic*, int32)` (0x6D2960)
-    fn set_component_atomic_alpha(a: GPtr<u8>, alpha: i32) = cdecl 0x6D2960 => unported;
     /// `CWorld::FindObjectsKindaColliding(const CVector&, float, bool, int16*, int16, CEntity**, bool x5)`
     /// (0x568B80)
     fn find_objects_kinda_colliding(p: GPtr<f32>, r: u32, b2d: u32, n: GPtr<i16>, max: u32, out: GPtr<u8>, b: u32, v: u32, pe: u32, o: u32, d: u32) = cdecl 0x568B80 => unported;
     /// `CWorld::TestSphereAgainstWorld(CVector, float, const CEntity*, bool x5, bool)` (0x569E20)
     fn test_sphere_against_world(x: u32, y: u32, z: u32, r: u32, ignore: u32, b: u32, v: u32, pe: u32, o: u32, d: u32, cam: u32) -> GPtr<u8> = cdecl 0x569E20 => unported;
-    /// `CCollision::ProcessColModels(const CMatrix&, CColModel&, const CMatrix&, CColModel&, CColPoint*,
-    /// CColPoint*, float*, bool)` (0x4185C0)
-    fn process_col_models(ma: GPtr<u8>, ca: GPtr<u8>, mb: GPtr<u8>, cb: GPtr<u8>, cps: u32, lcps: u32, maxd: u32, b: u32) -> i32 = cdecl 0x4185C0 => unported;
     /// `CWorld::ProcessVerticalLine(const CVector&, float, CColPoint&, CEntity*&, bool x6, CStoredCollPoly*)`
     /// (0x5674E0, AL)
     fn process_vertical_line(pos: GPtr<f32>, z: u32, cp: GPtr<u8>, ent: GPtr<u8>, b1: u32, b2: u32, b3: u32, b4: u32, b5: u32, b6: u32, poly: u32) -> u8 = cdecl 0x5674E0 => unported;
@@ -348,50 +337,37 @@ pub fn find_z_coor_for_ped(pos: GPtr<f32>) -> u8 {
 /// `TheCamera` (CCamera)
 const THE_CAMERA: u32 = 0xB6F028;
 
+use sa_core::bindings::entity_register_reference as register_reference;
+use sa_core::bindings::object_new;
+use sa_core::bindings::task_new;
+use sa_core::bindings::tm_set_task_secondary as task_manager_set_task_secondary;
+use sa_core::bindings::world_add;
+use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
+use sa_stream::bindings::simple_transform_update_matrix;
+use sa_world::bindings::camera_set_new_player_weapon_mode;
+use sa_world::bindings::make_changes_for_new_weapon as player_make_changes_for_new_weapon;
+use sa_world::bindings::ped_get_held_entity as get_entity_that_this_ped_is_holding;
+use sa_world::bindings::ped_set_current_weapon_slot as set_current_weapon_slot;
+use sa_world::bindings::physical_apply_move_force_5429f0 as apply_move_force;
+use sa_world::bindings::player_clear_weapon_target;
 orig! {
     /// `CPed::AttachPedToEntity(CEntity*, CVector, uint16, float, eWeaponType)` (0x5E7CB0, `ret 0x1C`)
     fn attach_ped_to_entity_call(ped: GPtr<u8>, e: GPtr<u8>, ox: u32, oy: u32, oz: u32, angle: u32, range: u32, weapon: i32) -> GPtr<u8> = thiscall 0x5E7CB0 => attach_ped_to_entity;
     /// `CPed::PositionAttachedPed()` (0x5DFDF0)
     fn position_attached_ped_call(ped: GPtr<u8>) = thiscall 0x5DFDF0 => position_attached_ped;
-    /// `CPlaceable::AllocateMatrix()` (0x54F560)
-    fn allocate_matrix(e: GPtr<u8>) = thiscall 0x54F560 => unported;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*)` (0x54F1B0)
-    fn simple_transform_update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => unported;
-    /// `CPhysical::ApplyMoveForce(CVector)` (0x5429F0, `ret 0xC`)
-    fn apply_move_force(e: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x5429F0 => unported;
     /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float)` (0x4D4610)
     fn blend_animation(c: GPtr<u8>, group: i32, id: i32, delta: u32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
     /// `CWeaponInfo::GetWeaponInfo(eWeaponType, eWeaponSkill)` (0x743C60)
     fn get_weapon_info(ty: i32, skill: i32) -> GPtr<u8> = cdecl 0x743C60 => unported;
-    /// `CPed::SetCurrentWeapon(int32 slot)` (0x5E61F0)
-    fn set_current_weapon_slot(ped: GPtr<u8>, slot: i32) = thiscall 0x5E61F0 => unported;
-    /// `CPlayerPed::ClearWeaponTarget()` (0x609C80)
-    fn player_clear_weapon_target(ped: GPtr<u8>) = thiscall 0x609C80 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    fn register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
     /// `CPed::GiveWeapon(eWeaponType, uint32 ammo, bool)` (0x5E6080, `ret 0xC`)
     fn give_weapon(ped: GPtr<u8>, ty: i32, ammo: u32, b: u32) -> i32 = thiscall 0x5E6080 => unported;
-    /// `CPlayerPed::MakeChangesForNewWeapon(eWeaponType)` (0x60B460)
-    fn player_make_changes_for_new_weapon(ped: GPtr<u8>, ty: i32) = thiscall 0x60B460 => unported;
-    /// `CCamera::SetNewPlayerWeaponMode(int16 mode, int16 maxZoom, int16 minZoom)` (0x50BFB0)
-    fn camera_set_new_player_weapon_mode(cam: GPtr<u8>, mode: u32, max: u32, min: u32) = thiscall 0x50BFB0 => unported;
-    /// `CPed::GetEntityThatThisPedIsHolding()` (0x5E02E0)
-    fn get_entity_that_this_ped_is_holding(ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x5E02E0 => unported;
     /// `CPed::DropEntityThatThisPedIsHolding(bool)` (0x5E0360)
     fn drop_entity_call(ped: GPtr<u8>, delete: u32) = thiscall 0x5E0360 => drop_entity_that_this_ped_is_holding;
-    /// `CObject::operator new(uint32)` (0x5A1EE0)
-    fn object_new(size: u32) -> GPtr<u8> = cdecl 0x5A1EE0 => unported;
     /// `CObject::CObject(int32 model, bool created)` (0x5A1D70, `ret 8`)
     fn object_ctor(o: GPtr<u8>, model: i32, created: u32) -> GPtr<u8> = thiscall 0x5A1D70 => unported;
-    /// `CWorld::Add(CEntity*)` (0x563220)
-    fn world_add(e: GPtr<u8>) = cdecl 0x563220 => unported;
-    /// `CTask::operator new(uint32)` (0x61A5A0)
-    fn task_new(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => unported;
     /// `CTaskSimpleHoldEntity::CTaskSimpleHoldEntity(CEntity*, const CVector*, uint8 boneFrameId,
     /// uint8 boneFlags, AnimationId, AssocGroupId, bool)` (0x6913A0)
     fn task_hold_entity_ctor(t: GPtr<u8>, e: GPtr<u8>, off: GPtr<f32>, bone: u32, flags: u32, anim: i32, group: i32, b: u32) -> GPtr<u8> = thiscall 0x6913A0 => unported;
-    /// `CTaskManager::SetTaskSecondary(CTask*, int32 slot)` (0x681B60)
-    fn task_manager_set_task_secondary(tm: GPtr<u8>, t: GPtr<u8>, slot: i32) = thiscall 0x681B60 => unported;
     /// `CPed::SortPeds(CPed**, int32, int32)` (0x5E17E0)
     fn sort_peds_call(ped: GPtr<u8>, list: GPtr<GPtr<u8>>, min: i32, max: i32) = thiscall 0x5E17E0 => sort_peds;
     /// `CWorld::ProcessLineOfSight(const CVector&, const CVector&, CColPoint&, CEntity*&, bool x8)` (0x56BA00, AL)
@@ -656,27 +632,20 @@ pub fn our_ped_can_see_this_entity(this: GPtr<u8>, e: GPtr<u8>, spotted: u32) ->
 /// original's inlined constructor leaves them, the rest uninitialised there and 0 here).
 type LocalMatrix = [u32; 18];
 
+use sa_core::bindings::frame_get_ltm as rw_frame_get_ltm;
+use sa_core::bindings::general_limit_radian_angle as limit_radian_angle;
+use sa_core::bindings::matrix_attach;
+use sa_core::bindings::matrix_detach;
+use sa_core::bindings::matrix_dtor;
+use sa_core::bindings::matrix_mul_assign;
+use sa_world::bindings::placeable_set_matrix;
 orig! {
-    /// `RwFrameGetLTM(RwFrame*)` (0x7F0990)
-    fn rw_frame_get_ltm(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0990 => unported;
-    /// `CMatrix::Attach(RwMatrix*, bool)` (0x59BD10)
-    fn matrix_attach(m: GPtr<u8>, rw: GPtr<u8>, owns: u32) = thiscall 0x59BD10 => unported;
-    /// `CMatrix::Detach()` (0x59ACF0)
-    fn matrix_detach(m: GPtr<u8>) = thiscall 0x59ACF0 => unported;
     /// `CMatrix::operator=(const CMatrix&)` (0x59BBC0)
     fn matrix_assign(dst: GPtr<u8>, src: GPtr<u8>) = thiscall 0x59BBC0 => unported;
     /// `Multiply3x3(CVector* out, const CMatrix&, const CVector&)` (0x59C790, cdecl, returns out)
     fn multiply_3x3(out: GPtr<f32>, m: GPtr<u8>, v: GPtr<f32>) -> GPtr<f32> = cdecl 0x59C790 => unported;
-    /// `CGeneral::LimitRadianAngle(float)` (0x53CB50, ST0)
-    fn limit_radian_angle(a: u32) -> f64 = cdecl 0x53CB50 => unported;
     /// `CMatrix::SetRotateZ(float)` (0x59B0E0)
     fn matrix_set_rotate_z(m: GPtr<u8>, a: u32) = thiscall 0x59B0E0 => unported;
-    /// `CMatrix::operator*=(const CMatrix&)` (0x411A80)
-    fn matrix_mul_assign(dst: GPtr<u8>, rhs: GPtr<u8>) = thiscall 0x411A80 => unported;
-    /// `CPlaceable::SetMatrix(const CMatrix&)` (0x54F610)
-    fn placeable_set_matrix(e: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F610 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
 }
 
 /// `CPed::PositionAttachedPed()` (0x5DFDF0), spec `CPed.md`: the attach entity's matrix (FIRELA 0x220 with
@@ -771,19 +740,15 @@ pub fn position_attached_ped(this: GPtr<u8>) {
 /// `bHalfShoulderRotation` (static bool, 1 in the shipped .data, 0x8D21E0)
 const HALF_SHOULDER_ROTATION: usize = 0x8D21E0;
 
+use sa_core::bindings::matrix_invert_59bdd0 as matrix_invert;
+use sa_core::bindings::matrix_mul;
+use sa_core::bindings::matrix_update_rw;
+use sa_world::bindings::matrix_ctor_rw;
 orig! {
-    /// `CMatrix::CMatrix(RwMatrix*, bool owns)` (0x59C050)
-    fn matrix_ctor_rw(m: GPtr<u8>, rw: GPtr<u8>, owns: u32) -> GPtr<u8> = thiscall 0x59C050 => unported;
-    /// `Invert(const CMatrix&)` (0x59BDD0, cdecl, hidden return matrix constructed by the callee)
-    fn matrix_invert(out: GPtr<u8>, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x59BDD0 => unported;
-    /// `operator*(const CMatrix&, const CMatrix&)` (0x59BE30, cdecl, hidden return matrix)
-    fn matrix_mul(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x59BE30 => unported;
     /// `CMatrix::ConvertToEulerAngles(float*, float*, float*, uint32)` (0x59A840)
     fn matrix_to_euler(m: GPtr<u8>, a: GPtr<f32>, b: GPtr<f32>, c: GPtr<f32>, flags: u32) = thiscall 0x59A840 => unported;
     /// `CMatrix::ConvertFromEulerAngles(float, float, float, uint32)` (0x59AA40)
     fn matrix_from_euler(m: GPtr<u8>, a: u32, b: u32, c: u32, flags: u32) = thiscall 0x59AA40 => unported;
-    /// `CMatrix::UpdateRW()` (0x59BBB0)
-    fn matrix_update_rw(m: GPtr<u8>) = thiscall 0x59BBB0 => unported;
 }
 
 /// The RwMatrix of bone `id` in `hier` (64 bytes each).
@@ -860,11 +825,9 @@ const CURRENT_SCAN_CODE: usize = 0xB7CD78;
 /// `CWorld::ms_aRepeatSectors` (16 x 16, 12 bytes each: vehicles, peds, objects lists)
 const REPEAT_SECTORS: usize = 0xB992B8;
 
+use sa_core::bindings::world_clear_scan_codes;
+use sa_world::bindings::crt_floor;
 orig! {
-    /// CRT `floor(double)` (0x8219F0, ST0)
-    fn crt_floor(v: f64) -> f64 = cdecl 0x8219F0 => unported;
-    /// `CWorld::ClearScanCodes()` (0x563470)
-    fn world_clear_scan_codes() = cdecl 0x563470 => unported;
     /// `CPed::MakeTyresMuddySectorList(CPtrListSingleLink&)` (0x6AE0D0, `ret 4`)
     fn make_tyres_muddy_sector_list(ped: GPtr<u8>, list: GPtr<u8>) = thiscall 0x6AE0D0 => unported;
 }
@@ -920,11 +883,10 @@ pub fn dead_ped_makes_tyres_bloody(this: GPtr<u8>) {
     }
 }
 
+use sa_world::bindings::entity_get_col_model;
 orig! {
     /// `CPedPlacement::FindZCoorForPed(CVector&)` (0x616920, AL)
     fn find_z_coor_for_ped_call(pos: GPtr<f32>) -> u8 = cdecl 0x616920 => find_z_coor_for_ped;
-    /// `CEntity::GetColModel()` (0x535300)
-    fn entity_get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => unported;
 }
 
 /// Writes `v` (raw dwords) as the entity position (matrix +0x30 or placement +4).
@@ -1011,13 +973,12 @@ const THE_PATHS: u32 = 0x96F050;
 /// `ThePaths.m_pPathNodes[area]` (0x96F854)
 const PATH_NODES: usize = 0x96F854;
 
+use sa_core::bindings::matrix_set_rotate_z_only;
+use sa_world::bindings::check_collision as physical_check_collision;
+use sa_world::bindings::vehicle_is_on_its_side;
 orig! {
-    /// `CVehicle::IsOnItsSide()` (0x6D1DD0, AL)
-    fn vehicle_is_on_its_side(v: GPtr<u8>) -> u8 = thiscall 0x6D1DD0 => unported;
     /// `CPlaceable::SetPosn(const CVector&)` (0x4241C0)
     fn placeable_set_posn(e: GPtr<u8>, v: GPtr<u32>) = thiscall 0x4241C0 => unported;
-    /// `CPhysical::CheckCollision()` (0x54D920, AL)
-    fn physical_check_collision(e: GPtr<u8>) -> u8 = thiscall 0x54D920 => unported;
     /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, bool x7)` (0x56A490, AL)
     fn get_is_line_of_sight_clear(a: GPtr<f32>, b: GPtr<u32>, bb: u32, v: u32, p: u32, o: u32, d: u32, s: u32, c: u32) -> u8 = cdecl 0x56A490 => unported;
     /// `CCarEnterExit::GetPositionToOpenCarDoor(CVector* out, CVehicle*, int32 door)` (0x64E740, cdecl)
@@ -1029,8 +990,6 @@ orig! {
     fn path_node_get_position(n: GPtr<u8>, out: GPtr<f32>) -> GPtr<f32> = thiscall 0x420A10 => unported;
     /// `operator-(const CVector&, const CVector&)` (0x40FE60, cdecl, hidden return pointer)
     fn vector_sub(out: GPtr<f32>, a: GPtr<f32>, b: GPtr<f32>) -> GPtr<f32> = cdecl 0x40FE60 => unported;
-    /// `CMatrix::SetRotateZOnly(float)` (0x59B020)
-    fn matrix_set_rotate_z_only(m: GPtr<u8>, h: u32) = thiscall 0x59B020 => unported;
 }
 
 /// The path node of a `CNodeAddress` dword (area low word, node high word): `m_pPathNodes[area] + node * 0x1C`.

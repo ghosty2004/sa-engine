@@ -30,6 +30,8 @@ const DEV_CAPS: usize = 0xC9BF1C;
 /// Default static VB size in bytes (`.data`, 0x20000).
 const DEFAULT_SIZE: usize = 0x8E2414;
 
+pub use crate::bindings::free_list_create;
+pub use crate::bindings::free_list_destroy;
 orig! {
     /// `IDirect3DDevice9::CreateVertexBuffer` (+0x68)
     pub fn dev_create_vertex_buffer(dev: GPtr<u8>, len: u32, usage: u32, fvf: u32, pool: u32, out: GPtr<u32>, shared: u32) -> i32 = stdcall vslot 0x68 => unported;
@@ -39,10 +41,6 @@ orig! {
     pub fn vb_unlock(vb: GPtr<u8>) -> i32 = stdcall vslot 0x30 => unported;
     /// `IUnknown::Release` (+8)
     pub fn com_release(obj: GPtr<u8>) -> u32 = stdcall vslot 0x8 => unported;
-    /// `_rwFreeListCreate(entrySize, entriesPerBlock, alignment, hint)` (0x801980)
-    pub fn free_list_create(size: u32, per_block: u32, align: u32, hint: u32) -> GPtr<u8> = cdecl 0x801980 => unported;
-    /// `RwFreeListDestroy(fl)` (0x801B80)
-    pub fn free_list_destroy(fl: GPtr<u8>) -> u32 = cdecl 0x801B80 => unported;
     /// `D3DResourceSystem::CreateIndexBuffer(numIndices, format, out)` (0x7306A0)
     pub fn resource_create_index_buffer(num: u32, fmt: u32, out: u32) -> i32 = cdecl 0x7306A0 => unported;
     /// `RwD3D9DynamicVertexBufferCreate(size, out)` (0x7F5A00)

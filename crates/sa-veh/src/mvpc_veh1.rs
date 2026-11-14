@@ -13,19 +13,16 @@ use crate::common::{g, rd, wr};
 /// the static line buffer the track reader fills (0xB71670)
 const LINE: usize = 0xB71670;
 
+use sa_core::bindings::crt_free;
+use sa_stream::bindings::crt_new;
+use sa_world::bindings::vector_ctor_iterator;
 orig! {
-    /// CRT `operator new` (0x821195)
-    fn crt_new(size: u32) -> GPtr<u8> = cdecl 0x821195 => unported;
-    /// CRT `free` (0x8213AE)
-    fn crt_free(p: GPtr<u8>) = cdecl 0x8213AE => unported;
     /// `CFileMgr::LoadFile(const char* path, uint8* buf, int32 size, const char* mode)` (0x538890)
     fn file_load(path: GPtr<u8>, buf: GPtr<u8>, size: i32, mode: u32) -> i32 = cdecl 0x538890 => unported;
     /// CRT `sscanf` (0x8220AD) with one target
     fn sscanf1(s: u32, fmt: u32, a: GPtr<u8>) -> i32 = cdecl 0x8220AD => unported;
     /// CRT `sscanf` (0x8220AD) with four targets
     fn sscanf4(s: u32, fmt: u32, a: GPtr<u8>, b: GPtr<u8>, c: GPtr<u8>, d: GPtr<u8>) -> i32 = cdecl 0x8220AD => unported;
-    /// `eh vector constructor iterator(void* p, uint32 size, int32 count, void (*ctor)(void*))` (0x403D60)
-    fn vector_ctor_iterator(p: GPtr<u8>, size: u32, count: i32, ctor: u32) = stdcall 0x403D60 => unported;
 }
 
 use sa_core::field::ptr_of as local;

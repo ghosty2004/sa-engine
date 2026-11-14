@@ -65,13 +65,15 @@ fn fild_u32(v: u32) -> X87 {
     if (v as i32) < 0 { r.fadd_m(k(K_2_32)) } else { r }
 }
 
+use crate::bindings::font_set_centre_size;
+use crate::bindings::font_set_drop_color;
+use crate::bindings::font_set_scale;
+use sa_core::bindings::camera_draw_borders_for_wide_screen;
+use sa_core::bindings::defined_state_2d;
+use sa_core::bindings::rgba_ctor;
 orig! {
-    /// `App::DefinedState2d()` (0x734750)
-    fn defined_state_2d() = cdecl 0x734750 => unported;
     /// `CFont::SetBackground(bool, bool)` (0x7195C0)
     fn font_set_background(on: u32, outline: u32) = cdecl 0x7195C0 => crate::font::set_background;
-    /// `CFont::SetCentreSize(float)` (0x7194E0)
-    fn font_set_centre_size(v: u32) = cdecl 0x7194E0 => crate::font::set_centre_size;
     /// `CFont::SetOrientation(eFontAlignment)` (0x719610)
     fn font_set_orientation(v: u32) = cdecl 0x719610 => crate::font::set_orientation;
     /// `CFont::SetProportional(bool)` (0x7195B0)
@@ -80,22 +82,14 @@ orig! {
     fn font_set_font_style(v: u32) = cdecl 0x719490 => crate::font::set_font_style;
     /// `CFont::SetEdge(int8)` (0x719590)
     fn font_set_edge(v: u32) = cdecl 0x719590 => crate::font::set_edge;
-    /// `CFont::SetDropColor(CRGBA)` (0x719510)
-    fn font_set_drop_color(c: u32) = cdecl 0x719510 => crate::font::set_drop_color;
     /// `CFont::SetColor(CRGBA)` (0x719430)
     fn font_set_color(c: u32) = cdecl 0x719430 => crate::font::set_color;
-    /// `CFont::SetScale(float, float)` (0x719380)
-    fn font_set_scale(sx: u32, sy: u32) = cdecl 0x719380 => crate::font::set_scale;
     /// `CFont::PrintString(float x, float y, const GxtChar*)` (0x71A700)
     fn font_print_string(px: f32, py: f32, text: GPtr<u8>) = cdecl 0x71A700 => crate::font_print::print_string;
     /// `CFont::DrawFonts()` (0x71A210)
     fn font_draw_fonts() = cdecl 0x71A210 => crate::font_print::draw_fonts;
-    /// `CRGBA::CRGBA(uint8, uint8, uint8, uint8)` (0x7170C0)
-    fn rgba_ctor(this: GPtr<u8>, r: u32, gg: u32, bb: u32, a: u32) -> GPtr<u8> = thiscall 0x7170C0 => unported;
     /// `CText::Get(const char*)` (0x6A0050)
     fn text_get(this: GPtr<u8>, key: GPtr<u8>) -> GPtr<u8> = thiscall 0x6A0050 => crate::text::text_get;
-    /// `CCamera::DrawBordersForWideScreen()` (0x514860)
-    fn camera_draw_borders_for_wide_screen(this: GPtr<u8>) = thiscall 0x514860 => unported;
     /// `CCredits::RenderCredits()` (0x5A87F0)
     fn render_credits_call() = cdecl 0x5A87F0 => render_credits;
     /// `CCredits::PrintCreditText(float, float, const GxtChar*, uint32&, float, bool)` (0x5A8660)

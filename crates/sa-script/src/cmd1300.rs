@@ -47,56 +47,37 @@ const HUNTER_GUN_OFFSET: usize = 0x8D3394;
 /// `CTimer::ms_fTimeStep` 0xB7CB5C.
 const TIME_STEP: usize = 0xB7CB5C;
 
+pub use sa_world::bindings::clear_drunk_blur;
+use crate::bindings::add_explosion;
+use crate::bindings::physical_45afb0;
+use crate::bindings::set_ammo;
+use crate::bindings::vehicle_get_ref;
+use sa_core::bindings::text_get;
+use sa_world::bindings::apply_cheat;
+use sa_world::bindings::audio_get_current_radio_station_id as get_current_radio_station_id;
+use sa_world::bindings::find_ground_z_for_coord;
+use sa_world::bindings::get_actual_pickup_index;
+use sa_world::bindings::get_has_collided_with;
+use sa_world::bindings::get_vehicle_appearance;
+use sa_world::bindings::is_law_enforcement_vehicle;
+use sa_world::bindings::is_within_area;
+use sa_world::bindings::set_velocity;
+use sa_world::bindings::skip_physics;
+use sa_world::bindings::vehicle_can_be_deleted as can_be_deleted;
 orig! {
-    /// `CMBlur::ClearDrunkBlur()` (0x71D780)
-    pub fn clear_drunk_blur() = cdecl 0x71D780 => unported;
-    /// `CWorld::FindGroundZForCoord(float, float)` (0x569660), floats as raw dwords, ST0 (exact as f64)
-    fn find_ground_z_for_coord(x: u32, y: u32) -> f64 = cdecl 0x569660 => unported;
-    /// `CText::Get(const char* key)` (0x6A0050)
-    fn text_get(t: GPtr<u8>, key: GPtr<u8>) -> GPtr<u8> = thiscall 0x6A0050 => unported;
     /// `CText::LoadMissionText(const char*)` (0x69FBF0)
     fn load_mission_text(t: GPtr<u8>, name: GPtr<u8>) = thiscall 0x69FBF0 => unported;
-    /// `CPickups::GetActualPickupIndex(int32)` (0x4552A0), result discarded
-    fn get_actual_pickup_index(h: i32) -> i32 = cdecl 0x4552A0 => unported;
     /// `CPickups::GenerateNewOne(CVector, uint32 model, ePickupType, uint32 ammo, uint32 moneyPerDay,
     /// bool isEmpty, const char* message)` (0x456F20)
     fn generate_new_one(x: u32, y: u32, z: u32, model: u32, ty: u32, ammo: u32, money: u32, empty: u32, msg: GPtr<u8>) -> i32 = cdecl 0x456F20 => unported;
-    /// `CPhysical::SkipPhysics()` (0x5433B0)
-    fn skip_physics(p: GPtr<u8>) = thiscall 0x5433B0 => unported;
-    /// `CPhysical::SetVelocity(CVector)` (0x441130, a `.HOODLUM` stub), the vector as three raw dwords
-    fn set_velocity(p: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x441130 => unported;
-    /// Unnamed thiscall taking a vector by value (0x45AFB0, a `.HOODLUM` stub; FREEZE_CAR_POSITION
-    /// passes (0, 0, 0) after SetVelocity)
-    fn physical_45afb0(p: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x45AFB0 => unported;
-    /// `CAudioEngine::GetCurrentRadioStationID()` (0x507040), AL
-    fn get_current_radio_station_id(a: GPtr<u8>) -> u8 = thiscall 0x507040 => unported;
-    /// `CVehicle::GetVehicleAppearance()` (0x6D1080)
-    fn get_vehicle_appearance(v: GPtr<u8>) -> i32 = thiscall 0x6D1080 => unported;
-    /// `CVehicle::CanBeDeleted()` (0x6D1180), AL
-    fn can_be_deleted(v: GPtr<u8>) -> u8 = thiscall 0x6D1180 => unported;
-    /// `CPlaceable::IsWithinArea(float x1, float y1, float x2, float y2)` (0x54F200), AL
-    fn is_within_area(e: GPtr<u8>, x1: u32, y1: u32, x2: u32, y2: u32) -> u8 = thiscall 0x54F200 => unported;
-    /// `CPool<CVehicle>::GetRef(CVehicle*)` (0x424160), ECX = the vehicle pool
-    fn vehicle_get_ref(pool: GPtr<u8>, v: GPtr<u8>) -> i32 = thiscall 0x424160 => unported;
-    /// `CPhysical::GetHasCollidedWith(CEntity*)` (0x543540), AL
-    fn get_has_collided_with(p: GPtr<u8>, e: GPtr<u8>) -> u8 = thiscall 0x543540 => unported;
     /// `CPed::ClearWeapon(eWeaponType)` (0x5E62B0)
     fn clear_weapon(p: GPtr<u8>, ty: u32) = thiscall 0x5E62B0 => unported;
     /// `CPopulation::AddPedInCar(CVehicle*, bool driver, int32, int32 seat, bool, bool)` (0x613A00)
     fn add_ped_in_car(v: GPtr<u8>, driver: u32, a: i32, seat: u32, b: u32, c: u32) -> GPtr<u8> = cdecl 0x613A00 => unported;
-    /// `CPed::SetAmmo(eWeaponType, uint32)` (0x5DF290)
-    fn set_ammo(p: GPtr<u8>, ty: u32, ammo: u32) = thiscall 0x5DF290 => unported;
     /// `CPed::GiveWeapon(eWeaponType, uint32 ammo, bool)` (0x5E6080), the slot returned is discarded
     fn give_weapon(p: GPtr<u8>, ty: u32, ammo: u32, flag: u32) -> i32 = thiscall 0x5E6080 => unported;
     /// `CPed::SetCurrentWeapon(eWeaponType)` (0x5E6280)
     fn set_current_weapon(p: GPtr<u8>, ty: u32) = thiscall 0x5E6280 => unported;
-    /// `CExplosion::AddExplosion(CEntity* victim, CPed* creator, eExplosionType, CVector, uint32 lifetime,
-    /// uint8 makeSound, float camShake, uint8 visible)` (0x736A50); the vector and float as raw dwords
-    fn add_explosion(victim: u32, creator: u32, ty: u32, x: u32, y: u32, z: u32, life: u32, sound: u32, shake: u32, visible: u32) = cdecl 0x736A50 => unported;
-    /// `CVehicle::IsLawEnforcementVehicle()` (0x6D2370), AL
-    fn is_law_enforcement_vehicle(v: GPtr<u8>) -> u8 = thiscall 0x6D2370 => unported;
-    /// `CCheat::ApplyCheat(eCheats)` (0x438370)
-    fn apply_cheat(id: u32) = cdecl 0x438370 => unported;
     /// `CWeapon::CWeapon(eWeaponType, int32 ammo)` (0x73B430)
     fn weapon_ctor(w: GPtr<u8>, ty: u32, ammo: u32) -> GPtr<u8> = thiscall 0x73B430 => unported;
     /// Unnamed `CVector operator*(const CVector&, float)` (0x40FEC0; hidden-pointer result), the float as

@@ -8,11 +8,26 @@ use sa_core::{hook, orig};
 
 use crate::common::{Fpu, g, k, rd, wr};
 
+pub use crate::bindings::rw_texture_set_raster;
+pub use sa_core::bindings::crt_free_8214bd as crt_free;
+pub use sa_core::bindings::crt_strncpy;
+pub use sa_core::bindings::light_destroy as rp_light_destroy;
+pub use sa_core::bindings::list_add_item;
+pub use sa_core::bindings::list_remove_item;
+pub use sa_core::bindings::rw_camera_create;
+pub use sa_core::bindings::rw_camera_destroy;
+pub use sa_core::bindings::rw_camera_set_far_clip_plane;
+pub use sa_core::bindings::rw_camera_set_near_clip_plane;
+pub use sa_core::bindings::rw_frame_create;
+pub use sa_core::bindings::rw_frame_destroy;
+pub use sa_core::bindings::rw_frame_update_objects;
+pub use sa_core::bindings::rw_matrix_update;
+pub use sa_core::bindings::rw_raster_create;
+pub use sa_core::bindings::rw_raster_destroy;
+pub use sa_core::bindings::rw_texture_create;
+pub use sa_stream::bindings::fx_get_fx_quality;
+pub use sa_stream::bindings::rw_texture_destroy;
 orig! {
-    /// `strncpy` (0x821F40)
-    pub fn crt_strncpy(dst: GPtr<u8>, src: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x821F40 => unported;
-    /// CRT `free` (0x8214BD)
-    pub fn crt_free(p: GPtr<u8>) = cdecl 0x8214BD => unported;
     /// `Light::RemoveExtraDirectionalLights(RpWorld*)` (0x7359E0)
     pub fn remove_extra_directional_lights(world: GPtr<u8>) = cdecl 0x7359E0 => unported;
     /// `FxPrim_c::~FxPrim_c()` (0x4A9F40)
@@ -25,40 +40,12 @@ orig! {
     pub fn custom_pipe_atomic_setup(atomic: GPtr<u8>) -> GPtr<u8> = cdecl 0x5DA610 => unported;
     /// `_rwObjectHasFrameSetFrame(void* object, RwFrame*)` (0x804EF0)
     pub fn rw_object_has_frame_set_frame(obj: GPtr<u8>, frame: GPtr<u8>) = cdecl 0x804EF0 => unported;
-    /// `RwFrameDestroy(RwFrame*)` (0x7F05A0)
-    pub fn rw_frame_destroy(frame: GPtr<u8>) -> i32 = cdecl 0x7F05A0 => unported;
-    /// `RwFrameCreate()` (0x7F0410)
-    pub fn rw_frame_create() -> GPtr<u8> = cdecl 0x7F0410 => unported;
-    /// `RwFrameUpdateObjects(RwFrame*)` (0x7F0910)
-    pub fn rw_frame_update_objects(frame: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0910 => unported;
-    /// `RwMatrixUpdate(RwMatrix*)` (0x7F18A0)
-    pub fn rw_matrix_update(m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F18A0 => unported;
-    /// `RwRasterDestroy(RwRaster*)` (0x7FB020)
-    pub fn rw_raster_destroy(r: GPtr<u8>) -> i32 = cdecl 0x7FB020 => unported;
-    /// `RwRasterCreate(w, h, depth, flags)` (0x7FB230)
-    pub fn rw_raster_create(w: i32, h: i32, depth: i32, flags: i32) -> GPtr<u8> = cdecl 0x7FB230 => unported;
-    /// `RwTextureSetRaster(RwTexture*, RwRaster*)` (0x7F35D0)
-    pub fn rw_texture_set_raster(t: GPtr<u8>, r: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F35D0 => unported;
-    /// `RwTextureDestroy(RwTexture*)` (0x7F3820)
-    pub fn rw_texture_destroy(t: GPtr<u8>) -> i32 = cdecl 0x7F3820 => unported;
-    /// `RwTextureCreate(RwRaster*)` (0x7F37C0)
-    pub fn rw_texture_create(r: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F37C0 => unported;
-    /// `RwCameraDestroy(RwCamera*)` (0x7EE4B0)
-    pub fn rw_camera_destroy(c: GPtr<u8>) -> i32 = cdecl 0x7EE4B0 => unported;
-    /// `RwCameraCreate()` (0x7EE4F0)
-    pub fn rw_camera_create() -> GPtr<u8> = cdecl 0x7EE4F0 => unported;
     /// `RwCameraSetProjection(RwCamera*, RwCameraProjection)` (0x7EE3A0)
     pub fn rw_camera_set_projection(c: GPtr<u8>, p: u32) -> GPtr<u8> = cdecl 0x7EE3A0 => unported;
-    /// `RwCameraSetFarClipPlane(RwCamera*, float)` (0x7EE2A0)
-    pub fn rw_camera_set_far_clip_plane(c: GPtr<u8>, f: u32) -> GPtr<u8> = cdecl 0x7EE2A0 => unported;
-    /// `RwCameraSetNearClipPlane(RwCamera*, float)` (0x7EE1D0)
-    pub fn rw_camera_set_near_clip_plane(c: GPtr<u8>, f: u32) -> GPtr<u8> = cdecl 0x7EE1D0 => unported;
     /// `RwCameraSetViewWindow(RwCamera*, const RwV2d*)` (0x7EE410)
     pub fn rw_camera_set_view_window(c: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EE410 => unported;
     /// `RpLightCreate(RwInt32 type)` (0x752110)
     pub fn rp_light_create(ty: i32) -> GPtr<u8> = cdecl 0x752110 => unported;
-    /// `RpLightDestroy(RpLight*)` (0x7520D0)
-    pub fn rp_light_destroy(l: GPtr<u8>) -> i32 = cdecl 0x7520D0 => unported;
     /// `RpLightSetColor(RpLight*, const RwRGBAReal*)` (0x751A90)
     pub fn rp_light_set_color(l: GPtr<u8>, c: GPtr<u8>) -> GPtr<u8> = cdecl 0x751A90 => unported;
     /// `CShadowCamera::Destroy()` (0x705400)
@@ -69,14 +56,8 @@ orig! {
     pub fn shadow_camera_set_light_call(this: GPtr<u8>, l: GPtr<u8>) -> GPtr<u8> = thiscall 0x705520 => shadow_camera_set_light;
     /// `CRealTimeShadow::Destroy()` (0x705990)
     pub fn real_time_shadow_destroy_call(this: GPtr<u8>) = thiscall 0x705990 => real_time_shadow_destroy;
-    /// `Fx_c::GetFxQuality()` (0x49EA50, on g_fx 0xA9AE00)
-    pub fn fx_get_fx_quality(this: GPtr<u8>) -> i32 = thiscall 0x49EA50 => unported;
     /// `CRealTimeShadowManager::GetRealTimeShadow(CPhysical*)` (0x706970)
     pub fn get_real_time_shadow(this: GPtr<u8>, e: GPtr<u8>) = thiscall 0x706970 => unported;
-    /// `List_c::AddItem(ListItem_c*)` (0x4A8DF0)
-    pub fn list_add_item(l: GPtr<u8>, item: GPtr<u8>) = thiscall 0x4A8DF0 => unported;
-    /// `List_c::RemoveItem(ListItem_c*)` (0x4A8E30)
-    pub fn list_remove_item(l: GPtr<u8>, item: GPtr<u8>) = thiscall 0x4A8E30 => unported;
     /// `FxSystem_c::Exit()` (0x4AA840)
     pub fn fx_system_exit(this: GPtr<u8>) = thiscall 0x4AA840 => unported;
     /// `FxSystem_c::~FxSystem_c()` (0x4AA260)

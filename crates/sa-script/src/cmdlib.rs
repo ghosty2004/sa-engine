@@ -189,47 +189,35 @@ pub fn register_script_brain_for_code_use(s: Scr, ty: u32) {
     add_new_streamed_script_brain_for_code_use(GPtr::from_addr(SCRIPTS_FOR_BRAINS), sp(0) & 0xFFFF, b, ty);
 }
 
+pub use crate::bindings::add_brain_for_code_use as add_new_streamed_script_brain_for_code_use;
+pub use crate::bindings::get_actual_blip_array_index;
+pub use crate::bindings::get_proper_index_from_index_used_by_script;
+pub use sa_core::bindings::ped_at_ref;
+pub use sa_core::bindings::world_add;
+pub use sa_core::bindings::world_remove;
+pub use sa_stream::bindings::world_remove_references_to_deleted_object;
+pub use sa_world::bindings::find_zone_by_label;
+pub use sa_world::bindings::object_at_ref;
+pub use sa_world::bindings::ped_get_ref;
+pub use sa_world::bindings::set_blip_sprite;
+pub use sa_world::bindings::vehicle_at_ref;
 orig! {
-    /// `CStreamedScripts::GetProperIndexFromIndexUsedByScript(int16)` (0x470810), AX
-    pub fn get_proper_index_from_index_used_by_script(m: GPtr<u8>, i: u32) -> u16 = thiscall 0x470810 => unported;
-    /// `CScriptsForBrains::AddNewStreamedScriptBrainForCodeUse(int16 index, const char* name, int8 type)` (0x46A9C0)
-    pub fn add_new_streamed_script_brain_for_code_use(b: GPtr<u8>, index: u32, name: GPtr<u8>, ty: u32) = thiscall 0x46A9C0 => unported;
     /// `CScriptsForBrains::AddNewScriptBrain(int16 index, int16 model, uint16 priority, int8 type, int8 b,
     /// float radius)` (0x46A930)
     pub fn add_new_script_brain(b: GPtr<u8>, index: u32, model: u32, prio: u32, ty: u32, a: u32, radius: u32) = thiscall 0x46A930 => unported;
-    /// `CTheZones::FindZoneByLabel(const char*, eZoneType)` (0x572C40), AX
-    pub fn find_zone_by_label(label: GPtr<u8>, ty: u32) -> u16 = cdecl 0x572C40 => unported;
-    /// `CPool<CPed>::GetAtRef(int32)` (0x404910), ECX = the ped pool
-    pub fn ped_at_ref(pool: GPtr<u8>, h: i32) -> GPtr<u8> = thiscall 0x404910 => unported;
-    /// `CPool<CVehicle>::GetAtRef(int32)` (0x4048E0), ECX = the vehicle pool
-    pub fn vehicle_at_ref(pool: GPtr<u8>, h: i32) -> GPtr<u8> = thiscall 0x4048E0 => unported;
-    /// `CPool<CObject>::GetAtRef(int32)` (0x465040), ECX = the object pool
-    pub fn object_at_ref(pool: GPtr<u8>, h: i32) -> GPtr<u8> = thiscall 0x465040 => unported;
     /// `CPool<CObject>::GetRef(CObject*)` (0x465070), ECX = the object pool
     pub fn object_get_ref(pool: GPtr<u8>, o: GPtr<u8>) -> i32 = thiscall 0x465070 => unported;
-    /// `CPool<CPed>::GetRef(CPed*)` (0x4442D0), ECX = the ped pool
-    pub fn ped_get_ref(pool: GPtr<u8>, p: GPtr<u8>) -> i32 = thiscall 0x4442D0 => unported;
     /// `CMissionCleanup::AddEntityToList(int32 handle, uint8 type)` (0x4637E0)
     pub fn mission_cleanup_add(m: GPtr<u8>, h: i32, ty: i32) = thiscall 0x4637E0 => unported;
     /// `CMissionCleanup::RemoveEntityFromList(int32 handle, uint8 type)` (0x4654B0)
     pub fn mission_cleanup_remove(m: GPtr<u8>, h: i32, ty: i32) = thiscall 0x4654B0 => unported;
-    /// `CWorld::Add(CEntity*)` (0x563220)
-    pub fn world_add(e: GPtr<u8>) = cdecl 0x563220 => unported;
-    /// `CWorld::Remove(CEntity*)` (0x563280)
-    pub fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
-    /// `CWorld::RemoveReferencesToDeletedObject(CEntity*)` (0x565510)
-    pub fn world_remove_references_to_deleted_object(e: GPtr<u8>) = cdecl 0x565510 => unported;
     /// `CRunningScript::CollectNextParameterWithoutIncreasingPC()` (0x464250)
     pub fn collect_next_parameter_without_increasing_pc(s: Scr) -> i32 = thiscall 0x464250 => unported;
     /// `CRunningScript::ReadTextLabelFromScript(char*, uint8)` (0x463D50)
     pub fn read_text_label(s: Scr, buf: GPtr<u8>, len: u32) = thiscall 0x463D50 => unported;
-    /// `CRadar::GetActualBlipArrayIndex(int32)` (0x582870)
-    pub fn get_actual_blip_array_index(h: i32) -> i32 = cdecl 0x582870 => unported;
     /// `CRadar::SetShortRangeCoordBlip(eBlipType, CVector, eBlipColour, eBlipDisplay, char*)` (0x583920);
     /// the vector by value (three stack words)
     pub fn set_short_range_coord_blip(ty: i32, x: f32, y: f32, z: f32, colour: i32, display: i32, name: GPtr<u8>) -> i32 = cdecl 0x583920 => unported;
-    /// `CRadar::SetBlipSprite(int32 blip, int32 sprite)` (0x583D70)
-    pub fn set_blip_sprite(h: i32, sprite: i32) = cdecl 0x583D70 => unported;
     /// `CWorld::FindGroundZForCoord(float, float)` (0x569660), ST0 (read as f64: exact)
     pub fn find_ground_z_for_coord(x: f32, y: f32) -> f64 = cdecl 0x569660 => unported;
     /// `CRunningScript::LocateCharCommand(int32 command)` (0x486D80)

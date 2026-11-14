@@ -324,11 +324,9 @@ pub fn init_g_c71a58() {
 
 // ---- other initialisers and the atexit destructors ----
 
+pub use sa_core::bindings::atexit;
+pub use sa_core::bindings::eh_vector_dtor;
 orig! {
-    /// CRT `_atexit` (0x821D1E)
-    pub fn atexit(f: u32) -> i32 = cdecl 0x821D1E => unported;
-    /// CRT `eh vector destructor iterator` (0x821E02, stdcall)
-    pub fn eh_vector_dtor(arr: GPtr<u8>, size: u32, n: u32, dtor: u32) = stdcall 0x821E02 => unported;
     /// `CText::CText()` (0x6A00F0)
     pub fn text_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x6A00F0 => crate::text::text_constructor;
     /// `CText::~CText()` (0x6A0140)

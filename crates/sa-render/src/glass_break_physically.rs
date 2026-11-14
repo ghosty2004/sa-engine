@@ -9,16 +9,12 @@ use sa_core::{hook, orig};
 use crate::common::{g, rd, wr, x};
 use crate::glass::{mi_as_atomic_model_info_ptr, report_glass_collision_event};
 
+use sa_core::bindings::matrix_mul_vec;
+use sa_world::bindings::calculate_triangle_planes;
+use sa_world::bindings::test_sphere_triangle;
 orig! {
-    /// `CCollision::CalculateTrianglePlanes(CColModel*)` (0x418580)
-    fn calculate_triangle_planes(cm: GPtr<u8>) = cdecl 0x418580 => unported;
-    /// `CCollision::TestSphereTriangle(const CColSphere&, const CompressedVector*, const CColTriangle&, const
-    /// CColTrianglePlane&)` (0x4165B0)
-    fn test_sphere_triangle(sphere: GPtr<u8>, verts: GPtr<u8>, tri: GPtr<u8>, plane: GPtr<u8>) -> u8 = cdecl 0x4165B0 => sa_world::collision::mvpe_coll1::test_sphere_triangle;
     /// `UncompressVector(CVector* out, const CompressedVector*)` (0x411590)
     fn uncompress_vector(out: GPtr<u8>, inp: GPtr<u8>) = cdecl 0x411590 => unported;
-    /// `CMatrix * CVector` (0x59C890, `out = m * v`)
-    fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
     /// `CGlass::GeneratePanesForWindow(ePaneType, CVector point, CVector fwd, CVector right, CVector velocity,
     /// CVector center, float dragCoeff, bool shatter, bool max1, int32 sections, bool)` (0x71B620)
     #[allow(clippy::too_many_arguments)]

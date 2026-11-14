@@ -61,36 +61,46 @@ const CLOCK_HOURS: usize = 0xB70153;
 /// 1.0f as the dword the original pushes.
 const ONE_F: u32 = 0x3F80_0000;
 
+use crate::bindings::pad_conversation_no_just_down;
+use crate::bindings::pad_conversation_yes_just_down;
+use sa_core::bindings::add_message_jump;
+use sa_core::bindings::entity_get_is_on_screen;
+use sa_core::bindings::entity_register_reference;
+use sa_core::bindings::find_player_coors;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::find_player_vehicle;
+use sa_core::bindings::general_random_int_in_range;
+use sa_core::bindings::get_pad;
+use sa_core::bindings::text_get;
+use sa_core::bindings::vector_dot_product;
+use sa_core::bindings::vector_magnitude;
+use sa_world::bindings::add_message_q;
+use sa_world::bindings::clear_small_messages_only;
+use sa_world::bindings::count_members_excluding_leader as membership_count_excluding_leader;
+use sa_world::bindings::disable_ped_speech as ped_disable_ped_speech;
+use sa_world::bindings::enable_ped_speech as ped_enable_ped_speech;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::event_script_command_ctor;
+use sa_world::bindings::event_script_command_dtor;
+use sa_world::bindings::get_stat_value as stats_get_stat_value;
+use sa_world::bindings::ik_is_looking;
+use sa_world::bindings::is_female_ped_type;
+use sa_world::bindings::ped_get_ped_talking;
+use sa_world::bindings::ped_pool_get_at;
+use sa_world::bindings::placeable_get_top_direction;
+use sa_world::bindings::player_get_wanted_level;
+use sa_world::bindings::sequence_add_task;
+use sa_world::bindings::sequence_ctor;
+use sa_world::bindings::stand_still_ctor;
+use sa_world::bindings::vector_sub;
 orig! {
     /// `CPed::Say(uint16 phrase, uint32 offset, float probability, bool overrideSilence, bool forceAudible,
     /// bool frontEnd)` (0x5EFFE0, `ret 0x18`)
     fn ped_say(p: GPtr<u8>, id: u32, off: u32, prob: u32, a: u32, b: u32, c: u32) = thiscall 0x5EFFE0 => unported;
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CWorld::FindPlayerCoors(CVector* out, int32)` (0x56E010)
-    fn find_player_coors(out: GPtr<u8>, id: i32) -> GPtr<u8> = cdecl 0x56E010 => unported;
-    /// `CWorld::FindPlayerVehicle(int32, bool)` (0x56E0D0)
-    fn find_player_vehicle(id: i32, remote: u32) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
-    /// `CPedGroupMembership::CountMembersExcludingLeader` (0x5F6AA0)
-    fn membership_count_excluding_leader(m: GPtr<u8>) -> i32 = thiscall 0x5F6AA0 => unported;
     /// `CPed::PedIsReadyForConversation(bool)` (0x43ABA0, `ret 4`)
     fn ped_is_ready_for_conversation(p: GPtr<u8>, random: u32) -> u8 = thiscall 0x43ABA0 => unported;
     /// `CConversationForPed::IsPlayerInPositionForConversation(bool)` (0x43AC40, `ret 4`)
     fn conv_is_player_in_position(c: GPtr<u8>, random: u32) -> u8 = thiscall 0x43AC40 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    fn get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CPad::ConversationNoJustDown` (0x541200)
-    fn pad_conversation_no_just_down(p: GPtr<u8>) -> u8 = thiscall 0x541200 => unported;
-    /// `CPad::ConversationYesJustDown` (0x5411D0)
-    fn pad_conversation_yes_just_down(p: GPtr<u8>) -> u8 = thiscall 0x5411D0 => unported;
-    /// `CMessages::ClearSmallMessagesOnly` (0x69DD30)
-    fn clear_small_messages_only() = cdecl 0x69DD30 => unported;
-    /// `CText::Get(const char*)` (0x6A0050, `ret 4`)
-    fn text_get(text: GPtr<u8>, key: GPtr<u8>) -> GPtr<u8> = thiscall 0x6A0050 => unported;
-    /// `CMessages::AddMessageJump(const char* text, uint32 time, uint16 flag, bool previousBrief)` (0x69F1E0)
-    fn add_message_jump(text: GPtr<u8>, time: u32, flag: u32, brief: u32) = cdecl 0x69F1E0 => unported;
-    /// `CMessages::AddMessageQ(const char* text, uint32 time, uint16 flag, bool previousBrief)` (0x69F0B0)
-    fn add_message_q(text: GPtr<u8>, time: u32, flag: u32, brief: u32) = cdecl 0x69F0B0 => unported;
     /// `CConversations::AwkwardSay(int32 sample, CPed*)` (0x43A810)
     fn awkward_say(sample: i32, ped: GPtr<u8>) = cdecl 0x43A810 => unported;
     /// `CAEPedSpeechAudioEntity::ReleasePlayerConversation()` (0x4E3960)
@@ -99,65 +109,21 @@ orig! {
     fn request_player_conversation(ped: GPtr<u8>) -> u8 = cdecl 0x4E38C0 => unported;
     /// `CAEPedSpeechAudioEntity::WillPedChatAboutTopic(int16)` (vtable +0x14 of ped +0x294)
     fn v_will_ped_chat_about_topic(s: GPtr<u8>, topic: i32) -> u8 = thiscall vslot 0x14 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70, `ret 4`)
-    fn entity_register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
-    /// `CPlayerPed::GetWantedLevel` (0x41BE60)
-    fn player_get_wanted_level(p: GPtr<u8>) -> i32 = thiscall 0x41BE60 => unported;
     /// `CConversations::IsConversationGoingOn()` (0x43AAC0)
     fn conversations_is_going_on() -> u8 = cdecl 0x43AAC0 => unported;
-    /// `CPool<CPed>::GetAt(int32)` (0x4082A0, `ret 4`)
-    fn ped_pool_get_at(pool: GPtr<u8>, i: i32) -> GPtr<u8> = thiscall 0x4082A0 => unported;
-    /// `CEntity::GetIsOnScreen` (0x534540)
-    fn entity_get_is_on_screen(e: GPtr<u8>) -> u8 = thiscall 0x534540 => unported;
-    /// `VectorSub(CVector* out, const CVector* a, const CVector* b)` (0x40FE60): out = a - b
-    fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => unported;
-    /// `CPlaceable::GetTopDirection(CVector* out)` (0x41CCB0, `ret 4`)
-    fn placeable_get_top_direction(p: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall 0x41CCB0 => unported;
-    /// `CVector::DotProduct(const CVector*, const CVector*)` (0x40FDB0, ST0)
-    fn vector_dot_product(a: GPtr<u8>, b: GPtr<u8>) -> f64 = cdecl 0x40FDB0 => unported;
-    /// `CVector::Magnitude()` (0x4082C0, ST0)
-    fn vector_magnitude(v: GPtr<u8>) -> f64 = thiscall 0x4082C0 => unported;
-    /// `CGeneral::GetRandomNumberInRange(int32, int32)` (0x407180)
-    fn general_random_int_in_range(min: i32, max: i32) -> i32 = cdecl 0x407180 => unported;
-    /// `CStats::GetStatValue(uint16)` (0x558E40, ST0)
-    fn stats_get_stat_value(id: u32) -> f64 = cdecl 0x558E40 => unported;
     /// `CPedClothesDesc::HasVisibleNewHairCut(int32)` (0x5A7970, `ret 4`)
     fn clothes_has_visible_new_hair_cut(c: GPtr<u8>, a: u32) -> u8 = thiscall 0x5A7970 => unported;
     /// `CPedClothesDesc::HasVisibleTattoo` (0x5A79D0)
     fn clothes_has_visible_tattoo(c: GPtr<u8>) -> u8 = thiscall 0x5A79D0 => unported;
-    /// `CPed::DisablePedSpeech(bool)` (0x5EFF60, `ret 4`)
-    fn ped_disable_ped_speech(p: GPtr<u8>, b: u32) = thiscall 0x5EFF60 => unported;
-    /// `CPed::EnablePedSpeech` (0x5EFF70)
-    fn ped_enable_ped_speech(p: GPtr<u8>) = thiscall 0x5EFF70 => unported;
-    /// `CPed::GetPedTalking` (0x5EFF50)
-    fn ped_get_ped_talking(p: GPtr<u8>) -> u8 = thiscall 0x5EFF50 => unported;
     /// `IKChainManager_c::LookAt(const char* purpose, CPed*, CEntity* target, int32 time, ePedBones, CVector* pos,
     /// bool useTorso, float speed, int32 blendTime, int32 priority, bool)` (0x618970, `ret 0x2C`)
     #[allow(clippy::too_many_arguments)]
     fn ik_look_at(m: GPtr<u8>, purpose: u32, ped: GPtr<u8>, target: GPtr<u8>, time: u32, bone: u32, pos: u32, torso: u32, speed: u32, blend: u32, prio: u32, a: u32) = thiscall 0x618970 => unported;
-    /// `IKChainManager_c::IsLooking(CPed*)` (0x6181A0, `ret 4`)
-    fn ik_is_looking(m: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x6181A0 => unported;
     /// `IKChainManager_c::AbortLookAt(CPed*, int32 blendOutTime)` (0x618280, `ret 8`)
     fn ik_abort_look_at(m: GPtr<u8>, ped: GPtr<u8>, t: u32) = thiscall 0x618280 => unported;
-    /// `CTaskComplexSequence::CTaskComplexSequence()` (0x632BD0)
-    fn sequence_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x632BD0 => unported;
-    /// `CTaskComplexSequence::AddTask(CTask*)` (0x632D10, `ret 4`)
-    fn sequence_add_task(s: GPtr<u8>, t: GPtr<u8>) = thiscall 0x632D10 => unported;
-    /// `CTaskSimpleStandStill::CTaskSimpleStandStill(int32 time, bool looped, bool useAnimIdleStance, float)`
-    /// (0x62F310, `ret 0x10`)
-    fn stand_still_ctor(t: GPtr<u8>, time: u32, looped: u32, idle: u32, delta: u32) -> GPtr<u8> = thiscall 0x62F310 => unported;
     /// `CTaskComplexKillPedOnFoot::CTaskComplexKillPedOnFoot(CPed*, int32, uint32, uint32, uint32, int8)` (0x620E30,
     /// `ret 0x18`)
     fn kill_ped_on_foot_ctor(t: GPtr<u8>, target: GPtr<u8>, time: u32, a: u32, b: u32, c: u32, d: u32) -> GPtr<u8> = thiscall 0x620E30 => unported;
-    /// `CEventScriptCommand::CEventScriptCommand(int32 primaryTaskIndex, CTask*, bool affectsDeadPeds)` (0x4B0A00,
-    /// `ret 0xC`)
-    fn event_script_command_ctor(e: GPtr<u8>, index: u32, task: GPtr<u8>, dead: u32) -> GPtr<u8> = thiscall 0x4B0A00 => unported;
-    /// `CEventScriptCommand::~CEventScriptCommand` (0x4B0A50)
-    fn event_script_command_dtor(e: GPtr<u8>) = thiscall 0x4B0A50 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, `ret 8`)
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, valid: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
-    /// `IsFemalePedType(ePedType)` (0x43A6A0, a `.HOODLUM` stub: pedType == 22 || pedType == 5; no catalogue name)
-    fn is_female_ped_type(t: u32) -> u8 = cdecl 0x43A6A0 => unported;
     /// `CPedToPlayerConversations::EndConversation()` (0x43AB10)
     fn p2p_end_conversation() = cdecl 0x43AB10 => unported;
 }
@@ -786,13 +752,11 @@ const SETUP_NUM_NODES: usize = 0x9691C8;
 /// speech, +0x24 speech yes, +0x28 speech no)
 const TEMP_NODES: usize = 0x969360;
 
+use sa_core::bindings::crt_strncpy;
+use sa_core::bindings::make_upper_case;
 orig! {
     /// `CConversationForPed::IsPlayerInPositionForConversation(bool)` (0x43AC40, `ret 4`; EAX passed through)
     fn conv_is_player_in_position_eax(c: GPtr<u8>, random: u32) -> u32 = thiscall 0x43AC40 => unported;
-    /// CRT `strncpy` (0x821F40)
-    fn crt_strncpy(d: GPtr<u8>, s: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x821F40 => unported;
-    /// `MakeUpperCase(char*)` (0x718710)
-    fn make_upper_case(s: GPtr<u8>) = cdecl 0x718710 => unported;
 }
 
 /// `CConversations::IsPlayerInPositionForConversation(CPed*, bool)` (stub 0x43B0B0 → 0x1563250, cdecl): the

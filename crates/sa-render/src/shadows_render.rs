@@ -14,13 +14,14 @@ use sa_math::x87::X87;
 
 use crate::common::{ftol32, g, jp, k, rd, wr, x, xi};
 
+use crate::bindings::rw_im3d_render_indexed_primitive;
+use crate::bindings::rw_im3d_transform;
+use sa_core::bindings::world_clear_scan_codes as clear_scan_codes;
 orig! {
     /// `RwRenderStateSet(state, value)` (`RwGlobals` +0x20)
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xc97b24 0x20 => unported;
     /// `CShadows::SetRenderModeForShadowType(uint8)` (0x707460; the dword the original pushes)
     fn set_render_mode_for_shadow_type(ty: u32) = cdecl 0x707460 => crate::shadows::set_render_mode_for_shadow_type;
-    /// `CWorld::ClearScanCodes()` (0x563470)
-    fn clear_scan_codes() = cdecl 0x563470 => unported;
     /// `CShadows::CastRealTimeShadowSectorList(list, ...)` (0x70a7e0, 19 dwords)
     fn cast_real_time_shadow_sector_list(list: GPtr<u8>, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, a8: u32, a9: u32, a10: u32, a11: u32, a12: u32, a13: u32, a14: u32, a15: u32, a16: u32, a17: u32, a18: u32, a19: u32) = cdecl 0x70a7e0 => crate::mvpd_r1::cast_real_time_shadow_sector_list;
     /// `CShadows::CastShadowSectorList(list, ...)` (0x70a630, 19 dwords)
@@ -31,10 +32,6 @@ orig! {
     fn get_water_level_no_waves(px: u32, py: u32, pz: u32, level: GPtr<f32>, big: GPtr<f32>, small: GPtr<f32>) -> u8 = cdecl 0x6e8580 => crate::waterlevel::get_water_level_no_waves;
     /// `FUN_006e8550(int x, int y, float* inout, float big, float small)` (0x6e8550): the waves at a point
     fn waves_for_coordinate(px: i32, py: i32, out: GPtr<f32>, big: u32, small: u32) = cdecl 0x6e8550 => crate::waterlevel::waves_for_coordinate;
-    /// `RwIm3DTransform(verts, count, ltm, flags)` (0x7ef450)
-    fn rw_im3d_transform(verts: u32, count: u32, ltm: u32, flags: u32) -> GPtr<u8> = cdecl 0x7ef450 => unported;
-    /// `RwIm3DRenderIndexedPrimitive(primType, indices, numIndices)` (0x7ef550)
-    fn rw_im3d_render_indexed_primitive(prim: u32, indices: u32, n: u32) -> u32 = cdecl 0x7ef550 => unported;
     /// `RwIm3DEnd()` (0x7ef520)
     fn rw_im3d_end() -> u32 = cdecl 0x7ef520 => unported;
     /// `RenderBuffer::StopStoring()` (0x7077a0)

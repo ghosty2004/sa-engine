@@ -14,19 +14,14 @@ use sa_core::{hook, orig};
 /// `CTheScripts::ScriptSearchLightArray` (0xA94D68, 8 of 0x7C)
 const SEARCH_LIGHTS: usize = 0xA94D68;
 
+use sa_core::bindings::entity_update_rw_frame;
+use sa_core::bindings::matrix_rotate_z;
+use sa_core::bindings::matrix_update_rw_matrix;
+use sa_core::bindings::vector_normalise;
+use sa_world::bindings::simple_transform_update_rw_matrix;
 orig! {
-    /// `CVector::Normalise()` (0x59C910)
-    fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
     /// `CMatrix::SetRotateX(float)` (0x59B060, `ret 4`)
     fn matrix_set_rotate_x(m: GPtr<u8>, a: u32) = thiscall 0x59B060 => unported;
-    /// `CMatrix::RotateZ(float)` (0x59B390, `ret 4`)
-    fn matrix_rotate_z(m: GPtr<u8>, a: u32) = thiscall 0x59B390 => unported;
-    /// `CMatrix::UpdateRwMatrix(RwMatrix*)` (0x59AD70, `ret 4`)
-    fn matrix_update_rw_matrix(m: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x59AD70 => unported;
-    /// `CSimpleTransform::UpdateRwMatrix(RwMatrix*)` (0x54EF40, `ret 4`)
-    fn simple_transform_update_rw_matrix(t: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x54EF40 => unported;
-    /// `CEntity::UpdateRwFrame()` (0x532B00)
-    fn entity_update_rw_frame(e: GPtr<u8>) = thiscall 0x532B00 => unported;
 }
 
 use sa_core::field::rd;

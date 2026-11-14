@@ -8,15 +8,12 @@ use sa_math::x87::X87;
 
 use super::common::{ftol32, g, x};
 
+use crate::bindings::garages_trigger_message as trigger_message;
+use crate::bindings::get_stat_value;
+use sa_core::bindings::stats_increment_stat as increment_stat;
 orig! {
     /// `CAudioEngine::ReportFrontendAudioEvent(eAudioEvents, float volume, float speed)` (0x506EA0) on `AudioEngine` (0xB6BC90)
     fn report_frontend_audio_event(ae: GPtr<u8>, event: u32, volume: f32, speed: f32) = thiscall 0x506EA0 => unported;
-    /// `CStats::IncrementStat(eStats, float)` (0x55C180)
-    fn increment_stat(stat: u32, v: f32) = cdecl 0x55C180 => unported;
-    /// `CStats::GetStatValue(eStats)` (0x558E40), ST0
-    fn get_stat_value(stat: u32) -> f64 = cdecl 0x558E40 => unported;
-    /// `CGarages::TriggerMessage(const char* key, int16 n1, uint16 time, int16 n2)` (0x447B80)
-    fn trigger_message(text: u32, n1: i32, time: u32, n2: i32) = cdecl 0x447B80 => unported;
 }
 
 /// `CWorld::Players[0].m_nMoney` (0xB7CE50).

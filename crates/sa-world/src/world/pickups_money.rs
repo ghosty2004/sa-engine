@@ -9,9 +9,8 @@ use sa_math::x87::X87;
 
 use super::common::{g, x, xi};
 
+use crate::bindings::find_ground_z_for_3d_coord;
 orig! {
-    /// `CWorld::FindGroundZFor3DCoord(float x, float y, float z, bool* found, CEntity** entity)` (0x5696C0, ST0)
-    fn find_ground_z_for_3d_coord(px: f32, py: f32, pz: f32, found: GPtr<u8>, entity: GPtr<u8>) -> f64 = cdecl 0x5696C0 => unported;
     /// `CPickups::GenerateNewOne(CVector, uint32 model, uint8 type, uint32 ammo, uint32 money, bool, const char*)`
     /// (0x456F20)
     #[allow(clippy::too_many_arguments)]

@@ -11,19 +11,29 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::anim_blend_animation as blend_animation;
+use crate::bindings::bbox_corners_uncached;
+use crate::bindings::clump_get_association;
+use crate::bindings::hit_wall_ctor;
+use crate::bindings::line_up_dtor;
+use crate::bindings::line_up_ped_with_car_ctor as line_up_ctor;
+use crate::bindings::task_complex_dtor;
+use crate::bindings::vehicle_clear_getting_out_flags;
+use sa_core::bindings::crt_free_8214bd as crt_free;
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_core::bindings::entity_register_reference;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::task_new as task_new_o;
+use sa_core::bindings::vector_normalise;
+use sa_world::bindings::ctor_48df30;
+use sa_world::bindings::look_about_ctor;
+use sa_world::bindings::stand_still_ctor;
+use sa_world::bindings::task_simple_ctor;
+use sa_world::bindings::task_simple_dtor;
+use sa_world::bindings::tm_find_active_task_by_type as task_manager_find_active_task_by_type;
+use sa_world::bindings::vector_magnitude_sqr as vector_magnitude;
+use sa_world::bindings::vector_sub;
 orig! {
-    /// `CTaskComplex::~CTaskComplex` (0x61A3D0)
-    fn task_complex_dtor(t: GPtr<u8>) = thiscall 0x61A3D0 => unported;
-    /// `CTask::operator new(uint32)` (0x61A5A0)
-    fn task_new_o(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => unported;
-    /// `CTaskSimpleStandStill::CTaskSimpleStandStill(int32, bool, bool, float)` (0x62F310, `ret 0x10`)
-    fn stand_still_ctor(t: GPtr<u8>, time: u32, looped: u32, idle: u32, delta: u32) -> GPtr<u8> = thiscall 0x62F310 => unported;
-    /// `CTaskSimpleHitWall::CTaskSimpleHitWall` (0x652F90)
-    fn hit_wall_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x652F90 => unported;
-    /// task constructor for type 421 (0x48DF30, a `.HOODLUM` stub; no catalogue name)
-    fn ctor_48df30(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x48DF30 => unported;
-    /// `CTaskSimpleLookAbout::CTaskSimpleLookAbout(int32)` (0x48E0A0, `ret 4`)
-    fn look_about_ctor(t: GPtr<u8>, time: u32) -> GPtr<u8> = thiscall 0x48E0A0 => unported;
     /// `CTaskSimpleGoToPoint::CTaskSimpleGoToPoint(int32 moveState, const CVector&, float radius, bool, bool)`
     /// (0x667CD0, `ret 0x14`)
     fn go_to_point_ctor(t: GPtr<u8>, ms: i32, target: GPtr<u8>, radius: u32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x667CD0 => unported;
@@ -34,8 +44,6 @@ orig! {
     /// `CTaskSimpleAchieveHeading::CTaskSimpleAchieveHeading(float heading, float changeRate, float tolerance)`
     /// (0x667E20, `ret 0xC`)
     fn achieve_heading_ctor(t: GPtr<u8>, h: f32, rate: u32, tol: u32) -> GPtr<u8> = thiscall 0x667E20 => unported;
-    /// `CVector::Normalise` (0x59C910)
-    fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
     /// `CGeneral::GetRadianAngleBetweenPoints(float x1, float y1, float x2, float y2)` (0x53CBE0, ST0)
     fn radian_angle_between_points(x1: f32, y1: f32, x2: f32, y2: f32) -> f64 = cdecl 0x53CBE0 => unported;
     /// `CGeneral::LimitRadianAngle(float)` (0x53CB50, ST0)
@@ -44,58 +52,27 @@ orig! {
     fn v_get_event_type(e: GPtr<u8>) -> i32 = thiscall vslot 0x4 => unported;
     /// `CPedGeometryAnalyser::ComputeClearTarget(const CPed&, const CVector&, CVector&)` (0x5F5D80, cdecl)
     fn compute_clear_target(ped: GPtr<u8>, target: GPtr<u8>, out: GPtr<u8>) -> u32 = cdecl 0x5F5D80 => unported;
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CTaskManager::FindActiveTaskByType(int32)` (0x681740, `ret 4`)
-    fn task_manager_find_active_task_by_type(m: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x681740 => unported;
     /// `CTaskSimpleCarDrive::UpdateBopping` (0x63C900)
     fn update_bopping_o(t: GPtr<u8>) = thiscall 0x63C900 => crate::mvpa_ai2::car_drive_update_bopping;
-    /// `VectorSub(CVector* out, const CVector* a, const CVector* b)` (0x40FE60): out = a - b
-    fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => unported;
-    /// `CVector::Magnitude` (0x406DA0, ST0)
-    fn vector_magnitude(v: GPtr<u8>) -> f64 = thiscall 0x406DA0 => unported;
     /// `CTaskSimpleCarDrive::ProcessHeadBopping(CPed*, bool, float)` (0x6428C0, `ret 0xC`)
     fn process_head_bopping(t: GPtr<u8>, ped: GPtr<u8>, b: u32, dist: u32) = thiscall 0x6428C0 => unported;
     /// `CTaskSimpleCarDrive::ProcessArmBopping(CPed*, bool, float)` (0x642AE0, `ret 0xC`)
     fn process_arm_bopping(t: GPtr<u8>, ped: GPtr<u8>, b: u32, dist: u32) = thiscall 0x642AE0 => unported;
-    /// `CTaskSimple::CTaskSimple` (0x61A390)
-    fn task_simple_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A390 => unported;
-    /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float)` (0x4D4610, cdecl)
-    fn blend_animation(clump: u32, group: u32, anim: u32, delta: u32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
     /// `CAnimBlendAssociation::SetFinishCallback(void (*)(CAnimBlendAssociation*, void*), void*)` (0x4CEBE0, `ret 8`)
     fn assoc_set_finish_callback(a: GPtr<u8>, cb: u32, data: GPtr<u8>) = thiscall 0x4CEBE0 => unported;
     /// `CAnimBlendAssociation::SetDeleteCallback(void (*)(CAnimBlendAssociation*, void*), void*)` (0x4CEBC0, `ret 8`)
     fn assoc_set_delete_callback(a: GPtr<u8>, cb: u32, data: GPtr<u8>) = thiscall 0x4CEBC0 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00, `ret 4`)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CPedGeometryAnalyser::ComputeEntityBoundingBoxCornersUncached(float z, CEntity&, CVector*)` (0x5F1FA0, cdecl)
-    fn bbox_corners_uncached(z: u32, e: GPtr<u8>, corners: GPtr<u8>) = cdecl 0x5F1FA0 => unported;
     /// `CPedGeometryAnalyser::ComputeEntityBoundingBoxPlanesUncached(float z, const CVector*, CVector*, float*)`
     /// (0x5F1670, cdecl)
     fn bbox_planes_uncached(z: u32, corners: GPtr<u8>, normals: GPtr<u8>, d: GPtr<u8>) = cdecl 0x5F1670 => crate::mvpa_ai1::compute_entity_bounding_box_planes_uncached;
-    /// `CTaskUtilityLineUpPedWithCar::~CTaskUtilityLineUpPedWithCar` (0x64FC00)
-    fn line_up_dtor(u: GPtr<u8>) = thiscall 0x64FC00 => unported;
-    /// CRT `free` (0x8214BD, cdecl)
-    fn crt_free(p: GPtr<u8>) = cdecl 0x8214BD => unported;
-    /// `CVehicle::ClearGettingOutFlags(uint8)` (0x6D3060, `ret 4`)
-    fn vehicle_clear_getting_out_flags(v: GPtr<u8>, door: u32) = thiscall 0x6D3060 => unported;
-    /// `CTaskSimple::~CTaskSimple` (0x61A3A0)
-    fn task_simple_dtor(t: GPtr<u8>) = thiscall 0x61A3A0 => unported;
     /// `CAnimManager::GetAnimationBlockIndex(const char*)` (0x4D3990, cdecl)
     fn anim_block_index_by_name(name: GPtr<u8>) -> u32 = cdecl 0x4D3990 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70, `ret 4`)
-    fn entity_register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
     /// CRT `operator new` (0x82119A, cdecl)
     fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
-    /// `CTaskUtilityLineUpPedWithCar::CTaskUtilityLineUpPedWithCar(const CVector&, int32, int32, int32)` (0x64FBB0,
-    /// `ret 0x10`)
-    fn line_up_ctor(u: GPtr<u8>, offset: GPtr<u8>, time: u32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x64FBB0 => unported;
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_get_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
     /// `CTask::MakeAbortable(CPed*, int32, const CEvent*)` (vtable +0x18)
     fn v_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, prio: u32, e: u32) -> u8 = thiscall vslot 0x18 => unported;
-    /// `RpAnimBlendClumpGetAssociation(RpClump*, AnimationId)` (0x4D68B0, cdecl)
-    fn clump_get_association(clump: u32, anim: u32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
     /// `CTaskSimpleRunTimedAnim::StartAnim(CPed*)` (0x61AC50, `ret 4`)
     fn start_timed_anim(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x61AC50 => crate::mvpa_ai2::run_timed_anim_start_anim;
 }

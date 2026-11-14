@@ -12,19 +12,36 @@ use sa_world::world::common::{find_player_ped, find_player_vehicle};
 
 use crate::common::{ftol32, g, rand_at, rd, wr, x, xi};
 
+use crate::bindings::audio_service;
+use crate::bindings::automobile_is_in_air as is_in_air;
+use crate::bindings::calculate_drive_acceleration;
+use crate::bindings::get_boat_pointer;
+use crate::bindings::get_car_gun_left_right;
+use crate::bindings::get_wheel_status;
+use crate::bindings::process_car_alarm;
+use crate::bindings::process_siren_and_horn;
+use crate::bindings::reset_player_breath;
+use crate::bindings::update_clump_alpha;
+use sa_core::bindings::get_pad;
+use sa_pop::bindings::car_gun_just_down;
+use sa_pop::bindings::get_car_gun_up_down;
+use sa_pop::bindings::scan_for_ped_danger;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::fx_kill;
+use sa_world::bindings::garages_trigger_message;
+use sa_world::bindings::get_adhesive_limit;
+use sa_world::bindings::get_pad_from_player;
+use sa_world::bindings::get_roughness;
+use sa_world::bindings::get_skidmark_type;
+use sa_world::bindings::nitrous_control;
+use sa_world::bindings::pad_start_shake as start_shake;
+use sa_world::bindings::physical_process_control;
+use sa_world::bindings::vector_magnitude_sqr;
 orig! {
     /// `CEntity::GetColModel()` (0x535300)
     fn get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => sa_world::world::entity::get_col_model;
-    /// `CAEVehicleAudioEntity::Service()` (0x502280)
-    fn audio_service(a: GPtr<u8>) = thiscall 0x502280 => unported;
-    /// `CAutomobile::IsInAir()` (0x6A6140)
-    fn is_in_air(v: GPtr<u8>) -> u8 = thiscall 0x6A6140 => unported;
     /// `CAutomobile::ProcessAutoBusDoors()` (0x6A38A0)
     fn process_auto_bus_doors(v: GPtr<u8>) = thiscall 0x6A38A0 => unported;
-    /// `CVehicle::ProcessCarAlarm()` (0x6D21F0)
-    fn process_car_alarm(v: GPtr<u8>) = thiscall 0x6D21F0 => crate::vehicle2::process_car_alarm;
-    /// `CVehicle::UpdateClumpAlpha()` (0x6D2980)
-    fn update_clump_alpha(v: GPtr<u8>) = thiscall 0x6D2980 => crate::vehicle2::update_clump_alpha;
     /// `CVehicle::UpdatePassengerList()` (0x6D29E0)
     fn update_passenger_list(v: GPtr<u8>) = thiscall 0x6D29E0 => crate::vehicle2::update_passenger_list;
     /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
@@ -49,8 +66,6 @@ orig! {
     fn v_break_tow_link(v: GPtr<u8>) -> u8 = thiscall vslot 0xF8 => unported;
     /// `VectorSub(CVector*, const CVector*, const CVector*)` (0x40FE60): `out = a - b`
     fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => sa_world::world::mvpa_math::vector_sub;
-    /// `CVector::SquaredMagnitude()` (0x406DA0), ST0
-    fn vector_magnitude_sqr(v: GPtr<u8>) -> f64 = thiscall 0x406DA0 => unported;
     /// `FUN_00424100(float x, float y)` (0x424100): `xor al, al; ret` (a stubbed area check)
     fn area_check_stub(px: u32, py: u32) -> u8 = cdecl 0x424100 => unported;
     /// `CAutomobile::FireTruckControl(CFire*)` (0x729B60)
@@ -65,66 +80,26 @@ orig! {
     fn update_moving_collision(v: GPtr<u8>, angle: u32) -> u8 = thiscall 0x6A1460 => unported;
     /// `CAutomobile::TankControl()` (0x6AE850)
     fn tank_control(v: GPtr<u8>) = thiscall 0x6AE850 => unported;
-    /// `CAutomobile::NitrousControl(int8)` (0x6A3EA0)
-    fn nitrous_control(v: GPtr<u8>, boosts: u32) = thiscall 0x6A3EA0 => unported;
-    /// `FxSystem_c::Kill()` (0x4AA3F0)
-    fn fx_kill(fx: GPtr<u8>) = thiscall 0x4AA3F0 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    fn get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CPad::CarGunJustDown()` (0x53FFE0): the caller tests AX
-    fn car_gun_just_down(pad: GPtr<u8>) -> u32 = thiscall 0x53FFE0 => unported;
-    /// `CGarages::TriggerMessage(const char*, int16, uint16, int16)` (0x447B80)
-    fn garages_trigger_message(text: u32, n1: i32, time: u32, n2: i32) = cdecl 0x447B80 => unported;
     /// `CPhysical::SkipPhysics()` (0x5433B0)
     fn skip_physics(v: GPtr<u8>) = thiscall 0x5433B0 => sa_world::physical::base::skip_physics;
-    /// `CPhysical::ProcessControl()` (0x5485E0)
-    fn physical_process_control(v: GPtr<u8>) = thiscall 0x5485E0 => sa_world::physical::attach::process_control;
-    /// `cHandlingDataMgr::GetBoatPointer(uint8)` (0x6F5300)
-    fn get_boat_pointer(mgr: GPtr<u8>, id: u32) -> GPtr<u8> = thiscall 0x6F5300 => crate::handling::get_boat_pointer;
     /// `CVehicle::ProcessBoatControl(tBoatHandlingData*, float*, bool, bool)` (0x6DBCE0)
     fn process_boat_control(v: GPtr<u8>, h: GPtr<u8>, res: GPtr<u8>, hit_wall: u32, post_collision: u32) = thiscall 0x6DBCE0 => unported;
     /// `CAutomobile::ProcessBuoyancy()` (0x6A8C00)
     fn process_buoyancy(v: GPtr<u8>) = thiscall 0x6A8C00 => crate::mvpd_v5::automobile_process_buoyancy;
-    /// `CPed::IsPlayer()` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CPlayerPed::ResetPlayerBreath()` (0x60A8A0)
-    fn reset_player_breath(p: GPtr<u8>) = thiscall 0x60A8A0 => unported;
-    /// `SurfaceInfos_c::GetSkidmarkType(uint32)` (0x55E630) on `g_surfaceInfos` (0xB79538)
-    fn get_skidmark_type(si: GPtr<u8>, id: u32) -> u32 = thiscall 0x55E630 => unported;
-    /// `SurfaceInfos_c::GetAdhesiveLimit(CColPoint&)` (0x55EB50), ST0
-    fn get_adhesive_limit(si: GPtr<u8>, cp: GPtr<u8>) -> f64 = thiscall 0x55EB50 => unported;
-    /// `SurfaceInfos_c::GetRoughness(uint32)` (0x55E810)
-    fn get_roughness(si: GPtr<u8>, id: u32) -> u32 = thiscall 0x55E810 => unported;
     /// `Multiply3x3(CVector*, const CMatrix*, const CVector*)` (0x59C790)
     fn multiply3x3(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C790 => sa_world::world::mvpa_math::multiply3x3;
     /// `CPhysical::GetSpeed(CVector)` (0x542CE0), result through the hidden pointer
     fn get_speed(e: GPtr<u8>, out: GPtr<CVector>, point: CVector) -> GPtr<CVector> = thiscall 0x542CE0 => sa_world::physical::forces::get_speed;
     /// `CPhysical::ApplyTurnForce(CVector, CVector)` (0x542A50)
     fn apply_turn_force(e: GPtr<u8>, force: CVector, point: CVector) = thiscall 0x542A50 => sa_world::physical::forces::apply_turn_force;
-    /// `cTransmission::CalculateDriveAcceleration(...)` (0x6D05E0), ST0
-    fn calculate_drive_acceleration(t: GPtr<u8>, gas: GPtr<u8>, gear: GPtr<u8>, change: GPtr<u8>, velocity: GPtr<u8>, i1: GPtr<u8>, i2: GPtr<u8>, wheels: u32, cheat: u32) -> f64 = thiscall 0x6D05E0 => unported;
     /// `CAutomobile::ProcessCarWheelPair(int32, int32, float, CVector*, CVector*, float, float, float, bool)` (0x6A4EC0), floats as bits
     fn process_car_wheel_pair(v: GPtr<u8>, left: u32, right: u32, steer: u32, speeds: GPtr<u8>, points: GPtr<u8>, traction: u32, accel: u32, brake: u32, front: u32) = thiscall 0x6A4EC0 => unported;
-    /// `CVehicle::ProcessSirenAndHorn(bool)` (0x6E0950)
-    fn process_siren_and_horn(v: GPtr<u8>, check: u32) = thiscall 0x6E0950 => crate::vehicle2::process_siren_and_horn;
     /// `CAutomobile::ProcessCarOnFireAndExplode(bool)` (0x6A7090)
     fn process_car_on_fire_and_explode(v: GPtr<u8>, explode: u32) = thiscall 0x6A7090 => crate::mvpd_v2::automobile_process_car_on_fire_and_explode;
     /// `CVehicle::UsesSiren()` (0x6D8470)
     fn uses_siren(v: GPtr<u8>) -> u8 = thiscall 0x6D8470 => crate::vehicle2::uses_siren;
     /// `CCarAI::MakeWayForCarWithSiren(CVehicle*)` (0x41D660)
     fn make_way_for_car_with_siren(v: GPtr<u8>) = cdecl 0x41D660 => sa_pop::carctrl4::make_way_for_car_with_siren;
-    /// `CDamageManager::GetWheelStatus(int32)` (0x6C21B0)
-    fn get_wheel_status(dm: GPtr<u8>, wheel: i32) -> u32 = thiscall 0x6C21B0 => crate::damage::get_wheel_status;
-    /// `CPad::StartShake(int16, uint8, uint32)` (0x53F920)
-    fn start_shake(pad: GPtr<u8>, time: u32, freq: u32, delay: u32) = thiscall 0x53F920 => unported;
-    /// `CCarCtrl::ScanForPedDanger(CVehicle*)` (0x42CE40)
-    fn scan_for_ped_danger(v: GPtr<u8>) = cdecl 0x42CE40 => sa_pop::carctrl4::scan_for_ped_danger;
-    /// `CPlayerPed::GetPadFromPlayer()` (0x609560)
-    fn get_pad_from_player(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x609560 => unported;
-    /// `CPad::GetCarGunLeftRight()` (0x53FC50): int16 in AX
-    fn get_car_gun_left_right(pad: GPtr<u8>) -> u32 = thiscall 0x53FC50 => unported;
-    /// `CPad::GetCarGunUpDown()` (0x53FC10): int16 in AX
-    fn get_car_gun_up_down(pad: GPtr<u8>) -> u32 = thiscall 0x53FC10 => unported;
     /// `CVehicle::UpdateTractorLink(bool, bool)` (0x6E0050)
     fn update_tractor_link(v: GPtr<u8>, a: u32, b: u32) = thiscall 0x6E0050 => unported;
     /// `CVehicle::UpdateTrailerLink(bool, bool)` (0x6DFC50)

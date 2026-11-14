@@ -57,6 +57,23 @@ const MENU_REINIT: usize = 0xBA67A5;
 const CAM_POS_SNAP: usize = 0x8CCC7C;
 const CAM_AXIS_SNAP: usize = 0x8CCC78;
 
+pub use crate::bindings::process_fov_lerp;
+pub use crate::bindings::process_vector_move_linear;
+pub use crate::bindings::process_vector_track_linear;
+pub use sa_core::bindings::crt_free_8214bd as crt_free;
+pub use sa_core::bindings::eh_vector_ctor;
+pub use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+pub use sa_core::bindings::entity_register_reference as register_reference;
+pub use sa_core::bindings::matrix_assign;
+pub use sa_core::bindings::matrix_dtor;
+pub use sa_core::bindings::matrix_invert_59bdd0 as matrix_invert;
+pub use sa_core::bindings::matrix_update_matrix;
+pub use sa_core::bindings::rw_frame_update_objects;
+pub use sa_core::bindings::rw_matrix_update;
+pub use sa_pop::bindings::rw_frame_ortho_normalize;
+pub use sa_world::bindings::get_vehicle_appearance;
+pub use sa_world::bindings::placeable_set_matrix;
+pub use sa_world::bindings::vector_ne;
 orig! {
     /// `CCamera::IsSphereVisible(const CVector&, float, RwMatrix*)` (0x420C40)
     pub fn is_sphere_visible_m(this: GPtr<u8>, c: GPtr<u8>, r: f32, m: GPtr<u8>) -> u8 = thiscall 0x420C40 => is_sphere_visible_with_matrix;
@@ -69,38 +86,20 @@ orig! {
     /// `CWorld::ProcessVerticalLine(const CVector&, float, CColPoint&, CEntity*&, bool buildings, bool vehicles,
     /// bool peds, bool objects, bool dummies, bool seeThrough, CStoredCollPoly*)` (0x5674E0)
     pub fn process_vertical_line(p: GPtr<u8>, dist: f32, cp: GPtr<u8>, e: GPtr<u8>, b: u8, v: u8, pe: u8, o: u8, d: u8, st: u8, poly: GPtr<u8>) -> u8 = cdecl 0x5674E0 => unported;
-    /// `free` (0x8214BD)
-    pub fn crt_free(p: GPtr<u8>) = cdecl 0x8214BD => unported;
     /// `CMatrix::Attach(RwMatrix*, bool)` (0x59BD10)
     pub fn matrix_attach(m: GPtr<u8>, rw: GPtr<u8>, owns: u8) = thiscall 0x59BD10 => unported;
     /// `CMBlur::MotionBlurOpen(RwCamera*)` (0x71D710)
     pub fn motion_blur_open_call(cam: GPtr<u8>) -> i32 = cdecl 0x71D710 => motion_blur_open;
     /// `CMBlur::MotionBlurRender(RwCamera*, uint32 r, g, b, a, int32 type, uint32 alpha)` (0x71D700, a lone `ret`)
     pub fn motion_blur_render(cam: GPtr<u8>, r: u32, gr: u32, b: u32, a: u32, kind: u32, alpha: u32) = cdecl 0x71D700 => unported;
-    /// `CMatrix::operator=(const CMatrix&)` (0x59BBC0)
-    pub fn matrix_assign(dst: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = thiscall 0x59BBC0 => unported;
-    /// `CPlaceable::SetMatrix(const CMatrix&)` (0x54F610)
-    pub fn placeable_set_matrix(p: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F610 => unported;
     /// `CCamera::CopyCameraMatrixToRWCam(bool)` (0x50AFA0)
     pub fn copy_camera_matrix_to_rw_cam(this: GPtr<u8>, update: u8) = thiscall 0x50AFA0 => copy_camera_matrix_to_rw_cam_port;
     /// `CCamera::CalculateDerivedValues(bool, bool)` (0x5150E0)
     pub fn calculate_derived_values(this: GPtr<u8>, a: u8, b: u8) = thiscall 0x5150E0 => calculate_derived_values_port;
-    /// `CMatrix::Invert(const CMatrix&)` returning by value (0x59BDD0, `Invert-2`: hidden return pointer first)
-    pub fn matrix_invert(out: GPtr<u8>, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x59BDD0 => unported;
     /// `CPlaceable::CPlaceable()` (0x54F1E0)
     pub fn placeable_ctor(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x54F1E0 => unported;
-    /// CRT `eh vector constructor iterator` (0x821D30, stdcall)
-    pub fn eh_vector_ctor(arr: GPtr<u8>, size: u32, n: u32, ctor: u32, dtor: u32) = stdcall 0x821D30 => unported;
     /// `CCamera::InitialiseScriptableComponents()` (0x50D2D0)
     pub fn initialise_scriptable_components(this: GPtr<u8>) = thiscall 0x50D2D0 => crate::camfx::initialise_scriptable_components;
-    /// `CMatrix::UpdateMatrix(RwMatrix*)` (0x59AD20)
-    pub fn matrix_update_matrix(m: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x59AD20 => unported;
-    /// `RwMatrixUpdate(RwMatrix*)` (0x7F18A0)
-    pub fn rw_matrix_update(m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F18A0 => unported;
-    /// `RwFrameUpdateObjects(RwFrame*)` (0x7F0910)
-    pub fn rw_frame_update_objects(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0910 => unported;
-    /// `RwFrameOrthoNormalize(RwFrame*)` (0x7F1170)
-    pub fn rw_frame_ortho_normalize(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F1170 => unported;
     /// `CCam::Init()` (0x50E490)
     pub fn cam_init(cam: GPtr<u8>) = thiscall 0x50E490 => crate::cam::cam_init;
     /// `CCamera::ClearPlayerWeaponMode()` (0x50AB10)
@@ -109,10 +108,6 @@ orig! {
     pub fn matrix_set_scale(m: GPtr<u8>, s: f32) = thiscall 0x59AED0 => unported;
     /// `CCamera::SetMotionBlur(int32 r, int32 g, int32 b, int32 a, int32 type)` (0x50BF40)
     pub fn set_motion_blur_call(this: GPtr<u8>, r: i32, gr: i32, b: i32, a: i32, kind: i32) = thiscall 0x50BF40 => crate::camera::set_motion_blur;
-    /// `operator!=(const CVector&, const CVector&)` (0x509760, cdecl, AL)
-    pub fn vector_ne(a: GPtr<u8>, b: GPtr<u8>) -> u8 = cdecl 0x509760 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    pub fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
     /// `CCamera::CalculateMirroredMatrix(CVector n, float d, CMatrix* in, CMatrix* out)` (0x50B380)
     pub fn calculate_mirrored_matrix_call(this: GPtr<u8>, nx: u32, ny: u32, nz: u32, d: u32, inp: GPtr<u8>, out: GPtr<u8>) = thiscall 0x50B380 => calculate_mirrored_matrix_bits;
     /// `CCamera::CalculateFrustumPlanes(bool)` (0x514D60)
@@ -123,20 +118,8 @@ orig! {
     pub fn camera_cone_cast_vs_world_collision(s1: GPtr<u8>, s2: GPtr<u8>, dist: GPtr<u8>, angle: f32) -> u8 = cdecl 0x41B000 => unported;
     /// `TransformVectors(RwV3d* out, int32 n, const CMatrix& m, const RwV3d* in)` (0x54EEA0)
     pub fn transform_vectors(out: GPtr<u8>, n: i32, m: GPtr<u8>, inp: GPtr<u8>) = cdecl 0x54EEA0 => unported;
-    /// `CCamera::ProcessVectorMoveLinear()` (0x5164A0)
-    pub fn process_vector_move_linear(this: GPtr<u8>) = thiscall 0x5164A0 => unported;
-    /// `CCamera::ProcessVectorTrackLinear()` (0x516440)
-    pub fn process_vector_track_linear(this: GPtr<u8>) = thiscall 0x516440 => unported;
-    /// `CCamera::ProcessFOVLerp()` (0x516500)
-    pub fn process_fov_lerp(this: GPtr<u8>) = thiscall 0x516500 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
-    pub fn clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    pub fn register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
     /// `CCamera::SetZoomValueFollowPedScript(int16)` (0x50C160)
     pub fn set_zoom_value_follow_ped_script_call(this: GPtr<u8>, zoom: u16) = thiscall 0x50C160 => crate::camera::set_zoom_value_follow_ped_script;
-    /// `CVehicle::GetVehicleAppearance()` (0x6D1080)
-    pub fn get_vehicle_appearance(veh: GPtr<u8>) -> i32 = thiscall 0x6D1080 => unported;
     /// `CCamera::GetArrPosForVehicleType(eVehicleType, int32&)` (0x50AF00)
     pub fn get_arr_pos_for_vehicle_type_call(this: GPtr<u8>, kind: i32, out: GPtr<i32>) -> u8 = thiscall 0x50AF00 => get_arr_pos_for_vehicle_type;
 }

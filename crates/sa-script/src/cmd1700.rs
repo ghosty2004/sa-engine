@@ -29,6 +29,14 @@ pub const PORTED: &[u16] = &[
 /// `CTheScripts::UsedObjectArray[0].nModelIndex` + 0x1C (the base the `m < 0` model rule indexes from).
 const USED_OBJECT_ARRAY_RULE_BASE: u32 = 0xA44B88;
 
+use crate::bindings::disable_random_trains;
+use crate::bindings::release_mission_trains;
+use crate::bindings::remove_script_checkpoint;
+use crate::bindings::remove_vehicle_upgrade;
+use sa_stream::bindings::has_vehicle_upgrade_loaded;
+use sa_stream::bindings::request_vehicle_upgrade;
+use sa_world::bindings::get_actual_script_thing_index;
+use sa_world::bindings::set_remap;
 orig! {
     /// `CTrain::CreateMissionTrain(CVector, bool clockwise, uint32 type, CTrain** first, CTrain** last, int32
     /// node, int32 track, bool missionTrain)` (0x6F7550), 10 dwords; the vector as raw dwords
@@ -39,45 +47,49 @@ orig! {
     fn vehicle_get_ref_(pool: GPtr<u8>, v: u32) -> i32 = thiscall 0x424160 => unported;
     /// `CRunningScript::CollectNextParameterWithoutIncreasingPC()` (0x464250)
     fn collect_next(s: Scr) -> i32 = thiscall 0x464250 => crate::vm::collect_next_parameter_without_increasing_pc;
-    /// `CTheScripts::GetActualScriptThingIndex(int32 ref, uint8 type)` (0x4839A0)
-    fn get_actual_script_thing_index(r: i32, ty: u32) -> i32 = cdecl 0x4839A0 => unported;
     /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, bool x7)` (0x56A490), AL
     fn get_is_line_of_sight_clear(a: GPtr<u32>, b: GPtr<u32>, buildings: u32, vehicles: u32, peds: u32, objects: u32, dummies: u32, see_through: u32, ignore_some: u32) -> u8 = cdecl 0x56A490 => unported;
     /// `CTheScripts::AddScriptCheckpoint(CVector at, CVector pointTo, float radius, int32 type)` (0x4935A0)
     fn add_script_checkpoint(x: u32, y: u32, z: u32, px: u32, py: u32, pz: u32, radius: u32, ty: u32) -> i32 = cdecl 0x4935A0 => unported;
-    /// `CTheScripts::RemoveScriptCheckpoint(int32)` (0x4936C0)
-    fn remove_script_checkpoint(h: i32) = cdecl 0x4936C0 => unported;
-    /// `CTrain::DisableRandomTrains(bool)` (0x6F5DB0)
-    fn disable_random_trains(b: u32) = cdecl 0x6F5DB0 => unported;
     /// `CVehicle::AddVehicleUpgrade(int32 modelId)` (0x6E3290), EAX
     fn add_vehicle_upgrade(v: GPtr<u8>, m: i32) -> i32 = thiscall 0x6E3290 => unported;
-    /// `CVehicle::RemoveVehicleUpgrade(int32 modelId)` (0x6DF930)
-    fn remove_vehicle_upgrade(v: GPtr<u8>, m: i32) = thiscall 0x6DF930 => unported;
-    /// `CStreaming::RequestVehicleUpgrade(int32 modelId, int32 flags)` (0x408C70)
-    fn request_vehicle_upgrade(m: i32, flags: i32) = cdecl 0x408C70 => unported;
-    /// `CStreaming::HasVehicleUpgradeLoaded(int32 modelId)` (0x407820), AL
-    fn has_vehicle_upgrade_loaded(m: i32) -> u8 = cdecl 0x407820 => unported;
     /// `CTrain::RemoveMissionTrains()` (0x6F6A20)
     fn remove_mission_trains() = cdecl 0x6F6A20 => unported;
-    /// `CTrain::ReleaseMissionTrains()` (0x6F6B60)
-    fn release_mission_trains() = cdecl 0x6F6B60 => unported;
     /// `CTrain::RemoveAllTrains()` (0x6F6AA0)
     fn remove_all_trains() = cdecl 0x6F6AA0 => unported;
     /// `CPlayerPed::RemovePlayerPed(int32)` (0x6094A0)
     fn remove_player_ped(i: i32) = cdecl 0x6094A0 => unported;
     /// `CCamera::StartCooperativeCamMode()` (0x50C260)
     fn start_cooperative_cam_mode(cam: GPtr<u8>) = thiscall 0x50C260 => unported;
-    /// `CVehicle::SetRemap(int32)` (0x6D0C00)
-    fn set_remap(v: GPtr<u8>, remap: i32) = thiscall 0x6D0C00 => unported;
 }
 
+use crate::bindings::find_node_coors_for_script;
+use crate::bindings::find_node_orientation_for_car_placement;
+use crate::bindings::find_nth_node_closest_to_coors;
+use crate::bindings::get_actual_blip_array_index as blip_index;
+use crate::bindings::start_playback_recorded_car;
+use crate::bindings::task_drive_point_route_ctor;
+use crate::bindings::vehicle_41bdd0;
+use sa_core::bindings::ped_group_process;
+use sa_core::bindings::set_mission_doesnt_require_model;
+use sa_core::bindings::task_new;
+use sa_core::bindings::vector_magnitude;
+use sa_stream::bindings::get_num_remaps;
+use sa_world::bindings::arrest_ped_ctor as task_arrest_ped_ctor;
+use sa_world::bindings::dive_from_attached_ctor as task_dive_ctor;
+use sa_world::bindings::find_ground_z_for_coord as find_ground_z;
+use sa_world::bindings::get_distance_from_centre_of_mass_to_base_of_model;
+use sa_world::bindings::group_intel_set_decision_maker_type as set_group_decision_maker_type;
+use sa_world::bindings::membership_is_leader;
+use sa_world::bindings::membership_is_member;
+use sa_world::bindings::membership_remove_member;
+use sa_world::bindings::ped_groups_get_peds_group as get_peds_group;
+use sa_world::bindings::run_anim_ctor as task_run_anim_ctor;
+use sa_world::bindings::seek_entity_standard_ctor as task_seek_entity_ctor;
+use sa_world::bindings::sequence_add_task;
 orig! {
-    /// `CTask::operator new(uint32)` (0x61A5A0)
-    fn task_new(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => unported;
     /// `CRunningScript::GivePedScriptedTask(int32 pedHandle, CTask*, int32 opcode)` (0x465C20)
     fn give(s: Scr, ped: u32, task: GPtr<u8>, command: u32) = thiscall 0x465C20 => unported;
-    /// `CTaskComplexDiveFromAttachedEntityAndGetUp::CTaskComplexDiveFromAttachedEntityAndGetUp(int32)` (0x492E20)
-    fn task_dive_ctor(t: GPtr<u8>, a: u32) -> GPtr<u8> = thiscall 0x492E20 => unported;
     /// `CPed::AttachPedToBike(CEntity*, CVector offset, uint16 pos, float, float, eWeaponType)` (0x5E7E60), 8 dwords
     fn attach_ped_to_bike(p: GPtr<u8>, v: GPtr<u8>, x: u32, y: u32, z: u32, pos: u32, a: u32, b: u32, w: u32) = thiscall 0x5E7E60 => unported;
     /// `CTaskComplexSeekEntityRadiusAngleOffset::CTaskComplexSeekEntityRadiusAngleOffset(CEntity*, int32 time,
@@ -87,18 +99,12 @@ orig! {
     fn ik_look_at(m: GPtr<u8>, name: u32, ped: GPtr<u8>, target: u32, time: u32, bone: u32, pos: GPtr<u32>, b: u32, speed: u32, blend: u32, prio: u32, c: u32) = thiscall 0x618970 => unported;
     /// unnamed task ctor 0x634440 (`CTaskSimpleTriggerLookAt`), 10 dwords
     fn task_trigger_look_at_ctor(t: GPtr<u8>, e: u32, time: u32, bone: u32, x: u32, y: u32, z: u32, b: u32, speed: u32, blend: u32, prio: u32) -> GPtr<u8> = thiscall 0x634440 => unported;
-    /// `CTaskComplexSequence::AddTask(CTask*)` (0x632D10)
-    fn sequence_add_task(seq: GPtr<u8>, t: GPtr<u8>) = thiscall 0x632D10 => unported;
     /// `CPed::ReplaceWeaponForScriptedCutscene()` (0x5E6530)
     fn replace_weapon_for_scripted_cutscene(p: GPtr<u8>) = thiscall 0x5E6530 => unported;
     /// `CPed::RemoveWeaponForScriptedCutscene()` (0x5E6550)
     fn remove_weapon_for_scripted_cutscene(p: GPtr<u8>) = thiscall 0x5E6550 => unported;
     /// `CPed::RemoveWeaponWhenEnteringVehicle(int32)` (0x5E6370)
     fn remove_weapon_when_entering_vehicle(p: GPtr<u8>, a: u32) = thiscall 0x5E6370 => unported;
-    /// `CVector::Magnitude()` (0x4082C0), ST0 (exact as f64)
-    fn vector_magnitude(v: GPtr<u8>) -> f64 = thiscall 0x4082C0 => unported;
-    /// `CPedGroupIntelligence::SetGroupDecisionMakerType(int32)` (0x5F7340)
-    fn set_group_decision_maker_type(gi: GPtr<u8>, dm: i32) = thiscall 0x5F7340 => unported;
     /// `CDecisionMakerTypesFileLoader::GetGrpDMName(int32, char*)` (0x600880)
     fn get_grp_dm_name(i: u32, buf: GPtr<u8>) = cdecl 0x600880 => unported;
     /// `CDecisionMakerTypesFileLoader::LoadDecisionMaker(const char*, int32 type, bool mission)` (0x607D30)
@@ -122,9 +128,6 @@ orig! {
     /// `CTaskComplexTurnToFaceEntityOrCoord` ctor (0x66B910; the coordinate form by its arguments: `const CVector&,
     /// float, float`)
     fn task_turn_to_face_ctor(t: GPtr<u8>, p: GPtr<u32>, a: u32, b: u32) -> GPtr<u8> = thiscall 0x66B910 => unported;
-    /// `CTaskComplexDrivePointRoute::CTaskComplexDrivePointRoute(CVehicle*, const CPointRoute&, float, int32,
-    /// int32, float, int32)` (0x6433E0)
-    fn task_drive_point_route_ctor(t: GPtr<u8>, v: GPtr<u8>, r: u32, speed: u32, mode: u32, model: u32, radius: u32, style: u32) -> GPtr<u8> = thiscall 0x6433E0 => unported;
     /// `CWeapon::FireOneInstantHitRound(CVector*, CVector*, int32)` (0x73AF00)
     fn fire_one_instant_hit_round(a: GPtr<u32>, b: GPtr<u32>, dmg: u32) = cdecl 0x73AF00 => unported;
     /// `CAutomobile::GetCarRoll()` (0x6A6010), ST0 (read as f64)
@@ -134,8 +137,6 @@ orig! {
     fn task_go_to_point_aiming_ctor(t: GPtr<u8>, ms: u32, p: GPtr<u32>, aim: GPtr<u8>, x: u32, y: u32, z: u32, r: u32, d: u32) -> GPtr<u8> = thiscall 0x668790 => unported;
     /// `CFireManager::GetNumFiresInRange(const CVector&, float)` (0x5397F0) on `gFireManager` 0xB71F80
     fn get_num_fires_in_range(m: GPtr<u8>, p: GPtr<u32>, r: u32) -> i32 = thiscall 0x5397F0 => unported;
-    /// `CRadar::GetActualBlipArrayIndex(int32)` (0x582870)
-    fn blip_index(h: i32) -> i32 = cdecl 0x582870 => unported;
     /// `CRadar::SetEntityBlip(eBlipType, int32, uint32, eBlipDisplay, char*)` (0x5839A0)
     fn set_entity_blip(ty: u32, h: u32, colour: u32, display: u32, name: GPtr<u8>) -> i32 = cdecl 0x5839A0 => unported;
     /// `CRadar::ChangeBlipScale(int32, int32)` (0x583CC0)
@@ -144,16 +145,6 @@ orig! {
     fn skip_to_end_and_stop_playback(v: GPtr<u8>) = cdecl 0x45A4A0 => unported;
     /// `CTaskSimpleCarSetTempAction::CTaskSimpleCarSetTempAction(CVehicle*, int32, int32)` (0x63D6F0)
     fn task_car_temp_action_ctor(t: GPtr<u8>, v: GPtr<u8>, a: u32, time: u32) -> GPtr<u8> = thiscall 0x63D6F0 => unported;
-    /// `CPedGroups::GetPedsGroup(const CPed*)` (0x5F7E80)
-    fn get_peds_group(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x5F7E80 => unported;
-    /// `CPedGroupMembership::IsLeader(const CPed*)` (0x5F69C0), AL
-    fn membership_is_leader(m: GPtr<u8>, p: GPtr<u8>) -> u8 = thiscall 0x5F69C0 => unported;
-    /// `CPedGroupMembership::IsMember(const CPed*)` (0x5F6A10), AL
-    fn membership_is_member(m: GPtr<u8>, p: GPtr<u8>) -> u8 = thiscall 0x5F6A10 => unported;
-    /// `CPedGroupMembership::RemoveMember(CPed*)` (0x5FB210)
-    fn membership_remove_member(m: GPtr<u8>, p: GPtr<u8>) = thiscall 0x5FB210 => unported;
-    /// `CPedGroup::Process()` (0x5FC7E0)
-    fn ped_group_process(g: GPtr<u8>) = thiscall 0x5FC7E0 => unported;
     /// `CTheScripts::AttachSearchlightToSearchlightObject(int32, CObject*, CObject*, CObject*, CVector)` (0x4934F0)
     fn attach_searchlight(h: u32, a: GPtr<u8>, b: GPtr<u8>, c: GPtr<u8>, x: u32, y: u32, z: u32) = cdecl 0x4934F0 => unported;
     /// `CTrain::SetTrainSpeed(CTrain*, float)` (0x6F5E20)
@@ -164,28 +155,10 @@ orig! {
     fn find_caboose(v: GPtr<u8>) -> u32 = cdecl 0x6F5E70 => unported;
     /// `CTaskComplexCarDriveMission::CTaskComplexCarDriveMission(CVehicle*, CEntity*, int32, int32, float)` (0x63CC30)
     fn task_car_drive_mission_ctor(t: GPtr<u8>, v: GPtr<u8>, target: GPtr<u8>, mission: u32, style: u32, speed: u32) -> GPtr<u8> = thiscall 0x63CC30 => unported;
-    /// `CTaskComplexSeekEntity<CEntitySeekPosCalculatorStandard>` ctor (0x46AC10)
-    fn task_seek_entity_ctor(t: GPtr<u8>, e: GPtr<u8>, time: u32, period: u32, a: u32, b: u32, c: u32, d: u32, f: u32) -> GPtr<u8> = thiscall 0x46AC10 => unported;
-    /// `CTaskSimpleRunAnim::CTaskSimpleRunAnim(AssocGroupId, AnimationId, float, bool)` (0x61A8B0)
-    fn task_run_anim_ctor(t: GPtr<u8>, g: u32, a: u32, blend: u32, b: u32) -> GPtr<u8> = thiscall 0x61A8B0 => unported;
-    /// `CTaskComplexArrestPed::CTaskComplexArrestPed(CPed*)` (0x68B990)
-    fn task_arrest_ped_ctor(t: GPtr<u8>, p: GPtr<u8>) -> GPtr<u8> = thiscall 0x68B990 => unported;
-    /// `CStreaming::SetMissionDoesntRequireModel(int32)` (0x409C90)
-    fn set_mission_doesnt_require_model(m: i32) = cdecl 0x409C90 => unported;
     /// `CLinkedUpgradeList::FindOtherUpgrade(int16)` (0x4C74D0) on `CVehicleModelInfo::ms_linkedUpgrades` 0xB4E6D8, AX
     fn find_other_upgrade(l: GPtr<u8>, m: i32) -> u16 = thiscall 0x4C74D0 => unported;
-    /// `CVehicleModelInfo::GetNumRemaps()` (0x4C86B0)
-    fn get_num_remaps(mi: GPtr<u8>) -> i32 = thiscall 0x4C86B0 => unported;
     /// `CFireManager::GetScriptFireCoords(int32)` (0x5397E0), returns a `CVector*`
     fn get_script_fire_coords(m: GPtr<u8>, i: i32) -> GPtr<u32> = thiscall 0x5397E0 => unported;
-    /// `CWorld::FindGroundZForCoord(float, float)` (0x569660), raw dwords, ST0 (exact as f64)
-    fn find_ground_z(x: u32, y: u32) -> f64 = cdecl 0x569660 => unported;
-    /// `CPathFind::FindNthNodeClosestToCoors(...)` (0x44F8C0), the `CNodeAddress` through the hidden pointer
-    fn find_nth_node_closest_to_coors(paths: GPtr<u8>, out: GPtr<u32>, x: u32, y: u32, z: u32, ty: u32, max: u32, a: u32, b: u32, n: u32, c: u32, d: u32, e: u32) -> GPtr<u32> = thiscall 0x44F8C0 => unported;
-    /// `CPathFind::FindNodeCoorsForScript(CNodeAddress, bool* found)` (0x4505E0), hidden-pointer vector
-    fn find_node_coors_for_script(paths: GPtr<u8>, out: GPtr<u32>, addr: u32, found: GPtr<u8>) -> GPtr<u32> = thiscall 0x4505E0 => unported;
-    /// `CPathFind::FindNodeOrientationForCarPlacement(CNodeAddress)` (0x450320), ST0 (read as f64)
-    fn find_node_orientation_for_car_placement(paths: GPtr<u8>, addr: u32) -> f64 = thiscall 0x450320 => unported;
     /// `CStuckCarCheck::IsCarInStuckCarArray(int32)` (0x463C70) on `CTheScripts::StuckCars` 0xA90AB0, AL
     fn is_car_in_stuck_car_array(sc: GPtr<u8>, h: u32) -> u8 = thiscall 0x463C70 => unported;
     /// `CVehicleRecording::SetPlaybackSpeed(CVehicle*, float)` (0x459660)
@@ -198,14 +171,8 @@ orig! {
     fn get_percentage_tagged_in_area(r: GPtr<u32>) -> i32 = cdecl 0x49D0B0 => unported;
     /// `CTagManager::SetAlphaInArea(CRect*, uint8)` (0x49CFE0)
     fn set_alpha_in_area(r: GPtr<u32>, a: u32) = cdecl 0x49CFE0 => unported;
-    /// `CEntity::GetDistanceFromCentreOfMassToBaseOfModel()` (0x536BE0), ST0 (exact as f64)
-    fn get_distance_from_centre_of_mass_to_base_of_model(e: GPtr<u8>) -> f64 = thiscall 0x536BE0 => unported;
     /// `CCarCtrl::JoinCarWithRoadSystemGotoCoors(CVehicle*, const CVector&, bool, bool)` (0x42F870), AL
     fn join_car_with_road_system_goto_coors(v: GPtr<u8>, pos: GPtr<u32>, a: u32, b: u32) -> u8 = cdecl 0x42F870 => unported;
-    /// unnamed thiscall on the vehicle (0x41BDD0; see ProcessCommands700To799.md, `SetEngineOn`)
-    fn vehicle_41bdd0(v: GPtr<u8>, a: u32) = thiscall 0x41BDD0 => unported;
-    /// `CVehicleRecording::StartPlaybackRecordedCar(CVehicle*, int32, bool, bool)` (0x45A980)
-    fn start_playback_recorded_car(v: GPtr<u8>, n: u32, ai: u32, b: u32) = cdecl 0x45A980 => unported;
     /// `CVehicleRecording::SkipForwardInRecording(CVehicle*, float)` (0x459D10)
     fn skip_forward_in_recording(v: GPtr<u8>, k: u32) = cdecl 0x459D10 => unported;
 }

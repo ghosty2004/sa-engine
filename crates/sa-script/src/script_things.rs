@@ -4,12 +4,9 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
-orig! {
-    /// `CDecisionMakerTypes::GetInstance()` (0x4684F0): creates the singleton on first use
-    fn decision_maker_types_get_instance() -> GPtr<u8> = cdecl 0x4684F0 => unported;
-}
+use sa_world::bindings::decision_maker_types_get_instance;
 
 /// The int16 id counter of each thing type (0..=8): its address for index 0 and the record stride.
 const COUNTERS: [(u32, u32); 9] = [

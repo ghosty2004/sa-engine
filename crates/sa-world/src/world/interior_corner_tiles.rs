@@ -3,14 +3,11 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use super::common::rd;
 
-orig! {
-    /// `Interior_c::SetTilesStatus(int32 x, int32 y, int32 w, int32 d, int32 status, bool)` (0x591700)
-    fn set_tiles_status(this: GPtr<u8>, x: i32, y: i32, w: i32, d: i32, status: i32, force: u32) = thiscall 0x591700 => unported;
-}
+use crate::bindings::set_tiles_status;
 
 /// `Interior_c::SetCornerTiles(int32 corner, int32 size, int32 status, bool force)` (0x5917C0): the
 /// two `size`-long strips along the walls meeting at the corner get `status`: corner 1 at (0, 0)

@@ -19,32 +19,24 @@ use sa_math::x87::X87;
 
 use super::common::{ftol32, f32_of, g, rd, wr, x, xi};
 
+use crate::bindings::fx_add_particle;
+use crate::bindings::is_vision_fx_active;
+use crate::bindings::rw_v3d_length;
+use crate::bindings::rw_v3d_normalize;
+use crate::bindings::rw_v3d_transform_vector;
+use sa_core::bindings::crt_acos;
+use sa_core::bindings::crt_new;
+use sa_core::bindings::frame_get_ltm;
+use sa_core::bindings::matrix_mul_vec;
+use sa_core::bindings::rw_v3d_transform_points;
 orig! {
-    /// CRT `operator new(uint32)` (0x82119A)
-    fn crt_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
-    /// `RwFrameGetLTM(RwFrame*)` (0x7F0990)
-    fn frame_get_ltm(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0990 => unported;
-    /// `operator*(const CMatrix&, const CVector&)` (0x59C890, the result through `out`)
-    fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
     /// `CWorld::ProcessVerticalLine(const CVector&, float, CColPoint&, CEntity*&, bool buildings,
     /// bool vehicles, bool peds, bool objects, bool dummies, bool seeThrough, CStoredCollPoly*)` (0x5674E0, AL)
     fn process_vertical_line(p: GPtr<u8>, z: f32, cp: GPtr<u8>, ent: GPtr<u8>, b0: u32, b1: u32, b2: u32, b3: u32, b4: u32, b5: u32, poly: u32) -> u8 = cdecl 0x5674E0 => unported;
-    /// `RwV3dTransformVector(out, in, matrix)` (0x7EDDC0)
-    fn rw_v3d_transform_vector(out: GPtr<u8>, inp: GPtr<u8>, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EDDC0 => unported;
-    /// `RwV3dNormalize(out, in)` (0x7ED9B0): the length in ST0
-    fn rw_v3d_normalize(out: GPtr<u8>, inp: GPtr<u8>) -> f64 = cdecl 0x7ED9B0 => unported;
-    /// `RwV3dLength(const RwV3d*)` (0x7EDAC0): ST0
-    fn rw_v3d_length(v: GPtr<u8>) -> f64 = cdecl 0x7EDAC0 => unported;
     /// `RwMatrixRotate(m, axis, angle, combine)` (0x7F1FD0)
     fn rw_matrix_rotate(m: GPtr<u8>, axis: GPtr<u8>, angle: f32, op: u32) -> GPtr<u8> = cdecl 0x7F1FD0 => unported;
-    /// CRT `acos(double)` (0x822394, the cdecl entry): ST0
-    fn crt_acos(v: f64) -> f64 = cdecl 0x822394 => unported;
-    /// `CPostEffects::IsVisionFXActive()` (0x7034F0, AL)
-    fn is_vision_fx_active() -> u8 = cdecl 0x7034F0 => unported;
     /// `FxPrtMult_c::FxPrtMult_c(float r, g, b, a, size, unk, life)` (0x4AB290), the floats as bits
     fn fx_prt_mult_ctor(p: GPtr<u8>, r: u32, g: u32, b: u32, a: u32, size: u32, unk: u32, life: u32) -> GPtr<u8> = thiscall 0x4AB290 => unported;
-    /// `FxSystem_c::AddParticle(RwV3d*, RwV3d*, float, FxPrtMult_c*, float, float, float, uint8)` (0x4AA440)
-    fn fx_add_particle(sys: GPtr<u8>, pos: GPtr<u8>, vel: GPtr<u8>, time: u32, mult: GPtr<u8>, rot: u32, bright: u32, cam: u32, local: u32) = thiscall 0x4AA440 => unported;
     /// `Fx_c::AddSparks(CVector&, CVector&, float, int32, CVector, eSparkType, float, float)` (0x49F040) on `g_fx` (0xA9AE00)
     fn fx_add_sparks(fx: GPtr<u8>, origin: GPtr<u8>, dir: GPtr<u8>, force: f32, amount: i32, across: CVector, kind: u32, spread: f32, life: f32) = thiscall 0x49F040 => unported;
     /// `BreakObject_c::Exit()` (0x59DDD0)
@@ -61,8 +53,6 @@ orig! {
     fn fx_render_begin(raster: GPtr<u8>, m: GPtr<u8>, flags: u32) = cdecl 0x4A13B0 => unported;
     /// `Fx_c::RenderEnd()` (0x4A1600)
     fn fx_render_end() = cdecl 0x4A1600 => unported;
-    /// `RwV3dTransformPoints(out, in, n, matrix)` (0x7EDD90)
-    fn rw_v3d_transform_points(out: GPtr<u8>, inp: GPtr<u8>, n: i32, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EDD90 => unported;
     /// `Fx_c::RenderAddTri(x1, y1, z1, x2, y2, z2, x3, y3, z3, u1, v1, u2, v2, u3, v3, r1, g1, b1, a1,
     /// r2, g2, b2, a2, r3, g3, b3, a3)` (0x4A1410, cdecl; floats as bits, colour channels as ints)
     fn fx_render_add_tri(x1: u32, y1: u32, z1: u32, x2: u32, y2: u32, z2: u32, x3: u32, y3: u32, z3: u32, u1: u32, v1: u32, u2: u32, v2: u32, u3: u32, v3: u32, r1: u32, g1: u32, b1: u32, a1: u32, r2: u32, g2: u32, b2: u32, a2: u32, r3: u32, g3: u32, b3: u32, a3: u32) = cdecl 0x4A1410 => unported;

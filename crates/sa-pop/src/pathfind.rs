@@ -178,11 +178,9 @@ fn region_value(c: X87) -> i32 {
     clamp_region(c.fsub_m(REGION_ORIGIN).fmul_m(region_scale()))
 }
 
+pub use sa_core::bindings::atexit;
+pub use sa_core::bindings::memory_free as mem_free;
 orig! {
-    /// `CMemoryMgr::Free(void*)` (0x72F430)
-    pub fn mem_free(p: GPtr<u8>) = cdecl 0x72F430 => unported;
-    /// CRT `_atexit` (0x821D1E)
-    pub fn atexit(f: u32) -> i32 = cdecl 0x821D1E => unported;
     /// the constructor of the 0x977BE8 object (0x4541E0, thiscall, returns `this`)
     pub fn ctor_977be8(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4541E0 => unported;
     /// the destructor body `__dtor_g_977be8` jumps to (0x454200, thiscall)
@@ -1134,6 +1132,8 @@ fn gt_or_nan(a: X87, b: X87) -> bool {
     a.fcom(b).test_parity(0x41)
 }
 
+pub use sa_core::bindings::memory_malloc as mem_malloc;
+pub use sa_core::bindings::stream_read as rw_stream_read;
 orig! {
     /// `CPathFind::MarkRegionsForCoors(CVector, float)` (0x44DB60)
     pub fn mark_regions_for_coors_call(this: GPtr<u8>, px: f32, py: f32, pz: f32, r: f32) = thiscall 0x44DB60 => mark_regions_for_coors;
@@ -1149,10 +1149,6 @@ orig! {
     pub fn switch_off_node_and_neighbours_call(this: GPtr<u8>, node: GPtr<u8>, out1: GPtr<GPtr<u8>>, out2: GPtr<GPtr<u8>>, switch_to: u8, back: u8) = thiscall 0x452160 => switch_off_node_and_neighbours;
     /// `CPathFind::SwitchRoadsOffInAreaForOneRegion(...)` (0x452820)
     pub fn switch_roads_off_in_area_for_one_region_call(this: GPtr<u8>, x0: f32, x1: f32, y0: f32, y1: f32, z0: f32, z1: f32, off: u32, cars: u32, area: i32, back: u32) = thiscall 0x452820 => switch_roads_off_in_area_for_one_region;
-    /// `RwStreamRead(RwStream*, void*, uint32)` (0x7EC9D0)
-    pub fn rw_stream_read(s: GPtr<u8>, buf: GPtr<u8>, len: u32) -> u32 = cdecl 0x7EC9D0 => unported;
-    /// `CMemoryMgr::Malloc(uint32 size, uint32 hint)` (0x72F420)
-    pub fn mem_malloc(size: u32, hint: u32) -> GPtr<u8> = cdecl 0x72F420 => unported;
 }
 
 /// `CPathFind::SwitchRoadsOffInAreaForOneRegion(x0, x1, y0, y1, z0, z1, bool off, bool cars, int32 area,
@@ -2683,11 +2679,10 @@ pub fn remove_interior(this: GPtr<u8>, id: i32) {
     }
 }
 
+pub use crate::bindings::camera_is_sphere_visible;
 orig! {
     /// `CCamera::IsSphereVisible(const CVector&, float, RwMatrix*)` (0x420C40)
     pub fn camera_is_sphere_visible_m(cam: GPtr<u8>, c: GPtr<f32>, r: f32, m: GPtr<u8>) -> u8 = thiscall 0x420C40 => unported;
-    /// `CCamera::IsSphereVisible(const CVector&, float)` (0x420D40)
-    pub fn camera_is_sphere_visible(cam: GPtr<u8>, c: GPtr<f32>, r: f32) -> u8 = thiscall 0x420D40 => unported;
 }
 
 /// `FUN_0044E790`: gr's `CPathFind::GeneratePedCreationCoors(float x, float y, float minDist1, float maxDist1,
@@ -3295,17 +3290,15 @@ pub fn find_node_coors_for_script_two_nodes(
     out
 }
 
+pub use sa_core::bindings::rw_stream_close;
+pub use sa_core::bindings::sprintf1 as sprintf_i;
 orig! {
     /// `CTimer::Suspend()` (0x5619D0)
     pub fn timer_suspend() = cdecl 0x5619D0 => sa_core::timer::suspend;
     /// `CTimer::Resume()` (0x561A00)
     pub fn timer_resume() = cdecl 0x561A00 => sa_core::timer::resume;
-    /// CRT `sprintf(buf, fmt, int)` (0x821BB5)
-    pub fn sprintf_i(buf: GPtr<u8>, fmt: GPtr<u8>, n: i32) -> i32 = cdecl 0x821BB5 => unported;
     /// `RwStreamOpen(RwStreamType, RwStreamAccessType, const void*)` (0x7ECEF0)
     pub fn rw_stream_open(ty: i32, access: i32, data: GPtr<u8>) -> GPtr<u8> = cdecl 0x7ECEF0 => unported;
-    /// `RwStreamClose(RwStream*, void*)` (0x7ECE20)
-    pub fn rw_stream_close(s: GPtr<u8>, data: u32) -> i32 = cdecl 0x7ECE20 => unported;
     /// `CPathFind::LoadPathFindData(RwStream*, int32)` (0x4529F0)
     pub fn load_path_find_data_from_stream_call(this: GPtr<u8>, s: GPtr<u8>, area: i32) = thiscall 0x4529F0 => load_path_find_data_from_stream;
 }

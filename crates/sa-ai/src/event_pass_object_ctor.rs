@@ -2,16 +2,12 @@
 //! Ported from the 1.0 US bytes.
 
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
-orig! {
-    /// `CEvent::CEvent()` (0x4ABFC0)
-    fn event_ctor(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x4ABFC0 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    fn entity_register_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571B70 => unported;
-}
+use crate::bindings::event_ctor;
+use sa_core::bindings::entity_register_reference;
 
 /// `CEventPassObject::CEventPassObject(CEntity* giver, bool dontPassObject)` (0x65DC70, `ret 8`; the entry `push
 /// -1; jmp 0x4011D8` pushes the SEH handler from a protection chunk): `CEvent` base, vtable 0x86F8B8, +0xC = giver

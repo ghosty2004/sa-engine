@@ -8,49 +8,42 @@ use sa_core::{hook, orig};
 
 use super::common::{g, rd, wr, x};
 
+use crate::bindings::car_ctrl_clear_interesting_vehicle_list;
+use crate::bindings::garages_close_hide_out_garages_before_save;
+use crate::bindings::is_player_on_a_mission as the_scripts_is_player_on_a_mission;
+use crate::bindings::player_ped_clear_adrenaline;
+use crate::bindings::set_player_wanted_level_for_forbidden_territories;
+use crate::bindings::stats_update_respect_stat;
+use crate::bindings::vehicle_remove_passenger;
+use sa_core::bindings::add_big_message as messages_add_big_message;
+use sa_core::bindings::camera_fade;
+use sa_core::bindings::camera_set_fade_colour;
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::game_logic_pass_time;
+use sa_core::bindings::general_random_int_in_range as general_get_random_number_in_range_int;
+use sa_core::bindings::get_pad as pad_get_pad;
+use sa_core::bindings::messages_clear_messages;
+use sa_core::bindings::ped_clear_weapons;
+use sa_core::bindings::references_remove_references_to_player;
+use sa_core::bindings::text_get;
+use sa_core::bindings::tm_get_simplest_active_task as task_manager_get_simplest_active_task;
+use sa_core::bindings::vector_normalise;
 orig! {
-    /// `CStats::UpdateRespectStat(uint8)` (0x55BC50, cdecl)
-    fn stats_update_respect_stat(b: u32) = cdecl 0x55BC50 => unported;
     /// `CStats::UpdateSexAppealStat()` (0x55BF20, cdecl)
     fn stats_update_sex_appeal_stat() = cdecl 0x55BF20 => unported;
-    /// `CGameLogic::SetPlayerWantedLevelForForbiddenTerritories(bool)` (0x441770, cdecl)
-    fn set_player_wanted_level_for_forbidden_territories(b: u32) = cdecl 0x441770 => unported;
     /// `CGameLogic::UpdateSkip()` (0x442480, cdecl)
     fn game_logic_update_skip() = cdecl 0x442480 => crate::world::mvpd_w2::game_logic_update_skip;
-    /// `CText::Get(const char*)` (0x6A0050, `ret 4`)
-    fn text_get(t: GPtr<u8>, key: GPtr<u8>) -> GPtr<u8> = thiscall 0x6A0050 => unported;
     /// `CHud::SetHelpMessage(const char*, bool quick, bool permanent, bool addToBrief)` (0x588BE0, cdecl)
     fn hud_set_help_message(s: GPtr<u8>, a: u32, b: u32, c: u32) = cdecl 0x588BE0 => unported;
-    /// `CTaskManager::GetSimplestActiveTask()` (0x6819D0)
-    fn task_manager_get_simplest_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x6819D0 => unported;
-    /// `CPlayerPed::ClearAdrenaline()` (0x60A070)
-    fn player_ped_clear_adrenaline(p: GPtr<u8>) = thiscall 0x60A070 => unported;
     /// `CPlayerInfo::KillPlayer()` (0x56E580)
     fn player_info_kill_player(i: GPtr<u8>) = thiscall 0x56E580 => unported;
     /// `CPlayerInfo::ArrestPlayer()` (0x56E5D0)
     fn player_info_arrest_player(i: GPtr<u8>) = thiscall 0x56E5D0 => unported;
     /// `CPed::Say(uint16, uint32, float, bool, bool, bool)` (0x5EFFE0, `ret 0x18`)
     fn ped_say(p: GPtr<u8>, id: u32, off: u32, vol: f32, a: u32, b: u32, c: u32) -> u32 = thiscall 0x5EFFE0 => unported;
-    /// `CMessages::AddBigMessage(const char*, uint32, eMessageStyle)` (0x69F2B0, cdecl)
-    fn messages_add_big_message(s: GPtr<u8>, t: u32, style: u32) = cdecl 0x69F2B0 => unported;
     /// `CWeaponEffects::ClearCrossHairs()` (0x742C80, cdecl)
     fn weapon_effects_clear_cross_hairs() = cdecl 0x742C80 => unported;
-    /// `CCamera::SetFadeColour(uint8, uint8, uint8)` (0x50BF00, `ret 0xC`)
-    fn camera_set_fade_colour(c: GPtr<u8>, r: u32, g: u32, b: u32) = thiscall 0x50BF00 => unported;
-    /// `CCamera::Fade(float, int16)` (0x50AC20, `ret 8`)
-    fn camera_fade(c: GPtr<u8>, t: f32, dir: u32) = thiscall 0x50AC20 => unported;
-    /// `CPed::ClearWeapons()` (0x5E6320)
-    fn ped_clear_weapons(p: GPtr<u8>) = thiscall 0x5E6320 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00, `ret 4`)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CVehicle::RemovePassenger(CPed*)` (0x6D1610, `ret 4`)
-    fn vehicle_remove_passenger(v: GPtr<u8>, p: GPtr<u8>) = thiscall 0x6D1610 => unported;
-    /// `CMessages::ClearMessages(bool)` (0x69DCD0, cdecl)
-    fn messages_clear_messages(b: u32) = cdecl 0x69DCD0 => unported;
-    /// `CCarCtrl::ClearInterestingVehicleList()` (0x423F00, cdecl)
-    fn car_ctrl_clear_interesting_vehicle_list() = cdecl 0x423F00 => unported;
-    /// `CGarages::CloseHideOutGaragesBeforeSave()` (0x44A170, cdecl)
-    fn garages_close_hide_out_garages_before_save() = cdecl 0x44A170 => unported;
     /// `CPlayerInfo::GetPos(CVector* out)` (0x56DFB0, `ret 4`); returns `out`
     fn player_info_get_pos(i: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall 0x56DFB0 => unported;
     /// `CWorld::ClearExcitingStuffFromArea(const CVector&, float, bool)` (0x56A0D0, cdecl)
@@ -61,32 +54,18 @@ orig! {
     fn restart_find_closest_hospital(x: f32, y: f32, z: f32, out: GPtr<u8>, h: GPtr<u8>) = cdecl 0x460850 => unported;
     /// `CRestart::FindClosestPoliceRestartPoint(CVector, CVector* out, float* heading)` (0x460A50, cdecl)
     fn restart_find_closest_police(x: f32, y: f32, z: f32, out: GPtr<u8>, h: GPtr<u8>) = cdecl 0x460A50 => unported;
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210, cdecl)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
     /// `CGameLogic::RestorePedsWeapons(CPed*)` (0x441D30, cdecl)
     fn game_logic_restore_peds_weapons(p: GPtr<u8>) = cdecl 0x441D30 => unported;
     /// `CGameLogic::Remove2ndPlayerIfPresent()` (0x4413C0, cdecl)
     fn game_logic_remove_2nd_player_if_present() = cdecl 0x4413C0 => unported;
-    /// `CGameLogic::PassTime(uint32 minutes)` (0x4414C0, cdecl)
-    fn game_logic_pass_time(m: u32) = cdecl 0x4414C0 => unported;
     /// `CGameLogic::RestorePlayerStuffDuringResurrection(CPlayerPed*, CVector, float)` (0x442060, cdecl)
     fn game_logic_restore_player_stuff(p: GPtr<u8>, x: f32, y: f32, z: f32, h: f32) = cdecl 0x442060 => unported;
     /// `CGameLogic::SortOutStreamingAndMemory(const CVector&, float)` (0x441440, cdecl)
     fn game_logic_sort_out_streaming_and_memory(p: GPtr<u8>, h: f32) = cdecl 0x441440 => unported;
     /// `CCamera::SetMotionBlur(int32 r, g, b, a, type)` (0x50BF40, `ret 0x14`)
     fn camera_set_motion_blur(c: GPtr<u8>, r: u32, g: u32, b: u32, a: u32, t: u32) = thiscall 0x50BF40 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70, cdecl)
-    fn pad_get_pad(id: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
     /// `CPad::StopShaking(int16)` (0x53FB50, `ret 4`)
     fn pad_stop_shaking(p: GPtr<u8>, n: u32) = thiscall 0x53FB50 => unported;
-    /// `CReferences::RemoveReferencesToPlayer()` (0x571AD0, cdecl)
-    fn references_remove_references_to_player() = cdecl 0x571AD0 => unported;
-    /// `CTheScripts::IsPlayerOnAMission()` (0x464D50, cdecl)
-    fn the_scripts_is_player_on_a_mission() -> u8 = cdecl 0x464D50 => unported;
-    /// `CGeneral::GetRandomNumberInRange(int32, int32)` (0x407180, cdecl)
-    fn general_get_random_number_in_range_int(a: i32, b: i32) -> i32 = cdecl 0x407180 => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
     /// `CGameLogic::StopPlayerMovingFromDirection(int32, CVector)` (0x441290, cdecl)
     fn game_logic_stop_player_moving_from_direction(id: i32, x: f32, y: f32, z: f32) = cdecl 0x441290 => unported;
 }

@@ -12,43 +12,36 @@ const TIME_MS: usize = 0xB7CB84;
 /// `g_ikChainMan` (`IKChainManager_c`)
 const IK_CHAIN_MAN: usize = 0xC15448;
 
+use crate::bindings::smart_flee_point_ctor as flee_point_ctor;
+use crate::bindings::task_timer_is_out_of_time;
+use sa_core::bindings::general_random_int_in_range as general_get_random_number_in_range;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::get_event_global_group;
+use sa_world::bindings::ik_is_looking;
+use sa_world::bindings::interesting_events_add;
+use sa_world::bindings::ped_say;
+use sa_world::bindings::run_anim_ctor;
+use sa_world::bindings::sequence_add_task;
+use sa_world::bindings::sequence_ctor;
+use sa_world::bindings::stand_still_ctor;
+use sa_world::bindings::task_complex_ctor;
+use sa_world::bindings::tired_ctor;
+use sa_world::bindings::wander_ctor;
 orig! {
     /// `CTask::GetTaskType()` (vtable +0x10)
     fn v_get_task_type(t: GPtr<u8>) -> u32 = thiscall vslot 0x10 => unported;
     /// `CTask::MakeAbortable(CPed*, int32, const CEvent*)` (vtable +0x18)
     fn v_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, prio: u32, ev: u32) -> u8 = thiscall vslot 0x18 => unported;
-    /// `CTaskComplex::CTaskComplex` (0x61A3B0)
-    fn task_complex_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A3B0 => unported;
-    /// `CTaskComplexSequence::CTaskComplexSequence()` (0x632BD0)
-    fn sequence_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x632BD0 => unported;
-    /// `CTaskComplexSequence::AddTask(CTask*)` (0x632D10, `ret 4`)
-    fn sequence_add_task(s: GPtr<u8>, t: GPtr<u8>) = thiscall 0x632D10 => unported;
-    /// `CTaskSimpleRunAnim::CTaskSimpleRunAnim(AssocGroupId, AnimationId, float, bool)` (0x61A8B0, `ret 0x10`)
-    fn run_anim_ctor(t: GPtr<u8>, group: u32, id: u32, delta: u32, hold: u32) -> GPtr<u8> = thiscall 0x61A8B0 => unported;
-    /// `CTaskSimpleTired::CTaskSimpleTired(int32)` (0x630F20, `ret 4`)
-    fn tired_ctor(t: GPtr<u8>, time: u32) -> GPtr<u8> = thiscall 0x630F20 => unported;
     /// `CTaskComplexSmartFleePoint::SetDefaultTaskWanderDir(CPed*)` (0x65BE00, `ret 4`)
     fn flee_point_set_default_task_wander_dir(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x65BE00 => unported;
-    /// `CTaskSimpleStandStill::CTaskSimpleStandStill(int32, bool, bool, float)` (0x62F310, `ret 0x10`)
-    fn stand_still_ctor(t: GPtr<u8>, time: u32, looped: u32, keep: u32, delta: u32) -> GPtr<u8> = thiscall 0x62F310 => unported;
-    /// `CTaskComplexWander::CTaskComplexWander(int32 moveState, uint8 dir, bool, float)` (0x66F450, `ret 0x10`)
-    fn wander_ctor(t: GPtr<u8>, ms: u32, dir: u32, a3: u32, a4: u32) -> GPtr<u8> = thiscall 0x66F450 => unported;
     /// `CTaskComplexSmartFleePoint::CreateSubTask(int32, CPed*)` (0x65BE80, `ret 8`)
     fn flee_point_create_sub_task(t: GPtr<u8>, ty: u32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x65BE80 => unported;
     /// `CGeneral::GetNodeHeadingFromVector(float, float)` (0x53CDC0, AL)
     fn general_get_node_heading_from_vector(x: f32, y: f32) -> u8 = cdecl 0x53CDC0 => unported;
-    /// `CPed::Say(id, offset, volume, a4, a5, a6)` (0x5EFFE0, `ret 0x18`)
-    fn ped_say(p: GPtr<u8>, id: u32, off: u32, vol: u32, a4: u32, a5: u32, a6: u32) -> u32 = thiscall 0x5EFFE0 => unported;
     /// `CTaskComplexSmartFleePoint::ComputeFleeDir(CPed*)` (0x65BE40, `ret 4`, AL)
     fn flee_point_compute_flee_dir(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x65BE40 => unported;
     /// `FUN_00669d30`: the wander task's direction setter (thiscall, `ret 4`)
     fn wander_set_dir(t: GPtr<u8>, dir: u32) = thiscall 0x669D30 => unported;
-    /// `CTaskTimer::IsOutOfTime()` (0x420E30, AL)
-    fn task_timer_is_out_of_time(t: GPtr<u8>) -> u8 = thiscall 0x420E30 => unported;
-    /// `CGeneral::GetRandomNumberInRange(int32, int32)` (0x407180)
-    fn general_get_random_number_in_range(lo: i32, hi: i32) -> i32 = cdecl 0x407180 => unported;
-    /// `IKChainManager_c::IsLooking(CPed*)` (0x6181A0, `ret 4`)
-    fn ik_is_looking(this: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x6181A0 => unported;
     /// `IKChainManager_c::AbortLookAt(CPed*, int32)` (0x618280, `ret 8`)
     fn ik_abort_look_at(this: GPtr<u8>, ped: GPtr<u8>, time: u32) = thiscall 0x618280 => unported;
     /// `IKChainManager_c::LookAt(...)` (0x618970, `ret 0x2C`)
@@ -56,23 +49,14 @@ orig! {
         this: GPtr<u8>, purpose: u32, ped: GPtr<u8>, target: u32, time: u32, bone: u32, posn: GPtr<u8>,
         torso: u32, speed: u32, blend: u32, prio: u32, force: u32
     ) -> u32 = thiscall 0x618970 => unported;
-    /// `CInterestingEvents::Add(type, CEntity*)` (0x602590, `ret 8`)
-    fn interesting_events_add(this: GPtr<u8>, ty: u32, e: GPtr<u8>) = thiscall 0x602590 => unported;
     /// `CTaskComplexSmartFleeEntity::CreateSubTask(int32)` (0x65C530, `ret 4`)
     fn flee_entity_create_sub_task(t: GPtr<u8>, ty: u32) -> GPtr<u8> = thiscall 0x65C530 => unported;
-    /// `CTaskComplexSmartFleePoint::CTaskComplexSmartFleePoint(const CVector&, bool, float, int32)` (0x65BD20,
-    /// `ret 0x10`)
-    fn flee_point_ctor(t: GPtr<u8>, pos: GPtr<u8>, scream: u32, radius: u32, time: u32) -> GPtr<u8> = thiscall 0x65BD20 => unported;
     /// `CTaskComplexSmartFleePoint::SetFleePosition(const CVector&, float, bool)` (0x65C3C0, `ret 0xC`)
     fn flee_point_set_flee_position(t: GPtr<u8>, pos: GPtr<u8>, radius: u32, scream: u32) = thiscall 0x65C3C0 => unported;
     /// `CEventSeenPanickedPed::CEventSeenPanickedPed(CPed*)` (0x4B2080, `ret 4`)
     fn seen_panicked_ped_ctor(e: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x4B2080 => unported;
     /// `FUN_004b2130`: the `CEventSeenPanickedPed` destructor the original calls on its stack event
     fn seen_panicked_ped_dtor(e: GPtr<u8>) = thiscall 0x4B2130 => unported;
-    /// `GetEventGlobalGroup()` (0x4ABA50)
-    fn get_event_global_group() -> GPtr<u8> = cdecl 0x4ABA50 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, `ret 8`)
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, flag: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
 }
 
 use sa_core::field::ptr_of as buf;

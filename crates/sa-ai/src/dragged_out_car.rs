@@ -8,35 +8,27 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::handler_is_kill_task_appropriate;
+use crate::bindings::kill_criminal_ctor;
+use crate::bindings::pause_ctor;
+use crate::bindings::steal_car_ctor;
+use sa_core::bindings::general_get_radian_angle_between_points;
+use sa_core::bindings::general_limit_radian_angle;
+use sa_core::bindings::general_random_int_in_range;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::achieve_heading_ctor;
+use sa_world::bindings::destroy_car_ctor;
+use sa_world::bindings::enter_car_as_driver_ctor;
+use sa_world::bindings::enter_car_as_passenger_ctor;
+use sa_world::bindings::kill_ped_on_foot_ctor;
+use sa_world::bindings::ped_say;
+use sa_world::bindings::sequence_add_task;
+use sa_world::bindings::sequence_ctor;
+use sa_world::bindings::shake_fist_ctor;
+use sa_world::bindings::smart_flee_entity_ctor;
 orig! {
-    /// `CPed::IsPlayer` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CPed::Say(context, offset, volume, b, b, b)` (0x5EFFE0, `ret 0x18`)
-    fn ped_say(p: GPtr<u8>, ctx: u32, offset: u32, vol: u32, a: u32, b: u32, c: u32) -> u32 = thiscall 0x5EFFE0 => unported;
-    /// `CEventHandler::IsKillTaskAppropriate(CPed*, CPed*, const CEvent&)` (0x4BC3E0, static)
-    fn handler_is_kill_task_appropriate(ped: GPtr<u8>, other: GPtr<u8>, e: GPtr<u8>) -> u8 = cdecl 0x4BC3E0 => crate::event_responses_simple::handler_is_kill_task_appropriate;
-    /// `CGeneral::GetRandomNumberInRange<int32>(min, max)` (0x407180; draws its own rand)
-    fn general_random_int_in_range(min: i32, max: i32) -> i32 = cdecl 0x407180 => unported;
-    /// `CGeneral::GetRadianAngleBetweenPoints(x1, y1, x2, y2)` (0x53CBE0, ST0)
-    fn general_get_radian_angle_between_points(x1: u32, y1: u32, x2: u32, y2: u32) -> f64 = cdecl 0x53CBE0 => unported;
-    /// `CGeneral::LimitRadianAngle(float)` (0x53CB50, ST0)
-    fn general_limit_radian_angle(a: u32) -> f64 = cdecl 0x53CB50 => unported;
-    /// `CTaskComplexSequence::CTaskComplexSequence` (0x632BD0)
-    fn sequence_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x632BD0 => unported;
-    /// `CTaskComplexSequence::AddTask(CTask*)` (0x632D10, `ret 4`)
-    fn sequence_add_task(t: GPtr<u8>, task: GPtr<u8>) = thiscall 0x632D10 => unported;
-    fn smart_flee_entity_ctor(t: GPtr<u8>, e: GPtr<u8>, b: u32, d: u32, time: u32, period: u32, f: u32) -> GPtr<u8> = thiscall 0x65C430 => unported;
     fn leave_car_ctor(t: GPtr<u8>, veh: GPtr<u8>, a: i32, b: i32, c: u32, d: u32) -> GPtr<u8> = thiscall 0x63B8C0 => unported;
-    fn achieve_heading_ctor(t: GPtr<u8>, heading: u32, rate: u32, tol: u32) -> GPtr<u8> = thiscall 0x667E20 => unported;
-    fn shake_fist_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x690B80 => unported;
-    fn pause_ctor(t: GPtr<u8>, time: i32) -> GPtr<u8> = thiscall 0x48E750 => unported;
-    fn steal_car_ctor(t: GPtr<u8>, veh: GPtr<u8>) -> GPtr<u8> = thiscall 0x63B7D0 => unported;
     fn drag_ped_from_car_ctor(t: GPtr<u8>, ped: GPtr<u8>, a: u32) -> GPtr<u8> = thiscall 0x640430 => unported;
-    fn enter_car_as_passenger_ctor(t: GPtr<u8>, veh: GPtr<u8>, seat: u32, b: u32) -> GPtr<u8> = thiscall 0x640340 => unported;
-    fn enter_car_as_driver_ctor(t: GPtr<u8>, veh: GPtr<u8>) -> GPtr<u8> = thiscall 0x6402F0 => unported;
-    fn kill_ped_on_foot_ctor(t: GPtr<u8>, ped: GPtr<u8>, time: i32, a: u32, b: u32, c: u32, d: u32) -> GPtr<u8> = thiscall 0x620E30 => unported;
-    fn kill_criminal_ctor(t: GPtr<u8>, ped: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x68BE70 => unported;
-    fn destroy_car_ctor(t: GPtr<u8>, veh: GPtr<u8>, a: u32, b: u32, c: u32) -> GPtr<u8> = thiscall 0x621C00 => unported;
 }
 
 const FLEE_SAFE_DIST: usize = 0xC18CEC;

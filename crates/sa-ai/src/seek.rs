@@ -9,75 +9,50 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::fnr_set_target_orig as follow_node_route_set_target;
+use crate::bindings::ped_placement_find_z_coor_for_ped;
+use crate::bindings::ped_set_move_state;
+use crate::bindings::stand_still_dtor;
+use crate::bindings::stand_still_process_ped;
+use crate::bindings::task_timer_is_out_of_time;
+use sa_core::bindings::entity_register_reference;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::matrix_dtor;
+use sa_core::bindings::matrix_invert;
+use sa_core::bindings::vector_difference;
+use sa_core::bindings::vector_from_multiply3x3;
+use sa_core::bindings::vector_normalise;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::attach_ped_to_entity as ped_attach_to_entity;
+use sa_world::bindings::dettach_ped_from_entity as ped_dettach_from_entity;
+use sa_world::bindings::go_to_point_and_stand_still_ctor;
+use sa_world::bindings::membership_is_member;
+use sa_world::bindings::ped_groups_are_in_same_group;
+use sa_world::bindings::ped_say;
+use sa_world::bindings::sequence_add_task;
+use sa_world::bindings::sequence_ctor;
+use sa_world::bindings::stand_still_ctor;
+use sa_world::bindings::task_complex_ctor;
+use sa_world::bindings::tired_ctor;
 orig! {
-    /// `CTaskComplex::CTaskComplex` (0x61A3B0)
-    fn task_complex_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A3B0 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    fn entity_register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
-    /// `CTaskSimpleStandStill::CTaskSimpleStandStill(int, bool, bool, float)` (0x62F310)
-    fn stand_still_ctor(t: GPtr<u8>, time: u32, a: u32, b: u32, f: u32) -> GPtr<u8> = thiscall 0x62F310 => unported;
-    /// `CTaskSimpleStandStill::ProcessPed(CPed*)` (0x62F370)
-    fn stand_still_process_ped(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x62F370 => unported;
-    /// `FUN_0062f360` (0x62F360): `CTaskSimpleStandStill` destructor
-    fn stand_still_dtor(t: GPtr<u8>) = thiscall 0x62F360 => unported;
-    /// `CTaskSimpleTired::Constructor(int)` (0x630F20)
-    fn tired_ctor(t: GPtr<u8>, time: u32) -> GPtr<u8> = thiscall 0x630F20 => unported;
-    /// `CTaskComplexSequence::Constructor` (0x632BD0)
-    fn sequence_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x632BD0 => unported;
-    /// `CTaskComplexSequence::AddTask(CTask*)` (0x632D10)
-    fn sequence_add_task(t: GPtr<u8>, task: GPtr<u8>) = thiscall 0x632D10 => unported;
     /// `CTaskComplexTurnToFaceEntityOrCoord::Constructor(CEntity*, float, float)` (0x66B890)
     fn turn_to_face_ctor(t: GPtr<u8>, e: u32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x66B890 => unported;
     /// `CTaskComplexLeaveCar::CTaskComplexLeaveCar(CVehicle*, int, int, bool, bool)` (0x63B8C0)
     fn leave_car_ctor(t: GPtr<u8>, v: u32, a: u32, b: u32, c: u32, d: u32) -> GPtr<u8> = thiscall 0x63B8C0 => unported;
     /// `CTaskSimpleCarDrive::Constructor(CVehicle*, CTaskUtilityLineUpPedWithCar*, bool)` (0x63C340)
     fn car_drive_simple_ctor(t: GPtr<u8>, v: u32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x63C340 => unported;
-    /// `CTaskComplexGoToPointAndStandStill::Constructor(int, const CVector&, float, float, bool, bool)` (0x668120)
-    fn go_to_point_and_stand_still_ctor(t: GPtr<u8>, ms: u32, pos: GPtr<u8>, r: u32, r2: u32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x668120 => unported;
     /// `CTaskComplexFollowNodeRoute::Constructor(int, const CVector&, float, float, float, bool, int, bool)` (0x66EA30)
     fn follow_node_route_ctor(t: GPtr<u8>, ms: u32, pos: GPtr<u8>, r: u32, a: u32, b: u32, c: u32, d: u32, e: u32) -> GPtr<u8> = thiscall 0x66EA30 => unported;
-    /// `CPed::SetMoveState(eMoveState)` (0x5DEC00)
-    fn ped_set_move_state(ped: GPtr<u8>, s: u32) = thiscall 0x5DEC00 => unported;
-    /// `CPedGroups::AreInSameGroup(const CPed*, const CPed*)` (0x5F7F40, cdecl, AL)
-    fn ped_groups_are_in_same_group(a: GPtr<u8>, b: GPtr<u8>) -> u8 = cdecl 0x5F7F40 => unported;
-    /// `CPed::DettachPedFromEntity` (0x5E7EC0)
-    fn ped_dettach_from_entity(ped: GPtr<u8>) = thiscall 0x5E7EC0 => unported;
-    /// `CVector::Normalise` (0x59C910)
-    fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
-    /// `CVector::Difference` (0x40FE00, `ecx = out`): `out = a - b`
-    fn vector_difference(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) = thiscall 0x40FE00 => unported;
-    /// `CPedPlacement::FindZCoorForPed(CVector*)` (0x616920, cdecl, AL)
-    fn ped_placement_find_z_coor_for_ped(v: GPtr<u8>) -> u8 = cdecl 0x616920 => unported;
-    /// `CMatrix::Invert(const CMatrix&, CMatrix&)` (0x59B920, cdecl)
-    fn matrix_invert(src: GPtr<u8>, dst: GPtr<u8>) -> GPtr<u8> = cdecl 0x59B920 => unported;
-    /// `CVector::FromMultiply3x3(const CMatrix&, const CVector&)` (0x59C6D0, `ecx = out`)
-    fn vector_from_multiply3x3(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) = thiscall 0x59C6D0 => unported;
     /// `CGeneral::GetRadianAngleBetweenPoints(float, float, float, float)` (0x53CBE0, cdecl, ST0)
     fn general_get_radian_angle_between_points_st0(x1: f32, y1: f32, x2: f32, y2: f32) -> f64 = cdecl 0x53CBE0 => unported;
     /// `CGeneral::LimitRadianAngle(float)` (0x53CB50, cdecl, ST0)
     fn general_limit_radian_angle_st0(a: f32) -> f64 = cdecl 0x53CB50 => unported;
-    /// `CPed::AttachPedToEntity(CEntity*, CVector, uint16, float, eWeaponType)` (0x5E7CB0)
-    fn ped_attach_to_entity(ped: GPtr<u8>, e: GPtr<u8>, ox: u32, oy: u32, oz: u32, dir: u32, lim: u32, w: u32) = thiscall 0x5E7CB0 => unported;
-    /// `CMatrix::~CMatrix` (0x59ACD0)
-    fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
-    /// `CTaskTimer::IsOutOfTime` (0x420E30, AL)
-    fn task_timer_is_out_of_time(t: GPtr<u8>) -> u8 = thiscall 0x420E30 => unported;
     /// `FUN_0046fee0` (0x46FEE0, `ret 8`): the seek position into `out`; returns `out`
     fn std_seek_pos(this: GPtr<u8>, out: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x46FEE0 => unported;
     /// `FUN_00665dc0` (0x665DC0, `ret 8`): the XYOffset instance's seek position into `out`
     fn xy_seek_pos(this: GPtr<u8>, out: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x665DC0 => unported;
-    /// `CTaskComplexFollowNodeRoute::SetTarget(CPed*, const CVector&, float, float, float, bool)` (0x671750)
-    fn follow_node_route_set_target(t: GPtr<u8>, ped: GPtr<u8>, pos: GPtr<u8>, a: u32, b: u32, c: u32, d: u32) = thiscall 0x671750 => unported;
     /// `CTaskComplexGoToPointAndStandStill::GoToPoint(const CVector&, float, float, bool)` (0x46FE60)
     fn go_to_point_and_stand_still_go_to_point(t: GPtr<u8>, pos: GPtr<u8>, a: u32, b: u32, c: u32) = thiscall 0x46FE60 => unported;
-    /// `CWorld::FindPlayerPed(int)` (0x56E210, cdecl)
-    fn find_player_ped(i: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CPedGroupMembership::IsMember(const CPed*)` (0x5F6A10, AL)
-    fn membership_is_member(m: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x5F6A10 => unported;
-    /// `CPed::IsPlayer` (0x5DF8F0, AL)
-    fn ped_is_player(ped: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CPed::Say(uint16, uint32, float, bool, bool, bool)` (0x5EFFE0)
-    fn ped_say(ped: GPtr<u8>, id: u32, off: u32, vol: u32, a: u32, b: u32, c: u32) -> u32 = thiscall 0x5EFFE0 => unported;
     /// `CTask::MakeAbortable(CPed*, int, const CEvent*)` (vtable +0x18, AL)
     fn task_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, prio: i32, e: u32) -> u8 = thiscall vslot 0x18 => unported;
     /// `CTaskComplexSeekEntityStandard::CreateSubTask(int, CPed*)` (0x46F1E0)

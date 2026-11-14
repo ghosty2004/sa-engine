@@ -40,21 +40,15 @@ const DECL_UV: isize = 0x18;
 const DECL_COLOR: isize = 0x1C;
 const IB_OFFSET: isize = 0xC;
 
+pub use crate::bindings::rx_locked_pipe_add_fragment;
+pub use crate::bindings::rx_locked_pipe_unlock;
+pub use crate::bindings::rx_pipeline_create;
+pub use crate::bindings::rx_pipeline_destroy;
+pub use crate::bindings::rx_pipeline_execute;
+pub use crate::bindings::rx_pipeline_lock;
 orig! {
-    /// `RxPipelineExecute(pipeline, data, heapReset)` (0x805710)
-    pub fn rx_pipeline_execute(p: GPtr<u8>, data: GPtr<u8>, reset: i32) -> GPtr<u8> = cdecl 0x805710 => unported;
     /// `RxHeapGetGlobalHeap()` (0x8052F0)
     pub fn rx_heap_get_global_heap() -> GPtr<u8> = cdecl 0x8052F0 => unported;
-    /// `RxPipelineCreate()` (0x8057B0)
-    pub fn rx_pipeline_create() -> GPtr<u8> = cdecl 0x8057B0 => unported;
-    /// `RxPipelineLock(pipeline)` (0x806990)
-    pub fn rx_pipeline_lock(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x806990 => unported;
-    /// `RxLockedPipeAddFragment(pipeline, firstIndex, nodeDef, NULL)` (0x806BE0, varargs; as called here)
-    pub fn rx_locked_pipe_add_fragment(p: GPtr<u8>, first: u32, node: GPtr<u8>, end: u32) -> GPtr<u8> = cdecl 0x806BE0 => unported;
-    /// `RxLockedPipeUnlock(pipeline)` (0x805F40)
-    pub fn rx_locked_pipe_unlock(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x805F40 => unported;
-    /// `_rxPipelineDestroy(pipeline)` (0x805820)
-    pub fn rx_pipeline_destroy(p: GPtr<u8>) = cdecl 0x805820 => unported;
     /// `RxNodeDefinitionGetD3D9ImmInstance()` (0x80E990)
     pub fn node_def_d3d9_imm_instance() -> GPtr<u8> = cdecl 0x80E990 => unported;
     /// `RxNodeDefinitionGetD3D9SubmitNoLight()` (0x80E9A0)

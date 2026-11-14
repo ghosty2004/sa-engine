@@ -13,6 +13,8 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::base_event_takes_priority as group_event_base_takes_priority;
+use sa_world::bindings::group_intelligence_add_event as pgi_add_event;
 orig! {
     fn v_delete(o: GPtr<u8>, flags: u32) -> GPtr<u8> = thiscall vslot 0x0 => unported;
     /// `CEvent::GetEventType` (vtable +4)
@@ -37,10 +39,6 @@ orig! {
     fn pgi_compute_script_command_tasks(i: GPtr<u8>) = thiscall 0x5F7800 => unported;
     /// `CPedGroupIntelligence::ComputeEventResponseTasks` (0x5FC440)
     fn pgi_compute_event_response_tasks(i: GPtr<u8>) -> GPtr<u8> = thiscall 0x5FC440 => unported;
-    /// `CEventGroupEvent::BaseEventTakesPriorityOverBaseEvent(const CEventGroupEvent&)` (0x4AE100, `ret 4`)
-    fn group_event_base_takes_priority(e: GPtr<u8>, o: GPtr<u8>) -> u8 = thiscall 0x4AE100 => unported;
-    /// `CPedGroupIntelligence::AddEvent(CEvent*)` (0x5F7470, `ret 4`)
-    fn pgi_add_event(i: GPtr<u8>, e: GPtr<u8>) = thiscall 0x5F7470 => unported;
 }
 
 use sa_core::field::rdp as p;

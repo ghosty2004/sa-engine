@@ -39,9 +39,8 @@ sa_core::globals! {
     pub static PIPELINE_FL_PREALLOC @ 0x8E26A4: u32 = 1;
 }
 
+use crate::bindings::free_list_create_prealloc;
 orig! {
-    /// `RwFreeListCreateAndPreallocateSpace` (0x801B70)
-    fn free_list_create_prealloc(size: u32, per_block: u32, align: u32, n: u32, space: GPtr<u8>, hint: u32) -> GPtr<u8> = cdecl 0x801B70 => crate::memory::rw_freelist_create_and_preallocate_space;
     /// `RwFreeListDestroy(fl)` (0x801B80)
     fn free_list_destroy(fl: GPtr<u8>) -> u32 = cdecl 0x801B80 => crate::memory::rw_freelist_destroy;
     /// `RxHeapCreate(size)` (0x809F90)

@@ -9,29 +9,36 @@ use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 use sa_math::x87::X87;
 
+use crate::bindings::camera_get_cut_scene_finish_time;
+use crate::bindings::cutscene_finish_cutscene;
+use crate::bindings::cutscene_load_cutscene_data_postload;
+use sa_core::bindings::add_message_jump as messages_add_message_jump;
+use sa_core::bindings::atol as crt_atol;
+use sa_core::bindings::camera_fade;
+use sa_core::bindings::cutscene_is_skip_button_being_pressed;
+use sa_core::bindings::disable_all_ped_speech as ped_speech_disable_all;
+use sa_core::bindings::entity_update_rp_hanim;
+use sa_core::bindings::fx_create_mat_from_vec;
+use sa_core::bindings::fx_play as fx_system_play;
+use sa_core::bindings::fx_stop as fx_system_stop;
+use sa_core::bindings::ipl_store_add_ipls_needed_at_posn;
+use sa_core::bindings::stricmp as crt_stricmp;
+use sa_core::bindings::text_get;
+use sa_core::bindings::timer_resume;
+use sa_core::bindings::timer_suspend;
+use sa_core::bindings::timer_update;
+use sa_core::bindings::world_add;
 orig! {
-    /// `CIplStore::AddIplsNeededAtPosn(const CVector&)` (0x4045B0)
-    fn ipl_store_add_ipls_needed_at_posn(p: GPtr<u8>) = cdecl 0x4045B0 => unported;
-    /// `CTimer::Suspend()` (0x5619D0)
-    fn timer_suspend() = cdecl 0x5619D0 => unported;
-    /// `CTimer::Resume()` (0x561A00)
-    fn timer_resume() = cdecl 0x561A00 => unported;
     /// `CCutsceneMgr::LoadCutsceneData_loading()` (0x5B11C0)
     fn call_load_cutscene_data_loading() = cdecl 0x5B11C0 => crate::cutscene_update::cutscene_load_cutscene_data_loading;
-    /// `CCutsceneMgr::LoadCutsceneData_postload()` (0x5AFBC0)
-    fn cutscene_load_cutscene_data_postload() = cdecl 0x5AFBC0 => unported;
     /// `CCutsceneMgr::CreateCutsceneObject(int32 model)` (0x5B02A0)
     fn cutscene_create_cutscene_object(model: i32) -> u32 = cdecl 0x5B02A0 => unported;
     /// `CCutsceneMgr::SetCutsceneAnim(const char* name, CObject*)` (0x5B0390)
     fn cutscene_set_cutscene_anim(name: GPtr<u8>, obj: u32) = cdecl 0x5B0390 => unported;
-    /// `Fx_c::CreateMatFromVec(RwMatrix* out, CVector* pos, CVector* dir)` (0x49E950, `ret 0xC`)
-    fn fx_create_mat_from_vec(fx: GPtr<u8>, out: GPtr<u8>, pos: GPtr<u8>, dir: GPtr<u8>) = thiscall 0x49E950 => unported;
     /// `GetFirstAtomic(RpClump*)` (0x734820)
     fn get_first_atomic(c: u32) -> GPtr<u8> = cdecl 0x734820 => unported;
     /// `RpSkinGeometryGetSkin(RpGeometry*)` (0x7C7550)
     fn rp_skin_geometry_get_skin(g: u32) -> u32 = cdecl 0x7C7550 => unported;
-    /// CRT `atol` (0x82258E)
-    fn crt_atol(s: GPtr<u8>) -> i32 = cdecl 0x82258E => unported;
     /// `GetAnimHierarchyFromSkinClump(RpClump*)` (0x734A40)
     fn get_anim_hierarchy_from_skin_clump(c: u32) -> u32 = cdecl 0x734A40 => unported;
     /// `RpHAnimIDGetIndex(RpHAnimHierarchy*, int32)` (0x7C51A0)
@@ -48,40 +55,14 @@ orig! {
     fn call_setup_cutscene_to_start() = cdecl 0x5B14D0 => crate::cutscene_update::cutscene_setup_cutscene_to_start;
     /// `CCutsceneMgr::HideRequestedObjects()` (0x5AFAD0)
     fn cutscene_hide_requested_objects() = cdecl 0x5AFAD0 => unported;
-    /// CRT `_stricmp` (0x8229B6)
-    fn crt_stricmp(a: GPtr<u8>, b: GPtr<u8>) -> i32 = cdecl 0x8229B6 => unported;
     /// `CAudioEngine::DisableEffectsLoading()` (0x506E80)
     fn audio_disable_effects_loading(e: GPtr<u8>) = thiscall 0x506E80 => unported;
-    /// `CAEPedSpeechAudioEntity::DisableAllPedSpeech()` (0x4E3EB0)
-    fn ped_speech_disable_all() = cdecl 0x4E3EB0 => unported;
     /// `CAudioEngine::PlayPreloadedCutsceneTrack()` (0x507070)
     fn audio_play_preloaded_cutscene_track(e: GPtr<u8>) = thiscall 0x507070 => unported;
-    /// `FxSystem_c::Stop()` (0x4AA390)
-    fn fx_system_stop(f: GPtr<u8>) = thiscall 0x4AA390 => unported;
-    /// `FxSystem_c::Play()` (0x4AA2F0)
-    fn fx_system_play(f: GPtr<u8>) = thiscall 0x4AA2F0 => unported;
-    /// `CText::Get(const char* key)` (0x6A0050, `ret 4`)
-    fn text_get(t: GPtr<u8>, key: GPtr<u8>) -> GPtr<u8> = thiscall 0x6A0050 => unported;
-    /// `CMessages::AddMessageJump(const char*, uint32 time, uint16 flag, bool)` (0x69F1E0)
-    fn messages_add_message_jump(text: GPtr<u8>, time: u32, flag: u32, b: u32) = cdecl 0x69F1E0 => unported;
     /// `CCutsceneMgr::UpdateCutsceneObjectBoundingBox(RpClump*, int32 model)` (0x5B01E0)
     fn cutscene_update_object_bounding_box(clump: u32, model: i32) = cdecl 0x5B01E0 => unported;
-    /// `CCamera::GetCutSceneFinishTime()` (0x50AD90)
-    fn camera_get_cut_scene_finish_time(c: GPtr<u8>) -> u32 = thiscall 0x50AD90 => unported;
-    /// `CCamera::Fade(float time, int16 direction)` (0x50AC20, `ret 8`)
-    fn camera_fade(c: GPtr<u8>, time: f32, dir: u32) = thiscall 0x50AC20 => unported;
-    /// `CCutsceneMgr::IsCutsceneSkipButtonBeingPressed()` (0x4D5D10), AL
-    fn cutscene_is_skip_button_being_pressed() -> u8 = cdecl 0x4D5D10 => unported;
-    /// `CCutsceneMgr::FinishCutscene()` (0x5B04D0)
-    fn cutscene_finish_cutscene() = cdecl 0x5B04D0 => unported;
     /// `RpAnimBlendClumpGetFirstAssociation(RpClump*)` (0x4D15E0)
     fn clump_get_first_association(c: u32) -> GPtr<u8> = cdecl 0x4D15E0 => unported;
-    /// `CWorld::Add(CEntity*)` (0x563220)
-    fn world_add(e: GPtr<u8>) = cdecl 0x563220 => unported;
-    /// `CEntity::UpdateRpHAnim()` (0x532B20)
-    fn entity_update_rp_hanim(e: GPtr<u8>) = thiscall 0x532B20 => unported;
-    /// `CTimer::Update()` (0x561B10)
-    fn timer_update() = cdecl 0x561B10 => unported;
 }
 
 /// 1/1024 (0x85C6D4): the compressed key frame translation scale

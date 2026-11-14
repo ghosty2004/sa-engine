@@ -69,71 +69,62 @@ const K_ONE: u32 = 0x3F80_0000;
 /// `g_surfaceInfos` (`SurfaceInfos_c`) 0xB79538.
 const SURFACE_INFOS: usize = 0xB79538;
 
+use crate::bindings::add_message_jump_q_with_number;
+use crate::bindings::add_message_with_number;
+use crate::bindings::draw_debug_square;
+use crate::bindings::find_node_coors_for_script;
+use crate::bindings::highlight_important_area;
+use crate::bindings::start_script_fire;
+use crate::bindings::vehicle_41bdd0;
+use sa_core::bindings::camera_restore_with_jump_cut as restore_with_jump_cut;
+use sa_core::bindings::text_get;
+use sa_core::bindings::vector_magnitude;
+use sa_world::bindings::cutscene_delete_cutscene_data as delete_cutscene_data;
+use sa_world::bindings::find_ground_z_for_coord;
+use sa_world::bindings::find_zone;
+use sa_world::bindings::generate_new_one;
+use sa_world::bindings::get_actual_pickup_index;
+use sa_world::bindings::get_actual_script_thing_index;
+use sa_world::bindings::get_distance_from_centre_of_mass_to_base_of_model;
+use sa_world::bindings::get_stat_value;
+use sa_world::bindings::is_shallow_water;
+use sa_world::bindings::is_within_area;
+use sa_world::bindings::ped_groups_get_peds_group as get_peds_group;
+use sa_world::bindings::set_char_created_by;
+use sa_world::bindings::set_stat_value;
+use sa_world::bindings::weapon_is_type_melee;
 orig! {
-    /// `CTheScripts::GetActualScriptThingIndex(int32 ref, uint8 type)` (0x4839A0)
-    fn get_actual_script_thing_index(r: i32, ty: u32) -> i32 = cdecl 0x4839A0 => unported;
     /// `CFireManager::IsScriptFireExtinguished(int16)` (0x5396E0), AL
     fn is_script_fire_extinguished(fm: GPtr<u8>, i: i32) -> u8 = thiscall 0x5396E0 => unported;
     /// `CFireManager::RemoveScriptFire(int16)` (0x539700)
     fn remove_script_fire(fm: GPtr<u8>, i: i32) = thiscall 0x539700 => unported;
     /// `CFireManager::RemoveAllScriptFires()` (0x539720)
     fn remove_all_script_fires(fm: GPtr<u8>) = thiscall 0x539720 => unported;
-    /// `CVector::Magnitude()` (0x4082C0), ST0 (an FSQRT result under PC=24: exact as f64)
-    fn vector_magnitude(v: GPtr<u8>) -> f64 = thiscall 0x4082C0 => unported;
     /// `CCutsceneMgr::StartCutscene()` (0x5B1460)
     fn start_cutscene() = cdecl 0x5B1460 => unported;
     /// `CCutsceneMgr::GetCutsceneTimeInMilleseconds()` (0x5B0550)
     fn get_cutscene_time_in_milleseconds() -> u32 = cdecl 0x5B0550 => unported;
     /// `CCutsceneMgr::HasCutsceneFinished()` (0x5B0570), AL
     fn has_cutscene_finished() -> u8 = cdecl 0x5B0570 => unported;
-    /// `CCutsceneMgr::DeleteCutsceneData()` (0x4D5ED0)
-    fn delete_cutscene_data() = cdecl 0x4D5ED0 => unported;
     /// `CStats::IncrementStat(uint16 stat, float value)` (0x55C180); the float as its raw dword
     fn increment_stat(stat: u32, value: u32) = cdecl 0x55C180 => unported;
-    /// `CStats::SetStatValue(uint16 stat, float value)` (0x55A070); the float as its raw dword
-    fn set_stat_value(stat: u32, value: u32) = cdecl 0x55A070 => unported;
-    /// `SurfaceInfos_c::IsShallowWater(uint32 surface)` (0x55E730), AL
-    fn is_shallow_water(si: GPtr<u8>, surface: u32) -> u8 = thiscall 0x55E730 => unported;
     /// `CWorld::FindGroundZFor3DCoord(float x, float y, float z, bool* outResult, CEntity** outEntity)`
     /// (0x5696C0), floats as raw dwords, ST0 (read as f64: exact)
     fn find_ground_z_for_3d_coord(x: u32, y: u32, z: u32, out: GPtr<u8>, ent: GPtr<u8>) -> f64 = cdecl 0x5696C0 => unported;
-    /// `CCamera::RestoreWithJumpCut()` (0x50BAB0)
-    fn restore_with_jump_cut(cam: GPtr<u8>) = thiscall 0x50BAB0 => unported;
-    /// `CWorld::FindGroundZForCoord(float, float)` (0x569660), floats as raw dwords, ST0 (exact as f64)
-    fn find_ground_z_for_coord(x: u32, y: u32) -> f64 = cdecl 0x569660 => unported;
     /// `CPathFind::FindNodeClosestToCoors(CVector, uint8 nodeType, float maxDist, uint16, uint16,
     /// uint16, bool, bool)` (0x44F460), the `CNodeAddress` returned through the hidden pointer (EAX)
     fn find_node_closest_to_coors(paths: GPtr<u8>, out: GPtr<u32>, x: u32, y: u32, z: u32, ty: u32, max: u32, a: u32, b: u32, c: u32, d: u32, e: u32) -> GPtr<u32> = thiscall 0x44F460 => unported;
     /// `CPathNode::GetPosition()` (0x420A10), the vector returned through the hidden pointer
     fn path_node_get_position(node: GPtr<u8>, out: GPtr<u32>) -> GPtr<u32> = thiscall 0x420A10 => unported;
-    /// `CPathFind::FindNodeCoorsForScript(CNodeAddress, bool* found)` (0x4505E0), hidden-pointer vector
-    /// (writes `*found` on every path)
-    fn find_node_coors_for_script(paths: GPtr<u8>, out: GPtr<u32>, addr: u32, found: GPtr<u8>) -> GPtr<u32> = thiscall 0x4505E0 => unported;
-    /// `CEntity::GetDistanceFromCentreOfMassToBaseOfModel()` (0x536BE0), ST0 (exact as f64)
-    fn get_distance_from_centre_of_mass_to_base_of_model(e: GPtr<u8>) -> f64 = thiscall 0x536BE0 => unported;
     /// `CCarCtrl::JoinCarWithRoadSystemGotoCoors(CVehicle*, const CVector&, bool, bool)` (0x42F870), AL
     fn join_car_with_road_system_goto_coors(v: GPtr<u8>, pos: GPtr<u32>, a: u32, b: u32) -> u8 = cdecl 0x42F870 => unported;
-    /// Unnamed thiscall on the vehicle with one argument (0x41BDD0, a `.HOODLUM` stub; the
-    /// `CAR_GOTO_*`/`BOAT_GOTO_COORDS` cases pass 1)
-    fn vehicle_41bdd0(v: GPtr<u8>, a: u32) = thiscall 0x41BDD0 => unported;
     /// `CEntity::GetBoundCentre()` (0x534250), the vector returned through the hidden pointer
     fn get_bound_centre(e: GPtr<u8>, out: GPtr<u32>) -> GPtr<u32> = thiscall 0x534250 => unported;
     /// `CCamera::IsSphereVisible(const CVector&, float)` (0x420D40), the float as its raw dword, AL
     fn is_sphere_visible(cam: GPtr<u8>, c: GPtr<u32>, r: u32) -> u8 = thiscall 0x420D40 => unported;
-    /// `CFireManager::StartScriptFire(const CVector&, CEntity*, float, uint8, int8 generation, int32
-    /// nStrength)` (0x53A270)
-    fn start_script_fire(fm: GPtr<u8>, pos: GPtr<u32>, target: GPtr<u8>, a: u32, b: u32, generation: u32, strength: u32) -> i32 = thiscall 0x53A270 => unported;
     /// `CWaterLevel::GetWaterLevel(float x, float y, float z, float* level, bool touching, CVector*)`
     /// (0x6EB690), AL (discarded)
     fn get_water_level(x: u32, y: u32, z: u32, level: GPtr<u32>, touching: u32, normal: u32) -> u8 = cdecl 0x6EB690 => unported;
-    /// `CPlaceable::IsWithinArea(float x1, float y1, float x2, float y2)` (0x54F200), AL
-    fn is_within_area(e: GPtr<u8>, x1: u32, y1: u32, x2: u32, y2: u32) -> u8 = thiscall 0x54F200 => unported;
-    /// `CTheScripts::HighlightImportantArea(uint32 id, float x1, float y1, float x2, float y2, float z)` (0x485E00)
-    fn highlight_important_area(id: u32, x1: u32, y1: u32, x2: u32, y2: u32, z: u32) = cdecl 0x485E00 => unported;
-    /// `CTheScripts::DrawDebugSquare(float, float, float, float)` (0x486840)
-    fn draw_debug_square(x1: u32, y1: u32, x2: u32, y2: u32) = cdecl 0x486840 => unported;
-    /// `CWeapon::IsTypeMelee()` (0x73B1C0), AL
-    fn weapon_is_type_melee(w: GPtr<u8>) -> u8 = thiscall 0x73B1C0 => unported;
     /// `CRunningScript::ReadTextLabelFromScript(char*, uint8)` (0x463D50)
     fn read_label(s: Scr, buf: GPtr<u8>, len: u32) = thiscall 0x463D50 => unported;
     /// `CWorld::FindPlayerCoors(int32)` (0x56E010), the vector returned through the hidden pointer
@@ -142,19 +133,8 @@ orig! {
     fn is_ped_dead(s: Scr, p: GPtr<u8>) -> u8 = thiscall 0x464D70 => unported;
     /// `CRunningScript::ThisIsAValidRandomPed(ePedType, bool civilian, bool gang, bool criminal)` (0x489490), AL
     fn this_is_a_valid_random_ped(s: Scr, ty: u32, a: u32, b: u32, c: u32) -> u8 = thiscall 0x489490 => unported;
-    /// `CPedGroups::GetPedsGroup(const CPed*)` (0x5F7E80)
-    fn get_peds_group(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x5F7E80 => unported;
-    /// `CTheZones::FindZone(const CVector*, uint64 label, eZoneType)` (0x572B80), AL
-    fn find_zone(pos: GPtr<u32>, lo: u32, hi: u32, ty: u32) -> u8 = cdecl 0x572B80 => unported;
     /// `CWorld::FindRoofZFor3DCoord(float, float, float, bool*)` (0x569750), ST0 (discarded)
     fn find_roof_z_for_3d_coord(x: u32, y: u32, z: u32, found: GPtr<u8>) -> f64 = cdecl 0x569750 => unported;
-    /// `CPed::SetCharCreatedBy(uint8)` (0x5E47E0)
-    fn set_char_created_by(p: GPtr<u8>, by: u32) = thiscall 0x5E47E0 => unported;
-    /// `CPickups::GetActualPickupIndex(int32)` (0x4552A0), result discarded
-    fn get_actual_pickup_index(h: i32) -> i32 = cdecl 0x4552A0 => unported;
-    /// `CPickups::GenerateNewOne(CVector, uint32 model, ePickupType, uint32 ammo, uint32 moneyPerDay,
-    /// bool isEmpty, const char* message)` (0x456F20)
-    fn generate_new_one(x: u32, y: u32, z: u32, model: u32, ty: u32, ammo: u32, money: u32, empty: u32, msg: u32) -> i32 = cdecl 0x456F20 => unported;
     /// `CCutsceneMgr::LoadCutsceneData(const char*)` (0x4D5E80)
     fn load_cutscene_data(name: GPtr<u8>) = cdecl 0x4D5E80 => unported;
     /// `CProjectileInfo::IsProjectileInRange(float x1, float x2, float y1, float y2, float z1, float z2,
@@ -166,18 +146,6 @@ orig! {
     fn get_garage_number_by_name(name: GPtr<u8>) -> u32 = cdecl 0x447680 => unported;
     /// `CGarages::ChangeGarageType(int16, uint8, uint32)` (0x4476D0)
     fn change_garage_type(id: u32, ty: u32, model: u32) = cdecl 0x4476D0 => unported;
-    /// `CText::Get(const char* key)` (0x6A0050)
-    fn text_get(t: GPtr<u8>, key: GPtr<u8>) -> GPtr<u8> = thiscall 0x6A0050 => unported;
-    /// `CMessages::AddMessageWithNumber(const char*, uint32 time, uint16 flag, int32 n1..n6, bool)` (0x69E360)
-    fn add_message_with_number(
-        t: GPtr<u8>, time: u32, flag: u32, n1: u32, n2: u32, n3: u32, n4: u32, n5: u32, n6: u32, prev: u32
-    ) = cdecl 0x69E360 => unported;
-    /// `CMessages::AddMessageJumpQWithNumber(const char*, uint32 time, uint16 flag, int32 n1..n6, bool)` (0x69E4E0)
-    fn add_message_jump_q_with_number(
-        t: GPtr<u8>, time: u32, flag: u32, n1: u32, n2: u32, n3: u32, n4: u32, n5: u32, n6: u32, prev: u32
-    ) = cdecl 0x69E4E0 => unported;
-    /// `CStats::GetStatValue(uint16)` (0x558E40), ST0 (an f32 value: exact as f64)
-    fn get_stat_value(stat: u32) -> f64 = cdecl 0x558E40 => unported;
     /// `CDarkel::CheckDamagedWeaponType(int32 damageWeaponId, int32 expectedDamageWeaponId)` (0x43D9E0), AL
     fn check_damaged_weapon_type(got: i32, want: i32) -> u8 = cdecl 0x43D9E0 => unported;
 }

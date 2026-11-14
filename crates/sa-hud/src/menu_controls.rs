@@ -102,6 +102,8 @@ const F_33: f32 = f32::from_bits(0x4204_0000);
 const F_10: f32 = f32::from_bits(0x4120_0000);
 const F_38: f32 = f32::from_bits(0x4218_0000);
 
+use crate::bindings::display_helper_text_call;
+use crate::bindings::hud_colours_get_rgb;
 orig! {
     /// `CControllerConfigManager::GetControllerSettingTextWithOrderNumber(eControllerAction, eContSetOrder)`
     /// (0x531E20, thiscall)
@@ -111,12 +113,8 @@ orig! {
     /// `CPad::GetAnaloguePadUp()` / `GetAnaloguePadDown()` (0x540950 / 0x540980; ECX = the pad, unread)
     fn pad_analogue_up() -> u8 = cdecl 0x540950 => unported;
     fn pad_analogue_down() -> u8 = cdecl 0x540980 => unported;
-    /// `CHudColours::GetRGB(out, colour)` (0x58FEA0, thiscall, hidden return)
-    fn hud_colours_get_rgb(this: GPtr<u8>, out: GPtr<u8>, colour: u32) -> GPtr<u8> = thiscall 0x58FEA0 => crate::hud::get_rgb;
     /// `CFont::SetScale(float w, float h)` (0x719380)
     fn font_set_scale(w: f32, h: f32) = cdecl 0x719380 => font_set_scale_rust;
-    /// `CMenuManager::DisplayHelperText(const char*)` (0x57E240, thiscall)
-    fn display_helper_text_call(this: GPtr<u8>, key: GPtr<u8>) = thiscall 0x57E240 => crate::menu_mgr::display_helper_text;
     /// `CMenuManager::DrawControllerBound(uint16 y, bool onlyCheck)` (0x57E6E0, thiscall)
     fn draw_controller_bound_call(this: GPtr<u8>, y: u32, only_check: u32) = thiscall 0x57E6E0 => draw_controller_bound;
 }

@@ -44,48 +44,60 @@ const K_1_448: u32 = 0x3B12_4925;
 /// `.rdata` 0x859EE0: "DUMMY"
 const DUMMY: usize = 0x859EE0;
 
+use crate::bindings::create_new_menu;
+use crate::bindings::find_closest_attractor;
+use crate::bindings::get_car_node_index_from_door;
+use crate::bindings::get_proper_index_from_index_used_by_script;
+use crate::bindings::make_player_group_reappear;
+use crate::bindings::markers_force_render;
+use crate::bindings::remove_n_followers;
+use crate::bindings::script_attach_anim_group_to_char_model;
+use crate::bindings::task_use_effect_ctor;
+use sa_core::bindings::crt_strncpy as strncpy_;
+use sa_core::bindings::cutscene_is_skip_button_being_pressed as is_cutscene_skip_button_being_pressed;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::start_extra_colour;
+use sa_core::bindings::streaming_request_model as request_model;
+use sa_core::bindings::stricmp;
+use sa_core::bindings::strncmp;
+use sa_core::bindings::task_new;
+use sa_core::bindings::time_cycle_stop_extra_colour as stop_extra_colour;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::add_entry_exit_to_stack;
+use sa_world::bindings::count_members_excluding_leader;
+use sa_world::bindings::dtor_cleanup_43a960 as remove_conversation_for_ped;
+use sa_world::bindings::entry_exit_at;
+use sa_world::bindings::event_attractor_dtor;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::find_nearest_entry_exit;
+use sa_world::bindings::find_smallest_zone_for_position;
+use sa_world::bindings::find_zone_by_label;
+use sa_world::bindings::ped_groups_get_peds_group as get_peds_group;
+use sa_world::bindings::ped_pool_get_at;
+use sa_world::bindings::plane_set_gear_up;
+use sa_world::bindings::set_char_created_by;
+use sa_world::bindings::switch_off_menu_call as switch_off_menu;
 orig! {
     /// `CMenuSystem::CheckForSelected(uint8)` (0x5807E0), AL (the full ScriptParams dword is pushed)
     fn check_for_selected(id: u32) -> i8 = cdecl 0x5807E0 => unported;
     /// `CMenuSystem::ActivateOneItem(uint8, uint8, bool)` (0x581B30)
     fn activate_one_item(id: u32, row: u32, on: u32) = cdecl 0x581B30 => unported;
-    /// `CMenuSystem::SwitchOffMenu(uint8)` (0x580750)
-    fn switch_off_menu(id: u32) = cdecl 0x580750 => unported;
-    /// `CStreamedScripts::GetProperIndexFromIndexUsedByScript(int16)` (0x470810), AX
-    fn get_proper_index_from_index_used_by_script(m: GPtr<u8>, i: u32) -> u16 = thiscall 0x470810 => unported;
-    /// `CStreaming::RequestModel(int32, int32 flags)` (0x4087E0)
-    fn request_model(id: i32, flags: i32) = cdecl 0x4087E0 => unported;
     /// `CMenuSystem::SetColumnOrientation(uint8, uint8, eFontAlignment)` (0x582080)
     fn set_column_orientation(menu: u32, column: u32, align: u32) = cdecl 0x582080 => unported;
     /// `CMenuSystem::CheckForAccept(uint8)` (0x5807C0), AL (the full ScriptParams dword is pushed)
     fn check_for_accept(id: u32) -> i8 = cdecl 0x5807C0 => unported;
-    /// `C3dMarkers::ForceRender(bool)` (0x722870)
-    fn markers_force_render(on: u32) = cdecl 0x722870 => unported;
     /// `CPostEffects::ScriptNightVisionSwitch(bool)` (0x701120)
     fn script_night_vision_switch(on: u32) = cdecl 0x701120 => unported;
     /// `CPostEffects::ScriptInfraredVisionSwitch(bool)` (0x701140)
     fn script_infrared_vision_switch(on: u32) = cdecl 0x701140 => unported;
-    /// `CTheZones::FindZoneByLabel(const char*, eZoneType)` (0x572C40), AX
-    fn find_zone_by_label(label: GPtr<u8>, ty: u32) -> u16 = cdecl 0x572C40 => unported;
     /// ADD_PRICE_MODIFIER's callee (0x49BDD0, cdecl (P0, P1); unnamed in the catalogue, gr
     /// `CShopping::AddPriceModifier`)
     fn add_price_modifier(a: u32, b: u32) = cdecl 0x49BDD0 => unported;
     /// REMOVE_PRICE_MODIFIER's callee (0x49ACD0, cdecl (P0); a thunk, gr `CShopping::RemovePriceModifier`)
     fn remove_price_modifier(a: u32) = cdecl 0x49ACD0 => unported;
-    /// `CCutsceneMgr::IsCutsceneSkipButtonBeingPressed()` (0x4D5D10), AL
-    fn is_cutscene_skip_button_being_pressed() -> u8 = cdecl 0x4D5D10 => unported;
-    /// `CPlane::SetGearUp()` (0x6CAC20) / `SetGearDown()` (0x6CAC70)
-    fn plane_set_gear_up(v: GPtr<u8>) = thiscall 0x6CAC20 => unported;
     fn plane_set_gear_down(v: GPtr<u8>) = thiscall 0x6CAC70 => unported;
-    /// `CConversations::RemoveConversationForPed(CPed*)` (0x43A960)
-    fn remove_conversation_for_ped(p: GPtr<u8>) = cdecl 0x43A960 => unported;
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
     /// `CPlayerPed::MakePlayerGroupDisappear()` (0x60A440) / `MakePlayerGroupReappear()` (0x60A4B0)
     fn make_player_group_disappear(p: GPtr<u8>) = thiscall 0x60A440 => unported;
-    fn make_player_group_reappear(p: GPtr<u8>) = thiscall 0x60A4B0 => unported;
-    /// CRT `strncmp` (0x8214D0)
-    fn strncmp(a: GPtr<u8>, b: GPtr<u8>, n: u32) -> i32 = cdecl 0x8214D0 => unported;
     /// `CRadar::SetCoordBlipAppearance(int32, uint8)` (0x583E50)
     fn set_coord_blip_appearance(h: u32, app: u32) = cdecl 0x583E50 => unported;
     /// `CConversations::IsPlayerInPositionForConversation(CPed*, bool)` (0x43B0B0), AL
@@ -94,8 +106,6 @@ orig! {
     fn enable_conversation(p: GPtr<u8>, on: u32) = cdecl 0x43AA40 => unported;
     /// `CAutomobile::UpdateMovingCollision(float)` (0x6A1460); the float as a raw dword
     fn update_moving_collision(v: GPtr<u8>, a: u32) = thiscall 0x6A1460 => unported;
-    /// `CDamageManager::GetCarNodeIndexFromDoor(eDoors)` (0x6C26F0)
-    fn get_car_node_index_from_door(door: u32) -> u32 = cdecl 0x6C26F0 => unported;
     /// `CVehicle` virtual slot 0x98 (`IsDoorMissing(eDoors)`), AL
     fn vehicle_is_door_missing(v: GPtr<u8>, door: u32) -> u8 = thiscall vslot 0x98 => unported;
     /// `CVehicle` virtual slot 0x6C (`OpenDoor(CPed*, int32 node, eDoors, float ratio, bool sound)`); ratio raw
@@ -110,46 +120,18 @@ orig! {
     fn vehicle_blow_up_cutscene(v: GPtr<u8>, a: u32, b: u32, c: u32, d: u32) = thiscall vslot 0xA8 => unported;
     /// `CRunningScript::ObjectInAngledAreaCheckCommand(int32 command)` (0x4883F0)
     fn object_in_angled_area_check_command(s: Scr, command: u32) = thiscall 0x4883F0 => unported;
-    /// `CTheScripts::ScriptAttachAnimGroupToCharModel(int32 model, char* ifp)` (0x474800)
-    fn script_attach_anim_group_to_char_model(model: i32, ifp: GPtr<u8>) -> u8 = cdecl 0x474800 => unported;
     /// `CTheScripts::AddToListOfSpecialAnimGroupsAttachedToCharModels(int32 model, char* ifp)` (0x474750)
     fn add_to_list_of_special_anim_groups(model: i32, ifp: GPtr<u8>) = cdecl 0x474750 => unported;
     /// `CMenuSystem::InsertOneMenuItemWithNumber(uint8, uint8, uint8, char*, int32, int32)` (0x581D70)
     fn insert_one_menu_item_with_number(menu: u32, col: u32, row: u32, key: GPtr<u8>, n1: u32, n2: u32) = cdecl 0x581D70 => unported;
     /// `CCutsceneMgr::AppendToNextCutscene(const char*, const char*)` (0x4D5DB0)
     fn append_to_next_cutscene(a: GPtr<u8>, b: GPtr<u8>) = cdecl 0x4D5DB0 => unported;
-    /// `CTheZones::FindSmallestZoneForPosition(const CVector&, bool)` (0x572360)
-    fn find_smallest_zone_for_position(pos: GPtr<u32>, b: u32) -> GPtr<u8> = cdecl 0x572360 => unported;
-    /// CRT `strncpy` (0x821F40)
-    fn strncpy_(dst: GPtr<u8>, src: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x821F40 => unported;
-    /// `CPedGroupMembership::CountMembersExcludingLeader()` (0x5F6AA0)
-    fn count_members_excluding_leader(m: GPtr<u8>) -> i32 = thiscall 0x5F6AA0 => unported;
-    /// `CPedGroupMembership::RemoveNFollowers(int32)` (0x5FB1D0)
-    fn remove_n_followers(m: GPtr<u8>, n: i32) = thiscall 0x5FB1D0 => unported;
     /// `CClothes::GetTextureDependency(int32)` (0x5A7EA0)
     fn get_texture_dependency(i: u32) -> i32 = cdecl 0x5A7EA0 => unported;
-    /// The ped pool's slot accessor at 0x4082A0 (thiscall on the pool, slot index; a `.HOODLUM` thunk,
-    /// `CPool<CPed>::GetAt(int32)` in gr)
-    fn ped_pool_get_at(pool: GPtr<u8>, i: i32) -> GPtr<u8> = thiscall 0x4082A0 => unported;
     /// `CVector::Magnitude()` (0x4082C0), ST0 (read as f64: the callee's PC-24 result is exact)
     fn vector_magnitude(v: GPtr<u32>) -> f64 = thiscall 0x4082C0 => unported;
     /// `CRunningScript::IsPedDead(CPed*)` (0x464D70), AL
     fn script_is_ped_dead(s: Scr, p: GPtr<u8>) -> u8 = thiscall 0x464D70 => unported;
-    /// `CPedGroups::GetPedsGroup(const CPed*)` (0x5F7E80)
-    fn get_peds_group(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x5F7E80 => unported;
-    /// `CPed::SetCharCreatedBy(uint8)` (0x5E47E0)
-    fn set_char_created_by(p: GPtr<u8>, by: u32) = thiscall 0x5E47E0 => unported;
-    /// `CEntryExitManager::FindNearestEntryExit(const CVector2D&, float range, int32 ignore)` (0x43F4B0)
-    fn find_nearest_entry_exit(pos: GPtr<u32>, range: u32, ignore: i32) -> i32 = cdecl 0x43F4B0 => unported;
-    /// The entry-exit slot accessor at 0x43EF00 (cdecl (index) -> CEntryExit*; a `.HOODLUM` thunk)
-    fn entry_exit_at(i: i32) -> GPtr<u8> = cdecl 0x43EF00 => unported;
-    /// `CEntryExitManager::AddEntryExitToStack(CEntryExit*)` (0x43E410)
-    fn add_entry_exit_to_stack(e: GPtr<u8>) = cdecl 0x43E410 => unported;
-    /// `CTimeCycle::StartExtraColour(int32, bool)` (0x55FEC0) / `StopExtraColour(bool)` (0x55FF20)
-    fn start_extra_colour(c: u32, b: u32) = cdecl 0x55FEC0 => unported;
-    fn stop_extra_colour(b: u32) = cdecl 0x55FF20 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0), AL
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
     /// `CRadar::SetBlipEntryExit(int32, CEntryExit*)` (0x583F00)
     fn set_blip_entry_exit(h: u32, e: GPtr<u8>) = cdecl 0x583F00 => unported;
     /// `CVector::NormaliseAndMag()` (0x59C970), ST0 (read as f64: the callee's PC-24 result is exact)
@@ -164,13 +146,6 @@ orig! {
     fn get_effect_in_use(i: GPtr<u8>) -> u32 = thiscall 0x6018D0 => unported;
     /// `CPedIntelligence::SetEffectInUse(C2dEffect*)` (0x6018E0)
     fn set_effect_in_use(i: GPtr<u8>, e: u32) = thiscall 0x6018E0 => unported;
-    /// The closest-attractor search at 0x6002F0 (cdecl, 9 dwords: `(CVector* pos, float range, int32 model,
-    /// int32 5, char* name, bool 1, C2dEffect* inUse, C2dEffect** outEffect, CEntity** outEntity)`; unnamed in
-    /// the catalogue)
-    fn find_closest_attractor(
-        pos: GPtr<u32>, range: u32, model: i32, five: u32, name: GPtr<u8>, one: u32, in_use: u32,
-        out_effect: GPtr<u32>, out_entity: GPtr<u32>
-    ) = cdecl 0x6002F0 => unported;
     /// `CRunningScript::RemoveScriptFromList(CRunningScript**)` (0x464BD0) / `AddScriptToList` (0x464C00)
     fn remove_script_from_list(s: Scr, list: GPtr<u8>) = thiscall 0x464BD0 => unported;
     fn add_script_to_list(s: Scr, list: GPtr<u8>) = thiscall 0x464C00 => unported;
@@ -178,23 +153,8 @@ orig! {
     fn shutdown_this_script(s: Scr) = thiscall 0x465AA0 => unported;
     /// `CEventAttractor::CEventAttractor(C2dEffect*, CEntity*, bool)` (0x4AF350)
     fn event_attractor_ctor(e: GPtr<u8>, effect: u32, entity: u32, b: u32) -> GPtr<u8> = thiscall 0x4AF350 => unported;
-    /// The `CEventAttractor` destructor at 0x4AF400
-    fn event_attractor_dtor(e: GPtr<u8>) = thiscall 0x4AF400 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420)
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
-    /// `CTask::operator new(uint32)` (0x61A5A0)
-    fn task_new(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => unported;
-    /// `CTaskComplexUseEffect::CTaskComplexUseEffect(C2dEffect*, CEntity*)` (0x6321F0)
-    fn task_use_effect_ctor(t: GPtr<u8>, effect: u32, entity: u32) -> GPtr<u8> = thiscall 0x6321F0 => unported;
     /// `CRunningScript::GivePedScriptedTask(int32 ped, CTask*, int32 command)` (0x465C20)
     fn give_ped_scripted_task(s: Scr, ped: u32, task: GPtr<u8>, command: u32) = thiscall 0x465C20 => unported;
-    /// CRT `_stricmp` (0x8229B6)
-    fn stricmp(a: GPtr<u8>, b: GPtr<u8>) -> i32 = cdecl 0x8229B6 => unported;
-    /// `CMenuSystem::CreateNewMenu(eMenuType, const char*, float x, float y, float width, int8 columns, bool
-    /// interactive, bool background, eFontAlignment)` (0x582300), AL; floats as raw dwords
-    fn create_new_menu(
-        ty: u32, title: GPtr<u8>, x: u32, y: u32, w: u32, columns: u32, interactive: u32, background: u32, align: u32
-    ) -> u8 = cdecl 0x582300 => unported;
     /// `CMenuSystem::InsertMenu(uint8 menu, uint8 column, char* title, char* rows[12])` (0x581E00), 15 dwords
     fn insert_menu(
         menu: u32, column: u32, a: GPtr<u8>, b: GPtr<u8>, r0: GPtr<u8>, r1: GPtr<u8>, r2: GPtr<u8>,

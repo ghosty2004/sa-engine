@@ -111,15 +111,23 @@ globals! {
 /// Calls into code that may still be original (CRT allocation, other subsystems, these pools).
 pub mod call {
     use super::*;
+    pub use crate::bindings::car_ctrl_update_car_count as update_car_count;
+    pub use crate::bindings::crt_free as operator_delete_array;
+    pub use crate::bindings::crt_free_8214bd as operator_delete;
+    pub use crate::bindings::load_all_requested_models;
+    pub use crate::bindings::object_new;
+    pub use crate::bindings::object_new_at;
+    pub use crate::bindings::object_save_construct;
+    pub use crate::bindings::object_save_extract;
+    pub use crate::bindings::player_ped_ctor;
+    pub use crate::bindings::streaming_request_model as request_model;
+    pub use crate::bindings::world_add;
+    pub use crate::bindings::world_remove;
     orig! {
         /// `operator new[]` (0x821195: `jmp operator new`)
         pub fn operator_new_array(size: u32) -> GPtr<u8> = cdecl 0x821195 => unported;
         /// `operator new` (0x82119A, CRT)
         pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
-        /// `operator delete[]` (0x8213AE: `jmp operator delete`)
-        pub fn operator_delete_array(p: GPtr<u8>) = cdecl 0x8213AE => unported;
-        /// `operator delete` (0x8214BD, CRT)
-        pub fn operator_delete(p: GPtr<u8>) = cdecl 0x8214BD => unported;
         /// `printf(fmt)` (0x821982, CRT)
         pub fn printf0(fmt: GPtr<u8>) -> i32 = cdecl 0x821982 => unported;
         /// `printf(fmt, int, double, double, double)` (0x821982, CRT; the doubles are pushed as qwords)
@@ -161,22 +169,10 @@ pub mod call {
         pub fn save_data(p: GPtr<u8>, size: u32) = cdecl 0x5D1270 => unported;
         /// `CGenericGameStorage::LoadDataFromWorkBuffer(void*, int32)`
         pub fn load_data(p: GPtr<u8>, size: u32) = cdecl 0x5D1300 => unported;
-        /// `CObjectSaveStructure::Construct(CObject*)`
-        pub fn object_save_construct(this: GPtr<u8>, obj: GPtr<u8>) = thiscall 0x5D2160 => unported;
-        /// `CObjectSaveStructure::Extract(CObject*)`
-        pub fn object_save_extract(this: GPtr<u8>, obj: GPtr<u8>) = thiscall 0x5D2220 => unported;
         /// `CPopulation::ConvertToDummyObject(CObject*)`
         pub fn convert_to_dummy_object(obj: GPtr<u8>) = cdecl 0x614670 => unported;
-        /// `CObject::operator new(size)`
-        pub fn object_new(size: u32) -> GPtr<u8> = cdecl 0x5A1EE0 => unported;
-        /// `CObject::operator new(size, poolRef)`
-        pub fn object_new_at(size: u32, pool_ref: i32) -> GPtr<u8> = cdecl 0x5A1EF0 => unported;
         /// `CObject::CObject(int32 modelIndex, bool create)` (the bool pushed as a dword)
         pub fn object_ctor(this: GPtr<u8>, model: i32, create: u32) -> GPtr<u8> = thiscall 0x5A1D70 => unported;
-        /// `CWorld::Add(CEntity*)`
-        pub fn world_add(e: GPtr<u8>) = cdecl 0x563220 => unported;
-        /// `CWorld::Remove(CEntity*)`
-        pub fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
         /// `CProjectileInfo::RemoveIfThisIsAProjectile(CObject*)` (bool in AL)
         pub fn remove_if_projectile(obj: GPtr<u8>) -> u8 = cdecl 0x739A40 => unported;
         /// virtual slot 0: the scalar deleting destructor (`this, flags`)
@@ -187,10 +183,6 @@ pub mod call {
         /// `CPed::Save` (vtable +0x60), `CPed::Load` (+0x64)
         pub fn ped_save(p: GPtr<u8>) -> u32 = thiscall vslot 0x60 => unported;
         pub fn ped_load(p: GPtr<u8>) -> u32 = thiscall vslot 0x64 => unported;
-        /// `CStreaming::RequestModel(int32, int32 flags)`
-        pub fn request_model(model: i32, flags: i32) = cdecl 0x4087E0 => unported;
-        /// `CStreaming::LoadAllRequestedModels(bool)`
-        pub fn load_all_requested_models(only_priority: u32) = cdecl 0x40EA10 => unported;
         /// `CVehicle::operator new(size, poolRef)`
         pub fn vehicle_new_at(size: u32, pool_ref: i32) -> GPtr<u8> = cdecl 0x6E2D60 => unported;
         pub fn boat_ctor(this: GPtr<u8>, model: i32, created_by: i32) -> GPtr<u8> = thiscall 0x6F2940 => unported;
@@ -203,12 +195,8 @@ pub mod call {
         pub fn plane_ctor(this: GPtr<u8>, model: i32, created_by: i32) -> GPtr<u8> = thiscall 0x6C8E20 => unported;
         pub fn trailer_ctor(this: GPtr<u8>, model: i32, created_by: i32) -> GPtr<u8> = thiscall 0x6D03A0 => unported;
         pub fn automobile_ctor(this: GPtr<u8>, model: i32, created_by: i32, setup_suspension: i32) -> GPtr<u8> = thiscall 0x6B0A90 => unported;
-        /// `CCarCtrl::UpdateCarCount(CVehicle*, bool remove)`
-        pub fn update_car_count(v: GPtr<u8>, remove: u32) = cdecl 0x424000 => unported;
         /// `CPed::operator new(size, poolRef)`
         pub fn ped_new_at(size: u32, pool_ref: i32) -> GPtr<u8> = cdecl 0x5E4730 => unported;
-        /// `CPlayerPed::CPlayerPed(int32 playerId, bool groupCreated)` (both pushed as dwords)
-        pub fn player_ped_ctor(this: GPtr<u8>, id: i32, group: u32) -> GPtr<u8> = thiscall 0x60D5B0 => unported;
     }
 }
 

@@ -11,17 +11,14 @@ use sa_core::{hook, orig};
 
 use super::common::{ftol32, g, rd, wr, xi};
 
+use sa_core::bindings::list_add_item;
+use sa_core::bindings::list_remove_item;
+use sa_core::bindings::world_remove;
 orig! {
-    /// `List_c::AddItem(ListItem_c*)` (0x4A8DF0)
-    fn list_add_item(l: GPtr<u8>, item: GPtr<u8>) = thiscall 0x4A8DF0 => unported;
-    /// `List_c::RemoveItem(ListItem_c*)` (0x4A8E30)
-    fn list_remove_item(l: GPtr<u8>, item: GPtr<u8>) = thiscall 0x4A8E30 => unported;
     /// `FurnitureGroup_c::Init()` (0x5910A0)
     fn furniture_group_init(grp: GPtr<u8>) -> i32 = thiscall 0x5910A0 => unported;
     /// `FurnitureManager_c::LoadFurniture()` (0x5C0280)
     fn load_furniture(man: GPtr<u8>) = thiscall 0x5C0280 => unported;
-    /// `CWorld::Remove(CEntity*)` (0x563280)
-    fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
     /// the deleting destructor (vtable +0)
     fn v_delete(e: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
 }

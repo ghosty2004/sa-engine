@@ -33,12 +33,8 @@ const OBJECT_POOL: usize = 0xB7449C;
 /// `sizeof(CObject)`
 const OBJECT_SIZE: i32 = 0x19C;
 
-orig! {
-    /// `CStreaming::SetMissionDoesntRequireModel(int32)` (0x409C90)
-    fn streaming_set_mission_doesnt_require_model(id: i32) = cdecl 0x409C90 => unported;
-    /// `CDecisionMakerTypes::AddDecisionMaker(CDecisionMaker*, eDecisionTypes, bool)` (0x607050, `ret 0xC`)
-    fn decision_maker_types_add(t: GPtr<u8>, dm: GPtr<u8>, ty: u32, mission: u32) -> u32 = thiscall 0x607050 => unported;
-}
+use sa_core::bindings::set_mission_doesnt_require_model as streaming_set_mission_doesnt_require_model;
+use sa_world::bindings::decision_maker_types_add;
 
 use sa_core::field::g as ga;
 
@@ -261,9 +257,10 @@ const K_DEFAULT_BRAIN_RADIUS: usize = 0x859D9C;
 /// `CTheScripts::ScriptSpace` (0xA49960)
 const SCRIPT_SPACE: usize = 0xA49960;
 
+use crate::bindings::effect_2d_init as scripted_2d_effect_reset;
+use sa_core::bindings::streaming_request_model;
+use sa_core::bindings::stricmp as crt_stricmp;
 orig! {
-    /// `FUN_006F9EB0` (thiscall): resets one 0x94-byte scripted 2d effect record
-    fn scripted_2d_effect_reset(e: GPtr<u8>) = thiscall 0x6F9EB0 => unported;
     /// `CWorld::FindPlayerCentreOfWorld(int32)` (0x56E250)
     fn find_player_centre_of_world(id: i32) -> GPtr<u8> = cdecl 0x56E250 => unported;
     /// `CScriptsForBrains::StartNewStreamedScriptBrain(uint8, CEntity*, bool)` (0x46B270, `ret 0xC`)
@@ -272,10 +269,6 @@ orig! {
     fn brains_start_or_request(t: GPtr<u8>, idx: u32, e: GPtr<u8>, attach: u32, b: u32) = thiscall 0x46CD80 => unported;
     /// `CScriptsForBrains::IsObjectWithinBrainActivationRange(CObject*, const CVector&)` (0x46B3D0, `ret 8`)
     fn brains_is_object_within_range(t: GPtr<u8>, o: GPtr<u8>, p: GPtr<u8>) -> u8 = thiscall 0x46B3D0 => unported;
-    /// `CStreaming::RequestModel(int32, int32 flags)` (0x4087E0)
-    fn streaming_request_model(id: i32, flags: i32) = cdecl 0x4087E0 => unported;
-    /// CRT `_stricmp` (0x8229B6)
-    fn crt_stricmp(a: GPtr<u8>, b: GPtr<u8>) -> i32 = cdecl 0x8229B6 => unported;
 }
 
 /// `CScripted2dEffects::Init()` (0x6FA6F0): for each of the 0x40 entries: byte B = 0, word = 1, int = -1, the
@@ -428,33 +421,25 @@ const VEHICLE_POOL: usize = 0xB74494;
 /// -100.0f (0x859014): the "find the ground" z sentinel
 const K_GROUND_Z_SENTINEL: usize = 0x859014;
 
+use sa_world::bindings::automobile_place_on_road_properly;
+use sa_world::bindings::bike_place_on_road_properly;
+use sa_world::bindings::entity_get_is_static;
+use sa_world::bindings::find_ground_z_for_coord;
+use sa_world::bindings::get_distance_from_centre_of_mass_to_base_of_model as entity_distance_to_base;
+use sa_world::bindings::membership_is_leader;
+use sa_world::bindings::ped_groups_get_peds_group as get_peds_group;
+use sa_world::bindings::physical_add_to_moving_list;
 orig! {
-    /// `CWorld::FindGroundZForCoord(float, float)` (0x569660, ST0)
-    fn find_ground_z_for_coord(x: u32, y: u32) -> f64 = cdecl 0x569660 => unported;
-    /// `CEntity::GetDistanceFromCentreOfMassToBaseOfModel()` (0x536BE0, ST0)
-    fn entity_distance_to_base(e: GPtr<u8>) -> f64 = thiscall 0x536BE0 => unported;
     /// `CEntity::Teleport(CVector, bool)` (vtable +0x38, `ret 0x10`)
     fn v_entity_teleport(e: GPtr<u8>, x: u32, y: u32, z: u32, b: u32) = thiscall vslot 0x38 => unported;
     /// `CTheScripts::ClearSpaceForMissionEntity(const CVector&, CEntity*)` (0x486B00)
     fn clear_space_for_mission_entity(pos: GPtr<u8>, e: GPtr<u8>) = cdecl 0x486B00 => unported;
-    /// `CPedGroups::GetPedsGroup(const CPed*)` (0x5F7E80)
-    fn get_peds_group(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x5F7E80 => unported;
-    /// `CPedGroupMembership::IsLeader(const CPed*)` (0x5F69C0, `ret 4`)
-    fn membership_is_leader(m: GPtr<u8>, p: GPtr<u8>) -> u8 = thiscall 0x5F69C0 => unported;
     /// `CPedGroup::Teleport(const CVector&)` (0x5F7AD0, `ret 4`)
     fn group_teleport(g: GPtr<u8>, pos: GPtr<u8>) = thiscall 0x5F7AD0 => unported;
     /// `CColStore::HasCollisionLoaded(const CVector&, int32 area)` (0x410CE0)
     fn col_store_has_collision_loaded(pos: GPtr<u8>, area: u32) -> u8 = cdecl 0x410CE0 => unported;
     /// `CIplStore::HaveIplsLoaded(const CVector&, int32 area)` (0x405600)
     fn ipl_store_have_ipls_loaded(pos: GPtr<u8>, area: u32) -> u8 = cdecl 0x405600 => unported;
-    /// `CEntity::GetIsStatic()` (0x4633E0)
-    fn entity_get_is_static(e: GPtr<u8>) -> u8 = thiscall 0x4633E0 => unported;
-    /// `CPhysical::AddToMovingList()` (0x542800)
-    fn physical_add_to_moving_list(e: GPtr<u8>) = thiscall 0x542800 => unported;
-    /// `CAutomobile::PlaceOnRoadProperly()` (0x6AF420)
-    fn automobile_place_on_road_properly(v: GPtr<u8>) = thiscall 0x6AF420 => unported;
-    /// `CBike::PlaceOnRoadProperly()` (0x6BEEB0)
-    fn bike_place_on_road_properly(v: GPtr<u8>) = thiscall 0x6BEEB0 => unported;
 }
 
 /// `CRunningScript::SetCharCoordinates(CPed*, float x, float y, float z, bool warpGang, bool offset)` (0x464DC0,

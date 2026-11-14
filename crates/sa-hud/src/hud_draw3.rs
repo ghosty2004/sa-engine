@@ -179,48 +179,48 @@ fn local<T, const N: usize>(buf: &mut [T; N]) -> GPtr<T> {
     GPtr::from_raw(buf.as_mut_ptr())
 }
 
+use crate::bindings::draw_window_call;
+use crate::bindings::font_set_drop_color;
+use crate::bindings::font_set_drop_shadow_position;
+use crate::bindings::font_set_right_justify_wrap;
+use crate::bindings::font_set_scale;
+use crate::bindings::font_set_wrapx;
+use crate::bindings::hud_colours_get_rgb;
+use crate::bindings::hud_colours_get_rgba;
+use crate::bindings::rw_tex_dictionary_find_hash_named_texture;
+use sa_core::bindings::append_string_to_key;
+use sa_core::bindings::ascii_to_gxt_char;
+use sa_core::bindings::font_print_string;
+use sa_core::bindings::get_weapon_info;
+use sa_core::bindings::intel_get_task_use_gun as intelligence_get_task_use_gun;
+use sa_core::bindings::rgba_ctor;
+use sa_core::bindings::sprintf1;
+use sa_stream::bindings::sprite2d_draw_bar_chart;
+use sa_world::bindings::floor_f as floorf_st0;
+use sa_world::bindings::get_stat_value as stats_get_stat_value_st0;
+use sa_world::bindings::get_task_swim as intelligence_get_task_swim;
+use sa_world::bindings::get_weapon_radius_on_screen as player_ped_get_weapon_radius_on_screen_st0;
+use sa_world::bindings::weapon_is_type_melee;
 orig! {
     /// `RwRenderStateSet` through `RwEngineInstance` (`mov r, [0xC97B24]; call [r+0x20]`)
     fn rw_render_state_set(state: u32, value: u32) -> u32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `CRGBA::CRGBA(r, g, b, a)` (0x7170C0)
-    fn rgba_ctor(this: GPtr<u8>, r: u32, gg: u32, bb: u32, a: u32) -> GPtr<u8> = thiscall 0x7170C0 => unported;
-    /// `CHudColours::GetRGB(CRGBA* out, uint8 colour)` (0x58FEA0)
-    fn hud_colours_get_rgb(this: GPtr<u8>, out: GPtr<u8>, colour: u32) -> GPtr<u8> = thiscall 0x58FEA0 => crate::hud::get_rgb;
-    /// `CHudColours::GetRGBA(CRGBA* out, uint8 colour, uint8 alpha)` (0x58FEE0)
-    fn hud_colours_get_rgba(this: GPtr<u8>, out: GPtr<u8>, colour: u32, alpha: u32) -> GPtr<u8> = thiscall 0x58FEE0 => crate::hud::get_rgba;
-    /// CRT `sprintf(buf, fmt, a)` (0x821BB5)
-    fn sprintf1(buf: GPtr<u8>, fmt: GPtr<u8>, a: i32) -> i32 = cdecl 0x821BB5 => unported;
     /// CRT `sprintf(buf, fmt, a, b)` (0x821BB5)
     fn sprintf2(buf: GPtr<u8>, fmt: GPtr<u8>, a: i32, bb: i32) -> i32 = cdecl 0x821BB5 => unported;
-    /// `AsciiToGxtChar(const char*, GxtChar*)` (0x718600)
-    fn ascii_to_gxt_char(src: GPtr<u8>, dst: GPtr<u8>) = cdecl 0x718600 => unported;
     /// `CText::Get(const char*)` (0x6A0050)
     fn text_get(this: GPtr<u8>, key: GPtr<u8>) -> GPtr<u8> = thiscall 0x6A0050 => crate::text::text_get;
 
     /// `CFont::SetBackground(bool, bool)` (0x7195C0)
     fn font_set_background(on: u32, outline: u32) = cdecl 0x7195C0 => crate::font::set_background;
-    /// `CFont::SetScale(float w, float h)` (0x719380)
-    fn font_set_scale(w: u32, h: u32) = cdecl 0x719380 => crate::font::set_scale;
     /// `CFont::SetProportional(bool)` (0x7195B0)
     fn font_set_proportional(v: u32) = cdecl 0x7195B0 => crate::font::set_proportional;
     /// `CFont::SetFontStyle(eFontStyle)` (0x719490)
     fn font_set_font_style(v: u32) = cdecl 0x719490 => crate::font::set_font_style;
     /// `CFont::SetOrientation(eFontAlignment)` (0x719610; not hookable, see hud-port.md)
     fn font_set_orientation(v: u32) = cdecl 0x719610 => crate::font::set_orientation;
-    /// `CFont::SetRightJustifyWrap(float)` (0x7194F0)
-    fn font_set_right_justify_wrap(v: u32) = cdecl 0x7194F0 => crate::font::set_right_justify_wrap;
-    /// `CFont::SetWrapx(float)` (0x7194D0)
-    fn font_set_wrapx(v: u32) = cdecl 0x7194D0 => crate::font::set_wrapx;
     /// `CFont::SetEdge(int8)` (0x719590)
     fn font_set_edge(v: u32) = cdecl 0x719590 => crate::font::set_edge;
-    /// `CFont::SetDropColor(CRGBA)` (0x719510)
-    fn font_set_drop_color(c: u32) = cdecl 0x719510 => crate::font::set_drop_color;
-    /// `CFont::SetDropShadowPosition(int8)` (0x719570)
-    fn font_set_drop_shadow_position(v: u32) = cdecl 0x719570 => crate::font::set_drop_shadow_position;
     /// `CFont::SetColor(CRGBA)` (0x719430)
     fn font_set_color(c: u32) = cdecl 0x719430 => crate::font::set_color;
-    /// `CFont::PrintString(float x, float y, const GxtChar*)` (0x71A700)
-    fn font_print_string(px: f32, py: f32, text: GPtr<u8>) = cdecl 0x71A700 => unported;
 
     /// `CHud::GetYPosBasedOnHealth(uint8, float, int8)` (0x588B60, ST0)
     fn get_y_pos_based_on_health_st0(player: u8, y: f32, offset: i8) -> f64 = cdecl 0x588B60 => get_y_pos_st0_rust;
@@ -234,43 +234,19 @@ orig! {
     fn draw_weapon_icon_call(ped: GPtr<u8>, px: i32, py: i32, alpha: f32) = cdecl 0x58D7D0 => crate::hud_draw::draw_weapon_icon;
     /// `CHud::DrawAmmo(CPed*, int32 x, int32 y, float alpha)` (0x5893B0)
     fn draw_ammo_call(ped: GPtr<u8>, px: i32, py: i32, alpha: f32) = cdecl 0x5893B0 => crate::hud_draw::draw_ammo;
-    /// `CPedIntelligence::GetTaskSwim()` (0x601070)
-    fn intelligence_get_task_swim(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x601070 => unported;
-    /// `CPedIntelligence::GetTaskUseGun()` (0x600F70)
-    fn intelligence_get_task_use_gun(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x600F70 => unported;
     /// `CStats::GetFatAndMuscleModifier(eStatModAbilities)` (0x559AF0, ST0)
     fn stats_get_fat_and_muscle_modifier_st0(stat: u32) -> f64 = cdecl 0x559AF0 => unported;
-    /// `CStats::GetStatValue(eStats)` (0x558E40, ST0)
-    fn stats_get_stat_value_st0(stat: u32) -> f64 = cdecl 0x558E40 => unported;
     /// `CWeaponInfo::GetSkillStatIndex(eWeaponType)` (0x743CD0)
     fn weapon_info_get_skill_stat_index(ty: u32) -> i32 = cdecl 0x743CD0 => unported;
-    /// `floorf` wrapper (0x406CE0, cdecl (float) -> ST0)
-    fn floorf_st0(v: f32) -> f64 = cdecl 0x406CE0 => unported;
-    /// `CMenuManager::DrawWindow(const CRect&, const char* key, uint8 colour, CRGBA back, bool unused, bool
-    /// background)` (0x573EE0, thiscall)
-    fn draw_window_call(this: GPtr<u8>, rect: GPtr<u8>, key: GPtr<u8>, colour: u32, back: u32, unused: u32, bg: u32) = thiscall 0x573EE0 => crate::menu_mgr::draw_window;
-    /// `CSprite2d::DrawBarChart(x, y, width, height, progress, progressAdd, drawPercentage, drawBlackBorder,
-    /// CRGBA colour, CRGBA addColour)` (0x728640)
-    fn sprite2d_draw_bar_chart(px: f32, py: f32, w: u32, h: u32, progress: f32, add: u32, pct: u32, border: u32, colour: u32, add_colour: u32) = cdecl 0x728640 => unported;
 
     /// `FindPlayerVehicle(int32, bool)` (0x56E0D0)
     fn find_player_vehicle(id: i32, remote: u8) -> GPtr<u8> = cdecl 0x56E0D0 => sa_world::world::cworld::find_player_vehicle_port;
     /// `FindPlayerPed(int32)` (0x56E210)
     fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
-    /// `CWeapon::IsTypeMelee()` (0x73B1C0)
-    fn weapon_is_type_melee(this: GPtr<u8>) -> u8 = thiscall 0x73B1C0 => unported;
-    /// `CPlayerPed::GetWeaponRadiusOnScreen()` (0x609CD0, ST0)
-    fn player_ped_get_weapon_radius_on_screen_st0(this: GPtr<u8>) -> f64 = thiscall 0x609CD0 => unported;
     /// `CSprite2d::DrawRect(const CRect&, const CRGBA&)` (0x727B60)
     fn sprite2d_draw_rect_static(rect: GPtr<f32>, colour: GPtr<u8>) = cdecl 0x727B60 => unported;
     /// `CSprite2d::Draw(const CRect&, const CRGBA&)` (0x728350)
     fn sprite2d_draw_rect(this: GPtr<u8>, rect: GPtr<f32>, colour: GPtr<u8>) = thiscall 0x728350 => unported;
-    /// `CWeaponInfo::GetWeaponInfo(eWeaponType, eWeaponSkill)` (0x743C60)
-    fn get_weapon_info(ty: u32, skill: u32) -> GPtr<u8> = cdecl 0x743C60 => unported;
-    /// `CKeyGen::AppendStringToKey(uint32, const char*)` (0x53CF70)
-    fn append_string_to_key(key: u32, s: GPtr<u8>) -> u32 = cdecl 0x53CF70 => sa_core::keygen::append_string_to_key;
-    /// `RwTexDictionaryFindHashNamedTexture(RwTexDictionary*, uint32)` (0x734E50)
-    fn rw_tex_dictionary_find_hash_named_texture(dict: GPtr<u8>, hash: u32) -> GPtr<u8> = cdecl 0x734E50 => unported;
     /// `CSprite::RenderOneXLUSprite(x, y, z, halfW, halfH, r, g, b, intensity, rhw, a, uDir, vDir)` (0x70D000)
     fn sprite_render_one_xlu_sprite(px: f32, py: f32, pz: u32, hw: u32, hh: u32, r: u32, gg: u32, bb: u32, intensity: u32, rhw: u32, a: u32, u_dir: u32, v_dir: u32) = cdecl 0x70D000 => unported;
 }

@@ -7,21 +7,16 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::compute_entity_hit_side_ped as geometry_compute_entity_hit_side;
+use crate::bindings::fall_and_get_up_ctor2;
+use crate::bindings::hit_response_ctor;
+use crate::bindings::say_ctor;
+use sa_core::bindings::tm_get_active_task;
+use sa_world::bindings::ik_look_at;
+use sa_world::bindings::player_ped_annoy_player_ped;
 orig! {
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CTaskManager::GetActiveTask` (0x681720)
-    fn tm_get_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x681720 => unported;
-    /// `CPlayerPed::AnnoyPlayerPed(bool)` (0x60A040, `ret 4`)
-    fn player_ped_annoy_player_ped(p: GPtr<u8>, b: u32) = thiscall 0x60A040 => unported;
-    /// `IKChainManager_c::LookAt(...)` (0x618970, `ret 0x2C`)
-    fn ik_look_at(m: GPtr<u8>, name: u32, ped: GPtr<u8>, target: GPtr<u8>, time: i32, bone: i32, pos: u32, torso: u32,
-                  speed: u32, blend: i32, prio: i32, b: u32) = thiscall 0x618970 => unported;
-    /// `CPedGeometryAnalyser::ComputeEntityHitSide(const CEntity&, const CEntity&)` (0x5F3BC0, cdecl)
-    fn geometry_compute_entity_hit_side(a: GPtr<u8>, b: GPtr<u8>) -> i32 = cdecl 0x5F3BC0 => unported;
-    fn say_ctor(t: GPtr<u8>, ctx: i32, time: i32) -> GPtr<u8> = thiscall 0x48E360 => unported;
-    fn fall_and_get_up_ctor2(t: GPtr<u8>, dir: i32, time: i32) -> GPtr<u8> = thiscall 0x678700 => unported;
-    fn hit_response_ctor(t: GPtr<u8>, side: i32) -> GPtr<u8> = thiscall 0x631D70 => unported;
 }
 
 /// `g_ikChainMan`

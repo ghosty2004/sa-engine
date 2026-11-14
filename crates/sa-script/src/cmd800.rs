@@ -82,101 +82,80 @@ const INTRO_TEXT_LINES: u32 = 0xA913E8;
 /// `.rdata` 0x859014: -100.0f
 const K_MINUS_100: u32 = 0xC2C8_0000;
 
+use crate::bindings::add_big_message_with_number;
+use crate::bindings::clear_space_for_mission_entity;
+use crate::bindings::object_has_been_damaged;
+use crate::bindings::our_ped_can_see_this_entity;
+use crate::bindings::start_script_fire;
+use crate::bindings::vehicle_get_ref;
+use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+use sa_core::bindings::entity_update_rw_frame as update_rw_frame;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::matrix_assign;
+use sa_core::bindings::matrix_dtor;
+use sa_core::bindings::rgba_ctor;
+use sa_core::bindings::task_new;
+use sa_core::bindings::text_get;
+use sa_stream::bindings::ped_is_player;
+use sa_stream::bindings::remove_this_ped;
+use sa_world::bindings::camera_set_directly_behind as set_camera_directly_behind_for_follow_ped_cam_on_a_string;
+use sa_world::bindings::civilian_ped_ctor;
+use sa_world::bindings::damage_calc_compute_damage_response as compute_damage_response;
+use sa_world::bindings::damage_calc_dtor;
+use sa_world::bindings::event_damage_affects_ped;
+use sa_world::bindings::event_damage_dtor;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::find_ground_z_for_coord;
+use sa_world::bindings::find_player_slot_with_ped_pointer;
+use sa_world::bindings::flush_immediately;
+use sa_world::bindings::generate_new_one as generate_new_pickup;
+use sa_world::bindings::get_actual_pickup_index;
+use sa_world::bindings::get_distance_from_centre_of_mass_to_base_of_model;
+use sa_world::bindings::get_garage_number_by_name;
+use sa_world::bindings::get_vehicle_appearance;
+use sa_world::bindings::is_within_area;
+use sa_world::bindings::membership_is_follower as membership_is_member;
+use sa_world::bindings::membership_remove_member;
+use sa_world::bindings::ped_get_ref as ped_get_ref_;
+use sa_world::bindings::ped_groups_get_peds_group as get_peds_group;
+use sa_world::bindings::ped_new;
+use sa_world::bindings::placeable_get_heading as get_heading;
+use sa_world::bindings::placeable_set_heading as set_heading;
+use sa_world::bindings::set_char_created_by;
+use sa_world::bindings::set_orientation;
+use sa_world::bindings::set_ped_in_as_driver_ctor;
+use sa_world::bindings::set_ped_in_as_driver_dtor;
+use sa_world::bindings::set_ped_in_as_driver_process_ped;
+use sa_world::bindings::set_velocity;
+use sa_world::bindings::tm_set_task as task_manager_set_task;
+use sa_world::bindings::update_rw_matrix;
+use sa_world::bindings::vehicle_can_be_deleted;
 orig! {
     /// `CPed::SetStayInSamePlace(bool)` (0x481090)
     fn set_stay_in_same_place(p: GPtr<u8>, stay: u32) = thiscall 0x481090 => unported;
-    /// Unnamed `CObject` method returning AL (0x46A2F0, a `.HOODLUM` stub; HAS_OBJECT_BEEN_DAMAGED's callee)
-    fn object_has_been_damaged(o: GPtr<u8>) -> u8 = thiscall 0x46A2F0 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
-    /// `CWorld::FindGroundZForCoord(float, float)` (0x569660), floats as raw dwords, ST0 (read as f64: exact)
-    fn find_ground_z_for_coord(x: u32, y: u32) -> f64 = cdecl 0x569660 => unported;
-    /// `CPedIntelligence::FlushImmediately(bool)` (0x601640)
-    fn flush_immediately(i: GPtr<u8>, set_primary_default: u32) = thiscall 0x601640 => unported;
-    /// `CEntity::GetDistanceFromCentreOfMassToBaseOfModel()` (0x536BE0), ST0
-    fn get_distance_from_centre_of_mass_to_base_of_model(e: GPtr<u8>) -> f64 = thiscall 0x536BE0 => unported;
     /// `CEntity::Teleport(CVector, bool)` (vtable slot 0x38); the by-value vector as three raw dwords
     fn teleport(e: GPtr<u8>, x: u32, y: u32, z: u32, reset_rotation: u32) = thiscall vslot 0x38 => unported;
-    /// `CTheScripts::ClearSpaceForMissionEntity(const CVector&, CEntity*)` (0x486B00)
-    fn clear_space_for_mission_entity(pos: GPtr<u32>, e: GPtr<u8>) = cdecl 0x486B00 => unported;
-    /// `CTaskSimpleCarSetPedInAsDriver::CTaskSimpleCarSetPedInAsDriver(CVehicle*, CTaskUtilityLineUpPedWithCar*)` (0x6470E0)
-    fn set_ped_in_as_driver_ctor(t: GPtr<u8>, veh: GPtr<u8>, line_up: GPtr<u8>) -> GPtr<u8> = thiscall 0x6470E0 => unported;
-    /// `CTaskSimpleCarSetPedInAsDriver::ProcessPed(CPed*)` (0x64B950)
-    fn set_ped_in_as_driver_process_ped(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x64B950 => unported;
-    /// `CTaskSimpleCarSetPedInAsDriver::~CTaskSimpleCarSetPedInAsDriver()` (0x647170)
-    fn set_ped_in_as_driver_dtor(t: GPtr<u8>) = thiscall 0x647170 => unported;
-    /// `CCamera::SetCameraDirectlyBehindForFollowPed_CamOnAString()` (0x50BD40)
-    fn set_camera_directly_behind_for_follow_ped_cam_on_a_string(cam: GPtr<u8>) = thiscall 0x50BD40 => unported;
     /// `CPedDamageResponseCalculator::CPedDamageResponseCalculator(CEntity*, float, eWeaponType, ePedPieceTypes, bool)` (0x4AD3F0)
     fn damage_calc_ctor(c: GPtr<u8>, source: u32, damage: u32, weapon: u32, piece: u32, speak: u32) -> GPtr<u8> = thiscall 0x4AD3F0 => unported;
-    /// `CPedDamageResponseCalculator::~CPedDamageResponseCalculator()` (0x4AD420)
-    fn damage_calc_dtor(c: GPtr<u8>) = thiscall 0x4AD420 => unported;
-    /// `CPedDamageResponseCalculator::ComputeDamageResponse(CPed*, CPedDamageResponse&, bool)` (0x4B5AC0)
-    fn compute_damage_response(c: GPtr<u8>, ped: GPtr<u8>, resp: GPtr<u8>, speak: u32) = thiscall 0x4B5AC0 => unported;
     /// `CEventDamage::CEventDamage(CEntity*, uint32 time, eWeaponType, ePedPieceTypes, uint8 direction,
     /// bool, bool pedInVehicle)` (0x4AD830)
     fn event_damage_ctor(e: GPtr<u8>, source: u32, time: u32, weapon: u32, piece: u32, dir: u32, a: u32, in_vehicle: u32) -> GPtr<u8> = thiscall 0x4AD830 => unported;
-    /// `CEventDamage::~CEventDamage()` (0x4AD960)
-    fn event_damage_dtor(e: GPtr<u8>) = thiscall 0x4AD960 => unported;
-    /// `CEventDamage::AffectsPed(CPed*)` (0x4B35A0), AL
-    fn event_damage_affects_ped(e: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x4B35A0 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420)
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, unk: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
-    /// `CFireManager::StartScriptFire(const CVector&, CEntity*, float, uint8, int8, int32)` (0x53A270)
-    fn start_script_fire(m: GPtr<u8>, pos: GPtr<u32>, e: GPtr<u8>, strength: u32, a: u32, b: u32, c: u32) -> i32 = thiscall 0x53A270 => unported;
-    /// `CVehicle::GetVehicleAppearance()` (0x6D1080)
-    fn get_vehicle_appearance(v: GPtr<u8>) -> i32 = thiscall 0x6D1080 => unported;
-    /// `CVehicle::CanBeDeleted()` (0x6D1180), AL
-    fn vehicle_can_be_deleted(v: GPtr<u8>) -> u8 = thiscall 0x6D1180 => unported;
-    /// `CPlaceable::IsWithinArea(float x1, float y1, float x2, float y2)` (0x54F200), AL; raw dwords
-    fn is_within_area(e: GPtr<u8>, x1: u32, y1: u32, x2: u32, y2: u32) -> u8 = thiscall 0x54F200 => unported;
-    /// `CPool<CVehicle>::GetRef(CVehicle*)` (0x424160), ECX = the vehicle pool
-    fn vehicle_get_ref(pool: GPtr<u8>, v: GPtr<u8>) -> i32 = thiscall 0x424160 => unported;
     /// `CVehicle::SetVehicleCreatedBy(int32)` (0x6D5D70)
     fn set_vehicle_created_by(v: GPtr<u8>, by: u32) = thiscall 0x6D5D70 => unported;
     /// `CCamera::SetZoomValueFollowPedScript(int16)` (0x50C160)
     fn set_zoom_value_follow_ped_script(cam: GPtr<u8>, z: u32) = thiscall 0x50C160 => unported;
     /// `CCamera::SetZoomValueCamStringScript(int16)` (0x50C1B0)
     fn set_zoom_value_cam_string_script(cam: GPtr<u8>, z: u32) = thiscall 0x50C1B0 => unported;
-    /// `CPickups::GetActualPickupIndex(int32)` (0x4552A0); the result is discarded here
-    fn get_actual_pickup_index(h: i32) -> i32 = cdecl 0x4552A0 => unported;
-    /// `CPickups::GenerateNewOne(CVector, uint32 model, uint8 type, uint32 ammo, uint32 money, bool, char*)`
-    /// (0x456F20); the vector by value (three raw dwords)
-    fn generate_new_pickup(x: u32, y: u32, z: u32, model: u32, ty: u32, ammo: u32, money: u32, empty: u32, msg: u32) -> i32 = cdecl 0x456F20 => unported;
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
     /// `CWorld::FindObjectsIntersectingCube(const CVector&, const CVector&, int16*, int16, CEntity**, bool x5)` (0x568DD0)
     fn find_objects_intersecting_cube(
         a: GPtr<u32>, b: GPtr<u32>, count: GPtr<i16>, max: u32, out: GPtr<u8>, bb: u32, bv: u32, bp: u32, bo: u32, bd: u32
     ) = cdecl 0x568DD0 => unported;
-    /// `CText::Get(const char* key)` (0x6A0050)
-    fn text_get(t: GPtr<u8>, key: GPtr<u8>) -> GPtr<u8> = thiscall 0x6A0050 => unported;
-    /// `CRGBA::CRGBA(uint8, uint8, uint8, uint8)` (0x7170C0), returns this
-    fn rgba_ctor(c: GPtr<u8>, r: u32, g: u32, b: u32, a: u32) -> GPtr<u8> = thiscall 0x7170C0 => unported;
-    /// `CTheScripts::RemoveThisPed(CPed*)` (0x486240)
-    fn remove_this_ped(p: GPtr<u8>) = cdecl 0x486240 => unported;
-    /// `CPed::SetCharCreatedBy(uint8)` (0x5E47E0)
-    fn set_char_created_by(p: GPtr<u8>, by: u32) = thiscall 0x5E47E0 => unported;
-    /// `CPedGroups::GetPedsGroup(const CPed*)` (0x5F7E80)
-    fn get_peds_group(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x5F7E80 => unported;
-    /// `CPedGroupMembership::IsMember(const CPed*)` (0x5F69E0), AL
-    fn membership_is_member(m: GPtr<u8>, p: GPtr<u8>) -> u8 = thiscall 0x5F69E0 => unported;
-    /// `CPedGroupMembership::RemoveMember(CPed*)` (0x5FB210)
-    fn membership_remove_member(m: GPtr<u8>, p: GPtr<u8>) = thiscall 0x5FB210 => unported;
     /// `CExplosion::TestForExplosionInArea(eExplosionType, float x1, x2, y1, y2, z1, z2)` (0x736950), AL; raw dwords
     fn test_for_explosion_in_area(ty: u32, x1: u32, x2: u32, y1: u32, y2: u32, z1: u32, z2: u32) -> u8 = cdecl 0x736950 => unported;
     /// `CPhysical::PlacePhysicalRelativeToOtherPhysical(CPhysical*, CPhysical*, CVector)` (0x546DB0)
     fn place_physical_relative_to_other_physical(base: GPtr<u8>, e: GPtr<u8>, x: u32, y: u32, z: u32) = cdecl 0x546DB0 => unported;
     /// `CObject::SetObjectTargettable(bool)` (0x59F300)
     fn set_object_targettable(o: GPtr<u8>, on: u32) = thiscall 0x59F300 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
-    fn clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0), AL
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CWorld::FindPlayerSlotWithPedPointer(void*)` (0x563FA0)
-    fn find_player_slot_with_ped_pointer(p: GPtr<u8>) -> i32 = cdecl 0x563FA0 => unported;
-    /// `CGarages::GetGarageNumberByName(const char*)` (0x447680), AX
-    fn get_garage_number_by_name(name: GPtr<u8>) -> u16 = cdecl 0x447680 => unported;
     /// `CGarage::OpenThisGarage()` (0x447D50)
     fn open_this_garage(g: GPtr<u8>) = thiscall 0x447D50 => unported;
     /// `CGarage::CloseThisGarage()` (0x447D70)
@@ -193,43 +172,14 @@ orig! {
     ) = cdecl 0x564ED0 => unported;
     /// `CTheScripts::AddToInvisibilitySwapArray(CEntity*, bool)` (0x481200)
     fn add_to_invisibility_swap_array(e: GPtr<u8>, visible: u32) = cdecl 0x481200 => unported;
-    /// `CPed::OurPedCanSeeThisEntity(CEntity*, bool)` (0x5E1660), AL
-    fn our_ped_can_see_this_entity(p: GPtr<u8>, e: GPtr<u8>, is_spotted: u32) -> u8 = thiscall 0x5E1660 => unported;
-    /// `CMessages::AddBigMessageWithNumber(const char*, uint32 time, uint16 style, int32 n1..n6)` (0x69E5F0)
-    fn add_big_message_with_number(
-        t: GPtr<u8>, time: u32, style: u32, n1: u32, n2: u32, n3: u32, n4: u32, n5: u32, n6: u32
-    ) = cdecl 0x69E5F0 => unported;
     /// `CPopulation::ChooseCivilianOccupation(bool, bool, int32, int32, int32, bool, bool, bool, char*)` (0x612F90)
     fn choose_civilian_occupation(a: u32, b: u32, c: i32, d: i32, e: i32, f: u32, g: u32, h: u32, i: u32) -> i32 = cdecl 0x612F90 => unported;
-    /// `CPed::operator new(uint32)` (0x5E4720)
-    fn ped_new(size: u32) -> GPtr<u8> = cdecl 0x5E4720 => unported;
-    /// `CCivilianPed::CCivilianPed(ePedType, uint32 model)` (0x5DDB70), returns this
-    fn civilian_ped_ctor(p: GPtr<u8>, ped_type: u32, model: u32) -> GPtr<u8> = thiscall 0x5DDB70 => unported;
-    /// `CTask::operator new(uint32)` (0x61A5A0)
-    fn task_new(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => unported;
     /// `CTaskSimpleStandStill::CTaskSimpleStandStill(int32 time, bool looped, bool hold, float blend)` (0x62F310)
     fn task_simple_stand_still_ctor(t: GPtr<u8>, time: i32, looped: u32, hold: u32, blend: u32) -> GPtr<u8> = thiscall 0x62F310 => unported;
-    /// `CTaskManager::SetTask(CTask*, int32 slot, bool)` (0x681AF0)
-    fn task_manager_set_task(m: GPtr<u8>, task: GPtr<u8>, slot: i32, force: u32) = thiscall 0x681AF0 => unported;
     /// `CPlaceable::SetPosn(const CVector&)` (0x4241C0)
     fn set_posn_v(e: GPtr<u8>, pos: GPtr<u32>) = thiscall 0x4241C0 => unported;
-    /// `CPlaceable::SetOrientation(float, float, float)` (0x439A80)
-    fn set_orientation(e: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x439A80 => unported;
-    /// `CPool<CPed>::GetRef(CPed*)` (0x4442D0), ECX = the ped pool
-    fn ped_get_ref_(pool: GPtr<u8>, p: GPtr<u8>) -> i32 = thiscall 0x4442D0 => unported;
-    /// `CPlaceable::GetHeading()` (0x441DB0): the raw FPATAN result in ST0, read as f64 (53 of its 64
-    /// significand bits, the project-wide FPATAN model; the product below is rounded to 24 bits)
-    fn get_heading(e: GPtr<u8>) -> f64 = thiscall 0x441DB0 => unported;
-    /// `CPlaceable::SetHeading(float)` (0x43E0C0)
-    fn set_heading(e: GPtr<u8>, h: u32) = thiscall 0x43E0C0 => unported;
-    /// `CEntity::UpdateRwMatrix()` (0x446F90)
-    fn update_rw_matrix(e: GPtr<u8>) = thiscall 0x446F90 => unported;
-    /// `CEntity::UpdateRwFrame()` (0x532B00)
-    fn update_rw_frame(e: GPtr<u8>) = thiscall 0x532B00 => unported;
     /// `CMatrix::SetRotateZ(float)` (0x59B0E0)
     fn matrix_set_rotate_z(m: GPtr<u8>, a: u32) = thiscall 0x59B0E0 => unported;
-    /// `CMatrix::operator=(const CMatrix&)` (0x59BBC0)
-    fn matrix_assign(m: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = thiscall 0x59BBC0 => unported;
     /// `operator*(const CMatrix&, const CVector&)` (0x59C890): the result through the hidden pointer
     fn matrix_mul_vec(out: GPtr<u32>, m: GPtr<u8>, v: GPtr<u32>) -> GPtr<u32> = cdecl 0x59C890 => unported;
     /// `CWorld::FindObjectsIntersectingAngledCollisionBox(const CBox&, const CMatrix&, const CVector&, float
@@ -238,8 +188,6 @@ orig! {
         bbox: GPtr<u8>, m: GPtr<u8>, pos: GPtr<u32>, min_x: u32, min_y: u32, max_x: u32, max_y: u32,
         count: GPtr<i16>, max: u32, out: GPtr<u8>, bb: u32, bv: u32, bp: u32, bo: u32, bd: u32
     ) = cdecl 0x568FF0 => unported;
-    /// `CPhysical::SetVelocity(CVector)`-style setter at 0x441130 (thiscall, the vector by value)
-    fn set_velocity(e: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x441130 => unported;
 }
 
 use sa_world::world::common::entity_pos_u as entity_pos;

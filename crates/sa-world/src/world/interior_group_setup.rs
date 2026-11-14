@@ -21,6 +21,14 @@ use sa_core::{hook, orig};
 
 use super::common::{ftol32, g, rd, wr, x, xi};
 
+use crate::bindings::add_ped;
+use crate::bindings::get_tile_centre;
+use crate::bindings::set_char_created_by;
+use crate::bindings::set_ped_decision_maker_type;
+use crate::bindings::tm_set_task as task_manager_set_task;
+use sa_core::bindings::load_all_requested_models;
+use sa_core::bindings::task_new;
+use sa_stream::bindings::stream_peds_for_interior;
 orig! {
     /// `InteriorGroup_c::ArePathsLoaded()` (0x595380)
     fn are_paths_loaded(this: GPtr<u8>) -> u8 = thiscall 0x595380 => unported;
@@ -39,32 +47,16 @@ orig! {
     fn path_44df60(pf: GPtr<u8>, node: i32) = thiscall 0x44DF60 => unported;
     /// `CPathFind::CompleteNewInterior(CNodeAddress*)` (0x452270)
     fn complete_new_interior(pf: GPtr<u8>, out: u32) = thiscall 0x452270 => unported;
-    /// `CStreaming::StreamPedsForInterior(int32)` (0x40BBB0)
-    fn stream_peds_for_interior(kind: i32) = cdecl 0x40BBB0 => unported;
-    /// `CStreaming::LoadAllRequestedModels(bool)` (0x40EA10)
-    fn load_all_requested_models(only_priority: u32) = cdecl 0x40EA10 => unported;
     /// `CStreaming::FindMIPedSlotForInterior(int32)` (0x407FB0)
     fn find_mi_ped_slot_for_interior(rand_val: i32) -> i32 = cdecl 0x407FB0 => unported;
     /// `InteriorGroup_c::GetRandomInterior()` (0x5948C0)
     fn get_random_interior(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x5948C0 => unported;
     /// `Interior_c::GetRandomTile(int32 status, int32* x, int32* y)` (0x591B20)
     fn get_random_tile(it: GPtr<u8>, status: i32, tx: GPtr<u8>, ty: GPtr<u8>) -> u8 = thiscall 0x591B20 => unported;
-    /// `Interior_c::GetTileCentre(float x, float y, CVector* out)` (0x591BD0)
-    fn get_tile_centre(it: GPtr<u8>, tx: f32, ty: f32, out: GPtr<u8>) = thiscall 0x591BD0 => unported;
-    /// `CPopulation::AddPed(ePedType, uint32 model, const CVector&, bool)` (0x612710)
-    fn add_ped(ty: u32, model: i32, pos: GPtr<u8>, b: u32) -> GPtr<u8> = cdecl 0x612710 => unported;
-    /// `CPed::SetCharCreatedBy(uint8)` (0x5E47E0)
-    fn set_char_created_by(ped: GPtr<u8>, by: u32) = thiscall 0x5E47E0 => unported;
-    /// `CPedIntelligence::SetPedDecisionMakerType(int32)` (0x600B50)
-    fn set_ped_decision_maker_type(intel: GPtr<u8>, ty: i32) = thiscall 0x600B50 => unported;
-    /// `CTask::operator new(uint32)` (0x61A5A0)
-    fn task_new(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => unported;
     /// `CTaskInteriorShopKeeper::CTaskInteriorShopKeeper(InteriorGroup_c*, bool)` (0x675660)
     fn shop_keeper_ctor(t: GPtr<u8>, group: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x675660 => unported;
     /// `CTaskInteriorBeInShop::CTaskInteriorBeInShop(InteriorGroup_c*)` (0x6753E0)
     fn be_in_shop_ctor(t: GPtr<u8>, group: GPtr<u8>) -> GPtr<u8> = thiscall 0x6753E0 => unported;
-    /// `CTaskManager::SetTask(CTask*, int32 slot, bool)` (0x681AF0)
-    fn task_manager_set_task(tm: GPtr<u8>, task: GPtr<u8>, slot: i32, b: u32) = thiscall 0x681AF0 => unported;
 }
 
 /// `1 / 32768` (0x858B14), `CModelInfo::ms_modelInfoPtrs` (0xA9B0C8).

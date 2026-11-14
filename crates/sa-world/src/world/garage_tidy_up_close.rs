@@ -8,17 +8,12 @@ use sa_core::{hook, orig};
 
 use super::common::{g, rd};
 
+use crate::bindings::entity_get_col_model;
+use crate::bindings::garage_is_entity_touching_3d;
+use crate::bindings::garage_is_point_inside_r;
+use sa_core::bindings::matrix_mul_vec;
+use sa_core::bindings::world_remove;
 orig! {
-    /// `CGarage::IsEntityTouching3D(CEntity*)` (0x448EE0, `ret 4`)
-    fn garage_is_entity_touching_3d(g: GPtr<u8>, e: GPtr<u8>) -> u8 = thiscall 0x448EE0 => unported;
-    /// `CEntity::GetColModel()` (0x535300)
-    fn entity_get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => unported;
-    /// `operator*(CVector* out, const CMatrix*, const CVector*)` (0x59C890, cdecl)
-    fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
-    /// `CGarage::IsPointInsideGarage(CVector, float)` (0x4487D0, `ret 0x10`)
-    fn garage_is_point_inside_r(g: GPtr<u8>, x: u32, y: u32, z: u32, r: u32) -> u8 = thiscall 0x4487D0 => unported;
-    /// `CWorld::Remove(CEntity*)` (0x563280)
-    fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
     /// `CVehicle` scalar deleting destructor (vtable slot 0)
     fn vehicle_delete(e: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
 }

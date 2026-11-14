@@ -9,6 +9,8 @@ use sa_core::{hook, orig};
 
 use crate::common::{g, rd, wr, x};
 
+use crate::bindings::get_position as node_get_position;
+use sa_world::bindings::join_car_with_road_system;
 orig! {
     /// `CPathFind::DoPathSearch(...)` (0x4515D0, thiscall, `ret 0x4C`)
     #[allow(clippy::too_many_arguments)]
@@ -16,14 +18,10 @@ orig! {
         out_nodes: GPtr<u32>, out_count: GPtr<i16>, max_nodes: i32, out_distance: GPtr<f32>, max_search: f32,
         target_addr: GPtr<u32>, max_depth: f32, same_lane: u32, forbidden: u32, allow_water: u32, for_boats: u32)
         = thiscall 0x4515D0 => crate::pathfind::do_path_search;
-    /// `CPathNode::GetPosition(CVector* out)` (0x420A10, `ret 4`)
-    fn node_get_position(node: GPtr<u8>, out: GPtr<f32>) -> GPtr<f32> = thiscall 0x420A10 => crate::pathfind::get_position;
     /// `CAutoPilot::RemoveOnePathNode()` (0x41B950)
     fn auto_pilot_remove_one_path_node(ap: GPtr<u8>) = thiscall 0x41B950 => unported;
     /// `CCarCtrl::FindLinksToGoWithTheseNodes(CVehicle*)` (0x42B470)
     fn find_links_to_go_with_these_nodes(v: GPtr<u8>) = cdecl 0x42B470 => unported;
-    /// `CCarCtrl::JoinCarWithRoadSystem(CVehicle*)` (0x42F5A0)
-    fn join_car_with_road_system(v: GPtr<u8>) = cdecl 0x42F5A0 => unported;
 }
 
 /// `ThePaths`: the `this` of `RemoveBadStartNode` comes out of the no-CD VM 0xCB73E0 (descriptor 0x155FFEC, called

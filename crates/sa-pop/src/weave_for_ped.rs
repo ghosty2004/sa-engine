@@ -4,17 +4,13 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 
 use crate::common::{g, rd};
 
-orig! {
-    /// `FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CGeneral::GetATanOfXY(float x, float y)` (0x53CC70, ST0)
-    fn general_get_atan_of_xy(x: f32, y: f32) -> f64 = cdecl 0x53CC70 => unported;
-}
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::get_atan_of_xy as general_get_atan_of_xy;
 
 /// `CModelInfo::ms_modelInfoPtrs` (0xA9B0C8)
 const MODEL_INFO_PTRS: usize = 0xA9_B0C8;

@@ -14,23 +14,18 @@ use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 use sa_math::x87::X87;
 
+use crate::bindings::get_entry_exit_index;
+use sa_core::bindings::crt_strncpy;
+use sa_core::bindings::matrix_dtor;
+use sa_core::bindings::matrix_mul_vec;
+use sa_core::bindings::matrix_set_rotate_z as set_rotate_z;
 orig! {
     /// `CPool<CEntryExit>::New()` (0x43F7D0)
     fn pool_new(pool: GPtr<u8>) -> GPtr<u8> = thiscall 0x43F7D0 => unported;
     /// CRT `rand()` (0x821B1E)
     fn rand() -> i32 = cdecl 0x821B1E => unported;
-    /// CRT `strncpy(dst, src, n)` (0x821F40)
-    fn crt_strncpy(dst: GPtr<u8>, src: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x821F40 => unported;
-    /// `CMatrix::SetRotateZ(float)` (0x59B0E0)
-    fn set_rotate_z(m: GPtr<u8>, a: f32) = thiscall 0x59B0E0 => unported;
-    /// `operator*(const CMatrix&, const CVector&)` (0x59C890)
-    fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
     /// `CQuadTreeNode::AddItem(void*, const CRect&)` (0x552CD0)
     fn quad_tree_add_item(node: GPtr<u8>, item: GPtr<u8>, r: GPtr<u8>) = thiscall 0x552CD0 => unported;
-    /// `CEntryExitManager::GetEntryExitIndex(const char*, uint16 enabled, uint16 disabled)` (0x43EFD0)
-    fn get_entry_exit_index(name: GPtr<u8>, enabled: u32, disabled: u32) -> i32 = cdecl 0x43EFD0 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
 }
 
 const POOL: usize = 0x96A7D8;

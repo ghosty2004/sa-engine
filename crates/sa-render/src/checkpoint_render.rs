@@ -9,13 +9,12 @@ use sa_core::{hook, orig};
 use crate::common::{g, k, rd, wr, x, xi};
 use crate::markers::place_marker_call;
 
+use crate::bindings::calc_screen_coors;
 orig! {
     /// `C3dMarkers::DirectionArrowSet(CVector pos, float size, int r, int g, int b, int a, float dx, float
     /// dy, float dz)` (0x721140)
     #[allow(clippy::too_many_arguments)]
     fn direction_arrow_set(px: f32, py: f32, pz: f32, size: f32, r: i32, gg: i32, b: i32, a: i32, dx: f32, dy: f32, dz: f32) = cdecl 0x721140 => unported;
-    /// `CSprite::CalcScreenCoors(const RwV3d&, RwV3d* out, float* w, float* h, bool, bool)` (0x70CE30)
-    fn calc_screen_coors(inp: GPtr<f32>, out: GPtr<f32>, w: GPtr<f32>, h: GPtr<f32>, max_vis: u8, min_vis: u8) -> u8 = cdecl 0x70CE30 => crate::sprite::calc_screen_coors;
     /// `CSprite::RenderOneXLUSprite(x, y, z, halfW, halfH, r, g, b, intensity, rhw, a, uDir, vDir)` (0x70D000)
     #[allow(clippy::too_many_arguments)]
     fn render_one_xlu_sprite(px: f32, py: f32, pz: f32, hw: f32, hh: f32, r: u32, gg: u32, b: u32, intensity: u32, rhw: f32, a: u32, u_dir: u32, v_dir: u32) = cdecl 0x70D000 => unported;

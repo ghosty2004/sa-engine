@@ -21,85 +21,54 @@ sa_core::globals! {
     pub static TEST_FOR_NEW_RANDOM_HELIS_TIMER @ 0xC1C960: u32 = 0;
 }
 
+pub use crate::bindings::automobile_destructor;
+pub use crate::bindings::automobile_process_control;
+pub use crate::bindings::bouncing_panel_set_panel;
+pub use crate::bindings::dm_set_door_status as set_door_status;
+pub use crate::bindings::dm_set_wheel_status as set_wheel_status;
+pub use crate::bindings::vehicle_delete;
+pub use crate::bindings::vehicle_render;
+pub use sa_core::bindings::crt_free as free;
+pub use sa_core::bindings::destroy_fx_system as fx_destroy;
+pub use sa_core::bindings::entity_register_reference;
+pub use sa_core::bindings::find_player_coors;
+pub use sa_core::bindings::find_player_ped;
+pub use sa_core::bindings::get_pad;
+pub use sa_core::bindings::matrix_dtor;
+pub use sa_core::bindings::matrix_set_translate;
+pub use sa_core::bindings::matrix_update_rw;
+pub use sa_core::bindings::world_remove;
+pub use sa_stream::bindings::find_player_wanted;
+pub use sa_stream::bindings::frame_for_all_objects as rw_frame_for_all_objects;
+pub use sa_stream::bindings::get_first_object;
+pub use sa_stream::bindings::get_wheel_posn;
+pub use sa_stream::bindings::num_of_helis_required;
+pub use sa_stream::bindings::vmi_set_vehicle_colour as set_vehicle_colour;
+pub use sa_world::bindings::audio_terminate;
+pub use sa_world::bindings::automobile_ctor;
+pub use sa_world::bindings::entity_render;
+pub use sa_world::bindings::fx_add_particle;
+pub use sa_world::bindings::fx_kill;
+pub use sa_world::bindings::heli_search_light_cone as search_light_cone;
+pub use sa_world::bindings::matrix_ctor_rw;
+pub use sa_world::bindings::player_no_rain;
 orig! {
-    /// `FindPlayerWanted(int32)` (0x56E230)
-    pub fn find_player_wanted(id: i32) -> GPtr<u8> = cdecl 0x56E230 => unported;
-    /// `CWanted::NumOfHelisRequired()` (0x561FA0)
-    pub fn num_of_helis_required(w: GPtr<u8>) -> i32 = thiscall 0x561FA0 => unported;
-    /// `CCullZones::PlayerNoRain()` (0x72DDC0)
-    pub fn player_no_rain() -> u8 = cdecl 0x72DDC0 => unported;
-    /// `FindPlayerPed(int32)` (0x56E210)
-    pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
     /// `CHeli::GenerateHeli(CPed*, bool)` (0x6C6520)
     pub fn generate_heli(ped: GPtr<u8>, police: u32) -> GPtr<u8> = cdecl 0x6C6520 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    pub fn entity_register_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571B70 => unported;
-    /// `FindPlayerCoors(CVector*, int32)` (0x56E010)
-    pub fn find_player_coors(out: GPtr<u8>, id: i32) -> GPtr<u8> = cdecl 0x56E010 => unported;
-    /// `CWorld::Remove(CEntity*)` (0x563280)
-    pub fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
     /// Virtual slot 0 (`scalar deleting destructor`)
     pub fn entity_vdelete(e: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
-    /// `CVehicle::Render()` (0x6D0E60)
-    pub fn vehicle_render(v: GPtr<u8>) = thiscall 0x6D0E60 => crate::vehicle2::render;
-    /// `CVehicle::operator delete(void*)` (0x6E2D90)
-    pub fn vehicle_delete(p: GPtr<u8>) = cdecl 0x6E2D90 => crate::vehicle2::operator_delete;
-    /// `CAEVehicleAudioEntity::Terminate()` (0x4FB8C0)
-    pub fn audio_terminate(a: GPtr<u8>) = thiscall 0x4FB8C0 => unported;
-    /// `CAutomobile::~CAutomobile` body (0x6A61E0)
-    pub fn automobile_destructor(v: GPtr<u8>) = thiscall 0x6A61E0 => unported;
-    /// `CAutomobile::CAutomobile(int32, eVehicleCreatedBy, bool)` (0x6B0A90)
-    pub fn automobile_ctor(v: GPtr<u8>, mi: i32, created_by: u32, setup_susp: u32) -> GPtr<u8> = thiscall 0x6B0A90 => unported;
     /// `CAutomobile::OpenDoor(CPed*, int32, eDoors, float, bool)` (0x6A6AE0)
     pub fn automobile_open_door(v: GPtr<u8>, ped: GPtr<u8>, comp: i32, door: i32, ratio: f32, sound: u32) = thiscall 0x6A6AE0 => unported;
     /// `CVehicle::GetPlaneNumGuns()` (0x6D3F30)
     pub fn get_plane_num_guns(v: GPtr<u8>) -> i32 = thiscall 0x6D3F30 => unported;
-    /// `FxSystem_c::Kill()` (0x4AA3F0)
-    pub fn fx_kill(fx: GPtr<u8>) = thiscall 0x4AA3F0 => unported;
-    /// `FxManager_c::DestroyFxSystem(FxSystem_c*)` (0x4A9810)
-    pub fn fx_destroy(mgr: GPtr<u8>, fx: GPtr<u8>) = thiscall 0x4A9810 => unported;
-    /// CRT `free` (0x8213AE)
-    pub fn free(p: GPtr<u8>) = cdecl 0x8213AE => unported;
-    /// `CDamageManager::SetDoorStatus(eDoors, eDoorStatus)` (0x6C21C0)
-    pub fn set_door_status(dm: GPtr<u8>, door: i32, status: u32) = thiscall 0x6C21C0 => crate::damage::set_door_status;
-    /// `CVehicleModelInfo::SetVehicleColour(uint8, uint8, uint8, uint8)` (0x4C84B0)
-    pub fn set_vehicle_colour(mi: GPtr<u8>, a: u32, b: u32, c: u32, d: u32) = thiscall 0x4C84B0 => unported;
-    /// `RwFrameForAllObjects` (0x7F1200)
-    pub fn rw_frame_for_all_objects(frame: GPtr<u8>, cb: u32, data: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F1200 => unported;
     /// `CVehicle::SetComponentAtomicAlpha(RpAtomic*, int32)` (0x6D2960)
     pub fn set_component_atomic_alpha(a: GPtr<u8>, alpha: u32) = cdecl 0x6D2960 => crate::vehicle::set_component_atomic_alpha;
-    /// `CEntity::Render()` (0x534310)
-    pub fn entity_render(e: GPtr<u8>) = thiscall 0x534310 => unported;
-    /// `CMatrix::CMatrix(RwMatrix*, bool)` (0x59C050)
-    pub fn matrix_ctor_rw(m: GPtr<u8>, rw: GPtr<u8>, temp: u32) -> GPtr<u8> = thiscall 0x59C050 => unported;
-    /// `CMatrix::SetTranslate(CVector)` (0x59AF40)
-    pub fn matrix_set_translate(m: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x59AF40 => unported;
-    /// `CMatrix::UpdateRW()` (0x59BBB0)
-    pub fn matrix_update_rw(m: GPtr<u8>) = thiscall 0x59BBB0 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    pub fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
-    /// `RwHelper::GetFirstObject(RwFrame*)` (0x7348C0)
-    pub fn get_first_object(frame: GPtr<u8>) -> GPtr<u8> = cdecl 0x7348C0 => unported;
-    /// `CBouncingPanel::SetPanel(int16, int16, float)` (0x6F4920)
-    pub fn bouncing_panel_set_panel(p: GPtr<u8>, frame: u32, axis: u32, limit: u32) = thiscall 0x6F4920 => crate::door::set_panel;
-    /// `CVehicleModelInfo::GetWheelPosn(int32, CVector&, bool)` (0x4C7D20)
-    pub fn get_wheel_posn(mi: GPtr<u8>, wheel: i32, out: GPtr<u8>, local: u32) = thiscall 0x4C7D20 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    pub fn get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CDamageManager::SetWheelStatus(int32, uint32)` (0x6C21A0)
-    pub fn set_wheel_status(dm: GPtr<u8>, wheel: i32, status: u32) = thiscall 0x6C21A0 => crate::damage::set_wheel_status;
-    /// `CAutomobile::ProcessControl()` (0x6B1880)
-    pub fn automobile_process_control(a: GPtr<u8>) = thiscall 0x6B1880 => unported;
     /// `CVehicle::ProcessWeapons()` (0x6E3950)
     pub fn process_weapons(v: GPtr<u8>) = thiscall 0x6E3950 => unported;
     /// `FxSystem_c::GetCompositeMatrix(RwMatrix*)` (0x4AA8C0)
     pub fn fx_get_composite_matrix(fx: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall 0x4AA8C0 => unported;
     /// `FxPrtMult_c::FxPrtMult_c(float r, g, b, a, size, unk, life)` (0x4AB290)
     pub fn fx_prt_mult_ctor(p: GPtr<u8>, r: u32, g: u32, b: u32, a: u32, size: u32, unk: u32, life: u32) -> GPtr<u8> = thiscall 0x4AB290 => unported;
-    /// `FxSystem_c::AddParticle(RwV3d*, RwV3d*, float, FxPrtMult_c*, float, float, float, uint8)` (0x4AA440)
-    pub fn fx_add_particle(fx: GPtr<u8>, pos: GPtr<u8>, vel: GPtr<u8>, time: u32, mult: GPtr<u8>, rot: u32, bright: u32, cam: u32, local: u32) = thiscall 0x4AA440 => unported;
-    /// `CHeli::SearchLightCone(...)` (0x6C58E0), 19 argument words
-    pub fn search_light_cone(corona: u32, ox: u32, oy: u32, oz: u32, tx: u32, ty: u32, tz: u32, radius: u32, power: u32, unk: u32, shadow: u32, a: GPtr<u8>, b: GPtr<u8>, c: GPtr<u8>, d: u32, e: u32, f: u32, h: u32, i: u32) = cdecl 0x6C58E0 => unported;
 }
 
 /// `GetCurrentAtomicObjectCB` (0x6A0750), passed to `RwFrameForAllObjects` by address.

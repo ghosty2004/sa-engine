@@ -25,15 +25,23 @@ sa_core::globals! {
     pub static TAKE_PHOTO @ 0xC8A7C1: u8 = 0;
 }
 
+pub use crate::bindings::get_weapon_reload_time_call;
+pub use sa_core::bindings::entity_get_is_on_screen;
+pub use sa_core::bindings::fx_create_mat_from_vec;
+pub use sa_core::bindings::intel_get_task_use_gun;
+pub use sa_core::bindings::rw_matrix_create;
+pub use sa_core::bindings::rw_matrix_destroy;
+pub use sa_stream::bindings::col_model_remove_collision_volumes;
+pub use sa_stream::bindings::model_info_add_ref as model_add_ref;
+pub use sa_stream::bindings::model_info_remove_ref as model_remove_ref;
+pub use sa_stream::bindings::ped_is_player;
+pub use sa_world::bindings::fx_copy_parent_matrix;
+pub use sa_world::bindings::fx_prt_mult_ctor as fx_prt_mult;
+pub use sa_world::bindings::fx_system_set_matrix as fx_set_matrix;
+pub use sa_world::bindings::get_percentage_progress as stats_get_percentage_progress;
 orig! {
     /// `CPed::GetWeaponSkill(eWeaponType)` (0x5E3B60, thiscall)
     pub fn ped_get_weapon_skill(ped: GPtr<u8>, ty: i32) -> u8 = thiscall 0x5E3B60 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0, thiscall)
-    pub fn ped_is_player(ped: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CBaseModelInfo::AddRef()` (0x4C4BA0, thiscall)
-    pub fn model_add_ref(mi: GPtr<u8>) = thiscall 0x4C4BA0 => unported;
-    /// `CBaseModelInfo::RemoveRef()` (0x4C4BB0, thiscall)
-    pub fn model_remove_ref(mi: GPtr<u8>) = thiscall 0x4C4BB0 => unported;
     /// `CWeapon::CanBeUsedFor2Player(eWeaponType)` (0x73B240)
     pub fn can_be_used_for_2_player_call(ty: i32) -> u8 = cdecl 0x73B240 => can_be_used_for_2_player;
     /// `CWeaponInfo::Initialise()` (0x5BF750)
@@ -56,8 +64,6 @@ orig! {
     pub fn projectile_info_shutdown() = cdecl 0x737BC0 => crate::projectile::shutdown;
     /// `CBulletInfo::Shutdown()` (0x736000)
     pub fn bullet_info_shutdown() = cdecl 0x736000 => unported;
-    /// `CColModel::RemoveCollisionVolumes()` (0x40F9E0, thiscall)
-    pub fn col_model_remove_collision_volumes(cm: GPtr<u8>) = thiscall 0x40F9E0 => unported;
     /// `CShotInfo::Update()` (0x739E60)
     pub fn shot_info_update() = cdecl 0x739E60 => unported;
     /// `CExplosion::Update()` (0x737620)
@@ -74,40 +80,20 @@ orig! {
     pub fn world_process_line_of_sight(a: GPtr<u8>, b: GPtr<u8>, cp: GPtr<u8>, e: GPtr<u8>, bd: u8, vh: u8, pd: u8, ob: u8, du: u8, st: u8, cam: u8, sh: u8) -> u8 = cdecl 0x56BA00 => unported;
     /// `CCollision::DistToLine(const CVector*, const CVector*, const CVector*)` (0x417610, ST0)
     pub fn dist_to_line(a: GPtr<u8>, b: GPtr<u8>, p: GPtr<u8>) -> f64 = cdecl 0x417610 => unported;
-    /// `CEntity::GetIsOnScreen()` (0x534540, thiscall)
-    pub fn entity_get_is_on_screen(e: GPtr<u8>) -> u8 = thiscall 0x534540 => unported;
-    /// `FxPrtMult_c::FxPrtMult_c(float r, g, b, a, size, spin, life)` (0x4AB290, thiscall)
-    pub fn fx_prt_mult(this: GPtr<u8>, r: f32, g: f32, b: f32, a: f32, size: f32, spin: f32, life: f32) -> GPtr<u8> = thiscall 0x4AB290 => unported;
     /// `FxSystem_c::AddParticle(CVector*, CVector*, float, FxPrtMult_c*, float, float, float, uint8)` (0x4AA440)
     pub fn fx_add_particle(fx: GPtr<u8>, pos: GPtr<u8>, vel: GPtr<u8>, t: f32, mult: GPtr<u8>, a: f32, b: f32, c: f32, d: u8) = thiscall 0x4AA440 => unported;
-    /// `RwMatrixCreate()` (0x7F2A50)
-    pub fn rw_matrix_create() -> GPtr<u8> = cdecl 0x7F2A50 => unported;
-    /// `RwMatrixDestroy(RwMatrix*)` (0x7F2A20)
-    pub fn rw_matrix_destroy(m: GPtr<u8>) -> i32 = cdecl 0x7F2A20 => unported;
-    /// `Fx_c::CreateMatFromVec(RwMatrix*, CVector* origin, CVector* target)` (0x49E950, thiscall)
-    pub fn fx_create_mat_from_vec(fx: GPtr<u8>, m: GPtr<u8>, o: GPtr<u8>, t: GPtr<u8>) = thiscall 0x49E950 => unported;
     /// `FxManager_c::CreateFxSystem(const char*, CVector*, RwMatrix*, bool)` (0x4A9BE0, thiscall)
     pub fn create_fx_system(man: GPtr<u8>, name: GPtr<u8>, pos: GPtr<u8>, m: GPtr<u8>, flag: u8) -> GPtr<u8> = thiscall 0x4A9BE0 => unported;
-    /// `FxSystem_c::CopyParentMatrix()` (0x4AA890, thiscall)
-    pub fn fx_copy_parent_matrix(fx: GPtr<u8>) = thiscall 0x4AA890 => unported;
     /// `FxSystem_c::SetMustCreatePrts(bool)` (0x4AAC70, thiscall)
     pub fn fx_set_must_create_prts(fx: GPtr<u8>, b: u8) = thiscall 0x4AAC70 => unported;
     /// `FxSystem_c::SetConstTime(bool, float)` (0x4AA6C0, thiscall)
     pub fn fx_set_const_time(fx: GPtr<u8>, b: u8, t: f32) = thiscall 0x4AA6C0 => unported;
-    /// `FxSystem_c::SetMatrix(RwMatrix*)` (0x4AA630, thiscall)
-    pub fn fx_set_matrix(fx: GPtr<u8>, m: GPtr<u8>) = thiscall 0x4AA630 => unported;
     /// `CWeapon::FireInstantHitFromCar(CVehicle*, bool left, bool right)` (0x73EC40, thiscall)
     pub fn fire_instant_hit_from_car(this: GPtr<u8>, veh: GPtr<u8>, left: u8, right: u8) -> u8 = thiscall 0x73EC40 => crate::weapon_fire::fire_instant_hit_from_car;
     /// `CAEPedWeaponAudioEntity::AddAudioEvent(int32)` (0x4E69F0, thiscall)
     pub fn ped_weapon_audio_add_event(ae: GPtr<u8>, ev: i32) = thiscall 0x4E69F0 => unported;
-    /// `CStats::GetPercentageProgress()` (0x5591E0, ST0)
-    pub fn stats_get_percentage_progress() -> f64 = cdecl 0x5591E0 => unported;
-    /// `CWeaponInfo::GetWeaponReloadTime()` (0x743D70, thiscall)
-    pub fn get_weapon_reload_time_call(info: GPtr<u8>) -> u32 = thiscall 0x743D70 => crate::weapon_info::get_weapon_reload_time;
     /// `RpAnimBlendClumpGetAssociation(RpClump*, uint32 animId)` (0x4D68B0)
     pub fn clump_get_association(clump: GPtr<u8>, id: u32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
-    /// `CPedIntelligence::GetTaskUseGun()` (0x600F70, thiscall)
-    pub fn intel_get_task_use_gun(intel: GPtr<u8>) -> GPtr<u8> = thiscall 0x600F70 => unported;
     /// `CWeaponInfo::GetCrouchReloadAnimationID()` (0x685700, thiscall)
     pub fn get_crouch_reload_animation_id_call(info: GPtr<u8>) -> u32 = thiscall 0x685700 => crate::weapon_info::get_crouch_reload_animation_id;
     /// `FUN_0073a280` (0x73A280, thiscall): reload loop time A of the info's anim group

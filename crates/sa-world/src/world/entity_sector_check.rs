@@ -8,11 +8,10 @@ use sa_math::x87::X87;
 
 use super::common::{ftol32, x};
 
+use crate::bindings::crt_floor;
 orig! {
     /// `CEntity::GetBoundRect()` (vtable +0x24): the `CRect` through the hidden pointer
     fn v_get_bound_rect(e: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x24 => unported;
-    /// CRT `floor(double)` (0x8219F0), ST0
-    fn crt_floor(v: f64) -> f64 = cdecl 0x8219F0 => unported;
 }
 
 /// `0.02` (0x858B38), `60` (0x858B34), `0.5` (0x858B8C).

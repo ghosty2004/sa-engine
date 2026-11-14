@@ -16,6 +16,8 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use sa_core::bindings::crt_free_8214bd as crt_free;
+use sa_core::bindings::crt_new as crt_operator_new;
 orig! {
     /// KERNEL32 `CreateFileA` (IAT 0x8580A0)
     fn create_file_a(name: GPtr<u8>, access: u32, share: u32, sec: u32, disp: u32, flags: u32, tmpl: u32) -> u32 = stdcall cell 0x8580A0 => unported;
@@ -29,10 +31,6 @@ orig! {
     fn get_file_size(h: u32, hi: u32) -> u32 = stdcall cell 0x858074 => unported;
     /// KERNEL32 `CloseHandle` (IAT 0x858078)
     fn close_handle(h: u32) -> i32 = stdcall cell 0x858078 => unported;
-    /// CRT `free` (0x8214BD)
-    fn crt_free(p: GPtr<u8>) = cdecl 0x8214BD => unported;
-    /// CRT `operator new` (0x82119A)
-    fn crt_operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
     /// `CAEStreamingDecoder::CAEStreamingDecoder(CAEDataStream*)` (0x4F2810, `ret 4`)
     fn streaming_decoder_ctor(d: GPtr<u8>, stream: GPtr<u8>) -> GPtr<u8> = thiscall 0x4F2810 => streaming_decoder_constructor;
     /// `CAEVorbisDecoder::GetStreamLengthMs()` (vtable +8)

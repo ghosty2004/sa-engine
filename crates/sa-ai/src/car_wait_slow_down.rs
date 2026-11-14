@@ -7,23 +7,18 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::car_drive_dtor;
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::ped_set_ped_position_in_car;
+use sa_world::bindings::task_simple_dtor;
 orig! {
     /// `CTaskSimple::CTaskSimple()` (0x61A390)
     fn task_simple_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A390 => crate::mvpa_ai1::task_simple_ctor;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    fn entity_register_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571B70 => unported;
-    /// `CTaskSimpleCarDrive::~CTaskSimpleCarDrive()` body (0x63C460)
-    fn car_drive_dtor(t: GPtr<u8>) = thiscall 0x63C460 => unported;
     /// `CTask::operator new(uint32)` (0x61A5A0)
     fn task_new_c(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => crate::mvpa_ai1::task_operator_new;
-    /// `CTaskSimple::~CTaskSimple()` (0x61A3A0)
-    fn task_simple_dtor(t: GPtr<u8>) = thiscall 0x61A3A0 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571A00 => unported;
     /// `CEvent::GetEventType()` (vtable slot 4)
     fn event_get_type(e: GPtr<u8>) -> i32 = thiscall vslot 0x4 => unported;
-    /// `CPed::SetPedPositionInCar()` (0x5DF910)
-    fn ped_set_ped_position_in_car(p: GPtr<u8>) = thiscall 0x5DF910 => unported;
 }
 
 /// `CTaskSimpleCarWaitToSlowDown::CTaskSimpleCarWaitToSlowDown(CVehicle*, int32 slowType)` (0x646990, `ret 8`,

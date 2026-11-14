@@ -7,38 +7,27 @@ use sa_core::{hook, orig};
 
 use crate::common::{f32_of, g, jne_mask, jp5, model_info, rd, wr, x};
 
+use crate::bindings::store_shadow_for_vehicle;
+use crate::bindings::vehicle_pre_render;
+use sa_core::bindings::matrix_attach;
+use sa_core::bindings::matrix_dtor;
+use sa_core::bindings::matrix_mul_vec;
+use sa_core::bindings::matrix_set_rotate_x;
+use sa_core::bindings::matrix_set_rotate_z;
+use sa_core::bindings::matrix_update_rw;
+use sa_stream::bindings::get_wheel_posn;
+use sa_world::bindings::clock_get_is_time_in_range;
+use sa_world::bindings::entity_get_col_model;
 orig! {
-    /// `CVehicle::PreRender()` (0x6D6480)
-    fn vehicle_pre_render(v: GPtr<u8>) = thiscall 0x6D6480 => unported;
-    /// `CClock::GetIsTimeInRange(uint8 from, uint8 to)` (0x52CEE0, AL)
-    fn clock_get_is_time_in_range(from: u32, to: u32) -> u8 = cdecl 0x52CEE0 => unported;
-    /// `operator*(const CMatrix&, const CVector&)` (0x59C890, the result through `out`)
-    fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
     /// `CHeli::AddHeliSearchLight(const CVector& origin, const CVector& target, float targetRadius,
     /// float power, uint32 coronaIndex, uint8, uint8 drawShadow)` (0x6C45B0)
     fn add_heli_search_light(origin: GPtr<u8>, target: GPtr<u8>, radius: f32, power: u32, corona: u32, a: u32, shadow: u32) = cdecl 0x6C45B0 => unported;
-    /// `CEntity::GetColModel()` (0x535300)
-    fn entity_get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => unported;
     /// virtual (vtable +0xD0) of `CAutomobile`: the burst/soft-ground suspension ratios
     fn v_slot_d0(v: GPtr<u8>) = thiscall vslot 0xD0 => unported;
-    /// `CVehicleModelInfo::GetWheelPosn(int32 wheel, CVector& out, bool local)` (0x4C7D20)
-    fn get_wheel_posn(mi: GPtr<u8>, wheel: i32, out: GPtr<u8>, local: u32) = thiscall 0x4C7D20 => unported;
     /// `CAutomobile::UpdateWheelMatrix(int32 node, int32 flags)` (0x6AA290)
     fn update_wheel_matrix(v: GPtr<u8>, node: i32, flags: u32) = thiscall 0x6AA290 => unported;
     /// `CAutomobile::DoHeliDustEffect(float, float)` (0x6B0690)
     fn do_heli_dust_effect(v: GPtr<u8>, a: f32, b: f32) = thiscall 0x6B0690 => unported;
-    /// `CMatrix::Attach(RwMatrix*, bool)` (0x59BD10)
-    fn matrix_attach(m: GPtr<u8>, rw: GPtr<u8>, owns: u32) = thiscall 0x59BD10 => unported;
-    /// `CMatrix::SetRotateX(float)` (0x59B060)
-    fn matrix_set_rotate_x(m: GPtr<u8>, a: f32) = thiscall 0x59B060 => unported;
-    /// `CMatrix::SetRotateZ(float)` (0x59B0E0)
-    fn matrix_set_rotate_z(m: GPtr<u8>, a: f32) = thiscall 0x59B0E0 => unported;
-    /// `CMatrix::UpdateRW()` (0x59BBB0)
-    fn matrix_update_rw(m: GPtr<u8>) = thiscall 0x59BBB0 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
-    /// `CShadows::StoreShadowForVehicle(CVehicle*, VEH_SHD_TYPE)` (0x70BDA0)
-    fn store_shadow_for_vehicle(v: GPtr<u8>, kind: u32) = cdecl 0x70BDA0 => unported;
 }
 
 use sa_core::field::ptr_of as buf;

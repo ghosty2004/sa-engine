@@ -50,19 +50,16 @@ const LINK0: CLink = CLink {
     next: GPtr::NULL,
 };
 
+pub use sa_core::bindings::crt_free as operator_delete_links;
+pub use sa_core::bindings::crt_free_8214bd as crt_free;
+pub use sa_core::bindings::memory_malloc as mem_malloc;
+pub use sa_stream::bindings::col_load_collision as col_store_load_collision;
+pub use sa_stream::bindings::crt_new as operator_new_links;
 orig! {
-    /// `CMemoryMgr::Malloc(size, hint)` (0x72F420)
-    pub fn mem_malloc(size: u32, hint: u32) -> GPtr<u8> = cdecl 0x72F420 => unported;
     /// `CMemoryMgr::Free` (0x72F430)
     pub fn mem_free(p: GPtr<u8>) = cdecl 0x72F430 => sa_core::memory::mgr_free;
     /// CRT `operator new` (0x82119A)
     pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
-    /// CRT `operator new` (0x821195), the `new CLink[50]` of `CCollision::Init`
-    pub fn operator_new_links(size: u32) -> GPtr<u8> = cdecl 0x821195 => unported;
-    /// CRT `free` (0x8214BD)
-    pub fn crt_free(p: GPtr<u8>) = cdecl 0x8214BD => unported;
-    /// CRT `operator delete` (0x8213AE), the links of `CCollision::Shutdown`
-    pub fn operator_delete_links(p: GPtr<u8>) = cdecl 0x8213AE => unported;
     /// `CColModelPool::New` (0x40FB80)
     pub fn col_model_pool_new(pool: sa_core::pools::PoolPtr<sa_core::pools::ColModelSlot>)
         -> GPtr<sa_core::pools::ColModelSlot> = thiscall 0x40FB80 => sa_core::pools::col_model_pool_new;
@@ -92,9 +89,6 @@ orig! {
     pub fn col_store_initialise() = cdecl 0x4113F0 => sa_stream::colstore::initialise;
     /// `CColStore::Shutdown` (0x4114D0)
     pub fn col_store_shutdown() = cdecl 0x4114D0 => sa_stream::colstore::shutdown;
-    /// `CColStore::LoadCollision(CVector, bool)` (0x410860)
-    pub fn col_store_load_collision(x: f32, y: f32, z: f32, ignore_player_veh: u8)
-        = cdecl 0x410860 => sa_stream::colstore::load_collision;
     /// `CStreaming::LoadAllRequestedModels(bool)` (0x40EA10)
     pub fn load_all_requested_models(only_priority: u8) = cdecl 0x40EA10 => sa_stream::streaming::load_all_requested_models;
     /// `CVector::CrossProduct(CVector* out, const CVector* a, const CVector* b)` (0x59C730)

@@ -2,14 +2,11 @@
 //! every on-stack damage event (weapon impacts, car hits, script damage) on the native walk.
 
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
-orig! {
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571A00 => unported;
-}
+use sa_core::bindings::entity_clean_up_old_reference;
 
 /// `CEventDamage::~CEventDamage()` (0x4AD960, SEH frame, no `delete`): vtable 0x85AD78, `CleanUpOldReference`
 /// on the source entity (+0x14) when set, then the `CEvent` vtable 0x85AB38.

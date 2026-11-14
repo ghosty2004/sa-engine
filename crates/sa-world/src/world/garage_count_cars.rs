@@ -3,14 +3,11 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use super::common::{g, rd};
 
-orig! {
-    /// `CGarage::IsPointInsideGarage(CVector)` (0x448740)
-    fn is_point_inside_garage(gp: GPtr<u8>, x: u32, y: u32, z: u32) -> u8 = thiscall 0x448740 => unported;
-}
+use crate::bindings::garage_is_point_inside as is_point_inside_garage;
 
 /// `CGarage::CountCarsInside(CVehicle* except)` (stub 0x4495F0 → 0x1561400, thiscall, `ret 4`): the vehicles of
 /// the pool (from the last slot down, free slots skipped) other than `except` whose position (matrix or placement)

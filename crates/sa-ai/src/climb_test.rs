@@ -7,17 +7,14 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use sa_core::bindings::matrix_mul_vec;
+use sa_stream::bindings::placeable_allocate_matrix;
+use sa_stream::bindings::simple_transform_update_matrix;
 orig! {
     /// `CTaskSimpleClimb::ScanToGrab(CPed*, CVector& pos, float& angle, uint8& surface, bool launch, bool, bool,
     /// CVector* posOverride)` (0x67FD30, cdecl)
     #[allow(clippy::too_many_arguments)]
     fn climb_scan_to_grab(ped: GPtr<u8>, pos: GPtr<u8>, angle: GPtr<u8>, surface: GPtr<u8>, launch: u32, a: u32, b: u32, over: GPtr<u8>) -> GPtr<u8> = cdecl 0x67FD30 => crate::climb_scan::climb_scan_to_grab;
-    /// `CPlaceable::AllocateMatrix()` (0x54F560)
-    fn placeable_allocate_matrix(e: GPtr<u8>) = thiscall 0x54F560 => unported;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*)` (0x54F1B0)
-    fn simple_transform_update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => unported;
-    /// `CMatrix * CVector` (0x59C890, `(CVector* out, const CMatrix*, const CVector*)`)
-    fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
 }
 
 /// `CTaskSimpleClimb::ms_fAtEdgeOffsetHorz` (0x8D2F24), `ms_fAtEdgeOffsetVert` (0xC18F78)

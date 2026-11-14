@@ -34,6 +34,7 @@ pub fn module(offset_global: usize) -> GPtr<u8> {
     p8(g::<u32>(RW_ENGINE_INSTANCE).read().wrapping_add(off))
 }
 
+pub use sa_core::bindings::rw_error1;
 orig! {
     /// `G->rwmalloc(size, hint)` (`RwGlobals` +0x134)
     pub fn rw_malloc(size: u32, hint: u32) -> GPtr<u8> = cdecl table 0xC97B24 0x134 => unported;
@@ -47,8 +48,6 @@ orig! {
     pub fn rw_memory_alloc(fl: GPtr<u8>, hint: u32) -> GPtr<u8> = cdecl table 0xC97B24 0x144 => unported;
     /// `G->memoryFree(freelist, p)` (+0x148, `_rwFreeListFreeReal` by default)
     pub fn rw_memory_free(fl: GPtr<u8>, p: GPtr<u8>) -> GPtr<u8> = cdecl table 0xC97B24 0x148 => unported;
-    /// `_rwerror(code)` (0x8088D0, varargs; one argument)
-    pub fn rw_error1(code: u32) -> u32 = cdecl 0x8088D0 => unported;
     /// `_rwerror(code, a)` (0x8088D0, varargs; two arguments)
     pub fn rw_error2(code: u32, a: u32) -> u32 = cdecl 0x8088D0 => unported;
     /// `RwErrorSet(const RwError*)` (0x808820)

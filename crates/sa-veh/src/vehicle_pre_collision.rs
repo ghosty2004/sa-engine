@@ -9,23 +9,16 @@ use sa_core::{hook, orig};
 
 use crate::common::{rd, wr, x};
 
+use sa_core::bindings::matrix_assign;
+use sa_core::bindings::matrix_dtor;
+use sa_core::bindings::matrix_invert;
+use sa_core::bindings::matrix_mul_vec;
+use sa_world::bindings::entity_get_col_model;
+use sa_world::bindings::entity_get_is_static;
+use sa_world::bindings::vector_sub;
 orig! {
     /// `CEntity::DoesNotCollideWithFlyers()` (0x532D40)
     fn entity_does_not_collide_with_flyers(e: GPtr<u8>) -> u8 = thiscall 0x532D40 => unported;
-    /// `CEntity::GetIsStatic()` (0x4633E0)
-    fn entity_get_is_static(e: GPtr<u8>) -> u8 = thiscall 0x4633E0 => unported;
-    /// `CEntity::GetColModel()` (0x535300)
-    fn entity_get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => unported;
-    /// `VectorSub(CVector* out, const CVector* a, const CVector* b)` (0x40FE60): out = a - b
-    fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => unported;
-    /// `CMatrix::operator*(CVector* out, const CMatrix&, const CVector&)` (0x59C890; rotation plus translation)
-    fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
-    /// `Invert(const CMatrix& src, CMatrix& dst)` (0x59B920)
-    fn matrix_invert(src: GPtr<u8>, dst: GPtr<u8>) -> GPtr<u8> = cdecl 0x59B920 => unported;
-    /// `CMatrix::operator=(const CMatrix&)` (0x59BBC0, `ret 4`)
-    fn matrix_assign(m: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = thiscall 0x59BBC0 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
 }
 
 use sa_core::field::gf as k;

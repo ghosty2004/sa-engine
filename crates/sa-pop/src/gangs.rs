@@ -89,9 +89,8 @@ pub fn initialise() {
     w(0x7C, 0);
 }
 
+pub use crate::bindings::init_sequence;
 orig! {
-    /// `CCarCtrl::InitSequence(int32)` (0x421740)
-    pub fn init_sequence(n: i32) = cdecl 0x421740 => crate::carctrl::init_sequence;
     /// `CCarCtrl::FindSequenceElement(int32)` (0x421770)
     pub fn find_sequence_element(i: i32) -> i32 = cdecl 0x421770 => crate::carctrl::find_sequence_element;
     /// `CTheZones::FillZonesWithGangColours(bool)` (0x572440)

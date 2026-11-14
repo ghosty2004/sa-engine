@@ -7,13 +7,10 @@ use sa_core::{hook, orig};
 
 use super::common::{g, rd, wr};
 
+use sa_core::bindings::matrix_mul_vec;
+use sa_stream::bindings::placeable_allocate_matrix;
+use sa_stream::bindings::simple_transform_update_matrix;
 orig! {
-    /// `CPlaceable::AllocateMatrix()` (0x54F560)
-    fn placeable_allocate_matrix(p: GPtr<u8>) = thiscall 0x54F560 => unported;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*)` (0x54F1B0)
-    fn simple_transform_update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => unported;
-    /// `operator*(const CMatrix&, const CVector&)` (0x59C890, the result through `out`)
-    fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
     /// `CPathFind::AreNodesLoadedForArea(float minX, float maxX, float minY, float maxY)` (0x44DD10) on
     /// `ThePaths` (0x96F050); EAX as it leaves it
     fn are_nodes_loaded_for_area(paths: GPtr<u8>, min_x: f32, max_x: f32, min_y: f32, max_y: f32) -> u32 = thiscall 0x44DD10 => unported;

@@ -43,29 +43,21 @@ const TRISTRIP_DATA: usize = 0x8D638C;
 /// `_rpTriListMeshGenerate`.
 const TRILIST_GENERATE: u32 = 0x75D530;
 
+use crate::bindings::build_mesh_add_triangle;
+use crate::bindings::build_mesh_create;
+use crate::bindings::build_mesh_destroy;
+use crate::bindings::material_list_deinitialize;
+use crate::bindings::material_list_initialize;
+use crate::bindings::mesh_destroy;
+use crate::bindings::plugin_deinit_object;
+use crate::bindings::plugin_init_object;
 orig! {
-    /// `_rpMaterialListInitialize(list)` (0x74E1B0)
-    fn material_list_initialize(l: GPtr<u8>) -> GPtr<u8> = cdecl 0x74E1B0 => crate::material::material_list_initialize;
-    /// `_rpMaterialListDeinitialize(list)` (0x74E150)
-    fn material_list_deinitialize(l: GPtr<u8>) -> GPtr<u8> = cdecl 0x74E150 => crate::material::material_list_deinitialize;
-    /// `_rwPluginRegistryInitObject(reg, obj)` (0x8086E0)
-    fn plugin_init_object(reg: GPtr<u8>, obj: GPtr<u8>) -> GPtr<u8> = cdecl 0x8086E0 => crate::plugin::registry_init_object;
-    /// `_rwPluginRegistryDeInitObject(reg, obj)` (0x808740)
-    fn plugin_deinit_object(reg: GPtr<u8>, obj: GPtr<u8>) -> GPtr<u8> = cdecl 0x808740 => crate::plugin::registry_deinit_object;
     /// `RpWorldUnlock(world)` (0x74F210)
     fn world_unlock_call(w: GPtr<u8>) -> GPtr<u8> = cdecl 0x74F210 => rp_world_unlock;
-    /// `_rpMeshDestroy(header)` (0x758BC0)
-    fn mesh_destroy(h: GPtr<u8>) -> u32 = cdecl 0x758BC0 => crate::mesh::rp_mesh_destroy;
     /// `_rpWorldSectorDeinstanceAll(sector)` (0x74ECA0)
     fn sector_deinstance_all(s: GPtr<u8>) = cdecl 0x74ECA0 => unported;
     /// `_rpWorldSectorDestroyRecurse(sector)` (0x74ED50)
     fn sector_destroy_recurse(s: GPtr<u8>) = cdecl 0x74ED50 => unported;
-    /// `_rpBuildMeshCreate(bufferSize)` (0x758A90)
-    fn build_mesh_create(n: u32) -> GPtr<u8> = cdecl 0x758A90 => crate::mesh::rp_build_mesh_create;
-    /// `_rpBuildMeshDestroy(buildMesh)` (0x758B80)
-    fn build_mesh_destroy(bm: GPtr<u8>) -> u32 = cdecl 0x758B80 => crate::mesh::rp_build_mesh_destroy;
-    /// `_rpBuildMeshAddTriangle(bm, material, v0, v1, v2, matIndex, texIndex, rasIndex, pipeIndex)` (0x758C00)
-    fn build_mesh_add_triangle(bm: GPtr<u8>, mat: GPtr<u8>, v0: u32, v1: u32, v2: u32, mi: u32, ti: u32, ri: u32, pi: u32) -> GPtr<u8> = cdecl 0x758C00 => crate::mesh::rp_build_mesh_add_triangle;
     /// `_rpMeshOptimise(buildMesh, flags)` (0x75D970)
     fn mesh_optimise_call(bm: GPtr<u8>, flags: u32) -> GPtr<u8> = cdecl 0x75D970 => rp_mesh_optimise;
     /// A mesh generator `gen(buildMesh, data)` (`_rpTriListMeshGenerate` or the tri-strip method)

@@ -9,11 +9,10 @@ use sa_core::mem::GPtr;
 use crate::common::wr;
 use crate::renderer::quiet;
 
+pub use sa_core::bindings::crt_free_8214bd as crt_free;
 sa_core::orig! {
     /// `FxInterpInfo*_c::Load(FILESTREAM)` (vtable +4)
     pub fn interp_load(this: GPtr<u8>, file: u32) = thiscall vslot 0x4 => unported;
-    /// CRT `free` (0x8214BD)
-    pub fn crt_free(p: GPtr<u8>) = cdecl 0x8214BD => unported;
 }
 
 sa_core::orig! {

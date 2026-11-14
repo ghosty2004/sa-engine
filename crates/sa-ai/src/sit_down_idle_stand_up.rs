@@ -15,13 +15,21 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::anim_blend_animation;
+use crate::bindings::assoc_set_finish_callback as anim_set_finish_callback;
+use crate::bindings::ik_abort_look_at;
+use crate::bindings::ped_scanner_get_closest_ped_in_range as scanner_closest_ped;
+use crate::bindings::task_complex_dtor;
+use sa_core::bindings::general_random_int_in_range as random_int;
+use sa_core::bindings::streaming_request_model;
+use sa_stream::bindings::anim_add_block_ref;
+use sa_stream::bindings::anim_remove_block_ref;
+use sa_stream::bindings::get_animation_block_index as anim_get_block_index;
+use sa_world::bindings::ik_is_looking;
+use sa_world::bindings::placeable_get_top_direction as placeable_get_forward;
+use sa_world::bindings::task_complex_ctor;
+use sa_world::bindings::task_simple_ctor;
 orig! {
-    /// `CTaskComplex::CTaskComplex()` (0x61A3B0)
-    fn task_complex_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A3B0 => unported;
-    /// `CTaskComplex::~CTaskComplex()` (0x61A3D0)
-    fn task_complex_dtor(t: GPtr<u8>) = thiscall 0x61A3D0 => unported;
-    /// `CTaskSimple::CTaskSimple()` (0x61A390)
-    fn task_simple_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A390 => unported;
     /// `CTask::GetTaskType()` (vtable slot 0x10)
     fn task_get_type(t: GPtr<u8>) -> u32 = thiscall vslot 0x10 => unported;
     /// `CTask::MakeAbortable(CPed*, int priority, const CEvent*)` (vtable slot 0x18, `ret 0xC`)
@@ -34,33 +42,11 @@ orig! {
     fn sit_idle_start_anim(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x631260 => unported;
     /// `CTaskSimpleStandStill(int ms, bool looped, bool useAnimIdle, float blend)` (0x62F310, `ret 0x10`)
     fn stand_still_ctor(t: GPtr<u8>, ms: i32, looped: u32, idle: u32, blend: u32) -> GPtr<u8> = thiscall 0x62F310 => unported;
-    /// `CAnimManager::GetAnimationBlockIndex(const char*)` (0x4D3990)
-    fn anim_get_block_index(name: GPtr<u8>) -> i32 = cdecl 0x4D3990 => unported;
-    /// `CAnimManager::AddAnimBlockRef(int32)` (0x4D3FB0)
-    fn anim_add_block_ref(i: i32) = cdecl 0x4D3FB0 => unported;
-    /// `CAnimManager::RemoveAnimBlockRef(int32)` (0x4D3FD0)
-    fn anim_remove_block_ref(i: i32) = cdecl 0x4D3FD0 => unported;
-    /// `CStreaming::RequestModel(int32 id, int32 flags)` (0x4087E0)
-    fn streaming_request_model(id: i32, flags: i32) = cdecl 0x4087E0 => unported;
-    /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float delta)` (0x4D4610)
-    fn anim_blend_animation(clump: u32, group: u32, id: u32, delta: u32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
-    /// `CAnimBlendAssociation::SetFinishCallback(cb, data)` (0x4CEBE0, `ret 8`)
-    fn anim_set_finish_callback(a: GPtr<u8>, cb: u32, data: u32) = thiscall 0x4CEBE0 => unported;
-    /// `IKChainManager_c::IsLooking(CPed*)` (0x6181A0, `ret 4`)
-    fn ik_is_looking(m: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x6181A0 => unported;
-    /// `IKChainManager_c::AbortLookAt(CPed*, int32 blend)` (0x618280, `ret 8`)
-    fn ik_abort_look_at(m: GPtr<u8>, ped: GPtr<u8>, blend: i32) = thiscall 0x618280 => unported;
     /// `IKChainManager_c::LookAt(name, ped, target, time, bone, pos, bool, speed, blend, priority, bool)` (0x618970,
     /// `ret 0x2C`)
     fn ik_look_at(m: GPtr<u8>, name: u32, ped: GPtr<u8>, target: GPtr<u8>, time: i32, bone: i32, pos: GPtr<u8>, b: u32, speed: u32, blend: i32, prio: i32, b2: u32) = thiscall 0x618970 => unported;
-    /// `CPedScanner::GetClosestPedInRange()` (0x5FFF20)
-    fn scanner_closest_ped(s: GPtr<u8>) -> GPtr<u8> = thiscall 0x5FFF20 => unported;
-    /// `CPlaceable::GetForward(CVector* out)` (0x41CCB0, `ret 4`)
-    fn placeable_get_forward(p: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall 0x41CCB0 => unported;
     /// `CPlaceable::GetRight(CVector* out)` (0x41CC70, `ret 4`)
     fn placeable_get_right(p: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall 0x41CC70 => unported;
-    /// `CGeneral::GetRandomNumberInRange(int, int)` (0x407180; draws its own rand)
-    fn random_int(lo: i32, hi: i32) -> i32 = cdecl 0x407180 => unported;
     fn create_sub_task_o(t: GPtr<u8>, ty: u32) -> GPtr<u8> = thiscall 0x631550 => sit_create_sub_task;
     fn sit_down_start_anim_o(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x6379F0 => sit_down_start_anim;
     fn stand_up_start_anim_o(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x631410 => stand_up_start_anim;

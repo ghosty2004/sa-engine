@@ -43,19 +43,38 @@ const K_DEG2RAD: u32 = 0x3C8E_FA35;
 /// the cases address as 0xA913E8 + 0x44 * n + offset.
 const NUM_TEXT_LINES: usize = 0xA44B68;
 
+use crate::bindings::add_brain_for_code_use;
+use crate::bindings::clear_space_for_mission_entity;
+use crate::bindings::get_new_unique_script_thing_index;
+use crate::bindings::get_proper_index_from_index_used_by_script as get_proper_index;
+use crate::bindings::physical_45afb0 as set_turn_speed;
+use crate::bindings::remove_vehicle_upgrade;
+use crate::bindings::task_drive_point_route_ctor;
+use sa_core::bindings::crt_strncpy as strncpy_;
+use sa_core::bindings::rgba_ctor;
+use sa_core::bindings::task_new;
+use sa_core::bindings::text_get;
+use sa_core::bindings::tm_get_simplest_active_task as get_simplest_active_task;
+use sa_world::bindings::apply_force;
+use sa_world::bindings::decision_maker_types_get_instance as dm_types_instance;
+use sa_world::bindings::find_ground_z_for_coord as find_ground_z;
+use sa_world::bindings::get_level_from_position;
+use sa_world::bindings::get_ped_flag;
+use sa_world::bindings::get_special_col_model;
+use sa_world::bindings::get_task_swim;
+use sa_world::bindings::get_vehicle_appearance;
+use sa_world::bindings::is_coop_game_going_on;
+use sa_world::bindings::mark_surrounding_entities;
+use sa_world::bindings::physical_add_to_moving_list as add_to_moving_list;
+use sa_world::bindings::sequence_add_task as task_sequence_add;
+use sa_world::bindings::sequence_ctor as task_sequence_ctor;
 orig! {
     /// `CVehicle::AddVehicleUpgrade(int32 modelId)` (0x6E3290)
     fn add_vehicle_upgrade(v: GPtr<u8>, m: i32) -> i32 = thiscall 0x6E3290 => unported;
-    /// `CVehicle::RemoveVehicleUpgrade(int32 modelId)` (0x6DF930)
-    fn remove_vehicle_upgrade(v: GPtr<u8>, m: i32) = thiscall 0x6DF930 => unported;
     /// `CRunningScript::PlayAnimScriptCommand(int32 command)` (0x470150; reads its own parameters)
     fn play_anim_script_command(s: Scr, command: u32) = thiscall 0x470150 => unported;
     /// `CRunningScript::ReadTextLabelFromScript(char*, uint8)` (0x463D50)
     fn read_label(s: Scr, buf: GPtr<u8>, len: u32) = thiscall 0x463D50 => crate::vm::read_text_label_from_script;
-    /// `CStreamedScripts::GetProperIndexFromIndexUsedByScript(int16)` (0x470810), AX
-    fn get_proper_index(m: GPtr<u8>, i: u32) -> u16 = thiscall 0x470810 => unported;
-    /// `CScriptsForBrains::AddNewStreamedScriptBrainForCodeUse(int16, const char*, int8)` (0x46A9C0)
-    fn add_brain_for_code_use(m: GPtr<u8>, i: u32, name: GPtr<u8>, ty: u32) = thiscall 0x46A9C0 => unported;
     /// `Multiply3x3(CVector* out, const CMatrix*, const CVector*)` (0x59C790), returns out
     fn multiply3x3(out: GPtr<u32>, m: GPtr<u8>, v: GPtr<u32>) -> GPtr<u32> = cdecl 0x59C790 => unported;
     /// 0x411A00 (thiscall on a `CVector`, `const CVector*`: `operator+=`)
@@ -70,24 +89,14 @@ orig! {
     fn vec_squared_magnitude(v: GPtr<u32>) -> f64 = thiscall 0x406DA0 => unported;
     /// 0x40FEF0 (thiscall on a `CVector`, float: `operator*=`); raw
     fn vec_mul_assign(v: GPtr<u32>, k: u32) = thiscall 0x40FEF0 => unported;
-    /// `CPhysical::ApplyForce(CVector force, CVector point, bool)` (0x542B50); vectors by value, raw
-    fn apply_force(p: GPtr<u8>, fx: u32, fy: u32, fz: u32, px: u32, py: u32, pz: u32, b: u32) = thiscall 0x542B50 => unported;
-    /// `CPhysical::AddToMovingList()` (0x542800)
-    fn add_to_moving_list(p: GPtr<u8>) = thiscall 0x542800 => unported;
     /// `CEntity` virtual slot 0x10 (`SetIsStatic(bool)`)
     fn set_is_static(e: GPtr<u8>, b: u32) = thiscall vslot 0x10 => unported;
-    /// 0x45AFB0 (thiscall on a `CPhysical`, three floats; a `.HOODLUM` stub: `SetTurnSpeed`); raw
-    fn set_turn_speed(p: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x45AFB0 => unported;
     /// 0x407800 (cdecl `(int32 model)`, AL: `CStreaming::IsObjectInCdImage`)
     fn is_object_in_cd_image(m: u32) -> u8 = cdecl 0x407800 => unported;
     /// `CShadows::RemoveOilInArea(float x1, float x2, float y1, float y2)` (0x7074F0); raw
     fn remove_oil_in_area(x1: u32, x2: u32, y1: u32, y2: u32) = cdecl 0x7074F0 => unported;
     /// `CRadar::SetBlipFriendly(int32, uint8)` (0x583EB0)
     fn set_blip_friendly(h: u32, b: u32) = cdecl 0x583EB0 => unported;
-    /// `CPedIntelligence::GetTaskSwim()` (0x601070)
-    fn get_task_swim(intel: GPtr<u8>) -> GPtr<u8> = thiscall 0x601070 => unported;
-    /// `CTask::operator new(uint32)` (0x61A5A0)
-    fn task_new(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => unported;
     /// `CRunningScript::GivePedScriptedTask(int32 pedHandle, CTask*, int32 opcode)` (0x465C20)
     fn give_ped_scripted_task(s: Scr, ped: u32, task: GPtr<u8>, command: u32) = thiscall 0x465C20 => unported;
     /// `CTaskSimpleSwim::CTaskSimpleSwim(const CVector*, CPed*)` (0x688930)
@@ -96,34 +105,17 @@ orig! {
     fn get_actual_script_thing_index(r: u32, ty: u32) -> i32 = cdecl 0x4839A0 => unported;
     /// `CRunningScript::CollectNextParameterWithoutIncreasingPC()` (0x464250)
     fn collect_next_no_pc(s: Scr) -> u32 = thiscall 0x464250 => unported;
-    /// `CDecisionMakerTypes::GetInstance()` (0x4684F0)
-    fn dm_types_instance() -> GPtr<u8> = cdecl 0x4684F0 => unported;
     /// 0x6070F0 (thiscall on `CDecisionMakerTypes`, `(int32 src, int32 type, bool mission)`: copies a decision
     /// maker, returns the new index)
     fn dm_copy(t: GPtr<u8>, src: i32, ty: u32, mission: u32) -> u32 = thiscall 0x6070F0 => unported;
-    /// `CTheScripts::GetNewUniqueScriptThingIndex(int32, uint8)` (0x483720)
-    fn get_new_unique_script_thing_index(i: u32, ty: u32) -> u32 = cdecl 0x483720 => unported;
-    /// `CTaskComplexDrivePointRoute::CTaskComplexDrivePointRoute(CVehicle*, const CPointRoute&, float, int32,
-    /// int32, float, int32)` (0x6433E0); floats raw
-    fn task_drive_point_route_ctor(t: GPtr<u8>, v: GPtr<u8>, route: u32, speed: u32, mode: u32, model: u32, r: u32, style: u32) -> GPtr<u8> = thiscall 0x6433E0 => unported;
     /// `CPedType::GetPedTypeAcquaintances(int32, ePedType)` (0x6089D0)
     fn get_ped_type_acquaintances(a: u32, t: u32) -> u32 = cdecl 0x6089D0 => unported;
-    /// `CPedType::GetPedFlag(ePedType)` (0x608830)
-    fn get_ped_flag(t: u32) -> u32 = cdecl 0x608830 => unported;
-    /// `CTheZones::GetLevelFromPosition(const CVector*)` (0x572300)
-    fn get_level_from_position(p: GPtr<u32>) -> u32 = cdecl 0x572300 => unported;
-    /// `CWorld::FindGroundZForCoord(float, float)` (0x569660), ST0 (read as f64: exact); floats raw
-    fn find_ground_z(x: u32, y: u32) -> f64 = cdecl 0x569660 => unported;
     /// `CObjectPool::GetAt(int32 slot)` (0x404870), ECX = the object pool
     fn object_pool_get_at(pool: GPtr<u8>, i: u32) -> GPtr<u8> = thiscall 0x404870 => unported;
     /// `CVector::Magnitude()` (0x4082C0), ST0 (an `fsqrt` result under PC=24: exact as f64)
     fn vector_magnitude(v: GPtr<u32>) -> f64 = thiscall 0x4082C0 => unported;
-    /// `CVehicle::GetVehicleAppearance()` (0x6D1080)
-    fn get_vehicle_appearance(v: GPtr<u8>) -> i32 = thiscall 0x6D1080 => unported;
     /// `CCheckpoints::UpdatePos(uint32 id, const CVector*)` (0x722900)
     fn checkpoints_update_pos(id: u32, p: GPtr<u32>) = cdecl 0x722900 => unported;
-    /// `CVehicle::GetSpecialColModel()` (0x6DF3D0)
-    fn get_special_col_model(v: GPtr<u8>) -> u8 = thiscall 0x6DF3D0 => unported;
     /// `CPedGroupMembership::GetLeader()` (0x5F69A0) / `CountMembersExcludingLeader()` (0x5F6AA0)
     fn group_get_leader(m: GPtr<u8>) -> u32 = thiscall 0x5F69A0 => unported;
     fn count_members_excluding_leader(m: GPtr<u8>) -> u32 = thiscall 0x5F6AA0 => unported;
@@ -131,15 +123,6 @@ orig! {
     fn tell_car_to_follow_other_car(a: GPtr<u8>, b: GPtr<u8>, r: u32) = cdecl 0x41C960 => unported;
     /// 0x43F9B0 (cdecl `(const char*, bool)`: `CEntryExitManager::SetEnabledByName`)
     fn set_entry_exit_enabled_by_name(name: GPtr<u8>, on: u32) = cdecl 0x43F9B0 => unported;
-    /// `CText::Get(const char*)` (0x6A0050), ECX = `TheText` 0xC1B340 (result discarded by 07FC)
-    fn text_get(t: GPtr<u8>, key: GPtr<u8>) -> GPtr<u8> = thiscall 0x6A0050 => unported;
-    /// CRT `strncpy` (0x821F40)
-    fn strncpy_(dst: GPtr<u8>, src: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x821F40 => unported;
-    /// `CGameLogic::IsCoopGameGoingOn()` (0x441390), AL
-    fn is_coop_game_going_on() -> u8 = cdecl 0x441390 => unported;
-    /// `CTaskComplexSequence::CTaskComplexSequence()` (0x632BD0) / `AddTask(CTask*)` (0x632D10)
-    fn task_sequence_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x632BD0 => unported;
-    fn task_sequence_add(seq: GPtr<u8>, t: GPtr<u8>) = thiscall 0x632D10 => unported;
     /// `CTaskComplexGoToPointAndStandStill::CTaskComplexGoToPointAndStandStill(int32, const CVector&, float,
     /// float, bool, bool)` (0x668120); floats raw
     fn task_go_to_point_ctor(t: GPtr<u8>, ms: u32, pos: GPtr<u32>, r: u32, r2: u32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x668120 => unported;
@@ -163,25 +146,17 @@ orig! {
     fn stunt_jump_add_one(a: GPtr<u8>, b: GPtr<u8>, cam: GPtr<u32>, reward: u32) = cdecl 0x49CB40 => unported;
     /// 0x4119D0 (cdecl `(CVector* out, const CVector*, float)`: `operator/`), returns out; raw
     fn vec_div(out: GPtr<u32>, v: GPtr<u32>, k: u32) -> GPtr<u32> = cdecl 0x4119D0 => unported;
-    /// `CTrain::MarkSurroundingEntitiesForCollisionWithTrain(CVector, float, CEntity*, bool)` (0x6F6640); raw
-    fn mark_surrounding_entities(x: u32, y: u32, z: u32, r: u32, e: GPtr<u8>, b: u32) = cdecl 0x6F6640 => unported;
     /// `CEntity` virtual slot 0x38 (`Teleport(CVector, bool)`); raw
     fn teleport(e: GPtr<u8>, x: u32, y: u32, z: u32, b: u32) = thiscall vslot 0x38 => unported;
-    /// `CTheScripts::ClearSpaceForMissionEntity(const CVector&, CEntity*)` (0x486B00)
-    fn clear_space_for_mission_entity(p: GPtr<u32>, e: GPtr<u8>) = cdecl 0x486B00 => unported;
     /// 0x470070 (thiscall on the ped, bool: `SetKindaStayInSamePlace`)
     fn set_kinda_stay_in_same_place(p: GPtr<u8>, b: u32) = thiscall 0x470070 => unported;
     /// 0x674930 (thiscall; the 0x30-byte follow-patrol-route task constructor `(int32 moveState, const route*,
     /// int32 mode, float, float)`); floats raw
     fn task_follow_patrol_route_ctor(t: GPtr<u8>, ms: u32, route: u32, mode: u32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x674930 => unported;
-    /// `CTaskManager::GetSimplestActiveTask()` (0x6819D0)
-    fn get_simplest_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x6819D0 => unported;
     /// `CTask` virtual slot 0x10 (`GetTaskType()`)
     fn task_get_type(t: GPtr<u8>) -> u32 = thiscall vslot 0x10 => unported;
     /// `CWorld::FindGroundZFor3DCoord(float, float, float, bool*, CEntity**)` (0x5696C0), ST0 (read as f64)
     fn find_ground_z_3d(x: u32, y: u32, z: u32, a: u32, b: u32) -> f64 = cdecl 0x5696C0 => unported;
-    /// `CRGBA::CRGBA(uint8, uint8, uint8, uint8)` (0x7170C0), returns this
-    fn rgba_ctor(c: GPtr<u8>, r: u32, g: u32, b: u32, a: u32) -> GPtr<u8> = thiscall 0x7170C0 => unported;
     /// `CModelInfo::IsBoatModel` (0x4C5A70) / `IsPlaneModel` (0x4C5B30) / `IsHeliModel` (0x4C5B00), AL
     fn is_boat_model(m: u32) -> u8 = cdecl 0x4C5A70 => unported;
     fn is_plane_model(m: u32) -> u8 = cdecl 0x4C5B30 => unported;

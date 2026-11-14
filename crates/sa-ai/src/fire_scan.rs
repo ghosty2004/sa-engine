@@ -8,13 +8,11 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::task_is_go_to_task;
+use sa_core::bindings::tm_get_active_task;
+use sa_core::bindings::tm_get_simplest_active_task;
+use sa_world::bindings::event_group_add;
 orig! {
-    /// `CTaskManager::GetSimplestActiveTask()` (0x6819D0)
-    fn tm_get_simplest_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x6819D0 => unported;
-    /// `CTaskManager::GetActiveTask()` (0x681720)
-    fn tm_get_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x681720 => unported;
-    /// `CTask::IsGoToTask(CTask*)` (0x61A360)
-    fn task_is_go_to_task(t: GPtr<u8>) -> u8 = cdecl 0x61A360 => unported;
     /// `CTask::GetTaskType()` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
     /// `CFireManager::FindNearestFire(const CVector&, bool, bool)` (0x538F40, `ret 0xC`)
@@ -28,8 +26,6 @@ orig! {
     fn event_walk_into_fire_ctor(e: GPtr<u8>, pos: GPtr<u8>, size: u32, ms: u32) -> GPtr<u8> = thiscall 0x4B1E20 => unported;
     /// `CEventPotentialWalkIntoFire::~CEventPotentialWalkIntoFire()` (0x4B1F00)
     fn event_walk_into_fire_dtor(e: GPtr<u8>) = thiscall 0x4B1F00 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, `ret 8`)
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
 }
 
 /// `gFireManager` (0xB71F80), `CTimer::m_snTimeInMilliseconds` (0xB7CB84)

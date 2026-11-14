@@ -9,19 +9,15 @@ use sa_math::x87::X87;
 
 use crate::common::{RwError, f32_of, g, p8, rd, rw_memory_alloc, wr, x};
 
+use crate::bindings::read_int32;
+use crate::bindings::read_real;
+use crate::bindings::rw_stream_find_chunk_call as find_chunk;
+use crate::bindings::rw_texture_stream_read_call as texture_stream_read;
 orig! {
-    /// `RwStreamReadInt32(stream, buf, size)` (0x7ED540)
-    fn read_int32(s: GPtr<u8>, p: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x7ED540 => crate::stream::rw_stream_read_int32;
-    /// `RwStreamReadReal(stream, buf, size)` (0x7ED4F0)
-    fn read_real(s: GPtr<u8>, p: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x7ED4F0 => crate::stream::rw_stream_read_real;
-    /// `RwStreamFindChunk(stream, type, len, ver)` (0x7ED2D0)
-    fn find_chunk(s: GPtr<u8>, ty: u32, len: GPtr<u32>, ver: GPtr<u32>) -> u32 = cdecl 0x7ED2D0 => crate::stream::rw_stream_find_chunk;
     /// `RwErrorGet(out)` (0x808880)
     fn error_get(out: GPtr<RwError>) -> GPtr<RwError> = cdecl 0x808880 => crate::engine::rw_error_get;
     /// `RwErrorSet(err)` (0x808820)
     fn error_set(e: GPtr<RwError>) -> GPtr<RwError> = cdecl 0x808820 => unported;
-    /// `RwTextureStreamRead(stream)` (0x8046E0)
-    fn texture_stream_read(s: GPtr<u8>) -> GPtr<u8> = cdecl 0x8046E0 => crate::texture::rw_texture_stream_read;
     /// `RwTextureDestroy(tex)` (0x7F3820)
     fn texture_destroy(t: GPtr<u8>) -> u32 = cdecl 0x7F3820 => crate::texture::rw_texture_destroy;
     /// `RpMatFXMaterialSetEffects(material, flags)` (0x811C80)

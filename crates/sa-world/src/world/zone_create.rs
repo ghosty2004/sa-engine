@@ -11,9 +11,8 @@ use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 use sa_math::x87::X87;
 
+use sa_core::bindings::crt_strncpy;
 orig! {
-    /// CRT `strncpy(dst, src, n)` (0x821F40)
-    fn crt_strncpy(dst: GPtr<u8>, src: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x821F40 => unported;
     /// `CTheZones::AssignZoneInfoForThisZone(int16)` (0x572180)
     fn assign_zone_info_for_this_zone(index: u32) = cdecl 0x572180 => unported;
 }

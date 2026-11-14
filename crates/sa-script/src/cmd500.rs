@@ -36,6 +36,26 @@ const MODEL0_LOAD_STATE: u32 = 0x8E4CD0;
 /// `CTheScripts::ScriptResourceManager` 0xA485A8.
 const SCRIPT_RESOURCE_MANAGER: usize = 0xA485A8;
 
+use crate::bindings::add_explosion;
+use crate::bindings::switch_ped_roads_off_in_area;
+use sa_core::bindings::general_random_int_in_range as random_int_in_range;
+use sa_core::bindings::set_mission_doesnt_require_model;
+use sa_core::bindings::streaming_request_model as request_model;
+use sa_core::bindings::stricmp;
+use sa_core::bindings::task_new;
+use sa_core::bindings::text_get;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::add_big_message_q;
+use sa_world::bindings::die_ctor as task_complex_die_ctor;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::event_script_command_ctor;
+use sa_world::bindings::event_script_command_dtor;
+use sa_world::bindings::find_ground_z_for_coord;
+use sa_world::bindings::generate_new_one;
+use sa_world::bindings::get_actual_pickup_index;
+use sa_world::bindings::get_has_collided_with;
+use sa_world::bindings::is_player_in_remote_mode;
+use sa_world::bindings::stop_all_law_enforcers_in_their_tracks;
 orig! {
     /// `CRestart::CancelOverrideRestart()` (0x460800)
     fn cancel_override_restart() = cdecl 0x460800 => unported;
@@ -46,14 +66,10 @@ orig! {
     /// `CGeneral::GetRandomNumberInRange(float, float)` (0x41BD90), floats as raw dwords, ST0 (a PC=24
     /// result: exact as f64)
     fn random_float_in_range(lo: u32, hi: u32) -> f64 = cdecl 0x41BD90 => unported;
-    /// `CGeneral::GetRandomNumberInRange(int32, int32)` (0x407180)
-    fn random_int_in_range(lo: i32, hi: i32) -> i32 = cdecl 0x407180 => unported;
     /// `CVehicle::BlowUpCar(CEntity*, bool)` (vtable slot 0xA4)
     fn blow_up_car(v: GPtr<u8>, culprit: GPtr<u8>, in_cutscene: u32) = thiscall vslot 0xA4 => unported;
     /// `CGangs::SetGangWeapons(int16 gang, int32, int32, int32)` (0x5DE550)
     fn set_gang_weapons(gang: u32, w1: i32, w2: i32, w3: i32) = cdecl 0x5DE550 => unported;
-    /// `CPlayerInfo::IsPlayerInRemoteMode()` (0x56DAB0), AL
-    fn is_player_in_remote_mode(info: GPtr<u8>) -> u8 = thiscall 0x56DAB0 => unported;
     /// Unnamed cdecl function taking `const CVector*` (0x47E070, a `.HOODLUM` stub; SET_CUTSCENE_OFFSET's
     /// callee, presumably `CCutsceneMgr::SetCutsceneOffset`)
     fn set_cutscene_offset(v: GPtr<u32>) = cdecl 0x47E070 => unported;
@@ -63,67 +79,27 @@ orig! {
     fn restore_clock() = cdecl 0x52D070 => unported;
     /// `CRunningScript::CollectNextParameterWithoutIncreasingPC()` (0x464250)
     fn collect_next(s: Scr) -> i32 = thiscall 0x464250 => crate::vm::collect_next_parameter_without_increasing_pc;
-    /// `CWorld::FindGroundZForCoord(float, float)` (0x569660), floats as raw dwords, ST0 (read as f64: exact)
-    fn find_ground_z_for_coord(x: u32, y: u32) -> f64 = cdecl 0x569660 => unported;
-    /// `CPickups::GetActualPickupIndex(int32)` (0x4552A0); the result is discarded here
-    fn get_actual_pickup_index(h: i32) -> i32 = cdecl 0x4552A0 => unported;
-    /// `CPickups::GenerateNewOne(CVector pos, uint32 model, uint8 type, uint32 ammo, uint32 money,
-    /// bool isEmpty, const char* message)` (0x456F20); the by-value vector as three raw dwords
-    fn generate_new_one(x: u32, y: u32, z: u32, model: u32, ty: u32, ammo: u32, money: u32, empty: u32, msg: u32) -> i32 = cdecl 0x456F20 => unported;
     /// `CPickups::IsPickUpPickedUp(int32)` (0x454B40), AL
     fn is_pick_up_picked_up(h: i32) -> u8 = cdecl 0x454B40 => unported;
     /// `CPickups::RemovePickUp(int32)` (0x4573D0)
     fn remove_pick_up(h: i32) = cdecl 0x4573D0 => unported;
-    /// `CStreaming::RequestModel(int32 model, int32 flags)` (0x4087E0)
-    fn request_model(model: i32, flags: i32) = cdecl 0x4087E0 => unported;
-    /// `CStreaming::SetMissionDoesntRequireModel(int32)` (0x409C90)
-    fn set_mission_doesnt_require_model(model: i32) = cdecl 0x409C90 => unported;
     /// `CScriptResourceManager::AddToResourceManager(int32, uint32 type, CRunningScript*)` (0x4704B0)
     fn add_to_resource_manager(m: GPtr<u8>, model: i32, ty: u32, s: Scr) = thiscall 0x4704B0 => unported;
     /// `CScriptResourceManager::RemoveFromResourceManager(int32, uint32 type, CRunningScript*)` (0x470510), AL
     fn remove_from_resource_manager(m: GPtr<u8>, model: i32, ty: u32, s: Scr) -> u8 = thiscall 0x470510 => unported;
-    /// CRT `_stricmp` (0x8229B6)
-    fn stricmp(a: GPtr<u8>, b: GPtr<u8>) -> i32 = cdecl 0x8229B6 => unported;
-    /// `CText::Get(const char*)` (0x6A0050), ECX = `TheText`
-    fn text_get(t: GPtr<u8>, key: GPtr<u8>) -> GPtr<u8> = thiscall 0x6A0050 => unported;
     /// `CDarkel::StartFrenzy(eWeaponType, int32 time, uint16 kills, int32 model, uint16* text, int32,
     /// int32, int32, bool standard, bool headshot)` (0x43D3B0)
     fn start_frenzy(w: u32, time: u32, kills: u32, m1: u32, text: GPtr<u8>, m2: u32, m3: u32, m4: u32, standard: u32, head: u32) = cdecl 0x43D3B0 => unported;
-    /// `CExplosion::AddExplosion(CEntity* victim, CEntity* creator, eExplosionType, CVector pos,
-    /// uint32 time, uint8 makeSound, float camShake, uint8 visible)` (0x736A50); the vector and the
-    /// float as raw dwords
-    fn add_explosion(victim: u32, creator: u32, ty: u32, x: u32, y: u32, z: u32, time: u32, sound: u32, shake: u32, visible: u32) = cdecl 0x736A50 => unported;
     /// `CAutomobile::SetTaxiLight(bool)` (0x6A3740)
     fn set_taxi_light(v: GPtr<u8>, on: u32) = thiscall 0x6A3740 => unported;
-    /// `CMessages::AddBigMessageQ(const char*, uint32 time, uint16 style)` (0x69F370)
-    fn add_big_message_q(text: GPtr<u8>, time: u32, style: u32) = cdecl 0x69F370 => unported;
     /// `CGarages::GetGarageNumberByName(const char*)` (0x447680); the caller tests the low word
     fn get_garage_number_by_name(name: GPtr<u8>) -> u32 = cdecl 0x447680 => unported;
     /// `CGarages::SetTargetCarForMissionGarage(int16 garage, CVehicle*)` (0x447C40)
     fn set_target_car_for_mission_garage(garage: u32, veh: GPtr<u8>) = cdecl 0x447C40 => unported;
     /// `CPad::GetPad(int32)` (0x53FB70)
     fn get_pad(n: u32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CTask::operator new(uint32)` (0x61A5A0)
-    fn task_new(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => unported;
-    /// `CTaskComplexDie::CTaskComplexDie(eWeaponType, AssocGroupId, AnimationId, float blendDelta,
-    /// float animSpeed, bool stealth, bool falling, int32 dir, bool railing)` (0x630040); floats as raw
-    /// dwords
-    fn task_complex_die_ctor(t: GPtr<u8>, w: u32, group: u32, anim: u32, blend: u32, speed: u32, stealth: u32, falling: u32, dir: u32, railing: u32) -> GPtr<u8> = thiscall 0x630040 => unported;
-    /// `CEventScriptCommand::CEventScriptCommand(int32 primaryTaskIndex, CTask*, bool)` (0x4B0A00)
-    fn event_script_command_ctor(e: GPtr<u8>, index: u32, task: GPtr<u8>, affects_dead: u32) -> GPtr<u8> = thiscall 0x4B0A00 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420)
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, valid: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
-    /// `CEventScriptCommand::~CEventScriptCommand()` (0x4B0A50, unnamed in the catalogue)
-    fn event_script_command_dtor(e: GPtr<u8>) = thiscall 0x4B0A50 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0), AL
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
     /// `CWorld::FindPlayerSlotWithPedPointer(void*)` (0x563FA0)
     fn find_player_slot_with_ped_pointer(p: GPtr<u8>) -> u32 = cdecl 0x563FA0 => unported;
-    /// `CPathFind::SwitchPedRoadsOffInArea(float x1, float x2, float y1, float y2, float z1, float z2,
-    /// bool off, bool)` (0x452F00), ECX = `ThePaths`; floats as raw dwords
-    fn switch_ped_roads_off_in_area(paths: GPtr<u8>, x1: u32, x2: u32, y1: u32, y2: u32, z1: u32, z2: u32, off: u32, b: u32) = thiscall 0x452F00 => unported;
-    /// `CPhysical::GetHasCollidedWith(CEntity*)` (0x543540), AL
-    fn get_has_collided_with(p: GPtr<u8>, e: GPtr<u8>) -> u8 = thiscall 0x543540 => unported;
     /// `CStreaming::RequestSpecialChar(int32 slot, const char*, int32 flags)` (0x40B450)
     fn request_special_char(slot: u32, name: GPtr<u8>, flags: u32) = cdecl 0x40B450 => unported;
     /// `CStreaming::HasSpecialCharLoaded(int32 slot)` (0x407F00), AL
@@ -135,8 +111,6 @@ orig! {
     /// float angle, bool longDistance, float nearClip, uint8 fade, float fadeSpeed, bool onlyFromBelow,
     /// bool reflectionDelay)` (0x6FC580); floats as raw dwords
     fn register_corona(id: u32, attach: u32, r: u32, g: u32, b: u32, a: u32, pos: GPtr<u32>, radius: u32, far_clip: u32, ty: u32, flare: u32, refl: u32, obst: u32, unused: u32, angle: u32, long_dist: u32, near_clip: u32, fade: u32, fade_speed: u32, below: u32, refl_delay: u32) = cdecl 0x6FC580 => unported;
-    /// `CWorld::StopAllLawEnforcersInTheirTracks()` (0x566C10)
-    fn stop_all_law_enforcers_in_their_tracks() = cdecl 0x566C10 => unported;
 }
 
 /// `TheText` 0xC1B340.

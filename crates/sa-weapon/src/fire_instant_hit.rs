@@ -32,11 +32,10 @@ use crate::weapon_fire::{
     world_reset_line_test_options,
 };
 
+use crate::bindings::audio_report_bullet_hit;
+use sa_world::bindings::ped_get_bone_position;
+use sa_world::bindings::ped_get_transformed_bone_position;
 orig! {
-    /// `CPed::GetTransformedBonePosition(RwV3d& inOut, uint32 bone, bool updateSkin)` (0x5E01C0, thiscall)
-    fn ped_get_transformed_bone_position(ped: GPtr<u8>, pos: GPtr<u8>, bone: u32, update: u32) = thiscall 0x5E01C0 => unported;
-    /// `CPed::GetBonePosition(RwV3d& out, uint32 bone, bool updateSkin)` (0x5E4280, thiscall)
-    fn ped_get_bone_position(ped: GPtr<u8>, pos: GPtr<u8>, bone: u32, update: u32) = thiscall 0x5E4280 => unported;
     /// `CCamera::Find3rdPersonCamTargetVector(float dist, CVector source, CVector& camTarget, CVector&
     /// pointTarget)` (0x514970, thiscall `ret 0x18`)
     #[allow(clippy::too_many_arguments)]
@@ -54,8 +53,6 @@ orig! {
     fn test_line_against_water(sx: f32, sy: f32, sz: f32, ex: f32, ey: f32, ez: f32, out: GPtr<u8>) -> u8 = cdecl 0x6E61B0 => unported;
     /// `Fx_c::TriggerBulletSplash(CVector& pos)` (0x4A10E0, thiscall)
     fn fx_trigger_bullet_splash(fx: GPtr<u8>, pos: GPtr<u8>) = thiscall 0x4A10E0 => unported;
-    /// `CAudioEngine::ReportBulletHit(CEntity*, eSurfaceType, const CVector&, float)` (0x506EC0, thiscall)
-    fn audio_report_bullet_hit(ae: GPtr<u8>, e: GPtr<u8>, surface: u32, pos: GPtr<u8>, angle: f32) = thiscall 0x506EC0 => unported;
     /// `CWeapon::SetUpPelletCol(int32 n, CEntity* owner, CEntity* victim, CVector& point, CColPoint&, CMatrix&
     /// out)` (0x73C710, thiscall `ret 0x18`)
     #[allow(clippy::too_many_arguments)]

@@ -13,47 +13,35 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use sa_core::bindings::entity_register_reference;
+use sa_core::bindings::matrix_mul_vec;
+use sa_core::bindings::tm_get_task_secondary;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::event_script_command_dtor;
+use sa_world::bindings::get_pad_from_player as player_get_pad;
+use sa_world::bindings::hold_entity_drop_entity as hold_drop_entity;
+use sa_world::bindings::pad_exit_vehicle_just_down;
+use sa_world::bindings::physical_add_to_moving_list;
+use sa_world::bindings::placeable_get_matrix;
+use sa_world::bindings::vector_sub;
 orig! {
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
     /// `CTask::MakeAbortable(CPed*, int32, const CEvent*)` (vtable +0x18, `ret 0xC`)
     fn v_task_make_abortable(t: GPtr<u8>, p: GPtr<u8>, prio: u32, e: u32) -> u8 = thiscall vslot 0x18 => unported;
-    /// `CTaskManager::GetTaskSecondary(int32)` (0x681810, `ret 4`)
-    fn tm_get_task_secondary(tm: GPtr<u8>, slot: i32) -> GPtr<u8> = thiscall 0x681810 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70, `ret 4`)
-    fn entity_register_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571B70 => unported;
     /// `CTaskSimpleHoldEntity::ChoosePutDownHeight(CPed*)` (0x693440, `ret 4`)
     fn hold_choose_put_down_height(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x693440 => unported;
     /// `CTaskSimpleHoldEntity::ReleaseEntity()` (0x6916E0)
     fn hold_release_entity(t: GPtr<u8>) = thiscall 0x6916E0 => unported;
     /// `CPhysical::SetIsStatic(bool)` (vtable +0x10, `ret 4`)
     fn v_set_is_static(e: GPtr<u8>, b: u32) = thiscall vslot 0x10 => unported;
-    /// `CPhysical::AddToMovingList()` (0x542800)
-    fn physical_add_to_moving_list(e: GPtr<u8>) = thiscall 0x542800 => unported;
     /// `CTaskSimpleHoldEntity::StartAnim(CPed*)` (0x692FF0, `ret 4`)
     fn hold_start_anim(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x692FF0 => unported;
-    /// `CTaskSimpleHoldEntity::DropEntity(CPed*, bool)` (0x6930F0, `ret 8`)
-    fn hold_drop_entity(t: GPtr<u8>, ped: GPtr<u8>, b: u32) = thiscall 0x6930F0 => unported;
-    /// `CPlaceable::GetMatrix()` (0x411990)
-    fn placeable_get_matrix(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x411990 => unported;
-    /// `operator*(const CMatrix&, const CVector&)` (0x59C890, cdecl, hidden result pointer first)
-    fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
-    /// `VectorSub(CVector* out, const CVector* a, const CVector* b)` (0x40FE60): out = a - b
-    fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CPlayerPed::GetPadFromPlayer()` (0x609560)
-    fn player_get_pad(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x609560 => unported;
-    /// `CPad::ExitVehicleJustDown()` (0x540120)
-    fn pad_exit_vehicle_just_down(pad: GPtr<u8>) -> u8 = thiscall 0x540120 => unported;
     /// `CTaskSimplePutDownEntity::CTaskSimplePutDownEntity()` (0x691990)
     fn put_down_entity_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x691990 => unported;
     /// `CEventScriptCommand::CEventScriptCommand(int32 primaryTaskIndex, CTask*, bool)` (0x4B0A00, `ret 0xC`)
     fn event_script_command_ctor(e: GPtr<u8>, idx: i32, task: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4B0A00 => unported;
-    /// `CEventScriptCommand::~CEventScriptCommand()` (0x4B0A50)
-    fn event_script_command_dtor(e: GPtr<u8>) = thiscall 0x4B0A50 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, `ret 8`)
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
 }
 
 /// `CTimer::ms_fTimeStep` (0xB7CB5C)

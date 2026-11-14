@@ -57,45 +57,34 @@ pub const FMT_S: u32 = 0x85C714;
 /// `rwID_TEXDICTIONARY`
 pub const RW_ID_TEXDICTIONARY: u32 = 0x16;
 
+pub use crate::bindings::rw_tex_dictionary_create;
+pub use crate::bindings::rw_tex_dictionary_destroy;
+pub use crate::bindings::rw_tex_dictionary_gta_stream_read;
+pub use crate::bindings::rw_tex_dictionary_remove_texture;
+pub use crate::bindings::rw_tex_dictionary_set_current;
+pub use crate::bindings::rw_texture_destroy;
+pub use sa_core::bindings::crt_free_8214bd as free;
+pub use sa_core::bindings::rw_stream_open;
+pub use sa_core::bindings::rw_tex_dictionary_find_named_texture;
+pub use sa_core::bindings::rw_tex_dictionary_for_all_textures;
+pub use sa_core::bindings::rw_tex_dictionary_get_current;
 orig! {
-    /// `RwTexDictionaryGetCurrent()` (0x7F3A90)
-    pub fn rw_tex_dictionary_get_current() -> GPtr<u8> = cdecl 0x7F3A90 => unported;
-    /// `RwTexDictionarySetCurrent(dict)` (0x7F3A70)
-    pub fn rw_tex_dictionary_set_current(dict: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F3A70 => unported;
-    /// `RwTextureDestroy(tex)` (0x7F3820)
-    pub fn rw_texture_destroy(tex: GPtr<u8>) -> i32 = cdecl 0x7F3820 => unported;
-    /// `RwTexDictionaryRemoveTexture(tex)` (0x7F39C0)
-    pub fn rw_tex_dictionary_remove_texture(tex: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F39C0 => unported;
-    /// `RwTexDictionaryFindNamedTexture(dict, name)` (0x7F39F0)
-    pub fn rw_tex_dictionary_find_named_texture(dict: GPtr<u8>, name: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F39F0 => unported;
     /// `RwStreamFindChunk(stream, type, lengthOut, versionOut)` (0x7ED2D0)
     pub fn rw_stream_find_chunk(stream: GPtr<u8>, ty: u32, len: GPtr<u32>, ver: GPtr<u32>) -> i32 = cdecl 0x7ED2D0 => unported;
-    /// `RwTexDictionaryCreate()` (0x7F3600)
-    pub fn rw_tex_dictionary_create() -> GPtr<u8> = cdecl 0x7F3600 => unported;
-    /// `RwTexDictionaryDestroy(dict)` (0x7F36A0)
-    pub fn rw_tex_dictionary_destroy(dict: GPtr<u8>) -> i32 = cdecl 0x7F36A0 => unported;
-    /// `RwTexDictionaryForAllTextures(dict, cb, data)` (0x7F3730)
-    pub fn rw_tex_dictionary_for_all_textures(dict: GPtr<u8>, cb: u32, data: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F3730 => unported;
     /// `RwTextureSetFindCallBack(cb)` (0x7F34D0)
     pub fn rw_texture_set_find_call_back(cb: u32) -> i32 = cdecl 0x7F34D0 => unported;
     /// `RwTextureSetReadCallBack(cb)` (0x7F3500)
     pub fn rw_texture_set_read_call_back(cb: u32) -> i32 = cdecl 0x7F3500 => unported;
-    /// `RwStreamOpen(type, access, data)` (0x7ECEF0)
-    pub fn rw_stream_open(ty: u32, access: u32, data: GPtr<u8>) -> GPtr<u8> = cdecl 0x7ECEF0 => unported;
     /// `RwStreamClose(stream, data)` (0x7ECE20)
     pub fn rw_stream_close(stream: GPtr<u8>, data: GPtr<u8>) -> i32 = cdecl 0x7ECE20 => unported;
     /// CRT `sprintf(buf, fmt, s)` (0x821BB5)
     pub fn sprintf_s(buf: GPtr<u8>, fmt: GPtr<u8>, s: GPtr<u8>) -> i32 = cdecl 0x821BB5 => unported;
     /// CRT `operator new` (0x82119A)
     pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
-    /// CRT `free` (0x8214BD)
-    pub fn free(p: GPtr<u8>) = cdecl 0x8214BD => unported;
     /// `CKeyGen::GetUppercaseKey(name)` (0x53CF30)
     pub fn get_uppercase_key(name: GPtr<u8>) -> u32 = cdecl 0x53CF30 => sa_core::keygen::get_uppercase_key;
     /// `CStreaming::RemoveModel(id)` (0x4089A0)
     pub fn remove_model(id: i32) = cdecl 0x4089A0 => crate::streaming::remove_model;
-    /// `RwTexDictionaryGtaStreamRead(stream)` (0x730FC0)
-    pub fn rw_tex_dictionary_gta_stream_read(stream: GPtr<u8>) -> GPtr<u8> = cdecl 0x730FC0 => crate::rw_gta_stream::rw_tex_dictionary_gta_stream_read;
     /// `RwTexDictionaryGtaStreamRead1(stream)` (0x731070)
     pub fn rw_tex_dictionary_gta_stream_read1(stream: GPtr<u8>) -> GPtr<u8> = cdecl 0x731070 => crate::rw_gta_stream::rw_tex_dictionary_gta_stream_read1;
     /// `RwTexDictionaryGtaStreamRead2(stream, dict)` (0x731150)

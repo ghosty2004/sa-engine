@@ -11,43 +11,30 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use sa_core::bindings::entity_update_rw_frame;
+use sa_core::bindings::matrix_assign;
+use sa_core::bindings::matrix_dtor;
+use sa_core::bindings::matrix_rotate_z;
+use sa_core::bindings::matrix_update_matrix;
+use sa_core::bindings::matrix_update_rw_matrix;
+use sa_core::bindings::rw_v3d_transform_points;
+use sa_world::bindings::hold_entity_drop_entity;
+use sa_world::bindings::matrix_copy_ctor;
+use sa_world::bindings::multiply3x3 as multiply_3x3;
+use sa_world::bindings::placeable_get_matrix;
+use sa_world::bindings::placeable_set_posn;
+use sa_world::bindings::simple_transform_update_rw_matrix;
 orig! {
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_task_type_he(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
     /// `CTask::MakeAbortable(CPed*, int32, const CEvent*)` (vtable +0x18, `ret 0xC`)
     fn v_task_make_abortable_he(t: GPtr<u8>, p: GPtr<u8>, prio: u32, e: u32) -> u8 = thiscall vslot 0x18 => unported;
-    /// `CTaskSimpleHoldEntity::DropEntity(CPed*, bool)` (0x6930F0, `ret 8`)
-    fn hold_entity_drop_entity(t: GPtr<u8>, p: GPtr<u8>, b: u32) = thiscall 0x6930F0 => unported;
-    /// `CPlaceable::SetPosn(const CVector&)` (0x4241C0, `ret 4`)
-    fn placeable_set_posn(e: GPtr<u8>, v: GPtr<u8>) = thiscall 0x4241C0 => unported;
-    /// `CPlaceable::GetMatrix()` (0x411990)
-    fn placeable_get_matrix(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x411990 => unported;
-    /// `CMatrix::UpdateMatrix(RwMatrix*)` (0x59AD20, `ret 4`)
-    fn matrix_update_matrix(m: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x59AD20 => unported;
-    /// `CMatrix::UpdateRwMatrix(RwMatrix*)` (0x59AD70, `ret 4`)
-    fn matrix_update_rw_matrix(m: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x59AD70 => unported;
-    /// `CSimpleTransform::UpdateRwMatrix(RwMatrix*)` (0x54EF40, `ret 4`)
-    fn simple_transform_update_rw_matrix(t: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x54EF40 => unported;
-    /// `CEntity::UpdateRwFrame()` (0x532B00)
-    fn entity_update_rw_frame(e: GPtr<u8>) = thiscall 0x532B00 => unported;
-    /// `Multiply3x3(const CMatrix&, const CVector&)` (0x59C790; hidden result pointer first)
-    fn multiply_3x3(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C790 => unported;
-    /// `CMatrix::CMatrix(const CMatrix&)` (0x59BCF0, `ret 4`)
-    fn matrix_copy_ctor(m: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = thiscall 0x59BCF0 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
-    /// `CMatrix::RotateZ(float)` (0x59B390, `ret 4`)
-    fn matrix_rotate_z(m: GPtr<u8>, a: u32) = thiscall 0x59B390 => unported;
-    /// `CMatrix::operator=(const CMatrix&)` (0x59BBC0, `ret 4`)
-    fn matrix_assign(m: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = thiscall 0x59BBC0 => unported;
     /// `GetAnimHierarchyFromSkinClump(RpClump*)` (0x734A40)
     fn get_anim_hierarchy_from_skin_clump(c: u32) -> u32 = cdecl 0x734A40 => unported;
     /// `RpHAnimIDGetIndex(RpHAnimHierarchy*, int32)` (0x7C51A0)
     fn hanim_id_get_index(h: u32, id: u32) -> i32 = cdecl 0x7C51A0 => unported;
     /// `RpHAnimHierarchyGetMatrixArray(RpHAnimHierarchy*)` (0x7C5120)
     fn hanim_hierarchy_get_matrix_array(h: u32) -> GPtr<u8> = cdecl 0x7C5120 => unported;
-    /// `RwV3dTransformPoints(RwV3d* out, const RwV3d* in, int32 n, const RwMatrix*)` (0x7EDD90)
-    fn rw_v3d_transform_points(out: GPtr<u8>, inp: GPtr<u8>, n: i32, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EDD90 => unported;
 }
 
 use sa_core::field::ptr_of as vp;

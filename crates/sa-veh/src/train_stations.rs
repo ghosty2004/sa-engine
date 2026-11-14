@@ -9,29 +9,22 @@ use sa_world::world::common::find_player_vehicle;
 
 use crate::common::{b, ftol32, g, rd, wr, x, xi};
 
+use sa_core::bindings::crt_free as operator_delete;
+use sa_core::bindings::load_all_requested_models;
+use sa_core::bindings::streaming_load_scene as load_scene;
+use sa_core::bindings::world_add;
+use sa_core::bindings::world_remove;
+use sa_world::bindings::get_stat_value;
+use sa_world::bindings::set_orientation;
 orig! {
-    /// `operator delete` (0x8213AE)
-    fn operator_delete(p: GPtr<u8>) = cdecl 0x8213AE => unported;
     /// `CTrain::FindNextStationPositionInDirection(bool, float, float*, int32*)` (0x6F5F00)
     fn call_find_next_station(clockwise: u32, pos: f32, dist: GPtr<f32>, idx: GPtr<i32>) = cdecl 0x6F5F00 => find_next_station_position_in_direction;
     /// `CTheZones::GetLevelFromPosition(const CVector&)` (0x572300)
     fn get_level_from_position(p: GPtr<u8>) -> i32 = cdecl 0x572300 => unported;
-    /// `CStats::GetStatValue(uint16)` (0x558E40), ST0
-    fn get_stat_value(stat: u32) -> f64 = cdecl 0x558E40 => unported;
-    /// `CStreaming::LoadScene(const CVector&)` (0x40EB70)
-    fn load_scene(p: GPtr<u8>) = cdecl 0x40EB70 => unported;
-    /// `CStreaming::LoadAllRequestedModels(bool)` (0x40EA10)
-    fn load_all_requested_models(only_priority: u32) = cdecl 0x40EA10 => unported;
     /// `CGameLogic::PassTime(uint32)` (0x4414C0)
     fn game_logic_pass_time(minutes: i32) = cdecl 0x4414C0 => unported;
-    /// `CWorld::Remove(CEntity*)` (0x563280)
-    fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
-    /// `CWorld::Add(CEntity*)` (0x563220)
-    fn world_add(e: GPtr<u8>) = cdecl 0x563220 => unported;
     /// virtual slot 0: the scalar deleting destructor
     fn entity_vdelete(e: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
-    /// `CPlaceable::SetOrientation(float, float, float)` (0x439A80)
-    fn set_orientation(e: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x439A80 => unported;
     /// `CWorld::ProcessVerticalLine(const CVector&, float, CColPoint&, CEntity*&, bool x7, CStoredCollPoly*)` (0x5674E0)
     fn process_vertical_line(p: GPtr<u8>, z: f32, cp: GPtr<u8>, ent: GPtr<u8>, b0: u32, b1: u32, b2: u32, b3: u32, b4: u32, b5: u32, poly: u32) -> u8 = cdecl 0x5674E0 => unported;
 }

@@ -141,6 +141,12 @@ const CALC_BOX_FLOATS_B: [(isize, u32); 8] = [
     (0x94, 0xB7A2B8),
 ];
 
+pub use sa_core::bindings::atexit;
+pub use sa_core::bindings::rgba_ctor;
+pub use sa_core::bindings::vector_normalise;
+pub use sa_world::bindings::cam_no_rain;
+pub use sa_world::bindings::is_vision_fx_active;
+pub use sa_world::bindings::player_no_rain;
 orig! {
     /// `CTimeCycle::CalcColoursForPoint(CVector point, CColourSet* out)` (0x5603D0; the CVector by value)
     pub fn calc_colours_for_point(px: u32, py: u32, pz: u32, out: GPtr<u8>) = cdecl 0x5603D0 => unported;
@@ -150,14 +156,8 @@ orig! {
     pub fn colour_set_ctor_call(s: GPtr<u8>, time_id: i32, weather_id: i32) -> GPtr<u8> = thiscall 0x55F4B0 => unported;
     /// `CColourSet::Interpolate(a, b, fa, fb, ignoreSky)` (0x55F870)
     pub fn colour_set_interpolate_call(s: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, fa: u32, fb: u32, ignore_sky: u32) = thiscall 0x55F870 => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    pub fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
     /// `CShadows::CalcPedShadowValues(CVector sunPos, float* frontX, frontY, sideX, sideY, dispX, dispY)` (0x7076C0)
     pub fn calc_ped_shadow_values(x: u32, y: u32, z: u32, fx: GPtr<u8>, fy: GPtr<u8>, sx: GPtr<u8>, sy: GPtr<u8>, dx: GPtr<u8>, dy: GPtr<u8>) = cdecl 0x7076C0 => unported;
-    /// `CCullZones::PlayerNoRain()` (0x72DDC0)
-    pub fn player_no_rain() -> u8 = cdecl 0x72DDC0 => unported;
-    /// `CCullZones::CamNoRain()` (0x72DDB0)
-    pub fn cam_no_rain() -> u8 = cdecl 0x72DDB0 => unported;
     /// `CTimeCycle::SetConstantParametersForPostFX()` (0x560210)
     pub fn set_constant_parameters_for_post_fx_call() = cdecl 0x560210 => unported;
     /// `CFileMgr::SetDir(const char*)` (0x5387D0)
@@ -170,12 +170,6 @@ orig! {
     pub fn load_line(f: u32) -> GPtr<u8> = cdecl 0x536F80 => unported;
     /// CRT `sscanf(line, fmt, ...)` (0x8220AD) with the 52 pointers `CTimeCycle::Initialise` passes
     pub fn sscanf_52(line: GPtr<u8>, fmt: u32, p0: u32, p1: u32, p2: u32, p3: u32, p4: u32, p5: u32, p6: u32, p7: u32, p8: u32, p9: u32, p10: u32, p11: u32, p12: u32, p13: u32, p14: u32, p15: u32, p16: u32, p17: u32, p18: u32, p19: u32, p20: u32, p21: u32, p22: u32, p23: u32, p24: u32, p25: u32, p26: u32, p27: u32, p28: u32, p29: u32, p30: u32, p31: u32, p32: u32, p33: u32, p34: u32, p35: u32, p36: u32, p37: u32, p38: u32, p39: u32, p40: u32, p41: u32, p42: u32, p43: u32, p44: u32, p45: u32, p46: u32, p47: u32, p48: u32, p49: u32, p50: u32, p51: u32) -> i32 = cdecl 0x8220AD => unported;
-    /// `CPostEffects::IsVisionFXActive()` (0x7034F0)
-    pub fn is_vision_fx_active() -> u8 = cdecl 0x7034F0 => unported;
-    /// `CRGBA::CRGBA(r, g, b, a)` (0x7170C0)
-    pub fn rgba_ctor(c: GPtr<u8>, r: u32, g: u32, b: u32, a: u32) -> GPtr<u8> = thiscall 0x7170C0 => unported;
-    /// CRT `_atexit` (0x821D1E)
-    pub fn atexit(f: u32) -> i32 = cdecl 0x821D1E => unported;
 }
 
 fn cur(off: usize) -> usize {

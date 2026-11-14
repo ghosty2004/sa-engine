@@ -3,16 +3,12 @@
 #![allow(clippy::unreadable_literal)]
 
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
-orig! {
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00, `ret 4`)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CTaskComplex::~CTaskComplex()` (`FUN_0061a3d0`)
-    fn task_complex_dtor(t: GPtr<u8>) = thiscall 0x61A3D0 => unported;
-}
+use crate::bindings::task_complex_dtor;
+use sa_core::bindings::entity_clean_up_old_reference;
 
 /// `FUN_0046ad70` (0x46AD70, thiscall): `CTaskComplexSeekEntity<CEntitySeekPosCalculatorStandard>::~...`. Vtable
 /// 0x859DF8; the seek target (+0xC), when set, has its reference to +0xC cleaned up (`CleanUpOldReference`); the

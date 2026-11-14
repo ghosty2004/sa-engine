@@ -32,6 +32,7 @@ sa_core::globals! {
     pub static ENGINE_REGISTRY @ 0x8E2298: [u32; 6] = [0x158, 0x158, 0, 0, 0, 0];
 }
 
+pub use sa_core::bindings::rw_stream_skip as stream_skip;
 orig! {
     /// `_rwGetNumEngineInstances()` (0x7F2B90, uncatalogued name)
     pub fn get_num_engine_instances() -> u32 = cdecl 0x7F2B90 => unported;
@@ -39,8 +40,6 @@ orig! {
     pub fn stream_find_chunk(s: GPtr<u8>, ty: u32, len: GPtr<u32>, ver: GPtr<u32>) -> i32 = cdecl 0x7ED2D0 => unported;
     /// `_rwStreamReadChunkHeader(stream, type, length, version, buildNum)` (0x7ED0F0)
     pub fn stream_read_chunk_header(s: GPtr<u8>, ty: GPtr<u32>, len: GPtr<u32>, ver: GPtr<u32>, build: GPtr<u32>) -> i32 = cdecl 0x7ED0F0 => unported;
-    /// `RwStreamSkip(stream, length)` (0x7ECD00)
-    pub fn stream_skip(s: GPtr<u8>, len: u32) -> GPtr<u8> = cdecl 0x7ECD00 => unported;
     /// `_rwStreamWriteVersionedChunkHeader(stream, type, size, version, buildNum)` (0x7ED270)
     pub fn stream_write_versioned_chunk_header(s: GPtr<u8>, ty: u32, size: i32, ver: u32, build: u32) -> GPtr<u8> = cdecl 0x7ED270 => unported;
 

@@ -13,35 +13,32 @@ use sa_math::x87::X87;
 
 use crate::common::{active_cam, cam_of, ftol32, g, k, rd, wr, x};
 
+use crate::bindings::process_fov_lerp;
+use crate::bindings::process_vector_move_linear;
+use crate::bindings::process_vector_track_linear;
+use sa_core::bindings::camera_process_fade as process_fade;
+use sa_core::bindings::camera_process_music_fade as process_music_fade;
+use sa_core::bindings::cross_product;
+use sa_core::bindings::draw_set_fov;
+use sa_core::bindings::entity_register_reference as register_reference;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::find_player_vehicle;
+use sa_core::bindings::rw_camera_set_far_clip_plane;
+use sa_core::bindings::rw_camera_set_near_clip_plane;
+use sa_core::bindings::vector_normalise as normalise;
+use sa_pop::bindings::cam_stairs_for_player;
+use sa_world::bindings::process_line_of_sight;
+use sa_world::bindings::vector_add;
+use sa_world::bindings::vector_sub;
 orig! {
     /// `CCollision::ResetMadeInvisibleObjects()` (0x415540)
     fn reset_made_invisible_objects() = cdecl 0x415540 => unported;
     /// `CCamera::UpdateTargetEntity()` (0x50C360)
     fn update_target_entity(this: GPtr<u8>) = thiscall 0x50C360 => unported;
-    /// `FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `FindPlayerVehicle(int32, bool)` (0x56E0D0)
-    fn find_player_vehicle(id: i32, remote: u32) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    fn register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
     /// `CCamera::CamControl()` (0x527FA0)
     fn cam_control(this: GPtr<u8>) = thiscall 0x527FA0 => unported;
-    /// `CCamera::ProcessVectorMoveLinear()` (0x5164A0)
-    fn process_vector_move_linear(this: GPtr<u8>) = thiscall 0x5164A0 => unported;
-    /// `CCamera::ProcessVectorTrackLinear()` (0x516440)
-    fn process_vector_track_linear(this: GPtr<u8>) = thiscall 0x516440 => unported;
-    /// `CCamera::ProcessFOVLerp()` (0x516500)
-    fn process_fov_lerp(this: GPtr<u8>) = thiscall 0x516500 => unported;
-    /// `CCamera::ProcessFade()` (0x50B5D0)
-    fn process_fade(this: GPtr<u8>) = thiscall 0x50B5D0 => unported;
-    /// `CCamera::ProcessMusicFade()` (0x50B6D0)
-    fn process_music_fade(this: GPtr<u8>) = thiscall 0x50B6D0 => unported;
     /// `CCamera::ProcessWideScreenOn()` (0x50B890)
     fn process_wide_screen_on(this: GPtr<u8>) = thiscall 0x50B890 => unported;
-    /// `RwCameraSetNearClipPlane(RwCamera*, float)` (0x7EE1D0); the float as its bits
-    fn rw_camera_set_near_clip_plane(cam: GPtr<u8>, near: u32) -> GPtr<u8> = cdecl 0x7EE1D0 => unported;
-    /// `RwCameraSetFarClipPlane(RwCamera*, float)` (0x7EE2A0); the float as its bits
-    fn rw_camera_set_far_clip_plane(cam: GPtr<u8>, far: u32) -> GPtr<u8> = cdecl 0x7EE2A0 => unported;
     /// `CGeneral::GetATanOfXY(float, float)` (0x53CC70, ST0); the floats as their bits
     fn get_atan_of_xy(xb: u32, yb: u32) -> f64 = cdecl 0x53CC70 => unported;
     /// `CCam::Process()` (0x526FC0)
@@ -50,24 +47,10 @@ orig! {
     fn process_shake(this: GPtr<u8>, ratio: u32) = thiscall 0x516560 => unported;
     /// `CCamera::StoreValuesDuringInterPol(CVector&, CVector&, CVector&, float&)` (0x50C290)
     fn store_values_during_inter_pol(this: GPtr<u8>, s: GPtr<u8>, t: GPtr<u8>, u: GPtr<u8>, f: GPtr<u8>) = thiscall 0x50C290 => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    fn normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
-    /// `CrossProduct(CVector* out, const CVector*, const CVector*)` (0x59C730), returns `out`
-    fn cross_product(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C730 => unported;
-    /// `VectorSub(CVector* out, const CVector*, const CVector*)` (0x40FE60), returns `out`
-    fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => unported;
     /// `operator*(CVector*, const CVector&, float)` (0x40FEC0), returns `out`; the float as its bits
     fn vector_scale(out: GPtr<u8>, v: GPtr<u8>, s: u32) -> GPtr<u8> = cdecl 0x40FEC0 => unported;
-    /// `operator+(CVector*, const CVector&, const CVector&)` (0x40FE30), returns `out`
-    fn vector_add(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE30 => unported;
     /// `CCam::KeepTrackOfTheSpeed(...)` (0x509DF0)
     fn keep_track_of_the_speed(cam: GPtr<u8>, s: GPtr<u8>, t: GPtr<u8>, u: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, f: GPtr<u8>) = thiscall 0x509DF0 => unported;
-    /// `CCullZones::CamStairsForPlayer()` (0x72DD30, AL)
-    fn cam_stairs_for_player() -> u8 = cdecl 0x72DD30 => unported;
-    /// `CWorld::ProcessLineOfSight(...)` (0x56BA00, AL)
-    fn process_line_of_sight(a: GPtr<u8>, b: GPtr<u8>, cp: GPtr<u8>, ent: GPtr<u8>, bu: u32, ve: u32, pe: u32, ob: u32, du: u32, st: u32, ic: u32, sh: u32) -> u8 = cdecl 0x56BA00 => unported;
-    /// `CDraw::SetFOV(float)` (0x6FF410); the float as its bits
-    fn draw_set_fov(fov: u32) = cdecl 0x6FF410 => unported;
     /// `CCamera::CalculateDerivedValues(bool, bool)` (0x5150E0)
     fn calculate_derived_values(this: GPtr<u8>, a: u32, b: u32) = thiscall 0x5150E0 => unported;
     /// `CCamera::CopyCameraMatrixToRWCam(bool)` (0x50AFA0)

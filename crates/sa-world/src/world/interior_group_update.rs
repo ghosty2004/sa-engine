@@ -9,6 +9,14 @@ use sa_core::{hook, orig};
 
 use super::common::{ftol32, g, rd, wr, xi};
 
+use crate::bindings::interior_manager_return_interior_to_pool;
+use crate::bindings::ped_is_pointer_valid;
+use crate::bindings::population_remove_ped;
+use sa_core::bindings::atexit;
+use sa_core::bindings::crt_free_8214bd as crt_free;
+use sa_core::bindings::eh_vector_ctor;
+use sa_core::bindings::ped_is_alive;
+use sa_stream::bindings::rw_texture_destroy;
 orig! {
     /// `InteriorGroup_c::CalcIsVisible()` (0x595200)
     fn ig_calc_is_visible(ig: GPtr<u8>) = thiscall 0x595200 => unported;
@@ -28,32 +36,16 @@ orig! {
     fn ig_remove_ped(ig: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x594E30 => unported;
     /// `InteriorGroup_c::UpdateOfficePeds()` (0x594E90)
     fn ig_update_office_peds(ig: GPtr<u8>) = thiscall 0x594E90 => unported;
-    /// `CPed::IsPointerValid()` (0x5E4220)
-    fn ped_is_pointer_valid(p: GPtr<u8>) -> u8 = thiscall 0x5E4220 => unported;
-    /// `CPed::IsAlive()` (0x5E0170)
-    fn ped_is_alive(p: GPtr<u8>) -> u8 = thiscall 0x5E0170 => unported;
-    /// `CPopulation::RemovePed(CPed*)` (0x610F20)
-    fn population_remove_ped(p: GPtr<u8>) = cdecl 0x610F20 => unported;
     /// `Interior_c::Exit()` (0x592230)
     fn interior_exit(i: GPtr<u8>) = thiscall 0x592230 => unported;
-    /// `InteriorManager_c::ReturnInteriorToPool(Interior_c*)` (0x5984B0)
-    fn interior_manager_return_interior_to_pool(m: GPtr<u8>, i: GPtr<u8>) = thiscall 0x5984B0 => unported;
     /// `CPathFind::RemoveInterior(uint32)` (0x44E1A0)
     fn path_find_remove_interior(pf: GPtr<u8>, id: i32) = thiscall 0x44E1A0 => unported;
-    /// `RwTextureDestroy(RwTexture*)` (0x7F3820)
-    fn rw_texture_destroy(t: GPtr<u8>) -> i32 = cdecl 0x7F3820 => unported;
-    /// CRT `free` (0x8214BD)
-    fn crt_free(p: GPtr<u8>) = cdecl 0x8214BD => unported;
     /// `Interior_c::AddInteriorInfo(int32, float, float, int32, CEntity*)` (0x591E40)
     fn interior_add_interior_info(i: GPtr<u8>, kind: i32, x: f32, y: f32, dir: u32, ent: u32) = thiscall 0x591E40 => unported;
     /// `CPlayerInfo::CPlayerInfo()` (0x571920)
     fn player_info_ctor(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x571920 => unported;
     /// `0x54F440`: the `CMatrixLinkList` constructor
     fn matrix_link_list_ctor(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x54F440 => unported;
-    /// CRT `eh vector constructor iterator` (0x821D30, stdcall)
-    fn eh_vector_ctor(arr: GPtr<u8>, size: u32, n: u32, ctor: u32, dtor: u32) = stdcall 0x821D30 => unported;
-    /// CRT `_atexit` (0x821D1E)
-    fn atexit(f: u32) -> i32 = cdecl 0x821D1E => unported;
 }
 
 /// `InteriorGroup_c::Update()` (0x5968E0): visibility; paths set up until +0xB8 is set; peds set up

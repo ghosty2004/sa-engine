@@ -7,19 +7,14 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use sa_core::bindings::entity_register_reference;
+use sa_core::bindings::vector_from_multiply;
+use sa_core::bindings::vector_normalise;
+use sa_world::bindings::multiply3x3;
+use sa_world::bindings::world_get_is_line_of_sight_clear;
 orig! {
-    /// `CVector::FromMultiply(const CMatrix&, const CVector&)` (0x59C670, thiscall on the result, `ret 8`)
-    fn vector_from_multiply(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = thiscall 0x59C670 => unported;
-    /// `Multiply3x3(CVector* out, const CMatrix&, const CVector&)` (0x59C790, cdecl)
-    fn multiply3x3(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C790 => unported;
-    /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, bool x7)` (0x56A490)
-    fn world_get_is_line_of_sight_clear(a: GPtr<u8>, b: GPtr<u8>, bld: u32, veh: u32, ped: u32, obj: u32, dum: u32, see: u32, cam: u32) -> u8 = cdecl 0x56A490 => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
     /// `CPedGeometryAnalyser::IsWanderPathClear(const CVector&, const CVector&, float, int32)` (0x5F2F70)
     fn is_wander_path_clear(a: GPtr<u8>, b: GPtr<u8>, max_height_diff: f32, max_steps: i32) -> u32 = cdecl 0x5F2F70 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70, thiscall, `ret 4`)
-    fn entity_register_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571B70 => unported;
 }
 
 use sa_world::world::common::entity_pos as pos;

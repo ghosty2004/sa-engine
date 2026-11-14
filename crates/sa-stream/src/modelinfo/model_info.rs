@@ -146,6 +146,12 @@ pub const TEMP_COL_MODELS: u32 = 0x968E50;
 /// First of the eight temp atomic models `Initialise` creates.
 pub const FIRST_TEMP_MODEL: i32 = 374;
 
+pub use crate::bindings::rw_texture_destroy;
+pub use sa_core::bindings::atexit;
+pub use sa_core::bindings::memory_free as memory_mgr_free;
+pub use sa_core::bindings::rp_atomic_destroy;
+pub use sa_core::bindings::rp_atomic_set_frame;
+pub use sa_core::bindings::rw_frame_destroy;
 orig! {
     /// `CKeyGen::GetUppercaseKey` (0x53CF30)
     pub fn get_uppercase_key(s: GPtr<u8>) -> u32 = cdecl 0x53CF30 => sa_core::keygen::get_uppercase_key;
@@ -159,18 +165,6 @@ orig! {
     pub fn init_2d_effects(this: MiPtr) = thiscall 0x4C4C20 => super::base::init_2d_effects;
     /// `CBaseModelInfo` Shutdown vcall thunk (0x4C6200)
     pub fn vcall_shutdown_thunk(this: MiPtr) = thiscall 0x4C6200 => super::base::vcall_shutdown_thunk;
-    /// `RwTextureDestroy` (0x7F3820)
-    pub fn rw_texture_destroy(tex: GPtr<u8>) -> i32 = cdecl 0x7F3820 => unported;
-    /// `CMemoryMgr::Free` (0x72F430)
-    pub fn memory_mgr_free(p: GPtr<u8>) = cdecl 0x72F430 => unported;
-    /// `RpAtomicSetFrame` (0x74BF20)
-    pub fn rp_atomic_set_frame(atomic: GPtr<u8>, frame: GPtr<u8>) -> GPtr<u8> = cdecl 0x74BF20 => unported;
-    /// `RwFrameDestroy` (0x7F05A0)
-    pub fn rw_frame_destroy(frame: GPtr<u8>) -> i32 = cdecl 0x7F05A0 => unported;
-    /// `RpAtomicDestroy` (0x749DC0)
-    pub fn rp_atomic_destroy(atomic: GPtr<u8>) -> i32 = cdecl 0x749DC0 => unported;
-    /// CRT `_atexit` (0x821D1E)
-    pub fn atexit(f: u32) -> i32 = cdecl 0x821D1E => unported;
     /// Store constructors (`CStore<T, N>::CStore`, catalogue `FUN_*`, not STREAM rows)
     pub fn atomic_store_ctor(s: GPtr<u8>) -> GPtr<u8> = thiscall 0x4C5CB0 => unported;
     pub fn damage_atomic_store_ctor(s: GPtr<u8>) -> GPtr<u8> = thiscall 0x4C5D10 => unported;
@@ -297,7 +291,6 @@ fn is_vehicle_type(id: i32, n: u32) -> bool {
     f::<u32>(model_info(id), 0x3C).read() == n
 }
 
-
 /// `CModelInfo::IsBoatModel` (0x4C5A70, cdecl, AL): vehicle type 5.
 #[hook(addr = 0x4C5A70, conv = cdecl, name = "CModelInfo::IsBoatModel", expect = "56 8B 74 24 08")]
 pub fn is_boat_model(id: i32) -> bool {
@@ -364,7 +357,6 @@ pub fn is_trailer_model(id: i32) -> bool {
     is_vehicle_type(id, 11)
 }
 
-
 /// `CModelInfo::IsVehicleModelType(int32)` (0x4C5C80, cdecl): the vehicle type, or -1.
 #[hook(addr = 0x4C5C80, conv = cdecl, name = "CModelInfo::IsVehicleModelType", expect = "8B 44 24 04 3D 20 4E 00 00")]
 pub fn is_vehicle_model_type(id: i32) -> i32 {
@@ -387,7 +379,6 @@ fn add_model(s: StoreRef, id: i32) -> MiPtr {
     model_info_slot(id).write(p);
     p
 }
-
 
 /// `CModelInfo::AddAtomicModel(int32)` (0x4C6620, cdecl).
 #[hook(addr = 0x4C6620, conv = cdecl, name = "CModelInfo::AddAtomicModel", expect = "A1 50 E9 AA 00")]
@@ -442,7 +433,6 @@ pub fn add_vehicle_model(id: i32) -> MiPtr {
 pub fn add_ped_model(id: i32) -> MiPtr {
     add_model(ped_store(), id)
 }
-
 
 /// `CModelInfo::Initialise` (0x4C6810).
 #[hook(addr = 0x4C6810, conv = cdecl, name = "CModelInfo::Initialise", expect = "53 56 57 33 C0")]
@@ -540,7 +530,6 @@ pub fn re_init_2d_effects() {
         }
     }
 }
-
 
 /// `__init_CModelInfo__ms_atomicModelInfoStore` (0x84BBF0, CRT initialiser): store constructor, then `_atexit(0x856230)`.
 #[hook(addr = 0x84BBF0, conv = cdecl, name = "__init_CModelInfo__ms_atomicModelInfoStore", expect = "B9 50 E9 AA 00")]
@@ -658,7 +647,6 @@ pub fn init_ped_store() {
 pub fn dtor_ped_store() {
     ped_store_dtor(PED_STORE.ptr().cast());
 }
-
 
 /// Every `#[hook]` of this module, in source order.
 pub const HOOKS: &[HookReg] = &[

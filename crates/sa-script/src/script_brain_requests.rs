@@ -22,6 +22,8 @@ const OBJECT_POOL: usize = 0xB7449C;
 /// `CTheScripts::LocalVariablesForCurrentMission` (0xA48960)
 const MISSION_LOCALS: usize = 0xA48960;
 
+use crate::bindings::brain_task_store_set_task;
+use sa_core::bindings::task_new;
 orig! {
     /// `CTheScripts::AddToWaitingForScriptBrainArray(CEntity*, int16 brainIndex)` (0x46AB60, cdecl)
     fn add_to_waiting_for_script_brain_array(e: GPtr<u8>, index: u32) = cdecl 0x46AB60 => unported;
@@ -33,13 +35,9 @@ orig! {
     fn get_streamed_script_with_this_start_address(this: GPtr<u8>, ip: u32) -> i32 = thiscall 0x470910 => crate::script_tables::get_streamed_script_with_this_start_address_host;
     /// `CTheScripts::RemoveFromWaitingForScriptBrainArray(CEntity*, int16)` (0x46ABC0)
     fn remove_from_waiting_for_script_brain_array(e: GPtr<u8>, index: u32) = cdecl 0x46ABC0 => crate::script_brains::remove_from_waiting_for_script_brain_array;
-    /// `CTask::operator new(uint32)` (0x61A5A0)
-    fn task_new(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => unported;
     /// `thunk_FUN_0156f250` (0x463640): the 8-byte task constructor `ShutdownThisScript` hands to the
     /// brain task store; returns `this`
     fn brain_finish_task_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x463640 => unported;
-    /// `CScriptedBrainTaskStore::SetTask(CPed*, CTask*)` (0x635720)
-    fn brain_task_store_set_task(ped: GPtr<u8>, task: GPtr<u8>) -> GPtr<u8> = cdecl 0x635720 => unported;
     /// `CStreaming::RequestModel(int32 model, int32 flags)` (0x4087E0): EAX is kept (its upper half is
     /// pushed again below)
     fn request_model(model: i32, flags: u32) -> u32 = cdecl 0x4087E0 => unported;

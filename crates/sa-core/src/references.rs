@@ -5,7 +5,7 @@
 
 use crate::mem::GPtr;
 use crate::pools;
-use crate::{globals, hook, orig};
+use crate::{globals, hook};
 
 /// `MAX_NUM_REFERENCES`
 pub const MAX_REFS: u32 = 3000;
@@ -19,21 +19,13 @@ globals! {
 }
 
 pub mod call {
-    use super::*;
-    orig! {
-        /// `CWorld::FindPlayerVehicle(int32 playerId, bool includeRemote)` (cdecl)
-        pub fn find_player_vehicle(id: i32, remote: u32) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
-        /// `CWorld::FindPlayerPed(int32 playerId)` (cdecl)
-        pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-        /// `CEntity::ResolveReferences()` (thiscall)
-        pub fn resolve_references(e: GPtr<u8>) = thiscall 0x571A40 => unported;
-        /// `CEntity::PruneReferences()` (thiscall)
-        pub fn prune_references(e: GPtr<u8>) = thiscall 0x571A90 => unported;
-        /// `CPedGroupMembership::SetLeader(CPed*)` (thiscall)
-        pub fn set_leader(m: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x5FB9C0 => unported;
-        /// `CPedGroup::Process()` (thiscall)
-        pub fn ped_group_process(g: GPtr<u8>) = thiscall 0x5FC7E0 => unported;
-    }
+    
+    pub use crate::bindings::entity_resolve_references as resolve_references;
+    pub use crate::bindings::find_player_ped;
+    pub use crate::bindings::find_player_vehicle;
+    pub use crate::bindings::membership_set_leader as set_leader;
+    pub use crate::bindings::ped_group_process;
+    pub use crate::bindings::prune_references;
 }
 
 use crate::field::at;

@@ -47,6 +47,16 @@ sa_core::globals! {
     pub static ANIM_CACHE_LIST @ 0xB5EB20: [u32; 13] = [0; 13];
 }
 
+pub use crate::bindings::load_anim_file;
+pub use sa_core::bindings::crt_strncpy as strncpy;
+pub use sa_core::bindings::get_first_atomic;
+pub use sa_core::bindings::rp_anim_blend_clump_init;
+pub use sa_core::bindings::rp_clump_destroy;
+pub use sa_core::bindings::rp_clump_for_all_atomics;
+pub use sa_core::bindings::rp_skin_geometry_get_skin;
+pub use sa_core::bindings::rw_stream_close;
+pub use sa_core::bindings::sscanf1;
+pub use sa_core::bindings::streaming_remove_model;
 orig! {
     /// `CLinkList<CAnimBlendHierarchy*>::Insert` (0x4D40C0)
     pub fn call_link_insert(this: GPtr<u8>, data: GPtr<u32>) -> GPtr<u8> = thiscall 0x4D40C0 => link_insert;
@@ -66,8 +76,6 @@ orig! {
     pub fn call_add_anim_assoc_definition(g: GPtr<u8>, b: GPtr<u8>, model: u32, n: u32, descr: u32) -> GPtr<u8> = cdecl 0x4D3BA0 => add_anim_assoc_definition;
     /// `CAnimManager::AddAnimToAssocDefinition` (0x4D3C80)
     pub fn call_add_anim_to_assoc_definition(def: GPtr<u8>, name: GPtr<u8>) = cdecl 0x4D3C80 => add_anim_to_assoc_definition;
-    /// `CAnimManager::LoadAnimFile(RwStream*, bool, const char (*)[32])` (0x4D47F0)
-    pub fn load_anim_file(s: GPtr<u8>, compressed: u32, names: GPtr<u8>) = cdecl 0x4D47F0 => crate::anim_file_load::load_anim_file;
     /// `CAnimBlendHierarchy::Shutdown()` (0x4CF980)
     pub fn hier_shutdown(this: GPtr<u8>) = thiscall 0x4CF980 => crate::hierarchy::shutdown;
     /// `CAnimBlendHierarchy::RemoveUncompressedData()` (0x4CF760)
@@ -94,32 +102,14 @@ orig! {
     pub fn assoc_reference_anim_block(this: GPtr<u8>) = thiscall 0x4CEA50 => crate::assoc::reference_anim_block;
     /// `CAnimBlendAssociation::CAnimBlendAssociation(RpClump*, CAnimBlendHierarchy*)` (0x4CEFC0)
     pub fn assoc_constructor1(this: GPtr<u8>, clump: GPtr<u8>, h: GPtr<u8>) -> GPtr<u8> = thiscall 0x4CEFC0 => crate::assoc::constructor1;
-    /// `CStreaming::RemoveModel(int32)` (0x4089A0)
-    pub fn streaming_remove_model(id: i32) = cdecl 0x4089A0 => unported;
-    /// `RpAnimBlendClumpInit(RpClump*)` (0x4D6720)
-    pub fn rp_anim_blend_clump_init(clump: GPtr<u8>) = cdecl 0x4D6720 => unported;
-    /// `GetFirstAtomic(RpClump*)` (0x734820)
-    pub fn get_first_atomic(clump: GPtr<u8>) -> GPtr<u8> = cdecl 0x734820 => unported;
-    /// `RpSkinGeometryGetSkin(RpGeometry*)` (0x7C7550)
-    pub fn rp_skin_geometry_get_skin(geo: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C7550 => unported;
-    /// `RpClumpForAllAtomics(RpClump*, cb, data)` (0x749B70)
-    pub fn rp_clump_for_all_atomics(clump: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> = cdecl 0x749B70 => unported;
-    /// `RpClumpDestroy(RpClump*)` (0x74A310)
-    pub fn rp_clump_destroy(clump: GPtr<u8>) -> i32 = cdecl 0x74A310 => unported;
     /// `CBaseModelInfo::CreateInstance()` (vtable +0x2C)
     pub fn model_create_instance(mi: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x2C => unported;
     /// `RwStreamOpen(type, access, data)` (0x7ECEF0)
     pub fn rw_stream_open(ty: i32, access: i32, data: GPtr<u8>) -> GPtr<u8> = cdecl 0x7ECEF0 => unported;
-    /// `RwStreamClose(stream, data)` (0x7ECE20)
-    pub fn rw_stream_close(s: GPtr<u8>, data: u32) -> i32 = cdecl 0x7ECE20 => unported;
     /// CRT `sprintf` (0x821BB5) with one argument
     pub fn sprintf1(buf: GPtr<u8>, fmt: GPtr<u8>, a: GPtr<u8>) -> i32 = cdecl 0x821BB5 => unported;
     /// CRT `sscanf` (0x8220AD) with four targets
     pub fn sscanf4(s: GPtr<u8>, fmt: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, c: GPtr<u8>, d: GPtr<u8>) -> i32 = cdecl 0x8220AD => unported;
-    /// CRT `sscanf` (0x8220AD) with one target
-    pub fn sscanf1(s: GPtr<u8>, fmt: GPtr<u8>, a: GPtr<u8>) -> i32 = cdecl 0x8220AD => unported;
-    /// CRT `strncpy` (0x821F40)
-    pub fn strncpy(d: GPtr<u8>, s: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x821F40 => unported;
     /// `CFileMgr::SetDir(const char*)` (0x5387D0)
     pub fn file_set_dir(dir: GPtr<u8>) = cdecl 0x5387D0 => unported;
     /// `CFileMgr::OpenFile(const char*, const char*)` (0x538900)

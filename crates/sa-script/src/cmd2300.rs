@@ -82,20 +82,40 @@ const MSG_FORMAT_WIDTH: usize = 0xA44B64;
 const MSG_FORMAT_FLAG: usize = 0xA44B66;
 const MSG_FORMAT_X: usize = 0xA44B60;
 
+use crate::bindings::add_explosion;
+use crate::bindings::camera_initialise_scriptable_components as initialise_scriptable_components;
+use crate::bindings::find_closest_attractor;
+use crate::bindings::get_proper_index_from_index_used_by_script;
+use crate::bindings::plane_switch_ambient_planes as switch_ambient_planes;
+use crate::bindings::play_preloaded_beat_track;
+use crate::bindings::preload_beat_track;
+use crate::bindings::rgba_set_463370;
+use crate::bindings::switch_ped_roads_off_in_area;
+use crate::bindings::switch_roads_off_in_area;
+use crate::bindings::vehicle_41bdd0;
+use sa_core::bindings::clear_skip;
+use sa_core::bindings::clear_specific_zones_to_trigger_gang_war;
+use sa_core::bindings::rgba_ctor;
+use sa_core::bindings::stricmp;
+use sa_world::bindings::attractor_manager_get_ped_using_effect as get_ped_using_effect;
+use sa_world::bindings::disable_ped_speech;
+use sa_world::bindings::enable_ped_speech;
+use sa_world::bindings::entity_get_is_static;
+use sa_world::bindings::find_ground_z_for_coord as find_ground_z_raw;
+use sa_world::bindings::find_zone_by_label;
+use sa_world::bindings::get_garage_number_by_name;
+use sa_world::bindings::get_ped_attractor_manager;
+use sa_world::bindings::hud_help_message_displayed as help_message_displayed;
+use sa_world::bindings::ped_get_ped_talking as get_ped_talking;
+use sa_world::bindings::set_door_damage;
+use sa_world::bindings::set_up_skip;
 orig! {
     /// `CCamera::VectorTrackLinear(CVector& to, CVector& from, float duration, bool ease)` (0x50D1D0)
     fn vector_track_linear(cam: GPtr<u8>, to: GPtr<u32>, from: GPtr<u32>, duration: f32, ease: u32) = thiscall 0x50D1D0 => unported;
     /// `CCamera::VectorMoveLinear(CVector& to, CVector& from, float duration, bool ease)` (0x50D160)
     fn vector_move_linear(cam: GPtr<u8>, to: GPtr<u32>, from: GPtr<u32>, duration: f32, ease: u32) = thiscall 0x50D160 => unported;
-    /// `CCamera::InitialiseScriptableComponents()` (0x50D2D0)
-    fn initialise_scriptable_components(cam: GPtr<u8>) = thiscall 0x50D2D0 => unported;
-    /// `CExplosion::AddExplosion(CEntity* victim, CPed* creator, eExplosionType, CVector pos, uint32 lifetime,
-    /// bool makeSound, float camShake, bool visibility)` (0x736A50; the vector by value)
-    fn add_explosion(victim: u32, creator: u32, ty: u32, x: u32, y: u32, z: u32, lifetime: u32, make_sound: u32, cam_shake: u32, visibility: u32) = cdecl 0x736A50 => unported;
     /// `CPostEffects::ScriptHeatHazeFXSwitch(bool)` (0x701160)
     fn script_heat_haze_fx_switch(on: u32) = cdecl 0x701160 => unported;
-    /// `CHud::HelpMessageDisplayed()` (0x588B50), AL
-    fn help_message_displayed() -> u8 = cdecl 0x588B50 => unported;
     /// `CDarkel::CheckDamagedWeaponType(int32 damageWeaponId, int32 expectedDamageWeaponId)` (0x43D9E0), AL
     fn check_damaged_weapon_type(got: i32, want: u32) -> u8 = cdecl 0x43D9E0 => unported;
     /// `CPad::GetPad(int32)` (0x53FB70)
@@ -106,16 +126,10 @@ orig! {
     fn object_lock_door(o: GPtr<u8>) = thiscall 0x59F5C0 => unported;
     /// `CEntity` virtual slot 4 (+0x10, `SetIsStatic(bool)`)
     fn entity_set_is_static(e: GPtr<u8>, b: u32) = thiscall vslot 0x10 => unported;
-    /// `CTheZones::FindZoneByLabel(const char*, eZoneType)` (0x572C40), AX
-    fn find_zone_by_label(label: GPtr<u8>, ty: u32) -> u16 = cdecl 0x572C40 => unported;
     /// `CGangWars::SetSpecificZoneToTriggerGangWar(int32)` (0x444010)
     fn set_specific_zone_to_trigger_gang_war(z: i32) = cdecl 0x444010 => unported;
-    /// `CGangWars::ClearSpecificZonesToTriggerGangWar()` (0x443FF0)
-    fn clear_specific_zones_to_trigger_gang_war() = cdecl 0x443FF0 => unported;
     /// `CMenuSystem::SetActiveMenuItem(uint8, uint8)` (0x5820C0)
     fn set_active_menu_item(menu: u32, item: u32) = cdecl 0x5820C0 => unported;
-    /// `CStreamedScripts::GetProperIndexFromIndexUsedByScript(int16)` (0x470810), AX
-    fn get_proper_index_from_index_used_by_script(m: GPtr<u8>, i: u32) -> u16 = thiscall 0x470810 => unported;
     /// 0x4700E0 (cdecl (index); tail jump to `CStreaming::SetMissionDoesntRequireModel(index + 0x6676)`)
     fn set_mission_doesnt_require_streamed_script(i: i32) = cdecl 0x4700E0 => unported;
     /// 0x40C1C0 (cdecl (index); tail jump to `CStreaming::RemoveModel(index + 0x6676)`)
@@ -126,30 +140,8 @@ orig! {
     fn set_weather_to_appropriate_type_now() = cdecl 0x72A790 => unported;
     /// `CAudioZones::SwitchAudioZone(char*, bool)` (0x508320)
     fn switch_audio_zone(name: GPtr<u8>, on: u32) = cdecl 0x508320 => unported;
-    /// Unnamed thiscall at 0x41BDD0 (a `.HOODLUM` stub; the vehicle's engine-on setter) taking a bool
-    fn vehicle_41bdd0(v: GPtr<u8>, b: u32) = thiscall 0x41BDD0 => unported;
-    /// The closest-attractor search at 0x6002F0 (cdecl, 9 dwords: `(CVector* pos, float range, int32 model,
-    /// int32 5, char* name, bool, C2dEffect* inUse, C2dEffect** outEffect, CEntity** outEntity)`)
-    fn find_closest_attractor(
-        pos: GPtr<u32>, range: u32, model: i32, five: u32, name: GPtr<u8>, b: u32, in_use: u32,
-        out_effect: GPtr<u32>, out_entity: GPtr<u32>
-    ) = cdecl 0x6002F0 => unported;
-    /// `GetPedAttractorManager()` (0x5EE190)
-    fn get_ped_attractor_manager() -> GPtr<u8> = cdecl 0x5EE190 => unported;
-    /// `CPedAttractorManager::GetPedUsingEffect(const C2dEffect*, const CEntity*)` (0x5EBE50)
-    fn get_ped_using_effect(m: GPtr<u8>, fx: u32, e: u32) -> GPtr<u8> = thiscall 0x5EBE50 => unported;
-    /// `CPathFind::SwitchRoadsOffInArea(x1, x2, y1, y2, z1, z2, bool off, bool cars, bool force)` (0x452C80); raw floats
-    fn switch_roads_off_in_area(
-        p: GPtr<u8>, x1: u32, x2: u32, y1: u32, y2: u32, z1: u32, z2: u32, off: u32, cars: u32, force: u32
-    ) = thiscall 0x452C80 => unported;
-    /// `CPathFind::SwitchPedRoadsOffInArea(x1, x2, y1, y2, z1, z2, bool off, bool)` (0x452F00); raw floats
-    fn switch_ped_roads_off_in_area(
-        p: GPtr<u8>, x1: u32, x2: u32, y1: u32, y2: u32, z1: u32, z2: u32, off: u32, b: u32
-    ) = thiscall 0x452F00 => unported;
     /// `CCamera::LerpFOV(float from, float to, float duration, bool ease)` (0x50D280); from/to raw
     fn lerp_fov(cam: GPtr<u8>, from: u32, to: u32, duration: f32, ease: u32) = thiscall 0x50D280 => unported;
-    /// `CPlane::SwitchAmbientPlanes(bool)` (0x6CCC50)
-    fn switch_ambient_planes(on: u32) = cdecl 0x6CCC50 => unported;
     /// `CPostEffects::ScriptDarknessFilterSwitch(bool, int32)` (0x701170)
     fn script_darkness_filter_switch(on: u32, alpha: u32) = cdecl 0x701170 => unported;
     /// `CScriptsForBrains::AddNewScriptBrain(int16 index, int16 model, uint16 priority, int8 attachType, int8
@@ -167,16 +159,8 @@ orig! {
     /// `CCamera::VectorMoveRunning()` (0x4748A0) / `VectorTrackRunning()` (0x474870); the whole EAX is pushed
     fn vector_move_running(cam: GPtr<u8>) -> u32 = thiscall 0x4748A0 => unported;
     fn vector_track_running(cam: GPtr<u8>) -> u32 = thiscall 0x474870 => unported;
-    /// CRT `_stricmp` (0x8229B6)
-    fn stricmp(a: GPtr<u8>, b: GPtr<u8>) -> i32 = cdecl 0x8229B6 => unported;
-    /// `CRGBA::CRGBA(uint8, uint8, uint8, uint8)` (0x7170C0), returns this
-    fn rgba_ctor(c: GPtr<u8>, r: u32, g: u32, b: u32, a: u32) -> GPtr<u8> = thiscall 0x7170C0 => unported;
-    /// Unnamed thiscall at 0x463370 (a `.HOODLUM` stub) taking `const CRGBA*`: the script rectangle's colour copy
-    fn rgba_set_463370(c: GPtr<u8>, from: GPtr<u8>) = thiscall 0x463370 => unported;
     /// `CPhysical::AttachEntityToEntity(CEntity*, CVector offset, CVector rotation)` (0x54D570); vectors by value
     fn attach_entity_to_entity(p: GPtr<u8>, e: GPtr<u8>, ox: u32, oy: u32, oz: u32, rx: u32, ry: u32, rz: u32) = thiscall 0x54D570 => unported;
-    /// `CGarages::GetGarageNumberByName(const char*)` (0x447680), AX
-    fn get_garage_number_by_name(name: GPtr<u8>) -> u16 = cdecl 0x447680 => unported;
     /// `CShopping::HasPlayerBought(uint32)` (0x49B5E0); the whole EAX is pushed
     fn has_player_bought(item: u32) -> u32 = cdecl 0x49B5E0 => unported;
     /// `CCamera::SetCameraDirectlyInFrontForFollowPed_ForAPed_CamOnAString(CPed*)` (0x50BE30)
@@ -189,33 +173,16 @@ orig! {
     fn update_money_per_day(h: u32, money: u32) = cdecl 0x455680 => unported;
     /// 0x43E090 (thiscall on the `CEntryExit`, `CVector*` out; gr `GetPositionRelativeToOutsideWorld`)
     fn entry_exit_position_43e090(e: GPtr<u8>, out: GPtr<u32>) = thiscall 0x43E090 => unported;
-    /// `CPed::GetPedTalking()` (0x5EFF50), AL
-    fn get_ped_talking(p: GPtr<u8>) -> u8 = thiscall 0x5EFF50 => unported;
-    /// `CPed::DisablePedSpeech(int16)` (0x5EFF60) / `EnablePedSpeech()` (0x5EFF70)
-    fn disable_ped_speech(p: GPtr<u8>, b: u32) = thiscall 0x5EFF60 => unported;
-    fn enable_ped_speech(p: GPtr<u8>) = thiscall 0x5EFF70 => unported;
-    /// `CGameLogic::SetUpSkip(CVector, float, bool, CVehicle*, bool)` (0x4423C0); the vector by value, raw
-    fn set_up_skip(x: u32, y: u32, z: u32, heading: u32, a: u32, b: u32, c: u32) = cdecl 0x4423C0 => unported;
-    /// `CGameLogic::ClearSkip(bool)` (0x441560)
-    fn clear_skip(b: u32) = cdecl 0x441560 => unported;
-    /// `CAudioEngine::PreloadBeatTrack(int16)` (0x507F40)
-    fn preload_beat_track(a: GPtr<u8>, t: u32) = thiscall 0x507F40 => unported;
     /// `CAudioEngine::GetBeatTrackStatus()` (0x507170), AL
     fn get_beat_track_status(a: GPtr<u8>) -> u8 = thiscall 0x507170 => unported;
-    /// `CAudioEngine::PlayPreloadedBeatTrack(bool)` (0x507180) / `StopBeatTrack()` (0x5071A0)
-    fn play_preloaded_beat_track(a: GPtr<u8>, b: u32) = thiscall 0x507180 => unported;
     fn stop_beat_track(a: GPtr<u8>) = thiscall 0x5071A0 => unported;
     /// `CStats::FindMaxNumberOfGroupMembers()` (0x559A50)
     fn find_max_number_of_group_members() -> u32 = cdecl 0x559A50 => unported;
     /// `CStats::IncrementStat(uint16 stat, float value)` (0x55C180); the float raw
     fn increment_stat(stat: u32, value: u32) = cdecl 0x55C180 => unported;
-    /// `CWorld::FindGroundZForCoord(float, float)` (0x569660), raw floats, ST0 (read as f64: exact)
-    fn find_ground_z_raw(x: u32, y: u32) -> f64 = cdecl 0x569660 => unported;
     /// `CPickups::GenerateNewOne(CVector, uint32 model, uint8 type, uint32 ammo, uint32 money, bool empty, const
     /// char* msg)` (0x456F20); the vector by value
     fn generate_new_one(x: u32, y: u32, z: u32, model: u32, ty: u32, ammo: u32, money: u32, empty: u32, msg: u32) -> u32 = cdecl 0x456F20 => unported;
-    /// `CEntity::GetIsStatic()` (0x4633E0), AL
-    fn entity_get_is_static(e: GPtr<u8>) -> u8 = thiscall 0x4633E0 => unported;
     /// `FxPrtMult_c::FxPrtMult_c(float r, g, b, a, size, angle, life)` (0x4AB290); raw floats
     fn fx_prt_mult_ctor(p: GPtr<u8>, r: u32, g: u32, b: u32, a: u32, size: u32, angle: u32, life: u32) = thiscall 0x4AB290 => unported;
     /// `FxSystem_c::AddParticle(CVector* pos, CVector* vel, float time, FxPrtMult_c*, float, float, float, bool)`
@@ -225,8 +192,6 @@ orig! {
     fn door_open(d: GPtr<u8>, ratio: u32) = thiscall 0x6F4790 => unported;
     /// `CDamageManager::SetDoorStatus(eDoors, uint32)` (0x6C21C0)
     fn set_door_status(dm: GPtr<u8>, door: u32, status: u32) = thiscall 0x6C21C0 => unported;
-    /// `CAutomobile::SetDoorDamage(eDoors, bool)` (0x6B1600)
-    fn set_door_damage(v: GPtr<u8>, door: u32, b: u32) = thiscall 0x6B1600 => unported;
 }
 
 /// The VECTOR_TRACK / VECTOR_MOVE argument shape (0920 0x476BDE, 0936 0x476F9D): `CollectParameters(8)`; `from =

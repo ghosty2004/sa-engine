@@ -18,64 +18,46 @@ const PICK_UP_BIKE_CB: u32 = 0x6462F0;
 /// 0.0f
 const K_ZERO: usize = 0x858B50;
 
+use crate::bindings::anim_blend_animation;
+use crate::bindings::assoc_set_finish_callback;
+use crate::bindings::clump_get_association;
+use crate::bindings::go_to_point_ctor;
+use crate::bindings::ik_chain_update_target;
+use crate::bindings::vehicle_anim_group_get_group as veh_anim_group_get_group;
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_core::bindings::entity_register_reference;
+use sa_core::bindings::fx_play as fx_system_play;
+use sa_core::bindings::get_pad as pad_get_pad;
+use sa_core::bindings::tm_get_task_secondary;
+use sa_core::bindings::tm_set_task_secondary;
+use sa_stream::bindings::anim_remove_block_ref as anim_remove_anim_block_ref;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::fx_copy_parent_matrix as fx_system_copy_parent_matrix;
+use sa_world::bindings::fx_kill as fx_system_kill;
+use sa_world::bindings::intel_find_task_by_type;
+use sa_world::bindings::membership_get_leader;
+use sa_world::bindings::ped_groups_get_peds_group as groups_get_peds_group;
+use sa_world::bindings::ped_restore_heading_rate;
+use sa_world::bindings::run_anim_ctor;
+use sa_world::bindings::task_simple_ctor;
+use sa_world::bindings::task_simple_dtor;
 orig! {
     /// `CTask::MakeAbortable(CPed*, int32 priority, const CEvent*)` (vtable +0x18, `ret 0xC`)
     fn v_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, prio: i32, ev: u32) -> u8 = thiscall vslot 0x18 => unported;
-    /// `CVehicleAnimGroup::GetGroup(int32 animId)` (0x6E3B00, `ret 4`)
-    fn veh_anim_group_get_group(g: GPtr<u8>, anim: u32) -> u32 = thiscall 0x6E3B00 => unported;
-    /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float delta)` (0x4D4610, cdecl)
-    fn anim_blend_animation(clump: u32, group: u32, anim: u32, delta: u32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
-    /// `CAnimBlendAssociation::SetFinishCallback(cb, data)` (0x4CEBE0, `ret 8`)
-    fn assoc_set_finish_callback(a: GPtr<u8>, cb: u32, data: u32) = thiscall 0x4CEBE0 => unported;
     /// `CTaskSimplePickUpBike::StartAnim(const CPed*)` (0x64AE90, `ret 4`)
     fn o_pick_up_bike_start_anim(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x64AE90 => unported;
-    /// `CPed::IsPlayer` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70, cdecl)
-    fn pad_get_pad(i: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CAnimManager::RemoveAnimBlockRef(int32)` (0x4D3FD0, cdecl)
-    fn anim_remove_anim_block_ref(i: i32) = cdecl 0x4D3FD0 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00, `ret 4`)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CTaskSimple::~CTaskSimple` (`FUN_0061a3a0`)
-    fn task_simple_dtor(t: GPtr<u8>) = thiscall 0x61A3A0 => unported;
-    /// `CTaskSimple::CTaskSimple` (`FUN_0061a390`)
-    fn task_simple_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A390 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70, `ret 4`)
-    fn entity_register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
     /// `CEvent::GetEventType` (vtable +4)
     fn v_event_type(e: GPtr<u8>) -> i32 = thiscall vslot 0x4 => unported;
     /// `CEvent::GetEventPriority` (vtable +8)
     fn v_event_priority(e: GPtr<u8>) -> i32 = thiscall vslot 0x8 => unported;
-    /// `RpAnimBlendClumpGetAssociation(RpClump*, AnimationId)` (0x4D68B0, cdecl)
-    fn clump_get_association(clump: u32, anim: u32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
-    /// `CPed::RestoreHeadingRate` (0x5DFD60)
-    fn ped_restore_heading_rate(p: GPtr<u8>) = thiscall 0x5DFD60 => unported;
-    /// `FxSystem_c::Kill` (0x4AA3F0)
-    fn fx_system_kill(f: GPtr<u8>) = thiscall 0x4AA3F0 => unported;
     /// `FxManager_c::CreateFxSystem(char* name, RwV3d* pos, RwMatrix* parent, bool)` (0x4A9BE0, `ret 0x10`)
     fn fx_manager_create_fx_system(m: GPtr<u8>, name: u32, pos: GPtr<u8>, parent: u32, b: u32) -> GPtr<u8> = thiscall 0x4A9BE0 => unported;
-    /// `FxSystem_c::CopyParentMatrix` (0x4AA890)
-    fn fx_system_copy_parent_matrix(f: GPtr<u8>) = thiscall 0x4AA890 => unported;
-    /// `FxSystem_c::Play` (0x4AA2F0)
-    fn fx_system_play(f: GPtr<u8>) = thiscall 0x4AA2F0 => unported;
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CTaskManager::GetTaskSecondary(int32)` (0x681810, `ret 4`)
-    fn tm_get_task_secondary(tm: GPtr<u8>, i: i32) -> GPtr<u8> = thiscall 0x681810 => unported;
-    /// `CTaskManager::SetTaskSecondary(CTask*, int32)` (0x681B60, `ret 8`)
-    fn tm_set_task_secondary(tm: GPtr<u8>, t: GPtr<u8>, i: i32) = thiscall 0x681B60 => unported;
-    /// `CTaskSimpleRunAnim::CTaskSimpleRunAnim(AssocGroupId, AnimationId, float delta, bool)` (0x61A8B0, `ret 0x10`)
-    fn run_anim_ctor(t: GPtr<u8>, group: u32, anim: u32, delta: u32, b: u32) -> GPtr<u8> = thiscall 0x61A8B0 => unported;
-    /// `CTaskSimpleGoToPoint::CTaskSimpleGoToPoint(int32 moveState, const CVector&, float radius, bool, bool)`
-    /// (0x667CD0, `ret 0x14`)
-    fn go_to_point_ctor(t: GPtr<u8>, ms: u32, pos: GPtr<u8>, radius: u32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x667CD0 => unported;
     /// `IKChain_c::UpdateEntity(CEntity*)` (0x617E00, `ret 4`)
     fn ik_chain_update_entity(c: GPtr<u8>, e: u32) = thiscall 0x617E00 => unported;
     /// `IKChain_c::UpdateOffset(int32 bone, CVector offset)` (0x617E20, `ret 0x10`; the vector by value)
     fn ik_chain_update_offset(c: GPtr<u8>, bone: u32, x: u32, y: u32, z: u32) = thiscall 0x617E20 => unported;
-    /// `IKChain_c::UpdateTarget(bool)` (0x617E50, `ret 4`)
-    fn ik_chain_update_target(c: GPtr<u8>, b: u32) = thiscall 0x617E50 => unported;
     /// `CPopulation::IsSunbather(int32 modelIndex)` (0x611760, cdecl; AL)
     fn population_is_sunbather(mi: i32) -> u8 = cdecl 0x611760 => unported;
     /// `CTaskSimpleSwim::CTaskSimpleSwim(const CVector* pos, CPed* ped)` (0x688930, `ret 8`)
@@ -84,12 +66,6 @@ orig! {
     /// bool, eFallDir, bool)` (0x630040, `ret 0x24`)
     #[allow(clippy::too_many_arguments)]
     fn complex_die_ctor(t: GPtr<u8>, w: u32, g: u32, a: u32, d: u32, s: u32, b1: u32, b2: u32, dir: u32, b3: u32) -> GPtr<u8> = thiscall 0x630040 => unported;
-    /// `CPedGroups::GetPedsGroup(const CPed*)` (0x5F7E80, cdecl)
-    fn groups_get_peds_group(ped: GPtr<u8>) -> GPtr<u8> = cdecl 0x5F7E80 => unported;
-    /// `CPedGroupMembership::GetLeader` (0x5F69A0)
-    fn membership_get_leader(m: GPtr<u8>) -> GPtr<u8> = thiscall 0x5F69A0 => unported;
-    /// `CPedIntelligence::FindTaskByType(int32)` (0x600EE0, `ret 4`)
-    fn intel_find_task_by_type(i: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x600EE0 => unported;
 }
 
 /// `CTaskSimplePickUpBike::StartAnim(const CPed*)` (0x64AE90, `ret 4`): by the door (+0x14) and the bike's roll

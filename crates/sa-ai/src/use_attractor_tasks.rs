@@ -10,6 +10,12 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::is_ped_registered_with_effect;
+use sa_core::bindings::general_random_int_in_range as random_int;
+use sa_world::bindings::get_ped_attractor_manager;
+use sa_world::bindings::interesting_events_add;
+use sa_world::bindings::task_complex_ctor;
+use sa_world::bindings::task_use_atm_ctor as use_atm_ctor;
 orig! {
     /// `CPedAttractor::GetType()` (vtable slot 0)
     fn attractor_get_type(a: GPtr<u8>) -> u32 = thiscall vslot 0x0 => unported;
@@ -19,18 +25,6 @@ orig! {
     fn broadcast_departure_v(a: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall vslot 0x14 => unported;
     /// `CTask::MakeAbortable(CPed*, int priority, const CEvent*)` (vtable slot 0x18, `ret 0xC`)
     fn task_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, prio: i32, ev: GPtr<u8>) -> u8 = thiscall vslot 0x18 => unported;
-    /// `CPedAttractorManager::IsPedRegisteredWithEffect(CPed*)` (0x5EBCB0, `ret 4`)
-    fn is_ped_registered_with_effect(m: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x5EBCB0 => crate::attractor_registry::is_ped_registered_with_effect_ped;
-    /// `GetPedAttractorManager()` (0x5EE190)
-    fn get_ped_attractor_manager() -> GPtr<u8> = cdecl 0x5EE190 => unported;
-    /// `CInterestingEvents::Add(type, CEntity*)` on `g_InterestingEvents` (0x602590, `ret 8`)
-    fn interesting_events_add(ie: GPtr<u8>, t: u32, e: GPtr<u8>) = thiscall 0x602590 => unported;
-    /// `CGeneral::GetRandomNumberInRange(int, int)` (0x407180)
-    fn random_int(lo: i32, hi: i32) -> i32 = cdecl 0x407180 => unported;
-    /// `CTaskComplex::CTaskComplex()` (0x61A3B0)
-    fn task_complex_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A3B0 => unported;
-    /// `CTaskSimpleUseAtm()` (0x48DFE0)
-    fn use_atm_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x48DFE0 => unported;
     /// `CTaskComplexWaitForBus()` (0x632900)
     fn wait_for_bus_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x632900 => unported;
     /// `CTaskComplexWaitForDryWeather()` (0x632800)

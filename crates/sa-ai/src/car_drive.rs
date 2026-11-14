@@ -11,6 +11,14 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::car_drive_create_sub_task as car_drive_create_sub_task_orig;
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::join_car_with_road_system as car_ctrl_join_car_with_road_system;
+use sa_world::bindings::leave_any_car_ctor;
+use sa_world::bindings::task_complex_ctor;
+use sa_world::bindings::upside_down_car_check_is_car_upside_down;
+use sa_world::bindings::wander_get_wander_task_by_ped_type;
 orig! {
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_get_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
@@ -22,31 +30,14 @@ orig! {
     fn v_create_sub_task_cannot_get_in_car(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x30 => unported;
     /// `CTaskComplexCarDrive::Drive(CPed*)` (vtable +0x34)
     fn v_drive(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x34 => unported;
-
-    /// `CTaskComplexCarDrive::CreateSubTask(int32 taskType, CPed*)` (0x642FA0, `ret 8`)
-    fn car_drive_create_sub_task_orig(t: GPtr<u8>, ty: i32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x642FA0 => unported;
-    /// `CTaskComplex::CTaskComplex` (0x61A3B0)
-    fn task_complex_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A3B0 => unported;
     /// `CTaskSimpleCarDrive::Constructor(veh, a1, a2)` (0x63C340, `ret 0xC`)
     fn car_drive_simple_ctor(t: GPtr<u8>, veh: u32, a1: u32, a2: u32) -> GPtr<u8> = thiscall 0x63C340 => unported;
     /// `CTaskComplexEnterCarAsDriver::CTaskComplexEnterCarAsDriver(CVehicle*)` (0x6402F0, `ret 4`)
     fn enter_car_as_driver_ctor(t: GPtr<u8>, veh: u32) -> GPtr<u8> = thiscall 0x6402F0 => unported;
     /// `CTaskComplexEnterCarAsPassenger::CTaskComplexEnterCarAsPassenger(CVehicle*, int32, bool)` (0x640340, `ret 0xC`)
     fn enter_car_as_passenger_ctor(t: GPtr<u8>, veh: u32, a1: u32, a2: u32) -> GPtr<u8> = thiscall 0x640340 => unported;
-    /// `CTaskComplexLeaveAnyCar::CTaskComplexLeaveAnyCar(int32, bool, bool)` (0x421150, `ret 0xC`)
-    fn leave_any_car_ctor(t: GPtr<u8>, a0: u32, a1: u32, a2: u32) -> GPtr<u8> = thiscall 0x421150 => unported;
-    /// `CTaskComplexWander::GetWanderTaskByPedType(CPed*)` (0x673D00, cdecl)
-    fn wander_get_wander_task_by_ped_type(ped: GPtr<u8>) -> GPtr<u8> = cdecl 0x673D00 => unported;
     /// `CTaskSimpleCreateCarAndGetIn::CTaskSimpleCreateCarAndGetIn(const CVector*, int32 model)` (0x6493E0, `ret 8`)
     fn create_car_and_get_in_ctor(t: GPtr<u8>, pos: GPtr<u8>, model: u32) -> GPtr<u8> = thiscall 0x6493E0 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity** ref)` (0x571A00)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CEntity::RegisterReference(CEntity** ref)` (0x571B70)
-    fn entity_register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
-    /// `CUpsideDownCarCheck::IsCarUpsideDown-vehicle(const CVehicle*)` (0x463830, `this` unused)
-    fn upside_down_car_check_is_car_upside_down(c: GPtr<u8>, v: GPtr<u8>) -> u8 = thiscall 0x463830 => unported;
-    /// `CCarCtrl::JoinCarWithRoadSystem(CVehicle*)` (0x42F5A0, cdecl)
-    fn car_ctrl_join_car_with_road_system(v: GPtr<u8>) = cdecl 0x42F5A0 => unported;
     /// `CTaskComplexDriveToPoint::IsTargetBlocked(CPed*)` (0x6452C0, `ret 4`)
     fn drive_to_point_is_target_blocked_orig(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x6452C0 => unported;
     /// `CCarAI::GetCarToGoToCoors(CVehicle*, const CVector*, int32 style, bool)` (0x41CE30; ST0 result, popped)

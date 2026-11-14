@@ -46,40 +46,25 @@ const K_0_0005: u32 = 0x3A03_126F;
 const K_2P32: u32 = 0x4F80_0000;
 const SPHERE_RADIUS: u32 = 0x3E99_999A;
 
+pub use crate::bindings::get_vectors_ready_for_rw as get_vectors_ready_for_rw_call;
+pub use sa_core::bindings::cross_product;
+pub use sa_core::bindings::get_weapon_info;
+pub use sa_core::bindings::vector_normalise;
+pub use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
+pub use sa_stream::bindings::simple_transform_update_matrix;
+pub use sa_world::bindings::entity_get_col_model as get_col_model;
+pub use sa_world::bindings::multiply3x3 as multiply_3x3;
+pub use sa_world::bindings::ped_get_bone_position;
+pub use sa_world::bindings::ped_get_weapon_skill;
+pub use sa_world::bindings::placeable_set_heading;
+pub use sa_world::bindings::update_rw_matrix;
+pub use sa_world::bindings::vector_sub;
+pub use sa_world::bindings::world_test_sphere_against_world as test_sphere_against_world;
 orig! {
-    /// `CPed::GetBonePosition(RwV3d& out, uint32 bone, bool updateSkin)` (0x5E4280)
-    pub fn ped_get_bone_position(p: GPtr<u8>, out: GPtr<u8>, bone: u32, update: u32) = thiscall 0x5E4280 => unported;
-    /// `CEntity::GetColModel()` (0x535300)
-    pub fn get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => unported;
     /// `CWaterLevel::GetWaterLevelNoWaves(float x, float y, float z, float* out, float*, float*)` (0x6E8580, AL)
     pub fn get_water_level_no_waves(x: u32, y: u32, z: u32, out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> u8 = cdecl 0x6E8580 => unported;
-    /// `CPlaceable::AllocateMatrix()` (0x54F560)
-    pub fn allocate_matrix(e: GPtr<u8>) = thiscall 0x54F560 => unported;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*)` (0x54F1B0)
-    pub fn simple_transform_update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => unported;
-    /// `CrossProduct(CVector* out, const CVector*, const CVector*)` (0x59C730), returns `out`
-    pub fn cross_product(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C730 => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    pub fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
-    /// `CWorld::TestSphereAgainstWorld(CVector centre (by value), float r, CEntity* ignore, bool buildings,
-    /// bool vehicles, bool peds, bool objects, bool dummies, bool camIgnore)` (0x569E20)
-    pub fn test_sphere_against_world(cx: u32, cy: u32, cz: u32, r: u32, ignore: GPtr<u8>, b: u32, v: u32, p: u32, o: u32, d: u32, c: u32) -> GPtr<u8> = cdecl 0x569E20 => unported;
     /// `CCamera::AvoidTheGeometry(const CVector* from, const CVector* target, CVector* out, float fov)` (0x514030)
     pub fn avoid_the_geometry(cam: GPtr<u8>, from: GPtr<u8>, target: GPtr<u8>, out: GPtr<u8>, fov: u32) = thiscall 0x514030 => unported;
-    /// `CCam::GetVectorsReadyForRW()` (0x509CE0)
-    pub fn get_vectors_ready_for_rw_call(cam: GPtr<u8>) = thiscall 0x509CE0 => crate::cam::get_vectors_ready_for_rw;
-    /// `CPed::GetWeaponSkill()` (0x5E6580; tail call, the whole EAX is passed on)
-    pub fn ped_get_weapon_skill(p: GPtr<u8>) -> u32 = thiscall 0x5E6580 => unported;
-    /// `CWeaponInfo::GetWeaponInfo(eWeaponType, eWeaponSkill)` (0x743C60)
-    pub fn get_weapon_info(ty: u32, skill: u32) -> GPtr<u8> = cdecl 0x743C60 => unported;
-    /// `VectorSub(CVector* out, const CVector* a, const CVector* b)` (0x40FE60): `out = a - b`
-    pub fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => unported;
-    /// `CPlaceable::SetHeading(float)` (0x43E0C0)
-    pub fn placeable_set_heading(e: GPtr<u8>, h: u32) = thiscall 0x43E0C0 => unported;
-    /// `CEntity::UpdateRwMatrix()` (0x446F90)
-    pub fn update_rw_matrix(e: GPtr<u8>) = thiscall 0x446F90 => unported;
-    /// `Multiply3x3(CVector* out, const CMatrix*, const CVector*)` (0x59C790), returns `out`
-    pub fn multiply_3x3(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C790 => unported;
     /// `CWaterLevel::GetWaterLevel(float x, float y, float z, float* out, bool waves, CVector* normal)`
     /// (0x6EB690, AL); the coordinates are pushed as dwords
     pub fn get_water_level(x: u32, y: u32, z: u32, out: GPtr<u8>, waves: u32, normal: GPtr<u8>) -> u8 = cdecl 0x6EB690 => unported;

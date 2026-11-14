@@ -59,9 +59,11 @@ const FPU_CW: usize = 0xCAF000;
 const FPU_CW_SAVED: usize = 0xCAF004;
 const MODE_HINT: u32 = 0x104_0411;
 
+use crate::bindings::free_list_create as freelist_create;
+use crate::bindings::free_list_destroy as freelist_destroy;
+use crate::bindings::im2d_render_open;
+use sa_core::bindings::direct3d_create9;
 orig! {
-    /// `Direct3DCreate9(sdk)` (d3d9 delay-load thunk 0x807C2B)
-    fn direct3d_create9(sdk: u32) -> u32 = stdcall 0x807C2B => unported;
     /// `IUnknown::Release()` (+8)
     fn release(o: GPtr<u8>) -> u32 = stdcall vslot 0x8 => unported;
     /// `IDirect3D9::GetAdapterCount()` (+0x10)
@@ -119,18 +121,12 @@ orig! {
     fn matrix_set_mult_fn(f: u32) -> u32 = cdecl 0x7F12C0 => crate::matrix::rw_matrix_set_mult_fn;
     /// `_rwVectorSetMultFn(point, points, vector, vectors)` (0x7ED5F0)
     fn vector_set_mult_fn(p: u32, ps: u32, v: u32, vs: u32) -> u32 = cdecl 0x7ED5F0 => unported;
-    /// `_rwFreeListCreate(entrySize, entriesPerBlock, alignment, hint)` (0x801980)
-    fn freelist_create(size: u32, per_block: u32, align: u32, hint: u32) -> GPtr<u8> = cdecl 0x801980 => unported;
-    /// `RwFreeListDestroy(fl)` (0x801B80)
-    fn freelist_destroy(fl: GPtr<u8>) -> u32 = cdecl 0x801B80 => unported;
     /// `RwFreeListPurge(fl)` (0x801E00)
     fn freelist_purge(fl: GPtr<u8>) -> i32 = cdecl 0x801E00 => unported;
     /// `_rxD3D9VideoMemoryRasterListCreate()` (0x4CC150)
     fn video_memory_raster_list_create() -> u32 = cdecl 0x4CC150 => unported;
     /// `_rwD3D9RasterClose()` (0x4CC170)
     fn raster_close() -> u32 = cdecl 0x4CC170 => unported;
-    /// `_rwD3D9Im2DRenderOpen()` (0x7FB480)
-    fn im2d_render_open() -> u32 = cdecl 0x7FB480 => unported;
     /// `_rwD3D9Im2DRenderClose()` (0x7FB5F0)
     fn im2d_render_close() -> u32 = cdecl 0x7FB5F0 => unported;
     /// `_rwD3D9RenderStateOpen()` (0x7FCAC0)

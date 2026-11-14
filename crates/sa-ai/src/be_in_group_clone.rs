@@ -7,11 +7,10 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use sa_world::bindings::task_complex_ctor;
 orig! {
     /// `CTask::operator new(uint32)` (0x61A5A0)
     fn task_new_c(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => crate::mvpa_ai1::task_operator_new;
-    /// `CTaskComplex::CTaskComplex()` (0x61A3B0)
-    fn task_complex_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A3B0 => unported;
 }
 
 /// `CTaskComplexBeInGroup::Clone` (0x636BE0, SEH frame): `operator new(0x28)`, the inlined constructor

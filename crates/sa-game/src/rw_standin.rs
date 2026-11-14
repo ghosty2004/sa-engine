@@ -34,11 +34,6 @@ sa_core::orig! {
 
 // ------------------------------------------------------------------ registration -------------
 
-
-
-
-
-
 // ------------------------------------------------------------------ rasters ------------------
 
 sa_core::orig! {
@@ -48,65 +43,25 @@ sa_core::orig! {
     fn memory_free(fl: GPtr<u8>, p: GPtr<u8>) -> GPtr<u8> = cdecl table 0xC97B24 0x148 => unported;
     /// `RwFreeListCreateAndPreallocateSpace(...)` (0x801B70)
     fn freelist_create(size: u32, per_block: u32, align: u32, n: u32, space: GPtr<u8>, hint: u32) -> GPtr<u8> = cdecl 0x801B70 => unported;
-    /// `RwFreeListDestroy(fl)` (0x801B80)
-    fn freelist_destroy(fl: GPtr<u8>) -> u32 = cdecl 0x801B80 => unported;
     /// `_rwPluginRegistryInitObject(reg, obj)` (0x8086E0)
     fn registry_init_object(reg: GPtr<u8>, obj: GPtr<u8>) -> GPtr<u8> = cdecl 0x8086E0 => unported;
     /// `_rwPluginRegistryDeInitObject(reg, obj)` (0x808740)
     fn registry_deinit_object(reg: GPtr<u8>, obj: GPtr<u8>) -> GPtr<u8> = cdecl 0x808740 => unported;
     /// `G->stdFunc[i](pOut, pInOut, nI)` (standard functions, `G + 0x48 + 4i`)
     fn std_func(f: u32, out: GPtr<u8>, inout: GPtr<u8>, n: i32) -> i32 = cdecl dyn => unported;
-    /// `RwStreamRead(stream, buf, size)` (0x7EC9D0)
-    fn stream_read(s: GPtr<u8>, buf: GPtr<u8>, size: u32) -> u32 = cdecl 0x7EC9D0 => unported;
     /// `RwStreamFindChunk(stream, type, &len, &ver)` (0x7ED2D0)
     fn stream_find_chunk(s: GPtr<u8>, ty: u32, len: GPtr<u32>, ver: GPtr<u32>) -> i32 = cdecl 0x7ED2D0 => unported;
-    /// `RwRasterCreate(w, h, depth, flags)` (0x7FB230)
-    fn raster_create(w: i32, h: i32, depth: i32, flags: i32) -> GPtr<u8> = cdecl 0x7FB230 => unported;
-    /// `RwRasterDestroy(raster)` (0x7FB020)
-    fn raster_destroy(r: GPtr<u8>) -> i32 = cdecl 0x7FB020 => unported;
-    /// `RwTextureCreate(raster)` (0x7F37C0)
-    fn texture_create(r: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F37C0 => unported;
-    /// `RwTextureSetName(tex, name)` (0x7F38A0)
-    fn texture_set_name(t: GPtr<u8>, name: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F38A0 => unported;
-    /// `RwTextureSetMaskName(tex, name)` (0x7F3910)
-    fn texture_set_mask_name(t: GPtr<u8>, name: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F3910 => unported;
 }
 
 // ------------------------------------------------------------------ render states, Im2D ------
 
-
-
-
-
-
 // ------------------------------------------------------------------ world pipelines ----------
 
-sa_core::orig! {
-    /// `RxPipelineCreate()` (0x8057B0)
-    fn rx_pipeline_create() -> GPtr<u8> = cdecl 0x8057B0 => unported;
-    /// `_rxPipelineDestroy(pipeline)` (0x805820)
-    fn rx_pipeline_destroy(p: GPtr<u8>) = cdecl 0x805820 => unported;
-    /// `RpWorldSetDefaultSectorPipeline(pipeline)` (0x75E270)
-    fn world_set_default_sector_pipeline(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x75E270 => unported;
-    /// `RpAtomicSetDefaultPipeline(pipeline)` (0x75E2A0)
-    fn atomic_set_default_pipeline(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x75E2A0 => unported;
-}
 
 // ------------------------------------------------------------------ RpSkin, RpMatFX, RpAnisot -
 
+use sa_rwcore::bindings::rw_engine_register_plugin as engine_register_plugin;
 sa_core::orig! {
-    fn engine_register_plugin(size: i32, id: u32, open: u32, close: u32) -> i32 = cdecl 0x7F2BB0 => unported;
-    fn engine_get_plugin_offset(id: u32) -> i32 = cdecl 0x7F2BE0 => unported;
-    fn atomic_register_plugin(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x74BDA0 => unported;
-    fn atomic_register_plugin_stream(id: u32, read: u32, write: u32, size: u32) -> i32 = cdecl 0x74BE00 => unported;
-    fn atomic_set_stream_always_cb(id: u32, cb: u32) -> i32 = cdecl 0x74BE30 => unported;
-    fn atomic_set_stream_rights_cb(id: u32, cb: u32) -> i32 = cdecl 0x74BE50 => unported;
-    fn geometry_register_plugin(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x74CD70 => unported;
-    fn geometry_register_plugin_stream(id: u32, read: u32, write: u32, size: u32) -> i32 = cdecl 0x74CDA0 => unported;
-    fn material_register_plugin(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x74DBF0 => unported;
-    fn material_register_plugin_stream(id: u32, read: u32, write: u32, size: u32) -> i32 = cdecl 0x74DC20 => unported;
-    fn sector_register_plugin(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x761C90 => unported;
-    fn sector_register_plugin_stream(id: u32, read: u32, write: u32, size: u32) -> i32 = cdecl 0x761CC0 => unported;
     fn texture_register_plugin(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x7F3BB0 => unported;
     fn texture_register_plugin_stream(id: u32, read: u32, write: u32, size: u32) -> i32 = cdecl 0x804550 => unported;
 }
@@ -213,7 +168,6 @@ fn anisot_engine_close(instance: u32, _o: u32, _s: u32) -> u32 {
     wr(0xC92474, rd(0xC92474).wrapping_sub(1));
     instance
 }
-
 
 macro_rules! cdecl_entries {
     ($( $addr:literal, $name:literal => $f:path : fn($($a:ident : $t:ty),*) -> $r:ty ;)*) => {

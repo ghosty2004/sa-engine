@@ -4,16 +4,12 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use super::common::{g, rd, wr, x};
 
-orig! {
-    /// `CAEDoorAudioEntity::AddAudioEvent(eAudioEvents, CVector& pos, float volume, float speed)` (0x4DC860)
-    fn door_audio_add_event(a: GPtr<u8>, ev: u32, pos: GPtr<u8>, vol: f32, speed: f32) = thiscall 0x4DC860 => unported;
-    /// `CGarage::FindDoorsWithGarage(CObject** door1, CObject** door2)` (0x449FF0)
-    fn find_doors_with_garage(gar: GPtr<u8>, d1: GPtr<u8>, d2: GPtr<u8>) = thiscall 0x449FF0 => unported;
-}
+use crate::bindings::door_audio_add_event;
+use crate::bindings::find_doors_with_garage;
 
 /// `bool CGarage::SlideDoorClosed()` (0x44A750).
 ///

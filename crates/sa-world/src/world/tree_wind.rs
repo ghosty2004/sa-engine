@@ -10,11 +10,10 @@ use sa_math::x87::X87;
 
 use super::common::{g, rd, wr, x};
 
+use sa_core::bindings::rw_frame_update_objects;
 orig! {
     /// `CWindModifiers::FindWindModifier(CVector pos, float* x, float* y)` (0x72C950; pos by value)
     fn wind_modifiers_find(px: u32, py: u32, pz: u32, ox: GPtr<f32>, oy: GPtr<f32>) -> u8 = cdecl 0x72C950 => unported;
-    /// `RwFrameUpdateObjects(RwFrame*)` (0x7F0910)
-    fn rw_frame_update_objects(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0910 => unported;
 }
 
 /// `CTimer::m_UserPause` (0xB7CB49), `m_CodePause` (0xB7CB48), `m_snTimeInMilliseconds` (0xB7CB84)

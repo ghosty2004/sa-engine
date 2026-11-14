@@ -18,23 +18,19 @@ use crate::common::*;
 /// `gpAnimBlendClump`
 const ANIM_BLEND_CLUMP: usize = 0xB4EA0C;
 
+use crate::bindings::node_get_current_translation;
+use crate::bindings::node_get_current_translation_compressed;
+use crate::bindings::node_get_end_translation;
+use crate::bindings::node_get_end_translation_compressed;
+use crate::bindings::node_update;
+use crate::bindings::node_update_compressed;
 orig! {
-    /// `CAnimBlendNode::Update(CVector& t, CQuaternion& q, float weight)` (0x4D06C0), AL
-    fn node_update(n: GPtr<u8>, t: GPtr<u8>, q: GPtr<u8>, w: f32) -> u8 = thiscall 0x4D06C0 => unported;
-    /// `CAnimBlendNode::GetCurrentTranslation(CVector&, float)` (0x4CFC50), `GetEndTranslation` (0x4CFD90)
-    fn node_get_current_translation(n: GPtr<u8>, t: GPtr<u8>, w: f32) = thiscall 0x4CFC50 => unported;
-    fn node_get_end_translation(n: GPtr<u8>, t: GPtr<u8>, w: f32) = thiscall 0x4CFD90 => unported;
     /// `CQuaternion::Normalise()` (0x4D1610)
     fn quat_normalise(q: GPtr<u8>) = thiscall 0x4D1610 => quaternion_normalise;
     /// `FrameUpdateCallBackSkinnedWithVelocityExtraction(c, fd)` (0x4D1680, `c` in EAX) and the 3D variant (0x4D1A50)
     fn skinned_with_velocity(c: GPtr<u8>, fd: GPtr<u8>) = reg("args = eax stack") 0x4D1680 => frame_update_skinned_with_velocity;
-    /// `CAnimBlendNode::UpdateCompressed(CVector& t, CQuaternion& q, float weight)` (0x4D08D0), AL
-    fn node_update_compressed(n: GPtr<u8>, t: GPtr<u8>, q: GPtr<u8>, w: f32) -> u8 = thiscall 0x4D08D0 => unported;
     /// `FrameUpdateCallBackWithVelocityExtractionCompressedSkinned(c, fd)` (0x4D1DB0, `c` in EAX)
     fn compressed_with_velocity(c: GPtr<u8>, fd: GPtr<u8>) = reg("args = eax stack") 0x4D1DB0 => frame_update_compressed_with_velocity;
-    /// `CAnimBlendNode::GetCurrentTranslationCompressed` (0x4CFE60), `GetEndTranslationCompressed` (0x4D0000)
-    fn node_get_current_translation_compressed(n: GPtr<u8>, t: GPtr<u8>, w: f32) = thiscall 0x4CFE60 => unported;
-    fn node_get_end_translation_compressed(n: GPtr<u8>, t: GPtr<u8>, w: f32) = thiscall 0x4D0000 => unported;
     fn skinned_with_3d_velocity(c: GPtr<u8>, fd: GPtr<u8>) = reg("args = eax stack") 0x4D1A50 => frame_update_skinned_with_3d_velocity;
 }
 

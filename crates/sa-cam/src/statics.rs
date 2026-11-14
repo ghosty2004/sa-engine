@@ -25,11 +25,9 @@ const DTOR_G_B6FEC0: u32 = 0x8563F0;
 const B6FEC0_CTOR: u32 = 0x5173F0;
 const B6FEC0_DTOR: u32 = 0x50E080;
 
+pub use sa_core::bindings::atexit;
+pub use sa_core::bindings::eh_vector_ctor;
 orig! {
-    /// CRT `eh vector constructor iterator` (0x821D30, stdcall)
-    pub fn eh_vector_ctor(arr: GPtr<u8>, size: u32, n: u32, ctor: u32, dtor: u32) = stdcall 0x821D30 => unported;
-    /// CRT `_atexit` (0x821D1E)
-    pub fn atexit(f: u32) -> i32 = cdecl 0x821D1E => unported;
     /// `CCamera::Constructor()` (0x51A450)
     pub fn camera_constructor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x51A450 => unported;
     /// `CIdleCam::Init()` (0x50E6D0)

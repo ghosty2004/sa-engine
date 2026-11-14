@@ -10,17 +10,13 @@ use sa_math::x87::X87;
 
 use crate::common::{g, rd};
 
+use crate::bindings::alpha_list_insert_sorted;
+use crate::bindings::atomic_default_render;
+use crate::bindings::render_atomic_with_alpha;
+use sa_core::bindings::frame_get_ltm;
 orig! {
-    /// `RwFrameGetLTM(frame)` (0x7F0990)
-    fn frame_get_ltm(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0990 => unported;
-    /// `AtomicDefaultRenderCallBack(atomic)` (0x7491C0)
-    fn atomic_default_render(a: GPtr<u8>) -> GPtr<u8> = cdecl 0x7491C0 => unported;
-    /// `CVisibilityPlugins::RenderAtomicWithAlpha(atomic, alpha)` (0x732480)
-    fn render_atomic_with_alpha(a: GPtr<u8>, alpha: i32) = cdecl 0x732480 => crate::visibility_ped::render_atomic_with_alpha;
     /// `CVisibilityPlugins::GetDotProductWithCameraVector(ltm, carLtm, atomicId)` (0x7326D0)
     fn dot_with_camera_call(m: GPtr<u8>, car: GPtr<u8>, id: u32) -> f64 = cdecl 0x7326D0 => dot_with_camera_f64;
-    /// The alpha-atomic list's sorted insert (`CLinkList<AlphaObjectInfo>::InsertSorted`, 0x733910, thiscall)
-    fn alpha_list_insert_sorted(list: GPtr<u8>, info: GPtr<u8>) -> GPtr<u8> = thiscall 0x733910 => crate::render_lists::sorted_list_insert;
 }
 
 /// `ms_pCameraPosn`, `gVehicleAngleToCamera`, `gVehicleDistanceFromCamera`, `ms_bigVehicleLod0Dist`,

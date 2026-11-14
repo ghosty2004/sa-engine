@@ -31,6 +31,21 @@ sa_core::globals! {
 /// `CCamera TheCamera`
 const THE_CAMERA: usize = 0xB6F028;
 
+pub use crate::bindings::get_weapon_skill_type_call as ped_get_weapon_skill;
+pub use sa_core::bindings::get_pad;
+pub use sa_core::bindings::tm_get_task_secondary as get_task_secondary;
+pub use sa_core::bindings::world_add;
+pub use sa_core::bindings::world_remove;
+pub use sa_world::bindings::camera_clear_player_weapon_mode;
+pub use sa_world::bindings::event_group_get_event_of_type as get_event_of_type;
+pub use sa_world::bindings::get_task_jet_pack;
+pub use sa_world::bindings::is_coop_game_going_on;
+pub use sa_world::bindings::make_changes_for_new_weapon;
+pub use sa_world::bindings::membership_get_member as group_get_member;
+pub use sa_world::bindings::ped_groups_are_in_same_group as are_in_same_group;
+pub use sa_world::bindings::physical_get_lighting_total as get_lighting_total;
+pub use sa_world::bindings::stats_get_fat_and_muscle_modifier as get_fat_and_muscle_modifier;
+pub use sa_world::bindings::tm_find_active_task_by_type as find_active_task_by_type;
 orig! {
     /// `CWanted::SetWantedLevel` (0x562470)
     pub fn wanted_set_wanted_level(w: GPtr<u8>, l: i32) = thiscall 0x562470 => crate::wanted::set_wanted_level;
@@ -38,54 +53,24 @@ orig! {
     pub fn wanted_set_wanted_level_no_drop(w: GPtr<u8>, l: i32) = thiscall 0x562570 => crate::wanted::set_wanted_level_no_drop;
     /// `CWanted::CheatWantedLevel` (0x562540)
     pub fn wanted_cheat_wanted_level(w: GPtr<u8>, l: i32) = thiscall 0x562540 => crate::wanted::cheat_wanted_level;
-    /// `CCamera::ClearPlayerWeaponMode` (0x50AB10)
-    pub fn camera_clear_player_weapon_mode(cam: GPtr<u8>) = thiscall 0x50AB10 => unported;
     /// `CWeaponEffects::ClearCrossHair(int32)` (0x742C60)
     pub fn clear_cross_hair(id: i32) = cdecl 0x742C60 => unported;
-    /// `CPedGroupMembership::GetMember(int32)` (0x5F69B0)
-    pub fn group_get_member(m: GPtr<u8>, i: i32) -> GPtr<u8> = thiscall 0x5F69B0 => unported;
-    /// `CPedIntelligence::GetTaskJetPack` (0x601110)
-    pub fn get_task_jet_pack(intel: GPtr<u8>) -> GPtr<u8> = thiscall 0x601110 => unported;
     /// `CWeapon::CanBeUsedFor2Player()` (0x73DEF0)
     pub fn weapon_can_be_used_for_2_player(w: GPtr<u8>) -> u8 = thiscall 0x73DEF0 => unported;
-    /// `CPedGroups::AreInSameGroup(const CPed*, const CPed*)` (0x5F7F40)
-    pub fn are_in_same_group(a: GPtr<u8>, b: GPtr<u8>) -> u8 = cdecl 0x5F7F40 => unported;
-    /// `CStats::GetFatAndMuscleModifier(eStatModAbilities)` (0x559AF0)
-    pub fn get_fat_and_muscle_modifier(a: i32) -> f64 = cdecl 0x559AF0 => unported;
     /// `std::max<float>`-like instance (0x420800): `a` when `a > b` (ordered), else `b`
     pub fn max_f(a: f32, b: f32) -> f64 = cdecl 0x420800 => max_f_port;
-    /// `CWorld::Remove(CEntity*)` (0x563280)
-    pub fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
-    /// `CWorld::Add(CEntity*)` (0x563220)
-    pub fn world_add(e: GPtr<u8>) = cdecl 0x563220 => unported;
     /// scalar deleting destructor (vtable slot 0)
     pub fn entity_vdelete(e: GPtr<u8>, flag: i32) = thiscall vslot 0x0 => unported;
-    /// `CPhysical::GetLightingTotal` (0x544850)
-    pub fn get_lighting_total(e: GPtr<u8>) -> f64 = thiscall 0x544850 => unported;
     /// `CPlayerPed::TellGroupToStartFollowingPlayer(bool, bool, bool)` (0x60A1D0)
     pub fn tell_group_to_start_following_player(p: GPtr<u8>, a: u32, b: u32, c: u32) = thiscall 0x60A1D0 => unported;
-    /// `CPlayerPed::MakeChangesForNewWeapon(eWeaponType)` (0x60B460)
-    pub fn make_changes_for_new_weapon(p: GPtr<u8>, ty: i32) = thiscall 0x60B460 => unported;
     /// `CPlayerPed::PlayerWantsToAttack` (0x60CC50)
     pub fn player_wants_to_attack(p: GPtr<u8>) = thiscall 0x60CC50 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    pub fn get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CGameLogic::IsCoopGameGoingOn` (0x441390)
-    pub fn is_coop_game_going_on() -> u8 = cdecl 0x441390 => unported;
     /// `CPed::IsPedInControl` (0x5E3960)
     pub fn ped_is_in_control(p: GPtr<u8>) -> u8 = thiscall 0x5E3960 => crate::ped::is_ped_in_control;
     /// `CTask::GetTaskType` (vtable slot 0x10)
     pub fn task_get_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CTaskManager::GetTaskSecondary(int32)` (0x681810)
-    pub fn get_task_secondary(tm: GPtr<u8>, i: i32) -> GPtr<u8> = thiscall 0x681810 => unported;
-    /// `CEventGroup::GetEventOfType(int32)` (0x4AB650)
-    pub fn get_event_of_type(eg: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x4AB650 => unported;
-    /// `CPed::GetWeaponSkill(eWeaponType)` (0x5E3B60)
-    pub fn ped_get_weapon_skill(p: GPtr<u8>, ty: i32) -> u8 = thiscall 0x5E3B60 => crate::ped::get_weapon_skill_type;
     /// `CPed::GetWeaponSkill()` (0x5E6580)
     pub fn ped_get_weapon_skill_current(p: GPtr<u8>) -> u8 = thiscall 0x5E6580 => crate::ped::get_weapon_skill_current;
-    /// `CTaskManager::FindActiveTaskByType(int32)` (0x681740)
-    pub fn find_active_task_by_type(tm: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x681740 => unported;
     /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
     pub fn clean_up_old_reference(e: GPtr<u8>, r: GPtr<GPtr<u8>>) = thiscall 0x571A00 => unported;
 }
@@ -596,6 +581,13 @@ pub fn player_has_just_attacked_someone(this: GPtr<u8>) {
 
 // --- hook list (generated) ---
 
+use crate::bindings::ped_speech_initialise;
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_core::bindings::membership_set_leader as group_membership_set_leader;
+use sa_core::bindings::ped_group_process;
+use sa_world::bindings::ped_groups_add_group;
+use sa_world::bindings::ped_set_ped_state;
+use sa_world::bindings::player_ped_set_initial_state;
 orig! {
     /// `CPed::CPed(ePedType)` (0x5E8030)
     fn ped_ctor(p: GPtr<u8>, ty: u32) -> GPtr<u8> = thiscall 0x5E8030 => unported;
@@ -603,26 +595,12 @@ orig! {
     fn player_ped_data_allocate_data(d: GPtr<u8>) = thiscall 0x571880 => unported;
     /// `CPed::SetModelIndex(uint32)` (0x5E4880)
     fn ped_set_model_index(p: GPtr<u8>, m: u32) = thiscall 0x5E4880 => unported;
-    /// `CPlayerPed::SetInitialState(bool)` (0x60CD20)
-    fn player_ped_set_initial_state(p: GPtr<u8>, b: u32) = thiscall 0x60CD20 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CPed::SetPedState(ePedState)` (0x5E4500)
-    fn ped_set_ped_state(p: GPtr<u8>, st: u32) = thiscall 0x5E4500 => unported;
     /// `CAnimManager::GetAnimationBlockIndex(const char*)` (0x4D3990)
     fn get_animation_block_index(name: u32) -> i32 = cdecl 0x4D3990 => unported;
-    /// `CPedGroups::AddGroup()` (0x5FB800)
-    fn ped_groups_add_group() -> i32 = cdecl 0x5FB800 => unported;
     /// `CPedGroupIntelligence::SetDefaultTaskAllocatorType(int32)` (0x5FBB70)
     fn group_intel_set_default_task_allocator_type(gi: GPtr<u8>, t: u32) = thiscall 0x5FBB70 => unported;
-    /// `CPedGroupMembership::SetLeader(CPed*)` (0x5FB9C0)
-    fn group_membership_set_leader(m: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x5FB9C0 => unported;
-    /// `CPedGroup::Process()` (0x5FC7E0)
-    fn ped_group_process(g: GPtr<u8>) = thiscall 0x5FC7E0 => unported;
     /// `CStats::GetFatAndMuscleModifier(eStatModAbilities)` (0x559AF0, ST0)
     fn stats_get_fat_and_muscle_modifier(m: u32) -> f64 = cdecl 0x559AF0 => unported;
-    /// `CAEPedSpeechAudioEntity::Initialise(CEntity*)` (0x4E68D0)
-    fn ped_speech_initialise(a: GPtr<u8>, e: GPtr<u8>) = thiscall 0x4E68D0 => unported;
 }
 
 /// `CPlayerPed` vtable (0x86D168).

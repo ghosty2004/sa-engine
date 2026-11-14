@@ -9,31 +9,21 @@ use sa_core::{hook, orig};
 
 use crate::common::{model_info, rd, x};
 
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::intel_find_task_by_type;
+use sa_world::bindings::intel_is_friendly_with;
+use sa_world::bindings::is_law_enforcement_vehicle as vehicle_is_law_enforcement;
+use sa_world::bindings::ped_groups_are_in_same_group as groups_are_in_same_group;
+use sa_world::bindings::ped_groups_get_peds_group as groups_get_peds_group;
+use sa_world::bindings::upside_down_car_check_is_car_upside_down as upside_down_check_is_car_upside_down;
+use sa_world::bindings::vehicle_can_be_driven;
+use sa_world::bindings::vehicle_is_on_its_side;
+use sa_world::bindings::vehicle_is_upside_down;
 orig! {
-    /// `CUpsideDownCarCheck::IsCarUpsideDown(const CVehicle*)` (0x463830, thiscall on an unused object)
-    fn upside_down_check_is_car_upside_down(c: GPtr<u8>, v: GPtr<u8>) -> u8 = thiscall 0x463830 => unported;
-    /// `CVehicle::CanBeDriven()` (0x6D5400)
-    fn vehicle_can_be_driven(v: GPtr<u8>) -> u8 = thiscall 0x6D5400 => unported;
-    /// `CVehicle::IsLawEnforcementVehicle()` (0x6D2370)
-    fn vehicle_is_law_enforcement(v: GPtr<u8>) -> u8 = thiscall 0x6D2370 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CPedIntelligence::IsFriendlyWith(const CPed&)` (0x601BC0)
-    fn intel_is_friendly_with(i: GPtr<u8>, p: GPtr<u8>) -> u8 = thiscall 0x601BC0 => unported;
-    /// `CPedGroups::AreInSameGroup(const CPed*, const CPed*)` (0x5F7F40)
-    fn groups_are_in_same_group(a: GPtr<u8>, b: GPtr<u8>) -> u8 = cdecl 0x5F7F40 => unported;
-    /// `CPedGroups::GetPedsGroup(const CPed*)` (0x5F7E80)
-    fn groups_get_peds_group(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x5F7E80 => unported;
     /// `CPedGroup::IsAnyoneUsingCar(const CVehicle*)` (0x5F7DB0)
     fn group_is_anyone_using_car_c(g: GPtr<u8>, v: GPtr<u8>) -> u8 = thiscall 0x5F7DB0 => group_is_anyone_using_car;
-    /// `CVehicle::IsUpsideDown()` (0x6D1D90)
-    fn vehicle_is_upside_down(v: GPtr<u8>) -> u8 = thiscall 0x6D1D90 => unported;
-    /// `CVehicle::IsOnItsSide()` (0x6D1DD0)
-    fn vehicle_is_on_its_side(v: GPtr<u8>) -> u8 = thiscall 0x6D1DD0 => unported;
     /// `CCarEnterExit::IsClearToDriveAway(const CVehicle*)` (0x6509B0)
     fn is_clear_to_drive_away_c(v: GPtr<u8>) -> u8 = cdecl 0x6509B0 => is_clear_to_drive_away;
-    /// `CPedIntelligence::FindTaskByType(int32)` (0x600EE0)
-    fn intel_find_task_by_type(i: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x600EE0 => unported;
     /// `CWorld::ProcessLineOfSight(origin, target, CColPoint&, CEntity*&, buildings, vehicles, peds, objects,
     /// dummies, seeThrough, cameraIgnore, shootThrough)` (0x56BA00)
     #[allow(clippy::too_many_arguments)]

@@ -9,21 +9,16 @@ use sa_math::x87::X87;
 
 use crate::common::{k, rd, wr};
 
+use sa_world::bindings::col_line_ctor;
+use sa_world::bindings::place_marker_set;
+use sa_world::bindings::test_line_sphere;
 orig! {
-    /// `C3dMarkers::PlaceMarkerSet(uint32 id, uint16 type, CVector& pos, float size, uint8 r, g, b, a, uint16
-    /// pulsePeriod, float pulseFraction, int16 rotateRate)` (0x725BA0, cdecl; every argument pushed as a dword)
-    fn place_marker_set(id: u32, ty: u32, pos: GPtr<u8>, size: u32, r: u32, g: u32, b: u32, a: u32, period: u32,
-        fraction: u32, rotate: u32) = cdecl 0x725BA0 => unported;
     /// `CCollision::DistToLine(const CVector* start, const CVector* end, const CVector* point)` (0x417610, ST0)
     fn dist_to_line(a: GPtr<u8>, b: GPtr<u8>, p: GPtr<u8>) -> f64 = cdecl 0x417610 => unported;
     /// `CFireManager::StartFire(CVector pos, float size, uint8, CEntity* creator, uint32 time, int8 generations,
     /// uint8)` (0x539F00, thiscall, the vector by value)
     fn fire_manager_start_fire(this: GPtr<u8>, px: u32, py: u32, pz: u32, size: u32, a: u32, creator: u32, time: u32,
         gens: u32, b: u32) -> GPtr<u8> = thiscall 0x539F00 => unported;
-    /// `CColLine::CColLine(const CVector& start, const CVector& end)` (0x40EF50, thiscall, `ret 8`)
-    fn col_line_ctor(this: GPtr<u8>, start: GPtr<u8>, end: GPtr<u8>) -> GPtr<u8> = thiscall 0x40EF50 => unported;
-    /// `CCollision::TestLineSphere(const CColLine&, const CColSphere&)` (0x417470, cdecl, AL)
-    fn test_line_sphere(line: GPtr<u8>, sphere: GPtr<u8>) -> u8 = cdecl 0x417470 => unported;
 }
 
 use sa_core::field::g as gp;

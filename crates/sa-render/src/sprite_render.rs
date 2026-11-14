@@ -4,14 +4,11 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::{g, jne, jp, k, rd, x, xi};
 
-orig! {
-    /// `RwIm2DRenderPrimitive(type, verts, n)` (0x734e90)
-    fn im2d_render_primitive(prim: u32, verts: GPtr<u8>, n: i32) -> i32 = cdecl 0x734e90 => unported;
-}
+use sa_core::bindings::rw_im2d_render_primitive as im2d_render_primitive;
 
 /// `CSprite::maVertices` (4 x `RwIm2DVertex`, 0x1C bytes: x, y, z, rhw, colour, u, v).
 const SPRITE_VERTICES: usize = 0xc4_b8e0;

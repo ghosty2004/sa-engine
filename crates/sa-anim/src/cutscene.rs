@@ -60,53 +60,40 @@ const AUDIO_TRACKS: usize = 0x8D0AA8; // {name, trackId}[], null-terminated
 const CUTOBJ_COLMODELS: usize = 0x968A30;
 const ANIM_CLUMP_OFFSET: usize = 0xB5F878; // the RpAnimBlendClumpData plugin offset
 
+pub use crate::bindings::cutscene_finish_cutscene as finish_cutscene;
+pub use crate::bindings::streaming_remove_current_zones_models;
+pub use sa_core::bindings::assoc_set_current_time;
+pub use sa_core::bindings::camera_set_wide_screen_on;
+pub use sa_core::bindings::clothes_rebuild_player_if_needed;
+pub use sa_core::bindings::crt_free_8214bd as crt_free2;
+pub use sa_core::bindings::crt_new as operator_new2;
+pub use sa_core::bindings::crt_strlwr;
+pub use sa_core::bindings::directory_read_dir_file;
+pub use sa_core::bindings::find_player_ped;
+pub use sa_core::bindings::game_drastic_tidy_up_memory;
+pub use sa_core::bindings::get_pad;
+pub use sa_core::bindings::hud_set_help_message;
+pub use sa_core::bindings::load_all_requested_models as streaming_load_all_requested_models;
+pub use sa_core::bindings::remove_unused_models_in_loaded_list as streaming_remove_unused_models_in_loaded_list;
+pub use sa_core::bindings::rp_atomic_resync_interpolated_sphere;
+pub use sa_core::bindings::set_mission_doesnt_require_model as streaming_set_mission_doesnt_require_model;
+pub use sa_core::bindings::streaming_i_have_used_streaming_memory;
+pub use sa_core::bindings::streaming_im_gonna_use_streaming_memory;
+pub use sa_core::bindings::streaming_request_model;
+pub use sa_core::bindings::stricmp as crt_stricmp;
+pub use sa_core::bindings::timer_resume;
+pub use sa_core::bindings::timer_suspend;
 orig! {
-    /// `operator new` (0x82119A)
-    pub fn operator_new2(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
-    /// `operator delete` / `free` (0x8214BD)
-    pub fn crt_free2(p: GPtr<u8>) = cdecl 0x8214BD => unported;
     /// `CDirectory::CDirectory(capacity)` (0x5322A0)
     pub fn directory_ctor(d: GPtr<u8>, capacity: i32) -> GPtr<u8> = thiscall 0x5322A0 => unported;
     /// `CDirectory::~CDirectory()` (0x5322D0)
     pub fn directory_dtor(d: GPtr<u8>) = thiscall 0x5322D0 => unported;
-    /// `CDirectory::ReadDirFile(name)` (0x532350)
-    pub fn directory_read_dir_file(d: GPtr<u8>, name: GPtr<u8>) = thiscall 0x532350 => unported;
-    /// CRT `_strlwr` (0x836C58)
-    pub fn crt_strlwr(s: GPtr<u8>) -> GPtr<u8> = cdecl 0x836C58 => unported;
-    /// CRT `_stricmp` (0x8229B6)
-    pub fn crt_stricmp(a: GPtr<u8>, b: GPtr<u8>) -> i32 = cdecl 0x8229B6 => unported;
     /// `CCutsceneMgr::Update_overlay()` (0x5B1720)
     pub fn update_overlay() = cdecl 0x5B1720 => unported;
-    /// `CPad::GetPad(n)` (0x53FB70)
-    pub fn get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
     /// `FUN_00746070` (the last skip test: skip when it returns 0)
     pub fn skip_check_746070() -> u8 = cdecl 0x746070 => unported;
-    /// `FindPlayerPed(id)` (0x56E210)
-    pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CClothes::RebuildPlayerIfNeeded(player)` (0x5A8390)
-    pub fn clothes_rebuild_player_if_needed(p: GPtr<u8>) = cdecl 0x5A8390 => unported;
     /// `CClothes::RebuildCutscenePlayer(player, model)` (0x5A8270)
     pub fn clothes_rebuild_cutscene_player(p: GPtr<u8>, model: i32) = cdecl 0x5A8270 => unported;
-    /// `CStreaming::RequestModel(model, flags)` (0x4087E0)
-    pub fn streaming_request_model(model: i32, flags: i32) = cdecl 0x4087E0 => unported;
-    /// `CStreaming::LoadAllRequestedModels(priority)` (0x40EA10)
-    pub fn streaming_load_all_requested_models(prio: u32) = cdecl 0x40EA10 => unported;
-    /// `CStreaming::SetMissionDoesntRequireModel(model)` (0x409C90)
-    pub fn streaming_set_mission_doesnt_require_model(model: i32) = cdecl 0x409C90 => unported;
-    /// `CStreaming::RemoveCurrentZonesModels()` (0x40B080)
-    pub fn streaming_remove_current_zones_models() = cdecl 0x40B080 => unported;
-    /// `CStreaming::RemoveUnusedModelsInLoadedList()` (0x407AC0)
-    pub fn streaming_remove_unused_models_in_loaded_list() = cdecl 0x407AC0 => unported;
-    /// `CStreaming::ImGonnaUseStreamingMemory()` (0x407BE0)
-    pub fn streaming_im_gonna_use_streaming_memory() = cdecl 0x407BE0 => unported;
-    /// `CStreaming::IHaveUsedStreamingMemory()` (0x407BF0)
-    pub fn streaming_i_have_used_streaming_memory() = cdecl 0x407BF0 => unported;
-    /// `CGame::DrasticTidyUpMemory(bool)` (0x53C810)
-    pub fn game_drastic_tidy_up_memory(b: u32) = cdecl 0x53C810 => unported;
-    /// `CTimer::Suspend()` (0x5619D0)
-    pub fn timer_suspend() = cdecl 0x5619D0 => unported;
-    /// `CTimer::Resume()` (0x561A00)
-    pub fn timer_resume() = cdecl 0x561A00 => unported;
     /// `CCutsceneMgr::LoadCutsceneData_preload()` (0x5B05A0)
     pub fn load_cutscene_data_preload() = cdecl 0x5B05A0 => unported;
     /// `CCutsceneMgr::LoadCutsceneData_overlay(name)` (0x5B13F0)
@@ -115,18 +102,12 @@ orig! {
     pub fn delete_cutscene_data_overlay() = cdecl 0x5AFD60 => unported;
     /// `CCutsceneMgr::LoadEverythingBecauseCutsceneDeletedAllOfIt()` (0x4D5C10)
     pub fn load_everything_because_cutscene_deleted_all_of_it() = cdecl 0x4D5C10 => unported;
-    /// `CCutsceneMgr::FinishCutscene()` (0x5B04D0)
-    pub fn finish_cutscene() = cdecl 0x5B04D0 => unported;
     /// `CAnimBlendAssocGroup::GetAnimation(name)` (0x4CE040)
     pub fn assoc_group_get_animation(gr: GPtr<u8>, name: GPtr<u8>) -> GPtr<u8> = thiscall 0x4CE040 => unported;
     /// `CAnimBlendAssocGroup::CopyAnimation(name)` (0x4CE0B0)
     pub fn assoc_group_copy_animation(gr: GPtr<u8>, name: GPtr<u8>) -> GPtr<u8> = thiscall 0x4CE0B0 => unported;
-    /// `CAnimBlendAssociation::SetCurrentTime(time)` (0x4CEA80)
-    pub fn assoc_set_current_time(a: GPtr<u8>, t: f32) = thiscall 0x4CEA80 => unported;
     /// `RpAnimBlendClumpFindFrame(clump, name)` (0x4D62A0)
     pub fn rp_anim_blend_clump_find_frame(clump: GPtr<u8>, name: GPtr<u8>) -> GPtr<u8> = cdecl 0x4D62A0 => unported;
-    /// `_rpAtomicResyncInterpolatedSphere(atomic)` (0x7491F0)
-    pub fn rp_atomic_resync_interpolated_sphere(a: GPtr<u8>) = cdecl 0x7491F0 => unported;
     /// `RwV3dTransformPoints(out, in, n, matrix)` (0x7EDD90)
     pub fn rw_v3d_transform_points(out: GPtr<f32>, inp: GPtr<f32>, n: i32, m: GPtr<u8>) -> GPtr<f32> = cdecl 0x7EDD90 => unported;
     /// `RpClumpForAllAtomics(clump, callback, data)` (0x749B70)
@@ -137,10 +118,6 @@ orig! {
     pub fn camera_set_cam_cut_scene_offset(cam: GPtr<u8>, v: GPtr<u8>) = thiscall 0x50BD20 => unported;
     /// `CCamera::TakeControlWithSpline(mode)` (0x50CAE0)
     pub fn camera_take_control_with_spline(cam: GPtr<u8>, mode: i32) = thiscall 0x50CAE0 => unported;
-    /// `CCamera::SetWideScreenOn()` (0x50C140)
-    pub fn camera_set_wide_screen_on(cam: GPtr<u8>) = thiscall 0x50C140 => unported;
-    /// `CHud::SetHelpMessage(text, quick, permanent, addToBrief)` (0x588BE0)
-    pub fn hud_set_help_message(text: u32, quick: u32, permanent: u32, brief: u32) = cdecl 0x588BE0 => unported;
     /// `CPlantMgr::PreUpdateOnceForNewCameraPos(pos)` (0x5DCF30)
     pub fn plant_mgr_pre_update_once_for_new_camera_pos(pos: GPtr<u8>) = cdecl 0x5DCF30 => unported;
 }

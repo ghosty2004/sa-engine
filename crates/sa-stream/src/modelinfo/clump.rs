@@ -62,6 +62,18 @@ pub const FILL_FRAME_ARRAY_CB: u32 = 0x4C5390;
 /// `CAnimManager::ms_aAnimBlocks` (0xB5D4A0, 0x20 bytes each)
 pub const ANIM_BLOCKS: u32 = 0xB5D4A0;
 
+pub use crate::bindings::get_anim_hierarchy_from_clump;
+pub use crate::bindings::get_animation_block_index;
+pub use crate::bindings::rp_skin_atomic_set_hanim_hierarchy;
+pub use crate::bindings::set_atomic_render_callback;
+pub use sa_core::bindings::crt_free_8214bd as free;
+pub use sa_core::bindings::get_first_atomic;
+pub use sa_core::bindings::get_frame_hierarchy_id;
+pub use sa_core::bindings::get_frame_node_name;
+pub use sa_core::bindings::rp_anim_blend_clump_init;
+pub use sa_core::bindings::rp_clump_destroy;
+pub use sa_core::bindings::rp_skin_geometry_get_skin;
+pub use sa_core::bindings::stricmp;
 orig! {
     /// `CBaseModelInfo::Init` (0x4C4B10)
     pub fn base_init(this: MiPtr) = thiscall 0x4C4B10 => super::base::init;
@@ -69,54 +81,30 @@ orig! {
     pub fn base_shutdown(this: MiPtr) = thiscall 0x4C4D50 => super::base::shutdown;
     /// `CBaseModelInfo::DeleteCollisionModel` (0x4C4C40)
     pub fn delete_collision_model(this: MiPtr) = thiscall 0x4C4C40 => super::base::delete_collision_model;
-    /// CRT `_stricmp` (0x8229B6)
-    pub fn stricmp(a: GPtr<u8>, b: GPtr<u8>) -> i32 = cdecl 0x8229B6 => unported;
     /// CRT `operator new` (0x82119A)
     pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
-    /// CRT `free` (0x8214BD)
-    pub fn free(p: GPtr<u8>) = cdecl 0x8214BD => unported;
-    /// `CAnimManager::GetAnimationBlockIndex(const char*)` (0x4D3990)
-    pub fn get_animation_block_index(name: GPtr<u8>) -> i32 = cdecl 0x4D3990 => unported;
     /// `CAnimManager::GetAnimation(uint32 key, CAnimBlock*)` (0x4D39F0)
     pub fn get_animation(key: u32, block: GPtr<u8>) -> GPtr<u8> = cdecl 0x4D39F0 => unported;
     /// `CAnimManager::BlendAnimation(RpClump*, CAnimBlendHierarchy*, int, float)` (0x4D4410)
     pub fn blend_animation(clump: GPtr<u8>, hier: GPtr<u8>, flags: i32, delta: f32) -> GPtr<u8> = cdecl 0x4D4410 => unported;
     /// `CCarFXRenderer::CustomCarPipeAtomicSetup` (0x5D5B20)
     pub fn custom_car_pipe_atomic_setup(atomic: GPtr<u8>) -> i32 = cdecl 0x5D5B20 => unported;
-    /// `CVisibilityPlugins::SetAtomicRenderCallback` (0x7328A0)
-    pub fn set_atomic_render_callback(atomic: GPtr<u8>, cb: u32) = cdecl 0x7328A0 => unported;
     /// `CVisibilityPlugins::SetClumpModelInfo` (0x733750)
     pub fn set_clump_model_info(clump: GPtr<u8>, mi: MiPtr) = cdecl 0x733750 => unported;
-    /// `CVisibilityPlugins::GetFrameHierarchyId` (0x732A20)
-    pub fn get_frame_hierarchy_id(frame: GPtr<u8>) -> i32 = cdecl 0x732A20 => unported;
     /// `CVisibilityPlugins::SetFrameHierarchyId` (0x732A00)
     pub fn set_frame_hierarchy_id(frame: GPtr<u8>, id: i32) = cdecl 0x732A00 => unported;
-    /// `NodeNamePlugin::GetFrameNodeName` (0x72FB30)
-    pub fn get_frame_node_name(frame: GPtr<u8>) -> GPtr<u8> = cdecl 0x72FB30 => unported;
     /// `RwFrameForAllChildren` (0x7F0DC0)
     pub fn rw_frame_for_all_children(frame: GPtr<u8>, cb: u32, data: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0DC0 => unported;
-    /// `RpSkinAtomicSetHAnimHierarchy` (0x7C7520)
-    pub fn rp_skin_atomic_set_hanim_hierarchy(atomic: GPtr<u8>, hier: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C7520 => unported;
     /// `RwHelper::GetAnimHierarchyFromFrame` (0x734AB0)
     pub fn get_anim_hierarchy_from_frame(frame: GPtr<u8>) -> GPtr<u8> = cdecl 0x734AB0 => unported;
-    /// `RwHelper::GetAnimHierarchyFromClump` (0x734B10)
-    pub fn get_anim_hierarchy_from_clump(clump: GPtr<u8>) -> GPtr<u8> = cdecl 0x734B10 => unported;
-    /// `RwHelper::GetFirstAtomic` (0x734820)
-    pub fn get_first_atomic(clump: GPtr<u8>) -> GPtr<u8> = cdecl 0x734820 => unported;
-    /// `RpSkinGeometryGetSkin` (0x7C7550)
-    pub fn rp_skin_geometry_get_skin(geometry: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C7550 => unported;
     /// `RpSkinGetVertexBoneWeights` (0x7C77F0)
     pub fn rp_skin_get_vertex_bone_weights(skin: GPtr<u8>) -> GPtr<f32> = cdecl 0x7C77F0 => unported;
-    /// `RpClumpDestroy` (0x74A310)
-    pub fn rp_clump_destroy(clump: GPtr<u8>) -> i32 = cdecl 0x74A310 => unported;
     /// `RpClumpClone` (0x749F70)
     pub fn rp_clump_clone(clump: GPtr<u8>) -> GPtr<u8> = cdecl 0x749F70 => unported;
     /// `RpAnimBlend::RpAnimBlendCreateAnimationForHierarchy` (0x4D60E0)
     pub fn rp_anim_blend_create_animation_for_hierarchy(hier: GPtr<u8>) -> GPtr<u8> = cdecl 0x4D60E0 => unported;
     /// `RtAnimInterpolatorSetCurrentAnim` (0x7CD5A0)
     pub fn rt_anim_interpolator_set_current_anim(interp: GPtr<u8>, anim: GPtr<u8>) -> i32 = cdecl 0x7CD5A0 => unported;
-    /// `RpAnimBlend::RpAnimBlendClumpInit` (0x4D6720)
-    pub fn rp_anim_blend_clump_init(clump: GPtr<u8>) = cdecl 0x4D6720 => unported;
     /// `CClumpModelInfo::~CClumpModelInfo` (0x4C5750)
     pub fn clump_destructor(this: MiPtr) = thiscall 0x4C5750 => unported;
 }

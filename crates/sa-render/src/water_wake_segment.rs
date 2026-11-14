@@ -10,15 +10,13 @@ use sa_world::physical::base::floor_f64;
 
 use crate::common::{ftol32, g, k, x, xi};
 
+use sa_core::bindings::little_test;
+use sa_world::bindings::rw_im3d_end;
 orig! {
-    /// `Common::LittleTest()` (0x541330)
-    fn little_test() = cdecl 0x541330 => unported;
     /// `RwIm3DTransform(RwIm3DVertex*, uint32, RwMatrix*, uint32)` (0x7EF450)
     fn rw_im3d_transform(verts: GPtr<u8>, n: u32, ltm: GPtr<u8>, flags: u32) -> GPtr<u8> = cdecl 0x7EF450 => unported;
     /// `RwIm3DRenderIndexedPrimitive(RwPrimitiveType, RwImVertexIndex*, int32)` (0x7EF550)
     fn rw_im3d_render_indexed_primitive(ty: u32, idx: GPtr<u8>, n: i32) -> i32 = cdecl 0x7EF550 => unported;
-    /// `RwIm3DEnd()` (0x7EF520)
-    fn rw_im3d_end() -> i32 = cdecl 0x7EF520 => unported;
 }
 
 /// The water render buffer: `TempBufferVertices` 3D (0xC4D958, `RwIm3DVertex` 0x24: pos +0, colour +0x18, u

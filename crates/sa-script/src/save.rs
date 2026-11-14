@@ -31,25 +31,21 @@ const WINDOW: u32 = 0x1000;
 
 use sa_core::field::g;
 
+use crate::bindings::script_attach_anim_group_to_char_model;
+use sa_core::bindings::scripts_init as the_scripts_init;
+use sa_core::bindings::world_add;
+use sa_core::bindings::world_remove;
 orig! {
     /// `CGenericGameStorage::SaveDataToWorkBuffer(void*, int32)` (0x5D1270)
     fn save_data(p: GPtr<u8>, n: i32) -> u8 = cdecl 0x5D1270 => sa_core::save::save_data_to_work_buffer;
     /// `CGenericGameStorage::LoadDataFromWorkBuffer(void*, int32)` (0x5D1300)
     fn load_data(p: GPtr<u8>, n: i32) -> u8 = cdecl 0x5D1300 => sa_core::save::load_data_from_work_buffer;
-    /// `CTheScripts::Init()` (0x468D50)
-    fn the_scripts_init() = cdecl 0x468D50 => unported;
     /// `CTheScripts::GetScriptIndexFromPointer(CRunningScript*)` (0x464D20)
     fn get_script_index_from_pointer(s: GPtr<u8>) -> u32 = cdecl 0x464D20 => unported;
     /// `CTheScripts::StartNewScript(uint8* ip, uint16 index)` (0x464C90; the callee reads the low word)
     fn start_new_script(ip: u32, index: u32) -> GPtr<u8> = cdecl 0x464C90 => unported;
-    /// `CWorld::Remove(CEntity*)` (0x563280)
-    fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
     /// `CBuilding::ReplaceWithNewModel(int32)` (0x403EC0)
     fn building_replace_with_new_model(e: GPtr<u8>, model: i32) = thiscall 0x403EC0 => unported;
-    /// `CWorld::Add(CEntity*)` (0x563220)
-    fn world_add(e: GPtr<u8>) = cdecl 0x563220 => unported;
-    /// `CTheScripts::ScriptAttachAnimGroupToCharModel(int32 model, char* group)` (0x474800)
-    fn script_attach_anim_group_to_char_model(model: i32, group: GPtr<u8>) -> u8 = cdecl 0x474800 => unported;
 }
 
 /// `(e - objects) / size + 1` as the bytes compute the pool index: a magic multiply (`imul m`, plus the

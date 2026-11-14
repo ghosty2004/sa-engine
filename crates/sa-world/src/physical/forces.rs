@@ -15,10 +15,7 @@ use sa_math::x87::X87;
 use super::shared::*;
 use crate::collision::fpu::Fpu;
 
-orig! {
-    /// `CCullZones::DoExtraAirResistanceForPlayer()` (0x72DDD0, AL)
-    pub fn do_extra_air_resistance_for_player() -> u8 = cdecl 0x72DDD0 => unported;
-}
+pub use crate::bindings::do_extra_air_resistance_for_player;
 
 sa_core::globals! {
     list GLOBALS;

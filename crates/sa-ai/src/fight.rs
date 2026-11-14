@@ -19,6 +19,35 @@ const TIME_STEP: usize = 0xB7CB5C;
 /// The `0.0f` constant the comparisons read.
 const F_ZERO: usize = 0x858B50;
 
+use crate::bindings::anim_blend_animation;
+use crate::bindings::anim_set_delete_callback;
+use crate::bindings::assoc_set_finish_callback as anim_set_finish_callback;
+use crate::bindings::clump_get_association as clump_get_association_id;
+use crate::bindings::fight_61c9b0;
+use crate::bindings::fight_6240b0;
+use crate::bindings::fight_dtor_orig;
+use crate::bindings::ped_set_move_state;
+use crate::bindings::use_gun_clear_anim;
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_core::bindings::entity_register_reference;
+use sa_core::bindings::get_weapon_info as weapon_info_get;
+use sa_core::bindings::intel_get_task_use_gun as ped_intelligence_get_task_use_gun;
+use sa_core::bindings::matrix_mul_vec;
+use sa_core::bindings::streaming_request_model;
+use sa_core::bindings::tm_get_simplest_active_task as task_manager_get_simplest_active_task;
+use sa_core::bindings::tm_get_task_secondary as task_manager_get_task_secondary;
+use sa_stream::bindings::anim_add_block_ref;
+use sa_stream::bindings::anim_remove_block_ref;
+use sa_stream::bindings::get_anim_group_name as anim_get_anim_group_name;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::get_animation_block as anim_get_animation_block;
+use sa_world::bindings::get_pad_from_player as player_get_pad_from_player;
+use sa_world::bindings::pad_get_target;
+use sa_world::bindings::ped_audio_add_audio_event;
+use sa_world::bindings::ped_get_weapon_skill;
+use sa_world::bindings::ped_weapon_audio_add_audio_event;
+use sa_world::bindings::task_simple_ctor;
+use sa_world::bindings::task_simple_dtor;
 orig! {
     // ---- virtual slots ----
     /// `CTask::GetTaskType` (vtable +0x10)
@@ -30,90 +59,32 @@ orig! {
     /// `CEvent::GetSourceEntity` (CEvent vtable +0x28)
     fn v_event_get_source_entity(e: GPtr<u8>) -> u32 = thiscall vslot 0x28 => unported;
 
-    // ---- task bases ----
-    /// `CTaskSimple::CTaskSimple` (0x61A390)
-    fn task_simple_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A390 => unported;
-    /// `CTaskSimple::~CTaskSimple` (0x61A3A0)
-    fn task_simple_dtor(t: GPtr<u8>) = thiscall 0x61A3A0 => unported;
-
     // ---- this module's own functions (called through the original address) ----
     /// `CTaskSimpleDuck::Destructor` (0x692030)
     fn duck_dtor_orig(t: GPtr<u8>) = thiscall 0x692030 => unported;
     /// `CTaskSimpleDuck::SetMoveAnim(CPed*)` (0x6939F0, `ret 4`)
     fn duck_set_move_anim_orig(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x6939F0 => unported;
-    /// `CTaskSimpleFight::~CTaskSimpleFight` (0x61C530)
-    fn fight_dtor_orig(t: GPtr<u8>) = thiscall 0x61C530 => unported;
 
     // ---- other catalogued functions ----
     /// `CTaskSimpleDuck::AbortBecauseOfOtherDuck(CPed*)` (0x692340, `ret 4`)
     fn duck_abort_because_of_other_duck(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x692340 => unported;
-    /// `CTaskManager::GetSimplestActiveTask()` (0x6819D0)
-    fn task_manager_get_simplest_active_task(m: GPtr<u8>) -> GPtr<u8> = thiscall 0x6819D0 => unported;
-    /// `CTaskManager::GetTaskSecondary(int32)` (0x681810, `ret 4`)
-    fn task_manager_get_task_secondary(m: GPtr<u8>, i: i32) -> GPtr<u8> = thiscall 0x681810 => unported;
-    /// `CPedIntelligence::GetTaskUseGun()` (0x600F70)
-    fn ped_intelligence_get_task_use_gun(i: GPtr<u8>) -> GPtr<u8> = thiscall 0x600F70 => unported;
-    /// `CTaskSimpleUseGun::ClearAnim(CPed*)` (0x61E190, `ret 4`)
-    fn use_gun_clear_anim(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x61E190 => unported;
-    /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float delta)` (0x4D4610)
-    fn anim_blend_animation(clump: u32, group: u32, id: u32, delta: u32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
-    /// `RpAnimBlendClumpGetAssociation(RpClump*, AnimationId)` (0x4D68B0)
-    fn clump_get_association_id(clump: u32, id: u32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
-    /// `CAnimBlendAssociation::SetFinishCallback(cb, data)` (0x4CEBE0)
-    fn anim_set_finish_callback(a: GPtr<u8>, cb: u32, data: u32) = thiscall 0x4CEBE0 => unported;
-    /// `CAnimBlendAssociation::SetDeleteCallback(cb, data)` (0x4CEBC0)
-    fn anim_set_delete_callback(a: GPtr<u8>, cb: u32, data: u32) = thiscall 0x4CEBC0 => unported;
-    /// `CPed::IsPlayer` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CPed::GetWeaponSkill()` (0x5E6580, current weapon)
-    fn ped_get_weapon_skill(p: GPtr<u8>) -> u32 = thiscall 0x5E6580 => unported;
-    /// `CWeaponInfo::GetWeaponInfo(eWeaponType, eWeaponSkill)` (0x743C60)
-    fn weapon_info_get(ty: u32, skill: u32) -> GPtr<u8> = cdecl 0x743C60 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity** ref)` (0x571A00)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CEntity::RegisterReference(CEntity** ref)` (0x571B70)
-    fn entity_register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
-    /// `CAnimManager::RemoveAnimBlockRef(int32)` (0x4D3FD0)
-    fn anim_remove_block_ref(i: i32) = cdecl 0x4D3FD0 => unported;
-    /// `CAnimManager::AddAnimBlockRef(int32)` (0x4D3FB0)
-    fn anim_add_block_ref(i: i32) = cdecl 0x4D3FB0 => unported;
     /// `CAnimManager::GetAnimBlockName(AssocGroupId)` (0x4D3A30)
     fn anim_get_anim_block_name(group: u32) -> GPtr<u8> = cdecl 0x4D3A30 => unported;
-    /// `CAnimManager::GetAnimationBlock(const char*)` (0x4D3940)
-    fn anim_get_animation_block(name: GPtr<u8>) -> GPtr<u8> = cdecl 0x4D3940 => unported;
-    /// `CStreaming::RequestModel(int32 id, int32 flags)` (0x4087E0)
-    fn streaming_request_model(id: i32, flags: i32) = cdecl 0x4087E0 => unported;
-    /// `CPed::SetMoveState(eMoveState)` (0x5DEC00, `ret 4`)
-    fn ped_set_move_state(p: GPtr<u8>, state: u32) = thiscall 0x5DEC00 => unported;
     /// `CAnimBlendAssociation::SetCurrentTime(float)` (0x4CEA80, `ret 4`; the float passed as its bits)
     fn anim_set_current_time(a: GPtr<u8>, t: u32) = thiscall 0x4CEA80 => unported;
-    /// `CAEPedAudioEntity::AddAudioEvent(event, volume, speed, entity, a4, a5, a6)` (0x4E2BB0, `ret 0x1C`)
-    fn ped_audio_add_audio_event(e: GPtr<u8>, ev: u32, vol: u32, speed: u32, a3: u32, a4: u32, a5: u32, a6: u32) = thiscall 0x4E2BB0 => unported;
-    /// `CAEPedWeaponAudioEntity::AddAudioEvent(int32)` (0x4E69F0, `ret 4`)
-    fn ped_weapon_audio_add_audio_event(e: GPtr<u8>, ev: u32) = thiscall 0x4E69F0 => unported;
-    /// `CMatrix::operator*(const CMatrix&, const CVector&)` (0x59C890, cdecl, hidden result pointer first)
-    fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
     /// `operator*(const CVector&, float)` (0x40FEC0, cdecl, hidden result pointer first)
     fn vector_mul_float(out: GPtr<u8>, v: GPtr<u8>, f: u32) -> GPtr<u8> = cdecl 0x40FEC0 => unported;
     /// `CVector::operator+=(const CVector&)` (0x411A00, `ret 4`)
     fn vector_add_assign(v: GPtr<u8>, o: GPtr<u8>) -> GPtr<u8> = thiscall 0x411A00 => unported;
-    /// `CPlayerPed::GetPadFromPlayer()` (0x609560)
-    fn player_get_pad_from_player(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x609560 => unported;
-    /// `CPad::GetTarget()` (0x540670)
-    fn pad_get_target(p: GPtr<u8>) -> u8 = thiscall 0x540670 => unported;
     /// `FUN_0061c7f0(CPed*, int8 command)` (0x61C7F0, `ret 8`; a `CTaskSimpleFight` method choosing the
     /// next combo move; reads only the low byte of `command`)
     fn fight_61c7f0(t: GPtr<u8>, ped: GPtr<u8>, command: u32) -> u8 = thiscall 0x61C7F0 => unported;
-    /// `FUN_0061c9b0(CPed*)` (0x61C9B0, `ret 4`)
-    fn fight_61c9b0(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x61C9B0 => unported;
     /// `FUN_00624710(CPed*)` (0x624710, `ret 4`; returns an int16 in AX)
     fn fight_624710(t: GPtr<u8>, ped: GPtr<u8>) -> u32 = thiscall 0x624710 => unported;
     /// `FUN_00624a40(CPed*)` (0x624A40, `ret 4`; returns an int16 in AX)
     fn fight_624a40(t: GPtr<u8>, ped: GPtr<u8>) -> u32 = thiscall 0x624A40 => unported;
     /// `FUN_00623b10(CPed*, int32)` (0x623B10, `ret 8`)
     fn fight_623b10(t: GPtr<u8>, ped: GPtr<u8>, a: i32) = thiscall 0x623B10 => unported;
-    /// `FUN_006240b0(CPed*, const CVector*)` (0x6240B0, `ret 8`; the melee hit test)
-    fn fight_6240b0(t: GPtr<u8>, ped: GPtr<u8>, pos: GPtr<u8>) = thiscall 0x6240B0 => unported;
 
     // ---- LoadMeleeData ----
     /// `CFileMgr::OpenFile(const char* name, const char* mode)` (0x538900)
@@ -132,8 +103,6 @@ orig! {
     fn crt_sscanf4(s: GPtr<u8>, fmt: u32, a0: GPtr<u8>, a1: GPtr<u8>, a2: GPtr<u8>, a3: GPtr<u8>) -> i32 = cdecl 0x8220AD => unported;
     /// CRT `_sscanf` (0x8220AD) with nine outputs
     fn crt_sscanf9(s: GPtr<u8>, fmt: u32, a0: GPtr<u8>, a1: GPtr<u8>, a2: GPtr<u8>, a3: GPtr<u8>, a4: GPtr<u8>, a5: GPtr<u8>, a6: GPtr<u8>, a7: GPtr<u8>, a8: GPtr<u8>) -> i32 = cdecl 0x8220AD => unported;
-    /// `CAnimManager::GetAnimGroupName(AssocGroupId)` (0x4D3A20)
-    fn anim_get_anim_group_name(group: i32) -> GPtr<u8> = cdecl 0x4D3A20 => unported;
     /// `FUN_005bd360(const char*)` (0x5BD360): hit level of a melee data token
     fn melee_hit_level_of(s: GPtr<u8>) -> u8 = cdecl 0x5BD360 => unported;
     /// `FUN_005bd3b0(int32)` (0x5BD3B0): sound id of a melee data number (int16 in AX)

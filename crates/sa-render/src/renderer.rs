@@ -60,25 +60,38 @@ pub const CURR_AREA: usize = 0xB72914;
 /// `RwEngineInstance` (RwGlobals*).
 pub const RW_ENGINE_INSTANCE: usize = 0xC97B24;
 
+pub use sa_core::bindings::deactivate_directional as de_activate_directional;
+pub use sa_core::bindings::entity_get_is_on_screen;
+pub use sa_core::bindings::find_player_ped;
+pub use sa_core::bindings::find_player_vehicle;
+pub use sa_core::bindings::general_limit_radian_angle as limit_radian_angle;
+pub use sa_core::bindings::rw_camera_begin_update;
+pub use sa_core::bindings::rw_camera_end_update;
+pub use sa_core::bindings::set_ambient_colours;
+pub use sa_core::bindings::streaming_request_model as request_model;
+pub use sa_core::bindings::vector_magnitude;
+pub use sa_core::bindings::world_clear_scan_codes as clear_scan_codes;
+pub use sa_stream::bindings::entity_is_visible;
+pub use sa_world::bindings::calculate_ground_height;
+pub use sa_world::bindings::camera_get_look_direction as get_look_direction;
+pub use sa_world::bindings::clock_get_is_time_in_range as get_is_time_in_range;
+pub use sa_world::bindings::get_clump_alpha as vp_get_clump_alpha;
+pub use sa_world::bindings::get_lighting_from_col;
+pub use sa_world::bindings::is_vision_fx_active;
+pub use sa_world::bindings::night_vision_set_lights;
+pub use sa_world::bindings::remove_lights_affecting_object;
+pub use sa_world::bindings::vector_sub;
 orig! {
     /// `RwRenderStateSet` through `RwEngineInstance->dOpenDevice.fpRenderStateSet` (+0x20)
     pub fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `DeActivateDirectional()` (0x735C70)
-    pub fn de_activate_directional() = cdecl 0x735C70 => unported;
-    /// `SetAmbientColours()` (0x735D30)
-    pub fn set_ambient_colours() = cdecl 0x735D30 => unported;
     /// `CVisibilityPlugins::RenderFadingEntities()` (0x733F10)
     pub fn vp_render_fading_entities() = cdecl 0x733F10 => unported;
     /// `CVisibilityPlugins::RenderFadingUnderwaterEntities()` (0x7337D0)
     pub fn vp_render_fading_underwater_entities() = cdecl 0x7337D0 => unported;
-    /// `CPostEffects::IsVisionFXActive()` (0x7034F0)
-    pub fn is_vision_fx_active() -> u8 = cdecl 0x7034F0 => unported;
     /// `CPostEffects::FilterFX_StoreAndSetDayNightBalance()` (0x7034B0)
     pub fn filter_fx_store_and_set_day_night_balance() = cdecl 0x7034B0 => unported;
     /// `CPostEffects::FilterFX_RestoreDayNightBalance()` (0x7034D0)
     pub fn filter_fx_restore_day_night_balance() = cdecl 0x7034D0 => unported;
-    /// `CPostEffects::NightVisionSetLights()` (0x7012E0)
-    pub fn night_vision_set_lights() = cdecl 0x7012E0 => unported;
     /// `CPostEffects::InfraredVisionSetLightsForDefaultObjects()` (0x701430)
     pub fn infrared_vision_set_lights_for_default_objects() = cdecl 0x701430 => unported;
     /// `CEntity::Render()` (vtable +0x48)
@@ -101,18 +114,12 @@ orig! {
     pub fn vehicle_setup_render(v: GPtr<u8>) = thiscall 0x6D64F0 => unported;
     /// `CVehicle::ResetAfterRender()` (0x6D0E20)
     pub fn vehicle_reset_after_render(v: GPtr<u8>) = thiscall 0x6D0E20 => unported;
-    /// `CPointLights::RemoveLightsAffectingObject()` (0x6FFFE0)
-    pub fn remove_lights_affecting_object() = cdecl 0x6FFFE0 => unported;
     /// `CVisibilityPlugins::InsertEntityIntoSortedList(CEntity*, float)` (0x734570); the float as its dword
     pub fn vp_insert_entity_into_sorted_list(e: GPtr<u8>, dist: u32) -> u8 = cdecl 0x734570 => unported;
     /// `CVisibilityPlugins::InsertEntityIntoUnderwaterEntities(CEntity*, float)` (0x733D90)
     pub fn vp_insert_entity_into_underwater_entities(e: GPtr<u8>, dist: u32) -> u8 = cdecl 0x733D90 => unported;
     /// `CWorld::GetSector(int32, int32)` (0x407260)
     pub fn get_sector(x: i32, y: i32) -> GPtr<u8> = cdecl 0x407260 => unported;
-    /// `CEntity::IsVisible()` (0x536BC0)
-    pub fn entity_is_visible(e: GPtr<u8>) -> u8 = thiscall 0x536BC0 => unported;
-    /// `CStreaming::RequestModel(int32, int32)` (0x4087E0)
-    pub fn request_model(model: i32, flags: i32) = cdecl 0x4087E0 => unported;
     /// `CRenderer::AddEntityToRenderList(CEntity*, float)` (0x5534B0); the float as its dword
     pub fn call_add_entity_to_render_list(e: GPtr<u8>, dist: u32) = cdecl 0x5534B0 => unported;
     /// `CRenderer::SetupScanLists(int32, int32)` (0x553540)
@@ -123,22 +130,12 @@ orig! {
     pub fn special_heli_pre_render() = cdecl 0x6C4750 => unported;
     /// `CShadows::RenderExtraPlayerShadows()` (0x707FA0)
     pub fn render_extra_player_shadows() = cdecl 0x707FA0 => unported;
-    /// `CVisibilityPlugins::GetClumpAlpha(RpClump*)` (0x732B20)
-    pub fn vp_get_clump_alpha(clump: GPtr<u8>) -> i32 = cdecl 0x732B20 => unported;
-    /// `CCamera::GetLookDirection()` (0x50AE90)
-    pub fn get_look_direction(cam: GPtr<u8>) -> i32 = thiscall 0x50AE90 => unported;
-    /// `RwCameraEndUpdate(RwCamera*)` (0x7EE180)
-    pub fn rw_camera_end_update(cam: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EE180 => unported;
-    /// `RwCameraBeginUpdate(RwCamera*)` (0x7EE190)
-    pub fn rw_camera_begin_update(cam: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EE190 => unported;
     /// `CCarFXRenderer::SetFxEnvMapLightMult(float)` (0x5D5BA0); the float as its dword
     pub fn set_fx_env_map_light_mult(m: u32) = cdecl 0x5D5BA0 => unported;
     /// `WorldReplaceNormalLightsWithScorched(RpWorld*, float)` (0x7357E0); the float as its dword
     pub fn world_replace_normal_lights_with_scorched(world: GPtr<u8>, l: u32) = cdecl 0x7357E0 => unported;
     /// `CPointLights::GenerateLightsAffectingObject(const CVector*, float*, CEntity*)` (0x6FFBB0, ST0)
     pub fn generate_lights_affecting_object(pos: GPtr<f32>, bright: GPtr<f32>, e: GPtr<u8>) -> f64 = cdecl 0x6FFBB0 => unported;
-    /// `CPhysical::GetLightingFromCol(bool)` (0x5447B0, ST0); the dword the original pushes
-    pub fn get_lighting_from_col(e: GPtr<u8>, interior: u32) -> f64 = thiscall 0x5447B0 => unported;
     /// `SetLightColoursForPedsCarsAndObjects(float)` (0x735D90); the float as its dword
     pub fn set_light_colours_for_peds_cars_and_objects(m: u32) = cdecl 0x735D90 => unported;
     /// `CRenderer::AddToLodRenderList(CEntity*, float)` (0x553710); the float as its dword
@@ -147,24 +144,14 @@ orig! {
     pub fn entity_create_rw_object(e: GPtr<u8>) = thiscall vslot 0x1C => unported;
     /// `CEntity::DeleteRwObject()` (vtable +0x20)
     pub fn entity_delete_rw_object(e: GPtr<u8>) = thiscall vslot 0x20 => unported;
-    /// `CEntity::GetIsOnScreen()` (0x534540)
-    pub fn entity_get_is_on_screen(e: GPtr<u8>) -> u8 = thiscall 0x534540 => unported;
     /// `CEntity::IsEntityOccluded()` (0x71FAE0)
     pub fn entity_is_entity_occluded(e: GPtr<u8>) -> u8 = thiscall 0x71FAE0 => unported;
-    /// `operator-(const CVector&, const CVector&)` (0x40FE60, result through the hidden pointer)
-    pub fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => unported;
-    /// `CVector::Magnitude()` (0x4082C0, ST0)
-    pub fn vector_magnitude(v: GPtr<u8>) -> f64 = thiscall 0x4082C0 => unported;
     /// `CBaseModelInfo::AsAtomicModelInfoPtr()` (vtable +0x4)
     pub fn mi_as_atomic_model_info_ptr(mi: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x4 => unported;
     /// `CBaseModelInfo::GetModelType()` (vtable +0x10, AL)
     pub fn mi_get_model_type(mi: GPtr<u8>) -> u8 = thiscall vslot 0x10 => unported;
     /// `CBaseModelInfo::GetTimeInfo()` (vtable +0x14)
     pub fn mi_get_time_info(mi: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x14 => unported;
-    /// `CClock::GetIsTimeInRange(uint8, uint8)` (0x52CEE0); the zero-extended dwords
-    pub fn get_is_time_in_range(on: u32, off: u32) -> u8 = cdecl 0x52CEE0 => unported;
-    /// `FindPlayerVehicle(int32, bool)` (0x56E0D0)
-    pub fn find_player_vehicle(id: i32, remote: u32) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
     /// The protection thunk 0x407000 (`thunk_FUN_01562960`, thiscall on the entity, AL)
     pub fn fun_407000(e: GPtr<u8>) -> u8 = thiscall 0x407000 => unported;
     /// `CRenderer::SetupMapEntityVisibility(CEntity*, CBaseModelInfo*, float, bool)` (0x553F60)
@@ -173,18 +160,12 @@ orig! {
     pub fn call_setup_entity_visibility(e: GPtr<u8>, out: GPtr<f32>) -> i32 = cdecl 0x554230 => setup_entity_visibility;
     /// `CRenderer::SetupBigBuildingVisibility(CEntity*, float&)` (0x554650)
     pub fn call_setup_big_building_visibility(e: GPtr<u8>, out: GPtr<f32>) -> i32 = cdecl 0x554650 => setup_big_building_visibility;
-    /// `CGeneral::LimitRadianAngle(float)` (0x53CB50, ST0); the float as its dword
-    pub fn limit_radian_angle(a: u32) -> f64 = cdecl 0x53CB50 => unported;
     /// `CRenderer::ShouldModelBeStreamed(CEntity*, const CVector&, float)` (0x554EB0); the float as its dword
     pub fn call_should_model_be_streamed(e: GPtr<u8>, p: GPtr<f32>, far: u32) -> u8 = cdecl 0x554EB0 => should_model_be_streamed_b;
     /// `CRenderer::ScanPtrList_RequestModels<...>(CPtrList&)` (0x555680)
     pub fn call_scan_ptr_list_request_models(list: GPtr<u8>) = cdecl 0x555680 => scan_ptr_list_request_models;
     /// `CCullZones::FindTunnelAttributesForCoors(CVector)` (0x72D9F0; the vector by value = 3 dwords)
     pub fn find_tunnel_attributes_for_coors(x: u32, y: u32, z: u32) -> u32 = cdecl 0x72D9F0 => unported;
-    /// `FindPlayerPed(int32)` (0x56E210)
-    pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CCamera::CalculateGroundHeight(eGroundHeightType)` (0x514B80, ST0)
-    pub fn calculate_ground_height(cam: GPtr<u8>, kind: i32) -> f64 = thiscall 0x514B80 => unported;
     /// `CMirrors::BeforeConstructRenderList()` (0x726DF0)
     pub fn mirrors_before_construct_render_list() = cdecl 0x726DF0 => unported;
     /// `COcclusion::ProcessBeforeRendering()` (0x7201C0)
@@ -193,8 +174,6 @@ orig! {
     pub fn scan_world() = cdecl 0x554FE0 => scan_world_port;
     /// `CVisibilityPlugins::InitAlphaEntityList()` (0x734540)
     pub fn vp_init_alpha_entity_list() = cdecl 0x734540 => unported;
-    /// `CWorld::ClearScanCodes()` (0x563470)
-    pub fn clear_scan_codes() = cdecl 0x563470 => unported;
     /// `RwV3dTransformPoints(RwV3d* out, const RwV3d* in, int32 n, const RwMatrix*)` (0x7EDD90)
     pub fn rw_v3d_transform_points(out: GPtr<f32>, inp: GPtr<f32>, n: i32, m: GPtr<u8>) -> GPtr<f32> = cdecl 0x7EDD90 => unported;
     /// `CWorldScan::ScanWorld(CVector2D*, int32, void (*)(int32, int32))` (0x72CAE0); the callback address

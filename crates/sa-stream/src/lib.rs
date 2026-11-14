@@ -19,6 +19,8 @@
 // Large `orig!` blocks expand one recursive macro step per declaration.
 #![recursion_limit = "1024"]
 
+/// The `orig!` bindings this crate declares for the whole workspace (generated, ADR-003 §3.2).
+pub mod bindings;
 #[cfg(test)]
 extern crate std;
 

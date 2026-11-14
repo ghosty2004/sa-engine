@@ -9,13 +9,10 @@ use sa_math::x87::X87;
 
 use crate::common::{b, g, rd, wr, x};
 
+use crate::bindings::vehicle_set_model_index;
+use sa_core::bindings::frame_get_ltm as rw_frame_get_ltm;
+use sa_stream::bindings::fill_frame_array;
 orig! {
-    /// `CVehicle::SetModelIndex(uint32)` (0x6D6A40)
-    fn vehicle_set_model_index(v: GPtr<u8>, mi: u32) = thiscall 0x6D6A40 => unported;
-    /// `CClumpModelInfo::FillFrameArray(RpClump*, RwFrame**)` (0x4C5440)
-    fn fill_frame_array(clump: GPtr<u8>, frames: GPtr<u8>) = cdecl 0x4C5440 => unported;
-    /// `RwFrameGetLTM(RwFrame*)` (0x7F0990)
-    fn rw_frame_get_ltm(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0990 => unported;
     /// CRT `printf` (0x821982) with two int arguments (the missing-node debug message)
     fn printf2(fmt: u32, a: i32, c: i32) -> i32 = cdecl 0x821982 => unported;
     /// `CAutomobile::ResetSuspension()` (0x6A2AE0, called directly)

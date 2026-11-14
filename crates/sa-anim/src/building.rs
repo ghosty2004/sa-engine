@@ -13,15 +13,12 @@ sa_core::globals! {
     list GLOBALS;
 }
 
+pub use sa_core::bindings::entity_destructor;
+pub use sa_core::bindings::entity_update_rp_hanim;
+pub use sa_core::bindings::entity_update_rw_frame;
 orig! {
     /// `CEntity::PreRender()` (0x535FA0, called directly, not through the vtable)
     pub fn entity_pre_render(e: GPtr<u8>) = thiscall 0x535FA0 => unported;
-    /// `CEntity::UpdateRwFrame()` (0x532B00)
-    pub fn entity_update_rw_frame(e: GPtr<u8>) = thiscall 0x532B00 => unported;
-    /// `CEntity::UpdateRpHAnim()` (0x532B20)
-    pub fn entity_update_rp_hanim(e: GPtr<u8>) = thiscall 0x532B20 => unported;
-    /// `CEntity::~CEntity()` (0x535E90)
-    pub fn entity_destructor(e: GPtr<u8>) = thiscall 0x535E90 => unported;
     /// `CBuilding::operator delete` (0x4040A0)
     pub fn building_delete(p: GPtr<u8>) = cdecl 0x4040A0 => unported;
     /// `CAnimatedBuilding::~CAnimatedBuilding()` (0x537A70)

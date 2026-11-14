@@ -13,6 +13,8 @@ use crate::weapon_fire::{
     interesting_events_add, normalise, report_crime, simple_transform_update_matrix,
 };
 
+use sa_world::bindings::placeable_get_matrix;
+use sa_world::bindings::weapon_effects_is_locked_on;
 orig! {
     /// `CProjectileInfo::AddProjectile(CEntity* creator, eWeaponType, CVector origin, float force, CVector*
     /// dir, CEntity* target)` (0x737C80)
@@ -26,10 +28,6 @@ orig! {
     /// `CWorld::TestSphereAgainstWorld(CVector, float, CEntity* ignore, bool x6)` (0x569E20)
     #[allow(clippy::too_many_arguments)]
     fn world_test_sphere(x: f32, y: f32, z: f32, r: f32, ignore: GPtr<u8>, bd: u32, vh: u32, pd: u32, ob: u32, du: u32, cam: u32) -> GPtr<u8> = cdecl 0x569E20 => unported;
-    /// `CWeaponEffects::IsLockedOn(int32 crosshair)` (0x742BD0)
-    fn weapon_effects_is_locked_on(n: i32) -> u8 = cdecl 0x742BD0 => unported;
-    /// `CPlaceable::GetMatrix()` (0x411990, thiscall)
-    fn placeable_get_matrix(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x411990 => unported;
     /// `CWeapon::PickTargetForHeatSeekingMissile(CVector origin, CVector dir, float, CEntity* ignore, bool,
     /// CEntity* last)` (0x73F910)
     #[allow(clippy::too_many_arguments)]

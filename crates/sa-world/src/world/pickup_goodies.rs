@@ -7,31 +7,19 @@ use sa_core::{hook, orig};
 
 use super::common::{ftol32, g, rd, wr, xi};
 
+use crate::bindings::audio_report_frontend_event as report_frontend_audio_event;
+use crate::bindings::event_group_add;
+use crate::bindings::event_script_command_ctor;
+use crate::bindings::event_script_command_dtor;
+use crate::bindings::player_get_wanted_level;
+use crate::bindings::task_jetpack_ctor;
+use crate::bindings::update_stats_add_to_health;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::player_ped_reset_sprint_energy;
+use sa_core::bindings::set_wanted_level;
+use sa_core::bindings::stats_increment_stat;
+use sa_core::bindings::task_new;
 orig! {
-    /// `CPlayerPed::ResetSprintEnergy()` (0x60A530)
-    fn player_ped_reset_sprint_energy(p: GPtr<u8>) = thiscall 0x60A530 => unported;
-    /// `CAudioEngine::ReportFrontendAudioEvent(eAudioEvents, float, float)` (0x506EA0) on `AudioEngine` (0xB6BC90)
-    fn report_frontend_audio_event(engine: GPtr<u8>, event: u32, volume: u32, speed: u32) = thiscall 0x506EA0 => unported;
-    /// `CStats::UpdateStatsAddToHealth(uint32)` (0x55D030)
-    fn update_stats_add_to_health(v: i32) = cdecl 0x55D030 => unported;
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CPlayerPed::GetWantedLevel()` (0x41BE60)
-    fn player_get_wanted_level(p: GPtr<u8>) -> i32 = thiscall 0x41BE60 => unported;
-    /// `CPlayerPed::SetWantedLevel(int32)` (0x609F10)
-    fn set_wanted_level(p: GPtr<u8>, level: i32) = thiscall 0x609F10 => unported;
-    /// `CStats::IncrementStat(uint16, float)` (0x55C180)
-    fn stats_increment_stat(stat: u32, v: f32) = cdecl 0x55C180 => unported;
-    /// `CTask::operator new(uint32)` (0x61A5A0)
-    fn task_new(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => unported;
-    /// `CTaskSimpleJetPack::CTaskSimpleJetPack(const CVector*, float, int32, CEntity*)` (0x67B4E0)
-    fn task_jetpack_ctor(t: GPtr<u8>, pos: u32, h: u32, a: u32, e: u32) -> GPtr<u8> = thiscall 0x67B4E0 => unported;
-    /// `CEventScriptCommand::CEventScriptCommand(int32, CTask*, bool)` (0x4B0A00)
-    fn event_script_command_ctor(e: GPtr<u8>, index: u32, task: GPtr<u8>, dead: u32) -> GPtr<u8> = thiscall 0x4B0A00 => unported;
-    /// `CEventScriptCommand::~CEventScriptCommand()` (0x4B0A50)
-    fn event_script_command_dtor(e: GPtr<u8>) = thiscall 0x4B0A50 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420)
-    fn event_group_add(grp: GPtr<u8>, ev: GPtr<u8>, valid: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
     /// `CPickups::PickedUpOyster()` (0x4552D0)
     fn picked_up_oyster() = cdecl 0x4552D0 => unported;
     /// `CPickups::PickedUpHorseShoe()` (0x455390)

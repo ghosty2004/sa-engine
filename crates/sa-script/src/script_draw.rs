@@ -8,17 +8,14 @@ use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 use sa_math::x87::X87;
 
+use sa_core::bindings::sprite2d_draw;
+use sa_core::bindings::sprite_draw_rect as sprite2d_draw_rect;
+use sa_world::bindings::sprite2d_draw_quad;
 orig! {
     /// `CMenuManager::DrawWindowedText(float x, float y, float wrap, const char* title, const char* text, eFontAlignment)` (0x578F50)
     fn draw_windowed_text(this: GPtr<u8>, x: u32, y: u32, wrap: u32, title: GPtr<u8>, text: GPtr<u8>, align: u32) = thiscall 0x578F50 => unported;
     /// `CMenuManager::DrawWindow(const CRect&, const char* key, uint8 fadeState, CRGBA titleColour, bool, bool drawBox)` (0x573EE0)
     fn draw_window(this: GPtr<u8>, rect: GPtr<u8>, key: GPtr<u8>, fade: u32, colour: u32, unused: u32, draw_box: u32) = thiscall 0x573EE0 => unported;
-    /// `CSprite2d::DrawRect(const CRect&, const CRGBA&)` (0x727B60)
-    fn sprite2d_draw_rect(rect: GPtr<u8>, colour: GPtr<u8>) = cdecl 0x727B60 => unported;
-    /// `CSprite2d::Draw(const CRect&, const CRGBA&)` (0x728350)
-    fn sprite2d_draw(this: GPtr<u8>, rect: GPtr<u8>, colour: GPtr<u8>) = thiscall 0x728350 => unported;
-    /// `CSprite2d::Draw(float x1, y1, x2, y2, x3, y3, x4, y4, const CRGBA&)` (0x728520)
-    fn sprite2d_draw_quad(this: GPtr<u8>, x1: f32, y1: f32, x2: f32, y2: f32, x3: f32, y3: f32, x4: f32, y4: f32, colour: GPtr<u8>) = thiscall 0x728520 => unported;
 }
 
 /// `CTheScripts::IntroRectangles` (0xA92D68): 0x80 entries of 0x3C bytes.

@@ -8,9 +8,8 @@ use sa_core::{hook, orig};
 
 use super::common::{ftol32, rd, wr, xi};
 
+use crate::bindings::set_tiles_status as interior_set_tiles_status;
 orig! {
-    /// `Interior_c::SetTilesStatus(int32, int32, int32, int32, int32, bool)` (0x591700)
-    fn interior_set_tiles_status(i: GPtr<u8>, tx: i32, ty: i32, w: i32, h: i32, status: i32, force: u32) = thiscall 0x591700 => unported;
     /// `Interior_c::Shop_PlaceCounter(bool)` (0x599EF0)
     fn shop_place_counter(i: GPtr<u8>, left: u32) -> i32 = thiscall 0x599EF0 => unported;
     /// `Interior_c::Shop_FurnishEdges()` (0x59A1B0)

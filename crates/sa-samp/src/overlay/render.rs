@@ -16,25 +16,31 @@ use super::draw::{Cmd, DrawList};
 use super::font::FontAtlas;
 use super::skin;
 
+use sa_core::bindings::font_draw_fonts;
+use sa_core::bindings::font_print_string;
+use sa_core::bindings::font_set_background;
+use sa_core::bindings::font_set_color;
+use sa_core::bindings::font_set_edge;
+use sa_core::bindings::font_set_font_style;
+use sa_core::bindings::font_set_orientation;
+use sa_core::bindings::font_set_proportional;
+use sa_core::bindings::pop_current_txd as txd_pop_current;
+use sa_core::bindings::push_current_txd as txd_push_current;
+use sa_core::bindings::rw_im2d_render_primitive;
+use sa_core::bindings::rw_raster_destroy;
+use sa_core::bindings::rw_raster_lock;
+use sa_core::bindings::set_current_txd as txd_set_current;
+use sa_core::bindings::sprite2d_draw;
+use sa_core::bindings::sprite2d_set_texture;
+use sa_core::bindings::sprite_draw_rect as sprite2d_draw_rect;
+use sa_core::bindings::txd_add_ref;
 orig! {
-    /// `CSprite2d::Draw(const CRect&, const CRGBA&)` (0x728350, thiscall)
-    fn sprite2d_draw(this: GPtr<u8>, r: GPtr<u8>, c: GPtr<u8>) = thiscall 0x728350 => unported;
-    /// `CSprite2d::SetTexture(const char*)` (0x727270, thiscall)
-    fn sprite2d_set_texture(this: GPtr<u8>, name: GPtr<u8>) = thiscall 0x727270 => unported;
     /// `CTxdStore::FindTxdSlot(const char*)` (0x731850)
     fn txd_find_slot(name: GPtr<u8>) -> i32 = cdecl 0x731850 => unported;
     /// `CTxdStore::AddTxdSlot(const char*)` (0x731C80)
     fn txd_add_slot(name: GPtr<u8>) -> i32 = cdecl 0x731C80 => unported;
     /// `CTxdStore::LoadTxd(int, const char* filename)` (0x7320B0)
     fn txd_load(slot: i32, file: GPtr<u8>) -> u8 = cdecl 0x7320B0 => unported;
-    /// `CTxdStore::AddRef(int)` (0x731A00)
-    fn txd_add_ref(slot: i32) = cdecl 0x731A00 => unported;
-    /// `CTxdStore::PushCurrentTxd()` (0x7316A0)
-    fn txd_push_current() = cdecl 0x7316A0 => unported;
-    /// `CTxdStore::SetCurrentTxd(int)` (0x7319C0)
-    fn txd_set_current(slot: i32) = cdecl 0x7319C0 => unported;
-    /// `CTxdStore::PopCurrentTxd()` (0x7316B0)
-    fn txd_pop_current() = cdecl 0x7316B0 => unported;
     /// `CWorld::GetIsLineOfSightClear(a, b, buildings, vehicles, peds, objects, dummies, seeThrough, cameraIgnore)`
     /// (0x56A490)
     fn line_of_sight_clear(a: GPtr<f32>, b: GPtr<f32>, buildings: u32, vehicles: u32, peds: u32, objects: u32, dummies: u32, see_through: u32, camera_ignore: u32) -> u8 = cdecl 0x56A490 => unported;
@@ -45,16 +51,8 @@ orig! {
 
     /// `RwRenderStateSet(state, value)` through `RwEngineInstance` +0x20
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `RwIm2DRenderPrimitive(type, vertices, n)` (0x734E90)
-    fn rw_im2d_render_primitive(ty: u32, verts: GPtr<u8>, n: i32) -> i32 = cdecl 0x734E90 => unported;
-    /// `CSprite2d::DrawRect(const CRect&, const CRGBA&)` (0x727B60)
-    fn sprite2d_draw_rect(r: GPtr<u8>, c: GPtr<u8>) = cdecl 0x727B60 => unported;
     /// `RwRasterCreate(width, height, depth, flags)` (0x7FB230)
     fn rw_raster_create(w: i32, h: i32, depth: i32, flags: u32) -> GPtr<u8> = cdecl 0x7FB230 => unported;
-    /// `RwRasterLock(raster, level, mode)` (0x7FB2D0)
-    fn rw_raster_lock(r: GPtr<u8>, level: u32, mode: u32) -> u32 = cdecl 0x7FB2D0 => unported;
-    /// `RwRasterDestroy(raster)` (0x7FB020)
-    fn rw_raster_destroy(r: GPtr<u8>) -> i32 = cdecl 0x7FB020 => unported;
     /// `RwRasterUnlock(raster)` (0x7FAEC0)
     fn rw_raster_unlock(r: GPtr<u8>) -> u32 = cdecl 0x7FAEC0 => unported;
     /// `CSprite::CalcScreenCoors(const RwV3d&, RwV3d* out, float* w, float* h, bool, bool)` (0x70CE30)
@@ -62,34 +60,18 @@ orig! {
 
     /// `CFont::SetScale(float, float)` (0x719380)
     fn font_set_scale(w: f32, h: f32) = cdecl 0x719380 => unported;
-    /// `CFont::SetColor(CRGBA)` (0x719430)
-    fn font_set_color(c: u32) = cdecl 0x719430 => unported;
     /// `CFont::SetJustify(bool)` (0x719600)
     fn font_set_justify(v: u32) = cdecl 0x719600 => unported;
-    /// `CFont::SetOrientation(eFontAlignment)` (0x719610)
-    fn font_set_orientation(v: u32) = cdecl 0x719610 => unported;
     /// `CFont::SetWrapx(float)` (0x7194D0)
     fn font_set_wrapx(v: f32) = cdecl 0x7194D0 => unported;
     /// `CFont::SetCentreSize(float)` (0x7194E0)
     fn font_set_centre_size(v: f32) = cdecl 0x7194E0 => unported;
-    /// `CFont::SetBackground(bool, bool)` (0x7195C0)
-    fn font_set_background(on: u32, outline: u32) = cdecl 0x7195C0 => unported;
     /// `CFont::SetBackgroundColor(CRGBA)` (0x7195E0)
     fn font_set_background_color(c: u32) = cdecl 0x7195E0 => unported;
-    /// `CFont::SetProportional(bool)` (0x7195B0)
-    fn font_set_proportional(v: u32) = cdecl 0x7195B0 => unported;
     /// `CFont::SetDropColor(CRGBA)` (0x719510)
     fn font_set_drop_color(c: u32) = cdecl 0x719510 => unported;
     /// `CFont::SetDropShadowPosition(int8)` (0x719570)
     fn font_set_drop_shadow_position(v: u32) = cdecl 0x719570 => unported;
-    /// `CFont::SetEdge(int8)` (0x719590)
-    fn font_set_edge(v: u32) = cdecl 0x719590 => unported;
-    /// `CFont::SetFontStyle(eFontStyle)` (0x719490)
-    fn font_set_font_style(v: u32) = cdecl 0x719490 => unported;
-    /// `CFont::PrintString(float x, float y, const GxtChar*)` (0x71A700)
-    fn font_print_string(x: f32, y: f32, text: GPtr<u8>) = cdecl 0x71A700 => unported;
-    /// `CFont::DrawFonts()` (0x71A210)
-    fn font_draw_fonts() = cdecl 0x71A210 => unported;
 }
 
 /// RenderWare render states.

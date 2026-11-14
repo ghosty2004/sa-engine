@@ -55,6 +55,7 @@ pub fn clear_crimes_being_qd(first: GPtr<u8>, count: u32) {
     }
 }
 
+pub use sa_world::bindings::gang_war_fighting_going_on;
 orig! {
     /// `CWanted::AddCrimeToQ` (0x562000)
     pub fn add_crime_to_q_call(this: GPtr<u8>, ty: i32, ped: GPtr<u8>, coors: GPtr<f32>, reported: u8, dont_care: u8) -> u8 = thiscall 0x562000 => add_crime_to_q;
@@ -76,8 +77,6 @@ orig! {
     pub fn set_wanted_level_call(this: GPtr<u8>, level: i32) = thiscall 0x562470 => set_wanted_level;
     /// `CWanted::SetWantedLevelNoDrop` (0x562570)
     pub fn set_wanted_level_no_drop_call(this: GPtr<u8>, level: i32) = thiscall 0x562570 => set_wanted_level_no_drop;
-    /// `CGangWars::GangWarFightingGoingOn` (0x443AC0)
-    pub fn gang_war_fighting_going_on() -> u8 = cdecl 0x443AC0 => unported;
     /// `CAEPoliceScannerAudioEntity::AddAudioEvent(int32 event, eCrimeType, const CVector&)` (0x4E71E0)
     pub fn police_scanner_add_audio_event(this: GPtr<u8>, ev: i32, ty: i32, coors: GPtr<f32>) = thiscall 0x4E71E0 => unported;
 }
@@ -679,6 +678,11 @@ fn crime_factor(i: u32) -> Option<u32> {
     Some(a)
 }
 
+pub use sa_world::bindings::crt_printf as debug_printf;
+pub use sa_world::bindings::german_game;
+pub use sa_world::bindings::is_law_enforcement_vehicle;
+pub use sa_world::bindings::is_ped_pointer_valid;
+pub use sa_world::bindings::set_player_wanted_level_for_forbidden_territories;
 orig! {
     /// `CWanted::SetMaximumWantedLevel` (0x561E70)
     pub fn set_maximum_wanted_level_call(level: i32) = cdecl 0x561E70 => set_maximum_wanted_level;
@@ -694,18 +698,10 @@ orig! {
     pub fn set_new_record_stat(stat: u32, v: f32) = cdecl 0x55C410 => unported;
     /// `CStats::SetStatValue(uint16, float)` (0x55A070)
     pub fn set_stat_value(stat: u32, v: f32) = cdecl 0x55A070 => unported;
-    /// `CVehicle::IsLawEnforcementVehicle` (0x6D2370)
-    pub fn is_law_enforcement_vehicle(v: GPtr<u8>) -> u8 = thiscall 0x6D2370 => unported;
     /// `FindPlayerCoors(CVector* out, int32)` (0x56E010)
     pub fn find_player_coors(out: GPtr<f32>, id: i32) -> GPtr<f32> = cdecl 0x56E010 => sa_world::world::cworld::find_player_coors_port;
-    /// `CGameLogic::SetPlayerWantedLevelForForbiddenTerritories(bool)` (0x441770)
-    pub fn set_player_wanted_level_for_forbidden_territories(b: u32) = cdecl 0x441770 => unported;
-    /// CRT printf (0x821982, `FID_conflict:_wprintf`): the debug messages of `CWanted::Update`
-    pub fn debug_printf(fmt: u32) -> i32 = cdecl 0x821982 => unported;
     /// `CPedType::PoliceDontCareAboutCrimesAgainstPedType(ePedType)` (0x608A40)
     pub fn police_dont_care_about_crimes_against_ped_type(ty: i32) -> u8 = cdecl 0x608A40 => crate::ped_type::police_dont_care_about_crimes_against_ped_type;
-    /// `IsPedPointerValid(CPed*)` (0x5E8A30)
-    pub fn is_ped_pointer_valid(ped: GPtr<u8>) -> u8 = cdecl 0x5E8A30 => unported;
     /// `CPlayerPed::GetWantedLevel` (0x41BE60)
     pub fn player_get_wanted_level(ped: GPtr<u8>) -> i32 = thiscall 0x41BE60 => crate::player_ped::get_wanted_level;
     /// `CText::Get(const char*)` (0x6A0050) on `TheText` (0xC1B340)
@@ -714,8 +710,6 @@ orig! {
     pub fn add_big_message(text: u32, time: u32, style: u32) = cdecl 0x69F2B0 => unported;
     /// `CCrime::FindImmediateDetectionRange` (0x531FC0)
     pub fn find_immediate_detection_range_call(ty: i32) -> f64 = cdecl 0x531FC0 => find_immediate_detection_range_f64;
-    /// `CLocalisation::GermanGame` (0x56D200)
-    pub fn german_game() -> u8 = cdecl 0x56D200 => unported;
     /// `CPlayerPed::SetWantedLevelNoDrop(int32)` (0x609F30)
     pub fn player_set_wanted_level_no_drop(ped: GPtr<u8>, level: i32) = thiscall 0x609F30 => crate::player_ped::set_wanted_level_no_drop;
 }

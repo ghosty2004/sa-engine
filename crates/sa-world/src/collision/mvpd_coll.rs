@@ -10,17 +10,13 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 
 use crate::world::common::{g, rd, wr, x, xi};
 
-orig! {
-    /// `CVector::CrossProduct(CVector* out, const CVector&, const CVector&)` (0x59C730, cdecl); returns `out`
-    fn cross_product(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C730 => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
-}
+use sa_core::bindings::cross_product;
+use sa_core::bindings::vector_normalise;
 
 /// The values the six-way switch puts in place for the shared 2D test: the first vertex's two coordinates in
 /// ST0/ST1 (`a`, `b`) and six stack slots.

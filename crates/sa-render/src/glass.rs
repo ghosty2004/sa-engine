@@ -42,6 +42,8 @@ const REFLECTION_TEXTURE: usize = 0xC403F8;
 /// `CTimeCycle::m_CurrentColours.m_nFogColor{Red,Green,Blue}` (uint16).
 const FOG_COLOUR: usize = 0xB7C4CA;
 
+pub use sa_world::bindings::rw_im3d_end;
+pub use sa_world::bindings::window_responds_to_collision;
 orig! {
     /// `RwRenderStateSet` (`RwEngineInstance` slot 0x20)
     pub fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
@@ -49,8 +51,6 @@ orig! {
     pub fn rw_im3d_transform(verts: GPtr<u8>, count: u32, ltm: GPtr<u8>, flags: u32) -> GPtr<u8> = cdecl 0x7EF450 => unported;
     /// `RwIm3DRenderIndexedPrimitive(RwPrimitiveType, RwImVertexIndex*, int32)` (0x7EF550)
     pub fn rw_im3d_render_indexed_primitive(ty: u32, indices: GPtr<u8>, count: i32) -> i32 = cdecl 0x7EF550 => unported;
-    /// `RwIm3DEnd()` (0x7EF520)
-    pub fn rw_im3d_end() -> i32 = cdecl 0x7EF520 => unported;
     /// `CBaseModelInfo::AsAtomicModelInfoPtr()` (vtable +4)
     pub fn mi_as_atomic_model_info_ptr(mi: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x4 => unported;
     /// `CFallingGlassPane::Update()` (0x71AA10)
@@ -65,8 +65,6 @@ orig! {
     pub fn call_render_reflection_polys() = cdecl 0x71AED0 => render_reflection_polys;
     /// `CAudioEngine::ReportGlassCollisionEvent(eAudioEvents, const CVector&)` (0x506EE0)
     pub fn report_glass_collision_event(this: GPtr<u8>, event: i32, pos: GPtr<f32>) = thiscall 0x506EE0 => unported;
-    /// `CGlass::WindowRespondsToCollision(CEntity*, float, CVector, CVector, bool)` (0x71BC40); raw dwords
-    pub fn window_responds_to_collision(e: GPtr<u8>, damage: u32, sx: u32, sy: u32, sz: u32, px: u32, py: u32, pz: u32, explosion: u32) = cdecl 0x71BC40 => unported;
 }
 
 fn pane(i: i32) -> GPtr<u8> {
@@ -437,14 +435,9 @@ pub fn window_responds_to_explosion(e: GPtr<u8>, px: f32, py: f32, pz: f32) {
     );
 }
 
-orig! {
-    /// CRT `eh vector constructor iterator` (0x821D30, stdcall)
-    pub fn eh_vector_ctor(arr: GPtr<u8>, size: u32, n: u32, ctor: u32, dtor: u32) = stdcall 0x821D30 => unported;
-    /// CRT `eh vector destructor iterator` (0x821E02, stdcall)
-    pub fn eh_vector_dtor(arr: GPtr<u8>, size: u32, n: u32, dtor: u32) = stdcall 0x821E02 => unported;
-    /// CRT `_atexit` (0x821D1E)
-    pub fn atexit(f: u32) -> i32 = cdecl 0x821D1E => unported;
-}
+pub use sa_core::bindings::atexit;
+pub use sa_core::bindings::eh_vector_ctor;
+pub use sa_core::bindings::eh_vector_dtor;
 
 /// `__init_CGlass__aGlassPanes` (0x854EE0): the 45 panes' constructor (0x71A8B0, destructor 0x71A8C0)
 /// through the CRT vector iterator, then `_atexit(0x856BA0)`; returns `_atexit`'s EAX (`pop ecx; ret`).

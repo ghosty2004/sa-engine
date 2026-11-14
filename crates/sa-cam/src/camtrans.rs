@@ -5,7 +5,7 @@
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::timer::TIME_MS;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 use sa_pop::common::get_atan_of_xy;
 use sa_world::world::common::find_player_vehicle;
@@ -34,13 +34,8 @@ sa_core::globals! {
     pub static SHAKE_PARAMS_INITIALISED @ 0xB70048: u8 = 0;
 }
 
-orig! {
-    /// `CHandShaker::Process(float intensity)` (0x50D930), the intensity pushed as the dword it is
-    pub fn hand_shaker_process(hs: GPtr<u8>, intensity: u32) = thiscall 0x50D930 => unported;
-    /// `Multiply3x3(CVector* out, const CVector* v, const CMatrix* m)` (0x59C810, cdecl): `out = (v . right,
-    /// v . up, v . at)`
-    pub fn multiply3x3(out: GPtr<u8>, v: GPtr<u8>, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C810 => unported;
-}
+pub use crate::bindings::hand_shaker_process;
+pub use sa_world::bindings::multiply3x3_vm as multiply3x3;
 
 /// Copies the 12 bytes of a `CVector` dword by dword (raw moves).
 fn copy_vec(dst: GPtr<u8>, src: GPtr<u8>) {

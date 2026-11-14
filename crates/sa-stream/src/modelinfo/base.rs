@@ -48,19 +48,15 @@ sa_core::globals! {
     pub static G2D_EFFECT_PLUGIN_OFFSET @ 0xC3A1E0: u32 = 0;
 }
 
+pub use crate::bindings::add_txd_slot as txd_add_txd_slot;
+pub use crate::bindings::col_model_dtor as col_model_destructor;
+pub use crate::bindings::find_txd_slot as txd_find_txd_slot;
+pub use sa_core::bindings::crt_free_8214bd as operator_delete;
 orig! {
-    /// CRT `operator delete` / `free` (0x8214BD)
-    pub fn operator_delete(p: GPtr<u8>) = cdecl 0x8214BD => unported;
     /// `CTxdStore::AddRef` (0x731A00)
     pub fn txd_add_ref(index: i32) = cdecl 0x731A00 => crate::txdstore::add_ref;
     /// `CTxdStore::RemoveRef` (0x731A30)
     pub fn txd_remove_ref(index: i32) = cdecl 0x731A30 => crate::txdstore::remove_ref;
-    /// `CTxdStore::FindTxdSlot(const char*)` (0x731850)
-    pub fn txd_find_txd_slot(name: GPtr<u8>) -> i32 = cdecl 0x731850 => crate::txdstore::find_txd_slot_name;
-    /// `CTxdStore::AddTxdSlot` (0x731C80)
-    pub fn txd_add_txd_slot(name: GPtr<u8>) -> i32 = cdecl 0x731C80 => crate::txdstore::add_txd_slot;
-    /// `CColModel::~CColModel` (0x40F700)
-    pub fn col_model_destructor(col: GPtr<u8>) = thiscall 0x40F700 => unported;
     /// `CColModel::operator delete` (0x40FC40)
     pub fn col_model_operator_delete(col: GPtr<u8>) = cdecl 0x40FC40 => unported;
     /// `RwHelper::Get2DEffectAtomic` (0x734880)

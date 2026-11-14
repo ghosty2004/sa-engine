@@ -9,21 +9,15 @@ use sa_math::x87::X87;
 
 use crate::common::{f32_of, rd, wr, x, xi};
 
+use sa_core::bindings::entity_register_reference;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::vector_dot_product;
+use sa_core::bindings::vector_magnitude;
+use sa_world::bindings::get_percentage_progress;
+use sa_world::bindings::player_set_wanted_level_no_drop;
 orig! {
-    /// `CStats::GetPercentageProgress()` (0x5591E0, ST0)
-    fn get_percentage_progress() -> f64 = cdecl 0x5591E0 => unported;
     /// `CBike::DamageKnockOffRider(CVehicle*, float, uint16, CEntity*, const CVector&, const CVector&)` (0x6B5A10)
     fn damage_knock_off_rider(v: GPtr<u8>, intensity: u32, piece: u32, damager: GPtr<u8>, posn: GPtr<u8>, dir: GPtr<u8>) = cdecl 0x6B5A10 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    fn entity_register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
-    /// `DotProduct(const CVector&, const CVector&)` (0x40FDB0, ST0)
-    fn vector_dot_product(a: GPtr<u8>, b: GPtr<u8>) -> f64 = cdecl 0x40FDB0 => unported;
-    /// `CVector::Magnitude()` (0x4082C0, ST0)
-    fn vector_magnitude(v: GPtr<u8>) -> f64 = thiscall 0x4082C0 => unported;
-    /// `FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CPlayerPed::SetWantedLevelNoDrop(int32)` (0x609F30)
-    fn player_set_wanted_level_no_drop(p: GPtr<u8>, level: i32) = thiscall 0x609F30 => unported;
     /// `CPed::Say(uint16, uint32, float, bool, bool, bool)` (0x5EFFE0), the float as its bits
     fn ped_say(p: GPtr<u8>, id: u32, delay: u32, prob: u32, a4: u32, a5: u32, a6: u32) = thiscall 0x5EFFE0 => unported;
 }
@@ -160,10 +154,7 @@ pub fn bike_vehicle_damage(this: GPtr<u8>, intensity: f32, _component: u32, _dam
     }
 }
 
-orig! {
-    /// `SurfaceInfos_c::GetAdhesionGroup(uint32)` (0x55E5C0) on `g_surfaceInfos` 0xB79538
-    fn get_adhesion_group(si: GPtr<u8>, id: u32) -> u32 = thiscall 0x55E5C0 => unported;
-}
+use sa_world::bindings::get_adhesion_group;
 
 /// CRT `floor` (0x8219F0, catalogue-excluded) of the double the original stores with `fstp qword`.
 fn x87_floor(v: X87) -> X87 {

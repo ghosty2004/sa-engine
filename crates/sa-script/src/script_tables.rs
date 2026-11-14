@@ -6,7 +6,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::{Cmp, X87};
 
 /// The connect-lod table (10 pairs of int32 handles)
@@ -20,13 +20,8 @@ const INVISIBILITY_SETTINGS: usize = 0xA449E0;
 /// The int16 id counters of thing type 8 (see `GetNewUniqueScriptThingIndex`)
 const THING8_COUNTERS: u32 = 0xC098D0;
 
-orig! {
-    /// `CBuilding::ReplaceWithNewModel(int32 model)` (0x403EC0)
-    fn building_replace_with_new_model(b: GPtr<u8>, model: u32) = thiscall 0x403EC0 => unported;
-    /// `C3dMarkers::PlaceMarkerSet(uint32 id, uint16 type, CVector& pos, float size, uint8 r, uint8 g,
-    /// uint8 b, uint8 a, uint16 pulsePeriod, float pulseFraction, int16 rotateRate)` (0x725BA0)
-    fn place_marker_set(id: u32, ty: u32, pos: GPtr<u8>, size: u32, r: u32, g: u32, b: u32, a: u32, period: u32, frac: u32, rot: u32) = cdecl 0x725BA0 => unported;
-}
+use sa_world::bindings::building_replace_with_new_model;
+use sa_world::bindings::place_marker_set;
 
 /// The script spheres (16 of 0x18: active byte +0, marker id +4, position +8, radius +0x14)
 const SCRIPT_SPHERES: usize = 0xA91268;

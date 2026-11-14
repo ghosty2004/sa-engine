@@ -10,15 +10,13 @@ use sa_core::{hook, orig};
 
 use super::common::{ftol32, rd, wr, x, xi};
 
+use crate::bindings::get_furniture;
+use crate::bindings::set_tiles_status;
 orig! {
-    /// `FurnitureManager_c::GetFurniture(int32 group, int32 subGroup, int16 id, uint8 wealth)` (0x5911E0) on `g_furnitureMan` (0xBAB380)
-    fn get_furniture(man: GPtr<u8>, group: i32, sub: i32, id: i32, wealth: u32) -> GPtr<u8> = thiscall 0x5911E0 => unported;
     /// `Interior_c::PlaceObject(bool, Furniture_c*, float x, float y, float z, float rot)` (0x5934E0)
     fn place_object(this: GPtr<u8>, a: u32, f: GPtr<u8>, px: f32, py: f32, pz: f32, rot: f32) -> GPtr<u8> = thiscall 0x5934E0 => unported;
     /// `Interior_c::AddInteriorInfo(int32 type, float x, float y, int32 dir, CEntity*)` (0x591E40)
     fn add_interior_info(this: GPtr<u8>, ty: i32, px: f32, py: f32, dir: i32, e: i32) = thiscall 0x591E40 => unported;
-    /// `Interior_c::SetTilesStatus(int32 x, int32 y, int32 w, int32 d, int32 status, bool)` (0x591700)
-    fn set_tiles_status(this: GPtr<u8>, x: i32, y: i32, w: i32, d: i32, status: i32, force: u32) = thiscall 0x591700 => unported;
     /// `Interior_c::AddGotoPt(int32 x, int32 y, float dx, float dy)` (0x591D20)
     fn add_goto_pt(this: GPtr<u8>, tx: i32, ty: i32, dx: f32, dy: f32) = thiscall 0x591D20 => unported;
     /// `FurnitureManager_c::GetRandomId(int32 group, int32 subGroup, uint8 wealth)` (0x591220)

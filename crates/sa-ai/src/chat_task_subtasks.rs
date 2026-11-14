@@ -10,25 +10,18 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::simple_chat_ctor;
+use sa_core::bindings::general_random_int_in_range as random_int;
+use sa_world::bindings::intel_find_task_by_type;
+use sa_world::bindings::interesting_events_add;
+use sa_world::bindings::ped_get_ped_talking as ped_get_talking;
+use sa_world::bindings::ped_say;
+use sa_world::bindings::run_anim_ctor;
 orig! {
-    /// `CPed::Say(uint16, uint32, float, bool, bool, bool)` (0x5EFFE0, `ret 0x18`), the float as its bits
-    fn ped_say(p: GPtr<u8>, ctx: u32, offset: u32, vol: u32, a: u32, b: u32, c: u32) -> u32 = thiscall 0x5EFFE0 => unported;
-    /// `CInterestingEvents::Add(type, CEntity*)` (0x602590, `ret 8`)
-    fn interesting_events_add(ie: GPtr<u8>, t: u32, e: GPtr<u8>) = thiscall 0x602590 => unported;
-    /// `CGeneral::GetRandomNumberInRange(int, int)` (0x407180; draws its own rand)
-    fn random_int(lo: i32, hi: i32) -> i32 = cdecl 0x407180 => unported;
-    /// `CTaskSimpleRunAnim(AssocGroupId, AnimationId, float blend, bool)` (0x61A8B0, `ret 0x10`)
-    fn run_anim_ctor(t: GPtr<u8>, group: u32, id: u32, blend: u32, b: u32) -> GPtr<u8> = thiscall 0x61A8B0 => unported;
-    /// `CTaskSimpleChat(int durationMs)` (0x5F65A0, `ret 4`)
-    fn simple_chat_ctor(t: GPtr<u8>, ms: u32) -> GPtr<u8> = thiscall 0x5F65A0 => unported;
     /// `CTaskSimpleStandStill(int ms, bool looped, bool useAnimIdle, float blend)` (0x62F310, `ret 0x10`)
     fn stand_still_ctor(t: GPtr<u8>, ms: i32, looped: u32, idle: u32, blend: u32) -> GPtr<u8> = thiscall 0x62F310 => unported;
     /// `CTask::MakeAbortable(CPed*, int priority, const CEvent*)` (vtable slot 0x18, `ret 0xC`)
     fn task_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, prio: i32, ev: u32) -> u8 = thiscall vslot 0x18 => unported;
-    /// `CPedIntelligence::FindTaskByType(int)` (0x600EE0, `ret 4`)
-    fn intel_find_task_by_type(i: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x600EE0 => unported;
-    /// `CPed::GetPedTalking()` (0x5EFF50)
-    fn ped_get_talking(ped: GPtr<u8>) -> u8 = thiscall 0x5EFF50 => unported;
 }
 
 /// `g_InterestingEvents`

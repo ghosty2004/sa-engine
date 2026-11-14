@@ -12,6 +12,14 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::bbox_corners_uncached;
+use crate::bindings::intel_add_task_phys_response;
+use sa_core::bindings::crt_free_8214bd as crt_free;
+use sa_core::bindings::eh_vector_ctor;
+use sa_core::bindings::eh_vector_dtor;
+use sa_core::bindings::ped_is_alive;
+use sa_core::bindings::tm_get_active_task;
+use sa_core::bindings::tm_get_simplest_active_task;
 orig! {
     /// `CEventHandler::ComputeVehicleCollisionResponse(CEvent*, CTask* active, CTask* simplest)` (0x4BD6A0, `ret 0xC`)
     fn r_vehicle_collision(h: GPtr<u8>, ev: GPtr<u8>, active: GPtr<u8>, simplest: GPtr<u8>) = thiscall 0x4BD6A0 => unported;
@@ -131,10 +139,6 @@ orig! {
     fn r_danger(h: GPtr<u8>, ev: GPtr<u8>, active: GPtr<u8>, simplest: GPtr<u8>) = thiscall 0x4BC230 => unported;
     /// `CEventHandler::ComputeDontJoinGroupResponse(CEvent*, CTask* active, CTask* simplest)` (0x4BC1D0, `ret 0xC`)
     fn r_dont_join_group(h: GPtr<u8>, ev: GPtr<u8>, active: GPtr<u8>, simplest: GPtr<u8>) = thiscall 0x4BC1D0 => unported;
-    /// `CTaskManager::GetActiveTask` (0x681720)
-    fn tm_get_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x681720 => unported;
-    /// `CTaskManager::GetSimplestActiveTask` (0x6819D0)
-    fn tm_get_simplest_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x6819D0 => unported;
     /// `CTaskManager::GetTaskSecondary(int32)` (0x681810, `ret 4`)
     fn tm_get_task_secondary(tm: GPtr<u8>, slot: i32) -> GPtr<u8> = thiscall 0x681810 => crate::tasks::task_manager_get_task_secondary;
     /// `CTaskManager::SetTaskSecondary(CTask*, int32)` (0x681B60, `ret 8`)
@@ -157,8 +161,6 @@ orig! {
     fn in_air_and_land_ctor(t: GPtr<u8>, glide: u8, vault: u8) -> GPtr<u8> = thiscall 0x678C80 => crate::fall::in_air_and_land_ctor;
     /// `CTaskComplexStuckInAir::CTaskComplexStuckInAir` (0x67BA40)
     fn stuck_in_air_ctor(t: u32) -> u32 = thiscall 0x67BA40 => crate::gen_ctors::g_ctask_complex_stuck_in_air_67ba40;
-    /// `CPedIntelligence::AddTaskPhysResponse(CTask*, bool)` (0x600DC0, `ret 8`)
-    fn intel_add_task_phys_response(i: GPtr<u8>, t: GPtr<u8>, b: u32) = thiscall 0x600DC0 => unported;
     /// `CPedIntelligence::AddTaskEventResponseTemp(CTask*, bool)` (0x600DE0, `ret 8`)
     fn intel_add_task_event_response_temp(i: GPtr<u8>, t: GPtr<u8>, b: u32) = thiscall 0x600DE0 => crate::intel::intel_add_task_event_response_temp;
     /// `CPedIntelligence::AddTaskEventResponseNonTemp(CTask*, bool)` (0x600E00, `ret 8`)
@@ -192,12 +194,8 @@ orig! {
     fn membership_is_member(m: GPtr<u8>, ped: GPtr<u8>) -> u32 = thiscall 0x5F6A10 => crate::small::membership_is_member;
     /// `CEntity::RegisterReference(CEntity**)` (0x571B70, `ret 4`)
     fn entity_register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => sa_world::world::entity::register_reference;
-    /// `CPedGeometryAnalyser::ComputeEntityBoundingBoxCornersUncached(float z, CEntity&, CVector*)` (0x5F1FA0, cdecl)
-    fn bbox_corners_uncached(z: u32, e: GPtr<u8>, corners: GPtr<u8>) = cdecl 0x5F1FA0 => unported;
     /// `CAnimBlendAssociation::~CAnimBlendAssociation` (0x4CECF0)
     fn anim_assoc_dtor(a: GPtr<u8>) = thiscall 0x4CECF0 => crate::mvpc_ai1::anim_blend_association_dtor;
-    /// CRT `free` (0x8214BD, cdecl)
-    fn crt_free(p: GPtr<u8>) = cdecl 0x8214BD => unported;
     /// `CMemoryMgr::FreeAlign(void*)` (0x72F4F0, cdecl)
     fn free_align(p: GPtr<u8>) = cdecl 0x72F4F0 => sa_core::memory::free_align;
     /// `CAnimManager::RemoveAnimBlockRef(int32)` (0x4D3FD0, cdecl)
@@ -213,12 +211,6 @@ orig! {
     fn rp_atomic_destroy(a: GPtr<u8>) -> u32 = cdecl 0x749DC0 => unported;
     /// `RwFrameDestroy(RwFrame*)` (0x7F05A0, cdecl)
     fn rw_frame_destroy(f: GPtr<u8>) -> u32 = cdecl 0x7F05A0 => unported;
-    /// CRT `eh vector constructor iterator(void*, size, count, ctor, dtor)` (0x821D30, stdcall)
-    fn eh_vector_ctor(arr: GPtr<u8>, size: u32, n: u32, ctor: u32, dtor: u32) = stdcall 0x821D30 => unported;
-    /// CRT `eh vector destructor iterator(void*, size, count, dtor)` (0x821E02, stdcall)
-    fn eh_vector_dtor(arr: GPtr<u8>, size: u32, n: u32, dtor: u32) = stdcall 0x821E02 => unported;
-    /// `CPed::IsAlive` (0x5E0170, AL)
-    fn ped_is_alive(p: GPtr<u8>) -> u8 = thiscall 0x5E0170 => unported;
     /// `CPedScriptedTaskRecord::GetStatus(const CPed*)` (0x608750, cdecl)
     fn scripted_task_get_status(p: GPtr<u8>) -> i32 = cdecl 0x608750 => unported;
     /// `CEventHandlerHistory::GetCurrentEvent` (0x4B8CA0)

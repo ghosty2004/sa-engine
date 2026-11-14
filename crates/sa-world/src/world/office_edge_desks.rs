@@ -5,16 +5,12 @@ use sa_core::abi::HookReg;
 use sa_core::crt::rand;
 use sa_core::mem::GPtr;
 use sa_core::orig::at_site;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use super::common::{ftol32, rd, xi};
 
-orig! {
-    /// `Interior_c::GetNumEmptyTiles(int32 x, int32 y, int32 dir, int32 count)` (0x591920)
-    fn get_num_empty_tiles(this: GPtr<u8>, x: i32, y: i32, dir: i32, n: i32) -> i32 = thiscall 0x591920 => unported;
-    /// `Interior_c::Office_PlaceDesk(int32 x, int32 y, int32 dir, int32 chance, int32, int32 id)` (0x5993E0)
-    fn office_place_desk(this: GPtr<u8>, tx: i32, ty: i32, dir: i32, chance: i32, a5: i32, id: i32) -> i32 = thiscall 0x5993E0 => unported;
-}
+use crate::bindings::get_num_empty_tiles;
+use crate::bindings::office_place_desk;
 
 /// `ftol((rand() & 0xFFFF) * (1/32768) * k)`.
 fn rand_scaled(site: u32, k: f32) -> i32 {

@@ -9,21 +9,16 @@ use sa_math::x87::X87;
 
 use crate::common::{ftol32, g, k, x, xi};
 
+use crate::bindings::rs_restore;
+use crate::bindings::rs_set_immediate;
+use sa_core::bindings::rs_camera_begin_update;
+use sa_core::bindings::rw_camera_end_update;
+use sa_core::bindings::rw_im2d_render_primitive;
 orig! {
-    /// `RwCameraEndUpdate(RwCamera*)` (0x7EE180)
-    fn rw_camera_end_update(cam: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EE180 => unported;
-    /// `RsCameraBeginUpdate(RwCamera*)` (0x619450)
-    fn rs_camera_begin_update(cam: GPtr<u8>) -> i32 = cdecl 0x619450 => unported;
     /// `CPostEffects::ImmediateModeRenderStatesStore()` (0x700CC0)
     fn rs_store() = cdecl 0x700CC0 => crate::mvpd_r3::immediate_mode_render_states_store;
-    /// `CPostEffects::ImmediateModeRenderStatesSet()` (0x700D70)
-    fn rs_set_immediate() = cdecl 0x700D70 => crate::posteffects::immediate_mode_render_states_set;
-    /// `CPostEffects::ImmediateModeRenderStatesReStore()` (0x700E00)
-    fn rs_restore() = cdecl 0x700E00 => crate::posteffects::immediate_mode_render_states_restore;
     /// `RwRenderStateSet` (`RwEngineInstance` 0xC97B24, slot 0x20)
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `RwIm2DRenderPrimitive(type, verts, n)` (0x734E90)
-    fn rw_im2d_render_primitive(ty: u32, verts: GPtr<u8>, n: i32) -> i32 = cdecl 0x734E90 => unported;
 }
 
 /// `Scene.m_pRwCamera` (0xC1703C), `CPostEffects::pRasterFrontBuffer` (0xC402D8), `TempBufferVertices`

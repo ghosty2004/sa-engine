@@ -8,37 +8,26 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::anim_blend_animation;
+use crate::bindings::anim_set_delete_callback as assoc_set_delete_callback;
+use crate::bindings::assoc_set_finish_callback;
+use crate::bindings::clump_get_association;
+use crate::bindings::go_to_vehicle_and_lean_do_tidy_up;
+use crate::bindings::ped_set_move_state;
+use crate::bindings::task_timer_is_out_of_time;
+use sa_core::bindings::general_get_radian_angle_between_points;
+use sa_core::bindings::general_limit_radian_angle;
+use sa_world::bindings::achieve_heading_ctor;
+use sa_world::bindings::stand_still_ctor;
 orig! {
     /// `CTask::GetTaskType()` (vtable slot 0x10)
     fn task_get_type(t: GPtr<u8>) -> u32 = thiscall vslot 0x10 => unported;
     /// `CTask::MakeAbortable(CPed*, eAbortPriority, const CEvent*)` (vtable slot 0x18)
     fn task_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, prio: i32, ev: u32) -> u8 = thiscall vslot 0x18 => unported;
-    /// `CGeneral::GetRadianAngleBetweenPoints(float x1, float y1, float x2, float y2)` (0x53CBE0, ST0)
-    fn general_get_radian_angle_between_points(x1: u32, y1: u32, x2: u32, y2: u32) -> f64 = cdecl 0x53CBE0 => unported;
-    /// `CGeneral::LimitRadianAngle(float)` (0x53CB50, ST0)
-    fn general_limit_radian_angle(a: u32) -> f64 = cdecl 0x53CB50 => unported;
     /// `CTask::operator new(uint32)` (0x61A5A0)
     fn task_new(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => crate::mvpa_ai1::task_operator_new;
-    /// `CTaskSimpleAchieveHeading(float heading, float changeRate, float tolerance)` (0x667E20)
-    fn achieve_heading_ctor(t: GPtr<u8>, heading: u32, rate: u32, tolerance: u32) -> GPtr<u8> = thiscall 0x667E20 => unported;
-    /// `CTaskGoToVehicleAndLean::DoTidyUp(CPed*)` (0x660F60)
-    fn go_to_vehicle_and_lean_do_tidy_up(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x660F60 => unported;
     /// `CTaskLeanOnVehicle(CEntity* vehicle, int32 leanAnimDuration, uint8)` (0x660F90)
     fn lean_on_vehicle_ctor(t: GPtr<u8>, veh: GPtr<u8>, duration: u32, a: u32) -> GPtr<u8> = thiscall 0x660F90 => unported;
-    /// `CTaskSimpleStandStill(int32 time, bool looped, bool keep, float delta)` (0x62F310)
-    fn stand_still_ctor(t: GPtr<u8>, time: u32, looped: u32, keep: u32, delta: u32) -> GPtr<u8> = thiscall 0x62F310 => unported;
-    /// `CPed::SetMoveState(eMoveState)` (0x5DEC00)
-    fn ped_set_move_state(ped: GPtr<u8>, state: u32) = thiscall 0x5DEC00 => unported;
-    /// `RpAnimBlendClumpGetAssociation(RpClump*, AnimationId)` (0x4D68B0)
-    fn clump_get_association(clump: u32, anim: u32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
-    /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float delta)` (0x4D4610)
-    fn anim_blend_animation(clump: u32, group: u32, anim: u32, delta: u32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
-    /// `CAnimBlendAssociation::SetDeleteCallback(callback, data)` (0x4CEBC0)
-    fn assoc_set_delete_callback(a: GPtr<u8>, cb: u32, data: u32) = thiscall 0x4CEBC0 => unported;
-    /// `CAnimBlendAssociation::SetFinishCallback(callback, data)` (0x4CEBE0)
-    fn assoc_set_finish_callback(a: GPtr<u8>, cb: u32, data: u32) = thiscall 0x4CEBE0 => unported;
-    /// `CTaskTimer::IsOutOfTime()` (0x420E30)
-    fn task_timer_is_out_of_time(t: GPtr<u8>) -> u8 = thiscall 0x420E30 => unported;
 }
 
 /// `CDefaultAnimCallback::DefaultAnimCB` (0x4D1390)

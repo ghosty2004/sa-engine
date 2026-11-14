@@ -148,56 +148,39 @@ const K_50: u32 = 0x4248_0000;
 const CI_POW: usize = 0x822130;
 const CI_ASIN: usize = 0x821E70;
 
+pub use crate::bindings::aim_weapon_left_right;
+pub use crate::bindings::aim_weapon_up_down;
+pub use crate::bindings::camera_col_det_and_react;
+pub use crate::bindings::clip_beta;
+pub use crate::bindings::get_vectors_ready_for_rw;
+pub use crate::bindings::improve_near_clip;
+pub use crate::bindings::round_decimals;
+pub use sa_core::bindings::cross_product;
+pub use sa_core::bindings::get_pad;
+pub use sa_core::bindings::tm_get_active_task as get_active_task;
+pub use sa_core::bindings::vector_dot_product as dot_product;
+pub use sa_core::bindings::vector_normalise;
+pub use sa_world::bindings::entity_get_col_model as get_col_model;
+pub use sa_world::bindings::get_vehicle_appearance;
+pub use sa_world::bindings::pad_get_steering_up_down as get_steering_up_down;
+pub use sa_world::bindings::placeable_get_heading as get_heading;
 orig! {
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    pub fn get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
     /// `CCamera::ApplyVehicleCameraTweaks(CVehicle*)` (0x50A480)
     pub fn apply_vehicle_camera_tweaks(cam: GPtr<u8>, veh: GPtr<u8>) = thiscall 0x50A480 => crate::camfx::apply_vehicle_camera_tweaks;
-    /// `CVehicle::GetVehicleAppearance()` (0x6D1080)
-    pub fn get_vehicle_appearance(veh: GPtr<u8>) -> i32 = thiscall 0x6D1080 => unported;
     /// `CCamera::GetArrPosForVehicleType(int32 appearance, int32* out)` (0x50AF00)
     pub fn get_arr_pos_for_vehicle_type(cam: GPtr<u8>, kind: i32, out: GPtr<i32>) -> u8 = thiscall 0x50AF00 => crate::camctl::get_arr_pos_for_vehicle_type;
-    /// `CEntity::GetColModel()` (0x535300)
-    pub fn get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    pub fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
-    /// `CrossProduct(CVector* out, const CVector*, const CVector*)` (0x59C730), returns `out`
-    pub fn cross_product(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C730 => unported;
-    /// `DotProduct(const CVector*, const CVector*)` (0x40FDB0, ST0)
-    pub fn dot_product(a: GPtr<u8>, b: GPtr<u8>) -> f64 = cdecl 0x40FDB0 => unported;
-    /// `CPlaceable::GetHeading()` (0x441DB0, the raw FPATAN in ST0)
-    pub fn get_heading(e: GPtr<u8>) -> f64 = thiscall 0x441DB0 => unported;
     /// `CVehicle::GetHeightAboveRoad()` (vtable slot +0xD4, ST0)
     pub fn v_get_height_above_road(veh: GPtr<u8>) -> f64 = thiscall vslot 0xD4 => unported;
     /// `a > b ? a : b` (0x420800, cdecl floats as dwords, ST0)
     pub fn max_f(a: u32, b: u32) -> f64 = cdecl 0x420800 => unported;
-    /// `CPad::AimWeaponLeftRight(CPed*)` (0x541040, AX)
-    pub fn aim_weapon_left_right(pad: GPtr<u8>, ped: GPtr<u8>) -> i16 = thiscall 0x541040 => unported;
-    /// `CPad::AimWeaponUpDown(CPed*)` (0x5410C0, AX)
-    pub fn aim_weapon_up_down(pad: GPtr<u8>, ped: GPtr<u8>) -> i16 = thiscall 0x5410C0 => unported;
-    /// `CPad::GetSteeringUpDown()` (0x53FBD0, AX)
-    pub fn get_steering_up_down(pad: GPtr<u8>) -> i16 = thiscall 0x53FBD0 => unported;
-    /// `CTaskManager::GetActiveTask()` (0x681720)
-    pub fn get_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x681720 => unported;
     /// `CTask::GetTaskType()` (vtable slot +0x10)
     pub fn v_get_task_type(task: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
     /// `CGeneral::GetATanOfXY(float, float)` (0x53CC70, ST0); the floats as dwords
     pub fn get_atan_of_xy(xb: u32, yb: u32) -> f64 = cdecl 0x53CC70 => unported;
-    /// `CCam::ClipBeta()` (0x509C50)
-    pub fn clip_beta(cam: GPtr<u8>) = thiscall 0x509C50 => crate::cam::clip_beta;
-    /// `FUN_0050a0a0(float, int32)` (0x50A0A0, ST0): round to `n` decimals
-    pub fn round_decimals(v: u32, n: i32) -> f64 = cdecl 0x50A0A0 => unported;
-    /// `CCam::GetVectorsReadyForRW()` (0x509CE0)
-    pub fn get_vectors_ready_for_rw(cam: GPtr<u8>) = thiscall 0x509CE0 => crate::cam::get_vectors_ready_for_rw;
     /// `CCamera::SetColVarsVehicle(int32 type, int32 zoom)` (0x50CCA0)
     pub fn set_col_vars_vehicle(ty: i32, zoom: i32) = cdecl 0x50CCA0 => crate::camfx::set_col_vars_vehicle;
     /// `CCamera::CameraVehicleModeSpecialCases(CVehicle*)` (0x50CDE0)
     pub fn camera_vehicle_mode_special_cases(cam: GPtr<u8>, veh: GPtr<u8>) = thiscall 0x50CDE0 => crate::camctl::camera_vehicle_mode_special_cases;
-    /// `CCamera::CameraColDetAndReact(CVector* source, CVector* target)` (0x520190; ECX = TheCamera is
-    /// loaded but never read)
-    pub fn camera_col_det_and_react(source: GPtr<u8>, target: GPtr<u8>) -> u8 = stdcall 0x520190 => crate::camcol::camera_col_det_and_react;
-    /// `CCamera::ImproveNearClip(CVehicle*, CPed*, CVector* source, CVector* target)` (0x516B20)
-    pub fn improve_near_clip(cam: GPtr<u8>, veh: GPtr<u8>, ped: GPtr<u8>, source: GPtr<u8>, target: GPtr<u8>) = thiscall 0x516B20 => crate::camcol::improve_near_clip;
 }
 
 use sa_core::field::gf as d;
@@ -1003,19 +986,13 @@ fn slope_pitch(this: GPtr<u8>, v: GPtr<u8>, t: &[f32; 3], lup: &mut f32) {
     *lup = f32_of(c2.fmul(roll).fadd_m(*lup));
 }
 
+pub use crate::bindings::get_look_behind_for_ped;
+pub use sa_pop::bindings::get_look_behind_for_car;
+pub use sa_pop::bindings::pad_get_look_left as get_look_left;
+pub use sa_pop::bindings::pad_get_look_right as get_look_right;
+pub use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
+pub use sa_stream::bindings::simple_transform_update_matrix;
 orig! {
-    /// `CPlaceable::AllocateMatrix()` (0x54F560)
-    pub fn allocate_matrix(e: GPtr<u8>) = thiscall 0x54F560 => unported;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*)` (0x54F1B0)
-    pub fn simple_transform_update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => unported;
-    /// `CPad::GetLookBehindForCar()` (0x53FE70, AL)
-    pub fn get_look_behind_for_car(pad: GPtr<u8>) -> u8 = thiscall 0x53FE70 => unported;
-    /// `CPad::GetLookBehindForPed()` (0x53FEC0, AL)
-    pub fn get_look_behind_for_ped(pad: GPtr<u8>) -> u8 = thiscall 0x53FEC0 => unported;
-    /// `CPad::GetLookLeft()` (0x53FDD0, AL)
-    pub fn get_look_left(pad: GPtr<u8>) -> u8 = thiscall 0x53FDD0 => unported;
-    /// `CPad::GetLookRight()` (0x53FE10, AL)
-    pub fn get_look_right(pad: GPtr<u8>) -> u8 = thiscall 0x53FE10 => unported;
     /// `CCam::WellBufferMe(float target, float* value, float* speed, float topSpeed, float step, bool isAngle)`
     /// (0x509AE0)
     pub fn well_buffer_me(target: f32, value: GPtr<f32>, speed: GPtr<f32>, top_speed: f32, step: f32, is_angle: u8) = cdecl 0x509AE0 => crate::cam::well_buffer_me;
@@ -1143,31 +1120,23 @@ pub fn rot_cam_if_in_front_car(this: GPtr<u8>, target: GPtr<u8>, orientation: u3
     1
 }
 
+pub use crate::bindings::handle_camera_motion_for_ducking;
+pub use sa_core::bindings::entity_update_rp_hanim as update_rp_hanim;
+pub use sa_core::bindings::entity_update_rw_frame as update_rw_frame;
+pub use sa_world::bindings::get_task_swim;
+pub use sa_world::bindings::ped_get_bone_position;
+pub use sa_world::bindings::ped_set_ped_position_in_car;
+pub use sa_world::bindings::placeable_get_matrix as get_matrix;
+pub use sa_world::bindings::update_rw_matrix;
 orig! {
     /// `RwCameraSetNearClipPlane(RwCamera*, RwReal)` (0x7EE1D0)
     pub fn rw_camera_set_near_clip_plane(cam: GPtr<u8>, near: f32) -> GPtr<u8> = cdecl 0x7EE1D0 => unported;
-    /// `CPedIntelligence::GetTaskSwim()` (0x601070)
-    pub fn get_task_swim(intel: GPtr<u8>) -> GPtr<u8> = thiscall 0x601070 => unported;
     /// `CPedIntelligence::GetTaskHold(bool)` (0x600FF0)
     pub fn get_task_hold(intel: GPtr<u8>, ignore_check: u8) -> GPtr<u8> = thiscall 0x600FF0 => unported;
-    /// `CCamera::HandleCameraMotionForDucking(CPed*, CVector* src, CVector* targ, bool instant)` (0x50CFA0)
-    pub fn handle_camera_motion_for_ducking(cam: GPtr<u8>, ped: GPtr<u8>, src: GPtr<u8>, targ: GPtr<u8>, instant: u32) = thiscall 0x50CFA0 => crate::camfx::handle_camera_motion_for_ducking;
     /// `FUN_00509ca0(float* out)` (0x509CA0, AL): the boat look left/right/behind height
     pub fn boat_look_height(cam: GPtr<u8>, out: GPtr<u8>) -> u8 = thiscall 0x509CA0 => crate::camproc::get_boat_look_lr_behind_cam_height;
     /// `CCullZones::Cam1stPersonForPlayer()` (0x72DD40, AL)
     pub fn cam_1st_person_for_player() -> u8 = cdecl 0x72DD40 => unported;
-    /// `CPed::SetPedPositionInCar()` (0x5DF910)
-    pub fn ped_set_ped_position_in_car(p: GPtr<u8>) = thiscall 0x5DF910 => unported;
-    /// `CEntity::UpdateRwMatrix()` (0x446F90)
-    pub fn update_rw_matrix(e: GPtr<u8>) = thiscall 0x446F90 => unported;
-    /// `CEntity::UpdateRwFrame()` (0x532B00)
-    pub fn update_rw_frame(e: GPtr<u8>) = thiscall 0x532B00 => unported;
-    /// `CEntity::UpdateRpHAnim()` (0x532B20)
-    pub fn update_rp_hanim(e: GPtr<u8>) = thiscall 0x532B20 => unported;
-    /// `CPed::GetBonePosition(RwV3d& out, uint32 bone, bool updateSkin)` (0x5E4280)
-    pub fn ped_get_bone_position(p: GPtr<u8>, out: GPtr<u8>, bone: u32, update: u32) = thiscall 0x5E4280 => unported;
-    /// `CPlaceable::GetMatrix()` (0x411990)
-    pub fn get_matrix(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x411990 => unported;
     /// `operator*(CVector* out, float s, const CVector& v)` (0x40FE90), returns `out`
     pub fn vec_s_mul(out: GPtr<u8>, s: u32, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE90 => unported;
     /// `CVector::operator+=(const CVector&)` (0x411A00)

@@ -25,45 +25,32 @@ const CI_ASIN: usize = 0x821E70;
 /// `gpBloodPoolTex`
 const BLOOD_POOL_TEX: usize = 0xC40400;
 
+use crate::bindings::anim_blend_animation;
+use crate::bindings::event_dead_ped_ctor;
+use crate::bindings::event_dead_ped_dtor;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::get_weapon_info as weapon_info_get;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::accident_manager_get_instance;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::get_event_global_group;
+use sa_world::bindings::get_water_level_no_waves as water_get_water_level_no_waves;
+use sa_world::bindings::localisation_blood;
+use sa_world::bindings::ped_remove_weapon_model;
+use sa_world::bindings::ped_set_ped_state;
 orig! {
     /// `CCarEnterExit::ComputeTargetDoorToExit(const CVehicle*, const CPed*)` (0x64F110, cdecl)
     fn car_enter_exit_compute_target_door_to_exit(v: u32, ped: GPtr<u8>) -> i32 = cdecl 0x64F110 => unported;
-    /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float delta)` (0x4D4610, cdecl)
-    fn anim_blend_animation(clump: u32, group: u32, anim: u32, delta: u32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
-    /// `CPed::SetPedState(ePedState)` (0x5E4500, `ret 4`)
-    fn ped_set_ped_state(p: GPtr<u8>, s: u32) = thiscall 0x5E4500 => unported;
-    /// `FindPlayerPed(int32)` (0x56E210, cdecl)
-    fn find_player_ped(i: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CWeaponInfo::GetWeaponInfo(eWeaponType, eWeaponSkill)` (0x743C60, cdecl)
-    fn weapon_info_get(wt: u32, skill: u32) -> GPtr<u8> = cdecl 0x743C60 => unported;
-    /// `CPed::RemoveWeaponModel(int32 modelIndex)` (0x5E3990, `ret 4`)
-    fn ped_remove_weapon_model(p: GPtr<u8>, mi: u32) = thiscall 0x5E3990 => unported;
-    /// `CPed::IsPlayer` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
     /// `CPed::RemoveWeaponAnims(int32, float delta)` (0x5F0250, `ret 8`)
     fn ped_remove_weapon_anims(p: GPtr<u8>, a: u32, delta: u32) = thiscall 0x5F0250 => unported;
     /// `CPed::CreateDeadPedWeaponPickups` (0x4591D0)
     fn ped_create_dead_ped_weapon_pickups(p: GPtr<u8>) = thiscall 0x4591D0 => unported;
     /// `CPed::CreateDeadPedMoney` (0x4590F0)
     fn ped_create_dead_ped_money(p: GPtr<u8>) = thiscall 0x4590F0 => unported;
-    /// `CEventDeadPed::CEventDeadPed(CPed*, bool, uint32 time)` (0x4ADEA0, `ret 0xC`)
-    fn event_dead_ped_ctor(e: GPtr<u8>, ped: GPtr<u8>, b: u32, time: u32) -> GPtr<u8> = thiscall 0x4ADEA0 => unported;
-    /// `CEventDeadPed::~CEventDeadPed` (0x4ADF70)
-    fn event_dead_ped_dtor(e: GPtr<u8>) = thiscall 0x4ADF70 => unported;
-    /// `GetEventGlobalGroup()` (0x4ABA50, cdecl)
-    fn get_event_global_group() -> GPtr<u8> = cdecl 0x4ABA50 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, `ret 8`)
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
-    /// `CAccidentManager::GetInstance()` (0x56CF20, cdecl)
-    fn accident_manager_get_instance() -> GPtr<u8> = cdecl 0x56CF20 => unported;
     /// `CAccidentManager::ReportAccident(CPed*)` (0x56CE80, `ret 4`)
     fn accident_manager_report_accident(m: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x56CE80 => unported;
     /// `CPed::DeadPedMakesTyresBloody` (0x6B4200)
     fn ped_dead_ped_makes_tyres_bloody(p: GPtr<u8>) = thiscall 0x6B4200 => unported;
-    /// `CLocalisation::Blood()` (0x56D230, cdecl)
-    fn localisation_blood() -> u8 = cdecl 0x56D230 => unported;
-    /// `CWaterLevel::GetWaterLevelNoWaves(float x, float y, float z, float* level, float*, float*)` (0x6E8580, cdecl)
-    fn water_get_water_level_no_waves(x: u32, y: u32, z: u32, out: GPtr<u8>, a: u32, b: u32) -> u8 = cdecl 0x6E8580 => unported;
     /// `CShadows::StoreStaticShadow(uint32 id, uint8 type, RwTexture*, const CVector*, float frontX, float frontY,
     /// float sideX, float sideY, int16 intensity, uint8 r, uint8 g, uint8 b, float zDistance, float scale, float
     /// drawDistance, bool temporary, float upDistance)` (0x70BA00, cdecl)

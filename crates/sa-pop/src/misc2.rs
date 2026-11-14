@@ -15,31 +15,22 @@ use crate::population::TRANSLATION_ARRAY;
 /// Globals owned by this module: none (they belong to the classes declared in gangs.rs and friends).
 pub const GLOBALS: &[GlobalDesc] = &[];
 
+use sa_core::bindings::atexit;
+use sa_core::bindings::eh_vector_ctor;
+use sa_core::bindings::eh_vector_dtor;
+use sa_core::bindings::end_gang_war as end_gang_war_o;
+use sa_core::bindings::stats_increment_stat as increment_stat;
+use sa_core::bindings::zones_fill_zones_with_gang_colours as fill_zones_with_gang_colours;
+use sa_world::bindings::is_player_on_a_mission;
+use sa_world::bindings::set_gang_wars_active as set_gang_wars_active_o;
+use sa_world::bindings::vehicle_set_created_by;
 orig! {
-    /// CRT `eh vector constructor iterator` (0x821D30, stdcall)
-    fn eh_vector_ctor(arr: GPtr<u8>, size: u32, n: u32, ctor: u32, dtor: u32) = stdcall 0x821D30 => unported;
-    /// CRT `eh vector destructor iterator` (0x821E02, stdcall)
-    fn eh_vector_dtor(arr: GPtr<u8>, size: u32, n: u32, dtor: u32) = stdcall 0x821E02 => unported;
-    /// CRT `_atexit` (0x821D1E)
-    fn atexit(f: u32) -> i32 = cdecl 0x821D1E => unported;
-    /// `CTheZones::FillZonesWithGangColours(bool)` (0x572440)
-    fn fill_zones_with_gang_colours(b: u32) = cdecl 0x572440 => unported;
-    /// `CGangWars::SetGangWarsActive(bool)` (0x446570)
-    fn set_gang_wars_active_o(b: u32) = cdecl 0x446570 => unported;
-    /// `CTheScripts::IsPlayerOnAMission()` (0x464D50)
-    fn is_player_on_a_mission() -> u8 = cdecl 0x464D50 => unported;
-    /// `CStats::IncrementStat(uint16, float)` (0x55C180)
-    fn increment_stat(stat: u32, v: f32) = cdecl 0x55C180 => unported;
-    /// `CGangWars::EndGangWar(bool)` (0x4464C0)
-    fn end_gang_war_o(b: u32) = cdecl 0x4464C0 => unported;
     /// `CGangWars::ReleasePedsInAttackWave(bool, bool)` (0x445C30)
     fn release_peds_in_attack_wave(a: u32, b: u32) -> i32 = cdecl 0x445C30 => unported;
     /// `CGangWars::MakeEnemyGainInfluenceInZone(int32 gang, int32 amount)` (0x445FD0)
     fn make_enemy_gain_influence_in_zone_o(gang: i32, amount: i32) = cdecl 0x445FD0 => unported;
     /// `CGangWars::ReleaseCarsInAttackWave()` (0x445E20)
     fn release_cars_in_attack_wave_o() = cdecl 0x445E20 => unported;
-    /// `CVehicle::SetVehicleCreatedBy(int32)` (0x6D5D70)
-    fn vehicle_set_created_by(veh: GPtr<u8>, by: i32) = thiscall 0x6D5D70 => unported;
 }
 
 /// `CGangWars::TimeTillNextAttack` (0x96AB48)
@@ -393,15 +384,13 @@ pub fn end_gang_war(b: u32) {
     release_cars_in_attack_wave_o();
 }
 
+use crate::bindings::tell_gang_members_to;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::get_stat_value;
+use sa_world::bindings::tm_find_active_task_by_type as find_active_task_by_type;
 orig! {
     /// `CStats::SetStatValue(uint16, float)` (0x55A070)
     fn set_stat_value(stat: u32, v: f32) = cdecl 0x55A070 => unported;
-    /// `CStats::GetStatValue(uint16)` (0x558E40, ST0)
-    fn get_stat_value(stat: u32) -> f64 = cdecl 0x558E40 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0)
-    fn ped_is_player(ped: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CTaskManager::FindActiveTaskByType(int32)` (0x681740, `ret 4`)
-    fn find_active_task_by_type(tm: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x681740 => unported;
     /// `CText::Get(const char*)` (0x6A0050)
     fn text_get(this: GPtr<u8>, key: u32) -> u32 = thiscall 0x6A0050 => unported;
     /// `CMessages::AddMessageQ(const char*, uint32, uint16, bool)` (0x69F0B0)
@@ -409,8 +398,6 @@ orig! {
     /// `CMessages::AddToPreviousBriefArray(const char*, int32 x6, const char*)` (0x69DD50)
     #[allow(clippy::too_many_arguments)]
     fn add_to_previous_brief_array(text: u32, a: i32, b: i32, c: i32, d: i32, e: i32, f: i32, s: u32) = cdecl 0x69DD50 => unported;
-    /// `CGangWars::TellGangMembersTo(bool)` (0x444530)
-    fn tell_gang_members_to(b: u32) = cdecl 0x444530 => unported;
     /// `CGangWars::CheerVictory()` (0x444040)
     fn cheer_victory() = cdecl 0x444040 => unported;
     /// `CGangWars::ReleaseCarsInAttackWave()` (0x445E20)
@@ -540,29 +527,20 @@ pub fn do_stuff_when_player_victorious() {
 
 // ---- CDarkel ---------------------------------------------------------------------------------------
 
+use crate::bindings::deal_with_weapon_change_at_end_of_frenzy;
+use sa_core::bindings::display_script_stat_update_message;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::hud_set_help_message as set_help_message;
+use sa_core::bindings::set_wanted_level;
+use sa_world::bindings::decrement_stat;
+use sa_world::bindings::get_vehicle_appearance;
+use sa_world::bindings::is_law_enforcement_vehicle;
+use sa_world::bindings::membership_is_member as group_is_member;
 orig! {
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CPedGroupMembership::IsMember(CPed*)` (0x5F6A10)
-    fn group_is_member(this: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x5F6A10 => unported;
-    /// `CStats::DecrementStat(uint16, float)` (0x559FA0)
-    fn decrement_stat(stat: u32, v: f32) = cdecl 0x559FA0 => unported;
-    /// `CStats::DisplayScriptStatUpdateMessage(uint8, uint32, float)` (0x55B980)
-    fn display_script_stat_update_message(a: u32, stat: u32, v: f32) = cdecl 0x55B980 => unported;
     /// `CAudioEngine::ReportFrontendAudioEvent(int32, float, float)` (0x506EA0)
     fn report_frontend_audio_event(this: GPtr<u8>, ev: i32, vol: f32, speed: f32) = thiscall 0x506EA0 => unported;
-    /// `CVehicle::GetVehicleAppearance()` (0x6D1080)
-    fn get_vehicle_appearance(veh: GPtr<u8>) -> i32 = thiscall 0x6D1080 => unported;
-    /// `CVehicle::IsLawEnforcementVehicle()` (0x6D2370)
-    fn is_law_enforcement_vehicle(veh: GPtr<u8>) -> u8 = thiscall 0x6D2370 => unported;
     /// `CDarkel::ThisVehicleShouldBeKilledForFrenzy(CVehicle*)` (0x43D350)
     fn this_vehicle_should_be_killed_for_frenzy(veh: GPtr<u8>) -> u8 = cdecl 0x43D350 => unported;
-    /// `CPlayerPed::SetWantedLevel(int32)` (0x609F10)
-    fn set_wanted_level(ped: GPtr<u8>, lvl: i32) = thiscall 0x609F10 => unported;
-    /// `CHud::SetHelpMessage(const char*, bool, bool, bool)` (0x588BE0)
-    fn set_help_message(text: u32, quick: u32, permanent: u32, brief: u32) = cdecl 0x588BE0 => unported;
-    /// `CDarkel::DealWithWeaponChangeAtEndOfFrenzy()` (0x43D7A0)
-    fn deal_with_weapon_change_at_end_of_frenzy() = cdecl 0x43D7A0 => unported;
 }
 
 /// `CDarkel::Status` (int16)
@@ -783,13 +761,11 @@ pub fn darkel_update() {
 
 // ---- CTagManager -----------------------------------------------------------------------------------
 
+use sa_world::bindings::garages_trigger_message;
+use sa_world::bindings::set_user_value;
 orig! {
     /// `CVisibilityPlugins::GetUserValue(RpAtomic*)` (0x7323A0)
     fn get_user_value(atomic: GPtr<u8>) -> u32 = cdecl 0x7323A0 => unported;
-    /// `CVisibilityPlugins::SetUserValue(RpAtomic*, uint16)` (0x732380)
-    fn set_user_value(atomic: GPtr<u8>, v: u32) = cdecl 0x732380 => unported;
-    /// `CGarages::TriggerMessage(const char*, int16, uint16, int16)` (0x447B80)
-    fn garages_trigger_message(text: u32, n1: i32, time: u32, n2: i32) = cdecl 0x447B80 => unported;
     /// An `RpAtomic` render callback (`call [atomic + 0x48]`)
     fn atomic_render_cb(f: u32, atomic: GPtr<u8>) -> GPtr<u8> = cdecl dyn => unported;
 }
@@ -987,6 +963,7 @@ pub fn render_tag_for_pc(atomic: GPtr<u8>) {
 
 // ---- CTrafficLights, CAccidentManager, car generators, road blocks ----------------------------------
 
+use sa_world::bindings::find_player_train;
 orig! {
     /// `CTrafficLights::FindOrientationForTrafficLightType(CEntity*)` (0x49D520)
     fn find_orientation_for_traffic_light_type(e: GPtr<u8>) -> f64 = cdecl 0x49D520 => unported;
@@ -1004,8 +981,6 @@ orig! {
     fn cargen_do_internal_processing(this: GPtr<u8>) = thiscall 0x6F34D0 => unported;
     /// `CCarGenerator::Process()` (0x6F3E90)
     fn cargen_process_o(this: GPtr<u8>) = thiscall 0x6F3E90 => unported;
-    /// `CWorld::FindPlayerTrain(int32)` (0x56E160)
-    fn find_player_train(id: i32) -> GPtr<u8> = cdecl 0x56E160 => unported;
     /// `CFileMgr::OpenFile(const char*, const char*)` (0x538900)
     fn file_open(path: u32, mode: u32) -> i32 = cdecl 0x538900 => unported;
     /// `CFileMgr::Read(FILESTREAM, void*, int32)` (0x538950)
@@ -1153,11 +1128,9 @@ pub fn should_car_stop_for_light(veh: GPtr<u8>, ignore_lights: u8) -> u8 {
     stop_for_light_link(veh, ignore_lights, 0x3A8, 0x398, 0x3B4, 6.0, -6.0, true).unwrap_or(0)
 }
 
+use sa_stream::bindings::load_data_from_work_buffer;
+use sa_stream::bindings::save_data_to_work_buffer;
 orig! {
-    /// `CGenericGameStorage::SaveDataToWorkBuffer(void*, int32)` (0x5D1270)
-    fn save_data_to_work_buffer(p: GPtr<u8>, n: i32) -> u8 = cdecl 0x5D1270 => unported;
-    /// `CGenericGameStorage::LoadDataFromWorkBuffer(void*, int32)` (0x5D1300)
-    fn load_data_from_work_buffer(p: GPtr<u8>, n: i32) -> u8 = cdecl 0x5D1300 => unported;
     /// `CGangWarsSaveStructure::Construct()` (0x5D2620)
     fn gang_wars_save_construct(s: GPtr<u8>) = thiscall 0x5D2620 => gang_wars_save_structure_construct;
     /// `CGangWarsSaveStructure::Extract()` (0x5D2740)
@@ -1439,11 +1412,9 @@ pub fn cargen_process(this: GPtr<u8>) {
     }
 }
 
+use crate::bindings::camera_is_sphere_visible;
+use sa_world::bindings::find_player_centre_of_world;
 orig! {
-    /// `CWorld::FindPlayerCentreOfWorld(int32)` (0x56E250)
-    fn find_player_centre_of_world(id: i32) -> GPtr<f32> = cdecl 0x56E250 => unported;
-    /// `CCamera::IsSphereVisible(const CVector*, float)` (0x420D40, `ret 8`)
-    fn camera_is_sphere_visible(cam: GPtr<u8>, c: GPtr<f32>, r: f32) -> u8 = thiscall 0x420D40 => unported;
     /// `COcclusion::IsPositionOccluded(CVector, float)` (0x7200B0; the vector by value)
     fn is_position_occluded(x: f32, y: f32, z: f32, r: f32) -> u8 = cdecl 0x7200B0 => unported;
     /// `CWorld::FindPlayerSpeed(int32)` (0x56E090)

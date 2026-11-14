@@ -314,14 +314,53 @@ use sa_core::field::g;
 use sa_math::fpu::fbits as k;
 use sa_math::fpu::x;
 
+pub use crate::bindings::add_txd_slot as txd_add_txd_slot;
+pub use crate::bindings::anim_add_block_ref as anim_add_anim_block_ref;
+pub use crate::bindings::are_army_required as wanted_are_army_required;
+pub use crate::bindings::are_fbi_required as wanted_are_fbi_required;
+pub use crate::bindings::are_swat_required as wanted_are_swat_required;
+pub use crate::bindings::car_group_pick_least_used_model;
+pub use crate::bindings::cd_stream_get_status;
+pub use crate::bindings::col_load_collision;
+pub use crate::bindings::crt_new as operator_new_alias;
+pub use crate::bindings::entity_is_visible;
+pub use crate::bindings::find_other_upgrade as linked_upgrades_find_other_upgrade;
+pub use crate::bindings::find_player_wanted;
+pub use crate::bindings::find_txd_slot as txd_find_txd_slot;
+pub use crate::bindings::load_data_from_work_buffer as generic_game_storage_load_data;
+pub use crate::bindings::manage_all_population as population_manage_all_population;
+pub use crate::bindings::mi_set_tex_dictionary;
+pub use crate::bindings::model_info_remove_ref as mi_remove_ref;
+pub use crate::bindings::num_of_helis_required as wanted_num_of_helis_required;
+pub use crate::bindings::object_can_be_deleted;
+pub use crate::bindings::pad_stop_pads_shaking;
+pub use crate::bindings::ped_is_player;
+pub use crate::bindings::rand;
+pub use crate::bindings::remove_this_ped as the_scripts_remove_this_ped;
+pub use crate::bindings::save_data_to_work_buffer as generic_game_storage_save_data;
+pub use crate::bindings::strchr;
+pub use crate::bindings::strnicmp;
+pub use crate::bindings::world_remove_references_to_deleted_object;
+pub use sa_core::bindings::atof;
+pub use sa_core::bindings::atol;
+pub use sa_core::bindings::crt_free_8214bd as free;
+pub use sa_core::bindings::entity_get_is_on_screen;
+pub use sa_core::bindings::file_read;
+pub use sa_core::bindings::find_player_ped;
+pub use sa_core::bindings::get_model_info as mi_get_model_info_by_name;
+pub use sa_core::bindings::mem_free_align as memory_free_align;
+pub use sa_core::bindings::mem_malloc_align as memory_malloc_align;
+pub use sa_core::bindings::open_file;
+pub use sa_core::bindings::stricmp;
+pub use sa_core::bindings::strtok;
+pub use sa_core::bindings::world_clear_scan_codes;
+pub use sa_core::bindings::world_remove;
 orig! {
     // --- CdStream (owner M)
     /// `CdStreamOpen(const char*, bool locked)` (0x4067B0)
     pub fn cd_stream_open(path: GPtr<u8>, locked: u8) -> u32 = cdecl 0x4067B0 => unported;
     /// `CdStreamRead(channel, buffer, offset, sectors)` (0x406A20)
     pub fn cd_stream_read(ch: i32, buf: GPtr<u8>, pos: u32, sectors: i32) -> i32 = cdecl 0x406A20 => unported;
-    /// `CdStreamGetStatus(channel)` (0x4063E0)
-    pub fn cd_stream_get_status(ch: i32) -> i32 = cdecl 0x4063E0 => unported;
     /// `CdStreamSync(channel)` (0x406460)
     pub fn cd_stream_sync(ch: i32) -> i32 = cdecl 0x406460 => unported;
     /// `CdStreamGetLastPosn()` (0x406450)
@@ -341,8 +380,6 @@ orig! {
     pub fn car_group_count_members(g: GPtr<u8>) -> i32 = thiscall 0x611C30 => unported;
     /// `CLoadedCarGroup::SortBasedOnUsage` (0x611E10)
     pub fn car_group_sort_based_on_usage(g: GPtr<u8>) = thiscall 0x611E10 => unported;
-    /// `CLoadedCarGroup::PickLeastUsedModel(int32 minRefs)` (0x611E90)
-    pub fn car_group_pick_least_used_model(g: GPtr<u8>, min_refs: i32) -> i32 = thiscall 0x611E90 => unported;
     /// `CLoadedCarGroup::RemoveMember` alias used by RemoveCarModel (0x6119D0: `CPopulation::RemoveSpecificDriverModelsForCar`)
     pub fn population_remove_specific_driver_models_for_car(model: i32) = cdecl 0x6119D0 => unported;
     // --- CTxdStore (owner M)
@@ -350,10 +387,6 @@ orig! {
     pub fn txd_get_txd(slot: i32) -> GPtr<u8> = cdecl 0x408340 => crate::txdstore::get_txd;
     /// `CTxdStore::GetParentTxdSlot(slot)` (0x408370)
     pub fn txd_get_parent_txd_slot(slot: i32) -> i32 = cdecl 0x408370 => crate::txdstore::get_parent_txd_slot;
-    /// `CTxdStore::FindTxdSlot(const char*)` (0x731850)
-    pub fn txd_find_txd_slot(name: GPtr<u8>) -> i32 = cdecl 0x731850 => crate::txdstore::find_txd_slot_name;
-    /// `CTxdStore::AddTxdSlot(const char*)` (0x731C80)
-    pub fn txd_add_txd_slot(name: GPtr<u8>) -> i32 = cdecl 0x731C80 => crate::txdstore::add_txd_slot;
     /// `CTxdStore::SetCurrentTxd(slot)` (0x7319C0)
     pub fn txd_set_current_txd(slot: i32) = cdecl 0x7319C0 => crate::txdstore::set_current_txd;
     /// `CTxdStore::AddRef(slot)` (0x731A00)
@@ -396,23 +429,12 @@ orig! {
     pub fn col_remove_col(slot: i32) = cdecl 0x410730 => crate::colstore::remove_col;
     /// `CColStore::LoadCol(slot, data, size)` (0x4106D0)
     pub fn col_load_col(slot: i32, data: GPtr<u8>, size: i32) -> bool = cdecl 0x4106D0 => crate::colstore::load_col_buffer;
-    /// `CColStore::LoadCollision(CVector, bool)` (0x410860)
-    pub fn col_load_collision(px: f32, py: f32, pz: f32, ignore: u8) = cdecl 0x410860 => crate::colstore::load_collision;
     /// `CColStore::EnsureCollisionIsInMemory(const CVector&)` (0x410AD0)
     pub fn col_ensure_collision_is_in_memory(pos: GPtr<f32>) = cdecl 0x410AD0 => crate::colstore::ensure_collision_is_in_memory;
     /// `CColStore::AddCollisionNeededAtPosn(const CVector&)` (0x4103A0)
     pub fn col_add_collision_needed_at_posn(pos: GPtr<f32>) = cdecl 0x4103A0 => crate::colstore::add_collision_needed_at_posn;
-    // --- model infos (owners B/C)
-    /// `CModelInfo::GetModelInfo(const char*, int32* index)` (0x4C5940)
-    pub fn mi_get_model_info_by_name(name: GPtr<u8>, index: GPtr<i32>) -> GPtr<u8> = cdecl 0x4C5940 => unported;
-    /// `CVehicleModelInfo::ms_linkedUpgrades.FindOtherUpgrade(model)` (0x4C74D0)
-    pub fn linked_upgrades_find_other_upgrade(list: GPtr<u8>, model: i32) -> i16 = thiscall 0x4C74D0 => unported;
-    /// `CBaseModelInfo::SetTexDictionary(const char*)` (0x4C4B40)
-    pub fn mi_set_tex_dictionary(mi: GPtr<u8>, name: GPtr<u8>) = thiscall 0x4C4B40 => unported;
     /// `CBaseModelInfo::ClearTexDictionary()` (0x4C4B70)
     pub fn mi_clear_tex_dictionary(mi: GPtr<u8>) = thiscall 0x4C4B70 => unported;
-    /// `CBaseModelInfo::RemoveRef()` (0x4C4BB0)
-    pub fn mi_remove_ref(mi: GPtr<u8>) = thiscall 0x4C4BB0 => unported;
     // --- CFileLoader (owner C)
     /// `CFileLoader::LoadAtomicFile(RwStream*, uint32 model)` (0x5371F0)
     pub fn fl_load_atomic_file(stream: GPtr<u8>, model: i32) -> u8 = cdecl 0x5371F0 => unported;
@@ -433,36 +455,15 @@ orig! {
     pub fn rt_dict_schema_set_current_dict(schema: GPtr<u8>, dict: GPtr<u8>) -> GPtr<u8> = cdecl 0x7CEEF0 => unported;
     /// `RtDictDestroy(dict)` (0x7CF130)
     pub fn rt_dict_destroy(dict: GPtr<u8>) -> i32 = cdecl 0x7CF130 => unported;
-    /// `CMemoryMgr::MallocAlign(size, align, hint)` (0x72F4C0)
-    pub fn memory_malloc_align(size: u32, align: u32, hint: u32) -> GPtr<u8> = cdecl 0x72F4C0 => unported;
-    /// `CMemoryMgr::FreeAlign(p)` (0x72F4F0)
-    pub fn memory_free_align(p: GPtr<u8>) = cdecl 0x72F4F0 => unported;
-    // --- CRT
-    /// CRT `rand` (0x821B1E)
-    pub fn rand() -> i32 = cdecl 0x821B1E => sa_core::crt::rand_owned;
-    /// CRT `_stricmp` (0x8229B6)
-    pub fn stricmp(a: GPtr<u8>, b: GPtr<u8>) -> i32 = cdecl 0x8229B6 => unported;
-    /// CRT `_strnicmp` (0x835AC7)
-    pub fn strnicmp(a: GPtr<u8>, b: GPtr<u8>, n: u32) -> i32 = cdecl 0x835AC7 => unported;
     /// CRT `sscanf(s, "%d", int*)` (0x8220AD)
     pub fn sscanf_int(s: GPtr<u8>, fmt: GPtr<u8>, out: GPtr<i32>) -> i32 = cdecl 0x8220AD => unported;
     /// CRT `operator new` (0x82119A)
     pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
-    /// CRT `free` (0x8214BD)
-    pub fn free(p: GPtr<u8>) = cdecl 0x8214BD => unported;
     /// `CFileMgr::CloseFile(FILE*)` (0x5389D0)
     pub fn fclose(f: GPtr<u8>) -> i32 = cdecl 0x5389D0 => sa_core::filemgr::close_file;
-    /// CRT `strtok` (0x82244B)
-    pub fn strtok(s: GPtr<u8>, delim: GPtr<u8>) -> GPtr<u8> = cdecl 0x82244B => unported;
-    /// CRT `atol` (0x82258E)
-    pub fn atol(s: GPtr<u8>) -> i32 = cdecl 0x82258E => unported;
-    /// CRT `atof` (0x823CEE)
-    pub fn atof(s: GPtr<u8>) -> f64 = cdecl 0x823CEE => unported;
     // --- core / misc
     /// `CFileLoader::LoadLine(FILE*)` (0x536F80)
     pub fn file_loader_load_line(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x536F80 => crate::fileloader::load_line_file;
-    /// `CFileMgr::Read(FILE*, buf, size)` (0x538950)
-    pub fn file_read(f: GPtr<u8>, buf: GPtr<u8>, size: u32) -> u32 = cdecl 0x538950 => sa_core::filemgr::read;
     /// `CDirectory::AddItem(const DirectoryInfo&)` (0x532310)
     pub fn directory_add_item(dir: GPtr<sa_core::directory::CDirectory>, info: GPtr<sa_core::directory::DirectoryInfo>) = thiscall 0x532310 => sa_core::directory::add_item;
     /// `CDirectory::FindItem(name, pos&, size&)` (0x5324A0)
@@ -475,16 +476,10 @@ orig! {
     pub fn get_uppercase_key(s: GPtr<u8>) -> u32 = cdecl 0x53CF30 => sa_core::keygen::get_uppercase_key;
     /// `CClock::GetIsTimeInRange(uint8 from, uint8 to)` (0x52CEE0)
     pub fn clock_get_is_time_in_range(from: u8, to: u8) -> u8 = cdecl 0x52CEE0 => unported;
-    /// `FindPlayerPed(int32)` (0x56E210)
-    pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
     /// `FindPlayerVehicle(int32, bool)` (0x56E0D0)
     pub fn find_player_vehicle(id: i32, include_remote: u8) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
     /// `FindPlayerCoors(CVector* out, int32 id)` (0x56E010)
     pub fn find_player_coors(out: GPtr<f32>, id: i32) -> GPtr<f32> = cdecl 0x56E010 => unported;
-    /// `FindPlayerWanted(int32)` (0x56E230)
-    pub fn find_player_wanted(id: i32) -> GPtr<u8> = cdecl 0x56E230 => unported;
-    /// `CPad::StopPadsShaking()` (0x541D70)
-    pub fn pad_stop_pads_shaking() = cdecl 0x541D70 => unported;
     /// `CLoadingScreen::Pause()` / `Continue()` (0x590310 / 0x590320)
     pub fn loading_screen_pause() = cdecl 0x590310 => unported;
     pub fn loading_screen_continue() = cdecl 0x590320 => crate::loading_screen::continue_;
@@ -494,15 +489,11 @@ orig! {
     pub fn zones_get_level_from_position(pos: GPtr<f32>) -> i32 = cdecl 0x572300 => unported;
     /// `CPopCycle::Update`-free: `CTheZones::GetZoneInfo(const CVector&, CZone**)` (0x572400)
     pub fn zones_get_zone_info(pos: GPtr<f32>, zone: GPtr<u8>) -> GPtr<u8> = cdecl 0x572400 => unported;
-    /// `CPopulation::ManageAllPopulation()` (0x6160A0)
-    pub fn population_manage_all_population() = cdecl 0x6160A0 => unported;
     /// `CTimer::Suspend()` / `Resume()`
     pub fn timer_suspend() = cdecl 0x5619D0 => sa_core::timer::suspend;
     pub fn timer_resume() = cdecl 0x561A00 => sa_core::timer::resume;
     /// `CEntity::LivesInThisNonOverlapSector(int32, int32)` (0x533050, thiscall)
     pub fn entity_lives_in_this_non_overlap_sector(e: GPtr<u8>, sx: i32, sy: i32) -> u8 = thiscall 0x533050 => unported;
-    /// `CEntity::IsVisibleOnScreen`? `CEntity::GetIsOnScreen()` (0x534540, thiscall)
-    pub fn entity_get_is_on_screen(e: GPtr<u8>) -> u8 = thiscall 0x534540 => unported;
     /// `CRenderer::ShouldModelBeStreamed(CEntity*, const CVector&, float)` (0x554EB0)
     pub fn renderer_should_model_be_streamed(e: GPtr<u8>, pos: GPtr<f32>, far: f32) -> u8 = cdecl 0x554EB0 => unported;
     // --- virtual calls
@@ -630,10 +621,6 @@ orig! {
     // --- added
     /// `CFileLoader::FinishLoadClumpFile(RwStream*, uint32 model)` (0x537450)
     pub fn fl_finish_load_clump_file(stream: GPtr<u8>, model: i32) -> u8 = cdecl 0x537450 => unported;
-    /// CRT `strchr` (0x8213D0)
-    pub fn strchr(s: GPtr<u8>, c: i32) -> GPtr<u8> = cdecl 0x8213D0 => unported;
-    /// `CFileMgr::OpenFile(path, mode)` (0x538900)
-    pub fn open_file(name: GPtr<u8>, mode: GPtr<u8>) -> GPtr<u8> = cdecl 0x538900 => sa_core::filemgr::open_file;
     /// `CPopCycle::IsPedAppropriateForCurrentZone(model)` (0x610150)
     pub fn popcycle_is_ped_appropriate_for_current_zone(model: i32) -> u8 = cdecl 0x610150 => unported;
     /// `CPopCycle::PickARandomGroupOfOtherPeds()` (0x610420)
@@ -648,8 +635,6 @@ orig! {
     pub fn radar_stream_radar_sections(pos: GPtr<f32>) = cdecl 0x5858D0 => unported;
     /// `CPathFind::LoadSceneForPathNodes(CVector)` (0x44DE00, thiscall on `ThePaths`)
     pub fn path_find_load_scene_for_path_nodes(paths: GPtr<u8>, x: f32, y: f32, z: f32) = thiscall 0x44DE00 => unported;
-    /// `CEntity::IsVisible()` (0x536BC0, thiscall)
-    pub fn entity_is_visible(e: GPtr<u8>) -> u8 = thiscall 0x536BC0 => unported;
     /// `CGeneral::GetRandomNumberInRange(int32, int32)` (0x407180)
     pub fn call_get_random_number_in_range_i32(min: i32, max: i32) -> i32 = cdecl 0x407180 => sa_core::general::get_random_number_in_range_i32;
     /// `CPopulation::LoadSpecificDriverModelsForCar(model)` (0x6117F0)
@@ -658,29 +643,11 @@ orig! {
     pub fn cheat_is_zone_streaming_allowed() -> u8 = cdecl 0x407410 => unported;
     /// `CGangWars::TellStreamingWhichGangsAreNeeded(uint32* mask)` (0x443D50)
     pub fn gang_wars_tell_streaming_which_gangs_are_needed(mask: GPtr<i32>) = cdecl 0x443D50 => unported;
-    /// `CWorld::ClearScanCodes()` (0x563470)
-    pub fn world_clear_scan_codes() = cdecl 0x563470 => unported;
-    /// `CWanted::AreSwatRequired/AreFbiRequired/AreArmyRequired/NumOfHelisRequired` (thiscall)
-    pub fn wanted_are_swat_required(w: GPtr<u8>) -> u8 = thiscall 0x561F40 => unported;
-    pub fn wanted_are_fbi_required(w: GPtr<u8>) -> u8 = thiscall 0x561F60 => unported;
-    pub fn wanted_are_army_required(w: GPtr<u8>) -> u8 = thiscall 0x561F80 => unported;
-    pub fn wanted_num_of_helis_required(w: GPtr<u8>) -> i32 = thiscall 0x561FA0 => unported;
     /// `CStreaming::RequestSpecialModel(id, name, flags)` (0x409D10)
     pub fn call_request_special_model(id: i32, name: GPtr<u8>, flags: i32) = cdecl 0x409D10 => request_special_model;
-    /// `CPed::IsPlayer()` / `CPed::CanBeDeletedEvenInVehicle()` (thiscall, AL)
-    pub fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
     pub fn ped_can_be_deleted_even_in_vehicle(p: GPtr<u8>) -> u8 = thiscall 0x5DF150 => unported;
-    /// `CTheScripts::RemoveThisPed(CPed*)` (0x486240)
-    pub fn the_scripts_remove_this_ped(p: GPtr<u8>) = cdecl 0x486240 => unported;
-    /// `CObject::CanBeDeleted()` (0x59F120, thiscall, AL)
-    pub fn object_can_be_deleted(o: GPtr<u8>) -> u8 = thiscall 0x59F120 => unported;
-    /// `CWorld::Remove(CEntity*)` (0x563280), `CWorld::RemoveReferencesToDeletedObject` (0x565510)
-    pub fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
-    pub fn world_remove_references_to_deleted_object(e: GPtr<u8>) = cdecl 0x565510 => unported;
     /// the entity's scalar deleting destructor (vtable +0x00)
     pub fn entity_scalar_deleting_destructor(e: GPtr<u8>, flags: i32) -> GPtr<u8> = thiscall vslot 0x00 => unported;
-    /// `CAnimManager` block functions
-    pub fn anim_add_anim_block_ref(i: i32) = cdecl 0x4D3FB0 => unported;
     pub fn anim_remove_anim_block_ref_without_delete(i: i32) = cdecl 0x4D3FF0 => unported;
     pub fn anim_remove_anim_block(i: i32) = cdecl 0x4D3F40 => unported;
     pub fn anim_get_num_refs_to_anim_block(i: i32) -> i32 = cdecl 0x4D4010 => unported;
@@ -699,11 +666,6 @@ orig! {
     pub fn streamed_scripts_register_script(ss: GPtr<u8>, name: GPtr<u8>) -> i32 = thiscall 0x4706C0 => unported;
     pub fn streamed_scripts_re_initialise(ss: GPtr<u8>) = thiscall 0x4706A0 => unported;
     pub fn streamed_scripts_initialise(ss: GPtr<u8>) = thiscall 0x470660 => unported;
-    /// CRT `operator new` through its `jmp` entry 0x821195 (Init2's link array)
-    pub fn operator_new_alias(size: u32) -> GPtr<u8> = cdecl 0x821195 => unported;
-    /// `CGenericGameStorage::SaveDataToWorkBuffer` / `LoadDataFromWorkBuffer` (0x5D1270 / 0x5D1300)
-    pub fn generic_game_storage_save_data(p: GPtr<u8>, n: i32) -> u8 = cdecl 0x5D1270 => unported;
-    pub fn generic_game_storage_load_data(p: GPtr<u8>, n: i32) -> u8 = cdecl 0x5D1300 => unported;
     /// `CStreamingInfo::GetCdPosnAndSize` / `SetCdPosnAndSize` (called)
     pub fn call_get_cd_posn_and_size(this: GPtr<CStreamingInfo>, pos: GPtr<u32>, size: GPtr<u32>) -> bool = thiscall 0x4075A0 => si::get_cd_posn_and_size;
     pub fn call_set_cd_posn_and_size(this: GPtr<CStreamingInfo>, pos: u32, size: u32) = thiscall 0x4075E0 => si::set_cd_posn_and_size;

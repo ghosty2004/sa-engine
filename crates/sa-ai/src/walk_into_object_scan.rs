@@ -8,35 +8,25 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::entity_scanner_clear;
+use crate::bindings::geometry_line_of_sight_clear as los_clear_ped;
+use crate::bindings::task_is_go_to_task;
+use sa_core::bindings::tm_get_simplest_active_task;
+use sa_core::bindings::vector_difference;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::entity_get_bound_centre;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::vector_magnitude_sqr;
+use sa_world::bindings::vector_sub;
 orig! {
-    /// `CTaskManager::GetSimplestActiveTask()` (0x6819D0)
-    fn tm_get_simplest_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x6819D0 => unported;
-    /// `CTask::IsGoToTask(CTask*)` (0x61A360)
-    fn task_is_go_to_task(t: GPtr<u8>) -> u8 = cdecl 0x61A360 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0)
-    fn ped_is_player(ped: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
     /// `CObjectScanner::CObjectScanner()` (0x606010)
     fn object_scanner_ctor(s: GPtr<u8>) -> GPtr<u8> = thiscall 0x606010 => unported;
     /// `CObjectScanner::ScanForObjectsInRange(CPed&)` (0x5FFF30, `ret 4`)
     fn object_scanner_scan_in_range(s: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x5FFF30 => unported;
-    /// `CEntityScanner::Clear()` (0x5FF9D0)
-    fn entity_scanner_clear(s: GPtr<u8>) = thiscall 0x5FF9D0 => unported;
-    /// `CVector::Difference(const CVector& a, const CVector& b)` (0x40FE00, `ret 8`): `this = a - b`
-    fn vector_difference(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) = thiscall 0x40FE00 => unported;
-    /// `CVector::MagnitudeSqr()` (0x406DA0, ST0)
-    fn vector_magnitude_sqr(v: GPtr<u8>) -> f64 = thiscall 0x406DA0 => unported;
-    /// `CEntity::GetBoundCentre(CVector& out)` (0x534250, `ret 4`; returns `&out`)
-    fn entity_get_bound_centre(e: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall 0x534250 => unported;
-    /// `CPedGeometryAnalyser::GetIsLineOfSightClear(const CPed&, const CVector&, CEntity&, float&)` (0x5F5A30)
-    fn los_clear_ped(ped: GPtr<u8>, target: GPtr<u8>, e: GPtr<u8>, dist: GPtr<u8>) -> u8 = cdecl 0x5F5A30 => unported;
-    /// `VectorSub(CVector* out, const CVector* a, const CVector* b)` (0x40FE60): `out = a - b`, returns `out`
-    fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => unported;
     /// `CPedGeometryAnalyser::GetIsLineOfSightClear(const CVector&, const CVector&, CEntity&)` (0x5F2F00)
     fn los_clear_v3d(a: GPtr<u8>, b: GPtr<u8>, e: GPtr<u8>) -> u8 = cdecl 0x5F2F00 => unported;
     /// `CEventPotentialWalkIntoObject::CEventPotentialWalkIntoObject(CObject*, int32 moveState)` (0x4AE5D0, `ret 8`)
     fn walk_into_object_ctor(e: GPtr<u8>, obj: GPtr<u8>, ms: u32) -> GPtr<u8> = thiscall 0x4AE5D0 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, `ret 8`)
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
     /// `CEventPotentialWalkIntoObject::~CEventPotentialWalkIntoObject()` (`FUN_004ae670`)
     fn walk_into_object_dtor(e: GPtr<u8>) = thiscall 0x4AE670 => unported;
 }

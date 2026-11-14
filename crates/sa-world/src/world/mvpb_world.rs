@@ -17,17 +17,20 @@ use super::common::{ftol32, g, rd, wr, x};
 use super::cworld::CURRENT_SCAN_CODE;
 use crate::physical::base::floor_f64;
 
+use crate::bindings::entity_delete_rw_object;
+use crate::bindings::make_vehicle_update_data;
+use crate::bindings::placeable_dtor;
+use crate::bindings::rp_clump_render;
+use crate::bindings::simple_transform_update_rw_matrix;
+use crate::bindings::tag_manager_is_tag;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::find_player_vehicle;
+use sa_core::bindings::matrix_update_rw_matrix;
+use sa_core::bindings::world_clear_scan_codes;
+use sa_stream::bindings::get_2d_effect;
 orig! {
-    /// `CMatrix::UpdateRwMatrix(RwMatrix*)` (0x59AD70, `ret 4`)
-    fn matrix_update_rw_matrix(m: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x59AD70 => unported;
-    /// `CSimpleTransform::UpdateRwMatrix(RwMatrix*)` (0x54EF40, `ret 4`)
-    fn simple_transform_update_rw_matrix(t: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x54EF40 => unported;
-    /// `CBaseModelInfo::Get2dEffect(int32)` (0x4C4C70, `ret 4`)
-    fn get_2d_effect(mi: GPtr<u8>, i: i32) -> GPtr<u8> = thiscall 0x4C4C70 => unported;
     /// `CCustomRoadsignMgr::RenderRoadsignAtomic(RpAtomic*, const CVector&)` (0x6FF350, cdecl)
     fn render_roadsign_atomic(a: GPtr<u8>, cam: GPtr<u8>) = cdecl 0x6FF350 => unported;
-    /// `CTagManager::IsTag(const CEntity*)` (0x49CCE0, cdecl)
-    fn tag_manager_is_tag(e: GPtr<u8>) -> u8 = cdecl 0x49CCE0 => unported;
     /// `CTagManager::RenderTagForPC(RpAtomic*)` (0x49CE40, cdecl)
     fn tag_manager_render_tag_for_pc(a: GPtr<u8>) = cdecl 0x49CE40 => unported;
     /// `RwEngineInstance->dOpenDevice.fpRenderStateGet(state, void*)` (table +0x24)
@@ -36,32 +39,18 @@ orig! {
     fn rw_render_state_set(state: u32, v: u32) -> u32 = cdecl table 0xC97B24 0x20 => unported;
     /// `atomic->renderCallBack(atomic)` (the pointer at RpAtomic +0x48)
     fn atomic_render_callback(f: u32, a: GPtr<u8>) -> GPtr<u8> = cdecl dyn => unported;
-    /// `RpClumpRender(RpClump*)` (0x749B20, cdecl)
-    fn rp_clump_render(c: GPtr<u8>) -> GPtr<u8> = cdecl 0x749B20 => unported;
     /// `CStreaming::RenderEntity(CLink<CEntity*>*)` (0x4096D0, cdecl)
     fn streaming_render_entity(l: GPtr<u8>) = cdecl 0x4096D0 => unported;
     /// `CEntity::RenderEffects` (0x5342B0)
     fn entity_render_effects_o(e: GPtr<u8>) = thiscall 0x5342B0 => crate::world::mvpb_world::entity_render_effects;
-    /// `CEntity::DeleteRwObject` (0x534030)
-    fn entity_delete_rw_object(e: GPtr<u8>) = thiscall 0x534030 => unported;
     /// `CEntity::ResolveReferences` (0x571A40)
     fn entity_resolve_references(e: GPtr<u8>) = thiscall 0x571A40 => crate::world::entity::resolve_references;
-    /// `CPlaceable::~CPlaceable` (0x54F490)
-    fn placeable_dtor(e: GPtr<u8>) = thiscall 0x54F490 => unported;
     /// `CReplay::GoToNextBlock` (0x45E2A0)
     fn replay_go_to_next_block() = cdecl 0x45E2A0 => unported;
-    /// `tReplayVehicleBlock::MakeVehicleUpdateData(CVehicle*, int32)` (0x45B730, `ret 8`)
-    fn make_vehicle_update_data(b: GPtr<u8>, v: GPtr<u8>, i: i32) = thiscall 0x45B730 => unported;
     /// vehicle virtual +0xBC (returns a vector pointer: the steering/lean data the replay stores)
     fn v_vehicle_bc(v: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0xBC => unported;
-    /// `CWorld::FindPlayerVehicle(int32, bool)` (0x56E0D0, cdecl)
-    fn find_player_vehicle(id: i32, remote: u32) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210, cdecl)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
     /// `CGarage::IsEntityEntirelyOutside(CEntity*, float)` (0x448D30, `ret 8`)
     fn garage_is_entity_entirely_outside(g: GPtr<u8>, e: GPtr<u8>, m: f32) -> u32 = thiscall 0x448D30 => unported;
-    /// `CWorld::ClearScanCodes` (0x563470)
-    fn world_clear_scan_codes() = cdecl 0x563470 => unported;
     /// `CWorld::FindObjectsInRangeSectorList` (0x563500, cdecl)
     fn find_in_range_list(list: GPtr<u8>, p: GPtr<u8>, r: f32, two_d: u8, n: GPtr<i16>, max: i16, out: GPtr<GPtr<u8>>) = cdecl 0x563500 => crate::world::cworld2::find_objects_in_range_sector_list;
     /// `CWorld::FindObjectsOfTypeInRangeSectorList` (0x5635C0, cdecl)

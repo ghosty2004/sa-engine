@@ -9,37 +9,25 @@ use sa_math::x87::X87;
 
 use crate::common::{g, rd, wr};
 
+use crate::bindings::atomic_default_render;
+use sa_core::bindings::frame_get_ltm;
+use sa_core::bindings::get_anim_hierarchy_from_skin_clump;
+use sa_core::bindings::get_weapon_info;
+use sa_core::bindings::rp_hanim_hierarchy_get_matrix_array;
+use sa_core::bindings::rp_hanim_id_get_index;
+use sa_core::bindings::rw_frame_update_objects;
+use sa_world::bindings::ped_get_weapon_skill;
+use sa_world::bindings::ped_reset_gun_flash_alpha;
+use sa_world::bindings::rp_clump_render;
+use sa_world::bindings::rw_matrix_rotate;
+use sa_world::bindings::rw_matrix_translate;
 orig! {
-    /// `RwFrameGetLTM(frame)` (0x7F0990)
-    fn frame_get_ltm(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0990 => unported;
-    /// `AtomicDefaultRenderCallBack(atomic)` (0x7491C0)
-    fn atomic_default_render(a: GPtr<u8>) -> GPtr<u8> = cdecl 0x7491C0 => unported;
     /// `RwRenderStateSet` (`RwEngineInstance->dOpenDevice.fpRenderStateSet`, +0x20)
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
     /// virtual `CPed::SetupLighting()` (vtable +0x4C)
     fn ped_setup_lighting(p: GPtr<u8>) -> u8 = thiscall vslot 0x4C => unported;
-    /// `GetAnimHierarchyFromSkinClump(RpClump*)` (0x734A40)
-    fn get_anim_hierarchy_from_skin_clump(c: GPtr<u8>) -> GPtr<u8> = cdecl 0x734A40 => unported;
-    /// `RpHAnimIDGetIndex(RpHAnimHierarchy*, int32)` (0x7C51A0)
-    fn rp_hanim_id_get_index(h: GPtr<u8>, id: i32) -> i32 = cdecl 0x7C51A0 => unported;
-    /// `RpHAnimHierarchyGetMatrixArray(RpHAnimHierarchy*)` (0x7C5120)
-    fn rp_hanim_hierarchy_get_matrix_array(h: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C5120 => unported;
-    /// `RwMatrixTranslate(RwMatrix*, const RwV3d*, RwOpCombineType)` (0x7F2450)
-    fn rw_matrix_translate(m: GPtr<u8>, t: GPtr<u8>, op: u32) -> GPtr<u8> = cdecl 0x7F2450 => unported;
-    /// `RwMatrixRotate(RwMatrix*, const RwV3d* axis, float angle, RwOpCombineType)` (0x7F1FD0), the angle as bits
-    fn rw_matrix_rotate(m: GPtr<u8>, axis: GPtr<u8>, angle: u32, op: u32) -> GPtr<u8> = cdecl 0x7F1FD0 => unported;
     /// `CPed::SetGunFlashAlpha(bool)` (0x5DF400)
     fn ped_set_gun_flash_alpha(p: GPtr<u8>, right: u32) = thiscall 0x5DF400 => unported;
-    /// `CPed::ResetGunFlashAlpha()` (0x5DF4E0)
-    fn ped_reset_gun_flash_alpha(p: GPtr<u8>) = thiscall 0x5DF4E0 => unported;
-    /// `RwFrameUpdateObjects(RwFrame*)` (0x7F0910)
-    fn rw_frame_update_objects(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0910 => unported;
-    /// `RpClumpRender(RpClump*)` (0x749B20)
-    fn rp_clump_render(c: GPtr<u8>) -> GPtr<u8> = cdecl 0x749B20 => unported;
-    /// `CPed::GetWeaponSkill()` (0x5E6580)
-    fn ped_get_weapon_skill(p: GPtr<u8>) -> u32 = thiscall 0x5E6580 => unported;
-    /// `CWeaponInfo::GetWeaponInfo(eWeaponType, eWeaponSkill)` (0x743C60)
-    fn get_weapon_info(ty: u32, skill: u32) -> GPtr<u8> = cdecl 0x743C60 => unported;
 }
 
 /// `CVisibilityPlugins::ms_weaponPedsForPC`: the used list's head link and the tail link's `prev` (links: data +0,

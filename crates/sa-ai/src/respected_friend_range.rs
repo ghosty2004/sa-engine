@@ -7,15 +7,12 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::event_acquaintance_ped_dtor as event_base_dtor;
+use sa_world::bindings::get_ped_flag as ped_type_flag;
 orig! {
     /// `CAcquaintance::GetAcquaintances(int type)` (0x608970, `ret 4`)
     fn acquaintance_get(a: GPtr<u8>, t: u32) -> u32 = thiscall 0x608970 => unported;
-    /// `CPedType::GetPedFlag(ePedType)` (0x608830)
-    fn ped_type_flag(t: u32) -> u32 = cdecl 0x608830 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// the base event destructor (0x4AF890)
-    fn event_base_dtor(e: GPtr<u8>) = thiscall 0x4AF890 => unported;
 }
 
 use sa_world::world::common::entity_pos as pos_of;

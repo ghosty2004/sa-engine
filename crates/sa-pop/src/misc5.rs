@@ -11,6 +11,12 @@ use crate::gangs::{find_sequence_element, init_sequence};
 /// Globals owned by this module: none.
 pub const GLOBALS: &[GlobalDesc] = &[];
 
+use crate::bindings::tell_gang_members_to;
+use sa_core::bindings::hud_set_help_message;
+use sa_core::bindings::stricmp;
+use sa_world::bindings::get_stat_value;
+use sa_world::bindings::ped_say;
+use sa_world::bindings::set_blip_sprite;
 orig! {
     /// `CTheZones::Calc2DDistanceBetween2Zones(CZone*, CZone*)` (0x5725B0, ST0)
     fn calc_2d_distance_between_2_zones(a: GPtr<u8>, b: GPtr<u8>) -> f64 = cdecl 0x5725B0 => unported;
@@ -18,19 +24,11 @@ orig! {
     fn pick_zone_to_attack_o() -> u8 = cdecl 0x443B00 => crate::misc5::pick_zone_to_attack;
     /// `CText::Get(const char*)` (0x6A0050, `this` = TheText 0xC1B340)
     fn text_get(this: GPtr<u8>, key: u32) -> u32 = thiscall 0x6A0050 => unported;
-    /// `CHud::SetHelpMessage(const char*, bool quick, bool permanent, bool addToBrief)` (0x588BE0)
-    fn hud_set_help_message(text: u32, quick: u32, permanent: u32, brief: u32) = cdecl 0x588BE0 => unported;
     /// `CRadar::SetCoordBlip(eBlipType, CVector, eBlipColour, eBlipDisplay, const char*)` (0x583820; the
     /// vector as raw dwords)
     fn set_coord_blip(ty: i32, px: u32, py: u32, pz: u32, colour: u32, display: i32, name: u32) -> i32 = cdecl 0x583820 => unported;
-    /// `CRadar::SetBlipSprite(int32, eRadarSprite)` (0x583D70)
-    fn set_blip_sprite(blip: i32, sprite: i32) = cdecl 0x583D70 => unported;
     /// `CPedGroup::FindDistanceToNearestMember(CPed**)` (0x5FB0A0, `ret 4`, ST0)
     fn ped_group_find_distance_to_nearest_member(this: GPtr<u8>, out: GPtr<GPtr<u8>>) -> f64 = thiscall 0x5FB0A0 => unported;
-    /// CRT `_stricmp` (0x8229B6)
-    fn stricmp(a: GPtr<u8>, b: GPtr<u8>) -> i32 = cdecl 0x8229B6 => unported;
-    /// `CPed::Say(uint16, uint32, float, bool, bool, bool)` (0x5EFFE0, `ret 0x18`; float as raw bits)
-    fn ped_say(ped: GPtr<u8>, id: u32, delay: u32, prob: u32, a: u32, b: u32, c: u32) -> u32 = thiscall 0x5EFFE0 => unported;
     /// `CTheZones::GetZoneInfo(const CVector&, CZone**)` (0x572400)
     fn get_zone_info(p: GPtr<u32>, out: GPtr<u8>) -> GPtr<u8> = cdecl 0x572400 => unported;
     /// `CGangWars::CanPlayerStartAGangWarHere(CZoneInfo*)` (0x443F80)
@@ -42,10 +40,6 @@ orig! {
     fn add_to_previous_brief_array(text: u32, a: i32, b: i32, c: i32, d: i32, e: i32, f: i32, s: u32) = cdecl 0x69DD50 => unported;
     /// `CGangWars::ClearTheStreets()` (0x4444B0)
     fn clear_the_streets() = cdecl 0x4444B0 => crate::misc2::clear_the_streets;
-    /// `CStats::GetStatValue(uint16)` (0x558E40, ST0)
-    fn get_stat_value(stat: u32) -> f64 = cdecl 0x558E40 => unported;
-    /// `CGangWars::TellGangMembersTo(bool)` (0x444530; protection VM body)
-    fn tell_gang_members_to(b: u32) = cdecl 0x444530 => unported;
 }
 
 /// `CTheZones::TotalNumberOfNavigationZones` (u16)
@@ -362,6 +356,17 @@ pub fn start_offensive_gang_war() {
     g::<i32>(0x96AB28).write(0);
 }
 
+use crate::bindings::are_nodes_loaded_for_area;
+use crate::bindings::get_position as path_node_get_position;
+use crate::bindings::pick_gang_car;
+use sa_core::bindings::matrix_set_rotate_z_only;
+use sa_world::bindings::automobile_place_on_road_properly;
+use sa_world::bindings::change_blip_colour;
+use sa_world::bindings::change_blip_scale;
+use sa_world::bindings::get_ped_flag;
+use sa_world::bindings::set_as_acquaintance;
+use sa_world::bindings::set_char_created_by as ped_set_char_created_by;
+use sa_world::bindings::vehicle_set_created_by;
 orig! {
     /// `CGangWars::PedStreamedInForThisGang(int32)` (0x4439D0)
     fn ped_streamed_in_for_this_gang(gang: i32) -> u8 = cdecl 0x4439D0 => crate::misc2::ped_streamed_in_for_this_gang;
@@ -369,8 +374,6 @@ orig! {
     fn pick_streamed_in_ped_for_this_gang(gang: i32, out: GPtr<i32>) -> u8 = cdecl 0x443A20 => crate::misc2::pick_streamed_in_ped_for_this_gang;
     /// `CStreaming::RequestModel(int32, int32)` (0x4087E0)
     fn request_model(m: i32, flags: i32) = cdecl 0x4087E0 => sa_stream::streaming::request_model;
-    /// `CPathFind::AreNodesLoadedForArea(float, float, float, float)` (0x44DD10)
-    fn are_nodes_loaded_for_area(this: GPtr<u8>, x0: f32, x1: f32, y0: f32, y1: f32) -> u8 = thiscall 0x44DD10 => crate::pathfind::are_nodes_loaded_for_area;
     /// `CPathFind::FindNodeClosestToCoors(CVector, uint8, float, uint16, int32, uint16, bool, bool)` (0x44F460;
     /// hidden return pointer, vector and floats as raw dwords)
     #[allow(clippy::too_many_arguments)]
@@ -379,32 +382,12 @@ orig! {
     /// (0x44F8C0; hidden return pointer, raw dwords)
     #[allow(clippy::too_many_arguments)]
     fn find_nth_node_closest_to_coors(this: GPtr<u8>, out: GPtr<u32>, x: u32, y: u32, z: u32, ty: u32, dist: u32, a: u32, b: u32, n: u32, c: u32, d: u32, e: u32) -> GPtr<u32> = thiscall 0x44F8C0 => unported;
-    /// `CPathNode::GetPosition()` (0x420A10; hidden return pointer)
-    fn path_node_get_position(node: GPtr<u8>, out: GPtr<f32>) -> GPtr<f32> = thiscall 0x420A10 => crate::pathfind::get_position;
     /// `CWorld::FindGroundZFor3DCoord(float, float, float, bool*, CEntity**)` (0x5696C0, ST0; raw dwords)
     fn find_ground_z_for_3d_coord(x: u32, y: u32, z: u32, found: GPtr<u8>, ent: GPtr<u8>) -> f64 = cdecl 0x5696C0 => unported;
-    /// `CMatrix::SetRotateZOnly(float)` (0x59B020; raw bits)
-    fn matrix_set_rotate_z_only(m: GPtr<u8>, a: u32) = thiscall 0x59B020 => unported;
-    /// `CPed::SetCharCreatedBy(uint8)` (0x5E47E0)
-    fn ped_set_char_created_by(p: GPtr<u8>, by: u32) = thiscall 0x5E47E0 => unported;
-    /// `CPedType::GetPedFlag(ePedType)` (0x608830)
-    fn get_ped_flag(ty: u32) -> u32 = cdecl 0x608830 => unported;
-    /// `CAcquaintance::SetAsAcquaintance(int32, uint32)` (0x608DA0)
-    fn set_as_acquaintance(a: GPtr<u8>, k: u32, flag: u32) = thiscall 0x608DA0 => unported;
     /// `CRadar::SetEntityBlip(eBlipType, int32, uint32, eBlipDisplay, const char*)` (0x5839A0)
     fn set_entity_blip(ty: u32, handle: u32, colour: u32, display: u32, name: u32) -> i32 = cdecl 0x5839A0 => unported;
-    /// `CRadar::ChangeBlipScale(int32, int32)` (0x583CC0)
-    fn change_blip_scale(blip: i32, scale: i32) = cdecl 0x583CC0 => unported;
-    /// `CRadar::ChangeBlipColour(int32, uint32)` (0x583AB0)
-    fn change_blip_colour(blip: i32, colour: u32) = cdecl 0x583AB0 => unported;
-    /// `CPopulation::PickGangCar(int32)` (0x614490)
-    fn pick_gang_car(gang: i32) -> i32 = cdecl 0x614490 => crate::population::pick_gang_car;
     /// `CCarCtrl::CreateCarForScript(int32, CVector, bool)` (0x431F80; raw dwords)
     fn create_car_for_script(model: i32, x: u32, y: u32, z: u32, mission: u32) -> GPtr<u8> = cdecl 0x431F80 => unported;
-    /// `CAutomobile::PlaceOnRoadProperly()` (0x6AF420)
-    fn automobile_place_on_road_properly(v: GPtr<u8>) = thiscall 0x6AF420 => unported;
-    /// `CVehicle::SetVehicleCreatedBy(int32)` (0x6D5D70)
-    fn vehicle_set_created_by(v: GPtr<u8>, by: i32) = thiscall 0x6D5D70 => unported;
     /// `CPickups::GenerateNewOne(CVector, uint32, uint8, uint32, uint32, bool, const char*)` (0x456F20; raw dwords)
     #[allow(clippy::too_many_arguments)]
     fn generate_new_pickup(x: u32, y: u32, z: u32, model: u32, ty: u32, ammo: u32, money: u32, empty: u32, msg: u32) -> i32 = cdecl 0x456F20 => unported;
@@ -680,20 +663,16 @@ pub fn create_defending_group(_unused: i32) -> u8 {
     1
 }
 
+use sa_core::bindings::world_remove;
+use sa_stream::bindings::object_can_be_deleted;
+use sa_world::bindings::ped_can_be_deleted;
+use sa_world::bindings::vehicle_can_be_deleted;
 orig! {
     /// `CVector::Normalise()` (0x59C910)
     fn vector_normalise(v: GPtr<f32>) = thiscall 0x59C910 => unported;
     /// `CWorld::FindObjectsIntersectingCube(const CVector&, const CVector&, int16*, int16, CEntity**, bool x5)` (0x568DD0)
     #[allow(clippy::too_many_arguments)]
     fn find_objects_intersecting_cube(a: GPtr<u32>, b: GPtr<u32>, count: GPtr<i16>, max: u32, out: GPtr<u32>, bb: u32, bv: u32, bp: u32, bo: u32, bd: u32) = cdecl 0x568DD0 => unported;
-    /// `CVehicle::CanBeDeleted()` (0x6D1180)
-    fn vehicle_can_be_deleted(v: GPtr<u8>) -> u8 = thiscall 0x6D1180 => unported;
-    /// `CPed::CanBeDeleted()` (0x5DF100)
-    fn ped_can_be_deleted(p: GPtr<u8>) -> u8 = thiscall 0x5DF100 => unported;
-    /// `CObject::CanBeDeleted()` (0x59F120)
-    fn object_can_be_deleted(o: GPtr<u8>) -> u8 = thiscall 0x59F120 => unported;
-    /// `CWorld::Remove(CEntity*)` (0x563280)
-    fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
     /// virtual slot 0 (scalar deleting destructor) of a `CEntity`
     fn delete_entity(e: GPtr<u8>, flags: i32) = thiscall vslot 0 => unported;
 }
@@ -796,45 +775,32 @@ pub fn clear_space_for_road_block_object(ax: u32, ay: u32, az: u32, bx: u32, by:
     1
 }
 
+use sa_core::bindings::entity_register_reference as register_reference;
+use sa_core::bindings::matrix_dtor;
+use sa_core::bindings::task_new;
+use sa_core::bindings::world_add;
+use sa_stream::bindings::get_default_cop_car_model;
+use sa_world::bindings::civilian_ped_ctor;
+use sa_world::bindings::cop_ped_ctor;
+use sa_world::bindings::entity_get_col_model as get_col_model;
+use sa_world::bindings::ped_new;
+use sa_world::bindings::set_clump_alpha;
+use sa_world::bindings::stand_still_ctor;
+use sa_world::bindings::tm_set_task as task_manager_set_task;
+use sa_world::bindings::wander_ctor;
 orig! {
     /// `CWorld::FindPlayerVehicle(int32, bool)` (0x56E0D0)
     fn find_player_vehicle(id: i32, remote: u8) -> GPtr<u8> = cdecl 0x56E0D0 => sa_world::world::cworld::find_player_vehicle_port;
     /// `CGangs::ChooseGangPedModel(int16)` (0x5DE5A0; pushed as a dword)
     fn choose_gang_ped_model(gang: i32) -> i32 = cdecl 0x5DE5A0 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
-    /// `CEntity::GetColModel()` (0x535300)
-    fn get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => unported;
-    /// `CStreaming::GetDefaultCopCarModel(bool)` (0x407C50)
-    fn get_default_cop_car_model(b: u32) -> i32 = cdecl 0x407C50 => unported;
     /// `operator*(const CMatrix&, const CVector&)` (0x59C890, returns `out`)
     fn matrix_mul_vector(out: GPtr<u32>, m: GPtr<u8>, v: GPtr<f32>) -> GPtr<u32> = cdecl 0x59C890 => unported;
-    /// `CPed::operator new(uint32)` (0x5E4720)
-    fn ped_new(size: u32) -> GPtr<u8> = cdecl 0x5E4720 => unported;
-    /// `CCopPed::CCopPed(eCopType)` (0x5DDC60)
-    fn cop_ped_ctor(p: GPtr<u8>, cop_type: u32) -> GPtr<u8> = thiscall 0x5DDC60 => unported;
-    /// `CCivilianPed::CCivilianPed(ePedType, uint32 model)` (0x5DDB70)
-    fn civilian_ped_ctor(p: GPtr<u8>, ty: u32, model: u32) -> GPtr<u8> = thiscall 0x5DDB70 => unported;
     /// `CPedPlacement::FindZCoorForPed(CVector&)` (0x616920)
     fn find_z_coor_for_ped(v: GPtr<u32>) -> u8 = cdecl 0x616920 => unported;
     /// `CMatrix::SetRotate(float, float, float)` (0x59B120; raw float bits)
     fn matrix_set_rotate(m: GPtr<u8>, ax: u32, ay: u32, az: u32) = thiscall 0x59B120 => unported;
-    /// `CTask::operator new(uint32)` (0x61A5A0)
-    fn task_new(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => unported;
-    /// `CTaskComplexWander::CTaskComplexWander(int32, uint8, bool, float)` (0x66F450; float as raw bits)
-    fn wander_ctor(t: GPtr<u8>, ms: u32, dir: u32, b: u32, r: u32) -> GPtr<u8> = thiscall 0x66F450 => unported;
-    /// `CTaskManager::SetTask(CTask*, int32, bool)` (0x681AF0)
-    fn task_manager_set_task(tm: GPtr<u8>, t: GPtr<u8>, slot: i32, b: u32) = thiscall 0x681AF0 => unported;
-    /// `CTaskSimpleStandStill::CTaskSimpleStandStill(int32, bool, bool, float)` (0x62F310; float as raw bits)
-    fn stand_still_ctor(t: GPtr<u8>, time: u32, a: u32, b: u32, f: u32) -> GPtr<u8> = thiscall 0x62F310 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    fn register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
-    /// `CVisibilityPlugins::SetClumpAlpha(RpClump*, int32)` (0x732B00)
-    fn set_clump_alpha(clump: GPtr<u8>, a: i32) = cdecl 0x732B00 => unported;
     /// `CPed::GiveDelayedWeapon(eWeaponType, uint32)` (0x5E89B0)
     fn ped_give_delayed_weapon(p: GPtr<u8>, w: i32, ammo: u32) = thiscall 0x5E89B0 => unported;
-    /// `CWorld::Add(CEntity*)` (0x563220)
-    fn world_add(e: GPtr<u8>) = cdecl 0x563220 => unported;
     /// `CTaskComplexKillPedOnFoot::CTaskComplexKillPedOnFoot(CPed*, int32, uint32, uint32, uint32, bool)` (0x620E30)
     #[allow(clippy::too_many_arguments)]
     fn kill_ped_on_foot_ctor(t: GPtr<u8>, target: GPtr<u8>, time: i32, a: u32, b: u32, c: u32, d: u32) -> GPtr<u8> = thiscall 0x620E30 => unported;
@@ -1079,31 +1045,21 @@ pub fn generate_road_block_peds_for_car(veh: GPtr<u8>, pair: i32, ped_type: i32)
     1
 }
 
+use sa_core::bindings::clear_skip;
+use sa_core::bindings::ped_remove_weapon_anims;
+use sa_stream::bindings::model_info_add_ref as model_add_ref;
+use sa_stream::bindings::model_info_remove_ref as model_remove_ref;
+use sa_world::bindings::do_weapon_stuff_at_start_of_2p_game as do_weapon_stuff_at_start_of_2player_game;
+use sa_world::bindings::is_coop_game_going_on;
+use sa_world::bindings::make_changes_for_new_weapon;
+use sa_world::bindings::ped_set_current_weapon;
+use sa_world::bindings::ped_set_current_weapon_slot;
+use sa_world::bindings::player_clear_weapon_target as clear_weapon_target;
 orig! {
-    /// `CGameLogic::ClearSkip(bool)` (0x441560)
-    fn clear_skip(b: u32) = cdecl 0x441560 => unported;
-    /// `CGameLogic::IsCoopGameGoingOn()` (0x441390)
-    fn is_coop_game_going_on() -> u8 = cdecl 0x441390 => unported;
-    /// `CGameLogic::DoWeaponStuffAtStartOf2PlayerGame(bool)` (0x4428B0)
-    fn do_weapon_stuff_at_start_of_2player_game(b: u32) = cdecl 0x4428B0 => unported;
     /// `CWeaponInfo::GetWeaponInfo(eWeaponType, eWeaponSkill)` (0x743C60)
     fn weapon_info_get(ty: i32, skill: u32) -> GPtr<u8> = cdecl 0x743C60 => unported;
-    /// `CBaseModelInfo::AddRef()` (0x4C4BA0)
-    fn model_add_ref(mi: GPtr<u8>) = thiscall 0x4C4BA0 => unported;
-    /// `CBaseModelInfo::RemoveRef()` (0x4C4BB0)
-    fn model_remove_ref(mi: GPtr<u8>) = thiscall 0x4C4BB0 => unported;
-    /// `CPed::RemoveWeaponAnims(eWeaponType, float blendDelta)` (0x5F0250)
-    fn ped_remove_weapon_anims(p: GPtr<u8>, ty: i32, delta: f32) = thiscall 0x5F0250 => unported;
     /// `CPed::GiveWeapon(eWeaponType, uint32 ammo, bool)` (0x5E6080)
     fn ped_give_weapon(p: GPtr<u8>, ty: i32, ammo: u32, b: u32) -> u32 = thiscall 0x5E6080 => unported;
-    /// `CPed::SetCurrentWeapon(eWeaponType)` (0x5E6280)
-    fn ped_set_current_weapon(p: GPtr<u8>, ty: i32) = thiscall 0x5E6280 => unported;
-    /// `CPed::SetCurrentWeapon(int32 slot)` (0x5E61F0)
-    fn ped_set_current_weapon_slot(p: GPtr<u8>, slot: i32) = thiscall 0x5E61F0 => unported;
-    /// `CPlayerPed::MakeChangesForNewWeapon(eWeaponType)` (0x60B460)
-    fn make_changes_for_new_weapon(p: GPtr<u8>, ty: i32) = thiscall 0x60B460 => unported;
-    /// `CPlayerPed::ClearWeaponTarget()` (0x609C80)
-    fn clear_weapon_target(p: GPtr<u8>) = thiscall 0x609C80 => unported;
     /// `CPed::RemoveWeaponModel(int32 model)` (0x5E3990)
     fn ped_remove_weapon_model(p: GPtr<u8>, model: i32) = thiscall 0x5E3990 => unported;
 }
@@ -1271,6 +1227,9 @@ pub fn deal_with_weapon_change_at_end_of_frenzy() {
     make_changes_for_new_weapon(player(), ty);
 }
 
+use crate::bindings::join_car_with_road_system_goto_coors;
+use crate::bindings::set_up_driver_and_passengers_for_vehicle;
+use sa_world::bindings::set_ped_decision_maker_type;
 orig! {
     /// `0x406E80` (stub into `.HOODLUM`; uncatalogued): the model `CreateAttackWave` requests for `Gang2`
     /// (`f(Gang2 + 0x12, 0, 0)`)
@@ -1289,12 +1248,6 @@ orig! {
     fn ped_pool_get_ref(pool: GPtr<u8>, p: GPtr<u8>) -> u32 = thiscall 0x4442D0 => unported;
     /// `CCarCtrl::GenerateOneEmergencyServicesCar(uint32, CVector)` (0x42B7D0; raw dwords)
     fn generate_one_emergency_services_car(model: i32, x: u32, y: u32, z: u32) -> GPtr<u8> = cdecl 0x42B7D0 => unported;
-    /// `CCarCtrl::JoinCarWithRoadSystemGotoCoors(CVehicle*, const CVector&, bool, bool)` (0x42F870)
-    fn join_car_with_road_system_goto_coors(v: GPtr<u8>, c: GPtr<f32>, a: u32, b: u32) -> u8 = cdecl 0x42F870 => unported;
-    /// `CCarCtrl::SetUpDriverAndPassengersForVehicle(CVehicle*, int32, int32, bool, bool, int32)` (0x4217C0)
-    fn set_up_driver_and_passengers_for_vehicle(veh: GPtr<u8>, pt: i32, min: i32, a: u32, b: u32, max: i32) = cdecl 0x4217C0 => crate::carctrl2::set_up_driver_and_passengers_for_vehicle;
-    /// `CPedIntelligence::SetPedDecisionMakerType(int32)` (0x600B50)
-    fn set_ped_decision_maker_type(intel: GPtr<u8>, t: i32) = thiscall 0x600B50 => unported;
     /// `CTaskSimpleGangDriveBy::CTaskSimpleGangDriveBy(CEntity*, const CVector*, float, int8, int8, bool)`
     /// (0x6217D0; float as raw bits)
     #[allow(clippy::too_many_arguments)]

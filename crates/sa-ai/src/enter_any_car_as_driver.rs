@@ -6,15 +6,12 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::car_enter_exit_is_vehicle_stealable as is_vehicle_stealable;
+use crate::bindings::scanner_closest_vehicle;
+use sa_world::bindings::task_simple_ctor as task_complex_ctor;
 orig! {
-    /// `CVehicleScanner::GetClosestVehicleInRange()` (0x5FFEE0: `[this+0x4C]`)
-    fn scanner_closest_vehicle(s: GPtr<u8>) -> GPtr<u8> = thiscall 0x5FFEE0 => unported;
-    /// `CCarEnterExit::IsVehicleStealable(const CVehicle*, const CPed*)` (0x6510D0, cdecl)
-    fn is_vehicle_stealable(v: GPtr<u8>, ped: GPtr<u8>) -> u8 = cdecl 0x6510D0 => unported;
     /// `CTaskComplexEnterCar::CTaskComplexEnterCar(CVehicle*, bool asDriver, bool, bool, bool)` (0x63A220)
     fn enter_car_ctor(t: GPtr<u8>, v: GPtr<u8>, driver: u32, a: u32, b: u32, c: u32) -> GPtr<u8> = thiscall 0x63A220 => unported;
-    /// `CTaskComplex::CTaskComplex()` (0x61A390)
-    fn task_complex_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A390 => unported;
 }
 
 /// `CTaskComplexEnterCarAsDriver`'s vtable and the 8-byte fallback task's vtable.

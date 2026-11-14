@@ -20,59 +20,42 @@ const G_FX: u32 = 0xA9AE00;
 /// `CEntryExitManager::mp_poolEntryExits`
 const ENTRY_EXIT_POOL: usize = 0x96A7D8;
 
+use crate::bindings::entry_exit_delete_one;
+use crate::bindings::get_clump_alpha;
+use crate::bindings::rw_matrix_scale;
+use crate::bindings::set_clump_alpha;
+use crate::bindings::simple_transform_update_rw_matrix;
+use crate::bindings::transform_from_object_space;
+use sa_core::bindings::crt_new;
+use sa_core::bindings::entity_update_rp_hanim;
+use sa_core::bindings::matrix_update_rw_matrix;
+use sa_core::bindings::rp_atomic_destroy;
+use sa_core::bindings::rp_atomic_set_frame;
+use sa_core::bindings::rw_frame_destroy;
+use sa_core::bindings::rw_frame_update_objects;
+use sa_stream::bindings::get_2d_effect;
+use sa_stream::bindings::load_line;
+use sa_stream::bindings::quad_ctor as quad_tree_ctor;
+use sa_stream::bindings::quad_operator_new as quad_tree_new;
 orig! {
-    /// `CBaseModelInfo::Get2dEffect(int32)` (0x4C4C70, `ret 4`)
-    fn get_2d_effect(mi: GPtr<u8>, i: i32) -> GPtr<u8> = thiscall 0x4C4C70 => unported;
     /// `CScriptsForBrains::MarkAttractorScriptBrainWithThisNameAsNoLongerNeeded(const char*)` (0x46AAE0, `ret 4`)
     fn mark_attractor_brain_not_needed(b: u32, name: GPtr<u8>) = thiscall 0x46AAE0 => unported;
     /// `Fx_c::DestroyEntityFx(CEntity*)` (0x4A1280, `ret 4`)
     fn fx_destroy_entity_fx(fx: u32, e: GPtr<u8>) = thiscall 0x4A1280 => unported;
-    /// `RpAtomicSetFrame(RpAtomic*, RwFrame*)` (0x74BF20)
-    fn rp_atomic_set_frame(a: GPtr<u8>, f: GPtr<u8>) -> GPtr<u8> = cdecl 0x74BF20 => unported;
-    /// `RwFrameDestroy(RwFrame*)` (0x7F05A0)
-    fn rw_frame_destroy(f: GPtr<u8>) -> i32 = cdecl 0x7F05A0 => unported;
-    /// `RpAtomicDestroy(RpAtomic*)` (0x749DC0)
-    fn rp_atomic_destroy(a: GPtr<u8>) -> i32 = cdecl 0x749DC0 => unported;
-    /// `CEntity::TransformFromObjectSpace(CVector& out, const CVector& offset)` (0x5334F0, `ret 8`)
-    fn transform_from_object_space(e: GPtr<u8>, out: GPtr<u8>, off: GPtr<u8>) -> GPtr<u8> = thiscall 0x5334F0 => unported;
     /// `CEntryExitManager::FindNearestEntryExit(const CVector2D&, float range, int32 ignoreIndex)` (0x43F4B0)
     fn find_nearest_entry_exit(pos: GPtr<u8>, range: u32, ignore: i32) -> i32 = cdecl 0x43F4B0 => unported;
-    /// `CEntryExitManager::DeleteOne(int32)` (0x43FD50)
-    fn entry_exit_delete_one(i: i32) = cdecl 0x43FD50 => unported;
     /// `CObject::GetLightingFromCollisionBelow()` (0x59FD00)
     fn get_lighting_from_collision_below(o: GPtr<u8>) = thiscall 0x59FD00 => unported;
     /// `CObject::DoBurnEffect()` (0x59FB50)
     fn do_burn_effect(o: GPtr<u8>) = thiscall 0x59FB50 => unported;
-    /// `CVisibilityPlugins::GetClumpAlpha(RpClump*)` (0x732B20)
-    fn get_clump_alpha(c: GPtr<u8>) -> i32 = cdecl 0x732B20 => unported;
-    /// `CVisibilityPlugins::SetClumpAlpha(RpClump*, int32)` (0x732B00)
-    fn set_clump_alpha(c: GPtr<u8>, a: i32) = cdecl 0x732B00 => unported;
     /// `CEntity::PreRender()` (0x535FA0)
     fn entity_pre_render(e: GPtr<u8>) = thiscall 0x535FA0 => crate::world::entity_prerender::pre_render;
-    /// `CMatrix::UpdateRwMatrix(RwMatrix*)` (0x59AD70, `ret 4`)
-    fn matrix_update_rw_matrix(m: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x59AD70 => unported;
-    /// `CSimpleTransform::UpdateRwMatrix(RwMatrix*)` (0x54EF40, `ret 4`)
-    fn simple_transform_update_rw_matrix(t: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x54EF40 => unported;
-    /// `RwMatrixScale(RwMatrix*, const RwV3d*, RwOpCombineType)` (0x7F22C0)
-    fn rw_matrix_scale(m: GPtr<u8>, v: GPtr<u8>, op: u32) -> GPtr<u8> = cdecl 0x7F22C0 => unported;
-    /// `RwFrameUpdateObjects(RwFrame*)` (0x7F0910)
-    fn rw_frame_update_objects(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0910 => unported;
-    /// `CEntity::UpdateRpHAnim()` (0x532B20)
-    fn entity_update_rp_hanim(e: GPtr<u8>) = thiscall 0x532B20 => unported;
-    /// `CQuadTreeNode::operator new(uint32)` (0x552C80)
-    fn quad_tree_new(size: u32) -> GPtr<u8> = cdecl 0x552C80 => unported;
-    /// `CQuadTreeNode::CQuadTreeNode(const CRect&, int32 level)` (0x552830, `ret 8`)
-    fn quad_tree_ctor(n: GPtr<u8>, rect: GPtr<u8>, level: i32) -> GPtr<u8> = thiscall 0x552830 => unported;
-    /// CRT `operator new` (0x82119A)
-    fn crt_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
     /// `CPool<CEntryExit>::CPool(int32 size, const char* name)` (0x43F720, a `.HOODLUM` stub, `ret 8`)
     fn entry_exit_pool_ctor(p: GPtr<u8>, size: i32, name: u32) -> GPtr<u8> = thiscall 0x43F720 => unported;
     /// `CFileMgr::OpenFile(const char*, const char*)` (0x538900)
     fn file_open(path: u32, mode: u32) -> GPtr<u8> = cdecl 0x538900 => unported;
     /// `CFileMgr::CloseFile(FILE*)` (0x5389D0)
     fn file_close(f: GPtr<u8>) -> u32 = cdecl 0x5389D0 => unported;
-    /// `CFileLoader::LoadLine(FILE*)` (0x536F80)
-    fn load_line(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x536F80 => unported;
     /// CRT `sscanf` (0x8220AD), one target
     fn sscanf1(s: GPtr<u8>, fmt: u32, a: GPtr<u8>) -> i32 = cdecl 0x8220AD => unported;
     /// CRT `sscanf` (0x8220AD), two targets

@@ -14,6 +14,16 @@ const NO_WEAPON: i32 = 0x37;
 /// `CModelInfo::ms_modelInfoPtrs`
 const MODEL_INFO_PTRS: usize = 0xA9B0C8;
 
+pub use crate::bindings::get_clump_model_info;
+pub use crate::bindings::weapon_shutdown;
+pub use sa_core::bindings::get_first_atomic;
+pub use sa_core::bindings::rp_clump_destroy;
+pub use sa_core::bindings::rp_clump_for_all_atomics;
+pub use sa_core::bindings::rp_skin_geometry_get_skin;
+pub use sa_core::bindings::world_add;
+pub use sa_core::bindings::world_remove;
+pub use sa_stream::bindings::model_info_add_ref as mi_add_ref;
+pub use sa_stream::bindings::model_info_remove_ref as mi_remove_ref;
 orig! {
     /// `CPed::SetCurrentWeapon(int32 slot)` (0x5E61F0)
     pub fn set_current_weapon_slot_call(p: GPtr<u8>, slot: i32) = thiscall 0x5E61F0 => set_current_weapon_slot;
@@ -25,36 +35,16 @@ orig! {
     pub fn remove_goggles_model(p: GPtr<u8>) = thiscall 0x5DF170 => remove_goggles_model_port;
     /// `CPed::AddGogglesModel(int32 model, bool& flag)` (0x5E3A90)
     pub fn add_goggles_model_call(p: GPtr<u8>, model: i32, flag: GPtr<u8>) = thiscall 0x5E3A90 => add_goggles_model;
-    /// `CWeapon::Shutdown` (0x73A380)
-    pub fn weapon_shutdown(w: GPtr<u8>) = thiscall 0x73A380 => unported;
     /// `CPlayerPed::GetPlayerInfoForThisPlayerPed` (0x609FF0)
     pub fn get_player_info_for_this_player_ped(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x609FF0 => crate::player_ped::get_player_info_for_this_player_ped;
     /// `CBaseModelInfo::CreateInstance()` (vtable slot 0x2C)
     pub fn mi_create_instance(mi: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x2C => unported;
-    /// `CBaseModelInfo::AddRef` (0x4C4BA0)
-    pub fn mi_add_ref(mi: GPtr<u8>) = thiscall 0x4C4BA0 => unported;
     /// `CEntity::DeleteRwObject` (vtable slot 0x20)
     pub fn entity_delete_rw_object(e: GPtr<u8>) = thiscall vslot 0x20 => unported;
     /// `CEntity::SetModelIndex(uint32)` (vtable slot 0x14)
     pub fn entity_set_model_index(e: GPtr<u8>, m: i32) = thiscall vslot 0x14 => unported;
     /// `CStreaming::RequestSpecialModel(int32 model, const char* name, int32 flags)` (0x409D10)
     pub fn request_special_model(m: i32, name: u32, flags: i32) = cdecl 0x409D10 => unported;
-    /// `CWorld::Remove(CEntity*)` (0x563280)
-    pub fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
-    /// `CWorld::Add(CEntity*)` (0x563220)
-    pub fn world_add(e: GPtr<u8>) = cdecl 0x563220 => unported;
-    /// `CVisibilityPlugins::GetClumpModelInfo(RpClump*)` (0x732AC0)
-    pub fn get_clump_model_info(c: GPtr<u8>) -> GPtr<u8> = cdecl 0x732AC0 => unported;
-    /// `CBaseModelInfo::RemoveRef()` (0x4C4BB0)
-    pub fn mi_remove_ref(mi: GPtr<u8>) = thiscall 0x4C4BB0 => unported;
-    /// `RwHelper::GetFirstAtomic(RpClump*)` (0x734820)
-    pub fn get_first_atomic(c: GPtr<u8>) -> GPtr<u8> = cdecl 0x734820 => unported;
-    /// `RpSkinGeometryGetSkin(RpGeometry*)` (0x7C7550)
-    pub fn rp_skin_geometry_get_skin(g: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C7550 => unported;
-    /// `RpClumpForAllAtomics(RpClump*, callback, void*)` (0x749B70)
-    pub fn rp_clump_for_all_atomics(c: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> = cdecl 0x749B70 => unported;
-    /// `RpClumpDestroy(RpClump*)` (0x74A310)
-    pub fn rp_clump_destroy(c: GPtr<u8>) -> i32 = cdecl 0x74A310 => unported;
 }
 
 /// The atomic callback `RemoveGogglesModel` passes to `RpClumpForAllAtomics` (0x734B90, the skinned

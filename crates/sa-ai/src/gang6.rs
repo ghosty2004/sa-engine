@@ -62,6 +62,68 @@ fn current_weapon_type(p: GPtr<u8>) -> u32 {
     rd::<u32>(p, 0x5A0 + s * 0x1C)
 }
 
+use crate::bindings::dtor_5f6200 as event_create_partner_task_dtor;
+use crate::bindings::gang_follower_calculate_offset_position;
+use crate::bindings::get_group_id as ped_groups_get_group_id;
+use crate::bindings::go_to_point_update_point as goto_point_update_point;
+use crate::bindings::ik_abort_look_at;
+use crate::bindings::leave_car_and_wander_ctor as leave_car_and_wander_ctor_orig;
+use crate::bindings::membership_count_members;
+use crate::bindings::pause_ctor;
+use crate::bindings::ped_is_playing_hand_signal;
+use crate::bindings::ped_set_move_anim_speed;
+use crate::bindings::play_hand_signal_anim_ctor_61b2b0 as play_hand_signal_anim_ctor;
+use crate::bindings::seek_entity_xy_offset_ctor;
+use crate::bindings::should_load_gang_anims;
+use crate::bindings::task_complex_dtor;
+use crate::bindings::task_timer_is_out_of_time;
+use crate::bindings::vehicle_set_hassle_pos_id;
+use crate::bindings::wander_gang_ctor;
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_core::bindings::entity_register_reference;
+use sa_core::bindings::find_player_ped as world_find_player_ped;
+use sa_core::bindings::general_get_radian_angle_between_points as general_radian_angle_between_points;
+use sa_core::bindings::general_limit_radian_angle;
+use sa_core::bindings::general_random_int_in_range;
+use sa_core::bindings::ped_group_process;
+use sa_core::bindings::streaming_request_model;
+use sa_core::bindings::tm_get_task_secondary;
+use sa_core::bindings::tm_set_task_secondary;
+use sa_core::bindings::vector_dot_product;
+use sa_stream::bindings::anim_add_block_ref;
+use sa_stream::bindings::anim_remove_block_ref;
+use sa_stream::bindings::entity_is_visible;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::be_in_group_ctor;
+use sa_world::bindings::count_members_excluding_leader as membership_count_members_excluding_leader;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::event_group_event_ctor;
+use sa_world::bindings::event_group_event_dtor;
+use sa_world::bindings::event_script_command_dtor;
+use sa_world::bindings::fx_play_and_kill;
+use sa_world::bindings::group_intel_set_default_task_allocator_type as group_intelligence_set_default_task_allocator_type;
+use sa_world::bindings::group_intelligence_add_event;
+use sa_world::bindings::ik_is_looking;
+use sa_world::bindings::ik_look_at;
+use sa_world::bindings::leave_car_ctor;
+use sa_world::bindings::membership_add_follower;
+use sa_world::bindings::membership_get_leader;
+use sa_world::bindings::membership_get_member;
+use sa_world::bindings::membership_is_member;
+use sa_world::bindings::membership_remove_member;
+use sa_world::bindings::ped_drop_held_entity;
+use sa_world::bindings::ped_get_held_entity;
+use sa_world::bindings::ped_groups_get_peds_group;
+use sa_world::bindings::ped_say;
+use sa_world::bindings::smart_flee_entity_ctor;
+use sa_world::bindings::task_complex_ctor;
+use sa_world::bindings::task_simple_ctor;
+use sa_world::bindings::tm_find_active_task_by_type;
+use sa_world::bindings::tm_set_task;
+use sa_world::bindings::turn_to_face_entity_ctor;
+use sa_world::bindings::vector_add_assign;
+use sa_world::bindings::vector_magnitude_sqr as vector_squared_magnitude;
+use sa_world::bindings::wander_get_wander_task_by_ped_type as wander_task_by_ped_type;
 orig! {
     // ---- virtual slots ----
     /// `CTask::GetTaskType` (vtable +0x10)
@@ -76,201 +138,65 @@ orig! {
     fn v_scan_for_stuff(t: GPtr<u8>, ped: GPtr<u8>) = thiscall vslot 0x2C => unported;
     /// `CTaskComplexWander::GetWanderType()` (vtable +0x2C)
     fn v_wander_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x2C => unported;
-
-    // ---- this module's functions and their neighbours (called through the original address) ----
-    /// `CTaskComplexGangLeader::ShouldLoadGangAnims()` (0x65E7F0, static)
-    fn should_load_gang_anims() -> u8 = cdecl 0x65E7F0 => unported;
     /// `CTaskComplexGangLeader::GetRandomGangAmbientAnim(CPed*, CEntity*)` (0x65E730, cdecl)
     fn get_random_gang_ambient_anim(ped: GPtr<u8>, held: GPtr<u8>) -> i32 = cdecl 0x65E730 => unported;
     /// `CTaskComplexGangLeader::TryToPassObject(CPed*, CPedGroup*)` (0x65EA50, cdecl)
     fn try_to_pass_object_orig(ped: GPtr<u8>, group: GPtr<u8>) -> GPtr<u8> = cdecl 0x65EA50 => unported;
-    /// `CTaskComplexGangFollower::CalculateOffsetPosition(CVector*)` (0x65ED40, `ret 4`)
-    fn gang_follower_calculate_offset_position(t: GPtr<u8>, out: GPtr<u8>) = thiscall 0x65ED40 => unported;
     /// `CTaskGangHassleVehicle::CalcTargetOffset()` (0x6641A0)
     fn gang_hassle_vehicle_calc_target_offset_orig(t: GPtr<u8>) = thiscall 0x6641A0 => unported;
-    /// `CTaskComplexLeaveCarAndWander::Constructor(CVehicle*, int32, int32, bool)` (0x63BDD0, `ret 0x10`)
-    fn leave_car_and_wander_ctor_orig(t: GPtr<u8>, v: GPtr<u8>, a: u32, b: u32, c: u32) -> GPtr<u8> = thiscall 0x63BDD0 => unported;
     /// `CTaskComplexLeaveCarAndWander::CreateSubTask(int32)` (0x63BEC0, `ret 4`)
     fn leave_car_and_wander_create_sub_task_orig(t: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x63BEC0 => unported;
-
-    // ---- task bases and constructors ----
-    /// `CTaskSimple::CTaskSimple` (0x61A390)
-    fn task_simple_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A390 => unported;
-    /// `CTaskComplex::CTaskComplex` (0x61A3B0)
-    fn task_complex_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A3B0 => unported;
-    /// `CTaskComplex::~CTaskComplex` (0x61A3D0)
-    fn task_complex_dtor(t: GPtr<u8>) = thiscall 0x61A3D0 => unported;
     /// `CTaskSimpleStandStill::Constructor(int32 time, bool, bool, float)` (0x62F310, `ret 0x10`)
     fn stand_still_ctor(t: GPtr<u8>, time: i32, a: u32, b: u32, f: u32) -> GPtr<u8> = thiscall 0x62F310 => unported;
     /// `CTaskSimpleRunAnim::Constructor(AssocGroupId, AnimationId, float, bool)` (0x61A8B0, `ret 0x10`)
     fn run_anim_ctor(t: GPtr<u8>, group: u32, anim: i32, delta: u32, b: u32) -> GPtr<u8> = thiscall 0x61A8B0 => unported;
-    /// `CTaskComplexPlayHandSignalAnim::Constructor(AnimationId, float)` (0x61B2B0, `ret 8`)
-    fn play_hand_signal_anim_ctor(t: GPtr<u8>, anim: i32, delta: u32) -> GPtr<u8> = thiscall 0x61B2B0 => unported;
     /// `CTaskComplexPassObject::Constructor(CPed*, bool)` (0x6611B0, `ret 8`)
     fn pass_object_ctor(t: GPtr<u8>, ped: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x6611B0 => unported;
-    /// `CTaskComplexBeInGroup::Constructor(int32 groupId, bool)` (0x632E50, `ret 8`)
-    fn be_in_group_ctor(t: GPtr<u8>, id: i32, b: u32) -> GPtr<u8> = thiscall 0x632E50 => unported;
-    /// `CTaskComplexWanderGang` constructor `(int32 moveState, uint8 dir, int32 time, bool, float)` (0x66F5C0, `ret 0x14`)
-    fn wander_gang_ctor(t: GPtr<u8>, ms: i32, dir: i32, time: i32, b: u32, f: u32) -> GPtr<u8> = thiscall 0x66F5C0 => unported;
     /// `CTaskComplexSignalAtPed::Constructor(CPed*, int32, bool)` (0x660A30, `ret 0xC`)
     fn signal_at_ped_ctor_orig(t: GPtr<u8>, ped: GPtr<u8>, a: i32, b: u32) -> GPtr<u8> = thiscall 0x660A30 => unported;
-    /// `CTaskComplexTurnToFaceEntityOrCoord::Constructor(CEntity*, float, float)` (0x66B890, `ret 0xC`)
-    fn turn_to_face_entity_ctor(t: GPtr<u8>, e: GPtr<u8>, a: u32, b: u32) -> GPtr<u8> = thiscall 0x66B890 => unported;
-    /// `CTaskSimplePause::Constructor(int32 time)` (0x48E750, `ret 4`)
-    fn pause_ctor(t: GPtr<u8>, time: i32) -> GPtr<u8> = thiscall 0x48E750 => unported;
-    /// `CTaskComplexSeekEntity<CEntitySeekPosCalculatorXYOffset>::Constructor(CEntity*, int32, int32, float, float,
-    /// float, bool, bool)` (0x661DC0, `ret 0x20`)
-    fn seek_entity_xy_offset_ctor(t: GPtr<u8>, e: GPtr<u8>, a: i32, b: i32, r: u32, d1: u32, d2: u32, c1: u32, c2: u32) -> GPtr<u8> = thiscall 0x661DC0 => unported;
     /// `CEntitySeekPosCalculatorXYOffset::CEntitySeekPosCalculatorXYOffset(const CVector&)` (0x65DE60, `ret 4`)
     fn seek_pos_calc_xy_offset_ctor(t: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = thiscall 0x65DE60 => unported;
-    /// `CTaskComplexSmartFleeEntity::Constructor(CEntity*, bool, float, int32, int32, float)` (0x65C430, `ret 0x18`)
-    fn smart_flee_entity_ctor(t: GPtr<u8>, e: GPtr<u8>, a: u32, b: u32, c: u32, d: u32, f: u32) -> GPtr<u8> = thiscall 0x65C430 => unported;
     /// `CTaskComplexTrackEntity::Constructor(CEntity*, CVector (by value), bool, int32, float, float, bool)`
     /// (0x65F3B0, `ret 0x24`)
     fn track_entity_ctor(t: GPtr<u8>, e: GPtr<u8>, vx: u32, vy: u32, vz: u32, a: u32, b: i32, f1: u32, f2: u32, c: u32) -> GPtr<u8> = thiscall 0x65F3B0 => unported;
-    /// `CTaskComplexLeaveCar` constructor `(CVehicle*, int32, int32, bool, bool)` (0x63B8C0, `ret 0x14`)
-    fn leave_car_ctor(t: GPtr<u8>, v: GPtr<u8>, a: u32, b: u32, c: u32, d: u32) -> GPtr<u8> = thiscall 0x63B8C0 => unported;
 
     // ---- events ----
     /// `CEventLeanOnVehicle::Constructor(CVehicle*, int32 time)` (0x65DAF0, `ret 8`)
     fn event_lean_on_vehicle_ctor(e: GPtr<u8>, v: GPtr<u8>, time: i32) -> GPtr<u8> = thiscall 0x65DAF0 => unported;
-    /// `CEventGroupEvent::CEventGroupEvent(CPed*, CEvent*)` (0x4ADFD0, `ret 8`)
-    fn event_group_event_ctor(e: GPtr<u8>, ped: GPtr<u8>, ev: GPtr<u8>) -> GPtr<u8> = thiscall 0x4ADFD0 => unported;
-    /// `CEventGroupEvent::~CEventGroupEvent` (0x4AE070)
-    fn event_group_event_dtor(e: GPtr<u8>) = thiscall 0x4AE070 => unported;
     /// `CEventScriptCommand::Constructor(int32 primaryTaskIndex, CTask*, bool)` (0x4B0A00, `ret 0xC`)
     fn event_script_command_ctor(e: GPtr<u8>, idx: i32, t: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4B0A00 => unported;
-    /// `CEventScriptCommand` complete destructor (0x4B0A50)
-    fn event_script_command_dtor(e: GPtr<u8>) = thiscall 0x4B0A50 => unported;
     /// `CEventCreatePartnerTask` constructor `(int32 type, CPed* partner, bool leader, float)` (0x5F6190, `ret 0x10`)
     fn event_create_partner_task_ctor(e: GPtr<u8>, ty: i32, partner: GPtr<u8>, lead: u32, f: u32) -> GPtr<u8> = thiscall 0x5F6190 => unported;
-    /// `CEventCreatePartnerTask` complete destructor (0x5F6200)
-    fn event_create_partner_task_dtor(e: GPtr<u8>) = thiscall 0x5F6200 => unported;
     /// `CEventPassObject::Constructor(CPed* giver, bool)` (0x65DC70, `ret 8`)
     fn event_pass_object_ctor(e: GPtr<u8>, giver: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x65DC70 => unported;
     /// `CEventPassObject` complete destructor (0x65DCF0)
     fn event_pass_object_dtor(e: GPtr<u8>) = thiscall 0x65DCF0 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, `ret 8`)
-    fn event_group_add(eg: GPtr<u8>, e: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
-    /// `CPedGroupIntelligence::AddEvent(CEvent*)` (0x5F7470, `ret 4`)
-    fn group_intelligence_add_event(gi: GPtr<u8>, e: GPtr<u8>) = thiscall 0x5F7470 => unported;
-    /// `CPedGroupIntelligence::SetDefaultTaskAllocatorType(int32)` (0x5FBB70, `ret 4` through 0x5FB280)
-    fn group_intelligence_set_default_task_allocator_type(gi: GPtr<u8>, ty: i32) = thiscall 0x5FBB70 => unported;
-
-    // ---- groups ----
-    /// `CPedGroupMembership::GetMember(int32)` (0x5F69B0, `ret 4`)
-    fn membership_get_member(m: GPtr<u8>, i: i32) -> GPtr<u8> = thiscall 0x5F69B0 => unported;
-    /// `CPedGroupMembership::GetLeader()` (0x5F69A0)
-    fn membership_get_leader(m: GPtr<u8>) -> GPtr<u8> = thiscall 0x5F69A0 => unported;
-    /// `CPedGroupMembership::IsMember(const CPed*)` (0x5F6A10, `ret 4`)
-    fn membership_is_member(m: GPtr<u8>, p: GPtr<u8>) -> u8 = thiscall 0x5F6A10 => unported;
-    /// `CPedGroupMembership::CountMembers()` (0x5F6A50)
-    fn membership_count_members(m: GPtr<u8>) -> i32 = thiscall 0x5F6A50 => unported;
-    /// `CPedGroupMembership::CountMembersExcludingLeader()` (0x5F6AA0)
-    fn membership_count_members_excluding_leader(m: GPtr<u8>) -> i32 = thiscall 0x5F6AA0 => unported;
-    /// `CPedGroupMembership::AddFollower(CPed*)` (0x5F8020, `ret 4`)
-    fn membership_add_follower(m: GPtr<u8>, p: GPtr<u8>) = thiscall 0x5F8020 => unported;
-    /// `CPedGroupMembership::RemoveMember(CPed*)` (0x5FB210, `ret 4`)
-    fn membership_remove_member(m: GPtr<u8>, p: GPtr<u8>) = thiscall 0x5FB210 => unported;
-    /// `CPedGroup::Process()` (0x5FC7E0)
-    fn ped_group_process(g: GPtr<u8>) = thiscall 0x5FC7E0 => unported;
     /// `CPedGroup::GetClosestGroupPed(CPed*, float* outDistSq)` (0x5FACD0, `ret 8`)
     fn ped_group_get_closest_group_ped(g: GPtr<u8>, p: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall 0x5FACD0 => unported;
-    /// `CPedGroups::GetPedsGroup(const CPed*)` (0x5F7E80, cdecl)
-    fn ped_groups_get_peds_group(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x5F7E80 => unported;
-    /// `CPedGroups::GetGroupId(CPedGroup*)` (0x5F7EE0, cdecl)
-    fn ped_groups_get_group_id(g: GPtr<u8>) -> i32 = cdecl 0x5F7EE0 => unported;
-
-    // ---- peds, tasks, IK, anims ----
-    /// `CPed::Say(uint16, uint32, float, uint8, uint8, uint8)` (0x5EFFE0, `ret 0x18`)
-    fn ped_say(p: GPtr<u8>, id: u32, delay: u32, prob: u32, a: u32, b: u32, c: u32) -> u32 = thiscall 0x5EFFE0 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CPed::IsPlayingHandSignal()` (0x5E0460)
-    fn ped_is_playing_hand_signal(p: GPtr<u8>) -> u8 = thiscall 0x5E0460 => unported;
-    /// `CPed::GetEntityThatThisPedIsHolding()` (0x5E02E0)
-    fn ped_get_held_entity(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x5E02E0 => unported;
-    /// `CPed::DropEntityThatThisPedIsHolding(bool)` (0x5E0360, `ret 4`)
-    fn ped_drop_held_entity(p: GPtr<u8>, b: u32) = thiscall 0x5E0360 => unported;
-    /// `CPed::SetMoveAnimSpeed(CAnimBlendAssociation*)` (0x5DEC10, `ret 4`)
-    fn ped_set_move_anim_speed(p: GPtr<u8>, a: GPtr<u8>) = thiscall 0x5DEC10 => unported;
-    /// `CEntity::IsVisible()` (0x536BC0)
-    fn entity_is_visible(e: GPtr<u8>) -> u8 = thiscall 0x536BC0 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    fn entity_register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
     /// `CPedIntelligence::GetMoveStateFromGoToTask()` (0x601D70)
     fn intel_get_move_state_from_goto_task(i: GPtr<u8>) -> i32 = thiscall 0x601D70 => unported;
-    /// `CTaskManager::FindActiveTaskByType(int32)` (0x681740, `ret 4`)
-    fn tm_find_active_task_by_type(tm: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x681740 => unported;
-    /// `CTaskManager::GetTaskSecondary(int32)` (0x681810, `ret 4`)
-    fn tm_get_task_secondary(tm: GPtr<u8>, i: i32) -> GPtr<u8> = thiscall 0x681810 => unported;
-    /// `CTaskManager::SetTask(CTask*, int32, bool)` (0x681AF0, `ret 0xC`)
-    fn tm_set_task(tm: GPtr<u8>, t: GPtr<u8>, i: i32, b: u32) = thiscall 0x681AF0 => unported;
-    /// `CTaskManager::SetTaskSecondary(CTask*, int32)` (0x681B60, `ret 8`)
-    fn tm_set_task_secondary(tm: GPtr<u8>, t: GPtr<u8>, i: i32) = thiscall 0x681B60 => unported;
-    /// `CTaskComplexWander::GetWanderTaskByPedType(CPed*)` (0x673D00, cdecl)
-    fn wander_task_by_ped_type(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x673D00 => unported;
     /// `CTaskComplexWander::GetDistSqOfClosestPathNodeToPed(CPed*)` (0x669FF0, `ret 4`, float in ST0)
     fn wander_dist_sq_of_closest_path_node(t: GPtr<u8>, p: GPtr<u8>) -> f64 = thiscall 0x669FF0 => unported;
     /// `CTaskComplexWanderGang::CanJoinGang()` (0x669FB0; catalogue `sub_669fb0`)
     fn wander_gang_can_join_gang(t: GPtr<u8>) -> u8 = thiscall 0x669FB0 => unported;
     /// `CTaskSimpleHoldEntity::PlayAnim(AnimationId, AssocGroupId)` (0x691720, `ret 8`)
     fn hold_entity_play_anim(t: GPtr<u8>, anim: i32, group: u32) = thiscall 0x691720 => unported;
-    /// `CTaskSimpleGoToPoint::UpdatePoint(const CVector&, float, bool)` (0x645700, `ret 0xC`)
-    fn goto_point_update_point(t: GPtr<u8>, p: GPtr<u8>, r: u32, b: u32) = thiscall 0x645700 => unported;
-    /// `CTaskTimer::IsOutOfTime()` (0x420E30)
-    fn task_timer_is_out_of_time(t: GPtr<u8>) -> u8 = thiscall 0x420E30 => unported;
-    /// `IKChainManager_c::LookAt(name, CPed*, CEntity*, int32 time, int32 bone, RwV3d*, bool, float, int32, int32, bool)`
-    /// (0x618970, `ret 0x2C`)
-    fn ik_look_at(m: GPtr<u8>, name: u32, ped: GPtr<u8>, target: GPtr<u8>, time: i32, bone: i32, pos: u32, b: u32, speed: u32, blend: i32, prio: i32, b2: u32) = thiscall 0x618970 => unported;
-    /// `IKChainManager_c::IsLooking(CPed*)` (0x6181A0, `ret 4`)
-    fn ik_is_looking(m: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x6181A0 => unported;
-    /// `IKChainManager_c::AbortLookAt(CPed*, int32 blendOutTime)` (0x618280, `ret 8`)
-    fn ik_abort_look_at(m: GPtr<u8>, ped: GPtr<u8>, t: i32) = thiscall 0x618280 => unported;
     /// `RpAnimBlendClumpGetAssociation(RpClump*, AnimationId)` (0x4D68B0, cdecl)
     fn clump_get_association(clump: GPtr<u8>, anim: i32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
     /// `CAnimManager::GetAnimationBlockIndex(const char*)` (0x4D3990)
     fn anim_get_block_index(name: u32) -> i32 = cdecl 0x4D3990 => unported;
-    /// `CAnimManager::AddAnimBlockRef(int32)` (0x4D3FB0)
-    fn anim_add_block_ref(i: i32) = cdecl 0x4D3FB0 => unported;
-    /// `CAnimManager::RemoveAnimBlockRef(int32)` (0x4D3FD0)
-    fn anim_remove_block_ref(i: i32) = cdecl 0x4D3FD0 => unported;
-    /// `CStreaming::RequestModel(int32 id, int32 flags)` (0x4087E0)
-    fn streaming_request_model(id: i32, flags: i32) = cdecl 0x4087E0 => unported;
     /// `FxManager_c::CreateFxSystem(const char*, RwV3d*, RwMatrix*, bool)` (0x4A9BE0, `ret 0x10`)
     fn fx_create_fx_system(m: GPtr<u8>, name: u32, pos: GPtr<u8>, mat: u32, b: u32) -> GPtr<u8> = thiscall 0x4A9BE0 => unported;
     /// `FxSystem_c::AttachToBone(CEntity*, int32)` (0x4AA400, `ret 8`)
     fn fx_attach_to_bone(fx: GPtr<u8>, e: GPtr<u8>, bone: i32) = thiscall 0x4AA400 => unported;
-    /// `FxSystem_c::PlayAndKill()` (0x4AA3D0)
-    fn fx_play_and_kill(fx: GPtr<u8>) = thiscall 0x4AA3D0 => unported;
-
-    // ---- world, vehicles, maths ----
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210)
-    fn world_find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
     /// `CVehicle::GetSpareHasslePosId()` (0x6D3AE0)
     fn vehicle_get_spare_hassle_pos_id(v: GPtr<u8>) -> i32 = thiscall 0x6D3AE0 => unported;
-    /// `CVehicle::SetHasslePosId(int32, bool)` (0x6D3B30, `ret 8`)
-    fn vehicle_set_hassle_pos_id(v: GPtr<u8>, id: i32, b: u32) = thiscall 0x6D3B30 => unported;
-    /// `CGeneral::GetRandomNumberInRange(int32, int32)` (0x407180)
-    fn general_random_int_in_range(min: i32, max: i32) -> i32 = cdecl 0x407180 => unported;
-    /// `CGeneral::GetRadianAngleBetweenPoints(float x1, float y1, float x2, float y2)` (0x53CBE0, float in ST0)
-    fn general_radian_angle_between_points(x1: u32, y1: u32, x2: u32, y2: u32) -> f64 = cdecl 0x53CBE0 => unported;
-    /// `CGeneral::LimitRadianAngle(float)` (0x53CB50, float in ST0)
-    fn general_limit_radian_angle(a: u32) -> f64 = cdecl 0x53CB50 => unported;
     /// `operator+(const CVector&, const CVector&)` (0x40FE30, cdecl, returns through `out`)
     fn vector_add(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) = cdecl 0x40FE30 => unported;
     /// `operator-(const CVector&, const CVector&)` (0x40FE60, cdecl, returns through `out`)
     fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) = cdecl 0x40FE60 => unported;
     /// `operator*(const CVector&, float)` (0x40FEC0, cdecl, returns through `out`)
     fn vector_scale(out: GPtr<u8>, v: GPtr<u8>, f: u32) = cdecl 0x40FEC0 => unported;
-    /// `CVector::operator+=(const CVector&)` (0x411A00, `ret 4`)
-    fn vector_add_assign(v: GPtr<u8>, o: GPtr<u8>) = thiscall 0x411A00 => unported;
-    /// `CVector::SquaredMagnitude()` (0x406DA0, float in ST0)
-    fn vector_squared_magnitude(v: GPtr<u8>) -> f64 = thiscall 0x406DA0 => unported;
-    /// `DotProduct(const CVector&, const CVector&)` (0x40FDB0, cdecl, float in ST0)
-    fn vector_dot_product(a: GPtr<u8>, b: GPtr<u8>) -> f64 = cdecl 0x40FDB0 => unported;
     /// `std::max<float>(float, float)` (0x420800, cdecl; the loaded argument in ST0)
     fn float_max(a: u32, b: u32) -> f64 = cdecl 0x420800 => unported;
     /// `approxEqual(float, float, float)` (0x4EEA80, cdecl, EAX)

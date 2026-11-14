@@ -12,25 +12,24 @@ use super::common::{g, rd, wr, x};
 /// `ThePaths`
 const THE_PATHS: usize = 0x96F050;
 
+use crate::bindings::entity_get_col_model;
+use crate::bindings::garage_is_point_inside;
+use crate::bindings::physical_add_to_moving_list as add_to_moving_list;
+use crate::bindings::population_remove_ped;
+use crate::bindings::remove_from_moving_list;
+use crate::bindings::simple_transform_update_rw_matrix;
+use sa_core::bindings::compress_from_full_matrix;
+use sa_core::bindings::entity_update_rw_frame;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::find_player_vehicle;
+use sa_core::bindings::matrix_update_rw_matrix;
+use sa_core::bindings::world_remove;
+use sa_stream::bindings::ped_is_player;
+use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
+use sa_stream::bindings::simple_transform_update_matrix;
 orig! {
     /// `CPhysical::PositionAttachedEntity` (0x546FF0)
     fn position_attached_entity(e: GPtr<u8>) = thiscall 0x546FF0 => unported;
-    /// `CMatrix::UpdateRwMatrix(RwMatrix*)` (0x59AD70, `ret 4`)
-    fn matrix_update_rw_matrix(m: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x59AD70 => unported;
-    /// `CSimpleTransform::UpdateRwMatrix(RwMatrix*)` (0x54EF40, `ret 4`)
-    fn simple_transform_update_rw_matrix(t: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x54EF40 => unported;
-    /// `CEntity::UpdateRwFrame` (0x532B00)
-    fn entity_update_rw_frame(e: GPtr<u8>) = thiscall 0x532B00 => unported;
-    /// `CPhysical::AddToMovingList` (0x542800)
-    fn add_to_moving_list(e: GPtr<u8>) = thiscall 0x542800 => unported;
-    /// `CPhysical::RemoveFromMovingList` (0x542860)
-    fn remove_from_moving_list(e: GPtr<u8>) = thiscall 0x542860 => unported;
-    /// `CPed::IsPlayer` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CPopulation::RemovePed(CPed*)` (0x610F20, cdecl)
-    fn population_remove_ped(p: GPtr<u8>) = cdecl 0x610F20 => unported;
-    /// `CWorld::FindPlayerVehicle(int32, bool)` (0x56E0D0, cdecl)
-    fn find_player_vehicle(id: i32, remote: u32) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
     /// `CPathFind::FindNodeClosestToCoors(CVector, uint8, float, bool, bool, bool, bool, bool)` (0x44F460, `ret 0x2C`,
     /// hidden return pointer first)
     fn find_node_closest_to_coors(pf: GPtr<u8>, out: GPtr<u32>, x: u32, y: u32, z: u32, ty: u32, d: f32, a: u32, b: u32, c: u32, e: u32, f: u32) -> GPtr<u32> = thiscall 0x44F460 => unported;
@@ -42,24 +41,10 @@ orig! {
     fn v_teleport(e: GPtr<u8>, x: f32, y: f32, z: f32, b: u32) = thiscall vslot 0x38 => unported;
     /// scalar deleting destructor (vtable +0)
     fn v_delete(e: GPtr<u8>, flags: u32) -> GPtr<u8> = thiscall vslot 0x0 => unported;
-    /// `CGarage::IsPointInsideGarage(CVector)` (0x448740, `ret 0xC`)
-    fn garage_is_point_inside(g: GPtr<u8>, x: u32, y: u32, z: u32) -> u8 = thiscall 0x448740 => unported;
     /// `CGarage::IsPointInsideGarage(CVector, float)` (0x4487D0, `ret 0x10`)
     fn garage_is_point_inside_r(g: GPtr<u8>, x: f32, y: f32, z: f32, r: f32) -> u8 = thiscall 0x4487D0 => unported;
-    /// `CWorld::Remove(CEntity*)` (0x563280, cdecl)
-    fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
-    /// `CEntity::GetColModel` (0x535300)
-    fn entity_get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => unported;
-    /// `CPlaceable::AllocateMatrix` (0x54F560)
-    fn allocate_matrix(e: GPtr<u8>) = thiscall 0x54F560 => unported;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*)` (0x54F1B0, `ret 4`)
-    fn simple_transform_update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => unported;
-    /// `CCompressedMatrixNotAligned::CompressFromFullMatrix(CMatrix&)` (0x59BAD0, `ret 4`)
-    fn compress_from_full_matrix(c: GPtr<u8>, m: GPtr<u8>) = thiscall 0x59BAD0 => unported;
     /// `CReplay::StorePedAnimation(CPed*, CStoredAnimationState&)` (0x45B170, cdecl)
     fn replay_store_ped_animation(p: GPtr<u8>, s: GPtr<u8>) = cdecl 0x45B170 => unported;
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210, cdecl)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
     /// `operator*(CVector* out, const CMatrix*, const CVector*)` (0x59C890, cdecl)
     fn matrix_mul_vec(out: GPtr<f32>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<f32> = cdecl 0x59C890 => unported;
 }

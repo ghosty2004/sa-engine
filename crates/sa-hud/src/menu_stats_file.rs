@@ -68,6 +68,7 @@ const F_RATING: usize = 0x865D28;
 const K_0_001: f32 = f32::from_bits(0x3A83_126F);
 const K_100: f32 = f32::from_bits(0x42C8_0000);
 
+use sa_core::bindings::atol;
 orig! {
     /// CRT `_strdate(char buf[9])` (0x823A8E): `MM/DD/YY` from `GetLocalTime`
     fn strdate(buf: GPtr<u8>) -> GPtr<u8> = cdecl 0x823A8E => unported;
@@ -83,8 +84,6 @@ orig! {
     fn fprintf2(f: GPtr<u8>, fmt: GPtr<u8>, a: u32, b: u32) -> i32 = cdecl 0x823A30 => unported;
     /// CRT `_strupr(char*)` (0x836FBA)
     fn strupr(s: GPtr<u8>) -> GPtr<u8> = cdecl 0x836FBA => unported;
-    /// CRT `atol` (0x82258E)
-    fn atol(s: GPtr<u8>) -> i32 = cdecl 0x82258E => unported;
     /// CRT `sprintf(buf, fmt, double)` (0x821BB5; the double as two stack words)
     fn sprintf_f64(buf: GPtr<u8>, fmt: GPtr<u8>, lo: u32, hi: u32) -> i32 = cdecl 0x821BB5 => unported;
 }

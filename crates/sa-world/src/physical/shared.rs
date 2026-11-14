@@ -437,6 +437,7 @@ sa_core::globals! {
 
 // ---- original callees shared by several modules ----------------------------------------------
 
+pub use sa_stream::bindings::rand;
 orig! {
     /// `Multiply3x3(CVector* out, const CMatrix& m, const CVector& v)` (0x59C790, cdecl, returns out)
     pub fn multiply3x3(out: GPtr<CVector>, m: Ent, v: GPtr<CVector>) -> GPtr<CVector>
@@ -450,8 +451,6 @@ orig! {
     pub fn register_reference(e: Ent, r: GPtr<Ent>) = thiscall 0x571B70 => unported;
     /// `CEntity::GetColModel()` (0x535300, thiscall)
     pub fn get_col_model(e: Ent) -> Ent = thiscall 0x535300 => unported;
-    /// CRT `rand()` (0x821B1E)
-    pub fn rand() -> i32 = cdecl 0x821B1E => sa_core::crt::rand_owned;
 }
 
 /// Phases B/C side of `Multiply3x3` 0x59C790 (sa-math's port of the same sum order).

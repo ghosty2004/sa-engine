@@ -10,19 +10,14 @@ use sa_math::x87::X87;
 
 use crate::common::{ftol32, g, jne, k, rd, wr, x, xi};
 
+use crate::bindings::bright_lights_render_out_geometry_buffer;
+use crate::bindings::calc_screen_coors;
+use sa_core::bindings::matrix_dtor;
+use sa_core::bindings::matrix_mul_vec;
+use sa_core::bindings::matrix_set_translate;
 orig! {
-    /// `CMatrix::SetTranslate(float x, float y, float z)` (0x59AF40); the floats as raw dwords
-    fn matrix_set_translate(m: GPtr<u8>, px: u32, py: u32, pz: u32) = thiscall 0x59AF40 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
-    /// `operator*(const CMatrix&, const CVector&)` (0x59C890, result through a hidden pointer)
-    fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
-    /// `CSprite::CalcScreenCoors(const RwV3d&, RwV3d* out, float* w, float* h, bool, bool)` (0x70CE30)
-    fn calc_screen_coors(inp: GPtr<f32>, out: GPtr<f32>, w: GPtr<f32>, h: GPtr<f32>, max_vis: u8, min_vis: u8) -> u8 = cdecl 0x70CE30 => crate::sprite::calc_screen_coors;
     /// `RwRenderStateSet(state, value)` (`RwGlobals` +0x20)
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `CBrightLights::RenderOutGeometryBuffer()` (0x722150)
-    fn bright_lights_render_out_geometry_buffer() = cdecl 0x722150 => unported;
 }
 
 /// `CBirds::NumberOfBirds`, `CBirds::aBirds` (6 x 0x44).

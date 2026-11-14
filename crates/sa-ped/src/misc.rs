@@ -19,6 +19,11 @@ const MISSION_FAILED_TIME: usize = 0x96A8AC;
 /// `CStreaming::ms_aInfoForModel[MODEL_GUN_PARA].m_nLoadState`
 const PARACHUTE_LOAD_STATE: usize = 0x8E69CC;
 
+pub use sa_core::bindings::crt_free_8214bd as crt_free;
+pub use sa_core::bindings::end_gang_war;
+pub use sa_core::bindings::txd_add_ref;
+pub use sa_core::bindings::txd_create;
+pub use sa_world::bindings::take_remote_controlled_car_from_player;
 orig! {
     /// `CDarkel::ResetOnPlayerDeath` (0x43DC10)
     pub fn darkel_reset_on_player_death() = cdecl 0x43DC10 => unported;
@@ -26,10 +31,6 @@ orig! {
     pub fn text_get(text: u32, key: u32) -> u32 = thiscall 0x6A0050 => unported;
     /// `CMessages::AddBigMessage(const char*, uint32, eMessageStyle)` (0x69F2B0)
     pub fn add_big_message(text: u32, time: u32, style: u32) = cdecl 0x69F2B0 => unported;
-    /// `CGangWars::EndGangWar(bool)` (0x4464C0)
-    pub fn end_gang_war(b: u32) = cdecl 0x4464C0 => unported;
-    /// `CRemote::TakeRemoteControlledCarFromPlayer(bool)` (0x45AE80)
-    pub fn take_remote_controlled_car_from_player(b: u32) = cdecl 0x45AE80 => unported;
     /// `CVehicle::BlowUpCar(CEntity*, bool)` (vtable slot 0xA4)
     pub fn vehicle_blow_up_car(v: GPtr<u8>, by: GPtr<u8>, b: u32) = thiscall vslot 0xA4 => unported;
     /// `CPed::GiveWeapon(eWeaponType, uint32 ammo, bool)` (0x5E6080)
@@ -37,8 +38,6 @@ orig! {
     /// the police-scanner destructor of a `CWanted` (0x56F200: `this + 0x21C`, then
     /// `CAEPoliceScannerAudioEntity::~CAEPoliceScannerAudioEntity`)
     pub fn wanted_scanner_destructor(w: GPtr<u8>) = thiscall 0x56F200 => unported;
-    /// CRT `operator delete` / `free` (0x8214BD)
-    pub fn crt_free(p: GPtr<u8>) = cdecl 0x8214BD => unported;
     /// `CPlayerPedData::~CPlayerPedData` (0x571840)
     pub fn ped_data_destructor_call(d: GPtr<u8>) = thiscall 0x571840 => ped_data_destructor;
     /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
@@ -47,10 +46,6 @@ orig! {
     pub fn register_reference(e: GPtr<u8>, r: GPtr<GPtr<u8>>) = thiscall 0x571B70 => unported;
     /// `CTxdStore::AddTxdSlot(const char*)` (0x731C80)
     pub fn txd_add_slot(name: u32) -> i32 = cdecl 0x731C80 => unported;
-    /// `CTxdStore::Create(int32)` (0x731990)
-    pub fn txd_create(slot: i32) = cdecl 0x731990 => unported;
-    /// `CTxdStore::AddRef(int32)` (0x731A00)
-    pub fn txd_add_ref(slot: i32) = cdecl 0x731A00 => unported;
     /// `CTxdStore::RemoveTxdSlot(int32)` (0x731CD0)
     pub fn txd_remove_slot(slot: i32) = cdecl 0x731CD0 => unported;
     /// `CWorld::TestSphereAgainstWorld(CVector, float, CEntity*, bool x6)` (0x569E20)

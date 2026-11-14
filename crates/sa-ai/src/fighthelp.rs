@@ -69,12 +69,37 @@ use sa_world::world::common::entity_pos as ent_pos;
 
 use sa_core::field::ptr_of as buf;
 
+use crate::bindings::anim_blend_animation;
+use crate::bindings::anim_get_anim_block_name;
+use crate::bindings::anim_set_delete_callback;
+use crate::bindings::assoc_set_finish_callback as anim_set_finish_callback;
+use crate::bindings::clump_get_association as clump_get_association_id;
+use crate::bindings::fight_61c9b0;
+use crate::bindings::ped_set_move_state;
+use sa_core::bindings::find_player_ped as world_find_player_ped;
+use sa_core::bindings::get_weapon_info as weapon_info_get;
+use sa_core::bindings::matrix_dtor;
+use sa_core::bindings::matrix_set_translate_only;
+use sa_core::bindings::ped_is_alive;
+use sa_core::bindings::streaming_request_model;
+use sa_stream::bindings::anim_add_block_ref;
+use sa_stream::bindings::anim_remove_block_ref;
+use sa_stream::bindings::ped_is_player;
+use sa_stream::bindings::placeable_allocate_matrix;
+use sa_stream::bindings::simple_transform_update_matrix;
+use sa_world::bindings::entity_get_bound_centre;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::event_sound_quiet_dtor;
+use sa_world::bindings::find_objects_in_range as world_find_objects_in_range;
+use sa_world::bindings::get_event_global_group;
+use sa_world::bindings::intel_get_task_duck;
+use sa_world::bindings::matrix_copy_ctor;
+use sa_world::bindings::player_get_wanted_level;
+use sa_world::bindings::stats_get_fat_and_muscle_modifier;
 orig! {
     // ---- CTaskSimpleFight (unnamed) ----
     /// `FUN_0061d6f0(CPed*)` (0x61D6F0, `ret 4`; target on the ground test)
     fn fight_61d6f0(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x61D6F0 => unported;
-    /// `FUN_0061c9b0(CPed*)` (0x61C9B0, `ret 4`)
-    fn fight_61c9b0(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x61C9B0 => unported;
     /// `FUN_0061d5f0(float radius)` (0x61D5F0, `ret 4`; sets up the fight col model)
     fn fight_set_up_col(t: GPtr<u8>, radius: u32) = thiscall 0x61D5F0 => unported;
     /// `FUN_0061cba0(CPed*, CPed* victim, CVector* pos, CVector* dir, int32)` (0x61CBA0, `ret 0x14`; hit a ped)
@@ -83,63 +108,14 @@ orig! {
     fn fight_hit_car(t: GPtr<u8>, ped: GPtr<u8>, v: GPtr<u8>, pos: u32, normal: u32, a: u32, b: u32) = thiscall 0x61D0B0 => unported;
     /// `FUN_0061d400(CPed*, CObject*, CVector* pos, CVector* normal, int16, uint8)` (0x61D400, `ret 0x18`; hit an object)
     fn fight_hit_obj(t: GPtr<u8>, ped: GPtr<u8>, o: GPtr<u8>, pos: u32, normal: u32, a: u32, b: u32) = thiscall 0x61D400 => unported;
-
-    // ---- other catalogued functions ----
-    /// `CPed::SetMoveState(eMoveState)` (0x5DEC00, `ret 4`)
-    fn ped_set_move_state(p: GPtr<u8>, state: u32) = thiscall 0x5DEC00 => unported;
-    /// `CPed::IsAlive()` (0x5E0170)
-    fn ped_is_alive(p: GPtr<u8>) -> u8 = thiscall 0x5E0170 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CPlayerPed::GetWantedLevel()` (0x41BE60)
-    fn player_get_wanted_level(p: GPtr<u8>) -> i32 = thiscall 0x41BE60 => unported;
-    /// `CPedIntelligence::GetTaskDuck(bool)` (0x6010A0, `ret 4`)
-    fn intel_get_task_duck(i: GPtr<u8>, ignore: u32) -> GPtr<u8> = thiscall 0x6010A0 => unported;
-    /// `CWeaponInfo::GetWeaponInfo(eWeaponType, eWeaponSkill)` (0x743C60)
-    fn weapon_info_get(ty: u32, skill: u32) -> GPtr<u8> = cdecl 0x743C60 => unported;
-    /// `CStats::GetFatAndMuscleModifier(int32)` (0x559AF0, float in ST0)
-    fn stats_get_fat_and_muscle_modifier(a: i32) -> f64 = cdecl 0x559AF0 => unported;
-    /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float delta)` (0x4D4610)
-    fn anim_blend_animation(clump: u32, group: u32, id: u32, delta: u32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
-    /// `CAnimBlendAssociation::SetFinishCallback(cb, data)` (0x4CEBE0)
-    fn anim_set_finish_callback(a: GPtr<u8>, cb: u32, data: u32) = thiscall 0x4CEBE0 => unported;
-    /// `CAnimBlendAssociation::SetDeleteCallback(cb, data)` (0x4CEBC0)
-    fn anim_set_delete_callback(a: GPtr<u8>, cb: u32, data: u32) = thiscall 0x4CEBC0 => unported;
     /// `CAnimBlendAssociation::SetCurrentTime(float)` (0x4CEA80, `ret 4`; the float passed as its bits)
     fn anim_set_current_time(a: GPtr<u8>, t: u32) = thiscall 0x4CEA80 => unported;
-    /// `CAnimManager::RemoveAnimBlockRef(int32)` (0x4D3FD0)
-    fn anim_remove_block_ref(i: i32) = cdecl 0x4D3FD0 => unported;
-    /// `CAnimManager::AddAnimBlockRef(int32)` (0x4D3FB0)
-    fn anim_add_block_ref(i: i32) = cdecl 0x4D3FB0 => unported;
-    /// `CAnimManager::GetAnimBlockName(AssocGroupId)` (0x4D3A30)
-    fn anim_get_anim_block_name(group: u32) -> u32 = cdecl 0x4D3A30 => unported;
     /// `CAnimManager::GetAnimationBlock(const char*)` (0x4D3940)
     fn anim_get_animation_block(name: u32) -> GPtr<u8> = cdecl 0x4D3940 => unported;
-    /// `CStreaming::RequestModel(int32 id, int32 flags)` (0x4087E0)
-    fn streaming_request_model(id: i32, flags: i32) = cdecl 0x4087E0 => unported;
-    /// `RpAnimBlendClumpGetAssociation(RpClump*, AnimationId)` (0x4D68B0)
-    fn clump_get_association_id(clump: u32, id: u32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210)
-    fn world_find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
     /// `CGlass::BreakGlassPhysically(CVector pos (by value), float radius)` (0x71CF50)
     fn glass_break_glass_physically(x: u32, y: u32, z: u32, r: u32) = cdecl 0x71CF50 => unported;
-    /// `CWorld::FindObjectsInRange(const CVector&, float, bool 2D, int16* count, int16 max, CEntity**,
-    /// bool buildings, bool vehicles, bool peds, bool objects, bool dummies)` (0x564A20)
-    fn world_find_objects_in_range(pos: GPtr<u8>, r: u32, b2d: u32, count: GPtr<u8>, max: u32, out: GPtr<u8>, b: u32, v: u32, p: u32, o: u32, d: u32) = cdecl 0x564A20 => unported;
-    /// `CMatrix::CMatrix(const CMatrix&)` (0x59BCF0, `ret 4`)
-    fn matrix_copy_ctor(m: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = thiscall 0x59BCF0 => unported;
-    /// `CMatrix::SetTranslateOnly(float, float, float)` (0x59AF80, `ret 0xC`)
-    fn matrix_set_translate_only(m: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x59AF80 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
-    /// `CEntity::GetBoundCentre(CVector& out)` (0x534250, `ret 4`; returns `&out`)
-    fn entity_get_bound_centre(e: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall 0x534250 => unported;
     /// `CEntity::GetColModel()` (0x535300)
     fn entity_get_col_model(e: GPtr<u8>) -> u32 = thiscall 0x535300 => unported;
-    /// `CPlaceable::AllocateMatrix()` (0x54F560)
-    fn placeable_allocate_matrix(e: GPtr<u8>) = thiscall 0x54F560 => unported;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*)` (0x54F1B0, `ret 4`)
-    fn simple_transform_update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => unported;
     /// `CCollision::ProcessColModels(const CMatrix&, CColModel&, const CMatrix&, CColModel&, CColPoint*,
     /// CColPoint*, float*, bool)` (0x4185C0)
     fn collision_process_col_models(m1: GPtr<u8>, c1: u32, m2: GPtr<u8>, c2: u32, cps: u32, lcps: u32, dists: u32, b: u32) -> i32 = cdecl 0x4185C0 => unported;
@@ -147,12 +123,6 @@ orig! {
     fn ped_mi_animate_col_model_skinned_world(mi: GPtr<u8>, clump: u32) -> GPtr<u8> = thiscall 0x4C7170 => unported;
     /// `CEventSoundQuiet::Constructor(CEntity*, float volume, uint32 time, const CVector&)` (0x5E05B0, `ret 0x10`)
     fn event_sound_quiet_ctor(e: GPtr<u8>, ent: GPtr<u8>, vol: u32, time: i32, pos: GPtr<u8>) -> GPtr<u8> = thiscall 0x5E05B0 => unported;
-    /// `FUN_005dea00` (0x5DEA00): `CEventSoundQuiet` destructor body
-    fn event_sound_quiet_dtor(e: GPtr<u8>) = thiscall 0x5DEA00 => unported;
-    /// `RwHelper::GetEventGlobalGroup()` (0x4ABA50)
-    fn get_event_global_group() -> GPtr<u8> = cdecl 0x4ABA50 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, `ret 8`)
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
 }
 
 /// Common tail of 0x623B10: the last command (+0x27) becomes the next one (+0x26), which is cleared.

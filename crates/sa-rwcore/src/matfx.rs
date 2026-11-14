@@ -54,73 +54,55 @@ const MATFX_ID: u32 = 0x120;
 /// 1.0f (0x858624).
 const ONE: f32 = 1.0;
 
+use crate::bindings::node_def_atomic as node_def_d3d9_atomic_all_in_one;
+use crate::bindings::node_def_d3d9_sector_all_in_one;
+use crate::bindings::rp_world_sector_register_plugin;
+use crate::bindings::rp_world_sector_register_plugin_stream;
+use crate::bindings::rw_engine_register_plugin;
+use crate::bindings::rx_locked_pipe_add_fragment;
+use crate::bindings::rx_locked_pipe_unlock;
+use crate::bindings::rx_pipeline_create;
+use crate::bindings::rx_pipeline_destroy;
+use crate::bindings::rx_pipeline_lock;
+use sa_core::bindings::atomic_geometry_set_usage_flags;
+use sa_core::bindings::enable_clipping_if_needed as d3d9_enable_clipping_if_needed;
+use sa_core::bindings::get_render_state as rw_d3d9_get_render_state;
+use sa_core::bindings::rp_atomic_register_plugin;
+use sa_core::bindings::rp_atomic_register_plugin_stream;
+use sa_core::bindings::rp_material_register_plugin;
+use sa_core::bindings::rp_material_register_plugin_stream;
+use sa_core::bindings::rw_d3d9_get_caps;
+use sa_core::bindings::rw_tex_dictionary_add_texture;
+use sa_core::bindings::rw_tex_dictionary_find_named_texture;
+use sa_core::bindings::rw_tex_dictionary_get_current;
+use sa_core::bindings::set_streams as d3d9_set_streams;
+use sa_core::bindings::vertex_alpha_enable as d3d9_vertex_alpha_enable;
 orig! {
-    /// `RwEngineRegisterPlugin(size, id, open, close)` (0x7F2BB0)
-    fn rw_engine_register_plugin(size: i32, id: u32, open: u32, close: u32) -> i32 = cdecl 0x7F2BB0 => unported;
-    /// `RpMaterialRegisterPlugin(size, id, ctor, dtor, copy)` (0x74DBF0)
-    fn rp_material_register_plugin(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x74DBF0 => unported;
-    /// `RpMaterialRegisterPluginStream(id, read, write, getSize)` (0x74DC20)
-    fn rp_material_register_plugin_stream(id: u32, read: u32, write: u32, size: u32) -> i32 = cdecl 0x74DC20 => unported;
-    /// `RpAtomicRegisterPlugin(size, id, ctor, dtor, copy)` (0x74BDA0)
-    fn rp_atomic_register_plugin(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x74BDA0 => unported;
-    /// `RpAtomicRegisterPluginStream(id, read, write, getSize)` (0x74BE00)
-    fn rp_atomic_register_plugin_stream(id: u32, read: u32, write: u32, size: u32) -> i32 = cdecl 0x74BE00 => unported;
-    /// `RpWorldSectorRegisterPlugin(size, id, ctor, dtor, copy)` (0x761C90)
-    fn rp_world_sector_register_plugin(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x761C90 => unported;
-    /// `RpWorldSectorRegisterPluginStream(id, read, write, getSize)` (0x761CC0)
-    fn rp_world_sector_register_plugin_stream(id: u32, read: u32, write: u32, size: u32) -> i32 = cdecl 0x761CC0 => unported;
     /// `RwTextureDestroy(texture)` (0x7F3820)
     fn rw_texture_destroy(t: GPtr<u8>) -> u32 = cdecl 0x7F3820 => unported;
-    /// `RwTexDictionaryGetCurrent()` (0x7F3A90)
-    fn rw_tex_dictionary_get_current() -> GPtr<u8> = cdecl 0x7F3A90 => unported;
-    /// `RwTexDictionaryFindNamedTexture(dict, name)` (0x7F39F0)
-    fn rw_tex_dictionary_find_named_texture(d: GPtr<u8>, name: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F39F0 => unported;
-    /// `RwTexDictionaryAddTexture(dict, texture)` (0x7F3980)
-    fn rw_tex_dictionary_add_texture(d: GPtr<u8>, t: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F3980 => unported;
     /// Bumped-texture builder (0x816290): (baseTexture, bumpTexture)
     fn matfx_create_bumped_texture(base: GPtr<u8>, bump: GPtr<u8>) -> GPtr<u8> = cdecl 0x816290 => unported;
     /// Dual-texture render-state setup stub (0x816280): (slot, state), returns 1
     fn matfx_setup_dual_state(slot: GPtr<u8>, state: u32) -> u32 = cdecl 0x816280 => unported;
-    /// `RxPipelineCreate()` (0x8057B0)
-    fn rx_pipeline_create() -> GPtr<u8> = cdecl 0x8057B0 => unported;
-    /// `RxPipelineLock(pipeline)` (0x806990)
-    fn rx_pipeline_lock(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x806990 => unported;
-    /// `RxLockedPipeAddFragment(pipeline, firstIndex, nodeDef, NULL)` (0x806BE0, varargs; as called here)
-    fn rx_locked_pipe_add_fragment(p: GPtr<u8>, first: u32, node: GPtr<u8>, end: u32) -> GPtr<u8> = cdecl 0x806BE0 => unported;
-    /// `RxLockedPipeUnlock(pipeline)` (0x805F40)
-    fn rx_locked_pipe_unlock(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x805F40 => unported;
-    /// `_rxPipelineDestroy(pipeline)` (0x805820)
-    fn rx_pipeline_destroy(p: GPtr<u8>) = cdecl 0x805820 => unported;
     /// `RxPipelineFindNodeByName(pipeline, name, start, index)` (0x806B30)
     fn rx_pipeline_find_node_by_name(p: GPtr<u8>, name: u32, start: u32, index: u32) -> GPtr<u8> = cdecl 0x806B30 => unported;
-    /// `RxNodeDefinitionGetD3D9AtomicAllInOne()` (0x7582E0)
-    fn node_def_d3d9_atomic_all_in_one() -> GPtr<u8> = cdecl 0x7582E0 => unported;
-    /// `RxNodeDefinitionGetD3D9WorldSectorAllInOne()` (0x75E9F0)
-    fn node_def_d3d9_sector_all_in_one() -> GPtr<u8> = cdecl 0x75E9F0 => unported;
     /// `RxD3D9AllInOneGetInstanceCallBack(node)` (0x757390)
     fn all_in_one_get_instance_cb(n: GPtr<u8>) -> u32 = cdecl 0x757390 => unported;
     /// `RxD3D9AllInOneSetInstanceCallBack(node, cb)` (0x757380)
     fn all_in_one_set_instance_cb(n: GPtr<u8>, cb: u32) = cdecl 0x757380 => unported;
     /// `RxD3D9AllInOneSetRenderCallBack(node, cb)` (0x7573E0)
     fn all_in_one_set_render_cb(n: GPtr<u8>, cb: u32) = cdecl 0x7573E0 => unported;
-    /// `RwD3D9GetCaps()` (0x7FAD20)
-    fn rw_d3d9_get_caps() -> GPtr<u8> = cdecl 0x7FAD20 => unported;
     /// `RwD3D9CreatePixelShader(function, &shader)` (0x7FACC0)
     fn rw_d3d9_create_pixel_shader(code: u32, out: u32) -> i32 = cdecl 0x7FACC0 => unported;
     /// `RwD3D9DeletePixelShader(shader)` (0x7FACF0)
     fn rw_d3d9_delete_pixel_shader(s: u32) = cdecl 0x7FACF0 => unported;
     /// Atomic geometry usage flags get (0x7588D0) / set (0x7588B0)
     fn atomic_geometry_get_usage_flags(geom: GPtr<u8>) -> u32 = cdecl 0x7588D0 => unported;
-    fn atomic_geometry_set_usage_flags(geom: GPtr<u8>, flags: u32) = cdecl 0x7588B0 => unported;
     /// World-sector usage flags get (0x758900) / set (0x7588E0)
     fn sector_get_usage_flags(s: GPtr<u8>) -> u32 = cdecl 0x758900 => unported;
     fn sector_set_usage_flags(s: GPtr<u8>, flags: u32) = cdecl 0x7588E0 => unported;
     /// A stored instance callback `(object, header, reinstance)`
     fn call_instance_cb(f: u32, object: GPtr<u8>, header: GPtr<u8>, reinstance: u32) -> u32 = cdecl dyn => unported;
-    /// `_rwD3D9EnableClippingIfNeeded(object, type)` (0x756D90)
-    fn d3d9_enable_clipping_if_needed(object: GPtr<u8>, ty: u32) = cdecl 0x756D90 => unported;
-    /// `RwD3D9GetRenderState(state, &value)` (0x7FC320)
-    fn rw_d3d9_get_render_state(state: u32, out: GPtr<u32>) = cdecl 0x7FC320 => unported;
     /// `RwD3D9SetRenderState(state, value)` (0x7FC2D0)
     fn rw_d3d9_set_render_state(state: u32, value: u32) -> i32 = cdecl 0x7FC2D0 => unported;
     /// `RwD3D9SetTextureStageState(stage, type, value)` (0x7FC340)
@@ -131,10 +113,6 @@ orig! {
     fn device_set_indices(dev: GPtr<u8>, ib: u32) -> i32 = stdcall vslot 0x1A0 => unported;
     /// `IDirect3DDevice9::SetVertexDeclaration(decl)` (vtable +0x15C)
     fn device_set_vertex_declaration(dev: GPtr<u8>, decl: u32) -> i32 = stdcall vslot 0x15C => unported;
-    /// `_rwD3D9SetStreams(streams, useOffsets)` (0x7FA090)
-    fn d3d9_set_streams(streams: GPtr<u8>, offsets: u32) = cdecl 0x7FA090 => unported;
-    /// `_rwD3D9RenderStateVertexAlphaEnable(enable)` (0x7FE0A0)
-    fn d3d9_vertex_alpha_enable(enable: u32) = cdecl 0x7FE0A0 => unported;
     /// `RwD3D9SetSurfaceProperties(surfaceProps, color, flags)` (0x7FC4D0)
     fn rw_d3d9_set_surface_properties(sp: GPtr<u8>, color: GPtr<u8>, flags: u32) -> i32 = cdecl 0x7FC4D0 => unported;
     /// MatFX D3D9 effect renderers: no-lighting (0x812C90), default (0x812AC0), dual (0x812D40), env
@@ -902,9 +880,8 @@ pub fn rp_matfx_get_d3d9_pipeline(ty: u32) -> u32 {
     }
 }
 
+use crate::bindings::free_list_create_prealloc as engine_freelist_create;
 orig! {
-    /// `RwFreeListCreateAndPreallocateSpace(size, perBlock, align, n, space, hint)` (0x801B70)
-    fn engine_freelist_create(size: u32, per_block: u32, align: u32, n: u32, space: GPtr<u8>, hint: u32) -> GPtr<u8> = cdecl 0x801B70 => crate::memory::rw_freelist_create_and_preallocate_space;
     /// `_rpMatFXPipelinesCreate()` (0x815E60)
     fn matfx_pipelines_create_call() -> u32 = cdecl 0x815E60 => rp_matfx_pipelines_create;
 }

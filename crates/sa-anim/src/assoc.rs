@@ -30,11 +30,9 @@ pub const VTBL_STATIC: u32 = 0x85C6CC;
 /// `ClumpOffset` (RpAnimBlend plugin offset of `CAnimBlendClumpData*` in an `RpClump`).
 pub const CLUMP_OFFSET: usize = 0xB5F878;
 
+pub use sa_core::bindings::mem_free_align;
+pub use sa_core::bindings::mem_malloc_align;
 orig! {
-    /// `CMemoryMgr::MallocAlign(size, align, hint)` (0x72F4C0)
-    pub fn mem_malloc_align(size: u32, align: u32, hint: u32) -> GPtr<u8> = cdecl 0x72F4C0 => unported;
-    /// `CMemoryMgr::FreeAlign(p)` (0x72F4F0)
-    pub fn mem_free_align(p: GPtr<u8>) = cdecl 0x72F4F0 => unported;
     /// `CAnimBlendNode::Init()` (0x4CFB70)
     pub fn node_init(this: GPtr<u8>) = thiscall 0x4CFB70 => crate::node::init;
     /// `CAnimBlendNode::SetupKeyFrameCompressed()` (0x4D0650)

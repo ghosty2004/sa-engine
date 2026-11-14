@@ -54,6 +54,26 @@ const CAR_GENERATORS: usize = 0xC27AD0;
 /// `CTheScripts::bScriptHasFadedOut` (byte) 0xA4448A.
 const SCRIPT_HAS_FADED_OUT: usize = 0xA4448A;
 
+use crate::bindings::add_clock;
+use crate::bindings::camera_restore;
+use crate::bindings::get_actual_blip_array_index;
+use crate::bindings::report_mission_audio_event;
+use crate::bindings::set_ammo;
+use crate::bindings::set_coord_blip;
+use sa_core::bindings::camera_set_fade_colour as set_fade_colour;
+use sa_core::bindings::entity_update_rw_frame as update_rw_frame;
+use sa_core::bindings::get_pad;
+use sa_stream::bindings::car_generator_switch_on;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::camera_get_fading as get_fading;
+use sa_world::bindings::change_blip_colour;
+use sa_world::bindings::change_blip_scale;
+use sa_world::bindings::find_ground_z_for_coord;
+use sa_world::bindings::find_zone;
+use sa_world::bindings::get_has_collided_with;
+use sa_world::bindings::pad_start_shake as start_shake;
+use sa_world::bindings::placeable_get_heading as get_heading;
+use sa_world::bindings::update_rw_matrix;
 orig! {
     /// `CRunningScript::CollectNextParameterWithoutIncreasingPC()` (0x464250)
     fn collect_next(s: Scr) -> i32 = thiscall 0x464250 => crate::vm::collect_next_parameter_without_increasing_pc;
@@ -63,57 +83,26 @@ orig! {
     fn take_control_no_entity(cam: GPtr<u8>, pos: GPtr<u32>, switch: u32, who: i32) = thiscall 0x50C8B0 => unported;
     /// `CCamera::SetCamPositionForFixedMode(const CVector&, const CVector&)` (0x50BEC0)
     fn set_cam_position_for_fixed_mode(cam: GPtr<u8>, pos: GPtr<u32>, up: GPtr<u32>) = thiscall 0x50BEC0 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0), AL
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CRadar::GetActualBlipArrayIndex(int32)` (0x582870); the result is discarded by every caller here
-    fn get_actual_blip_array_index(h: i32) -> i32 = cdecl 0x582870 => unported;
     /// `CRadar::SetEntityBlip(eBlipType, int32 handle, uint32 colour, eBlipDisplay, const char* scriptName)` (0x5839A0)
     fn set_entity_blip(ty: i32, h: i32, colour: u32, display: u32, name: GPtr<u8>) -> i32 = cdecl 0x5839A0 => unported;
     /// `CRadar::ClearBlip(int32)` (0x587CE0)
     fn clear_blip(h: i32) = cdecl 0x587CE0 => unported;
-    /// `CRadar::ChangeBlipColour(int32, uint32)` (0x583AB0)
-    fn change_blip_colour(h: i32, c: u32) = cdecl 0x583AB0 => unported;
-    /// `CRadar::ChangeBlipScale(int32, int32)` (0x583CC0)
-    fn change_blip_scale(h: i32, scale: i32) = cdecl 0x583CC0 => unported;
     /// `CRadar::ChangeBlipDisplay(int32, eBlipDisplay)` (0x583D20)
     fn change_blip_display(h: i32, d: u32) = cdecl 0x583D20 => unported;
-    /// `CWorld::FindGroundZForCoord(float, float)` (0x569660), floats as raw dwords, ST0 (read as f64: exact)
-    fn find_ground_z_for_coord(x: u32, y: u32) -> f64 = cdecl 0x569660 => unported;
     /// `CRestart::AddHospitalRestartPoint(const CVector&, float, int32 town)` (0x460730)
     fn add_hospital_restart_point(pos: GPtr<u32>, angle: u32, town: i32) = cdecl 0x460730 => unported;
     /// `CRestart::AddPoliceRestartPoint(const CVector&, float, int32 town)` (0x460780)
     fn add_police_restart_point(pos: GPtr<u32>, angle: u32, town: i32) = cdecl 0x460780 => unported;
     /// `CRestart::OverrideNextRestart(const CVector&, float)` (0x4607D0)
     fn override_next_restart(pos: GPtr<u32>, angle: u32) = cdecl 0x4607D0 => unported;
-    /// `COnscreenTimer::AddClock(uint32 varId, const char* gxt, bool countDown)` (0x44CD50)
-    fn add_clock(t: GPtr<u8>, var: u32, gxt: GPtr<u8>, down: u32) = thiscall 0x44CD50 => unported;
-    /// `CRadar::SetCoordBlip(eBlipType, CVector, uint32 colour, eBlipDisplay, const char*)` (0x583820);
-    /// the by-value vector as three raw dwords
-    fn set_coord_blip(ty: i32, x: u32, y: u32, z: u32, colour: u32, display: u32, name: GPtr<u8>) -> i32 = cdecl 0x583820 => unported;
     /// `CPlaceable::SetHeading(float)` (0x43E0C0)
     fn set_heading(e: GPtr<u8>, h: f32) = thiscall 0x43E0C0 => unported;
-    /// `CEntity::UpdateRwMatrix()` (0x446F90)
-    fn update_rw_matrix(e: GPtr<u8>) = thiscall 0x446F90 => unported;
-    /// `CAudioEngine::ReportMissionAudioEvent(uint16, CVector&)` (0x507340)
-    fn report_mission_audio_event(a: GPtr<u8>, id: u32, pos: GPtr<u32>) = thiscall 0x507340 => unported;
     /// `CRunningScript::GetIndexOfGlobalVariable()` (0x464700), AX
     fn global_index(s: Scr) -> u16 = thiscall 0x464700 => crate::vm::get_index_of_global_variable;
     /// `COnscreenTimer::ClearClock(uint32 varId)` (0x44CE60)
     fn clear_clock(t: GPtr<u8>, var: u32) = thiscall 0x44CE60 => unported;
     /// `COnscreenTimer::ClearCounter(uint32 varId)` (0x44CE80)
     fn clear_counter(t: GPtr<u8>, var: u32) = thiscall 0x44CE80 => unported;
-    /// `CCamera::Restore()` (0x50B930)
-    fn camera_restore(cam: GPtr<u8>) = thiscall 0x50B930 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    fn get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CPad::StartShake(int16 time, uint8 freq, uint32 shakeDelayMs)` (0x53F920)
-    fn start_shake(pad: GPtr<u8>, time: u32, freq: u32, delay: u32) = thiscall 0x53F920 => unported;
-    /// `CCamera::SetFadeColour(uint8, uint8, uint8)` (0x50BF00)
-    fn set_fade_colour(cam: GPtr<u8>, r: u32, g: u32, b: u32) = thiscall 0x50BF00 => unported;
-    /// `CCamera::GetFading()` (0x50ADE0), AL
-    fn get_fading(cam: GPtr<u8>) -> u8 = thiscall 0x50ADE0 => unported;
-    /// `CPed::SetAmmo(eWeaponType, uint32)` (0x5DF290)
-    fn set_ammo(p: GPtr<u8>, ty: u32, ammo: u32) = thiscall 0x5DF290 => unported;
     /// `CUpsideDownCarCheck::HasCarBeenUpsideDownForAWhile(int32)` (0x463940), AL
     fn has_car_been_upside_down_for_a_while(c: GPtr<u8>, h: i32) -> u8 = thiscall 0x463940 => unported;
     /// `CTheCarGenerators::CreateCarGenerator(CVector, float angle, int32 model, int16 colour1, int16
@@ -122,26 +111,14 @@ orig! {
     fn create_car_generator(x: u32, y: u32, z: u32, angle: u32, model: u32, c1: u32, c2: u32, force: u32, alarm: u32, lock: u32, min_delay: u32, max_delay: u32, ipl: u32, owned: u32) -> i32 = cdecl 0x6F31A0 => unported;
     /// `CCarGenerator::SwitchOff()` (0x6F2E30)
     fn car_generator_switch_off(g: GPtr<u8>) = thiscall 0x6F2E30 => unported;
-    /// `CCarGenerator::SwitchOn()` (0x6F32C0)
-    fn car_generator_switch_on(g: GPtr<u8>) = thiscall 0x6F32C0 => unported;
     /// Unnamed thiscall on a `CCarGenerator` taking the count (0x47C0E0, a `.HOODLUM` stub; gr's
     /// `SwitchOn(); m_nGenerateCount = count`)
     fn car_generator_47c0e0(g: GPtr<u8>, count: u32) = thiscall 0x47C0E0 => unported;
-    /// `CTheZones::FindZone(const CVector*, uint64 label, eZoneType)` (0x572B80), the label as two
-    /// stack dwords, AL
-    fn find_zone(pos: GPtr<u32>, lo: u32, hi: u32, ty: u32) -> u8 = cdecl 0x572B80 => unported;
     /// `CCamera::Fade(float time, int16 direction)` (0x50AC20), the float as its raw dword
     fn camera_fade(cam: GPtr<u8>, time: u32, dir: u32) = thiscall 0x50AC20 => unported;
     /// `CShadows::StoreShadowToBeRendered(uint8 type, CVector* pos, float frontX, float frontY, float
     /// sideX, float sideY, int16 intensity, uint8 r, uint8 g, uint8 b)` (0x707930); floats as raw dwords
     fn store_shadow_to_be_rendered(ty: u32, pos: GPtr<u32>, fx: u32, fy: u32, sx: u32, sy: u32, intensity: u32, r: u32, g: u32, b: u32) = cdecl 0x707930 => unported;
-    /// `CPlaceable::GetHeading()` (0x441DB0), ST0 (an FPATAN result: read as f64, i.e. 53 of its 64
-    /// significand bits, as sa-ai's car_exit does)
-    fn get_heading(e: GPtr<u8>) -> f64 = thiscall 0x441DB0 => unported;
-    /// `CEntity::UpdateRwFrame()` (0x532B00)
-    fn update_rw_frame(e: GPtr<u8>) = thiscall 0x532B00 => unported;
-    /// `CPhysical::GetHasCollidedWith(CEntity*)` (0x543540), AL
-    fn get_has_collided_with(p: GPtr<u8>, e: GPtr<u8>) -> u8 = thiscall 0x543540 => unported;
 }
 
 /// The ped's vehicle when `m_nPedFlags` bit 8 (+0x46C) is set and `m_pVehicle` (+0x58C) != 0, else the

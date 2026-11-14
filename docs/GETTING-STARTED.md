@@ -253,8 +253,10 @@ docs/            PLAN, ROADMAP, WORKLOG, CONTINUE, arch/ (design + per-lane note
 tools/
   catalog/       catalogue builders (run_all.sh)
   e2e/           game runs: lib.sh, record/replay, port-l2.sh, l3.sh, verify-all.sh, l2-extras.txt, programs/
-  verify/        writer-gate.sh, queue.py, bisect-batch.sh, static checks
-  gen/           code generators (patterns.py, ai_patterns.py, …) — their output is never edited by hand
+  verify/        writer-gate.sh, queue.py, bisect-batch.sh, static checks (dupes.py: duplicated helpers;
+                 state_check.py: state.csv claims vs registered ports)
+  gen/           code generators (patterns.py, ai_patterns.py, bindings.py: the orig! bindings, …) — their
+                 output is never edited by hand
   native/        phase B gap lists (mvp_gaps.py, samp_unported.py, static_inits.py)
   web/           browser build, dev server, headless driver (integration branch)
   wine-env.sh    the Wine environment
@@ -296,7 +298,11 @@ Key documents:
    ```
 
    - game memory through `globals!`/`GPtr` and `catalog/layouts.csv` (ADR-001);
-   - calls to other original functions through `orig!` (ADR-001), never raw addresses;
+   - calls to other original functions through `orig!` (ADR-001), never raw addresses. A function that more than
+     one module calls has one generated binding (`crates/<owner>/src/bindings.rs`, from `catalog/bindings.csv`,
+     `tools/gen/bindings.py`): import it (`use sa_world::bindings::find_player_ped;`) instead of declaring it
+     again; a new shared binding is a CSV row plus `python3 -I tools/gen/bindings.py` (the writer gate runs
+     `--check`);
    - shared helpers, never local copies (ADR-003 §3.2): raw field / global access in `sa_core::field` (`rd`, `wr`,
      `at`, `g`, `gf`, `rd3f`, `ptr_of`, ...), x87 shorthands in `sa_math::fpu` (`x`, `xi`, `xc`, `st0`, `f32_of`,
      `ftol32`, the `fcom` tests `lt` / `gt` / `le_or_nan` / `ge_or_nan`), entity position / type in
@@ -312,7 +318,8 @@ Key documents:
      only) or a `keycells` reader — see [verify/HOWTO.md](verify/HOWTO.md).
    - Register it in the crate's `hooks.rs` list. New hooks are always `unverified = "<batch>"` with `route`
      and `hazards`; the macro refuses them otherwise.
-4. **Gate it:** `tools/verify/writer-gate.sh` (clippy for host/i686/wasm32, builds, hook tests, L1), then
+4. **Gate it:** `tools/verify/writer-gate.sh` (clippy for host/i686/wasm32, builds, hook tests, L1, the bindings
+   and state.csv checks), then
    `python3 -I tools/verify/queue.py`. `cargo test -p sa-hook --lib` must pass: it checks every registration
    against the exe (entry bytes, one registration per address, callers that read registers, protection reads).
 5. **Commit** (plain English message, no attribution lines). A verifier later promotes it (§8).

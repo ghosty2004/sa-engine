@@ -34,29 +34,79 @@ const NEIGHBOUR_MAX_ANGLE: f32 = f32::from_bits(0x3F5F_66F3);
 /// 0x859878 (180/pi)
 const RAD_TO_DEG: f32 = f32::from_bits(0x4265_2EE0);
 
+pub use crate::bindings::event_player_command_to_group_ctor;
+pub use crate::bindings::event_player_command_to_group_dtor;
+pub use crate::bindings::get_default_player_motion_group;
+pub use crate::bindings::get_weapon_skill_type_call as ped_get_weapon_skill_type;
+pub use sa_core::bindings::assoc_set_current_time;
+pub use sa_core::bindings::display_script_stat_update_message;
+pub use sa_core::bindings::entity_clean_up_old_reference;
+pub use sa_core::bindings::entity_get_is_on_screen;
+pub use sa_core::bindings::entity_register_reference;
+pub use sa_core::bindings::get_atan_of_xy;
+pub use sa_core::bindings::get_pad;
+pub use sa_core::bindings::intel_get_task_use_gun;
+pub use sa_core::bindings::ped_group_process as group_process;
+pub use sa_core::bindings::task_new as task_operator_new;
+pub use sa_core::bindings::world_clear_scan_codes;
+pub use sa_stream::bindings::ped_is_player;
+pub use sa_stream::bindings::placeable_allocate_matrix;
+pub use sa_stream::bindings::simple_transform_update_matrix;
+pub use sa_world::bindings::add_animation;
+pub use sa_world::bindings::be_in_group_ctor as task_be_in_group_ctor;
+pub use sa_world::bindings::car_ctrl_possibly_remove_vehicle;
+pub use sa_world::bindings::change_blip_colour as radar_change_blip_colour;
+pub use sa_world::bindings::change_blip_scale as radar_change_blip_scale;
+pub use sa_world::bindings::compute_response_task_type_group as event_compute_response_task_type_group;
+pub use sa_world::bindings::count_members_excluding_leader as membership_count_excluding_leader;
+pub use sa_world::bindings::crt_floor;
+pub use sa_world::bindings::dist_to_line;
+pub use sa_world::bindings::event_group_add;
+pub use sa_world::bindings::event_group_event_ctor;
+pub use sa_world::bindings::event_group_event_dtor;
+pub use sa_world::bindings::event_group_get_event_of_type;
+pub use sa_world::bindings::event_gun_aimed_at_ctor;
+pub use sa_world::bindings::event_gun_aimed_at_dtor;
+pub use sa_world::bindings::event_new as event_operator_new;
+pub use sa_world::bindings::event_script_command_dtor;
+pub use sa_world::bindings::event_will_respond;
+pub use sa_world::bindings::get_button_sprint_results;
+pub use sa_world::bindings::get_task_jet_pack as intel_get_task_jet_pack;
+pub use sa_world::bindings::group_intel_set_default_task_allocator_type;
+pub use sa_world::bindings::intel_find_task_by_type;
+pub use sa_world::bindings::intel_get_task_duck;
+pub use sa_world::bindings::intel_get_task_fighting;
+pub use sa_world::bindings::intel_get_task_throw;
+pub use sa_world::bindings::is_coop_game_going_on;
+pub use sa_world::bindings::membership_add_follower;
+pub use sa_world::bindings::membership_is_member;
+pub use sa_world::bindings::membership_remove_member;
+pub use sa_world::bindings::pad_get_force_camera_behind_player;
+pub use sa_world::bindings::pad_get_ped_walk_left_right;
+pub use sa_world::bindings::pad_get_ped_walk_up_down;
+pub use sa_world::bindings::ped_get_ref as ped_pool_get_ref;
+pub use sa_world::bindings::ped_groups_are_in_same_group;
+pub use sa_world::bindings::ped_groups_get_peds_group;
+pub use sa_world::bindings::ped_restore_heading_rate;
+pub use sa_world::bindings::rw_im3d_end;
+pub use sa_world::bindings::speech_set_cj_mood;
+pub use sa_world::bindings::stats_find_max_number_of_group_members;
+pub use sa_world::bindings::tag_manager_is_tag as tag_is_tag;
+pub use sa_world::bindings::tm_find_active_task_by_type as task_mgr_find_active_task_by_type;
+pub use sa_world::bindings::world_reset_line_test_options;
 orig! {
-    /// `CPedGroupMembership::CountMembersExcludingLeader` (0x5F6AA0)
-    pub fn membership_count_excluding_leader(m: GPtr<u8>) -> i32 = thiscall 0x5F6AA0 => unported;
-    /// `CPedGroupMembership::IsMember(CPed*)` (0x5F6A10)
-    pub fn membership_is_member(m: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x5F6A10 => unported;
     /// `CPedGroupMembership::RemoveAllFollowers(bool)` (0x5FB190)
     pub fn membership_remove_all_followers(m: GPtr<u8>, b: u32) = thiscall 0x5FB190 => unported;
     /// `CPed::Say(uint16, uint32, float, uint8, uint8, uint8)` (0x5EFFE0, `ret 0x18`)
     pub fn ped_say(p: GPtr<u8>, id: u32, delay: u32, prob: f32, a: u32, b: u32, c: u32) -> u32 = thiscall 0x5EFFE0 => unported;
     /// `CEvent::Clone` (vtable slot 0x10)
     pub fn v_event_clone(e: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x10 => unported;
-    /// `CEventGroupEvent::CEventGroupEvent(CPed*, CEvent*)` (0x4ADFD0, `ret 8`)
-    pub fn event_group_event_ctor(e: GPtr<u8>, ped: GPtr<u8>, ev: GPtr<u8>) -> GPtr<u8> = thiscall 0x4ADFD0 => unported;
-    /// `CEventGroupEvent::~CEventGroupEvent` (0x4AE070)
-    pub fn event_group_event_dtor(e: GPtr<u8>) = thiscall 0x4AE070 => unported;
     /// `CPedGroupIntelligence::AddEvent(CEvent*)` (0x5F7470, `ret 4`)
     pub fn group_intel_add_event(gi: GPtr<u8>, e: GPtr<u8>) -> u8 = thiscall 0x5F7470 => unported;
     /// `CPedGroupIntelligence::ReportAllBarScriptTasksFinished` (0x5F8780)
     pub fn group_intel_report_all_bar_script_tasks_finished(gi: GPtr<u8>) = thiscall 0x5F8780 => unported;
     /// `CPedGroup::PlayerGaveCommand_Attack(CPed* player, CPed* target)` (0x5F7CC0, `ret 8`)
     pub fn group_player_gave_command_attack(g: GPtr<u8>, player: GPtr<u8>, target: GPtr<u8>) = thiscall 0x5F7CC0 => unported;
-    /// `CTagManager::IsTag(const CEntity*)` (0x49CCE0)
-    pub fn tag_is_tag(e: GPtr<u8>) -> u8 = cdecl 0x49CCE0 => unported;
     /// `CTagManager::GetAlpha(CEntity*)` (0x49CF90)
     pub fn tag_get_alpha(e: GPtr<u8>) -> u8 = cdecl 0x49CF90 => unported;
     /// `CObject::CanBeTargetted` (0x59F320)
@@ -70,24 +120,16 @@ orig! {
     pub fn world_process_line_of_sight(a: GPtr<f32>, b: GPtr<f32>, cp: GPtr<u8>, e: GPtr<GPtr<u8>>, bd: u32, vh: u32, pd: u32, ob: u32, du: u32, st: u32, cam: u32, sh: u32) -> u8 = cdecl 0x56BA00 => unported;
     /// `CWeapon::TargetWeaponRangeMultiplier(CEntity* victim, CEntity* owner)` (0x73B380, ST0)
     pub fn target_weapon_range_multiplier(victim: GPtr<u8>, owner: GPtr<u8>) -> f64 = cdecl 0x73B380 => unported;
-    /// `CPed::GetWeaponSkill(eWeaponType)` (0x5E3B60, AL)
-    pub fn ped_get_weapon_skill_type(p: GPtr<u8>, ty: i32) -> u8 = thiscall 0x5E3B60 => crate::ped::get_weapon_skill_type;
     /// `CPlayerPed::CanIKReachThisTarget(CVector, CWeapon*, bool)` (0x609F80, `ret 0x14`)
     pub fn can_ik_reach_this_target(p: GPtr<u8>, tx: f32, ty: f32, tz: f32, w: GPtr<u8>, b: u32) -> u8 = thiscall 0x609F80 => crate::player_ped::can_ik_reach_this_target;
     /// `CPlayerPed::DoesTargetHaveToBeBroken(CEntity*, CWeapon*)` (0x60C0C0, `ret 8`)
     pub fn does_target_have_to_be_broken_call(p: GPtr<u8>, t: GPtr<u8>, w: GPtr<u8>) -> u8 = thiscall 0x60C0C0 => does_target_have_to_be_broken;
-    /// `CGeneral::GetATanOfXY(float x, float y)` (0x53CC70, ST0)
-    pub fn get_atan_of_xy(xv: f32, yv: f32) -> f64 = cdecl 0x53CC70 => unported;
     /// `CPlayerPed::FindTargetPriority(CEntity*)` (0x609DE0, `ret 4`, ST0)
     pub fn find_target_priority(p: GPtr<u8>, t: GPtr<u8>) -> f64 = thiscall 0x609DE0 => unported;
     /// `CPlayerPed::LOSBlockedBetweenPeds(CEntity*, CEntity*)` (0x60B550, cdecl)
     pub fn los_blocked_between_peds_call(a: GPtr<u8>, b: GPtr<u8>) -> u8 = cdecl 0x60B550 => los_blocked_between_peds;
     /// `CWorld::FindPlayerCoors(CVector* out, int32 id)` (0x56E010)
     pub fn find_player_coors(out: GPtr<f32>, id: i32) -> GPtr<f32> = cdecl 0x56E010 => unported;
-    /// `CPed::IsPlayer` (0x5DF8F0)
-    pub fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CCollision::DistToLine(const CVector&, const CVector&, const CVector&)` (0x417610, ST0)
-    pub fn dist_to_line(a: GPtr<f32>, b: GPtr<f32>, p: GPtr<f32>) -> f64 = cdecl 0x417610 => unported;
     /// `sub_609380` (unnamed: any of the recruit cheats 76/77/78 active; cdecl, AL)
     pub fn recruit_cheats_active() -> u8 = cdecl 0x609380 => unported;
     /// `CPad::GetGroupControlForward` (0x541190)
@@ -106,84 +148,30 @@ orig! {
     pub fn acq_set_as_acquaintance(a: GPtr<u8>, ty: i32, flags: u32) = thiscall 0x608DA0 => unported;
     /// `CAcquaintance::ClearAsAcquaintance(int32, uint32)` (0x608980, `ret 8`)
     pub fn acq_clear_as_acquaintance(a: GPtr<u8>, ty: i32, flags: u32) = thiscall 0x608980 => unported;
-    /// `CPedGroupIntelligence::SetDefaultTaskAllocatorType(int32)` (0x5FBB70)
-    pub fn group_intel_set_default_task_allocator_type(gi: GPtr<u8>, ty: i32) = thiscall 0x5FBB70 => unported;
-    /// `CEventPlayerCommandToGroup::CEventPlayerCommandToGroup(ePlayerGroupCommand, CPed*)` (0x4B23D0, `ret 8`)
-    pub fn event_player_command_to_group_ctor(e: GPtr<u8>, cmd: i32, target: GPtr<u8>) -> GPtr<u8> = thiscall 0x4B23D0 => unported;
-    /// `CEventEditableResponse::ComputeResponseTaskType(CPedGroup*)` (0x4B57A0)
-    pub fn event_compute_response_task_type_group(e: GPtr<u8>, group: GPtr<u8>) = thiscall 0x4B57A0 => unported;
-    /// `CEventEditableResponse::WillRespond` (0x4AC490)
-    pub fn event_will_respond(e: GPtr<u8>) -> u8 = thiscall 0x4AC490 => unported;
-    /// `CEvent::operator new(uint32)` (0x4B5620)
-    pub fn event_operator_new(size: u32) -> GPtr<u8> = cdecl 0x4B5620 => unported;
-    /// `CEventPlayerCommandToGroup` destructor body (0x4B2470, unnamed in the catalogue)
-    pub fn event_player_command_to_group_dtor(e: GPtr<u8>) = thiscall 0x4B2470 => unported;
     /// `CPedGroup::FindDistanceToFurthestMember` (0x5FB010, ST0)
     pub fn group_find_distance_to_furthest_member(g: GPtr<u8>) -> f64 = thiscall 0x5FB010 => unported;
-    /// `CPedIntelligence::FindTaskByType(int32)` (0x600EE0)
-    pub fn intel_find_task_by_type(intel: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x600EE0 => unported;
-    /// `CEventGroup::GetEventOfType(eEventType)` (0x4AB650)
-    pub fn event_group_get_event_of_type(eg: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x4AB650 => unported;
     /// `CTask::GetTaskType` (vtable slot 0x10)
     pub fn v_task_get_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CTask::operator new(uint32)` (0x61A5A0)
-    pub fn task_operator_new(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => unported;
     /// `CTaskComplexSmartFleeEntity::CTaskComplexSmartFleeEntity(CEntity*, bool, float, int32, int32, float)` (0x65C430, `ret 0x18`)
     pub fn task_smart_flee_entity_ctor(t: GPtr<u8>, e: GPtr<u8>, b: u32, dist: f32, time: i32, a: u32, c: u32) -> GPtr<u8> = thiscall 0x65C430 => unported;
     /// `CEventScriptCommand::CEventScriptCommand(int32, CTask*, bool)` (0x4B0A00, `ret 0xC`)
     pub fn event_script_command_ctor(e: GPtr<u8>, index: i32, task: GPtr<u8>, dead: u32) -> GPtr<u8> = thiscall 0x4B0A00 => unported;
-    /// `CEventScriptCommand` destructor (0x4B0A50, unnamed in the catalogue)
-    pub fn event_script_command_dtor(e: GPtr<u8>) = thiscall 0x4B0A50 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, `ret 8`)
-    pub fn event_group_add(eg: GPtr<u8>, e: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
-    /// `CEntity::GetIsOnScreen` (0x534540)
-    pub fn entity_get_is_on_screen(e: GPtr<u8>) -> u8 = thiscall 0x534540 => unported;
     /// `CEntity::FlagToDestroyWhenNextProcessed` (vtable slot 0x54)
     pub fn v_flag_to_destroy_when_next_processed(e: GPtr<u8>) = thiscall vslot 0x54 => unported;
     /// `CWorld::FindObjectsInRange(const CVector&, float, bool, int16*, int16, CEntity**, bool, bool, bool, bool, bool)` (0x564A20)
     pub fn world_find_objects_in_range(p: GPtr<f32>, r: f32, b2d: u32, n: GPtr<i16>, max: u32, list: GPtr<GPtr<u8>>, bd: u32, vh: u32, pd: u32, ob: u32, du: u32) = cdecl 0x564A20 => unported;
-    /// `CCarCtrl::PossiblyRemoveVehicle(CVehicle*)` (0x424F80)
-    pub fn car_ctrl_possibly_remove_vehicle(v: GPtr<u8>) = cdecl 0x424F80 => unported;
-    /// `CTaskManager::FindActiveTaskByType(int32)` (0x681740)
-    pub fn task_mgr_find_active_task_by_type(tm: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x681740 => unported;
-    /// `CAEPedSpeechAudioEntity::SetCJMood(int16, uint32, int16, int16, int16)` (0x4E3ED0)
-    pub fn speech_set_cj_mood(a: i32, b: u32, c: i32, d: i32, e: i32) = cdecl 0x4E3ED0 => unported;
-    /// `CStats::FindMaxNumberOfGroupMembers` (0x559A50)
-    pub fn stats_find_max_number_of_group_members() -> i32 = cdecl 0x559A50 => unported;
-    /// `CPedGroups::GetPedsGroup(const CPed*)` (0x5F7E80)
-    pub fn ped_groups_get_peds_group(ped: GPtr<u8>) -> GPtr<u8> = cdecl 0x5F7E80 => unported;
-    /// `CPedGroupMembership::RemoveMember(CPed*)` (0x5FB210)
-    pub fn membership_remove_member(m: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x5FB210 => unported;
-    /// `CTaskComplexBeInGroup::CTaskComplexBeInGroup(int32 groupId, bool)` (0x632E50, `ret 8`)
-    pub fn task_be_in_group_ctor(t: GPtr<u8>, id: i32, b: u32) -> GPtr<u8> = thiscall 0x632E50 => unported;
-    /// `CPedGroupMembership::AddFollower(CPed*)` (0x5F8020)
-    pub fn membership_add_follower(m: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x5F8020 => unported;
-    /// `CPedGroup::Process` (0x5FC7E0)
-    pub fn group_process(g: GPtr<u8>) = thiscall 0x5FC7E0 => unported;
     /// `CPed::GiveWeaponWhenJoiningGang` (0x5E8BE0)
     pub fn ped_give_weapon_when_joining_gang(p: GPtr<u8>) = thiscall 0x5E8BE0 => unported;
     /// `CEventNewGangMember::CEventNewGangMember(CPed*)` (0x608F70, `ret 4`)
     pub fn event_new_gang_member_ctor(e: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x608F70 => unported;
-    /// `CStats::DisplayScriptStatUpdateMessage(uint8, uint32, float)` (0x55B980)
-    pub fn display_script_stat_update_message(inc: u32, stat: u32, v: f32) = cdecl 0x55B980 => unported;
-    /// `CPool<CPed>::GetRef(CPed*)` thunk (0x4442D0, body in .HOODLUM; unnamed in the catalogue)
-    pub fn ped_pool_get_ref(pool: GPtr<u8>, ped: GPtr<u8>) -> i32 = thiscall 0x4442D0 => unported;
     /// `CRadar::SetEntityBlip(eBlipType, int32, uint32, eBlipDisplay, const char*)` (0x5839A0)
     pub fn radar_set_entity_blip(ty: i32, h: i32, colour: u32, display: i32, name: u32) -> i32 = cdecl 0x5839A0 => unported;
-    /// `CRadar::ChangeBlipScale(int32, int32)` (0x583CC0)
-    pub fn radar_change_blip_scale(b: i32, s: i32) = cdecl 0x583CC0 => unported;
-    /// `CRadar::ChangeBlipColour(int32, uint32)` (0x583AB0)
-    pub fn radar_change_blip_colour(b: i32, c: u32) = cdecl 0x583AB0 => unported;
     /// `CRadar::SetBlipFriendly(int32, bool)` (0x583EB0)
     pub fn radar_set_blip_friendly(b: i32, f: u32) = cdecl 0x583EB0 => unported;
     /// `CEventDontJoinPlayerGroup::CEventDontJoinPlayerGroup(CPed*)` (0x6090E0, `ret 4`)
     pub fn event_dont_join_player_group_ctor(e: GPtr<u8>, player: GPtr<u8>) -> GPtr<u8> = thiscall 0x6090E0 => unported;
     /// `CEventDontJoinPlayerGroup` destructor (0x609140, unnamed in the catalogue)
     pub fn event_dont_join_player_group_dtor(e: GPtr<u8>) = thiscall 0x609140 => unported;
-    /// `CPlaceable::AllocateMatrix` (0x54F560)
-    pub fn placeable_allocate_matrix(e: GPtr<u8>) = thiscall 0x54F560 => unported;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*)` (0x54F1B0, unnamed in the catalogue)
-    pub fn simple_transform_update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => unported;
     /// `CEntity::GetBoundCentre(CVector&)` (0x534250)
     pub fn entity_get_bound_centre(e: GPtr<u8>, out: GPtr<f32>) = thiscall 0x534250 => unported;
     /// `CEntity::GetHeightAboveRoad` (vtable slot 0xD4, ST0)
@@ -198,40 +186,16 @@ orig! {
     pub fn cranes_is_this_car_being_carried(v: GPtr<u8>) -> u8 = cdecl 0x6F3FF0 => unported;
     /// `CPlayerInfo::EvaluateCarPosition(CEntity*, CPed*, float, float*, CVehicle**)` (0x56DAD0, `ret 0x14`)
     pub fn evaluate_car_position(pi: GPtr<u8>, e: GPtr<u8>, ped: GPtr<u8>, d: f32, out_d: GPtr<f32>, out_v: GPtr<GPtr<u8>>) = thiscall 0x56DAD0 => crate::player_info::evaluate_car_position;
-    /// CRT `floor(double)` (0x8219F0, ST0)
-    pub fn crt_floor(v: f64) -> f64 = cdecl 0x8219F0 => unported;
-    /// `CWorld::ClearScanCodes` (0x563470)
-    pub fn world_clear_scan_codes() = cdecl 0x563470 => unported;
     /// `CPed::GetWeaponSkill()` (0x5E6580, AL)
     pub fn ped_get_weapon_skill_current(p: GPtr<u8>) -> u8 = thiscall 0x5E6580 => crate::ped::get_weapon_skill_current;
     /// `CCamera::Find3rdPersonCamTargetVector(float range, CVector source, CVector& cam, CVector& point)` (0x514970, `ret 0x18`)
     pub fn camera_find_3rd_person_cam_target_vector(cam: GPtr<u8>, range: f32, sx: f32, sy: f32, sz: f32, out_cam: GPtr<f32>, out_point: GPtr<f32>) = thiscall 0x514970 => unported;
-    /// `CWorld::ResetLineTestOptions` (0x5631C0)
-    pub fn world_reset_line_test_options() = cdecl 0x5631C0 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
-    pub fn entity_clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    pub fn entity_register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
     /// `CPedIntelligence::IsInSeeingRange(const CVector&)` (0x600C60)
     pub fn intel_is_in_seeing_range(intel: GPtr<u8>, p: GPtr<f32>) -> u8 = thiscall 0x600C60 => unported;
-    /// `CPedGroups::AreInSameGroup(const CPed*, const CPed*)` (0x5F7F40)
-    pub fn ped_groups_are_in_same_group(a: GPtr<u8>, b: GPtr<u8>) -> u8 = cdecl 0x5F7F40 => unported;
-    /// `CEventGunAimedAt::CEventGunAimedAt(CPed*)` (0x4B0700, `ret 4`, unnamed in the catalogue)
-    pub fn event_gun_aimed_at_ctor(e: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x4B0700 => unported;
-    /// `CEventGunAimedAt` destructor (0x4B07B0, unnamed in the catalogue)
-    pub fn event_gun_aimed_at_dtor(e: GPtr<u8>) = thiscall 0x4B07B0 => unported;
     /// `CPlayerPed::EvaluateNeighbouringTarget` (0x60D1C0, `ret 0x18`)
     pub fn evaluate_neighbouring_target_call(p: GPtr<u8>, t: GPtr<u8>, out_t: GPtr<GPtr<u8>>, out_s: GPtr<f32>, max_dist: f32, heading: f32, left: u32) = thiscall 0x60D1C0 => evaluate_neighbouring_target;
     /// `CPlayerPed::EvaluateTarget` (0x60D020, `ret 0x18`)
     pub fn evaluate_target_call(p: GPtr<u8>, t: GPtr<u8>, out_t: GPtr<GPtr<u8>>, out_s: GPtr<f32>, max_dist: f32, heading: f32, b: u32) = thiscall 0x60D020 => evaluate_target;
-    /// `CGameLogic::IsCoopGameGoingOn` (0x441390)
-    pub fn is_coop_game_going_on() -> u8 = cdecl 0x441390 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    pub fn get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CPad::GetPedWalkLeftRight` (0x53FC90, AX)
-    pub fn pad_get_ped_walk_left_right(pad: GPtr<u8>) -> i16 = thiscall 0x53FC90 => unported;
-    /// `CPad::GetPedWalkUpDown` (0x53FD30, AX)
-    pub fn pad_get_ped_walk_up_down(pad: GPtr<u8>) -> i16 = thiscall 0x53FD30 => unported;
     /// `CGeneral::GetRadianAngleBetweenPoints(float, float, float, float)` (0x53CBE0, ST0)
     pub fn get_radian_angle_between_points(x1: f32, y1: f32, x2: f32, y2: f32) -> f64 = cdecl 0x53CBE0 => unported;
     /// `CGeneral::LimitRadianAngle(float)` (0x53CB50, ST0)
@@ -248,48 +212,24 @@ orig! {
     pub fn rw_im3d_transform(v: u32, n: u32, m: u32, flags: u32) -> u32 = cdecl 0x7EF450 => unported;
     /// `RwIm3DRenderIndexedPrimitive(RwPrimitiveType, RwImVertexIndex*, int32)` (0x7EF550)
     pub fn rw_im3d_render_indexed_primitive(ty: u32, idx: u32, n: i32) -> i32 = cdecl 0x7EF550 => unported;
-    /// `RwIm3DEnd` (0x7EF520)
-    pub fn rw_im3d_end() -> i32 = cdecl 0x7EF520 => unported;
     /// `RpAnimBlendClumpGetAssociation(RpClump*, uint32 animId)` (0x4D68B0)
     pub fn clump_get_association(clump: GPtr<u8>, id: u32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
-    /// `CAnimBlendAssociation::SetCurrentTime(float)` (0x4CEA80)
-    pub fn assoc_set_current_time(a: GPtr<u8>, t: f32) = thiscall 0x4CEA80 => unported;
     /// `CAnimBlendAssociation` deleting destructor (vtable slot 0)
     pub fn v_assoc_delete(a: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
     /// `CAnimBlendAssociation::SetDeleteCallback(void(*)(CAnimBlendAssociation*, void*), void*)` (0x4CEBC0)
     pub fn assoc_set_delete_callback(a: GPtr<u8>, cb: u32, data: GPtr<u8>) = thiscall 0x4CEBC0 => unported;
-    /// `CPed::RestoreHeadingRate` (0x5DFD60)
-    pub fn ped_restore_heading_rate(p: GPtr<u8>) = thiscall 0x5DFD60 => unported;
     /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float)` (0x4D4610)
     pub fn blend_animation(clump: GPtr<u8>, group: u32, id: u32, delta: f32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
-    /// `CAnimManager::AddAnimation(RpClump*, AssocGroupId, AnimationId)` (0x4D3AA0)
-    pub fn add_animation(clump: GPtr<u8>, group: u32, id: u32) -> GPtr<u8> = cdecl 0x4D3AA0 => unported;
     /// `CPlayerPed::GetPadFromPlayer` (0x609560)
     pub fn get_pad_from_player(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x609560 => crate::player_ped::get_pad_from_player;
-    /// `CPad::GetForceCameraBehindPlayer` (0x540AE0)
-    pub fn pad_get_force_camera_behind_player(pad: GPtr<u8>) -> u8 = thiscall 0x540AE0 => unported;
     /// `CPad::AimWeaponLeftRight(CPed*)` (0x541040, AX)
     pub fn pad_aim_weapon_left_right(pad: GPtr<u8>, ped: u32) -> i16 = thiscall 0x541040 => unported;
-    /// `CPedIntelligence::GetTaskFighting` (0x600F30)
-    pub fn intel_get_task_fighting(i: GPtr<u8>) -> GPtr<u8> = thiscall 0x600F30 => unported;
-    /// `CPedIntelligence::GetTaskUseGun` (0x600F70)
-    pub fn intel_get_task_use_gun(i: GPtr<u8>) -> GPtr<u8> = thiscall 0x600F70 => unported;
-    /// `CPedIntelligence::GetTaskDuck(bool)` (0x6010A0)
-    pub fn intel_get_task_duck(i: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x6010A0 => unported;
-    /// `CPedIntelligence::GetTaskThrow` (0x600FB0)
-    pub fn intel_get_task_throw(i: GPtr<u8>) -> GPtr<u8> = thiscall 0x600FB0 => unported;
-    /// `CPedIntelligence::GetTaskJetPack` (0x601110)
-    pub fn intel_get_task_jet_pack(i: GPtr<u8>) -> GPtr<u8> = thiscall 0x601110 => unported;
     /// `CWorld::TestSphereAgainstWorld(CVector, float, CEntity*, bool, bool, bool, bool, bool, bool)` (0x569E20)
     pub fn world_test_sphere_against_world(cx: f32, cy: f32, cz: f32, r: f32, ignore: u32, b: u32, v: u32, p: u32, o: u32, d: u32, cam: u32) -> GPtr<u8> = cdecl 0x569E20 => unported;
-    /// `CClothes::GetDefaultPlayerMotionGroup` (0x5A81B0)
-    pub fn get_default_player_motion_group() -> i32 = cdecl 0x5A81B0 => unported;
     /// `CStats::UpdateStatsWhenSprinting` (0x55C660)
     pub fn stats_update_when_sprinting() = cdecl 0x55C660 => unported;
     /// `CStats::UpdateStatsWhenRunning` (0x55C6F0)
     pub fn stats_update_when_running() = cdecl 0x55C6F0 => unported;
-    /// `CPlayerPed::GetButtonSprintResults(eSprintType)` (0x60A820, ST0; EDX preserved for the original caller)
-    pub fn get_button_sprint_results(p: GPtr<u8>, ty: i32) -> f64 = thiscall 0x60A820 => unported;
 }
 
 /// `m_pPlayerData`

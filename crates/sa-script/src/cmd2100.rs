@@ -40,9 +40,37 @@ const EMPTY_STR: usize = 0x858B54;
 /// `g_interiorMan` 0xBAF670.
 const INTERIOR_MAN: usize = 0xBAF670;
 
+use crate::bindings::add_brain_for_code_use;
+use crate::bindings::clump_get_association;
+use crate::bindings::clump_is_initialized;
+use crate::bindings::get_proper_index_from_index_used_by_script as get_proper_index;
+use crate::bindings::object_get_ref_;
+use crate::bindings::set_coords_of_script_car;
+use crate::bindings::set_entity_blip;
+use crate::bindings::start_playback_recorded_car;
+use sa_core::bindings::crt_strncpy as strncpy_;
+use sa_core::bindings::get_uppercase_key;
+use sa_core::bindings::task_new;
+use sa_core::bindings::world_add as world_add_;
+use sa_core::bindings::world_remove as world_remove_;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::entry_exit_at;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::event_script_command_ctor;
+use sa_world::bindings::event_script_command_dtor;
+use sa_world::bindings::find_ground_z_for_coord as find_ground_z;
+use sa_world::bindings::find_nearest_entry_exit;
+use sa_world::bindings::find_smallest_zone_for_position;
+use sa_world::bindings::find_zone_by_label;
+use sa_world::bindings::get_event_global_group;
+use sa_world::bindings::get_has_collided_with;
+use sa_world::bindings::sequence_add_task as task_sequence_add;
+use sa_world::bindings::set_gang_wars_active;
+use sa_world::bindings::set_orientation;
+use sa_world::bindings::set_velocity as set_ped_velocity;
+use sa_world::bindings::shopping_remove_loaded_shop as remove_loaded_shop;
+use sa_world::bindings::task_walk_alongside_ctor;
 orig! {
-    /// `CPed::IsPlayer()` (0x5DF8F0), AL
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
     /// `CTimeCycle::StopExtraColour(bool)` (0x55FF20)
     fn stop_extra_colour(a: i32) = cdecl 0x55FF20 => unported;
     /// `CVehicle::SetTowLink(CVehicle*, bool)` through the vtable slot +0xF4, read at run time; AL discarded
@@ -53,28 +81,11 @@ orig! {
     fn global_index(s: Scr) -> u16 = thiscall 0x464700 => crate::vm::get_index_of_global_variable;
     /// `CCam::DoCamBump(float, float)` (0x50CB30); raw
     fn do_cam_bump(cam: GPtr<u8>, a: u32, b: u32) = thiscall 0x50CB30 => unported;
-    /// `RpAnimBlendClumpGetAssociation(RpClump*, const char*)` (0x4D6870)
-    fn clump_get_association(clump: GPtr<u8>, name: GPtr<u8>) -> GPtr<u8> = cdecl 0x4D6870 => unported;
-    /// `RpAnimBlendClumpIsInitialized(RpClump*)` (0x4D6760), AL
-    fn clump_is_initialized(clump: GPtr<u8>) -> u8 = cdecl 0x4D6760 => unported;
     /// `CAnimBlendAssociation::SetCurrentTime(float)` (0x4CEA80); raw
     fn set_current_time(a: GPtr<u8>, t: u32) = thiscall 0x4CEA80 => unported;
-    /// 0x441130 (thiscall on a `CPed`, three floats: sets the move speed); raw
-    fn set_ped_velocity(p: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x441130 => unported;
-    /// `CWorld::Remove(CEntity*)` (0x563280) / `CWorld::Add(CEntity*)` (0x563220)
-    fn world_remove_(e: GPtr<u8>) = cdecl 0x563280 => unported;
-    fn world_add_(e: GPtr<u8>) = cdecl 0x563220 => unported;
-    /// `CPlaceable::SetOrientation(float, float, float)` (0x439A80); raw
-    fn set_orientation(e: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x439A80 => unported;
-    /// `CTheZones::FindSmallestZoneForPosition(const CVector&, bool)` (0x572360)
-    fn find_smallest_zone_for_position(pos: GPtr<u32>, b: u32) -> GPtr<u8> = cdecl 0x572360 => unported;
-    /// CRT `strncpy` (0x821F40)
-    fn strncpy_(dst: GPtr<u8>, src: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x821F40 => unported;
     /// `InteriorManager_c::ActivatePeds(bool)` (0x598080) / `IsGroupActive(int32)` (0x598280, AL)
     fn interior_activate_peds(m: GPtr<u8>, b: u32) = thiscall 0x598080 => unported;
     fn interior_is_group_active(m: GPtr<u8>, g: u32) -> u8 = thiscall 0x598280 => unported;
-    /// `CTask::operator new(uint32)` (0x61A5A0)
-    fn task_new(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => unported;
     /// `CRunningScript::GivePedScriptedTask(int32 pedHandle, CTask*, int32 opcode)` (0x465C20)
     fn give_ped_scripted_task(s: Scr, ped: u32, task: GPtr<u8>, command: u32) = thiscall 0x465C20 => unported;
     /// `CTaskComplexFollowPedFootsteps::CTaskComplexFollowPedFootsteps(CPed*)` (0x694E20)
@@ -82,18 +93,8 @@ orig! {
     /// `CTaskComplexDie::CTaskComplexDie(...)` (0x630040), 9 dwords; floats raw
     #[allow(clippy::too_many_arguments)]
     fn task_die_ctor(t: GPtr<u8>, a: u32, b: u32, c: u32, d: u32, e: u32, f: u32, g: u32, h: u32, i: u32) -> GPtr<u8> = thiscall 0x630040 => unported;
-    /// `CEventScriptCommand::CEventScriptCommand(int32 primaryTaskIndex, CTask*, bool)` (0x4B0A00) and its
-    /// destructor 0x4B0A50
-    fn event_script_command_ctor(e: GPtr<u8>, idx: u32, task: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4B0A00 => unported;
-    fn event_script_command_dtor(e: GPtr<u8>) = thiscall 0x4B0A50 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420)
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
-    /// `GetEventGlobalGroup()` (0x4ABA50)
-    fn get_event_global_group() -> GPtr<u8> = cdecl 0x4ABA50 => unported;
     /// `CEventGlobalGroup::GetSoundLevel(CEntity*, CVector&)` (0x4AB900), ST0 (read as f64)
     fn get_sound_level(g: GPtr<u8>, e: GPtr<u8>, pos: GPtr<u32>) -> f64 = thiscall 0x4AB900 => unported;
-    /// `CTaskComplexWalkAlongsidePed::CTaskComplexWalkAlongsidePed(CPed*, float)` (0x683240); raw
-    fn task_walk_alongside_ctor(t: GPtr<u8>, p: GPtr<u8>, d: u32) -> GPtr<u8> = thiscall 0x683240 => unported;
     /// `CCarCtrl::ScriptGenerateOneEmergencyServicesCar(uint32 model, CVector)` (0x42FBC0), AL; vector raw
     fn script_generate_emergency_car(m: u32, x: u32, y: u32, z: u32) -> u8 = cdecl 0x42FBC0 => unported;
     /// `CTaskSimpleSetKindaStayInSamePlace` constructor (0x62F610, bool), `ProcessPed(CPed*)` (0x62F660) and
@@ -101,14 +102,6 @@ orig! {
     fn task_kinda_stay_ctor(t: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x62F610 => unported;
     fn task_kinda_stay_process_ped(t: GPtr<u8>, p: GPtr<u8>) -> u8 = thiscall 0x62F660 => unported;
     fn task_kinda_stay_dtor(t: GPtr<u8>) = thiscall 0x62F650 => unported;
-    /// `CTaskComplexSequence::AddTask(CTask*)` (0x632D10)
-    fn task_sequence_add(seq: GPtr<u8>, t: GPtr<u8>) = thiscall 0x632D10 => unported;
-    /// `CVehicleRecording::StartPlaybackRecordedCar(CVehicle*, int32, bool, bool)` (0x45A980)
-    fn start_playback_recorded_car(v: GPtr<u8>, i: u32, ai: u32, looped: u32) = cdecl 0x45A980 => unported;
-    /// `CEntryExitManager::FindNearestEntryExit(const CVector2D&, float, int32)` (0x43F4B0)
-    fn find_nearest_entry_exit(pos: GPtr<u32>, range: u32, ignore: i32) -> i32 = cdecl 0x43F4B0 => unported;
-    /// The entry-exit slot accessor at 0x43EF00 (cdecl (index) -> CEntryExit*; a `.HOODLUM` thunk)
-    fn entry_exit_at(i: i32) -> GPtr<u8> = cdecl 0x43EF00 => unported;
     /// `CWorld::FindObjectsInRange(const CVector&, float, bool, int16*, int16, CEntity**, bool x5)` (0x564A20)
     #[allow(clippy::too_many_arguments)]
     fn find_objects_in_range(pos: GPtr<u32>, r: u32, two_d: u32, count: GPtr<u16>, max: u32, out: GPtr<u32>, b: u32, v: u32, p: u32, o: u32, d: u32) = cdecl 0x564A20 => unported;
@@ -118,57 +111,36 @@ orig! {
     fn find_objects_of_type_in_range(model: u32, pos: GPtr<u32>, r: u32, two_d: u32, count: GPtr<u16>, max: u32, out: GPtr<u32>, b: u32, v: u32, p: u32, o: u32, d: u32) = cdecl 0x564C70 => unported;
     /// `CVector::Magnitude()` (0x4082C0), ST0 (an `fsqrt` result under PC=24: exact as f64)
     fn vector_magnitude(v: GPtr<u32>) -> f64 = thiscall 0x4082C0 => unported;
-    /// `CPool<CObject>::GetRef(CObject*)` with the raw result (0x465070)
-    fn object_get_ref_(pool: GPtr<u8>, o: GPtr<u8>) -> u32 = thiscall 0x465070 => unported;
     /// `CTheScripts::AddToSwitchJumpTable(int32 value, int32 address)` (0x470390)
     fn add_to_switch_jump_table(v: u32, a: u32) = cdecl 0x470390 => unported;
     /// `CTheScripts::UseSwitchJumpTable(int32* out)` (0x4703C0; writes 0 first, then the target when found)
     fn use_switch_jump_table(out: GPtr<u32>) = cdecl 0x4703C0 => unported;
     /// `CVehicleRecording::RemoveRecordingFile(int32)` (0x45A0A0)
     fn remove_recording_file(i: u32) = cdecl 0x45A0A0 => unported;
-    /// `CTheZones::FindZoneByLabel(const char*, eZoneType)` (0x572C40), AX
-    fn find_zone_by_label(label: GPtr<u8>, ty: u32) -> u16 = cdecl 0x572C40 => unported;
     /// `CBirds::CreateNumberOfBirds(CVector, CVector, int32, int32, bool)` (0x711EF0); vectors raw
     #[allow(clippy::too_many_arguments)]
     fn create_number_of_birds(ax: u32, ay: u32, az: u32, bx: u32, by: u32, bz: u32, n: u32, ty: u32, c: u32) = cdecl 0x711EF0 => unported;
-    /// `CGangWars::SetGangWarsActive(bool)` (0x446570) / `GangWarGoingOn()` (0x443AA0, AL)
-    fn set_gang_wars_active(b: u32) = cdecl 0x446570 => unported;
     fn gang_war_going_on() -> u8 = cdecl 0x443AA0 => unported;
     /// `CPedClothesDesc::SetTextureAndModel(const char* tex, const char* model, int32)` (0x5A8080)
     fn set_texture_and_model_names(d: GPtr<u8>, tex: GPtr<u8>, model: GPtr<u8>, ty: u32) = thiscall 0x5A8080 => unported;
-    /// `CKeyGen::GetUppercaseKey(const char*)` (0x53CF30)
-    fn get_uppercase_key(s: GPtr<u8>) -> u32 = cdecl 0x53CF30 => unported;
     /// `CShopping::SetPlayerHasBought(uint32)` (0x49B610) / `RemoveLoadedShop()` (0x49AE30)
     fn set_player_has_bought(k: u32) = cdecl 0x49B610 => unported;
-    fn remove_loaded_shop() = cdecl 0x49AE30 => unported;
     /// `CTheScripts::GetActualScriptThingIndex(int32 ref, uint8 type)` (0x4839A0)
     fn get_actual_script_thing_index(r: u32, ty: u32) -> i32 = cdecl 0x4839A0 => unported;
     /// 0x53FB70 (cdecl `(int32)`: `CPad::GetPad`)
     fn get_pad(i: u32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
     /// `FxSystem_c::AttachToBone(CEntity*, int32)` (0x4AA400)
     fn fx_attach_to_bone(fx: GPtr<u8>, e: GPtr<u8>, bone: u32) = thiscall 0x4AA400 => unported;
-    /// `CStreamedScripts::GetProperIndexFromIndexUsedByScript(int16)` (0x470810), AX
-    fn get_proper_index(m: GPtr<u8>, i: u32) -> u16 = thiscall 0x470810 => unported;
-    /// `CScriptsForBrains::AddNewStreamedScriptBrainForCodeUse(int16, const char*, int8)` (0x46A9C0)
-    fn add_brain_for_code_use(m: GPtr<u8>, i: u32, name: GPtr<u8>, ty: u32) = thiscall 0x46A9C0 => unported;
-    /// `CRadar::SetEntityBlip(eBlipType, int32, uint32, eBlipDisplay, const char*)` (0x5839A0)
-    fn set_entity_blip(ty: u32, h: u32, colour: u32, display: u32, name: GPtr<u8>) -> u32 = cdecl 0x5839A0 => unported;
     /// `CRadar::ChangeBlipScale(int32, int32)` (0x583CC0)
     fn change_blip_scale(b: u32, s: u32) = cdecl 0x583CC0 => unported;
     /// `CPed::GetBonePosition(RwV3d&, uint32 bone, bool)` (0x5E4280)
     fn get_bone_position(p: GPtr<u8>, out: GPtr<u32>, bone: u32, b: u32) = thiscall 0x5E4280 => unported;
     /// `CRunningScript::PlayAnimScriptCommand(int32 command)` (0x470150; reads its own parameters)
     fn play_anim_script_command(s: Scr, command: u32) = thiscall 0x470150 => unported;
-    /// `CCarCtrl::SetCoordsOfScriptCar(CVehicle*, float, float, float, bool, bool)` (0x4342A0); raw
-    fn set_coords_of_script_car(v: GPtr<u8>, x: u32, y: u32, z: u32, a: u32, b: u32) = cdecl 0x4342A0 => unported;
-    /// `CWorld::FindGroundZForCoord(float, float)` (0x569660), ST0 (read as f64: exact); floats raw
-    fn find_ground_z(x: u32, y: u32) -> f64 = cdecl 0x569660 => unported;
     /// `CClock::OffsetClockByADay(uint32)` (0x52D0B0)
     fn offset_clock_by_a_day(n: u32) = cdecl 0x52D0B0 => unported;
     /// `COnscreenTimer::SetClockBeepCountdownSecs(uint32 varId, uint32 secs)` (0x44CEE0)
     fn set_clock_beep_countdown_secs(t: GPtr<u8>, id: u32, secs: u32) = thiscall 0x44CEE0 => unported;
-    /// `CPhysical::GetHasCollidedWith(CEntity*)` (0x543540), AL
-    fn get_has_collided_with(p: GPtr<u8>, e: GPtr<u8>) -> u8 = thiscall 0x543540 => unported;
 }
 
 /// `VEH(h)` / `PED(h)` / `OBJ(h)` (GetAtRef; no null check by the callers unless stated).

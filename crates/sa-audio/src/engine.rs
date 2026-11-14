@@ -24,21 +24,23 @@ use crate::common::{
 /// No globals of its own (`AudioEngine` itself is reached by address).
 pub const GLOBALS: &[GlobalDesc] = &[];
 
+pub use crate::bindings::amb_is_active;
+pub use crate::bindings::cut_is_active;
+pub use crate::bindings::cut_service;
+pub use crate::bindings::cut_stop;
+pub use crate::bindings::frontend_add_audio_event;
+pub use crate::bindings::hw_get_track_play_time;
+pub use crate::bindings::hw_service;
+pub use crate::bindings::radio_is_vehicle_radio_active;
+pub use crate::bindings::sm_pause_manually as sound_manager_pause_manually;
+pub use crate::bindings::sm_service as sound_manager_service;
 orig! {
-    /// `CAESoundManager::PauseManually(bool)` (0x4EF510)
-    pub fn sound_manager_pause_manually(this: GPtr<u8>, pause: u32) = thiscall 0x4EF510 => unported;
-    /// `CAESoundManager::Service()` (0x4F0000)
-    pub fn sound_manager_service(this: GPtr<u8>) = thiscall 0x4F0000 => unported;
     /// `CAEAudioHardware::SetMusicMasterScalingFactor(float)` (0x4D9530)
     pub fn hw_set_music_master_scaling_factor(this: GPtr<u8>, f: f32) = thiscall 0x4D9530 => unported;
     /// `CAEAudioHardware::SetEffectsMasterScalingFactor(float)` (0x4D9540)
     pub fn hw_set_effects_master_scaling_factor(this: GPtr<u8>, f: f32) = thiscall 0x4D9540 => unported;
     /// `CAEAudioHardware::GetBeatInfo(tBeatInfo*)` (0x4D8FA0)
     pub fn hw_get_beat_info(this: GPtr<u8>, out: GPtr<u8>) = thiscall 0x4D8FA0 => unported;
-    /// `CAEAudioHardware::GetTrackPlayTime()` (0x4D8F60)
-    pub fn hw_get_track_play_time(this: GPtr<u8>) -> u32 = thiscall 0x4D8F60 => unported;
-    /// `CAEAudioHardware::Service()` (0x4D9870; hooked by sa-hook's determinism mode)
-    pub fn hw_service(this: GPtr<u8>) = thiscall 0x4D9870 => unported;
     /// `CAECollisionAudioEntity::ReportGlassCollisionEvent(eAudioEvents, const CVector&, uint32)` (0x4DA070)
     pub fn coll_report_glass_collision_event(this: GPtr<u8>, event: u32, pos: u32, time: u32) = thiscall 0x4DA070 => unported;
     /// `CAECollisionAudioEntity::ReportWaterSplash(CVector posn, float volume)` (0x4DA190)
@@ -51,28 +53,16 @@ orig! {
     pub fn radio_start_radio_manual(this: GPtr<u8>, id: u32, bass: u32, a3: u32, a4: u32) = thiscall 0x4EB3C0 => unported;
     /// `CAERadioTrackManager::StartRadio(tVehicleAudioSettings*)` (0x4EB550)
     pub fn radio_start_radio_settings(this: GPtr<u8>, settings: u32) = thiscall 0x4EB550 => unported;
-    /// `CAERadioTrackManager::IsVehicleRadioActive()` (0x4E9800)
-    pub fn radio_is_vehicle_radio_active(this: GPtr<u8>) -> u8 = thiscall 0x4E9800 => unported;
     /// `CAEVehicleAudioEntity::StaticGetPlayerVehicleAudioSettingsForRadio()` (0x4F4ED0)
     pub fn vehicle_settings_for_radio() -> u32 = cdecl 0x4F4ED0 => unported;
     /// `CAECutsceneTrackManager::PlayPreloadedCutsceneTrack()` (0x4DBE70)
     pub fn cut_play_preloaded(this: GPtr<u8>) = thiscall 0x4DBE70 => unported;
-    /// `CAECutsceneTrackManager::StopCutsceneTrack()` (0x4DBE80)
-    pub fn cut_stop(this: GPtr<u8>) = thiscall 0x4DBE80 => unported;
-    /// `CAECutsceneTrackManager::IsCutsceneTrackActive()` (0x4DBEB0)
-    pub fn cut_is_active(this: GPtr<u8>) -> u8 = thiscall 0x4DBEB0 => unported;
-    /// `CAECutsceneTrackManager::Service(int32 trackPlayTime)` (0x4DBFB0)
-    pub fn cut_service(this: GPtr<u8>, play_time: u32) = thiscall 0x4DBFB0 => unported;
     /// `CAEAmbienceTrackManager::StopAmbienceTrack()` (0x4D6CC0)
     pub fn amb_stop(this: GPtr<u8>) = thiscall 0x4D6CC0 => unported;
-    /// `CAEAmbienceTrackManager::IsAmbienceTrackActive()` (0x4D6CF0)
-    pub fn amb_is_active(this: GPtr<u8>) -> u8 = thiscall 0x4D6CF0 => unported;
     /// `CAEAmbienceTrackManager::Service(int32 trackPlayTime)` (0x4D76C0)
     pub fn amb_service(this: GPtr<u8>, play_time: u32) = thiscall 0x4D76C0 => unported;
     /// `CAEScriptAudioEntity::ReportMissionAudioEvent(uint16, CPhysical*, float, float)` (0x4EE960)
     pub fn script_report_mission_audio_event(this: GPtr<u8>, event: u32, physical: u32, a3: u32, a4: u32) = thiscall 0x4EE960 => unported;
-    /// `CAEFrontendAudioEntity::AddAudioEvent(eAudioEvents, float, float)` (0x4DD4A0)
-    pub fn frontend_add_audio_event(this: GPtr<u8>, event: u32, volume: u32, speed: u32) = thiscall 0x4DD4A0 => unported;
 }
 
 /// 1.0f as the word the original pushes
@@ -336,6 +326,12 @@ pub const HOOKS: &[HookReg] = &[
 
 // ---- tail-jump forwarders (generated from the bytes: target, this adjustment, stack words) ----
 
+pub use crate::bindings::amb_is_active as t_is_ambience_track_active;
+pub use crate::bindings::cut_is_active as t_is_cutscene_track_active;
+pub use crate::bindings::frontend_add_audio_event as t_report_frontend_audio_event;
+pub use crate::bindings::hw_set_effects_fader_scaling_factor as t_set_effects_fader_scaling_factor;
+pub use crate::bindings::radio_is_vehicle_radio_active as t_is_vehicle_radio_active;
+pub use crate::bindings::script_is_mission_audio_sample_finished as t_is_mission_audio_sample_finished;
 orig! {
     /// `CAEFrontendAudioEntity::IsLoadingTuneActive()` (0x4DD470)
     pub fn t_is_loading_tune_active(this: GPtr<u8>) -> u8 = thiscall 0x4DD470 => unported;
@@ -343,8 +339,6 @@ orig! {
     pub fn t_reset_statistics(this: GPtr<u8>) = thiscall 0x4E8200 => unported;
     /// `CAEAudioHardware::SetMusicFaderScalingFactor(factor: float)` (0x4D9550)
     pub fn t_set_music_fader_scaling_factor(this: GPtr<u8>, factor: u32) = thiscall 0x4D9550 => unported;
-    /// `CAEAudioHardware::SetEffectsFaderScalingFactor(factor: float)` (0x4D9560)
-    pub fn t_set_effects_fader_scaling_factor(this: GPtr<u8>, factor: u32) = thiscall 0x4D9560 => unported;
     /// `CAEAudioHardware::SetNonStreamFaderScalingFactor(factor: float)` (0x4D95A0)
     pub fn t_set_non_stream_fader_scaling_factor(this: GPtr<u8>, factor: u32) = thiscall 0x4D95A0 => unported;
     /// `CAEAudioHardware::SetStreamFaderScalingFactor(factor: float)` (0x4D95B0)
@@ -353,8 +347,6 @@ orig! {
     pub fn t_disable_effects_loading(this: GPtr<u8>) = thiscall 0x4D8E50 => unported;
     /// `CAEAudioHardware::EnableEffectsLoading()` (0x4D8E40)
     pub fn t_enable_effects_loading(this: GPtr<u8>) = thiscall 0x4D8E40 => unported;
-    /// `CAEFrontendAudioEntity::AddAudioEvent(event: eAudioEvents, volume_change: float, speed: float)` (0x4DD4A0)
-    pub fn t_report_frontend_audio_event(this: GPtr<u8>, event: u32, volume_change: u32, speed: u32) = thiscall 0x4DD4A0 => unported;
     /// `CAECollisionAudioEntity::ReportCollision(entity1: CEntity*, entity2: CEntity*, surf1: eSurfaceType, surf2: eSurfaceType, pos: const CVector&, normal: const CVector*, impact1: float, impact2: float, one_shot: bool, unknown: bool)` (0x4DBA10)
     pub fn t_report_collision(this: GPtr<u8>, entity1: u32, entity2: u32, surf1: u32, surf2: u32, pos: u32, normal: u32, impact1: u32, impact2: u32, one_shot: u32, unknown: u32) = thiscall 0x4DBA10 => unported;
     /// `CAECollisionAudioEntity::ReportBulletHit(entity: CEntity*, surface: eSurfaceType, pos: const CVector&, angle: float)` (0x4DBDF0)
@@ -389,20 +381,14 @@ orig! {
     pub fn t_display_radio_station_name(this: GPtr<u8>) = thiscall 0x4E9E50 => unported;
     /// `CAERadioTrackManager::GetCurrentRadioStationID()` (0x4E83F0)
     pub fn t_get_current_radio_station_id(this: GPtr<u8>) -> u8 = thiscall 0x4E83F0 => unported;
-    /// `CAERadioTrackManager::IsVehicleRadioActive()` (0x4E9800)
-    pub fn t_is_vehicle_radio_active(this: GPtr<u8>) -> u8 = thiscall 0x4E9800 => unported;
     /// `CAECutsceneTrackManager::PlayPreloadedCutsceneTrack()` (0x4DBE70)
     pub fn t_play_preloaded_cutscene_track(this: GPtr<u8>) = thiscall 0x4DBE70 => unported;
-    /// `CAECutsceneTrackManager::IsCutsceneTrackActive()` (0x4DBEB0)
-    pub fn t_is_cutscene_track_active(this: GPtr<u8>) -> u8 = thiscall 0x4DBEB0 => unported;
     /// `CAECutsceneTrackManager::GetCutsceneTrackStatus()` (0x4DBEC0)
     pub fn t_get_cutscene_track_status(this: GPtr<u8>) -> u8 = thiscall 0x4DBEC0 => unported;
     /// `CAECutsceneTrackManager::GetCutsceneTrackStatus()` (0x4DBEC0)
     pub fn t_get_beat_track_status(this: GPtr<u8>) -> u8 = thiscall 0x4DBEC0 => unported;
     /// `CAECutsceneTrackManager::PauseTrack(pause: bool)` (0x4DBF00)
     pub fn t_pause_beat_track(this: GPtr<u8>, pause: u32) = thiscall 0x4DBF00 => unported;
-    /// `CAEAmbienceTrackManager::IsAmbienceTrackActive()` (0x4D6CF0)
-    pub fn t_is_ambience_track_active(this: GPtr<u8>) -> u8 = thiscall 0x4D6CF0 => unported;
     /// `CAEAmbienceTrackManager::IsAmbienceRadioActive()` (0x4D6D40)
     pub fn t_is_ambience_radio_active(this: GPtr<u8>) -> u8 = thiscall 0x4D6D40 => unported;
     /// `CAEScriptAudioEntity::PreloadMissionAudio(slot: uint8, event: eAudioEvents)` (0x4EC190)
@@ -411,8 +397,6 @@ orig! {
     pub fn t_get_mission_audio_loading_status(this: GPtr<u8>, slot: u32) -> u8 = thiscall 0x4EBF60 => unported;
     /// `CAEScriptAudioEntity::PlayLoadedMissionAudio(slot: uint8)` (0x4EC270)
     pub fn t_play_loaded_mission_audio(this: GPtr<u8>, slot: u32) = thiscall 0x4EC270 => unported;
-    /// `CAEScriptAudioEntity::IsMissionAudioSampleFinished(slot: uint8)` (0x4EBFE0)
-    pub fn t_is_mission_audio_sample_finished(this: GPtr<u8>, slot: u32) -> u8 = thiscall 0x4EBFE0 => unported;
     /// `CAEScriptAudioEntity::GetMissionAudioEvent(slot: uint8)` (0x4EC020)
     pub fn t_get_mission_audio_event(this: GPtr<u8>, slot: u32) -> u32 = thiscall 0x4EC020 => unported;
     /// `CAEScriptAudioEntity::GetMissionAudioPosition(slot: uint8)` (0x4EC4D0)

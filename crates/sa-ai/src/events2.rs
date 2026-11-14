@@ -8,49 +8,69 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::acquaintance_get;
+use crate::bindings::area_codes_dtor;
+use crate::bindings::car_enter_exit_remove_car_sit_anim;
+use crate::bindings::compute_closest_surface_point_ped as geom_compute_closest_surface_point;
+use crate::bindings::compute_entity_hit_side as geom_compute_entity_hit_side;
+use crate::bindings::damage_4abca0 as fun_004abca0;
+use crate::bindings::death_dtor;
+use crate::bindings::dtor_4b0d00 as in_air_dtor;
+use crate::bindings::editable_response_ctor;
+use crate::bindings::event_base_dtor;
+use crate::bindings::event_ctor;
+use crate::bindings::event_handler_current_type as handler_get_current_event_type;
+use crate::bindings::event_pool_new;
+use crate::bindings::ik_get_look_at_entity;
+use crate::bindings::intel_can_see_entity_with_lights as intel_can_see_entity_with_lights_st0;
+use crate::bindings::intel_get_ped_fov_range as intel_get_ped_fov_range_st0;
+use crate::bindings::intel_is_in_seeing_range;
+use crate::bindings::intel_is_threatened_by;
+use crate::bindings::ped_type_police_dont_care;
+use crate::bindings::task_is_go_to_task;
+use crate::bindings::vehicle_is_passenger;
+use crate::bindings::walk_round_car_set_new_vehicle;
+use crate::bindings::wanted_can_cop_join_pursuit;
+use sa_core::bindings::car_set_ped_out_dtor as task_car_set_ped_out_dtor;
+use sa_core::bindings::car_set_ped_out_process_ped as task_car_set_ped_out_process_ped;
+use sa_core::bindings::entity_register_reference;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::general_random_int_in_range as general_get_random_number_in_range_int;
+use sa_core::bindings::get_weapon_info as weapon_info_get;
+use sa_core::bindings::ped_is_alive;
+use sa_core::bindings::tm_get_active_task;
+use sa_core::bindings::tm_get_simplest_active_task;
+use sa_core::bindings::vector_difference;
+use sa_core::bindings::vector_dot_product as vector_dot_product_st0;
+use sa_core::bindings::vector_normalise;
+use sa_stream::bindings::find_player_wanted;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::area_codes_ctor;
+use sa_world::bindings::can_physical_be_damaged as physical_can_be_damaged;
+use sa_world::bindings::decision_maker_types_get_instance;
+use sa_world::bindings::event_ctor_4aeac0 as fun_004aeac0;
+use sa_world::bindings::event_damage_dtor as damage_dtor;
+use sa_world::bindings::event_dtor_4aeb90 as fun_004aeb90;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::get_ped_flag as ped_type_get_ped_flag;
+use sa_world::bindings::get_task_jet_pack as intel_get_task_jet_pack;
+use sa_world::bindings::group_intelligence_add_event as pgi_add_event;
+use sa_world::bindings::ik_is_looking;
+use sa_world::bindings::intel_find_task_by_type;
+use sa_world::bindings::membership_get_leader;
+use sa_world::bindings::membership_get_member;
+use sa_world::bindings::membership_is_leader;
+use sa_world::bindings::membership_is_member;
+use sa_world::bindings::ped_groups_are_in_same_group;
+use sa_world::bindings::ped_groups_get_peds_group;
+use sa_world::bindings::report_crime as crime_report_crime;
+use sa_world::bindings::tm_find_active_task_by_type;
+use sa_world::bindings::tm_find_task_by_type;
+use sa_world::bindings::vector_magnitude_sqr as vector_magnitude_sqr_st0;
+use sa_world::bindings::world_get_is_line_of_sight_clear;
 orig! {
-    /// `CEventPool::New` (0x4B5570, thiscall on the pool)
-    fn event_pool_new(pool: GPtr<u8>) -> GPtr<u8> = thiscall 0x4B5570 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420)
-    fn event_group_add(grp: GPtr<u8>, e: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    fn entity_register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
-    /// `CPed::IsAlive` (0x5E0170)
-    fn ped_is_alive(ped: GPtr<u8>) -> u8 = thiscall 0x5E0170 => unported;
-    /// `CPed::IsPlayer` (0x5DF8F0)
-    fn ped_is_player(ped: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CPedIntelligence::IsThreatenedBy(const CPed&)` (0x601C30)
-    fn intel_is_threatened_by(intel: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x601C30 => unported;
-    /// `CPedGroups::GetPedsGroup(CPed*)` (0x5F7E80, cdecl)
-    fn ped_groups_get_peds_group(ped: GPtr<u8>) -> GPtr<u8> = cdecl 0x5F7E80 => unported;
-    /// `CPedGroupMembership::IsLeader(CPed*)` (0x5F69C0)
-    fn membership_is_leader(m: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x5F69C0 => unported;
-    /// `CPedGroupMembership::GetLeader` (0x5F69A0)
-    fn membership_get_leader(m: GPtr<u8>) -> GPtr<u8> = thiscall 0x5F69A0 => unported;
-    /// `CPedGroupMembership::GetMember(int)` (0x5F69B0)
-    fn membership_get_member(m: GPtr<u8>, i: i32) -> GPtr<u8> = thiscall 0x5F69B0 => unported;
-    /// `CVector::DotProduct(const CVector*, const CVector*)` (0x40FDB0, cdecl, ST0)
-    fn vector_dot_product_st0(a: GPtr<u8>, b: GPtr<u8>) -> f64 = cdecl 0x40FDB0 => unported;
-    /// `CVector::Normalise` (0x59C910)
-    fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
-    /// `CVector::Difference` (0x40FE00, `ecx = out`, `ret 8`): `out = a - b`
-    fn vector_difference(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) = thiscall 0x40FE00 => unported;
-    /// `FUN_00406da0` (0x406DA0): `CVector::MagnitudeSqr` (ST0)
-    fn vector_magnitude_sqr_st0(v: GPtr<u8>) -> f64 = thiscall 0x406DA0 => unported;
-    /// `CTaskManager::FindActiveTaskByType(int)` (0x681740)
-    fn tm_find_active_task_by_type(tm: GPtr<u8>, t: i32) -> GPtr<u8> = thiscall 0x681740 => unported;
-    /// `CTaskManager::GetActiveTask` (0x681720)
-    fn tm_get_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x681720 => unported;
-    /// `CEventHandler::GetCurrentEventType` (0x4B8CC0)
-    fn handler_get_current_event_type(h: GPtr<u8>) -> i32 = thiscall 0x4B8CC0 => unported;
     /// `CEventHandlerHistory::GetCurrentEvent` (0x4B8CA0)
     fn history_get_current_event(h: GPtr<u8>) -> GPtr<u8> = thiscall 0x4B8CA0 => unported;
-    /// `CWorld::FindPlayerPed(int)` (0x56E210, cdecl)
-    fn find_player_ped(i: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CAcquaintance::GetAcquaintances(int)` (0x608970)
-    fn acquaintance_get(a: GPtr<u8>, i: i32) -> u32 = thiscall 0x608970 => unported;
-    /// `CPedType::GetPedFlag(int)` (0x608830, cdecl)
-    fn ped_type_get_ped_flag(t: u32) -> u32 = cdecl 0x608830 => unported;
     /// `CInformFriendsEventQueue::Add(CEntity*, CEvent*)` (0x4AC1E0, cdecl)
     fn inform_friends_queue_add(ped: GPtr<u8>, e: GPtr<u8>) -> u8 = cdecl 0x4AC1E0 => unported;
     /// `CInformGroupEventQueue::Add(CEntity*, CPedGroup*, CEvent*)` (0x4B7CD0, cdecl)
@@ -59,29 +79,14 @@ orig! {
     fn event_get_sound_level_st0(ev: GPtr<u8>, ent: GPtr<u8>, pos: GPtr<u8>) -> f64 = thiscall 0x4B2850 => unported;
     /// `CEventSource::ComputeEventSourceType(const CEvent&, const CPed&)` (0x4ABAC0, cdecl)
     fn compute_event_source_type(ev: GPtr<u8>, ped: GPtr<u8>) -> u32 = cdecl 0x4ABAC0 => unported;
-    /// `CDecisionMakerTypes::GetInstance` (0x4684F0, cdecl)
-    fn decision_maker_types_get_instance() -> GPtr<u8> = cdecl 0x4684F0 => unported;
     /// `CDecisionMakerTypes::MakeDecision(CPed*, ...)` (0x606E70, `ret 0x2C`)
     fn make_decision_ped(dm: GPtr<u8>, ped: GPtr<u8>, ev: i32, src: u32, b: u32, a4: u32, a5: u32, a6: u32, a7: u32, a8: u32, task: GPtr<u8>, facial: GPtr<u8>) = thiscall 0x606E70 => unported;
     /// `CDecisionMakerTypes::MakeDecision(CPedGroup*, ...)` (0x606F80, `ret 0x20`, AX = task)
     fn make_decision_group(dm: GPtr<u8>, grp: GPtr<u8>, ev: i32, src: u32, b: u32, a4: u32, a5: u32, a6: u32, a7: u32) -> u32 = thiscall 0x606F80 => unported;
-    /// `CEventEditableResponse::Constructor` (0x4AC450)
-    fn editable_response_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4AC450 => unported;
-
-    /// `FUN_004abca0` (0x4ABCA0, AL)
-    fn fun_004abca0(ev: GPtr<u8>) -> u8 = thiscall 0x4ABCA0 => unported;
     /// `CEvent::TakesPriorityOver(const CEvent&)` (0x4ABC30, AL)
     fn event_takes_priority_over(ev: GPtr<u8>, other: GPtr<u8>) -> u8 = thiscall 0x4ABC30 => unported;
-    /// `CGeneral::GetRandomNumberInRange(int, int)` (0x407180, cdecl)
-    fn general_get_random_number_in_range_int(a: i32, b: i32) -> i32 = cdecl 0x407180 => unported;
     /// `CTaskSimpleCarSetPedOut::CTaskSimpleCarSetPedOut(CVehicle*, int, bool)` (0x6478B0)
     fn task_car_set_ped_out_ctor(t: GPtr<u8>, veh: GPtr<u8>, door: i32, b: u32) -> GPtr<u8> = thiscall 0x6478B0 => unported;
-    /// `CTaskSimpleCarSetPedOut::ProcessPed(CPed*)` (0x647D10)
-    fn task_car_set_ped_out_process_ped(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x647D10 => unported;
-    /// `FUN_00647950` (0x647950): `CTaskSimpleCarSetPedOut` destructor
-    fn task_car_set_ped_out_dtor(t: GPtr<u8>) = thiscall 0x647950 => unported;
-    /// `CCarEnterExit::RemoveCarSitAnim(const CPed*)` (0x64F680, cdecl)
-    fn car_enter_exit_remove_car_sit_anim(ped: GPtr<u8>) = cdecl 0x64F680 => unported;
     /// `CEvent::GetEventPriority` (vtable +8)
     fn ev_get_event_priority(ev: GPtr<u8>) -> i32 = thiscall vslot 0x8 => unported;
 
@@ -89,36 +94,12 @@ orig! {
     fn ped_is_alive_eax(ped: GPtr<u8>) -> u32 = thiscall 0x5E0170 => unported;
     /// `CEventGunShot::Constructor(CEntity*, CVector, CVector, bool)` (0x4AC610, `ret 0x20`)
     fn gun_shot_ctor(this: GPtr<u8>, ent: u32, a0: u32, a1: u32, a2: u32, b0: u32, b1: u32, b2: u32, f: u32) -> GPtr<u8> = thiscall 0x4AC610 => unported;
-    /// `CPedIntelligence::FindTaskByType(int)` (0x600EE0)
-    fn intel_find_task_by_type(intel: GPtr<u8>, t: i32) -> GPtr<u8> = thiscall 0x600EE0 => unported;
-    /// `CPedGroups::AreInSameGroup(const CPed*, const CPed*)` (0x5F7F40, cdecl)
-    fn ped_groups_are_in_same_group(a: GPtr<u8>, b: GPtr<u8>) -> u8 = cdecl 0x5F7F40 => unported;
-    /// `CVehicle::IsPassenger(const CPed*)` (0x6D1BD0)
-    fn vehicle_is_passenger(v: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x6D1BD0 => unported;
-    /// `CWorld::FindPlayerWanted(int)` (0x56E230, cdecl)
-    fn find_player_wanted(i: i32) -> GPtr<u8> = cdecl 0x56E230 => unported;
     /// `CWanted::IsInPursuit(CCopPed*)` (0x562330)
     fn wanted_is_in_pursuit(w: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x562330 => unported;
-    /// `CWanted::CanCopJoinPursuit(CCopPed*)` (0x562FB0)
-    fn wanted_can_cop_join_pursuit(w: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x562FB0 => unported;
     /// `CWanted::RegisterCrime(eCrimeType, const CVector&, CPed*, bool)` (0x562410)
     fn wanted_register_crime(w: GPtr<u8>, crime: u32, pos: GPtr<u8>, ped: GPtr<u8>, b: u32) = thiscall 0x562410 => unported;
-    /// `CPedIntelligence::GetPedFOVRange` (0x4ABEA0, ST0)
-    fn intel_get_ped_fov_range_st0(intel: GPtr<u8>) -> f64 = thiscall 0x4ABEA0 => unported;
     /// `VectorSub(CVector* out, const CVector*, const CVector*)` (0x40FE60, cdecl)
     fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) = cdecl 0x40FE60 => unported;
-    /// `CWorld::GetIsLineOfSightClear(...)` (0x56A490, cdecl)
-    fn world_get_is_line_of_sight_clear(a: GPtr<u8>, b: GPtr<u8>, c1: u32, c2: u32, c3: u32, c4: u32, c5: u32, c6: u32, c7: u32) -> u8 = cdecl 0x56A490 => unported;
-    /// `CPedType::PoliceDontCareAboutCrimesAgainstPedType(int)` (0x608A40, cdecl, AL)
-    fn ped_type_police_dont_care(t: u32) -> u8 = cdecl 0x608A40 => unported;
-    /// `CWeaponInfo::GetWeaponInfo(eWeaponType, eWeaponSkill)` (0x743C60, cdecl)
-    fn weapon_info_get(w: u32, skill: u32) -> GPtr<u8> = cdecl 0x743C60 => unported;
-    /// `CPedIntelligence::CanSeeEntityWithLights(const CEntity*, bool)` (0x605550, ST0)
-    fn intel_can_see_entity_with_lights_st0(intel: GPtr<u8>, e: GPtr<u8>, b: u32) -> f64 = thiscall 0x605550 => unported;
-    /// `CPhysical::CanPhysicalBeDamaged(eWeaponType, bool*)` (0x5448B0, AL)
-    fn physical_can_be_damaged(p: GPtr<u8>, w: u32, out: u32) -> u8 = thiscall 0x5448B0 => unported;
-    /// `CPedIntelligence::GetTaskJetPack` (0x601110)
-    fn intel_get_task_jet_pack(intel: GPtr<u8>) -> GPtr<u8> = thiscall 0x601110 => unported;
     /// `CPed::RemoveBodyPart(int, char)` (0x5F0140)
     fn ped_remove_body_part(ped: GPtr<u8>, part: u32, dir: u32) = thiscall 0x5F0140 => unported;
     /// `CEventDamage::ComputeBodyPartToRemove(int&)` (0x4ADC10)
@@ -127,40 +108,15 @@ orig! {
     fn ev_get_life_time(ev: GPtr<u8>) -> i32 = thiscall vslot 0xC => unported;
     /// `CEvent::IsCriminalEvent` (vtable +0x1C)
     fn ev_is_criminal_event(ev: GPtr<u8>) -> u8 = thiscall vslot 0x1C => unported;
-
-    /// `IKChainManager_c::IsLooking(CPed*)` (0x6181A0)
-    fn ik_is_looking(m: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x6181A0 => unported;
-    /// `IKChainManager_c::GetLookAtEntity(CPed*)` (0x6181D0)
-    fn ik_get_look_at_entity(m: GPtr<u8>, ped: GPtr<u8>) -> u32 = thiscall 0x6181D0 => unported;
-    /// `CPedIntelligence::IsInSeeingRange(const CVector&)` (0x600C60, AL)
-    fn intel_is_in_seeing_range(intel: GPtr<u8>, pos: GPtr<u8>) -> u8 = thiscall 0x600C60 => unported;
-    /// `CCrime::ReportCrime(eCrimeType, CEntity*, CPed*)` (0x532010, cdecl)
-    fn crime_report_crime(ty: i32, victim: GPtr<u8>, ped: GPtr<u8>) = cdecl 0x532010 => unported;
     /// `CEventDamage::CEventDamage(const CEventDamage&)` (0x4B33B0)
     fn damage_copy_ctor(this: GPtr<u8>, other: GPtr<u8>) -> GPtr<u8> = thiscall 0x4B33B0 => unported;
-    /// `FUN_004ade90` (0x4ADE90): `CEventDeath` destructor body
-    fn death_dtor(this: GPtr<u8>) = thiscall 0x4ADE90 => unported;
     /// `CEventKnockOffBike::Constructor-first` (0x4AFCF0)
     fn knock_off_bike_ctor(this: GPtr<u8>, veh: u32, v1: GPtr<u8>, v2: GPtr<u8>, f24: u32, f28: u32, b36: u32, b34: u32, i2c: u32, ped: u32, b1: u32, b2: u32) -> GPtr<u8> = thiscall 0x4AFCF0 => unported;
-    /// `CPedGroupIntelligence::AddEvent(CEvent*)` (0x5F7470)
-    fn pgi_add_event(gi: GPtr<u8>, e: GPtr<u8>) = thiscall 0x5F7470 => unported;
 
     /// `IKChainManager_c::LookAt(const char*, CPed*, CEntity*, int, ePedBones, RwV3d*, bool, float, int, int, bool)` (0x618970)
     fn ik_look_at(m: GPtr<u8>, name: u32, ped: GPtr<u8>, e: GPtr<u8>, time: u32, bone: u32, pos: u32, b: u32, speed: u32, blend: u32, prio: u32, f: u32) -> u8 = thiscall 0x618970 => unported;
-    /// `CTaskManager::GetSimplestActiveTask` (0x6819D0)
-    fn tm_get_simplest_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x6819D0 => unported;
-    /// `CTask::IsGoToTask(CTask*)` (0x61A360, cdecl, AL)
-    fn task_is_go_to_task(t: GPtr<u8>) -> u8 = cdecl 0x61A360 => unported;
-    /// `CTaskComplexWalkRoundCar::SetNewVehicle(CVehicle*, int8)` (0x654290)
-    fn walk_round_car_set_new_vehicle(t: GPtr<u8>, v: GPtr<u8>, f: i32) = thiscall 0x654290 => unported;
     /// `CTaskComplexEnterCar::GetTargetPos(CVector* out)` (0x63A300): returns `out`
     fn enter_car_get_target_pos(t: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall 0x63A300 => unported;
-    /// `CPedGeometryAnalyser::ComputeClosestSurfacePoint(const CPed&, CEntity&, CVector&)` (0x5F3B70, cdecl)
-    fn geom_compute_closest_surface_point(ped: GPtr<u8>, e: GPtr<u8>, out: GPtr<u8>) = cdecl 0x5F3B70 => unported;
-    /// `CPedGeometryAnalyser::ComputeEntityHitSide(const CVector&, CEntity&)` (0x5F3AC0, cdecl)
-    fn geom_compute_entity_hit_side(pos: GPtr<u8>, e: GPtr<u8>) -> i32 = cdecl 0x5F3AC0 => unported;
-    /// `CPedGroupMembership::IsMember(const CPed*)` (0x5F6A10)
-    fn membership_is_member(m: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x5F6A10 => unported;
 
     /// `CVehiclePotentialCollisionScanner::ScanForVehiclePotentialCollisionEvents(const CPed&, CEntity**, int)` (0x603720)
     fn scan_vehicle_potential_collision(s: GPtr<u8>, ped: GPtr<u8>, ents: GPtr<u8>, n: i32) = thiscall 0x603720 => unported;
@@ -180,32 +136,14 @@ orig! {
     fn geom_is_in_air(ped: GPtr<u8>) -> u8 = cdecl 0x5F1CB0 => unported;
     /// `CEventInAir::Constructor` (0x4B0CB0)
     fn in_air_ctor(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x4B0CB0 => unported;
-    /// `FUN_004b0d00` (0x4B0D00): `CEventInAir` destructor
-    fn in_air_dtor(e: GPtr<u8>) = thiscall 0x4B0D00 => unported;
-    /// `CEvent::Constructor` (0x4ABFC0)
-    fn event_ctor(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x4ABFC0 => unported;
-    /// `FUN_004ac010` (0x4AC010): `CEvent` base destructor
-    fn event_base_dtor(e: GPtr<u8>) = thiscall 0x4AC010 => unported;
     /// `CWeapon::GenerateDamageEvent(CPed*, CEntity*, eWeaponType, int, ePedPieceTypes, int)` (0x73A530, cdecl)
     fn weapon_generate_damage_event(ped: GPtr<u8>, e: u32, w: u32, dmg: u32, piece: u32, dir: u32) -> u8 = cdecl 0x73A530 => unported;
     /// `FUN_00603bf0` (0x603BF0)
     fn fun_00603bf0(s: GPtr<u8>, ped: GPtr<u8>, ents: GPtr<u8>, n: i32) = thiscall 0x603BF0 => unported;
-    /// `CTaskManager::FindTaskByType(int slot, int type)` (0x6817D0)
-    fn tm_find_task_by_type(tm: GPtr<u8>, slot: i32, t: i32) -> GPtr<u8> = thiscall 0x6817D0 => unported;
-    /// `CEventAreaCodes::Constructor(CPed*)` (0x4B2190)
-    fn area_codes_ctor(e: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x4B2190 => unported;
-    /// `FUN_004b2210` (0x4B2210): `CEventAreaCodes` destructor
-    fn area_codes_dtor(e: GPtr<u8>) = thiscall 0x4B2210 => unported;
-    /// `FUN_004aeac0` (0x4AEAC0): vehicle-event constructor `(CPed*, CVehicle*, int)`
-    fn fun_004aeac0(e: GPtr<u8>, ped: GPtr<u8>, v: GPtr<u8>, n: i32) -> GPtr<u8> = thiscall 0x4AEAC0 => unported;
-    /// `FUN_004aeb90` (0x4AEB90): its destructor
-    fn fun_004aeb90(e: GPtr<u8>) = thiscall 0x4AEB90 => unported;
     /// `CEventDamage::Constructor-1` (0x4AD830)
     fn damage_ctor(e: GPtr<u8>, src: u32, time: u32, w: u32, piece: u32, dir: u32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x4AD830 => unported;
     /// `CEventGroup::HasEventOfType(const CEvent*)` (0x4AB5E0, AL)
     fn event_group_has_event_of_type(grp: GPtr<u8>, e: GPtr<u8>) -> u8 = thiscall 0x4AB5E0 => unported;
-    /// `FUN_004ad960` (0x4AD960): `CEventDamage` destructor
-    fn damage_dtor(e: GPtr<u8>) = thiscall 0x4AD960 => unported;
     /// `CTask::MakeAbortable(CPed*, int, const CEvent*)` (vtable +0x18, AL)
     fn task_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, prio: i32, e: GPtr<u8>) -> u8 = thiscall vslot 0x18 => unported;
 

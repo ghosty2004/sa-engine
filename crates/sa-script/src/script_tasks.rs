@@ -18,33 +18,24 @@ const TASK_SEQUENCES: usize = 0xC178F0;
 /// `CPedScriptedTaskRecord::ms_scriptedTasks` (0xC0B1E8, 0x14 bytes each)
 const SCRIPTED_TASKS: usize = 0xC0B1E8;
 
+use crate::bindings::brain_task_store_set_task;
+use crate::bindings::record_set_event;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::event_script_command_ctor;
+use sa_world::bindings::event_script_command_dtor;
+use sa_world::bindings::group_intel_set_script_command_task;
+use sa_world::bindings::ped_groups_get_peds_group as get_peds_group;
+use sa_world::bindings::sequence_add_task;
 orig! {
-    /// `CPedGroups::GetPedsGroup(CPed*)` (0x5F7E80)
-    fn get_peds_group(ped: GPtr<u8>) -> GPtr<u8> = cdecl 0x5F7E80 => unported;
-    /// `CScriptedBrainTaskStore::SetTask(CPed*, CTask*)` (0x635720)
-    fn brain_task_store_set_task(ped: GPtr<u8>, task: GPtr<u8>) -> GPtr<u8> = cdecl 0x635720 => unported;
     /// `CPedScriptedTaskRecord::GetVacantSlot()` (0x608540)
     fn get_vacant_slot() -> i32 = cdecl 0x608540 => unported;
     /// `CPedScriptedTaskRecordData::SetAsAttractorScriptTask(CPed*, int32 opcode, CTask*)` (0x608440)
     fn record_set_as_attractor_script_task(rec: GPtr<u8>, ped: GPtr<u8>, opcode: u32, task: GPtr<u8>) = thiscall 0x608440 => unported;
     /// `CPedScriptedTaskRecordData::SetAsGroupTask(CPed*, int32 opcode, CTask*)` (0x6084A0)
     fn record_set_as_group_task(rec: GPtr<u8>, ped: GPtr<u8>, opcode: u32, task: GPtr<u8>) = thiscall 0x6084A0 => unported;
-    /// `CPedScriptedTaskRecordData::Set(CPed*, int32 opcode, CEventScriptCommand*)` (0x608390)
-    fn record_set_event(rec: GPtr<u8>, ped: GPtr<u8>, opcode: u32, event: GPtr<u8>) = thiscall 0x608390 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0, AL)
-    fn ped_is_player(ped: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CPedGroupIntelligence::SetScriptCommandTask(CPed*, const CTask&)` (0x5F8560)
-    fn group_intel_set_script_command_task(gi: GPtr<u8>, ped: GPtr<u8>, task: GPtr<u8>) = thiscall 0x5F8560 => unported;
     /// `CPedGroupIntelligence::GetTaskScriptCommand(CPed*)` (0x5F8690)
     fn group_intel_get_task_script_command(gi: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x5F8690 => unported;
-    /// `CEventScriptCommand::CEventScriptCommand(int32 primaryTaskId, CTask*, bool affectsDeadPeds)` (0x4B0A00)
-    fn event_script_command_ctor(e: GPtr<u8>, id: u32, task: GPtr<u8>, dead: u32) -> GPtr<u8> = thiscall 0x4B0A00 => unported;
-    /// `CEventScriptCommand::~CEventScriptCommand()` (0x4B0A50, catalogue `FUN_004b0a50`)
-    fn event_script_command_dtor(e: GPtr<u8>) = thiscall 0x4B0A50 => unported;
-    /// `CEventGroup::Add(CEvent*, bool unused)` (0x4AB420): the stored copy or null
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, unused: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
-    /// `CTaskComplexSequence::AddTask(CTask*)` (0x632D10)
-    fn sequence_add_task(seq: GPtr<u8>, task: GPtr<u8>) = thiscall 0x632D10 => unported;
     /// The task's virtual slot 0 (scalar deleting destructor), `ecx` = task, flag 1.
     fn task_delete_virtual(task: GPtr<u8>, flag: u32) -> GPtr<u8> = thiscall vslot 0x00 => unported;
 }

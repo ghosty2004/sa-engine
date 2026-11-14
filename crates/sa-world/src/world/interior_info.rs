@@ -8,21 +8,15 @@ use sa_core::{hook, orig};
 
 use super::common::{g, rd, wr, x, xi};
 
+use crate::bindings::get_tile_centre as interior_get_tile_centre;
+use crate::bindings::ig_get_entity;
+use crate::bindings::rw_matrix_rotate;
+use crate::bindings::rw_matrix_translate;
+use crate::bindings::rw_v3d_transform_vectors;
+use sa_core::bindings::rw_matrix_multiply;
 orig! {
-    /// `RwMatrixRotate(RwMatrix*, const RwV3d*, float, RwOpCombineType)` (0x7F1FD0)
-    fn rw_matrix_rotate(m: GPtr<u8>, axis: GPtr<u8>, angle: u32, op: u32) -> GPtr<u8> = cdecl 0x7F1FD0 => unported;
-    /// `RwMatrixTranslate(RwMatrix*, const RwV3d*, RwOpCombineType)` (0x7F2450)
-    fn rw_matrix_translate(m: GPtr<u8>, v: GPtr<u8>, op: u32) -> GPtr<u8> = cdecl 0x7F2450 => unported;
-    /// `RwMatrixMultiply(RwMatrix*, const RwMatrix*, const RwMatrix*)` (0x7F18B0)
-    fn rw_matrix_multiply(dst: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F18B0 => unported;
-    /// `RwV3dTransformVectors(RwV3d*, const RwV3d*, int32, const RwMatrix*)` (0x7EDDF0)
-    fn rw_v3d_transform_vectors(out: GPtr<u8>, inp: GPtr<u8>, n: i32, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EDDF0 => unported;
-    /// `InteriorGroup_c::GetEntity()` (0x594BD0)
-    fn ig_get_entity(ig: GPtr<u8>) -> GPtr<u8> = thiscall 0x594BD0 => unported;
     /// `Interior_c::IsPtInside(const CVector&, float, float, float)` (0x5913E0)
     fn interior_is_pt_inside(i: GPtr<u8>, p: GPtr<u8>, bx: u32, by: u32, bz: u32) -> u8 = thiscall 0x5913E0 => unported;
-    /// `Interior_c::GetTileCentre(float, float, CVector*)` (0x591BD0)
-    fn interior_get_tile_centre(i: GPtr<u8>, px: f32, py: f32, out: GPtr<u8>) = thiscall 0x591BD0 => unported;
     /// `Interior_c::GetTileStatus(int32, int32)` (0x5918E0)
     fn interior_get_tile_status(i: GPtr<u8>, tx: i32, ty: i32) -> i32 = thiscall 0x5918E0 => unported;
 }

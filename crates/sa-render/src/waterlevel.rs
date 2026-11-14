@@ -173,12 +173,22 @@ const MARK_Z: u32 = 0x446D_8000;
 const GROUND_PROBE: u32 = 0x41F0_0000;
 const NO_GROUND: u32 = 0xC2C8_0000;
 
+pub use crate::bindings::camera_is_sphere_visible_m as is_sphere_visible;
+pub use crate::bindings::draw_quad as post_fx_draw_quad;
+pub use crate::bindings::im_render_states_store as post_fx_states_store;
+pub use crate::bindings::o_render_water_rectangle;
+pub use crate::bindings::rs_restore as post_fx_states_restore;
+pub use crate::bindings::rs_set_immediate as post_fx_states_set;
+pub use crate::bindings::rw_im3d_render_primitive;
+pub use sa_core::bindings::cross_product;
+pub use sa_core::bindings::rw_v3d_transform_points;
+pub use sa_core::bindings::vector_normalise;
+pub use sa_stream::bindings::rw_texture_destroy;
+pub use sa_world::bindings::rw_im3d_end;
 orig! {
     /// `CWorld::ProcessVerticalLine(const CVector&, float, CColPoint&, CEntity*&, bool buildings, bool
     /// vehicles, bool peds, bool objects, bool dummies, bool seeThrough, CStoredCollPoly*)` (0x5674E0)
     pub fn process_vertical_line(p: GPtr<f32>, z: u32, cp: GPtr<u8>, e: GPtr<GPtr<u8>>, b: u32, v: u32, pe: u32, o: u32, d: u32, st: u32, poly: u32) -> u8 = cdecl 0x5674E0 => unported;
-    /// `RwV3dTransformPoints(RwV3d* out, const RwV3d* in, int32 n, const RwMatrix*)` (0x7EDD90)
-    pub fn rw_v3d_transform_points(out: GPtr<u8>, inp: GPtr<u8>, n: i32, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EDD90 => unported;
     /// `CWorldScan::ScanWorld(CVector2D* points, int32 n, void (*)(int32, int32))` (0x72CAE0)
     pub fn world_scan_scan_world(points: GPtr<u8>, n: i32, cb: u32) = cdecl 0x72CAE0 => unported;
     /// `CWaterLevel::MarkQuadsAndPolysToBeRendered` (0x6E5810)
@@ -199,12 +209,8 @@ orig! {
     pub fn o_render_high_detail_water_triangle(x1: i32, y1: i32, a0: u32, a1: u32, a2: u32, a3: u32, x2: i32, y2: i32, b0: u32, b1: u32, b2: u32, b3: u32, x3: i32, y3: i32, c0: u32, c1: u32, c2: u32, c3: u32) = cdecl 0x6EDDC0 => crate::waterlevel::render_high_detail_water_triangle;
     /// `FUN_006e8780`: one layer of a high-detail water triangle (0x6E8780)
     pub fn o_render_high_detail_triangle_layer(x1: i32, y1: i32, a0: u32, a1: u32, a2: u32, a3: u32, x2: i32, y2: i32, b0: u32, b1: u32, b2: u32, b3: u32, x3: i32, y3: i32, c0: u32, c1: u32, c2: u32, c3: u32, layer: i32, sq: i32, sum: i32, n: i32) = cdecl 0x6E8780 => unported;
-    /// `CCamera::IsSphereVisible(const CVector&, float, RwMatrix*)` (0x420C40)
-    pub fn is_sphere_visible(this: GPtr<u8>, c: GPtr<u8>, r: u32, m: u32) -> u8 = thiscall 0x420C40 => unported;
     /// `CWaterLevel::RenderFlatWaterTriangle` (0x6EE080)
     pub fn o_render_flat_water_triangle(x1: i32, y1: i32, a0: u32, a1: u32, a2: u32, a3: u32, x2: i32, y2: i32, b0: u32, b1: u32, b2: u32, b3: u32, x3: i32, y3: i32, c0: u32, c1: u32, c2: u32, c3: u32) = cdecl 0x6EE080 => crate::waterlevel::render_flat_water_triangle;
-    /// `CWaterLevel::RenderWaterRectangle` (0x6EC5D0)
-    pub fn o_render_water_rectangle(x1: i32, x2: i32, y1: i32, y2: i32, a0: u32, a1: u32, a2: u32, a3: u32, b0: u32, b1: u32, b2: u32, b3: u32, c0: u32, c1: u32, c2: u32, c3: u32, d0: u32, d1: u32, d2: u32, d3: u32) = cdecl 0x6EC5D0 => crate::waterlevel::render_water_rectangle;
     /// `CWaterLevel::RenderHighDetailWaterRectangle` (0x6EB810)
     pub fn o_render_high_detail_water_rectangle(x1: i32, x2: i32, y1: i32, y2: i32, a0: u32, a1: u32, a2: u32, a3: u32, b0: u32, b1: u32, b2: u32, b3: u32, c0: u32, c1: u32, c2: u32, c3: u32, d0: u32, d1: u32, d2: u32, d3: u32) = cdecl 0x6EB810 => crate::waterlevel::render_high_detail_water_rectangle;
     /// `CWaterLevel::CalculateWavesOnlyForCoordinate(x, y, big, small, float* wave, float* colourMult, float*
@@ -218,26 +224,12 @@ orig! {
     pub fn o_set_up_water_fog(x1: i32, y1: i32, x2: i32, y2: i32) = cdecl 0x6EA9F0 => crate::waterlevel::set_up_water_fog;
     /// `CWaterLevel::RenderFlatWaterTriangle_OneLayer` (0x6E8ED0)
     pub fn o_render_flat_water_triangle_one_layer(x1: i32, y1: i32, a0: u32, a1: u32, a2: u32, a3: u32, x2: i32, y2: i32, b0: u32, b1: u32, b2: u32, b3: u32, x3: i32, y3: i32, c0: u32, c1: u32, c2: u32, c3: u32, layer: i32) = cdecl 0x6E8ED0 => crate::waterlevel::render_flat_water_triangle_one_layer;
-    /// `CPostEffects::ImmediateModeRenderStatesStore()` (0x700CC0)
-    pub fn post_fx_states_store() = cdecl 0x700CC0 => unported;
-    /// `CPostEffects::ImmediateModeRenderStatesSet()` (0x700D70)
-    pub fn post_fx_states_set() = cdecl 0x700D70 => crate::posteffects::immediate_mode_render_states_set;
-    /// `CPostEffects::ImmediateModeRenderStatesReStore()` (0x700E00)
-    pub fn post_fx_states_restore() = cdecl 0x700E00 => crate::posteffects::immediate_mode_render_states_restore;
-    /// `CPostEffects::DrawQuad(float x, float y, float w, float h, uint8 r, g, b, a, RwRaster*)` (0x700EC0)
-    pub fn post_fx_draw_quad(x0: u32, y0: u32, w: u32, h: u32, r: u32, g: u32, b: u32, a: u32, raster: u32) = cdecl 0x700EC0 => unported;
     /// `RwRenderStateSet` through `RwEngineInstance->dOpenDevice.fpRenderStateSet` (+0x20)
     pub fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
     /// `RwIm3DTransform(RxObjSpace3DVertex*, uint32 count, RwMatrix* ltm, uint32 flags)` (0x7EF450)
     pub fn rw_im3d_transform(verts: GPtr<u8>, count: u32, ltm: GPtr<u8>, flags: u32) -> GPtr<u8> = cdecl 0x7EF450 => unported;
-    /// `RwIm3DRenderPrimitive(RwPrimitiveType)` (0x7EF6B0)
-    pub fn rw_im3d_render_primitive(prim: u32) -> i32 = cdecl 0x7EF6B0 => unported;
-    /// `RwIm3DEnd()` (0x7EF520)
-    pub fn rw_im3d_end() -> i32 = cdecl 0x7EF520 => unported;
     /// `RenderBuffer::RenderIfDoesntFit()` (0x6E7680)
     pub fn render_buffer_render_if_doesnt_fit() = cdecl 0x6E7680 => unported;
-    /// `RwTextureDestroy(RwTexture*)` (0x7F3820)
-    pub fn rw_texture_destroy(t: GPtr<u8>) -> i32 = cdecl 0x7F3820 => unported;
     /// `FUN_006e5750`: add a quad / triangle to a block (0x6E5750)
     pub fn o_add_to_block(bx: i32, by: i32, idx: i32, kind: i32) = cdecl 0x6E5750 => crate::waterlevel::add_to_block;
     /// `CGame::CanSeeWaterFromCurrArea()` (0x53C4B0)
@@ -250,10 +242,6 @@ orig! {
     pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
     /// `FUN_006ea8a0`: `CWaterLevel::GetGroundLevel` (0x6EA8A0)
     pub fn o_get_ground_level(p: GPtr<f32>, out: GPtr<f32>, col: GPtr<u8>, offset: u32) -> u8 = cdecl 0x6EA8A0 => crate::waterlevel::get_ground_level;
-    /// `CVector::CrossProduct-out(CVector* out, const CVector* a, const CVector* b)` (0x59C730)
-    pub fn cross_product(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C730 => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    pub fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
     /// `CWaterLevel::GetWaterLevelNoWaves` (0x6E8580)
     pub fn o_get_water_level_no_waves(x: u32, y: u32, z: u32, level: GPtr<f32>, big: GPtr<f32>, small: GPtr<f32>) -> u8 = cdecl 0x6E8580 => crate::waterlevel::get_water_level_no_waves;
     /// `CWaterLevel::AddWaveToResult` (0x6E81E0)

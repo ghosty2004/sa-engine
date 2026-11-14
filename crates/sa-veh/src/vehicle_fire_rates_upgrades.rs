@@ -9,11 +9,10 @@ use sa_math::x87::X87;
 
 use crate::common::{ftol32, g, rd, x, xi};
 
+use crate::bindings::get_atomic_id;
 orig! {
     /// `RpClumpForAllAtomics(RpClump*, RpAtomicCallBack, void*)` (0x749B70)
     fn clump_for_all_atomics(c: GPtr<u8>, cb: u32, data: GPtr<u8>) -> GPtr<u8> = cdecl 0x749B70 => unported;
-    /// `CVisibilityPlugins::GetAtomicId(RpAtomic*)` (0x732250)
-    fn get_atomic_id(a: GPtr<u8>) -> i32 = cdecl 0x732250 => unported;
 }
 
 /// The weapon-upgrade fire-rate factor: `level / 16` of the plane (+0x9D8, type 4) or heli (+0xA10,

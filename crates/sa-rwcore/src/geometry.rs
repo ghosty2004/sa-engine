@@ -40,40 +40,25 @@ const E_RW_BADVERSION: u32 = 0x8000_0004;
 /// Core error 6 (too many vertices).
 const E_TOO_MANY_VERTICES: u32 = 6;
 
+use crate::bindings::bbox_calculate as rw_bbox_calculate;
+use crate::bindings::build_mesh_add_triangle as rp_build_mesh_add_triangle;
+use crate::bindings::build_mesh_create as rp_build_mesh_create;
+use crate::bindings::build_mesh_destroy as rp_build_mesh_destroy;
+use crate::bindings::material_list_deinitialize as material_list_deinitialize_call;
+use crate::bindings::material_list_find_call;
+use crate::bindings::material_list_get_material_call;
+use crate::bindings::material_list_initialize as material_list_initialize_call;
+use crate::bindings::mesh_destroy as rp_mesh_destroy;
+use crate::bindings::plugin_add;
+use crate::bindings::plugin_add_stream;
+use crate::bindings::plugin_deinit_object;
+use crate::bindings::plugin_init_object;
+use crate::bindings::rw_sqrt;
 orig! {
-    /// `_rwPluginRegistryInitObject(reg, obj)` (0x8086E0)
-    fn plugin_init_object(reg: GPtr<u8>, obj: GPtr<u8>) -> GPtr<u8> = cdecl 0x8086E0 => crate::plugin::registry_init_object;
-    /// `_rwPluginRegistryDeInitObject(reg, obj)` (0x808740)
-    fn plugin_deinit_object(reg: GPtr<u8>, obj: GPtr<u8>) -> GPtr<u8> = cdecl 0x808740 => crate::plugin::registry_deinit_object;
-    /// `_rwPluginRegistryAddPlugin(reg, size, id, ctor, dtor, copy)` (0x8084A0)
-    fn plugin_add(reg: GPtr<u8>, size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x8084A0 => crate::plugin::registry_add_plugin;
-    /// `_rwPluginRegistryAddPluginStream(reg, id, read, write, getSize)` (0x8088E0)
-    fn plugin_add_stream(reg: GPtr<u8>, id: u32, read: u32, write: u32, get_size: u32) -> i32 = cdecl 0x8088E0 => crate::plugin::registry_add_plugin_stream;
-    /// `RwBBoxCalculate(box, verts, n)` (0x808F60)
-    fn rw_bbox_calculate(bx: GPtr<u8>, verts: GPtr<u8>, n: i32) -> GPtr<u8> = cdecl 0x808F60 => crate::matrix::rw_bbox_calculate;
-    /// `_rwSqrt(x)` (0x7EDB30), result in ST0
-    fn rw_sqrt(v: f32) -> f64 = cdecl 0x7EDB30 => crate::vector::rw_sqrt_f64;
     /// `RwResourcesFreeResEntry(entry)` (0x807DE0)
     fn rw_resources_free_res_entry(e: GPtr<u8>) -> u32 = cdecl 0x807DE0 => unported;
-    /// `_rpMeshDestroy(header)` (0x758BC0)
-    fn rp_mesh_destroy(h: GPtr<u8>) -> u32 = cdecl 0x758BC0 => crate::mesh::rp_mesh_destroy;
-    /// `_rpBuildMeshCreate(bufferSize)` (0x758A90)
-    fn rp_build_mesh_create(n: u32) -> GPtr<u8> = cdecl 0x758A90 => crate::mesh::rp_build_mesh_create;
-    /// `_rpBuildMeshDestroy(bm)` (0x758B80)
-    fn rp_build_mesh_destroy(bm: GPtr<u8>) -> u32 = cdecl 0x758B80 => crate::mesh::rp_build_mesh_destroy;
-    /// `_rpBuildMeshAddTriangle(bm, mat, v0, v1, v2, matIndex, texIndex, rasIndex, pipeIndex)` (0x758C00)
-    fn rp_build_mesh_add_triangle(bm: GPtr<u8>, mat: GPtr<u8>, v0: u32, v1: u32, v2: u32, mi: u32, ti: u32, ri: u32, pi: u32) -> GPtr<u8> = cdecl 0x758C00 => crate::mesh::rp_build_mesh_add_triangle;
     /// `_rpMeshOptimise(bm, flags)` (0x75D970)
     fn rp_mesh_optimise(bm: GPtr<u8>, flags: u32) -> GPtr<u8> = cdecl 0x75D970 => unported;
-
-    /// `_rpMaterialListInitialize(list)` (0x74E1B0)
-    fn material_list_initialize_call(l: GPtr<u8>) -> GPtr<u8> = cdecl 0x74E1B0 => crate::material::material_list_initialize;
-    /// `_rpMaterialListDeinitialize(list)` (0x74E150)
-    fn material_list_deinitialize_call(l: GPtr<u8>) -> GPtr<u8> = cdecl 0x74E150 => crate::material::material_list_deinitialize;
-    /// `_rpMaterialListGetMaterial(list, index)` (0x74E2B0)
-    fn material_list_get_material_call(l: GPtr<u8>, i: i32) -> GPtr<u8> = cdecl 0x74E2B0 => crate::material::material_list_get_material;
-    /// `_rpMaterialListFindMaterialIndex(list, material)` (0x74E420)
-    fn material_list_find_call(l: GPtr<u8>, m: GPtr<u8>) -> i32 = cdecl 0x74E420 => crate::material::material_list_find_material_index;
     /// `_rpMaterialListAppendMaterial(list, material)` (0x74E350)
     fn material_list_append_call(l: GPtr<u8>, m: GPtr<u8>) -> i32 = cdecl 0x74E350 => crate::material::material_list_append_material;
     /// `RpGeometryAddMorphTargets(geometry, n)` (0x74C310)
@@ -447,10 +432,7 @@ pub fn rp_geometry_for_all_meshes(gm: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> 
     gm
 }
 
-orig! {
-    /// `_rpMeshHeaderForAllMeshes(header, cb, data)` (0x758D30)
-    fn mesh_header_for_all_meshes_call(h: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> = cdecl 0x758D30 => crate::mesh::rp_mesh_header_for_all_meshes;
-}
+use crate::bindings::mesh_header_for_all_meshes as mesh_header_for_all_meshes_call;
 
 /// `RpGeometryCreate(numVerts, numTriangles, format)` (0x74CA90): validates the counts (numVerts >=
 /// 0x10000 -> error {2, 6}), derives the texture coordinate set count and the low flag byte, mallocs
@@ -602,13 +584,12 @@ pub fn rp_geometry_register_plugin_stream(id: u32, read: u32, write: u32, get_si
     plugin_add_stream(p8(GEOMETRY_REGISTRY), id, read, write, get_size)
 }
 
+use crate::bindings::plugin_read_data_chunks;
+use crate::bindings::read_real as rw_stream_read_real_call;
+use crate::bindings::rw_stream_find_chunk_call;
 orig! {
-    /// `RwStreamFindChunk(stream, type, length, version)` (0x7ED2D0)
-    fn rw_stream_find_chunk_call(s: GPtr<u8>, ty: u32, len: GPtr<u32>, ver: GPtr<u32>) -> u32 = cdecl 0x7ED2D0 => crate::stream::rw_stream_find_chunk;
     /// `RwStreamRead(stream, buf, len)` (0x7EC9D0)
     fn rw_stream_read_call(s: GPtr<u8>, buf: GPtr<u8>, len: u32) -> u32 = cdecl 0x7EC9D0 => crate::stream::rw_stream_read;
-    /// `RwStreamReadReal(stream, p, numBytes)` (0x7ED4F0)
-    fn rw_stream_read_real_call(s: GPtr<u8>, p: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x7ED4F0 => crate::stream::rw_stream_read_real;
     /// `RpGeometryCreate(numVerts, numTriangles, format)` (0x74CA90)
     fn rp_geometry_create_call(nv: i32, nt: i32, format: u32) -> GPtr<u8> = cdecl 0x74CA90 => rp_geometry_create;
     /// `RpGeometryLock(geometry, mode)` (0x74C7D0)
@@ -619,8 +600,6 @@ orig! {
     fn set_default_surface_properties(p: GPtr<u8>) -> u32 = cdecl 0x74D870 => unported;
     /// `_rpMaterialListStreamRead(stream, list)` (0x74E600)
     fn material_list_stream_read_call(s: GPtr<u8>, l: GPtr<u8>) -> GPtr<u8> = cdecl 0x74E600 => crate::material::material_list_stream_read;
-    /// `_rwPluginRegistryReadDataChunks(reg, stream, obj)` (0x808980)
-    fn plugin_read_data_chunks(reg: GPtr<u8>, s: GPtr<u8>, obj: GPtr<u8>) -> GPtr<u8> = cdecl 0x808980 => crate::plugin::registry_read_data_chunks;
     /// `FUN_0074d6d0(geometry)`: the geometry free helper of `RpGeometryStreamRead`'s late failures
     fn geometry_free_helper(gm: GPtr<u8>) -> u32 = cdecl 0x74D6D0 => unported;
 }

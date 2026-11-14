@@ -19,29 +19,23 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::go_to_attractor_ctor;
+use crate::bindings::peds_push_back;
+use sa_core::bindings::entity_register_reference;
+use sa_core::bindings::general_get_radian_angle_between_points as radian_angle_between_points;
+use sa_core::bindings::matrix_dtor;
+use sa_core::bindings::matrix_set_scale;
+use sa_core::bindings::vector_from_multiply;
+use sa_stream::bindings::placeable_allocate_matrix;
+use sa_stream::bindings::simple_transform_update_matrix;
+use sa_world::bindings::multiply3x3;
+use sa_world::bindings::sequence_add_task;
+use sa_world::bindings::sequence_ctor;
 orig! {
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    fn entity_register_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571B70 => unported;
-    /// `CPlaceable::AllocateMatrix()` (0x54F560)
-    fn placeable_allocate_matrix(p: GPtr<u8>) = thiscall 0x54F560 => unported;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*)` (0x54F1B0)
-    fn simple_transform_update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => unported;
     /// `CMatrix::operator=(const CMatrix&)` (0x59BBC0)
     fn matrix_assign(dst: GPtr<u8>, src: GPtr<u8>) = thiscall 0x59BBC0 => unported;
-    /// `CMatrix::SetScale(float)` (0x59AED0)
-    fn matrix_set_scale(m: GPtr<u8>, s: u32) = thiscall 0x59AED0 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
-    /// `operator*(const CMatrix&, const CVector&)` into `out` (0x59C670, thiscall on the result)
-    fn vector_from_multiply(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = thiscall 0x59C670 => unported;
-    /// `Multiply3x3(CVector* out, const CMatrix&, const CVector&)` (0x59C790)
-    fn multiply3x3(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C790 => unported;
     /// CRT `sprintf(buf, fmt)` (0x821BB5; the script name is the format)
     fn crt_sprintf(buf: GPtr<u8>, fmt: GPtr<u8>) -> i32 = cdecl 0x821BB5 => unported;
-    /// `CGeneral::GetRadianAngleBetweenPoints(x1, y1, x2, y2)` (0x53CBE0, ST0)
-    fn radian_angle_between_points(x1: u32, y1: u32, x2: u32, y2: u32) -> f64 = cdecl 0x53CBE0 => unported;
-    /// `std::vector<CPed*>::push_back` (0x5EE200, `ret 4`)
-    fn peds_push_back(v: GPtr<u8>, val: GPtr<u8>) = thiscall 0x5EE200 => crate::attractor_ptr_vectors::push_back_p;
     /// `std::vector<CTask*>::push_back` (0x5EE300, `ret 4`)
     fn tasks_push_back(v: GPtr<u8>, val: GPtr<u8>) = thiscall 0x5EE300 => crate::attractor_ptr_vectors::push_back_t;
     /// `uninitialized_fill_n<CTask**>` (0x5EB310)
@@ -52,13 +46,6 @@ orig! {
     fn pairs_push_back(v: GPtr<u8>, val: GPtr<u8>) = thiscall 0x5EE270 => crate::attractor_task_pair_vector::push_back;
     /// `std::copy<CPedTaskPair*>` (0x5EAB80, result through the first argument)
     fn pairs_copy(out: GPtr<u8>, first: u32, last: u32, dest: u32) -> GPtr<u8> = cdecl 0x5EAB80 => crate::attractor_task_pair_vector::copy;
-    /// `CTaskComplexGoToAttractor(CPedAttractor*, const CVector&, float heading, float time, int slot, int moveState)`
-    /// (0x66B640, `ret 0x18`)
-    fn go_to_attractor_ctor(t: GPtr<u8>, a: GPtr<u8>, pos: GPtr<u8>, heading: u32, time: u32, slot: i32, ms: u32) -> GPtr<u8> = thiscall 0x66B640 => unported;
-    /// `CTaskComplexSequence::CTaskComplexSequence()` (0x632BD0)
-    fn sequence_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x632BD0 => unported;
-    /// `CTaskComplexSequence::AddTask(CTask*)` (0x632D10, `ret 4`)
-    fn sequence_add_task(t: GPtr<u8>, task: GPtr<u8>) = thiscall 0x632D10 => unported;
     /// `CTaskSimpleStandStill(int ms, bool looped, bool useAnimIdle, float blend)` (0x62F310, `ret 0x10`)
     fn stand_still_ctor(t: GPtr<u8>, ms: i32, looped: u32, idle: u32, blend: u32) -> GPtr<u8> = thiscall 0x62F310 => unported;
     /// `CPedAttractor::ComputeAttractPos(int, CVector&)` (vtable slot 0xC, `ret 8`)

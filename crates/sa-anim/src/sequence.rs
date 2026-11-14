@@ -22,31 +22,24 @@ sa_core::globals! {
     list GLOBALS;
 }
 
+pub use sa_core::bindings::crt_free as operator_delete;
+pub use sa_core::bindings::crt_free_8214bd as crt_free;
+pub use sa_core::bindings::eh_vector_ctor;
+pub use sa_core::bindings::get_uppercase_key;
+pub use sa_core::bindings::memory_free as mem_free;
+pub use sa_core::bindings::memory_malloc as mem_malloc;
+pub use sa_core::bindings::stricmp;
 orig! {
-    /// `CMemoryMgr::Malloc(size)` (0x72F420); the blend code pushes a second word (0, RwMalloc's hint)
-    pub fn mem_malloc(size: u32, hint: u32) -> GPtr<u8> = cdecl 0x72F420 => unported;
-    /// `CMemoryMgr::Free(p)` (0x72F430)
-    pub fn mem_free(p: GPtr<u8>) = cdecl 0x72F430 => unported;
     /// `CMemoryMgr::MoveMemory(p)` (0x72F500; returns its argument in this build)
     pub fn mem_move_memory(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x72F500 => unported;
     /// CRT `operator new` (0x82119A)
     pub fn operator_new(n: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
     /// CRT `operator new[]` (0x821195)
     pub fn operator_new_array(n: u32) -> GPtr<u8> = cdecl 0x821195 => unported;
-    /// CRT `operator delete` (0x8213AE)
-    pub fn operator_delete(p: GPtr<u8>) = cdecl 0x8213AE => unported;
-    /// CRT `free` (0x8214BD, `delete[]` of a vector-new block)
-    pub fn crt_free(p: GPtr<u8>) = cdecl 0x8214BD => unported;
-    /// `CKeyGen::GetUppercaseKey(const char*)` (0x53CF30)
-    pub fn get_uppercase_key(s: GPtr<u8>) -> u32 = cdecl 0x53CF30 => unported;
     /// `CKeyGen::GetKey(const char*)` (0x53CED0)
     pub fn get_key(s: GPtr<u8>) -> u32 = cdecl 0x53CED0 => unported;
-    /// CRT `_stricmp` (0x8229B6)
-    pub fn stricmp(a: GPtr<u8>, b: GPtr<u8>) -> i32 = cdecl 0x8229B6 => unported;
     /// CRT `strncpy` (0x8245A0)
     pub fn strncpy(d: GPtr<u8>, s: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x8245A0 => unported;
-    /// CRT `eh vector constructor iterator` (0x821D30, stdcall)
-    pub fn eh_vector_ctor(p: GPtr<u8>, size: u32, n: u32, ctor: u32, dtor: u32) = stdcall 0x821D30 => unported;
 }
 
 pub const FLAG_ROT: u8 = 1;

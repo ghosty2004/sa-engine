@@ -14,23 +14,16 @@ use sa_math::x87::{Cmp, X87};
 
 use super::common::{f32_of, g, rd, wr, x, xi};
 
+use crate::bindings::object_ctor;
+use crate::bindings::placeable_set_posn;
+use crate::bindings::simple_transform_update_rw_matrix;
+use sa_core::bindings::entity_update_rw_frame;
+use sa_core::bindings::matrix_update_rw_matrix;
+use sa_core::bindings::object_new;
+use sa_core::bindings::world_add;
 orig! {
-    /// `CObject::operator new(uint32)` (0x5A1EE0)
-    fn object_new(size: u32) -> GPtr<u8> = cdecl 0x5A1EE0 => unported;
-    /// `CObject::CObject(int32 modelId, bool create)` (0x5A1D70)
-    fn object_ctor(o: GPtr<u8>, model: u32, create: u32) -> GPtr<u8> = thiscall 0x5A1D70 => unported;
-    /// `CPlaceable::SetPosn(const CVector&)` (0x4241C0)
-    fn placeable_set_posn(e: GPtr<u8>, v: GPtr<u8>) = thiscall 0x4241C0 => unported;
     /// `CMatrix::SetRotateZOnly(float)` (0x59B020)
     fn matrix_set_rotate_z_only(m: GPtr<u8>, angle: f32) = thiscall 0x59B020 => unported;
-    /// `CMatrix::UpdateRwMatrix(RwMatrix*)` (0x59AD70)
-    fn matrix_update_rw_matrix(m: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x59AD70 => unported;
-    /// `CSimpleTransform::UpdateRwMatrix(RwMatrix*)` (0x54EF40)
-    fn simple_transform_update_rw_matrix(t: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x54EF40 => unported;
-    /// `CEntity::UpdateRwFrame()` (0x532B00)
-    fn entity_update_rw_frame(e: GPtr<u8>) = thiscall 0x532B00 => unported;
-    /// `CWorld::Add(CEntity*)` (0x563220)
-    fn world_add(e: GPtr<u8>) = cdecl 0x563220 => unported;
     /// virtual `CEntity::SetIsStatic(bool)` (vtable +0x10)
     fn v_set_is_static(e: GPtr<u8>, s: u32) = thiscall vslot 0x10 => unported;
 }
@@ -174,28 +167,20 @@ pub fn water_creature_init(this: GPtr<u8>, kind: i32, pos: GPtr<u8>, parent: GPt
     1
 }
 
+use crate::bindings::placeable_get_top_direction as placeable_get_forward;
+use crate::bindings::process_line_of_sight;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::general_random_int_in_range as random_in_range_i;
+use sa_core::bindings::random_float_in_range as random_in_range_f;
+use sa_core::bindings::vector_normalise_and_mag;
+use sa_core::bindings::world_remove;
 orig! {
-    /// `CVector::NormaliseAndMag()` (0x59C970): ST0
-    fn vector_normalise_and_mag(v: GPtr<u8>) -> f64 = thiscall 0x59C970 => unported;
     /// `CGeneral::GetRadianAngleBetweenPoints(float, float, float, float)` (0x53CBE0): ST0
     fn radian_angle_between_points(x1: f32, y1: f32, x2: f32, y2: f32) -> f64 = cdecl 0x53CBE0 => unported;
     /// `CGeneral::LimitRadianAngle(float)` (0x53CB50): ST0
     fn limit_radian_angle(a: f32) -> f64 = cdecl 0x53CB50 => unported;
-    /// `CGeneral::GetRandomNumberInRange(float, float)` (0x41BD90): ST0
-    fn random_in_range_f(lo: f32, hi: f32) -> f64 = cdecl 0x41BD90 => unported;
-    /// `CGeneral::GetRandomNumberInRange(int32, int32)` (0x407180)
-    fn random_in_range_i(lo: i32, hi: i32) -> i32 = cdecl 0x407180 => unported;
-    /// `CPlaceable::GetForward()` (0x41CCB0, the result through `out`)
-    fn placeable_get_forward(e: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall 0x41CCB0 => unported;
-    /// `CWorld::ProcessLineOfSight(const CVector&, const CVector&, CColPoint&, CEntity*&, bool buildings,
-    /// bool vehicles, bool peds, bool objects, bool dummies, bool seeThrough, bool camera, bool shootThrough)` (0x56BA00, AL)
-    fn process_line_of_sight(a: GPtr<u8>, b: GPtr<u8>, cp: GPtr<u8>, ent: GPtr<u8>, b0: u32, b1: u32, b2: u32, b3: u32, b4: u32, b5: u32, b6: u32, b7: u32) -> u8 = cdecl 0x56BA00 => unported;
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(n: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
     /// `CWaterLevel::GetWaterLevel(float x, float y, float z, float* level, bool touching, CVector* normal)` (0x6EB690, AL)
     fn water_get_level(x: f32, y: f32, z: f32, level: GPtr<u8>, touching: u32, normal: u32) -> u8 = cdecl 0x6EB690 => unported;
-    /// `CWorld::Remove(CEntity*)` (0x563280)
-    fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
     /// `WaterCreatureManager_c::TryToExitGroup(WaterCreature_c*)` (0x6E45B0) on `g_waterCreatureMan` (0xC1DF30)
     fn try_to_exit_group(m: GPtr<u8>, c: GPtr<u8>) = thiscall 0x6E45B0 => unported;
 }

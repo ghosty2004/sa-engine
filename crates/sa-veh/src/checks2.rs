@@ -28,51 +28,45 @@ sa_core::globals! {
     pub static PLAYBACK_INDEX @ 0x97D7C0: [u32; 16] = [0; 16];
 }
 
+pub use crate::bindings::train_find_position_on_track_from_coors;
+pub use sa_core::bindings::cross_product;
+pub use sa_core::bindings::entity_update_rw_frame as update_rw_frame;
+pub use sa_core::bindings::matrix_assign;
+pub use sa_core::bindings::matrix_dtor;
+pub use sa_core::bindings::matrix_scale;
+pub use sa_core::bindings::memory_free;
+pub use sa_core::bindings::memory_malloc;
+pub use sa_core::bindings::stream_read as rw_stream_read;
+pub use sa_core::bindings::streaming_remove_model;
+pub use sa_core::bindings::streaming_request_model;
+pub use sa_world::bindings::crt_printf as printf;
+pub use sa_world::bindings::entity_get_bound_centre as get_bound_centre;
+pub use sa_world::bindings::mark_surrounding_entities as mark_surrounding_entities_for_collision_with_train;
+pub use sa_world::bindings::matrix_copy_ctor;
+pub use sa_world::bindings::physical_remove_and_add as remove_and_add;
+pub use sa_world::bindings::rw_im3d_end;
+pub use sa_world::bindings::update_rw_matrix;
 orig! {
-    /// `CStreaming::RequestModel(int32, int32)` (0x4087E0)
-    pub fn streaming_request_model(id: i32, flags: i32) = cdecl 0x4087E0 => unported;
     /// CRT `sscanf` with one output (0x8220AD)
     pub fn sscanf(s: GPtr<u8>, fmt: u32, out: GPtr<u8>) -> i32 = cdecl 0x8220AD => unported;
-    /// `CMemoryMgr::Malloc(uint32, uint32)` (0x72F420)
-    pub fn memory_malloc(size: u32, hint: u32) -> GPtr<u8> = cdecl 0x72F420 => unported;
-    /// `RwStreamRead(RwStream*, void*, uint32)` (0x7EC9D0)
-    pub fn rw_stream_read(st: GPtr<u8>, buf: GPtr<u8>, len: u32) -> u32 = cdecl 0x7EC9D0 => unported;
     /// `RwStreamClose(RwStream*, void*)` (0x7ECE20)
     pub fn rw_stream_close(st: GPtr<u8>, data: GPtr<u8>) -> i32 = cdecl 0x7ECE20 => unported;
     /// `RwIm3DTransform(RwIm3DVertex*, uint32, RwMatrix*, uint32)` (0x7EF450)
     pub fn rw_im3d_transform(verts: u32, n: i32, m: u32, flags: u32) -> GPtr<u8> = cdecl 0x7EF450 => unported;
     /// `RwIm3DRenderIndexedPrimitive(RwPrimitiveType, uint16*, int32)` (0x7EF550)
     pub fn rw_im3d_render_indexed_primitive(ty: u32, idx: u32, n: i32) -> i32 = cdecl 0x7EF550 => unported;
-    /// `RwIm3DEnd()` (0x7EF520)
-    pub fn rw_im3d_end() -> i32 = cdecl 0x7EF520 => unported;
     /// `CVehicleRecording::SmoothRecording(int32)` (0x45A0F0)
     pub fn smooth_recording_o(idx: i32) = cdecl 0x45A0F0 => crate::checks2::smooth_recording;
-    /// `CMemoryMgr::Free(void*)` (0x72F430)
-    pub fn memory_free(p: GPtr<u8>) = cdecl 0x72F430 => unported;
-    /// `CStreaming::RemoveModel(int32)` (0x4089A0)
-    pub fn streaming_remove_model(id: i32) = cdecl 0x4089A0 => unported;
     /// `CVehicleRecording::RestoreInfoForMatrix(CMatrix&, CVehicleStateEachFrame*)` (0x459960)
     pub fn restore_info_for_matrix_o(m: GPtr<u8>, f: GPtr<u8>) = cdecl 0x459960 => crate::checks2::restore_info_for_matrix;
     /// `CVehicleRecording::SetRecordingToPointClosestToCoors(int32, CVector)` (0x45A1E0)
     pub fn set_recording_to_point_closest_to_coors_o(i: i32, x: f32, y: f32, z: f32) = cdecl 0x45A1E0 => crate::checks2::set_recording_to_point_closest_to_coors;
-    /// `CVector::CrossProduct(CVector* out, const CVector*, const CVector*)` (0x59C730)
-    pub fn cross_product(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C730 => unported;
-    /// `CMatrix::CMatrix(const CMatrix&)` (0x59BCF0)
-    pub fn matrix_copy_ctor(m: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = thiscall 0x59BCF0 => unported;
-    /// `CMatrix::Scale(float)` (0x459350)
-    pub fn matrix_scale(m: GPtr<u8>, s: u32) = thiscall 0x459350 => unported;
     /// `operator+(const CMatrix&, const CMatrix&)` (0x59BFA0), hidden return pointer first
     pub fn matrix_add(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x59BFA0 => unported;
-    /// `CMatrix::operator=(const CMatrix&)` (0x59BBC0)
-    pub fn matrix_assign(m: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = thiscall 0x59BBC0 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    pub fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
     /// `CStuckCarCheck::ResetArrayElement(uint16)` (0x463970)
     pub fn stuck_reset_array_element(c: GPtr<u8>, i: u32) = thiscall 0x463970 => unported;
     /// `CStuckCarCheck::AttemptToWarpVehicle(CVehicle*, CVector*, float)` (0x463A60)
     pub fn stuck_attempt_to_warp_vehicle(c: GPtr<u8>, v: GPtr<u8>, pos: GPtr<u8>, angle: f32) -> u8 = thiscall 0x463A60 => unported;
-    /// `CEntity::GetBoundCentre(CVector&)` (0x534250)
-    pub fn get_bound_centre(e: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall 0x534250 => unported;
     /// `CCamera::IsSphereVisible(const CVector&, float)` (0x420D40)
     pub fn camera_is_sphere_visible(cam: GPtr<u8>, c: GPtr<u8>, r: u32) -> u8 = thiscall 0x420D40 => unported;
     /// `CPathFind::FindNodeCoorsForScript(CNodeAddress, CNodeAddress, float*, bool*)` (0x450780)
@@ -83,8 +77,6 @@ orig! {
     pub fn find_node_coors_linked(pf: GPtr<u8>, out: GPtr<u8>, node: u32, found: GPtr<u8>) -> GPtr<u8> = thiscall 0x4505E0 => unported;
     /// `CPathFind::FindNodeOrientationForCarPlacement(CNodeAddress)` (0x450320)
     pub fn find_node_orientation_for_car_placement(pf: GPtr<u8>, node: u32) -> f32 = thiscall 0x450320 => unported;
-    /// CRT `printf` (0x821982, the debug message of a big playback step)
-    pub fn printf(fmt: u32) -> i32 = cdecl 0x821982 => unported;
     /// `CVehicleRecording::StopPlaybackWithIndex(int32)` (0x459440)
     pub fn stop_playback_with_index_o(i: i32) = cdecl 0x459440 => crate::checks2::stop_playback_with_index;
     /// `CVehicleRecording::StopPlaybackRecordedCar(CVehicle*)` (0x45A280)
@@ -93,18 +85,8 @@ orig! {
     pub fn restore_info_for_car_o(v: GPtr<u8>, f: GPtr<u8>, force: u32) = cdecl 0x459A30 => crate::checks2::restore_info_for_car;
     /// `CVehicleRecording::InterpolateInfoForCar(CVehicle*, CVehicleStateEachFrame*, float)` (0x459B30)
     pub fn interpolate_info_for_car_o(v: GPtr<u8>, f: GPtr<u8>, t: f32) = cdecl 0x459B30 => crate::checks2::interpolate_info_for_car;
-    /// `CTrain::FindPositionOnTrackFromCoors()` (0x6F6CC0)
-    pub fn train_find_position_on_track_from_coors(t: GPtr<u8>) = thiscall 0x6F6CC0 => unported;
     /// `CPhysical` virtual slot 0x5C (`ProcessControlCollisionCheck(bool)`)
     pub fn process_control_collision_check(v: GPtr<u8>, b: u32) = thiscall vslot 0x5C => unported;
-    /// `CPhysical::RemoveAndAdd()` (0x542560)
-    pub fn remove_and_add(v: GPtr<u8>) = thiscall 0x542560 => unported;
-    /// `CEntity::UpdateRwMatrix()` (0x446F90)
-    pub fn update_rw_matrix(v: GPtr<u8>) = thiscall 0x446F90 => unported;
-    /// `CEntity::UpdateRwFrame()` (0x532B00)
-    pub fn update_rw_frame(v: GPtr<u8>) = thiscall 0x532B00 => unported;
-    /// `CTrain::MarkSurroundingEntitiesForCollisionWithTrain(CVector, float, CEntity*, bool)` (0x6F6640)
-    pub fn mark_surrounding_entities_for_collision_with_train(x: u32, y: u32, z: u32, radius: u32, e: GPtr<u8>, only_trains: u32) = cdecl 0x6F6640 => unported;
 }
 
 /// `CTimer::m_snTimeInMilliseconds`.

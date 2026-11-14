@@ -17,271 +17,167 @@ const THE_PATHS: u32 = 0x96F050;
 /// The loading-screen title the init steps pass ("Loading the Game", 0x863A6C)
 const LS_TITLE: u32 = 0x863A6C;
 
+use crate::bindings::col_accel_end_cache;
+use crate::bindings::col_accel_start_cache;
+use crate::bindings::d3d_set_use_resource_buffering;
+use crate::bindings::ini_file_load_ini_file;
+use crate::bindings::loading_screen;
+use crate::bindings::placeable_init_matrix_array;
+use crate::bindings::pools_initialise;
+use crate::bindings::scripts_process;
+use crate::bindings::scripts_start_test_script;
+use crate::bindings::stencil_shadows_init;
+use crate::bindings::txd_add_ref;
+use crate::bindings::txd_create;
 orig! {
-    /// `CLoadingScreen::LoadingScreen(const char*, const char*, const char*)` (0x53DED0)
-    fn loading_screen(a: u32, b: u32, c: u32) = cdecl 0x53DED0 => unported;
     /// `CGame::Init1(const char*)` (0x5BF840)
     fn game_init1(dat: GPtr<u8>) -> u8 = cdecl 0x5BF840 => init1;
-    /// `CColAccel::startCache()` (0x5B31A0)
-    fn col_accel_start_cache() = cdecl 0x5B31A0 => unported;
     /// `CFileLoader::LoadLevel(const char*)` (0x5B9030)
     fn file_loader_load_level(f: u32) = cdecl 0x5B9030 => unported;
-    /// `CColAccel::endCache()` (0x5B2AD0)
-    fn col_accel_end_cache() = cdecl 0x5B2AD0 => unported;
     /// `CGame::Init2(const char*)` (0x5BA1A0)
     fn game_init2(dat: GPtr<u8>) -> u8 = cdecl 0x5BA1A0 => init2;
-    /// `CStencilShadows::Init()` (0x70F9E0)
-    fn stencil_shadows_init() = cdecl 0x70F9E0 => unported;
-    /// `CTheScripts::StartTestScript()` (0x464D40)
-    fn scripts_start_test_script() = cdecl 0x464D40 => unported;
-    /// `CTheScripts::Process()` (0x46A000)
-    fn scripts_process() = cdecl 0x46A000 => unported;
     /// `CCamera::Process()` (0x52B730)
     fn camera_process(c: u32) = thiscall 0x52B730 => unported;
     /// `CGame::Init3(const char*)` (0x5BA400)
     fn game_init3(dat: GPtr<u8>) -> u8 = cdecl 0x5BA400 => init3;
     /// `CMaths::InitMathsTables()` (0x59AC90)
     fn maths_init_maths_tables() = cdecl 0x59AC90 => unported;
-    /// `CPools::Initialise()` (0x550F10)
-    fn pools_initialise() = cdecl 0x550F10 => unported;
-    /// `CPlaceable::InitMatrixArray()` (0x54F3A0)
-    fn placeable_init_matrix_array() = cdecl 0x54F3A0 => unported;
-    /// `CIniFile::LoadIniFile()` (0x56D070)
-    fn ini_file_load_ini_file() = cdecl 0x56D070 => unported;
-    /// `D3DResourceSystem::SetUseD3DResourceBuffering(bool)` (0x730AC0)
-    fn d3d_set_use_resource_buffering(b: u32) = cdecl 0x730AC0 => unported;
     /// `CTxdStore::AddTxdSlot(const char*)` (0x731C80)
     fn txd_add_txd_slot(name: u32) -> i32 = cdecl 0x731C80 => unported;
-    /// `CTxdStore::Create(int32)` (0x731990)
-    fn txd_create(i: i32) = cdecl 0x731990 => unported;
-    /// `CTxdStore::AddRef(int32)` (0x731A00)
-    fn txd_add_ref(i: i32) = cdecl 0x731A00 => unported;
     /// `CTxdStore::LoadTxd(int32, const char*)` (0x7320B0)
     fn txd_load_txd(i: i32, f: u32) = cdecl 0x7320B0 => unported;
 }
 
+use crate::bindings::collision_init;
+use crate::bindings::conversations_clear;
+use crate::bindings::cover_init;
+use crate::bindings::cull_zones_init;
+use crate::bindings::debug_init_text_buffer as fun_00532240;
+use crate::bindings::game_logic_init_at_start_of_game;
+use crate::bindings::gang_wars_init_at_start_of_game;
+use crate::bindings::occlusion_init;
+use crate::bindings::p2p_conversations_clear;
+use crate::bindings::quad_tree_init_pool;
+use crate::bindings::references_init;
+use crate::bindings::set_current_txd as txd_set_current_txd;
+use crate::bindings::set_pieces_init;
+use crate::bindings::stunt_jump_manager_init;
+use crate::bindings::tag_manager_init;
+use crate::bindings::weather_init;
 orig! {
-    /// `CTxdStore::SetCurrentTxd(int32)` (0x7319C0)
-    fn txd_set_current_txd(i: i32) = cdecl 0x7319C0 => unported;
-    /// `CGameLogic::InitAtStartOfGame()` (0x441210)
-    fn game_logic_init_at_start_of_game() = cdecl 0x441210 => unported;
-    /// `CGangWars::InitAtStartOfGame()` (0x443920)
-    fn gang_wars_init_at_start_of_game() = cdecl 0x443920 => unported;
-    /// `CConversations::Clear()` (0x43A7B0)
-    fn conversations_clear() = cdecl 0x43A7B0 => unported;
-    /// `CPedToPlayerConversations::Clear()` (0x43AAE0)
-    fn p2p_conversations_clear() = cdecl 0x43AAE0 => unported;
-    /// `CQuadTreeNode::InitPool()` (0x552C00)
-    fn quad_tree_init_pool() = cdecl 0x552C00 => unported;
     /// `CPlantMgr::Initialise()` (0x5DD910, AL)
     fn plant_mgr_initialise() -> u8 = cdecl 0x5DD910 => unported;
     /// `CCustomRoadsignMgr::Initialise()` (0x6FE120, AL)
     fn roadsign_mgr_initialise() -> u8 = cdecl 0x6FE120 => unported;
-    /// `CReferences::Init()` (0x5719B0)
-    fn references_init() = cdecl 0x5719B0 => unported;
-    /// 0x532240 (no catalogue name; called between `CReferences::Init` and `CTagManager::Init`)
-    fn fun_00532240() = cdecl 0x532240 => unported;
-    /// `CTagManager::Init()` (0x49CC50)
-    fn tag_manager_init() = cdecl 0x49CC50 => unported;
-    /// `CWeather::Init()` (0x72A480)
-    fn weather_init() = cdecl 0x72A480 => unported;
-    /// `CCover::Init()` (0x698710)
-    fn cover_init() = cdecl 0x698710 => unported;
-    /// `CCullZones::Init()` (0x72D6B0)
-    fn cull_zones_init() = cdecl 0x72D6B0 => unported;
-    /// `COcclusion::Init()` (0x71DCA0)
-    fn occlusion_init() = cdecl 0x71DCA0 => unported;
-    /// `CCollision::Init()` (0x416260)
-    fn collision_init() = cdecl 0x416260 => unported;
     /// `CBirds::Init()` (0x711EC0)
     fn birds_init() = cdecl 0x711EC0 => unported;
     /// `CEntryExitManager::Init()` (0x43F880)
     fn entry_exit_manager_init() = cdecl 0x43F880 => unported;
-    /// `CStuntJumpManager::Init()` (0x49CA50)
-    fn stunt_jump_manager_init() = cdecl 0x49CA50 => unported;
-    /// `CSetPieces::Init()` (0x4994F0)
-    fn set_pieces_init() = cdecl 0x4994F0 => unported;
 }
 
+use crate::bindings::anim_manager_initialise;
+use crate::bindings::audio_zones_init;
+use crate::bindings::car_ctrl_init;
+use crate::bindings::car_generators_init;
+use crate::bindings::cutscene_mgr_initialise;
+use crate::bindings::garages_init;
+use crate::bindings::init_model_indices;
+use crate::bindings::messages_clear_all_displayed_by_game;
+use crate::bindings::messages_init;
+use crate::bindings::model_info_initialise;
+use crate::bindings::pickups_init;
+use crate::bindings::restart_initialise;
+use crate::bindings::streaming_init_image_list;
+use crate::bindings::streaming_read_ini_file;
+use crate::bindings::the_zones_init as zones_init;
+use crate::bindings::user_display_init;
+use crate::bindings::vehicle_recording_init;
+use crate::bindings::world_initialise;
 orig! {
-    /// `CTheZones::Init()` (0x572670)
-    fn zones_init() = cdecl 0x572670 => unported;
-    /// `CUserDisplay::Init()` (0x571EE0)
-    fn user_display_init() = cdecl 0x571EE0 => unported;
-    /// `CMessages::Init()` (0x69EE00)
-    fn messages_init() = cdecl 0x69EE00 => unported;
-    /// `CMessages::ClearAllMessagesDisplayedByGame(bool)` (0x69EDC0)
-    fn messages_clear_all_displayed_by_game(b: u32) = cdecl 0x69EDC0 => unported;
-    /// `CVehicleRecording::Init()` (0x459390)
-    fn vehicle_recording_init() = cdecl 0x459390 => unported;
-    /// `CRestart::Initialise()` (0x460630)
-    fn restart_initialise() = cdecl 0x460630 => unported;
-    /// `CWorld::Initialise()` (0x5631E0)
-    fn world_initialise() = cdecl 0x5631E0 => unported;
-    /// `CAnimManager::Initialise()` (0x5BF6B0)
-    fn anim_manager_initialise() = cdecl 0x5BF6B0 => unported;
-    /// `CCutsceneMgr::Initialise()` (0x4D5A20)
-    fn cutscene_mgr_initialise() = cdecl 0x4D5A20 => unported;
-    /// `CCarCtrl::Init()` (0x4212E0)
-    fn car_ctrl_init() = cdecl 0x4212E0 => unported;
-    /// `ModelIndices::InitModelIndices()` (0x5BCA10)
-    fn init_model_indices() = cdecl 0x5BCA10 => unported;
-    /// `CModelInfo::Initialise()` (0x4C6810)
-    fn model_info_initialise() = cdecl 0x4C6810 => unported;
-    /// `CPickups::Init()` (0x454A70)
-    fn pickups_init() = cdecl 0x454A70 => unported;
-    /// `CTheCarGenerators::Init()` (0x6F3270)
-    fn car_generators_init() = cdecl 0x6F3270 => unported;
-    /// `CGarages::Init()` (0x447120)
-    fn garages_init() = cdecl 0x447120 => unported;
-    /// `CAudioZones::Init()` (0x5081A0)
-    fn audio_zones_init() = cdecl 0x5081A0 => unported;
-    /// `CStreaming::InitImageList()` (0x4083C0)
-    fn streaming_init_image_list() = cdecl 0x4083C0 => unported;
-    /// `CStreaming::ReadIniFile()` (0x5BCCD0)
-    fn streaming_read_ini_file() = cdecl 0x5BCCD0 => unported;
     /// `CPathFind::Init()` (0x44D080)
     fn path_find_init(p: u32) = thiscall 0x44D080 => unported;
     /// 0x44D2B0 (`CPathFind` method, a bare `ret` in 1.0 US)
     fn path_find_fun_0044d2b0(p: u32) = thiscall 0x44D2B0 => unported;
 }
 
+use crate::bindings::anim_manager_load_anim_files;
+use crate::bindings::car_plate_mgr_initialise;
+use crate::bindings::cheat_reset_cheats;
+use crate::bindings::clothes_init;
+use crate::bindings::draw_set_fov;
+use crate::bindings::entry_exit_post_creation;
+use crate::bindings::fight_load_melee_data;
+use crate::bindings::load_all_requested_models as streaming_load_all_requested_models;
+use crate::bindings::ped_initialise;
+use crate::bindings::player_info_clear;
+use crate::bindings::renderer_init;
+use crate::bindings::streaming_load_initial_peds;
+use crate::bindings::streaming_load_initial_vehicles;
+use crate::bindings::streaming_load_initial_weapons;
+use crate::bindings::test_model_indices;
+use crate::bindings::the_zones_post_zone_creation as zones_post_zone_creation;
+use crate::bindings::water_level_initialise;
 orig! {
-    /// `CTaskSimpleFight::LoadMeleeData()` (0x5BEDC0)
-    fn fight_load_melee_data() = cdecl 0x5BEDC0 => unported;
-    /// `CCheat::ResetCheats()` (0x438450)
-    fn cheat_reset_cheats() = cdecl 0x438450 => unported;
     /// `Fx_c::Init()` (0x49EA90)
     fn fx_init(fx: u32) = thiscall 0x49EA90 => unported;
-    /// `CTheZones::PostZoneCreation()` (0x572B70)
-    fn zones_post_zone_creation() = cdecl 0x572B70 => unported;
-    /// `CEntryExitManager::PostEntryExitsCreation()` (0x43F0A0)
-    fn entry_exit_post_creation() = cdecl 0x43F0A0 => unported;
     /// 0x44D0E0 (`CPathFind` method, no catalogue name; `ThePaths.PreparePathData`)
     fn path_find_fun_0044d0e0(p: u32) = thiscall 0x44D0E0 => unported;
-    /// `CPlayerInfo::Clear()` (0x56F330)
-    fn player_info_clear(p: u32) = thiscall 0x56F330 => unported;
     /// `CPlayerInfo::LoadPlayerSkin()` (0x56F7D0)
     fn player_info_load_player_skin(p: u32) = thiscall 0x56F7D0 => unported;
-    /// `TestModelIndices()` (0x53ED30)
-    fn test_model_indices() = cdecl 0x53ED30 => unported;
-    /// `CClothes::Init()` (0x5A80D0)
-    fn clothes_init() = cdecl 0x5A80D0 => unported;
-    /// `CWaterLevel::WaterLevelInitialise()` (0x6EAE80)
-    fn water_level_initialise() = cdecl 0x6EAE80 => unported;
-    /// `CDraw::SetFOV(float)` (0x6FF410)
-    fn draw_set_fov(fov: u32) = cdecl 0x6FF410 => unported;
-    /// `CCustomCarPlateMgr::Initialise()` (0x6FD500, AL)
-    fn car_plate_mgr_initialise() -> u8 = cdecl 0x6FD500 => unported;
-    /// `CStreaming::LoadInitialVehicles()` (0x407F20)
-    fn streaming_load_initial_vehicles() = cdecl 0x407F20 => unported;
-    /// `CStreaming::LoadInitialPeds()` (0x40D3D0)
-    fn streaming_load_initial_peds() = cdecl 0x40D3D0 => unported;
-    /// `CStreaming::LoadAllRequestedModels(bool)` (0x40EA10)
-    fn streaming_load_all_requested_models(b: u32) = cdecl 0x40EA10 => unported;
-    /// `CAnimManager::LoadAnimFiles()` (0x4D5620)
-    fn anim_manager_load_anim_files() = cdecl 0x4D5620 => unported;
-    /// `CStreaming::LoadInitialWeapons()` (0x40A120)
-    fn streaming_load_initial_weapons() = cdecl 0x40A120 => unported;
-    /// `CPed::Initialise()` (0x5DEBB0)
-    fn ped_initialise() = cdecl 0x5DEBB0 => unported;
-    /// `CRenderer::Init()` (0x5531C0)
-    fn renderer_init() = cdecl 0x5531C0 => unported;
 }
 
-orig! {
-    /// `CRadar::Initialise()` (0x587FB0)
-    fn radar_initialise() = cdecl 0x587FB0 => unported;
-    /// `CRadar::LoadTextures()` (0x5827D0)
-    fn radar_load_textures() = cdecl 0x5827D0 => unported;
-    /// `CWeapon::InitialiseWeapons()` (0x73A300)
-    fn weapon_initialise_weapons() = cdecl 0x73A300 => unported;
-    /// `CRoadBlocks::Init()` (0x461100)
-    fn road_blocks_init() = cdecl 0x461100 => unported;
-    /// `CPopulation::Initialise()` (0x610E10)
-    fn population_initialise() = cdecl 0x610E10 => unported;
-    /// `CCoronas::Init()` (0x6FAA70)
-    fn coronas_init() = cdecl 0x6FAA70 => unported;
-    /// `CShadows::Init()` (0x706CD0)
-    fn shadows_init() = cdecl 0x706CD0 => unported;
-    /// `CWeaponEffects::Init()` (0x742AB0)
-    fn weapon_effects_init() = cdecl 0x742AB0 => unported;
-    /// `CSkidmarks::Init()` (0x7204E0)
-    fn skidmarks_init() = cdecl 0x7204E0 => unported;
-    /// `CGlass::Init()` (0x71A8D0)
-    fn glass_init() = cdecl 0x71A8D0 => unported;
-    /// `CGarages::Init_AfterRestart()` (0x448B60)
-    fn garages_init_after_restart() = cdecl 0x448B60 => unported;
-    /// `CTheScripts::Init()` (0x468D50)
-    fn scripts_init() = cdecl 0x468D50 => unported;
-    /// `CGangs::Initialise()` (0x5DE680)
-    fn gangs_initialise() = cdecl 0x5DE680 => unported;
-    /// `CClock::Initialise(uint32)` (0x52CD90)
-    fn clock_initialise(scale: u32) = cdecl 0x52CD90 => unported;
-    /// `CHeli::InitHelis()` (0x6C4560)
-    fn heli_init_helis() = cdecl 0x6C4560 => unported;
-    /// `CCranes::InitCranes()` (0x6F3FC0)
-    fn cranes_init_cranes() = cdecl 0x6F3FC0 => unported;
-    /// `CMovingThings::Init()` (0x717D00)
-    fn moving_things_init() = cdecl 0x717D00 => unported;
-    /// `CDarkel::Init()` (0x43CEB0)
-    fn darkel_init() = cdecl 0x43CEB0 => unported;
-    /// `CGridRef::Init()` (0x71D4E0)
-    fn grid_ref_init() = cdecl 0x71D4E0 => unported;
-    /// `CStats::Init()` (0x55C0C0)
-    fn stats_init() = cdecl 0x55C0C0 => unported;
-}
+use crate::bindings::clock_initialise;
+use crate::bindings::coronas_init;
+use crate::bindings::cranes_init_cranes;
+use crate::bindings::darkel_init;
+use crate::bindings::gangs_initialise;
+use crate::bindings::garages_init_after_restart;
+use crate::bindings::glass_init;
+use crate::bindings::grid_ref_init;
+use crate::bindings::heli_init_helis;
+use crate::bindings::moving_things_init;
+use crate::bindings::population_initialise;
+use crate::bindings::radar_initialise;
+use crate::bindings::radar_load_textures;
+use crate::bindings::road_blocks_init;
+use crate::bindings::scripts_init;
+use crate::bindings::shadows_init;
+use crate::bindings::skidmarks_init;
+use crate::bindings::stats_init;
+use crate::bindings::weapon_effects_init;
+use crate::bindings::weapon_initialise_weapons;
 
+use crate::bindings::bridge_init;
+use crate::bindings::clouds_init;
+use crate::bindings::inform_friends_event_queue_init;
+use crate::bindings::inform_group_event_queue_init;
+use crate::bindings::interior_manager_init;
+use crate::bindings::ped_groups_init;
+use crate::bindings::ped_stats_initialise;
+use crate::bindings::proc_object_man_init;
+use crate::bindings::real_time_shadow_manager_init;
+use crate::bindings::replay_init;
+use crate::bindings::ropes_init;
+use crate::bindings::shopping_init;
+use crate::bindings::special_fx_init;
+use crate::bindings::temp_col_models_initialise;
+use crate::bindings::water_cannons_init;
+use crate::bindings::water_creature_manager_init;
 orig! {
-    /// `CClouds::Init()` (0x7138D0)
-    fn clouds_init() = cdecl 0x7138D0 => unported;
-    /// `CSpecialFX::Init()` (0x7268F0)
-    fn special_fx_init() = cdecl 0x7268F0 => unported;
-    /// `CRopes::Init()` (0x555DC0)
-    fn ropes_init() = cdecl 0x555DC0 => unported;
-    /// `CWaterCannons::Init()` (0x728C80)
-    fn water_cannons_init() = cdecl 0x728C80 => unported;
-    /// `CBridge::Init()` (0x41BC70)
-    fn bridge_init() = cdecl 0x41BC70 => unported;
-    /// `CPedGroups::Init()` (0x5FB8C0)
-    fn ped_groups_init() = cdecl 0x5FB8C0 => unported;
-    /// `CInformFriendsEventQueue::Init()` (0x4B2990)
-    fn inform_friends_event_queue_init() = cdecl 0x4B2990 => unported;
-    /// `CInformGroupEventQueue::Init()` (0x4B2AD0)
-    fn inform_group_event_queue_init() = cdecl 0x4B2AD0 => unported;
-    /// `CReplay::Init()` (0x45E220)
-    fn replay_init() = cdecl 0x45E220 => unported;
-    /// `CShopping::Init()` (0x49C290)
-    fn shopping_init() = cdecl 0x49C290 => unported;
     /// `CPad::GetPad(int32)` (0x53FB70)
     fn pad_get_pad(n: i32) -> u32 = cdecl 0x53FB70 => unported;
     /// `CPad::Clear(bool enablePlayerControls, bool resetPhase)` (0x541A70, `ret 8`)
     fn pad_clear(p: u32, a: u32, b: u32) = thiscall 0x541A70 => unported;
-    /// `InteriorManager_c::Init()` (0x5C0500, AL)
-    fn interior_manager_init(m: u32) -> u8 = thiscall 0x5C0500 => unported;
-    /// `ProcObjectMan_c::Init()` (0x5A3EA0)
-    fn proc_object_man_init(m: u32) -> u8 = thiscall 0x5A3EA0 => unported;
-    /// `WaterCreatureManager_c::Init()` (0x6E3F90)
-    fn water_creature_manager_init(m: u32) -> u8 = thiscall 0x6E3F90 => unported;
-    /// `CRealTimeShadowManager::Init()` (0x7067C0)
-    fn real_time_shadow_manager_init(m: u32) = thiscall 0x7067C0 => unported;
-    /// `CTempColModels::Initialise()` (0x5BA8C0)
-    fn temp_col_models_initialise() = cdecl 0x5BA8C0 => unported;
     /// `cHandlingDataMgr::LoadHandlingData()` (0x5BD830)
     fn handling_load_handling_data(m: u32) = thiscall 0x5BD830 => unported;
     /// `SurfaceInfos_c::Init()` (0x55F420)
     fn surface_infos_init(s: u32) = thiscall 0x55F420 => unported;
-    /// `CPedStats::Initialise()` (0x5BF9D0)
-    fn ped_stats_initialise() = cdecl 0x5BF9D0 => unported;
 }
 
+use crate::bindings::pop_cycle_initialise;
+use crate::bindings::time_cycle_initialise;
+use crate::bindings::vehicle_recording_init_at_start_of_game;
 orig! {
-    /// `CTimeCycle::Initialise(bool)` (0x5BBAC0)
-    fn time_cycle_initialise(b: u32) = cdecl 0x5BBAC0 => unported;
-    /// `CPopCycle::Initialise()` (0x5BC090)
-    fn pop_cycle_initialise() = cdecl 0x5BC090 => unported;
-    /// `CVehicleRecording::InitAtStartOfGame()` (0x45A1B0)
-    fn vehicle_recording_init_at_start_of_game() = cdecl 0x45A1B0 => unported;
     /// `CAudioEngine::Initialise()` (0x5B9C60, AL)
     fn audio_engine_initialise(e: u32) -> u8 = thiscall 0x5B9C60 => unported;
     /// `BreakManager_c::Init()` (0x59E650, AL)

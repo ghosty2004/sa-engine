@@ -67,6 +67,10 @@ mod req {
     pub const INITIATE_STOP: i32 = 0x12;
 }
 
+use crate::bindings::free_list_create_prealloc as freelist_create_prealloc;
+use crate::bindings::plugin_add as registry_add_plugin;
+use crate::bindings::plugin_deinit_object as registry_deinit_object;
+use crate::bindings::plugin_init_object as registry_init_object;
 orig! {
     /// `RwDevice::fpSystem(request, pOut, pInOut, nIn)` (stored pointer)
     fn device_system(f: u32, request: i32, out: GPtr<u8>, inout: GPtr<u8>, n: i32) -> i32 = cdecl dyn => unported;
@@ -84,12 +88,6 @@ orig! {
     fn error_set(e: GPtr<RwError>) -> GPtr<RwError> = cdecl 0x808820 => rw_error_set;
     /// `_rwDeviceSystemRequest` (0x7F2AB0)
     fn system_request(dev: GPtr<u8>, request: i32, out: GPtr<u8>, inout: GPtr<u8>, n: i32) -> i32 = cdecl 0x7F2AB0 => device_system_request;
-    /// `_rwPluginRegistryInitObject(reg, obj)` (0x8086E0)
-    fn registry_init_object(reg: GPtr<u8>, obj: GPtr<u8>) -> GPtr<u8> = cdecl 0x8086E0 => crate::plugin::registry_init_object;
-    /// `_rwPluginRegistryDeInitObject(reg, obj)` (0x808740)
-    fn registry_deinit_object(reg: GPtr<u8>, obj: GPtr<u8>) -> GPtr<u8> = cdecl 0x808740 => crate::plugin::registry_deinit_object;
-    /// `_rwPluginRegistryAddPlugin(reg, size, id, ctor, dtor, copy)` (0x8084A0)
-    fn registry_add_plugin(reg: GPtr<u8>, size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x8084A0 => crate::plugin::registry_add_plugin;
     /// `RwImageSetGamma(RwReal)` (0x803FE0)
     fn image_set_gamma(gamma: f32) -> i32 = cdecl 0x803FE0 => unported;
     /// `_rwDeviceGetHandle()` (0x7F9C20, D3D9 driver)
@@ -122,8 +120,6 @@ orig! {
     fn rx_pipeline_open() -> i32 = cdecl 0x804FE0 => unported;
     /// `_rxPipelineClose()` (0x804F60)
     fn rx_pipeline_close() -> i32 = cdecl 0x804F60 => unported;
-    /// `RwFreeListCreateAndPreallocateSpace(...)` (0x801B70)
-    fn freelist_create_prealloc(size: u32, per_block: u32, align: u32, n: u32, space: GPtr<u8>, hint: u32) -> GPtr<u8> = cdecl 0x801B70 => crate::memory::rw_freelist_create_and_preallocate_space;
     /// `RwFreeListDestroy(fl)` (0x801B80)
     fn freelist_destroy(fl: GPtr<u8>) -> u32 = cdecl 0x801B80 => crate::memory::rw_freelist_destroy;
 }

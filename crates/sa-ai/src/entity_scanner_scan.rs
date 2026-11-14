@@ -5,7 +5,7 @@
 #![allow(clippy::unreadable_literal)]
 
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
@@ -13,18 +13,11 @@ use crate::common::*;
 const SCAN_CODE: usize = 0xB7CD78;
 const REPEAT_SECTORS: usize = 0xB992B8;
 
-orig! {
-    /// `CEntityScanner::Clear()` (0x5FF9D0)
-    fn scanner_clear(s: GPtr<u8>) = thiscall 0x5FF9D0 => unported;
-    /// `FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CWorld::ClearScanCodes()` (0x563470)
-    fn world_clear_scan_codes() = cdecl 0x563470 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    fn register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
-    /// CRT `floor(double)` (0x8219F0)
-    fn floor(v: f64) -> f64 = cdecl 0x8219F0 => unported;
-}
+use crate::bindings::entity_scanner_clear as scanner_clear;
+use sa_core::bindings::entity_register_reference as register_reference;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::world_clear_scan_codes;
+use sa_world::bindings::crt_floor as floor;
 
 use sa_core::field::gf as ldf;
 

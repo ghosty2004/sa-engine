@@ -17,10 +17,42 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::dragged_out_car_dtor as event_dragged_out_car_dtor;
+use crate::bindings::event_cop_car_being_stolen_ctor;
+use crate::bindings::event_cop_car_being_stolen_dtor;
+use crate::bindings::event_leader_exited_car_as_driver_ctor as event_leader_exited_car_ctor;
+use crate::bindings::is_player_to_quit_car_enter;
+use crate::bindings::is_vehicle_healthy;
+use crate::bindings::leave_group_ctor as t_none;
+use crate::bindings::vehicle_clear_getting_in_flags;
+use crate::bindings::vehicle_is_driver;
+use sa_core::bindings::car_set_ped_out_ctor as t_set_ped_out;
+use sa_core::bindings::entity_register_reference;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::hud_set_help_message;
+use sa_core::bindings::ped_is_alive;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::compute_target_door_to_exit;
+use sa_world::bindings::enter_car_dtor;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::event_group_event_ctor;
+use sa_world::bindings::event_group_event_dtor;
+use sa_world::bindings::event_leader_entered_car_as_driver_ctor;
+use sa_world::bindings::get_event_global_group;
+use sa_world::bindings::get_nearest_car_door;
+use sa_world::bindings::group_intelligence_add_event;
+use sa_world::bindings::intel_is_friendly_with as intelligence_is_friendly_with;
+use sa_world::bindings::is_law_enforcement_vehicle as vehicle_is_law_enforcement;
+use sa_world::bindings::leave_car_ctor as t_leave_car_5;
+use sa_world::bindings::membership_is_leader as group_membership_is_leader;
+use sa_world::bindings::pad_get_accelerate;
+use sa_world::bindings::pad_get_brake;
+use sa_world::bindings::ped_groups_are_in_same_group;
+use sa_world::bindings::ped_groups_get_peds_group;
+use sa_world::bindings::player_set_real_move_anim as player_ped_set_real_move_anim;
+use sa_world::bindings::stand_still_ctor as t_stand_still;
 orig! {
     fn create_sub_task_o(t: GPtr<u8>, ty: u32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x63E040 => create_sub_task;
-    /// `CTaskComplexEnterCar::~CTaskComplexEnterCar` (0x63DFA0)
-    fn enter_car_dtor(t: GPtr<u8>) = thiscall 0x63DFA0 => unported;
     /// `CTaskComplex::CreateFirstSubTask` (vtable +0x24)
     fn v_create_first_sub_task(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x24 => unported;
     /// `CTaskComplexEnterCar::CreateNextSubTask_AfterSimpleCarAlign` (vtable +0x2C)
@@ -33,19 +65,9 @@ orig! {
     fn v_ped_set_move_anim(ped: GPtr<u8>) = thiscall vslot 0x5C => unported;
     /// `CVehicle` vtable +0x94 (door missing, door argument)
     fn v_veh_slot_94(v: GPtr<u8>, door: u32) -> u8 = thiscall vslot 0x94 => unported;
-
-    fn ped_is_player(ped: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    fn ped_is_alive(ped: GPtr<u8>) -> u8 = thiscall 0x5E0170 => unported;
     fn ped_set_move_state(ped: GPtr<u8>, s: i32) = thiscall 0x5DEC00 => unported;
-    fn player_ped_set_real_move_anim(ped: GPtr<u8>) = thiscall 0x60A9C0 => unported;
-    fn find_player_ped(i: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
     fn player_info_set_last_target_vehicle(pi: GPtr<u8>, v: GPtr<u8>) = thiscall 0x56DA80 => unported;
-    fn entity_register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
-
-    fn is_vehicle_healthy(v: GPtr<u8>) -> u8 = cdecl 0x64EEC0 => unported;
     fn is_ped_healthy(p: GPtr<u8>) -> u8 = cdecl 0x64EEE0 => unported;
-    fn get_nearest_car_door(ped: GPtr<u8>, v: GPtr<u8>, out: GPtr<u8>, door: GPtr<u8>) -> u8 = cdecl 0x6528F0 => unported;
-    fn is_player_to_quit_car_enter(ped: GPtr<u8>, v: GPtr<u8>, start: u32, task: GPtr<u8>) -> u8 = cdecl 0x64F240 => unported;
     fn compute_slow_jacked_ped(v: GPtr<u8>, door: i32) -> GPtr<u8> = cdecl 0x64F070 => unported;
     fn is_car_slow_jack_required(v: GPtr<u8>, door: i32, ped: GPtr<u8>) -> u8 = cdecl 0x64EF70 => unported;
     fn is_car_quick_jack_possible(v: GPtr<u8>, door: i32, ped: GPtr<u8>) -> u8 = cdecl 0x64EF00 => unported;
@@ -56,49 +78,22 @@ orig! {
     fn is_car_door_ready(v: GPtr<u8>, door: i32) -> u8 = cdecl 0x64ED90 => unported;
     fn is_car_door_in_use(v: GPtr<u8>, a: i32, b: i32) -> u8 = cdecl 0x64EC90 => unported;
     fn compute_passenger_index_from_car_door(v: GPtr<u8>, door: i32) -> i32 = cdecl 0x64F1E0 => unported;
-    fn compute_target_door_to_exit(v: GPtr<u8>, ped: GPtr<u8>) -> u32 = cdecl 0x64F110 => unported;
     fn make_undragged_passenger_peds_leave_car(v: GPtr<u8>, dragged: GPtr<u8>, ped: GPtr<u8>) = cdecl 0x64F540 => unported;
     fn position_ped_out_of_collision(ped: GPtr<u8>, v: GPtr<u8>, door: i32) = cdecl 0x6479B0 => unported;
-    fn vehicle_is_driver(v: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x6D1C40 => unported;
-    fn vehicle_is_law_enforcement(v: GPtr<u8>) -> u8 = thiscall 0x6D2370 => unported;
-    fn vehicle_clear_getting_in_flags(v: GPtr<u8>, f: u32) = thiscall 0x6D3040 => unported;
     fn damage_get_door_status(d: GPtr<u8>, door: i32) -> u32 = thiscall 0x6C2250 => unported;
     fn damage_set_door_status(d: GPtr<u8>, door: i32, st: u32) = thiscall 0x6C21E0 => unported;
     fn set_vehicle_flags(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x63AB90 => unported;
     fn prepare_vehicle_for_ped_enter(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x63AC10 => unported;
     fn prepare_ped_for_vehicle_enter(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x63AC80 => unported;
     fn create_line_up_utility(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x63ACC0 => unported;
-    fn pad_get_accelerate(pad: GPtr<u8>) -> i16 = thiscall 0x5403F0 => unported;
-    fn pad_get_brake(pad: GPtr<u8>) -> i16 = thiscall 0x540080 => unported;
     fn text_get(text: GPtr<u8>, key: u32) -> u32 = thiscall 0x6A0050 => unported;
-    fn hud_set_help_message(text: u32, a: u32, b: u32, c: u32) = cdecl 0x588BE0 => unported;
-    fn intelligence_is_friendly_with(i: GPtr<u8>, p: GPtr<u8>) -> u8 = thiscall 0x601BC0 => unported;
     fn intelligence_add_task_primary_maybe_in_group(i: GPtr<u8>, t: GPtr<u8>, b: u32) = thiscall 0x600E20 => unported;
     fn ped_chat_say(store: GPtr<u8>, name: u32, a: GPtr<u8>, b: GPtr<u8>, delay: i32, c: u32, d: u32, e: u32, f: u32, g: u32, h: u32, i: u32) = thiscall 0x618970 => unported;
-
-    fn ped_groups_get_peds_group(ped: GPtr<u8>) -> GPtr<u8> = cdecl 0x5F7E80 => unported;
     fn ped_groups_is_group_leader(ped: GPtr<u8>) -> u8 = cdecl 0x5F7E40 => unported;
-    fn ped_groups_are_in_same_group(a: GPtr<u8>, b: GPtr<u8>) -> u8 = cdecl 0x5F7F40 => unported;
-    fn group_membership_is_leader(m: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x5F69C0 => unported;
-    fn group_intelligence_add_event(gi: GPtr<u8>, e: GPtr<u8>) = thiscall 0x5F7470 => unported;
-    fn event_group_event_ctor(e: GPtr<u8>, ped: GPtr<u8>, ev: GPtr<u8>) -> GPtr<u8> = thiscall 0x4ADFD0 => unported;
-    fn event_group_event_dtor(e: GPtr<u8>) = thiscall 0x4AE070 => unported;
-    fn event_leader_entered_car_as_driver_ctor(e: GPtr<u8>, veh: GPtr<u8>) -> GPtr<u8> = thiscall 0x48E1C0 => unported;
     fn event_leader_quit_entering_car_ctor(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x63A110 => unported;
-    fn event_leader_exited_car_ctor(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x4B8300 => unported;
-    fn event_cop_car_being_stolen_ctor(e: GPtr<u8>, ped: GPtr<u8>, veh: GPtr<u8>) -> GPtr<u8> = thiscall 0x4B1740 => unported;
-    fn event_cop_car_being_stolen_dtor(e: GPtr<u8>) = thiscall 0x4B17F0 => unported;
     fn event_dragged_out_car_ctor(e: GPtr<u8>, veh: GPtr<u8>, ped: GPtr<u8>, driver: u32) -> GPtr<u8> = thiscall 0x4AD250 => unported;
-    fn event_dragged_out_car_dtor(e: GPtr<u8>) = thiscall 0x4AD330 => unported;
-    fn get_event_global_group() -> GPtr<u8> = cdecl 0x4ABA50 => unported;
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
-
-    // task constructors (thiscall on a task pool slot)
-    fn t_stand_still(t: GPtr<u8>, ms: u32, looped: u32, idle: u32, blend: u32) -> GPtr<u8> = thiscall 0x62F310 => unported;
-    fn t_none(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x463540 => unported;
     fn t_fall_and_get_up(t: GPtr<u8>, anim: u32, group: u32, ms: u32) -> GPtr<u8> = thiscall 0x6786C0 => unported;
     fn t_enter_boat_as_driver(t: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = thiscall 0x63B5E0 => unported;
-    fn t_leave_car_5(t: GPtr<u8>, v: GPtr<u8>, door: u32, delay: u32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x63B8C0 => unported;
     fn t_leave_car_3(t: GPtr<u8>, v: GPtr<u8>, door: u32, delay: u32) -> GPtr<u8> = thiscall 0x62F1A0 => unported;
     fn t_drive_timed(t: GPtr<u8>, v: GPtr<u8>, ms: i32) -> GPtr<u8> = thiscall 0x5FF940 => unported;
     fn t_go_to_car_door(t: GPtr<u8>, v: GPtr<u8>, ms: u32, driver: u32, seat: u32, a: u32, b: u32, c: u32, d: u32) -> GPtr<u8> = thiscall 0x645780 => unported;
@@ -113,7 +108,6 @@ orig! {
     fn t_wait_for_door(t: GPtr<u8>, v: GPtr<u8>, door: u32, opp: u32) -> GPtr<u8> = thiscall 0x646B70 => unported;
     fn t_set_in_passenger(t: GPtr<u8>, v: GPtr<u8>, door: u32, lu: u32) -> GPtr<u8> = thiscall 0x646FE0 => unported;
     fn t_set_in_driver(t: GPtr<u8>, v: GPtr<u8>, lu: u32) -> GPtr<u8> = thiscall 0x6470E0 => unported;
-    fn t_set_ped_out(t: GPtr<u8>, v: GPtr<u8>, door: u32, b: u32) -> GPtr<u8> = thiscall 0x6478B0 => unported;
     fn t_slow_drag_ped_out(t: GPtr<u8>, v: GPtr<u8>, door: u32, lu: u32, quit: u32) -> GPtr<u8> = thiscall 0x647FE0 => unported;
     fn t_wait_until_ped_out(t: GPtr<u8>, ped: u32, dir: GPtr<u8>) -> GPtr<u8> = thiscall 0x649450 => unported;
     fn t_slow_be_dragged_out(t: GPtr<u8>, v: GPtr<u8>, door: u32) -> GPtr<u8> = thiscall 0x648620 => unported;

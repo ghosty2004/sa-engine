@@ -7,45 +7,32 @@ use sa_core::{hook, orig};
 
 use super::common::{g, rd, wr};
 
+use crate::bindings::damage_calc_compute_damage_response as compute_damage_response;
+use crate::bindings::damage_calc_dtor;
+use crate::bindings::event_damage_affects_ped;
+use crate::bindings::event_damage_dtor;
+use crate::bindings::event_group_add;
+use crate::bindings::ped_set_current_weapon as set_current_weapon;
+use crate::bindings::set_texture_and_model;
+use sa_core::bindings::clothes_rebuild_player as rebuild_player;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::load_all_requested_models;
+use sa_core::bindings::streaming_request_model as request_model;
+use sa_stream::bindings::reclassify_loaded_cars;
+use sa_stream::bindings::stream_peds_into_random_slots;
 orig! {
-    /// `CStreaming::StreamPedsIntoRandomSlots(int32 models[8])` (0x40BDA0)
-    fn stream_peds_into_random_slots(models: GPtr<u8>) = cdecl 0x40BDA0 => unported;
-    /// `FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CPedClothesDesc::SetTextureAndModel(const char*, const char*, eClothesTexturePart)` (0x5A8080)
-    fn set_texture_and_model(d: GPtr<u8>, tex: u32, model: u32, part: u32) = thiscall 0x5A8080 => unported;
-    /// `CClothes::RebuildPlayer(CPlayerPed*, bool)` (0x5A82C0)
-    fn rebuild_player(ped: GPtr<u8>, b: u32) = cdecl 0x5A82C0 => unported;
     /// `CPedDamageResponseCalculator::CPedDamageResponseCalculator(CEntity*, float, eWeaponType, ePedPieceTypes, bool)` (0x4AD3F0)
     fn damage_calc_ctor(c: GPtr<u8>, e: u32, dmg: f32, wt: u32, piece: u32, speak: u32) -> GPtr<u8> = thiscall 0x4AD3F0 => unported;
-    /// `CPedDamageResponseCalculator::~CPedDamageResponseCalculator()` (0x4AD420)
-    fn damage_calc_dtor(c: GPtr<u8>) = thiscall 0x4AD420 => unported;
     /// `CEventDamage::CEventDamage(CEntity*, uint32, eWeaponType, ePedPieceTypes, uint8, bool, bool)` (0x4AD830)
     fn event_damage_ctor(e: GPtr<u8>, src: u32, time: u32, wt: u32, piece: u32, dir: u32, a6: u32, a7: u32) -> GPtr<u8> = thiscall 0x4AD830 => unported;
-    /// `CEventDamage::~CEventDamage()` (0x4AD960)
-    fn event_damage_dtor(e: GPtr<u8>) = thiscall 0x4AD960 => unported;
-    /// `CEventDamage::AffectsPed(CPed*)` (0x4B35A0)
-    fn event_damage_affects_ped(e: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x4B35A0 => unported;
-    /// `CPedDamageResponseCalculator::ComputeDamageResponse(CPed*, CPedDamageResponse&, bool)` (0x4B5AC0)
-    fn compute_damage_response(c: GPtr<u8>, ped: GPtr<u8>, r: GPtr<u8>, speak: u32) = thiscall 0x4B5AC0 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420)
-    fn event_group_add(grp: GPtr<u8>, ev: GPtr<u8>, valid: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
     /// `CCheat::BeachPartyCheat()` (0x439230)
     fn beach_party_cheat() = cdecl 0x439230 => super::cheat_clothes_themes::beach_party_cheat;
     /// `CCheat::FunhouseCheat()` (0x439720)
     fn funhouse_cheat() = cdecl 0x439720 => super::cheat_clothes_themes::funhouse_cheat;
     /// `CCheat::CountrysideInvasionCheat()` (0x439F60)
     fn countryside_invasion_cheat() = cdecl 0x439F60 => super::cheat_clothes_themes::countryside_invasion_cheat;
-    /// `CStreaming::ReclassifyLoadedCars()` (0x40AFA0)
-    fn reclassify_loaded_cars() = cdecl 0x40AFA0 => unported;
-    /// `CStreaming::RequestModel(int32, int32 flags)` (0x4087E0)
-    fn request_model(model: i32, flags: i32) = cdecl 0x4087E0 => unported;
-    /// `CStreaming::LoadAllRequestedModels(bool)` (0x40EA10)
-    fn load_all_requested_models(only_priority: u32) = cdecl 0x40EA10 => unported;
     /// `CPed::GiveWeapon(eWeaponType, uint32 ammo, bool)` (0x5E6080)
     fn give_weapon(ped: GPtr<u8>, ty: i32, ammo: u32, b: u32) -> i32 = thiscall 0x5E6080 => unported;
-    /// `CPed::SetCurrentWeapon(eWeaponType)` (0x5E6280)
-    fn set_current_weapon(ped: GPtr<u8>, ty: i32) = thiscall 0x5E6280 => unported;
 }
 
 /// Toggles a cheat's state byte (`test dl, dl; sete al`), returning the new state.

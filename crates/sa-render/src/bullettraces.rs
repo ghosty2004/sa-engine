@@ -35,11 +35,9 @@ pub fn update() {
 const ACTIVE_CAM: usize = 0xB6F081;
 const CAM0_MODE: usize = 0xB6F1A8;
 
+pub use sa_core::bindings::find_player_ped;
+pub use sa_core::bindings::find_player_vehicle;
 orig! {
-    /// `FindPlayerPed(int32)` (0x56E210)
-    pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `FindPlayerVehicle(int32, bool)` (0x56E0D0)
-    pub fn find_player_vehicle(id: i32, remote: u32) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
     /// `CVector::Normalise()` (0x59C910)
     pub fn vector_normalise(this: GPtr<f32>) = thiscall 0x59C910 => unported;
     /// `CBulletTraces::AddTrace(CVector* start, CVector* end, float radius, uint32 lifeTime, uint8
@@ -141,6 +139,7 @@ pub fn add_trace_wrapper(start: GPtr<f32>, end: GPtr<f32>, _weapon: u32, from: G
     add_trace(pp, pp.wrapping_index(3), 0x3C23_D70A, 0x12C, 0x46);
 }
 
+pub use sa_world::bindings::rw_im3d_end;
 orig! {
     /// `RwRenderStateSet` (`RwEngineInstance` slot 0x20)
     pub fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
@@ -148,8 +147,6 @@ orig! {
     pub fn rw_im3d_transform(verts: GPtr<u8>, count: u32, ltm: GPtr<u8>, flags: u32) -> GPtr<u8> = cdecl 0x7EF450 => unported;
     /// `RwIm3DRenderIndexedPrimitive(RwPrimitiveType, RwImVertexIndex*, int32)` (0x7EF550)
     pub fn rw_im3d_render_indexed_primitive(ty: u32, indices: GPtr<u16>, count: i32) -> i32 = cdecl 0x7EF550 => unported;
-    /// `RwIm3DEnd()` (0x7EF520)
-    pub fn rw_im3d_end() -> i32 = cdecl 0x7EF520 => unported;
     /// `CVector::CrossProduct(CVector* out, const CVector*, const CVector*)` (0x59C730)
     pub fn cross_product(out: GPtr<f32>, a: GPtr<f32>, b: GPtr<f32>) -> GPtr<f32> = cdecl 0x59C730 => unported;
 }

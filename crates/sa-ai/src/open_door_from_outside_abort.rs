@@ -8,13 +8,11 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::compute_anim_id;
+use sa_core::bindings::find_player_ped;
 orig! {
-    /// `CTaskSimpleCarOpenDoorFromOutside::ComputeAnimID(int32* group, int32* anim)` (0x645FA0, `ret 8`)
-    fn compute_anim_id(t: GPtr<u8>, group: GPtr<u8>, anim: GPtr<u8>) = thiscall 0x645FA0 => unported;
     /// `CVehicle::ProcessOpenDoor(CPed*, uint32 door, uint32 group, uint32 anim, float time)` (vtable +0x70)
     fn v_vehicle_process_open_door(v: GPtr<u8>, ped: GPtr<u8>, door: u32, group: u32, anim: u32, time: u32) = thiscall vslot 0x70 => unported;
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210, cdecl)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
 }
 
 use sa_core::field::ptr_of as buf;

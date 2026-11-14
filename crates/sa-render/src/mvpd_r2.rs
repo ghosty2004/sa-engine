@@ -14,15 +14,12 @@ use sa_math::x87::X87;
 
 use crate::common::{g, jp, k, rd, wr, x};
 
+use sa_core::bindings::general_random_int_in_range as random_int_in_range;
+use sa_core::bindings::vector_normalise;
+use sa_world::bindings::get_water_level_no_waves as water_level_no_waves;
 orig! {
-    /// `CGeneral::GetRandomNumberInRange(int32, int32)` (0x407180)
-    fn random_int_in_range(lo: i32, hi: i32) -> i32 = cdecl 0x407180 => unported;
     /// `CGeneral::GetRandomNumberInRange(float, float)` (0x41BD90, ST0)
     fn random_float_in_range(lo: u32, hi: u32) -> f64 = cdecl 0x41BD90 => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    fn vector_normalise(this: GPtr<u8>) = thiscall 0x59C910 => unported;
-    /// `CWaterLevel::GetWaterLevelNoWaves(x, y, z, float* out, bool, CVector*)` (0x6E8580, bool in AL)
-    fn water_level_no_waves(px: u32, py: u32, pz: u32, out: GPtr<u8>, a: u32, b: u32) -> u8 = cdecl 0x6E8580 => unported;
     /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, 7 bools)` (0x56A490, bool in AL)
     #[allow(clippy::too_many_arguments)]
     fn is_line_of_sight_clear(a: GPtr<u8>, b: GPtr<u8>, bld: u32, veh: u32, ped: u32, obj: u32, dum: u32, see: u32, cam: u32) -> u8 = cdecl 0x56A490 => unported;
@@ -305,15 +302,18 @@ pub fn birds_update() {
     }
 }
 
+use crate::bindings::camera_is_sphere_visible_m;
+use crate::bindings::stencil_graphics_high_quality;
+use sa_core::bindings::defined_state;
+use sa_core::bindings::find_player_vehicle;
+use sa_core::bindings::matrix_dtor;
+use sa_core::bindings::render_weapon_peds_for_pc;
+use sa_core::bindings::rs_camera_begin_update;
+use sa_core::bindings::rw_camera_end_update;
+use sa_core::bindings::rw_raster_destroy;
 orig! {
-    /// `RwRasterDestroy(RwRaster*)` (0x7FB020)
-    fn rw_raster_destroy(r: GPtr<u8>) -> i32 = cdecl 0x7FB020 => unported;
-    /// `FindPlayerVehicle(int32, bool)` (0x56E0D0)
-    fn find_player_vehicle(id: i32, remote: u32) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
     /// `CCullZones::FindMirrorAttributesForCoors(CVector)` (0x72DA70; by value)
     fn find_mirror_attributes(px: u32, py: u32, pz: u32) -> GPtr<u8> = cdecl 0x72DA70 => unported;
-    /// `CCamera::IsSphereVisible(const CVector&, float, const RwMatrix*)` (0x420C40, bool in AL)
-    fn camera_is_sphere_visible_m(this: GPtr<u8>, c: GPtr<u8>, r: u32, m: u32) -> u8 = thiscall 0x420C40 => unported;
     /// `CMirrors::CreateBuffer()` (0x7230A0)
     fn mirrors_create_buffer() = cdecl 0x7230A0 => unported;
     /// `CMirrors::BuildCameraMatrixForScreens(CMatrix&)` (0x7266B0)
@@ -321,26 +321,14 @@ orig! {
     /// `CCamera::DealWithMirrorBeforeConstructRenderList(bool, CVector normal, float v, CMatrix*)` (0x50B510)
     #[allow(clippy::too_many_arguments)]
     fn camera_deal_with_mirror(this: GPtr<u8>, active: u32, nx: u32, ny: u32, nz: u32, v: u32, m: GPtr<u8>) = thiscall 0x50B510 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    fn matrix_dtor(this: GPtr<u8>) = thiscall 0x59ACD0 => unported;
     /// `CCamera::SetCameraUpForMirror()` (0x51A560)
     fn camera_set_up_for_mirror(this: GPtr<u8>) = thiscall 0x51A560 => unported;
     /// `CCamera::RestoreCameraAfterMirror()` (0x51A5A0)
     fn camera_restore_after_mirror(this: GPtr<u8>) = thiscall 0x51A5A0 => unported;
-    /// `CStencilShadows::GraphicsHighQuality()` (0x70F9B0, bool in AL)
-    fn stencil_graphics_high_quality() -> u8 = cdecl 0x70F9B0 => unported;
     /// `RwCameraClear(RwCamera*, RwRGBA*, mode)` (0x7EE340)
     fn rw_camera_clear(cam: GPtr<u8>, colour: GPtr<u8>, mode: u32) -> GPtr<u8> = cdecl 0x7EE340 => unported;
-    /// `RsCameraBeginUpdate(RwCamera*)` (0x619450)
-    fn rs_camera_begin_update(cam: GPtr<u8>) -> i32 = cdecl 0x619450 => unported;
-    /// `RwCameraEndUpdate(RwCamera*)` (0x7EE180)
-    fn rw_camera_end_update(cam: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EE180 => unported;
-    /// `DefinedState()` (0x734650)
-    fn defined_state() = cdecl 0x734650 => unported;
     /// `RenderScene()` (0x53DF40)
     fn render_scene() = cdecl 0x53DF40 => unported;
-    /// `CVisibilityPlugins::RenderWeaponPedsForPC()` (0x732F30)
-    fn render_weapon_peds_for_pc() = cdecl 0x732F30 => unported;
     /// 0x53E8D0 (thiscall on 0xC88224)
     fn fun_53e8d0(this: GPtr<u8>) = thiscall 0x53E8D0 => unported;
 }
@@ -501,13 +489,10 @@ pub fn mirrors_before_main_render() {
     camera_restore_after_mirror(g(THE_CAMERA));
 }
 
+use sa_core::bindings::find_player_ped;
+use sa_world::bindings::cam_no_rain;
+use sa_world::bindings::player_no_rain;
 orig! {
-    /// `CCullZones::CamNoRain()` (0x72DDB0, bool in AL)
-    fn cam_no_rain() -> u8 = cdecl 0x72DDB0 => unported;
-    /// `CCullZones::PlayerNoRain()` (0x72DDC0, bool in AL)
-    fn player_no_rain() -> u8 = cdecl 0x72DDC0 => unported;
-    /// `FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
     /// `CCamera::GetLookingLRBFirstPerson()` (0x50AE60, bool in AL)
     fn camera_looking_lrb_first_person(this: GPtr<u8>) -> u8 = thiscall 0x50AE60 => unported;
     /// `CVehicle::CarHasRoof()` (0x6D25D0, bool in AL)

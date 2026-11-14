@@ -12,6 +12,9 @@ use sa_core::{hook, orig};
 
 use crate::common::{g, rd, wr, x};
 
+pub use sa_world::bindings::can_ped_open_locks;
+pub use sa_world::bindings::clump_get_first_association_4d6a70 as clump_get_first_association;
+pub use sa_world::bindings::get_next_association;
 orig! {
     /// `CVehicle::IsDoorReady(uint32)` (vtable slot 0x7C)
     pub fn veh_is_door_ready(veh: GPtr<u8>, door: u32) -> u8 = thiscall vslot 0x7C => unported;
@@ -21,12 +24,6 @@ orig! {
     pub fn veh_is_door_closed(veh: GPtr<u8>, door: u32) -> u8 = thiscall vslot 0x8C => unported;
     /// `CVehicle::IsDoorMissing(uint32)` (vtable slot 0x94)
     pub fn veh_is_door_missing(veh: GPtr<u8>, door: u32) -> u8 = thiscall vslot 0x94 => unported;
-    /// `CVehicle::CanPedOpenLocks(const CPed*)` (0x6D1E20)
-    pub fn can_ped_open_locks(veh: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x6D1E20 => unported;
-    /// `RpAnimBlendClumpGetFirstAssociation(RpClump*, uint32 flags)` (0x4D6A70)
-    pub fn clump_get_first_association(clump: GPtr<u8>, flags: u32) -> GPtr<u8> = cdecl 0x4D6A70 => unported;
-    /// `RpAnimBlendGetNextAssociation(CAnimBlendAssociation*, uint32 flags)` (0x4D6AD0)
-    pub fn get_next_association(assoc: GPtr<u8>, flags: u32) -> GPtr<u8> = cdecl 0x4D6AD0 => unported;
     /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float)` (0x4D4610)
     pub fn blend_animation(clump: GPtr<u8>, group: u32, anim: u32, delta: f32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
 }

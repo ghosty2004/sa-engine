@@ -48,31 +48,24 @@ const RADAR_RANGE: usize = 0xBA8314;
 /// First TXD model id (`RESOURCE_ID_TXD`)
 const TXD_BASE: i32 = 20000;
 
+pub use crate::bindings::get_int_colour_call;
+pub use sa_core::bindings::rgba_ctor;
+pub use sa_core::bindings::vector_normalise;
+pub use sa_stream::bindings::placeable_allocate_matrix;
+pub use sa_stream::bindings::simple_transform_update_matrix;
+pub use sa_stream::bindings::sprite2d_delete;
+pub use sa_world::bindings::camera_get_look_direction;
 orig! {
-    /// `CCamera::GetLookDirection()` (0x50AE90)
-    pub fn camera_get_look_direction(cam: GPtr<u8>) -> i32 = thiscall 0x50AE90 => unported;
-    /// `CPlaceable::AllocateMatrix()` (0x54F560)
-    pub fn placeable_allocate_matrix(ent: GPtr<u8>) = thiscall 0x54F560 => unported;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*)` (0x54F1B0)
-    pub fn simple_transform_update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    pub fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
     /// `CRadar::CalculateCachedSinCos()` (0x583670)
     pub fn calculate_cached_sin_cos_call() = cdecl 0x583670 => calculate_cached_sin_cos;
-    /// `CHudColours::GetIntColour(uint8)` (0x58FD50)
-    pub fn get_int_colour_call(this: GPtr<u8>, colour: u32) -> u32 = thiscall 0x58FD50 => unported;
     /// `CRadar::GetRadarTraceColour(eBlipColour, bool, bool)` (0x584770)
     pub fn get_radar_trace_colour_call(colour: u32, bright: u32, friendly: u32) -> u32 = cdecl 0x584770 => get_radar_trace_colour;
-    /// `CRGBA::CRGBA(uint8 r, uint8 g, uint8 b, uint8 a)` (0x7170C0)
-    pub fn rgba_ctor(this: GPtr<u8>, r: u32, g: u32, b: u32, a: u32) -> GPtr<u8> = thiscall 0x7170C0 => unported;
     /// `CStreaming::RequestModel(int32, int32)` (0x4087E0)
     pub fn request_model(id: i32, flags: i32) = cdecl 0x4087E0 => sa_stream::streaming::request_model;
     /// `CStreaming::RemoveModel(int32)` (0x4089A0)
     pub fn remove_model(id: i32) = cdecl 0x4089A0 => sa_stream::streaming::remove_model;
     /// `CStreaming::RemoveTxdModel(int32)` (0x40C180)
     pub fn remove_txd_model(slot: i32) = cdecl 0x40C180 => unported;
-    /// `CSprite2d::Delete()` (0x727240)
-    pub fn sprite2d_delete(this: GPtr<u8>) = thiscall 0x727240 => unported;
     /// `CRadar::RemoveRadarSections()` (0x584BF0)
     pub fn remove_radar_sections_call() = cdecl 0x584BF0 => remove_radar_sections;
 }
@@ -517,17 +510,15 @@ pub fn clip_radar_poly_with(out: GPtr<u8>, inp: GPtr<u8>, quirk: impl Fn(u32, GP
     4
 }
 
+pub use sa_core::bindings::sprite2d_set_texture;
+pub use sa_stream::bindings::find_txd_slot;
 orig! {
     /// `CTxdStore::PushCurrentTxd()` (0x7316A0)
     pub fn push_current_txd() = cdecl 0x7316A0 => sa_stream::txdstore::push_current_txd;
-    /// `CTxdStore::FindTxdSlot(const char*)` (0x731850)
-    pub fn find_txd_slot(name: GPtr<u8>) -> i32 = cdecl 0x731850 => sa_stream::txdstore::find_txd_slot_name;
     /// `CTxdStore::SetCurrentTxd(int32)` (0x7319C0)
     pub fn set_current_txd(slot: i32) = cdecl 0x7319C0 => sa_stream::txdstore::set_current_txd;
     /// `CTxdStore::PopCurrentTxd()` (0x7316B0)
     pub fn pop_current_txd() = cdecl 0x7316B0 => sa_stream::txdstore::pop_current_txd;
-    /// `CSprite2d::SetTexture(char*)` (0x727270)
-    pub fn sprite2d_set_texture(this: GPtr<u8>, name: GPtr<u8>) = thiscall 0x727270 => unported;
 }
 
 /// `"hud"` (.rdata)
@@ -636,6 +627,7 @@ pub fn transform_radar_point_to_real_world_space_with(out: GPtr<f32>, inp: GPtr<
     oy.write(ry.fadd_m(origin[1]).to_f32());
 }
 
+pub use sa_world::bindings::sprite2d_draw_quad;
 orig! {
     /// `CRadar::LimitToMap(float*, float*)` (0x583350)
     pub fn limit_to_map_call(px: GPtr<f32>, py: GPtr<f32>) = cdecl 0x583350 => limit_to_map;
@@ -643,8 +635,6 @@ orig! {
     pub fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
     /// `CSprite2d::DrawRect(const CRect&, const CRGBA&)` (0x727B60)
     pub fn sprite2d_draw_rect(rect: GPtr<f32>, colour: GPtr<u8>) = cdecl 0x727B60 => unported;
-    /// `CSprite2d::Draw(x1, y1, x2, y2, x3, y3, x4, y4, const CRGBA&)` (0x728520)
-    pub fn sprite2d_draw_quad(this: GPtr<u8>, x1: f32, y1: f32, x2: f32, y2: f32, x3: f32, y3: f32, x4: f32, y4: f32, colour: GPtr<u8>) = thiscall 0x728520 => unported;
 }
 
 /// 2^32 (.rdata 0x858C54): `fild` of an unsigned argument adds it when the sign bit is set.
@@ -734,11 +724,9 @@ pub fn draw_rotating_radar_sprite(sprite: GPtr<u8>, px: f32, py: f32, angle: f32
     );
 }
 
+pub use crate::bindings::clear_blip_call;
+pub use sa_core::bindings::find_player_vehicle;
 orig! {
-    /// `FindPlayerVehicle(int32 playerId, bool bIncludeRemote)` (0x56E0D0)
-    pub fn find_player_vehicle(id: i32, remote: u32) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
-    /// `CRadar::ClearBlip(int32)` (0x587CE0)
-    pub fn clear_blip_call(h: i32) = cdecl 0x587CE0 => crate::radar::clear_blip;
     /// `CRadar::ClearActualBlip(int32)` (0x587C10)
     pub fn clear_actual_blip_call(i: i32) = cdecl 0x587C10 => crate::radar::clear_actual_blip;
     /// `CRadar::SetCoordBlip(eBlipType, CVector, eBlipColour, eBlipDisplay, const char*)` (0x583820)
@@ -833,9 +821,9 @@ pub fn setup_airstrip_blips() {
     AIRSTRIP_BLIP.set(h);
 }
 
+pub use crate::bindings::transform_real_world_point_to_radar_space_call;
+pub use sa_world::bindings::find_player_heading_st0;
 orig! {
-    /// `FindPlayerHeading(int32)` (0x56E450, ST0)
-    pub fn find_player_heading_st0(id: i32) -> f64 = cdecl 0x56E450 => unported;
     /// `CRadar::DrawRotatingRadarSprite(...)` (0x584850)
     #[allow(clippy::too_many_arguments)]
     pub fn draw_rotating_radar_sprite_call(sprite: GPtr<u8>, px: f32, py: f32, angle: f32, width: u32, height: u32, colour: u32) = cdecl 0x584850 => draw_rotating_radar_sprite;
@@ -845,8 +833,6 @@ orig! {
     pub fn init_front_end_map_call() = cdecl 0x585960 => init_front_end_map;
     /// `FindPlayerCentreOfWorldForMap(int32)` (0x56E400, `CVector` through a hidden return pointer)
     pub fn find_player_centre_of_world_for_map(out: GPtr<f32>, id: i32) -> GPtr<f32> = cdecl 0x56E400 => unported;
-    /// `CRadar::TransformRealWorldPointToRadarSpace(CVector2D&, const CVector2D&)` (0x583530)
-    pub fn transform_real_world_point_to_radar_space_call(out: GPtr<f32>, inp: GPtr<f32>) = cdecl 0x583530 => crate::radar::transform_real_world_point_to_radar_space;
     /// `CRadar::LimitRadarPoint(CVector2D&)` (0x5832F0, ST0)
     pub fn limit_radar_point_call_st0(p: GPtr<f32>) -> f64 = cdecl 0x5832F0 => limit_radar_point_call_st0_rust;
 }

@@ -10,6 +10,81 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::anim_blend_animation;
+use crate::bindings::anim_blend_animation_hier;
+use crate::bindings::anim_set_delete_callback;
+use crate::bindings::assoc_set_finish_callback as anim_set_finish_callback;
+use crate::bindings::attractor_get_head_of_queue;
+use crate::bindings::be_in_couple_abort_arm_ik as be_in_couple_abort_arm_ik_orig;
+use crate::bindings::car_drive_create_sub_task;
+use crate::bindings::car_drive_timed_ctor as car_drive_timed_ctor_orig;
+use crate::bindings::clump_get_association;
+use crate::bindings::dtor_669d20 as wander_dtor_669d20;
+use crate::bindings::event_group_remove_invalid_events;
+use crate::bindings::event_group_reorganise;
+use crate::bindings::event_leader_exited_car_as_driver_ctor;
+use crate::bindings::ik_abort_look_at;
+use crate::bindings::ik_abort_point_arm;
+use crate::bindings::ik_is_arm_pointing;
+use crate::bindings::leave_boat_ctor;
+use crate::bindings::leave_car_create_sub_task;
+use crate::bindings::line_up_dtor as line_up_ped_with_car_dtor;
+use crate::bindings::line_up_ped_with_car_process_ped;
+use crate::bindings::partner_dtor;
+use crate::bindings::pause_ctor as simple_pause_ctor;
+use crate::bindings::ped_set_radio_station;
+use crate::bindings::play_hand_signal_anim_ctor as play_hand_signal_anim_ctor_orig;
+use crate::bindings::run_timed_anim_ctor2;
+use crate::bindings::task_complex_dtor;
+use crate::bindings::task_timer_is_out_of_time;
+use crate::bindings::vehicle_anim_group_get_group;
+use crate::bindings::vehicle_clear_getting_out_flags;
+use crate::bindings::wander_create_first_sub_task;
+use sa_core::bindings::atexit as crt_atexit;
+use sa_core::bindings::car_set_ped_out_ctor;
+use sa_core::bindings::car_set_ped_out_dtor;
+use sa_core::bindings::car_set_ped_out_process_ped;
+use sa_core::bindings::crt_free_8214bd as crt_free;
+use sa_core::bindings::eh_vector_ctor as crt_eh_vector_ctor;
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_core::bindings::entity_register_reference;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::general_random_int_in_range;
+use sa_core::bindings::matrix_dtor;
+use sa_core::bindings::matrix_set_rotate_z_only;
+use sa_core::bindings::streaming_request_model;
+use sa_core::bindings::tm_get_active_task as task_manager_get_active_task;
+use sa_stream::bindings::anim_add_block_ref;
+use sa_stream::bindings::anim_remove_block_ref;
+use sa_stream::bindings::get_animation_block_index as anim_get_block_index;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::are_friends as ped_intelligence_are_friends;
+use sa_world::bindings::compute_target_door_to_exit as car_enter_exit_compute_target_door_to_exit;
+use sa_world::bindings::crt_printf as crt_debug_printf;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::event_group_event_ctor;
+use sa_world::bindings::event_group_event_dtor;
+use sa_world::bindings::get_pad_from_player as player_get_pad_from_player;
+use sa_world::bindings::get_ped_attractor_manager;
+use sa_world::bindings::ik_is_looking;
+use sa_world::bindings::ik_look_at;
+use sa_world::bindings::matrix_copy_ctor;
+use sa_world::bindings::membership_is_leader as group_membership_is_leader;
+use sa_world::bindings::multiply3x3 as multiply_3x3;
+use sa_world::bindings::pad_get_sprint;
+use sa_world::bindings::ped_get_bone_position;
+use sa_world::bindings::ped_groups_get_peds_group;
+use sa_world::bindings::ped_set_ped_position_in_car;
+use sa_world::bindings::run_anim_ctor;
+use sa_world::bindings::stats_get_fat_and_muscle_modifier;
+use sa_world::bindings::task_complex_ctor;
+use sa_world::bindings::task_simple_ctor;
+use sa_world::bindings::task_simple_dtor;
+use sa_world::bindings::tm_find_task_by_type as task_manager_find_task_by_type;
+use sa_world::bindings::upside_down_car_check_is_car_upside_down;
+use sa_world::bindings::vehicle_audio_player_about_to_exit_as_driver;
+use sa_world::bindings::wander_ctor as wander_ctor_66f450;
+use sa_world::bindings::wander_standard_ctor;
 orig! {
     // ---- virtual slots (CTask / CTaskComplex vtable layout) ----
     /// `CTask::GetTaskType` (vtable +0x10)
@@ -18,115 +93,45 @@ orig! {
     fn v_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, priority: i32, event: GPtr<u8>) -> u8 = thiscall vslot 0x18 => unported;
     /// `CTaskComplex::CreateNextSubTask(CPed*)` (vtable +0x20)
     fn v_create_next_sub_task(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x20 => unported;
-
-    // ---- base constructors ----
-    /// `CTaskSimple::CTaskSimple` (0x61A390)
-    fn task_simple_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A390 => unported;
-    /// `CTaskComplex::CTaskComplex` (0x61A3B0)
-    fn task_complex_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A3B0 => unported;
-
-    // ---- other catalogued functions ----
-    /// `CTaskComplexWander::CreateFirstSubTask(CPed*)` (0x6740E0)
-    fn wander_create_first_sub_task(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x6740E0 => unported;
     /// `CTaskComplexPartner::CreateFirstSubTask(CPed*)` (0x681F20)
     fn partner_create_first_sub_task(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x681F20 => unported;
     /// `CTaskComplexEvasiveStep::CreateSubTask(int32 taskType)` (0x6533E0)
     fn evasive_step_create_sub_task(t: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x6533E0 => unported;
-    /// `CTaskComplexCarDrive::CreateSubTask(int32 taskType, CPed*)` (0x642FA0)
-    fn car_drive_create_sub_task(t: GPtr<u8>, ty: i32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x642FA0 => unported;
     /// `CTaskComplexSequence::CreateNextSubTask-Internal(CPed*, int32* progress, int32* repeat)` (0x632C70)
     fn sequence_create_next_sub_task_internal(t: GPtr<u8>, ped: GPtr<u8>, progress: GPtr<u8>, repeat: GPtr<u8>) -> GPtr<u8> = thiscall 0x632C70 => unported;
     /// `CTaskComplexCarDrive::Constructor_1` (0x63C940, `ret 0x10`)
     fn car_drive_ctor_1(t: GPtr<u8>, a0: u32, a1: u32, a2: i32, a3: u32) -> GPtr<u8> = thiscall 0x63C940 => unported;
-    /// `CTaskComplexWanderStandard::CTaskComplexWanderStandard` (0x48E4F0, `ret 0xC`)
-    fn wander_standard_ctor(t: GPtr<u8>, a0: u32, a1: u32, a2: u32) -> GPtr<u8> = thiscall 0x48E4F0 => unported;
-    /// `CTaskSimpleRunTimedAnim::Constructor-2` (0x61ABE0, 8 stack arguments)
-    fn run_timed_anim_ctor2(t: GPtr<u8>, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32) -> GPtr<u8> = thiscall 0x61ABE0 => unported;
     /// `CTask` virtual destructor (vtable +0, called with the deleting flag)
     fn v_delete(t: GPtr<u8>, flags: u32) -> GPtr<u8> = thiscall vslot 0x0 => unported;
-    /// `CTaskSimple::~CTaskSimple` (0x61A3A0)
-    fn task_simple_dtor(t: GPtr<u8>) = thiscall 0x61A3A0 => unported;
-    /// `CTaskComplex::~CTaskComplex` (0x61A3D0)
-    fn task_complex_dtor(t: GPtr<u8>) = thiscall 0x61A3D0 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity** ref)` (0x571A00)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CAnimBlendAssociation::SetFinishCallback(cb, data)` (0x4CEBE0)
-    fn anim_set_finish_callback(a: GPtr<u8>, cb: u32, data: u32) = thiscall 0x4CEBE0 => unported;
     /// `CTaskSimpleCarDrive::Constructor(veh, a1, a2)` (0x63C340, `ret 0xC`)
     fn car_drive_simple_ctor(t: GPtr<u8>, veh: u32, a1: u32, a2: u32) -> GPtr<u8> = thiscall 0x63C340 => unported;
     /// `CTrafficLights::LightForPeds()` (0x49D400)
     fn traffic_lights_light_for_peds() -> u8 = cdecl 0x49D400 => unported;
-    /// `CPedAttractorManager::GetPedAttractorManager()` (0x5EE190)
-    fn get_ped_attractor_manager() -> GPtr<u8> = cdecl 0x5EE190 => unported;
     /// `CPedAttractorManager::BroadcastArrival-(CPed*, CPedAttractor*)` (0x5EFE20, `ret 8`)
     fn attractor_manager_broadcast_arrival(m: GPtr<u8>, ped: GPtr<u8>, attr: GPtr<u8>) -> u8 = thiscall 0x5EFE20 => unported;
-    /// `CPedAttractor::GetHeadOfQueue()` (0x5EB590)
-    fn attractor_get_head_of_queue(a: GPtr<u8>) -> GPtr<u8> = thiscall 0x5EB590 => unported;
-    /// 0x66F450 (the `CTaskComplexWanderCriminal` base constructor, `ret 0x10`)
-    fn wander_ctor_66f450(t: GPtr<u8>, a0: u32, a1: u32, a2: u32, a3: u32) -> GPtr<u8> = thiscall 0x66F450 => unported;
-    /// `CVehicleAnimGroup::GetGroup(int32 animId)` (0x6E3B00, `ret 4`)
-    fn vehicle_anim_group_get_group(g: GPtr<u8>, anim: u32) -> u32 = thiscall 0x6E3B00 => unported;
-    /// 0x669D20 (the `CTaskComplexWander` destructor reached by `CTaskComplexWanderCop`'s destructor)
-    fn wander_dtor_669d20(t: GPtr<u8>) = thiscall 0x669D20 => unported;
-    /// `IKChainManager_c::IsArmPointing(int32 arm, CPed*)` (0x6182B0, `ret 8`)
-    fn ik_is_arm_pointing(m: GPtr<u8>, arm: i32, ped: GPtr<u8>) -> u8 = thiscall 0x6182B0 => unported;
-    /// `IKChainManager_c::AbortPointArm(int32 arm, CPed*, int32 blendTime)` (0x6182F0, `ret 0xC`)
-    fn ik_abort_point_arm(m: GPtr<u8>, arm: i32, ped: GPtr<u8>, blend: i32) = thiscall 0x6182F0 => unported;
     /// `CAEPedSpeechAudioEntity::ReleasePedConversation()` (0x4E52A0, static)
     fn release_ped_conversation() = cdecl 0x4E52A0 => unported;
-    /// `CTaskComplexPartner::~CTaskComplexPartner` (0x683A40)
-    fn partner_dtor(t: GPtr<u8>) = thiscall 0x683A40 => unported;
     /// `CTaskSimpleCarDrive::ProcessPed(CPed*)` (0x644470)
     fn car_drive_process_ped(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x644470 => unported;
-    /// `CEntity::RegisterReference(CEntity** ref)` (0x571B70)
-    fn entity_register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
     /// `CTaskSimpleRunAnim::Constructor2` (0x61A900, `ret 0x18`)
     fn run_anim_ctor2(t: GPtr<u8>, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32) -> GPtr<u8> = thiscall 0x61A900 => unported;
-    /// `CAnimBlendAssociation::SetDeleteCallback(cb, data)` (0x4CEBC0)
-    fn anim_set_delete_callback(a: GPtr<u8>, cb: u32, data: u32) = thiscall 0x4CEBC0 => unported;
     /// `CTaskGoToVehicleAndLean::Constructor(a0, a1)` (0x660E60, `ret 8`)
     fn go_to_vehicle_and_lean_ctor(t: GPtr<u8>, a0: u32, a1: u32) -> GPtr<u8> = thiscall 0x660E60 => unported;
     /// `CPed::Say(uint16 id, uint32, float, uint8, uint8, uint8)` (0x5EFFE0, `ret 0x18`)
     fn ped_say(p: GPtr<u8>, id: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32) = thiscall 0x5EFFE0 => unported;
     /// `CTaskSimpleEvasiveStep::StartAnim(CPed*)` (0x655EA0)
     fn evasive_step_start_anim(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x655EA0 => unported;
-    /// `CAnimManager::GetAnimationBlockIndex-by-name(const char*)` (0x4D3990)
-    fn anim_get_block_index(name: GPtr<u8>) -> i32 = cdecl 0x4D3990 => unported;
-    /// `CAnimManager::RemoveAnimBlockRef(int32)` (0x4D3FD0)
-    fn anim_remove_block_ref(i: i32) = cdecl 0x4D3FD0 => unported;
-    /// `CAnimManager::AddAnimBlockRef(int32)` (0x4D3FB0)
-    fn anim_add_block_ref(i: i32) = cdecl 0x4D3FB0 => unported;
-    /// `CStreaming::RequestModel(int32 id, int32 flags)` (0x4087E0)
-    fn streaming_request_model(id: i32, flags: i32) = cdecl 0x4087E0 => unported;
     /// `CTaskGangHasslePed::Constructor` (0x65FED0, `ret 0x10`)
     fn gang_hassle_ped_ctor(t: GPtr<u8>, a0: u32, a1: u32, a2: u32, a3: u32) -> GPtr<u8> = thiscall 0x65FED0 => unported;
-    /// `CAnimManager::BlendAnimation-id(RpClump*, AssocGroupId, AnimationId, float delta)` (0x4D4610)
-    fn anim_blend_animation(clump: u32, group: u32, id: u32, delta: u32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
-    /// `CTaskSimplePlayHandSignalAnim::CTaskSimplePlayHandSignalAnim` (0x61AE50, `ret 0x10`)
-    fn play_hand_signal_anim_ctor_orig(t: GPtr<u8>, a0: u32, a1: u32, a2: u32, a3: u32) -> GPtr<u8> = thiscall 0x61AE50 => unported;
     /// `CTaskComplexGangLeader::ShouldLoadGangAnims()` (0x65E7F0, static; the callers leave `this` in ECX,
     /// passed the same way here)
     fn should_load_gang_anims(ecx: GPtr<u8>) -> u8 = thiscall 0x65E7F0 => unported;
-    /// `CVehicle::ClearGettingOutFlags(uint8 doors)` (0x6D3060, `ret 4`)
-    fn vehicle_clear_getting_out_flags(v: GPtr<u8>, doors: u32) = thiscall 0x6D3060 => unported;
-    /// `CTaskUtilityLineUpPedWithCar::Destructor` (0x64FC00)
-    fn line_up_ped_with_car_dtor(u: GPtr<u8>) = thiscall 0x64FC00 => unported;
-    /// CRT `_free` (0x8214BD)
-    fn crt_free(p: GPtr<u8>) = cdecl 0x8214BD => unported;
-    /// `CPed::IsPlayer` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
     /// `FUN_005fe9c0(int32 pedType)` (0x5FE9C0, cdecl)
     fn ped_type_5fe9c0(ty: i32) -> u8 = cdecl 0x5FE9C0 => unported;
-    /// `CPedIntelligence::AreFriends(CPed*, CPed*)` (0x601D10, static)
-    fn ped_intelligence_are_friends(a: GPtr<u8>, b: GPtr<u8>) -> u8 = cdecl 0x601D10 => unported;
     /// `CEvent::HasEditableResponse` (CEvent vtable +0x24)
     fn v_event_has_editable_response(e: GPtr<u8>) -> u8 = thiscall vslot 0x24 => unported;
     /// `CEvent::GetEventType` (CEvent vtable +4)
     fn v_event_get_type(e: GPtr<u8>) -> i32 = thiscall vslot 0x4 => unported;
-    /// `CEventGroup::Add-(CEvent*, bool)` (0x4AB420, `ret 8`)
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, valid: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
-    /// `CTaskComplexBeInCouple::AbortArmIK(CPed*)` (0x6837F0)
-    fn be_in_couple_abort_arm_ik_orig(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x6837F0 => unported;
     /// `CTaskComplexPlayHandSignalAnim::GetAnimIdForPed(CPed*)` (0x61B460)
     fn play_hand_signal_get_anim_id_orig(t: GPtr<u8>, ped: GPtr<u8>) -> i32 = thiscall 0x61B460 => unported;
     /// `CTaskComplexPlayHandSignalAnim::CreateSubTask(int32)` (0x61B2F0, `ret 4`)
@@ -135,10 +140,6 @@ orig! {
     fn partner_deal_ctor(t: GPtr<u8>, a0: GPtr<u8>, a1: u32, a2: u32, a3: u32, vx: u32, vy: u32, vz: u32) -> GPtr<u8> = thiscall 0x684190 => unported;
     /// `CTaskComplexGangFollower::Constructor` (0x65EAA0, `ret 0x1C`; a CVector by value at args 3..5)
     fn gang_follower_ctor(t: GPtr<u8>, a0: u32, a1: u32, a2: u32, vx: u32, vy: u32, vz: u32, a6: u32) -> GPtr<u8> = thiscall 0x65EAA0 => unported;
-    /// CRT `_atexit` (0x821D1E)
-    fn crt_atexit(f: u32) -> i32 = cdecl 0x821D1E => unported;
-    /// CRT `eh vector constructor iterator` (0x821D30, stdcall)
-    fn crt_eh_vector_ctor(arr: GPtr<u8>, size: u32, n: u32, ctor: u32, dtor: u32) = stdcall 0x821D30 => unported;
     /// `FUN_005f6450`: `CPedGroupDefaultTaskAllocatorFollowAnyMeans` constructor (vtable only)
     fn alloc_ctor_5f6450(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x5F6450 => unported;
     /// `FUN_005f6480`: `CPedGroupDefaultTaskAllocatorFollowLimited` constructor
@@ -153,108 +154,27 @@ orig! {
     fn alloc_ctor_5f6540(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x5F6540 => unported;
     /// `FUN_00694850`: the formation offsets constructor
     fn formation_offsets_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x694850 => unported;
-    /// `CTaskManager::GetActiveTask()` (0x681720)
-    fn task_manager_get_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x681720 => unported;
     /// `CTaskComplexWander::GetWanderType` (vtable +0x2C)
     fn v_get_wander_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x2C => unported;
     /// `CTask::GetSubTask` (vtable +8)
     fn v_get_sub_task(t: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x8 => unported;
     /// `CTaskSimpleRunNamedAnim::Constructor-Anim` (0x61A990, `ret 0x24`)
     fn run_named_anim_ctor(t: GPtr<u8>, a0: GPtr<u8>, a1: GPtr<u8>, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, a8: u32) -> GPtr<u8> = thiscall 0x61A990 => unported;
-    /// `CAnimManager::BlendAnimation-hier(RpClump*, CAnimBlendHierarchy*, int32 flags, float delta)` (0x4D4410)
-    fn anim_blend_animation_hier(clump: u32, hier: u32, flags: u32, delta: u32) -> GPtr<u8> = cdecl 0x4D4410 => unported;
-    /// `CTaskComplexLeaveCar::CreateSubTask(int32, CPed*)` (0x641530, `ret 8`)
-    fn leave_car_create_sub_task(t: GPtr<u8>, ty: i32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x641530 => unported;
-    /// `CTaskManager::FindTaskByType(int32 slot, int32 type)` (0x6817D0, `ret 8`)
-    fn task_manager_find_task_by_type(tm: GPtr<u8>, slot: i32, ty: i32) -> GPtr<u8> = thiscall 0x6817D0 => unported;
-    /// `RpAnimBlend::RpAnimBlendClumpGetAssociation-AnimId(RpClump*, uint32)` (0x4D68B0)
-    fn clump_get_association(clump: u32, id: u32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
-    /// `CTaskUtilityLineUpPedWithCar::ProcessPed(CPed*, CVehicle*, CAnimBlendAssociation*)` (0x6513A0)
-    fn line_up_ped_with_car_process_ped(u: GPtr<u8>, ped: GPtr<u8>, veh: GPtr<u8>, anim: GPtr<u8>) = thiscall 0x6513A0 => unported;
-    /// `CPed::SetPedPositionInCar` (0x5DF910)
-    fn ped_set_ped_position_in_car(p: GPtr<u8>) = thiscall 0x5DF910 => unported;
     /// `CTaskSimpleFacial::GetAnimId(int32 type)` (0x690CC0, static)
     fn facial_get_anim_id(ty: u32) -> u32 = cdecl 0x690CC0 => unported;
-    /// `CTaskTimer::IsOutOfTime` (0x420E30)
-    fn task_timer_is_out_of_time(t: GPtr<u8>) -> u8 = thiscall 0x420E30 => unported;
-    /// `IKChainManager_c::IsLooking(CPed*)` (0x6181A0, `ret 4`)
-    fn ik_is_looking(m: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x6181A0 => unported;
-    /// `IKChainManager_c::LookAt(name, CPed*, CEntity*, time, bone, CVector* pos, bool, float speed, blend,
-    /// priority, bool)` (0x618970, `ret 0x2C`)
-    fn ik_look_at(m: GPtr<u8>, name: u32, ped: GPtr<u8>, target: GPtr<u8>, time: i32, bone: i32, pos: u32, b: u32, speed: u32, blend: i32, prio: i32, b2: u32) = thiscall 0x618970 => unported;
-    /// `CGeneral::GetRandomNumberInRange_int32(min, max)` (0x407180; draws its own rand)
-    fn general_random_int_in_range(min: i32, max: i32) -> i32 = cdecl 0x407180 => unported;
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
     /// `CAnimBlendAssociation::SetCurrentTime(float)` (0x4CEA80, `ret 4`)
     fn anim_set_current_time(a: GPtr<u8>, t: u32) = thiscall 0x4CEA80 => unported;
-    /// `CMatrix::SetRotateZOnly(float)` (0x59B020, `ret 4`)
-    fn matrix_set_rotate_z_only(m: GPtr<u8>, a: u32) = thiscall 0x59B020 => unported;
-    /// `CPlayerPed::GetPadFromPlayer` (0x609560)
-    fn player_get_pad_from_player(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x609560 => unported;
-    /// `CPad::GetSprint` (0x5407A0)
-    fn pad_get_sprint(pad: GPtr<u8>) -> u8 = thiscall 0x5407A0 => unported;
-    /// `CStats::GetFatAndMuscleModifier(int32)` (0x559AF0, float in ST0)
-    fn stats_get_fat_and_muscle_modifier(a: i32) -> f64 = cdecl 0x559AF0 => unported;
     /// `CTaskSimpleRunNamedAnim::OffsetPedPosition(CPed*)` (0x61AB00, `ret 4`)
     fn run_named_anim_offset_ped_position(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x61AB00 => unported;
     /// `RpAnimBlend::RpAnimBlendClumpGetAssociation-Hier(RpClump*, bool, CAnimBlendHierarchy*)` (0x4D68E0)
     fn clump_get_association_hier(clump: u32, b: u32, hier: u32) -> GPtr<u8> = cdecl 0x4D68E0 => unported;
-    /// `CPed::GetBonePosition-Original(RwV3d* out, uint32 bone, bool)` (0x5E4280, `ret 0xC`)
-    fn ped_get_bone_position(p: GPtr<u8>, out: GPtr<u8>, bone: u32, b: u32) = thiscall 0x5E4280 => unported;
-    /// `CEventGroup::RemoveInvalidEvents(bool)` (0x4AB760, `ret 4`)
-    fn event_group_remove_invalid_events(g: GPtr<u8>, b: u32) = thiscall 0x4AB760 => unported;
-    /// `CEventGroup::Reorganise()` (0x4AB700)
-    fn event_group_reorganise(g: GPtr<u8>) = thiscall 0x4AB700 => unported;
     /// `CTaskSimpleRunNamedAnim::StartAnim(CPed*)` (0x61BB10)
     fn run_named_anim_start_anim_orig(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x61BB10 => unported;
-    /// `CCarEnterExit::ComputeTargetDoorToExit(CVehicle*, CPed*)` (0x64F110)
-    fn car_enter_exit_compute_target_door_to_exit(v: GPtr<u8>, ped: GPtr<u8>) -> u32 = cdecl 0x64F110 => unported;
-    /// `CTaskSimpleCarSetPedOut::CTaskSimpleCarSetPedOut(CVehicle*, int32 door, bool)` (0x6478B0, `ret 0xC`)
-    fn car_set_ped_out_ctor(t: GPtr<u8>, v: GPtr<u8>, door: u32, b: u32) -> GPtr<u8> = thiscall 0x6478B0 => unported;
-    /// `CTaskSimpleCarSetPedOut::ProcessPed(CPed*)` (0x647D10)
-    fn car_set_ped_out_process_ped(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x647D10 => unported;
-    /// `CTaskSimpleCarSetPedOut` destructor (0x647950)
-    fn car_set_ped_out_dtor(t: GPtr<u8>) = thiscall 0x647950 => unported;
-    /// `IKChainManager_c::AbortLookAt(CPed*, int32 blend)` (0x618280, `ret 8`)
-    fn ik_abort_look_at(m: GPtr<u8>, ped: GPtr<u8>, blend: i32) = thiscall 0x618280 => unported;
-    /// `CUpsideDownCarCheck::IsCarUpsideDown-vehicle(const CVehicle*)` (0x463830, `this` unused)
-    fn upside_down_car_check_is_car_upside_down(c: GPtr<u8>, v: GPtr<u8>) -> u8 = thiscall 0x463830 => unported;
-    /// `CMatrix::CMatrix(const CMatrix&)` (0x59BCF0, `ret 4`)
-    fn matrix_copy_ctor(m: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = thiscall 0x59BCF0 => unported;
-    /// `CMatrix::~CMatrix` (0x59ACD0)
-    fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
     /// `CTaskUtilityLineUpPedWithCar::GetLocalPositionToOpenCarDoor(CVector* out, CVehicle*, float, assoc)`
     /// (0x64FC10, `ret 0x10`)
     fn line_up_get_local_position_to_open_car_door(u: GPtr<u8>, out: GPtr<u8>, veh: GPtr<u8>, t: u32, a: u32) -> GPtr<u8> = thiscall 0x64FC10 => unported;
-    /// `Multiply3x3(CVector* out, const CMatrix&, const CVector&)` (0x59C790, cdecl)
-    fn multiply_3x3(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C790 => unported;
-    /// `CTaskSimplePause::Constructor(int32 time)` (0x48E750)
-    fn simple_pause_ctor(t: GPtr<u8>, time: i32) -> GPtr<u8> = thiscall 0x48E750 => unported;
-    /// CRT `wprintf`-like debug print (0x821982, `FID_conflict:_wprintf`, cdecl)
-    fn crt_debug_printf(fmt: u32) -> i32 = cdecl 0x821982 => unported;
-    /// `CPedGroups::GetPedsGroup(const CPed*)` (0x5F7E80)
-    fn ped_groups_get_peds_group(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x5F7E80 => unported;
-    /// `CPedGroupMembership::IsLeader(const CPed*)` (0x5F69C0, `ret 4`)
-    fn group_membership_is_leader(m: GPtr<u8>, p: GPtr<u8>) -> u8 = thiscall 0x5F69C0 => unported;
-    /// `CEventLeaderExitedCarAsDriver::Constructor` (0x4B8300)
-    fn event_leader_exited_car_as_driver_ctor(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x4B8300 => unported;
-    /// `CEventGroupEvent::CEventGroupEvent(CPed*, CEvent*)` (0x4ADFD0, `ret 8`)
-    fn event_group_event_ctor(g: GPtr<u8>, ped: GPtr<u8>, e: GPtr<u8>) -> GPtr<u8> = thiscall 0x4ADFD0 => unported;
     /// `CPedGroupIntelligence::AddEvent-(CEventGroupEvent*)` (0x5F7470, `ret 4`)
     fn group_intelligence_add_event(gi: GPtr<u8>, e: GPtr<u8>) -> u8 = thiscall 0x5F7470 => unported;
-    /// `CEventGroupEvent::~CEventGroupEvent` (0x4AE070)
-    fn event_group_event_dtor(g: GPtr<u8>) = thiscall 0x4AE070 => unported;
-    /// `CPed::SetRadioStation` (0x5DFD90)
-    fn ped_set_radio_station(p: GPtr<u8>) = thiscall 0x5DFD90 => unported;
-    /// `CAEVehicleAudioEntity::PlayerAboutToExitVehicleAsDriver` (0x4F5BA0)
-    fn vehicle_audio_player_about_to_exit_as_driver(a: GPtr<u8>) = thiscall 0x4F5BA0 => unported;
-    /// `CTaskComplexLeaveBoat::Constructor(CVehicle*, int32 delay)` (0x63BB60, `ret 8`)
-    fn leave_boat_ctor(t: GPtr<u8>, v: u32, delay: u32) -> GPtr<u8> = thiscall 0x63BB60 => unported;
-    /// `CTaskSimpleCarDriveTimed::CTaskSimpleCarDriveTimed(veh, time)` (0x5FF940, `ret 8`)
-    fn car_drive_timed_ctor_orig(t: GPtr<u8>, v: u32, time: u32) -> GPtr<u8> = thiscall 0x5FF940 => unported;
-    /// `CTaskSimpleRunAnim::Constructor(groupId, animId, float delta, bool)` (0x61A8B0, `ret 0x10`)
-    fn run_anim_ctor(t: GPtr<u8>, group: u32, anim: u32, delta: u32, b: u32) -> GPtr<u8> = thiscall 0x61A8B0 => unported;
     /// `CTaskSimpleStandStill::Constructor(time, bool, bool, float)` (0x62F310, `ret 0x10`)
     fn stand_still_ctor(t: GPtr<u8>, time: i32, a: u32, b: u32, f: u32) -> GPtr<u8> = thiscall 0x62F310 => unported;
     /// `CTaskComplexSeekEntityStandard::Constructor` (0x46AC10, body in `.HOODLUM`, `ret 0x20`)

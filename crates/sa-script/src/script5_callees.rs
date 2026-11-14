@@ -11,23 +11,17 @@ use sa_math::x87::X87;
 
 use crate::vm::Scr;
 
+use sa_core::bindings::entity_register_reference;
+use sa_core::bindings::get_pad;
+use sa_stream::bindings::remove_txd as txd_remove;
+use sa_stream::bindings::sprite2d_delete;
+use sa_world::bindings::enter_car_dtor;
+use sa_world::bindings::task_simple_ctor as task_ctor;
 orig! {
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    fn get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
     /// CRT `sprintf(char*, const char*, ...)` (0x821BB5), called with the format only
     fn crt_sprintf(out: GPtr<u8>, fmt: u32) -> i32 = cdecl 0x821BB5 => unported;
-    /// `CSprite2d::Delete()` (0x727240)
-    fn sprite2d_delete(s: GPtr<u8>) = thiscall 0x727240 => unported;
     /// `CTxdStore::FindTxdSlot(const char*)` (0x731850)
     fn txd_find_slot(name: u32) -> i32 = cdecl 0x731850 => unported;
-    /// `CTxdStore::RemoveTxd(int32)` (0x731E90)
-    fn txd_remove(slot: i32) = cdecl 0x731E90 => unported;
-    /// `CTaskComplexEnterCar::~CTaskComplexEnterCar()` (0x63DFA0)
-    fn enter_car_dtor(t: GPtr<u8>) = thiscall 0x63DFA0 => unported;
-    /// `CTask::CTask()` (0x61A390)
-    fn task_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A390 => unported;
-    /// `CEntity::RegisterReference(CEntity** slot)` (0x571B70, `ret 4`)
-    fn entity_register_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571B70 => unported;
 }
 
 /// `CTaskSimpleTriggerLookAt` vtable (0x86E3CC)
@@ -285,9 +279,8 @@ pub fn dont_suppress_vehicle_model(model: i32) {
     }
 }
 
+use sa_world::bindings::task_simple_dtor as task_dtor;
 orig! {
-    /// `CTask::~CTask()` (0x61A3A0)
-    fn task_dtor(t: GPtr<u8>) = thiscall 0x61A3A0 => unported;
     /// `CTaskComplexGoToPointAiming::CTaskComplexGoToPointAiming(int32 moveState, CEntity* target, CVector*
     /// offset, CVector point, float radius, float moveStateRadius)` (0x668790, `ret 0x20`)
     fn go_to_point_aiming_ctor(t: GPtr<u8>, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, a8: u32) -> GPtr<u8> = thiscall 0x668790 => unported;
@@ -398,9 +391,8 @@ pub fn the_scripts_add_script_effect_system(fx: u32) -> i32 {
     get_new_unique_script_thing_index(i, 1)
 }
 
+use sa_world::bindings::find_safe_house_index_for_garage_type;
 orig! {
-    /// `CGarages::FindSafeHouseIndexForGarageType(eGarageType)` (0x4489F0; keeps ECX)
-    fn find_safe_house_index_for_garage_type(t: u32) -> i32 = cdecl 0x4489F0 => unported;
     /// `CStoredCar::StoreCar(CVehicle*)` (0x449760, `ret 4`)
     fn stored_car_store(slot: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = thiscall 0x449760 => unported;
 }
@@ -465,13 +457,10 @@ pub fn garages_store_car_in_nearest_impounding_garage(v: GPtr<u8>) {
     stored_car_store(cars.byte_add(0x40 * slot as isize), v);
 }
 
+use sa_core::bindings::list_add_item;
+use sa_core::bindings::list_remove_item;
+use sa_core::bindings::world_remove;
 orig! {
-    /// The intrusive list's `RemoveItem(item)` (0x4A8E30, thiscall, `ret 4`)
-    fn list_remove_item(list: GPtr<u8>, item: GPtr<u8>) = thiscall 0x4A8E30 => unported;
-    /// The intrusive list's `AddItem(item)` (0x4A8DF0, thiscall, `ret 4`)
-    fn list_add_item(list: GPtr<u8>, item: GPtr<u8>) = thiscall 0x4A8DF0 => unported;
-    /// `CWorld::Remove(CEntity*)` (0x563280)
-    fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
     /// Virtual slot 0 (the scalar deleting destructor, `ret 4`)
     fn vcall_delete(f: u32, this: GPtr<u8>, flags: u32) = thiscall dyn => unported;
 }
@@ -526,12 +515,8 @@ pub fn ctor_492f60(this: GPtr<u8>) {
     this.cast::<u32>().write(0x859DC4);
 }
 
-orig! {
-    /// `CTheScripts::GetActualScriptThingIndex(int32 handle, uint8 type)` (0x4839A0)
-    fn get_actual_script_thing_index(handle: i32, ty: u32) -> i32 = cdecl 0x4839A0 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity** slot)` (0x571A00, `ret 4`)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571A00 => unported;
-}
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::get_actual_script_thing_index;
 
 /// `CTheScripts::ScriptSearchLightArray` (0xA94D68, 8 x 0x7C)
 const SEARCH_LIGHTS: usize = 0xA94D68;

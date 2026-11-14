@@ -10,58 +10,35 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
+use crate::bindings::stop_playback_recorded_car as vehicle_recording_stop_playback_recorded_car;
+use sa_core::bindings::entity_register_reference;
+use sa_core::bindings::task_new;
+use sa_stream::bindings::world_remove_references_to_deleted_object;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::event_script_command_ctor;
+use sa_world::bindings::event_script_command_dtor;
+use sa_world::bindings::is_law_enforcement_vehicle as vehicle_is_law_enforcement_vehicle;
+use sa_world::bindings::join_car_with_road_system as car_ctrl_join_car_with_road_system;
+use sa_world::bindings::leave_any_car_ctor;
+use sa_world::bindings::membership_is_follower;
+use sa_world::bindings::membership_remove_member;
+use sa_world::bindings::ped_groups_get_peds_group;
+use sa_world::bindings::remove_from_interesting_vehicle_list as car_ctrl_remove_from_interesting_vehicle_list;
+use sa_world::bindings::sequence_add_task;
+use sa_world::bindings::sequence_ctor;
+use sa_world::bindings::set_char_created_by as ped_set_char_created_by;
+use sa_world::bindings::vehicle_change_law_enforcer_state;
+use sa_world::bindings::vehicle_remove_driver;
+use sa_world::bindings::vehicle_remove_passenger;
+use sa_world::bindings::vehicle_set_created_by as vehicle_set_vehicle_created_by;
+use sa_world::bindings::wander_get_wander_task_by_ped_type as get_wander_task_by_ped_type;
 orig! {
-    /// `CCarCtrl::RemoveFromInterestingVehicleList(CVehicle*)` (0x423ED0)
-    fn car_ctrl_remove_from_interesting_vehicle_list(v: GPtr<u8>) = cdecl 0x423ED0 => unported;
-    /// `CVehicleRecording::StopPlaybackRecordedCar(CVehicle*)` (0x45A280)
-    fn vehicle_recording_stop_playback_recorded_car(v: GPtr<u8>) = cdecl 0x45A280 => unported;
-    /// `CVehicle::SetVehicleCreatedBy(int32)` (0x6D5D70, `ret 4`)
-    fn vehicle_set_vehicle_created_by(v: GPtr<u8>, by: i32) = thiscall 0x6D5D70 => unported;
-    /// `CEntity::RegisterReference(CEntity** slot)` (0x571B70, `ret 4`)
-    fn entity_register_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571B70 => unported;
-    /// `CVehicle::RemoveDriver(bool)` (0x6D1950, `ret 4`)
-    fn vehicle_remove_driver(v: GPtr<u8>, b: u32) = thiscall 0x6D1950 => unported;
-    /// `CVehicle::RemovePassenger(CPed*)` (0x6D1610, `ret 4`)
-    fn vehicle_remove_passenger(v: GPtr<u8>, p: GPtr<u8>) = thiscall 0x6D1610 => unported;
-    /// `CVehicle::IsLawEnforcementVehicle()` (0x6D2370)
-    fn vehicle_is_law_enforcement_vehicle(v: GPtr<u8>) -> u8 = thiscall 0x6D2370 => unported;
-    /// `CVehicle::ChangeLawEnforcerState(bool)` (0x6D2330, `ret 4`)
-    fn vehicle_change_law_enforcer_state(v: GPtr<u8>, b: u32) = thiscall 0x6D2330 => unported;
-    /// `CWorld::RemoveReferencesToDeletedObject(CEntity*)` (0x565510)
-    fn world_remove_references_to_deleted_object(e: GPtr<u8>) = cdecl 0x565510 => unported;
     /// Virtual slot 0 (the scalar deleting destructor, `ret 4`)
     fn vcall_delete(f: u32, this: GPtr<u8>, flags: u32) = thiscall dyn => unported;
-    /// `CPed::SetCharCreatedBy(uint8)` (0x5E47E0, `ret 4`)
-    fn ped_set_char_created_by(p: GPtr<u8>, by: u32) = thiscall 0x5E47E0 => unported;
-    /// `CCarCtrl::JoinCarWithRoadSystem(CVehicle*)` (0x42F5A0)
-    fn car_ctrl_join_car_with_road_system(v: GPtr<u8>) = cdecl 0x42F5A0 => unported;
-    /// `CPedGroups::GetPedsGroup(const CPed*)` (0x5F7E80)
-    fn ped_groups_get_peds_group(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x5F7E80 => unported;
-    /// `CPedGroupMembership::IsFollower(const CPed*)` (0x5F69E0, AL)
-    fn membership_is_follower(m: GPtr<u8>, p: GPtr<u8>) -> u8 = thiscall 0x5F69E0 => unported;
-    /// `CPedGroupMembership::RemoveMember(CPed*)` (0x5FB210)
-    fn membership_remove_member(m: GPtr<u8>, p: GPtr<u8>) = thiscall 0x5FB210 => unported;
     /// `CEventGroup::GetEventOfType(int32)` (0x4AB650)
     fn event_group_get_event_of_type(g: GPtr<u8>, ty: u32) -> GPtr<u8> = thiscall 0x4AB650 => unported;
     /// Virtual `CTask::GetTaskType()` (vtable +0x10)
     fn vcall_task_type(f: u32, t: GPtr<u8>) -> u32 = thiscall dyn => unported;
-    /// `CTask::operator new(uint32)` (0x61A5A0)
-    fn task_new(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => unported;
-    /// `CTaskComplexSequence::CTaskComplexSequence()` (0x632BD0)
-    fn sequence_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x632BD0 => unported;
-    /// `CTaskComplexLeaveAnyCar::CTaskComplexLeaveAnyCar(int32 delay, bool sensibleLeaveCar, bool forceGetOut)`
-    /// (0x421150)
-    fn leave_any_car_ctor(t: GPtr<u8>, delay: u32, sensible: u32, force: u32) -> GPtr<u8> = thiscall 0x421150 => unported;
-    /// `CTaskComplexWander::GetWanderTaskByPedType(CPed*)` (0x673D00)
-    fn get_wander_task_by_ped_type(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x673D00 => unported;
-    /// `CTaskComplexSequence::AddTask(CTask*)` (0x632D10)
-    fn sequence_add_task(s: GPtr<u8>, t: GPtr<u8>) = thiscall 0x632D10 => unported;
-    /// `CEventScriptCommand::CEventScriptCommand(int32, CTask*, bool)` (0x4B0A00, `ret 0xC`)
-    fn event_script_command_ctor(e: GPtr<u8>, idx: u32, t: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4B0A00 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420)
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, valid: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
-    /// `CEventScriptCommand::~CEventScriptCommand()` (0x4B0A50)
-    fn event_script_command_dtor(e: GPtr<u8>) = thiscall 0x4B0A50 => unported;
 }
 
 /// `CPopulation::ms_nTotalMissionPeds` (0xC0EC24, int32)

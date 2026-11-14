@@ -29,15 +29,26 @@ sa_core::globals! {
     pub static SHOTS @ 0xC89690: [u8; NUM_SHOTS * SHOT_SIZE] = [0; NUM_SHOTS * SHOT_SIZE];
 }
 
+pub use crate::bindings::audio_report_bullet_hit;
+pub use crate::bindings::col_lighting_get_current;
+pub use crate::bindings::extinguish_point_with_water;
+pub use crate::bindings::fx_add_tyre_burst;
+pub use sa_core::bindings::assoc_set_current_time;
+pub use sa_core::bindings::vector_normalise as normalise;
+pub use sa_world::bindings::clump_get_first_association_4d6a70 as clump_get_first_association;
+pub use sa_world::bindings::entity_get_is_static;
+pub use sa_world::bindings::fx_add_blood;
+pub use sa_world::bindings::generate_damage_event;
+pub use sa_world::bindings::get_local_direction as ped_get_local_direction;
+pub use sa_world::bindings::localisation_blood;
+pub use sa_world::bindings::ped_is_ped_in_control;
+pub use sa_world::bindings::ped_is_pointer_valid;
+pub use sa_world::bindings::physical_add_to_moving_list;
+pub use sa_world::bindings::report_crime;
+pub use sa_world::bindings::vector_scale;
+pub use sa_world::bindings::vector_sub;
+pub use sa_world::bindings::vehicle_inflict_damage;
 orig! {
-    /// `CPed::IsPointerValid()` (0x5E4220, thiscall)
-    pub fn ped_is_pointer_valid(ped: GPtr<u8>) -> u8 = thiscall 0x5E4220 => unported;
-    /// `CPed::IsPedInControl()` (0x5E3960, thiscall)
-    pub fn ped_is_ped_in_control(ped: GPtr<u8>) -> u8 = thiscall 0x5E3960 => unported;
-    /// `CPed::GetLocalDirection(const CVector2D&)` (0x5DEF60, thiscall)
-    pub fn ped_get_local_direction(ped: GPtr<u8>, v: GPtr<u8>) -> i32 = thiscall 0x5DEF60 => unported;
-    /// `CWeapon::GenerateDamageEvent(CPed*, CEntity*, eWeaponType, int32 damage, ePedPieceTypes, uint8 dir)` (0x73A530)
-    pub fn generate_damage_event(ped: GPtr<u8>, creator: GPtr<u8>, ty: i32, damage: i32, piece: i32, dir: i32) = cdecl 0x73A530 => unported;
     /// `CFireManager::StartFire(CEntity* target, CEntity* creator, float, uint8, uint32 time, int8 gens)` (0x53A050, thiscall)
     pub fn start_fire_target(man: GPtr<u8>, target: GPtr<u8>, creator: GPtr<u8>, size: f32, unk: u8, time: u32, gens: i8) -> GPtr<u8> = thiscall 0x53A050 => unported;
     /// `CWorld::SprayPaintWorld(CVector&, CVector&, float, bool)` (0x565B70)
@@ -46,59 +57,29 @@ orig! {
     pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
     /// `CAudioEngine::ReportFrontendAudioEvent(eAudioEvents, float volumeChange, float speed)` (0x506EA0, thiscall)
     pub fn report_frontend_audio_event(ae: GPtr<u8>, ev: i32, vol: f32, speed: f32) = thiscall 0x506EA0 => unported;
-    /// `CFireManager::ExtinguishPointWithWater(CVector, float, float)` (0x5394C0, thiscall)
-    pub fn extinguish_point_with_water(man: GPtr<u8>, x: f32, y: f32, z: f32, r: f32, w: f32) -> u8 = thiscall 0x5394C0 => crate::fire::extinguish_point_with_water;
     /// `CWorld::SetCarsOnFire(float x, y, z, float radius, CEntity*)` (0x5659F0)
     pub fn set_cars_on_fire(x: f32, y: f32, z: f32, r: f32, e: GPtr<u8>) = cdecl 0x5659F0 => unported;
     /// `CWorld::SetWorldOnFire(float x, y, z, float radius, CEntity*)` (0x56B910)
     pub fn set_world_on_fire(x: f32, y: f32, z: f32, r: f32, e: GPtr<u8>) = cdecl 0x56B910 => unported;
-    /// `CVector::Normalise()` (0x59C910, thiscall)
-    pub fn normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
     /// `CWorld::ProcessLineOfSight(start, end, colPoint, entity, buildings, vehicles, peds, objects, dummies,
     /// seeThrough, camera, shootThrough)` (0x56BA00)
     pub fn process_line_of_sight(a: GPtr<u8>, b: GPtr<u8>, cp: GPtr<u8>, e: GPtr<u8>, bd: u8, vh: u8, pd: u8, ob: u8, du: u8, st: u8, cam: u8, sh: u8) -> u8 = cdecl 0x56BA00 => unported;
     /// `CWeapon::CheckForShootingVehicleOccupant(CEntity**, CColPoint*, eWeaponType, const CVector&, const CVector&)` (0x73F480)
     pub fn check_for_shooting_vehicle_occupant(e: GPtr<u8>, cp: GPtr<u8>, ty: i32, a: GPtr<u8>, b: GPtr<u8>) = cdecl 0x73F480 => unported;
-    /// `VectorSub(CVector* out, const CVector* a, const CVector* b)` (0x40FE60, returns out)
-    pub fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => unported;
-    /// `operator*(CVector* out, float, const CVector*)` (0x40FE90, returns out)
-    pub fn vector_scale(out: GPtr<u8>, k: f32, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE90 => unported;
-    /// `CCrime::ReportCrime(eCrimeType, CEntity* victim, CPed* commitedBy)` (0x532010)
-    pub fn report_crime(ty: i32, victim: GPtr<u8>, by: GPtr<u8>) = cdecl 0x532010 => unported;
-    /// `CLocalisation::Blood()` (0x56D230)
-    pub fn localisation_blood() -> u8 = cdecl 0x56D230 => unported;
-    /// `Fx_c::AddBlood(CVector& pos, CVector& dir, int32 count, float brightness)` (0x49EB00, thiscall)
-    pub fn fx_add_blood(fx: GPtr<u8>, pos: GPtr<u8>, dir: GPtr<u8>, n: i32, b: f32) = thiscall 0x49EB00 => unported;
-    /// `RpAnimBlendClumpGetFirstAssociation(RpClump*, uint32 flags)` (0x4D6A70)
-    pub fn clump_get_first_association(clump: GPtr<u8>, flags: u32) -> GPtr<u8> = cdecl 0x4D6A70 => unported;
     /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float delta)` (0x4D4610)
     pub fn blend_animation(clump: GPtr<u8>, group: i32, id: i32, delta: f32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
-    /// `CAnimBlendAssociation::SetCurrentTime(float)` (0x4CEA80, thiscall)
-    pub fn assoc_set_current_time(a: GPtr<u8>, t: f32) = thiscall 0x4CEA80 => unported;
     /// `CVehicle::BurstTyre(uint8 component, bool)` (vtable +0xB0, thiscall; the dword holding the piece byte is pushed)
     pub fn vehicle_burst_tyre(veh: GPtr<u8>, piece: u32, b: u8) = thiscall vslot 0xB0 => unported;
-    /// `Fx_c::AddTyreBurst(CVector& pos, CVector& vel)` (0x49F300, thiscall)
-    pub fn fx_add_tyre_burst(fx: GPtr<u8>, pos: GPtr<u8>, vel: GPtr<u8>) = thiscall 0x49F300 => unported;
-    /// `CVehicle::InflictDamage(CEntity* damager, eWeaponType, float damage, CVector coords)` (0x6D7C90, thiscall)
-    pub fn vehicle_inflict_damage(veh: GPtr<u8>, by: GPtr<u8>, ty: i32, dmg: f32, x: f32, y: f32, z: f32) = thiscall 0x6D7C90 => unported;
     /// `CCamera::IsSphereVisible(const CVector& center, float radius)` (0x420D40, thiscall)
     pub fn camera_is_sphere_visible(cam: GPtr<u8>, c: GPtr<u8>, r: f32) -> u8 = thiscall 0x420D40 => unported;
-    /// `tColLighting::GetCurrentLighting(float)` (0x59F0C0, cdecl with the dword holding the lighting byte pushed; ST0)
-    pub fn col_lighting_get_current(l: u32, scale: f32) -> f64 = cdecl 0x59F0C0 => unported;
     /// `Fx_c::AddBulletImpact(CVector& pos, CVector& dir, int32 surface, int32 count, float brightness)` (0x49F3D0, thiscall)
     pub fn fx_add_bullet_impact(fx: GPtr<u8>, pos: GPtr<u8>, dir: GPtr<u8>, surface: u32, n: i32, b: f32) = thiscall 0x49F3D0 => unported;
     /// `CObject::ObjectDamage(float, const CVector* pos, const CVector* dir, CEntity*, eWeaponType)` (0x5A0D90, thiscall)
     pub fn object_damage(obj: GPtr<u8>, dmg: f32, pos: GPtr<u8>, dir: GPtr<u8>, by: GPtr<u8>, ty: i32) = thiscall 0x5A0D90 => unported;
-    /// `CEntity::GetIsStatic()` (0x4633E0, thiscall)
-    pub fn entity_get_is_static(e: GPtr<u8>) -> u8 = thiscall 0x4633E0 => unported;
     /// `CEntity::SetIsStatic(bool)` (vtable +0x10, thiscall)
     pub fn entity_set_is_static(e: GPtr<u8>, b: u8) = thiscall vslot 0x10 => unported;
-    /// `CPhysical::AddToMovingList()` (0x542800, thiscall)
-    pub fn physical_add_to_moving_list(e: GPtr<u8>) = thiscall 0x542800 => unported;
     /// `CPhysical::ApplyMoveForce(CVector force)` (0x5429F0, thiscall)
     pub fn physical_apply_move_force(e: GPtr<u8>, x: f32, y: f32, z: f32) = thiscall 0x5429F0 => unported;
-    /// `CAudioEngine::ReportBulletHit(CEntity*, eSurfaceType, const CVector&, float angle)` (0x506EC0, thiscall)
-    pub fn audio_report_bullet_hit(ae: GPtr<u8>, e: GPtr<u8>, surface: u32, pos: GPtr<u8>, angle: f32) = thiscall 0x506EC0 => unported;
     /// `CGlass::WasGlassHitByBullet(CEntity*, CVector)` (0x71C0D0)
     pub fn glass_was_hit_by_bullet(e: GPtr<u8>, x: f32, y: f32, z: f32) = cdecl 0x71C0D0 => unported;
     /// `CHeli::TestSniperCollision(CVector* start, CVector* end)` (0x6C6890)

@@ -173,6 +173,7 @@ const RESTORE_CB: usize = 0xC980B0;
 /// Engine mode globals: width, height, refresh, format, depth, flags.
 const MODE_WIDTH: usize = 0xC9BEE4;
 
+use crate::bindings::im2d_render_open;
 orig! {
     /// `IDirect3DDevice9::TestCooperativeLevel()` (+0xC)
     fn dev_test_cooperative_level(dev: GPtr<u8>) -> i32 = stdcall vslot 0xC => unported;
@@ -197,8 +198,6 @@ orig! {
     fn dynamic_vertex_buffer_restore() -> u32 = cdecl 0x7F58D0 => crate::d3d9vb::dynamic_vertex_buffer_restore;
     /// `_rwD3D9RenderStateReset()` (0x7FD100)
     fn render_state_reset() = cdecl 0x7FD100 => unported;
-    /// `_rwD3D9Im2DRenderOpen()` (0x7FB480)
-    fn im2d_render_open() -> u32 = cdecl 0x7FB480 => unported;
     /// `_rwD3D9Im3DRenderOpen()` (0x80E020)
     fn im3d_render_open() -> u32 = cdecl 0x80E020 => unported;
     /// The device restore callback through its pointer

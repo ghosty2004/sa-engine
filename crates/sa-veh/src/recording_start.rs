@@ -12,9 +12,8 @@ use crate::checks2::{
 };
 use crate::common::{rd, wr};
 
+use sa_core::bindings::entity_register_reference;
 orig! {
-    /// `CEntity::RegisterReference(CEntity** slot)` (0x571B70, `ret 4`)
-    fn entity_register_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571B70 => unported;
     /// `CVehicleRecording::SetRecordingToPointClosestToCoors(int32, CVector)` (0x45A1E0)
     fn set_recording_to_point_closest_to_coors(i: i32, x: u32, y: u32, z: u32) = cdecl 0x45A1E0 => unported;
 }

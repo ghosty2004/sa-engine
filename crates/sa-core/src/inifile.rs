@@ -32,15 +32,11 @@ pub const GTA3_INI: u32 = 0x864FFC;
 /// `"%f"` (0x862EF0)
 pub const FMT_F: u32 = 0x862EF0;
 
+pub use crate::bindings::file_close as close_file;
+pub use crate::bindings::file_set_dir as set_dir;
+pub use crate::bindings::open_file;
+pub use crate::bindings::read_line;
 orig! {
-    /// `CFileMgr::SetDir` (0x5387D0)
-    pub fn set_dir(path: GPtr<u8>) -> i32 = cdecl 0x5387D0 => crate::filemgr::set_dir;
-    /// `CFileMgr::OpenFile` (0x538900)
-    pub fn open_file(path: GPtr<u8>, mode: GPtr<u8>) -> GPtr<u8> = cdecl 0x538900 => crate::filemgr::open_file;
-    /// `CFileMgr::ReadLine` (0x5389B0)
-    pub fn read_line(f: GPtr<u8>, buf: GPtr<u8>, n: i32) -> bool = cdecl 0x5389B0 => crate::filemgr::read_line;
-    /// `CFileMgr::CloseFile` (0x5389D0)
-    pub fn close_file(f: GPtr<u8>) -> i32 = cdecl 0x5389D0 => crate::filemgr::close_file;
     /// CRT `sscanf` (0x8220AD), the one-output form used here
     pub fn sscanf(s: GPtr<u8>, fmt: GPtr<u8>, out: GPtr<f32>) -> i32 = cdecl 0x8220AD => unported;
 }

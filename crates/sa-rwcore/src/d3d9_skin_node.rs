@@ -44,6 +44,19 @@ const ONE_ADDR: usize = 0x858624;
 /// `D3DDECLTYPE_UNUSED`: the type of the `D3DDECL_END` element.
 const DECL_END_TYPE: u8 = 0x11;
 
+use crate::bindings::add_dynamic_geometry;
+use crate::bindings::allocate_res_entry;
+use crate::bindings::create_vertex_buffer;
+use crate::bindings::create_vertex_declaration;
+use crate::bindings::crt_qsort as qsort;
+use crate::bindings::destroy_vertex_buffer;
+use crate::bindings::dynamic_vertex_buffer_create;
+use crate::bindings::dynamic_vertex_buffer_destroy;
+use crate::bindings::dynamic_vertex_buffer_lock;
+use crate::bindings::geometry_get_usage_flags;
+use crate::bindings::index_buffer_create;
+use crate::bindings::set_render_state;
+use crate::bindings::set_transform_world;
 orig! {
     /// `IDirect3DVertexBuffer9::Lock` / `Unlock`
     fn vb_lock(vb: GPtr<u8>, offset: u32, size: u32, data: GPtr<u32>, flags: u32) -> i32 = stdcall vslot 0x2C => unported;
@@ -53,42 +66,19 @@ orig! {
     fn ib_unlock(ib: GPtr<u8>) -> i32 = stdcall vslot 0x30 => unported;
     /// `IDirect3DVertexDeclaration9::GetDeclaration(elements, count)` (+0x10)
     fn decl_get_declaration(decl: GPtr<u8>, elements: GPtr<u8>, count: GPtr<u32>) -> i32 = stdcall vslot 0x10 => unported;
-
-    /// `RwResourcesAllocateResEntry(owner, ownerRef, size, destroyNotify)` (0x807ED0)
-    fn allocate_res_entry(owner: u32, owner_ref: GPtr<u32>, size: u32, notify: u32) -> GPtr<u8> = cdecl 0x807ED0 => crate::memory::rw_resources_allocate_res_entry;
     /// `RwResourcesFreeResEntry(entry)` (0x807DE0)
     fn free_res_entry(e: GPtr<u8>) -> u32 = cdecl 0x807DE0 => crate::memory::rw_resources_free_res_entry;
-    /// `RwD3D9IndexBufferCreate(numIndices, IDirect3DIndexBuffer9** out)` (0x4C9970)
-    fn index_buffer_create(num: u32, out: u32) -> u32 = cdecl 0x4C9970 => crate::d3d9vb::index_buffer_create;
     /// `_rpD3D9IndexRangeMinMax(indices, count, &numVertices, &minVertex)` (0x756710)
     fn index_range_call(indices: GPtr<u8>, n: u32, num_out: GPtr<u32>, min_out: GPtr<u32>) = cdecl 0x756710 => index_range;
     /// `_rpD3D9SortTriangles(indices, count)` (0x756770)
     fn sort_triangles_call(indices: GPtr<u8>, n: u32) = cdecl 0x756770 => sort_triangles;
-    /// CRT `qsort(base, num, width, comp)` (0x8247E0)
-    fn qsort(base: GPtr<u8>, num: u32, width: u32, comp: u32) = cdecl 0x8247E0 => unported;
 
     /// `RwD3D9GetCaps()` (0x7FAD20)
     fn get_caps() -> u32 = cdecl 0x7FAD20 => crate::d3d9dev::get_caps;
-    /// `RpD3D9GeometryGetUsageFlags(geometry)` (0x7588D0)
-    fn geometry_get_usage_flags(geo: GPtr<u8>) -> u32 = cdecl 0x7588D0 => crate::d3d9misc::geometry_get_usage_flags;
-    /// `_rpD3D9AddDynamicGeometry(geometry)` (0x74E970)
-    fn add_dynamic_geometry(geo: u32) = cdecl 0x74E970 => crate::d3d9misc::add_dynamic_geometry;
     /// `_rpD3D9VertexDeclarationGetSize(type)` (0x7522E0)
     fn decl_get_size(ty: u32) -> u32 = cdecl 0x7522E0 => crate::d3d9misc::vertex_declaration_get_size;
     /// `_rpD3D9FindFormatV2d(texCoords, numVertices)` (0x755AA0)
     fn find_format_v2d(uv: GPtr<u8>, n: i32) -> u32 = cdecl 0x755AA0 => crate::d3d9inst::find_format_v2d;
-    /// `RwD3D9CreateVertexDeclaration(elements, &decl)` (0x7FAA30)
-    fn create_vertex_declaration(elements: GPtr<u8>, out: GPtr<u32>) -> u32 = cdecl 0x7FAA30 => crate::d3d9dev::create_vertex_declaration;
-    /// `RwD3D9CreateVertexBuffer(stride, size, &vb, &offset)` (0x7F5500)
-    fn create_vertex_buffer(stride: u32, size: u32, vb: GPtr<u32>, offset: GPtr<u32>) -> u32 = cdecl 0x7F5500 => crate::d3d9vb::create_vertex_buffer;
-    /// `RwD3D9DestroyVertexBuffer(stride, size, vb, offset)` (0x7F56A0)
-    fn destroy_vertex_buffer(stride: u32, size: u32, vb: u32, offset: u32) = cdecl 0x7F56A0 => crate::d3d9vb::destroy_vertex_buffer;
-    /// `RwD3D9DynamicVertexBufferCreate(size, &vb)` (0x7F5A00)
-    fn dynamic_vertex_buffer_create(size: u32, out: GPtr<u32>) -> u32 = cdecl 0x7F5A00 => crate::d3d9vb::dynamic_vertex_buffer_create;
-    /// `RwD3D9DynamicVertexBufferDestroy(vb)` (0x7F5AE0)
-    fn dynamic_vertex_buffer_destroy(vb: u32) = cdecl 0x7F5AE0 => crate::d3d9vb::dynamic_vertex_buffer_destroy;
-    /// `RwD3D9DynamicVertexBufferLock(stride, numVertices, &vb, &data, &baseIndex)` (0x7F5B10)
-    fn dynamic_vertex_buffer_lock(stride: u32, n: u32, vb: GPtr<u32>, data: u32, base: GPtr<u32>) -> u32 = cdecl 0x7F5B10 => crate::d3d9vb::dynamic_vertex_buffer_lock;
     /// `_rpD3D9SkinUseSoftware(atomic, header)`-like predicate (0x7C89C0; 1 without hardware T&L)
     fn skin_use_software(atomic: u32) -> u32 = cdecl 0x7C89C0 => crate::generated::generated_leaf_logic::g_fun_007c89c0_7c89c0;
     /// `_rpD3D9SkinUseHardware(atomic)`-like predicate (0x7C8A00; vertex shaders with few enough bones)
@@ -104,10 +94,6 @@ orig! {
 
     /// `RwFrameGetLTM(frame)` (0x7F0990)
     fn frame_get_ltm(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0990 => crate::frame::get_ltm;
-    /// `RwD3D9SetTransformWorld(matrix)` (0x7FA520)
-    fn set_transform_world(m: GPtr<u8>) -> u32 = cdecl 0x7FA520 => crate::d3d9dev::set_transform_world;
-    /// `RwD3D9SetRenderState(state, value)` (0x7FC2D0)
-    fn set_render_state(state: u32, value: u32) -> u32 = cdecl 0x7FC2D0 => crate::d3d9state::set_render_state;
     /// `RwD3D9GetRenderState(state, out)` (0x7FC320)
     fn get_render_state(state: u32, out: GPtr<u32>) = cdecl 0x7FC320 => crate::d3d9state::get_render_state;
 

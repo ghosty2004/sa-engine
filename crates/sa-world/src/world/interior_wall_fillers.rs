@@ -20,24 +20,16 @@ use sa_core::abi::HookReg;
 use sa_core::crt::rand;
 use sa_core::mem::GPtr;
 use sa_core::orig::at_site;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use super::common::{ftol32, g, rd, xi};
 
-orig! {
-    /// `FurnitureManager_c::GetFurniture(int32 group, int32 subGroup, int16 id, uint8 wealth)` (0x5911E0) on `g_furnitureMan` (0xBAB380)
-    fn get_furniture(man: GPtr<u8>, group: i32, sub: i32, id: i32, wealth: u32) -> GPtr<u8> = thiscall 0x5911E0 => unported;
-    /// `Interior_c::PlaceFurniture(Furniture_c*, int32 x, int32 y, float height, int32, int32 rot, int32* outX, int32* outY, uint8)` (0x592AA0)
-    fn place_furniture(this: GPtr<u8>, f: GPtr<u8>, x: i32, y: i32, h: u32, a5: i32, rot: i32, ox: GPtr<u8>, oy: GPtr<u8>, a9: u32) -> i32 = thiscall 0x592AA0 => unported;
-    /// `Interior_c::GetNumEmptyTiles(int32 x, int32 y, int32 dir, int32 count)` (0x591920)
-    fn get_num_empty_tiles(this: GPtr<u8>, x: i32, y: i32, dir: i32, n: i32) -> i32 = thiscall 0x591920 => unported;
-    /// `Interior_c::AddInteriorInfo(int32 type, float x, float y, int32 dir, CEntity*)` (0x591E40)
-    fn add_interior_info(this: GPtr<u8>, ty: i32, x: f32, y: f32, dir: i32, e: u32) = thiscall 0x591E40 => unported;
-    /// `CGeneral::GetRandomNumberInRange(int32, int32)` (0x407180)
-    fn random_in_range(lo: i32, hi: i32) -> i32 = cdecl 0x407180 => unported;
-    /// `CAnimManager::GetAnimationBlockIndex(const char*)` (0x4D3990)
-    fn get_animation_block_index(name: GPtr<u8>) -> i32 = cdecl 0x4D3990 => unported;
-}
+use crate::bindings::add_interior_info;
+use crate::bindings::get_furniture;
+use crate::bindings::get_num_empty_tiles;
+use crate::bindings::place_furniture;
+use sa_core::bindings::general_random_int_in_range as random_in_range;
+use sa_stream::bindings::get_animation_block_index;
 
 /// `g_furnitureMan` (0xBAB380).
 const FURNITURE_MAN: usize = 0xBA_B380;

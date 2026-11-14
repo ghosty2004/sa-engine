@@ -9,15 +9,26 @@ use sa_math::x87::X87;
 
 use crate::common::{f32_of, g, model_info, rand_at, rd, wr, x};
 
+use sa_core::bindings::get_ambient_blue_obj;
+use sa_core::bindings::get_ambient_green_obj;
+use sa_core::bindings::get_ambient_red_obj;
+use sa_core::bindings::vector_magnitude;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::buoyancy_process;
+use sa_world::bindings::damage_calc_compute_damage_response;
+use sa_world::bindings::damage_calc_ctor;
+use sa_world::bindings::damage_calc_dtor;
+use sa_world::bindings::event_damage_affects_ped;
+use sa_world::bindings::event_damage_ctor;
+use sa_world::bindings::event_damage_dtor;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::kob_ctor;
+use sa_world::bindings::kob_dtor;
+use sa_world::bindings::player_handle_breath;
+use sa_world::bindings::surface_is_water;
+use sa_world::bindings::vec_mul_assign as vector_mul_assign;
+use sa_world::bindings::vector_div;
 orig! {
-    /// `CTimeCycle::GetAmbientRed_Obj()` (0x560360, ST0)
-    fn get_ambient_red_obj() -> f64 = cdecl 0x560360 => unported;
-    /// `CTimeCycle::GetAmbientGreen_Obj()` (0x560370, ST0)
-    fn get_ambient_green_obj() -> f64 = cdecl 0x560370 => unported;
-    /// `CTimeCycle::GetAmbientBlue_Obj()` (0x560380, ST0)
-    fn get_ambient_blue_obj() -> f64 = cdecl 0x560380 => unported;
-    /// `cBuoyancy::ProcessBuoyancy(CPhysical*, float, CVector*, CVector*)` (0x6C3EF0) on `mod_Buoyancy` (0xC1C890)
-    fn buoyancy_process(b: GPtr<u8>, e: GPtr<u8>, buoyancy: u32, centre: GPtr<u8>, force: GPtr<u8>) -> u8 = thiscall 0x6C3EF0 => unported;
     /// `CVehicle::BlowUpCar(CEntity*, bool)` (virtual, vtable +0xA4)
     fn blow_up_car_virtual(v: GPtr<u8>, damager: GPtr<u8>, in_cutscene: u32) = thiscall vslot 0xA4 => unported;
     /// `CPhysical::ApplyMoveForce(CVector)` (0x5429F0)
@@ -26,38 +37,8 @@ orig! {
     fn apply_turn_force(p: GPtr<u8>, force: CVector, point: CVector) = thiscall 0x542A50 => sa_world::physical::forces::apply_turn_force;
     /// `CPhysical::GetSpeed(CVector point)` (0x542CE0, hidden result pointer)
     fn get_speed(p: GPtr<u8>, out: GPtr<CVector>, point: CVector) -> GPtr<CVector> = thiscall 0x542CE0 => sa_world::physical::forces::get_speed;
-    /// `operator/(const CVector&, float)` (0x4119D0, hidden result pointer)
-    fn vector_div(out: GPtr<u8>, v: GPtr<u8>, k: f32) -> GPtr<u8> = cdecl 0x4119D0 => unported;
-    /// `CVector::operator*=(float)` (0x40FEF0)
-    fn vector_mul_assign(v: GPtr<u8>, k: f32) = thiscall 0x40FEF0 => unported;
     /// `CVector::Normalise()` (0x59C910)
     fn normalise(v: GPtr<CVector>) = thiscall 0x59C910 => sa_world::collision::data::normalise_port;
-    /// `CVector::Magnitude()` (0x4082C0, ST0)
-    fn vector_magnitude(v: GPtr<u8>) -> f64 = thiscall 0x4082C0 => unported;
-    /// `SurfaceInfos_c::IsWater(uint32)` (0x55E710)
-    fn surface_is_water(s: GPtr<u8>, surf: u32) -> u8 = thiscall 0x55E710 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CPlayerPed::HandlePlayerBreath(bool, float)` (0x60A8D0), the float as bits
-    fn player_handle_breath(ped: GPtr<u8>, b: u32, f: u32) = thiscall 0x60A8D0 => unported;
-    /// `CEventKnockOffBike::CEventKnockOffBike(...)` (0x4AFCF0)
-    fn kob_ctor(e: GPtr<u8>, veh: GPtr<u8>, speed: GPtr<u8>, impact: GPtr<u8>, dmg: u32, a5: u32, kind: u32, dir: u32, time: u32, ped: u32, driver: u32, force: u32) -> GPtr<u8> = thiscall 0x4AFCF0 => unported;
-    /// `CEventKnockOffBike::~CEventKnockOffBike()` (0x4AFE70)
-    fn kob_dtor(e: GPtr<u8>) = thiscall 0x4AFE70 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420)
-    fn event_group_add(grp: GPtr<u8>, ev: GPtr<u8>, valid: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
-    /// `CPedDamageResponseCalculator::CPedDamageResponseCalculator(...)` (0x4AD3F0)
-    fn damage_calc_ctor(c: GPtr<u8>, e: GPtr<u8>, dmg: u32, wt: u32, piece: u32, speak: u32) -> GPtr<u8> = thiscall 0x4AD3F0 => unported;
-    /// `CPedDamageResponseCalculator::~CPedDamageResponseCalculator()` (0x4AD420)
-    fn damage_calc_dtor(c: GPtr<u8>) = thiscall 0x4AD420 => unported;
-    /// `CEventDamage::CEventDamage(...)` (0x4AD830)
-    fn event_damage_ctor(e: GPtr<u8>, src: GPtr<u8>, time: u32, wt: u32, piece: u32, dir: u32, a6: u32, a7: u32) -> GPtr<u8> = thiscall 0x4AD830 => unported;
-    /// `CEventDamage::~CEventDamage()` (0x4AD960)
-    fn event_damage_dtor(e: GPtr<u8>) = thiscall 0x4AD960 => unported;
-    /// `CEventDamage::AffectsPed(CPed*)` (0x4B35A0)
-    fn event_damage_affects_ped(e: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x4B35A0 => unported;
-    /// `CPedDamageResponseCalculator::ComputeDamageResponse(CPed*, CPedDamageResponse&, bool)` (0x4B5AC0)
-    fn damage_calc_compute_damage_response(c: GPtr<u8>, ped: GPtr<u8>, r: GPtr<u8>, speak: u32) = thiscall 0x4B5AC0 => unported;
 }
 
 const TIME_STEP: usize = 0xB7_CB5C;
@@ -300,31 +281,22 @@ pub fn automobile_process_buoyancy(this: GPtr<u8>) {
     }
 }
 
+use crate::bindings::do_drive_by_shootings;
+use crate::bindings::do_soft_ground_resistance;
+use crate::bindings::process_wheel_rotation;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::get_pad;
+use sa_core::bindings::prune_references;
+use sa_pop::bindings::car_gun_just_down;
+use sa_world::bindings::max_f;
+use sa_world::bindings::min_f;
+use sa_world::bindings::stats_get_fat_and_muscle_modifier as get_fat_and_muscle_modifier;
+use sa_world::bindings::vector_add;
+use sa_world::bindings::vector_magnitude_sqr;
+use sa_world::bindings::vector_scale;
 orig! {
-    /// `operator*(float, const CVector&)` (0x40FE90, hidden result pointer)
-    fn vector_scale(out: GPtr<u8>, k: f32, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE90 => unported;
-    /// `operator+(const CVector&, const CVector&)` (0x40FE30, hidden result pointer)
-    fn vector_add(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE30 => unported;
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
     /// `CVehicle::ProcessControlInputs(uint8 pad)` (virtual, vtable +0x60)
     fn process_control_inputs_virtual(v: GPtr<u8>, pad: u32) = thiscall vslot 0x60 => unported;
-    /// `std::min<float>` (0x404330, ST0)
-    fn min_f(a: f32, b: f32) -> f64 = cdecl 0x404330 => unported;
-    /// `std::max<float>` (0x420800, ST0)
-    fn max_f(a: f32, b: f32) -> f64 = cdecl 0x420800 => unported;
-    /// `CStats::GetFatAndMuscleModifier(eStatModAbilities)` (0x559AF0, ST0)
-    fn get_fat_and_muscle_modifier(a: i32) -> f64 = cdecl 0x559AF0 => unported;
-    /// `CEntity::PruneReferences()` (0x571A90)
-    fn prune_references(e: GPtr<u8>) = thiscall 0x571A90 => unported;
-    /// `CVehicle::DoDriveByShootings()` (0x741FD0)
-    fn do_drive_by_shootings(v: GPtr<u8>) = thiscall 0x741FD0 => unported;
-    /// `CBike::DoSoftGroundResistance(uint32&)` (0x6B6D40)
-    fn do_soft_ground_resistance(b: GPtr<u8>, flags: GPtr<u32>) = thiscall 0x6B6D40 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    fn get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CPad::CarGunJustDown()` (0x53FFE0), the result in AX
-    fn car_gun_just_down(p: GPtr<u8>) -> u32 = thiscall 0x53FFE0 => unported;
     /// `CVehicle::ActivateBomb()` (0x6D24F0)
     fn activate_bomb(v: GPtr<u8>) = thiscall 0x6D24F0 => unported;
     /// `CCarAI::UpdateCarAI(CVehicle*)` (0x41DA30)
@@ -335,14 +307,10 @@ orig! {
     fn update_car_on_rails(v: GPtr<u8>) = cdecl 0x436540 => unported;
     /// `cTransmission::CalculateGearForSimpleCar(float speed, uint8& gear)` (0x6D0530)
     fn calculate_gear_for_simple_car(t: GPtr<u8>, speed: f32, gear: GPtr<u8>) = thiscall 0x6D0530 => unported;
-    /// `CVehicle::ProcessWheelRotation(tWheelState, const CVector&, const CVector&, float)` (0x6D1230, ST0)
-    fn process_wheel_rotation(v: GPtr<u8>, state: u32, fwd: GPtr<u8>, speed: GPtr<u8>, radius: f32) -> f64 = thiscall 0x6D1230 => unported;
     /// `CVehicle` virtual +0xD8 (`PlayCarHorn`)
     fn play_car_horn_virtual(v: GPtr<u8>) = thiscall vslot 0xD8 => unported;
     /// `CCarCtrl::SteerAICarWithPhysics(CVehicle*)` (0x437C20)
     fn steer_ai_car_with_physics(v: GPtr<u8>) = cdecl 0x437C20 => unported;
-    /// `CVector::SquaredMagnitude()` (0x406DA0, ST0)
-    fn vector_magnitude_sqr(v: GPtr<u8>) -> f64 = thiscall 0x406DA0 => unported;
 }
 
 /// `CBike::ProcessAI(uint32& extraHandlingFlags)` (0x6BC930, `ret 4`).

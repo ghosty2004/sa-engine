@@ -7,9 +7,9 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+pub use crate::bindings::get_weapon_skill_type_call;
+pub use sa_world::bindings::entity_delete_rw_object;
 orig! {
-    /// `CEntity::DeleteRwObject` (0x534030)
-    pub fn entity_delete_rw_object(e: GPtr<u8>) = thiscall 0x534030 => unported;
     /// `CPedType::Initialise` (0x608E40)
     pub fn ped_type_initialise() = cdecl 0x608E40 => unported;
     /// 0x64F860 (catalogue name `CCarEnterExit::SetAnimOffsetForEnterOrExitVehicle`, `void()`)
@@ -20,8 +20,6 @@ orig! {
     pub fn speech_disable_for_script(s: GPtr<u8>, b: i32) = thiscall 0x4E5700 => unported;
     /// `CAEPedSpeechAudioEntity::CanPedHoldConversation` (0x4E69E0)
     pub fn speech_can_hold_conversation(s: GPtr<u8>) -> u8 = thiscall 0x4E69E0 => unported;
-    /// `CPed::GetWeaponSkill(eWeaponType)` (0x5E3B60)
-    pub fn get_weapon_skill_type_call(p: GPtr<u8>, ty: i32) -> u8 = thiscall 0x5E3B60 => crate::ped::get_weapon_skill_type;
     /// `CWeaponInfo::GetWeaponInfo(eWeaponType, eWeaponSkill)` (0x743C60)
     pub fn get_weapon_info_call(ty: i32, skill: i32) -> GPtr<u8> = cdecl 0x743C60 => unported;
 }

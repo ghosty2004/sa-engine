@@ -26,9 +26,8 @@ const ANIMATIONS: usize = 0xB4EA40;
 /// `CAnimManager::ms_aAnimBlocks` (180 × `CAnimBlock`, 0x20 each; owned by CAnimManager).
 const ANIM_BLOCKS: usize = 0xB5D4A0;
 
+pub use sa_core::bindings::atexit;
 orig! {
-    /// CRT `_atexit` (0x821D1E)
-    pub fn atexit(f: u32) -> i32 = cdecl 0x821D1E => unported;
     /// `CAnimBlendAssocGroup::CAnimBlendAssocGroup()` (0x4CDE70)
     pub fn assoc_group_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4CDE70 => unported;
     /// `CAnimBlendAssocGroup::~CAnimBlendAssocGroup()` (0x4CE1D0)

@@ -7,27 +7,20 @@ use sa_core::{hook, orig};
 
 use crate::common::{f32_of, g, rd, wr, x};
 
+use sa_core::bindings::get_pad as pad_get_pad;
+use sa_world::bindings::pad_get_car_gun_fired;
+use sa_world::bindings::pad_get_enter_targeting;
+use sa_world::bindings::pad_get_target;
+use sa_world::bindings::vector_add_assign as vec_add_assign;
+use sa_world::bindings::vector_mul_scalar as vec_mul_scalar;
+use sa_world::bindings::weapon_effects_is_locked_on;
 orig! {
     /// `CWorld::FindPlayerSlotWithVehiclePointer(CEntity*)` (0x564000)
     fn find_player_slot_with_vehicle(v: GPtr<u8>) -> i32 = cdecl 0x564000 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    fn pad_get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CPad::GetCarGunFired()` (0x53FF90): int16 in AX
-    fn pad_get_car_gun_fired(pad: GPtr<u8>) -> i16 = thiscall 0x53FF90 => unported;
     /// `CPad::CarGunJustDown()` (0x53FFE0): int16 in AX
     fn pad_car_gun_just_down(pad: GPtr<u8>) -> i16 = thiscall 0x53FFE0 => unported;
-    /// `CPad::GetEnterTargeting()` (0x5406B0, AL)
-    fn pad_get_enter_targeting(pad: GPtr<u8>) -> u8 = thiscall 0x5406B0 => unported;
-    /// `CPad::GetTarget()` (0x540670, AL)
-    fn pad_get_target(pad: GPtr<u8>) -> u8 = thiscall 0x540670 => unported;
-    /// `operator*(const CVector&, float)` (0x40FEC0, the result through `out`)
-    fn vec_mul_scalar(out: GPtr<u8>, v: GPtr<u8>, s: f32) -> GPtr<u8> = cdecl 0x40FEC0 => unported;
-    /// `CVector::operator+=(const CVector&)` (0x411A00)
-    fn vec_add_assign(v: GPtr<u8>, o: GPtr<u8>) = thiscall 0x411A00 => unported;
     /// `CProjectileInfo::AddProjectile(CEntity*, eWeaponType, CVector, float, CVector*, CEntity*)` (0x737C80)
     fn add_projectile(creator: GPtr<u8>, wt: i32, x: f32, y: f32, z: f32, force: u32, dir: GPtr<u8>, target: GPtr<u8>) -> u8 = cdecl 0x737C80 => unported;
-    /// `CWeaponEffects::IsLockedOn(int32)` (0x742BD0, AL)
-    fn weapon_effects_is_locked_on(n: i32) -> u8 = cdecl 0x742BD0 => unported;
     /// `CVehicle::ScanAndMarkTargetForHeatSeekingMissile(CEntity*)` (0x6E0400)
     fn scan_and_mark_target(v: GPtr<u8>, e: GPtr<u8>) -> GPtr<u8> = thiscall 0x6E0400 => unported;
 }

@@ -8,11 +8,9 @@ use sa_math::x87::X87;
 
 use crate::common::{g, rd, wr};
 
+use crate::bindings::atomic_default_render;
+use sa_core::bindings::frame_get_ltm;
 orig! {
-    /// `RwFrameGetLTM(frame)` (0x7F0990)
-    fn frame_get_ltm(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0990 => unported;
-    /// `AtomicDefaultRenderCallBack(atomic)` (0x7491C0)
-    fn atomic_default_render(a: GPtr<u8>) -> GPtr<u8> = cdecl 0x7491C0 => unported;
     /// `CVisibilityPlugins::RenderAtomicWithAlpha(atomic, alpha)` (0x732480)
     fn render_atomic_with_alpha_call(a: GPtr<u8>, alpha: i32) = cdecl 0x732480 => render_atomic_with_alpha;
 }

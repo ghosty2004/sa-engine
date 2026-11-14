@@ -6,20 +6,16 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
+use sa_core::bindings::load_all_requested_models;
+use sa_core::bindings::uncompress_animation;
+use sa_stream::bindings::anim_add_block_ref as add_anim_block_ref;
+use sa_stream::bindings::anim_remove_block_ref as remove_anim_block_ref;
+use sa_stream::bindings::get_animation_block_index;
 orig! {
-    /// `CAnimManager::GetAnimationBlockIndex(name)` (0x4D3990)
-    fn get_animation_block_index(name: GPtr<u8>) -> i32 = cdecl 0x4D3990 => unported;
     /// `CStreaming::RequestModel(id, flags)` (0x4087E0)
     fn request_model(id: i32, flags: u32) = cdecl 0x4087E0 => unported;
-    /// `CStreaming::LoadAllRequestedModels(priorityOnly)` (0x40EA10)
-    fn load_all_requested_models(b: u32) = cdecl 0x40EA10 => unported;
-    /// `CAnimManager::AddAnimBlockRef(index)` (0x4D3FB0), `RemoveAnimBlockRef(index)` (0x4D3FD0)
-    fn add_anim_block_ref(i: i32) = cdecl 0x4D3FB0 => unported;
-    fn remove_anim_block_ref(i: i32) = cdecl 0x4D3FD0 => unported;
     /// `CAnimManager::GetAnimAssociation(group, anim)` (0x4D3A60)
     fn get_anim_association(group: i32, anim: i32) -> GPtr<u8> = cdecl 0x4D3A60 => unported;
-    /// `CAnimManager::UncompressAnimation(hierarchy)` (0x4D41C0)
-    fn uncompress_animation(h: GPtr<u8>) = cdecl 0x4D41C0 => unported;
 }
 
 /// `CCarEnterExit::ms_bPedOffsetsCalculated` and the offset vectors: get-up, quick dragged out, bed L,

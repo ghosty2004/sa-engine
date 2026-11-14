@@ -37,6 +37,11 @@ const THE_TEXT: usize = 0xC1B340;
 const NEW_STANDARD_KEYS: usize = 0xB731A8;
 const OLD_STANDARD_KEYS: usize = 0xB72F38;
 
+pub use crate::bindings::force_weather_now as weather_force_weather_now;
+pub use crate::bindings::handle_special_cheats;
+pub use crate::bindings::set_stat_value as stats_set_stat_value;
+pub use crate::bindings::weather_release_weather;
+pub use sa_stream::bindings::reclassify_loaded_cars as streaming_reclassify_loaded_cars;
 orig! {
     /// a cheat function from `m_aCheatFunctions` (cdecl, no arguments)
     pub fn call_cheat_fn(f: u32) = cdecl dyn => unported;
@@ -48,22 +53,12 @@ orig! {
     pub fn hud_set_help_message(t: GPtr<u16>, quick: i32, permanent: i32, brief: i32) = cdecl 0x588BE0 => unported;
     /// `CStats::IncrementStat(uint16, float)` (0x55C180)
     pub fn stats_increment_stat(stat: u32, v: u32) = cdecl 0x55C180 => unported;
-    /// `CStats::SetStatValue(uint16, float)` (0x55A070)
-    pub fn stats_set_stat_value(stat: u32, v: u32) = cdecl 0x55A070 => unported;
     /// `CCheat::AddToCheatString(char)` (0x438480)
     pub fn add_to_cheat_string_call(c: u32) = cdecl 0x438480 => add_to_cheat_string_port;
-    /// `CWeather::ReleaseWeather` (0x72A510)
-    pub fn weather_release_weather() = cdecl 0x72A510 => unported;
-    /// `CWeather::ForceWeatherNow(int16)` (0x72A4F0)
-    pub fn weather_force_weather_now(w: u32) = cdecl 0x72A4F0 => unported;
     /// `CPlayerPed::CheatWantedLevel(int32)` (0x609F50)
     pub fn player_cheat_wanted_level(ped: GPtr<u8>, level: i32) = thiscall 0x609F50 => unported;
     /// `CClothes::RebuildPlayer(CPlayerPed*, bool)` (0x5A82C0)
     pub fn clothes_rebuild_player(ped: GPtr<u8>, b: i32) = cdecl 0x5A82C0 => unported;
-    /// `CCheat::HandleSpecialCheats(eCheats)` (0x439A10)
-    pub fn handle_special_cheats(c: i32) = cdecl 0x439A10 => unported;
-    /// `CStreaming::ReclassifyLoadedCars` (0x40AFA0)
-    pub fn streaming_reclassify_loaded_cars() = cdecl 0x40AFA0 => unported;
     /// `CStreaming::StreamPedsIntoRandomSlots(const int32* models)` (0x40BDA0)
     pub fn streaming_stream_peds_into_random_slots(m: GPtr<i32>) = cdecl 0x40BDA0 => unported;
     /// `CCheat::VehicleCheat(eModelID)` (0x43A0B0)
@@ -455,7 +450,6 @@ pub fn stunt_plane_cheat() {
 pub fn monster_truck_cheat() {
     vehicle_cheat(0x22c);
 }
-
 
 /// Fat/muscle/skinny tail: `CClothes::RebuildPlayer(ped, false)` unless the ped state (+0x530) is 0x32.
 fn rebuild_player_unless_dead() {

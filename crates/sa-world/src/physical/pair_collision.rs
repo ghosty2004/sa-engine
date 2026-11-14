@@ -48,6 +48,7 @@ const STAT_PROPERTY_DAMAGED: u32 = 0x7D;
 /// The `double` 0.01 at 0x85A308 (`fcomp qword`).
 const D_85A308: u64 = 0x3F84_7AE1_47AE_147B;
 
+pub use sa_core::bindings::stats_increment_stat as increment_stat;
 orig! {
     /// `CGlass::IsObjectGlass(CEntity*)` (0x46A760, cdecl, AL)
     pub fn is_object_glass(e: Ent) -> u8 = cdecl 0x46a760 => unported;
@@ -64,8 +65,6 @@ orig! {
     pub fn create_some_money(x: f32, y: f32, z: f32, amount: i32) = cdecl 0x458970 => unported;
     /// `Fx_c::TriggerWaterHydrant(CVector&)` (0x4A0D70, thiscall on `g_fx`)
     pub fn trigger_water_hydrant(fx: Ent, pos: Ent) = thiscall 0x4a0d70 => unported;
-    /// `CStats::IncrementStat(eStats, float)` (0x55C180, cdecl)
-    pub fn increment_stat(stat: u32, value: f32) = cdecl 0x55c180 => unported;
     /// `CWorld::FindPlayerVehicle(int32, bool)` (0x56E0D0, cdecl)
     pub fn find_player_vehicle(id: i32, remote: u32) -> Ent = cdecl 0x56e0d0 => unported;
     /// `operator*(const CVector&, float)` (0x40FEC0, cdecl, out first)
@@ -1038,7 +1037,6 @@ orig! {
 
 /// `CModelInfo::ms_modelInfoPtrs` (0xA9B0C8)
 const MODEL_INFO_PTRS: usize = 0xA9B0C8;
-
 
 /// `CPhysical::ApplySoftCollision(CPhysical* entity, CColPoint& cp, float& thisDamage, float&
 /// entityDamage)` (0x54A2C0, `ret 0x10`, AL), the soft response of two physicals (no shared

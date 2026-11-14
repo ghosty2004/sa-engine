@@ -9,6 +9,14 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+pub use crate::bindings::car_drive_dtor as dtor_63c460;
+pub use crate::bindings::close_door_from_outside_dtor as dtor_646570;
+pub use crate::bindings::dtor_669d20;
+pub use crate::bindings::stand_still_dtor as dtor_62f360;
+pub use crate::bindings::task_complex_dtor as dtor_61a3d0;
+pub use sa_core::bindings::car_set_ped_out_dtor as dtor_647950;
+pub use sa_world::bindings::dtor_6389f0;
+pub use sa_world::bindings::task_simple_dtor as dtor_61a3a0;
 orig! {
     /// `CTaskComplexWanderCop::CTaskComplexWanderCop` (0x460D80), called with `this` only (thiscall)
     pub fn dtor_460d80(this: GPtr<u8>) = thiscall 0x460D80 => unported;
@@ -32,10 +40,6 @@ orig! {
     pub fn dtor_48ea90(this: GPtr<u8>) = thiscall 0x48EA90 => unported;
     /// `CTaskSimpleChat::Destructor` (0x5F7FD0), called with `this` only (thiscall)
     pub fn dtor_5f7fd0(this: GPtr<u8>) = thiscall 0x5F7FD0 => unported;
-    /// `FUN_0061a3a0` (0x61A3A0), called with `this` only (thiscall)
-    pub fn dtor_61a3a0(this: GPtr<u8>) = thiscall 0x61A3A0 => unported;
-    /// `FUN_0061a3d0` (0x61A3D0), called with `this` only (thiscall)
-    pub fn dtor_61a3d0(this: GPtr<u8>) = thiscall 0x61A3D0 => unported;
     /// `FUN_0061aeb0` (0x61AEB0), called with `this` only (thiscall)
     pub fn dtor_61aeb0(this: GPtr<u8>) = thiscall 0x61AEB0 => unported;
     /// `CTaskComplexPlayHandSignalAnim::Destructor` (0x61BDF0), called with `this` only (thiscall)
@@ -44,8 +48,6 @@ orig! {
     pub fn dtor_61bf10(this: GPtr<u8>) = thiscall 0x61BF10 => unported;
     /// `CTaskComplexRoadRage::Destructor` (0x622110), called with `this` only (thiscall)
     pub fn dtor_622110(this: GPtr<u8>) = thiscall 0x622110 => unported;
-    /// `FUN_0062f360` (0x62F360), called with `this` only (thiscall)
-    pub fn dtor_62f360(this: GPtr<u8>) = thiscall 0x62F360 => unported;
     /// `CTaskSimpleSitIdle::Destructor` (0x6311B0), called with `this` only (thiscall)
     pub fn dtor_6311b0(this: GPtr<u8>) = thiscall 0x6311B0 => unported;
     /// `CTaskComplexSitDownThenIdleThenStandUp::Destructor` (0x6314A0), called with `this` only (thiscall)
@@ -66,26 +68,18 @@ orig! {
     pub fn dtor_633ef0(this: GPtr<u8>) = thiscall 0x633EF0 => unported;
     /// `CTaskSimpleIKPointArm::Destructor` (0x634240), called with `this` only (thiscall)
     pub fn dtor_634240(this: GPtr<u8>) = thiscall 0x634240 => unported;
-    /// `CTaskComplexSequence` (0x6389F0), called with `this` only (thiscall)
-    pub fn dtor_6389f0(this: GPtr<u8>) = thiscall 0x6389F0 => unported;
     /// `CTaskComplexLeaveCar::~CTaskComplexLeaveCar` (0x63B970), called with `this` only (thiscall)
     pub fn dtor_63b970(this: GPtr<u8>) = thiscall 0x63B970 => unported;
-    /// `CTaskSimpleCarDrive::Destructor` (0x63C460), called with `this` only (thiscall)
-    pub fn dtor_63c460(this: GPtr<u8>) = thiscall 0x63C460 => unported;
     /// `FUN_0063cb50` (0x63CB50), called with `this` only (thiscall)
     pub fn dtor_63cb50(this: GPtr<u8>) = thiscall 0x63CB50 => unported;
     /// `FUN_0063d100` (0x63D100), called with `this` only (thiscall)
     pub fn dtor_63d100(this: GPtr<u8>) = thiscall 0x63D100 => unported;
     /// `FUN_00640330` (0x640330), called with `this` only (thiscall)
     pub fn dtor_640330(this: GPtr<u8>) = thiscall 0x640330 => unported;
-    /// `CTaskSimpleCarCloseDoorFromOutside::Destructor` (0x646570), called with `this` only (thiscall)
-    pub fn dtor_646570(this: GPtr<u8>) = thiscall 0x646570 => unported;
     /// `CTaskSimpleCarWaitToSlowDown::Destructor` (0x646A00), called with `this` only (thiscall)
     pub fn dtor_646a00(this: GPtr<u8>) = thiscall 0x646A00 => unported;
     /// `CTaskSimpleCarGetOut::Destructor` (0x647260), called with `this` only (thiscall)
     pub fn dtor_647260(this: GPtr<u8>) = thiscall 0x647260 => unported;
-    /// `FUN_00647950` (0x647950), called with `this` only (thiscall)
-    pub fn dtor_647950(this: GPtr<u8>) = thiscall 0x647950 => unported;
     /// `CTaskComplexGoToCarDoorAndStandStill::Destructor` (0x64A580), called with `this` only (thiscall)
     pub fn dtor_64a580(this: GPtr<u8>) = thiscall 0x64A580 => unported;
     /// `CTaskSimpleEvasiveStep::~CTaskSimpleEvasiveStep` (0x6531D0), called with `this` only (thiscall)
@@ -124,8 +118,6 @@ orig! {
     pub fn dtor_667e70(this: GPtr<u8>) = thiscall 0x667E70 => unported;
     /// `FUN_00668240` (0x668240), called with `this` only (thiscall)
     pub fn dtor_668240(this: GPtr<u8>) = thiscall 0x668240 => unported;
-    /// `thunk_FUN_0040387c` (0x669D20), called with `this` only (thiscall)
-    pub fn dtor_669d20(this: GPtr<u8>) = thiscall 0x669D20 => unported;
     /// `CTaskComplexAvoidOtherPedWhileWandering::Destructor` (0x66A1D0), called with `this` only (thiscall)
     pub fn dtor_66a1d0(this: GPtr<u8>) = thiscall 0x66A1D0 => unported;
     /// `CTaskComplexGoToAttractor::Destructor` (0x66B6A0), called with `this` only (thiscall)

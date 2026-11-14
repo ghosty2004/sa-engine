@@ -20,14 +20,9 @@ const DBG_FLAG: usize = 0x859CF8;
 /// -100.0 (the 2D area's highlight z)
 const K_MINUS_100: u32 = 0xC2C8_0000;
 
-orig! {
-    /// `CTheScripts::IsPedStopped(CPed*)` (0x486110)
-    fn is_ped_stopped(p: GPtr<u8>) -> u8 = cdecl 0x486110 => unported;
-    /// `CTheScripts::HighlightImportantArea(uint32 id, float x1, float y1, float x2, float y2, float z)` (0x485E00)
-    fn highlight_important_area(id: u32, x1: u32, y1: u32, x2: u32, y2: u32, z: u32) = cdecl 0x485E00 => unported;
-    /// `CTheScripts::DrawDebugSquare(float x1, float y1, float x2, float y2)` (0x486840)
-    fn draw_debug_square(x1: u32, y1: u32, x2: u32, y2: u32) = cdecl 0x486840 => unported;
-}
+use crate::bindings::draw_debug_square;
+use crate::bindings::highlight_important_area;
+use crate::bindings::is_ped_stopped;
 
 use sa_core::field::rd;
 use sa_math::fpu::x;
@@ -372,9 +367,8 @@ pub fn the_scripts_is_vehicle_stopped(v: GPtr<u8>) -> u8 {
     u8::from(vehicle_stopped(v))
 }
 
+use sa_stream::bindings::ped_is_player;
 orig! {
-    /// `CPed::IsPlayer()` (0x5DF8F0), AL
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
     /// `RpAnimBlendClumpGetAssociation(RpClump*, uint32 animId)` (0x4D68B0)
     fn clump_get_association(clump: GPtr<u8>, id: u32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
 }

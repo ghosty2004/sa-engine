@@ -9,17 +9,13 @@ use sa_math::x87::X87;
 
 use crate::common::{ftol32, k, rd, wr, x};
 
+use crate::bindings::render_buffer_stop_storing;
+use sa_core::bindings::rw_v3d_transform_points;
+use sa_world::bindings::entity_get_col_model as get_col_model;
+use sa_world::bindings::transform_from_object_space;
 orig! {
-    /// `CEntity::GetColModel()` (0x535300)
-    fn get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => unported;
-    /// `CEntity::TransformFromObjectSpace(CVector& out, const CVector& offset)` (0x5334F0), returns `out`
-    fn transform_from_object_space(e: GPtr<u8>, out: GPtr<u8>, offset: GPtr<u8>) -> GPtr<u8> = thiscall 0x5334F0 => unported;
-    /// `RwV3dTransformPoints(RwV3d* out, const RwV3d* in, int n, const RwMatrix* m)` (0x7EDD90)
-    fn rw_v3d_transform_points(out: GPtr<u8>, inp: GPtr<u8>, n: i32, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EDD90 => unported;
     /// `RenderBuffer::StartStoring(int nIdx, int nVtx, RwImVertexIndex** idx, RwIm3DVertex** vtx)` (0x708290)
     fn render_buffer_start_storing(n_idx: i32, n_vtx: i32, idx: GPtr<u32>, vtx: GPtr<u32>) = cdecl 0x708290 => unported;
-    /// `RenderBuffer::StopStoring()` (0x7077A0)
-    fn render_buffer_stop_storing() = cdecl 0x7077A0 => unported;
 }
 
 /// 0.0f (0x858B50), 1.0f (0x858624), -1.0f (0x858C1C), 0.06f (0x859934).

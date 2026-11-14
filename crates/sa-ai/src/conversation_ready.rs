@@ -10,19 +10,13 @@ use sa_world::world::common::find_player_ped;
 
 use crate::common::*;
 
+use sa_world::bindings::audio_get_mission_audio_loading_status;
+use sa_world::bindings::audio_is_mission_audio_sample_finished;
+use sa_world::bindings::audio_play_loaded_mission_audio;
+use sa_world::bindings::event_group_get_event_of_type;
+use sa_world::bindings::intel_find_task_by_type;
+use sa_world::bindings::intel_get_task_fighting;
 orig! {
-    /// `CPedIntelligence::GetTaskFighting()` (0x600F30)
-    fn intel_get_task_fighting(i: GPtr<u8>) -> GPtr<u8> = thiscall 0x600F30 => unported;
-    /// `CPedIntelligence::FindTaskByType(int32)` (0x600EE0, `ret 4`)
-    fn intel_find_task_by_type(i: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x600EE0 => unported;
-    /// `CEventGroup::GetEventOfType(int32)` (0x4AB650, `ret 4`)
-    fn event_group_get_event_of_type(g: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x4AB650 => unported;
-    /// `CAudioEngine::IsMissionAudioSampleFinished(uint8 slot)` (0x5072C0, `ret 4`), AL
-    fn audio_is_mission_audio_sample_finished(e: GPtr<u8>, slot: u32) -> u8 = thiscall 0x5072C0 => unported;
-    /// `CAudioEngine::GetMissionAudioLoadingStatus(uint8 slot)` (0x5072A0, `ret 4`), AL
-    fn audio_get_mission_audio_loading_status(e: GPtr<u8>, slot: u32) -> u8 = thiscall 0x5072A0 => unported;
-    /// `CAudioEngine::PlayLoadedMissionAudio(uint8 slot)` (0x5072B0, `ret 4`)
-    fn audio_play_loaded_mission_audio(e: GPtr<u8>, slot: u32) = thiscall 0x5072B0 => unported;
     /// `CConversationForPed::Update()` (0x43C190)
     fn conversation_for_ped_update(c: GPtr<u8>) = thiscall 0x43C190 => unported;
 }

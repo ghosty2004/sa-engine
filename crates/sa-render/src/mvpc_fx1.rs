@@ -18,23 +18,21 @@ use sa_stream::modelinfo::vehicle::sscanf_n;
 use crate::common::{ftol32, k, rd, wr};
 use crate::fx::FX_POOL;
 
+pub use crate::bindings::pool_get_mem;
+pub use sa_core::bindings::file_close as cfm_close_file;
+pub use sa_core::bindings::list_add_item;
+pub use sa_core::bindings::open_file as cfm_open_file;
+pub use sa_core::bindings::read_line as cfm_read_line;
+pub use sa_stream::bindings::add_txd_slot as txd_add_txd_slot;
+pub use sa_stream::bindings::load_txd as txd_load_txd;
+pub use sa_stream::bindings::rw_texture_read;
 orig! {
-    /// `CFileMgr::OpenFile(path, mode)` (0x538900)
-    pub fn cfm_open_file(path: GPtr<u8>, mode: GPtr<u8>) -> GPtr<u8> = cdecl 0x538900 => sa_core::filemgr::open_file;
-    /// `CFileMgr::ReadLine(file, buf, n)` (0x5389B0)
-    pub fn cfm_read_line(f: GPtr<u8>, buf: GPtr<u8>, n: i32) -> bool = cdecl 0x5389B0 => sa_core::filemgr::read_line;
-    /// `CFileMgr::CloseFile(file)` (0x5389D0)
-    pub fn cfm_close_file(f: GPtr<u8>) -> i32 = cdecl 0x5389D0 => sa_core::filemgr::close_file;
     /// thunk 0x4AB240 → `CFileMgr::OpenFile`
     pub fn fx_open_file(path: GPtr<u8>, mode: GPtr<u8>) -> GPtr<u8> = cdecl 0x4AB240 => thunk_open_file;
     /// thunk 0x4AB250 → `CFileMgr::ReadLine`
     pub fn fx_read_line(f: GPtr<u8>, buf: GPtr<u8>, n: i32) -> bool = cdecl 0x4AB250 => thunk_read_line;
     /// thunk 0x4AB260 → `CFileMgr::CloseFile`
     pub fn fx_close_file(f: GPtr<u8>) -> i32 = cdecl 0x4AB260 => thunk_close_file;
-    /// `CTxdStore::AddTxdSlot(const char*)` (0x731C80)
-    pub fn txd_add_txd_slot(name: GPtr<u8>) -> i32 = cdecl 0x731C80 => sa_stream::txdstore::add_txd_slot;
-    /// `CTxdStore::LoadTxd(int, const char* filename)` (0x7320B0)
-    pub fn txd_load_txd(slot: i32, path: GPtr<u8>) -> u8 = cdecl 0x7320B0 => sa_stream::txdstore::load_txd_filename;
     /// `CTxdStore::AddRef(int)` (0x731A00)
     pub fn txd_add_ref(slot: i32) = cdecl 0x731A00 => sa_stream::txdstore::add_ref;
     /// `CTxdStore::PushCurrentTxd()` (0x7316A0)
@@ -45,8 +43,6 @@ orig! {
     pub fn txd_set_current(slot: i32) = cdecl 0x7319C0 => sa_stream::txdstore::set_current_txd;
     /// `FxMemoryPool_c::Optimise()` (0x4A9CD0)
     pub fn pool_optimise(this: GPtr<u8>) = thiscall 0x4A9CD0 => crate::fx::fx_memory_pool_optimise;
-    /// `FxMemoryPool_c::GetMem(size, align)` (0x4A9CA0)
-    pub fn pool_get_mem(this: GPtr<u8>, size: u32, align: u32) -> GPtr<u8> = thiscall 0x4A9CA0 => crate::fx::fx_memory_pool_get_mem;
     /// `FxManager_c::LoadFxSystemBP(const char* filename, FILESTREAM)` (0x5C1F50)
     pub fn load_fx_system_bp_call(this: GPtr<u8>, name: GPtr<u8>, f: GPtr<u8>) -> GPtr<u8> = thiscall 0x5C1F50 => load_fx_system_bp;
     /// `FxSystemBP_c::operator new(size)` (0x4AA100)
@@ -55,8 +51,6 @@ orig! {
     pub fn system_bp_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4AA0D0 => crate::fx::fx_system_bp_constructor;
     /// `FxSystemBP_c::Load(const char* filename, FILESTREAM, int version)` (0x5C05F0)
     pub fn system_bp_load_call(this: GPtr<u8>, name: GPtr<u8>, f: GPtr<u8>, version: i32) -> u8 = thiscall 0x5C05F0 => system_bp_load;
-    /// `List_c::AddItem(ListItem_c*)` (0x4A8DF0)
-    pub fn list_add_item(this: GPtr<u8>, item: GPtr<u8>) = thiscall 0x4A8DF0 => unported;
     /// `CKeyGen::GetUppercaseKey(const char*)` (0x53CF30)
     pub fn get_uppercase_key(s: GPtr<u8>) -> u32 = cdecl 0x53CF30 => sa_core::keygen::get_uppercase_key;
     /// `FxSystemBP_c::SetBoundingSphere(const CVector*, float)` (0x4AA200)
@@ -79,8 +73,6 @@ orig! {
     pub fn add_fx_info_call(this: GPtr<u8>, ty: u32) -> GPtr<u8> = thiscall 0x4A7B00 => add_fx_info;
     /// `FxInfo_c::Load(FILESTREAM, int version)`: vtable slot +4
     pub fn info_vload(this: GPtr<u8>, f: GPtr<u8>, version: i32) = thiscall vslot 0x4 => unported;
-    /// `RwTextureRead(const char* name, const char* mask)` (0x7F3AC0)
-    pub fn rw_texture_read(name: GPtr<u8>, mask: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F3AC0 => unported;
     /// CRT `sprintf` with one argument (0x821BB5)
     pub fn sprintf1(buf: GPtr<u8>, fmt: GPtr<u8>, a: GPtr<u8>) -> i32 = cdecl 0x821BB5 => unported;
 }
@@ -715,31 +707,27 @@ pub fn interp_255_load(this: GPtr<u8>, f: GPtr<u8>) {
     interp_load_short(this, f, 0x4300_0000);
 }
 
+pub use sa_core::bindings::memory_malloc;
+pub use sa_core::bindings::rw_matrix_update;
+pub use sa_stream::bindings::crt_new as operator_new_821195;
+pub use sa_stream::bindings::fx_get_fx_quality as get_fx_quality;
 orig! {
     /// `FxManager_c::CreateFxSystem(const char* name, const RwV3d* pos, RwMatrix* parent, bool ignoreBounds)` (0x4A9BE0)
     pub fn create_fx_system_name(this: GPtr<u8>, name: GPtr<u8>, pos: GPtr<u8>, parent: GPtr<u8>, ignore: u32) -> GPtr<u8> = thiscall 0x4A9BE0 => crate::fx::fx_manager_create_fx_system_name;
     /// `FxManager_c::ShouldCreate(FxSystemBP_c*, RwMatrix*, RwMatrix* parent, bool ignoreBounds)` (0x4A9500)
     pub fn should_create(this: GPtr<u8>, bp: GPtr<u8>, m: GPtr<u8>, parent: GPtr<u8>, ignore: u32) -> u8 = thiscall 0x4A9500 => crate::mvpa_fx2::fx_manager_should_create;
-    /// `RwMatrixUpdate(RwMatrix*)` (0x7F18A0)
-    pub fn rw_matrix_update(m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F18A0 => unported;
     /// `operator new(size_t)` (0x82119A)
     pub fn operator_new(n: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
-    /// `operator new(size_t)` (0x821195, the second entry FxSystem_c::Init calls)
-    pub fn operator_new_821195(n: u32) -> GPtr<u8> = cdecl 0x821195 => unported;
     /// `FxSystem_c::FxSystem_c()` (0x4AAF00)
     pub fn system_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4AAF00 => crate::fx::fx_system_constructor;
     /// `FxSystem_c::Init(FxSystemBP_c*, RwMatrix* local, RwMatrix* parent)` (0x4AA750)
     pub fn system_init_call(this: GPtr<u8>, bp: GPtr<u8>, m: GPtr<u8>, parent: GPtr<u8>) -> u8 = thiscall 0x4AA750 => system_init;
-    /// `Fx_c::GetFxQuality()` (0x49EA50)
-    pub fn get_fx_quality(this: GPtr<u8>) -> i32 = thiscall 0x49EA50 => unported;
     /// `FxSystem_c::SetRateMult(float)` (0x4AA6F0)
     pub fn system_set_rate_mult(this: GPtr<u8>, mult: u32) = thiscall 0x4AA6F0 => crate::fx::fx_system_set_rate_mult;
     /// `ListItem_c::ListItem_c()` (0x4A8DB0)
     pub fn list_item_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4A8DB0 => crate::fx::list_item_ctor_port;
     /// `FxSystem_c::Play()` (0x4AA2F0)
     pub fn system_play(this: GPtr<u8>) = thiscall 0x4AA2F0 => crate::fx::fx_system_play;
-    /// `CMemoryMgr::Malloc(size, hint)` (0x72F420)
-    pub fn memory_malloc(size: u32, hint: u32) -> GPtr<u8> = cdecl 0x72F420 => unported;
     /// `FxPrimBP_c::CreateInstance()`: vtable slot +0xC
     pub fn prim_bp_vcreate_instance(this: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0xC => unported;
     /// `FxPrim_c::Init(FxPrimBP_c*, FxSystem_c*)`: vtable slot +4
@@ -904,16 +892,10 @@ pub fn fx_create_entity_fx(this: GPtr<u8>, entity: GPtr<u8>, name: GPtr<u8>, pos
     system_play(rd::<GPtr<u8>>(item, 8));
 }
 
-orig! {
-    /// `RwV3dNormalize(RwV3d* out, const RwV3d* in)` (0x7ED9B0): the length in ST0
-    pub fn rw_v3d_normalize(out: GPtr<u8>, inp: GPtr<u8>) -> f64 = cdecl 0x7ED9B0 => unported;
-    /// `RwV3dTransformVectors(RwV3d* out, const RwV3d* in, int n, const RwMatrix*)` (0x7EDDF0)
-    pub fn rw_v3d_transform_vectors(out: GPtr<u8>, inp: GPtr<u8>, n: i32, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EDDF0 => unported;
-    /// `FxManager_c::FxRwMatrixCreate()` (0x4A9440)
-    pub fn fx_rw_matrix_create(this: GPtr<u8>) -> u32 = thiscall 0x4A9440 => crate::fx::fx_manager_fx_rw_matrix_create;
-    /// `FxManager_c::FxRwMatrixDestroy(RwMatrix*)` (0x4A9460)
-    pub fn fx_rw_matrix_destroy(this: GPtr<u8>, m: u32) = thiscall 0x4A9460 => crate::fx::fx_manager_fx_rw_matrix_destroy;
-}
+pub use crate::bindings::fx_rw_matrix_create;
+pub use crate::bindings::fx_rw_matrix_destroy;
+pub use sa_world::bindings::rw_v3d_normalize;
+pub use sa_world::bindings::rw_v3d_transform_vectors;
 
 use sa_math::fpu::x as xf;
 
@@ -1089,11 +1071,10 @@ pub fn interp_u255_get_val(this: GPtr<u8>, out: GPtr<u8>, t: u32) {
     interp_short_get_val(this, out, t, false, 0x3B80_0000);
 }
 
+pub use sa_world::bindings::rw_v3d_length;
 orig! {
     /// `FxInterpInfo32_c::GetVal(float* out, float t)` (0x4A89C0)
     pub fn interp_32_get_val_call(this: GPtr<u8>, out: GPtr<u8>, t: u32) = thiscall 0x4A89C0 => interp_32_get_val;
-    /// `RwV3dLength(const RwV3d*)` (0x7EDAC0): the length in ST0
-    pub fn rw_v3d_length(v: GPtr<u8>) -> f64 = cdecl 0x7EDAC0 => unported;
 }
 
 /// The `FxInfo*_c::GetValue` key time: `mult` with byte +6 set, else `(float)(currTime / totalTime)`

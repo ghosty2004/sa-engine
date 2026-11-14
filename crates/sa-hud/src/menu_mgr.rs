@@ -58,31 +58,35 @@ const K_INV_448: f32 = f32::from_bits(0x3B12_4925);
 const K_HALF: f32 = f32::from_bits(0x3F00_0000);
 const K_ZERO: f32 = 0.0;
 
+pub use crate::bindings::analogue_pad_down;
+pub use crate::bindings::analogue_pad_left;
+pub use crate::bindings::analogue_pad_right;
+pub use crate::bindings::analogue_pad_up;
+pub use crate::bindings::clear_blip_call as radar_clear_blip;
+pub use crate::bindings::font_set_drop_color;
+pub use crate::bindings::font_set_scale_for_current_language;
+pub use crate::bindings::font_set_wrapx;
+pub use sa_core::bindings::camera_process_fade;
+pub use sa_core::bindings::camera_set_fade_colour;
+pub use sa_core::bindings::crt_strncpy;
+pub use sa_core::bindings::file_close;
+pub use sa_core::bindings::file_set_dir;
+pub use sa_core::bindings::file_write;
+pub use sa_core::bindings::open_file as file_open;
+pub use sa_core::bindings::rgba_ctor;
+pub use sa_core::bindings::sprite_draw_rect;
+pub use sa_core::bindings::timer_update;
+pub use sa_world::bindings::audio_is_cutscene_track_active;
+pub use sa_world::bindings::audio_report_frontend_event;
+pub use sa_world::bindings::audio_retune_radio;
+pub use sa_world::bindings::audio_set_effects_master_volume as audio_set_effects_volume;
+pub use sa_world::bindings::audio_set_music_master_volume as audio_set_music_volume;
+pub use sa_world::bindings::audio_start_radio;
+pub use sa_world::bindings::audio_stop_radio;
+pub use sa_world::bindings::stats_update_respect_stat;
 orig! {
     /// `CPad::GetPad(int32)` (0x53FB70)
     pub fn get_pad(n: u32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CPad::GetAnaloguePadUp()` (0x540950, thiscall)
-    pub fn analogue_pad_up(pad: GPtr<u8>) -> u8 = thiscall 0x540950 => unported;
-    /// `CPad::GetAnaloguePadDown()` (0x540980, thiscall)
-    pub fn analogue_pad_down(pad: GPtr<u8>) -> u8 = thiscall 0x540980 => unported;
-    /// `CPad::GetAnaloguePadLeft()` (0x5409B0, thiscall)
-    pub fn analogue_pad_left(pad: GPtr<u8>) -> u8 = thiscall 0x5409B0 => unported;
-    /// `CPad::GetAnaloguePadRight()` (0x5409E0, thiscall)
-    pub fn analogue_pad_right(pad: GPtr<u8>) -> u8 = thiscall 0x5409E0 => unported;
-    /// `CAudioEngine::StopRadio(tVehicleAudioSettings*, bool)` (0x506F70, thiscall)
-    pub fn audio_stop_radio(this: GPtr<u8>, a: u32, b: u32) = thiscall 0x506F70 => unported;
-    /// `CAudioEngine::ReportFrontendAudioEvent(int32, float, float)` (0x506EA0, thiscall)
-    pub fn audio_report_frontend_event(this: GPtr<u8>, id: u32, volume: u32, speed: u32) = thiscall 0x506EA0 => unported;
-    /// `CAudioEngine::StartRadio(int8, int8)` (0x507DC0, thiscall)
-    pub fn audio_start_radio(this: GPtr<u8>, station: u32, b: u32) = thiscall 0x507DC0 => unported;
-    /// `CAudioEngine::IsCutsceneTrackActive()` (0x507150, thiscall)
-    pub fn audio_is_cutscene_track_active(this: GPtr<u8>) -> u8 = thiscall 0x507150 => unported;
-    /// `CAudioEngine::RetuneRadio(int8)` (0x507E10, thiscall)
-    pub fn audio_retune_radio(this: GPtr<u8>, station: u32) = thiscall 0x507E10 => unported;
-    /// `CAudioEngine::SetMusicMasterVolume(int8)` (0x506DE0, thiscall)
-    pub fn audio_set_music_volume(this: GPtr<u8>, v: u32) = thiscall 0x506DE0 => unported;
-    /// `CAudioEngine::SetEffectsMasterVolume(int8)` (0x506E10, thiscall)
-    pub fn audio_set_effects_volume(this: GPtr<u8>, v: u32) = thiscall 0x506E10 => unported;
     /// `CAudioEngine::SetBassEnhanceOnOff(bool)` (0x506F90, thiscall)
     pub fn audio_set_bass_enhance(this: GPtr<u8>, v: u32) = thiscall 0x506F90 => unported;
     /// `CAudioEngine::SetRadioAutoRetuneOnOff(bool)` (0x506F80, thiscall)
@@ -105,26 +109,14 @@ orig! {
     pub fn switch_to_new_screen_call(this: GPtr<u8>, screen: u32) = thiscall 0x573680 => switch_to_new_screen;
     /// `CMenuManager::DoSettingsBeforeStartingAGame()` (0x573330, thiscall)
     pub fn do_settings_before_starting_a_game_call(this: GPtr<u8>) = thiscall 0x573330 => do_settings_before_starting_a_game;
-    /// CRT `strncpy` (0x821F40)
-    pub fn crt_strncpy(dst: GPtr<u8>, src: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x821F40 => unported;
-    /// `CSprite2d::DrawRect(const CRect&, const CRGBA&)` (0x727B60)
-    pub fn sprite_draw_rect(rect: GPtr<u8>, colour: GPtr<u8>) = cdecl 0x727B60 => unported;
-    /// `CRGBA::CRGBA(r, g, b, a)` (0x7170C0, thiscall)
-    pub fn rgba_ctor(this: GPtr<u8>, r: u32, g: u32, b: u32, a: u32) -> GPtr<u8> = thiscall 0x7170C0 => unported;
-    /// `CFont::SetWrapx(float)` (0x7194D0)
-    pub fn font_set_wrapx(v: u32) = cdecl 0x7194D0 => crate::font::set_wrapx;
     /// `CFont::SetColor(CRGBA)` (0x719430)
     pub fn font_set_color(c: u32) = cdecl 0x719430 => crate::font::set_color;
-    /// `CFont::SetDropColor(CRGBA)` (0x719510)
-    pub fn font_set_drop_color(c: u32) = cdecl 0x719510 => crate::font::set_drop_color;
     /// `CFont::SetEdge(int8)` (0x719590)
     pub fn font_set_edge(v: u32) = cdecl 0x719590 => crate::font::set_edge;
     /// `CFont::SetOrientation(eFontAlignment)` (0x719610)
     pub fn font_set_orientation(v: u32) = cdecl 0x719610 => crate::font::set_orientation;
     /// `CFont::SetFontStyle(eFontStyle)` (0x719490)
     pub fn font_set_font_style(v: u32) = cdecl 0x719490 => crate::font::set_font_style;
-    /// `CFont::SetScaleForCurrentLanguage(float, float)` (0x7193A0)
-    pub fn font_set_scale_for_current_language(w: f32, h: u32) = cdecl 0x7193A0 => crate::font::set_scale_for_current_language;
     /// `CFont::PrintString(float, float, const GxtChar*)` (0x71A700)
     pub fn font_print_string(px: f32, py: f32, text: GPtr<u8>) = cdecl 0x71A700 => crate::font_print::print_string;
     /// `CText::Get(const char*)` (0x6A0050, thiscall)
@@ -137,8 +129,6 @@ orig! {
     pub fn text_load_mission_text(this: GPtr<u8>, name: GPtr<u8>) = thiscall 0x69FBF0 => crate::text_load::load_mission_text;
     /// `CTimer::Stop()` (0x561AA0)
     pub fn timer_stop() = cdecl 0x561AA0 => sa_core::timer::stop;
-    /// `CTimer::Update()` (0x561B10)
-    pub fn timer_update() = cdecl 0x561B10 => unported;
     /// `CLocalisation::SetNormalGame()` (0x56D1A0)
     pub fn localisation_set_normal_game() = cdecl 0x56D1A0 => crate::hud::localisation_set_normal_game;
     /// `CLocalisation::SetFrenchGame()` (0x56D1C0)
@@ -149,18 +139,10 @@ orig! {
     pub fn ccm_save_settings(this: GPtr<u8>, f: GPtr<u8>) = thiscall 0x52D200 => unported;
     /// `CAEAudioUtility::GetRandomNumberInRange(int32, int32)` (0x4D9C10)
     pub fn audio_random_in_range(lo: i32, hi: i32) -> i32 = cdecl 0x4D9C10 => unported;
-    /// `CRadar::ClearBlip(int32)` (0x587CE0)
-    pub fn radar_clear_blip(h: i32) = cdecl 0x587CE0 => crate::radar::clear_blip;
-    /// `CStats::UpdateRespectStat(uint8)` (0x55BC50)
-    pub fn stats_update_respect_stat(v: u32) = cdecl 0x55BC50 => unported;
     /// `CHud::SetZoneName(const char*, bool)` (0x588BB0)
     pub fn hud_set_zone_name(name: u32, force: u8) = cdecl 0x588BB0 => crate::hud::set_zone_name;
-    /// `CCamera::SetFadeColour(uint8, uint8, uint8)` (0x50BF00, thiscall)
-    pub fn camera_set_fade_colour(this: GPtr<u8>, r: u32, g: u32, b: u32) = thiscall 0x50BF00 => unported;
     /// `CCamera::Fade(float, int16)` (0x50AC20, thiscall)
     pub fn camera_fade(this: GPtr<u8>, t: u32, dir: u32) = thiscall 0x50AC20 => unported;
-    /// `CCamera::ProcessFade()` (0x50B5D0, thiscall)
-    pub fn camera_process_fade(this: GPtr<u8>) = thiscall 0x50B5D0 => unported;
     /// `CRadar::RequestMapSection(int32, int32)` (0x584B50)
     pub fn radar_request_map_section(x: i32, y: i32) = cdecl 0x584B50 => crate::radar_draw::request_map_section;
     /// `CRadar::RemoveMapSection(int32, int32)` (0x584BB0)
@@ -169,16 +151,8 @@ orig! {
     pub fn streaming_load_requested_models() = cdecl 0x40E3A0 => sa_stream::streaming::load_requested_models;
     /// `CStreaming::LoadAllRequestedModels(bool)` (0x40EA10)
     pub fn streaming_load_all_requested_models(only_priority: u8) = cdecl 0x40EA10 => sa_stream::streaming::load_all_requested_models;
-    /// `CFileMgr::SetDir(const char*)` (0x5387D0)
-    pub fn file_set_dir(dir: GPtr<u8>) -> i32 = cdecl 0x5387D0 => sa_core::filemgr::set_dir;
     /// `CFileMgr::SetDirMyDocuments()` (0x538860)
     pub fn file_set_dir_my_documents() -> i32 = cdecl 0x538860 => sa_core::filemgr::set_dir_my_documents;
-    /// `CFileMgr::OpenFile(const char*, const char*)` (0x538900)
-    pub fn file_open(path: GPtr<u8>, mode: GPtr<u8>) -> GPtr<u8> = cdecl 0x538900 => sa_core::filemgr::open_file;
-    /// `CFileMgr::Write(FILE*, const void*, int32)` (0x538970)
-    pub fn file_write(f: GPtr<u8>, buf: GPtr<u8>, size: u32) -> u32 = cdecl 0x538970 => sa_core::filemgr::write;
-    /// `CFileMgr::CloseFile(FILE*)` (0x5389D0)
-    pub fn file_close(f: GPtr<u8>) -> i32 = cdecl 0x5389D0 => sa_core::filemgr::close_file;
     /// `RwEngineGetCurrentSubSystem()` (0x7F2C60)
     pub fn rw_engine_get_current_subsystem() -> i32 = cdecl 0x7F2C60 => unported;
     /// `ClientToScreen(HWND, POINT*)` (import slot 0x8582FC)
@@ -842,15 +816,21 @@ pub fn process_streaming(this: GPtr<u8>, load_all: u32) {
     }
 }
 
+pub use crate::bindings::font_get_number_lines;
+pub use crate::bindings::font_set_centre_size;
+pub use crate::bindings::font_set_drop_shadow_position;
+pub use crate::bindings::font_set_scale;
+pub use crate::bindings::hud_colours_get_rgb;
+pub use sa_core::bindings::ascii_to_gxt_char;
+pub use sa_core::bindings::defined_state_2d as defined_state;
+pub use sa_core::bindings::file_read;
+pub use sa_core::bindings::sprite2d_init_per_frame as sprite2d_set_recip_near_clip;
+pub use sa_core::bindings::sprite2d_set_recip_near_clip as sprite2d_init_per_frame;
+pub use sa_core::bindings::stricmp as crt_stricmp;
+pub use sa_core::bindings::strncmp as crt_strncmp;
 orig! {
-    /// `CFileMgr::Read(FILE*, void*, int32)` (0x538950)
-    pub fn file_read(f: GPtr<u8>, buf: GPtr<u8>, size: u32) -> u32 = cdecl 0x538950 => sa_core::filemgr::read;
     /// `CFileMgr::Seek(FILE*, int32, int32)` (0x538990)
     pub fn file_seek(f: GPtr<u8>, offset: i32, origin: i32) -> bool = cdecl 0x538990 => sa_core::filemgr::seek;
-    /// CRT `strncmp` (0x8214D0)
-    pub fn crt_strncmp(a: GPtr<u8>, b: GPtr<u8>, n: u32) -> i32 = cdecl 0x8214D0 => unported;
-    /// CRT `_stricmp` (0x8229B6)
-    pub fn crt_stricmp(a: GPtr<u8>, b: GPtr<u8>) -> i32 = cdecl 0x8229B6 => unported;
     /// `CControllerConfigManager::LoadSettings(FILE*)` (0x530530, thiscall)
     pub fn ccm_load_settings(this: GPtr<u8>, f: GPtr<u8>) -> u8 = thiscall 0x530530 => unported;
     /// `OutputDebugStringA` (import slot 0x858118)
@@ -867,30 +847,12 @@ orig! {
     pub fn font_set_background(on: u32, outline: u32) = cdecl 0x7195C0 => crate::font::set_background;
     /// `CFont::SetProportional(bool)` (0x7195B0)
     pub fn font_set_proportional(v: u32) = cdecl 0x7195B0 => crate::font::set_proportional;
-    /// `CFont::SetCentreSize(float)` (0x7194E0)
-    pub fn font_set_centre_size(v: u32) = cdecl 0x7194E0 => crate::font::set_centre_size;
-    /// `CFont::SetDropShadowPosition(int8)` (0x719570)
-    pub fn font_set_drop_shadow_position(v: u32) = cdecl 0x719570 => crate::font::set_drop_shadow_position;
-    /// `CFont::SetScale(float, float)` (0x719380)
-    pub fn font_set_scale(w: u32, h: u32) = cdecl 0x719380 => crate::font::set_scale;
-    /// `CFont::GetNumberLines(float, float, const GxtChar*)` (0x71A5E0)
-    pub fn font_get_number_lines(px: f32, py: f32, text: GPtr<u8>) -> u32 = cdecl 0x71A5E0 => crate::font::get_number_lines;
     /// `CFont::DrawFonts()` (0x71A210)
     pub fn font_draw_fonts() = cdecl 0x71A210 => crate::font_print::draw_fonts;
     /// `CFont::InitPerFrame()` (0x719800)
     pub fn font_init_per_frame() = cdecl 0x719800 => crate::font::init_per_frame;
-    /// `CHudColours::GetRGB(CRGBA*, uint8)` (0x58FEA0, thiscall)
-    pub fn hud_colours_get_rgb(this: GPtr<u8>, out: GPtr<u8>, colour: u32) -> GPtr<u8> = thiscall 0x58FEA0 => crate::hud::get_rgb;
-    /// `AsciiToGxtChar(const char*, GxtChar*)` (0x718600)
-    pub fn ascii_to_gxt_char(src: GPtr<u8>, dst: GPtr<u8>) = cdecl 0x718600 => unported;
     /// `RsCameraBeginUpdate(RwCamera*)` (0x619450)
     pub fn rs_camera_begin_update(cam: u32) -> i32 = cdecl 0x619450 => unported;
-    /// `CSprite2d::InitPerFrame()` (0x727260)
-    pub fn sprite2d_init_per_frame() = cdecl 0x727260 => unported;
-    /// `CSprite2d::SetRecipNearClip()` (0x727350)
-    pub fn sprite2d_set_recip_near_clip() = cdecl 0x727350 => unported;
-    /// `DefinedState()` (0x734750)
-    pub fn defined_state() = cdecl 0x734750 => unported;
 }
 
 /// 1/512 (0x863A44)
@@ -1126,21 +1088,16 @@ pub fn message_screen(this: GPtr<u8>, key: GPtr<u8>, black: u32, started: u32) {
     font_draw_fonts();
 }
 
+pub use sa_core::bindings::audio_engine_service as audio_service;
+pub use sa_core::bindings::is_video_mode_exclusive;
+pub use sa_core::bindings::pad_clear;
+pub use sa_world::bindings::pad_clear_mouse_history;
+pub use sa_world::bindings::switch_off_menu_call as menu_system_switch_off_menu;
 orig! {
     /// `CAudioEngine::IsRadioRetuneInProgress()` (0x506FF0, thiscall)
     pub fn audio_is_radio_retune_in_progress(this: GPtr<u8>) -> u8 = thiscall 0x506FF0 => unported;
-    /// `CAudioEngine::Service()` (0x507750, thiscall)
-    pub fn audio_service(this: GPtr<u8>) = thiscall 0x507750 => unported;
-    /// `CMenuSystem::SwitchOffMenu(uint8)` (0x580750)
-    pub fn menu_system_switch_off_menu(menu: u32) = cdecl 0x580750 => unported;
-    /// `CPad::Clear(bool, bool)` (0x541A70, thiscall)
-    pub fn pad_clear(pad: GPtr<u8>, a: u32, b: u32) = thiscall 0x541A70 => unported;
     /// `CPad::ClearKeyBoardHistory()` (0x53F1E0)
     pub fn pad_clear_keyboard_history() = cdecl 0x53F1E0 => unported;
-    /// `CPad::ClearMouseHistory()` (0x541BD0, thiscall)
-    pub fn pad_clear_mouse_history(pad: GPtr<u8>) = thiscall 0x541BD0 => unported;
-    /// `VideoMode::IsVideoModeExclusive()` (0x745CA0)
-    pub fn is_video_mode_exclusive() -> u8 = cdecl 0x745CA0 => unported;
     /// `DIReleaseMouse()` (0x746F70)
     pub fn di_release_mouse() = cdecl 0x746F70 => unported;
     /// `Input::diMouseInit(bool)` (0x7469A0)
@@ -1352,6 +1309,11 @@ pub fn process(this: GPtr<u8>) {
     check_for_menu_closing_call(this);
 }
 
+pub use sa_stream::bindings::find_txd_slot;
+pub use sa_stream::bindings::pad_stop_pads_shaking;
+pub use sa_stream::bindings::remove_txd;
+pub use sa_stream::bindings::sprite2d_delete;
+pub use sa_world::bindings::audio_get_current_radio_station_id;
 orig! {
     /// `RwD3D9ChangeMultiSamplingLevels(int32)` (0x7F8A90)
     pub fn rw_d3d9_change_multisampling_levels(n: u32) = cdecl 0x7F8A90 => unported;
@@ -1361,22 +1323,12 @@ orig! {
     pub fn centre_mouse_pointer_call(this: GPtr<u8>) = thiscall 0x57C520 => centre_mouse_pointer;
     /// `CRadar::SetMapCentreToPlayerCoords()` (0x585B20)
     pub fn radar_set_map_centre_to_player_coords() = cdecl 0x585B20 => unported;
-    /// `CPad::StopPadsShaking()` (0x541D70)
-    pub fn pad_stop_pads_shaking() = cdecl 0x541D70 => unported;
-    /// `CAudioEngine::GetCurrentRadioStationID()` (0x507040, thiscall)
-    pub fn audio_get_current_radio_station_id(this: GPtr<u8>) -> u8 = thiscall 0x507040 => unported;
     /// `C_PcSave::PopulateSlotInfo()` (0x619140, thiscall)
     pub fn pc_save_populate_slot_info(this: GPtr<u8>) = thiscall 0x619140 => unported;
     /// `CTimer::StartUserPause()` (0x561AF0)
     pub fn timer_start_user_pause() = cdecl 0x561AF0 => unported;
     /// `CMenuManager::SwapTexturesRound(bool)` (0x5730A0, thiscall)
     pub fn swap_textures_round(this: GPtr<u8>, b: u32) = thiscall 0x5730A0 => swap_textures_round_port;
-    /// `CTxdStore::FindTxdSlot(const char*)` (0x731850)
-    pub fn find_txd_slot(name: GPtr<u8>) -> i32 = cdecl 0x731850 => sa_stream::txdstore::find_txd_slot_name;
-    /// `CTxdStore::RemoveTxd(int32)` (0x731E90)
-    pub fn remove_txd(slot: i32) = cdecl 0x731E90 => unported;
-    /// `CSprite2d::Delete()` (0x727240, thiscall)
-    pub fn sprite2d_delete(this: GPtr<u8>) = thiscall 0x727240 => unported;
 }
 
 /// 1100.0 (0x864F94), 640.0 (0x85951C), 448.0 (0x8652B0)
@@ -1460,12 +1412,8 @@ pub fn unload_textures(this: GPtr<u8>) {
     wr::<u8>(this, 0x15C, 0);
 }
 
-orig! {
-    /// CRT `eh vector constructor iterator` (0x821D30, stdcall)
-    pub fn eh_vector_ctor(arr: GPtr<u8>, size: u32, n: u32, ctor: u32, dtor: u32) = stdcall 0x821D30 => unported;
-    /// CRT `eh vector destructor iterator` (0x821E02, stdcall)
-    pub fn eh_vector_dtor(arr: GPtr<u8>, size: u32, n: u32, dtor: u32) = stdcall 0x821E02 => unported;
-}
+pub use sa_core::bindings::eh_vector_ctor;
+pub use sa_core::bindings::eh_vector_dtor;
 
 /// `CSprite2d::CSprite2d()` (0x727230) / `~CSprite2d()` (0x7281E0), passed to the CRT iterators.
 const SPRITE2D_CTOR: u32 = 0x727230;
@@ -1635,19 +1583,14 @@ pub fn check_slider_movement(this: GPtr<u8>, lr: u32) {
     save_settings_call(this);
 }
 
+pub use crate::bindings::sprite2d_set_texture;
+pub use sa_core::bindings::game_tidy_up_memory;
+pub use sa_core::bindings::streaming_i_have_used_streaming_memory;
+pub use sa_core::bindings::streaming_im_gonna_use_streaming_memory;
+pub use sa_core::bindings::streaming_make_space_for;
+pub use sa_stream::bindings::add_txd_slot;
+pub use sa_stream::bindings::load_txd;
 orig! {
-    /// `CStreaming::MakeSpaceFor(int32)` (0x40E120)
-    pub fn streaming_make_space_for(size: u32) = cdecl 0x40E120 => unported;
-    /// `CStreaming::ImGonnaUseStreamingMemory()` (0x407BE0)
-    pub fn streaming_im_gonna_use_streaming_memory() = cdecl 0x407BE0 => unported;
-    /// `CStreaming::IHaveUsedStreamingMemory()` (0x407BF0)
-    pub fn streaming_i_have_used_streaming_memory() = cdecl 0x407BF0 => unported;
-    /// `CGame::TidyUpMemory(bool, bool)` (0x53C500)
-    pub fn game_tidy_up_memory(a: u32, b: u32) = cdecl 0x53C500 => unported;
-    /// `CTxdStore::AddTxdSlot(const char*)` (0x731C80)
-    pub fn add_txd_slot(name: GPtr<u8>) -> i32 = cdecl 0x731C80 => sa_stream::txdstore::add_txd_slot;
-    /// `CTxdStore::LoadTxd(int32, const char*)` (0x7320B0)
-    pub fn load_txd(slot: i32, file: GPtr<u8>) -> u8 = cdecl 0x7320B0 => sa_stream::txdstore::load_txd_filename;
     /// `CTxdStore::AddRef(int32)` (0x731A00)
     pub fn txd_add_ref(slot: i32) = cdecl 0x731A00 => sa_stream::txdstore::add_ref;
     /// `CTxdStore::PushCurrentTxd()` (0x7316A0)
@@ -1656,8 +1599,6 @@ orig! {
     pub fn set_current_txd(slot: i32) = cdecl 0x7319C0 => sa_stream::txdstore::set_current_txd;
     /// `CTxdStore::PopCurrentTxd()` (0x7316B0)
     pub fn pop_current_txd() = cdecl 0x7316B0 => sa_stream::txdstore::pop_current_txd;
-    /// `CSprite2d::SetTexture(const char*, const char*)` (0x7272B0, thiscall)
-    pub fn sprite2d_set_texture(this: GPtr<u8>, name: GPtr<u8>, mask: GPtr<u8>) = thiscall 0x7272B0 => unported;
     /// `CSprite2d::SetAddressing(RwTextureAddressMode)` (0x727320, thiscall)
     pub fn sprite2d_set_addressing(this: GPtr<u8>, mode: u32) = thiscall 0x727320 => unported;
 }
@@ -2128,14 +2069,9 @@ pub fn process_pc_menu_options_port(this: GPtr<u8>, lr: u32, accept: u32) -> u8 
     1
 }
 
-orig! {
-    /// `CFileMgr::GetTotalSize(FILE*)` (0x5389E0)
-    pub fn file_get_total_size(f: GPtr<u8>) -> i32 = cdecl 0x5389E0 => sa_core::filemgr::get_total_size;
-    /// CRT `atol` (0x82258E)
-    pub fn crt_atol(s: GPtr<u8>) -> i32 = cdecl 0x82258E => unported;
-    /// CRT `sprintf(buf, fmt, a)` (0x821BB5)
-    pub fn crt_sprintf1(buf: GPtr<u8>, fmt: GPtr<u8>, a: i32) -> i32 = cdecl 0x821BB5 => unported;
-}
+pub use sa_core::bindings::atol as crt_atol;
+pub use sa_core::bindings::file_get_total_size;
+pub use sa_core::bindings::sprintf1 as crt_sprintf1;
 
 /// `CMenuManager::ProcessMissionPackNewGame()` (0x57D520, thiscall): as `CMenuManager.deviations.md`:
 /// the 25 pack ids (+0x161, stride 0x105) cleared; for files `MPACK//MPACK%d//MPACK.DAT` 0..24 (user
@@ -2414,9 +2350,9 @@ pub fn check_codes_for_controls(this: GPtr<u8>, ty: u32) {
     save_settings_call(this);
 }
 
+pub use crate::bindings::font_set_alpha_fade;
+pub use sa_core::bindings::pad_update_pads;
 orig! {
-    /// `CFont::SetAlphaFade(float)` (0x719500)
-    pub fn font_set_alpha_fade(v: u32) = cdecl 0x719500 => crate::font::set_alpha_fade;
     /// `CMenuManager::SetFrontEndRenderStates()` (0x573A60, thiscall)
     pub fn set_front_end_render_states_call(this: GPtr<u8>) = thiscall 0x573A60 => set_front_end_render_states;
     /// `CMenuManager::DrawBackground()` (0x57B750, thiscall)
@@ -2425,8 +2361,6 @@ orig! {
     pub fn rs_event_handler(event: i32, param: GPtr<u8>) -> i32 = cdecl 0x619B60 => sa_core::platform::rs_event_handler;
     /// `Win::MessageLoop()` (0x746870)
     pub fn win_message_loop() = cdecl 0x746870 => sa_core::input::message_loop;
-    /// `CPad::UpdatePads()` (0x541DD0)
-    pub fn pad_update_pads() = cdecl 0x541DD0 => unported;
     /// `CMenuManager::MessageScreen(const char*, bool, bool)` (0x579330, thiscall)
     pub fn message_screen_call(this: GPtr<u8>, key: GPtr<u8>, black: u32, started: u32) = thiscall 0x579330 => message_screen;
 }

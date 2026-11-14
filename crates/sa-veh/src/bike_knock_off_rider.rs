@@ -10,32 +10,25 @@ use sa_math::x87::X87;
 use crate::common::{rd, wr, x};
 use sa_core::mem::GPtr;
 
+use crate::bindings::ped_get_bike_riding_skill;
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_core::bindings::tm_get_active_task as task_manager_get_active_task;
+use sa_pop::bindings::cam_stairs_for_player as cull_zones_cam_stairs_for_player;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::get_local_direction as ped_get_local_direction;
 orig! {
-    /// `CPed::GetBikeRidingSkill()` (0x5DF510, ST0)
-    fn ped_get_bike_riding_skill(p: GPtr<u8>) -> f64 = thiscall 0x5DF510 => unported;
-    /// `CTaskManager::GetActiveTask()` (0x681720)
-    fn task_manager_get_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x681720 => unported;
     /// `CTask::GetTaskType()` (vtable slot 0x10)
     fn task_get_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CCullZones::CamStairsForPlayer()` (0x72DD30)
-    fn cull_zones_cam_stairs_for_player() -> u8 = cdecl 0x72DD30 => unported;
     /// `CCullZones::FindZoneWithStairsAttributeForPlayer()` (0x72DAD0)
     fn cull_zones_find_zone_with_stairs_for_player() -> u32 = cdecl 0x72DAD0 => unported;
-    /// `CPed::GetLocalDirection(const CVector2D&)` (0x5DEF60)
-    fn ped_get_local_direction(p: GPtr<u8>, dir: GPtr<u8>) -> i32 = thiscall 0x5DEF60 => unported;
     /// `CEventKnockOffBike::CEventKnockOffBike(CVehicle*, CVector* moveSpeed, CVector* impactVelocity, float
     /// damageIntensity, float height, uint8 type, uint8 direction, int32 time, CPed*, bool isVictimDriver, bool
     /// forceKnockOff)` (0x4AFCF0)
     #[allow(clippy::too_many_arguments)]
     fn event_knock_off_bike_ctor(e: GPtr<u8>, veh: GPtr<u8>, move_speed: GPtr<u8>, impact: GPtr<u8>, damage: u32, height: f32, kind: u32, dir: u32, time: u32, ped: u32, driver: u32, force: u32) -> GPtr<u8> = thiscall 0x4AFCF0 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420)
-    fn event_group_add(group: GPtr<u8>, e: GPtr<u8>, unused: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
     /// `CEventKnockOffBike::~CEventKnockOffBike()` (0x4AFE70)
     fn event_knock_off_bike_dtor(e: GPtr<u8>) = thiscall 0x4AFE70 => event_knock_off_bike_destructor;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571A00 => unported;
 }
 
 use sa_math::fpu::fbits as c;

@@ -22,9 +22,8 @@ sa_core::globals! {
     list GLOBALS;
 }
 
+pub use sa_core::bindings::eh_vector_dtor;
 orig! {
-    /// CRT `eh vector destructor iterator` (0x821E02, stdcall)
-    pub fn eh_vector_dtor(p: GPtr<u8>, size: u32, n: u32, dtor: u32) = stdcall 0x821E02 => unported;
     /// `CAnimManager::RemoveFromUncompressedCache(CAnimBlendHierarchy*)` (0x4D42A0)
     pub fn remove_from_uncompressed_cache(h: GPtr<u8>) = cdecl 0x4D42A0 => crate::manager::remove_from_uncompressed_cache;
     /// `CAnimManager::UncompressAnimation(CAnimBlendHierarchy*)` (0x4D41C0)

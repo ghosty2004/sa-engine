@@ -49,11 +49,10 @@ const E_RW_NOMEM: u32 = 0x8000_0013;
 const E_RW_READ: u32 = 0x8000_001A;
 const E_RW_WRITE: u32 = 0x8000_001C;
 
+pub use crate::bindings::free_list_destroy as rw_free_list_destroy;
 orig! {
     /// `RwFreeListCreateAndPreallocateSpace(entrySize, entriesPerBlock, alignment, numBlocks, fl, hint)` (0x801B70)
     pub fn rw_free_list_create_and_preallocate(size: u32, per_block: u32, align: u32, blocks: u32, fl: GPtr<u8>, hint: u32) -> GPtr<u8> = cdecl 0x801B70 => unported;
-    /// `RwFreeListDestroy(fl)` (0x801B80)
-    pub fn rw_free_list_destroy(fl: GPtr<u8>) -> u32 = cdecl 0x801B80 => unported;
     /// `G->fileFuncs.rwfopen(name, mode)` (G+0xC8)
     pub fn rw_fopen(name: GPtr<u8>, mode: GPtr<u8>) -> u32 = cdecl table 0xC97B24 0xC8 => unported;
     /// `G->fileFuncs.rwfclose(fp)` (G+0xCC)

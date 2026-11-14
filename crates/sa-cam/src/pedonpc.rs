@@ -17,30 +17,22 @@ use crate::common::{Fpu, g, k, rd, wr};
 use crate::followped::{clip_beta, copy3, d, fcos, fpatan, fsin, ped_is_player, push_st0};
 use crate::rocket::{matrix_update_rw_matrix, simple_transform_update_rw_matrix};
 
+pub use crate::bindings::pad_540e80;
+pub use sa_core::bindings::get_anim_hierarchy_from_skin_clump;
+pub use sa_core::bindings::matrix_mul_vec;
+pub use sa_core::bindings::matrix_set_rotate_z_only;
+pub use sa_core::bindings::rp_hanim_hierarchy_get_matrix_array;
+pub use sa_core::bindings::rp_hanim_id_get_index;
+pub use sa_core::bindings::rw_v3d_transform_points;
+pub use sa_world::bindings::placeable_get_heading;
 orig! {
-    /// `GetAnimHierarchyFromSkinClump(RpClump*)` (0x734A40)
-    pub fn get_anim_hierarchy_from_skin_clump(c: GPtr<u8>) -> GPtr<u8> = cdecl 0x734A40 => unported;
     /// `ConvertPedNode2BoneTag(int32)` (0x4D58A0)
     pub fn convert_ped_node_2_bone_tag_call(node: i32) -> i32 = cdecl 0x4D58A0 => crate::camproc::convert_ped_node_2_bone_tag;
-    /// `RpHAnimIDGetIndex(RpHAnimHierarchy*, int32)` (0x7C51A0)
-    pub fn rp_hanim_id_get_index(h: GPtr<u8>, id: i32) -> i32 = cdecl 0x7C51A0 => unported;
-    /// `RpHAnimHierarchyGetMatrixArray(RpHAnimHierarchy*)` (0x7C5120)
-    pub fn rp_hanim_hierarchy_get_matrix_array(h: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C5120 => unported;
-    /// `RwV3dTransformPoints(RwV3d* out, const RwV3d* in, int32 n, const RwMatrix*)` (0x7EDD90)
-    pub fn rw_v3d_transform_points(out: GPtr<u8>, inp: GPtr<u8>, n: i32, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EDD90 => unported;
     /// `RwMatrixScale(RwMatrix*, const RwV3d*, RwOpCombineType)` (0x7F22C0)
     pub fn rw_matrix_scale(m: GPtr<u8>, v: GPtr<u8>, op: i32) -> GPtr<u8> = cdecl 0x7F22C0 => unported;
-    /// `CMatrix * CVector` (0x59C890, cdecl(out, m, v)), returns out
-    pub fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
-    /// `CPlaceable::GetHeading()` (0x441DB0, ST0)
-    pub fn placeable_get_heading(e: GPtr<u8>) -> f64 = thiscall 0x441DB0 => unported;
-    /// `CMatrix::SetRotateZOnly(float)` (0x59B020); the float as a dword
-    pub fn matrix_set_rotate_z_only(m: GPtr<u8>, h: u32) = thiscall 0x59B020 => unported;
     /// `CPad::SniperZoomOut()` (0x540B80, AL) / `SniperZoomIn()` (0x540B30, AL)
     pub fn pad_sniper_zoom_out(pad: GPtr<u8>) -> u8 = thiscall 0x540B80 => unported;
     pub fn pad_sniper_zoom_in(pad: GPtr<u8>) -> u8 = thiscall 0x540B30 => unported;
-    /// `FUN_00540e80` / `FUN_00540f80` (CPad, AX): the first-person look left/right and up/down sticks
-    pub fn pad_540e80(pad: GPtr<u8>) -> i16 = thiscall 0x540E80 => unported;
     pub fn pad_540f80(pad: GPtr<u8>) -> i16 = thiscall 0x540F80 => unported;
 }
 

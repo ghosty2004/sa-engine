@@ -6,18 +6,12 @@ use sa_math::x87::X87;
 
 use crate::abi::HookReg;
 use crate::mem::GPtr;
-use crate::{hook, orig};
+use crate::hook;
 
-orig! {
-    /// `RwMatrixDestroy(RwMatrix*)` (0x7F2A20)
-    fn mm_rw_matrix_destroy(m: GPtr<u8>) -> i32 = cdecl 0x7F2A20 => unported;
-    /// `operator*(CMatrix* out, const CMatrix& a, const CMatrix& b)` (0x59BE30, cdecl, returns out)
-    fn mm_matrix_mul(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x59BE30 => unported;
-    /// `CMatrix::operator=(const CMatrix&)` (0x59BBC0)
-    fn mm_matrix_assign(this: GPtr<u8>, m: GPtr<u8>) -> GPtr<u8> = thiscall 0x59BBC0 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    fn mm_matrix_dtor(this: GPtr<u8>) = thiscall 0x59ACD0 => unported;
-}
+use crate::bindings::matrix_assign as mm_matrix_assign;
+use crate::bindings::matrix_dtor as mm_matrix_dtor;
+use crate::bindings::matrix_mul as mm_matrix_mul;
+use crate::bindings::rw_matrix_destroy as mm_rw_matrix_destroy;
 
 /// `CMatrix::Detach()` (0x59ACF0, thiscall): when `m_pAttachMatrix` and `m_bOwnsAttachedMatrix` are both
 /// non-zero, `RwMatrixDestroy(m_pAttachMatrix)`; then `m_pAttachMatrix = 0` (the flag is kept).

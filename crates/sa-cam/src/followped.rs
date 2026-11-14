@@ -26,59 +26,44 @@ use crate::common::{Fpu, g, k, rd, the_camera, wr};
 pub(crate) const CI_ASIN: usize = 0x821E70;
 pub(crate) const CI_POW: usize = 0x822130;
 
+pub use crate::bindings::camera_col_det_and_react;
+pub use crate::bindings::clip_beta;
+pub use crate::bindings::handle_camera_motion_for_ducking;
+pub use crate::bindings::improve_near_clip;
+pub use sa_core::bindings::intel_get_task_use_gun as get_task_use_gun;
+pub use sa_core::bindings::tm_get_active_task;
+pub use sa_core::bindings::vector_dot_product as dot_product;
+pub use sa_stream::bindings::ped_is_player;
+pub use sa_world::bindings::is_coop_game_going_on;
+pub use sa_world::bindings::pad_clear_mouse_history;
+pub use sa_world::bindings::pad_get_force_camera_behind_player;
+pub use sa_world::bindings::pad_get_ped_walk_left_right;
+pub use sa_world::bindings::pad_get_ped_walk_up_down;
+pub use sa_world::bindings::placeable_get_top_direction;
+pub use sa_world::bindings::vector_magnitude_sqr as magnitude_sqr;
 orig! {
-    /// `CPed::IsPlayer()` (0x5DF8F0, AL)
-    pub fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
     /// `CVector::operator+=(const CVector&)` (0x411A00), returns `this`
     pub fn vector_add_assign(v: GPtr<u8>, o: GPtr<u8>) -> GPtr<u8> = thiscall 0x411A00 => unported;
     /// `CCamera::ResetDuckingSystem(CPed*)` (0x50CEF0)
     pub fn reset_ducking_system(cam: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x50CEF0 => crate::camfx::reset_ducking_system;
-    /// `DotProduct(const CVector*, const CVector*)` (0x40FDB0, ST0)
-    pub fn dot_product(a: GPtr<u8>, b: GPtr<u8>) -> f64 = cdecl 0x40FDB0 => unported;
-    /// `CPad::ClearMouseHistory()` (0x541BD0)
-    pub fn pad_clear_mouse_history(pad: GPtr<u8>) = thiscall 0x541BD0 => unported;
-    /// `CPad::GetForceCameraBehindPlayer()` (0x540AE0, AL)
-    pub fn pad_get_force_camera_behind_player(pad: GPtr<u8>) -> u8 = thiscall 0x540AE0 => unported;
-    /// `CPedIntelligence::GetTaskUseGun()` (0x600F70)
-    pub fn get_task_use_gun(intel: GPtr<u8>) -> GPtr<u8> = thiscall 0x600F70 => unported;
-    /// `CPad::GetPedWalkLeftRight()` (0x53FC90, AX) / `GetPedWalkUpDown()` (0x53FD30, AX)
-    pub fn pad_get_ped_walk_left_right(pad: GPtr<u8>) -> i16 = thiscall 0x53FC90 => unported;
-    pub fn pad_get_ped_walk_up_down(pad: GPtr<u8>) -> i16 = thiscall 0x53FD30 => unported;
-    /// `CPlaceable::GetTopDirection(CVector* out)` (0x41CCB0)
-    pub fn placeable_get_top_direction(p: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall 0x41CCB0 => unported;
     /// `IKChainManager_c::LookAt(const char*, CPed*, CEntity*, int32 time, ePedBones, CVector* pos,
     /// bool torso, float speed, int32 blend, int32 priority, bool force)` (0x618970); the float as a dword
     pub fn ik_look_at(m: GPtr<u8>, name: u32, ped: GPtr<u8>, target: GPtr<u8>, time: i32, bone: i32, pos: GPtr<u8>, torso: u32, speed: u32, blend: i32, prio: i32, force: u32) -> u8 = thiscall 0x618970 => unported;
     /// `CTaskSimpleClimb::GetCameraStickModifier(CEntity*, float& alpha, float& beta, float& stickAlpha,
     /// float& stickBeta)` (0x67A5D0)
     pub fn climb_get_camera_stick_modifier(t: GPtr<u8>, ped: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, sa: GPtr<u8>, sb: GPtr<u8>) = thiscall 0x67A5D0 => unported;
-    /// `CTaskManager::GetActiveTask()` (0x681720)
-    pub fn tm_get_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x681720 => unported;
     /// `CTask::GetTaskType()` (vtable +0x10)
     fn v_get_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
     /// `FUN_0063a380` (the enter-car stick modifier, `this` = CTaskComplexEnterCarAsDriver)
     pub fn enter_car_stick_modifier(t: GPtr<u8>, ped: GPtr<u8>, dist: f32, a: GPtr<f32>, b: GPtr<f32>, sa: GPtr<f32>, sb: GPtr<f32>) = thiscall 0x63A380 => crate::camproc::enter_car_camera_stick_modifier;
-    /// `CCam::ClipBeta()` (0x509C50)
-    pub fn clip_beta(c: GPtr<u8>) = thiscall 0x509C50 => crate::cam::clip_beta;
     /// `CCamera::GetFadingDirection()` (0x50ADF0)
     pub fn get_fading_direction(cam: GPtr<u8>) -> i32 = thiscall 0x50ADF0 => crate::camera::get_fading_direction;
-    /// `CCamera::HandleCameraMotionForDucking(CPed*, CVector*, CVector*, bool)` (0x50CFA0)
-    pub fn handle_camera_motion_for_ducking(cam: GPtr<u8>, ped: GPtr<u8>, src: GPtr<u8>, targ: GPtr<u8>, instant: u32) = thiscall 0x50CFA0 => crate::camfx::handle_camera_motion_for_ducking;
     /// `CCamera::SetColVarsPed(int32 type, int32 zoom)` (0x50CC50, cdecl)
     pub fn set_col_vars_ped(ty: i32, zoom: i32) = cdecl 0x50CC50 => crate::camfx::set_col_vars_ped;
     /// `CCamera::CameraGenericModeSpecialCases(CPed*)` (0x50CD30)
     pub fn camera_generic_mode_special_cases(cam: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x50CD30 => crate::camera::camera_generic_mode_special_cases;
-    /// `CCamera::CameraColDetAndReact(CVector* source, const CVector* target)` (0x520190, stdcall, AL;
-    /// ported in camcol but not hooked)
-    pub fn camera_col_det_and_react(source: GPtr<u8>, target: GPtr<u8>) -> u8 = stdcall 0x520190 => crate::camcol::camera_col_det_and_react;
-    /// `CCamera::ImproveNearClip(CVehicle*, CPed*, CVector*, CVector*)` (0x516B20)
-    pub fn improve_near_clip(cam: GPtr<u8>, veh: GPtr<u8>, ped: GPtr<u8>, source: GPtr<u8>, target: GPtr<u8>) = thiscall 0x516B20 => crate::camcol::improve_near_clip;
     /// `FUN_0050a120(CVector*, int32)` (0x50A120): each component rounded to n decimals
     pub fn round_vector_decimals(v: GPtr<u8>, n: i32) = cdecl 0x50A120 => crate::camproc::round_vector_decimals;
-    /// `CGameLogic::IsCoopGameGoingOn()` (0x441390, AL)
-    pub fn is_coop_game_going_on() -> u8 = cdecl 0x441390 => unported;
-    /// `CVector::SquaredMagnitude()` (0x406DA0, ST0 = `(x*x + y*y) + z*z`)
-    pub fn magnitude_sqr(v: GPtr<u8>) -> f64 = thiscall 0x406DA0 => unported;
     /// `CIdleCam::Process()` (0x522C80, AL)
     pub fn idle_cam_process(ic: GPtr<u8>) -> u8 = thiscall 0x522C80 => crate::camproc::idle_cam_process;
 }

@@ -7,17 +7,13 @@ use sa_core::{hook, native, orig};
 
 use crate::common::*;
 
+use crate::bindings::task_complex_dtor;
+use crate::bindings::vehicle_set_hassle_pos_id;
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_stream::bindings::anim_remove_block_ref;
 orig! {
-    /// `CVehicle::SetHasslePosId(int32, bool)` (0x6D3B30, `ret 8`)
-    fn vehicle_set_hassle_pos_id(v: GPtr<u8>, id: i32, b: u32) = thiscall 0x6D3B30 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity** ref)` (0x571A00, `ret 4`)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
     /// `CAnimManager::GetAnimationBlockIndex(const char*)` (0x4D3990)
     fn anim_get_block_index(name: u32) -> i32 = cdecl 0x4D3990 => unported;
-    /// `CAnimManager::RemoveAnimBlockRef(int32)` (0x4D3FD0)
-    fn anim_remove_block_ref(i: i32) = cdecl 0x4D3FD0 => unported;
-    /// `CTaskComplex::~CTaskComplex()` (0x61A3D0)
-    fn task_complex_dtor(t: GPtr<u8>) = thiscall 0x61A3D0 => unported;
     /// `CTaskComplex::CreateNextSubTask`-slot +0x20 of the task's vtable (the tail jump of 0x65F700)
     fn v_slot_20(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x20 => unported;
 }

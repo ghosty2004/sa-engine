@@ -25,6 +25,46 @@ const F8: u32 = 0x4100_0000;
 /// `4.0f` (run-anim blend delta, pushed as an immediate)
 const F4: u32 = 0x4080_0000;
 
+use crate::bindings::acquaintance_ped_ctor as event_acquaintance_ped_ctor;
+use crate::bindings::be_in_couple_abort_arm_ik;
+use crate::bindings::car_enter_exit_is_vehicle_stealable;
+use crate::bindings::event_vehicle_to_steal_ctor;
+use crate::bindings::event_vehicle_to_steal_dtor;
+use crate::bindings::intel_get_ped_entities;
+use crate::bindings::partner_ctor_orig;
+use crate::bindings::ped_stop_playing_hand_signal;
+use crate::bindings::run_timed_anim_ctor2;
+use crate::bindings::should_load_gang_anims;
+use crate::bindings::simple_chat_ctor;
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_core::bindings::entity_register_reference as wfp_register_reference;
+use sa_core::bindings::entity_register_reference;
+use sa_core::bindings::general_get_node_heading_from_vector;
+use sa_core::bindings::general_random_int_in_range;
+use sa_core::bindings::ped_is_alive;
+use sa_core::bindings::streaming_request_model;
+use sa_core::bindings::vector2d_normalise;
+use sa_stream::bindings::anim_add_block_ref;
+use sa_stream::bindings::anim_remove_block_ref;
+use sa_stream::bindings::get_animation_block_index as anim_get_block_index;
+use sa_world::bindings::attractor_manager_get_ped_using_effect;
+use sa_world::bindings::event_acquaintance_ped_dtor;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::get_ped_attractor_manager;
+use sa_world::bindings::go_to_point_and_stand_still_ctor;
+use sa_world::bindings::ik_is_looking;
+use sa_world::bindings::ik_look_at;
+use sa_world::bindings::intel_find_task_by_type;
+use sa_world::bindings::placeable_get_top_direction;
+use sa_world::bindings::run_anim_ctor;
+use sa_world::bindings::sequence_add_task;
+use sa_world::bindings::sequence_ctor;
+use sa_world::bindings::task_complex_ctor;
+use sa_world::bindings::tm_find_active_task_by_type;
+use sa_world::bindings::tm_set_task;
+use sa_world::bindings::turn_to_face_entity_ctor;
+use sa_world::bindings::vector_add;
+use sa_world::bindings::wander_standard_ctor;
 orig! {
     // ---- virtual slots ----
     /// `CTask::GetTaskType` (vtable +0x10)
@@ -45,120 +85,34 @@ orig! {
     fn partner_shove_ctor_orig(t: GPtr<u8>, name: GPtr<u8>, partner: GPtr<u8>, lead: u32, dist: u32, upd: u32, vx: u32, vy: u32, vz: u32) -> GPtr<u8> = thiscall 0x6846F0 => unported;
     /// `CTaskComplexPartnerChat::Constructor` (0x684290, `ret 0x28`)
     fn partner_chat_ctor_orig(t: GPtr<u8>, name: GPtr<u8>, partner: GPtr<u8>, lead: u32, dist: u32, upd: u32, a5: u32, a6: u32, vx: u32, vy: u32, vz: u32) -> GPtr<u8> = thiscall 0x684290 => unported;
-    /// `CTaskComplexPartner::Constructor` (0x681E70, `ret 0x24`)
-    fn partner_ctor_orig(t: GPtr<u8>, name: GPtr<u8>, partner: GPtr<u8>, lead: u32, dist: u32, face: u32, upd: u32, vx: u32, vy: u32, vz: u32) -> GPtr<u8> = thiscall 0x681E70 => unported;
-    /// `CTaskComplexBeInCouple::AbortArmIK(CPed*)` (0x6837F0, `ret 4`)
-    fn be_in_couple_abort_arm_ik(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x6837F0 => unported;
     /// `CTaskComplexBeInCouple::GetSideOfPartner(CPed*)` (0x683840, `ret 4`; catalogue `FUN_00683840`): 1 or 2.
     fn be_in_couple_get_side(t: GPtr<u8>, ped: GPtr<u8>) -> i32 = thiscall 0x683840 => unported;
     /// `CTaskComplexUsePairedAttractor::SetPartnership(CPed*, bool, pair*)` (0x6331F0, `ret 0xC`)
     fn paired_set_partnership(t: GPtr<u8>, partner: GPtr<u8>, lead: u32, pair: GPtr<u8>) = thiscall 0x6331F0 => unported;
     /// `CTaskComplexWanderCriminal::LookForCarsToSteal(CPed*)` (0x66B4F0, `ret 4`)
     fn wander_criminal_look_for_cars_to_steal(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x66B4F0 => unported;
-
-    // ---- task bases and constructors ----
-    /// `CTaskComplex::CTaskComplex` (0x61A3B0)
-    fn task_complex_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A3B0 => unported;
     /// `CTaskSimpleStandStill::Constructor(int32 time, bool, bool, float)` (0x62F310, `ret 0x10`)
     fn stand_still_ctor(t: GPtr<u8>, time: i32, a: u32, b: u32, f: u32) -> GPtr<u8> = thiscall 0x62F310 => unported;
-    /// `CTaskSimpleRunAnim::Constructor(AssocGroupId, AnimationId, float, bool)` (0x61A8B0, `ret 0x10`)
-    fn run_anim_ctor(t: GPtr<u8>, group: u32, anim: u32, delta: u32, b: u32) -> GPtr<u8> = thiscall 0x61A8B0 => unported;
-    /// `CTaskSimpleRunTimedAnim::Constructor-2` (0x61ABE0, 8 stack arguments)
-    fn run_timed_anim_ctor2(t: GPtr<u8>, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32) -> GPtr<u8> = thiscall 0x61ABE0 => unported;
-    /// `CTaskSimpleChat::CTaskSimpleChat(int32 time)` (0x5F65A0, `ret 4`)
-    fn simple_chat_ctor(t: GPtr<u8>, time: u32) -> GPtr<u8> = thiscall 0x5F65A0 => unported;
     /// `CTaskComplexChat::Constructor(bool, CPed*, int32, int16)` (0x682CB0, `ret 0x10`; entry `push -1; jmp island`)
     fn complex_chat_ctor(t: GPtr<u8>, a: u32, partner: GPtr<u8>, b: i32, c: u32) -> GPtr<u8> = thiscall 0x682CB0 => unported;
     /// `CTaskSimpleDoHandSignal::Constructor()` (0x660880)
     fn do_hand_signal_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x660880 => unported;
-    /// `CTaskComplexTurnToFaceEntityOrCoord::Constructor(CEntity*, float, float)` (0x66B890, `ret 0xC`)
-    fn turn_to_face_entity_ctor(t: GPtr<u8>, e: GPtr<u8>, a: u32, b: u32) -> GPtr<u8> = thiscall 0x66B890 => unported;
-    /// `CTaskComplexWanderStandard` constructor `(int32 moveState, uint8 dir, bool)` (0x48E4F0, `ret 0xC`)
-    fn wander_standard_ctor(t: GPtr<u8>, ms: u32, dir: u32, b: u32) -> GPtr<u8> = thiscall 0x48E4F0 => unported;
     /// `CTaskComplexWander` next-scan-time setter (0x66B150, `ret 4`): `+0x34 = a0`.
     fn wander_set_next_scan_time(t: GPtr<u8>, time: u32) = thiscall 0x66B150 => unported;
-    /// `CTaskComplexGoToPointAndStandStill::Constructor(int32, const CVector&, float, float, bool, bool)` (0x668120,
-    /// `ret 0x18`)
-    fn go_to_point_and_stand_still_ctor(t: GPtr<u8>, ms: u32, p: GPtr<u8>, r: u32, d: u32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x668120 => unported;
     /// `FUN_00683340` (0x683340, `ret 0x10`): the `CTaskComplexWaitForPed` constructor `(CPed*, float, int32, bool)`
     fn wait_for_ped_ctor(t: GPtr<u8>, ped: GPtr<u8>, f: u32, time: u32, b: u32) -> GPtr<u8> = thiscall 0x683340 => wait_for_ped_ctor_port;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70, `ret 4`)
-    fn wfp_register_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571B70 => unported;
-    /// `CTaskComplexSequence::CTaskComplexSequence` (0x632BD0)
-    fn sequence_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x632BD0 => unported;
-    /// `CTaskComplexSequence::AddTask(CTask*)` (0x632D10, `ret 4`)
-    fn sequence_add_task(t: GPtr<u8>, task: GPtr<u8>) = thiscall 0x632D10 => unported;
     /// `CTaskComplexAvoidOtherPedWhileWandering::Constructor(CPed*, const CVector&, int32)` (0x66A100, `ret 0xC`)
     fn avoid_other_ped_while_wandering_ctor(t: GPtr<u8>, ped: GPtr<u8>, target: GPtr<u8>, ms: u32) -> GPtr<u8> = thiscall 0x66A100 => unported;
-
-    // ---- events ----
-    /// `CEventVehicleToSteal::Constructor(CVehicle*)` (0x4AF670, `ret 4`)
-    fn event_vehicle_to_steal_ctor(e: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = thiscall 0x4AF670 => unported;
-    /// `CEventVehicleToSteal` destructor (0x4AF700)
-    fn event_vehicle_to_steal_dtor(e: GPtr<u8>) = thiscall 0x4AF700 => unported;
-    /// `CEventAcquaintancePed::Constructor(CPed*)` (0x4AF820, `ret 4`)
-    fn event_acquaintance_ped_ctor(e: GPtr<u8>, p: GPtr<u8>) -> GPtr<u8> = thiscall 0x4AF820 => unported;
-    /// `CEventAcquaintancePed` destructor (0x4AF890)
-    fn event_acquaintance_ped_dtor(e: GPtr<u8>) = thiscall 0x4AF890 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, `ret 8`)
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
 
     // ---- other catalogued functions ----
     /// `CAEPedSpeechAudioEntity::RequestPedConversation(CPed*, CPed*)` (0x4E50E0, cdecl)
     fn request_ped_conversation(a: GPtr<u8>, b: GPtr<u8>) -> u8 = cdecl 0x4E50E0 => unported;
-    /// `CPed::StopPlayingHandSignal()` (0x5E0480)
-    fn ped_stop_playing_hand_signal(p: GPtr<u8>) = thiscall 0x5E0480 => unported;
-    /// `CPed::IsAlive()` (0x5E0170)
-    fn ped_is_alive(p: GPtr<u8>) -> u8 = thiscall 0x5E0170 => unported;
-    /// `CTaskManager::FindActiveTaskByType(int32)` (0x681740, `ret 4`)
-    fn tm_find_active_task_by_type(tm: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x681740 => unported;
-    /// `CTaskManager::SetTask(CTask*, int32, bool)` (0x681AF0, `ret 0xC`)
-    fn tm_set_task(tm: GPtr<u8>, t: GPtr<u8>, slot: i32, b: u32) = thiscall 0x681AF0 => unported;
-    /// `CPedIntelligence::FindTaskByType(int32)` (0x600EE0, `ret 4`)
-    fn intel_find_task_by_type(i: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x600EE0 => unported;
-    /// `CPedIntelligence::GetPedEntities()` (0x4893E0)
-    fn intel_get_ped_entities(i: GPtr<u8>) -> GPtr<u8> = thiscall 0x4893E0 => unported;
-    /// `CPlaceable::GetTopDirection()` (0x41CCB0, `ret 4`, CVector by hidden pointer)
-    fn placeable_get_top_direction(p: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall 0x41CCB0 => unported;
-    /// `CGeneral::GetNodeHeadingFromVector(float, float)` (0x53CDC0, cdecl)
-    fn general_get_node_heading_from_vector(x: u32, y: u32) -> u32 = cdecl 0x53CDC0 => unported;
-    /// `CVector2D::Normalise()` (0x44E480)
-    fn vector2d_normalise(v: GPtr<u8>) = thiscall 0x44E480 => unported;
-    /// `FUN_0040fe30(CVector* out, const CVector* a, const CVector* b)` (0x40FE30, cdecl: `*out = *a + *b`)
-    fn vector_add(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE30 => unported;
-    /// `CGeneral::GetRandomNumberInRange(int32, int32)` (0x407180)
-    fn general_random_int_in_range(min: i32, max: i32) -> i32 = cdecl 0x407180 => unported;
     /// `IKChainManager_c::PointArm(name, arm, ped, target, bone, pos, speed, blendTime, cosLimit)` (0x618B60, `ret 0x24`)
     fn ik_point_arm(m: GPtr<u8>, name: u32, arm: i32, ped: GPtr<u8>, target: GPtr<u8>, bone: i32, pos: GPtr<u8>, speed: u32, blend: u32, limit: u32) = thiscall 0x618B60 => unported;
-    /// `IKChainManager_c::LookAt(name, CPed*, CEntity*, int32 time, int32 bone, RwV3d*, bool, float, int32, int32, bool)`
-    /// (0x618970, `ret 0x2C`)
-    fn ik_look_at(m: GPtr<u8>, name: u32, ped: GPtr<u8>, target: GPtr<u8>, time: i32, bone: i32, pos: u32, b: u32, speed: u32, blend: i32, prio: i32, b2: u32) = thiscall 0x618970 => unported;
-    /// `IKChainManager_c::IsLooking(CPed*)` (0x6181A0, `ret 4`)
-    fn ik_is_looking(m: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x6181A0 => unported;
-    /// `CAnimManager::GetAnimationBlockIndex(const char*)` (0x4D3990)
-    fn anim_get_block_index(name: GPtr<u8>) -> i32 = cdecl 0x4D3990 => unported;
-    /// `CAnimManager::AddAnimBlockRef(int32)` (0x4D3FB0)
-    fn anim_add_block_ref(i: i32) = cdecl 0x4D3FB0 => unported;
-    /// `CAnimManager::RemoveAnimBlockRef(int32)` (0x4D3FD0)
-    fn anim_remove_block_ref(i: i32) = cdecl 0x4D3FD0 => unported;
-    /// `CStreaming::RequestModel(int32 id, int32 flags)` (0x4087E0)
-    fn streaming_request_model(id: i32, flags: i32) = cdecl 0x4087E0 => unported;
-    /// `CTaskComplexGangLeader::ShouldLoadGangAnims()` (0x65E7F0, static)
-    fn should_load_gang_anims() -> u8 = cdecl 0x65E7F0 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70, `ret 4`)
-    fn entity_register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00, `ret 4`)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
     /// `CScripted2dEffects::GetEffectPairs(const C2dEffect*)` (0x6FA840, cdecl)
     fn scripted_2d_effects_get_effect_pairs(effect: GPtr<u8>) -> GPtr<u8> = cdecl 0x6FA840 => unported;
-    /// `CPedAttractorManager::GetPedAttractorManager()` (0x5EE190, cdecl)
-    fn get_ped_attractor_manager() -> GPtr<u8> = cdecl 0x5EE190 => unported;
-    /// `CPedAttractorManager::GetPedUsingEffect(const C2dEffect*, const CEntity*)` (0x5EBE50, `ret 8`)
-    fn attractor_manager_get_ped_using_effect(m: GPtr<u8>, effect: u32, entity: u32) -> GPtr<u8> = thiscall 0x5EBE50 => unported;
     /// `CPathNode::GetPosition()` (0x420A10, `ret 4`, CVector by hidden pointer)
     fn path_node_get_position(n: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall 0x420A10 => unported;
-    /// `CCarEnterExit::IsVehicleStealable(const CVehicle*, const CPed*)` (0x6510D0, cdecl)
-    fn car_enter_exit_is_vehicle_stealable(v: GPtr<u8>, ped: GPtr<u8>) -> u8 = cdecl 0x6510D0 => unported;
     /// `CTaskComplexWanderStandard::ScanForStuff(CPed*)` (0x672600, `ret 4`)
     fn wander_standard_scan_for_stuff(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x672600 => unported;
     /// `CTaskComplexProstituteSolicit::IsTaskValid(CPed*, CPed*)` (0x661BB0, cdecl)

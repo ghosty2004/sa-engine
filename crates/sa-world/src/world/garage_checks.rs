@@ -9,28 +9,21 @@ use sa_math::vector::CVector;
 
 use super::common::{rd, x};
 
+use crate::bindings::entity_get_col_model as get_col_model;
+use crate::bindings::garage_is_entity_touching_3d as is_entity_touching_3d;
+use crate::bindings::vehicle_can_be_deleted as can_be_deleted;
+use sa_core::bindings::matrix_mul_vec;
+use sa_core::bindings::world_remove;
+use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
+use sa_stream::bindings::simple_transform_update_matrix as update_matrix;
 orig! {
     /// `CWorld::FindObjectsIntersectingCube(const CVector& min, const CVector& max, int16* count,
     /// int16 maxCount, CEntity** out, bool x5)` (0x568DD0)
     fn find_objects_intersecting_cube(mn: GPtr<u8>, mx: GPtr<u8>, count: GPtr<u8>, max: u32, out: GPtr<u8>, b: u32, v: u32, p: u32, o: u32, d: u32) = cdecl 0x568DD0 => unported;
-    /// `CGarage::IsEntityTouching3D(CEntity*)` (0x448EE0)
-    fn is_entity_touching_3d(gr: GPtr<u8>, e: GPtr<u8>) -> u8 = thiscall 0x448EE0 => unported;
-    /// `CEntity::GetColModel()` (0x535300)
-    fn get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => unported;
-    /// `CPlaceable::AllocateMatrix()` (0x54F560)
-    fn allocate_matrix(e: GPtr<u8>) = thiscall 0x54F560 => unported;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*)` (0x54F1B0)
-    fn update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => unported;
-    /// `operator*(const CMatrix&, const CVector&)` (0x59C890)
-    fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
     /// `CGarage::IsPointInsideGarage(CVector, float margin)` (0x4487D0)
     fn is_point_inside(gr: GPtr<u8>, p: CVector, margin: f32) -> u8 = thiscall 0x4487D0 => unported;
     /// `CGarage::IsPointInsideGarage(CVector)` (0x448740)
     fn is_point_inside_no_margin(gr: GPtr<u8>, p: CVector) -> u8 = thiscall 0x448740 => unported;
-    /// `CVehicle::CanBeDeleted()` (0x6D1180)
-    fn can_be_deleted(v: GPtr<u8>) -> u8 = thiscall 0x6D1180 => unported;
-    /// `CWorld::Remove(CEntity*)` (0x563280)
-    fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
     /// the deleting destructor (vtable +0)
     fn v_delete(e: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
 }

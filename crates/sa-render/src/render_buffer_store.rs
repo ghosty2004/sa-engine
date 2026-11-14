@@ -8,11 +8,10 @@ use sa_math::x87::X87;
 
 use crate::common::{g, rd};
 
+use sa_core::bindings::frame_get_ltm;
 orig! {
     /// `RenderBuffer::RenderStuffInBuffer()` (0x707800)
     fn render_stuff_in_buffer() = cdecl 0x707800 => unported;
-    /// `RwFrameGetLTM(frame)` (0x7F0990)
-    fn frame_get_ltm(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0990 => unported;
 }
 
 /// `TempBufferIndicesStored` (0xC4B954), `TempBufferVerticesStored` (0xC4B950), `TempBufferRenderIndexList`

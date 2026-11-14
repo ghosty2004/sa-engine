@@ -32,6 +32,7 @@ const HINT_STRIP: u32 = 0x30502;
 /// The triangle comparator (`qsort` callback).
 const MATERIAL_COMPARE: u32 = 0x759640;
 
+use crate::bindings::crt_qsort;
 orig! {
     /// The generator `(buildMesh, winding, joinParity)` (0x7591D0)
     fn generate_tristrip_call(bm: GPtr<u8>, winding: u32, join_parity: u32) -> GPtr<u8> = cdecl 0x7591D0 => generate_tristrip;
@@ -47,8 +48,6 @@ orig! {
     fn extend_strip_call(s: GPtr<u8>, edge: GPtr<u8>, buckets: GPtr<u8>, tris: GPtr<u8>, pass: u32) -> u32 = cdecl 0x75A370 => extend_strip;
     /// Joins a strip list into one strip `(&list, joinParity)` (0x75A660)
     fn join_strips_call(list: GPtr<u8>, join_parity: u32) -> u32 = cdecl 0x75A660 => join_strips;
-    /// CRT `qsort(base, n, size, cmp)` (0x8247E0)
-    fn crt_qsort(base: GPtr<u8>, n: u32, size: u32, cmp: u32) = cdecl 0x8247E0 => unported;
     /// `_rwFreeListCreate(entrySize, entriesPerBlock, alignment, hint)` (0x801980)
     fn free_list_create(size: u32, per_block: u32, align: u32, hint: u32) -> GPtr<u8> = cdecl 0x801980 => crate::memory::rw_freelist_create;
     /// `RwFreeListDestroy(fl)` (0x801B80)

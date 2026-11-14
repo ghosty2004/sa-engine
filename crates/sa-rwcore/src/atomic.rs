@@ -34,48 +34,34 @@ sa_core::globals! {
     pub static RIGHTS_EXTRA_DATA @ 0xC92480: u32 = 0;
 }
 
+pub use crate::bindings::frame_dirty;
+pub use crate::bindings::object_release_frame;
+pub use crate::bindings::plugin_add as registry_add_plugin;
+pub use crate::bindings::plugin_add_stream as registry_add_plugin_stream;
+pub use crate::bindings::plugin_deinit_object as registry_deinit_object;
+pub use crate::bindings::plugin_init_object as registry_init_object;
+pub use crate::bindings::registry_add_always_cb;
+pub use crate::bindings::registry_copy_object;
+pub use crate::bindings::registry_get_plugin_offset;
+pub use crate::bindings::resources_free_res_entry;
+pub use crate::bindings::rx_pipeline_execute;
+pub use sa_core::bindings::geometry_add_ref;
+pub use sa_core::bindings::rw_v3d_transform_point as v3d_transform_point;
 orig! {
     /// `RwStreamReadInt32(stream, dst, numBytes)` (0x7ED540)
     pub fn stream_read_int32(s: GPtr<u8>, dst: GPtr<u32>, n: u32) -> GPtr<u8> = cdecl 0x7ED540 => unported;
-    /// `RxPipelineExecute(pipeline, data, heapReset)` (0x805710)
-    pub fn rx_pipeline_execute(p: GPtr<u8>, data: GPtr<u8>, reset: i32) -> GPtr<u8> = cdecl 0x805710 => unported;
-    /// `_rpGeometryAddRef(geometry)` (0x74CCB0)
-    pub fn geometry_add_ref(g: GPtr<u8>) -> GPtr<u8> = cdecl 0x74CCB0 => unported;
     /// `RpGeometryDestroy(geometry)` (0x74CCC0)
     pub fn geometry_destroy(g: GPtr<u8>) -> i32 = cdecl 0x74CCC0 => unported;
-    /// `RwResourcesFreeResEntry(entry)` (0x807DE0)
-    pub fn resources_free_res_entry(e: GPtr<u8>) -> i32 = cdecl 0x807DE0 => unported;
-    /// `RwV3dTransformPoint(out, in, matrix)` (0x7EDD60)
-    pub fn v3d_transform_point(out: GPtr<u8>, inp: GPtr<u8>, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EDD60 => unported;
     /// `_rwSqrt(x)` (0x7EDB30; the f32 argument passed as its dword, result in ST0)
     pub fn rw_sqrt(v: u32) -> f64 = cdecl 0x7EDB30 => unported;
-
-    /// `RwFrameDirty` (0x7F0340)
-    pub fn frame_dirty(f: GPtr<u8>) -> u32 = cdecl 0x7F0340 => crate::frame::dirty;
     /// `RwFrameGetLTM` (0x7F0990)
     pub fn frame_get_ltm(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0990 => crate::frame::get_ltm;
     /// `RwFrameUpdateObjects` (0x7F0910)
     pub fn frame_update_objects(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0910 => crate::frame::update_objects;
     /// `_rwObjectHasFrameSetFrame` (0x804EF0)
     pub fn object_set_frame(obj: GPtr<u8>, f: GPtr<u8>) = cdecl 0x804EF0 => crate::frame::object_has_frame_set_frame;
-    /// `_rwObjectHasFrameReleaseFrame` (0x804F40)
-    pub fn object_release_frame(obj: GPtr<u8>) -> GPtr<u8> = cdecl 0x804F40 => crate::frame::object_has_frame_release_frame;
-    /// `_rwPluginRegistryInitObject` (0x8086E0)
-    pub fn registry_init_object(reg: GPtr<u8>, obj: GPtr<u8>) -> GPtr<u8> = cdecl 0x8086E0 => crate::plugin::registry_init_object;
-    /// `_rwPluginRegistryDeInitObject` (0x808740)
-    pub fn registry_deinit_object(reg: GPtr<u8>, obj: GPtr<u8>) -> GPtr<u8> = cdecl 0x808740 => crate::plugin::registry_deinit_object;
-    /// `_rwPluginRegistryCopyObject` (0x808770)
-    pub fn registry_copy_object(reg: GPtr<u8>, dst: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = cdecl 0x808770 => crate::plugin::registry_copy_object;
-    /// `_rwPluginRegistryAddPlugin` (0x8084A0)
-    pub fn registry_add_plugin(reg: GPtr<u8>, size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x8084A0 => crate::plugin::registry_add_plugin;
-    /// `_rwPluginRegistryAddPluginStream` (0x8088E0)
-    pub fn registry_add_plugin_stream(reg: GPtr<u8>, id: u32, read: u32, write: u32, get_size: u32) -> i32 = cdecl 0x8088E0 => crate::plugin::registry_add_plugin_stream;
-    /// `_rwPluginRegistryAddPlgnStrmlwysCB` (0x808920)
-    pub fn registry_add_always_cb(reg: GPtr<u8>, id: u32, cb: u32) -> i32 = cdecl 0x808920 => crate::plugin::registry_add_plugin_stream_always_cb;
     /// `_rwPluginRegistryAddPlgnStrmRightsCB` (0x808950)
     pub fn registry_add_rights_cb(reg: GPtr<u8>, id: u32, cb: u32) -> i32 = cdecl 0x808950 => crate::plugin::registry_add_plugin_stream_rights_cb;
-    /// `_rwPluginRegistryGetPluginOffset` (0x808470)
-    pub fn registry_get_plugin_offset(reg: GPtr<u8>, id: u32) -> i32 = cdecl 0x808470 => crate::plugin::registry_get_plugin_offset;
 
     /// `_rpAtomicResyncInterpolatedSphere` (0x7491F0)
     pub fn resync_interpolated_sphere_call(a: GPtr<u8>) -> GPtr<u8> = cdecl 0x7491F0 => resync_interpolated_sphere;

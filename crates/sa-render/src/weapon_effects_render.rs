@@ -13,27 +13,21 @@ use sa_math::x87::X87;
 
 use crate::common::{g, jne, jp, k, rd, x, xi};
 
+use crate::bindings::calc_screen_coors;
+use crate::bindings::cr_render_one_xlu_sprite_rotate_aspect as rotate_aspect;
+use sa_core::bindings::get_weapon_info;
+use sa_world::bindings::get_weapon_radius_on_screen;
+use sa_world::bindings::is_coop_game_going_on;
+use sa_world::bindings::ped_get_weapon_skill as get_weapon_skill;
 orig! {
     /// `RwRenderStateSet(state, value)` (`RwGlobals` +0x20)
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xc97b24 0x20 => unported;
-    /// `CSprite::CalcScreenCoors(const RwV3d&, RwV3d* out, float* w, float* h, bool, bool)` (0x70ce30)
-    fn calc_screen_coors(inp: GPtr<f32>, out: GPtr<f32>, w: GPtr<f32>, h: GPtr<f32>, a: u8, b: u8) -> u8 = cdecl 0x70ce30 => crate::sprite::calc_screen_coors;
-    /// `CSprite::RenderOneXLUSprite_Rotate_Aspect(x, y, z, w, h, r, g, b, intensity, recipZ, angle, alpha)` (0x70d490)
-    fn rotate_aspect(px: f32, py: f32, pz: f32, w: f32, h: f32, r: u32, gg: u32, b: u32, intensity: u32, recip_z: u32, angle: f32, alpha: u32) = cdecl 0x70d490 => crate::mvpd_r5::render_one_xlu_sprite_rotate_aspect;
     /// `CSprite::RenderOneXLUSprite_Triangle(x1, y1, x2, y2, x3, y3, z, r, g, b, intensity, recipZ, alpha)` (0x70d320)
     fn sprite_triangle(x1: u32, y1: u32, x2: u32, y2: u32, x3: u32, y3: u32, pz: f32, r: u8, gg: u8, b: u8, intensity: u32, recip_z: u32, alpha: u8) = cdecl 0x70d320 => crate::sprite_render::render_one_xlu_sprite_triangle;
     /// `std::min<float>` (0x404330, ST0)
     fn min_f(a: f32, b: f32) -> f64 = cdecl 0x404330 => self::min_f_port;
     /// `std::max<float>` (0x420800, ST0)
     fn max_f(a: f32, b: f32) -> f64 = cdecl 0x420800 => self::max_f_port;
-    /// `CPlayerPed::GetWeaponRadiusOnScreen()` (0x609cd0, ST0)
-    fn get_weapon_radius_on_screen(ped: GPtr<u8>) -> f64 = thiscall 0x609cd0 => unported;
-    /// `CGameLogic::IsCoopGameGoingOn()` (0x441390)
-    fn is_coop_game_going_on() -> u8 = cdecl 0x441390 => unported;
-    /// `CPed::GetWeaponSkill()` (0x5e6580)
-    fn get_weapon_skill(ped: GPtr<u8>) -> u32 = thiscall 0x5e6580 => unported;
-    /// `CWeaponInfo::GetWeaponInfo(eWeaponType, eWeaponSkill)` (0x743c60)
-    fn get_weapon_info(ty: u32, skill: u32) -> GPtr<u8> = cdecl 0x743c60 => unported;
     /// `CWeapon::FindNearestTargetEntityWithScreenCoors(float x, float y, float range, CVector pos,
     /// float*, float*)` (0x73e240; dwords as pushed)
     fn find_nearest_target(sx: u32, sy: u32, range: u32, px: u32, py: u32, pz: u32, a: u32, b: u32) -> GPtr<u8> = cdecl 0x73e240 => unported;

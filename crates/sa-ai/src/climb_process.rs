@@ -13,6 +13,26 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::pad_jump_just_down;
+use sa_core::bindings::matrix_mul_vec;
+use sa_core::bindings::vector_magnitude;
+use sa_stream::bindings::ped_is_player;
+use sa_stream::bindings::placeable_allocate_matrix;
+use sa_stream::bindings::simple_transform_update_matrix;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::event_sound_quiet_ctor;
+use sa_world::bindings::event_sound_quiet_dtor;
+use sa_world::bindings::get_event_global_group;
+use sa_world::bindings::get_pad_from_player as player_get_pad;
+use sa_world::bindings::pad_get_exit_vehicle;
+use sa_world::bindings::physical_apply_move_force_5429f0 as physical_apply_move_force;
+use sa_world::bindings::physical_get_speed;
+use sa_world::bindings::placeable_set_posn;
+use sa_world::bindings::vec_mul_assign as vector_scale_assign;
+use sa_world::bindings::vector_add_assign;
+use sa_world::bindings::vector_div as vector_div_scalar;
+use sa_world::bindings::vector_scale as scalar_mul_vector;
+use sa_world::bindings::vector_sub;
 orig! {
     /// `CTask::MakeAbortable(CPed*, eAbortPriority, const CEvent*)` (vtable slot 0x18)
     fn task_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, prio: u32, ev: u32) -> u8 = thiscall vslot 0x18 => unported;
@@ -24,48 +44,10 @@ orig! {
     fn climb_test_for_vault_c(t: GPtr<u8>, ped: GPtr<u8>, p: GPtr<u8>, a: f32) -> u8 = thiscall 0x6804D0 => crate::climb_scan::climb_test_for_vault;
     /// `CTaskSimpleClimb::TestForStandUp(CPed*, const CVector&, float)` (0x680570)
     fn climb_test_for_stand_up_c(t: GPtr<u8>, ped: GPtr<u8>, p: GPtr<u8>, a: f32) -> u8 = thiscall 0x680570 => crate::climb_scan::climb_test_for_stand_up;
-    /// `CMatrix * CVector` (0x59C890, `(CVector* out, const CMatrix*, const CVector*)`)
-    fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
-    /// `CPlaceable::AllocateMatrix()` (0x54F560)
-    fn placeable_allocate_matrix(e: GPtr<u8>) = thiscall 0x54F560 => unported;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*)` (0x54F1B0)
-    fn simple_transform_update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => unported;
-    /// `operator-(const CVector&, const CVector&)` (0x40FE60, hidden result first)
-    fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => unported;
-    /// `CPhysical::GetSpeed(CVector point)` (0x542CE0, hidden result first, `ret 0x10`)
-    fn physical_get_speed(p: GPtr<u8>, out: GPtr<u8>, x: u32, y: u32, z: u32) -> GPtr<u8> = thiscall 0x542CE0 => unported;
-    /// `CPlaceable::SetPosn(const CVector&)` (0x4241C0)
-    fn placeable_set_posn(p: GPtr<u8>, v: GPtr<u8>) = thiscall 0x4241C0 => unported;
-    /// `operator/(const CVector&, float)` (0x4119D0, hidden result first)
-    fn vector_div_scalar(out: GPtr<u8>, v: GPtr<u8>, s: f32) -> GPtr<u8> = cdecl 0x4119D0 => unported;
-    /// `CVector::operator+=(const CVector&)` (0x411A00)
-    fn vector_add_assign(v: GPtr<u8>, o: GPtr<u8>) = thiscall 0x411A00 => unported;
-    /// `CVector::Magnitude()` (0x4082C0, ST0)
-    fn vector_magnitude(v: GPtr<u8>) -> f64 = thiscall 0x4082C0 => unported;
-    /// `CVector::operator*=(float)` (0x40FEF0)
-    fn vector_scale_assign(v: GPtr<u8>, s: f32) = thiscall 0x40FEF0 => unported;
-    /// `operator*(float, const CVector&)` (0x40FE90, hidden result first)
-    fn scalar_mul_vector(out: GPtr<u8>, s: f32, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE90 => unported;
-    /// `CPhysical::ApplyMoveForce(CVector)` (0x5429F0)
-    fn physical_apply_move_force(p: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x5429F0 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CPlayerPed::GetPadFromPlayer()` (0x609560)
-    fn player_get_pad(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x609560 => unported;
     /// `CPad::GetJump()` (0x540750), `JumpJustDown()` (0x540770), `GetExitVehicle()` (0x5400D0)
     fn pad_get_jump(pad: GPtr<u8>) -> u8 = thiscall 0x540750 => unported;
-    fn pad_jump_just_down(pad: GPtr<u8>) -> u8 = thiscall 0x540770 => unported;
-    fn pad_get_exit_vehicle(pad: GPtr<u8>) -> u8 = thiscall 0x5400D0 => unported;
     /// `CPlaceable::SetOrientation(float, float, float)` (0x439A80)
     fn placeable_set_orientation(e: GPtr<u8>, x: f32, y: f32, z: f32) = thiscall 0x439A80 => unported;
-    /// `CEventSoundQuiet(CEntity*, float, uint32, CVector)` (0x5E05B0)
-    fn event_sound_quiet_ctor(e: GPtr<u8>, ent: GPtr<u8>, volume: f32, time: u32, pos: GPtr<u8>) -> GPtr<u8> = thiscall 0x5E05B0 => unported;
-    /// `GetEventGlobalGroup()` (0x4ABA50)
-    fn get_event_global_group() -> GPtr<u8> = cdecl 0x4ABA50 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420)
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
-    /// `CEventSoundQuiet::~CEventSoundQuiet()` body (0x5DEA00)
-    fn event_sound_quiet_dtor(e: GPtr<u8>) = thiscall 0x5DEA00 => unported;
 }
 
 /// `CTimer::ms_fTimeStep` (0xB7CB5C)

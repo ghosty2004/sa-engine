@@ -10,32 +10,25 @@ use sa_core::{hook, orig};
 
 use crate::common::{GPtr, X87, ae_resolve_probability, f32_of, g, rd, wr, x, xi};
 
+use crate::bindings::sound_stop_and_forget;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::vector_magnitude;
+use sa_core::bindings::vector_normalise;
+use sa_world::bindings::entity_get_is_type_physical as entity_is_physical;
+use sa_world::bindings::process_line_of_sight as world_process_line_of_sight;
 orig! {
     /// `operator==(const CVector&, const CVector&)` (0x4DC670, AL)
     fn vector_equal(a: GPtr<u8>, b: GPtr<u8>) -> u8 = cdecl 0x4DC670 => unported;
-    /// `FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
     /// `CPlaceable::GetRightDirection(CVector* out)` (0x41CC70, returns `out`)
     fn placeable_get_right(this: GPtr<u8>, out: GPtr<u8>) -> u32 = thiscall 0x41CC70 => unported;
     /// `CPlaceable::GetTopDirection(CVector* out)` (0x41CCB0, returns `out`)
     fn placeable_get_top(this: GPtr<u8>, out: GPtr<u8>) -> u32 = thiscall 0x41CCB0 => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    fn vector_normalise(this: GPtr<u8>) = thiscall 0x59C910 => unported;
-    /// `CWorld::ProcessLineOfSight(start, end, CColPoint&, CEntity*&, buildings, vehicles, peds, objects, dummies,
-    /// seeThrough, camera, shootThrough)` (0x56BA00, AL)
-    fn world_process_line_of_sight(s: GPtr<u8>, e: GPtr<u8>, cp: GPtr<u8>, ent: GPtr<u8>, b: u32, v: u32, p: u32, o: u32, d: u32, st: u32, c: u32, sh: u32) -> u8 = cdecl 0x56BA00 => unported;
-    /// `CEntity::GetIsTypePhysical()` (0x4DA030, AL)
-    fn entity_is_physical(this: GPtr<u8>) -> u8 = thiscall 0x4DA030 => unported;
     /// `operator*(float, const CVector&)` (0x40FE90, returns the hidden `out`)
     fn scalar_mul_vector(out: GPtr<u8>, s: u32, v: GPtr<u8>) -> u32 = cdecl 0x40FE90 => unported;
     /// `operator-(const CVector&, const CVector&)` (0x40FE60, returns the hidden `out`)
     fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> u32 = cdecl 0x40FE60 => unported;
-    /// `CVector::Magnitude()` (0x4082C0, ST0)
-    fn vector_magnitude(this: GPtr<u8>) -> f64 = thiscall 0x4082C0 => unported;
     /// `CAEAudioUtility::GetPiecewiseLinear(float, int16, const float (*)[2])` (0x4D9D90, ST0)
     fn get_piecewise_linear(v: u32, n: u32, table: u32) -> f64 = cdecl 0x4D9D90 => unported;
-    /// `CAESound::StopSoundAndForget()` (0x4EF850)
-    fn sound_stop_and_forget(this: GPtr<u8>) = thiscall 0x4EF850 => unported;
 }
 
 /// `CWeather::LightningDuration` (uint32), `CWeather::WindClipped`, `CGame::currArea`

@@ -119,6 +119,61 @@ use crate::field::gu as at;
 /// Typed calls the ports make (all into other subsystems or not yet ported).
 pub mod call {
     use super::*;
+    pub use crate::bindings::audio_engine_service;
+    pub use crate::bindings::camera_fade;
+    pub use crate::bindings::camera_process_fade;
+    pub use crate::bindings::camera_process_music_fade;
+    pub use crate::bindings::camera_set_fade_colour;
+    pub use crate::bindings::camera_size;
+    pub use crate::bindings::credits_render_credits;
+    pub use crate::bindings::crt_strncpy as strncpy;
+    pub use crate::bindings::d3d9_device_get_restore_callback as rw_d3d9_device_get_restore_callback;
+    pub use crate::bindings::d3d9_device_set_restore_callback as rw_d3d9_device_set_restore_callback;
+    pub use crate::bindings::debug_display_text_buffer;
+    pub use crate::bindings::defined_state;
+    pub use crate::bindings::do_fade;
+    pub use crate::bindings::draw_calculate_aspect_ratio;
+    pub use crate::bindings::file_mgr_seek;
+    pub use crate::bindings::find_player_ped;
+    pub use crate::bindings::flush_obrs_printfs;
+    pub use crate::bindings::font_draw_fonts;
+    pub use crate::bindings::font_init_per_frame;
+    pub use crate::bindings::get_pad as pad_get_pad;
+    pub use crate::bindings::handling_load_handling_data;
+    pub use crate::bindings::hud_draw_after_fade;
+    pub use crate::bindings::loading_screen_new_chunk_loaded;
+    pub use crate::bindings::menu_draw_front_end;
+    pub use crate::bindings::menu_process;
+    pub use crate::bindings::message_loop;
+    pub use crate::bindings::messages_display;
+    pub use crate::bindings::object_has_frame_set_frame as rw_object_has_frame_set_frame;
+    pub use crate::bindings::pad_update_pads;
+    pub use crate::bindings::ped_stats_initialise;
+    pub use crate::bindings::pop_cycle_initialise;
+    pub use crate::bindings::rs_camera_begin_update;
+    pub use crate::bindings::rs_camera_show_raster;
+    pub use crate::bindings::rs_event_handler;
+    pub use crate::bindings::rs_timer;
+    pub use crate::bindings::rw_camera_clear;
+    pub use crate::bindings::rw_camera_create;
+    pub use crate::bindings::rw_camera_destroy;
+    pub use crate::bindings::rw_camera_end_update;
+    pub use crate::bindings::rw_frame_create;
+    pub use crate::bindings::rw_frame_destroy;
+    pub use crate::bindings::rw_matrix_create;
+    pub use crate::bindings::rw_raster_create;
+    pub use crate::bindings::rw_raster_destroy;
+    pub use crate::bindings::securom_state_display;
+    pub use crate::bindings::sprite2d_init_per_frame;
+    pub use crate::bindings::sprite2d_set_recip_near_clip;
+    pub use crate::bindings::strncmp;
+    pub use crate::bindings::temp_col_models_initialise;
+    pub use crate::bindings::text_load;
+    pub use crate::bindings::text_unload;
+    pub use crate::bindings::time_cycle_initialise;
+    pub use crate::bindings::timer_update;
+    pub use crate::bindings::vehicle_recording_init_at_start_of_game;
+    pub use crate::bindings::visibility_plugins_set_render_ware_camera;
     orig! {
         pub fn memory_mgr_init() = cdecl 0x72F3B0 => unported;
         pub fn localisation_initialise() = cdecl 0x56D180 => unported;
@@ -129,9 +184,7 @@ pub mod call {
         pub fn temp_col_models_shutdown() = cdecl 0x41B360 => unported;
         pub fn txd_store_shutdown() = cdecl 0x732000 => unported;
         pub fn ped_stats_shutdown() = cdecl 0x608850 => unported;
-        pub fn text_unload(this: GPtr<u8>, unload_mission: u32) = thiscall 0x69FF20 => unported;
         pub fn cd_stream_shutdown() = cdecl 0x406370 => unported;
-        pub fn find_player_ped(player: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
         pub fn tidy_up_d3d_textures(n: u32) = cdecl 0x7305E0 => super::tidy_up_d3d_textures;
         pub fn tidy_up_d3d_index_buffers(n: u32) = cdecl 0x730740 => super::tidy_up_d3d_index_buffers;
         /// `IUnknown::Release()` (COM slot 8)
@@ -146,40 +199,20 @@ pub mod call {
         pub fn timer_initialise() = cdecl 0x5617E0 => crate::timer::initialise;
         pub fn game_initialise(dat_file: GPtr<u8>) -> u8 = cdecl 0x53BC80 => unported;
         pub fn loading_screen_set_loading_bar_msg(msg: GPtr<u8>, msg2: GPtr<u8>) = cdecl 0x590240 => unported;
-        pub fn loading_screen_new_chunk_loaded() = cdecl 0x590D00 => unported;
-        pub fn menu_draw_front_end(this: GPtr<u8>) = thiscall 0x57C290 => unported;
         pub fn audio_engine_restart(this: GPtr<u8>) = thiscall 0x506DB0 => unported;
-        /// `CCamera::Fade(float time, short direction)` (direction pushed as a dword)
-        pub fn camera_fade(this: GPtr<u8>, time: f32, direction: u32) = thiscall 0x50AC20 => unported;
-        pub fn camera_process_fade(this: GPtr<u8>) = thiscall 0x50B5D0 => unported;
-        pub fn camera_process_music_fade(this: GPtr<u8>) = thiscall 0x50B6D0 => unported;
-        /// `CCamera::SetFadeColour(r, g, b)` (bytes pushed as dwords)
-        pub fn camera_set_fade_colour(this: GPtr<u8>, r: u32, g: u32, b: u32) = thiscall 0x50BF00 => unported;
         /// `CSprite2d::DrawRect(const CRect&, const CRGBA&)`
         pub fn sprite2d_draw_rect(rect: GPtr<[f32; 4]>, colour: GPtr<[u8; 4]>) = cdecl 0x727B60 => unported;
         pub fn file_mgr_open_file(path: GPtr<u8>, mode: GPtr<u8>) -> u32 = cdecl 0x538900 => unported;
-        pub fn file_mgr_seek(file: u32, offset: i32, origin: i32) -> i32 = cdecl 0x538990 => unported;
         pub fn file_mgr_read(file: u32, buf: GPtr<u8>, size: i32) -> i32 = cdecl 0x538950 => unported;
         pub fn file_mgr_close_file(file: u32) -> i32 = cdecl 0x5389D0 => unported;
-        /// CRT `strncmp`
-        pub fn strncmp(a: GPtr<u8>, b: GPtr<u8>, n: u32) -> i32 = cdecl 0x8214D0 => unported;
-        /// CRT `strncpy`
-        pub fn strncpy(dst: GPtr<u8>, src: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x821F40 => unported;
         /// `CLoadingScreen::LoadingScreen(msg1, msg2, splash)` (address 0x53DED0)
         pub fn loading_screen(msg1: GPtr<u8>, msg2: GPtr<u8>, splash: GPtr<u8>) = cdecl 0x53DED0 => unported;
         /// `DoRWStuffStartOfFrame(int16 TopRed, TopGreen, TopBlue, BottomRed, BottomGreen, BottomBlue, int16 Alpha)`
         /// (seven dword pushes)
         pub fn do_rw_stuff_start_of_frame(a: u32, b: u32, c: u32, d: u32, e: u32, f: u32, g: u32) -> bool = cdecl 0x53D690 => crate::platform::do_rw_stuff_start_of_frame;
-        pub fn message_loop() = cdecl 0x746870 => unported;
-        pub fn pad_update_pads() = cdecl 0x541DD0 => unported;
         /// `CMenuManager::MessageScreen(const char* key, bool blackBg, bool cameraUpdateStarted)`
         pub fn menu_message_screen(this: GPtr<u8>, key: GPtr<u8>, black_bg: u32, camera_update_started: u32) = thiscall 0x579330 => unported;
-        pub fn font_draw_fonts() = cdecl 0x71A210 => unported;
         pub fn do_rw_stuff_end_of_frame() = cdecl 0x53D840 => unported;
-        pub fn pad_get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-        pub fn rs_event_handler(event: i32, param: GPtr<u8>) -> i32 = cdecl 0x619B60 => unported;
-        /// `CText::Load(bool keepMissionPack)`
-        pub fn text_load(this: GPtr<u8>, keep_mission_pack: u32) = thiscall 0x6A01A0 => unported;
         pub fn car_fx_renderer_initialise() -> i32 = cdecl 0x5D5AC0 => unported;
         pub fn grass_renderer_initialise() -> u8 = cdecl 0x5DD6B0 => unported;
         pub fn custom_building_renderer_initialise() -> i32 = cdecl 0x5D7EC0 => unported;
@@ -188,15 +221,10 @@ pub mod call {
         pub fn d3d_resource_system_init() = cdecl 0x730830 => super::d3d_resource_system_init;
         pub fn txd_store_initialise() = cdecl 0x731F20 => unported;
         pub fn visibility_plugins_initialise() = cdecl 0x733A20 => unported;
-        pub fn rw_camera_create() -> GPtr<u8> = cdecl 0x7EE4F0 => unported;
-        pub fn rw_frame_create() -> GPtr<u8> = cdecl 0x7F0410 => unported;
-        /// `RwRasterCreate(width, height, depth, flags)`
-        pub fn rw_raster_create(w: i32, h: i32, depth: i32, flags: i32) -> GPtr<u8> = cdecl 0x7FB230 => unported;
         pub fn camera_init(this: GPtr<u8>) = thiscall 0x5BC520 => unported;
         pub fn camera_set_rw_camera(this: GPtr<u8>, cam: GPtr<u8>) = thiscall 0x50C100 => unported;
         pub fn rw_camera_set_far_clip_plane(cam: GPtr<u8>, v: f32) -> GPtr<u8> = cdecl 0x7EE2A0 => unported;
         pub fn rw_camera_set_near_clip_plane(cam: GPtr<u8>, v: f32) -> GPtr<u8> = cdecl 0x7EE1D0 => unported;
-        pub fn camera_size(camera: GPtr<u8>, rect: GPtr<u8>, view_window: f32, aspect: f32) = cdecl 0x72FC70 => crate::camerasize::camera_size;
         pub fn rp_world_create(bbox: GPtr<u8>) -> GPtr<u8> = cdecl 0x74F760 => unported;
         pub fn rp_world_add_camera(world: GPtr<u8>, cam: GPtr<u8>) -> GPtr<u8> = cdecl 0x750F20 => unported;
         pub fn lights_create(world: GPtr<u8>) -> GPtr<u8> = cdecl 0x5BA520 => unported;
@@ -205,50 +233,15 @@ pub mod call {
         pub fn hud_initialise() = cdecl 0x5BA850 => unported;
         pub fn player_skin_initialise() = cdecl 0x6FF8A0 => unported;
         pub fn post_effects_initialise() = cdecl 0x704630 => unported;
-        pub fn rw_matrix_create() -> GPtr<u8> = cdecl 0x7F2A50 => unported;
-        pub fn rw_d3d9_device_get_restore_callback() -> u32 = cdecl 0x7FAE30 => unported;
-        pub fn rw_d3d9_device_set_restore_callback(cb: u32) = cdecl 0x7FAE20 => unported;
         /// `operator new` (0x82119A)
         pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
-        pub fn rs_timer() -> u32 = cdecl 0x619410 => unported;
-        pub fn rw_object_has_frame_set_frame(object: GPtr<u8>, frame: GPtr<u8>) -> GPtr<u8> = cdecl 0x804EF0 => unported;
-        pub fn rw_frame_destroy(frame: GPtr<u8>) -> i32 = cdecl 0x7F05A0 => unported;
-        pub fn rw_raster_destroy(raster: GPtr<u8>) -> i32 = cdecl 0x7FB020 => unported;
-        pub fn rw_camera_destroy(camera: GPtr<u8>) -> i32 = cdecl 0x7EE4B0 => unported;
         /// the chained restore callback stored at 0xBD0114
         pub fn prev_d3d_restore_callback() = cdecl cell 0xBD0114 => unported;
-        pub fn temp_col_models_initialise() = cdecl 0x5BA8C0 => unported;
-        pub fn handling_load_handling_data(this: GPtr<u8>) = thiscall 0x5BD830 => unported;
         pub fn surface_infos_init(this: GPtr<u8>) = thiscall 0x55F420 => unported;
-        pub fn ped_stats_initialise() = cdecl 0x5BF9D0 => unported;
-        pub fn time_cycle_initialise(is_second: u32) = cdecl 0x5BBAC0 => unported;
-        pub fn pop_cycle_initialise() = cdecl 0x5BC090 => unported;
-        pub fn vehicle_recording_init_at_start_of_game() = cdecl 0x45A1B0 => unported;
         pub fn audio_engine_initialise(this: GPtr<u8>) -> u8 = thiscall 0x5B9C60 => unported;
         pub fn break_manager_init(this: GPtr<u8>) -> u8 = thiscall 0x59E650 => unported;
         pub fn bone_node_manager_init(this: GPtr<u8>) -> u8 = thiscall 0x6173F0 => unported;
         pub fn ik_chain_manager_init(this: GPtr<u8>) -> u8 = thiscall 0x6180A0 => unported;
-        /// `CDraw::CalculateAspectRatio()` (result in ST0)
-        pub fn draw_calculate_aspect_ratio() -> f64 = cdecl 0x6FF420 => unported;
-        pub fn timer_update() = cdecl 0x561B10 => unported;
-        pub fn sprite2d_set_recip_near_clip() = cdecl 0x727260 => unported;
-        pub fn sprite2d_init_per_frame() = cdecl 0x727350 => unported;
-        pub fn font_init_per_frame() = cdecl 0x719800 => unported;
-        pub fn menu_process(this: GPtr<u8>) = thiscall 0x57B440 => unported;
-        pub fn audio_engine_service(this: GPtr<u8>) = thiscall 0x507750 => unported;
-        pub fn visibility_plugins_set_render_ware_camera(camera: GPtr<u8>) = cdecl 0x7328C0 => unported;
-        pub fn rw_camera_clear(camera: GPtr<u8>, colour: GPtr<u8>, mode: i32) -> GPtr<u8> = cdecl 0x7EE340 => unported;
-        pub fn rs_camera_begin_update(camera: GPtr<u8>) -> i32 = cdecl 0x619450 => unported;
-        pub fn defined_state() = cdecl 0x734650 => unported;
-        pub fn securom_state_display() = cdecl 0x744AE0 => unported;
-        pub fn do_fade() = cdecl 0x53E600 => unported;
-        pub fn hud_draw_after_fade() = cdecl 0x58D490 => unported;
-        pub fn messages_display(flag: u32) = cdecl 0x69EFC0 => unported;
-        pub fn credits_render_credits() = cdecl 0x5A87F0 => unported;
-        pub fn debug_display_text_buffer() = cdecl 0x532260 => unported;
-        pub fn flush_obrs_printfs() = cdecl 0x734640 => unported;
-        pub fn rw_camera_end_update(camera: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EE180 => unported;
-        pub fn rs_camera_show_raster(camera: GPtr<u8>) -> GPtr<u8> = cdecl 0x619440 => unported;
     }
 }
 
@@ -871,7 +864,6 @@ pub fn d3d_resource_create_texture(w: u32, h: u32, levels: u32, format: u32, out
     let dev = GPtr::<u8>::from_addr(GPtr::<u32>::from_addr(0xC97C28).read() as usize);
     d3dres::dev_create_texture(dev, w, h, levels, 0, format, 1, out, 0)
 }
-
 
 mod d3dres2 {
     use crate::mem::GPtr;

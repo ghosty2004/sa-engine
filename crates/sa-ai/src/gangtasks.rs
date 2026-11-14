@@ -31,6 +31,41 @@ fn rand_scaled(site: u32, k_addr: usize) -> i32 {
     ftol32(xi(r).fmul_m(c(0x858B14)).fmul_m(c(k_addr)))
 }
 
+use crate::bindings::be_in_couple_abort_arm_ik;
+use crate::bindings::do_gang_abuse_speech_orig;
+use crate::bindings::ik_abort_look_at;
+use crate::bindings::membership_count_members;
+use crate::bindings::partner_ctor_orig;
+use crate::bindings::ped_is_playing_hand_signal;
+use crate::bindings::ped_stop_playing_hand_signal;
+use crate::bindings::play_hand_signal_anim_ctor_61b2b0 as play_hand_signal_anim_ctor;
+use crate::bindings::seek_entity_xy_offset_ctor;
+use crate::bindings::should_load_gang_anims;
+use crate::bindings::wander_gang_ctor;
+use sa_core::bindings::entity_register_reference;
+use sa_core::bindings::find_player_ped as world_find_player_ped;
+use sa_core::bindings::general_get_radian_angle_between_points as general_radian_angle_between_points;
+use sa_core::bindings::general_limit_radian_angle;
+use sa_core::bindings::general_random_int_in_range;
+use sa_core::bindings::streaming_request_model;
+use sa_core::bindings::tm_get_task_secondary;
+use sa_core::bindings::tm_set_task_secondary;
+use sa_core::bindings::vector_from_multiply3x3 as vector_from_multiply_3x3;
+use sa_stream::bindings::anim_add_block_ref;
+use sa_stream::bindings::anim_remove_block_ref;
+use sa_stream::bindings::ped_is_player;
+use sa_stream::bindings::streaming_is_very_busy;
+use sa_world::bindings::ik_is_looking;
+use sa_world::bindings::ik_look_at;
+use sa_world::bindings::membership_get_member;
+use sa_world::bindings::ped_drop_held_entity;
+use sa_world::bindings::ped_say;
+use sa_world::bindings::simple_car_drive_ctor;
+use sa_world::bindings::task_complex_ctor;
+use sa_world::bindings::task_simple_ctor;
+use sa_world::bindings::task_walk_alongside_ctor as walk_alongside_ped_ctor;
+use sa_world::bindings::tm_find_active_task_by_type;
+use sa_world::bindings::turn_to_face_entity_ctor;
 orig! {
     // ---- virtual slots ----
     /// `CTask::GetTaskType` (vtable +0x10)
@@ -41,101 +76,23 @@ orig! {
     fn v_create_next_sub_task(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x20 => unported;
     /// `CTaskComplexPartner::StreamRequiredAnims()` (vtable +0x2C)
     fn v_partner_stream_required_anims(t: GPtr<u8>) = thiscall vslot 0x2C => unported;
-
-    // ---- this module's own functions (called through the original address) ----
-    /// `CTaskComplexGangLeader::ShouldLoadGangAnims()` (0x65E7F0, static)
-    fn should_load_gang_anims() -> u8 = cdecl 0x65E7F0 => unported;
-    /// `CTaskComplexGangLeader::DoGangAbuseSpeech(CPed*, CPed*)` (0x65E860, cdecl)
-    fn do_gang_abuse_speech_orig(talker: GPtr<u8>, target: GPtr<u8>) = cdecl 0x65E860 => unported;
-    /// `CTaskComplexPartner::Constructor` (0x681E70, `ret 0x24`)
-    fn partner_ctor_orig(t: GPtr<u8>, name: GPtr<u8>, partner: GPtr<u8>, lead: u32, dist: u32, face: u32, upd: u32, vx: u32, vy: u32, vz: u32) -> GPtr<u8> = thiscall 0x681E70 => unported;
-
-    // ---- task bases and constructors ----
-    /// `CTaskSimple::CTaskSimple` (0x61A390)
-    fn task_simple_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A390 => unported;
-    /// `CTaskComplex::CTaskComplex` (0x61A3B0)
-    fn task_complex_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A3B0 => unported;
     /// `CTaskComplexSeekEntityStandard::Constructor(CEntity*, int32, int32, float, float, float, bool, bool)`
     /// (0x46AC10, `ret 0x20`)
     fn seek_entity_standard_ctor(t: GPtr<u8>, e: GPtr<u8>, a: i32, b: i32, r: u32, d1: u32, d2: u32, c1: u32, c2: u32) -> GPtr<u8> = thiscall 0x46AC10 => unported;
-    /// `CTaskComplexTurnToFaceEntityOrCoord::Constructor(CEntity*, float, float)` (0x66B890, `ret 0xC`)
-    fn turn_to_face_entity_ctor(t: GPtr<u8>, e: GPtr<u8>, a: u32, b: u32) -> GPtr<u8> = thiscall 0x66B890 => unported;
     /// `CTaskSimpleStandStill::Constructor(int32 time, bool, bool, float)` (0x62F310, `ret 0x10`)
     fn stand_still_ctor(t: GPtr<u8>, time: i32, a: u32, b: u32, f: u32) -> GPtr<u8> = thiscall 0x62F310 => unported;
     /// `CTaskSimpleRunAnim::Constructor(AssocGroupId, AnimationId, float, bool)` (0x61A8B0, `ret 0x10`)
     fn run_anim_ctor(t: GPtr<u8>, group: u32, anim: i32, delta: u32, b: u32) -> GPtr<u8> = thiscall 0x61A8B0 => unported;
     /// `CTaskComplexWanderStandard` constructor `(int32 moveState, uint8 dir, bool)` (0x48E4F0, `ret 0xC`)
     fn wander_standard_ctor(t: GPtr<u8>, ms: i32, dir: i32, b: u32) -> GPtr<u8> = thiscall 0x48E4F0 => unported;
-    /// `CTaskSimpleCarDrive::Constructor(CVehicle*, CTaskUtilityLineUpPedWithCar*, bool)` (0x63C340, `ret 0xC`)
-    fn simple_car_drive_ctor(t: GPtr<u8>, v: GPtr<u8>, a: u32, b: u32) -> GPtr<u8> = thiscall 0x63C340 => unported;
     /// `CTaskComplexLeaveCar` constructor `(CVehicle*, int32, int32, bool, bool)` (0x63B8C0, `ret 0x14`)
     fn leave_car_ctor(t: GPtr<u8>, v: GPtr<u8>, a: i32, b: i32, c: u32, d: u32) -> GPtr<u8> = thiscall 0x63B8C0 => unported;
-    /// `CTaskComplexSeekEntity<CEntitySeekPosCalculatorXYOffset>::Constructor(CEntity*, int32, int32, float, float,
-    /// float, bool, bool)` (0x661DC0, `ret 0x20`)
-    fn seek_entity_xy_offset_ctor(t: GPtr<u8>, e: GPtr<u8>, a: i32, b: i32, r: u32, d1: u32, d2: u32, c1: u32, c2: u32) -> GPtr<u8> = thiscall 0x661DC0 => unported;
     /// `CTaskComplexKillPedOnFoot::Constructor(CPed*, int32, uint32, uint32, int32, bool)` (0x620E30, `ret 0x18`)
     fn kill_ped_on_foot_ctor(t: GPtr<u8>, p: GPtr<u8>, a: i32, b: u32, c: u32, d: i32, e: u32) -> GPtr<u8> = thiscall 0x620E30 => unported;
-    /// `CTaskComplexPlayHandSignalAnim::Constructor(AnimationId, float)` (0x61B2B0, `ret 8`)
-    fn play_hand_signal_anim_ctor(t: GPtr<u8>, anim: i32, delta: u32) -> GPtr<u8> = thiscall 0x61B2B0 => unported;
-    /// `CTaskComplexWanderGang` constructor `(int32 moveState, uint8 dir, int32 time, bool, float)` (0x66F5C0, `ret 0x14`)
-    fn wander_gang_ctor(t: GPtr<u8>, ms: i32, dir: i32, time: i32, b: u32, f: u32) -> GPtr<u8> = thiscall 0x66F5C0 => unported;
-    /// `CTaskComplexWalkAlongsidePed::Constructor(CPed*, float)` (0x683240, `ret 8`)
-    fn walk_alongside_ped_ctor(t: GPtr<u8>, p: GPtr<u8>, f: u32) -> GPtr<u8> = thiscall 0x683240 => unported;
-
-    // ---- other catalogued functions ----
-    /// `CGeneral::GetRandomNumberInRange(int32, int32)` (0x407180)
-    fn general_random_int_in_range(min: i32, max: i32) -> i32 = cdecl 0x407180 => unported;
     /// `FUN_0065e710(CPed*)` (0x65E710, cdecl; a gang ambient anim id)
     fn gang_anim_65e710(ped: GPtr<u8>) -> i32 = cdecl 0x65E710 => unported;
-    /// `CPedGroupMembership::CountMembers()` (0x5F6A50)
-    fn membership_count_members(m: GPtr<u8>) -> i32 = thiscall 0x5F6A50 => unported;
-    /// `CPedGroupMembership::GetMember(int32)` (0x5F69B0, `ret 4`)
-    fn membership_get_member(m: GPtr<u8>, i: i32) -> GPtr<u8> = thiscall 0x5F69B0 => unported;
-    /// `CStreaming::IsVeryBusy()` (0x4076A0)
-    fn streaming_is_very_busy() -> u8 = cdecl 0x4076A0 => unported;
-    /// `CPed::Say(uint16, uint32, float, uint8, uint8, uint8)` (0x5EFFE0, `ret 0x18`)
-    fn ped_say(p: GPtr<u8>, id: u32, delay: u32, prob: u32, a: u32, b: u32, c: u32) -> u32 = thiscall 0x5EFFE0 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CPed::StopPlayingHandSignal()` (0x5E0480)
-    fn ped_stop_playing_hand_signal(p: GPtr<u8>) = thiscall 0x5E0480 => unported;
-    /// `CPed::DropEntityThatThisPedIsHolding(bool)` (0x5E0360, `ret 4`)
-    fn ped_drop_held_entity(p: GPtr<u8>, b: u32) = thiscall 0x5E0360 => unported;
-    /// `IKChainManager_c::LookAt(name, CPed*, CEntity*, int32 time, int32 bone, RwV3d*, bool, float, int32, int32, bool)`
-    /// (0x618970, `ret 0x2C`)
-    fn ik_look_at(m: GPtr<u8>, name: u32, ped: GPtr<u8>, target: GPtr<u8>, time: i32, bone: i32, pos: u32, b: u32, speed: u32, blend: i32, prio: i32, b2: u32) = thiscall 0x618970 => unported;
-    /// `IKChainManager_c::IsLooking(CPed*)` (0x6181A0, `ret 4`)
-    fn ik_is_looking(m: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x6181A0 => unported;
-    /// `IKChainManager_c::AbortLookAt(CPed*, int32 blendOutTime)` (0x618280, `ret 8`)
-    fn ik_abort_look_at(m: GPtr<u8>, ped: GPtr<u8>, t: i32) = thiscall 0x618280 => unported;
-    /// `CTaskManager::GetTaskSecondary(int32)` (0x681810, `ret 4`)
-    fn tm_get_task_secondary(tm: GPtr<u8>, i: i32) -> GPtr<u8> = thiscall 0x681810 => unported;
-    /// `CTaskManager::SetTaskSecondary(CTask*, int32)` (0x681B60, `ret 8`)
-    fn tm_set_task_secondary(tm: GPtr<u8>, t: GPtr<u8>, i: i32) = thiscall 0x681B60 => unported;
-    /// `CPed::IsPlayingHandSignal()` (0x5E0460)
-    fn ped_is_playing_hand_signal(p: GPtr<u8>) -> u8 = thiscall 0x5E0460 => unported;
-    /// `CTaskManager::FindActiveTaskByType(int32)` (0x681740, `ret 4`)
-    fn tm_find_active_task_by_type(tm: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x681740 => unported;
     /// `CAnimManager::GetAnimationBlockIndex(const char*)` (0x4D3990)
     fn anim_get_block_index(name: u32) -> i32 = cdecl 0x4D3990 => unported;
-    /// `CAnimManager::AddAnimBlockRef(int32)` (0x4D3FB0)
-    fn anim_add_block_ref(i: i32) = cdecl 0x4D3FB0 => unported;
-    /// `CAnimManager::RemoveAnimBlockRef(int32)` (0x4D3FD0)
-    fn anim_remove_block_ref(i: i32) = cdecl 0x4D3FD0 => unported;
-    /// `CStreaming::RequestModel(int32 id, int32 flags)` (0x4087E0)
-    fn streaming_request_model(id: i32, flags: i32) = cdecl 0x4087E0 => unported;
-    /// `CGeneral::GetRadianAngleBetweenPoints(float x1, float y1, float x2, float y2)` (0x53CBE0, float in ST0)
-    fn general_radian_angle_between_points(x1: u32, y1: u32, x2: u32, y2: u32) -> f64 = cdecl 0x53CBE0 => unported;
-    /// `CGeneral::LimitRadianAngle(float)` (0x53CB50, float in ST0)
-    fn general_limit_radian_angle(a: u32) -> f64 = cdecl 0x53CB50 => unported;
-    /// `CVector::FromMultiply3x3(const CMatrix&, const CVector&)` (0x59C6D0, `ret 8`)
-    fn vector_from_multiply_3x3(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) = thiscall 0x59C6D0 => unported;
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210)
-    fn world_find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    fn entity_register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
-    /// `CTaskComplexBeInCouple::AbortArmIK(CPed*)` (0x6837F0, `ret 4`)
-    fn be_in_couple_abort_arm_ik(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x6837F0 => unported;
 }
 
 /// `fstp dword` of an f64 an original callee returned in ST0.

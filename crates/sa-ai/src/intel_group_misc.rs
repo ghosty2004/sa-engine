@@ -19,37 +19,24 @@ const GROUPS: usize = 0xC09920;
 /// `sizeof(CPedGroup)`
 const GROUP_SIZE: usize = 0x2D4;
 
+use crate::bindings::acquaintance_get;
+use crate::bindings::membership_remove_member;
+use crate::bindings::pgi_flush;
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::event_script_command_dtor;
+use sa_world::bindings::get_ped_flag as ped_type_get_ped_flag;
+use sa_world::bindings::group_intel_set_script_command_task as pgi_set_script_command_task;
+use sa_world::bindings::intel_find_task_by_type;
+use sa_world::bindings::ped_groups_get_peds_group as groups_get_peds_group;
+use sa_world::bindings::tm_find_active_task_by_type;
+use sa_world::bindings::tm_set_task;
 orig! {
     /// Virtual slot +0 (scalar deleting destructor, `ret 4`).
     fn v_delete(o: GPtr<u8>, flags: u32) -> u32 = thiscall vslot 0x0 => unported;
-    /// `CTaskManager::SetTask(CTask*, int32 slot, bool)` (0x681AF0, `ret 0xC`)
-    fn tm_set_task(tm: GPtr<u8>, t: GPtr<u8>, slot: i32, b: u32) = thiscall 0x681AF0 => unported;
-    /// `CTaskManager::FindActiveTaskByType(int32)` (0x681740, `ret 4`)
-    fn tm_find_active_task_by_type(tm: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x681740 => unported;
-    /// `CPedIntelligence::FindTaskByType(int32)` (0x600EE0, `ret 4`)
-    fn intel_find_task_by_type(i: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x600EE0 => unported;
-    /// `CAcquaintance::GetAcquaintances(int32)` (0x608970, `ret 4`)
-    fn acquaintance_get(a: GPtr<u8>, i: i32) -> u32 = thiscall 0x608970 => unported;
-    /// `CPedType::GetPedFlag(ePedType)` (0x608830, cdecl)
-    fn ped_type_get_ped_flag(t: u32) -> u32 = cdecl 0x608830 => unported;
-    /// `CPedGroups::GetPedsGroup(const CPed*)` (0x5F7E80, cdecl)
-    fn groups_get_peds_group(ped: GPtr<u8>) -> GPtr<u8> = cdecl 0x5F7E80 => unported;
-    /// `CPed::IsPlayer` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CPedGroupIntelligence::SetScriptCommandTask(CPed*, const CTask&)` (0x5F8560, `ret 8`)
-    fn pgi_set_script_command_task(i: GPtr<u8>, ped: GPtr<u8>, t: GPtr<u8>) = thiscall 0x5F8560 => unported;
-    /// `CPedGroupIntelligence::Flush` (0x5F7350)
-    fn pgi_flush(i: GPtr<u8>) = thiscall 0x5F7350 => unported;
-    /// `CPedGroupMembership::RemoveMember(int32)` (0x5F80D0, `ret 4`)
-    fn membership_remove_member(m: GPtr<u8>, i: i32) = thiscall 0x5F80D0 => unported;
     /// `CEventScriptCommand::CEventScriptCommand(int32 primaryTaskIndex, CTask*, bool)` (0x4B0A00, `ret 0xC`)
     fn event_script_command_ctor(e: GPtr<u8>, idx: i32, t: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4B0A00 => unported;
-    /// `CEventScriptCommand::~CEventScriptCommand` (`FUN_004b0a50`)
-    fn event_script_command_dtor(e: GPtr<u8>) = thiscall 0x4B0A50 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, `ret 8`)
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00, `ret 4`)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
 }
 
 /// Drops the registered entity reference in `slot` (if any) and clears it.

@@ -10,11 +10,10 @@ use sa_math::x87::X87;
 
 use crate::common::wr;
 
+pub use sa_core::bindings::eh_vector_ctor;
 orig! {
     /// `CPlantSurfPropMgr::Initialise()` (0x5DD6C0)
     pub fn plant_surf_prop_initialise() -> u8 = cdecl 0x5DD6C0 => unported;
-    /// CRT `eh vector constructor iterator(arr, size, n, ctor, dtor)` (0x821D30, stdcall)
-    pub fn eh_vector_ctor(arr: GPtr<u8>, size: u32, n: u32, ctor: u32, dtor: u32) = stdcall 0x821D30 => unported;
     /// `FUN_006f9eb0` (0x6F9EB0): resets a `CScripted2dEffects` pair list
     pub fn effect_pairs_reset_call(this: GPtr<u8>) -> u32 = thiscall 0x6F9EB0 => effect_pairs_reset;
 }
@@ -148,19 +147,16 @@ pub fn plant_mgr_reload_config() -> u8 {
     1
 }
 
+pub use sa_core::bindings::rw_raster_destroy;
+pub use sa_stream::bindings::find_txd_slot as txd_find_slot;
+pub use sa_stream::bindings::rw_texture_read;
 orig! {
     /// `CTxdStore::PushCurrentTxd()` (0x7316A0)
     pub fn txd_push_current() = cdecl 0x7316A0 => sa_stream::txdstore::push_current_txd;
     /// `CTxdStore::PopCurrentTxd()` (0x7316B0)
     pub fn txd_pop_current() = cdecl 0x7316B0 => sa_stream::txdstore::pop_current_txd;
-    /// `CTxdStore::FindTxdSlot(const char*)` (0x731850)
-    pub fn txd_find_slot(name: GPtr<u8>) -> i32 = cdecl 0x731850 => sa_stream::txdstore::find_txd_slot_name;
     /// `CTxdStore::SetCurrentTxd(int)` (0x7319C0)
     pub fn txd_set_current(slot: i32) = cdecl 0x7319C0 => sa_stream::txdstore::set_current_txd;
-    /// `RwTextureRead(const char* name, const char* mask)` (0x7F3AC0)
-    pub fn rw_texture_read(name: GPtr<u8>, mask: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F3AC0 => unported;
-    /// `RwRasterDestroy(RwRaster*)` (0x7FB020)
-    pub fn rw_raster_destroy(r: GPtr<u8>) -> i32 = cdecl 0x7FB020 => unported;
     /// `C3dMarkers::Init()` (0x724E40)
     pub fn markers_init() = cdecl 0x724E40 => crate::markers::init;
     /// `CCheckpoints::Init()` (0x722880)
@@ -440,15 +436,11 @@ pub fn find_wind_modifier(x: u32, y: u32, z: u32, out_x: GPtr<f32>, out_y: GPtr<
     1
 }
 
+pub use sa_core::bindings::crt_strncpy as strncpy;
+pub use sa_core::bindings::rw_raster_create;
+pub use sa_core::bindings::rw_texture_create;
+pub use sa_core::bindings::rw_texture_set_name;
 orig! {
-    /// `RwRasterCreate(w, h, depth, flags)` (0x7FB230)
-    pub fn rw_raster_create(w: i32, h: i32, depth: i32, flags: i32) -> GPtr<u8> = cdecl 0x7FB230 => unported;
-    /// `RwTextureCreate(RwRaster*)` (0x7F37C0)
-    pub fn rw_texture_create(r: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F37C0 => unported;
-    /// `RwTextureSetName(RwTexture*, const char*)` (0x7F38A0)
-    pub fn rw_texture_set_name(t: GPtr<u8>, name: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F38A0 => unported;
-    /// CRT `strncpy` (0x821F40)
-    pub fn strncpy(dst: GPtr<u8>, src: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x821F40 => unported;
     /// `CCustomRoadsignMgr::RoadsignGenerateTextRaster(text, numLetters, charset, a, raster)` (0x6FEB70)
     pub fn roadsign_generate_text_raster(text: GPtr<u8>, n: i32, charset: u32, a: u32, raster: GPtr<u8>) -> u8 = cdecl 0x6FEB70 => unported;
 }
@@ -488,13 +480,10 @@ pub fn roadsign_create_texture(text: GPtr<u8>, n: i32) -> GPtr<u8> {
     tex
 }
 
+pub use sa_core::bindings::file_close as cfm_close_file;
+pub use sa_core::bindings::open_file as cfm_open_file;
+pub use sa_stream::bindings::load_line as file_loader_load_line;
 orig! {
-    /// `CFileMgr::OpenFile(path, mode)` (0x538900)
-    pub fn cfm_open_file(path: GPtr<u8>, mode: GPtr<u8>) -> GPtr<u8> = cdecl 0x538900 => sa_core::filemgr::open_file;
-    /// `CFileMgr::CloseFile(file)` (0x5389D0)
-    pub fn cfm_close_file(f: GPtr<u8>) -> i32 = cdecl 0x5389D0 => sa_core::filemgr::close_file;
-    /// `CFileLoader::LoadLine(FILESTREAM)` (0x536F80)
-    pub fn file_loader_load_line(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x536F80 => unported;
     /// `ProcSurfaceInfo_c::Init(const char* surface, const char* model, float spacing, float minDist,
     /// int minRot, int maxRot, float minScl, maxScl, minSclZ, maxSclZ, zOffMin, zOffMax, int align,
     /// int useGrid)` (0x5A2EB0)
@@ -540,19 +529,16 @@ pub fn proc_object_man_load_data_file(this: GPtr<u8>) {
     cfm_close_file(f);
 }
 
+pub use sa_core::bindings::frame_get_ltm as rw_frame_get_ltm;
+pub use sa_core::bindings::rw_matrix_invert;
+pub use sa_core::bindings::rw_v3d_transform_points;
 orig! {
     /// `_rpAtomicResyncInterpolatedSphere(RpAtomic*)` (0x7491F0)
     pub fn rp_atomic_resync_interpolated_sphere(a: GPtr<u8>) -> GPtr<u8> = cdecl 0x7491F0 => unported;
-    /// `RwFrameGetLTM(RwFrame*)` (0x7F0990)
-    pub fn rw_frame_get_ltm(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0990 => unported;
-    /// `RwV3dTransformPoints(out, in, n, m)` (0x7EDD90)
-    pub fn rw_v3d_transform_points(out: GPtr<u8>, inp: GPtr<u8>, n: i32, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EDD90 => unported;
     /// `RpClumpGetNumAtomics(RpClump*)` (0x7498E0)
     pub fn rp_clump_get_num_atomics(c: GPtr<u8>) -> i32 = cdecl 0x7498E0 => unported;
     /// `RpClumpForAllAtomics(RpClump*, cb, data)` (0x749B70)
     pub fn rp_clump_for_all_atomics(c: GPtr<u8>, cb: u32, data: GPtr<u8>) -> GPtr<u8> = cdecl 0x749B70 => unported;
-    /// `RwMatrixInvert(out, in)` (0x7F2070)
-    pub fn rw_matrix_invert(out: GPtr<u8>, inp: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F2070 => unported;
 }
 
 /// `RpClumpGetBoundingSphere`'s "use the LTM" flag (byte 0x8D60BC).
@@ -660,17 +646,12 @@ pub fn rp_clump_get_bounding_sphere(clump: GPtr<u8>, sphere: GPtr<u8>, use_ltm: 
     clump
 }
 
+pub use sa_core::bindings::find_player_ped;
+pub use sa_pop::bindings::store_shadow_to_be_rendered;
+pub use sa_world::bindings::ped_get_bone_position;
 orig! {
-    /// `CPed::GetBonePosition(RwV3d* out, uint bone, bool updateSkin)` (0x5E4280)
-    pub fn ped_get_bone_position(ped: GPtr<u8>, out: GPtr<u8>, bone: u32, update: u32) = thiscall 0x5E4280 => unported;
-    /// `CWorld::FindPlayerPed(int)` (0x56E210)
-    pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
     /// `CCamera::IsSphereVisible(const CVector*, float)` (0x420D40)
     pub fn camera_is_sphere_visible(cam: GPtr<u8>, c: GPtr<u8>, r: u32) -> u8 = thiscall 0x420D40 => unported;
-    /// `CShadows::StoreShadowToBeRendered(type, RwTexture*, CVector* pos, fx, fy, sx, sy, short r, g, b, a,
-    /// float zDist, bool drawOnWater, float scale, CRealTimeShadow*, bool drawOnBuildings)` (0x707390)
-    pub fn store_shadow_to_be_rendered(ty: u32, tex: u32, pos: GPtr<u8>, fx: u32, fy: u32, sx: u32, sy: u32,
-        r: u32, g: u32, b: u32, a: u32, zdist: u32, water: u32, scale: u32, rt: u32, buildings: u32) = cdecl 0x707390 => unported;
 }
 
 /// `CShadows::StoreShadowForPedObject(CEntity* ped, float dispX, float dispY, float frontX, float frontY,

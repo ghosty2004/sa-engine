@@ -19,49 +19,36 @@ const COVER_NUM_POINTS: usize = 0xC197A4;
 /// `CConversations::m_aNodes` (0x18 each)
 const CONVERSATION_NODES: usize = 0x969570;
 
+use crate::bindings::base_event_takes_priority;
+use crate::bindings::dtor_669d20;
+use crate::bindings::editable_response_dtor;
+use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+use sa_core::bindings::entity_register_reference as register_reference;
+use sa_stream::bindings::get_2d_effect;
+use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
+use sa_stream::bindings::simple_transform_update_matrix;
+use sa_world::bindings::compute_response_task_type_group;
+use sa_world::bindings::event_will_respond as will_respond;
+use sa_world::bindings::membership_is_member as group_membership_is_member;
+use sa_world::bindings::task_complex_ctor;
+use sa_world::bindings::task_simple_ctor;
 orig! {
     /// `CWorld::FindPlayerCoors(CVector* out, int32 id)` (0x56E010, cdecl)
     fn find_player_coors(out: GPtr<f32>, id: i32) -> GPtr<f32> = cdecl 0x56E010 => unported;
     /// `CEntity::GetBoundCentre(CVector* out)` (0x534250, `ret 4`)
     fn entity_get_bound_centre(e: GPtr<u8>, out: GPtr<f32>) -> GPtr<f32> = thiscall 0x534250 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00, `ret 4`)
-    fn clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70, `ret 4`)
-    fn register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
-    /// `CBaseModelInfo::Get2dEffect(int32)` (0x4C4C70, `ret 4`)
-    fn get_2d_effect(mi: GPtr<u8>, i: i32) -> GPtr<u8> = thiscall 0x4C4C70 => unported;
-    /// `CPlaceable::AllocateMatrix` (0x54F560)
-    fn allocate_matrix(e: GPtr<u8>) = thiscall 0x54F560 => unported;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*)` (0x54F1B0, `ret 4`)
-    fn simple_transform_update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => unported;
     /// `Multiply3x3(CVector* out, const CMatrix*, const CVector*)` (0x59C790, cdecl)
     fn multiply3x3(out: GPtr<f32>, m: GPtr<u8>, v: GPtr<f32>) -> GPtr<f32> = cdecl 0x59C790 => unported;
     /// `operator*(CVector* out, const CMatrix*, const CVector*)` (0x59C890, cdecl)
     fn matrix_mul_vec(out: GPtr<f32>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<f32> = cdecl 0x59C890 => unported;
     /// `CCover::AddCoverPoint(int32, CEntity*, CVector*, char, uint8)` (0x698F30, cdecl)
     fn add_cover_point(ty: u32, e: GPtr<u8>, pos: GPtr<f32>, a: u32, b: u32) = cdecl 0x698F30 => unported;
-    /// `CTaskComplex::CTaskComplex` (0x61A3B0)
-    fn task_complex_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A3B0 => unported;
-    /// `CTaskSimple::CTaskSimple` (0x61A390)
-    fn task_simple_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A390 => unported;
     /// `FUN_0061a3a0` (0x61A3A0): `CTaskSimple` base destructor
     fn task_simple_dtor(t: GPtr<u8>) = thiscall 0x61A3A0 => crate::mvpb_ai::task_simple_dtor_61a3a0;
     /// `FUN_0061a3d0` (0x61A3D0): `CTaskComplex` base destructor
     fn task_complex_dtor(t: GPtr<u8>) = thiscall 0x61A3D0 => crate::mvpb_ai::task_complex_dtor_61a3d0;
-    /// `thunk_FUN_0040387c` (0x669D20): base destructor `FUN_0048e600` tail-jumps to
-    fn dtor_669d20(t: GPtr<u8>) = thiscall 0x669D20 => unported;
-    /// `CEventEditableResponse::~CEventEditableResponse` (0x4AC480)
-    fn editable_response_dtor(e: GPtr<u8>) = thiscall 0x4AC480 => unported;
     /// `CEventGroup::Flush(bool)` (0x4AB370, `ret 4`)
     fn event_group_flush(g: GPtr<u8>, avoid: u32) -> u32 = thiscall 0x4AB370 => unported;
-    /// `CPedGroupMembership::IsMember(const CPed*)` (0x5F6A10, `ret 4`)
-    fn group_membership_is_member(m: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x5F6A10 => unported;
-    /// `CEventEditableResponse::ComputeResponseTaskType(CPedGroup*)` (0x4B57A0, `ret 4`)
-    fn compute_response_task_type_group(e: GPtr<u8>, g: GPtr<u8>) = thiscall 0x4B57A0 => unported;
-    /// `CEventEditableResponse::WillRespond` (0x4AC490)
-    fn will_respond(e: GPtr<u8>) -> u8 = thiscall 0x4AC490 => unported;
-    /// `CEventGroupEvent::BaseEventTakesPriorityOverBaseEvent(const CEventGroupEvent&)` (0x4AE100, `ret 4`)
-    fn base_event_takes_priority(e: GPtr<u8>, o: GPtr<u8>) -> u8 = thiscall 0x4AE100 => unported;
     /// `CEvent::GetEventType` (vtable +0x4)
     fn v_get_event_type(e: GPtr<u8>) -> u32 = thiscall vslot 0x4 => unported;
     /// `CEvent::Clone` (vtable +0x10)
@@ -479,11 +466,7 @@ pub fn conversation_node_clear_recursively(this: GPtr<u8>) {
     wr::<u32>(this, 0xC, 0);
 }
 
-orig! {
-    /// `CConversationNode::ClearRecursively` (0x43A710), the self-call (through the original address, so the
-    /// hook toggle decides)
-    fn conversation_node_clear_recursively_call(n: GPtr<u8>) = thiscall 0x43A710 => crate::mvpb_ai::conversation_node_clear_recursively;
-}
+use crate::bindings::conversation_node_clear_recursively as conversation_node_clear_recursively_call;
 
 /// `CTaskComplexFacial::StopAll` (0x691250): sets the stop flag (+0xE) when the sub-task (+8) is a
 /// `CTaskSimpleFacial` (type 0x12F).

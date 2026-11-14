@@ -8,26 +8,19 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::dtor_4ae7a0 as walk_into_ped_dtor;
+use crate::bindings::intel_get_move_state_from_go_to_task;
+use crate::bindings::task_is_go_to_task;
+use sa_core::bindings::col_sphere_set;
+use sa_core::bindings::ped_is_alive;
+use sa_core::bindings::tm_get_simplest_active_task;
+use sa_core::bindings::vector_difference;
+use sa_core::bindings::vector_dot_product;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::vector_magnitude_sqr;
 orig! {
-    /// `CTaskManager::GetSimplestActiveTask()` (0x6819D0)
-    fn tm_get_simplest_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x6819D0 => unported;
-    /// `CTask::IsGoToTask(CTask*)` (0x61A360)
-    fn task_is_go_to_task(t: GPtr<u8>) -> u8 = cdecl 0x61A360 => unported;
-    /// `CPedIntelligence::GetMoveStateFromGoToTask()` (0x601D70)
-    fn intel_get_move_state_from_go_to_task(i: GPtr<u8>) -> u32 = thiscall 0x601D70 => unported;
-    /// `CPed::IsAlive()` (0x5E0170)
-    fn ped_is_alive(ped: GPtr<u8>) -> u8 = thiscall 0x5E0170 => unported;
-    /// `CVector::Difference(const CVector& a, const CVector& b)` (0x40FE00, `ret 8`): `this = a - b`
-    fn vector_difference(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) = thiscall 0x40FE00 => unported;
-    /// `CVector::MagnitudeSqr()` (0x406DA0, ST0)
-    fn vector_magnitude_sqr(v: GPtr<u8>) -> f64 = thiscall 0x406DA0 => unported;
-    /// `DotProduct(const CVector*, const CVector*)` (0x40FDB0, ST0)
-    fn vector_dot_product(a: GPtr<u8>, b: GPtr<u8>) -> f64 = cdecl 0x40FDB0 => unported;
     /// `operator*(const CVector&, float)` (0x40FEC0, returns the hidden out pointer)
     fn vector_mul(out: GPtr<u8>, v: GPtr<u8>, f: u32) -> GPtr<u8> = cdecl 0x40FEC0 => unported;
-    /// `CColSphere::Set(float radius, const CVector& center, uint8 material, uint8 flags, uint8 lighting)` (0x40FD10,
-    /// `ret 0x14`)
-    fn col_sphere_set(s: GPtr<u8>, r: u32, c: GPtr<u8>, m: u32, f: u32, l: u32) = thiscall 0x40FD10 => unported;
     /// `CColSphere::IntersectEdge(const CVector& a, const CVector& b, CVector& p1, CVector& p2)` (0x4100E0, `ret 0x10`)
     fn col_sphere_intersect_edge(s: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, p1: GPtr<u8>, p2: GPtr<u8>) -> u8 = thiscall 0x4100E0 => unported;
     /// `approxEqual(float, float, float)` (0x4EEA80)
@@ -35,10 +28,6 @@ orig! {
     /// `CEventPotentialWalkIntoPed::CEventPotentialWalkIntoPed(CPed*, const CVector& target, int32 moveState)` (0x4AE6E0,
     /// `ret 0xC`)
     fn walk_into_ped_ctor(e: GPtr<u8>, other: GPtr<u8>, target: GPtr<u8>, ms: u32) -> GPtr<u8> = thiscall 0x4AE6E0 => unported;
-    /// `CEventPotentialWalkIntoPed::~CEventPotentialWalkIntoPed()` (0x4AE7A0)
-    fn walk_into_ped_dtor(e: GPtr<u8>) = thiscall 0x4AE7A0 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, `ret 8`)
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
 }
 
 use sa_core::field::gf as k;

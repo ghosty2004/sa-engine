@@ -90,6 +90,8 @@ pub(crate) fn ci_pow(base: f64, exp: X87) -> X87 {
     X87::from_f64_exact(r)
 }
 
+use crate::bindings::track_ctor as track_loader_ctor;
+use sa_core::bindings::is_foreground_app;
 orig! {
     // DirectSound (IDirectSound8 / IDirectSoundBuffer8 / IDirectSound3DBuffer / IKsPropertySet)
     fn com_query_interface_raw(obj: GPtr<u8>, iid: u32, out: u32) -> i32 = stdcall vslot 0x00 => unported;
@@ -153,9 +155,6 @@ orig! {
     fn enter_critical_section(cs: u32) = stdcall cell 0x8580EC => unported;
     fn leave_critical_section(cs: u32) = stdcall cell 0x8580E8 => unported;
     fn co_initialize(r: u32) -> i32 = stdcall cell 0x858350 => unported;
-
-    /// `Win::IsForegroundApp()` (0x746060)
-    fn is_foreground_app() -> u8 = cdecl 0x746060 => unported;
     /// `CAEAudioUtility::GetCurrentTimeInMS()` (0x4D9E80, EDX:EAX)
     pub(crate) fn current_time_ms() -> u64 = cdecl 0x4D9E80 => get_current_time_in_ms;
     /// `operator new` (0x82119A)
@@ -188,7 +187,6 @@ orig! {
     fn sc_add_fx(this: u32) -> bool = thiscall 0x4F1AE0 => streaming_add_fx;
     fn sc_remove_fx(this: u32) = thiscall 0x4F1C20 => streaming_remove_fx;
     fn st_service(this: u32) = thiscall 0x4F1290 => stream_thread_service;
-    fn track_loader_ctor(this: u32) -> u32 = thiscall 0x4E0930 => unported;
     fn track_loader_initialise(this: u32) -> u8 = thiscall 0x4E0C50 => unported;
     fn track_loader_get_data_stream(this: u32, track: u32) -> u32 = thiscall 0x4E0D20 => unported;
     /// `CAEVorbisDecoder::CAEVorbisDecoder(CAEDataStream*, bool checkLength)` (`ret 8`)

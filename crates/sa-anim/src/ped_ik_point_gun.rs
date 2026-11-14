@@ -8,17 +8,13 @@ use sa_math::x87::X87;
 
 use crate::common::*;
 
+use sa_core::bindings::get_anim_hierarchy_from_skin_clump;
+use sa_core::bindings::rp_hanim_hierarchy_get_matrix_array;
+use sa_core::bindings::rp_hanim_id_get_index;
+use sa_core::bindings::rw_matrix_create;
 orig! {
     /// `CGeneral::LimitRadianAngle(float)` (0x53CB50, ST0)
     fn limit_radian_angle(a: f32) -> f64 = cdecl 0x53CB50 => unported;
-    /// `GetAnimHierarchyFromSkinClump(RpClump*)` (0x734A40)
-    fn get_anim_hierarchy_from_skin_clump(clump: GPtr<u8>) -> GPtr<u8> = cdecl 0x734A40 => unported;
-    /// `RpHAnimIDGetIndex(RpHAnimHierarchy*, int32)` (0x7C51A0)
-    fn rp_hanim_id_get_index(h: GPtr<u8>, id: i32) -> i32 = cdecl 0x7C51A0 => unported;
-    /// `RpHAnimHierarchyGetMatrixArray(RpHAnimHierarchy*)` (0x7C5120)
-    fn rp_hanim_hierarchy_get_matrix_array(h: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C5120 => unported;
-    /// `RwMatrixCreate()` (0x7F2A50) / `RwMatrixDestroy(RwMatrix*)` (0x7F2A20)
-    fn rw_matrix_create() -> GPtr<u8> = cdecl 0x7F2A50 => unported;
     fn rw_matrix_destroy(m: GPtr<u8>) -> u32 = cdecl 0x7F2A20 => unported;
     /// `CPedIK::MoveLimb(LimbOrientation&, float yaw, float pitch, LimbMovementInfo&)` (0x5FDA60, thiscall, `ret 0x10`)
     fn move_limb(ik: GPtr<u8>, limb: GPtr<u8>, yaw: u32, pitch: u32, info: u32) -> i32 = thiscall 0x5FDA60 => unported;

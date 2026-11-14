@@ -8,9 +8,8 @@ use sa_core::{hook, orig};
 
 use super::common::{g, rd, wr, x};
 
+use crate::bindings::door_audio_add_event;
 orig! {
-    /// `CAEDoorAudioEntity::AddAudioEvent(eAudioEvents, CVector& pos, float volume, float speed)` (0x4DC860)
-    fn door_audio_add_event(a: GPtr<u8>, ev: u32, pos: GPtr<u8>, vol: f32, speed: f32) = thiscall 0x4DC860 => unported;
     /// `CGarage::FindDoorsWithGarage(CObject** door1, CObject** door2)` (0x449FF0)
     fn find_doors_c(gar: GPtr<u8>, d1: GPtr<u8>, d2: GPtr<u8>) = thiscall 0x449FF0 => find_doors_with_garage;
 }

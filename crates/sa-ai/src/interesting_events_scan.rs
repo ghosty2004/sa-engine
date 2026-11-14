@@ -6,15 +6,11 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::vector_normalise_and_mag;
+use sa_core::bindings::world_clear_scan_codes;
+use sa_world::bindings::crt_floor as floor;
 orig! {
-    /// `FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CVector::NormaliseAndMag()` (0x59C970, ST0)
-    fn vector_normalise_and_mag(v: GPtr<u8>) -> f64 = thiscall 0x59C970 => unported;
-    /// CRT `floor(double)` (0x8219F0)
-    fn floor(v: f64) -> f64 = cdecl 0x8219F0 => unported;
-    /// `CWorld::ClearScanCodes()` (0x563470)
-    fn world_clear_scan_codes() = cdecl 0x563470 => unported;
     /// `CInterestingEvents::Add(EType, CEntity*)` (0x602590)
     fn interesting_events_add(ie: GPtr<u8>, ty: i32, e: GPtr<u8>) = thiscall 0x602590 => crate::interesting_events_add::interesting_events_add;
 }

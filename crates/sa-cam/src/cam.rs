@@ -62,17 +62,14 @@ const NEG_PI: u32 = 0xC049_0FDB;
 const ZERO: u32 = 0x0000_0000;
 const TEN: u32 = 0x4120_0000;
 
+pub use crate::bindings::idle_cam_reset_call;
+pub use sa_core::bindings::cross_product;
+pub use sa_core::bindings::vector_normalise;
 orig! {
     /// `CCam::WrapAngle(float&)` (0x509BE0)
     pub fn wrap_angle_call(a: GPtr<f32>) = cdecl 0x509BE0 => wrap_angle;
     /// `CCam::Init()` (0x50E490)
     pub fn cam_init_call(this: GPtr<u8>) = thiscall 0x50E490 => cam_init;
-    /// `CIdleCam::Reset(bool)` (0x50A160)
-    pub fn idle_cam_reset_call(this: GPtr<u8>, reset_controls: u8) = thiscall 0x50A160 => crate::idlecam::reset;
-    /// `CVector::Normalise()` (0x59C910)
-    pub fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
-    /// `CrossProduct(CVector* out, const CVector*, const CVector*)` (0x59C730)
-    pub fn cross_product(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C730 => unported;
 }
 
 use sa_core::field::copy3;

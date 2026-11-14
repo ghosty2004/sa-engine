@@ -31,27 +31,21 @@ const K_0_1: u32 = 0x3DCCCCCD; // 0x858B1C
 const K_0_02: u32 = 0x3CA3D70A; // 0x858B38
 const K_0_006: u32 = 0x3BC49BA6; // 0x859CDC
 
+use sa_core::bindings::file_close;
+use sa_core::bindings::open_file as file_open;
+use sa_core::bindings::sscanf1;
+use sa_core::bindings::strncmp;
+use sa_stream::bindings::get_anim_group_name;
+use sa_stream::bindings::load_line;
 orig! {
-    /// `CFileMgr::OpenFile(const char*, const char*)` (0x538900)
-    fn file_open(path: GPtr<u8>, mode: GPtr<u8>) -> GPtr<u8> = cdecl 0x538900 => sa_core::filemgr::open_file;
-    /// `CFileMgr::CloseFile(FILE*)` (0x5389d0)
-    fn file_close(f: GPtr<u8>) -> i32 = cdecl 0x5389d0 => sa_core::filemgr::close_file;
-    /// `CFileLoader::LoadLine(FILE*)` (0x536f80; ported in sa-stream, not a dependency of this crate)
-    fn load_line(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x536f80 => unported;
-    /// `CAnimManager::GetAnimGroupName(AssocGroupId)` (0x4d3a20; ported in sa-anim, not a dependency)
-    fn get_anim_group_name(i: i32) -> GPtr<u8> = cdecl 0x4d3a20 => unported;
     /// `CWeaponInfo::FindWeaponType(const char*)` (0x743d10)
     fn find_weapon_type(name: GPtr<u8>) -> i32 = cdecl 0x743d10 => crate::weapon_info::find_weapon_type;
     /// `CWeaponInfo::FindWeaponFireType(const char*)` (0x5bcf30)
     fn find_weapon_fire_type(s: GPtr<u8>) -> u32 = cdecl 0x5bcf30 => crate::weapon_info::find_weapon_fire_type;
     /// `FUN_0061db30` (0x61db30): the melee anim group of a name
     fn melee_anim_group(s: GPtr<u8>) -> u32 = cdecl 0x61db30 => crate::weapon_info::melee_anim_group;
-    /// CRT `_strncmp` (0x8214d0)
-    fn strncmp(a: GPtr<u8>, b: GPtr<u8>, n: u32) -> i32 = cdecl 0x8214d0 => unported;
     /// CRT `floor(double)` (0x8219f0, ST0)
     fn floor(v: f64) -> f64 = cdecl 0x8219f0 => sa_world::physical::base::floor_f64;
-    /// CRT `_sscanf` (0x8220ad), one target
-    fn sscanf1(s: GPtr<u8>, fmt: GPtr<u8>, a: GPtr<u8>) -> i32 = cdecl 0x8220ad => unported;
     /// CRT `_sscanf` (0x8220ad), ten targets
     #[allow(clippy::too_many_arguments)]
     fn sscanf10(s: GPtr<u8>, fmt: GPtr<u8>, a1: GPtr<u8>, a2: GPtr<u8>, a3: GPtr<u8>, a4: GPtr<u8>, a5: GPtr<u8>,

@@ -8,19 +8,14 @@ use sa_core::{hook, orig};
 
 use crate::common::{rd, wr};
 
+use sa_core::bindings::world_add;
+use sa_core::bindings::world_remove;
+use sa_world::bindings::darkel_register_kill_by_player;
+use sa_world::bindings::is_coop_game_going_on;
+use sa_world::bindings::set_orientation as placeable_set_orientation;
 orig! {
-    /// `CWorld::Remove(CEntity*)` (0x563280)
-    fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
-    /// `CWorld::Add(CEntity*)` (0x563220)
-    fn world_add(e: GPtr<u8>) = cdecl 0x563220 => unported;
-    /// `CPlaceable::SetOrientation(float, float, float)` (0x439A80)
-    fn placeable_set_orientation(p: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x439A80 => unported;
     /// `CBike::ResetSuspension()` (0x6B6740)
     fn bike_reset_suspension(b: GPtr<u8>) = thiscall 0x6B6740 => unported;
-    /// `CGameLogic::IsCoopGameGoingOn()` (0x441390, AL)
-    fn is_coop_game_going_on() -> u8 = cdecl 0x441390 => unported;
-    /// `CDarkel::RegisterKillByPlayer(const CPed*, eWeaponType, bool headShot, int32 player)` (0x43DCD0)
-    fn darkel_register_kill_by_player(ped: GPtr<u8>, w: u32, head: u32, n: u32) = cdecl 0x43DCD0 => unported;
     /// virtual (vtable +0x54) of `CPed`, removing it
     fn v_ped_slot_54(p: GPtr<u8>) = thiscall vslot 0x54 => unported;
     /// virtual deleting destructor (vtable +0)

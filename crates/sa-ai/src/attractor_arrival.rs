@@ -8,9 +8,10 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::go_to_attractor_ctor;
+use crate::bindings::is_ped_registered_with_effect;
+use crate::bindings::peds_push_back;
 orig! {
-    /// `CPedAttractorManager::IsPedRegisteredWithEffect(CPed*)` (0x5EBCB0, `ret 4`)
-    fn is_ped_registered_with_effect(m: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x5EBCB0 => crate::attractor_registry::is_ped_registered_with_effect_ped;
     /// `CPedAttractor::GetType()` (vtable slot 0)
     fn attractor_get_type(a: GPtr<u8>) -> u32 = thiscall vslot 0x0 => unported;
     /// `CPedAttractor::IsAtHeadOfQueue(CPed*)` (vtable slot 8, `ret 4`)
@@ -19,12 +20,8 @@ orig! {
     fn compute_attract_pos_v(a: GPtr<u8>, slot: i32, out: GPtr<u8>) = thiscall vslot 0xC => unported;
     /// `CPedAttractor::ComputeAttractHeading(int, float&)` (vtable slot 0x10, `ret 8`)
     fn compute_attract_heading_v(a: GPtr<u8>, slot: i32, out: GPtr<u8>) = thiscall vslot 0x10 => unported;
-    /// `std::vector<CPed*>::push_back` (0x5EE200, `ret 4`)
-    fn peds_push_back(v: GPtr<u8>, val: GPtr<u8>) = thiscall 0x5EE200 => crate::attractor_ptr_vectors::push_back_p;
     /// `std::vector<CPed*>::erase(iterator)` (0x5EC220, `ret 8`, the iterator result through the first argument)
     fn peds_erase(v: GPtr<u8>, out: GPtr<u8>, it: u32) -> GPtr<u8> = thiscall 0x5EC220 => unported;
-    /// `CTaskComplexGoToAttractor` ctor (0x66B640, `ret 0x18`)
-    fn go_to_attractor_ctor(t: GPtr<u8>, a: GPtr<u8>, pos: GPtr<u8>, heading: u32, time: u32, slot: i32, ms: u32) -> GPtr<u8> = thiscall 0x66B640 => unported;
     /// `CTaskComplexUsePairedAttractor(CPedAttractor*)` (0x6331A0, `ret 4`)
     fn use_paired_attractor_ctor(t: GPtr<u8>, a: GPtr<u8>) -> GPtr<u8> = thiscall 0x6331A0 => unported;
     /// `CTaskComplexUseAttractor(CPedAttractor*)` (0x6326F0, `ret 4`)

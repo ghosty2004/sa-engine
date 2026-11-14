@@ -87,23 +87,21 @@ sa_core::globals! {
     list GLOBALS;
 }
 
+pub use sa_core::bindings::ascii_to_gxt_char;
+pub use sa_core::bindings::find_player_ped;
+pub use sa_core::bindings::get_mouse_set_up;
+pub use sa_core::bindings::insert_number_in_string;
+pub use sa_core::bindings::strncmp;
+pub use sa_core::bindings::text_get;
 orig! {
     /// `CPad::GetPad(int32)` (0x53FB70)
     pub fn get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => crate::pad::get_pad;
     /// `FindPlayerVehicle(int32 playerId, bool bIncludeRemote)` (0x56E0D0)
     pub fn find_player_vehicle(id: i32, remote: u8) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
-    /// `FindPlayerPed(int32 playerId)` (0x56E210)
-    pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CText::Get(const char* key)` (0x6A0050)
-    pub fn text_get(text: GPtr<u8>, key: GPtr<u8>) -> GPtr<u8> = thiscall 0x6A0050 => unported;
-    /// `CMessages::InsertNumberInString(text, n1, .., n6, out)` (0x69DE90)
-    pub fn insert_number_in_string(text: GPtr<u8>, n1: i32, n2: i32, n3: i32, n4: i32, n5: i32, n6: i32, out: GPtr<u8>) = cdecl 0x69DE90 => unported;
     /// `CMessages::StringCopy(dst, src, len)` (0x69DB70)
     pub fn string_copy(dst: GPtr<u8>, src: GPtr<u8>, len: i32) = cdecl 0x69DB70 => unported;
     /// `CMessages::GetStringLength(s)` (0x69DB50)
     pub fn get_string_length(s: GPtr<u8>) -> i32 = cdecl 0x69DB50 => unported;
-    /// `Common::AsciiToGxtChar(src, dst)` (0x718600)
-    pub fn ascii_to_gxt_char(src: GPtr<u8>, dst: GPtr<u8>) = cdecl 0x718600 => unported;
     /// unnamed 0x719360: the font character of a key (`c >= 0x80` through the table at 0x8D5AD8)
     pub fn key_char(c: u32) -> u8 = cdecl 0x719360 => unported;
     /// `CFileMgr::Read(file, buf, size)` (0x538950)
@@ -112,12 +110,8 @@ orig! {
     pub fn file_write(file: i32, buf: GPtr<u8>, size: i32) -> i32 = cdecl 0x538970 => unported;
     /// `CFileMgr::Seek(file, offset, origin)` (0x538990, AL)
     pub fn file_seek(file: i32, offset: i32, origin: i32) -> u8 = cdecl 0x538990 => unported;
-    /// CRT `strncmp` (0x8214D0)
-    pub fn strncmp(a: GPtr<u8>, b: GPtr<u8>, n: u32) -> i32 = cdecl 0x8214D0 => unported;
     /// `GTATranslateShiftKey(RsKeyCodes*)` (0x747CD0; the result is not used)
     pub fn gta_translate_shift_key(ck: GPtr<i32>) = cdecl 0x747CD0 => unported;
-    /// `Input::GetMouseSetUp()` (0x53F2D0, hidden result pointer, `ret 4`)
-    pub fn get_mouse_set_up(out: GPtr<u8>) -> GPtr<u8> = stdcall 0x53F2D0 => unported;
     /// `IDirectInputDevice8A::GetCapabilities(caps)`
     pub fn did_get_capabilities(dev: GPtr<u8>, caps: GPtr<u8>) -> i32 = stdcall vslot 0x0C => unported;
 

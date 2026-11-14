@@ -44,17 +44,13 @@ const DEPTH_UNUSED: u32 = 0xBF800000;
 const K_FLIP: usize = 0x858C1C;
 const CP: isize = 0x2C;
 
+use sa_core::bindings::atexit;
+use sa_core::bindings::matrix_assign;
+use sa_core::bindings::matrix_invert;
+use sa_core::bindings::matrix_mul_vec;
 orig! {
-    /// CRT `_atexit` (0x821D1E)
-    fn atexit(f: u32) -> i32 = cdecl 0x821d1e => unported;
-    /// `CMatrix::Invert(const CMatrix& src, CMatrix& dst)` (0x59B920, cdecl, returns `dst`)
-    fn matrix_invert(src: GPtr<u8>, dst: GPtr<u8>) -> GPtr<u8> = cdecl 0x59b920 => unported;
-    /// `CMatrix::operator=(const CMatrix&)` (0x59BBC0, thiscall)
-    fn matrix_assign(dst: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = thiscall 0x59bbc0 => unported;
     /// `CMatrix::operator*=(const CMatrix&)` (0x411A80, thiscall)
     fn matrix_mul_assign(dst: GPtr<u8>, m: GPtr<u8>) -> GPtr<u8> = thiscall 0x411a80 => unported;
-    /// `operator*(const CMatrix&, const CVector&)` (0x59C890, cdecl, out first)
-    fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59c890 => unported;
     /// `Multiply3x3(const CMatrix&, const CVector&)` (0x59C790, cdecl, out first)
     fn multiply3x3(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59c790 => crate::world::mvpa_math::multiply3x3;
     /// `CCollision::TestSphereBox(const CColSphere&, const CBox&)` (0x4120C0, AL)

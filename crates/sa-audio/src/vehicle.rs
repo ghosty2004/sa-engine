@@ -147,24 +147,24 @@ const DBL_0_99: usize = 0x862CD8;
 /// 5.0f (`.rdata`)
 const FLT_5: usize = 0x858C80;
 
+pub use crate::bindings::ae_find_vehicle_of_player as find_vehicle_of_player;
+pub use crate::bindings::hw_is_sound_bank_loaded as is_sound_bank_loaded;
+pub use crate::bindings::just_wrecked_vehicle;
+pub use crate::bindings::play_train_brake_sound;
+pub use crate::bindings::sm_cancel_sounds_in_bank_slot as cancel_sounds_in_bank_slot;
+pub use crate::bindings::sound_set_flags;
+pub use sa_core::bindings::ped_is_alive;
+pub use sa_stream::bindings::ped_is_player;
+pub use sa_world::bindings::get_pad_from_player as player_get_pad_from_player;
+pub use sa_world::bindings::vehicle_audio_player_about_to_exit_as_driver as player_about_to_exit_vehicle_as_driver;
 orig! {
-    /// `CAEAudioHardware::IsSoundBankLoaded(uint16 bankId, int16 slot)` (0x4D88C0)
-    pub fn is_sound_bank_loaded(hw: GPtr<u8>, bank: u32, slot: u32) -> u8 = thiscall 0x4D88C0 => unported;
     /// `CAudioEngine::StartRadio(tVehicleAudioSettings*)` (0x507DF0)
     pub fn engine_start_radio(engine: GPtr<u8>, settings: GPtr<u8>) = thiscall 0x507DF0 => unported;
     /// `CAudioEngine::StopRadio(tVehicleAudioSettings*, bool)` (0x506F70)
     /// `CAEAudioUtility::GetPiecewiseLinear(float, int16, const float (*)[2])` (0x4D9D90)
     pub fn get_piecewise_linear(v: u32, n: u32, table: GPtr<u8>) -> f32 = cdecl 0x4D9D90 => unported;
-    /// `CAESoundManager::CancelSoundsInBankSlot(int16 slot, bool)` (0x4EFC60)
-    pub fn cancel_sounds_in_bank_slot(sm: GPtr<u8>, slot: u32, full: u32) = thiscall 0x4EFC60 => unported;
-    /// `CAESound::SetFlags(uint16 flags, uint16 enabled)` (0x4EF2B0)
-    pub fn sound_set_flags(sound: GPtr<u8>, flags: u32, enabled: u32) = thiscall 0x4EF2B0 => unported;
     /// `CAESound::StopSound()` (0x4EF1C0)
     pub fn sound_stop_sound(sound: GPtr<u8>) = thiscall 0x4EF1C0 => unported;
-    /// `CPed::IsAlive()` (0x5E0170)
-    pub fn ped_is_alive(ped: GPtr<u8>) -> u8 = thiscall 0x5E0170 => unported;
-    /// `CPlayerPed::GetPadFromPlayer()` (0x609560)
-    pub fn player_get_pad_from_player(ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x609560 => unported;
     /// `CPad::GetAccelerate()` (0x5403F0)
     pub fn pad_get_accelerate(pad: GPtr<u8>) -> u32 = thiscall 0x5403F0 => unported;
     /// `CPad::GetBrake()` (0x540080)
@@ -174,14 +174,8 @@ orig! {
     pub fn update_boat_sound(this: GPtr<u8>, state: u32, slot: u32, sfx: u32, speed: u32, volume: u32) = thiscall 0x4F9E90 => unported;
     /// `CAEVehicleAudioEntity::PlayReverseSound(int16 sfx, float speed, float volume)` (0x4F87D0)
     pub fn play_reverse_sound(this: GPtr<u8>, sfx: u32, speed: u32, volume: u32) = thiscall 0x4F87D0 => unported;
-    /// `CAEVehicleAudioEntity::PlayTrainBrakeSound(int16 sfx, float speed, float volume)` (0x4FA630)
-    pub fn play_train_brake_sound(this: GPtr<u8>, sfx: u32, speed: u32, volume: u32) = thiscall 0x4FA630 => unported;
     /// `CAEVehicleAudioEntity::CancelVehicleEngineSound(int16)` (0x4F55C0)
     pub fn cancel_vehicle_engine_sound_call(this: GPtr<u8>, ty: u32) = thiscall 0x4F55C0 => cancel_vehicle_engine_sound;
-    /// `CAEVehicleAudioEntity::PlayerAboutToExitVehicleAsDriver()` (0x4F5BA0)
-    pub fn player_about_to_exit_vehicle_as_driver(this: GPtr<u8>) = thiscall 0x4F5BA0 => unported;
-    /// `CAEVehicleAudioEntity::JustWreckedVehicle()` (0x4FD0B0)
-    pub fn just_wrecked_vehicle(this: GPtr<u8>) = thiscall 0x4FD0B0 => unported;
     /// `CAEVehicleAudioEntity::JustGotInVehicleAsDriver()` (0x4F5700)
     pub fn just_got_in_vehicle_as_driver(this: GPtr<u8>) = thiscall 0x4F5700 => unported;
     /// `CAEVehicleAudioEntity::JustGotOutOfVehicleAsDriver()` (0x4FCF40)
@@ -192,10 +186,6 @@ orig! {
     pub fn turn_off_radio_for_vehicle_call(this: GPtr<u8>) = thiscall 0x4F5B60 => turn_off_radio_for_vehicle;
     /// `CAEVehicleAudioEntity::ProcessVehicle(CPhysical*)` (0x501E10)
     pub fn process_vehicle(this: GPtr<u8>, veh: u32) = thiscall 0x501E10 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0)
-    pub fn ped_is_player(ped: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CAEAudioUtility::FindVehicleOfPlayer()` (0x4D9E10)
-    pub fn find_vehicle_of_player() -> u32 = cdecl 0x4D9E10 => unported;
     pub fn engine_stop_radio(engine: GPtr<u8>, settings: GPtr<u8>, duck: u32) = thiscall 0x506F70 => unported;
 }
 

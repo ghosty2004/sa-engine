@@ -18,9 +18,8 @@ use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 use sa_math::x87::X87;
 
+use sa_core::bindings::get_atan_of_xy as general_get_atan_of_xy;
 orig! {
-    /// `CGeneral::GetATanOfXY(float x, float y)` (0x53CC70, ST0)
-    fn general_get_atan_of_xy(x: f32, y: f32) -> f64 = cdecl 0x53CC70 => unported;
     /// The scan callback `void (*)(int32 x, int32 y)` (cdecl, the address passed in)
     fn call_scan(f: u32, x: i32, y: i32) = cdecl dyn => unported;
 }

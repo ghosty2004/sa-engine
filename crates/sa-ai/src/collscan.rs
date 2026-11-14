@@ -39,53 +39,46 @@ sa_core::globals! {
 /// `CTimer::m_snTimeInMilliseconds` (owned by CTimer).
 const TIME_MS: usize = 0xB7CB84;
 
+use crate::bindings::acquaintance_get;
+use crate::bindings::acquaintance_ped_hate_ctor;
+use crate::bindings::building_collision_dtor;
+use crate::bindings::dtor_4aca70 as ped_collision_dtor;
+use crate::bindings::dtor_4acdd0 as object_collision_dtor;
+use crate::bindings::intel_get_move_state_from_go_to_task;
+use crate::bindings::task_is_go_to_task;
+use sa_core::bindings::general_limit_radian_angle;
+use sa_core::bindings::matrix_mul_vec as matrix_mul_vector;
+use sa_core::bindings::tm_get_simplest_active_task;
+use sa_core::bindings::vector_dot_product;
+use sa_core::bindings::vector_normalise;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::clothes_get_is_wearing_balaclava;
+use sa_world::bindings::damage_calc_compute_damage_response as calc_compute_damage_response;
+use sa_world::bindings::damage_calc_ctor as calc_ctor;
+use sa_world::bindings::damage_calc_dtor as calc_dtor;
+use sa_world::bindings::entity_get_col_model;
+use sa_world::bindings::entity_get_is_static;
+use sa_world::bindings::entity_get_is_type_physical;
+use sa_world::bindings::event_acquaintance_ped_dtor as acquaintance_dtor;
+use sa_world::bindings::event_damage_affects_ped as damage_affects_ped;
+use sa_world::bindings::event_damage_ctor as damage_ctor;
+use sa_world::bindings::event_damage_dtor as damage_dtor;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::event_sound_quiet_dtor as sound_quiet_dtor;
+use sa_world::bindings::get_event_global_group;
+use sa_world::bindings::get_ped_flag as ped_type_get_ped_flag;
+use sa_world::bindings::placeable_get_heading;
+use sa_world::bindings::vector_magnitude_sqr as vector_squared_magnitude;
+use sa_world::bindings::vector_sub;
 orig! {
-    /// `CTaskManager::GetSimplestActiveTask` (0x6819D0)
-    fn tm_get_simplest_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x6819D0 => unported;
-    /// `CTask::IsGoToTask(CTask*)` (0x61A360, cdecl)
-    fn task_is_go_to_task(t: GPtr<u8>) -> u8 = cdecl 0x61A360 => unported;
-    /// `FUN_00406da0` (thiscall on a CVector, ST0): the squared length `(x*x + y*y) + z*z`
-    fn vector_squared_magnitude(v: GPtr<u8>) -> f64 = thiscall 0x406DA0 => unported;
     /// `CPed::KillPedWithCar(CVehicle*, float, bool)` (0x5F0360, `ret 0xC`)
     fn ped_kill_ped_with_car(p: GPtr<u8>, veh: GPtr<u8>, impulse: u32, b: u32) = thiscall 0x5F0360 => unported;
-    /// `CPed::IsPlayer` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CPlaceable::GetHeading` (0x441DB0, ST0)
-    fn placeable_get_heading(p: GPtr<u8>) -> f64 = thiscall 0x441DB0 => unported;
-    /// `CEntity::GetColModel` (0x535300)
-    fn entity_get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => unported;
     /// `FUN_004119d0(CVector* out, const CVector* v, float k)` (0x4119D0, cdecl): out = v * (1.0f / k)
     fn vector_div(out: GPtr<u8>, v: GPtr<u8>, k: u32) -> GPtr<u8> = cdecl 0x4119D0 => unported;
-    /// `operator*(const CMatrix&, const CVector&)` (0x59C890, cdecl, result in `out`)
-    fn matrix_mul_vector(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
-    /// `VectorSub(CVector* out, const CVector* a, const CVector* b)` (0x40FE60): out = a - b
-    fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => unported;
-    /// `CGeneral::LimitRadianAngle(float)` (0x53CB50, ST0)
-    fn general_limit_radian_angle(a: u32) -> f64 = cdecl 0x53CB50 => unported;
-    /// `CVector::Normalise` (0x59C910)
-    fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
-    /// `CVector::DotProduct(const CVector*, const CVector*)` (0x40FDB0, ST0)
-    fn vector_dot_product(a: GPtr<u8>, b: GPtr<u8>) -> f64 = cdecl 0x40FDB0 => unported;
     /// `FUN_0040fe90(CVector* out, float k, const CVector* v)` (0x40FE90, cdecl): out = k * v
     fn vector_scale(out: GPtr<u8>, k: u32, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE90 => unported;
     /// `CPedGeometryAnalyser::ComputePedHitSide(const CPed&, const CPhysical&)` (0x5F3640, cdecl)
     fn compute_ped_hit_side(ped: GPtr<u8>, other: GPtr<u8>) -> u32 = cdecl 0x5F3640 => unported;
-    /// `CPedDamageResponseCalculator::CPedDamageResponseCalculator(CEntity*, float, eWeaponType, ePedPieceTypes,
-    /// bool)` (0x4AD3F0, `ret 0x14`)
-    fn calc_ctor(c: GPtr<u8>, src: GPtr<u8>, dmg: u32, wt: u32, piece: u32, b: u32) -> GPtr<u8> = thiscall 0x4AD3F0 => unported;
-    /// `CPedDamageResponseCalculator::~CPedDamageResponseCalculator` (0x4AD420)
-    fn calc_dtor(c: GPtr<u8>) = thiscall 0x4AD420 => unported;
-    /// `CPedDamageResponseCalculator::ComputeDamageResponse(CPed*, CPedDamageResponse*, bool)` (0x4B5AC0, `ret 0xC`)
-    fn calc_compute_damage_response(c: GPtr<u8>, ped: GPtr<u8>, resp: GPtr<u8>, b: u32) = thiscall 0x4B5AC0 => unported;
-    /// `CEventDamage::CEventDamage(CEntity*, uint32 time, eWeaponType, ePedPieceTypes, uint8 direction, bool, bool)`
-    /// (0x4AD830, `ret 0x1C`)
-    fn damage_ctor(e: GPtr<u8>, src: GPtr<u8>, time: u32, wt: u32, piece: u32, dir: u32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x4AD830 => unported;
-    /// `CEventDamage::AffectsPed(CPed*)` (0x4B35A0, `ret 4`)
-    fn damage_affects_ped(e: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x4B35A0 => unported;
-    /// `CEventDamage::~CEventDamage` (0x4AD960)
-    fn damage_dtor(e: GPtr<u8>) = thiscall 0x4AD960 => unported;
-    /// `CPedIntelligence::GetMoveStateFromGoToTask` (0x601D70)
-    fn intel_get_move_state_from_go_to_task(i: GPtr<u8>) -> u32 = thiscall 0x601D70 => unported;
     /// `CEventVehicleCollision::CEventVehicleCollision(int16 piece, float, CVehicle*, const CVector*, const CVector*,
     /// int8 moveState, int16)` (0x4AC840, `ret 0x1C`)
     fn vehicle_collision_ctor(e: GPtr<u8>, piece: u32, dmg: u32, veh: GPtr<u8>, vel: GPtr<u8>, pos: GPtr<u8>, ms: u32, a: u32) -> GPtr<u8> = thiscall 0x4AC840 => unported;
@@ -98,40 +91,18 @@ orig! {
     fn ped_collision_with_player_ctor(e: GPtr<u8>, piece: u32, dmg: u32, ped: GPtr<u8>, vel: GPtr<u8>, pos: GPtr<u8>, ms: u32, oms: u32) -> GPtr<u8> = thiscall 0x5FED40 => unported;
     /// `CEventPedCollisionWithPed::CEventPedCollisionWithPed(...)` (0x4AC990, `ret 0x1C`)
     fn ped_collision_with_ped_ctor(e: GPtr<u8>, piece: u32, dmg: u32, ped: GPtr<u8>, vel: GPtr<u8>, pos: GPtr<u8>, ms: u32, oms: u32) -> GPtr<u8> = thiscall 0x4AC990 => unported;
-    /// The ped-collision events' base destructor (0x4ACA70)
-    fn ped_collision_dtor(e: GPtr<u8>) = thiscall 0x4ACA70 => unported;
     /// `CEventObjectCollision::CEventObjectCollision(int16, float, CObject*, const CVector*, const CVector*, int32)`
     /// (0x4ACCF0, `ret 0x18`)
     fn object_collision_ctor(e: GPtr<u8>, piece: u32, dmg: u32, obj: GPtr<u8>, vel: GPtr<u8>, pos: GPtr<u8>, ms: u32) -> GPtr<u8> = thiscall 0x4ACCF0 => unported;
-    /// `CEventObjectCollision` destructor (0x4ACDD0)
-    fn object_collision_dtor(e: GPtr<u8>) = thiscall 0x4ACDD0 => unported;
     /// `CEventBuildingCollision::CEventBuildingCollision(int16, float, CBuilding*, const CVector*, const CVector*,
     /// int32)` (0x4ACF00, `ret 0x18`)
     fn building_collision_ctor(e: GPtr<u8>, piece: u32, dmg: u32, b: GPtr<u8>, vel: GPtr<u8>, pos: GPtr<u8>, ms: u32) -> GPtr<u8> = thiscall 0x4ACF00 => unported;
-    /// `CEventBuildingCollision` destructor (0x4ACFF0)
-    fn building_collision_dtor(e: GPtr<u8>) = thiscall 0x4ACFF0 => unported;
-    /// `CEventAcquaintancePedHate::CEventAcquaintancePedHate(CPed*)` (0x420E70, `ret 4`)
-    fn acquaintance_ped_hate_ctor(e: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x420E70 => unported;
-    /// The acquaintance events' base destructor (0x4AF890)
-    fn acquaintance_dtor(e: GPtr<u8>) = thiscall 0x4AF890 => unported;
     /// `CEventSoundQuiet::CEventSoundQuiet(CEntity*, float, uint32, const CVector*)` (0x5E05B0, `ret 0x10`)
     fn sound_quiet_ctor(e: GPtr<u8>, ent: GPtr<u8>, range: u32, time: u32, pos: GPtr<u8>) -> GPtr<u8> = thiscall 0x5E05B0 => unported;
-    /// `CEventSoundQuiet` destructor (0x5DEA00)
-    fn sound_quiet_dtor(e: GPtr<u8>) = thiscall 0x5DEA00 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, `ret 8`)
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, valid: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
-    /// `RwHelper::GetEventGlobalGroup()` (0x4ABA50)
-    fn get_event_global_group() -> GPtr<u8> = cdecl 0x4ABA50 => unported;
     /// `CPed::Say(uint16, uint32, float, bool, bool, bool)` (0x5EFFE0, `ret 0x18`)
     fn ped_say(p: GPtr<u8>, id: u32, off: u32, prob: u32, a: u32, b: u32, c: u32) = thiscall 0x5EFFE0 => unported;
     /// `CMentalState::IncrementAnger(int32)` (0x421050, `ret 4`, a `.HOODLUM` stub), called on `m_pIntelligence`
     fn increment_anger(i: GPtr<u8>, n: u32) = thiscall 0x421050 => unported;
-    /// `CAcquaintance::GetAcquaintances(int32)` (0x608970, `ret 4`)
-    fn acquaintance_get(a: GPtr<u8>, i: i32) -> u32 = thiscall 0x608970 => unported;
-    /// `CPedType::GetPedFlag(ePedType)` (0x608830, cdecl)
-    fn ped_type_get_ped_flag(t: u32) -> u32 = cdecl 0x608830 => unported;
-    /// `CEntity::GetIsStatic` (0x4633E0, a `.HOODLUM` stub)
-    fn entity_get_is_static(e: GPtr<u8>) -> u8 = thiscall 0x4633E0 => unported;
     /// `FUN_00420800(float a, float b)` (0x420800, cdecl, ST0): `a > b ? a : b`
     fn float_max(a: u32, b: u32) -> f64 = cdecl 0x420800 => unported;
     /// `CPed::GetLocalDirection(const CVector2D&)` (0x5DEF60, `ret 4`)
@@ -139,10 +110,6 @@ orig! {
     /// `CWeapon::GenerateDamageEvent(CPed*, CEntity*, eWeaponType, int32 damage, ePedPieceTypes, int32 direction)`
     /// (0x73A530, cdecl)
     fn weapon_generate_damage_event(ped: GPtr<u8>, src: GPtr<u8>, wt: u32, dmg: i32, piece: u32, dir: u32) = cdecl 0x73A530 => unported;
-    /// `CEntity::GetIsTypePhysical` (0x4DA030)
-    fn entity_get_is_type_physical(e: GPtr<u8>) -> u8 = thiscall 0x4DA030 => unported;
-    /// `CPedClothesDesc::GetIsWearingBalaclava` (0x5A7950)
-    fn clothes_get_is_wearing_balaclava(c: GPtr<u8>) -> u8 = thiscall 0x5A7950 => unported;
 }
 
 use sa_core::field::gx as cf;

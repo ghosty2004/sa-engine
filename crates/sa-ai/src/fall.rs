@@ -16,11 +16,37 @@ const IN_AIR_DELETE_ANIM_CB: u32 = 0x678E60;
 /// `CDefaultAnimCallback::DefaultAnimCB` (0x4D1390, the "no callback" the original installs)
 const DEFAULT_ANIM_CB: u32 = 0x4D1390;
 
+use crate::bindings::anim_blend_animation;
+use crate::bindings::anim_set_delete_callback as assoc_set_delete_callback;
+use crate::bindings::assoc_set_finish_callback;
+use crate::bindings::climb_test_for_climb;
+use crate::bindings::clump_get_association;
+use sa_core::bindings::assoc_set_current_time;
+use sa_core::bindings::entity_register_reference;
+use sa_core::bindings::get_pad as pad_get_pad;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::achieve_heading_ctor;
+use sa_world::bindings::clothes_get_is_wearing_balaclava as clothes_is_wearing_balaclava;
+use sa_world::bindings::damage_calc_compute_damage_response;
+use sa_world::bindings::damage_calc_ctor;
+use sa_world::bindings::damage_calc_dtor;
+use sa_world::bindings::event_damage_affects_ped;
+use sa_world::bindings::event_damage_ctor;
+use sa_world::bindings::event_damage_dtor;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::event_sound_quiet_dtor as sound_quiet_dtor;
+use sa_world::bindings::get_event_global_group;
+use sa_world::bindings::get_pad_from_player as player_get_pad;
+use sa_world::bindings::ped_audio_add_audio_event;
+use sa_world::bindings::ped_say;
+use sa_world::bindings::ped_set_ped_state;
+use sa_world::bindings::physical_apply_move_force_5429f0 as physical_apply_move_force_vec;
+use sa_world::bindings::task_complex_ctor;
+use sa_world::bindings::task_simple_ctor;
+use sa_world::bindings::vector_mul_scalar as vector_mul;
+use sa_world::bindings::vehicle_is_pointer_valid;
+use sa_world::bindings::world_process_vertical_line;
 orig! {
-    /// `CTaskSimple::CTaskSimple` (0x61A390)
-    fn task_simple_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A390 => unported;
-    /// `CTaskComplex::CTaskComplex` (0x61A3B0)
-    fn task_complex_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A3B0 => unported;
     /// `CTask::GetTaskType()` (vtable +0x10)
     fn v_get_task_type(t: GPtr<u8>) -> u32 = thiscall vslot 0x10 => unported;
     /// `CTaskSimpleInAir::CTaskSimpleInAir(bool, bool, bool)` (0x678CD0, `ret 0xC`)
@@ -32,51 +58,14 @@ orig! {
     fn fall_ctor(t: GPtr<u8>, anim: u32, group: u32, time: u32) -> GPtr<u8> = thiscall 0x6782C0 => unported;
     /// `CTaskSimpleGetUp::CTaskSimpleGetUp()` (0x677F50)
     fn get_up_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x677F50 => unported;
-    /// `CAnimBlendAssociation::SetFinishCallback(cb, data)` (0x4CEBE0, `ret 8`)
-    fn assoc_set_finish_callback(a: GPtr<u8>, cb: u32, data: u32) = thiscall 0x4CEBE0 => unported;
-    /// `CAnimBlendAssociation::SetDeleteCallback(cb, data)` (0x4CEBC0, `ret 8`)
-    fn assoc_set_delete_callback(a: GPtr<u8>, cb: u32, data: u32) = thiscall 0x4CEBC0 => unported;
-    /// `CAEPedAudioEntity::AddAudioEvent(id, volume, speed, physical, surface, a6, a7)` (0x4E2BB0, `ret 0x1C`)
-    fn ped_audio_add_audio_event(a: GPtr<u8>, id: u32, vol: u32, speed: u32, p: u32, s: u32, a6: u32, a7: u32) = thiscall 0x4E2BB0 => unported;
-    /// `CPedClothesDesc::GetIsWearingBalaclava()` (0x5A7950)
-    fn clothes_is_wearing_balaclava(c: GPtr<u8>) -> u8 = thiscall 0x5A7950 => unported;
     /// `CEventSoundQuiet::CEventSoundQuiet(CEntity*, float, uint32, const CVector&)` (0x5E05B0, `ret 0x10`)
     fn sound_quiet_ctor(e: GPtr<u8>, ent: GPtr<u8>, vol: u32, time: u32, pos: GPtr<u8>) -> GPtr<u8> = thiscall 0x5E05B0 => unported;
-    /// `GetEventGlobalGroup()` (0x4ABA50)
-    fn get_event_global_group() -> GPtr<u8> = cdecl 0x4ABA50 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, `ret 8`)
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, flag: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
-    /// `FUN_005dea00`: the `CEventSoundQuiet` destructor the original calls on its stack event
-    fn sound_quiet_dtor(e: GPtr<u8>) = thiscall 0x5DEA00 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CPlayerPed::GetPadFromPlayer()` (0x609560)
-    fn player_get_pad(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x609560 => unported;
     /// `CPad::GetPedWalkLeftRight()` (0x53FC90, AX)
     fn pad_get_ped_walk_left_right(p: GPtr<u8>) -> u16 = thiscall 0x53FC90 => unported;
     /// `CPad::GetPedWalkUpDown()` (0x53FD30, AX)
     fn pad_get_ped_walk_up_down(p: GPtr<u8>) -> u16 = thiscall 0x53FD30 => unported;
-    /// `CPed::Say(id, offset, volume, a4, a5, a6)` (0x5EFFE0, `ret 0x18`)
-    fn ped_say(p: GPtr<u8>, id: u32, off: u32, vol: u32, a4: u32, a5: u32, a6: u32) -> u32 = thiscall 0x5EFFE0 => unported;
-    /// `RpAnimBlendClumpGetAssociation(RpClump*, AnimationId)` (0x4D68B0)
-    fn clump_get_association(clump: u32, id: u32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
-    /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float delta)` (0x4D4610)
-    fn anim_blend_animation(clump: u32, group: u32, id: u32, delta: u32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
     /// `CPhysical::ApplyMoveForce(float, float, float)` (0x4ABBA0, `ret 0xC`)
     fn physical_apply_move_force(p: GPtr<u8>, x: f32, y: f32, z: f32) = thiscall 0x4ABBA0 => unported;
-    /// `CPhysical::ApplyMoveForce(CVector)` (0x5429F0, `ret 0xC`; the vector by value)
-    fn physical_apply_move_force_vec(p: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x5429F0 => unported;
-    /// `operator*(const CVector&, float)` (0x40FEC0, cdecl, returns `out`)
-    fn vector_mul(out: GPtr<u8>, v: GPtr<u8>, f: f32) -> GPtr<u8> = cdecl 0x40FEC0 => unported;
-    /// `CWorld::ProcessVerticalLine(pos, zEnd, colPoint, outEntity, buildings, vehicles, peds, objects, dummies,
-    /// seeThrough, camera)` (0x5674E0, AL)
-    fn world_process_vertical_line(
-        pos: GPtr<u8>, z: u32, cp: GPtr<u8>, ent: GPtr<u8>, b: u32, v: u32, p: u32, o: u32, d: u32, s: u32, c: u32
-    ) -> u8 = cdecl 0x5674E0 => unported;
-    /// `CTaskSimpleClimb::TestForClimb(CPed*, CVector&, float&, uint8&, bool)` (0x6803A0)
-    fn climb_test_for_climb(ped: GPtr<u8>, pos: GPtr<u8>, heading: GPtr<u8>, surf: GPtr<u8>, launch: u32) -> GPtr<u8> = cdecl 0x6803A0 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70, `ret 4`)
-    fn entity_register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
     /// `CTaskSimpleGetUp::StartAnim(CPed*)` (0x67C770, `ret 4`)
     fn get_up_start_anim(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x67C770 => unported;
     /// `CTaskSimpleFall::StartAnim(CPed*)` (0x67CA40, `ret 4`)
@@ -85,45 +74,21 @@ orig! {
     fn fall_process_fall(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x6784C0 => unported;
     /// `CTaskSimpleEvasiveStep::CTaskSimpleEvasiveStep(CEntity*)` (0x653160, `ret 4`)
     fn evasive_step_simple_ctor(t: GPtr<u8>, e: u32) -> GPtr<u8> = thiscall 0x653160 => unported;
-    /// `CTaskSimpleAchieveHeading::CTaskSimpleAchieveHeading(float, float, float)` (0x667E20, `ret 0xC`)
-    fn achieve_heading_ctor(t: GPtr<u8>, h: u32, rate: u32, tol: u32) -> GPtr<u8> = thiscall 0x667E20 => unported;
     /// `CGeneral::GetRadianAngleBetweenPoints(float x1, float y1, float x2, float y2)` (0x53CBE0, ST0)
     fn general_get_radian_angle_between_points(x1: f32, y1: f32, x2: f32, y2: f32) -> f64 = cdecl 0x53CBE0 => unported;
     /// `CEvent::GetEventType()` (vtable +4)
     fn v_get_event_type(e: GPtr<u8>) -> u32 = thiscall vslot 0x4 => unported;
     /// `CEvent::GetEventPriority()` (vtable +8)
     fn v_get_event_priority(e: GPtr<u8>) -> u32 = thiscall vslot 0x8 => unported;
-    /// `CAnimBlendAssociation::SetCurrentTime(float)` (0x4CEA80, `ret 4`)
-    fn assoc_set_current_time(a: GPtr<u8>, t: f32) = thiscall 0x4CEA80 => unported;
     /// `RpAnimBlendClumpGetFirstAssociation(RpClump*, uint32 flags)` (0x4D6A70)
     fn clump_get_first_association_flags(clump: u32, flags: u32) -> GPtr<u8> = cdecl 0x4D6A70 => unported;
     /// `CPedPlacement::IsPositionClearOfCars(const CPed*)` (0x616A40)
     fn ped_placement_is_position_clear_of_cars(ped: GPtr<u8>) -> GPtr<u8> = cdecl 0x616A40 => unported;
-    /// `CVehicle::IsVehiclePointerValid(CVehicle*)` (0x6E38F0)
-    fn vehicle_is_pointer_valid(v: GPtr<u8>) -> u8 = cdecl 0x6E38F0 => unported;
     /// `CPlaceable::GetMatrix()` (0x411990)
     fn placeable_get_matrix(e: GPtr<u8>) -> u32 = thiscall 0x411990 => unported;
     /// `CCollision::ProcessColModels(matA, colA, matB, colB, colPoints, lineColPoints, lineDists, doSeparation)`
     /// (0x4185C0)
     fn collision_process_col_models(ma: u32, ca: u32, mb: u32, cb: u32, cp: u32, lp: u32, ld: u32, sep: u32) -> i32 = cdecl 0x4185C0 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    fn pad_get_pad(id: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CPedDamageResponseCalculator::CPedDamageResponseCalculator(CEntity*, float, eWeaponType, ePedPieceTypes, bool)`
-    /// (0x4AD3F0, `ret 0x14`)
-    fn damage_calc_ctor(c: GPtr<u8>, e: GPtr<u8>, dmg: u32, wt: u32, piece: u32, a5: u32) -> GPtr<u8> = thiscall 0x4AD3F0 => unported;
-    /// `CEventDamage::CEventDamage(CEntity*, uint32 time, eWeaponType, ePedPieceTypes, uint8, bool, bool)` (0x4AD830,
-    /// `ret 0x1C`)
-    fn event_damage_ctor(e: GPtr<u8>, src: GPtr<u8>, time: u32, wt: u32, piece: u32, dir: u32, a6: u32, a7: u32) -> GPtr<u8> = thiscall 0x4AD830 => unported;
-    /// `CEventDamage::AffectsPed(CPed*)` (0x4B35A0, `ret 4`)
-    fn event_damage_affects_ped(e: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x4B35A0 => unported;
-    /// `CPedDamageResponseCalculator::ComputeDamageResponse(CPed*, CPedDamageResponse*, bool)` (0x4B5AC0, `ret 0xC`)
-    fn damage_calc_compute_damage_response(c: GPtr<u8>, ped: GPtr<u8>, r: GPtr<u8>, speak: u32) = thiscall 0x4B5AC0 => unported;
-    /// `FUN_004ad960`: the `CEventDamage` destructor the original calls on its stack event
-    fn event_damage_dtor(e: GPtr<u8>) = thiscall 0x4AD960 => unported;
-    /// `CPedDamageResponseCalculator::~CPedDamageResponseCalculator` (0x4AD420)
-    fn damage_calc_dtor(c: GPtr<u8>) = thiscall 0x4AD420 => unported;
-    /// `CPed::SetPedState(ePedState)` (0x5E4500, `ret 4`)
-    fn ped_set_ped_state(p: GPtr<u8>, s: u32) = thiscall 0x5E4500 => unported;
 }
 
 use sa_core::field::ptr_of as buf;

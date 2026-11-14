@@ -14,13 +14,20 @@ pub const GLOBALS: &[GlobalDesc] = &[];
 /// `TheCamera` (0xB6F028).
 const THE_CAMERA: usize = 0xB6F028;
 
+use crate::bindings::add_police_car_occupants;
+use crate::bindings::camera_is_sphere_visible;
+use crate::bindings::choose_police_car_model;
+use crate::bindings::get_position as node_get_position;
+use crate::bindings::set_up_driver_and_passengers_for_vehicle;
+use sa_core::bindings::entity_register_reference as register_reference;
+use sa_core::bindings::task_new;
+use sa_core::bindings::world_add;
+use sa_world::bindings::automobile_place_on_road_properly;
+use sa_world::bindings::bike_place_on_road_properly;
+use sa_world::bindings::find_objects_kinda_colliding;
 orig! {
-    /// `CCarCtrl::ChoosePoliceCarModel(uint32)` (0x421980)
-    fn choose_police_car_model(ignore: u32) -> i32 = cdecl 0x421980 => crate::carctrl2::choose_police_car_model;
     /// `CCarCtrl::GetNewVehicleDependingOnCarModel(int32, uint8)` (0x421440)
     fn get_new_vehicle_depending_on_car_model(mi: i32, by: u32) -> GPtr<u8> = cdecl 0x421440 => crate::carctrl5::get_new_vehicle_depending_on_car_model;
-    /// `CPathNode::GetPosition()` (0x420A10, thiscall, hidden return)
-    fn node_get_position(node: GPtr<u8>, out: GPtr<f32>) -> GPtr<f32> = thiscall 0x420A10 => crate::pathfind::get_position;
     /// `CWorld::ProcessVerticalLine(const CVector&, float, CColPoint&, CEntity*&, bool x6, CStoredCollPoly*)` (0x5674E0)
     fn process_vertical_line(o: GPtr<f32>, z: f32, cp: GPtr<f32>, ent: GPtr<u32>, b: u32, v: u32, p: u32, ob: u32, d: u32, see: u32, poly: u32) -> u8 = cdecl 0x5674E0 => unported;
     /// virtual slot 0 of a `CEntity`: the deleting destructor
@@ -29,32 +36,16 @@ orig! {
     fn vehicle_base_distance(v: GPtr<u8>) -> f64 = thiscall vslot 0xD4 => unported;
     /// `CEntity::GetIsOnScreen()` (0x534540)
     fn entity_get_is_on_screen(e: GPtr<u8>) -> u8 = thiscall 0x534540 => sa_world::world::entity::get_is_on_screen_port;
-    /// `CCamera::IsSphereVisible(const CVector&, float)` (0x420D40)
-    fn camera_is_sphere_visible(cam: GPtr<u8>, c: GPtr<f32>, r: f32) -> u8 = thiscall 0x420D40 => unported;
-    /// `CWorld::FindObjectsKindaColliding(const CVector&, float, bool, int16*, int16, CEntity**, bool x5)` (0x568B80)
-    fn find_objects_kinda_colliding(pos: GPtr<f32>, r: f32, b2d: u32, cnt: GPtr<i16>, max: i32, out: GPtr<u32>, bld: u32, veh: u32, ped: u32, obj: u32, dum: u32) = cdecl 0x568B80 => unported;
     /// `CPlaceable::GetTopDirection()` (0x41CCB0, thiscall, hidden return)
     fn get_top_direction(e: GPtr<u8>, out: GPtr<f32>) -> GPtr<f32> = thiscall 0x41CCB0 => unported;
     /// `FUN_0040FEC0(CVector* out, const CVector*, float)` (0x40FEC0): `*out = v * f`
     fn vec_mul(out: GPtr<f32>, v: GPtr<f32>, f: f32) -> GPtr<f32> = cdecl 0x40FEC0 => unported;
-    /// `CCarCtrl::SetUpDriverAndPassengersForVehicle(CVehicle*, int32, int32, bool, bool, int32)` (0x4217C0)
-    fn set_up_driver_and_passengers_for_vehicle(v: GPtr<u8>, pt: i32, min: i32, a: u32, b: u32, max: i32) = cdecl 0x4217C0 => crate::carctrl2::set_up_driver_and_passengers_for_vehicle;
     /// `CMatrix::operator=(const CMatrix&)` (0x59BBC0)
     fn matrix_assign(this: GPtr<u8>, o: GPtr<u8>) = thiscall 0x59BBC0 => unported;
     /// `CPlaceable::SetPosn(const CVector&)` (0x4241C0)
     fn set_posn_v(e: GPtr<u8>, p: GPtr<f32>) = thiscall 0x4241C0 => unported;
     /// `CVehicle::ChangeLawEnforcerState(bool)` (0x6D2330)
     fn change_law_enforcer_state(v: GPtr<u8>, b: u8) = thiscall 0x6D2330 => unported;
-    /// `CWorld::Add(CEntity*)` (0x563220)
-    fn world_add(e: GPtr<u8>) = cdecl 0x563220 => unported;
-    /// `CBike::PlaceOnRoadProperly()` (0x6BEEB0)
-    fn bike_place_on_road_properly(v: GPtr<u8>) = thiscall 0x6BEEB0 => unported;
-    /// `CAutomobile::PlaceOnRoadProperly()` (0x6AF420)
-    fn automobile_place_on_road_properly(v: GPtr<u8>) = thiscall 0x6AF420 => unported;
-    /// `CCarAI::AddPoliceCarOccupants(CVehicle*, bool)` (0x41C070)
-    fn add_police_car_occupants(v: GPtr<u8>, always: u8) = cdecl 0x41C070 => crate::carctrl4::add_police_car_occupants;
-    /// `CTask::operator new(uint32)` (0x61A5A0)
-    fn task_new(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => unported;
     /// `CTaskComplexCarDriveWander::CTaskComplexCarDriveWander(CVehicle*, eCarDrivingStyle, float)` (0x63CB10)
     fn drive_wander_ctor(this: GPtr<u8>, v: GPtr<u8>, style: u32, speed: f32) -> GPtr<u8> = thiscall 0x63CB10 => unported;
     /// `CTaskManager::SetTask(CTask*, int32, bool)` (0x681AF0)
@@ -65,8 +56,6 @@ orig! {
     fn event_group_add(this: GPtr<u8>, ev: GPtr<u32>, b: u8) -> GPtr<u8> = thiscall 0x4AB420 => unported;
     /// `CEventAcquaintancePed::~CEventAcquaintancePed()` (0x4AF890)
     fn event_acquaintance_ped_dtor(this: GPtr<u32>) = thiscall 0x4AF890 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    fn register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
 }
 
 /// `fld; fcom 0.0; test ah, 5; jp skip; fchs`: the absolute value as the bytes take it (NaN unchanged).

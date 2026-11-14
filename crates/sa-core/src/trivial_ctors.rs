@@ -3,12 +3,8 @@
 //! bytes.
 
 use crate::mem::GPtr;
-use crate::orig;
 
-orig! {
-    /// `CScriptsForBrains::Init()` (0x46A8C0)
-    fn scripts_for_brains_init(this: GPtr<u8>) = thiscall 0x46A8C0 => unported;
-}
+use crate::bindings::scripts_for_brains_init;
 
 /// `mov eax, ecx; ret`: an empty constructor returning `this`.
 fn identity(this: GPtr<u8>) -> GPtr<u8> {

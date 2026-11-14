@@ -13,6 +13,20 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::ped_placement_find_z_coor_for_ped as find_z_coor_for_ped;
+use sa_core::bindings::general_limit_radian_angle as limit_radian_angle;
+use sa_core::bindings::matrix_copy_to_rw_matrix as matrix_copy_to_rw;
+use sa_core::bindings::matrix_dtor;
+use sa_core::bindings::matrix_set_rotate_z_only;
+use sa_core::bindings::matrix_update_matrix as matrix_update;
+use sa_world::bindings::anim_door_offsets as veh_anim_group_door_offsets;
+use sa_world::bindings::bike_corrected_world_door_position as bike_get_corrected_world_door_position;
+use sa_world::bindings::matrix_copy_ctor;
+use sa_world::bindings::multiply3x3;
+use sa_world::bindings::multiply3x3_vm as multiply3x3_transposed;
+use sa_world::bindings::placeable_set_matrix;
+use sa_world::bindings::set_orientation as placeable_set_orientation;
+use sa_world::bindings::vehicle_is_upside_down;
 orig! {
     /// `FUN_0064e4b0(int32 animGroup, int32 animId)` (0x64E4B0, cdecl, ST0): the group's critical blend time
     fn veh_anim_critical_blend_time(group: u32, anim: u32) -> f64 = cdecl 0x64E4B0 => unported;
@@ -20,46 +34,18 @@ orig! {
     fn veh_anim_group_get_group(g: GPtr<u8>, anim: i32) -> i32 = thiscall 0x6E3B00 => unported;
     /// `CVehicleAnimGroup::ComputeCriticalBlendTime(int32)` (0x6E3C80, `ret 4`, ST0)
     fn veh_anim_group_critical_blend_time(g: GPtr<u8>, anim: i32) -> f64 = thiscall 0x6E3C80 => unported;
-    /// `CVehicleAnimGroup::ComputeAnimDoorOffsets(CVector* ret, int32 door)` (0x6E3D10, `ret 8`)
-    fn veh_anim_group_door_offsets(g: GPtr<u8>, ret: GPtr<u8>, door: u32) -> GPtr<u8> = thiscall 0x6E3D10 => unported;
     /// `CTaskUtilityLineUpPedWithCar::GetPositionToOpenCarDoor(CVector* out, CVehicle*, float, assoc)` (0x650A80)
     fn line_up_get_position_to_open_car_door(u: GPtr<u8>, out: GPtr<u8>, veh: GPtr<u8>, t: u32, a: GPtr<u8>) -> GPtr<u8> = thiscall 0x650A80 => unported;
-    /// `CBike::GetCorrectedWorldDoorPosition(CVector& out, CVector a, CVector b)` (0x6BF230, `ret 0x1C`)
-    fn bike_get_corrected_world_door_position(b: GPtr<u8>, out: GPtr<u8>, a0: u32, a1: u32, a2: u32, b0: u32, b1: u32, b2: u32) -> GPtr<u8> = thiscall 0x6BF230 => unported;
-    /// `Multiply3x3(CVector* out, const CVector&, const CMatrix&)` (0x59C810, cdecl): the transposed product
-    fn multiply3x3_transposed(out: GPtr<u8>, v: GPtr<u8>, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C810 => unported;
-    /// `Multiply3x3(CVector* out, const CMatrix&, const CVector&)` (0x59C790, cdecl)
-    fn multiply3x3(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C790 => unported;
-    /// `CPedPlacement::FindZCoorForPed(CVector*)` (0x616920, cdecl)
-    fn find_z_coor_for_ped(pos: GPtr<u8>) -> u8 = cdecl 0x616920 => unported;
-    /// `CVehicle::IsUpsideDown()` (0x6D1D90)
-    fn vehicle_is_upside_down(v: GPtr<u8>) -> u8 = thiscall 0x6D1D90 => unported;
-    /// `CGeneral::LimitRadianAngle(float)` (0x53CB50, ST0)
-    fn limit_radian_angle(a: u32) -> f64 = cdecl 0x53CB50 => unported;
     /// the vehicle's virtual at +0xD4 (ST0; the distance its base sits below the position)
     fn v_vehicle_d4(v: GPtr<u8>) -> f64 = thiscall vslot 0xD4 => unported;
-    /// `CMatrix::CMatrix(const CMatrix&)` (0x59BCF0, `ret 4`)
-    fn matrix_copy_ctor(m: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = thiscall 0x59BCF0 => unported;
-    /// `CMatrix::~CMatrix` (0x59ACD0)
-    fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
     /// `CMatrix::SetRotateZ(float)` (0x59B0E0)
     fn matrix_set_rotate_z(m: GPtr<u8>, a: u32) = thiscall 0x59B0E0 => unported;
-    /// `CMatrix::SetRotateZOnly(float)` (0x59B020)
-    fn matrix_set_rotate_z_only(m: GPtr<u8>, a: u32) = thiscall 0x59B020 => unported;
     /// `CMatrix::operator*=(const CMatrix&)` (0x411A80)
     fn matrix_mul_assign(m: GPtr<u8>, o: GPtr<u8>) -> GPtr<u8> = thiscall 0x411A80 => unported;
-    /// `CMatrix::CopyToRwMatrix(RwMatrix*)` (0x59B8B0)
-    fn matrix_copy_to_rw(m: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x59B8B0 => unported;
-    /// `CMatrix::UpdateMatrix(RwMatrix*)` (0x59AD20)
-    fn matrix_update(m: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x59AD20 => unported;
     /// `RtQuatConvertFromMatrix(RtQuat*, const RwMatrix*)` (0x7EB5C0, cdecl)
     fn rt_quat_convert_from_matrix(q: GPtr<u8>, m: GPtr<u8>) -> u32 = cdecl 0x7EB5C0 => unported;
     /// `RtQuatSetupSlerpCache(const RtQuat* from, const RtQuat* to, RtQuatSlerpCache*)` (0x7EC220, cdecl)
     fn rt_quat_setup_slerp_cache(from: GPtr<u8>, to: GPtr<u8>, cache: GPtr<u8>) -> u32 = cdecl 0x7EC220 => unported;
-    /// `CPlaceable::SetMatrix(const CMatrix&)` (0x54F610)
-    fn placeable_set_matrix(e: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F610 => unported;
-    /// `CPlaceable::SetOrientation(float x, float y, float z)` (0x439A80)
-    fn placeable_set_orientation(e: GPtr<u8>, ax: u32, ay: u32, az: u32) = thiscall 0x439A80 => unported;
 }
 
 const TIME_MS: usize = 0xB7CB84;

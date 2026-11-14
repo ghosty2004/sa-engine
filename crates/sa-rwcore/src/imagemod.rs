@@ -44,15 +44,13 @@ const K_INV255: u32 = 0x3B80_8081;
 const K_255: u32 = 0x437F_0000;
 const K_HALF: u32 = 0x3F00_0000;
 
+use crate::bindings::free_list_create_prealloc;
+use sa_core::bindings::crt_pow;
 orig! {
-    /// `RwFreeListCreateAndPreallocateSpace` (0x801B70)
-    fn free_list_create_prealloc(size: u32, per_block: u32, align: u32, n: u32, space: GPtr<u8>, hint: u32) -> GPtr<u8> = cdecl 0x801B70 => crate::memory::rw_freelist_create_and_preallocate_space;
     /// `RwFreeListDestroy(fl)` (0x801B80)
     fn free_list_destroy(fl: GPtr<u8>) -> u32 = cdecl 0x801B80 => crate::memory::rw_freelist_destroy;
     /// `RwImageSetGamma(gamma)` (0x803FE0)
     fn image_set_gamma_call(gamma: f32) -> i32 = cdecl 0x803FE0 => rw_image_set_gamma;
-    /// CRT `pow(double, double)` (0x8220F0; takes the SSE2 path when available, so no host model)
-    fn crt_pow(a: f64, b: f64) -> f64 = cdecl 0x8220F0 => unported;
 }
 
 /// `M = G + [0xC9A65C]`, recomputed on every access as the original reloads both globals.

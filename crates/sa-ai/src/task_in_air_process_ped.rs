@@ -8,33 +8,26 @@ use sa_math::vector::CVector;
 
 use crate::common::*;
 
+use crate::bindings::anim_set_delete_callback as set_delete_callback;
+use crate::bindings::assoc_set_finish_callback as set_finish_callback;
+use crate::bindings::climb_test_for_climb;
+use sa_core::bindings::entity_register_reference;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::vector_mul_scalar;
+use sa_world::bindings::world_process_vertical_line;
 orig! {
     /// `RpAnimBlendClumpGetAssociation(RpClump*, AnimationId)` (0x4D68B0)
     fn clump_get_association(clump: GPtr<u8>, anim: i32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
     /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float)` (0x4D4610)
     fn blend_animation(clump: GPtr<u8>, group: u32, anim: u32, delta: f32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
-    /// `CAnimBlendAssociation::SetDeleteCallback(void (*)(CAnimBlendAssociation*, void*), void*)` (0x4CEBC0)
-    fn set_delete_callback(a: GPtr<u8>, f: u32, data: u32) = thiscall 0x4CEBC0 => unported;
-    /// `CAnimBlendAssociation::SetFinishCallback(void (*)(CAnimBlendAssociation*, void*), void*)` (0x4CEBE0)
-    fn set_finish_callback(a: GPtr<u8>, f: u32, data: u32) = thiscall 0x4CEBE0 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
     /// `CPed::Say(uint16 id, uint32 offset, float volume, uint8, uint8, uint8)` (0x5EFFE0)
     fn ped_say(p: GPtr<u8>, id: u32, offset: u32, volume: u32, a4: u32, a5: u32, a6: u32) = thiscall 0x5EFFE0 => unported;
     /// `CPhysical::ApplyMoveForce(float, float, float)` (0x4ABBA0)
     fn apply_move_force_xyz(p: GPtr<u8>, x: f32, y: f32, z: f32) = thiscall 0x4ABBA0 => unported;
-    /// `operator*(const CVector&, float)` (0x40FEC0, cdecl, result through the first argument)
-    fn vector_mul_scalar(out: GPtr<u8>, v: GPtr<u8>, s: f32) -> GPtr<u8> = cdecl 0x40FEC0 => unported;
     /// `CPhysical::ApplyMoveForce(CVector)` (0x5429F0)
     fn apply_move_force(p: GPtr<u8>, force: CVector) = thiscall 0x5429F0 => unported;
-    /// `CWorld::ProcessVerticalLine(const CVector&, float z, CColPoint&, CEntity*&, bool x6, CStoredCollPoly*)` (0x5674E0)
-    fn world_process_vertical_line(pos: GPtr<u8>, z: u32, cp: GPtr<u8>, ent: GPtr<u8>, b: u32, v: u32, p: u32, o: u32, d: u32, s: u32, l: u32) -> u8 = cdecl 0x5674E0 => unported;
     /// `CTask::GetTaskType()` (vtable slot 0x10)
     fn task_get_type(t: GPtr<u8>) -> u32 = thiscall vslot 0x10 => unported;
-    /// `CTaskSimpleClimb::TestForClimb(CPed*, CVector&, float&, uint8&, bool)` (0x6803A0)
-    fn climb_test_for_climb(ped: GPtr<u8>, pos: GPtr<u8>, heading: GPtr<u8>, surf: GPtr<u8>, launch: u32) -> GPtr<u8> = cdecl 0x6803A0 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    fn entity_register_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571B70 => unported;
 }
 
 /// `CTimer::m_snTimeInMilliseconds`

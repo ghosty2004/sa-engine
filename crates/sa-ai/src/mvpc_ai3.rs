@@ -11,13 +11,21 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::bbox_centre_uncached;
+use crate::bindings::bbox_corners_uncached;
+use crate::bindings::dtor_4aeea0 as event_sexy_ped_dtor;
+use crate::bindings::ik_manager_remove_ik_chain;
+use crate::bindings::rt_quat_rotate;
+use sa_core::bindings::general_random_int_in_range as random_int_in_range;
+use sa_stream::bindings::rand;
+use sa_world::bindings::interesting_events_add;
+use sa_world::bindings::ped_say;
+use sa_world::bindings::task_simple_dtor;
 orig! {
     /// `CTaskComplex::CTaskComplex` (0x61A3B0)
     fn task_complex_ctor(t: u32) -> u32 = thiscall 0x61A3B0 => crate::gen_ctors::g_ctask_complex_61a3b0;
     /// `CTaskSimple::CTaskSimple` (0x61A390)
     fn task_simple_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A390 => crate::mvpa_ai1::task_simple_ctor;
-    /// `CTaskSimple::~CTaskSimple` (0x61A3A0)
-    fn task_simple_dtor(t: GPtr<u8>) = thiscall 0x61A3A0 => unported;
     /// `CTask::operator new(uint32)` (0x61A5A0)
     fn task_new_o(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => crate::mvpa_ai1::task_operator_new;
     /// `CEntity::RegisterReference(CEntity**)` (0x571B70, `ret 4`)
@@ -26,39 +34,21 @@ orig! {
     fn entity_clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => sa_world::world::entity::clean_up_old_reference;
     /// `CPointRoute::operator new(uint32)` (0x41B7C0, cdecl)
     fn point_route_new(size: u32) -> GPtr<u8> = cdecl 0x41B7C0 => sa_world::world::mvpa2::point_route_new;
-    /// `IKChainManager_c::RemoveIKChain(IKChain_c*)` (0x618170, `ret 4`)
-    fn ik_manager_remove_ik_chain(m: GPtr<u8>, c: GPtr<u8>) = thiscall 0x618170 => unported;
-    /// `CPed::Say(uint16, uint32, float, bool, bool, bool)` (0x5EFFE0, `ret 0x18`)
-    fn ped_say(p: GPtr<u8>, id: u32, delay: u32, prob: u32, a: u32, b: u32, c: u32) -> u32 = thiscall 0x5EFFE0 => unported;
     /// `CTask::Clone` (vtable +4)
     fn v_clone(t: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x4 => unported;
     /// `CTaskManager::FindActiveTaskByType(int32)` (0x681740, `ret 4`)
     fn tm_find_active_task_by_type(tm: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x681740 => crate::tasks::task_manager_find_active_task_by_type;
-    /// CRT `rand()` (0x821B1E); called through `at_site` with the original return address.
-    fn rand() -> i32 = cdecl 0x821B1E => sa_core::crt::rand_owned;
-    /// `CGeneral::GetRandomNumberInRange(int32, int32)` (0x407180, cdecl)
-    fn random_int_in_range(lo: i32, hi: i32) -> i32 = cdecl 0x407180 => unported;
     /// `CGeneral::GetRandomNumberInRange<float>(float, float)` (0x41BD90, cdecl, ST0)
     fn random_float_in_range(lo: u32, hi: u32) -> f64 = cdecl 0x41BD90 => unported;
-    /// `RtQuatRotate(RtQuat*, const RwV3d* axis, RwReal angle, RwOpCombineType)` (0x7EB7C0, cdecl)
-    fn rt_quat_rotate(q: GPtr<u8>, axis: u32, angle: f32, op: u32) -> GPtr<u8> = cdecl 0x7EB7C0 => unported;
     /// `CTaskSimpleCarDrive::StartBopping(CPed*)` (0x642760, `ret 4`)
     fn start_bopping_o(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x642760 => crate::mvpc_ai3::car_drive_start_bopping;
-    /// `CInterestingEvents::Add(EType, CEntity*)` (0x602590, `ret 8`)
-    fn interesting_events_add(ie: GPtr<u8>, ty: u32, e: GPtr<u8>) = thiscall 0x602590 => unported;
     /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, bool x7)` (0x56A490, cdecl; AL)
     #[allow(clippy::too_many_arguments)]
     fn world_los_clear(a: GPtr<u8>, b: GPtr<u8>, bld: u32, veh: u32, peds: u32, obj: u32, dum: u32, see: u32, cam: u32) -> u32 = cdecl 0x56A490 => unported;
     /// `CEventSexyPed::CEventSexyPed(CPed*)` (0x4AEDF0, `ret 4`)
     fn event_sexy_ped_ctor(e: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x4AEDF0 => unported;
-    /// `CEventSexyPed::~CEventSexyPed` (0x4AEEA0)
-    fn event_sexy_ped_dtor(e: GPtr<u8>) = thiscall 0x4AEEA0 => unported;
     /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, `ret 8`)
     fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, valid: u8) -> GPtr<u8> = thiscall 0x4AB420 => crate::group::event_group_add;
-    /// `CPedGeometryAnalyser::ComputeEntityBoundingBoxCornersUncached(float z, CEntity&, CVector*)` (0x5F1FA0, cdecl)
-    fn bbox_corners_uncached(z: u32, e: GPtr<u8>, corners: GPtr<u8>) = cdecl 0x5F1FA0 => unported;
-    /// `CPedGeometryAnalyser::ComputeEntityBoundingBoxCentreUncached(float z, const CVector*, CVector&)` (0x5F1600, cdecl)
-    fn bbox_centre_uncached(z: u32, corners: GPtr<u8>, out: GPtr<u8>) = cdecl 0x5F1600 => crate::mvpa_ai1::compute_entity_bounding_box_centre_uncached;
     /// `CColSphere::Set(float radius, const CVector& centre, uint8 material, uint8 flags, uint8 lighting)` (0x40FD10,
     /// `ret 0x14`)
     fn col_sphere_set(s: GPtr<u8>, r: f32, c: GPtr<u8>, m: u32, f: u32, l: u32) = thiscall 0x40FD10 => unported;

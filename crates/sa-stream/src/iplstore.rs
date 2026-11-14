@@ -75,6 +75,24 @@ pub const STR_STREAM_SUFFIX: u32 = 0x85897C;
 const THE_CAMERA: u32 = 0xB6F028;
 const FRONT_END_MENU_MANAGER: u32 = 0xBA6748;
 
+pub use crate::bindings::col_accel_is_cache_loading;
+pub use crate::bindings::load_object_instance_bin;
+pub use crate::bindings::menu_message_screen as message_screen;
+pub use crate::bindings::quad_ctor;
+pub use crate::bindings::quad_dtor;
+pub use crate::bindings::quad_operator_delete;
+pub use crate::bindings::quad_operator_new;
+pub use crate::bindings::strchr;
+pub use crate::bindings::strnicmp;
+pub use crate::bindings::strrchr;
+pub use sa_core::bindings::camera_get_screen_fade_status as get_screen_fade_status;
+pub use sa_core::bindings::crt_free as operator_delete_array;
+pub use sa_core::bindings::crt_free_8214bd as free;
+pub use sa_core::bindings::find_player_ped;
+pub use sa_core::bindings::stricmp;
+pub use sa_core::bindings::strncmp;
+pub use sa_core::bindings::world_add;
+pub use sa_core::bindings::world_remove;
 orig! {
     /// `CIplPool::New()` (0x4059B0, UNK-game)
     pub fn ipl_pool_new(p: GPtr<CPool<IplDef>>) -> GPtr<IplDef> = thiscall 0x4059B0 => pool::pool_new;
@@ -90,16 +108,6 @@ orig! {
     pub fn quad_add_item(node: GPtr<u8>, item: GPtr<u8>, r: GPtr<u8>) = thiscall 0x552CD0 => sa_core::quadtree::add_item;
     /// `CQuadTreeNode::DeleteItem(item)` (0x552A40)
     pub fn quad_delete_item(node: GPtr<u8>, item: GPtr<u8>) = thiscall 0x552A40 => sa_core::quadtree::delete_item;
-    /// `CQuadTreeNode::operator new(size)` (0x552C80)
-    pub fn quad_operator_new(size: u32) -> GPtr<u8> = cdecl 0x552C80 => unported;
-    /// `CQuadTreeNode::operator delete(p)` (0x552C90)
-    pub fn quad_operator_delete(p: GPtr<u8>) = cdecl 0x552C90 => unported;
-    /// `CQuadTreeNode::CQuadTreeNode(const CRect&, int levels)` (0x552830)
-    pub fn quad_ctor(node: GPtr<u8>, r: GPtr<u8>, levels: i32) -> GPtr<u8> = thiscall 0x552830 => unported;
-    /// `CQuadTreeNode::~CQuadTreeNode()` (0x552520)
-    pub fn quad_dtor(node: GPtr<u8>) = thiscall 0x552520 => unported;
-    /// `FindPlayerPed(int)` (0x56E210)
-    pub fn find_player_ped(n: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
     /// `FindPlayerVehicle(int, bool)` (0x56E0D0)
     pub fn find_player_vehicle(n: i32, include_remote: u8) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
     /// `CStreaming::RequestModel(id, flags)` (0x4087E0)
@@ -108,18 +116,10 @@ orig! {
     pub fn remove_model(id: i32) = cdecl 0x4089A0 => crate::streaming::remove_model;
     /// `CStreaming::LoadAllRequestedModels(bool)` (0x40EA10)
     pub fn load_all_requested_models(only_priority: u8) = cdecl 0x40EA10 => crate::streaming::load_all_requested_models;
-    /// `CCamera::GetScreenFadeStatus()` (0x50AE20)
-    pub fn get_screen_fade_status(cam: GPtr<u8>) -> i32 = thiscall 0x50AE20 => unported;
-    /// `CMenuManager::MessageScreen(key, blackBackground, cameraUpdateStarted)` (0x579330)
-    pub fn message_screen(menu: GPtr<u8>, key: GPtr<u8>, black: u8, cam: u8) = thiscall 0x579330 => unported;
     /// `CTimer::Suspend()` (0x5619D0)
     pub fn timer_suspend() = cdecl 0x5619D0 => sa_core::timer::suspend;
     /// `CTimer::Resume()` (0x561A00)
     pub fn timer_resume() = cdecl 0x561A00 => sa_core::timer::resume;
-    /// `CWorld::Add(entity)` (0x563220)
-    pub fn world_add(e: GPtr<u8>) = cdecl 0x563220 => unported;
-    /// `CWorld::Remove(entity)` (0x563280)
-    pub fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
     /// entity `vtbl[0]`: the virtual deleting destructor (`delete` flag 1)
     pub fn entity_delete(e: GPtr<u8>, flags: i32) -> GPtr<u8> = thiscall vslot 0x00 => unported;
     /// entity `vtbl[2]`: `CEntity::Add()`
@@ -128,8 +128,6 @@ orig! {
     pub fn entity_get_bound_rect(e: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x24 => unported;
     /// `CTheCarGenerators::RemoveCarGenerators(uint8 ipl)` (0x6F3240; called with the int32 argument)
     pub fn remove_car_generators(ipl: i32) = cdecl 0x6F3240 => unported;
-    /// `CColAccel::isCacheLoading()` (0x5B2AC0, AL)
-    pub fn col_accel_is_cache_loading() -> u8 = cdecl 0x5B2AC0 => unported;
     /// `CColAccel::getIplDef(IplDef* ret, int slot)` (0x5B2EF0, struct return through `ret`)
     pub fn col_accel_get_ipl_def(ret: GPtr<IplDef>, slot: i32) -> GPtr<IplDef> = cdecl 0x5B2EF0 => unported;
     /// `CColAccel::setIplDef(int slot, IplDef def)` (0x5B2ED0, the def by value = 13 dwords)
@@ -138,8 +136,6 @@ orig! {
     pub fn load_line(data: GPtr<GPtr<u8>>, size: GPtr<i32>) -> GPtr<u8> = cdecl 0x536FE0 => crate::fileloader::load_line_buffer;
     /// `CFileLoader::LoadObjectInstance(const char* line)` (0x538690)
     pub fn load_object_instance_text(line: GPtr<u8>) -> GPtr<u8> = cdecl 0x538690 => crate::fileloader::load_object_instance_line;
-    /// `CFileLoader::LoadObjectInstance(CFileObjectInstance*, const char* name)` (0x538090)
-    pub fn load_object_instance_bin(inst: GPtr<u8>, name: GPtr<u8>) -> GPtr<u8> = cdecl 0x538090 => unported;
     /// `CFileLoader::LoadCarGenerator(CFileCarGenerator*, int ipl)` (0x537990)
     pub fn load_car_generator(cg: GPtr<u8>, ipl: i32) = cdecl 0x537990 => crate::fileloader::load_car_generator_struct;
     /// `CGenericGameStorage::SaveDataToWorkBuffer(void*, int)` (0x5D1270)
@@ -149,14 +145,6 @@ orig! {
     /// CRT `operator new` (0x82119A), `operator new[]` (0x821195), `operator delete[]` (0x8213AE), `free` (0x8214BD)
     pub fn operator_new(n: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
     pub fn operator_new_array(n: u32) -> GPtr<u8> = cdecl 0x821195 => unported;
-    pub fn operator_delete_array(p: GPtr<u8>) = cdecl 0x8213AE => unported;
-    pub fn free(p: GPtr<u8>) = cdecl 0x8214BD => unported;
-    /// CRT `_stricmp` (0x8229B6), `_strnicmp` (0x835AC7), `strncmp` (0x8214D0), `strrchr` (0x821490), `strchr` (0x8213D0)
-    pub fn stricmp(a: GPtr<u8>, b: GPtr<u8>) -> i32 = cdecl 0x8229B6 => unported;
-    pub fn strnicmp(a: GPtr<u8>, b: GPtr<u8>, n: u32) -> i32 = cdecl 0x835AC7 => unported;
-    pub fn strncmp(a: GPtr<u8>, b: GPtr<u8>, n: u32) -> i32 = cdecl 0x8214D0 => unported;
-    pub fn strrchr(s: GPtr<u8>, c: i32) -> GPtr<u8> = cdecl 0x821490 => unported;
-    pub fn strchr(s: GPtr<u8>, c: i32) -> GPtr<u8> = cdecl 0x8213D0 => unported;
     /// Rust-internal calls through the hook table
     pub fn set_ipls_required_call(posn: GPtr<f32>, area: i32) = cdecl 0x404700 => set_ipls_required;
     pub fn include_entity_call(slot: i32, e: GPtr<u8>) = cdecl 0x404C90 => include_entity;

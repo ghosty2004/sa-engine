@@ -22,39 +22,29 @@ const ACTIVE: usize = 0xC098E0;
 /// `sizeof(CPedGroup)`
 const GROUP_SIZE: usize = 0x2D4;
 
+use crate::bindings::group_intel_process as pgi_process;
+use crate::bindings::membership_process;
+use crate::bindings::membership_remove_member;
+use crate::bindings::pgi_flush;
+use sa_core::bindings::entity_register_reference;
+use sa_core::bindings::ped_is_alive;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::is_player_on_a_mission as scripts_is_player_on_a_mission;
+use sa_world::bindings::ped_give_object_to_hold as ped_give_object_to_ped_to_hold;
+use sa_world::bindings::set_ped_decision_maker_type as intel_set_ped_decision_maker_type;
 orig! {
     /// `CPedGroupIntelligence::CPedGroupIntelligence` (0x5F7250)
     fn pgi_ctor(i: GPtr<u8>) -> GPtr<u8> = thiscall 0x5F7250 => unported;
-    /// `CPedGroupIntelligence::Process` (0x5FC4A0)
-    fn pgi_process(i: GPtr<u8>) = thiscall 0x5FC4A0 => unported;
-    /// `CPedGroupIntelligence::Flush` (0x5F7350)
-    fn pgi_flush(i: GPtr<u8>) = thiscall 0x5F7350 => unported;
     /// `CPedGroupIntelligence::SetDefaultTaskAllocator(const CPedGroupDefaultTaskAllocator&)` (0x5FB280, `ret 4`)
     fn pgi_set_default_task_allocator(i: GPtr<u8>, a: GPtr<u8>) = thiscall 0x5FB280 => unported;
     /// `CPedGroupDefaultTaskAllocators::Get(int32)` (0x5F7200, cdecl)
     fn default_task_allocators_get(ty: i32) -> GPtr<u8> = cdecl 0x5F7200 => unported;
-    /// `CPedGroupMembership::Process` (0x5FBA60)
-    fn membership_process(m: GPtr<u8>) = thiscall 0x5FBA60 => unported;
     /// `CPedGroupMembership::AddMember(CPed*, int32)` (0x5F6AE0, `ret 8`)
     fn membership_add_member(m: GPtr<u8>, ped: GPtr<u8>, i: i32) = thiscall 0x5F6AE0 => unported;
-    /// `CPedGroupMembership::RemoveMember(int32)` (0x5F80D0, `ret 4`)
-    fn membership_remove_member(m: GPtr<u8>, i: i32) = thiscall 0x5F80D0 => unported;
     /// `CPedGroupMembership::GetObjectForPedToHold` (0x5F6950, cdecl)
     fn membership_get_object_for_ped_to_hold() -> i32 = cdecl 0x5F6950 => unported;
     /// `CPedGroup::Flush` (0x5FB790)
     fn group_flush(g: GPtr<u8>) = thiscall 0x5FB790 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70, `ret 4`)
-    fn entity_register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
-    /// `CPed::IsPlayer` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CPed::IsAlive` (0x5E0170)
-    fn ped_is_alive(p: GPtr<u8>) -> u8 = thiscall 0x5E0170 => unported;
-    /// `CPed::GiveObjectToPedToHold(int32 modelIndex, uint8)` (0x5E4390, `ret 8`)
-    fn ped_give_object_to_ped_to_hold(p: GPtr<u8>, model: i32, b: u32) = thiscall 0x5E4390 => unported;
-    /// `CPedIntelligence::SetPedDecisionMakerType(int32)` (0x600B50, `ret 4`)
-    fn intel_set_ped_decision_maker_type(i: GPtr<u8>, ty: i32) = thiscall 0x600B50 => unported;
-    /// `CTheScripts::IsPlayerOnAMission` (0x464D50)
-    fn scripts_is_player_on_a_mission() -> u8 = cdecl 0x464D50 => unported;
     /// `CTaskComplexGangFollower::CTaskComplexGangFollower(CPedGroup*, CPed*, uint8, CVector, float)` (0x65EAA0,
     /// `ret 0x1C`; the vector by value)
     #[allow(clippy::too_many_arguments)]
@@ -472,6 +462,10 @@ pub fn group_flush_port(this: GPtr<u8>) {
 /// `CTaskComplexFollowLeaderInFormation::ms_offsets` (0xC196E8, 7 (x, y) float pairs)
 const FORMATION_OFFSETS: usize = 0xC196E8;
 
+use sa_core::bindings::car_set_ped_out_ctor as car_set_ped_out_ctor_tp;
+use sa_core::bindings::car_set_ped_out_dtor as car_set_ped_out_dtor_tp;
+use sa_core::bindings::car_set_ped_out_process_ped as car_set_ped_out_process_ped_tp;
+use sa_world::bindings::compute_target_door_to_exit as car_enter_exit_compute_target_door_to_exit;
 orig! {
     /// `CPed::Teleport(CVector, bool)` (vtable +0x38, `ret 0x10`; the vector by value)
     fn v_ped_teleport(p: GPtr<u8>, x: u32, y: u32, z: u32, b: u32) = thiscall vslot 0x38 => unported;
@@ -479,14 +473,6 @@ orig! {
     fn v_event_type_tp(e: GPtr<u8>) -> i32 = thiscall vslot 0x4 => unported;
     /// `CTask::MakeAbortable(CPed*, int32, const CEvent*)` (vtable +0x18, `ret 0xC`)
     fn v_task_make_abortable_tp(t: GPtr<u8>, p: GPtr<u8>, prio: u32, e: u32) -> u8 = thiscall vslot 0x18 => unported;
-    /// `CCarEnterExit::ComputeTargetDoorToExit(const CVehicle*, const CPed*)` (0x64F110)
-    fn car_enter_exit_compute_target_door_to_exit(v: GPtr<u8>, p: GPtr<u8>) -> u32 = cdecl 0x64F110 => unported;
-    /// `CTaskSimpleCarSetPedOut::CTaskSimpleCarSetPedOut(CVehicle*, int32 door, bool)` (0x6478B0, `ret 0xC`)
-    fn car_set_ped_out_ctor_tp(t: GPtr<u8>, veh: GPtr<u8>, door: u32, b: u32) -> GPtr<u8> = thiscall 0x6478B0 => unported;
-    /// `CTaskSimpleCarSetPedOut::ProcessPed(CPed*)` (0x647D10, `ret 4`)
-    fn car_set_ped_out_process_ped_tp(t: GPtr<u8>, p: GPtr<u8>) -> u8 = thiscall 0x647D10 => unported;
-    /// `CTaskSimpleCarSetPedOut` complete destructor (0x647950)
-    fn car_set_ped_out_dtor_tp(t: GPtr<u8>) = thiscall 0x647950 => unported;
     /// `CPed::PositionAnyPedOutOfCollision()` (0x5E13C0)
     fn ped_position_any_ped_out_of_collision(p: GPtr<u8>) = thiscall 0x5E13C0 => unported;
 }
@@ -547,13 +533,11 @@ pub fn group_teleport(this: GPtr<u8>, pos: GPtr<f32>) {
     }
 }
 
+use crate::bindings::wander_gang_ctor as wander_gang_ctor_alloc;
 orig! {
     /// `CTaskComplexFollowLeaderInFormation::CTaskComplexFollowLeaderInFormation(CPedGroup*, CPed* leader, const
     /// CVector2D& offset, float)` (0x6949A0, `ret 0x10`)
     fn follow_leader_in_formation_ctor(t: GPtr<u8>, g: GPtr<u8>, leader: GPtr<u8>, off: GPtr<u8>, dist: u32) -> GPtr<u8> = thiscall 0x6949A0 => unported;
-    /// `CTaskComplexWanderGang::CTaskComplexWanderGang(int32 moveState, uint8 dir, int32 time, bool, float)`
-    /// (0x66F5C0, `ret 0x14`)
-    fn wander_gang_ctor_alloc(t: GPtr<u8>, ms: i32, dir: i32, time: i32, b: u32, f: u32) -> GPtr<u8> = thiscall 0x66F5C0 => unported;
 }
 
 /// `CPedGroupDefaultTaskAllocatorFollowLimited::AllocateDefaultTasks(CPedGroup*, CPed*)` (0x5F6C70, thiscall,

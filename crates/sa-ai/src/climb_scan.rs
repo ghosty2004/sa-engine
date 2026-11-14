@@ -9,49 +9,34 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use sa_core::bindings::atexit as crt_atexit;
+use sa_core::bindings::matrix_dtor;
+use sa_core::bindings::matrix_invert_59bdd0 as matrix_invert;
+use sa_core::bindings::matrix_mul_vec;
+use sa_core::bindings::matrix_set_translate_only;
+use sa_core::bindings::vector_magnitude;
+use sa_core::bindings::world_clear_scan_codes;
+use sa_stream::bindings::placeable_allocate_matrix;
+use sa_stream::bindings::simple_transform_update_matrix;
+use sa_world::bindings::entity_get_bound_centre;
+use sa_world::bindings::entity_get_col_model;
+use sa_world::bindings::get_task_swim as intel_get_task_swim;
+use sa_world::bindings::placeable_get_matrix;
+use sa_world::bindings::stats_get_fat_and_muscle_modifier;
+use sa_world::bindings::vector_sub;
 orig! {
     /// `CTaskSimpleClimb::CreateColModel()` (0x67A890)
     fn climb_create_col_model() -> u8 = cdecl 0x67A890 => unported;
-    /// `CMatrix * CVector` (0x59C890, `(CVector* out, const CMatrix*, const CVector*)`)
-    fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
-    /// `CWorld::ClearScanCodes()` (0x563470)
-    fn world_clear_scan_codes() = cdecl 0x563470 => unported;
     /// `CTaskSimpleClimb::ScanToGrabSectorList<...>(list, ped, pos&, angle&, surface&, launch, standUp, vault)`
     /// (0x67DE10, cdecl)
     #[allow(clippy::too_many_arguments)]
     fn scan_sector_list_c(list: GPtr<u8>, ped: GPtr<u8>, pos: GPtr<u8>, angle: GPtr<u8>, surface: GPtr<u8>, launch: u32, stand_up: u32, vault: u32) -> GPtr<u8> = cdecl 0x67DE10 => climb_scan_to_grab_sector_list;
-    /// `CPlaceable::AllocateMatrix()` (0x54F560)
-    fn placeable_allocate_matrix(e: GPtr<u8>) = thiscall 0x54F560 => unported;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*)` (0x54F1B0)
-    fn simple_transform_update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => unported;
-    /// `CMatrix Invert(const CMatrix&)` (0x59BDD0, cdecl, hidden result first)
-    fn matrix_invert(out: GPtr<u8>, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x59BDD0 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
-    /// CRT `_atexit` (0x821D1E)
-    fn crt_atexit(f: u32) -> i32 = cdecl 0x821D1E => unported;
-    /// `CPedIntelligence::GetTaskSwim()` (0x601070)
-    fn intel_get_task_swim(i: GPtr<u8>) -> GPtr<u8> = thiscall 0x601070 => unported;
-    /// `CStats::GetFatAndMuscleModifier(int32)` (0x559AF0, ST0)
-    fn stats_get_fat_and_muscle_modifier(i: i32) -> f64 = cdecl 0x559AF0 => unported;
-    /// `CVector::Magnitude()` (0x4082C0, ST0)
-    fn vector_magnitude(v: GPtr<u8>) -> f64 = thiscall 0x4082C0 => unported;
-    /// `CEntity::GetBoundCentre(CVector& out)` (0x534250, returns `&out`)
-    fn entity_get_bound_centre(e: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall 0x534250 => unported;
-    /// `CEntity::GetColModel()` (0x535300)
-    fn entity_get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => unported;
     /// `CCollision::ProcessColModels(const CMatrix&, CColModel&, const CMatrix&, CColModel&, CColPoint*,
     /// CColPoint*, float*, bool)` (0x4185C0)
     #[allow(clippy::too_many_arguments)]
     fn collision_process_col_models(m1: GPtr<u8>, c1: GPtr<u8>, m2: GPtr<u8>, c2: GPtr<u8>, cps: GPtr<u8>, lcps: u32, dists: u32, b: u32) -> i32 = cdecl 0x4185C0 => unported;
-    /// `operator-(const CVector&, const CVector&)` (0x40FE60, hidden result first)
-    fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => unported;
     /// `CMatrix::operator=(const CMatrix&)` (0x59BBC0)
     fn matrix_assign(m: GPtr<u8>, o: GPtr<u8>) = thiscall 0x59BBC0 => unported;
-    /// `CMatrix::SetTranslateOnly(float, float, float)` (0x59AF80)
-    fn matrix_set_translate_only(m: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x59AF80 => unported;
-    /// `CPlaceable::GetMatrix()` (0x411990)
-    fn placeable_get_matrix(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x411990 => unported;
     /// `SurfaceInfos_c::CanClimb(surface)` (0x55EA10) on `g_surfaceInfos` (0xB79538)
     fn surface_can_climb(s: GPtr<u8>, surface: u32) -> u8 = thiscall 0x55EA10 => unported;
 }

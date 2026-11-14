@@ -2,12 +2,9 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
-orig! {
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210, cdecl)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-}
+use sa_core::bindings::find_player_ped;
 
 /// `CPools::ms_pPedPool` (0xB74490): +0 objects, +4 byte map; ped size 0x7C4.
 const PED_POOL: usize = 0xB7_4490;

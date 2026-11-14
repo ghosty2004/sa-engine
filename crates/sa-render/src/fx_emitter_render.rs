@@ -45,6 +45,11 @@ const TRAIL_CAM: usize = 0xB6FA14;
 /// `RenderInfo_t` byte size (written by `ProcessRenderInfo` and the infos it calls).
 const INFO_SIZE: usize = 0xA4;
 
+use crate::bindings::fx_rw_matrix_create as matrix_create;
+use crate::bindings::fx_rw_matrix_destroy as matrix_destroy;
+use sa_core::bindings::rw_v3d_transform_points as transform_points;
+use sa_world::bindings::rw_v3d_length as length;
+use sa_world::bindings::rw_v3d_normalize as normalize;
 orig! {
     /// `RwRenderStateSet(state, value)` (`RwEngineInstance` +0x20)
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
@@ -58,17 +63,8 @@ orig! {
     fn render_end() = cdecl 0x4A1600 => crate::mvpa_render3::fx_render_end;
     /// `Fx_c::RenderAddTri_` (0x4A1410): three positions, three UVs, three RGBA colours (int dwords)
     fn render_add_tri(x0: u32, y0: u32, z0: u32, x1: u32, y1: u32, z1: u32, x2: u32, y2: u32, z2: u32, u0: u32, v0: u32, u1: u32, v1: u32, u2: u32, v2: u32, r0: u32, g0: u32, b0: u32, a0: u32, r1: u32, g1: u32, b1: u32, a1: u32, r2: u32, g2: u32, b2: u32, a2: u32) = cdecl 0x4A1410 => crate::mvpc_fx2::fx_render_add_tri;
-    /// `FxManager_c::FxRwMatrixCreate()` (0x4A9440) / `FxRwMatrixDestroy(RwMatrix*)` (0x4A9460)
-    fn matrix_create(this: GPtr<u8>) -> u32 = thiscall 0x4A9440 => crate::fx::fx_manager_fx_rw_matrix_create;
-    fn matrix_destroy(this: GPtr<u8>, m: u32) = thiscall 0x4A9460 => crate::fx::fx_manager_fx_rw_matrix_destroy;
     /// `FxSystem_c::GetCompositeMatrix(RwMatrix*)` (0x4AA8C0)
     fn get_composite_matrix(this: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall 0x4AA8C0 => crate::fx::fx_system_get_composite_matrix;
-    /// `RwV3dTransformPoints(out, in, n, matrix)` (0x7EDD90)
-    fn transform_points(out: GPtr<u8>, inp: GPtr<u8>, n: i32, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EDD90 => unported;
-    /// `RwV3dNormalize(out, in)` (0x7ED9B0), ST0 length (discarded by every call here)
-    fn normalize(out: GPtr<u8>, inp: GPtr<u8>) -> f64 = cdecl 0x7ED9B0 => unported;
-    /// `RwV3dLength(v)` (0x7EDAC0), ST0
-    fn length(v: GPtr<u8>) -> f64 = cdecl 0x7EDAC0 => unported;
     /// `FxInfoManager_c::ProcessRenderInfo(currTime, lifeRatio, timeStep, totalTime, useConst, out)` (0x4A4A80)
     fn process_render_info(this: GPtr<u8>, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, out: GPtr<u8>) = thiscall 0x4A4A80 => crate::mvpc_fx1::info_manager_process_render_info;
     /// `FxPrtMult_c::FxPrtMult_c()` (0x4AB270)

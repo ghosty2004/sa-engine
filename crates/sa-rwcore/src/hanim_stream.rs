@@ -12,16 +12,14 @@ use sa_core::{hook, orig};
 
 use crate::common::{p8, rd, rw_free, rw_malloc, rw_memory_alloc, wr};
 
+use crate::bindings::read_int32;
+use sa_core::bindings::rw_error1;
+use sa_core::bindings::rw_error_set;
 orig! {
-    /// `RwStreamReadInt32(stream, buf, size)` (0x7ED540)
-    fn read_int32(s: GPtr<u8>, p: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x7ED540 => crate::stream::rw_stream_read_int32;
     /// `RtAnimInterpolatorCreate(numNodes, keyFrameSize)` (0x7CD520)
     fn interpolator_create_call(n: i32, kfs: i32) -> GPtr<u8> = cdecl 0x7CD520 => rt_anim_interpolator_create;
     /// A key-frame interpolate callback `cb(out, in1, in2, time, customData)`
     fn call_interpolate_cb(f: u32, out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, t: f32, custom: u32) = cdecl dyn => unported;
-    /// `_rwerror(code)` (0x8088D0), `RwErrorSet(err)` (0x808820)
-    fn rw_error1(code: u32) -> u32 = cdecl 0x8088D0 => unported;
-    fn rw_error_set(e: GPtr<u32>) -> GPtr<u32> = cdecl 0x808820 => unported;
 }
 
 /// RtAnim interpolation schemes (0x30 each) and their count.

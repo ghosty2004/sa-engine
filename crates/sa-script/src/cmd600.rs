@@ -33,54 +33,38 @@ const SCRIPT_RESOURCE_MANAGER: usize = 0xA485A8;
 /// `.rdata` 0x859014: -100.0f
 const K_MINUS_100: u32 = 0xC2C8_0000;
 
+use crate::bindings::clear_space_for_mission_entity;
+use crate::bindings::get_actual_blip_array_index;
+use crate::bindings::is_ped_stopped;
+use crate::bindings::set_coord_blip;
+use sa_core::bindings::camera_set_wide_screen_off as set_wide_screen_off;
+use sa_core::bindings::camera_set_wide_screen_on as set_wide_screen_on;
+use sa_core::bindings::entity_update_rw_frame as update_rw_frame;
+use sa_stream::bindings::set_mission_doesnt_require_special_char;
+use sa_stream::bindings::setup_big_building;
+use sa_world::bindings::find_ground_z_for_coord;
+use sa_world::bindings::get_garage_number_by_name;
+use sa_world::bindings::object_create;
+use sa_world::bindings::set_blip_sprite;
+use sa_world::bindings::set_orientation;
+use sa_world::bindings::update_rw_matrix;
 orig! {
     /// `CScriptResourceManager::RemoveFromResourceManager(int32, uint32 type, CRunningScript*)` (0x470510), AL
     fn remove_from_resource_manager(m: GPtr<u8>, model: i32, ty: u32, s: Scr) -> u8 = thiscall 0x470510 => unported;
-    /// `CStreaming::SetMissionDoesntRequireSpecialChar(int32 slot)` (0x40B490)
-    fn set_mission_doesnt_require_special_char(slot: i32) = cdecl 0x40B490 => unported;
     /// `CDarkel::ResetModelsKilledByPlayer(int32 player)` (0x43D6A0)
     fn reset_models_killed_by_player(player: i32) = cdecl 0x43D6A0 => unported;
     /// `CDarkel::QueryModelsKilledByPlayer(int32 model, int32 player)` (0x43D6C0), AX
     fn query_models_killed_by_player(model: i32, player: i32) -> u16 = cdecl 0x43D6C0 => unported;
-    /// `CTheScripts::IsPedStopped(CPed*)` (0x486110), AL
-    fn is_ped_stopped(p: GPtr<u8>) -> u8 = cdecl 0x486110 => unported;
     /// `CRunningScript::CollectNextParameterWithoutIncreasingPC()` (0x464250)
     fn collect_next(s: Scr) -> i32 = thiscall 0x464250 => crate::vm::collect_next_parameter_without_increasing_pc;
-    /// `CCamera::SetWideScreenOn()` (0x50C140)
-    fn set_wide_screen_on(cam: GPtr<u8>) = thiscall 0x50C140 => unported;
-    /// `CCamera::SetWideScreenOff()` (0x50C150)
-    fn set_wide_screen_off(cam: GPtr<u8>) = thiscall 0x50C150 => unported;
-    /// `CWorld::FindGroundZForCoord(float, float)` (0x569660), floats as raw dwords, ST0 (read as f64: exact)
-    fn find_ground_z_for_coord(x: u32, y: u32) -> f64 = cdecl 0x569660 => unported;
-    /// `CRadar::GetActualBlipArrayIndex(int32)` (0x582870); the result is discarded here
-    fn get_actual_blip_array_index(h: i32) -> i32 = cdecl 0x582870 => unported;
-    /// `CRadar::SetCoordBlip(eBlipType, CVector, uint32 colour, eBlipDisplay, const char*)` (0x583820);
-    /// the by-value vector as three raw dwords
-    fn set_coord_blip(ty: i32, x: u32, y: u32, z: u32, colour: u32, display: u32, name: GPtr<u8>) -> i32 = cdecl 0x583820 => unported;
-    /// `CRadar::SetBlipSprite(int32, int32)` (0x583D70)
-    fn set_blip_sprite(h: i32, sprite: i32) = cdecl 0x583D70 => unported;
-    /// `CGarages::GetGarageNumberByName(const char*)` (0x447680), AX
-    fn get_garage_number_by_name(name: GPtr<u8>) -> u16 = cdecl 0x447680 => unported;
     /// `CGarages::ActivateGarage(int16)` (0x447CD0)
     fn activate_garage(n: i32) = cdecl 0x447CD0 => unported;
     /// `CGarages::DeActivateGarage(int16)` (0x447CB0)
     fn deactivate_garage(n: i32) = cdecl 0x447CB0 => unported;
-    /// `CObject::Create(int32 model, bool)` (0x5A1F60)
-    fn object_create(model: i32, flag: i32) -> GPtr<u8> = cdecl 0x5A1F60 => unported;
     /// `CPlaceable::SetPosn(float, float, float)` (0x420B80), floats as raw dwords
     fn set_posn(e: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x420B80 => unported;
-    /// `CPlaceable::SetOrientation(float, float, float)` (0x439A80)
-    fn set_orientation(e: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x439A80 => unported;
-    /// `CEntity::UpdateRwMatrix()` (0x446F90)
-    fn update_rw_matrix(e: GPtr<u8>) = thiscall 0x446F90 => unported;
-    /// `CEntity::UpdateRwFrame()` (0x532B00)
-    fn update_rw_frame(e: GPtr<u8>) = thiscall 0x532B00 => unported;
     /// `CBaseModelInfo` virtual slot 3 (+0x0C, `AsLodAtomicModelInfoPtr`)
     fn model_info_vslot_0c(mi: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x0C => unported;
-    /// `CEntity::SetupBigBuilding()` (0x533150)
-    fn setup_big_building(e: GPtr<u8>) = thiscall 0x533150 => unported;
-    /// `CTheScripts::ClearSpaceForMissionEntity(const CVector&, CEntity*)` (0x486B00)
-    fn clear_space_for_mission_entity(pos: GPtr<u32>, e: GPtr<u8>) = cdecl 0x486B00 => unported;
 }
 
 /// 0299 ACTIVATE_GARAGE / 02B9 DEACTIVATE_GARAGE body: `ReadTextLabelFromScript(buf, 8)`;

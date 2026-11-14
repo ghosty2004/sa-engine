@@ -11,80 +11,48 @@ use sa_core::orig::at_site;
 use crate::common::*;
 use sa_world::world::common::entity_pos as pos;
 
+use crate::bindings::car_enter_exit_get_position_to_open_car_door as position_to_open_car_door;
+use crate::bindings::intel_get_ped_entities;
+use crate::bindings::pad_conversation_no_just_down;
+use crate::bindings::pad_conversation_yes_just_down;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::get_pad as pad_get_pad;
+use sa_core::bindings::matrix_dtor;
+use sa_core::bindings::matrix_invert as matrix_invert_into;
+use sa_core::bindings::matrix_mul_vec;
+use sa_core::bindings::messages_clear_messages;
+use sa_core::bindings::tm_get_simplest_active_task;
+use sa_world::bindings::apply_turn_force_6 as physical_apply_turn_force;
+use sa_world::bindings::audio_add_event as vehicle_audio_add_audio_event;
+use sa_world::bindings::car_drive_ctor;
+use sa_world::bindings::enter_car_as_passenger_ctor;
+use sa_world::bindings::get_player_info as player_ped_get_player_info;
+use sa_world::bindings::get_vehicle_appearance as vehicle_get_appearance;
+use sa_world::bindings::is_coop_game_going_on;
+use sa_world::bindings::is_player_on_a_mission;
+use sa_world::bindings::leave_car_ctor;
+use sa_world::bindings::max_f;
+use sa_world::bindings::min_f;
+use sa_world::bindings::pad_get_accelerate;
+use sa_world::bindings::pad_get_brake;
+use sa_world::bindings::pad_start_shake;
+use sa_world::bindings::player_info_add_health;
+use sa_world::bindings::speech_set_cj_mood;
+use sa_world::bindings::stand_still_ctor;
+use sa_world::bindings::turn_to_face_entity_ctor as turn_ctor_entity;
+use sa_world::bindings::vector_mul_scalar;
+use sa_world::bindings::vehicle_is_on_its_side;
+use sa_world::bindings::vehicle_is_upside_down;
 orig! {
-    /// `FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CVehicle::GetVehicleAppearance()` (0x6D1080)
-    fn vehicle_get_appearance(v: GPtr<u8>) -> i32 = thiscall 0x6D1080 => unported;
-    /// `CVehicle::IsUpsideDown()` (0x6D1D90)
-    fn vehicle_is_upside_down(v: GPtr<u8>) -> u8 = thiscall 0x6D1D90 => unported;
-    /// `CVehicle::IsOnItsSide()` (0x6D1DD0)
-    fn vehicle_is_on_its_side(v: GPtr<u8>) -> u8 = thiscall 0x6D1DD0 => unported;
-    /// `CTaskManager::GetSimplestActiveTask()` (0x6819D0)
-    fn tm_get_simplest_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x6819D0 => unported;
-    /// `CTheScripts::IsPlayerOnAMission()` (0x464D50)
-    fn is_player_on_a_mission() -> u8 = cdecl 0x464D50 => unported;
-    /// `CGameLogic::IsCoopGameGoingOn()` (0x441390)
-    fn is_coop_game_going_on() -> u8 = cdecl 0x441390 => unported;
-    /// `CTaskComplexLeaveCar::CTaskComplexLeaveCar(CVehicle*, int32, int32, bool, bool)` (0x63B8C0)
-    fn leave_car_ctor(t: GPtr<u8>, v: GPtr<u8>, a: u32, b: u32, c: u32, d: u32) -> GPtr<u8> = thiscall 0x63B8C0 => unported;
-    /// `CTaskComplexEnterCarAsPassenger::CTaskComplexEnterCarAsPassenger(CVehicle*, int32, bool)` (0x640340)
-    fn enter_car_as_passenger_ctor(t: GPtr<u8>, v: GPtr<u8>, seat: u32, b: u32) -> GPtr<u8> = thiscall 0x640340 => unported;
-    /// `CTaskSimpleStandStill::CTaskSimpleStandStill(int32, bool, bool, float)` (0x62F310)
-    fn stand_still_ctor(t: GPtr<u8>, time: u32, a: u32, b: u32, f: u32) -> GPtr<u8> = thiscall 0x62F310 => unported;
-    /// `CTaskComplexCarDrive::CTaskComplexCarDrive(CVehicle*)` (0x63C9D0)
-    fn car_drive_ctor(t: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = thiscall 0x63C9D0 => unported;
-    /// `CTaskComplexTurnToFaceEntityOrCoord` (entity) constructor (0x66B890, `ret 0xC`)
-    fn turn_ctor_entity(t: GPtr<u8>, e: GPtr<u8>, rate: u32, tol: u32) -> GPtr<u8> = thiscall 0x66B890 => unported;
-    /// `CMatrix::Invert(const CMatrix& in, CMatrix& out)` (0x59B920, cdecl)
-    fn matrix_invert_into(inp: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = cdecl 0x59B920 => unported;
-    /// `CCarEnterExit::GetPositionToOpenCarDoor(CVector* out, CVehicle*, int32 door)` (0x64E740, cdecl)
-    fn position_to_open_car_door(out: GPtr<u8>, v: GPtr<u8>, door: u32) -> GPtr<u8> = cdecl 0x64E740 => unported;
-    /// `operator*(const CMatrix&, const CVector&)` (0x59C890, cdecl, returns out)
-    fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
     /// `CTaskComplexSeekEntity<CEntitySeekPosCalculatorXYOffset>` constructor (0x661DC0, `ret 0x20`)
     #[allow(clippy::too_many_arguments)]
     fn seek_entity_xy_ctor(t: GPtr<u8>, e: GPtr<u8>, a: u32, b: u32, c: u32, d: u32, f: u32, b7: u32, b8: u32) -> GPtr<u8> = thiscall 0x661DC0 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
     /// `CTaskComplexProstituteSolicit::IsTaskValid(CPed*, CPed*)` (0x661BB0)
     fn is_task_valid(prostitute: GPtr<u8>, client: GPtr<u8>) -> u8 = cdecl 0x661BB0 => prostitute_solicit_is_task_valid;
     /// `CTaskComplexProstituteSolicit::CreateSubTask(int32, CPed*)` (0x666360)
     fn create_sub_task(t: GPtr<u8>, ty: i32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x666360 => prostitute_solicit_create_sub_task;
-    /// `CAEPedSpeechAudioEntity::SetCJMood(int16, uint32, int16, int16, int16)` (0x4E3ED0)
-    fn speech_set_cj_mood(mood: i32, time: u32, gang: i32, fat: i32, dressed: i32) = cdecl 0x4E3ED0 => unported;
-    /// `CPad::ConversationYesJustDown()` (0x5411D0)
-    fn pad_conversation_yes_just_down(pad: GPtr<u8>) -> u8 = thiscall 0x5411D0 => unported;
-    /// `CPad::ConversationNoJustDown()` (0x541200)
-    fn pad_conversation_no_just_down(pad: GPtr<u8>) -> u8 = thiscall 0x541200 => unported;
-    /// `CPad::GetAccelerate()` (0x5403F0)
-    fn pad_get_accelerate(pad: GPtr<u8>) -> i16 = thiscall 0x5403F0 => unported;
-    /// `CPad::GetBrake()` (0x540080)
-    fn pad_get_brake(pad: GPtr<u8>) -> i16 = thiscall 0x540080 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    fn pad_get_pad(id: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CPad::StartShake(int16 time, uint8 freq, uint32 delay)` (0x53F920)
-    fn pad_start_shake(pad: GPtr<u8>, time: u32, freq: u32, delay: u32) = thiscall 0x53F920 => unported;
-    /// `operator*(CVector* out, const CVector&, float)` (0x40FEC0, cdecl, returns out)
-    fn vector_mul_scalar(out: GPtr<u8>, v: GPtr<u8>, s: f32) -> GPtr<u8> = cdecl 0x40FEC0 => unported;
     /// `CWanted::SetWantedLevel(int32)` (0x562470)
     fn wanted_set_wanted_level(w: GPtr<u8>, level: i32) = thiscall 0x562470 => unported;
-    /// `CPedIntelligence::GetPedEntities()` (0x4893E0): the scanner's 16 entity slots
-    fn intel_get_ped_entities(intel: GPtr<u8>) -> GPtr<u8> = thiscall 0x4893E0 => unported;
-    /// `CMessages::ClearMessages(bool)` (0x69DCD0)
-    fn messages_clear_messages(flag: u32) = cdecl 0x69DCD0 => unported;
-    /// `Min(float, float)` (0x404330, ST0)
-    fn min_f(a: f32, b: f32) -> f64 = cdecl 0x404330 => unported;
-    /// `Max(float, float)` (0x420800, ST0)
-    fn max_f(a: f32, b: f32) -> f64 = cdecl 0x420800 => unported;
-    /// `CPhysical::ApplyTurnForce(CVector force, CVector point)` (0x65DA70, by value)
-    fn physical_apply_turn_force(p: GPtr<u8>, fx: f32, fy: f32, fz: f32, px: f32, py: f32, pz: f32) = thiscall 0x65DA70 => unported;
-    /// `CAEVehicleAudioEntity::AddAudioEvent(int32, float)` (0x4F6420)
-    fn vehicle_audio_add_audio_event(a: GPtr<u8>, event: u32, p: f32) = thiscall 0x4F6420 => unported;
-    /// `CPlayerPed::GetPlayerInfoForThisPlayerPed()` (0x609FF0)
-    fn player_ped_get_player_info(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x609FF0 => unported;
-    /// `CPlayerInfo::AddHealth(int32)` (0x56EAB0)
-    fn player_info_add_health(pi: GPtr<u8>, amount: i32) = thiscall 0x56EAB0 => unported;
 }
 
 /// `CTaskComplexProstituteSolicit::IsTaskValid(CPed* prostitute, CPed* client)` (0x661BB0, cdecl; AL): true only

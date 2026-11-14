@@ -11,9 +11,8 @@ use sa_math::x87::X87;
 
 use crate::common::{g, rd, wr, x};
 
+use sa_world::bindings::get_adhesion_group;
 orig! {
-    /// `cSurfaceInfos::GetAdhesionGroup(uint32)` (0x55E5C0) on `g_surfaceInfos` (0xB79538)
-    fn get_adhesion_group(si: GPtr<u8>, id: u32) -> u32 = thiscall 0x55E5C0 => unported;
     /// `CPhysical::ApplyMoveForce(CVector)` (0x5429F0)
     fn apply_move_force(e: GPtr<u8>, force: CVector) = thiscall 0x5429F0 => sa_world::physical::forces::apply_move_force;
 }

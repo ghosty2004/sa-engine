@@ -70,6 +70,9 @@ const INV_SQRT3_BITS: u32 = 0x3F13_CD3A;
 const ONE_BITS: u32 = 0x3F80_0000;
 const HALF_BITS: u32 = 0x3F00_0000;
 
+use crate::bindings::matrix_ortho_normalize as rw_matrix_ortho_normalize;
+use sa_core::bindings::frame_get_ltm as rw_frame_get_ltm;
+use sa_core::bindings::get_render_state as rw_d3d9_get_render_state;
 orig! {
     /// `D3DXMatrixMultiply(out, a, b)` (0x7672E1)
     pub fn d3dx_matrix_multiply(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = stdcall 0x7672E1 => unported;
@@ -85,14 +88,8 @@ orig! {
     fn rw_matrix_multiply(dst: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F18B0 => crate::matrix::rw_matrix_multiply;
     /// `RwMatrixInvert(dst, src)` (0x7F2070)
     fn rw_matrix_invert(dst: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F2070 => crate::matrix::rw_matrix_invert;
-    /// `RwMatrixOrthoNormalize(dst, src)` (0x7F1920)
-    fn rw_matrix_ortho_normalize(dst: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F1920 => unported;
-    /// `RwFrameGetLTM(frame)` (0x7F0990)
-    fn rw_frame_get_ltm(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0990 => unported;
     /// `_rwInvSqrt(x)` (0x7EDB90), result in ST0
     fn rw_inv_sqrt(v: f32) -> f64 = cdecl 0x7EDB90 => unported;
-    /// `RwD3D9GetRenderState(state, &value)` (0x7FC320)
-    fn rw_d3d9_get_render_state(state: u32, out: GPtr<u32>) = cdecl 0x7FC320 => unported;
     /// `IDirect3DDevice9::SetVertexShaderConstantF(reg, data, count)` (vtable +0x178)
     pub fn device_set_vs_constant_f(dev: GPtr<u8>, reg: u32, data: GPtr<u8>, count: u32) -> i32 = stdcall vslot 0x178 => unported;
 

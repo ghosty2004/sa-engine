@@ -90,6 +90,21 @@ const K_3: f32 = f(0x4040_0000);
 const K_2_32: f32 = f(0x4F80_0000);
 const K_70: f32 = f(0x428C_0000);
 
+pub use crate::bindings::display_helper_text_call;
+pub use crate::bindings::font_set_centre_size;
+pub use crate::bindings::font_set_drop_color;
+pub use crate::bindings::font_set_drop_shadow_position;
+pub use crate::bindings::font_set_right_justify_wrap;
+pub use crate::bindings::font_set_scale;
+pub use crate::bindings::font_set_scale_for_current_language;
+pub use crate::bindings::font_set_wrapx;
+pub use crate::bindings::hud_colours_get_rgb;
+pub use sa_core::bindings::ascii_to_gxt_char;
+pub use sa_core::bindings::memory_calloc;
+pub use sa_core::bindings::memory_free;
+pub use sa_core::bindings::rgba_ctor;
+pub use sa_core::bindings::sprintf1 as crt_sprintf1;
+pub use sa_core::bindings::sprite2d_draw as sprite2d_draw_rect;
 orig! {
     /// `CFont::SetBackground(bool, bool)` (0x7195C0)
     pub fn font_set_background(on: u32, outline: u32) = cdecl 0x7195C0 => crate::font::set_background;
@@ -97,26 +112,12 @@ orig! {
     pub fn font_set_proportional(v: u32) = cdecl 0x7195B0 => crate::font::set_proportional;
     /// `CFont::SetOrientation(eFontAlignment)` (0x719610)
     pub fn font_set_orientation(v: u32) = cdecl 0x719610 => crate::font::set_orientation;
-    /// `CFont::SetWrapx(float)` (0x7194D0)
-    pub fn font_set_wrapx(v: u32) = cdecl 0x7194D0 => crate::font::set_wrapx;
-    /// `CFont::SetRightJustifyWrap(float)` (0x7194F0)
-    pub fn font_set_right_justify_wrap(v: u32) = cdecl 0x7194F0 => crate::font::set_right_justify_wrap;
-    /// `CFont::SetCentreSize(float)` (0x7194E0)
-    pub fn font_set_centre_size(v: u32) = cdecl 0x7194E0 => crate::font::set_centre_size;
     /// `CFont::SetFontStyle(eFontStyle)` (0x719490)
     pub fn font_set_font_style(v: u32) = cdecl 0x719490 => crate::font::set_font_style;
-    /// `CFont::SetScale(float, float)` (0x719380)
-    pub fn font_set_scale(w: u32, h: u32) = cdecl 0x719380 => crate::font::set_scale;
-    /// `CFont::SetScaleForCurrentLanguage(float, float)` (0x7193A0)
-    pub fn font_set_scale_for_current_language(w: f32, h: u32) = cdecl 0x7193A0 => crate::font::set_scale_for_current_language;
     /// `CFont::SetEdge(int8)` (0x719590)
     pub fn font_set_edge(v: u32) = cdecl 0x719590 => crate::font::set_edge;
     /// `CFont::SetColor(CRGBA)` (0x719430)
     pub fn font_set_color(c: u32) = cdecl 0x719430 => crate::font::set_color;
-    /// `CFont::SetDropColor(CRGBA)` (0x719510)
-    pub fn font_set_drop_color(c: u32) = cdecl 0x719510 => crate::font::set_drop_color;
-    /// `CFont::SetDropShadowPosition(int8)` (0x719570)
-    pub fn font_set_drop_shadow_position(v: u32) = cdecl 0x719570 => crate::font::set_drop_shadow_position;
     /// `CFont::PrintString(float, float, const GxtChar*)` (0x71A700)
     pub fn font_print_string(px: f32, py: f32, text: GPtr<u8>) = cdecl 0x71A700 => crate::font_print::print_string;
     /// `CFont::GetNumberLines(float, float, const GxtChar*)` (0x71A5E0; AX)
@@ -125,24 +126,12 @@ orig! {
     pub fn font_get_string_width_st0(text: GPtr<u8>, full: u32, script: u32) -> f64 = cdecl 0x71A0E0 => crate::font_print::get_string_width_call_st0;
     /// `CText::Get(const char*)` (0x6A0050, thiscall)
     pub fn text_get(this: GPtr<u8>, key: GPtr<u8>) -> GPtr<u8> = thiscall 0x6A0050 => crate::text::text_get;
-    /// `CRGBA::CRGBA(r, g, b, a)` (0x7170C0, thiscall)
-    pub fn rgba_ctor(this: GPtr<u8>, r: u32, g: u32, b: u32, a: u32) -> GPtr<u8> = thiscall 0x7170C0 => unported;
-    /// `CHudColours::GetRGB(uint8)` (0x58FEA0, thiscall, hidden return pointer)
-    pub fn hud_colours_get_rgb(this: GPtr<u8>, out: GPtr<u8>, colour: u32) -> GPtr<u8> = thiscall 0x58FEA0 => crate::hud::get_rgb;
-    /// `AsciiToGxtChar(const char*, GxtChar*)` (0x718600)
-    pub fn ascii_to_gxt_char(src: GPtr<u8>, dst: GPtr<u8>) = cdecl 0x718600 => unported;
     /// `GxtCharStrlen(const GxtChar*)` (0x718690)
     pub fn gxt_char_strlen(s: GPtr<u8>) -> u32 = cdecl 0x718690 => crate::font_print::gxt_char_strlen;
     /// `GxtCharStrcat(GxtChar*, const GxtChar*)` (0x718630)
     pub fn gxt_char_strcat(dst: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = cdecl 0x718630 => crate::font_print::gxt_char_strcat;
-    /// CRT `sprintf(buf, fmt, a)` (0x821BB5)
-    pub fn crt_sprintf1(buf: GPtr<u8>, fmt: GPtr<u8>, a: i32) -> i32 = cdecl 0x821BB5 => unported;
     /// `RwEngineInstance->stringFuncs.vecSprintf` (`RwEngineInstance` +0xF0): `(buf, fmt, a)`
     pub fn rw_sprintf1(buf: GPtr<u8>, fmt: GPtr<u8>, a: i32) -> i32 = cdecl table 0xC97B24 0xF0 => unported;
-    /// `CMemoryMgr::Calloc` (0x72F460) as `DrawStandardMenus` calls it: `(0x64, 1, 0)`
-    pub fn memory_calloc(a: u32, b: u32, c: u32) -> GPtr<u8> = cdecl 0x72F460 => unported;
-    /// `CMemoryMgr::Free(void*)` (0x72F430)
-    pub fn memory_free(p: GPtr<u8>) = cdecl 0x72F430 => unported;
     /// `CGenericGameStorage::GetNameOfSavedGame(int32)` (0x5D0F40)
     pub fn get_name_of_saved_game(slot: i32) -> GPtr<u8> = cdecl 0x5D0F40 => unported;
     /// `CGenericGameStorage::GetSavedGameDateAndTime(int32)` (0x618D00)
@@ -153,8 +142,6 @@ orig! {
     pub fn fx_get_quality(this: GPtr<u8>) -> u32 = thiscall 0x49EA50 => unported;
     /// `VideoMode::GetVideoModeList()` (0x745AF0)
     pub fn get_video_mode_list() -> GPtr<GPtr<u8>> = cdecl 0x745AF0 => unported;
-    /// `CSprite2d::Draw(const CRect&, const CRGBA&)` (0x728350, thiscall)
-    pub fn sprite2d_draw_rect(this: GPtr<u8>, rect: GPtr<u8>, colour: GPtr<u8>) = thiscall 0x728350 => unported;
     /// `CMenuManager::PrintStats()` (0x574900, thiscall)
     pub fn print_stats_call(this: GPtr<u8>) = thiscall 0x574900 => print_stats;
     /// `CMenuManager::PrintBriefs()` (0x576320, thiscall)
@@ -172,8 +159,6 @@ orig! {
     pub fn set_helper_text_call(this: GPtr<u8>, text: u32) = thiscall 0x57CD10 => crate::menu_mgr::set_helper_text;
     /// `CMenuManager::ResetHelperText()` (0x57CD30, thiscall)
     pub fn reset_helper_text_call(this: GPtr<u8>) = thiscall 0x57CD30 => crate::menu_mgr::reset_helper_text;
-    /// `CMenuManager::DisplayHelperText(const char*)` (0x57E240, thiscall)
-    pub fn display_helper_text_call(this: GPtr<u8>, key: GPtr<u8>) = thiscall 0x57E240 => crate::menu_mgr::display_helper_text;
 }
 
 /// The Rust path of [`font_get_number_lines`] with the float arguments as words.
@@ -877,9 +862,12 @@ const BG_SPRITE_CASE: [u8; 40] = [
 ];
 const BG_SPRITES: [u8; 8] = [0xF, 0xE, 0xD, 0x10, 0x12, 0, 0x11, 0x13];
 
+pub use crate::bindings::small_message_screen_call;
+pub use sa_core::bindings::defined_state_2d;
+pub use sa_core::bindings::sprite2d_init_per_frame as sprite2d_727350;
+pub use sa_core::bindings::sprite2d_set_recip_near_clip as sprite2d_727260;
+pub use sa_core::bindings::sprite_draw_rect as sprite2d_draw_rect_static;
 orig! {
-    /// `CSprite2d::DrawRect(const CRect&, const CRGBA&)` (0x727B60)
-    pub fn sprite2d_draw_rect_static(rect: GPtr<u8>, colour: GPtr<u8>) = cdecl 0x727B60 => unported;
     /// `CMenuManager::PrintMap()` (0x575130, thiscall)
     pub fn print_map(this: GPtr<u8>) = thiscall 0x575130 => crate::menu_map::print_map;
     /// `CMenuManager::DrawControllerSetupScreen()` (0x57F300, thiscall)
@@ -888,18 +876,10 @@ orig! {
     pub fn draw_quit_game_screen_call(this: GPtr<u8>) = thiscall 0x57D860 => crate::menu_mgr::draw_quit_game_screen;
     /// `CMenuManager::DrawStandardMenus(bool)` (0x5794A0, thiscall)
     pub fn draw_standard_menus_call(this: GPtr<u8>, draw_title: u32) = thiscall 0x5794A0 => draw_standard_menus;
-    /// `CMenuManager::SmallMessageScreen(const char*)` (0x574010, thiscall)
-    pub fn small_message_screen_call(this: GPtr<u8>, key: GPtr<u8>) = thiscall 0x574010 => crate::menu_mgr::small_message_screen;
     /// `RsCameraBeginUpdate(RwCamera*)` (0x619450)
     pub fn rs_camera_begin_update(cam: u32) -> i32 = cdecl 0x619450 => unported;
-    /// 0x727260 (`CSprite2d::SetRecipNearClip` in the catalogue)
-    pub fn sprite2d_727260() = cdecl 0x727260 => unported;
-    /// 0x727350 (`CSprite2d::InitPerFrame` in the catalogue)
-    pub fn sprite2d_727350() = cdecl 0x727350 => unported;
     /// `CFont::InitPerFrame()` (0x719800)
     pub fn font_init_per_frame() = cdecl 0x719800 => crate::font::init_per_frame;
-    /// `DefinedState2d()` (0x734750)
-    pub fn defined_state_2d() = cdecl 0x734750 => unported;
     /// `CFont::DrawFonts()` (0x71A210)
     pub fn font_draw_fonts() = cdecl 0x71A210 => crate::font_print::draw_fonts;
     /// `CFont::RenderFontBuffer()` (0x719840)
@@ -1381,19 +1361,16 @@ pub fn display_slider(_this: GPtr<u8>, px: f32, py: f32, h1: f32, h2: f32, len: 
 // PrintRadioStationList, PrintBriefs
 // ---------------------------------------------------------------------------------------------------
 
+pub use crate::bindings::font_set_justify;
+pub use crate::bindings::msg_insert_player_control_keys;
+pub use crate::bindings::sprite2d_draw_2d_polygon;
 orig! {
     /// `CSprite2d::Draw(float x, float y, float w, float h, const CRGBA&)` (0x7282C0, thiscall)
     pub fn sprite2d_draw_xywh(this: GPtr<u8>, px: f32, py: f32, sw: f32, sh: f32, colour: GPtr<u8>) = thiscall 0x7282C0 => unported;
-    /// `CSprite2d::Draw2DPolygon(x1, y1, x2, y2, x3, y3, x4, y4, const CRGBA&)` (0x7285B0)
-    pub fn sprite2d_draw_2d_polygon(x1: f32, y1: f32, x2: f32, y2: f32, x3: f32, y3: f32, x4: f32, y4: f32, colour: GPtr<u8>) = cdecl 0x7285B0 => unported;
-    /// `CFont::SetJustify(bool)` (0x719600)
-    pub fn font_set_justify(v: u32) = cdecl 0x719600 => crate::font::set_justify;
     /// `CMessages::InsertNumberInString(text, n1..n6, out)` (0x69DE90)
     pub fn msg_insert_number_in_string(text: GPtr<u8>, n1: i32, n2: i32, n3: i32, n4: i32, n5: i32, n6: i32, out: GPtr<u8>) = cdecl 0x69DE90 => crate::messages::insert_number_in_string;
     /// `CMessages::InsertStringInString(GxtChar*, const GxtChar*)` (0x69E040)
     pub fn msg_insert_string_in_string(target: GPtr<u8>, repl: GPtr<u8>) = cdecl 0x69E040 => crate::messages::insert_string_in_string;
-    /// `CMessages::InsertPlayerControlKeysInString(GxtChar*)` (0x69E160)
-    pub fn msg_insert_player_control_keys(s: GPtr<u8>) = cdecl 0x69E160 => crate::messages::insert_player_control_keys_in_string;
 }
 
 /// `CMenuManager::PrintRadioStationList()` (0x5746F0, thiscall): the radio station sprites 1..12
@@ -1549,20 +1526,17 @@ const STATS_PAGE: usize = 0x8CDFF8;
 const STATS_SCROLL_TIME: usize = 0xBA826C;
 const STATS_CURRENT_ID: usize = 0xB794CC;
 
+pub use sa_stream::bindings::sprite2d_draw_bar_chart;
+pub use sa_world::bindings::get_stat_value as stats_get_stat_value_st0;
 orig! {
     /// `CStats::ConstructStatLine(int32 line, uint8 page)` (0x55A780; returns the line count)
     pub fn stats_construct_stat_line(line: i32, page: u32) -> i32 = cdecl 0x55A780 => unported;
-    /// `CStats::GetStatValue(uint16)` (0x558E40, ST0)
-    pub fn stats_get_stat_value_st0(id: u32) -> f64 = cdecl 0x558E40 => unported;
     /// `CStats::FindCriminalRatingNumber()` (0x559080)
     pub fn stats_find_criminal_rating_number() -> i32 = cdecl 0x559080 => unported;
     /// `CStats::FindCriminalRatingString()` (0x55A210)
     pub fn stats_find_criminal_rating_string() -> GPtr<u8> = cdecl 0x55A210 => unported;
     /// `GxtCharStrcpy(GxtChar*, const GxtChar*)` (0x718660)
     pub fn gxt_char_strcpy(dst: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = cdecl 0x718660 => crate::font_print::gxt_char_strcpy;
-    /// `CSprite2d::DrawBarChart(x, y, width, height, progress, progressAdd, drawPercentage, drawBlackBorder,
-    /// CRGBA colour, CRGBA addColour)` (0x728640)
-    pub fn sprite2d_draw_bar_chart(px: f32, py: f32, bw: u32, bh: u32, progress: f32, add: u32, pct: u32, border: u32, colour: u32, add_colour: u32) = cdecl 0x728640 => unported;
 }
 
 /// Inline `StretchY(c)` kept on the x87 stack (not stored): `c` or `fild H * k`.

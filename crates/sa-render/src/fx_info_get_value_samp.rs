@@ -15,6 +15,11 @@ use sa_math::x87::X87;
 
 use crate::common::{k, rd, wr};
 
+use crate::bindings::interp_float_get_val;
+use sa_core::bindings::rw_matrix_update;
+use sa_world::bindings::rw_v3d_length;
+use sa_world::bindings::rw_v3d_normalize;
+use sa_world::bindings::world_process_vertical_line;
 orig! {
     /// `FxInterpInfo32_c::GetVal(float* out, float t)` (0x4A89C0)
     fn interp_32_get_val(this: GPtr<u8>, out: GPtr<u8>, t: u32) = thiscall 0x4A89C0 => crate::mvpc_fx1::interp_32_get_val;
@@ -22,18 +27,6 @@ orig! {
     fn interp_u255_get_val(this: GPtr<u8>, out: GPtr<u8>, t: u32) = thiscall 0x4A8800 => crate::mvpc_fx1::interp_u255_get_val;
     /// `FxInterpInfo255_c::GetVal(float* out, float t)` (0x4A8B80)
     fn interp_255_get_val_call(this: GPtr<u8>, out: GPtr<u8>, t: u32) = thiscall 0x4A8B80 => interp_255_get_val;
-    /// `FxInterpInfoFloat_c::GetVal(float* out, float t)` (0x4A8470)
-    fn interp_float_get_val(this: GPtr<u8>, out: GPtr<u8>, t: u32) = thiscall 0x4A8470 => unported;
-    /// `RwV3dLength(const RwV3d*)` (0x7EDAC0): the length in ST0
-    fn rw_v3d_length(v: GPtr<u8>) -> f64 = cdecl 0x7EDAC0 => unported;
-    /// `RwV3dNormalize(RwV3d* out, const RwV3d* in)` (0x7ED9B0): the length in ST0 (popped by every caller here)
-    fn rw_v3d_normalize(out: GPtr<u8>, inp: GPtr<u8>) -> f64 = cdecl 0x7ED9B0 => unported;
-    /// `RwMatrixUpdate(RwMatrix*)` (0x7F18A0)
-    fn rw_matrix_update(m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F18A0 => unported;
-    /// `CWorld::ProcessVerticalLine(const CVector& origin, float distance, CColPoint&, CEntity*&, bool buildings,
-    /// bool vehicles, bool peds, bool objects, bool dummies, bool seeThrough, CStoredCollPoly*)` (0x5674E0, cdecl)
-    fn world_process_vertical_line(origin: GPtr<u8>, dist: u32, cp: GPtr<u8>, ent: GPtr<u8>, b: u32, v: u32, p: u32,
-        o: u32, d: u32, see: u32, poly: u32) -> u8 = cdecl 0x5674E0 => unported;
 }
 
 use sa_math::fpu::x as xf;

@@ -8,6 +8,10 @@
 #   hooks    every hook added since BASE is `#[hook(unverified = "BATCH", route = ..., hazards = ...)]`,
 #            its batch has at most 60 hooks (tools/verify/queue.py gate)
 #   queue    catalog/verify-queue.csv and docs/verify/QUEUE.md are regenerated (tools/verify/queue.py)
+#   bindings the generated `orig!` bindings (crates/*/src/bindings.rs) match catalog/bindings.csv, and no
+#            module re-declares a bound function with the binding's exact signature (tools/gen/bindings.py --check)
+#   state    catalog/state.csv claims implemented/L1/L2/L3 only for registered or documented Rust ports
+#            (tools/verify/state_check.py)
 #   clippy   cargo clippy --workspace --all-targets -- -D warnings (host build of every crate and test)
 #   i686     cargo build --release --target i686-pc-windows-gnu -p sa-launcher -p sa-hook (the in-process
 #            DLL, every port's naked entry) + clippy -D warnings of sa-hook for that target
@@ -63,6 +67,12 @@ res hooks "$([ $rc = 0 ] && echo 1)" "$(grep -m1 '^gate:' "$OUT/hooks.log")$([ $
 grep -E '^(note|promoted):' "$OUT/hooks.log" | sed 's/^/    /' | tee -a "$SUMMARY"
 python3 -I "$HERE/queue.py" --check > "$OUT/queue.log" 2>&1
 res queue "$([ $? = 0 ] && echo 1)" "$(tail -1 "$OUT/queue.log")"
+# ADR-003 §3.2/§3.5: the generated orig! bindings match catalog/bindings.csv and no module repeats one
+python3 -I "$ROOT/tools/gen/bindings.py" --check > "$OUT/bindings.log" 2>&1
+res bindings "$([ $? = 0 ] && echo 1)" "$(grep -m1 '^bindings:' "$OUT/bindings.log")$(grep -m1 '^FAIL' "$OUT/bindings.log" | sed 's/^/; /')"
+# catalog/state.csv claims a port only where one exists
+python3 -I "$HERE/state_check.py" > "$OUT/state.log" 2>&1
+res state "$([ $? = 0 ] && echo 1)" "$(head -1 "$OUT/state.log")"
 
 # ---- builds and tests ----------------------------------------------------------------------------
 cargo_step clippy "host clippy -D warnings, all targets" clippy "$J" --workspace --all-targets -- -D warnings

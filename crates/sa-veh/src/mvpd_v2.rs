@@ -8,31 +8,23 @@ use sa_math::x87::X87;
 
 use crate::common::{f32_of, g, model_info, rand_at, rd, wr, x, xi};
 
+use crate::bindings::audio_initialise;
+use crate::bindings::get_flying_pointer;
+use crate::bindings::vehicle_ctor;
+use crate::bindings::vehicle_set_model_index;
+use sa_core::bindings::memory_malloc as mem_malloc;
+use sa_core::bindings::rw_matrix_transform;
+use sa_stream::bindings::choose_vehicle_colour;
+use sa_stream::bindings::fill_frame_array;
 orig! {
-    /// `CVehicle::CVehicle(eVehicleCreatedBy)` (0x6D5F10)
-    fn vehicle_ctor(v: GPtr<u8>, created_by: u32) -> GPtr<u8> = thiscall 0x6D5F10 => unported;
     /// `CRideAnimData::CRideAnimData()` (0x6D0B10)
     fn ride_anim_data_ctor(r: GPtr<u8>) -> GPtr<u8> = thiscall 0x6D0B10 => crate::bike2::ride_anim_data_constructor;
     /// `CVehicleModelInfo` virtual +0x38 (`GetAnimFileIndex`)
     fn mi_get_anim_file_index(mi: GPtr<u8>) -> i32 = thiscall vslot 0x38 => unported;
-    /// `CVehicle::SetModelIndex(uint32)` (0x6D6A40)
-    fn vehicle_set_model_index(v: GPtr<u8>, mi: u32) = thiscall 0x6D6A40 => unported;
-    /// `CClumpModelInfo::FillFrameArray(RpClump*, RwFrame**)` (0x4C5440)
-    fn fill_frame_array(clump: GPtr<u8>, frames: GPtr<u8>) = cdecl 0x4C5440 => unported;
-    /// `cHandlingDataMgr::GetFlyingPointer(uint8)` (0x6F52D0)
-    fn get_flying_pointer(mgr: GPtr<u8>, id: u32) -> GPtr<u8> = thiscall 0x6F52D0 => crate::handling::get_flying_pointer;
-    /// `CVehicleModelInfo::ChooseVehicleColour(uint8&, uint8&, uint8&, uint8&, int32)` (0x4C8500)
-    fn choose_vehicle_colour(mi: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, c: GPtr<u8>, d: GPtr<u8>, inc: i32) = thiscall 0x4C8500 => unported;
-    /// `CMemoryMgr::Malloc(uint32)` (0x72F420; the caller pushes a second 0 word)
-    fn mem_malloc(size: u32, hint: u32) -> GPtr<u8> = cdecl 0x72F420 => unported;
     /// `CBike::SetupSuspensionLines()` (0x6B89B0)
     fn setup_suspension_lines_call(b: GPtr<u8>) = thiscall 0x6B89B0 => bike_setup_suspension_lines;
     /// `CMatrix::operator=(const CMatrix&)` (0x59BBC0)
     fn matrix_assign(m: GPtr<u8>, src: GPtr<u8>) = thiscall 0x59BBC0 => unported;
-    /// `CAEVehicleAudioEntity::Initialise(CEntity*)` (0x4F7670)
-    fn audio_initialise(a: GPtr<u8>, e: GPtr<u8>) = thiscall 0x4F7670 => unported;
-    /// `RwMatrixTransform(RwMatrix*, const RwMatrix*, RwOpCombineType)` (0x7F25A0)
-    fn rw_matrix_transform(m: GPtr<u8>, t: GPtr<u8>, op: i32) -> GPtr<u8> = cdecl 0x7F25A0 => unported;
 }
 
 /// `CBike::CBike(int32 modelIndex, eVehicleCreatedBy)` (0x6BF430, catalogue `CBike::Constructor`, `ret 8`;
@@ -336,39 +328,27 @@ pub fn bike_setup_suspension_lines(this: GPtr<u8>) {
     }
 }
 
+use crate::bindings::automobile_is_in_air;
+use crate::bindings::event_vehicle_on_fire_ctor;
+use crate::bindings::event_vehicle_on_fire_dtor;
+use crate::bindings::fx_set_vel_add;
+use sa_core::bindings::fx_play;
+use sa_core::bindings::random_float_in_range as random_float;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::fx_add_particle;
+use sa_world::bindings::fx_create_system as fx_create_fx_system;
+use sa_world::bindings::fx_kill;
+use sa_world::bindings::get_engine_status as dm_get_engine_status;
+use sa_world::bindings::get_event_global_group;
 orig! {
-    /// `CDamageManager::GetEngineStatus()` (0x6C22C0)
-    fn dm_get_engine_status(dm: GPtr<u8>) -> u32 = thiscall 0x6C22C0 => unported;
-    /// `CAutomobile::IsInAir()` (0x6A6140)
-    fn automobile_is_in_air(a: GPtr<u8>) -> u8 = thiscall 0x6A6140 => unported;
     /// `CVehicle::BlowUpCar(CEntity*, bool)` (virtual, vtable +0xA4)
     fn blow_up_car_virtual(v: GPtr<u8>, damager: GPtr<u8>, in_cutscene: u32) = thiscall vslot 0xA4 => unported;
     /// `FxPrtMult_c::FxPrtMult_c(float x7)` (0x4AB290), the floats as bits
     fn fx_prt_mult_ctor(p: GPtr<u8>, r: u32, g: u32, b: u32, a: u32, size: u32, unk: u32, life: u32) -> GPtr<u8> = thiscall 0x4AB290 => unported;
-    /// `CGeneral::GetRandomNumberInRange<float>(float, float)` (0x41BD90, ST0)
-    fn random_float(min: f32, max: f32) -> f64 = cdecl 0x41BD90 => unported;
-    /// `FxSystem_c::AddParticle(CVector*, CVector*, float, FxPrtMult_c*, float, float, float, int32)` (0x4AA440)
-    fn fx_add_particle(fx: GPtr<u8>, pos: GPtr<u8>, vel: GPtr<u8>, time: u32, mult: GPtr<u8>, rot: u32, bright: u32, cam: u32, local: u32) = thiscall 0x4AA440 => unported;
     /// `CGeneral::GetRandomNumberInRange(int32, int32)` (0x407180)
     fn random_i32(min: i32, max: i32) -> i32 = cdecl 0x407180 => sa_core::general::get_random_number_in_range_i32;
     /// `CExplosion::AddExplosion(CEntity*, CPed*, eExplosionType, CVector, uint32, bool, float, bool)` (0x736A50)
     fn add_explosion(victim: GPtr<u8>, creator: GPtr<u8>, ty: u32, x: u32, y: u32, z: u32, lifetime: u32, make_sound: u32, cam_shake: u32, visibility: u32) = cdecl 0x736A50 => unported;
-    /// `FxManager_c::CreateFxSystem(char*, CVector*, RwMatrix*, bool)` (0x4A9BE0)
-    fn fx_create_fx_system(mgr: GPtr<u8>, name: u32, pos: GPtr<u8>, m: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4A9BE0 => unported;
-    /// `FxSystem_c::Play()` (0x4AA2F0)
-    fn fx_play(fx: GPtr<u8>) = thiscall 0x4AA2F0 => unported;
-    /// `FxSystem_c::Kill()` (0x4AA3F0)
-    fn fx_kill(fx: GPtr<u8>) = thiscall 0x4AA3F0 => unported;
-    /// `FxSystem_c::SetVelAdd(CVector*)` (0x4AA730)
-    fn fx_set_vel_add(fx: GPtr<u8>, v: GPtr<u8>) = thiscall 0x4AA730 => unported;
-    /// `CEventVehicleOnFire::CEventVehicleOnFire(CVehicle*)` (0x4B10C0)
-    fn event_vehicle_on_fire_ctor(ev: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = thiscall 0x4B10C0 => unported;
-    /// `GetEventGlobalGroup()` (0x4ABA50)
-    fn get_event_global_group() -> GPtr<u8> = cdecl 0x4ABA50 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420)
-    fn event_group_add(grp: GPtr<u8>, ev: GPtr<u8>, valid: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
-    /// `CEventVehicleOnFire::~CEventVehicleOnFire()` (0x4B1170)
-    fn event_vehicle_on_fire_dtor(ev: GPtr<u8>) = thiscall 0x4B1170 => unported;
     /// `CVehicle::ProcessDelayedExplosion()` (0x6D1340)
     fn process_delayed_explosion(v: GPtr<u8>) = thiscall 0x6D1340 => unported;
 }
@@ -544,21 +524,16 @@ pub fn automobile_process_car_on_fire_and_explode(this: GPtr<u8>, explode: u32) 
     process_delayed_explosion(this);
 }
 
+use sa_core::bindings::matrix_dtor;
+use sa_core::bindings::matrix_mul_vec;
+use sa_core::bindings::vector_magnitude;
+use sa_world::bindings::get_water_level;
+use sa_world::bindings::vector_ne;
 orig! {
     /// `CMatrix::CMatrix(const CMatrix&)` (0x59BCF0)
     fn matrix_copy_ctor(m: GPtr<u8>, src: GPtr<u8>) = thiscall 0x59BCF0 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
     /// `CBike::CalculateLeanMatrix()` (0x6B7150)
     fn calculate_lean_matrix(b: GPtr<u8>) = thiscall 0x6B7150 => crate::bike2::calculate_lean_matrix;
-    /// `operator!=(const CVector&, const CVector&)` (0x509760)
-    fn vector_ne(a: GPtr<u8>, b: GPtr<u8>) -> u8 = cdecl 0x509760 => unported;
-    /// `operator*(const CMatrix&, const CVector&)` (0x59C890, hidden result pointer)
-    fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
-    /// `CWaterLevel::GetWaterLevel(float, float, float, float*, bool, CVector*)` (0x6EB690), the floats as bits
-    fn get_water_level(x: u32, y: u32, z: u32, level: GPtr<u8>, waves: u32, normal: u32) -> u8 = cdecl 0x6EB690 => unported;
-    /// `CVector::Magnitude()` (0x4082C0, ST0)
-    fn vector_magnitude(v: GPtr<u8>) -> f64 = thiscall 0x4082C0 => unported;
 }
 
 /// `rand()` static guard / value of `AddExhaustParticles` (0xC1CDB8 bit 0 / 0xC1CDB4).

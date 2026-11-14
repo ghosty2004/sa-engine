@@ -10,29 +10,23 @@ use sa_core::{hook, orig};
 
 use super::common::{ftol32, g, rd, wr, x, xi};
 
+use crate::bindings::furnish_bedroom;
+use crate::bindings::furnish_kitchen;
+use crate::bindings::furnish_lounge;
+use crate::bindings::office_place_desk;
+use crate::bindings::ped_get_held_entity as get_entity_held;
+use crate::bindings::set_tiles_status;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::list_add_item;
+use sa_core::bindings::list_remove_item;
+use sa_core::bindings::world_remove;
 orig! {
     /// `Interior_c::FurnishShop(int32)` (0x59A790)
     fn furnish_shop(this: GPtr<u8>, a: i32) = thiscall 0x59A790 => unported;
     /// `Interior_c::FurnishOffice()` (0x599AF0)
     fn furnish_office(this: GPtr<u8>) = thiscall 0x599AF0 => furnish_office_port;
-    /// `Interior_c::FurnishLounge()` (0x597740)
-    fn furnish_lounge(this: GPtr<u8>) = thiscall 0x597740 => unported;
-    /// `Interior_c::FurnishBedroom()` (0x593FC0)
-    fn furnish_bedroom(this: GPtr<u8>) = thiscall 0x593FC0 => unported;
-    /// `Interior_c::FurnishKitchen()` (0x5970B0)
-    fn furnish_kitchen(this: GPtr<u8>) = thiscall 0x5970B0 => unported;
-    /// `FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CPed::GetEntityThatThisPedIsHolding()` (0x5E02E0)
-    fn get_entity_held(ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x5E02E0 => unported;
-    /// `CWorld::Remove(CEntity*)` (0x563280)
-    fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
     /// `CEntity::~CEntity` deleting destructor (vtable +0)
     fn v_delete(e: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
-    /// `List_c::RemoveItem(ListItem_c*)` (0x4A8E30)
-    fn list_remove_item(l: GPtr<u8>, item: GPtr<u8>) = thiscall 0x4A8E30 => unported;
-    /// `List_c::AddItem(ListItem_c*)` (0x4A8DF0)
-    fn list_add_item(l: GPtr<u8>, item: GPtr<u8>) = thiscall 0x4A8DF0 => unported;
     /// `CPickups::RemovePickUpsInArea(float, float, float, float, float, float)` (0x456D30)
     fn remove_pickups_in_area(x0: f32, x1: f32, y0: f32, y1: f32, z0: f32, z1: f32) = cdecl 0x456D30 => unported;
     /// `Interior_c::Unfurnish()` (0x5915D0)
@@ -45,16 +39,12 @@ orig! {
     fn is_pt_inside(it: GPtr<u8>, pt: GPtr<f32>, mx: f32, my: f32, mz: f32) -> u8 = thiscall 0x5913E0 => super::misc2::interior_is_pt_inside;
     /// `InteriorManager_c::GetPedsInteriorGroup(CPed*)` (0x598240)
     fn get_peds_interior_group(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x598240 => super::misc2::interior_manager_get_peds_interior_group;
-    /// `Interior_c::SetTilesStatus(int32 x, int32 y, int32 w, int32 d, int32 status, bool)` (0x591700)
-    fn set_tiles_status(this: GPtr<u8>, x: i32, y: i32, w: i32, d: i32, status: i32, force: u32) = thiscall 0x591700 => unported;
     /// `FurnitureManager_c::GetRandomId(int32 group, int32 subGroup, uint8 wealth)` (0x591220) on `g_furnitureMan` (0xBAB380)
     fn get_random_id(man: GPtr<u8>, group: i32, sub: u32, wealth: u32) -> i32 = thiscall 0x591220 => super::misc2::furniture_manager_get_random_id;
     /// `Interior_c::Office_FurnishEdges()` (0x599770)
     fn office_furnish_edges(this: GPtr<u8>) = thiscall 0x599770 => super::interior_room_items::office_furnish_edges;
     /// `Interior_c::Office_FurnishCenter()` (0x599A30)
     fn office_furnish_center(this: GPtr<u8>) = thiscall 0x599A30 => office_furnish_center_port;
-    /// `Interior_c::Office_PlaceDesk(int32 x, int32 y, int32 dir, int32 chance, int32, int32 id)` (0x5993E0)
-    fn office_place_desk(this: GPtr<u8>, tx: i32, ty: i32, dir: i32, chance: i32, a5: i32, id: i32) -> i32 = thiscall 0x5993E0 => unported;
     /// `Interior_c::Office_PlaceDeskQuad(int32, int32 x, int32 y, int32 id)` (0x599960)
     fn office_place_desk_quad_call(this: GPtr<u8>, a0: i32, tx: i32, ty: i32, id: i32) -> i32 = thiscall 0x599960 => office_place_desk_quad;
     /// `Interior_c::Shop_FurnishCeiling()` (0x59A130)

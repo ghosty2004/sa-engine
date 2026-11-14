@@ -2,17 +2,13 @@
 //! US bytes.
 
 use sa_core::mem::GPtr;
-use sa_core::{native, orig};
+use sa_core::native;
 use sa_math::x87::X87;
 
 use crate::common::{g, rd};
 
-orig! {
-    /// `FxManager_c::CreateFxSystem(const char* name, CVector* point, RwMatrix* parent, bool)` (0x4A9BE0, thiscall)
-    fn fx_create_system(fx: GPtr<u8>, name: u32, point: GPtr<u8>, parent: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4A9BE0 => unported;
-    /// `FxSystem_c::PlayAndKill()` (0x4AA3D0)
-    fn fx_system_play_and_kill(s: GPtr<u8>) = thiscall 0x4AA3D0 => unported;
-}
+use sa_world::bindings::fx_create_system;
+use sa_world::bindings::fx_play_and_kill as fx_system_play_and_kill;
 
 /// `g_fxMan` (0xA9AE80) and the effect name "water_hydrant" (0x85A70C).
 const FX_MAN: usize = 0xA9_AE80;

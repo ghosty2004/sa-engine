@@ -17,15 +17,15 @@ fn door(car: Car, d: u32) -> GPtr<u8> {
     car.byte_add((d.wrapping_mul(3).wrapping_add(0xB7)).wrapping_mul(8) as i32 as isize)
 }
 
+pub use sa_core::bindings::world_add;
+pub use sa_core::bindings::world_remove;
+pub use sa_world::bindings::damage_get_door_status as dm_get_door_status;
+pub use sa_world::bindings::door_is_closed;
 orig! {
     /// `CDoor::GetAngleOpenRatio()` (0x6F47E0), float in ST0
     pub fn door_get_angle_open_ratio(d: GPtr<u8>) -> f64 = thiscall 0x6F47E0 => unported;
-    /// `CDoor::IsClosed()` (0x6F4800)
-    pub fn door_is_closed(d: GPtr<u8>) -> u8 = thiscall 0x6F4800 => unported;
     /// `CDoor::IsFullyOpen()` (0x6F4820)
     pub fn door_is_fully_open(d: GPtr<u8>) -> u8 = thiscall 0x6F4820 => unported;
-    /// `CDamageManager::GetDoorStatus(eDoors)` (0x6C2230)
-    pub fn dm_get_door_status(dm: GPtr<u8>, d: u32) -> u32 = thiscall 0x6C2230 => unported;
     /// `CDamageManager::SetWheelStatus(eCarWheel, eCarWheelStatus)` (0x6C21A0)
     pub fn dm_set_wheel_status(dm: GPtr<u8>, wheel: u32, status: u32) = thiscall 0x6C21A0 => unported;
     /// virtual `CVehicle::IsDoorMissing(eDoors)` (vtable +0x98)
@@ -40,10 +40,6 @@ orig! {
     pub fn v_is_door_closed(v: GPtr<u8>, d: u32) -> u8 = thiscall vslot 0x90 => unported;
     /// virtual `CAutomobile::ResetSuspension()` (vtable +0x10C)
     pub fn v_reset_suspension(v: GPtr<u8>) = thiscall vslot 0x10C => unported;
-    /// `CWorld::Remove(CEntity*)` (0x563280)
-    pub fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
-    /// `CWorld::Add(CEntity*)` (0x563220)
-    pub fn world_add(e: GPtr<u8>) = cdecl 0x563220 => unported;
     /// `CPlaceable::SetOrientation(float, float, float)` (0x439A80)
     pub fn set_orientation(e: GPtr<u8>, x: f32, y: f32, z: f32) = thiscall 0x439A80 => unported;
 }

@@ -11,14 +11,13 @@ use sa_core::{hook, orig};
 
 use crate::common::{g, rd};
 
+use sa_core::bindings::deactivate_directional;
+use sa_core::bindings::set_ambient_colours;
 orig! {
     /// A node's render callback (`void (*)(void* data, float distance)`, the distance as its dword)
     fn node_render(f: u32, data: u32, dist: u32) = cdecl dyn => unported;
     /// `G->dOpenDevice.fpRenderStateSet(state, value)` (`[G] + 0x20`)
     fn rw_render_state_set(state: u32, value: u32) -> u32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `Light::SetAmbientColours()` (0x735D30), `Light::DeActivateDirectional()` (0x735C70)
-    fn set_ambient_colours() = cdecl 0x735D30 => unported;
-    fn deactivate_directional() = cdecl 0x735C70 => unported;
     /// `CVisibilityPlugins::RenderBoatAlphaAtomics()` (0x733EC0)
     fn render_boat_alpha_atomics_call() = cdecl 0x733EC0 => render_boat_alpha_atomics;
 }

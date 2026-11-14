@@ -38,6 +38,30 @@ const K_360: u32 = 0x43B4_0000;
 const K_ZERO: u32 = 0;
 const K_DEG2RAD: u32 = 0x3C8E_FA35;
 
+use crate::bindings::object_get_ref_;
+use crate::bindings::scripted_task_status;
+use sa_core::bindings::crt_strncpy as strncpy_;
+use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+use sa_core::bindings::entity_register_reference as register_reference;
+use sa_core::bindings::get_weapon_info;
+use sa_core::bindings::make_upper_case;
+use sa_core::bindings::matrix_dtor;
+use sa_core::bindings::task_new;
+use sa_world::bindings::clothes_desc_set_texture_and_model as set_texture_and_model;
+use sa_world::bindings::find_zone_by_label;
+use sa_world::bindings::flush_immediately;
+use sa_world::bindings::get_modelling_matrix;
+use sa_world::bindings::get_ped_flag;
+use sa_world::bindings::matrix_ctor_rw as matrix_from_rw;
+use sa_world::bindings::placeable_set_matrix;
+use sa_world::bindings::seek_entity_aiming_ctor as task_seek_entity_aiming_ctor;
+use sa_world::bindings::sequence_add_task as task_sequence_add;
+use sa_world::bindings::sequence_ctor as task_sequence_ctor;
+use sa_world::bindings::set_as_acquaintance;
+use sa_world::bindings::set_ped_decision_maker_type;
+use sa_world::bindings::task_go_pick_up_entity_ctor as task_pickup_object_ctor;
+use sa_world::bindings::task_jetpack_ctor;
+use sa_world::bindings::use_sequence_ctor as task_use_sequence_ctor;
 orig! {
     /// A virtual `CVehicle` method without arguments (thiscall through the vtable slot read at run time)
     fn vcall0(f: u32, this: GPtr<u8>) = thiscall dyn => unported;
@@ -49,12 +73,8 @@ orig! {
     fn release_one_mission_train(t: GPtr<u8>) = cdecl 0x6F5DF0 => unported;
     /// `CRunningScript::ReadTextLabelFromScript(char*, uint8)` (0x463D50)
     fn read_label(s: Scr, buf: GPtr<u8>, len: u32) = thiscall 0x463D50 => crate::vm::read_text_label_from_script;
-    /// `CTheZones::FindZoneByLabel(const char*, eZoneType)` (0x572C40), AX
-    fn find_zone_by_label(label: GPtr<u8>, ty: u32) -> u16 = cdecl 0x572C40 => unported;
     /// `CBaseModelInfo` virtual slot 0x10 (`GetModelType()`), AL
     fn model_info_type(mi: GPtr<u8>) -> u8 = thiscall vslot 0x10 => unported;
-    /// `CTask::operator new(uint32)` (0x61A5A0)
-    fn task_new(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => unported;
     /// `CRunningScript::GivePedScriptedTask(int32 pedHandle, CTask*, int32 opcode)` (0x465C20)
     fn give_ped_scripted_task(s: Scr, ped: u32, task: GPtr<u8>, command: u32) = thiscall 0x465C20 => unported;
     /// `CTaskComplexSeekEntity<CEntitySeekPosCalculatorStandard>::CTaskComplexSeekEntity(CEntity*, int32 time,
@@ -68,25 +88,13 @@ orig! {
     fn request_ipl_and_ignore(slot: u32) = cdecl 0x405850 => unported;
     fn remove_ipl_and_ignore(slot: u32) = cdecl 0x405890 => unported;
     fn remove_ipl_when_far_away(slot: u32) = cdecl 0x4058D0 => unported;
-    /// `CPedType::GetPedFlag(ePedType)` (0x608830)
-    fn get_ped_flag(t: u32) -> u32 = cdecl 0x608830 => unported;
-    /// `CAcquaintance::SetAsAcquaintance(int32, uint32)` (0x608DA0) / `ClearAsAcquaintance` (0x608980)
-    fn set_as_acquaintance(a: GPtr<u8>, ty: u32, fl: u32) = thiscall 0x608DA0 => unported;
     fn clear_as_acquaintance(a: GPtr<u8>, ty: u32, fl: u32) = thiscall 0x608980 => unported;
     /// `CAcquaintance::ClearAcquaintances(int32)` (0x6089A0)
     fn clear_acquaintances(a: GPtr<u8>, ty: u32) = thiscall 0x6089A0 => unported;
     /// `CAutomobile::GetCarPitch()` (0x6A6050), ST0 (an FPATAN-based result read as f64, the MATH-2 model)
     fn get_car_pitch(v: GPtr<u8>) -> f64 = thiscall 0x6A6050 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
-    fn clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    fn register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
-    /// `CWeaponInfo::GetWeaponInfo(eWeaponType, eWeaponSkill)` (0x743C60)
-    fn get_weapon_info(ty: u32, skill: u32) -> GPtr<u8> = cdecl 0x743C60 => unported;
     /// `CShopping::GetExtraInfo(uint32, int32)` (0x49ADE0)
     fn get_extra_info(a: u32, b: u32) -> u32 = cdecl 0x49ADE0 => unported;
-    /// `CPedClothesDesc::SetTextureAndModel(uint32 tex, uint32 model, int32 type)` (0x5A8050)
-    fn set_texture_and_model(d: GPtr<u8>, tex: u32, model: u32, ty: u32) = thiscall 0x5A8050 => unported;
     /// `CFireManager::GetNumFiresInArea(float x6)` (0x539860), ECX = gFireManager 0xB71F80; floats raw
     fn get_num_fires_in_area(m: GPtr<u8>, a: u32, b: u32, c: u32, d: u32, e: u32, f: u32) -> u32 = thiscall 0x539860 => unported;
     /// `CVehicle::InitWinch(int32)` (0x6D3B60)
@@ -103,14 +111,10 @@ orig! {
     fn get_object_carried_with_rope(o: GPtr<u8>) -> GPtr<u8> = thiscall 0x59F3C0 => unported;
     /// `CShopping::GetNameTag(uint32)` (0x49ADA0)
     fn get_name_tag(i: u32) -> GPtr<u8> = cdecl 0x49ADA0 => unported;
-    /// CRT `strncpy` (0x821F40)
-    fn strncpy_(dst: GPtr<u8>, src: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x821F40 => unported;
     /// 0x46A630 (thiscall; the 0x14-byte `CTaskComplexClimb` constructor, no arguments)
     fn task_climb_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x46A630 => unported;
     /// `CShopping::Buy(uint32, int32)` (0x49BF70)
     fn shopping_buy(i: u32, b: u32) = cdecl 0x49BF70 => unported;
-    /// `CPedIntelligence::FlushImmediately(bool)` (0x601640)
-    fn flush_immediately(intel: GPtr<u8>, b: u32) = thiscall 0x601640 => unported;
     /// `CShopping::StoreClothesState()` (0x49B200) / `RestoreClothesState()` (0x49B240)
     fn store_clothes_state() = cdecl 0x49B200 => unported;
     fn restore_clothes_state() = cdecl 0x49B240 => unported;
@@ -122,15 +126,8 @@ orig! {
     fn release_object_carried_with_rope(o: GPtr<u8>) = thiscall 0x59F3E0 => unported;
     /// `CPool<CPed>::GetRef(CPed*)` / `CPool<CObject>::GetRef(CObject*)` with the raw result (0x4442D0 / 0x465070)
     fn ped_get_ref_(pool: GPtr<u8>, p: GPtr<u8>) -> u32 = thiscall 0x4442D0 => unported;
-    fn object_get_ref_(pool: GPtr<u8>, o: GPtr<u8>) -> u32 = thiscall 0x465070 => unported;
     /// `CTheScripts::GetActualScriptThingIndex(int32 ref, uint8 type)` (0x4839A0)
     fn get_actual_script_thing_index(r: u32, ty: u32) -> i32 = cdecl 0x4839A0 => unported;
-    /// `CTaskComplexUseSequence::CTaskComplexUseSequence(int32)` (0x635450)
-    fn task_use_sequence_ctor(t: GPtr<u8>, i: i32) -> GPtr<u8> = thiscall 0x635450 => unported;
-    /// `CTaskComplexSeekEntityAiming::CTaskComplexSeekEntityAiming(CEntity*, float, float)` (0x694B90); raw
-    fn task_seek_entity_aiming_ctor(t: GPtr<u8>, e: GPtr<u8>, a: u32, b: u32) -> GPtr<u8> = thiscall 0x694B90 => unported;
-    /// `CPedScriptedTaskRecord::GetStatus(const CPed*, int32 opcode)` (0x608710)
-    fn scripted_task_status(p: GPtr<u8>, op: u32) -> u32 = cdecl 0x608710 => unported;
     /// `CTask` virtual slot 8 (`GetSubTask()`)
     fn task_get_sub_task(t: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x08 => unported;
     /// `CTask` virtual slot 0x10 (`GetTaskType()`)
@@ -139,20 +136,14 @@ orig! {
     fn task_kill_ped_on_foot_ctor(t: GPtr<u8>, target: GPtr<u8>, time: u32, a: u32, b: u32, c: u32, d: u32) -> GPtr<u8> = thiscall 0x620E30 => unported;
     /// `CTagManager::GetNearestTag(const CVector&)` (0x49D160)
     fn get_nearest_tag(pos: GPtr<u32>) -> GPtr<u8> = cdecl 0x49D160 => unported;
-    /// `CTaskSimpleJetPack::CTaskSimpleJetPack(const CVector*, float, int32, CEntity*)` (0x67B4E0); raw
-    fn task_jetpack_ctor(t: GPtr<u8>, pos: u32, h: u32, a: u32, e: u32) -> GPtr<u8> = thiscall 0x67B4E0 => unported;
     /// 0x493960 (cdecl `(CPed*, int32* out)`, AL: the searchlight query; writes `*out` when it returns true)
     fn is_ped_in_any_searchlight(p: GPtr<u8>, out: GPtr<u32>) -> u8 = cdecl 0x493960 => unported;
     /// `CTheScripts::GetUniqueScriptThingIndex(int32, uint8)` (0x4810C0)
     fn get_unique_script_thing_index(i: u32, ty: u32) -> u32 = cdecl 0x4810C0 => unported;
-    /// `MakeUpperCase(char*)` (0x718710)
-    fn make_upper_case(s: GPtr<u8>) = cdecl 0x718710 => unported;
     /// `CAudioEngine::GetBeatInfo()` (0x5071B0), ECX = AudioEngine 0xB6BC90
     fn get_beat_info(a: GPtr<u8>) -> GPtr<u8> = thiscall 0x5071B0 => unported;
     /// `CPedGroupIntelligence::SetDefaultTaskAllocatorType(int32)` (0x5FBB70)
     fn set_default_task_allocator_type(g: GPtr<u8>, t: u32) = thiscall 0x5FBB70 => unported;
-    /// `CPedIntelligence::SetPedDecisionMakerType(int32)` (0x600B50)
-    fn set_ped_decision_maker_type(intel: GPtr<u8>, t: i32) = thiscall 0x600B50 => unported;
     /// `CTaskSimpleSetCharDecisionMaker::CTaskSimpleSetCharDecisionMaker(int32)` (0x46A470)
     fn task_set_char_dm_ctor(t: GPtr<u8>, dm: i32) -> GPtr<u8> = thiscall 0x46A470 => unported;
     /// `CRadar::SetBlipAlwaysDisplayInZoom(int32, uint8)` (0x583DB0)
@@ -161,27 +152,14 @@ orig! {
     /// (0x45A060, AL)
     fn request_recording_file(i: u32) = cdecl 0x45A020 => unported;
     fn has_recording_file_been_loaded(i: u32) -> u8 = cdecl 0x45A060 => unported;
-    /// `CEntity::GetModellingMatrix()` (0x46A2D0)
-    fn get_modelling_matrix(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x46A2D0 => unported;
     /// 0x59C3E0 (thiscall on a `CQuaternion`, `RwMatrix*`; gr `CQuaternion::Set(const RwMatrix&)`)
     fn quaternion_set(q: GPtr<u32>, m: GPtr<u8>) = thiscall 0x59C3E0 => unported;
     /// `CQuaternion::Get(RwMatrix*)` (0x59C080)
     fn quaternion_get(q: GPtr<u32>, m: GPtr<u8>) = thiscall 0x59C080 => unported;
-    /// 0x59C050 (thiscall; `CMatrix::CMatrix(RwMatrix*, bool owner)`)
-    fn matrix_from_rw(m: GPtr<u8>, rw: GPtr<u8>, owner: u32) -> GPtr<u8> = thiscall 0x59C050 => unported;
-    /// `CPlaceable::SetMatrix(const CMatrix&)` (0x54F610)
-    fn placeable_set_matrix(e: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F610 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
     /// `CPlaceable::SetPosn(const CVector&)` (0x4241C0)
     fn placeable_set_posn(e: GPtr<u8>, p: GPtr<u32>) = thiscall 0x4241C0 => unported;
-    /// 0x6919C0 (thiscall; the 0x34-byte task constructor of vtable 0x870B98, `(CEntity*, int32)`)
-    fn task_pickup_object_ctor(t: GPtr<u8>, o: GPtr<u8>, n: u32) -> GPtr<u8> = thiscall 0x6919C0 => unported;
     /// 0x53FB70 (cdecl `(int32)`: `CPad::GetPad`)
     fn get_pad(i: u32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CTaskComplexSequence::CTaskComplexSequence()` (0x632BD0) / `AddTask(CTask*)` (0x632D10)
-    fn task_sequence_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x632BD0 => unported;
-    fn task_sequence_add(seq: GPtr<u8>, t: GPtr<u8>) = thiscall 0x632D10 => unported;
     /// `CTaskComplexGoToPointAndStandStill::CTaskComplexGoToPointAndStandStill(int32, const CVector&, float,
     /// float, bool, bool)` (0x668120); floats raw
     fn task_go_to_point_ctor(t: GPtr<u8>, ms: u32, pos: GPtr<u32>, r: u32, r2: u32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x668120 => unported;

@@ -9,28 +9,20 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::attractor_manager_deregister_ped as deregister_ped;
+use crate::bindings::eh_handle_events;
+use crate::bindings::scripted_2d_effects_get_index;
+use crate::bindings::wanted_can_cop_join_pursuit;
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_core::bindings::entity_register_reference;
+use sa_stream::bindings::find_player_wanted;
+use sa_world::bindings::get_ped_attractor_manager;
+use sa_world::bindings::task_simple_ctor;
 orig! {
-    /// `CEventHandler::HandleEvents()` (0x4C3F10)
-    fn eh_handle_events(eh: GPtr<u8>) = thiscall 0x4C3F10 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    fn entity_register_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571B70 => unported;
-    /// `CScripted2dEffects::GetIndex(const C2dEffectPedAttractor*)` (0x6F9F60)
-    fn scripted_2d_effects_get_index(effect: GPtr<u8>) -> i32 = cdecl 0x6F9F60 => unported;
-    /// `GetPedAttractorManager()` (0x5EE190)
-    fn get_ped_attractor_manager() -> GPtr<u8> = cdecl 0x5EE190 => unported;
     /// `CPedAttractorManager::RegisterPedWithAttractor(CPed*, C2dEffectPedAttractor*, CEntity*, int32)` (0x5EFCA0)
     fn register_ped_with_attractor(m: GPtr<u8>, ped: GPtr<u8>, fx: GPtr<u8>, entity: GPtr<u8>, move_state: u32) -> GPtr<u8> = thiscall 0x5EFCA0 => unported;
     /// `CPedAttractor::GetTaskForPed(CPed*)` (0x5EC500)
     fn attractor_get_task_for_ped(a: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x5EC500 => unported;
-    /// `CTaskSimple::CTaskSimple()` (0x61A390)
-    fn task_simple_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A390 => unported;
-    /// `CPedAttractorManager::DeRegisterPed(CPed*, CPedAttractor*)` (0x5EC850)
-    /// `FindPlayerWanted(int32)` (0x56E230)
-    fn find_player_wanted(id: i32) -> GPtr<u8> = cdecl 0x56E230 => unported;
-    /// `CWanted::CanCopJoinPursuit(CCopPed*)` (0x562FB0)
-    fn wanted_can_cop_join_pursuit(w: GPtr<u8>, cop: GPtr<u8>) -> u8 = thiscall 0x562FB0 => unported;
     /// `CTask::MakeAbortable(CPed*, eAbortPriority, const CEvent*)` (vtable slot 0x18)
     fn task_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, prio: i32, ev: u32) -> u8 = thiscall vslot 0x18 => unported;
     /// `CTaskComplex::CreateFirstSubTask(CPed*)` (vtable slot 0x24)
@@ -38,7 +30,6 @@ orig! {
     /// `CPedAttractorManager::IsPedRegisteredWithEffect`-style lookup (0x5EBF50): the attractor `ped` is registered
     /// with for (fx, entity)
     fn find_attractor_for_ped(m: GPtr<u8>, ped: GPtr<u8>, fx: GPtr<u8>, entity: GPtr<u8>) -> GPtr<u8> = thiscall 0x5EBF50 => unported;
-    fn deregister_ped(m: GPtr<u8>, ped: GPtr<u8>, a: GPtr<u8>) -> u8 = thiscall 0x5EC850 => unported;
     /// `CTaskComplex` base destructor (0x61A3D0)
     fn task_complex_dtor(t: GPtr<u8>) = thiscall 0x61A3D0 => crate::mvpb_ai::task_complex_dtor_61a3d0;
 }

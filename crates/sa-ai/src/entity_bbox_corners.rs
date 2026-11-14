@@ -10,17 +10,13 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use sa_core::bindings::vector_from_multiply;
+use sa_core::bindings::vector_normalise;
+use sa_stream::bindings::placeable_allocate_matrix;
+use sa_stream::bindings::simple_transform_update_matrix;
 orig! {
     /// `InteriorManager_c::GetBoundingBox(CEntity*, CVector* corners)` (0x598090, `ret 8`)
     fn interior_manager_get_bounding_box(m: GPtr<u8>, e: GPtr<u8>, corners: GPtr<u8>) -> u8 = thiscall 0x598090 => unported;
-    /// `CPlaceable::AllocateMatrix()` (0x54F560)
-    fn placeable_allocate_matrix(p: GPtr<u8>) = thiscall 0x54F560 => unported;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*)` (0x54F1B0, `ret 4`)
-    fn simple_transform_update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => unported;
-    /// `CVector::FromMultiply(const CMatrix&, const CVector&)` (0x59C670, `ret 8`): `this = m * v` (with position)
-    fn vector_from_multiply(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = thiscall 0x59C670 => unported;
-    /// `CVector::Normalise` (0x59C910)
-    fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
 }
 
 /// `g_interiorMan` (`InteriorManager_c`)

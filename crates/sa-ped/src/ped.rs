@@ -24,37 +24,38 @@ const CONV_PED: usize = 0x9691C0;
 /// `CModelInfo::ms_modelInfoPtrs`
 const MODEL_INFO_PTRS: usize = 0xA9B0C8;
 
+pub use crate::bindings::cover_point_release_for_ped as release_cover_point_for_ped;
+pub use sa_core::bindings::deactivate_directional;
+pub use sa_core::bindings::general_angle_between_points as get_angle_between_points;
+pub use sa_core::bindings::general_get_radian_angle_between_points as get_radian_angle_between_points;
+pub use sa_core::bindings::general_limit_radian_angle as limit_radian_angle;
+pub use sa_core::bindings::get_pad;
+pub use sa_core::bindings::set_ambient_colours;
+pub use sa_stream::bindings::get_first_object;
+pub use sa_stream::bindings::set_component_atomic_alpha;
+pub use sa_world::bindings::anim_get_next_association as get_next_association;
+pub use sa_world::bindings::clear_blip_for_entity;
+pub use sa_world::bindings::clump_get_first_association;
+pub use sa_world::bindings::crt_printf as debug_printf;
+pub use sa_world::bindings::intel_find_task_by_type as find_task_by_type;
+pub use sa_world::bindings::membership_is_follower as group_is_follower;
+pub use sa_world::bindings::pad_get_ped_walk_left_right;
+pub use sa_world::bindings::pad_get_ped_walk_up_down;
+pub use sa_world::bindings::remove_lights_affecting_object;
+pub use sa_world::bindings::set_hearing_range;
+pub use sa_world::bindings::set_orientation;
+pub use sa_world::bindings::set_ped_decision_maker_type;
+pub use sa_world::bindings::set_seeing_range;
+pub use sa_world::bindings::tm_find_active_task_by_type as find_active_task_by_type;
 orig! {
     /// `CEntity::CleanUpOldReference(CEntity** ref)` (0x571A00, thiscall on the referenced entity)
     pub fn clean_up_old_reference(e: GPtr<u8>, r: GPtr<GPtr<u8>>) = thiscall 0x571A00 => unported;
     /// `CEntity::RegisterReference(CEntity** ref)` (0x571B70)
     pub fn register_reference(e: GPtr<u8>, r: GPtr<GPtr<u8>>) = thiscall 0x571B70 => unported;
-    /// `CPedGroupMembership::IsFollower(const CPed*)` (0x5F69E0)
-    pub fn group_is_follower(m: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x5F69E0 => unported;
-    /// `CTaskManager::FindActiveTaskByType(int32)` (0x681740)
-    pub fn find_active_task_by_type(tm: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x681740 => unported;
     /// `CTaskSimpleHoldEntity::CanThrowEntity` (0x691700)
     pub fn can_throw_entity(t: GPtr<u8>) -> u8 = thiscall 0x691700 => unported;
     /// `CTask::MakeAbortable(CPed*, eAbortPriority, const CEvent*)` (vtable slot 0x18)
     pub fn task_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, prio: i32, ev: u32) -> u8 = thiscall vslot 0x18 => unported;
-    /// `CPedIntelligence::SetPedDecisionMakerType(int32)` (0x600B50)
-    pub fn set_ped_decision_maker_type(intel: GPtr<u8>, ty: i32) = thiscall 0x600B50 => unported;
-    /// `CPedIntelligence::SetSeeingRange(float)` (0x600BF0)
-    pub fn set_seeing_range(intel: GPtr<u8>, r: u32) = thiscall 0x600BF0 => unported;
-    /// `CPedIntelligence::SetHearingRange(float)` (0x600BE0)
-    pub fn set_hearing_range(intel: GPtr<u8>, r: u32) = thiscall 0x600BE0 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    pub fn get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CPad::GetPedWalkLeftRight` (0x53FC90)
-    pub fn pad_get_ped_walk_left_right(pad: GPtr<u8>) -> i16 = thiscall 0x53FC90 => unported;
-    /// `CPad::GetPedWalkUpDown` (0x53FD30)
-    pub fn pad_get_ped_walk_up_down(pad: GPtr<u8>) -> i16 = thiscall 0x53FD30 => unported;
-    /// `CGeneral::GetRadianAngleBetweenPoints(float x1, float y1, float x2, float y2)` (0x53CBE0)
-    pub fn get_radian_angle_between_points(x1: u32, y1: u32, x2: u32, y2: u32) -> f64 = cdecl 0x53CBE0 => unported;
-    /// `CGeneral::LimitRadianAngle(float)` (0x53CB50)
-    pub fn limit_radian_angle(a: u32) -> f64 = cdecl 0x53CB50 => unported;
-    /// `CGeneral::GetAngleBetweenPoints(float x1, float y1, float x2, float y2)` (0x53CEA0)
-    pub fn get_angle_between_points(x1: u32, y1: u32, x2: u32, y2: u32) -> f64 = cdecl 0x53CEA0 => unported;
     /// `CWeaponInfo::GetSkillStatIndex(eWeaponType)` (0x743CD0)
     pub fn get_skill_stat_index(ty: i32) -> i32 = cdecl 0x743CD0 => unported;
     /// `CPed::GetWeaponSkill(eWeaponType)` (0x5E3B60)
@@ -69,32 +70,8 @@ orig! {
     pub fn speech_enable(e: GPtr<u8>) = thiscall 0x4E3F70 => unported;
     /// `CAEPedSpeechAudioEntity::EnablePedSpeechForScriptSpeech` (0x4E3F90)
     pub fn speech_enable_script(e: GPtr<u8>) = thiscall 0x4E3F90 => unported;
-    /// CRT printf (0x821982)
-    pub fn debug_printf(fmt: u32) -> i32 = cdecl 0x821982 => unported;
     /// `CLocalisation::ShootLimbs` (0x56D280)
     pub fn shoot_limbs() -> u8 = cdecl 0x56D280 => unported;
-    /// `CPedIntelligence::FindTaskByType(int32)` (0x600EE0)
-    pub fn find_task_by_type(intel: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x600EE0 => unported;
-    /// `CPointLights::RemoveLightsAffectingObject` (0x6FFFE0)
-    pub fn remove_lights_affecting_object() = cdecl 0x6FFFE0 => unported;
-    /// `Light::SetAmbientColours()` (0x735D30)
-    pub fn set_ambient_colours() = cdecl 0x735D30 => unported;
-    /// `Light::DeActivateDirectional` (0x735C70)
-    pub fn deactivate_directional() = cdecl 0x735C70 => unported;
-    /// `RpAnimBlendClumpGetFirstAssociation(RpClump*)` (0x4D15E0)
-    pub fn clump_get_first_association(c: GPtr<u8>) -> GPtr<u8> = cdecl 0x4D15E0 => unported;
-    /// `RpAnimBlendGetNextAssociation(CAnimBlendAssociation*)` (0x4D6AB0)
-    pub fn get_next_association(a: GPtr<u8>) -> GPtr<u8> = cdecl 0x4D6AB0 => unported;
-    /// `RwHelper::GetFirstObject(RwFrame*)` (0x7348C0)
-    pub fn get_first_object(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7348C0 => unported;
-    /// `CVehicle::SetComponentAtomicAlpha(RpAtomic*, int32)` (0x6D2960)
-    pub fn set_component_atomic_alpha(a: GPtr<u8>, alpha: i32) = cdecl 0x6D2960 => unported;
-    /// `CCoverPoint::ReleaseCoverPointForPed(CPed*)` (0x698EF0)
-    pub fn release_cover_point_for_ped(cp: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x698EF0 => unported;
-    /// `CRadar::ClearBlipForEntity(eBlipType, int32)` (0x587C60)
-    pub fn clear_blip_for_entity(ty: i32, handle: i32) = cdecl 0x587C60 => unported;
-    /// `CPlaceable::SetOrientation(float x, float y, float z)` (0x439A80)
-    pub fn set_orientation(e: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x439A80 => unported;
 }
 
 /// The ped pool handle of `ped` (`CPool::GetRef`): `(index << 8) + flags[index]`, index as the

@@ -13,6 +13,10 @@ use sa_world::collision::surface::SiPtr;
 
 use crate::common::{ftol32, g, jp, k, rd, wr, x, xi};
 
+use crate::bindings::get_surf_properties;
+use crate::bindings::loc_tri_release;
+use crate::bindings::proc_object_process_triangle_added as process_triangle_added;
+use crate::bindings::transform_points;
 orig! {
     /// `CEntity::GetColModel()` (0x535300)
     fn get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => sa_world::world::entity::get_col_model;
@@ -22,8 +26,6 @@ orig! {
     fn allocate_matrix(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x54f560 => sa_world::world::entity::allocate_matrix;
     /// `CSimpleTransform::UpdateMatrix(CMatrix*) const` (0x54f1b0)
     fn simple_transform_update_matrix(this: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54f1b0 => crate::mvpd_unk::simple_transform_update_matrix;
-    /// `TransformPoints(RwV3d* out, int count, const CMatrix&, const RwV3d* in)` (0x54eef0)
-    fn transform_points(out: GPtr<u8>, count: u32, m: GPtr<u8>, inp: GPtr<u8>) = cdecl 0x54eef0 => crate::mvpb_r1::transform_points;
     /// `SurfaceInfos_c::CreatesPlants(id)` (0x55e9d0)
     fn creates_plants(si: SiPtr, id: u32) -> u32 = thiscall 0x55e9d0 => sa_world::collision::surface::creates_plants;
     /// `SurfaceInfos_c::CreatesObjects(id)` (0x55e9f0)
@@ -33,14 +35,8 @@ orig! {
     fn loc_tri_add(this: GPtr<u8>, v0: GPtr<u8>, v1: GPtr<u8>, v2: GPtr<u8>, surface: u32, light: u32, plants: u32, objects: u32) -> u32 = thiscall 0x5dc290 => plant_loc_tri_add;
     /// `CPlantLocTri::GetPlantDensity()` (0x5DC210): `this` in EAX, the area in ST0 (80 bits)
     fn get_plant_density(this: GPtr<u8>) -> X87 = reg("args = eax") 0x5DC210 => crate::mvpb_r1::plant_loc_tri_get_plant_density;
-    /// `CPlantSurfPropMgr::GetSurfProperties(uint16 id)` (0x6F9DE0; the id pushed as a dword)
-    fn get_surf_properties(id: u32) -> GPtr<u8> = cdecl 0x6F9DE0 => unported;
     /// `CPlantMgr::MoveLocTriToList(CPlantLocTri** from, CPlantLocTri** to, CPlantLocTri*)` (0x5DB590)
     fn move_loc_tri_to_list(from: GPtr<u8>, to: GPtr<u8>, tri: GPtr<u8>) = cdecl 0x5DB590 => unported;
-    /// `ProcObjectMan_c::ProcessTriangleAdded(CPlantLocTri*)` (0x5a3f20)
-    fn process_triangle_added(this: GPtr<u8>, tri: GPtr<u8>) -> u8 = thiscall 0x5a3f20 => unported;
-    /// `CPlantLocTri::Release()` (0x5db6d0)
-    fn loc_tri_release(this: GPtr<u8>) = thiscall 0x5db6d0 => crate::mvpb_r1::plant_loc_tri_release;
 }
 
 /// `CPlantMgr::m_UnusedLocTriListHead`, `g_surfaceInfos`, `g_procObjMan`.
@@ -221,7 +217,6 @@ pub fn add_loc_tris(entry: GPtr<u8>, centre: GPtr<u8>, mask: i32, start: i32, en
         }
     }
 }
-
 
 /// The seven distance tests (0x5DC9BA..0x5DCC9D): true when any squared distance is below 10000.
 fn near_any(c: GPtr<u8>, v: &[[f32; 3]; 3]) -> bool {

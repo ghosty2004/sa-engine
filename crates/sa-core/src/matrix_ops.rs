@@ -5,9 +5,8 @@ use crate::abi::{HookReg, NativeReg};
 use crate::mem::GPtr;
 use crate::{hook, orig};
 
+use crate::bindings::rw_matrix_update;
 orig! {
-    /// `RwMatrixUpdate(RwMatrix*)` (0x7F18A0)
-    fn rw_matrix_update(m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F18A0 => unported;
     /// `CMatrix::UpdateRwMatrix(RwMatrix*)` (0x59AD70)
     fn update_rw_matrix_call(this: GPtr<u8>, rw: GPtr<u8>) -> GPtr<u8> = thiscall 0x59AD70 => update_rw_matrix;
 }

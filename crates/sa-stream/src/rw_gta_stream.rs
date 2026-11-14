@@ -86,51 +86,34 @@ pub const RW_ID_ATOMIC: u32 = 0x14;
 pub const RW_ID_TEXTURENATIVE: u32 = 0x15;
 pub const RW_ID_GEOMETRYLIST: u32 = 0x1A;
 
+pub use crate::bindings::fx_get_fx_quality;
+pub use crate::bindings::rp_clump_add_atomic;
+pub use crate::bindings::rw_tex_dictionary_create;
+pub use crate::bindings::rw_tex_dictionary_destroy;
+pub use sa_core::bindings::geometry_stream_read as rp_geometry_stream_read;
+pub use sa_core::bindings::get_current_time_in_cycles;
+pub use sa_core::bindings::get_cycles_per_millisecond;
+pub use sa_core::bindings::memory_free as memory_mgr_free;
+pub use sa_core::bindings::memory_malloc as memory_mgr_malloc;
+pub use sa_core::bindings::rp_atomic_create;
+pub use sa_core::bindings::rp_atomic_destroy;
+pub use sa_core::bindings::rp_atomic_set_frame;
+pub use sa_core::bindings::rp_atomic_set_geometry;
+pub use sa_core::bindings::rp_clump_create;
+pub use sa_core::bindings::rp_clump_destroy;
+pub use sa_core::bindings::rw_stream_skip;
+pub use sa_core::bindings::rw_tex_dictionary_add_texture;
+pub use sa_core::bindings::rw_tex_dictionary_for_all_textures;
+pub use sa_core::bindings::stream_read as rw_stream_read;
 orig! {
     /// `RwStreamFindChunk(stream, type, lengthOut, versionOut)` (0x7ED2D0)
     pub fn rw_stream_find_chunk(stream: GPtr<u8>, ty: u32, len: GPtr<u32>, ver: GPtr<u32>) -> i32 = cdecl 0x7ED2D0 => unported;
-    /// `RwStreamRead(stream, buf, len)` (0x7EC9D0)
-    pub fn rw_stream_read(stream: GPtr<u8>, buf: GPtr<u8>, len: u32) -> u32 = cdecl 0x7EC9D0 => unported;
-    /// `RwStreamSkip(stream, n)` (0x7ECD00)
-    pub fn rw_stream_skip(stream: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x7ECD00 => unported;
-    /// `RpGeometryStreamRead(stream)` (0x74D190)
-    pub fn rp_geometry_stream_read(stream: GPtr<u8>) -> GPtr<u8> = cdecl 0x74D190 => unported;
     /// `RpGeometryDestroy(geometry)` (0x74CCC0)
     pub fn rp_geometry_destroy(g: GPtr<u8>) -> i32 = cdecl 0x74CCC0 => unported;
-    /// `CMemoryMgr::Malloc(size, hint)` (0x72F420)
-    pub fn memory_mgr_malloc(size: u32, hint: u32) -> GPtr<u8> = cdecl 0x72F420 => unported;
-    /// `CMemoryMgr::Free(p)` (0x72F430)
-    pub fn memory_mgr_free(p: GPtr<u8>) = cdecl 0x72F430 => unported;
-    /// `RwTexDictionaryCreate()` (0x7F3600)
-    pub fn rw_tex_dictionary_create() -> GPtr<u8> = cdecl 0x7F3600 => unported;
-    /// `RwTexDictionaryDestroy(dict)` (0x7F36A0)
-    pub fn rw_tex_dictionary_destroy(dict: GPtr<u8>) -> i32 = cdecl 0x7F36A0 => unported;
-    /// `RwTexDictionaryForAllTextures(dict, cb, data)` (0x7F3730)
-    pub fn rw_tex_dictionary_for_all_textures(dict: GPtr<u8>, cb: u32, data: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F3730 => unported;
-    /// `RwTexDictionaryAddTexture(dict, tex)` (0x7F3980)
-    pub fn rw_tex_dictionary_add_texture(dict: GPtr<u8>, tex: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F3980 => unported;
-    /// `RpClumpCreate()` (0x74A290)
-    pub fn rp_clump_create() -> GPtr<u8> = cdecl 0x74A290 => unported;
-    /// `RpClumpDestroy(clump)` (0x74A310)
-    pub fn rp_clump_destroy(clump: GPtr<u8>) -> i32 = cdecl 0x74A310 => unported;
-    /// `RpClumpAddAtomic(clump, atomic)` (0x74A490)
-    pub fn rp_clump_add_atomic(clump: GPtr<u8>, atomic: GPtr<u8>) -> GPtr<u8> = cdecl 0x74A490 => unported;
-    /// `RpAtomicCreate()` (0x749C50)
-    pub fn rp_atomic_create() -> GPtr<u8> = cdecl 0x749C50 => unported;
-    /// `RpAtomicDestroy(atomic)` (0x749DC0)
-    pub fn rp_atomic_destroy(atomic: GPtr<u8>) -> i32 = cdecl 0x749DC0 => unported;
-    /// `RpAtomicSetFrame(atomic, frame)` (0x74BF20)
-    pub fn rp_atomic_set_frame(atomic: GPtr<u8>, frame: GPtr<u8>) -> GPtr<u8> = cdecl 0x74BF20 => unported;
-    /// `RpAtomicSetGeometry(atomic, geometry, flags)` (0x749D40)
-    pub fn rp_atomic_set_geometry(atomic: GPtr<u8>, g: GPtr<u8>, flags: u32) -> GPtr<u8> = cdecl 0x749D40 => unported;
     /// `_rwFrameListStreamRead(stream, frameList)` (0x807970)
     pub fn rw_frame_list_stream_read(stream: GPtr<u8>, fl: GPtr<PtrList>) -> GPtr<PtrList> = cdecl 0x807970 => unported;
     /// `_rwFrameListDeinitialize(frameList)` (0x807720)
     pub fn rw_frame_list_deinitialize(fl: GPtr<PtrList>) -> GPtr<PtrList> = cdecl 0x807720 => unported;
-    /// `CTimer::GetCurrentTimeInCycles()` (0x561A80)
-    pub fn get_current_time_in_cycles() -> u32 = cdecl 0x561A80 => sa_core::timer::get_current_time_in_cycles;
-    /// `CTimer::GetCyclesPerMillisecond()` (0x561A40)
-    pub fn get_cycles_per_millisecond() -> u32 = cdecl 0x561A40 => sa_core::timer::get_cycles_per_millisecond;
     /// `RwEngineInstance->stdFunc[rwSTANDARDNATIVETEXTUREREAD](stream, &texture, length)` (+0xB0)
     pub fn rw_native_texture_read(stream: GPtr<u8>, tex: GPtr<GPtr<u8>>, len: u32) -> i32 = cdecl table 0xC97B24 0xB0 => unported;
     /// `RpAnisotTextureGetMaxAnisotropy(tex)` (0x748F50, AL)
@@ -139,8 +122,6 @@ orig! {
     pub fn rp_anisot_get_max_supported_max_anisotropy() -> i32 = cdecl 0x748F20 => unported;
     /// `RpAnisotTextureSetMaxAnisotropy(tex, value)` (0x748F30)
     pub fn rp_anisot_texture_set_max_anisotropy(tex: GPtr<u8>, v: i32) -> GPtr<u8> = cdecl 0x748F30 => unported;
-    /// `Fx_c::GetFxQuality()` (0x49EA50, thiscall on `g_fx`)
-    pub fn fx_get_fx_quality(fx: GPtr<u8>) -> i32 = thiscall 0x49EA50 => unported;
 }
 
 /// `RwStream` +0xC: the memory stream position GTA saves and compares.

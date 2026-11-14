@@ -12,42 +12,31 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::clump_get_association;
+use crate::bindings::ped_set_move_anim_speed;
+use crate::bindings::walk_alongside_create_sub_task;
+use sa_core::bindings::matrix_mul_vec;
+use sa_core::bindings::vector_dot_product;
+use sa_world::bindings::max_f;
+use sa_world::bindings::min_f;
+use sa_world::bindings::vector_magnitude_sqr;
+use sa_world::bindings::vector_mul_scalar as vector_scale;
+use sa_world::bindings::vector_sub;
 orig! {
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
     /// `CTask::MakeAbortable(CPed*, int32, const CEvent*)` (vtable +0x18, `ret 0xC`)
     fn v_task_make_abortable(t: GPtr<u8>, p: GPtr<u8>, prio: u32, e: u32) -> u8 = thiscall vslot 0x18 => unported;
-    /// `RpAnimBlendClumpGetAssociation(RpClump*, AnimationId)` (0x4D68B0)
-    fn clump_get_association(clump: u32, id: u32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
     /// `CPedIntelligence::GetMoveStateFromGoToTask()` (0x601D70)
     fn intel_get_move_state_from_go_to_task(intel: GPtr<u8>) -> i32 = thiscall 0x601D70 => unported;
     /// `CTaskManager::FindActiveTaskByType(int32)` (0x681740, `ret 4`)
     fn tm_find_active_task_by_type(tm: GPtr<u8>, ty: u32) -> GPtr<u8> = thiscall 0x681740 => unported;
-    /// `operator*(const CMatrix&, const CVector&)` (0x59C890, cdecl, hidden result pointer first)
-    fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
-    /// `VectorSub(CVector* out, const CVector* a, const CVector* b)` (0x40FE60): out = a - b
-    fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => unported;
-    /// `DotProduct(const CVector*, const CVector*)` (0x40FDB0), ST0
-    fn vector_dot_product(a: GPtr<u8>, b: GPtr<u8>) -> f64 = cdecl 0x40FDB0 => unported;
-    /// `CVector::SquaredMagnitude()` (0x406DA0), ST0
-    fn vector_magnitude_sqr(v: GPtr<u8>) -> f64 = thiscall 0x406DA0 => unported;
-    /// `operator*(const CVector&, float)` (0x40FEC0, cdecl, hidden result pointer first; reads the vector before
-    /// writing the result)
-    fn vector_scale(out: GPtr<u8>, v: GPtr<u8>, s: f32) -> GPtr<u8> = cdecl 0x40FEC0 => unported;
     /// `CVector::operator+=(const CVector&)` (0x411A00, `ret 4`; component by component)
     fn vector_add_assign(this: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = thiscall 0x411A00 => unported;
-    /// `std::max<float>(a, b)` (0x420800): `a > b ? a : b`, ST0
-    fn max_f(a: f32, b: f32) -> f64 = cdecl 0x420800 => unported;
-    /// `std::min<float>(a, b)` (0x404330): `a < b ? a : b`, ST0
-    fn min_f(a: f32, b: f32) -> f64 = cdecl 0x404330 => unported;
-    /// `CPed::SetMoveAnimSpeed(CAnimBlendAssociation*)` (0x5DEC10, `ret 4`)
-    fn ped_set_move_anim_speed(ped: GPtr<u8>, anim: GPtr<u8>) = thiscall 0x5DEC10 => unported;
     /// `approxEqual(float a, float b, float eps)` (0x4EEA80): `|a - b| < eps`
     fn approx_equal(a: f32, b: f32, eps: f32) -> u32 = cdecl 0x4EEA80 => unported;
     /// `CTaskSimpleGoToPoint::UpdatePoint(const CVector&, float radius, bool)` (0x645700, `ret 0xC`)
     fn go_to_point_update_point(t: GPtr<u8>, p: GPtr<u8>, radius: f32, b: u32) = thiscall 0x645700 => unported;
-    /// `CTaskComplexWalkAlongsidePed::CreateSubTask(int32, CPed*)` (0x685000, `ret 8`)
-    fn walk_alongside_create_sub_task(t: GPtr<u8>, ty: u32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x685000 => crate::mvpb_ai3::walk_alongside_create_sub_task;
 }
 
 /// 0.0f (0x858B50), 2.0f (0x858CA0), 0.0625f (0x858620), 0.0125f (0x85A5C4), 4.0f (0x858B90)

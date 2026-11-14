@@ -9,6 +9,11 @@ use sa_math::x87::X87;
 
 use crate::common::{f32_of, g, rand_at, rd, x, xi};
 
+use sa_pop::bindings::fabsf as fabsf_call;
+use sa_world::bindings::apply_spring_collision;
+use sa_world::bindings::apply_spring_collision_alt;
+use sa_world::bindings::apply_spring_dampening;
+use sa_world::bindings::entity_get_col_model as get_col_model;
 orig! {
     /// `CVector::CrossProduct(CVector* out, const CVector* a, const CVector* b)` (0x59C730)
     fn cross_product(out: GPtr<CVector>, a: GPtr<CVector>, b: GPtr<CVector>) -> GPtr<CVector>
@@ -19,23 +24,10 @@ orig! {
     fn apply_move_force(p: GPtr<u8>, force: CVector) = thiscall 0x5429F0 => sa_world::physical::forces::apply_move_force;
     /// `CPhysical::ApplyTurnForce(CVector force, CVector point)` (0x542A50)
     fn apply_turn_force(p: GPtr<u8>, force: CVector, point: CVector) = thiscall 0x542A50 => sa_world::physical::forces::apply_turn_force;
-    /// `fabsf` thunk (0x406D10, cdecl, ST0)
-    fn fabsf_call(v: f32) -> f64 = cdecl 0x406D10 => unported;
     /// `CPhysical::GetSpeed(CVector point)` (0x542CE0, hidden result pointer)
     fn get_speed(p: GPtr<u8>, out: GPtr<CVector>, point: CVector) -> GPtr<CVector> = thiscall 0x542CE0 => sa_world::physical::forces::get_speed;
-    /// `CPhysical::ApplySpringCollision(float, CVector&, CVector&, float, float, float&)` (0x543C90)
-    fn apply_spring_collision(p: GPtr<u8>, level: f32, dir: GPtr<u8>, point: GPtr<u8>, len: f32, bias: f32, out: GPtr<f32>) -> u8
-        = thiscall 0x543C90 => sa_world::physical::spring::apply_spring_collision;
-    /// `CPhysical::ApplySpringCollisionAlt(float, CVector&, CVector&, float, float, CVector&, float&)` (0x543D60)
-    fn apply_spring_collision_alt(p: GPtr<u8>, level: f32, dir: GPtr<u8>, point: GPtr<u8>, len: f32, bias: f32, normal: GPtr<u8>, out: GPtr<f32>) -> u8
-        = thiscall 0x543D60 => sa_world::physical::spring::apply_spring_collision_alt;
-    /// `CPhysical::ApplySpringDampening(float, float, CVector&, CVector&, CVector&)` (0x543E90)
-    fn apply_spring_dampening(p: GPtr<u8>, damping: f32, limit: f32, dir: GPtr<u8>, point: GPtr<u8>, speed: GPtr<u8>) -> u8
-        = thiscall 0x543E90 => sa_world::physical::spring::apply_spring_dampening;
     /// `Multiply3x3(CVector* out, const CMatrix& m, const CVector& v)` (0x59C790)
     fn multiply3x3(out: GPtr<CVector>, m: GPtr<u8>, v: GPtr<CVector>) -> GPtr<CVector> = cdecl 0x59C790 => sa_world::physical::shared::multiply3x3_port;
-    /// `CEntity::GetColModel()` (0x535300)
-    fn get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => unported;
 }
 
 /// `CTimer::ms_fTimeStep` (0xB7CB5C).

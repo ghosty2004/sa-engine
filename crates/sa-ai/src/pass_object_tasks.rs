@@ -7,34 +7,23 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::event_base_dtor as event_dtor;
+use crate::bindings::ik_abort_point_arm;
+use crate::bindings::ik_is_arm_pointing;
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_core::bindings::entity_register_reference;
+use sa_core::bindings::tm_set_task_secondary;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::hold_entity_drop_entity;
+use sa_world::bindings::ped_get_held_entity as ped_get_entity_held;
+use sa_world::bindings::tm_find_active_task_by_type;
+use sa_world::bindings::turn_to_face_entity_ctor;
 orig! {
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    fn entity_register_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571B70 => unported;
-    /// `CEvent::~CEvent()` body (0x4AC010)
-    fn event_dtor(e: GPtr<u8>) = thiscall 0x4AC010 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CPed::GetEntityThatThisPedIsHolding()` (0x5E02E0)
-    fn ped_get_entity_held(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x5E02E0 => unported;
     /// `CTask::operator new(uint32)` (0x61A5A0)
     fn task_new_c(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => crate::mvpa_ai1::task_operator_new;
-    /// `CTaskComplexTurnToFaceEntityOrCoord(CEntity*, float, float)` (0x66B890)
-    fn turn_to_face_entity_ctor(t: GPtr<u8>, e: GPtr<u8>, a: u32, b: u32) -> GPtr<u8> = thiscall 0x66B890 => unported;
-    /// `IKChainManager_c::IsArmPointing(int32 arm, CPed*)` (0x6182B0) on `g_ikChainMan` (0xC15448)
-    fn ik_is_arm_pointing(m: GPtr<u8>, arm: i32, ped: GPtr<u8>) -> u8 = thiscall 0x6182B0 => unported;
-    /// `IKChainManager_c::AbortPointArm(int32 arm, CPed*, int32 blendTime)` (0x6182F0)
-    fn ik_abort_point_arm(m: GPtr<u8>, arm: i32, ped: GPtr<u8>, blend: i32) = thiscall 0x6182F0 => unported;
-    /// `CTaskManager::FindActiveTaskByType(int32)` (0x681740)
-    fn tm_find_active_task_by_type(tm: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x681740 => unported;
-    /// `CTaskSimpleHoldEntity::DropEntity(CPed*, bool)` (0x6930F0)
-    fn hold_entity_drop_entity(t: GPtr<u8>, ped: GPtr<u8>, b: u32) = thiscall 0x6930F0 => unported;
     /// `CTaskSimpleHoldEntity(CEntity*, CVector*, uint8 boneFrame, uint8 flags, int32 anim, int32 group, bool)` (0x6913A0)
     #[allow(clippy::too_many_arguments)]
     fn hold_entity_ctor(t: GPtr<u8>, e: GPtr<u8>, pos: GPtr<u8>, bone: u32, flags: u32, anim: i32, group: i32, b: u32) -> GPtr<u8> = thiscall 0x6913A0 => unported;
-    /// `CTaskManager::SetTaskSecondary(CTask*, int32 slot)` (0x681B60)
-    fn tm_set_task_secondary(tm: GPtr<u8>, t: GPtr<u8>, slot: i32) = thiscall 0x681B60 => unported;
     /// `CTaskComplexPassObject::AbortIK(CPed*)` (0x661290)
     fn pass_object_abort_ik(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x661290 => unported;
 }

@@ -7,41 +7,26 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::evasive_step_ctor;
+use crate::bindings::follow_point_route_ctor;
+use crate::bindings::geometry_compute_route_round_entity_bbox;
+use crate::bindings::membership_count_members;
+use crate::bindings::say_ctor;
+use crate::bindings::seek_set_move_state_radius;
+use crate::bindings::task_is_go_to_task;
+use sa_core::bindings::random_float_in_range as general_random_float_in_range;
+use sa_core::bindings::tm_get_active_task;
+use sa_core::bindings::vector_magnitude;
+use sa_core::bindings::vector_normalise;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::ik_look_at;
+use sa_world::bindings::intel_find_task_by_type;
+use sa_world::bindings::ped_say;
+use sa_world::bindings::tm_find_active_task_by_type;
+use sa_world::bindings::vector_sub;
 orig! {
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CTask::IsGoToTask(CTask*)` (0x61A360, static)
-    fn task_is_go_to_task(t: GPtr<u8>) -> u8 = cdecl 0x61A360 => unported;
-    /// `CTaskManager::GetActiveTask` (0x681720)
-    fn tm_get_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x681720 => unported;
-    /// `CTaskManager::FindActiveTaskByType(int32)` (0x681740, `ret 4`)
-    fn tm_find_active_task_by_type(tm: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x681740 => unported;
-    /// `CPedIntelligence::FindTaskByType(int32)` (0x600EE0, `ret 4`)
-    fn intel_find_task_by_type(i: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x600EE0 => unported;
-    /// `CPedGroupMembership::CountMembers` (0x5F6A50)
-    fn membership_count_members(m: GPtr<u8>) -> i32 = thiscall 0x5F6A50 => unported;
-    /// `CPed::IsPlayer` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CPed::Say(context, offset, volume, b, b, b)` (0x5EFFE0, `ret 0x18`)
-    fn ped_say(p: GPtr<u8>, ctx: u32, offset: u32, vol: u32, a: u32, b: u32, c: u32) -> u32 = thiscall 0x5EFFE0 => unported;
-    /// `CGeneral::GetRandomNumberInRange<float>(min, max)` (0x41BD90; draws its own rand, ST0)
-    fn general_random_float_in_range(min: f32, max: f32) -> f64 = cdecl 0x41BD90 => unported;
-    /// `VectorSub(CVector* out, const CVector* a, const CVector* b)` (0x40FE60)
-    fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => unported;
-    /// `CVector::Magnitude` (0x4082C0, ST0)
-    fn vector_magnitude(v: GPtr<u8>) -> f64 = thiscall 0x4082C0 => unported;
-    /// `CVector::Normalise` (0x59C910)
-    fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
-    /// `IKChainManager_c::LookAt(...)` (0x618970, `ret 0x2C`)
-    fn ik_look_at(m: GPtr<u8>, name: u32, ped: GPtr<u8>, target: GPtr<u8>, time: i32, bone: i32, pos: u32, torso: u32,
-                  speed: u32, blend: i32, prio: i32, b: u32) = thiscall 0x618970 => unported;
-    /// `CPedGeometryAnalyser::ComputeRouteRoundEntityBoundingBox(ped, entity, target, route, n)` (0x5F6110)
-    fn geometry_compute_route_round_entity_bbox(ped: GPtr<u8>, e: GPtr<u8>, target: GPtr<u8>, route: GPtr<u8>, n: i32) -> u8 = cdecl 0x5F6110 => unported;
-    /// `FUN_004bc470` (the seek task's move-state radius setter; `misc.rs`)
-    fn seek_set_move_state_radius(t: GPtr<u8>, r: f32) = thiscall 0x4BC470 => crate::misc::fun_004bc470;
-    fn say_ctor(t: GPtr<u8>, ctx: i32, time: i32) -> GPtr<u8> = thiscall 0x48E360 => unported;
-    fn evasive_step_ctor(t: GPtr<u8>, e: GPtr<u8>, dir: GPtr<u8>) -> GPtr<u8> = thiscall 0x6532D0 => unported;
-    fn follow_point_route_ctor(t: GPtr<u8>, ms: i32, route: GPtr<u8>, mode: i32, radius: u32, slow: u32, a: u32, b: u32, c: u32) -> GPtr<u8> = thiscall 0x671510 => unported;
 }
 
 /// `g_ikChainMan`

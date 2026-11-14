@@ -27,6 +27,7 @@ use super::forces::{apply_force_call, apply_friction_force_call, apply_move_forc
 use super::shared::*;
 use crate::collision::fpu::Fpu;
 
+pub use sa_core::bindings::random_float_in_range as random_float;
 orig! {
     /// `CPhysical::ApplySoftCollision(CEntity*, CColPoint&, float&)` (0x543890, AL)
     pub fn apply_soft_collision_1_call(e: Ent, entity: Ent, cp: Ent, damage: GPtr<f32>) -> u8
@@ -60,8 +61,6 @@ orig! {
     /// `CPhysical::DettachEntityFromEntity(float, float, float, bool)` (0x5442F0)
     pub fn dettach_entity_from_entity_call(e: Ent, x: u32, y: u32, z: f32, apply_turn: u8)
         = thiscall 0x5442f0 => crate::physical::attach::dettach_entity_from_entity;
-    /// `CGeneral::GetRandomNumberInRange<float>(float, float)` (0x41BD90, cdecl, ST0)
-    pub fn random_float(min: f32, max: f32) -> f64 = cdecl 0x41bd90 => unported;
     /// `CPhysical::ApplyFrictionMoveForce(CVector)` (0x5430A0)
     pub fn apply_friction_move_force_call(e: Ent, force: CVector)
         = thiscall 0x5430a0 => crate::physical::forces::apply_friction_move_force;
@@ -433,7 +432,6 @@ pub fn apply_collision_alt(this: Ent, entity: Ent, cp: Ent, damage: GPtr<f32>, o
     report2(this, entity, cp, n, impact, impact2);
     1
 }
-
 
 /// Where `PositionAttachedEntity`'s detach tests lead.
 enum PaeNext {

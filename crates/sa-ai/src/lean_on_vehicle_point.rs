@@ -2,14 +2,11 @@
 //! `CreateFirstSubTask` 0x664D40 and `ControlSubTask` 0x664E60). Ported from the 1.0 US bytes.
 
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
-orig! {
-    /// `CMatrix * CVector` (0x59C890, `(CVector* out, const CMatrix*, const CVector*)`, returns `out`)
-    fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
-}
+use sa_core::bindings::matrix_mul_vec;
 
 /// `CModelInfo::ms_modelInfoPtrs` (0xA9B0C8)
 const MODEL_INFO_PTRS: usize = 0xA9_B0C8;

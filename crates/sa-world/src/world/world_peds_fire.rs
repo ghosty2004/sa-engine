@@ -8,21 +8,16 @@ use sa_core::{hook, orig};
 
 use super::common::{rd, x};
 
+use crate::bindings::get_local_direction;
+use crate::bindings::start_fire_on;
+use sa_core::bindings::ped_is_alive;
+use sa_core::bindings::tm_get_active_task as get_active_task;
+use sa_stream::bindings::ped_is_player;
 orig! {
-    /// `CFireManager::StartFire(CEntity* target, CEntity* creator, float size, uint8, uint32 time, int8 gens)` (0x53A050) on `gFireManager` (0xB71F80)
-    fn start_fire_on(fm: GPtr<u8>, target: GPtr<u8>, creator: GPtr<u8>, size: f32, a: u32, time: u32, gens: u32) -> GPtr<u8> = thiscall 0x53A050 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
     /// `VectorSub(CVector* out, const CVector* a, const CVector* b)` (0x40FE60): `a - b`
     fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => super::mvpa_math::vector_sub;
-    /// `CPed::GetLocalDirection(const CVector2D&)` (0x5DEF60)
-    fn get_local_direction(ped: GPtr<u8>, v: GPtr<u8>) -> i32 = thiscall 0x5DEF60 => unported;
     /// `CWeapon::GenerateDamageEvent(CPed*, CEntity*, eWeaponType, int32, ePedPieceTypes, int32)` (0x73A530)
     fn generate_damage_event(victim: GPtr<u8>, creator: GPtr<u8>, ty: i32, damage: i32, piece: i32, dir: u32) -> u8 = cdecl 0x73A530 => unported;
-    /// `CPed::IsAlive()` (0x5E0170)
-    fn ped_is_alive(p: GPtr<u8>) -> u8 = thiscall 0x5E0170 => unported;
-    /// `CTaskManager::GetActiveTask()` (0x681720)
-    fn get_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x681720 => unported;
     /// `CTask::GetTaskType()` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
 }

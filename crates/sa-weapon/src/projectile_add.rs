@@ -9,23 +9,27 @@ use crate::projectile::cross_product;
 use crate::weapon::ped_is_player;
 use crate::weapon_fire::{find_player_ped, matrix_dtor, vector_magnitude};
 
+use sa_core::bindings::entity_register_reference;
+use sa_core::bindings::find_player_vehicle;
+use sa_core::bindings::matrix_assign;
+use sa_core::bindings::memory_malloc as memory_mgr_malloc;
+use sa_core::bindings::object_new;
+use sa_core::bindings::streaming_request_model;
+use sa_core::bindings::world_add;
+use sa_world::bindings::change_blip_colour as radar_change_blip_colour;
+use sa_world::bindings::change_blip_scale as radar_change_blip_scale;
+use sa_world::bindings::fx_create_system;
+use sa_world::bindings::get_modelling_matrix as entity_get_modelling_matrix;
+use sa_world::bindings::multiply3x3;
+use sa_world::bindings::placeable_get_matrix;
+use sa_world::bindings::placeable_set_matrix;
 orig! {
     /// `CMatrix::SetTranslate(float, float, float)` (0x59AF40, thiscall)
     fn matrix_set_translate(m: GPtr<u8>, x: f32, y: f32, z: f32) = thiscall 0x59AF40 => unported;
     /// `CMatrix::RotateZ(float)` (0x59B390, thiscall)
     fn matrix_rotate_z(m: GPtr<u8>, a: f32) = thiscall 0x59B390 => unported;
-    /// `CMatrix::operator=(const CMatrix&)` (0x59BBC0, thiscall)
-    fn matrix_assign(m: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = thiscall 0x59BBC0 => unported;
-    /// `Multiply3x3(CVector* out, const CMatrix&, const CVector&)` (0x59C790)
-    fn multiply3x3(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C790 => unported;
     /// `CGeneral::LimitRadianAngle(float)` (0x53CB50, ST0)
     fn limit_radian_angle(a: f32) -> f64 = cdecl 0x53CB50 => unported;
-    /// `CPlaceable::GetMatrix()` (0x411990, thiscall)
-    fn placeable_get_matrix(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x411990 => unported;
-    /// `CStreaming::RequestModel(int32, int32)` (0x4087E0)
-    fn streaming_request_model(id: i32, flags: i32) = cdecl 0x4087E0 => unported;
-    /// `operator new(uint32)` (0x5A1EE0, the pool-aware one of CObject / CProjectile)
-    fn object_new(size: u32) -> GPtr<u8> = cdecl 0x5A1EE0 => unported;
     /// `CProjectile::CProjectile(int32 model)` (0x5A4030, thiscall)
     fn projectile_ctor(p: GPtr<u8>, model: i32) -> GPtr<u8> = thiscall 0x5A4030 => unported;
     /// `CColModel::AllocateData(int32 spheres, int32 boxes, int32 lines, int32 vertices, int32 triangles,
@@ -35,26 +39,8 @@ orig! {
     /// `CColSphere::Set(float radius, const CVector& center, uint8 material, uint8 flags, uint8 lighting)`
     /// (0x40FD10, thiscall)
     fn col_sphere_set(s: GPtr<u8>, radius: f32, center: GPtr<u8>, material: u32, flags: u32, light: u32) = thiscall 0x40FD10 => unported;
-    /// `CMemoryMgr::Malloc(uint32, uint32)` (0x72F420)
-    fn memory_mgr_malloc(size: u32, hint: u32) -> GPtr<u8> = cdecl 0x72F420 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70, thiscall)
-    fn entity_register_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571B70 => unported;
-    /// `CPlaceable::SetMatrix(const CMatrix&)` (0x54F610, thiscall)
-    fn placeable_set_matrix(e: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F610 => unported;
-    /// `CWorld::Add(CEntity*)` (0x563220)
-    fn world_add(e: GPtr<u8>) = cdecl 0x563220 => unported;
-    /// `CEntity::GetModellingMatrix()` (0x46A2D0, thiscall)
-    fn entity_get_modelling_matrix(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x46A2D0 => unported;
-    /// `FxManager_c::CreateFxSystem(const char*, CVector*, RwMatrix*, bool)` (0x4A9BE0, thiscall)
-    fn fx_create_system(fx: GPtr<u8>, name: u32, point: GPtr<u8>, parent: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4A9BE0 => unported;
     /// `CRadar::SetEntityBlip(eBlipType, int32 handle, uint32 colour, eBlipDisplay, const char*)` (0x5839A0)
     fn radar_set_entity_blip(ty: u32, handle: i32, colour: u32, display: u32, name: u32) -> i32 = cdecl 0x5839A0 => unported;
-    /// `CRadar::ChangeBlipScale(int32, int32)` (0x583CC0)
-    fn radar_change_blip_scale(blip: i32, scale: i32) = cdecl 0x583CC0 => unported;
-    /// `CRadar::ChangeBlipColour(int32, uint32)` (0x583AB0)
-    fn radar_change_blip_colour(blip: i32, colour: u32) = cdecl 0x583AB0 => unported;
-    /// `FindPlayerVehicle(int32, bool)` (0x56E0D0)
-    fn find_player_vehicle(id: i32, b: u32) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
     /// `CAudioEngine::ReportWeaponEvent(int32 event, eWeaponType, CPhysical*)` (0x506F40, thiscall)
     fn audio_report_weapon_event(ae: GPtr<u8>, ev: i32, ty: u32, e: GPtr<u8>) = thiscall 0x506F40 => unported;
 }

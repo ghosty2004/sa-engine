@@ -14,9 +14,8 @@ pub const GLOBALS: &[GlobalDesc] = &[];
 /// `RsGlobal.ps` (the `psGlobalType*`); `diMouse` (`IDirectInputDevice8*`) at +0x1C
 const RS_GLOBAL_PS: usize = 0xC17054;
 
+use sa_core::bindings::rw_engine_get_num_video_modes;
 orig! {
-    /// `RwEngineGetNumVideoModes()` (0x7F2CC0)
-    fn rw_engine_get_num_video_modes() -> i32 = cdecl 0x7F2CC0 => unported;
     /// A COM method `(this)` through its vtable slot (stdcall)
     fn com_call0(f: u32, this: GPtr<u8>) -> u32 = stdcall dyn => unported;
 }

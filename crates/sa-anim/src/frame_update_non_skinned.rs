@@ -14,29 +14,23 @@ use crate::common::*;
 /// `gpAnimBlendClump`
 const ANIM_BLEND_CLUMP: usize = 0xB4EA0C;
 
+use crate::bindings::node_get_current_translation;
+use crate::bindings::node_get_current_translation_compressed;
+use crate::bindings::node_get_end_translation;
+use crate::bindings::node_get_end_translation_compressed;
+use crate::bindings::node_update;
+use crate::bindings::node_update_compressed;
+use sa_core::bindings::quat_get;
+use sa_core::bindings::rw_matrix_update;
 orig! {
-    /// `CAnimBlendNode::Update(CVector& t, CQuaternion& q, float weight)` (0x4D06C0), AL
-    fn node_update(n: GPtr<u8>, t: GPtr<u8>, q: GPtr<u8>, w: f32) -> u8 = thiscall 0x4D06C0 => unported;
     /// `CQuaternion::Normalise()` (0x4D1610)
     fn quat_normalise(q: GPtr<u8>) = thiscall 0x4D1610 => crate::frame_update::quaternion_normalise;
-    /// `CQuaternion::Get(RwMatrix*)` (0x59C080, thiscall, `ret 4`)
-    fn quat_get(q: GPtr<u8>, m: GPtr<u8>) = thiscall 0x59C080 => unported;
-    /// `RwMatrixUpdate(RwMatrix*)` (0x7F18A0)
-    fn rw_matrix_update(m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F18A0 => unported;
     /// `FrameUpdateCallBackNonSkinnedWithVelocityExtraction(data, fd)` (0x4D2100, `data` in EAX) and the 3D variant
     /// (0x4D2450)
     fn non_skinned_with_velocity(data: GPtr<u8>, fd: GPtr<u8>) = reg("args = eax stack") 0x4D2100 => frame_update_non_skinned_with_velocity;
-    /// `CAnimBlendNode::UpdateCompressed(CVector&, CQuaternion&, float)` (0x4D08D0), AL
-    fn node_update_compressed(n: GPtr<u8>, t: GPtr<u8>, q: GPtr<u8>, w: f32) -> u8 = thiscall 0x4D08D0 => unported;
     /// `FrameUpdateCallBackWithVelocityExtractionCompressedNonSkinned(data, fd)` (0x4D27F0, `data` in EAX)
     fn compressed_non_skinned_with_velocity(data: GPtr<u8>, fd: GPtr<u8>) = reg("args = eax stack") 0x4D27F0 => frame_update_compressed_non_skinned_with_velocity;
-    /// `GetCurrentTranslationCompressed` (0x4CFE60), `GetEndTranslationCompressed` (0x4D0000)
-    fn node_get_current_translation_compressed(n: GPtr<u8>, t: GPtr<u8>, w: f32) = thiscall 0x4CFE60 => unported;
-    fn node_get_end_translation_compressed(n: GPtr<u8>, t: GPtr<u8>, w: f32) = thiscall 0x4D0000 => unported;
     fn non_skinned_with_3d_velocity(data: GPtr<u8>, fd: GPtr<u8>) = reg("args = eax stack") 0x4D2450 => frame_update_non_skinned_with_3d_velocity;
-    /// `CAnimBlendNode::GetCurrentTranslation(CVector&, float)` (0x4CFC50), `GetEndTranslation` (0x4CFD90)
-    fn node_get_current_translation(n: GPtr<u8>, t: GPtr<u8>, w: f32) = thiscall 0x4CFC50 => unported;
-    fn node_get_end_translation(n: GPtr<u8>, t: GPtr<u8>, w: f32) = thiscall 0x4CFD90 => unported;
 }
 
 fn one() -> f32 {

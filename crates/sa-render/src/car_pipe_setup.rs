@@ -8,6 +8,9 @@ use sa_math::x87::X87;
 
 use crate::common::{g, rd, wr};
 
+use sa_core::bindings::atomic_geometry_set_usage_flags as geometry_set_usage_flags;
+use sa_core::bindings::rp_clump_for_all_atomics as clump_for_all_atomics;
+use sa_core::bindings::rp_geometry_for_all_materials as geometry_for_all_materials;
 orig! {
     /// The env-map material pool's `New` (0x5D9110, thiscall)
     fn env_pool_new(pool: GPtr<u8>) -> GPtr<u8> = thiscall 0x5D9110 => crate::mvpa_render2::env_map_material_pool_new;
@@ -17,18 +20,12 @@ orig! {
     fn matfx_get_effects(m: GPtr<u8>) -> u32 = cdecl 0x812140 => unported;
     /// `CCustomCarEnvMapPipeline::SetFxEnvTexture(material, tex)` (0x5DA230)
     fn set_fx_env_texture_call(m: GPtr<u8>, tex: u32) = cdecl 0x5DA230 => set_fx_env_texture;
-    /// `RpGeometryForAllMaterials(geometry, cb, data)` (0x74C790)
-    fn geometry_for_all_materials(g: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> = cdecl 0x74C790 => unported;
     /// `PipelinePlugin::SetPipelineID(atomic, id)` (0x72FC50)
     fn set_pipeline_id(a: GPtr<u8>, id: u32) = cdecl 0x72FC50 => crate::pipe_ids::set_pipeline_id;
     /// `CCustomCarEnvMapPipeline::CustomPipeAtomicSetup(atomic)` (0x5DA610)
     fn custom_pipe_atomic_setup_call(a: GPtr<u8>) -> GPtr<u8> = cdecl 0x5DA610 => custom_pipe_atomic_setup;
-    /// `RpClumpForAllAtomics(clump, cb, data)` (0x749B70)
-    fn clump_for_all_atomics(c: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> = cdecl 0x749B70 => unported;
     /// The env-map record duplication `(slot)` (0x5D9570)
     fn env_record_own_call(slot: GPtr<u32>) -> u32 = cdecl 0x5D9570 => env_record_own;
-    /// `_rpD3D9AtomicGeometrySetUsageFlags(geometry, flags)` (0x7588B0)
-    fn geometry_set_usage_flags(g: GPtr<u8>, flags: u32) = cdecl 0x7588B0 => unported;
     /// `CCustomBuildingDNPipeline::GetExtraVertColourPtr(geometry)` (0x5D6E90)
     fn get_extra_vert_colour_ptr(g: GPtr<u8>) -> u32 = cdecl 0x5D6E90 => crate::pipe_ids::get_extra_vert_colour_ptr;
     /// `CCustomBuildingDNPipeline::CustomPipeAtomicSetup` (0x5D71C0), `CCustomBuildingPipeline::CustomPipeAtomicSetup` (0x5D7E50)
@@ -158,9 +155,8 @@ pub fn custom_car_pipe_atomic_setup(atomic: GPtr<u8>) -> GPtr<u8> {
 const GAME_LIGHT: usize = 0xC02CB0;
 const P_DIRECT: usize = 0xC886EC;
 
+use sa_core::bindings::vector_normalise;
 orig! {
-    /// `CVector::Normalise()` (0x59C910)
-    fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
     /// `CCustomCarEnvMapPipeline::PreRenderUpdate()` (0x5D8870)
     fn env_map_pre_render_update_call() = cdecl 0x5D8870 => env_map_pre_render_update;
 }

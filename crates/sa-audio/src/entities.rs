@@ -36,19 +36,17 @@ sa_core::globals! {
     pub static PS_NEXT_DIALOGUE_TIME @ 0xB61D50: u32 = 0;
 }
 
+pub use crate::bindings::are_sounds_of_this_event_playing_for_this_entity;
+pub use crate::bindings::hw_is_sound_bank_loaded;
+pub use crate::bindings::sm_are_sounds_playing_in_bank_slot as are_sounds_playing_in_bank_slot;
+pub use crate::bindings::sound_set_position;
+pub use crate::bindings::sound_stop_and_forget;
+pub use sa_world::bindings::engine_is_loading_tune_active;
 orig! {
     /// `CAEAudioHardware::LoadSoundBank(uint16 bankId, int16 slot)` (0x4D88A0)
     pub fn load_sound_bank(hw: GPtr<u8>, bank: u32, slot: u32) -> u32 = thiscall 0x4D88A0 => unported;
     /// `CAESoundManager::CancelSoundsOwnedByAudioEntity(CAEAudioEntity*, bool)` (0x4EFCD0)
     pub fn cancel_sounds_owned_by_audio_entity(sm: GPtr<u8>, entity: GPtr<u8>, stop: u32) = thiscall 0x4EFCD0 => unported;
-    /// `CAESoundManager::AreSoundsOfThisEventPlayingForThisEntity(int16 event, CAEAudioEntity*)` (0x4EF570)
-    pub fn are_sounds_of_this_event_playing_for_this_entity(sm: GPtr<u8>, event: u32, entity: GPtr<u8>) -> u32 = thiscall 0x4EF570 => unported;
-    /// `CAESoundManager::AreSoundsPlayingInBankSlot(int16)` (0x4EF520): 0, 1, or 2 in AX
-    pub fn are_sounds_playing_in_bank_slot(sm: GPtr<u8>, slot: u32) -> u32 = thiscall 0x4EF520 => unported;
-    /// `CAESound::StopSoundAndForget()` (0x4EF850)
-    pub fn sound_stop_and_forget(sound: GPtr<u8>) = thiscall 0x4EF850 => unported;
-    /// `CAudioEngine::IsLoadingTuneActive()` (0x506D90)
-    pub fn engine_is_loading_tune_active(engine: GPtr<u8>) -> u8 = thiscall 0x506D90 => unported;
     /// `CAEPoliceScannerAudioEntity::FinishedPlayingScannerDialogue()` (0x4E6C30, static)
     pub fn ps_finished_playing_scanner_dialogue() = cdecl 0x4E6C30 => unported;
     /// `CAEWeaponAudioEntity::Terminate()` (0x503480)
@@ -73,10 +71,6 @@ orig! {
     pub fn global_weapon_projectile_fire(this: GPtr<u8>, ty: u32, physical: u32, event: u32) = thiscall 0x4DF060 => unported;
     /// `CAEDoorAudioEntity::PlayDoorSound(int16 sfx, eAudioEvents, CVector&, float volDelta, float speed)` (0x4DC6D0)
     pub fn door_play_door_sound(this: GPtr<u8>, sfx: u32, event: u32, posn: u32, vol: u32, speed: u32) = thiscall 0x4DC6D0 => unported;
-    /// `CAESound::SetPosition(CVector)` (0x4EF880, the vector by value)
-    pub fn sound_set_position(sound: GPtr<u8>, px: u32, py: u32, pz: u32) = thiscall 0x4EF880 => unported;
-    /// `CAEAudioHardware::IsSoundBankLoaded(uint16 bankId, int16 slot)` (0x4D88C0)
-    pub fn hw_is_sound_bank_loaded(hw: GPtr<u8>, bank: u32, slot: u32) -> u8 = thiscall 0x4D88C0 => unported;
     /// `CAECollisionAudioEntity::PlayBulletHitCollisionSound(eSurfaceType, CVector&, float angle)` (0x4DB7C0)
     pub fn collision_play_bullet_hit_collision_sound(this: GPtr<u8>, surface: u32, posn: u32, angle: u32) = thiscall 0x4DB7C0 => unported;
     /// `CAEFireAudioEntity::PlayFireSounds(eAudioEvents, CVector&)` (0x4DD0D0)

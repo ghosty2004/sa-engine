@@ -10,6 +10,9 @@ use sa_math::x87::X87;
 
 use crate::common::{ftol32, g, k, x, xi};
 
+use crate::bindings::rw_im3d_render_indexed_primitive;
+use crate::bindings::rw_im3d_transform;
+use sa_core::bindings::general_random_int_in_range as random_in_range;
 orig! {
     /// `CCullZones::CamNoRain()` (0x72DDB0, bool in AL)
     fn cam_no_rain() -> u8 = cdecl 0x72DDB0 => crate::cullzones::cam_no_rain;
@@ -19,14 +22,8 @@ orig! {
     fn operator_new(size: u32) -> u32 = cdecl 0x821195 => unported;
     /// `CVector::Magnitude()` (0x4082C0, ST0)
     fn vector_magnitude(v: GPtr<f32>) -> f64 = thiscall 0x4082C0 => unported;
-    /// `CGeneral::GetRandomNumberInRange(int32, int32)` (0x407180)
-    fn random_in_range(min: i32, max: i32) -> i32 = cdecl 0x407180 => unported;
     /// `RwRenderStateSet(state, value)` (`RwGlobals` +0x20)
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `RwIm3DTransform(verts, count, ltm, flags)` (0x7EF450)
-    fn rw_im3d_transform(verts: u32, count: u32, ltm: u32, flags: u32) -> GPtr<u8> = cdecl 0x7EF450 => unported;
-    /// `RwIm3DRenderIndexedPrimitive(primType, indices, numIndices)` (0x7EF550)
-    fn rw_im3d_render_indexed_primitive(prim: u32, indices: u32, n: u32) -> u32 = cdecl 0x7EF550 => unported;
     /// `RwIm3DEnd()` (0x7EF520)
     fn rw_im3d_end() -> u32 = cdecl 0x7EF520 => unported;
 }

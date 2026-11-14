@@ -12,23 +12,19 @@ use super::common::{g, rd, wr, x};
 /// `CPools::ms_pVehiclePool`
 const VEHICLE_POOL: usize = 0xB74494;
 
+use sa_core::bindings::find_player_vehicle as world_find_player_vehicle;
+use sa_core::bindings::quad_tree_get_all_matching_rect;
+use sa_core::bindings::world_remove;
+use sa_stream::bindings::placeable_allocate_matrix;
 orig! {
-    /// `CPlaceable::AllocateMatrix()` (0x54F560)
-    fn placeable_allocate_matrix(p: GPtr<u8>) = thiscall 0x54F560 => unported;
     /// `CMatrix::operator=(const CMatrix&)` (0x59BBC0, `ret 4`)
     fn matrix_assign(m: GPtr<u8>, o: GPtr<u8>) = thiscall 0x59BBC0 => unported;
     /// `CWorld::ProcessVerticalLine(const CVector&, float, CColPoint&, CEntity*&, bool x6, CStoredCollPoly*)`
     /// (0x5674E0)
     #[allow(clippy::too_many_arguments)]
     fn world_process_vertical_line(p: GPtr<u8>, min_z: u32, cp: GPtr<u8>, ent: GPtr<u8>, b0: u32, b1: u32, b2: u32, b3: u32, b4: u32, b5: u32, poly: u32) -> u8 = cdecl 0x5674E0 => unported;
-    /// `CWorld::FindPlayerVehicle(int32, bool)` (0x56E0D0)
-    fn world_find_player_vehicle(id: i32, remote: u32) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
-    /// `CWorld::Remove(CEntity*)` (0x563280)
-    fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
     /// virtual deleting destructor (vtable +0)
     fn v_delete(e: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
-    /// `CQuadTreeNode::GetAllMatching(const CRect&, CPtrListSingleLink&)` (0x5528C0, `ret 8`)
-    fn quad_tree_get_all_matching_rect(q: GPtr<u8>, rect: GPtr<u8>, list: GPtr<u8>) = thiscall 0x5528C0 => unported;
     /// `CPtrListSingleLink::Flush()` (0x552400)
     fn single_link_flush(l: GPtr<u8>) = thiscall 0x552400 => crate::world::mvpa_math::single_link_flush;
     /// `CPointRoutePool::New()` (0x41B5B0)

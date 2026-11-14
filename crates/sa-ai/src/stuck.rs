@@ -17,46 +17,28 @@ const TIME_STEP: usize = 0xB7CB5C;
 /// `CTimer::m_FrameCounter` (owned by CTimer).
 const FRAME_COUNTER: usize = 0xB7CB4C;
 
+use sa_core::bindings::general_get_radian_angle_between_points;
+use sa_core::bindings::general_limit_radian_angle;
+use sa_core::bindings::vector_normalise;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::event_group_get_event_of_type;
+use sa_world::bindings::get_task_climb as intel_get_task_climb;
+use sa_world::bindings::get_task_jet_pack as intel_get_task_jet_pack;
+use sa_world::bindings::get_task_swim as intel_get_task_swim;
+use sa_world::bindings::physical_apply_move_force_5429f0 as physical_apply_move_force;
+use sa_world::bindings::placeable_set_posn;
+use sa_world::bindings::set_orientation as placeable_set_orientation;
+use sa_world::bindings::vector_add;
+use sa_world::bindings::vector_magnitude_sqr as vector_squared_magnitude;
+use sa_world::bindings::vector_sub;
+use sa_world::bindings::world_get_is_line_of_sight_clear;
+use sa_world::bindings::world_process_vertical_line;
 orig! {
-    /// `CPed::IsPlayer` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CPedIntelligence::GetTaskSwim` (0x601070)
-    fn intel_get_task_swim(i: GPtr<u8>) -> GPtr<u8> = thiscall 0x601070 => unported;
-    /// `CPedIntelligence::GetTaskJetPack` (0x601110)
-    fn intel_get_task_jet_pack(i: GPtr<u8>) -> GPtr<u8> = thiscall 0x601110 => unported;
-    /// `CPedIntelligence::GetTaskClimb` (0x601180)
-    fn intel_get_task_climb(i: GPtr<u8>) -> GPtr<u8> = thiscall 0x601180 => unported;
-    /// `VectorSub(CVector* out, const CVector* a, const CVector* b)` (0x40FE60): out = a - b
-    fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => unported;
-    /// `VectorAdd(CVector* out, const CVector* a, const CVector* b)` (0x40FE30): out = a + b
-    fn vector_add(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE30 => unported;
-    /// `FUN_00406da0` (thiscall on a CVector, ST0): `(x*x + y*y) + z*z`, the SQUARED length (no `fsqrt`)
-    fn vector_squared_magnitude(v: GPtr<u8>) -> f64 = thiscall 0x406DA0 => unported;
-    /// `CWorld::ProcessVerticalLine(const CVector*, float z, CColPoint*, CEntity**, bool buildings, bool vehicles,
-    /// bool peds, bool objects, bool dummies, bool seeThrough, CStoredCollPoly*)` (0x5674E0, cdecl)
-    fn world_process_vertical_line(pos: GPtr<u8>, z: u32, cp: GPtr<u8>, ent: GPtr<u8>, b: u32, v: u32, p: u32, o: u32, d: u32, s: u32, l: u32) -> u8 = cdecl 0x5674E0 => unported;
-    /// `CWorld::GetIsLineOfSightClear(const CVector*, const CVector*, bool x7)` (0x56A490, cdecl)
-    fn world_get_is_line_of_sight_clear(a: GPtr<u8>, b: GPtr<u8>, bb: u32, v: u32, p: u32, o: u32, d: u32, s: u32, c: u32) -> u8 = cdecl 0x56A490 => unported;
-    /// `CPlaceable::SetPosn(const CVector*)` (0x4241C0, `ret 4`)
-    fn placeable_set_posn(p: GPtr<u8>, v: GPtr<u8>) = thiscall 0x4241C0 => unported;
-    /// `CVector::Normalise` (0x59C910)
-    fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
-    /// `CPhysical::ApplyMoveForce(CVector)` (0x5429F0, `ret 0xC`, the vector by value)
-    fn physical_apply_move_force(p: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x5429F0 => unported;
-    /// `CGeneral::GetRadianAngleBetweenPoints(float x1, float y1, float x2, float y2)` (0x53CBE0, ST0)
-    fn general_get_radian_angle_between_points(x1: u32, y1: u32, x2: u32, y2: u32) -> f64 = cdecl 0x53CBE0 => unported;
-    /// `CGeneral::LimitRadianAngle(float)` (0x53CB50, ST0)
-    fn general_limit_radian_angle(a: u32) -> f64 = cdecl 0x53CB50 => unported;
-    /// `CPlaceable::SetOrientation(float x, float y, float z)` (0x439A80, `ret 0xC`)
-    fn placeable_set_orientation(p: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x439A80 => unported;
-    /// `CEventGroup::GetEventOfType(int32)` (0x4AB650, `ret 4`)
-    fn event_group_get_event_of_type(g: GPtr<u8>, t: i32) -> GPtr<u8> = thiscall 0x4AB650 => unported;
     /// `CEventStuckInAir::CEventStuckInAir(CPed*)` (0x4B1490, `ret 4`)
     fn stuck_in_air_ctor(e: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x4B1490 => unported;
     /// `FUN_004b1520` (`CEventStuckInAir::~CEventStuckInAir`)
     fn stuck_in_air_dtor(e: GPtr<u8>) = thiscall 0x4B1520 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, `ret 8`)
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, valid: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
 }
 
 use sa_core::field::gx as cf;

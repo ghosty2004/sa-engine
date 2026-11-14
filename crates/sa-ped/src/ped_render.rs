@@ -19,67 +19,45 @@ const GUNFLASH_NAME: u32 = 0x85A728;
 /// the jetpack thrust FX name passed to `CreateFxSystem` (`.rdata`)
 const PARACHUTE_FX_NAME: u32 = 0x85AA44;
 
+use crate::bindings::get_clump_model_info;
+use crate::bindings::weapon_shutdown;
+use sa_core::bindings::activate_directional;
+use sa_core::bindings::destroy_fx_system as fx_destroy_system;
+use sa_core::bindings::fx_play;
+use sa_core::bindings::get_anim_hierarchy_from_skin_clump;
+use sa_core::bindings::get_first_atomic;
+use sa_core::bindings::rp_clump_destroy;
+use sa_core::bindings::rp_clump_for_all_atomics;
+use sa_core::bindings::rp_hanim_hierarchy_get_matrix_array;
+use sa_core::bindings::rp_hanim_id_get_index;
+use sa_core::bindings::rp_skin_geometry_get_skin;
+use sa_stream::bindings::clump_get_frame_from_name as get_frame_from_name;
+use sa_stream::bindings::model_info_add_ref;
+use sa_stream::bindings::model_info_remove_ref;
+use sa_world::bindings::fx_copy_parent_matrix;
+use sa_world::bindings::fx_set_local_particles;
+use sa_world::bindings::intel_get_task_hold;
+use sa_world::bindings::ped_drop_held_entity as drop_entity_that_this_ped_is_holding;
+use sa_world::bindings::ped_pre_render_after_test as pre_render_after_test;
+use sa_world::bindings::renderer_setup_lighting_for_entity as setup_lighting_for_entity;
+use sa_world::bindings::weapon_reload;
 orig! {
-    /// `CPed::PreRenderAfterTest()` (0x5E65A0)
-    fn pre_render_after_test(p: GPtr<u8>) = thiscall 0x5E65A0 => unported;
-    /// `ActivateDirectional()` (0x735C80)
-    fn activate_directional() = cdecl 0x735C80 => unported;
-    /// `CRenderer::SetupLightingForEntity(CPhysical*)` (0x553E40)
-    fn setup_lighting_for_entity(e: GPtr<u8>) -> u32 = cdecl 0x553E40 => unported;
-    /// `FxManager_c::DestroyFxSystem(FxSystem_c*)` (0x4A9810)
-    fn fx_destroy_system(m: GPtr<u8>, s: GPtr<u8>) = thiscall 0x4A9810 => unported;
     /// `FxManager_c::CreateFxSystem(const char*, CVector*, RwMatrix*, bool)` (0x4A9BE0)
     fn fx_create_system(m: GPtr<u8>, name: u32, pos: GPtr<f32>, mat: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4A9BE0 => unported;
-    /// `FxSystem_c::SetLocalParticles(bool)` (0x4AA910)
-    fn fx_set_local_particles(s: GPtr<u8>, b: u32) = thiscall 0x4AA910 => unported;
-    /// `FxSystem_c::CopyParentMatrix()` (0x4AA890)
-    fn fx_copy_parent_matrix(s: GPtr<u8>) = thiscall 0x4AA890 => unported;
-    /// `FxSystem_c::Play()` (0x4AA2F0)
-    fn fx_play(s: GPtr<u8>) = thiscall 0x4AA2F0 => unported;
-    /// `CVisibilityPlugins::GetAtomicModelInfo`-style lookup of a clump's model info (0x732AC0)
-    fn get_clump_model_info(c: GPtr<u8>) -> GPtr<u8> = cdecl 0x732AC0 => unported;
-    /// `CBaseModelInfo::RemoveRef()` (0x4C4BB0)
-    fn model_info_remove_ref(mi: GPtr<u8>) = thiscall 0x4C4BB0 => unported;
-    /// `CBaseModelInfo::AddRef()` (0x4C4BA0)
-    fn model_info_add_ref(mi: GPtr<u8>) = thiscall 0x4C4BA0 => unported;
-    /// `GetFirstAtomic(RpClump*)` (0x734820)
-    fn get_first_atomic(c: GPtr<u8>) -> GPtr<u8> = cdecl 0x734820 => unported;
-    /// `RpSkinGeometryGetSkin(RpGeometry*)` (0x7C7550)
-    fn rp_skin_geometry_get_skin(g: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C7550 => unported;
-    /// `RpClumpForAllAtomics(RpClump*, callback, void*)` (0x749B70)
-    fn rp_clump_for_all_atomics(c: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> = cdecl 0x749B70 => unported;
-    /// `RpClumpDestroy(RpClump*)` (0x74A310)
-    fn rp_clump_destroy(c: GPtr<u8>) -> i32 = cdecl 0x74A310 => unported;
     /// model info vtable slot 0x2C (`CreateInstance`)
     fn model_info_create_instance(mi: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x2C => unported;
-    /// `CClumpModelInfo::GetFrameFromName(RpClump*, const char*)` (0x4C5400)
-    fn get_frame_from_name(c: GPtr<u8>, name: u32) -> GPtr<u8> = cdecl 0x4C5400 => unported;
-    /// `GetAnimHierarchyFromSkinClump(RpClump*)` (0x734A40)
-    fn get_anim_hierarchy_from_skin_clump(c: GPtr<u8>) -> GPtr<u8> = cdecl 0x734A40 => unported;
-    /// `RpHAnimIDGetIndex(RpHAnimHierarchy*, int32)` (0x7C51A0)
-    fn rp_hanim_id_get_index(h: GPtr<u8>, id: i32) -> i32 = cdecl 0x7C51A0 => unported;
-    /// `RpHAnimHierarchyGetMatrixArray(RpHAnimHierarchy*)` (0x7C5120)
-    fn rp_hanim_hierarchy_get_matrix_array(h: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C5120 => unported;
     /// `CPed::RemoveWeaponModel(int32)` (0x5E3990)
     fn remove_weapon_model_call(p: GPtr<u8>, model: i32) = thiscall 0x5E3990 => remove_weapon_model;
     /// `CPed::AddWeaponModel(int32)` (0x5E5ED0)
     fn add_weapon_model_call(p: GPtr<u8>, model: i32) = thiscall 0x5E5ED0 => add_weapon_model;
     /// `CPed::RemoveGogglesModel()` (0x5DF170)
     fn remove_goggles_model(p: GPtr<u8>) = thiscall 0x5DF170 => unported;
-    /// `CWeapon::Reload(CPed*)` (0x73AEB0)
-    fn weapon_reload(w: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x73AEB0 => unported;
-    /// `CWeapon::Shutdown()` (0x73A380)
-    fn weapon_shutdown(w: GPtr<u8>) = thiscall 0x73A380 => unported;
     /// `CWeapon::Initialise(eWeaponType, int32, CPed*)` (0x73B4A0)
     fn weapon_initialise(w: GPtr<u8>, ty: u32, ammo: u32, ped: GPtr<u8>) = thiscall 0x73B4A0 => unported;
     /// `CPed::GiveWeapon(eWeaponType, uint32, bool)` (0x5E6080)
     fn give_weapon_call(p: GPtr<u8>, ty: u32, ammo: u32, b: u32) -> u32 = thiscall 0x5E6080 => give_weapon;
     /// `CPed::RequestDelayedWeapon()` (0x5E8910)
     fn request_delayed_weapon_call(p: GPtr<u8>) = thiscall 0x5E8910 => request_delayed_weapon;
-    /// `CPedIntelligence::GetTaskHold(bool)` (0x600FF0)
-    fn intel_get_task_hold(i: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x600FF0 => unported;
-    /// `CPed::DropEntityThatThisPedIsHolding(bool)` (0x5E0360)
-    fn drop_entity_that_this_ped_is_holding(p: GPtr<u8>, b: u32) = thiscall 0x5E0360 => unported;
     /// `RpAnimBlendClumpGetAssociation(RpClump*, uint32 animId)` (0x4D68B0)
     fn clump_get_association(c: GPtr<u8>, id: u32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
     /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float)` (0x4D4610)

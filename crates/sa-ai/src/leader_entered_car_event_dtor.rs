@@ -2,16 +2,12 @@
 //! group's leader, enters a car. Ported from the 1.0 US bytes. Unverified (docs/verify/HOWTO.md).
 
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
-orig! {
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CEvent::~CEvent()` (0x4AC480)
-    fn event_dtor(e: GPtr<u8>) = thiscall 0x4AC480 => unported;
-}
+use crate::bindings::editable_response_dtor as event_dtor;
+use sa_core::bindings::entity_clean_up_old_reference;
 
 /// `CEventLeaderEnteredCarAsDriver::~CEventLeaderEnteredCarAsDriver` (0x48E220, thiscall; entry `push -1; jmp
 /// 0x40166A` into the SEH prologue): vtable 0x85A198, the vehicle reference (+0x14) dropped when set, then the

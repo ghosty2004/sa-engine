@@ -46,6 +46,34 @@ const CAR_DENSITY_MULTIPLIER: usize = 0x8A5B20;
 /// The immediate 01B4 pushes as the radius: 10.0f (`push 0x41200000`).
 const K_10: u32 = 0x4120_0000;
 
+use crate::bindings::add_big_message_with_number;
+use crate::bindings::add_message_jump_q_with_number;
+use crate::bindings::add_message_with_number;
+use crate::bindings::clean_up_this_object;
+use crate::bindings::clean_up_this_ped;
+use crate::bindings::clean_up_this_vehicle;
+use crate::bindings::clear_space_for_mission_entity;
+use crate::bindings::switch_roads_off_in_area;
+use sa_core::bindings::get_weapon_info;
+use sa_core::bindings::ped_give_weapon as give_weapon;
+use sa_core::bindings::player_info_make_player_safe as make_player_safe;
+use sa_core::bindings::text_get;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::civilian_ped_ctor;
+use sa_world::bindings::compute_target_door_to_enter_as_passenger;
+use sa_world::bindings::cop_ped_ctor;
+use sa_world::bindings::emergency_ped_ctor;
+use sa_world::bindings::find_ground_z_for_coord as find_ground_z_raw;
+use sa_world::bindings::force_weather_now;
+use sa_world::bindings::ped_new;
+use sa_world::bindings::ped_remove_weapon_model as remove_weapon_model;
+use sa_world::bindings::ped_set_current_weapon_slot as set_current_weapon_slot;
+use sa_world::bindings::player_get_wanted_level as get_wanted_level;
+use sa_world::bindings::set_char_created_by;
+use sa_world::bindings::set_ped_in_as_passenger_ctor;
+use sa_world::bindings::set_ped_in_as_passenger_dtor;
+use sa_world::bindings::set_ped_in_as_passenger_process_ped;
+use sa_world::bindings::weather_release_weather as release_weather;
 orig! {
     /// `CUpsideDownCarCheck::AddCarToCheck(int32)` (0x4638D0)
     fn add_car_to_check(c: GPtr<u8>, h: i32) = thiscall 0x4638D0 => unported;
@@ -57,82 +85,16 @@ orig! {
     fn car_in_area_check_command(s: Scr, command: u32) = thiscall 0x488EC0 => unported;
     /// `CRunningScript::LocateCarCommand(int32 command)` (0x487A20)
     fn locate_car_command(s: Scr, command: u32) = thiscall 0x487A20 => unported;
-    /// `CPlayerPed::GetWantedLevel()` (0x41BE60)
-    fn get_wanted_level(p: GPtr<u8>) -> i32 = thiscall 0x41BE60 => unported;
-    /// `CTheScripts::CleanUpThisPed(CPed*)` (0x486300)
-    fn clean_up_this_ped(p: GPtr<u8>) = cdecl 0x486300 => unported;
-    /// `CTheScripts::CleanUpThisVehicle(CVehicle*)` (0x486670)
-    fn clean_up_this_vehicle(v: GPtr<u8>) = cdecl 0x486670 => unported;
-    /// `CTheScripts::CleanUpThisObject(CObject*)` (0x4866C0)
-    fn clean_up_this_object(o: GPtr<u8>) = cdecl 0x4866C0 => unported;
-    /// `CPlayerInfo::MakePlayerSafe(bool, float radius)` (0x56E870)
-    fn make_player_safe(info: GPtr<u8>, safe: u32, radius: f32) = thiscall 0x56E870 => unported;
     /// `CWeather::ForceWeather(int16)` (0x72A4E0)
     fn force_weather(w: u32) = cdecl 0x72A4E0 => unported;
-    /// `CWeather::ForceWeatherNow(int16)` (0x72A4F0)
-    fn force_weather_now(w: u32) = cdecl 0x72A4F0 => unported;
-    /// `CWeather::ReleaseWeather()` (0x72A510)
-    fn release_weather() = cdecl 0x72A510 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0), AL
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CPed::SetCurrentWeapon(int32 slot)` (0x5E61F0)
-    fn set_current_weapon_slot(p: GPtr<u8>, slot: i32) = thiscall 0x5E61F0 => unported;
-    /// `CPathFind::SwitchRoadsOffInArea(float x1, float x2, float y1, float y2, float z1, float z2, bool
-    /// switchOff, bool carPaths, bool forceToggle)` (0x452C80); the floats are passed as raw dwords
-    fn switch_roads_off_in_area(
-        p: GPtr<u8>, x1: u32, x2: u32, y1: u32, y2: u32, z1: u32, z2: u32, off: u32, cars: u32, force: u32
-    ) = thiscall 0x452C80 => unported;
     /// `CWanted::SetMaximumWantedLevel(int32)` (0x561E70)
     fn set_maximum_wanted_level(l: i32) = cdecl 0x561E70 => unported;
-    /// `CPed::GiveWeapon(eWeaponType, uint32 ammo, bool)` (0x5E6080), returns the weapon slot
-    fn give_weapon(p: GPtr<u8>, ty: u32, ammo: u32, flag: u32) -> u32 = thiscall 0x5E6080 => unported;
-    /// `CWeaponInfo::GetWeaponInfo(eWeaponType, eWeaponSkill)` (0x743C60)
-    fn get_weapon_info(ty: u32, skill: u32) -> GPtr<u8> = cdecl 0x743C60 => unported;
-    /// `CPed::RemoveWeaponModel(int32 model)` (0x5E3990)
-    fn remove_weapon_model(p: GPtr<u8>, model: u32) = thiscall 0x5E3990 => unported;
     /// `CEntity` virtual slot 14 (+0x38, `Teleport(CVector, bool)`): the vector by value (three words)
     fn entity_teleport(e: GPtr<u8>, x: u32, y: u32, z: u32, clear_orientation: u32) = thiscall vslot 0x38 => unported;
-    /// `CTheScripts::ClearSpaceForMissionEntity(const CVector&, CEntity*)` (0x486B00)
-    fn clear_space_for_mission_entity(pos: GPtr<u32>, e: GPtr<u8>) = cdecl 0x486B00 => unported;
-    /// `CWorld::FindGroundZForCoord(float, float)` (0x569660), floats as raw dwords, ST0 (read as f64: exact)
-    fn find_ground_z_raw(x: u32, y: u32) -> f64 = cdecl 0x569660 => unported;
     /// `CTheScripts::IsVehicleStopped(CVehicle*)` (0x4861F0), AL
     fn is_vehicle_stopped(v: GPtr<u8>) -> u8 = cdecl 0x4861F0 => unported;
     /// `CRunningScript::GetCorrectPedModelIndexForEmergencyServiceType(ePedType, int32*)` (0x464F50)
     fn get_correct_ped_model_index(s: Scr, ped_type: i32, model: GPtr<u32>) = thiscall 0x464F50 => unported;
-    /// `CPed::operator new(uint32)` (0x5E4720)
-    fn ped_new(size: u32) -> GPtr<u8> = cdecl 0x5E4720 => unported;
-    /// `CCopPed::CCopPed(eCopType)` (0x5DDC60), returns this
-    fn cop_ped_ctor(p: GPtr<u8>, cop_type: u32) -> GPtr<u8> = thiscall 0x5DDC60 => unported;
-    /// `CCivilianPed::CCivilianPed(ePedType, uint32 model)` (0x5DDB70), returns this
-    fn civilian_ped_ctor(p: GPtr<u8>, ped_type: u32, model: u32) -> GPtr<u8> = thiscall 0x5DDB70 => unported;
-    /// `CEmergencyPed::CEmergencyPed(ePedType, uint32 model)` (0x5DE340), returns this
-    fn emergency_ped_ctor(p: GPtr<u8>, ped_type: u32, model: u32) -> GPtr<u8> = thiscall 0x5DE340 => unported;
-    /// `CPed::SetCharCreatedBy(uint8)` (0x5E47E0)
-    fn set_char_created_by(p: GPtr<u8>, by: u32) = thiscall 0x5E47E0 => unported;
-    /// `CCarEnterExit::ComputeTargetDoorToEnterAsPassenger(const CVehicle*, int32 seat)` (0x64F190)
-    fn compute_target_door_to_enter_as_passenger(veh: GPtr<u8>, seat: i32) -> i32 = cdecl 0x64F190 => unported;
-    /// `CTaskSimpleCarSetPedInAsPassenger::CTaskSimpleCarSetPedInAsPassenger(CVehicle*, int32 door,
-    /// CTaskUtilityLineUpPedWithCar*)` (0x646FE0)
-    fn set_ped_in_as_passenger_ctor(t: GPtr<u8>, veh: GPtr<u8>, door: i32, line_up: GPtr<u8>) -> GPtr<u8> = thiscall 0x646FE0 => unported;
-    /// `CTaskSimpleCarSetPedInAsPassenger::ProcessPed(CPed*)` (0x64B5D0)
-    fn set_ped_in_as_passenger_process_ped(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x64B5D0 => unported;
-    /// `CTaskSimpleCarSetPedInAsPassenger::~CTaskSimpleCarSetPedInAsPassenger()` (0x647080)
-    fn set_ped_in_as_passenger_dtor(t: GPtr<u8>) = thiscall 0x647080 => unported;
-    /// `CText::Get(const char* key)` (0x6A0050)
-    fn text_get(t: GPtr<u8>, key: GPtr<u8>) -> GPtr<u8> = thiscall 0x6A0050 => unported;
-    /// `CMessages::AddBigMessageWithNumber(const char*, uint32 time, uint16 style, int32 n1..n6)` (0x69E5F0)
-    fn add_big_message_with_number(
-        t: GPtr<u8>, time: u32, style: u32, n1: u32, n2: u32, n3: u32, n4: u32, n5: u32, n6: u32
-    ) = cdecl 0x69E5F0 => unported;
-    /// `CMessages::AddMessageWithNumber(const char*, uint32 time, uint16 flag, int32 n1..n6, bool)` (0x69E360)
-    fn add_message_with_number(
-        t: GPtr<u8>, time: u32, flag: u32, n1: u32, n2: u32, n3: u32, n4: u32, n5: u32, n6: u32, prev: u32
-    ) = cdecl 0x69E360 => unported;
-    /// `CMessages::AddMessageJumpQWithNumber(const char*, uint32 time, uint16 flag, int32 n1..n6, bool)` (0x69E4E0)
-    fn add_message_jump_q_with_number(
-        t: GPtr<u8>, time: u32, flag: u32, n1: u32, n2: u32, n3: u32, n4: u32, n5: u32, n6: u32, prev: u32
-    ) = cdecl 0x69E4E0 => unported;
 }
 
 /// The 8-byte key of 01E3..01E5: `ReadTextLabelFromScript(buf, 8)`, `TheText.Get(buf)` (zeroed buffer,

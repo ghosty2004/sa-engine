@@ -7,19 +7,14 @@ use sa_core::{hook, orig};
 
 use super::common::{cam_pos, g, rd, wr, x};
 
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::matrix_mul_vec;
+use sa_stream::bindings::get_2d_effect;
+use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
+use sa_stream::bindings::simple_transform_update_matrix as update_matrix;
 orig! {
-    /// `CPlaceable::AllocateMatrix()` (0x54F560)
-    fn allocate_matrix(e: GPtr<u8>) = thiscall 0x54F560 => unported;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*)` (0x54F1B0)
-    fn update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => unported;
-    /// `operator*(const CMatrix&, const CVector&)` (0x59C890): the result through the hidden pointer
-    fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
-    /// `FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
     /// `CWorld::FindObjectsInRange(const CVector&, float, bool, int16*, int16, CEntity**, bool x5)` (0x564A20)
     fn find_objects_in_range(pos: GPtr<u8>, radius: f32, b2d: u32, count: GPtr<u8>, max: u32, out: GPtr<u8>, b: u32, v: u32, p: u32, o: u32, d: u32) = cdecl 0x564A20 => unported;
-    /// `CBaseModelInfo::Get2dEffect(int32)` (0x4C4C70)
-    fn get_2d_effect(mi: GPtr<u8>, i: i32) -> GPtr<u8> = thiscall 0x4C4C70 => unported;
     /// `InteriorManager_c::IsInteriorEffectVisible(C2dEffect*, CEntity*)` (0x598690)
     fn is_interior_effect_visible_call(this: GPtr<u8>, fx: GPtr<u8>, e: GPtr<u8>) -> u32 = thiscall 0x598690 => is_interior_effect_visible;
     /// `InteriorManager_c::AddSameGroupEffectInfos(intVisibleEffect_t*, int32)` (0x598430)

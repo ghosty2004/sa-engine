@@ -8,31 +8,20 @@ use sa_math::x87::{Cmp, X87};
 
 use crate::common::{f32_of, g, jne_mask, jp5, rd, wr, x, xi};
 
+use crate::bindings::keep_area_around_player_clear;
+use crate::bindings::pad_get_hand_brake;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::get_pad as pad_get_pad;
+use sa_core::bindings::tm_get_simplest_active_task as get_simplest_active_task;
+use sa_world::bindings::game_logic_allowed_direction as is_player_allowed_direction;
+use sa_world::bindings::pad_get_accelerate;
+use sa_world::bindings::pad_get_brake;
+use sa_world::bindings::pad_get_exit_vehicle;
+use sa_world::bindings::pad_get_steering_left_right;
+use sa_world::bindings::tm_find_active_task_by_type as find_active_task_by_type;
 orig! {
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    fn pad_get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CTaskManager::FindActiveTaskByType(int32)` (0x681740)
-    fn find_active_task_by_type(tm: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x681740 => unported;
-    /// `CTaskManager::GetSimplestActiveTask()` (0x6819D0)
-    fn get_simplest_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x6819D0 => unported;
     /// virtual `CTask::GetTaskType()` (vtable +0x10)
     fn v_task_get_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CPad::GetExitVehicle()` (0x5400D0, AL)
-    fn pad_get_exit_vehicle(pad: GPtr<u8>) -> u8 = thiscall 0x5400D0 => unported;
-    /// `CPad::GetHandBrake()` (0x540040): int16 in AX
-    fn pad_get_hand_brake(pad: GPtr<u8>) -> i16 = thiscall 0x540040 => unported;
-    /// `CPad::GetSteeringLeftRight()` (0x53FB80): int16 in AX
-    fn pad_get_steering_left_right(pad: GPtr<u8>) -> i16 = thiscall 0x53FB80 => unported;
-    /// `CPad::GetAccelerate()` (0x5403F0): int16 in AX
-    fn pad_get_accelerate(pad: GPtr<u8>) -> i16 = thiscall 0x5403F0 => unported;
-    /// `CPad::GetBrake()` (0x540080): int16 in AX
-    fn pad_get_brake(pad: GPtr<u8>) -> i16 = thiscall 0x540080 => unported;
-    /// `CGameLogic::IsPlayerAllowedToGoInThisDirection(CPed*, CVector, float)` (0x441E10, AL)
-    fn is_player_allowed_direction(p: GPtr<u8>, dx: u32, dy: u32, dz: u32, limit: u32) -> u8 = cdecl 0x441E10 => unported;
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(n: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CPlayerPed::KeepAreaAroundPlayerClear()` (0x60C1E0)
-    fn keep_area_around_player_clear(p: GPtr<u8>) = thiscall 0x60C1E0 => unported;
 }
 
 /// `CTimer::ms_fTimeStep`.

@@ -18,33 +18,43 @@ use sa_world::world::cworld::{PLAYER_IN_FOCUS, PLAYER_INFO_SIZE, PLAYERS};
 use crate::camctl::{clean_up_old_reference, register_reference};
 use crate::common::{ACTIVE_CAM, CAMS, CCAM_SIZE, g, k, rd, wr, x, xi};
 
+pub use crate::bindings::cc_well_buffer_me;
+pub use crate::bindings::pad_540e80;
+pub use sa_core::bindings::cam_using_3rd_person_mouse_cam as cc_using_3rd_person_mouse_cam;
+pub use sa_core::bindings::get_pad as cc_get_pad;
+pub use sa_core::bindings::tm_get_task_secondary as cc_task_secondary;
+pub use sa_core::bindings::vector_magnitude as cc_magnitude;
+pub use sa_core::bindings::vector_normalise as cc_normalise;
+pub use sa_pop::bindings::cam_stairs_for_player;
+pub use sa_world::bindings::cam_get_weapon_first_person_on as cc_weapon_first_person_on;
+pub use sa_world::bindings::camera_set_cam_position_for_fixed_mode as cc_set_fixed;
+pub use sa_world::bindings::find_doors_with_garage;
+pub use sa_world::bindings::get_task_jet_pack as cc_task_jet_pack;
+pub use sa_world::bindings::get_vehicle_appearance as cc_vehicle_appearance;
+pub use sa_world::bindings::is_coop_game_going_on as cc_is_coop;
+pub use sa_world::bindings::pad_get_enter_targeting as cc_pad_enter_targeting;
+pub use sa_world::bindings::pad_get_ped_walk_left_right as cc_pad_walk_lr;
+pub use sa_world::bindings::pad_get_ped_walk_up_down as cc_pad_walk_ud;
+pub use sa_world::bindings::pad_get_target;
+pub use sa_world::bindings::ped_is_ped_in_control as cc_is_ped_in_control;
+pub use sa_world::bindings::placeable_get_heading as cc_get_heading;
+pub use sa_world::bindings::placeable_get_matrix as cc_get_matrix;
+pub use sa_world::bindings::process_line_of_sight as cc_process_los;
+pub use sa_world::bindings::tm_find_active_task_by_type as cc_find_active_task_by_type;
+pub use sa_world::bindings::vector_add as cc_vec_add;
+pub use sa_world::bindings::vector_sub as cc_vec_sub;
+pub use sa_world::bindings::world_get_is_line_of_sight_clear as cc_los;
 orig! {
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    pub fn cc_get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
     /// `CPad` 0x5404A0 (cycle-camera "just down", AL)
     pub fn pad_cycle_camera_down(pad: GPtr<u8>) -> u8 = thiscall 0x5404A0 => unported;
     /// `CPad::sub_5404F0` (AL)
     pub fn pad_5404f0(pad: GPtr<u8>) -> u8 = thiscall 0x5404F0 => unported;
     /// `CPad::sub_540530` (AL)
     pub fn pad_540530(pad: GPtr<u8>) -> u8 = thiscall 0x540530 => unported;
-    /// `CPad` 0x540E80 (AX)
-    pub fn pad_540e80(pad: GPtr<u8>) -> i16 = thiscall 0x540E80 => unported;
     /// `CPad` 0x540F80 (result unused)
     pub fn pad_540f80(pad: GPtr<u8>) -> u8 = thiscall 0x540F80 => unported;
-    /// `CPad::GetPedWalkLeftRight()` (0x53FC90, AX)
-    pub fn cc_pad_walk_lr(pad: GPtr<u8>) -> i16 = thiscall 0x53FC90 => unported;
-    /// `CPad::GetPedWalkUpDown()` (0x53FD30, AX)
-    pub fn cc_pad_walk_ud(pad: GPtr<u8>) -> i16 = thiscall 0x53FD30 => unported;
-    /// `CPad::GetTarget()` (0x540670, AL)
-    pub fn pad_get_target(pad: GPtr<u8>) -> u8 = thiscall 0x540670 => unported;
-    /// `CPad::GetEnterTargeting()` (0x5406B0, AL)
-    pub fn cc_pad_enter_targeting(pad: GPtr<u8>) -> u8 = thiscall 0x5406B0 => unported;
-    /// `CGameLogic::IsCoopGameGoingOn()` (0x441390, AL)
-    pub fn cc_is_coop() -> u8 = cdecl 0x441390 => unported;
     /// `CCullZones::CamCloseInForPlayer()` (0x72DD20, AL)
     pub fn cam_close_in_for_player() -> u8 = cdecl 0x72DD20 => unported;
-    /// `CCullZones::CamStairsForPlayer()` (0x72DD30, AL)
-    pub fn cam_stairs_for_player() -> u8 = cdecl 0x72DD30 => unported;
     /// `CCullZones::FindZoneWithStairsAttributeForPlayer()` (0x72DAD0)
     pub fn find_zone_with_stairs_for_player() -> GPtr<u8> = cdecl 0x72DAD0 => unported;
     /// the cull zone's centre (0x72D6D0, thiscall, `ret 4`, returns `out`)
@@ -55,8 +65,6 @@ orig! {
     pub fn cc_restore_with_jump_cut(this: GPtr<u8>) = thiscall 0x50BAB0 => crate::camctl::restore_with_jump_cut;
     /// `CCamera::SetCameraDirectlyBehindForFollowPed_CamOnAString()` (0x50BD40)
     pub fn cc_set_behind(this: GPtr<u8>) = thiscall 0x50BD40 => crate::camctl::set_camera_directly_behind_for_follow_ped_cam_on_a_string;
-    /// `CCamera::SetCamPositionForFixedMode(const CVector&, const CVector&)` (0x50BEC0)
-    pub fn cc_set_fixed(this: GPtr<u8>, src: GPtr<u8>, up: GPtr<u8>) = thiscall 0x50BEC0 => unported;
     /// `CCamera::ClearPlayerWeaponMode()` (0x50AB10)
     pub fn cc_clear_weapon_mode(this: GPtr<u8>) = thiscall 0x50AB10 => crate::camera::clear_player_weapon_mode;
     /// `CCamera::GetArrPosForVehicleType(int32, int32&)` (0x50AF00, AL)
@@ -73,50 +81,16 @@ orig! {
     pub fn is_point_in_garage_camera_zone(px: u32, py: u32, pz: u32) -> u8 = cdecl 0x449BA0 => unported;
     /// `CGarages::CameraShouldBeOutside()` (0x448650, AL)
     pub fn camera_should_be_outside() -> u8 = cdecl 0x448650 => unported;
-    /// `CGarage::FindDoorsWithGarage(CObject**, CObject**)` (0x449FF0)
-    pub fn find_doors_with_garage(gar: GPtr<u8>, first: GPtr<u8>, second: GPtr<u8>) = thiscall 0x449FF0 => unported;
-    /// `CPlaceable::GetMatrix()` (0x411990)
-    pub fn cc_get_matrix(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x411990 => unported;
-    /// `CPlaceable::GetHeading()` (0x441DB0, ST0)
-    pub fn cc_get_heading(e: GPtr<u8>) -> f64 = thiscall 0x441DB0 => unported;
     /// `CGeneral::GetATanOfXY(float, float)` (0x53CC70, ST0)
     pub fn cc_atan_xy(xb: u32, yb: u32) -> f64 = cdecl 0x53CC70 => unported;
-    /// `VectorSub(CVector* out, const CVector* a, const CVector* b)` = a - b (0x40FE60)
-    pub fn cc_vec_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => unported;
-    /// `out = a + b` (0x40FE30)
-    pub fn cc_vec_add(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE30 => unported;
     /// `out = s * v` (0x40FE90)
     pub fn cc_vec_s_mul(out: GPtr<u8>, s: u32, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE90 => unported;
     /// `out = v * s` (0x40FEC0)
     pub fn cc_vec_mul_s(out: GPtr<u8>, v: GPtr<u8>, s: u32) -> GPtr<u8> = cdecl 0x40FEC0 => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    pub fn cc_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
-    /// `CVector::Magnitude()` (0x4082C0, ST0)
-    pub fn cc_magnitude(v: GPtr<u8>) -> f64 = thiscall 0x4082C0 => unported;
-    /// `CWorld::GetIsLineOfSightClear(...)` (0x56A490, AL)
-    pub fn cc_los(a: GPtr<u8>, b: GPtr<u8>, bu: u32, ve: u32, pe: u32, ob: u32, du: u32, st: u32, ig: u32) -> u8 = cdecl 0x56A490 => unported;
-    /// `CWorld::ProcessLineOfSight(...)` (0x56BA00, AL)
-    pub fn cc_process_los(a: GPtr<u8>, b: GPtr<u8>, cp: GPtr<u8>, ent: GPtr<u8>, bu: u32, ve: u32, pe: u32, ob: u32, du: u32, st: u32, ic: u32, sh: u32) -> u8 = cdecl 0x56BA00 => unported;
     /// `CWorld::FindGroundZFor3DCoord(float, float, float, bool*, CEntity**)` (0x5696C0, ST0)
     pub fn cc_find_ground_z(px: u32, py: u32, pz: u32, found: GPtr<u8>, ent: u32) -> f64 = cdecl 0x5696C0 => unported;
-    /// `CVehicle::GetVehicleAppearance()` (0x6D1080)
-    pub fn cc_vehicle_appearance(veh: GPtr<u8>) -> i32 = thiscall 0x6D1080 => unported;
-    /// `CCam::WellBufferMe(float, float*, float*, float, float, bool)` (0x509AE0)
-    pub fn cc_well_buffer_me(target: u32, v: GPtr<u8>, s: GPtr<u8>, top: u32, step: u32, angle: u32) = cdecl 0x509AE0 => unported;
-    /// `CCam::GetWeaponFirstPersonOn()` (0x509DC0, AL)
-    pub fn cc_weapon_first_person_on(cam: GPtr<u8>) -> u8 = thiscall 0x509DC0 => unported;
-    /// `CCam::Using3rdPersonMouseCam()` (0x50A850, AL)
-    pub fn cc_using_3rd_person_mouse_cam(cam: GPtr<u8>) -> u8 = thiscall 0x50A850 => unported;
-    /// `CTaskManager::GetTaskSecondary(int32)` (0x681810)
-    pub fn cc_task_secondary(tm: GPtr<u8>, i: i32) -> GPtr<u8> = thiscall 0x681810 => unported;
-    /// `CTaskManager::FindActiveTaskByType(int32)` (0x681740)
-    pub fn cc_find_active_task_by_type(tm: GPtr<u8>, t: i32) -> GPtr<u8> = thiscall 0x681740 => unported;
-    /// `CPedIntelligence::GetTaskJetPack()` (0x601110)
-    pub fn cc_task_jet_pack(intel: GPtr<u8>) -> GPtr<u8> = thiscall 0x601110 => unported;
     /// `CPedIntelligence::GetTaskHold(bool)` (0x600FF0)
     pub fn cc_task_hold(intel: GPtr<u8>, ignore: u8) -> GPtr<u8> = thiscall 0x600FF0 => unported;
-    /// `CPed::IsPedInControl()` (0x5E3960, AL)
-    pub fn cc_is_ped_in_control(ped: GPtr<u8>) -> u8 = thiscall 0x5E3960 => unported;
     /// `CPed::CanWeRunAndFireWithWeapon()` (0x5E88E0, AL)
     pub fn cc_can_run_and_fire(ped: GPtr<u8>) -> u8 = thiscall 0x5E88E0 => unported;
     /// `CAudioEngine::ReportFrontendAudioEvent(eAudioEvents, float, float)` (0x506EA0)

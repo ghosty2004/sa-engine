@@ -21,9 +21,8 @@ const C_HALF_RAD: usize = 0x8631D4;
 /// The RtQuat plugin id of its `RwError`s.
 const QUAT_PLUGIN: i32 = 0x195;
 
+use crate::bindings::rw_sqrt;
 orig! {
-    /// `_rwSqrt(float)` (0x7EDB30): table sqrt, f32 in ST0
-    fn rw_sqrt(v: f32) -> f64 = cdecl 0x7EDB30 => crate::vector::rw_sqrt_f64;
     /// `RwV3dNormalize(out, in)` (0x7ED9B0): ST0 length (discarded here)
     fn rw_v3d_normalize(out: GPtr<u8>, inp: GPtr<u8>) -> f64 = cdecl 0x7ED9B0 => normalize_f64;
     /// `_rtQuatFromMatrixX/Y/Z(RtQuat*, const RwMatrix*)` (called through a register in the original)
@@ -241,7 +240,6 @@ pub fn rt_quat_transform_vectors(out: GPtr<u8>, inp: GPtr<u8>, n: i32, q: GPtr<u
 pub fn matrix_ortho_normalize_body(dst: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> {
     crate::matrix::matrix_ortho_normalize(dst, src)
 }
-
 
 /// A `.rdata` float by address (the polynomial coefficients of the inlined `acosf` / `sinf`).
 fn c(a: usize) -> f32 {

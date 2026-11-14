@@ -9,15 +9,12 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::event_pool_new;
+use sa_core::bindings::ped_is_alive;
+use sa_world::bindings::membership_is_member;
 orig! {
-    /// `CEventPool::New` (0x4B5570, thiscall on the pool): a free event pool slot or null.
-    fn event_pool_new(pool: GPtr<u8>) -> GPtr<u8> = thiscall 0x4B5570 => unported;
     /// `CEventAcquaintancePed::AffectsPed(CPed*)` (0x4AFA30)
     fn acquaintance_ped_affects_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x4AFA30 => unported;
-    /// `CPedGroupMembership::IsMember(CPed*)` (0x5F6A10)
-    fn membership_is_member(this: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x5F6A10 => unported;
-    /// `CPed::IsAlive` (0x5E0170)
-    fn ped_is_alive(ped: GPtr<u8>) -> u8 = thiscall 0x5E0170 => unported;
     /// `CEvent::GetEventType` (vtable +4)
     fn ev_get_event_type(ev: GPtr<u8>) -> i32 = thiscall vslot 0x4 => unported;
     /// `CEvent::GetEventPriority` (vtable +8)
@@ -159,10 +156,10 @@ pub fn vt_85ae88_affects_ped_4ae2d0(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
 
 // ---- scalar deleting destructors: `call dtor; if (flags & 1) CEvent::operator delete; return this` ---
 
+use crate::bindings::dtor_5f6200;
+use sa_world::bindings::event_sound_quiet_dtor as dtor_5dea00;
 orig! {
     fn dtor_420f30(this: GPtr<u8>) = thiscall 0x420F30 => unported;
-    fn dtor_5dea00(this: GPtr<u8>) = thiscall 0x5DEA00 => unported;
-    fn dtor_5f6200(this: GPtr<u8>) = thiscall 0x5F6200 => unported;
     fn dtor_5fed80(this: GPtr<u8>) = thiscall 0x5FED80 => unported;
     fn dtor_5ff030(this: GPtr<u8>) = thiscall 0x5FF030 => unported;
     fn dtor_5ff0f0(this: GPtr<u8>) = thiscall 0x5FF0F0 => unported;
@@ -262,20 +259,18 @@ fn sdd_inline(this: GPtr<u8>, flags: u32, dtor: fn(GPtr<u8>)) -> GPtr<u8> {
     this
 }
 
-orig! {
-    fn dtor_4aca70(this: GPtr<u8>) = thiscall 0x4ACA70 => unported;
-    fn dtor_4acdd0(this: GPtr<u8>) = thiscall 0x4ACDD0 => unported;
-    fn dtor_4acff0(this: GPtr<u8>) = thiscall 0x4ACFF0 => unported;
-    fn dtor_4ae070(this: GPtr<u8>) = thiscall 0x4AE070 => unported;
-    fn dtor_4ae3c0(this: GPtr<u8>) = thiscall 0x4AE3C0 => unported;
-    fn dtor_4ae7a0(this: GPtr<u8>) = thiscall 0x4AE7A0 => unported;
-    fn dtor_4aed60(this: GPtr<u8>) = thiscall 0x4AED60 => unported;
-    fn dtor_4aeea0(this: GPtr<u8>) = thiscall 0x4AEEA0 => unported;
-    fn dtor_4af0a0(this: GPtr<u8>) = thiscall 0x4AF0A0 => unported;
-    fn dtor_4af400(this: GPtr<u8>) = thiscall 0x4AF400 => unported;
-    fn dtor_4b0a50(this: GPtr<u8>) = thiscall 0x4B0A50 => unported;
-    fn dtor_4b0d00(this: GPtr<u8>) = thiscall 0x4B0D00 => unported;
-}
+use crate::bindings::building_collision_dtor as dtor_4acff0;
+use crate::bindings::dtor_4aca70;
+use crate::bindings::dtor_4acdd0;
+use crate::bindings::dtor_4ae3c0;
+use crate::bindings::dtor_4ae7a0;
+use crate::bindings::dtor_4aed60;
+use crate::bindings::dtor_4aeea0;
+use crate::bindings::dtor_4af0a0;
+use crate::bindings::dtor_4b0d00;
+use sa_world::bindings::event_attractor_dtor as dtor_4af400;
+use sa_world::bindings::event_group_event_dtor as dtor_4ae070;
+use sa_world::bindings::event_script_command_dtor as dtor_4b0a50;
 
 /// `CEventPedCollisionWithPed::~CEventPedCollisionWithPed` (0x4B5980): `FUN_004aca70`, inlined pool delete.
 #[hook(addr = 0x4B5980, conv = thiscall, name = "CEventPedCollisionWithPed::~CEventPedCollisionWithPed", expect = "56 57 8B F9 E8 E7 70 FF FF")]
@@ -352,6 +347,8 @@ pub fn event_in_air_sdd_4b64d0(this: GPtr<u8>, flags: u32) -> GPtr<u8> {
 
 // ---- Clone / CloneEditable ----------------------------------------------------------------------
 
+use crate::bindings::event_base_dtor;
+use sa_core::bindings::entity_clean_up_old_reference;
 orig! {
     fn ctor_4aedf0(this: GPtr<u8>, a: u32) -> GPtr<u8> = thiscall 0x4AEDF0 => unported;
     fn ctor_4af010(this: GPtr<u8>, a: u32) -> GPtr<u8> = thiscall 0x4AF010 => unported;
@@ -375,10 +372,6 @@ orig! {
     fn building_collision_ctor(this: GPtr<u8>, a: u32, b: u32, c: u32, d: GPtr<u8>, e: GPtr<u8>, f: i32) -> GPtr<u8> = thiscall 0x4ACF00 => unported;
     /// `CEventPedCollisionWithPed::Constructor` (0x4AC990)
     fn ped_collision_ctor(this: GPtr<u8>, a: u32, b: u32, c: u32, d: GPtr<u8>, e: GPtr<u8>, f: i32, h: i32) -> GPtr<u8> = thiscall 0x4AC990 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `FUN_004ac010` (0x4AC010): `CEvent` base destructor
-    fn event_base_dtor(this: GPtr<u8>) = thiscall 0x4AC010 => unported;
 }
 
 /// `vt_85b0b0::CloneEditable` (0x4B7280): inlined `operator new`, `FUN_004aedf0(e, this[+0x14])`.
@@ -614,9 +607,8 @@ pub fn event_lean_on_vehicle_dtor_65dc10(this: GPtr<u8>) {
     event_base_dtor(this);
 }
 
+use sa_core::bindings::entity_register_reference;
 orig! {
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    fn entity_register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
     /// scalar deleting destructor (vtable +0)
     fn ev_delete(ev: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
 }
@@ -656,13 +648,10 @@ pub fn event_group_event_dtor_4ae070(this: GPtr<u8>) {
 
 // ---- batch 3 -------------------------------------------------------------------------------------
 
+use crate::bindings::intel_is_threatened_by;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::intel_is_friendly_with;
 orig! {
-    /// `CPedIntelligence::IsThreatenedBy(const CPed&)` (0x601C30)
-    fn intel_is_threatened_by(intel: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x601C30 => unported;
-    /// `CPedIntelligence::IsFriendlyWith(const CPed&)` (0x601BC0)
-    fn intel_is_friendly_with(intel: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x601BC0 => unported;
-    /// `CPed::IsPlayer` (0x5DF8F0)
-    fn ped_is_player(ped: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
     /// `CEvent::GetSourceEntity` (vtable +0x28)
     fn ev_get_source_entity(ev: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x28 => unported;
     /// `CEvent::TakesPriorityOver(const CEvent&)` (vtable +0x2C)
@@ -714,15 +703,12 @@ pub fn event_group_event_base_takes_priority_4ae100(this: GPtr<u8>, other: GPtr<
 
 // ---- batch 4 -------------------------------------------------------------------------------------
 
+use crate::bindings::ik_get_look_at_entity;
+use sa_world::bindings::ik_is_looking;
+use sa_world::bindings::tm_find_active_task_by_type;
 orig! {
     /// `CTaskGangHasslePed::Constructor(CPed*, int, int, int)` (0x65FED0)
     fn gang_hassle_ped_ctor(this: GPtr<u8>, ped: GPtr<u8>, a: u32, b: u32, c: u32) -> GPtr<u8> = thiscall 0x65FED0 => unported;
-    /// `IKChainManager_c::IsLooking(CPed*)` (0x6181A0)
-    fn ik_is_looking(this: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x6181A0 => unported;
-    /// `IKChainManager_c::GetLookAtEntity(CPed*)` (0x6181D0)
-    fn ik_get_look_at_entity(this: GPtr<u8>, ped: GPtr<u8>) -> u32 = thiscall 0x6181D0 => unported;
-    /// `CTaskManager::FindActiveTaskByType(int)` (0x681740)
-    fn tm_find_active_task_by_type(tm: GPtr<u8>, t: i32) -> GPtr<u8> = thiscall 0x681740 => unported;
     /// `CTask::GetTaskType` (vtable +0x10)
     fn task_get_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
 }
@@ -793,10 +779,7 @@ pub fn inform_friends_event_queue_add_4ac1e0(ped: GPtr<u8>, ev: GPtr<u8>) -> u8 
     1
 }
 
-orig! {
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    fn entity_register_reference_ev(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
-}
+use sa_core::bindings::entity_register_reference as entity_register_reference_ev;
 
 /// The first of the ped's active tasks of types 0x4B2, 0x4BF, 0x4B3.
 fn find_chat_task(ped: GPtr<u8>) -> GPtr<u8> {

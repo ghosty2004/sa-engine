@@ -7,23 +7,17 @@ use sa_core::{hook, orig};
 
 use crate::common::{g, rd, wr};
 
+pub use crate::bindings::frustum_info_ctor as fx_sphere_ctor;
+pub use sa_core::bindings::eh_vector_ctor as eh_vector_constructor_iterator;
+pub use sa_core::bindings::list_add_item;
+pub use sa_core::bindings::rw_matrix_create;
+pub use sa_core::bindings::rw_matrix_multiply;
+pub use sa_core::bindings::rw_v3d_transform_points;
 orig! {
     /// `FxMemoryPool_c::Init()` (0x4A9C30)
     pub fn fx_memory_pool_init(this: GPtr<u8>) -> u8 = thiscall 0x4A9C30 => unported;
-    /// `RwMatrixCreate()` (0x7F2A50)
-    pub fn rw_matrix_create() -> GPtr<u8> = cdecl 0x7F2A50 => unported;
-    /// `RwMatrixMultiply(RwMatrix* out, const RwMatrix* a, const RwMatrix* b)` (0x7F18B0)
-    pub fn rw_matrix_multiply(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F18B0 => unported;
-    /// `RwV3dTransformPoints(RwV3d* out, const RwV3d* in, RwInt32 n, const RwMatrix*)` (0x7EDD90)
-    pub fn rw_v3d_transform_points(out: GPtr<u8>, inp: GPtr<u8>, n: i32, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EDD90 => unported;
     /// `FxEmitterPrt_c::operator new[](size_t)` (0x4A18B0)
     pub fn fx_emitter_prt_new_array(size: u32) -> GPtr<u8> = cdecl 0x4A18B0 => unported;
-    /// `` `eh vector constructor iterator' `` (0x821D30, stdcall: ptr, size, count, ctor, dtor)
-    pub fn eh_vector_constructor_iterator(p: GPtr<u8>, size: u32, count: u32, ctor: u32, dtor: u32) = stdcall 0x821D30 => unported;
-    /// `List_c::AddItem(ListItem_c*)` (0x4A8DF0)
-    pub fn list_add_item(l: GPtr<u8>, item: GPtr<u8>) = thiscall 0x4A8DF0 => unported;
-    /// `FxSphere_c::FxSphere_c()` (0x4A9F70)
-    pub fn fx_sphere_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4A9F70 => unported;
     /// `FxFrustumInfo_c::IsCollision(FxSphere_c*)` (0x4AA030)
     pub fn fx_frustum_is_collision(this: GPtr<u8>, s: GPtr<u8>) -> u32 = thiscall 0x4AA030 => crate::mvpa_render3::fx_frustum_is_collision;
 }

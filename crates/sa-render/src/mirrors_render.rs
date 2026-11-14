@@ -7,18 +7,15 @@ use sa_core::{hook, orig};
 
 use crate::common::{THE_CAMERA, g, jp, rd, x, xi};
 
+use crate::bindings::rw_im3d_render_indexed_primitive;
+use crate::bindings::rw_im3d_transform;
+use sa_core::bindings::defined_state;
 orig! {
-    /// `DefinedState()` (0x734650)
-    fn defined_state() = cdecl 0x734650 => unported;
     /// `RwRenderStateSet(state, value)` (`RwGlobals` +0x20)
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
     /// `RwIm2DRenderIndexedPrimitive(prim, verts, numVerts, indices, numIndices)` through the thunk
     /// 0x734EA0 (`RwEngineInstance` +0x34, protection-decoded)
     fn rw_im2d_render_indexed_primitive(prim: u32, verts: u32, nv: u32, indices: u32, ni: u32) -> u32 = cdecl 0x734EA0 => unported;
-    /// `RwIm3DTransform(verts, count, ltm, flags)` (0x7EF450)
-    fn rw_im3d_transform(verts: u32, count: u32, ltm: u32, flags: u32) -> GPtr<u8> = cdecl 0x7EF450 => unported;
-    /// `RwIm3DRenderIndexedPrimitive(primType, indices, numIndices)` (0x7EF550)
-    fn rw_im3d_render_indexed_primitive(prim: u32, indices: u32, n: u32) -> u32 = cdecl 0x7EF550 => unported;
     /// `RwIm3DEnd()` (0x7EF520)
     fn rw_im3d_end() -> u32 = cdecl 0x7EF520 => unported;
 }

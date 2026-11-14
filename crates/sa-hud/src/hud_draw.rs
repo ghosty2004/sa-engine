@@ -431,6 +431,53 @@ fn max_h() -> X87 {
     xi(g::<i32>(RS_MAX_HEIGHT).read())
 }
 
+use crate::bindings::draw_blips_call as radar_draw_blips;
+use crate::bindings::font_get_number_lines;
+use crate::bindings::font_set_alpha_fade;
+use crate::bindings::font_set_background_color;
+use crate::bindings::font_set_centre_size;
+use crate::bindings::font_set_drop_color;
+use crate::bindings::font_set_drop_shadow_position;
+use crate::bindings::font_set_justify;
+use crate::bindings::font_set_right_justify_wrap;
+use crate::bindings::font_set_scale;
+use crate::bindings::font_set_scale_for_current_language;
+use crate::bindings::font_set_slant;
+use crate::bindings::font_set_wrapx;
+use crate::bindings::get_string_length_call as msg_get_string_length;
+use crate::bindings::hud_colours_get_rgb;
+use crate::bindings::hud_colours_get_rgba;
+use crate::bindings::msg_insert_player_control_keys;
+use crate::bindings::rw_tex_dictionary_find_hash_named_texture;
+use crate::bindings::sprite2d_set_texture;
+use sa_core::bindings::append_string_to_key;
+use sa_core::bindings::ascii_to_gxt_char;
+use sa_core::bindings::atol as crt_atol;
+use sa_core::bindings::eh_vector_ctor as eh_vector_ctor_iterator;
+use sa_core::bindings::font_print_string;
+use sa_core::bindings::get_pad;
+use sa_core::bindings::get_weapon_info;
+use sa_core::bindings::rgba_ctor;
+use sa_core::bindings::sprintf1;
+use sa_core::bindings::sprite2d_draw as sprite2d_draw_rect;
+use sa_core::bindings::sprite_draw_rect as sprite2d_draw_rect_static;
+use sa_stream::bindings::add_txd_slot;
+use sa_stream::bindings::find_txd_slot;
+use sa_stream::bindings::load_txd;
+use sa_stream::bindings::remove_txd_slot;
+use sa_stream::bindings::sprite2d_delete;
+use sa_stream::bindings::sprite2d_draw_bar_chart;
+use sa_world::bindings::audio_report_frontend_event;
+use sa_world::bindings::camera_get_fading;
+use sa_world::bindings::count_members_excluding_leader as group_count_members_excluding_leader;
+use sa_world::bindings::font_get_string_width_st0;
+use sa_world::bindings::frenzy_on_going as darkel_frenzy_on_going;
+use sa_world::bindings::get_stat_value as stats_get_stat_value_st0;
+use sa_world::bindings::is_coop_game_going_on;
+use sa_world::bindings::max_f as max_f_st0;
+use sa_world::bindings::min_f as min_f_st0;
+use sa_world::bindings::ped_get_weapon_skill;
+use sa_world::bindings::sprite2d_draw_quad;
 orig! {
     /// `RwRenderStateSet` through `RwEngineInstance` (`mov r, [0xC97B24]; call [r+0x20]`)
     fn rw_render_state_set(state: u32, value: u32) -> u32 = cdecl table 0xC97B24 0x20 => unported;
@@ -472,16 +519,8 @@ orig! {
 
     /// `CRadar::DrawMap()` (0x586B00)
     fn radar_draw_map() = cdecl 0x586B00 => unported;
-    /// `CRadar::DrawBlips()` (0x588050)
-    fn radar_draw_blips() = cdecl 0x588050 => crate::radar_draw2::draw_blips;
     /// `eh vector constructor iterator(ptr, size, count, ctor)` (0x403D60, stdcall)
     fn vector_ctor_iterator(p: GPtr<u8>, size: u32, count: u32, ctor: u32) = stdcall 0x403D60 => unported;
-    /// `std::min<float>(a, b)` (0x404330): ST0 = `a` when `a < b`, else `b`
-    fn min_f_st0(a: f32, bb: f32) -> f64 = cdecl 0x404330 => unported;
-    /// `CSprite2d::Draw(x1, y1, x2, y2, x3, y3, x4, y4, const CRGBA&)` (0x728520)
-    fn sprite2d_draw_quad(this: GPtr<u8>, x1: f32, y1: f32, x2: f32, y2: f32, x3: f32, y3: f32, x4: f32, y4: f32, colour: GPtr<u8>) = thiscall 0x728520 => unported;
-    /// `CSprite2d::DrawRect(const CRect&, const CRGBA&)` (0x727B60)
-    fn sprite2d_draw_rect_static(rect: GPtr<u8>, colour: GPtr<u8>) = cdecl 0x727B60 => unported;
 
     /// `FindPlayerWanted(int32)` (0x56E230)
     fn find_player_wanted(id: i32) -> GPtr<u8> = cdecl 0x56E230 => sa_world::world::cworld::find_player_wanted;
@@ -490,69 +529,22 @@ orig! {
 
     /// `CStats::GetFatAndMuscleModifier(eStatModAbilities)` (0x559AF0, ST0)
     fn stats_get_fat_and_muscle_modifier_st0(stat: u32) -> f64 = cdecl 0x559AF0 => unported;
-    /// `CSprite2d::DrawBarChart(x, y, width, height, progress, progressAdd, drawPercentage, drawBlackBorder,
-    /// CRGBA colour, CRGBA addColour)` (0x728640)
-    fn sprite2d_draw_bar_chart(px: f32, py: f32, w: u32, h: u32, progress: f32, add: u32, pct: u32, border: u32, colour: u32, add_colour: u32) = cdecl 0x728640 => unported;
-    /// `CHudColours::GetRGB(CRGBA* out, uint8 colour)` (0x58FEA0)
-    fn hud_colours_get_rgb(this: GPtr<u8>, out: GPtr<u8>, colour: u32) -> GPtr<u8> = thiscall 0x58FEA0 => crate::hud::get_rgb;
 
     /// `CMessages::StringCopy(GxtChar* dst, const GxtChar* src, uint16 len)` (0x69DB70)
     fn msg_string_copy(dst: GPtr<u8>, src: GPtr<u8>, len: u32) = cdecl 0x69DB70 => crate::messages::string_copy;
     /// `CMessages::StringCompare(const GxtChar*, const GxtChar*, uint16)` (0x69DBD0)
     fn msg_string_compare(a: GPtr<u8>, bb: GPtr<u8>, len: u32) -> u8 = cdecl 0x69DBD0 => crate::messages::string_compare;
-    /// `CMessages::GetStringLength(const GxtChar*)` (0x69DB50)
-    fn msg_get_string_length(s: GPtr<u8>) -> u32 = cdecl 0x69DB50 => crate::messages::get_string_length;
-    /// `CMessages::InsertPlayerControlKeysInString(GxtChar*)` (0x69E160)
-    fn msg_insert_player_control_keys(s: GPtr<u8>) = cdecl 0x69E160 => crate::messages::insert_player_control_keys_in_string;
     /// `CMessages::AddToPreviousBriefArray(text, n1..n6, string)` (0x69DD50)
     fn msg_add_to_previous_brief_array(text: GPtr<u8>, n1: i32, n2: i32, n3: i32, n4: i32, n5: i32, n6: i32, st: GPtr<u8>) = cdecl 0x69DD50 => crate::messages::add_to_previous_brief_array;
     /// `CMessages::InsertNumberInString(text, n1..n6, out)` (0x69DE90)
     fn msg_insert_number_in_string(text: GPtr<u8>, n1: i32, n2: i32, n3: i32, n4: i32, n5: i32, n6: i32, out: GPtr<u8>) = cdecl 0x69DE90 => crate::messages::insert_number_in_string;
-    /// `CSprite2d::Delete()` (0x727240)
-    fn sprite2d_delete(this: GPtr<u8>) = thiscall 0x727240 => unported;
-    /// `CTxdStore::FindTxdSlot(const char*)` (0x731850)
-    fn find_txd_slot(name: GPtr<u8>) -> i32 = cdecl 0x731850 => sa_stream::txdstore::find_txd_slot_name;
-    /// `CTxdStore::RemoveTxdSlot(int32)` (0x731CD0)
-    fn remove_txd_slot(slot: i32) = cdecl 0x731CD0 => sa_stream::txdstore::remove_txd_slot;
 
     /// `CTheScripts::DrawScriptSpritesAndRectangles(bool)` (0x464980)
     fn draw_script_sprites_and_rectangles(before_fade: u32) = cdecl 0x464980 => unported;
-    /// `CFont::SetJustify(bool)` (0x719600)
-    fn font_set_justify(v: u32) = cdecl 0x719600 => crate::font::set_justify;
-    /// `CFont::SetWrapx(float)` (0x7194D0)
-    fn font_set_wrapx(v: u32) = cdecl 0x7194D0 => crate::font::set_wrapx;
-    /// `CFont::SetBackgroundColor(CRGBA)` (0x7195E0)
-    fn font_set_background_color(c: u32) = cdecl 0x7195E0 => crate::font::set_background_color;
-    /// `CFont::SetDropShadowPosition(int8)` (0x719570)
-    fn font_set_drop_shadow_position(v: u32) = cdecl 0x719570 => crate::font::set_drop_shadow_position;
-    /// `CFont::SetRightJustifyWrap(float)` (0x7194F0)
-    fn font_set_right_justify_wrap(v: u32) = cdecl 0x7194F0 => crate::font::set_right_justify_wrap;
     /// `CFont::PrintStringFromBottom(float x, float y, const GxtChar*)` (0x71A820)
     fn font_print_string_from_bottom(px: f32, py: f32, text: GPtr<u8>) = cdecl 0x71A820 => unported;
-
-    /// `CFont::GetNumberLines(float x, float y, const GxtChar*)` (0x71A5E0; the caller tests AX)
-    fn font_get_number_lines(px: f32, py: f32, text: GPtr<u8>) -> u32 = cdecl 0x71A5E0 => crate::font::get_number_lines;
-
-    /// `CGameLogic::IsCoopGameGoingOn()` (0x441390)
-    fn is_coop_game_going_on() -> u8 = cdecl 0x441390 => unported;
-    /// `CFont::SetScaleForCurrentLanguage(float w, float h)` (0x7193A0)
-    fn font_set_scale_for_current_language(w: f32, h: u32) = cdecl 0x7193A0 => crate::font::set_scale_for_current_language;
-
-    /// `CFont::SetSlant(float)` (0x719420)
-    fn font_set_slant(v: u32) = cdecl 0x719420 => crate::font::set_slant;
-
-    /// `CCamera::GetFading()` (0x50ADE0)
-    fn camera_get_fading(this: GPtr<u8>) -> u8 = thiscall 0x50ADE0 => unported;
     /// `CCamera::GetScreenFadeStatus()` (0x50AE20)
     fn camera_get_screen_fade_status(this: GPtr<u8>) -> u32 = thiscall 0x50AE20 => unported;
-
-    /// CRT `atol` (0x82258E)
-    fn crt_atol(s: GPtr<u8>) -> i32 = cdecl 0x82258E => unported;
-
-    /// `CTxdStore::AddTxdSlot(const char*)` (0x731C80)
-    fn add_txd_slot(name: GPtr<u8>) -> i32 = cdecl 0x731C80 => sa_stream::txdstore::add_txd_slot;
-    /// `CTxdStore::LoadTxd(int32, const char*)` (0x7320B0)
-    fn load_txd(slot: i32, name: GPtr<u8>) -> u8 = cdecl 0x7320B0 => sa_stream::txdstore::load_txd_filename;
     /// `CTxdStore::AddRef(int32)` (0x731A00)
     fn txd_add_ref(slot: i32) = cdecl 0x731A00 => sa_stream::txdstore::add_ref;
     /// `CTxdStore::PushCurrentTxd()` (0x7316A0)
@@ -561,28 +553,8 @@ orig! {
     fn set_current_txd(slot: i32) = cdecl 0x7319C0 => sa_stream::txdstore::set_current_txd;
     /// `CTxdStore::PopCurrentTxd()` (0x7316B0)
     fn pop_current_txd() = cdecl 0x7316B0 => sa_stream::txdstore::pop_current_txd;
-    /// `CSprite2d::SetTexture(const char* name, const char* mask)` (0x7272B0)
-    fn sprite2d_set_texture(this: GPtr<u8>, name: GPtr<u8>, mask: GPtr<u8>) = thiscall 0x7272B0 => unported;
     /// `CHud::ReInitialise()` (0x588880)
     fn re_initialise_call() = cdecl 0x588880 => re_initialise;
-    /// MSVC `eh vector constructor iterator(ptr, size, count, ctor, dtor)` (0x821D30, stdcall)
-    fn eh_vector_ctor_iterator(p: GPtr<u8>, size: u32, count: u32, ctor: u32, dtor: u32) = stdcall 0x821D30 => unported;
-
-    /// `CAudioEngine::ReportFrontendAudioEvent(eAudioEvents, float volume, float speed)` (0x506EA0)
-    fn audio_report_frontend_event(this: GPtr<u8>, event: u32, volume: u32, speed: u32) = thiscall 0x506EA0 => unported;
-    /// `CFont::SetAlphaFade(float)` (0x719500)
-    fn font_set_alpha_fade(v: u32) = cdecl 0x719500 => crate::font::set_alpha_fade;
-    /// `CFont::GetStringWidth(const GxtChar*, bool full, bool scriptText)` (0x71A0E0, ST0)
-    fn font_get_string_width_st0(text: GPtr<u8>, full: u32, script: u32) -> f64 = cdecl 0x71A0E0 => unported;
-    /// `CStats::GetStatValue(eStats)` (0x558E40, ST0)
-    fn stats_get_stat_value_st0(stat: u32) -> f64 = cdecl 0x558E40 => unported;
-    /// `CPedGroupMembership::CountMembersExcludingLeader()` (0x5F6AA0)
-    fn group_count_members_excluding_leader(this: GPtr<u8>) -> i32 = thiscall 0x5F6AA0 => unported;
-    /// `std::max<float>(a, b)` (0x420800): ST0 = `a` when `a > b`, else `b`
-    fn max_f_st0(a: f32, bb: f32) -> f64 = cdecl 0x420800 => unported;
-
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    fn get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
     /// `CPad::GetDisplayVitalStats(CPed*)` (0x5408B0; the caller tests AX)
     fn pad_get_display_vital_stats(pad: GPtr<u8>, ped: GPtr<u8>) -> u32 = thiscall 0x5408B0 => unported;
     /// `CGameLogic::SkipCanBeActivated()` (0x4415C0)
@@ -593,53 +565,23 @@ orig! {
     fn radar_draw_3d_markers() = cdecl 0x585BF0 => crate::radar_draw2::draw_3d_markers;
     /// `CMenuSystem::Process(uint8 menu)` (0x582630)
     fn menu_system_process(menu: i32) = cdecl 0x582630 => unported;
-    /// `CDarkel::FrenzyOnGoing()` (0x43D1F0)
-    fn darkel_frenzy_on_going() -> u8 = cdecl 0x43D1F0 => unported;
-
-    /// `CPed::GetWeaponSkill()` (0x5E6580)
-    fn ped_get_weapon_skill(ped: GPtr<u8>) -> u32 = thiscall 0x5E6580 => unported;
-    /// `CWeaponInfo::GetWeaponInfo(eWeaponType, eWeaponSkill)` (0x743C60)
-    fn get_weapon_info(ty: u32, skill: u32) -> GPtr<u8> = cdecl 0x743C60 => unported;
-    /// `CKeyGen::AppendStringToKey(uint32, const char*)` (0x53CF70)
-    fn append_string_to_key(key: u32, s: GPtr<u8>) -> u32 = cdecl 0x53CF70 => sa_core::keygen::append_string_to_key;
-    /// `RwTexDictionaryFindHashNamedTexture(RwTexDictionary*, uint32)` (0x734E50)
-    fn rw_tex_dictionary_find_hash_named_texture(dict: GPtr<u8>, hash: u32) -> GPtr<u8> = cdecl 0x734E50 => unported;
     /// `CSprite::RenderOneXLUSprite(x, y, z, halfW, halfH, r, g, b, intensity, rhw, a, uDir, vDir)` (0x70D000)
     fn sprite_render_one_xlu_sprite(px: f32, py: f32, pz: u32, hw: f32, hh: f32, r: u32, gg: u32, bb: u32, intensity: u32, rhw: u32, a: u32, u_dir: u32, v_dir: u32) = cdecl 0x70D000 => unported;
-    /// `CSprite2d::Draw(const CRect&, const CRGBA&)` (0x728350)
-    fn sprite2d_draw_rect(this: GPtr<u8>, rect: GPtr<u8>, colour: GPtr<u8>) = thiscall 0x728350 => unported;
-    /// `CHudColours::GetRGBA(CRGBA* out, uint8 colour, uint8 alpha)` (0x58FEE0)
-    fn hud_colours_get_rgba(this: GPtr<u8>, out: GPtr<u8>, colour: u32, alpha: u32) -> GPtr<u8> = thiscall 0x58FEE0 => crate::hud::get_rgba;
-    /// `CRGBA::CRGBA(r, g, b, a)` (0x7170C0)
-    fn rgba_ctor(this: GPtr<u8>, r: u32, gg: u32, bb: u32, a: u32) -> GPtr<u8> = thiscall 0x7170C0 => unported;
-
-    /// CRT `sprintf(buf, fmt, a)` (0x821BB5)
-    fn sprintf1(buf: GPtr<u8>, fmt: GPtr<u8>, a: i32) -> i32 = cdecl 0x821BB5 => unported;
     /// CRT `sprintf(buf, fmt, a, b)` (0x821BB5)
     fn sprintf2(buf: GPtr<u8>, fmt: GPtr<u8>, a: i32, bb: i32) -> i32 = cdecl 0x821BB5 => unported;
-    /// `AsciiToGxtChar(const char*, GxtChar*)` (0x718600)
-    fn ascii_to_gxt_char(src: GPtr<u8>, dst: GPtr<u8>) = cdecl 0x718600 => unported;
 
     /// `CFont::SetBackground(bool, bool)` (0x7195C0)
     fn font_set_background(on: u32, outline: u32) = cdecl 0x7195C0 => crate::font::set_background;
-    /// `CFont::SetScale(float w, float h)` (0x719380)
-    fn font_set_scale(w: u32, h: u32) = cdecl 0x719380 => crate::font::set_scale;
     /// `CFont::SetOrientation(eFontAlignment)` (0x719610)
     fn font_set_orientation(v: u32) = cdecl 0x719610 => crate::font::set_orientation;
-    /// `CFont::SetCentreSize(float)` (0x7194E0)
-    fn font_set_centre_size(v: u32) = cdecl 0x7194E0 => crate::font::set_centre_size;
     /// `CFont::SetProportional(bool)` (0x7195B0)
     fn font_set_proportional(v: u32) = cdecl 0x7195B0 => crate::font::set_proportional;
     /// `CFont::SetEdge(int8)` (0x719590)
     fn font_set_edge(v: u32) = cdecl 0x719590 => crate::font::set_edge;
-    /// `CFont::SetDropColor(CRGBA)` (0x719510)
-    fn font_set_drop_color(c: u32) = cdecl 0x719510 => crate::font::set_drop_color;
     /// `CFont::SetFontStyle(eFontStyle)` (0x719490)
     fn font_set_font_style(v: u32) = cdecl 0x719490 => crate::font::set_font_style;
     /// `CFont::SetColor(CRGBA)` (0x719430)
     fn font_set_color(c: u32) = cdecl 0x719430 => crate::font::set_color;
-    /// `CFont::PrintString(float x, float y, const GxtChar*)` (0x71A700)
-    fn font_print_string(px: f32, py: f32, text: GPtr<u8>) = cdecl 0x71A700 => unported;
 }
 
 /// A local buffer as a game pointer (the original's stack temporaries).

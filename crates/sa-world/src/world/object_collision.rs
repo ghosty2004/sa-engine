@@ -11,22 +11,13 @@ use sa_math::x87::X87;
 
 use super::common::{g, rd, wr, x};
 
-orig! {
-    /// `CEntity::GetIsStatic()` (0x4633E0)
-    fn entity_get_is_static(e: GPtr<u8>) -> u8 = thiscall 0x4633E0 => unported;
-    /// `CEntity::GetColModel()` (0x535300)
-    fn entity_get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => unported;
-    /// `VectorSub(CVector* out, const CVector* a, const CVector* b)` (0x40FE60): out = a - b
-    fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => unported;
-    /// `CMatrix::operator*(CVector* out, const CMatrix&, const CVector&)` (0x59C890; rotation plus translation)
-    fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
-    /// `Invert(const CMatrix& src, CMatrix& dst)` (0x59B920)
-    fn matrix_invert(src: GPtr<u8>, dst: GPtr<u8>) -> GPtr<u8> = cdecl 0x59B920 => unported;
-    /// `CMatrix::operator=(const CMatrix&)` (0x59BBC0, `ret 4`)
-    fn matrix_assign(m: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = thiscall 0x59BBC0 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
-}
+use crate::bindings::entity_get_col_model;
+use crate::bindings::entity_get_is_static;
+use crate::bindings::vector_sub;
+use sa_core::bindings::matrix_assign;
+use sa_core::bindings::matrix_dtor;
+use sa_core::bindings::matrix_invert;
+use sa_core::bindings::matrix_mul_vec;
 
 /// 0.66 (0x85BA50): the "at" z below which an object flagged +0x140 bit 8 lets vehicles and peds through
 const K_TIPPED_AT_Z: usize = 0x85BA50;
@@ -222,17 +213,13 @@ fn pre_collision_body(this: GPtr<u8>, other: GPtr<u8>, ignore_stuck: u8, disable
     true
 }
 
+use crate::bindings::crt_ceil;
+use crate::bindings::multiply3x3 as multiply_3x3;
+use crate::bindings::physical_get_speed;
+use crate::bindings::vector_magnitude_sqr as vector_squared_magnitude;
 orig! {
-    /// `CPhysical::GetSpeed(CVector* out, CVector point)` (0x542CE0, `ret 0x10`)
-    fn physical_get_speed(p: GPtr<u8>, out: GPtr<u8>, x: u32, y: u32, z: u32) -> GPtr<u8> = thiscall 0x542CE0 => unported;
-    /// `Multiply3x3(CVector* out, const CMatrix&, const CVector&)` (0x59C790)
-    fn multiply_3x3(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C790 => unported;
-    /// `CVector::SquaredMagnitude()` (0x406DA0, ST0)
-    fn vector_squared_magnitude(v: GPtr<u8>) -> f64 = thiscall 0x406DA0 => unported;
     /// The `ceilf`-style wrapper 0x538AD0 (`ceil((double) f)`, ST0)
     fn ceil_of_float(v: f32) -> f64 = cdecl 0x538AD0 => unported;
-    /// CRT `ceil(double)` (0x823820, ST0)
-    fn crt_ceil(v: f64) -> f64 = cdecl 0x823820 => unported;
 }
 
 /// `CTimer::ms_fTimeStep` (0xB7CB5C), `CModelInfo::ms_modelInfoPtrs` (0xA9B0C8)

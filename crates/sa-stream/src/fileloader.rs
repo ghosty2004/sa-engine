@@ -78,33 +78,43 @@ fn cmpsb_eq(p: GPtr<u8>, lit: &[u8]) -> bool {
 /// Calls into other (possibly original) functions.
 pub mod call {
     use super::*;
+    pub use crate::bindings::add_txd_slot;
+    pub use crate::bindings::car_generator_switch_on;
+    pub use crate::bindings::find_txd_slot;
+    pub use crate::bindings::get_model_info_min_max;
+    pub use crate::bindings::mi_set_tex_dictionary as set_tex_dictionary;
+    pub use crate::bindings::rp_clump_remove_atomic;
+    pub use crate::bindings::rw_frame_add_child;
+    pub use crate::bindings::rw_tex_dictionary_create;
+    pub use crate::bindings::rw_tex_dictionary_gta_stream_read;
+    pub use crate::bindings::set_atomic_render_callback;
+    pub use crate::bindings::strrchr;
+    pub use sa_core::bindings::box_set;
+    pub use sa_core::bindings::crt_strncpy as strncpy;
+    pub use sa_core::bindings::file_close as close_file;
+    pub use sa_core::bindings::file_read as read;
+    pub use sa_core::bindings::get_frame_node_name;
+    pub use sa_core::bindings::open_file;
+    pub use sa_core::bindings::read_line;
+    pub use sa_core::bindings::rp_atomic_set_frame;
+    pub use sa_core::bindings::rp_clump_create;
+    pub use sa_core::bindings::rp_clump_destroy;
+    pub use sa_core::bindings::rp_clump_stream_read;
+    pub use sa_core::bindings::rw_frame_create;
+    pub use sa_core::bindings::rw_stream_open;
+    pub use sa_core::bindings::rw_tex_dictionary_for_all_textures;
+    pub use sa_core::bindings::strncmp;
     orig! {
-        /// CFileMgr::ReadLine (0x5389B0)
-        pub fn read_line(f: GPtr<u8>, buf: GPtr<u8>, len: i32) -> bool = cdecl 0x5389B0 => sa_core::filemgr::read_line;
-        /// CFileMgr::Read (0x538950)
-        pub fn read(f: GPtr<u8>, buf: GPtr<u8>, len: u32) -> u32 = cdecl 0x538950 => sa_core::filemgr::read;
-        /// CFileMgr::OpenFile (0x538900)
-        pub fn open_file(name: GPtr<u8>, mode: GPtr<u8>) -> GPtr<u8> = cdecl 0x538900 => sa_core::filemgr::open_file;
-        /// CFileMgr::CloseFile (0x5389D0)
-        pub fn close_file(f: GPtr<u8>) -> i32 = cdecl 0x5389D0 => sa_core::filemgr::close_file;
         /// CRT `fopen` thunk (0x8232D8)
         pub fn fopen(name: GPtr<u8>, mode: GPtr<u8>) -> GPtr<u8> = cdecl 0x8232D8 => unported;
         /// CRT `fclose` (0x82318B)
         pub fn fclose(f: GPtr<u8>) -> i32 = cdecl 0x82318B => unported;
-        /// CRT `strrchr` (0x821490)
-        pub fn strrchr(s: GPtr<u8>, c: i32) -> GPtr<u8> = cdecl 0x821490 => unported;
         /// CRT `sprintf` (0x821BB5), one argument
         pub fn sprintf1(d: GPtr<u8>, fmt: GPtr<u8>, a: GPtr<u8>) -> i32 = cdecl 0x821BB5 => unported;
-        /// CRT `strncmp` (0x8214D0)
-        pub fn strncmp(a: GPtr<u8>, b: GPtr<u8>, n: u32) -> i32 = cdecl 0x8214D0 => unported;
-        /// CRT `strncpy` (0x821F40)
-        pub fn strncpy(d: GPtr<u8>, s: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x821F40 => unported;
         /// CLoadingScreen::LoadingScreen(msg1, msg2, msg3) (0x53DED0)
         pub fn loading_screen(a: GPtr<u8>, b: GPtr<u8>, c: GPtr<u8>) = cdecl 0x53DED0 => crate::loading_screen::loading_screen;
         /// CKeyGen::GetUppercaseKey (0x53CF30)
         pub fn get_uppercase_key(s: GPtr<u8>) -> u32 = cdecl 0x53CF30 => sa_core::keygen::get_uppercase_key;
-        /// CBaseModelInfo::SetTexDictionary (0x4C4B40)
-        pub fn set_tex_dictionary(mi: GPtr<u8>, name: GPtr<u8>) = thiscall 0x4C4B40 => unported;
         /// CBaseModelInfo::SetColModel (0x4C4BC0)
         pub fn set_col_model(mi: GPtr<u8>, col: GPtr<u8>, owns: u8) = thiscall 0x4C4BC0 => unported;
         /// CBaseModelInfo::SetBaseModelInfoFlags (0x5B3AD0)
@@ -127,8 +137,6 @@ pub mod call {
         pub fn add_ped_model(id: i32) -> GPtr<u8> = cdecl 0x4C67A0 => unported;
         /// CModelInfo::GetModelInfo(name, &id) (0x4C5940)
         pub fn get_model_info_full(name: GPtr<u8>, id: GPtr<u8>) -> GPtr<u8> = cdecl 0x4C5940 => unported;
-        /// CModelInfo::GetModelInfo(name, min, max) (0x4C5A20)
-        pub fn get_model_info_min_max(name: GPtr<u8>, min: i32, max: i32) -> GPtr<u8> = cdecl 0x4C5A20 => unported;
         /// CTimeInfo::FindOtherTimeModel (0x4C47E0)
         pub fn find_other_time_model(ti: GPtr<u8>, name: GPtr<u8>) -> GPtr<u8> = thiscall 0x4C47E0 => unported;
         /// virtual CBaseModelInfo slot 0x30: SetAnimFile(name)
@@ -149,42 +157,16 @@ pub mod call {
         pub fn set_damaged_atomic(mi: GPtr<u8>, atomic: GPtr<u8>) = thiscall 0x4C48D0 => unported;
         /// RwHelper GetNameAndDamage (0x5370A0)
         pub fn get_name_and_damage(node: GPtr<u8>, out: GPtr<u8>, damage: GPtr<u8>) = cdecl 0x5370A0 => unported;
-        /// GetFrameNodeName (0x72FB30)
-        pub fn get_frame_node_name(frame: GPtr<u8>) -> GPtr<u8> = cdecl 0x72FB30 => unported;
-        /// CVisibilityPlugins::SetAtomicRenderCallback (0x7328A0)
-        pub fn set_atomic_render_callback(atomic: GPtr<u8>, cb: u32) = cdecl 0x7328A0 => unported;
         /// CVisibilityPlugins::SetModelInfoIndex (0x732230)
         pub fn set_model_info_index(atomic: GPtr<u8>, id: i32) = cdecl 0x732230 => unported;
-        /// RpClumpRemoveAtomic (0x74A4C0)
-        pub fn rp_clump_remove_atomic(clump: GPtr<u8>, atomic: GPtr<u8>) -> GPtr<u8> = cdecl 0x74A4C0 => unported;
-        /// RwFrameCreate (0x7F0410)
-        pub fn rw_frame_create() -> GPtr<u8> = cdecl 0x7F0410 => unported;
-        /// RpAtomicSetFrame (0x74BF20)
-        pub fn rp_atomic_set_frame(atomic: GPtr<u8>, frame: GPtr<u8>) -> GPtr<u8> = cdecl 0x74BF20 => unported;
-        /// RwStreamOpen (0x7ECEF0)
-        pub fn rw_stream_open(ty: u32, access: u32, name: GPtr<u8>) -> GPtr<u8> = cdecl 0x7ECEF0 => unported;
         /// RwStreamClose (0x7ECE20)
         pub fn rw_stream_close(stream: GPtr<u8>, data: GPtr<u8>) -> i32 = cdecl 0x7ECE20 => unported;
         /// RwStreamFindChunk (0x7ED2D0)
         pub fn rw_stream_find_chunk(stream: GPtr<u8>, ty: u32, len: GPtr<u8>, ver: GPtr<u8>) -> i32 = cdecl 0x7ED2D0 => unported;
-        /// RwTexDictionaryGtaStreamRead (0x730FC0)
-        pub fn rw_tex_dictionary_gta_stream_read(stream: GPtr<u8>) -> GPtr<u8> = cdecl 0x730FC0 => crate::rw_gta_stream::rw_tex_dictionary_gta_stream_read;
-        /// RwTexDictionaryCreate (0x7F3600)
-        pub fn rw_tex_dictionary_create() -> GPtr<u8> = cdecl 0x7F3600 => unported;
-        /// RwTexDictionaryForAllTextures (0x7F3730)
-        pub fn rw_tex_dictionary_for_all_textures(dict: GPtr<u8>, cb: u32, data: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F3730 => unported;
-        /// RpClumpStreamRead (0x74B420)
-        pub fn rp_clump_stream_read(stream: GPtr<u8>) -> GPtr<u8> = cdecl 0x74B420 => unported;
-        /// RpClumpDestroy (0x74A310)
-        pub fn rp_clump_destroy(clump: GPtr<u8>) -> i32 = cdecl 0x74A310 => unported;
-        /// RpClumpCreate (0x74A290)
-        pub fn rp_clump_create() -> GPtr<u8> = cdecl 0x74A290 => unported;
         /// RpClumpForAllAtomics (0x749B70)
         pub fn rp_clump_for_all_atomics(clump: GPtr<u8>, cb: u32, data: GPtr<u8>) -> GPtr<u8> = cdecl 0x749B70 => unported;
         /// _rwFrameCloneAndLinkClones (0x7EFFB0)
         pub fn rw_frame_clone_and_link_clones(frame: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EFFB0 => unported;
-        /// RwFrameAddChild (0x7F0B00)
-        pub fn rw_frame_add_child(parent: GPtr<u8>, child: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0B00 => unported;
         /// RpClumpGtaStreamRead1 (0x72E570)
         pub fn rp_clump_gta_stream_read1(stream: GPtr<u8>) -> u8 = cdecl 0x72E570 => crate::rw_gta_stream::rp_clump_gta_stream_read1;
         /// RpClumpGtaStreamRead2 (0x72E620)
@@ -195,10 +177,6 @@ pub mod call {
         pub fn use_common_vehicle_tex_dicationary() = cdecl 0x4C75A0 => crate::modelinfo::vehicle::use_common_vehicle_tex_dicationary;
         /// CVehicleModelInfo::StopUsingCommonVehicleTexDicationary (0x4C75C0)
         pub fn stop_using_common_vehicle_tex_dicationary() = cdecl 0x4C75C0 => crate::modelinfo::vehicle::stop_using_common_vehicle_tex_dicationary;
-        /// CTxdStore::FindTxdSlot(name) (0x731850)
-        pub fn find_txd_slot(name: GPtr<u8>) -> i32 = cdecl 0x731850 => crate::txdstore::find_txd_slot_name;
-        /// CTxdStore::AddTxdSlot (0x731C80)
-        pub fn add_txd_slot(name: GPtr<u8>) -> i32 = cdecl 0x731C80 => crate::txdstore::add_txd_slot;
         /// CGarages::AddOne (0x4471E0)
         pub fn garages_add_one(x1: f32, y1: f32, z1: f32, fx: f32, fy: f32, x2: f32, y2: f32, z2: f32, ty: u32, a: u32, name: GPtr<u8>, door: u32) -> i32 = cdecl 0x4471E0 => unported;
         /// COcclusion::AddOne (0x71DCD0)
@@ -207,14 +185,10 @@ pub mod call {
         pub fn register_audio_box(name: GPtr<u8>, id: i32, on: u8, x1: f32, y1: f32, z1: f32, x2: f32, y2: f32, z2: f32) = cdecl 0x508240 => unported;
         /// CAudioZones::RegisterAudioSphere (0x5081C0)
         pub fn register_audio_sphere(name: GPtr<u8>, id: i32, on: u8, x: f32, y: f32, z: f32, r: f32) = cdecl 0x5081C0 => unported;
-        /// CBox::Set (0x40EDE0)
-        pub fn box_set(b: GPtr<u8>, a: GPtr<u8>, c: GPtr<u8>) = thiscall 0x40EDE0 => unported;
         /// CTimeCycle::AddOne (0x55FF40)
         pub fn time_cycle_add_one(b: GPtr<u8>, far_clip: i32, extra: i32, intensity: f32, falloff: f32, lod: f32) = cdecl 0x55FF40 => unported;
         /// CTheCarGenerators::CreateCarGenerator (0x6F31A0)
         pub fn create_car_generator(x: f32, y: f32, z: f32, angle: f32, model: i32, c1: u32, c2: u32, force: u32, alarm: u32, lock: u32, min: u32, max: u32, ipl: i32, ignore: u32) -> i32 = cdecl 0x6F31A0 => unported;
-        /// CCarGenerator::SwitchOn (0x6F32C0)
-        pub fn car_generator_switch_on(g: GPtr<u8>) = thiscall 0x6F32C0 => unported;
         /// CStuntJumpManager::AddOne (0x49CB40)
         pub fn stunt_jump_add_one(start: GPtr<u8>, end: GPtr<u8>, cam: GPtr<u8>, reward: i32) = cdecl 0x49CB40 => unported;
         /// CTheZones::CreateZone (0x5728A0)
@@ -954,23 +928,18 @@ pub fn load_animated_clump_object(line: GPtr<u8>) -> i32 {
 
 // ----------------------------------------------------------------------------- collision ---
 
+use crate::bindings::col_model_ctor;
+use crate::bindings::col_model_new;
+use crate::bindings::collision_data_ctor;
+use sa_core::bindings::col_box_set;
+use sa_core::bindings::col_sphere_set;
 orig! {
     /// CMemoryMgr::Malloc (0x72F420)
     fn malloc(size: u32, hint: u32) -> GPtr<u8> = cdecl 0x72F420 => unported;
     /// CRT `operator new` (0x82119A)
     fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
-    /// CCollisionData::CCollisionData (0x40F030)
-    fn collision_data_ctor(cd: GPtr<u8>) -> GPtr<u8> = thiscall 0x40F030 => unported;
-    /// CColSphere::Set(radius, center, material, flags, lighting) (0x40FD10)
-    fn col_sphere_set(s: GPtr<u8>, radius: u32, center: GPtr<u8>, mat: u32, flags: u32, light: u32) = thiscall 0x40FD10 => unported;
-    /// CColBox::Set(min, max, material, flags, lighting) (0x40EE70)
-    fn col_box_set(b: GPtr<u8>, min: GPtr<u8>, max: GPtr<u8>, mat: u32, flags: u32, light: u32) = thiscall 0x40EE70 => unported;
     /// CCollisionData::GetNoOfShadowVerts (0x537510)
     fn get_no_of_shadow_verts(cd: GPtr<u8>) -> u32 = thiscall 0x537510 => unported;
-    /// CColModel::operator new (0x40FC30)
-    fn col_model_new(size: u32) -> GPtr<u8> = cdecl 0x40FC30 => unported;
-    /// CColModel::CColModel (0x40FB60)
-    fn col_model_ctor(cm: GPtr<u8>) -> GPtr<u8> = thiscall 0x40FB60 => unported;
     /// CPlantMgr::SetPlantFriendlyFlagInAtomicMI (0x5DB650)
     fn set_plant_friendly_flag(mi: GPtr<u8>) = cdecl 0x5DB650 => unported;
     /// CColStore::IncludeModelIndex (0x410820)
@@ -1414,6 +1383,7 @@ pub fn load_collision_file_first_time(buf: GPtr<u8>, size: u32, col_id: u8) -> b
 
 // ------------------------------------------------------------------ vehicle / ped objects ---
 
+use crate::bindings::get_anim_group_name;
 orig! {
     /// cHandlingDataMgr::GetHandlingId (0x6F4FD0), this = mod_HandlingManager (0xC2B9C8)
     fn get_handling_id(mgr: GPtr<u8>, name: GPtr<u8>) -> i32 = thiscall 0x6F4FD0 => unported;
@@ -1421,8 +1391,6 @@ orig! {
     fn find_ped_type(name: GPtr<u8>) -> i32 = cdecl 0x608790 => unported;
     /// CPedStats::GetPedStatType (0x6088D0)
     fn get_ped_stat_type(name: GPtr<u8>) -> i32 = cdecl 0x6088D0 => unported;
-    /// CAnimManager::GetAnimGroupName (0x4D3A20)
-    fn get_anim_group_name(i: i32) -> GPtr<u8> = cdecl 0x4D3A20 => unported;
     /// CPopulation::FindPedRaceFromName (0x5B6D40)
     fn find_ped_race_from_name(name: GPtr<u8>) -> u8 = cdecl 0x5B6D40 => unported;
     /// CAEPedSpeechAudioEntity::GetAudioPedType (0x4E3C60)
@@ -1664,19 +1632,15 @@ pub fn load_ped_object(line: GPtr<u8>) -> i32 {
 
 // ------------------------------------------------------------------------------- 2d effects ---
 
+use crate::bindings::rw_texture_read;
+use sa_core::bindings::pop_current_txd;
+use sa_core::bindings::push_current_txd;
+use sa_core::bindings::set_current_txd;
 orig! {
-    /// CTxdStore::PushCurrentTxd (0x7316A0)
-    fn push_current_txd() = cdecl 0x7316A0 => unported;
-    /// CTxdStore::PopCurrentTxd (0x7316B0)
-    fn pop_current_txd() = cdecl 0x7316B0 => unported;
-    /// CTxdStore::SetCurrentTxd (0x7319C0)
-    fn set_current_txd(slot: i32) = cdecl 0x7319C0 => unported;
     /// CModelInfo::Get2dEffectStore (0x4C5A60)
     fn get_2d_effect_store() -> GPtr<u8> = cdecl 0x4C5A60 => unported;
     /// CBaseModelInfo::Add2dEffect (0x4C4D20)
     fn add_2d_effect(mi: GPtr<u8>, fx: GPtr<u8>) = thiscall 0x4C4D20 => unported;
-    /// RwTextureRead (0x7F3AC0)
-    fn rw_texture_read(name: GPtr<u8>, mask: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F3AC0 => unported;
 }
 
 /// `_ftol` of an f32 local, low byte (Load2dEffect interior sizes).
@@ -1946,11 +1910,11 @@ pub fn load_2d_effect(line: GPtr<u8>) {
     pop_current_txd();
 }
 
+use crate::bindings::load_object_instance_bin as load_object_instance_call;
+use crate::bindings::setup_big_building;
+use sa_core::bindings::memory_malloc as call_malloc;
+use sa_core::bindings::world_add;
 orig! {
-    /// CMemoryMgr::Malloc (0x72F420)
-    fn call_malloc(size: u32, hint: u32) -> GPtr<u8> = cdecl 0x72F420 => unported;
-    /// CFileLoader::LoadObjectInstance(CFileObjectInstance*, name) (0x538090, blocked: _CIacos)
-    fn load_object_instance_call(inst: GPtr<u8>, name: GPtr<u8>) -> GPtr<u8> = cdecl 0x538090 => unported;
     /// CEntryExitManager::AddOne (0x43FA00)
     fn entry_exit_add_one(a: f32, b: f32, c: f32, d: f32, e: f32, f2: f32, g: f32, h: f32, i: f32, j: f32, k: f32, area: i32, flags: i32, extra: i32, t1: i32, t2: i32, sky: i32, title: GPtr<u8>) -> i32 = cdecl 0x43FA00 => unported;
     /// CPickups::GenerateNewOne(CVector, model, type, ammo, money, revenue, forced, msg) (0x456F20)
@@ -1962,12 +1926,8 @@ orig! {
     fn col_accel_add_ipl_entity(list: GPtr<u8>, count: i32, idx: u32) = cdecl 0x5B3040 => unported;
     /// CColAccel::cacheIPLSection (0x5B2F10)
     fn col_accel_cache_ipl_section(list: GPtr<u8>, count: i32) = cdecl 0x5B2F10 => unported;
-    /// CEntity::SetupBigBuilding (0x533150)
-    fn setup_big_building(e: GPtr<u8>) = thiscall 0x533150 => unported;
     /// CBaseModelInfo::DeleteCollisionModel (0x4C4C40)
     fn delete_collision_model(mi: GPtr<u8>) = thiscall 0x4C4C40 => unported;
-    /// CWorld::Add (0x563220)
-    fn world_add(e: GPtr<u8>) = cdecl 0x563220 => unported;
 }
 
 /// `CFileLoader::LoadObjectInstance(line)` (0x538690): `"%d %s %d %f %f %f %f %f %f %f %d"` into a
@@ -2190,6 +2150,12 @@ pub fn link_lods(extra: i32) {
 
 // ------------------------------------------------------------------------- file dispatchers ---
 
+use crate::bindings::rw_tex_dictionary_destroy;
+use crate::bindings::rw_tex_dictionary_set_current;
+use sa_core::bindings::col_store_remove_all_collision as remove_all_collision;
+use sa_core::bindings::init_trains;
+use sa_core::bindings::loading_screen_new_chunk_loaded as new_chunk_loaded;
+use sa_core::bindings::rw_tex_dictionary_get_current;
 orig! {
     fn load_object_call(line: GPtr<u8>) -> i32 = cdecl 0x5B3C60 => load_object;
     fn load_time_object_call(line: GPtr<u8>) -> i32 = cdecl 0x5B3DE0 => load_time_object;
@@ -2232,12 +2198,6 @@ orig! {
     fn setup_related_ipls(name: GPtr<u8>, idx: i32, out: GPtr<u8>) -> i32 = cdecl 0x404DE0 => unported;
     /// CIplStore::RemoveRelatedIpls (0x405110)
     fn remove_related_ipls(idx: i32) = cdecl 0x405110 => unported;
-    /// RwTexDictionaryGetCurrent (0x7F3A90)
-    fn rw_tex_dictionary_get_current() -> GPtr<u8> = cdecl 0x7F3A90 => unported;
-    /// RwTexDictionarySetCurrent (0x7F3A70)
-    fn rw_tex_dictionary_set_current(d: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F3A70 => unported;
-    /// RwTexDictionaryDestroy (0x7F36A0)
-    fn rw_tex_dictionary_destroy(d: GPtr<u8>) -> i32 = cdecl 0x7F36A0 => unported;
     /// CStreaming::AddImageToList (0x407610)
     fn add_image_to_list(name: GPtr<u8>, not_player: u8) -> i32 = cdecl 0x407610 => unported;
     /// ModelIndices::MatchAllModelStrings (0x5B57C0)
@@ -2248,8 +2208,6 @@ orig! {
     fn setup_common_data() = cdecl 0x5B8F00 => crate::modelinfo::vehicle::setup_common_data;
     /// CStreaming::Init2 (0x5B8AD0)
     fn streaming_init2() = cdecl 0x5B8AD0 => unported;
-    /// CLoadingScreen::NewChunkLoaded (0x590D00)
-    fn new_chunk_loaded() = cdecl 0x590D00 => unported;
     /// CColStore::LoadAllBoundingBoxes (0x4113D0)
     fn load_all_bounding_boxes() = cdecl 0x4113D0 => unported;
     /// virtual slot 0x34: ConvertAnimFileIndex()
@@ -2258,10 +2216,6 @@ orig! {
     fn load_all_remaining_ipls() = cdecl 0x405780 => unported;
     /// CColStore::BoundingBoxesPostProcess (0x410EC0)
     fn bounding_boxes_post_process() = cdecl 0x410EC0 => unported;
-    /// CTrain::InitTrains (0x6F7440)
-    fn init_trains() = cdecl 0x6F7440 => unported;
-    /// CColStore::RemoveAllCollision (0x410E00)
-    fn remove_all_collision() = cdecl 0x410E00 => unported;
 }
 
 /// The four-character section header test (`line[0..4] == tag`, byte by byte).

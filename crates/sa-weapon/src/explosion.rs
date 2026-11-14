@@ -21,6 +21,9 @@ sa_core::globals! {
     pub static EXPLOSIONS @ 0xC88950: [u8; NUM_EXPLOSIONS * EXPLOSION_SIZE] = [0; NUM_EXPLOSIONS * EXPLOSION_SIZE];
 }
 
+pub use sa_core::bindings::vector_normalise as normalise;
+pub use sa_world::bindings::vec_mul_assign;
+pub use sa_world::bindings::vector_add_assign as vec_add_assign;
 orig! {
     /// `CWorld::TriggerExplosion(const CVector&, float radius, float visibleDistance, CEntity* victim,
     /// CEntity* creator, bool processVehicleBombTimer, float damage)` (0x56B790); raw words as pushed
@@ -29,12 +32,6 @@ orig! {
     /// bool shadows, CEntity*)` (0x7000E0)
     #[allow(clippy::too_many_arguments)]
     pub fn add_light(ty: u32, px: f32, py: f32, pz: f32, dx: u32, dy: u32, dz: u32, radius: f32, r: f32, g: f32, b: f32, fog: u32, shadows: u32, e: GPtr<u8>) = cdecl 0x7000E0 => unported;
-    /// `CVector::operator*=(float)` (0x40FEF0, thiscall)
-    pub fn vec_mul_assign(v: GPtr<u8>, f: f32) = thiscall 0x40FEF0 => unported;
-    /// `CVector::operator+=(const CVector&)` (0x411A00, thiscall)
-    pub fn vec_add_assign(v: GPtr<u8>, o: GPtr<u8>) = thiscall 0x411A00 => unported;
-    /// `CVector::Normalise()` (0x59C910, thiscall)
-    pub fn normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
     /// `CCreepingFire::TryToStartFireAtCoors(CVector, int8, bool, bool, float)` (0x53A450)
     pub fn try_to_start_fire_at_coors(x: f32, y: f32, z: f32, gens: i8, a: u8, script: u8, zdist: f32) -> u8 = cdecl 0x53A450 => crate::fire::try_to_start_fire_at_coors;
     /// `CExplosion::AddExplosion(...)` (0x736A50)
@@ -331,40 +328,30 @@ pub fn update() {
     }
 }
 
+pub use crate::bindings::pad_start_shake_distance;
+pub use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+pub use sa_core::bindings::entity_register_reference as register_reference;
+pub use sa_core::bindings::get_pad as pad_get_pad;
+pub use sa_core::bindings::stats_increment_stat;
+pub use sa_world::bindings::cam_shake;
+pub use sa_world::bindings::find_ground_z_for_3d_coord;
+pub use sa_world::bindings::is_coop_game_going_on;
+pub use sa_world::bindings::report_crime;
+pub use sa_world::bindings::vector_sub;
 orig! {
     /// `FindPlayerPed(int32)` (0x56E210)
     pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00, thiscall)
-    pub fn clean_up_old_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70, thiscall)
-    pub fn register_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571B70 => unported;
-    /// `CWorld::FindGroundZFor3DCoord(float x, float y, float z, bool* found, CEntity** e)` (0x5696C0, ST0)
-    pub fn find_ground_z_for_3d_coord(x: f32, y: f32, z: f32, found: GPtr<u8>, e: GPtr<u8>) -> f64 = cdecl 0x5696C0 => unported;
     /// `CWaterLevel::GetWaterLevelNoWaves(float x, float y, float z, float* level, float*, float*)` (0x6E8580)
     pub fn get_water_level_no_waves(x: f32, y: f32, z: f32, level: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> u8 = cdecl 0x6E8580 => unported;
-    /// `operator-(const CVector&, const CVector&)` (0x40FE60, returns into `out`)
-    pub fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => unported;
     /// `CAEExplosionAudioEntity::AddAudioEvent(int32 event, CVector& pos, float volume)` (0x4DCBE0, thiscall)
     pub fn explosion_audio_add_event(ae: GPtr<u8>, ev: i32, pos: GPtr<u8>, vol: f32) = thiscall 0x4DCBE0 => unported;
-    /// `CCrime::ReportCrime(eCrimeType, CEntity* victim, CPed* criminal)` (0x532010)
-    pub fn report_crime(ty: i32, victim: GPtr<u8>, criminal: GPtr<u8>) = cdecl 0x532010 => unported;
     /// `CInterestingEvents::Add(EType, CEntity*)` (0x602590, thiscall)
     pub fn interesting_events_add(this: GPtr<u8>, ty: i32, e: GPtr<u8>) = thiscall 0x602590 => unported;
-    /// `CStats::IncrementStat(eStats, float)` (0x55C180)
-    pub fn stats_increment_stat(stat: u32, v: f32) = cdecl 0x55C180 => unported;
     /// `CShadows::AddPermanentShadow(uint8 type, RwTexture*, const CVector*, float frontX, float frontY,
     /// float sideX, float sideY, int16 intensity, uint8 r, g, b, float drawDistance, uint32 time,
     /// float upDistance)` (0x706F60); small integers as pushed words
     #[allow(clippy::too_many_arguments)]
     pub fn add_permanent_shadow(ty: u32, tex: u32, pos: GPtr<u8>, fx: f32, fy: f32, sx: f32, sy: f32, intensity: u32, r: u32, g: u32, b: u32, dist: f32, time: u32, up: f32) = cdecl 0x706F60 => unported;
-    /// `CCamera::CamShake(float strength, float x, float y, float z)` (0x50A9F0, thiscall); raw position words
-    pub fn cam_shake(cam: GPtr<u8>, strength: f32, x: u32, y: u32, z: u32) = thiscall 0x50A9F0 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    pub fn pad_get_pad(id: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CPad::StartShake_Distance(int16 time, uint8 freq, float x, y, z)` (0x53F9A0, thiscall); raw words
-    pub fn pad_start_shake_distance(pad: GPtr<u8>, time: u32, freq: u32, x: u32, y: u32, z: u32) = thiscall 0x53F9A0 => unported;
-    /// `CGameLogic::IsCoopGameGoingOn()` (0x441390)
-    pub fn is_coop_game_going_on() -> u8 = cdecl 0x441390 => unported;
 }
 
 /// `g_fxMan`

@@ -18,33 +18,26 @@ const THE_CAMERA: usize = 0xB6F028;
 /// `MODEL_GUN_PARA` (0x173)
 const MI_PARACHUTE: i32 = 0x173;
 
+pub use crate::bindings::clothes_desc_ctor;
+pub use sa_core::bindings::crt_strncpy;
+pub use sa_core::bindings::get_atan_of_xy;
+pub use sa_stream::bindings::rw_texture_destroy;
+pub use sa_world::bindings::calculate_ground_height as camera_calculate_ground_height;
+pub use sa_world::bindings::is_coop_game_going_on;
+pub use sa_world::bindings::stats_get_fat_and_muscle_modifier as get_fat_and_muscle_modifier;
 orig! {
     /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
     pub fn clean_up_old_reference(e: GPtr<u8>, r: GPtr<GPtr<u8>>) = thiscall 0x571A00 => unported;
     /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
     pub fn register_reference(e: GPtr<u8>, r: GPtr<GPtr<u8>>) = thiscall 0x571B70 => unported;
-    /// `CGeneral::GetATanOfXY(float x, float y)` (0x53CC70)
-    pub fn get_atan_of_xy(x: f32, y: f32) -> f64 = cdecl 0x53CC70 => unported;
-    /// `CStats::GetFatAndMuscleModifier(eStatModAbilities)` (0x559AF0)
-    pub fn get_fat_and_muscle_modifier(a: i32) -> f64 = cdecl 0x559AF0 => unported;
     /// `CPlayerPedData::SetInitialState` (0x56F210)
     pub fn ped_data_set_initial_state(d: GPtr<u8>) = thiscall 0x56F210 => set_initial_state;
-    /// `RwTextureDestroy` (0x7F3820)
-    pub fn rw_texture_destroy(t: GPtr<u8>) -> i32 = cdecl 0x7F3820 => unported;
     /// `CPlayerSkin::GetSkinTexture(const char*)` (0x6FFA10)
     pub fn get_skin_texture(name: GPtr<u8>) -> GPtr<u8> = cdecl 0x6FFA10 => unported;
-    /// CRT `strncpy` (0x821F40)
-    pub fn crt_strncpy(d: GPtr<u8>, s: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x821F40 => unported;
-    /// `CGameLogic::IsCoopGameGoingOn` (0x441390)
-    pub fn is_coop_game_going_on() -> u8 = cdecl 0x441390 => unported;
-    /// `CCamera::CalculateGroundHeight(eGroundHeightType)` (0x514B80)
-    pub fn camera_calculate_ground_height(cam: GPtr<u8>, ty: i32) -> f64 = thiscall 0x514B80 => unported;
     /// `operator new` (0x82119A)
     pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
     /// `CWanted::Initialise` (0x562390)
     pub fn wanted_initialise(w: GPtr<u8>) = thiscall 0x562390 => crate::wanted::initialise;
-    /// `CPedClothesDesc::CPedClothesDesc` (0x5A8020)
-    pub fn clothes_desc_ctor(d: GPtr<u8>) -> GPtr<u8> = thiscall 0x5A8020 => crate::clothes::desc_constructor;
     /// `CPedClothesDesc::Initialise` (0x5A78F0)
     pub fn clothes_desc_initialise(d: GPtr<u8>) = thiscall 0x5A78F0 => crate::clothes::desc_initialise;
 }

@@ -6,7 +6,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use super::common::{find_player_coors, ftol32, x};
 
@@ -19,10 +19,7 @@ sa_core::globals! {
 /// 0x858B54: the empty string `GetArtistBugstarID` returns.
 const EMPTY_STRING: usize = 0x858B54;
 
-orig! {
-    /// CRT `atol` (0x82258E)
-    pub fn atol(s: GPtr<u8>) -> i32 = cdecl 0x82258E => unported;
-}
+pub use sa_core::bindings::atol;
 
 /// `CBridge::Init` (0x41BC70): `ret`.
 pub fn bridge_init() {}

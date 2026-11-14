@@ -13,6 +13,8 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use sa_world::bindings::event_will_respond as er_will_respond;
+use sa_world::bindings::intel_record_event_for_script;
 orig! {
     fn v_delete(e: GPtr<u8>, flags: u32) -> GPtr<u8> = thiscall vslot 0x0 => unported;
     fn v_event_type(e: GPtr<u8>) -> i32 = thiscall vslot 0x4 => unported;
@@ -28,8 +30,6 @@ orig! {
     fn er_compute_response_task_of_type(e: GPtr<u8>, ped: GPtr<u8>, ty: i32) -> u8 = thiscall 0x4B5730 => unported;
     /// `CEventEditableResponse::ComputeResponseTaskType(CPed*, bool)` (0x4B56C0, `ret 8`)
     fn er_compute_response_task_type(e: GPtr<u8>, ped: GPtr<u8>, b: u32) = thiscall 0x4B56C0 => unported;
-    /// `CEventEditableResponse::WillRespond` (0x4AC490)
-    fn er_will_respond(e: GPtr<u8>) -> u8 = thiscall 0x4AC490 => unported;
     /// `CEventEditableResponse::InformGroup(CPed*)` (0x4B7DF0, `ret 4`)
     fn er_inform_group(e: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x4B7DF0 => unported;
     /// `CEventEditableResponse::InformRespectedFriends(CPed*)` (0x4B2B00, `ret 4`)
@@ -38,8 +38,6 @@ orig! {
     fn er_trigger_look_at(e: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x4AC5A0 => unported;
     /// `CEventEditableResponse::InformVehicleOccupants(CPed*)` (0x4AC4A0, `ret 4`)
     fn er_inform_vehicle_occupants(e: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x4AC4A0 => unported;
-    /// `CPedIntelligence::RecordEventForScript(int32 type, int32 priority)` (0x602050, `ret 8`)
-    fn intel_record_event_for_script(i: GPtr<u8>, ty: i32, prio: i32) = thiscall 0x602050 => unported;
 }
 
 fn count(this: GPtr<u8>) -> i32 {

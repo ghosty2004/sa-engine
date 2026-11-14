@@ -8,34 +8,26 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::duck_ctor;
+use crate::bindings::handler_compute_event_response_task;
+use crate::bindings::handler_is_kill_task_appropriate;
+use crate::bindings::kill_criminal_ctor;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::cam_get_weapon_first_person_on;
+use sa_world::bindings::flee_entity_ctor;
+use sa_world::bindings::ik_is_looking;
+use sa_world::bindings::ik_look_at;
+use sa_world::bindings::intel_get_task_fighting;
+use sa_world::bindings::kill_ped_on_foot_ctor;
+use sa_world::bindings::smart_flee_entity_ctor;
 orig! {
     /// `CEvent::GetSourceEntity` (vtable +0x28)
     fn v_event_source(e: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x28 => unported;
     /// Event / task scalar deleting destructor (vtable +0)
     fn v_delete(e: GPtr<u8>, flags: u32) -> GPtr<u8> = thiscall vslot 0x0 => unported;
-    /// `CPed::IsPlayer` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CPedIntelligence::GetTaskFighting` (0x600F30)
-    fn intel_get_task_fighting(i: GPtr<u8>) -> GPtr<u8> = thiscall 0x600F30 => unported;
-    /// `IKChainManager_c::IsLooking(CPed*)` (0x6181A0, `ret 4`)
-    fn ik_is_looking(m: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x6181A0 => unported;
-    /// `IKChainManager_c::LookAt(...)` (0x618970, `ret 0x2C`)
-    fn ik_look_at(m: GPtr<u8>, name: u32, ped: GPtr<u8>, target: GPtr<u8>, time: i32, bone: i32, pos: u32, torso: u32,
-                  speed: u32, blend: i32, prio: i32, b: u32) = thiscall 0x618970 => unported;
-    /// `CCam::GetWeaponFirstPersonOn` (0x509DC0)
-    fn cam_get_weapon_first_person_on(cam: GPtr<u8>) -> u8 = thiscall 0x509DC0 => unported;
-    /// `CEventHandler::IsKillTaskAppropriate(CPed*, CPed*, const CEvent&)` (0x4BC3E0, static)
-    fn handler_is_kill_task_appropriate(ped: GPtr<u8>, other: GPtr<u8>, e: GPtr<u8>) -> u8 = cdecl 0x4BC3E0 => crate::event_responses_simple::handler_is_kill_task_appropriate;
-    /// `CEventHandler::ComputeEventResponseTask(CEvent*, CTask*)` (0x4C3870, `ret 8`)
-    fn handler_compute_event_response_task(h: GPtr<u8>, e: GPtr<u8>, aborted: GPtr<u8>) = thiscall 0x4C3870 => unported;
     /// `CEventHandler::Flush` (0x4C3790, ported below)
     fn handler_flush_orig(h: GPtr<u8>) = thiscall 0x4C3790 => handler_flush;
-    fn smart_flee_entity_ctor(t: GPtr<u8>, e: GPtr<u8>, b: u32, d: u32, time: u32, period: u32, f: u32) -> GPtr<u8> = thiscall 0x65C430 => unported;
-    fn flee_entity_ctor(t: GPtr<u8>, e: GPtr<u8>, b: u32, d: u32, time: u32, period: u32, f: u32) -> GPtr<u8> = thiscall 0x65B930 => unported;
-    fn duck_ctor(t: GPtr<u8>, ty: u32, time: u32, counter: i32) -> GPtr<u8> = thiscall 0x691FC0 => unported;
     fn investigate_dead_ped_ctor(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x696DF0 => unported;
-    fn kill_ped_on_foot_ctor(t: GPtr<u8>, ped: GPtr<u8>, time: i32, a: u32, b: u32, c: u32, d: u32) -> GPtr<u8> = thiscall 0x620E30 => unported;
-    fn kill_criminal_ctor(t: GPtr<u8>, ped: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x68BE70 => unported;
 }
 
 /// `g_ikChainMan`

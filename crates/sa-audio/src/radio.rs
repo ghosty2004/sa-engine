@@ -35,13 +35,34 @@ const KEY_STATION_12: usize = 0x85F3A8;
 /// Station key of radio id 13 (0x85F3B0, 8 bytes)
 const KEY_STATION_13: usize = 0x85F3B0;
 
+pub use crate::bindings::ae_random_int;
+pub use crate::bindings::ae_resolve_probability as resolve_probability;
+pub use crate::bindings::engine_is_ambience_radio_active;
+pub use crate::bindings::engine_is_ambience_track_active;
+pub use crate::bindings::engine_stop_ambience_track;
+pub use crate::bindings::hw_get_playing_track_id;
+pub use crate::bindings::hw_get_track_length_ms;
+pub use crate::bindings::hw_set_channel_frequency_scaling_factor;
+pub use crate::bindings::hw_set_channel_volume;
+pub use crate::bindings::hw_stop_track;
+pub use crate::bindings::player_vehicle_audio_settings_for_radio;
+pub use crate::bindings::queue_up_tracks_for_station;
+pub use sa_core::bindings::file_set_dir_my_documents;
+pub use sa_core::bindings::find_player_vehicle;
+pub use sa_core::bindings::font_set_background;
+pub use sa_core::bindings::font_set_color;
+pub use sa_core::bindings::font_set_edge;
+pub use sa_core::bindings::font_set_font_style;
+pub use sa_core::bindings::font_set_orientation;
+pub use sa_core::bindings::font_set_proportional;
+pub use sa_core::bindings::get_pad as pad_get_pad;
+pub use sa_core::bindings::memory_malloc;
+pub use sa_core::bindings::rgba_ctor;
+pub use sa_core::bindings::sprintf1;
+pub use sa_core::bindings::text_get;
+pub use sa_world::bindings::audio_is_cutscene_track_active as engine_is_cutscene_track_active;
+pub use sa_world::bindings::stats_get_full_favorite_radio_station_list;
 orig! {
-    /// CRT `sprintf(buf, fmt, a)` (0x821BB5)
-    pub fn sprintf1(buf: GPtr<u8>, fmt: GPtr<u8>, a: i32) -> i32 = cdecl 0x821BB5 => unported;
-    /// `CText::Get(const char* key)` (0x6A0050)
-    pub fn text_get(text: GPtr<u8>, key: GPtr<u8>) -> GPtr<u8> = thiscall 0x6A0050 => unported;
-    /// `CAEVehicleAudioEntity::StaticGetPlayerVehicleAudioSettingsForRadio()` (0x4F4ED0)
-    pub fn player_vehicle_audio_settings_for_radio() -> GPtr<u8> = cdecl 0x4F4ED0 => unported;
     /// `CAEAudioHardware::SetChannelFlags(int16 slot, int16 channel, int16 flags)` (0x4D9500)
     pub fn hw_set_channel_flags(hw: GPtr<u8>, a: u32, b: u32, flags: u32) = thiscall 0x4D9500 => unported;
     /// `CAEAudioHardware::StartTrackPlayback()` (0x4D8F30; EAX passed through by tail calls)
@@ -50,58 +71,32 @@ orig! {
     pub fn update_radio_volumes(this: GPtr<u8>) -> u32 = thiscall 0x4EA010 => unported;
     /// `CAEAudioHardware::DisableBassEq()` (0x4D94D0)
     pub fn hw_disable_bass_eq(hw: GPtr<u8>) = thiscall 0x4D94D0 => unported;
-    /// `CAEAudioHardware::SetChannelVolume(int16 slot, uint16 channel, float volume, uint8)` (0x4D8870)
-    pub fn hw_set_channel_volume(hw: GPtr<u8>, slot: u32, channel: u32, volume_bits: u32, b: u32) = thiscall 0x4D8870 => unported;
-    /// `CAEAudioHardware::GetTrackLengthMs()` (0x4D8F70)
-    pub fn hw_get_track_length_ms(hw: GPtr<u8>) -> u32 = thiscall 0x4D8F70 => unported;
-    /// `CAEAudioHardware::GetPlayingTrackID()` (0x4D8F90)
-    pub fn hw_get_playing_track_id(hw: GPtr<u8>) -> u32 = thiscall 0x4D8F90 => unported;
     /// `CAEAudioHardware::PlayTrack(uint32 id, int32 next, uint32 offsetMs, uint8 flags, bool, bool)` (0x4D8F10)
     pub fn hw_play_track(hw: GPtr<u8>, id: u32, next: i32, offset: u32, flags: u32, user: u32, user_next: u32) = thiscall 0x4D8F10 => unported;
-    /// `CAEAudioHardware::StopTrack()` (0x4D8F50)
-    pub fn hw_stop_track(hw: GPtr<u8>) = thiscall 0x4D8F50 => unported;
     /// `CAEAudioHardware::StopSound(int16 channel, uint16 slot)` (0x4D88E0)
     pub fn hw_stop_sound(hw: GPtr<u8>, channel: u32, slot: u32) = thiscall 0x4D88E0 => unported;
     /// `CAECutsceneTrackManager::StartTrackPlayback()` (0x4DBF10)
     pub fn cutscene_start_track_playback(this: GPtr<u8>) = thiscall 0x4DBF10 => unported;
     /// `CAECutsceneTrackManager::CheckForPause()` (0x4DBF60)
     pub fn cutscene_check_for_pause(this: GPtr<u8>) = thiscall 0x4DBF60 => unported;
-    /// `FindPlayerVehicle(int32 playerId, bool bIncludeRemote)` (0x56E0D0)
-    pub fn find_player_vehicle(id: i32, remote: u32) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
     /// `CAERadioTrackManager::IsVehicleRadioActive()` (0x4E9800; called with ECX = this)
     pub fn is_vehicle_radio_active_call() -> u8 = cdecl 0x4E9800 => is_vehicle_radio_active;
     /// `CAERadioTrackManager::GetRadioStationName(eRadioID)` (0x4E9E10)
     pub fn get_radio_station_name_call(this: GPtr<u8>, id: u32) -> GPtr<u8> = thiscall 0x4E9E10 => get_radio_station_name;
-    /// `CFont::SetFontStyle(eFontStyle)` (0x719490)
-    pub fn font_set_font_style(style: u32) = cdecl 0x719490 => unported;
     /// `CFont::SetJustify(bool)` (0x719600)
     pub fn font_set_justify(on: u32) = cdecl 0x719600 => unported;
-    /// `CFont::SetBackground(bool, bool)` (0x7195C0)
-    pub fn font_set_background(on: u32, proportional: u32) = cdecl 0x7195C0 => unported;
     /// `CFont::SetScale(float w, float h)` (0x719380)
     pub fn font_set_scale(w_bits: u32, h_bits: u32) = cdecl 0x719380 => unported;
-    /// `CFont::SetProportional(bool)` (0x7195B0)
-    pub fn font_set_proportional(on: u32) = cdecl 0x7195B0 => unported;
-    /// `CFont::SetOrientation(eFontAlignment)` (0x719610)
-    pub fn font_set_orientation(a: u32) = cdecl 0x719610 => unported;
     /// `CFont::SetRightJustifyWrap(float)` (0x7194F0)
     pub fn font_set_right_justify_wrap(v_bits: u32) = cdecl 0x7194F0 => unported;
-    /// `CFont::SetEdge(int8)` (0x719590)
-    pub fn font_set_edge(e: u32) = cdecl 0x719590 => unported;
     /// `CFont::SetDropColor(CRGBA)` (0x719510)
     pub fn font_set_drop_color(c: u32) = cdecl 0x719510 => unported;
-    /// `CFont::SetColor(CRGBA)` (0x719430)
-    pub fn font_set_color(c: u32) = cdecl 0x719430 => unported;
     /// `CFont::PrintString(float x, float y, const GxtChar*)` (0x71A700)
     pub fn font_print_string(x_bits: u32, y_bits: u32, text: GPtr<u8>) = cdecl 0x71A700 => unported;
     /// `CFont::DrawFonts()` (0x71A210; EAX passed through by the tail jump)
     pub fn font_draw_fonts() -> u32 = cdecl 0x71A210 => unported;
-    /// `CRGBA::CRGBA(uint8 r, uint8 g, uint8 b, uint8 a)` (0x7170C0)
-    pub fn rgba_ctor(this: GPtr<u8>, r: u32, g: u32, b: u32, a: u32) -> GPtr<u8> = thiscall 0x7170C0 => unported;
     /// `CHudColours::GetRGB(eHudColours)` (0x58FEA0; CRGBA through the hidden pointer)
     pub fn hud_colours_get_rgb(this: GPtr<u8>, out: GPtr<u8>, colour: u32) -> GPtr<u8> = thiscall 0x58FEA0 => unported;
-    /// `CAudioEngine::IsCutsceneTrackActive()` (0x507150)
-    pub fn engine_is_cutscene_track_active(engine: GPtr<u8>) -> u8 = thiscall 0x507150 => unported;
     /// `CAEAmbienceTrackManager::UpdateAmbienceTrackAndVolume()` (0x4D6E60)
     pub fn ambience_update_track_and_volume(this: GPtr<u8>) = thiscall 0x4D6E60 => unported;
     /// `CAEAmbienceTrackManager::StartTrackPlayback()` (0x4D6DA0)
@@ -110,20 +105,12 @@ orig! {
     pub fn ambience_check_for_pause_call(this: GPtr<u8>) = thiscall 0x4D6DF0 => ambience_check_for_pause;
     /// `CAudioEngine::GetCutsceneTrackStatus()` (0x507160)
     pub fn engine_get_cutscene_track_status(engine: GPtr<u8>) -> u8 = thiscall 0x507160 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    pub fn pad_get_pad(id: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
     /// `CPad::NextStationJustUp()` (0x5405B0)
     pub fn pad_next_station_just_up(pad: GPtr<u8>) -> u8 = thiscall 0x5405B0 => unported;
     /// `CPad::LastStationJustUp()` (0x5405E0)
     pub fn pad_last_station_just_up(pad: GPtr<u8>) -> u8 = thiscall 0x5405E0 => unported;
-    /// `CAERadioTrackManager::QueueUpTracksForStation(eRadioID, int8* index, eTrackType, tRadioSettings*)` (0x4EA670)
-    pub fn queue_up_tracks_for_station(this: GPtr<u8>, station: u32, index: GPtr<u8>, ty: u32, settings: GPtr<u8>) -> u8 = thiscall 0x4EA670 => unported;
-    /// `CAEAudioUtility::ResolveProbability(float)` (0x4D9C80)
-    pub fn resolve_probability(p: f32) -> u8 = cdecl 0x4D9C80 => crate::utility::resolve_probability;
     /// `CAERadioTrackManager::AddMusicTrackIndexToHistory(eRadioID, int8)` (0x4E96C0)
     pub fn add_music_track_index_to_history_call(this: GPtr<u8>, id: u32, index: u32) = thiscall 0x4E96C0 => add_music_track_index_to_history;
-    /// `CStats::GetFullFavoriteRadioStationList()` (0x558F90)
-    pub fn stats_get_full_favorite_radio_station_list() -> GPtr<u8> = cdecl 0x558F90 => unported;
     /// `CAEUserRadioTrackManager::GetUserTrackPlayMode()` (0x4F3330)
     pub fn get_user_track_play_mode_call(this: GPtr<u8>) -> u8 = thiscall 0x4F3330 => get_user_track_play_mode;
     /// `CStats::GetStatValue(uint16 stat)` (0x558E40, ST0)
@@ -133,8 +120,6 @@ orig! {
     pub fn hw_set_bass_setting(hw: GPtr<u8>, setting: u32, gain: f32) = thiscall 0x4D94A0 => unported;
     /// `CAEUserRadioTrackManager::ReadUserTracks()` (0x4F2FD0)
     pub fn read_user_tracks(this: GPtr<u8>) -> u8 = thiscall 0x4F2FD0 => read_user_tracks_port;
-    /// `CFileMgr::SetDirMyDocuments()` (0x538860)
-    pub fn file_set_dir_my_documents() = cdecl 0x538860 => unported;
     /// `CFileMgr::SetDir(const char*)` (0x5387D0)
     pub fn file_set_dir(dir: GPtr<u8>) = cdecl 0x5387D0 => unported;
     /// `CFileMgr::OpenFile(const char* name, const char* mode)` (0x538900)
@@ -145,32 +130,20 @@ orig! {
     pub fn file_read(file: i32, buf: GPtr<u8>, size: u32) -> i32 = cdecl 0x538950 => unported;
     /// `CFileMgr::CloseFile(int32 file)` (0x5389D0)
     pub fn file_close(file: i32) -> i32 = cdecl 0x5389D0 => unported;
-    /// `CMemoryMgr::Malloc(uint32 size, uint32 hint)` (0x72F420)
-    pub fn memory_malloc(size: u32, hint: u32) -> GPtr<u8> = cdecl 0x72F420 => unported;
     /// `CAEWMADecoder::InitLibrary()` (0x502B80)
     pub fn wma_init_library() -> u8 = cdecl 0x502B80 => unported;
     /// `CAEMFDecoder::InitLibrary()` (0x4E7C70)
     pub fn mf_init_library() -> u8 = cdecl 0x4E7C70 => unported;
-    /// `CAEAudioHardware::SetChannelFrequencyScalingFactor(int16 slot, int16 channel, float factor)` (0x4D8960)
-    pub fn hw_set_channel_frequency_scaling_factor(hw: GPtr<u8>, slot: u32, channel: u32, factor_bits: u32) = thiscall 0x4D8960 => unported;
-    /// `CAudioEngine::IsAmbienceRadioActive()` (0x507280)
-    pub fn engine_is_ambience_radio_active(engine: GPtr<u8>) -> u8 = thiscall 0x507280 => unported;
     /// `CAERadioTrackManager::StopRadio(tRadioSettings*, bool)` (0x4E9820)
     pub fn stop_radio(this: GPtr<u8>, settings: GPtr<u8>, b: u32) = thiscall 0x4E9820 => unported;
     /// `CAudioEngine::ReportFrontendAudioEvent(eAudioEvents, float volumeChange, float speed)` (0x506EA0)
     pub fn report_frontend_audio_event(engine: GPtr<u8>, event: i32, volume: f32, speed: f32) = thiscall 0x506EA0 => unported;
     /// `CAERadioTrackManager::ChooseTalkRadioShow()` (0x4E8E40)
     pub fn choose_talk_radio_show(this: GPtr<u8>) -> i32 = thiscall 0x4E8E40 => unported;
-    /// `CAEAudioUtility::GetRandomNumberInRange<int32>(int32, int32)` (0x4D9C10)
-    pub fn ae_random_int(min: i32, max: i32) -> i32 = cdecl 0x4D9C10 => crate::utility::get_random_number_in_range_int;
     /// `CAERadioTrackManager::StartRadio(eRadioID, eBassSetting, float bassGain, uint8)` (0x4EB3C0)
     pub fn start_radio_manual(this: GPtr<u8>, station: u32, bass: u32, gain_bits: u32, b: u32) = thiscall 0x4EB3C0 => start_radio_manual_port;
-    /// `CAudioEngine::IsAmbienceTrackActive()` (0x507210)
-    pub fn engine_is_ambience_track_active(engine: GPtr<u8>) -> u8 = thiscall 0x507210 => unported;
     /// `CAudioEngine::DoesAmbienceTrackOverrideRadio()` (0x507270)
     pub fn engine_does_ambience_track_override_radio(engine: GPtr<u8>) -> u8 = thiscall 0x507270 => unported;
-    /// `CAudioEngine::StopAmbienceTrack(bool)` (0x507220)
-    pub fn engine_stop_ambience_track(engine: GPtr<u8>, b: u32) = thiscall 0x507220 => unported;
     /// `CAERadioTrackManager::TrackRadioStation(eRadioID, uint8)` (0x4EAC30)
     pub fn track_radio_station(this: GPtr<u8>, station: u32, b: u32) -> u8 = thiscall 0x4EAC30 => unported;
     /// `CAERadioTrackManager::ChooseTracksForStation(eRadioID)` (0x4EB180)

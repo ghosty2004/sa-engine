@@ -8,9 +8,8 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use sa_core::bindings::entity_clean_up_old_reference;
 orig! {
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571A00 => unported;
     /// `operator delete(void*)` (0x8214BD)
     fn operator_delete(p: u32) = cdecl 0x8214BD => unported;
     fn destructor_o(this: GPtr<u8>) = thiscall 0x5EC410 => destructor;

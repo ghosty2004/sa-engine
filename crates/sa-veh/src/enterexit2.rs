@@ -7,32 +7,22 @@ use sa_core::{hook, orig};
 
 use crate::common::rd;
 
+pub use sa_core::bindings::matrix_dtor;
+pub use sa_core::bindings::matrix_invert;
+pub use sa_core::bindings::vector_from_multiply;
+pub use sa_world::bindings::entity_get_col_model as get_col_model;
+pub use sa_world::bindings::event_ctor_4aeac0;
+pub use sa_world::bindings::event_dtor_4aeb90;
+pub use sa_world::bindings::event_group_add;
+pub use sa_world::bindings::ped_stop_non_partial_anims as stop_non_partial_anims;
+pub use sa_world::bindings::test_line_sphere;
 orig! {
     /// `CVehicle` virtual slot 0xBC (`GetRideAnimData()`)
     pub fn get_ride_anim_data(v: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0xBC => unported;
     /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float)` (0x4D4610)
     pub fn blend_animation(clump: GPtr<u8>, group: u32, id: u32, delta: u32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
-    /// `CPed::StopNonPartialAnims()` (0x5DED10)
-    pub fn stop_non_partial_anims(ped: GPtr<u8>) = thiscall 0x5DED10 => unported;
     /// `CCarEnterExit::ComputeTargetDoorToExit(const CVehicle*, const CPed*)` (0x64F110)
     pub fn compute_target_door_to_exit(v: GPtr<u8>, ped: GPtr<u8>) -> i32 = cdecl 0x64F110 => unported;
-    /// `FUN_004aeac0`: an event constructor (vtable 0x85AFE8, 0x20 bytes: `+0x14`/`+0x18` entity
-    /// references, `+0x1C` the door), thiscall with three arguments
-    pub fn event_ctor_4aeac0(ev: GPtr<u8>, a: GPtr<u8>, veh: GPtr<u8>, door: i32) -> GPtr<u8> = thiscall 0x4AEAC0 => unported;
-    /// `FUN_004aeb90`: its destructor
-    pub fn event_dtor_4aeb90(ev: GPtr<u8>) = thiscall 0x4AEB90 => unported;
-    /// `CEntity::GetColModel()` (0x535300)
-    pub fn get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => unported;
-    /// `Invert(const CMatrix& src, CMatrix& dst)` (0x59B920)
-    pub fn matrix_invert(src: GPtr<u8>, dst: GPtr<u8>) -> GPtr<u8> = cdecl 0x59B920 => unported;
-    /// `CVector::FromMultiply(const CMatrix&, const CVector&)` (0x59C670)
-    pub fn vector_from_multiply(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = thiscall 0x59C670 => unported;
-    /// `CCollision::TestLineSphere(const CColLine&, const CColSphere&)` (0x417470)
-    pub fn test_line_sphere(line: GPtr<u8>, sphere: GPtr<u8>) -> u8 = cdecl 0x417470 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    pub fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420)
-    pub fn event_group_add(group: GPtr<u8>, ev: GPtr<u8>, unk: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
 }
 
 /// 1000.0f, the blend delta of every AddInCarAnim call.

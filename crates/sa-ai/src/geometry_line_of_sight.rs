@@ -3,19 +3,14 @@
 //! aid). Unverified (docs/verify/HOWTO.md).
 
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
-orig! {
-    /// `CColLine::CColLine(const CVector& start, const CVector& end)` (0x40EF50)
-    fn col_line_ctor(l: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = thiscall 0x40EF50 => unported;
-    /// `CCollision::TestLineOfSight(const CColLine&, const CMatrix&, CColModel&, bool, bool)` (0x417730), AL
-    fn test_line_of_sight(l: GPtr<u8>, m: GPtr<u8>, col: GPtr<u8>, see_through: u32, shoot_through: u32) -> u8 = cdecl 0x417730 => unported;
-    /// `CPlaceable::AllocateMatrix()` (0x54F560), `CSimpleTransform::UpdateMatrix(CMatrix*)` (0x54F1B0)
-    fn allocate_matrix(e: GPtr<u8>) = thiscall 0x54F560 => unported;
-    fn simple_transform_update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => unported;
-}
+use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
+use sa_stream::bindings::simple_transform_update_matrix;
+use sa_world::bindings::col_line_ctor;
+use sa_world::bindings::coll_test_line_of_sight as test_line_of_sight;
 
 /// `CPedGeometryAnalyser::GetIsLineOfSightClear(const CVector& a, const CVector& b, CEntity& e)` (0x5F2F00, cdecl,
 /// full EAX 1 / 0): a `CColLine(a, b)` tested against the entity's collision model (`ms_modelInfoPtrs[mi] + 0x14`)

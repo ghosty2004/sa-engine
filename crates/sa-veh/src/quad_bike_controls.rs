@@ -8,15 +8,12 @@ use sa_math::x87::X87;
 
 use crate::common::{f32_of, g, jne_mask, jp5, rd, wr, x, xi};
 
+use sa_core::bindings::get_pad as pad_get_pad;
+use sa_world::bindings::pad_get_steering_left_right;
+use sa_world::bindings::pad_get_steering_up_down;
 orig! {
     /// `CAutomobile::ProcessControlInputs(uint8 pedType)` (0x6AD690)
     fn automobile_process_control_inputs(v: GPtr<u8>, ped_type: u32) = thiscall 0x6AD690 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    fn pad_get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CPad::GetSteeringLeftRight()` (0x53FB80): int16 in AX
-    fn pad_get_steering_left_right(pad: GPtr<u8>) -> i16 = thiscall 0x53FB80 => unported;
-    /// `CPad::GetSteeringUpDown()` (0x53FBD0): int16 in AX
-    fn pad_get_steering_up_down(pad: GPtr<u8>) -> i16 = thiscall 0x53FBD0 => unported;
 }
 
 /// `CTimer::ms_fTimeStep` (0xB7CB5C).

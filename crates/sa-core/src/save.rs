@@ -113,6 +113,15 @@ fn file_handle() -> GPtr<u8> {
 
 pub mod call {
     use super::*;
+    pub use crate::bindings::crt_free as free;
+    pub use crate::bindings::crt_strncpy as strncpy;
+    pub use crate::bindings::file_close as close_file;
+    pub use crate::bindings::file_get_total_size as get_total_size;
+    pub use crate::bindings::file_read as read;
+    pub use crate::bindings::file_write as write;
+    pub use crate::bindings::init_user_directories;
+    pub use crate::bindings::open_file;
+    pub use crate::bindings::strncmp;
     orig! {
         /// CRT `sprintf(buf, fmt, char*, int, char*)` (0x821BB5)
         pub fn sprintf_sis(buf: GPtr<u8>, fmt: GPtr<u8>, a: GPtr<u8>, n: i32, b: GPtr<u8>) -> i32 = cdecl 0x821BB5 => unported;
@@ -120,28 +129,10 @@ pub mod call {
         pub fn sprintf_si(buf: GPtr<u8>, fmt: GPtr<u8>, a: GPtr<u8>, n: i32) -> i32 = cdecl 0x821BB5 => unported;
         /// CRT `sprintf(buf, fmt, char*, char*)` (0x821BB5)
         pub fn sprintf_ss(buf: GPtr<u8>, fmt: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> i32 = cdecl 0x821BB5 => unported;
-        /// CRT `strncpy` (0x821F40)
-        pub fn strncpy(dst: GPtr<u8>, src: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x821F40 => unported;
-        /// CRT `strncmp` (0x8214D0)
-        pub fn strncmp(a: GPtr<u8>, b: GPtr<u8>, n: u32) -> i32 = cdecl 0x8214D0 => unported;
         /// `operator new` (0x821195)
         pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x821195 => unported;
-        /// `operator delete` / `free` as the save code calls it (0x8213AE)
-        pub fn free(p: GPtr<u8>) = cdecl 0x8213AE => unported;
-        /// `CFileMgr::OpenFile(path, mode)` (0x538900)
-        pub fn open_file(path: GPtr<u8>, mode: GPtr<u8>) -> GPtr<u8> = cdecl 0x538900 => crate::filemgr::open_file;
-        /// `CFileMgr::Read` (0x538950)
-        pub fn read(f: GPtr<u8>, buf: GPtr<u8>, size: u32) -> u32 = cdecl 0x538950 => crate::filemgr::read;
-        /// `CFileMgr::Write` (0x538970)
-        pub fn write(f: GPtr<u8>, buf: GPtr<u8>, size: u32) -> u32 = cdecl 0x538970 => crate::filemgr::write;
-        /// `CFileMgr::CloseFile` (0x5389D0)
-        pub fn close_file(f: GPtr<u8>) -> i32 = cdecl 0x5389D0 => crate::filemgr::close_file;
-        /// `CFileMgr::GetTotalSize` (0x5389E0)
-        pub fn get_total_size(f: GPtr<u8>) -> i32 = cdecl 0x5389E0 => crate::filemgr::get_total_size;
         /// `CFileMgr::GetErrorReadWrite` (0x538A50)
         pub fn get_error_read_write(f: GPtr<u8>) -> u32 = cdecl 0x538A50 => crate::filemgr::get_error_read_write;
-        /// `CFileMgr::InitUserDirectories` (0x744FB0)
-        pub fn init_user_directories() -> GPtr<u8> = cdecl 0x744FB0 => crate::platform::init_user_directories;
         /// `CKeyGen::GetKey(const char*)` (0x53CF00)
         pub fn get_key(s: GPtr<u8>) -> u32 = cdecl 0x53CF00 => crate::keygen::get_key;
         /// KERNEL32 `DeleteFileA` at 0x619103 (C_PcSave::DeleteSlot)
@@ -149,6 +140,7 @@ pub mod call {
         /// KERNEL32 `GetLocalTime` at 0x5D1E54 (determinism mode redirects this site to the virtual clock)
         pub fn get_local_time(out: GPtr<u8>) = stdcall site 0x5D1E54 => unported;
     }
+    pub use crate::bindings::pad_update_pads as update_pads;
     orig! {
         /// `CGenericGameStorage::OpenFileForReading(name, slot)` (0x5D0D20)
         pub fn open_file_for_reading(name: GPtr<u8>, slot: i32) -> u8 = cdecl 0x5D0D20 => super::open_file_for_reading;
@@ -188,12 +180,10 @@ pub mod call {
         pub fn text_copy(dst: GPtr<u8>, src: GPtr<u8>) = cdecl 0x69F910 => super::text_copy;
         /// `CPad::UpdatePads()` through its thunk (0x541E50)
         pub fn update_pads_thunk() = cdecl 0x541E50 => super::update_pads_thunk;
-        /// `CPad::UpdatePads()` (0x541DD0)
-        pub fn update_pads() = cdecl 0x541DD0 => unported;
     }
     // GenericSave / GenericLoad block functions (eBlocks order), and the steps around them.
+    pub use crate::bindings::cheat_reset_cheats;
     orig! {
-        pub fn cheat_reset_cheats() = cdecl 0x438450 => unported;
         pub fn script_connect_lods_function(a: i32, b: i32) = cdecl 0x470A20 => unported;
         pub fn streaming_delete_all_rw_objects() = cdecl 0x4090A0 => unported;
         pub fn scripts_save() -> u8 = cdecl 0x5D4C40 => unported;
@@ -247,36 +237,36 @@ pub mod call {
         pub fn user_3d_markers_load() -> u8 = cdecl 0x5D42E0 => unported;
     }
     // DoGameSpecificStuffBeforeSave / AfterSucessLoad callees
+    pub use crate::bindings::camera_fade;
+    pub use crate::bindings::clear_specific_zones_to_trigger_gang_war as gang_wars_clear_specific_zones_to_trigger_gang_war;
+    pub use crate::bindings::clothes_rebuild_player;
+    pub use crate::bindings::collision_sort_out_collision_after_load;
+    pub use crate::bindings::end_gang_war as gang_wars_end_gang_war;
+    pub use crate::bindings::find_player_ped;
+    pub use crate::bindings::game_logic_pass_time;
+    pub use crate::bindings::game_tidy_up_memory;
+    pub use crate::bindings::load_all_requested_models as streaming_load_all_requested_models;
+    pub use crate::bindings::player_ped_reset_sprint_energy;
+    pub use crate::bindings::pop_cycle_update;
+    pub use crate::bindings::ropes_shutdown;
+    pub use crate::bindings::scripts_process;
+    pub use crate::bindings::set_wanted_level as player_ped_set_wanted_level;
+    pub use crate::bindings::stats_increment_stat;
+    pub use crate::bindings::streaming_load_scene;
+    pub use crate::bindings::streaming_load_scene_collision;
+    pub use crate::bindings::streaming_remove_inappropriate_ped_models;
+    pub use crate::bindings::text_load;
+    pub use crate::bindings::zones_fill_zones_with_gang_colours;
     orig! {
-        pub fn ropes_shutdown() = cdecl 0x556B10 => unported;
         pub fn pickups_remove_pickup_objects() = cdecl 0x455470 => unported;
-        pub fn gang_wars_end_gang_war(end: u32) = cdecl 0x4464C0 => unported;
-        pub fn stats_increment_stat(stat: u32, value: f32) = cdecl 0x55C180 => unported;
-        pub fn game_logic_pass_time(minutes: u32) = cdecl 0x4414C0 => unported;
-        pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-        pub fn player_ped_reset_sprint_energy(ped: GPtr<u8>) = thiscall 0x60A530 => unported;
-        pub fn player_ped_set_wanted_level(ped: GPtr<u8>, level: i32) = thiscall 0x609F10 => unported;
-        pub fn game_tidy_up_memory(a: u32, b: u32) = cdecl 0x53C500 => unported;
-        pub fn text_load(this: GPtr<u8>, keep_mission_packs: u32) = thiscall 0x6A01A0 => unported;
-        pub fn collision_sort_out_collision_after_load() = cdecl 0x411E30 => unported;
-        pub fn streaming_load_scene_collision(pos: GPtr<u8>) = cdecl 0x40ED80 => unported;
-        pub fn streaming_load_scene(pos: GPtr<u8>) = cdecl 0x40EB70 => unported;
-        pub fn streaming_load_all_requested_models(priority: u32) = cdecl 0x40EA10 => unported;
-        pub fn camera_fade(this: GPtr<u8>, time: f32, dir: u32) = thiscall 0x50AC20 => unported;
-        pub fn scripts_process() = cdecl 0x46A000 => unported;
         pub fn tag_manager_update_num_tagged() = cdecl 0x49CDE0 => unported;
-        pub fn clothes_rebuild_player(ped: GPtr<u8>, ignore_fat_and_muscle: u32) = cdecl 0x5A82C0 => unported;
-        pub fn pop_cycle_update() = cdecl 0x610BF0 => unported;
-        pub fn streaming_remove_inappropriate_ped_models() = cdecl 0x40B3A0 => unported;
-        pub fn gang_wars_clear_specific_zones_to_trigger_gang_war() = cdecl 0x443FF0 => unported;
-        pub fn zones_fill_zones_with_gang_colours(disable_radar: u32) = cdecl 0x572440 => unported;
     }
     // CSimpleVariablesSaveStructure
+    pub use crate::bindings::get_pad;
+    pub use crate::bindings::text_get;
     orig! {
-        pub fn text_get(this: GPtr<u8>, key: GPtr<u8>) -> GPtr<u8> = thiscall 0x6A0050 => unported;
         pub fn ascii_to_gxt_char(src: GPtr<u8>, dst: GPtr<u8>) = cdecl 0x718600 => crate::common::ascii_to_gxt_char;
         pub fn gxt_char_strlen(s: GPtr<u8>) -> i32 = cdecl 0x718690 => unported;
-        pub fn get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
         pub fn matrix_set_translate(m: GPtr<u8>, x: f32, y: f32, z: f32) = thiscall 0x59AF40 => unported;
         /// the cheat function `CCheat::m_aCheatFunctions` entry at 0x8A5CC4 (+0x135 of the structure)
         pub fn cheat_fn_8a5cc4() = cdecl cell 0x8A5CC4 => unported;

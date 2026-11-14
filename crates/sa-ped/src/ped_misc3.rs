@@ -11,6 +11,16 @@ use crate::common::*;
 /// `CMBlur::Drunkness` (f32)
 const MBLUR_DRUNKNESS: usize = 0xC73C58;
 
+use crate::bindings::cover_point_release_for_ped;
+use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+use sa_core::bindings::ped_clear_weapons;
+use sa_core::bindings::uncompress_animation as anim_uncompress_animation;
+use sa_world::bindings::clear_blip_for_entity as radar_clear_blip_for_entity;
+use sa_world::bindings::get_task_swim;
+use sa_world::bindings::ped_set_current_weapon_slot;
+use sa_world::bindings::vehicle_is_pointer_valid;
+use sa_world::bindings::vehicle_remove_passenger;
+use sa_world::bindings::weapon_is_type_melee;
 orig! {
     /// `CAEWeaponAudioEntity::Initialise()` (0x503450)
     fn weapon_audio_initialise(a: GPtr<u8>) = thiscall 0x503450 => unported;
@@ -18,44 +28,24 @@ orig! {
     fn weapon_audio_play_flame_thrower_idle_gas_loop(a: GPtr<u8>, p: GPtr<u8>) = thiscall 0x503870 => unported;
     /// `CAEWeaponAudioEntity::StopFlameThrowerIdleGasLoop()` (0x5034E0)
     fn weapon_audio_stop_flame_thrower_idle_gas_loop(a: GPtr<u8>) = thiscall 0x5034E0 => unported;
-    /// `CPedIntelligence::GetTaskSwim()` (0x601070)
-    fn get_task_swim(i: GPtr<u8>) -> GPtr<u8> = thiscall 0x601070 => unported;
     /// `CAEPedSpeechAudioEntity` virtual slot 1 (vtable +4), the script speech entry
     fn speech_v1(s: GPtr<u8>, id: u32, a: u32, b: u32, c: u32, d: u32) -> u32 = thiscall vslot 0x4 => unported;
     /// `CAEPedSpeechAudioEntity::AddSayEvent(int32, int16, uint32, float, uint8, uint8, uint8)` (0x4E6550)
     fn speech_add_say_event(s: GPtr<u8>, ev: u32, ctx: u32, off: u32, vol: u32, a: u32, b: u32, c: u32) -> u32 = thiscall 0x4E6550 => unported;
     /// `CAnimManager::GetAnimAssociation(AssocGroupId, AnimationId)` (0x4D3A60)
     fn anim_get_anim_association(group: i32, id: i32) -> GPtr<u8> = cdecl 0x4D3A60 => unported;
-    /// `CAnimManager::UncompressAnimation(CAnimBlendHierarchy*)` (0x4D41C0)
-    fn anim_uncompress_animation(h: GPtr<u8>) = cdecl 0x4D41C0 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
-    fn clean_up_old_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571A00 => unported;
     /// `CPed::GetWeaponSkill(eWeaponType)` (0x5E3B60; EAX pushed whole)
     fn ped_get_weapon_skill_type(p: GPtr<u8>, ty: i32) -> i32 = thiscall 0x5E3B60 => unported;
-    /// `CVehicle::RemovePassenger(CPed*)` (0x6D1610)
-    fn vehicle_remove_passenger(v: GPtr<u8>, p: GPtr<u8>) = thiscall 0x6D1610 => unported;
-    /// `CVehicle::IsVehiclePointerValid(CVehicle*)` (0x6E38F0, AL)
-    fn vehicle_is_pointer_valid(v: GPtr<u8>) -> u8 = cdecl 0x6E38F0 => unported;
-    /// `CCoverPoint::ReleaseCoverPointForPed(CPed*)` (0x698EF0)
-    fn cover_point_release_for_ped(c: GPtr<u8>, p: GPtr<u8>) = thiscall 0x698EF0 => unported;
-    /// `CRadar::ClearBlipForEntity(eBlipType, int32 handle)` (0x587C60)
-    fn radar_clear_blip_for_entity(ty: i32, handle: i32) = cdecl 0x587C60 => unported;
     /// `CPed::GiveDelayedWeapon(eWeaponType, uint32)` (0x5E89B0)
     fn ped_give_delayed_weapon(p: GPtr<u8>, ty: i32, ammo: i32) = thiscall 0x5E89B0 => unported;
-    /// `CPed::SetCurrentWeapon(int32 slot)` (0x5E61F0)
-    fn ped_set_current_weapon_slot(p: GPtr<u8>, slot: i32) = thiscall 0x5E61F0 => unported;
     /// `CPickups::CreatePickupCoorsCloseToCoors(float, float, float, float*, float*, float*)` (0x458A80)
     fn pickups_create_pickup_coors_close_to_coors(x: u32, y: u32, z: u32, ox: GPtr<u8>, oy: GPtr<u8>, oz: GPtr<u8>) = cdecl 0x458A80 => unported;
     /// `CPed::CreateDeadPedPickupCoors(float*, float*, float*)` (0x459180)
     fn create_dead_ped_pickup_coors_call(p: GPtr<u8>, x: GPtr<u8>, y: GPtr<u8>, z: GPtr<u8>) = thiscall 0x459180 => unported;
-    /// `CWeapon::IsTypeMelee()` (0x73B1C0, AL)
-    fn weapon_is_type_melee(w: GPtr<u8>) -> u8 = thiscall 0x73B1C0 => unported;
     /// `CPickups::TryToMerge_WeaponType(CVector, eWeaponType, ePickupType, uint32, bool)` (0x4555A0, AL)
     fn pickups_try_to_merge_weapon_type(x: u32, y: u32, z: u32, ty: i32, pt: i32, ammo: i32, b: u32) -> u8 = cdecl 0x4555A0 => unported;
     /// `CPickups::GenerateNewOne_WeaponType(CVector, eWeaponType, ePickupType, uint32, bool, char*)` (0x457380)
     fn pickups_generate_new_one_weapon_type(x: u32, y: u32, z: u32, ty: i32, pt: i32, ammo: i32, b: u32, msg: u32) -> i32 = cdecl 0x457380 => unported;
-    /// `CPed::ClearWeapons()` (0x5E6320)
-    fn ped_clear_weapons(p: GPtr<u8>) = thiscall 0x5E6320 => unported;
 }
 
 /// `CAEPedWeaponAudioEntity::Initialise(CPed*)` (0x4E6AA0): `+0xA4 = ped`, `CAEWeaponAudioEntity::Initialise()`,

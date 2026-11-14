@@ -4,14 +4,11 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
-orig! {
-    /// `CPedGroupMembership::RemoveMember(int32 memIdx)` (0x5F80D0)
-    fn remove_member_by_idx(m: GPtr<u8>, idx: i32) = thiscall 0x5F80D0 => unported;
-}
+use crate::bindings::membership_remove_member as remove_member_by_idx;
 
 /// `CPedGroupMembership::RemoveMember(CPed* ped)` (0x5FB210, thiscall, `ret 4`): the index of `ped` among the
 /// eight member slots (+4); when found, a tail jump to `RemoveMember(index)` with the argument slot replaced by the

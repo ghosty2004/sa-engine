@@ -13,6 +13,25 @@ use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 use sa_math::x87::X87;
 
+use crate::bindings::convert_ped_node_2_bone_tag;
+use crate::bindings::rp_skin_get_num_bones as skin_get_num_bones;
+use sa_core::bindings::crt_free_8214bd as operator_delete;
+use sa_core::bindings::crt_strncpy;
+use sa_core::bindings::frame_for_all_children;
+use sa_core::bindings::get_anim_hierarchy_from_skin_clump;
+use sa_core::bindings::get_first_atomic;
+use sa_core::bindings::get_frame_hierarchy_id;
+use sa_core::bindings::get_frame_node_name;
+use sa_core::bindings::get_uppercase_key;
+use sa_core::bindings::rp_clump_for_all_atomics as clump_for_all_atomics;
+use sa_core::bindings::rp_hanim_id_get_index as hanim_id_get_index;
+use sa_core::bindings::rp_skin_geometry_get_skin as skin_geometry_get_skin;
+use sa_core::bindings::rp_skin_get_skin_to_bone_matrices as skin_get_skin_to_bone_matrices;
+use sa_core::bindings::rw_error1;
+use sa_core::bindings::rw_error_set;
+use sa_core::bindings::rw_matrix_invert as matrix_invert;
+use sa_core::bindings::rw_v3d_transform_points as v3d_transform_points;
+use sa_core::bindings::stricmp as crt_stricmp;
 orig! {
     /// `CAnimBlendClumpData::CAnimBlendClumpData()` (0x4CF0E0)
     fn clump_data_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4CF0E0 => crate::clumpdata::constructor;
@@ -28,41 +47,10 @@ orig! {
     fn assoc_vdtor(this: GPtr<u8>, flags: u32) = thiscall vslot 0 => unported;
     /// `operator new(size)` (0x82119A), `operator delete(p)` (0x8214BD)
     fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
-    fn operator_delete(p: GPtr<u8>) = cdecl 0x8214BD => unported;
-    /// CRT `_stricmp` (0x8229B6), `strncpy` (0x821F40)
-    fn crt_stricmp(a: GPtr<u8>, b: GPtr<u8>) -> i32 = cdecl 0x8229B6 => unported;
-    fn crt_strncpy(d: GPtr<u8>, s: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x821F40 => unported;
-    /// `CKeyGen::GetUppercaseKey(str)` (0x53CF30)
-    fn get_uppercase_key(s: GPtr<u8>) -> u32 = cdecl 0x53CF30 => unported;
-    /// `GetFrameNodeName(frame)` (0x72FB30)
-    fn get_frame_node_name(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x72FB30 => unported;
     /// `NodeNamePlugin::SetFrameNodeName(frame, name)` (0x72FB00)
     fn set_frame_node_name_call(f: GPtr<u8>, name: GPtr<u8>) = cdecl 0x72FB00 => set_frame_node_name;
     /// `ConvertBoneTag2BoneName(tag)` (0x4D56F0)
     fn convert_bone_tag_2_bone_name(tag: i32) -> GPtr<u8> = cdecl 0x4D56F0 => unported;
-    /// `ConvertPedNode2BoneTag(node)` (0x4D58A0)
-    fn convert_ped_node_2_bone_tag(node: i32) -> i32 = cdecl 0x4D58A0 => unported;
-    /// `RwHelper::GetFirstAtomic(clump)` (0x734820)
-    fn get_first_atomic(c: GPtr<u8>) -> GPtr<u8> = cdecl 0x734820 => unported;
-    /// `RwHelper::GetAnimHierarchyFromSkinClump(clump)` (0x734A40)
-    fn get_anim_hierarchy_from_skin_clump(c: GPtr<u8>) -> GPtr<u8> = cdecl 0x734A40 => unported;
-    /// `RpSkinGeometryGetSkin(geometry)` (0x7C7550), `RpSkinGetNumBones(skin)` (0x7C77E0),
-    /// `RpSkinGetSkinToBoneMatrices(skin)` (0x7C7810)
-    fn skin_geometry_get_skin(g: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C7550 => unported;
-    fn skin_get_num_bones(s: GPtr<u8>) -> i32 = cdecl 0x7C77E0 => unported;
-    fn skin_get_skin_to_bone_matrices(s: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C7810 => unported;
-    /// `RpHAnimIDGetIndex(hierarchy, id)` (0x7C51A0)
-    fn hanim_id_get_index(h: GPtr<u8>, id: i32) -> i32 = cdecl 0x7C51A0 => unported;
-    /// `RpClumpForAllAtomics(clump, cb, data)` (0x749B70)
-    fn clump_for_all_atomics(c: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> = cdecl 0x749B70 => unported;
-    /// `RwFrameForAllChildren(frame, cb, data)` (0x7F0DC0)
-    fn frame_for_all_children(f: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> = cdecl 0x7F0DC0 => unported;
-    /// `RwMatrixInvert(out, in)` (0x7F2070)
-    fn matrix_invert(out: GPtr<u8>, inp: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F2070 => unported;
-    /// `RwV3dTransformPoints(out, in, n, matrix)` (0x7EDD90)
-    fn v3d_transform_points(out: GPtr<u8>, inp: GPtr<u8>, n: i32, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EDD90 => unported;
-    /// `CVisibilityPlugins::GetFrameHierarchyId(frame)` (0x732A20)
-    fn get_frame_hierarchy_id(f: GPtr<u8>) -> i32 = cdecl 0x732A20 => unported;
     /// `RpAnimBlendAllocateData(clump)` (0x4D5F50)
     fn allocate_data_call(c: GPtr<u8>) = cdecl 0x4D5F50 => rp_anim_blend_allocate_data;
     /// `RpAnimBlendClumpIsInitialized(clump)` (0x4D6760)
@@ -73,9 +61,6 @@ orig! {
     fn skin_get_bone_positions_to_table_call(c: GPtr<u8>, t: GPtr<u8>) = cdecl 0x735360 => skin_get_bone_positions_to_table;
     /// `RtAnimAnimationCreate(typeID, numFrames, flags, duration)` (0x7CCE40)
     fn animation_create_call(ty: u32, n: i32, flags: u32, duration: f32) -> GPtr<u8> = cdecl 0x7CCE40 => rt_anim_animation_create;
-    /// `_rwerror(code)` (0x8088D0), `RwErrorSet(err)` (0x808820)
-    fn rw_error1(code: u32) -> u32 = cdecl 0x8088D0 => unported;
-    fn rw_error_set(e: GPtr<u32>) -> GPtr<u32> = cdecl 0x808820 => unported;
     /// `G->rwmalloc(size, hint)` (`RwGlobals` +0x134)
     fn rw_malloc(size: u32, hint: u32) -> u32 = cdecl table 0xC97B24 0x134 => unported;
 }

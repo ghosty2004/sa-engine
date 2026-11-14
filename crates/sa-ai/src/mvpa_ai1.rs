@@ -10,15 +10,19 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::bbox_centre_uncached;
+use crate::bindings::bbox_corners_uncached;
+use crate::bindings::car_drive_dtor_63ca40 as task_complex_car_drive_dtor;
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_core::bindings::tm_get_task_secondary as task_manager_get_task_secondary;
+use sa_core::bindings::vector_normalise;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::event_acquaintance_ped_dtor;
+use sa_world::bindings::ptr_list_double_link_flush;
+use sa_world::bindings::task_simple_dtor;
 orig! {
-    /// `CPtrListDoubleLink::Flush` (0x552470)
-    fn ptr_list_double_link_flush(l: GPtr<u8>) = thiscall 0x552470 => unported;
     /// `CTaskComplexSequence::Flush` (0x632C10)
     fn sequence_flush(s: GPtr<u8>) = thiscall 0x632C10 => crate::small::sequence_flush;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00, `ret 4`)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CPed::IsPlayer` (0x5DF8F0, AL)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
     /// `CRadar::ClearBlipForEntity(eBlipType, int32 handle)` (0x587C60, cdecl)
     fn radar_clear_blip_for_entity(ty: u32, handle: i32) = cdecl 0x587C60 => unported;
     /// `CPedIntelligence::RestorePedDecisionMakerType` (0x600BC0)
@@ -27,18 +31,10 @@ orig! {
     fn task_pair_flush(p: GPtr<u8>) = thiscall 0x5E95B0 => crate::mvpa_ai1::ped_task_pair_flush;
     /// `CTaskPool::New` (0x61A500, thiscall on the pool)
     fn task_pool_new_o(pool: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A500 => crate::mvpa_ai1::task_pool_new;
-    /// `CEventAcquaintancePed::~CEventAcquaintancePed` (0x4AF890)
-    fn event_acquaintance_ped_dtor(e: GPtr<u8>) = thiscall 0x4AF890 => unported;
-    /// `CTaskSimple::~CTaskSimple` (0x61A3A0)
-    fn task_simple_dtor(t: GPtr<u8>) = thiscall 0x61A3A0 => unported;
-    /// `CTaskComplexCarDrive::~CTaskComplexCarDrive` (0x63CA40)
-    fn task_complex_car_drive_dtor(t: GPtr<u8>) = thiscall 0x63CA40 => unported;
     /// `CTaskSimpleIKChain::~CTaskSimpleIKChain` (0x633A90)
     fn task_simple_ik_chain_dtor(t: GPtr<u8>) = thiscall 0x633A90 => unported;
     /// scalar deleting destructor (vtable +0)
     fn v_delete(t: GPtr<u8>, flags: u32) -> GPtr<u8> = thiscall vslot 0x0 => unported;
-    /// `CTaskManager::GetTaskSecondary(int32)` (0x681810, `ret 4`)
-    fn task_manager_get_task_secondary(m: GPtr<u8>, slot: i32) -> GPtr<u8> = thiscall 0x681810 => unported;
     /// `CPedGeometryAnalyser::CanPedTargetPoint(const CPed&, const CVector&, bool)` (0x5F1B70, cdecl; AL, full EAX
     /// passed on)
     fn can_ped_target_point_o(ped: GPtr<u8>, point: GPtr<u8>, check: u32) -> u32 = cdecl 0x5F1B70 => unported;
@@ -50,20 +46,12 @@ orig! {
     fn route_round_entity_bbox_2(ped: GPtr<u8>, pos: GPtr<u8>, e: GPtr<u8>, target: u32, route: u32, flag: u32) -> u32 = cdecl 0x5F3DD0 => unported;
     /// `CPedGeometryAnalyser::ComputeEntityHitSide(const CVector&, CEntity&)` (0x5F3AC0, cdecl)
     fn entity_hit_side_3(pos: GPtr<u8>, e: GPtr<u8>) -> u32 = cdecl 0x5F3AC0 => crate::mvpa_ai1::compute_entity_hit_side_3;
-    /// `CPedGeometryAnalyser::ComputeEntityBoundingBoxCornersUncached(float z, CEntity&, CVector* corners)` (0x5F1FA0,
-    /// cdecl; `z` passed as its dword)
-    fn bbox_corners_uncached(z: u32, e: GPtr<u8>, corners: GPtr<u8>) = cdecl 0x5F1FA0 => unported;
-    /// `CPedGeometryAnalyser::ComputeEntityBoundingBoxCentreUncached(float z, const CVector* corners, CVector& out)`
-    /// (0x5F1600, cdecl)
-    fn bbox_centre_uncached(z: u32, corners: GPtr<u8>, out: GPtr<u8>) = cdecl 0x5F1600 => crate::mvpa_ai1::compute_entity_bounding_box_centre_uncached;
     /// `CPedGeometryAnalyser::ComputeEntityBoundingBoxSegmentPlanesUncached(const CVector* corners, const CVector&
     /// centre, CVector* normals, float* distances)` (0x5F1750, cdecl)
     fn bbox_segment_planes_uncached(corners: GPtr<u8>, centre: GPtr<u8>, normals: GPtr<u8>, d: GPtr<u8>) = cdecl 0x5F1750 => crate::mvpa_ai1::compute_entity_bounding_box_segment_planes_uncached;
     /// `CPedGeometryAnalyser::ComputeEntityHitSide(const CVector&, const CVector* normals, const float* distances)`
     /// (0x5F1450, cdecl)
     fn entity_hit_side_2(pos: GPtr<u8>, normals: GPtr<u8>, d: GPtr<u8>) -> u32 = cdecl 0x5F1450 => unported;
-    /// `CVector::Normalise` (0x59C910)
-    fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
 }
 
 /// `CPools::ms_pPedPool`

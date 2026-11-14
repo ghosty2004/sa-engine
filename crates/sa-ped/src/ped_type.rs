@@ -23,13 +23,11 @@ const PED_TYPE_NAMES: usize = 0x8D23B8;
 const NUM_PED_TYPES: u32 = 32;
 const NUM_PED_STATS: u32 = 43;
 
+pub use sa_core::bindings::crt_free;
+pub use sa_core::bindings::eh_vector_dtor as eh_vector_destructor_iterator;
 orig! {
     /// `CAcquaintance::SetAsAcquaintance(AcquaintanceId, uint32 mask)` (0x608DA0)
     pub fn acquaintance_set_as_acquaintance(this: GPtr<u8>, id: i32, mask: u32) = thiscall 0x608DA0 => unported;
-    /// CRT `free` (0x8213AE)
-    pub fn crt_free(p: GPtr<u8>) = cdecl 0x8213AE => unported;
-    /// CRT `eh vector destructor iterator(void*, size, count, dtor)` (0x821E02)
-    pub fn eh_vector_destructor_iterator(p: GPtr<u8>, size: u32, count: u32, dtor: u32) = stdcall 0x821E02 => unported;
 }
 
 /// `strcmp(a, b) == 0` as the inlined MSVC loop compares (bytes, stops at the first difference or NUL).
@@ -167,9 +165,8 @@ pub fn ped_type_shutdown() {
     crt_free(a.byte_add(-4));
 }
 
+use sa_stream::bindings::crt_new as ps_operator_new;
 orig! {
-    /// CRT `operator new(size)` (0x821195)
-    fn ps_operator_new(size: u32) -> GPtr<u8> = cdecl 0x821195 => unported;
     /// `CFileMgr::OpenFile(path, mode)` (0x538900)
     fn ps_open_file(path: GPtr<u8>, mode: GPtr<u8>) -> u32 = cdecl 0x538900 => unported;
     /// `CFileMgr::CloseFile(file)` (0x5389D0)

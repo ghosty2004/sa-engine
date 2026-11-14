@@ -8,31 +8,25 @@ use sa_core::{hook, orig};
 
 use crate::common::{AE_AUDIO_HARDWARE, AE_SOUND_MANAGER, AUDIO_ENGINE, GPtr, X87, g, rd, wr, x, xi};
 
+use crate::bindings::env_distance_attenuation_st0;
+use crate::bindings::hw_is_sound_bank_loaded;
+use crate::bindings::hw_load_sound_bank;
+use crate::bindings::sm_request_new_sound;
+use sa_core::bindings::vector_magnitude as vector_magnitude_st0;
+use sa_world::bindings::engine_is_loading_tune_active;
 orig! {
-    /// `CAEAudioHardware::IsSoundBankLoaded(bank, slot)` (0x4D88C0)
-    fn hw_is_sound_bank_loaded(hw: GPtr<u8>, bank: u32, slot: u32) -> u8 = thiscall 0x4D88C0 => unported;
-    /// `CAEAudioHardware::LoadSoundBank(bank, slot)` (0x4D88A0)
-    fn hw_load_sound_bank(hw: GPtr<u8>, bank: u32, slot: u32) = thiscall 0x4D88A0 => unported;
-    /// `CAudioEngine::IsLoadingTuneActive()` (0x506D90)
-    fn engine_is_loading_tune_active(engine: GPtr<u8>) -> u8 = thiscall 0x506D90 => unported;
     /// `CAESound::Initialise(slot, sfx, CAEAudioEntity*, CVector pos, volume, maxDistance, speed, timeScale,
     /// ignoredServiceCycles, flags, speedVariance, playPos)` (0x4EFE50)
     #[allow(clippy::too_many_arguments)]
     fn sound_initialise(sound: GPtr<u8>, slot: u32, sfx: u32, entity: GPtr<u8>, px: u32, py: u32, pz: u32, vol: u32, max_dist: u32, speed: u32, time_scale: u32, ignored: u32, flags: u32, var: u32, play_pos: u32) = thiscall 0x4EFE50 => unported;
     /// `CAESound::RegisterWithPhysicalEntity(CEntity*)` (0x4EF820)
     fn sound_register_with_physical_entity(sound: GPtr<u8>, entity: GPtr<u8>) = thiscall 0x4EF820 => unported;
-    /// `CAESoundManager::RequestNewSound(CAESound*)` (0x4EFB10)
-    fn sm_request_new_sound(sm: GPtr<u8>, sound: GPtr<u8>) -> u32 = thiscall 0x4EFB10 => unported;
     /// `CAEAudioEnvironment::GetPositionRelativeToCamera(CVector* out, CPlaceable*)` (0x4D8340)
     fn env_position_relative_to_camera(out: GPtr<u8>, placeable: GPtr<u8>) -> u32 = cdecl 0x4D8340 => unported;
-    /// `CAEAudioEnvironment::GetDistanceAttenuation(float)` (0x4D7F20, ST0)
-    fn env_distance_attenuation_st0(dist: f32) -> f64 = cdecl 0x4D7F20 => unported;
     /// `CAEAudioUtility::GetRandomNumberInRange<float>(float, float)` (0x4D9C50, ST0)
     fn ae_random_float_st0(min: f32, max: f32) -> f64 = cdecl 0x4D9C50 => unported;
     /// `CAEAudioUtility::ResolveProbability(float)` (0x4D9C80)
     fn ae_resolve_probability(p: f32) -> u8 = cdecl 0x4D9C80 => unported;
-    /// `CVector::Magnitude()` (0x4082C0, ST0)
-    fn vector_magnitude_st0(v: GPtr<u8>) -> f64 = thiscall 0x4082C0 => unported;
 }
 
 /// `CTimer::m_snTimeInMilliseconds` (0xB7CB84)

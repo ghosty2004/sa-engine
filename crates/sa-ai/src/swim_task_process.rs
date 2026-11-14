@@ -53,19 +53,57 @@ const FX_MAN: usize = 0xA9AE80;
 /// `g_fx` (`Fx_c`)
 const G_FX: usize = 0xA9AE00;
 
+use crate::bindings::anim_blend_animation;
+use crate::bindings::anim_get_anim_block_name;
+use crate::bindings::assoc_start;
+use crate::bindings::climb_test_for_climb;
+use crate::bindings::clump_get_association;
+use crate::bindings::pad_jump_just_down;
+use crate::bindings::ped_set_move_state;
+use crate::bindings::player_control_button_sprint;
+use sa_core::bindings::entity_register_reference;
+use sa_core::bindings::entity_update_rw_frame;
+use sa_core::bindings::general_angle_between_points;
+use sa_core::bindings::general_get_radian_angle_between_points as general_radian_angle_between_points;
+use sa_core::bindings::general_limit_radian_angle;
+use sa_core::bindings::general_random_int_in_range as general_random_in_range;
+use sa_core::bindings::matrix_dtor;
+use sa_core::bindings::matrix_set_translate;
+use sa_core::bindings::matrix_update_rw;
+use sa_core::bindings::rp_hanim_hierarchy_get_matrix_array as hanim_get_matrix_array;
+use sa_core::bindings::rw_matrix_create;
+use sa_core::bindings::rw_matrix_update;
+use sa_stream::bindings::anim_add_block_ref as anim_add_anim_block_ref;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::camera_get_look_direction;
+use sa_world::bindings::damage_calc_compute_damage_response as calc_compute_damage_response;
+use sa_world::bindings::damage_calc_dtor as calc_dtor;
+use sa_world::bindings::event_damage_affects_ped as damage_affects_ped;
+use sa_world::bindings::event_damage_dtor as damage_dtor;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::fx_add_particle as fx_system_add_particle;
+use sa_world::bindings::fx_kill as fx_system_kill;
+use sa_world::bindings::fx_play_and_kill as fx_system_play_and_kill;
+use sa_world::bindings::fx_set_local_particles as fx_system_set_local_particles;
+use sa_world::bindings::fx_system_set_matrix;
+use sa_world::bindings::fx_trigger_water_splash;
+use sa_world::bindings::game_logic_allowed_direction;
+use sa_world::bindings::game_logic_is_player_use_2player_controls as game_logic_use_2player_controls;
+use sa_world::bindings::get_pad_from_player as player_get_pad;
+use sa_world::bindings::get_water_level as water_get_water_level;
+use sa_world::bindings::matrix_ctor_rw;
+use sa_world::bindings::pad_get_ped_walk_left_right as pad_walk_left_right;
+use sa_world::bindings::pad_get_ped_walk_up_down as pad_walk_up_down;
+use sa_world::bindings::pad_weapon_just_down;
+use sa_world::bindings::ped_audio_add_audio_event;
+use sa_world::bindings::ped_restore_heading_rate;
+use sa_world::bindings::physical_apply_move_force;
+use sa_world::bindings::player_handle_breath as player_handle_player_breath;
+use sa_world::bindings::vector_add;
+use sa_world::bindings::vector_sub;
 orig! {
-    /// `RpAnimBlendClumpGetAssociation(RpClump*, AnimationId)` (0x4D68B0, cdecl)
-    fn clump_get_association(clump: u32, anim: u32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
-    /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float delta)` (0x4D4610, cdecl)
-    fn anim_blend_animation(clump: u32, group: u32, anim: u32, delta: u32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
     /// `RpAnimBlendClumpSetBlendDeltas(RpClump*, uint32 flags, float delta)` (0x4D67E0, cdecl)
     fn clump_set_blend_deltas(clump: u32, flags: u32, delta: u32) = cdecl 0x4D67E0 => unported;
-    /// `CPed::RestoreHeadingRate` (0x5DFD60)
-    fn ped_restore_heading_rate(p: GPtr<u8>) = thiscall 0x5DFD60 => unported;
-    /// `FxSystem_c::Kill` (0x4AA3F0)
-    fn fx_system_kill(f: GPtr<u8>) = thiscall 0x4AA3F0 => unported;
-    /// `CPed::IsPlayer` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
     /// `CTaskSimpleSwim::ProcessControlAI(CPed*)` (0x689640, `ret 4`)
     fn o_swim_process_control_ai(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x689640 => unported;
     /// `CTaskSimpleSwim::ProcessControlInput(CPlayerPed*)` (0x688A90, `ret 4`)
@@ -80,141 +118,51 @@ orig! {
     fn o_swim_destroy_fx_system(t: GPtr<u8>) = thiscall 0x68AA50 => unported;
     /// `CTaskSimpleSwim::CreateFxSystem(CPed*, RwMatrix*)` (0x68A9F0, `ret 8`)
     fn o_swim_create_fx_system(t: GPtr<u8>, ped: GPtr<u8>, m: GPtr<u8>) = thiscall 0x68A9F0 => unported;
-    /// `VectorSub(CVector* out, const CVector* a, const CVector* b)` (0x40FE60): out = a - b
-    fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => unported;
-    /// `operator+(CVector* out, const CVector* a, const CVector* b)` (0x40FE30): out = a + b
-    fn vector_add(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE30 => unported;
-    /// `CPlayerPed::HandlePlayerBreath(bool underWater, float rate)` (0x60A8D0, `ret 8`)
-    fn player_handle_player_breath(p: GPtr<u8>, under: u32, rate: u32) = thiscall 0x60A8D0 => unported;
     /// `CStats::GetFatAndMuscleModifier(eStatModAbilities)` (0x559AF0, cdecl, ST0)
     fn stats_get_fat_and_muscle_modifier(i: u32) -> f64 = cdecl 0x559AF0 => unported;
     /// `CPed::Say(uint16, uint32, float, bool, bool, bool)` (0x5EFFE0, `ret 0x18`)
     fn ped_say(p: GPtr<u8>, id: u32, off: u32, vol: u32, a: u32, b: u32, c: u32) = thiscall 0x5EFFE0 => unported;
-    /// `CPed::SetMoveState(eMoveState)` (0x5DEC00, `ret 4`)
-    fn ped_set_move_state(p: GPtr<u8>, s: u32) = thiscall 0x5DEC00 => unported;
     /// `CPedDamageResponseCalculator::CPedDamageResponseCalculator(CEntity*, float, eWeaponType, ePedPieceTypes,
     /// bool)` (0x4AD3F0, `ret 0x14`)
     fn calc_ctor(c: GPtr<u8>, src: u32, dmg: u32, wt: u32, piece: u32, b: u32) -> GPtr<u8> = thiscall 0x4AD3F0 => unported;
-    /// `CPedDamageResponseCalculator::~CPedDamageResponseCalculator` (0x4AD420)
-    fn calc_dtor(c: GPtr<u8>) = thiscall 0x4AD420 => unported;
-    /// `CPedDamageResponseCalculator::ComputeDamageResponse(CPed*, CPedDamageResponse*, bool)` (0x4B5AC0, `ret 0xC`)
-    fn calc_compute_damage_response(c: GPtr<u8>, ped: GPtr<u8>, resp: GPtr<u8>, b: u32) = thiscall 0x4B5AC0 => unported;
     /// `CEventDamage::CEventDamage(CEntity*, uint32 time, eWeaponType, ePedPieceTypes, uint8 dir, bool, bool)`
     /// (0x4AD830, `ret 0x1C`)
     fn damage_ctor(e: GPtr<u8>, src: u32, time: u32, wt: u32, piece: u32, dir: u32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x4AD830 => unported;
-    /// `CEventDamage::AffectsPed(CPed*)` (0x4B35A0, `ret 4`)
-    fn damage_affects_ped(e: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x4B35A0 => unported;
-    /// `CEventDamage::~CEventDamage` (0x4AD960)
-    fn damage_dtor(e: GPtr<u8>) = thiscall 0x4AD960 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, `ret 8`)
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
-    /// `CPlayerPed::GetPadFromPlayer` (0x609560)
-    fn player_get_pad(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x609560 => unported;
-    /// `CPad::GetPedWalkUpDown` (0x53FD30; AX)
-    fn pad_walk_up_down(pad: GPtr<u8>) -> i16 = thiscall 0x53FD30 => unported;
-    /// `CPad::GetPedWalkLeftRight` (0x53FC90; AX)
-    fn pad_walk_left_right(pad: GPtr<u8>) -> i16 = thiscall 0x53FC90 => unported;
-    /// `CPad::JumpJustDown` (0x540770)
-    fn pad_jump_just_down(pad: GPtr<u8>) -> u8 = thiscall 0x540770 => unported;
-    /// `CPad::WeaponJustDown(CPed*)` (0x540250, `ret 4`)
-    fn pad_weapon_just_down(pad: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x540250 => unported;
-    /// `CCamera::GetLookDirection` (0x50AE90)
-    fn camera_get_look_direction(c: GPtr<u8>) -> i32 = thiscall 0x50AE90 => unported;
     /// `FUN_00420800(float a, float b)` (0x420800, cdecl, ST0): `a > b ? a : b` (`test ah, 0x41`)
     fn max_f(a: u32, b: u32) -> f64 = cdecl 0x420800 => unported;
     /// `FUN_00404330(float a, float b)` (0x404330, cdecl, ST0): `a < b ? a : b` (`test ah, 5; jp`)
     fn min_f(a: u32, b: u32) -> f64 = cdecl 0x404330 => unported;
-    /// `CPlayerPed::ControlButtonSprint(eSprintType)` (0x60A610, `ret 4`, ST0)
-    fn player_control_button_sprint(p: GPtr<u8>, ty: u32) -> f64 = thiscall 0x60A610 => unported;
     /// `CPlayerPed::GetButtonSprintResults(eSprintType)` (0x60A820, `ret 4`, ST0)
     fn player_get_button_sprint_results(p: GPtr<u8>, ty: u32) -> f64 = thiscall 0x60A820 => unported;
     /// `CPlayerPed::HandleSprintEnergy(bool, float)` (0x60A550, `ret 8`)
     fn player_handle_sprint_energy(p: GPtr<u8>, b: u32, f: u32) = thiscall 0x60A550 => unported;
-    /// `CGameLogic::IsPlayerUse2PlayerControls(CPed*)` (0x442020, cdecl)
-    fn game_logic_use_2player_controls(p: GPtr<u8>) -> u8 = cdecl 0x442020 => unported;
-    /// `CGameLogic::IsPlayerAllowedToGoInThisDirection(CPed*, CVector dir, float)` (0x441E10, cdecl; the vector by
-    /// value)
-    fn game_logic_allowed_direction(p: GPtr<u8>, x: u32, y: u32, z: u32, d: u32) -> u8 = cdecl 0x441E10 => unported;
-    /// `CGeneral::GetRadianAngleBetweenPoints(float x1, float y1, float x2, float y2)` (0x53CBE0, cdecl, ST0)
-    fn general_radian_angle_between_points(x1: u32, y1: u32, x2: u32, y2: u32) -> f64 = cdecl 0x53CBE0 => unported;
-    /// `CGeneral::LimitRadianAngle(float)` (0x53CB50, cdecl, ST0)
-    fn general_limit_radian_angle(a: u32) -> f64 = cdecl 0x53CB50 => unported;
-    /// `CGeneral::GetAngleBetweenPoints(float x1, float y1, float x2, float y2)` (0x53CEA0, cdecl, ST0)
-    fn general_angle_between_points(x1: u32, y1: u32, x2: u32, y2: u32) -> f64 = cdecl 0x53CEA0 => unported;
     /// `CGeneral::LimitAngle(float)` (0x53CB00, cdecl, ST0)
     fn general_limit_angle(a: u32) -> f64 = cdecl 0x53CB00 => unported;
-    /// `CWaterLevel::GetWaterLevel(float x, float y, float z, float* level, bool waves, CVector* normal)` (0x6EB690,
-    /// cdecl)
-    fn water_get_water_level(x: u32, y: u32, z: u32, out: GPtr<u8>, waves: u32, n: u32) -> u8 = cdecl 0x6EB690 => unported;
-    /// `CAnimManager::GetAnimBlockName(AssocGroupId)` (0x4D3A30, cdecl)
-    fn anim_get_anim_block_name(g: u32) -> u32 = cdecl 0x4D3A30 => unported;
     /// `CAnimManager::GetAnimationBlock(const char*)` (0x4D3940, cdecl)
     fn anim_get_animation_block(name: u32) -> GPtr<u8> = cdecl 0x4D3940 => unported;
     /// `CStreaming::RequestModel(int32, int32 flags)` (0x4087E0, cdecl)
     fn streaming_request_model(id: i32, flags: u32) = cdecl 0x4087E0 => unported;
-    /// `CAnimManager::AddAnimBlockRef(int32)` (0x4D3FB0, cdecl)
-    fn anim_add_anim_block_ref(i: i32) = cdecl 0x4D3FB0 => unported;
-    /// `CTaskSimpleClimb::TestForClimb(CPed*, CVector& pos, float& angle, uint8& surface, bool)` (0x6803A0, cdecl)
-    fn climb_test_for_climb(ped: GPtr<u8>, pos: GPtr<u8>, angle: GPtr<u8>, surf: GPtr<u8>, b: u32) -> GPtr<u8> = cdecl 0x6803A0 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70, `ret 4`)
-    fn entity_register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
-    /// `CAnimBlendAssociation::Start(float)` (0x4CEB70, `ret 4`)
-    fn assoc_start(a: GPtr<u8>, t: u32) = thiscall 0x4CEB70 => unported;
     /// `CStats::UpdateStatsWhenSwimming(bool underWater, bool sprinting)` (0x55C990, cdecl)
     fn stats_update_stats_when_swimming(under: u32, sprint: u32) = cdecl 0x55C990 => unported;
-    /// `CPhysical::ApplyMoveForce(float x, float y, float z)` (0x4ABBA0, `ret 0xC`)
-    fn physical_apply_move_force(p: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x4ABBA0 => unported;
-    /// `RwMatrixCreate` (0x7F2A50, cdecl)
-    fn rw_matrix_create() -> GPtr<u8> = cdecl 0x7F2A50 => unported;
-    /// `RwMatrixUpdate(RwMatrix*)` (0x7F18A0, cdecl)
-    fn rw_matrix_update(m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F18A0 => unported;
     /// `RwMatrixDestroy(RwMatrix*)` (0x7F2A20, cdecl)
     fn rw_matrix_destroy(m: GPtr<u8>) -> u32 = cdecl 0x7F2A20 => unported;
-    /// `FxSystem_c::SetMatrix(RwMatrix*)` (0x4AA630, `ret 4`)
-    fn fx_system_set_matrix(f: GPtr<u8>, m: GPtr<u8>) = thiscall 0x4AA630 => unported;
-    /// `FxSystem_c::SetLocalParticles(uint32)` (0x4AA910, `ret 4`)
-    fn fx_system_set_local_particles(f: GPtr<u8>, b: u32) = thiscall 0x4AA910 => unported;
-    /// `Fx_c::TriggerWaterSplash(CVector&)` (0x4A1070, `ret 4`)
-    fn fx_trigger_water_splash(fx: GPtr<u8>, pos: GPtr<u8>) = thiscall 0x4A1070 => unported;
-    /// `CAEPedAudioEntity::AddAudioEvent(int32 id, float volume, float speed, CPhysical*, uint8, int32, uint32)`
-    /// (0x4E2BB0, `ret 0x1C`)
-    fn ped_audio_add_audio_event(a: GPtr<u8>, id: u32, vol: u32, speed: u32, e: u32, b: u32, c: u32, d: u32) = thiscall 0x4E2BB0 => unported;
-    /// `CGeneral::GetRandomNumberInRange(int32 min, int32 max)` (0x407180, cdecl)
-    fn general_random_in_range(min: i32, max: i32) -> i32 = cdecl 0x407180 => unported;
     /// `GetAnimHierarchyFromSkinClump(RpClump*)` (0x734A40, cdecl)
     fn get_anim_hierarchy_from_skin_clump(clump: u32) -> GPtr<u8> = cdecl 0x734A40 => unported;
-    /// `RpHAnimHierarchyGetMatrixArray(RpHAnimHierarchy*)` (0x7C5120, cdecl)
-    fn hanim_get_matrix_array(h: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C5120 => unported;
     /// `RpHAnimIDGetIndex(RpHAnimHierarchy*, int32 id)` (0x7C51A0, cdecl)
     fn hanim_id_get_index(h: GPtr<u8>, id: u32) -> i32 = cdecl 0x7C51A0 => unported;
     /// `FxPrtMult_c::FxPrtMult_c(float r, float g, float b, float a, float size, float, float life)` (0x4AB290,
     /// `ret 0x1C`)
     fn fx_prt_mult_ctor(m: GPtr<u8>, r: u32, g: u32, b: u32, a: u32, size: u32, unk: u32, life: u32) = thiscall 0x4AB290 => unported;
-    /// `FxSystem_c::AddParticle(RwV3d* pos, RwV3d* vel, float time, FxPrtMult_c*, float rot, float bright, float,
-    /// uint8)` (0x4AA440, `ret 0x20`)
-    fn fx_system_add_particle(f: GPtr<u8>, pos: GPtr<u8>, vel: GPtr<u8>, t: u32, m: GPtr<u8>, rot: u32, br: u32, a: u32, b: u32) = thiscall 0x4AA440 => unported;
     /// `FxManager_c::CreateFxSystem(char* name, RwV3d* pos, RwMatrix* parent, bool)` (0x4A9BE0, `ret 0x10`)
     fn fx_manager_create_fx_system(m: GPtr<u8>, name: u32, pos: GPtr<u8>, parent: u32, b: u32) -> GPtr<u8> = thiscall 0x4A9BE0 => unported;
-    /// `FxSystem_c::PlayAndKill` (0x4AA3D0)
-    fn fx_system_play_and_kill(f: GPtr<u8>) = thiscall 0x4AA3D0 => unported;
     /// `CPedIK::RotateTorso(AnimBlendFrameData*, LimbOrientation&, bool)` (0x5FDDB0, `ret 0xC`)
     fn ped_ik_rotate_torso(ik: GPtr<u8>, frame: u32, orient: GPtr<u8>, b: u32) -> u8 = thiscall 0x5FDDB0 => unported;
-    /// `CMatrix::CMatrix(RwMatrix*, bool owns)` (0x59C050, `ret 8`)
-    fn matrix_ctor_rw(m: GPtr<u8>, rw: GPtr<u8>, owns: u32) -> GPtr<u8> = thiscall 0x59C050 => unported;
-    /// `CMatrix::SetTranslate(float, float, float)` (0x59AF40, `ret 0xC`)
-    fn matrix_set_translate(m: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x59AF40 => unported;
     /// `CMatrix::RotateY(float)` (0x59B2C0, `ret 4`)
     fn matrix_rotate_y(m: GPtr<u8>, a: u32) = thiscall 0x59B2C0 => unported;
     /// `CMatrix::RotateX(float)` (0x59B1E0, `ret 4`)
     fn matrix_rotate_x(m: GPtr<u8>, a: u32) = thiscall 0x59B1E0 => unported;
     /// `CMatrix::operator*=(const CMatrix&)` (0x411A80, `ret 4`)
     fn matrix_mul_assign(m: GPtr<u8>, o: GPtr<u8>) -> GPtr<u8> = thiscall 0x411A80 => unported;
-    /// `CMatrix::UpdateRW` (0x59BBB0)
-    fn matrix_update_rw(m: GPtr<u8>) = thiscall 0x59BBB0 => unported;
-    /// `CMatrix::~CMatrix` (0x59ACD0)
-    fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
-    /// `CEntity::UpdateRwFrame` (0x532B00)
-    fn entity_update_rw_frame(e: GPtr<u8>) = thiscall 0x532B00 => unported;
 }
 
 use sa_core::field::ptr_of as local;

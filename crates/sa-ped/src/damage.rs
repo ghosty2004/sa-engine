@@ -14,17 +14,14 @@ use crate::common::*;
 
 const _: () = assert!(sa_core::layouts::size::CPedDamageResponseCalculator == 0x14);
 
+pub use sa_world::bindings::are_friends;
+pub use sa_world::bindings::intel_get_task_fighting as get_task_fighting;
+pub use sa_world::bindings::ped_groups_are_in_same_group as are_in_same_group;
 orig! {
     /// `CPed::IsPlayer` (0x5DF8F0)
     pub fn ped_is_player(ped: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => crate::ped::is_player;
-    /// `CPedIntelligence::GetTaskFighting` (0x600F30)
-    pub fn get_task_fighting(intel: GPtr<u8>) -> GPtr<u8> = thiscall 0x600F30 => unported;
     /// `CLocalisation::KillPeds` (0x56D2C0)
     pub fn localisation_kill_peds() -> u8 = cdecl 0x56D2C0 => unported;
-    /// `CPedGroups::AreInSameGroup(const CPed*, const CPed*)` (0x5F7F40)
-    pub fn are_in_same_group(a: GPtr<u8>, b: GPtr<u8>) -> u8 = cdecl 0x5F7F40 => unported;
-    /// `CPedIntelligence::AreFriends(const CPed&, const CPed&)` (0x601D10)
-    pub fn are_friends(a: GPtr<u8>, b: GPtr<u8>) -> u8 = cdecl 0x601D10 => unported;
     /// `std::min<float>(a, b)` instance (0x404330): `b` unless `a < b`
     pub fn min_f(a: f32, b: f32) -> f64 = cdecl 0x404330 => min_f_port;
 }
@@ -198,7 +195,8 @@ pub fn account_for_ped_damage_stats(this: GPtr<u8>, ped: GPtr<u8>, _resp: GPtr<u
     }
 }
 
-
+use sa_world::bindings::event_damage_dtor;
+use sa_world::bindings::player_ped_annoy_player_ped as player_on_hit_60a040;
 orig! {
     /// `CPed::Say(uint16 phrase, uint32 startTime, float volume, bool, bool, bool)` (0x5EFFE0)
     fn ped_say(ped: GPtr<u8>, phrase: u32, start: u32, vol: f32, a: u32, b: u32, c: u32) -> u32 = thiscall 0x5EFFE0 => unported;
@@ -210,12 +208,8 @@ orig! {
     fn account_for_ped_armour_call(this: GPtr<u8>, ped: GPtr<u8>, r: GPtr<u8>) = thiscall 0x4AD550 => account_for_ped_armour;
     /// `CPedDamageResponseCalculator::ComputeWillForceDeath` (0x4AD610)
     fn compute_will_force_death_call(this: GPtr<u8>, ped: GPtr<u8>, r: GPtr<u8>) -> u8 = thiscall 0x4AD610 => compute_will_force_death;
-    /// `CPlayerPed::AnnoyPlayerPed(bool)` (0x60A040)
-    fn player_on_hit_60a040(p: GPtr<u8>, b: u32) = thiscall 0x60A040 => unported;
     /// `CEventDamage::CEventDamage(CEntity*, uint32, eWeaponType, ePedPieceTypes, uint8, bool, bool)` (0x4AD830)
     fn event_damage_ctor(e: GPtr<u8>, src: GPtr<u8>, t: u32, wt: u32, part: u32, dir: u32, a: u32, b: u32) = thiscall 0x4AD830 => unported;
-    /// `CEventDamage::~CEventDamage()` (0x4AD960)
-    fn event_damage_dtor(e: GPtr<u8>) = thiscall 0x4AD960 => unported;
     /// `CPlayerPed::MakeGroupRespondToPlayerTakingDamage(CEventDamage&)` (0x60A110)
     fn make_group_respond_to_player_taking_damage(p: GPtr<u8>, e: GPtr<u8>) = thiscall 0x60A110 => unported;
     /// `CPedGroupMembership`-style notification of the damaging player's group (0x5F6A10, on group + 0x...)

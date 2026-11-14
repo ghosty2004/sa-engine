@@ -10,6 +10,12 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::intel_find_task_by_type;
+use sa_world::bindings::membership_get_leader;
+use sa_world::bindings::task_complex_ctor;
+use sa_world::bindings::weapon_is_type_melee;
 orig! {
     /// `CPedGroupMembership::RemoveMember(int32 memberIndex)` (0x5F80D0, `ret 4`)
     fn membership_remove_member(m: GPtr<u8>, i: i32) -> u32 = thiscall 0x5F80D0 => unported;
@@ -19,22 +25,10 @@ orig! {
     fn membership_get_member(m: GPtr<u8>, i: i32) -> u32 = thiscall 0x5F69B0 => unported;
     /// `CPedList::FillUpHoles` (0x699E20)
     fn ped_list_fill_up_holes(l: GPtr<u8>) -> u32 = thiscall 0x699E20 => unported;
-    /// `CPedIntelligence::FindTaskByType(int32)` (0x600EE0, `ret 4`)
-    fn intel_find_task_by_type(i: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x600EE0 => unported;
-    /// `CWeapon::IsTypeMelee` (0x73B1C0)
-    fn weapon_is_type_melee(w: GPtr<u8>) -> u8 = thiscall 0x73B1C0 => unported;
     /// `CEntity::RegisterReference(CEntity**)` (0x571B70, `ret 4`)
     fn entity_register_reference(e: GPtr<u8>, r: GPtr<u8>) -> u32 = thiscall 0x571B70 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00, `ret 4`)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CTaskComplex::CTaskComplex` (0x61A3B0)
-    fn task_complex_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A3B0 => unported;
     /// `CPedIntelligence::IsInACarOrEnteringOne` (0x601CC0)
     fn intel_is_in_a_car_or_entering_one(i: GPtr<u8>) -> u32 = thiscall 0x601CC0 => unported;
-    /// `CPedGroupMembership::GetLeader` (0x5F69A0)
-    fn membership_get_leader(m: GPtr<u8>) -> GPtr<u8> = thiscall 0x5F69A0 => unported;
-    /// `CPed::IsPlayer` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
     /// `CTask::MakeAbortable(CPed*, int32 priority, const CEvent*)` (vtable +0x18, `ret 0xC`)
     fn v_make_abortable(t: GPtr<u8>, ped: u32, prio: i32, ev: u32) -> u8 = thiscall vslot 0x18 => unported;
     /// `CTask::Clone` (vtable +4)

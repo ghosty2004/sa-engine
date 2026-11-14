@@ -9,9 +9,8 @@ use sa_math::x87::X87;
 
 use super::common::{ftol32, x};
 
+use crate::bindings::crt_floor;
 orig! {
-    /// CRT `floor(double)` (0x8219F0), ST0
-    fn crt_floor(v: f64) -> f64 = cdecl 0x8219F0 => unported;
     /// `CWorld::TriggerExplosionSectorList(CPtrListDoubleLink&, const CVector&, float, float, CEntity*, CEntity*, bool, float)` (0x567750)
     fn trigger_explosion_sector_list(list: GPtr<u8>, point: GPtr<u8>, radius: u32, vis: u32, victim: u32, creator: u32, bomb: u32, damage: u32) = cdecl 0x567750 => unported;
 }

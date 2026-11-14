@@ -9,17 +9,13 @@ use sa_core::{hook, orig};
 
 use super::common::{g, x};
 
+pub use crate::bindings::ptr_list_double_link_flush;
+pub use sa_core::bindings::atexit;
+pub use sa_core::bindings::eh_vector_ctor;
+pub use sa_core::bindings::eh_vector_dtor;
 orig! {
-    /// CRT `eh vector constructor iterator` (0x821D30, stdcall)
-    pub fn eh_vector_ctor(arr: GPtr<u8>, size: u32, n: u32, ctor: u32, dtor: u32) = stdcall 0x821D30 => unported;
-    /// CRT `eh vector destructor iterator` (0x821E02, stdcall)
-    pub fn eh_vector_dtor(arr: GPtr<u8>, size: u32, n: u32, dtor: u32) = stdcall 0x821E02 => unported;
-    /// CRT `_atexit` (0x821D1E)
-    pub fn atexit(f: u32) -> i32 = cdecl 0x821D1E => unported;
     /// `CPedClothesDesc::CPedClothesDesc` (0x5A8020)
     pub fn ped_clothes_desc_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x5A8020 => unported;
-    /// `CPtrListDoubleLink::Flush` (0x552470)
-    pub fn ptr_list_double_link_flush(this: GPtr<u8>) = thiscall 0x552470 => unported;
 }
 
 /// `__init_g_96a718` (0x849B20): `[0x96A718] = [0x96A714] * 10.0` (f32).

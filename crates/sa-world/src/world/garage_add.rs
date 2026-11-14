@@ -7,13 +7,10 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 
-orig! {
-    /// CRT `strncpy(dst, src, n)` (0x821F40)
-    fn crt_strncpy(dst: GPtr<u8>, src: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x821F40 => unported;
-}
+use sa_core::bindings::crt_strncpy;
 
 const GARAGES: usize = 0x96C048;
 const NUM_GARAGES: usize = 0x96C024;

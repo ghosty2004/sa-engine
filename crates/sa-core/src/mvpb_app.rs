@@ -141,91 +141,65 @@ mod k {
 const NEAR_K1: u32 = 0x8CD4F0;
 const NEAR_K2: u32 = 0x8CD4EC;
 
+use crate::bindings::audio_engine_service;
+use crate::bindings::camera_get_screen_fade_status;
+use crate::bindings::credits_render_credits;
+use crate::bindings::debug_display_text_buffer;
+use crate::bindings::do_fade;
+use crate::bindings::flush_obrs_printfs;
+use crate::bindings::font_draw_fonts;
+use crate::bindings::font_init_per_frame;
+use crate::bindings::get_current_time_in_cycles as timer_get_current_time_in_cycles;
+use crate::bindings::get_cycles_per_millisecond as timer_get_cycles_per_millisecond;
+use crate::bindings::get_pad as pad_get_pad;
+use crate::bindings::hud_draw_after_fade;
+use crate::bindings::link_list_clear as link_list_clear_o;
+use crate::bindings::matrix_update;
+use crate::bindings::menu_draw_front_end;
+use crate::bindings::menu_process;
+use crate::bindings::messages_display;
+use crate::bindings::pad_update_pads;
+use crate::bindings::render_weapon_peds_for_pc as vis_render_weapon_peds_for_pc;
+use crate::bindings::rgba_ctor;
+use crate::bindings::rs_camera_show_raster;
+use crate::bindings::rw_camera_begin_update;
+use crate::bindings::rw_camera_end_update;
+use crate::bindings::rw_camera_set_far_clip_plane;
+use crate::bindings::rw_camera_set_near_clip_plane;
+use crate::bindings::securom_state_display;
+use crate::bindings::sprite2d_draw_rect4;
+use crate::bindings::sprite2d_init_per_frame;
+use crate::bindings::sprite2d_set_recip_near_clip;
+use crate::bindings::sprite_draw_rect as sprite2d_draw_rect;
+use crate::bindings::timer_update;
+use crate::bindings::visibility_plugins_set_render_ware_camera as vis_set_render_ware_camera;
 orig! {
     /// `CDraw::CalculateAspectRatio()` (0x6FF420; float in ST0, popped by every caller here)
     fn draw_calculate_aspect_ratio() -> f32 = cdecl 0x6FF420 => unported;
-    /// `CTimer::Update()` (0x561B10)
-    fn timer_update() = cdecl 0x561B10 => unported;
-    /// `CTimer::GetCurrentTimeInCycles()` (0x561A80)
-    fn timer_get_current_time_in_cycles() -> u32 = cdecl 0x561A80 => crate::timer::get_current_time_in_cycles;
     /// `CTimer::GetCurrentTimeInCycles()` as the `Game::Idle` busy-wait calls it (0x53E930; a
     /// determinism-mode site: retargeted to a constant that ends the wait)
     fn timer_cycles_idle_wait() -> u32 = cdecl callsite 0x53E930 => crate::timer::get_current_time_in_cycles;
     /// `CTimer::GetCurrentTimeInCycles()` as `Game::Idle` calls it for `g_LastTickTime` (0x53E94F; a
     /// determinism-mode site: retargeted to 0)
     fn timer_cycles_idle_last_tick() -> u32 = cdecl callsite 0x53E94F => crate::timer::get_current_time_in_cycles;
-    /// `CTimer::GetCyclesPerMillisecond()` (0x561A40)
-    fn timer_get_cycles_per_millisecond() -> u32 = cdecl 0x561A40 => crate::timer::get_cycles_per_millisecond;
-    /// `CSprite2d::SetRecipNearClip()` (0x727260)
-    fn sprite2d_set_recip_near_clip() = cdecl 0x727260 => unported;
-    /// `CSprite2d::InitPerFrame()` (0x727350)
-    fn sprite2d_init_per_frame() = cdecl 0x727350 => unported;
-    /// `CFont::InitPerFrame()` (0x719800)
-    fn font_init_per_frame() = cdecl 0x719800 => unported;
     /// `CFont::SetAlphaFade(float)` (0x719500)
     fn font_set_alpha_fade(a: u32) = cdecl 0x719500 => unported;
-    /// `CFont::DrawFonts()` (0x71A210)
-    fn font_draw_fonts() = cdecl 0x71A210 => unported;
-    /// `CPad::UpdatePads()` (0x541DD0)
-    fn pad_update_pads() = cdecl 0x541DD0 => unported;
-    /// `CPad::GetPad(int)` (0x53FB70)
-    fn pad_get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CMenuManager::Process()` (0x57B440)
-    fn menu_process(this: GPtr<u8>) = thiscall 0x57B440 => unported;
-    /// `CMenuManager::DrawFrontEnd()` (0x57C290)
-    fn menu_draw_front_end(this: GPtr<u8>) = thiscall 0x57C290 => unported;
-    /// `CAudioEngine::Service()` (0x507750)
-    fn audio_engine_service(this: GPtr<u8>) = thiscall 0x507750 => unported;
     /// `CAudioEngine::DisplayRadioStationName()` (0x507030)
     fn audio_engine_display_radio_station_name(this: GPtr<u8>) = thiscall 0x507030 => unported;
     /// `CameraSize(RwCamera*, RwRect*, float viewWindow, float aspectRatio)` (0x72FC70)
     fn camera_size(cam: GPtr<u8>, rect: GPtr<u8>, view_window: u32, aspect: u32) = cdecl 0x72FC70 => unported;
-    /// `CVisibilityPlugins::SetRenderWareCamera(RwCamera*)` (0x7328C0)
-    fn vis_set_render_ware_camera(cam: GPtr<u8>) = cdecl 0x7328C0 => unported;
     /// `RwCameraClear(RwCamera*, RwRGBA*, int clearMode)` (0x7EE340)
     fn rw_camera_clear(cam: GPtr<u8>, colour: GPtr<u8>, mode: u32) -> GPtr<u8> = cdecl 0x7EE340 => unported;
     /// `RsCameraBeginUpdate(RwCamera*)` (0x619450)
     fn rs_camera_begin_update(cam: GPtr<u8>) -> i32 = cdecl 0x619450 => crate::platform::rs_camera_begin_update;
-    /// `RsCameraShowRaster(RwCamera*)` (0x619440)
-    fn rs_camera_show_raster(cam: GPtr<u8>) -> GPtr<u8> = cdecl 0x619440 => unported;
-    /// `RwCameraEndUpdate(RwCamera*)` (0x7EE180)
-    fn rw_camera_end_update(cam: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EE180 => unported;
-    /// `RwCameraBeginUpdate(RwCamera*)` (0x7EE190)
-    fn rw_camera_begin_update(cam: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EE190 => unported;
-    /// `RwCameraSetNearClipPlane(RwCamera*, float)` (0x7EE1D0)
-    fn rw_camera_set_near_clip_plane(cam: GPtr<u8>, near: u32) -> GPtr<u8> = cdecl 0x7EE1D0 => unported;
-    /// `RwCameraSetFarClipPlane(RwCamera*, float)` (0x7EE2A0)
-    fn rw_camera_set_far_clip_plane(cam: GPtr<u8>, far: u32) -> GPtr<u8> = cdecl 0x7EE2A0 => unported;
     /// `RwRenderStateSet(state, value)` (RwEngineInstance 0xC97B24, slot 0x20)
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
     /// `DefinedState()` (0x734650)
     fn defined_state() = cdecl 0x734650 => crate::input::defined_state;
-    /// `DoFade()` (0x53E600)
-    fn do_fade() = cdecl 0x53E600 => unported;
-    /// `SecuromStateDisplay()` (0x744AE0)
-    fn securom_state_display() = cdecl 0x744AE0 => unported;
-    /// `CHud::DrawAfterFade()` (0x58D490)
-    fn hud_draw_after_fade() = cdecl 0x58D490 => unported;
     /// `CHud::Draw()` (0x58FAE0)
     fn hud_draw() = cdecl 0x58FAE0 => unported;
-    /// `CMessages::Display(bool)` (0x69EFC0)
-    fn messages_display(flag: u32) = cdecl 0x69EFC0 => unported;
-    /// `CCredits::RenderCredits()` (0x5A87F0)
-    fn credits_render_credits() = cdecl 0x5A87F0 => unported;
-    /// `CDebug::DebugDisplayTextBuffer()` (0x532260)
-    fn debug_display_text_buffer() = cdecl 0x532260 => unported;
-    /// `FlushObrsPrintfs()` (0x734640)
-    fn flush_obrs_printfs() = cdecl 0x734640 => unported;
-    /// `CSprite2d::DrawRect(const CRect&, const CRGBA&, const CRGBA&, const CRGBA&, const CRGBA&)` (0x727C10)
-    fn sprite2d_draw_rect4(rect: GPtr<u8>, c1: GPtr<u8>, c2: GPtr<u8>, c3: GPtr<u8>, c4: GPtr<u8>) = cdecl 0x727C10 => unported;
-    /// `CSprite2d::DrawRect(const CRect&, const CRGBA&)` (0x727B60)
-    fn sprite2d_draw_rect(rect: GPtr<u8>, c: GPtr<u8>) = cdecl 0x727B60 => unported;
-    /// `CRGBA::CRGBA(r, g, b, a)` (0x7170C0, thiscall; bytes pushed as dwords)
-    fn rgba_ctor(this: GPtr<u8>, r: u32, g: u32, b: u32, a: u32) -> GPtr<u8> = thiscall 0x7170C0 => unported;
     /// `Light::SetLightsWithTimeOfDayColour(RpWorld*)` (0x7354E0)
     fn set_lights_with_time_of_day_colour(world: GPtr<u8>) = cdecl 0x7354E0 => unported;
-    /// `CCamera::GetScreenFadeStatus()` (0x50AE20)
-    fn camera_get_screen_fade_status(this: GPtr<u8>) -> i32 = thiscall 0x50AE20 => unported;
     /// `RsMouseSetPos(RwV2d*)` (0x6194A0)
     fn rs_mouse_set_pos(pos: GPtr<u8>) = cdecl 0x6194A0 => unported;
     /// `CRenderer::ConstructRenderList()` (0x5556E0)
@@ -244,10 +218,6 @@ orig! {
     fn mirrors_render_mirror_buffer() = cdecl 0x726090 => unported;
     /// `RenderScene()` (0x53DF40)
     fn render_scene_o() = cdecl 0x53DF40 => crate::mvpb_app::render_scene;
-    /// `CVisibilityPlugins::RenderWeaponPedsForPC()` (0x732F30)
-    fn vis_render_weapon_peds_for_pc() = cdecl 0x732F30 => unported;
-    /// `CLinkList<CPed*>::Clear()` of `ms_weaponPedsForPC` (0x53E8D0)
-    fn link_list_clear_o(this: GPtr<u8>) = thiscall 0x53E8D0 => crate::mvpb_app::link_list_clear;
     /// `RenderEffects()` (0x53E170)
     fn render_effects_o() = cdecl 0x53E170 => crate::mvpb_app::render_effects;
     /// `Render2dStuff()` (0x53E230)
@@ -258,12 +228,11 @@ orig! {
     fn camera_set_motion_blur_alpha(this: GPtr<u8>, a: i32) = thiscall 0x50BF80 => unported;
     /// `CCamera::RenderMotionBlur()` (0x50B8F0)
     fn camera_render_motion_blur(this: GPtr<u8>) = thiscall 0x50B8F0 => unported;
-    /// `CMatrix::Update()` (0x59BB60)
-    fn matrix_update(this: GPtr<u8>) = thiscall 0x59BB60 => unported;
     /// `CClouds::RenderSkyPolys()` (0x714650)
     fn clouds_render_sky_polys() = cdecl 0x714650 => unported;
 }
 
+use crate::bindings::find_player_ped;
 orig! {
     // ---- RenderScene
     fn moving_things_render_before_clouds() = cdecl 0x7178F0 => unported;
@@ -304,7 +273,6 @@ orig! {
     fn scripts_render_all_search_lights() = cdecl 0x493E30 => unported;
     fn heli_post_search_light_cone() = cdecl 0x6C46E0 => unported;
     fn weapon_effects_render() = cdecl 0x742CF0 => unported;
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
     /// `CPed::DrawTriangleForMouseRecruitPed()` (0x60BA80)
     fn ped_draw_triangle_for_mouse_recruit_ped(this: GPtr<u8>) = thiscall 0x60BA80 => unported;
     fn special_fx_render() = cdecl 0x726AD0 => unported;
@@ -314,13 +282,15 @@ orig! {
     fn post_effects_render() = cdecl 0x7046E0 => unported;
 }
 
+use crate::bindings::audio_zones_update;
+use crate::bindings::camera_draw_borders_for_wide_screen;
+use crate::bindings::scripts_process;
 orig! {
     // ---- Render2dStuff
     fn replay_display() = cdecl 0x45C210 => unported;
     /// 0x60F8C0 (no arguments; called between `CReplay::Display` and `CPickups::RenderPickUpText`)
     fn fun_0060f8c0() = cdecl 0x60F8C0 => unported;
     fn pickups_render_pick_up_text() = cdecl 0x455000 => unported;
-    fn camera_draw_borders_for_wide_screen(this: GPtr<u8>) = thiscall 0x514860 => unported;
     fn special_fx_render_2d_fxs() = cdecl 0x721660 => unported;
     fn onscreen_timer_process_for_display(this: GPtr<u8>) = thiscall 0x44CC20 => unported;
     fn darkel_draw_messages() = cdecl 0x43CEC0 => unported;
@@ -332,12 +302,9 @@ orig! {
     fn cutscene_mgr_update() = cdecl 0x4D5D00 => unported;
     fn zones_update() = cdecl 0x572D10 => unported;
     fn cover_update() = cdecl 0x6997E0 => unported;
-    /// `CAudioZones::Update(bool, CVector)` (0x5083C0; the vector by value)
-    fn audio_zones_update(force: u32, x: u32, y: u32, z: u32) = cdecl 0x5083C0 => unported;
     fn cheat_do_cheats() = cdecl 0x439AF0 => unported;
     fn clock_update() = cdecl 0x52CF10 => unported;
     fn weather_update() = cdecl 0x72B850 => unported;
-    fn scripts_process() = cdecl 0x46A000 => unported;
     fn collision_update() = cdecl 0x411E20 => unported;
     /// `CPathFind::UpdateStreaming(bool)` (0x450A60)
     fn path_find_update_streaming(this: GPtr<u8>, force: u32) = thiscall 0x450A60 => unported;
@@ -364,6 +331,9 @@ orig! {
     fn pickups_update() = cdecl 0x458DE0 => unported;
 }
 
+use crate::bindings::camera_process;
+use crate::bindings::camera_process_fade;
+use crate::bindings::pop_cycle_update;
 orig! {
     fn car_ctrl_prune_vehicles_of_interest() = cdecl 0x423F10 => unported;
     fn garages_update() = cdecl 0x44C8C0 => unported;
@@ -374,12 +344,9 @@ orig! {
     fn ropes_update() = cdecl 0x558D70 => unported;
     fn post_effects_update() = cdecl 0x7046A0 => unported;
     fn time_cycle_update() = cdecl 0x561760 => unported;
-    fn pop_cycle_update() = cdecl 0x610BF0 => unported;
     fn interesting_events_scan_for_nearby_entities(this: GPtr<u8>) = thiscall 0x605A30 => unported;
     /// `CReplay::ShouldStandardCameraBeProcessed()` (0x45C440, bool in AL)
     fn replay_should_standard_camera_be_processed() -> u8 = cdecl 0x45C440 => unported;
-    fn camera_process(this: GPtr<u8>) = thiscall 0x52B730 => unported;
-    fn camera_process_fade(this: GPtr<u8>) = thiscall 0x50B5D0 => unported;
     fn cull_zones_update() = cdecl 0x72DEC0 => unported;
     fn game_logic_update() = cdecl 0x442AD0 => unported;
     fn gang_wars_update() = cdecl 0x446610 => unported;

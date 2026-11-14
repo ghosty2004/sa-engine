@@ -54,53 +54,40 @@ const SCRIPT_SPACE: usize = 0xA49960;
 const PED_FLAGS: isize = 0x46C;
 const PED_VEHICLE: isize = 0x58C;
 
+pub use sa_core::bindings::entity_update_rw_frame as update_rw_frame;
+pub use sa_stream::bindings::setup_big_building;
+pub use sa_world::bindings::object_create;
+pub use sa_world::bindings::update_rw_matrix;
+use crate::bindings::vehicle_get_ref;
+use sa_core::bindings::get_pad;
+use sa_world::bindings::grant_ammo;
+use sa_world::bindings::pad_get_horn as get_horn;
+use sa_world::bindings::remove_from_interesting_vehicle_list;
+use sa_world::bindings::set_ped_in_as_driver_ctor;
+use sa_world::bindings::set_ped_in_as_driver_dtor;
+use sa_world::bindings::set_ped_in_as_driver_process_ped;
+use sa_world::bindings::vehicle_set_created_by as set_vehicle_created_by;
 orig! {
     /// `CRunningScript::LocateCharCharCommand(int32 command)` (0x4870F0)
     pub fn locate_char_char_command(s: Scr, command: u32) = thiscall 0x4870F0 => unported;
-    /// `CObject::Create(int32 model, bool)` (0x5A1F60)
-    pub fn object_create(model: i32, flag: i32) -> GPtr<u8> = cdecl 0x5A1F60 => unported;
     /// `CPlaceable::SetOrientation(float, float, float)` (0x439A80)
     pub fn set_orientation(e: GPtr<u8>, x: f32, y: f32, z: f32) = thiscall 0x439A80 => unported;
-    /// `CEntity::UpdateRwMatrix()` (0x446F90)
-    pub fn update_rw_matrix(e: GPtr<u8>) = thiscall 0x446F90 => unported;
-    /// `CEntity::UpdateRwFrame()` (0x532B00)
-    pub fn update_rw_frame(e: GPtr<u8>) = thiscall 0x532B00 => unported;
     /// `CBaseModelInfo` virtual slot 3 (+0x0C, `AsLodAtomicModelInfoPtr`)
     pub fn model_info_vslot_0c(mi: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x0C => unported;
-    /// `CEntity::SetupBigBuilding()` (0x533150)
-    pub fn setup_big_building(e: GPtr<u8>) = thiscall 0x533150 => unported;
     /// `CObject` virtual slot 0 (scalar deleting destructor, `delete` flag 1)
     pub fn object_delete(o: GPtr<u8>, flags: i32) = thiscall vslot 0x00 => unported;
     /// `CMissionCleanup::Process()` (0x468560)
     fn mission_cleanup_process(m: GPtr<u8>) = thiscall 0x468560 => unported;
-    /// `CPool<CVehicle>::GetRef(CVehicle*)` (0x424160), ECX = the vehicle pool
-    fn vehicle_get_ref(pool: GPtr<u8>, v: GPtr<u8>) -> i32 = thiscall 0x424160 => unported;
-    /// `CCarCtrl::RemoveFromInterestingVehicleList(CVehicle*)` (0x423ED0)
-    fn remove_from_interesting_vehicle_list(v: GPtr<u8>) = cdecl 0x423ED0 => unported;
-    /// `CVehicle::SetVehicleCreatedBy(int32)` (0x6D5D70)
-    fn set_vehicle_created_by(v: GPtr<u8>, by: i32) = thiscall 0x6D5D70 => unported;
     /// `CRunningScript::GetPadState(uint16 pad, uint16 button)` (0x485B10), AX
     fn get_pad_state(s: Scr, pad: u32, button: u32) -> u16 = thiscall 0x485B10 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    fn get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CPad::GetHorn()` (0x53FEE0), AL
-    fn get_horn(pad: GPtr<u8>) -> u8 = thiscall 0x53FEE0 => unported;
     /// `CPlayerPed::SetWantedLevel(int32)` (0x609F10)
     fn set_wanted_level(p: GPtr<u8>, level: u32) = thiscall 0x609F10 => unported;
     /// `CPlayerPed::SetWantedLevelNoDrop(int32)` (0x609F30)
     fn set_wanted_level_no_drop(p: GPtr<u8>, level: u32) = thiscall 0x609F30 => unported;
     /// `CWorld::FindPlayerWanted(int32)` (0x56E230)
     fn find_player_wanted(i: u32) -> GPtr<u8> = cdecl 0x56E230 => unported;
-    /// `CPed::GrantAmmo(eWeaponType, uint32)` (0x5DF220)
-    fn grant_ammo(p: GPtr<u8>, ty: u32, ammo: u32) = thiscall 0x5DF220 => unported;
     /// `CRunningScript::IsPedDead(CPed*)` (0x464D70), AL
     fn is_ped_dead(s: Scr, p: GPtr<u8>) -> u8 = thiscall 0x464D70 => unported;
-    /// `CTaskSimpleCarSetPedInAsDriver::CTaskSimpleCarSetPedInAsDriver(CVehicle*, CTaskUtilityLineUpPedWithCar*)` (0x6470E0)
-    fn set_ped_in_as_driver_ctor(t: GPtr<u8>, veh: GPtr<u8>, line_up: GPtr<u8>) -> GPtr<u8> = thiscall 0x6470E0 => unported;
-    /// `CTaskSimpleCarSetPedInAsDriver::ProcessPed(CPed*)` (0x64B950), AL
-    fn set_ped_in_as_driver_process_ped(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x64B950 => unported;
-    /// `CTaskSimpleCarSetPedInAsDriver::~CTaskSimpleCarSetPedInAsDriver()` (0x647170)
-    fn set_ped_in_as_driver_dtor(t: GPtr<u8>) = thiscall 0x647170 => unported;
 }
 
 /// `CPed::m_pVehicle` when `m_nPedFlags` bit 8 (in vehicle) is set, else null (`test ch,1`, then the

@@ -23,6 +23,9 @@ pub const SET_ATOMIC_RENDERER_CB: u32 = 0x4C5280;
 /// `CVisibilityPlugins::RenderWeaponCB` (0x733670), passed as callback data
 pub const RENDER_WEAPON_CB: u32 = 0x733670;
 
+pub use crate::bindings::get_first_object;
+pub use crate::bindings::set_component_atomic_alpha;
+pub use sa_core::bindings::rp_clump_for_all_atomics;
 orig! {
     /// `CClumpModelInfo::Init` (0x4C4E40)
     pub fn clump_init(this: MiPtr) = thiscall 0x4C4E40 => super::clump::init;
@@ -30,12 +33,6 @@ orig! {
     pub fn clump_set_clump(this: MiPtr, clump: GPtr<u8>) = thiscall 0x4C4F70 => super::clump::set_clump;
     /// `CClumpModelInfo::GetFrameFromName` (0x4C5400)
     pub fn get_frame_from_name(clump: GPtr<u8>, name: GPtr<u8>) -> GPtr<u8> = cdecl 0x4C5400 => super::clump::get_frame_from_name;
-    /// `RpClumpForAllAtomics` (0x749B70)
-    pub fn rp_clump_for_all_atomics(clump: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> = cdecl 0x749B70 => unported;
-    /// `RwHelper::GetFirstObject` (0x7348C0)
-    pub fn get_first_object(frame: GPtr<u8>) -> GPtr<u8> = cdecl 0x7348C0 => unported;
-    /// `CVehicle::SetComponentAtomicAlpha` (0x6D2960)
-    pub fn set_component_atomic_alpha(atomic: GPtr<u8>, alpha: i32) = cdecl 0x6D2960 => unported;
     /// `CWeaponModelInfo::~CWeaponModelInfo` (0x4C5790)
     pub fn weapon_destructor_call(this: MiPtr) = thiscall 0x4C5790 => destructor;
 }

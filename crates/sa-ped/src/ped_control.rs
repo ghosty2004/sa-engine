@@ -107,33 +107,129 @@ const CHASE_SAVED: usize = 0xB9B994;
 const CHASE_MOVED: usize = 0x8CDF21;
 const CHASE_NEAR_NODE: usize = 0x8CDF20;
 
+use crate::bindings::population_update_ped_count as update_ped_count;
+use sa_core::bindings::camera_process;
+use sa_core::bindings::camera_restore_with_jump_cut;
+use sa_core::bindings::camera_set_fade_colour;
+use sa_core::bindings::destroy_fx_system as fx_destroy_system;
+use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+use sa_core::bindings::entity_get_is_on_screen;
+use sa_core::bindings::entity_register_reference as register_reference;
+use sa_core::bindings::entity_update_rp_hanim;
+use sa_core::bindings::fx_play;
+use sa_core::bindings::general_random_int_in_range as general_get_random_number_in_range_i;
+use sa_core::bindings::get_anim_hierarchy_from_skin_clump;
+use sa_core::bindings::get_pad as pad_get_pad;
+use sa_core::bindings::intel_get_task_use_gun as get_task_use_gun;
+use sa_core::bindings::load_all_requested_models as streaming_load_all_requested_models;
+use sa_core::bindings::prune_references;
+use sa_core::bindings::random_float_in_range as general_get_random_number_in_range_f;
+use sa_core::bindings::rp_hanim_hierarchy_get_matrix_array as hanim_get_matrix_array;
+use sa_core::bindings::rp_hanim_id_get_index as hanim_id_get_index;
+use sa_core::bindings::rw_frame_update_objects;
+use sa_core::bindings::rw_v3d_transform_points;
+use sa_core::bindings::task_new as task_operator_new;
+use sa_core::bindings::timer_stop;
+use sa_core::bindings::timer_update;
+use sa_core::bindings::tm_get_active_task as task_mgr_get_active_task;
+use sa_core::bindings::tm_get_simplest_active_task as task_mgr_get_simplest_active_task;
+use sa_core::bindings::vector_magnitude;
+use sa_stream::bindings::animate_ped_col_model_skinned_world as ped_mi_animate_ped_col_model_skinned_world;
+use sa_stream::bindings::clump_get_frame_from_name;
+use sa_stream::bindings::fx_get_fx_quality;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::add_permanent_shadow;
+use sa_world::bindings::anim_get_next_association as get_next_association;
+use sa_world::bindings::audio_report_frontend_event;
+use sa_world::bindings::cam_no_rain;
+use sa_world::bindings::camera_get_game_cam_position;
+use sa_world::bindings::camera_using_1st_person_weapon_mode;
+use sa_world::bindings::clear_drunk_blur as mblur_clear_drunk_blur;
+use sa_world::bindings::clothes_get_is_wearing_balaclava as get_is_wearing_balaclava;
+use sa_world::bindings::clump_get_first_association;
+use sa_world::bindings::count_members_excluding_leader as group_count_members_excluding_leader;
+use sa_world::bindings::cull_zones_no_police;
+use sa_world::bindings::enter_car_as_driver_ctor as task_enter_car_as_driver_ctor;
+use sa_world::bindings::enter_car_as_passenger_ctor as task_enter_car_as_passenger_ctor;
+use sa_world::bindings::entity_get_col_model;
+use sa_world::bindings::entity_render;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::event_script_command_dtor;
+use sa_world::bindings::event_sound_quiet_dtor;
+use sa_world::bindings::find_player_slot_with_ped_pointer;
+use sa_world::bindings::find_player_train;
+use sa_world::bindings::floor_f;
+use sa_world::bindings::fx_add_particle;
+use sa_world::bindings::fx_copy_parent_matrix;
+use sa_world::bindings::fx_create_system;
+use sa_world::bindings::fx_set_local_particles;
+use sa_world::bindings::get_clump_alpha;
+use sa_world::bindings::get_event_global_group;
+use sa_world::bindings::get_nearest_car_door as car_enter_exit_get_nearest_car_door;
+use sa_world::bindings::get_task_jet_pack;
+use sa_world::bindings::get_task_swim;
+use sa_world::bindings::get_vehicle_appearance as vehicle_get_vehicle_appearance;
+use sa_world::bindings::get_water_level;
+use sa_world::bindings::intel_get_task_fighting as get_task_fighting;
+use sa_world::bindings::intel_get_task_hold;
+use sa_world::bindings::intel_process;
+use sa_world::bindings::is_coop_game_going_on as game_logic_is_coop_game_going_on;
+use sa_world::bindings::is_player_on_a_mission as scripts_is_player_on_a_mission;
+use sa_world::bindings::is_shallow_water;
+use sa_world::bindings::is_vision_fx_active as post_effects_is_vision_fx_active;
+use sa_world::bindings::leave_car_ctor as task_leave_car_ctor;
+use sa_world::bindings::localisation_blood;
+use sa_world::bindings::membership_get_member as group_get_member;
+use sa_world::bindings::membership_is_member as group_is_member;
+use sa_world::bindings::night_vision_set_lights as post_effects_night_vision_set_lights;
+use sa_world::bindings::pad_exit_vehicle_just_down;
+use sa_world::bindings::pad_get_exit_vehicle;
+use sa_world::bindings::pad_get_target;
+use sa_world::bindings::pad_weapon_just_down;
+use sa_world::bindings::ped_audio_add_audio_event as ped_audio_add_event;
+use sa_world::bindings::ped_is_ped_in_control as is_ped_in_control;
+use sa_world::bindings::ped_reset_gun_flash_alpha;
+use sa_world::bindings::ped_shoulder_bone_rotation;
+use sa_world::bindings::ped_weapon_audio_add_audio_event as weapon_audio_add_event;
+use sa_world::bindings::physical_get_lighting_total;
+use sa_world::bindings::placeable_get_top_direction as get_top_direction;
+use sa_world::bindings::player_clear_weapon_target;
+use sa_world::bindings::player_no_rain;
+use sa_world::bindings::process_col_models;
+use sa_world::bindings::process_line_of_sight;
+use sa_world::bindings::realtime_shadow_do_shadow_this_frame;
+use sa_world::bindings::rp_clump_render;
+use sa_world::bindings::rw_matrix_rotate;
+use sa_world::bindings::rw_matrix_scale;
+use sa_world::bindings::set_clump_alpha;
+use sa_world::bindings::set_engine_status as damage_manager_set_engine_status;
+use sa_world::bindings::set_new_record_stat as stats_set_new_record_stat;
+use sa_world::bindings::set_next_scan_code as world_set_next_scan_code;
+use sa_world::bindings::set_ped_decision_maker_type as intel_set_decision_maker_type;
+use sa_world::bindings::shadows_store_shadow_for_ped_object;
+use sa_world::bindings::skip_physics as physical_skip_physics;
+use sa_world::bindings::stats_get_fat_and_muscle_modifier;
+use sa_world::bindings::task_go_pick_up_entity_ctor;
+use sa_world::bindings::tm_find_active_task_by_type as task_mgr_find_active_task_by_type;
+use sa_world::bindings::tm_set_task as task_mgr_set_task;
+use sa_world::bindings::vector_add;
+use sa_world::bindings::vector_add_assign;
+use sa_world::bindings::vector_magnitude_sqr as magnitude_sqr;
+use sa_world::bindings::vector_mul_scalar;
+use sa_world::bindings::vector_scale as scalar_mul_vector;
+use sa_world::bindings::vector_sub;
+use sa_world::bindings::vehicle_can_be_driven;
 orig! {
-    /// `CStats::SetNewRecordStat(uint16, float)` (0x55C410)
-    fn stats_set_new_record_stat(stat: u32, v: u32) = cdecl 0x55C410 => unported;
     /// `CStats::IncrementStat(uint16, float)` (0x55C180)
     fn stats_increment_stat(stat: u32, v: u32) = cdecl 0x55C180 => unported;
     /// `CPlayerInfo::WorkOutEnergyFromHunger()` (0x56E610)
     fn player_info_work_out_energy_from_hunger(p: GPtr<u8>) = thiscall 0x56E610 => unported;
     /// `CPlayerInfo::StreamParachuteWeapon(bool)` (0x56EB30)
     fn player_info_stream_parachute_weapon(p: GPtr<u8>, b: u32) = thiscall 0x56EB30 => unported;
-    /// `CGameLogic::IsCoopGameGoingOn()` (0x441390, AL; result unused here)
-    fn game_logic_is_coop_game_going_on() -> u8 = cdecl 0x441390 => unported;
     /// `CPathFind::CalcRoadDensity(float x, float y)` (0x44EFC0, ST0)
     fn paths_calc_road_density(pf: GPtr<u8>, x: u32, y: u32) -> f64 = thiscall 0x44EFC0 => unported;
-    /// `CPad::ExitVehicleJustDown()` (0x540120, AL)
-    fn pad_exit_vehicle_just_down(pad: GPtr<u8>) -> u8 = thiscall 0x540120 => unported;
-    /// `CPad::GetExitVehicle()` (0x5400D0, AL)
-    fn pad_get_exit_vehicle(pad: GPtr<u8>) -> u8 = thiscall 0x5400D0 => unported;
-    /// `CTaskManager::GetActiveTask()` (0x681720)
-    fn task_mgr_get_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x681720 => unported;
     /// `CTask::MakeAbortable(CPed*, int32, const CEvent*)` (vtable +0x18, AL)
     fn task_make_abortable(t: GPtr<u8>, p: GPtr<u8>, prio: i32, ev: u32) -> u8 = thiscall vslot 0x18 => unported;
-    /// `CTask::operator new(uint32)` (0x61A5A0)
-    fn task_operator_new(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => unported;
-    /// `CTaskComplexLeaveCar::CTaskComplexLeaveCar(CVehicle*, int32, int32, bool, bool)` (0x63B8C0)
-    fn task_leave_car_ctor(t: GPtr<u8>, v: GPtr<u8>, a: u32, b: u32, c: u32, d: u32) -> GPtr<u8> = thiscall 0x63B8C0 => unported;
-    /// `CTaskManager::SetTask(CTask*, int32, bool)` (0x681AF0)
-    fn task_mgr_set_task(tm: GPtr<u8>, t: GPtr<u8>, slot: i32, b: u32) = thiscall 0x681AF0 => unported;
     /// `CVehicle::CanPedStepOutCar(bool)` (vtable +0xE4, AL)
     fn vehicle_can_ped_step_out_car(v: GPtr<u8>, b: u32) -> u8 = thiscall vslot 0xE4 => unported;
     /// `CVehicle::CanPedJumpOutCar(CPed*)` (vtable +0xE8, AL)
@@ -144,52 +240,18 @@ orig! {
     fn bridge_this_is_a_bridge_object_moving_up(m: i32) -> u8 = cdecl 0x41BCB0 => unported;
     /// `CPlayerInfo::FindObjectToSteal(CPed*)` (0x56DBD0)
     fn player_info_find_object_to_steal(p: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x56DBD0 => unported;
-    /// `CTaskComplexGoPickUpEntity::CTaskComplexGoPickUpEntity(CEntity*, int32)` (0x6919C0)
-    fn task_go_pick_up_entity_ctor(t: GPtr<u8>, e: GPtr<u8>, a: u32) -> GPtr<u8> = thiscall 0x6919C0 => unported;
     /// `CEventScriptCommand::CEventScriptCommand(int32, CTask*, bool)` (0x4B0A00)
     fn event_script_command_ctor(ev: GPtr<u8>, slot: i32, t: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4B0A00 => unported;
-    /// `CEventScriptCommand::~CEventScriptCommand()` (0x4B0A50)
-    fn event_script_command_dtor(ev: GPtr<u8>) = thiscall 0x4B0A50 => unported;
-    /// 0x406CE0: `floor((double)f)` as a cdecl(float) helper (ST0)
-    fn floor_f(v: f32) -> f64 = cdecl 0x406CE0 => unported;
-    /// `CWorld::SetNextScanCode()` (0x4072E0)
-    fn world_set_next_scan_code() = cdecl 0x4072E0 => unported;
     /// `CWorld::GetRepeatSector(int32, int32)` (0x4072A0)
     fn world_get_repeat_sector(x: i32, y: i32) -> GPtr<u8> = cdecl 0x4072A0 => unported;
     /// `CPlayerInfo::FindClosestCarSectorList(CPtrList&, CPed*, float x4, float*, CVehicle**)` (0x56F4E0)
     fn player_info_find_closest_car_sector_list(p: GPtr<u8>, list: GPtr<u8>, ped: GPtr<u8>, a: u32, b: u32, c: u32, d: u32, dist: GPtr<u8>, veh: GPtr<u8>) = thiscall 0x56F4E0 => unported;
-    /// `CVehicle::CanBeDriven()` (0x6D5400, AL)
-    fn vehicle_can_be_driven(v: GPtr<u8>) -> u8 = thiscall 0x6D5400 => unported;
     /// `CTaskSimpleJetPack::DropJetPack(CPed*)` (0x67B660)
     fn jet_pack_drop_jet_pack(t: GPtr<u8>, p: GPtr<u8>) = thiscall 0x67B660 => unported;
-    /// `CCarEnterExit::GetNearestCarDoor(CPed*, CVehicle*, CVector&, int32&)` (0x6528F0, AL)
-    fn car_enter_exit_get_nearest_car_door(p: GPtr<u8>, v: GPtr<u8>, pos: GPtr<u8>, door: GPtr<u8>) -> u8 = cdecl 0x6528F0 => unported;
-    /// `CTaskComplexEnterCarAsPassenger::CTaskComplexEnterCarAsPassenger(CVehicle*, int32, bool)` (0x640340)
-    fn task_enter_car_as_passenger_ctor(t: GPtr<u8>, v: GPtr<u8>, a: u32, b: u32) -> GPtr<u8> = thiscall 0x640340 => unported;
-    /// `CTaskComplexEnterCarAsDriver::CTaskComplexEnterCarAsDriver(CVehicle*)` (0x6402F0)
-    fn task_enter_car_as_driver_ctor(t: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = thiscall 0x6402F0 => unported;
-    /// `CCamera::SetFadeColour(uint8, uint8, uint8)` (0x50BF00)
-    fn camera_set_fade_colour(c: GPtr<u8>, r: u32, g: u32, b: u32) = thiscall 0x50BF00 => unported;
     /// `CCamera::Fade(float, int16)` (0x50AC20)
     fn camera_fade(c: GPtr<u8>, t: u32, dir: u32) = thiscall 0x50AC20 => unported;
-    /// `CCamera::RestoreWithJumpCut()` (0x50BAB0)
-    fn camera_restore_with_jump_cut(c: GPtr<u8>) = thiscall 0x50BAB0 => unported;
-    /// `CCamera::Process()` (0x52B730)
-    fn camera_process(c: GPtr<u8>) = thiscall 0x52B730 => unported;
-    /// `CTimer::Stop()` (0x561AA0)
-    fn timer_stop() = cdecl 0x561AA0 => unported;
     /// `CRenderer::RequestObjectsInFrustum(...)` (0x555960, two dword arguments here)
     fn renderer_request_objects_in_frustum(a: u32, b: u32) = cdecl 0x555960 => unported;
-    /// `CStreaming::LoadAllRequestedModels(bool)` (0x40EA10)
-    fn streaming_load_all_requested_models(b: u32) = cdecl 0x40EA10 => unported;
-    /// `CTimer::Update()` (0x561B10)
-    fn timer_update() = cdecl 0x561B10 => unported;
-    /// `CDamageManager::SetEngineStatus(uint32)` (0x6C22A0)
-    fn damage_manager_set_engine_status(d: GPtr<u8>, s: u32) = thiscall 0x6C22A0 => unported;
-    /// `CVehicle::GetVehicleAppearance()` (0x6D1080)
-    fn vehicle_get_vehicle_appearance(v: GPtr<u8>) -> i32 = thiscall 0x6D1080 => unported;
-    /// `CWorld::FindPlayerTrain(int32)` (0x56E160)
-    fn find_player_train(id: i32) -> GPtr<u8> = cdecl 0x56E160 => unported;
     /// `CStats::UpdateStatsWhenFlying(CVehicle*)` (0x55CC00)
     fn stats_update_when_flying(v: GPtr<u8>) = cdecl 0x55CC00 => unported;
     /// `CStats::UpdateStatsWhenOnMotorBike(CBike*)` (0x55CD60)
@@ -200,12 +262,8 @@ orig! {
     fn pad_get_ped_walk_left_right(pad: GPtr<u8>) -> u32 = thiscall 0x53FC90 => unported;
     /// `CPad::GetAccelerate()` (0x5403F0, AX)
     fn pad_get_accelerate(pad: GPtr<u8>) -> u32 = thiscall 0x5403F0 => unported;
-    /// `CTheScripts::IsPlayerOnAMission()` (0x464D50, AL)
-    fn scripts_is_player_on_a_mission() -> u8 = cdecl 0x464D50 => unported;
     /// `CPathFind::FindNodeClosestToCoors(CVector, uint8, float, bool x5)` (0x44F460, hidden return pointer)
     fn paths_find_node_closest_to_coors(pf: GPtr<u8>, out: GPtr<u8>, x: u32, y: u32, z: u32, ty: u32, dist: u32, a: u32, b: u32, c: u32, d: u32, e: u32) -> GPtr<u8> = thiscall 0x44F460 => unported;
-    /// `CCullZones::NoPolice()` (0x72DD50, AL)
-    fn cull_zones_no_police() -> u8 = cdecl 0x72DD50 => unported;
     /// `CCullZones::PoliceAbandonCars()` (0x72DD60, AL)
     fn cull_zones_police_abandon_cars() -> u8 = cdecl 0x72DD60 => unported;
     /// 0x56EC80 (proposed `CPlayerCrossHair::Process(int32, CPad*)`)
@@ -220,34 +278,14 @@ orig! {
     fn task_in_air_678e80(t: GPtr<u8>, p: GPtr<u8>) = thiscall 0x678E80 => unported;
     /// `CPedIK::PitchForSlope()` (0x5FE0E0)
     fn ped_ik_pitch_for_slope(ik: GPtr<u8>) = thiscall 0x5FE0E0 => unported;
-    /// `CClumpModelInfo::GetFrameFromName(RpClump*, const char*)` (0x4C5400)
-    fn clump_get_frame_from_name(c: GPtr<u8>, name: u32) -> GPtr<u8> = cdecl 0x4C5400 => unported;
-    /// `RwMatrixRotate(RwMatrix*, const RwV3d* axis, float angle, RwOpCombineType)` (0x7F1FD0)
-    fn rw_matrix_rotate(m: GPtr<u8>, axis: GPtr<u8>, angle: u32, combine: u32) -> GPtr<u8> = cdecl 0x7F1FD0 => unported;
-    /// `RwMatrixScale(RwMatrix*, const RwV3d*, RwOpCombineType)` (0x7F22C0)
-    fn rw_matrix_scale(m: GPtr<u8>, s: GPtr<u8>, combine: u32) -> GPtr<u8> = cdecl 0x7F22C0 => unported;
-    /// `Fx_c::GetFxQuality()` (0x49EA50)
-    fn fx_get_fx_quality(fx: GPtr<u8>) -> i32 = thiscall 0x49EA50 => unported;
-    /// `CRealTimeShadowManager::DoShadowThisFrame(CPhysical*)` (0x706BA0)
-    fn realtime_shadow_do_shadow_this_frame(m: GPtr<u8>, p: GPtr<u8>) = thiscall 0x706BA0 => unported;
-    /// `CShadows::StoreShadowForPedObject(CEntity*, float x6)` (0x707B40)
-    fn shadows_store_shadow_for_ped_object(p: GPtr<u8>, a: u32, b: u32, c: u32, d: u32, e: u32, f: u32) = cdecl 0x707B40 => unported;
-    /// `CPed::ShoulderBoneRotation(RpClump*)` (0x5DF560)
-    fn ped_shoulder_bone_rotation(c: GPtr<u8>) = cdecl 0x5DF560 => unported;
     /// `CWindModifiers::FindWindModifier(CVector, float*, float*)` (0x72C950, AL)
     fn wind_find_wind_modifier(x: u32, y: u32, z: u32, a: GPtr<u8>, b: GPtr<u8>) -> u8 = cdecl 0x72C950 => unported;
     /// `CVehicle::IsOpenTopCar()` (virtual, vtable +0x9C, AL)
     fn vehicle_is_open_top_car(v: GPtr<u8>) -> u8 = thiscall vslot 0x9C => unported;
     /// `CKeyGen::GetUppercaseKey(const char*)` (0x53CF30)
     fn keygen_get_uppercase_key(s: u32) -> u32 = cdecl 0x53CF30 => unported;
-    /// `operator*(float, const CVector&)` (0x40FE90, cdecl, hidden return pointer)
-    fn scalar_mul_vector(out: GPtr<u8>, s: f32, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE90 => unported;
     /// `Fx_c::AddBlood(CVector&, CVector&, int32, float)` (0x49EB00)
     fn fx_add_blood(fx: GPtr<u8>, p: GPtr<u8>, d: GPtr<u8>, n: i32, bright: u32) = thiscall 0x49EB00 => unported;
-    /// `CVector::Magnitude()` (0x4082C0, ST0)
-    fn vector_magnitude(v: GPtr<u8>) -> f64 = thiscall 0x4082C0 => unported;
-    /// `CPedModelInfo::AnimatePedColModelSkinnedWorld(RpClump*)` (0x4C7170)
-    fn ped_mi_animate_ped_col_model_skinned_world(mi: GPtr<u8>, c: GPtr<u8>) = thiscall 0x4C7170 => unported;
     /// `CWorld::FindPlayerSpeed(int32)` (0x56E090)
     fn find_player_speed(id: i32) -> GPtr<u8> = cdecl 0x56E090 => unported;
     /// `CPed::IsPedHeadAbovePos(float)` (0x5F02C0, AL)
@@ -258,42 +296,16 @@ orig! {
     fn rw_render_state_get(state: u32, value: GPtr<u8>) -> i32 = cdecl table 0xC97B24 0x24 => unported;
     /// `RwEngineInstance->dOpenDevice.fpRenderStateSet` (`*(0xC97B24) + 0x20`)
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `CTaskManager::FindActiveTaskByType(int32)` (0x681740)
-    fn task_mgr_find_active_task_by_type(tm: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x681740 => unported;
-    /// `CPostEffects::IsVisionFXActive()` (0x7034F0, AL)
-    fn post_effects_is_vision_fx_active() -> u8 = cdecl 0x7034F0 => unported;
     /// `CPostEffects::InfraredVisionStoreAndSetLightsForHeatObjects(CPed*)` (0x701320)
     fn post_effects_infrared_store_and_set_lights(p: GPtr<u8>) = cdecl 0x701320 => unported;
-    /// `CPostEffects::NightVisionSetLights()` (0x7012E0)
-    fn post_effects_night_vision_set_lights() = cdecl 0x7012E0 => unported;
     /// `CPostEffects::InfraredVisionRestoreLightsForHeatObjects()` (0x701410)
     fn post_effects_infrared_restore_lights() = cdecl 0x701410 => unported;
-    /// `CEntity::Render()` (0x534310)
-    fn entity_render(e: GPtr<u8>) = thiscall 0x534310 => unported;
-    /// `CPedIntelligence::GetTaskHold(bool)` (0x600FF0)
-    fn intel_get_task_hold(i: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x600FF0 => unported;
     /// `CVisibilityPlugins::AddWeaponPedForPC(CPed*)` (0x5E46D0)
     fn visibility_add_weapon_ped_for_pc(p: GPtr<u8>) = cdecl 0x5E46D0 => unported;
-    /// 0x5DF4E0 (catalogue `CPed::ResetGunFlashAlpha`)
-    fn ped_reset_gun_flash_alpha(p: GPtr<u8>) = thiscall 0x5DF4E0 => unported;
-    /// `RwV3dTransformPoints(RwV3d* out, const RwV3d* in, int32 n, const RwMatrix*)` (0x7EDD90)
-    fn rw_v3d_transform_points(out: GPtr<u8>, inp: GPtr<u8>, n: i32, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EDD90 => unported;
-    /// `RwFrameUpdateObjects(RwFrame*)` (0x7F0910)
-    fn rw_frame_update_objects(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0910 => unported;
-    /// `RpClumpRender(RpClump*)` (0x749B20)
-    fn rp_clump_render(c: GPtr<u8>) -> GPtr<u8> = cdecl 0x749B20 => unported;
-    /// `CPedIntelligence::GetTaskJetPack()` (0x601110)
-    fn get_task_jet_pack(i: GPtr<u8>) -> GPtr<u8> = thiscall 0x601110 => unported;
     /// `CTaskSimpleJetPack::RenderJetPack(CPed*)` (0x67F6A0)
     fn jet_pack_render(t: GPtr<u8>, p: GPtr<u8>) = thiscall 0x67F6A0 => unported;
-    /// `CMBlur::ClearDrunkBlur()` (0x71D780)
-    fn mblur_clear_drunk_blur() = cdecl 0x71D780 => unported;
     /// `CMBlur::SetDrunkBlur(float)` (0x71D730)
     fn mblur_set_drunk_blur(f: f32) = cdecl 0x71D730 => unported;
-    /// `CStats::GetFatAndMuscleModifier(eStatModAbilities)` (0x559AF0, ST0)
-    fn stats_get_fat_and_muscle_modifier(m: i32) -> f64 = cdecl 0x559AF0 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    fn pad_get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
     /// `CWanted::Update()` (0x562C90)
     fn wanted_update(w: GPtr<u8>) = thiscall 0x562C90 => unported;
     /// `CPad::GetWeapon(CPed*)` (0x540180, EAX tested whole)
@@ -304,24 +316,12 @@ orig! {
     fn weapon_info_get_target_head_range(i: GPtr<u8>) -> f64 = thiscall 0x743D50 => unported;
     /// `CPed::GetTransformedBonePosition(RwV3d&, ePedBones, bool)` (0x5E01C0)
     fn get_transformed_bone_position(p: GPtr<u8>, v: GPtr<u8>, bone: i32, update: u32) = thiscall 0x5E01C0 => unported;
-    /// `CVector::operator+=(const CVector&)` (0x411A00)
-    fn vector_add_assign(v: GPtr<u8>, o: GPtr<u8>) = thiscall 0x411A00 => unported;
     /// `CWeaponEffects::MarkTarget(int32, CVector, uint8 r, g, b, a, float size, uint8)` (0x742BF0; colours read as bytes)
     fn weapon_effects_mark_target(idx: u32, x: u32, y: u32, z: u32, r: u32, g: u32, b: u32, a: u32, size: u32, flag: u32) = cdecl 0x742BF0 => unported;
     /// `CPlayerPed::HandleSprintEnergy(bool, float)` (0x60A550, AL)
     fn handle_sprint_energy(p: GPtr<u8>, b: u32, f: u32) -> u8 = thiscall 0x60A550 => unported;
-    /// `CPlayerPed::ClearWeaponTarget()` (0x609C80)
-    fn player_clear_weapon_target(p: GPtr<u8>) = thiscall 0x609C80 => unported;
-    /// `CPad::WeaponJustDown(CPed*)` (0x540250, AL)
-    fn pad_weapon_just_down(pad: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x540250 => unported;
-    /// `CCamera::Using1stPersonWeaponMode()` (0x50BFF0, AL)
-    fn camera_using_1st_person_weapon_mode(c: GPtr<u8>) -> u8 = thiscall 0x50BFF0 => unported;
-    /// `CAudioEngine::ReportFrontendAudioEvent(eAudioEvents, float, float)` (0x506EA0)
-    fn audio_report_frontend_event(a: GPtr<u8>, id: u32, vol: u32, spd: u32) = thiscall 0x506EA0 => unported;
     /// `CPed::IsPedShootable()` (0x5DEFD0, AL)
     fn ped_is_ped_shootable(p: GPtr<u8>) -> u8 = thiscall 0x5DEFD0 => unported;
-    /// `CWorld::FindPlayerSlotWithPedPointer(void*)` (0x563FA0)
-    fn find_player_slot_with_ped_pointer(p: GPtr<u8>) -> i32 = cdecl 0x563FA0 => unported;
     /// `CPlayerPed::ProcessWeaponSwitch(CPad*)` (0x60D850)
     fn player_process_weapon_switch(p: GPtr<u8>, pad: GPtr<u8>) = thiscall 0x60D850 => unported;
     /// `CPlayerPed::ProcessAnimGroups()` (0x6098F0)
@@ -332,76 +332,32 @@ orig! {
     fn ped_set_look_timer(p: GPtr<u8>, t: u32) = thiscall 0x5DF8D0 => unported;
     /// `CPed::ClearLookFlag()` (0x5E1950)
     fn ped_clear_look_flag(p: GPtr<u8>) = thiscall 0x5E1950 => unported;
-    /// `CPad::GetTarget()` (0x540670, AL)
-    fn pad_get_target(pad: GPtr<u8>) -> u8 = thiscall 0x540670 => unported;
     /// `CPlayerPed::ProcessGroupBehaviour(CPad*)` (0x60D350)
     fn player_process_group_behaviour(p: GPtr<u8>, pad: GPtr<u8>) = thiscall 0x60D350 => unported;
     /// `CCarCtrl::RegisterVehicleOfInterest(CVehicle*)` (0x423DE0)
     fn car_ctrl_register_vehicle_of_interest(v: GPtr<u8>) = cdecl 0x423DE0 => unported;
-    /// `CEntity::UpdateRpHAnim()` (0x532B20)
-    fn entity_update_rp_hanim(e: GPtr<u8>) = thiscall 0x532B20 => unported;
     /// `CPad::IsDPadUpPressed()` (0x53EE60, AL)
     fn pad_is_dpad_up_pressed(pad: GPtr<u8>) -> u8 = thiscall 0x53EE60 => unported;
-    /// `CEntity::GetColModel()` (0x535300)
-    fn entity_get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => unported;
-    /// `CPedGroupMembership::CountMembersExcludingLeader()` (0x5F6AA0)
-    fn group_count_members_excluding_leader(m: GPtr<u8>) -> i32 = thiscall 0x5F6AA0 => unported;
     /// `CPedGroup::FindDistanceToNearestMember(CPed**)` (0x5FB0A0, ST0)
     fn group_find_distance_to_nearest_member(g: GPtr<u8>, out: u32) -> f64 = thiscall 0x5FB0A0 => unported;
-    /// `CPedGroupMembership::GetMember(int32)` (0x5F69B0)
-    fn group_get_member(m: GPtr<u8>, i: i32) -> GPtr<u8> = thiscall 0x5F69B0 => unported;
-    /// `CGeneral::GetRandomNumberInRange(float, float)` (0x41BD90, ST0)
-    fn general_get_random_number_in_range_f(a: f32, b: f32) -> f64 = cdecl 0x41BD90 => unported;
-    /// `CGeneral::GetRandomNumberInRange(int32, int32)` (0x407180)
-    fn general_get_random_number_in_range_i(a: i32, b: i32) -> i32 = cdecl 0x407180 => unported;
-    /// `CPhysical::GetLightingTotal()` (0x544850, ST0)
-    fn physical_get_lighting_total(p: GPtr<u8>) -> f64 = thiscall 0x544850 => unported;
     /// `CEntryExitManager::WeAreInInteriorTransition()` (0x43E400, AL)
     fn entry_exit_we_are_in_interior_transition() -> u8 = cdecl 0x43E400 => unported;
     /// `FxPrtMult_c::FxPrtMult_c(float r, g, b, a, size, unk, life)` (0x4AB290, `ret 0x1C`)
     fn fx_prt_mult_ctor(m: GPtr<u8>, r: u32, g: u32, b: u32, a: u32, size: u32, unk: u32, life: u32) = thiscall 0x4AB290 => unported;
-    /// `FxSystem_c::AddParticle(RwV3d* pos, RwV3d* vel, float time, FxPrtMult_c*, float, float, float, uint8)` (0x4AA440)
-    fn fx_add_particle(fx: GPtr<u8>, pos: GPtr<u8>, vel: GPtr<u8>, time: u32, mult: GPtr<u8>, a: u32, b: u32, c: u32, d: u32) = thiscall 0x4AA440 => unported;
     /// `SurfaceInfos_c::ProducesFootDust(uint32)` (0x55E8B0, AL)
     fn produces_foot_dust(si: GPtr<u8>, s: u32) -> u8 = thiscall 0x55E8B0 => unported;
     /// `SurfaceInfos_c::LeavesFootsteps(uint32)` (0x55E890, AL)
     fn leaves_footsteps(si: GPtr<u8>, s: u32) -> u8 = thiscall 0x55E890 => unported;
-    /// `SurfaceInfos_c::IsShallowWater(uint32)` (0x55E730, AL)
-    fn is_shallow_water(si: GPtr<u8>, s: u32) -> u8 = thiscall 0x55E730 => unported;
     /// `SurfaceInfos_c::GetAdhesionGroup(uint32)` (0x55E5C0)
     fn get_adhesion_group(si: GPtr<u8>, s: u32) -> i32 = thiscall 0x55E5C0 => unported;
     /// `CPed::GetBonePosition(RwV3d& out, ePedBones, bool)` (0x5E4280, `ret 0xC`)
     fn get_bone_position(p: GPtr<u8>, out: GPtr<u8>, bone: i32, update: u32) = thiscall 0x5E4280 => unported;
-    /// `CCullZones::CamNoRain()` (0x72DDB0, AL)
-    fn cam_no_rain() -> u8 = cdecl 0x72DDB0 => unported;
-    /// `CCullZones::PlayerNoRain()` (0x72DDC0, AL)
-    fn player_no_rain() -> u8 = cdecl 0x72DDC0 => unported;
-    /// `CWaterLevel::GetWaterLevel(float x, float y, float z, float* level, bool, CVector*)` (0x6EB690, AL)
-    fn get_water_level(x: u32, y: u32, z: u32, level: GPtr<u8>, touching: u32, normal: u32) -> u8 = cdecl 0x6EB690 => unported;
-    /// `CPlaceable::GetTopDirection()` (0x41CCB0, hidden return pointer)
-    fn get_top_direction(e: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall 0x41CCB0 => unported;
     /// `Fx_c::TriggerFootSplash(CVector&)` (0x4A1150)
     fn fx_trigger_foot_splash(fx: GPtr<u8>, pos: GPtr<u8>) = thiscall 0x4A1150 => unported;
-    /// `CAEPedAudioEntity::AddAudioEvent(int32, float, float, CPhysical*, uint8, int32, uint32)` (0x4E2BB0)
-    fn ped_audio_add_event(a: GPtr<u8>, id: u32, vol: u32, spd: u32, p: u32, b: u32, c: u32, d: u32) = thiscall 0x4E2BB0 => unported;
-    /// `RpAnimBlendClumpGetFirstAssociation(RpClump*)` (0x4D15E0)
-    fn clump_get_first_association(c: GPtr<u8>) -> GPtr<u8> = cdecl 0x4D15E0 => unported;
-    /// `RpAnimBlendGetNextAssociation(CAnimBlendAssociation*)` (0x4D6AB0)
-    fn get_next_association(a: GPtr<u8>) -> GPtr<u8> = cdecl 0x4D6AB0 => unported;
-    /// `CPedClothesDesc::GetIsWearingBalaclava()` (0x5A7950, AL)
-    fn get_is_wearing_balaclava(d: GPtr<u8>) -> u8 = thiscall 0x5A7950 => unported;
     /// `CEventSoundQuiet::CEventSoundQuiet(CEntity*, float, uint32, const CVector&)` (0x5E05B0, `ret 0x10`)
     fn event_sound_quiet_ctor(ev: GPtr<u8>, e: GPtr<u8>, vol: u32, t: u32, pos: GPtr<u8>) = thiscall 0x5E05B0 => unported;
-    /// `CEventSoundQuiet::~CEventSoundQuiet()` (0x5DEA00)
-    fn event_sound_quiet_dtor(ev: GPtr<u8>) = thiscall 0x5DEA00 => unported;
-    /// `GetEventGlobalGroup()` (0x4ABA50)
-    fn get_event_global_group() -> GPtr<u8> = cdecl 0x4ABA50 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420)
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
     /// `CPed::DoFootLanded(bool, uint8)` (0x5E5380, `ret 8`)
     fn do_foot_landed_call(p: GPtr<u8>, left: u32, wobble: u32) = thiscall 0x5E5380 => unported;
-    /// `CTaskManager::GetSimplestActiveTask()` (0x6819D0)
-    fn task_mgr_get_simplest_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x6819D0 => unported;
     /// `CTask::GetTaskType()` (vtable +0x10)
     fn task_get_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
     /// `CTaskSimpleLand::RightFootLanded()` (0x678FE0, AL)
@@ -410,58 +366,14 @@ orig! {
     fn task_land_left_foot_landed(t: GPtr<u8>) -> u8 = thiscall 0x679010 => unported;
     /// `CGeneral::LimitRadianAngle(float)` (0x53CB50, ST0)
     fn limit_radian_angle(a: f32) -> f64 = cdecl 0x53CB50 => unported;
-    /// `CPedIntelligence::GetTaskUseGun()` (0x600F70)
-    fn get_task_use_gun(i: GPtr<u8>) -> GPtr<u8> = thiscall 0x600F70 => unported;
-    /// `CPedIntelligence::GetTaskFighting()` (0x600F30)
-    fn get_task_fighting(i: GPtr<u8>) -> GPtr<u8> = thiscall 0x600F30 => unported;
     /// `SurfaceInfos_c::IsStairs(uint32)` (0x55E7B0, AL)
     fn is_stairs(si: GPtr<u8>, surface: u32) -> u8 = thiscall 0x55E7B0 => unported;
     /// `CAEPedAudioEntity::Service()` (0x4E2EE0)
     fn ped_audio_service(a: GPtr<u8>) = thiscall 0x4E2EE0 => unported;
-    /// `CPedIntelligence::GetTaskSwim()` (0x601070)
-    fn get_task_swim(intel: GPtr<u8>) -> GPtr<u8> = thiscall 0x601070 => unported;
-    /// `GetAnimHierarchyFromSkinClump(RpClump*)` (0x734A40)
-    fn get_anim_hierarchy_from_skin_clump(c: GPtr<u8>) -> GPtr<u8> = cdecl 0x734A40 => unported;
-    /// `RpHAnimIDGetIndex(RpHAnimHierarchy*, int32)` (0x7C51A0)
-    fn hanim_id_get_index(h: GPtr<u8>, id: i32) -> i32 = cdecl 0x7C51A0 => unported;
-    /// `RpHAnimHierarchyGetMatrixArray(RpHAnimHierarchy*)` (0x7C5120)
-    fn hanim_get_matrix_array(h: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C5120 => unported;
-    /// `FxManager_c::CreateFxSystem(char*, RwV3d*, RwMatrix*, bool)` (0x4A9BE0)
-    fn fx_create_system(m: GPtr<u8>, name: u32, pos: GPtr<u8>, mat: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4A9BE0 => unported;
-    /// `FxManager_c::DestroyFxSystem(FxSystem_c*)` (0x4A9810)
-    fn fx_destroy_system(m: GPtr<u8>, fx: GPtr<u8>) = thiscall 0x4A9810 => unported;
-    /// `FxSystem_c::SetLocalParticles(uint8)` (0x4AA910)
-    fn fx_set_local_particles(fx: GPtr<u8>, b: u32) = thiscall 0x4AA910 => unported;
-    /// `FxSystem_c::CopyParentMatrix()` (0x4AA890)
-    fn fx_copy_parent_matrix(fx: GPtr<u8>) = thiscall 0x4AA890 => unported;
-    /// `FxSystem_c::Play()` (0x4AA2F0)
-    fn fx_play(fx: GPtr<u8>) = thiscall 0x4AA2F0 => unported;
-    /// `CEntity::PruneReferences()` (0x571A90)
-    fn prune_references(e: GPtr<u8>) = thiscall 0x571A90 => unported;
-    /// `CVisibilityPlugins::GetClumpAlpha(RpClump*)` (0x732B20)
-    fn get_clump_alpha(c: GPtr<u8>) -> i32 = cdecl 0x732B20 => unported;
-    /// `CVisibilityPlugins::SetClumpAlpha(RpClump*, int32)` (0x732B00)
-    fn set_clump_alpha(c: GPtr<u8>, a: i32) = cdecl 0x732B00 => unported;
-    /// `CVector::MagnitudeSqr()` (0x406DA0, ST0)
-    fn magnitude_sqr(v: GPtr<u8>) -> f64 = thiscall 0x406DA0 => unported;
-    /// `CCollision::ProcessColModels(const CMatrix&, CColModel&, const CMatrix&, CColModel&, CColPoint*, CColPoint*, float*, bool)` (0x4185C0)
-    fn process_col_models(m1: GPtr<u8>, c1: GPtr<u8>, m2: GPtr<u8>, c2: GPtr<u8>, pts: u32, a: u32, b: u32, c: u32) -> i32 = cdecl 0x4185C0 => unported;
-    /// `CPedGroupMembership::IsMember(const CPed*)` (0x5F6A10, AL)
-    fn group_is_member(m: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x5F6A10 => unported;
     /// `CPed::ProcessBuoyancy()` (0x5E1FA0)
     fn process_buoyancy(p: GPtr<u8>) = thiscall 0x5E1FA0 => unported;
     /// `CPedIntelligence::ProcessFirst()` (0x6073A0)
     fn intel_process_first(i: GPtr<u8>) = thiscall 0x6073A0 => unported;
-    /// `CPedIntelligence::Process()` (0x608260)
-    fn intel_process(i: GPtr<u8>) = thiscall 0x608260 => unported;
-    /// `operator*(const CVector&, float)` (0x40FEC0, cdecl, hidden return pointer)
-    fn vector_mul_scalar(out: GPtr<u8>, v: GPtr<u8>, s: f32) -> GPtr<u8> = cdecl 0x40FEC0 => unported;
-    /// `operator-(const CVector&, const CVector&)` (0x40FE60, cdecl, hidden return pointer)
-    fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => unported;
-    /// `operator+(const CVector&, const CVector&)` (0x40FE30, cdecl, hidden return pointer)
-    fn vector_add(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE30 => unported;
-    /// `CPhysical::SkipPhysics()` (0x5433B0)
-    fn physical_skip_physics(p: GPtr<u8>) = thiscall 0x5433B0 => unported;
     /// `CPhysical::ProcessControl()` (0x5485E0)
     fn physical_process_control(p: GPtr<u8>) = thiscall 0x5485E0 => unported;
     /// `CPed::RequestDelayedWeapon()` (0x5E8910)
@@ -476,39 +388,14 @@ orig! {
     fn v_set_move_anim(p: GPtr<u8>) = thiscall vslot 0x5C => unported;
     /// `CEntity::FlagToDestroyWhenNextProcessed()` (virtual, vtable +0x54)
     fn v_flag_to_destroy(p: GPtr<u8>) = thiscall vslot 0x54 => unported;
-    /// `CLocalisation::Blood()` (0x56D230, AL)
-    fn localisation_blood() -> u8 = cdecl 0x56D230 => unported;
-    /// `CShadows::AddPermanentShadow(uint8, RwTexture*, CVector*, float x4, int16 x4, float, uint32, float)` (0x706F60;
-    /// every argument a dword on the stack)
-    fn add_permanent_shadow(ty: u32, tex: u32, pos: GPtr<u8>, fx: u32, fy: u32, sx: u32, sy: u32, r: u32, g: u32, b: u32, a: u32, dist: u32, time: u32, up: u32) = cdecl 0x706F60 => unported;
-    /// `CPopulation::UpdatePedCount(CPed*, uint8)` (0x611570)
-    fn update_ped_count(p: GPtr<u8>, b: u32) = cdecl 0x611570 => unported;
     /// `CPed::Say(uint16, uint32, float, uint8, uint8, uint8)` (0x5EFFE0, `ret 0x18`)
     fn ped_say(p: GPtr<u8>, id: u32, offset: u32, vol: u32, a: u32, b: u32, c: u32) = thiscall 0x5EFFE0 => unported;
-    /// `CAEWeaponAudioEntity::AddAudioEvent(int32)` (0x4E69F0)
-    fn weapon_audio_add_event(a: GPtr<u8>, id: u32) = thiscall 0x4E69F0 => unported;
     /// `CAEPedWeaponAudioEntity::Service()` (0x4E6AE0)
     fn weapon_audio_service(a: GPtr<u8>) = thiscall 0x4E6AE0 => unported;
     /// `CPed::ProcessControl()` (0x5E8CD0)
     fn ped_process_control_call(p: GPtr<u8>) = thiscall 0x5E8CD0 => unported;
     /// `CWeapon::Update(CPed* owner)` (0x73DB40)
     fn weapon_update(w: GPtr<u8>, owner: GPtr<u8>) = thiscall 0x73DB40 => unported;
-    /// `CPed::IsPedInControl()` (0x5E3960, AL; the result is discarded by the tail call)
-    fn is_ped_in_control(p: GPtr<u8>) -> u8 = thiscall 0x5E3960 => unported;
-    /// `CPedIntelligence::SetPedDecisionMakerType(int32)` (0x600B50)
-    fn intel_set_decision_maker_type(i: GPtr<u8>, t: i32) = thiscall 0x600B50 => unported;
-    /// `CEntity::GetIsOnScreen()` (0x534540, AL)
-    fn entity_get_is_on_screen(e: GPtr<u8>) -> u8 = thiscall 0x534540 => unported;
-    /// `CCamera::GetGameCamPosition()` (0x50AE50)
-    fn camera_get_game_cam_position(c: GPtr<u8>) -> GPtr<u8> = thiscall 0x50AE50 => unported;
-    /// `CWorld::ProcessLineOfSight(const CVector&, const CVector&, CColPoint&, CEntity*&, bool x8)` (0x56BA00, AL)
-    fn process_line_of_sight(a: GPtr<u8>, b: GPtr<u8>, cp: GPtr<u8>, ent: GPtr<u8>, b1: u32, b2: u32, b3: u32, b4: u32, b5: u32, b6: u32, b7: u32, b8: u32) -> u8 = cdecl 0x56BA00 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0, AL)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
-    fn clean_up_old_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    fn register_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571B70 => unported;
     /// `CCopPed::AddCriminalToKill(CPed*)` (0x5DDEB0, `ret 4`)
     fn cop_add_criminal_to_kill_call(cop: GPtr<u8>, criminal: GPtr<u8>) -> i32 = thiscall 0x5DDEB0 => unported;
 }

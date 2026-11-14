@@ -45,19 +45,13 @@ const K_M0_7071: u32 = 0xBF35_0481;
 const K_1_4142: u32 = 0x3FB5_0565;
 const K_5: u32 = 0x40A0_0000;
 
+pub use sa_core::bindings::cross_product;
+pub use sa_core::bindings::get_anim_hierarchy_from_skin_clump;
+pub use sa_core::bindings::rp_hanim_hierarchy_get_matrix_array;
+pub use sa_core::bindings::rp_hanim_id_get_index;
+pub use sa_core::bindings::vector_normalise;
+pub use sa_world::bindings::world_get_is_line_of_sight_clear as get_is_line_of_sight_clear;
 orig! {
-    /// `RwHelper::GetAnimHierarchyFromSkinClump(RpClump*)` (0x734A40)
-    pub fn get_anim_hierarchy_from_skin_clump(clump: GPtr<u8>) -> GPtr<u8> = cdecl 0x734A40 => unported;
-    /// `RpHAnimIDGetIndex(RpHAnimHierarchy*, int32)` (0x7C51A0)
-    pub fn rp_hanim_id_get_index(h: GPtr<u8>, id: i32) -> i32 = cdecl 0x7C51A0 => unported;
-    /// `RpHAnimHierarchyGetMatrixArray(RpHAnimHierarchy*)` (0x7C5120)
-    pub fn rp_hanim_hierarchy_get_matrix_array(h: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C5120 => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    pub fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
-    /// `CrossProduct(CVector* out, const CVector*, const CVector*)` (0x59C730), returns `out`
-    pub fn cross_product(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C730 => unported;
-    /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, bool x7)` (0x56A490, AL)
-    pub fn get_is_line_of_sight_clear(a: GPtr<u8>, b: GPtr<u8>, bu: u32, ve: u32, pe: u32, ob: u32, du: u32, st: u32, ig: u32) -> u8 = cdecl 0x56A490 => unported;
     /// `CWorld::FindGroundZFor3DCoord(float x, float y, float z, bool* found, CEntity** ent)` (0x5696C0, ST0)
     pub fn find_ground_z_for_3d_coord(px: u32, py: u32, pz: u32, found: GPtr<u8>, ent: u32) -> f64 = cdecl 0x5696C0 => unported;
 }

@@ -23,6 +23,11 @@ fn load(a: usize, n: i32) {
     load_data(g(a), n);
 }
 
+use crate::bindings::find_safe_house_index_for_garage_type;
+use crate::bindings::remove_cars_blocking_door_not_inside;
+use crate::bindings::stunt_jump_pool_new;
+use sa_core::bindings::restart_initialise;
+use sa_core::bindings::stats_increment_stat;
 orig! {
     /// `CGenericGameStorage::SaveDataToWorkBuffer(void*, int32)` (0x5D1270)
     fn save_data(p: GPtr<u8>, n: i32) -> u8 = cdecl 0x5D1270 => sa_core::save::save_data_to_work_buffer;
@@ -30,28 +35,18 @@ orig! {
     fn load_data(p: GPtr<u8>, n: i32) -> u8 = cdecl 0x5D1300 => sa_core::save::load_data_from_work_buffer;
     /// `CGarages::CloseHideOutGaragesBeforeSave()` (0x44A170)
     fn close_hide_out_garages_before_save_call() = cdecl 0x44A170 => close_hide_out_garages_before_save;
-    /// `CGarages::FindSafeHouseIndexForGarageType(eGarageType)` (0x4489F0)
-    fn find_safe_house_index_for_garage_type(ty: u32) -> i32 = cdecl 0x4489F0 => unported;
     /// `CGarage::StoreAndRemoveCarsForThisHideOut(CStoredCar*, int32)` (0x449900)
     fn store_and_remove_cars_for_this_hide_out(garage: GPtr<u8>, cars: GPtr<u8>, max: i32) = thiscall 0x449900 => unported;
-    /// `CGarage::RemoveCarsBlockingDoorNotInside()` (0x449690)
-    fn remove_cars_blocking_door_not_inside(garage: GPtr<u8>) = thiscall 0x449690 => unported;
     /// `CSaveGarage::CopyGarageIntoSaveGarage(const CGarage&)` (0x5D3020)
     fn copy_garage_into_save_garage(s: GPtr<u8>, garage: GPtr<u8>) = thiscall 0x5D3020 => super::misc2::copy_garage_into_save_garage;
     /// `CSaveGarage::CopyGarageOutOfSaveGarage(CGarage&)` (0x5D30C0)
     fn copy_garage_out_of_save_garage(s: GPtr<u8>, garage: GPtr<u8>) = thiscall 0x5D30C0 => super::misc2::copy_garage_out_of_save_garage;
-    /// `CRestart::Initialise()` (0x460630)
-    fn restart_initialise() = cdecl 0x460630 => unported;
     /// `CStats::GetStatValue(uint16)` (0x558E40, ST0)
     fn stats_get_stat_value(stat: u32) -> f32 = cdecl 0x558E40 => unported;
-    /// `CStats::IncrementStat(uint16, float)` (0x55C180)
-    fn stats_increment_stat(stat: u32, value: f32) = cdecl 0x55C180 => unported;
     /// `CStats::SetStatValue(uint16, float)` (0x55A070)
     fn stats_set_stat_value(stat: u32, value: f32) = cdecl 0x55A070 => unported;
     /// `CStats::PopulateFavoriteRadioStationList()` (0x558EC0)
     fn stats_populate_favorite_radio_station_list() = cdecl 0x558EC0 => unported;
-    /// `CPool<CStuntJump>::New()` (0x49C9E0)
-    fn stunt_jump_pool_new(pool: GPtr<u8>) -> GPtr<u8> = thiscall 0x49C9E0 => unported;
 }
 
 // ------------------------------------------------------------------------------- CGarages -------

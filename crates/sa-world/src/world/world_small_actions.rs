@@ -10,9 +10,15 @@ use sa_math::vector::CVector;
 
 use super::common::{g, rd, wr};
 
+use crate::bindings::entity_update_anim as update_anim;
+use crate::bindings::population_remove_ped as remove_ped;
+use crate::bindings::remove_from_moving_list;
+use crate::bindings::simple_transform_update_rw_matrix as transform_update_rw;
+use sa_core::bindings::entity_register_reference as register_reference;
+use sa_core::bindings::entity_update_rw_frame as update_rw_frame;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::matrix_update_rw_matrix as matrix_update_rw;
 orig! {
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    fn register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
     /// `CProjectileInfo::RemoveDetonatorProjectiles()` (0x738860)
     fn remove_detonator_projectiles() = cdecl 0x738860 => unported;
     /// `CWorld::TestSphereAgainstWorld(CVector, float, CEntity*, bool x6)` (0x569E20)
@@ -27,22 +33,8 @@ orig! {
     fn v_remove(e: GPtr<u8>) = thiscall vslot 0xC => unported;
     /// the deleting destructor (vtable +0)
     fn v_delete(e: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
-    /// `CPhysical::RemoveFromMovingList()` (0x542860)
-    fn remove_from_moving_list(e: GPtr<u8>) = thiscall 0x542860 => unported;
-    /// `FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CPopulation::RemovePed(CPed*)` (0x610F20)
-    fn remove_ped(p: GPtr<u8>) = cdecl 0x610F20 => unported;
     /// `CWorld::TestForBuildingsOnTopOfEachOther(CPtrList&)` (0x563950)
     fn test_list_for_buildings_on_top(list: GPtr<u8>) = cdecl 0x563950 => unported;
-    /// `CEntity::UpdateAnim()` (0x535F00)
-    fn update_anim(e: GPtr<u8>) = thiscall 0x535F00 => unported;
-    /// `CMatrix::UpdateRwMatrix(RwMatrix*)` (0x59AD70)
-    fn matrix_update_rw(m: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x59AD70 => unported;
-    /// `CSimpleTransform::UpdateRwMatrix(RwMatrix*)` (0x54EF40)
-    fn transform_update_rw(t: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x54EF40 => unported;
-    /// `CEntity::UpdateRwFrame()` (0x532B00)
-    fn update_rw_frame(e: GPtr<u8>) = thiscall 0x532B00 => unported;
 }
 
 /// `CWorld::RemoveEntityInsteadOfProcessingIt(CEntity* e)` (0x563A10): a ped that is the player is

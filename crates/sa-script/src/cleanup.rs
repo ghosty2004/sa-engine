@@ -13,12 +13,8 @@ const ENTRIES: u16 = 0x4B;
 /// `m_Count` (i8).
 const COUNT: isize = 0x258;
 
-orig! {
-    /// `CEntity::GetIsStatic()` (0x4633E0), AL
-    fn entity_get_is_static(e: GPtr<u8>) -> u8 = thiscall 0x4633E0 => unported;
-    /// `CPhysical::AddToMovingList()` (0x542800)
-    fn physical_add_to_moving_list(e: GPtr<u8>) = thiscall 0x542800 => unported;
-}
+use sa_world::bindings::entity_get_is_static;
+use sa_world::bindings::physical_add_to_moving_list;
 
 /// `CMissionCleanup::AddEntityToList(int32 handle, MissionCleanUpEntityType type)` (stub 0x4637E0 → 0x1565D40,
 /// `ret 8`): the first free entry (type 0, u16 counter below 75) gets `handle` (+4), then the low byte of
@@ -87,123 +83,74 @@ pub fn remove_entity_from_list(m: GPtr<u8>, handle: i32, ty: u32) {
     }
 }
 
+use crate::bindings::audio_engine_clear_mission_audio;
+use crate::bindings::camera_initialise_scriptable_components;
+use crate::bindings::camera_restore;
+use crate::bindings::clean_up_this_object as scripts_clean_up_this_object;
+use crate::bindings::clean_up_this_ped as scripts_clean_up_this_ped;
+use crate::bindings::clean_up_this_vehicle as scripts_clean_up_this_vehicle;
+use crate::bindings::clear_all_script_fire_flags as fire_manager_clear_all_script_fire_flags;
+use crate::bindings::clear_all_suppressed_car_models as scripts_clear_all_suppressed_car_models;
+use crate::bindings::clear_script_road_blocks as road_blocks_clear_script_road_blocks;
+use crate::bindings::decision_maker_unload;
+use crate::bindings::disable_random_trains as train_disable_random_trains;
+use crate::bindings::enable_ped_speech_for_script_speech as ped_enable_ped_speech_for_script_speech;
+use crate::bindings::force_group_to_always_follow as player_ped_force_group_to_always_follow;
+use crate::bindings::make_player_group_reappear as player_ped_make_player_group_reappear;
+use crate::bindings::markers_force_render;
+use crate::bindings::pad_set_drunk_input_delay;
+use crate::bindings::path_find_release_requested_nodes;
+use crate::bindings::path_find_unmark_all_road_nodes_as_dont_wander;
+use crate::bindings::phone_task_stop;
+use crate::bindings::plane_switch_ambient_planes;
+use crate::bindings::player_ped_force_group_to_never_follow;
+use crate::bindings::release_mission_trains as train_release_mission_trains;
+use crate::bindings::remove_script_checkpoint as scripts_remove_script_checkpoint;
+use crate::bindings::remove_script_effect_system as scripts_remove_script_effect_system;
+use crate::bindings::remove_script_texture_dictionary as scripts_remove_script_texture_dictionary;
+use crate::bindings::stuck_car_check_init;
+use sa_core::bindings::camera_fade;
+use sa_core::bindings::camera_set_wide_screen_off;
+use sa_core::bindings::clear_skip as game_logic_clear_skip;
+use sa_core::bindings::clear_specific_zones_to_trigger_gang_war as gang_wars_clear_specific_zones;
+use sa_core::bindings::find_player_ped as world_find_player_ped;
+use sa_core::bindings::get_pad;
+use sa_core::bindings::hud_set_help_message;
+use sa_core::bindings::player_info_make_player_safe;
+use sa_core::bindings::post_effects_script_reset_for_effects;
+use sa_core::bindings::streaming_disable_cop_bikes;
+use sa_core::bindings::time_cycle_stop_extra_colour;
+use sa_core::bindings::zones_fill_zones_with_gang_colours;
+use sa_stream::bindings::find_player_wanted as world_find_player_wanted;
+use sa_stream::bindings::set_mission_doesnt_require_special_char as streaming_set_mission_doesnt_require_special_char;
+use sa_world::bindings::all_resprays_close_or_open as garages_all_resprays_close_or_open;
+use sa_world::bindings::enable_ped_speech as ped_enable_ped_speech;
+use sa_world::bindings::fx_kill as fx_system_kill;
+use sa_world::bindings::get_actual_script_thing_index as scripts_get_actual_script_thing_index;
+use sa_world::bindings::group_intel_set_decision_maker_type;
+use sa_world::bindings::group_intel_set_default_task_allocator_type;
+use sa_world::bindings::sequence_flush;
+use sa_world::bindings::tm_find_task_by_type as task_manager_find_task_by_type;
+use sa_world::bindings::weather_release_weather;
 orig! {
     /// `CMissionCleanup::RemoveEntityFromList(int32, MissionCleanUpEntityType)` (0x4654B0, `ret 8`)
     fn cleanup_remove_entity_from_list(m: GPtr<u8>, handle: i32, ty: u32) = thiscall 0x4654B0 => crate::cleanup::remove_entity_from_list;
-    /// `CCamera::Fade(float, int16)` (0x50AC20, `ret 8`)
-    fn camera_fade(cam: GPtr<u8>, time: f32, direction: u32) = thiscall 0x50AC20 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    fn get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CPad::SetDrunkInputDelay(int32)` (0x53F910, `ret 4`)
-    fn pad_set_drunk_input_delay(pad: GPtr<u8>, d: i32) = thiscall 0x53F910 => unported;
-    /// `CTrain::DisableRandomTrains(bool)` (0x6F5DB0)
-    fn train_disable_random_trains(b: u32) = cdecl 0x6F5DB0 => unported;
-    /// `CTrain::ReleaseMissionTrains()` (0x6F6B60)
-    fn train_release_mission_trains() = cdecl 0x6F6B60 => unported;
-    /// `CPlane::SwitchAmbientPlanes(bool)` (0x6CCC50)
-    fn plane_switch_ambient_planes(b: u32) = cdecl 0x6CCC50 => unported;
-    /// `CTheZones::FillZonesWithGangColours(bool)` (0x572440)
-    fn zones_fill_zones_with_gang_colours(b: u32) = cdecl 0x572440 => unported;
-    /// `CGangWars::ClearSpecificZonesToTriggerGangWar()` (0x443FF0)
-    fn gang_wars_clear_specific_zones() = cdecl 0x443FF0 => unported;
-    /// `CGarages::AllRespraysCloseOrOpen(bool)` (0x448B30)
-    fn garages_all_resprays_close_or_open(b: u32) = cdecl 0x448B30 => unported;
-    /// `CWorld::FindPlayerWanted(int32)` (0x56E230)
-    fn world_find_player_wanted(id: i32) -> GPtr<u8> = cdecl 0x56E230 => unported;
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210)
-    fn world_find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
     /// `CPickups::RemoveMissionPickUps()` (0x456DE0)
     fn pickups_remove_mission_pickups() = cdecl 0x456DE0 => unported;
-    /// `CRoadBlocks::ClearScriptRoadBlocks()` (0x460EC0)
-    fn road_blocks_clear_script_road_blocks() = cdecl 0x460EC0 => unported;
-    /// `CStreaming::DisableCopBikes(bool)` (0x407D10)
-    fn streaming_disable_cop_bikes(b: u32) = cdecl 0x407D10 => unported;
-    /// `CPathFind::ReleaseRequestedNodes()` (0x44DD00)
-    fn path_find_release_requested_nodes(pf: GPtr<u8>) = thiscall 0x44DD00 => unported;
-    /// `CPathFind::UnMarkAllRoadNodesAsDontWander()` (0x44D400)
-    fn path_find_unmark_all_road_nodes_as_dont_wander(pf: GPtr<u8>) = thiscall 0x44D400 => unported;
     /// `CPathFind::TidyUpNodeSwitchesAfterMission()` (0x44D3B0)
     fn path_find_tidy_up_node_switches_after_mission(pf: GPtr<u8>) = thiscall 0x44D3B0 => unported;
     /// `CVehicleRecording::RemoveAllRecordingsThatArentUsed()` (0x45A160)
     fn vehicle_recording_remove_unused() = cdecl 0x45A160 => unported;
-    /// `CCamera::SetWideScreenOff()` (0x50C150)
-    fn camera_set_wide_screen_off(cam: GPtr<u8>) = thiscall 0x50C150 => unported;
-    /// `CCamera::InitialiseScriptableComponents()` (0x50D2D0)
-    fn camera_initialise_scriptable_components(cam: GPtr<u8>) = thiscall 0x50D2D0 => unported;
     /// `CCamera::ResetDuckingSystem(CPed*)` (0x50CEF0, `ret 4`)
     fn camera_reset_ducking_system(cam: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x50CEF0 => unported;
-    /// `CCamera::Restore()` (0x50B930)
-    fn camera_restore(cam: GPtr<u8>) = thiscall 0x50B930 => unported;
-    /// `CPostEffects::ScriptResetForEffects()` (0x7010F0)
-    fn post_effects_script_reset_for_effects() = cdecl 0x7010F0 => unported;
-    /// `CTimeCycle::StopExtraColour(bool)` (0x55FF20)
-    fn time_cycle_stop_extra_colour(b: u32) = cdecl 0x55FF20 => unported;
-    /// `CAudioEngine::ClearMissionAudio(uint8 slot)` (0x5072F0, `ret 4`)
-    fn audio_engine_clear_mission_audio(ae: GPtr<u8>, slot: u32) = thiscall 0x5072F0 => unported;
-    /// `CWeather::ReleaseWeather()` (0x72A510)
-    fn weather_release_weather() = cdecl 0x72A510 => unported;
-    /// `CStreaming::SetMissionDoesntRequireSpecialChar(int32)` (0x40B490)
-    fn streaming_set_mission_doesnt_require_special_char(slot: i32) = cdecl 0x40B490 => unported;
-    /// `CTheScripts::ClearAllSuppressedCarModels()` (0x46A7C0)
-    fn scripts_clear_all_suppressed_car_models() = cdecl 0x46A7C0 => unported;
-    /// `C3dMarkers::ForceRender(bool)` (0x722870)
-    fn markers_force_render(b: u32) = cdecl 0x722870 => unported;
-    /// `CPedGroupIntelligence::SetDefaultTaskAllocatorType(int32)` (0x5FBB70, `ret 4`)
-    fn group_intel_set_default_task_allocator_type(gi: GPtr<u8>, ty: i32) = thiscall 0x5FBB70 => unported;
-    /// `CPedGroupIntelligence::SetGroupDecisionMakerType(int32)` (0x5F7340, `ret 4`)
-    fn group_intel_set_decision_maker_type(gi: GPtr<u8>, ty: i32) = thiscall 0x5F7340 => unported;
-    /// `CPlayerPed::ForceGroupToAlwaysFollow(bool)` (0x60C7C0, `ret 4`)
-    fn player_ped_force_group_to_always_follow(p: GPtr<u8>, b: u32) = thiscall 0x60C7C0 => unported;
-    /// `CPlayerPed::ForceGroupToNeverFollow(bool)` (0x60C800, `ret 4`)
-    fn player_ped_force_group_to_never_follow(p: GPtr<u8>, b: u32) = thiscall 0x60C800 => unported;
-    /// `CPlayerPed::MakePlayerGroupReappear()` (0x60A4B0)
-    fn player_ped_make_player_group_reappear(p: GPtr<u8>) = thiscall 0x60A4B0 => unported;
-    /// `CPed::EnablePedSpeech()` (0x5EFF70)
-    fn ped_enable_ped_speech(p: GPtr<u8>) = thiscall 0x5EFF70 => unported;
-    /// `CPed::EnablePedSpeechForScriptSpeech()` (0x5EFF90)
-    fn ped_enable_ped_speech_for_script_speech(p: GPtr<u8>) = thiscall 0x5EFF90 => unported;
-    /// `CTaskManager::FindTaskByType(int32 slot, int32 type)` (0x6817D0, `ret 8`)
-    fn task_manager_find_task_by_type(tm: GPtr<u8>, slot: i32, ty: i32) -> GPtr<u8> = thiscall 0x6817D0 => unported;
     /// `CTask::GetTaskType()` (vtable +0x10)
     fn v_task_get_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// 0x634A40 (thiscall on the mobile phone task, `CPed*`, `ret 4`): ends the phone task
-    fn phone_task_stop(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x634A40 => unported;
-    /// `CGameLogic::ClearSkip(bool)` (0x441560)
-    fn game_logic_clear_skip(b: u32) = cdecl 0x441560 => unported;
     /// `CRestart::ClearRespawnPointForDurationOfMission()` (0x460840)
     fn restart_clear_respawn_point_for_mission() = cdecl 0x460840 => unported;
-    /// `CFireManager::ClearAllScriptFireFlags()` (0x5397A0)
-    fn fire_manager_clear_all_script_fire_flags(fm: GPtr<u8>) = thiscall 0x5397A0 => unported;
-    /// `CStuckCarCheck::Init()` (0x4639E0)
-    fn stuck_car_check_init(s: GPtr<u8>) = thiscall 0x4639E0 => unported;
-    /// `CPlayerInfo::MakePlayerSafe(bool, float)` (0x56E870, `ret 8`)
-    fn player_info_make_player_safe(info: GPtr<u8>, safe: u32, radius: f32) = thiscall 0x56E870 => unported;
-    /// `CHud::SetHelpMessage(const char*, bool quick, bool permanent, bool addToBrief)` (0x588BE0)
-    fn hud_set_help_message(text: u32, quick: u32, permanent: u32, brief: u32) = cdecl 0x588BE0 => unported;
-    /// `CTheScripts::CleanUpThisVehicle(CVehicle*)` (0x486670)
-    fn scripts_clean_up_this_vehicle(v: GPtr<u8>) = cdecl 0x486670 => unported;
-    /// `CTheScripts::CleanUpThisPed(CPed*)` (0x486300)
-    fn scripts_clean_up_this_ped(p: GPtr<u8>) = cdecl 0x486300 => unported;
-    /// `CTheScripts::CleanUpThisObject(CObject*)` (0x4866C0)
-    fn scripts_clean_up_this_object(o: GPtr<u8>) = cdecl 0x4866C0 => unported;
-    /// `CTheScripts::GetActualScriptThingIndex(int32 ref, uint8 type)` (0x4839A0)
-    fn scripts_get_actual_script_thing_index(h: i32, ty: u32) -> i32 = cdecl 0x4839A0 => unported;
-    /// `FxSystem_c::Kill()` (0x4AA3F0)
-    fn fx_system_kill(fx: GPtr<u8>) = thiscall 0x4AA3F0 => unported;
-    /// `CTheScripts::RemoveScriptEffectSystem(int32)` (0x492FD0)
-    fn scripts_remove_script_effect_system(h: i32) = cdecl 0x492FD0 => unported;
-    /// `CDecisionMakerTypesFileLoader::UnloadDecisionMaker(int32)` (0x607A70)
-    fn decision_maker_unload(i: i32) = cdecl 0x607A70 => unported;
     /// `CPedGroups::RemoveGroup(int32)` (0x5FB870)
     fn ped_groups_remove_group(g: i32) = cdecl 0x5FB870 => unported;
-    /// `CTaskComplexSequence::Flush()` (0x632C10)
-    fn sequence_flush(s: GPtr<u8>) = thiscall 0x632C10 => unported;
     /// `CTheScripts::RemoveScriptSearchLight(int32)` (0x493160)
     fn scripts_remove_script_search_light(h: i32) = cdecl 0x493160 => unported;
-    /// `CTheScripts::RemoveScriptCheckpoint(int32)` (0x4936C0)
-    fn scripts_remove_script_checkpoint(h: i32) = cdecl 0x4936C0 => unported;
-    /// `CTheScripts::RemoveScriptTextureDictionary()` (0x465A40)
-    fn scripts_remove_script_texture_dictionary() = cdecl 0x465A40 => unported;
     /// `CPedType::GetPedFlag(ePedType)` (0x608830)
     fn ped_type_get_ped_flag(ty: i32) -> u32 = cdecl 0x608830 => unported;
     /// `CPedType::ClearPedTypeAsAcquaintance(int32 acquaintance, ePedType, int32 flag)` (0x6089F0)

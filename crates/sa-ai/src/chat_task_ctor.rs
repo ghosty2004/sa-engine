@@ -2,16 +2,11 @@
 //! entry's `push <handler>` sits in the protection fragment 0x407C1D). Unverified (docs/verify/HOWTO.md).
 #![allow(clippy::unreadable_literal)]
 
-use sa_core::orig;
 
 use crate::common::*;
 
-orig! {
-    /// `CTaskComplex::CTaskComplex()` (0x61A3B0)
-    fn task_complex_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A3B0 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70, `ret 4`)
-    fn entity_register_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571B70 => unported;
-}
+use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::task_complex_ctor;
 
 /// `CTaskComplexChat` vtable
 const VTABLE: u32 = 0x8706A0;

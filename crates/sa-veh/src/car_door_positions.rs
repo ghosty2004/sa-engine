@@ -17,33 +17,22 @@ use sa_math::x87::X87;
 
 use crate::common::{jne_mask, jp5, model_info, rd, wr, x};
 
+use sa_core::bindings::matrix_mul_vec as matrix_mul_vector;
+use sa_core::bindings::tm_get_active_task as task_manager_get_active_task;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::anim_door_offsets;
+use sa_world::bindings::bike_corrected_world_door_position;
+use sa_world::bindings::multiply3x3;
+use sa_world::bindings::path_to_door_blocked;
+use sa_world::bindings::ped_groups_are_in_same_group;
+use sa_world::bindings::world_get_is_line_of_sight_clear;
+use sa_world::bindings::world_process_vertical_line;
+use sa_world::bindings::world_test_sphere_against_world;
 orig! {
-    /// `CVehicleAnimGroup::ComputeAnimDoorOffsets(CVector* ret, int door)` (0x6E3D10, `ret 8`)
-    fn anim_door_offsets(group: GPtr<u8>, out: GPtr<u8>, ty: u32) -> GPtr<u8> = thiscall 0x6E3D10 => unported;
-    /// `operator*(const CMatrix&, const CVector&)` into `out` (0x59C890)
-    fn matrix_mul_vector(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
-    /// `Multiply3x3(CVector* out, const CMatrix&, const CVector&)` (0x59C790)
-    fn multiply3x3(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C790 => unported;
-    /// `CBike::GetCorrectedWorldDoorPosition(CVector& out, CVector animOffset, CVector seat)` (0x6BF230, `ret 0x1C`)
-    fn bike_corrected_world_door_position(bike: GPtr<u8>, out: GPtr<u8>, ox: u32, oy: u32, oz: u32, sx: u32, sy: u32, sz: u32) -> GPtr<u8> = thiscall 0x6BF230 => unported;
     /// `CVehicle` virtual slot 0xD4 (ST0)
     fn vehicle_vslot_d4(v: GPtr<u8>) -> f64 = thiscall vslot 0xD4 => unported;
-    /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, bool x7)` (0x56A490)
-    fn world_get_is_line_of_sight_clear(a: GPtr<u8>, b: GPtr<u8>, bld: u32, veh: u32, ped: u32, obj: u32, dum: u32, see: u32, cam: u32) -> u8 = cdecl 0x56A490 => unported;
-    /// `CWorld::TestSphereAgainstWorld(CVector, float, CEntity*, bool x6)` (0x569E20)
-    fn world_test_sphere_against_world(cx: u32, cy: u32, cz: u32, r: u32, ignore: GPtr<u8>, b: u32, v: u32, p: u32, o: u32, d: u32, c: u32) -> GPtr<u8> = cdecl 0x569E20 => unported;
-    /// `CWorld::ProcessVerticalLine(const CVector&, float, CColPoint&, CEntity*&, bool x7)` (0x5674E0)
-    fn world_process_vertical_line(pos: GPtr<u8>, z: u32, cp: GPtr<u8>, ent: GPtr<u8>, b: u32, v: u32, p: u32, o: u32, d: u32, s: u32, l: u32) -> u8 = cdecl 0x5674E0 => unported;
-    /// `CTaskManager::GetActiveTask()` (0x681720)
-    fn task_manager_get_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x681720 => unported;
     /// `CTask::GetTaskType()` (vtable slot 0x10)
     fn task_get_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CPedGroups::AreInSameGroup(const CPed*, const CPed*)` (0x5F7F40)
-    fn ped_groups_are_in_same_group(a: GPtr<u8>, b: GPtr<u8>) -> u8 = cdecl 0x5F7F40 => unported;
-    /// `CCarEnterExit::IsPathToDoorBlockedByVehicleCollisionModel(const CPed*, CVehicle*, const CVector&)` (0x651210)
-    fn path_to_door_blocked(ped: GPtr<u8>, veh: GPtr<u8>, pos: GPtr<u8>) -> u8 = cdecl 0x651210 => unported;
     fn get_position_to_open_car_door_o(out: GPtr<u8>, veh: GPtr<u8>, door: i32) -> GPtr<u8> = cdecl 0x64E740 => get_position_to_open_car_door;
     fn is_room_for_ped_to_leave_car_o(veh: GPtr<u8>, door: i32, offset: GPtr<u8>) -> u8 = cdecl 0x6504C0 => is_room_for_ped_to_leave_car;
 }

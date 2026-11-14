@@ -48,6 +48,20 @@ const FACING: f32 = f32::from_bits(0x3F73_3333); // 0x858EF0 (0.95)
 const BLENDED: f32 = f32::from_bits(0x3F7A_E148); // 0x863E18 (0.98)
 const FAR_RANGE: f32 = 999.0; // 0x866BEC
 
+pub use sa_core::bindings::crt_acos;
+pub use sa_core::bindings::crt_free;
+pub use sa_core::bindings::entity_get_is_on_screen;
+pub use sa_core::bindings::entity_register_reference as register_reference;
+pub use sa_core::bindings::entity_update_rp_hanim;
+pub use sa_core::bindings::get_anim_hierarchy_from_skin_clump;
+pub use sa_core::bindings::ik_chain_task_blend_out;
+pub use sa_core::bindings::ped_is_alive;
+pub use sa_core::bindings::rp_hanim_hierarchy_get_matrix_array;
+pub use sa_core::bindings::rp_hanim_id_get_index;
+pub use sa_core::bindings::task_new;
+pub use sa_core::bindings::tm_get_task_secondary as task_manager_get_task_secondary;
+pub use sa_core::bindings::tm_set_task_secondary as task_manager_set_task_secondary;
+pub use sa_core::bindings::world_clear_scan_codes;
 orig! {
     /// `RwV3dTransformVector(out, in, matrix)` (0x7EDDC0)
     pub fn rw_v3d_transform_vector(out: GPtr<f32>, inp: GPtr<f32>, m: GPtr<u8>) -> GPtr<f32> = cdecl 0x7EDDC0 => unported;
@@ -63,22 +77,10 @@ orig! {
     pub fn rt_quat_transform_vectors(out: GPtr<f32>, inp: GPtr<f32>, n: i32, q: GPtr<f32>) -> GPtr<f32> = cdecl 0x7EBBB0 => unported;
     /// `RtQuatRotate(quat, axis, angle, combineOp)` (0x7EB7C0)
     pub fn rt_quat_rotate(q: GPtr<f32>, axis: GPtr<f32>, angle: f32, op: i32) -> GPtr<f32> = cdecl 0x7EB7C0 => unported;
-    /// CRT `acos(double)` (0x822394, the cdecl entry the `_CIacos` at 0x822380 shares its body with)
-    pub fn crt_acos(v: f64) -> f64 = cdecl 0x822394 => unported;
-    /// `RwHelper::GetAnimHierarchyFromSkinClump(clump)` (0x734A40)
-    pub fn get_anim_hierarchy_from_skin_clump(clump: GPtr<u8>) -> GPtr<u8> = cdecl 0x734A40 => unported;
-    /// `RpHAnimIDGetIndex(hierarchy, id)` (0x7C51A0)
-    pub fn rp_hanim_id_get_index(h: GPtr<u8>, id: i32) -> i32 = cdecl 0x7C51A0 => unported;
-    /// `RpHAnimHierarchyGetMatrixArray(hierarchy)` (0x7C5120)
-    pub fn rp_hanim_hierarchy_get_matrix_array(h: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C5120 => unported;
-    /// `CEntity::RegisterReference(CEntity** ref)` (0x571B70)
-    pub fn register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
     /// `CPed::GetBonePosition(RwV3d& out, boneTag, bool updateSkin)` (0x5E4280)
     pub fn ped_get_bone_position(ped: GPtr<u8>, out: GPtr<f32>, bone: i32, update: u32) = thiscall 0x5E4280 => unported;
     /// `operator new` (0x821195)
     pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x821195 => unported;
-    /// CRT `free` (0x8213AE)
-    pub fn crt_free(p: GPtr<u8>) = cdecl 0x8213AE => unported;
     /// `BoneNodeManager_c::GetBoneNode()` (0x617460)
     pub fn get_bone_node(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x617460 => crate::bones::manager_get_bone_node;
     /// `BoneNodeManager_c::ReturnBoneNode(node)` (0x617470)
@@ -125,40 +127,24 @@ orig! {
     pub fn call_can_accept(this: GPtr<u8>, ped: GPtr<u8>, range: f32) -> u8 = thiscall 0x618800 => can_accept;
     /// `IKChainManager_c::AbortLookAt(ped, blendTime)` (0x618280)
     pub fn call_abort_look_at(this: GPtr<u8>, ped: GPtr<u8>, time: i32) = thiscall 0x618280 => abort_look_at;
-    /// `CTaskManager::GetTaskSecondary(slot)` (0x681810)
-    pub fn task_manager_get_task_secondary(tm: GPtr<u8>, slot: i32) -> GPtr<u8> = thiscall 0x681810 => unported;
     /// `CTaskSimpleIKManager::GetTaskAtSlot(slot)` (0x6339B0)
     pub fn ik_manager_task_get_task_at_slot(t: GPtr<u8>, slot: i32) -> GPtr<u8> = thiscall 0x6339B0 => unported;
     /// `CTaskSimpleIKLookAt::GetLookAtEntity()` (0x634120)
     pub fn look_at_task_get_entity(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x634120 => unported;
     /// `CTaskSimpleIKLookAt::GetLookAtOffset(CVector* out)` (0x634130): returns out
     pub fn look_at_task_get_offset(t: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall 0x634130 => unported;
-    /// `CTaskSimpleIKChain::BlendOut(time)` (0x633C40)
-    pub fn ik_chain_task_blend_out(t: GPtr<u8>, time: i32) = thiscall 0x633C40 => unported;
     /// `CTaskSimpleIKChain::GetIKChain()` (0x633C70)
     pub fn ik_chain_task_get_ik_chain(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x633C70 => unported;
-    /// `CPed::IsAlive()` (0x5E0170)
-    pub fn ped_is_alive(ped: GPtr<u8>) -> u8 = thiscall 0x5E0170 => unported;
-    /// `CEntity::GetIsOnScreen()` (0x534540)
-    pub fn entity_get_is_on_screen(e: GPtr<u8>) -> u8 = thiscall 0x534540 => unported;
     /// `VectorSub(CVector* out, const CVector* a, const CVector* b)` (0x40FE60): out = a - b
     pub fn vector_sub(out: GPtr<f32>, a: GPtr<f32>, b: GPtr<f32>) -> GPtr<f32> = cdecl 0x40FE60 => unported;
     /// `CVector::MagnitudeSqr()` (0x406DA0): ST0
     pub fn vector_magnitude_sqr(v: GPtr<f32>) -> f64 = thiscall 0x406DA0 => unported;
     /// `RpAnimBlendClumpGetAssociation(clump, animId)` (0x4D68B0)
     pub fn rp_anim_blend_clump_get_association(clump: GPtr<u8>, anim: i32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
-    /// `CEntity::UpdateRpHAnim()` (0x532B20)
-    pub fn entity_update_rp_hanim(e: GPtr<u8>) = thiscall 0x532B20 => unported;
-    /// `CWorld::ClearScanCodes()` (0x563470)
-    pub fn world_clear_scan_codes() = cdecl 0x563470 => unported;
     /// `IKChainManager_c::CanAcceptLookAt(ped)` (0x6188B0, AL)
     pub fn call_can_accept_look_at(this: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x6188B0 => can_accept_look_at;
-    /// `CTask::operator new(uint32)` (0x61A5A0)
-    pub fn task_new(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => unported;
     /// `CTaskSimpleIKManager::CTaskSimpleIKManager()` (0x6337F0): returns `this`
     pub fn ik_manager_task_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x6337F0 => unported;
-    /// `CTaskManager::SetTaskSecondary(CTask*, slot)` (0x681B60)
-    pub fn task_manager_set_task_secondary(tm: GPtr<u8>, task: GPtr<u8>, slot: i32) = thiscall 0x681B60 => unported;
     /// `CTaskSimpleIKManager::AddIKChainTask(CTaskSimpleIKChain*, slot)` (0x633940)
     pub fn ik_manager_task_add_ik_chain_task(t: GPtr<u8>, task: GPtr<u8>, slot: i32) = thiscall 0x633940 => unported;
     /// `CTaskSimpleIKLookAt::UpdateLookAtInfo(purpose, ped, entity, time, offsetBone, CVector offset (by

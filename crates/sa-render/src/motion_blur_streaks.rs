@@ -14,13 +14,11 @@ use sa_math::x87::X87;
 
 use crate::common::{ftol32, k, rd, wr};
 
+use crate::bindings::rw_im3d_render_indexed_primitive;
+use sa_core::bindings::little_test;
 orig! {
-    /// `Common::LittleTest()` (0x541330)
-    fn little_test() = cdecl 0x541330 => unported;
     /// `RwIm3DTransform(RwIm3DVertex*, uint32 count, RwMatrix*, uint32 flags)` (0x7EF450)
     fn rw_im3d_transform(v: u32, n: u32, m: u32, flags: u32) -> u32 = cdecl 0x7EF450 => unported;
-    /// `RwIm3DRenderIndexedPrimitive(RwPrimitiveType, RwImVertexIndex*, int32)` (0x7EF550)
-    fn rw_im3d_render_indexed_primitive(ty: u32, idx: u32, n: u32) -> u32 = cdecl 0x7EF550 => unported;
     /// `RwIm3DEnd()` (0x7EF520)
     fn rw_im3d_end() -> u32 = cdecl 0x7EF520 => unported;
 }

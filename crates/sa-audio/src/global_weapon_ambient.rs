@@ -34,37 +34,27 @@ const FOGGYNESS_SF: usize = 0xC812FC;
 const CAMERA_MATRIX: usize = 0xB6F03C;
 const CAMERA_PLACEMENT_POS: usize = 0xB6F02C;
 
+use crate::bindings::ae_random_int;
+use crate::bindings::hw_is_sound_bank_loaded;
+use crate::bindings::sm_request_new_sound;
+use crate::bindings::sound_stop_sound;
+use sa_core::bindings::find_player_coors;
+use sa_core::bindings::general_random_int_in_range as random_int;
+use sa_core::bindings::random_float_in_range as random_float;
+use sa_core::bindings::vector_magnitude;
+use sa_world::bindings::placeable_set_posn;
+use sa_world::bindings::sound_dtor;
+use sa_world::bindings::vector_magnitude_sqr;
+use sa_world::bindings::vector_sub;
 orig! {
-    /// `CPlaceable::SetPosn(const CVector&)` (0x4241C0)
-    fn placeable_set_posn(e: GPtr<u8>, pos: GPtr<u8>) = thiscall 0x4241C0 => unported;
-    /// `CGeneral::GetRandomNumberInRange(float, float)` (0x41BD90, ST0)
-    fn random_float(min: f32, max: f32) -> f64 = cdecl 0x41BD90 => unported;
-    /// `CGeneral::GetRandomNumberInRange(int, int)` (0x407180)
-    fn random_int(min: i32, max: i32) -> i32 = cdecl 0x407180 => unported;
     /// `std::min<float>(a, b)` by value (0x404330, ST0)
     fn min_float(a: u32, b: u32) -> f64 = cdecl 0x404330 => unported;
     /// `CAEGlobalWeaponAudioEntity::PickAmbientGunFire(int32* shots, eWeaponType*, uint32* delay)` (0x4DEFE0)
     fn pick_ambient_gun_fire(this: GPtr<u8>, shots: GPtr<u8>, weapon: GPtr<u8>, delay: GPtr<u8>) = thiscall 0x4DEFE0 => unported;
-    /// `VectorSub(CVector* out, const CVector* a, const CVector* b)` (0x40FE60, returns out)
-    fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => unported;
-    /// `CVector::MagnitudeSqr()` (0x406DA0, ST0), `CVector::Magnitude()` (0x4082C0, ST0)
-    fn vector_magnitude_sqr(v: GPtr<u8>) -> f64 = thiscall 0x406DA0 => unported;
-    fn vector_magnitude(v: GPtr<u8>) -> f64 = thiscall 0x4082C0 => unported;
-    /// `CAEAudioHardware::IsSoundBankLoaded(bank, slot)` (0x4D88C0)
-    fn hw_is_sound_bank_loaded(hw: GPtr<u8>, bank: u32, slot: u32) -> u8 = thiscall 0x4D88C0 => unported;
     /// `CAESound::Initialise(...)` (0x4EFE50, `ret 0x38`)
     fn sound_initialise(sound: GPtr<u8>, slot: u32, sfx: u32, entity: GPtr<u8>, px: u32, py: u32, pz: u32, vol: u32, max_dist: u32, speed: u32, doppler: u32, delay: u32, flags: u32, freq_var: u32, play_time: u32) = thiscall 0x4EFE50 => unported;
-    /// `CAESoundManager::RequestNewSound(CAESound*)` (0x4EFB10)
-    fn sm_request_new_sound(sm: GPtr<u8>, sound: GPtr<u8>) -> u32 = thiscall 0x4EFB10 => unported;
-    /// `CAESound::StopSound()` (0x4EF1C0), `CAESound::~CAESound()` (0x4EF660)
-    fn sound_stop_sound(sound: GPtr<u8>) = thiscall 0x4EF1C0 => crate::sound::stop_sound;
-    fn sound_dtor(sound: GPtr<u8>) = thiscall 0x4EF660 => unported;
-    /// `FindPlayerCoors(CVector* out, int32 player)` (0x56E010)
-    fn find_player_coors(out: GPtr<u8>, id: i32) -> GPtr<u8> = cdecl 0x56E010 => unported;
     /// `CAudioEngine::ReportWeaponEvent(event, weaponType, CPhysical*)` (0x506F40)
     fn report_weapon_event(engine: GPtr<u8>, event: u32, weapon: u32, physical: u32) = thiscall 0x506F40 => crate::engine::report_weapon_event;
-    /// `CAEAudioUtility::GetRandomNumberInRange<int32>(min, max)` (0x4D9C10)
-    fn ae_random_int(min: i32, max: i32) -> i32 = cdecl 0x4D9C10 => crate::utility::get_random_number_in_range_int;
 }
 
 use sa_core::field::gr32 as r32;

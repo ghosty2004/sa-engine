@@ -36,17 +36,15 @@ const K_MINUS_100: u32 = 0xC2C8_0000;
 /// `CPopulation::ms_nTotalMissionPeds` 0xC0EC24.
 const TOTAL_MISSION_PEDS: usize = 0xC0EC24;
 
+pub use crate::bindings::vehicle_get_ref;
+pub use sa_world::bindings::civilian_ped_ctor;
+pub use sa_world::bindings::cop_ped_ctor;
+pub use sa_world::bindings::emergency_ped_ctor;
+pub use sa_world::bindings::ped_new;
+pub use sa_world::bindings::set_game_clock;
 orig! {
     /// `CRunningScript::GetCorrectPedModelIndexForEmergencyServiceType(ePedType, int32*)` (0x464F50)
     pub fn get_correct_ped_model_index(s: Scr, ped_type: i32, model: GPtr<u32>) = thiscall 0x464F50 => unported;
-    /// `CPed::operator new(uint32)` (0x5E4720)
-    pub fn ped_new(size: u32) -> GPtr<u8> = cdecl 0x5E4720 => unported;
-    /// `CCopPed::CCopPed(eCopType)` (0x5DDC60), returns this
-    pub fn cop_ped_ctor(p: GPtr<u8>, cop_type: u32) -> GPtr<u8> = thiscall 0x5DDC60 => unported;
-    /// `CCivilianPed::CCivilianPed(ePedType, uint32 model)` (0x5DDB70), returns this
-    pub fn civilian_ped_ctor(p: GPtr<u8>, ped_type: u32, model: u32) -> GPtr<u8> = thiscall 0x5DDB70 => unported;
-    /// `CEmergencyPed::CEmergencyPed(ePedType, uint32 model)` (0x5DE340), returns this
-    pub fn emergency_ped_ctor(p: GPtr<u8>, ped_type: u32, model: u32) -> GPtr<u8> = thiscall 0x5DE340 => unported;
     /// `CTaskSimpleStandStill::CTaskSimpleStandStill(int32 time, bool looped, bool hold, float blend)` (0x62F310)
     pub fn task_simple_stand_still_ctor(t: GPtr<u8>, time: i32, looped: i32, hold: i32, blend: f32) -> GPtr<u8> = thiscall 0x62F310 => unported;
     /// `CPlaceable::SetPosn(const CVector&)` (0x4241C0)
@@ -56,14 +54,10 @@ orig! {
     /// `CCarCtrl::CreateCarForScript(int32 model, CVector pos, bool mission)` (0x431F80): the vector
     /// is passed by value (three stack words)
     pub fn create_car_for_script(model: u32, x: u32, y: u32, z: u32, mission: u32) -> GPtr<u8> = cdecl 0x431F80 => unported;
-    /// `CPool<CVehicle>::GetRef(CVehicle*)` (0x424160), ECX = the vehicle pool
-    pub fn vehicle_get_ref(pool: GPtr<u8>, v: GPtr<u8>) -> i32 = thiscall 0x424160 => unported;
     /// `CVehicle` virtual slot 0 (scalar deleting destructor, flag 1)
     pub fn vehicle_delete(v: GPtr<u8>, flags: i32) = thiscall vslot 0x00 => unported;
     /// `CMessages::ClearMessages(bool)` (0x69DCD0)
     pub fn clear_messages(flag: i32) = cdecl 0x69DCD0 => unported;
-    /// `CClock::SetGameClock(uint8 h, uint8 m, uint8 day)` (0x52D150)
-    pub fn set_game_clock(h: u32, m: u32, day: u32) = cdecl 0x52D150 => unported;
 }
 
 /// `CTimer::ms_fTimeStep` 0xB7CB5C.
@@ -76,43 +70,29 @@ orig! {
     fn crt_rand() -> u32 = cdecl 0x821B1E => unported;
 }
 
+use crate::bindings::highlight_important_area;
+use crate::bindings::set_coords_of_script_car;
+use crate::bindings::vehicle_41bdd0;
+use sa_core::bindings::add_big_message;
+use sa_core::bindings::add_message_jump;
+use sa_core::bindings::text_get;
+use sa_stream::bindings::remove_this_ped;
+use sa_world::bindings::add_message_q;
+use sa_world::bindings::find_ground_z_for_coord as ground_z;
+use sa_world::bindings::get_distance_from_centre_of_mass_to_base_of_model as distance_to_base;
+use sa_world::bindings::is_within_area as is_within_area_2d;
+use sa_world::bindings::join_car_with_road_system;
 orig! {
-    /// `CTheScripts::RemoveThisPed(CPed*)` (0x486240)
-    fn remove_this_ped(p: GPtr<u8>) = cdecl 0x486240 => unported;
     /// `CRunningScript::SetCharCoordinates(CPed*, float x, float y, float z, bool, bool)` (0x464DC0);
     /// floats raw
     fn set_char_coordinates(s: Scr, p: GPtr<u8>, x: u32, y: u32, z: u32, a: u32, b: u32) = thiscall 0x464DC0 => unported;
-    /// `CPlaceable::IsWithinArea(float x1, float y1, float x2, float y2)` (0x54F200), AL; floats raw
-    fn is_within_area_2d(e: GPtr<u8>, x1: u32, y1: u32, x2: u32, y2: u32) -> u8 = thiscall 0x54F200 => unported;
     /// `CPlaceable::IsWithinArea(float x1, float y1, float z1, float x2, float y2, float z2)` (0x54F2B0), AL
     fn is_within_area_3d(e: GPtr<u8>, x1: u32, y1: u32, z1: u32, x2: u32, y2: u32, z2: u32) -> u8 = thiscall 0x54F2B0 => unported;
-    /// `CTheScripts::HighlightImportantArea(uint32 id, float x1, float y1, float x2, float y2, float z)`
-    /// (0x485E00); floats raw
-    fn highlight_important_area(id: u32, x1: u32, y1: u32, x2: u32, y2: u32, z: u32) = cdecl 0x485E00 => unported;
-    /// `CWorld::FindGroundZForCoord(float, float)` (0x569660), floats raw, ST0 (exact as f64)
-    fn ground_z(x: u32, y: u32) -> f64 = cdecl 0x569660 => unported;
-    /// `CEntity::GetDistanceFromCentreOfMassToBaseOfModel()` (0x536BE0, called directly), ST0 (exact as f64)
-    fn distance_to_base(e: GPtr<u8>) -> f64 = thiscall 0x536BE0 => unported;
     /// `CCarCtrl::JoinCarWithRoadSystemGotoCoors(CVehicle*, const CVector&, bool, bool)` (0x42F870), AL
     fn join_car_with_road_system_goto_coors(v: GPtr<u8>, pos: GPtr<u32>, a: u32, b: u32) -> u8 = cdecl 0x42F870 => unported;
-    /// `CCarCtrl::JoinCarWithRoadSystem(CVehicle*)` (0x42F5A0)
-    fn join_car_with_road_system(v: GPtr<u8>) = cdecl 0x42F5A0 => unported;
-    /// Unnamed thiscall at 0x41BDD0 (a `.HOODLUM` stub) taking a bool, called on the vehicle with `true`
-    /// after the car-mission commands set the autopilot
-    fn vehicle_41bdd0(v: GPtr<u8>, b: u32) = thiscall 0x41BDD0 => unported;
     /// Unnamed thiscall at 0x463490 (a `.HOODLUM` stub) on the vehicle's `CAutoPilot` (+0x390) taking
     /// the mission byte (presumably `CAutoPilot::SetCarMission`)
     fn autopilot_463490(ap: GPtr<u8>, mission: u32) = thiscall 0x463490 => unported;
-    /// `CCarCtrl::SetCoordsOfScriptCar(CVehicle*, float x, float y, float z, bool, bool)` (0x4342A0); floats raw
-    fn set_coords_of_script_car(v: GPtr<u8>, x: u32, y: u32, z: u32, a: u32, b: u32) = cdecl 0x4342A0 => unported;
-    /// `CText::Get(const char*)` (0x6A0050), ECX = `TheText`
-    fn text_get(t: GPtr<u8>, key: GPtr<u8>) -> GPtr<u8> = thiscall 0x6A0050 => unported;
-    /// `CMessages::AddBigMessage(const char*, uint32 time, uint16 style)` (0x69F2B0)
-    fn add_big_message(text: GPtr<u8>, time: u32, style: u32) = cdecl 0x69F2B0 => unported;
-    /// `CMessages::AddMessageQ(const char*, uint32 time, uint16 flag, bool previousBrief)` (0x69F0B0)
-    fn add_message_q(text: GPtr<u8>, time: u32, flag: u32, brief: u32) = cdecl 0x69F0B0 => unported;
-    /// `CMessages::AddMessageJump(const char*, uint32 time, uint16 flag, bool previousBrief)` (0x69F1E0)
-    fn add_message_jump(text: GPtr<u8>, time: u32, flag: u32, brief: u32) = cdecl 0x69F1E0 => unported;
     /// `CClock::GetGameClockMinutesUntil(uint8 h, uint8 m)` (0x52CEB0)
     fn get_game_clock_minutes_until(h: u32, m: u32) -> u32 = cdecl 0x52CEB0 => unported;
     /// `CCamera::IsSphereVisible(const CVector&, float)` (0x420D40), AL; the float raw

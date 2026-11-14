@@ -14,6 +14,39 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::anim_blend_animation;
+use crate::bindings::clump_get_association;
+use crate::bindings::compute_knock_off_bike_response;
+use crate::bindings::damage_4abca0;
+use crate::bindings::dragged_out_car_dtor;
+use crate::bindings::event_leader_exited_car_as_driver_ctor as leader_exited_car_ctor;
+use crate::bindings::fall_and_get_up_ctor;
+use crate::bindings::in_air_and_land_ctor;
+use crate::bindings::intel_add_task_phys_response;
+use crate::bindings::stealth_kill_ctor;
+use sa_core::bindings::intel_get_task_use_gun;
+use sa_core::bindings::ped_is_alive;
+use sa_core::bindings::tm_get_active_task;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::anim_get_anim_association;
+use sa_world::bindings::damage_calc_compute_damage_response as calc_compute_damage_response;
+use sa_world::bindings::damage_calc_dtor as calc_dtor;
+use sa_world::bindings::die_ctor;
+use sa_world::bindings::event_damage_affects_ped as damage_affects_ped;
+use sa_world::bindings::event_damage_dtor as damage_dtor;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::event_group_event_ctor as group_event_ctor;
+use sa_world::bindings::event_group_event_dtor as group_event_dtor;
+use sa_world::bindings::event_group_get_event_of_type;
+use sa_world::bindings::group_intelligence_add_event as pgi_add_event;
+use sa_world::bindings::kob_ctor;
+use sa_world::bindings::kob_dtor;
+use sa_world::bindings::membership_get_leader;
+use sa_world::bindings::membership_is_leader;
+use sa_world::bindings::ped_groups_get_peds_group;
+use sa_world::bindings::sequence_add_task;
+use sa_world::bindings::sequence_ctor;
+use sa_world::bindings::tm_find_active_task_by_type;
 orig! {
     /// `CEvent::GetEventType` (vtable +4)
     fn v_event_type(e: GPtr<u8>) -> i32 = thiscall vslot 0x4 => unported;
@@ -21,22 +54,10 @@ orig! {
     fn v_event_source(e: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x28 => unported;
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CPed::IsAlive` (0x5E0170)
-    fn ped_is_alive(p: GPtr<u8>) -> u8 = thiscall 0x5E0170 => unported;
-    /// `CPed::IsPlayer` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
     /// `CEventDamage::IsSameEventForAI(CEventDamage*)` (0x4ADBF0, `ret 4`)
     fn damage_same_event_for_ai(e: GPtr<u8>, o: GPtr<u8>) -> u8 = thiscall 0x4ADBF0 => unported;
-    /// `FUN_004abca0` (CEventDamage, `ret 0`)
-    fn damage_4abca0(e: GPtr<u8>) -> u8 = thiscall 0x4ABCA0 => unported;
-    /// `CTaskManager::FindActiveTaskByType(int32)` (0x681740, `ret 4`)
-    fn tm_find_active_task_by_type(tm: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x681740 => unported;
-    /// `CTaskManager::GetActiveTask` (0x681720)
-    fn tm_get_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x681720 => unported;
     /// `CEventHandler::ComputePersonalityResponseToDamage(CEventDamage*, CPed*)` (0x4BF9B0, `ret 8`)
     fn compute_personality_response_to_damage(h: GPtr<u8>, e: GPtr<u8>, src: GPtr<u8>) = thiscall 0x4BF9B0 => unported;
-    /// `CEventHandler::ComputeKnockOffBikeResponse(CEvent*, CTask*, CTask*)` (0x4B9FF0, `ret 0xC`)
-    fn compute_knock_off_bike_response(h: GPtr<u8>, e: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) = thiscall 0x4B9FF0 => unported;
     /// `CEventDamage::ProcessDamage(CPed*)` (0x4B3A20, `ret 4`)
     fn damage_process_damage(e: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x4B3A20 => unported;
     /// `CEventDamage::ComputeDamageAnim(CPed*, bool)` (0x4B3FC0, `ret 8`)
@@ -49,37 +70,20 @@ orig! {
     fn interesting_events_add(ie: GPtr<u8>, ty: i32, e: GPtr<u8>) = thiscall 0x602590 => unported;
     /// `CPed::SetPedState(int32)` (0x5E4500, `ret 4`)
     fn ped_set_ped_state(p: GPtr<u8>, s: i32) = thiscall 0x5E4500 => unported;
-    /// `CPedIntelligence::GetTaskUseGun` (0x600F70)
-    fn intel_get_task_use_gun(i: GPtr<u8>) -> GPtr<u8> = thiscall 0x600F70 => unported;
-    /// `CPedIntelligence::AddTaskPhysResponse(CTask*, bool)` (0x600DC0, `ret 8`)
-    fn intel_add_task_phys_response(i: GPtr<u8>, t: GPtr<u8>, b: u32) = thiscall 0x600DC0 => unported;
-    /// `CTaskSimpleStealthKill::Constructor(bool, CPed*, AssocGroupId)` (0x6225F0, `ret 0xC`)
-    fn stealth_kill_ctor(t: GPtr<u8>, b: u32, src: GPtr<u8>, g: u32) -> GPtr<u8> = thiscall 0x6225F0 => unported;
-    /// `CTaskComplexFallAndGetUp::Constructor(animId, group, int32 time)` (0x6786C0, `ret 0xC`)
-    fn fall_and_get_up_ctor(t: GPtr<u8>, anim: u32, group: u32, time: i32) -> GPtr<u8> = thiscall 0x6786C0 => unported;
     /// `CTaskSimpleBeHit::Constructor(CPed*, int32, uint8, int32)` (0x620780, `ret 0x10`)
     fn be_hit_ctor(t: GPtr<u8>, src: u32, a: u32, piece: u32, time: i32) -> GPtr<u8> = thiscall 0x620780 => unported;
     /// `CTaskSimpleChoking::Constructor(CPed*, bool)` (0x6202C0, `ret 8`)
     fn choking_ctor(t: GPtr<u8>, src: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x6202C0 => unported;
     /// `CTaskSimpleChoking::UpdateChoke(CPed*, CPed*, bool)` (0x620660, `ret 0xC`)
     fn choking_update_choke(t: GPtr<u8>, ped: GPtr<u8>, src: GPtr<u8>, b: u32) = thiscall 0x620660 => unported;
-    /// `CTaskComplexDie::Constructor(weapon, group, anim, blendDelta, speed, stealth, falling, fallDir,
-    /// overRailing)` (0x630040, `ret 0x24`)
-    fn die_ctor(t: GPtr<u8>, wt: u32, group: u32, anim: u32, delta: u32, speed: u32, stealth: u32, falling: u32, dir: u32, rail: u32) -> GPtr<u8> = thiscall 0x630040 => unported;
     /// `CTaskComplexFallToDeath::CalcFall(CPed*, int32*, bool*)` (0x6796C0, static)
     fn fall_to_death_calc_fall(ped: GPtr<u8>, dir: GPtr<u8>, rail: GPtr<u8>) -> u8 = cdecl 0x6796C0 => unported;
     /// `CEventHandler::RegisterKill(CPed*, CEntity*, eWeaponType, bool)` (0x4B9340, static)
     fn register_kill(ped: GPtr<u8>, src: GPtr<u8>, wt: u32, head: u32) = cdecl 0x4B9340 => unported;
-    /// `CAnimManager::GetAnimAssociation(group, id)` (0x4D3A60)
-    fn anim_get_anim_association(group: u32, id: u32) -> GPtr<u8> = cdecl 0x4D3A60 => unported;
-    /// `RpAnimBlendClumpGetAssociation(RpClump*, uint32 animId)` (0x4D68B0)
-    fn clump_get_association(clump: u32, id: u32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
     /// `RpAnimBlendClumpGetFirstAssociation(RpClump*, uint32 flags)` (0x4D6A70)
     fn clump_get_first_association_flags(clump: u32, flags: u32) -> GPtr<u8> = cdecl 0x4D6A70 => unported;
     /// `CAnimManager::AddAnimation(RpClump*, group, id)` (0x4D3AA0)
     fn anim_add_animation(clump: u32, group: u32, id: u32) -> GPtr<u8> = cdecl 0x4D3AA0 => unported;
-    /// `CAnimManager::BlendAnimation(RpClump*, group, id, float delta)` (0x4D4610)
-    fn anim_blend_animation(clump: u32, group: u32, id: u32, delta: u32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
     /// `CAnimBlendAssociation::SetCurrentTime(float)` (0x4CEA80, `ret 4`)
     fn anim_set_current_time(a: GPtr<u8>, t: u32) = thiscall 0x4CEA80 => unported;
     /// `CGeneral::GetRandomNumberInRange<float>(min, max)` (0x41BD90; draws its own rand, ST0)
@@ -90,8 +94,6 @@ orig! {
     fn knocked_over_by_car_ctor(e: GPtr<u8>, veh: GPtr<u8>) -> GPtr<u8> = thiscall 0x4B1B60 => unported;
     /// `CEventGotKnockedOverByCar` destructor (0x4B1C10)
     fn knocked_over_by_car_dtor(e: GPtr<u8>) = thiscall 0x4B1C10 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, `ret 8`)
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, valid: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
     /// Event / task scalar deleting destructor (vtable +0)
     fn v_delete(e: GPtr<u8>, flags: u32) -> GPtr<u8> = thiscall vslot 0x0 => unported;
     /// `CEvent::Clone` (vtable +0x10)
@@ -104,13 +106,8 @@ orig! {
     fn history_store_active_event(h: GPtr<u8>) = thiscall 0x4B8BF0 => unported;
     /// `CEventKnockOffBike::CEventKnockOffBike()` (0x4AFC70, default)
     fn kob_ctor_default(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x4AFC70 => unported;
-    /// `CEventKnockOffBike::CEventKnockOffBike(veh, CVector* speed, CVector* impact, float damage, float, uint8 weapon,
-    /// uint8 direction, int32, CPed*, bool, bool)` (0x4AFCF0, `ret 0x2C`)
-    fn kob_ctor(e: GPtr<u8>, veh: GPtr<u8>, speed: GPtr<u8>, impact: GPtr<u8>, dmg: u32, a4: u32, weapon: u32, dir: u32, a7: u32, a8: u32, a9: u32, a10: u32) -> GPtr<u8> = thiscall 0x4AFCF0 => unported;
     /// `CEventKnockOffBike::operator=` (0x4B4AA0, `ret 4`)
     fn kob_assign(e: GPtr<u8>, o: GPtr<u8>) -> GPtr<u8> = thiscall 0x4B4AA0 => unported;
-    /// `CEventKnockOffBike` destructor (0x4AFE70)
-    fn kob_dtor(e: GPtr<u8>) = thiscall 0x4AFE70 => unported;
     /// `CEventKnockOffBike::SetPedSafePosition(CPed*)` (0x4B4AC0, `ret 4`)
     fn kob_set_ped_safe_position(e: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x4B4AC0 => unported;
     /// `CEventKnockOffBike::SetPedOutCar(CPed*)` (0x4AFF60, `ret 4`)
@@ -119,46 +116,14 @@ orig! {
     fn kob_calc_forces_and_anims(e: GPtr<u8>, ped: GPtr<u8>) -> u32 = thiscall 0x4B0020 => unported;
     /// `CEventDamage::CEventDamage(CEntity*, uint32 time, weapon, piece, direction, bool, bool)` (0x4AD830, `ret 0x1C`)
     fn damage_ctor(e: GPtr<u8>, src: u32, time: u32, wt: u32, piece: u32, dir: u32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x4AD830 => unported;
-    /// `CEventDamage` destructor (0x4AD960)
-    fn damage_dtor(e: GPtr<u8>) = thiscall 0x4AD960 => unported;
-    /// `CEventDamage::AffectsPed(CPed*)` (0x4B35A0, `ret 4`)
-    fn damage_affects_ped(e: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x4B35A0 => unported;
     /// `CPedDamageResponseCalculator::CPedDamageResponseCalculator(CEntity*, float, weapon, piece, bool)` (0x4AD3F0, `ret 0x14`)
     fn calc_ctor(c: GPtr<u8>, src: u32, dmg: u32, wt: u32, piece: u32, b: u32) -> GPtr<u8> = thiscall 0x4AD3F0 => unported;
-    /// `CPedDamageResponseCalculator::ComputeDamageResponse(CPed*, CPedDamageResponse*, bool)` (0x4B5AC0, `ret 0xC`)
-    fn calc_compute_damage_response(c: GPtr<u8>, ped: GPtr<u8>, resp: GPtr<u8>, b: u32) = thiscall 0x4B5AC0 => unported;
-    /// `CPedDamageResponseCalculator` destructor (0x4AD420)
-    fn calc_dtor(c: GPtr<u8>) = thiscall 0x4AD420 => unported;
     /// `operator*(CVector* out, float, const CVector&)` (0x40FE90, cdecl)
     fn vector_scale(out: GPtr<u8>, f: u32, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE90 => unported;
-    /// `CTaskComplexInAirAndLand::CTaskComplexInAirAndLand(bool, bool)` (0x678C80, `ret 8`)
-    fn in_air_and_land_ctor(t: GPtr<u8>, a: u32, b: u32) -> GPtr<u8> = thiscall 0x678C80 => unported;
-    /// `CPedGroups::GetPedsGroup(CPed*)` (0x5F7E80, cdecl)
-    fn ped_groups_get_peds_group(ped: GPtr<u8>) -> GPtr<u8> = cdecl 0x5F7E80 => unported;
-    /// `CPedGroupMembership::IsLeader(const CPed*)` (0x5F69C0, `ret 4`)
-    fn membership_is_leader(m: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x5F69C0 => unported;
-    /// `CPedGroupMembership::GetLeader` (0x5F69A0)
-    fn membership_get_leader(m: GPtr<u8>) -> GPtr<u8> = thiscall 0x5F69A0 => unported;
-    /// `CEventGroup::GetEventOfType(int32)` (0x4AB650, `ret 4`)
-    fn event_group_get_event_of_type(g: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x4AB650 => unported;
-    /// `CTaskComplexSequence::CTaskComplexSequence` (0x632BD0)
-    fn sequence_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x632BD0 => unported;
-    /// `CTaskComplexSequence::AddTask(CTask*)` (0x632D10, `ret 4`)
-    fn sequence_add_task(t: GPtr<u8>, task: GPtr<u8>) = thiscall 0x632D10 => unported;
     /// `CTaskComplexEnterCarAsPassenger::CTaskComplexEnterCarAsPassenger(CVehicle*, int32 seat, bool)` (0x640340, `ret 0xC`)
     fn enter_car_as_passenger_ctor(t: GPtr<u8>, veh: u32, seat: u32, b: u32) -> GPtr<u8> = thiscall 0x640340 => unported;
-    /// `CEventLeaderExitedCarAsDriver::CEventLeaderExitedCarAsDriver` (0x4B8300)
-    fn leader_exited_car_ctor(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x4B8300 => unported;
-    /// `CEventGroupEvent::CEventGroupEvent(CPed*, CEvent*)` (0x4ADFD0, `ret 8`)
-    fn group_event_ctor(e: GPtr<u8>, ped: GPtr<u8>, ev: GPtr<u8>) -> GPtr<u8> = thiscall 0x4ADFD0 => unported;
-    /// `CEventGroupEvent::~CEventGroupEvent` (0x4AE070)
-    fn group_event_dtor(e: GPtr<u8>) = thiscall 0x4AE070 => unported;
-    /// `CPedGroupIntelligence::AddEvent(CEvent*)` (0x5F7470, `ret 4`)
-    fn pgi_add_event(i: GPtr<u8>, e: GPtr<u8>) = thiscall 0x5F7470 => unported;
     /// `CEventDraggedOutCar::CEventDraggedOutCar(CVehicle*, CPed*, bool)` (0x4AD250, `ret 0xC`)
     fn dragged_out_car_ctor(e: GPtr<u8>, veh: GPtr<u8>, ped: u32, b: u32) -> GPtr<u8> = thiscall 0x4AD250 => unported;
-    /// `CEventDraggedOutCar::~CEventDraggedOutCar` (0x4AD330)
-    fn dragged_out_car_dtor(e: GPtr<u8>) = thiscall 0x4AD330 => unported;
 }
 
 /// `g_InterestingEvents`
@@ -1026,6 +991,9 @@ pub fn handler_ctor(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     this
 }
 
+use crate::bindings::event_group_remove_invalid_events as he_group_remove_invalid_events;
+use crate::bindings::event_group_reorganise as he_group_reorganise;
+use crate::bindings::handler_compute_event_response_task as he_compute_event_response_task;
 orig! {
     /// `CEventGroup::GetHighestPriorityEvent` (0x4AB7C0)
     fn he_group_get_highest_priority_event(g: GPtr<u8>) -> GPtr<u8> = thiscall 0x4AB7C0 => crate::group::event_group_get_highest_priority_event;
@@ -1033,14 +1001,8 @@ orig! {
     fn he_group_tick_events(g: GPtr<u8>) = thiscall 0x4AB6D0 => crate::group::event_group_tick_events;
     /// `CEventGroup::Remove(CEvent*)` (0x4AB5A0, `ret 4`)
     fn he_group_remove(g: GPtr<u8>, e: GPtr<u8>) = thiscall 0x4AB5A0 => unported;
-    /// `CEventGroup::RemoveInvalidEvents(bool)` (0x4AB760, `ret 4`)
-    fn he_group_remove_invalid_events(g: GPtr<u8>, b: u32) = thiscall 0x4AB760 => unported;
-    /// `CEventGroup::Reorganise` (0x4AB700)
-    fn he_group_reorganise(g: GPtr<u8>) = thiscall 0x4AB700 => unported;
     /// `CTaskManager::StopTimers(const CEvent*)` (0x6819A0, `ret 4`)
     fn he_tm_stop_timers(tm: GPtr<u8>, e: GPtr<u8>) = thiscall 0x6819A0 => unported;
-    /// `CEventHandler::ComputeEventResponseTask(CEvent*, CTask*)` (0x4C3870, `ret 8`)
-    fn he_compute_event_response_task(h: GPtr<u8>, e: GPtr<u8>, t: GPtr<u8>) = thiscall 0x4C3870 => unported;
     /// `CEventHandler::SetEventResponseTask(const CEvent&)` (0x4BC600, `ret 4`)
     fn he_set_event_response_task(h: GPtr<u8>, e: GPtr<u8>) = thiscall 0x4BC600 => unported;
     /// `CEvent::CanBeInterruptedBySameEvent` (vtable +0x3C)
@@ -1178,29 +1140,27 @@ pub fn handler_handle_events(this: GPtr<u8>) {
     he_group_reorganise(eg);
 }
 
+use crate::bindings::climb_test_for_climb;
+use crate::bindings::hit_head_ctor;
+use crate::bindings::task_is_go_to_task;
+use crate::bindings::walk_round_object_ctor;
+use sa_core::bindings::general_random_int_in_range;
+use sa_world::bindings::can_ped_target_ped as geometry_can_ped_target_ped;
+use sa_world::bindings::complex_jump_ctor;
+use sa_world::bindings::groups_is_in_players_group as ped_groups_is_in_players_group;
+use sa_world::bindings::ik_is_looking;
+use sa_world::bindings::ik_look_at;
+use sa_world::bindings::intel_find_task_by_type;
 orig! {
     /// `CEventBuildingCollision::IsHeadOnCollision(CPed*)` (0x4AD1E0, `ret 4`)
     fn building_collision_is_head_on(e: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x4AD1E0 => unported;
-    /// `CPedIntelligence::FindTaskByType(int32)` (0x600EE0, `ret 4`)
-    fn intel_find_task_by_type(i: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x600EE0 => unported;
     /// `CTaskCategories::ComputeTaskCategory(CTask*)` (0x698680)
     fn task_categories_compute(t: GPtr<u8>) -> i32 = cdecl 0x698680 => unported;
     /// `CEventBuildingCollision::CanTreatBuildingAsObject(CBuilding*)` (0x4B3120)
     fn building_collision_can_treat_as_object(b: GPtr<u8>) -> u8 = cdecl 0x4B3120 => unported;
-    /// `CTask::IsGoToTask(CTask*)` (0x61A360)
-    fn task_is_go_to_task(t: GPtr<u8>) -> u8 = cdecl 0x61A360 => unported;
-    /// `CGeneral::GetRandomNumberInRange(int32, int32)` (0x407180)
-    fn general_random_int_in_range(lo: i32, hi: i32) -> i32 = cdecl 0x407180 => unported;
     /// `CPedGeometryAnalyser::CanPedJumpObstacle(const CPed&, const CEntity&, const CVector& pos, const CVector&
     /// normal)` (0x5F32D0)
     fn geometry_can_ped_jump_obstacle(ped: GPtr<u8>, e: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> u8 = cdecl 0x5F32D0 => unported;
-    /// `CPedGeometryAnalyser::CanPedTargetPed(CPed&, CPed&, bool)` (0x5F1C40)
-    fn geometry_can_ped_target_ped(a: GPtr<u8>, b: GPtr<u8>, c: u32) -> u8 = cdecl 0x5F1C40 => unported;
-    /// `CTaskComplexWalkRoundObject::CTaskComplexWalkRoundObject(int32 moveState, const CVector&, CEntity*)` (0x655020,
-    /// `ret 0xC`)
-    fn walk_round_object_ctor(t: GPtr<u8>, ms: i32, target: GPtr<u8>, obj: GPtr<u8>) -> GPtr<u8> = thiscall 0x655020 => unported;
-    /// `CTaskSimpleHitHead::CTaskSimpleHitHead()` (0x653060)
-    fn hit_head_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x653060 => unported;
     /// `CTaskComplexWalkRoundBuildingAttempt(int32, const CVector& target, const CVector&, const CVector&, bool)`
     /// (0x654740, `ret 0x14`; the bool goes as a whole dword)
     fn walk_round_building_ctor_pos(t: GPtr<u8>, ms: i32, target: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, head_on: u32) -> GPtr<u8> = thiscall 0x654740 => unported;
@@ -1209,20 +1169,9 @@ orig! {
     fn walk_round_building_ctor_entity(t: GPtr<u8>, ms: i32, e: GPtr<u8>, off: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, head_on: u32) -> GPtr<u8> = thiscall 0x654840 => unported;
     /// `CTaskComplexMoveBackAndJump::CTaskComplexMoveBackAndJump()` (0x655340)
     fn move_back_and_jump_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x655340 => unported;
-    /// `CTaskComplexJump::CTaskComplexJump(eForceClimb)` (0x67A030, `ret 4`)
-    fn complex_jump_ctor(t: GPtr<u8>, climb: u32) -> GPtr<u8> = thiscall 0x67A030 => unported;
-    /// `CPedGroups::IsInPlayersGroup(CPed*)` (0x5F7F10)
-    fn ped_groups_is_in_players_group(p: GPtr<u8>) -> u8 = cdecl 0x5F7F10 => unported;
-    /// `CTaskSimpleClimb::TestForClimb(CPed*, CVector&, float&, uint8&, bool)` (0x6803A0)
-    fn climb_test_for_climb(ped: GPtr<u8>, pos: GPtr<u8>, heading: GPtr<u8>, surf: GPtr<u8>, launch: u32) -> GPtr<u8> = cdecl 0x6803A0 => unported;
     /// `CTaskSimpleClimb::CTaskSimpleClimb(CEntity*, const CVector&, float, uint8, eClimbHeights, bool)` (0x67A110,
     /// `ret 0x18`; the surface and height go as whole dwords)
     fn climb_ctor(t: GPtr<u8>, e: GPtr<u8>, pos: GPtr<u8>, heading: u32, surf: u32, height: u32, force: u32) -> GPtr<u8> = thiscall 0x67A110 => unported;
-    /// `IKChainManager_c::IsLooking(CPed*)` (0x6181A0, `ret 4`)
-    fn ik_is_looking(m: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x6181A0 => unported;
-    /// `IKChainManager_c::LookAt(const char*, CPed*, CEntity*, int32 time, int32 bone, RwV3d*, bool, float, int32,
-    /// int32, bool)` (0x618970, `ret 0x2C`)
-    fn ik_look_at(m: GPtr<u8>, name: u32, ped: GPtr<u8>, target: GPtr<u8>, time: i32, bone: i32, pos: u32, b: u32, speed: u32, blend: i32, prio: i32, b2: u32) = thiscall 0x618970 => unported;
     /// `CTaskManager::GetTaskSecondary(int32)` (0x681810, `ret 4`)
     fn tm_get_task_secondary(tm: GPtr<u8>, i: u32) -> GPtr<u8> = thiscall 0x681810 => unported;
 }

@@ -3,15 +3,12 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 
 use crate::common::{rd, wr, Fpu};
 
-orig! {
-    /// `FxInterpInfoU255_c::GetVal(float* out, float t)` (0x4A8800, `ret 8`)
-    fn interp_u255_get_val(this: GPtr<u8>, out: GPtr<u8>, t: u32) = thiscall 0x4A8800 => unported;
-}
+use crate::bindings::interp_u255_get_val;
 
 /// `FUN_004a6860(float currTime, float mult, float timeStep, float totalTime, bool useConst, void* out)` (0x4A6860,
 /// thiscall, `ret 0x18`): key time `mult` with byte +6 set, else `(float)(currTime / totalTime)`;

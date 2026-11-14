@@ -9,41 +9,30 @@ use sa_math::x87::X87;
 
 use super::common::{g, rd, wr};
 
+use crate::bindings::find_far_clip_for_coors;
+use crate::bindings::set_game_clock;
+use sa_core::bindings::clothes_rebuild_player;
+use sa_core::bindings::game_drastic_tidy_up_memory as drastic_tidy_up_memory;
+use sa_core::bindings::remove_unused_models_in_loaded_list;
+use sa_core::bindings::stats_increment_stat;
+use sa_core::bindings::streaming_load_scene as load_scene;
+use sa_core::bindings::streaming_load_scene_collision as load_scene_collision;
+use sa_core::bindings::timer_stop;
+use sa_core::bindings::timer_update;
+use sa_core::bindings::world_remove;
 orig! {
-    /// `CStats::IncrementStat(uint16, float)` (0x55C180)
-    fn stats_increment_stat(stat: u32, v: f32) = cdecl 0x55C180 => unported;
-    /// `CClock::SetGameClock(uint8, uint8, uint8)` (0x52D150)
-    fn set_game_clock(h: u32, m: u32, day: u32) = cdecl 0x52D150 => unported;
     /// `CPickups::PassTime(uint32)` (0x455200)
     fn pickups_pass_time(ms: u32) = cdecl 0x455200 => unported;
-    /// `CTimer::Stop()` (0x561AA0)
-    fn timer_stop() = cdecl 0x561AA0 => unported;
-    /// `CTimer::Update()` (0x561B10)
-    fn timer_update() = cdecl 0x561B10 => unported;
-    /// `CTimeCycle::FindFarClipForCoors(CVector)` (0x5616E0), ST0
-    fn find_far_clip_for_coors(x: u32, y: u32, z: u32) -> f64 = cdecl 0x5616E0 => unported;
     /// `RwCameraSetFarClipPlane(RwCamera*, float)` (0x7EE2A0)
     fn rw_camera_set_far_clip_plane(cam: GPtr<u8>, far: f32) -> GPtr<u8> = cdecl 0x7EE2A0 => unported;
     /// `CStreaming::FlushRequestList()` (0x40E4E0)
     fn flush_request_list() = cdecl 0x40E4E0 => unported;
     /// `CStreaming::DeleteRwObjectsAfterDeath(const CVector&)` (0x409210)
     fn delete_rw_objects_after_death(p: GPtr<u8>) = cdecl 0x409210 => unported;
-    /// `CStreaming::RemoveUnusedModelsInLoadedList()` (0x407AC0)
-    fn remove_unused_models_in_loaded_list() = cdecl 0x407AC0 => unported;
-    /// `CGame::DrasticTidyUpMemory(bool)` (0x53C810)
-    fn drastic_tidy_up_memory(b: u32) = cdecl 0x53C810 => unported;
-    /// `CStreaming::LoadSceneCollision(const CVector&)` (0x40ED80)
-    fn load_scene_collision(p: GPtr<u8>) = cdecl 0x40ED80 => unported;
     /// `CRenderer::RequestObjectsInDirection(const CVector&, float, int32)` (0x555CB0)
     fn request_objects_in_direction(p: GPtr<u8>, angle: u32, flags: u32) = cdecl 0x555CB0 => unported;
-    /// `CStreaming::LoadScene(const CVector&)` (0x40EB70)
-    fn load_scene(p: GPtr<u8>) = cdecl 0x40EB70 => unported;
-    /// `CWorld::Remove(CEntity*)` (0x563280)
-    fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
     /// virtual slot 0: the scalar deleting destructor
     fn entity_vdelete(e: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
-    /// `CClothes::RebuildPlayer(CPlayerPed*, bool)` (0x5A82C0)
-    fn clothes_rebuild_player(ped: GPtr<u8>, ignore: u32) = cdecl 0x5A82C0 => unported;
 }
 
 /// `CGameLogic::PassTime(uint32 minutes)` (0x4414C0): advances `CClock` (minutes 0xB70152, hours

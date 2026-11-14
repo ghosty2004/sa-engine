@@ -9,13 +9,11 @@ use sa_core::{hook, orig};
 
 use super::common::{g, rd, x};
 
+use sa_core::bindings::stricmp;
+use sa_stream::bindings::stream_peds_into_random_slots;
 orig! {
     /// `CWorld::FindObjectsInRange(const CVector&, float, bool, int16*, int16, CEntity**, bool x5)` (0x564A20)
     fn find_objects_in_range(c: GPtr<u8>, r: f32, b2d: u32, count: GPtr<u8>, max: u32, out: GPtr<u8>, bu: u32, ve: u32, pe: u32, ob: u32, du: u32) = cdecl 0x564A20 => unported;
-    /// CRT `_stricmp` (0x8229B6)
-    fn stricmp(a: GPtr<u8>, b: GPtr<u8>) -> i32 = cdecl 0x8229B6 => unported;
-    /// `CStreaming::StreamPedsIntoRandomSlots(int32*)` (0x40BDA0)
-    fn stream_peds_into_random_slots(m: GPtr<u8>) = cdecl 0x40BDA0 => unported;
     /// `CStreaming::RemoveDodgyPedsFromRandomSlots()` (0x40BE60)
     fn remove_dodgy_peds_from_random_slots() = cdecl 0x40BE60 => unported;
 }

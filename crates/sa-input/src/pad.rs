@@ -126,6 +126,12 @@ const JOY_LY: usize = 0xC8CFBC;
 /// `RsGlobal.ps`
 const RS_PS: usize = 0xC17054;
 
+pub use sa_core::bindings::di_mouse_init;
+pub use sa_core::bindings::find_player_vehicle;
+pub use sa_core::bindings::intel_get_task_use_gun as get_task_use_gun;
+pub use sa_core::bindings::is_foreground_app;
+pub use sa_core::bindings::is_video_mode_exclusive;
+pub use sa_core::bindings::tm_get_simplest_active_task as get_simplest_active_task;
 orig! {
     /// `CControllerState::Clear` (0x53EF80)
     pub fn call_controller_state_clear(s: GPtr<u8>) = thiscall 0x53EF80 => controller_state_clear;
@@ -163,20 +169,8 @@ orig! {
     pub fn ccm_affect_pad_from_keyboard(m: GPtr<u8>) = thiscall 0x531140 => unported;
     /// `CControllerConfigManager::AffectPadFromMouse` (0x5314A0)
     pub fn ccm_affect_pad_from_mouse(m: GPtr<u8>) = thiscall 0x5314A0 => unported;
-    /// `CPedIntelligence::GetTaskUseGun` (0x600F70)
-    pub fn get_task_use_gun(intel: GPtr<u8>) -> GPtr<u8> = thiscall 0x600F70 => unported;
-    /// `CTaskManager::GetSimplestActiveTask` (0x6819D0)
-    pub fn get_simplest_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x6819D0 => unported;
     /// `CTask::GetTaskType` (vtable +0x10)
     pub fn task_get_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `FindPlayerVehicle(int32, bool)` (0x56E0D0)
-    pub fn find_player_vehicle(id: i32, remote: u32) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
-    /// `Win::IsForegroundApp` (0x746060, AL)
-    pub fn is_foreground_app() -> u8 = cdecl 0x746060 => unported;
-    /// `Input::diMouseInit(bool exclusive)` (0x7469A0)
-    pub fn di_mouse_init(exclusive: u32) -> i32 = cdecl 0x7469A0 => unported;
-    /// `VideoMode::IsVideoModeExclusive` (0x745CA0, AL)
-    pub fn is_video_mode_exclusive() -> u8 = cdecl 0x745CA0 => unported;
     /// `Rs::RsPadEventHandler(event, param)` (0x6195A0)
     pub fn rs_pad_event_handler(event: i32, param: GPtr<u32>) -> i32 = cdecl 0x6195A0 => unported;
     /// `IDirectInputDevice8A::Acquire()`

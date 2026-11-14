@@ -38,6 +38,9 @@ const FX: usize = 0xA9AE00;
 /// `Scene.m_pRwCamera`.
 const SCENE_CAMERA: usize = 0xC1703C;
 
+pub use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+pub use sa_core::bindings::little_test;
+pub use sa_world::bindings::rw_im3d_end;
 orig! {
     /// `RwRenderStateSet` (`RwEngineInstance` slot 0x20)
     pub fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
@@ -45,18 +48,12 @@ orig! {
     pub fn rw_im3d_transform(verts: GPtr<u8>, count: u32, ltm: GPtr<u8>, flags: u32) -> GPtr<u8> = cdecl 0x7EF450 => unported;
     /// `RwIm3DRenderIndexedPrimitive(RwPrimitiveType, RwImVertexIndex*, int32)` (0x7EF550)
     pub fn rw_im3d_render_indexed_primitive(ty: u32, indices: GPtr<u8>, count: i32) -> i32 = cdecl 0x7EF550 => unported;
-    /// `RwIm3DEnd()` (0x7EF520)
-    pub fn rw_im3d_end() -> i32 = cdecl 0x7EF520 => unported;
     /// `RwD3D9SetStencilClear(uint32)` (0x7F9D30)
     pub fn rw_d3d9_set_stencil_clear(v: u32) -> i32 = cdecl 0x7F9D30 => unported;
-    /// `LittleTest()` (0x541330)
-    pub fn little_test() = cdecl 0x541330 => unported;
     /// `Fx_c::GetFxQuality()` (0x49EA50)
     pub fn get_fx_quality(this: GPtr<u8>) -> u32 = thiscall 0x49EA50 => crate::fx::fx_get_fx_quality;
     /// `CVector::Normalise()` (0x59C910)
     pub fn vector_normalise(this: GPtr<f32>) = thiscall 0x59C910 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
-    pub fn clean_up_old_reference(this: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
     /// `CMemoryMgr::Malloc(uint32 size, uint32 hint)` (0x72F420)
     pub fn memory_malloc(size: u32, hint: u32) -> u32 = cdecl 0x72F420 => unported;
     /// `CMemoryMgr::Free(void*)` (0x72F430)
@@ -309,13 +306,11 @@ pub fn process(cam: GPtr<u8>) -> u8 {
     1
 }
 
+pub use sa_core::bindings::rgba_ctor;
+pub use sa_core::bindings::sprite2d_init_per_frame;
 orig! {
-    /// `CRGBA::CRGBA(uint8, uint8, uint8, uint8)` (0x7170C0, catalogue `FUN_007170c0`); returns `this`
-    pub fn rgba_ctor(this: GPtr<u8>, r: u32, g: u32, b: u32, a: u32) -> GPtr<u8> = thiscall 0x7170C0 => unported;
     /// `CStencilShadows::Render(CRGBA*)` (0x710D50)
     pub fn stencil_render(rgba: GPtr<u8>) = cdecl 0x710D50 => unported;
-    /// `CSprite2d::InitPerFrame()` (0x727350)
-    pub fn sprite2d_init_per_frame() = cdecl 0x727350 => unported;
     /// `CSprite2d::DrawRect(const CRect&, const CRGBA&)` (0x727B60)
     pub fn sprite2d_draw_rect(rect: GPtr<f32>, rgba: GPtr<u8>) = cdecl 0x727B60 => unported;
 }
@@ -495,14 +490,9 @@ pub fn render(colour: GPtr<u8>) -> u8 {
     1
 }
 
-orig! {
-    /// CRT `eh vector constructor iterator` (0x821D30, stdcall)
-    pub fn eh_vector_ctor(arr: GPtr<u8>, size: u32, n: u32, ctor: u32, dtor: u32) = stdcall 0x821D30 => unported;
-    /// CRT `eh vector destructor iterator` (0x821E02, stdcall)
-    pub fn eh_vector_dtor(arr: GPtr<u8>, size: u32, n: u32, dtor: u32) = stdcall 0x821E02 => unported;
-    /// CRT `_atexit` (0x821D1E)
-    pub fn atexit(f: u32) -> i32 = cdecl 0x821D1E => unported;
-}
+pub use sa_core::bindings::atexit;
+pub use sa_core::bindings::eh_vector_ctor;
+pub use sa_core::bindings::eh_vector_dtor;
 
 /// `__init_CStencilShadows__m_StencilShadowObjects` (0x854B60): the 64 objects' constructor (0x70F8D0,
 /// destructor 0x70F8E0) through the CRT vector iterator, then `_atexit(0x856AE0)`; returns `_atexit`'s

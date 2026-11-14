@@ -7,32 +7,20 @@
 #![allow(clippy::unreadable_literal)]
 
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
-orig! {
-    /// `CPed::IsAlive()` (0x5E0170)
-    fn ped_is_alive(p: GPtr<u8>) -> u8 = thiscall 0x5E0170 => unported;
-    /// `CEventDeadPed::CEventDeadPed(CPed*, bool, uint32)` (0x4ADEA0, `ret 0xC`)
-    fn event_dead_ped_ctor(e: GPtr<u8>, ped: GPtr<u8>, b: u32, time: u32) -> GPtr<u8> = thiscall 0x4ADEA0 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, `ret 8`)
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
-    /// `CEventDeadPed::~CEventDeadPed()` (0x4ADF70)
-    fn event_dead_ped_dtor(e: GPtr<u8>) = thiscall 0x4ADF70 => unported;
-    /// `CTaskTimer::IsOutOfTime()` (0x420E30)
-    fn task_timer_is_out_of_time(t: GPtr<u8>) -> u8 = thiscall 0x420E30 => unported;
-    /// `CPedIntelligence::FindTaskByType(int32)` (0x600EE0, `ret 4`)
-    fn intel_find_task_by_type(i: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x600EE0 => unported;
-    /// `operator*(const CMatrix&, const CVector&)` (0x59C890), hidden result pointer first
-    fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
-    /// `operator-(const CVector&, const CVector&)` (0x40FE60), hidden result pointer first
-    fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => unported;
-    /// `CGeneral::GetRadianAngleBetweenPoints(float, float, float, float)` (0x53CBE0, ST0)
-    fn radian_angle_between_points(x1: u32, y1: u32, x2: u32, y2: u32) -> f64 = cdecl 0x53CBE0 => unported;
-    /// `CGeneral::LimitRadianAngle(float)` (0x53CB50, ST0)
-    fn limit_radian_angle(a: u32) -> f64 = cdecl 0x53CB50 => unported;
-}
+use crate::bindings::event_dead_ped_ctor;
+use crate::bindings::event_dead_ped_dtor;
+use crate::bindings::task_timer_is_out_of_time;
+use sa_core::bindings::general_get_radian_angle_between_points as radian_angle_between_points;
+use sa_core::bindings::general_limit_radian_angle as limit_radian_angle;
+use sa_core::bindings::matrix_mul_vec;
+use sa_core::bindings::ped_is_alive;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::intel_find_task_by_type;
+use sa_world::bindings::vector_sub;
 
 use sa_world::world::common::entity_pos as pos;
 

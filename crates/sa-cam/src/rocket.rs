@@ -14,23 +14,18 @@ use crate::camproc::{find_player_ped, get_atan_of_xy_bits, get_pad, get_vectors_
 use crate::common::{Fpu, g, k, rd, wr};
 use crate::followped::{clip_beta, copy3, d, entity_pos, fcos, fsin, push_st0};
 
+pub use sa_core::bindings::entity_update_rp_hanim as entity_update_rp_h_anim;
+pub use sa_core::bindings::entity_update_rw_frame;
+pub use sa_core::bindings::matrix_update_rw_matrix;
+pub use sa_world::bindings::simple_transform_update_rw_matrix;
+pub use sa_world::bindings::world_get_is_line_of_sight_clear as get_is_line_of_sight_clear;
 orig! {
-    /// `CMatrix::UpdateRwMatrix(RwMatrix*)` (0x59AD70)
-    pub fn matrix_update_rw_matrix(m: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x59AD70 => unported;
-    /// `CSimpleTransform::UpdateRwMatrix(RwMatrix*)` (0x54EF40)
-    pub fn simple_transform_update_rw_matrix(t: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x54EF40 => unported;
-    /// `CEntity::UpdateRwFrame()` (0x532B00)
-    pub fn entity_update_rw_frame(e: GPtr<u8>) = thiscall 0x532B00 => unported;
-    /// `CEntity::UpdateRpHAnim()` (0x532B20)
-    pub fn entity_update_rp_h_anim(e: GPtr<u8>) = thiscall 0x532B20 => unported;
     /// `CPad::LookAroundLeftRight(CPed*)` / `LookAroundUpDown(CPed*)` (0x540BD0 / 0x540CC0, AX)
     pub fn pad_look_around_left_right(pad: GPtr<u8>, ped: GPtr<u8>) -> i16 = thiscall 0x540BD0 => unported;
     pub fn pad_look_around_up_down(pad: GPtr<u8>, ped: GPtr<u8>) -> i16 = thiscall 0x540CC0 => unported;
     /// `CWeapon::PickTargetForHeatSeekingMissile(CVector origin, CVector dir, float distMul, CEntity* ignore,
     /// bool fromVehicle, CEntity* last)` (0x73F910, cdecl); the vectors and the float as dwords
     pub fn pick_target_for_heat_seeking_missile(ox: u32, oy: u32, oz: u32, dx: u32, dy: u32, dz: u32, mul: u32, ignore: GPtr<u8>, from_veh: u32, last: GPtr<u8>) -> GPtr<u8> = cdecl 0x73F910 => unported;
-    /// `CWorld::GetIsLineOfSightClear(...)` (0x56A490, AL)
-    pub fn get_is_line_of_sight_clear(a: GPtr<u8>, b: GPtr<u8>, bu: u32, ve: u32, pe: u32, ob: u32, du: u32, st: u32, ig: u32) -> u8 = cdecl 0x56A490 => unported;
     /// `CWeaponEffects::MarkTarget(int32, CVector pos, uint8 r, uint8 g, uint8 b, uint8 a, float size,
     /// uint8)` (0x742BF0, cdecl); the vector and the float as dwords
     pub fn weapon_effects_mark_target(i: i32, px: u32, py: u32, pz: u32, r: u32, gr: u32, b: u32, a: u32, size: u32, flag: u32) = cdecl 0x742BF0 => unported;

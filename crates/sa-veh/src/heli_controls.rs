@@ -3,37 +3,23 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 
 use crate::common::{f32_of, g, jne_mask, jp5, rd, wr, x, xi};
 
-orig! {
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    fn pad_get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CPad::GetAccelerate()` (0x5403F0): int16 in AX
-    fn pad_get_accelerate(pad: GPtr<u8>) -> i16 = thiscall 0x5403F0 => unported;
-    /// `CPad::GetBrake()` (0x540080): int16 in AX
-    fn pad_get_brake(pad: GPtr<u8>) -> i16 = thiscall 0x540080 => unported;
-    /// `CPad::GetSteeringLeftRight()` (0x53FB80): int16 in AX
-    fn pad_get_steering_left_right(pad: GPtr<u8>) -> i16 = thiscall 0x53FB80 => unported;
-    /// `CPad::GetSteeringUpDown()` (0x53FBD0): int16 in AX
-    fn pad_get_steering_up_down(pad: GPtr<u8>) -> i16 = thiscall 0x53FBD0 => unported;
-    /// `CPad::GetLookLeft()` (0x53FDD0, AL)
-    fn pad_get_look_left(pad: GPtr<u8>) -> u8 = thiscall 0x53FDD0 => unported;
-    /// `CPad::GetLookRight()` (0x53FE10, AL)
-    fn pad_get_look_right(pad: GPtr<u8>) -> u8 = thiscall 0x53FE10 => unported;
-    /// `CPad::GetHorn()` (0x53FEE0, AL)
-    fn pad_get_horn(pad: GPtr<u8>) -> u8 = thiscall 0x53FEE0 => unported;
-    /// `CrossProduct(CVector* out, const CVector&, const CVector&)` (0x59C730)
-    fn cross_product(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C730 => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(n: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CPlayerPed::KeepAreaAroundPlayerClear()` (0x60C1E0)
-    fn keep_area_around_player_clear(p: GPtr<u8>) = thiscall 0x60C1E0 => unported;
-}
+use crate::bindings::keep_area_around_player_clear;
+use sa_core::bindings::cross_product;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::get_pad as pad_get_pad;
+use sa_core::bindings::vector_normalise;
+use sa_pop::bindings::pad_get_look_left;
+use sa_pop::bindings::pad_get_look_right;
+use sa_world::bindings::pad_get_accelerate;
+use sa_world::bindings::pad_get_brake;
+use sa_world::bindings::pad_get_horn;
+use sa_world::bindings::pad_get_steering_left_right;
+use sa_world::bindings::pad_get_steering_up_down;
 
 use sa_core::field::ptr_of as buf;
 

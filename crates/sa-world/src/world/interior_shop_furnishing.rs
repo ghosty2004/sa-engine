@@ -16,15 +16,12 @@ use sa_core::{hook, orig};
 
 use super::common::{ftol32, g, rd, xi};
 
+use crate::bindings::add_interior_info;
+use crate::bindings::get_furniture;
+use crate::bindings::get_num_empty_tiles;
+use crate::bindings::place_furniture;
+use crate::bindings::set_tiles_status;
 orig! {
-    /// `FurnitureManager_c::GetFurniture(int32 group, int32 subGroup, int16 id, uint8 wealth)` (0x5911E0) on `g_furnitureMan` (0xBAB380)
-    fn get_furniture(man: GPtr<u8>, group: i32, sub: i32, id: i32, wealth: u32) -> GPtr<u8> = thiscall 0x5911E0 => unported;
-    /// `Interior_c::PlaceFurniture(Furniture_c*, int32 x, int32 y, float height, int32, int32 rot, int32* outW, int32* outD, uint8)` (0x592AA0)
-    fn place_furniture(this: GPtr<u8>, f: GPtr<u8>, x: i32, y: i32, h: u32, a5: i32, rot: i32, ow: GPtr<u8>, od: GPtr<u8>, a9: u32) -> i32 = thiscall 0x592AA0 => unported;
-    /// `Interior_c::GetNumEmptyTiles(int32 x, int32 y, int32 dir, int32 count)` (0x591920)
-    fn get_num_empty_tiles(this: GPtr<u8>, x: i32, y: i32, dir: i32, n: i32) -> i32 = thiscall 0x591920 => unported;
-    /// `Interior_c::SetTilesStatus(int32 x, int32 y, int32 w, int32 d, int32 status, bool)` (0x591700)
-    fn set_tiles_status(this: GPtr<u8>, x: i32, y: i32, w: i32, d: i32, status: i32, force: u32) = thiscall 0x591700 => unported;
     /// `Interior_c::Shop_Place3PieceUnit(int32, int32, int32, int32, int32)` (0x599BB0)
     fn shop_place_3_piece_unit_call(this: GPtr<u8>, ty: i32, x: i32, y: i32, dir: i32, len: i32) -> u8 = thiscall 0x599BB0 => shop_place_3_piece_unit;
     /// `Interior_c::Shop_PlaceEdgeUnits(int32, int32, int32, int32)` (0x599DC0)
@@ -35,8 +32,6 @@ orig! {
     fn shop_add_shelf_info(this: GPtr<u8>, tx: i32, ty: i32, dir: u32) = thiscall 0x59A140 => super::interior_group_update::interior_shop_add_shelf_info;
     /// `Interior_c::GetTileStatus(int32 x, int32 y)` (0x5918E0)
     fn get_tile_status(this: GPtr<u8>, tx: i32, ty: i32) -> u32 = thiscall 0x5918E0 => super::misc2::interior_get_tile_status;
-    /// `Interior_c::AddInteriorInfo(int32 type, float x, float y, int32 dir, CEntity*)` (0x591E40)
-    fn add_interior_info(this: GPtr<u8>, ty: i32, x: f32, y: f32, dir: i32, e: u32) = thiscall 0x591E40 => unported;
 }
 
 /// The shelf-info spacing counter (0x8D0948) shared with `Shop_AddShelfInfo`.

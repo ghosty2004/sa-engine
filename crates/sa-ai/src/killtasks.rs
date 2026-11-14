@@ -23,42 +23,31 @@ const INTERESTING_EVENTS: usize = 0xC0B058;
 /// The vtable the original stores before calling the event base destructor 0x4AF890.
 const EVENT_BASE_VTBL: u32 = 0x858E68;
 
+use crate::bindings::acquaintance_ped_hate_ctor as event_ped_hate_ctor;
+use sa_core::bindings::entity_register_reference;
+use sa_core::bindings::find_player_ped as world_find_player_ped;
+use sa_core::bindings::general_random_int_in_range;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::event_acquaintance_ped_dtor as event_base_dtor;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::intel_find_task_by_type;
+use sa_world::bindings::ped_set_current_weapon;
+use sa_world::bindings::set_ped_decision_maker_type as intel_set_ped_decision_maker_type;
+use sa_world::bindings::simple_car_drive_ctor;
 orig! {
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210)
-    fn world_find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    fn entity_register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
-    /// `CGeneral::GetRandomNumberInRange(int32, int32)` (0x407180)
-    fn general_random_int_in_range(min: i32, max: i32) -> i32 = cdecl 0x407180 => unported;
     /// `CCopPed::AddCriminalToKill(CPed*)` (0x5DDEB0, `ret 4`)
     fn cop_add_criminal_to_kill(cop: GPtr<u8>, c: GPtr<u8>) = thiscall 0x5DDEB0 => unported;
     /// `CCopPed::SetPartner(CCopPed*)` (0x5DDE80, `ret 4`)
     fn cop_set_partner(cop: GPtr<u8>, p: GPtr<u8>) = thiscall 0x5DDE80 => unported;
-    /// `CPedIntelligence::SetPedDecisionMakerType(int32)` (0x600B50, `ret 4`)
-    fn intel_set_ped_decision_maker_type(i: GPtr<u8>, t: i32) = thiscall 0x600B50 => unported;
-    /// `CPedIntelligence::FindTaskByType(int32)` (0x600EE0, `ret 4`)
-    fn intel_find_task_by_type(i: GPtr<u8>, t: i32) -> GPtr<u8> = thiscall 0x600EE0 => unported;
-    /// `CEventAcquaintancePedHate::Constructor2(CPed*)` (0x420E70, `ret 4`)
-    fn event_ped_hate_ctor(e: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x420E70 => unported;
-    /// `FUN_004af890` (0x4AF890): the event base destructor the original calls after resetting the vtable
-    fn event_base_dtor(e: GPtr<u8>) = thiscall 0x4AF890 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, `ret 8`)
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
     /// `CTaskComplexLeaveCar` constructor `(CVehicle*, int32, int32, bool, bool)` (0x63B8C0, `ret 0x14`)
     fn leave_car_ctor(t: GPtr<u8>, v: GPtr<u8>, a: i32, b: i32, c: u32, d: u32) -> GPtr<u8> = thiscall 0x63B8C0 => unported;
     /// `CTaskComplexCarDriveMission::Constructor(CVehicle*, CEntity*, int32 mission, int32 style, float speed)`
     /// (0x63CC30, `ret 0x14`)
     fn car_drive_mission_ctor(t: GPtr<u8>, v: GPtr<u8>, e: GPtr<u8>, mission: i32, style: i32, speed: u32) -> GPtr<u8> = thiscall 0x63CC30 => unported;
-    /// `CTaskSimpleCarDrive::Constructor(CVehicle*, CTaskUtilityLineUpPedWithCar*, bool)` (0x63C340, `ret 0xC`)
-    fn simple_car_drive_ctor(t: GPtr<u8>, v: GPtr<u8>, a: u32, b: u32) -> GPtr<u8> = thiscall 0x63C340 => unported;
     /// `CTaskComplexKillPedOnFoot::Constructor(CPed*, int32, uint32, uint32, int32, bool)` (0x620E30, `ret 0x18`)
     fn kill_ped_on_foot_ctor(t: GPtr<u8>, p: GPtr<u8>, a: i32, b: u32, c: u32, d: i32, e: u32) -> GPtr<u8> = thiscall 0x620E30 => unported;
-    /// `CPed::SetCurrentWeapon(eWeaponType)` (0x5E6280, `ret 4`)
-    fn ped_set_current_weapon(p: GPtr<u8>, w: i32) = thiscall 0x5E6280 => unported;
     /// `CPed::GiveWeapon(eWeaponType, uint32 ammo, bool)` (0x5E6080, `ret 0xC`)
     fn ped_give_weapon(p: GPtr<u8>, w: i32, ammo: u32, b: u32) -> u32 = thiscall 0x5E6080 => unported;
     /// `CInterestingEvents::Add(int32 type, CEntity*)` (0x602590, `ret 8`)

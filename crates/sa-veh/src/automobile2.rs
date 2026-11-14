@@ -12,75 +12,51 @@ use crate::common::{f32_of, g, jne_mask, model_info, rand_at, rd, wr, x, xi};
 /// `CAutomobile*` (thiscall `this`).
 type Car = GPtr<u8>;
 
+pub use crate::bindings::audio_add_event_entity;
+pub use crate::bindings::bouncing_panel_set_panel as bouncing_panel_set;
+pub use crate::bindings::dm_get_panel_status;
+pub use crate::bindings::dm_set_door_status;
+pub use crate::bindings::door_open;
+pub use crate::bindings::get_wheel_status as dm_get_wheel_status;
+pub use crate::bindings::set_component_visibility;
+pub use crate::bindings::spawn_flying_component;
+pub use crate::bindings::vehicle_destructor;
+pub use sa_core::bindings::frame_get_ltm as rw_frame_get_ltm;
+pub use sa_core::bindings::matrix_dtor;
+pub use sa_core::bindings::matrix_set_rotate;
+pub use sa_core::bindings::matrix_update_rw;
+pub use sa_core::bindings::random_float_in_range as random_float;
+pub use sa_stream::bindings::rp_material_set_texture;
+pub use sa_stream::bindings::rw_texture_destroy;
+pub use sa_world::bindings::audio_add_event;
+pub use sa_world::bindings::audio_terminate;
+pub use sa_world::bindings::event_group_add;
+pub use sa_world::bindings::event_sound_quiet_ctor;
+pub use sa_world::bindings::event_sound_quiet_dtor;
+pub use sa_world::bindings::fx_kill;
+pub use sa_world::bindings::get_adhesion_group;
+pub use sa_world::bindings::get_event_global_group;
 orig! {
     /// `CVehicle::operator delete(void*)` (0x6E2D90, catalogue `delete`)
     pub fn vehicle_delete(p: GPtr<u8>) = cdecl 0x6E2D90 => unported;
     /// `CAutomobile::Destructor()` (0x6A61E0)
     pub fn destructor_call(car: GPtr<u8>) = thiscall 0x6A61E0 => destructor;
-    /// `FxSystem_c::Kill()` (0x4AA3F0)
-    pub fn fx_kill(fx: GPtr<u8>) = thiscall 0x4AA3F0 => unported;
-    /// `CAEVehicleAudioEntity::Terminate()` (0x4FB8C0)
-    pub fn audio_terminate(a: GPtr<u8>) = thiscall 0x4FB8C0 => unported;
-    /// `CVehicle::Destructor()` (0x6E2B40)
-    pub fn vehicle_destructor(v: GPtr<u8>) = thiscall 0x6E2B40 => unported;
-    /// `RpMaterialSetTexture(RpMaterial*, RwTexture*)` (0x74DBC0)
-    pub fn rp_material_set_texture(m: GPtr<u8>, t: GPtr<u8>) -> GPtr<u8> = cdecl 0x74DBC0 => unported;
-    /// `RwTextureDestroy(RwTexture*)` (0x7F3820)
-    pub fn rw_texture_destroy(t: GPtr<u8>) -> i32 = cdecl 0x7F3820 => unported;
-    /// `RwFrameGetLTM(RwFrame*)` (0x7F0990)
-    pub fn rw_frame_get_ltm(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0990 => unported;
-    /// `CDamageManager::GetPanelStatus(ePanels)` (0x6C2180)
-    pub fn dm_get_panel_status(dm: GPtr<u8>, panel: u32) -> u32 = thiscall 0x6C2180 => crate::damage::get_panel_status;
     /// `CDamageManager::GetDoorStatus(eDoors)` (0x6C2230)
     pub fn dm_get_door_status(dm: GPtr<u8>, door: i32) -> u32 = thiscall 0x6C2230 => crate::damage::get_door_status;
-    /// `CDamageManager::SetDoorStatus(eDoors, eDoorStatus)` (0x6C21C0)
-    pub fn dm_set_door_status(dm: GPtr<u8>, door: i32, status: u32) = thiscall 0x6C21C0 => crate::damage::set_door_status;
     /// `CDamageManager::GetCarNodeIndexFromPanel(ePanels)` (0x6C26A0)
     pub fn node_from_panel_call(panel: u32) -> i32 = cdecl 0x6C26A0 => get_car_node_index_from_panel;
     /// `CDamageManager::GetCarNodeIndexFromDoor(eDoors)` (0x6C26F0)
     pub fn node_from_door_call(door: u32) -> i32 = cdecl 0x6C26F0 => get_car_node_index_from_door;
-    /// `CBouncingPanel::SetPanel(int16, int16, float)` (0x6F4920), the float as its bits
-    pub fn bouncing_panel_set(p: GPtr<u8>, frame: u32, axis: u32, limit: u32) = thiscall 0x6F4920 => crate::door::set_panel;
-    /// `CVehicle::SetComponentVisibility(RwFrame*, uint32)` (0x6D2700)
-    pub fn set_component_visibility(v: GPtr<u8>, frame: GPtr<u8>, state: u32) = thiscall 0x6D2700 => unported;
-    /// `CAutomobile::SpawnFlyingComponent(int32, uint32)` (0x6A8580); returns the `CObject*`
-    pub fn spawn_flying_component(car: GPtr<u8>, node: i32, kind: u32) -> GPtr<u8> = thiscall 0x6A8580 => unported;
-    /// `CGeneral::GetRandomNumberInRange<float>(float, float)` (0x41BD90, ST0)
-    pub fn random_float(min: f32, max: f32) -> f64 = cdecl 0x41BD90 => unported;
-    /// `CAEVehicleAudioEntity::AddAudioEvent(eAudioEvents, float)` (0x4F6420)
-    pub fn audio_add_event(a: GPtr<u8>, event: u32, volume: f32) = thiscall 0x4F6420 => unported;
-    /// `CAEVehicleAudioEntity::AddAudioEvent(eAudioEvents, CVehicle*)` (0x4F7580)
-    pub fn audio_add_event_entity(a: GPtr<u8>, event: u32, e: GPtr<u8>) = thiscall 0x4F7580 => unported;
     /// `CGlass::CarWindscreenShatters(CVehicle*, bool)` (0x71C2B0)
     pub fn car_windscreen_shatters(v: GPtr<u8>, explode: u32) = cdecl 0x71C2B0 => unported;
     /// `CVehicle::CanDoorsBeDamaged()` (0x6D1E60)
     pub fn can_doors_be_damaged(v: GPtr<u8>) -> u8 = thiscall 0x6D1E60 => unported;
-    /// `CDoor::Open(float)` (0x6F4790)
-    pub fn door_open(d: GPtr<u8>, ratio: f32) = thiscall 0x6F4790 => crate::door::open;
     /// `CMatrix::CMatrix(RwMatrix*, bool)` (0x59C050)
     pub fn matrix_ctor_attach(m: GPtr<u8>, rw: GPtr<u8>, owns: u32) = thiscall 0x59C050 => unported;
-    /// `CMatrix::SetRotate(float, float, float)` (0x59B120)
-    pub fn matrix_set_rotate(m: GPtr<u8>, x: f32, y: f32, z: f32) = thiscall 0x59B120 => unported;
-    /// `CMatrix::UpdateRW()` (0x59BBB0)
-    pub fn matrix_update_rw(m: GPtr<u8>) = thiscall 0x59BBB0 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    pub fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
     /// `RwFrameForAllObjects(RwFrame*, callback, void*)` (0x7F1200)
     pub fn rw_frame_for_all_objects(f: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> = cdecl 0x7F1200 => unported;
     /// `CDoor::IsClosed()` (0x6F4800)
     pub fn door_is_closed(d: GPtr<u8>) -> u8 = thiscall 0x6F4800 => crate::door::is_closed;
-    /// `CEventSoundQuiet::CEventSoundQuiet(CEntity*, float, uint32, const CVector&)` (0x5E05B0)
-    pub fn event_sound_quiet_ctor(ev: GPtr<u8>, e: GPtr<u8>, volume: f32, start: u32, pos: GPtr<u8>) -> GPtr<u8> = thiscall 0x5E05B0 => unported;
-    /// `GetEventGlobalGroup()` (0x4ABA50)
-    pub fn get_event_global_group() -> GPtr<u8> = cdecl 0x4ABA50 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420)
-    pub fn event_group_add(grp: GPtr<u8>, ev: GPtr<u8>, valid: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
-    /// the stack event's destructor (0x5DEA00)
-    pub fn event_sound_quiet_dtor(ev: GPtr<u8>) = thiscall 0x5DEA00 => unported;
-    /// `CDamageManager::GetWheelStatus(eCarWheel)` (0x6C21B0)
-    pub fn dm_get_wheel_status(dm: GPtr<u8>, wheel: i32) -> u32 = thiscall 0x6C21B0 => crate::damage::get_wheel_status;
-    /// `SurfaceInfos_c::GetAdhesionGroup(uint32)` (0x55E5C0)
-    pub fn get_adhesion_group(si: GPtr<u8>, id: u32) -> u32 = thiscall 0x55E5C0 => unported;
 }
 
 /// CRT `floor` (0x8219F0, catalogue-excluded CRT) of the register value passed as a double.

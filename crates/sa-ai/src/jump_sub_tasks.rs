@@ -8,30 +8,24 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::hit_head_ctor;
+use crate::bindings::in_air_and_land_ctor;
+use crate::bindings::task_complex_dtor;
+use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::groups_is_in_players_group;
+use sa_world::bindings::task_complex_ctor;
 orig! {
     /// `CTask::operator new(uint32)` (0x61A5A0)
     fn task_new_c(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => crate::mvpa_ai1::task_operator_new;
     /// `CTaskSimple::CTaskSimple()` (0x61A390)
     fn task_simple_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A390 => crate::mvpa_ai1::task_simple_ctor;
-    /// `CTaskComplex::CTaskComplex()` (0x61A3B0)
-    fn task_complex_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A3B0 => unported;
-    /// `CTaskComplex::~CTaskComplex()` body (0x61A3D0)
-    fn task_complex_dtor(t: GPtr<u8>) = thiscall 0x61A3D0 => unported;
     /// `CTask::GetTaskType()` (vtable slot 0x10)
     fn task_get_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CTaskComplexInAirAndLand(bool usePlayerLaunchForce, bool invalidClimb)` (0x678C80)
-    fn in_air_and_land_ctor(t: GPtr<u8>, a: u32, b: u32) -> GPtr<u8> = thiscall 0x678C80 => unported;
     /// `CTaskSimpleJump(bool canClimb)` (0x679AA0)
     fn simple_jump_ctor(t: GPtr<u8>, can_climb: u32) -> GPtr<u8> = thiscall 0x679AA0 => unported;
-    /// `CPedGroups::IsInPlayersGroup(CPed*)` (0x5F7F10)
-    fn groups_is_in_players_group(ped: GPtr<u8>) -> u8 = cdecl 0x5F7F10 => unported;
     /// `CTaskSimpleClimb(CEntity*, const CVector&, float heading, uint8 surface, int8 stage, bool force)` (0x67A110)
     #[allow(clippy::too_many_arguments)]
     fn simple_climb_ctor_c(t: GPtr<u8>, e: GPtr<u8>, pos: GPtr<u8>, heading: u32, surface: u32, stage: u32, force: u32) -> GPtr<u8> = thiscall 0x67A110 => simple_climb_ctor;
-    /// `CTaskSimpleHitHead()` (0x653060)
-    fn hit_head_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x653060 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    fn entity_register_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571B70 => unported;
 }
 
 use sa_world::world::common::entity_pos as pos;

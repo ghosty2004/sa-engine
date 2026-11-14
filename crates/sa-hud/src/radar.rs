@@ -64,6 +64,9 @@ const DISABLE_STREAMING: usize = 0x9654B0;
 /// `"radar%02d"` (.rdata)
 const RADAR_TXD_FMT: usize = 0x866B98;
 
+pub use sa_stream::bindings::find_txd_slot;
+pub use sa_world::bindings::crt_ceil;
+pub use sa_world::bindings::crt_floor;
 orig! {
     /// `CRadar::ClearActualBlip(int32)` (0x587C10)
     pub fn clear_actual_blip_call(i: i32) = cdecl 0x587C10 => clear_actual_blip;
@@ -73,18 +76,12 @@ orig! {
     pub fn stream_radar_sections_xy_call(x: i32, y: i32) = cdecl 0x584C50 => stream_radar_sections_xy;
     /// `CTheZones::GetCurrentZoneLockedOrUnlocked(CVector2D)` (0x572130)
     pub fn zone_locked_or_unlocked(x: f32, y: f32) -> u8 = cdecl 0x572130 => sa_world::world::zones::get_current_zone_locked_or_unlocked;
-    /// `CTxdStore::FindTxdSlot(const char*)` (0x731850)
-    pub fn find_txd_slot(name: GPtr<u8>) -> i32 = cdecl 0x731850 => sa_stream::txdstore::find_txd_slot_name;
     /// `CStreaming::RequestModel(int32, int32)` (0x4087E0)
     pub fn request_model(id: i32, flags: i32) = cdecl 0x4087E0 => sa_stream::streaming::request_model;
     /// `CStreaming::RemoveModel(int32)` (0x4089A0)
     pub fn remove_model(id: i32) = cdecl 0x4089A0 => sa_stream::streaming::remove_model;
     /// `FindPlayerPed(int32)` (0x56E210)
     pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
-    /// CRT `floor(double)` (0x8219F0)
-    pub fn crt_floor(v: f64) -> f64 = cdecl 0x8219F0 => unported;
-    /// CRT `ceil(double)` (0x823820)
-    pub fn crt_ceil(v: f64) -> f64 = cdecl 0x823820 => unported;
 }
 
 fn menu_map() -> bool {

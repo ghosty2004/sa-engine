@@ -58,13 +58,10 @@ mod k {
     pub const F100: u32 = 0x42C8_0000;
 }
 
+pub use sa_core::bindings::file_close;
+pub use sa_core::bindings::file_set_dir;
+pub use sa_core::bindings::open_file as file_open;
 orig! {
-    /// `CFileMgr::SetDir` (0x5387D0)
-    pub fn file_set_dir(path: GPtr<u8>) -> i32 = cdecl 0x5387D0 => sa_core::filemgr::set_dir;
-    /// `CFileMgr::OpenFile` (0x538900)
-    pub fn file_open(path: GPtr<u8>, mode: GPtr<u8>) -> GPtr<u8> = cdecl 0x538900 => sa_core::filemgr::open_file;
-    /// `CFileMgr::CloseFile` (0x5389D0)
-    pub fn file_close(f: GPtr<u8>) -> i32 = cdecl 0x5389D0 => sa_core::filemgr::close_file;
     /// `CFileLoader::LoadLine(FILE*)` (0x536F80)
     pub fn load_line(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x536F80 => sa_stream::fileloader::load_line_file;
     /// `SurfaceInfos_c::GetSurfaceIdFromName` (0x55D220)

@@ -4,7 +4,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::automobile2::{
     dm_get_door_status, dm_get_panel_status, dm_set_door_status, node_from_door_call, node_from_panel_call,
@@ -14,10 +14,7 @@ use crate::common::{ftol32, model_info, rand_at, rand_frac, rd, xi};
 
 use sa_core::field::gf as k;
 
-orig! {
-    /// `CDamageManager::SetPanelStatus(ePanels, ePanelDamageState)` (0x6C2150)
-    fn dm_set_panel_status(dm: GPtr<u8>, panel: u32, status: u32) = thiscall 0x6C2150 => crate::damage::set_panel_status;
-}
+use crate::bindings::dm_set_panel_status;
 
 /// `_ftol((rand() & 0xFFFF) * (1 / 32768) * m)` with `rand` called from `site` (the inlined integer
 /// `GetRandomNumberInRange(0, m)`).

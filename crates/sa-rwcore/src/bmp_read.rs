@@ -10,6 +10,9 @@ use sa_core::{hook, orig};
 
 use crate::common::{RwError, p8, rd, rw_error_set, rw_free, rw_malloc};
 
+use crate::bindings::image_allocate_pixels;
+use crate::bindings::image_destroy;
+use sa_core::bindings::rw_error1;
 orig! {
     /// `RwStreamOpen(type, access, data)` (0x7ECEF0)
     fn stream_open(ty: u32, access: u32, data: GPtr<u8>) -> GPtr<u8> = cdecl 0x7ECEF0 => crate::stream::rw_stream_open;
@@ -21,12 +24,6 @@ orig! {
     fn stream_skip(s: GPtr<u8>, offset: u32) -> GPtr<u8> = cdecl 0x7ECD00 => crate::stream::rw_stream_skip;
     /// `RwImageCreate(w, h, depth)` (0x8026E0)
     fn image_create(w: i32, h: i32, depth: i32) -> GPtr<u8> = cdecl 0x8026E0 => crate::image::rw_image_create;
-    /// `RwImageAllocatePixels(image)` (0x8027A0)
-    fn image_allocate_pixels(img: GPtr<u8>) -> GPtr<u8> = cdecl 0x8027A0 => crate::image::rw_image_allocate_pixels;
-    /// `RwImageDestroy(image)` (0x802740)
-    fn image_destroy(img: GPtr<u8>) -> u32 = cdecl 0x802740 => crate::image::rw_image_destroy;
-    /// `_rwerror(code)` (0x8088D0, one argument)
-    fn rw_error1(code: u32) -> u32 = cdecl 0x8088D0 => unported;
     /// `_rwerror(code, a)` (0x8088D0, two arguments)
     fn rw_error2(code: u32, a: u32) -> u32 = cdecl 0x8088D0 => unported;
     /// `_rtBMPDecodeRow(image, y, src, bpp, rle)` (0x7CE5D0)

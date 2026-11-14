@@ -20,7 +20,7 @@
 
 use crate::mem::GPtr;
 use crate::timer::TIME_MS;
-use crate::{globals, hook, orig};
+use crate::{globals, hook};
 use sa_math::x87::{Cmp, X87};
 
 globals! {
@@ -43,14 +43,9 @@ pub mod k {
     pub const MED: u32 = 0x3EAA_AA3B;
 }
 
-orig! {
-    /// `CTimer::GetCurrentTimeInCycles` (0x561A80)
-    pub fn get_current_time_in_cycles() -> u32 = cdecl 0x561A80 => crate::timer::get_current_time_in_cycles;
-    /// `CTimer::GetCyclesPerMillisecond` (0x561A40)
-    pub fn get_cycles_per_millisecond() -> u32 = cdecl 0x561A40 => crate::timer::get_cycles_per_millisecond;
-    /// `FindPlayerPed(int32 playerId)` (0x56E210)
-    pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-}
+pub use crate::bindings::find_player_ped;
+pub use crate::bindings::get_current_time_in_cycles;
+pub use crate::bindings::get_cycles_per_millisecond;
 
 /// Byte-offset access to a `CLoadMonitor`.
 #[derive(Clone, Copy)]

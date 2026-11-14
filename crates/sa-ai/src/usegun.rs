@@ -29,31 +29,46 @@ const MINUS_FOUR: u32 = 0xC080_0000;
 /// 8.0f
 const EIGHT: u32 = 0x4100_0000;
 
+use crate::bindings::anim_blend_animation as ug_blend_animation;
+use crate::bindings::anim_set_delete_callback as ug_set_delete_callback;
+use crate::bindings::assoc_set_finish_callback as ug_set_finish_callback;
+use crate::bindings::assoc_start as ug_assoc_start;
+use crate::bindings::clump_get_association as ug_clump_get_association;
+use crate::bindings::duck_is_task_in_use_by_other_tasks as ug_duck_in_use_by_other_tasks;
+use crate::bindings::fight_6240b0 as ug_fight_6240b0;
+use crate::bindings::fight_ctor as ug_fight_ctor;
+use crate::bindings::fight_dtor_orig as ug_fight_dtor;
+use crate::bindings::ik_abort_look_at as ug_ik_abort_look_at;
+use crate::bindings::ik_abort_point_arm as ug_ik_abort_point_arm;
+use crate::bindings::ik_is_arm_pointing as ug_ik_is_arm_pointing;
+use crate::bindings::ped_set_move_state as ug_ped_set_move_state;
+use crate::bindings::ug_abort_ik_orig;
+use sa_core::bindings::entity_clean_up_old_reference as ug_clean_up_old_reference;
+use sa_core::bindings::entity_register_reference as ug_register_reference;
+use sa_core::bindings::get_weapon_info as ug_get_weapon_info;
+use sa_core::bindings::intel_get_task_use_gun as ug_get_task_use_gun;
+use sa_core::bindings::matrix_mul_vec as ug_matrix_mul_vector;
+use sa_core::bindings::ped_is_alive as ug_ped_is_alive;
+use sa_core::bindings::tm_get_simplest_active_task as ug_get_simplest_active_task;
+use sa_core::bindings::tm_get_task_secondary as ug_task_manager_get_task_secondary;
+use sa_core::bindings::vector_normalise as ug_vector_normalise;
+use sa_stream::bindings::ped_is_player as ug_ped_is_player;
+use sa_world::bindings::get_pad_from_player as ug_player_get_pad;
+use sa_world::bindings::ik_is_looking as ug_ik_is_looking;
+use sa_world::bindings::intel_get_task_duck as ug_get_task_duck;
+use sa_world::bindings::pad_get_ped_walk_left_right as ug_pad_walk_left_right;
+use sa_world::bindings::pad_get_ped_walk_up_down as ug_pad_walk_up_down;
+use sa_world::bindings::ped_get_bone_position as ug_ped_get_bone_position;
+use sa_world::bindings::ped_get_transformed_bone_position as ug_ped_get_transformed_bone_position;
+use sa_world::bindings::ped_get_weapon_skill as ug_ped_get_weapon_skill;
+use sa_world::bindings::task_simple_ctor as ug_task_simple_ctor;
+use sa_world::bindings::task_simple_dtor as ug_task_simple_dtor;
+use sa_world::bindings::vector_add as ug_vector_add;
+use sa_world::bindings::vector_sub as ug_vector_sub;
+use sa_world::bindings::vector_sub_assign as ug_vector_sub_assign;
 orig! {
-    /// `CTask::CTask` simple base constructor (0x61A390)
-    fn ug_task_simple_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A390 => unported;
-    /// simple task base destructor (0x61A3A0)
-    fn ug_task_simple_dtor(t: GPtr<u8>) = thiscall 0x61A3A0 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    fn ug_register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
-    fn ug_clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CAnimBlendAssociation::SetDeleteCallback(cb, data)` (0x4CEBC0)
-    fn ug_set_delete_callback(a: GPtr<u8>, cb: u32, data: u32) = thiscall 0x4CEBC0 => unported;
-    /// `CAnimBlendAssociation::SetFinishCallback(cb, data)` (0x4CEBE0)
-    fn ug_set_finish_callback(a: GPtr<u8>, cb: u32, data: u32) = thiscall 0x4CEBE0 => unported;
     /// `CAnimBlendAssociation::SetCurrentTime(float)` (0x4CEA80)
     fn ug_set_current_time(a: GPtr<u8>, t: u32) = thiscall 0x4CEA80 => unported;
-    /// `CAnimBlendAssociation::Start(float)` (0x4CEB70)
-    fn ug_assoc_start(a: GPtr<u8>, t: u32) = thiscall 0x4CEB70 => unported;
-    /// `IKChainManager_c::IsArmPointing(arm, ped)` (0x6182B0)
-    fn ug_ik_is_arm_pointing(m: GPtr<u8>, arm: i32, ped: GPtr<u8>) -> u8 = thiscall 0x6182B0 => unported;
-    /// `IKChainManager_c::AbortPointArm(arm, ped, blend)` (0x6182F0)
-    fn ug_ik_abort_point_arm(m: GPtr<u8>, arm: i32, ped: GPtr<u8>, blend: i32) = thiscall 0x6182F0 => unported;
-    /// `IKChainManager_c::IsLooking(ped)` (0x6181A0)
-    fn ug_ik_is_looking(m: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x6181A0 => unported;
-    /// `IKChainManager_c::AbortLookAt(ped, blend)` (0x618280)
-    fn ug_ik_abort_look_at(m: GPtr<u8>, ped: GPtr<u8>, blend: i32) = thiscall 0x618280 => unported;
     /// `IKChainManager_c::IsFacingTarget(ped, slot)` (0x618330)
     fn ug_ik_is_facing_target(m: GPtr<u8>, ped: GPtr<u8>, slot: i32) -> u8 = thiscall 0x618330 => unported;
     /// `IKChainManager_c::LookAt(name, ped, target, time, bone, pos, useTorso, speed, blend, priority, b)` (0x618970)
@@ -62,44 +77,16 @@ orig! {
     /// `IKChainManager_c::PointArm(name, arm, ped, target, bone, pos, speed, blendTime, cosLimit)` (0x618B60)
     #[allow(clippy::too_many_arguments)]
     fn ug_ik_point_arm(m: GPtr<u8>, name: u32, arm: i32, ped: GPtr<u8>, target: GPtr<u8>, bone: i32, pos: GPtr<u8>, speed: u32, blend: u32, limit: u32) = thiscall 0x618B60 => unported;
-    /// `CPedIntelligence::GetTaskUseGun()` (0x600F70)
-    fn ug_get_task_use_gun(intel: GPtr<u8>) -> GPtr<u8> = thiscall 0x600F70 => unported;
-    /// `CPedIntelligence::GetTaskDuck(bool)` (0x6010A0)
-    fn ug_get_task_duck(intel: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x6010A0 => unported;
-    /// `CTaskManager::GetTaskSecondary(int32)` (0x681810)
-    fn ug_task_manager_get_task_secondary(tm: GPtr<u8>, i: i32) -> GPtr<u8> = thiscall 0x681810 => unported;
-    /// `CTaskManager::GetSimplestActiveTask()` (0x6819D0)
-    fn ug_get_simplest_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x6819D0 => unported;
     /// `CTask::GetTaskType()` (vtable +0x10)
     fn ug_v_get_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
     /// `CTask::MakeAbortable(ped, priority, event)` (vtable +0x18)
     fn ug_v_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, priority: i32, event: GPtr<u8>) -> u8 = thiscall vslot 0x18 => unported;
-    /// `CPed::GetBonePosition(CVector&, bone, bool)` (0x5E4280)
-    fn ug_ped_get_bone_position(p: GPtr<u8>, out: GPtr<u8>, bone: u32, b: u32) = thiscall 0x5E4280 => unported;
-    /// `CPed::GetTransformedBonePosition(CVector&, bone, bool)` (0x5E01C0)
-    fn ug_ped_get_transformed_bone_position(p: GPtr<u8>, io: GPtr<u8>, bone: u32, b: u32) = thiscall 0x5E01C0 => unported;
-    /// `CPed::IsAlive()` (0x5E0170)
-    fn ug_ped_is_alive(p: GPtr<u8>) -> u8 = thiscall 0x5E0170 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0)
-    fn ug_ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CPed::SetMoveState(eMoveState)` (0x5DEC00)
-    fn ug_ped_set_move_state(p: GPtr<u8>, s: u32) = thiscall 0x5DEC00 => unported;
     /// `CPed::Say(id, ...)` (0x5EFFE0)
     fn ug_ped_say(p: GPtr<u8>, id: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32) = thiscall 0x5EFFE0 => unported;
     /// `CPed::DoGunFlash(lifetime, leftHand)` (0x5DF340)
     fn ug_ped_do_gun_flash(p: GPtr<u8>, life: u32, left: u32) -> u32 = thiscall 0x5DF340 => unported;
-    /// `CPed::GetWeaponSkill()` (0x5E6580)
-    fn ug_ped_get_weapon_skill(p: GPtr<u8>) -> u32 = thiscall 0x5E6580 => unported;
     /// `CPlacebale::GetAtDirection` style getter with a hidden out vector (0x50E420)
     fn ug_get_at_direction(p: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall 0x50E420 => unported;
-    /// `CPlayerPed::GetPadFromPlayer()` (0x609560)
-    fn ug_player_get_pad(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x609560 => unported;
-    /// `CPad::GetPedWalkUpDown()` (0x53FD30)
-    fn ug_pad_walk_up_down(pad: GPtr<u8>) -> i16 = thiscall 0x53FD30 => unported;
-    /// `CPad::GetPedWalkLeftRight()` (0x53FC90)
-    fn ug_pad_walk_left_right(pad: GPtr<u8>) -> i16 = thiscall 0x53FC90 => unported;
-    /// `CWeaponInfo::GetWeaponInfo(type, skill)` (0x743C60)
-    fn ug_get_weapon_info(ty: u32, skill: u32) -> GPtr<u8> = cdecl 0x743C60 => unported;
     /// `CWeapon::Fire(owner, src, src2, target, targetPos, altPos)` (0x742300)
     fn ug_weapon_fire(w: GPtr<u8>, owner: GPtr<u8>, src: GPtr<u8>, src2: GPtr<u8>, target: GPtr<u8>, tpos: GPtr<u8>, alt: GPtr<u8>) -> u32 = thiscall 0x742300 => unported;
     /// `CWeaponInfo::GetAnimLoopStart(bool duck)` (0x608F00, result in ST0)
@@ -108,16 +95,10 @@ orig! {
     fn ug_wi_loop_end(wi: GPtr<u8>, duck: u32) -> f64 = thiscall 0x608F20 => unported;
     /// `CWeaponInfo::GetAnimLoopFire(bool duck)` (0x61C150, result in ST0)
     fn ug_wi_loop_fire(wi: GPtr<u8>, duck: u32) -> f64 = thiscall 0x61C150 => unported;
-    /// `CAnimManager::BlendAnimation(clump, group, id, delta)` (0x4D4610)
-    fn ug_blend_animation(clump: u32, group: u32, id: u32, delta: u32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
     /// `CAnimManager::AddAnimation(clump, group, id)` (0x4D3AA0)
     fn ug_add_animation(clump: u32, group: u32, id: u32) -> GPtr<u8> = cdecl 0x4D3AA0 => unported;
-    /// `RpAnimBlendClumpGetAssociation(clump, id)` (0x4D68B0)
-    fn ug_clump_get_association(clump: u32, id: u32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
     /// `CTaskSimpleDuck::ForceStopMove()` (0x6924B0)
     fn ug_duck_force_stop_move(d: GPtr<u8>) = thiscall 0x6924B0 => unported;
-    /// `CTaskSimpleDuck::IsTaskInUseByOtherTasks()` (0x61C3D0)
-    fn ug_duck_in_use_by_other_tasks(d: GPtr<u8>) -> u8 = thiscall 0x61C3D0 => unported;
     /// `CTaskSimpleDuck::StopFireGun()` (0x61C420)
     fn ug_duck_stop_fire_gun(d: GPtr<u8>) -> u8 = thiscall 0x61C420 => unported;
     /// `CPedIK::RotateTorsoForArm(const CVector&)` (0x5FDF90)
@@ -126,30 +107,12 @@ orig! {
     fn ug_pedik_point_gun_at_position(ik: GPtr<u8>, v: GPtr<u8>, amount: u32) -> u8 = thiscall 0x5FDE20 => unported;
     /// `CPedIK::PointGunInDirection(zAngle, angle2, bool, float)` (0x5FDC00)
     fn ug_pedik_point_gun_in_direction(ik: GPtr<u8>, a: u32, b: u32, c: u32, amount: u32) -> u8 = thiscall 0x5FDC00 => unported;
-    /// `operator+(CVector* out, const CVector*, const CVector*)` (0x40FE30)
-    fn ug_vector_add(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE30 => unported;
-    /// `VectorSub(CVector* out, const CVector*, const CVector*)` (0x40FE60)
-    fn ug_vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => unported;
-    /// `CVector::operator-=(const CVector&)` (0x406D70)
-    fn ug_vector_sub_assign(v: GPtr<u8>, o: GPtr<u8>) = thiscall 0x406D70 => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    fn ug_vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
-    /// `operator*(CVector* out, const CMatrix&, const CVector&)` (0x59C890)
-    fn ug_matrix_mul_vector(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
     /// `CCamera::Find3rdPersonCamTargetVector(range, CVector source, CVector& camPos, CVector& pointAt)` (0x514970)
     #[allow(clippy::too_many_arguments)]
     fn ug_find_3rd_person_cam_target_vector(cam: GPtr<u8>, range: u32, sx: u32, sy: u32, sz: u32, cam_pos: GPtr<u8>, point: GPtr<u8>) = thiscall 0x514970 => unported;
-    /// `CTaskSimpleFight::CTaskSimpleFight(target, command, time)` (0x61C470)
-    fn ug_fight_ctor(t: GPtr<u8>, target: GPtr<u8>, cmd: u32, time: u32) -> GPtr<u8> = thiscall 0x61C470 => unported;
-    /// `CTaskSimpleFight::~CTaskSimpleFight()` (0x61C530)
-    fn ug_fight_dtor(t: GPtr<u8>) = thiscall 0x61C530 => unported;
-    /// `CTaskSimpleFight` pistol-whip hit test `(ped, const CVector*)` (0x6240B0)
-    fn ug_fight_6240b0(t: GPtr<u8>, ped: GPtr<u8>, v: GPtr<u8>) = thiscall 0x6240B0 => unported;
     // This class's own methods (called through their original addresses).
     /// `CTaskSimpleUseGun::Destructor` (0x61DF30)
     fn ug_destructor_orig(t: GPtr<u8>) = thiscall 0x61DF30 => unported;
-    /// `CTaskSimpleUseGun::AbortIK(ped)` (0x61DFA0)
-    fn ug_abort_ik_orig(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x61DFA0 => unported;
     /// `CTaskSimpleUseGun::SetMoveAnim(ped)` (0x61E3F0)
     fn ug_set_move_anim_orig(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x61E3F0 => unported;
     /// `CTaskSimpleUseGun::RemoveStanceAnims(ped, float)` (0x61E8E0)

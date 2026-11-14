@@ -89,37 +89,26 @@ const RW_CAM_NEAR: isize = 0x80;
 /// `CCamera::m_nPedZoom` (+0xC8; `ImproveNearClip` reads it at the absolute 0xB6F0F0).
 const PED_ZOOM: isize = 0xC8;
 
+pub use sa_core::bindings::rw_camera_set_near_clip_plane as set_near_clip_raw;
+pub use sa_core::bindings::vector_magnitude;
+pub use sa_stream::bindings::animate_ped_col_model_skinned_world;
+pub use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
+pub use sa_stream::bindings::simple_transform_update_matrix;
+pub use sa_world::bindings::entity_get_col_model as get_col_model;
+pub use sa_world::bindings::get_task_jet_pack;
+pub use sa_world::bindings::get_task_swim;
+pub use sa_world::bindings::get_using_parachute;
+pub use sa_world::bindings::vector_sub;
 orig! {
-    /// `RwCameraSetNearClipPlane(RwCamera*, RwReal)` (0x7EE1D0), the value passed as the dword the
-    /// caller pushes
-    pub fn set_near_clip_raw(cam: GPtr<u8>, near: u32) -> GPtr<u8> = cdecl 0x7EE1D0 => unported;
     /// `CCamera::GetRoughDistanceToGround()` (0x516B00, ST0)
     pub fn get_rough_distance_to_ground(this: GPtr<u8>) -> f64 = thiscall 0x516B00 => get_rough_distance_to_ground_st0;
-    /// `CPedIntelligence::GetUsingParachute()` (0x6011B0, AL)
-    pub fn get_using_parachute(intel: GPtr<u8>) -> u8 = thiscall 0x6011B0 => unported;
-    /// `CPedIntelligence::GetTaskSwim()` (0x601070)
-    pub fn get_task_swim(intel: GPtr<u8>) -> GPtr<u8> = thiscall 0x601070 => unported;
-    /// `CPedIntelligence::GetTaskJetPack()` (0x601110)
-    pub fn get_task_jet_pack(intel: GPtr<u8>) -> GPtr<u8> = thiscall 0x601110 => unported;
     /// `CWaterLevel::GetWaterLevel(float x, float y, float z, float* level, bool waves, CVector* normal)`
     /// (0x6EB690, cdecl, AL); the coordinates are pushed as dwords
     pub fn get_water_level_raw(x: u32, y: u32, z: u32, level: GPtr<f32>, waves: u32, normal: GPtr<u8>) -> u8 = cdecl 0x6EB690 => unported;
-    /// `VectorSub(CVector* out, const CVector* a, const CVector* b)` (0x40FE60): out = a - b, returns out
-    pub fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => unported;
-    /// `CVector::Magnitude()` (0x4082C0, ST0)
-    pub fn vector_magnitude(v: GPtr<u8>) -> f64 = thiscall 0x4082C0 => unported;
     /// `std::min<float>(a, b)` instance (0x404330, ST0): `b` unless `a < b`
     pub fn min_f(a: f32, b: f32) -> f64 = cdecl 0x404330 => min_f_port;
-    /// `CPedModelInfo::AnimatePedColModelSkinnedWorld(RpClump*)` (0x4C7170)
-    pub fn animate_ped_col_model_skinned_world(mi: GPtr<u8>, clump: GPtr<u8>) = thiscall 0x4C7170 => unported;
     /// `CCollision::CheckPeds(const CVector& pos, const CVector& dir, float& t)` (0x4154A0, AL)
     pub fn check_peds(pos: GPtr<f32>, dir: GPtr<f32>, t: GPtr<f32>) -> u8 = cdecl 0x4154A0 => sa_world::collision::misc::check_peds;
-    /// `CEntity::GetColModel()` (0x535300)
-    pub fn get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => unported;
-    /// `CPlaceable::AllocateMatrix()` (0x54F560)
-    pub fn allocate_matrix(e: GPtr<u8>) = thiscall 0x54F560 => unported;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*)` (0x54F1B0, thiscall on the placement)
-    pub fn simple_transform_update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => unported;
     /// `CCamera::ConeCastCollisionResolve(CVector* source, CVector* target, CVector* out, float radius,
     /// float angle, float* dist)` (0x51A5D0), radius and angle pushed as dwords
     pub fn cone_cast_collision_resolve_raw(this: GPtr<u8>, source: GPtr<u8>, target: GPtr<u8>, out: GPtr<u8>, radius: u32, angle: u32, dist: GPtr<u8>) -> u8 = thiscall 0x51A5D0 => cone_cast_collision_resolve_bits;

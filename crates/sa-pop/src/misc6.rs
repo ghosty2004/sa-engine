@@ -12,6 +12,8 @@ use crate::misc::{allocate_matrix, update_matrix};
 /// Globals owned by this module: none.
 pub const GLOBALS: &[GlobalDesc] = &[];
 
+use sa_stream::bindings::get_2d_effect;
+use sa_world::bindings::add_light as point_lights_add_light;
 orig! {
     /// `CTrafficLights::FindOrientationForTrafficLightType(CEntity*)` (0x49D520, ST0)
     fn find_orientation_call(e: GPtr<u8>) -> f64 = cdecl 0x49D520 => find_orientation_abi;
@@ -21,8 +23,6 @@ orig! {
     fn light_for_cars1_visual_call() -> u8 = cdecl 0x49D350 => crate::misc::light_for_cars1_visual;
     /// `CTrafficLights::LightForCars2_Visual()` (0x49D3A0)
     fn light_for_cars2_visual_call() -> u8 = cdecl 0x49D3A0 => crate::misc::light_for_cars2_visual;
-    /// `CBaseModelInfo::Get2dEffect(int32)` (0x4C4C70, thiscall)
-    fn get_2d_effect(mi: GPtr<u8>, i: i32) -> GPtr<u8> = thiscall 0x4C4C70 => unported;
     /// `operator*(const CMatrix&, const CVector&)` (0x59C890, hidden result pointer first)
     fn matrix_mul_vec(out: GPtr<f32>, m: GPtr<u8>, v: GPtr<f32>) -> GPtr<f32> = cdecl 0x59C890 => unported;
     /// `CCoronas::RegisterCorona(uint32 id, CEntity*, uint8 r, g, b, a, const CVector&, float radius, float
@@ -32,9 +32,6 @@ orig! {
     /// `CBrightLights::RegisterOne(CVector pos, CVector up, CVector right, CVector fwd, uint8 color, uint8,
     /// uint8, uint8)` (0x724770, vectors by value as bits)
     fn bright_lights_register_one(p0: u32, p1: u32, p2: u32, u0: u32, u1: u32, u2: u32, r0: u32, r1: u32, r2: u32, f0: u32, f1: u32, f2: u32, color: u32, a: u32, b: u32, c: u32) = cdecl 0x724770 => unported;
-    /// `CPointLights::AddLight(uint8 type, CVector pos, CVector dir, float radius, float r, float g, float b,
-    /// uint8 fogType, bool extraShadows, CEntity* attached)` (0x7000E0, by-value vectors and floats as bits)
-    fn point_lights_add_light(ty: u32, px: u32, py: u32, pz: u32, dx: u32, dy: u32, dz: u32, radius: u32, r: u32, gr: u32, b: u32, fog: u32, shadows: u32, attached: u32) = cdecl 0x7000E0 => unported;
     /// `CShadows::StoreStaticShadow(uint32 id, uint8 type, RwTexture*, const CVector* pos, float frontX, float
     /// frontY, float sideX, float sideY, int16 intensity, uint8 r, uint8 g, uint8 b, float zDistance, float
     /// scale, float drawDistance, bool temporary, float upDistance)` (0x70BA00, floats as bits)

@@ -9,11 +9,9 @@ use sa_core::mem::GPtr;
 use sa_core::orig;
 use sa_math::x87::X87;
 
+use sa_core::bindings::world_add;
+use sa_core::bindings::world_remove;
 orig! {
-    /// `CWorld::Remove(CEntity*)` (0x563280)
-    fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
-    /// `CWorld::Add(CEntity*)` (0x563220)
-    fn world_add(e: GPtr<u8>) = cdecl 0x563220 => unported;
     /// virtual scalar deleting destructor (+0)
     fn delete_entity(e: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
     /// `CPickup::FindTextIndexForString(const char*)` (0x455500)
@@ -125,33 +123,24 @@ pub fn generate_new_one(x: f32, y: f32, z: f32, model: u32, kind: u32, ammo: u32
     ((u32::from(n) << 16) | i) as i32
 }
 
+use crate::bindings::object_ctor;
+use crate::bindings::pick_up_should_be_invisible;
+use crate::bindings::set_orientation;
+use crate::bindings::simple_transform_update_rw_matrix as transform_update_rw_matrix;
+use sa_core::bindings::entity_register_reference as register_reference;
+use sa_core::bindings::entity_update_rw_frame as update_rw_frame;
+use sa_core::bindings::get_weapon_info;
+use sa_core::bindings::make_sure_slot_in_object_pool_is_empty;
+use sa_core::bindings::object_new_at;
 orig! {
     /// virtual `CBaseModelInfo::GetModelType()` (+0x10, AL)
     fn model_type(mi: GPtr<u8>) -> u8 = thiscall vslot 0x10 => unported;
-    /// `CWeaponInfo::GetWeaponInfo(eWeaponType, uint8 skill)` (0x743C60)
-    fn get_weapon_info(ty: u32, skill: u32) -> GPtr<u8> = cdecl 0x743C60 => unported;
-    /// `CPools::MakeSureSlotInObjectPoolIsEmpty(int32)` (0x550080)
-    fn make_sure_slot_in_object_pool_is_empty(slot: i32) = cdecl 0x550080 => unported;
-    /// `CObject::operator new(size, int32 poolRef)` (0x5A1EF0)
-    fn object_new_at(size: u32, pool_ref: i32) -> GPtr<u8> = cdecl 0x5A1EF0 => unported;
-    /// `CObject::CObject(int32 model, bool create)` (0x5A1D70)
-    fn object_ctor(this: GPtr<u8>, model: u32, create: u32) -> GPtr<u8> = thiscall 0x5A1D70 => unported;
     /// `CObject::Create(int32 model, bool)` (0x5A1F60)
     fn object_create(model: u32, b: u32) -> GPtr<u8> = cdecl 0x5A1F60 => unported;
     /// `CPickup::GetPosn()` (0x4549A0, the CVector through the hidden pointer)
     fn pickup_get_posn(this: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall 0x4549A0 => unported;
-    /// `CPlaceable::SetOrientation(float x, float y, float z)` (0x439A80)
-    fn set_orientation(this: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x439A80 => unported;
     /// `CMatrix::UpdateRwMatrix(RwMatrix*)` (0x59AD70)
     fn matrix_update_rw_matrix(m: GPtr<u8>, rw: GPtr<u8>) -> GPtr<u8> = thiscall 0x59AD70 => unported;
-    /// `CSimpleTransform::UpdateRwMatrix(RwMatrix*)` (0x54EF40)
-    fn transform_update_rw_matrix(t: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x54EF40 => unported;
-    /// `CEntity::UpdateRwFrame()` (0x532B00)
-    fn update_rw_frame(e: GPtr<u8>) = thiscall 0x532B00 => unported;
-    /// `CPickup::PickUpShouldBeInvisible()` (0x454D20)
-    fn pick_up_should_be_invisible(p: GPtr<u8>) -> u8 = thiscall 0x454D20 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    fn register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
 }
 
 use sa_core::field::rd32;

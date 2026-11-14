@@ -26,6 +26,7 @@ use crate::common::*;
 
 type P = GPtr<u8>;
 
+use sa_core::bindings::general_random_int_in_range as random_in_range;
 orig! {
     /// `CTask::operator delete`-style virtual destructor (vtable +0, `ret 4`)
     fn v_delete(o: P, flags: u32) -> P = thiscall vslot 0x0 => unported;
@@ -92,8 +93,6 @@ orig! {
     fn fx_get_play_status(f: P) -> i32 = thiscall 0x4AA900 => unported;
     /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
     fn entity_clean_up_old_reference(e: P, slot: P) = thiscall 0x571A00 => unported;
-    /// `CGeneral::GetRandomNumberInRange(int32, int32)` (0x407180)
-    fn random_in_range(min: i32, max: i32) -> i32 = cdecl 0x407180 => unported;
     /// `CEventEditableResponse::ComputeResponseTaskType(CPed*, bool)` (0x4B56C0, `ret 8`)
     fn editable_compute_response_task_type(e: P, ped: P, b: u32) = thiscall 0x4B56C0 => unported;
     /// `CEventHandler::ComputeEventResponseTask(CPed*, CEvent*)` (0x4C4220)

@@ -26,75 +26,49 @@ const FORCE_SCALE_BIKE: usize = 0x8D22AC;
 const RAMMED: u32 = 49;
 const RUN_OVER: u32 = 50;
 
+use sa_core::bindings::get_pad;
+use sa_core::bindings::tm_get_simplest_active_task;
+use sa_core::bindings::vector_dot_product as dot_product;
+use sa_core::bindings::vector_magnitude;
+use sa_core::bindings::vector_normalise;
+use sa_world::bindings::apply_force as physical_apply_force;
+use sa_world::bindings::damage_calc_compute_damage_response;
+use sa_world::bindings::damage_calc_ctor;
+use sa_world::bindings::damage_calc_dtor;
+use sa_world::bindings::entity_get_col_model;
+use sa_world::bindings::event_damage_affects_ped;
+use sa_world::bindings::event_damage_ctor;
+use sa_world::bindings::event_damage_dtor;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::min_f;
+use sa_world::bindings::pad_start_shake;
+use sa_world::bindings::physical_apply_turn_force;
+use sa_world::bindings::report_crime;
+use sa_world::bindings::tm_find_active_task_by_type;
+use sa_world::bindings::vector_add;
+use sa_world::bindings::vector_add_assign;
+use sa_world::bindings::vector_magnitude_sqr;
+use sa_world::bindings::vector_mul_scalar;
+use sa_world::bindings::vector_scale as scalar_mul_vector;
+use sa_world::bindings::vector_sub;
+use sa_world::bindings::vector_sub_assign;
 orig! {
-    /// `CTaskManager::GetSimplestActiveTask()` (0x6819D0)
-    fn tm_get_simplest_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x6819D0 => unported;
     /// `CTask::GetTaskType` (vtable slot 0x10)
     fn task_get_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CTaskManager::FindActiveTaskByType(int32)` (0x681740)
-    fn tm_find_active_task_by_type(tm: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x681740 => unported;
     /// `CPed::IsPlayer()` (0x5DF8F0)
     fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => crate::ped::is_player;
-    /// `CVector::SquaredMagnitude()` (0x406DA0, ST0)
-    fn vector_magnitude_sqr(v: GPtr<u8>) -> f64 = thiscall 0x406DA0 => unported;
-    /// `CVector::Magnitude()` (0x4082C0, ST0)
-    fn vector_magnitude(v: GPtr<u8>) -> f64 = thiscall 0x4082C0 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    fn get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CPad::StartShake(int16 time, uint8 freq, uint32 delay)` (0x53F920)
-    fn pad_start_shake(pad: GPtr<u8>, time: u32, freq: u32, delay: u32) = thiscall 0x53F920 => unported;
     /// `CPed::GetLocalDirection(const CVector2D&)` (0x5DEF60)
     fn ped_get_local_direction(p: GPtr<u8>, v: GPtr<f32>) -> i32 = thiscall 0x5DEF60 => crate::ped::get_local_direction;
-    /// `CEntity::GetColModel()` (0x535300)
-    fn entity_get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => unported;
-    /// `DotProduct(const CVector&, const CVector&)` (0x40FDB0, ST0)
-    fn dot_product(a: GPtr<u8>, b: GPtr<u8>) -> f64 = cdecl 0x40FDB0 => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
     /// `CAutomobile::RemoveBonnetInPedCollision()` (0x6AA200)
     fn remove_bonnet_in_ped_collision(car: GPtr<u8>) -> GPtr<u8> = thiscall 0x6AA200 => unported;
-    /// `CPhysical::ApplyTurnForce(CVector force, CVector point)` (0x542A50; raw float words)
-    fn physical_apply_turn_force(p: GPtr<u8>, fx: u32, fy: u32, fz: u32, px: u32, py: u32, pz: u32) = thiscall 0x542A50 => unported;
-    /// `CPhysical::ApplyForce(CVector force, CVector point, bool updateTurnSpeed)` (0x542B50; raw float words)
-    fn physical_apply_force(p: GPtr<u8>, fx: u32, fy: u32, fz: u32, px: u32, py: u32, pz: u32, b: u32) = thiscall 0x542B50 => unported;
     /// `CLocalisation::KnockDownPeds()` (0x56D290)
     fn knock_down_peds() -> u8 = cdecl 0x56D290 => unported;
     /// `CAEVehicleAudioEntity::AddAudioEvent(eAudioEvents, float)` (0x4F6420)
     fn add_audio_event(a: GPtr<u8>, ev: u32, vol: u32) = thiscall 0x4F6420 => unported;
-    /// `CCrime::ReportCrime(eCrimeType, CEntity* victim, CPed* criminal)` (0x532010)
-    fn report_crime(ty: i32, victim: GPtr<u8>, criminal: GPtr<u8>) = cdecl 0x532010 => unported;
-    /// `CPedDamageResponseCalculator::CPedDamageResponseCalculator(CEntity*, float, eWeaponType, ePedPieceTypes, bool)` (0x4AD3F0)
-    fn damage_calc_ctor(c: GPtr<u8>, e: GPtr<u8>, dmg: u32, wt: u32, piece: u32, speak: u32) -> GPtr<u8> = thiscall 0x4AD3F0 => unported;
-    /// `CPedDamageResponseCalculator::~CPedDamageResponseCalculator()` (0x4AD420)
-    fn damage_calc_dtor(c: GPtr<u8>) = thiscall 0x4AD420 => unported;
-    /// `CEventDamage::CEventDamage(CEntity*, uint32, eWeaponType, ePedPieceTypes, uint8, bool, bool)` (0x4AD830)
-    fn event_damage_ctor(e: GPtr<u8>, src: GPtr<u8>, time: u32, wt: u32, piece: u32, dir: u32, a6: u32, a7: u32) -> GPtr<u8> = thiscall 0x4AD830 => unported;
-    /// `CEventDamage::~CEventDamage()` (0x4AD960)
-    fn event_damage_dtor(e: GPtr<u8>) = thiscall 0x4AD960 => unported;
-    /// `CEventDamage::AffectsPed(CPed*)` (0x4B35A0)
-    fn event_damage_affects_ped(e: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x4B35A0 => unported;
-    /// `CPedDamageResponseCalculator::ComputeDamageResponse(CPed*, CPedDamageResponse&, bool)` (0x4B5AC0)
-    fn damage_calc_compute_damage_response(c: GPtr<u8>, ped: GPtr<u8>, r: GPtr<u8>, speak: u32) = thiscall 0x4B5AC0 => unported;
     /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float)` (0x4D4610)
     fn blend_animation(c: GPtr<u8>, group: i32, id: i32, delta: u32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420)
-    fn event_group_add(grp: GPtr<u8>, ev: GPtr<u8>, valid: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
     /// `CPed::Say(uint16, uint32, float, bool, bool, bool)` (0x5EFFE0)
     fn ped_say(p: GPtr<u8>, id: u32, offset: u32, vol: u32, a: u32, b: u32, c: u32) = thiscall 0x5EFFE0 => unported;
-    /// `operator*(float, const CVector&)` (0x40FE90, cdecl, returns out)
-    fn scalar_mul_vector(out: GPtr<u8>, s: f32, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE90 => unported;
-    /// `operator*(const CVector&, float)` (0x40FEC0, cdecl, returns out)
-    fn vector_mul_scalar(out: GPtr<u8>, v: GPtr<u8>, s: f32) -> GPtr<u8> = cdecl 0x40FEC0 => unported;
-    /// `operator+(const CVector&, const CVector&)` (0x40FE30, cdecl, returns out)
-    fn vector_add(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE30 => unported;
-    /// `operator-(const CVector&, const CVector&)` (0x40FE60, cdecl, returns out)
-    fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => unported;
-    /// `CVector::operator-=(const CVector&)` (0x406D70)
-    fn vector_sub_assign(v: GPtr<u8>, o: GPtr<u8>) = thiscall 0x406D70 => unported;
-    /// `CVector::operator+=(const CVector&)` (0x411A00)
-    fn vector_add_assign(v: GPtr<u8>, o: GPtr<u8>) = thiscall 0x411A00 => unported;
-    /// `std::min<float>(a, b)` (0x404330, ST0: a when a < b, else b)
-    fn min_f(a: f32, b: f32) -> f64 = cdecl 0x404330 => unported;
 }
 
 /// A local `CVector` the original passes by address.

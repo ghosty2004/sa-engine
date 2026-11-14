@@ -227,59 +227,59 @@ pub mod lit {
 /// Calls into other (possibly original) functions.
 pub mod call {
     use super::*;
+    pub use crate::bindings::find_txd_slot;
+    pub use crate::bindings::frame_for_all_objects as rw_frame_for_all_objects;
+    pub use crate::bindings::get_animation_block_index;
+    pub use crate::bindings::get_atomic_id;
+    pub use crate::bindings::get_first_object;
+    pub use crate::bindings::get_model_info_min_max;
+    pub use crate::bindings::rp_clump_add_atomic;
+    pub use crate::bindings::rp_clump_remove_atomic;
+    pub use crate::bindings::rp_material_set_texture;
+    pub use crate::bindings::rw_frame_add_child;
+    pub use crate::bindings::rw_texture_destroy;
+    pub use crate::bindings::rw_texture_read;
+    pub use crate::bindings::set_atomic_render_callback;
+    pub use crate::bindings::strstr;
+    pub use sa_core::bindings::crt_free_8214bd as free;
+    pub use sa_core::bindings::crt_strncpy as strncpy;
+    pub use sa_core::bindings::frame_get_ltm as rw_frame_get_ltm;
+    pub use sa_core::bindings::get_current_time_in_cycles;
+    pub use sa_core::bindings::get_cycles_per_millisecond;
+    pub use sa_core::bindings::get_frame_hierarchy_id;
+    pub use sa_core::bindings::get_frame_node_name;
+    pub use sa_core::bindings::get_model_info as get_model_info_full;
+    pub use sa_core::bindings::read_line;
+    pub use sa_core::bindings::rp_atomic_clone;
+    pub use sa_core::bindings::rp_atomic_set_frame;
+    pub use sa_core::bindings::rw_frame_create;
+    pub use sa_core::bindings::rw_frame_destroy;
+    pub use sa_core::bindings::rw_frame_update_objects;
+    pub use sa_core::bindings::rw_matrix_create;
+    pub use sa_core::bindings::rw_matrix_destroy;
+    pub use sa_core::bindings::rw_tex_dictionary_find_named_texture;
+    pub use sa_core::bindings::rw_tex_dictionary_get_current;
+    pub use sa_core::bindings::rw_v3d_transform_points;
+    pub use sa_core::bindings::stricmp;
+    pub use sa_core::bindings::strncmp;
+    pub use sa_core::bindings::strtok;
     orig! {
-        /// RwTexDictionaryFindNamedTexture (0x7F39F0)
-        pub fn rw_tex_dictionary_find_named_texture(dict: GPtr<u8>, name: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F39F0 => unported;
-        /// RwTexDictionaryGetCurrent (0x7F3A90)
-        pub fn rw_tex_dictionary_get_current() -> GPtr<u8> = cdecl 0x7F3A90 => unported;
         /// RwTextureGetFindCallBack (0x7F34F0)
         pub fn rw_texture_get_find_call_back() -> u32 = cdecl 0x7F34F0 => unported;
         /// RwTextureSetFindCallBack (0x7F34D0)
         pub fn rw_texture_set_find_call_back(cb: u32) -> u32 = cdecl 0x7F34D0 => unported;
-        /// RwTextureRead (0x7F3AC0)
-        pub fn rw_texture_read(name: GPtr<u8>, mask: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F3AC0 => unported;
-        /// RwTextureDestroy (0x7F3820)
-        pub fn rw_texture_destroy(tex: GPtr<u8>) -> i32 = cdecl 0x7F3820 => unported;
         /// RpClumpForAllAtomics (0x749B70)
         pub fn rp_clump_for_all_atomics(clump: GPtr<u8>, cb: u32, data: GPtr<u8>) -> GPtr<u8> = cdecl 0x749B70 => unported;
-        /// RwFrameForAllObjects (0x7F1200)
-        pub fn rw_frame_for_all_objects(frame: GPtr<u8>, cb: u32, data: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F1200 => unported;
         /// RwFrameForAllChildren (0x7F0DC0)
         pub fn rw_frame_for_all_children(frame: GPtr<u8>, cb: u32, data: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0DC0 => unported;
         /// RpGeometryForAllMaterials (0x74C790)
         pub fn rp_geometry_for_all_materials(geo: GPtr<u8>, cb: u32, data: GPtr<u8>) -> GPtr<u8> = cdecl 0x74C790 => unported;
-        /// RwFrameDestroy (0x7F05A0)
-        pub fn rw_frame_destroy(frame: GPtr<u8>) -> i32 = cdecl 0x7F05A0 => unported;
-        /// RwFrameCreate (0x7F0410)
-        pub fn rw_frame_create() -> GPtr<u8> = cdecl 0x7F0410 => unported;
         /// RwMatrixRotate (0x7F1FD0)
         pub fn rw_matrix_rotate(m: GPtr<u8>, axis: GPtr<u8>, angle: f32, op: u32) -> GPtr<u8> = cdecl 0x7F1FD0 => unported;
-        /// RwFrameUpdateObjects (0x7F0910)
-        pub fn rw_frame_update_objects(frame: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0910 => unported;
-        /// RwFrameGetLTM (0x7F0990)
-        pub fn rw_frame_get_ltm(frame: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0990 => unported;
         /// RwFrameRemoveChild (0x7F0CD0)
         pub fn rw_frame_remove_child(frame: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0CD0 => unported;
-        /// RwFrameAddChild (0x7F0B00)
-        pub fn rw_frame_add_child(parent: GPtr<u8>, child: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0B00 => unported;
-        /// RwMatrixCreate (0x7F2A50)
-        pub fn rw_matrix_create() -> GPtr<u8> = cdecl 0x7F2A50 => unported;
         /// RwMatrixTransform (0x7F25A0)
         pub fn rw_matrix_transform(m: GPtr<u8>, t: GPtr<u8>, op: u32) -> GPtr<u8> = cdecl 0x7F25A0 => unported;
-        /// RwMatrixDestroy (0x7F2A20)
-        pub fn rw_matrix_destroy(m: GPtr<u8>) -> i32 = cdecl 0x7F2A20 => unported;
-        /// RwV3dTransformPoints (0x7EDD90)
-        pub fn rw_v3d_transform_points(out: GPtr<u8>, pts: GPtr<u8>, n: i32, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EDD90 => unported;
-        /// RpAtomicSetFrame (0x74BF20)
-        pub fn rp_atomic_set_frame(atomic: GPtr<u8>, frame: GPtr<u8>) -> GPtr<u8> = cdecl 0x74BF20 => unported;
-        /// RpAtomicClone (0x749E60)
-        pub fn rp_atomic_clone(atomic: GPtr<u8>) -> GPtr<u8> = cdecl 0x749E60 => unported;
-        /// RpClumpAddAtomic (0x74A490)
-        pub fn rp_clump_add_atomic(clump: GPtr<u8>, atomic: GPtr<u8>) -> GPtr<u8> = cdecl 0x74A490 => unported;
-        /// RpClumpRemoveAtomic (0x74A4C0)
-        pub fn rp_clump_remove_atomic(clump: GPtr<u8>, atomic: GPtr<u8>) -> GPtr<u8> = cdecl 0x74A4C0 => unported;
-        /// RpMaterialSetTexture (0x74DBC0)
-        pub fn rp_material_set_texture(mat: GPtr<u8>, tex: GPtr<u8>) -> GPtr<u8> = cdecl 0x74DBC0 => unported;
         /// RpMatFXMaterialGetEffects (0x812140)
         pub fn rp_mat_fx_material_get_effects(mat: GPtr<u8>) -> i32 = cdecl 0x812140 => unported;
         /// RpMatFXMaterialSetEffects (0x811C80)
@@ -292,24 +292,12 @@ pub mod call {
         pub fn rp_material_list_append_material(list: GPtr<u8>, mat: GPtr<u8>) -> i32 = cdecl 0x74E350 => unported;
         /// _rpMaterialListDeinitialize (0x74E150)
         pub fn rp_material_list_deinitialize(list: GPtr<u8>) -> GPtr<u8> = cdecl 0x74E150 => unported;
-        /// GetFrameNodeName (0x72FB30)
-        pub fn get_frame_node_name(frame: GPtr<u8>) -> GPtr<u8> = cdecl 0x72FB30 => unported;
-        /// RwHelper GetFirstObject (0x7348C0)
-        pub fn get_first_object(frame: GPtr<u8>) -> GPtr<u8> = cdecl 0x7348C0 => unported;
         /// CVisibilityPlugins::SetAtomicFlag (0x7322B0)
         pub fn set_atomic_flag(atomic: GPtr<u8>, flag: u32) = cdecl 0x7322B0 => unported;
         /// CVisibilityPlugins::ClearAtomicFlag (0x732310)
         pub fn clear_atomic_flag(atomic: GPtr<u8>, flag: u32) = cdecl 0x732310 => unported;
-        /// CVisibilityPlugins::GetAtomicId (0x732370)
-        pub fn get_atomic_id(atomic: GPtr<u8>) -> u32 = cdecl 0x732370 => unported;
-        /// CVisibilityPlugins::SetAtomicRenderCallback (0x7328A0)
-        pub fn set_atomic_render_callback(atomic: GPtr<u8>, cb: u32) = cdecl 0x7328A0 => unported;
         /// CVisibilityPlugins::ClearClumpForAllAtomicsFlag (0x732350)
         pub fn clear_clump_for_all_atomics_flag(clump: GPtr<u8>, flag: u32) = cdecl 0x732350 => unported;
-        /// CVisibilityPlugins::GetFrameHierarchyId (0x732A20)
-        pub fn get_frame_hierarchy_id(frame: GPtr<u8>) -> i32 = cdecl 0x732A20 => unported;
-        /// CTxdStore::FindTxdSlot(name) (0x731850)
-        pub fn find_txd_slot(name: GPtr<u8>) -> i32 = cdecl 0x731850 => crate::txdstore::find_txd_slot_name;
         /// CTxdStore::PushCurrentTxd (0x7316A0)
         pub fn push_current_txd() = cdecl 0x7316A0 => crate::txdstore::push_current_txd;
         /// CTxdStore::PopCurrentTxd (0x7316B0)
@@ -328,12 +316,6 @@ pub mod call {
         pub fn clump_create_instance(mi: GPtr<u8>) -> GPtr<u8> = thiscall 0x4C5140 => unported;
         /// CClumpModelInfo::DeleteRwObject (0x4C4E70)
         pub fn clump_delete_rw_object(mi: GPtr<u8>) = thiscall 0x4C4E70 => unported;
-        /// CAnimManager::GetAnimationBlockIndex(name) (0x4D3990)
-        pub fn get_animation_block_index(name: GPtr<u8>) -> i32 = cdecl 0x4D3990 => unported;
-        /// CModelInfo::GetModelInfo(name, minId, maxId) (0x4C5A20)
-        pub fn get_model_info_min_max(name: GPtr<u8>, min: i32, max: i32) -> GPtr<u8> = cdecl 0x4C5A20 => unported;
-        /// CModelInfo::GetModelInfo(name, &id) (0x4C5940)
-        pub fn get_model_info_full(name: GPtr<u8>, id: GPtr<i32>) -> GPtr<u8> = cdecl 0x4C5940 => unported;
         /// CWorld::FindPlayerVehicle(playerId, bIncludeRemote) (0x56E0D0)
         pub fn find_player_vehicle(player: i32, remote: u8) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
         /// CGeneral::GetRandomNumberInRange<int> (0x407180)
@@ -352,10 +334,6 @@ pub mod call {
         pub fn init_scratch_pad() = cdecl 0x72F480 => unported;
         /// CMemoryMgr::ReleaseScratchPad (0x72F4B0)
         pub fn release_scratch_pad() = cdecl 0x72F4B0 => unported;
-        /// CTimer::GetCurrentTimeInCycles (0x561A80)
-        pub fn get_current_time_in_cycles() -> u32 = cdecl 0x561A80 => sa_core::timer::get_current_time_in_cycles;
-        /// CTimer::GetCyclesPerMillisecond (0x561A40)
-        pub fn get_cycles_per_millisecond() -> u32 = cdecl 0x561A40 => sa_core::timer::get_cycles_per_millisecond;
         /// CQuaternion::Set(const RwMatrix&) (0x59C3E0)
         pub fn quaternion_set(q: GPtr<u8>, m: GPtr<u8>) = thiscall 0x59C3E0 => unported;
         /// CPool<CVehicleStructure>::New via CVehicleStructure::operator new (0x4C9570)
@@ -364,28 +342,14 @@ pub mod call {
         pub fn vehicle_structure_ctor(s: GPtr<u8>) -> GPtr<u8> = thiscall 0x4C8D60 => super::vehicle_structure_ctor;
         /// CVehicleModelInfo::~CVehicleModelInfo (0x4C5920)
         pub fn dtor(mi: GPtr<u8>) = thiscall 0x4C5920 => super::destructor;
-        /// CRT `operator delete` = `free` (0x8214BD)
-        pub fn free(p: GPtr<u8>) = cdecl 0x8214BD => unported;
         /// CRT `operator new` (0x82119A)
         pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
-        /// CRT `_stricmp` (0x8229B6)
-        pub fn stricmp(a: GPtr<u8>, b: GPtr<u8>) -> i32 = cdecl 0x8229B6 => unported;
-        /// CRT `strncmp` (0x8214D0)
-        pub fn strncmp(a: GPtr<u8>, b: GPtr<u8>, n: u32) -> i32 = cdecl 0x8214D0 => unported;
-        /// CRT `strstr` (0x822650)
-        pub fn strstr(a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x822650 => unported;
-        /// CRT `strncpy` (0x821F40)
-        pub fn strncpy(d: GPtr<u8>, s: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x821F40 => unported;
         /// CRT `isdigit` (0x822789)
         pub fn isdigit(c: i32) -> i32 = cdecl 0x822789 => unported;
         /// CRT `fopen` via 0x8232D8
         pub fn fopen(name: GPtr<u8>, mode: GPtr<u8>) -> GPtr<u8> = cdecl 0x8232D8 => unported;
         /// CRT `fclose` (0x82318B)
         pub fn fclose(f: GPtr<u8>) -> i32 = cdecl 0x82318B => unported;
-        /// CRT `strtok` (0x82244B)
-        pub fn strtok(s: GPtr<u8>, delim: GPtr<u8>) -> GPtr<u8> = cdecl 0x82244B => unported;
-        /// CFileMgr::ReadLine (0x5389B0)
-        pub fn read_line(f: GPtr<u8>, buf: GPtr<u8>, len: i32) -> bool = cdecl 0x5389B0 => sa_core::filemgr::read_line;
         /// CFileLoader::LoadLine(FILE*) (0x536F80)
         pub fn load_line(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x536F80 => crate::fileloader::load_line_file;
     }
@@ -1261,10 +1225,8 @@ pub fn init(mi: GPtr<u8>) {
 
 /// CRT `operator delete` (0x8213AE).
 mod del {
-    use super::*;
-    orig! {
-        pub fn operator_delete(p: GPtr<u8>) = cdecl 0x8213AE => unported;
-    }
+    
+    pub use sa_core::bindings::crt_free as operator_delete;
 }
 
 /// `CVehicleModelInfo::ConvertAnimFileIndex` (0x4C76D0): name → anim block index, the name is freed
@@ -1999,18 +1961,18 @@ pub fn delete_rw_object(mi: GPtr<u8>) {
     clump_delete_rw_object(mi);
 }
 
+use sa_core::bindings::file_close as close_file;
+use sa_core::bindings::loading_screen_new_chunk_loaded as new_chunk_loaded;
+use sa_core::bindings::open_file;
+use sa_core::bindings::txd_add_ref;
 orig! {
     fn load_vehicle_colours_call() = cdecl 0x5B6890 => load_vehicle_colours;
     fn load_vehicle_upgrades_call() = cdecl 0x5B65A0 => load_vehicle_upgrades;
     fn load_environment_maps_call() = cdecl 0x4C8780 => load_environment_maps;
-    /// CLoadingScreen::NewChunkLoaded (0x590D00)
-    fn new_chunk_loaded() = cdecl 0x590D00 => unported;
     /// CTxdStore::AddTxdSlot (0x731C80)
     fn add_txd_slot(name: GPtr<u8>) -> i32 = cdecl 0x731C80 => unported;
     /// CTxdStore::LoadTxd(slot, filename) (0x7320B0)
     fn load_txd(slot: i32, name: GPtr<u8>) -> u8 = cdecl 0x7320B0 => unported;
-    /// CTxdStore::AddRef (0x731A00)
-    fn txd_add_ref(slot: i32) = cdecl 0x731A00 => unported;
     /// CPool<CVehicleStructure>::CPool(size, name) (0x5B8340)
     fn vehicle_structure_pool_ctor(pool: GPtr<u8>, size: i32, name: GPtr<u8>) -> GPtr<u8> = thiscall 0x5B8340 => unported;
     /// CCarFXRenderer::InitialiseDirtTexture (0x5D5BC0)
@@ -2021,10 +1983,6 @@ orig! {
     fn add_upgrade_link_call(list: GPtr<u8>, u1: i32, u2: i32) = thiscall 0x4C74B0 => add_upgrade_link_i32;
     /// CRT `sscanf` (0x8220AD), up to 34 targets
     fn sscanf(s: GPtr<u8>, fmt: GPtr<u8>, a0: GPtr<u8>, a1: GPtr<u8>, a2: GPtr<u8>, a3: GPtr<u8>, a4: GPtr<u8>, a5: GPtr<u8>, a6: GPtr<u8>, a7: GPtr<u8>, a8: GPtr<u8>, a9: GPtr<u8>, a10: GPtr<u8>, a11: GPtr<u8>, a12: GPtr<u8>, a13: GPtr<u8>, a14: GPtr<u8>, a15: GPtr<u8>, a16: GPtr<u8>, a17: GPtr<u8>, a18: GPtr<u8>, a19: GPtr<u8>, a20: GPtr<u8>, a21: GPtr<u8>, a22: GPtr<u8>, a23: GPtr<u8>, a24: GPtr<u8>, a25: GPtr<u8>, a26: GPtr<u8>, a27: GPtr<u8>, a28: GPtr<u8>, a29: GPtr<u8>, a30: GPtr<u8>, a31: GPtr<u8>, a32: GPtr<u8>, a33: GPtr<u8>, a34: GPtr<u8>, a35: GPtr<u8>, a36: GPtr<u8>, a37: GPtr<u8>) -> i32 = cdecl 0x8220AD => unported;
-    /// CFileMgr::OpenFile (0x538900)
-    fn open_file(name: GPtr<u8>, mode: GPtr<u8>) -> GPtr<u8> = cdecl 0x538900 => sa_core::filemgr::open_file;
-    /// CFileMgr::CloseFile (0x5389D0)
-    fn close_file(f: GPtr<u8>) -> i32 = cdecl 0x5389D0 => sa_core::filemgr::close_file;
 }
 
 // phase B/C target of an `orig!` declaration (unused in phase A)

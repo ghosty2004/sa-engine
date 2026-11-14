@@ -9,6 +9,10 @@ use sa_math::x87::X87;
 
 use super::common::{ftol32, g, rd, wr, x};
 
+use crate::bindings::placeable_get_matrix;
+use sa_core::bindings::matrix_mul_vec;
+use sa_stream::bindings::placeable_allocate_matrix;
+use sa_stream::bindings::simple_transform_update_matrix;
 orig! {
     /// `CEntity::GetBoundCentre(CVector&)` (0x534290, `ret 4`)
     fn entity_get_bound_centre(e: GPtr<u8>, out: GPtr<u8>) = thiscall 0x534290 => unported;
@@ -20,14 +24,6 @@ orig! {
     fn occluder_is_point_within_area(o: GPtr<u8>, x: f32, y: f32, r: f32) -> u8 = thiscall 0x71E580 => unported;
     /// `CActiveOccluder::IsPointBehindOccluder(CVector, float)` (0x71FA40, `ret 0x10`)
     fn occluder_is_point_behind(o: GPtr<u8>, x: f32, y: f32, z: f32, r: f32) -> u8 = thiscall 0x71FA40 => unported;
-    /// `CPlaceable::AllocateMatrix()` (0x54F560)
-    fn placeable_allocate_matrix(p: GPtr<u8>) = thiscall 0x54F560 => unported;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*)` (0x54F1B0, `ret 4`)
-    fn simple_transform_update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => unported;
-    /// `CPlaceable::GetMatrix()` (0x411990)
-    fn placeable_get_matrix(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x411990 => unported;
-    /// `CMatrix::operator*(const CMatrix&, const CVector&)` (0x59C890, cdecl, hidden result pointer)
-    fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
 }
 
 /// The model's collision model (`CModelInfo::ms_modelInfoPtrs[model]` +0x14).
@@ -143,33 +139,25 @@ pub fn entity_is_entity_occluded(this: GPtr<u8>) -> u8 {
     0
 }
 
+use crate::bindings::car_ctrl_is_this_vehicle_interesting;
+use crate::bindings::explosion_remove_all_explosions_in_area;
+use crate::bindings::extinguish_all_car_fires_in_area as world_extinguish_all_car_fires_in_area;
+use crate::bindings::fire_extinguish_point as fire_manager_extinguish_point;
+use crate::bindings::garages_store_car_in_nearest_impounding_garage;
+use crate::bindings::membership_is_follower;
+use crate::bindings::ped_can_be_deleted;
+use crate::bindings::ped_groups_get_peds_group;
+use crate::bindings::population_remove_ped;
+use crate::bindings::remove_all_projectiles as projectile_info_remove_all_projectiles;
+use crate::bindings::remove_from_interesting_vehicle_list as car_ctrl_remove_from_interesting_vehicle_list;
+use crate::bindings::vehicle_can_be_deleted;
+use crate::bindings::vehicle_remove_passenger;
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_core::bindings::find_player_ped;
+use sa_stream::bindings::ped_is_player;
 orig! {
-    /// `CPed::IsPlayer()` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CPed::CanBeDeleted()` (0x5DF100)
-    fn ped_can_be_deleted(p: GPtr<u8>) -> u8 = thiscall 0x5DF100 => unported;
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210, cdecl)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CPedGroups::GetPedsGroup(const CPed*)` (0x5F7E80, cdecl)
-    fn ped_groups_get_peds_group(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x5F7E80 => unported;
-    /// `CPedGroupMembership::IsFollower(const CPed*)` (0x5F69E0, `ret 4`)
-    fn membership_is_follower(m: GPtr<u8>, p: GPtr<u8>) -> u8 = thiscall 0x5F69E0 => unported;
-    /// `CPopulation::RemovePed(CPed*)` (0x610F20, cdecl)
-    fn population_remove_ped(p: GPtr<u8>) = cdecl 0x610F20 => unported;
-    /// `CVehicle::CanBeDeleted()` (0x6D1180)
-    fn vehicle_can_be_deleted(v: GPtr<u8>) -> u8 = thiscall 0x6D1180 => unported;
     /// `CGarages::IsPointWithinHideOutGarage(const CVector&)` (0x448900, cdecl)
     fn garages_is_point_within_hide_out_garage(p: GPtr<u8>) -> u8 = cdecl 0x448900 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00, `ret 4`)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CVehicle::RemovePassenger(CPed*)` (0x6D1610, `ret 4`)
-    fn vehicle_remove_passenger(v: GPtr<u8>, p: GPtr<u8>) = thiscall 0x6D1610 => unported;
-    /// `CCarCtrl::IsThisVehicleInteresting(CVehicle*)` (0x423EA0, cdecl)
-    fn car_ctrl_is_this_vehicle_interesting(v: GPtr<u8>) -> u8 = cdecl 0x423EA0 => unported;
-    /// `CGarages::StoreCarInNearestImpoundingGarage(CVehicle*)` (0x44A3C0, cdecl)
-    fn garages_store_car_in_nearest_impounding_garage(v: GPtr<u8>) = cdecl 0x44A3C0 => unported;
-    /// `CCarCtrl::RemoveFromInterestingVehicleList(CVehicle*)` (0x423ED0, cdecl)
-    fn car_ctrl_remove_from_interesting_vehicle_list(v: GPtr<u8>) = cdecl 0x423ED0 => unported;
     /// entity virtual +0xC (`Remove`)
     fn v_remove(e: GPtr<u8>) = thiscall vslot 0xC => unported;
     /// entity virtual +0x0 (scalar deleting destructor)
@@ -178,14 +166,6 @@ orig! {
     fn remove_from_moving_list(e: GPtr<u8>) = thiscall 0x542860 => crate::physical::base::remove_from_moving_list;
     /// `CObject::DeleteAllTempObjectsInArea(CVector, float)` (0x5A1980, cdecl)
     fn object_delete_all_temp_objects_in_area(x: f32, y: f32, z: f32, r: f32) = cdecl 0x5A1980 => unported;
-    /// `CFireManager::ExtinguishPoint(CVector, float)` (0x539450, `ret 0x10`)
-    fn fire_manager_extinguish_point(fm: GPtr<u8>, x: f32, y: f32, z: f32, r: f32) = thiscall 0x539450 => unported;
-    /// `CWorld::ExtinguishAllCarFiresInArea(CVector, float)` (0x566950, cdecl)
-    fn world_extinguish_all_car_fires_in_area(x: f32, y: f32, z: f32, r: f32) = cdecl 0x566950 => unported;
-    /// `CExplosion::RemoveAllExplosionsInArea(CVector, float)` (0x7369E0, cdecl)
-    fn explosion_remove_all_explosions_in_area(x: f32, y: f32, z: f32, r: f32) = cdecl 0x7369E0 => unported;
-    /// `CProjectileInfo::RemoveAllProjectiles()` (0x7399B0, cdecl)
-    fn projectile_info_remove_all_projectiles() = cdecl 0x7399B0 => unported;
     /// `CShadows::TidyUpShadows()` (0x707770, cdecl)
     fn shadows_tidy_up_shadows() = cdecl 0x707770 => unported;
     /// `CPickups::RemoveUnnecessaryPickups(const CVector&, float)` (0x4563A0, cdecl)
@@ -301,24 +281,19 @@ pub fn world_clear_exciting_stuff_from_area(point: GPtr<u8>, r: f32, projectiles
     pickups_remove_unnecessary_pickups(point, r);
 }
 
+use crate::bindings::clock_get_is_time_in_range;
+use crate::bindings::flush_single as single_list_flush;
+use crate::bindings::is_coop_game_going_on as game_logic_is_coop_game_going_on;
+use sa_core::bindings::get_pad as pad_get_pad;
+use sa_core::bindings::quad_tree_get_all_matching_rect;
 orig! {
-    /// `CPad::GetPad(int32)` (0x53FB70, cdecl)
-    fn pad_get_pad(id: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CGameLogic::IsCoopGameGoingOn()` (0x441390, cdecl)
-    fn game_logic_is_coop_game_going_on() -> u8 = cdecl 0x441390 => unported;
-    /// `CQuadTreeNode::GetAllMatching(const CRect&, CPtrListSingleLink&)` (0x5528C0, `ret 8`)
-    fn quad_tree_get_all_matching_rect(t: GPtr<u8>, r: GPtr<u8>, l: GPtr<u8>) = thiscall 0x5528C0 => unported;
     /// `CQuadTreeNode::GetAllMatching(const CVector2D&, CPtrListSingleLink&)` (0x552930, `ret 8`)
     fn quad_tree_get_all_matching_vec(t: GPtr<u8>, v: GPtr<u8>, l: GPtr<u8>) = thiscall 0x552930 => unported;
     /// `CCamera::IsSphereVisible(const CVector&, float, const CMatrix*)` (0x420C40, `ret 0xC`)
     fn camera_is_sphere_visible(c: GPtr<u8>, p: GPtr<u8>, r: f32, m: GPtr<u8>) -> u8 = thiscall 0x420C40 => unported;
-    /// `CClock::GetIsTimeInRange(uint8, uint8)` (0x52CEE0, cdecl)
-    fn clock_get_is_time_in_range(a: u32, b: u32) -> u8 = cdecl 0x52CEE0 => unported;
     /// `C3dMarkers::PlaceMarkerCone(uint32 id, const CVector&, float size, uint8 r, g, b, a, uint16 period,
     /// float fraction, int16 type, bool rotate)` (0x726D40, cdecl)
     fn markers_place_marker_cone(id: GPtr<u8>, p: GPtr<u8>, size: f32, r: u32, g: u32, b: u32, a: u32, period: u32, frac: f32, ty: u32, rot: u32) = cdecl 0x726D40 => unported;
-    /// `CPtrListSingleLink::Flush()` (0x552400)
-    fn single_list_flush(l: GPtr<u8>) = thiscall 0x552400 => unported;
     /// `CEntryExit::TransitionFinished(CPed*)` (0x4404A0, `ret 4`)
     fn entry_exit_transition_finished(ee: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x4404A0 => unported;
     /// `CEntryExit::IsInArea(const CVector&)` (0x43E460, `ret 4`)
@@ -441,37 +416,29 @@ pub fn entry_exit_manager_update() {
     single_list_flush(lp);
 }
 
+use crate::bindings::add_big_message_q as messages_add_big_message_q;
+use crate::bindings::camera_set_cam_position_for_fixed_mode;
+use crate::bindings::pick_random_passenger as vehicle_pick_random_passenger;
+use sa_core::bindings::camera_restore_with_jump_cut;
+use sa_core::bindings::find_player_vehicle;
+use sa_core::bindings::stats_increment_stat;
+use sa_core::bindings::text_get;
+use sa_core::bindings::vector_magnitude;
 orig! {
-    /// `CWorld::FindPlayerVehicle(int32, bool)` (0x56E0D0, cdecl)
-    fn find_player_vehicle(id: i32, remote: u32) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
-    /// `CCamera::RestoreWithJumpCut()` (0x50BAB0)
-    fn camera_restore_with_jump_cut(c: GPtr<u8>) = thiscall 0x50BAB0 => unported;
-    /// `CStats::IncrementStat(eStats, float)` (0x55C180, cdecl)
-    fn stats_increment_stat(s: u32, v: f32) = cdecl 0x55C180 => unported;
     /// `CAudioEngine::ReportFrontendAudioEvent(eAudioEvents, float volume, float speed)` (0x506EA0, `ret 0xC`)
     fn audio_report_frontend_audio_event(a: GPtr<u8>, ev: u32, vol: f32, speed: f32) = thiscall 0x506EA0 => unported;
-    /// `CText::Get(const char*)` (0x6A0050, `ret 4`)
-    fn text_get(t: GPtr<u8>, key: GPtr<u8>) -> GPtr<u8> = thiscall 0x6A0050 => unported;
-    /// `CMessages::AddBigMessageQ(const char*, uint32, eMessageStyle)` (0x69F370, cdecl)
-    fn messages_add_big_message_q(s: GPtr<u8>, t: u32, style: u32) = cdecl 0x69F370 => unported;
     /// `CHud::SetHelpMessage(const char*, bool, bool, bool)` (0x588BE0, cdecl)
     fn hud_set_help_message(s: GPtr<u8>, a: u32, b: u32, c: u32) = cdecl 0x588BE0 => unported;
     /// `CMessages::AddBigMessageWithNumber(const char*, uint32, eMessageStyle, int32 x6)` (0x69E5F0, cdecl)
     fn messages_add_big_message_with_number(s: GPtr<u8>, t: u32, style: u32, n1: i32, n2: i32, n3: i32, n4: i32, n5: i32, n6: i32) = cdecl 0x69E5F0 => unported;
     /// `CVehicle::GetVehicleAppearance()` (0x6D1080)
     fn vehicle_get_vehicle_appearance(v: GPtr<u8>) -> u32 = thiscall 0x6D1080 => unported;
-    /// `CVector::Magnitude()` (0x4082C0, float in ST0)
-    fn vector_magnitude(v: GPtr<u8>) -> f64 = thiscall 0x4082C0 => unported;
     /// `thunk_FUN_0156acc0(int32)` (0x49C3B0, `ret 4`): the stunt-jump pool's slot `i`
     fn stunt_jump_pool_at(pool: GPtr<u8>, i: i32) -> GPtr<u8> = thiscall 0x49C3B0 => unported;
     /// `CBoundingBox::IsPointWithin(const CVector&)` (0x49C300, `ret 4`)
     fn bounding_box_is_point_within(b: GPtr<u8>, p: GPtr<u8>) -> u8 = thiscall 0x49C300 => unported;
-    /// `CCamera::SetCamPositionForFixedMode(const CVector&, const CVector&)` (0x50BEC0, `ret 8`)
-    fn camera_set_cam_position_for_fixed_mode(c: GPtr<u8>, p: GPtr<u8>, up: GPtr<u8>) = thiscall 0x50BEC0 => unported;
     /// `CCamera::TakeControl(CEntity*, eCamMode, eSwitchType, int32)` (0x50C7C0, `ret 0x10`)
     fn camera_take_control(c: GPtr<u8>, e: GPtr<u8>, mode: u32, sw: u32, who: u32) = thiscall 0x50C7C0 => unported;
-    /// `CVehicle::PickRandomPassenger()` (0x6D2A10)
-    fn vehicle_pick_random_passenger(v: GPtr<u8>) -> GPtr<u8> = thiscall 0x6D2A10 => unported;
     /// `CPed::Say(uint16, uint32, float, bool, bool, bool)` (0x5EFFE0, `ret 0x18`)
     fn ped_say(p: GPtr<u8>, id: u32, off: u32, vol: f32, a: u32, b: u32, c: u32) -> u32 = thiscall 0x5EFFE0 => unported;
 }
@@ -629,23 +596,18 @@ pub fn stunt_jump_manager_update() {
     }
 }
 
+use crate::bindings::interior_group_exit;
+use sa_core::bindings::list_add_item;
+use sa_core::bindings::list_remove_head;
+use sa_core::bindings::list_remove_item;
+use sa_core::bindings::tm_get_active_task as task_manager_get_active_task;
 orig! {
-    /// `CTaskManager::GetActiveTask()` (0x681720)
-    fn task_manager_get_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x681720 => unported;
     /// task virtual +0x10 (`GetTaskType`)
     fn v_task_get_type(t: GPtr<u8>) -> u32 = thiscall vslot 0x10 => unported;
     /// `InteriorManager_c::GetVisibleEffects(InteriorEffectInfo_t*, int32 max)` (0x598D80, `ret 8`)
     fn interior_manager_get_visible_effects(m: GPtr<u8>, buf: GPtr<u8>, max: i32) -> i32 = thiscall 0x598D80 => unported;
     /// `InteriorManager_c::PruneVisibleEffects(InteriorEffectInfo_t*, int32 n, int32 max, float dist)` (0x598A60)
     fn interior_manager_prune_visible_effects_o(m: GPtr<u8>, buf: GPtr<u8>, n: i32, max: i32, d: f32) = thiscall 0x598A60 => crate::world::mvpd_w3::interior_manager_prune_visible_effects;
-    /// `InteriorGroup_c::Exit()` (0x595290)
-    fn interior_group_exit(gr: GPtr<u8>) = thiscall 0x595290 => unported;
-    /// `FUN_004a8e30(ListItem_c*)` (0x4A8E30, `ret 4`): `List_c::RemoveItem`
-    fn list_remove_item(l: GPtr<u8>, i: GPtr<u8>) = thiscall 0x4A8E30 => unported;
-    /// `FUN_004a8df0(ListItem_c*)` (0x4A8DF0, `ret 4`): `List_c::AddItem`
-    fn list_add_item(l: GPtr<u8>, i: GPtr<u8>) = thiscall 0x4A8DF0 => unported;
-    /// `FUN_004a8e70()` (0x4A8E70): `List_c::RemoveHead`
-    fn list_remove_head(l: GPtr<u8>) -> GPtr<u8> = thiscall 0x4A8E70 => unported;
     /// `InteriorGroup_c::Init(CEntity*, int32)` (0x5947E0, `ret 8`)
     fn interior_group_init(gr: GPtr<u8>, e: GPtr<u8>, id: i32) = thiscall 0x5947E0 => unported;
     /// `Interior_c::Init(C2dEffect*)` (0x593BF0, `ret 4`)
@@ -819,11 +781,11 @@ pub fn interior_manager_prune_visible_effects(_this: GPtr<u8>, fx: GPtr<u8>, n: 
     }
 }
 
+use sa_core::bindings::general_random_int_in_range as general_get_random_number_in_range_int;
+use sa_core::bindings::list_get_num_items;
+use sa_core::bindings::vector_normalise;
+use sa_core::bindings::world_remove;
 orig! {
-    /// `FUN_004a8ec0()` (0x4A8EC0): `List_c::GetNumItems`
-    fn list_get_num_items(l: GPtr<u8>) -> i32 = thiscall 0x4A8EC0 => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
     /// `CCamera::IsSphereVisible(const CVector&, float)` (0x420D40, `ret 8`)
     fn camera_is_sphere_visible_r(c: GPtr<u8>, p: GPtr<u8>, r: f32) -> u8 = thiscall 0x420D40 => unported;
     /// `CWaterLevel::GetWaterDepth(const CVector&, float* depth, float* level, float* bed)` (0x6EA960, cdecl)
@@ -832,14 +794,10 @@ orig! {
     fn wcm_get_random_water_creature_id(m: GPtr<u8>) -> i32 = thiscall 0x6E4040 => unported;
     /// `WaterCreatureManager_c::CanAddWaterCreatureAtPos(int32, CVector)` (0x6E4510, `ret 0x10`)
     fn wcm_can_add_water_creature_at_pos(m: GPtr<u8>, id: i32, x: f32, y: f32, z: f32) -> u8 = thiscall 0x6E4510 => unported;
-    /// `CGeneral::GetRandomNumberInRange(int32, int32)` (0x407180, cdecl)
-    fn general_get_random_number_in_range_int(a: i32, b: i32) -> i32 = cdecl 0x407180 => unported;
     /// `WaterCreature_c::Init(int32 type, CVector* pos, WaterCreature_c* leader, float level, float depth)` (0x6E4160)
     fn water_creature_init(w: GPtr<u8>, id: i32, pos: GPtr<u8>, leader: GPtr<u8>, level: f32, depth: f32) -> u8 = thiscall 0x6E4160 => unported;
     /// `WaterCreature_c::Update(float)` (0x6E4670, `ret 4`)
     fn water_creature_update(w: GPtr<u8>, dt: f32) = thiscall 0x6E4670 => unported;
-    /// `CWorld::Remove(CEntity*)` (0x563280, cdecl)
-    fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
 }
 
 /// `rand() * (1/32768) * 2 - 1` at a call site.
@@ -948,33 +906,22 @@ pub fn water_creature_manager_update(this: GPtr<u8>, dt: f32) {
     }
 }
 
+use crate::bindings::ped_shoulder_bone_rotation;
+use crate::bindings::realtime_shadow_do_shadow_this_frame as shadow_manager_do_shadow_this_frame;
+use crate::bindings::shadows_store_shadow_for_ped_object;
+use sa_core::bindings::entity_update_rp_hanim as entity_update_rp_h_anim;
+use sa_core::bindings::frame_get_ltm as rw_frame_get_ltm;
+use sa_core::bindings::get_first_atomic;
+use sa_core::bindings::matrix_assign;
+use sa_core::bindings::matrix_dtor;
+use sa_core::bindings::rp_hanim_hierarchy_get_matrix_array as rp_h_anim_hierarchy_get_matrix_array;
+use sa_core::bindings::rp_skin_geometry_get_skin;
+use sa_stream::bindings::get_anim_hierarchy_from_clump;
 orig! {
     /// `CPhysical::ProcessControl()` (0x5485E0)
     fn physical_process_control(p: GPtr<u8>) = thiscall 0x5485E0 => unported;
-    /// `CEntity::UpdateRpHAnim()` (0x532B20)
-    fn entity_update_rp_h_anim(e: GPtr<u8>) = thiscall 0x532B20 => unported;
-    /// `GetAnimHierarchyFromClump(RpClump*)` (0x734B10, cdecl)
-    fn get_anim_hierarchy_from_clump(c: GPtr<u8>) -> GPtr<u8> = cdecl 0x734B10 => unported;
-    /// `RpHAnimHierarchyGetMatrixArray(RpHAnimHierarchy*)` (0x7C5120, cdecl)
-    fn rp_h_anim_hierarchy_get_matrix_array(h: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C5120 => unported;
-    /// `RwFrameGetLTM(RwFrame*)` (0x7F0990, cdecl)
-    fn rw_frame_get_ltm(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0990 => unported;
     /// `CMatrix::CMatrix(RwMatrix*, bool)` (0x59C050, `ret 8`)
     fn matrix_ctor_rw(m: GPtr<u8>, rw: GPtr<u8>, owns: u32) = thiscall 0x59C050 => unported;
-    /// `CMatrix::operator=(const CMatrix&)` (0x59BBC0, `ret 4`)
-    fn matrix_assign(m: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = thiscall 0x59BBC0 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
-    /// `GetFirstAtomic(RpClump*)` (0x734820, cdecl)
-    fn get_first_atomic(c: GPtr<u8>) -> GPtr<u8> = cdecl 0x734820 => unported;
-    /// `RpSkinGeometryGetSkin(RpGeometry*)` (0x7C7550, cdecl)
-    fn rp_skin_geometry_get_skin(g: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C7550 => unported;
-    /// `CRealTimeShadowManager::DoShadowThisFrame(CPhysical*)` (0x706BA0, `ret 4`)
-    fn shadow_manager_do_shadow_this_frame(m: GPtr<u8>, e: GPtr<u8>) = thiscall 0x706BA0 => unported;
-    /// `CShadows::StoreShadowForPedObject(CEntity*, float x6)` (0x707B40, cdecl)
-    fn shadows_store_shadow_for_ped_object(e: GPtr<u8>, a: u32, b: u32, c: u32, d: u32, f: u32, g: u32) = cdecl 0x707B40 => unported;
-    /// `CPed::ShoulderBoneRotation(RpClump*)` (0x5DF560, cdecl)
-    fn ped_shoulder_bone_rotation(c: GPtr<u8>) = cdecl 0x5DF560 => unported;
     /// `CWorld::ProcessVerticalLine(const CVector&, float, CColPoint&, CEntity*&, bool x7, CStoredCollPoly*)`
     /// (0x5674E0, cdecl)
     fn world_process_vertical_line(o: GPtr<u8>, z: f32, cp: GPtr<u8>, ent: GPtr<u8>, b: u32, v: u32, p: u32, ob: u32, d: u32, s: u32, poly: u32) -> u8 = cdecl 0x5674E0 => unported;

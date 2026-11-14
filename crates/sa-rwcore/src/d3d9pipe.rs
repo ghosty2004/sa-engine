@@ -25,6 +25,14 @@ const AMB: usize = 0x8E2418;
 /// RESOURCESMODULE offset in RwGlobals (the used-entries list pointer is at +0x24).
 const RES_MODULE_OFFSET: usize = 0xC9BC58;
 
+pub use crate::bindings::d3d9_instance;
+pub use crate::bindings::flush_cache;
+pub use crate::bindings::light_local_enable;
+pub use crate::bindings::lights_enable;
+pub use crate::bindings::set_render_state;
+pub use crate::bindings::set_transform_world;
+pub use crate::bindings::set_tss;
+pub use sa_core::bindings::frame_get_ltm;
 orig! {
     /// `IDirect3DDevice9::SetPixelShader` (+0x1AC)
     pub fn dev_set_pixel_shader(dev: GPtr<u8>, ps: u32) -> i32 = stdcall vslot 0x1AC => unported;
@@ -45,12 +53,8 @@ orig! {
     pub fn sphere_inside(camera: GPtr<u8>, sphere: GPtr<u8>) -> u32 = cdecl 0x7FAD30 => crate::d3d9dev::camera_is_sphere_fully_inside_frustum;
     /// `RwD3D9CameraIsBBoxFullyInsideFrustum(camera, bbox)` (0x7FAD90)
     pub fn bbox_inside(camera: GPtr<u8>, bbox: GPtr<u8>) -> u32 = cdecl 0x7FAD90 => crate::d3d9dev::camera_is_bbox_fully_inside_frustum;
-    /// `RwD3D9SetRenderState(state, value)` (0x7FC2D0)
-    pub fn set_render_state(state: u32, value: u32) -> u32 = cdecl 0x7FC2D0 => crate::d3d9state::set_render_state;
     /// `RwD3D9GetRenderState(state, out)` (0x7FC320)
     pub fn get_render_state(state: u32, out: GPtr<u32>) = cdecl 0x7FC320 => crate::d3d9state::get_render_state;
-    /// `RwD3D9SetTextureStageState(stage, type, value)` (0x7FC340)
-    pub fn set_tss(stage: u32, ty: u32, value: u32) = cdecl 0x7FC340 => crate::d3d9state::set_texture_stage_state;
     /// `RwD3D9SetTexture(texture, stage)` (0x7FDE70)
     pub fn set_texture(t: GPtr<u8>, stage: u32) -> u32 = cdecl 0x7FDE70 => crate::d3d9state::set_texture;
     /// `_rwD3D9RenderStateVertexAlphaEnable(enable)` (0x7FE0A0)
@@ -61,24 +65,12 @@ orig! {
     pub fn set_surface_properties(sp: GPtr<u8>, color: GPtr<u8>, flags: u32) -> u32 = cdecl 0x7FC4D0 => crate::d3d9state::set_surface_properties;
     /// `_rwD3D9SetStreams(streams, useOffsets)` (0x7FA090)
     pub fn set_streams(s: GPtr<u8>, use_offsets: u32) = cdecl 0x7FA090 => crate::d3d9dev::set_streams;
-    /// `_rwD3D9RenderStateFlushCache()` (0x7FC200)
-    pub fn flush_cache() = cdecl 0x7FC200 => crate::d3d9state::flush_cache;
     /// `_rwD3D9RasterHasAlpha(texture)` (0x4C9EA0, called with the material's texture)
     pub fn raster_has_alpha(t: GPtr<u8>) -> u32 = cdecl 0x4C9EA0 => unported;
     /// `RwResourcesFreeResEntry(entry)` (0x807DE0)
     pub fn res_free(e: GPtr<u8>) -> u32 = cdecl 0x807DE0 => unported;
-    /// `_rxD3D9Instance(object, owner, type, &repEntry, meshHeader, instanceCb, allocateNative)` (0x756960)
-    pub fn d3d9_instance(obj: GPtr<u8>, owner: GPtr<u8>, ty: u32, rep: GPtr<u8>, mesh: GPtr<u8>, cb: u32, native: u32) -> GPtr<u8> = cdecl 0x756960 => unported;
-    /// `RwFrameGetLTM(frame)` (0x7F0990)
-    pub fn frame_get_ltm(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0990 => unported;
-    /// `RwD3D9SetTransformWorld(matrix)` (0x7FA520)
-    pub fn set_transform_world(m: GPtr<u8>) -> u32 = cdecl 0x7FA520 => crate::d3d9dev::set_transform_world;
     /// `_rwD3D9LightDirectionalEnable(light)` (0x756260)
     pub fn light_directional_enable(l: GPtr<u8>) -> u32 = cdecl 0x756260 => unported;
-    /// `_rwD3D9LightLocalEnable(light)` (0x756390)
-    pub fn light_local_enable(l: GPtr<u8>) -> u32 = cdecl 0x756390 => unported;
-    /// `_rwD3D9LightsEnable(enable, type)` (0x756600)
-    pub fn lights_enable(enable: u32, ty: u32) = cdecl 0x756600 => unported;
     /// The reinstance callback `(object, resEntry, instanceCb)` through its stored pointer
     pub fn call_reinstance_cb(f: u32, obj: u32, e: u32, inst: u32) -> u32 = cdecl dyn => unported;
     /// The lighting callback `(object)` through its stored pointer

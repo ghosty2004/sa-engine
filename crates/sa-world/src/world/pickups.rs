@@ -50,29 +50,34 @@ const MI_WFM_A: usize = 0x8CD5C0;
 const MI_WFM_B: usize = 0x8CD5C8;
 const MI_WFM_C: usize = 0x8CD5BC;
 
+pub use crate::bindings::clear_blip_for_entity;
+pub use crate::bindings::frenzy_on_going;
+pub use crate::bindings::german_game;
+pub use crate::bindings::get_task_jet_pack;
+pub use crate::bindings::intel_find_task_by_type as find_task_by_type;
+pub use crate::bindings::is_coop_game_going_on;
+pub use crate::bindings::is_player_on_a_mission;
+pub use crate::bindings::object_ctor;
+pub use crate::bindings::pad_get_target;
+pub use crate::bindings::set_orientation as placeable_set_orientation;
+pub use crate::bindings::simple_transform_update_rw_matrix;
+pub use sa_core::bindings::entity_update_rw_frame;
+pub use sa_core::bindings::get_pad;
+pub use sa_core::bindings::make_sure_slot_in_object_pool_is_empty;
+pub use sa_core::bindings::matrix_update_rw_matrix;
+pub use sa_core::bindings::object_new_at;
+pub use sa_core::bindings::stricmp;
+pub use sa_core::bindings::world_add;
+pub use sa_core::bindings::world_remove;
 orig! {
-    /// `CWorld::Remove(CEntity*)` (0x563280)
-    pub fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
     /// `CEntity` scalar deleting destructor (vtable slot 0, `delete` with flag 1)
     pub fn entity_vdelete(e: GPtr<u8>, flag: i32) = thiscall vslot 0x0 => unported;
-    /// `CRadar::ClearBlipForEntity(eBlipType, int32 handle)` (0x587C60)
-    pub fn clear_blip_for_entity(ty: i32, handle: i32) = cdecl 0x587C60 => unported;
     /// `CWeaponInfo::GetWeaponInfo(eWeaponType, eWeaponSkill)` (0x743C60)
     pub fn get_weapon_info(ty: i32, skill: i32) -> GPtr<u8> = cdecl 0x743C60 => unported;
     /// `CBaseModelInfo::GetModelType` (vtable slot 0x10)
     pub fn model_info_get_type(mi: GPtr<u8>) -> u8 = thiscall vslot 0x10 => unported;
-    /// `CPedIntelligence::GetTaskJetPack` (0x601110)
-    pub fn get_task_jet_pack(intel: GPtr<u8>) -> GPtr<u8> = thiscall 0x601110 => unported;
-    /// `CTheScripts::IsPlayerOnAMission` (0x464D50)
-    pub fn is_player_on_a_mission() -> u8 = cdecl 0x464D50 => unported;
-    /// `CDarkel::FrenzyOnGoing` (0x43D1F0)
-    pub fn frenzy_on_going() -> u8 = cdecl 0x43D1F0 => unported;
     /// `CLocalisation::KillFrenzy` (0x56D2A0)
     pub fn localisation_kill_frenzy() -> u8 = cdecl 0x56D2A0 => unported;
-    /// `CLocalisation::GermanGame` (0x56D200)
-    pub fn german_game() -> u8 = cdecl 0x56D200 => unported;
-    /// `CGameLogic::IsCoopGameGoingOn` (0x441390)
-    pub fn is_coop_game_going_on() -> u8 = cdecl 0x441390 => unported;
     /// `CWeapon::CanBeUsedFor2Player(eWeaponType)` (0x73B240)
     pub fn can_be_used_for_2_player(w: i32) -> u8 = cdecl 0x73B240 => unported;
     /// `CPickup::GetPosn(CVector* out)` (0x4549A0, thiscall)
@@ -87,42 +92,18 @@ orig! {
     pub fn pickup_update(this: GPtr<u8>, ped: GPtr<u8>, veh: GPtr<u8>, id: i32) -> u8 = thiscall 0x457410 => crate::world::mvpd_w5::pickup_update;
     /// `CPickup::GiveUsAPickUpObject(CObject**, int32 slot)` (0x4567E0)
     pub fn give_us_a_pick_up_object(this: GPtr<u8>, out: GPtr<GPtr<u8>>, slot: i32) = thiscall 0x4567E0 => give_us_a_pick_up_object_port;
-    /// `CPools::MakeSureSlotInObjectPoolIsEmpty(int32)` (0x550080)
-    pub fn make_sure_slot_in_object_pool_is_empty(slot: i32) = cdecl 0x550080 => unported;
-    /// `CObject::operator new(uint32 size, int32 handle)` (0x5A1EF0)
-    pub fn object_new_at(size: u32, handle: i32) -> GPtr<u8> = cdecl 0x5A1EF0 => unported;
-    /// `CObject::CObject(int32 model, bool createRW)` (0x5A1D70): returns `this`
-    pub fn object_ctor(o: GPtr<u8>, model: u32, rw: u32) -> GPtr<u8> = thiscall 0x5A1D70 => unported;
     /// `CObject::Create(int32 model, bool)` (0x5A1F60)
     pub fn object_create(model: u32, b: u32) -> GPtr<u8> = cdecl 0x5A1F60 => unported;
-    /// `CPlaceable::SetOrientation(float x, float y, float z)` (0x439A80)
-    pub fn placeable_set_orientation(e: GPtr<u8>, ox: u32, oy: u32, oz: u32) = thiscall 0x439A80 => unported;
-    /// `CMatrix::UpdateRwMatrix(RwMatrix*)` (0x59AD70)
-    pub fn matrix_update_rw_matrix(m: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x59AD70 => unported;
-    /// `CSimpleTransform::UpdateRwMatrix(RwMatrix*)` (0x54EF40)
-    pub fn simple_transform_update_rw_matrix(t: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x54EF40 => unported;
-    /// `CEntity::UpdateRwFrame()` (0x532B00)
-    pub fn entity_update_rw_frame(e: GPtr<u8>) = thiscall 0x532B00 => unported;
     /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
     pub fn entity_register_reference(e: GPtr<u8>, r: GPtr<GPtr<u8>>) = thiscall 0x571B70 => unported;
     /// `CPickup::PickUpShouldBeInvisible()` (0x454D20, AL)
     pub fn pick_up_should_be_invisible_call(this: GPtr<u8>) -> u8 = thiscall 0x454D20 => pick_up_should_be_invisible;
-    /// `CWorld::Add(CEntity*)` (0x563220)
-    pub fn world_add(e: GPtr<u8>) = cdecl 0x563220 => unported;
     /// `CPickup::FindTextIndexForString(const char*)` (0x455500, AL used)
     pub fn find_text_index_for_string_call(s: GPtr<u8>) -> i32 = cdecl 0x455500 => find_text_index_for_string;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    pub fn get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
     /// `CPad::CollectPickupJustDown` (0x540A70)
     pub fn pad_collect_pickup_just_down(pad: GPtr<u8>) -> u8 = thiscall 0x540A70 => unported;
-    /// `CPad::GetTarget` (0x540670)
-    pub fn pad_get_target(pad: GPtr<u8>) -> u8 = thiscall 0x540670 => unported;
-    /// `CPedIntelligence::FindTaskByType(int32)` (0x600EE0)
-    pub fn find_task_by_type(intel: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x600EE0 => unported;
     /// `CPickups::AddToCollectedPickupsArray(int32)` (0x455240)
     pub fn add_to_collected_pickups_array_call(i: i32) = cdecl 0x455240 => add_to_collected_pickups_array;
-    /// CRT `_stricmp` (0x8229B6)
-    pub fn stricmp(a: GPtr<u8>, b: GPtr<u8>) -> i32 = cdecl 0x8229B6 => unported;
 }
 
 pub fn pickup(i: u32) -> GPtr<u8> {

@@ -24,11 +24,16 @@ const SECTORS: usize = 0xB7D0B8;
 const VEHICLE_POOL: usize = 0xB74494;
 const OBJECT_POOL: usize = 0xB7449C;
 
+use sa_core::bindings::entity_register_reference as register_reference;
+use sa_core::bindings::world_clear_scan_codes;
+use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
+use sa_stream::bindings::simple_transform_update_matrix;
+use sa_world::bindings::crt_floor as floor;
+use sa_world::bindings::double_node_delete as list_node_delete;
+use sa_world::bindings::double_node_new as list_node_new;
 orig! {
     fn find_player_coors(out: GPtr<f32>, id: i32) -> GPtr<f32> = cdecl 0x56E010 => unported;
     fn find_player_vehicle(id: i32, include_remote: u8) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
-    fn allocate_matrix(e: GPtr<u8>) = thiscall 0x54F560 => unported;
-    fn simple_transform_update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => unported;
     /// `CObject::CanBeUsedToTakeCoverBehind()` (0x5A1B60)
     fn object_can_be_used_to_take_cover_behind(o: GPtr<u8>) -> u8 = thiscall 0x5A1B60 => unported;
     /// `CCover::ShouldThisBuildingHaveItsCoverPointsCreated(CBuilding*)` (0x699230)
@@ -39,15 +44,6 @@ orig! {
     fn find_cover_points_for_building(b: GPtr<u8>) = cdecl 0x699120 => unported;
     /// `CPtrList::IsMemberOfList(void*)` (0x5521D0)
     fn ptr_list_is_member(list: GPtr<u8>, item: GPtr<u8>) -> u8 = thiscall 0x5521D0 => unported;
-    /// `CWorld::ClearScanCodes()` (0x563470)
-    fn world_clear_scan_codes() = cdecl 0x563470 => unported;
-    /// `operator new(size)` (0x5523C0) / `operator delete(p)` (0x5523D0) of the pool-backed lists
-    fn list_node_new(size: u32) -> GPtr<u8> = cdecl 0x5523C0 => unported;
-    fn list_node_delete(p: GPtr<u8>) = cdecl 0x5523D0 => unported;
-    /// CRT `floor(double)` (0x8219F0)
-    fn floor(v: f64) -> f64 = cdecl 0x8219F0 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    fn register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
 }
 
 use sa_core::field::gf as ldf;

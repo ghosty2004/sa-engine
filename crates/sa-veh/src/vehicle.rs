@@ -18,21 +18,15 @@ use crate::common::{b, g, model_info, rd, wr, x};
 /// `CVehicle*` (thiscall `this`).
 type Veh = GPtr<u8>;
 
+pub use sa_core::bindings::rp_clump_for_all_atomics;
+pub use sa_core::bindings::rp_geometry_for_all_materials;
+pub use sa_stream::bindings::col_model_remove_collision_volumes;
+pub use sa_stream::bindings::rw_texture_destroy;
+pub use sa_world::bindings::rope_release_picked_up_object;
+pub use sa_world::bindings::ropes_find_rope;
 orig! {
-    /// `CRopes::FindRope(uint32 id)` (0x556000)
-    pub fn ropes_find_rope(id: u32) -> i32 = cdecl 0x556000 => unported;
-    /// `CRope::ReleasePickedUpObject()` (0x556030)
-    pub fn rope_release_picked_up_object(rope: GPtr<u8>) = thiscall 0x556030 => unported;
     /// `CRope::PickUpObject(CEntity*)` (0x5569C0)
     pub fn rope_pick_up_object(rope: GPtr<u8>, e: GPtr<u8>) = thiscall 0x5569C0 => unported;
-    /// `RwTextureDestroy(RwTexture*)` (0x7F3820)
-    pub fn rw_texture_destroy(t: GPtr<u8>) -> i32 = cdecl 0x7F3820 => unported;
-    /// `CColModel::RemoveCollisionVolumes()` (0x40F9E0)
-    pub fn col_model_remove_collision_volumes(cm: GPtr<u8>) = thiscall 0x40F9E0 => unported;
-    /// `RpClumpForAllAtomics(RpClump*, RpAtomicCallBack, void*)` (0x749B70)
-    pub fn rp_clump_for_all_atomics(clump: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> = cdecl 0x749B70 => unported;
-    /// `RpGeometryForAllMaterials(RpGeometry*, RpMaterialCallBack, void*)` (0x74C790)
-    pub fn rp_geometry_for_all_materials(geo: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> = cdecl 0x74C790 => unported;
 }
 
 // --- base-class virtual defaults --------------------------------------------------------------

@@ -8,13 +8,11 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use sa_world::bindings::find_ground_z_for_3d_coord as world_find_ground_z_for_3d_coord;
+use sa_world::bindings::groups_is_in_players_group;
+use sa_world::bindings::is_shallow_water as surface_is_shallow_water;
+use sa_world::bindings::vector_mul_scalar;
 orig! {
-    /// `SurfaceInfos_c::IsShallowWater(surface)` (0x55E730) on `g_surfaceInfos` (0xB79538)
-    fn surface_is_shallow_water(s: GPtr<u8>, surface: u32) -> u8 = thiscall 0x55E730 => unported;
-    /// `CPedGroups::IsInPlayersGroup(CPed*)` (0x5F7F10)
-    fn groups_is_in_players_group(ped: GPtr<u8>) -> u8 = cdecl 0x5F7F10 => unported;
-    /// `operator*(const CVector&, float)` (0x40FEC0, cdecl, returns `out`)
-    fn vector_mul_scalar(out: GPtr<u8>, v: GPtr<u8>, s: f32) -> GPtr<u8> = cdecl 0x40FEC0 => unported;
     /// `CVector::operator+=(const CVector&)` (0x411A00)
     fn vector_add_assign(v: GPtr<u8>, o: GPtr<u8>) -> GPtr<u8> = thiscall 0x411A00 => unported;
     /// `CVector::operator*=(float)` (0x40FEF0)
@@ -22,8 +20,6 @@ orig! {
     /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, bool x7)` (0x56A490)
     #[allow(clippy::too_many_arguments)]
     fn world_get_is_line_of_sight_clear(a: GPtr<u8>, b: GPtr<u8>, bu: u32, ve: u32, pe: u32, ob: u32, du: u32, st: u32, ig: u32) -> u8 = cdecl 0x56A490 => unported;
-    /// `CWorld::FindGroundZFor3DCoord(float, float, float, bool*, CEntity**)` (0x5696C0, ST0)
-    fn world_find_ground_z_for_3d_coord(x: f32, y: f32, z: f32, on: GPtr<u8>, e: GPtr<u8>) -> f64 = cdecl 0x5696C0 => unported;
 }
 
 /// `CVector::operator/=(float)` (0x411A30; not a catalogued function, inlined here): `inv = 1 / s` kept on the

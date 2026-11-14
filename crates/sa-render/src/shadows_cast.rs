@@ -17,6 +17,8 @@ use sa_world::collision::data::{CdPtr, CmPtr};
 
 use crate::common::{ftol32, g, jne, jp, k, rd, wr, x, xi};
 
+use crate::bindings::rw_im3d_render_indexed_primitive;
+use crate::bindings::rw_im3d_transform;
 orig! {
     /// `CCollision::CalculateTrianglePlanes(CColModel*)` (0x418580)
     fn calculate_triangle_planes(cm: CmPtr) = cdecl 0x418580 => sa_world::collision::data::calculate_triangle_planes_col_model;
@@ -28,10 +30,6 @@ orig! {
     fn get_triangle_point(cd: CdPtr, out: GPtr<CVector>, idx: i32) = thiscall 0x40f5e0 => sa_world::collision::data::get_triangle_point;
     /// `CShadows::AffectColourWithLighting(type, lighting, r, g, b, uint8* outR, outG, outB)` (0x707850)
     fn affect_colour_with_lighting(kind: u32, lighting: u32, r: u32, gg: u32, b: u32, out_r: GPtr<u8>, out_g: GPtr<u8>, out_b: GPtr<u8>) = cdecl 0x707850 => crate::mvpb_r1::affect_colour_with_lighting;
-    /// `RwIm3DTransform(verts, count, ltm, flags)` (0x7ef450)
-    fn rw_im3d_transform(verts: u32, count: u32, ltm: u32, flags: u32) -> GPtr<u8> = cdecl 0x7ef450 => unported;
-    /// `RwIm3DRenderIndexedPrimitive(primType, indices, numIndices)` (0x7ef550)
-    fn rw_im3d_render_indexed_primitive(prim: u32, indices: u32, n: u32) -> u32 = cdecl 0x7ef550 => unported;
     /// `RwIm3DEnd()` (0x7ef520)
     fn rw_im3d_end() -> u32 = cdecl 0x7ef520 => unported;
     /// `RenderBuffer::StopStoring()` (0x7077a0)

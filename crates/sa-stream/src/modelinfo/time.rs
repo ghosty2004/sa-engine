@@ -22,11 +22,9 @@ sa_core::globals! {
     list GLOBALS;
 }
 
+pub use crate::bindings::strstr;
+pub use sa_core::bindings::crt_strncpy as strncpy;
 orig! {
-    /// CRT `strstr` (0x822650)
-    pub fn strstr(s: GPtr<u8>, sub: GPtr<u8>) -> GPtr<u8> = cdecl 0x822650 => unported;
-    /// CRT `strncpy` (0x821F40)
-    pub fn strncpy(dst: GPtr<u8>, src: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x821F40 => unported;
     /// `CKeyGen::GetUppercaseKey` (0x53CF30)
     pub fn get_uppercase_key(s: GPtr<u8>) -> u32 = cdecl 0x53CF30 => sa_core::keygen::get_uppercase_key;
     /// `CTimeModelInfo::~CTimeModelInfo` (0x4C5680)

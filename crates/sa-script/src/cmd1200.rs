@@ -31,17 +31,24 @@ const CURR_AREA: usize = 0xB72914;
 /// `CScriptResourceManager ScriptResourceManager` 0xA485A8.
 const SCRIPT_RESOURCE_MANAGER: usize = 0xA485A8;
 
+pub use sa_core::bindings::streaming_request_model as request_model;
+pub use sa_stream::bindings::get_animation_block_index;
+pub use sa_stream::bindings::remove_buildings_not_in_area;
+pub use sa_world::bindings::get_animation_block;
+use crate::bindings::add_counter;
+use crate::bindings::clear_script_road_blocks;
+use crate::bindings::find_node_coors_for_script;
+use crate::bindings::find_nth_node_closest_to_coors;
+use sa_core::bindings::get_uppercase_key;
+use sa_core::bindings::start_extra_colour;
+use sa_core::bindings::text_get;
+use sa_core::bindings::time_cycle_stop_extra_colour as stop_extra_colour;
+use sa_world::bindings::attach_ped_to_entity;
+use sa_world::bindings::find_ground_z_for_coord;
+use sa_world::bindings::get_vehicle_appearance;
 orig! {
-    /// `CStreaming::RemoveBuildingsNotInArea(int32)` (0x4094B0)
-    pub fn remove_buildings_not_in_area(area: i32) = cdecl 0x4094B0 => unported;
     /// `CColStore::RequestCollision(const CVector&, int32 area)` (0x410C00)
     pub fn request_collision(pos: GPtr<f32>, area: i32) = cdecl 0x410C00 => unported;
-    /// `CAnimManager::GetAnimationBlockIndex(const char*)` (0x4D3990)
-    pub fn get_animation_block_index(name: GPtr<u8>) -> i32 = cdecl 0x4D3990 => unported;
-    /// `CAnimManager::GetAnimationBlock(const char*)` (0x4D3940)
-    pub fn get_animation_block(name: GPtr<u8>) -> GPtr<u8> = cdecl 0x4D3940 => unported;
-    /// `CStreaming::RequestModel(int32, int32 flags)` (0x4087E0)
-    pub fn request_model(id: i32, flags: i32) = cdecl 0x4087E0 => unported;
     /// `CScriptResourceManager::AddToResourceManager(int32, uint32 type, CRunningScript*)` (0x4704B0)
     pub fn add_to_resource_manager(m: GPtr<u8>, id: i32, ty: u32, s: Scr) = thiscall 0x4704B0 => unported;
     /// `CScriptResourceManager::RemoveFromResourceManager(int32, uint32 type, CRunningScript*)` (0x470510), AL
@@ -54,27 +61,18 @@ orig! {
     fn register_script_road_block(a: u32, b: u32, c: u32, d: u32, e: u32, g: u32, flag: u32) = cdecl 0x460DF0 => unported;
     /// Unnamed `CVector operator*(const CVector&, float)` (0x40FEC0; hidden-pointer result), the float raw
     fn vector_mul_float(out: GPtr<u32>, v: GPtr<u8>, k: u32) -> GPtr<u32> = cdecl 0x40FEC0 => unported;
-    /// `CPed::AttachPedToEntity(CEntity*, CVector offset, uint16 position, float angleLimit, eWeaponType)`
-    /// (0x5E7CB0); the vector and float as raw dwords
-    fn attach_ped_to_entity(p: GPtr<u8>, e: GPtr<u8>, x: u32, y: u32, z: u32, pos: u32, angle: u32, weapon: u32) = thiscall 0x5E7CB0 => unported;
     /// `CAutomobile::CloseAllDoors()` (0x6A4520)
     fn close_all_doors(v: GPtr<u8>) = thiscall 0x6A4520 => unported;
     /// `CVector::Magnitude()` (0x4082C0), ST0 (an FSQRT result under PC=24: exact as f64)
     fn vector_magnitude(v: GPtr<u32>) -> f64 = thiscall 0x4082C0 => unported;
-    /// `CText::Get(const char* key)` (0x6A0050)
-    fn text_get(t: GPtr<u8>, key: GPtr<u8>) -> GPtr<u8> = thiscall 0x6A0050 => unported;
     /// `CHud::SetHelpMessage(const char*, bool quick, bool permanent, bool addToBrief)` (0x588BE0)
     fn set_help_message(t: GPtr<u8>, a: u32, b: u32, c: u32) = cdecl 0x588BE0 => unported;
     /// `CMessages::AddToPreviousBriefArray(const char*, int32 n1..n6, const char*)` (0x69DD50)
     fn add_to_previous_brief_array(t: GPtr<u8>, n1: u32, n2: u32, n3: u32, n4: u32, n5: u32, n6: u32, s: u32) = cdecl 0x69DD50 => unported;
     /// `CHud::SetHelpMessageWithNumber(const char*, int32, bool, bool)` (0x588E30)
     fn set_help_message_with_number(t: GPtr<u8>, n: u32, a: u32, b: u32) = cdecl 0x588E30 => unported;
-    /// `COnscreenTimer::AddCounter(uint32 varId, uint16 type, const char* gxt, uint16 index)` (0x44CDA0)
-    fn add_counter(t: GPtr<u8>, var: u32, ty: u32, gxt: GPtr<u8>, index: u32) = thiscall 0x44CDA0 => unported;
     /// `CRunningScript::GetIndexOfGlobalVariable()` (0x464700), AX
     fn global_index(s: Scr) -> u16 = thiscall 0x464700 => crate::vm::get_index_of_global_variable;
-    /// `CKeyGen::GetUppercaseKey(const char*)` (0x53CF30)
-    fn get_uppercase_key(s: GPtr<u8>) -> u32 = cdecl 0x53CF30 => unported;
     /// `CTaskSimpleDuckToggle::CTaskSimpleDuckToggle(int32)` (0x62F690)
     fn duck_toggle_ctor(t: GPtr<u8>, on: u32) -> GPtr<u8> = thiscall 0x62F690 => unported;
     /// `CRunningScript::GivePedScriptedTask(int32 ped, CTask*, int32 opcode)` (0x465C20)
@@ -90,25 +88,14 @@ orig! {
     fn vector_add_assign(v: GPtr<u32>, o: GPtr<u8>) = thiscall 0x411A00 => unported;
     /// `CAutomobile::SetHeliOrientation(float)` (0x6A2450), the float as its raw dword
     fn set_heli_orientation(v: GPtr<u8>, a: u32) = thiscall 0x6A2450 => unported;
-    /// `CWorld::FindGroundZForCoord(float, float)` (0x569660), raw dwords, ST0 (exact as f64)
-    fn find_ground_z_for_coord(x: u32, y: u32) -> f64 = cdecl 0x569660 => unported;
-    /// `CPathFind::FindNthNodeClosestToCoors(CVector, uint8 type, float maxDist, bool, bool, int32 n,
-    /// bool, bool, CNodeAddress*)` (0x44F8C0), the `CNodeAddress` through the hidden pointer (EAX)
-    fn find_nth_node_closest_to_coors(paths: GPtr<u8>, out: GPtr<u32>, x: u32, y: u32, z: u32, ty: u32, max: u32, a: u32, b: u32, n: u32, c: u32, d: u32, e: u32) -> GPtr<u32> = thiscall 0x44F8C0 => unported;
     /// `CPathFind::FindNodePairClosestToCoors(CVector, uint8 type, CNodeAddress* n1, CNodeAddress* n2, float*
     /// orientation, float minDist, float maxDist, bool, bool, bool)` (0x44FEE0, `ret 0x30`), raw dwords
     fn find_node_pair_closest_to_coors(paths: GPtr<u8>, x: u32, y: u32, z: u32, ty: u32, n1: GPtr<u32>, n2: GPtr<u32>, orient: GPtr<u32>, min: u32, max: u32, a: u32, b: u32, c: u32) = thiscall 0x44FEE0 => unported;
-    /// `CPathFind::FindNodeCoorsForScript(CNodeAddress, bool* found)` (0x4505E0), hidden-pointer vector
-    fn find_node_coors_for_script(paths: GPtr<u8>, out: GPtr<u32>, addr: u32, found: GPtr<u8>) -> GPtr<u32> = thiscall 0x4505E0 => unported;
     /// `CCoronas::RegisterCorona(uint32 id, CEntity*, uint8 r, g, b, a, const CVector*, float radius,
     /// float farClip, uint8 type, uint8 flare, bool reflection, bool obstacles, int32, float angle, bool
     /// longDistance, float nearClip, uint8 fadeState, float fadeSpeed, bool onlyFromBelow, bool)`
     /// (0x6FC580); floats as raw dwords
     fn register_corona(id: u32, e: u32, r: u32, g: u32, b: u32, a: u32, pos: GPtr<u32>, radius: u32, far: u32, ty: u32, flare: u32, refl: u32, obst: u32, unused: u32, angle: u32, long: u32, near: u32, fade: u32, speed: u32, below: u32, delay: u32) = cdecl 0x6FC580 => unported;
-    /// `CRoadBlocks::ClearScriptRoadBlocks()` (0x460EC0)
-    fn clear_script_road_blocks() = cdecl 0x460EC0 => unported;
-    /// `CVehicle::GetVehicleAppearance()` (0x6D1080)
-    fn get_vehicle_appearance(v: GPtr<u8>) -> i32 = thiscall 0x6D1080 => unported;
     /// `CAutomobile::ClearHeliOrientation()` (0x6A2460)
     fn clear_heli_orientation(v: GPtr<u8>) = thiscall 0x6A2460 => unported;
     /// `CAutomobile::TellPlaneToGoToCoors(float x, float y, float z, float, float)` (0x6A2470), raw dwords
@@ -123,10 +110,6 @@ orig! {
     fn locate_object_command(s: Scr, command: u32) = thiscall 0x487D10 => unported;
     /// `CRunningScript::ObjectInAreaCheckCommand(int32 command)` (0x489150)
     fn object_in_area_check_command(s: Scr, command: u32) = thiscall 0x489150 => unported;
-    /// `CTimeCycle::StartExtraColour(int32, bool)` (0x55FEC0)
-    fn start_extra_colour(c: u32, keep: u32) = cdecl 0x55FEC0 => unported;
-    /// `CTimeCycle::StopExtraColour(bool)` (0x55FF20)
-    fn stop_extra_colour(keep: u32) = cdecl 0x55FF20 => unported;
 }
 
 /// `.rdata` 0x859014: -100.0f

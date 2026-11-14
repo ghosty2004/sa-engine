@@ -10,6 +10,19 @@ use sa_world::world::common::{find_player_ped, find_player_vehicle};
 
 use crate::common::{ftol32, g, rand_at, rd, wr, x};
 
+use crate::bindings::dm_get_panel_status as get_panel_status;
+use crate::bindings::get_light_status;
+use sa_core::bindings::get_pad;
+use sa_core::bindings::vector_magnitude;
+use sa_world::bindings::audio_add_event as add_audio_event;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::event_vehicle_damage_dtor;
+use sa_world::bindings::get_percentage_progress;
+use sa_world::bindings::get_vehicle_type_for_audio;
+use sa_world::bindings::interesting_events_add;
+use sa_world::bindings::pad_start_shake as start_shake;
+use sa_world::bindings::ped_say;
+use sa_world::bindings::player_set_wanted_level_no_drop as set_wanted_level_no_drop;
 orig! {
     /// `CBike::DamageKnockOffRider(CVehicle*, float, uint16, CEntity*, CVector&, CVector&)` (0x6B5A10, cdecl)
     fn damage_knock_off_rider(v: GPtr<u8>, dmg: u32, comp: u32, e: GPtr<u8>, coors: GPtr<u8>, dir: GPtr<u8>) -> u8 = cdecl 0x6B5A10 => unported;
@@ -17,20 +30,8 @@ orig! {
     fn scalar_mul_vector(out: GPtr<u8>, s: f32, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE90 => sa_world::world::mvpa_math::scalar_mul_vector;
     /// `DotProduct(const RwV3d*, const RwV3d*)` (0x40FDB0), ST0
     fn dot_product(a: GPtr<u8>, b: GPtr<u8>) -> f64 = cdecl 0x40FDB0 => dot_product_native;
-    /// `CStats::GetPercentageProgress()` (0x5591E0), ST0
-    fn get_percentage_progress() -> f64 = cdecl 0x5591E0 => unported;
-    /// `CVector::Magnitude()` (0x4082C0), ST0
-    fn vector_magnitude(v: GPtr<u8>) -> f64 = thiscall 0x4082C0 => unported;
-    /// `CPlayerPed::SetWantedLevelNoDrop(int32)` (0x609F30)
-    fn set_wanted_level_no_drop(p: GPtr<u8>, level: i32) = thiscall 0x609F30 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    fn get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CPad::StartShake(int16, uint8, uint32)` (0x53F920)
-    fn start_shake(pad: GPtr<u8>, time: u32, freq: u32, delay: u32) = thiscall 0x53F920 => unported;
     /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
     fn register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => sa_world::world::entity::register_reference;
-    /// `CDamageManager::GetLightStatus(eLights)` (0x6C2130)
-    fn get_light_status(dm: GPtr<u8>, light: u32) -> u32 = thiscall 0x6C2130 => crate::damage::get_light_status;
     /// `CAutomobile::dmgDrawCarCollidingParticles(const CVector&, float, eWeaponType)` (0x6A6DC0)
     fn dmg_draw_car_colliding_particles(v: GPtr<u8>, coors: GPtr<u8>, intensity: f32, weapon: u32) = thiscall 0x6A6DC0 => unported;
     /// `CVehicle::CanVehicleBeDamaged(CEntity*, eWeaponType, bool*)` (0x6D1280)
@@ -41,30 +42,16 @@ orig! {
     fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => sa_world::world::mvpa_math::vector_sub;
     /// `CEntity::GetColModel()` (0x535300)
     fn get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => sa_world::world::entity::get_col_model;
-    /// `CDamageManager::GetPanelStatus(int32)` (0x6C2180)
-    fn get_panel_status(dm: GPtr<u8>, panel: u32) -> u32 = thiscall 0x6C2180 => crate::damage::get_panel_status;
     /// `CVector::Difference(const CVector&, const CVector&)` (0x40FE00, thiscall on the output): `a - b`
     fn vector_difference(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = thiscall 0x40FE00 => unported;
     /// `CEventVehicleDamageCollision::CEventVehicleDamageCollision(CVehicle*, CVehicle*, eWeaponType)` (0x6A0620)
     fn event_vehicle_damage_collision_ctor(ev: GPtr<u8>, v: GPtr<u8>, other: GPtr<u8>, weapon: u32) -> GPtr<u8> = thiscall 0x6A0620 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420)
-    fn event_group_add(grp: GPtr<u8>, ev: GPtr<u8>, valid: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
     /// `CVehicle::ReactToVehicleDamage(CPed*)` (0x6D5490)
     fn react_to_vehicle_damage(v: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x6D5490 => unported;
-    /// `CEventVehicleDamage` base destructor body (0x4B1990), after the vtable store 0x8710D0
-    fn event_vehicle_damage_dtor(ev: GPtr<u8>) = thiscall 0x4B1990 => unported;
-    /// `CAEVehicleAudioEntity::GetVehicleTypeForAudio()` (0x4F4F00): int16 in AX
-    fn get_vehicle_type_for_audio(a: GPtr<u8>) -> u32 = thiscall 0x4F4F00 => unported;
-    /// `CPed::Say(uint16, uint32, float, uint8, uint8, uint8)` (0x5EFFE0)
-    fn ped_say(p: GPtr<u8>, ctx: u32, offset: u32, vol: u32, a: u32, b: u32, c: u32) -> u32 = thiscall 0x5EFFE0 => unported;
     /// `CVehicle::PickRandomPassenger()` (0x6D2A10)
     fn pick_random_passenger(v: GPtr<u8>) -> GPtr<u8> = thiscall 0x6D2A10 => crate::vehicle2::pick_random_passenger;
-    /// `CInterestingEvents::Add(EType, CEntity*)` (0x602590) on `g_InterestingEvents` (0xC0B058)
-    fn interesting_events_add(ie: GPtr<u8>, kind: u32, e: GPtr<u8>) = thiscall 0x602590 => unported;
     /// `CAutomobile::BlowUpCar(CEntity*, bool)` (vtable +0xA4)
     fn v_blow_up_car(v: GPtr<u8>, culprit: GPtr<u8>, in_cutscene: u32) = thiscall vslot 0xA4 => unported;
-    /// `CAEVehicleAudioEntity::AddAudioEvent(eAudioEvents, float)` (0x4F6420)
-    fn add_audio_event(a: GPtr<u8>, event: u32, volume: f32) = thiscall 0x4F6420 => unported;
     /// `CDamageManager::GetEngineStatus()` (0x6C22C0)
     fn get_engine_status(dm: GPtr<u8>) -> u32 = thiscall 0x6C22C0 => crate::damage::get_engine_status;
     /// `CDamageManager::SetEngineStatus(uint32)` (0x6C22A0)

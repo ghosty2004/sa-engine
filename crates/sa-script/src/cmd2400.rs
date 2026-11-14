@@ -72,28 +72,38 @@ const LOADED_CARS: usize = 0xC0E9F8;
 const ZONE_INFO_FLAGS: u32 = 0xBA1DFF;
 const NAV_ZONE_INFO_INDEX: u32 = 0xBA37B4;
 
+use crate::bindings::clean_up_this_object;
+use crate::bindings::clear_all_script_fire_flags;
+use crate::bindings::create_new_menu;
+use crate::bindings::get_new_unique_script_thing_index;
+use crate::bindings::path_find_unmark_all_road_nodes_as_dont_wander as unmark_all_road_nodes_as_dont_wander;
+use crate::bindings::report_mission_audio_event as report_mission_audio_event_pos;
+use crate::bindings::set_up_conversation_node;
+use crate::bindings::vehicle_pool_get_at;
+use sa_core::bindings::get_uppercase_key;
+use sa_core::bindings::rp_clump_for_all_atomics;
+use sa_core::bindings::stats_increment_stat as increment_stat;
+use sa_core::bindings::stricmp;
+use sa_core::bindings::task_new;
+use sa_stream::bindings::pick_random_car;
+use sa_world::bindings::damage_get_door_status as get_door_status;
+use sa_world::bindings::decision_maker_types_get_instance;
+use sa_world::bindings::facial_set_request;
+use sa_world::bindings::find_ground_z_for_coord as find_ground_z_raw;
+use sa_world::bindings::find_objects_of_type_in_range;
+use sa_world::bindings::find_zone_by_label;
+use sa_world::bindings::get_task_swim;
+use sa_world::bindings::hold_entity_drop_entity;
+use sa_world::bindings::is_law_enforcement_vehicle;
+use sa_world::bindings::pick_random_passenger;
+use sa_world::bindings::set_up_skip;
+use sa_world::bindings::task_facial_stop_all as facial_stop_all;
+use sa_world::bindings::vehicle_can_be_deleted as can_be_deleted;
 orig! {
-    /// `CTheScripts::CleanUpThisObject(CObject*)` (0x4866C0)
-    fn clean_up_this_object(o: GPtr<u8>) = cdecl 0x4866C0 => unported;
-    /// `RpClumpForAllAtomics(RpClump*, RpAtomicCallBack, void*)` (0x749B70)
-    fn rp_clump_for_all_atomics(clump: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> = cdecl 0x749B70 => unported;
     /// `CPad::GetPad(int32)` (0x53FB70)
     fn get_pad(n: u32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// CRT `_stricmp` (0x8229B6)
-    fn stricmp(a: GPtr<u8>, b: GPtr<u8>) -> i32 = cdecl 0x8229B6 => unported;
-    /// `CMenuSystem::CreateNewMenu(eMenuType, const char*, float x, float y, float width, int8 columns, bool
-    /// interactive, bool background, eFontAlignment)` (0x582300), AL; floats as raw dwords
-    fn create_new_menu(
-        ty: u32, title: GPtr<u8>, x: u32, y: u32, w: u32, columns: u32, interactive: u32, background: u32, align: u32
-    ) -> u8 = cdecl 0x582300 => unported;
-    /// `CPedIntelligence::GetTaskSwim()` (0x601070)
-    fn get_task_swim(i: GPtr<u8>) -> GPtr<u8> = thiscall 0x601070 => unported;
     /// `CTaskManager::GetTaskSecondary(int32)` (0x681810)
     fn get_task_secondary(tm: GPtr<u8>, slot: u32) -> GPtr<u8> = thiscall 0x681810 => unported;
-    /// `CTaskComplexFacial::SetRequest(eFacialExpression, int32, eFacialExpression, int32)` (0x691230)
-    fn facial_set_request(t: GPtr<u8>, a: u32, b: u32, c: u32, d: u32) = thiscall 0x691230 => unported;
-    /// `CTaskComplexFacial::StopAll()` (0x691250)
-    fn facial_stop_all(t: GPtr<u8>) = thiscall 0x691250 => unported;
     /// `CHeli::SwitchPoliceHelis(bool)` (0x6C4800)
     fn switch_police_helis(on: u32) = cdecl 0x6C4800 => unported;
     /// `CShopping::StoreVehicleMods()` (0x49B280) / `RestoreVehicleMods()` (0x49B3C0)
@@ -111,8 +121,6 @@ orig! {
     fn set_char_coordinates(s: Scr, p: GPtr<u8>, x: u32, y: u32, z: u32, warp: u32, offset: u32) = thiscall 0x464DC0 => unported;
     /// `CTheScripts::GetActualScriptThingIndex(int32 ref, uint8 type)` (0x4839A0)
     fn get_actual_script_thing_index(r: u32, ty: u32) -> i32 = cdecl 0x4839A0 => unported;
-    /// `CVehicle::IsLawEnforcementVehicle()` (0x6D2370), AL
-    fn is_law_enforcement_vehicle(v: GPtr<u8>) -> u8 = thiscall 0x6D2370 => unported;
     /// `FxManager_c::DestroyFxSystem(FxSystem_c*)` (0x4A9810)
     fn destroy_fx_system(m: GPtr<u8>, fx: u32) = thiscall 0x4A9810 => unported;
     /// `CTheScripts::RemoveScriptEffectSystem(int32)` (0x492FD0)
@@ -121,33 +129,19 @@ orig! {
     fn find_player_centre_of_world(id: u32) -> GPtr<u32> = cdecl 0x56E250 => unported;
     /// `CScriptsForBrains::IsObjectWithinBrainActivationRange(CObject*, const CVector&)` (0x46B3D0), AL
     fn is_object_within_brain_activation_range(b: GPtr<u8>, o: GPtr<u8>, pos: GPtr<u32>) -> u8 = thiscall 0x46B3D0 => unported;
-    /// `CDecisionMakerTypes::GetInstance()` (0x4684F0)
-    fn decision_maker_types_get_instance() -> GPtr<u8> = cdecl 0x4684F0 => unported;
     /// 0x6070F0 (thiscall on the `CDecisionMakerTypes` instance, 3 dwords `(int32 src, int32 0, bool cleanup)`, returns
     /// the new decision maker index; gr `CDecisionMakerTypes::CopyDecisionMaker`)
     fn copy_decision_maker_6070f0(t: GPtr<u8>, src: u32, ty: u32, cleanup: u32) -> u32 = thiscall 0x6070F0 => unported;
-    /// `CTheScripts::GetNewUniqueScriptThingIndex(int32 index, uint8 type)` (0x483720)
-    fn get_new_unique_script_thing_index(i: u32, ty: u32) -> u32 = cdecl 0x483720 => unported;
     /// `CScriptResourceManager::AddToResourceManager(int32, uint32 type, CRunningScript*)` (0x4704B0)
     fn add_to_resource_manager(m: GPtr<u8>, id: u32, ty: u32, s: Scr) = thiscall 0x4704B0 => unported;
-    /// `CAudioEngine::ReportMissionAudioEvent(uint16, CVector&)` (0x507340)
-    fn report_mission_audio_event_pos(a: GPtr<u8>, ev: u32, pos: GPtr<u32>) = thiscall 0x507340 => unported;
     /// `CAudioEngine::ReportMissionAudioEvent(uint16, CObject*)` (0x507350)
     fn report_mission_audio_event_obj(a: GPtr<u8>, ev: u32, o: GPtr<u8>) = thiscall 0x507350 => unported;
     /// `CAudioEngine::AttachMissionAudioToObject(uint8 slot, CObject*)` (0x507320)
     fn attach_mission_audio_to_object(a: GPtr<u8>, slot: u32, o: GPtr<u8>) = thiscall 0x507320 => unported;
     /// `CFireManager::ExtinguishPoint(CVector, float)` (0x539450); the vector by value, raw
     fn extinguish_point(m: GPtr<u8>, x: u32, y: u32, z: u32, r: u32) = thiscall 0x539450 => unported;
-    /// `CWorld::FindGroundZForCoord(float, float)` (0x569660), raw floats, ST0 (read as f64: exact)
-    fn find_ground_z_raw(x: u32, y: u32) -> f64 = cdecl 0x569660 => unported;
-    /// `CWorld::FindObjectsOfTypeInRange(uint32 model, const CVector&, float radius, bool 2d, int16* count,
-    /// int16 max, CEntity** out, bool buildings, bool vehicles, bool peds, bool objects, bool dummies)`
-    /// (0x564C70); the float raw
-    fn find_objects_of_type_in_range(model: u32, pos: GPtr<u32>, radius: u32, two_d: u32, count: GPtr<u16>, max_count: u32, out: GPtr<u32>, b: u32, v: u32, p: u32, o: u32, d: u32) = cdecl 0x564C70 => unported;
     /// `CVector::Magnitude()` (0x4082C0), ST0 (an `fsqrt` result under PC=24: exact as f64)
     fn vector_magnitude(v: GPtr<u32>) -> f64 = thiscall 0x4082C0 => unported;
-    /// `CFireManager::ClearAllScriptFireFlags()` (0x5397A0)
-    fn clear_all_script_fire_flags(m: GPtr<u8>) = thiscall 0x5397A0 => unported;
     /// `CPool<CVehicle>::GetRef(CVehicle*)` (0x424160), ECX = the vehicle pool
     fn vehicle_get_ref(pool: GPtr<u8>, v: GPtr<u8>) -> u32 = thiscall 0x424160 => unported;
     /// `CVehicle::GetRemapIndex()` (0x6D0B70)
@@ -160,19 +154,14 @@ orig! {
     fn pause_beat_track(a: GPtr<u8>, b: u32) = thiscall 0x507200 => unported;
     /// `CPathFind::MarkRoadNodeAsDontWander(float, float, float)` (0x450560); raw floats
     fn mark_road_node_as_dont_wander(p: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x450560 => unported;
-    /// `CPathFind::UnMarkAllRoadNodesAsDontWander()` (0x44D400)
-    fn unmark_all_road_nodes_as_dont_wander(p: GPtr<u8>) = thiscall 0x44D400 => unported;
     /// `CCheckpoints::SetHeading(uint32 id, float)` (0x722970); raw float
     fn checkpoints_set_heading(id: u32, h: u32) = cdecl 0x722970 => unported;
     /// `CStats::SetStatValue(uint16, float)` (0x55A070) / `IncrementStat(uint16, float)` (0x55C180)
     fn set_stat_value(stat: u32, v: f32) = cdecl 0x55A070 => unported;
-    fn increment_stat(stat: u32, v: f32) = cdecl 0x55C180 => unported;
     /// `CVehicleRecording::ChangeCarPlaybackToUseAI(CVehicle*)` (0x45A360)
     fn change_car_playback_to_use_ai(v: GPtr<u8>) = cdecl 0x45A360 => unported;
     /// `CCamera::AddShakeSimple(float, int32, float)` (0x50D240); the three operand dwords raw
     fn add_shake_simple(c: GPtr<u8>, a: u32, b: u32, d: u32) = thiscall 0x50D240 => unported;
-    /// `CTask::operator new(uint32)` (0x61A5A0)
-    fn task_new(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => unported;
     /// `CTaskSimpleSetCharIgnoreWeaponRangeFlag::CTaskSimpleSetCharIgnoreWeaponRangeFlag(bool)` (0x474620)
     fn task_ignore_weapon_range_ctor(t: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x474620 => unported;
     /// `CRunningScript::GivePedScriptedTask(int32 ped, CTask*, int32 command)` (0x465C20)
@@ -183,37 +172,16 @@ orig! {
     fn task_get_type(t: GPtr<u8>) -> u32 = thiscall vslot 0x10 => unported;
     /// `CTask` virtual slot 6 (+0x18, `MakeAbortable(CPed*, eAbortPriority, const CEvent*)`), AL (discarded)
     fn task_make_abortable(t: GPtr<u8>, p: GPtr<u8>, prio: u32, ev: u32) -> u8 = thiscall vslot 0x18 => unported;
-    /// `CTaskSimpleHoldEntity::DropEntity(CPed*, bool)` (0x6930F0)
-    fn hold_entity_drop_entity(t: GPtr<u8>, p: GPtr<u8>, b: u32) = thiscall 0x6930F0 => unported;
-    /// `CConversations::SetUpConversationNode(char*, char*, char*, int32, int32, int32)` (0x43A870)
-    fn set_up_conversation_node(a: GPtr<u8>, b: GPtr<u8>, c: GPtr<u8>, x: u32, y: u32, z: u32) = cdecl 0x43A870 => unported;
-    /// `CKeyGen::GetUppercaseKey(const char*)` (0x53CF30)
-    fn get_uppercase_key(s: GPtr<u8>) -> u32 = cdecl 0x53CF30 => unported;
-    /// `CVehicle::PickRandomPassenger()` (0x6D2A10)
-    fn pick_random_passenger(v: GPtr<u8>) -> GPtr<u8> = thiscall 0x6D2A10 => unported;
     /// `CPed::Say(uint16, uint32, float, uint8, uint8, uint8)` (0x5EFFE0), AX (discarded); the float raw
     fn ped_say(p: GPtr<u8>, id: u32, a: u32, vol: u32, b: u32, c: u32, d: u32) -> u16 = thiscall 0x5EFFE0 => unported;
-    /// `CGameLogic::SetUpSkip(CVector, float, bool, CVehicle*, bool)` (0x4423C0); the vector by value, raw
-    fn set_up_skip(x: u32, y: u32, z: u32, heading: u32, a: u32, b: u32, c: u32) = cdecl 0x4423C0 => unported;
-    /// `CLoadedCarGroup::PickRandomCar(bool, bool)` (0x611C50)
-    fn pick_random_car(g: GPtr<u8>, a: u32, b: u32) -> i32 = thiscall 0x611C50 => unported;
     /// `CEntryExitManager::FindNearestEntryExit(const CVector2D&, float range, int32 ignore)` (0x43F4B0)
     fn find_nearest_entry_exit(pos: GPtr<u32>, range: u32, ignore: i32) -> u32 = cdecl 0x43F4B0 => unported;
     /// 0x43EF90 (cdecl `(int32 index, uint32 flag, bool on)`; gr `CEntryExitManager::SetEntryExitFlagWithIndex`)
     fn set_entry_exit_flag_with_index_43ef90(i: u32, flag: u32, on: u32) = cdecl 0x43EF90 => unported;
-    /// `CTheZones::FindZoneByLabel(const char*, eZoneType)` (0x572C40), AX
-    fn find_zone_by_label(label: GPtr<u8>, ty: u32) -> u16 = cdecl 0x572C40 => unported;
     /// `Fx_c::AddBlood(CVector& pos, CVector& dir, int32 amount, float lightMult)` (0x49EB00); the float raw
     fn fx_add_blood(fx: GPtr<u8>, pos: GPtr<u32>, dir: GPtr<u32>, amount: u32, light: u32) = thiscall 0x49EB00 => unported;
-    /// `CDamageManager::GetDoorStatus(eDoors)` (0x6C2230)
-    fn get_door_status(dm: GPtr<u8>, door: u32) -> u32 = thiscall 0x6C2230 => unported;
-    /// The vehicle pool's slot accessor at 0x41CC10 (thiscall on the pool, slot index; a `.HOODLUM` thunk,
-    /// `CPool<CVehicle>::GetAt(int32)` in gr)
-    fn vehicle_pool_get_at(pool: GPtr<u8>, i: u32) -> GPtr<u8> = thiscall 0x41CC10 => unported;
     /// `CVehicle::GetVehicleAppearance()` (0x6D1080)
     fn get_vehicle_appearance(v: GPtr<u8>) -> u32 = thiscall 0x6D1080 => unported;
-    /// `CVehicle::CanBeDeleted()` (0x6D1180), AL
-    fn can_be_deleted(v: GPtr<u8>) -> u8 = thiscall 0x6D1180 => unported;
     /// 0x477DA0 (cdecl `(const CVector* pos, float x1, float y1, float x2, float y2, float width)`, AL: the angled
     /// area test; unnamed in the catalogue)
     fn is_in_angled_area_477da0(pos: GPtr<u8>, x1: u32, y1: u32, x2: u32, y2: u32, w: u32) -> u8 = cdecl 0x477DA0 => unported;

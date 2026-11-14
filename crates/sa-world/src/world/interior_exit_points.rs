@@ -6,15 +6,12 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 
 use super::common::{rd, wr, x, xi};
 
-orig! {
-    /// `Interior_c::GetTileCentre(float x, float y, CVector* out)` (0x591BD0)
-    fn get_tile_centre(it: GPtr<u8>, tx: f32, ty: f32, out: GPtr<u8>) = thiscall 0x591BD0 => unported;
-}
+use crate::bindings::get_tile_centre;
 
 /// `0.5` (0x858B8C), `0.25` (0x858C84).
 const F_0_5: f32 = 0.5;

@@ -32,21 +32,18 @@ const MODEL_INFO_PTRS: usize = 0xA9B0C8;
 /// `mod_HandlingManager.m_aVehicleHandling` (0xE0 each), flags at +0xD0
 const HANDLING: usize = 0xC2B9DC;
 
+pub use crate::bindings::is_coop_game_going_on;
+pub use crate::bindings::sound_dtor as ae_sound_dtor;
+pub use sa_core::bindings::stricmp;
 orig! {
     /// `CAEDoorAudioEntity::Reset` (0x4DC6B0)
     pub fn door_audio_reset(e: GPtr<u8>) = thiscall 0x4DC6B0 => unported;
-    /// `CAESound::~CAESound` (0x4EF660)
-    pub fn ae_sound_dtor(s: GPtr<u8>) = thiscall 0x4EF660 => unported;
     /// `CGarage::Update(int32 index)` (0x44AA50)
     pub fn garage_update(gp: GPtr<u8>, i: i32) = thiscall 0x44AA50 => crate::world::garage_update::garage_update;
     /// `CGarage::TidyUpGarage` (0x449C50)
     pub fn tidy_up_garage(gp: GPtr<u8>) = thiscall 0x449C50 => unported;
     /// `CGarage::TidyUpGarageClose` (0x449D10)
     pub fn tidy_up_garage_close(gp: GPtr<u8>) = thiscall 0x449D10 => unported;
-    /// `CGameLogic::IsCoopGameGoingOn` (0x441390)
-    pub fn is_coop_game_going_on() -> u8 = cdecl 0x441390 => unported;
-    /// CRT `_stricmp` (0x8229B6)
-    pub fn stricmp(a: GPtr<u8>, b: GPtr<u8>) -> i32 = cdecl 0x8229B6 => unported;
     /// `CBaseModelInfo::AsAtomicModelInfoPtr` (vtable slot 4)
     pub fn as_atomic_model_info_ptr(mi: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x4 => unported;
 }

@@ -72,31 +72,20 @@ const HEAD_FADE: f32 = f32::from_bits(0x3CB6_0B61); // 0x86D2B8 (1/45)
 /// 0x864E0C, 0x85F0A0).
 const SIN_C: [u32; 6] = [0x2F2E_C9D3, 0x32D7_2F34, 0x3638_EF1B, 0x3950_0D01, 0x3C08_8889, 0x3E2A_AAAB];
 
+pub use sa_core::bindings::eh_vector_ctor;
+pub use sa_core::bindings::eh_vector_dtor;
+pub use sa_core::bindings::list_add_item as tlist_add_item;
+pub use sa_core::bindings::list_dtor as tlist_dtor;
+pub use sa_core::bindings::list_get_num_items as tlist_get_num_items;
+pub use sa_core::bindings::list_item_ctor;
+pub use sa_core::bindings::list_item_dtor;
+pub use sa_core::bindings::list_remove_all as tlist_remove_all;
+pub use sa_core::bindings::list_remove_head as tlist_remove_head;
+pub use sa_core::bindings::list_remove_item as tlist_remove_item;
+pub use sa_core::bindings::rw_matrix_multiply;
 orig! {
-    /// `ListItem_c::ListItem_c` (0x4A8DB0): next = prev = 0, returns this
-    pub fn list_item_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4A8DB0 => unported;
-    /// `ListItem_c::~ListItem_c` (0x4A8DC0): `ret`
-    pub fn list_item_dtor(this: GPtr<u8>) = thiscall 0x4A8DC0 => unported;
     /// `TList_c::TList_c` (0x4A8DD0): head = tail = count = 0, returns this
     pub fn tlist_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4A8DD0 => unported;
-    /// `TList_c::~TList_c` (0x4A8DE0): `ret`
-    pub fn tlist_dtor(this: GPtr<u8>) = thiscall 0x4A8DE0 => unported;
-    /// `TList_c::AddItem(item)` (0x4A8DF0): push front
-    pub fn tlist_add_item(this: GPtr<u8>, item: GPtr<u8>) = thiscall 0x4A8DF0 => unported;
-    /// `TList_c::RemoveItem(item)` (0x4A8E30)
-    pub fn tlist_remove_item(this: GPtr<u8>, item: GPtr<u8>) = thiscall 0x4A8E30 => unported;
-    /// `TList_c::RemoveHead()` (0x4A8E70): the head or 0
-    pub fn tlist_remove_head(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4A8E70 => unported;
-    /// `TList_c::RemoveAll()` (0x4A8EB0)
-    pub fn tlist_remove_all(this: GPtr<u8>) = thiscall 0x4A8EB0 => unported;
-    /// `TList_c::GetNumItems()` (0x4A8EC0)
-    pub fn tlist_get_num_items(this: GPtr<u8>) -> i32 = thiscall 0x4A8EC0 => unported;
-    /// CRT `eh vector constructor iterator` (0x821D30, stdcall)
-    pub fn eh_vector_ctor(arr: GPtr<u8>, size: u32, n: u32, ctor: u32, dtor: u32) = stdcall 0x821D30 => unported;
-    /// CRT `eh vector destructor iterator` (0x821E02, stdcall)
-    pub fn eh_vector_dtor(arr: GPtr<u8>, size: u32, n: u32, dtor: u32) = stdcall 0x821E02 => unported;
-    /// `RwMatrixMultiply(dst, a, b)` (0x7F18B0)
-    pub fn rw_matrix_multiply(dst: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F18B0 => unported;
     /// `RtQuatSetupSlerpCache(from, to, cache)` (0x7EC220)
     pub fn rt_quat_setup_slerp_cache(from: GPtr<f32>, to: GPtr<f32>, cache: GPtr<f32>) = cdecl 0x7EC220 => unported;
     /// `BoneNode_c::CalcWldMat(parentMatrix)` (0x616CD0)

@@ -85,6 +85,7 @@ pub const ONSCN_TIMER: usize = 0xBA1788;
 /// `CWorld::Players[]` (stride 0x190); `m_nMaxHealth` at +0x14F
 const PLAYERS: usize = 0xB7CD98;
 
+pub use sa_core::bindings::rgba_ctor;
 orig! {
     /// `COnscreenTimer::Init()` (0x44CBC0)
     pub fn onscreen_timer_init(this: GPtr<u8>) = thiscall 0x44CBC0 => unported;
@@ -94,8 +95,6 @@ orig! {
     pub fn place_name_process(this: GPtr<u8>) = thiscall 0x571F20 => unported;
     /// `CCurrentVehicle::Process()` (0x572040)
     pub fn current_vehicle_process(this: GPtr<u8>) = thiscall 0x572040 => unported;
-    /// `CRGBA::CRGBA(uint8 r, uint8 g, uint8 b, uint8 a)` (0x7170C0)
-    pub fn rgba_ctor(this: GPtr<u8>, r: u32, g: u32, b: u32, a: u32) -> GPtr<u8> = thiscall 0x7170C0 => unported;
 }
 
 fn big(style: u32, i: u32) -> GPtr<u8> {

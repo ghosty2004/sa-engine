@@ -22,11 +22,10 @@ sa_core::globals! {
     pub static PLANE_GEN_ACTIVE @ 0x8D33BC: u8 = 1;
 }
 
+pub use crate::bindings::dm_reset_damage_status as reset_damage_status;
 orig! {
     /// `RwRenderStateSet` (RwEngineInstance table slot 0x20)
     pub fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `CDamageManager::ResetDamageStatus()` (0x6C20E0)
-    pub fn reset_damage_status(dm: GPtr<u8>) = thiscall 0x6C20E0 => crate::damage::reset_damage_status;
 }
 
 /// `CHeli::InitHelis()` (0x6C4560): pHelis cleared; origin and target of search lights 0 and 1 only

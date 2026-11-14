@@ -15,90 +15,67 @@ const TIME_STEP: usize = 0xB7CB5C;
 /// `g_ikChainMan` (`IKChainManager_c`)
 const IK_CHAIN_MAN: usize = 0xC15448;
 
+use crate::bindings::assoc_group_get_animation;
+use crate::bindings::car_door_create_sub_task;
+use crate::bindings::car_door_is_vehicle_in_range;
+use crate::bindings::car_wait_for_door_ctor;
+use crate::bindings::clump_get_association;
+use crate::bindings::duck_control_duck_move;
+use crate::bindings::go_to_point_ctor as goto_point_ctor_call;
+use crate::bindings::goto_has_circled_target;
+use crate::bindings::goto_quit_ik;
+use crate::bindings::goto_set_up_ik;
+use crate::bindings::ik_get_look_at_entity;
+use crate::bindings::ped_set_move_state;
+use crate::bindings::player_control_button_sprint;
+use crate::bindings::stand_still_dtor;
+use crate::bindings::stand_still_process_ped;
+use sa_core::bindings::entity_get_is_on_screen;
+use sa_core::bindings::entity_register_reference;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::get_pad as pad_get_pad;
+use sa_core::bindings::get_weapon_info as weapon_info_get;
+use sa_core::bindings::vector2d_normalise;
+use sa_core::bindings::vector_dot_product;
+use sa_core::bindings::vector_normalise;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::ik_is_looking;
+use sa_world::bindings::intel_get_task_duck;
+use sa_world::bindings::intel_get_task_hold;
+use sa_world::bindings::ped_restore_heading_rate;
+use sa_world::bindings::player_set_real_move_anim;
+use sa_world::bindings::stand_still_ctor;
+use sa_world::bindings::surface_cant_sprint_on;
+use sa_world::bindings::task_complex_ctor;
+use sa_world::bindings::task_simple_ctor;
+use sa_world::bindings::vector_magnitude_sqr;
+use sa_world::bindings::vector_ne;
+use sa_world::bindings::vector_sub;
 orig! {
-    /// `CTaskSimple::CTaskSimple` (0x61A390)
-    fn task_simple_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A390 => unported;
-    /// `CPed::SetMoveState(eMoveState)` (0x5DEC00, `ret 4`)
-    fn ped_set_move_state(p: GPtr<u8>, s: u32) = thiscall 0x5DEC00 => unported;
-    /// `CPedIntelligence::GetTaskDuck(bool)` (0x6010A0, `ret 4`)
-    fn intel_get_task_duck(i: GPtr<u8>, ignore: u32) -> GPtr<u8> = thiscall 0x6010A0 => unported;
-    /// `CPedIntelligence::GetTaskHold(bool)` (0x600FF0, `ret 4`)
-    fn intel_get_task_hold(i: GPtr<u8>, ignore: u32) -> GPtr<u8> = thiscall 0x600FF0 => unported;
-    /// `CTaskSimpleDuck::ControlDuckMove(float moveX, float moveY)` (0x6923F0, `ret 8`)
-    fn duck_control_duck_move(d: GPtr<u8>, mx: f32, my: f32) = thiscall 0x6923F0 => unported;
     /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float delta)` (0x4D4610)
     fn anim_blend_animation(clump: u32, group: u32, id: u32, delta: f32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
-    /// `RpAnimBlendClumpGetAssociation(RpClump*, AnimationId)` (0x4D68B0)
-    fn clump_get_association(clump: u32, id: u32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
-    /// `IKChainManager_c::IsLooking(CPed*)` (0x6181A0, `ret 4`)
-    fn ik_is_looking(this: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x6181A0 => unported;
     /// `IKChainManager_c::AbortLookAt(CPed*, int32 blendOutTime)` (0x618280, `ret 8`)
     fn ik_abort_look_at(this: GPtr<u8>, ped: GPtr<u8>, time: u32) = thiscall 0x618280 => unported;
-    /// `IKChainManager_c::GetLookAtEntity(CPed*)` (0x6181D0, `ret 4`)
-    fn ik_get_look_at_entity(this: GPtr<u8>, ped: GPtr<u8>) -> u32 = thiscall 0x6181D0 => unported;
     /// `IKChainManager_c::LookAt(purpose, ped, target, time, bone, posn, useTorso, speed, blendTime, priority,
     /// forceLooking)` (0x618970, `ret 0x2C`)
     fn ik_look_at(
         this: GPtr<u8>, purpose: u32, ped: GPtr<u8>, target: u32, time: u32, bone: u32, posn: GPtr<u8>,
         torso: u32, speed: u32, blend: u32, prio: u32, force: u32
     ) -> u32 = thiscall 0x618970 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    fn pad_get_pad(id: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CEntity::GetIsOnScreen()` (0x534540)
-    fn entity_get_is_on_screen(e: GPtr<u8>) -> u8 = thiscall 0x534540 => unported;
     /// `CTaskManager::GetTaskSecondary(int32)` (0x681810, `ret 4`)
     fn tm_get_task_secondary(tm: GPtr<u8>, slot: u32) -> GPtr<u8> = thiscall 0x681810 => unported;
-    /// `FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
     /// `CTask::GetTaskType()` (vtable +0x10)
     fn v_get_task_type(t: GPtr<u8>) -> u32 = thiscall vslot 0x10 => unported;
-    /// `VectorSub(CVector* out, const CVector* a, const CVector* b)` (0x40FE60): out = a - b
-    fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => unported;
-    /// `CVector::MagnitudeSqr()` (0x406DA0, ST0)
-    fn vector_magnitude_sqr(v: GPtr<u8>) -> f64 = thiscall 0x406DA0 => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
-    /// `CVector2D::Normalise()` (0x44E480)
-    fn vector2d_normalise(v: GPtr<u8>) = thiscall 0x44E480 => unported;
-    /// `FUN_00509760(const CVector*, const CVector*)` (cdecl, AL): true unless the three components compare
-    /// equal (`operator!=`)
-    fn vector_ne(a: GPtr<u8>, b: GPtr<u8>) -> u8 = cdecl 0x509760 => unported;
-    /// `CTaskSimpleStandStill::CTaskSimpleStandStill(int32, bool, bool, float)` (0x62F310, `ret 0x10`)
-    fn stand_still_ctor(t: GPtr<u8>, time: u32, looped: u32, keep: u32, delta: u32) -> GPtr<u8> = thiscall 0x62F310 => unported;
-    /// `CTaskSimpleStandStill::ProcessPed(CPed*)` (0x62F370, `ret 4`)
-    fn stand_still_process_ped(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x62F370 => unported;
-    /// `CTaskSimpleStandStill::~CTaskSimpleStandStill` (0x62F360)
-    fn stand_still_dtor(t: GPtr<u8>) = thiscall 0x62F360 => unported;
-    /// `CTaskSimpleGoTo::HasCircledTarget(CPed*)` (0x667A10, `ret 4`)
-    fn goto_has_circled_target(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x667A10 => unported;
-    /// `CTaskSimpleGoTo::QuitIK(CPed*)` (0x667CA0, `ret 4`)
-    fn goto_quit_ik(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x667CA0 => unported;
-    /// `CTaskSimpleGoTo::SetUpIK(CPed*)` (0x667AD0, `ret 4`)
-    fn goto_set_up_ik(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x667AD0 => unported;
     /// `CEventScanner::ScanForEventsNow(const CPed&, bool)` (0x6053D0, `ret 8`)
     fn scanner_scan_for_events_now(s: GPtr<u8>, ped: GPtr<u8>, dont_scan_cars: u32) = thiscall 0x6053D0 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
     /// `CPlayerPed::SetPlayerMoveBlendRatio(CVector*)` (0x60C520, `ret 4`)
     fn player_set_move_blend_ratio(p: GPtr<u8>, v: GPtr<u8>) = thiscall 0x60C520 => unported;
-    /// `CPlayerPed::SetRealMoveAnim()` (0x60A9C0)
-    fn player_set_real_move_anim(p: GPtr<u8>) = thiscall 0x60A9C0 => unported;
-    /// `CPlayerPed::ControlButtonSprint(eSprintType)` (0x60A610, `ret 4`, ST0)
-    fn player_control_button_sprint(p: GPtr<u8>, ty: u32) -> f64 = thiscall 0x60A610 => unported;
-    /// `CWeaponInfo::GetWeaponInfo(eWeaponType, eWeaponSkill)` (0x743C60)
-    fn weapon_info_get(ty: u32, skill: u32) -> GPtr<u8> = cdecl 0x743C60 => unported;
-    /// `SurfaceInfos_c::CantSprintOn(SurfaceId)` (0x55E870, `ret 4`)
-    fn surface_cant_sprint_on(s: GPtr<u8>, id: u32) -> u8 = thiscall 0x55E870 => unported;
-    /// `CAnimBlendAssocGroup::GetAnimation(AnimationId)` (0x4CE090, `ret 4`)
-    fn assoc_group_get_animation(g: GPtr<u8>, id: u32) -> GPtr<u8> = thiscall 0x4CE090 => unported;
     /// `CPed` vtable +0x5C (`SetMoveAnim`, no stack arguments)
     fn v_ped_set_move_anim(p: GPtr<u8>) = thiscall vslot 0x5C => unported;
     /// `CGeneral::GetRadianAngleBetweenPoints(float x1, float y1, float x2, float y2)` (0x53CBE0, ST0)
     fn general_get_radian_angle_between_points(x1: f32, y1: f32, x2: f32, y2: f32) -> f64 = cdecl 0x53CBE0 => unported;
     /// `CGeneral::LimitRadianAngle(float)` (0x53CB50, ST0)
     fn general_limit_radian_angle(a: f32) -> f64 = cdecl 0x53CB50 => unported;
-    /// `CPed::RestoreHeadingRate()` (0x5DFD60)
-    fn ped_restore_heading_rate(p: GPtr<u8>) = thiscall 0x5DFD60 => unported;
     /// `CTaskSimpleAchieveHeading::SetUpIK(CPed*)` (0x667F20, `ret 4`)
     fn achieve_heading_set_up_ik(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x667F20 => unported;
     /// `CTaskComplexGoToPointAndStandStill::CreateSubTask(int32 type, CPed*)` (0x6682D0, `ret 8`)
@@ -106,30 +83,20 @@ orig! {
     /// `CTaskComplexGoToPointAndStandStill::SelectMoveState(CTaskSimpleGoToPoint*, CPed*, float, float)` (0x668250,
     /// `ret 0x10`)
     fn gtpss_select_move_state(t: GPtr<u8>, task: GPtr<u8>, ped: GPtr<u8>, r: u32, c: u32) = thiscall 0x668250 => unported;
-    /// `CVector::DotProduct(const CVector*, const CVector*)` (0x40FDB0, ST0)
-    fn vector_dot_product(a: GPtr<u8>, b: GPtr<u8>) -> f64 = cdecl 0x40FDB0 => unported;
     /// `CTaskSimplePause::CTaskSimplePause(int32)` (0x48E750, `ret 4`)
     fn pause_ctor(t: GPtr<u8>, time: u32) -> GPtr<u8> = thiscall 0x48E750 => unported;
     /// `CTaskComplexLeaveCar::CTaskComplexLeaveCar(CVehicle*, int32, int32, bool, bool)` (0x63B8C0, `ret 0x14`)
     fn leave_car_ctor(t: GPtr<u8>, veh: u32, a1: u32, a2: u32, a3: u32, a4: u32) -> GPtr<u8> = thiscall 0x63B8C0 => unported;
-    /// `CTaskSimpleGoToPoint::CTaskSimpleGoToPoint(...)` (0x667CD0, `ret 0x14`)
-    fn goto_point_ctor_call(t: GPtr<u8>, state: u32, target: GPtr<u8>, radius: u32, over: u32, exact: u32) -> GPtr<u8> = thiscall 0x667CD0 => unported;
     /// `CTask::MakeAbortable(CPed*, int32, const CEvent*)` (vtable +0x18)
     fn v_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, prio: u32, ev: u32) -> u8 = thiscall vslot 0x18 => unported;
     /// `CTaskComplex::CreateFirstSubTask(CPed*)` (vtable +0x24)
     fn v_create_first_sub_task(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x24 => unported;
-    /// `CTaskComplex::CTaskComplex` (0x61A3B0)
-    fn task_complex_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A3B0 => unported;
     /// `CTaskComplexTurnToFaceEntityOrCoord::ComputeTargetHeading(CPed*)` (0x66B9D0, `ret 4`, ST0)
     fn turn_compute_target_heading(t: GPtr<u8>, ped: GPtr<u8>) -> f64 = thiscall 0x66B9D0 => unported;
     /// `CTaskComplexTurnToFaceEntityOrCoord` (entity) constructor (0x66B890, `ret 0xC`)
     fn turn_ctor_entity(t: GPtr<u8>, e: u32, rate: u32, tol: u32) -> GPtr<u8> = thiscall 0x66B890 => unported;
     /// `CTaskComplexTurnToFaceEntityOrCoord` (coords) constructor (0x66B910, `ret 0xC`)
     fn turn_ctor_coords(t: GPtr<u8>, pos: GPtr<u8>, rate: u32, tol: u32) -> GPtr<u8> = thiscall 0x66B910 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70, `ret 4`)
-    fn entity_register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
-    /// `CTaskSimpleCarWaitForDoorNotToBeInUse` constructor (0x646B70, `ret 0xC`)
-    fn car_wait_for_door_ctor(t: GPtr<u8>, veh: u32, door: u32, a3: u32) -> GPtr<u8> = thiscall 0x646B70 => unported;
     /// `CTaskSimpleCarGoToPointNearDoorUntilDoorNotInUse` constructor (0x646D70, `ret 0x10`)
     fn car_go_near_door_ctor(t: GPtr<u8>, veh: u32, door: u32, pos: GPtr<u8>, ms: u32) -> GPtr<u8> = thiscall 0x646D70 => unported;
     /// `CTaskComplexFollowPointRoute` constructor (0x671510, `ret 0x20`)
@@ -138,10 +105,6 @@ orig! {
     ) -> GPtr<u8> = thiscall 0x671510 => unported;
     /// `CCarEnterExit::GetPositionToOpenCarDoor(CVector* out, CVehicle*, int32 door)` (0x64E740, returns `out`)
     fn get_position_to_open_car_door(out: GPtr<u8>, veh: u32, door: u32) -> GPtr<u8> = cdecl 0x64E740 => unported;
-    /// `CTaskComplexGoToCarDoorAndStandStill::CreateSubTask(int32, CPed*)` (0x64A5F0, `ret 8`)
-    fn car_door_create_sub_task(t: GPtr<u8>, ty: u32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x64A5F0 => unported;
-    /// `CTaskComplexGoToCarDoorAndStandStill::IsVehicleInRange(const CPed&)` (0x6458A0, `ret 4`)
-    fn car_door_is_vehicle_in_range(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x6458A0 => unported;
     /// `CTaskComplexGoToCarDoorAndStandStill::ComputeRouteToDoor(const CPed&)` (0x645910, `ret 4`)
     fn car_door_compute_route_to_door(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x645910 => unported;
     /// `CCarEnterExit::IsPathToDoorBlockedByVehicleCollisionModel(const CPed*, CVehicle*, const CVector&)` (0x651210)

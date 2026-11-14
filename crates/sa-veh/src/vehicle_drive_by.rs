@@ -10,23 +10,17 @@ use sa_core::{hook, orig};
 
 use crate::common::{g, jne_mask, jp5, rd, wr, x};
 
+use sa_core::bindings::get_weapon_info;
+use sa_pop::bindings::pad_get_look_left;
+use sa_pop::bindings::pad_get_look_right;
+use sa_world::bindings::get_pad_from_player;
+use sa_world::bindings::get_player_info;
+use sa_world::bindings::pad_get_car_gun_fired;
 orig! {
-    /// `CPlayerPed::GetPlayerInfoForThisPlayerPed()` (0x609FF0)
-    fn get_player_info(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x609FF0 => unported;
-    /// `CPlayerPed::GetPadFromPlayer()` (0x609560)
-    fn get_pad_from_player(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x609560 => unported;
-    /// `CWeaponInfo::GetWeaponInfo(eWeaponType, eWeaponSkill)` (0x743C60)
-    fn get_weapon_info(kind: u32, skill: u32) -> GPtr<u8> = cdecl 0x743C60 => unported;
-    /// `CPad::GetCarGunFired()` (0x53FF90): int16 in AX
-    fn pad_get_car_gun_fired(pad: GPtr<u8>) -> i16 = thiscall 0x53FF90 => unported;
     /// virtual `CVehicle::GetRideAnimData()` (vtable +0xBC)
     fn v_get_ride_anim_data(v: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0xBC => unported;
     /// `CWeapon::Update(CPed* owner)` (0x73DB40)
     fn weapon_update(w: GPtr<u8>, owner: u32) = thiscall 0x73DB40 => unported;
-    /// `CPad::GetLookLeft()` (0x53FDD0, AL)
-    fn pad_get_look_left(pad: GPtr<u8>) -> u8 = thiscall 0x53FDD0 => unported;
-    /// `CPad::GetLookRight()` (0x53FE10, AL)
-    fn pad_get_look_right(pad: GPtr<u8>) -> u8 = thiscall 0x53FE10 => unported;
     /// `RpAnimBlendClumpGetAssociation(RpClump*, uint32 animId)` (0x4D68B0)
     fn clump_get_association(c: GPtr<u8>, id: u32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
     /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float)` (0x4D4610)

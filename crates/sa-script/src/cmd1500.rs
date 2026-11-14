@@ -75,36 +75,71 @@ const NUM_INTRO_TEXT_LINES: usize = 0xA44B68;
 /// The per-sequence byte array cleared by CLEAR_SEQUENCE_TASK (0xA43F68, 4-byte stride).
 const SEQUENCE_ID_BYTES: u32 = 0xA43F68;
 
+use crate::bindings::clear_space_for_mission_entity;
+use crate::bindings::clump_get_association as rp_anim_blend_clump_get_association;
+use crate::bindings::get_new_unique_script_thing_index;
+use crate::bindings::path_find_release_requested_nodes as release_requested_nodes;
+use crate::bindings::record_set_event as scripted_task_record_set;
+use crate::bindings::start_playback_recorded_car;
+use crate::bindings::stop_playback_recorded_car;
+use crate::bindings::task_gun_control_ctor;
+use sa_core::bindings::assoc_set_current_time as set_current_time;
+use sa_core::bindings::entity_register_reference as register_reference;
+use sa_core::bindings::membership_set_leader;
+use sa_core::bindings::ped_group_process;
+use sa_core::bindings::rgba_ctor;
+use sa_core::bindings::task_new;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::civilian_ped_ctor;
+use sa_world::bindings::compute_response_task_type_group;
+use sa_world::bindings::cop_ped_ctor;
+use sa_world::bindings::count_members_excluding_leader;
+use sa_world::bindings::dm_load_enum as load_decision_maker;
+use sa_world::bindings::dtor_6389f0 as sequence_dtor;
+use sa_world::bindings::emergency_ped_ctor;
+use sa_world::bindings::enter_car_as_passenger_ctor as task_enter_car_as_passenger_ctor;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::event_group_event_ctor;
+use sa_world::bindings::event_group_event_dtor;
+use sa_world::bindings::event_leader_entered_car_as_driver_ctor as event_leader_entered_car_ctor;
+use sa_world::bindings::event_new;
+use sa_world::bindings::event_script_command_ctor;
+use sa_world::bindings::event_script_command_dtor;
+use sa_world::bindings::group_intel_set_script_command_task;
+use sa_world::bindings::leave_any_car_ctor as task_leave_any_car_ctor;
+use sa_world::bindings::leave_car_ctor as task_leave_car_ctor;
+use sa_world::bindings::membership_add_follower;
+use sa_world::bindings::membership_get_leader;
+use sa_world::bindings::ped_groups_remove_group as remove_group;
+use sa_world::bindings::ped_new;
+use sa_world::bindings::sequence_add_task;
+use sa_world::bindings::sequence_ctor;
+use sa_world::bindings::sequence_flush;
+use sa_world::bindings::set_char_created_by;
+use sa_world::bindings::set_hearing_range;
+use sa_world::bindings::set_new_record_stat;
+use sa_world::bindings::set_ped_decision_maker_type;
+use sa_world::bindings::set_seeing_range;
+use sa_world::bindings::set_stat_value;
+use sa_world::bindings::simple_car_drive_ctor as task_car_drive_ctor;
+use sa_world::bindings::smart_flee_entity_ctor as task_smart_flee_entity_ctor;
+use sa_world::bindings::stand_still_ctor as task_stand_still_ctor;
+use sa_world::bindings::task_wander_criminal_ctor;
+use sa_world::bindings::turn_to_face_entity_ctor as task_turn_to_face_entity_ctor;
+use sa_world::bindings::wander_standard_ctor as task_wander_standard_ctor;
 orig! {
-    /// `CTask::operator new(uint32)` (0x61A5A0)
-    fn task_new(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => unported;
     /// `CRunningScript::GivePedScriptedTask(int32 ped, CTask*, int32 command)` (0x465C20)
     fn give_ped_scripted_task(s: Scr, ped: u32, task: GPtr<u8>, command: u32) = thiscall 0x465C20 => unported;
     /// `CTaskComplexSmartFleePoint::CTaskComplexSmartFleePoint(const CVector&, bool, float, int32)` (0x65BD20)
     fn task_smart_flee_point_ctor(t: GPtr<u8>, pos: GPtr<u32>, b: u32, range: u32, time: u32) -> GPtr<u8> = thiscall 0x65BD20 => unported;
-    /// `CTaskComplexSmartFleeEntity::CTaskComplexSmartFleeEntity(CEntity*, bool, float, int32, int32, float)`
-    /// (0x65C430); floats raw
-    fn task_smart_flee_entity_ctor(t: GPtr<u8>, e: GPtr<u8>, b: u32, range: u32, time: u32, a: u32, c: u32) -> GPtr<u8> = thiscall 0x65C430 => unported;
-    /// `CTaskComplexWanderStandard::CTaskComplexWanderStandard(int32 moveState, uint8 dir, bool)` (0x48E4F0); the
-    /// direction dword as pushed
-    fn task_wander_standard_ctor(t: GPtr<u8>, move_state: u32, dir: u32, b: u32) -> GPtr<u8> = thiscall 0x48E4F0 => unported;
-    /// `CTaskComplexWanderCriminal::CTaskComplexWanderCriminal(int32, uint8)` (0x48E610)
-    fn task_wander_criminal_ctor(t: GPtr<u8>, move_state: u32, dir: u32, b: u32) -> GPtr<u8> = thiscall 0x48E610 => unported;
     /// `CGeneral::GetRandomNumberInRange(int32, int32)` (0x407180)
     fn random_int_in_range(lo: i32, hi: i32) -> u32 = cdecl 0x407180 => unported;
     /// `CTaskComplexKillPedOnFoot::CTaskComplexKillPedOnFoot(CPed*, int32, uint32, uint32, uint32, uint8)` (0x620E30)
     fn task_kill_ped_on_foot_ctor(t: GPtr<u8>, p: GPtr<u8>, a: u32, b: u32, c: u32, d: u32, e: u32) -> GPtr<u8> = thiscall 0x620E30 => unported;
-    /// `CVehicleRecording::StartPlaybackRecordedCar(CVehicle*, int32, bool, bool)` (0x45A980)
-    fn start_playback_recorded_car(v: GPtr<u8>, n: u32, a: u32, b: u32) = cdecl 0x45A980 => unported;
-    /// `CVehicleRecording::StopPlaybackRecordedCar(CVehicle*)` (0x45A280) / `PausePlaybackRecordedCar` (0x459740) /
-    /// `UnpausePlaybackRecordedCar` (0x459850)
-    fn stop_playback_recorded_car(v: GPtr<u8>) = cdecl 0x45A280 => unported;
     fn pause_playback_recorded_car(v: GPtr<u8>) = cdecl 0x459740 => unported;
     fn unpause_playback_recorded_car(v: GPtr<u8>) = cdecl 0x459850 => unported;
     /// `CVehicleRecording::IsPlaybackGoingOnForCar(CVehicle*)` (0x4594C0), AL
     fn is_playback_going_on_for_car(v: GPtr<u8>) -> u8 = cdecl 0x4594C0 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    fn register_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571B70 => unported;
     /// `CTaskComplexFollowNodeRoute::CTaskComplexFollowNodeRoute(int32 mode, const CVector&, float, float, float,
     /// bool, int32 time, bool)` (0x66EA30); floats raw
     fn task_follow_node_route_ctor(
@@ -121,31 +156,12 @@ orig! {
     fn play_anim_script_command(s: Scr, command: u32) = thiscall 0x470150 => unported;
     /// `CPathFind::MakeRequestForNodesToBeLoaded(float, float, float, float)` (0x450D70); raw floats
     fn make_request_for_nodes_to_be_loaded(p: GPtr<u8>, x1: u32, x2: u32, y1: u32, y2: u32) = thiscall 0x450D70 => unported;
-    /// `CPathFind::ReleaseRequestedNodes()` (0x44DD00)
-    fn release_requested_nodes(p: GPtr<u8>) = thiscall 0x44DD00 => unported;
     /// `CDecisionMakerTypesFileLoader::GetPedDMName(int32, char*)` (0x600860)
     fn get_ped_dm_name(i: u32, out: GPtr<u8>) = cdecl 0x600860 => unported;
     /// `CTheScripts::GetActualScriptThingIndex(int32 ref, uint8 type)` (0x4839A0)
     fn get_actual_script_thing_index(r: u32, ty: u32) -> i32 = cdecl 0x4839A0 => unported;
-    /// `CDecisionMakerTypesFileLoader::LoadDecisionMaker(const char*, eDecisionTypes, bool)` (0x607D30)
-    fn load_decision_maker(name: GPtr<u8>, ty: u32, cleanup: u32) -> u32 = cdecl 0x607D30 => unported;
-    /// `CTheScripts::GetNewUniqueScriptThingIndex(int32 index, uint8 type)` (0x483720)
-    fn get_new_unique_script_thing_index(i: u32, ty: u32) -> u32 = cdecl 0x483720 => unported;
-    /// `CPedIntelligence::SetPedDecisionMakerType(int32)` (0x600B50)
-    fn set_ped_decision_maker_type(intel: GPtr<u8>, ty: i32) = thiscall 0x600B50 => unported;
-    /// `CRGBA::CRGBA(uint8, uint8, uint8, uint8)` (0x7170C0), returns this
-    fn rgba_ctor(c: GPtr<u8>, r: u32, g: u32, b: u32, a: u32) -> GPtr<u8> = thiscall 0x7170C0 => unported;
-    /// `CPedIntelligence::SetSeeingRange(float)` (0x600BF0) / `SetHearingRange(float)` (0x600BE0); raw
-    fn set_seeing_range(i: GPtr<u8>, r: u32) = thiscall 0x600BF0 => unported;
-    fn set_hearing_range(i: GPtr<u8>, r: u32) = thiscall 0x600BE0 => unported;
-    /// `RpAnimBlendClumpGetAssociation(RpClump*, const char*)` (0x4D6870)
-    fn rp_anim_blend_clump_get_association(clump: GPtr<u8>, name: GPtr<u8>) -> GPtr<u8> = cdecl 0x4D6870 => unported;
-    /// `CAnimBlendAssociation::SetCurrentTime(float)` (0x4CEA80)
-    fn set_current_time(a: GPtr<u8>, t: f32) = thiscall 0x4CEA80 => unported;
     /// `CTaskSequences::GetAvailableSlot(bool)` (0x632E00)
     fn get_available_sequence_slot(b: u32) -> i32 = cdecl 0x632E00 => unported;
-    /// `CTaskComplexSequence::Flush()` (0x632C10)
-    fn sequence_flush(seq: GPtr<u8>) = thiscall 0x632C10 => unported;
     /// `CTaskComplexUseSequence::CTaskComplexUseSequence(int32)` (0x635450)
     fn task_use_sequence_ctor(t: GPtr<u8>, i: u32) -> GPtr<u8> = thiscall 0x635450 => unported;
     /// `CScripted2dEffects::AddScripted2DEffect(float)` (0x6FA7C0); the float raw
@@ -154,43 +170,18 @@ orig! {
     fn vector_normalise(v: GPtr<u32>) = thiscall 0x59C910 => unported;
     /// `CRunningScript::GetCorrectPedModelIndexForEmergencyServiceType(ePedType, int32*)` (0x464F50)
     fn get_correct_ped_model_index(s: Scr, ped_type: u32, model: GPtr<u32>) = thiscall 0x464F50 => unported;
-    /// `CPed::operator new(uint32)` (0x5E4720)
-    fn ped_new(size: u32) -> GPtr<u8> = cdecl 0x5E4720 => unported;
-    /// `CCopPed::CCopPed(eCopType)` (0x5DDC60) / `CCivilianPed::CCivilianPed(ePedType, uint32)` (0x5DDB70) /
-    /// `CEmergencyPed::CEmergencyPed(ePedType, uint32)` (0x5DE340), each returns this
-    fn cop_ped_ctor(p: GPtr<u8>, cop_type: u32) -> GPtr<u8> = thiscall 0x5DDC60 => unported;
-    fn civilian_ped_ctor(p: GPtr<u8>, ped_type: u32, model: u32) -> GPtr<u8> = thiscall 0x5DDB70 => unported;
-    fn emergency_ped_ctor(p: GPtr<u8>, ped_type: u32, model: u32) -> GPtr<u8> = thiscall 0x5DE340 => unported;
-    /// `CPed::SetCharCreatedBy(uint8)` (0x5E47E0)
-    fn set_char_created_by(p: GPtr<u8>, by: u32) = thiscall 0x5E47E0 => unported;
     /// `CPedAttractorPedPlacer::PlacePedAtEffect(const C2dEffect&, CEntity*, CPed*, float)` (0x5EA390); the float raw
     fn place_ped_at_effect(fx: GPtr<u8>, e: u32, p: GPtr<u8>, d: u32) = cdecl 0x5EA390 => unported;
-    /// `CTheScripts::ClearSpaceForMissionEntity(const CVector&, CEntity*)` (0x486B00)
-    fn clear_space_for_mission_entity(pos: GPtr<u32>, e: GPtr<u8>) = cdecl 0x486B00 => unported;
-    /// `CTaskSimpleStandStill::CTaskSimpleStandStill(int32, bool, bool, float)` (0x62F310); the float raw
-    fn task_stand_still_ctor(t: GPtr<u8>, time: u32, looped: u32, hold: u32, delta: u32) -> GPtr<u8> = thiscall 0x62F310 => unported;
     /// `CTaskManager::SetTask(CTask*, int32 slot, bool)` (0x681AF0)
     fn task_manager_set_task(tm: GPtr<u8>, t: GPtr<u8>, slot: u32, b: u32) = thiscall 0x681AF0 => unported;
     /// `CTaskComplexUseEffect::CTaskComplexUseEffect(C2dEffect*, CEntity*)` (0x6321F0)
     fn task_use_effect_ctor(t: GPtr<u8>, effect: GPtr<u8>, e: u32) -> GPtr<u8> = thiscall 0x6321F0 => unported;
-    /// `CEventScriptCommand::CEventScriptCommand(int32 primaryTaskIndex, CTask*, bool)` (0x4B0A00)
-    fn event_script_command_ctor(e: GPtr<u8>, index: u32, task: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4B0A00 => unported;
-    /// `CEventScriptCommand::~CEventScriptCommand()` (0x4B0A50, unnamed in the catalogue)
-    fn event_script_command_dtor(e: GPtr<u8>) = thiscall 0x4B0A50 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420)
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
     /// `CPedScriptedTaskRecord::GetVacantSlot()` (0x608540)
     fn scripted_task_record_get_vacant_slot() -> u32 = cdecl 0x608540 => unported;
-    /// `CPedScriptedTaskRecordData::Set(CPed*, int32 opcode, CEventScriptCommand*)` (0x608390)
-    fn scripted_task_record_set(r: GPtr<u8>, p: GPtr<u8>, command: u32, e: GPtr<u8>) = thiscall 0x608390 => unported;
-    /// `CTaskComplexLeaveCar::CTaskComplexLeaveCar(CVehicle*, int32 door, int32 delay, bool, bool)` (0x63B8C0)
-    fn task_leave_car_ctor(t: GPtr<u8>, v: GPtr<u8>, door: u32, delay: u32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x63B8C0 => unported;
     /// `CStats::IncrementStat(uint16, float)` (0x55C180) / `DecrementStat` (0x559FA0) / `SetNewRecordStat` (0x55C410)
     /// / `SetStatValue` (0x55A070); the float raw
     fn increment_stat(stat: u32, v: u32) = cdecl 0x55C180 => unported;
     fn decrement_stat(stat: u32, v: u32) = cdecl 0x559FA0 => unported;
-    fn set_new_record_stat(stat: u32, v: u32) = cdecl 0x55C410 => unported;
-    fn set_stat_value(stat: u32, v: u32) = cdecl 0x55A070 => unported;
     /// `CStats::DisplayScriptStatUpdateMessage(uint8 state, uint32 stat, float value)` (0x55B980); the float raw
     fn display_script_stat_update_message(state: u32, stat: u32, v: u32) = cdecl 0x55B980 => unported;
     /// `CPedScriptedTaskRecord::GetStatus(const CPed*, int32 opcode)` (0x608710)
@@ -199,61 +190,24 @@ orig! {
     fn ped_groups_add_group() -> u32 = cdecl 0x5FB800 => unported;
     /// `CPedGroupIntelligence::SetDefaultTaskAllocatorType(int32)` (0x5FBB70)
     fn set_default_task_allocator_type(gi: GPtr<u8>, ty: u32) = thiscall 0x5FBB70 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0), AL
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
     /// `CTaskComplexBeInGroup::CTaskComplexBeInGroup(int32 group, bool isLeader)` (0x632E50)
     fn task_be_in_group_ctor(t: GPtr<u8>, g: u32, leader: u32) -> GPtr<u8> = thiscall 0x632E50 => unported;
-    /// `CPedGroupMembership::SetLeader(CPed*)` (0x5FB9C0) / `AddFollower(CPed*)` (0x5F8020)
-    fn membership_set_leader(m: GPtr<u8>, p: GPtr<u8>) = thiscall 0x5FB9C0 => unported;
-    fn membership_add_follower(m: GPtr<u8>, p: GPtr<u8>) = thiscall 0x5F8020 => unported;
-    /// `CPedGroup::Process()` (0x5FC7E0)
-    fn ped_group_process(g: GPtr<u8>) = thiscall 0x5FC7E0 => unported;
-    /// `CPedGroupMembership::CountMembersExcludingLeader()` (0x5F6AA0) / `GetLeader()` (0x5F69A0) /
-    /// `RemoveNFollowers(int32)` (0x5FB1D0)
-    fn count_members_excluding_leader(m: GPtr<u8>) -> i32 = thiscall 0x5F6AA0 => unported;
-    fn membership_get_leader(m: GPtr<u8>) -> GPtr<u8> = thiscall 0x5F69A0 => unported;
     fn remove_n_followers(m: GPtr<u8>, n: u32) = thiscall 0x5FB1D0 => unported;
     /// `CPedIntelligence::FindTaskByType(int32)` (0x600EE0)
     fn intel_find_task_by_type(i: GPtr<u8>, ty: u32) -> GPtr<u8> = thiscall 0x600EE0 => unported;
-    /// `CEventLeaderEnteredCarAsDriver::CEventLeaderEnteredCarAsDriver(CVehicle*)` (0x48E1C0), returns this
-    fn event_leader_entered_car_ctor(e: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = thiscall 0x48E1C0 => unported;
     /// The `CEventLeaderEnteredCarAsDriver` destructor at 0x48E220 (unnamed in the catalogue)
     fn event_leader_entered_car_dtor_48e220(e: GPtr<u8>) = thiscall 0x48E220 => unported;
-    /// `CEventEditableResponse::ComputeResponseTaskType(CPedGroup*)` (0x4B57A0)
-    fn compute_response_task_type_group(e: GPtr<u8>, g: GPtr<u8>) = thiscall 0x4B57A0 => unported;
-    /// `CEvent::operator new(uint32)` (0x4B5620)
-    fn event_new(size: u32) -> GPtr<u8> = cdecl 0x4B5620 => unported;
-    /// `CEventGroupEvent::CEventGroupEvent(CPed*, CEvent*)` (0x4ADFD0) / `~CEventGroupEvent()` (0x4AE070)
-    fn event_group_event_ctor(e: GPtr<u8>, p: GPtr<u8>, ev: GPtr<u8>) -> GPtr<u8> = thiscall 0x4ADFD0 => unported;
-    fn event_group_event_dtor(e: GPtr<u8>) = thiscall 0x4AE070 => unported;
     /// `CPedGroupIntelligence::AddEvent(CEvent*)` (0x5F7470), AL (discarded)
     fn group_intel_add_event(gi: GPtr<u8>, e: GPtr<u8>) -> u8 = thiscall 0x5F7470 => unported;
-    /// `CTaskComplexEnterCarAsPassenger::CTaskComplexEnterCarAsPassenger(CVehicle*, int32 seat, bool)` (0x640340)
-    fn task_enter_car_as_passenger_ctor(t: GPtr<u8>, v: GPtr<u8>, seat: u32, b: u32) -> GPtr<u8> = thiscall 0x640340 => unported;
     /// The `CTaskComplexEnterCarAsPassenger` destructor at 0x640380 (unnamed in the catalogue)
     fn task_enter_car_as_passenger_dtor_640380(t: GPtr<u8>) = thiscall 0x640380 => unported;
-    /// `CPedGroupIntelligence::SetScriptCommandTask(CPed*, const CTask&)` (0x5F8560) / `SetDefaultTask` (0x5F8580)
-    fn group_intel_set_script_command_task(gi: GPtr<u8>, p: GPtr<u8>, t: GPtr<u8>) = thiscall 0x5F8560 => unported;
     fn group_intel_set_default_task(gi: GPtr<u8>, p: GPtr<u8>, t: GPtr<u8>) = thiscall 0x5F8580 => unported;
     /// `CPedGroupIntelligence::GetTaskDefault(CPed*)` (0x5F86C0)
     fn group_intel_get_task_default(gi: GPtr<u8>, p: GPtr<u8>) -> GPtr<u8> = thiscall 0x5F86C0 => unported;
-    /// `CTaskComplexSequence::CTaskComplexSequence()` (0x632BD0) / `~CTaskComplexSequence()` (0x6389F0) /
-    /// `AddTask(CTask*)` (0x632D10)
-    fn sequence_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x632BD0 => unported;
-    fn sequence_dtor(t: GPtr<u8>) = thiscall 0x6389F0 => unported;
-    fn sequence_add_task(seq: GPtr<u8>, t: GPtr<u8>) = thiscall 0x632D10 => unported;
-    /// `CTaskSimpleCarDrive::CTaskSimpleCarDrive(CVehicle*, CTaskUtilityLineUpPedWithCar*, bool)` (0x63C340)
-    fn task_car_drive_ctor(t: GPtr<u8>, v: GPtr<u8>, a: u32, b: u32) -> GPtr<u8> = thiscall 0x63C340 => unported;
     /// `CTask` virtual slot 1 (+4, `Clone()`)
     fn task_clone(t: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x4 => unported;
     /// `CPedGroups::RemoveAllFollowersFromGroup(int32)` (0x5FB8A0) / `RemoveGroup(int32)` (0x5FB870)
     fn remove_all_followers_from_group(g: u32) = cdecl 0x5FB8A0 => unported;
-    fn remove_group(g: u32) = cdecl 0x5FB870 => unported;
-    /// `CTaskComplexLeaveAnyCar::CTaskComplexLeaveAnyCar(int32, bool, bool)` (0x421150)
-    fn task_leave_any_car_ctor(t: GPtr<u8>, a: u32, b: u32, c: u32) -> GPtr<u8> = thiscall 0x421150 => unported;
-    /// `CTaskSimpleGunControl::CTaskSimpleGunControl(CEntity*, const CVector*, const CVector*, eGunCommand, int16,
-    /// int32)` (0x61F3F0)
-    fn task_gun_control_ctor(t: GPtr<u8>, e: GPtr<u8>, a: u32, b: u32, c: u32, d: u32, e2: u32) -> GPtr<u8> = thiscall 0x61F3F0 => unported;
     /// `CTaskComplexGoToPointShooting::CTaskComplexGoToPointShooting(int32, const CVector&, CEntity*, CVector, float,
     /// float)` (0x668C70); the by-value vector and floats raw
     fn task_go_to_point_shooting_ctor(
@@ -264,9 +218,6 @@ orig! {
     fn task_stay_in_same_place_ctor(t: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x62F590 => unported;
     fn task_stay_in_same_place_process_ped(t: GPtr<u8>, p: GPtr<u8>) -> u8 = thiscall 0x62F5E0 => unported;
     fn task_stay_in_same_place_dtor_62f5d0(t: GPtr<u8>) = thiscall 0x62F5D0 => unported;
-    /// `CTaskComplexTurnToFaceEntityOrCoord::CTaskComplexTurnToFaceEntityOrCoord(CEntity*, float, float)` (0x66B890);
-    /// floats raw
-    fn task_turn_to_face_entity_ctor(t: GPtr<u8>, e: GPtr<u8>, a: u32, b: u32) -> GPtr<u8> = thiscall 0x66B890 => unported;
 }
 
 /// `PED(h)` / `VEH(h)`.

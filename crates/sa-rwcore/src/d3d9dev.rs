@@ -63,6 +63,8 @@ const MODE_FORMATS: u32 = 0x884788;
 /// D3D9 raster extension offset inside RwRaster.
 const RASTER_EXT_OFFSET: usize = 0xB4E9E0;
 
+pub use crate::bindings::flush_cache as flush_cache_call;
+pub use crate::bindings::free_list_create;
 orig! {
     /// `IDirect3DDevice9::SetFVF` (+0x164)
     pub fn dev_set_fvf(dev: GPtr<u8>, fvf: u32) -> i32 = stdcall vslot 0x164 => unported;
@@ -120,13 +122,8 @@ orig! {
     pub fn d3d_check_device_format(d3d: GPtr<u8>, adapter: u32, dev_type: u32, adapter_fmt: u32, usage: u32, rtype: u32, fmt: u32) -> i32 = stdcall vslot 0x28 => unported;
     /// `IDirect3D9::CheckDeviceMultiSampleType` (+0x2C)
     pub fn d3d_check_multisample(d3d: GPtr<u8>, adapter: u32, dev_type: u32, fmt: u32, windowed: u32, ty: u32, quality: u32) -> i32 = stdcall vslot 0x2C => unported;
-
-    /// `_rwD3D9RenderStateFlushCache()` (0x7FC200)
-    pub fn flush_cache_call() = cdecl 0x7FC200 => crate::d3d9state::flush_cache;
     /// `_rwD3D9LightCompare(a, b)` (0x7FA8B0)
     pub fn light_compare_call(a: GPtr<u8>, b: GPtr<u8>) -> u32 = cdecl 0x7FA8B0 => light_compare;
-    /// `_rwFreeListCreate(entrySize, entriesPerBlock, alignment, hint)` (0x801980)
-    pub fn free_list_create(size: u32, per_block: u32, align: u32, hint: u32) -> GPtr<u8> = cdecl 0x801980 => unported;
     /// `RwFreeListPurge(fl)` (0x801E00)
     pub fn free_list_purge(fl: GPtr<u8>) -> u32 = cdecl 0x801E00 => unported;
 }

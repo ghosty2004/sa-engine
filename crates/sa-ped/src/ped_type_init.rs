@@ -6,11 +6,12 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
+use sa_core::bindings::eh_vector_ctor as eh_vector_constructor_iterator;
+use sa_core::bindings::sscanf1;
+use sa_core::bindings::strtok;
 orig! {
     /// CRT `operator new` (0x821195)
     fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x821195 => unported;
-    /// CRT `eh_vector_constructor_iterator(void* p, size_t size, int count, ctor, dtor)` (0x821D30, stdcall)
-    fn eh_vector_constructor_iterator(p: GPtr<u8>, size: u32, count: u32, ctor: u32, dtor: u32) = stdcall 0x821d30 => unported;
     /// `CPedType::LoadPedData()` (0x608B30)
     fn load_ped_data_call() = cdecl 0x608b30 => load_ped_data;
     /// `CFileMgr::OpenFile(const char*, const char*)` (0x538900)
@@ -19,10 +20,6 @@ orig! {
     fn file_close(f: i32) -> i32 = cdecl 0x5389d0 => unported;
     /// `CFileLoader::LoadLine(FILE*)` (0x536F80)
     fn load_line(f: i32) -> GPtr<u8> = cdecl 0x536f80 => unported;
-    /// CRT `sscanf(s, "%s", buf)` (0x8220AD)
-    fn sscanf1(s: GPtr<u8>, fmt: GPtr<u8>, a: GPtr<u8>) -> i32 = cdecl 0x8220ad => unported;
-    /// CRT `strtok(char*, const char*)` (0x82244B)
-    fn strtok(s: GPtr<u8>, delim: GPtr<u8>) -> GPtr<u8> = cdecl 0x82244b => unported;
     /// `CPedType::FindPedType(const char*)` (0x608790)
     fn find_ped_type(name: GPtr<u8>) -> i32 = cdecl 0x608790 => crate::ped_type::find_ped_type;
 }

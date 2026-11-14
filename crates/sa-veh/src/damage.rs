@@ -12,6 +12,9 @@ use crate::common::{ftol32, rand_at, rand_frac, rd, wr};
 /// `CDamageManager` thiscall `this`.
 type Dm = GPtr<u8>;
 
+pub use crate::bindings::car_set_panel_damage;
+pub use sa_world::bindings::automobile_set_panel_damage as car_set_bumper_damage;
+pub use sa_world::bindings::set_door_damage as car_set_door_damage;
 orig! {
     /// `CDoor::Open(float)` (0x6F4790)
     pub fn door_open(door: GPtr<u8>, ratio: f32) = thiscall 0x6F4790 => unported;
@@ -27,12 +30,6 @@ orig! {
     pub fn set_light_status_call(dm: GPtr<u8>, light: u32, status: u32) = thiscall 0x6C2100 => set_light_status;
     /// `CDamageManager::ResetDamageStatus()` (0x6C20E0)
     pub fn reset_damage_status_call(dm: GPtr<u8>) = thiscall 0x6C20E0 => reset_damage_status;
-    /// `CAutomobile::SetPanelDamage(int32, bool)` (0x6B1350)
-    pub fn car_set_panel_damage(car: GPtr<u8>, panel: u32, no_fly: u32) = thiscall 0x6B1350 => unported;
-    /// `CAutomobile::SetBumperDamage(int32, bool)` (0x6B1480)
-    pub fn car_set_bumper_damage(car: GPtr<u8>, panel: u32, no_fly: u32) = thiscall 0x6B1480 => unported;
-    /// `CAutomobile::SetDoorDamage(int32, bool)` (0x6B1600)
-    pub fn car_set_door_damage(car: GPtr<u8>, door: u32, no_fly: u32) = thiscall 0x6B1600 => unported;
 }
 
 /// `CDamageManager::Init()` (0x6A0520): `rep stosd` of 6 zero dwords; returns `this`.

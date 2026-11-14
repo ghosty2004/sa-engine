@@ -7,15 +7,16 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use sa_core::bindings::general_random_int_in_range;
+use sa_world::bindings::destroy_car_ctor;
+use sa_world::bindings::enter_car_as_driver_ctor;
+use sa_world::bindings::give_delayed_weapon as ped_give_delayed_weapon;
+use sa_world::bindings::interesting_events_add;
+use sa_world::bindings::shake_fist_ctor;
+use sa_world::bindings::turn_to_face_entity_ctor;
 orig! {
-    /// `CPed::GiveDelayedWeapon(eWeaponType, uint32 ammo)` (0x5E89B0)
-    fn ped_give_delayed_weapon(p: GPtr<u8>, weapon: u32, ammo: u32) = thiscall 0x5E89B0 => unported;
     /// `CPed::SetCurrentWeapon(eWeaponType)` (0x5E6280)
     fn ped_set_current_weapon(p: GPtr<u8>, weapon: u32) = thiscall 0x5E6280 => unported;
-    /// `CGeneral::GetRandomNumberInRange(int32, int32)` (0x407180)
-    fn general_random_int_in_range(lo: i32, hi: i32) -> i32 = cdecl 0x407180 => unported;
-    /// `CInterestingEvents::Add(type, CEntity*)` (0x602590) on `g_InterestingEvents` (0xC0B058)
-    fn interesting_events_add(ie: GPtr<u8>, ty: u32, e: GPtr<u8>) = thiscall 0x602590 => unported;
     /// `CTaskComplexRoadRage::CreateSubTask(int32, CPed*)` (0x629080)
     fn road_rage_create_sub_task_c(t: GPtr<u8>, ty: i32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x629080 => road_rage_create_sub_task;
     /// `CTask::operator new(uint32)` (0x61A5A0)
@@ -23,16 +24,8 @@ orig! {
     /// `CTaskComplexKillPedOnFoot(CPed*, int32 time, uint32 flags, int32 delay, int32 chance, int8 level)` (0x620E30)
     #[allow(clippy::too_many_arguments)]
     fn kill_ped_on_foot_ctor(t: GPtr<u8>, target: GPtr<u8>, time: i32, flags: u32, delay: i32, chance: i32, level: u32) -> GPtr<u8> = thiscall 0x620E30 => unported;
-    /// `CTaskComplexDestroyCar(CVehicle*, uint32, uint32, uint32)` (0x621C00)
-    fn destroy_car_ctor(t: GPtr<u8>, veh: GPtr<u8>, a: u32, b: u32, c: u32) -> GPtr<u8> = thiscall 0x621C00 => unported;
-    /// `CTaskComplexTurnToFaceEntityOrCoord(CEntity*, float, float)` (0x66B890)
-    fn turn_to_face_entity_ctor(t: GPtr<u8>, e: GPtr<u8>, a: u32, b: u32) -> GPtr<u8> = thiscall 0x66B890 => unported;
     /// `CTaskComplexLeaveCar(CVehicle*, int32 door, int32 delay, bool sensible, bool forceGetOut)` (0x63B8C0)
     fn leave_car_ctor(t: GPtr<u8>, veh: GPtr<u8>, door: i32, delay: i32, sensible: u32, force: u32) -> GPtr<u8> = thiscall 0x63B8C0 => unported;
-    /// `CTaskSimpleShakeFist()` (0x690B80)
-    fn shake_fist_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x690B80 => unported;
-    /// `CTaskComplexEnterCarAsDriver(CVehicle*)` (0x6402F0)
-    fn enter_car_as_driver_ctor(t: GPtr<u8>, veh: GPtr<u8>) -> GPtr<u8> = thiscall 0x6402F0 => unported;
     /// `CTaskComplexSeekEntity<CEntitySeekPosCalculatorStandard>(CEntity*, int32, int32, float, float, float, bool,
     /// bool)` (0x46AC10)
     #[allow(clippy::too_many_arguments)]

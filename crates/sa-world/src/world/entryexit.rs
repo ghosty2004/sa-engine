@@ -25,6 +25,8 @@ sa_core::globals! {
     pub static POOL_ENTRY_EXITS @ 0x96A7D8: GPtr<u8> = GPtr::NULL;
 }
 
+pub use crate::bindings::get_entry_exit_index;
+pub use sa_stream::bindings::strnicmp;
 orig! {
     /// `CWorld::TestSphereAgainstWorld(CVector, float, CEntity*, bool x5, bool)` (0x569E20)
     pub fn test_sphere_against_world(px: u32, py: u32, pz: u32, r: u32, ignore: GPtr<u8>, b0: i32, b1: i32, b2: i32, b3: i32, b4: i32, b5: i32) -> GPtr<u8>
@@ -32,10 +34,6 @@ orig! {
     /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, bool x7)` (0x56A490)
     pub fn get_is_line_of_sight_clear(a: GPtr<u8>, b: GPtr<u8>, b0: i32, b1: i32, b2: i32, b3: i32, b4: i32, b5: i32, b6: i32) -> u8
         = cdecl 0x56A490 => unported;
-    /// CRT `_strnicmp` (0x835AC7)
-    pub fn strnicmp(a: GPtr<u8>, b: GPtr<u8>, n: u32) -> i32 = cdecl 0x835AC7 => unported;
-    /// `CEntryExitManager::GetEntryExitIndex(const char*, uint16 enabledFlags, uint16 disabledFlags)` (0x43EFD0)
-    pub fn get_entry_exit_index(name: GPtr<u8>, en: u32, dis: u32) -> i32 = cdecl 0x43EFD0 => unported;
     /// `CEntryExit::GetPositionRelativeToOutsideWorld(CVector&)` (0x43EA00, thiscall)
     pub fn ee_get_position_relative_to_outside_world_call(this: GPtr<u8>, pos: GPtr<f32>) = thiscall 0x43EA00 => get_position_relative_to_outside_world;
     /// `CEntryExitManager::SetEntryExitFlag(const char*, uint16, bool)` (0x43EF20)

@@ -8,39 +8,25 @@ use sa_core::{hook, orig};
 
 use crate::common::{rd, wr, x};
 
+use crate::bindings::audio_add_event_entity;
+use crate::bindings::dm_get_panel_status;
+use crate::bindings::dm_reset_damage_status;
+use crate::bindings::dm_set_door_status;
+use crate::bindings::dm_set_panel_status;
+use crate::bindings::dm_set_wheel_status;
+use crate::bindings::door_open;
+use crate::bindings::set_component_visibility;
+use crate::bindings::spawn_flying_component;
+use sa_core::bindings::matrix_dtor;
+use sa_core::bindings::matrix_set_translate;
+use sa_core::bindings::matrix_update_rw;
+use sa_core::bindings::rp_clump_for_all_atomics;
+use sa_world::bindings::matrix_ctor_rw;
 orig! {
-    /// `CDamageManager::GetPanelStatus(ePanels)` (0x6C2180)
-    fn dm_get_panel_status(dm: GPtr<u8>, panel: u32) -> u32 = thiscall 0x6C2180 => crate::damage::get_panel_status;
-    /// `CDamageManager::SetPanelStatus(ePanels, uint32)` (0x6C2150)
-    fn dm_set_panel_status(dm: GPtr<u8>, panel: u32, status: u32) = thiscall 0x6C2150 => crate::damage::set_panel_status;
     /// `CDamageManager::GetDoorStatus(eDoors)` (0x6C2230)
     fn dm_get_door_status(dm: GPtr<u8>, door: i32) -> u32 = thiscall 0x6C2230 => crate::damage::get_door_status;
-    /// `CDamageManager::SetDoorStatus(eDoors, uint32)` (0x6C21C0)
-    fn dm_set_door_status(dm: GPtr<u8>, door: i32, status: u32) = thiscall 0x6C21C0 => crate::damage::set_door_status;
-    /// `CDamageManager::SetWheelStatus(eCarWheel, uint32)` (0x6C21A0)
-    fn dm_set_wheel_status(dm: GPtr<u8>, wheel: i32, status: u32) = thiscall 0x6C21A0 => crate::damage::set_wheel_status;
-    /// `CDamageManager::ResetDamageStatus()` (0x6C20E0)
-    fn dm_reset_damage_status(dm: GPtr<u8>) = thiscall 0x6C20E0 => crate::damage::reset_damage_status;
-    /// `CAutomobile::SpawnFlyingComponent(int32, uint32)` (0x6A8580)
-    fn spawn_flying_component(car: GPtr<u8>, node: i32, kind: u32) -> GPtr<u8> = thiscall 0x6A8580 => unported;
-    /// `CVehicle::SetComponentVisibility(RwFrame*, uint32)` (0x6D2700)
-    fn set_component_visibility(v: GPtr<u8>, frame: GPtr<u8>, state: u32) = thiscall 0x6D2700 => unported;
-    /// `CAEVehicleAudioEntity::AddAudioEvent(eAudioEvents, CEntity*)` (0x4F7580)
-    fn audio_add_event_entity(a: GPtr<u8>, event: u32, e: GPtr<u8>) = thiscall 0x4F7580 => unported;
-    /// `CDoor::Open(float)` (0x6F4790)
-    fn door_open(d: GPtr<u8>, ratio: f32) = thiscall 0x6F4790 => crate::door::open;
-    /// `CMatrix::CMatrix(RwMatrix*, bool)` (0x59C050)
-    fn matrix_ctor_rw(m: GPtr<u8>, rw: GPtr<u8>, owns: u32) -> GPtr<u8> = thiscall 0x59C050 => unported;
-    /// `CMatrix::SetTranslate(CVector)` (0x59AF40)
-    fn matrix_set_translate(m: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x59AF40 => unported;
     /// `CMatrix::SetRotate(float, float, float)` (0x59B120)
     fn matrix_set_rotate(m: GPtr<u8>, rx: u32, ry: u32, rz: u32) = thiscall 0x59B120 => unported;
-    /// `CMatrix::UpdateRW()` (0x59BBB0)
-    fn matrix_update_rw(m: GPtr<u8>) = thiscall 0x59BBB0 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
-    /// `RpClumpForAllAtomics(RpClump*, callback, void*)` (0x749B70)
-    fn rp_clump_for_all_atomics(clump: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> = cdecl 0x749B70 => unported;
 }
 
 const DM: isize = 0x5A0;

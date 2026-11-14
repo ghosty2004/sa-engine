@@ -11,41 +11,28 @@ use sa_math::x87::X87;
 
 use crate::common::{g, rd, wr};
 
+use sa_core::bindings::rp_atomic_create;
+use sa_core::bindings::rp_atomic_set_frame;
+use sa_core::bindings::rp_atomic_set_geometry;
+use sa_core::bindings::rp_geometry_destroy;
+use sa_core::bindings::rp_geometry_triangle_set_material;
+use sa_core::bindings::rp_geometry_unlock;
+use sa_core::bindings::rw_frame_create;
+use sa_stream::bindings::rp_material_set_texture;
+use sa_world::bindings::rp_geometry_create;
+use sa_world::bindings::rp_material_create;
+use sa_world::bindings::rp_material_destroy;
+use sa_world::bindings::rp_morph_target_calc_bounding_sphere;
+use sa_world::bindings::rw_frame_set_identity;
 orig! {
-    /// `RpMaterialCreate()` (0x74D990)
-    fn rp_material_create() -> GPtr<u8> = cdecl 0x74D990 => unported;
-    /// `RpMaterialDestroy(RpMaterial*)` (0x74DA20)
-    fn rp_material_destroy(m: GPtr<u8>) -> u32 = cdecl 0x74DA20 => unported;
-    /// `RpMaterialSetTexture(RpMaterial*, RwTexture*)` (0x74DBC0)
-    fn rp_material_set_texture(m: GPtr<u8>, t: GPtr<u8>) -> GPtr<u8> = cdecl 0x74DBC0 => unported;
     /// `RwTextureDestroy(RwTexture*)` (0x7F3820)
     fn rw_texture_destroy(t: GPtr<u8>) -> u32 = cdecl 0x7F3820 => unported;
     /// `CCustomRoadsignMgr::CreateRoadsignTexture(const char*, int32)` (0x6FECA0)
     fn create_roadsign_texture(text: GPtr<u8>, n: i32) -> GPtr<u8> = cdecl 0x6FECA0 => crate::mvpc_render1::roadsign_create_texture;
-    /// `RpGeometryCreate(numVerts, numTriangles, format)` (0x74CA90)
-    fn rp_geometry_create(verts: i32, tris: i32, format: u32) -> GPtr<u8> = cdecl 0x74CA90 => unported;
-    /// `RpGeometryDestroy(RpGeometry*)` (0x74CCC0)
-    fn rp_geometry_destroy(geo: GPtr<u8>) -> u32 = cdecl 0x74CCC0 => unported;
     /// `RpGeometryTriangleSetVertexIndices(geo, tri, v0, v1, v2)` (0x74C690)
     fn rp_geometry_triangle_set_vertex_indices(geo: GPtr<u8>, tri: GPtr<u8>, a: i32, b: i32, c: i32) -> GPtr<u8> = cdecl 0x74C690 => unported;
-    /// `RpGeometryTriangleSetMaterial(geo, tri, material)` (0x74C6C0)
-    fn rp_geometry_triangle_set_material(geo: GPtr<u8>, tri: GPtr<u8>, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x74C6C0 => unported;
-    /// `RpMorphTargetCalcBoundingSphere(RpMorphTarget*, RwSphere*)` (0x74C200)
-    fn rp_morph_target_calc_bounding_sphere(mt: GPtr<u8>, s: GPtr<u8>) -> GPtr<u8> = cdecl 0x74C200 => unported;
-    /// `RpGeometryUnlock(RpGeometry*)` (0x74C800)
-    fn rp_geometry_unlock(geo: GPtr<u8>) -> GPtr<u8> = cdecl 0x74C800 => unported;
-    /// `RpAtomicCreate()` (0x749C50)
-    fn rp_atomic_create() -> GPtr<u8> = cdecl 0x749C50 => unported;
-    /// `RpAtomicSetGeometry(atomic, geo, flags)` (0x749D40)
-    fn rp_atomic_set_geometry(a: GPtr<u8>, geo: GPtr<u8>, flags: u32) -> GPtr<u8> = cdecl 0x749D40 => unported;
     /// `RpAtomicDestroy(RpAtomic*)` (0x749DC0)
     fn rp_atomic_destroy(a: GPtr<u8>) -> u32 = cdecl 0x749DC0 => unported;
-    /// `RwFrameCreate()` (0x7F0410)
-    fn rw_frame_create() -> GPtr<u8> = cdecl 0x7F0410 => unported;
-    /// `RwFrameSetIdentity(RwFrame*)` (0x7F10B0)
-    fn rw_frame_set_identity(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F10B0 => unported;
-    /// `RpAtomicSetFrame(RpAtomic*, RwFrame*)` (0x74BF20)
-    fn rp_atomic_set_frame(a: GPtr<u8>, f: GPtr<u8>) -> GPtr<u8> = cdecl 0x74BF20 => unported;
 }
 
 /// 0.95f (0x858EF0), 0.0f (0x858B50), -0.5f (0x858F40), -2.0f (0x858B18), 0.5f (0x858B8C), -1.0f (0x858C1C),

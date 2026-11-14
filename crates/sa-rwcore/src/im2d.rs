@@ -31,6 +31,14 @@ const VB_VERTS: u32 = 0x2492;
 const IB_INDICES: u32 = 0x2710;
 const VSIZE: u32 = 0x1C;
 
+pub use crate::bindings::create_vertex_declaration;
+pub use crate::bindings::delete_vertex_declaration;
+pub use crate::bindings::dynamic_vertex_buffer_lock as dyn_lock;
+pub use crate::bindings::flush_cache;
+pub use crate::bindings::get_current_texture;
+pub use crate::bindings::set_render_state;
+pub use crate::bindings::set_stream_source;
+pub use crate::bindings::set_tss;
 orig! {
     /// `IDirect3DDevice9::GetAvailableTextureMem` (+0x10)
     pub fn dev_get_available_texture_mem(dev: GPtr<u8>) -> u32 = stdcall vslot 0x10 => unported;
@@ -48,31 +56,14 @@ orig! {
     pub fn buf_unlock(buf: GPtr<u8>) -> i32 = stdcall vslot 0x30 => unported;
     /// `IUnknown::Release` (+8)
     pub fn com_release(obj: GPtr<u8>) -> u32 = stdcall vslot 0x8 => unported;
-
-    /// `RwD3D9CreateVertexDeclaration(elements, out)` (0x7FAA30)
-    pub fn create_vertex_declaration(elements: GPtr<u8>, out: GPtr<u32>) -> u32 = cdecl 0x7FAA30 => crate::d3d9dev::create_vertex_declaration;
-    /// `RwD3D9DeleteVertexDeclaration(decl)` (0x7FAC10)
-    pub fn delete_vertex_declaration(decl: u32) = cdecl 0x7FAC10 => crate::d3d9dev::delete_vertex_declaration;
-    /// `RwD3D9DynamicVertexBufferLock(vertexSize, num, vbOut, data, baseIndex)` (0x7F5B10)
-    pub fn dyn_lock(vsize: u32, num: u32, vb: GPtr<u32>, data: u32, base: GPtr<u32>) -> u32 = cdecl 0x7F5B10 => crate::d3d9vb::dynamic_vertex_buffer_lock;
     /// `_rwD3D9SetVertexDeclaration(decl)` (0x7F9F70)
     pub fn set_vertex_declaration(decl: u32) = cdecl 0x7F9F70 => crate::d3d9dev::set_vertex_declaration;
     /// `_rwD3D9SetVertexShader(vs)` (0x7F9FB0)
     pub fn set_vertex_shader(vs: u32) = cdecl 0x7F9FB0 => crate::d3d9dev::set_vertex_shader;
     /// `_rwD3D9SetPixelShader(ps)` (0x7F9FF0)
     pub fn set_pixel_shader(ps: u32) = cdecl 0x7F9FF0 => crate::d3d9dev::set_pixel_shader;
-    /// `RwD3D9SetStreamSource(stream, vb, offset, stride)` (0x7FA030)
-    pub fn set_stream_source(stream: u32, vb: u32, offset: u32, stride: u32) = cdecl 0x7FA030 => crate::d3d9dev::set_stream_source;
     /// `_rwD3D9SetIndices(ib)` (0x7FA1C0)
     pub fn set_indices(ib: u32) = cdecl 0x7FA1C0 => crate::d3d9dev::set_indices;
-    /// `RwD3D9SetRenderState(state, value)` (0x7FC2D0)
-    pub fn set_render_state(state: u32, value: u32) -> u32 = cdecl 0x7FC2D0 => crate::d3d9state::set_render_state;
-    /// `RwD3D9SetTextureStageState(stage, type, value)` (0x7FC340)
-    pub fn set_tss(stage: u32, ty: u32, value: u32) = cdecl 0x7FC340 => crate::d3d9state::set_texture_stage_state;
-    /// `_rwD3D9GetCurrentTexture(stage)` (0x7FDE50)
-    pub fn get_current_texture(stage: u32) -> u32 = cdecl 0x7FDE50 => crate::d3d9state::get_current_texture;
-    /// `_rwD3D9RenderStateFlushCache()` (0x7FC200)
-    pub fn flush_cache() = cdecl 0x7FC200 => crate::d3d9state::flush_cache;
     /// `_rwD3D9Im2DSetRenderStates()` (0x7FB810)
     pub fn set_render_states_call() = cdecl 0x7FB810 => im2d_set_render_states;
     /// `RwRasterGetCurrentContext()` (0x7FAE60)

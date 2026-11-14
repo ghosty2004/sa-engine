@@ -24,16 +24,13 @@ const ACTIVE_SEQUENCE: usize = 0x8D2E98;
 /// The timed task's VM-produced "hold last frame" word (see the module docs)
 const TIMED_HOLD_WORD: u32 = 0xBCC7FC20;
 
+use crate::bindings::affect_secondary_behaviour_ctor;
+use sa_core::bindings::task_new;
 orig! {
-    /// `CTask::operator new(uint32)` (0x61A5A0)
-    fn task_new(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => unported;
     /// `CTaskSimpleRunNamedAnim::CTaskSimpleRunNamedAnim(const char* anim, const char* group, int32 flags, float blend,
     /// int32 endTime, bool dontInterrupt, bool runInSequence, bool offsetPed, bool holdLastFrame)` (0x61A990, `ret 0x24`)
     fn run_named_anim_ctor(t: GPtr<u8>, anim: GPtr<u8>, group: GPtr<u8>, flags: u32, blend: u32, end_time: i32,
         dont_interrupt: u32, run_in_sequence: u32, offset_ped: u32, hold_last_frame: u32) -> GPtr<u8> = thiscall 0x61A990 => unported;
-    /// `CTaskSimpleAffectSecondaryBehaviour::CTaskSimpleAffectSecondaryBehaviour(bool add, int32 type, CTask*)`
-    /// (0x691270, `ret 0xC`)
-    fn affect_secondary_behaviour_ctor(t: GPtr<u8>, add: u32, ty: u32, task: GPtr<u8>) -> GPtr<u8> = thiscall 0x691270 => unported;
     /// `CRunningScript::GivePedScriptedTask(int32 pedHandle, CTask*, int32 opcode)` (0x465C20)
     fn give_ped_scripted_task(s: Scr, ped: i32, task: GPtr<u8>, command: u32) = thiscall 0x465C20 => crate::script_tasks::give_ped_scripted_task;
 }

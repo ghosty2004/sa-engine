@@ -2,14 +2,11 @@
 //! rolls over. Ported from the 1.0 US bytes. Unverified (docs/verify/HOWTO.md).
 
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
-orig! {
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571B70)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571B70 => unported;
-}
+use sa_core::bindings::entity_register_reference as entity_clean_up_old_reference;
 
 /// `CEventCarUpsideDown::~CEventCarUpsideDown` body (0x4B1D50, thiscall; SEH frame): vtable 0x85B660, the
 /// vehicle (+0xC) drops its registered reference to the slot, then the `CEvent` vtable 0x85AB38.
@@ -26,10 +23,7 @@ pub fn event_car_upside_down_dtor(this: GPtr<u8>) {
 
 pub const HOOKS: &[HookReg] = &[HOOK_EVENT_CAR_UPSIDE_DOWN_DTOR];
 
-orig! {
-    /// `CEventEditableResponse::~CEventEditableResponse` body (0x4AC480, thiscall)
-    fn event_editable_response_dtor_body(this: GPtr<u8>) = thiscall 0x4AC480 => unported;
-}
+use crate::bindings::editable_response_dtor as event_editable_response_dtor_body;
 
 /// The destructor body 0x4B83C0 (thiscall; an event raised when the player leaves a car): vtable 0x85B898, then a
 /// tail jump to `CEventEditableResponse`'s body 0x4AC480.

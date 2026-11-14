@@ -11,9 +11,9 @@ use sa_math::x87::X87;
 
 use super::common::{f32_of, x, xi};
 
+use crate::bindings::find_ground_z_for_3d_coord;
+use sa_core::bindings::get_weapon_info;
 orig! {
-    /// `CWorld::FindGroundZFor3DCoord(float x, float y, float z, bool* found, CEntity** entity)` (0x5696C0, ST0)
-    fn find_ground_z_for_3d_coord(px: f32, py: f32, pz: f32, found: GPtr<u8>, entity: GPtr<u8>) -> f64 = cdecl 0x5696C0 => unported;
     /// `FindPlayerCoors(CVector* out, int32 playerId)` (0x56E010); returns `out`
     fn find_player_coors(out: GPtr<f32>, id: i32) -> GPtr<f32> = cdecl 0x56E010 => unported;
     /// `CPickups::TestForPickupsInBubble(CVector, float)` (0x456450)
@@ -26,8 +26,6 @@ orig! {
     /// bool objects, bool dummies, bool cameraIgnore)` (0x569E20)
     #[allow(clippy::too_many_arguments)]
     fn test_sphere_against_world(cx: f32, cy: f32, cz: f32, r: f32, ignore: u32, b: u32, v: u32, p: u32, o: u32, d: u32, cam: u32) -> GPtr<u8> = cdecl 0x569E20 => unported;
-    /// `CWeaponInfo::GetWeaponInfo(eWeaponType, eWeaponSkill)` (0x743C60)
-    fn get_weapon_info(wt: u32, skill: u32) -> GPtr<u8> = cdecl 0x743C60 => unported;
     /// `CPickups::GenerateNewOne(CVector, uint32 model, uint8 type, uint32 ammo, uint32 money, bool, const char*)`
     /// (0x456F20)
     #[allow(clippy::too_many_arguments)]

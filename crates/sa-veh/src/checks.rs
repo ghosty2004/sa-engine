@@ -23,6 +23,7 @@ sa_core::globals! {
     pub static NUM_PLAYBACK_FILES @ 0x97F630: i32 = 0;
 }
 
+pub use sa_core::bindings::text_get;
 orig! {
     /// `CVehicleRecording::Init()` (0x459390)
     pub fn recording_init_call() = cdecl 0x459390 => recording_init;
@@ -30,8 +31,6 @@ orig! {
     pub fn is_car_upside_down_call(c: GPtr<u8>, v: GPtr<u8>) -> u8 = thiscall 0x463830 => is_car_upside_down;
     /// `CVehicle` virtual slot 0xE4 (gta-reversed: `CanPedStepOutCar(bool)`), called with `false`
     pub fn vehicle_vslot_e4(v: GPtr<u8>, arg: u32) -> u8 = thiscall vslot 0xE4 => unported;
-    /// `CText::Get(const char*)` (0x6A0050)
-    pub fn text_get(text: GPtr<u8>, key: GPtr<u8>) -> GPtr<u8> = thiscall 0x6A0050 => unported;
     /// `CHud::SetVehicleName(const char*)` (0x588F50)
     pub fn hud_set_vehicle_name(name: GPtr<u8>) = cdecl 0x588F50 => unported;
 }

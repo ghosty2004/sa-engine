@@ -16,6 +16,7 @@ use crate::collision::fpu::Fpu;
 /// +0x44 are 0 as the original's inlined default constructor leaves them).
 pub type LocalMatrix = [u32; 18];
 
+pub use sa_core::bindings::world_clear_scan_codes;
 orig! {
     /// virtual `CEntity::SetIsStatic(bool)` (vtable +0x10, thiscall; the dword the original pushes)
     pub fn set_is_static_v(e: Ent, v: u32) = thiscall vslot 0x10 => unported;
@@ -69,8 +70,6 @@ orig! {
     pub fn ped_is_player(p: Ent) -> u8 = thiscall 0x5DF8F0 => unported;
     /// `CPedIntelligence::GetTaskClimb()` (0x601180)
     pub fn get_task_climb(i: Ent) -> Ent = thiscall 0x601180 => unported;
-    /// `CWorld::ClearScanCodes()` (0x563470)
-    pub fn world_clear_scan_codes() = cdecl 0x563470 => unported;
     /// `CPhysical::ProcessCollisionSectorList(int32 x, int32 y)` (0x54BA60)
     pub fn process_collision_sector_list(e: Ent, x: i32, y: i32) -> u8 = thiscall 0x54BA60 => crate::physical::mvpe_phys1::process_collision_sector_list;
     /// `CPhysical::ProcessCollisionSectorList_SimpleCar(CRepeatSector*)` (0x54CFF0)
@@ -800,11 +799,10 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_APPLY_FRICTION_VOID,
 ];
 
+pub use crate::bindings::set_next_scan_code;
 orig! {
     /// `CMatrix::Reorthogonalise()` (0x59B6A0)
     pub fn matrix_reorthogonalise(m: Ent) = thiscall 0x59B6A0 => unported;
-    /// `SetNextScanCode()` (0x4072E0)
-    pub fn set_next_scan_code() = cdecl 0x4072E0 => unported;
     /// `CPhysical::ProcessShiftSectorList(int32 x, int32 y)` (0x546670)
     pub fn process_shift_sector_list(e: Ent, x: i32, y: i32) -> u8 = thiscall 0x546670 => crate::physical::mvpe_phys1::process_shift_sector_list;
     /// `CPhysical::RemoveAndAdd()` (0x542560)

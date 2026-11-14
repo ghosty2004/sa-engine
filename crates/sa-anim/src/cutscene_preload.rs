@@ -10,93 +10,59 @@ use sa_core::{hook, orig};
 
 use crate::common::{g, rd, wr};
 
+use crate::bindings::cutscene_load_cutscene_data_postload as load_cutscene_data_postload;
+use crate::bindings::wanted_clear_qd_crimes;
+use sa_core::bindings::atof as crt_atof;
+use sa_core::bindings::atol as crt_atol;
+use sa_core::bindings::camera_set_near_clip_script;
+use sa_core::bindings::car_set_ped_out_ctor;
+use sa_core::bindings::car_set_ped_out_dtor;
+use sa_core::bindings::car_set_ped_out_process_ped;
+use sa_core::bindings::crt_free;
+use sa_core::bindings::crt_strlwr;
+use sa_core::bindings::crt_strncpy;
+use sa_core::bindings::directory_find_item;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::get_model_info as model_info_get_model_info;
+use sa_core::bindings::get_pad as pad_get_pad;
+use sa_core::bindings::get_uppercase_key;
+use sa_core::bindings::ipl_store_add_ipls_needed_at_posn;
+use sa_core::bindings::load_all_requested_models as streaming_load_all_requested_models;
+use sa_core::bindings::player_info_make_player_safe;
+use sa_core::bindings::player_ped_reset_sprint_energy;
+use sa_core::bindings::rubbish_set_visibility;
+use sa_core::bindings::rw_stream_close;
+use sa_core::bindings::rw_stream_open;
+use sa_core::bindings::rw_stream_skip;
+use sa_core::bindings::sscanf1;
+use sa_core::bindings::start_extra_colour as time_cycle_start_extra_colour;
+use sa_core::bindings::stream_read as rw_stream_read;
+use sa_core::bindings::streaming_load_scene;
+use sa_core::bindings::streaming_remove_model;
+use sa_core::bindings::streaming_set_flag_407a30 as streaming_set_load_vehicles_in_load_scene;
+use sa_core::bindings::stricmp as crt_stricmp;
+use sa_core::bindings::strncmp as crt_strncmp;
+use sa_core::bindings::strtok as crt_strtok;
+use sa_core::bindings::time_cycle_stop_extra_colour;
 orig! {
-    /// CRT `_stricmp` (0x8229B6)
-    fn crt_stricmp(a: GPtr<u8>, b: GPtr<u8>) -> i32 = cdecl 0x8229B6 => unported;
     /// `FindCutsceneAudioTrackId(const char*)` (0x5AFA50), AX (the caller pushes all of EAX)
     fn find_cutscene_audio_track_id(name: GPtr<u8>) -> u32 = cdecl 0x5AFA50 => crate::cutscene::find_cutscene_audio_track_id;
     /// `CAudioEngine::PreloadCutsceneTrack(int16, bool)` (0x507E30, `ret 8`)
     fn audio_preload_cutscene_track(e: GPtr<u8>, id: u32, b: u32) = thiscall 0x507E30 => unported;
-    /// `CStreaming::RemoveModel(int32)` (0x4089A0)
-    fn streaming_remove_model(id: i32) = cdecl 0x4089A0 => unported;
-    /// `CKeyGen::GetUppercaseKey(const char*)` (0x53CF30)
-    fn get_uppercase_key(s: GPtr<u8>) -> u32 = cdecl 0x53CF30 => unported;
-    /// `CCamera::SetNearClipScript(float)` (0x50BF90, `ret 4`)
-    fn camera_set_near_clip_script(cam: GPtr<u8>, v: u32) = thiscall 0x50BF90 => unported;
-    /// `CRubbish::SetVisibility(bool)` (0x7204C0)
-    fn rubbish_set_visibility(b: u32) = cdecl 0x7204C0 => unported;
-    /// `FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CWanted::ClearQdCrimes()` (0x561FE0)
-    fn wanted_clear_qd_crimes(w: GPtr<u8>) = thiscall 0x561FE0 => unported;
-    /// `CPlayerPed::ResetSprintEnergy()` (0x60A530)
-    fn player_ped_reset_sprint_energy(p: GPtr<u8>) = thiscall 0x60A530 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    fn pad_get_pad(id: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CPlayerInfo::MakePlayerSafe(bool, float)` (0x56E870, `ret 8`)
-    fn player_info_make_player_safe(pi: GPtr<u8>, safe: u32, radius: f32) = thiscall 0x56E870 => unported;
     /// CRT `sprintf(buf, fmt, const char*)` (0x821BB5)
     fn crt_sprintf1(buf: GPtr<u8>, fmt: GPtr<u8>, s: GPtr<u8>) -> i32 = cdecl 0x821BB5 => unported;
-    /// `CDirectory::FindItem(const char* name, uint32& offset, uint32& size)` (0x5324A0, `ret 0xC`), AL
-    fn directory_find_item(dir: GPtr<u8>, name: GPtr<u8>, offset: GPtr<u32>, size: GPtr<u32>) -> u8 = thiscall 0x5324A0 => unported;
     /// CRT `operator new[]` (0x821195)
     fn operator_new(n: u32) -> GPtr<u8> = cdecl 0x821195 => unported;
-    /// CRT `free` (0x8213AE)
-    fn crt_free(p: GPtr<u8>) = cdecl 0x8213AE => unported;
-    /// `RwStreamOpen(type, access, data)` (0x7ECEF0)
-    fn rw_stream_open(ty: u32, access: u32, data: GPtr<u8>) -> GPtr<u8> = cdecl 0x7ECEF0 => unported;
-    /// `RwStreamSkip(stream, offset)` (0x7ECD00)
-    fn rw_stream_skip(s: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x7ECD00 => unported;
-    /// `RwStreamRead(stream, buffer, length)` (0x7EC9D0)
-    fn rw_stream_read(s: GPtr<u8>, buf: GPtr<u8>, n: u32) -> u32 = cdecl 0x7EC9D0 => unported;
-    /// `RwStreamClose(stream, data)` (0x7ECE20)
-    fn rw_stream_close(s: GPtr<u8>, data: u32) -> i32 = cdecl 0x7ECE20 => unported;
-    /// CRT `sscanf` (0x8220AD) with one target
-    fn sscanf1(s: GPtr<u8>, fmt: GPtr<u8>, a: GPtr<u8>) -> i32 = cdecl 0x8220AD => unported;
     /// CRT `sscanf` (0x8220AD) with three targets
     fn sscanf3(s: GPtr<u8>, fmt: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, c: GPtr<u8>) -> i32 = cdecl 0x8220AD => unported;
     /// CRT `sscanf` (0x8220AD) with four targets
     fn sscanf4(s: GPtr<u8>, fmt: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, c: GPtr<u8>, d: GPtr<u8>) -> i32 = cdecl 0x8220AD => unported;
-    /// CRT `strncmp` (0x8214D0)
-    fn crt_strncmp(a: GPtr<u8>, b: GPtr<u8>, n: u32) -> i32 = cdecl 0x8214D0 => unported;
-    /// CRT `strtok` (0x82244B)
-    fn crt_strtok(s: GPtr<u8>, delim: GPtr<u8>) -> GPtr<u8> = cdecl 0x82244B => unported;
-    /// CRT `_strlwr` (0x836C58)
-    fn crt_strlwr(s: GPtr<u8>) -> GPtr<u8> = cdecl 0x836C58 => unported;
-    /// CRT `strncpy` (0x821F40)
-    fn crt_strncpy(d: GPtr<u8>, s: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x821F40 => unported;
-    /// CRT `atol` (0x82258E)
-    fn crt_atol(s: GPtr<u8>) -> i32 = cdecl 0x82258E => unported;
-    /// CRT `atof` (0x823CEE), ST0
-    fn crt_atof(s: GPtr<u8>) -> f64 = cdecl 0x823CEE => unported;
-    /// `CTimeCycle::StartExtraColour(int32, bool)` (0x55FEC0)
-    fn time_cycle_start_extra_colour(c: u32, b: u32) = cdecl 0x55FEC0 => unported;
-    /// `CTimeCycle::StopExtraColour(bool)` (0x55FF20)
-    fn time_cycle_stop_extra_colour(b: u32) = cdecl 0x55FF20 => unported;
-    /// `CTaskSimpleCarSetPedOut::CTaskSimpleCarSetPedOut(CVehicle*, int32 door, bool)` (0x6478B0, `ret 0xC`)
-    fn car_set_ped_out_ctor(t: GPtr<u8>, veh: GPtr<u8>, door: u32, b: u32) -> GPtr<u8> = thiscall 0x6478B0 => unported;
-    /// `CTaskSimpleCarSetPedOut::ProcessPed(CPed*)` (0x647D10, `ret 4`)
-    fn car_set_ped_out_process_ped(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x647D10 => unported;
-    /// `CTaskSimpleCarSetPedOut::~CTaskSimpleCarSetPedOut()` (0x647950)
-    fn car_set_ped_out_dtor(t: GPtr<u8>) = thiscall 0x647950 => unported;
-    /// `CIplStore::AddIplsNeededAtPosn(const CVector&)` (0x4045B0)
-    fn ipl_store_add_ipls_needed_at_posn(p: GPtr<u8>) = cdecl 0x4045B0 => unported;
-    /// `CStreaming::SetLoadVehiclesInLoadScene(bool)` (0x407A30)
-    fn streaming_set_load_vehicles_in_load_scene(b: u32) = cdecl 0x407A30 => unported;
-    /// `CStreaming::LoadScene(const CVector&)` (0x40EB70)
-    fn streaming_load_scene(p: GPtr<u8>) = cdecl 0x40EB70 => unported;
     /// `CCutsceneMgr::LoadAnimationUncompressed(const char*)` (0x4D5AB0)
     fn load_animation_uncompressed(name: GPtr<u8>) = cdecl 0x4D5AB0 => crate::cutscene::load_animation_uncompressed;
-    /// `CCutsceneMgr::LoadCutsceneData_postload()` (0x5AFBC0)
-    fn load_cutscene_data_postload() = cdecl 0x5AFBC0 => unported;
-    /// `CModelInfo::GetModelInfo(const char*, int32* index)` (0x4C5940)
-    fn model_info_get_model_info(name: GPtr<u8>, idx: GPtr<i32>) -> GPtr<u8> = cdecl 0x4C5940 => unported;
     /// `CStreaming::RequestModel(int32, int32)` (0x4087E0)
     fn streaming_request_model(id: i32, flags: u32) = cdecl 0x4087E0 => unported;
     /// `CStreaming::RequestSpecialModel(int32, const char*, int32)` (0x409D10)
     fn streaming_request_special_model(id: i32, name: GPtr<u8>, flags: u32) = cdecl 0x409D10 => unported;
-    /// `CStreaming::LoadAllRequestedModels(bool)` (0x40EA10)
-    fn streaming_load_all_requested_models(b: u32) = cdecl 0x40EA10 => unported;
 }
 
 /// `CCutsceneMgr` state: name (0xBC3F0C), load status (0xB5F84C), offset (CVector, 0xBC4034); the finale's name

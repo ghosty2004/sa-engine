@@ -4,20 +4,14 @@
 #![allow(clippy::unreadable_literal)]
 
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
-orig! {
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    fn entity_register_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571B70 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CEvent::~CEvent()` (0x4AC010)
-    fn event_dtor(e: GPtr<u8>) = thiscall 0x4AC010 => unported;
-    /// `CEvent::CEvent()` (0x4ABFC0)
-    fn event_ctor(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x4ABFC0 => unported;
-}
+use crate::bindings::event_base_dtor as event_dtor;
+use crate::bindings::event_ctor;
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_core::bindings::entity_register_reference;
 
 /// `CEventVehicleDamage::CEventVehicleDamage(CVehicle*, CEntity* attacker, eWeaponType)` (0x4B18D0, thiscall, `ret
 /// 0xC`; entry `push -1; jmp 0x407A45`, the protection fragment pushes the SEH handler). The `CEventEditableResponse`

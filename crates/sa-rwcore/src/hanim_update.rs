@@ -12,10 +12,8 @@ use sa_math::x87::X87;
 
 use crate::common::{f32_of, g, p8, rd, wr};
 
+use crate::bindings::frame_dirty;
 orig! {
-    /// `RwFrameDirty(frame)` (0x7F0340), `RwFrameGetLTM(frame)` (0x7F0990), `RwFrameUpdateObjects(frame)`
-    /// (0x7F0910)
-    fn frame_dirty(f: GPtr<u8>) -> u32 = cdecl 0x7F0340 => crate::frame::dirty;
     fn frame_get_ltm(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0990 => crate::frame::get_ltm;
     fn frame_update_objects(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0910 => crate::frame::update_objects;
     /// `RwMatrixMultiply(out, a, b)` (0x7F18B0)

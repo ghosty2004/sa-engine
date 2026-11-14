@@ -24,47 +24,40 @@ const K_SPEED_DIST: usize = 0x8599D0;
 /// 0.0
 const K_ZERO: usize = 0x858B50;
 
+use crate::bindings::event_vehicle_to_steal_ctor;
+use crate::bindings::event_vehicle_to_steal_dtor;
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_core::bindings::entity_register_reference;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::get_weapon_info as weapon_info_get;
+use sa_core::bindings::vector_difference;
+use sa_stream::bindings::find_player_wanted;
+use sa_world::bindings::arrest_ped_ctor;
+use sa_world::bindings::ctor_48df30 as task_1a5_ctor;
+use sa_world::bindings::cull_zones_no_police;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::stand_still_ctor;
+use sa_world::bindings::vector_magnitude_sqr;
+use sa_world::bindings::wanted_remove_cop as wanted_remove_pursuit_cop;
 orig! {
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
     /// `CTask::MakeAbortable(CPed*, int32 priority, const CEvent*)` (vtable +0x18, `ret 0xC`)
     fn v_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, prio: i32, ev: u32) -> u8 = thiscall vslot 0x18 => unported;
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210, cdecl)
-    fn find_player_ped(i: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CWorld::FindPlayerWanted(int32)` (0x56E230, cdecl)
-    fn find_player_wanted(i: i32) -> GPtr<u8> = cdecl 0x56E230 => unported;
-    /// `CWanted::RemovePursuitCop(CCopPed*)` (0x562C10, `ret 4`)
-    fn wanted_remove_pursuit_cop(w: GPtr<u8>, cop: GPtr<u8>) = thiscall 0x562C10 => unported;
     /// `CWanted::RemoveExcessPursuitCops` (0x562C40)
     fn wanted_remove_excess_pursuit_cops(w: GPtr<u8>) = thiscall 0x562C40 => unported;
     /// `CWanted::IsInPursuit(CCopPed*)` (0x562330, `ret 4`; AL)
     fn wanted_is_in_pursuit(w: GPtr<u8>, cop: GPtr<u8>) -> u32 = thiscall 0x562330 => unported;
     /// `CWanted::SetPursuitCop(CCopPed*)` (0x563060, `ret 4`; AL)
     fn wanted_set_pursuit_cop(w: GPtr<u8>, cop: GPtr<u8>) -> u8 = thiscall 0x563060 => unported;
-    /// `CCullZones::NoPolice` (0x72DD50, AL)
-    fn cull_zones_no_police() -> u8 = cdecl 0x72DD50 => unported;
     /// `CPed::DoWeHaveWeaponAvailable(eWeaponType)` (0x5DF300, `ret 4`)
     fn ped_do_we_have_weapon_available(p: GPtr<u8>, w: u32) -> u8 = thiscall 0x5DF300 => unported;
     /// `CPed::SetCurrentWeapon(eWeaponType)` (0x5E6280, `ret 4`)
     fn ped_set_current_weapon(p: GPtr<u8>, w: u32) = thiscall 0x5E6280 => unported;
-    /// `CWeaponInfo::GetWeaponInfo(eWeaponType, eWeaponSkill)` (0x743C60, cdecl)
-    fn weapon_info_get(w: u32, skill: u32) -> GPtr<u8> = cdecl 0x743C60 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00, `ret 4`)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70, `ret 4`)
-    fn entity_register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
-    /// `CTask::operator new` is `task_new` (common); `FUN_0048df30`: the constructor of the 0x20-byte task the
-    /// pursuit creates for type 0x1A5 and after reporting a vehicle to steal
-    fn task_1a5_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x48DF30 => unported;
-    /// `CTaskSimpleStandStill::CTaskSimpleStandStill(int32 ms, bool looped, bool useAnimIdle, float blend)`
-    /// (0x62F310, `ret 0x10`)
-    fn stand_still_ctor(t: GPtr<u8>, ms: u32, looped: u32, idle: u32, blend: u32) -> GPtr<u8> = thiscall 0x62F310 => unported;
     /// `CTaskComplexSeekEntity<CEntitySeekPosCalculatorStandard>::CTaskComplexSeekEntity(CEntity*, int32 time,
     /// int32 scanInterval, float radius, float moveStateRadius, float, bool, bool)` (0x46AC10, `ret 0x20`)
     #[allow(clippy::too_many_arguments)]
     fn seek_entity_standard_ctor(t: GPtr<u8>, e: GPtr<u8>, time: u32, scan: u32, radius: u32, r2: u32, r3: u32, b1: u32, b2: u32) -> GPtr<u8> = thiscall 0x46AC10 => unported;
-    /// `CTaskComplexArrestPed::CTaskComplexArrestPed(CPed*)` (0x68B990, `ret 4`)
-    fn arrest_ped_ctor(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x68B990 => unported;
     /// `CTaskComplexPolicePursuit::SetPursuit(CPed*)` (0x68BBD0, `ret 4`)
     fn o_set_pursuit(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x68BBD0 => unported;
     /// `CTaskComplexPolicePursuit::ClearPursuit(CCopPed*)` (0x68BD90, `ret 4`)
@@ -75,16 +68,6 @@ orig! {
     fn o_set_weapon(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x68BAD0 => unported;
     /// `CTaskComplexPolicePursuit::CreateSubTask(int32 type, CPed*)` (0x68D910, `ret 8`)
     fn o_create_sub_task(t: GPtr<u8>, ty: i32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x68D910 => unported;
-    /// `CVector::Difference(const CVector& a, const CVector& b)` (0x40FE00, `ret 8`): `this = a - b`
-    fn vector_difference(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) = thiscall 0x40FE00 => unported;
-    /// `CVector::MagnitudeSqr()` (0x406DA0, ST0)
-    fn vector_magnitude_sqr(v: GPtr<u8>) -> f64 = thiscall 0x406DA0 => unported;
-    /// `CEventVehicleToSteal::CEventVehicleToSteal(CVehicle*)` (0x4AF670, `ret 4`)
-    fn event_vehicle_to_steal_ctor(e: GPtr<u8>, veh: GPtr<u8>) -> GPtr<u8> = thiscall 0x4AF670 => unported;
-    /// `CEventVehicleToSteal::~CEventVehicleToSteal` (`FUN_004af700`)
-    fn event_vehicle_to_steal_dtor(e: GPtr<u8>) = thiscall 0x4AF700 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, `ret 8`)
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
 }
 
 use sa_world::world::common::entity_pos;

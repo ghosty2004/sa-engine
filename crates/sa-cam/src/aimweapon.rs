@@ -29,22 +29,16 @@ use crate::followped::{
     push_st0, reset_ducking_system,
 };
 
+pub use sa_core::bindings::entity_update_rp_hanim as update_rp_h_anim;
+pub use sa_world::bindings::pad_get_enter_targeting;
+pub use sa_world::bindings::pad_get_weapon;
+pub use sa_world::bindings::weapon_is_type_melee;
+pub use sa_world::bindings::world_get_is_line_of_sight_clear as get_is_line_of_sight_clear;
 orig! {
-    /// `CWeapon::IsTypeMelee()` (0x73B1C0, AL)
-    pub fn weapon_is_type_melee(w: GPtr<u8>) -> u8 = thiscall 0x73B1C0 => unported;
     /// `CVector::operator*=(float)` (0x40FEF0, `ret 4`); the float as a dword
     pub fn vector_scale_assign(v: GPtr<u8>, s: u32) -> GPtr<u8> = thiscall 0x40FEF0 => unported;
-    /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, bool buildings, bool vehicles,
-    /// bool peds, bool objects, bool dummies, bool seeThrough, bool ignoreSomeObjects)` (0x56A490, AL)
-    pub fn get_is_line_of_sight_clear(a: GPtr<u8>, b: GPtr<u8>, bu: u32, ve: u32, pe: u32, ob: u32, du: u32, st: u32, ig: u32) -> u8 = cdecl 0x56A490 => unported;
-    /// `CEntity::UpdateRpHAnim()` (0x532B20)
-    pub fn update_rp_h_anim(e: GPtr<u8>) = thiscall 0x532B20 => unported;
     /// `CPedClothesDesc::HasVisibleNewHairCut(int32)` (0x5A7970, AL)
     pub fn has_visible_new_hair_cut(c: GPtr<u8>, n: i32) -> u8 = thiscall 0x5A7970 => unported;
-    /// `CPad::GetEnterTargeting()` (0x5406B0, AL)
-    pub fn pad_get_enter_targeting(pad: GPtr<u8>) -> u8 = thiscall 0x5406B0 => unported;
-    /// `CPad::GetWeapon(CPed*)` (0x540180, int32 in EAX)
-    pub fn pad_get_weapon(pad: GPtr<u8>, ped: GPtr<u8>) -> u32 = thiscall 0x540180 => unported;
     /// `CCamera::HandleCameraMotionForDuckingDuringAim(CPed*, CVector*, CVector*, bool)` (0x50D090)
     pub fn handle_camera_motion_for_ducking_during_aim(cam: GPtr<u8>, ped: GPtr<u8>, src: GPtr<u8>, targ: GPtr<u8>, instant: u32) = thiscall 0x50D090 => crate::camfx::handle_camera_motion_for_ducking_during_aim;
     /// `CCamera::SetColVarsAimWeapon(int32)` (0x50CBF0, cdecl)

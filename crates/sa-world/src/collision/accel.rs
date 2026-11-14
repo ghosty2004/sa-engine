@@ -51,21 +51,16 @@ pub struct IplDefVal(pub [u32; 13]);
 #[derive(Clone, Copy, Debug)]
 pub struct ColDefVal(pub [u32; 12]);
 
+pub use sa_core::bindings::crt_free as operator_delete;
+pub use sa_core::bindings::file_close;
+pub use sa_core::bindings::file_write;
+pub use sa_core::bindings::open_file_for_writing;
+pub use sa_stream::bindings::col_model_ctor;
 orig! {
     /// CRT `operator new` (0x821195)
     pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x821195 => unported;
-    /// CRT `operator delete` (0x8213AE)
-    pub fn operator_delete(p: GPtr<u8>) = cdecl 0x8213AE => unported;
-    /// `CFileMgr::OpenFileForWriting` (0x538910)
-    pub fn open_file_for_writing(path: GPtr<u8>) -> GPtr<u8> = cdecl 0x538910 => sa_core::filemgr::open_file_for_writing;
-    /// `CFileMgr::Write` (0x538970)
-    pub fn file_write(f: GPtr<u8>, buf: GPtr<u8>, size: u32) -> u32 = cdecl 0x538970 => sa_core::filemgr::write;
-    /// `CFileMgr::CloseFile` (0x5389D0)
-    pub fn file_close(f: GPtr<u8>) -> i32 = cdecl 0x5389D0 => sa_core::filemgr::close_file;
     /// `CColModel::operator new` (0x40FC30)
     pub fn col_model_new(size: u32) -> GPtr<u8> = cdecl 0x40FC30 => col_model_new_port;
-    /// `CColModel::CColModel` (0x40FB60)
-    pub fn col_model_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x40FB60 => unported;
     /// `CBaseModelInfo::SetColModel(CColModel*, bool)` (0x4C4BC0)
     pub fn set_col_model(mi: MiPtr, col: GPtr<u8>, owns: u32) = thiscall 0x4C4BC0 => sa_stream::modelinfo::base::set_col_model;
     /// `CBaseModelInfo::DeleteCollisionModel` (0x4C4C40)

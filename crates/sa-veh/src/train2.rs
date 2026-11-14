@@ -25,43 +25,29 @@ sa_core::globals! {
     pub static STATION_DIST @ 0xC38034: [f32; 6] = [0.0; 6];
 }
 
+pub use crate::bindings::audio_initialise;
+pub use crate::bindings::find_closest_track_node as find_closest_track_node_o;
+pub use crate::bindings::vehicle_ctor;
+pub use crate::bindings::vehicle_delete;
+pub use crate::bindings::vehicle_destructor;
+pub use crate::bindings::vehicle_pre_render;
+pub use crate::bindings::vehicle_set_model_index;
+pub use sa_core::bindings::world_clear_scan_codes as clear_scan_codes;
+pub use sa_stream::bindings::choose_vehicle_colour;
+pub use sa_stream::bindings::fill_frame_array;
+pub use sa_world::bindings::audio_terminate;
+pub use sa_world::bindings::crt_floor as floor;
+pub use sa_world::bindings::physical_add_to_moving_list as add_to_moving_list;
+pub use sa_world::bindings::world_process_vertical_line;
 orig! {
-    /// `CAEVehicleAudioEntity::Terminate()` (0x4FB8C0)
-    pub fn audio_terminate(a: GPtr<u8>) = thiscall 0x4FB8C0 => unported;
-    /// `CVehicle::~CVehicle` body (0x6E2B40)
-    pub fn vehicle_destructor(v: GPtr<u8>) = thiscall 0x6E2B40 => unported;
-    /// `CVehicle::operator delete(void*)` (0x6E2D90)
-    pub fn vehicle_delete(p: GPtr<u8>) = cdecl 0x6E2D90 => crate::vehicle2::operator_delete;
-    /// `CVehicle::PreRender()` (0x6D6480)
-    pub fn vehicle_pre_render(v: GPtr<u8>) = thiscall 0x6D6480 => unported;
     /// `CVehicle::DoVehicleLights(CMatrix&, uint32)` (0x6E1A60)
     pub fn do_vehicle_lights(v: GPtr<u8>, m: GPtr<u8>, flags: u32) = thiscall 0x6E1A60 => unported;
     /// `CEntity` virtual slot 0x10 (`SetIsStatic(bool)`)
     pub fn entity_set_is_static(e: GPtr<u8>, v: u32) = thiscall vslot 0x10 => unported;
-    /// `CPhysical::AddToMovingList()` (0x542800)
-    pub fn add_to_moving_list(e: GPtr<u8>) = thiscall 0x542800 => unported;
-    /// `CWorld::ProcessVerticalLine(const CVector&, float, CColPoint&, CEntity*&, bool x7)` (0x5674E0)
-    pub fn world_process_vertical_line(pos: GPtr<u8>, z: u32, cp: GPtr<u8>, ent: GPtr<u8>, b: u32, v: u32, p: u32, o: u32, d: u32, s: u32, l: u32) -> u8 = cdecl 0x5674E0 => unported;
     /// `CTrain::ReadAndInterpretTrackFile(const char*, CTrainNode**, int32*, float*, int32)` (0x6F55D0)
     pub fn read_and_interpret_track_file(name: u32, nodes: GPtr<u8>, num: GPtr<u8>, len: GPtr<u8>, track: i32) = cdecl 0x6F55D0 => unported;
-    /// `CVehicle::CVehicle(eVehicleCreatedBy)` (0x6D5F10)
-    pub fn vehicle_ctor(v: GPtr<u8>, created_by: u32) -> GPtr<u8> = thiscall 0x6D5F10 => unported;
-    /// `CVehicle::SetModelIndex(uint32)` (0x6D6A40)
-    pub fn vehicle_set_model_index(v: GPtr<u8>, mi: u32) = thiscall 0x6D6A40 => unported;
-    /// `CClumpModelInfo::FillFrameArray(RpClump*, RwFrame**)` (0x4C5440)
-    pub fn fill_frame_array(clump: GPtr<u8>, frames: GPtr<u8>) = cdecl 0x4C5440 => unported;
-    /// `CVehicleModelInfo::ChooseVehicleColour(uint8&, uint8&, uint8&, uint8&, int32)` (0x4C8500)
-    pub fn choose_vehicle_colour(mi: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, c: GPtr<u8>, d: GPtr<u8>, inc: i32) = thiscall 0x4C8500 => unported;
-    /// `CAEVehicleAudioEntity::Initialise(CEntity*)` (0x4F7670)
-    pub fn audio_initialise(a: GPtr<u8>, e: GPtr<u8>) = thiscall 0x4F7670 => unported;
-    /// CRT `floor(double)` (0x8219F0)
-    pub fn floor(v: f64) -> f64 = cdecl 0x8219F0 => unported;
-    /// `CWorld::ClearScanCodes()` (0x563470)
-    pub fn clear_scan_codes() = cdecl 0x563470 => unported;
     /// `CTrain::TrainHitStuff(CPtrListSingleLink<CPhysical*>&, CEntity*)` (0x6F5CF0)
     pub fn train_hit_stuff_o(list: GPtr<GPtr<u8>>, train: GPtr<u8>) = cdecl 0x6F5CF0 => crate::train2::train_hit_stuff;
-    /// `CTrain::FindClosestTrackNode(CVector, int32*)` (0x6F6BD0)
-    pub fn find_closest_track_node_o(x: f32, y: f32, z: f32, track: GPtr<i32>) -> i32 = cdecl 0x6F6BD0 => crate::train2::find_closest_track_node;
 }
 
 /// `0.125`: track node coordinates to metres.

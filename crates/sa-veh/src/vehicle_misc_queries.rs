@@ -10,11 +10,9 @@ use sa_math::x87::{Cmp, X87};
 use crate::common::{entity_get_col_model, f32_of, rd, wr, x, xi};
 use sa_world::world::common::entity_pos;
 
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::find_player_vehicle;
 orig! {
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(n: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CWorld::FindPlayerVehicle(int32, bool)` (0x56E0D0)
-    fn find_player_vehicle(n: i32, remote: u32) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
     /// `CPhysical::CanPhysicalBeDamaged(eWeaponType, bool*)` (0x5448B0, AL)
     fn physical_can_be_damaged(p: GPtr<u8>, w: u32, out: GPtr<u8>) -> u8 = thiscall 0x5448B0 => unported;
 }

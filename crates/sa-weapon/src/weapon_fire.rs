@@ -47,25 +47,45 @@ fn ensure_matrix(e: GPtr<u8>) {
     }
 }
 
+pub use crate::bindings::get_weapon_reload_time_call;
+pub use sa_core::bindings::get_anim_hierarchy_from_skin_clump;
+pub use sa_core::bindings::get_pad;
+pub use sa_core::bindings::matrix_dtor;
+pub use sa_core::bindings::matrix_invert;
+pub use sa_core::bindings::matrix_mul_vec;
+pub use sa_core::bindings::pad_clear;
+pub use sa_core::bindings::rp_hanim_hierarchy_get_matrix_array;
+pub use sa_core::bindings::rp_hanim_id_get_index;
+pub use sa_core::bindings::rw_v3d_transform_points;
+pub use sa_core::bindings::stats_increment_stat;
+pub use sa_core::bindings::tm_get_active_task as task_manager_get_active_task;
+pub use sa_core::bindings::vector_magnitude;
+pub use sa_core::bindings::vector_normalise as normalise;
+pub use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
+pub use sa_stream::bindings::simple_transform_update_matrix;
+pub use sa_world::bindings::automobile_set_panel_damage;
+pub use sa_world::bindings::calculate_triangle_planes;
+pub use sa_world::bindings::cam_shake_no_pos;
+pub use sa_world::bindings::col_line_ctor;
+pub use sa_world::bindings::col_point_assign;
+pub use sa_world::bindings::entity_get_col_model;
+pub use sa_world::bindings::event_group_add;
+pub use sa_world::bindings::get_event_global_group;
+pub use sa_world::bindings::get_percentage_progress as stats_get_percentage_progress;
+pub use sa_world::bindings::matrix_copy_ctor;
+pub use sa_world::bindings::pad_start_shake;
+pub use sa_world::bindings::ped_get_weapon_slot;
+pub use sa_world::bindings::ped_set_current_weapon;
+pub use sa_world::bindings::process_line_sphere;
+pub use sa_world::bindings::report_crime;
+pub use sa_world::bindings::use_detonator as world_use_detonator;
+pub use sa_world::bindings::vector_sub;
+pub use sa_world::bindings::world_reset_line_test_options;
 orig! {
-    /// `CPlaceable::AllocateMatrix()` (0x54F560, thiscall)
-    pub fn allocate_matrix(e: GPtr<u8>) = thiscall 0x54F560 => unported;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*)` (0x54F1B0, thiscall)
-    pub fn simple_transform_update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => unported;
-    /// `operator*(const CMatrix&, const CVector&)` (0x59C890, cdecl(out, mat, vec), returns out)
-    pub fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
-    /// `operator-(const CVector&, const CVector&)` (0x40FE60, cdecl(out, a, b), returns out)
-    pub fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => unported;
-    /// `CVector::Magnitude()` (0x4082C0, thiscall, ST0)
-    pub fn vector_magnitude(v: GPtr<u8>) -> f64 = thiscall 0x4082C0 => unported;
     /// `FindPlayerPed(int32)` (0x56E210)
     pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
-    /// `CTaskManager::GetActiveTask()` (0x681720, thiscall)
-    pub fn task_manager_get_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x681720 => unported;
     /// `CTask::GetTaskType()` (vtable slot 0x10, thiscall)
     pub fn task_get_type(task: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CWorld::UseDetonator(CEntity*)` (0x5660B0)
-    pub fn world_use_detonator(e: GPtr<u8>) = cdecl 0x5660B0 => unported;
     /// `CWeapon::TakePhotograph(CEntity* owner, CVector* point)` (0x73C1F0, thiscall)
     pub fn take_photograph(this: GPtr<u8>, owner: GPtr<u8>, point: GPtr<u8>) -> u8 = thiscall 0x73C1F0 => unported;
     /// `CAEPedWeaponAudioEntity::AddAudioEvent(int32)` (0x4E69F0, thiscall)
@@ -74,20 +94,6 @@ orig! {
     pub fn ped_say(ped: GPtr<u8>, phrase: u32, offset: u32, vol: f32, a: u32, b: u32, c: u32) = thiscall 0x5EFFE0 => unported;
     /// `CPed::GiveWeapon(eWeaponType, uint32 ammo, bool)` (0x5E6080, thiscall)
     pub fn ped_give_weapon(ped: GPtr<u8>, ty: i32, ammo: u32, b: u32) -> i32 = thiscall 0x5E6080 => unported;
-    /// `CPed::GetWeaponSlot(eWeaponType)` (0x5DF200, thiscall)
-    pub fn ped_get_weapon_slot(ped: GPtr<u8>, ty: i32) -> i32 = thiscall 0x5DF200 => unported;
-    /// `CPed::SetCurrentWeapon(eWeaponType)` (0x5E6280, thiscall)
-    pub fn ped_set_current_weapon(ped: GPtr<u8>, ty: i32) = thiscall 0x5E6280 => unported;
-    /// `CStats::IncrementStat(uint16, float)` (0x55C180)
-    pub fn stats_increment_stat(stat: u32, v: f32) = cdecl 0x55C180 => unported;
-    /// `CStats::GetPercentageProgress()` (0x5591E0, ST0)
-    pub fn stats_get_percentage_progress() -> f64 = cdecl 0x5591E0 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    pub fn get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CPad::Clear(bool enablePlayerControls, bool resetPhase)` (0x541A70, thiscall)
-    pub fn pad_clear(pad: GPtr<u8>, a: u32, b: u32) = thiscall 0x541A70 => unported;
-    /// `CWeaponInfo::GetWeaponReloadTime()` (0x743D70, thiscall)
-    pub fn get_weapon_reload_time_call(info: GPtr<u8>) -> u32 = thiscall 0x743D70 => crate::weapon_info::get_weapon_reload_time;
     /// `CPed::GetWeaponSkill(eWeaponType)` (0x5E3B60, thiscall)
     pub fn ped_get_weapon_skill(ped: GPtr<u8>, ty: i32) -> u8 = thiscall 0x5E3B60 => unported;
 
@@ -102,22 +108,12 @@ orig! {
     pub fn fire_area_effect_call(this: GPtr<u8>, firer: GPtr<u8>, origin: GPtr<u8>, target_ent: GPtr<u8>, target: GPtr<u8>) -> u8 = thiscall 0x73E800 => unported;
     /// `CBulletInfo::AddBullet(CEntity* creator, eWeaponType, CVector pos, CVector velocity)` (0x736010)
     pub fn add_bullet_call(creator: GPtr<u8>, ty: i32, px: f32, py: f32, pz: f32, vx: f32, vy: f32, vz: f32) -> u8 = cdecl 0x736010 => crate::bullet_shot::add_bullet;
-    /// `CVector::Normalise()` (0x59C910, thiscall)
-    pub fn normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
     /// `CPad::StartShake_Distance(int16 time, uint8 freq, float x, float y, float z)` (0x53F9A0, thiscall)
     pub fn pad_start_shake_distance(pad: GPtr<u8>, time: u32, freq: u32, x: f32, y: f32, z: f32) = thiscall 0x53F9A0 => unported;
-    /// `CCamera::CamShakeNoPos(CCamera*, float)` (0x50A970, cdecl)
-    pub fn cam_shake_no_pos(cam: GPtr<u8>, strength: f32) = cdecl 0x50A970 => unported;
-    /// `CCrime::ReportCrime(eCrimeType, CEntity* victim, CPed* commitedBy)` (0x532010)
-    pub fn report_crime(ty: i32, victim: GPtr<u8>, by: GPtr<u8>) = cdecl 0x532010 => unported;
     /// `CEventGunShot::CEventGunShot(CEntity*, CVector start, CVector end, bool silenced)` (0x4AC610, thiscall `ret 0x20`)
     pub fn event_gun_shot_ctor(ev: GPtr<u8>, e: GPtr<u8>, sx: f32, sy: f32, sz: f32, ex: f32, ey: f32, ez: f32, silenced: u32) -> GPtr<u8> = thiscall 0x4AC610 => unported;
     /// `CEventGunShotWhizzedBy::CEventGunShotWhizzedBy(CEntity*, const CVector&, const CVector&, bool)` (0x4B1FD0, thiscall)
     pub fn event_whizzed_by_ctor(ev: GPtr<u8>, e: GPtr<u8>, start: GPtr<u8>, end: GPtr<u8>, silenced: u32) -> GPtr<u8> = thiscall 0x4B1FD0 => unported;
-    /// `GetEventGlobalGroup()` (0x4ABA50)
-    pub fn get_event_global_group() -> GPtr<u8> = cdecl 0x4ABA50 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, thiscall)
-    pub fn event_group_add(group: GPtr<u8>, ev: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
     /// `CInterestingEvents::Add(EType, CEntity*)` (0x602590, thiscall on `g_InterestingEvents` 0xC0B058)
     pub fn interesting_events_add(ie: GPtr<u8>, ty: i32, e: GPtr<u8>) = thiscall 0x602590 => unported;
     /// `CEventGunShotWhizzedBy::~CEventGunShotWhizzedBy()` (0x4B2070, thiscall)
@@ -126,32 +122,8 @@ orig! {
     pub fn event_gun_shot_dtor(ev: GPtr<u8>) = thiscall 0x4AC720 => unported;
     /// `CWeapon::CheckForShootingVehicleOccupant(CEntity**, CColPoint*, eWeaponType, const CVector*, const CVector*)` (0x73F480)
     pub fn check_for_shooting_vehicle_occupant_call(e: GPtr<u8>, cp: GPtr<u8>, ty: i32, origin: GPtr<u8>, target: GPtr<u8>) -> u8 = cdecl 0x73F480 => check_for_shooting_vehicle_occupant;
-    /// `CColPoint::operator=(const CColPoint&)` (0x40FC80, thiscall; a stub into `.HOODLUM`)
-    pub fn col_point_assign(this: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = thiscall 0x40FC80 => unported;
-    /// `CColLine::CColLine(const CVector& start, const CVector& end)` (0x40EF50, thiscall)
-    pub fn col_line_ctor(this: GPtr<u8>, start: GPtr<u8>, end: GPtr<u8>) -> GPtr<u8> = thiscall 0x40EF50 => unported;
-    /// `GetAnimHierarchyFromSkinClump(RpClump*)` (0x734A40)
-    pub fn get_anim_hierarchy_from_skin_clump(clump: GPtr<u8>) -> GPtr<u8> = cdecl 0x734A40 => unported;
-    /// `RpHAnimIDGetIndex(RpHAnimHierarchy*, int32)` (0x7C51A0)
-    pub fn rp_hanim_id_get_index(h: GPtr<u8>, id: i32) -> i32 = cdecl 0x7C51A0 => unported;
-    /// `RpHAnimHierarchyGetMatrixArray(RpHAnimHierarchy*)` (0x7C5120)
-    pub fn rp_hanim_hierarchy_get_matrix_array(h: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C5120 => unported;
-    /// `RwV3dTransformPoints(RwV3d* out, const RwV3d* in, int32 n, const RwMatrix*)` (0x7EDD90)
-    pub fn rw_v3d_transform_points(out: GPtr<u8>, inp: GPtr<u8>, n: i32, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EDD90 => unported;
     /// `CColSphere::Set(float radius, const CVector& center, uint8 material, uint8 piece, uint8 light)` (0x40FD10, thiscall)
     pub fn col_sphere_set(this: GPtr<u8>, radius: f32, center: GPtr<u8>, material: u32, piece: u32, light: u32) = thiscall 0x40FD10 => unported;
-    /// `CCollision::ProcessLineSphere(const CColLine&, const CColSphere&, CColPoint&, float& depth)` (0x412AA0)
-    pub fn process_line_sphere(line: GPtr<u8>, sphere: GPtr<u8>, cp: GPtr<u8>, depth: GPtr<u8>) -> u8 = cdecl 0x412AA0 => unported;
-    /// `CEntity::GetColModel()` (0x535300, thiscall)
-    pub fn entity_get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => unported;
-    /// `CMatrix::Invert(const CMatrix& in, CMatrix& out)` (0x59B920, returns out)
-    pub fn matrix_invert(inp: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = cdecl 0x59B920 => unported;
-    /// `CMatrix::CMatrix(const CMatrix&)` (0x59BCF0, thiscall)
-    pub fn matrix_copy_ctor(this: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = thiscall 0x59BCF0 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0, thiscall)
-    pub fn matrix_dtor(this: GPtr<u8>) = thiscall 0x59ACD0 => unported;
-    /// `CCollision::CalculateTrianglePlanes(CColModel*)` (0x418580)
-    pub fn calculate_triangle_planes(cm: GPtr<u8>) = cdecl 0x418580 => unported;
     /// `SurfaceInfos_c::IsGlass(uint32)` (0x55E790, thiscall on `g_surfaceInfos` 0xB79538; the caller tests AL)
     pub fn surface_is_glass(si: GPtr<u8>, id: u32) -> u32 = thiscall 0x55E790 => unported;
     /// `CCollision::TestLineTriangle(const CColLine&, const CompressedVector*, const CColTriangle&,
@@ -161,19 +133,13 @@ orig! {
     pub fn progress_panel_damage(dm: GPtr<u8>, panel: u32) -> u8 = thiscall 0x6C23C0 => unported;
     /// `CDamageManager::GetPanelStatus(ePanels)` (0x6C2180, thiscall)
     pub fn get_panel_status(dm: GPtr<u8>, panel: u32) -> i32 = thiscall 0x6C2180 => unported;
-    /// `CAutomobile::SetPanelDamage(ePanels, bool)` (0x6B1480, thiscall)
-    pub fn automobile_set_panel_damage(veh: GPtr<u8>, panel: u32, b: u32) = thiscall 0x6B1480 => unported;
     /// `CWeapon::DoBulletImpact(CEntity* owner, CEntity* victim, const CVector* start, const CVector* end, const CColPoint*, int32)` (0x73B550, thiscall)
     pub fn do_bullet_impact(this: GPtr<u8>, owner: GPtr<u8>, victim: GPtr<u8>, start: GPtr<u8>, end: GPtr<u8>, cp: GPtr<u8>, inc: i32) = thiscall 0x73B550 => crate::weapon_impact::do_bullet_impact;
     /// `CWeapon::TargetWeaponRangeMultiplier(CEntity* victim, CEntity* owner)` (0x73B380, ST0)
     pub fn target_weapon_range_multiplier_call(victim: GPtr<u8>, owner: GPtr<u8>) -> f64 = cdecl 0x73B380 => target_weapon_range_multiplier_st0;
-    /// `CPad::StartShake(int16 time, uint8 freq, uint32 delay)` (0x53F920, thiscall)
-    pub fn pad_start_shake(pad: GPtr<u8>, time: u32, freq: u32, delay: u32) = thiscall 0x53F920 => unported;
     /// `CPointLights::AddLight(uint8 type, CVector pos, CVector dir, float radius, float r, float g, float b,
     /// uint8 fogType, bool extraShadows, CEntity* attachedTo)` (0x7000E0)
     pub fn point_lights_add_light(ty: u32, px: f32, py: f32, pz: f32, dx: f32, dy: f32, dz: f32, radius: f32, r: f32, g: f32, b: f32, fog: u32, shadows: u32, attached: GPtr<u8>) = cdecl 0x7000E0 => unported;
-    /// `CWorld::ResetLineTestOptions()` (0x5631C0)
-    pub fn world_reset_line_test_options() = cdecl 0x5631C0 => unported;
     /// `CWeapon::FireM16_1stPerson(CPed*)` (0x741C00, thiscall)
     pub fn fire_m16_1st_person_call(this: GPtr<u8>, firer: GPtr<u8>) -> u8 = thiscall 0x741C00 => fire_m16_1st_person;
 }

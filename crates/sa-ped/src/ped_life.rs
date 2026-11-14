@@ -46,19 +46,39 @@ const ANIM_BLOCKS: u32 = 0xB5D4A0;
 /// `CAEAudioEntity` base vtable written back by the destructor (0x859988)
 const VT_AUDIO_ENTITY: u32 = 0x859988;
 
+use crate::bindings::ped_speech_initialise as speech_init;
+use crate::bindings::population_update_ped_count;
+use crate::bindings::task_complex_facial_ctor as task_primary_ctor;
+use sa_core::bindings::eh_vector_ctor;
+use sa_core::bindings::eh_vector_dtor;
+use sa_core::bindings::entity_update_rp_hanim as entity_update_after_model;
+use sa_core::bindings::ped_clear_weapons as ped_dtor_weapons;
+use sa_core::bindings::rp_anim_blend_clump_init as anim_blend_clump_init;
+use sa_core::bindings::set_mission_doesnt_require_model;
+use sa_core::bindings::task_new;
+use sa_core::bindings::world_remove as world_remove_references;
+use sa_stream::bindings::anim_remove_block_ref as remove_anim_block_ref;
+use sa_world::bindings::add_animation;
+use sa_world::bindings::dtor_cleanup_43a960;
+use sa_world::bindings::entity_set_model_index;
+use sa_world::bindings::event_acquaintance_ped_dtor as event_hate_dtor;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::fire_extinguish;
+use sa_world::bindings::get_ped_flag;
+use sa_world::bindings::give_delayed_weapon;
+use sa_world::bindings::ped_groups_remove_group;
+use sa_world::bindings::physical_dtor;
+use sa_world::bindings::remove_from_waiting_for_script_brain_array as script_release_ped_model;
+use sa_world::bindings::set_as_acquaintance;
+use sa_world::bindings::sound_dtor as audio_entity_member_dtor;
+use sa_world::bindings::wanted_remove_cop;
 orig! {
     /// `CPhysical::CPhysical()` (0x542260)
     fn physical_ctor(e: GPtr<u8>) = thiscall 0x542260 => unported;
-    /// `CPhysical::~CPhysical()` (0x542450)
-    fn physical_dtor(e: GPtr<u8>) = thiscall 0x542450 => unported;
     /// `CAEPedSpeechAudioEntity::CAEPedSpeechAudioEntity()` (0x4E4F10)
     fn speech_ctor(e: GPtr<u8>) = thiscall 0x4E4F10 => unported;
     /// `CPedIK::CPedIK(CPed*)` (0x5FD8C0)
     fn ped_ik_ctor(ik: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x5FD8C0 => unported;
-    /// `` `eh vector constructor iterator' `` (0x821D30, stdcall)
-    fn eh_vector_ctor(p: GPtr<u8>, size: u32, n: u32, ctor: u32, dtor: u32) = stdcall 0x821D30 => unported;
-    /// `` `eh vector destructor iterator' `` (0x821E02, stdcall)
-    fn eh_vector_dtor(p: GPtr<u8>, size: u32, n: u32, dtor: u32) = stdcall 0x821E02 => unported;
     /// `CAEPedWeaponAudioEntity::Initialise(CPed*)` (0x4E6AA0)
     fn weapon_audio_init(e: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x4E6AA0 => unported;
     /// `CAEPedWeaponAudioEntity::Terminate()` (0x4E6AC0)
@@ -69,22 +89,12 @@ orig! {
     fn ped_audio_terminate(e: GPtr<u8>) = thiscall 0x4E1360 => unported;
     /// `CAEPedAudioEntity::~CAEPedAudioEntity()` (0x5DE920)
     fn ped_audio_dtor(e: GPtr<u8>) = thiscall 0x5DE920 => unported;
-    /// `CAESound` array / `CAEAudioEntity` member destructor (0x4EF660, on entity + 8)
-    fn audio_entity_member_dtor(e: GPtr<u8>) = thiscall 0x4EF660 => unported;
-    /// `CAEPedSpeechAudioEntity::Initialise(CEntity*)` (0x4E68D0)
-    fn speech_init(e: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x4E68D0 => unported;
     /// speech entity vtable slot 2 (`Terminate`)
     fn speech_terminate(e: GPtr<u8>) = thiscall vslot 0x08 => unported;
     /// `CPedType::GetPedTypeAcquaintances(ePedType)` (0x6089B0)
     fn get_ped_type_acquaintances(ty: u32) -> GPtr<u32> = cdecl 0x6089B0 => unported;
-    /// `CPedType::GetPedFlag(ePedType)` (0x608830)
-    fn get_ped_flag(ty: u32) -> u32 = cdecl 0x608830 => unported;
-    /// `CAcquaintance::SetAsAcquaintance(int32, uint32)` (0x608DA0)
-    fn set_as_acquaintance(a: GPtr<u8>, k: u32, flag: u32) = thiscall 0x608DA0 => unported;
     /// `CPed::GiveWeapon(eWeaponType, uint32, bool)` (0x5E6080)
     fn give_weapon(p: GPtr<u8>, ty: u32, ammo: u32, b: u32) -> i32 = thiscall 0x5E6080 => unported;
-    /// `CPed::GiveDelayedWeapon(eWeaponType, uint32)` (0x5E89B0)
-    fn give_delayed_weapon(p: GPtr<u8>, ty: u32, ammo: u32) = thiscall 0x5E89B0 => unported;
     /// `CPed::SetCurrentWeapon(eWeaponType)` (0x5E6280)
     fn set_current_weapon(p: GPtr<u8>, ty: i32) = thiscall 0x5E6280 => crate::ped_weapon::set_current_weapon_type;
     /// `CPedIntelligence::operator new(uint32)` (0x6074A0)
@@ -97,38 +107,16 @@ orig! {
     fn intel_dtor(i: GPtr<u8>) = thiscall 0x607300 => unported;
     /// `CPool<CPedIntelligence>::New()` (0x605EC0)
     fn intel_pool_new(pool: GPtr<u8>) -> GPtr<u8> = thiscall 0x605EC0 => unported;
-    /// `CTask::operator new(uint32)` (0x61A5A0)
-    fn task_new(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => unported;
-    /// default primary task constructor for non-player peds (0x690D20)
-    fn task_primary_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x690D20 => unported;
     /// default secondary task constructor (0x62F310, `(0, 1, 0, 8.0f)`)
     fn task_secondary_ctor(t: GPtr<u8>, a: u32, b: u32, c: u32, d: f32) -> GPtr<u8> = thiscall 0x62F310 => unported;
     /// `CTaskManager::SetTask(CTask*, int32)` (0x681B60)
     fn task_manager_set_task(tm: GPtr<u8>, t: GPtr<u8>, slot: u32) = thiscall 0x681B60 => unported;
     /// `CTaskManager::SetTaskSecondary(CTask*, int32)` (0x681AF0)
     fn task_manager_set_task_secondary(tm: GPtr<u8>, t: GPtr<u8>, slot: u32, z: u32) = thiscall 0x681AF0 => unported;
-    /// population ped count update `(CPed*, bool removing)` (0x611570)
-    fn population_update_ped_count(ped: GPtr<u8>, removing: u32) = cdecl 0x611570 => unported;
     /// `CEventAcquaintancePedHate::CEventAcquaintancePedHate(CPed*)` (0x4AF820)
     fn event_hate_ctor(e: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x4AF820 => unported;
-    /// `CEventAcquaintancePed::~CEventAcquaintancePed()` (0x4AF890)
-    fn event_hate_dtor(e: GPtr<u8>) = thiscall 0x4AF890 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420)
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
     /// `CReplay::RecordPedDeleted`-style hook the destructor calls first (0x45EC20)
     fn dtor_notify_replay(ped: GPtr<u8>) = cdecl 0x45EC20 => unported;
-    /// `CStreaming::SetMissionDoesntRequireModel(int32)` (0x409C90)
-    fn set_mission_doesnt_require_model(m: i32) = cdecl 0x409C90 => unported;
-    /// script ped-model release `(CPed*, uint16)` (0x46ABC0)
-    fn script_release_ped_model(ped: GPtr<u8>, idx: u32) = cdecl 0x46ABC0 => unported;
-    /// `CWorld::Remove`-side cleanup of references to a deleted entity (0x563280)
-    fn world_remove_references(ped: GPtr<u8>) = cdecl 0x563280 => unported;
-    /// `CPedGroups`-side cleanup for a deleted ped (0x43A960)
-    fn dtor_cleanup_43a960(ped: GPtr<u8>) = cdecl 0x43A960 => unported;
-    /// `CFire::Extinguish()` (0x5393F0)
-    fn fire_extinguish(f: GPtr<u8>) = thiscall 0x5393F0 => unported;
-    /// `CPed::ClearWeapons()`-style weapon cleanup (0x5E6320)
-    fn ped_dtor_weapons(ped: GPtr<u8>) = thiscall 0x5E6320 => unported;
     /// `CPed::operator delete(void*)` (0x5E4760)
     fn ped_delete(p: GPtr<u8>) = cdecl 0x5E4760 => unported;
     /// `CPed::~CPed()` (0x5E8620)
@@ -145,30 +133,16 @@ orig! {
     fn emergency_dtor_call(p: GPtr<u8>) = thiscall 0x5DE3B0 => emergency_ped_dtor;
     /// `CPlayerPed::~CPlayerPed()` (0x6093B0)
     fn player_dtor_call(p: GPtr<u8>) = thiscall 0x6093B0 => player_ped_dtor;
-    /// `CWanted::RemoveCop`-style call on the player's wanted (0x562C10)
-    fn wanted_remove_cop(w: GPtr<u8>, cop: GPtr<u8>) = thiscall 0x562C10 => unported;
     /// `CCopPed` member cleanup (0x5DE070)
     fn cop_clear_criminals(cop: GPtr<u8>) = thiscall 0x5DE070 => unported;
     /// `CStreaming::GetDefaultCopModel()` (0x407C00)
     fn get_default_cop_model() -> u32 = cdecl 0x407C00 => unported;
-    /// `CAnimManager::RemoveAnimBlockRef(int32)` (0x4D3FD0)
-    fn remove_anim_block_ref(i: i32) = cdecl 0x4D3FD0 => unported;
-    /// `CPedGroups::RemoveGroup(int32)` (0x5FB870)
-    fn ped_groups_remove_group(g: u32) = cdecl 0x5FB870 => unported;
-    /// `CEntity::SetModelIndex(uint32)` (0x532AE0)
-    fn entity_set_model_index(e: GPtr<u8>, m: u32) = thiscall 0x532AE0 => unported;
-    /// `RpAnimBlendClumpInit(RpClump*)` (0x4D6720)
-    fn anim_blend_clump_init(c: GPtr<u8>) = cdecl 0x4D6720 => unported;
     /// `RpAnimBlendClumpFillFrameArray(RpClump*, AnimBlendFrameData**)` (0x4D64A0)
     fn anim_blend_clump_fill_frame_array(c: GPtr<u8>, out: GPtr<u8>) = cdecl 0x4D64A0 => unported;
     /// `CPopulation::IsMale`-style model test `(int32 model, int32 k)` (0x610210)
     fn model_test_610210(m: i32, k: i32) -> u8 = cdecl 0x610210 => unported;
-    /// `CAnimManager::AddAnimation(RpClump*, AssocGroupId, AnimationId)` (0x4D3AA0)
-    fn add_animation(c: GPtr<u8>, g: u32, a: u32) -> GPtr<u8> = cdecl 0x4D3AA0 => unported;
     /// `CPedModelInfo::CreateHitColModelSkinned(RpClump*)` (0x4C6D90)
     fn create_hit_col_model_skinned(mi: GPtr<u8>, c: GPtr<u8>) = thiscall 0x4C6D90 => unported;
-    /// `CEntity::UpdateRpHAnim()`-style follow-up (0x532B20)
-    fn entity_update_after_model(e: GPtr<u8>) = thiscall 0x532B20 => unported;
 }
 
 /// The pool index of `p` (`(p - objects) / size` as the exe's signed magic-number division).

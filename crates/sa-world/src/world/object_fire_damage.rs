@@ -7,21 +7,16 @@ use sa_core::{hook, orig};
 
 use super::common::{g, rd, wr, x};
 
+use crate::bindings::add_permanent_shadow;
+use crate::bindings::audio_report_object_destruction;
+use crate::bindings::remove_from_moving_list;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::find_player_vehicle;
 orig! {
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
-    /// `CWorld::FindPlayerVehicle(int32, bool)` (0x56E0D0)
-    fn find_player_vehicle(id: i32, remote: u32) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
-    /// `CAudioEngine::ReportObjectDestruction(CEntity*)` (0x506ED0) on `AudioEngine` (0xB6BC90)
-    fn audio_report_object_destruction(ae: GPtr<u8>, e: GPtr<u8>) = thiscall 0x506ED0 => unported;
     /// `BreakManager_c::Add(CObject*, RwV3d*, float, bool)` (0x59E9B0) on `g_breakMan` (0xBB4240)
     fn break_manager_add(m: GPtr<u8>, o: GPtr<u8>, v: GPtr<u8>, f: u32, b: u32) = thiscall 0x59E9B0 => unported;
-    /// `CPhysical::RemoveFromMovingList()` (0x542860)
-    fn remove_from_moving_list(e: GPtr<u8>) = thiscall 0x542860 => unported;
     /// virtual slot +0x20 (`CEntity::DeleteRwObject`)
     fn v_delete_rw_object(e: GPtr<u8>) = thiscall vslot 0x20 => unported;
-    /// `CShadows::AddPermanentShadow(uint8, RwTexture*, CVector*, float, float, float, float, int16, uint8, uint8, uint8, float, uint32, float)` (0x706F60)
-    fn add_permanent_shadow(ty: u32, tex: u32, pos: GPtr<u8>, fx: u32, fy: u32, sx: u32, sy: u32, i: u32, r: u32, gg: u32, b: u32, dist: u32, time: u32, up: u32) = cdecl 0x706F60 => unported;
 }
 
 /// `CObject::ObjectFireDamage(float damage, CEntity* damager)` (0x5A1580): only for the two burnable

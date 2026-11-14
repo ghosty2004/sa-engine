@@ -4,7 +4,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::{g, rd, wr};
 
@@ -27,10 +27,7 @@ const ROW_SELECTABLE: isize = 0x3D6; // bool[12]
 const NUM_ROWS: isize = 0x3F6; // uint8
 const SELECTED_ROW: isize = 0x415; // int8
 
-orig! {
-    /// `operator delete(void*)` (0x8214BD)
-    pub fn operator_delete(p: GPtr<u8>) = cdecl 0x8214BD => unported;
-}
+pub use sa_core::bindings::crt_free_8214bd as operator_delete;
 
 /// `MenuNumber[menu]` (index read as the bytes do, `[menu*4 + 0xBA82D8]`).
 fn panel(menu: u8) -> GPtr<u8> {

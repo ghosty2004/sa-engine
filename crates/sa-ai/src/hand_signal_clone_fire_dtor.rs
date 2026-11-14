@@ -4,16 +4,12 @@
 #![allow(clippy::unreadable_literal)]
 
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
-orig! {
-    /// `CTaskSimple::CTaskSimple()` (0x61A390)
-    fn task_simple_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A390 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571A00 => unported;
-}
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::task_simple_ctor;
 
 /// `CTaskSimpleDoHandSignal::Clone()` (0x6608C0, thiscall, SEH frame): a new 0x0C-byte task (vtable 0x86FA68, +8 = 0),
 /// then +8 = the source's byte +8; the copy writes through a null result too when the pool is full, as in the

@@ -48,9 +48,12 @@ const K_SHAKE_SCALE: u32 = 0x3A83_126F;
 /// `.rdata` 0x859014: -100.0f
 const K_MINUS_100: u32 = 0xC2C8_0000;
 
+pub use sa_core::bindings::task_new;
+pub use sa_world::bindings::cam_shake_no_pos;
+pub use sa_world::bindings::get_distance_from_centre_of_mass_to_base_of_model;
+pub use sa_world::bindings::player_on_foot_ctor as task_simple_player_on_foot_ctor;
+pub use sa_world::bindings::set_posn;
 orig! {
-    /// `CCamera::CamShakeNoPos(CCamera*, float)` (0x50A970, cdecl)
-    pub fn cam_shake_no_pos(cam: GPtr<u8>, strength: f32) = cdecl 0x50A970 => unported;
     /// `CTheScripts::StartNewScript(uint8* ip)` (0x464C20)
     pub fn start_new_script(ip: GPtr<u8>) -> Scr = cdecl 0x464C20 => crate::script_brains::start_new_script;
     /// `CRunningScript::RemoveScriptFromList(CRunningScript**)` (0x464BD0)
@@ -73,16 +76,8 @@ orig! {
     pub fn reactivate_player_ped(idx: i32) = cdecl 0x609540 => unported;
     /// `CWorld::FindGroundZForCoord(float, float)` (0x569660), ST0 (read as f64: exact)
     pub fn find_ground_z_for_coord(x: f32, y: f32) -> f64 = cdecl 0x569660 => unported;
-    /// `CEntity::GetDistanceFromCentreOfMassToBaseOfModel()` (0x536BE0), ST0
-    pub fn get_distance_from_centre_of_mass_to_base_of_model(e: GPtr<u8>) -> f64 = thiscall 0x536BE0 => unported;
-    /// `CPlaceable::SetPosn(float, float, float)` (0x420B80)
-    pub fn set_posn(e: GPtr<u8>, x: f32, y: f32, z: f32) = thiscall 0x420B80 => unported;
     /// `CTheScripts::ClearSpaceForMissionEntity(const CVector&, CEntity*)` (0x486B00)
     pub fn clear_space_for_mission_entity(pos: GPtr<f32>, e: GPtr<u8>) = cdecl 0x486B00 => unported;
-    /// `CTask::operator new(uint32)` (0x61A5A0)
-    pub fn task_new(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => unported;
-    /// `CTaskSimplePlayerOnFoot::CTaskSimplePlayerOnFoot()` (0x685750), returns this
-    pub fn task_simple_player_on_foot_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x685750 => unported;
     /// `CTaskManager::SetTask(CTask*, int32 slot, bool)` (0x681AF0)
     pub fn task_manager_set_task(m: GPtr<u8>, task: GPtr<u8>, slot: i32, force: i32) = thiscall 0x681AF0 => unported;
 }

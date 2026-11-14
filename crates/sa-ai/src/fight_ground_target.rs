@@ -8,25 +8,18 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use sa_core::bindings::ped_is_alive;
+use sa_core::bindings::tm_get_simplest_active_task;
+use sa_core::bindings::vector_dot_product as dot_product;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::ped_get_bone_position;
+use sa_world::bindings::placeable_get_matrix;
+use sa_world::bindings::vector_sub;
 orig! {
     /// `CLocalisation::KickingWhenDown()` (0x56D270)
     fn localisation_kicking_when_down() -> u8 = cdecl 0x56D270 => localisation_kicking_when_down_native;
-    /// `CPed::GetBonePosition(RwV3d&, uint32 bone, bool)` (0x5E4280)
-    fn ped_get_bone_position(p: GPtr<u8>, out: GPtr<u8>, bone: u32, b: u32) = thiscall 0x5E4280 => unported;
-    /// `CPed::IsAlive()` (0x5E0170)
-    fn ped_is_alive(p: GPtr<u8>) -> u8 = thiscall 0x5E0170 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CTaskManager::GetSimplestActiveTask()` (0x6819D0)
-    fn tm_get_simplest_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x6819D0 => unported;
     /// `CTask::GetTaskType()` (vtable slot 0x10)
     fn task_get_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CPlaceable::GetMatrix()` (0x411990)
-    fn placeable_get_matrix(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x411990 => unported;
-    /// `VectorSub(CVector* out, const CVector* a, const CVector* b)` (0x40FE60, returns `out`)
-    fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => unported;
-    /// `DotProduct(const CVector*, const CVector*)` (0x40FDB0, ST0)
-    fn dot_product(a: GPtr<u8>, b: GPtr<u8>) -> f64 = cdecl 0x40FDB0 => unported;
 }
 
 /// `CLocalisation::Blood()` (0x56D230): true.

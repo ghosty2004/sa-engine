@@ -10,9 +10,15 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::go_to_point_update_point;
+use crate::bindings::point_route_add;
+use crate::bindings::task_is_go_to_task;
+use sa_core::bindings::ped_is_alive;
+use sa_core::bindings::tm_get_simplest_active_task as task_manager_get_simplest_active_task;
+use sa_core::bindings::vector_normalise;
+use sa_world::bindings::vector_magnitude_sqr as vector_magnitude;
+use sa_world::bindings::vector_sub;
 orig! {
-    /// `CPed::IsAlive()` (0x5E0170), AL
-    fn ped_is_alive(p: GPtr<u8>) -> u8 = thiscall 0x5E0170 => unported;
     /// `CTask::GetTaskType()` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
     /// `CTask::MakeAbortable(CPed*, eAbortPriority, const CEvent*)` (vtable +0x18), AL
@@ -22,22 +28,8 @@ orig! {
     /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, bool x7)` (0x56A490), AL
     #[allow(clippy::too_many_arguments)]
     fn world_get_is_line_of_sight_clear(a: GPtr<u8>, b: GPtr<u8>, c1: u32, c2: u32, c3: u32, c4: u32, c5: u32, c6: u32, c7: u32) -> u8 = cdecl 0x56A490 => unported;
-    /// `operator-(const CVector&, const CVector&)` into `out` (0x40FE60, cdecl, returns `out`)
-    fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => unported;
-    /// `CVector::Magnitude()` (0x406DA0, ST0)
-    fn vector_magnitude(v: GPtr<u8>) -> f64 = thiscall 0x406DA0 => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
-    /// `CPointRoute::AddPoints(const CVector&)` (0x48E180, `ret 4`)
-    fn point_route_add(r: GPtr<u8>, p: GPtr<u8>) = thiscall 0x48E180 => unported;
     /// `CPointRoute` remove the point at an index (0x5F13A0, `ret 4`)
     fn point_route_remove(r: GPtr<u8>, i: i32) = thiscall 0x5F13A0 => unported;
-    /// `CTaskManager::GetSimplestActiveTask()` (0x6819D0)
-    fn task_manager_get_simplest_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x6819D0 => unported;
-    /// `CTask::IsGoToTask(CTask*)` (0x61A360, cdecl), AL
-    fn task_is_go_to_task(t: GPtr<u8>) -> u8 = cdecl 0x61A360 => unported;
-    /// `CTaskSimpleGoToPoint::UpdatePoint(const CVector&, float radius, bool)` (0x645700, `ret 0xC`)
-    fn go_to_point_update_point(t: GPtr<u8>, p: GPtr<u8>, radius: u32, b: u32) = thiscall 0x645700 => unported;
 }
 
 /// `CTimer::m_snTimeInMilliseconds`

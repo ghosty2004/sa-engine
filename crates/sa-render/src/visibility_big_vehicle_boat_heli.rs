@@ -11,17 +11,13 @@ use sa_math::x87::X87;
 
 use crate::common::{g, rd};
 
+use crate::bindings::alpha_list_insert_sorted;
+use crate::bindings::atomic_default_render;
+use crate::bindings::dot_with_camera;
+use sa_core::bindings::frame_get_ltm;
 orig! {
-    /// `RwFrameGetLTM(frame)` (0x7F0990)
-    fn frame_get_ltm(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0990 => unported;
-    /// `AtomicDefaultRenderCallBack(atomic)` (0x7491C0)
-    fn atomic_default_render(a: GPtr<u8>) -> GPtr<u8> = cdecl 0x7491C0 => unported;
     /// `CVisibilityPlugins::RenderAlphaAtomic(RpAtomic*, int32 alpha)` (0x732480)
     fn render_alpha_atomic(a: GPtr<u8>, alpha: u32) -> GPtr<u8> = cdecl 0x732480 => unported;
-    /// `CVisibilityPlugins::GetDotProductWithCameraVector(ltm, carLtm, atomicId)` (0x7326D0, ST0)
-    fn dot_with_camera(m: GPtr<u8>, car: GPtr<u8>, id: u32) -> f64 = cdecl 0x7326D0 => unported;
-    /// `CLinkList<AlphaObjectInfo>::InsertSorted` (0x733910, thiscall): NULL when the list is full
-    fn alpha_list_insert_sorted(list: GPtr<u8>, info: GPtr<u8>) -> GPtr<u8> = thiscall 0x733910 => crate::render_lists::sorted_list_insert;
 }
 
 /// `CVisibilityPlugins` globals: angle to camera 0xC88020, distance from camera 0xC88024, the big-vehicle near

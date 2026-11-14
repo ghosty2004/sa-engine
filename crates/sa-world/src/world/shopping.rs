@@ -47,21 +47,15 @@ const STR_SHOPPING_DAT: usize = 0x85A528;
 /// `"r"` (0x85A53C)
 const STR_MODE_R: usize = 0x85A53C;
 
+pub use sa_core::bindings::stricmp;
+use sa_core::bindings::atol;
+use sa_core::bindings::file_close as close_file;
+use sa_core::bindings::open_file;
+use sa_core::bindings::strncmp;
+use sa_core::bindings::strtok;
 orig! {
-    /// CRT `_stricmp` (0x8229B6)
-    pub fn stricmp(a: GPtr<u8>, b: GPtr<u8>) -> i32 = cdecl 0x8229B6 => unported;
-    /// CRT `strncmp` (0x8214D0)
-    fn strncmp(a: GPtr<u8>, b: GPtr<u8>, n: u32) -> i32 = cdecl 0x8214D0 => unported;
-    /// CRT `strtok` (0x82244B)
-    fn strtok(s: GPtr<u8>, delim: GPtr<u8>) -> GPtr<u8> = cdecl 0x82244B => unported;
-    /// CRT `atol` (0x82258E)
-    fn atol(s: GPtr<u8>) -> i32 = cdecl 0x82258E => unported;
     /// `CFileLoader::LoadLine(FILESTREAM)` (0x536F80)
     fn load_line(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x536F80 => sa_stream::fileloader::load_line_file;
-    /// `CFileMgr::OpenFile(const char*, const char*)` (0x538900)
-    fn open_file(name: GPtr<u8>, mode: GPtr<u8>) -> GPtr<u8> = cdecl 0x538900 => sa_core::filemgr::open_file;
-    /// `CFileMgr::CloseFile(FILESTREAM)` (0x5389D0)
-    fn close_file(f: GPtr<u8>) -> i32 = cdecl 0x5389D0 => sa_core::filemgr::close_file;
     /// `CKeyGen::GetUppercaseKey(const char*)` (0x53CF30)
     fn get_uppercase_key(s: GPtr<u8>) -> u32 = cdecl 0x53CF30 => sa_core::keygen::get_uppercase_key;
     /// `CWeaponInfo::FindWeaponType(const char*)` (0x743D10)

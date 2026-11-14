@@ -14,6 +14,8 @@ use crate::{hook, orig};
 use crate::field::wr;
 use crate::field::rd;
 
+use crate::bindings::eh_vector_ctor;
+use crate::bindings::pad_clear;
 orig! {
     /// `CBaseModelInfo::CBaseModelInfo()` (0x4C4A60)
     fn base_model_info_ctor_call(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4C4A60 => base_model_info_ctor;
@@ -25,10 +27,6 @@ orig! {
     fn bounding_box_ctor_call(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x40FAF0 => bounding_box_ctor;
     /// `CCam::Init()` (0x50E180)
     fn cam_init(this: GPtr<u8>) = thiscall 0x50E180 => unported;
-    /// `CPad::Clear(bool, bool)` (0x541A70)
-    fn pad_clear(this: GPtr<u8>, enable: u32, phase: u32) = thiscall 0x541A70 => unported;
-    /// `eh vector constructor iterator(ptr, size, count, ctor, dtor)` (0x821D30)
-    fn eh_vector_ctor(p: GPtr<u8>, size: u32, n: u32, ctor: u32, dtor: u32) = stdcall 0x821D30 => unported;
 }
 
 /// `CBaseModelInfo::CBaseModelInfo()` (0x4C4A60): vtable 0x85BB9C, u16 +8 = 0, u16 +0xA = 0xFFFF.
@@ -311,9 +309,6 @@ pub fn path_element_ctor(this: GPtr<u8>) -> GPtr<u8> {
     this
 }
 
-
-
-
 /// The element constructor of a `ListItem_c` base.
 #[hook(addr = 0x5A3070, conv = thiscall, name = "FUN_005a3070", expect = "56 8B F1 E8 38 5D F0 FF",
        unverified = "std5-ctor-1", route = "L2", hazards = "none", recs = "boot")]
@@ -329,7 +324,6 @@ pub fn fx_particle_slot_ctor(this: GPtr<u8>) -> GPtr<u8> {
     list_item_ctor_call(this);
     this
 }
-
 
 /// The script element constructor 0x46AE30: bytes +0 and +0x18 = 0.
 #[hook(addr = 0x46AE30, conv = thiscall, name = "(missed by ghidra: data-code-immediate)", expect = "8B C1 C6 00 00 C6 40 18",
@@ -359,7 +353,6 @@ pub fn proc_surface_info_ctor(this: GPtr<u8>) -> GPtr<u8> {
     list_ctor_call(this.byte_add(0x3C));
     this
 }
-
 
 /// `FurnitureManager_c::FurnitureManager_c()` (0x591260): 9 groups of 0xC (0x590DE0 / 0x590DF0), 0x200
 /// items of 0x10 at +0x6C (0x590E00 / 0x590E10), the `List_c` at +0x206C.

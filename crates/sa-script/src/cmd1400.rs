@@ -33,9 +33,9 @@ const ENTER_AS_DRIVER_DEFAULT_TIME: usize = 0x86E698;
 /// (spec open question: its name).
 const NEXT_ENTER_CAR_DWORD: usize = 0x8D237C;
 
+use sa_core::bindings::task_new;
+use sa_world::bindings::leave_car_ctor as task_complex_leave_car_ctor;
 orig! {
-    /// `CTask::operator new(uint32)` (0x61A5A0)
-    fn task_new(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => unported;
     /// `CRunningScript::GivePedScriptedTask(int32 pedHandle, CTask*, int32 opcode)` (0x465C20)
     fn give_ped_scripted_task(s: Scr, ped: u32, task: GPtr<u8>, command: u32) = thiscall 0x465C20 => unported;
     /// `CTaskSimpleHandsUp::CTaskSimpleHandsUp(int32 time)` (0x48E970), returns this
@@ -47,9 +47,6 @@ orig! {
     fn task_enter_car_as_passenger_timed_ctor(t: GPtr<u8>, v: GPtr<u8>, door: u32, time: u32, b: u32) -> GPtr<u8> = thiscall 0x63B030 => unported;
     /// `CTaskComplexEnterCarAsDriverTimed::CTaskComplexEnterCarAsDriverTimed(CVehicle*, int32 time)` (0x63AD70), returns this
     fn task_enter_car_as_driver_timed_ctor(t: GPtr<u8>, v: GPtr<u8>, time: u32) -> GPtr<u8> = thiscall 0x63AD70 => unported;
-    /// `CTaskComplexLeaveCar::CTaskComplexLeaveCar(CVehicle*, int32 door, int32 delay, bool sensible, bool forceGetOut)`
-    /// (0x63B8C0), returns this
-    fn task_complex_leave_car_ctor(t: GPtr<u8>, v: GPtr<u8>, door: u32, delay: u32, sensible: u32, force: u32) -> GPtr<u8> = thiscall 0x63B8C0 => unported;
 }
 
 /// The enter-car time mapping: -2 -> -1, -1 -> the dword at `default_at`, else the value.
@@ -70,34 +67,45 @@ fn take_next_enter_car_dword(t: GPtr<u8>, field: isize) {
     g.write(6);
 }
 
+use crate::bindings::affect_secondary_behaviour_ctor as task_affect_secondary_ctor;
+use crate::bindings::physical_45afb0 as set_turn_speed;
+use crate::bindings::task_trigger_look_at_ctor;
+use sa_core::bindings::strncmp;
+use sa_core::bindings::vector_magnitude;
+use sa_world::bindings::achieve_heading_ctor as task_achieve_heading_ctor;
+use sa_world::bindings::add_light;
+use sa_world::bindings::car_drive_wander_ctor as task_car_drive_wander_ctor;
+use sa_world::bindings::complex_jump_ctor as task_jump_ctor;
+use sa_world::bindings::cower_ctor as task_cower_ctor;
+use sa_world::bindings::ctor_48df30 as task_scratch_head_ctor;
+use sa_world::bindings::die_ctor as task_die_ctor;
+use sa_world::bindings::entity_get_is_static;
+use sa_world::bindings::find_zone;
+use sa_world::bindings::flee_entity_ctor as task_flee_entity_ctor;
+use sa_world::bindings::get_percentage_progress;
+use sa_world::bindings::get_stat_value;
+use sa_world::bindings::look_about_ctor as task_look_about_ctor;
+use sa_world::bindings::physical_add_to_moving_list as add_to_moving_list;
+use sa_world::bindings::seek_entity_standard_ctor as task_seek_entity_ctor;
+use sa_world::bindings::sequence_add_task;
+use sa_world::bindings::set_stat_value;
+use sa_world::bindings::shake_fist_ctor as task_shake_fist_ctor;
+use sa_world::bindings::stand_still_ctor as task_stand_still_ctor;
+use sa_world::bindings::task_use_atm_ctor;
+use sa_world::bindings::tired_ctor as task_tired_ctor;
 orig! {
     /// `CStats::RegisterBestPosition(eStats, int32)` (0x55A160)
     fn register_best_position(stat: u32, pos: u32) = cdecl 0x55A160 => unported;
     /// `CPlayerInfo::GetPos(CVector* out)` (0x56DFB0), returns `out`
     fn player_get_pos(p: GPtr<u8>, out: GPtr<u32>) -> GPtr<u32> = thiscall 0x56DFB0 => unported;
-    /// `CTheZones::FindZone(const CVector*, int32 nameLow, int32 nameHigh, eZoneType)` (0x572B80), AL
-    fn find_zone(pos: GPtr<u32>, lo: u32, hi: u32, ty: u32) -> u8 = cdecl 0x572B80 => unported;
-    /// `CEntity::GetIsStatic()` (0x4633E0), AL
-    fn entity_get_is_static(e: GPtr<u8>) -> u8 = thiscall 0x4633E0 => unported;
-    /// `CPhysical::AddToMovingList()` (0x542800)
-    fn add_to_moving_list(e: GPtr<u8>) = thiscall 0x542800 => unported;
     /// `CVector::Normalise()` (0x59C910)
     fn vector_normalise(v: GPtr<u32>) = thiscall 0x59C910 => unported;
-    /// `CPointLights::AddLight(uint8 type, CVector pos, CVector dir, float radius, float r, float g, float b,
-    /// uint8 fogType, bool extraShadows, CEntity*)` (0x7000E0), 14 dwords
-    fn add_light(ty: u32, px: u32, py: u32, pz: u32, dx: u32, dy: u32, dz: u32, radius: u32, r: u32, g: u32, b: u32, fog: u32, shadows: u32, e: u32) = cdecl 0x7000E0 => unported;
     /// `FxManager_c::TriggerGunshot(CEntity*, const CVector& pos, const CVector& dir, bool)` (0x4A0DE0) on `g_fx` 0xA9AE00
     fn trigger_gunshot(fx: GPtr<u8>, e: u32, pos: GPtr<u32>, dir: GPtr<u32>, b: u32) = thiscall 0x4A0DE0 => unported;
-    /// `CStats::GetPercentageProgress()` (0x5591E0), ST0 (exact as f64)
-    fn get_percentage_progress() -> f64 = cdecl 0x5591E0 => unported;
     /// `CVisibilityPlugins::SetClumpAlpha(RpClump*, int32)` (0x732B00)
     fn set_clump_alpha(c: u32, a: u32) = cdecl 0x732B00 => unported;
     /// `CStats::IncrementStat(eStats, float)` (0x55C180), the float as its raw dword
     fn increment_stat(stat: u32, v: u32) = cdecl 0x55C180 => unported;
-    /// `CStats::GetStatValue(eStats)` (0x558E40), ST0 (exact as f64)
-    fn get_stat_value(stat: u32) -> f64 = cdecl 0x558E40 => unported;
-    /// `CStats::SetStatValue(eStats, float)` (0x55A070), the float as its raw dword
-    fn set_stat_value(stat: u32, v: u32) = cdecl 0x55A070 => unported;
     /// `CRunningScript::GetIndexOfGlobalVariable()` (0x464700), AX
     fn global_index(s: Scr) -> u16 = thiscall 0x464700 => crate::vm::get_index_of_global_variable;
     /// `CUserDisplay::OnscnTimer.SetCounterFlashWhenFirstDisplayed(uint16 varId, bool)` (0x44CEB0)
@@ -108,8 +116,6 @@ orig! {
     fn multiply_3x3(out: GPtr<u32>, m: GPtr<u8>, v: GPtr<u32>) -> GPtr<u32> = cdecl 0x59C790 => unported;
     /// `Multiply3x3(CVector* out, const CVector&, const CMatrix&)` (0x59C810, vector times matrix), returns `out`
     fn multiply_3x3_vm(out: GPtr<u32>, v: GPtr<u32>, m: GPtr<u8>) -> GPtr<u32> = cdecl 0x59C810 => unported;
-    /// unnamed 0x45AFB0 (`.HOODLUM` 0x15658A0; writes the three floats to `[this+0x50..0x58]`, the turn speed)
-    fn set_turn_speed(o: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x45AFB0 => unported;
     /// virtual `CEntity::SetIsStatic(bool)` (vtable +0x10)
     fn vcall_set_is_static(f: u32, e: GPtr<u8>, b: u32) = thiscall dyn => unported;
     /// `CVector::operator*=(float)` (0x40FEF0), the float as its raw dword
@@ -122,75 +128,36 @@ orig! {
     fn vector_mul(out: GPtr<u32>, v: GPtr<u32>, k: u32) -> GPtr<u32> = cdecl 0x40FEC0 => unported;
     /// unnamed `CVector::operator+=(const CVector&)` (0x411A00)
     fn vector_add_assign(v: GPtr<u32>, o: GPtr<u32>) = thiscall 0x411A00 => unported;
-    /// `CVector::Magnitude()` (0x4082C0), ST0 (exact as f64)
-    fn vector_magnitude(v: GPtr<u8>) -> f64 = thiscall 0x4082C0 => unported;
-    /// CRT `strncmp` (0x8214D0)
-    fn strncmp(a: GPtr<u8>, b: GPtr<u8>, n: u32) -> i32 = cdecl 0x8214D0 => unported;
     /// `CTaskSimplePause::CTaskSimplePause(int32 time)` (0x48E750), returns this
     fn task_pause_ctor(t: GPtr<u8>, time: u32) -> GPtr<u8> = thiscall 0x48E750 => unported;
-    /// `CTaskSimpleStandStill::CTaskSimpleStandStill(int32 time, bool looped, bool holdLastFrame, float blend)` (0x62F310)
-    fn task_stand_still_ctor(t: GPtr<u8>, time: u32, looped: u32, hold: u32, blend: u32) -> GPtr<u8> = thiscall 0x62F310 => unported;
     /// `CTaskComplexFallAndGetUp::CTaskComplexFallAndGetUp(int32 dir, int32 time)` (0x678700)
     fn task_fall_and_get_up_ctor(t: GPtr<u8>, a: u32, b: u32) -> GPtr<u8> = thiscall 0x678700 => unported;
-    /// `CTaskComplexJump::CTaskComplexJump(int32)` (0x67A030)
-    fn task_jump_ctor(t: GPtr<u8>, a: u32) -> GPtr<u8> = thiscall 0x67A030 => unported;
-    /// `CTaskSimpleTired::CTaskSimpleTired(int32 time)` (0x630F20)
-    fn task_tired_ctor(t: GPtr<u8>, time: u32) -> GPtr<u8> = thiscall 0x630F20 => unported;
-    /// `CTaskComplexDie::CTaskComplexDie(eWeaponType, AssocGroupId, AnimationId, float, float, bool, bool,
-    /// eFallDir, bool)` (0x630040), 9 dwords
-    fn task_die_ctor(t: GPtr<u8>, a: u32, b: u32, c: u32, d: u32, e: u32, f: u32, g: u32, h: u32, i: u32) -> GPtr<u8> = thiscall 0x630040 => unported;
     /// `CIKChainManager_c::LookAt(const char*, CPed*, CEntity*, int32 time, ePedBones, CVector*, bool, float,
     /// int32, int32, bool)` (0x618970) on `g_ikChainMan` 0xC15448
     fn ik_look_at(m: GPtr<u8>, name: u32, ped: GPtr<u8>, target: GPtr<u8>, time: u32, bone: u32, pos: u32, b: u32, speed: u32, blend: u32, prio: u32, c: u32) = thiscall 0x618970 => unported;
-    /// unnamed task ctor 0x634440 (`CTaskSimpleTriggerLookAt(CEntity*, int32 time, int32 bone, CVector, bool,
-    /// float, int32, int32)`), 10 dwords
-    fn task_trigger_look_at_ctor(t: GPtr<u8>, e: GPtr<u8>, time: u32, bone: u32, x: u32, y: u32, z: u32, b: u32, speed: u32, blend: u32, prio: u32) -> GPtr<u8> = thiscall 0x634440 => unported;
-    /// `CTaskComplexSequence::AddTask(CTask*)` (0x632D10)
-    fn sequence_add_task(seq: GPtr<u8>, t: GPtr<u8>) = thiscall 0x632D10 => unported;
     /// `CTaskSimpleSay::CTaskSimpleSay(int32 sayId, int32)` (0x48E360)
     fn task_say_ctor(t: GPtr<u8>, id: u32, b: u32) -> GPtr<u8> = thiscall 0x48E360 => unported;
-    /// `CTaskSimpleShakeFist::CTaskSimpleShakeFist()` (0x690B80)
-    fn task_shake_fist_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x690B80 => unported;
     /// `CTaskManager::SetTaskSecondary(CTask*, int32 slot)` (0x681B60)
     fn set_task_secondary(m: GPtr<u8>, t: GPtr<u8>, slot: u32) = thiscall 0x681B60 => unported;
-    /// `CTaskSimpleAffectSecondaryBehaviour::CTaskSimpleAffectSecondaryBehaviour(bool add, int32 slot, CTask*)` (0x691270)
-    fn task_affect_secondary_ctor(t: GPtr<u8>, add: u32, slot: u32, task: GPtr<u8>) -> GPtr<u8> = thiscall 0x691270 => unported;
-    /// `CTaskSimpleCower::CTaskSimpleCower()` (0x48DE70)
-    fn task_cower_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x48DE70 => unported;
     /// `CTaskSimpleDuck::CTaskSimpleDuck(eDuckControlType, uint16 len, int16)` (0x691FC0)
     fn task_duck_ctor(t: GPtr<u8>, ty: u32, len: u32, c: u32) -> GPtr<u8> = thiscall 0x691FC0 => unported;
-    /// `CTaskSimpleUseAtm::CTaskSimpleUseAtm()` (0x48DFE0)
-    fn task_use_atm_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x48DFE0 => unported;
-    /// task ctor 0x48DF30 (`.HOODLUM` 0x1562470, CTaskSimpleScratchHead)
-    fn task_scratch_head_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x48DF30 => unported;
-    /// `CTaskSimpleLookAbout::CTaskSimpleLookAbout(int32 time)` (0x48E0A0)
-    fn task_look_about_ctor(t: GPtr<u8>, time: u32) -> GPtr<u8> = thiscall 0x48E0A0 => unported;
     /// `CTaskComplexLeaveCarAndFlee::CTaskComplexLeaveCarAndFlee(CVehicle*, const CVector&, int32, int32, bool)` (0x63BF90)
     fn task_leave_car_and_flee_ctor(t: GPtr<u8>, v: GPtr<u8>, p: GPtr<u32>, a: u32, b: u32, c: u32) -> GPtr<u8> = thiscall 0x63BF90 => unported;
     /// `CTaskComplexDriveToPoint::CTaskComplexDriveToPoint(CVehicle*, const CVector&, float speed, int32 mode,
     /// int32 model, float radius, int32 style)` (0x63CE00)
     fn task_drive_to_point_ctor(t: GPtr<u8>, v: GPtr<u8>, p: GPtr<u32>, speed: u32, mode: u32, model: u32, radius: u32, style: u32) -> GPtr<u8> = thiscall 0x63CE00 => unported;
-    /// `CTaskComplexCarDriveWander::CTaskComplexCarDriveWander(CVehicle*, int32 style, float speed)` (0x63CB10)
-    fn task_car_drive_wander_ctor(t: GPtr<u8>, v: GPtr<u8>, style: u32, speed: u32) -> GPtr<u8> = thiscall 0x63CB10 => unported;
     /// `CTaskComplexGoToPointAndStandStill::CTaskComplexGoToPointAndStandStill(int32 moveState, const CVector&,
     /// float, float, bool, bool)` (0x668120)
     fn task_go_to_point_and_stand_still_ctor(t: GPtr<u8>, ms: u32, p: GPtr<u32>, r1: u32, r2: u32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x668120 => unported;
     /// `CTaskComplexGoToPointAndStandStillTimed::...(int32 moveState, const CVector&, float, float, int32 time)` (0x6685E0)
     fn task_go_to_point_and_stand_still_timed_ctor(t: GPtr<u8>, ms: u32, p: GPtr<u32>, r1: u32, r2: u32, time: u32) -> GPtr<u8> = thiscall 0x6685E0 => unported;
-    /// `CTaskSimpleAchieveHeading::CTaskSimpleAchieveHeading(float, float, float)` (0x667E20)
-    fn task_achieve_heading_ctor(t: GPtr<u8>, a: u32, b: u32, c: u32) -> GPtr<u8> = thiscall 0x667E20 => unported;
     /// unnamed 0x48E180 (`.HOODLUM` 0x1569990; `CPointRoute::AddRoutePoint(const CVector&)`)
     fn point_route_add(r: GPtr<u8>, p: GPtr<u32>) = thiscall 0x48E180 => unported;
     /// `CTaskComplexFollowPointRoute::CTaskComplexFollowPointRoute(int32 moveState, const CPointRoute&, int32 mode,
     /// float, float, bool, bool, bool)` (0x671510)
     fn task_follow_point_route_ctor(t: GPtr<u8>, ms: u32, r: u32, mode: u32, a: u32, b: u32, c: u32, d: u32, e: u32) -> GPtr<u8> = thiscall 0x671510 => unported;
-    /// `CTaskComplexSeekEntity<CEntitySeekPosCalculatorStandard>::CTaskComplexSeekEntity(CEntity*, int32, int32,
-    /// float, float, float, bool, bool)` (0x46AC10)
-    fn task_seek_entity_ctor(t: GPtr<u8>, e: GPtr<u8>, time: u32, period: u32, a: u32, b: u32, c: u32, d: u32, f: u32) -> GPtr<u8> = thiscall 0x46AC10 => unported;
     /// `CTaskComplexFleePoint::CTaskComplexFleePoint(const CVector&, bool, float, int32)` (0x65B390)
     fn task_flee_point_ctor(t: GPtr<u8>, p: GPtr<u32>, b: u32, dist: u32, time: u32) -> GPtr<u8> = thiscall 0x65B390 => unported;
-    /// `CTaskComplexFleeEntity::CTaskComplexFleeEntity(CEntity*, bool, float, int32, int32, float)` (0x65B930)
-    fn task_flee_entity_ctor(t: GPtr<u8>, e: GPtr<u8>, b: u32, dist: u32, time: u32, period: u32, k: u32) -> GPtr<u8> = thiscall 0x65B930 => unported;
 }
 
 use sa_core::field::gr32 as rd;

@@ -94,19 +94,16 @@ const IMM_77: f32 = f32::from_bits(0x429A_0000);
 const IMM_250: f32 = f32::from_bits(0x437A_0000);
 const IMM_100: f32 = f32::from_bits(0x42C8_0000);
 
+use crate::bindings::clear_blip_call;
+use crate::bindings::transform_radar_point_to_screen_space_call;
+use crate::bindings::transform_real_world_point_to_radar_space_call;
 orig! {
     /// `CPad::IsMouseRButtonPressed()` (0x572E70; called with ECX = the pad, which it does not read)
     fn is_mouse_rbutton_pressed_call() -> u8 = cdecl 0x572E70 => crate::menu_mgr::is_mouse_rbutton_pressed;
-    /// `CRadar::ClearBlip(int32)` (0x587CE0)
-    fn clear_blip_call(h: i32) = cdecl 0x587CE0 => crate::radar::clear_blip;
     /// `CRadar::SetBlipSprite(int32, eRadarSprite)` (0x583D70)
     fn set_blip_sprite_call(h: i32, sprite: i32) = cdecl 0x583D70 => crate::radar::set_blip_sprite;
-    /// `CRadar::TransformRealWorldPointToRadarSpace(CVector2D& out, const CVector2D& in)` (0x583530)
-    fn transform_real_world_point_to_radar_space_call(out: GPtr<f32>, inp: GPtr<f32>) = cdecl 0x583530 => crate::radar::transform_real_world_point_to_radar_space;
     /// `CRadar::LimitRadarPoint(CVector2D&)` (0x5832F0, ST0; discarded here)
     fn limit_radar_point_call_st0(p: GPtr<f32>) -> f64 = cdecl 0x5832F0 => limit_radar_point_st0_rust;
-    /// `CRadar::TransformRadarPointToScreenSpace(CVector2D& out, const CVector2D& in)` (0x583480)
-    fn transform_radar_point_to_screen_space_call(out: GPtr<f32>, inp: GPtr<f32>) = cdecl 0x583480 => crate::radar::transform_radar_point_to_screen_space;
     /// `CMenuSystem::CreateNewMenu(type, title, x, y, width, columns, interactive, background, alignment)`
     /// (0x582300; AL)
     fn create_new_menu_call(kind: u32, title: GPtr<u8>, px: f32, py: f32, width: f32, columns: u32, interactive: u32, background: u32, alignment: u32) -> u8 = cdecl 0x582300 => create_new_menu_rust;

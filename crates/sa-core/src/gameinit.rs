@@ -15,6 +15,48 @@ use crate::field::p8;
 /// "Loading the Game" (0x863A6C), the loading-screen title of every stage.
 const LOADING_THE_GAME: u32 = 0x863A6C;
 
+pub use crate::bindings::anim_manager_initialise;
+pub use crate::bindings::camera_process;
+pub use crate::bindings::car_ctrl_init;
+pub use crate::bindings::car_generators_init as the_car_generators_init;
+pub use crate::bindings::col_accel_end_cache;
+pub use crate::bindings::col_accel_start_cache;
+pub use crate::bindings::collision_init;
+pub use crate::bindings::cull_zones_init;
+pub use crate::bindings::cutscene_mgr_initialise;
+pub use crate::bindings::debug_init_text_buffer;
+pub use crate::bindings::game_logic_init_at_start_of_game as game_logic_init_at_start;
+pub use crate::bindings::gang_wars_init_at_start_of_game as gang_wars_init_at_start;
+pub use crate::bindings::ini_file_load_ini_file as ini_load;
+pub use crate::bindings::init_model_indices;
+pub use crate::bindings::loading_screen;
+pub use crate::bindings::messages_clear_all_displayed_by_game;
+pub use crate::bindings::messages_init;
+pub use crate::bindings::model_info_initialise;
+pub use crate::bindings::occlusion_init;
+pub use crate::bindings::p2p_conversations_clear as ped_to_player_conversations_clear;
+pub use crate::bindings::pickups_init;
+pub use crate::bindings::placeable_init_matrix_array;
+pub use crate::bindings::pools_initialise;
+pub use crate::bindings::pop_current_txd as txd_pop_current;
+pub use crate::bindings::push_current_txd as txd_push_current;
+pub use crate::bindings::quad_tree_init_pool;
+pub use crate::bindings::references_init;
+pub use crate::bindings::restart_initialise;
+pub use crate::bindings::scripts_process;
+pub use crate::bindings::scripts_start_test_script as start_test_script;
+pub use crate::bindings::set_current_txd as txd_set_current;
+pub use crate::bindings::set_pieces_init;
+pub use crate::bindings::stencil_shadows_init;
+pub use crate::bindings::stunt_jump_manager_init;
+pub use crate::bindings::tag_manager_init;
+pub use crate::bindings::the_zones_init;
+pub use crate::bindings::txd_add_ref;
+pub use crate::bindings::txd_create;
+pub use crate::bindings::user_display_init;
+pub use crate::bindings::vehicle_recording_init;
+pub use crate::bindings::weather_init;
+pub use crate::bindings::world_initialise;
 orig! {
     /// `CGame::Init1(datFile)` (0x5BF840)
     pub fn init1_call(dat: GPtr<u8>) -> u8 = cdecl 0x5BF840 => init1;
@@ -22,136 +64,84 @@ orig! {
     pub fn init2_call(dat: GPtr<u8>) -> u8 = cdecl 0x5BA1A0 => init2;
     /// `CGame::Init3(datFile)` (0x5BA400)
     pub fn init3_call(dat: GPtr<u8>) -> u8 = cdecl 0x5BA400 => init3;
-    /// `CColAccel::startCache()` (0x5B31A0)
-    pub fn col_accel_start_cache() = cdecl 0x5B31A0 => unported;
-    /// `CColAccel::endCache()` (0x5B2AD0)
-    pub fn col_accel_end_cache() = cdecl 0x5B2AD0 => unported;
     /// `CFileLoader::LoadLevel(path)` (0x5B9030)
     pub fn load_level(path: GPtr<u8>) = cdecl 0x5B9030 => unported;
-    /// `CStencilShadows::Init()` (0x70F9E0)
-    pub fn stencil_shadows_init() = cdecl 0x70F9E0 => unported;
-    /// `CLoadingScreen::LoadingScreen(title, message, unused)` (0x53DED0)
-    pub fn loading_screen(title: u32, msg: u32, unused: u32) = cdecl 0x53DED0 => unported;
-    /// `CTheScripts::StartTestScript()` (0x464D40)
-    pub fn start_test_script() = cdecl 0x464D40 => unported;
-    /// `CTheScripts::Process()` (0x46A000)
-    pub fn scripts_process() = cdecl 0x46A000 => unported;
-    /// `CCamera::Process()` (0x52B730)
-    pub fn camera_process(this: GPtr<u8>) = thiscall 0x52B730 => unported;
 
     // ---- Init1
     pub fn init_maths_tables_call() = cdecl 0x59AC90 => init_maths_tables;
-    pub fn pools_initialise() = cdecl 0x550F10 => unported;
-    pub fn placeable_init_matrix_array() = cdecl 0x54F3A0 => unported;
-    pub fn ini_load() = cdecl 0x56D070 => unported;
     pub fn set_use_d3d_resource_buffering_call(on: u32) = cdecl 0x730AC0 => set_use_d3d_resource_buffering;
     pub fn txd_add_slot(name: u32) -> i32 = cdecl 0x731C80 => unported;
-    pub fn txd_create(slot: i32) = cdecl 0x731990 => unported;
-    pub fn txd_add_ref(slot: i32) = cdecl 0x731A00 => unported;
     pub fn txd_load_txd(slot: i32, path: u32) -> u8 = cdecl 0x7320B0 => unported;
-    pub fn txd_set_current(slot: i32) = cdecl 0x7319C0 => unported;
     pub fn txd_find_slot(name: u32) -> i32 = cdecl 0x731850 => unported;
-    pub fn txd_push_current() = cdecl 0x7316A0 => unported;
-    pub fn txd_pop_current() = cdecl 0x7316B0 => unported;
-    pub fn game_logic_init_at_start() = cdecl 0x441210 => unported;
-    pub fn gang_wars_init_at_start() = cdecl 0x443920 => unported;
     pub fn conversations_clear_call() = cdecl 0x43A7B0 => conversations_clear;
-    pub fn ped_to_player_conversations_clear() = cdecl 0x43AAE0 => unported;
-    pub fn quad_tree_init_pool() = cdecl 0x552C00 => unported;
     pub fn plant_mgr_initialise_call() -> u8 = cdecl 0x5DD910 => plant_mgr_initialise;
     pub fn custom_roadsign_mgr_initialise_call() -> u8 = cdecl 0x6FE120 => custom_roadsign_mgr_initialise;
-    pub fn references_init() = cdecl 0x5719B0 => unported;
-    pub fn debug_init_text_buffer() = cdecl 0x532240 => unported;
-    pub fn tag_manager_init() = cdecl 0x49CC50 => unported;
-    pub fn weather_init() = cdecl 0x72A480 => unported;
     pub fn cover_init_call() = cdecl 0x698710 => cover_init;
-    pub fn cull_zones_init() = cdecl 0x72D6B0 => unported;
-    pub fn occlusion_init() = cdecl 0x71DCA0 => unported;
-    pub fn collision_init() = cdecl 0x416260 => unported;
     pub fn birds_init_call() = cdecl 0x711EC0 => birds_init;
     pub fn entry_exit_manager_init_call() = cdecl 0x43F880 => entry_exit_manager_init;
-    pub fn stunt_jump_manager_init() = cdecl 0x49CA50 => unported;
-    pub fn set_pieces_init() = cdecl 0x4994F0 => unported;
-    pub fn the_zones_init() = cdecl 0x572670 => unported;
-    pub fn user_display_init() = cdecl 0x571EE0 => unported;
-    pub fn messages_init() = cdecl 0x69EE00 => unported;
-    pub fn messages_clear_all_displayed_by_game(flag: u32) = cdecl 0x69EDC0 => unported;
-    pub fn vehicle_recording_init() = cdecl 0x459390 => unported;
-    pub fn restart_initialise() = cdecl 0x460630 => unported;
-    pub fn world_initialise() = cdecl 0x5631E0 => unported;
-    pub fn anim_manager_initialise() = cdecl 0x5BF6B0 => unported;
-    pub fn cutscene_mgr_initialise() = cdecl 0x4D5A20 => unported;
-    pub fn car_ctrl_init() = cdecl 0x4212E0 => unported;
-    pub fn init_model_indices() = cdecl 0x5BCA10 => unported;
-    pub fn model_info_initialise() = cdecl 0x4C6810 => unported;
-    pub fn pickups_init() = cdecl 0x454A70 => unported;
-    pub fn the_car_generators_init() = cdecl 0x6F3270 => unported;
 }
+pub use crate::bindings::anim_manager_load_anim_files;
+pub use crate::bindings::audio_zones_init;
+pub use crate::bindings::car_plate_mgr_initialise as custom_car_plate_mgr_initialise;
+pub use crate::bindings::cheat_reset_cheats;
+pub use crate::bindings::clothes_init;
+pub use crate::bindings::coronas_init;
+pub use crate::bindings::entry_exit_post_creation;
+pub use crate::bindings::fight_load_melee_data as task_simple_fight_load_melee_data;
+pub use crate::bindings::garages_init;
+pub use crate::bindings::load_all_requested_models as streaming_load_all_requested_models;
+pub use crate::bindings::ped_initialise;
+pub use crate::bindings::population_initialise;
+pub use crate::bindings::radar_initialise;
+pub use crate::bindings::radar_load_textures;
+pub use crate::bindings::renderer_init;
+pub use crate::bindings::road_blocks_init;
+pub use crate::bindings::shadows_init;
+pub use crate::bindings::streaming_init_image_list;
+pub use crate::bindings::streaming_load_initial_peds;
+pub use crate::bindings::streaming_load_initial_vehicles;
+pub use crate::bindings::streaming_load_initial_weapons;
+pub use crate::bindings::streaming_read_ini_file;
+pub use crate::bindings::test_model_indices;
+pub use crate::bindings::the_zones_post_zone_creation;
+pub use crate::bindings::water_level_initialise;
+pub use crate::bindings::weapon_initialise_weapons;
 orig! {
-    pub fn garages_init() = cdecl 0x447120 => unported;
-    pub fn audio_zones_init() = cdecl 0x5081A0 => unported;
-    pub fn streaming_init_image_list() = cdecl 0x4083C0 => unported;
-    pub fn streaming_read_ini_file() = cdecl 0x5BCCD0 => unported;
     pub fn path_find_init(this: GPtr<u8>) = thiscall 0x44D080 => unported;
     pub fn path_find_allocate_info_mem(this: GPtr<u8>) = thiscall 0x44D2B0 => unported;
-    pub fn task_simple_fight_load_melee_data() = cdecl 0x5BEDC0 => unported;
-    pub fn cheat_reset_cheats() = cdecl 0x438450 => unported;
     pub fn fx_init(this: GPtr<u8>) = thiscall 0x49EA90 => unported;
-
-    // ---- Init2
-    pub fn the_zones_post_zone_creation() = cdecl 0x572B70 => unported;
-    pub fn entry_exit_post_creation() = cdecl 0x43F0A0 => unported;
     pub fn path_find_prepare_path_data(this: GPtr<u8>) = thiscall 0x44D0E0 => unported;
     pub fn player_info_clear(this: GPtr<u8>) = thiscall 0x56F330 => unported;
     pub fn player_info_load_player_skin(this: GPtr<u8>) = thiscall 0x56F7D0 => unported;
-    pub fn test_model_indices() = cdecl 0x53ED30 => unported;
-    pub fn clothes_init() = cdecl 0x5A80D0 => unported;
-    pub fn water_level_initialise() = cdecl 0x6EAE80 => unported;
     pub fn draw_set_fov(fov: f32) = cdecl 0x6FF410 => unported;
-    pub fn custom_car_plate_mgr_initialise() -> u8 = cdecl 0x6FD500 => unported;
-    pub fn streaming_load_initial_vehicles() = cdecl 0x407F20 => unported;
-    pub fn streaming_load_initial_peds() = cdecl 0x40D3D0 => unported;
-    pub fn streaming_load_all_requested_models(only_priority: u32) = cdecl 0x40EA10 => unported;
-    pub fn anim_manager_load_anim_files() = cdecl 0x4D5620 => unported;
-    pub fn streaming_load_initial_weapons() = cdecl 0x40A120 => unported;
-    pub fn ped_initialise() = cdecl 0x5DEBB0 => unported;
-    pub fn renderer_init() = cdecl 0x5531C0 => unported;
-    pub fn radar_initialise() = cdecl 0x587FB0 => unported;
-    pub fn radar_load_textures() = cdecl 0x5827D0 => unported;
-    pub fn weapon_initialise_weapons() = cdecl 0x73A300 => unported;
-    pub fn road_blocks_init() = cdecl 0x461100 => unported;
-    pub fn population_initialise() = cdecl 0x610E10 => unported;
-    pub fn coronas_init() = cdecl 0x6FAA70 => unported;
-    pub fn shadows_init() = cdecl 0x706CD0 => unported;
 }
+pub use crate::bindings::bridge_init;
+pub use crate::bindings::clock_initialise;
+pub use crate::bindings::clouds_init;
+pub use crate::bindings::cranes_init_cranes;
+pub use crate::bindings::darkel_init;
+pub use crate::bindings::gangs_initialise;
+pub use crate::bindings::garages_init_after_restart;
+pub use crate::bindings::get_pad as pad_get_pad;
+pub use crate::bindings::glass_init;
+pub use crate::bindings::grid_ref_init;
+pub use crate::bindings::heli_init_helis;
+pub use crate::bindings::moving_things_init;
+pub use crate::bindings::pad_clear;
+pub use crate::bindings::ped_groups_init;
+pub use crate::bindings::replay_init;
+pub use crate::bindings::ropes_init;
+pub use crate::bindings::rw_raster_lock;
+pub use crate::bindings::scripts_init as the_scripts_init;
+pub use crate::bindings::shopping_init;
+pub use crate::bindings::skidmarks_init;
+pub use crate::bindings::special_fx_init;
+pub use crate::bindings::stats_init;
+pub use crate::bindings::water_cannons_init;
+pub use crate::bindings::weapon_effects_init;
 orig! {
-    pub fn weapon_effects_init() = cdecl 0x742AB0 => unported;
-    pub fn skidmarks_init() = cdecl 0x7204E0 => unported;
-    pub fn glass_init() = cdecl 0x71A8D0 => unported;
-    pub fn garages_init_after_restart() = cdecl 0x448B60 => unported;
-    pub fn the_scripts_init() = cdecl 0x468D50 => unported;
-    pub fn gangs_initialise() = cdecl 0x5DE680 => unported;
-    pub fn clock_initialise(scale: u32) = cdecl 0x52CD90 => unported;
-    pub fn heli_init_helis() = cdecl 0x6C4560 => unported;
-    pub fn cranes_init_cranes() = cdecl 0x6F3FC0 => unported;
-    pub fn moving_things_init() = cdecl 0x717D00 => unported;
-    pub fn darkel_init() = cdecl 0x43CEB0 => unported;
-    pub fn grid_ref_init() = cdecl 0x71D4E0 => unported;
-    pub fn stats_init() = cdecl 0x55C0C0 => unported;
-    pub fn clouds_init() = cdecl 0x7138D0 => unported;
-    pub fn special_fx_init() = cdecl 0x7268F0 => unported;
-    pub fn ropes_init() = cdecl 0x555DC0 => unported;
-    pub fn water_cannons_init() = cdecl 0x728C80 => unported;
-    pub fn bridge_init() = cdecl 0x41BC70 => unported;
-    pub fn ped_groups_init() = cdecl 0x5FB8C0 => unported;
     pub fn inform_friends_event_queue_init_call() = cdecl 0x4B2990 => inform_friends_event_queue_init;
     pub fn inform_group_event_queue_init_call() = cdecl 0x4B2AD0 => inform_group_event_queue_init;
-    pub fn replay_init() = cdecl 0x45E220 => unported;
-    pub fn shopping_init() = cdecl 0x49C290 => unported;
-
-    // ---- Init3
-    pub fn pad_get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    pub fn pad_clear(this: GPtr<u8>, a: u32, b: u32) = thiscall 0x541A70 => unported;
     pub fn interior_manager_init(this: GPtr<u8>) -> u8 = thiscall 0x5C0500 => unported;
     pub fn proc_object_man_init(this: GPtr<u8>) -> u8 = thiscall 0x5A3EA0 => unported;
     pub fn water_creature_manager_init(this: GPtr<u8>) -> u8 = thiscall 0x6E3F90 => unported;
@@ -159,12 +149,10 @@ orig! {
 
     // ---- leaves
     pub fn rw_texture_read(name: u32, mask: u32) -> GPtr<u8> = cdecl 0x7F3AC0 => unported;
-    pub fn rw_raster_lock(raster: GPtr<u8>, level: u32, flags: u32) -> u32 = cdecl 0x7FB2D0 => unported;
     pub fn ptr_list_double_link_flush_call(this: GPtr<u8>) = thiscall 0x552470 => ptr_list_double_link_flush;
     pub fn inform_friends_event_queue_flush() = cdecl 0x4AC2A0 => unported;
     pub fn inform_group_event_queue_flush() = cdecl 0x4AC410 => unported;
 }
-
 
 /// `CGame::Initialise(datFile)` (0x53BC80): `Init1`, the collision cache around the two level
 /// loads (`DATA\DEFAULT.DAT` 0x863A90, then `datFile`), `Init2`, `CStencilShadows::Init`, the
@@ -517,11 +505,11 @@ pub fn inform_group_event_queue_init() {
     inform_group_event_queue_flush();
 }
 
+pub use crate::bindings::display_script_stat_update_message as stats_display_script_stat_update_message;
+pub use crate::bindings::stats_check_for_stats_message;
+pub use crate::bindings::tag_manager_get_percentage_tagged;
 orig! {
-    pub fn tag_manager_get_percentage_tagged() -> i32 = cdecl 0x49CDA0 => unported;
-    pub fn stats_check_for_stats_message() = cdecl 0x559760 => unported;
     pub fn stats_check_for_threshold(value: GPtr<f32>, range: f32) -> u8 = cdecl 0x5595F0 => unported;
-    pub fn stats_display_script_stat_update_message(state: u32, stat: u32, value: f32) = cdecl 0x55B980 => unported;
 }
 
 /// `CStats::UpdateRespectStat(reset)` (0x55BC50). `reset`: the last and the displayed respect
@@ -615,8 +603,8 @@ pub fn stats_update_respect_stat(reset: u32) {
     last.write(r);
 }
 
+pub use crate::bindings::eh_vector_ctor as eh_vector_constructor_iterator;
 orig! {
-    pub fn eh_vector_constructor_iterator(p: GPtr<u8>, size: u32, count: u32, ctor: u32, dtor: u32) = stdcall 0x821D30 => unported;
     pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
 }
 
@@ -715,8 +703,8 @@ pub fn camera_fade(this: GPtr<u8>, time: f32, direction: u32) {
     this.byte_add(0xC44).cast::<u32>().write(g::<u32>(0xB7CB84).read());
 }
 
+pub use crate::bindings::stream_read as rw_stream_read;
 orig! {
-    pub fn rw_stream_read(s: GPtr<u8>, buf: GPtr<u8>, len: u32) -> u32 = cdecl 0x7EC9D0 => unported;
     pub fn env_map_from_buffer_call(buf: GPtr<u8>, out: GPtr<u8>) = cdecl 0x5D8BE0 => env_map_from_buffer;
     pub fn env_map_pool_new_call(pool: GPtr<u8>) -> GPtr<u8> = thiscall 0x5D9110 => env_map_pool_new;
 }
@@ -907,6 +895,13 @@ pub const GLOBALS: &[GlobalDesc] = &[];
 
 // ------------------------------------------------------------------ CPlantMgr, entry-exits ------
 
+pub use crate::bindings::atof as crt_atof;
+pub use crate::bindings::atol as crt_atol;
+pub use crate::bindings::get_surface_id_from_name;
+pub use crate::bindings::streaming_i_have_used_streaming_memory;
+pub use crate::bindings::streaming_im_gonna_use_streaming_memory;
+pub use crate::bindings::streaming_make_space_for;
+pub use crate::bindings::strtok as crt_strtok;
 orig! {
     pub fn plant_mgr_reload_config_call() -> u8 = cdecl 0x5DD780 => plant_mgr_reload_config;
     pub fn plant_surf_prop_mgr_initialise_call() -> u8 = cdecl 0x5DD6C0 => plant_surf_prop_mgr_initialise;
@@ -917,37 +912,30 @@ orig! {
     pub fn atomic_create_prelit_if_needed_call(a: GPtr<u8>) -> GPtr<u8> = cdecl 0x5DD100 => atomic_create_prelit_if_needed;
     pub fn rw_helper_get_first_atomic_call(c: GPtr<u8>) -> GPtr<u8> = cdecl 0x734820 => rw_helper_get_first_atomic;
     pub fn rw_helper_set_filter_mode_call(a: GPtr<u8>, mode: u32) -> u8 = cdecl 0x734D80 => rw_helper_set_filter_mode_on_atomics_textures;
-    pub fn streaming_make_space_for(size: u32) = cdecl 0x40E120 => unported;
-    pub fn streaming_im_gonna_use_streaming_memory() = cdecl 0x407BE0 => unported;
-    pub fn streaming_i_have_used_streaming_memory() = cdecl 0x407BF0 => unported;
     pub fn set_dir(dir: u32) = cdecl 0x5387D0 => unported;
     pub fn open_file(path: u32, mode: u32) -> i32 = cdecl 0x538900 => unported;
     pub fn close_file(f: i32) -> i32 = cdecl 0x5389D0 => unported;
     pub fn load_line(f: i32) -> GPtr<u8> = cdecl 0x536F80 => unported;
-    pub fn get_surface_id_from_name(this: GPtr<u8>, name: GPtr<u8>) -> u32 = thiscall 0x55D220 => unported;
-    pub fn crt_strtok(s: GPtr<u8>, delim: GPtr<u8>) -> GPtr<u8> = cdecl 0x82244B => unported;
-    pub fn crt_atol(s: GPtr<u8>) -> i32 = cdecl 0x82258E => unported;
-    pub fn crt_atof(s: GPtr<u8>) -> f64 = cdecl 0x823CEE => unported;
     pub fn crt_sprintf4(buf: GPtr<u8>, fmt: u32, a: u32, b: u32) -> i32 = cdecl 0x821BB5 => unported;
     pub fn crt_sprintf3(buf: GPtr<u8>, fmt: u32, a: u32) -> i32 = cdecl 0x821BB5 => unported;
 }
+pub use crate::bindings::rp_atomic_clone;
+pub use crate::bindings::rp_atomic_set_frame;
+pub use crate::bindings::rp_atomic_set_geometry;
+pub use crate::bindings::rp_clump_destroy;
+pub use crate::bindings::rp_clump_stream_read;
+pub use crate::bindings::rp_geometry_for_all_materials;
+pub use crate::bindings::rp_geometry_lock;
+pub use crate::bindings::rp_geometry_triangle_set_material;
+pub use crate::bindings::rp_geometry_unlock;
+pub use crate::bindings::rw_frame_create;
+pub use crate::bindings::rw_stream_close;
+pub use crate::bindings::rw_stream_open;
 orig! {
-    pub fn rw_stream_open(ty: u32, access: u32, data: GPtr<u8>) -> GPtr<u8> = cdecl 0x7ECEF0 => unported;
     pub fn rw_stream_find_chunk(s: GPtr<u8>, ty: u32, len: u32, ver: u32) -> i32 = cdecl 0x7ED2D0 => unported;
-    pub fn rw_stream_close(s: GPtr<u8>, data: u32) -> i32 = cdecl 0x7ECE20 => unported;
-    pub fn rp_clump_stream_read(s: GPtr<u8>) -> GPtr<u8> = cdecl 0x74B420 => unported;
-    pub fn rp_clump_destroy(c: GPtr<u8>) -> i32 = cdecl 0x74A310 => unported;
     pub fn rp_clump_for_all_atomics(c: GPtr<u8>, cb: u32, data: GPtr<u8>) -> GPtr<u8> = cdecl 0x749B70 => unported;
-    pub fn rp_geometry_lock(g: GPtr<u8>, flags: u32) -> GPtr<u8> = cdecl 0x74C7D0 => unported;
-    pub fn rp_geometry_unlock(g: GPtr<u8>) -> GPtr<u8> = cdecl 0x74C800 => unported;
-    pub fn rp_geometry_for_all_materials(g: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> = cdecl 0x74C790 => unported;
     pub fn rp_geometry_create(verts: u32, tris: u32, flags: u32) -> GPtr<u8> = cdecl 0x74CA90 => unported;
     pub fn rp_geometry_triangle_get_material(g: GPtr<u8>, tri: GPtr<u8>) -> GPtr<u8> = cdecl 0x74C760 => unported;
-    pub fn rp_geometry_triangle_set_material(g: GPtr<u8>, tri: GPtr<u8>, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x74C6C0 => unported;
-    pub fn rp_atomic_set_geometry(a: GPtr<u8>, g: GPtr<u8>, flags: u32) -> GPtr<u8> = cdecl 0x749D40 => unported;
-    pub fn rp_atomic_clone(a: GPtr<u8>) -> GPtr<u8> = cdecl 0x749E60 => unported;
-    pub fn rp_atomic_set_frame(a: GPtr<u8>, f: GPtr<u8>) -> GPtr<u8> = cdecl 0x74BF20 => unported;
-    pub fn rw_frame_create() -> GPtr<u8> = cdecl 0x7F0410 => unported;
     pub fn rp_material_set_texture(m: GPtr<u8>, t: u32) -> GPtr<u8> = cdecl 0x74DBC0 => unported;
     pub fn quad_tree_node_new(size: u32) -> GPtr<u8> = cdecl 0x552C80 => quad_tree_node_new_port;
     pub fn quad_tree_node_ctor_call(this: GPtr<u8>, rect: GPtr<u8>, depth: u32) -> GPtr<u8> = thiscall 0x552830 => quad_tree_node_ctor;

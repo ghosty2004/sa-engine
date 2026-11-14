@@ -40,6 +40,10 @@ pub fn closest_sq_dist_st0(p0: GPtr<f32>, q0: GPtr<f32>, q1: GPtr<f32>, u: GPtr<
     super::prim::closest_squared_distance_between_finite_lines(p0, q0, q1, u, uu).to_f64()
 }
 
+use crate::bindings::is_extra_entity_to_ignore;
+use sa_core::bindings::matrix_invert;
+use sa_core::bindings::matrix_mul_vec;
+use sa_stream::bindings::simple_transform_update_matrix;
 orig! {
     /// `CColBox::operator=(const CColBox&)` (0x40EEC0, thiscall, `ret 4`): copies min, max (6 dwords),
     /// the surface/piece word and the light byte (0x1B bytes).
@@ -51,16 +55,8 @@ orig! {
     /// `CCollision::ClosestSquaredDistanceBetweenFiniteLines(p0, q0, q1, u, uu)` (0x415A40, ST0)
     fn closest_sq_dist(p0: GPtr<f32>, q0: GPtr<f32>, q1: GPtr<f32>, u: GPtr<f32>, uu: f32) -> f64
         = cdecl 0x415a40 => closest_sq_dist_st0;
-    /// `CCamera::IsExtraEntityToIgnore(CEntity*)` (0x50CE80, thiscall, AL; ported in sa-cam)
-    fn is_extra_entity_to_ignore(cam: GPtr<u8>, e: GPtr<u8>) -> u8 = thiscall 0x50ce80 => unported;
     /// `CPlaceable::AllocateMatrix` (0x54F560, thiscall)
     fn allocate_matrix(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x54f560 => crate::world::entity::allocate_matrix;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*)` (0x54F1B0, `ret 4`)
-    fn simple_transform_update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54f1b0 => unported;
-    /// `CMatrix::Invert(const CMatrix& src, CMatrix& dst)` (0x59B920, cdecl, returns `dst`)
-    fn matrix_invert(src: GPtr<u8>, dst: GPtr<u8>) -> GPtr<u8> = cdecl 0x59b920 => unported;
-    /// `operator*(const CMatrix&, const CVector&)` (0x59C890, cdecl, out first)
-    fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59c890 => unported;
     /// `CMatrix::~CMatrix()` (0x59ACD0)
     fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59acd0 => crate::world::mvpa_math::matrix_dtor;
     /// `CColLine::CColLine(const CVector& start, const CVector& end)` (0x40EF50, `ret 8`)
@@ -719,19 +715,15 @@ pub fn sphere_cast_vs_entity(a: GPtr<u8>, b: GPtr<u8>, e: GPtr<u8>) -> u8 {
     hit
 }
 
+use crate::bindings::camera_to_ignore_this_object;
+use crate::bindings::col_point_assign;
+use sa_core::bindings::ped_is_alive;
+use sa_stream::bindings::col_model_ctor;
 orig! {
-    /// `CColModel::CColModel()` (0x40FB60, thiscall)
-    fn col_model_ctor(cm: GPtr<u8>) -> GPtr<u8> = thiscall 0x40fb60 => unported;
     /// `CCollisionData::CCollisionData()` (0x40F030, thiscall)
     fn collision_data_ctor(cd: GPtr<u8>) -> GPtr<u8> = thiscall 0x40f030 => crate::world::mvpa_math::collision_data_ctor;
     /// `CColModel::~CColModel()` (0x40F700, thiscall)
     fn col_model_dtor(cm: GPtr<u8>) = thiscall 0x40f700 => crate::world::mvpa_math::col_model_dtor;
-    /// `CColPoint::operator=(const CColPoint&)` (stub 0x40FC80, thiscall `ret 4`)
-    fn col_point_assign(dst: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = thiscall 0x40fc80 => unported;
-    /// `CWorld::CameraToIgnoreThisObject(CEntity*)` (0x563F40, AL)
-    fn camera_to_ignore_this_object(e: GPtr<u8>) -> u8 = cdecl 0x563f40 => crate::world::cworld2::camera_to_ignore_this_object;
-    /// `CPed::IsAlive()` (0x5E0170, thiscall, AL; ported in sa-ped)
-    fn ped_is_alive(ped: GPtr<u8>) -> u8 = thiscall 0x5e0170 => unported;
     /// `CPedModelInfo::AnimatePedColModelSkinned(RpClump*)` (0x4C6F70, thiscall, returns the col model)
     fn animate_ped_col_model_skinned(mi: sa_stream::modelinfo::base::MiPtr, clump: GPtr<u8>) -> GPtr<u8>
         = thiscall 0x4c6f70 => sa_stream::modelinfo::ped::animate_ped_col_model_skinned;
