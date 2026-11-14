@@ -59,8 +59,9 @@ A port is **verified** at L2 or L3 (F1 progress in `catalog/progress.md`). Every
   call graph and state (`catalog/state.csv`: unknown → specified → implemented → L1 → L2 → L3).
 - **The oracle** (`crates/sa-oracle*`, `tools/e2e`): recordings, replays, state hashes, L1/L2/L3 runners.
 - **SA:MP**: `crates/sa-samp-api` (the interface samp-rs uses to talk to "the game"), `crates/sa-samp` (that
-  interface implemented on the engine), `crates/sa-samp-ui` (SA:MP's chat, dialogs, nametags, scoreboard drawn
-  by the engine), `crates/sa-udp-proxy` + `crates/sa-net` (browser networking). The SA:MP client itself (samp-rs) lives in
+  interface implemented on the engine, including the engine backend of samp-rs's UI: samp-rs draws its chat, dialogs,
+  nametags and scoreboard once, through `sa_samp_api::ui::UiBackend`; D3D9 on the original exe, the engine here),
+  `crates/sa-udp-proxy` + `crates/sa-net` (browser networking). The SA:MP client itself (samp-rs) lives in
   `samp-rs/` in this repository, as its own Cargo workspace (see [samp/game-adapter.md](samp/game-adapter.md)).
 
 ---
@@ -242,7 +243,7 @@ crates/
   sa-script, sa-weapon, sa-input, sa-formats   the game subsystems (one crate each)
   sa-ports       links every port crate into one registry
   sa-oracle, sa-oracle-format   the oracle (L1 specs, recordings, satool)
-  sa-samp-api, sa-samp, sa-samp-ui, sa-net, sa-udp-proxy   SA:MP (§1)
+  sa-samp-api, sa-samp, sa-net, sa-udp-proxy   SA:MP (§1)
   sa-viewer      model/texture viewer
 samp-rs/         the SA:MP client (own Cargo workspace: samp-proto, samp-client, the samp.dll replacement, …)
 catalog/         the function catalogue (generated + state.csv, verify-queue.csv)

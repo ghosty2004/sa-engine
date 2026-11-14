@@ -44,10 +44,10 @@ serve: ## Serve the browser build on localhost:8642 (GAME=/path/to/gta-sa)
 check: ## The writer gate: clippy (host, i686, wasm32), builds, hook tests, L1, queue
 	tools/verify/writer-gate.sh
 
-test: ## Fast tests: hook registration checks, core and SA:MP UI crates
+test: ## Fast tests: hook registration checks, core and SA:MP crates
 	cargo test -p sa-hook --lib
 	cargo test -p sa-core --lib
-	cargo test -p sa-samp-ui -p sa-samp-api
+	cargo test -p sa-samp -p sa-samp-api
 
 clippy: ## Host clippy of the whole workspace
 	cargo clippy --workspace --all-targets -- -D warnings

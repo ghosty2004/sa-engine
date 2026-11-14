@@ -217,13 +217,13 @@ pub fn local_time_now() -> LocalTime {
         // SAFETY: plain Win32 query into a valid struct.
         unsafe { GetLocalTime(&mut st) };
         let unix =
-            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs() as i64).unwrap_or(0);
+            web_time::SystemTime::now().duration_since(web_time::UNIX_EPOCH).map(|d| d.as_secs() as i64).unwrap_or(0);
         LocalTime { unix, hour: st.wHour as u8, minute: st.wMinute as u8, second: st.wSecond as u8 }
     }
     #[cfg(not(windows))]
     {
         let unix =
-            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs() as i64).unwrap_or(0);
+            web_time::SystemTime::now().duration_since(web_time::UNIX_EPOCH).map(|d| d.as_secs() as i64).unwrap_or(0);
         let day = unix.rem_euclid(86_400);
         LocalTime { unix, hour: (day / 3600) as u8, minute: (day / 60 % 60) as u8, second: (day % 60) as u8 }
     }
