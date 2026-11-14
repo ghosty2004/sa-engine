@@ -16,7 +16,7 @@ use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 use sa_math::x87::X87;
 use sa_world::collision::fpu::Fpu;
-use sa_world::physical::attach::{allocate_matrix, process_col_models, simple_transform_update_matrix};
+use sa_world::physical::attach::process_col_models;
 use sa_world::physical::shared::*;
 
 use crate::bindings::damage_calc_compute_damage_response as calc_compute;
@@ -62,21 +62,8 @@ const FALL_SPEED_Z: usize = 0x86C294;
 
 use sa_core::field::gf as kf;
 
-fn ensure_matrix(e: Ent) {
-    if matrix(e).is_null() {
-        allocate_matrix(e);
-        simple_transform_update_matrix(e.byte_add(PLACEMENT_POS), matrix(e));
-    }
-}
-
-/// `fld v; fcomp m; test ah, 5; jp` not taken: `v < m`.
-fn lt(v: f32, m: f32) -> bool {
-    let mut f = Fpu::new();
-    f.fld(v);
-    f.fcomp_m(m);
-    !f.jp(5)
-}
-
+use sa_world::physical::attach::ensure_matrix;
+use sa_world::world::mvpc_world1::less as lt;
 /// `fld v; fcomp m; test ah, 0x41; je` taken: `v > m`.
 fn gt(v: f32, m: f32) -> bool {
     let mut f = Fpu::new();

@@ -54,11 +54,10 @@ use sa_world::bindings::intel_get_task_fighting;
 use sa_world::bindings::ped_weapon_audio_add_audio_event;
 use sa_world::bindings::event_sound_quiet_ctor;
 use sa_world::bindings::generate_damage_event as weapon_generate_damage_event;
+use crate::bindings::fight_strike_damage_c as fight_strike_damage_o;
 orig! {
     /// `FUN_0061c650` (0x61C650): the victim's fight task blocks the hit
     fn fight_block_hit_o(t: GPtr<u8>, victim: GPtr<u8>, attacker: GPtr<u8>, combo: u32, level: u32) -> u8 = thiscall 0x61C650 => fight_block_hit;
-    /// `FUN_0061c740` (0x61C740): the strike damage (ST0)
-    fn fight_strike_damage_o(t: GPtr<u8>, ped: GPtr<u8>) -> X87 = reg("args = ecx stack") 0x61C740 => unported;
     /// `CPedGeometryAnalyser::ComputePedShotSide(CPed&, const CVector&)` (0x5F13F0)
     fn compute_ped_shot_side(ped: GPtr<u8>, pos: GPtr<u8>) -> i32 = cdecl 0x5F13F0 => crate::ped_geometry::compute_ped_shot_side;
 }

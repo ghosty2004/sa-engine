@@ -23,11 +23,7 @@ orig! {
     fn scan_and_mark_target(v: GPtr<u8>, e: GPtr<u8>) -> GPtr<u8> = thiscall 0x6E0400 => unported;
 }
 
-/// `CTimer::m_snTimeInMilliseconds`.
-fn now() -> u32 {
-    g::<u32>(0xB7_CB84).read()
-}
-
+use sa_pop::carctrl3::time_ms as now;
 /// The crosshair colour statics of `CWeaponEffects` 0 (0xC8A84C..4E RGB, 0xC8A85C size).
 fn crosshair(r: u8, gb: u8, size: u32) {
     g::<u8>(0xC8_A84C).write(r);

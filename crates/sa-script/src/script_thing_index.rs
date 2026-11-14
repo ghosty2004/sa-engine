@@ -9,13 +9,8 @@ use sa_core::hook;
 
 use sa_ai::bindings::decision_maker_types_get_instance;
 
-fn rd8(a: u32) -> u8 {
-    GPtr::<u8>::from_addr(a as usize).read()
-}
-fn rd16(a: u32) -> u16 {
-    GPtr::<u16>::from_addr(a as usize).read()
-}
-
+use sa_core::field::gr8u as rd8;
+use sa_core::field::gr16u as rd16;
 /// `CTheScripts::GetActualScriptThingIndex(int32 ref, uint8 type)` (0x4839A0, cdecl). `ref == -1` → -1. Else `idx =
 /// ref & 0xFFFF`, `id = ref >> 16` (unsigned); the slot is live when its id word equals `id` and its active byte is
 /// set, then `idx` is returned, else -1. Per type (jump table 0x483B08; above 8 → -1), `(active byte, id word)`:

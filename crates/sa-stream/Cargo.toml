@@ -1,5 +1,6 @@
 [package]
 name = "sa-stream"
+build = "../phase_a_build.rs"
 version = "0.1.0"
 description = "STREAM subsystem of gta_sa.exe 1.0 US (PORT-STREAM): CdStream, CStreaming, CStreamingInfo, CFileLoader, IPL/TXD/COL stores, model infos, CLoadedCarGroup, CLoadingScreen. Built on sa-core (ADR-001). no_std; host, i686-pc-windows-gnu and wasm32"
 edition.workspace = true

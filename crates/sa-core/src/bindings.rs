@@ -434,6 +434,11 @@ orig! {
 }
 
 orig! {
+    /// `Fx_c::Render` (0x49E650)
+    pub fn fx_render(cam: GPtr<u8>, haze: u32) = stdcall 0x49E650 => unported;
+}
+
+orig! {
     /// `Fx_c::CreateMatFromVec` (0x49E950)
     pub fn fx_create_mat_from_vec(fx: GPtr<u8>, out: GPtr<u8>, pos: GPtr<u8>, dir: GPtr<u8>) = thiscall 0x49E950 => unported;
 }
@@ -2969,6 +2974,11 @@ orig! {
 }
 
 orig! {
+    /// `RwEngineGetVideoModeInfo` (0x7F2CF0)
+    pub fn rw_engine_get_video_mode_info(info: GPtr<[i32;6]>, mode: i32) -> GPtr<[i32;6]> = cdecl 0x7F2CF0 => unported;
+}
+
+orig! {
     /// `RwTextureSetMipmapping` (0x7F3530)
     pub fn rw_texture_set_mipmapping(enable: u32) -> u32 = cdecl 0x7F3530 => unported;
 }
@@ -3185,7 +3195,7 @@ orig! {
 
 orig! {
     /// `_strncpy` (0x821F40)
-    pub fn crt_strncpy(d: GPtr<u8>, s: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x821F40 => unported;
+    pub fn crt_strncpy(d: GPtr<u8>, s: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x821F40 => crate::crt::strncpy_port;
 }
 
 orig! {

@@ -135,10 +135,7 @@ fn pad(this: GPtr<u8>) -> GPtr<u8> {
     get_pad(u32::from(b8(this, 0xEA)) as i32)
 }
 
-fn word(addr: usize) -> u16 {
-    g::<u16>(addr).read()
-}
-
+use sa_world::world::pickup_goodies::mi as word;
 use sa_core::field::gr8 as byte;
 
 /// `(u32)(CTimer::m_snTimeInMillisecondsPauseMode - lastActionTime) > 20`

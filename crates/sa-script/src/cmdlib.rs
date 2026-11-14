@@ -70,12 +70,7 @@ pub fn set_sp(i: i32, v: u32) {
     param(i).write(v);
 }
 
-/// A float constant by its bits (`.rdata` values are written as bit patterns).
-#[inline]
-pub fn f(bits: u32) -> f32 {
-    f32::from_bits(bits)
-}
-
+pub use sa_math::fpu::fbits as f;
 /// `UpdateCompareFlag(b)` with a 0/1 byte (the `setcc` forms; the upper bytes of the pushed dword
 /// are stale stack bytes the callee ignores).
 #[inline]
@@ -83,17 +78,7 @@ pub fn set_flag(s: Scr, b: bool) {
     flag(s, u32::from(b));
 }
 
-/// `fld dword; fst dword`: the value an x87 load/store round trip leaves (a signalling NaN comes back
-/// quiet; every other value unchanged).
-#[inline]
-pub fn fld_fst(v: f32) -> f32 {
-    if v.is_nan() {
-        f32::from_bits(v.to_bits() | 0x0040_0000)
-    } else {
-        v
-    }
-}
-
+pub use sa_math::fpu::fld_fst;
 /// `.rdata` 0x859014: -100.0f (the "find the ground" z threshold of the CREATE_*/blip commands).
 pub const K_MINUS_100: u32 = 0xC2C8_0000;
 
@@ -137,12 +122,7 @@ pub const PLAYERS: usize = 0xB7CD98;
 /// `TheCamera` 0xB6F028.
 pub const THE_CAMERA: usize = 0xB6F028;
 
-/// The pool pointer stored at `cell`.
-#[inline]
-pub fn pool(cell: usize) -> GPtr<u8> {
-    GPtr::<GPtr<u8>>::from_addr(cell).read()
-}
-
+pub use sa_core::field::grp as pool;
 /// `CWorld::Players[i]` (`CPlayerInfo*`), `i` as the original multiplies it (`imul i, 0x190`).
 #[inline]
 pub fn player_info(i: u32) -> GPtr<u8> {

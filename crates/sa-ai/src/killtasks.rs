@@ -70,10 +70,7 @@ fn cop(this: GPtr<u8>) -> GPtr<u8> {
     rd::<GPtr<u8>>(this, 0x10)
 }
 
-fn in_vehicle(p: GPtr<u8>) -> bool {
-    rd::<u32>(p, 0x46C) & 0x100 != 0
-}
-
+use sa_world::world::cworld::in_vehicle;
 /// A stack `CEventAcquaintancePedHate(about)` with task id `task` (+0xE) added to `target`'s event group
 /// (intelligence +0x68), then destroyed (vtable 0x858E68, base destructor 0x4AF890). The original's slot is 0x18
 /// bytes; the Rust buffer is 0x20.

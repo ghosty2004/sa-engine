@@ -145,12 +145,7 @@ fn heading_deg_tail(h: f64) -> u32 {
     v.to_bits()
 }
 
-/// A local `CVector` (three raw f32 dwords) as the pointer the original passes.
-#[inline]
-fn vec_ptr(v: &[u32; 3]) -> GPtr<u32> {
-    GPtr::from_raw(v.as_ptr().cast_mut())
-}
-
+use sa_core::field::vec_ptr;
 /// The "-100 ground rule" as compiled in this switch: `fld z; fcom [-100.0]; fnstsw; test ah,0x41; jp
 /// keep`; when taken not (`z <= -100`, ordered) `fstp st(0)` and ST0 = `FindGroundZForCoord(x, y)`; ST0
 /// is then stored as f32 (an SNaN z comes back quieted by the `fld`).

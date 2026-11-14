@@ -221,10 +221,7 @@ pub struct Outcome {
     pub scratch: [u8; SCRATCH_LEN],
 }
 
-fn u32_at(d: &[u8], o: usize) -> u32 {
-    u32::from_le_bytes([d[o], d[o + 1], d[o + 2], d[o + 3]])
-}
-
+use sa_core::field::u32_at;
 impl Outcome {
     /// Decodes the outputs of a context block plus the scratch bytes after the call.
     pub fn from_ctx(b: &[u8], scratch: &[u8]) -> Outcome {

@@ -11,7 +11,6 @@ use sa_math::x87::Cmp;
 use crate::common::*;
 
 use sa_world::bindings::find_player_ped;
-use sa_world::bindings::get_stat_value;
 use sa_world::bindings::membership_get_member;
 use sa_world::bindings::count_members_excluding_leader as membership_count_excluding_leader;
 orig! {
@@ -38,10 +37,7 @@ const OVERRIDE_GANG: usize = 0xB613D8;
 const OVERRIDE_FAT: usize = 0xB613D4;
 const OVERRIDE_DRESSED: usize = 0xB613D0;
 
-fn stat(id: u32) -> X87 {
-    X87::from_f64_exact(get_stat_value(id as u16))
-}
-
+use sa_world::world::pickup_collectables::stat;
 /// The player group's membership (`FindPlayerPed(-1)` → player data +0x480 → group index +0x38).
 fn player_membership() -> GPtr<u8> {
     let data = rd::<GPtr<u8>>(find_player_ped(-1), 0x480);

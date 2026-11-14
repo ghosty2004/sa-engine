@@ -452,11 +452,7 @@ fn fsin(f: &mut Fpu) {
     let v = f.pop();
     f.push(v.fsin());
 }
-fn fidiv(f: &mut Fpu, d: i32) {
-    let v = f.pop();
-    f.push(v.fdiv(X87::from_i32(d)));
-}
-
+use sa_pop::carctrl3::fidiv;
 /// `GetCoreDataForDWCineyCamMode` with its 12 out-parameters at these frame offsets (entity, vehicle,
 /// dest, src, up, right, fwd, vel, speed, angVel, angSpeed, sphere).
 fn core_data(this: GPtr<u8>, b: GPtr<u8>, o: [isize; 12]) {

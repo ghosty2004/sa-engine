@@ -62,7 +62,7 @@ fn ped_of(id: i32) -> GPtr<u8> {
 
 use crate::world::common::entity_pos as pos_ptr;
 
-fn in_vehicle(ped: GPtr<u8>) -> bool {
+pub fn in_vehicle(ped: GPtr<u8>) -> bool {
     rd::<u32>(ped, 0x46C) & 0x100 != 0
 }
 

@@ -20,9 +20,7 @@ use sa_world::bindings::does_not_collide_with_flyers as entity_does_not_collide_
 
 use sa_core::field::gf as k;
 use sa_world::world::common::entity_type as ty;
-fn recording(e: GPtr<u8>) -> bool {
-    (rd::<u32>(e, 0x1C) >> 4) & 1 != 0
-}
+use sa_world::world::object_collision::uses_collision_recording as recording;
 fn set(p: GPtr<u8>) {
     p.write(1);
 }

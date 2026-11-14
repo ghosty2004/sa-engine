@@ -1376,9 +1376,7 @@ pub fn shutdown() {
     remove_txd_slot(find_txd_slot(g(STR_HUD)));
 }
 
-fn w32(addr: usize, v: u32) {
-    g::<u32>(addr).write(v);
-}
+use sa_veh::mvpd_v4::put as w32;
 fn w16(addr: usize, v: u16) {
     g::<u16>(addr).write(v);
 }

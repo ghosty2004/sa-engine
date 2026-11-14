@@ -97,10 +97,7 @@ pub type GenFn = Arc<dyn Fn(&mut Rng) -> Inputs + Send + Sync>;
 pub type EdgesFn = Arc<dyn Fn() -> Vec<Inputs> + Send + Sync>;
 pub type CallFn = Arc<dyn Fn(&Inputs) -> Call + Send + Sync>;
 
-fn f(x: u32) -> f32 {
-    f32::from_bits(x)
-}
-
+use sa_math::fpu::fbits as f;
 fn bits(v: Vec<f32>) -> Inputs {
     v.into_iter().map(f32::to_bits).collect()
 }

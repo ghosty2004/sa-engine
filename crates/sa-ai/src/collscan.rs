@@ -37,8 +37,6 @@ sa_core::globals! {
     pub static SCAN_OBJECT_THRESHOLD_PED @ 0x8D23B0: f32 = 1.0;
 }
 
-/// `CTimer::m_snTimeInMilliseconds` (owned by CTimer).
-const TIME_MS: usize = 0xB7CB84;
 
 use crate::bindings::acquaintance_get;
 use crate::bindings::acquaintance_ped_hate_ctor;
@@ -102,10 +100,7 @@ use sa_core::field::gx as cf;
 
 use sa_core::field::gf as fm;
 
-fn now() -> u32 {
-    g::<u32>(TIME_MS).read()
-}
-
+use sa_world::world::garage_update::now;
 use sa_world::world::common::entity_pos as pos;
 
 use sa_core::field::ptr_of as local;

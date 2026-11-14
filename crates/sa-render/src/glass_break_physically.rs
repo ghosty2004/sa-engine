@@ -32,16 +32,8 @@ fn mi_of(e: GPtr<u8>) -> GPtr<u8> {
     g::<GPtr<u8>>((MODEL_INFOS as u32).wrapping_add((idx * 4) as u32) as usize).read()
 }
 
-/// `fcomp` + `test ah, 5; jp` not taken: `a < b`.
-fn lt(a: f32, b: f32) -> bool {
-    !x(a).fcom(x(b)).test_parity(5)
-}
-
-/// `fcomp` + `test ah, 0x41; jne` not taken: `a > b`.
-fn gt(a: f32, b: f32) -> bool {
-    !x(a).fcom(x(b)).test_any(0x41)
-}
-
+use sa_world::world::misc2::below as lt;
+use sa_world::world::misc2::above as gt;
 /// `CGlass::BreakGlassPhysically(CVector point, float radius)` (0x71CF50, cdecl).
 ///
 /// Nothing within 1000 ms after `LastColCheckMS` (`now < last + 1000 && now >= last`, unsigned). Every

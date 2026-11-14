@@ -192,9 +192,7 @@ pub fn temp_col_models_initialise() {
     fn wr8(a: u32, v: u32) {
         GPtr::<u8>::from_addr(a as usize).write(v as u8);
     }
-    fn p(v: &[u32; 3]) -> GPtr<u32> {
-        GPtr::from_raw(v.as_ptr().cast_mut())
-    }
+    use sa_core::field::vec_ptr as p;
     fn sphere_set(s: GPtr<u8>, r: u32, c: [u32; 3]) {
         sphere_set_call(s, f32::from_bits(r).to_bits(), p(&c));
     }

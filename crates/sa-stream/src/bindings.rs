@@ -394,6 +394,11 @@ orig! {
 }
 
 orig! {
+    /// `CPedModelInfo::AnimatePedColModelSkinned` (0x4C6F70)
+    pub fn animate_ped_col_model_skinned(mi: GPtr<crate::shared::CBaseModelInfo>, clump: GPtr<u8>) -> GPtr<u8> = thiscall 0x4C6F70 => crate::modelinfo::ped::animate_ped_col_model_skinned;
+}
+
+orig! {
     /// `CPedModelInfo::AnimatePedColModelSkinnedWorld` (0x4C7170)
     pub fn animate_ped_col_model_skinned_world(mi: GPtr<u8>, clump: GPtr<u8>) -> GPtr<u8> = thiscall 0x4C7170 => unported;
 }

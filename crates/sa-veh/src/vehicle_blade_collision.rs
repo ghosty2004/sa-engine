@@ -19,15 +19,7 @@ orig! {
     fn blade_col_sector_list(v: GPtr<u8>, list: GPtr<u8>, col: GPtr<u8>, m: GPtr<u8>, rotor: u32, mult: u32) -> u8 = thiscall 0x6DAF00 => unported;
 }
 
-/// CRT `floor` (0x8219F0) of a double: exact.
-fn floor_f64(d: f64) -> f64 {
-    if d.is_nan() || d.abs() >= 4_503_599_627_370_496.0 {
-        return d;
-    }
-    let t = d as i64 as f64;
-    if t > d { t - 1.0 } else { t }
-}
-
+use sa_math::fpu::floor_f64;
 /// `_ftol(floor((c +- r) * 0.02 + 60))` (the sector index the original computes).
 fn sector(c: f32, r: f32, plus: bool) -> i32 {
     let v = if plus { x(c).fadd_m(r) } else { x(c).fsub_m(r) };

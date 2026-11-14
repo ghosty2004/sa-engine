@@ -84,12 +84,7 @@ fn store_time_till_next_attack(r: i32) {
     g::<f32>(TIME_TILL_NEXT_ATTACK).write(f.to_f32());
 }
 
-/// `sqrt(dx*dx + dy*dy)` of the x87 sequences `fld a; fsub b` (x, then y) used by the gang war code
-/// (addition order is irrelevant for the bits; the squares are 80-bit intermediates).
-fn dist2d(ax: X87, ay: X87) -> X87 {
-    ax.fmul(ax).fadd(ay.fmul(ay)).fsqrt()
-}
-
+use sa_math::fpu::hypot_x87 as dist2d;
 /// `CGangWars::PickZoneToAttack()` (0x443B00, AL): walks the navigation zones in `CCarCtrl` sequence
 /// order; a zone whose info has gang 0 + gang 2 density >= 20 (unsigned bytes, int sum) attacks the first
 /// zone (array order) with an info index, not containing the point (2500, -1666) (x87 tests `test ah,

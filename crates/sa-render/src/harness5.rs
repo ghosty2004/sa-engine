@@ -28,7 +28,7 @@ use sa_core::field::rd3f as v3;
 
 /// `sqrt((dz*dz + dy*dy) + dx*dx)` with `d = P - W` loaded `fld P; fsub W` per component (the x87
 /// order of 0x5DBE5D.. / 0x71117D..).
-fn dist(p: [f32; 3], w: [f32; 3]) -> X87 {
+pub fn dist(p: [f32; 3], w: [f32; 3]) -> X87 {
     let dx = x(p[0]).fsub_m(w[0]);
     let dy = x(p[1]).fsub_m(w[1]);
     let dz = x(p[2]).fsub_m(w[2]);

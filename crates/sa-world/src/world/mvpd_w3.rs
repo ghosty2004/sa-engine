@@ -294,7 +294,7 @@ orig! {
 }
 
 /// The camera position the original reads (`TheCamera` entity +0x30 when set, else 0xB6F02C).
-fn cam_position() -> GPtr<u8> {
+pub fn cam_position() -> GPtr<u8> {
     let e = g::<GPtr<u8>>(0xB6F03C).read();
     if e.is_null() { GPtr::from_addr(0xB6F02C) } else { e.byte_add(0x30) }
 }

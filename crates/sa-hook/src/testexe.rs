@@ -10,13 +10,8 @@ pub struct Exe {
     exec: Vec<bool>,
 }
 
-fn u16_at(d: &[u8], o: usize) -> u16 {
-    u16::from_le_bytes([d[o], d[o + 1]])
-}
-fn u32_at(d: &[u8], o: usize) -> u32 {
-    u32::from_le_bytes([d[o], d[o + 1], d[o + 2], d[o + 3]])
-}
-
+use sa_core::field::u16_at;
+use sa_core::field::u32_at;
 pub fn load() -> Option<Exe> {
     let mut cands: Vec<PathBuf> = Vec::new();
     if let Ok(p) = std::env::var("SA_GTA_EXE") {

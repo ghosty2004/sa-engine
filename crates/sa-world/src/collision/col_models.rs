@@ -56,9 +56,8 @@ use crate::bindings::process_sphere_box;
 use crate::bindings::test_sphere_box;
 use crate::bindings::test_sphere_triangle;
 use sa_core::bindings::matrix_mul_assign;
+use crate::bindings::calculate_triangle_planes_416330 as calculate_triangle_planes;
 orig! {
-    /// `CCollision::CalculateTrianglePlanes(CCollisionData*)` (0x416330)
-    fn calculate_triangle_planes(cd: super::data::CdPtr) = cdecl 0x416330 => super::data::calculate_triangle_planes_col_data;
     /// `CCollision::ProcessSphereSphere(const CColSphere&, const CColSphere&, CColPoint&, float&)` (0x416450, AL)
     fn process_sphere_sphere(a: GPtr<f32>, b: GPtr<f32>, cp: GPtr<f32>, max: GPtr<f32>) -> u8
         = cdecl 0x416450 => super::prim::process_sphere_sphere;

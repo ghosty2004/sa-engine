@@ -16,7 +16,7 @@ use crate::bindings::rw_raster_push_context;
 use crate::bindings::rw_raster_render_fast;
 use sa_core::bindings::rw_camera_clear;
 use sa_core::bindings::rw_camera_end_update;
-use crate::bindings::fx_render;
+use sa_core::bindings::fx_render;
 use crate::bindings::heat_haze_fx_init;
 use crate::bindings::rs_restore;
 use crate::bindings::rs_set_immediate as rs_set;
@@ -124,7 +124,7 @@ pub fn heat_haze_fx(intensity: f32, always_on: u32) {
         if not16 {
             rs(0x1A, 1);
         }
-        fx_render(g::<u32>(0xB6F97C).read(), 1);
+        fx_render(GPtr::<u8>::from_addr((g::<u32>(0xB6F97C).read()) as usize), 1);
         rs_restore();
     } else {
         g::<u8>(FULL_SCREEN).write(0);

@@ -47,7 +47,7 @@ fn rebuild_unless_driving() {
 }
 
 /// The player's clothes descriptor (`FindPlayerPed(-1)->m_pPlayerData->m_pPedClothesDesc`).
-fn clothes() -> GPtr<u8> {
+pub fn clothes() -> GPtr<u8> {
     rd::<GPtr<u8>>(rd::<GPtr<u8>>(find_player_ped(-1), 0x480), 4)
 }
 

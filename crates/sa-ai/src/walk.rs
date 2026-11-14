@@ -100,10 +100,7 @@ use sa_core::field::ptr_of as buf;
 
 use sa_world::world::common::entity_pos as ent_pos;
 
-fn time_ms() -> u32 {
-    g::<u32>(TIME_MS).read()
-}
-
+use sa_world::world::garage_update::now as time_ms;
 use sa_core::field::gx as gf;
 
 use sa_math::fpu::fabs;

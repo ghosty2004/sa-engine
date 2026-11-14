@@ -172,11 +172,7 @@ use sa_math::fpu::fcom_parity as tjp;
 
 use sa_math::fpu::fcom_any as tjne;
 
-/// `test ah, m; jnp`: taken.
-fn tjnp(a: X87, b: X87, m: u8) -> bool {
-    !a.fcom(b).test_parity(m)
-}
-
+use sa_math::fpu::fcom_jnp as tjnp;
 use sa_math::fpu::st0;
 
 /// `(float)(uint32)v`: `fild dword` plus 2^32 when the sign bit is set.

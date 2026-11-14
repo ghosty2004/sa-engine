@@ -1,5 +1,6 @@
 [package]
 name = "sa-rwcore"
+build = "../phase_a_build.rs"
 version = "0.1.0"
 description = "Phase A port of the RenderWare 3.6 core linked into gta_sa.exe 1.0 US (PORT-RW-1): math, freelists, frames, plugin registry, streams, atomics/clumps/geometry/materials/textures, camera, Im3D, in the original memory layout. Built on sa-core (ADR-001). no_std; host, i686-pc-windows-gnu and wasm32"
 edition.workspace = true

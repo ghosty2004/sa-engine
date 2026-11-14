@@ -24,11 +24,7 @@ fn light(h: i32) -> Option<GPtr<u8>> {
     (i >= 0).then(|| GPtr::from_addr(SEARCH_LIGHTS.wrapping_add((i as u32).wrapping_mul(0x7C)) as usize))
 }
 
-#[inline]
-fn wr(l: GPtr<u8>, off: isize, v: u32) {
-    l.byte_add(off).cast::<u32>().write(v);
-}
-
+use sa_core::field::wr32 as wr;
 /// `if (l->entity) l->entity->CleanUpOldReference(&l->entity)` (+0x48).
 fn clean_up_entity(l: GPtr<u8>) {
     let slot = l.byte_add(0x48);

@@ -105,6 +105,7 @@ pub use sa_render::bindings::fx_get_fx_quality as fx_get_quality;
 pub use sa_world::bindings::ae_random_int as audio_random_in_range;
 pub use crate::bindings::hud_set_zone_name;
 pub use crate::bindings::load_mission_text as text_load_mission_text;
+pub use sa_input::bindings::reinit_controls as ccm_reinit_controls;
 orig! {
     /// `CAudioEngine::Reset()` (0x507A90, thiscall)
     pub fn audio_reset(this: GPtr<u8>) = thiscall 0x507A90 => unported;
@@ -126,8 +127,6 @@ orig! {
     pub fn localisation_set_normal_game() = cdecl 0x56D1A0 => crate::hud::localisation_set_normal_game;
     /// `CLocalisation::SetFrenchGame()` (0x56D1C0)
     pub fn localisation_set_french_game() = cdecl 0x56D1C0 => crate::hud::localisation_set_french_game;
-    /// `CControllerConfigManager::ReinitControls()` (0x531F20, thiscall)
-    pub fn ccm_reinit_controls(this: GPtr<u8>) = thiscall 0x531F20 => unported;
     /// `CControllerConfigManager::SaveSettings(FILE*)` (0x52D200, thiscall)
     pub fn ccm_save_settings(this: GPtr<u8>, f: GPtr<u8>) = thiscall 0x52D200 => unported;
     /// `CRadar::RequestMapSection(int32, int32)` (0x584B50)
@@ -583,7 +582,7 @@ pub fn initialise_changed_language_settings(this: GPtr<u8>, reinit: u32) {
         localisation_set_french_game();
     }
     if reinit as u8 != 0 {
-        ccm_reinit_controls(g(CONTROLS_MANAGER));
+        ccm_reinit_controls();
     }
 }
 
@@ -1978,7 +1977,7 @@ pub fn process_pc_menu_options_port(this: GPtr<u8>, lr: u32, accept: u32) -> u8 
                     rw_d3d9_change_multisampling_levels(rd(this, 0xC8));
                     set_video_mode(rd(this, 0xD4));
                 }
-                0x24 => ccm_reinit_controls(g(CONTROLS_MANAGER)),
+                0x24 => ccm_reinit_controls(),
                 _ => {}
             }
             save();

@@ -1,5 +1,6 @@
 [package]
 name = "sa-audio"
+build = "../phase_a_build.rs"
 version = "0.1.0"
 description = "AUDIO subsystem of gta_sa.exe 1.0 US (PORT-AUDIO): CAudioEngine, CAEAudioHardware wrappers, CAESound, CAESoundManager, the CAE*AudioEntity classes, CAERadioTrackManager logic, CAEAudioUtility, CAEAudioEnvironment, CAudioZones. Built on sa-core (ADR-001). Sound output (DirectSound, stream decoding) stays original in phase A. no_std; host, i686-pc-windows-gnu and wasm32"
 edition.workspace = true

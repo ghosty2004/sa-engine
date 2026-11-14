@@ -66,15 +66,7 @@ use sa_math::fpu::ge_or_nan as ge;
 
 use sa_world::world::common::entity_pos as pos_ptr;
 
-fn cam_pos() -> GPtr<u8> {
-    let m = g::<GPtr<u8>>(0xB6_F03C).read();
-    if m.is_null() {
-        GPtr::from_addr(0xB6_F02C)
-    } else {
-        m.byte_add(0x30)
-    }
-}
-
+use sa_world::world::mvpd_w3::cam_position as cam_pos;
 /// `CVehicle::DoVehicleLights(CMatrix& matrix, uint32 nLightFlags)` (0x6E1A60, `ret 8`).
 ///
 /// Nothing while the global 0xC1CC18 is set. The lights bit (+0x428 bit 6) follows

@@ -69,9 +69,8 @@ use crate::bindings::add_car_to_check as stuck_add_car_to_check;
 use crate::bindings::read_label as read_text_label;
 use sa_core::bindings::hud_set_help_message as set_help_message;
 use sa_core::bindings::streaming_load_scene as load_scene;
+use sa_core::bindings::crt_strncpy as strncpy;
 orig! {
-    /// CRT `strncpy` (0x821F40)
-    fn strncpy(dst: GPtr<u8>, src: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x821F40 => crate::vm::strncpy_port;
     /// `CTheScripts::RemoveScriptSphere(int32)` (0x483BA0)
     fn remove_script_sphere(h: i32) = cdecl 0x483BA0 => unported;
     /// `CCamera::SetCameraDirectlyInFrontForFollowPed_CamOnAString()` (0x50BD70)

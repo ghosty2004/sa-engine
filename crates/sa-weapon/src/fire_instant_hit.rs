@@ -41,6 +41,7 @@ use sa_world::bindings::cam_get_two_player_aim_vector;
 use sa_world::bindings::fx_trigger_gunshot;
 use sa_world::bindings::camera_find_3rd_person_cam_target_vector;
 use sa_world::bindings::process_col_models as collision_process_col_models;
+use sa_stream::bindings::animate_ped_col_model_skinned as ped_mi_animate_col_model_skinned;
 orig! {
     /// `CWeapon::DoDoomAiming(CEntity* owner, CVector* start, CVector* end)` (0x73CDC0)
     fn do_doom_aiming(owner: GPtr<u8>, start: GPtr<u8>, end: GPtr<u8>) = cdecl 0x73CDC0 => unported;
@@ -53,8 +54,6 @@ orig! {
     /// out)` (0x73C710, thiscall `ret 0x18`)
     #[allow(clippy::too_many_arguments)]
     fn set_up_pellet_col(this: GPtr<u8>, n: i32, owner: GPtr<u8>, victim: GPtr<u8>, point: GPtr<u8>, cp: GPtr<u8>, mat: GPtr<u8>) -> u8 = thiscall 0x73C710 => unported;
-    /// `CPedModelInfo::AnimatePedColModelSkinned(RpClump*)` (0x4C6F70, thiscall)
-    fn ped_mi_animate_col_model_skinned(mi: GPtr<u8>, clump: GPtr<u8>) -> GPtr<u8> = thiscall 0x4C6F70 => unported;
 }
 
 /// `CWorld::pIgnoreEntity` (0xB7CD68) and the line-test options `bIncludeDeadPeds` (0xB7CD6F),
@@ -107,11 +106,7 @@ fn fptr(v: &mut [f32; 3]) -> GPtr<u8> {
     lp(v).cast()
 }
 
-/// `fld [ptr]; fcomp [m]` with `test ah, 5; jp` not taken: `a < b` (false on NaN).
-fn lt(a: f32, b: f32) -> bool {
-    !x(a).fcom(x(b)).test_parity(5)
-}
-
+use sa_world::world::misc2::below as lt;
 /// The three-`rand()` scatter the original uses on two paths (calls at the given return addresses):
 /// `E.x += (r3/32767*0.4 - 0.2) * sp`, `E.y += (r2/32767*0.4 - 0.2) * sp` (both products kept at 80 bits),
 /// `E.z = (f32)((r1/32767*0.2 - 0.1) * sp) + E.z`.
@@ -653,7 +648,7 @@ pub fn fire_instant_hit(
             let mut dists = [1f32; 15];
             let col = if etype(hit) == 3 {
                 let slot = (MODEL_INFOS as u32).wrapping_add((i32::from(rh(hit, 0x22) as i16) * 4) as u32);
-                ped_mi_animate_col_model_skinned(g::<GPtr<u8>>(slot as usize).read(), rp(hit, 0x18))
+                ped_mi_animate_col_model_skinned(GPtr::<u8>::cast::<sa_stream::shared::CBaseModelInfo>(g::<GPtr<u8>>(slot as usize).read()), rp(hit, 0x18))
             } else {
                 entity_get_col_model(hit)
             };
@@ -711,15 +706,7 @@ fn rd_f(cp: &[u32; COL_POINT_WORDS], i: usize) -> f32 {
     f32::from_bits(cp[i])
 }
 
-/// `fcomp [m]` of an x87 value with `test ah, 5; jp` not taken: `a < b`.
-fn lt_x(a: X87, b: f32) -> bool {
-    !a.fcom(x(b)).test_parity(5)
-}
-
-/// `fld; fcomp 0.0; test ah, 0x44; jnp` taken: the value equals zero.
-fn is_zero(v: f32) -> bool {
-    !x(v).fcom(x(0.0)).test_parity(0x44)
-}
-
+use sa_pop::carctrl4::lt_k as lt_x;
+use crate::projectile_add::force_is_zero as is_zero;
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[HOOK_FIRE_INSTANT_HIT];

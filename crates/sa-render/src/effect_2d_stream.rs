@@ -33,10 +33,7 @@ fn w16(p: GPtr<u8>, o: isize, v: u16) {
 
 use sa_core::field::wr32 as w32;
 
-fn d32(b: &[u8], o: usize) -> u32 {
-    u32::from_le_bytes([b[o], b[o + 1], b[o + 2], b[o + 3]])
-}
-
+use sa_core::field::u32_at as d32;
 /// `C2dEffect::Rwt2dEffectPluginDataChunkReadCallBack(stream, length, geometry, offset, size)`
 /// (0x6F9FD0): the "particle" TXD slot is looked up once; a count of 0 returns. Otherwise per effect:
 /// position, type (stored as a byte) and chunk size; a size the type does not accept is skipped

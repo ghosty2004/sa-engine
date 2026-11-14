@@ -800,7 +800,7 @@ orig! {
 
 orig! {
     /// `FUN_0061c740` (0x61C740)
-    pub fn fight_strike_damage_c(t: GPtr<u8>, ped: GPtr<u8>) -> f64 = thiscall 0x61C740 => unported;
+    pub fn fight_strike_damage_c(t: GPtr<u8>, ped: GPtr<u8>) -> sa_math::x87::X87 = reg("args = ecx stack; pop") 0x61C740 => unported;
 }
 
 orig! {

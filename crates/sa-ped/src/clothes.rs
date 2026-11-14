@@ -184,10 +184,7 @@ pub fn has_visible_new_hair_cut(this: GPtr<u8>, arg: i32) -> u8 {
     (rd::<u32>(this, 4) == get_uppercase_key(GPtr::from_addr(0x867198))) as u8
 }
 
-fn stat(i: u32) -> X87 {
-    X87::from_f64_exact(get_stat_value(i as u16))
-}
-
+use sa_world::world::pickup_collectables::stat;
 /// `CClothes::GetPlayerMotionGroupToLoad` (0x5A7FB0): 0x37 (fat) when fat > 500 and fat > muscle
 /// (muscle stored as f32, fat re-read); else 0x38 (muscular) when muscle > 500; else 0x36.
 #[hook(addr = 0x5A7FB0, conv = cdecl, name = "CClothes::GetPlayerMotionGroupToLoad", expect = "51 6A 15 E8 88 0E FB FF")]

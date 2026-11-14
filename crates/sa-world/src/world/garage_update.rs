@@ -118,7 +118,7 @@ use sa_math::fpu::ge_or_nan as ge;
 
 use sa_math::fpu::xc as c;
 
-fn now() -> u32 {
+pub fn now() -> u32 {
     g::<u32>(TIME_MS).read()
 }
 

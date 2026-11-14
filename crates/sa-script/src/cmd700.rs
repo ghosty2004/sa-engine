@@ -145,11 +145,7 @@ fn ground_rule(x: u32, y: u32, z: u32) -> u32 {
     st.to_f32().to_bits()
 }
 
-/// A local `CVector` (three raw dwords) as the pointer the original passes.
-fn vec_ptr(v: &[u32; 3]) -> GPtr<u32> {
-    GPtr::from_raw(v.as_ptr().cast_mut())
-}
-
+use sa_core::field::vec_ptr;
 /// `CPlaceable::GetPosition()` inlined: `m_matrix` (+0x14) ? `+0x30` of it : `m_placement.pos` (+0x4).
 fn entity_pos(e: GPtr<u8>) -> [u32; 3] {
     let m = e.byte_add(0x14).cast::<GPtr<u8>>().read();

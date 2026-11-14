@@ -11,7 +11,7 @@ use sa_core::{hook, orig};
 use sa_math::x87::X87;
 use sa_world::collision::fpu::Fpu;
 use sa_world::physical::attach::{
-    allocate_matrix, matrix_copy_ctor, matrix_dtor, process_col_models, simple_transform_update_matrix, LocalMatrix,
+    matrix_copy_ctor, matrix_dtor, process_col_models, LocalMatrix,
 };
 use sa_world::physical::shared::*;
 
@@ -595,14 +595,7 @@ pub fn automobile_place_on_road_properly(this: Ent) {
     }
 }
 
-/// `if (!e->m_matrix) { AllocateMatrix(); m_placement.UpdateMatrix(m_matrix); }`
-fn ensure_matrix(e: Ent) {
-    if matrix(e).is_null() {
-        allocate_matrix(e);
-        simple_transform_update_matrix(e.byte_add(PLACEMENT_POS), matrix(e));
-    }
-}
-
+use sa_world::physical::attach::ensure_matrix;
 /// `CModelInfo::ms_modelInfoPtrs[model]`.
 fn model_info(e: Ent) -> Ent {
     let model = rh(e, MODEL_INDEX) as i16 as i32;

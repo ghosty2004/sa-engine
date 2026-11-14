@@ -75,10 +75,7 @@ mod key {
     pub const FED_AAS: usize = 0x865454;
 }
 
-const fn f(bits: u32) -> f32 {
-    f32::from_bits(bits)
-}
-
+use sa_math::fpu::fbits as f;
 /// 1/640 (0x859520), 1/448 (0x859524), 0.0625 (0x858620), 0.5 (0x858B8C), 40.0 (0x858A10), 3.0
 /// (0x858B3C), 2^32 (0x858C54), 70.0 (0x858CE0)
 const K_INV_640: f32 = f(0x3ACC_CCCD);

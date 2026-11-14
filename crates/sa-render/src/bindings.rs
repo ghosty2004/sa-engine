@@ -9,11 +9,6 @@ use sa_core::mem::{GBool, GPtr};
 use sa_core::orig;
 
 orig! {
-    /// `Fx_c::Render` (0x49E650)
-    pub fn fx_render(cam: u32, haze: u32) = stdcall 0x49E650 => unported;
-}
-
-orig! {
     /// `Fx_c::InitStaticSystems` (0x49E660)
     pub fn init_static_systems(this: GPtr<u8>) = thiscall 0x49E660 => crate::mvpc_fx1::fx_init_static_systems;
 }

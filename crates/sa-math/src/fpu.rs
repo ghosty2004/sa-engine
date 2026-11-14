@@ -42,7 +42,7 @@ pub fn ftol32(v: X87) -> i32 {
 
 /// An f32 given by its bits (an `.rdata` constant as the original stores it).
 #[inline]
-pub fn fbits(bits: u32) -> f32 {
+pub const fn fbits(bits: u32) -> f32 {
     f32::from_bits(bits)
 }
 
@@ -95,6 +95,39 @@ pub fn ge_or_nan(a: X87, b: X87) -> bool {
 #[inline]
 pub fn lt(a: X87, b: X87) -> bool {
     !a.fcom(b).test_parity(5)
+}
+
+pub fn fcom_jnp(a: X87, b: X87, m: u8) -> bool {
+    !a.fcom(b).test_parity(m)
+}
+
+
+pub fn fcom_ne(a: X87, b: X87) -> bool {
+    a.fcom(b).test_parity(0x44)
+}
+
+
+pub fn hypot_x87(ax: X87, ay: X87) -> X87 {
+    ax.fmul(ax).fadd(ay.fmul(ay)).fsqrt()
+}
+
+
+pub fn fstp_bits(v: X87) -> u32 {
+    v.to_f32().to_bits()
+}
+
+
+pub fn fld_fst(v: f32) -> f32 {
+    if v.is_nan() {
+        f32::from_bits(v.to_bits() | 0x40_0000)
+    } else {
+        v
+    }
+}
+
+
+pub fn fcom_c0(a: X87, b: X87) -> bool {
+    a.fcom(b).test_any(1)
 }
 
 #[cfg(test)]

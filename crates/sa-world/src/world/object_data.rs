@@ -32,9 +32,7 @@ const OBJECT_INFO: usize = 0xBB4A90;
 fn at(i: u32) -> GPtr<u8> {
     GPtr::from_addr(OBJECT_INFO + 0x50 * i as usize)
 }
-fn f(p: GPtr<u8>, o: isize) -> f32 {
-    p.byte_add(o).cast::<f32>().read()
-}
+use sa_core::field::rdf as f;
 use sa_core::field::rd8 as b;
 use sa_core::field::wr32 as w32;
 use sa_core::field::addr32 as ptr;

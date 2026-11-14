@@ -38,7 +38,7 @@ orig! {
 pub fn fight_hit_object(this: GPtr<u8>, ped: GPtr<u8>, obj: GPtr<u8>, pos: GPtr<u8>, normal: GPtr<u8>, _piece: u32, surface: u32) {
     let mut n = [rd::<u32>(normal, 0), rd::<u32>(normal, 4), rd::<u32>(normal, 8)];
     let np: GPtr<u8> = GPtr::from_raw(n.as_mut_ptr()).cast();
-    let dmg = X87::from_f64_exact(fight_strike_damage_c(this, ped)).to_f32();
+    let dmg = X87::from_f64_exact(fight_strike_damage_c(this, ped).to_f64()).to_f32();
     if rd::<u8>(obj, 0x144) < 0xC8
         && rd::<u8>(obj, 0x40) & 4 == 0
         && !x(rd::<f32>(rd::<GPtr<u8>>(obj, 0x160), 0x18)).fcom(x(f32::from_bits(0x42C7_CCCD))).test_parity(0x05)

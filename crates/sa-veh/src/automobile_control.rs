@@ -130,16 +130,8 @@ use sa_math::fpu::le_or_nan as le;
 
 use sa_math::fpu::ge_or_nan as ge;
 
-/// `fcomp` + `test ah, 0x44` + `jp` taken: `a != b` or unordered.
-fn ne(a: X87, b: X87) -> bool {
-    a.fcom(b).test_parity(0x44)
-}
-
-/// `fcomp` + `test ah, 1` + `jne` taken: `a < b` or unordered.
-fn lt(a: X87, b: X87) -> bool {
-    a.fcom(b).test_any(0x01)
-}
-
+use sa_math::fpu::fcom_ne as ne;
+use sa_math::fpu::fcom_c0 as lt;
 /// `(x*x + y*y) + z*z` of the vector at `p + off`, register operands (the inlined `SquaredMagnitude`).
 fn sq3(p: GPtr<u8>, off: isize) -> X87 {
     let (vx, vy, vz) = (ld(p, off), ld(p, off + 4), ld(p, off + 8));

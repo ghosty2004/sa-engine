@@ -7,10 +7,7 @@ use sa_core::hook;
 use sa_core::mem::GPtr;
 use sa_math::x87::X87;
 
-fn f(p: GPtr<u8>, o: isize) -> f32 {
-    p.byte_add(o).cast::<f32>().read()
-}
-
+use sa_core::field::rdf as f;
 /// `CColSphere::IntersectSphere(const CColSphere& other)` (0x410090, thiscall `ret 4`, bool in AL): with the centre
 /// differences `d = this - other` and `r = other.r + this.r` kept on the x87 stack, true when
 /// `r * r > (dz*dz + dx*dx) + dy*dy` (C0 and C3 clear).

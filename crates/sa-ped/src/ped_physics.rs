@@ -571,11 +571,7 @@ pub fn process_buoyancy(this: GPtr<u8>) {
     }
 }
 
-/// `(e->m_nFlags >> 4) & 1` (the entity's "stuck" bit of +0x1C, as the bytes test it).
-fn stuck(e: GPtr<u8>) -> bool {
-    (rd::<u32>(e, 0x1C) >> 4) & 1 != 0
-}
-
+use sa_world::world::object_collision::uses_collision_recording as stuck;
 /// `|v| < 0.001` as `fld; fabs; fcomp [0x858CDC]; test ah, 5; jp` decides it.
 fn abs_below_thousandth(v: u32) -> bool {
     !x(f32::from_bits(v & 0x7FFF_FFFF)).fcom(x(f32::from_bits(0x3A83_126F))).test_parity(5)

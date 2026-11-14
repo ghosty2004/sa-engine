@@ -429,7 +429,7 @@ const VISIBLE_ENTRY_EXITS: usize = 0x96A720;
 const ENTRY_EXIT_POOL: usize = 0x96A7D8;
 
 /// `(p - objects) / 0x3C` as the bytes compute it (`imul 0x88888889`, `sar 5`, rounded toward zero).
-fn entry_exit_index(p: u32, objects: u32) -> i32 {
+pub fn entry_exit_index(p: u32, objects: u32) -> i32 {
     let d = p.wrapping_sub(objects) as i32;
     let hi = ((i64::from(d) * i64::from(0x8888_8889u32 as i32)) >> 32) as i32;
     let q = hi.wrapping_add(d) >> 5;

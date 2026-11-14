@@ -223,14 +223,7 @@ pub fn ped_load(this: GPtr<u8>) -> u8 {
     1
 }
 
-/// `(p - objects) / 0x3C` as `imul 0x88888889; sar 5` rounds it (toward zero).
-fn entry_exit_index(p: u32, objects: u32) -> i32 {
-    let d = p.wrapping_sub(objects) as i32;
-    let hi = ((i64::from(d) * i64::from(0x8888_8889u32 as i32)) >> 32) as i32;
-    let q = hi.wrapping_add(d) >> 5;
-    q.wrapping_add((q as u32 >> 31) as i32)
-}
-
+use sa_world::world::save_blocks::entry_exit_index;
 /// `CPedSaveStructure::Construct(CPed*)` (0x5D43D0, thiscall, `ret 4`): position (matrix +0x30 or
 /// placement), health, armour, created-by, active weapon slot, area, +0x72D / +0x72E; +0x184 = -1, or the
 /// pool index of the ped's entry-exit (+0x78C) when it (or its link +0x38) has the +0x32 byte set; then the

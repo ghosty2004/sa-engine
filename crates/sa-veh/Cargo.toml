@@ -1,5 +1,6 @@
 [package]
 name = "sa-veh"
+build = "../phase_a_build.rs"
 version = "0.1.0"
 description = "VEH subsystem of gta_sa.exe 1.0 US (PORT-VEH): CVehicle, CAutomobile, CBike, CBmx, CQuadBike, CBoat, CHeli, CPlane, CTrain, CTrailer, CMonsterTruck, CDamageManager, cHandlingDataMgr, CCarEnterExit, CDoor, CVehicleRecording and the small vehicle checks. Built on sa-core (ADR-001). no_std; host, i686-pc-windows-gnu and wasm32"
 edition.workspace = true

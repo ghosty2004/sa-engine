@@ -67,9 +67,7 @@ fn wrp(p: GPtr<u8>, off: isize, v: GPtr<u8>) {
     field::<GPtr<u8>, u8>(p, off).write(v)
 }
 use sa_core::field::ptr_of as lp;
-fn f(v: u32) -> f32 {
-    f32::from_bits(v)
-}
+use sa_math::fpu::fbits as f;
 /// `repe cmpsb` over `lit.len()` bytes (the literal includes its NUL).
 fn cmpsb_eq(p: GPtr<u8>, lit: &[u8]) -> bool {
     lit.iter().enumerate().all(|(k, b)| rd8(p, k as isize) == *b)

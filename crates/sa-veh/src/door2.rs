@@ -21,11 +21,7 @@ pub use sa_world::bindings::multiply3x3 as multiply3x3_mv;
 pub use sa_world::bindings::multiply3x3_vm;
 pub use sa_world::bindings::physical_get_speed;
 
-/// `CTimer::ms_fTimeStep`.
-fn time_step() -> f32 {
-    g::<f32>(0xB7CB5C).read()
-}
-
+use sa_pop::carctrl3::time_step;
 use sa_core::field::gf as k;
 
 /// `fabs`: clears the sign bit (of a NaN too).

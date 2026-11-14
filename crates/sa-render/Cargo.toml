@@ -1,5 +1,6 @@
 [package]
 name = "sa-render"
+build = "../phase_a_build.rs"
 version = "0.1.0"
 description = "RENDER subsystem of gta_sa.exe 1.0 US (PORT-RENDER), game side: CRenderer visibility and sector scanning, cull zones, sprites, shadows, coronas, point lights, clouds, weather render side, post effects, bullet traces, special FX and the FX system. Built on sa-core (ADR-001). no_std; host, i686-pc-windows-gnu and wasm32"
 edition.workspace = true

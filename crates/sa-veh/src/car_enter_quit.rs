@@ -23,10 +23,7 @@ const PI: u32 = 0x4049_0FDB;
 const TWO_PI: u32 = 0x40C9_0FDB;
 const HALF_PI: u32 = 0x3FC9_0FDB;
 
-fn f(b: u32) -> f32 {
-    f32::from_bits(b)
-}
-
+use sa_math::fpu::fbits as f;
 /// The task kinds the test applies to: `Some(melee)` (melee = the attack button quits instead of the
 /// stick timeout), `None` for any other task.
 fn kind(t: i32) -> Option<bool> {

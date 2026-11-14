@@ -19,10 +19,7 @@ use std::sync::Arc;
 
 const WORDS: usize = SCRATCH_LEN / 4;
 
-fn f(x: u32) -> f32 {
-    f32::from_bits(x)
-}
-
+use sa_math::fpu::fbits as f;
 fn bits(v: Vec<f32>) -> Inputs {
     v.into_iter().map(f32::to_bits).collect()
 }

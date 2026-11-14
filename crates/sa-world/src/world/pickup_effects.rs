@@ -23,11 +23,7 @@ orig! {
     fn find_pick_up_for_this_object(o: GPtr<u8>) -> GPtr<u8> = cdecl 0x4551C0 => unported;
 }
 
-/// `MI_PICKUP_CAMERA` .. the pickup model index words (`.data`).
-fn mi(addr: usize) -> i32 {
-    i32::from(g::<u16>(addr).read())
-}
-
+use crate::world::mvpd_w5::mi_g as mi;
 use sa_core::field::gf as k;
 
 use crate::world::common::entity_pos as pos_of;

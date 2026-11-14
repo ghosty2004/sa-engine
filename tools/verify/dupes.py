@@ -24,7 +24,13 @@ them), and the names in
 COMMON (constructors, trait-like names, `main`) for the names report.
 
 `--summary` prints one line per name with its crate/file counts (the measure ADR-003 §1 quotes).
-Exit status 0 always (step 7 of ADR-003's migration turns this into a writer-gate check).
+
+`--check` (the writer gate's `dupes` step, ADR-003 §4): the cross-crate groups of `--bodies --renamed` must
+each be listed in `tools/verify/dupes-allow.txt` (one line per group: its members `file:fn` sorted and joined
+with `;`, a tab, the reason the copies stay: different semantics, separate workspaces, ...). Exit 1 on a group
+not listed (a new copy: import the existing definition instead) and on a listed group that no longer exists
+(the list only shrinks: remove the line). `--write-allow` rewrites the list from the tree, keeping the reasons
+of the groups it already lists (new groups get `pending: ...`). Without `--check` the exit status is 0.
 """
 import argparse
 import collections
@@ -221,7 +227,58 @@ def collect(include_tests):
     return defs
 
 
+ALLOW = os.path.join(ROOT, 'tools', 'verify', 'dupes-allow.txt')
+
+
+def renamed_groups(include_tests=False):
+    """The cross-crate groups of definitions identical modulo renaming (non-generated)."""
+    defs = [d for d in collect(include_tests) if not d[5]]
+    by_body = collections.defaultdict(list)
+    for d in defs:
+        body = helpernorm.normalise(d[4][d[4].index(d[0]) + len(d[0]):])
+        by_body[hashlib.sha1(body.encode()).hexdigest()].append(d)
+    return [ds for ds in by_body.values() if len({d[1] for d in ds}) >= 2 and len(ds[0][4]) >= 40]
+
+
+def group_key(ds):
+    return ';'.join(sorted({f'{d[2]}:{d[0]}' for d in ds}))
+
+
+def read_allow():
+    out = {}
+    if os.path.exists(ALLOW):
+        for line in open(ALLOW, encoding='utf-8'):
+            if line.strip() and not line.startswith('#'):
+                k, _, why = line.rstrip('\n').partition('\t')
+                out[k] = why
+    return out
+
+
+def check(write):
+    groups = renamed_groups()
+    allow = read_allow()
+    keys = {group_key(ds): ds for ds in groups}
+    if write:
+        with open(ALLOW, 'w', encoding='utf-8') as fh:
+            fh.write('# Cross-crate copies that stay, with the reason (tools/verify/dupes.py --check); the list only shrinks.\n')
+            for k in sorted(keys):
+                fh.write(f'{k}\t{allow.get(k) or "pending: not yet merged (DEDUP-1)"}\n')
+        print(f'dupes: allow-list written, {len(keys)} groups')
+        return 0
+    new = [k for k in keys if k not in allow]
+    stale = [k for k in allow if k not in keys]
+    print(f'dupes: {len(keys)} cross-crate groups of copies, {len(keys) - len(new)} listed in tools/verify/dupes-allow.txt; '
+          f'{len(new)} new, {len(stale)} stale')
+    for k in new:
+        print(f'FAIL new copies: {k} (import the existing definition, ADR-003 §3.2)')
+    for k in stale:
+        print(f'FAIL stale allow-list line (the group changed or is gone; remove or update it): {k}')
+    return 1 if new or stale else 0
+
+
 def main():
+    if '--check' in sys.argv or '--write-allow' in sys.argv:
+        return check('--write-allow' in sys.argv)
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
     ap.add_argument('--names', action='store_true', help='only the same-name report')
     ap.add_argument('--bodies', action='store_true', help='only the identical-body report')

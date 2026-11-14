@@ -41,8 +41,6 @@ sa_core::globals! {
     pub static P2P_LAST_PLAYER_VEHICLE @ 0x969A40: GPtr<u8> = GPtr::NULL;
 }
 
-/// `CTimer::m_snTimeInMilliseconds` (owned by CTimer).
-const TIME_MS: usize = 0xB7CB84;
 /// `CConversations::m_Nodes` (owned by CConversations).
 const NODES: usize = 0x969570;
 /// `gString` (owned by the file loader).
@@ -119,10 +117,7 @@ orig! {
     fn p2p_end_conversation() = cdecl 0x43AB10 => unported;
 }
 
-fn now() -> u32 {
-    g::<u32>(TIME_MS).read()
-}
-
+use sa_world::world::garage_update::now;
 use sa_core::field::gx as cf;
 
 use sa_world::world::common::entity_pos as pos;
@@ -381,11 +376,7 @@ fn stat_score(stat: u32, extra: u32, sub: usize) -> i32 {
     ftol32(X87::from_f64_exact(stats_get_stat_value(stat as u16)).fadd(xi(extra as i32)).fsub_m(g::<f32>(sub).read()))
 }
 
-/// The player's `CPedClothesDesc` (`m_pPlayerData` +0x480 -> +4), through a fresh `FindPlayerPed(-1)`.
-fn player_clothes() -> GPtr<u8> {
-    rd::<GPtr<u8>>(rd::<GPtr<u8>>(find_player_ped(-1), 0x480), 4)
-}
-
+use sa_world::world::cheat_clothes_themes::clothes as player_clothes;
 /// Vehicle class - 1 -> case of the topic-0 switch (the byte table at 0x43C150; cases 0x43B44D, 0x43B406, skip).
 const VEHICLE_CLASS_CASE: [u8; 9] = [0, 1, 1, 0, 0, 0, 2, 2, 1];
 

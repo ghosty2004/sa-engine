@@ -1,5 +1,6 @@
 [package]
 name = "sa-anim"
+build = "../phase_a_build.rs"
 version = "0.1.0"
 description = "ANIM subsystem of gta_sa.exe 1.0 US (PORT-ANIM-INPUT): CAnimManager, CAnimBlend* (associations, hierarchies, sequences, nodes, groups, clump data), IFP loading, bones and IK chains (BoneNode_c, IKChain_c, CPedIK), vehicle anim groups, CCutsceneMgr, CAnimatedBuilding. Built on sa-core (ADR-001). no_std; host, i686-pc-windows-gnu and wasm32"
 edition.workspace = true

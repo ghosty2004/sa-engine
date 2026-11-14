@@ -29,24 +29,9 @@ pub fn g<T: GameData>(addr: usize) -> GPtr<T> {
     GPtr::from_addr(addr)
 }
 
-/// `fld dword` of an f32.
-#[inline]
-pub fn x(v: f32) -> X87 {
-    X87::from_f32(v)
-}
-
-/// `fild dword` of an int32.
-#[inline]
-pub fn xi(v: i32) -> X87 {
-    X87::from_i32(v)
-}
-
-/// `_ftol` (0x821B40) of ST0, low 32 bits (EAX).
-#[inline]
-pub fn ftol32(v: X87) -> i32 {
-    v.ftol() as u32 as i32
-}
-
+pub use sa_math::fpu::x;
+pub use sa_math::fpu::xi;
+pub use sa_math::fpu::ftol32;
 /// The f32 a `fstp dword` stores.
 #[inline]
 pub fn f32_of(v: X87) -> f32 {

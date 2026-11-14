@@ -87,10 +87,7 @@ use sa_core::field::pa as s;
 
 use sa_core::field::ptr_of as lp;
 
-fn bp(b: &mut [u8]) -> GPtr<u8> {
-    GPtr::from_raw(b.as_mut_ptr())
-}
-
+use sa_core::field::buf_ptr as bp;
 /// `repe cmpsb` of `n` bytes between a local buffer and the string at `at` (stops at the first
 /// difference; `n` is the string's length + 1).
 fn field_is(buf: &[u8], at: usize, n: usize) -> bool {

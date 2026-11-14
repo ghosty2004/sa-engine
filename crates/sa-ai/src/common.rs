@@ -54,6 +54,7 @@ pub use sa_world::bindings::ped_audio_add_audio_event;
 pub use sa_world::bindings::ped_say;
 pub use crate::bindings::task_simple_ctor;
 pub use sa_world::bindings::vector_magnitude_sqr as vector_magnitude_sqr_x;
+pub use sa_core::bindings::random_float_in_range as general_random_float_in_range_x;
 orig! {
     /// `CTask::operator delete(void*)` (0x61A5B0): frees a task pool slot.
     pub fn task_delete(p: GPtr<u8>) = cdecl 0x61A5B0 => unported;
@@ -66,8 +67,6 @@ orig! {
     pub fn task_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, priority: i32, event: GPtr<u8>) -> u8 = thiscall vslot 0x18 => unported;
     /// `CTaskComplex::CreateNextSubTask(CPed*)` (vtable slot 0x20)
     pub fn task_create_next_sub_task(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x20 => unported;
-    /// `CGeneral::GetRandomNumberInRange(float, float)` (0x41BD90, the full 80-bit ST0; draws its own rand)
-    pub fn general_random_float_in_range_x(min: f32, max: f32) -> X87 = reg("args = stack") 0x41BD90 => unported;
     /// `CVehicle::GetRideAnimData()` (vtable slot 0xBC)
     pub fn vehicle_get_ride_anim_data(v: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0xBC => unported;
     /// `CPed::SetMoveAnim()` (vtable slot 0x5C)

@@ -29,7 +29,7 @@ const K_ZERO: usize = 0x858B50;
 
 use sa_core::field::gf as k;
 use crate::world::common::entity_type as ty;
-fn uses_collision_recording(e: GPtr<u8>) -> bool {
+pub fn uses_collision_recording(e: GPtr<u8>) -> bool {
     (rd::<u32>(e, 0x1C) >> 4) & 1 != 0
 }
 fn set(p: GPtr<u8>) {

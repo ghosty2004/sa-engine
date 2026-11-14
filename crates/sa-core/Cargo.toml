@@ -1,5 +1,6 @@
 [package]
 name = "sa-core"
+build = "../phase_a_build.rs"
 version = "0.1.0"
 description = "Engine core (ADR-001): game globals and layouts, typed calls into original code, hook registration; CORE ports (pools, timer, CGeneral random). no_std; host, i686-pc-windows-gnu and wasm32"
 edition.workspace = true

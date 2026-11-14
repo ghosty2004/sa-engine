@@ -14,10 +14,7 @@ use sa_math::x87::X87;
 
 use sa_core::field::gu as g;
 
-fn f(bits: u32) -> f32 {
-    f32::from_bits(bits)
-}
-
+use sa_math::fpu::fbits as f;
 use sa_core::bindings::crt_pow;
 use sa_core::bindings::entity_register_reference;
 use sa_core::bindings::matrix_mul_vec;

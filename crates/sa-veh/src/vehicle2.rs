@@ -383,11 +383,7 @@ orig! {
     pub fn vmi_set_env_map_coeff(mi: GPtr<u8>, c: f32) = thiscall 0x4C9800 => unported;
 }
 
-/// `CTimer::ms_fTimeStep`.
-fn time_step() -> f32 {
-    g::<f32>(0xB7CB5C).read()
-}
-
+use sa_pop::carctrl3::time_step;
 /// `CVehicle::ProcessDelayedExplosion()` (0x6D1340): the bomb timer (+0x4DE, u16) counts down by
 /// `ftol(timeStep * 16.666666)` (clamped at 0, unsigned compare); when it reaches 0, virtual
 /// `BlowUpCar(bomb owner +0x4E0, false)`.

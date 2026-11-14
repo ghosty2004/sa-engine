@@ -296,11 +296,7 @@ fn moon_size() -> X87 {
     v.fadd(v).fadd_m(4.0)
 }
 
-/// The dword a `fstp dword` stores.
-fn bits(v: X87) -> u32 {
-    v.to_f32().to_bits()
-}
-
+use sa_math::fpu::fstp_bits as bits;
 /// `CSprite::CalcScreenCoors(in, &out, &w, &h, false, true)` on the frame slots (fresh pointers per call).
 fn calc(inp: &mut [u32; 3], out: &mut [u32; 3], w: &mut f32, h: &mut f32) -> bool {
     calc_screen_coors(

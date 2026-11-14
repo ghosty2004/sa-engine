@@ -31,11 +31,10 @@ use crate::field::at;
 pub mod call {
     use super::*;
     pub use crate::bindings::rw_camera_set_view_window;
+    pub use crate::bindings::rw_engine_get_video_mode_info;
     orig! {
         /// `RwEngineGetCurrentVideoMode` (0x7F2D20; ported in sa-rwcore, which depends on sa-core)
         pub fn rw_engine_get_current_video_mode() -> i32 = cdecl 0x7F2D20 => unported;
-        /// `RwEngineGetVideoModeInfo(RwVideoMode*, RwInt32)` (0x7F2CF0; ported in sa-rwcore)
-        pub fn rw_engine_get_video_mode_info(info: GPtr<RwVideoMode>, mode: i32) -> GPtr<RwVideoMode> = cdecl 0x7F2CF0 => unported;
     }
 }
 
@@ -191,7 +190,7 @@ mod tests {
     fn sizes_rasters_and_view_window() {
         host::set::<fn() -> i32>("sa_core::camerasize::call::rw_engine_get_current_video_mode", cur_mode);
         host::set::<fn(GPtr<RwVideoMode>, i32) -> GPtr<RwVideoMode>>(
-            "sa_core::camerasize::call::rw_engine_get_video_mode_info",
+            "sa_core::bindings::rw_engine_get_video_mode_info",
             mode_info,
         );
         host::set::<fn(GPtr<u8>, GPtr<u8>) -> GPtr<u8>>(
@@ -234,7 +233,7 @@ mod tests {
         camera_size(GPtr::NULL, GPtr::NULL, 0.7, 1.0);
         for k in [
             "sa_core::camerasize::call::rw_engine_get_current_video_mode",
-            "sa_core::camerasize::call::rw_engine_get_video_mode_info",
+            "sa_core::bindings::rw_engine_get_video_mode_info",
             "sa_core::bindings::rw_camera_set_view_window",
         ] {
             host::clear(k);

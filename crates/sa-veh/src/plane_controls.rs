@@ -24,11 +24,7 @@ use sa_world::bindings::pad_get_steering_up_down;
 use crate::bindings::plane_set_gear_up;
 use sa_pop::bindings::get_car_gun_up_down as pad_get_car_gun_up_down;
 
-/// `CTimer::ms_fTimeStep`.
-fn ts() -> f32 {
-    g::<f32>(0xB7_CB5C).read()
-}
-
+use sa_pop::carctrl3::time_step as ts;
 /// `pow(0.99, timeStep)` (`_CIpow`).
 fn decay() -> X87 {
     X87::from_f64_exact(sa_core::orig::x87_binary(

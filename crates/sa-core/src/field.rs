@@ -225,3 +225,33 @@ mod tests {
         assert_eq!(pa(a), p);
     }
 }
+
+pub fn vec3_ptr(v: &mut [u32; 3]) -> GPtr<u8> {
+    GPtr::from_raw(v.as_mut_ptr()).cast()
+}
+
+
+pub fn g32(a: usize) -> GPtr<u32> {
+    GPtr::from_addr(a)
+}
+
+
+pub fn buf_ptr(buf: &mut [u8]) -> GPtr<u8> {
+    GPtr::from_raw(buf.as_mut_ptr())
+}
+
+
+pub fn u16_at(d: &[u8], o: usize) -> u16 {
+    u16::from_le_bytes([d[o], d[o + 1]])
+}
+
+
+pub fn u32_at(d: &[u8], o: usize) -> u32 {
+    u32::from_le_bytes([d[o], d[o + 1], d[o + 2], d[o + 3]])
+}
+
+
+pub fn vec_ptr(v: &[u32; 3]) -> GPtr<u32> {
+    GPtr::from_raw(v.as_ptr().cast_mut())
+}
+

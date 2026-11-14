@@ -2333,12 +2333,7 @@ fn dt_ms() -> i32 {
     ftol32(x(g::<f32>(TIME_STEP).read()).fmul_m(f32c(0x3CA3_D70A)).fmul_m(1000.0))
 }
 
-/// `(float)(uint32)v` as `fild` + the 2^32 correction for negative dwords.
-fn u32_to_x(v: u32) -> X87 {
-    let r = xi(v as i32);
-    if (v as i32) < 0 { r.fadd_m(4_294_967_296.0) } else { r }
-}
-
+use sa_world::world::stats::u32_as_x87 as u32_to_x;
 /// `FPV()`: `Players[PlayerInFocus].m_pPed && ped.bInVehicle ? ped.m_pVehicle : null` (re-evaluated at each use).
 fn fpv() -> GPtr<u8> {
     let pif = i32::from(g::<u8>(PLAYER_IN_FOCUS).read());

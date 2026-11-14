@@ -105,11 +105,7 @@ fn last_big(style: u32, i: u32) -> GPtr<u8> {
     g::<u8>(LAST_BIG_MESSAGE + (style as usize) * 0x80 + i as usize)
 }
 
-/// `fld [x]; fcomp [0.0]; test ah, 0x44; jp` not taken: `x == 0.0` (ordered).
-fn is_zero(v: f32) -> bool {
-    !x(v).fcom(x(0.0)).test_parity(0x44)
-}
-
+use sa_weapon::projectile_add::force_is_zero as is_zero;
 /// `CHud::SetVehicleName(const GxtChar*)` (0x588F50)
 #[hook(addr = 0x588F50, conv = cdecl, name = "CHud::SetVehicleName", expect = "8B 44 24 04 A3 58 A4 BA 00")]
 pub fn set_vehicle_name(name: u32) {

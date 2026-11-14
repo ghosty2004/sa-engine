@@ -24,11 +24,7 @@ orig! {
     fn v_task_get_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
 }
 
-/// `CTimer::ms_fTimeStep`.
-fn ts() -> f32 {
-    g::<f32>(0xB7_CB5C).read()
-}
-
+use sa_pop::carctrl3::time_step as ts;
 /// `CAutomobile::ProcessControlInputs(uint8 pedType)` (0x6AD690).
 ///
 /// The handbrake (+0x428 bit 5) is forced on, and the car treated as being left, while the driver

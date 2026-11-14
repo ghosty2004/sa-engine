@@ -13,8 +13,6 @@ use crate::common::*;
 pub const WEAPON_SIZE: usize = 0x1C;
 const _: () = assert!(WEAPON_SIZE == sa_core::layouts::size::CWeapon);
 
-/// `CModelInfo::ms_modelInfoPtrs`
-const MODEL_INFO_PTRS: usize = 0xA9B0C8;
 /// `CWeapon::ms_PelletTestCol` (`CColModel`)
 pub const PELLET_TEST_COL: usize = 0xC8A7DC;
 
@@ -96,10 +94,7 @@ orig! {
     pub fn evaluate_target_call(t: GPtr<u8>, origin: GPtr<u8>, dir: GPtr<u8>, mult: f32, planes: u8, last: GPtr<u8>) -> f64 = cdecl 0x73E560 => evaluate_target_st0;
 }
 
-fn model_info(id: i32) -> GPtr<u8> {
-    g::<GPtr<u8>>(MODEL_INFO_PTRS.wrapping_add((id as usize).wrapping_mul(4))).read()
-}
-
+use sa_world::world::hand_object::model_info;
 /// `CWeapon::IsTypeMelee()` (0x73B1C0, thiscall): `GetWeaponInfo(type, 1)->fireType == MELEE`.
 #[hook(addr = 0x73B1C0, conv = thiscall, name = "CWeapon::IsTypeMelee", expect = "8B 01 6A 01 50", this = "CWeapon")]
 pub fn is_type_melee(this: GPtr<u8>) -> u8 {

@@ -69,17 +69,12 @@ orig! {
     fn kill_armed_ctor(t: GPtr<u8>, target: u32, a: u32, b: u32, c: u32, d: u32) -> GPtr<u8> = thiscall 0x621190 => unported;
 }
 
-/// `CTimer::m_snTimeInMilliseconds`
-const TIME_MS: usize = 0xB7CB84;
 /// 0.0, 0.1 (a vehicle "slow enough" to drag its occupant out), 5.0 (the gang-gun distance)
 const ZERO: usize = 0x858B50;
 const SLOW_SPEED: usize = 0x858B1C;
 const GANG_GUN_DIST: usize = 0x858C80;
 
-fn now() -> u32 {
-    g::<u32>(TIME_MS).read()
-}
-
+use sa_world::world::garage_update::now;
 use sa_core::field::ptr_of as buf;
 
 use sa_world::world::common::entity_pos as pos_ptr;
@@ -92,10 +87,7 @@ fn sub(this: GPtr<u8>) -> GPtr<u8> {
     rd::<GPtr<u8>>(this, 8)
 }
 
-fn in_vehicle(p: GPtr<u8>) -> bool {
-    rd::<u32>(p, 0x46C) & 0x100 != 0
-}
-
+use sa_world::world::cworld::in_vehicle;
 /// The ped's current weapon (`ped + 0x5A0 + slot (+0x718, signed byte) * 0x1C`) is a melee one.
 fn current_weapon_melee(ped: GPtr<u8>) -> bool {
     let slot = isize::from(rd::<i8>(ped, 0x718));

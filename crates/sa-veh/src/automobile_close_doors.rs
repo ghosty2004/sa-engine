@@ -61,10 +61,7 @@ const K_M0_1: u32 = 0xBDCC_CCCD;
 const K_M0_02: u32 = 0xBCA3_D70A;
 const K_M0_2: u32 = 0xBE4C_CCCD;
 
-fn f(p: GPtr<u8>, off: isize) -> f32 {
-    p.byte_add(off).cast::<f32>().read()
-}
-
+use sa_core::field::rdf as f;
 /// `CVehicle::AddPassenger(CPed*)` (0x6D13A0, thiscall, `ret 4`; the automatic-seat overload).
 ///
 /// First a nudge from the ped's mass (+0x8C): for vehicle type +0x590 == 9 `ApplyTurnForce(k * up, -0.1f *

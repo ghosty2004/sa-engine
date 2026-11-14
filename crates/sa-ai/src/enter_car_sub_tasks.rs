@@ -134,9 +134,7 @@ fn lu(t: GPtr<u8>) -> u32 {
     rd::<u32>(t, 0x38)
 }
 use sa_core::field::gf as kf;
-fn in_vehicle(ped: GPtr<u8>) -> bool {
-    rd::<u32>(ped, 0x46C) & 0x100 != 0
-}
+use sa_world::world::cworld::in_vehicle;
 fn sub(t: GPtr<u8>, ty: u32, ped: GPtr<u8>) -> GPtr<u8> {
     create_sub_task_o(t, ty, ped)
 }

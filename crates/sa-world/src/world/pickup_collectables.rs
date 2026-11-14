@@ -16,7 +16,7 @@ use sa_core::bindings::audio_report_frontend_event as report_frontend_audio_even
 /// `CWorld::Players[0].m_nMoney` (0xB7CE50).
 const MONEY: usize = 0xB7_CE50;
 
-fn stat(id: u32) -> X87 {
+pub fn stat(id: u32) -> X87 {
     X87::from_f64_exact(get_stat_value(id as u16))
 }
 

@@ -77,10 +77,7 @@ fn cstr_len(p: GPtr<u8>) -> u32 {
     n
 }
 
-fn local(buf: &mut [u8]) -> GPtr<u8> {
-    GPtr::from_raw(buf.as_mut_ptr())
-}
-
+use sa_core::field::buf_ptr as local;
 /// `CMessages::GetStringLength(const GxtChar*)` (0x69DB50).
 #[hook(addr = 0x69DB50, conv = cdecl, name = "CMessages::GetStringLength", expect = "8B 4C 24 04 8A 11")]
 pub fn get_string_length(s: GPtr<u8>) -> u32 {

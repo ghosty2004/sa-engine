@@ -68,6 +68,7 @@ use crate::bindings::vector_sub;
 use crate::bindings::placeable_allocate_matrix as allocate_matrix;
 use sa_core::bindings::cross_product;
 use sa_core::bindings::vector_normalise as normalise;
+use crate::bindings::calculate_triangle_planes_416330 as calculate_triangle_planes;
 orig! {
     /// `FUN_0050D590(CPed*)` (cdecl, ST0; animates the skinned ped col model and returns a height)
     fn ped_col_fn_50d590(ped: GPtr<u8>) -> f64 = cdecl 0x50D590 => unported;
@@ -80,8 +81,6 @@ orig! {
     /// CColCacheEntry*)` (0x4181B0, AL)
     fn sphere_cast_vs_caches_call(sp: GPtr<u8>, v: GPtr<u8>, n: i32, cache: GPtr<u8>, n_out: GPtr<u8>, out: GPtr<u8>) -> u8
         = cdecl 0x4181B0 => sphere_cast_vs_caches;
-    /// `CCollision::CalculateTrianglePlanes(CCollisionData*)` (0x416330)
-    fn calculate_triangle_planes(cd: super::data::CdPtr) = cdecl 0x416330 => super::data::calculate_triangle_planes_col_data;
 }
 
 use sa_core::field::gfu as kf;

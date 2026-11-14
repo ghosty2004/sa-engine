@@ -53,6 +53,7 @@ use sa_core::bindings::col_box_set;
 use crate::bindings::col_sphere_set;
 use crate::bindings::matrix_dtor;
 use crate::bindings::placeable_allocate_matrix as allocate_matrix;
+use crate::bindings::calculate_triangle_planes_416330 as calculate_triangle_planes;
 orig! {
     /// `CColBox::operator=(const CColBox&)` (0x40EEC0, thiscall, `ret 4`): copies min, max (6 dwords),
     /// the surface/piece word and the light byte (0x1B bytes).
@@ -64,8 +65,6 @@ orig! {
     /// `CCollision::ClosestSquaredDistanceBetweenFiniteLines(p0, q0, q1, u, uu)` (0x415A40, ST0)
     fn closest_sq_dist(p0: GPtr<f32>, q0: GPtr<f32>, q1: GPtr<f32>, u: GPtr<f32>, uu: f32) -> f64
         = cdecl 0x415a40 => closest_sq_dist_st0;
-    /// `CCollision::CalculateTrianglePlanes(CCollisionData*)` (0x416330)
-    fn calculate_triangle_planes(cd: super::data::CdPtr) = cdecl 0x416330 => super::data::calculate_triangle_planes_col_data;
 }
 
 /// Copies `n` dwords from `src + off` to `dst + off` (`rep movsd`).
@@ -709,10 +708,8 @@ use sa_core::bindings::ped_is_alive;
 use sa_stream::bindings::col_model_ctor;
 use crate::bindings::col_model_dtor;
 use crate::bindings::collision_data_ctor;
+use sa_stream::bindings::animate_ped_col_model_skinned;
 orig! {
-    /// `CPedModelInfo::AnimatePedColModelSkinned(RpClump*)` (0x4C6F70, thiscall, returns the col model)
-    fn animate_ped_col_model_skinned(mi: sa_stream::modelinfo::base::MiPtr, clump: GPtr<u8>) -> GPtr<u8>
-        = thiscall 0x4c6f70 => sa_stream::modelinfo::ped::animate_ped_col_model_skinned;
     /// `CCollision::ProcessLineOfSight(const CColLine&, const CMatrix&, CColModel&, CColPoint&, float&,
     /// bool seeThrough, bool shootThrough)` (0x417950, AL)
     fn process_line_of_sight(line: GPtr<u8>, m: GPtr<u8>, cm: GPtr<u8>, cp: GPtr<u8>, max: GPtr<u8>, see: u8, shoot: u8) -> u8
@@ -744,7 +741,7 @@ const K_TYRE_SIDE: usize = 0x858B8C;
 
 /// `entity->GetMatrix()` with the allocate-and-update the original inlines (`AllocateMatrix`, then
 /// `CSimpleTransform::UpdateMatrix` from the placement).
-fn ensure_matrix(e: GPtr<u8>) -> GPtr<u8> {
+pub fn ensure_matrix(e: GPtr<u8>) -> GPtr<u8> {
     if rd::<GPtr<u8>>(e, 0x14).is_null() {
         allocate_matrix(e);
         simple_transform_update_matrix(e.byte_add(4), rd::<GPtr<u8>>(e, 0x14));

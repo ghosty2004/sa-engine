@@ -263,7 +263,7 @@ fn reaction(k: usize) -> f32 {
 }
 
 /// `fild` of a uint32 counter: + 2^32 when the sign bit is set (0x858C54).
-fn u32_as_x87(c: u32) -> X87 {
+pub fn u32_as_x87(c: u32) -> X87 {
     let v = xi(c as i32);
     if (c as i32) < 0 { v.fadd_m(4_294_967_296.0) } else { v }
 }

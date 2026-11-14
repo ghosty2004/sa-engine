@@ -137,15 +137,7 @@ pub fn get_piecewise_linear(v: f32, n: i16, table: GPtr<f32>) -> X87 {
     piecewise_linear_with(v, n, |i| table.byte_add(i * 4).read())
 }
 
-/// `floor` (CRT 0x8219F0) of an f64: exact.
-fn floor_f64(v: f64) -> f64 {
-    if v.is_nan() || v.abs() >= 4_503_599_627_370_496.0 {
-        return v;
-    }
-    let t = v as i64 as f64;
-    if t > v { t - 1.0 } else { t }
-}
-
+use sa_math::fpu::floor_f64;
 /// `fild dword` of a uint32 as MSVC emits it: signed load, `fadd 2^32` (PC=24) when negative.
 fn fild_u32(v: u32) -> X87 {
     let r = xi(v as i32);
@@ -557,15 +549,7 @@ pub fn get_reverb_environment_and_depth(env: GPtr<u8>, depth: GPtr<i32>) {
     depth.write(g::<i32>(e + 4).read());
 }
 
-/// `sqrt((dz*dz + dy*dy) + dx*dx)` of `p - q` as the original's inline `DistanceBetweenPoints`
-/// (operands loaded from memory: `p` the arguments, `q` the stored vector).
-fn distance(p: [f32; 3], q: [f32; 3]) -> X87 {
-    let dx = x(p[0]).fsub_m(q[0]);
-    let dy = x(p[1]).fsub_m(q[1]);
-    let dz = x(p[2]).fsub_m(q[2]);
-    dz.fmul(dz).fadd(dy.fmul(dy)).fadd(dx.fmul(dx)).fsqrt()
-}
-
+use sa_render::harness5::dist as distance;
 /// `min * 0.125 < p < max * 0.125` on one axis of a box (int16 coordinates in 1/8 m).
 fn box_axis_contains(min: i16, max: i16, p: f32) -> bool {
     xi(i32::from(min)).fmul_m(0.125).fcom(x(p)) == sa_math::x87::Cmp::Less

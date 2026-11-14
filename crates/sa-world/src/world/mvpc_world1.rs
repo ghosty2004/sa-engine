@@ -123,7 +123,7 @@ fn ensure_matrix(e: GPtr<u8>) -> GPtr<u8> {
 }
 
 /// `fld a; fcomp [b]; test ah, 5; jp` not taken: `a < b` (f32, NaN false).
-fn less(a: f32, b: f32) -> bool {
+pub fn less(a: f32, b: f32) -> bool {
     let mut f = Fpu::new();
     f.fld(a);
     f.fcomp_m(b);

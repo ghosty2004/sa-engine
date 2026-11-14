@@ -701,15 +701,7 @@ orig! {
     pub fn cam_look_right(c: GPtr<u8>, right: u32) = thiscall 0x520E40 => unported;
 }
 
-/// `CPlaceable::GetMatrix()` inlined: allocate and fill the matrix from the placement when missing.
-fn entity_matrix(e: GPtr<u8>) -> GPtr<u8> {
-    if rd::<GPtr<u8>>(e, 0x14).is_null() {
-        allocate_matrix(e);
-        simple_transform_update_matrix(e.byte_add(4), rd::<GPtr<u8>>(e, 0x14));
-    }
-    rd::<GPtr<u8>>(e, 0x14)
-}
-
+use sa_world::collision::sphere_cast::ensure_matrix as entity_matrix;
 use sa_world::world::common::entity_pos;
 
 /// `CCam::Process`' orientation of the target entity (`slot` = `&m_pCamTargetEntity`), re-reading the
@@ -732,10 +724,7 @@ fn target_orientation(slot: GPtr<u8>) -> u32 {
 fn v3() -> [u32; 3] {
     [0; 3]
 }
-fn vp(v: &mut [u32; 3]) -> GPtr<u8> {
-    GPtr::from_raw(v.as_mut_ptr()).cast()
-}
-
+use sa_core::field::vec3_ptr as vp;
 /// `TheCamera` fields and other globals `CCam::Process` uses (see `docs/re/specs/CAM/CCam.md`).
 const IDLE_COUNTER: usize = 0xB6FE34;
 const IDLE_THRESHOLD: usize = 0xB6FDC8;

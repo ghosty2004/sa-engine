@@ -9,23 +9,14 @@ use sa_core::mem::GPtr;
 use sa_core::hook;
 use sa_math::x87::X87;
 
-use super::common::{ftol32, g, rd, x, xi};
+use super::common::{ftol32, g, rd, x};
 
 use crate::bindings::crt_ceil;
 use crate::bindings::update_fat_and_muscle_stats;
 use sa_core::bindings::display_script_stat_update_message;
 use crate::bindings::stats_increment_stat;
 
-/// `fild` of an unsigned dword (`+ 2^32` when the sign bit is set, 0x858C54).
-fn u2f(v: u32) -> X87 {
-    let f = xi(v as i32);
-    if (v as i32) < 0 {
-        f.fadd_m(4_294_967_296.0)
-    } else {
-        f
-    }
-}
-
+use crate::world::stats::u32_as_x87 as u2f;
 /// `ftol(CTimer::ms_fTimeStep * 0.02 * 1000)`: the frame time in ms.
 fn frame_ms() -> i32 {
     ftol32(x(g::<f32>(0xB7_CB5C).read()).fmul_m(f32::from_bits(0x3CA3_D70A)).fmul_m(1000.0))
@@ -44,7 +35,7 @@ fn raise(counter: usize, stat: u32, amount: usize) {
 }
 
 /// `|move speed|^2` as the original sums it: `(x^2 + y^2) + z^2`.
-fn speed_sq(v: GPtr<u8>) -> X87 {
+pub fn speed_sq(v: GPtr<u8>) -> X87 {
     let sx = x(rd::<f32>(v, 0x44));
     let sy = x(rd::<f32>(v, 0x48));
     let sz = x(rd::<f32>(v, 0x4C));
@@ -151,7 +142,7 @@ fn vehicle_counter(counter: usize, threshold: usize, stat: u32, amount: usize, d
 }
 
 /// `s > c` (`fcom`, `test ah, 0x41`, `je` taken).
-fn above(s: X87, c: f32) -> bool {
+pub fn above(s: X87, c: f32) -> bool {
     !s.fcom(x(c)).test_any(0x41)
 }
 

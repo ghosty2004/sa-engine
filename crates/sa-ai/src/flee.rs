@@ -8,8 +8,6 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
-/// `CTimer::m_snTimeInMilliseconds`
-const TIME_MS: usize = 0xB7CB84;
 /// `g_ikChainMan` (`IKChainManager_c`)
 const IK_CHAIN_MAN: usize = 0xC15448;
 
@@ -61,10 +59,7 @@ fn ik() -> GPtr<u8> {
     GPtr::from_addr(IK_CHAIN_MAN)
 }
 
-fn time_ms() -> u32 {
-    g::<u32>(TIME_MS).read()
-}
-
+use sa_world::world::garage_update::now as time_ms;
 /// `(dz·dz + dy·dy) + dx·dx` of `a - p` as the original's x87 sequence computes it (unrounded differences).
 fn dist2(a: GPtr<u8>, p: GPtr<u8>) -> X87 {
     let dx = x(rd::<f32>(a, 0)).fsub_m(rd::<f32>(p, 0));

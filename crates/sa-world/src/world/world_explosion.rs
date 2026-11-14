@@ -16,7 +16,7 @@ orig! {
 }
 
 /// `_ftol(floor(v * 0.02 + 60))`: the sector index of a world coordinate (the product as a double).
-fn sector(v: X87) -> i32 {
+pub fn sector(v: X87) -> i32 {
     let s = v.fmul_m(f32::from_bits(0x3CA3_D70A)).fadd_m(60.0);
     ftol32(X87::from_f64_exact(crt_floor(s.to_f64())))
 }

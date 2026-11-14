@@ -65,7 +65,7 @@ pub const HOOKS: &[HookReg] = &[
 use sa_math::fpu::fbits as k;
 
 /// `fidiv dword [m]`.
-fn fidiv(f: &mut Fpu, v: i32) {
+pub fn fidiv(f: &mut Fpu, v: i32) {
     let a = f.pop();
     f.push(a.fdiv(X87::from_i32(v)));
 }
@@ -79,7 +79,7 @@ fn fild_u32(f: &mut Fpu, v: u32) {
 }
 
 /// `CTimer::m_snTimeInMilliseconds` (0xB7CB84).
-fn time_ms() -> u32 {
+pub fn time_ms() -> u32 {
     g::<u32>(0xB7CB84).read()
 }
 
@@ -984,7 +984,7 @@ orig! {
 }
 
 /// `CTimer::ms_fTimeStep` (0xB7CB5C).
-fn time_step() -> f32 {
+pub fn time_step() -> f32 {
     g::<f32>(0xB7CB5C).read()
 }
 

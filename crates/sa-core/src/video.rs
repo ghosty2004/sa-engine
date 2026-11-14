@@ -54,9 +54,8 @@ pub mod call {
     pub use crate::bindings::release;
     pub use crate::bindings::rw_engine_get_current_sub_system;
     pub use crate::bindings::update_window;
+    pub use crate::bindings::rw_engine_get_video_mode_info;
     orig! {
-        /// `RwEngineGetVideoModeInfo` (0x7F2CF0)
-        pub fn rw_engine_get_video_mode_info(info: GPtr<RwVideoMode>, mode: i32) -> GPtr<RwVideoMode> = cdecl 0x7F2CF0 => unported;
         /// `RwD3D9ChangeVideoMode` (0x7F8640)
         pub fn rw_d3d9_change_video_mode(mode: i32) -> i32 = cdecl 0x7F8640 => unported;
         /// `RwEngineInstance->stringFuncs.vecSprintf`-style `rwsprintf` (+0xF0) with 3 values

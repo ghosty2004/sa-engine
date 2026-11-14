@@ -38,10 +38,7 @@ const STREAMING_FLAG: usize = 0xB7CD6D;
 /// `CStreaming::ms_aInfoForModel` (0x14 bytes each; +6 the flags)
 const STREAMING_INFO: usize = 0x8E4CC0;
 
-fn gu(a: usize) -> GPtr<u32> {
-    GPtr::from_addr(a)
-}
-
+use sa_core::field::g32 as gu;
 use sa_core::field::pa as gb;
 
 use sa_core::field::rd32;

@@ -225,6 +225,7 @@ orig! {
 }
 
 use crate::bindings::find_player_ped;
+use crate::bindings::fx_render;
 orig! {
     // ---- RenderScene
     fn moving_things_render_before_clouds() = cdecl 0x7178F0 => unported;
@@ -254,8 +255,6 @@ orig! {
     fn moving_things_render() = cdecl 0x717150 => unported;
     fn vis_render_really_draw_last_objects() = cdecl 0x733800 => unported;
     fn coronas_render() = cdecl 0x6FAEC0 => unported;
-    /// `Fx_c::Render(RwCamera*, bool)` (0x49E650)
-    fn fx_render(this: GPtr<u8>, cam: GPtr<u8>, flag: u32) = thiscall 0x49E650 => unported;
     fn water_cannons_render() = cdecl 0x729B30 => unported;
     fn water_level_render_water_fog() = cdecl 0x6E7760 => unported;
     fn clouds_moving_fog_render() = cdecl 0x716C90 => unported;
@@ -925,7 +924,7 @@ pub fn render_effects() {
     moving_things_render();
     vis_render_really_draw_last_objects();
     coronas_render();
-    fx_render(g(G_FX), g::<GPtr<u8>>(CAMERA_RW_CAMERA).read(), 0);
+    fx_render(g::<GPtr<u8>>(CAMERA_RW_CAMERA).read(), 0);
     water_cannons_render();
     water_level_render_water_fog();
     clouds_moving_fog_render();

@@ -190,14 +190,7 @@ fn ped_is_ducking(ped: GPtr<u8>) -> bool {
     !task.is_null() && rd::<u32>(ped, 0x46C) & 0x0400_0000 != 0 && rd::<u8>(task, 0x19) == 0
 }
 
-/// `|m_vecMoveSpeed|^2` (+0x44) in the original order `(x*x + y*y) + z*z`.
-fn move_speed_sq(ped: GPtr<u8>) -> X87 {
-    let vx = x(rd::<f32>(ped, 0x44));
-    let vy = x(rd::<f32>(ped, 0x48));
-    let vz = x(rd::<f32>(ped, 0x4C));
-    vx.fmul(vx).fadd(vy.fmul(vy)).fadd(vz.fmul(vz))
-}
-
+use sa_world::world::stats_travel::speed_sq as move_speed_sq;
 /// Ducking goal height: moving (`|v|^2 > 1e-6` [0x8630EC]) `0x8CCB98 - 0.5`, else (NaN included)
 /// `0x8CCB94 - 1.0`.
 fn duck_goal(ped: GPtr<u8>) -> X87 {

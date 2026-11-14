@@ -35,7 +35,7 @@ const MODEL_INFO_PTRS: usize = 0xA9B0C8;
 /// `CTxdStore::ms_pTxdPool`
 const TXD_POOL: usize = 0xC8800C;
 
-fn model_info(mi: i32) -> GPtr<u8> {
+pub fn model_info(mi: i32) -> GPtr<u8> {
     g::<GPtr<u8>>(MODEL_INFO_PTRS.wrapping_add((mi as usize).wrapping_mul(4))).read()
 }
 

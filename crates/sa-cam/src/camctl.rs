@@ -816,11 +816,7 @@ pub fn calculate_ground_height_port(this: GPtr<u8>, kind: i32) -> X87 {
     }
 }
 
-/// `fcomp m; test ah, 0x41; je` taken: `a > m` (not equal, not less, not unordered).
-fn jne_greater(a: X87, m: f32) -> bool {
-    !a.fcom(x(m)).test_any(0x41)
-}
-
+use sa_world::world::stats_travel::above as jne_greater;
 /// `CCamera::ConeCastCollisionResolve(const CVector& source, const CVector& target, CVector& out,
 /// float radius, float angle, float& dist)` (0x51A5D0, AL): equal source and target (`test ah,0x44`,
 /// per axis; NaN counts as different) give 0 with nothing written. Otherwise two spheres of `radius`

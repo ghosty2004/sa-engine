@@ -32,11 +32,8 @@ import bindings as B
 
 sys.path.insert(0, os.path.join(B.ROOT, 'tools', 'lib'))
 
-# C varargs: every caller passes its own argument list, so one fixed signature cannot describe them.
-VARARGS = {
-    0x821982: 'printf', 0x821BB5: 'sprintf', 0x8220AD: 'sscanf', 0x8088D0: 'RwError-style varargs',
-    0x822E7E: 'vsprintf', 0x823AD0: 'sprintf_s', 0x823A30: 'fprintf',
-}
+# C varargs (declared per caller): `bindings.VARARGS`
+VARARGS = B.VARARGS
 INTS = ('u8', 'i8', 'u16', 'i16', 'u32', 'i32', 'usize', 'isize', 'u64', 'i64')
 WIDTH = {'u8': 1, 'i8': 1, 'bool': 1, 'u16': 2, 'i16': 2, 'u32': 4, 'i32': 4, 'usize': 4, 'isize': 4, 'f32': 4}
 EXTRA_TYPES = {'CVector': 'sa_math::vector::CVector', 'X87': 'sa_math::x87::X87'}
@@ -124,7 +121,7 @@ def resolve_target_abs(d, s, deps):
 # ---- types -----------------------------------------------------------------------------------------
 def alias_map(s, uses, global_aliases):
     out = {}
-    for m in re.finditer(r'^\s*(?:pub(?:\([^)]*\))?\s+)?type\s+(\w+)\s*=\s*([^;]+);', s, re.M):
+    for m in re.finditer(r'^\s*(?:pub(?:\([^)]*\))?\s+)?type\s+(\w+)\s*=\s*((?:[^;\[]|\[[^\]]*\])+);', s, re.M):
         out[m.group(1)] = B.norm_type(m.group(2))
     for k, v in uses.items():
         last = v.split('::')[-1]
@@ -140,7 +137,7 @@ def alias_map(s, uses, global_aliases):
 def global_aliases():
     seen = collections.defaultdict(set)
     for p in B.rust_files():
-        for m in re.finditer(r'^\s*pub\s+type\s+(\w+)\s*=\s*([^;]+);', open(p, encoding='utf-8').read(), re.M):
+        for m in re.finditer(r'^\s*pub\s+type\s+(\w+)\s*=\s*((?:[^;\[]|\[[^\]]*\])+);', open(p, encoding='utf-8').read(), re.M):
             seen[m.group(1)].add(B.norm_type(m.group(2)))
     return {k: v.pop() for k, v in seen.items() if len(v) == 1}
 
@@ -151,7 +148,7 @@ def norm(t, aliases):
         t = re.sub(r'\b(?:sa_core::)?mem::GPtr\b', 'GPtr', t)
         t = re.sub(r'\bsa_core::GPtr\b', 'GPtr', t)
         for k, v in aliases.items():
-            t = re.sub(r'(?<![\w:])%s(?![\w])' % re.escape(k), v, t)
+            t = re.sub(r'(?<![\w])(?:(?:super|self|crate|sa_\w+|\w+)::)*%s(?![\w])' % re.escape(k), v, t)
     t = re.sub(r'(?<![\w:])(?:sa_math::(?:vector::)?)?CVector\b', 'sa_math::vector::CVector', t)
     t = re.sub(r'(?<![\w:])(?:sa_math::)?(?:x87::)?X87\b', 'sa_math::x87::X87', t)
     return t

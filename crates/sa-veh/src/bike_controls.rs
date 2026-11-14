@@ -18,11 +18,7 @@ use sa_world::bindings::pad_get_exit_vehicle;
 use sa_world::bindings::pad_get_steering_left_right;
 use sa_world::bindings::pad_get_steering_up_down;
 
-/// `CTimer::ms_fTimeStep`.
-fn ts() -> f32 {
-    g::<f32>(0xB7_CB5C).read()
-}
-
+use sa_pop::carctrl3::time_step as ts;
 /// `pow(0.98, timeStep)` (`_CIpow`).
 fn decay() -> X87 {
     X87::from_f64_exact(sa_core::orig::x87_binary(

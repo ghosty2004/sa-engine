@@ -123,10 +123,7 @@ fn is_mi(m: i32, addr: usize) -> bool {
     m == i32::from(g::<u16>(addr).read())
 }
 
-fn bits(v: X87) -> u32 {
-    v.to_f32().to_bits()
-}
-
+use sa_math::fpu::fstp_bits as bits;
 use sa_core::field::rd3u as v3;
 
 /// The camera position the original reads: `[0xB6F03C] + 0x30`, else 0xB6F02C.

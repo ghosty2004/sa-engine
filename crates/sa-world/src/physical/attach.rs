@@ -47,15 +47,13 @@ pub use sa_stream::bindings::ped_is_player;
 pub use crate::bindings::placeable_allocate_matrix as allocate_matrix;
 pub use sa_stream::bindings::simple_transform_update_matrix;
 pub use crate::bindings::physical_apply_turn_force as apply_turn_force_call;
+pub use sa_core::bindings::matrix_rotate_x;
+pub use sa_core::bindings::matrix_rotate_z;
 orig! {
     /// virtual `CEntity::SetIsStatic(bool)` (vtable +0x10, thiscall; the dword the original pushes)
     pub fn set_is_static_v(e: Ent, v: u32) = thiscall vslot 0x10 => unported;
     /// `CMatrix::ResetOrientation()` (0x59AEA0)
     pub fn matrix_reset_orientation(m: GPtr<LocalMatrix>) = thiscall 0x59AEA0 => unported;
-    /// `CMatrix::RotateZ(float)` (0x59B390)
-    pub fn matrix_rotate_z(m: GPtr<LocalMatrix>, a: u32) = thiscall 0x59B390 => unported;
-    /// `CMatrix::RotateX(float)` (0x59B1E0)
-    pub fn matrix_rotate_x(m: GPtr<LocalMatrix>, a: u32) = thiscall 0x59B1E0 => unported;
     /// `CPhysical::ProcessCollisionSectorList(int32 x, int32 y)` (0x54BA60)
     pub fn process_collision_sector_list(e: Ent, x: i32, y: i32) -> u8 = thiscall 0x54BA60 => crate::physical::mvpe_phys1::process_collision_sector_list;
     /// `CPhysical::ProcessCollisionSectorList_SimpleCar(CRepeatSector*)` (0x54CFF0)
@@ -86,7 +84,7 @@ fn local_matrix() -> LocalMatrix {
 }
 
 /// `if (!e->m_matrix) { e->AllocateMatrix(); e->m_placement.UpdateMatrix(e->m_matrix); }`
-fn ensure_matrix(e: Ent) {
+pub fn ensure_matrix(e: Ent) {
     if matrix(e).is_null() {
         allocate_matrix(e);
         simple_transform_update_matrix(e.byte_add(PLACEMENT_POS), matrix(e));
@@ -181,8 +179,8 @@ pub fn dettach_entity_from_entity(this: Ent, x: u32, y: u32, z: f32, apply_turn:
     let mut ma = local_matrix();
     let mut mb = local_matrix();
     matrix_reset_orientation(lp(&mut mb));
-    matrix_rotate_z(lp(&mut mb), y);
-    matrix_rotate_x(lp(&mut mb), x);
+    matrix_rotate_z(GPtr::<[u32;18]>::cast::<u8>(lp(&mut mb)), f32::from_bits(y));
+    matrix_rotate_x(GPtr::<[u32;18]>::cast::<u8>(lp(&mut mb)), f32::from_bits(x));
     ensure_matrix(att);
     matrix_assign(lp(&mut ma).cast(), matrix(att));
     matrix_mul_assign(lp(&mut ma).cast(), lp(&mut mb).cast());

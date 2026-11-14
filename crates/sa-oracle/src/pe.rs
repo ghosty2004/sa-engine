@@ -33,13 +33,8 @@ pub struct Image {
     pub flat: Vec<u8>,
 }
 
-fn u16_at(d: &[u8], o: usize) -> u16 {
-    u16::from_le_bytes([d[o], d[o + 1]])
-}
-fn u32_at(d: &[u8], o: usize) -> u32 {
-    u32::from_le_bytes([d[o], d[o + 1], d[o + 2], d[o + 3]])
-}
-
+use sa_core::field::u16_at;
+use sa_core::field::u32_at;
 /// Locates the exe: `$SA_GTA_EXE`, `<workspace>/re/gta/1.0-US/gta_sa.exe`, then
 /// `~/sa-engine/re/gta/1.0-US/gta_sa.exe` (worktrees have no `re/`).
 pub fn find_exe() -> Option<PathBuf> {

@@ -6,7 +6,7 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
-use crate::common::{g, rd, wr, xi};
+use crate::common::{rd, wr, xi};
 
 use sa_world::bindings::clump_get_first_association_4d6a70 as clump_get_first_association;
 use sa_world::bindings::fx_kill;
@@ -20,11 +20,7 @@ orig! {
     fn v_open_door(v: GPtr<u8>, ped: u32, comp: u32, door: u32, ratio: f32, sound: u32) = thiscall vslot 0x6C => unported;
 }
 
-/// `CTimer::m_snTimeInMilliseconds`.
-fn now() -> u32 {
-    g::<u32>(0xB7_CB84).read()
-}
-
+use sa_pop::carctrl3::time_ms as now;
 /// `CAutomobile::SetBusDoorTimer(uint32 time, bool retain)` (0x6A3860): start = now (500 ms earlier
 /// with `retain`), end = start + max(time, 1000).
 #[hook(addr = 0x6A3860, conv = thiscall, name = "CAutomobile::SetBusDoorTimer", this = "CAutomobile",

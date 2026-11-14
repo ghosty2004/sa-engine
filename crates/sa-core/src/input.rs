@@ -778,10 +778,7 @@ const FOREGROUND_APP: usize = 0x8D621C;
 /// `AEAudioHardware` (+0 `m_bInitialised`).
 const AE_AUDIO_HARDWARE: usize = 0xB5F8B8;
 
-fn g32(a: usize) -> GPtr<u32> {
-    GPtr::from_addr(a)
-}
-
+use crate::field::g32;
 /// `CPad::GetPad(0)->Clear(false, true)` and the same for pad 1 (0x74800C / 0x74817E).
 fn clear_pads() {
     wp_pad_clear(get_pad(0), 0, 1);

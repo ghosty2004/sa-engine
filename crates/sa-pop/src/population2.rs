@@ -214,12 +214,7 @@ pub fn test_room_for_dummy_object(obj: GPtr<u8>) -> u8 {
     u8::from(n == 0)
 }
 
-/// `_ftol(floor((double)(v * 0.02f + 60.0f)))` of an x87 value (the world sector of a coordinate).
-fn sector(v: X87) -> i32 {
-    let s = v.fmul_m(f32::from_bits(0x3CA3_D70A)).fadd_m(60.0);
-    ftol32(X87::from_f64_exact(crt_floor(s.to_f64())))
-}
-
+use sa_world::world::world_explosion::sector;
 /// `CPopulation::TestSafeForRealObject(CDummyObject*)` (0x6123A0): false when an entity of the
 /// repeat-sector vehicle lists around the dummy's bounding sphere (not yet scanned this pass) touches it and
 /// its col model collides with the dummy's (`ProcessColModels > 0`). The sector bounds are clamped to

@@ -16,11 +16,7 @@ fn sub(a: f32, b: f32) -> f32 {
     x(a).fsub_m(b).to_f32()
 }
 
-/// `(a + b)` rounded to f32 (`fld a; fadd b; fstp`).
-fn add(a: f32, b: f32) -> f32 {
-    x(a).fadd_m(b).to_f32()
-}
-
+use sa_anim::frame_update::add;
 /// The four edge tests of one quad `b -> c -> d -> e -> b` (each edge as start + delta) against the line
 /// `(p, dir)`; true at the first hit.
 fn quad_hit(p: GPtr<f32>, dir: GPtr<f32>, corners: &[[f32; 2]; 4]) -> bool {

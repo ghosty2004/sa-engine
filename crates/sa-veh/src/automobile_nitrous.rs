@@ -8,7 +8,7 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
-use crate::common::{f32_of, g, jne_mask, jp5, rd, wr, x};
+use crate::common::{f32_of, jne_mask, jp5, rd, wr, x};
 
 use sa_pop::bindings::get_look_behind_for_car as pad_get_look_behind_for_car;
 use sa_pop::bindings::pad_get_look_left;
@@ -24,11 +24,7 @@ orig! {
     fn do_nitro_effect(v: GPtr<u8>, power: f32) = thiscall 0x6A3BD0 => unported;
 }
 
-/// `CTimer::ms_fTimeStep` (0xB7CB5C).
-fn time_step() -> f32 {
-    g::<f32>(0xB7_CB5C).read()
-}
-
+use sa_pop::carctrl3::time_step;
 /// The inlined `StopNitroEffect`: kills and clears both exhaust fx systems (+0x978, +0x97C).
 fn stop_nitro_effect(this: GPtr<u8>) {
     for o in [0x978, 0x97C] {

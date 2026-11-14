@@ -172,7 +172,7 @@ pub fn frame_update_offscreen(fd: GPtr<u8>, data: GPtr<u8>) {
 }
 
 /// Sums `+=` the way the callbacks store them: `f32(a + b)` with `a` loaded first.
-fn add(a: f32, b: f32) -> f32 {
+pub fn add(a: f32, b: f32) -> f32 {
     x(a).fadd_m(b).to_f32()
 }
 

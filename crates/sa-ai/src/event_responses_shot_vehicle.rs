@@ -124,10 +124,7 @@ fn smart_flee(other: GPtr<u8>, b: u32) -> GPtr<u8> {
     new_task(0x40, |t| smart_flee_entity_ctor(t, other, b, f32::from_bits(gu(FLEE_SAFE_DIST)), gu(FLEE_TIME), gu(FLEE_PERIOD), gu(FLEE_SHIFT)))
 }
 
-fn in_vehicle(p: GPtr<u8>) -> bool {
-    rd::<u32>(p, 0x46C) & 0x100 != 0
-}
-
+use sa_world::world::cworld::in_vehicle;
 /// The "as the driver of its own vehicle, flee the scene; else smart flee from the own vehicle" answer.
 fn flee_scene_or_own_vehicle(this: GPtr<u8>) -> GPtr<u8> {
     let p = ped(this);

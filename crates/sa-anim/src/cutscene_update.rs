@@ -101,9 +101,7 @@ const K_MS: usize = 0x858C4C;
 const SKIP_A: usize = 0xBAAD40;
 const SKIP_B: usize = 0xB5F854;
 
-fn gu32(a: usize) -> GPtr<u32> {
-    GPtr::from_addr(a)
-}
+use sa_core::field::g32 as gu32;
 use sa_core::field::pa as gu8;
 
 /// `CCutsceneMgr::Update_overlay()` (0x5B1720, cdecl).
@@ -221,10 +219,7 @@ pub fn cutscene_update_overlay() {
 fn wf(p: GPtr<u8>, off: isize, v: f32) {
     p.byte_add(off).cast::<f32>().write(v);
 }
-fn wu(p: GPtr<u8>, off: isize, v: u32) {
-    p.byte_add(off).cast::<u32>().write(v);
-}
-
+use sa_core::field::wr32 as wu;
 /// `CCutsceneMgr::SetupCutsceneToStart()` (0x5B14D0, cdecl).
 ///
 /// `offset.z = f32(offset.z + 1)`. The cutscene objects from the last to the first: with a first animation

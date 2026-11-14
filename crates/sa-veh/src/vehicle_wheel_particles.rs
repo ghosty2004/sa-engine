@@ -205,15 +205,7 @@ pub fn vehicle_add_single_wheel_particles(
     0
 }
 
-fn cam_pos() -> GPtr<u8> {
-    let m = g::<GPtr<u8>>(0xB6_F03C).read();
-    if m.is_null() {
-        GPtr::from_addr(0xB6_F02C)
-    } else {
-        m.byte_add(0x30)
-    }
-}
-
+use sa_world::world::mvpd_w3::cam_position as cam_pos;
 /// 0x6DEA43..0x6DEB99: the sparks of a rim on a sparking surface and the scrape sound.
 fn sparks(this: GPtr<u8>, state: u32, skid_ratio: f32, cp: GPtr<u8>, from: GPtr<u8>) {
     let k = f32::from_bits(0xC248_0000);

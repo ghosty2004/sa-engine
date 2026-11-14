@@ -1911,12 +1911,12 @@ pub fn set_pieces_add_one(
 
 // ---- CGameLogic, CStats, water creatures ----
 
-fn above(v: f32, k: f32) -> bool {
+pub fn above(v: f32, k: f32) -> bool {
     // test ah,0x41 / je
     !x(v).fcom(x(k)).test_any(0x41)
 }
 
-fn below(v: f32, k: f32) -> bool {
+pub fn below(v: f32, k: f32) -> bool {
     // test ah,5 / jnp
     !x(v).fcom(x(k)).test_parity(0x05)
 }

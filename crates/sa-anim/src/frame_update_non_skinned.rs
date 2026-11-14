@@ -156,11 +156,7 @@ fn non_skinned_body(fd: GPtr<u8>, data: GPtr<u8>, compressed: bool) {
     rw_matrix_update(m);
 }
 
-/// `f32(a + b)` with `a` loaded first.
-fn add(a: f32, b: f32) -> f32 {
-    x(a).fadd_m(b).to_f32()
-}
-
+use crate::frame_update::add;
 /// `FrameUpdateCallBackNonSkinnedWith3dVelocityExtraction(data, fd)` (0x4D2450, `data` in EAX, `fd` on the stack,
 /// cdecl): the body of the skinned 3D variant (0x4D1A50) on the frame's matrix `m` = `fd->frame + 0x10`. Partial
 /// sum: associations with the partial flag (+0x2E bit 4; the first node pointer not null-checked). Pass 1 (pointers

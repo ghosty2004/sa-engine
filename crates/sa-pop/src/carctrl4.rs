@@ -57,11 +57,7 @@ fn pos(node: GPtr<u8>) -> [f32; 3] {
     v
 }
 
-/// `fcom m; fnstsw ax; test ah, 0x44; jp` taken: not equal (unordered counts as equal).
-fn ne(a: X87, b: X87) -> bool {
-    a.fcom(b).test_parity(0x44)
-}
-
+use sa_math::fpu::fcom_ne as ne;
 /// `CCarCtrl::FindPathDirection(CNodeAddress a, CNodeAddress b, CNodeAddress c, bool* sharpTurn)` (0x422090):
 /// 0 when an address is empty or its area is not loaded or a leg has zero length, 1 when the normalised
 /// legs' dot product is above 0.4, else 4 (cross product > 0) or 2, with `*sharpTurn = 1` when the dot
@@ -361,11 +357,7 @@ fn lane_flags(link: GPtr<u8>, from: u32) -> (bool, bool) {
     }
 }
 
-/// `CTimer::m_snTimeInMilliseconds`.
-fn now() -> u32 {
-    g::<u32>(0xB7CB84).read()
-}
-
+use crate::carctrl3::time_ms as now;
 /// `fild i8; fmul 0.01f; fmul sign` of a link direction byte (+8 x, +9 y).
 fn link_dir(l: GPtr<u8>, off: isize, sign: X87) -> X87 {
     xi(i32::from(rd::<i8>(l, off)))
@@ -1302,7 +1294,7 @@ fn dist3(a: GPtr<f32>, b: GPtr<f32>) -> X87 {
 }
 
 /// `fcomp k; test ah, 5; jp` not taken: `v < k`.
-fn lt_k(v: X87, k: f32) -> bool {
+pub fn lt_k(v: X87, k: f32) -> bool {
     !v.fcom(x(k)).test_parity(0x05)
 }
 

@@ -81,11 +81,7 @@ orig! {
 
 use sa_math::fpu::le_or_nan as le;
 
-/// `sqrt(a*a + b*b)` in the operand order the original adds them (`a*a` first on the stack).
-fn hyp(a: X87, b: X87) -> X87 {
-    a.fmul(a).fadd(b.fmul(b)).fsqrt()
-}
-
+use sa_math::fpu::hypot_x87 as hyp;
 // `CTrain` generation state (0xC37FFC..0xC38068).
 const GEN_TRACK: usize = 0xC3_7FFC;
 const GEN_CONFIG: usize = 0xC3_8000;
@@ -401,17 +397,12 @@ fn gen_status_0(radius: f32) {
 const PLANE_GEN_MODEL: usize = 0xC1_CAD8;
 const PLANE_GEN_STATUS: usize = 0xC1_CADC;
 const PLANE_GEN_TIME: usize = 0xC1_CAE0;
-/// `CTimer::m_snTimeInMilliseconds`.
-const TIME_MS: usize = 0xB7_CB84;
 /// `CWeather::WeatherRegion` and the two weather type words (19 = sandstorm).
 const WEATHER_REGION: usize = 0xC8_1314;
 const WEATHER_A: usize = 0xC8_1320;
 const WEATHER_B: usize = 0xC8_131C;
 
-fn time_ms() -> u32 {
-    g::<u32>(TIME_MS).read()
-}
-
+use sa_world::world::garage_update::now as time_ms;
 fn plane_gen_set(model: u32) {
     g::<u32>(PLANE_GEN_MODEL).write(model);
     g::<u32>(PLANE_GEN_STATUS).write(1);

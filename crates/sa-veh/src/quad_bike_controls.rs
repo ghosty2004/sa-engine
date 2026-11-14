@@ -16,11 +16,7 @@ orig! {
     fn automobile_process_control_inputs(v: GPtr<u8>, ped_type: u32) = thiscall 0x6AD690 => unported;
 }
 
-/// `CTimer::ms_fTimeStep` (0xB7CB5C).
-fn time_step() -> f32 {
-    g::<f32>(0xB7_CB5C).read()
-}
-
+use sa_pop::carctrl3::time_step;
 /// The mouse-steering state (0xC1CC04): 2 while the mouse drives the lean.
 fn mouse_state() -> GPtr<i32> {
     g::<i32>(0xC1_CC04)

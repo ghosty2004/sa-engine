@@ -101,6 +101,7 @@ use sa_world::bindings::seek_entity_standard_ctor;
 use sa_world::bindings::simple_car_drive_ctor as car_drive_simple_ctor;
 use sa_world::bindings::stand_still_ctor;
 use crate::bindings::gang_follower_ctor;
+use crate::bindings::should_load_gang_anims;
 orig! {
     // ---- virtual slots (CTask / CTaskComplex vtable layout) ----
     /// `CTask::GetTaskType` (vtable +0x10)
@@ -129,9 +130,6 @@ orig! {
     fn car_drive_process_ped(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x644470 => unported;
     /// `CTaskSimpleEvasiveStep::StartAnim(CPed*)` (0x655EA0)
     fn evasive_step_start_anim(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x655EA0 => unported;
-    /// `CTaskComplexGangLeader::ShouldLoadGangAnims()` (0x65E7F0, static; the callers leave `this` in ECX,
-    /// passed the same way here)
-    fn should_load_gang_anims(ecx: GPtr<u8>) -> u8 = thiscall 0x65E7F0 => unported;
     /// `CEvent::HasEditableResponse` (CEvent vtable +0x24)
     fn v_event_has_editable_response(e: GPtr<u8>) -> u8 = thiscall vslot 0x24 => unported;
     /// `CEvent::GetEventType` (CEvent vtable +4)
@@ -977,7 +975,7 @@ pub fn smart_flee_entity_ctor(
 #[hook(addr = 0x6823C0, conv = thiscall, name = "CTaskComplexPartnerDeal::StreamRequiredAnims", expect = "56 8B F1 8A 46 6E")]
 pub fn partner_deal_stream_required_anims(this: GPtr<u8>) {
     if rd::<u8>(this, 0x6E) == 0 {
-        if should_load_gang_anims(this) == 0 {
+        if should_load_gang_anims() == 0 {
             return;
         }
         let i = anim_get_block_index(this.byte_add(0x5E));
@@ -987,7 +985,7 @@ pub fn partner_deal_stream_required_anims(this: GPtr<u8>) {
         }
         anim_add_block_ref(i);
         wr::<u8>(this, 0x6E, 1);
-    } else if should_load_gang_anims(this) == 0 {
+    } else if should_load_gang_anims() == 0 {
         let i = anim_get_block_index(this.byte_add(0x5E));
         anim_remove_block_ref(i as u32);
         wr::<u8>(this, 0x6E, 0);

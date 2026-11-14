@@ -77,11 +77,7 @@ fn sp0() -> u32 {
     param(0).read()
 }
 
-#[inline]
-fn f(v: u32) -> f32 {
-    f32::from_bits(v)
-}
-
+use sa_math::fpu::fbits as f;
 /// `fld a; fop b; fstp` with `b` a memory operand.
 #[inline]
 fn fop(a: u32, b: u32, op: fn(X87, f32) -> X87) -> u32 {

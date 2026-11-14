@@ -406,16 +406,7 @@ fn add_to_list(list: &sa_core::mem::Global<u32>, e: GPtr<u8>, dist: f32) {
     list.set(list.get().wrapping_add(8));
 }
 
-/// `fld dword` + `fstp dword`: a signalling NaN comes out quiet.
-#[inline]
-pub fn quiet(v: f32) -> f32 {
-    if v.is_nan() {
-        f32::from_bits(v.to_bits() | 0x40_0000)
-    } else {
-        v
-    }
-}
-
+pub use sa_math::fpu::fld_fst as quiet;
 /// `CRenderer::AddToLodRenderList(CEntity*, float)` (0x553710).
 #[hook(addr = 0x553710, conv = cdecl, name = "CRenderer::AddToLodRenderList", expect = "A1 D0 45 B7 00")]
 pub fn add_to_lod_render_list(e: GPtr<u8>, dist: f32) {

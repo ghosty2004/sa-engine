@@ -126,10 +126,7 @@ orig! {
     pub fn choose_tracks_for_station(this: GPtr<u8>, station: u32) = thiscall 0x4EB180 => choose_tracks_for_station_port;
 }
 
-fn local(buf: &mut [u8]) -> GPtr<u8> {
-    GPtr::from_raw(buf.as_mut_ptr())
-}
-
+use sa_core::field::buf_ptr as local;
 // ---------------------------------------------------------------------------------------------------
 // CAERadioTrackManager
 // ---------------------------------------------------------------------------------------------------

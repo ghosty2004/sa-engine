@@ -31,7 +31,7 @@ fn vf(p: GPtr<u8>, i: isize) -> f32 {
     rd::<f32>(p, 4 * i)
 }
 
-fn put(addr: usize, v: u32) {
+pub fn put(addr: usize, v: u32) {
     g::<u32>(addr).write(v);
 }
 

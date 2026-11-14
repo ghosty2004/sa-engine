@@ -97,10 +97,7 @@ orig! {
 
 use sa_core::field::pa as gp;
 use sa_core::field::pa as g8;
-fn g32(a: usize) -> GPtr<u32> {
-    GPtr::from_addr(a)
-}
-
+use sa_core::field::g32;
 /// 0A3E: the last random ped (created by 1, no bit 11 at +0x1C, no bit 3 at +0x470, alive, no bit 8 at +0x46C, in no
 /// group) inside the box, scanning the ped pool from the top; its handle or -1.
 fn random_char_in_area(s: Scr) -> u32 {

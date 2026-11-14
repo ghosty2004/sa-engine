@@ -222,11 +222,7 @@ fn message(key: usize, time: u32) {
     messages_add_message_q(text_get(g::<u8>(THE_TEXT), g::<u8>(key)), time, 1, 1);
 }
 
-/// `x87 compare: ST0 < m` (`fcom(p) m; fnstsw; test ah, 5; jp` not taken).
-fn below(v: X87, m: f32) -> bool {
-    !v.fcom(x(m)).test_parity(0x05)
-}
-
+use sa_pop::carctrl4::lt_k as below;
 /// `CTaskComplexProstituteSolicit::ControlSubTask(CPed* prostitute)` (0x6669D0, thiscall, `ret 4`). Fields: +0x8 the
 /// sub-task, +0xC the client, +0x10 the meeting point, +0x1C / +0x20 / +0x24 times, +0x28 / +0x2A word counters,
 /// +0x2C flag word. Unreversed in gta-reversed; from the 1.0 US bytes:

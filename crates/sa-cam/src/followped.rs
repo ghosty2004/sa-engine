@@ -157,12 +157,7 @@ pub(crate) fn fcos(f: &mut Fpu) {
     let v = f.pop().fcos();
     f.push(v);
 }
-/// `fpatan`: `st1 = atan2(st1, st0)`, pop.
-pub(crate) fn fpatan(f: &mut Fpu) {
-    let xv = f.pop();
-    let yv = f.pop();
-    f.push(yv.fpatan(xv));
-}
+pub use sa_world::physical::friction_attach::fpatan;
 /// `call _CIasin` (operand and result in ST0).
 pub(crate) fn ci_asin(f: &mut Fpu) {
     let v = f.pop();

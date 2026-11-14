@@ -27,10 +27,7 @@ orig! {
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
 }
 
-fn vp(v: &mut [u32; 3]) -> GPtr<u8> {
-    GPtr::from_raw(v.as_mut_ptr()).cast()
-}
-
+use sa_core::field::vec3_ptr as vp;
 fn set_target(this: GPtr<u8>, p: [u32; 3]) {
     for (k, c) in p.iter().enumerate() {
         wr::<u32>(this, 0x38 + 4 * k as isize, *c);

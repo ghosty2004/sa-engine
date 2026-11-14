@@ -53,7 +53,7 @@ orig! {
 }
 
 /// `fpatan` on the model: `st1 = atan2(st1, st0)`, pop.
-fn fpatan(f: &mut Fpu) {
+pub fn fpatan(f: &mut Fpu) {
     let x = f.pop();
     let y = f.pop();
     f.push(y.fpatan(x));

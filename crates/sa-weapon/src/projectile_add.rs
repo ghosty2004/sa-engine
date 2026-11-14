@@ -53,7 +53,7 @@ fn throw_speed(force: f32) -> f32 {
     if force_is_zero(force) { 0.0 } else { x(force).fmul_m(cf(0x3E61_47AE)).fadd_m(cf(0x3E19_999A)).to_f32() }
 }
 
-fn force_is_zero(f: f32) -> bool {
+pub fn force_is_zero(f: f32) -> bool {
     !x(f).fcom(x(0.0)).test_parity(0x44)
 }
 

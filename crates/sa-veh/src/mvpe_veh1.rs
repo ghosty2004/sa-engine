@@ -16,7 +16,7 @@ use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 use sa_world::collision::fpu::Fpu;
-use sa_world::physical::attach::{allocate_matrix, process_col_models, simple_transform_update_matrix};
+use sa_world::physical::attach::process_col_models;
 use sa_world::physical::shared::*;
 
 pub use crate::bindings::process_rider_anims;
@@ -27,14 +27,7 @@ orig! {
     pub fn automobile_process_entity_collision(v: Ent, e: Ent, cps: Ent) -> i32 = thiscall 0x6ACE70 => unported;
 }
 
-/// `if (!e->m_matrix) { AllocateMatrix(); m_placement.UpdateMatrix(m_matrix); }`
-fn ensure_matrix(e: Ent) {
-    if matrix(e).is_null() {
-        allocate_matrix(e);
-        simple_transform_update_matrix(e.byte_add(PLACEMENT_POS), matrix(e));
-    }
-}
-
+use sa_world::physical::attach::ensure_matrix;
 /// `CQuadBike::ProcessDrivingAnims(CPed* ped, bool)` (0x6CE280, `ret 8`): unless entity flag
 /// 0x20000, `CBike::ProcessRiderAnims(ped, this, &this->m_rideAnimData (+0x98C), this->+0x988,
 /// 0)`.

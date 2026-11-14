@@ -139,10 +139,7 @@ fn task_type(e: GPtr<u8>) -> i32 {
     i32::from(rd::<i16>(e, 0xE))
 }
 
-fn in_vehicle(p: GPtr<u8>) -> bool {
-    rd::<u32>(p, 0x46C) & 0x100 != 0
-}
-
+use sa_world::world::cworld::in_vehicle;
 fn new_task(size: u32, ctor: impl FnOnce(GPtr<u8>) -> GPtr<u8>) -> GPtr<u8> {
     let t = task_new(size);
     if t.is_null() { t } else { ctor(t) }

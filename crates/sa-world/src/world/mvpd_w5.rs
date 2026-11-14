@@ -342,7 +342,7 @@ const F1_5: u32 = 0x3FC00000;
 const FM1: u32 = 0xBF800000;
 
 /// A `ModelIndices` global (`uint16`, zero-extended as the original's `movzx`).
-fn mi_g(addr: usize) -> i32 {
+pub fn mi_g(addr: usize) -> i32 {
     i32::from(g::<u16>(addr).read())
 }
 

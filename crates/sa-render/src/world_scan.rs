@@ -102,10 +102,7 @@ fn floor_f(v: f32) -> i32 {
 use sa_math::fpu::x as xf;
 use sa_core::field::gf as k;
 use sa_math::fpu::lt as less;
-/// `test ah, 1` set: `a < b` or unordered.
-fn c0(a: X87, b: X87) -> bool {
-    a.fcom(b).test_any(1)
-}
+use sa_math::fpu::fcom_c0 as c0;
 use sa_math::fpu::gt as greater;
 
 /// The extra-rectangle list search after `scan(x, row)` (0x72D10B-0x72D1A5): the first entry equal to (x, row)

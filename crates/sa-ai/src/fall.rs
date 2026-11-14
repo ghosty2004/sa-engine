@@ -83,10 +83,7 @@ orig! {
 
 use sa_core::field::ptr_of as buf;
 
-fn time_ms() -> u32 {
-    g::<u32>(TIME_MS).read()
-}
-
+use sa_world::world::garage_update::now as time_ms;
 /// `fld dword [addr]`
 fn gf(addr: usize) -> X87 {
     x(gm(addr))

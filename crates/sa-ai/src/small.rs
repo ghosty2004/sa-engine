@@ -22,11 +22,7 @@ orig! {
     fn v_process_ped(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall vslot 0x1C => unported;
 }
 
-/// `CTimer::m_snTimeInMilliseconds`
-fn time_ms() -> u32 {
-    g::<u32>(0xB7CB84).read()
-}
-
+use sa_pop::carctrl3::time_ms;
 /// `CTaskSimplePause::CTaskSimplePause(int32 time)` (0x48E750, a `.HOODLUM` stub; body at 0x1562630, `ret 4`):
 /// `CTaskSimple` base, vtable 0x85A278, timer start/interval 0, the two timer flags clear, +0x14 = time.
 #[hook(addr = 0x48E750, conv = thiscall, name = "CTaskSimplePause::Constructor", expect = "E9 DB 3E 0D 01")]

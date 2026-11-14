@@ -32,7 +32,7 @@ fn frontend(event: u32) {
 }
 
 /// The int16 model id in a `MI_PICKUP_*` cell.
-fn mi(cell: usize) -> u16 {
+pub fn mi(cell: usize) -> u16 {
     g::<u16>(cell).read()
 }
 

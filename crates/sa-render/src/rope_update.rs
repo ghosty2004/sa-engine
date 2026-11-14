@@ -72,11 +72,7 @@ const CI_POW: usize = 0x822130;
 
 use sa_core::field::gf as c;
 
-/// The u16 model index stored at `addr` (`ModelIndices`).
-fn mi(addr: usize) -> i32 {
-    i32::from(g::<u16>(addr).read())
-}
-
+use sa_world::world::mvpd_w5::mi_g as mi;
 use sa_world::world::common::entity_pos as pos_ptr;
 
 /// The bounding box's max z of an entity's model (`ms_modelInfoPtrs[model]->m_pColModel->m_boundBox.m_vecMax.z`).

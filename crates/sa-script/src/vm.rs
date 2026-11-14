@@ -64,6 +64,7 @@ pub const SCENE_SKIP_IP: isize = 0xD8;
 pub const IS_MISSION: isize = 0xDC;
 
 pub use sa_core::bindings::cutscene_is_skip_button_being_pressed as is_cutscene_skip_button_being_pressed;
+pub use sa_core::bindings::crt_strncpy as strncpy;
 orig! {
     /// `CRunningScript::GetPointerToLocalVariable(int32)` (0x463CA0)
     pub fn get_pointer_to_local_variable_call(s: Scr, loc: i32) -> GPtr<u32> = thiscall 0x463CA0 => get_pointer_to_local_variable;
@@ -83,8 +84,6 @@ orig! {
     pub fn update_pc_call(s: Scr, new_ip: i32) = thiscall 0x464DA0 => update_pc;
     /// `CRunningScript::UpdateCompareFlag(bool)` (0x4859D0)
     pub fn update_compare_flag_call(s: Scr, state: u32) = thiscall 0x4859D0 => update_compare_flag;
-    /// CRT `strncpy` (0x821F40)
-    pub fn strncpy(dst: GPtr<u8>, src: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x821F40 => strncpy_port;
     /// `CRunningScript::DoDeathArrestCheck` (0x485A50)
     pub fn do_death_arrest_check(s: Scr) = thiscall 0x485A50 => unported;
     /// `CTheScripts::ReinitialiseSwitchStatementData` (0x470370)
@@ -92,25 +91,6 @@ orig! {
     /// A `ProcessCommandsXToY` switch from `s_OriginalCommandHandlerTable` (thiscall, command id on the
     /// stack, AL = OpcodeResult)
     pub fn call_command_handler(f: u32, s: Scr, command: i32) -> i8 = thiscall dyn => unported;
-}
-
-/// CRT `strncpy` semantics (phases B/C path of [`strncpy`]): copies up to `n` bytes, stops after the
-/// terminating NUL and pads the rest of the `n` bytes with zeros; returns `dst`.
-pub fn strncpy_port(dst: GPtr<u8>, src: GPtr<u8>, n: u32) -> GPtr<u8> {
-    let mut i = 0u32;
-    while i < n {
-        let c = src.byte_add(i as isize).read();
-        dst.byte_add(i as isize).write(c);
-        i += 1;
-        if c == 0 {
-            break;
-        }
-    }
-    while i < n {
-        dst.byte_add(i as isize).write(0);
-        i += 1;
-    }
-    dst
 }
 
 use sa_core::field::rd;

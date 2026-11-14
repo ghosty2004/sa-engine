@@ -10,11 +10,7 @@ use crate::common::{g, rd, wr, x, xi};
 /// `CHeli*` / `CPlane*`.
 type Ptr = GPtr<u8>;
 
-/// `CTimer::m_snTimeInMilliseconds`.
-fn now() -> u32 {
-    g::<u32>(0xB7CB84).read()
-}
-
+use sa_pop::carctrl3::time_ms as now;
 sa_core::globals! {
     list GLOBALS;
     /// `CHeli::TestForNewRandomHelisTimer`

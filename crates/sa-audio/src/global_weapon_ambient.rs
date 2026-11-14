@@ -56,10 +56,7 @@ orig! {
 
 use sa_core::field::gr32 as r32;
 
-fn w32(a: usize, v: u32) {
-    g::<u32>(a).write(v);
-}
-
+use sa_veh::mvpd_v4::put as w32;
 use sa_core::field::pa as gp;
 
 use sa_world::world::common::entity_pos;

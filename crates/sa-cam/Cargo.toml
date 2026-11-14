@@ -1,5 +1,6 @@
 [package]
 name = "sa-cam"
+build = "../phase_a_build.rs"
 version = "0.1.0"
 description = "CAM subsystem of gta_sa.exe 1.0 US (PORT-CAM): CCamera, CCam, CHandShaker, CIdleCam, CCurves and the camera static initialisers. Built on sa-core (ADR-001). no_std; host, i686-pc-windows-gnu and wasm32"
 edition.workspace = true

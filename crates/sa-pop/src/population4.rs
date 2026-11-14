@@ -111,11 +111,7 @@ fn rnd_f(lo: f32, hi: f32) -> f32 {
 
 use sa_world::world::common::entity_pos_f as entity_pos;
 
-/// `fcomp` + `fnstsw ax` + `test ah, mask` + `jnp` taken.
-fn jnp(a: X87, b: X87, mask: u8) -> bool {
-    !a.fcom(b).test_parity(mask)
-}
-
+use sa_math::fpu::fcom_jnp as jnp;
 /// `CModelInfo::ms_modelInfoPtrs[m]->m_pColModel->boundSphere.radius` (+0x14, +0x24).
 fn col_radius(m: i32) -> f32 {
     rd::<f32>(rd::<GPtr<u8>>(model_info(m), 0x14), 0x24)

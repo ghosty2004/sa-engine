@@ -72,6 +72,7 @@ use sa_stream::bindings::cd_stream_read;
 use sa_world::bindings::ae_random_int;
 use crate::bindings::floor_f;
 use sa_world::bindings::sound_dtor;
+use crate::bindings::radio_is_vehicle_radio_active;
 orig! {
     fn hw_get_channel_play_times(this: u32, slot: u32, out: u32) = thiscall 0x4D8820 => unported;
     fn hw_get_virtual_channel_sound_lengths(this: u32, out: u32) = thiscall 0x4D8E90 => unported;
@@ -99,7 +100,6 @@ orig! {
     fn sound_calculate_volume(s: u32) = thiscall 0x4EFA10 => unported;
     fn entity_update_parameters_raw(ent: GPtr<u8>, s: u32, pt: u32) = thiscall vslot 0x00 => unported;
     fn sm_cancel_sounds_of_event(this: u32, ev: u32, ent: u32) = thiscall 0x4EFB90 => unported;
-    fn radio_is_vehicle_radio_active(this: u32) -> u8 = thiscall 0x4E9800 => unported;
     fn global_weapon_service_ambient_gun_fire(this: u32) = thiscall 0x4DF210 => unported;
     fn collision_service(this: u32) = thiscall 0x4DA2C0 => unported;
     fn script_service(this: u32) = thiscall 0x4EC900 => unported;
@@ -772,7 +772,7 @@ pub fn audio_engine_service(this: u32) {
         w8(this + 1, 1);
     } else if r8(this + 1) != 0 && pt == 0xFFFF_FFFA {
         w8(this + 1, 0);
-        if radio_is_vehicle_radio_active(0x8CB6F8) != 0 {
+        if radio_is_vehicle_radio_active() != 0 {
             let s = vehicle_player_settings_for_radio();
             radio_start_radio(GPtr::from_addr(0x8CB6F8), s);
         }

@@ -79,11 +79,7 @@ orig! {
     pub fn process_control_collision_check(v: GPtr<u8>, b: u32) = thiscall vslot 0x5C => unported;
 }
 
-/// `CTimer::m_snTimeInMilliseconds`.
-fn now() -> u32 {
-    g::<u32>(0xB7CB84).read()
-}
-
+use sa_pop::carctrl3::time_ms as now;
 /// `fild dword` of an unsigned value as MSVC converts it: negative as i32 -> `+ 2^32` (0x858C54).
 fn fild_u(v: u32) -> X87 {
     let r = xi(v as i32);

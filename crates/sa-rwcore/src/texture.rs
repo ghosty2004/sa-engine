@@ -64,6 +64,7 @@ use crate::bindings::rw_texture_read as rw_texture_read_call;
 use crate::bindings::rw_texture_set_auto_mipmapping as set_auto_mipmapping_call;
 use crate::bindings::rw_texture_set_mipmapping as set_mipmapping_call;
 use crate::bindings::stream_read as rw_stream_read_call;
+use crate::bindings::rw_texture_destroy as rw_texture_destroy_call;
 orig! {
     /// `_rwerror(code, a, b)` (0x8088D0, varargs; three arguments)
     fn rw_error3(code: u32, a: u32, b: u32) -> u32 = cdecl 0x8088D0 => unported;
@@ -86,8 +87,6 @@ orig! {
     /// A dictionary callback `cb(dict, data)` (`RwTexDictionaryForAllTexDictionaries`)
     fn call_dict_cb(f: u32, d: GPtr<u8>, data: u32) -> GPtr<u8> = cdecl dyn => unported;
 
-    /// `RwTextureDestroy(texture)` as `RwTexDictionaryDestroy` calls it (an extra 0 argument pushed)
-    fn rw_texture_destroy_call(t: GPtr<u8>, extra: u32) -> u32 = cdecl 0x7F3820 => texture_destroy_extra;
     /// `RwTextureGetMipmapping()` (0x7F3550)
     fn get_mipmapping_call() -> u32 = cdecl 0x7F3550 => rw_texture_get_mipmapping;
     /// `RwTextureGetAutoMipmapping()` (0x7F3580)
@@ -96,11 +95,6 @@ orig! {
     fn string_find_and_read_call(string: GPtr<u8>, s: GPtr<u8>) -> GPtr<u8> = cdecl 0x80A510 => crate::stream::string_stream_find_and_read;
 }
 
-/// The phase B/C path of `rw_texture_destroy_call` (the extra argument is ignored).
-#[cfg_attr(sa_phase_a, allow(dead_code))]
-fn texture_destroy_extra(t: GPtr<u8>, _extra: u32) -> u32 {
-    rw_texture_destroy(t)
-}
 
 /// `M = G + [0xC97B4C]`.
 fn tmod() -> GPtr<u8> {
@@ -232,7 +226,7 @@ pub fn rw_tex_dictionary_destroy(d: GPtr<u8>) -> u32 {
     if l != head {
         loop {
             let next = llink::next(l);
-            if rw_texture_destroy_call(l.byte_add(-8), 0) == 0 {
+            if rw_texture_destroy_call(l.byte_add(-8)) == 0 {
                 break;
             }
             l = next;

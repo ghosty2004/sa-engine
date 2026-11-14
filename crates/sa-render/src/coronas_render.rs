@@ -235,10 +235,7 @@ fn ti(n: u32) -> GPtr<u16> {
     GPtr::from_addr((TEMP_BUFFER_INDICES + 2 * n) as usize)
 }
 
-fn fbits(v: X87) -> u32 {
-    v.to_f32().to_bits()
-}
-
+use sa_math::fpu::fstp_bits as fbits;
 /// `CCoronas::RenderSunReflection()` (0x6FBAA0): the sun's reflection on the sea. Only with the sun
 /// vector's z above -0.05; the intensity `(0.3 - |z - 0.25|) * 3.333 * (1 - [0xC81304]) * (1 -
 /// [0xC81300]) * (1 - [0xC812F0])` must be positive. It is faded by the five fixed points

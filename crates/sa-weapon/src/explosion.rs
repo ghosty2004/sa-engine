@@ -184,12 +184,7 @@ pub fn remove_all_explosions_in_area(px: f32, py: f32, pz: f32, r: f32) {
     }
 }
 
-/// `(float)(uint32)v` (`fild` + 2^32 for negative ints).
-fn u32_x87(v: u32) -> X87 {
-    let f = xi(v as i32);
-    if (v as i32) < 0 { f.fadd_m(4_294_967_296.0) } else { f }
-}
-
+use sa_world::world::stats::u32_as_x87 as u32_x87;
 /// `CExplosion::Update()` (0x737620): per active explosion (fields relative to the entry):
 /// - a pending trigger (+0x30): after its time it is cleared and, with +0x34 != 0 (or NaN),
 ///   `CWorld::TriggerExplosion(pos, radius, +0x34, victim, creator, type in {2,5,8,9,10}, +0x24)` (the
