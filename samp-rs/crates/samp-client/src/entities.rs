@@ -124,14 +124,7 @@ struct Label {
     text: Vec<u8>,
 }
 
-/// One label to draw this frame (screen position from the client tick, drawn in the Present pass).
-#[derive(Clone, Debug)]
-pub struct LabelDraw {
-    /// World position (projected in the Present pass like samp's 3D-text painter).
-    pub pos: [f32; 3],
-    pub text: Vec<u8>,
-    pub argb: u32,
-}
+pub use crate::ui::render::LabelDraw;
 
 static LABEL_DRAWS: Mutex<Vec<LabelDraw>> = Mutex::new(Vec::new());
 

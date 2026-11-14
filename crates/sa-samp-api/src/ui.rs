@@ -1,21 +1,16 @@
-//! The engine-drawn SA:MP user interface: chat window and input line, dialogs, nametags, 3D text labels,
-//! textdraws, game text, the kill list, the scoreboard and the mouse cursor.
+//! The SA:MP user interface's drawing backend (`docs/samp/overlay.md` §10).
 //!
-//! On the original backend samp-rs draws all of this itself through its D3D9 proxy (`ui/render/*.rs`,
-//! [`crate::render::Overlay`]). A backend that has no D3D9 device (the native engine, the browser build)
-//! can instead offer an engine-owned UI through [`crate::GameAdapter::ui`]: samp-rs feeds it state (the
-//! RPC payloads, already decoded) and drains [`UiEvent`]s (what the player typed or clicked). Layout and
-//! behaviour follow samp 0.3.7-R4 (`docs/samp/overlay.md`).
+//! samp-rs has one UI implementation: the logic in `samp-ui`, the state machine and the per-frame pass in
+//! `samp-client` (`ui::core`, `ui::session`, `ui::render`). It draws through [`UiBackend`], which has two
+//! implementations: samp-client's Direct3D 9 / D3DX / DXUT code on the original `gta_sa.exe`, and the ported
+//! engine (`sa-samp`'s overlay) natively and in the browser. The trait sits at the level samp's own code
+//! draws: D3DX sprites ([`UiSprite`]) and fonts ([`UiFont`]) with `DrawText` format flags ([`dt`]), the
+//! DXUT dialog with its skin sprites, the nametag bar painter, projection and the textdraw `CFont` calls.
 //!
-//! Strings are UTF-8 (samp-rs converts the wire's code page 1252). Embedded `{RRGGBB}` colour codes are
-//! interpreted where samp interprets them (chat, dialogs, labels, nametags' text is plain). Colours are
-//! [`Rgba`] (samp's wire colours are `0xRRGGBBAA`: see [`Rgba::from_rgba_u32`]).
-//!
-//! Added at API v1 (additive: a default method on `GameAdapter`, new types only). v4: the class-selection
-//! panel ([`SampUi::show_class_panel`], [`UiEvent::ClassPanelClicked`]).
+//! Text is bytes in the Windows ANSI code page (1252), like samp's. Colours are D3D `0xAARRGGBB` unless a
+//! name says otherwise. Changed at API v5 (replaces the engine-owned `SampUi` of v1..v4).
 
-use crate::input::{EventResult, WindowEvent};
-use crate::{PedRef, Rgba, Vec3};
+use crate::Rgba;
 
 impl Rgba {
     /// From samp's wire format `0xRRGGBBAA`.
@@ -44,330 +39,307 @@ impl Rgba {
     }
 }
 
-/// The kind of a chat entry (samp's chat window entry types).
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum ChatKind {
-    /// Player chat (RPC 101): `name:` in the name colour, then the text in white.
-    Player,
-    /// Server / client message (RPC 93) and local info lines: the text in its colour.
-    Info,
-    /// Debug line.
-    Debug,
+/// D3DX `DrawText` format flags.
+pub mod dt {
+    /// `DT_CENTER`.
+    pub const CENTER: u32 = 0x1;
+    /// `DT_RIGHT`.
+    pub const RIGHT: u32 = 0x2;
+    /// `DT_VCENTER`.
+    pub const VCENTER: u32 = 0x4;
+    /// `DT_BOTTOM`.
+    pub const BOTTOM: u32 = 0x8;
+    /// `DT_SINGLELINE`.
+    pub const SINGLELINE: u32 = 0x20;
+    /// `DT_EXPANDTABS`.
+    pub const EXPANDTABS: u32 = 0x40;
+    /// `DT_NOCLIP`.
+    pub const NOCLIP: u32 = 0x100;
+    /// `DT_CALCRECT`: measure only, the rectangle is updated.
+    pub const CALCRECT: u32 = 0x400;
 }
 
-/// One chat line as samp-rs hands it over.
-#[derive(Clone, Debug, PartialEq)]
-pub struct ChatMessage {
-    /// Entry type.
-    pub kind: ChatKind,
-    /// Sender name (player chat only; empty otherwise).
-    pub name: String,
-    /// Name colour.
-    pub name_colour: Rgba,
-    /// Text (may contain `{RRGGBB}` codes).
-    pub text: String,
-    /// Text colour.
-    pub colour: Rgba,
-    /// Local time the line arrived (hour, minute, second), for the chat timestamps (F9 / `/timestamp`).
-    pub time: [u8; 3],
-}
-
-/// Display options samp-rs sets from `sa-mp.cfg`, its local commands and the server's `InitGame` flags.
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub struct UiOptions {
-    /// Chat lines shown (`/pagesize`, 10..=20).
-    pub chat_page_size: u8,
-    /// Timestamps before chat lines (`/timestamp`).
-    pub timestamps: bool,
-    /// `/fontsize` (−3..=5): every UI font grows by 2 px per step.
-    pub font_size: i8,
-    /// Nametags shown at all (`ShowNameTags`).
-    pub nametags: bool,
-    /// Nametag draw distance in metres (`SetNameTagDrawDistance`, default 70).
-    pub nametag_distance: f32,
-    /// Nametags hidden behind buildings and objects (`DisableNameTagLOS` turns it off).
-    pub nametag_los: bool,
-}
-
-impl Default for UiOptions {
-    fn default() -> Self {
-        Self {
-            chat_page_size: 10,
-            timestamps: false,
-            font_size: 0,
-            nametags: true,
-            nametag_distance: 70.0,
-            nametag_los: true,
-        }
-    }
-}
-
-/// Dialog styles (`ShowPlayerDialog`'s style byte).
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum DialogStyle {
-    /// 0: message box.
-    MsgBox,
-    /// 1: input line.
-    Input,
-    /// 2: list.
-    List,
-    /// 3: password input.
-    Password,
-    /// 4: tab list.
-    Tablist,
-    /// 5: tab list with a header row.
-    TablistHeaders,
-}
-
-impl DialogStyle {
-    /// From the wire byte (unknown values are message boxes, as samp treats them).
-    pub const fn from_byte(b: u8) -> Self {
-        match b {
-            1 => Self::Input,
-            2 => Self::List,
-            3 => Self::Password,
-            4 => Self::Tablist,
-            5 => Self::TablistHeaders,
-            _ => Self::MsgBox,
-        }
-    }
-}
-
-/// A dialog to show (RPC 61).
-#[derive(Clone, Debug, PartialEq)]
-pub struct DialogSpec {
-    /// Dialog id (−1 hides).
-    pub id: i16,
-    /// Style.
-    pub style: DialogStyle,
-    /// Caption.
-    pub title: String,
-    /// Body (rows separated by `\n`, cells by `\t` for tab lists).
-    pub body: String,
-    /// Left button.
-    pub button1: String,
-    /// Right button (empty = none).
-    pub button2: String,
-}
-
-/// What a nametag hangs on.
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub enum NametagAnchor {
-    /// A ped: the backend reads its position every frame.
-    Ped(PedRef),
-    /// A fixed world position (the ped's root; the tag is raised as samp raises it).
-    World(Vec3),
-}
-
-/// One nametag with its health / armour bars.
-#[derive(Clone, Debug, PartialEq)]
-pub struct Nametag {
-    /// Player id shown after the name (`Name (id)`).
-    pub player_id: u16,
-    /// Anchor.
-    pub anchor: NametagAnchor,
-    /// Name.
-    pub name: String,
-    /// Name colour (the player colour, alpha ignored).
-    pub colour: Rgba,
-    /// Health (0..=100; negative hides the bars).
-    pub health: f32,
-    /// Armour (0..=100).
-    pub armour: f32,
-    /// Paused (AFK icon).
-    pub afk: bool,
-}
-
-/// A chat bubble above a player (`SetPlayerChatBubble`, RPC 59).
-#[derive(Clone, Debug, PartialEq)]
-pub struct ChatBubble {
-    /// The player's ped (or a fixed position).
-    pub anchor: NametagAnchor,
-    /// Text (≤ 144 characters, `{RRGGBB}` codes; wrapped at 36 characters like samp).
-    pub text: String,
-    /// Colour (alpha forced opaque, as samp does).
-    pub colour: Rgba,
-    /// Draw distance in metres.
-    pub distance: f32,
-    /// Lifetime in milliseconds of game time.
-    pub expire_ms: u32,
-}
-
-/// A 3D text label (RPC 36).
-#[derive(Clone, Debug, PartialEq)]
-pub struct TextLabel3d {
-    /// Text (`{RRGGBB}` codes and `\n`).
-    pub text: String,
-    /// Colour.
-    pub colour: Rgba,
-    /// World position (or offset when attached).
-    pub pos: Vec3,
-    /// Draw distance in metres.
-    pub draw_distance: f32,
-    /// Hidden behind walls (line of sight test; the native backend does not test it yet).
-    pub test_los: bool,
-    /// Attached to a ped (position is then an offset from it).
-    pub attached_ped: Option<PedRef>,
-}
-
-/// Textdraw alignment (samp's 1 left, 2 centre, 3 right).
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum TdAlign {
+/// A rectangle in pixels (`right` / `bottom` exclusive, D3D `RECT`).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct UiRect {
     /// Left.
-    Left,
-    /// Centred.
-    Centre,
+    pub left: i32,
+    /// Top.
+    pub top: i32,
     /// Right.
-    Right,
+    pub right: i32,
+    /// Bottom.
+    pub bottom: i32,
 }
 
-/// A textdraw (RPC 134), in samp's 640×448 canvas.
-#[derive(Clone, Debug, PartialEq)]
-pub struct TextDrawSpec {
-    /// Text (GTA `~r~`-style codes are the game font's business).
-    pub text: String,
-    /// Position.
-    pub x: f32,
-    /// Position.
-    pub y: f32,
-    /// Letter size.
-    pub letter_w: f32,
-    /// Letter size.
-    pub letter_h: f32,
-    /// Box size (`TextSize`): wrap x / centre size.
-    pub text_w: f32,
-    /// Box size.
-    pub text_h: f32,
-    /// Letter colour.
-    pub colour: Rgba,
-    /// Box on.
-    pub use_box: bool,
-    /// Box colour.
-    pub box_colour: Rgba,
-    /// Shadow size.
-    pub shadow: u8,
-    /// Outline size.
-    pub outline: u8,
-    /// Shadow / outline colour.
-    pub background_colour: Rgba,
-    /// Game font 0..=3 (4 = sprite, 5 = model preview: not drawn by the engine UI yet).
-    pub font: u8,
-    /// Proportional spacing.
+impl UiRect {
+    /// From the four edges.
+    pub const fn new(left: i32, top: i32, right: i32, bottom: i32) -> Self {
+        Self { left, top, right, bottom }
+    }
+}
+
+/// samp's D3DX sprites: each pass draws inside one sprite's `Begin` / `End`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum UiSprite {
+    /// The font renderer's sprite (dialog body, scoreboard texts, F5, audio title).
+    Text,
+    /// The chat window's direct-draw sprite.
+    Chat,
+    /// The chat window's render-target blit sprite.
+    Blit,
+    /// The GUI resource manager's sprite (DXUT dialogs; [`UiBackend::dialog_begin`]).
+    Gui,
+    /// The death window's sprite.
+    Death,
+    /// The nametag painter's sprite.
+    Tags,
+    /// The 3D text painter's sprite (labels, bubbles).
+    Text3d,
+}
+
+/// samp's D3DX fonts.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum UiFont {
+    /// Font renderer main font (chat lines, F5).
+    Main,
+    /// The main font's outline twin (draws the black outline passes).
+    MainOutline,
+    /// Font renderer small font (main − 2): nametags, labels, dialog body, scoreboard texts.
+    Small,
+    /// The small font's outline twin.
+    SmallOutline,
+    /// GUI font 0: buttons, edit boxes.
+    Gui0,
+    /// GUI font 1 (GUI − 2): captions, list rows.
+    Gui1,
+    /// Death-window names (aux height).
+    DeathNames,
+    /// Death-window GTAWEAPON3 icon font (aux + 8).
+    DeathIcon,
+    /// Death-window GTAWEAPON3 backdrop font (aux + 12).
+    DeathBackdrop,
+    /// SAMPAUX3 20 (AFK icon).
+    Aux20,
+    /// SAMPAUX3 22 (AFK backdrop).
+    Aux22,
+}
+
+/// Metrics samp measures once when it creates its fonts.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct UiMetrics {
+    /// Height of "Y" in the main font.
+    pub main_h: i32,
+    /// Height of "Y" in the small font.
+    pub small_h: i32,
+    /// GUI font 0 cell height.
+    pub gui0_h: i32,
+    /// GUI font 1 cell height.
+    pub gui1_h: i32,
+    /// Death window: width of `LONGESTNICKNICK_NICKNICK` in the names font.
+    pub nick_w: i32,
+    /// Death window: GTAWEAPON3 `G` glyph width.
+    pub icon_w: i32,
+    /// Death window: GTAWEAPON3 `G` glyph height.
+    pub icon_h: i32,
+    /// Width of the chat timestamp sample `[19:58:34]` in the main font.
+    pub timestamp_w: i32,
+}
+
+/// A pre-transformed colour quad of the nametag bar painter (screen pixels).
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct ColourQuad {
+    /// Left.
+    pub x0: f32,
+    /// Top.
+    pub y0: f32,
+    /// Right.
+    pub x1: f32,
+    /// Bottom.
+    pub y1: f32,
+    /// `0xAARRGGBB`.
+    pub colour: u32,
+}
+
+/// The `CFont` state of one text textdraw (samp's setter order: scale, colour, justify 0, orientation, wrap,
+/// centre size, background, background colour, proportional, drop colour, edge or shadow, font style; then
+/// `PrintString` at `(x, y)` and `SetEdge(0)`).
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct TextdrawFont {
+    /// `SetScale`.
+    pub scale: (f32, f32),
+    /// `CRGBA` as stored (R, G, B, A in memory order).
+    pub colour: u32,
+    /// 0 = centre, 1 = left, 2 = right.
+    pub orientation: u8,
+    /// `SetWrapx`.
+    pub wrap_x: f32,
+    /// `SetCentreSize`.
+    pub centre_size: f32,
+    /// `SetBackground`.
+    pub background: bool,
+    /// `SetBackgroundColor` (`CRGBA`).
+    pub background_colour: u32,
+    /// `SetProportional`.
     pub proportional: bool,
-    /// Alignment.
-    pub align: TdAlign,
-    /// Clickable in cursor mode.
-    pub selectable: bool,
+    /// `SetDropColor` (`CRGBA`).
+    pub drop_colour: u32,
+    /// `SetEdge` when non-zero, else `SetDropShadowPosition(shadow)`.
+    pub outline: u8,
+    /// Shadow offset.
+    pub shadow: u8,
+    /// `SetFontStyle`.
+    pub font: u8,
+    /// `PrintString` position.
+    pub x: f32,
+    /// `PrintString` position.
+    pub y: f32,
 }
 
-/// A row of the scoreboard (TAB).
-#[derive(Clone, Debug, PartialEq)]
-pub struct ScoreRow {
-    /// Player id.
-    pub id: u16,
-    /// Name.
-    pub name: String,
-    /// Score.
-    pub score: i32,
-    /// Ping.
-    pub ping: u32,
-    /// Name colour.
-    pub colour: Rgba,
-}
+/// Where samp's UI draws. Methods are called on the game thread from the client's frame callbacks; the
+/// Present pass may only draw in [`crate::hooks::FramePhase::Present`], textdraws in `After2d`.
+pub trait UiBackend {
+    /// The video mode (`RsGlobal.maximumWidth` / `maximumHeight`): what the font sizes and the scoreboard scale
+    /// with.
+    fn video_size(&self) -> (i32, i32);
 
-/// The cursor mode.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
-pub enum CursorMode {
-    /// No cursor; the game owns the mouse.
-    #[default]
-    Off,
-    /// Cursor shown, the camera does not move (dialogs, scoreboard, `SelectTextDraw`).
-    Locked,
-    /// Cursor shown, game input passes (samp's mode 3).
-    Free,
-}
+    /// The game window's client area (dialogs and the class-selection panel are placed in it).
+    fn client_size(&self) -> (i32, i32);
 
-/// What the player did, drained by samp-rs with [`SampUi::poll_events`].
-#[derive(Clone, Debug, PartialEq)]
-pub enum UiEvent {
-    /// The chat input was submitted: text or a `/command` (samp-rs decides between RPC 101 and 50 and
-    /// runs its local commands).
-    ChatSubmit(String),
-    /// A dialog was answered (`OnDialogResponse`): button 1 = left, 0 = right / Esc.
-    DialogResponse {
-        /// Dialog id.
-        id: i16,
-        /// 1 or 0.
-        button: u8,
-        /// Selected list row or −1.
-        list_item: i16,
-        /// Input text, or the selected row's first cell.
-        text: String,
-    },
-    /// A selectable textdraw was clicked (`0xFFFF` = selection cancelled with Esc).
-    TextDrawClicked(u16),
-    /// A scoreboard row was clicked.
-    ScoreboardClicked(u16),
-    /// A class-selection panel button was clicked (DXUT: pressed and released over the button). samp-rs
-    /// treats it as the matching key: `<<` = Left, `>>` = Right, `Spawn` = Shift. Added at API v4.
-    ClassPanelClicked(ClassButton),
-}
+    /// The mouse position in client coordinates.
+    fn cursor_pos(&self) -> (i32, i32);
 
-/// The buttons of samp's class-selection panel (samp.dll's GUI dialog 0x1026eaa4, control ids 6, 5, 4).
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum ClassButton {
-    /// `<<`: the previous class (control id 6).
-    Previous,
-    /// `>>`: the next class (control id 5).
-    Next,
-    /// `Spawn` (control id 4).
-    Spawn,
-}
+    /// samp's font metrics for the current fonts.
+    fn metrics(&self) -> UiMetrics;
 
-/// The engine-drawn SA:MP UI. Methods are called from frame callbacks on the game thread.
-pub trait SampUi {
-    /// Adds a chat line (oldest of 100 dropped).
-    fn chat_add(&mut self, msg: &ChatMessage);
-    /// Clears the chat.
-    fn chat_clear(&mut self);
-    /// Shows a dialog; `None` hides the current one.
-    fn show_dialog(&mut self, dialog: Option<&DialogSpec>);
-    /// Replaces the set of nametags drawn this frame and after.
-    fn set_nametags(&mut self, tags: &[Nametag]);
-    /// Shows / replaces (`Some`) or removes (`None`) player `player_id`'s chat bubble.
-    fn set_chat_bubble(&mut self, player_id: u16, bubble: Option<&ChatBubble>);
-    /// Creates / replaces (`Some`) or deletes (`None`) 3D text label `id`.
-    fn set_label(&mut self, id: u16, label: Option<&TextLabel3d>);
-    /// Shows / replaces (`Some`) or hides (`None`) textdraw `id` (0..2048 global, 2048.. player).
-    fn set_textdraw(&mut self, id: u16, td: Option<&TextDrawSpec>);
-    /// `GameTextForPlayer`: style 0..=6, time in milliseconds.
-    fn game_text(&mut self, text: &str, time_ms: u32, style: u8);
-    /// Adds a kill-list row (`reason` = weapon id, 200 connect, 201 disconnect; empty killer = none).
-    fn kill_entry(
+    /// `ID3DXFont::DrawTextA` without a sprite and with `flags` holding [`dt::CALCRECT`] (samp's measures): the
+    /// extent of `count` bytes (−1 = all) of `text` laid out from `rect`. `colour` is passed through as samp
+    /// passes it (it draws nothing).
+    fn measure(&self, font: UiFont, text: &[u8], count: i32, rect: UiRect, flags: u32, colour: u32) -> UiRect;
+
+    /// `ID3DXSprite::Begin(flags)` of one of samp's sprites.
+    fn sprite_begin(&mut self, sprite: UiSprite, flags: u32);
+
+    /// `ID3DXSprite::End`.
+    fn sprite_end(&mut self, sprite: UiSprite);
+
+    /// `ID3DXFont::DrawTextA` of `count` bytes (−1 = up to NUL / the end) on `sprite` (`None` = the font's own
+    /// sprite). Returns the height.
+    #[allow(clippy::too_many_arguments)]
+    fn draw_text(
         &mut self,
-        killer: &str,
-        killer_colour: Rgba,
-        victim: &str,
-        victim_colour: Rgba,
-        reason: u8,
+        font: UiFont,
+        sprite: Option<UiSprite>,
+        text: &[u8],
+        count: i32,
+        rect: &mut UiRect,
+        flags: u32,
+        colour: u32,
+    ) -> i32;
+
+    /// samp's colour-code font wrapper: `text` (codes already stripped) drawn with one colour per visible
+    /// glyph (`glyphs`, in order; blanks have none).
+    #[allow(clippy::too_many_arguments)]
+    fn draw_text_coloured(
+        &mut self,
+        font: UiFont,
+        sprite: UiSprite,
+        text: &[u8],
+        rect: &mut UiRect,
+        flags: u32,
+        colour: u32,
+        glyphs: &[u32],
     );
-    /// Opens (`Some`) or closes the scoreboard with these rows and the server name.
-    fn set_scoreboard(&mut self, rows: Option<(&str, &[ScoreRow])>);
-    /// Sets the cursor mode.
-    fn set_cursor_mode(&mut self, mode: CursorMode);
-    /// `SelectTextDraw` (`Some(hover colour)`) / `CancelSelectTextDraw` (`None`).
-    fn select_textdraws(&mut self, hover: Option<Rgba>);
-    /// Display options (page size, timestamps, font size, nametag rules).
-    fn set_options(&mut self, options: &UiOptions);
-    /// Shows or hides the class-selection panel (`<<` `>>` `Spawn`). samp-rs shows it during class selection
-    /// once no dialog is open and hides it at the spawn; the UI does not draw it while the scoreboard is open.
-    /// Added at API v4.
-    fn show_class_panel(&mut self, shown: bool);
-    /// Whether the chat input or a dialog has the keyboard (samp's input lock).
-    fn wants_keyboard(&self) -> bool;
-    /// A window event, before the game sees it. Native backends call this themselves before
-    /// [`crate::hooks::GameHooks::window_event`].
-    fn handle_event(&mut self, event: WindowEvent) -> EventResult;
-    /// Takes the events since the last call.
-    fn poll_events(&mut self) -> Vec<UiEvent>;
+
+    /// The font renderer's outlined draw: black passes of the stripped text at `outline` (the 4-way passes move
+    /// only left / top, the 8-way chat passes the whole rectangle) with `outline_font`, then the coloured pass
+    /// with `font`. The default does exactly that; a backend with pre-outlined glyphs may draw it at once.
+    #[allow(clippy::too_many_arguments)]
+    fn draw_text_outlined(
+        &mut self,
+        sprite: UiSprite,
+        font: UiFont,
+        outline_font: UiFont,
+        stripped: &[u8],
+        rect: UiRect,
+        flags: u32,
+        colour: u32,
+        glyphs: &[u32],
+        outline: &[(i32, i32)],
+    ) {
+        let whole = outline.len() > 4;
+        for &(dx, dy) in outline {
+            let (rx, ry) = if whole { (dx, dy) } else { (0, 0) };
+            let mut r = UiRect::new(rect.left + dx, rect.top + dy, rect.right + rx, rect.bottom + ry);
+            self.draw_text(outline_font, Some(sprite), stripped, stripped.len() as i32, &mut r, flags | dt::NOCLIP, 0xFF00_0000);
+        }
+        let mut r = rect;
+        self.draw_text_coloured(font, sprite, stripped, &mut r, flags | dt::NOCLIP, colour, glyphs);
+    }
+
+    /// Start of `CDXUTDialog::OnRender` for a dialog at `rect` with a uniform background (the GUI sprite
+    /// begins; the skin texture is bound).
+    fn dialog_begin(&mut self, rect: UiRect, background: u32);
+
+    /// End of the dialog render.
+    fn dialog_end(&mut self);
+
+    /// `CDXUTDialog::DrawSprite`: the skin (`sampgui.png`) rectangle `src` scaled into `dst`, tinted (alpha 0
+    /// draws nothing).
+    fn gui_sprite(&mut self, src: UiRect, dst: UiRect, colour: u32);
+
+    /// `CDXUTDialog::DrawText` (through the colour-code wrapper) in the GUI sprite.
+    fn gui_text(&mut self, font: UiFont, text: &[u8], rect: UiRect, format: u32, colour: u32);
+
+    /// `CDXUTDialog::DrawText` of UTF-16 text (edit boxes), `count` characters (−1 = all).
+    fn gui_text_wide(&mut self, font: UiFont, text: &[u16], count: i32, rect: UiRect, format: u32, colour: u32);
+
+    /// `CDXUTDialog::DrawRect`: a solid rectangle (caret, selection).
+    fn gui_rect(&mut self, rect: UiRect, colour: u32);
+
+    /// Width of UTF-16 text as DXUT's edit box measures it (GDI).
+    fn text_width_wide(&self, font: UiFont, text: &[u16]) -> i32;
+
+    /// ANSI → UTF-16 (`MultiByteToWideChar(CP_ACP)`).
+    fn to_wide(&self, text: &[u8]) -> Vec<u16>;
+
+    /// The nametag bar painter begins (state block, sprite, the fixed states).
+    fn bars_begin(&mut self);
+
+    /// One bar: border, background, fill.
+    fn bars_group(&mut self, quads: &[ColourQuad; 3]);
+
+    /// The bar painter ends.
+    fn bars_end(&mut self);
+
+    /// World → screen `(x, y, z)` with the game's camera (z > 1: behind the camera).
+    fn project(&self, p: [f32; 3]) -> [f32; 3];
+
+    /// The SAMPAUX3 fonts (AFK icon): created when `create` and missing; whether they exist.
+    fn aux_fonts(&mut self, create: bool) -> bool;
+
+    /// The chat window's render-target cache: draws the cached chat and returns true, or returns false and the
+    /// caller draws the lines directly.
+    fn chat_blit(&mut self) -> bool;
+
+    /// The game's textdraw unit constants (1/640, 1/448).
+    fn textdraw_units(&self) -> (f32, f32);
+
+    /// The `CFont` calls of one text textdraw (`text` NUL-free; `has_keys`: run the key-name insertion).
+    fn textdraw_text(&mut self, font: &TextdrawFont, text: &[u8], has_keys: bool);
+
+    /// A sprite (font 4, `txd:name`) or model preview (font 5) textdraw `id`: loads its texture on first use and
+    /// draws `rect` (`[left, top, right, bottom]`) tinted with `colour` (`CRGBA`). Returns false when there is no
+    /// texture (a preview without a render falls back to the text path).
+    fn textdraw_sprite(&mut self, id: u16, style: u8, text: &[u8], serial: u64, rect: [f32; 4], colour: u32) -> bool;
+
+    /// Drops textdraw textures whose textdraw is gone or changed (`live`: id and text of the sprite textdraws).
+    fn textdraw_sync(&mut self, live: &[(u16, &[u8])]);
+
+
+    /// samp's input lock and cursor for the host (native backends route their own input): `keyboard` = the chat
+    /// input or a dialog has the keys, `mouse` = the UI owns the mouse, `cursor` = the UI's cursor shows.
+    fn set_input_state(&mut self, keyboard: bool, mouse: bool, cursor: bool) {
+        let _ = (keyboard, mouse, cursor);
+    }
 }

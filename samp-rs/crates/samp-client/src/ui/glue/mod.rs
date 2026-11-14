@@ -13,7 +13,8 @@ use std::sync::Mutex;
 use super::core::UiCore;
 use super::d3d;
 use super::inputlock::{InputLock, Op};
-use super::render::Renderer;
+use super::d3d::renderer::Renderer;
+use super::session::UiSession;
 use crate::patch::{Memory, ProcessMemory};
 use crate::script::Runner;
 
@@ -49,25 +50,14 @@ struct State {
     device_proxy: bool,
     wndproc: bool,
     fonts_added: bool,
-    /// Cached dialog layout (computed once per open, like the original).
-    dialog_layout: Option<(u64, samp_ui::dialog::DialogLayout)>,
-    input_first_visible: usize,
-    input_caret: Option<(usize, usize)>,
+    /// The per-frame pass state and mouse routing shared with the engine host.
+    session: UiSession,
     /// Remote players published by the session tick.
     remotes: Vec<super::core::RemoteUi>,
     /// GTA menu handle of the current menu.
     menu_handle: Option<i32>,
     /// Pad buttons last frame (cross, triangle) for the menu poll.
     menu_pad: (bool, bool),
-    /// Class-selection panel buttons (`<<`, `>>`, `Spawn`) drawn this frame.
-    class_buttons: Option<[samp_ui::Rect; 3]>,
-    /// The class-selection panel was made visible. samp's class-selection step shows it on the first frame without
-    /// an open dialog and keeps it until the spawn.
-    class_panel_shown: bool,
-    /// Last click on a dialog list row (double-click detection).
-    last_list_click: Option<(usize, web_time::Instant)>,
-    /// Last scoreboard row click (double-click detection).
-    last_scoreboard_click: Option<(usize, web_time::Instant)>,
     /// The spawn ends class selection: its mode-0 request restores input only after 10 frames
     /// (docs/phase3/parity-notes.md).
     spawn_release: bool,
@@ -222,16 +212,10 @@ fn ensure(g: &mut Option<State>, debug_mode: bool) -> &mut State {
             device_proxy: false,
             wndproc: false,
             fonts_added: false,
-            dialog_layout: None,
-            input_first_visible: 0,
-            input_caret: None,
+            session: UiSession::new(),
             remotes: Vec::new(),
             menu_handle: None,
             menu_pad: (false, false),
-            last_list_click: None,
-            last_scoreboard_click: None,
-            class_buttons: None,
-            class_panel_shown: false,
             spawn_release: false,
             netgame_object: false,
             net_stats: super::core::NetStats::default(),

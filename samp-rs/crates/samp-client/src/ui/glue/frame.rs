@@ -10,7 +10,7 @@ use super::{State, UI, ensure, exec_ops};
 use crate::script::Arg;
 use crate::ui::core::{MenuRequest, Outgoing};
 use crate::ui::d3d;
-use crate::ui::render::Renderer;
+use crate::ui::d3d::renderer::Renderer;
 
 /// `CMessages::AddBigMessage(text, time, style)`, used for game text.
 const ADD_BIG_MESSAGE: u32 = 0x69F2B0;
@@ -117,9 +117,9 @@ fn frame_entry_inner(debug_mode: bool) {
     // While a dialog is open the class-selection step does nothing; otherwise its first frame makes the panel
     // visible. It stays visible when a dialog opens later and goes away with the class selection.
     if !st.core.class_selection {
-        st.class_panel_shown = false;
+        st.session.class_panel_shown = false;
     } else if !st.core.dialogs.is_open() {
-        st.class_panel_shown = true;
+        st.session.class_panel_shown = true;
     }
     menu_work(st);
     // Scoreboard: rows rebuilt on open and when the player count changes; RPC 155 on the opening frame, then
@@ -147,8 +147,12 @@ pub fn frame_after_2d() {
     let _ = catch_unwind(AssertUnwindSafe(|| {
         let Ok(mut g) = UI.try_lock() else { return };
         let Some(st) = g.as_mut() else { return };
-        if !gta_menu_active() && st.core.netgame && !st.core.scoreboard.is_open() {
-            crate::ui::textdraws::draw_all(&mut st.core.textdraws);
+        if !gta_menu_active()
+            && st.core.netgame
+            && !st.core.scoreboard.is_open()
+            && let Some(r) = st.renderer.as_mut()
+        {
+            crate::ui::render::textdraws::draw_all(r, &mut st.core.textdraws);
         }
         let mut ops = st.lock.frame();
         if std::mem::take(&mut st.core.requests.input_restore) {

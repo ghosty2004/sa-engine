@@ -9,11 +9,13 @@
 
 pub mod bubbles;
 pub mod chat;
+pub mod classpanel;
 pub mod colour;
 pub mod commands;
 pub mod config;
 pub mod deathwindow;
 pub mod dialog;
+pub mod dxut;
 pub mod edit;
 pub mod fonts;
 pub mod gametext;

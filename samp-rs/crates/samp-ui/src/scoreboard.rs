@@ -2,7 +2,6 @@
 //! and geometry (docs/re/subsystems/ui-rendering.md, "Scoreboard").
 
 use crate::colour::rgba_to_argb;
-use crate::fonts::{FontId, TextMeasure};
 use crate::{Rect, round_i};
 
 /// RPC 155 (score/ping request) is sent at most this often while open. Mirrors the samp.dll
@@ -185,7 +184,9 @@ pub fn players_text(remote_count: usize) -> Vec<u8> {
     format!("Players: {}", remote_count + 1).into_bytes()
 }
 
-pub fn layout(m: &dyn TextMeasure, w: i32, h: i32) -> Layout {
+/// Geometry for video mode `w × h`, with the small font's line height and the measured width of
+/// [`PLAYERS_SAMPLE`] (the renderer measures both with its own fonts).
+pub fn layout(w: i32, h: i32, small_h: i32, players_sample_w: i32) -> Layout {
     let (sw, sh) = size(w);
     let x = w / 2 - sw / 2;
     let y = h / 2 - sh / 2;
@@ -193,7 +194,6 @@ pub fn layout(m: &dyn TextMeasure, w: i32, h: i32) -> Layout {
     let name_w = round_i(0.4375 * f64::from(sw));
     let score_w = round_i(0.265625 * f64::from(sw));
     let column_widths = [id_w, name_w, score_w, sw - id_w - name_w - score_w];
-    let small_h = m.line_height(FontId::Small);
     let header_top = y + 60 - small_h - 3;
     let mut headers = [(0, 0); 4];
     let mut hx = x + 10;
@@ -206,7 +206,7 @@ pub fn layout(m: &dyn TextMeasure, w: i32, h: i32) -> Layout {
         list: Rect::xywh(x, y + 60, sw, sh - 60),
         column_widths,
         server_name: Rect::new(x + 5, y + 5, x + sw, y + 60),
-        players_x: x + sw - m.measure(FontId::Small, PLAYERS_SAMPLE).w,
+        players_x: x + sw - players_sample_w,
         headers,
     }
 }
@@ -214,7 +214,7 @@ pub fn layout(m: &dyn TextMeasure, w: i32, h: i32) -> Layout {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::fonts::MonoMeasure;
+
 
     fn p(id: u16, name: &str, score: i32, npc: bool) -> PlayerInfo {
         PlayerInfo { id, name: name.into(), score, ping: 50, colour_rgba: 0x11223344, is_npc: npc }
@@ -252,8 +252,7 @@ mod tests {
     fn ur_15_1_geometry() {
         assert_eq!(size(800), (640, 480));
         assert_eq!(size(801), (800, 600));
-        let m = MonoMeasure { char_w: 7, line_h: 14 };
-        let l = layout(&m, 1280, 720);
+        let l = layout(1280, 720, 14, 14 * 7);
         assert_eq!(l.rect, Rect::xywh(240, 60, 800, 600));
         assert_eq!(l.list, Rect::xywh(240, 120, 800, 540));
         assert_eq!(l.column_widths, [68, 350, 213, 169]);
@@ -261,7 +260,7 @@ mod tests {
         assert_eq!(l.headers[1].0, 250 + 68);
         assert_eq!(l.players_x, 240 + 800 - 14 * 7);
         assert_eq!(players_text(3), b"Players: 4");
-        let l = layout(&m, 800, 600);
+        let l = layout(800, 600, 14, 98);
         assert_eq!(l.column_widths, [54, 280, 170, 136]);
     }
 }

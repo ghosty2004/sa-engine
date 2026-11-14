@@ -62,7 +62,7 @@ pub fn camera_target_labels_on() -> bool {
 pub fn draw_camera_target_labels(items: &[([f32; 16], Vec<u8>)]) {
     let _ = try_with_ui(|st| {
         if st.core.settings.camera_target_labels
-            && let Some(r) = st.renderer.as_ref()
+            && let Some(r) = st.renderer.as_mut()
         {
             r.camera_target_labels(items);
         }

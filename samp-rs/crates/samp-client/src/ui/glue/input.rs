@@ -3,7 +3,6 @@
 
 use super::adapters::{LiveGame, gta_menu_active};
 use super::{State, try_with_ui};
-use crate::ui::core::Outgoing;
 
 /// A window event for the UI; returns whether it is consumed.
 pub(in crate::ui) fn on_window_event(ev: samp_ui::keys::Event, wheel_lines: u32) -> bool {
@@ -98,93 +97,24 @@ fn clipboard_requests(st: &mut State) {
     }
 }
 
-/// Left button released over a dialog control or a hovered textdraw.
+/// Left button released over a hovered textdraw, the scoreboard, the class-selection panel or a dialog control
+/// (`crate::ui::session`); a panel click is left for the session tick.
 fn mouse_up(st: &mut State, x: i32, y: i32) -> bool {
-    use samp_ui::dialog::Button;
-    if st.core.textdraws.selection.active
-        && let Some(id) = st.core.textdraws.selection.hovered
-    {
-        // RPC 83 OnPlayerSelectTextDraw with the hovered id; selection stays on.
-        st.core.push_outgoing(Outgoing::SelectTextDraw(id));
-        return true;
-    }
-    if st.core.scoreboard.is_open() {
-        return scoreboard_click(st, x, y);
-    }
-    if let Some(b) = st.class_buttons
-        && let Some(i) = b.iter().position(|r| r.contains(x, y))
-    {
-        // `<<` previous class, `>>` next class, `Spawn` (consumed by the session tick).
-        CLASS_CLICK.store(i as u8 + 1, std::sync::atomic::Ordering::SeqCst);
-        return true;
-    }
-    if !st.core.dialogs.drawn(st.core.input.is_open(), st.core.scoreboard.is_open()) {
-        return false;
-    }
-    let Some((_, l)) = st.dialog_layout.clone() else { return false };
-    if l.button1.contains(x, y) {
-        st.core.dialog_respond(Button::Ok);
-        return true;
-    }
-    if l.button2.is_some_and(|b| b.contains(x, y)) {
-        st.core.dialog_respond(Button::Cancel);
-        return true;
-    }
-    if let (Some(list), Some(d)) = (l.list, st.core.dialogs.current_mut()) {
-        if let Some(row) = d.row_at(&list, l.list_row_h, x, y) {
-            // A click selects; a double click (two clicks on the same row within the system double-click
-            // time, DXUT's WM_LBUTTONDBLCLK) activates with response 1.
-            let now = web_time::Instant::now();
-            // SAFETY: plain Win32 query.
-            let dbl = unsafe { windows_sys::Win32::UI::Input::KeyboardAndMouse::GetDoubleClickTime() };
-            let double = st
-                .last_list_click
-                .is_some_and(|(r, t)| r == row && now.duration_since(t).as_millis() <= u128::from(dbl));
-            d.select(row);
-            if double {
-                st.last_list_click = None;
-                st.core.dialog_respond(Button::Ok);
-            } else {
-                st.last_list_click = Some((row, now));
-            }
-        }
-        return list.contains(x, y);
-    }
-    l.rect.contains(x, y)
-}
-
-/// A click on the scoreboard's list box: a click selects the row; a double click activates it, and the
-/// scoreboard's GUI callback sends RPC 23 OnPlayerClickPlayer and closes. Clicks outside the scoreboard fall
-/// through (they close it, see `samp_ui::keys`).
-fn scoreboard_click(st: &mut State, x: i32, y: i32) -> bool {
-    let r = st.core.scoreboard_rect;
-    if !r.contains(x, y) {
-        return false;
-    }
-    let row_h = st.renderer.as_ref().map(|r| r.fonts.gui1_height).unwrap_or(0);
-    let list = samp_ui::Rect::new(r.left, r.top + 60, r.right, r.bottom);
-    let sel = samp_ui::dialog::list_selection_rect(&list);
-    let text = samp_ui::dialog::list_text_rect(&list);
-    if row_h <= 0 || x < sel.left || x >= sel.right || y < text.top || y >= sel.bottom {
-        return true;
-    }
-    let row = st.core.scoreboard.scroll() + ((y - text.top) / row_h) as usize;
-    if row >= st.core.scoreboard.rows().len() {
-        return true;
-    }
-    let now = web_time::Instant::now();
+    use samp_ui::classpanel::ClassButton;
+    let Some(r) = st.renderer.as_ref() else { return false };
     // SAFETY: plain Win32 query.
     let dbl = unsafe { windows_sys::Win32::UI::Input::KeyboardAndMouse::GetDoubleClickTime() };
-    let double =
-        st.last_scoreboard_click.is_some_and(|(r, t)| r == row && now.duration_since(t).as_millis() <= u128::from(dbl));
-    st.core.scoreboard.set_selected(Some(row));
-    if double {
-        st.last_scoreboard_click = None;
-        st.core.scoreboard_activate();
-    } else {
-        st.last_scoreboard_click = Some((row, now));
+    let now = u64::from(crate::ui::core::tick_ms());
+    let consumed = st.session.mouse_up(&mut st.core, r, x, y, now, dbl);
+    if let Some(c) = st.session.take_class_click() {
+        let i = match c {
+            ClassButton::Previous => 1,
+            ClassButton::Next => 2,
+            ClassButton::Spawn => 3,
+        };
+        CLASS_CLICK.store(i, std::sync::atomic::Ordering::SeqCst);
     }
-    true
+    consumed
 }
 
 /// A click on the class-selection panel: 1 = `<<`, 2 = `>>`, 3 = `Spawn` (0 = none).

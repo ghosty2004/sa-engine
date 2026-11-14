@@ -1,10 +1,10 @@
 //! The fonts and sprites the UI draws with, and the metrics samp measures when it creates the fonts.
 
 use samp_ui::deathwindow;
-use samp_ui::fonts::{self, FontId, Size, TextMeasure};
+use samp_ui::fonts;
 
 use super::{text_font_args, weapon_font_args};
-use crate::ui::d3d::{D3dx, Font, Rect, Sprite, dt};
+use crate::ui::d3d::{D3dx, Font, Sprite, dt};
 
 /// The fonts the UI draws with, plus the metrics samp measures once when it creates them.
 pub struct Fonts {
@@ -79,17 +79,6 @@ pub(super) fn build_fonts(d3dx: &D3dx, video_w: i32, fs: i32, face: &[u8], weigh
 }
 
 impl Fonts {
-    fn font(&self, id: FontId) -> &Font {
-        match id {
-            FontId::Main => &self.main,
-            FontId::Small => &self.small,
-            FontId::Gui0 => &self.gui0,
-            FontId::Gui1 => &self.gui1,
-            FontId::DeathNames => &self.death_names,
-            FontId::DeathIcon => &self.death_icon,
-        }
-    }
-
     pub(super) fn all(&self) -> [&Font; 9] {
         [
             &self.main,
@@ -102,34 +91,6 @@ impl Fonts {
             &self.death_icon,
             &self.death_backdrop,
         ]
-    }
-}
-
-impl TextMeasure for Fonts {
-    fn measure(&self, font: FontId, text: &[u8]) -> Size {
-        let (w, h) = self.font(font).measure(text, dt::SINGLELINE);
-        Size { w, h }
-    }
-    fn timestamp_width(&self) -> i32 {
-        self.timestamp_w
-    }
-    fn line_height(&self, font: FontId) -> i32 {
-        match font {
-            FontId::Main => self.main_h,
-            FontId::Small => self.small_h,
-            FontId::Gui0 => self.gui0_height,
-            FontId::Gui1 => self.gui1_height,
-            f => self.measure(f, b"Y").h,
-        }
-    }
-    /// Multi-line block (`DT_CALCRECT|DT_EXPANDTABS`), the dialog body measure.
-    fn measure_block(&self, font: FontId, text: &[u8]) -> Size {
-        if text.is_empty() {
-            return Size::default();
-        }
-        let mut r = Rect::default();
-        self.font(font).draw_n(std::ptr::null_mut(), text, -1, &mut r, dt::CALCRECT | dt::EXPANDTABS, 0xFF00_0000);
-        Size { w: r.right - r.left, h: r.bottom - r.top }
     }
 }
 

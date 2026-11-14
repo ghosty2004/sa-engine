@@ -177,6 +177,50 @@ pub fn sprite_hit_rect(d: &TextDrawData, w: i32, h: i32, ux: f32, uy: f32) -> Re
     Rect::new(left, top, ftol(sx * d.text_size.x + left as f32), ftol(sy * d.text_size.y + top as f32))
 }
 
+/// Where a sprite textdraw's texture comes from. Mirrors samp.dll 0x100B2D10 / 0x100B2BD0.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SpriteSource {
+    /// TXD slot name (`CTxdStore::FindTxdSlot`).
+    pub slot: Vec<u8>,
+    /// When no slot has that name: the folder (`SAMP` or `models\txd`) and file stem of the TXD to add a slot
+    /// for and load; `None` = the slot must exist (`hud`).
+    pub file: Option<(&'static [u8], Vec<u8>)>,
+    /// Texture name.
+    pub texture: Vec<u8>,
+}
+
+impl SpriteSource {
+    /// The TXD path `<dir>\<stem>.txd`.
+    pub fn path(&self) -> Option<Vec<u8>> {
+        let (dir, stem) = self.file.as_ref()?;
+        let mut p = dir.to_vec();
+        p.push(b'\\');
+        p.extend_from_slice(stem);
+        p.extend_from_slice(b".txd");
+        Some(p)
+    }
+}
+
+/// Parses a sprite textdraw's `txd:name` as samp does: at most 63 characters, no path separators; `hud` is the
+/// game's HUD dictionary, `samaps` / `vehicleprev` come from samp's folder (`samaps.txd`, `vehicles128.txd`),
+/// anything else from `models\txd` with the slot name cut at 10 characters. `mdlNNN` names take the generic
+/// path in 0.3.7-R4 (samp's custom-model store only exists after the unused RPC 179).
+pub fn sprite_source(text: &[u8]) -> Option<SpriteSource> {
+    let i = text.iter().position(|&b| b == b':')?;
+    if text.len() > 0x3F || text.contains(&b'\\') || text.contains(&b'/') {
+        return None;
+    }
+    let (t, name) = (&text[..i], &text[i + 1..]);
+    let samp: &'static [u8] = b"SAMP";
+    let (slot, file) = match t {
+        b"hud" => (b"hud".to_vec(), None),
+        b"samaps" => (b"samaps".to_vec(), Some((samp, b"samaps".to_vec()))),
+        b"vehicleprev" => (b"vehicleprev".to_vec(), Some((samp, b"vehicles128".to_vec()))),
+        _ => (t[..t.len().min(10)].to_vec(), Some((&b"models\\txd"[..], t.to_vec()))),
+    };
+    Some(SpriteSource { slot, file, texture: name.to_vec() })
+}
+
 /// One textdraw.
 #[derive(Clone, Debug, PartialEq)]
 pub struct TextDraw {
@@ -441,5 +485,19 @@ mod tests {
         t.clear();
         t.show(3, d, b"_");
         assert!(t.get(3).unwrap().serial > second);
+    }
+
+    #[test]
+    fn sprite_sources_follow_samp() {
+        let s = sprite_source(b"LD_SPAC:white").unwrap();
+        assert_eq!((s.slot.as_slice(), s.texture.as_slice()), (&b"LD_SPAC"[..], &b"white"[..]));
+        assert_eq!(s.path().unwrap(), b"models\\txd\\LD_SPAC.txd");
+        assert_eq!(sprite_source(b"hud:radar_burgershot").unwrap().file, None);
+        assert_eq!(sprite_source(b"vehicleprev:411").unwrap().path().unwrap(), b"SAMP\\vehicles128.txd");
+        assert_eq!(sprite_source(b"samaps:map").unwrap().path().unwrap(), b"SAMP\\samaps.txd");
+        assert_eq!(sprite_source(b"averyverylongname:x").unwrap().slot, b"averyveryl");
+        assert!(sprite_source(b"nocolon").is_none());
+        assert!(sprite_source(b"a/b:c").is_none());
+        assert!(sprite_source(&[b'a'; 64]).is_none());
     }
 }

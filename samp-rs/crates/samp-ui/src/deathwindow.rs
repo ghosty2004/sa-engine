@@ -1,11 +1,9 @@
 //! Death window: the last 5 kill / connect rows, the reason → GTAWEAPON3 glyph table and the
-//! per-row layout ([`DeathWindow::layout`])
-//! (docs/re/subsystems/ui-rendering.md, "Death window").
+//! origin ([`origin`]); samp-client's renderer places the rows (docs/re/subsystems/ui-rendering.md,
+//! "Death window").
 
 use std::collections::VecDeque;
 
-use crate::fonts::{FontId, TextMeasure};
-use crate::{Rect, round_i};
 
 /// Rows kept.
 pub const ROWS: usize = 5;
@@ -95,27 +93,6 @@ pub struct DeathRow {
     pub reason: u8,
 }
 
-/// Text placement; `align_right` = the text ends at `x` (`DT_RIGHT`), else starts at `x`.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct NamePlacement {
-    pub x: i32,
-    pub y: i32,
-    pub align_right: bool,
-    pub text: Vec<u8>,
-    pub colour: u32,
-}
-
-/// What to draw for one row.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct RowLayout {
-    pub left_name: NamePlacement,
-    /// Icon box: backdrop glyph `G` in black, then the reason glyph centred.
-    pub icon_box: Rect,
-    pub glyph: u8,
-    pub glyph_colour: u32,
-    pub right_name: Option<NamePlacement>,
-}
-
 /// The death window. Mirrors the samp.dll global at 0x1026ea00.
 #[derive(Clone, Debug)]
 pub struct DeathWindow {
@@ -162,66 +139,15 @@ impl DeathWindow {
             reason,
         });
     }
-
-    /// Lays out the rows for video mode `w × h`. Rows are placed in slot order from the top; with
-    /// fewer than 5 rows the stored rows fill from the top (assumed).
-    pub fn layout(&self, m: &dyn TextMeasure, w: i32, h: i32) -> Vec<RowLayout> {
-        let nick_w = m.measure(FontId::DeathNames, NICK_SAMPLE).w;
-        let icon = m.measure(FontId::DeathIcon, &[DEFAULT_GLYPH]);
-        let (x, y0) = origin(w, h, nick_w, icon.w);
-        self.rows
-            .iter()
-            .enumerate()
-            .map(|(i, r)| {
-                let y = y0 + i as i32 * (icon.h + 5);
-                let icon_left = x + nick_w + 3;
-                let icon_box = Rect::new(icon_left, y - 5, icon_left + ICON_BOX_W, y - 5 + icon.h);
-                let glyph = glyph(r.reason);
-                let glyph_colour = glyph_colour(r.reason);
-                if r.killer.is_empty() {
-                    RowLayout {
-                        left_name: NamePlacement {
-                            x: x + nick_w,
-                            y,
-                            align_right: true,
-                            text: r.victim.clone(),
-                            colour: r.victim_colour,
-                        },
-                        icon_box,
-                        glyph,
-                        glyph_colour,
-                        right_name: None,
-                    }
-                } else {
-                    RowLayout {
-                        left_name: NamePlacement {
-                            x: x + nick_w,
-                            y,
-                            align_right: true,
-                            text: r.killer.clone(),
-                            colour: r.killer_colour,
-                        },
-                        icon_box,
-                        glyph,
-                        glyph_colour,
-                        right_name: Some(NamePlacement {
-                            x: icon_left + icon.w,
-                            y,
-                            align_right: false,
-                            text: r.victim.clone(),
-                            colour: r.victim_colour,
-                        }),
-                    }
-                }
-            })
-            .collect()
-    }
 }
 
-/// Origin `(round(0.75·W), round(0.3·H))`, pulled left so `2·nickW + iconW` fits.
+/// Origin `(ftol(0.75·W), ftol(0.3·H))` in single precision, pulled left so `2·nickW + iconW` fits. The spec
+/// says `round`; the renderer has always truncated (the D3D call-stream comparison against the original matched
+/// with it), and the two differ only when `0.75·W` or `0.3·H` ends in .5 (sa-engine overlay.md §10.4).
+/// Mirrors samp.dll 0x1006A2E0.
 pub fn origin(w: i32, h: i32, nick_w: i32, icon_w: i32) -> (i32, i32) {
-    let mut x = round_i(0.75 * f64::from(w));
-    let y = round_i(0.3 * f64::from(h));
+    let mut x = (0.75 * w as f32) as i32;
+    let y = (0.3 * h as f32) as i32;
     if x + nick_w * 2 + icon_w > w {
         x = w - (nick_w * 2 + icon_w);
     }
@@ -231,7 +157,6 @@ pub fn origin(w: i32, h: i32, nick_w: i32, icon_w: i32) -> (i32, i32) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::fonts::MonoMeasure;
 
     #[test]
     fn ur_17_2_glyph_table() {
@@ -310,27 +235,11 @@ mod tests {
     }
 
     #[test]
-    fn ur_17_1_origin_and_row_layout() {
+    fn ur_17_1_origin() {
         // 24-char sample at 8 px = 192; icon 20 × 18.
         assert_eq!(origin(1920, 1080, 192, 20), (1440, 324));
         assert_eq!(origin(1280, 720, 192, 20), (1280 - 404, 216));
         assert_eq!(origin(800, 600, 192, 20), (800 - 404, 180));
-        let m = MonoMeasure { char_w: 8, line_h: 18 };
-        let mut d = DeathWindow::new();
-        d.add(b"Killer", 0xFF00FF00, b"Victim", 0xFFFF0000, 24);
-        d.add(b"", 0, b"Joiner", 0xFF0000FF, 200);
-        let l = d.layout(&m, 1920, 1080);
-        let (x, y) = (1440, 324);
-        assert_eq!(
-            l[0].left_name,
-            NamePlacement { x: x + 192, y, align_right: true, text: b"Killer".to_vec(), colour: 0xFF00FF00 }
-        );
-        assert_eq!(l[0].icon_box, Rect::new(x + 195, y - 5, x + 195 + 35, y - 5 + 18));
-        assert_eq!((l[0].glyph, l[0].glyph_colour), (b'3', 0xFFFFFFFF));
-        assert_eq!(l[0].right_name.as_ref().unwrap().x, x + 195 + 8);
-        assert_eq!(l[1].left_name.text, b"Joiner");
-        assert_eq!(l[1].left_name.y, y + 18 + 5);
-        assert!(l[1].right_name.is_none());
-        assert_eq!((l[1].glyph, l[1].glyph_colour), (b'N', 0xFF1111AA));
+        assert_eq!(origin(1366, 768, 100, 20), (1024, 230));
     }
 }

@@ -9,7 +9,7 @@ use crate::game::off;
 use crate::objedit;
 use crate::ui::d3d;
 use crate::ui::inputlock::InputLock;
-use crate::ui::render::{self, Renderer};
+use crate::ui::d3d::renderer::{self as render, Renderer};
 use crate::worldhooks::rd;
 
 /// Offset of pad 0's `Cross` button state in `CPad`.
@@ -39,7 +39,7 @@ fn pick_ray(cursor: (i32, i32)) -> Option<([f32; 3], [f32; 3])> {
 }
 
 /// Per-frame work of the object editor (gizmo, hover), then of object selection (pick and highlight).
-pub(super) fn editor_pass(lock: &mut InputLock, r: &Renderer) {
+pub(super) fn editor_pass(lock: &mut InputLock, r: &mut Renderer) {
     let sprint = sprint_held();
     let cursor = render::cursor_pos();
     objedit::with(|sh| {

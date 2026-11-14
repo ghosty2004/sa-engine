@@ -3,7 +3,6 @@
 use sa_samp_api::hud::Hud as _;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
-use samp_ui::chat::DisplayMode;
 use samp_ui::keys::Overlay;
 
 use super::adapters::{gta_menu_active, key_polled, net_stats_values, set_hud};
@@ -12,8 +11,10 @@ use super::frame::DIRECT_MODE_LINE;
 use super::overlays::{bubbles, map_click, nametags};
 use super::{State, UI, exec_ops, try_with_ui};
 use crate::ui::core::{CursorRequest, Outgoing};
+use crate::ui::d3d::renderer as render;
 use crate::ui::d3d::{self, HResult, Rect};
-use crate::ui::render::{self, BubbleDraw, CursorReq, Frame, ScoreboardDraw, TagDraw};
+use crate::ui::render::{BubbleDraw, CursorReq, LabelDraw, TagDraw};
+use crate::ui::session::{PassInput, UiSession};
 
 pub(super) extern "system" fn present_hook(
     _this: *mut std::ffi::c_void,
@@ -90,14 +91,14 @@ pub(super) extern "system" fn reset_hook(_this: *mut std::ffi::c_void, params: *
 }
 
 /// What the Present pass gathers before it draws.
-struct PassInput {
+struct Gathered {
     overlay: Option<Overlay>,
-    /// The scoreboard is open (it is drawn this frame).
-    scoreboard_shown: bool,
     /// The scoreboard or an F5 / F10 overlay hides the rest of the UI.
     sb_open: bool,
     tags: Vec<TagDraw>,
     bubbles: Vec<BubbleDraw>,
+    labels: Vec<LabelDraw>,
+    vehicle_labels: Option<Vec<([f32; 3], String)>>,
     audio_title: Option<Vec<u8>>,
     net_stats: Option<Vec<u8>>,
 }
@@ -161,8 +162,9 @@ fn run_cursor_requests(st: &mut State) {
     }
 }
 
-/// Steps 4b–9 up to the drawing: overlay keys, HUD flags, nametags, bubbles, the audio title and the F5 text.
-fn gather(st: &mut State) -> PassInput {
+/// Steps 4b–9 up to the drawing: overlay keys, HUD flags, nametags, bubbles, labels, the audio title and the F5
+/// text.
+fn gather(st: &mut State) -> Gathered {
     // Steps 5–8: scoreboard, else F5 (connected) / F10 held → HUD off and
     // only the nametag passes; else F1 held opens the help dialog. Keys are polled with
     // GetAsyncKeyState (any bit set), each only when the earlier ones did not apply.
@@ -178,15 +180,16 @@ fn gather(st: &mut State) -> PassInput {
         }
     }
     // Steps 5 / 9: the HUD flags are written on every Present.
-    set_hud(!sb_open && overlay.is_none() && st.core.chat.mode() != DisplayMode::Hidden);
-    let scoreboard_shown = sb_open;
+    set_hud(UiSession::hud_visible(&st.core, overlay));
     let sb_open = sb_open || overlay.is_some();
     let tags = nametags(st);
     let bubbles = if sb_open { Vec::new() } else { bubbles(st) };
     // Step 4b: the audio stream title line, when the netgame exists.
     let audio_title = if st.core.netgame { crate::audio::title_text() } else { None };
     let net_stats = (overlay == Some(Overlay::NetStats)).then(|| net_stats_text(st));
-    PassInput { overlay, scoreboard_shown, sb_open, tags, bubbles, audio_title, net_stats }
+    let labels = crate::entities::label_draws();
+    let vehicle_labels = crate::vehlabels::draws();
+    Gathered { overlay, sb_open, tags, bubbles, labels, vehicle_labels, audio_title, net_stats }
 }
 
 /// The F5 text with the download / upload rates sampled now.
@@ -199,93 +202,42 @@ fn net_stats_text(st: &mut State) -> Vec<u8> {
     crate::ui::core::net_stats_text(&net_stats_values(&base))
 }
 
-/// Font rebuild when asked or when the size changed, the dialog layout (once per open), the chat input's first
-/// visible character and the click rects of the input and the scoreboard.
+/// Font rebuild when asked or when the size changed, then the session's layouts (dialog, chat input, click
+/// rects).
 fn update_layouts(st: &mut State, face: &[u8], weight: u32, fs: i32) {
     let Some(r) = st.renderer.as_mut() else { return };
     if std::mem::take(&mut st.core.requests.rebuild_fonts) || r.needs_rebuild(fs) {
         r.rebuild_fonts(face, weight, fs);
-        st.dialog_layout = None;
+        st.session.fonts_changed();
     }
-    // Dialog layout once per open (and after a font rebuild).
-    let serial = st.core.dialog_serial;
-    if let Some(d) = st.core.dialogs.current() {
-        if st.dialog_layout.as_ref().is_none_or(|(s, _)| *s != serial) {
-            let (cw, ch) = render::client_size();
-            st.dialog_layout = Some((serial, d.layout(&r.fonts, cw, ch)));
-        }
-        if let Some((_, l)) = &st.dialog_layout
-            && let Some(list) = l.list
-        {
-            st.core.dialog_page_rows = d.page_rows(&list, l.list_row_h);
-        }
-    }
-    // Chat input first visible character (DXUT PlaceCaret on caret moves).
-    if st.core.input.is_open() {
-        let key = (st.core.input.edit().caret(), st.core.input.edit().text().len());
-        if st.input_caret != Some(key) {
-            st.input_caret = Some(key);
-            st.input_first_visible = r.input_first_visible(&st.core.chat, &st.core.input, st.input_first_visible);
-        }
-        let (cw, _) = render::client_size();
-        st.core.input_rect = samp_ui::input::box_rect(cw, st.core.chat.bottom(r.fonts.main_h), r.fonts.gui0_height);
-    } else {
-        st.input_caret = None;
-    }
-    let (w, h) = (render::video_width(), render::video_height());
-    let (sw, shh) = samp_ui::scoreboard::size(w);
-    st.core.scoreboard_rect = samp_ui::Rect::xywh(w / 2 - sw / 2, h / 2 - shh / 2, sw, shh);
+    st.session.update_layouts(&mut st.core, r);
 }
 
-/// Steps 4–12: the renderer's frame (chat, nametags, bubbles, scoreboard, death window, dialog, overlays).
-fn draw_frame(st: &mut State, input: &PassInput, cursor: (i32, i32)) {
+/// Steps 4–12: the shared pass (chat, nametags, bubbles, scoreboard, death window, dialog, overlays, the
+/// class-selection panel) on the D3D9 backend.
+fn draw_frame(st: &mut State, g: &Gathered, cursor: (i32, i32)) {
     let Some(r) = st.renderer.as_mut() else { return };
-    let sb_draw = input.scoreboard_shown.then(|| ScoreboardDraw {
-        rows: st.core.scoreboard.rows(),
-        server_name: &st.core.server_name,
-        players: samp_ui::scoreboard::players_text(st.core.remote_ids().count()),
-        selected: st.core.scoreboard.selected(),
-        scroll: st.core.scoreboard.scroll(),
-    });
-    let dialog = if st.core.dialogs.drawn(st.core.input.is_open(), input.sb_open) {
-        st.core.dialogs.current().zip(st.dialog_layout.as_ref().map(|(_, l)| l))
-    } else {
-        None
-    };
-    let frame = Frame {
-        chat: &st.core.chat,
-        input: &st.core.input,
-        input_first_visible: st.input_first_visible,
-        tags: &input.tags,
-        nametag_status: st.core.settings.nametag_status,
-        bubbles: &input.bubbles,
-        scoreboard: sb_draw,
-        death: st.core.deaths.visible().then_some(&st.core.deaths),
-        dialog,
+    let input = PassInput {
+        overlay: g.overlay,
+        tags: &g.tags,
+        bubbles: &g.bubbles,
+        labels: &g.labels,
+        vehicle_labels: g.vehicle_labels.as_deref(),
+        audio_title: g.audio_title.as_deref(),
+        net_stats: g.net_stats.as_deref(),
+        netgame_object: st.netgame_object,
         cursor,
-        overlay: input.overlay,
-        net_stats: input.net_stats.as_deref(),
-        netgame_object: st.core.netgame && st.netgame_object,
-        name_tag_passes: st.core.netgame && st.netgame_object && st.core.show_name_tags,
-        audio_title: input.audio_title.as_deref(),
     };
     let lock = &mut st.lock;
-    r.frame(&frame, &mut |req| match req {
+    st.session.draw(&st.core, r, &input, &mut |req| match req {
         CursorReq::Mode2 => exec_ops(lock.request_mode2()),
     });
 }
 
-/// Step 12 after the frame: the class-selection panel, the object editor and selection, textdraw selection,
-/// then leaving cursor mode 2 when no mode-2 UI is left.
+/// Step 12 after the frame (the class-selection panel was drawn by the pass): the object editor and selection,
+/// textdraw selection, then leaving cursor mode 2 when no mode-2 UI is left.
 fn after_frame(st: &mut State, sb_open: bool, cursor: (i32, i32)) {
     let Some(r) = st.renderer.as_mut() else { return };
-    // Step 12: the class-selection GUI dialog after the chat GUI dialog (spec "4.2 GUI dialogs created by
-    // samp"); class selection holds cursor mode 2 meanwhile.
-    if st.core.class_selection && st.class_panel_shown && !sb_open {
-        st.class_buttons = Some(r.class_panel(cursor));
-    } else {
-        st.class_buttons = None;
-    }
     // Step 12: object editor and object selection.
     if !sb_open {
         editor_pass(&mut st.lock, r);
@@ -298,11 +250,7 @@ fn after_frame(st: &mut State, sb_open: bool, cursor: (i32, i32)) {
         st.core.textdraws.hover(cursor.0, cursor.1);
     }
     // Leaving a mode-2 UI: back to mode 0 with an immediate restore, except after the spawn (delayed restore).
-    let wants2 = st.core.input.is_open()
-        || st.core.class_selection
-        || st.core.dialogs.is_open()
-        || st.core.textdraws.selection.active;
-    if !wants2 && st.lock.mode() == 2 {
+    if !UiSession::wants_mode2(&st.core) && st.lock.mode() == 2 {
         let immediate = !std::mem::take(&mut st.spawn_release);
         exec_ops(st.lock.request_mode0(immediate));
     }

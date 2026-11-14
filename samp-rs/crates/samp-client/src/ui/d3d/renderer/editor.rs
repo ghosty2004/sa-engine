@@ -2,6 +2,8 @@
 
 use samp_ui::fonts;
 
+use sa_samp_api::ui::{UiFont, UiRect, UiSprite};
+
 use super::Renderer;
 use crate::objedit::{self, Editor};
 use crate::ui::d3d::{self, Rect, dt};
@@ -31,12 +33,12 @@ impl Renderer {
     fn axis_ends(&self, m: &[f32; 16], axis: usize, s: f32) -> Option<([f32; 3], [f32; 3])> {
         let mut v = [0.0f32; 3];
         v[axis] = s;
-        let a = self.project(objedit::transform(m, v));
+        let a = self.project_point(objedit::transform(m, v));
         if a[2] > 1.0 {
             return None;
         }
         v[axis] = -s;
-        let b = self.project(objedit::transform(m, v));
+        let b = self.project_point(objedit::transform(m, v));
         (b[2] <= 1.0).then_some((a, b))
     }
 
@@ -86,7 +88,7 @@ impl Renderer {
     /// Selection highlight: the object's axis cross (length 1, one colour) and the id / model / distance label
     /// through the 3D-text painter with the outline on and no line-of-sight test (outlined small text, rect
     /// [x, y, x+1, y+1], format 0x101). Mirrors samp.dll B 0x1006DA20.
-    pub fn select_highlight(&self, m: &[f32; 16], label: &[u8]) {
+    pub fn select_highlight(&mut self, m: &[f32; 16], label: &[u8]) {
         if let Some(line) = &self.unused.editor_line {
             line.set_antialias(true);
             for axis in 0..3 {
@@ -94,18 +96,18 @@ impl Renderer {
                 line.segment([a[0], a[1]], [b[0], b[1]], objedit::SELECT_LINE_COLOUR);
             }
         }
-        let s = &self.sprites.text3d;
-        s.begin(d3d::sprite::ALPHABLEND);
+        self.sprites.text3d.begin(d3d::sprite::ALPHABLEND);
         let pos = [m[12], m[13], m[14]];
         {
-            let p = self.project(pos);
+            let p = self.project_point(pos);
             if p[2] <= 1.0 {
                 let (x, y) = (p[0] as i32, p[1] as i32);
-                let rect = Rect { left: x, top: y, right: x + 1, bottom: y + 1 };
-                Self::outlined(
-                    s,
-                    &self.fonts.small,
-                    &self.fonts.small_outline,
+                let rect = UiRect::new(x, y, x + 1, y + 1);
+                crate::ui::render::outlined(
+                    self,
+                    UiSprite::Text3d,
+                    UiFont::Small,
+                    UiFont::SmallOutline,
                     label,
                     rect,
                     dt::CENTER,
@@ -114,15 +116,14 @@ impl Renderer {
                 );
             }
         }
-        s.end();
+        self.sprites.text3d.end();
     }
 
     /// `/ctd`: one sprite begin; per camera target the editor's axis cross on the entity matrix (length 1) and its
     /// label at the matrix position (3D-text painter, outline on, no line-of-sight test); one sprite end.
     /// Mirrors samp.dll B 0x10004830.
-    pub fn camera_target_labels(&self, items: &[([f32; 16], Vec<u8>)]) {
-        let s = &self.sprites.text3d;
-        s.begin(d3d::sprite::ALPHABLEND);
+    pub fn camera_target_labels(&mut self, items: &[([f32; 16], Vec<u8>)]) {
+        self.sprites.text3d.begin(d3d::sprite::ALPHABLEND);
         for (m, label) in items {
             if let Some(line) = &self.unused.editor_line {
                 line.set_antialias(true);
@@ -131,14 +132,15 @@ impl Renderer {
                     line.segment([a[0], a[1]], [b[0], b[1]], objedit::SELECT_LINE_COLOUR);
                 }
             }
-            let p = self.project([m[12], m[13], m[14]]);
+            let p = self.project_point([m[12], m[13], m[14]]);
             if p[2] <= 1.0 {
                 let (x, y) = (p[0] as i32, p[1] as i32);
-                let rect = Rect { left: x, top: y, right: x + 1, bottom: y + 1 };
-                Self::outlined(
-                    s,
-                    &self.fonts.small,
-                    &self.fonts.small_outline,
+                let rect = UiRect::new(x, y, x + 1, y + 1);
+                crate::ui::render::outlined(
+                    self,
+                    UiSprite::Text3d,
+                    UiFont::Small,
+                    UiFont::SmallOutline,
                     label,
                     rect,
                     dt::CENTER,
@@ -147,6 +149,6 @@ impl Renderer {
                 );
             }
         }
-        s.end();
+        self.sprites.text3d.end();
     }
 }

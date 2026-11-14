@@ -12,6 +12,7 @@ use std::ffi::c_void;
 mod d3dx;
 pub mod devcall;
 mod proxy;
+pub mod renderer;
 mod resources;
 mod text;
 
@@ -77,14 +78,7 @@ pub mod font {
 }
 
 /// `DrawText` format flags.
-pub mod dt {
-    pub const CENTER: u32 = 0x1;
-    pub const VCENTER: u32 = 0x4;
-    pub const EXPANDTABS: u32 = 0x40;
-    pub const SINGLELINE: u32 = 0x20;
-    pub const NOCLIP: u32 = 0x100;
-    pub const CALCRECT: u32 = 0x400;
-}
+pub use sa_samp_api::ui::dt;
 
 /// COM `Release` (slot 2).
 pub unsafe fn release(obj: *mut c_void) {

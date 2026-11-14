@@ -333,3 +333,69 @@ sa-game platform input → UI (samp_input) and --samp-ui-demo. Verified: 38 + 1 
 host / i686 / wasm32 (UI, API, backend), host / i686 (sa-game); demo run on the user's install (release i686,
 --start-in-world, STD-9 stubs + 0x680600, 0x7331E0): 4 UI events from platform input, PNGs in
 target/samp-ui-evidence/."
+
+## 10. One UI implementation (SAMP-UI-DEDUP, 2026-11-14)
+
+User rule (2026-11-14): no duplicated code, abstraction wherever it applies: one SA:MP UI, samp-rs's own,
+drawing through a backend trait with two implementations (samp-rs's D3D9 code on the original exe, the ported
+engine natively). This section is the inventory taken before the change and the design that replaces
+`crates/sa-samp-ui`; it supersedes §1–§5 where they describe sa-samp-ui and the `SampUi` API.
+
+### 10.1 Inventory: what sa-samp-ui duplicated
+
+samp-rs has the UI three times over before this change: the logic in `samp-ui`, the session / state machine in
+`samp-client/src/ui/core` (`UiCore`: RPCs, routed keys, local commands, cursor requests), and the drawing in
+`samp-client/src/ui/{render,glue,dxut.rs}` (D3D9 / D3DX / DXUT, Windows only). sa-samp-ui (4,915 lines) re-did
+all three for the engine. Module by module (D = duplicate of samp-rs, E = genuinely engine renderer code):
+
+| sa-samp-ui module | duplicates | engine-only part |
+|---|---|---|
+| `chat.rs` (583) | D: 100-entry window, player-chat 72/12 split, 144 cut, control chars, F7 modes, page size, timestamps, line layout (`samp_ui::chat::ChatWindow::layout`), input line + history (`samp_ui::input::ChatInput`, `box_rect`), chat scrollbar (`render/chat.rs chat_gui` + `dxut::ScrollBar`) | — |
+| `colour.rs` (176) | D: `{RRGGBB}` parse / strip / per-glyph colouring / runs, wire RGBA → ARGB (`samp_ui::colour`) | `last_colour` (colour carried over a pixel wrap, only needed by its own label wrapping) |
+| `text.rs` (134) | D: control chars, `split_line` (`samp_ui::text`) | `wrap_pixels` (400 px label wrap: not samp behaviour, §10.4) |
+| `edit.rs` (153) | D: single-line edit (`samp_ui::edit::LineEdit`, which also has selection, word moves, insert mode, clipboard) | — |
+| `dialog.rs` (572) | D: all six styles, row / cell parsing, geometry 0x1006f500, keyboard, response (`samp_ui::dialog`); mouse buttons / row select / double click (`glue/input.rs mouse_up`); drawing (`render/panels.rs dialog`) | — |
+| `panels.rs` (319) | D: kill list (`samp_ui::deathwindow` + `render/panels.rs death_window`), scoreboard (`samp_ui::scoreboard` + `render/panels.rs scoreboard` + `glue/input.rs scoreboard_click`) | the drawn arrow cursor (no `mouse.png`) |
+| `world.rs` (510) | D: nametag bars / name rect / raise (`samp_ui::nametags`, `render/world.rs`), bubbles (`samp_ui::bubbles`, `glue/overlays.rs`), 3D labels (`render/world.rs text3d`) | `WorldView` (projection, LOS, ped positions: the backend's) |
+| `textdraw.rs` (323) | D: font params, hit rects, selection (`samp_ui::textdraw`), sprite `txd:name` rules (`samp-client ui/textdraws.rs`) | — |
+| `classpanel.rs` (151) | D: geometry and hit test (`render/chat.rs class_panel`, `glue/input.rs mouse_up`) | — |
+| `skin.rs` (408) | D: skin element rects and colours, caption / button / scrollbar / edit box / list box renders (`dxut.rs`, `render/panels.rs list_box`) | `mip_chain` (D3DX's box-filtered mip levels for the skin raster) |
+| `font.rs` (397) | D: `FontId`, height table (`samp_ui::fonts`), `Measure` (`samp_ui::fonts::TextMeasure`) | `FontAtlas` (ab_glyph raster, GDI ppem rule, baked outline): the engine's font backend |
+| `draw.rs` (262) | — | `DrawList` / `Cmd`: what the engine draws; `coloured` / `coloured_lines` emulate D3DX `DrawText` |
+| `ui.rs` (872) | D: `UiCore` (+ `samp_ui::keys` routing) and the Present order of `glue/present.rs` | — |
+
+samp-rs itself also recomputed what samp-ui already had: `render/panels.rs` derives the scoreboard rectangle,
+columns and death-window origin by hand next to `samp_ui::scoreboard::layout` / `samp_ui::deathwindow::origin`, and
+`dxut.rs` holds the skin rects and DXUT control geometry (scrollbar thumb, edit-box frame, button hover shift) that
+are renderer-independent.
+
+### 10.2 Design
+
+* **Backend trait** `sa_samp_api::ui::UiBackend` (replaces `SampUi`; API v5). It sits at the level samp-client's
+  render code draws: D3DX sprites as batches (`UiSprite`: text, chat, blit, GUI, death window, nametags, 3D
+  text), D3DX fonts (`UiFont`: main / small and their outline twins, GUI 0 / 1, death-window names, GTAWEAPON3 icon /
+  backdrop, SAMPAUX3 20 / 22) with `DrawText` (format flags `dt::*`, `DT_CALCRECT` measures) and the colour-code
+  wrapper's per-glyph colours, DXUT (`dialog_begin` / `dialog_end` with the uniform background, skin sprites,
+  GUI text ANSI and UTF-16, solid rectangles, GDI widths), the nametag bar painter (pre-transformed colour quads),
+  projection, the video / client size, the cursor position and textdraw printing (`CFont` state + `PrintString`,
+  TXD sprites). Defaults on the trait carry the composite steps both backends share (the outline passes).
+* **One renderer**, in samp-rs: `samp-client/src/ui/render` becomes platform-independent and generic over
+  `&mut dyn UiBackend`: nametag bars and names, bubbles, labels, chat (lines, scrollbar, input box), dialogs, the
+  DXUT list box, the scoreboard, the death window, the class-selection panel, textdraws, the F5 / audio-title texts.
+  The per-frame pass and click routing that `glue/present.rs` and `glue/input.rs` held (Present order, dialog
+  layout cache, chat input first visible character, class panel, dialog / scoreboard / class-panel clicks with
+  double click) move to a platform-independent `ui::session` (`UiSession`, owns the `UiCore`). The Windows glue
+  keeps only Win32 work (screenshots, cursor-mode ops, `GetAsyncKeyState`, the clipboard, the device proxy).
+* **samp-ui** gains what both backends need and samp-ui lacked: `classpanel` (geometry, hit test, labels) and
+  `dxut` (skin element rects and colours, scrollbar / edit-box / button geometry).
+* **D3D9 backend**: samp-client's `Renderer` (D3DX objects, render-target chat cache, plate painter, object editor,
+  logo, lost / reset) implements `UiBackend`; each trait method is the D3D helper the render code called before, so
+  the D3D call stream does not change.
+* **Engine backend**: `sa-samp/src/overlay` implements `UiBackend` on the ported engine (`CSprite2d::DrawRect`, RW
+  Im2D glyph quads over the glyph atlas, the skin raster with its mip chain, `CFont`, `CSprite::CalcScreenCoors`,
+  `CMessages::AddBigMessage`). The atlas and mip-chain code move there from sa-samp-ui; `DrawText` is emulated from
+  the atlas metrics (line height = the font's cell height, as D3DX's "Y").
+* **Native client**: `sa-game/src/samp_net.rs` owns a `UiSession`, feeds it the RPCs (`UiCore::on_rpc`), routes
+  `WindowEvent`s to it (mapped to `samp_ui::keys::Event`) and draws it at `FramePhase::Present` (textdraws at
+  `After2d`) through `game.ui()`. The demo / reference scene drive the same `UiCore`.
+* `crates/sa-samp-ui` is deleted.

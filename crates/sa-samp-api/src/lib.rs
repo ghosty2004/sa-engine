@@ -62,7 +62,7 @@ pub use error::{GameError, GameResult};
 pub use types::*;
 
 /// Version of this interface. Bumped on every incompatible change; samp-rs checks it at start-up.
-pub const API_VERSION: u32 = 4;
+pub const API_VERSION: u32 = 5;
 
 /// Which implementation of the traits is running.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -131,9 +131,9 @@ pub trait GameAdapter:
     /// Requests the game to quit at the next frame boundary (`RsGlobal.quit` 0xC17050).
     fn request_quit(&mut self);
 
-    /// The engine-drawn SA:MP UI ([`ui::SampUi`]), where the backend offers one (native engine). `None`
-    /// on the original backend: samp-rs draws its own UI through D3D9 there.
-    fn ui(&mut self) -> Option<&mut dyn ui::SampUi> {
+    /// The SA:MP UI's drawing backend ([`ui::UiBackend`]) where the game provides one (the native engine). `None`
+    /// on the original backend: samp-rs brings its own Direct3D 9 backend there.
+    fn ui(&mut self) -> Option<&mut dyn ui::UiBackend> {
         None
     }
 }
@@ -162,7 +162,7 @@ const _: Option<&dyn GameAdapter> = None;
 const _: Option<&dyn SampHost> = None;
 const _: Option<&dyn hooks::GameHooks> = None;
 const _: Option<&dyn files::FileProvider> = None;
-const _: Option<&dyn ui::SampUi> = None;
+const _: Option<&dyn ui::UiBackend> = None;
 
 #[cfg(test)]
 mod tests {
