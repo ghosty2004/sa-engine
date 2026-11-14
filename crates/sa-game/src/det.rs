@@ -8,8 +8,9 @@
 //! semaphore) the main thread waits until the `CdStream` queue is empty and the streaming thread idle (and once more
 //! at the end of every iteration). Input comes from the iteration-keyed scripts (`SA_GAME_KEYS`, `SA_GAME_WALK`,
 //! `SA_GAME_MOUSE`). The DirectSound play cursors advance by the step in the main loop (not in real time),
-//! and the game heap is a fixed-address region ([`crate::detheap`]). Not covered: the audio threads' own timing
-//! (the smooth fade and the stream decoder run in real time).
+//! and the game heap is a fixed-address region ([`crate::detheap`]). The audio threads (smooth fade, stream decoder)
+//! run cooperatively on the main thread at the start of each iteration, timed by the virtual clock (`bind::coop`, as
+//! on wasm32).
 
 use std::sync::OnceLock;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
@@ -34,6 +35,11 @@ impl StdClock {
 
 /// The step in microseconds (0: real time).
 static STEP_US: AtomicU64 = AtomicU64::new(0);
+/// Whether the caller runs on the main thread (the one that turned the mode on).
+pub fn on_main_thread() -> bool {
+    MAIN.get() == Some(&std::thread::current().id())
+}
+
 /// The virtual clock in microseconds.
 static NOW_US: AtomicU64 = AtomicU64::new(0);
 /// Microseconds every main-thread time read adds to the virtual clock.
@@ -49,6 +55,14 @@ static STREAM_BUSY: AtomicBool = AtomicBool::new(false);
 pub fn set_fixed_step(ms: f64) {
     STEP_US.store((ms * 1000.0).round().max(1.0) as u64, Ordering::SeqCst);
     let _ = MAIN.set(std::thread::current().id());
+    // the cooperative audio stream thread is stepped inside the original's busy-wait loops on it (bind::coop)
+    #[cfg(not(target_arch = "wasm32"))]
+    sa_core::orig::set_busy_wait_handler(crate::bind::coop::service_stream_now);
+}
+
+/// The virtual clock in microseconds.
+pub fn now_us() -> u64 {
+    NOW_US.load(Ordering::SeqCst)
 }
 
 pub fn on() -> bool {
@@ -81,6 +95,9 @@ pub fn begin_iteration() {
         NOW_US.fetch_add(s, Ordering::SeqCst);
         // the DirectSound buffers' play cursors advance with the virtual clock, in the main loop
         crate::dsound::advance(s as f64 / 1_000_000.0);
+        // the audio threads run cooperatively, one due pass each per iteration (bind::coop)
+        #[cfg(not(target_arch = "wasm32"))]
+        crate::bind::coop::service_audio_threads();
     } else if cfg!(target_arch = "wasm32") {
         crate::dsound::advance_real_time();
     }

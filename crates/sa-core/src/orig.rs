@@ -65,6 +65,27 @@ pub fn set_unported_handler(f: UnportedHandler) {
     UNPORTED_HANDLER.store(f as usize as u32, Ordering::Relaxed);
 }
 
+/// Called by ports inside the original's busy-wait loops on another thread's progress (e.g.
+/// `CAECutsceneTrackManager::PreloadCutsceneTrack` spinning until the audio stream thread loaded the track). A no-op
+/// unless the host installed a handler ([`set_busy_wait_handler`]): sa-game's deterministic mode runs the audio
+/// threads cooperatively on the main thread and steps them from here.
+pub fn busy_wait() {
+    let h = BUSY_WAIT_HANDLER.load(Ordering::Relaxed);
+    if h != 0 {
+        // SAFETY: only `set_busy_wait_handler` stores a non-zero value, a `fn()`.
+        let f: fn() = unsafe { core::mem::transmute::<usize, fn()>(h as usize) };
+        f();
+    }
+}
+
+static BUSY_WAIT_HANDLER: AtomicU32 = AtomicU32::new(0);
+
+/// Installs `f` as [`busy_wait`]'s handler (32-bit targets only: the handler is kept as a 32-bit word).
+#[cfg(target_pointer_width = "32")]
+pub fn set_busy_wait_handler(f: fn()) {
+    BUSY_WAIT_HANDLER.store(f as usize as u32, Ordering::Relaxed);
+}
+
 /// True in phase A (in-process with the original exe): only there does a fallback hook's
 /// `<fn>_original` reach original code (ADR-002). Ports use it to panic with their own context
 /// (e.g. the opcode of an unported script command) before calling a fallback in phases B/C.
