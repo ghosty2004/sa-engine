@@ -1,12 +1,13 @@
 # Where to continue (state at 2026-11-14)
 
 **Newest tree = branch `worktree-agent-ab80f5d4fe8147e79` (INTRO-2, docs/verify/integration-intro2.md): master
-`e52b9fcf` + AUDIO-STREAM + INTRO-1 + SCRIPT-5 + the intro ports up to the BMX ride; master fast-forwards to it.**
+`58a1c75b` + AUDIO-STREAM + INTRO-1 + SCRIPT-5 + the intro ports up to the BMX ride; verify-all IDENTICAL 13/13;
+master fast-forwards to it.**
 New Game now runs the intro natively (no `--start-in-world`, no `SA_GAME_SCRIPT_SKIP`, no stubs) through the airport
 cutscene, the police-car ride and the drop-off in Jefferson ("Get on the bike."), 0 blocked to frame 6000; with keys
 CJ rides the BMX into East Los Santos until the bike hits a ped (`CPed::KillPedWithCar` 0x5F0360, next blocker).
 `--fixed-step` runs are deterministic again (the audio threads run cooperatively natively). Queue: 2395 unverified
-hooks in 374 batches.
+hooks in 376 batches.
 
 Previous state (2026-11-12 ~15:00):
 

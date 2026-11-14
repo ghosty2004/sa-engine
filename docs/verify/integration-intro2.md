@@ -1,6 +1,8 @@
 # INTRO-2: the intro past the police-car ride, natively
 
-Branch `worktree-agent-ab80f5d4fe8147e79`, on master `e52b9fcf` (INTEGRATE-10). master can fast-forward to it.
+Branch `worktree-agent-ab80f5d4fe8147e79`, built on master `e52b9fcf` (INTEGRATE-10) and rebased (cleanly) onto master
+`58a1c75b` (MOD-1 roadmap, `--window` pointer / surface fixes, GetBeatInfo / GetTrackInfo ports). master can
+fast-forward to it.
 Goal: New Game runs the original intro natively (no `--start-in-world`, no `SA_GAME_SCRIPT_SKIP`, no stubs):
 airport cutscene → police-car ride → on foot in Ballas territory → BMX to Grove Street → free roam.
 
@@ -89,7 +91,12 @@ The runs are deterministic: the keyed run gives the same 5247 ok / first blocker
   blocked, 0 crashed**; 13,445 Rust ports in the `orig!` registry; the same 5 second registrations as INTEGRATE-10.
 - Intro run (no `--start-in-world`, no `SA_GAME_SCRIPT_SKIP`, no stubs): **6016 ok, 0 blocked to frame 6000** without
   input (milestones 1-3); with the BMX keys 5247 ok, then blocked from frame 5231 on `CPed::KillPedWithCar`.
-- `SA_ROOT=~/sa-engine tools/e2e/verify-all.sh intro2 4,5` at `fb55a6eb` (the code head for phase A; the commits
+- After the rebase: `SA_ROOT=~/sa-engine tools/e2e/verify-all.sh intro2b 4,5` at `1fa2bd6c` (DLL sha256 `b2b68fe3…`):
+  **IDENTICAL on all 13 recordings**, 17 subsystems each, same frame counts as below. Generated files regenerated
+  on the rebased tree (queue: 2398 unverified hooks in 376 batches; `--check` clean); sa-hook lib tests 58 pass;
+  native sa-game with and without `samp`, `FEATURES=samp tools/web/build.sh`: clean; smoke run 316 ok / 0 blocked
+  (13,447 ports); the keyed intro run gives the same 5247 ok / first blocker at frame 5231.
+- Before the rebase: `SA_ROOT=~/sa-engine tools/e2e/verify-all.sh intro2 4,5` at `fb55a6eb` (the code head for phase A; the commits
   after it touch the wasm32 build and docs only), DLL sha256 `4d478f82…`: **IDENTICAL on all 13 recordings**, 17
   subsystems each (grove walk 5200, air-water 5800, anim-input 3300, car-ai 5000, c-bug 3220, driving 4338,
   menus-hud 5700, menus-map-controls 4000, pause-restart 3700, police-gang 5200, save-load 3900, weapon-combat
