@@ -1129,3 +1129,7 @@
 - Tests: lib tests, samp-rs 638, builds (DLL, native ± samp, wasm + samp), smoke 0 blocked, native SA:MP join
   0 blocked with no "Fat" box and the weapon icon shown. verify-all int10: IDENTICAL on all 13 recordings.
 - Open: HUD ammo after give-weapon reads 143-7 instead of 100; inflight.py does not see #[sa_core::native( registrations.
+
+## 2026-11-14 — MOD-1 analysis: binary compatibility with existing .asi mods (main session)
+- Checked the architecture: arena keeps globals at the original addresses, ports use original layouts and calling conventions, vtables sit in `.rdata`; but in phases B/C `orig!` `=> path` calls Rust directly (mod entry patches would be bypassed), `.text` is mapped read-only and never executable (mid-function patches have nothing to act on), D3D9 objects are trap vtables (EndScene/Present hooks cannot chain), and ASIs need a PE loader + Win32/SEH.
+- Estimate: route A (phase A as a product: original exe + sa-hook, patch detection → per-function fallback to the original bytes) ~1–2 months, medium; route B (native Linux without Wine) ~4–8 months, hard. User chose route A first; ROADMAP MOD-1 and the decisions list updated.
