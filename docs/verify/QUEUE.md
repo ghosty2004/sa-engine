@@ -41,7 +41,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | batch | 2 | AUDIO | 63b156bd | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
 | boot-render-2 | 3 | RW, UNK-game | 2077fc01 | master | 0 | 0 | 0 | 3 | 0 | L2 3 |
 | boot-rw-1 | 1 | RW | 2077fc01 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
-| carjack-1 | 1 | AI | 4b8a01b9 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| carjack-1 | 33 | AI, AUDIO, UNK-game | 4b8a01b9 | master | 33 | 0 | 0 | 0 | 0 | L2 33 |
 | climb-1 | 4 | AI | eae25835 | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
 | climb-2 | 1 | AI | 2c460985 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | climb-3 | 1 | AI | 9f5e84b0 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
@@ -362,7 +362,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | std9-render-7 | 1 | RW | da9de7f1 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | std9-rw-1 | 3 | RW | da9de7f1 | master | 0 | 0 | 0 | 3 | 0 | L2 3 |
 | stream-1 | 9 | AUDIO | 722abe17 | master | 9 | 0 | 0 | 0 | 0 | L2 4, split 5 |
-| veh-lights-1 | 1 | VEH | uncommitted | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| veh-lights-1 | 1 | VEH | 87c1b470 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | veh3-1 | 42 | VEH | 35a056ba | master | 42 | 0 | 0 | 0 | 0 | L2 40, split 2 |
 | veh3-2 | 2 | VEH | 35a056ba | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
 | veh3-3 | 16 | VEH | 43038126 | master | 16 | 0 | 0 | 0 | 0 | L2 16 |
@@ -1643,7 +1643,7 @@ SA_UNVERIFIED=boot-rw-1 LANE=$LANE tools/e2e/port-l2.sh batch:boot-rw-1 $SA_ROOT
 
 ## carjack-1
 
-1 hooks in sa-ai; hazards: ax-al-return (1), uninit-locals (1); recordings calling them: carjack (1).
+33 hooks in sa-ai, sa-audio; hazards: ax-al-return (7), heap-writes (29), uninit-locals (1), x87-transcendental (4); recordings calling them: carjack (33).
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
@@ -1654,7 +1654,39 @@ SA_UNVERIFIED=carjack-1 LANE=$LANE tools/e2e/port-l2.sh batch:carjack-1 $SA_ROOT
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
+| 0x4AEAC0 | `FUN_004aeac0` | written | L2 | heap-writes |
+| 0x4AEB90 | `FUN_004aeb90` | written | L2 | heap-writes |
+| 0x4B2130 | `FUN_004b2130` | written | L2 | heap-writes |
 | 0x4B2EE0 | `CEventVehicleCollision::AffectsPed` | written | L2 | ax-al-return,uninit-locals |
+| 0x4E53B0 | `CAEPedSpeechAudioEntity::GetCurrentCJMood` | written | L2 | heap-writes |
+| 0x620EF0 | `FUN_00620ef0` | written | L2 | heap-writes |
+| 0x621F50 | `CTaskComplexDestroyCarArmed::Constructor` | written | L2 | heap-writes |
+| 0x625E70 | `CTaskComplexKillPedOnFoot::CreateSubTask` | written | L2 | heap-writes |
+| 0x626260 | `CTaskComplexKillPedOnFoot::ControlSubTask` | written | L2 | heap-writes,x87-transcendental |
+| 0x6288C0 | `CTaskComplexDestroyCar::ControlSubTask` | written | L2 | heap-writes |
+| 0x628C80 | `CTaskComplexDestroyCarArmed::CalculateSearchPositionAndRanges` | written | L2 | heap-writes |
+| 0x62B150 | `CTaskComplexKillPedOnFoot::CreateNextSubTask` | written | L2 | heap-writes,x87-transcendental |
+| 0x62B490 | `CTaskComplexKillPedOnFoot::CreateFirstSubTask` | written | L2 | heap-writes,x87-transcendental |
+| 0x63BF90 | `CTaskComplexLeaveCarAndFlee::Constructor` | written | L2 | heap-writes |
+| 0x63C840 | `FUN_0063c840` | written | L2 | heap-writes |
+| 0x642390 | `CTaskComplexLeaveCarAndFlee::CreateNextSubTask` | written | L2 | heap-writes |
+| 0x642510 | `CTaskComplexScreamInCarThenLeave::CreateSubTask` | written | L2 | heap-writes |
+| 0x643D00 | `CTaskComplexDragPedFromCar::CreateFirstSubTask` | written | L2 | heap-writes |
+| 0x648100 | `CTaskSimpleCarSlowDragPedOut::ComputeAnimID_Wrapper` | written | L2 | heap-writes |
+| 0x648180 | `CTaskSimpleCarSlowDragPedOut::FinishAnimCarSlowDragPedOutCB` | written | L2 | heap-writes |
+| 0x648520 | `CTaskComplexCarSlowBeDraggedOut::CreateTaskUtilityLineUpPedWithCar` | written | L2 | heap-writes |
+| 0x6485A0 | `CTaskComplexCarSlowBeDraggedOut::PrepareVehicleForPedExit` | written | L2 | heap-writes |
+| 0x6486F0 | `CTaskComplexCarSlowBeDraggedOutAndStandUp::MakeAbortable` | written | L2 | ax-al-return |
+| 0x648A10 | `CTaskComplexCarSlowBeDraggedOutAndStandUp::CreateFirstSubTask` | written | L2 | heap-writes |
+| 0x6497F0 | `SayJacking` | written | L2 | ax-al-return |
+| 0x64AD00 | `CTaskSimpleCarOpenDoorFromOutside::MakeAbortable` | written | L2 | ax-al-return,heap-writes |
+| 0x64C190 | `CTaskSimpleCarSlowBeDraggedOut::StartAnim` | written | L2 | heap-writes |
+| 0x64C220 | `CTaskSimpleCarSetPedSlowDraggedOut::ProcessPed` | written | L2 | ax-al-return,heap-writes,x87-transcendental |
+| 0x64C6A0 | `CTaskComplexCarSlowBeDraggedOut::CreateSubTask` | written | L2 | heap-writes |
+| 0x64C810 | `CTaskComplexCarSlowBeDraggedOut::CreateNextSubTask` | written | L2 | heap-writes |
+| 0x64E060 | `CTaskSimpleCarSlowDragPedOut::ProcessPed` | written | L2 | ax-al-return,heap-writes |
+| 0x64E180 | `CTaskSimpleCarSlowBeDraggedOut::ProcessPed` | written | L2 | ax-al-return,heap-writes |
+| 0x65E9A0 | `FUN_0065e9a0` | written | L2 | none |
 
 ## climb-1
 
