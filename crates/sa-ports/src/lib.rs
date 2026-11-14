@@ -95,6 +95,7 @@ pub const NATIVES: &[&[&[sa_core::abi::NativeReg]]] = &[
     &[sa_pop::pathfind::NATIVES],
     &[sa_pop::car_ai_reason_to_stop::NATIVES],
     &[sa_pop::carctrl4::NATIVES],
+    &[sa_ai::hassle_vehicle_track_entity::NATIVES],
     &[sa_ai::seek::NATIVES],
     &[sa_ai::police_pursuit::NATIVES],
     &[sa_ai::car_set_ped_out_native::NATIVES],

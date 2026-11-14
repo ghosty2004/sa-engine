@@ -220,3 +220,6 @@ pub mod event_damage_affects_group;
 pub mod decision_maker_index;
 pub mod evasive_dive_next_sub_task;
 pub mod conversation_setup_done;
+pub mod hassle_vehicle_track_entity;
+pub mod event_ped_to_flee_dtor;
+pub mod follow_ped_footsteps_control;
