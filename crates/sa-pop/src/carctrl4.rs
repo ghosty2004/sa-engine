@@ -1838,10 +1838,10 @@ pub fn update_car_ai(veh: GPtr<u8>) {
 }
 
 /// The mission-switch cases of `UpdateCarAI` for missions 8 (go to coordinates, 0x41E2BF), 9 (stop forever,
-/// 0x41E3B1) and 12 (0x41E338), status 2 / 3 / 12, with d = the 2D distance to the destination (+0x3EC) `sqrt(dy * dy
-/// + dx * dx)`. 8 / 12: d below the straight-line distance byte (+0x3DD, `fild`; strict, `test ah, 0x41; jne`
-/// skips) → mission 9 / 13. 9: d below 3.0 (`test ah, 5; jp` not taken) → temp action (+0x3BB) 0 and mission 0;
-/// otherwise d above `+0x3DD + 5.0` (strict) on frames with `(CTimer::m_FrameCounter & 7) == 0` → temp action 0 and
+/// 0x41E3B1) and 12 (0x41E338), status 2 / 3 / 12, with d = the 2D distance to the destination (+0x3EC)
+/// `sqrt(dy * dy + dx * dx)`. 8 / 12: d below the straight-line distance byte (+0x3DD, `fild`; strict,
+/// `test ah, 0x41; jne` skips) → mission 9 / 13. 9: d below 3.0 (`test ah, 5; jp` not taken) → temp action (+0x3BB) 0
+/// and mission 0; otherwise d above `+0x3DD + 5.0` (strict) on frames with `(CTimer::m_FrameCounter & 7) == 0` → temp action 0 and
 /// mission `8 + (JoinCarWithRoadSystemGotoCoors(v, &destination, true, false) != 0)`. All three then continue with
 /// the cruise path (0x41FA92 → 0x40A4AD, the law-enforcer test), and the tail switch (0x41FE25) takes its default
 /// for them, so the rest is the path of missions 0 / 1 (INTRO-2).
