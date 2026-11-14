@@ -66,13 +66,17 @@ fn window_target(window: Arc<Window>) -> Result<d3d9::WindowTarget, String> {
     }))
     .map_err(|e| format!("request_device: {e}"))?;
     let caps = surface.get_capabilities(&adapter);
-    let format = caps
-        .formats
-        .iter()
-        .copied()
-        .find(|f| !f.is_srgb())
-        .or(caps.formats.first().copied())
-        .ok_or("the window surface has no format")?;
+    // An 8-bit UNORM back buffer as D3D9's X8R8G8B8. Compositors may list wider formats first (HDR / 10-bit
+    // outputs offer Rgba16Unorm, which needs a device feature we do not request), so take the 8-bit ones
+    // first, then any non-sRGB format the device can use.
+    let device_features = device.features();
+    let usable = |f: &wgpu::TextureFormat| device_features.contains(f.required_features());
+    let format = [wgpu::TextureFormat::Bgra8Unorm, wgpu::TextureFormat::Rgba8Unorm]
+        .into_iter()
+        .find(|f| caps.formats.contains(f))
+        .or_else(|| caps.formats.iter().copied().find(|f| !f.is_srgb() && usable(f)))
+        .or_else(|| caps.formats.iter().copied().find(usable))
+        .ok_or("the window surface has no format this device can use")?;
     let config = wgpu::SurfaceConfiguration {
         usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
         format,
