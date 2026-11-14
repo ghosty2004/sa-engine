@@ -1248,8 +1248,8 @@
 
 ## 2026-11-14 PEDHIT: vehicles and the player hitting peds natively (agent a8dce841187c8089c)
 - Goal: any vehicle (car, BMX) or the player on foot hits peds (bump, fast hit, run over, thrown over the bonnet,
-  killed) natively, 1:1 with gta_sa.exe 1.0 US, and play continues. Branch `worktree-agent-a8dce841187c8089c` on
-  master 87c1b470 (FRAMELIMIT + DoHeadLightReflectionSingle).
+  killed) natively, 1:1 with gta_sa.exe 1.0 US, and play continues. Branch `worktree-agent-a8dce841187c8089c`,
+  rebased on master 90a18dff (CARJACK, SAMP-CLASSPANEL).
 - Ported from the 1.0 US bytes, batch `pedhit-1` (13 hooks, unverified, route L2): `CPed::KillPedWithCar` 0x5F0360
   (1139 instructions: the gates, the strong path with pad shake, side hit / runover / bonnet-roof throw with lift
   and bonnet removal, the weak bump, crime report, the damage event and knock-down anims, the force on the car),
@@ -1261,7 +1261,8 @@
   `CTaskComplexEnterAnyCarAsDriver::CreateFirstSubTask` 0x643510. Phase B natives: `Fx_c::TriggerWaterHydrant`
   0x4A0D70 and `CIdleCam::SetTarget` 0x50A280 (entries are jumps into protection chunks read as keys; the chunks'
   loads evaluated on the image: `[0xB6F03C]` and `[0xB7CB84]`), `FxSystem_c::GetPlayStatus` 0x4AA900 (5-byte body).
-  0x4AC920, 0x4B2EE0, 0x664590, 0x6648C0 were also needed: FRAMELIMIT / CARJACK's ports on master are used.
+  0x4AC920, 0x4B2EE0, 0x664590, 0x6648C0 were also needed and ported here too; master's (FRAMELIMIT / CARJACK)
+  registrations were kept and these dropped at the rebase (same bodies from the same bytes).
 - sa-game (exploration): `SA_GAME_TELEPORT` takes `;`-separated entries and moves the player's vehicle (with a
   heading); the veh-list prints the main-loop iteration, vehicle headings / speeds and, with
   `SA_GAME_VEHLIST_PEDS=R`, peds within R units (state, health). Scenarios: `tools/e2e/scenarios/pedhit.sh`.
@@ -1275,3 +1276,10 @@
   instructions, when the player idles in a car next to a prostitute), `CObject::ProcessTrainCrossingBehaviour`
   0x5A0B50 (driving south past the tracks). One early intro run (pre-rebase build, other route) crashed at
   iteration 6803 (null + 0x44 in a Rust port); not reproduced on the final tree.
+- Gate: hooks PASS, sa-hook lib 58/58, i686 DLL, wasm32 sa-ports, l1test PASS; host clippy clean for every crate
+  except sa-game (pre-existing: `sa_core::orig::set_busy_wait_handler` is 32-bit only, so the 64-bit sa-game build
+  fails on master too); i686 clippy only the known `draw_quad_bits`. Queue regenerated (2451 unverified in 381
+  batches, `--check` clean).
+- verify-all pedhit 1,2,3,6 with `SA_UNVERIFIED=pedhit-1` on the ba14f5d7-based head: IDENTICAL on all 13
+  recordings (17 subsystems each). The 90a18dff rebase brings only sa-game / SA:MP UI changes (no game-function
+  ports, nothing in the phase A DLL); hooktest, queue and the three scenarios were rerun there with the same results.
