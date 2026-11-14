@@ -36,6 +36,7 @@ pub const MODULES: &[&[HookReg]] = &[
     ped_events::HOOKS,
     crate::global_weapon_ambient::HOOKS,
     crate::audio_data_stream::HOOKS,
+    crate::beat_info::HOOKS,
     crate::weather_update_parameters::HOOKS,
     crate::generated::HOOKS,
     crate::vehicle_add_audio_event::HOOKS,

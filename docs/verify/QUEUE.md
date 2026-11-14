@@ -38,6 +38,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | attr-6 | 4 | AI, UNK-game | 3533ddc6 | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
 | attr-7 | 4 | AI | 794917c7 | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
 | attr-8 | 4 | AI, CALLED-ONLY, WORLD | 80046b17 | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
+| batch | 2 | AUDIO | uncommitted | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
 | boot-render-2 | 3 | RW, UNK-game | 2077fc01 | master | 0 | 0 | 0 | 3 | 0 | L2 3 |
 | boot-rw-1 | 1 | RW | 2077fc01 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | climb-1 | 4 | AI | eae25835 | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
@@ -235,7 +236,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | rw5-node-1 | 4 | RW | f789a8ea | master | 0 | 0 | 0 | 4 | 0 | L2 4 |
 | rw5-raster | 1 | RW | f789a8ea | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | samp-anim-1 | 1 | ANIM | 87822502 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| samp-heli-1 | 1 | VEH | b729fb20 | worktree-agent-a623a7f9d5dd59528 | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| samp-heli-1 | 1 | VEH | b729fb20 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | samp-ped-1 | 1 | PED | 87822502 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | samp-render-1 | 5 | CALLED-ONLY, UNK-game | 87822502 | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
 | samp-render-2 | 6 | RENDER, UNK-game | 87822502 | master | 6 | 0 | 0 | 0 | 0 | L2 6 |
@@ -1556,6 +1557,22 @@ SA_UNVERIFIED=attr-8 LANE=$LANE tools/e2e/port-l2.sh batch:attr-8 $SA_ROOT/targe
 | 0x59EE80 | `CHandObject::Render` | written | L2 | heap-writes |
 | 0x59EEB0 | `FUN_0059eeb0` | written | L2 | heap-writes |
 | 0x734E50 | `RwTexDictionaryFindHashNamedTexture` | written | L2 | none |
+
+## batch
+
+2 hooks in sa-audio; hazards: heap-writes (2); recordings calling them: grove-walk (2).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh batch $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=batch LANE=$LANE tools/e2e/port-l2.sh batch:batch $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag batch
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x4D8FA0 | `CAEAudioHardware::GetBeatInfo` | written | L2 | heap-writes |
+| 0x4E0A70 | `CAEMP3TrackLoader::GetTrackInfo` | written | L2 | heap-writes |
 
 ## boot-render-2
 
