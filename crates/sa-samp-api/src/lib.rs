@@ -62,7 +62,7 @@ pub use error::{GameError, GameResult};
 pub use types::*;
 
 /// Version of this interface. Bumped on every incompatible change; samp-rs checks it at start-up.
-pub const API_VERSION: u32 = 3;
+pub const API_VERSION: u32 = 4;
 
 /// Which implementation of the traits is running.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]

@@ -3,7 +3,7 @@
 //! samp-rs draws its UI through a D3D9 device proxy and D3DX fonts on the original `gta_sa.exe`. The native
 //! engine (Linux, and later the browser) has no D3D9 device, so this crate holds the UI itself: chat window
 //! and input line, dialogs (all six styles), nametags with health / armour bars, 3D text labels, textdraws,
-//! the kill list, the scoreboard and the cursor. It keeps their state, handles keyboard and mouse input, and
+//! the kill list, the scoreboard, the class-selection panel and the cursor. It keeps their state, handles keyboard and mouse input, and
 //! lays everything out as a [`draw::DrawList`] (rectangles, UI-font text, game-font text). The engine side
 //! (`sa-samp::overlay`) draws that list through the ported `CSprite2d`, RW Im2D and `CFont` code.
 //!
@@ -15,6 +15,7 @@
 //! with Arial, SIL OFL 1.1, `assets/fonts/`); textdraws use the game's fonts as in samp.
 
 pub mod chat;
+pub mod classpanel;
 pub mod colour;
 pub mod dialog;
 pub mod draw;
