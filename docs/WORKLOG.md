@@ -1163,6 +1163,9 @@
   OFF setting runs at 39 fps (median 22.7 ms). In a car with the radio on (`SA_GAME_TELEPORT=60:2456.5:-1761.7:13.6`,
   F), the toggle and GetTrackInfo cause 0 blocks. That drive later hits `ProcessTrainCrossingBehaviour` 0x5A0B50,
   which it also hits without the menu. Evidence (not committed): target/framelimit/.
+- verify-all framelimit-final (lanes 1,2,3,6) with `SA_UNVERIFIED=framelimit-render,framelimit-ai,carjack-1,stream-1,batch`
+  (18 hooks installed): IDENTICAL on all 13 recordings. The DLL was built on 0e66feb2; a266cc61 changes only sa-game
+  and doc comments. The branch is rebased on a266cc61, and the repro and window run were repeated there (0 blocked).
 - Gate: sa-hook lib tests 58/58, i686-windows DLL, wasm32 sa-ports, queue regenerated. The clippy -D warnings
   failures are already on master: sa-pop carctrl4.rs doc lists, sa-game crt.rs/detheap.rs, sa-render
   postfx_speed_fx.rs.
