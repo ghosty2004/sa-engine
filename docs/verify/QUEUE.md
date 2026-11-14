@@ -73,23 +73,23 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | intro-ai-3 | 3 | AI | 5e0f61bf | master | 0 | 0 | 0 | 3 | 0 | L2 3 |
 | intro-ai-4 | 4 | AI | 5e0f61bf | master | 0 | 0 | 0 | 4 | 0 | L2 4 |
 | intro-anim-1 | 2 | ANIM | 5e0f61bf | master | 0 | 0 | 0 | 2 | 0 | L2 2 |
-| intro2-1 | 10 | AI, ANIM, PED, RW, UNK-game | 648a8fb8 | worktree-agent-ab80f5d4fe8147e79 | 9 | 0 | 0 | 1 | 0 | L2 9, split 1 |
-| intro3-1 | 1 | VEH | 063f0087 | worktree-agent-ab80f5d4fe8147e79 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| intro3-10 | 1 | AI | a0755088 | worktree-agent-ab80f5d4fe8147e79 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| intro3-11 | 2 | PED, WORLD | 5a7473fd | worktree-agent-ab80f5d4fe8147e79 | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| intro3-12 | 1 | AI | a0755088 | worktree-agent-ab80f5d4fe8147e79 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| intro3-13 | 1 | AI | 4f2a2eeb | worktree-agent-ab80f5d4fe8147e79 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| intro3-14 | 1 | AI | 4f2a2eeb | worktree-agent-ab80f5d4fe8147e79 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| intro3-15 | 1 | AI | 4f2a2eeb | worktree-agent-ab80f5d4fe8147e79 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| intro3-16 | 1 | UNK-game | 9a98127e | worktree-agent-ab80f5d4fe8147e79 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| intro3-2 | 2 | AI | a0755088 | worktree-agent-ab80f5d4fe8147e79 | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| intro3-3 | 1 | RW | a1b58e7b | worktree-agent-ab80f5d4fe8147e79 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| intro3-4 | 1 | MATH | f10905b2 | worktree-agent-ab80f5d4fe8147e79 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| intro3-5 | 1 | POP | f10905b2 | worktree-agent-ab80f5d4fe8147e79 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| intro3-6 | 1 | AI | a0755088 | worktree-agent-ab80f5d4fe8147e79 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| intro3-7 | 1 | RENDER | 85e5180b | worktree-agent-ab80f5d4fe8147e79 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| intro3-8 | 1 | AI | a0755088 | worktree-agent-ab80f5d4fe8147e79 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| intro3-9 | 1 | RENDER | 85e5180b | worktree-agent-ab80f5d4fe8147e79 | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| intro2-1 | 10 | AI, ANIM, PED, RW, UNK-game | 648a8fb8 | master | 9 | 0 | 0 | 1 | 0 | L2 9, split 1 |
+| intro3-1 | 1 | VEH | 063f0087 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| intro3-10 | 1 | AI | a0755088 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| intro3-11 | 2 | PED, WORLD | 5a7473fd | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| intro3-12 | 1 | AI | a0755088 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| intro3-13 | 1 | AI | 4f2a2eeb | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| intro3-14 | 1 | AI | 4f2a2eeb | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| intro3-15 | 1 | AI | 4f2a2eeb | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| intro3-16 | 1 | UNK-game | 9a98127e | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| intro3-2 | 2 | AI | a0755088 | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| intro3-3 | 1 | RW | a1b58e7b | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| intro3-4 | 1 | MATH | f10905b2 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| intro3-5 | 1 | POP | f10905b2 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| intro3-6 | 1 | AI | a0755088 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| intro3-7 | 1 | RENDER | 85e5180b | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| intro3-8 | 1 | AI | a0755088 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| intro3-9 | 1 | RENDER | 85e5180b | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | menu-1 | 1 | HUD | da9de7f1 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | menu-2 | 1 | HUD | da9de7f1 | master | 1 | 0 | 0 | 0 | 0 | split 1 |
 | menu-3 | 4 | HUD | da9de7f1 | master | 4 | 0 | 0 | 0 | 0 | L2 1, split 3 |
@@ -265,19 +265,19 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | samp2-render-1 | 1 | RENDER | 572a1369 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | save-core-1 | 3 | SAVE | 9b1fb21c | master | 3 | 0 | 0 | 0 | 0 | L3-only 1, split 2 |
 | save-veh-1 | 5 | VEH | 9b1fb21c | master | 5 | 0 | 0 | 0 | 0 | L2 1, split 4 |
-| script5-1 | 6 | SCRIPT | 7ff4d4e0 | worktree-agent-ab80f5d4fe8147e79 | 6 | 0 | 0 | 0 | 0 | L2 6 |
-| script5-10 | 1 | SCRIPT | ca8fe925 | worktree-agent-ab80f5d4fe8147e79 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| script5-11 | 1 | WORLD | 4d52557d | worktree-agent-ab80f5d4fe8147e79 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| script5-12 | 1 | WORLD | 9ef7928c | worktree-agent-ab80f5d4fe8147e79 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| script5-13 | 1 | UNK-game | db58e54c | worktree-agent-ab80f5d4fe8147e79 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| script5-2 | 5 | AI, SCRIPT, VEH | f5e3feac | worktree-agent-ab80f5d4fe8147e79 | 5 | 0 | 0 | 0 | 0 | L2 5 |
-| script5-3 | 5 | SCRIPT, UNK-game | c32097f8 | worktree-agent-ab80f5d4fe8147e79 | 5 | 0 | 0 | 0 | 0 | L2 5 |
-| script5-4 | 1 | UNK-game | f164773b | worktree-agent-ab80f5d4fe8147e79 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| script5-5 | 1 | SCRIPT | f617f2ce | worktree-agent-ab80f5d4fe8147e79 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| script5-6 | 5 | AI, SCRIPT, UNK-game | ddadfafb | worktree-agent-ab80f5d4fe8147e79 | 5 | 0 | 0 | 0 | 0 | L2 5 |
-| script5-7 | 2 | AI, SCRIPT | ecc23dcd | worktree-agent-ab80f5d4fe8147e79 | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| script5-8 | 1 | SCRIPT | 4d9346ec | worktree-agent-ab80f5d4fe8147e79 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| script5-9 | 1 | VEH | db11e2d2 | worktree-agent-ab80f5d4fe8147e79 | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| script5-1 | 6 | SCRIPT | 7ff4d4e0 | master | 6 | 0 | 0 | 0 | 0 | L2 6 |
+| script5-10 | 1 | SCRIPT | ca8fe925 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| script5-11 | 1 | WORLD | 4d52557d | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| script5-12 | 1 | WORLD | 9ef7928c | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| script5-13 | 1 | UNK-game | db58e54c | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| script5-2 | 5 | AI, SCRIPT, VEH | f5e3feac | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
+| script5-3 | 5 | SCRIPT, UNK-game | c32097f8 | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
+| script5-4 | 1 | UNK-game | f164773b | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| script5-5 | 1 | SCRIPT | f617f2ce | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| script5-6 | 5 | AI, SCRIPT, UNK-game | ddadfafb | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
+| script5-7 | 2 | AI, SCRIPT | ecc23dcd | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| script5-8 | 1 | SCRIPT | 4d9346ec | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| script5-9 | 1 | VEH | db11e2d2 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | std10-ai-1 | 1 | AI | 8c3ee769 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | std10-render-1 | 4 | RW | aa9224ad | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
 | std10-render-2 | 1 | RW | 8c3ee769 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
@@ -358,7 +358,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | std9-render-4 | 2 | RW, UNK-game | da9de7f1 | master | 0 | 0 | 0 | 2 | 0 | L2 2 |
 | std9-render-7 | 1 | RW | da9de7f1 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | std9-rw-1 | 3 | RW | da9de7f1 | master | 0 | 0 | 0 | 3 | 0 | L2 3 |
-| stream-1 | 9 | AUDIO | 722abe17 | worktree-agent-ab80f5d4fe8147e79 | 9 | 0 | 0 | 0 | 0 | L2 4, split 5 |
+| stream-1 | 9 | AUDIO | 722abe17 | master | 9 | 0 | 0 | 0 | 0 | L2 4, split 5 |
 | veh3-1 | 42 | VEH | 35a056ba | master | 42 | 0 | 0 | 0 | 0 | L2 40, split 2 |
 | veh3-2 | 2 | VEH | 35a056ba | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
 | veh3-3 | 16 | VEH | 43038126 | master | 16 | 0 | 0 | 0 | 0 | L2 16 |

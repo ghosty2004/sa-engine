@@ -3847,6 +3847,14 @@ pub fn g_task_simple_jump_get_task_type_679ae0(_this: u32) -> u32 {
     0xD2
 }
 
+/// `CTaskSimpleJump::JumpAnimFinishCB` (0x67A020): setter, cdecl, `ret`; 4 instruction(s) matched.
+#[hook(addr = 0x67A020, conv = cdecl, name = "CTaskSimpleJump::JumpAnimFinishCB", expect = "8B 44 24 08 C7 40 28 00 00 00 00")]
+pub fn g_task_simple_jump_jump_anim_finish_cb_67a020(_a0: u32, a1: u32) -> u32 {
+    wr::<u32>(p(a1), 0x28, 0);
+    wr::<u8>(p(a1), 0x20, 1 as u8);
+    a1
+}
+
 /// `CTaskComplexJump::GetTaskType` (0x67A050): const-id, thiscall, `ret`; 2 instruction(s) matched.
 #[hook(addr = 0x67A050, conv = thiscall, name = "CTaskComplexJump::GetTaskType", expect = "B8 D3 00 00 00")]
 pub fn g_task_complex_jump_get_task_type_67a050(_this: u32) -> u32 {
@@ -4693,6 +4701,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_VT_870480_CONTROL_SUB_TASK_678BC0,
     HOOK_G_TASK_COMPLEX_FALL_TO_DEATH_GET_TASK_TYPE_6790A0,
     HOOK_G_TASK_SIMPLE_JUMP_GET_TASK_TYPE_679AE0,
+    HOOK_G_TASK_SIMPLE_JUMP_JUMP_ANIM_FINISH_CB_67A020,
     HOOK_G_TASK_COMPLEX_JUMP_GET_TASK_TYPE_67A050,
     HOOK_G_TASK_COMPLEX_JUMP_CONTROL_SUB_TASK_67A100,
     HOOK_G_TASK_SIMPLE_CLIMB_GET_TASK_TYPE_67A1C0,
@@ -5339,6 +5348,7 @@ pub const BODIES: &[Body] = &[
     (0x678BC0, 0x8A748C4BA712FCF7, &[(0x678BC0, 6)]),
     (0x6790A0, 0x69E224B56B913FBA, &[(0x6790A0, 6)]),
     (0x679AE0, 0x6CC9424E91B91E92, &[(0x679AE0, 6)]),
+    (0x67A020, 0x949BBA96F5656E73, &[(0x67A020, 16)]),
     (0x67A050, 0x601B6124146B6A95, &[(0x67A050, 6)]),
     (0x67A100, 0x8A748C4BA712FCF7, &[(0x67A100, 6)]),
     (0x67A1C0, 0x3562344830E5C77E, &[(0x67A1C0, 6)]),
