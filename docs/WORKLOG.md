@@ -1499,3 +1499,15 @@
   harness) IDENTICAL 13/13; `dedup2-final-u` (`SA_UNVERIFIED=all`, lanes 4-5) 12/13 IDENTICAL + weapon-combat
   1792 common frames, the same as master (UNVERIFIED-WC, not worse). Not run: a native window or browser session
   (the D refactor's backends are checked by the offscreen run and the web build only).
+
+## 2026-11-15 — integrate DEDUP-1 pass 2 (main session)
+
+- master fast-forwarded 3e761b12 → 6a76af1f (DEDUP-1 pass 2, 10 commits).
+- Checked on master: `make structure` (dupes 43/43 allowed, cfg 367 ≤ baseline, layers 0 violations), bindings
+  `--check` (2,633 in 16 crates), sa-hook lib 58/58, i686 sa-game with and without samp, `FEATURES=samp
+  tools/web/build.sh`.
+- Native offscreen scenarios (`tools/e2e/scenarios/frontier.sh`): pausemenu and solicit 0 blocked; crossing blocked
+  on CTrailer::SetupSuspensionLines 0x6CF1A0 and melee on ComputeDamageAnim 0x4B3FC0 / HandlePedHit 0x4E1CC0, the
+  known FRONTIER-2 items; no crash.
+- Browser (headless Brave, native GPU, samp demo stack): joins the open.mp server, 0 blocked, in world at Grove Street.
+- `target/play/sa-game` and `web/pkg` refreshed.
