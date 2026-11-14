@@ -1,5 +1,5 @@
-//! The front end shared by every platform backend (ADR-003 §3.1, §3.6): the native window ([`crate::game_window`],
-//! winit) and the browser worker ([`crate::web`], wasm32) are two backends of this one front end. A backend turns its
+//! The front end shared by every platform backend (ADR-003 §3.1, §3.6): the native window ([`crate::platform::game_window`],
+//! winit) and the browser worker ([`crate::platform::web`], wasm32) are two backends of this one front end. A backend turns its
 //! platform's events into calls of [`FrontEnd`]'s input methods, drives the main loop by calling
 //! [`FrontEnd::iterate`] (or [`FrontEnd::take`] / [`FrontEnd::after`]) once per main-loop iteration, and asks
 //! [`in_menu`] whether the pointer is the game's (captured, relative motion) or the menu's (free, absolute positions).

@@ -83,7 +83,7 @@ pub fn set_start_in_world() {
 /// Registers file `id` of the game folder (`path` relative to it, `size` bytes); reads go to `saGameIo.read`.
 #[wasm_bindgen]
 pub fn add_game_file(path: &str, id: u32, size: f64) {
-    crate::webfs::add(path, id, size as u64);
+    crate::platform::webfs::add(path, id, size as u64);
 }
 
 /// Creates the GPU device on `canvas` (WebGPU, else WebGL2) and installs it as the window the game's
@@ -186,7 +186,7 @@ fn samp_options() -> crate::app::SampOptions {
 #[wasm_bindgen]
 pub fn boot() -> Result<(), JsValue> {
     use sa_platform::fs::GameFs;
-    let game = crate::webfs::WebFs;
+    let game = crate::platform::webfs::WebFs;
     let exe = game
         .read("gta_sa.exe")
         .map_err(|e| JsValue::from_str(&format!("gta_sa.exe: {e} (choose your GTA San Andreas folder)")))?;
@@ -204,7 +204,7 @@ pub fn boot() -> Result<(), JsValue> {
         Box::new(game),
         Box::new(MemFs::default()),
         exe,
-        &format!("your game folder ({} files)", crate::webfs::count()),
+        &format!("your game folder ({} files)", crate::platform::webfs::count()),
         "browser memory (not kept)",
         &samp_options(),
     )

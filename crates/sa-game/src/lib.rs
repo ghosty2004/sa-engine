@@ -12,30 +12,17 @@
 //! sa-game --game wine/gta-sa [--frames N] [--report out.md] [--window [--exit-after S] [--auto-input]] [--screenshot out.png]
 //! ```
 //!
-//! `--window` runs the same boot and main loop in a native window ([`game_window`]): every `Present` draws the
+//! `--window` runs the same boot and main loop in a native window ([`platform::game_window`]): every `Present` draws the
 //! device's back buffer into the window surface, and the window's keyboard / mouse input reaches the game through the
 //! platform layer (window messages and DirectInput). Without `--window` the loop runs offscreen with synthetic input.
 
 #![deny(unsafe_code)]
 
-// wasm32: stdout / stderr go nowhere, so the crate's `println!` / `eprintln!` write to the browser console
-// (textual-scope macros shadow the std prelude ones for every module declared below).
-#[cfg(target_arch = "wasm32")]
-macro_rules! println {
-    () => { $crate::web::log_line(String::new()) };
-    ($($t:tt)*) => { $crate::web::log_line(format!($($t)*)) };
-}
-#[cfg(target_arch = "wasm32")]
-macro_rules! eprintln {
-    () => { $crate::web::log_line(String::new()) };
-    ($($t:tt)*) => { $crate::web::log_line(format!($($t)*)) };
-}
+// The platform backends first: on wasm32 their `println!` / `eprintln!` reach every module below.
+#[macro_use]
+pub mod platform;
 
 pub mod env;
-#[cfg(target_arch = "wasm32")]
-pub mod web;
-#[cfg(target_arch = "wasm32")]
-pub mod webfs;
 
 pub mod arena;
 pub mod bind;
@@ -51,8 +38,6 @@ pub mod detheap;
 pub mod dsound;
 pub mod dx;
 pub mod frontend;
-#[cfg(not(target_arch = "wasm32"))]
-pub mod game_window;
 pub mod imports;
 pub mod native;
 pub mod rw_standin;
@@ -67,8 +52,6 @@ pub mod samp_input;
 pub mod samp_ui_demo;
 #[cfg(feature = "samp")]
 pub mod samp_ui_scene;
-#[cfg(not(target_arch = "wasm32"))]
-pub mod screen;
 pub mod sha256;
 pub mod vorbisfile;
 pub mod winmain;

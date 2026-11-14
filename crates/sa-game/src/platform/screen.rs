@@ -1,7 +1,7 @@
 //! The status screen (`--screenshot`): one more main-loop iteration after the offscreen run, drawn as a status
 //! screen through the D3D9 seam (`sa_platform::gpu::D3d9Device` on a headless `sa_rw_wgpu::d3d9::WgpuDevice`): one bar
 //! per frame step, issued as a D3D9 call stream (clear + `DrawPrimitiveUP` of pre-transformed quads). The game itself
-//! in a window is [`crate::game_window`].
+//! in a window is [`crate::platform::game_window`].
 
 use sa_platform::gpu::{D3d9Device, PrimitiveType, Viewport, clear, fvf, rs, tss};
 use sa_platform::input::InputState;

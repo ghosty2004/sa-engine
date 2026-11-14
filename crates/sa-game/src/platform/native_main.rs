@@ -1,0 +1,184 @@
+//! The native backend's entry (ADR-003 §3.1): the command line, the boot from the install folder on disk and
+//! the offscreen / windowed run of [`crate::app::Session`] (the web backend is [`super::web`]).
+
+use std::path::PathBuf;
+
+use sa_platform::native::{NativeFs, documents_dir};
+
+use crate::app::{
+    Args, INIT_FAILED, Session, TEMP_DOCS, boot_with, frame_intervals, frame_time_summary, synthetic_input,
+};
+use super::{game_window, screen};
+use crate::{d3d9, det, native};
+
+pub fn parse_args() -> Result<Args, String> {
+    let mut a = Args {
+        game: PathBuf::new(),
+        frames: None,
+        window: false,
+        exit_after: None,
+        auto_input: false,
+        frame_times: None,
+        screenshot: None,
+        report: None,
+        documents: None,
+        samp: None,
+        name: "Player".into(),
+        samp_auth: None,
+        samp_proxy: None,
+        samp_ui_demo: false,
+    };
+    let mut system_heap = false;
+    let mut it = std::env::args().skip(1);
+    while let Some(k) = it.next() {
+        let mut val = || it.next().ok_or(format!("{k} needs a value"));
+        match k.as_str() {
+            "--game" => a.game = PathBuf::from(val()?),
+            "--frames" => a.frames = Some(val()?.parse().map_err(|e| format!("--frames: {e}"))?),
+            "--window" => a.window = true,
+            "--system-heap" => system_heap = true,
+            "--exit-after" => a.exit_after = Some(val()?.parse().map_err(|e| format!("--exit-after: {e}"))?),
+            "--auto-input" => a.auto_input = true,
+            "--frame-times" => a.frame_times = Some(PathBuf::from(val()?)),
+            "--screenshot" => a.screenshot = Some(PathBuf::from(val()?)),
+            "--report" => a.report = Some(PathBuf::from(val()?)),
+            "--present-dir" => d3d9::set_present_dir(PathBuf::from(val()?)),
+            "--documents" => a.documents = Some(PathBuf::from(val()?)),
+            "--persistent-documents" => a.documents = Some(documents_dir()),
+            "--start-in-world" => native::set_start_in_world(),
+            "--samp" => a.samp = Some(val()?),
+            "--name" => a.name = val()?,
+            "--samp-auth" => a.samp_auth = Some(PathBuf::from(val()?)),
+            "--samp-ui-demo" => a.samp_ui_demo = true,
+            "--fixed-step" => det::set_fixed_step(val()?.parse().map_err(|e| format!("--fixed-step: {e}"))?),
+            "-h" | "--help" => {
+                println!(
+                    "sa-game --game DIR [--frames N] [--report FILE] [--present-dir DIR] [--documents DIR | --persistent-documents] [--start-in-world] [--fixed-step MS] [--frame-times FILE] [--samp HOST[:PORT] [--name NAME] [--samp-auth FILE] | --samp-ui-demo] [--window [--exit-after SECONDS] [--auto-input] | --screenshot OUT.png]\n\
+                     The user documents folder (settings, saves) is a fresh temporary folder per run unless\n\
+                     --documents DIR or --persistent-documents ($XDG_DATA_HOME/sa-engine/documents) is given.\n\
+                     --window runs the game in a native window with the window's keyboard and mouse; --auto-input adds\n\
+                     the offscreen mode's synthetic input (Enter through the menus, SA_GAME_WALK).\n\
+                     --fixed-step MS: deterministic mode (the game clock advances MS per main-loop iteration, streaming\n\
+                     reads complete within their iteration; scripted input: SA_GAME_KEYS, SA_GAME_WALK, SA_GAME_MOUSE, SA_GAME_LMB, SA_GAME_POINTER).\n\
+                     Window runs serve the game heap from the deterministic mode's fixed-address region (one heap\n\
+                     layout everywhere); --system-heap uses the C library's allocator instead.\n\
+                     --samp joins a SA:MP / open.mp server through the native game adapter (build with --features samp;\n\
+                     without it a stand-in client only samples the adapter). The auth table comes from --samp-auth or SAMP_AUTH_TABLE.\n\
+                     --samp-ui-demo draws the engine-drawn SA:MP UI (chat, dialogs, nametags, labels, textdraws) with sample content."
+                );
+                std::process::exit(0);
+            }
+            _ => return Err(format!("unknown option {k}")),
+        }
+    }
+    if let Some(s) = &a.samp {
+        crate::samp::parse_target(s, &a.name)?;
+        if a.samp_ui_demo {
+            return Err("--samp-ui-demo and --samp are exclusive".into());
+        }
+    }
+    if a.game.as_os_str().is_empty() {
+        return Err("--game DIR is required (the GTA San Andreas install)".into());
+    }
+    // decided before the first game allocation: a block must be freed by the allocator that made it
+    det::set_fixed_heap(a.window && !system_heap);
+    Ok(a)
+}
+
+/// The platform setup and the boot (WinMain up to its main loop).
+pub fn boot(args: &Args) -> Result<Session, String> {
+    let game = NativeFs::new(&args.game).map_err(|e| format!("--game {}: {e}", args.game.display()))?;
+    if !sa_platform::fs::GameFs::exists(&game, "models/gta3.img") {
+        return Err(format!(
+            "{} does not look like a GTA San Andreas folder (no models/gta3.img)",
+            args.game.display()
+        ));
+    }
+    let docs = match &args.documents {
+        Some(d) => d.clone(),
+        None => {
+            let d = std::env::temp_dir().join(format!("sa-game-documents-{}", std::process::id()));
+            let _ = std::fs::remove_dir_all(&d);
+            TEMP_DOCS.with(|t| *t.borrow_mut() = Some(d.clone()));
+            d
+        }
+    };
+    std::fs::create_dir_all(&docs).map_err(|e| format!("{}: {e}", docs.display()))?;
+    let docs_fs = NativeFs::new(&docs).map_err(|e| e.to_string())?;
+    let exe_path = args.game.join("gta_sa.exe");
+    let exe = std::fs::read(&exe_path).map_err(|e| {
+        format!("{}: {e} (phase B reads the data sections of your own 1.0 US exe at start-up)", exe_path.display())
+    })?;
+    boot_with(
+        Box::new(game),
+        Box::new(docs_fs),
+        exe,
+        &args.game.display().to_string(),
+        &docs.display().to_string(),
+        &args.samp_options(),
+    )
+}
+
+pub fn remove_temp_docs() {
+    if let Some(d) = TEMP_DOCS.with(|t| t.borrow_mut().take()) {
+        let _ = std::fs::remove_dir_all(d);
+    }
+}
+
+/// The offscreen run: the boot, then `--frames` iterations (3 by default) with the synthetic input.
+pub fn run_offscreen(args: &Args) -> Result<Session, String> {
+    let mut s = boot(args)?;
+    for n in 0..args.frames.unwrap_or(3) {
+        if !s.iterate(synthetic_input(n)) {
+            break;
+        }
+    }
+    Ok(s)
+}
+
+pub fn main() {
+    let args = match parse_args() {
+        Ok(a) => a,
+        Err(e) => {
+            eprintln!("sa-game: {e}");
+            std::process::exit(2);
+        }
+    };
+    let session = if args.window { game_window::run(&args) } else { run_offscreen(&args) };
+    match session {
+        Ok(s) => {
+            let md = s.report();
+            if let Some(p) = &args.report
+                && let Err(e) = std::fs::write(p, md)
+            {
+                eprintln!("sa-game: {}: {e}", p.display());
+            }
+            if let Some(ft) = frame_time_summary() {
+                println!("sa-game: frame pacing (in-game presents): {ft}");
+            }
+            if let Some(p) = &args.frame_times {
+                let text: String = frame_intervals().iter().map(|v| format!("{v:.3}\n")).collect();
+                if let Err(e) = std::fs::write(p, text) {
+                    eprintln!("sa-game: {}: {e}", p.display());
+                }
+            }
+            let r = match &args.screenshot {
+                Some(p) if !args.window => screen::screenshot(p).map(|()| println!("sa-game: wrote {}", p.display())),
+                _ => Ok(()),
+            };
+            remove_temp_docs();
+            if let Err(e) = r {
+                eprintln!("sa-game: {e}");
+                std::process::exit(1);
+            }
+            if INIT_FAILED.load(std::sync::atomic::Ordering::SeqCst) {
+                std::process::exit(4);
+            }
+        }
+        Err(e) => {
+            remove_temp_docs();
+            eprintln!("sa-game: {e}");
+            std::process::exit(1);
+        }
+    }
+}

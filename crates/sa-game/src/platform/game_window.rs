@@ -144,7 +144,7 @@ impl WindowApp for GameWindow<'_> {
             }
         }
         crate::boot::NO_PROBE.store(true, std::sync::atomic::Ordering::SeqCst);
-        match crate::app::boot(self.args) {
+        match super::native_main::boot(self.args) {
             Ok(s) => self.session = Some(s),
             Err(e) => self.error = Some(e),
         }
