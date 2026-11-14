@@ -149,6 +149,7 @@ pub fn stop_cutscene_track(this: GPtr<u8>, wait: u32) {
             let t = hw_get_track_play_time(hw);
             cut_service(cut, t);
             hw_service(hw);
+            sa_core::orig::busy_wait();
             if cut_is_active(cut) == 0 {
                 break;
             }
@@ -220,6 +221,7 @@ pub fn stop_ambience_track(_this: GPtr<u8>, wait: u32) {
         let t = hw_get_track_play_time(hw);
         amb_service(amb, t);
         hw_service(hw);
+        sa_core::orig::busy_wait();
         if amb_is_active(amb) == 0 {
             break;
         }

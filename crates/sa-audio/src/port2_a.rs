@@ -3480,6 +3480,7 @@ fn stop_music_stream_for_preload(this: GPtr<u8>) {
             let t = hw_get_track_play_time(hw);
             radio_service(radio, t);
             hw_service(hw);
+            sa_core::orig::busy_wait();
         }
     } else if ambience_is_ambience_track_active(g(crate::common::AE_AMBIENCE_TRACK_MANAGER)) != 0 {
         engine_stop_ambience_track(this, 1);
@@ -3491,6 +3492,7 @@ fn stop_music_stream_for_preload(this: GPtr<u8>) {
             let t = hw_get_track_play_time(hw);
             cutscene_service(cut, t);
             hw_service(hw);
+            sa_core::orig::busy_wait();
         }
     }
 }
@@ -3537,6 +3539,7 @@ pub fn engine_reset(this: GPtr<u8>) {
             let t = hw_get_track_play_time(hw);
             radio_service(radio, t);
             hw_service(hw);
+            sa_core::orig::busy_wait();
         }
     } else if ambience_is_ambience_track_active(amb) != 0 {
         engine_stop_ambience_track(this, 1);
@@ -3547,6 +3550,7 @@ pub fn engine_reset(this: GPtr<u8>) {
             let t = hw_get_track_play_time(hw);
             cutscene_service(cut, t);
             hw_service(hw);
+            sa_core::orig::busy_wait();
         }
     }
     collision_reset(this.byte_add(0x4BC));
@@ -3650,6 +3654,8 @@ pub fn cutscene_preload_cutscene_track_port(this: GPtr<u8>, track: u32, wait: u3
         if rd::<u32>(this, 8) == 2 {
             break;
         }
+        // the stream thread loads the track meanwhile (phase B's deterministic mode steps it here)
+        sa_core::orig::busy_wait();
     }
 }
 
@@ -4433,6 +4439,7 @@ pub fn radio_service_port(this: GPtr<u8>, play_time: u32) {
                     let t = hw_get_track_play_time(hw);
                     radio_service_call(this, t);
                     hw_service(hw);
+                    sa_core::orig::busy_wait();
                 }
                 let gain = rd::<u32>(this, 0xEC);
                 let bass = u32::from(rd::<u8>(this, 0xEA));
@@ -5082,6 +5089,7 @@ pub fn engine_initialise_post_loading(this: GPtr<u8>) {
         .all(|&(bank, slot)| hw_is_sound_bank_loaded(hw, bank, slot) != 0)
     {
         hw_service(hw);
+        sa_core::orig::busy_wait();
     }
 }
 
