@@ -1,5 +1,7 @@
-//! The two car tasks a jacked ped retaliates with (batch `carjack-1`): `CTaskComplexDestroyCar::ControlSubTask` (attack
-//! the car CJ drove off in) and `CTaskComplexDragPedFromCar::CreateFirstSubTask` (pull CJ back out). Ported from the
+//! The car tasks a jacked ped (or its passenger) reacts with (batch `carjack-1`): `CTaskComplexDestroyCar::ControlSubTask`
+//! and `CTaskComplexDestroyCarArmed`'s constructor (attack the car CJ drove off in),
+//! `CTaskComplexDragPedFromCar::CreateFirstSubTask` (pull CJ back out) and
+//! `CTaskComplexScreamInCarThenLeave::CreateSubTask` (a passenger screams, then gets out and runs). Ported from the
 //! 1.0 US bytes (gta-reversed as a reading aid; the bytes win). Unverified (docs/verify/HOWTO.md).
 #![allow(clippy::unreadable_literal)]
 
@@ -38,6 +40,18 @@ orig! {
     fn enter_car_create_first_sub_task(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x643A60 => unported;
     /// `CTaskComplexEnterCar::CreateSubTask(int32, CPed*)` (0x63E040, `ret 8`)
     fn enter_car_create_sub_task(t: GPtr<u8>, ty: u32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x63E040 => unported;
+    /// `CTaskComplex::CTaskComplex()` (0x61A3B0)
+    fn task_complex_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A3B0 => unported;
+    /// `CTheScripts::IsPlayerOnAMission()` (0x464D50)
+    fn is_player_on_a_mission() -> u8 = cdecl 0x464D50 => unported;
+    /// `CTaskComplexLeaveCarAndFlee::CTaskComplexLeaveCarAndFlee(veh, point, door, delay, wait)` (0x63BF90, `ret 0x14`)
+    fn leave_car_and_flee_ctor(t: GPtr<u8>, veh: GPtr<u8>, point: GPtr<u8>, door: u32, delay: u32, wait: u32) -> GPtr<u8> = thiscall 0x63BF90 => unported;
+    /// `CTaskSimpleCarDrive::CTaskSimpleCarDrive(veh, a, b)` (0x63C340, `ret 0xC`)
+    fn car_drive_ctor(t: GPtr<u8>, veh: u32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x63C340 => unported;
+    /// `CTaskComplexWander::GetWanderTaskByPedType(CPed*)` (0x673D00, cdecl)
+    fn wander_get_wander_task_by_ped_type(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x673D00 => unported;
+    /// `CTaskManager::SetTask(CTask*, int32 slot, bool)` (0x681AF0, `ret 0xC`)
+    fn task_manager_set_task(tm: GPtr<u8>, t: GPtr<u8>, slot: u32, b: u32) = thiscall 0x681AF0 => unported;
 }
 
 /// 0.0
@@ -136,5 +150,88 @@ pub fn drag_ped_from_car_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) ->
     enter_car_create_first_sub_task(this, ped)
 }
 
+/// The stand-in for the original's argument slot (see [`destroy_car_armed_ctor`]).
+static STALE_REF_CELL: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(0);
+
+/// `CTaskComplexDestroyCarArmed::CTaskComplexDestroyCarArmed(CVehicle*, a, b, c)` (0x621F50, `ret 0x10`, SEH frame):
+/// `CTaskComplex()`, vtable 0x86D9C4, +0x10 the vehicle, +0x14..+0x4C zero, +0x50 (byte) 0, +0x54 -1, +0x58 / +0x5C
+/// / +0x60 the three arguments. With a vehicle the original registers a reference to its own *argument slot*
+/// (`lea eax, [esp+0x18]`), not to +0x10; here the reference is a private static cell holding the vehicle, so
+/// the stale write the world later makes through it lands there instead of in a dead stack slot (+0x10 itself is never
+/// cleared, as in the original). Nothing reads the cell, so one shared static serves every call.
+#[hook(addr = 0x621F50, conv = thiscall, name = "CTaskComplexDestroyCarArmed::Constructor", expect = "6A FF 68 C8 F7 83 00",
+       unverified = "carjack-1", route = "L2", hazards = "heap-writes", recs = "carjack",
+       note = "the original registers the vehicle reference at its argument slot; the port at a static cell")]
+pub fn destroy_car_armed_ctor(this: GPtr<u8>, veh: GPtr<u8>, a: u32, b: u32, c: u32) -> GPtr<u8> {
+    task_complex_ctor(this);
+    wr::<u32>(this, 0, 0x86D9C4);
+    wr::<GPtr<u8>>(this, 0x10, veh);
+    for off in (0x14..=0x34).step_by(4) {
+        wr::<u32>(this, off, 0);
+    }
+    wr::<u32>(this, 0x58, a);
+    wr::<u32>(this, 0x5C, b);
+    for off in (0x38..=0x4C).step_by(4) {
+        wr::<u32>(this, off, 0);
+    }
+    wr::<u8>(this, 0x50, 0);
+    wr::<u32>(this, 0x54, 0xFFFF_FFFF);
+    wr::<u32>(this, 0x60, c);
+    if !veh.is_null() {
+        STALE_REF_CELL.store(veh.addr() as u32, core::sync::atomic::Ordering::Relaxed);
+        entity_register_reference(veh, GPtr::from_raw(STALE_REF_CELL.as_ptr()).cast());
+    }
+    this
+}
+
+/// `CTaskComplexScreamInCarThenLeave::CreateSubTask(int32 type, CPed*)` (0x642510, `ret 8`; entry `nop; jmp` into the
+/// protection's relocated `mov eax, fs:[0]`). Vehicle +0xC. 0x2C2 → `CTaskComplexLeaveCarAndFlee(veh, veh position, 0,
+/// 0, wait)` with wait = 0 on a mission (`IsPlayerOnAMission`), else `rand() & 0x3FF > 0x200` (call site 0x642623,
+/// drawn before the allocation) ? 0 : 1; 0x2C5 → the timer (+0x14) starts for 5000 ms and `CTaskSimpleCarDrive(veh,
+/// 0, 0)`; 0x516 → the ped's primary default task becomes `GetWanderTaskByPedType(ped)` (the intelligence read first),
+/// NULL; others NULL.
+#[hook(addr = 0x642510, conv = thiscall, name = "CTaskComplexScreamInCarThenLeave::CreateSubTask", expect = "90 E9 76 FD DB FF",
+       unverified = "carjack-1", route = "L2", hazards = "heap-writes", recs = "carjack")]
+pub fn scream_in_car_then_leave_create_sub_task(this: GPtr<u8>, ty: u32, ped: GPtr<u8>) -> GPtr<u8> {
+    let flee = |this: GPtr<u8>, wait: u32| {
+        let t = task_new(0x28);
+        if t.is_null() {
+            return t;
+        }
+        let v = rd::<GPtr<u8>>(this, 0xC);
+        let m = rd::<GPtr<u8>>(v, 0x14);
+        let pos = if m.is_null() { v.byte_add(4) } else { m.byte_add(0x30) };
+        leave_car_and_flee_ctor(t, v, pos, 0, 0, wait)
+    };
+    match ty {
+        0x2C2 => {
+            if is_player_on_a_mission() != 0 {
+                return flee(this, 0);
+            }
+            let r = sa_core::orig::at_site(0x642623, rand) & 0x3FF;
+            flee(this, u32::from(r <= 0x200))
+        }
+        0x2C5 => {
+            wr::<u32>(this, 0x14, g::<u32>(0xB7CB84).read());
+            wr::<u32>(this, 0x18, 5000);
+            wr::<u8>(this, 0x1C, 1);
+            let t = task_new(0x60);
+            if t.is_null() { t } else { car_drive_ctor(t, rd::<u32>(this, 0xC), 0, 0) }
+        }
+        0x516 => {
+            let intel = rd::<GPtr<u8>>(ped, 0x47C);
+            let w = wander_get_wander_task_by_ped_type(ped);
+            task_manager_set_task(intel.byte_add(4), w, 4, 0);
+            GPtr::NULL
+        }
+        _ => GPtr::NULL,
+    }
+}
+
 /// Every hook of this module.
-pub const HOOKS: &[HookReg] = &[HOOK_DESTROY_CAR_CONTROL_SUB_TASK, HOOK_DRAG_PED_FROM_CAR_CREATE_FIRST_SUB_TASK];
+pub const HOOKS: &[HookReg] = &[
+    HOOK_DESTROY_CAR_CONTROL_SUB_TASK,
+    HOOK_DRAG_PED_FROM_CAR_CREATE_FIRST_SUB_TASK,
+    HOOK_DESTROY_CAR_ARMED_CTOR,
+    HOOK_SCREAM_IN_CAR_THEN_LEAVE_CREATE_SUB_TASK,
+];
