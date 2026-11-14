@@ -1209,3 +1209,7 @@
   CVehicle::IsSphereTouchingVehicle 0x6D84D0, UpdateCarAI's law-enforcer/wanted path (police after a jack),
   MakeTyresMuddySectorList 0x6AE0D0, 0x649550, 0x6DF3D0, IsEntityBlockingTarget 0x5F3970, 0x661BB0, the walk-into-fire
   events 0x4B6840/0x4B1F00, burning car 0x4DCBE0; KillPedWithCar 0x5F0360 (INTRO-2 lane) and 0x649020 (FRAMELIMIT).
+- Gates on the rebased head: sa-hook 58/58, ai_patterns.py --check clean, queue regenerated (2437 unverified hooks),
+  writer gate PASS hooks/queue/i686/wasm32/hooktest (l1test/l1 skipped: no L1-pure hook); host clippy fails only on
+  master's sa-game det.rs `set_busy_wait_handler`, i686 clippy only on master's `draw_quad_bits` (clippy of sa-ai,
+  sa-audio, sa-core and the Linux sa-game target clean). verify-all carjack2 (lanes 4,5,7): IDENTICAL on all 13.
