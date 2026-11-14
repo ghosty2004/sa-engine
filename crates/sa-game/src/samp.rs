@@ -140,6 +140,11 @@ fn ui_lock() -> (bool, bool) {
     GAME.with(|g| g.borrow().as_ref().map(|g| g.ui_input_lock()).unwrap_or_default())
 }
 
+/// Whether the SA:MP UI shows its cursor (the browser page then releases the pointer lock and sends absolute
+/// positions and clicks, as in the menus).
+pub fn ui_cursor_visible() -> bool {
+    GAME.with(|g| g.borrow().as_ref().is_some_and(|g| g.ui_cursor_visible()))
+}
 
 /// sa-core's dispatch handler: runs the client's frame callback on the adapter.
 fn on_frame(phase: u8) {

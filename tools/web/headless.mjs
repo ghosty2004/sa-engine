@@ -13,6 +13,9 @@
 // --enter-every S: presses Enter every S seconds until the game is in IDLE (menus) with real key events.
 // --walk letters l / r: mouse-look left / right while that segment lasts (a real click on the canvas first locks the
 // pointer, then real mouse moves; the page does not pass that click to the game).
+// --pointer 'S:X:Y[:click],...': S seconds after gGameState first reaches IDLE, real mouse moves to the game client
+// position (X, Y) (scaled to the canvas on the page); with `click` a real left click there (press, 80 ms, release).
+// The page passes them to the game while the SA:MP UI shows its cursor (dialogs, class-selection panel) or in menus.
 // --screencast: records the page (status line included) with Page.startScreencast into OUT/cast/ (JPEG frames +
 // frames.jsonl with their times, events.jsonl with the status timeline); tools/web/make_video.py assembles an MP4.
 // --audio: Chromium may start audio without a gesture (--autoplay-policy=no-user-gesture-required); the page's audio
@@ -41,6 +44,10 @@ const walkTotal = walkPlan.reduce((a, p) => a + p.secs, 0);
 const lookPx = Number(arg('look-px', '40'));
 // w a s d; j / h = left Shift (jump, SA:MP spawn), p = Space (sprint), n / b = right / left arrow
 const KEYS = { w: ['KeyW', 'w', 87], a: ['KeyA', 'a', 65], s: ['KeyS', 's', 83], d: ['KeyD', 'd', 68], j: ['ShiftLeft', 'Shift', 16], h: ['ShiftLeft', 'Shift', 16], p: ['Space', ' ', 32], n: ['ArrowRight', 'ArrowRight', 39], b: ['ArrowLeft', 'ArrowLeft', 37] };
+const pointerPlan = (arg('pointer', '') || '').split(',').filter(Boolean).map((x) => {
+  const [secs, px, py, click] = x.split(':');
+  return { secs: Number(secs), x: Number(px), y: Number(py), click: click === 'click', done: false };
+});
 let held = new Set();
 let locked = false, mx = 0, my = 0;
 const enterEvery = Number(arg('enter-every', '0'));
@@ -261,6 +268,26 @@ while ((Date.now() - t0) / 1000 < seconds) {
     await sleep(150);
     await key('keyUp', 'Enter', 'Enter', 13);
     note(`t=${t.toFixed(1)} s: Enter (real key event)`);
+  }
+  for (const p of pointerPlan) {
+    if (p.done || inGameAt === null || t - inGameAt < p.secs) continue;
+    p.done = true;
+    const r = JSON.parse(await evalJs('(() => { const c = document.getElementById("screen"); const b = c.getBoundingClientRect(); return JSON.stringify({ x: b.x, y: b.y, w: b.width, h: b.height, cw: c.width, ch: c.height }); })()'));
+    const px = r.x + (p.x + 0.5) * r.w / r.cw, py = r.y + (p.y + 0.5) * r.h / r.ch;
+    // a short approach from the left so the page sees several moves, then the target
+    for (let i = 4; i >= 0; i--) {
+      await s('Input.dispatchMouseEvent', { type: 'mouseMoved', x: px - i * 6, y: py });
+      await sleep(30);
+    }
+    castEvent({ event: `pointer ${p.x},${p.y}${p.click ? ' click' : ''}` });
+    if (p.click) {
+      await s('Input.dispatchMouseEvent', { type: 'mousePressed', x: px, y: py, button: 'left', clickCount: 1 });
+      await sleep(80);
+      await s('Input.dispatchMouseEvent', { type: 'mouseReleased', x: px, y: py, button: 'left', clickCount: 1 });
+    }
+    note(`t=${t.toFixed(1)} s: pointer to (${p.x}, ${p.y})${p.click ? ' + left click' : ''} (real mouse events; uiCursor ${status.uiCursor})`);
+    await sleep(300);
+    await shot(`pointer-${p.x}x${p.y}${p.click ? '-click' : ''}-t${Math.round(t)}`);
   }
   if (walkAfter !== null && inGameAt !== null && !walking && !walked && t - inGameAt >= walkAfter) {
     await shot(`walk-before-t${Math.round(t)}`);
