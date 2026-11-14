@@ -195,7 +195,7 @@ orig! {
     fn c_5f67e0_t0(this: u32) -> u32 = thiscall 0x5F67E0 => unported;
     /// `FUN_005f6920` (0x5F6920), thiscall, 0 stack argument(s)
     fn c_5f6920_t0(this: u32) -> u32 = thiscall 0x5F6920 => unported;
-    /// `FUN_005fee80` (0x5FEE80), thiscall, 0 stack argument(s)
+    /// `CEventPlayerCollisionWithPed::Destructor` (0x5FEE80), thiscall, 0 stack argument(s)
     fn c_5fee80_t0(this: u32) -> u32 = thiscall 0x5FEE80 => unported;
     /// `FUN_005fef70` (0x5FEF70), thiscall, 0 stack argument(s)
     fn c_5fef70_t0(this: u32) -> u32 = thiscall 0x5FEF70 => unported;

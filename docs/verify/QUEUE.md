@@ -53,6 +53,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | clump-1 | 4 | RW | da9de7f1 | master | 0 | 0 | 0 | 4 | 0 | L2 3, split 1 |
 | framelimit-ai | 5 | AI, UNK-game | 4b8a01b9 | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
 | framelimit-render | 1 | RENDER | 4b8a01b9 | master | 1 | 0 | 0 | 0 | 0 | L3-only 1 |
+| frontier-1-1 | 15 | AI, UNK-game, VEH, WORLD | 21ae2faf | worktree-agent-adab96e32a9742efe | 15 | 0 | 0 | 0 | 0 | L2 15 |
 | gen2-anim-1 | 1 | UNK-game | ed288e85 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | gen2-coll-1 | 20 | UNK-game | ed288e85 | master | 0 | 0 | 0 | 20 | 0 | L2 8, split 12 |
 | gen2-core-1 | 4 | UNK-game | ed288e85 | master | 0 | 0 | 0 | 4 | 0 | L2 4 |
@@ -267,11 +268,11 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | samp-rw-2 | 2 | RW | 87822502 | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
 | samp-script-1 | 6 | SCRIPT | 87822502 | master | 6 | 0 | 0 | 0 | 0 | L2 6 |
 | samp-unk-1 | 14 | UNK-game | 87822502 | master | 14 | 0 | 0 | 0 | 0 | L2 14 |
-| samp2-fx-1 | 2 | RENDER | 4ee147b1 | worktree-agent-adab96e32a9742efe | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| samp2-phys-1 | 2 | PHYS | 4042b7f5 | worktree-agent-adab96e32a9742efe | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| samp2-fx-1 | 2 | RENDER | 1d5463e2 | worktree-agent-adab96e32a9742efe | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| samp2-phys-1 | 2 | PHYS | 45da4209 | worktree-agent-adab96e32a9742efe | 2 | 0 | 0 | 0 | 0 | L2 2 |
 | samp2-render-1 | 3 | RENDER | 572a1369 | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| samp2-water-1 | 4 | RENDER, WEAPON | 4ee147b1 | worktree-agent-adab96e32a9742efe | 4 | 0 | 0 | 0 | 0 | L2 1, L3-only 3 |
-| samp2-weapon-1 | 3 | WEAPON | 4ee147b1 | worktree-agent-adab96e32a9742efe | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| samp2-water-1 | 4 | RENDER, WEAPON | 1d5463e2 | worktree-agent-adab96e32a9742efe | 4 | 0 | 0 | 0 | 0 | L2 1, L3-only 3 |
+| samp2-weapon-1 | 3 | WEAPON | 1d5463e2 | worktree-agent-adab96e32a9742efe | 3 | 0 | 0 | 0 | 0 | L2 3 |
 | save-core-1 | 3 | SAVE | 9b1fb21c | master | 3 | 0 | 0 | 0 | 0 | L3-only 1, split 2 |
 | save-veh-1 | 5 | VEH | 9b1fb21c | master | 5 | 0 | 0 | 0 | 0 | L2 1, split 4 |
 | script5-1 | 6 | SCRIPT | 7ff4d4e0 | master | 6 | 0 | 0 | 0 | 0 | L2 6 |
@@ -386,8 +387,8 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | world6-1 | 10 | WORLD | 88a72154 | master | 10 | 0 | 0 | 0 | 0 | L2 10 |
 | world6-2 | 15 | WORLD | ecb128cf | master | 15 | 0 | 0 | 0 | 0 | L2 15 |
 | world6-3 | 34 | WORLD | 9a4a4418 | master | 34 | 0 | 0 | 0 | 0 | L2 33, split 1 |
-| world6-4 | 11 | WORLD | cff5d372 | worktree-agent-adab96e32a9742efe | 11 | 0 | 0 | 0 | 0 | L2 10, split 1 |
-| world6-5 | 4 | WORLD | 88f90241 | worktree-agent-adab96e32a9742efe | 4 | 0 | 0 | 0 | 0 | L2 4 |
+| world6-4 | 11 | WORLD | 2d637c0d | worktree-agent-adab96e32a9742efe | 11 | 0 | 0 | 0 | 0 | L2 10, split 1 |
+| world6-5 | 4 | WORLD | dbc51762 | worktree-agent-adab96e32a9742efe | 4 | 0 | 0 | 0 | 0 | L2 4 |
 | writerq-ai-1 | 3 | AI | ddda169b | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
 | writerq-ai-2 | 11 | AI, SCRIPT | 9b393bba | master | 11 | 0 | 0 | 0 | 0 | L2 11 |
 | writerq-ai-3 | 11 | AI, UNK-game | 5626d260 | master | 11 | 0 | 0 | 0 | 0 | L2 11 |
@@ -1873,6 +1874,35 @@ SA_UNVERIFIED=framelimit-render LANE=$LANE tools/e2e/port-l2.sh batch:framelimit
 | address | name | status | route | hazards |
 |---|---|---|---|---|
 | 0x706870 | `CRealTimeShadowManager::ReInit` | written | L3-only | heap-writes |
+
+## frontier-1-1
+
+15 hooks in sa-ai, sa-veh, sa-world; hazards: heap-writes (13), preserved-regs (1), x87-transcendental (1); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier-1-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier-1-1 LANE=$LANE tools/e2e/port-l2.sh batch:frontier-1-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier-1-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x4B1F00 | `CEventPotentialWalkIntoFire::Destructor` | written | L2 | heap-writes,preserved-regs |
+| 0x4B6840 | `CEventPotentialWalkIntoFire::~CEventPotentialWalkIntoFire` | written | L2 | heap-writes |
+| 0x5A0B50 | `CObject::ProcessTrainCrossingBehaviour` | written | L2 | heap-writes,x87-transcendental |
+| 0x5F3970 | `CPedGeometryAnalyser::IsEntityBlockingTarget` | written | L2 | none |
+| 0x5FEE80 | `CEventPlayerCollisionWithPed::Destructor` | written | L2 | heap-writes |
+| 0x61DC10 | `CTaskSimpleFightingControl::Constructor` | written | L2 | heap-writes |
+| 0x626AC0 | `CTaskComplexKillPedOnFootMelee::CreateSubTask` | written | L2 | heap-writes |
+| 0x626D90 | `CTaskComplexKillPedOnFootMelee::ControlSubTask` | written | L2 | heap-writes |
+| 0x62BC10 | `CTaskComplexKillPedOnFootMelee::CreateNextSubTask` | written | L2 | heap-writes |
+| 0x648B90 | `CTaskSimpleBikeJacked::Constructor` | written | L2 | heap-writes |
+| 0x64C970 | `CTaskSimpleBikeJacked::ProcessPed` | written | L2 | heap-writes |
+| 0x65EF80 | `CTaskSimpleGoToPointFine::SetBlendedMoveAnim` | written | L2 | heap-writes |
+| 0x663540 | `CTaskSimpleGoToPointFine::ProcessPed` | written | L2 | heap-writes |
+| 0x6669D0 | `CTaskComplexProstituteSolicit::ControlSubTask` | written | L2 | heap-writes |
+| 0x6D84D0 | `CVehicle::IsSphereTouchingVehicle` | written | L2 | none |
 
 ## gen2-anim-1
 
