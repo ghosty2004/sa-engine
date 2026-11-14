@@ -43,7 +43,7 @@ pub struct Reader {
 
 /// Every absolute read of a hooked entry's bytes in gta_sa.exe 1.0 US (`.text`, the no-CD `.text` and
 /// `.HOODLUM`), found by the test below.
-pub const READERS: [Reader; 45] = [
+pub const READERS: [Reader; 46] = [
     // CStreaming::AreAnimsUsedByRequestedModels entry (0x407AD0)
     Reader {
         at: 0x401BCE,
@@ -418,6 +418,15 @@ pub const READERS: [Reader; 45] = [
         disp_off: 2,
         key: 0x634443,
         value: 0xFFDC_F408,
+    },
+    // Batch carjack-1: CTaskComplexCarSlowBeDraggedOut::CreateSubTask entry 0x64C6A0 (`nop; jmp 0x40375D`):
+    // `adc ecx, [0x64C6A1]` at 0x402265 (the jmp opcode and three rel32 bytes).
+    Reader {
+        at: 0x402265,
+        insn: [0x13, 0x0D, 0xA1, 0xC6, 0x64, 0x00],
+        disp_off: 2,
+        key: 0x64C6A1,
+        value: 0xDB70_B7E9,
     },
 ];
 
