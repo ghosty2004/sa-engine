@@ -2177,7 +2177,6 @@ dependencies = [
  "sa-rwcore",
  "sa-samp",
  "sa-samp-api",
- "sa-samp-ui",
  "sa-script",
  "sa-stream",
  "sa-veh",
@@ -2186,6 +2185,7 @@ dependencies = [
  "samp-client",
  "samp-proto",
  "samp-saa",
+ "samp-ui",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
@@ -2417,22 +2417,15 @@ dependencies = [
 name = "sa-samp"
 version = "0.1.0"
 dependencies = [
+ "ab_glyph",
  "sa-core",
  "sa-samp-api",
- "sa-samp-ui",
+ "samp-ui",
 ]
 
 [[package]]
 name = "sa-samp-api"
 version = "0.1.0"
-
-[[package]]
-name = "sa-samp-ui"
-version = "0.1.0"
-dependencies = [
- "ab_glyph",
- "sa-samp-api",
-]
 
 [[package]]
 name = "sa-script"
