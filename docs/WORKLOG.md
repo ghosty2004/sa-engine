@@ -1245,3 +1245,33 @@
 - Rebased SAMP-CLASSPANEL (792d81ee, 3 commits) onto ba14f5d7 (doc conflicts unioned) and fast-forwarded master: the SA:MP class-selection panel (`<<` `>>` `Spawn`) in sa-samp-ui (sa-samp-api v4: `show_class_panel`, `UiEvent::ClassPanelClicked`), trilinear GUI skin, native client wiring (clicks act as Left/Right/Shift through classsel), browser pointer release while the SA:MP cursor shows, `SA_GAME_POINTER`, `headless.mjs --pointer`.
 - Main session: `sa-game --window` also releases the pointer while the SA:MP UI cursor shows (4f446863). Checks: sa-samp-ui 44, samp-client 201+1, sa-hook lib 58/58, i686 clippy with and without `samp`; native join against the local open.mp server with scripted clicks: Next → class 1 (sound 1052, skin 105), Spawn → spawn requested and spawned, 0 blocked over 2800 iterations.
 - Agent evidence: panel pixel-identical to the original 0.3.7-R4 except label glyph width (~12% narrower, UI font size rule; ledger + overlay.md §8 item 9).
+
+## 2026-11-14 PEDHIT: vehicles and the player hitting peds natively (agent a8dce841187c8089c)
+- Goal: any vehicle (car, BMX) or the player on foot hits peds (bump, fast hit, run over, thrown over the bonnet,
+  killed) natively, 1:1 with gta_sa.exe 1.0 US, and play continues. Branch `worktree-agent-a8dce841187c8089c` on
+  master 87c1b470 (FRAMELIMIT + DoHeadLightReflectionSingle).
+- Ported from the 1.0 US bytes, batch `pedhit-1` (13 hooks, unverified, route L2): `CPed::KillPedWithCar` 0x5F0360
+  (1139 instructions: the gates, the strong path with pad shake, side hit / runover / bonnet-roof throw with lift
+  and bonnet removal, the weak bump, crime report, the damage event and knock-down anims, the force on the car),
+  `CPed::MakeTyresMuddySectorList` 0x6AE0D0 (bloody tyres; the spec's "uninitialised bike local" is set to 0 by the
+  prologue), the `CEventGotKnockedOverByCar` / `CEventPedCollisionWithPlayer` destructors 0x4B1C10 / 0x5FED80,
+  `FxInfoDir_c::GetValue` 0x4A64D0, `CPickups::DoMoneyEffects` 0x454E80, `CreatePickupCoorsCloseToCoors` 0x458A80,
+  `GenerateNewOne_WeaponType` 0x457380, `CShadows::AddPermanentShadow` 0x706F60, `CGarage::CountCarsInside`
+  0x4495F0, `CTaskComplexProstituteSolicit::IsTaskValid` / `CreateSubTask` 0x661BB0 / 0x666360,
+  `CTaskComplexEnterAnyCarAsDriver::CreateFirstSubTask` 0x643510. Phase B natives: `Fx_c::TriggerWaterHydrant`
+  0x4A0D70 and `CIdleCam::SetTarget` 0x50A280 (entries are jumps into protection chunks read as keys; the chunks'
+  loads evaluated on the image: `[0xB6F03C]` and `[0xB7CB84]`), `FxSystem_c::GetPlayStatus` 0x4AA900 (5-byte body).
+  0x4AC920, 0x4B2EE0, 0x664590, 0x6648C0 were also needed: FRAMELIMIT / CARJACK's ports on master are used.
+- sa-game (exploration): `SA_GAME_TELEPORT` takes `;`-separated entries and moves the player's vehicle (with a
+  heading); the veh-list prints the main-loop iteration, vehicle headings / speeds and, with
+  `SA_GAME_VEHLIST_PEDS=R`, peds within R units (state, health). Scenarios: `tools/e2e/scenarios/pedhit.sh`.
+- Runs (offscreen, `--fixed-step`, deterministic, 0 blocked, 0 crashed):
+  car 2916 iterations (KillPedWithCar 14 calls: ped bumped to 61 hp at 375, one killed (54 → 55) and one bumped
+  to 70 hp at 467-478, slow approach, hydrant water, blood pool, dropped weapon); foot (the main session's repro,
+  CEventPedCollisionWithPlayer at ~918) 3516 iterations; intro BMX 7316 iterations (ped killed by the BMX at 5082).
+  Evidence (not committed): `target/pedhit-evidence/{car,foot,intro-bmx}{.mp4,-sheet.png,/}`.
+- Not covered: a motorbike (class 9; no parked one near Grove Street, the traffic bikes are police bikes:
+  jacking is CARJACK's). Next blockers seen: `CTaskComplexProstituteSolicit::ControlSubTask` 0x6669D0 (~700
+  instructions, when the player idles in a car next to a prostitute), `CObject::ProcessTrainCrossingBehaviour`
+  0x5A0B50 (driving south past the tracks). One early intro run (pre-rebase build, other route) crashed at
+  iteration 6803 (null + 0x44 in a Rust port); not reproduced on the final tree.
