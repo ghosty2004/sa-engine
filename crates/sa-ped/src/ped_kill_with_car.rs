@@ -223,9 +223,10 @@ pub fn ped_kill_ped_with_car(this: GPtr<u8>, car: GPtr<u8>, intensity: f32, play
                 let fwd = f32_of(dot_in(d, m.byte_add(0x10), [2, 1, 0]));
                 let lim = x(rd::<f32>(entity_get_col_model(car), 0x10)).fmul_m(0.85);
                 if !lim.fcom(x(fwd).fabs()).test_any(0x41) { Hit::RunOver { zone2: false } } else { Hit::Plain }
-            } else if rnd != 0 && (x(up).fcom(x(0.1)).test_any(0x41) || rnd <= 1) {
-                Hit::RunOver { zone2: true }
-            } else if rd::<u8>(rd::<GPtr<u8>>(car, 0x384), 0xCC) & 8 != 0 {
+            } else if (rnd != 0 && (x(up).fcom(x(0.1)).test_any(0x41) || rnd <= 1))
+                || rd::<u8>(rd::<GPtr<u8>>(car, 0x384), 0xCC) & 8 != 0
+            {
+                // a low or random-miss front hit, or a big vehicle (handling model flag 8): run over
                 Hit::RunOver { zone2: true }
             } else {
                 Hit::Throw
