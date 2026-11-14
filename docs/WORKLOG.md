@@ -1240,3 +1240,8 @@
   against the same server with xdotool clicks: side-by-side at 800 × 600, the same scene; the panel matches to the
   pixel except the GUI font 0 labels (about 12 % narrower in the engine; ledger, overlay.md §6.2). Evidence under
   `target/classpanel-evidence/` (not committed).
+
+## 2026-11-14 — SAMP-CLASSPANEL on master (main session)
+- Rebased SAMP-CLASSPANEL (792d81ee, 3 commits) onto ba14f5d7 (doc conflicts unioned) and fast-forwarded master: the SA:MP class-selection panel (`<<` `>>` `Spawn`) in sa-samp-ui (sa-samp-api v4: `show_class_panel`, `UiEvent::ClassPanelClicked`), trilinear GUI skin, native client wiring (clicks act as Left/Right/Shift through classsel), browser pointer release while the SA:MP cursor shows, `SA_GAME_POINTER`, `headless.mjs --pointer`.
+- Main session: `sa-game --window` also releases the pointer while the SA:MP UI cursor shows (4f446863). Checks: sa-samp-ui 44, samp-client 201+1, sa-hook lib 58/58, i686 clippy with and without `samp`; native join against the local open.mp server with scripted clicks: Next → class 1 (sound 1052, skin 105), Spawn → spawn requested and spawned, 0 blocked over 2800 iterations.
+- Agent evidence: panel pixel-identical to the original 0.3.7-R4 except label glyph width (~12% narrower, UI font size rule; ledger + overlay.md §8 item 9).
