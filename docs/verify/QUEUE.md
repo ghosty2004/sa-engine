@@ -235,6 +235,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | native-7 | 2 | UNK-game | ba6c9352 | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
 | native-8 | 3 | AI, VEH | f3cf72bb | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
 | native-9 | 2 | AI, UNK-game | e3ccdd9b | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| pedhit-1 | 13 | AI, PED, RENDER, UNK-game, WORLD | uncommitted | worktree-agent-a8dce841187c8089c | 13 | 0 | 0 | 0 | 0 | L2 13 |
 | popw4-drive-1 | 9 | POP | 09ffb626 | master | 0 | 0 | 0 | 9 | 0 | L2 9 |
 | popw4-frame-1 | 1 | POP | 09ffb626 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | popw4-gang-1 | 11 | POP | 09ffb626 | master | 0 | 0 | 0 | 11 | 0 | L2 7, split 4 |
@@ -5220,6 +5221,33 @@ SA_UNVERIFIED=native-9 LANE=$LANE tools/e2e/port-l2.sh batch:native-9 $SA_ROOT/t
 |---|---|---|---|---|
 | 0x6220A0 | `CTaskComplexRoadRage::Constructor` | written | L2 | heap-writes |
 | 0x6A0650 | `FUN_006a0650` | written | L2 | heap-writes |
+
+## pedhit-1
+
+13 hooks in sa-ai, sa-ped, sa-render, sa-world; hazards: heap-writes (9), uninit-locals (1), x87-transcendental (2); recordings calling them: driving (6), grove-walk (5), weapon-combat (2).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh pedhit-1 $SA_ROOT/target/e2e/corpus/driving.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=pedhit-1 LANE=$LANE tools/e2e/port-l2.sh batch:pedhit-1 $SA_ROOT/target/e2e/corpus/driving.sarec --runs "plain l2 rust" --tag pedhit-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x4495F0 | `thunk_FUN_01561400` | written | L2 | none |
+| 0x454E80 | `CPickups::DoMoneyEffects` | written | L2 | x87-transcendental,heap-writes |
+| 0x457380 | `CPickups::GenerateNewOne_WeaponType` | written | L2 | heap-writes |
+| 0x458A80 | `CPickups::CreatePickupCoorsCloseToCoors-` | written | L2 | x87-transcendental |
+| 0x4A64D0 | `FxInfoDir_c::GetValue` | written | L2 | heap-writes |
+| 0x4B1C10 | `FUN_004b1c10` | written | L2 | heap-writes |
+| 0x5F0360 | `CPed::KillPedWithCar` | written | L2 | heap-writes,uninit-locals |
+| 0x5FED80 | `FUN_005fed80` | written | L2 | heap-writes |
+| 0x643510 | `CTaskComplexEnterAnyCarAsDriver::CreateFirstSubTask` | written | L2 | heap-writes |
+| 0x661BB0 | `CTaskComplexProstituteSolicit::IsTaskValid` | written | L2 | none |
+| 0x666360 | `CTaskComplexProstituteSolicit::CreateSubTask` | written | L2 | heap-writes |
+| 0x6AE0D0 | `CPed::MakeTyresMuddySectorList<CPtrListSingleLink<CPhysical*>>` | written | L2 | heap-writes |
+| 0x706F60 | `CShadows::AddPermanentShadow` | written | L2 | none |
 
 ## popw4-drive-1
 
