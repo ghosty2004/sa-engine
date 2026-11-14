@@ -226,6 +226,34 @@ fn new_scalar(size: u32) -> GPtr<u8> {
     alloc_at(NEW, size)
 }
 
+/// Registers the host stand-ins of the CRT functions ports call through `unported` bindings (in phases B/C the
+/// address registry serves them: sa-game's CRT replacements): `pow` (0x8220F0, the libm pow the replacement uses;
+/// exact for the `pow(2, integer)` the ports compute), `floor` (0x8219F0) and `strncpy` (0x821F40).
+pub fn install_crt() {
+    use sa_core::orig::host::set;
+    set::<fn(f64, f64) -> f64>("sa_core::bindings::crt_pow", sa_math::libm::pow);
+    set::<fn(f64) -> f64>("sa_world::bindings::crt_floor", sa_math::fpu::floor_f64);
+    set::<fn(GPtr<u8>, GPtr<u8>, u32) -> GPtr<u8>>("sa_core::bindings::crt_strncpy", strncpy);
+}
+
+/// CRT `strncpy`: copies up to `n` bytes, stops after the terminating NUL and pads the rest with zeros.
+fn strncpy(dst: GPtr<u8>, src: GPtr<u8>, n: u32) -> GPtr<u8> {
+    let mut i = 0u32;
+    while i < n {
+        let c = src.byte_add(i as isize).read();
+        dst.byte_add(i as isize).write(c);
+        i += 1;
+        if c == 0 {
+            break;
+        }
+    }
+    while i < n {
+        dst.byte_add(i as isize).write(0);
+        i += 1;
+    }
+    dst
+}
+
 /// Registers the allocator stand-ins (every `orig!` declaration of `operator new` / `new[]` the
 /// pool constructors use) and records which one the current spec's original calls.
 pub fn expect_allocator(addr: u32) {

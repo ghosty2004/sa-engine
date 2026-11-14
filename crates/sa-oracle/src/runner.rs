@@ -596,6 +596,7 @@ pub fn patched(img: &Arc<Image>, spec: &Spec) -> Arc<Image> {
 
 pub fn run(spec: &Spec, img: &Arc<Image>, cfg: &Cfg) -> Result<Report, String> {
     let t0 = Instant::now();
+    crate::hosted::install_crt();
     let img = &patched(img, spec);
     let prep = prepare(img, spec)?;
     let edges = (spec.edges)();

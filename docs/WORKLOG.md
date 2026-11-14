@@ -1423,3 +1423,79 @@
   step-3 binary identical to step 2's).
 - Also found: `tools/gen/audio_patterns.py --check` already failed on master (regeneration adds 3 hooks:
   0x4F4620, 0x59CD50, 0x59CB70); left as is.
+
+## 2026-11-15 — DEDUP-1 pass 2: binding signatures from the original, ADR-003 steps 4, 5, 7 (agent, branch worktree-agent-a1a2b663eb9c1be36)
+- Base: master 3e761b12 (fast-forwarded). Commits: A 11eece4d, B 7e89e5fc, D 2637faf5, E 541c46ea, C 21cf78a5 +
+  74531a50 + 06303313, F (gates, docs, queue). Scratch scripts under target/dedup2 (not committed).
+- A (binding conflicts): `tools/gen/bindings.py --resolve` (`tools/gen/bindings_migrate.py`) merged every declaration
+  of a repeated or bound address into its binding. Where declarations disagreed, the signature came from the exe
+  (`tools/lib/abi.py` on `tools/lib/exe.py`: the callee's `ret N`, ECX reads, `add esp, N` at call sites, the
+  width each argument is read with, how the original's callers use the result: AL / AX movsx/movzx / EAX / ST0);
+  a pointer where any caller passes one, `f32` where any passes a float; a binding that targets a port has the
+  port's signature. Callers convert at the call expression only (a rustc-diagnostics fixer handled the calls the
+  textual rewrite could not type). Round A: 4183 declarations merged, bindings 1881 → 2559, 324 signatures changed.
+  Real mismatches with the original found (potential port bugs, all fixed at the call site):
+  - results read wider than the original returns (AL / AX taken as EAX, the high bits undefined): 49 call sites —
+    0x4076A0 IsVeryBusy, 0x420920 / 0x420950 node compares, 0x43AC40, 0x448D30 IsEntityEntirelyOutside, 0x44DD10
+    AreNodesLoadedForArea, 0x454C70 pickup IsVisible, 0x4C74D0 FindOtherUpgrade (i16), 0x4D6760, 0x4DA030
+    GetIsTypePhysical, 0x4DC670, 0x4EEA80 (2), 0x4EF570 / 0x4EF5D0 (u16), 0x53C4A0 / 0x53C4B0 CanSeeOutside /
+    CanSeeWater, the CPad axes 0x53FB80 / 0x53FBD0 / 0x53FC90 / 0x53FD30 / 0x540040 / 0x541040 / 0x5410C0 (i16,
+    8 sites), 0x55E710 IsWater and the nine 0x55EA30..0x55EB30 IsAudio* surface tests, 0x562330 IsInPursuit,
+    0x5E0170 CPed::IsAlive (2), 0x5EFFE0 CPed::Say (i16, 6 sites), 0x5F1C40 CanPedTargetPed, 0x5F6A10 IsMember (2).
+    These callers now get the original's width zero- / sign-extended (behaviour changes only where the callee left
+    high bits set; verify-all IDENTICAL, so none of the recordings exercised a difference).
+  - convention / arity: 0x49E650 Fx_c::Render is stdcall(2), declared thiscall(3) in sa-core; 0x4E9800, 0x531F20,
+    0x540950, 0x540980, 0x65E7F0 are static (ECX unread), declared thiscall with a `this` (calls drop it; the menu's
+    analogue callbacks take a closure); 0x7F3820 RwTextureDestroy declared with an extra argument; 0x61C740's reg
+    form lacked `; pop` (the callee pops 4); 0x743C60 GetWeaponInfo reads `skill` as a byte (u8 now).
+  - ports whose signature drops a result the original's callers use: 0x571B70 CEntity::RegisterReference (its EAX is
+    returned by CCoverPoint::ReserveCoverPointForPed) and 0x4087E0 CStreaming::RequestModel (a script-brain caller
+    keeps EAX's high word): the bindings keep `-> u32` and stay on the phase B registry (no ported twin) — the ports
+    return nothing there (ROADMAP note).
+- B: relative `=>` paths, typed struct pointers (binding by full path or `GPtr<u8>` + `.cast()`), local / global /
+  path aliases (`Ent`, `CdPtr`, `MiPtr`, array aliases), lint-only attributes, L1 host stand-in keys (renamed to
+  the binding's path), CVector-by-value spellings (the binding takes the vector; word callers build it), X87
+  results (a plain-convention binding returning `X87` renders as `reg("args = …")`), the per-crate phase B adapters
+  of registered ports (55 `*_native` / `*_port` / `*_abi` / `*_st0_rust` functions) replaced by the port. Bindings
+  below their port's crate get a generated ported twin in the port's crate (`port` column, 297 rows) so phases B/C
+  and the host L1 specs call the port directly as before (found: l1test failed on round A until the twins). Final:
+  2633 bindings in 16 crates; outside the binding modules only C varargs stay declared per caller (96 declarations
+  of 7 addresses, `bindings.VARARGS`); `--check` fails on any other. audio_patterns.py: the user-track player
+  (0x59CB70 / 0x59CD50) and 0x4F4620 are excluded (decoding / file output stay original, state.csv "not-ported"),
+  so its `--check` passes. Not done: the generators' own declarations (1223 word-level `u32` declarations in
+  generated files, 515 of them at 350 bound addresses, 133 addresses in more than one generated file).
+- C: one shared build script (`crates/phase_a_build.rs`) for the 16 port crates; sa-testkit (dev-dependency) for the
+  hooks.rs test helpers copied 15× (exe_image_bytes, exe_size, count_hooks, the initial-values check);
+  `sa_world::world::common` re-exports sa_core::field's at/rd/wr/g; the other helper copies became imports
+  (generic ones in sa_core::field / sa_math::fpu, the rest in the lowest crate every copy may depend on; a copy
+  merges only when every free name it uses resolves to the same item, re-exports followed). dupes.py: renamed-copy
+  groups across crates 124 / 227 redundant copies → 44 / 68 (exact-body 82 / 142 → 30 / 40; names in ≥ 2 crates
+  552 → 515). `--check` + `tools/verify/dupes-allow.txt`: 43 groups listed (25 across the samp-rs workspace, 10
+  different things — one offset read for fields of different classes, ports of different functions —, 9 pending
+  a hand merge).
+- D: sa-game's platform cfgs (app.rs 11, lib.rs 6 conditions) moved into `crates/sa-game/src/platform/` (native_main,
+  game_window, screen, web, webfs; mod.rs is the only target switch).
+- E: step 4 — sa-viewer, sa-formats, sa-rw and sa-rw-wgpu's world Renderer were used only by the NATIVE-DEMO viewer:
+  retired (−28.7k lines); sa-rw-wgpu keeps the D3D9 seam + `dxt`. Step 5 — `tools/lib/exe.py` (exe, catalogue,
+  callee facts) used by patterns.py / ai_patterns.py (their `--check` output unchanged), `abi.py`, `layers.py`.
+- F: writer gate steps `dupes`, `cfg` (`tools/verify/cfg_check.py` + `cfg-baseline.txt`: 367 conditions in 139 files
+  outside the backends, only shrinks), `layers` (`tools/verify/crate_layers.py`, ADR-003 §3.4 order as measured:
+  sa-pop below veh/cam/render); `bindings` strict. PLAN.md F14 (code quality). ADR-003 §3.4, §4, §5.1, §5.2.
+  README / GETTING-STARTED / Makefile (`make structure`).
+- Phase B: a native offscreen run of the tree crashed in RsInitialize (`free(): invalid pointer`) and RwInitialize:
+  bindings had taken a Rust target some callers' declarations named where the others had reached the phase B
+  registry's implementation (CMemoryMgr::FreeAlign → sa-game's stand-in, paired with its MallocAlign; CRT pow / floor
+  / strncpy → the registry's CRT replacements). Fixed (825c2d09), and `bindings.py --check` now fails when a binding
+  a host stand-in replaces is not `unported`. Offscreen 600 frames `--fixed-step 33.333`: the same report as master's
+  sa-game (616 ok, 0 blocked, 0 crashed) except the registry call counts (fewer calls go through it). The host L2
+  specs needed the same: `sa_oracle::hosted::install_crt` registers the CRT stand-ins (pow, floor, strncpy) those
+  ports reach. 46 bindings still target a Rust function other than the address's registered port (adapters /
+  alternatives the callers' declarations named): pass 3 checks each.
+- Gates: host clippy -D warnings, i686 DLL + i686 clippy, wasm32 sa-ports, i686 sa-game (+samp), `FEATURES=samp
+  tools/web/build.sh` (wasm-bindgen 0.2.130), make test, sa-hook lib tests, l1test (after B: 18 passed; final: 18 passed, 1 ignored),
+  bindings / dupes / cfg / layers / state checks. samp-rs not touched.
+- verify-all: A `dedup2-a` IDENTICAL 13/13 (DLL 4df7befa…), B `dedup2-b` IDENTICAL 13/13 (DLL a55c3fed…), final
+  `dedup2-final` (06303313, DLL 61cd9877…; the later commits change only phase B targets, unused code and the L1
+  harness) IDENTICAL 13/13; `dedup2-final-u` (`SA_UNVERIFIED=all`, lanes 4-5) 12/13 IDENTICAL + weapon-combat
+  1792 common frames, the same as master (UNVERIFIED-WC, not worse). Not run: a native window or browser session
+  (the D refactor's backends are checked by the offscreen run and the web build only).

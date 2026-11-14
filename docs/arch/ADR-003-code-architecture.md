@@ -158,6 +158,11 @@ SAMP-UI-DEDUP covers the SA:MP UI part of 3.1 / 3.2 in parallel.
   port (`port` column) and the generator also writes the binding into the port's crate with the port as target;
   callers that may depend on that crate import the twin, so phases B/C and host tests call the port directly.
   Both are generated from one CSV row.
+- **Host stand-ins and the registry stay authoritative.** A binding that a host stand-in replaces
+  (`orig::host::set("sa_x::bindings::name", ..)`: sa-game's platform layer, the L1 harness) stays `unported`
+  without a twin (`--check` enforces it), and so do the CRT functions the phase B registry serves (pow, floor,
+  strncpy, ...): a Rust target there would bypass the implementation every other caller gets (found: FreeAlign
+  freeing a stand-in allocation with the CRT's `free`).
 - **Shared build script.** The port crates share `crates/phase_a_build.rs` (`build = "../phase_a_build.rs"`).
 
 ### 5.2 Step 4: the viewer stack (decided in DEDUP-1 pass 2)
