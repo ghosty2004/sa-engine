@@ -1174,3 +1174,29 @@
 - Fast-forwarded master to FRAMELIMIT's 8592d839 (rebased on a266cc61): CRealTimeShadowManager::ReInit 0x706870 (the vsync toggle resets the D3D9 device; the reset callback 0x5BA120 makes the next shadow update reinit), plus walk blockers surfaced by the menu timing (0x4AF700, 0x649020, 0x664590, 0x6648C0, 0x4AC920) and CEventVehicleCollision::AffectsPed 0x4B2EE0 copied from CARJACK; `SA_GAME_KEYS` accepts `esc`.
 - Agent evidence: scripted toggle ON→OFF→ON→OFF then 2616 iterations, 0 blocked; window run 0 blocked; gta_sa.set byte 0xB35 saved; verify-all framelimit-final IDENTICAL 13/13 with the new batches on. Main session: sa-hook lib 58/58, i686 sa-game build, play package refreshed.
 - CARJACK registers 0x4AC920 and 0x4B2EE0 too: keep master's when it lands. Driving later hits ProcessTrainCrossingBehaviour 0x5A0B50 (independent of the menu).
+## 2026-11-14 — CARJACK: pulling drivers out of their cars natively (agent, branch worktree-agent-a271da3abdc02b710)
+- Blocker from the play build: `calls unported v_task_make_abortable (0x6486f0)` right after a drag-out. Ported from
+  the bytes (batch `carjack-1`, 28 hooks + 1 native, all unverified; rebased on master 2ab733fe, whose FRAMELIMIT
+  registrations of 0x4AC920 and 0x4B2EE0 — the same bodies — replaced CARJACK's): the slow drag-out family
+  (`crates/sa-ai/src/car_slow_drag_out.rs`: 0x648100, 0x648180, 0x64E060, SayJacking 0x6497F0, 0x64C190, 0x64E180,
+  0x64C220, 0x648520, 0x6485A0, 0x64C6A0 (+ keycells reader 0x402265), 0x64C810, 0x6486F0, 0x648A10), jack events
+  (`jack_events.rs`: CEventPedEnteredMyVehicle ctor/dtor 0x4AEAC0/0x4AEB90, CEventSeenPanickedPed dtor 0x4B2130,
+  CEventVehicleCollision dtor 0x4AC920), CEventVehicleCollision::AffectsPed 0x4B2EE0, CTaskSimpleCarDrive's close-door
+  callback 0x63C840, CTaskComplexLeaveCarAndFlee ctor/CreateNextSubTask 0x63BF90/0x642390, the retaliation tasks
+  (`kill_ped_on_foot.rs`: CTaskComplexKillPedOnFoot dtor 0x620EF0, CreateSubTask 0x625E70, ControlSubTask 0x626260,
+  CreateNextSubTask 0x62B150, CreateFirstSubTask 0x62B490, taunt 0x65E9A0; `retaliation_car_tasks.rs`:
+  CTaskComplexDestroyCar::ControlSubTask 0x6288C0, CTaskComplexDragPedFromCar::CreateFirstSubTask 0x643D00),
+  CAEPedSpeechAudioEntity::GetCurrentCJMood 0x4E53B0 (sa-audio `cj_mood.rs`), CPed::UpdateStatLeavingVehicle 0x5E01B0
+  (lone `ret`, native). sa-ai's std7 NATIVES now lists 16 generated `#[native]`s no list carried (0x655E00 was a
+  blocker). Dropped in the rebase: 0x485B10 / 0x719360 (INTRO-2 ported them).
+- `SA_GAME_JACK=ITER[:DIST[:SIDE]],...` (exploration): teleports CJ in front of the nearest non-police driven car
+  (drivers stop for a ped in their path) and prints the jacked driver's state for 400 iterations.
+- Evidence: `SA_GAME_SCRIPT_SKIP=1 sa-game --start-in-world --fixed-step 40 --frames 4000` with
+  `SA_GAME_JACK=1250:7,1650:7,2050:7,2450:7,2850:7` and F/W keys per jack (target/carjack/jack-summary.txt):
+  4 drivers jacked (models 475, 600, 439, 475), each dragged out (state 50 → 0 → 1, out of the vehicle, walks away),
+  CJ drives off each time; 4000 iterations, blocker list empty. Contact sheets + MP4 in target/carjack/.
+- Other routes still stop on: KillPedOnFootMelee::CreateSubTask 0x626AC0 (+ its ControlSubTask 0x626D90 /
+  CreateNextSubTask 0x62BC10), CTaskSimpleGoToPointFine::ProcessPed 0x663540 (+ SetBlendedMoveAnim 0x65EF80),
+  CVehicle::IsSphereTouchingVehicle 0x6D84D0, UpdateCarAI's law-enforcer/wanted path (police after a jack),
+  MakeTyresMuddySectorList 0x6AE0D0, 0x649550, 0x6DF3D0, IsEntityBlockingTarget 0x5F3970, 0x661BB0, the walk-into-fire
+  events 0x4B6840/0x4B1F00, burning car 0x4DCBE0; KillPedWithCar 0x5F0360 (INTRO-2 lane) and 0x649020 (FRAMELIMIT).
