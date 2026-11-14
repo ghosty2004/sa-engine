@@ -810,6 +810,39 @@ fn find_chat_task(ped: GPtr<u8>) -> GPtr<u8> {
     GPtr::NULL
 }
 
+// ---- FRONTIER-1 (batch frontier-1-1): the walk-into-fire events and the player-ped collision event --------------
+
+orig! {
+    /// `CEvent::~CEvent` as inlined by the fire events (0x4B1F00)
+    fn dtor_4b1f00(this: GPtr<u8>) = thiscall 0x4B1F00 => event_base_dtor_4b1f00;
+}
+
+/// `CEventPotentialWalkIntoFire::Destructor` (0x4B1F00, folded: the CEvent part only): `vtbl = 0x85AB38` (CEvent), nothing else.
+#[hook(addr = 0x4B1F00, conv = thiscall, name = "CEventPotentialWalkIntoFire::Destructor", expect = "C7 01 38 AB 85 00 C3", preserve = "ecx",
+       unverified = "frontier-1-1", route = "L2", hazards = "heap-writes,preserved-regs")]
+pub fn event_base_dtor_4b1f00(this: GPtr<u8>) {
+    wr::<u32>(this, 0, 0x85_AB38);
+}
+
+/// `CEventPotentialWalkIntoFire::~CEventPotentialWalkIntoFire` (0x4B6840, scalar deleting): 0x4B1F00, then the
+/// inlined pool delete when `flags & 1`.
+#[hook(addr = 0x4B6840, conv = thiscall, name = "CEventPotentialWalkIntoFire::~CEventPotentialWalkIntoFire",
+       expect = "56 E8 BA B6 FF FF",
+       unverified = "frontier-1-1", route = "L2", hazards = "heap-writes")]
+pub fn event_potential_walk_into_fire_sdd_4b6840(this: GPtr<u8>, flags: u32) -> GPtr<u8> {
+    sdd_inline(this, flags, dtor_4b1f00)
+}
+
+/// `CEventPlayerCollisionWithPed::~CEventPlayerCollisionWithPed` (0x5FEE80): `vtbl = 0x86C9B0`, then a tail jump
+/// into `CEventPedCollisionWithPed`'s destructor (0x4ACA70).
+#[hook(addr = 0x5FEE80, conv = thiscall, name = "CEventPlayerCollisionWithPed::Destructor",
+       expect = "C7 01 B0 C9 86 00 E9",
+       unverified = "frontier-1-1", route = "L2", hazards = "heap-writes")]
+pub fn event_player_collision_with_ped_dtor_5fee80(this: GPtr<u8>) {
+    wr::<u32>(this, 0, 0x86_C9B0);
+    dtor_4aca70(this);
+}
+
 /// `vt_85b0b0::AffectsPed(CPed*)` (0x4AEF00): both the ped and the source (+0x14) alive, the ped not
 /// already looking at the source (`g_ikChainMan`), and unless one of them has no 0x4B2/0x4BF/0x4B3
 /// task, their task types differ (source's type read first).
@@ -839,6 +872,9 @@ pub fn vt_85b0b0_affects_ped_4aef00(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
 }
 
 pub const HOOKS: &[HookReg] = &[
+    HOOK_EVENT_BASE_DTOR_4B1F00,
+    HOOK_EVENT_POTENTIAL_WALK_INTO_FIRE_SDD_4B6840,
+    HOOK_EVENT_PLAYER_COLLISION_WITH_PED_DTOR_5FEE80,
     HOOK_EVENT_OPERATOR_NEW_4B5620,
     HOOK_EVENT_OPERATOR_DELETE_4B5630,
     HOOK_VT_85AE88_GET_SOURCE_ENTITY_4AE230,
