@@ -873,7 +873,13 @@ pub(crate) fn did_poll(_this: GPtr<ComObj>) -> i32 {
 }
 pub(crate) fn did_get_device_state(this: GPtr<ComObj>, size: u32, data: GPtr<u8>) -> i32 {
     let bytes: Option<Vec<u8>> = with("IDirectInputDevice8::GetDeviceState", |p| match this.addr() {
-        DI_MOUSE if size == 0x14 => Some(p.input.di_mouse_state().to_bytes().to_vec()),
+        DI_MOUSE if size == 0x14 => {
+            // relative axes since the last read, as DirectInput reports them
+            let b = p.input.di_mouse_state().to_bytes().to_vec();
+            p.input.mouse_delta = (0.0, 0.0);
+            p.input.wheel = 0.0;
+            Some(b)
+        }
         a @ (DI_PAD1 | DI_PAD2) if size == 0x110 => {
             let i = usize::from(a == DI_PAD2);
             p.input.pads.get(i).map(|g| {

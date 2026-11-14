@@ -460,7 +460,13 @@ impl Session {
             for e in &input.events {
                 p.queue.push_event(e, t);
             }
+            // DirectInput's relative mouse axes accumulate until the game reads them (`GetDeviceState`, once per
+            // game frame): motion that arrives during the frame limiter's waiting iterations must not be lost
+            let (unread, unread_wheel) = (p.input.mouse_delta, p.input.wheel);
             p.input = input;
+            p.input.mouse_delta.0 += unread.0;
+            p.input.mouse_delta.1 += unread.1;
+            p.input.wheel += unread_wheel;
         });
         if !QUIET_FRAMES.load(std::sync::atomic::Ordering::Relaxed) {
             println!("frame {n}:");
