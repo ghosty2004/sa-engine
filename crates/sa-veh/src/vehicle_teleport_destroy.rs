@@ -8,8 +8,8 @@ use sa_core::{hook, orig};
 
 use crate::common::{rd, wr};
 
-use sa_core::bindings::world_add;
-use sa_core::bindings::world_remove;
+use sa_world::bindings::world_add;
+use sa_world::bindings::world_remove;
 use sa_world::bindings::darkel_register_kill_by_player;
 use sa_world::bindings::is_coop_game_going_on;
 use sa_world::bindings::set_orientation as placeable_set_orientation;

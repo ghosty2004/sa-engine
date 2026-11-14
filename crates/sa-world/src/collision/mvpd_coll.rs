@@ -155,7 +155,7 @@ pub fn is_stored_poly_still_valid_vertical_line(pos: GPtr<u8>, z: f32, cp: GPtr<
     let mut out = [0f32; 3];
     let r = cross_product(GPtr::from_raw(&mut out).cast(), GPtr::from_raw(&mut e2).cast(), GPtr::from_raw(&mut e1).cast());
     let mut n = [rd::<f32>(r, 0), rd::<f32>(r, 4), rd::<f32>(r, 8)];
-    vector_normalise(GPtr::from_raw(&mut n).cast());
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(GPtr::from_raw(&mut n).cast()));
     let d = x(n[2]).fmul_m(v[0][2]).fadd(x(n[1]).fmul_m(v[0][1])).fadd(x(n[0]).fmul_m(v[0][0])).to_f32();
     let zero = x(g::<f32>(0x858B50).read());
     let le = |p: X87, q: X87| p.fcom(q).test_any(0x41);

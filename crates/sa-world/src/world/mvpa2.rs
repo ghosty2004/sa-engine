@@ -12,17 +12,14 @@ use super::common::{g, rd, wr, x};
 /// `CPools::ms_pVehiclePool`
 const VEHICLE_POOL: usize = 0xB74494;
 
-use sa_core::bindings::find_player_vehicle as world_find_player_vehicle;
+use crate::bindings::find_player_vehicle as world_find_player_vehicle;
 use sa_core::bindings::quad_tree_get_all_matching_rect;
-use sa_core::bindings::world_remove;
-use sa_stream::bindings::placeable_allocate_matrix;
+use crate::bindings::world_remove;
+use crate::bindings::placeable_allocate_matrix;
 use crate::bindings::flush_single as single_link_flush;
 use sa_core::bindings::matrix_assign;
+use crate::bindings::world_process_vertical_line;
 orig! {
-    /// `CWorld::ProcessVerticalLine(const CVector&, float, CColPoint&, CEntity*&, bool x6, CStoredCollPoly*)`
-    /// (0x5674E0)
-    #[allow(clippy::too_many_arguments)]
-    fn world_process_vertical_line(p: GPtr<u8>, min_z: u32, cp: GPtr<u8>, ent: GPtr<u8>, b0: u32, b1: u32, b2: u32, b3: u32, b4: u32, b5: u32, poly: u32) -> u8 = cdecl 0x5674E0 => unported;
     /// virtual deleting destructor (vtable +0)
     fn v_delete(e: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
     /// `CPointRoutePool::New()` (0x41B5B0)
@@ -67,7 +64,7 @@ pub fn find_ground_z_for_3d_coord(px: f32, py: f32, pz: f32, found: GPtr<u8>, en
     let mut out = [0u32; 1];
     let hit = world_process_vertical_line(
         GPtr::<f32>::from_raw(point.as_mut_ptr()).cast(),
-        0xC47A_0000,
+        f32::from_bits(0xC47A_0000),
         GPtr::<u32>::from_raw(colpoint.as_mut_ptr()).cast(),
         GPtr::<u32>::from_raw(out.as_mut_ptr()).cast(),
         1,
@@ -76,7 +73,7 @@ pub fn find_ground_z_for_3d_coord(px: f32, py: f32, pz: f32, found: GPtr<u8>, en
         0,
         0,
         0,
-        0,
+        GPtr::NULL,
     );
     if hit == 0 {
         if !found.is_null() {

@@ -52,7 +52,7 @@ pub fn go_to_vehicle_and_lean_point(this: GPtr<u8>, out: GPtr<u8>, ped: GPtr<u8>
         x(max_x).fadd_m(0.5)
     };
     let mut local = [lx.to_f32(), 0.0f32, 0.0f32];
-    matrix_mul_vec(out.cast::<f32>(), rd::<GPtr<u8>>(veh, 0x14), GPtr::from_raw(&mut local as *mut [f32; 3]).cast());
+    matrix_mul_vec(out.cast::<u8>(), rd::<GPtr<u8>>(veh, 0x14), GPtr::from_raw(&mut local as *mut [f32; 3]).cast());
     out
 }
 

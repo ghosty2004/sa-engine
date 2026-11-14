@@ -22,7 +22,7 @@ use crate::bindings::process_wheel_rotation;
 use sa_world::bindings::register_corona;
 use crate::bindings::store_shadow_for_vehicle;
 use sa_core::bindings::matrix_attach;
-use sa_core::bindings::matrix_dtor;
+use sa_world::bindings::matrix_dtor;
 use sa_core::bindings::matrix_rotate_x;
 use sa_core::bindings::matrix_set_rotate;
 use sa_core::bindings::matrix_update_rw;
@@ -37,16 +37,15 @@ use sa_core::bindings::matrix_mul_vec as matrix_mul_vector;
 use sa_core::bindings::matrix_set_translate_only;
 use sa_stream::bindings::get_frame_from_id;
 use sa_world::bindings::entity_get_col_model as get_col_model;
-use sa_world::bindings::get_vehicle_appearance;
+use crate::bindings::get_vehicle_appearance;
 use sa_world::bindings::multiply3x3;
 use sa_world::bindings::placeable_get_top_direction as get_top_direction;
+use sa_world::bindings::physical_get_speed as get_speed;
 orig! {
     /// `CVehicle::AddWaterSplashParticles()` (0x6DDF60)
     fn add_water_splash_particles(v: GPtr<u8>) = thiscall 0x6DDF60 => unported;
     /// `CCamera::GetLookingForwardFirstPerson()` (0x50AED0) on `TheCamera`
     fn get_looking_forward_first_person(cam: GPtr<u8>) -> u8 = thiscall 0x50AED0 => unported;
-    /// `CPhysical::GetSpeed(CVector)` (0x542CE0)
-    fn get_speed(e: GPtr<u8>, out: GPtr<CVector>, point: CVector) -> GPtr<CVector> = thiscall 0x542CE0 => sa_world::physical::forces::get_speed;
     /// `CAutomobile::ProcessSwingingDoor(int32 node, eDoors)` (0x6A9D70)
     fn process_swinging_door(v: GPtr<u8>, node: i32, door: i32) = thiscall 0x6A9D70 => crate::mvpb_a5::process_swinging_door;
     /// `CBouncingPanel::ProcessPanel(CVehicle*, RwFrame*, CVector, CVector, float, float)` (0x6F49A0), floats as bits
@@ -314,11 +313,11 @@ fn simple_wheel_contacts(this: GPtr<u8>) {
             ld(this, comp).fmul_m(1.5).to_f32(),
         );
         let mut o = CVector::default();
-        let r = GPtr::<f32>::cast::<u8>(matrix_mul_vector(
-            GPtr::<u8>::cast::<f32>(GPtr::from_raw(&mut o).cast()),
+        let r = matrix_mul_vector(
+            GPtr::from_raw(&mut o).cast(),
             rd::<GPtr<u8>>(this, 0x14),
             GPtr::from_raw(&mut local).cast(),
-        ));
+        );
         let v = rv(r, 0);
         wr::<f32>(this, out, v.x);
         wr::<f32>(this, out + 4, v.y);
@@ -425,7 +424,7 @@ fn model_lights(this: GPtr<u8>, model: u16) {
             let mut local = CVector::new(0.0, f32::from_bits(ly), f32::from_bits(lz));
             let lp = GPtr::from_raw(&mut local).cast::<u8>();
             let mut w = CVector::default();
-            let wp = GPtr::<f32>::cast::<u8>(matrix_mul_vector(GPtr::<u8>::cast::<f32>(GPtr::from_raw(&mut w).cast()), rd::<GPtr<u8>>(this, 0x14), lp));
+            let wp = matrix_mul_vector(GPtr::from_raw(&mut w).cast(), rd::<GPtr<u8>>(this, 0x14), lp);
             let world = rv(wp, 0);
             let b = ftol32(x(g::<f32>(0xB7_C4E4).read()).fmul_m(10.0)) as u32;
             register_corona(
@@ -436,18 +435,18 @@ fn model_lights(this: GPtr<u8>, model: u16) {
                 0,
                 0xFF,
                 lp,
-                f32::from_bits(0x3F4C_CCCD),
-                f32::from_bits(corona_range()),
+                f32::from_bits(0x3F4C_CCCD).to_bits(),
+                f32::from_bits(corona_range()).to_bits(),
                 1,
                 0,
                 1,
                 0,
                 0,
-                f32::from_bits(0),
+                f32::from_bits(0).to_bits(),
                 0,
-                f32::from_bits(0x3FC0_0000),
+                f32::from_bits(0x3FC0_0000).to_bits(),
                 0,
-                f32::from_bits(0x4170_0000),
+                f32::from_bits(0x4170_0000).to_bits(),
                 0,
                 1,
             );
@@ -495,18 +494,18 @@ fn model_lights(this: GPtr<u8>, model: u16) {
                 0xFF,
                 0xFF,
                 GPtr::from_raw(&mut local).cast(),
-                f32::from_bits(0x3ECC_CCCD),
-                f32::from_bits(corona_range()),
+                f32::from_bits(0x3ECC_CCCD).to_bits(),
+                f32::from_bits(corona_range()).to_bits(),
                 0,
                 0,
                 0,
                 0,
                 0,
-                f32::from_bits(0),
+                f32::from_bits(0).to_bits(),
                 0,
-                f32::from_bits(0x3FC0_0000),
+                f32::from_bits(0x3FC0_0000).to_bits(),
                 0,
-                f32::from_bits(0x4170_0000),
+                f32::from_bits(0x4170_0000).to_bits(),
                 0,
                 1,
             );
@@ -649,18 +648,18 @@ fn light_bar(this: GPtr<u8>, model: u16) {
             u32::from(b),
             0xFF,
             GPtr::from_raw(&mut lp).cast(),
-            f32::from_bits(0x3ECC_CCCD),
-            f32::from_bits(corona_range()),
+            f32::from_bits(0x3ECC_CCCD).to_bits(),
+            f32::from_bits(corona_range()).to_bits(),
             0,
             0,
             0,
             0,
             0,
-            f32::from_bits(0),
+            f32::from_bits(0).to_bits(),
             0,
-            f32::from_bits(0x3FC0_0000),
+            f32::from_bits(0x3FC0_0000).to_bits(),
             0,
-            f32::from_bits(0x4170_0000),
+            f32::from_bits(0x4170_0000).to_bits(),
             0,
             1,
         );

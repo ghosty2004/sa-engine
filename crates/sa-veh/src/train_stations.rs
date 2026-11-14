@@ -10,14 +10,14 @@ use sa_world::world::common::find_player_vehicle;
 use crate::common::{b, ftol32, g, rd, wr, x, xi};
 
 use sa_core::bindings::crt_free as operator_delete;
-use sa_core::bindings::load_all_requested_models;
+use sa_stream::bindings::load_all_requested_models;
 use sa_core::bindings::streaming_load_scene as load_scene;
-use sa_core::bindings::world_add;
-use sa_core::bindings::world_remove;
+use sa_world::bindings::world_add;
+use sa_world::bindings::world_remove;
 use sa_world::bindings::get_stat_value;
 use sa_world::bindings::set_orientation;
 use sa_core::bindings::game_logic_pass_time;
-use sa_stream::bindings::get_level_from_position;
+use sa_world::bindings::get_level_from_position;
 use sa_world::bindings::world_process_vertical_line as process_vertical_line;
 orig! {
     /// `CTrain::FindNextStationPositionInDirection(bool, float, float*, int32*)` (0x6F5F00)

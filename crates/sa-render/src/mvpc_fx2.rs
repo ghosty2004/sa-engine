@@ -10,7 +10,7 @@ use crate::common::{ftol32, rd, wr};
 
 pub use crate::bindings::fx_rw_matrix_create;
 pub use crate::bindings::fx_rw_matrix_destroy;
-pub use sa_core::bindings::rw_matrix_multiply;
+pub use sa_rwcore::bindings::rw_matrix_multiply;
 pub use sa_core::bindings::rw_matrix_update;
 pub use crate::bindings::create_particle;
 orig! {

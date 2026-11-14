@@ -4,25 +4,20 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::vector::CVector;
 use sa_math::x87::X87;
 
 use crate::common::{f32_of, ftol32, g, x, xi};
 
-use sa_pop::bindings::store_shadow_to_be_rendered;
+use sa_world::bindings::store_shadow_to_be_rendered;
 use sa_world::bindings::process_line_of_sight;
 use sa_world::bindings::register_corona;
 use sa_world::bindings::rw_im3d_end;
 use sa_world::bindings::rw_im3d_render_indexed_primitive;
 use sa_world::bindings::rw_im3d_transform;
-orig! {
-    /// `CVector::Normalise()` (0x59C910)
-    fn normalise(v: GPtr<CVector>) = thiscall 0x59C910 => sa_world::collision::data::normalise_port;
-    /// `CrossProduct(CVector*, const CVector&, const CVector&)` (0x59C730)
-    fn cross_product(out: GPtr<CVector>, a: GPtr<CVector>, b: GPtr<CVector>) -> GPtr<CVector>
-        = cdecl 0x59C730 => sa_world::collision::data::cross_product_port;
-}
+use sa_core::bindings::cross_product;
+use sa_core::bindings::vector_normalise as normalise;
 
 /// `TempBufferVerticesStored` / `TempBufferIndicesStored`.
 const NUM_VERTS: usize = 0xC4B950;
@@ -71,7 +66,7 @@ pub fn search_light_cone(id: u32, ox: f32, oy: f32, oz: f32, tx: f32, ty: f32, t
     let mut t = [tx, ty, tz];
     // dir = normalised(target - origin)
     let mut dir = [f32_of(x(tx).fsub_m(ox)), f32_of(x(ty).fsub_m(oy)), f32_of(x(tz).fsub_m(oz))];
-    normalise(v3(&mut dir));
+    normalise(GPtr::<sa_math::vector::CVector>::cast::<[f32;3]>(v3(&mut dir)));
     let a = x(dir[0]).fmul_m(3.0);
     let b = x(dir[1]).fmul_m(3.0);
     let c = f32_of(x(dir[2]).fmul_m(3.0));
@@ -95,7 +90,7 @@ pub fn search_light_cone(id: u32, ox: f32, oy: f32, oz: f32, tx: f32, ty: f32, t
         f32_of(x(cam.wrapping_index(1).read()).fsub_m(o[1])),
         f32_of(x(cam.wrapping_index(2).read()).fsub_m(o[2])),
     ];
-    normalise(v3(&mut cd));
+    normalise(GPtr::<sa_math::vector::CVector>::cast::<[f32;3]>(v3(&mut cd)));
     let mut dot = x(cd[0]).fmul_m(dir[0]).fadd(x(cd[1]).fmul_m(dir[1])).fadd(x(cd[2]).fmul_m(dir[2]));
     if !dot.fcom(x(0.0)).test_parity(0x05) {
         dot = x(0.0);
@@ -107,8 +102,8 @@ pub fn search_light_cone(id: u32, ox: f32, oy: f32, oz: f32, tx: f32, ty: f32, t
     let d6 = dot.fmul(d5);
     let size = f32_of(x(20.0).fmul(d6));
     let alpha = ftol32(d6.fmul_m(255.0)) as u32;
-    register_corona(id, GPtr::NULL, 0xC8, 0xC8, 0xFF, alpha, p8(&mut o), f32::from_bits(size.to_bits()), f32::from_bits(100f32.to_bits()), 0, 0, 1, 0, 0, f32::from_bits(0),
-                    0, f32::from_bits(1.5f32.to_bits()), 0, f32::from_bits(15f32.to_bits()), 0, 0);
+    register_corona(id, GPtr::NULL, 0xC8, 0xC8, 0xFF, alpha, p8(&mut o), f32::from_bits(size.to_bits()).to_bits(), f32::from_bits(100f32.to_bits()).to_bits(), 0, 0, 1, 0, 0, f32::from_bits(0).to_bits(),
+                    0, f32::from_bits(1.5f32.to_bits()).to_bits(), 0, f32::from_bits(15f32.to_bits()).to_bits(), 0, 0);
 
     let mut maxv = 0f32;
     let nv_g = g::<u32>(NUM_VERTS);
@@ -124,11 +119,11 @@ pub fn search_light_cone(id: u32, ox: f32, oy: f32, oz: f32, tx: f32, ty: f32, t
     for i in 0..=40i32 {
         let mut z = [0f32, 0.0, 1.0];
         let mut r = [0f32; 3];
-        cross_product(v3(&mut r), v3(&mut dir), v3(&mut z));
-        normalise(v3(&mut r));
+        cross_product(GPtr::<sa_math::vector::CVector>::cast::<u8>(v3(&mut r)), GPtr::<sa_math::vector::CVector>::cast::<u8>(v3(&mut dir)), GPtr::<sa_math::vector::CVector>::cast::<u8>(v3(&mut z)));
+        normalise(GPtr::<sa_math::vector::CVector>::cast::<[f32;3]>(v3(&mut r)));
         let mut u = [0f32; 3];
-        cross_product(v3(&mut u), v3(&mut r), v3(&mut dir));
-        normalise(v3(&mut u));
+        cross_product(GPtr::<sa_math::vector::CVector>::cast::<u8>(v3(&mut u)), GPtr::<sa_math::vector::CVector>::cast::<u8>(v3(&mut r)), GPtr::<sa_math::vector::CVector>::cast::<u8>(v3(&mut dir)));
+        normalise(GPtr::<sa_math::vector::CVector>::cast::<[f32;3]>(v3(&mut u)));
         let ang = xi(i).fmul_m(pi20);
         let s = f32_of(ang.fsin());
         let co = f32_of(ang.fcos());
@@ -188,7 +183,7 @@ pub fn search_light_cone(id: u32, ox: f32, oy: f32, oz: f32, tx: f32, ty: f32, t
         let len = dz.fmul(dz).fadd(dy.fmul(dy)).fadd(dx.fmul(dx)).fsqrt();
         if !len.fcom(x(100.0)).test_any(0x41) {
             let mut n = [f32_of(dx), f32_of(dy), f32_of(dz)];
-            normalise(v3(&mut n));
+            normalise(GPtr::<sa_math::vector::CVector>::cast::<[f32;3]>(v3(&mut n)));
             let a = x(n[0]).fmul_m(100.0);
             let b = x(n[1]).fmul_m(100.0);
             let c = f32_of(x(n[2]).fmul_m(100.0));
@@ -205,7 +200,7 @@ pub fn search_light_cone(id: u32, ox: f32, oy: f32, oz: f32, tx: f32, ty: f32, t
         vb.wrapping_index(10).write(h[1]);
         vb.wrapping_index(11).write(h[2]);
         let mut v = [f32_of(x(px).fsub_m(o[0])), f32_of(x(py).fsub_m(o[1])), f32_of(x(pz).fsub_m(o[2]))];
-        normalise(v3(&mut v));
+        normalise(GPtr::<sa_math::vector::CVector>::cast::<[f32;3]>(v3(&mut v)));
         let mut d = x(v[0]).fmul_m(cd[0]).fadd(x(v[2]).fmul_m(cd[2])).fadd(x(v[1]).fmul_m(cd[1]));
         if !d.fcom(x(0.0)).test_parity(0x05) {
             d = d.fchs();

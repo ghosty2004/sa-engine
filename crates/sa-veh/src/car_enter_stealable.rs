@@ -12,22 +12,19 @@ use crate::common::{model_info, rd, x};
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::intel_find_task_by_type;
 use sa_world::bindings::intel_is_friendly_with;
-use sa_world::bindings::is_law_enforcement_vehicle as vehicle_is_law_enforcement;
+use crate::bindings::is_law_enforcement_vehicle as vehicle_is_law_enforcement;
 use sa_world::bindings::ped_groups_are_in_same_group as groups_are_in_same_group;
 use sa_world::bindings::ped_groups_get_peds_group as groups_get_peds_group;
-use sa_world::bindings::upside_down_car_check_is_car_upside_down as upside_down_check_is_car_upside_down;
+use crate::bindings::upside_down_car_check_is_car_upside_down as upside_down_check_is_car_upside_down;
 use sa_world::bindings::vehicle_can_be_driven;
 use sa_world::bindings::vehicle_is_on_its_side;
-use sa_world::bindings::vehicle_is_upside_down;
+use crate::bindings::vehicle_is_upside_down;
+use sa_world::bindings::process_line_of_sight as world_process_line_of_sight;
 orig! {
     /// `CPedGroup::IsAnyoneUsingCar(const CVehicle*)` (0x5F7DB0)
     fn group_is_anyone_using_car_c(g: GPtr<u8>, v: GPtr<u8>) -> u8 = thiscall 0x5F7DB0 => group_is_anyone_using_car;
     /// `CCarEnterExit::IsClearToDriveAway(const CVehicle*)` (0x6509B0)
     fn is_clear_to_drive_away_c(v: GPtr<u8>) -> u8 = cdecl 0x6509B0 => is_clear_to_drive_away;
-    /// `CWorld::ProcessLineOfSight(origin, target, CColPoint&, CEntity*&, buildings, vehicles, peds, objects,
-    /// dummies, seeThrough, cameraIgnore, shootThrough)` (0x56BA00)
-    #[allow(clippy::too_many_arguments)]
-    fn world_process_line_of_sight(a: GPtr<u8>, b: GPtr<u8>, cp: GPtr<u8>, e: GPtr<u8>, bu: u32, ve: u32, pe: u32, ob: u32, du: u32, st: u32, ci: u32, sh: u32) -> u8 = cdecl 0x56BA00 => unported;
 }
 
 /// `CCarEnterExit::IsVehicleStealable(const CVehicle* vehicle, const CPed* ped)` (0x6510D0, cdecl, bool in AL).
@@ -73,7 +70,7 @@ pub fn is_vehicle_stealable(veh: GPtr<u8>, ped: GPtr<u8>) -> u8 {
             return 0;
         }
     }
-    let group = groups_get_peds_group(ped);
+    let group = GPtr::from_addr(groups_get_peds_group(ped.addr() as u32) as usize);
     if !group.is_null() && group_is_anyone_using_car_c(group, veh) != 0 {
         return 0;
     }

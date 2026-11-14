@@ -77,21 +77,21 @@ pub use sa_core::bindings::activate_directional;
 pub use sa_core::bindings::crt_free_8214bd as crt_free;
 pub use sa_core::bindings::deactivate_directional;
 pub use sa_core::bindings::entity_destructor;
-pub use sa_core::bindings::entity_get_is_on_screen as get_is_on_screen;
+pub use crate::bindings::entity_get_is_on_screen as get_is_on_screen;
 pub use sa_core::bindings::get_anim_hierarchy_from_skin_clump as rw_get_anim_hierarchy_from_skin_clump;
 pub use sa_core::bindings::get_first_atomic as rw_get_first_atomic;
-pub use sa_core::bindings::matrix_dtor;
+pub use crate::bindings::matrix_dtor;
 pub use sa_core::bindings::matrix_mul_vec;
 pub use sa_core::bindings::matrix_set_rotate;
 pub use sa_core::bindings::matrix_update_matrix;
 pub use sa_core::bindings::matrix_update_rw as matrix_update_rw_attached;
 pub use sa_core::bindings::ptr_node_single_new as single_node_new;
-pub use sa_core::bindings::rp_clump_for_all_atomics;
+pub use sa_rwcore::bindings::rp_clump_for_all_atomics;
 pub use sa_core::bindings::rp_geometry_for_all_materials;
-pub use sa_core::bindings::rp_skin_geometry_get_skin;
-pub use sa_core::bindings::rw_frame_update_objects;
+pub use sa_rwcore::bindings::rp_skin_geometry_get_skin;
+pub use sa_rwcore::bindings::rw_frame_update_objects;
 pub use sa_core::bindings::set_ambient_colours;
-pub use sa_core::bindings::streaming_remove_model;
+pub use sa_stream::bindings::streaming_remove_model;
 pub use sa_stream::bindings::get_2d_effect as model_info_get_2d_effect;
 pub use sa_stream::bindings::is_object_glass;
 pub use sa_stream::bindings::model_info_add_ref;
@@ -103,7 +103,7 @@ pub use crate::bindings::generate_lights_affecting_object;
 pub use sa_core::bindings::eh_vector_dtor as eh_vector_destructor_iterator;
 pub use sa_core::bindings::matrix_ctor_rw as matrix_ctor_attach;
 pub use sa_core::bindings::matrix_set_rotate_z_only;
-pub use sa_core::bindings::rp_atomic_destroy;
+pub use sa_rwcore::bindings::rp_atomic_destroy;
 pub use sa_core::bindings::rp_clump_destroy;
 pub use sa_core::bindings::rw_frame_destroy;
 pub use sa_core::bindings::set_light_colours_for_peds_cars_and_objects;
@@ -986,7 +986,7 @@ pub fn transform_from_object_space_ref(this: GPtr<u8>, out: GPtr<u8>, off: GPtr<
     }
     let mut tmp = [rd::<u32>(off, 0), rd::<u32>(off, 4), rd::<u32>(off, 8)];
     let mut res = [0u32; 3];
-    let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::from_raw(res.as_mut_ptr()).cast()), m, GPtr::from_raw(tmp.as_mut_ptr()).cast()));
+    let r = matrix_mul_vec(GPtr::from_raw(res.as_mut_ptr()).cast(), m, GPtr::from_raw(tmp.as_mut_ptr()).cast());
     wr::<u32>(out, 0, rd::<u32>(r, 0));
     wr::<u32>(out, 4, rd::<u32>(r, 4));
     let z = rd::<u32>(r, 8);
@@ -1006,7 +1006,7 @@ pub fn transform_from_object_space_ptr(this: GPtr<u8>, out: GPtr<u8>, off: GPtr<
     } else {
         let mut tmp = [rd::<u32>(off, 0), rd::<u32>(off, 4), rd::<u32>(off, 8)];
         let mut res = [0u32; 3];
-        let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::from_raw(res.as_mut_ptr()).cast()), m, GPtr::from_raw(tmp.as_mut_ptr()).cast()));
+        let r = matrix_mul_vec(GPtr::from_raw(res.as_mut_ptr()).cast(), m, GPtr::from_raw(tmp.as_mut_ptr()).cast());
         for k in [0, 4, 8] {
             wr::<u32>(vp, k, rd::<u32>(r, k));
         }
@@ -1278,7 +1278,7 @@ pub fn set_rw_object_alpha(this: GPtr<u8>, alpha: u32) {
             rp_geometry_for_all_materials(geo, 0x533280, GPtr::from_addr(alpha as usize));
         }
         2 => {
-            rp_clump_for_all_atomics(o, 0x533290, GPtr::from_addr(alpha as usize));
+            rp_clump_for_all_atomics(o, 0x533290, GPtr::<u8>::addr(GPtr::from_addr(alpha as usize)) as u32);
         }
         _ => {}
     }
@@ -1522,7 +1522,7 @@ pub fn find_trigger_point_coors(this: GPtr<u8>, out: GPtr<u8>, index: i32) -> GP
         let e = model_info_get_2d_effect(mi, i);
         if rd::<u8>(e, 0xC) == 8 && rd::<i32>(e, 0x10) == index {
             let m = get_matrix(this);
-            matrix_mul_vec(out.cast::<f32>(), m, e);
+            matrix_mul_vec(out.cast::<u8>(), m, e);
             return out;
         }
         i += 1;
@@ -1540,7 +1540,7 @@ pub fn find_trigger_point_coors(this: GPtr<u8>, out: GPtr<u8>, index: i32) -> GP
 pub fn detach_from_rw_object(this: GPtr<u8>) {
     if !rd::<GPtr<u8>>(this, 0x18).is_null() {
         let mi = g::<GPtr<u8>>(MODEL_INFO_PTRS).wrapping_index(i32::from(rd::<i16>(this, 0x22))).read();
-        model_info_remove_ref(mi);
+        model_info_remove_ref(mi.cast::<sa_stream::shared::CBaseModelInfo>());
         streaming_remove_entity(rd(this, 0x28));
         wr::<u32>(this, 0x28, 0);
         let mi = g::<GPtr<u8>>(MODEL_INFO_PTRS).wrapping_index(i32::from(rd::<i16>(this, 0x22))).read();
@@ -1569,7 +1569,7 @@ pub fn material_update_uv_anim_cb(m: GPtr<u8>, _data: u32) -> GPtr<u8> {
 #[hook(addr = 0x532B20, conv = thiscall, name = "CEntity::UpdateRpHAnim", expect = "56 8B F1 8B 46 18", this = "CEntity")]
 pub fn update_rp_h_anim(this: GPtr<u8>) {
     let a = rw_get_first_atomic(rd(this, 0x18));
-    if a.is_null() || rp_skin_geometry_get_skin(rd(a, 0x18)).is_null() {
+    if a.is_null() || GPtr::<u8>::from_addr(rp_skin_geometry_get_skin(rd(a, 0x18)) as usize).is_null() {
         return;
     }
     if rd::<u32>(this, 0x1C) & 0x80_0000 != 0 {
@@ -1665,7 +1665,7 @@ pub fn attach_to_rw_object(this: GPtr<u8>, rw: GPtr<u8>, update: u8) {
         }
     }
     let mi = g::<GPtr<u8>>(MODEL_INFO_PTRS).wrapping_index(i32::from(rd::<i16>(this, 0x22))).read();
-    model_info_add_ref(mi);
+    model_info_add_ref(mi.cast::<sa_stream::shared::CBaseModelInfo>());
     let l = streaming_add_entity(this);
     wr::<GPtr<u8>>(this, 0x28, l);
     entity_create_effects(this);
@@ -1689,8 +1689,8 @@ pub fn delete_rw_object(this: GPtr<u8>) {
         }
         2 => {
             let a = rw_get_first_atomic(rw);
-            if !a.is_null() && !rp_skin_geometry_get_skin(rd(a, 0x18)).is_null() {
-                rp_clump_for_all_atomics(rw, 0x734B90, GPtr::NULL);
+            if !a.is_null() && !GPtr::<u8>::from_addr(rp_skin_geometry_get_skin(rd(a, 0x18)) as usize).is_null() {
+                rp_clump_for_all_atomics(rw, 0x734B90, GPtr::<u8>::addr(GPtr::NULL) as u32);
             }
             rp_clump_destroy(rw);
         }
@@ -1698,7 +1698,7 @@ pub fn delete_rw_object(this: GPtr<u8>) {
     }
     wr::<u32>(this, 0x18, 0);
     let mi = g::<GPtr<u8>>(MODEL_INFO_PTRS).wrapping_index(i32::from(rd::<i16>(this, 0x22))).read();
-    model_info_remove_ref(mi);
+    model_info_remove_ref(mi.cast::<sa_stream::shared::CBaseModelInfo>());
     streaming_remove_entity(rd(this, 0x28));
     wr::<u32>(this, 0x28, 0);
     if rd::<u8>(this, 0x36) & 7 == 1 {

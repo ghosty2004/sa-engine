@@ -10,7 +10,7 @@ use crate::common::*;
 
 use crate::bindings::attractor_manager_deregister_ped;
 use sa_world::bindings::get_ped_attractor_manager;
-use sa_core::bindings::vector_magnitude_sqr as vector_magnitude;
+use sa_world::bindings::vector_magnitude_sqr as vector_magnitude;
 use sa_core::bindings::vector_difference as vector_sub;
 orig! {
     /// `CTask::MakeAbortable(CPed*, eAbortPriority, const CEvent*)` (vtable +0x18), AL
@@ -84,7 +84,7 @@ pub fn use_effect_make_abortable(this: GPtr<u8>, ped: GPtr<u8>, prio: u32, event
     let vp = GPtr::from_raw(v.as_mut_ptr()).cast::<u8>();
     vector_sub(vp, entity_pos(victim), target);
     wr::<f32>(vp, 8, 0.0);
-    let m = sa_math::x87::X87::from_f64_exact(vector_magnitude(vp.cast::<f32>()));
+    let m = sa_math::x87::X87::from_f64_exact(vector_magnitude(vp.cast::<u8>()).to_f64());
     if !m.fcom(x(k)).test_parity(5) && rd::<u32>(victim, 0x534) == 1 {
         wr::<u8>(this, 0x20, 1);
     }

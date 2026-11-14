@@ -32,6 +32,7 @@ use sa_stream::bindings::col_model_ctor;
 use sa_world::bindings::compute_target_door_to_exit;
 use crate::bindings::scan_vehicle_potential_collision;
 use crate::bindings::simple_anim_dtor as task_simple_anim_dtor;
+use crate::bindings::decision_make_decision;
 orig! {
     /// `FUN_005bb9f0` (0x5BB9F0, stdcall): loads an event index table from a file.
     fn load_event_indices(indices: GPtr<u8>, file: u32) -> u32 = stdcall 0x5BB9F0 => unported;
@@ -41,9 +42,6 @@ orig! {
     fn place_chat_group(this: GPtr<u8>, a0: u32, a1: u32, a2: u32, a3: u32) -> u8 = thiscall 0x5FCE80 => unported;
     /// `CPedGroupPlacer::PlaceRandomGroup` (0x5FD330)
     fn place_random_group(this: GPtr<u8>, a0: u32, a1: u32, a2: u32, a3: u32) -> u8 = thiscall 0x5FD330 => unported;
-    /// `CDecision::MakeDecision` (0x6040D0)
-    #[allow(clippy::too_many_arguments)]
-    fn decision_make_decision(this: GPtr<u8>, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, a8: u32) = thiscall 0x6040D0 => unported;
     /// `CEntitySeekPosCalculator*::ComputeEntitySeekPos` (vtable +0)
     fn seek_pos_compute(calc: GPtr<u8>, ped: GPtr<u8>, target: GPtr<u8>, out: GPtr<u8>) = thiscall vslot 0x0 => unported;
     /// `CPointRoute::operator delete` (0x41B7D0)
@@ -554,9 +552,9 @@ pub fn fun_0066e050(this: GPtr<u8>) {
 use crate::bindings::line_up_ped_with_car_ctor;
 use crate::bindings::membership_remove_member;
 use crate::bindings::pgi_flush as group_intelligence_flush;
-use sa_core::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference;
 use sa_core::bindings::vector_normalise;
-use sa_core::bindings::world_remove;
+use sa_world::bindings::world_remove;
 use crate::bindings::attractor_is_registered_with_ped_o as ped_attractor_is_registered_with_ped;
 orig! {
     /// `FUN_005eec90` (0x5EEC90): `CPedStepAttractor` complete destructor
@@ -681,7 +679,7 @@ pub fn fun_006550d0(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x86F364);
     let e = rd::<GPtr<u8>>(this, 0x1C);
     if !e.is_null() {
-        entity_clean_up_old_reference(e, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x1C)));
+        entity_clean_up_old_reference(e, this.byte_add(0x1C));
     }
     let r = rd::<GPtr<u8>>(this, 0x20);
     if !r.is_null() {
@@ -712,7 +710,7 @@ pub fn fun_0063bae0(this: GPtr<u8>, _a0: u32) -> GPtr<u8> {
 pub fn fun_004ace80(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     let f = rd::<GPtr<u8>>(ped, 0x14).byte_add(0x10);
     let mut v = [rd::<f32>(this, 0x18), rd::<f32>(this, 0x1C), 0.0f32];
-    vector_normalise(GPtr::from_raw(&mut v as *mut [f32; 3]).cast());
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(GPtr::from_raw(&mut v as *mut [f32; 3]).cast()));
     let d = x(v[1])
         .fmul_m(rd::<f32>(f, 4))
         .fadd(x(v[2]).fmul_m(rd::<f32>(f, 8)));
@@ -865,7 +863,7 @@ pub fn fun_0061aeb0(this: GPtr<u8>) {
     task_simple_anim_dtor(this);
 }
 
-use sa_world::bindings::membership_is_member;
+use crate::bindings::membership_is_member;
 
 /// `CPedGroups::AreInSameGroup(CPed*, CPed*)` (0x5F7F40): both non-null and some active group holds
 /// `a` in a member slot (+0xC..+0x28) and has `b` as a member (`IsMember`).
@@ -879,7 +877,7 @@ pub fn ped_groups_are_in_same_group_5f7f40(a: u32, b: u32) -> u8 {
             continue;
         }
         let grp = g::<u8>((GROUPS + k * 0x2D4) as usize);
-        if (0..8).any(|i| rd::<u32>(grp, 0xC + 4 * i) == a) && membership_is_member(grp.byte_add(8), GPtr::from_addr(b as usize)) != 0 {
+        if (0..8).any(|i| rd::<u32>(grp, 0xC + 4 * i) == a) && membership_is_member(grp.byte_add(8), GPtr::from_addr(b as usize)) as u8 != 0 {
             return 1;
         }
     }
@@ -888,14 +886,14 @@ pub fn ped_groups_are_in_same_group_5f7f40(a: u32, b: u32) -> u8 {
 
 // ---- batch 3 -------------------------------------------------------------------------------------
 
-use sa_core::bindings::assoc_set_finish_callback;
+use sa_anim::bindings::assoc_set_finish_callback;
 use crate::bindings::attractor_scanner_clear;
 use crate::bindings::decision_from;
 use sa_core::bindings::entity_register_reference;
 use sa_core::bindings::ped_is_alive;
 use sa_stream::bindings::anim_remove_block_ref as remove_anim_block_ref;
-use sa_world::bindings::task_simple_dtor;
-use sa_world::bindings::tm_find_active_task_by_type as task_manager_find_active_task_by_type;
+use crate::bindings::task_simple_dtor;
+use crate::bindings::tm_find_active_task_by_type as task_manager_find_active_task_by_type;
 use crate::bindings::entity_scanner_scan as entity_scanner_scan_in_range;
 
 /// `(missed by ghidra: cat7-call)` (0x6822B0; the body continues through the straight protection stub
@@ -904,7 +902,7 @@ use crate::bindings::entity_scanner_scan as entity_scanner_scan_in_range;
 #[hook(addr = 0x6822B0, conv = thiscall, name = "(missed by ghidra: cat7-call)", expect = "8B 41 38 8B 49 34")]
 pub fn active_task_byte_59_6822b0(this: GPtr<u8>) -> i32 {
     let intel = rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0x38), 0x47C);
-    let t = task_manager_find_active_task_by_type(intel.byte_add(4), rd::<i32>(this, 0x34) as u32);
+    let t = task_manager_find_active_task_by_type(intel.byte_add(4), (rd::<i32>(this, 0x34) as u32) as i32);
     if t.is_null() {
         0
     } else {
@@ -961,7 +959,7 @@ pub fn event_scanner_ctor_605300(this: GPtr<u8>) -> GPtr<u8> {
 /// vehicle (+0x4C) becomes the ped's vehicle (reference moved); otherwise a plain scan.
 #[hook(addr = 0x5FFE60, conv = thiscall, name = "CVehicleScanner::ScanForVehiclesInRange", expect = "56 57 8B 7C 24 0C")]
 pub fn vehicle_scanner_scan_for_vehicles_in_range_5ffe60(this: GPtr<u8>, ped: GPtr<u8>) {
-    if ped_is_alive(ped) == 0 {
+    if ped_is_alive(ped) as u8 == 0 {
         return;
     }
     if rd::<u32>(ped, 0x58C) == 0 || rd::<u32>(ped, 0x46C) & 0x100 == 0 {
@@ -974,7 +972,7 @@ pub fn vehicle_scanner_scan_for_vehicles_in_range_5ffe60(this: GPtr<u8>, ped: GP
     let slot = this.byte_add(0x4C);
     let old = rd::<GPtr<u8>>(slot, 0);
     if !old.is_null() {
-        entity_clean_up_old_reference(old, slot.cast::<GPtr<u8>>());
+        entity_clean_up_old_reference(old, slot.cast::<u8>());
     }
     let v = rd::<GPtr<u8>>(ped, 0x58C);
     wr::<u32>(slot, 0, v.addr() as u32);
@@ -995,7 +993,7 @@ pub fn fun_00691630(this: GPtr<u8>) {
         let e = rd::<GPtr<u8>>(slot, 0);
         if !e.is_null() {
             wr::<u32>(e, 0x1C, rd::<u32>(e, 0x1C) & 0xFFFF_FBFF);
-            entity_clean_up_old_reference(rd::<GPtr<u8>>(slot, 0), slot.cast::<GPtr<u8>>());
+            entity_clean_up_old_reference(rd::<GPtr<u8>>(slot, 0), slot.cast::<u8>());
             let e = rd::<GPtr<u8>>(slot, 0);
             wr::<u32>(e, 0x1C, rd::<u32>(e, 0x1C) | 0x800);
             wr::<u32>(slot, 0, 0);
@@ -1003,7 +1001,7 @@ pub fn fun_00691630(this: GPtr<u8>) {
     }
     let a = rd::<GPtr<u8>>(this, 0x38);
     if !a.is_null() {
-        assoc_set_finish_callback(a, 0x4D1390, GPtr::NULL);
+        assoc_set_finish_callback(a, 0x4D1390, GPtr::<u8>::addr(GPtr::NULL) as u32);
     }
     let b = rd::<u32>(this, 0x2C);
     if b != 0 {

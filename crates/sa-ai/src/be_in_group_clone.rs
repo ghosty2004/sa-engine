@@ -7,8 +7,8 @@ use sa_core::hook;
 
 use crate::common::*;
 
-use sa_world::bindings::task_complex_ctor;
-use sa_core::bindings::task_new as task_new_c;
+use crate::bindings::task_complex_ctor;
+use crate::bindings::task_new as task_new_c;
 
 /// `CTaskComplexBeInGroup::Clone` (0x636BE0, SEH frame): `operator new(0x28)`, the inlined constructor
 /// (`CTaskComplex` base, +0x10 = this +0x10 byte, +0xC = this +0xC, +0x14 / +0x18 / +0x20 = 0, vtable
@@ -22,7 +22,7 @@ pub fn be_in_group_clone(this: GPtr<u8>) -> GPtr<u8> {
     }
     let b = rd::<u8>(this, 0x10);
     let group = rd::<u32>(this, 0xC);
-    task_complex_ctor(t);
+    task_complex_ctor(t.addr() as u32);
     wr::<u8>(t, 0x10, b);
     wr::<u32>(t, 0xC, group);
     wr::<u32>(t, 0x14, 0);

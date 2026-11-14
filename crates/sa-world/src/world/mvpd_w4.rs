@@ -18,11 +18,11 @@ use crate::bindings::vehicle_remove_passenger;
 use sa_core::bindings::add_big_message as messages_add_big_message;
 use sa_core::bindings::camera_fade;
 use sa_core::bindings::camera_set_fade_colour;
-use sa_core::bindings::entity_clean_up_old_reference;
-use sa_core::bindings::find_player_ped;
+use crate::bindings::entity_clean_up_old_reference;
+use crate::bindings::find_player_ped;
 use sa_core::bindings::game_logic_pass_time;
 use sa_core::bindings::general_random_int_in_range as general_get_random_number_in_range_int;
-use sa_core::bindings::get_pad as pad_get_pad;
+use sa_input::bindings::get_pad as pad_get_pad;
 use sa_core::bindings::messages_clear_messages;
 use sa_core::bindings::ped_clear_weapons;
 use sa_core::bindings::references_remove_references_to_player;
@@ -33,7 +33,7 @@ use crate::bindings::camera_set_motion_blur;
 use crate::bindings::ee_get_position_relative_to_outside_world as entry_exit_get_position_relative_to_outside_world;
 use crate::bindings::ped_say;
 use crate::bindings::player_info_get_pos;
-use sa_core::bindings::clear_exciting_stuff_from_area as world_clear_exciting_stuff_from_area;
+use crate::bindings::clear_exciting_stuff_from_area as world_clear_exciting_stuff_from_area;
 use sa_core::bindings::hud_set_help_message;
 orig! {
     /// `CStats::UpdateSexAppealStat()` (0x55BF20, cdecl)
@@ -101,7 +101,7 @@ fn take_player_out_of_vehicle() {
         return;
     }
     if !drv.is_null() {
-        entity_clean_up_old_reference(drv, GPtr::<u8>::cast::<GPtr<u8>>(veh.byte_add(0x460)));
+        entity_clean_up_old_reference(drv, veh.byte_add(0x460));
     }
     let p0 = g::<GPtr<u8>>(0xB7CD98).read();
     wr::<u32>(rd::<GPtr<u8>>(p0, 0x58C), 0x460, 0);
@@ -164,7 +164,7 @@ fn resurrect(hospital: bool, pass_time: bool, clear_144: bool) {
     references_remove_references_to_player();
     g::<u8>(0x9690C0).write(10);
     g::<u8>(0xC0EC23).write(10);
-    let pad = pad_get_pad((g::<u8>(0xB7CD74).read() as i32) as u32);
+    let pad = pad_get_pad(((g::<u8>(0xB7CD74).read() as i32) as u32) as i32);
     wr::<u16>(pad, 0x10E, 0);
 }
 
@@ -412,7 +412,7 @@ pub fn game_logic_update() {
         x(rd::<f32>(b, 8)).fsub_m(rd::<f32>(a, 8)).to_f32(),
     ];
     let dp = GPtr::from_raw(&mut dir).cast::<u8>();
-    vector_normalise(dp);
+    vector_normalise(dp.cast::<[f32;3]>());
     let (nx, ny, nz) = (rd::<f32>(dp, 0), rd::<f32>(dp, 4), rd::<f32>(dp, 8));
     game_logic_stop_player_moving_from_direction(0, nx, ny, nz);
     game_logic_stop_player_moving_from_direction(1, x(nx).fchs().to_f32(), x(ny).fchs().to_f32(), x(nz).fchs().to_f32());

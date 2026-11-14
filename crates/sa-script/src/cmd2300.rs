@@ -82,8 +82,8 @@ const MSG_FORMAT_WIDTH: usize = 0xA44B64;
 const MSG_FORMAT_FLAG: usize = 0xA44B66;
 const MSG_FORMAT_X: usize = 0xA44B60;
 
-use sa_world::bindings::add_explosion;
-use sa_world::bindings::camera_initialise_scriptable_components as initialise_scriptable_components;
+use sa_weapon::bindings::add_explosion;
+use sa_cam::bindings::camera_initialise_scriptable_components as initialise_scriptable_components;
 use crate::bindings::find_closest_attractor;
 use crate::bindings::get_proper_index_from_index_used_by_script;
 use crate::bindings::plane_switch_ambient_planes as switch_ambient_planes;
@@ -91,8 +91,8 @@ use crate::bindings::play_preloaded_beat_track;
 use crate::bindings::preload_beat_track;
 use sa_world::bindings::rgba_set_463370;
 use crate::bindings::switch_ped_roads_off_in_area;
-use sa_world::bindings::switch_roads_off_in_area;
-use sa_world::bindings::vehicle_41bdd0;
+use sa_pop::bindings::switch_roads_off_in_area;
+use sa_veh::bindings::vehicle_41bdd0;
 use sa_core::bindings::clear_skip;
 use sa_core::bindings::clear_specific_zones_to_trigger_gang_war;
 use sa_core::bindings::rgba_ctor;
@@ -111,19 +111,19 @@ use sa_world::bindings::set_door_damage;
 use sa_world::bindings::set_up_skip;
 use crate::bindings::add_new_script_brain;
 use crate::bindings::start_new_streamed_script;
-use sa_core::bindings::get_pad;
-use sa_core::bindings::stats_increment_stat as increment_stat;
+use sa_input::bindings::get_pad;
+use sa_world::bindings::stats_increment_stat as increment_stat;
 use sa_stream::bindings::generate_new_one;
 use sa_stream::bindings::hud_colours_get_rgb as hud_get_rgb;
 use sa_world::bindings::attach_entity_to_entity;
-use sa_world::bindings::check_damaged_weapon_type;
+use sa_pop::bindings::check_damaged_weapon_type;
 use sa_world::bindings::dm_set_door_status as set_door_status;
 use sa_world::bindings::door_open;
-use sa_world::bindings::fx_add_particle;
+use sa_render::bindings::fx_add_particle;
 use sa_world::bindings::fx_prt_mult_ctor;
 use sa_world::bindings::get_actual_script_thing_index;
 use sa_world::bindings::get_water_level;
-use sa_world::bindings::get_water_level_no_waves;
+use sa_render::bindings::get_water_level_no_waves;
 use sa_world::bindings::membership_get_member as group_get_member;
 use sa_world::bindings::object_lock_door;
 use sa_world::bindings::ped_say;
@@ -433,9 +433,9 @@ fn add_smoke_particle(s: Scr) {
         fx,
         GPtr::<u32>::cast::<u8>(GPtr::from_raw(pos.as_mut_ptr())),
         GPtr::<u32>::cast::<u8>(GPtr::from_raw(vel.as_mut_ptr())),
-        f32::from_bits(0),
+        f32::from_bits(0).to_bits(),
         pp,
-        f32::from_bits(0xBF80_0000),
+        f32::from_bits(0xBF80_0000).to_bits(),
         f32::from_bits(0x3F99_999A),
         f32::from_bits(0x3F19_999A),
         0,
@@ -502,7 +502,7 @@ pub fn process_commands_2300_to_2399(s: Scr, command: u32) -> i8 {
         0x0901 => {
             collect(s, 2);
             let on = sp(1) != 0;
-            get_pad(sp(0)).byte_add(0x11E).write(u8::from(!on));
+            get_pad(sp(0) as i32).byte_add(0x11E).write(u8::from(!on));
         }
         // 0904 GET_HUD_COLOUR (0x47644C): `c = HudColour.GetRGB((u8)SP0)`; SP0..SP3 = r, g, b, a; StoreParameters(4)
         0x0904 => {
@@ -714,7 +714,7 @@ pub fn process_commands_2300_to_2399(s: Scr, command: u32) -> i8 {
             let ok = if sp(2) != 0 {
                 get_water_level(f32::from_bits(x), f32::from_bits(y), f32::from_bits(0), hp.cast::<u8>(), 1, GPtr::NULL)
             } else {
-                get_water_level_no_waves(f32::from_bits(x), f32::from_bits(y), f32::from_bits(0), hp.cast::<u8>(), GPtr::NULL, GPtr::NULL)
+                get_water_level_no_waves(f32::from_bits(x).to_bits(), f32::from_bits(y).to_bits(), f32::from_bits(0).to_bits(), hp.cast::<f32>(), GPtr::NULL, GPtr::NULL)
             };
             if ok == 0 {
                 h[0] = 0xC47A_0000;
@@ -824,7 +824,7 @@ pub fn process_commands_2300_to_2399(s: Scr, command: u32) -> i8 {
         // true, SP4 (raw f32), false)`
         0x0948 => {
             collect(s, 5);
-            add_explosion(GPtr::NULL, GPtr::NULL, sp(3), f32::from_bits(sp(0)), f32::from_bits(sp(1)), f32::from_bits(sp(2)), 0, 1, f32::from_bits(sp(4)), 0);
+            add_explosion(GPtr::NULL, GPtr::NULL, sp(3) as i32, f32::from_bits(sp(0)), f32::from_bits(sp(1)), f32::from_bits(sp(2)), 0, 1, f32::from_bits(sp(4)), 0);
         }
         // 0949 ATTACH_MISSION_AUDIO_TO_CHAR (0x477545): `AudioEngine.AttachMissionAudioToPed((u8)(SP0 - 1), PED(SP1))`
         0x0949 => {
@@ -917,7 +917,7 @@ pub fn process_commands_2300_to_2399(s: Scr, command: u32) -> i8 {
         0x095B => {
             collect(s, 1);
             let o = object_at_ref(pool(OBJECT_POOL), spi(0));
-            set_flag(s, entity_get_is_static(o) == 0);
+            set_flag(s, entity_get_is_static(o) as u8 == 0);
         }
         // 095C ADD_SMOKE_PARTICLE (0x4779EC)
         0x095C => add_smoke_particle(s),

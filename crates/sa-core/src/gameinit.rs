@@ -69,14 +69,9 @@ pub use crate::bindings::find_txd_slot as txd_find_slot;
 pub use crate::bindings::init_maths_tables_call;
 pub use crate::bindings::load_txd as txd_load_txd;
 pub use crate::bindings::plant_mgr_initialise as plant_mgr_initialise_call;
-orig! {
-    /// `CGame::Init1(datFile)` (0x5BF840)
-    pub fn init1_call(dat: GPtr<u8>) -> u8 = cdecl 0x5BF840 => init1;
-    /// `CGame::Init2(datFile)` (0x5BA1A0)
-    pub fn init2_call(dat: GPtr<u8>) -> u8 = cdecl 0x5BA1A0 => init2;
-    /// `CGame::Init3(datFile)` (0x5BA400)
-    pub fn init3_call(dat: GPtr<u8>) -> u8 = cdecl 0x5BA400 => init3;
-}
+pub use crate::bindings::game_init1 as init1_call;
+pub use crate::bindings::game_init2 as init2_call;
+pub use crate::bindings::game_init3 as init3_call;
 pub use crate::bindings::anim_manager_load_anim_files;
 pub use crate::bindings::audio_zones_init;
 pub use crate::bindings::car_plate_mgr_initialise as custom_car_plate_mgr_initialise;
@@ -419,7 +414,7 @@ pub fn custom_roadsign_mgr_initialise() -> u8 {
     g::<u32>(0xC3EF84).write(t.addr() as u32);
     txd_pop_current();
     let raster = GPtr::<u32>::from_addr(g::<u32>(0xC3EF84).read() as usize).read();
-    let px = GPtr::<u8>::addr(rw_raster_lock(p8(raster), 0, 2)) as u32;
+    let px = GPtr::<u8>::addr(GPtr::from_addr(rw_raster_lock(p8(raster), 0, 2) as usize)) as u32;
     g::<u32>(0xC3EF88).write(px);
     1
 }
@@ -571,7 +566,7 @@ pub fn stats_update_respect_stat(reset: u32) {
     if cmp(r, shown.read()).test_any(0x41) && cmp(last.read(), k2).test_parity(5) {
         // not above the displayed value: a fall
         if cmp(last.read(), lim).test_parity(0x44) && cmp(shown.read(), lim).test_parity(0x44) {
-            let display = stats_check_for_threshold(GPtr::from_addr(0x8CDEC4), r) != 0 || !cmp(r, k2).test_parity(5);
+            let display = stats_check_for_threshold(GPtr::<f32>::cast::<u32>(GPtr::from_addr(0x8CDEC4)), r.to_bits()) != 0 || !cmp(r, k2).test_parity(5);
             if display {
                 stats_display_script_stat_update_message(0, 0x40, r);
             }
@@ -583,7 +578,7 @@ pub fn stats_update_respect_stat(reset: u32) {
         return;
     }
     if cmp(last.read(), lim).test_parity(0x44) && cmp(shown.read(), lim).test_parity(0x44) {
-        let display = stats_check_for_threshold(GPtr::from_addr(0x8CDEC4), r) != 0 || !cmp(last.read(), k2).test_parity(5);
+        let display = stats_check_for_threshold(GPtr::<f32>::cast::<u32>(GPtr::from_addr(0x8CDEC4)), r.to_bits()) != 0 || !cmp(last.read(), k2).test_parity(5);
         if display {
             stats_display_script_stat_update_message(1, 0x40, r);
         }
@@ -595,9 +590,7 @@ pub fn stats_update_respect_stat(reset: u32) {
 }
 
 pub use crate::bindings::eh_vector_ctor as eh_vector_constructor_iterator;
-orig! {
-    pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
-}
+pub use crate::bindings::crt_new as operator_new;
 
 /// `CMatrixLink::CMatrixLink()` (0x54F0C0, thiscall): the matrix's attached RW matrix (+0x40) and
 /// "owns it" flag (+0x44) cleared; returns `this`.
@@ -695,9 +688,9 @@ pub fn camera_fade(this: GPtr<u8>, time: f32, direction: u32) {
 }
 
 pub use crate::bindings::stream_read as rw_stream_read;
+pub use crate::bindings::env_mat_pool_new as env_map_pool_new_call;
 orig! {
     pub fn env_map_from_buffer_call(buf: GPtr<u8>, out: GPtr<u8>) = cdecl 0x5D8BE0 => env_map_from_buffer;
-    pub fn env_map_pool_new_call(pool: GPtr<u8>) -> GPtr<u8> = thiscall 0x5D9110 => env_map_pool_new;
 }
 
 /// `CustomEnvMapPipeMaterialData::FromBuffer(buf, out)` (0x5D8BE0): the four floats scaled by
@@ -929,9 +922,9 @@ pub use crate::bindings::rp_clump_for_all_atomics;
 pub use crate::bindings::rp_geometry_create;
 pub use crate::bindings::rp_material_set_texture;
 pub use crate::bindings::rw_stream_find_chunk_call as rw_stream_find_chunk;
+pub use crate::bindings::crt_new_821195 as operator_new_array;
 orig! {
     pub fn rp_geometry_triangle_get_material(g: GPtr<u8>, tri: GPtr<u8>) -> GPtr<u8> = cdecl 0x74C760 => unported;
-    pub fn operator_new_array(size: u32) -> GPtr<u8> = cdecl 0x821195 => unported;
 }
 
 /// `CPlantMgr::Initialise()` (0x5DD910): `ReloadConfig` (failure: 0), streaming memory for the
@@ -1305,7 +1298,7 @@ pub fn atomic_create_prelit_if_needed(a: GPtr<u8>) -> GPtr<u8> {
        route = "L2", hazards = "none", recs = "new-game")]
 pub fn rw_helper_get_first_atomic(c: GPtr<u8>) -> GPtr<u8> {
     let mut first: u32 = 0;
-    rp_clump_for_all_atomics(c, 0x734810, GPtr::from_raw(&mut first).cast());
+    rp_clump_for_all_atomics(c, 0x734810, GPtr::<u8>::addr(GPtr::from_raw(&mut first).cast()) as u32);
     p8(first)
 }
 

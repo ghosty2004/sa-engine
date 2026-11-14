@@ -20,30 +20,29 @@ pub use sa_core::bindings::list_add_item;
 pub use sa_core::bindings::list_remove_all;
 pub use sa_core::bindings::list_remove_item;
 pub use sa_core::bindings::rgba_ctor as crgba_ctor;
-pub use sa_core::bindings::rw_d3d9_get_caps;
+pub use sa_rwcore::bindings::rw_d3d9_get_caps;
 pub use sa_core::bindings::rw_im2d_render_primitive;
-pub use sa_core::bindings::rw_raster_destroy;
-pub use sa_core::bindings::world_remove;
+pub use sa_rwcore::bindings::rw_raster_destroy;
+pub use sa_world::bindings::world_remove;
 pub use sa_core::bindings::find_txd_slot;
-pub use sa_core::bindings::rw_texture_destroy;
-pub use sa_core::bindings::rw_texture_read;
+pub use sa_rwcore::bindings::rw_texture_destroy;
+pub use sa_rwcore::bindings::rw_texture_read;
 pub use sa_world::bindings::escalator_switch_off;
 pub use crate::bindings::set_vertices_d3d9;
 pub use crate::bindings::shadow_camera_destroy;
 pub use sa_core::bindings::get_model_info as get_model_info_full;
 pub use sa_core::bindings::load_plants_dat;
-pub use sa_core::bindings::pop_current_txd;
-pub use sa_core::bindings::push_current_txd;
-pub use sa_core::bindings::rw_raster_lock;
-pub use sa_core::bindings::set_current_txd;
-pub use sa_pop::bindings::rope_remove as rope_remove_call;
-pub use sa_world::bindings::render_vertex_buffer;
-pub use sa_world::bindings::set_vertices_rect;
+pub use sa_stream::bindings::pop_current_txd;
+pub use sa_stream::bindings::push_current_txd;
+pub use sa_rwcore::bindings::rw_raster_lock;
+pub use sa_stream::bindings::set_current_txd;
+pub use crate::bindings::rope_remove as rope_remove_call;
+pub use crate::bindings::render_vertex_buffer;
+pub use crate::bindings::set_vertices_rect;
+pub use sa_core::bindings::crt_new as operator_new;
 orig! {
     /// `RwRenderStateSet(state, value)`: `RwEngineInstance->dOpenDevice.fpRenderStateSet` (slot +0x20)
     pub fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `operator new(size_t)` (0x82119A)
-    pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
     /// `C3dMarkers::Shutdown()` (0x722710)
     pub fn markers_shutdown() = cdecl 0x722710 => crate::markers::shutdown;
     /// `CPointLights::Init()` (0x6FFB40)
@@ -178,7 +177,7 @@ pub fn d3d_resource_system_set_use_buffering(on: u8) {
 #[hook(addr = 0x5D8980, conv = cdecl, name = "IsEnvironmentMappingSupported", expect = "E8 9B 23 22 00",
        route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn is_environment_mapping_supported() -> u32 {
-    let caps = rw_d3d9_get_caps();
+    let caps = GPtr::from_addr(rw_d3d9_get_caps() as usize);
     if rd::<i32>(caps, 0x94) <= 1 {
         return 0;
     }
@@ -313,7 +312,7 @@ pub fn custom_roadsign_mgr_initialise() -> u8 {
     g::<GPtr<u8>>(0xC3EF84).write(tex);
     pop_current_txd();
     let tex = g::<GPtr<u8>>(0xC3EF84).read();
-    let p = rw_raster_lock(rd::<GPtr<u8>>(tex, 0), 0, 2);
+    let p = GPtr::from_addr(rw_raster_lock(rd::<GPtr<u8>>(tex, 0), 0, 2) as usize);
     g::<GPtr<u8>>(0xC3EF88).write(p);
     1
 }
@@ -619,7 +618,7 @@ pub fn proc_surface_info_init(
 ) -> u8 {
     let id = get_surface_id_from_name(GPtr::from_addr(0xB79538), surface);
     wr::<u8>(this, 0, id as u8);
-    if get_model_info_full(model, this.byte_add(4)).is_null() {
+    if get_model_info_full(model, this.byte_add(4).cast::<i32>()).is_null() {
         return 0;
     }
     let spacing_bits = spacing;

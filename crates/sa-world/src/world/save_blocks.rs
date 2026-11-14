@@ -27,7 +27,7 @@ use crate::bindings::find_safe_house_index_for_garage_type;
 use crate::bindings::remove_cars_blocking_door_not_inside;
 use crate::bindings::stunt_jump_pool_new;
 use sa_core::bindings::restart_initialise;
-use sa_core::bindings::stats_increment_stat;
+use crate::bindings::stats_increment_stat;
 use crate::bindings::garages_close_hide_out_garages_before_save as close_hide_out_garages_before_save_call;
 use crate::bindings::get_stat_value as stats_get_stat_value;
 use crate::bindings::set_stat_value as stats_set_stat_value;

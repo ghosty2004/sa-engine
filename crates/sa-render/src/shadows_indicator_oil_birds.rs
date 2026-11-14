@@ -80,8 +80,7 @@ pub fn shadows_gun_shot_sets_oil_on_fire(start: GPtr<f32>, end: GPtr<f32>) {
     }
     let sh = gp::<u8>(PERMANENT_SHADOWS + 0x38 * found as usize);
     wr::<u8>(sh, 0x32, 5);
-    fire_manager_start_fire(gp(FIRE_MANAGER), f32::from_bits(rd::<u32>(sh, 0)), f32::from_bits(rd::<u32>(sh, 4)), f32::from_bits(rd::<u32>(sh, 8)), f32::from_bits(0x3FE6_6666), 0, GPtr::NULL,
-        0x7D0, 0, 1);
+    fire_manager_start_fire(gp(FIRE_MANAGER), sa_math::vector::CVector::new(f32::from_bits(rd::<u32>(sh, 0)), f32::from_bits(rd::<u32>(sh, 4)), f32::from_bits(rd::<u32>(sh, 8))), f32::from_bits(0x3FE6_6666), 0, GPtr::<u8>::addr(GPtr::NULL) as u32, 0x7D0, 0, 1);
 }
 
 /// `CBirds::aBirds[6]` (0x44 each) at 0xC6A8B0: position +0, active byte +0x3F; `CBirds::NumberOfBirds` 0xC6A8A4,

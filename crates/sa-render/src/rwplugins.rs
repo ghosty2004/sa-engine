@@ -81,33 +81,32 @@ pub use sa_core::bindings::crt_free_8214bd as operator_delete;
 pub use sa_core::bindings::crt_strncpy as strncpy;
 pub use sa_core::bindings::memory_free;
 pub use sa_core::bindings::memory_malloc;
-pub use sa_core::bindings::rp_atomic_destroy;
-pub use sa_core::bindings::rp_atomic_register_plugin;
-pub use sa_core::bindings::rp_atomic_register_plugin_stream;
+pub use sa_rwcore::bindings::rp_atomic_destroy;
+pub use sa_rwcore::bindings::rp_atomic_register_plugin;
+pub use sa_rwcore::bindings::rp_atomic_register_plugin_stream;
 pub use sa_core::bindings::rp_atomic_set_frame;
-pub use sa_core::bindings::rp_geometry_register_plugin;
-pub use sa_core::bindings::rp_geometry_register_plugin_stream;
-pub use sa_core::bindings::rp_material_register_plugin;
-pub use sa_core::bindings::rp_material_register_plugin_stream;
+pub use sa_rwcore::bindings::rp_geometry_register_plugin;
+pub use sa_rwcore::bindings::rp_geometry_register_plugin_stream;
+pub use sa_rwcore::bindings::rp_material_register_plugin;
+pub use sa_rwcore::bindings::rp_material_register_plugin_stream;
 pub use sa_core::bindings::rw_frame_destroy;
-pub use sa_core::bindings::rw_stream_write;
-pub use sa_core::bindings::stream_read as rw_stream_read;
-pub use sa_core::bindings::rw_texture_destroy;
-pub use sa_core::bindings::anim_blend_clump_remove_all_associations;
+pub use sa_rwcore::bindings::rw_stream_write;
+pub use sa_rwcore::bindings::stream_read as rw_stream_read;
+pub use sa_rwcore::bindings::rw_texture_destroy;
+pub use sa_anim::bindings::anim_blend_clump_remove_all_associations;
 pub use crate::bindings::spec_mat_pool_new;
-pub use sa_core::bindings::anim_blend_clump_data_dtor;
-pub use sa_core::bindings::clump_register_plugin as rp_clump_register_plugin;
+pub use sa_anim::bindings::anim_blend_clump_data_dtor;
+pub use sa_rwcore::bindings::clump_register_plugin as rp_clump_register_plugin;
 pub use sa_core::bindings::env_mat_pool_new;
-pub use sa_core::bindings::frame_register_plugin as rw_frame_register_plugin;
-pub use sa_core::bindings::frame_register_plugin_stream as rw_frame_register_plugin_stream;
-pub use sa_core::bindings::register_scheme_call as rt_anim_register_interpolation_scheme;
+pub use sa_rwcore::bindings::frame_register_plugin as rw_frame_register_plugin;
+pub use sa_rwcore::bindings::frame_register_plugin_stream as rw_frame_register_plugin_stream;
+pub use sa_rwcore::bindings::register_scheme_call as rt_anim_register_interpolation_scheme;
+pub use sa_core::bindings::crt_new_821195 as operator_new;
 orig! {
     /// `RpClumpRegisterPluginStream` (0x74BE70)
     pub fn rp_clump_register_plugin_stream(id: u32, read: u32, write: u32, size: u32) -> i32 = cdecl 0x74BE70 => unported;
     /// `rwstrlen` through `RwEngineInstance` +0x120
     pub fn rw_strlen(s: GPtr<u8>) -> i32 = cdecl table 0xC97B24 0x120 => unported;
-    /// `operator new` (0x821195, the `new[]` jump)
-    pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x821195 => unported;
 }
 
 /// `obj + off` (the original's `[reg + reg]` addressing, 32-bit wrapping).

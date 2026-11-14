@@ -9,9 +9,9 @@ use sa_core::hook;
 
 use crate::common::*;
 
-use sa_core::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference;
 use sa_core::bindings::entity_register_reference;
-use sa_core::bindings::find_player_ped;
+use sa_world::bindings::find_player_ped;
 use sa_core::bindings::vector_normalise_and_mag;
 use sa_core::bindings::world_get_is_line_of_sight_clear;
 
@@ -57,7 +57,7 @@ pub fn interesting_events_add(this: GPtr<u8>, ty: i32, entity: GPtr<u8>) {
         wr::<f32>(dir, 0, x(rd::<f32>(pp, 0)).fsub_m(c[0]).to_f32());
         wr::<f32>(dir, 4, x(rd::<f32>(pp, 4)).fsub_m(c[1]).to_f32());
         wr::<u32>(dir, 8, 0);
-        let mag = X87::from_f64_exact(vector_normalise_and_mag(dir));
+        let mag = X87::from_f64_exact(vector_normalise_and_mag(dir).to_f64());
         if !mag.fcom(X87::zero()).test_parity(0x44) {
             let f = rd::<GPtr<u8>>(player, 0x14).byte_add(0x10);
             for k in 0..3 {
@@ -134,7 +134,7 @@ pub fn interesting_events_add(this: GPtr<u8>, ty: i32, entity: GPtr<u8>) {
         }
         let old = rd::<GPtr<u8>>(slot, 8);
         if !old.is_null() {
-            entity_clean_up_old_reference(old, GPtr::<u8>::cast::<GPtr<u8>>(slot.byte_add(8)));
+            entity_clean_up_old_reference(old, slot.byte_add(8));
         }
         wr::<i32>(slot, 0, ty);
         wr::<GPtr<u8>>(slot, 8, entity);

@@ -39,7 +39,7 @@ use crate::bindings::is_ped_stopped;
 use sa_world::bindings::set_coord_blip;
 use sa_core::bindings::camera_set_wide_screen_off as set_wide_screen_off;
 use sa_core::bindings::camera_set_wide_screen_on as set_wide_screen_on;
-use sa_core::bindings::entity_update_rw_frame as update_rw_frame;
+use sa_world::bindings::entity_update_rw_frame as update_rw_frame;
 use sa_stream::bindings::set_mission_doesnt_require_special_char;
 use sa_stream::bindings::setup_big_building;
 use sa_world::bindings::find_ground_z_for_coord;
@@ -147,7 +147,7 @@ fn sprite_blip_for_coord(s: Scr, ty: i32, colour: u32) {
             .to_bits();
     }
     get_actual_blip_array_index(collect_next(s));
-    let h = set_coord_blip(ty, f32::from_bits(x), f32::from_bits(y), f32::from_bits(z), colour, 3, s.byte_add(8));
+    let h = set_coord_blip(ty, f32::from_bits(x), f32::from_bits(y), f32::from_bits(z), colour as i32, 3, s.byte_add(8));
     set_blip_sprite(h, spi(3));
     set_sp(0, h as u32);
     store(s, 1);

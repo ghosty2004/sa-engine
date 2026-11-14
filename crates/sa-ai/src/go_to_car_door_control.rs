@@ -17,8 +17,8 @@ use crate::bindings::go_to_point_update_point;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::get_nearest_car_door;
 use sa_world::bindings::path_to_door_blocked;
-use sa_core::bindings::vector_magnitude_sqr as vector_magnitude;
-use sa_core::bindings::vector_sub;
+use sa_world::bindings::vector_magnitude_sqr as vector_magnitude;
+use sa_world::bindings::vector_sub;
 use crate::bindings::get_nearest_car_passenger_door;
 orig! {
     /// `CTaskComplex::CreateFirstSubTask` (vtable +0x24)
@@ -39,7 +39,7 @@ fn set_target(this: GPtr<u8>, p: [u32; 3]) {
 
 fn door_pos(this: GPtr<u8>) -> [u32; 3] {
     let mut p = [0u32; 3];
-    get_position_to_open_car_door(vp(&mut p), rd::<GPtr<u8>>(this, 0xC), rd::<u32>(this, 0x34));
+    get_position_to_open_car_door(vp(&mut p), rd::<GPtr<u8>>(this, 0xC), rd::<u32>(this, 0x34) as i32);
     p
 }
 
@@ -88,7 +88,7 @@ pub fn control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
             }
             let mut d = [0u32; 3];
             vector_sub(vp(&mut d), this.byte_add(0x38), vp(&mut p));
-            let len = X87::from_f64_exact(vector_magnitude(GPtr::<u8>::cast::<f32>(vp(&mut d))));
+            let len = X87::from_f64_exact(vector_magnitude(vp(&mut d)).to_f64());
             if len.fcom(x(g::<f32>(0x86EC40).read())).test_any(0x41) {
                 return rd::<GPtr<u8>>(this, 8);
             }

@@ -14,7 +14,7 @@ use crate::common::{g, rand_at, rd, wr, x, xi};
 
 use crate::bindings::audio_service;
 use crate::bindings::find_maximum_speed_to_stop_at_stations;
-use sa_core::bindings::get_pad;
+use sa_input::bindings::get_pad;
 use sa_core::bindings::matrix_update_rw_matrix as matrix_update_rw;
 use sa_pop::bindings::scan_for_ped_danger;
 use sa_stream::bindings::ped_is_player;
@@ -24,44 +24,38 @@ use sa_world::bindings::pad_start_shake as start_shake;
 use sa_world::bindings::physical_process_control;
 use crate::bindings::area_check_stub;
 use crate::bindings::get_lighting_from_collision;
-use sa_core::bindings::entity_update_rw_frame as update_rw_frame;
-use sa_core::bindings::vector_sub;
+use sa_world::bindings::entity_update_rw_frame as update_rw_frame;
+use sa_world::bindings::vector_sub;
 use sa_world::bindings::apply_move_speed;
 use sa_world::bindings::buoyancy_process as process_buoyancy;
 use sa_world::bindings::cam_shake;
 use sa_world::bindings::col_lighting_get_current as get_current_lighting;
-use sa_world::bindings::mark_surrounding_entities as mark_surrounding_entities_for_collision_with_train;
+use crate::bindings::mark_surrounding_entities as mark_surrounding_entities_for_collision_with_train;
 use sa_world::bindings::pad_get_accelerate as get_accelerate;
 use sa_world::bindings::pad_get_brake as get_brake;
 use sa_world::bindings::physical_remove_and_add as remove_and_add;
 use sa_world::bindings::placeable_get_top_direction as get_top_direction;
 use sa_world::bindings::simple_transform_update_rw_matrix;
 use sa_world::bindings::skip_physics;
+use sa_core::bindings::cross_product;
+use sa_core::bindings::vector_normalise;
+use sa_world::bindings::max_f;
+use sa_world::bindings::min_f;
+use sa_world::bindings::physical_apply_move_force_5429f0 as apply_move_force;
+use sa_world::bindings::physical_apply_turn_force as apply_turn_force;
 orig! {
     /// `CTrain::FindNumCarriagesPulled()` (0x6F5CD0)
     fn find_num_carriages_pulled(t: GPtr<u8>) -> u32 = thiscall 0x6F5CD0 => crate::train::find_num_carriages_pulled;
     /// `CGameLogic::CalcDistanceToForbiddenTrainCrossing(CVector, CVector, bool, CVector&)` (0x4418E0), ST0
     fn calc_distance_to_forbidden_train_crossing(px: f32, py: f32, pz: f32, mx: f32, my: f32, mz: f32, ignore: u8, out: GPtr<u8>) -> f64 = cdecl 0x4418E0 => calc_distance_native;
-    /// `min(float, float)` (0x404330), ST0
-    fn min_f(a: f32, b: f32) -> f64 = cdecl 0x404330 => min_native;
-    /// `max(float, float)` (0x420800), ST0
-    fn max_f(a: f32, b: f32) -> f64 = cdecl 0x420800 => max_native;
     /// `CTrainNode::GetPosn()` (0x6F5440, hidden return pointer)
     fn train_node_get_posn(n: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall 0x6F5440 => node_posn_native;
-    /// `CVector::Normalise()` (0x59C910)
-    fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => normalise_native;
     /// `CTrain::IsInTunnel()` (0x6F6320)
     fn is_in_tunnel(t: GPtr<u8>) -> u8 = thiscall 0x6F6320 => unported;
     /// `CTrain::RemoveRandomPassenger()` (0x6F6850)
     fn remove_random_passenger(t: GPtr<u8>) = thiscall 0x6F6850 => unported;
     /// `CTrain::AddNearbyPedAsRandomPassenger()` (0x6F8170)
     fn add_nearby_ped_as_random_passenger(t: GPtr<u8>) = thiscall 0x6F8170 => unported;
-    /// `CrossProduct(CVector*, const CVector*, const CVector*)` (0x59C730)
-    fn cross_product(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C730 => cross_native;
-    /// `CPhysical::ApplyMoveForce(CVector)` (0x5429F0)
-    fn apply_move_force(e: GPtr<u8>, force: CVector) = thiscall 0x5429F0 => sa_world::physical::forces::apply_move_force;
-    /// `CPhysical::ApplyTurnForce(CVector, CVector)` (0x542A50)
-    fn apply_turn_force(e: GPtr<u8>, force: CVector, point: CVector) = thiscall 0x542A50 => sa_world::physical::forces::apply_turn_force;
     /// `CEntity::SetIsStatic(bool)` (vtable +0x10)
     fn v_set_is_static(e: GPtr<u8>, s: u32) = thiscall vslot 0x10 => unported;
 }
@@ -84,24 +78,6 @@ pub fn calc_distance_native(
     .to_f64()
 }
 
-/// Phases B/C side of `min` 0x404330.
-pub fn min_native(a: f32, b: f32) -> f64 {
-    if x(a).fcom(x(b)).test_parity(0x05) {
-        f64::from(b)
-    } else {
-        f64::from(a)
-    }
-}
-
-/// Phases B/C side of `max` 0x420800.
-pub fn max_native(a: f32, b: f32) -> f64 {
-    if x(a).fcom(x(b)).test_any(0x41) {
-        f64::from(b)
-    } else {
-        f64::from(a)
-    }
-}
-
 /// Phases B/C side of `CTrainNode::GetPosn` 0x6F5440: the int16 position times 1/8.
 pub fn node_posn_native(n: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> {
     for k in 0..3isize {
@@ -111,23 +87,6 @@ pub fn node_posn_native(n: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> {
             xi(i32::from(rd::<i16>(n, 2 * k))).fmul_m(0.125).to_f32(),
         );
     }
-    out
-}
-
-/// Phases B/C side of `CVector::Normalise` 0x59C910.
-pub fn normalise_native(v: GPtr<u8>) {
-    let [a, b, c] = sa_math::vector::normalise([rd::<f32>(v, 0), rd::<f32>(v, 4), rd::<f32>(v, 8)]);
-    wr::<f32>(v, 0, a);
-    wr::<f32>(v, 4, b);
-    wr::<f32>(v, 8, c);
-}
-
-/// Phases B/C side of `CrossProduct` 0x59C730.
-pub fn cross_native(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> {
-    let r = sa_math::vector::cross_product(&rv(a, 0), &rv(b, 0));
-    wr::<f32>(out, 0, r.x);
-    wr::<f32>(out, 4, r.y);
-    wr::<f32>(out, 8, r.z);
     out
 }
 
@@ -424,8 +383,8 @@ fn front_carriage(this: GPtr<u8>, count: i32, nodes: GPtr<u8>) {
     let r2 = train_node_get_posn(n2, GPtr::from_raw(&mut t2).cast());
     let r1 = train_node_get_posn(n1, GPtr::from_raw(&mut t1).cast());
     vector_sub(bp, r1, r2);
-    vector_normalise(ap);
-    vector_normalise(bp);
+    vector_normalise(ap.cast::<[f32;3]>());
+    vector_normalise(bp.cast::<[f32;3]>());
     let (a, b) = (rv(ap, 0), rv(bp, 0));
     let dot = x(b.z)
         .fmul_m(a.z)
@@ -543,9 +502,9 @@ fn forbidden_crossings(this: GPtr<u8>) {
         .fadd(x(out[0]).fmul_m(rd::<f32>(u, 0)));
     let gas = rd::<f32>(this, 0x5B0);
     let r = if le(dot, X87::zero()) {
-        max_f(0.0, gas)
+        max_f(0.0, gas).to_f64()
     } else {
-        min_f(0.0, gas)
+        min_f(0.0f32.to_bits(), gas.to_bits()).to_f64()
     };
     wr::<f32>(this, 0x5B0, st0(r).to_f32());
     let p = rv(pos_ptr(this), 0);
@@ -719,7 +678,7 @@ fn on_rails(this: GPtr<u8>, old: CVector, old_heading: f32, total: f32, nodes: G
         x(p2z).fsub(p1z).to_f32(),
     );
     let fp = GPtr::from_raw(&mut fwd).cast::<u8>();
-    vector_normalise(fp);
+    vector_normalise(fp.cast::<[f32;3]>());
     if rd::<u8>(this, 0x5B8) & 0x40 == 0 {
         let f = rv(fp, 0);
         fwd = CVector::new(
@@ -740,7 +699,7 @@ fn on_rails(this: GPtr<u8>, old: CVector, old_heading: f32, total: f32, nodes: G
         0,
     );
     let rp = GPtr::from_raw(&mut right).cast::<u8>();
-    vector_normalise(rp);
+    vector_normalise(rp.cast::<[f32;3]>());
     let mut tmp2 = CVector::default();
     let up = rv(cross_product(GPtr::from_raw(&mut tmp2).cast(), rp, fp), 0);
     let right = rv(rp, 0);
@@ -752,8 +711,8 @@ fn on_rails(this: GPtr<u8>, old: CVector, old_heading: f32, total: f32, nodes: G
         wr::<f32>(rd::<GPtr<u8>>(this, 0x14), off + 8, v.z);
     }
     let _ = m;
-    let la = st0(get_current_lighting(get_lighting_from_collision(ma), 0.5)).to_f32();
-    let lb = st0(get_current_lighting(get_lighting_from_collision(mb), 0.5));
+    let la = st0(get_current_lighting(get_lighting_from_collision(ma), 0.5).to_f64()).to_f32();
+    let lb = st0(get_current_lighting(get_lighting_from_collision(mb), 0.5).to_f64());
     wr::<f32>(this, 0x12C, lb.fsub_m(la).fmul_m(t2).fadd_m(la).to_f32());
     // move speed from the position change
     let p = pos_ptr(this);

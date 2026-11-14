@@ -26,11 +26,11 @@ const TEX_MASKS: usize = 0x8D4A58;
 const PARTICLE_TXD: usize = 0x85C648;
 
 pub use sa_core::bindings::find_txd_slot;
-pub use sa_core::bindings::rw_texture_destroy;
-pub use sa_core::bindings::rw_texture_read;
-pub use sa_core::bindings::pop_current_txd;
-pub use sa_core::bindings::push_current_txd;
-pub use sa_core::bindings::set_current_txd;
+pub use sa_rwcore::bindings::rw_texture_destroy;
+pub use sa_rwcore::bindings::rw_texture_read;
+pub use sa_stream::bindings::pop_current_txd;
+pub use sa_stream::bindings::push_current_txd;
+pub use sa_stream::bindings::set_current_txd;
 
 /// `CCoronas::Init()` (0x6FAA70): with the "particle" TXD current, every corona texture not yet loaded
 /// whose name is non-empty is read (`RwTextureRead(name, mask)`); then every corona's identifier is 0

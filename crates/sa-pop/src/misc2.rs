@@ -18,9 +18,9 @@ pub const GLOBALS: &[GlobalDesc] = &[];
 use sa_core::bindings::atexit;
 use sa_core::bindings::eh_vector_ctor;
 use sa_core::bindings::eh_vector_dtor;
-use sa_core::bindings::end_gang_war as end_gang_war_o;
-use sa_core::bindings::stats_increment_stat as increment_stat;
-use sa_core::bindings::zones_fill_zones_with_gang_colours as fill_zones_with_gang_colours;
+use crate::bindings::end_gang_war as end_gang_war_o;
+use sa_world::bindings::stats_increment_stat as increment_stat;
+use sa_world::bindings::zones_fill_zones_with_gang_colours as fill_zones_with_gang_colours;
 use sa_world::bindings::is_player_on_a_mission;
 use sa_world::bindings::set_gang_wars_active as set_gang_wars_active_o;
 use sa_world::bindings::vehicle_set_created_by;
@@ -181,7 +181,7 @@ pub fn set_gang_wars_active(b: u8) {
     if b == GANG_WARS_ACTIVE.get() {
         return;
     }
-    fill_zones_with_gang_colours(u32::from(b == 0));
+    fill_zones_with_gang_colours(u32::from(b == 0) as u8);
     let t = time_till_next_attack(rand_at(0x446591));
     store_u32_as_f32(TIME_TILL_NEXT_ATTACK, t as u32);
     if b == 0 {
@@ -391,10 +391,8 @@ use crate::bindings::release_cars_in_attack_wave_o as release_cars_in_attack_wav
 use sa_core::bindings::text_get;
 use sa_world::bindings::add_message_q;
 use sa_world::bindings::set_stat_value;
+use sa_world::bindings::add_to_previous_brief_array;
 orig! {
-    /// `CMessages::AddToPreviousBriefArray(const char*, int32 x6, const char*)` (0x69DD50)
-    #[allow(clippy::too_many_arguments)]
-    fn add_to_previous_brief_array(text: u32, a: i32, b: i32, c: i32, d: i32, e: i32, f: i32, s: u32) = cdecl 0x69DD50 => unported;
     /// `CGangWars::CheerVictory()` (0x444040)
     fn cheer_victory() = cdecl 0x444040 => unported;
 }
@@ -507,7 +505,7 @@ pub fn do_stuff_when_player_victorious() {
     let t = GPtr::<u8>::addr(text_get(g(0xC1B340), GPtr::from_addr(0x85992C))) as u32;
     add_message_q(GPtr::from_addr(t as usize), 0x1194, 1, 1);
     let t = GPtr::<u8>::addr(text_get(g(0xC1B340), GPtr::from_addr(0x85992C))) as u32;
-    add_to_previous_brief_array(t, -1, -1, -1, -1, -1, -1, 0);
+    add_to_previous_brief_array(GPtr::from_addr(t as usize), -1, -1, -1, -1, -1, -1, GPtr::NULL);
     PROVOCATION.set(0.0);
     tell_gang_members_to(1);
     increment_stat(0x44, 45.0);
@@ -524,7 +522,7 @@ pub fn do_stuff_when_player_victorious() {
 
 use crate::bindings::deal_with_weapon_change_at_end_of_frenzy;
 use sa_core::bindings::display_script_stat_update_message;
-use sa_core::bindings::find_player_ped;
+use sa_world::bindings::find_player_ped;
 use sa_core::bindings::hud_set_help_message as set_help_message;
 use sa_core::bindings::set_wanted_level;
 use sa_world::bindings::decrement_stat;
@@ -658,7 +656,7 @@ pub fn register_kill_not_by_player(ped: GPtr<u8>) {
         let p = find_player_ped(-1);
         let grp = rd::<i32>(rd::<GPtr<u8>>(p, 0x480), 0x38);
         let m = g::<u8>((grp.wrapping_mul(0x2D4) as u32).wrapping_add(0xC09928) as usize);
-        if group_is_member(m, ped) != 0 {
+        if group_is_member(m, ped) as u8 != 0 {
             decrement_stat(0x44, 2.0f32.to_bits());
             increment_stat(0xA3, 1.0);
             display_script_stat_update_message(0, 0x150, 1.0);
@@ -963,9 +961,8 @@ use crate::bindings::find_traffic_light_type_from_orientation;
 use sa_core::bindings::file_close;
 use sa_core::bindings::file_read;
 use sa_core::bindings::open_file as file_open;
+use sa_core::bindings::crt_new as operator_new;
 orig! {
-    /// CRT `operator new` (0x82119A)
-    fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
     /// `CAccidentManager::CAccidentManager()` (0x56CE30)
     fn accident_manager_ctor_o(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x56CE30 => unported;
     /// `CAccidentManager::GetNearestFreeAccidentExceptThisOne(CVector&, CAccident*, bool)` (0x56CF90)

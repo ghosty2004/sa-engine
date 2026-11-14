@@ -53,16 +53,16 @@ const K_STICK_SCALE: usize = 0x859044;
 const K_BLEND_STEP: usize = 0x858CA8;
 
 use sa_world::bindings::anim_blend_animation;
-use sa_core::bindings::assoc_group_get_animation;
+use sa_anim::bindings::assoc_group_get_animation_4ce090 as assoc_group_get_animation;
 use sa_core::bindings::clump_get_association;
 use crate::bindings::pad_jump_just_down;
 use sa_world::bindings::ped_set_move_state;
 use sa_world::bindings::player_control_button_sprint;
-use sa_core::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference;
 use sa_core::bindings::general_random_int_in_range;
 use sa_core::bindings::get_weapon_info as weapon_info_get;
 use sa_core::bindings::intel_get_task_use_gun;
-use sa_core::bindings::set_model_is_deletable as streaming_set_model_is_deletable;
+use sa_stream::bindings::set_model_is_deletable as streaming_set_model_is_deletable;
 use sa_core::bindings::streaming_request_model;
 use sa_core::bindings::tm_get_active_task;
 use sa_world::bindings::anim_get_next_association;
@@ -82,13 +82,13 @@ use sa_world::bindings::surface_cant_sprint_on;
 use sa_core::bindings::clump_get_first_association;
 use sa_core::bindings::general_get_radian_angle_between_points;
 use sa_core::bindings::general_limit_radian_angle;
-use sa_core::bindings::tm_get_task_secondary;
+use crate::bindings::tm_get_task_secondary;
 use sa_world::bindings::clear_cross_hair as weapon_effects_clear_cross_hair;
 use sa_world::bindings::game_logic_allowed_direction as game_logic_is_player_allowed_to_go_in_this_direction;
 use sa_world::bindings::pad_get_ped_walk_left_right;
 use sa_world::bindings::pad_get_ped_walk_up_down;
 use sa_world::bindings::pad_get_touched_time_delta;
-use sa_world::bindings::tm_set_task;
+use crate::bindings::tm_set_task;
 orig! {
     /// `CPedIntelligence::SetTaskDuckSecondary(uint16)` (0x601230, `ret 4`)
     fn intel_set_task_duck_secondary(i: GPtr<u8>, t: u32) = thiscall 0x601230 => unported;
@@ -248,7 +248,7 @@ pub fn on_foot_make_abortable(_this: GPtr<u8>, ped: GPtr<u8>, prio: i32, ev: GPt
     weapon_effects_clear_cross_hair(rd::<u32>(ped, 0x598));
     let t = rd::<GPtr<u8>>(target, 0);
     if !t.is_null() {
-        entity_clean_up_old_reference(t, target.cast::<GPtr<u8>>());
+        entity_clean_up_old_reference(t, target.cast::<u8>());
     }
     wr::<u32>(target, 0, 0);
     r
@@ -469,7 +469,7 @@ pub fn on_foot_play_idle_animations(this: GPtr<u8>, ped: GPtr<u8>) {
 use crate::bindings::duck_control_duck_move;
 use sa_world::bindings::game_logic_is_player_use_2player_controls;
 use sa_world::bindings::pad_exit_vehicle_just_down;
-use sa_core::bindings::vector_sub;
+use sa_world::bindings::vector_sub;
 use sa_world::bindings::weapon_is_type_melee;
 orig! {
     /// `CPedIntelligence::ClearTaskDuckSecondary()` (0x601390)
@@ -935,7 +935,7 @@ fn fighter_idle_direction(fight: GPtr<u8>, pd: GPtr<u8>) {
 
 use crate::bindings::duck_is_task_in_use_by_other_tasks;
 use crate::bindings::fight_ctor;
-use sa_core::bindings::ik_abort_look_at;
+use sa_anim::bindings::ik_abort_look_at;
 use sa_world::bindings::intel_is_in_seeing_range;
 use crate::bindings::stealth_kill_ctor;
 use crate::bindings::ug_abort_ik_orig as use_gun_abort_ik;
@@ -947,7 +947,7 @@ use sa_world::bindings::damage_calc_dtor;
 use sa_world::bindings::event_damage_affects_ped;
 use sa_world::bindings::event_damage_ctor;
 use sa_world::bindings::event_damage_dtor;
-use sa_world::bindings::event_group_add;
+use crate::bindings::event_group_add;
 use sa_world::bindings::event_group_event_ctor;
 use sa_world::bindings::event_group_event_dtor;
 use sa_world::bindings::event_gun_aimed_at_ctor;
@@ -957,13 +957,13 @@ use sa_world::bindings::ik_look_at;
 use sa_world::bindings::intel_get_task_duck;
 use sa_world::bindings::intel_get_task_throw;
 use sa_world::bindings::is_coop_game_going_on as game_logic_is_coop_game_going_on;
-use sa_world::bindings::localisation_kicking_when_down;
+use crate::bindings::localisation_kicking_when_down;
 use sa_world::bindings::pad_get_enter_targeting;
 use sa_world::bindings::pad_get_weapon;
 use sa_world::bindings::pad_melee_attack_just_down;
 use sa_world::bindings::ped_get_weapon_skill;
 use sa_world::bindings::ped_groups_are_in_same_group;
-use sa_world::bindings::ped_groups_get_peds_group;
+use crate::bindings::ped_groups_get_peds_group;
 use sa_world::bindings::ped_set_ped_state;
 use sa_world::bindings::ped_weapon_audio_add_audio_event;
 use sa_world::bindings::placeable_get_top_direction;
@@ -971,12 +971,12 @@ use sa_world::bindings::report_crime as crime_report_crime;
 use sa_world::bindings::task_use_goggles_ctor as use_goggles_ctor;
 use crate::bindings::ik_get_look_at_entity;
 use crate::bindings::weapon_fire;
-use sa_core::bindings::tm_set_task_secondary;
+use crate::bindings::tm_set_task_secondary;
 use sa_world::bindings::aim_weapon_left_right as pad_aim_weapon_left_right;
 use sa_world::bindings::aim_weapon_up_down as pad_aim_weapon_up_down;
 use sa_world::bindings::does_target_have_to_be_broken_call as player_does_target_have_to_be_broken;
 use sa_world::bindings::get_crouch_reload_animation_id_call as weapon_info_get_crouch_reload_anim_id;
-use sa_world::bindings::group_intelligence_add_event as group_intel_add_event;
+use crate::bindings::group_intelligence_add_event as group_intel_add_event;
 use sa_world::bindings::pad_weapon_just_down;
 use sa_world::bindings::vector_add_assign;
 orig! {
@@ -1042,7 +1042,7 @@ const S_PROC_PLYR_WEAPON: u32 = 0x870910;
 const IK_CHAIN_MAN: usize = 0xC15448;
 
 fn tm_secondary(ped: GPtr<u8>, i: u32) -> GPtr<u8> {
-    tm_get_task_secondary(task_manager(ped), i)
+    tm_get_task_secondary(task_manager(ped), i as i32)
 }
 fn is_ped(e: GPtr<u8>) -> bool {
     rd::<u8>(e, 0x36) & 7 == 3
@@ -1230,7 +1230,7 @@ fn ppw_stealth_kill(ped: GPtr<u8>, wi: GPtr<u8>, victim: GPtr<u8>) {
     let mut ev = [0u32; 0x11];
     let calc_p: GPtr<u8> = GPtr::from_raw(calc.as_mut_ptr()).cast();
     let ev_p: GPtr<u8> = GPtr::from_raw(ev.as_mut_ptr()).cast();
-    damage_calc_ctor(calc_p, ped, f32::from_bits(0), rd::<u32>(weapon_slot(ped), 0), 3, 0);
+    damage_calc_ctor(calc_p, ped.addr() as u32, f32::from_bits(0).to_bits(), rd::<u32>(weapon_slot(ped), 0), 3, 0);
     let flags = (rd::<u32>(victim, 0x46C) >> 8) & 0xFFFF_FF01;
     event_damage_ctor(ev_p, ped, g::<u32>(TIMER_TIME_MS).read(), rd::<u32>(weapon_slot(ped), 0), 3, 0, 0, flags);
     if event_damage_affects_ped(ev_p, victim) != 0 {
@@ -1311,7 +1311,7 @@ fn ppw_gun(ped: GPtr<u8>, pad: GPtr<u8>, wi: GPtr<u8>) {
             }
             let mut v = [0u32, 0, 0x3F19_999A];
             let mut out = [0u32; 3];
-            let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::from_raw(out.as_mut_ptr()).cast()), rd::<GPtr<u8>>(ped, 0x14), GPtr::from_raw(v.as_mut_ptr()).cast()));
+            let r = matrix_mul_vec(GPtr::from_raw(out.as_mut_ptr()).cast(), rd::<GPtr<u8>>(ped, 0x14), GPtr::from_raw(v.as_mut_ptr()).cast());
             let mut fp = [rd::<u32>(r, 0), rd::<u32>(r, 4), rd::<u32>(r, 8)];
             weapon_fire(weapon_slot(ped), ped, GPtr::from_raw(fp.as_mut_ptr()).cast(), GPtr::NULL, GPtr::NULL, GPtr::NULL, GPtr::NULL);
         }
@@ -1411,7 +1411,7 @@ fn ppw_aim(this: GPtr<u8>, ped: GPtr<u8>, pad: GPtr<u8>, wi: GPtr<u8>) {
                 && player_does_target_have_to_be_broken(ped, target(), weapon_slot(ped)) == 0
                 && (rd::<u8>(ped, 0x46C) & 0x40 != 0 || {
                     let ty = rd::<u32>(weapon_slot(ped), 0);
-                    rd::<u8>(weapon_info_get(ty as i32, (ped_get_weapon_skill(ped) as i32) as u8), 0x18) & 1 != 0
+                    rd::<u8>(weapon_info_get(ty as i32, ((ped_get_weapon_skill(ped) as u32) as i32) as u8), 0x18) & 1 != 0
                 });
             if !keep {
                 player_clear_weapon_target(ped);
@@ -1439,7 +1439,7 @@ fn ppw_aim(this: GPtr<u8>, ped: GPtr<u8>, pad: GPtr<u8>, wi: GPtr<u8>) {
                 if rd::<u32>(weapon_slot(ped), 0) != 0x17 {
                     ped_say(ped, 0xB0, 0, f32::from_bits(0x3F80_0000), 0, 0, 0);
                 }
-                let grp = ped_groups_get_peds_group(victim);
+                let grp = GPtr::from_addr(ped_groups_get_peds_group(victim.addr() as u32) as usize);
                 if !grp.is_null() {
                     if ped_groups_are_in_same_group(victim, ped) == 0 {
                         let e = event_new(0x18);
@@ -1598,7 +1598,7 @@ fn ppw_look(this: GPtr<u8>, ped: GPtr<u8>, wi: GPtr<u8>) {
                 let ik = GPtr::from_addr(IK_CHAIN_MAN);
                 if ik_is_looking(ik, ped) == 0 || ik_get_look_at_entity(ik, ped) != t {
                     let bone = if is_ped(t) { 5 } else { -1 };
-                    ik_look_at(ik, GPtr::from_addr(S_PROC_PLYR_WEAPON as usize), ped, t, 9_999_999, bone as u32, GPtr::NULL, 0, 0x3E80_0000, 500, 3, 0);
+                    ik_look_at(ik, GPtr::from_addr(S_PROC_PLYR_WEAPON as usize), ped, t, 9_999_999, (bone as u32) as i32, GPtr::NULL, 0, f32::from_bits(0x3E80_0000), 500, 3, 0);
                 }
             }
         }
@@ -1641,7 +1641,7 @@ fn ppw_look(this: GPtr<u8>, ped: GPtr<u8>, wi: GPtr<u8>) {
 pub fn on_foot_process_player_weapon_port(this: GPtr<u8>, ped: GPtr<u8>) {
     let pad = player_get_pad(ped);
     let ty = rd::<u32>(weapon_slot(ped), 0);
-    let wi = weapon_info_get(ty as i32, (ped_get_weapon_skill(ped) as i32) as u8);
+    let wi = weapon_info_get(ty as i32, ((ped_get_weapon_skill(ped) as u32) as i32) as u8);
     let pd = || player_data(ped);
     if rd::<u8>(pd(), 0x34) & 4 != 0 && rd::<u32>(ped, 0x71C) == 0 {
         camera_clear_player_weapon_mode(cam());

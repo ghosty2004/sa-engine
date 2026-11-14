@@ -77,28 +77,28 @@ const SEQUENCE_ID_BYTES: u32 = 0xA43F68;
 
 use sa_world::bindings::clear_space_for_mission_entity;
 use sa_world::bindings::clump_get_association as rp_anim_blend_clump_get_association;
-use sa_world::bindings::get_new_unique_script_thing_index;
+use crate::bindings::get_new_unique_script_thing_index;
 use crate::bindings::path_find_release_requested_nodes as release_requested_nodes;
 use crate::bindings::record_set_event as scripted_task_record_set;
 use crate::bindings::start_playback_recorded_car;
-use sa_world::bindings::stop_playback_recorded_car;
+use sa_veh::bindings::stop_playback_recorded_car;
 use sa_world::bindings::task_gun_control_ctor;
-use sa_core::bindings::assoc_set_current_time as set_current_time;
+use sa_anim::bindings::assoc_set_current_time as set_current_time;
 use sa_core::bindings::entity_register_reference as register_reference;
 use sa_core::bindings::membership_set_leader;
 use sa_core::bindings::ped_group_process;
 use sa_core::bindings::rgba_ctor;
-use sa_core::bindings::task_new;
-use sa_stream::bindings::ped_is_player;
+use sa_ai::bindings::task_new;
+use sa_ped::bindings::ped_is_player;
 use sa_world::bindings::civilian_ped_ctor;
-use sa_world::bindings::compute_response_task_type_group;
+use sa_ai::bindings::compute_response_task_type_group;
 use sa_world::bindings::cop_ped_ctor;
 use sa_world::bindings::count_members_excluding_leader;
 use sa_world::bindings::dm_load_enum as load_decision_maker;
 use sa_world::bindings::dtor_6389f0 as sequence_dtor;
 use sa_world::bindings::emergency_ped_ctor;
 use sa_world::bindings::enter_car_as_passenger_ctor as task_enter_car_as_passenger_ctor;
-use sa_world::bindings::event_group_add;
+use sa_ai::bindings::event_group_add;
 use sa_world::bindings::event_group_event_ctor;
 use sa_world::bindings::event_group_event_dtor;
 use sa_world::bindings::event_leader_entered_car_as_driver_ctor as event_leader_entered_car_ctor;
@@ -114,7 +114,7 @@ use sa_world::bindings::ped_groups_remove_group as remove_group;
 use sa_world::bindings::ped_new;
 use sa_world::bindings::sequence_add_task;
 use sa_world::bindings::sequence_ctor;
-use sa_world::bindings::sequence_flush;
+use sa_ai::bindings::sequence_flush;
 use sa_world::bindings::set_char_created_by;
 use sa_world::bindings::set_hearing_range;
 use sa_world::bindings::set_new_record_stat;
@@ -136,21 +136,22 @@ use crate::bindings::scripted_task_status as scripted_task_record_get_status;
 use sa_core::bindings::display_script_stat_update_message;
 use sa_core::bindings::general_random_int_in_range as random_int_in_range;
 use sa_core::bindings::get_atan_of_xy;
-use sa_core::bindings::stats_increment_stat as increment_stat;
+use sa_world::bindings::stats_increment_stat as increment_stat;
 use sa_world::bindings::be_in_group_ctor as task_be_in_group_ctor;
 use sa_world::bindings::decrement_stat;
 use sa_world::bindings::follow_node_route_ctor as task_follow_node_route_ctor;
 use sa_world::bindings::get_actual_script_thing_index;
 use sa_world::bindings::group_intel_set_default_task_allocator_type as set_default_task_allocator_type;
-use sa_world::bindings::group_intelligence_add_event as group_intel_add_event;
+use sa_ai::bindings::group_intelligence_add_event as group_intel_add_event;
 use sa_world::bindings::intel_find_task_by_type;
 use sa_world::bindings::kill_ped_on_foot_ctor as task_kill_ped_on_foot_ctor;
 use sa_world::bindings::ped_groups_add_group;
 use sa_world::bindings::place_ped_at_effect;
 use sa_world::bindings::smart_flee_point_ctor as task_smart_flee_point_ctor;
 use sa_world::bindings::task_use_effect_ctor;
-use sa_world::bindings::tm_set_task as task_manager_set_task;
+use sa_ai::bindings::tm_set_task as task_manager_set_task;
 use sa_world::bindings::use_sequence_ctor as task_use_sequence_ctor;
+use sa_core::bindings::vector_normalise;
 orig! {
     fn pause_playback_recorded_car(v: GPtr<u8>) = cdecl 0x459740 => unported;
     fn unpause_playback_recorded_car(v: GPtr<u8>) = cdecl 0x459850 => unported;
@@ -169,8 +170,6 @@ orig! {
     fn get_available_sequence_slot(b: u32) -> i32 = cdecl 0x632E00 => unported;
     /// `CScripted2dEffects::AddScripted2DEffect(float)` (0x6FA7C0); the float raw
     fn add_scripted_2d_effect(r: u32) -> i32 = cdecl 0x6FA7C0 => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    fn vector_normalise(v: GPtr<u32>) = thiscall 0x59C910 => unported;
     /// The `CEventLeaderEnteredCarAsDriver` destructor at 0x48E220 (unnamed in the catalogue)
     fn event_leader_entered_car_dtor_48e220(e: GPtr<u8>) = thiscall 0x48E220 => unported;
     /// The `CTaskComplexEnterCarAsPassenger` destructor at 0x640380 (unnamed in the catalogue)
@@ -387,7 +386,7 @@ fn clear_sequence_task(s: Scr) {
 fn heading_dir(deg: f32) -> [u32; 3] {
     let a = X87::from_f32(deg).fmul_m(f(K_DEG_TO_RAD));
     let mut v = [a.fsin().fchs().to_f32().to_bits(), a.fcos().to_f32().to_bits(), 0];
-    vector_normalise(GPtr::from_raw(v.as_mut_ptr()));
+    vector_normalise(GPtr::<u32>::cast::<[f32;3]>(GPtr::from_raw(v.as_mut_ptr())));
     v
 }
 

@@ -21,8 +21,8 @@ use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::add_animation;
 use sa_world::bindings::event_group_add;
 use sa_world::bindings::kob_ctor;
-use sa_world::bindings::kob_dtor;
-use sa_core::bindings::assoc_set_current_time;
+use crate::bindings::kob_dtor;
+use sa_anim::bindings::assoc_set_current_time;
 use sa_core::bindings::clump_get_association;
 use sa_core::bindings::rt_quat_rotate;
 use sa_world::bindings::anim_blend_animation as blend_animation;
@@ -72,7 +72,7 @@ fn knock_off(rider: GPtr<u8>, veh: GPtr<u8>) {
         veh.byte_add(0x44),
         GPtr::from_raw(impact.as_mut_ptr()).cast(),
         0,
-        0,
+        f32::from_bits(0),
         0x36,
         2,
         0,
@@ -92,7 +92,7 @@ fn knock_off(rider: GPtr<u8>, veh: GPtr<u8>) {
             veh.byte_add(0x44),
             GPtr::from_raw(impact2.as_mut_ptr()).cast(),
             0,
-            0,
+            f32::from_bits(0),
             0x36,
             2,
             0,
@@ -100,11 +100,7 @@ fn knock_off(rider: GPtr<u8>, veh: GPtr<u8>) {
             0,
             0,
         );
-        event_group_add(
-            rd::<GPtr<u8>>(rd::<GPtr<u8>>(veh, 0x464), 0x47C).byte_add(0x68),
-            evp2,
-            0,
-        );
+        event_group_add(rd::<GPtr<u8>>(rd::<GPtr<u8>>(veh, 0x464), 0x47C).byte_add(0x68), evp2, 0);
         kob_dtor(evp2);
     }
     kob_dtor(evp);

@@ -184,7 +184,7 @@ pub fn avoid_the_geometry(this: GPtr<u8>, from: GPtr<u8>, target: GPtr<u8>, out:
     wr::<u32>(out, 4, rd::<u32>(b, 0x34));
     wr::<f32>(b, 0x38, f.fstp());
     wr::<u32>(out, 8, rd::<u32>(b, 0x38));
-    vector_normalise(b.byte_add(0x3C));
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(b.byte_add(0x3C)));
     // 2. line of sight target -> out
     let cp = b.byte_add(0x60);
     let hit_ent = b.byte_add(0x1C);
@@ -281,19 +281,7 @@ pub fn avoid_the_geometry(this: GPtr<u8>, from: GPtr<u8>, target: GPtr<u8>, out:
     wr::<f32>(b, 0x28, f.fstp());
     f.fadd_m(rd(out, 8));
     wr::<f32>(b, 0x2C, f.fstp());
-    let hit = test_sphere_against_world(
-        f32::from_bits(rd::<u32>(b, 0x24)),
-        f32::from_bits(rd::<u32>(b, 0x28)),
-        f32::from_bits(rd::<u32>(b, 0x2C)),
-        f32::from_bits(radius),
-        GPtr::NULL,
-        1,
-        0,
-        0,
-        1,
-        0,
-        1,
-    );
+    let hit = test_sphere_against_world(sa_math::vector::CVector::new(f32::from_bits(rd::<u32>(b, 0x24)), f32::from_bits(rd::<u32>(b, 0x28)), f32::from_bits(rd::<u32>(b, 0x2C))), f32::from_bits(radius), GPtr::<u8>::addr(GPtr::NULL) as u32, 1, 0, 0, 1, 0, 1);
     if !hit.is_null() {
         sphere_push(this, b, out, f);
     }
@@ -378,11 +366,11 @@ fn sphere_push(this: GPtr<u8>, b: GPtr<u8>, out: GPtr<u8>, f: &mut Fpu) {
     f.fsqrt();
     f.fsubr_m(rd(b, 0x18));
     wr::<f32>(b, 0x14, f.fstp());
-    vector_normalise(b.byte_add(0x30));
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(b.byte_add(0x30)));
     wr::<u32>(b, 0x2C, g::<u32>(TEMP_SPHERE_COL_POINT + 0x18).read());
     wr::<u32>(b, 0x24, g::<u32>(TEMP_SPHERE_COL_POINT + 0x10).read());
     wr::<u32>(b, 0x28, g::<u32>(TEMP_SPHERE_COL_POINT + 0x14).read());
-    vector_normalise(b.byte_add(0x24));
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(b.byte_add(0x24)));
     f.fld(rd(b, 0x30));
     f.fmul_m(rd(b, 0x14));
     f.fld(rd(b, 0x34));

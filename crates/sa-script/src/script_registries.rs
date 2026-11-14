@@ -33,7 +33,7 @@ const OBJECT_POOL: usize = 0xB7449C;
 /// `sizeof(CObject)`
 const OBJECT_SIZE: i32 = 0x19C;
 
-use sa_core::bindings::set_mission_doesnt_require_model as streaming_set_mission_doesnt_require_model;
+use sa_stream::bindings::set_mission_doesnt_require_model as streaming_set_mission_doesnt_require_model;
 use sa_world::bindings::decision_maker_types_add;
 
 use sa_core::field::g as ga;
@@ -257,7 +257,7 @@ const K_DEFAULT_BRAIN_RADIUS: usize = 0x859D9C;
 /// `CTheScripts::ScriptSpace` (0xA49960)
 const SCRIPT_SPACE: usize = 0xA49960;
 
-use sa_world::bindings::effect_2d_init as scripted_2d_effect_reset;
+use sa_render::bindings::effect_2d_init as scripted_2d_effect_reset;
 use sa_core::bindings::streaming_request_model;
 use sa_core::bindings::stricmp as crt_stricmp;
 use crate::bindings::brains_is_object_within_range;
@@ -421,7 +421,7 @@ use sa_world::bindings::entity_get_is_static;
 use sa_world::bindings::find_ground_z_for_coord;
 use sa_world::bindings::get_distance_from_centre_of_mass_to_base_of_model as entity_distance_to_base;
 use sa_world::bindings::membership_is_leader;
-use sa_world::bindings::ped_groups_get_peds_group as get_peds_group;
+use sa_ai::bindings::ped_groups_get_peds_group as get_peds_group;
 use sa_world::bindings::physical_add_to_moving_list;
 use sa_stream::bindings::has_collision_loaded as col_store_has_collision_loaded;
 use sa_world::bindings::clear_space_for_mission_entity;
@@ -468,7 +468,7 @@ pub fn running_script_set_char_coordinates(_this: GPtr<u8>, ped: GPtr<u8>, px: f
     }
     let mut p = [px, py, z];
     clear_space_for_mission_entity(GPtr::from_raw(p.as_mut_ptr()).cast(), ped);
-    let g = get_peds_group(ped);
+    let g = GPtr::from_addr(get_peds_group(ped.addr() as u32) as usize);
     if !g.is_null() && membership_is_leader(g.byte_add(8), ped) != 0 && warp_gang != 0 {
         let mut q = [px, py, z];
         group_teleport(g, GPtr::from_raw(q.as_mut_ptr()).cast());
@@ -524,7 +524,7 @@ pub fn mission_cleanup_check_if_collision_has_loaded(this: GPtr<u8>) {
             continue;
         }
         fl.write(fl.read() & 0xFFFB_FFFF);
-        if entity_get_is_static(ent) == 0 {
+        if entity_get_is_static(ent) as u8 == 0 {
             physical_add_to_moving_list(ent);
         }
         if ty == 1 {

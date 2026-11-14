@@ -13,15 +13,13 @@ use crate::bindings::entity_get_col_model as get_col_model;
 use crate::bindings::garage_is_entity_touching_3d as is_entity_touching_3d;
 use crate::bindings::vehicle_can_be_deleted as can_be_deleted;
 use sa_core::bindings::matrix_mul_vec;
-use sa_core::bindings::world_remove;
-use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
+use crate::bindings::world_remove;
+use crate::bindings::placeable_allocate_matrix as allocate_matrix;
 use sa_stream::bindings::simple_transform_update_matrix as update_matrix;
 use crate::bindings::find_objects_intersecting_cube;
+use crate::bindings::garage_is_point_inside as is_point_inside_no_margin;
+use crate::bindings::garage_is_point_inside_r as is_point_inside;
 orig! {
-    /// `CGarage::IsPointInsideGarage(CVector, float margin)` (0x4487D0)
-    fn is_point_inside(gr: GPtr<u8>, p: CVector, margin: f32) -> u8 = thiscall 0x4487D0 => unported;
-    /// `CGarage::IsPointInsideGarage(CVector)` (0x448740)
-    fn is_point_inside_no_margin(gr: GPtr<u8>, p: CVector) -> u8 = thiscall 0x448740 => unported;
     /// the deleting destructor (vtable +0)
     fn v_delete(e: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
 }
@@ -73,7 +71,7 @@ pub fn entity_has_a_sphere_way_outside_garage(this: GPtr<u8>, e: GPtr<u8>, margi
         }
         let sphere = rd::<GPtr<u8>>(data, 8).byte_add(i as isize * 0x14);
         let mut out = [0f32; 3];
-        let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::from_raw(&mut out as *mut [f32; 3]).cast()), rd::<GPtr<u8>>(e, 0x14), sphere));
+        let r = matrix_mul_vec(GPtr::from_raw(&mut out as *mut [f32; 3]).cast(), rd::<GPtr<u8>>(e, 0x14), sphere);
         let m = x(margin).fadd_m(rd::<f32>(rd::<GPtr<u8>>(data, 8).byte_add(i as isize * 0x14), 0xC)).to_f32();
         let p = CVector::new(rd::<f32>(r, 0), rd::<f32>(r, 4), rd::<f32>(r, 8));
         if is_point_inside(this, p, m) == 0 {

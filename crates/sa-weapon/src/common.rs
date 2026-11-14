@@ -9,8 +9,6 @@ pub use sa_world::physical::shared::{
 };
 pub use sa_world::world::common::{ftol32, g, x, xi};
 
-use sa_core::orig;
-
 pub use sa_math::fpu::fbits as cf;
 
 /// `CTimer::m_snTimeInMilliseconds` (0xB7CB84), owned by sa-core.
@@ -47,15 +45,7 @@ pub use sa_stream::bindings::rand;
 pub use sa_world::bindings::fx_kill;
 pub use sa_world::bindings::fx_play_and_kill;
 pub use sa_core::bindings::general_random_int_in_range as random_int;
-pub use sa_core::bindings::get_weapon_info;
-orig! {
-    /// `CGeneral::GetRandomNumberInRange<float>(min, max)` (0x41BD90, ST0)
-    pub fn random_float(min: f32, max: f32) -> f64 = cdecl 0x41BD90 => random_float_port;
-}
-
-/// Phases B/C path of `GetRandomNumberInRange<float>`: the full ST0 as an f64.
-pub fn random_float_port(min: f32, max: f32) -> f64 {
-    sa_core::general::get_random_number_in_range_f32(min, max).to_f64()
-}
+pub use crate::bindings::get_weapon_info;
+pub use sa_core::bindings::random_float_in_range as random_float;
 
 pub use sa_math::fpu::st0;

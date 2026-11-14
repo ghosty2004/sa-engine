@@ -188,6 +188,7 @@ pub const HOOKS: &[HookReg] = &[HOOK_RENDER_BOAT_WAKES, HOOK_RENDER_WATER];
 use crate::bindings::o_render_water_rectangle as rw_rectangle;
 use sa_core::bindings::can_see_water_from_curr_area as rw_can_see_water;
 use sa_core::bindings::defined_state as rw_defined_state;
+use crate::bindings::render_water_triangle as rw_triangle;
 orig! {
     /// `CWaterLevel::SetCameraRange()` (0x6E9C80)
     fn rw_set_camera_range() = cdecl 0x6E9C80 => crate::waterlevel::set_camera_range;
@@ -195,8 +196,6 @@ orig! {
     fn rw_detailed_segment(bx: i32, by: i32, fx0: f32, fx1: f32, fy0: f32, fy1: f32) = cdecl 0x6E6A10 => crate::waterlevel::render_detailed_sea_bed_segment;
     /// The sea-bed segment of a block (0x6E6870)
     fn rw_segment(bx: i32, by: i32, fx0: f32, fx1: f32, fy0: f32, fy1: f32) = cdecl 0x6E6870 => crate::waterlevel::render_sea_bed_segment;
-    /// `CWaterLevel::RenderWaterTriangle(x1, y1, CRenPar, x2, y2, CRenPar, x3, y3, CRenPar)` (0x6EE240)
-    fn rw_triangle(x1: i32, y1: i32, p1z: u32, p1b: u32, p1s: u32, p1f: u32, x2: i32, y2: i32, p2z: u32, p2b: u32, p2s: u32, p2f: u32, x3: i32, y3: i32, p3z: u32, p3b: u32, p3s: u32, p3f: u32) = cdecl 0x6EE240 => crate::waterlevel::render_water_triangle;
 }
 
 /// The visible water blocks (count, x and y as int16).

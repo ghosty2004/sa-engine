@@ -153,18 +153,18 @@ pub use crate::bindings::just_wrecked_vehicle;
 pub use crate::bindings::play_train_brake_sound;
 pub use crate::bindings::sm_cancel_sounds_in_bank_slot as cancel_sounds_in_bank_slot;
 pub use crate::bindings::sound_set_flags;
-pub use sa_core::bindings::ped_is_alive;
-pub use sa_stream::bindings::ped_is_player;
-pub use sa_world::bindings::get_pad_from_player as player_get_pad_from_player;
+pub use sa_ped::bindings::ped_is_alive;
+pub use sa_ped::bindings::ped_is_player;
+pub use sa_ped::bindings::get_pad_from_player as player_get_pad_from_player;
 pub use sa_world::bindings::vehicle_audio_player_about_to_exit_as_driver as player_about_to_exit_vehicle_as_driver;
 pub use crate::bindings::cancel_vehicle_engine_sound as cancel_vehicle_engine_sound_call;
 pub use crate::bindings::get_piecewise_linear;
 pub use crate::bindings::sound_stop_sound;
 pub use crate::bindings::update_boat_sound;
-pub use sa_world::bindings::audio_stop_radio as engine_stop_radio;
+pub use crate::bindings::audio_stop_radio as engine_stop_radio;
 pub use sa_world::bindings::pad_get_accelerate;
 pub use sa_world::bindings::pad_get_brake;
-pub use sa_world::bindings::turn_on_radio_for_vehicle as turn_on_radio_for_vehicle_call;
+pub use crate::bindings::turn_on_radio_for_vehicle as turn_on_radio_for_vehicle_call;
 orig! {
     /// `CAudioEngine::StartRadio(tVehicleAudioSettings*)` (0x507DF0)
     pub fn engine_start_radio(engine: GPtr<u8>, settings: GPtr<u8>) = thiscall 0x507DF0 => unported;
@@ -857,7 +857,7 @@ pub fn get_accel_and_brake(this: GPtr<u8>, params: GPtr<u8>) {
     if p != 0
         && rd::<u8>(this, 0xA7) == 0
         && rd::<u32>(g::<u8>(p as usize), 0x530) != 0x3F
-        && ped_is_alive(g(p as usize)) != 0
+        && ped_is_alive(g(p as usize)) as u8 != 0
     {
         let pad = player_get_pad_from_player(g(PLAYER_DRIVER.get() as usize));
         let a = pad_get_accelerate(pad);
@@ -1031,7 +1031,7 @@ pub fn service(this: GPtr<u8>) {
         let d = PLAYER_DRIVER.get();
         if d != 0 && rd::<u8>(this, 0xA7) == 0 {
             let dp: GPtr<u8> = g(d as usize);
-            if rd::<u32>(dp, 0x530) == 0x3F || ped_is_alive(dp) == 0 {
+            if rd::<u32>(dp, 0x530) == 0x3F || ped_is_alive(dp) as u8 == 0 {
                 player_about_to_exit_vehicle_as_driver(this);
             }
         }
@@ -1146,7 +1146,7 @@ pub fn turn_on_radio_for_vehicle(this: GPtr<u8>) {
 #[hook(addr = 0x4F5B60, conv = thiscall, name = "CAEVehicleAudioEntity::TurnOffRadioForVehicle", expect = "0F BE 81 9B 00 00 00")]
 pub fn turn_off_radio_for_vehicle(this: GPtr<u8>) {
     if has_radio(this) {
-        engine_stop_radio(audio_engine(), this.byte_add(0x80), 0);
+        engine_stop_radio(audio_engine(), GPtr::<u8>::addr(this.byte_add(0x80)) as u32, 0);
     }
     PLAYER_ATTACHED_FOR_RADIO.set(0);
     VEHICLE_AUDIO_SETTINGS_FOR_RADIO.set(0);

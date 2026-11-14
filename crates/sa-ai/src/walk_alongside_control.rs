@@ -20,13 +20,13 @@ use sa_core::bindings::matrix_mul_vec;
 use sa_core::bindings::vector_dot_product;
 use sa_world::bindings::max_f;
 use sa_world::bindings::min_f;
-use sa_core::bindings::vector_magnitude_sqr;
+use sa_world::bindings::vector_magnitude_sqr;
 use sa_world::bindings::vector_mul_scalar as vector_scale;
-use sa_core::bindings::vector_sub;
+use sa_world::bindings::vector_sub;
 use crate::bindings::approx_equal;
 use crate::bindings::go_to_point_update_point;
 use crate::bindings::intel_get_move_state_from_go_to_task;
-use sa_world::bindings::tm_find_active_task_by_type;
+use crate::bindings::tm_find_active_task_by_type;
 use sa_world::bindings::vector_add_assign;
 orig! {
     /// `CTask::GetTaskType` (vtable +0x10)
@@ -140,7 +140,7 @@ pub fn walk_alongside_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8
             let base: GPtr<u8> = GPtr::from_raw(buf.as_mut_ptr()).cast();
             let point = base;
             let diff = base.byte_add(0xC);
-            matrix_mul_vec(point.cast::<f32>(), rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0xC), 0x14), this.byte_add(0x14));
+            matrix_mul_vec(point.cast::<u8>(), rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0xC), 0x14), this.byte_add(0x14));
             let ped_pos = entity_pos(ped);
             vector_sub(diff, point, ped_pos);
             wr::<f32>(diff, 8, 0.0);
@@ -154,9 +154,9 @@ pub fn walk_alongside_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8
                     .fadd(X87::from_f32(pt(0)).fmul_m(rd::<f32>(tm, 0x10)))
                     .fchs()
                     .to_f32();
-                let v = X87::from_f64_exact(vector_dot_product(ped_pos, fwd)).fadd_m(neg);
+                let v = X87::from_f64_exact(vector_dot_product(ped_pos, fwd).to_f64()).fadd_m(neg);
                 if !v.fcom(X87::from_f32(kf(K_ZERO))).test_parity(5) {
-                    let m2 = X87::from_f64_exact(vector_magnitude_sqr(diff.cast::<f32>())).to_f32();
+                    let m2 = X87::from_f64_exact(vector_magnitude_sqr(diff.cast::<u8>()).to_f64()).to_f32();
                     if !ped_walk.is_null() {
                         if !X87::from_f32(m2).fcom(X87::from_f32(kf(K_TWO))).test_parity(5) {
                             let tmp = base.byte_add(8);
@@ -166,21 +166,21 @@ pub fn walk_alongside_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8
                         let c = X87::from_f32(m2).fcom(X87::from_f32(kf(K_QUARTER_SQ)));
                         if !c.test_parity(5) {
                             // Closer than 0.25: the ped slows down, the target speeds up.
-                            let s = max_f(SPEED_MIN, step(rd::<f32>(ped_walk, 0x24), false));
+                            let s = max_f(SPEED_MIN, step(rd::<f32>(ped_walk, 0x24), false)).to_f64();
                             wr::<f32>(ped_walk, 0x24, X87::from_f64_exact(s).to_f32());
                             ped_flag = true;
                             if !target_walk.is_null() {
-                                let s = min_f(SPEED_MAX, step(rd::<f32>(target_walk, 0x24), true));
+                                let s = min_f(SPEED_MAX.to_bits(), step(rd::<f32>(target_walk, 0x24), true).to_bits()).to_f64();
                                 wr::<f32>(target_walk, 0x24, X87::from_f64_exact(s).to_f32());
                                 target_flag = true;
                             }
                         } else if !c.test_any(0x41) {
                             // Farther than 0.25: the ped speeds up, the target slows down.
-                            let s = min_f(SPEED_MAX, step(rd::<f32>(ped_walk, 0x24), true));
+                            let s = min_f(SPEED_MAX.to_bits(), step(rd::<f32>(ped_walk, 0x24), true).to_bits()).to_f64();
                             wr::<f32>(ped_walk, 0x24, X87::from_f64_exact(s).to_f32());
                             ped_flag = true;
                             if !target_walk.is_null() {
-                                let s = max_f(SPEED_MIN, step(rd::<f32>(target_walk, 0x24), false));
+                                let s = max_f(SPEED_MIN, step(rd::<f32>(target_walk, 0x24), false)).to_f64();
                                 wr::<f32>(target_walk, 0x24, X87::from_f64_exact(s).to_f32());
                                 target_flag = true;
                             }

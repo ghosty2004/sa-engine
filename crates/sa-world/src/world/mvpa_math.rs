@@ -4,7 +4,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 
 use super::common::{rd, wr, x, xi};
@@ -12,17 +12,12 @@ use super::common::{rd, wr, x, xi};
 use crate::bindings::single_node_delete;
 use sa_core::bindings::crt_free_8214bd as crt_free;
 use sa_core::bindings::memory_free as memory_mgr_free;
-use sa_core::bindings::rw_matrix_destroy;
+use sa_rwcore::bindings::rw_matrix_destroy;
 use sa_core::bindings::eh_vector_ctor as eh_vector_constructor_iterator;
 use sa_core::bindings::rw_matrix_update;
-orig! {
-    /// `CCollision::RemoveTrianglePlanes(CCollisionData*)` (0x416400)
-    fn remove_triangle_planes(d: GPtr<u8>) = cdecl 0x416400 => unported;
-    /// `CCollisionData::RemoveCollisionVolumes()` (0x40F070)
-    fn remove_collision_volumes(d: GPtr<u8>) = thiscall 0x40F070 => unported;
-    /// CRT `operator new` (0x82119A)
-    fn operator_new(n: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
-}
+use sa_core::bindings::crt_new as operator_new;
+use crate::bindings::col_data_remove_collision_volumes as remove_collision_volumes;
+use crate::bindings::collision_remove_triangle_planes as remove_triangle_planes;
 
 use sa_core::field::rd3f as v3;
 
@@ -422,10 +417,10 @@ pub fn col_model_dtor(this: GPtr<u8>) {
         return;
     }
     if f & 2 != 0 {
-        remove_triangle_planes(d);
+        remove_triangle_planes(d.cast::<crate::collision::shared::CCollisionData>());
         memory_mgr_free(rd::<GPtr<u8>>(this, 0x2C));
     } else {
-        remove_collision_volumes(d);
+        remove_collision_volumes(d.cast::<crate::collision::shared::CCollisionData>());
         crt_free(rd::<GPtr<u8>>(this, 0x2C));
     }
 }

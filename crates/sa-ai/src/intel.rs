@@ -9,15 +9,15 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
-use sa_world::bindings::acquaintance_get;
+use crate::bindings::acquaintance_get;
 use crate::bindings::task_is_go_to_task;
 use sa_core::bindings::tm_get_simplest_active_task;
-use sa_core::bindings::tm_get_task_secondary;
+use crate::bindings::tm_get_task_secondary;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::anim_get_next_association;
 use sa_world::bindings::get_ped_flag as ped_type_get_ped_flag;
 use sa_world::bindings::tm_find_task_by_type;
-use sa_world::bindings::tm_set_task;
+use crate::bindings::tm_set_task;
 use sa_core::bindings::stricmp as crt_stricmp;
 use sa_world::bindings::clump_get_first_association_4d6a70 as clump_get_first_association_flags;
 orig! {
@@ -32,13 +32,13 @@ fn tm(this: GPtr<u8>) -> GPtr<u8> {
 /// The inlined "secondary task `slot` if it has type `ty`" pattern: `GetTaskSecondary` called once for the null
 /// test, once for the type and once more for the result.
 fn secondary_of_type(this: GPtr<u8>, slot: i32, ty: i32) -> GPtr<u8> {
-    if tm_get_task_secondary(tm(this), slot as u32).is_null() {
+    if tm_get_task_secondary(tm(this), (slot as u32) as i32).is_null() {
         return GPtr::NULL;
     }
-    if v_task_type(tm_get_task_secondary(tm(this), slot as u32)) != ty {
+    if v_task_type(tm_get_task_secondary(tm(this), (slot as u32) as i32)) != ty {
         return GPtr::NULL;
     }
-    tm_get_task_secondary(tm(this), slot as u32)
+    tm_get_task_secondary(tm(this), (slot as u32) as i32)
 }
 
 /// The simplest active task if its type is `ty` (one `GetTaskType` call), else null.
@@ -54,13 +54,13 @@ fn simplest_of_type(this: GPtr<u8>, ty: i32) -> GPtr<u8> {
 /// `CPedIntelligence::AddTaskEventResponseTemp(CTask*, bool)` (0x600DE0, `ret 8`): `SetTask(task, 1, b)`.
 #[hook(addr = 0x600DE0, conv = thiscall, name = "CPedIntelligence::AddTaskEventResponseTemp", expect = "8B 44 24 08 8B 54 24 04")]
 pub fn intel_add_task_event_response_temp(this: GPtr<u8>, task: GPtr<u8>, b: u32) {
-    tm_set_task(tm(this), task, 1, b);
+    tm_set_task(tm(this), task, 1, b as u8);
 }
 
 /// `CPedIntelligence::AddTaskEventResponseNonTemp(CTask*, bool)` (0x600E00, `ret 8`): `SetTask(task, 2, b)`.
 #[hook(addr = 0x600E00, conv = thiscall, name = "CPedIntelligence::AddTaskEventResponseNonTemp", expect = "8B 44 24 08 8B 54 24 04")]
 pub fn intel_add_task_event_response_non_temp(this: GPtr<u8>, task: GPtr<u8>, b: u32) {
-    tm_set_task(tm(this), task, 2, b);
+    tm_set_task(tm(this), task, 2, b as u8);
 }
 
 /// `CPedIntelligence::FindTaskByType(int32)` (0x600EE0, `ret 4`): `CTaskManager::FindTaskByType` over the primary
@@ -178,8 +178,8 @@ pub fn intel_get_using_parachute(this: GPtr<u8>) -> u8 {
 /// sets 0 (respect) or 1 (like), else 0 (EAX).
 #[hook(addr = 0x601BC0, conv = thiscall, name = "CPedIntelligence::IsFriendlyWith", expect = "53 55 56 8B F1")]
 pub fn intel_is_friendly_with(this: GPtr<u8>, other: GPtr<u8>) -> u32 {
-    let a0 = acquaintance_get(rd::<GPtr<u8>>(this, 0).byte_add(0x4E0), 0);
-    let a1 = acquaintance_get(rd::<GPtr<u8>>(this, 0).byte_add(0x4E0), 1);
+    let a0 = acquaintance_get(GPtr::<u8>::addr(rd::<GPtr<u8>>(this, 0).byte_add(0x4E0)) as u32, 0);
+    let a1 = acquaintance_get(GPtr::<u8>::addr(rd::<GPtr<u8>>(this, 0).byte_add(0x4E0)) as u32, 1);
     let f = ped_type_get_ped_flag(rd::<u32>(other, 0x598) as i32);
     if rd::<u32>(rd::<GPtr<u8>>(this, 0), 0x598) == rd::<u32>(other, 0x598) || a0 & f != 0 || a1 & f != 0 {
         1
@@ -192,8 +192,8 @@ pub fn intel_is_friendly_with(this: GPtr<u8>, other: GPtr<u8>) -> u32 {
 /// this ped's acquaintance sets 3 (dislike) or 4 (hate), else 0 (EAX).
 #[hook(addr = 0x601C30, conv = thiscall, name = "CPedIntelligence::IsThreatenedBy", expect = "56 8B F1 8B 0E")]
 pub fn intel_is_threatened_by(this: GPtr<u8>, other: GPtr<u8>) -> u32 {
-    let a3 = acquaintance_get(rd::<GPtr<u8>>(this, 0).byte_add(0x4E0), 3);
-    let a4 = acquaintance_get(rd::<GPtr<u8>>(this, 0).byte_add(0x4E0), 4);
+    let a3 = acquaintance_get(GPtr::<u8>::addr(rd::<GPtr<u8>>(this, 0).byte_add(0x4E0)) as u32, 3);
+    let a4 = acquaintance_get(GPtr::<u8>::addr(rd::<GPtr<u8>>(this, 0).byte_add(0x4E0)) as u32, 4);
     let f = ped_type_get_ped_flag(rd::<u32>(other, 0x598) as i32);
     (a3 & f != 0 || a4 & f != 0) as u32
 }

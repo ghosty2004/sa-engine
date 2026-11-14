@@ -29,13 +29,11 @@ pub use sa_core::bindings::get_uppercase_key;
 pub use sa_core::bindings::memory_free as mem_free;
 pub use sa_core::bindings::memory_malloc as mem_malloc;
 pub use sa_core::bindings::stricmp;
+pub use sa_core::bindings::crt_new as operator_new;
+pub use sa_core::bindings::crt_new_821195 as operator_new_array;
 orig! {
     /// `CMemoryMgr::MoveMemory(p)` (0x72F500; returns its argument in this build)
     pub fn mem_move_memory(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x72F500 => unported;
-    /// CRT `operator new` (0x82119A)
-    pub fn operator_new(n: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
-    /// CRT `operator new[]` (0x821195)
-    pub fn operator_new_array(n: u32) -> GPtr<u8> = cdecl 0x821195 => unported;
     /// `CKeyGen::GetKey(const char*)` (0x53CED0)
     pub fn get_key(s: GPtr<u8>) -> u32 = cdecl 0x53CED0 => unported;
     /// CRT `strncpy` (0x8245A0)

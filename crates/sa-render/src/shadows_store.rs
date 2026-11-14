@@ -4,21 +4,17 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
-use sa_math::vector::CVector;
+use sa_core::hook;
 use sa_math::x87::X87;
 
 use crate::common::{ftol32, g, jne, jp, k, rd, x, xi};
 
 use crate::bindings::stencil_graphics_high_quality as graphics_high_quality;
-use sa_core::bindings::find_player_vehicle;
-use sa_pop::bindings::store_shadow_to_be_rendered as store_shadow_to_be_rendered_tex;
+use sa_world::bindings::find_player_vehicle;
+use crate::bindings::store_shadow_to_be_rendered as store_shadow_to_be_rendered_tex;
 use sa_world::bindings::entity_get_col_model as get_col_model;
-use sa_world::bindings::store_static_shadow;
-orig! {
-    /// `CVector::CrossProduct(CVector* out, const CVector* a, const CVector* b)` (0x59c730)
-    fn cross_product(out: GPtr<CVector>, a: GPtr<CVector>, b: GPtr<CVector>) -> GPtr<CVector> = cdecl 0x59c730 => sa_world::collision::data::cross_product_port;
-}
+use crate::bindings::store_static_shadow;
+use sa_core::bindings::cross_product;
 
 /// `gpShadowCarTex`, `gpShadowBikeTex`, `gpShadowHeliTex`, `gpShadowBaronTex` / plane shadow texture.
 const TEX_CAR: usize = 0xc4_03e0;
@@ -206,9 +202,9 @@ pub fn store_shadow_for_vehicle(veh: GPtr<u8>, ty: u32) {
     let mut up = [0u32, 0, 0x3f80_0000];
     let mut out = [0u32; 3];
     cross_product(
-        GPtr::<u32>::from_raw(out.as_mut_ptr()).cast(),
-        fwd.cast(),
-        GPtr::<u32>::from_raw(up.as_mut_ptr()).cast(),
+        GPtr::<sa_math::vector::CVector>::cast::<u8>(GPtr::<u32>::from_raw(out.as_mut_ptr()).cast()),
+        GPtr::<sa_math::vector::CVector>::cast::<u8>(fwd.cast()),
+        GPtr::<sa_math::vector::CVector>::cast::<u8>(GPtr::<u32>::from_raw(up.as_mut_ptr()).cast()),
     );
     let (ox, oy) = (f32::from_bits(out[0]), f32::from_bits(out[1]));
     let mut side = [ox, oy];
@@ -255,7 +251,7 @@ pub fn store_shadow_for_vehicle(veh: GPtr<u8>, ty: u32) {
     let s = strength;
     if !fast && flag == 0 {
         let id = veh.addr().wrapping_add(1) as u32;
-        store_static_shadow(id, 1, tex, p, f32::from_bits(fx), f32::from_bits(fy), f32::from_bits(sx), f32::from_bits(sy), s, s, s, s, f32::from_bits(0x4090_0000), f32::from_bits(0x3f80_0000), f32::from_bits(0), 0, f32::from_bits(0x3dcc_cccd));
+        store_static_shadow(id, 1, tex, p, f32::from_bits(fx).to_bits(), f32::from_bits(fy).to_bits(), f32::from_bits(sx).to_bits(), f32::from_bits(sy).to_bits(), s, s, s, s, f32::from_bits(0x4090_0000).to_bits(), f32::from_bits(0x3f80_0000).to_bits(), f32::from_bits(0).to_bits(), 0, f32::from_bits(0x3dcc_cccd).to_bits());
     } else {
         store_shadow_to_be_rendered_tex(1, GPtr::from_addr(tex as usize), p, fx, fy, sx, sy, s, s, s, s, zdist, flag_dword, 0x3f80_0000, GPtr::from_addr(0), flag_dword);
     }

@@ -95,7 +95,7 @@ pub use sa_core::bindings::font_set_centre_size;
 pub use sa_core::bindings::font_set_drop_color;
 pub use sa_core::bindings::font_set_drop_shadow_position;
 pub use sa_core::bindings::font_set_right_justify_wrap;
-pub use sa_core::bindings::font_set_scale;
+pub use crate::bindings::font_set_scale;
 pub use crate::bindings::font_set_scale_for_current_language;
 pub use sa_core::bindings::font_set_wrapx;
 pub use sa_stream::bindings::hud_colours_get_rgb;
@@ -106,22 +106,20 @@ pub use sa_core::bindings::rgba_ctor;
 pub use sa_core::bindings::sprintf1 as crt_sprintf1;
 pub use sa_core::bindings::sprite2d_draw as sprite2d_draw_rect;
 pub use crate::bindings::reset_helper_text_call;
-pub use sa_core::bindings::font_print_string;
-pub use sa_core::bindings::font_set_background;
-pub use sa_core::bindings::font_set_color;
-pub use sa_core::bindings::font_set_edge;
-pub use sa_core::bindings::font_set_font_style;
-pub use sa_core::bindings::font_set_orientation;
-pub use sa_core::bindings::font_set_proportional;
+pub use crate::bindings::font_print_string;
+pub use crate::bindings::font_set_background;
+pub use crate::bindings::font_set_color;
+pub use crate::bindings::font_set_edge;
+pub use crate::bindings::font_set_font_style;
+pub use crate::bindings::font_set_orientation;
+pub use crate::bindings::font_set_proportional;
 pub use sa_core::bindings::get_video_mode_list;
-pub use sa_core::bindings::gxt_char_strlen;
-pub use sa_core::bindings::text_get;
-pub use sa_stream::bindings::fx_get_fx_quality as fx_get_quality;
+pub use crate::bindings::gxt_char_strlen;
+pub use crate::bindings::text_get;
+pub use sa_render::bindings::fx_get_fx_quality as fx_get_quality;
+pub use crate::bindings::font_get_number_lines;
+pub use sa_world::bindings::font_get_string_width_st0;
 orig! {
-    /// `CFont::GetNumberLines(float, float, const GxtChar*)` (0x71A5E0; AX)
-    pub fn font_get_number_lines(px: u32, py: u32, text: GPtr<u8>) -> u32 = cdecl 0x71A5E0 => get_number_lines_bits;
-    /// `CFont::GetStringWidth(const GxtChar*, bool, bool)` (0x71A0E0, ST0)
-    pub fn font_get_string_width_st0(text: GPtr<u8>, full: u32, script: u32) -> f64 = cdecl 0x71A0E0 => crate::font_print::get_string_width_call_st0;
     /// `GxtCharStrcat(GxtChar*, const GxtChar*)` (0x718630)
     pub fn gxt_char_strcat(dst: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = cdecl 0x718630 => crate::font_print::gxt_char_strcat;
     /// `RwEngineInstance->stringFuncs.vecSprintf` (`RwEngineInstance` +0xF0): `(buf, fmt, a)`
@@ -147,12 +145,6 @@ orig! {
     pub fn check_hover_call(this: GPtr<u8>, left: i32, right: i32, top: i32, bottom: i32) -> u8 = thiscall 0x57C4F0 => crate::menu_mgr::check_hover;
     /// `CMenuManager::SetHelperText(int32)` (0x57CD10, thiscall)
     pub fn set_helper_text_call(this: GPtr<u8>, text: u32) = thiscall 0x57CD10 => crate::menu_mgr::set_helper_text;
-}
-
-/// The Rust path of [`font_get_number_lines`] with the float arguments as words.
-#[allow(dead_code)]
-fn get_number_lines_bits(px: u32, py: u32, text: GPtr<u8>) -> u32 {
-    crate::font::get_number_lines(f32::from_bits(px), f32::from_bits(py), text)
 }
 
 fn b8(p: GPtr<u8>, off: isize) -> u8 {
@@ -336,7 +328,7 @@ pub fn draw_standard_menus(this: GPtr<u8>, draw_title: u32) {
         font_set_font_style(0);
         let sy = isy(f(0x4006_6666), kk::Y2_1);
         let sx = isx(f(0x3FA6_6666), kk::X1_3);
-        font_set_scale(f32::from_bits(sx.to_bits()), f32::from_bits(sy.to_bits()));
+        font_set_scale(f32::from_bits(sx.to_bits()).to_bits(), f32::from_bits(sy.to_bits()).to_bits());
         font_set_edge(1);
         font_set_color(hud_rgb(3));
         font_set_drop_color(hud_rgb(5));
@@ -413,11 +405,11 @@ fn draw_item(this: GPtr<u8>, i: i32, has_label: bool, draw_items: bool, item_y_p
         font_set_edge(1);
         let sy = isy(f(0x3F73_3333), kk::Y0_95);
         let sx = isx(f(0x3ED7_0A3E), kk::X0_42);
-        font_set_scale(f32::from_bits(sx.to_bits()), f32::from_bits(sy.to_bits()));
+        font_set_scale(f32::from_bits(sx.to_bits()).to_bits(), f32::from_bits(sy.to_bits()).to_bits());
     } else {
         let sy = isy(1.0, K_INV_448);
         let sx = isx(f(0x3F33_3333), kk::X0_7);
-        font_set_scale(f32::from_bits(sx.to_bits()), f32::from_bits(sy.to_bits()));
+        font_set_scale(f32::from_bits(sx.to_bits()).to_bits(), f32::from_bits(sy.to_bits()).to_bits());
         font_set_edge(2);
     }
     font_set_drop_color(rgba(0, 0, 0, 0xFF));
@@ -603,7 +595,7 @@ fn draw_item(this: GPtr<u8>, i: i32, has_label: bool, draw_items: bool, item_y_p
             let sy = isy(1.0, K_INV_448);
             (isx(f(0x3F33_3333), kk::X0_7), sy)
         };
-        font_set_scale(f32::from_bits(sx.to_bits()), f32::from_bits(sy.to_bits()));
+        font_set_scale(f32::from_bits(sx.to_bits()).to_bits(), f32::from_bits(sy.to_bits()).to_bits());
         let py = item_sy(i32::from(rd::<i16>(item(this, i), 0xE)));
         let s40 = if w() == 0x280 { x(K_40) } else { xi(w()).fmul_m(K_1_16) };
         let px = xi(w()).fsub(s40).to_f32();
@@ -703,7 +695,7 @@ fn draw_item(this: GPtr<u8>, i: i32, has_label: bool, draw_items: bool, item_y_p
         } else {
             PROT_X_VALUE
         };
-        let n = font_get_number_lines(px, item_y_pos.to_bits(), text) as u16 as i16;
+        let n = font_get_number_lines(f32::from_bits(px), f32::from_bits(item_y_pos.to_bits()), text) as u16 as i16;
         let n29 = i32::from(n).wrapping_mul(0x1D);
         let mut v = xi(n29);
         if n29 < 0 {
@@ -854,11 +846,11 @@ pub use crate::bindings::small_message_screen_call;
 pub use sa_core::bindings::defined_state_2d;
 pub use sa_core::bindings::sprite2d_init_per_frame as sprite2d_727350;
 pub use sa_core::bindings::sprite2d_set_recip_near_clip as sprite2d_727260;
-pub use sa_core::bindings::sprite_draw_rect as sprite2d_draw_rect_static;
+pub use sa_render::bindings::sprite_draw_rect as sprite2d_draw_rect_static;
 pub use crate::bindings::font_render_font_buffer;
-pub use sa_core::bindings::font_draw_fonts;
-pub use sa_core::bindings::font_init_per_frame;
-pub use sa_core::bindings::get_pad;
+pub use crate::bindings::font_draw_fonts;
+pub use crate::bindings::font_init_per_frame;
+pub use sa_input::bindings::get_pad;
 pub use sa_core::bindings::rs_camera_begin_update;
 pub use sa_world::bindings::user_radio_initialise;
 pub use sa_world::bindings::user_radio_scan as user_radio_scan_user_tracks;
@@ -969,7 +961,7 @@ pub fn draw_background(this: GPtr<u8>) {
     let mut screen_rect = [f(0xC0A0_0000), xi(h().wrapping_add(5)).to_f32(), xi(wi.wrapping_add(5)).to_f32(), f(0xC0A0_0000)];
     let mut c = 0u32;
     let cp = rgba_ctor(local(&mut c), 0, 0, 0, 0xFF);
-    sprite2d_draw_rect_static(GPtr::<u8>::cast::<f32>(local(&mut screen_rect)), cp);
+    sprite2d_draw_rect_static(local(&mut screen_rect), cp);
     if g::<u8>(BG_SPRITE).read() != 0 {
         let mut c = 0u32;
         let cp = rgba_ctor(local(&mut c), 0xFF, 0xFF, 0xFF, 0xFF);
@@ -1014,7 +1006,7 @@ pub fn draw_background(this: GPtr<u8>) {
         }
         font_draw_fonts();
         let clear = error_elapsed() > 0x1B58 || {
-            get_pad(u32::from(b8(this, 0xEA)));
+            get_pad(u32::from(b8(this, 0xEA)) as i32);
             esc_just_pressed() && error_elapsed() > 0x3E8
         };
         if clear {
@@ -1043,7 +1035,7 @@ pub fn draw_background(this: GPtr<u8>) {
     let right = ftol32(stretch_x_call(this, f(0x4270_0000)).fsubr_m(wf));
     if b8(this, 0x15D) == 5 {
         let lmb = g::<u8>(MOUSE_LMB).read();
-        get_pad(u32::from(b8(this, 0xEA)));
+        get_pad(u32::from(b8(this, 0xEA)) as i32);
         if lmb != 0 {
             let my: i32 = rd(this, 0xC0);
             if my > top && my < bottom {
@@ -1112,7 +1104,7 @@ fn draw_scan_screen(this: GPtr<u8>) {
     let mut rect = [x270.to_f32(), y250().to_f32(), x375.to_f32(), y245().to_f32()];
     let mut c = 0u32;
     let cp = rgba_ctor(local(&mut c), 0x32, 0x32, 0x32, 0xFF);
-    sprite2d_draw_rect_static(GPtr::<u8>::cast::<f32>(local(&mut rect)), cp);
+    sprite2d_draw_rect_static(local(&mut rect), cp);
     let px = |v: i32| if w() == 0x280 { xi(v) } else { xi(v).fmul(xi(w())).fmul_m(K_INV_640) };
     let mut rect = [
         px(g::<i32>(BG_PROGRESS_POS).read()).to_f32(),
@@ -1122,21 +1114,21 @@ fn draw_scan_screen(this: GPtr<u8>) {
     ];
     let mut c = 0u32;
     let cp = rgba_ctor(local(&mut c), 0xE1, 0xE1, 0xE1, 0xFF);
-    sprite2d_draw_rect_static(GPtr::<u8>::cast::<f32>(local(&mut rect)), cp);
+    sprite2d_draw_rect_static(local(&mut rect), cp);
     font_draw_fonts();
     reset_helper_text_call(this);
     if g::<u8>(BG_SCAN_RESTART).read() != 0 {
         g::<u32>(BG_SCAN_START).write(g::<u32>(TIME_PAUSE_MODE).read());
         g::<u8>(BG_SCAN_RESTART).write(0);
     }
-    if user_radio_scan_user_tracks(g(USER_RADIO_TRACKS)) == 0 {
-        get_pad(u32::from(b8(this, 0xEA)));
+    if u8::from(user_radio_scan_user_tracks(GPtr::<u8>::addr(g(USER_RADIO_TRACKS)) as u32)) == 0 {
+        get_pad(u32::from(b8(this, 0xEA)) as i32);
         if !esc_just_pressed() {
             return;
         }
     }
     if g::<u32>(TIME_PAUSE_MODE).read().wrapping_sub(g::<u32>(BG_SCAN_START).read()) <= 0xBB8 {
-        get_pad(u32::from(b8(this, 0xEA)));
+        get_pad(u32::from(b8(this, 0xEA)) as i32);
         if is_esc_just_pressed_call() == 0 {
             return;
         }
@@ -1148,7 +1140,7 @@ fn draw_scan_screen(this: GPtr<u8>) {
             g::<i32>(USER_RADIO_SCAN_STATE).write(0);
         }
         if st == 2 {
-            get_pad(u32::from(b8(this, 0xEA)));
+            get_pad(u32::from(b8(this, 0xEA)) as i32);
             if is_esc_just_pressed_call() == 0 {
                 user_radio_initialise(g(USER_RADIO_TRACKS));
                 help = Some(5);
@@ -1163,7 +1155,7 @@ fn draw_scan_screen(this: GPtr<u8>) {
         if st == 3 {
             help = Some(4);
         } else {
-            get_pad(u32::from(b8(this, 0xEA)));
+            get_pad(u32::from(b8(this, 0xEA)) as i32);
             if is_esc_just_pressed_call() != 0 {
                 help = Some(4);
             }
@@ -1215,7 +1207,7 @@ fn wt_layout(xw: f32, x_minus_wrap: f32, wrap: f32, align: u32) {
     font_set_orientation(align);
     let sy = isy(1.0, K_INV_448);
     let sx = isx(f(0x3F33_3333), kk::X0_7);
-    font_set_scale(f32::from_bits(sx.to_bits()), f32::from_bits(sy.to_bits()));
+    font_set_scale(f32::from_bits(sx.to_bits()).to_bits(), f32::from_bits(sy.to_bits()).to_bits());
 }
 
 /// `CMenuManager::DrawWindowedText(float x, float y, float wrap, const char* title, const char*
@@ -1246,7 +1238,7 @@ pub fn draw_windowed_text(_this: GPtr<u8>, px: f32, py: f32, wrap: f32, title: G
     font_set_orientation(align);
     let sy = isy(1.0, K_INV_448);
     let sx = isx(f(0x3F33_3333), kk::X0_7);
-    font_set_scale(f32::from_bits(sx.to_bits()), f32::from_bits(sy.to_bits()));
+    font_set_scale(f32::from_bits(sx.to_bits()).to_bits(), f32::from_bits(sy.to_bits()).to_bits());
     let text = text_get(g(THE_TEXT), message);
     font_get_text_rect(local(&mut rect).cast(), px, py, text);
     rect[0] = x(rect[0]).fsub_m(K_4).to_f32();
@@ -1254,7 +1246,7 @@ pub fn draw_windowed_text(_this: GPtr<u8>, px: f32, py: f32, wrap: f32, title: G
     rect[3] = s22.fadd_m(rect[3]).to_f32();
     let mut c = 0u32;
     let cp = rgba_ctor(local(&mut c), 0, 0, 0, 0xBE);
-    sprite2d_draw_rect_static(GPtr::<u8>::cast::<f32>(local(&mut rect)), cp);
+    sprite2d_draw_rect_static(local(&mut rect), cp);
     font_set_color(rgba(0xE1, 0xE1, 0xE1, 0xFF));
     font_set_drop_color(rgba(0, 0, 0, 0xFF));
     font_set_edge(2);
@@ -1322,7 +1314,7 @@ pub fn display_slider(_this: GPtr<u8>, px: f32, py: f32, h1: f32, h2: f32, len: 
         shadow[1] = x(mh).fadd(a).fadd_m(py).to_f32();
         let mut sc = 0u32;
         let sp = rgba_ctor(local(&mut sc), 0, 0, 0, 0xC8);
-        sprite2d_draw_rect_static(GPtr::<u8>::cast::<f32>(local(&mut shadow)), sp);
+        sprite2d_draw_rect_static(local(&mut shadow), sp);
         let mh = max_h();
         let mut bar = [0f32; 4];
         bar[3] = x(mh).fadd_m(py).fsub_m(bh).to_f32();
@@ -1330,7 +1322,7 @@ pub fn display_slider(_this: GPtr<u8>, px: f32, py: f32, h1: f32, h2: f32, len: 
         bar[2] = x(spacing_f).fadd_m(bx).to_f32();
         bar[1] = x(mh).fadd_m(py).to_f32();
         let mut col = colour;
-        sprite2d_draw_rect_static(GPtr::<u8>::cast::<f32>(local(&mut bar)), local(&mut col));
+        sprite2d_draw_rect_static(local(&mut bar), local(&mut col));
     }
     last
 }
@@ -1340,10 +1332,10 @@ pub fn display_slider(_this: GPtr<u8>, px: f32, py: f32, h1: f32, h2: f32, len: 
 // ---------------------------------------------------------------------------------------------------
 
 pub use sa_core::bindings::font_set_justify;
-pub use sa_world::bindings::msg_insert_player_control_keys;
-pub use sa_world::bindings::sprite2d_draw_2d_polygon;
+pub use crate::bindings::msg_insert_player_control_keys;
+pub use sa_render::bindings::sprite2d_draw_2d_polygon;
 pub use crate::bindings::insert_string_in_string_call as msg_insert_string_in_string;
-pub use sa_core::bindings::insert_number_in_string as msg_insert_number_in_string;
+pub use crate::bindings::insert_number_in_string as msg_insert_number_in_string;
 orig! {
     /// `CSprite2d::Draw(float x, float y, float w, float h, const CRGBA&)` (0x7282C0, thiscall)
     pub fn sprite2d_draw_xywh(this: GPtr<u8>, px: f32, py: f32, sw: f32, sh: f32, colour: GPtr<u8>) = thiscall 0x7282C0 => unported;
@@ -1463,7 +1455,7 @@ pub fn print_briefs(this: GPtr<u8>) {
         let x50b = sx50();
         let mut c = 0u32;
         let cp = rgba_ctor(local(&mut c), 0xE1, 0xE1, 0xE1, 0xFF);
-        sprite2d_draw_2d_polygon(x50b, y100b, x55, y110b, x45, y110, x50, y100, cp);
+        sprite2d_draw_2d_polygon(x50b.to_bits(), y100b.to_bits(), x55.to_bits(), y110b.to_bits(), x45.to_bits(), y110.to_bits(), x50.to_bits(), y100.to_bits(), cp);
     }
     if b8(this, 8) > 3 {
         let y348 = isy(f(0x43AE_0000), f(0x3F46_DB6E));
@@ -1476,7 +1468,7 @@ pub fn print_briefs(this: GPtr<u8>) {
         let x50b = sx50();
         let mut c = 0u32;
         let cp = rgba_ctor(local(&mut c), 0xE1, 0xE1, 0xE1, 0xFF);
-        sprite2d_draw_2d_polygon(x50b, y348b, x55, y338b, x45, y338, x50, y348, cp);
+        sprite2d_draw_2d_polygon(x50b.to_bits(), y348b.to_bits(), x55.to_bits(), y338b.to_bits(), x45.to_bits(), y338.to_bits(), x50.to_bits(), y348.to_bits(), cp);
     }
 }
 
@@ -1505,7 +1497,7 @@ const STATS_CURRENT_ID: usize = 0xB794CC;
 pub use sa_stream::bindings::sprite2d_draw_bar_chart;
 pub use sa_world::bindings::get_stat_value as stats_get_stat_value_st0;
 pub use sa_world::bindings::find_criminal_rating_number as stats_find_criminal_rating_number;
-pub use sa_world::bindings::gxt_char_strcpy;
+pub use crate::bindings::gxt_char_strcpy;
 orig! {
     /// `CStats::ConstructStatLine(int32 line, uint8 page)` (0x55A780; returns the line count)
     pub fn stats_construct_stat_line(line: i32, page: u32) -> i32 = cdecl 0x55A780 => unported;
@@ -1561,7 +1553,7 @@ pub fn print_stats(this: GPtr<u8>) {
     font_set_font_style(2);
     let sy = isy(f(0x3F40_0000), f(0x3ADB_6DB7));
     let sx = isx(f(0x3E99_999A), f(0x39F5_C290));
-    font_set_scale(f32::from_bits(sx.to_bits()), f32::from_bits(sy.to_bits()));
+    font_set_scale(f32::from_bits(sx.to_bits()).to_bits(), f32::from_bits(sy.to_bits()).to_bits());
     let now = g::<u32>(TIME_PAUSE_MODE).read();
     if now.wrapping_sub(g::<u32>(STATS_SCROLL_TIME).read()) > 0x28 {
         let speed: f32 = rd(this, 4);
@@ -1670,7 +1662,7 @@ pub fn print_stats(this: GPtr<u8>) {
     font_set_font_style(3);
     let sy = isy(f(0x3F4C_CCCD), f(0x3AEA_0EA1));
     let sx = isx(f(0x3F19_999A), f(0x3A75_C290));
-    font_set_scale(f32::from_bits(sx.to_bits()), f32::from_bits(sy.to_bits()));
+    font_set_scale(f32::from_bits(sx.to_bits()).to_bits(), f32::from_bits(sy.to_bits()).to_bits());
     font_set_orientation(0);
     let mut rating = [0u8; 0x50];
     crt_sprintf1(g(G_STRING), g(key::PCT_D), stats_find_criminal_rating_number());

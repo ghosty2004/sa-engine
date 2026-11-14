@@ -23,17 +23,16 @@ use sa_world::bindings::set_ped_in_as_passenger_process_ped as set_in_as_passeng
 use sa_world::bindings::tm_set_task;
 use sa_stream::bindings::find_other_upgrade;
 use sa_world::bindings::car_drive_wander_ctor;
-use sa_world::bindings::car_enter_exit_compute_passenger_index_from_car_door as compute_passenger_index_from_car_door;
-use sa_world::bindings::get_replacement_upgrade;
+use crate::bindings::car_enter_exit_compute_passenger_index_from_car_door as compute_passenger_index_from_car_door;
+use crate::bindings::get_replacement_upgrade;
 use sa_world::bindings::get_upgrade;
 use sa_world::bindings::nitrous_control;
 use sa_world::bindings::ped_say;
-use sa_world::bindings::population_remove_ped as remove_ped;
+use sa_pop::bindings::population_remove_ped as remove_ped;
 use sa_world::bindings::set_as_acquaintance as acquaintance_set;
-use sa_world::bindings::vehicle_remove_passenger as remove_passenger;
+use crate::bindings::vehicle_remove_passenger as remove_passenger;
+use sa_world::bindings::physical_apply_turn_force as apply_turn_force;
 orig! {
-    /// `CPhysical::ApplyTurnForce(CVector force, CVector point)` (0x542A50)
-    fn apply_turn_force(p: GPtr<u8>, force: CVector, point: CVector) = thiscall 0x542A50 => sa_world::physical::forces::apply_turn_force;
     /// `CVehicle::AddReplacementUpgrade(int32 model, int32 node)` (0x6D3830)
     fn add_replacement_upgrade(v: GPtr<u8>, model: i32, node: u32) = thiscall 0x6D3830 => unported;
     /// `CVehicle::AddUpgrade(int32 model, int32 node)` (0x6DFA20)
@@ -93,7 +92,7 @@ pub fn set_ped_in_car_direct(ped: GPtr<u8>, veh: GPtr<u8>, door: i32, as_driver:
         set_in_as_driver_dtor(t);
         return 1;
     }
-    let index = compute_passenger_index_from_car_door(veh, door as u32);
+    let index = compute_passenger_index_from_car_door(veh, (door as u32) as i32);
     let mut task = [0u32; 8];
     let t = GPtr::from_raw(task.as_mut_ptr()).cast::<u8>();
     set_in_as_passenger_ctor(t, veh, door as u32, GPtr::NULL);
@@ -245,7 +244,7 @@ pub fn add_vehicle_upgrade(this: GPtr<u8>, model: i32) -> i32 {
         let linked = find_other_upgrade(g::<u8>(0xB4E6D8), model as i16) as u16 as i16 as i32;
         let (node, repl) = upgrade_node(mi);
         if repl {
-            rp.write(get_replacement_upgrade(this, node) as i32);
+            rp.write((get_replacement_upgrade(this, node) as u32) as i32);
             add_replacement_upgrade(this, model, node);
             if node == 2 {
                 let own = model_info(rd::<i16>(this, 0x22) as i32);

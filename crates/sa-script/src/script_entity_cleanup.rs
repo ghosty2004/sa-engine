@@ -10,26 +10,26 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
-use sa_world::bindings::stop_playback_recorded_car as vehicle_recording_stop_playback_recorded_car;
+use sa_veh::bindings::stop_playback_recorded_car as vehicle_recording_stop_playback_recorded_car;
 use sa_core::bindings::entity_register_reference;
-use sa_core::bindings::task_new;
+use sa_ai::bindings::task_new;
 use sa_stream::bindings::world_remove_references_to_deleted_object;
-use sa_world::bindings::event_group_add;
+use sa_ai::bindings::event_group_add;
 use sa_world::bindings::event_script_command_ctor;
 use sa_world::bindings::event_script_command_dtor;
-use sa_world::bindings::is_law_enforcement_vehicle as vehicle_is_law_enforcement_vehicle;
-use sa_world::bindings::join_car_with_road_system as car_ctrl_join_car_with_road_system;
+use sa_veh::bindings::is_law_enforcement_vehicle as vehicle_is_law_enforcement_vehicle;
+use sa_pop::bindings::join_car_with_road_system as car_ctrl_join_car_with_road_system;
 use sa_world::bindings::leave_any_car_ctor;
 use sa_world::bindings::membership_is_follower;
 use sa_world::bindings::membership_remove_member;
-use sa_world::bindings::ped_groups_get_peds_group;
+use sa_ai::bindings::ped_groups_get_peds_group;
 use sa_world::bindings::remove_from_interesting_vehicle_list as car_ctrl_remove_from_interesting_vehicle_list;
 use sa_world::bindings::sequence_add_task;
 use sa_world::bindings::sequence_ctor;
 use sa_world::bindings::set_char_created_by as ped_set_char_created_by;
 use sa_world::bindings::vehicle_change_law_enforcer_state;
 use sa_world::bindings::vehicle_remove_driver;
-use sa_world::bindings::vehicle_remove_passenger;
+use sa_veh::bindings::vehicle_remove_passenger;
 use sa_world::bindings::vehicle_set_created_by as vehicle_set_vehicle_created_by;
 use sa_world::bindings::wander_get_wander_task_by_ped_type as get_wander_task_by_ped_type;
 use sa_world::bindings::event_group_get_event_of_type;
@@ -139,7 +139,7 @@ pub fn clean_up_this_ped(ped: GPtr<u8>) {
     }
     let f = ped.byte_add(0x46C).cast::<u32>();
     f.write(f.read() & 0xFFDF_FFFF);
-    let grp = ped_groups_get_peds_group(ped);
+    let grp = GPtr::from_addr(ped_groups_get_peds_group(ped.addr() as u32) as usize);
     if !grp.is_null() {
         let m = grp.byte_add(8);
         if membership_is_follower(m, ped) != 0 {

@@ -21,13 +21,13 @@ pub use sa_world::bindings::get_wheel_status as dm_get_wheel_status;
 pub use crate::bindings::set_component_visibility;
 pub use crate::bindings::spawn_flying_component;
 pub use crate::bindings::vehicle_destructor;
-pub use sa_core::bindings::frame_get_ltm as rw_frame_get_ltm;
-pub use sa_core::bindings::matrix_dtor;
+pub use sa_rwcore::bindings::frame_get_ltm as rw_frame_get_ltm;
+pub use sa_world::bindings::matrix_dtor;
 pub use sa_core::bindings::matrix_set_rotate;
 pub use sa_core::bindings::matrix_update_rw;
 pub use sa_core::bindings::random_float_in_range as random_float;
 pub use sa_core::bindings::rp_material_set_texture;
-pub use sa_core::bindings::rw_texture_destroy;
+pub use sa_rwcore::bindings::rw_texture_destroy;
 pub use sa_world::bindings::audio_add_event;
 pub use sa_world::bindings::audio_terminate;
 pub use sa_world::bindings::event_group_add;
@@ -39,12 +39,12 @@ pub use sa_world::bindings::get_event_global_group;
 pub use crate::bindings::automobile_destructor as destructor_call;
 pub use crate::bindings::can_doors_be_damaged;
 pub use crate::bindings::vehicle_delete;
-pub use sa_core::bindings::frame_for_all_objects as rw_frame_for_all_objects;
+pub use sa_rwcore::bindings::frame_for_all_objects as rw_frame_for_all_objects;
 pub use sa_core::bindings::matrix_ctor_rw as matrix_ctor_attach;
-pub use sa_world::bindings::damage_get_door_status as dm_get_door_status;
-pub use sa_world::bindings::door_is_closed;
-pub use sa_world::bindings::get_car_node_index_from_door as node_from_door_call;
-pub use sa_world::bindings::node_from_panel as node_from_panel_call;
+pub use crate::bindings::damage_get_door_status as dm_get_door_status;
+pub use crate::bindings::door_is_closed;
+pub use crate::bindings::get_car_node_index_from_door as node_from_door_call;
+pub use crate::bindings::node_from_panel as node_from_panel_call;
 orig! {
     /// `CGlass::CarWindscreenShatters(CVehicle*, bool)` (0x71C2B0)
     pub fn car_windscreen_shatters(v: GPtr<u8>, explode: u32) = cdecl 0x71C2B0 => unported;
@@ -210,7 +210,7 @@ fn free_bouncing_panel(car: Car, node: i32) -> Result<isize, ()> {
 #[hook(addr = 0x6B1350, conv = thiscall, name = "CAutomobile::SetBumperDamage", expect = "53 55 56 57 8B 7C 24 14", this = "CAutomobile")]
 pub fn set_bumper_damage(car: Car, panel: u32, skip_flying: u32) {
     let status = dm_get_panel_status(car.byte_add(0x5A0), panel) as u8;
-    let node = node_from_panel_call(panel) as i32;
+    let node = (node_from_panel_call(panel) as u32) as i32;
     let frame = car_node(car, node);
     if frame.is_null() || !node_damageable(car, node) {
         return;
@@ -255,7 +255,7 @@ pub fn set_bumper_damage(car: Car, panel: u32, skip_flying: u32) {
 #[hook(addr = 0x6B1480, conv = thiscall, name = "CAutomobile::SetPanelDamage", expect = "53 55 56 57 8B 7C 24 14", this = "CAutomobile")]
 pub fn set_panel_damage(car: Car, panel: u32, skip_flying: u32) {
     let status = dm_get_panel_status(car.byte_add(0x5A0), panel) as u8;
-    let node = node_from_panel_call(panel) as i32;
+    let node = (node_from_panel_call(panel) as u32) as i32;
     let frame = car_node(car, node);
     if frame.is_null() || !node_damageable(car, node) {
         return;
@@ -270,7 +270,7 @@ pub fn set_panel_damage(car: Car, panel: u32, skip_flying: u32) {
                 && node != 0xF
                 && node != 0xE
             {
-                let r = random_float(f32::from_bits(0xBE4C_CCCD), f32::from_bits(0xBF00_0000));
+                let r = random_float(f32::from_bits(0xBE4C_CCCD), f32::from_bits(0xBF00_0000)).to_f64();
                 let r = f32_of(X87::from_f64_exact(r));
                 bouncing_panel_set(car.byte_add(0x6AC + 0x20 * k), node as u32, 1, r.to_bits());
             }
@@ -309,7 +309,7 @@ pub fn set_panel_damage(car: Car, panel: u32, skip_flying: u32) {
 pub fn set_door_damage(car: Car, door: u32, skip_flying: u32) {
     let dm = car.byte_add(0x5A0);
     let mut status = dm_get_door_status(dm, door as i32) as u8;
-    let node = node_from_door_call(door) as i32;
+    let node = (node_from_door_call(door) as u32) as i32;
     if car_node(car, node).is_null() {
         return;
     }
@@ -369,7 +369,7 @@ pub fn set_door_damage(car: Car, door: u32, skip_flying: u32) {
             set_component_visibility(car, car_node(car, node), 0);
         }
         1 | 3 => {
-            rw_frame_for_all_objects(car_node(car, node), 0x4C_7B90, GPtr::from_addr(0x400));
+            rw_frame_for_all_objects(car_node(car, node), 0x4C_7B90, GPtr::<u8>::addr(GPtr::from_addr(0x400)) as u32);
             if door == 0 {
                 wr::<u32>(car, 0x5CC, 0x3E4C_CCCD);
             }
@@ -426,12 +426,12 @@ pub fn open_door(car: Car, ped: GPtr<u8>, node: i32, door: u32, ratio: f32, play
     }
     let was_closed = door_is_closed(d) != 0;
     if was_closed {
-        rw_frame_for_all_objects(car_node(car, node), 0x4C_7BB0, GPtr::from_addr(0x400));
+        rw_frame_for_all_objects(car_node(car, node), 0x4C_7BB0, GPtr::<u8>::addr(GPtr::from_addr(0x400)) as u32);
     }
     door_open(d, ratio);
     if was_closed {
         if x(rd::<f32>(d, 4)).fcom(x(rd::<f32>(d, 0xC))).test_parity(0x44) {
-            rw_frame_for_all_objects(car_node(car, node), 0x4C_7B90, GPtr::from_addr(0x400));
+            rw_frame_for_all_objects(car_node(car, node), 0x4C_7B90, GPtr::<u8>::addr(GPtr::from_addr(0x400)) as u32);
             if play_sound as u8 != 0 {
                 audio_add_event(car.byte_add(0x138), door.wrapping_add(0x4E), 0.0);
                 if !ped.is_null() {

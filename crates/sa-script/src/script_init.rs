@@ -169,7 +169,7 @@ pub fn update_object_indices() {
         let e = i as usize * 0x1C;
         let idx = ga::<i32>(0xA44B88 + e);
         idx.write(-1);
-        get_model_info(GPtr::from_addr(0xA44B70 + e), idx.cast::<u8>());
+        get_model_info(GPtr::from_addr(0xA44B70 + e), idx.cast::<i32>());
         i = i.wrapping_add(1);
     }
 }

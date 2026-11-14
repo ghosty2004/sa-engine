@@ -11,10 +11,10 @@ use crate::common::*;
 
 use sa_world::bindings::ped_type_police_dont_care as police_dont_care;
 use crate::bindings::vehicle_is_passenger;
-use sa_core::bindings::entity_clean_up_old_reference;
-use sa_core::bindings::find_player_ped;
+use sa_world::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::find_player_ped;
 use sa_core::bindings::ped_is_alive;
-use sa_stream::bindings::find_player_wanted;
+use sa_world::bindings::find_player_wanted;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::wanted_register_crime;
 orig! {
@@ -30,11 +30,11 @@ pub fn event_vehicle_damage_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x85B588);
     let v = rd::<GPtr<u8>>(this, 0x14);
     if !v.is_null() {
-        entity_clean_up_old_reference(v, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x14)));
+        entity_clean_up_old_reference(v, this.byte_add(0x14));
     }
     let a = rd::<GPtr<u8>>(this, 0x18);
     if !a.is_null() {
-        entity_clean_up_old_reference(a, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x18)));
+        entity_clean_up_old_reference(a, this.byte_add(0x18));
     }
     wr::<u32>(this, 0, 0x85AB38);
 }
@@ -45,7 +45,7 @@ pub fn event_vehicle_damage_dtor(this: GPtr<u8>) {
 #[hook(addr = 0x4B1A00, conv = thiscall, name = "CEventVehicleDamage::AffectsPed", expect = "56 8B 74 24 08 57 8B F9",
        unverified = "attr-4", route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn event_vehicle_damage_affects_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
-    if ped_is_alive(ped) == 0 || rd::<u32>(this, 0x18) == 0 {
+    if ped_is_alive(ped) as u8 == 0 || rd::<u32>(this, 0x18) == 0 {
         return 0;
     }
     if rd::<u32>(ped, 0x46C) & 0x100 != 0 {
@@ -87,7 +87,7 @@ pub fn event_vehicle_damage_report_criminal_event(this: GPtr<u8>, ped: GPtr<u8>)
     if is_criminal_event_v(this) == 0 || rd::<u32>(this, 0x18) == 0 {
         return;
     }
-    let flag = police_dont_care(rd::<u32>(ped, 0x598));
+    let flag = police_dont_care(rd::<u32>(ped, 0x598) as i32);
     if rd::<u32>(ped, 0x598) != 6 {
         return;
     }
@@ -95,7 +95,7 @@ pub fn event_vehicle_damage_report_criminal_event(this: GPtr<u8>, ped: GPtr<u8>)
     let m = rd::<GPtr<u8>>(a, 0x14);
     let pos = if m.is_null() { a.byte_add(4) } else { m.byte_add(0x30) };
     let slot = (ped.addr() as u32 & 0xFFFF_FF00) | flag as u32;
-    wanted_register_crime(find_player_wanted(-1), 8, pos, GPtr::from_addr((ped.addr() as u32) as usize), slot);
+    wanted_register_crime(find_player_wanted(-1), 8, pos.cast::<f32>(), GPtr::from_addr((ped.addr() as u32) as usize), slot as u8);
 }
 
 /// Every `#[hook]` of this module.

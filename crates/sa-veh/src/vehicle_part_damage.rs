@@ -17,13 +17,13 @@ use sa_pop::bindings::dm_set_wheel_status;
 use sa_world::bindings::door_open;
 use crate::bindings::set_component_visibility;
 use crate::bindings::spawn_flying_component;
-use sa_core::bindings::matrix_dtor;
+use sa_world::bindings::matrix_dtor;
 use sa_core::bindings::matrix_set_translate;
 use sa_core::bindings::matrix_update_rw;
-use sa_core::bindings::rp_clump_for_all_atomics;
+use sa_rwcore::bindings::rp_clump_for_all_atomics;
 use sa_core::bindings::matrix_ctor_rw;
 use sa_core::bindings::matrix_set_rotate;
-use sa_world::bindings::damage_get_door_status as dm_get_door_status;
+use crate::bindings::damage_get_door_status as dm_get_door_status;
 
 const DM: isize = 0x5A0;
 
@@ -244,7 +244,7 @@ pub fn quad_bike_fix(this: GPtr<u8>) {
         dm_set_door_status(dm, d as u32, 4);
     }
     wr::<u8>(this, 0x42A, rd::<u8>(this, 0x42A) & 0xFE);
-    rp_clump_for_all_atomics(rd::<GPtr<u8>>(this, 0x18), 0x004C_7790, GPtr::from_addr(2));
+    rp_clump_for_all_atomics(rd::<GPtr<u8>>(this, 0x18), 0x004C_7790, GPtr::<u8>::addr(GPtr::from_addr(2)) as u32);
     for w in 0..4 {
         dm_set_wheel_status(dm, w, 0);
     }

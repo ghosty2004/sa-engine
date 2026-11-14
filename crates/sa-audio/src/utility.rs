@@ -52,9 +52,9 @@ const RAND_RET_FLOAT: u32 = 0x4D9C56;
 /// Return address of the `call rand` in `ResolveProbability` (0x4D9C92).
 const RAND_RET_PROB: u32 = 0x4D9C97;
 
-pub use sa_core::bindings::find_player_ped;
+pub use sa_world::bindings::find_player_ped;
 pub use crate::bindings::convert_from_bytes_to_ms_call;
-pub use sa_core::bindings::find_player_vehicle;
+pub use sa_world::bindings::find_player_vehicle;
 orig! {
     /// `CAEAudioUtility::AudioLog10(float)` (0x4D9E50) as callers reach it (80-bit ST0 result)
     pub fn call_audio_log10(v: f32) -> X87 = reg("args = stack") 0x4D9E50 => audio_log10;
@@ -515,7 +515,7 @@ pub fn directional_mike_attenuation_with(n: [f32; 3], front: f32, rear: f32, rea
 #[hook(addr = 0x4D7F60, conv = cdecl, name = "CAEAudioEnvironment::GetDirectionalMikeAttenuation", expect = "83 EC 0C 8B 44 24 10")]
 pub fn get_directional_mike_attenuation(dir: GPtr<u8>) -> X87 {
     let mut v = [rd::<u32>(dir, 0), rd::<u32>(dir, 4), rd::<u32>(dir, 8)];
-    vector_normalise(GPtr::from_raw(v.as_mut_ptr()).cast());
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(GPtr::from_raw(v.as_mut_ptr()).cast()));
     let n = v.map(f32::from_bits);
     directional_mike_attenuation_with(
         n,

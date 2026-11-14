@@ -12,7 +12,7 @@ use crate::common::*;
 
 use sa_world::bindings::ped_set_move_state;
 use sa_world::bindings::stats_get_fat_and_muscle_modifier;
-use sa_core::bindings::anim_set_delete_callback as assoc_set_delete_callback;
+use sa_anim::bindings::anim_set_delete_callback as assoc_set_delete_callback;
 use sa_world::bindings::anim_blend_animation;
 orig! {
     /// `CPed::SetMoveAnim()` (vtable slot 0x5C)
@@ -28,7 +28,7 @@ const DELETE_ANIM_CB: u32 = 0x67_A380;
 fn release(this: GPtr<u8>) {
     let a = rd::<GPtr<u8>>(this, 0x2C);
     if !a.is_null() {
-        assoc_set_delete_callback(a, DEFAULT_ANIM_CB, GPtr::NULL);
+        assoc_set_delete_callback(a, DEFAULT_ANIM_CB, GPtr::<u8>::addr(GPtr::NULL) as u32);
     }
 }
 
@@ -110,7 +110,7 @@ pub fn climb_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
     if a.is_null() {
         return;
     }
-    assoc_set_delete_callback(a, DELETE_ANIM_CB, this);
+    assoc_set_delete_callback(a, DELETE_ANIM_CB, this.addr() as u32);
     if rd::<u32>(ped, 0x480) == 0 {
         return;
     }

@@ -13,7 +13,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::vector::CVector;
 
 use super::common::{g, rd, wr, x};
@@ -26,13 +26,10 @@ use crate::bindings::ped_new;
 use crate::bindings::test_sphere_box;
 use sa_core::bindings::matrix_mul_vec;
 use sa_core::bindings::vector_normalise as vec_normalise;
-use sa_core::bindings::world_add;
+use crate::bindings::world_add;
 use crate::bindings::find_objects_kinda_colliding;
 use crate::bindings::world_process_vertical_line as process_vertical_line;
-orig! {
-    /// `CGarage::IsPointInsideGarage(CVector, float margin)` (0x4487D0)
-    fn garage_is_point_inside(gr: GPtr<u8>, p: CVector, margin: f32) -> u8 = thiscall 0x4487D0 => unported;
-}
+use crate::bindings::garage_is_point_inside_r as garage_is_point_inside;
 
 /// `CWorld::ms_nCurrentScanCode` (0xB7CD78), `CModelInfo::ms_modelInfoPtrs` (0xA9B0C8),
 /// `CTimer::ms_fTimeStep` (0xB7CB5C), `CPools::ms_pVehiclePool` (0xB74494).
@@ -152,7 +149,7 @@ pub fn garage_push_vehicles_out(this: GPtr<u8>, except: GPtr<u8>) {
         while s < i32::from(rd::<i16>(data, 0)) {
             let centre = rd::<GPtr<u8>>(data, 8).byte_add(s as isize * 0x14);
             let mut out = [0f32; 3];
-            let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(p(&mut out)), rd::<GPtr<u8>>(veh, 0x14), centre));
+            let r = matrix_mul_vec(p(&mut out), rd::<GPtr<u8>>(veh, 0x14), centre);
             let pt = CVector::new(rd::<f32>(r, 0), rd::<f32>(r, 4), rd::<f32>(r, 8));
             if garage_is_point_inside(this, pt, 0.0) == 0 {
                 let pos = ent_pos(veh);
@@ -161,7 +158,7 @@ pub fn garage_push_vehicles_out(this: GPtr<u8>, except: GPtr<u8>) {
                     x(rd::<f32>(this, 0x34)).fadd_m(rd::<f32>(this, 0x30)).fmul_m(0.5).fsubr_m(rd::<f32>(ent_pos(veh), 4)).to_f32(),
                     0.0,
                 ];
-                vec_normalise(p(&mut dir));
+                vec_normalise(GPtr::<u8>::cast::<[f32;3]>(p(&mut dir)));
                 let k = f32::from_bits(0x3CA3_D70A);
                 let ts = g::<f32>(TIME_STEP).read();
                 let a = x(dir[0]).fmul_m(k);

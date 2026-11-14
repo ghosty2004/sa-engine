@@ -43,7 +43,7 @@ fn new_task(size: u32, ctor: impl FnOnce(GPtr<u8>) -> GPtr<u8>) -> GPtr<u8> {
 }
 
 fn look_at(p: GPtr<u8>, other: GPtr<u8>, time: i32) {
-    ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), GPtr::from_addr(S_PLAYER_COLL_PED as usize), p, other, time as u32, 5, GPtr::NULL, 1, 0x3E80_0000, 500, 3, 0);
+    ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), GPtr::from_addr(S_PLAYER_COLL_PED as usize), p, other, (time as u32) as i32, 5, GPtr::NULL, 1, f32::from_bits(0x3E80_0000), 500, 3, 0);
 }
 
 /// The say task (`CTaskSimpleSay(0x1C, -1)`) stored in +0x2C.

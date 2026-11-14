@@ -14,22 +14,21 @@ use sa_world::bindings::dm_set_door_status;
 use crate::bindings::door_process;
 use crate::bindings::set_component_visibility;
 use crate::bindings::spawn_flying_component;
-use sa_core::bindings::matrix_dtor;
+use sa_world::bindings::matrix_dtor;
 use sa_core::bindings::matrix_set_rotate;
 use sa_core::bindings::matrix_update_rw;
 use sa_world::bindings::audio_add_event;
 use sa_world::bindings::multiply3x3 as multiply_3x3;
 use sa_world::bindings::vector_add;
 use sa_world::bindings::vector_scale;
-use sa_core::bindings::vector_sub;
+use sa_world::bindings::vector_sub;
 use crate::bindings::can_doors_be_damaged;
 use sa_core::bindings::matrix_ctor_rw as matrix_ctor_attach;
-use sa_world::bindings::damage_get_door_status as dm_get_door_status;
+use crate::bindings::damage_get_door_status as dm_get_door_status;
+use sa_world::bindings::physical_apply_turn_force as apply_turn_force;
 orig! {
     /// `CDoor::ProcessImpact(CVehicle*, CVector&, CVector&, CVector&)` (0x6F4540)
     fn door_process_impact(d: GPtr<u8>, v: GPtr<u8>, mf: GPtr<u8>, tf: GPtr<u8>, off: GPtr<u8>) -> u8 = thiscall 0x6F4540 => crate::door2::process_impact;
-    /// `CPhysical::ApplyTurnForce(CVector force, CVector point)` (0x542A50)
-    fn apply_turn_force(p: GPtr<u8>, force: CVector, point: CVector) = thiscall 0x542A50 => sa_world::physical::forces::apply_turn_force;
 }
 
 use sa_core::field::ptr_of as vp;
@@ -167,10 +166,10 @@ use sa_core::bindings::entity_register_reference;
 use sa_core::bindings::matrix_set_translate;
 use sa_world::bindings::add_ped_in_car;
 use sa_world::bindings::set_ped_decision_maker_type as intel_set_ped_decision_maker_type;
-use sa_core::bindings::train_ctor;
-use sa_core::bindings::world_add;
-use sa_core::bindings::world_remove;
-use sa_world::bindings::vehicle_new;
+use crate::bindings::train_ctor;
+use sa_world::bindings::world_add;
+use sa_world::bindings::world_remove;
+use crate::bindings::vehicle_new;
 orig! {
     /// `CVehicle::ProcessControl()` (virtual, vtable +0x28)
     fn process_control_virtual(v: GPtr<u8>) = thiscall vslot 0x28 => unported;
@@ -229,7 +228,7 @@ pub fn create_mission_train(
     let cw_bit = (clockwise & 1) << 6;
     while g::<u32>(cfg).read() != 0 {
         let mem = vehicle_new(0x6AC);
-        let t = if mem.is_null() { GPtr::NULL } else { train_ctor(mem, (g::<u32>(cfg).read()) as i32, 4) };
+        let t = if mem.is_null() { GPtr::NULL } else { train_ctor(mem, ((g::<u32>(cfg).read()) as i32) as u32, 4) };
         matrix_set_translate(rd::<GPtr<u8>>(t, 0x14), f32::from_bits(0), f32::from_bits(0), f32::from_bits(0));
         let st = (rd::<u8>(t, 0x36) & 7) | 0x20;
         wr::<u16>(t, 0x5A0, node as u16);
@@ -335,7 +334,7 @@ pub fn create_mission_train(
 use sa_core::bindings::memory_malloc;
 use sa_world::bindings::entity_get_col_model as get_col_model;
 use sa_stream::bindings::get_wheel_posn;
-use sa_world::bindings::get_vehicle_appearance;
+use crate::bindings::get_vehicle_appearance;
 
 /// `sqrt((x*x + y*y) + z*z)` of the vector at `p` (x87).
 fn mag3(p: GPtr<u8>) -> sa_math::x87::X87 {

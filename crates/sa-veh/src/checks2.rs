@@ -30,32 +30,32 @@ sa_core::globals! {
 
 pub use crate::bindings::train_find_position_on_track_from_coors;
 pub use sa_core::bindings::cross_product;
-pub use sa_core::bindings::entity_update_rw_frame as update_rw_frame;
+pub use sa_world::bindings::entity_update_rw_frame as update_rw_frame;
 pub use sa_core::bindings::matrix_assign;
-pub use sa_core::bindings::matrix_dtor;
+pub use sa_world::bindings::matrix_dtor;
 pub use sa_core::bindings::matrix_scale;
 pub use sa_core::bindings::memory_free;
 pub use sa_core::bindings::memory_malloc;
-pub use sa_core::bindings::stream_read as rw_stream_read;
-pub use sa_core::bindings::streaming_remove_model;
+pub use sa_rwcore::bindings::stream_read as rw_stream_read;
+pub use sa_stream::bindings::streaming_remove_model;
 pub use sa_core::bindings::streaming_request_model;
 pub use sa_world::bindings::crt_printf as printf;
 pub use sa_world::bindings::entity_get_bound_centre as get_bound_centre;
-pub use sa_world::bindings::mark_surrounding_entities as mark_surrounding_entities_for_collision_with_train;
+pub use crate::bindings::mark_surrounding_entities as mark_surrounding_entities_for_collision_with_train;
 pub use sa_world::bindings::matrix_copy_ctor;
 pub use sa_world::bindings::physical_remove_and_add as remove_and_add;
 pub use sa_world::bindings::rw_im3d_end;
 pub use sa_world::bindings::update_rw_matrix;
 pub use crate::bindings::set_recording_to_point_closest_to_coors as set_recording_to_point_closest_to_coors_o;
-pub use sa_core::bindings::rw_stream_close;
-pub use sa_pop::bindings::stop_playback_with_index as stop_playback_with_index_o;
+pub use sa_rwcore::bindings::rw_stream_close;
+pub use crate::bindings::stop_playback_with_index as stop_playback_with_index_o;
 pub use sa_world::bindings::camera_is_sphere_visible;
 pub use sa_world::bindings::find_node_coors_for_script as find_node_coors_linked;
 pub use sa_world::bindings::find_node_orientation_for_car_placement;
-pub use sa_world::bindings::find_nth_node_closest_to_coors;
+pub use sa_pop::bindings::find_nth_node_closest_to_coors;
 pub use sa_world::bindings::rw_im3d_render_indexed_primitive;
 pub use sa_world::bindings::rw_im3d_transform;
-pub use sa_world::bindings::stop_playback_recorded_car as stop_playback_recorded_car_o;
+pub use crate::bindings::stop_playback_recorded_car as stop_playback_recorded_car_o;
 orig! {
     /// CRT `sscanf` with one output (0x8220AD)
     pub fn sscanf(s: GPtr<u8>, fmt: u32, out: GPtr<u8>) -> i32 = cdecl 0x8220AD => unported;
@@ -902,7 +902,7 @@ pub fn stuck_car_check_process(c: GPtr<u8>) {
                 f32::from_bits(0x4974_23FE),
                 0,
                 1,
-                u32::from(n),
+                u32::from(n) as i32,
                 0,
                 0,
                 GPtr::NULL,

@@ -11,7 +11,6 @@
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
-use sa_math::vector::CVector;
 use sa_math::x87::X87;
 
 use crate::common::{ftol32, g, jne, jp, k, rd, wr, x, xi};
@@ -23,12 +22,10 @@ use sa_core::bindings::matrix_set_rotate_x;
 use sa_core::bindings::matrix_set_rotate_y;
 use sa_core::bindings::matrix_set_rotate_z;
 use sa_core::bindings::calc_screen_coors_71da00 as calc_screen_coors_scaled;
-use sa_core::bindings::matrix_dtor;
+use sa_world::bindings::matrix_dtor;
+use sa_core::bindings::cross_product;
+use sa_core::bindings::vector_normalise as normalise;
 orig! {
-    /// `CVector::Normalise()` (0x59c910)
-    fn normalise(v: GPtr<CVector>) = thiscall 0x59c910 => sa_world::collision::data::normalise_port;
-    /// `CVector::CrossProduct(CVector* out, const CVector* a, const CVector* b)` (0x59c730)
-    fn cross_product(out: GPtr<CVector>, a: GPtr<CVector>, b: GPtr<CVector>) -> GPtr<CVector> = cdecl 0x59c730 => sa_world::collision::data::cross_product_port;
     /// `COccluder::ProcessLineSegment(int corner1, int corner2, CActiveOccluder*)` (0x71e130)
     fn process_line_segment(this: GPtr<u8>, c1: i32, c2: i32, occl: GPtr<u8>) -> u8 = thiscall 0x71e130 => crate::occlusion::process_line_segment;
 }
@@ -66,11 +63,11 @@ fn mp(m: &mut [u32; 18]) -> GPtr<u8> {
 fn transform(d: &mut [u32; 18], v: V3) -> V3 {
     let mut vin = v;
     let mut out = [0f32; 3];
-    let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(
-        GPtr::<u8>::cast::<f32>(GPtr::<f32>::from_raw(out.as_mut_ptr()).cast()),
+    let r = matrix_mul_vec(
+        GPtr::<f32>::from_raw(out.as_mut_ptr()).cast(),
         mp(d),
         GPtr::<f32>::from_raw(vin.as_mut_ptr()).cast(),
-    ));
+    );
     [rd::<f32>(r, 0), rd::<f32>(r, 4), rd::<f32>(r, 8)]
 }
 
@@ -306,7 +303,7 @@ fn boxed(this: GPtr<u8>, out: GPtr<u8>, md: &mut [u32; 18], c: V3) -> bool {
         let cdy = f(x(d[1]).fadd_m(c[1]));
         let cdx = f(x(d[0]).fadd_m(c[0]));
         let mut n = *d;
-        normalise(GPtr::<f32>::from_raw(n.as_mut_ptr()).cast());
+        normalise(GPtr::<sa_math::vector::CVector>::cast::<[f32;3]>(GPtr::<f32>::from_raw(n.as_mut_ptr()).cast()));
         let nf = i32::from(rd::<u8>(out, 0x7b) as i8);
         let slot = out.byte_add(0x7c + 12 * nf as isize);
         wr::<f32>(slot, 0, n[0]);
@@ -363,11 +360,11 @@ fn planar(this: GPtr<u8>, out: GPtr<u8>, md: &mut [u32; 18], c: V3) -> bool {
     let mut uu = u;
     let mut n = [0f32; 3];
     cross_product(
-        GPtr::<f32>::from_raw(n.as_mut_ptr()).cast(),
-        GPtr::<f32>::from_raw(rr.as_mut_ptr()).cast(),
-        GPtr::<f32>::from_raw(uu.as_mut_ptr()).cast(),
+        GPtr::<sa_math::vector::CVector>::cast::<u8>(GPtr::<f32>::from_raw(n.as_mut_ptr()).cast()),
+        GPtr::<sa_math::vector::CVector>::cast::<u8>(GPtr::<f32>::from_raw(rr.as_mut_ptr()).cast()),
+        GPtr::<sa_math::vector::CVector>::cast::<u8>(GPtr::<f32>::from_raw(uu.as_mut_ptr()).cast()),
     );
-    normalise(GPtr::<f32>::from_raw(n.as_mut_ptr()).cast());
+    normalise(GPtr::<sa_math::vector::CVector>::cast::<[f32;3]>(GPtr::<f32>::from_raw(n.as_mut_ptr()).cast()));
     let off = x(n[0]).fmul_m(c[0]).fadd(x(n[1]).fmul_m(c[1])).fadd(x(n[2]).fmul_m(c[2]));
     wr::<f32>(out, 0x7c, n[0]);
     wr::<f32>(out, 0x80, n[1]);

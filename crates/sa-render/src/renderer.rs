@@ -61,16 +61,16 @@ pub const CURR_AREA: usize = 0xB72914;
 pub const RW_ENGINE_INSTANCE: usize = 0xC97B24;
 
 pub use sa_core::bindings::deactivate_directional as de_activate_directional;
-pub use sa_core::bindings::entity_get_is_on_screen;
-pub use sa_core::bindings::find_player_ped;
-pub use sa_core::bindings::find_player_vehicle;
+pub use sa_world::bindings::entity_get_is_on_screen;
+pub use sa_world::bindings::find_player_ped;
+pub use sa_world::bindings::find_player_vehicle;
 pub use sa_core::bindings::general_limit_radian_angle as limit_radian_angle;
 pub use sa_core::bindings::rw_camera_begin_update;
 pub use sa_core::bindings::rw_camera_end_update;
 pub use sa_core::bindings::set_ambient_colours;
 pub use sa_core::bindings::streaming_request_model as request_model;
 pub use sa_core::bindings::vector_magnitude;
-pub use sa_core::bindings::world_clear_scan_codes as clear_scan_codes;
+pub use sa_world::bindings::world_clear_scan_codes as clear_scan_codes;
 pub use sa_stream::bindings::entity_is_visible;
 pub use sa_stream::bindings::calculate_ground_height;
 pub use sa_world::bindings::camera_get_look_direction as get_look_direction;
@@ -80,14 +80,14 @@ pub use sa_world::bindings::get_lighting_from_col;
 pub use sa_world::bindings::is_vision_fx_active;
 pub use sa_world::bindings::night_vision_set_lights;
 pub use sa_world::bindings::remove_lights_affecting_object;
-pub use sa_core::bindings::vector_sub;
+pub use sa_world::bindings::vector_sub;
 pub use crate::bindings::render_one_non_road as render_one_non_road_call;
 pub use crate::bindings::world_scan;
 pub use sa_core::bindings::rw_v3d_transform_points;
 pub use sa_core::bindings::set_light_colours_for_peds_cars_and_objects;
 pub use sa_core::bindings::world_replace_normal_lights_with_scorched;
 pub use sa_pop::bindings::find_tunnel_attributes_for_coors;
-pub use sa_stream::bindings::call_should_model_be_streamed;
+pub use crate::bindings::call_should_model_be_streamed;
 pub use sa_world::bindings::generate_lights_affecting_object;
 orig! {
     /// `RwRenderStateSet` through `RwEngineInstance->dOpenDevice.fpRenderStateSet` (+0x20)
@@ -1345,8 +1345,8 @@ pub fn construct_render_list() {
     let p = find_player_ped(-1);
     let mut mult: Option<X87> = None;
     if !p.is_null() && rd::<u8>(p, 0x2F) == 0 {
-        let g1 = st0(calculate_ground_height(g(crate::common::THE_CAMERA), 0)).to_f32();
-        let g2 = st0(calculate_ground_height(g(crate::common::THE_CAMERA), 2));
+        let g1 = st0(calculate_ground_height(g(crate::common::THE_CAMERA), 0).to_f64()).to_f32();
+        let g2 = st0(calculate_ground_height(g(crate::common::THE_CAMERA), 2).to_f64());
         let pp = entity_pos(p);
         if !jne(x(rd::<f32>(pp, 8)).fsub_m(g1), x(k(0x4248_0000)), 0x41) {
             let pp2 = entity_pos(p);
@@ -1641,7 +1641,7 @@ pub fn request_objects_in_frustum(transform: GPtr<u8>, flags: i32) {
 
 pub use sa_core::bindings::rw_matrix_rotate;
 pub use sa_core::bindings::rw_matrix_translate;
-pub use sa_world::bindings::call_request_objects_in_frustum;
+pub use crate::bindings::call_request_objects_in_frustum;
 
 /// `request_objects_in_frustum` with an `f32` matrix pointer (the phase B/C path of the `orig!` call).
 pub fn request_objects_in_frustum_f32(m: GPtr<f32>, flags: i32) {
@@ -1683,7 +1683,7 @@ pub fn request_objects_in_direction(posn: GPtr<u8>, angle: f32) {
     let deg = x(angle).fmul_m(k(0x4265_2EE0)).fadd_m(k(0x4334_0000)).to_f32();
     rw_matrix_rotate(mp.cast::<u8>(), GPtr::<f32>::cast::<u8>(ap.wrapping_index(3)), f32::from_bits(deg.to_bits()), 2);
     rw_matrix_translate(mp.cast::<u8>(), posn, 2);
-    call_request_objects_in_frustum(mp, 0x20);
+    call_request_objects_in_frustum(mp.cast::<u8>(), 0x20);
 }
 
 /// This module's registrations.

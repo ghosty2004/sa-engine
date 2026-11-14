@@ -64,13 +64,13 @@ pub use crate::bindings::call_get_first_assoc_group;
 pub use crate::bindings::call_remove_uncompressed_data as hier_remove_uncompressed_data;
 pub use crate::bindings::call_shutdown as hier_shutdown;
 pub use crate::bindings::call_uncompress as hier_uncompress;
-pub use sa_core::bindings::anim_create_anim_assoc_groups as call_create_anim_assoc_groups;
-pub use sa_core::bindings::anim_register_anim_block as call_register_anim_block;
-pub use sa_core::bindings::assoc_group_get_animation as group_get_animation_id;
-pub use sa_core::bindings::assoc_start;
+pub use crate::bindings::anim_create_anim_assoc_groups as call_create_anim_assoc_groups;
+pub use crate::bindings::anim_register_anim_block as call_register_anim_block;
+pub use crate::bindings::assoc_group_get_animation_4ce090 as group_get_animation_id;
+pub use crate::bindings::assoc_start;
 pub use sa_core::bindings::file_close;
 pub use sa_core::bindings::file_set_dir;
-pub use sa_core::bindings::get_animation_block as call_get_animation_block;
+pub use crate::bindings::get_animation_block as call_get_animation_block;
 pub use sa_core::bindings::load_line;
 pub use sa_core::bindings::open_file as file_open;
 pub use sa_core::bindings::rw_stream_open;
@@ -234,7 +234,7 @@ pub fn create_anim_association(grp: i32, id: i32) -> GPtr<u8> {
 /// `CAnimManager::GetAnimAssociation(group, int32 anim)` (0x4D3A60).
 #[hook(addr = 0x4D3A60, conv = cdecl, name = "CAnimManager::GetAnimAssociation-by-id", expect = "8B 44 24 08 8B 15 34 EA B4 00")]
 pub fn get_anim_association_id(grp: i32, id: i32) -> GPtr<u8> {
-    group_get_animation_id(group(grp), id as u32)
+    group_get_animation_id(group(grp), (id as u32) as i32)
 }
 
 /// `CAnimManager::GetAnimAssociation(group, const char*)` (0x4D3A80).
@@ -365,8 +365,8 @@ pub fn add_anim_to_assoc_definition(d: GPtr<u8>, name: GPtr<u8>) {
 /// The skinned-clump clean-up and destruction the group creators share.
 pub fn destroy_temp_clump(clump: GPtr<u8>) {
     let a = get_first_atomic(clump);
-    if !a.is_null() && !rp_skin_geometry_get_skin(rd::<GPtr<u8>>(a, 0x18)).is_null() {
-        rp_clump_for_all_atomics(clump, 0x734B90, GPtr::NULL);
+    if !a.is_null() && !GPtr::<u8>::from_addr(rp_skin_geometry_get_skin(rd::<GPtr<u8>>(a, 0x18)) as usize).is_null() {
+        rp_clump_for_all_atomics(clump, 0x734B90, GPtr::<u8>::addr(GPtr::NULL) as u32);
     }
     rp_clump_destroy(clump);
 }
@@ -403,7 +403,7 @@ pub fn create_anim_assoc_groups() {
             let mut k = 0u32;
             while k < rd::<u32>(group(i), 8) {
                 let ds = descr.byte_add(k as isize * 8);
-                let s = group_get_animation_id(group(i), rd::<i32>(ds, 0) as u32);
+                let s = group_get_animation_id(group(i), (rd::<i32>(ds, 0) as u32) as i32);
                 wr::<u16>(s, 0xA, rd::<u16>(s, 0xA) | rd::<u16>(ds, 4));
                 k += 1;
             }
@@ -600,7 +600,7 @@ pub fn add_animation_hier(clump: GPtr<u8>, h: GPtr<u8>, fl: i32) -> GPtr<u8> {
     a
 }
 
-pub use sa_core::bindings::uncompress_animation as uncompress_animation_call;
+pub use crate::bindings::uncompress_animation as uncompress_animation_call;
 
 /// The found-association tail of both `BlendAnimation`s.
 fn blend_found(a: GPtr<u8>, d: f32) -> GPtr<u8> {
@@ -683,9 +683,9 @@ pub fn blend_animation_hier(clump: GPtr<u8>, h: GPtr<u8>, fl: i32, d: f32) -> GP
 #[hook(addr = 0x4D4610, conv = cdecl, name = "CAnimManager::BlendAnimation-id", expect = "83 EC 14 8B 4C 24 18")]
 pub fn blend_animation_id(clump: GPtr<u8>, grp: i32, id: i32, d: f32) -> GPtr<u8> {
     let cd = clump_data(clump);
-    let moving = rd::<u8>(group_get_animation_id(group(grp), id as u32), 0xA) >> 5 & 1;
-    let partial = rd::<u8>(group_get_animation_id(group(grp), id as u32), 0xA) >> 4 & 1;
-    let hi = (rd::<u16>(group_get_animation_id(group(grp), id as u32), 0xA) >> 15) as u8 & 1;
+    let moving = rd::<u8>(group_get_animation_id(group(grp), (id as u32) as i32), 0xA) >> 5 & 1;
+    let partial = rd::<u8>(group_get_animation_id(group(grp), (id as u32) as i32), 0xA) >> 4 & 1;
+    let hi = (rd::<u16>(group_get_animation_id(group(grp), (id as u32) as i32), 0xA) >> 15) as u8 & 1;
     let mut sync = GPtr::NULL;
     let mut found = GPtr::NULL;
     let mut fading = false;

@@ -19,11 +19,11 @@ use crate::bindings::vector_mul_scalar as vector_mul;
 use sa_core::bindings::add_big_message as messages_add_big_message;
 use sa_core::bindings::camera_fade;
 use sa_core::bindings::camera_set_fade_colour;
-use sa_core::bindings::find_player_coors;
-use sa_core::bindings::find_player_ped;
-use sa_core::bindings::find_player_vehicle;
+use crate::bindings::find_player_coors;
+use crate::bindings::find_player_ped;
+use crate::bindings::find_player_vehicle;
 use sa_core::bindings::game_logic_pass_time;
-use sa_core::bindings::get_pad as pad_get_pad;
+use sa_input::bindings::get_pad as pad_get_pad;
 use sa_core::bindings::streaming_load_scene;
 use sa_core::bindings::streaming_load_scene_collision;
 use sa_core::bindings::text_get;
@@ -238,7 +238,7 @@ use crate::bindings::hud_help_message_displayed;
 use crate::bindings::is_stat_capped as stats_is_stat_capped;
 use crate::bindings::simple_transform_update_rw_matrix;
 use crate::bindings::stats_find_max_number_of_group_members;
-use sa_core::bindings::entity_update_rw_frame;
+use crate::bindings::entity_update_rw_frame;
 use sa_core::bindings::matrix_mul_vec;
 use sa_core::bindings::matrix_update_rw_matrix;
 use crate::bindings::garages_is_model_index_a_door;
@@ -320,7 +320,7 @@ pub fn object_process_control_logic(this: GPtr<u8>) {
             6
         };
         let mut out = [0f32; 3];
-        let o = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::from_raw(&mut out).cast()), rd::<GPtr<u8>>(this, 0x14), GPtr::from_raw(&mut off).cast()));
+        let o = matrix_mul_vec(GPtr::from_raw(&mut out).cast(), rd::<GPtr<u8>>(this, 0x14), GPtr::from_raw(&mut off).cast());
         let (px, py) = (rd::<f32>(o, 0), rd::<f32>(o, 4));
         let pz = x(rd::<f32>(o, 8)).fadd_m(slack).to_f32();
         ropes_register_rope(this, ty, px, py, pz, 0, segs, 1, this, 0x4E20);
@@ -533,7 +533,7 @@ pub fn stats_get_fat_and_muscle_modifier(ability: u32) -> X87 {
     // `max(0, f32((fat - off) / (1000 - off))) * k + 1`
     let fat_max_term = |k: usize| {
         let v = x(fat).fsub_m(f(0x8CDEC0)).fdiv(x(k1000).fsub_m(f(0x8CDEC0))).to_f32();
-        X87::from_f64_exact(max_f(0.0, v)).fmul_m(f(k)).fadd_m(one)
+        X87::from_f64_exact(max_f(0.0, v).to_f64()).fmul_m(f(k)).fadd_m(one)
     };
     // the value unless it is below `lo` (ordered)
     let at_least = |v: X87, lo: f32| if v.fcom(x(lo)).test_parity(5) { v } else { x(lo) };
@@ -543,7 +543,7 @@ pub fn stats_get_fat_and_muscle_modifier(ability: u32) -> X87 {
     // `min(1, f32(int * k)) * m + 1`
     let capped_int = |m: usize| {
         let v = int_stat(0xB791B4).to_f32();
-        X87::from_f64_exact(min_f(one, v)).fmul_m(f(m)).fadd_m(one)
+        X87::from_f64_exact(min_f(one.to_bits(), v.to_bits()).to_f64()).fmul_m(f(m)).fadd_m(one)
     };
     match ability {
         0 => {

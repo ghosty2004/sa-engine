@@ -22,11 +22,11 @@ sa_core::globals! {
     pub static CROSS_HAIRS @ 0xC8A838: [u8; NUM_CROSS_HAIRS * CROSS_HAIR_SIZE] = [0; NUM_CROSS_HAIRS * CROSS_HAIR_SIZE];
 }
 
-pub use sa_core::bindings::pop_current_txd as txd_pop_current;
-pub use sa_core::bindings::push_current_txd as txd_push_current;
-pub use sa_core::bindings::set_current_txd as txd_set_current;
-pub use sa_core::bindings::rw_texture_destroy;
-pub use sa_core::bindings::rw_texture_read;
+pub use sa_stream::bindings::pop_current_txd as txd_pop_current;
+pub use sa_stream::bindings::push_current_txd as txd_push_current;
+pub use sa_stream::bindings::set_current_txd as txd_set_current;
+pub use sa_rwcore::bindings::rw_texture_destroy;
+pub use sa_rwcore::bindings::rw_texture_read;
 pub use sa_core::bindings::find_txd_slot as txd_find_slot;
 
 pub fn cross_hair(i: i32) -> GPtr<u8> {

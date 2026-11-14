@@ -16,7 +16,7 @@ pub use crate::bindings::stand_still_dtor as dtor_62f360;
 pub use crate::bindings::task_complex_dtor as dtor_61a3d0;
 pub use sa_core::bindings::car_set_ped_out_dtor as dtor_647950;
 pub use sa_world::bindings::dtor_6389f0;
-pub use sa_world::bindings::task_simple_dtor as dtor_61a3a0;
+pub use crate::bindings::task_simple_dtor as dtor_61a3a0;
 pub use crate::bindings::dtor_63b970;
 pub use crate::bindings::dtor_65c4d0;
 pub use crate::bindings::dtor_65ff60;

@@ -20,7 +20,7 @@ use crate::bindings::bbox_planes_uncached as planes_uncached;
 use crate::bindings::bounding_sphere;
 use sa_core::bindings::sphere_intersect_ray;
 use sa_core::bindings::vector_normalise;
-use sa_stream::bindings::placeable_allocate_matrix;
+use sa_world::bindings::placeable_allocate_matrix;
 use sa_stream::bindings::simple_transform_update_matrix;
 use sa_world::bindings::process_line_of_sight;
 use crate::bindings::bbox_corners_uncached as corners_uncached;
@@ -108,7 +108,7 @@ fn check_route(pts: &[V3; 8], count: i32, centre: V3, ped: GPtr<u8>, e: GPtr<u8>
             x(cur[1]).fsub_m(prev[1]).to_f32(),
             0.0,
         ];
-        vector_normalise(p3(&mut dir));
+        vector_normalise(GPtr::<u8>::cast::<[f32;3]>(p3(&mut dir)));
         let ox = x(dir[1]).fmul_m(0.5).to_f32();
         let oy = x(dir[0]).fmul_m(0.5).fchs().to_f32();
         let mut off = [ox, oy, 0.0];
@@ -289,7 +289,7 @@ pub fn compute_route_round_entity_bounding_box(
         x(tp[1]).fsub_m(fp[1]).to_f32(),
         x(tp[2]).fsub_m(fp[2]).to_f32(),
     ];
-    vector_normalise(p3(&mut dir));
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(p3(&mut dir)));
     let origin = fp;
     let mut flag = false;
     let sign = |v: X87| -> (i32, f32) {
@@ -344,7 +344,7 @@ pub fn compute_route_round_entity_bounding_box(
         if !len.fcom(X87::zero()).test_parity(0x44) {
             return 0;
         }
-        vector_normalise(p3(&mut d2));
+        vector_normalise(GPtr::<u8>::cast::<[f32;3]>(p3(&mut d2)));
         let mut start = fv;
         if sphere_intersect_ray(
             pa(&mut sphere),
@@ -365,7 +365,7 @@ pub fn compute_route_round_entity_bounding_box(
         x(tp[1]).fsub_m(fp[1]).to_f32(),
         x(tp[2]).fsub_m(fp[2]).to_f32(),
     ];
-    vector_normalise(p3(&mut dir));
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(p3(&mut dir)));
     let mut from_plane = -1i32;
     let mut to_plane = -1i32;
     for i in 0..4 {

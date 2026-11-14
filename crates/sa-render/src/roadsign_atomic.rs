@@ -11,21 +11,21 @@ use sa_math::x87::X87;
 
 use crate::common::{g, rd, wr};
 
-use sa_core::bindings::rp_atomic_create;
+use sa_rwcore::bindings::rp_atomic_create;
 use sa_core::bindings::rp_atomic_set_frame;
-use sa_core::bindings::rp_atomic_set_geometry;
+use sa_rwcore::bindings::rp_atomic_set_geometry;
 use sa_core::bindings::rp_geometry_destroy;
 use sa_core::bindings::rp_geometry_triangle_set_material;
-use sa_core::bindings::rp_geometry_unlock;
-use sa_core::bindings::rw_frame_create;
+use sa_rwcore::bindings::rp_geometry_unlock;
+use sa_rwcore::bindings::rw_frame_create;
 use sa_core::bindings::rp_material_set_texture;
-use sa_core::bindings::rp_geometry_create;
+use sa_rwcore::bindings::rp_geometry_create;
 use sa_world::bindings::rp_material_create;
-use sa_core::bindings::rp_material_destroy;
+use sa_rwcore::bindings::rp_material_destroy;
 use sa_world::bindings::rp_morph_target_calc_bounding_sphere;
 use sa_world::bindings::rw_frame_set_identity;
-use sa_core::bindings::rp_atomic_destroy;
-use sa_core::bindings::rw_texture_destroy;
+use sa_rwcore::bindings::rp_atomic_destroy;
+use sa_rwcore::bindings::rw_texture_destroy;
 use sa_world::bindings::rp_geometry_triangle_set_vertex_indices;
 orig! {
     /// `CCustomRoadsignMgr::CreateRoadsignTexture(const char*, int32)` (0x6FECA0)

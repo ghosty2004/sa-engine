@@ -157,7 +157,7 @@ pub fn process_follow_ped_with_mouse(
             f.fsub_m(rd(b, 0x28 + 4 * i));
             wr::<f32>(b, 0x1C + 4 * i, f.fstp());
         }
-        vector_normalise(b.byte_add(0x1C));
+        vector_normalise(GPtr::<u8>::cast::<[f32;3]>(b.byte_add(0x1C)));
         f.fld(rd(b, 0x24));
         f.fcomp_m(k(K_M0_9));
         if !f.jp(0x5) {
@@ -529,19 +529,7 @@ fn sphere_near_clip(this: GPtr<u8>, b: GPtr<u8>, f: &mut Fpu) {
     f.fld(rd(b, 0x14));
     f.fmul_m(rd(b, 0x10));
     let r = f.fstp().to_bits();
-    let mut hit = test_sphere_against_world(
-        f32::from_bits(rd::<u32>(b, 0x1C)),
-        f32::from_bits(rd::<u32>(b, 0x20)),
-        f32::from_bits(rd::<u32>(b, 0x24)),
-        f32::from_bits(r),
-        GPtr::NULL,
-        1,
-        1,
-        0,
-        1,
-        0,
-        0,
-    );
+    let mut hit = test_sphere_against_world(sa_math::vector::CVector::new(f32::from_bits(rd::<u32>(b, 0x1C)), f32::from_bits(rd::<u32>(b, 0x20)), f32::from_bits(rd::<u32>(b, 0x24))), f32::from_bits(r), GPtr::<u8>::addr(GPtr::NULL) as u32, 1, 1, 0, 1, 0, 0);
     if hit.is_null() {
         return;
     }
@@ -677,19 +665,7 @@ fn sphere_near_clip(this: GPtr<u8>, b: GPtr<u8>, f: &mut Fpu) {
         f.fld(rd(b, 0x9C));
         f.fadd_m(rd(src, 8));
         wr::<f32>(b, 0x3C, f.fstp());
-        hit = test_sphere_against_world(
-            f32::from_bits(rd::<u32>(b, 0x34)),
-            f32::from_bits(rd::<u32>(b, 0x38)),
-            f32::from_bits(rd::<u32>(b, 0x3C)),
-            f32::from_bits(r),
-            GPtr::NULL,
-            1,
-            1,
-            0,
-            1,
-            0,
-            0,
-        );
+        hit = test_sphere_against_world(sa_math::vector::CVector::new(f32::from_bits(rd::<u32>(b, 0x34)), f32::from_bits(rd::<u32>(b, 0x38)), f32::from_bits(rd::<u32>(b, 0x3C))), f32::from_bits(r), GPtr::<u8>::addr(GPtr::NULL) as u32, 1, 1, 0, 1, 0, 0);
         n += 1;
         if n > 5 || hit.is_null() {
             return;

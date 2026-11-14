@@ -35,11 +35,10 @@ pub fn update() {
 const ACTIVE_CAM: usize = 0xB6F081;
 const CAM0_MODE: usize = 0xB6F1A8;
 
-pub use sa_core::bindings::find_player_ped;
-pub use sa_core::bindings::find_player_vehicle;
+pub use sa_world::bindings::find_player_ped;
+pub use sa_world::bindings::find_player_vehicle;
+pub use sa_core::bindings::vector_normalise;
 orig! {
-    /// `CVector::Normalise()` (0x59C910)
-    pub fn vector_normalise(this: GPtr<f32>) = thiscall 0x59C910 => unported;
     /// `CBulletTraces::AddTrace(CVector* start, CVector* end, float radius, uint32 lifeTime, uint8
     /// transparency)` (0x723750); the radius as a raw dword, the byte as its pushed dword
     pub fn add_trace(start: GPtr<f32>, end: GPtr<f32>, radius: u32, life: u32, alpha: u32) = cdecl 0x723750 => unported;
@@ -112,7 +111,7 @@ pub fn add_trace_wrapper(start: GPtr<f32>, end: GPtr<f32>, _weapon: u32, from: G
         .fadd(x(d[0]).fmul_m(d[0]))
         .fsqrt()
         .to_f32();
-    vector_normalise(GPtr::from_raw(d.as_mut_ptr()));
+    vector_normalise(GPtr::<f32>::cast::<[f32;3]>(GPtr::from_raw(d.as_mut_ptr())));
     let s = rand_unit(0x726C3C).fmul_m(len);
     let dxs = x(d[0]).fmul(s);
     let dys = x(d[1]).fmul(s);
@@ -142,11 +141,10 @@ pub fn add_trace_wrapper(start: GPtr<f32>, end: GPtr<f32>, _weapon: u32, from: G
 pub use sa_world::bindings::rw_im3d_end;
 pub use sa_world::bindings::rw_im3d_render_indexed_primitive;
 pub use sa_world::bindings::rw_im3d_transform;
+pub use sa_core::bindings::cross_product;
 orig! {
     /// `RwRenderStateSet` (`RwEngineInstance` slot 0x20)
     pub fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `CVector::CrossProduct(CVector* out, const CVector*, const CVector*)` (0x59C730)
-    pub fn cross_product(out: GPtr<f32>, a: GPtr<f32>, b: GPtr<f32>) -> GPtr<f32> = cdecl 0x59C730 => unported;
 }
 
 /// `TheCamera.m_pMat` and `TheCamera.m_placement.m_vPosn`.
@@ -200,7 +198,7 @@ pub fn render() {
             x(s(8)).fsub_m(rd::<f32>(cam, 8)).to_f32(),
         ];
         let vp = GPtr::<f32>::from_raw(v.as_mut_ptr());
-        vector_normalise(vp);
+        vector_normalise(vp.cast::<[f32;3]>());
         let mut d = [
             x(s(0xC)).fsub_m(s(0)).to_f32(),
             x(s(0x10)).fsub_m(s(4)).to_f32(),
@@ -215,11 +213,11 @@ pub fn render() {
             .fsqrt()
             .to_f32();
         let dp = GPtr::<f32>::from_raw(d.as_mut_ptr());
-        vector_normalise(dp);
+        vector_normalise(dp.cast::<[f32;3]>());
         let mut w = [0f32; 3];
         let wp = GPtr::<f32>::from_raw(w.as_mut_ptr());
-        cross_product(wp, vp, dp);
-        vector_normalise(wp);
+        cross_product(wp.cast::<u8>(), vp.cast::<u8>(), dp.cast::<u8>());
+        vector_normalise(wp.cast::<[f32;3]>());
         let (d0, d1, d2) = (
             dp.read(),
             dp.wrapping_index(1).read(),

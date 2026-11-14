@@ -19,18 +19,18 @@ pub use crate::bindings::get_clump_model_info;
 pub use crate::bindings::weapon_shutdown;
 pub use sa_core::bindings::get_first_atomic;
 pub use sa_core::bindings::rp_clump_destroy;
-pub use sa_core::bindings::rp_clump_for_all_atomics;
-pub use sa_core::bindings::rp_skin_geometry_get_skin;
-pub use sa_core::bindings::world_add;
-pub use sa_core::bindings::world_remove;
+pub use sa_rwcore::bindings::rp_clump_for_all_atomics;
+pub use sa_rwcore::bindings::rp_skin_geometry_get_skin;
+pub use sa_world::bindings::world_add;
+pub use sa_world::bindings::world_remove;
 pub use sa_stream::bindings::model_info_add_ref as mi_add_ref;
 pub use sa_stream::bindings::model_info_remove_ref as mi_remove_ref;
 pub use crate::bindings::add_weapon_model;
 pub use crate::bindings::remove_goggles_model;
-pub use sa_core::bindings::request_special_model;
-pub use sa_world::bindings::get_player_info as get_player_info_for_this_player_ped;
-pub use sa_world::bindings::ped_remove_weapon_model as remove_weapon_model;
-pub use sa_world::bindings::ped_set_current_weapon_slot as set_current_weapon_slot_call;
+pub use sa_stream::bindings::request_special_model;
+pub use crate::bindings::get_player_info as get_player_info_for_this_player_ped;
+pub use crate::bindings::ped_remove_weapon_model as remove_weapon_model;
+pub use crate::bindings::ped_set_current_weapon_slot as set_current_weapon_slot_call;
 orig! {
     /// `CPed::AddGogglesModel(int32 model, bool& flag)` (0x5E3A90)
     pub fn add_goggles_model_call(p: GPtr<u8>, model: i32, flag: GPtr<u8>) = thiscall 0x5E3A90 => add_goggles_model;
@@ -90,7 +90,7 @@ pub fn set_current_weapon_slot(this: GPtr<u8>, slot: i32) {
 /// `CPed::SetCurrentWeapon(eWeaponType)` (0x5E6280, `ret 4`)
 #[hook(addr = 0x5E6280, conv = thiscall, name = "CPed::SetCurrentWeapon-WepType", expect = "8B 44 24 04 56", this = "CPed")]
 pub fn set_current_weapon_type(this: GPtr<u8>, ty: i32) {
-    set_current_weapon_slot_call(this, info_slot(ty) as u32);
+    set_current_weapon_slot_call(this, (info_slot(ty) as u32) as i32);
 }
 
 /// `CPed::ClearWeapon(eWeaponType)` (0x5E62B0, `ret 4`): when the type's slot holds it: switch to the
@@ -102,7 +102,7 @@ pub fn clear_weapon(this: GPtr<u8>, ty: i32) {
         return;
     }
     if active(this) == slot {
-        set_current_weapon_slot_call(this, info_slot(0) as u32);
+        set_current_weapon_slot_call(this, (info_slot(0) as u32) as i32);
     }
     weapon_shutdown(weapon(this, slot));
     if ty == 0x2C || ty == 0x2D {
@@ -119,7 +119,7 @@ pub fn clear_weapons(this: GPtr<u8>) {
     for i in 0..13 {
         weapon_shutdown(weapon(this, i));
     }
-    set_current_weapon_slot_call(this, info_slot(0) as u32);
+    set_current_weapon_slot_call(this, (info_slot(0) as u32) as i32);
 }
 
 /// `CPed::ReplaceWeaponForScriptedCutscene` (0x5E6530): saves the current weapon type, selects slot 0.
@@ -136,7 +136,7 @@ pub fn remove_weapon_for_scripted_cutscene(this: GPtr<u8>) {
     if s == NO_WEAPON {
         return;
     }
-    set_current_weapon_slot_call(this, info_slot(s) as u32);
+    set_current_weapon_slot_call(this, (info_slot(s) as u32) as i32);
     wr::<i32>(this, 0x70C, NO_WEAPON);
 }
 
@@ -151,7 +151,7 @@ pub fn replace_weapon_when_exiting_vehicle(this: GPtr<u8>) {
     if matches!(rd::<i32>(this, 0x598), 0 | 1) {
         let s = rd::<i32>(this, 0x70C);
         if s != NO_WEAPON {
-            set_current_weapon_slot_call(this, info_slot(s) as u32);
+            set_current_weapon_slot_call(this, (info_slot(s) as u32) as i32);
             wr::<i32>(this, 0x70C, NO_WEAPON);
             return;
         }
@@ -191,7 +191,7 @@ pub fn remove_weapon_when_entering_vehicle(this: GPtr<u8>, arg: i32) {
             if rd::<i32>(this, 0x70C) == NO_WEAPON {
                 wr::<i32>(this, 0x70C, wtype(this, active(this)));
             }
-            set_current_weapon_slot_call(this, info_slot(wtype(this, slot)) as u32);
+            set_current_weapon_slot_call(this, (info_slot(wtype(this, slot)) as u32) as i32);
         }
         None => remove_weapon_model(this, info_model(wtype(this, active(this)))),
     }
@@ -209,7 +209,7 @@ pub fn add_goggles_model(this: GPtr<u8>, model: i32, flag: GPtr<u8>) {
         remove_goggles_model(this);
     }
     wr::<GPtr<u8>>(this, 0x4FC, mi_create_instance(mi));
-    mi_add_ref(mi);
+    mi_add_ref(mi.cast::<sa_stream::shared::CBaseModelInfo>());
     wr::<GPtr<u8>>(this, 0x500, flag);
     flag.write(1);
 }
@@ -226,10 +226,10 @@ pub fn remove_goggles_model_port(this: GPtr<u8>) {
     if rd::<GPtr<u8>>(this, 0x4FC).is_null() {
         return;
     }
-    mi_remove_ref(get_clump_model_info(rd::<GPtr<u8>>(this, 0x4FC)));
+    mi_remove_ref(GPtr::<u8>::cast::<sa_stream::shared::CBaseModelInfo>(get_clump_model_info(rd::<GPtr<u8>>(this, 0x4FC))));
     let a = get_first_atomic(rd::<GPtr<u8>>(this, 0x4FC));
-    if !a.is_null() && !rp_skin_geometry_get_skin(rd::<GPtr<u8>>(a, 0x18)).is_null() {
-        rp_clump_for_all_atomics(rd::<GPtr<u8>>(this, 0x4FC), ATOMIC_REMOVE_ANIM_FROM_SKIN_CB, GPtr::NULL);
+    if !a.is_null() && !GPtr::<u8>::from_addr(rp_skin_geometry_get_skin(rd::<GPtr<u8>>(a, 0x18)) as usize).is_null() {
+        rp_clump_for_all_atomics(rd::<GPtr<u8>>(this, 0x4FC), ATOMIC_REMOVE_ANIM_FROM_SKIN_CB, GPtr::<u8>::addr(GPtr::NULL) as u32);
     }
     rp_clump_destroy(rd::<GPtr<u8>>(this, 0x4FC));
     let flag = rd::<GPtr<u8>>(this, 0x500);

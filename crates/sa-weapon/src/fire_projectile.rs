@@ -16,23 +16,13 @@ use crate::weapon_fire::{
 
 use sa_world::bindings::placeable_get_matrix;
 use sa_world::bindings::weapon_effects_is_locked_on;
+use sa_core::bindings::world_get_is_line_of_sight_clear as world_line_of_sight_clear;
+use crate::bindings::add_projectile;
+use sa_world::bindings::pick_target_for_heat_seeking_missile;
+use sa_world::bindings::world_test_sphere_against_world as world_test_sphere;
 orig! {
-    /// `CProjectileInfo::AddProjectile(CEntity* creator, eWeaponType, CVector origin, float force, CVector*
-    /// dir, CEntity* target)` (0x737C80)
-    #[allow(clippy::too_many_arguments)]
-    fn add_projectile(creator: GPtr<u8>, ty: u32, x: f32, y: f32, z: f32, force: f32, dir: GPtr<u8>, target: GPtr<u8>) -> u8 = cdecl 0x737C80 => crate::projectile_add::add_projectile;
     /// `CProjectileInfo::RemoveNotAdd(CEntity* creator, eWeaponType, CVector pos)` (0x737C00)
     fn remove_not_add(creator: GPtr<u8>, ty: u32, x: f32, y: f32, z: f32) = cdecl 0x737C00 => unported;
-    /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, bool x7)` (0x56A490)
-    #[allow(clippy::too_many_arguments)]
-    fn world_line_of_sight_clear(a: GPtr<u8>, b: GPtr<u8>, bd: u32, vh: u32, pd: u32, ob: u32, du: u32, st: u32, cam: u32) -> u8 = cdecl 0x56A490 => unported;
-    /// `CWorld::TestSphereAgainstWorld(CVector, float, CEntity* ignore, bool x6)` (0x569E20)
-    #[allow(clippy::too_many_arguments)]
-    fn world_test_sphere(x: f32, y: f32, z: f32, r: f32, ignore: GPtr<u8>, bd: u32, vh: u32, pd: u32, ob: u32, du: u32, cam: u32) -> GPtr<u8> = cdecl 0x569E20 => unported;
-    /// `CWeapon::PickTargetForHeatSeekingMissile(CVector origin, CVector dir, float, CEntity* ignore, bool,
-    /// CEntity* last)` (0x73F910)
-    #[allow(clippy::too_many_arguments)]
-    fn pick_target_for_heat_seeking_missile(px: f32, py: f32, pz: f32, dx: f32, dy: f32, dz: f32, k: f32, ignore: GPtr<u8>, b: u32, last: GPtr<u8>) -> GPtr<u8> = cdecl 0x73F910 => unported;
 }
 
 /// `CWorld::pIgnoreEntity` (0xB7CD68).
@@ -203,7 +193,7 @@ pub fn fire_projectile(this: GPtr<u8>, firer: GPtr<u8>, origin: GPtr<u8>, target
                     x(rf(t, 4)).fsub_m(lo[1]).to_f32(),
                     x(rf(t, 8)).fsub_m(lo[2]).to_f32(),
                 ];
-                normalise(fp(&mut d));
+                normalise(GPtr::<u8>::cast::<[f32;3]>(fp(&mut d)));
                 let dx8 = x(d[0]).fmul_m(8.0);
                 let dy8 = x(d[1]).fmul_m(8.0);
                 let dz8 = x(d[2]).fmul_m(8.0).to_f32();
@@ -235,10 +225,10 @@ pub fn fire_projectile(this: GPtr<u8>, firer: GPtr<u8>, origin: GPtr<u8>, target
                 x(rf(t, 4)).fsub_m(lo[1]).to_f32(),
                 x(rf(t, 8)).fsub_m(lo[2]).to_f32(),
             ];
-            normalise(fp(&mut d));
+            normalise(GPtr::<u8>::cast::<[f32;3]>(fp(&mut d)));
             add_projectile(firer, 0x13, o[0], o[1], o[2], force, fp(&mut d), target);
         } else {
-            add_projectile(firer, ty, o[0], o[1], o[2], force, GPtr::NULL, target);
+            add_projectile(firer, (ty as i32) as u32, o[0], o[1], o[2], force, GPtr::NULL, target);
         }
     } else if ty == 0x10 || ty == 0x27 {
         if etype(firer) == 3 {
@@ -249,8 +239,8 @@ pub fn fire_projectile(this: GPtr<u8>, firer: GPtr<u8>, origin: GPtr<u8>, target
             let py = x(rf(p, 4)).fsub_m(rf(m, 0x14)).to_f32();
             let px = x(rf(p, 0)).fsub_m(rf(m, 0x10)).to_f32();
             let pz = z.fsub_m(cf(0x3ECC_CCCD)).to_f32();
-            if world_test_sphere(px, py, pz, cf(0x3E99_999A), GPtr::NULL, 0, 0, 1, 0, 0, 0).is_null() {
-                add_projectile(firer, ty, px, py, pz, 0.0, GPtr::NULL, target);
+            if world_test_sphere(sa_math::vector::CVector::new(px, py, pz), cf(0x3E99_999A), GPtr::<u8>::addr(GPtr::NULL) as u32, 0, 0, 1, 0, 0, 0).is_null() {
+                add_projectile(firer, (ty as i32) as u32, px, py, pz, 0.0, GPtr::NULL, target);
             } else {
                 let o = v3(origin);
                 remove_not_add(firer, ty, o[0], o[1], o[2]);

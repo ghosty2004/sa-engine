@@ -7,8 +7,8 @@ use sa_math::x87::X87;
 
 use crate::common::{g, rd};
 
-use sa_world::bindings::fx_create_system;
-use sa_world::bindings::fx_play_and_kill as fx_system_play_and_kill;
+use crate::bindings::fx_create_system;
+use crate::bindings::fx_play_and_kill as fx_system_play_and_kill;
 
 /// `g_fxMan` (0xA9AE80) and the effect name "water_hydrant" (0x85A70C).
 const FX_MAN: usize = 0xA9_AE80;

@@ -68,8 +68,9 @@ pub use sa_core::bindings::atof;
 pub use sa_core::bindings::cross_product;
 pub use sa_core::bindings::strtok;
 pub use sa_core::bindings::vector_normalise;
-pub use sa_core::bindings::camera_delete_cut_scene_cam_data_memory as delete_cut_scene_cam_data_memory_call;
-pub use sa_core::bindings::load_line;
+pub use crate::bindings::camera_delete_cut_scene_cam_data_memory as delete_cut_scene_cam_data_memory_call;
+pub use sa_stream::bindings::load_line;
+pub use sa_core::bindings::crt_new as operator_new;
 orig! {
     /// `FUN_005b2090` (vector spline evaluator)
     pub fn spline_vector_call(out: GPtr<u8>, spline: GPtr<u8>, time: f32, index: GPtr<i32>) = cdecl 0x5B2090 => spline_vector;
@@ -77,8 +78,6 @@ orig! {
     pub fn spline_scalar_call(out: GPtr<f32>, spline: GPtr<u8>, time: f32, index: GPtr<i32>) = cdecl 0x5B2330 => spline_scalar;
     /// CRT `sscanf(s, "%d", int*)` (0x8220AD)
     pub fn sscanf_int(s: GPtr<u8>, fmt: GPtr<u8>, out: GPtr<i32>) -> i32 = cdecl 0x8220AD => unported;
-    /// CRT `operator new` (0x82119A)
-    pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
 }
 
 /// `spline[i]` (`[esi+i*4]`, 32-bit index arithmetic).
@@ -543,7 +542,7 @@ pub fn process_fly_by(
     for (j, v) in d.iter().enumerate() {
         wr::<f32>(front, j as isize * 4, *v);
     }
-    vector_normalise(front);
+    vector_normalise(front.cast::<[f32;3]>());
     let mut tmp = [0u32; 3];
     let mut right = [0u32; 3];
     let tp = GPtr::<u32>::from_raw(tmp.as_mut_ptr()).cast::<u8>();
@@ -556,7 +555,7 @@ pub fn process_fly_by(
     for o in [0, 4, 8] {
         wr::<u32>(up, o, rd::<u32>(r, o));
     }
-    vector_normalise(up);
+    vector_normalise(up.cast::<[f32;3]>());
     wr::<u32>(this, 0xB4, FLYBY_FOV.ptr().cast::<u32>().read());
 }
 

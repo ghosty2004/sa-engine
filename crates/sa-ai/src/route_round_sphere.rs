@@ -7,6 +7,7 @@
     clippy::similar_names
 )]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -68,7 +69,7 @@ pub fn compute_route_round_sphere(
             x(t[1]).fsub_m(s[1]).to_f32(),
             x(t[2]).fsub_m(s[2]).to_f32(),
         ];
-        vector_normalise(p3(&mut dir));
+        vector_normalise(GPtr::<u8>::cast::<[f32;3]>(p3(&mut dir)));
         if sphere_intersect_ray(sphere, pp, p3(&mut dir), p3(&mut p1), p3(&mut p2)) != 0 {
             put(new_target, p2);
         }
@@ -79,7 +80,7 @@ pub fn compute_route_round_sphere(
         x(nt[1]).fsub_m(p[1]).to_f32(),
         x(nt[2]).fsub_m(p[2]).to_f32(),
     ];
-    vector_normalise(p3(&mut dir));
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(p3(&mut dir)));
     if sphere_intersect_ray(sphere, new_target, p3(&mut dir), p3(&mut p1), p3(&mut p2)) == 0 {
         put(detour, v3(new_target));
         return 0;
@@ -118,7 +119,7 @@ pub fn compute_route_round_sphere(
         qy.fsub_m(c[1]).to_f32(),
         x(qz).fsub_m(c[2]).to_f32(),
     ];
-    vector_normalise(p3(&mut u));
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(p3(&mut u)));
     let r = x(rd::<f32>(sphere, 0xC));
     let dy = x(u[1]).fmul(r).to_f32();
     let dz = x(u[2]).fmul(r).to_f32();

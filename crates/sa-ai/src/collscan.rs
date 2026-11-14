@@ -40,7 +40,7 @@ sa_core::globals! {
 /// `CTimer::m_snTimeInMilliseconds` (owned by CTimer).
 const TIME_MS: usize = 0xB7CB84;
 
-use sa_world::bindings::acquaintance_get;
+use crate::bindings::acquaintance_get;
 use crate::bindings::acquaintance_ped_hate_ctor;
 use crate::bindings::building_collision_dtor;
 use crate::bindings::dtor_4aca70 as ped_collision_dtor;
@@ -64,13 +64,13 @@ use sa_world::bindings::event_acquaintance_ped_dtor as acquaintance_dtor;
 use sa_world::bindings::event_damage_affects_ped as damage_affects_ped;
 use sa_world::bindings::event_damage_ctor as damage_ctor;
 use sa_world::bindings::event_damage_dtor as damage_dtor;
-use sa_world::bindings::event_group_add;
-use sa_world::bindings::event_sound_quiet_dtor as sound_quiet_dtor;
+use crate::bindings::event_group_add;
+use crate::bindings::event_sound_quiet_dtor as sound_quiet_dtor;
 use sa_world::bindings::get_event_global_group;
 use sa_world::bindings::get_ped_flag as ped_type_get_ped_flag;
 use sa_world::bindings::placeable_get_heading;
-use sa_core::bindings::vector_magnitude_sqr as vector_squared_magnitude;
-use sa_core::bindings::vector_sub;
+use sa_world::bindings::vector_magnitude_sqr as vector_squared_magnitude;
+use sa_world::bindings::vector_sub;
 use crate::bindings::building_collision_ctor;
 use crate::bindings::object_collision_ctor;
 use crate::bindings::ped_collision_ctor as ped_collision_with_ped_ctor;
@@ -81,9 +81,9 @@ use sa_world::bindings::mental_state_increment_anger as increment_anger;
 use sa_world::bindings::ped_say;
 use sa_world::bindings::vector_div;
 use sa_world::bindings::vector_scale;
+use sa_world::bindings::kill_ped_with_car as ped_kill_ped_with_car;
+use sa_world::bindings::max_f as float_max;
 orig! {
-    /// `CPed::KillPedWithCar(CVehicle*, float, bool)` (0x5F0360, `ret 0xC`)
-    fn ped_kill_ped_with_car(p: GPtr<u8>, veh: GPtr<u8>, impulse: u32, b: u32) = thiscall 0x5F0360 => unported;
     /// `CPedGeometryAnalyser::ComputePedHitSide(const CPed&, const CPhysical&)` (0x5F3640, cdecl)
     fn compute_ped_hit_side(ped: GPtr<u8>, other: GPtr<u8>) -> u32 = cdecl 0x5F3640 => unported;
     /// `CEventVehicleCollision::CEventVehicleCollision(int16 piece, float, CVehicle*, const CVector*, const CVector*,
@@ -96,8 +96,6 @@ orig! {
     fn player_collision_with_ped_ctor(e: GPtr<u8>, piece: u32, dmg: u32, ped: GPtr<u8>, vel: GPtr<u8>, pos: GPtr<u8>, ms: u32, oms: u32) -> GPtr<u8> = thiscall 0x5FEE40 => unported;
     /// `CEventPedCollisionWithPlayer::CEventPedCollisionWithPlayer(...)` (0x5FED40, `ret 0x1C`)
     fn ped_collision_with_player_ctor(e: GPtr<u8>, piece: u32, dmg: u32, ped: GPtr<u8>, vel: GPtr<u8>, pos: GPtr<u8>, ms: u32, oms: u32) -> GPtr<u8> = thiscall 0x5FED40 => unported;
-    /// `FUN_00420800(float a, float b)` (0x420800, cdecl, ST0): `a > b ? a : b`
-    fn float_max(a: u32, b: u32) -> f64 = cdecl 0x420800 => unported;
 }
 
 use sa_core::field::gx as cf;
@@ -141,7 +139,7 @@ fn standing_push(v: GPtr<u8>, d: f32) -> Option<X87> {
 fn attached_damage(v: GPtr<u8>, other: GPtr<u8>) {
     let side = compute_ped_hit_side(v, other);
     let mut calc = [0u32; 5];
-    calc_ctor(local(&mut calc), other, f32::from_bits(rd::<u32>(v, 0xD8)), 0x31, 3, 0);
+    calc_ctor(local(&mut calc), other.addr() as u32, f32::from_bits(rd::<u32>(v, 0xD8)).to_bits(), 0x31, 3, 0);
     let in_veh = (rd::<u32>(v, 0x46C) >> 8) & 0xFFFF_FF01;
     let mut ev = [0u32; 0x11];
     damage_ctor(local(&mut ev), other, now(), 0x31, 3, side, 0, in_veh);
@@ -179,7 +177,7 @@ fn vehicle_hits_player(v: GPtr<u8>, other: GPtr<u8>, sp: f32, d: f32) {
     let mut half = [0u32; 3];
     vector_div(local(&mut half), local(&mut c), f32::from_bits(0x4000_0000));
     let mut cw = [0u32; 3];
-    let r = GPtr::<f32>::cast::<u8>(matrix_mul_vector(GPtr::<u8>::cast::<f32>(local(&mut cw)), rd::<GPtr<u8>>(other, 0x14), local(&mut half)));
+    let r = matrix_mul_vector(local(&mut cw), rd::<GPtr<u8>>(other, 0x14), local(&mut half));
     let mut cwc = [rd::<u32>(r, 0), rd::<u32>(r, 4), rd::<u32>(r, 8)];
     let mut tmp = [0u32; 3];
     let rel = vector_sub(local(&mut tmp), local(&mut cwc), pos(v));
@@ -193,7 +191,7 @@ fn vehicle_hits_player(v: GPtr<u8>, other: GPtr<u8>, sp: f32, d: f32) {
     let op = pos(other);
     let mut dir = [0u32; 3];
     vector_sub(local(&mut dir), pos(v), op);
-    vector_normalise(local(&mut dir));
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(local(&mut dir)));
     let mv = other.byte_add(0x44);
     let ad = x(f32::from_bits(diff.to_bits() & 0x7FFF_FFFF));
     let front = !ad.fcom(x(box_ang)).test_parity(5) || !ad.fcom(cf(0x858CB8).fsub_m(box_ang)).test_any(0x41);
@@ -205,22 +203,22 @@ fn vehicle_hits_player(v: GPtr<u8>, other: GPtr<u8>, sp: f32, d: f32) {
     } else if !x(diff).fcom(cf(0x858B50)).test_any(0x41) {
         let mut s = [0u32; 3];
         let r = vector_scale(local(&mut s), f32::from_bits(0xBF80_0000), rd::<GPtr<u8>>(other, 0x14));
-        X87::from_f64_exact(vector_dot_product(r, mv))
+        X87::from_f64_exact(vector_dot_product(r, mv).to_f64())
     } else {
         let right = rd::<GPtr<u8>>(other, 0x14);
-        let dot = X87::from_f64_exact(vector_dot_product(right, mv));
+        let dot = X87::from_f64_exact(vector_dot_product(right, mv).to_f64());
         let stored = f32_of(dot);
         if !x(sp).fcom(cf(0x86CD7C)).test_any(0x41) && !dot.fcom(cf(0x858B1C)).test_parity(5) {
             // 0x6048B4: the right . victim-forward test only decides a dead store; the dot product is reloaded
             // from its f32 slot
-            let _ = vector_dot_product(right, rd::<GPtr<u8>>(v, 0x14).byte_add(0x10));
+            let _ = vector_dot_product(right, rd::<GPtr<u8>>(v, 0x14).byte_add(0x10)).to_f64();
             x(stored)
         } else {
             dot
         }
     };
     if !dot.fcom(cf(0x858B1C)).test_any(0x41) {
-        ped_kill_ped_with_car(v, other, d.to_bits(), 0);
+        ped_kill_ped_with_car(v, other, f32::from_bits(d.to_bits()), 0);
     }
 }
 
@@ -229,7 +227,7 @@ fn vehicle_collision(this: GPtr<u8>, v: GPtr<u8>, other: GPtr<u8>, group: GPtr<u
     if rd::<u8>(this, 0) != 0 {
         return;
     }
-    let sp = f32_of(X87::from_f64_exact(vector_squared_magnitude(GPtr::<u8>::cast::<f32>(other.byte_add(0x44)))));
+    let sp = f32_of(X87::from_f64_exact(vector_squared_magnitude(other.byte_add(0x44)).to_f64()));
     let thr = if rd::<u32>(other, 0x4C4) != 0 { fm(0x86C924) } else { fm(0x86C920) };
     if rd::<i32>(other, 0x594) == 6
         && rd::<u8>(other, 0x40) & 4 != 0
@@ -238,7 +236,7 @@ fn vehicle_collision(this: GPtr<u8>, v: GPtr<u8>, other: GPtr<u8>, group: GPtr<u
         && rd::<u32>(v, 0x568) == 0
         && !x(sp).fcom(cf(0x858FC4)).test_any(0x41)
     {
-        ped_kill_ped_with_car(v, other, 0x4170_0000, 0);
+        ped_kill_ped_with_car(v, other, f32::from_bits(0x4170_0000), 0);
     }
     if !x(sp).fcom(x(thr)).test_any(0x41) {
         let mut d = rd::<f32>(v, 0xD8);
@@ -252,7 +250,7 @@ fn vehicle_collision(this: GPtr<u8>, v: GPtr<u8>, other: GPtr<u8>, group: GPtr<u
         } else if attached_to_vehicle(v) {
             attached_damage(v, other);
         } else {
-            ped_kill_ped_with_car(v, other, rd::<u32>(v, 0xD8), 0);
+            ped_kill_ped_with_car(v, other, f32::from_bits(rd::<u32>(v, 0xD8)), 0);
         }
         return;
     }
@@ -304,7 +302,7 @@ fn ped_event_dtor(kind: PedEv, ev: &mut [u32; 0xD]) {
 /// `CEventAcquaintancePedHate(target)` added to `group` when `GetAcquaintances(hater +0x4E0, 4)` has the target's
 /// ped-type flag (0x604C7D / 0x604E7B; destructor: vtable 0x858E68, then 0x4AF890).
 fn hate_if_hated(hater: GPtr<u8>, target: GPtr<u8>, group_of: impl Fn() -> GPtr<u8>) {
-    let a = acquaintance_get(hater.byte_add(0x4E0), 4);
+    let a = acquaintance_get(GPtr::<u8>::addr(hater.byte_add(0x4E0)) as u32, 4);
     if a & ped_type_get_ped_flag(rd::<u32>(target, 0x598) as i32) == 0 {
         return;
     }
@@ -366,10 +364,10 @@ fn object_collision(v: GPtr<u8>, other: GPtr<u8>, group: GPtr<u8>, ms: u32) {
     let st = rd::<u8>(v, 0x46C) & 1;
     let mut d = rd::<f32>(v, 0xD8);
     if st != 0
-        && entity_get_is_static(other) == 0
+        && entity_get_is_static(other) as u8 == 0
         && let Some(d2) = standing_push(v, d)
     {
-        d = f32_of(X87::from_f64_exact(float_max(0, f32_of(d2).to_bits())));
+        d = f32_of(X87::from_f64_exact(float_max(f32::from_bits(0), f32::from_bits(f32_of(d2).to_bits())).to_f64()));
     }
     let thr = if rd::<GPtr<u8>>(v, 0x480).is_null() {
         SCAN_OBJECT_THRESHOLD_PED.get()
@@ -377,7 +375,7 @@ fn object_collision(v: GPtr<u8>, other: GPtr<u8>, group: GPtr<u8>, ms: u32) {
         SCAN_OBJECT_THRESHOLD_PLAYER.get()
     };
     let hit = !x(d).fcom(x(thr)).test_any(0x41)
-        && entity_get_is_static(other) == 0
+        && entity_get_is_static(other) as u8 == 0
         && st != 0
         && other != rd::<GPtr<u8>>(v, 0x584)
         && {
@@ -390,7 +388,7 @@ fn object_collision(v: GPtr<u8>, other: GPtr<u8>, group: GPtr<u8>, ms: u32) {
         let ix = rd::<f32>(v, 0xE0);
         dir2[0] = f32_of(x(ix).fchs()).to_bits();
         dir2[1] = f32_of(x(rd::<f32>(v, 0xE4)).fchs()).to_bits();
-        let ld = ped_get_local_direction(v, local(&mut dir2)) as u32;
+        let ld = ped_get_local_direction(v, GPtr::<u8>::cast::<f32>(local(&mut dir2))) as u32;
         weapon_generate_damage_event(v, rd::<GPtr<u8>>(v, 0xDC), 0x36, ftol32(x(dmg)), 3, ld);
         wr::<u32>(v, 0x128, rd::<u32>(v, 0xDC));
         return;

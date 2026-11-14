@@ -29,7 +29,7 @@ const RADIO_VOLUME: usize = 0xBA6798;
 use crate::bindings::audio_retune_radio;
 use sa_core::bindings::audio_set_effects_master_volume;
 use sa_core::bindings::audio_set_music_master_volume;
-use sa_stream::bindings::get_level_from_position;
+use crate::bindings::get_level_from_position;
 use crate::bindings::mark_everything_as_new;
 use sa_core::bindings::camera_process_fade;
 use sa_core::bindings::camera_set_fade_colour;

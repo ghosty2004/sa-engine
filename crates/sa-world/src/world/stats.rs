@@ -5,7 +5,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::{Cmp, X87};
 
 use super::common::{ftol32, g, x, xi};
@@ -30,14 +30,11 @@ const RATING_FLAG_96918C: usize = 0x96918C;
 
 pub use crate::bindings::german_game;
 pub use sa_core::bindings::sprintf1 as sprintf_i;
-pub use sa_core::bindings::stats_check_for_stats_message as check_for_stats_message;
+pub use crate::bindings::stats_check_for_stats_message as check_for_stats_message;
 pub use crate::bindings::update_fat_and_muscle_stats;
 pub use sa_core::bindings::display_script_stat_update_message;
-pub use sa_core::bindings::stats_increment_stat as increment_stat_call;
-orig! {
-    /// `CStats::DecrementStat(uint16, float)` (0x559FA0)
-    pub fn decrement_stat_call(id: u32, v: u32) = cdecl 0x559FA0 => decrement_stat_port;
-}
+pub use crate::bindings::stats_increment_stat as increment_stat_call;
+pub use crate::bindings::decrement_stat as decrement_stat_call;
 
 fn int_stat(id: u32) -> i32 {
     STAT_TYPES_INT.ptr().cast::<i32>().wrapping_index(id as i32 - 0x78).read()
@@ -252,10 +249,6 @@ pub fn is_stat_capped(id: u16) -> u8 {
     ) as u8
 }
 
-pub fn decrement_stat_port(id: u32, v: u32) {
-    decrement_stat(id as u16, v)
-}
-
 fn set_int_stat(id: u32, v: i32) {
     STAT_TYPES_INT.ptr().cast::<i32>().wrapping_index(id as i32 - 0x78).write(v)
 }
@@ -296,7 +289,7 @@ pub fn modify_stat(id: u32, v: u32) {
         increment_stat_call(id, f32::from_bits(v));
         return;
     }
-    decrement_stat_call(id, x(f32::from_bits(v)).fchs().to_f32().to_bits());
+    decrement_stat_call(id as u16, x(f32::from_bits(v)).fchs().to_f32().to_bits());
 }
 
 /// `CStats::ProcessReactionStatsOnDecrement(uint8)` (0x559730): for stat 0xA5 below 0, fat (0x15) -= 23.

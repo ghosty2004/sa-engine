@@ -61,7 +61,7 @@ pub fn process_buoyancy_boat(this: GPtr<u8>, veh: GPtr<u8>, buoyancy: f32, turn_
     underwater: u32) -> u8 {
     let p = pos_ptr(veh);
     let touching = (ru(veh, 0x40) >> 0x1B) & 0xFFFF_FF01;
-    if get_water_level(rf(p, 0), rf(p, 4), rf(p, 8), this.byte_add(0x64).cast(), touching, GPtr::NULL) == 0 {
+    if get_water_level(rf(p, 0), rf(p, 4), rf(p, 8), GPtr::<f32>::cast::<u8>(this.byte_add(0x64).cast()), touching as u8, GPtr::NULL) == 0 {
         return 0;
     }
     matrix_assign(this.byte_add(0xC), rp(veh, 0x14));
@@ -98,8 +98,8 @@ pub fn process_buoyancy_boat(this: GPtr<u8>, veh: GPtr<u8>, buoyancy: f32, turn_
                 let c = x(sa_core::timer::TIME_STEP.get()).fmul_m(rf(this, 0x6C)).fmul(d).to_f32();
                 let mut off = CVector { x: cx, y, z: 0.0 };
                 let mut out = CVector::default();
-                let r = multiply3x3(GPtr::from_raw(&mut out), rp(veh, 0x14), GPtr::from_raw(&mut off));
-                let world = cv(r);
+                let r = multiply3x3(GPtr::from_raw(&mut out).cast(), rp(veh, 0x14), GPtr::from_raw(&mut off).cast());
+                let world = cv(r.cast::<CVector>());
                 let mut sp = CVector::default();
                 let s = cv(get_speed_call(veh, GPtr::from_raw(&mut sp), world));
                 let dot = x(s.z).fmul_m(n.z).fadd(x(s.y).fmul_m(n.y)).fadd(x(s.x).fmul_m(n.x));
@@ -112,7 +112,7 @@ pub fn process_buoyancy_boat(this: GPtr<u8>, veh: GPtr<u8>, buoyancy: f32, turn_
                 if underwater as u8 == 0 {
                     let t = CVector { x: x(n.x).fmul(w).to_f32(), y: x(n.y).fmul(w).to_f32(), z: x(n.z).fmul(w).to_f32() };
                     let mut o2 = CVector::default();
-                    let at = cv(multiply3x3(GPtr::from_raw(&mut o2), this.byte_add(0xC), GPtr::from_raw(&mut point)));
+                    let at = cv(GPtr::<u8>::cast::<CVector>(multiply3x3(GPtr::from_raw(&mut o2).cast(), this.byte_add(0xC), GPtr::from_raw(&mut point).cast())));
                     apply_turn_force_call(veh, t, at);
                 }
             }
@@ -122,8 +122,8 @@ pub fn process_buoyancy_boat(this: GPtr<u8>, veh: GPtr<u8>, buoyancy: f32, turn_
     }
     wf(this, 0xBC, x(hr).fmul_m(rf(this, 0xBC)).to_f32());
     let mut out = CVector::default();
-    let r = multiply3x3(GPtr::from_raw(&mut out), this.byte_add(0xC), this.byte_add(0xC0).cast());
-    let t = cv(r);
+    let r = multiply3x3(GPtr::from_raw(&mut out).cast(), this.byte_add(0xC), this.byte_add(0xC0).cast());
+    let t = cv(r.cast::<CVector>());
     turn_point.cast::<[f32; 3]>().write([t.x, t.y, t.z]);
     if rb(this, 0xBA) != 0 { 1 } else { rb(this, 0x98) }
 }

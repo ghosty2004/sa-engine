@@ -109,11 +109,11 @@ pub fn calc_screen_coors(
     let near = g::<f32>(NEAR_CLIP_Z).read();
     let far = g::<f32>(FAR_CLIP_Z).read();
     let mut t = [0u32; 3];
-    let r = matrix_mul_vec(
-        GPtr::from_raw(t.as_mut_ptr().cast()),
+    let r = GPtr::<u8>::cast::<f32>(matrix_mul_vec(
+        GPtr::<f32>::cast::<u8>(GPtr::from_raw(t.as_mut_ptr().cast())),
         GPtr::from_addr(VIEW_MATRIX),
         input.cast::<u8>(),
-    );
+    ));
     let mut f = Fpu::new();
     f.fld(near);
     f.fadd_m(k(ONE));
@@ -271,11 +271,11 @@ pub fn calc_horizon_coors() -> X87 {
     local[1] = f.fstp();
     f.fstp_st(0);
     let mut t = [0u32; 3];
-    let r = matrix_mul_vec(
-        GPtr::from_raw(t.as_mut_ptr().cast()),
+    let r = GPtr::<u8>::cast::<f32>(matrix_mul_vec(
+        GPtr::<f32>::cast::<u8>(GPtr::from_raw(t.as_mut_ptr().cast())),
         GPtr::from_addr(VIEW_MATRIX),
         GPtr::<f32>::cast::<u8>(GPtr::from_raw(local.as_mut_ptr())),
-    );
+    ));
     let (vy, vz) = (r.wrapping_index(1).read(), r.wrapping_index(2).read());
     let mut f = Fpu::new();
     f.fld(k(ONE));

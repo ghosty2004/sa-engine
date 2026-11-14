@@ -7,7 +7,7 @@ use sa_core::hook;
 
 use super::common::{f32_of, g, rd, wr, xi};
 
-use sa_stream::bindings::placeable_allocate_matrix;
+use crate::bindings::placeable_allocate_matrix;
 use sa_stream::bindings::simple_transform_update_matrix;
 
 /// `CPlaceable::GetMatrix()` as the original inlines it: the matrix, allocated and filled from the placement when

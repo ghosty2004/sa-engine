@@ -178,7 +178,7 @@ pub fn arrest_cam_head_view(this: GPtr<u8>, ped: GPtr<u8>, check: u32) -> u8 {
     for (i, o) in [0x20, 0x24, 0x28].into_iter().enumerate() {
         wr::<u32>(front, 4 * i as isize, mu(b, o));
     }
-    vector_normalise(front);
+    vector_normalise(front.cast::<[f32;3]>());
     let up = this.byte_add(0x1B4);
     stu(b, 0x20, 0);
     wr::<u32>(up, 0, 0);
@@ -187,7 +187,7 @@ pub fn arrest_cam_head_view(this: GPtr<u8>, ped: GPtr<u8>, check: u32) -> u8 {
     stu(b, 0x28, K_ONE);
     wr::<u32>(up, 8, K_ONE);
     cross_product(b.byte_add(0x38), front, up);
-    vector_normalise(b.byte_add(0x38));
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(b.byte_add(0x38)));
     let o = cross_product(b.byte_add(0x20), b.byte_add(0x38), front);
     for i in [0, 4, 8] {
         wr::<u32>(up, i, rd::<u32>(o, i));
@@ -246,7 +246,7 @@ pub fn arrest_cam_source_from(
     stu(b, 0x30, K_ONE);
     st(b, 0xC, f.fstp());
     cross_product(b.byte_add(0x1C), b.byte_add(4), b.byte_add(0x28));
-    vector_normalise(b.byte_add(0x1C));
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(b.byte_add(0x1C)));
     f.fld(m(b, 0x1C));
     f.fmul_m(kd(0x8CC8CC));
     f.fld(m(b, 0x20));
@@ -262,7 +262,7 @@ pub fn arrest_cam_source_from(
     f.fld(m(b, 0x30));
     f.fadd_m(m(b, 0x18));
     st(b, 0x18, f.fstp());
-    vector_normalise(b.byte_add(4));
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(b.byte_add(4)));
     f.fld(m(b, 0xC));
     f.fcomp_m(k(K_M0_7071));
     let renorm = if !f.jp(0x05) {
@@ -297,7 +297,7 @@ pub fn arrest_cam_source_from(
         }
     };
     if renorm {
-        vector_normalise(b.byte_add(4));
+        vector_normalise(GPtr::<u8>::cast::<[f32;3]>(b.byte_add(4)));
     }
     f.fld(kd(0x8CC8C8));
     f.fmul_m(m(b, 4));
@@ -407,7 +407,7 @@ pub fn arrest_cam_side_pos(
     f.fld(rd::<f32>(target, 4));
     f.fsub_m(m(b, 0x18));
     st(b, 0xC, f.fstp());
-    vector_normalise(b.byte_add(8));
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(b.byte_add(8)));
     f.fld(kd(0x8CC7F0));
     f.fmul_m(m(b, 8));
     f.fld(m(b, 0xC));

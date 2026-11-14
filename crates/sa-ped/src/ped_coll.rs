@@ -31,7 +31,7 @@ use sa_core::bindings::entity_update_rp_hanim;
 use sa_core::bindings::get_anim_hierarchy_from_skin_clump;
 use sa_core::bindings::rp_hanim_hierarchy_get_matrix_array as rp_hanim_get_matrix_array;
 use sa_core::bindings::rp_hanim_id_get_index;
-use sa_core::bindings::world_remove;
+use sa_world::bindings::world_remove;
 use sa_stream::bindings::get_first_object;
 use sa_stream::bindings::set_component_atomic_alpha;
 use sa_world::bindings::hold_entity_drop_entity as hold_drop_entity;
@@ -127,7 +127,7 @@ pub fn get_transformed_bone_position(this: GPtr<u8>, v: GPtr<f32>, bone: i32, up
     } else if fl & 0x400 == 0 {
         let mut out = [0.0f32; 3];
         let off = GPtr::<f32>::from_addr(PED_BONE_OFFSETS.wrapping_add((bone as usize).wrapping_mul(12)));
-        let r = matrix_mul_vec(lp(&mut out).cast(), rd::<GPtr<u8>>(this, 0x14), off.cast::<u8>());
+        let r = GPtr::<u8>::cast::<f32>(matrix_mul_vec(GPtr::<f32>::cast::<u8>(lp(&mut out).cast()), rd::<GPtr<u8>>(this, 0x14), off.cast::<u8>()));
         copy3(v.cast(), r.cast());
         return;
     }
@@ -150,7 +150,7 @@ pub fn get_bone_position(this: GPtr<u8>, out: GPtr<f32>, bone: i32, update: u32)
     } else if fl & 0x400 == 0 {
         let mut tmp = [0.0f32; 3];
         let off = GPtr::<f32>::from_addr(PED_BONE_OFFSETS.wrapping_add((bone as usize).wrapping_mul(12)));
-        let r = matrix_mul_vec(lp(&mut tmp).cast(), rd::<GPtr<u8>>(this, 0x14), off.cast::<u8>());
+        let r = GPtr::<u8>::cast::<f32>(matrix_mul_vec(GPtr::<f32>::cast::<u8>(lp(&mut tmp).cast()), rd::<GPtr<u8>>(this, 0x14), off.cast::<u8>()));
         copy3(out.cast(), r.cast());
         return;
     }
@@ -278,7 +278,7 @@ pub fn is_position_clear_for_ped(pos: GPtr<f32>, radius: f32, max: i32, out: GPt
 pub fn is_position_clear_of_cars(ped: GPtr<u8>) -> GPtr<u8> {
     let p = ent_pos(ped);
     let pos = [p.read(), p.wrapping_index(1).read(), p.wrapping_index(2).read()];
-    let veh = test_sphere_against_world(f32::from_bits(pos[0].to_bits()), f32::from_bits(pos[1].to_bits()), f32::from_bits(pos[2].to_bits()), f32::from_bits(0x3E80_0000), GPtr::NULL, 0, 1, 0, 0, 0, 0);
+    let veh = test_sphere_against_world(sa_math::vector::CVector::new(f32::from_bits(pos[0].to_bits()), f32::from_bits(pos[1].to_bits()), f32::from_bits(pos[2].to_bits())), f32::from_bits(0x3E80_0000), GPtr::<u8>::addr(GPtr::NULL) as u32, 0, 1, 0, 0, 0, 0);
     if veh.is_null() {
         return GPtr::from_addr(0);
     }
@@ -334,23 +334,23 @@ use sa_core::bindings::entity_register_reference as register_reference;
 use sa_core::bindings::object_new;
 use sa_core::bindings::task_new;
 use sa_core::bindings::tm_set_task_secondary as task_manager_set_task_secondary;
-use sa_core::bindings::world_add;
-use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
+use sa_world::bindings::world_add;
+use sa_world::bindings::placeable_allocate_matrix as allocate_matrix;
 use sa_stream::bindings::simple_transform_update_matrix;
 use sa_world::bindings::camera_set_new_player_weapon_mode;
-use sa_world::bindings::make_changes_for_new_weapon as player_make_changes_for_new_weapon;
+use crate::bindings::make_changes_for_new_weapon as player_make_changes_for_new_weapon;
 use sa_world::bindings::ped_get_held_entity as get_entity_that_this_ped_is_holding;
-use sa_world::bindings::ped_set_current_weapon_slot as set_current_weapon_slot;
+use crate::bindings::ped_set_current_weapon_slot as set_current_weapon_slot;
 use sa_world::bindings::physical_apply_move_force_5429f0 as apply_move_force;
-use sa_world::bindings::player_clear_weapon_target;
+use crate::bindings::player_clear_weapon_target;
 use sa_core::bindings::get_weapon_info;
 use sa_core::bindings::object_ctor_5a1d70 as object_ctor;
-use sa_core::bindings::ped_give_weapon as give_weapon;
+use crate::bindings::ped_give_weapon as give_weapon;
 use sa_world::bindings::anim_blend_animation as blend_animation;
-use sa_world::bindings::attach_ped_to_entity as attach_ped_to_entity_call;
+use crate::bindings::attach_ped_to_entity as attach_ped_to_entity_call;
 use sa_world::bindings::hold_entity_ctor as task_hold_entity_ctor;
-use sa_world::bindings::ped_drop_held_entity as drop_entity_call;
-use sa_world::bindings::ped_position_attached_ped as position_attached_ped_call;
+use crate::bindings::ped_drop_held_entity as drop_entity_call;
+use crate::bindings::ped_position_attached_ped as position_attached_ped_call;
 use sa_world::bindings::process_line_of_sight;
 orig! {
     /// `CPed::SortPeds(CPed**, int32, int32)` (0x5E17E0)
@@ -368,7 +368,7 @@ fn weapon_at(ped: GPtr<u8>, slot: i8) -> GPtr<u8> {
 #[hook(addr = 0x5E7E60, conv = thiscall, name = "CPed::AttachPedToBike", expect = "8B 44 24 20 8B 54 24 14", this = "CPed")]
 #[allow(clippy::too_many_arguments)]
 pub fn attach_ped_to_bike(this: GPtr<u8>, e: GPtr<u8>, ox: u32, oy: u32, oz: u32, angle: u32, range: u32, range2: u32, weapon: i32) -> GPtr<u8> {
-    let r = attach_ped_to_entity_call(this, e, f32::from_bits(ox), f32::from_bits(oy), f32::from_bits(oz), angle, f32::from_bits(range), weapon as u32);
+    let r = attach_ped_to_entity_call(this, e, f32::from_bits(ox).to_bits(), f32::from_bits(oy).to_bits(), f32::from_bits(oz).to_bits(), angle, f32::from_bits(range).to_bits(), (weapon as u32) as i32);
     if r.is_null() {
         return r;
     }
@@ -411,14 +411,14 @@ pub fn attach_ped_to_entity(this: GPtr<u8>, e: GPtr<u8>, ox: u32, oy: u32, oz: u
         wr::<u32>(this, 0x784, rd::<u32>(w, 0xC));
     }
     if !player {
-        give_weapon(this, weapon, 30000, 1);
+        give_weapon(this, weapon as u32, 30000, 1);
         let slot = rd::<i32>(get_weapon_info(weapon, 1), 0x14);
-        set_current_weapon_slot(this, slot as u32);
+        set_current_weapon_slot(this, (slot as u32) as i32);
         position_attached_ped_call(this);
         return e;
     }
     if weapon != 0 {
-        give_weapon(this, weapon, 30000, 1);
+        give_weapon(this, weapon as u32, 30000, 1);
     }
     wr::<u8>(rd::<GPtr<u8>>(this, 0x480), 0x20, weapon as u8);
     player_make_changes_for_new_weapon(this, weapon);
@@ -460,7 +460,7 @@ pub fn dettach_ped_from_entity(this: GPtr<u8>) {
         let fy = x(rd::<f32>(f, 4)).fmul_m(m4).to_f32();
         let fz = x(rd::<f32>(f, 8)).fmul_m(m4).to_f32();
         let fz = x(fz).fadd_m(4.0).to_f32();
-        apply_move_force(this, f32::from_bits(fx.to_bits()), f32::from_bits(fy.to_bits()), f32::from_bits(fz.to_bits()));
+        apply_move_force(this, sa_math::vector::CVector::new(f32::from_bits(fx.to_bits()), f32::from_bits(fy.to_bits()), f32::from_bits(fz.to_bits())));
         wr::<u32>(this, 0x46C, rd::<u32>(this, 0x46C) & !1);
         return;
     }
@@ -473,7 +473,7 @@ pub fn dettach_ped_from_entity(this: GPtr<u8>) {
         wr::<u32>(weapon_at(this, rd::<i8>(this, 0x718)), 8, 0);
         wr::<u32>(weapon_at(this, rd::<i8>(this, 0x718)), 0xC, 0);
         let slot = rd::<i32>(get_weapon_info(rd::<i32>(this, 0x70C), 1), 0x14);
-        set_current_weapon_slot(this, slot as u32);
+        set_current_weapon_slot(this, (slot as u32) as i32);
         wr::<u32>(weapon_at(this, rd::<i8>(this, 0x718)), 0xC, rd::<u32>(this, 0x784));
         wr::<u32>(this, 0x70C, 0x37);
     }
@@ -512,7 +512,7 @@ pub fn give_object_to_ped_to_hold(this: GPtr<u8>, model: i32, replace: u32) -> G
     world_add(obj);
     let mut off = [0.0f32; 3];
     let mem = task_new(0x3C);
-    let task = if mem.is_null() { mem } else { task_hold_entity_ctor(mem, obj, lp(&mut off).cast(), 6, 0x10, 0xBF, 0, 1) };
+    let task = if mem.is_null() { mem } else { task_hold_entity_ctor(mem, obj, GPtr::<f32>::cast::<u8>(lp(&mut off).cast()), 6, 0x10, 0xBF, 0, 1) };
     task_manager_set_task_secondary(rd::<GPtr<u8>>(this, 0x47C).byte_add(4), task, 4);
     obj
 }
@@ -615,11 +615,11 @@ pub fn our_ped_can_see_this_entity(this: GPtr<u8>, e: GPtr<u8>, spotted: u32) ->
 /// original's inlined constructor leaves them, the rest uninitialised there and 0 here).
 type LocalMatrix = [u32; 18];
 
-use sa_core::bindings::frame_get_ltm as rw_frame_get_ltm;
+use sa_rwcore::bindings::frame_get_ltm as rw_frame_get_ltm;
 use sa_core::bindings::general_limit_radian_angle as limit_radian_angle;
 use sa_core::bindings::matrix_attach;
 use sa_core::bindings::matrix_detach;
-use sa_core::bindings::matrix_dtor;
+use sa_world::bindings::matrix_dtor;
 use sa_core::bindings::matrix_mul_assign;
 use sa_world::bindings::placeable_set_matrix;
 use sa_core::bindings::matrix_assign;
@@ -803,7 +803,7 @@ const CURRENT_SCAN_CODE: usize = 0xB7CD78;
 /// `CWorld::ms_aRepeatSectors` (16 x 16, 12 bytes each: vehicles, peds, objects lists)
 const REPEAT_SECTORS: usize = 0xB992B8;
 
-use sa_core::bindings::world_clear_scan_codes;
+use sa_world::bindings::world_clear_scan_codes;
 use sa_world::bindings::crt_floor;
 orig! {
     /// `CPed::MakeTyresMuddySectorList(CPtrListSingleLink&)` (0x6AE0D0, `ret 4`)
@@ -862,7 +862,7 @@ pub fn dead_ped_makes_tyres_bloody(this: GPtr<u8>) {
 }
 
 use sa_world::bindings::entity_get_col_model;
-use sa_world::bindings::ped_placement_find_z_coor_for_ped as find_z_coor_for_ped_call;
+use crate::bindings::ped_placement_find_z_coor_for_ped as find_z_coor_for_ped_call;
 
 /// Writes `v` (raw dwords) as the entity position (matrix +0x30 or placement +4).
 fn set_pos_raw(e: GPtr<u8>, v: [u32; 3]) {
@@ -903,16 +903,16 @@ pub fn position_any_ped_out_of_collision(this: GPtr<u8>) -> u8 {
     for _ in 0..15 {
         c[0] = x(ent_pos(this).read()).fsub_m(off).to_f32();
         for _ in 0..15 {
-            find_z_coor_for_ped_call(GPtr::<f32>::cast::<u8>(lp(&mut c).cast()));
+            find_z_coor_for_ped_call(lp(&mut c).cast());
             let (cx, cy, cz) = (c[0].to_bits(), c[1].to_bits(), c[2].to_bits());
-            let blocked = test_sphere_against_world(f32::from_bits(cx), f32::from_bits(cy), f32::from_bits(cz), f32::from_bits(0x3F19_999A), GPtr::from_addr((this.addr() as u32) as usize), 1, 0, 0, 1, 0, 0);
+            let blocked = test_sphere_against_world(sa_math::vector::CVector::new(f32::from_bits(cx), f32::from_bits(cy), f32::from_bits(cz)), f32::from_bits(0x3F19_999A), GPtr::<u8>::addr(GPtr::from_addr((this.addr() as u32) as usize)) as u32, 1, 0, 0, 1, 0, 0);
             if blocked.is_null() {
                 let p = ent_pos(this);
                 let dx = x(c[0]).fsub_m(p.read());
                 let dy = x(c[1]).fsub_m(p.wrapping_index(1).read());
                 let dz = x(c[2]).fsub_m(p.wrapping_index(2).read());
                 let d2 = dz.fmul(dz).fadd(dy.fmul(dy)).fadd(dx.fmul(dx)).to_f32();
-                last_veh = test_sphere_against_world(f32::from_bits(cx), f32::from_bits(cy), f32::from_bits(cz), f32::from_bits(0x3F19_999A), GPtr::from_addr((this.addr() as u32) as usize), 0, 1, 0, 0, 0, 0);
+                last_veh = test_sphere_against_world(sa_math::vector::CVector::new(f32::from_bits(cx), f32::from_bits(cy), f32::from_bits(cz)), f32::from_bits(0x3F19_999A), GPtr::<u8>::addr(GPtr::from_addr((this.addr() as u32) as usize)) as u32, 0, 1, 0, 0, 0, 0);
                 let (best, found, pos) = if last_veh.is_null() {
                     (&mut best_free, &mut found_free, &mut free_pos)
                 } else {
@@ -951,11 +951,11 @@ const PATH_NODES: usize = 0x96F854;
 use sa_core::bindings::matrix_set_rotate_z_only;
 use sa_world::bindings::check_collision as physical_check_collision;
 use sa_world::bindings::vehicle_is_on_its_side;
-use sa_core::bindings::vector_sub;
+use sa_world::bindings::vector_sub;
 use sa_core::bindings::world_get_is_line_of_sight_clear as get_is_line_of_sight_clear;
 use sa_world::bindings::car_enter_exit_get_position_to_open_car_door as get_position_to_open_car_door;
-use sa_world::bindings::find_node_closest_to_coors;
-use sa_world::bindings::get_position as path_node_get_position;
+use sa_pop::bindings::find_node_closest_to_coors;
+use sa_pop::bindings::get_position as path_node_get_position;
 use sa_world::bindings::placeable_set_posn;
 
 /// The path node of a `CNodeAddress` dword (area low word, node high word): `m_pPathNodes[area] + node * 0x1C`.
@@ -1025,12 +1025,12 @@ pub fn position_ped_out_of_collision(this: GPtr<u8>, exit_door: i32, veh: GPtr<u
         found = try_posn(this, &mut v, &mut c);
     } else if exit_door != 0 {
         let mut tmp = [0u32; 3];
-        let r = GPtr::<u8>::cast::<u32>(get_position_to_open_car_door(GPtr::<u32>::cast::<u8>(lp(&mut tmp).cast()), veh, exit_door as u32));
+        let r = GPtr::<u8>::cast::<u32>(get_position_to_open_car_door(GPtr::<u32>::cast::<u8>(lp(&mut tmp).cast()), veh, (exit_door as u32) as i32));
         c = [r.read(), r.wrapping_index(1).read(), r.wrapping_index(2).read()];
         found = try_posn(this, &mut v, &mut c);
         if !found && rd::<i32>(veh, 0x590) == 9 && (exit_door == 10 || exit_door == 11) {
             let door = if exit_door == 11 { 9 } else { 8 };
-            let r = GPtr::<u8>::cast::<u32>(get_position_to_open_car_door(GPtr::<u32>::cast::<u8>(lp(&mut tmp).cast()), veh, door as u32));
+            let r = GPtr::<u8>::cast::<u32>(get_position_to_open_car_door(GPtr::<u32>::cast::<u8>(lp(&mut tmp).cast()), veh, (door as u32) as i32));
             c = [r.read(), r.wrapping_index(1).read(), r.wrapping_index(2).read()];
             found = try_posn(this, &mut v, &mut c);
         }
@@ -1191,7 +1191,7 @@ pub fn position_ped_out_of_collision(this: GPtr<u8>, exit_door: i32, veh: GPtr<u
     } else if !have {
         return 0;
     }
-    find_z_coor_for_ped_call(GPtr::<f32>::cast::<u8>(lp(&mut c).cast()));
+    find_z_coor_for_ped_call(lp(&mut c).cast());
     placeable_set_posn(this, GPtr::<u32>::cast::<f32>(lp(&mut c).cast()));
     let vm = rd::<GPtr<u8>>(veh, 0x14);
     let heading = if vm.is_null() {

@@ -25,12 +25,12 @@ pub use sa_core::bindings::open_file as cfm_open_file;
 pub use sa_core::bindings::read_line as cfm_read_line;
 pub use sa_core::bindings::add_txd_slot as txd_add_txd_slot;
 pub use sa_core::bindings::load_txd as txd_load_txd;
-pub use sa_core::bindings::rw_texture_read;
+pub use sa_rwcore::bindings::rw_texture_read;
 pub use sa_core::bindings::get_uppercase_key;
-pub use sa_core::bindings::pop_current_txd as txd_pop_current;
-pub use sa_core::bindings::push_current_txd as txd_push_current;
-pub use sa_core::bindings::set_current_txd as txd_set_current;
-pub use sa_core::bindings::txd_add_ref;
+pub use sa_stream::bindings::pop_current_txd as txd_pop_current;
+pub use sa_stream::bindings::push_current_txd as txd_push_current;
+pub use sa_stream::bindings::set_current_txd as txd_set_current;
+pub use sa_stream::bindings::txd_add_ref;
 orig! {
     /// thunk 0x4AB240 → `CFileMgr::OpenFile`
     pub fn fx_open_file(path: GPtr<u8>, mode: GPtr<u8>) -> GPtr<u8> = cdecl 0x4AB240 => thunk_open_file;
@@ -704,23 +704,21 @@ pub fn interp_255_load(this: GPtr<u8>, f: GPtr<u8>) {
 
 pub use sa_core::bindings::memory_malloc;
 pub use sa_core::bindings::rw_matrix_update;
-pub use sa_stream::bindings::crt_new as operator_new_821195;
-pub use sa_stream::bindings::fx_get_fx_quality as get_fx_quality;
-pub use sa_core::bindings::fx_play as system_play;
-pub use sa_world::bindings::fx_create_system as create_fx_system_name;
+pub use sa_core::bindings::crt_new_821195 as operator_new_821195;
+pub use crate::bindings::fx_get_fx_quality as get_fx_quality;
+pub use crate::bindings::fx_play as system_play;
+pub use crate::bindings::fx_create_system as create_fx_system_name;
+pub use sa_core::bindings::crt_new as operator_new;
+pub use sa_core::bindings::list_item_ctor;
 orig! {
     /// `FxManager_c::ShouldCreate(FxSystemBP_c*, RwMatrix*, RwMatrix* parent, bool ignoreBounds)` (0x4A9500)
     pub fn should_create(this: GPtr<u8>, bp: GPtr<u8>, m: GPtr<u8>, parent: GPtr<u8>, ignore: u32) -> u8 = thiscall 0x4A9500 => crate::mvpa_fx2::fx_manager_should_create;
-    /// `operator new(size_t)` (0x82119A)
-    pub fn operator_new(n: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
     /// `FxSystem_c::FxSystem_c()` (0x4AAF00)
     pub fn system_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4AAF00 => crate::fx::fx_system_constructor;
     /// `FxSystem_c::Init(FxSystemBP_c*, RwMatrix* local, RwMatrix* parent)` (0x4AA750)
     pub fn system_init_call(this: GPtr<u8>, bp: GPtr<u8>, m: GPtr<u8>, parent: GPtr<u8>) -> u8 = thiscall 0x4AA750 => system_init;
     /// `FxSystem_c::SetRateMult(float)` (0x4AA6F0)
     pub fn system_set_rate_mult(this: GPtr<u8>, mult: u32) = thiscall 0x4AA6F0 => crate::fx::fx_system_set_rate_mult;
-    /// `ListItem_c::ListItem_c()` (0x4A8DB0)
-    pub fn list_item_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4A8DB0 => crate::fx::list_item_ctor_port;
     /// `FxPrimBP_c::CreateInstance()`: vtable slot +0xC
     pub fn prim_bp_vcreate_instance(this: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0xC => unported;
     /// `FxPrim_c::Init(FxPrimBP_c*, FxSystem_c*)`: vtable slot +4

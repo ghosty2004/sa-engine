@@ -3,7 +3,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::vector::CVector;
 use sa_math::x87::X87;
 
@@ -13,27 +13,23 @@ use crate::bindings::dm_reset_damage_status;
 use sa_world::bindings::dm_set_door_status;
 use sa_pop::bindings::dm_set_wheel_status;
 use sa_world::bindings::get_wheel_status as dm_get_wheel_status;
-use sa_core::bindings::matrix_dtor;
+use sa_world::bindings::matrix_dtor;
 use sa_core::bindings::matrix_set_translate;
 use sa_core::bindings::matrix_update_rw;
 use sa_core::bindings::random_float_in_range;
-use sa_core::bindings::rp_clump_for_all_atomics;
-use sa_core::bindings::stats_increment_stat;
+use sa_rwcore::bindings::rp_clump_for_all_atomics;
+use sa_world::bindings::stats_increment_stat;
 use sa_world::bindings::audio_add_event;
 use sa_core::bindings::matrix_ctor_rw;
-use sa_world::bindings::switch_vehicle_to_real_physics;
+use sa_pop::bindings::switch_vehicle_to_real_physics;
 use sa_world::bindings::vector_scale as scalar_mul_vector;
-orig! {
-    /// `CPhysical::ApplyMoveForce(CVector)` (0x5429F0)
-    fn apply_move_force(e: GPtr<u8>, force: CVector) = thiscall 0x5429F0 => sa_world::physical::forces::apply_move_force;
-    /// `CPhysical::ApplyTurnForce(CVector, CVector)` (0x542A50)
-    fn apply_turn_force(e: GPtr<u8>, force: CVector, point: CVector) = thiscall 0x542A50 => sa_world::physical::forces::apply_turn_force;
-}
+use sa_world::bindings::physical_apply_move_force_5429f0 as apply_move_force;
+use sa_world::bindings::physical_apply_turn_force as apply_turn_force;
 
 /// `matrix row * (rand(-0.03, 0.03) * mass_at)` (a temporary `CVector`).
 fn kick(this: GPtr<u8>, mass_off: isize) -> CVector {
     let c = f32::from_bits(0x3CF5_C28F);
-    let k = X87::from_f64_exact(random_float_in_range(-c, c)).fmul_m(rd::<f32>(this, mass_off)).to_f32();
+    let k = X87::from_f64_exact(random_float_in_range(-c, c).to_f64()).fmul_m(rd::<f32>(this, mass_off)).to_f32();
     let mut out = [0f32; 3];
     let r = scalar_mul_vector(GPtr::from_raw(&mut out as *mut [f32; 3]).cast(), k, rd::<GPtr<u8>>(this, 0x14));
     CVector::new(rd::<f32>(r, 0), rd::<f32>(r, 4), rd::<f32>(r, 8))
@@ -99,7 +95,7 @@ pub fn automobile_fix(this: GPtr<u8>) {
         }
     }
     wr::<u8>(this, 0x42A, rd::<u8>(this, 0x42A) & 0xFE);
-    rp_clump_for_all_atomics(rd::<GPtr<u8>>(this, 0x18), 0x004C_7790, GPtr::from_addr(2));
+    rp_clump_for_all_atomics(rd::<GPtr<u8>>(this, 0x18), 0x004C_7790, GPtr::<u8>::addr(GPtr::from_addr(2)) as u32);
     for k in 0..0x11isize {
         let node = rd::<GPtr<u8>>(this, 0x668 + 4 * k);
         if node.is_null() {

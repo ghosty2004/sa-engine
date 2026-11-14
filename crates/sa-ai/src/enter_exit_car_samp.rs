@@ -18,19 +18,19 @@ const VEH_ANIM_GROUPS: u32 = 0xC1CDC0;
 /// `CDefaultAnimCallback::DefaultAnimCB`
 const DEFAULT_ANIM_CB: u32 = 0x4D1390;
 
-use sa_core::bindings::assoc_set_finish_callback;
+use sa_anim::bindings::assoc_set_finish_callback;
 use crate::bindings::line_up_dtor;
 use crate::bindings::task_complex_dtor;
-use sa_core::bindings::vehicle_anim_group_get_group as veh_anim_group_get_group;
+use sa_anim::bindings::vehicle_anim_group_get_group as veh_anim_group_get_group;
 use crate::bindings::vehicle_clear_getting_in_flags;
 use sa_core::bindings::car_set_ped_out_ctor;
 use sa_core::bindings::crt_free_8214bd as crt_free;
-use sa_core::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference;
 use sa_core::bindings::entity_register_reference;
-use sa_core::bindings::find_player_ped;
-use sa_world::bindings::task_complex_ctor;
-use sa_world::bindings::task_simple_ctor;
-use sa_world::bindings::task_simple_dtor;
+use sa_world::bindings::find_player_ped;
+use crate::bindings::task_complex_ctor;
+use crate::bindings::task_simple_ctor;
+use crate::bindings::task_simple_dtor;
 use crate::bindings::veh_anim_group_compute_critical_blend_time;
 orig! {
     /// `CTask::MakeAbortable(CPed*, int32 priority, const CEvent*)` (vtable +0x18, `ret 0xC`)
@@ -53,7 +53,7 @@ fn register_if_set(slot: GPtr<u8>) {
 #[hook(addr = 0x63A220, conv = thiscall, name = "CTaskComplexEnterCar::Constructor", expect = "6A FF 68 68 13 84 00",
        route = "L2", hazards = "heap-writes", recs = "car-ai")]
 pub fn enter_car_ctor(this: GPtr<u8>, veh: GPtr<u8>, b1: u32, b2: u32, b3: u32, b4: u32) -> GPtr<u8> {
-    task_complex_ctor(this);
+    task_complex_ctor(this.addr() as u32);
     let low = ((((b4 as u8 & 1) << 1 | (b3 as u8 & 1)) << 1 | (b2 as u8 & 1)) << 1) | (b1 as u8 & 1);
     let flags = low | (rd::<u8>(this, 0x10) & 0xF0);
     wr::<u32>(this, 0, 0x86E6F0);
@@ -86,7 +86,7 @@ pub fn enter_car_dtor(this: GPtr<u8>) {
     let slot = this.byte_add(0xC);
     let v = rd::<GPtr<u8>>(slot, 0);
     if !v.is_null() {
-        entity_clean_up_old_reference(v, slot.cast::<GPtr<u8>>());
+        entity_clean_up_old_reference(v, slot.cast::<u8>());
     }
     let lu = rd::<GPtr<u8>>(this, 0x38);
     if !lu.is_null() {
@@ -107,7 +107,7 @@ pub fn enter_car_dtor(this: GPtr<u8>) {
 #[hook(addr = 0x63AD70, conv = thiscall, name = "CTaskComplexEnterCarAsDriverTimed::Constructor", expect = "6A FF E9 42 F7 DC FF",
        unverified = "ai7-11", route = "L2", hazards = "heap-writes", recs = "car-ai")]
 pub fn enter_car_as_driver_timed_ctor(this: GPtr<u8>, veh: GPtr<u8>, time: u32) -> GPtr<u8> {
-    task_complex_ctor(this);
+    task_complex_ctor(this.addr() as u32);
     wr::<GPtr<u8>>(this, 0xC, veh);
     wr::<u32>(this, 0x10, time);
     wr::<u32>(this, 0, 0x86E720);
@@ -168,11 +168,11 @@ pub fn car_open_door_from_outside_dtor(this: GPtr<u8>) {
     let slot = this.byte_add(0x10);
     let v = rd::<GPtr<u8>>(slot, 0);
     if !v.is_null() {
-        entity_clean_up_old_reference(v, slot.cast::<GPtr<u8>>());
+        entity_clean_up_old_reference(v, slot.cast::<u8>());
     }
     let a = rd::<GPtr<u8>>(this, 0xC);
     if !a.is_null() {
-        assoc_set_finish_callback(a, DEFAULT_ANIM_CB, GPtr::NULL);
+        assoc_set_finish_callback(a, DEFAULT_ANIM_CB, GPtr::<u8>::addr(GPtr::NULL) as u32);
     }
     if rd::<u8>(this, 0x19) != 0 {
         wr::<u8>(this, 0x19, 0);

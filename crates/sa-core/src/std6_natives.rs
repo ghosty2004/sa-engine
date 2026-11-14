@@ -2,7 +2,7 @@
 //! (STD-6: their docs say "not hookable"; collected by address).
 
 /// Every `#[native]` STD-6 added to existing ports of this crate.
-pub const NATIVES: &[sa_core::abi::NativeReg] = &[
+pub const NATIVES: &[crate::abi::NativeReg] = &[
     crate::loadmonitor::NATIVE_DESTRUCTOR,
     crate::loadmonitor::NATIVE_RENDER,
 ];

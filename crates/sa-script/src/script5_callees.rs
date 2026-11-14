@@ -12,11 +12,11 @@ use sa_math::x87::X87;
 use crate::vm::Scr;
 
 use sa_core::bindings::entity_register_reference;
-use sa_core::bindings::get_pad;
+use sa_input::bindings::get_pad;
 use sa_stream::bindings::remove_txd as txd_remove;
 use sa_stream::bindings::sprite2d_delete;
 use sa_world::bindings::enter_car_dtor;
-use sa_world::bindings::task_simple_ctor as task_ctor;
+use sa_ai::bindings::task_simple_ctor as task_ctor;
 use sa_core::bindings::find_txd_slot as txd_find_slot;
 orig! {
     /// CRT `sprintf(char*, const char*, ...)` (0x821BB5), called with the format only
@@ -117,7 +117,7 @@ pub fn task_enter_car_as_passenger_dtor(this: GPtr<u8>) {
        note = "AX only; the original's upper EAX half is the pad pointer's")]
 pub fn running_script_get_pad_state(this: Scr, pad: u32, button: u32) -> u16 {
     let _ = this;
-    let p = get_pad(i32::from(pad as u16) as u32);
+    let p = get_pad((i32::from(pad as u16) as u32) as i32);
     let b = button as u16;
     if b > 0x13 {
         return 0;
@@ -278,7 +278,7 @@ pub fn dont_suppress_vehicle_model(model: i32) {
     }
 }
 
-use sa_world::bindings::task_simple_dtor as task_dtor;
+use sa_ai::bindings::task_simple_dtor as task_dtor;
 use crate::bindings::go_to_point_aiming_ctor;
 
 /// The mission byte setter at stub 0x463490 (→ 0x1565620, thiscall on a `CAutoPilot`, `ret 4`; unnamed in the
@@ -340,7 +340,7 @@ pub fn go_to_point_shooting_ctor(this: GPtr<u8>, a1: u32, a2: u32, a3: u32, a4: 
     this
 }
 
-use sa_world::bindings::get_new_unique_script_thing_index;
+use crate::bindings::get_new_unique_script_thing_index;
 orig! {
     /// `CDecision::Add(int32 taskId, float* chances, int32* flags)` (0x600600, `ret 0xC`)
     fn decision_add(d: GPtr<u8>, task: u32, chances: u32, flags: u32) = thiscall 0x600600 => unported;
@@ -450,7 +450,7 @@ pub fn garages_store_car_in_nearest_impounding_garage(v: GPtr<u8>) {
 
 use sa_core::bindings::list_add_item;
 use sa_core::bindings::list_remove_item;
-use sa_core::bindings::world_remove;
+use sa_world::bindings::world_remove;
 orig! {
     /// Virtual slot 0 (the scalar deleting destructor, `ret 4`)
     fn vcall_delete(f: u32, this: GPtr<u8>, flags: u32) = thiscall dyn => unported;
@@ -506,7 +506,7 @@ pub fn ctor_492f60(this: GPtr<u8>) {
     this.cast::<u32>().write(0x859DC4);
 }
 
-use sa_core::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference;
 use sa_world::bindings::get_actual_script_thing_index;
 
 /// `CTheScripts::ScriptSearchLightArray` (0xA94D68, 8 x 0x7C)
@@ -540,7 +540,7 @@ pub fn the_scripts_remove_script_search_light(handle: i32) {
         let slot = l.byte_add(off);
         let e = slot.cast::<GPtr<u8>>().read();
         if !e.is_null() {
-            entity_clean_up_old_reference(e, slot.cast::<GPtr<u8>>());
+            entity_clean_up_old_reference(e, slot.cast::<u8>());
         }
         slot.cast::<u32>().write(0);
     }

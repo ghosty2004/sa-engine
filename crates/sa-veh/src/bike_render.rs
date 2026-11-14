@@ -20,7 +20,7 @@ use sa_world::bindings::register_corona;
 use crate::bindings::store_shadow_for_vehicle;
 use sa_core::bindings::matrix_assign;
 use sa_core::bindings::matrix_attach;
-use sa_core::bindings::matrix_dtor;
+use sa_world::bindings::matrix_dtor;
 use sa_core::bindings::matrix_mul;
 use sa_core::bindings::matrix_rotate_y;
 use sa_core::bindings::matrix_set_rotate;
@@ -33,14 +33,12 @@ use sa_world::bindings::add_light;
 use crate::bindings::vehicle_pre_render;
 use sa_core::bindings::matrix_mul_assign;
 use sa_core::bindings::matrix_set_translate;
-use sa_world::bindings::bike_calculate_lean_matrix as calculate_lean_matrix;
+use crate::bindings::bike_calculate_lean_matrix as calculate_lean_matrix;
 use sa_world::bindings::entity_get_col_model as get_col_model;
 use sa_world::bindings::multiply3x3;
+use sa_core::bindings::vector_normalise;
+use sa_world::bindings::physical_get_speed as get_speed;
 orig! {
-    /// `CPhysical::GetSpeed(CVector)` (0x542CE0)
-    fn get_speed(e: GPtr<u8>, out: GPtr<CVector>, point: CVector) -> GPtr<CVector> = thiscall 0x542CE0 => sa_world::physical::forces::get_speed;
-    /// `CVector::Normalise()` (0x59C910)
-    fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => crate::train_control::normalise_native;
     /// `CQuaternion::Set(RwV3d*, float)` (0x59C600)
     fn quaternion_set(q: GPtr<u8>, axis: GPtr<u8>, angle: f32) = thiscall 0x59C600 => unported;
     /// `CBike::DoBurstAndSoftGroundRatios()` (vtable +0xD0)
@@ -369,18 +367,18 @@ fn police_lights(this: GPtr<u8>) {
             0,
             0xFF,
             gp(&mut left_lamp),
-            f32::from_bits(0x3ECC_CCCD),
-            f32::from_bits(0x4220_0000),
+            f32::from_bits(0x3ECC_CCCD).to_bits(),
+            f32::from_bits(0x4220_0000).to_bits(),
             0,
             0,
             0,
             0,
             0,
-            f32::from_bits(0),
+            f32::from_bits(0).to_bits(),
             0,
-            f32::from_bits(0x3FC0_0000),
+            f32::from_bits(0x3FC0_0000).to_bits(),
             0,
-            f32::from_bits(0x41F0_0000),
+            f32::from_bits(0x41F0_0000).to_bits(),
             0,
             1,
         );
@@ -395,18 +393,18 @@ fn police_lights(this: GPtr<u8>) {
             b,
             0xFF,
             gp(&mut right_lamp),
-            f32::from_bits(0x3ECC_CCCD),
-            f32::from_bits(0x4220_0000),
+            f32::from_bits(0x3ECC_CCCD).to_bits(),
+            f32::from_bits(0x4220_0000).to_bits(),
             0,
             0,
             0,
             0,
             0,
-            f32::from_bits(0),
+            f32::from_bits(0).to_bits(),
             0,
-            f32::from_bits(0x3FC0_0000),
+            f32::from_bits(0x3FC0_0000).to_bits(),
             0,
-            f32::from_bits(0x41F0_0000),
+            f32::from_bits(0x41F0_0000).to_bits(),
             0,
             1,
         );
@@ -465,7 +463,7 @@ fn frames(this: GPtr<u8>, mi: GPtr<u8>, col: GPtr<u8>, l190: &mut StackMatrix) {
         matrix_update_rw(dp);
         let a = ld(mi, 0x58).fmul_m(f32::from_bits(0x3C8E_FA35));
         let mut axis = CVector::new(0.0, a.fsin().to_f32(), a.fcos().fchs().to_f32());
-        vector_normalise(gp(&mut axis));
+        vector_normalise(GPtr::<u8>::cast::<[f32;3]>(gp(&mut axis)));
         let mut q = [0f32; 4];
         quaternion_set(gp(&mut q), gp(&mut axis), ld(this, 0x644).fchs().to_f32());
         quaternion_get(gp(&mut q), GPtr::from_raw(rw.as_mut_ptr()).cast());
@@ -637,7 +635,7 @@ fn bmx_frames(this: GPtr<u8>, mi: GPtr<u8>, col: GPtr<u8>, l16c: &mut StackMatri
         matrix_update_rw(dp);
         let a = ld(mi, 0x58).fmul_m(f32::from_bits(0x3C8E_FA35));
         let mut axis = CVector::new(0.0, a.fsin().to_f32(), a.fcos().fchs().to_f32());
-        vector_normalise(gp(&mut axis));
+        vector_normalise(GPtr::<u8>::cast::<[f32;3]>(gp(&mut axis)));
         let mut q = [0f32; 4];
         quaternion_set(gp(&mut q), gp(&mut axis), ld(this, 0x644).fchs().to_f32());
         quaternion_get(gp(&mut q), GPtr::from_raw(rw.as_mut_ptr()).cast());

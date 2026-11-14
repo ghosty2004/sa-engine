@@ -4,7 +4,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::{Cmp, X87};
 
 use super::common::{rd, wr, x};
@@ -12,19 +12,16 @@ use super::common::{rd, wr, x};
 use crate::bindings::entity_get_col_model;
 use crate::bindings::garage_is_entity_entirely_inside_3d_o;
 use crate::bindings::placeable_get_matrix;
-use sa_core::bindings::find_player_ped;
-use sa_core::bindings::find_player_vehicle;
-use sa_core::bindings::matrix_dtor;
+use crate::bindings::find_player_ped;
+use crate::bindings::find_player_vehicle;
+use crate::bindings::matrix_dtor;
 use sa_core::bindings::matrix_set_rotate_z;
-use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
+use crate::bindings::placeable_allocate_matrix as allocate_matrix;
 use sa_stream::bindings::simple_transform_update_matrix;
 use crate::bindings::garage_is_point_inside_r;
 use crate::bindings::tm_find_active_task_by_type as task_manager_find_active_task_by_type;
 use sa_core::bindings::matrix_mul_vec;
-orig! {
-    /// `CrossProduct(CVector* out, const CVector*, const CVector*)` (0x59C730, cdecl)
-    fn cross_product(out: GPtr<f32>, a: GPtr<u8>, b: GPtr<f32>) -> GPtr<f32> = cdecl 0x59C730 => unported;
-}
+use sa_core::bindings::cross_product;
 
 use crate::world::common::entity_pos;
 
@@ -54,9 +51,9 @@ pub fn garage_is_entity_entirely_inside_3d(this: GPtr<u8>, e: GPtr<u8>, m: f32) 
         let sphere = rd::<GPtr<u8>>(cd, 8).byte_add(0x14 * i as isize);
         let mat = placeable_get_matrix(e);
         let mut out = [0.0f32; 3];
-        let c = matrix_mul_vec(GPtr::from_raw(out.as_mut_ptr()), mat, sphere);
+        let c = GPtr::<u8>::cast::<f32>(matrix_mul_vec(GPtr::<f32>::cast::<u8>(GPtr::from_raw(out.as_mut_ptr())), mat, sphere));
         let r = x(m).fsub_m(rd::<f32>(rd::<GPtr<u8>>(cd, 8), 0x14 * i as isize + 0xC)).to_f32();
-        if garage_is_point_inside_r(this, c.read(), c.wrapping_index(1).read(), c.wrapping_index(2).read(), r) == 0 {
+        if garage_is_point_inside_r(this, sa_math::vector::CVector::new(c.read(), c.wrapping_index(1).read(), c.wrapping_index(2).read()), r) == 0 {
             return 0;
         }
         i += 1;
@@ -142,7 +139,7 @@ pub fn garage_build_rotated_door_matrix(door: GPtr<u8>, t: f32) {
     let mut up = [fy.fchs().to_f32(), fx.to_f32(), c];
     let m = ensure_matrix(door);
     let mut right = [0.0f32; 3];
-    cross_product(GPtr::from_raw(right.as_mut_ptr()), m.byte_add(0x10), GPtr::from_raw(up.as_mut_ptr()));
+    cross_product(GPtr::<f32>::cast::<u8>(GPtr::from_raw(right.as_mut_ptr())), m.byte_add(0x10), GPtr::<f32>::cast::<u8>(GPtr::from_raw(up.as_mut_ptr())));
     for (off, v) in [(0isize, right[0]), (4, right[1]), (8, right[2]), (0x20, up[0]), (0x24, up[1]), (0x28, up[2])] {
         let m = ensure_matrix(door);
         wr::<f32>(m, off, v);
@@ -179,7 +176,7 @@ pub fn entry_exit_is_in_area(this: GPtr<u8>, pos: GPtr<u8>) -> u8 {
     let m: GPtr<u8> = GPtr::from_raw(mat.as_mut_ptr().cast());
     matrix_set_rotate_z(m, rd::<f32>(this, 0x1C));
     let mut out = [0.0f32; 3];
-    let r = matrix_mul_vec(GPtr::from_raw(out.as_mut_ptr()), m, GPtr::from_raw(d.as_mut_ptr()).cast());
+    let r = GPtr::<u8>::cast::<f32>(matrix_mul_vec(GPtr::<f32>::cast::<u8>(GPtr::from_raw(out.as_mut_ptr())), m, GPtr::from_raw(d.as_mut_ptr()).cast()));
     let rx = x(r.read()).fadd_m(cx).to_f32();
     let ry = x(r.wrapping_index(1).read()).fadd_m(cy).to_f32();
     let ok = entry_exit_box(this, x(rx), x(ry), rd::<f32>(pos, 8));

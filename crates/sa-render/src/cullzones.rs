@@ -370,7 +370,7 @@ pub fn update() {
             if MILITARY_ZONES_DISABLED.get() != 0 || flags & 0x1000 == 0 {
                 return;
             }
-            if ped_is_alive(find_player_ped(-1)) == 0 {
+            if ped_is_alive(find_player_ped(-1)) as u8 == 0 {
                 return;
             }
             set_wanted_level_no_drop(find_player_ped(-1), 5);

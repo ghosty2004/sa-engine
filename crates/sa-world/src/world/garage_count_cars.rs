@@ -29,7 +29,7 @@ pub fn garage_count_cars_inside(this: GPtr<u8>, except: GPtr<u8>) -> i32 {
         }
         let m = rd::<GPtr<u8>>(v, 0x14);
         let p = if m.is_null() { v.byte_add(4) } else { m.byte_add(0x30) };
-        if is_point_inside_garage(this, rd::<u32>(p, 0), rd::<u32>(p, 4), rd::<u32>(p, 8)) != 0 {
+        if is_point_inside_garage(this, sa_math::vector::CVector::new(f32::from_bits(rd::<u32>(p, 0)), f32::from_bits(rd::<u32>(p, 4)), f32::from_bits(rd::<u32>(p, 8)))) != 0 {
             n += 1;
         }
     }

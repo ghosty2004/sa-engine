@@ -175,7 +175,7 @@ mod tests {
 
     #[test]
     fn splits_like_the_original() {
-        host::set::<fn(u32) -> GPtr<u8>>("sa_core::memory::malloc", leak_malloc);
+        host::set::<fn(u32) -> GPtr<u8>>("sa_core::bindings::crt_malloc", leak_malloc);
         assert_eq!(split(""), (0, Vec::new()));
         assert_eq!(split("gta_sa.exe"), (1, std::vec![String::from("gta_sa.exe")]));
         let (n, v) = split("\"C:\\Games\\GTA San Andreas\\gta_sa.exe\"  -vms\t-x");
@@ -187,6 +187,6 @@ mod tests {
         let (n, v) = split("a \"\" b");
         assert_eq!(n, 3);
         assert_eq!(v, ["a", "b", "<garbage>"]);
-        host::clear("sa_core::memory::malloc");
+        host::clear("sa_core::bindings::crt_malloc");
     }
 }

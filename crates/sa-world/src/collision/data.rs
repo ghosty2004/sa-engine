@@ -24,7 +24,7 @@ use sa_math::x87::X87;
 
 use super::shared::{
     CColModel, CColTriangle, CColTrianglePlane, CCollisionData, CLink, CLinkList, CompressedVector, cf, k,
-    read_vec, write_vec,
+    read_vec,
 };
 use crate::field;
 
@@ -54,19 +54,21 @@ pub use sa_core::bindings::crt_free as operator_delete_links;
 pub use sa_core::bindings::crt_free_8214bd as crt_free;
 pub use sa_core::bindings::memory_malloc as mem_malloc;
 pub use sa_stream::bindings::col_load_collision as col_store_load_collision;
-pub use sa_stream::bindings::crt_new as operator_new_links;
-pub use sa_core::bindings::load_all_requested_models;
+pub use sa_core::bindings::crt_new_821195 as operator_new_links;
+pub use sa_stream::bindings::load_all_requested_models;
 pub use sa_core::bindings::memory_free as mem_free;
+pub use sa_core::bindings::crt_new as operator_new;
+pub use sa_core::bindings::cross_product;
+pub use sa_core::bindings::vector_normalise as normalise;
+pub use crate::bindings::calculate_triangle_planes_416330 as collision_calculate_triangle_planes;
+pub use crate::bindings::col_data_remove_collision_volumes;
+pub use crate::bindings::collision_remove_triangle_planes;
 orig! {
-    /// CRT `operator new` (0x82119A)
-    pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
     /// `CColModelPool::New` (0x40FB80)
     pub fn col_model_pool_new(pool: sa_core::pools::PoolPtr<sa_core::pools::ColModelSlot>)
         -> GPtr<sa_core::pools::ColModelSlot> = thiscall 0x40FB80 => sa_core::pools::col_model_pool_new;
     /// `CCollisionData::Copy` (0x40F120)
     pub fn col_data_copy(this: CdPtr, src: CdPtr) = thiscall 0x40F120 => unported;
-    /// `CCollisionData::RemoveCollisionVolumes` (0x40F070)
-    pub fn col_data_remove_collision_volumes(this: CdPtr) = thiscall 0x40F070 => remove_collision_volumes;
     /// `CCollisionData::CalculateTrianglePlanes` (0x40F590)
     pub fn col_data_calculate_triangle_planes(this: CdPtr) = thiscall 0x40F590 => calculate_triangle_planes;
     /// `CCollisionData::RemoveTrianglePlanes` (0x40F6A0)
@@ -81,32 +83,10 @@ orig! {
     /// `CLinkList<CCollisionData*>::Insert` (0x4161F0)
     pub fn link_list_insert(this: GPtr<CLinkList>, data: GPtr<CdPtr>) -> GPtr<CLink>
         = thiscall 0x4161F0 => link_list_insert_port;
-    /// `CCollision::RemoveTrianglePlanes(CCollisionData*)` (0x416400)
-    pub fn collision_remove_triangle_planes(cd: CdPtr) = cdecl 0x416400 => remove_triangle_planes_col_data;
-    /// `CCollision::CalculateTrianglePlanes(CCollisionData*)` (0x416330)
-    pub fn collision_calculate_triangle_planes(cd: CdPtr) = cdecl 0x416330 => calculate_triangle_planes_col_data;
     /// `CColStore::Initialise` (0x4113F0)
     pub fn col_store_initialise() = cdecl 0x4113F0 => sa_stream::colstore::initialise;
     /// `CColStore::Shutdown` (0x4114D0)
     pub fn col_store_shutdown() = cdecl 0x4114D0 => sa_stream::colstore::shutdown;
-    /// `CVector::CrossProduct(CVector* out, const CVector* a, const CVector* b)` (0x59C730)
-    pub fn cross_product(out: GPtr<CVector>, a: GPtr<CVector>, b: GPtr<CVector>) -> GPtr<CVector>
-        = cdecl 0x59C730 => cross_product_port;
-    /// `CVector::Normalise` (0x59C910)
-    pub fn normalise(v: GPtr<CVector>) = thiscall 0x59C910 => normalise_port;
-}
-
-/// The Rust side of `CrossProduct` 0x59C730 (`sa_math::vector::cross_product`, alias-safe).
-pub fn cross_product_port(out: GPtr<CVector>, a: GPtr<CVector>, b: GPtr<CVector>) -> GPtr<CVector> {
-    write_vec(out, sa_math::vector::cross_product(&read_vec(a), &read_vec(b)));
-    out
-}
-
-/// The Rust side of `CVector::Normalise` 0x59C910.
-pub fn normalise_port(v: GPtr<CVector>) {
-    let mut x = read_vec(v);
-    x.normalise();
-    write_vec(v, x);
 }
 
 fn cd_field<T>(cd: CdPtr, off: isize) -> GPtr<T> {
@@ -220,7 +200,7 @@ pub fn remove_collision_volumes(this: CdPtr) {
             mem_free(p);
         }
     }
-    collision_remove_triangle_planes(this);
+    collision_remove_triangle_planes(this.cast::<crate::collision::shared::CCollisionData>());
     cd_field::<u16>(this, 0).write(0);
     cd_field::<u8>(this, 6).write(0);
     cd_field::<u16>(this, 2).write(0);
@@ -386,10 +366,10 @@ pub fn col_model_remove_collision_volumes(this: CmPtr) {
         return;
     }
     if cm_flags(this).read() & 2 != 0 {
-        collision_remove_triangle_planes(cd);
+        collision_remove_triangle_planes(cd.cast::<crate::collision::shared::CCollisionData>());
         mem_free(cm_data(this).read().cast());
     } else {
-        col_data_remove_collision_volumes(cd);
+        col_data_remove_collision_volumes(cd.cast::<crate::collision::shared::CCollisionData>());
         crt_free(cm_data(this).read().cast());
     }
     cm_data(this).write(GPtr::NULL);
@@ -471,13 +451,13 @@ pub fn triangle_plane_set(
     let mut ac = CVector::new(sub(c.x, a.x), sub(c.y, a.y), sub(c.z, a.z));
     let mut n = CVector::default();
     let np = GPtr::from_raw(&mut n as *mut CVector);
-    let r = cross_product(
-        np,
-        GPtr::from_raw(&mut ac as *mut CVector),
-        GPtr::from_raw(&mut ab as *mut CVector),
-    );
+    let r = GPtr::<u8>::cast::<sa_math::vector::CVector>(cross_product(
+        np.cast::<u8>(),
+        GPtr::<sa_math::vector::CVector>::cast::<u8>(GPtr::from_raw(&mut ac as *mut CVector)),
+        GPtr::<sa_math::vector::CVector>::cast::<u8>(GPtr::from_raw(&mut ab as *mut CVector)),
+    ));
     let mut nn = read_vec(r);
-    normalise(GPtr::from_raw(&mut nn as *mut CVector));
+    normalise(GPtr::<sa_math::vector::CVector>::cast::<[f32;3]>(GPtr::from_raw(&mut nn as *mut CVector)));
     let w = |v: f32| X87::from_f32(v).fmul_m(cf(k::F4096)).ftol() as u16 as i16;
     let (wx, wy, wz) = (w(nn.x), w(nn.y), w(nn.z));
     let p = this.cast::<i16>();
@@ -684,7 +664,7 @@ pub fn remove_triangle_planes_col_data(cd: CdPtr) {
 pub fn calculate_triangle_planes_col_model(cm: CmPtr) {
     let cd = cm_data(cm).read();
     if !cd.is_null() {
-        collision_calculate_triangle_planes(cd);
+        collision_calculate_triangle_planes(cd.cast::<crate::collision::shared::CCollisionData>());
     }
 }
 
@@ -693,7 +673,7 @@ pub fn calculate_triangle_planes_col_model(cm: CmPtr) {
 pub fn remove_triangle_planes_col_model(cm: CmPtr) {
     let cd = cm_data(cm).read();
     if !cd.is_null() {
-        collision_remove_triangle_planes(cd);
+        collision_remove_triangle_planes(cd.cast::<crate::collision::shared::CCollisionData>());
     }
 }
 

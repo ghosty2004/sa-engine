@@ -14,7 +14,7 @@ use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 use sa_math::x87::X87;
 
-use sa_core::bindings::load_line;
+use sa_stream::bindings::load_line;
 use crate::bindings::find_fx_system_bp;
 use sa_core::bindings::file_close;
 use sa_core::bindings::file_set_dir;
@@ -146,7 +146,7 @@ pub fn initialise(file_name: GPtr<u8>) {
             e.byte_add(0x1E).write(ints[3] as u8);
             e.byte_add(0x1F).write(ints[4] as u8);
             e.byte_add(0x10).cast::<f32>().write(buoy.to_f32());
-            let mi = get_model_info(GPtr::from_raw(model_name.as_mut_ptr()), GPtr::NULL);
+            let mi = get_model_info(GPtr::from_raw(model_name.as_mut_ptr()), GPtr::<u8>::cast::<i32>(GPtr::NULL)).cast::<u8>();
             if !mi.is_null() {
                 let idx = mi.byte_add(0x10).cast::<u16>();
                 let defaults = f(e, 0) == f(d0, 0) && f(e, 0x18) == f(d0, 0x18) && b(e, 0x1C) == b(d0, 0x1C);

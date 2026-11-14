@@ -7,20 +7,14 @@ use sa_core::{hook, orig};
 
 use crate::common::{ftol32, g, k, rd, wr, x, xi};
 
+use crate::bindings::fx_add_particle;
+use sa_world::bindings::fx_prt_mult_ctor;
+use sa_world::bindings::fx_add_sparks;
 orig! {
     /// `SurfaceInfos_c::GetBulletFx(uint32 surface)` (0x55E670, thiscall on `g_surfaceInfos` 0xB79538)
     fn surface_get_bullet_fx(si: GPtr<u8>, surface: u32) -> i32 = thiscall 0x55E670 => unported;
-    /// `Fx_c::AddSparks(...)` (0x49F040, thiscall `ret 0x28`; the across vector by value)
-    #[allow(clippy::too_many_arguments)]
-    fn fx_add_sparks(fx: GPtr<u8>, origin: GPtr<f32>, dir: GPtr<f32>, force: f32, amount: i32, ax: f32, ay: f32, az: f32, kind: u32, spread: f32, life: f32) = thiscall 0x49F040 => crate::fx_add_sparks::fx_add_sparks;
     /// `Fx_c::AddWood(CVector& pos, CVector& dir, int32 amount, float brightness)` (0x49EE10, thiscall)
     fn fx_add_wood(fx: GPtr<u8>, pos: GPtr<u8>, dir: GPtr<u8>, amount: i32, b: f32) = thiscall 0x49EE10 => unported;
-    /// `FxPrtMult_c::FxPrtMult_c(r, g, b, a, size, spin, life)` (0x4AB290)
-    #[allow(clippy::too_many_arguments)]
-    fn fx_prt_mult_ctor(p: GPtr<u8>, r: f32, g: f32, b: f32, a: f32, size: f32, spin: f32, life: f32) -> GPtr<u8> = thiscall 0x4AB290 => unported;
-    /// `FxSystem_c::AddParticle(RwV3d*, RwV3d*, float, FxPrtMult_c*, float, float, float, uint8)` (0x4AA440)
-    #[allow(clippy::too_many_arguments)]
-    fn fx_add_particle(sys: GPtr<u8>, pos: GPtr<u8>, vel: GPtr<u8>, time: f32, mult: GPtr<u8>, rot: f32, bright: f32, near: f32, local: u32) = thiscall 0x4AA440 => unported;
 }
 
 /// `g_fx` (0xA9AE00) and its particle systems: sparks-impact smoke 0xA9AE24, dust 0xA9AE18.
@@ -61,7 +55,7 @@ pub fn fx_add_bullet_impact(_this: GPtr<u8>, pos: GPtr<u8>, dir: GPtr<u8>, surfa
     let mp: GPtr<u8> = GPtr::from_raw(mult.as_mut_ptr()).cast();
     match fx {
         1 => {
-            fx_add_sparks(g(G_FX), pos.cast(), dir.cast(), 3.0, amount, 0.0, 0.0, 0.0, 1, k(0x3ECC_CCCD), 1.0);
+            fx_add_sparks(g(G_FX), GPtr::<f32>::cast::<u8>(pos.cast()), GPtr::<f32>::cast::<u8>(dir.cast()), 3.0, amount, sa_math::vector::CVector::new(0.0, 0.0, 0.0), 1, k(0x3ECC_CCCD), 1.0);
             fx_prt_mult_ctor(mp, 1.0, 1.0, 1.0, k(0x3E19_999A), k(0x3ECC_CCCD), 0.0, k(0x3D99_999A));
             let n = if amount >= 8 {
                 wr::<f32>(mp, 0xC, x(rd::<f32>(mp, 0xC)).fadd(x(rd::<f32>(mp, 0xC))).to_f32());
@@ -71,7 +65,7 @@ pub fn fx_add_bullet_impact(_this: GPtr<u8>, pos: GPtr<u8>, dir: GPtr<u8>, surfa
             };
             for i in 0..n {
                 let t = xi(i).fmul_m(k(0x3D4C_CCCD)).to_f32();
-                fx_add_particle(g::<GPtr<u8>>(SYS_SMOKE).read(), pos, dir, t, mp, -1.0, lighting, k(0x3F19_999A), 0);
+                fx_add_particle(g::<GPtr<u8>>(SYS_SMOKE).read(), pos, dir, t.to_bits(), mp, (-1.0f32).to_bits(), lighting, k(0x3F19_999A), 0);
             }
         }
         2 | 4 => {
@@ -95,8 +89,8 @@ pub fn fx_add_bullet_impact(_this: GPtr<u8>, pos: GPtr<u8>, dir: GPtr<u8>, surfa
                     x(rd::<f32>(dir, 8)).fmul_m(k(0x3E99_999A)).to_f32(),
                 ];
                 let t = xi(i).fmul_m(k(0x3D4C_CCCD)).to_f32();
-                fx_add_particle(g::<GPtr<u8>>(SYS_DUST).read(), pos, GPtr::from_raw(vel.as_mut_ptr()).cast(), t, mp,
-                    -1.0, lighting, k(0x3F19_999A), 0);
+                fx_add_particle(g::<GPtr<u8>>(SYS_DUST).read(), pos, GPtr::from_raw(vel.as_mut_ptr()).cast(), t.to_bits(), mp,
+                    (-1.0f32).to_bits(), lighting, k(0x3F19_999A), 0);
             }
         }
         3 => {

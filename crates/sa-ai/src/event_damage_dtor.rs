@@ -7,7 +7,7 @@ use sa_core::hook;
 
 use crate::common::*;
 
-use sa_core::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference;
 
 /// `CEventDamage::~CEventDamage()` (0x4AD960, SEH frame, no `delete`): vtable 0x85AD78, `CleanUpOldReference`
 /// on the source entity (+0x14) when set, then the `CEvent` vtable 0x85AB38.
@@ -18,7 +18,7 @@ pub fn event_damage_destructor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x85_AD78);
     let src = rd::<GPtr<u8>>(this, 0x14);
     if !src.is_null() {
-        entity_clean_up_old_reference(src, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x14)));
+        entity_clean_up_old_reference(src, this.byte_add(0x14));
     }
     wr::<u32>(this, 0, 0x85_AB38);
 }

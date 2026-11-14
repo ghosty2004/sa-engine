@@ -10,7 +10,7 @@ use sa_math::x87::X87;
 
 use crate::common::{ftol32, g, rd, x, xi};
 
-use sa_core::bindings::entity_get_is_on_screen;
+use sa_world::bindings::entity_get_is_on_screen;
 use sa_core::bindings::vector_normalise_and_mag;
 use sa_world::bindings::fx_prt_mult_ctor;
 use sa_world::bindings::fx_add_particle;
@@ -40,7 +40,7 @@ pub fn automobile_dmg_draw_car_colliding_particles(this: GPtr<u8>, pos: GPtr<u8>
     if weapon != 0 && weapon != 0xE {
         let mut dir = [rd::<u32>(this, 0x44), rd::<u32>(this, 0x48), rd::<u32>(this, 0x4C)];
         let dp: GPtr<u8> = GPtr::from_raw(&mut dir as *mut [u32; 3]).cast();
-        let mag = X87::from_f64_exact(vector_normalise_and_mag(dp));
+        let mag = X87::from_f64_exact(vector_normalise_and_mag(dp).to_f64());
         let mut p = [rd::<u32>(pos, 0), rd::<u32>(pos, 4), rd::<u32>(pos, 8)];
         let across = CVector::new(rd::<f32>(this, 0x44), rd::<f32>(this, 0x48), rd::<f32>(this, 0x4C));
         let amount = ((f / 10) + 4) & 0x3F;
@@ -78,9 +78,9 @@ pub fn automobile_dmg_draw_car_colliding_particles(this: GPtr<u8>, pos: GPtr<u8>
             g::<GPtr<u8>>(0xA9_AE20).read(),
             ptp,
             GPtr::from_raw(&mut vel as *mut [u32; 3]).cast(),
-            0.0,
+            0.0f32.to_bits(),
             mp,
-            -1.0,
+            (-1.0f32).to_bits(),
             f32::from_bits(0x3F99_999A),
             f32::from_bits(0x3F19_999A),
             0,

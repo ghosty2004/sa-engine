@@ -58,12 +58,12 @@ use crate::bindings::plugin_init_object;
 use crate::bindings::plugin_read_data_chunks;
 use crate::bindings::registry_get_plugin_offset as plugin_get_offset;
 use sa_core::bindings::rw_stream_find_chunk_call;
-use sa_core::bindings::rw_raster_destroy;
-use sa_core::bindings::rw_tex_dictionary_create as rw_tex_dictionary_create_call;
-use sa_core::bindings::rw_texture_read as rw_texture_read_call;
-use sa_core::bindings::rw_texture_set_auto_mipmapping as set_auto_mipmapping_call;
-use sa_core::bindings::rw_texture_set_mipmapping as set_mipmapping_call;
-use sa_core::bindings::stream_read as rw_stream_read_call;
+use crate::bindings::rw_raster_destroy;
+use crate::bindings::rw_tex_dictionary_create as rw_tex_dictionary_create_call;
+use crate::bindings::rw_texture_read as rw_texture_read_call;
+use crate::bindings::rw_texture_set_auto_mipmapping as set_auto_mipmapping_call;
+use crate::bindings::rw_texture_set_mipmapping as set_mipmapping_call;
+use crate::bindings::stream_read as rw_stream_read_call;
 orig! {
     /// `_rwerror(code, a, b)` (0x8088D0, varargs; three arguments)
     fn rw_error3(code: u32, a: u32, b: u32) -> u32 = cdecl 0x8088D0 => unported;
@@ -113,7 +113,7 @@ fn rw_error_with(code: u32) {
         error_code: 0,
     };
     e.error_code = code as i32;
-    rw_error_set(GPtr::from_raw(&mut e));
+    rw_error_set(GPtr::from_raw(&mut e).cast());
 }
 
 /// `RwTextureSetFindCallBack(cb)` (0x7F34D0).

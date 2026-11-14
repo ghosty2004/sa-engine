@@ -6,7 +6,7 @@
 use crate::common::*;
 
 use sa_core::bindings::entity_register_reference;
-use sa_world::bindings::task_complex_ctor;
+use crate::bindings::task_complex_ctor;
 
 /// `CTaskComplexChat` vtable
 const VTABLE: u32 = 0x8706A0;
@@ -25,7 +25,7 @@ pub fn task_complex_chat_ctor(
     stage: i32,
     context: i16,
 ) -> GPtr<u8> {
-    task_complex_ctor(this);
+    task_complex_ctor(this.addr() as u32);
     wr::<u8>(this, 0xC, is_chatter);
     wr::<i32>(this, 0x14, stage);
     wr::<u32>(this, 0, VTABLE);

@@ -77,15 +77,12 @@ pub use sa_core::bindings::stricmp;
 pub use crate::bindings::anim_blend_animation_hier as blend_animation;
 pub use crate::bindings::rp_skin_get_vertex_bone_weights;
 pub use sa_core::bindings::frame_for_all_children as rw_frame_for_all_children;
+pub use sa_core::bindings::crt_new as operator_new;
+pub use crate::bindings::base_init;
+pub use crate::bindings::delete_collision_model;
 orig! {
-    /// `CBaseModelInfo::Init` (0x4C4B10)
-    pub fn base_init(this: MiPtr) = thiscall 0x4C4B10 => super::base::init;
     /// `CBaseModelInfo::Shutdown` (0x4C4D50)
     pub fn base_shutdown(this: MiPtr) = thiscall 0x4C4D50 => super::base::shutdown;
-    /// `CBaseModelInfo::DeleteCollisionModel` (0x4C4C40)
-    pub fn delete_collision_model(this: MiPtr) = thiscall 0x4C4C40 => super::base::delete_collision_model;
-    /// CRT `operator new` (0x82119A)
-    pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
     /// `CAnimManager::GetAnimation(uint32 key, CAnimBlock*)` (0x4D39F0)
     pub fn get_animation(key: u32, block: GPtr<u8>) -> GPtr<u8> = cdecl 0x4D39F0 => unported;
     /// `CCarFXRenderer::CustomCarPipeAtomicSetup` (0x5D5B20)
@@ -176,7 +173,7 @@ pub fn get_anim_file_index(this: MiPtr) -> i32 {
 /// `CClumpModelInfo::Init` (0x4C4E40): base init, anim file index -1.
 #[hook(addr = 0x4C4E40, conv = thiscall, name = "CClumpModelInfo::Init", expect = "56 8B F1 E8 C8 FC FF FF", this = "CClumpModelInfo")]
 pub fn init(this: MiPtr) {
-    base_init(this);
+    base_init(this.cast::<crate::shared::CBaseModelInfo>());
     f::<i32>(this, ANIM_FILE).write(-1);
 }
 
@@ -199,12 +196,12 @@ pub fn delete_rw_object(this: MiPtr) {
     }
     rp_clump_destroy(rw(this));
     f::<u32>(this, mi::RW_OBJECT).write(0);
-    remove_tex_dictionary_ref(this);
+    remove_tex_dictionary_ref(this.cast::<crate::shared::CBaseModelInfo>());
     if vcall_get_anim_file_index(this) != -1 {
         remove_anim_block_ref(vcall_get_anim_file_index(this) as u32);
     }
     if f::<u8>(this, 0x13).read() & 8 != 0 {
-        delete_collision_model(this);
+        delete_collision_model(this.cast::<crate::shared::CBaseModelInfo>());
     }
 }
 
@@ -262,20 +259,20 @@ pub fn set_clump(this: MiPtr, clump: GPtr<u8>) {
         }
     }
     set_clump_model_info(rw(this), this);
-    add_tex_dictionary_ref(this);
+    add_tex_dictionary_ref(this.cast::<crate::shared::CBaseModelInfo>());
     if vcall_get_anim_file_index(this) != -1 {
         add_anim_block_ref(vcall_get_anim_file_index(this));
     }
-    rp_clump_for_all_atomics(clump, ATOMIC_SETUP_LIGHTING_CB, GPtr::from_addr((this.addr() as u32) as usize));
+    rp_clump_for_all_atomics(clump, ATOMIC_SETUP_LIGHTING_CB, GPtr::<u8>::addr(GPtr::from_addr((this.addr() as u32) as usize)) as u32);
     let first = get_first_atomic(clump);
     if first.is_null() {
         return;
     }
-    if rp_skin_geometry_get_skin(first.byte_add(0x18).cast::<GPtr<u8>>().read()).is_null() {
+    if GPtr::<u8>::from_addr(rp_skin_geometry_get_skin(first.byte_add(0x18).cast::<GPtr<u8>>().read()) as usize).is_null() {
         return;
     }
     if f::<u8>(this, 0x13).read() & 2 != 0 {
-        rp_clump_for_all_atomics(clump, SET_HIERARCHY_FOR_SKIN_ATOMIC, GPtr::NULL);
+        rp_clump_for_all_atomics(clump, SET_HIERARCHY_FOR_SKIN_ATOMIC, GPtr::<u8>::addr(GPtr::NULL) as u32);
         return;
     }
     let a = get_first_atomic(clump);
@@ -284,9 +281,9 @@ pub fn set_clump(this: MiPtr, clump: GPtr<u8>) {
     let radius = morph.byte_add(0x10);
     radius.write(X87::from_f32(radius.read()).fmul_m(f32::from_bits(K_1_2)).to_f32());
     let hier = get_anim_hierarchy_from_clump(clump);
-    rp_clump_for_all_atomics(clump, SET_HIERARCHY_FOR_SKIN_ATOMIC, GPtr::from_addr((hier.addr() as u32) as usize));
+    rp_clump_for_all_atomics(clump, SET_HIERARCHY_FOR_SKIN_ATOMIC, GPtr::<u8>::addr(GPtr::from_addr((hier.addr() as u32) as usize)) as u32);
     let a = get_first_atomic(clump);
-    let skin = rp_skin_geometry_get_skin(a.byte_add(0x18).cast::<GPtr<u8>>().read());
+    let skin = GPtr::from_addr(rp_skin_geometry_get_skin(a.byte_add(0x18).cast::<GPtr<u8>>().read()) as usize);
     let geometry = a.byte_add(0x18).cast::<GPtr<u8>>().read();
     let mut i = 0i32;
     while i < geometry.byte_add(0x14).cast::<i32>().read() {
@@ -314,15 +311,15 @@ pub fn create_instance_void(this: MiPtr) -> GPtr<u8> {
     if rw(this).is_null() {
         return GPtr::NULL;
     }
-    add_ref(this);
+    add_ref(this.cast::<crate::shared::CBaseModelInfo>());
     let clone = rp_clump_clone(rw(this));
     let a = get_first_atomic(clone);
     if !a.is_null()
-        && !rp_skin_geometry_get_skin(a.byte_add(0x18).cast::<GPtr<u8>>().read()).is_null()
+        && !GPtr::<u8>::from_addr(rp_skin_geometry_get_skin(a.byte_add(0x18).cast::<GPtr<u8>>().read()) as usize).is_null()
         && f::<u8>(this, 0x13).read() & 2 == 0
     {
         let hier = get_anim_hierarchy_from_clump(clone);
-        rp_clump_for_all_atomics(clone, SET_HIERARCHY_FOR_SKIN_ATOMIC, GPtr::from_addr((hier.addr() as u32) as usize));
+        rp_clump_for_all_atomics(clone, SET_HIERARCHY_FOR_SKIN_ATOMIC, GPtr::<u8>::addr(GPtr::from_addr((hier.addr() as u32) as usize)) as u32);
         let anim = rp_anim_blend_create_animation_for_hierarchy(hier);
         rt_anim_interpolator_set_current_anim(hier.byte_add(0x20).cast::<GPtr<u8>>().read(), anim);
         hier.cast::<u32>().write(0x3000);
@@ -336,7 +333,7 @@ pub fn create_instance_void(this: MiPtr) -> GPtr<u8> {
             blend_animation(clone, anim, 2, 1.0);
         }
     }
-    remove_ref(this);
+    remove_ref(this.cast::<crate::shared::CBaseModelInfo>());
     clone
 }
 
@@ -360,7 +357,7 @@ unsafe impl sa_core::mem::GameData for SearchData {}
 
 /// `found ? null : frame` (the original's `setne al; dec eax; and eax, frame`).
 fn recurse(frame: GPtr<u8>, cb: u32, data: GPtr<u8>) -> GPtr<u8> {
-    rw_frame_for_all_children(frame, cb, data);
+    rw_frame_for_all_children(frame, cb, data.addr() as u32);
     let found = data.byte_add(4).cast::<GPtr<u8>>().read();
     if found.is_null() { frame } else { GPtr::NULL }
 }
@@ -410,14 +407,14 @@ pub fn fill_frame_array_cb(frame: GPtr<u8>, data: GPtr<u8>) -> GPtr<u8> {
     if id > 0 {
         data.cast::<GPtr<u8>>().wrapping_index(id).write(frame);
     }
-    rw_frame_for_all_children(frame, FILL_FRAME_ARRAY_CB, data);
+    rw_frame_for_all_children(frame, FILL_FRAME_ARRAY_CB, data.addr() as u32);
     frame
 }
 
 fn search(clump: GPtr<u8>, key: u32, cb: u32) -> GPtr<u8> {
     let mut d = SearchData { key, frame: GPtr::NULL };
     let p = GPtr::from_raw((&raw mut d).cast::<u8>());
-    rw_frame_for_all_children(frame_of(clump), cb, p);
+    rw_frame_for_all_children(frame_of(clump), cb, p.addr() as u32);
     p.byte_add(4).cast::<GPtr<u8>>().read()
 }
 
@@ -436,7 +433,7 @@ pub fn get_frame_from_name(clump: GPtr<u8>, name: GPtr<u8>) -> GPtr<u8> {
 /// `CClumpModelInfo::FillFrameArray(RpClump*, RwFrame**)` (0x4C5440, cdecl).
 #[hook(addr = 0x4C5440, conv = cdecl, name = "CClumpModelInfo::FillFrameArray", expect = "8B 44 24 08 8B 4C 24 04")]
 pub fn fill_frame_array(clump: GPtr<u8>, array: GPtr<u8>) {
-    rw_frame_for_all_children(frame_of(clump), FILL_FRAME_ARRAY_CB, array);
+    rw_frame_for_all_children(frame_of(clump), FILL_FRAME_ARRAY_CB, array.addr() as u32);
 }
 
 /// `CClumpModelInfo::SetFrameIds(RwObjectNameIdAssocation*)` (0x4C5460, `ret 4`): entries of 0x0C
@@ -466,7 +463,7 @@ pub fn scalar_deleting_destructor(this: MiPtr, flags: u32) -> MiPtr {
 /// `SetBaseModelInfoFlags`, then bit 2 of flag byte +0x13 = IDE bit 0x20.
 #[hook(addr = 0x5B3C30, conv = cdecl, name = "CClumpModelInfo::SetClumpModelInfoFlags", expect = "8B 54 24 04 53")]
 pub fn set_clump_model_info_flags(m: MiPtr, flags: u32) {
-    set_base_model_info_flags(m, flags);
+    set_base_model_info_flags(m.cast::<crate::shared::CBaseModelInfo>(), flags);
     let p = f::<u8>(m, 0x13);
     p.write(if flags & 0x20 != 0 { p.read() | 4 } else { p.read() & 0xFB });
 }

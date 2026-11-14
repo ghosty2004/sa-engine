@@ -14,7 +14,7 @@ pub use crate::bindings::grass_set_global_wind_bending;
 pub use crate::bindings::plant_col_entity_cache_update;
 pub use crate::bindings::plant_process_entry_col_data_sections;
 pub use crate::bindings::rw_im3d_render_primitive;
-pub use sa_core::bindings::rp_atomic_resync_interpolated_sphere;
+pub use sa_rwcore::bindings::rp_atomic_resync_interpolated_sphere;
 pub use sa_core::bindings::rw_v3d_transform_points;
 pub use sa_world::bindings::rw_im3d_end;
 pub use crate::bindings::grass_set_current_scan_code;

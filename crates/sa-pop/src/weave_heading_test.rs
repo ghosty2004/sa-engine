@@ -4,14 +4,10 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use sa_world::bindings::vector_add;
-orig! {
-    /// `CCollision::Test2DLineAgainst2DLine(x1, y1, dx1, dy1, x2, y2, dx2, dy2)` (0x4138D0, AL)
-    #[allow(clippy::too_many_arguments)]
-    fn test_2d_line_against_2d_line(x1: f32, y1: f32, dx1: f32, dy1: f32, x2: f32, y2: f32, dx2: f32, dy2: f32) -> u8 = cdecl 0x4138D0 => unported;
-}
+use sa_world::bindings::test_2d_line_against_2d_line;
 
 use sa_math::fpu::x;
 
@@ -34,7 +30,7 @@ fn quad_hit(p: GPtr<f32>, dir: GPtr<f32>, corners: &[[f32; 2]; 4]) -> bool {
         let a = corners[k];
         let b = corners[(k + 1) % 4];
         let (ex, ey) = (sub(b[0], a[0]), sub(b[1], a[1]));
-        if test_2d_line_against_2d_line(px, py, dx, dy, a[0], a[1], ex, ey) != 0 {
+        if test_2d_line_against_2d_line(px.to_bits(), py.to_bits(), dx.to_bits(), dy.to_bits(), (a[0]).to_bits(), (a[1]).to_bits(), ex, ey) != 0 {
             return true;
         }
     }

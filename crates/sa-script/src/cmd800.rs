@@ -88,23 +88,23 @@ use crate::bindings::object_has_been_damaged;
 use crate::bindings::our_ped_can_see_this_entity;
 use crate::bindings::start_script_fire;
 use crate::bindings::vehicle_get_ref;
-use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
-use sa_core::bindings::entity_update_rw_frame as update_rw_frame;
-use sa_core::bindings::find_player_ped;
+use sa_world::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+use sa_world::bindings::entity_update_rw_frame as update_rw_frame;
+use sa_world::bindings::find_player_ped;
 use sa_core::bindings::matrix_assign;
-use sa_core::bindings::matrix_dtor;
+use sa_world::bindings::matrix_dtor;
 use sa_core::bindings::rgba_ctor;
-use sa_core::bindings::task_new;
+use sa_ai::bindings::task_new;
 use sa_core::bindings::text_get;
-use sa_stream::bindings::ped_is_player;
+use sa_ped::bindings::ped_is_player;
 use sa_stream::bindings::remove_this_ped;
-use sa_world::bindings::camera_set_directly_behind as set_camera_directly_behind_for_follow_ped_cam_on_a_string;
+use sa_cam::bindings::camera_set_directly_behind as set_camera_directly_behind_for_follow_ped_cam_on_a_string;
 use sa_world::bindings::civilian_ped_ctor;
-use sa_world::bindings::damage_calc_compute_damage_response as compute_damage_response;
+use sa_ped::bindings::damage_calc_compute_damage_response as compute_damage_response;
 use sa_world::bindings::damage_calc_dtor;
 use sa_world::bindings::event_damage_affects_ped;
 use sa_world::bindings::event_damage_dtor;
-use sa_world::bindings::event_group_add;
+use sa_ai::bindings::event_group_add;
 use sa_world::bindings::find_ground_z_for_coord;
 use sa_world::bindings::find_player_slot_with_ped_pointer;
 use sa_world::bindings::flush_immediately;
@@ -112,12 +112,12 @@ use sa_stream::bindings::generate_new_one as generate_new_pickup;
 use sa_world::bindings::get_actual_pickup_index;
 use sa_world::bindings::get_distance_from_centre_of_mass_to_base_of_model;
 use sa_world::bindings::get_garage_number_by_name;
-use sa_world::bindings::get_vehicle_appearance;
+use sa_veh::bindings::get_vehicle_appearance;
 use sa_world::bindings::is_within_area;
 use sa_world::bindings::membership_is_follower as membership_is_member;
 use sa_world::bindings::membership_remove_member;
 use sa_world::bindings::ped_get_ref as ped_get_ref_;
-use sa_world::bindings::ped_groups_get_peds_group as get_peds_group;
+use sa_ai::bindings::ped_groups_get_peds_group as get_peds_group;
 use sa_world::bindings::ped_new;
 use sa_world::bindings::placeable_get_heading as get_heading;
 use sa_world::bindings::placeable_set_heading as set_heading;
@@ -127,19 +127,20 @@ use sa_world::bindings::set_ped_in_as_driver_ctor;
 use sa_world::bindings::set_ped_in_as_driver_dtor;
 use sa_world::bindings::set_ped_in_as_driver_process_ped;
 use sa_world::bindings::set_velocity;
-use sa_world::bindings::tm_set_task as task_manager_set_task;
+use sa_ai::bindings::tm_set_task as task_manager_set_task;
 use sa_world::bindings::update_rw_matrix;
 use sa_world::bindings::vehicle_can_be_deleted;
 use sa_core::bindings::find_objects_of_type_in_range;
 use sa_core::bindings::matrix_mul_vec;
 use sa_core::bindings::matrix_set_rotate_z;
-use sa_world::bindings::damage_calc_ctor;
+use sa_ped::bindings::damage_calc_ctor;
 use sa_world::bindings::event_damage_ctor;
 use sa_world::bindings::find_objects_intersecting_cube;
 use sa_world::bindings::placeable_set_posn as set_posn_v;
-use sa_world::bindings::set_zoom_value_follow_ped_script;
+use sa_cam::bindings::set_zoom_value_follow_ped_script;
 use sa_world::bindings::stand_still_ctor as task_simple_stand_still_ctor;
 use sa_world::bindings::vehicle_set_created_by as set_vehicle_created_by;
+use sa_pop::bindings::choose_civilian_occupation;
 orig! {
     /// `CPed::SetStayInSamePlace(bool)` (0x481090)
     fn set_stay_in_same_place(p: GPtr<u8>, stay: u32) = thiscall 0x481090 => unported;
@@ -163,8 +164,6 @@ orig! {
     ) = cdecl 0x564ED0 => unported;
     /// `CTheScripts::AddToInvisibilitySwapArray(CEntity*, bool)` (0x481200)
     fn add_to_invisibility_swap_array(e: GPtr<u8>, visible: u32) = cdecl 0x481200 => unported;
-    /// `CPopulation::ChooseCivilianOccupation(bool, bool, int32, int32, int32, bool, bool, bool, char*)` (0x612F90)
-    fn choose_civilian_occupation(a: u32, b: u32, c: i32, d: i32, e: i32, f: u32, g: u32, h: u32, i: u32) -> i32 = cdecl 0x612F90 => unported;
     /// `CWorld::FindObjectsIntersectingAngledCollisionBox(const CBox&, const CMatrix&, const CVector&, float
     /// minX, minY, maxX, maxY, int16*, int16, CEntity**, bool x5)` (0x568FF0); floats as raw dwords
     fn find_objects_intersecting_angled_collision_box(
@@ -208,7 +207,7 @@ fn angled_box_occupied(obj: GPtr<u8>, local: GPtr<u8>, pos: GPtr<u32>) -> bool {
     for (i, c) in corners.iter().enumerate() {
         let mut v = *c;
         let mut out = [0u32; 3];
-        let r = GPtr::<f32>::cast::<u32>(matrix_mul_vec(GPtr::<u32>::cast::<f32>(GPtr::from_raw(out.as_mut_ptr())), local, GPtr::<u32>::cast::<u8>(GPtr::from_raw(v.as_mut_ptr()))));
+        let r = GPtr::<u8>::cast::<u32>(matrix_mul_vec(GPtr::<u32>::cast::<u8>(GPtr::from_raw(out.as_mut_ptr())), local, GPtr::<u32>::cast::<u8>(GPtr::from_raw(v.as_mut_ptr()))));
         t[i] = [r.read(), r.byte_add(4).read(), r.byte_add(8).read()];
     }
     let (a, bb, c, d) = (t[0], t[1], t[2], t[3]);
@@ -374,7 +373,7 @@ fn explode_char_head(s: Scr) {
     let ped = ped_at_ref(pool(PED_POOL), spi(0));
     let mut calc = [0u32; 0x10];
     let c = GPtr::from_raw(calc.as_mut_ptr()).cast::<u8>();
-    damage_calc_ctor(c, GPtr::NULL, f32::from_bits(K_1000), 0x22, 9, 0);
+    damage_calc_ctor(c, GPtr::<u8>::addr(GPtr::NULL) as u32, f32::from_bits(K_1000).to_bits(), 0x22, 9, 0);
     let in_vehicle = (ped.byte_add(0x46C).cast::<u32>().read() >> 8) & 0xFFFF_FF01;
     let time = GPtr::<u32>::from_addr(TIME_IN_MILLISECONDS).read();
     let mut event = [0u32; 0x20];
@@ -518,7 +517,7 @@ fn remove_char_elegantly(s: Scr) {
             remove_this_ped(ped);
         } else {
             set_char_created_by(ped, 1);
-            let g = get_peds_group(ped);
+            let g = GPtr::from_addr(get_peds_group(ped.addr() as u32) as usize);
             if !g.is_null() {
                 let m = g.byte_add(8);
                 if membership_is_member(m, ped) != 0 {
@@ -554,7 +553,7 @@ fn make_object_targettable(s: Scr) {
     let t = r.cast::<GPtr<u8>>().read();
     if obj.addr() == t.addr() {
         if !t.is_null() {
-            clean_up_old_reference(t, r.cast::<GPtr<u8>>());
+            clean_up_old_reference(t, r.cast::<u8>());
         }
         r.cast::<u32>().write(0);
     }
@@ -631,7 +630,7 @@ fn set_visibility_of_closest_object_of_type(s: Scr) {
         GPtr::from_raw(pos.as_mut_ptr()),
         f32::from_bits(radius),
         1,
-        GPtr::from_raw(&mut count),
+        GPtr::<i16>::cast::<u16>(GPtr::from_raw(&mut count)),
         16,
         GPtr::from_raw(list.as_mut_ptr()),
         1,
@@ -708,7 +707,7 @@ fn create_random_char(s: Scr) {
     let mut model: i32 = 0;
     let mut tries: u16 = 0;
     while ped_type != 5 && tries < 5 {
-        model = choose_civilian_occupation(0, 0, -1, -1, -1, 0, 0, 0, 0);
+        model = choose_civilian_occupation(0, 0, -1, -1, -1, 0, 0, 0, GPtr::NULL);
         let m = mi(model);
         if !m.byte_add(0x1C).cast::<GPtr<u8>>().read().is_null() {
             ped_type = m.byte_add(0x28).cast::<u32>().read();

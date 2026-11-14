@@ -40,8 +40,8 @@ pub use sa_world::bindings::pad_get_force_camera_behind_player;
 pub use sa_world::bindings::pad_get_ped_walk_left_right;
 pub use sa_world::bindings::pad_get_ped_walk_up_down;
 pub use sa_world::bindings::placeable_get_top_direction;
-pub use sa_core::bindings::vector_magnitude_sqr as magnitude_sqr;
-pub use sa_world::bindings::camera_reset_ducking_system as reset_ducking_system;
+pub use sa_world::bindings::vector_magnitude_sqr as magnitude_sqr;
+pub use crate::bindings::camera_reset_ducking_system as reset_ducking_system;
 pub use sa_world::bindings::ik_look_at;
 pub use sa_world::bindings::vector_add_assign;
 orig! {
@@ -207,7 +207,7 @@ fn speed_sq_cmp(f: &mut Fpu, v: GPtr<u8>, m: f32) {
 /// then `_CIasin` (ST0 left on the stack; the caller negates it).
 pub(crate) fn clamped_asin_of_dot(f: &mut Fpu, b: GPtr<u8>, slot: isize, ped: GPtr<u8>) {
     let fwd = rd::<GPtr<u8>>(ped, 0x14).byte_add(0x10);
-    push_st0(f, dot_product(ped.byte_add(0x578), fwd));
+    push_st0(f, dot_product(ped.byte_add(0x578), fwd).to_f64());
     f.fld(k(K_M1));
     f.fcomp_st(1);
     if !f.jne(0x41) {
@@ -441,9 +441,9 @@ fn train_follow(this: GPtr<u8>, b: GPtr<u8>, ped: GPtr<u8>, f: &mut Fpu) {
     wr::<f32>(b, 0x3C, f.fst());
     f.fsub_m(d(0x8CCEA0));
     let a = f.fstp().to_bits();
-    push_st0(f, max_f(0, a));
+    push_st0(f, max_f(f32::from_bits(0), f32::from_bits(a)).to_f64());
     wr::<f32>(b, 0x20, f.fstp());
-    push_st0(f, max_f(g::<u32>(0x8CCEA0).read(), rd::<u32>(b, 0x3C)));
+    push_st0(f, max_f(f32::from_bits(g::<u32>(0x8CCEA0).read()), f32::from_bits(rd::<u32>(b, 0x3C))).to_f64());
     f.fdivr_m(rd(b, 0x20));
     let tsb = g::<u32>(TIME_STEP).read();
     wr::<f32>(b, 0x3C, f.fstp());
@@ -604,7 +604,7 @@ fn main_block(this: GPtr<u8>, b: GPtr<u8>, ped: GPtr<u8>, f: &mut Fpu) {
         wr::<f32>(b, o, f.fstp());
     }
     copy3(front, b.byte_add(0x68));
-    vector_normalise(front);
+    vector_normalise(front.cast::<[f32;3]>());
     // |T - hist[1]| with the bytes' register order: (dx*dx + dz*dz) + dy*dy
     let row0 = rd::<u32>(b, 0x48) as usize;
     f.fld(rd(b, 0x5C));
@@ -1326,7 +1326,7 @@ fn main_block(this: GPtr<u8>, b: GPtr<u8>, ped: GPtr<u8>, f: &mut Fpu) {
         && g::<u8>(VEC_MOVE_LINEAR_PROCESSED).read() == 0
         && g::<u8>(VEC_TRACK_LINEAR_PROCESSED).read() == 0
         && {
-            push_st0(f, magnitude_sqr(GPtr::<u8>::cast::<f32>(ped.byte_add(0x44))));
+            push_st0(f, magnitude_sqr(ped.byte_add(0x44)).to_f64());
             f.fcomp_m(k(K_0_0001));
             !f.jp(0x41)
         };
@@ -1394,10 +1394,10 @@ fn look_at_camera_top(b: GPtr<u8>, f: &mut Fpu) {
         p,
         GPtr::NULL,
         0x5DC,
-        -1i32 as u32,
+        (-1i32 as u32) as i32,
         b.byte_add(0x68),
         0,
-        0x3E80_0000,
+        f32::from_bits(0x3E80_0000),
         0x1F4,
         3,
         0,

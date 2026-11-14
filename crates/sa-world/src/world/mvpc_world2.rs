@@ -29,16 +29,16 @@ use crate::bindings::transform_from_object_space;
 use sa_core::bindings::crt_new;
 use sa_core::bindings::entity_update_rp_hanim;
 use sa_core::bindings::matrix_update_rw_matrix;
-use sa_core::bindings::rp_atomic_destroy;
+use sa_rwcore::bindings::rp_atomic_destroy;
 use sa_core::bindings::rp_atomic_set_frame;
 use sa_core::bindings::rw_frame_destroy;
-use sa_core::bindings::rw_frame_update_objects;
+use sa_rwcore::bindings::rw_frame_update_objects;
 use sa_stream::bindings::get_2d_effect;
-use sa_core::bindings::load_line;
+use sa_stream::bindings::load_line;
 use sa_core::bindings::quad_ctor as quad_tree_ctor;
 use sa_core::bindings::quad_operator_new as quad_tree_new;
 use crate::bindings::find_nearest_entry_exit;
-use sa_core::bindings::entity_pre_render;
+use crate::bindings::entity_pre_render;
 use sa_core::bindings::entry_exit_pool_ctor;
 use sa_core::bindings::file_close;
 use sa_core::bindings::get_model_info as model_info_by_name;
@@ -120,7 +120,7 @@ pub fn furniture_load_furniture(this: GPtr<u8>) -> u32 {
                     v(0x168), v(0x18C), v(0x174));
             } else if is(0x86AF48, 6) {
                 sscanf6(line, 0x86AF34, tok, at(0x140), at(0x188), at(0x190), at(0x164), at(0x194));
-                let mi = model_info_by_name(at(0x140), at(0x180));
+                let mi = model_info_by_name(at(0x140), GPtr::<u8>::cast::<i32>(at(0x180))).cast::<u8>();
                 if !mi.is_null() {
                     let v = |k| rd::<u32>(at(k), 0);
                     furniture_group_add_furniture(this.byte_add(group as isize * 12), sub, v(0x180), v(0x188), v(0x190),

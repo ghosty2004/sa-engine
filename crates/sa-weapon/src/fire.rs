@@ -61,14 +61,15 @@ pub use sa_world::bindings::get_engine_status;
 pub use sa_world::bindings::ped_is_ped_in_control;
 pub use sa_world::bindings::report_crime;
 pub use sa_world::bindings::set_engine_status;
-pub use sa_core::bindings::fire_manager_init as manager_init_call;
-pub use sa_world::bindings::fire_extinguish as extinguish_call;
+pub use crate::bindings::fire_manager_init as manager_init_call;
+pub use crate::bindings::fire_extinguish as extinguish_call;
 pub use sa_world::bindings::fire_manager_start_fire as start_fire_no_target_call;
 pub use sa_world::bindings::fx_add_particle;
 pub use sa_world::bindings::fx_create_system as create_fx_system;
 pub use sa_world::bindings::get_new_unique_script_thing_index;
 pub use sa_world::bindings::get_water_level_no_waves;
 pub use sa_world::bindings::world_process_vertical_line as process_vertical_line;
+pub use sa_world::bindings::find_player_ped;
 orig! {
     /// `CFire::CreateFxSysForStrength(const CVector&, RwMatrix*)` (0x539360)
     pub fn create_fx_sys_for_strength_call(fire: GPtr<u8>, pos: GPtr<u8>, m: GPtr<u8>) = thiscall 0x539360 => create_fx_sys_for_strength;
@@ -76,8 +77,6 @@ orig! {
     pub fn initialise_call(fire: GPtr<u8>) = thiscall 0x538B30 => initialise;
     /// `CFireManager::GetNextFreeFire(bool)` (0x539E50)
     pub fn get_next_free_fire_call(this: GPtr<u8>, allow_script: u8) -> GPtr<u8> = thiscall 0x539E50 => get_next_free_fire;
-    /// `FindPlayerPed(int32)` (0x56E210)
-    pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
 }
 
 /// `CFireManager::m_aFires[i]` of the manager at `this`.
@@ -567,9 +566,9 @@ pub fn extinguish_point_with_water(this: GPtr<u8>, px: f32, py: f32, pz: f32, ra
         );
         let smoke = g::<GPtr<u8>>(0xA9AE24).read();
         let pp = lp(&mut pos).cast();
-        fx_add_particle(smoke, pp, lp(&mut vel).cast(), 0.0, lp(&mut mult).cast(), -1.0, f32::from_bits(0x3F99_999A), f32::from_bits(0x3F19_999A), 0);
+        fx_add_particle(smoke, pp, lp(&mut vel).cast(), 0.0f32.to_bits(), lp(&mut mult).cast(), (-1.0f32).to_bits(), f32::from_bits(0x3F99_999A), f32::from_bits(0x3F19_999A), 0);
         let smoke = g::<GPtr<u8>>(0xA9AE24).read();
-        fx_add_particle(smoke, pp, lp(&mut vel2).cast(), 0.0, lp(&mut mult).cast(), -1.0, f32::from_bits(0x3F99_999A), f32::from_bits(0x3F19_999A), 0);
+        fx_add_particle(smoke, pp, lp(&mut vel2).cast(), 0.0f32.to_bits(), lp(&mut mult).cast(), (-1.0f32).to_bits(), f32::from_bits(0x3F99_999A), f32::from_bits(0x3F19_999A), 0);
         wb(fi, 0, rb(fi, 0) | 8);
         let mut f = Fpu::new();
         f.fld(rf(fi, 0x1C));
@@ -593,7 +592,7 @@ pub fn extinguish_point_with_water(this: GPtr<u8>, px: f32, py: f32, pz: f32, ra
 #[allow(clippy::too_many_arguments)]
 pub fn start_fire_no_target(this: GPtr<u8>, px: f32, py: f32, pz: f32, _size: f32, _unk: u8, creator: GPtr<u8>, time: u32, gens: i8, _unk2: u8) -> GPtr<u8> {
     let mut level = 0f32;
-    if get_water_level_no_waves(px, py, pz, GPtr::<f32>::cast::<u8>(lp(&mut level)), GPtr::NULL, GPtr::NULL) != 0 {
+    if get_water_level_no_waves(px.to_bits(), py.to_bits(), pz.to_bits(), lp(&mut level), GPtr::NULL, GPtr::NULL) != 0 {
         let mut f = Fpu::new();
         f.fld(level);
         f.fcomp_m(pz);
@@ -771,7 +770,7 @@ pub fn try_to_start_fire_at_coors(px: f32, py: f32, pz: f32, gens: i8, _a: u8, s
     }
     cell.write(6);
     let hit_z = f32::from_le_bytes([cp[8], cp[9], cp[10], cp[11]]);
-    let fi = start_fire_no_target_call(man, px, py, hit_z, f32::from_bits(0x3F4C_CCCD), 1, GPtr::NULL, 20_000, gens as u32, ((script == 0) as u8) as u32);
+    let fi = start_fire_no_target_call(man, sa_math::vector::CVector::new(px, py, hit_z), f32::from_bits(0x3F4C_CCCD), 1, 0, 20_000, gens as u32, u32::from(script == 0));
     if fi.is_null() {
         return 0;
     }
@@ -990,7 +989,7 @@ fn fire_glow(s: GPtr<u8>, sum: f32) {
     let tex = g::<u32>(SHADOW_EXPLOSION_TEX).read();
     let front = x(dir).fmul_m(cf(0x3F99_999A)).to_f32();
     let side = x(dir).fmul_m(cf(0xBF99_999A)).to_f32();
-    store_static_shadow(s.addr() as u32, 2, tex, lp(&mut pos).cast(), front, 0.0, 0.0, side, 0, rr, gr, b, 10.0, 1.0, 40.0, 0, 0.0);
+    store_static_shadow(s.addr() as u32, 2, tex, lp(&mut pos).cast(), front.to_bits(), 0.0f32.to_bits(), 0.0f32.to_bits(), side.to_bits(), 0, rr, gr, b, 10.0f32.to_bits(), 1.0f32.to_bits(), 40.0f32.to_bits(), 0, 0.0f32.to_bits());
     // `fcomp 6.0; test ah, 0x41; jne`: only `sum > 6` continues
     if x(sum).fcom(X87::constant(0x40C0_0000)).test_any(0x41) {
         return;
@@ -999,7 +998,7 @@ fn fire_glow(s: GPtr<u8>, sum: f32) {
     let mut pt = [p[0], p[1], x(p[2]).fadd_m(cf(0x4026_6666)).to_f32()];
     let c = rv(cam_matrix_pos(), 0);
     let mut d = [x(c[0]).fsub_m(pt[0]).to_f32(), x(c[1]).fsub_m(pt[1]).to_f32(), x(c[2]).fsub_m(pt[2]).to_f32()];
-    vector_normalise(lp(&mut d).cast());
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(lp(&mut d).cast()));
     let k = cf(0x4060_0000);
     let oz = x(d[2]).fmul_m(k).to_f32();
     pt[0] = x(d[0]).fmul_m(k).fadd_m(pt[0]).to_f32();
@@ -1009,7 +1008,7 @@ fn fire_glow(s: GPtr<u8>, sum: f32) {
     let id = s.addr() as u32;
     let corona = |pt: &mut [f32; 3], id: u32, flare: u32| {
         let (b, g_, r) = (colour(2, m2), colour(1, m2), colour(0, m2));
-        register_corona(id, GPtr::NULL, r, g_, b, 0xFF, lp(pt).cast(), radius, 70.0, 1, flare, 0, 0, 0, 0.0, 0, 1.5, 0, 15.0, 0, 0);
+        register_corona(id, GPtr::NULL, r, g_, b, 0xFF, lp(pt).cast(), radius.to_bits(), 70.0f32.to_bits(), 1, flare, 0, 0, 0, 0.0f32.to_bits(), 0, 1.5f32.to_bits(), 0, 15.0f32.to_bits(), 0, 0);
     };
     corona(&mut pt, id, 2);
     pt[2] = x(pt[2]).fadd_m(2.0).to_f32();
@@ -1017,7 +1016,7 @@ fn fire_glow(s: GPtr<u8>, sum: f32) {
     pt[2] = x(pt[2]).fsub_m(2.0).to_f32();
     let cr = rv(g(CAM_RIGHT), 0);
     let mut rt = [cr[0], cr[1], 0.0f32];
-    vector_normalise(lp(&mut rt).cast());
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(lp(&mut rt).cast()));
     let r2z = x(rt[2]).fdouble().to_f32();
     pt[0] = x(rt[0]).fdouble().fadd_m(pt[0]).to_f32();
     pt[1] = x(rt[1]).fdouble().fadd_m(pt[1]).to_f32();
@@ -1045,7 +1044,7 @@ fn riot(this: GPtr<u8>) {
     pt[2] = st0(find_ground_z_for_3d_coord(pt[0], pt[1], pt[2], lp(&mut hit), GPtr::<GPtr<u8>>::cast::<u8>(lp(&mut hit_entity)))).to_f32();
     let c = rv(cam_matrix_pos(), 0);
     let mut dir = [x(pt[0]).fsub_m(c[0]).to_f32(), x(pt[1]).fsub_m(c[1]).to_f32(), x(pt[2]).fsub_m(c[2]).to_f32()];
-    vector_normalise(lp(&mut dir).cast());
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(lp(&mut dir).cast()));
     let m = g::<GPtr<u8>>(CAM_MATRIX).read();
     let fwd = if m.is_null() {
         let h = g::<f32>(CAM_HEADING).read();
@@ -1069,14 +1068,14 @@ fn riot(this: GPtr<u8>) {
             fx_play_and_kill(fx);
         }
     } else {
-        let size = st0(sa_core::orig::at_site(0x53B135, || random_float(0.5, 2.5))).to_f32();
-        start_fire_no_target_call(this, pt[0], pt[1], pt[2], size, 1, GPtr::NULL, 30000, 5, 1);
+        let size = st0(sa_core::orig::at_site(0x53B135, || random_float(0.5, 2.5)).to_f64()).to_f32();
+        start_fire_no_target_call(this, sa_math::vector::CVector::new(pt[0], pt[1], pt[2]), size, 1, 0, 30000, 5, 1);
     }
 }
 
 // ---- CFire::ProcessFire (PORT-WEAPON-2) ------------------------------------------------------------
 
-pub use sa_core::bindings::find_player_vehicle;
+pub use sa_world::bindings::find_player_vehicle;
 pub use sa_core::bindings::matrix_mul_vec;
 pub use sa_core::bindings::ped_is_alive;
 pub use sa_core::bindings::vector_magnitude;
@@ -1085,11 +1084,11 @@ pub use sa_world::bindings::fx_set_offset_pos;
 pub use sa_world::bindings::placeable_get_matrix;
 pub use sa_world::bindings::vector_add as pf_vector_add;
 pub use sa_world::bindings::vector_scale as pf_vector_scale;
-pub use sa_core::bindings::vector_sub as pf_vector_sub;
+pub use sa_world::bindings::vector_sub as pf_vector_sub;
 pub use sa_world::bindings::vehicle_inflict_damage as pf_vehicle_inflict_damage;
 pub use crate::bindings::try_to_start_fire_at_coors as try_to_start_fire_at_coors_call;
 pub use sa_world::bindings::add_light as point_lights_add_light;
-pub use sa_world::bindings::start_fire_on as start_fire_target_call;
+pub use crate::bindings::start_fire_on as start_fire_target_call;
 orig! {
     /// `CPlayerPed::DoStuffToGoOnFire()` (0x60A020, thiscall)
     pub fn do_stuff_to_go_on_fire(ped: GPtr<u8>) = thiscall 0x60A020 => unported;
@@ -1180,7 +1179,7 @@ pub fn process_fire(this: GPtr<u8>) {
                     if rh(veh, 0x22) != 0x197 && ru(veh, 0x590) == 0 {
                         wf(veh, 0x4C0, 75.0);
                     }
-                } else if ped_is_player(e) == 0 && ped_is_alive(e) == 0 {
+                } else if ped_is_player(e) == 0 && ped_is_alive(e) as u8 == 0 {
                     wu(e, 0x40, ru(e, 0x40) | 0x2000_0000);
                 }
             }
@@ -1201,7 +1200,7 @@ pub fn process_fire(this: GPtr<u8>) {
                     let lp_ = lp(&mut local).cast::<u8>();
                     let m = placeable_get_matrix(v);
                     let mut out = [0f32; 3];
-                    let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(lp(&mut out).cast()), m, lp_));
+                    let r = matrix_mul_vec(lp(&mut out).cast(), m, lp_);
                     wv(this, 4, rv(r, 0));
                 }
             }
@@ -1273,7 +1272,7 @@ pub fn process_fire(this: GPtr<u8>) {
             let t1 = xi(sa_core::orig::at_site(0x53AB3E, rand)).fmul_m(cf(0x3800_0100)).to_f32();
             let dxv = xi(sa_core::orig::at_site(0x53AB55, rand)).fmul_m(cf(0x3800_0100)).fdouble().fsub_m(1.0).to_f32();
             let mut dir = [dxv, x(t1).fdouble().fsub_m(1.0).to_f32(), 0.0f32];
-            vector_normalise(lp(&mut dir).cast());
+            vector_normalise(GPtr::<u8>::cast::<[f32;3]>(lp(&mut dir).cast()));
             let d = xi(sa_core::orig::at_site(0x53AB95, rand)).fmul_m(cf(0x3800_0100)).fadd_m(2.0);
             let script = u32::from(rb(this, 0) >> 1) & 1;
             let gens = u32::from(rb(this, 0x20).wrapping_sub(1));

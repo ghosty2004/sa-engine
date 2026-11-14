@@ -17,10 +17,10 @@ use super::common::{f32_of, g, rd, wr, x, xi};
 use sa_core::bindings::object_ctor_5a1d70 as object_ctor;
 use crate::bindings::placeable_set_posn;
 use crate::bindings::simple_transform_update_rw_matrix;
-use sa_core::bindings::entity_update_rw_frame;
+use crate::bindings::entity_update_rw_frame;
 use sa_core::bindings::matrix_update_rw_matrix;
 use sa_core::bindings::object_new;
-use sa_core::bindings::world_add;
+use crate::bindings::world_add;
 use sa_core::bindings::matrix_set_rotate_z_only;
 orig! {
     /// virtual `CEntity::SetIsStatic(bool)` (vtable +0x10)
@@ -168,11 +168,11 @@ pub fn water_creature_init(this: GPtr<u8>, kind: i32, pos: GPtr<u8>, parent: GPt
 
 use crate::bindings::placeable_get_top_direction as placeable_get_forward;
 use crate::bindings::process_line_of_sight;
-use sa_core::bindings::find_player_ped;
+use crate::bindings::find_player_ped;
 use sa_core::bindings::general_random_int_in_range as random_in_range_i;
 use sa_core::bindings::random_float_in_range as random_in_range_f;
 use sa_core::bindings::vector_normalise_and_mag;
-use sa_core::bindings::world_remove;
+use crate::bindings::world_remove;
 use crate::bindings::get_water_level as water_get_level;
 use sa_core::bindings::general_get_radian_angle_between_points as radian_angle_between_points;
 use sa_core::bindings::general_limit_radian_angle as limit_radian_angle;
@@ -241,7 +241,7 @@ pub fn water_creature_update(this: GPtr<u8>, ts: f32) {
             f32_of(x(ty).fsub_m(rd::<f32>(mp, 4))).to_bits(),
             f32_of(tz.fsub_m(rd::<f32>(mp, 8))).to_bits(),
         ];
-        let dist_x = X87::from_f64_exact(vector_normalise_and_mag(buf(&mut dir)));
+        let dist_x = X87::from_f64_exact(vector_normalise_and_mag(buf(&mut dir)).to_f64());
         let dist = f32_of(dist_x);
         if !dist_x.fcom(x(0.0)).test_any(0x41) {
             let h = f32_of(heading_of(f32::from_bits(dir[0]), f32::from_bits(dir[1])));
@@ -357,7 +357,7 @@ fn leader_update(this: GPtr<u8>, info: GPtr<u8>, ts: f32) {
     if rd::<u8>(this, 0x30) == 0 && rd::<u8>(this, 0xE) == 0 {
         let u = rand_unit(0x6E_4943);
         if u.fcom(x(info_f(0x24))) == Cmp::Less {
-            let h = X87::from_f64_exact(random_in_range_f(-pi, pi));
+            let h = X87::from_f64_exact(random_in_range_f(-pi, pi).to_f64());
             wr::<f32>(this, 0x2C, f32_of(h));
             turned = true;
         }
@@ -422,7 +422,7 @@ fn leader_update(this: GPtr<u8>, info: GPtr<u8>, ts: f32) {
             f32_of(x(my_f(1)).fsub_m(rd::<f32>(pp, 4))).to_bits(),
             f32_of(x(my_f(2)).fsub_m(rd::<f32>(pp, 8))).to_bits(),
         ];
-        let mag = X87::from_f64_exact(vector_normalise_and_mag(buf(&mut away)));
+        let mag = X87::from_f64_exact(vector_normalise_and_mag(buf(&mut away)).to_f64());
         if mag.fcom(x(5.0)) == Cmp::Less {
             let s = random_in_range_i(0x23, 0x32);
             wr::<u8>(this, 0xE, s as u8);

@@ -8,7 +8,7 @@ use sa_core::hook;
 use crate::common::*;
 
 use crate::bindings::editable_response_dtor as event_dtor;
-use sa_core::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference;
 
 /// `CEventLeaderEnteredCarAsDriver::~CEventLeaderEnteredCarAsDriver` (0x48E220, thiscall; entry `push -1; jmp
 /// 0x40166A` into the SEH prologue): vtable 0x85A198, the vehicle reference (+0x14) dropped when set, then the
@@ -19,7 +19,7 @@ pub fn leader_entered_car_as_driver_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x85A198);
     let v = rd::<GPtr<u8>>(this, 0x14);
     if !v.is_null() {
-        entity_clean_up_old_reference(v, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x14)));
+        entity_clean_up_old_reference(v, this.byte_add(0x14));
     }
     event_dtor(this);
 }

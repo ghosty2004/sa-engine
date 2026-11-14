@@ -27,9 +27,9 @@ sa_core::globals! {
 }
 
 pub use sa_core::bindings::destroy_fx_system;
-pub use sa_core::bindings::world_remove;
+pub use sa_world::bindings::world_remove;
 pub use sa_world::bindings::clear_blip_for_entity;
-pub use sa_world::bindings::add_explosion;
+pub use crate::bindings::add_explosion;
 pub use sa_world::bindings::object_get_ref_ as object_pool_get_ref;
 orig! {
     /// `CEntity` scalar deleting destructor (vtable slot 0)
@@ -145,7 +145,7 @@ pub fn remove_not_add(creator: GPtr<u8>, ty: i32, px: f32, py: f32, pz: f32) {
         0x13 | 0x14 => 2,
         _ => return,
     };
-    add_explosion(GPtr::NULL, creator, ex as u32, px, py, pz, 0, 1, -1.0, 0);
+    add_explosion(GPtr::NULL, creator, (ex as u32) as i32, px, py, pz, 0, 1, -1.0, 0);
 }
 
 /// `CProjectileInfo::RemoveIfThisIsAProjectile(CObject*)` (0x739A40): the active info whose
@@ -255,19 +255,15 @@ pub use sa_world::bindings::audio_report_object_destruction;
 pub use sa_world::bindings::ped_get_weapon_slot;
 pub use sa_world::bindings::ped_is_pointer_valid;
 pub use sa_core::bindings::audio_report_frontend_event;
-pub use sa_core::bindings::find_player_vehicle;
+pub use sa_world::bindings::find_player_vehicle;
 pub use sa_world::bindings::attach_entity_to_entity_quat;
+pub use sa_world::bindings::find_player_ped;
+pub use sa_core::bindings::world_get_is_line_of_sight_clear as get_is_line_of_sight_clear;
 orig! {
-    /// `FindPlayerPed(int32)` (0x56E210)
-    pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
     /// `CProjectileInfo::RemoveProjectile(CProjectileInfo*, CProjectile*)` (0x7388F0)
     pub fn remove_projectile_call(info: GPtr<u8>, obj: GPtr<u8>) = cdecl 0x7388F0 => remove_projectile;
     /// `CWorld::SetPedsChoking(float x, y, z, float radius, CEntity*)` (0x565800); raw position words
     pub fn set_peds_choking(x: u32, y: u32, z: u32, r: f32, e: GPtr<u8>) = cdecl 0x565800 => unported;
-    /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, bool buildings, vehicles, peds,
-    /// objects, dummies, seeThrough, ignoreSomeObjects)` (0x56A490)
-    #[allow(clippy::too_many_arguments)]
-    pub fn get_is_line_of_sight_clear(a: GPtr<u8>, b: GPtr<u8>, bd: u8, v: u8, p: u8, o: u8, d: u8, s: u8, i: u8) -> u8 = cdecl 0x56A490 => unported;
 }
 
 /// `CReplay::Mode`
@@ -297,7 +293,7 @@ pub fn remove_projectile(info: GPtr<u8>, obj: GPtr<u8>) {
     };
     let boom = |by: GPtr<u8>, ty: i32| {
         let p = pos(obj);
-        add_explosion(GPtr::NULL, by, ty as u32, p[0], p[1], p[2], 0, 1, -1.0, 0);
+        add_explosion(GPtr::NULL, by, (ty as u32) as i32, p[0], p[1], p[2], 0, 1, -1.0, 0);
     };
     match ru(info, 0) {
         0x10 | 0x15 => boom(c, 0),
@@ -395,14 +391,14 @@ fn rocket_trail(o: GPtr<u8>) {
         v[0] = unit2(0x738DE5);
         v[1] = unit2(0x738E07);
         v[2] = unit2(0x738E29);
-        normalise(lp(&mut v).cast());
+        normalise(GPtr::<u8>::cast::<[f32;3]>(lp(&mut v).cast()));
         let mut w = rv_bits(o, 0x44);
-        normalise(lp(&mut w).cast());
+        normalise(GPtr::<u8>::cast::<[f32;3]>(lp(&mut w).cast()));
         let mut c = [0u32; 3];
         let cp = cross_product(lp(&mut c).cast(), lp(&mut w).cast(), lp(&mut v).cast());
         let cv = rv(cp, 0);
         let mut vel = [x(cv[0]).fmul_m(1.5).to_f32(), x(cv[1]).fmul_m(1.5).to_f32(), x(cv[2]).fmul_m(1.5).to_f32()];
-        crate::weapon::fx_add_particle(g::<GPtr<u8>>(0xA9AE20).read(), lp(&mut p).cast(), lp(&mut vel).cast(), 0.0, mp, -1.0, cf(0x3F99_999A), cf(0x3F19_999A), 0);
+        crate::weapon::fx_add_particle(g::<GPtr<u8>>(0xA9AE20).read(), lp(&mut p).cast(), lp(&mut vel).cast(), 0.0f32.to_bits(), mp, (-1.0f32).to_bits(), cf(0x3F99_999A), cf(0x3F19_999A), 0);
     }
 }
 
@@ -482,7 +478,7 @@ fn heat_seek(info: GPtr<u8>, o: GPtr<u8>) {
     let mut cur = rv_bits(mv, 0);
     let mut dir = [lx.fsub_m(a[0]).to_f32(), ly.fsub_m(a[1]).to_f32(), x(lz).fsub_m(a[2]).to_f32()];
     let curp: GPtr<u8> = lp(&mut cur).cast();
-    normalise(curp);
+    normalise(curp.cast::<[f32;3]>());
     let c = rv(curp, 0);
     let dot = x(dir[2]).fmul_m(c[2]).fadd(x(dir[1]).fmul_m(c[1])).fadd(x(dir[0]).fmul_m(c[0]));
     let mut f = Fpu::new();
@@ -496,7 +492,7 @@ fn heat_seek(info: GPtr<u8>, o: GPtr<u8>) {
         dir[1] = x(dir[1]).fsub(cy).to_f32();
         dir[2] = x(dir[2]).fsub_m(cz).to_f32();
     }
-    normalise(lp(&mut dir).cast());
+    normalise(GPtr::<u8>::cast::<[f32;3]>(lp(&mut dir).cast()));
     let mut drag = 1.0f32;
     let mut rate = if creator_is_player(rp(info, 4)) { x(cf(0x3C3F_B15A)) } else { x(cf(0x3C13_74BC)) };
     let mut f = Fpu::new();

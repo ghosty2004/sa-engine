@@ -193,8 +193,8 @@ pub use crate::bindings::add_brain_for_code_use as add_new_streamed_script_brain
 pub use crate::bindings::get_actual_blip_array_index;
 pub use crate::bindings::get_proper_index_from_index_used_by_script;
 pub use sa_core::bindings::ped_at_ref;
-pub use sa_core::bindings::world_add;
-pub use sa_core::bindings::world_remove;
+pub use sa_world::bindings::world_add;
+pub use sa_world::bindings::world_remove;
 pub use sa_stream::bindings::world_remove_references_to_deleted_object;
 pub use sa_world::bindings::find_zone_by_label;
 pub use sa_world::bindings::object_at_ref;

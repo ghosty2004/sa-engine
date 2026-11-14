@@ -13,16 +13,16 @@ use sa_core::{hook, orig};
 use crate::common::*;
 
 use sa_world::bindings::anim_blend_animation;
-use sa_core::bindings::assoc_set_finish_callback as anim_set_finish_callback;
+use sa_anim::bindings::assoc_set_finish_callback as anim_set_finish_callback;
 use crate::bindings::ik_is_arm_pointing;
 use crate::bindings::play_hand_signal_anim_ctor;
 use crate::bindings::task_complex_dtor;
 use sa_core::bindings::general_random_int_in_range as random_int;
 use sa_core::bindings::object_new;
-use sa_core::bindings::streaming_remove_model;
+use sa_stream::bindings::streaming_remove_model;
 use sa_core::bindings::streaming_request_model;
-use sa_core::bindings::world_add;
-use sa_core::bindings::anim_add_block_ref;
+use sa_world::bindings::world_add;
+use sa_anim::bindings::anim_add_block_ref;
 use sa_stream::bindings::anim_remove_block_ref;
 use sa_stream::bindings::get_animation_block_index as anim_get_block_index;
 use sa_stream::bindings::model_info_add_ref;
@@ -102,7 +102,7 @@ pub fn hand_signal_create_sub_task(this: GPtr<u8>, ty: u32) -> GPtr<u8> {
 fn hand_model(this: GPtr<u8>, id: usize, mi_slot: usize, bit: u8, flags_at_entry: u8) {
     if load_state(id) == 1 {
         if flags_at_entry & bit == 0 {
-            model_info_add_ref(g::<GPtr<u8>>(mi_slot).read());
+            model_info_add_ref(GPtr::<u8>::cast::<sa_stream::shared::CBaseModelInfo>(g::<GPtr<u8>>(mi_slot).read()));
             wr::<u8>(this, 0x14, rd::<u8>(this, 0x14) | bit);
         }
     } else {
@@ -164,11 +164,11 @@ pub fn hand_signal_dtor(this: GPtr<u8>) {
     let mi = |slot: usize| g::<GPtr<u8>>(slot).read();
     let f = rd::<u8>(this, 0x14);
     if f & 1 != 0 {
-        model_info_remove_ref(mi(if f & 8 != 0 { 0xA9B6F8 } else { 0xA9B6F0 }));
+        model_info_remove_ref(GPtr::<u8>::cast::<sa_stream::shared::CBaseModelInfo>(mi(if f & 8 != 0 { 0xA9B6F8 } else { 0xA9B6F0 })));
     }
     let f = rd::<u8>(this, 0x14);
     if f & 2 != 0 {
-        model_info_remove_ref(mi(if f & 8 != 0 { 0xA9B6FC } else { 0xA9B6F4 }));
+        model_info_remove_ref(GPtr::<u8>::cast::<sa_stream::shared::CBaseModelInfo>(mi(if f & 8 != 0 { 0xA9B6FC } else { 0xA9B6F4 })));
     }
     let f = rd::<u8>(this, 0x14);
     if f & 4 != 0 {
@@ -225,7 +225,7 @@ pub fn play_hand_signal_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
     let group = if one_hand { 0x4E } else { 0x4D };
     let a = anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), group, anim as u32, f32::from_bits(rd::<u32>(this, 0x14)));
     wr::<GPtr<u8>>(this, 8, a);
-    anim_set_finish_callback(a, FINISH_RUN_ANIM_CB, GPtr::from_addr((this.addr() as u32) as usize));
+    anim_set_finish_callback(a, FINISH_RUN_ANIM_CB, GPtr::<u8>::addr(GPtr::from_addr((this.addr() as u32) as usize)) as u32);
     if rd::<i32>(this, 0x10) == -1 {
         return;
     }

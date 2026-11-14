@@ -12,9 +12,9 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
-use sa_core::bindings::entity_update_rw_frame;
+use sa_world::bindings::entity_update_rw_frame;
 use sa_core::bindings::matrix_assign;
-use sa_core::bindings::matrix_dtor;
+use sa_world::bindings::matrix_dtor;
 use sa_core::bindings::matrix_rotate_z;
 use sa_core::bindings::matrix_update_matrix;
 use sa_core::bindings::matrix_update_rw_matrix;

@@ -21,7 +21,7 @@ const VT_FOLLOW_NODE_ROUTE: u32 = 0x8700A8;
 const EMPTY_NODE_ADDRESS: usize = 0x8A5F44;
 
 use crate::bindings::point_route_new;
-use sa_world::bindings::task_complex_ctor;
+use crate::bindings::task_complex_ctor;
 orig! {
     /// `CNodeRoute::operator new(uint32)` (0x41B860, cdecl)
     fn node_route_new(size: u32) -> GPtr<u8> = cdecl 0x41B860 => node_route_new_host;
@@ -56,7 +56,7 @@ pub fn follow_node_route_ctor(
     time: u32,
     flag3: u32,
 ) -> GPtr<u8> {
-    task_complex_ctor(GPtr::from_addr((this.addr() as u32) as usize));
+    task_complex_ctor(GPtr::<u8>::addr(GPtr::from_addr((this.addr() as u32) as usize)) as u32);
     wr::<u32>(this, 0, VT_FOLLOW_NODE_ROUTE);
     wr::<u32>(this, 0xC, target.read());
     wr::<u32>(this, 0x10, target.wrapping_index(1).read());

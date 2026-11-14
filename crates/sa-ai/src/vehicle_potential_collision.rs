@@ -182,7 +182,7 @@ pub fn handler_compute_vehicle_potential_collision_response(this: GPtr<u8>, e: G
             return;
         }
         player_ped_annoy_player_ped(p, 0);
-        ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), GPtr::from_addr(S_PLAYER_LOOK as usize), ped(this), veh, 1500, -1i32 as u32, GPtr::NULL, 1, 0x3E80_0000, 500, 3, 0);
+        ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), GPtr::from_addr(S_PLAYER_LOOK as usize), ped(this), veh, 1500, (-1i32 as u32) as i32, GPtr::NULL, 1, f32::from_bits(0x3E80_0000), 500, 3, 0);
         let pd = ped(this);
         let w = rd::<u32>(pd, 0x5A0 + 0x1C * isize::from(rd::<i8>(pd, 0x718)));
         if [0, 5, 0x16, 0x17, 0x1C].contains(&w) {
@@ -192,7 +192,7 @@ pub fn handler_compute_vehicle_potential_collision_response(this: GPtr<u8>, e: G
     }
     let t = x87_abs(x(gf(K_PED_SCALE)).fmul_m(speed_along).fmul_m(gf(K_SPEED_SCALE)));
     if !x87_abs(x(along)).fcom(t).test_parity(0x05) {
-        let r = X87::from_f64_exact(general_random_float_in_range(0.0, 1.0));
+        let r = X87::from_f64_exact(general_random_float_in_range(0.0, 1.0).to_f64());
         let a_speed = x87_abs(x(speed_along));
         let (margin, t0, t1, t2);
         if !a_speed.fcom(x(gf(K_FAST))).test_any(0x41) {
@@ -270,11 +270,11 @@ pub fn handler_compute_vehicle_potential_collision_response(this: GPtr<u8>, e: G
     if n < 200 {
         let h = heading_to_vehicle(this, veh);
         set(this, new_task(0x18, |t| achieve_heading_ctor(t, f32::from_bits(h.to_bits()), gu(HEADING_A), gu(HEADING_B))));
-        ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), GPtr::from_addr(S_PED_LOOK as usize), ped(this), veh, 1300, -1i32 as u32, GPtr::NULL, 1, 0x3E80_0000, 500, 3, 0);
+        ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), GPtr::from_addr(S_PED_LOOK as usize), ped(this), veh, 1300, (-1i32 as u32) as i32, GPtr::NULL, 1, f32::from_bits(0x3E80_0000), 500, 3, 0);
         return;
     }
     if n < 400 {
-        ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), GPtr::from_addr(S_PED_LOOK as usize), ped(this), veh, 1300, -1i32 as u32, GPtr::NULL, 1, 0x3E80_0000, 500, 3, 0);
+        ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), GPtr::from_addr(S_PED_LOOK as usize), ped(this), veh, 1300, (-1i32 as u32) as i32, GPtr::NULL, 1, f32::from_bits(0x3E80_0000), 500, 3, 0);
     }
 }
 

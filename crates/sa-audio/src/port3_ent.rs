@@ -569,7 +569,7 @@ use crate::bindings::twin_initialise;
 use crate::bindings::twin_loop_stop_sound_and_forget as twin_stop_sound_and_forget;
 use crate::bindings::twin_play;
 use crate::bindings::twin_update;
-use sa_stream::bindings::ped_is_player;
+use sa_ped::bindings::ped_is_player;
 use sa_world::bindings::get_using_parachute as intelligence_get_using_parachute;
 use sa_world::bindings::clump_get_association as anim_get_association;
 orig! {
@@ -766,8 +766,8 @@ pub fn ped_service(this: GPtr<u8>) {
 
 use crate::bindings::ae_resolve_probability;
 use crate::bindings::hw_load_sound_bank;
-use sa_world::bindings::cam_no_rain as cull_cam_no_rain;
-use sa_world::bindings::player_no_rain as cull_player_no_rain;
+use sa_render::bindings::cam_no_rain as cull_cam_no_rain;
+use sa_render::bindings::player_no_rain as cull_player_no_rain;
 use crate::bindings::ae_random_float as ae_random_float_st0;
 use crate::bindings::are_sounds_of_this_event_playing_for_this_entity as sm_are_sounds_of_this_event_playing;
 orig! {
@@ -1033,8 +1033,8 @@ pub fn user_radio_free_decoder_library() {
 
 use sa_world::bindings::ae_random_int;
 use sa_world::bindings::ped_get_ped_talking;
-use sa_core::bindings::vector_magnitude_sqr as vector_magnitude_sqr_st0;
-use sa_core::bindings::vector_sub;
+use sa_world::bindings::vector_magnitude_sqr as vector_magnitude_sqr_st0;
+use sa_world::bindings::vector_sub;
 orig! {
     /// `CAEPedSpeechAudioEntity` virtual slot 0x10 (`GetPedType`, AX)
     fn vcall_speech_get_ped_type(speech: GPtr<u8>) -> u32 = thiscall vslot 0x10 => unported;
@@ -1072,7 +1072,7 @@ fn too_far_from_camera(ped: GPtr<u8>) -> bool {
     let mut d = [0u32; 3];
     let dp: GPtr<u8> = GPtr::from_raw(d.as_mut_ptr()).cast();
     vector_sub(dp, entity_position(ped), camera_position());
-    let m = X87::from_f64_exact(vector_magnitude_sqr_st0(dp.cast::<f32>()));
+    let m = X87::from_f64_exact(vector_magnitude_sqr_st0(dp.cast::<u8>()).to_f64());
     !m.fcom(x(c(0x859600))).test_any(0x41)
 }
 
@@ -1186,7 +1186,7 @@ use crate::bindings::sound_stop_and_forget as sound_stop_sound_and_forget;
 use sa_stream::bindings::ped_model_info_increment_voice;
 use sa_world::bindings::task_facial_stop_all;
 use crate::bindings::speech_get_voice_and_type_for_special_ped;
-use sa_core::bindings::tm_get_task_secondary as task_manager_get_task_secondary;
+use sa_ai::bindings::tm_get_task_secondary as task_manager_get_task_secondary;
 orig! {
     /// `FUN_004e3350` (0x4E3350): the ped-speech slot initialiser
     fn speech_slot_init(slot: GPtr<u8>) -> u32 = thiscall 0x4E3350 => crate::port2_a::ped_speech_slot_init;
@@ -1507,7 +1507,7 @@ pub fn twin_play_twin_loop_sound(
 
 // ---- CAEPedSpeechAudioEntity::IsCJDressedInForGangSpeech ------------------------------------------
 
-use sa_core::bindings::find_player_ped;
+use sa_world::bindings::find_player_ped;
 use sa_core::bindings::get_uppercase_key as key_gen_get_uppercase_key;
 orig! {
     /// `CTheZones::GetLevelFromPosition(CVector)` (0x441B70, cdecl, the vector by value)

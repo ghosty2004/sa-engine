@@ -2,14 +2,15 @@
 //! 1.0 US bytes (the exe wins over gta-reversed).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
 use crate::common::*;
 
-use sa_core::bindings::find_player_ped;
-use sa_stream::bindings::find_player_wanted;
-use sa_world::bindings::ped_groups_get_peds_group as get_peds_group;
+use sa_world::bindings::find_player_ped;
+use sa_world::bindings::find_player_wanted;
+use crate::bindings::ped_groups_get_peds_group as get_peds_group;
 orig! {
     /// `CEvent::GetEventType` (vtable +0x4)
     fn v_get_event_type(e: GPtr<u8>) -> u32 = thiscall vslot 0x4 => unported;
@@ -55,7 +56,7 @@ pub fn pgi_process_ignore_player_group(this: GPtr<u8>) {
         if src.is_null() || rd::<u8>(src, 0x36) & 7 != 3 {
             return;
         }
-        let g = get_peds_group(src);
+        let g = GPtr::from_addr(get_peds_group(src.addr() as u32) as usize);
         if g.is_null() {
             return;
         }

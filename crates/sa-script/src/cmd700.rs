@@ -75,8 +75,8 @@ use crate::bindings::draw_debug_square;
 use sa_world::bindings::find_node_coors_for_script;
 use crate::bindings::highlight_important_area;
 use crate::bindings::start_script_fire;
-use sa_world::bindings::vehicle_41bdd0;
-use sa_core::bindings::camera_restore_with_jump_cut as restore_with_jump_cut;
+use sa_veh::bindings::vehicle_41bdd0;
+use sa_cam::bindings::camera_restore_with_jump_cut as restore_with_jump_cut;
 use sa_core::bindings::text_get;
 use sa_core::bindings::vector_magnitude;
 use sa_world::bindings::cutscene_delete_cutscene_data as delete_cutscene_data;
@@ -89,22 +89,22 @@ use sa_world::bindings::get_distance_from_centre_of_mass_to_base_of_model;
 use sa_world::bindings::get_stat_value;
 use sa_world::bindings::is_shallow_water;
 use sa_world::bindings::is_within_area;
-use sa_world::bindings::ped_groups_get_peds_group as get_peds_group;
+use sa_ai::bindings::ped_groups_get_peds_group as get_peds_group;
 use sa_world::bindings::set_char_created_by;
 use sa_world::bindings::set_stat_value;
 use sa_world::bindings::weapon_is_type_melee;
 use crate::bindings::is_ped_dead;
 use crate::bindings::read_label;
 use crate::bindings::this_is_a_valid_random_ped;
-use sa_core::bindings::find_player_coors;
-use sa_core::bindings::stats_increment_stat as increment_stat;
+use sa_world::bindings::find_player_coors;
+use sa_world::bindings::stats_increment_stat as increment_stat;
 use sa_world::bindings::camera_is_sphere_visible as is_sphere_visible;
-use sa_world::bindings::check_damaged_weapon_type;
+use sa_pop::bindings::check_damaged_weapon_type;
 use sa_world::bindings::entity_get_bound_centre as get_bound_centre;
 use sa_world::bindings::find_ground_z_for_3d_coord;
-use sa_world::bindings::find_node_closest_to_coors;
+use sa_pop::bindings::find_node_closest_to_coors;
 use sa_world::bindings::get_garage_number_by_name;
-use sa_world::bindings::get_position as path_node_get_position;
+use sa_pop::bindings::get_position as path_node_get_position;
 use sa_world::bindings::get_water_level;
 use sa_world::bindings::join_car_with_road_system_goto_coors;
 orig! {
@@ -256,7 +256,7 @@ fn get_random_char_in_zone(s: Scr) {
             || ped.byte_add(0x58C).cast::<u32>().read() != 0
             || ped.byte_add(0x46C).cast::<u32>().read() & 0x100 != 0
             || this_is_a_valid_random_ped(s, ped.byte_add(0x598).cast::<u32>().read(), sp(0), sp(1), sp(2)) == 0
-            || !get_peds_group(ped).is_null()
+            || !GPtr::<u8>::from_addr(get_peds_group(ped.addr() as u32) as usize).is_null()
         {
             continue;
         }

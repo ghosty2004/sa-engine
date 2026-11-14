@@ -14,19 +14,20 @@ use crate::common::*;
 use crate::bindings::bbox_centre_uncached;
 use crate::bindings::bbox_corners_uncached;
 use crate::bindings::car_drive_dtor_63ca40 as task_complex_car_drive_dtor;
-use sa_core::bindings::entity_clean_up_old_reference;
-use sa_core::bindings::tm_get_task_secondary as task_manager_get_task_secondary;
+use sa_world::bindings::entity_clean_up_old_reference;
+use crate::bindings::tm_get_task_secondary as task_manager_get_task_secondary;
 use sa_core::bindings::vector_normalise;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::event_acquaintance_ped_dtor;
 use sa_core::bindings::ptr_list_double_link_flush;
-use sa_world::bindings::task_simple_dtor;
+use crate::bindings::task_simple_dtor;
 use crate::bindings::bbox_segment_planes_uncached;
 use crate::bindings::compute_entity_hit_side as entity_hit_side_3;
 use crate::bindings::entity_hit_side_2;
 use crate::bindings::geom_compute_route_round_entity_bbox as route_round_entity_bbox_2;
 use sa_world::bindings::clear_blip_for_entity as radar_clear_blip_for_entity;
-use sa_world::bindings::sequence_flush;
+use crate::bindings::sequence_flush;
+use sa_core::bindings::world_get_is_line_of_sight_clear;
 orig! {
     /// `CPedIntelligence::RestorePedDecisionMakerType` (0x600BC0)
     fn intel_restore_ped_decision_maker_type(i: GPtr<u8>) -> u32 = thiscall 0x600BC0 => crate::intelrest::intel_restore_ped_decision_maker_type;
@@ -41,9 +42,6 @@ orig! {
     /// `CPedGeometryAnalyser::CanPedTargetPoint(const CPed&, const CVector&, bool)` (0x5F1B70, cdecl; AL, full EAX
     /// passed on)
     fn can_ped_target_point_o(ped: GPtr<u8>, point: GPtr<u8>, check: u32) -> u32 = cdecl 0x5F1B70 => unported;
-    /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, bool x7)` (0x56A490, cdecl; AL, full EAX)
-    #[allow(clippy::too_many_arguments)]
-    fn world_get_is_line_of_sight_clear(a: GPtr<u8>, b: GPtr<u8>, bld: u32, veh: u32, peds: u32, obj: u32, dum: u32, see: u32, cam: u32) -> u32 = cdecl 0x56A490 => unported;
 }
 
 /// `CPools::ms_pPedPool`
@@ -164,7 +162,7 @@ pub fn membership_remove_member(this: GPtr<u8>, idx: i32) {
     let slot = this.byte_add(4 + 4 * idx as isize);
     let p = rd::<GPtr<u8>>(slot, 0);
     if !p.is_null() {
-        entity_clean_up_old_reference(p, slot.cast::<GPtr<u8>>());
+        entity_clean_up_old_reference(p, slot.cast::<u8>());
     }
     if ped_is_player(rd::<GPtr<u8>>(slot, 0)) == 0 {
         let ped = rd::<GPtr<u8>>(slot, 0);
@@ -255,7 +253,7 @@ pub fn inform_friends_event_queue_flush() {
         let e = g::<u8>(0xA9AFB8 + 0xC * i);
         let p = rd::<GPtr<u8>>(e, 0);
         if !p.is_null() {
-            entity_clean_up_old_reference(p, e.cast::<GPtr<u8>>());
+            entity_clean_up_old_reference(p, e.cast::<u8>());
             wr::<u32>(e, 0, 0);
         }
         let ev = rd::<GPtr<u8>>(e, 4);
@@ -521,7 +519,7 @@ pub fn compute_entity_bounding_box_planes_uncached(_z: u32, corners: GPtr<u8>, n
         wr::<f32>(dp, 0, f32_of(x(rd::<f32>(c, 0)).fsub_m(prev[0])));
         wr::<f32>(dp, 4, f32_of(x(rd::<f32>(c, 4)).fsub_m(prev[1])));
         wr::<f32>(dp, 8, f32_of(x(rd::<f32>(c, 8)).fsub_m(prev[2])));
-        vector_normalise(dp);
+        vector_normalise(dp.cast::<[f32;3]>());
         let n = normals.byte_add(0xC * i);
         wr::<u32>(n, 0, rd::<u32>(dp, 4));
         wr::<f32>(n, 4, f32_of(x(rd::<f32>(dp, 0)).fchs()));
@@ -646,7 +644,7 @@ pub fn can_ped_target_point(ped: GPtr<u8>, point: GPtr<u8>, check: u32) -> u32 {
     wr::<u32>(op, 0, rd::<u32>(p, 0));
     wr::<u32>(op, 4, rd::<u32>(p, 4));
     wr::<f32>(op, 8, z);
-    world_get_is_line_of_sight_clear(op, point, 1, 0, 0, 1, 0, 1, 0)
+    world_get_is_line_of_sight_clear(op, point, 1, 0, 0, 1, 0, 1, 0) as u32
 }
 
 /// Every registration of this module.

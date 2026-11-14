@@ -20,8 +20,8 @@ use crate::common::{ACTIVE_CAM, CAMS, CCAM_SIZE, g, k, rd, wr, x, xi};
 
 pub use crate::bindings::cc_well_buffer_me;
 pub use crate::bindings::pad_540e80;
-pub use sa_core::bindings::cam_using_3rd_person_mouse_cam as cc_using_3rd_person_mouse_cam;
-pub use sa_core::bindings::get_pad as cc_get_pad;
+pub use crate::bindings::cam_using_3rd_person_mouse_cam as cc_using_3rd_person_mouse_cam;
+pub use sa_input::bindings::get_pad as cc_get_pad;
 pub use sa_core::bindings::tm_get_task_secondary as cc_task_secondary;
 pub use sa_core::bindings::vector_magnitude as cc_magnitude;
 pub use sa_core::bindings::vector_normalise as cc_normalise;
@@ -42,18 +42,18 @@ pub use sa_world::bindings::placeable_get_matrix as cc_get_matrix;
 pub use sa_world::bindings::process_line_of_sight as cc_process_los;
 pub use sa_world::bindings::tm_find_active_task_by_type as cc_find_active_task_by_type;
 pub use sa_world::bindings::vector_add as cc_vec_add;
-pub use sa_core::bindings::vector_sub as cc_vec_sub;
+pub use sa_world::bindings::vector_sub as cc_vec_sub;
 pub use sa_core::bindings::world_get_is_line_of_sight_clear as cc_los;
 pub use crate::bindings::cc_get_arr_pos;
 pub use crate::bindings::cc_start_transition;
 pub use crate::bindings::pad_540f80;
 pub use sa_core::bindings::audio_report_frontend_event as cc_report_frontend_audio;
-pub use sa_core::bindings::camera_restore_with_jump_cut as cc_restore_with_jump_cut;
+pub use crate::bindings::camera_restore_with_jump_cut as cc_restore_with_jump_cut;
 pub use sa_core::bindings::get_atan_of_xy as cc_atan_xy;
 pub use sa_pop::bindings::cull_zones_find_zone_with_stairs_for_player as find_zone_with_stairs_for_player;
-pub use sa_world::bindings::camera_clear_player_weapon_mode as cc_clear_weapon_mode;
-pub use sa_world::bindings::camera_restore as cc_restore;
-pub use sa_world::bindings::camera_set_directly_behind as cc_set_behind;
+pub use crate::bindings::camera_clear_player_weapon_mode as cc_clear_weapon_mode;
+pub use crate::bindings::camera_restore as cc_restore;
+pub use crate::bindings::camera_set_directly_behind as cc_set_behind;
 pub use sa_world::bindings::find_ground_z_for_3d_coord as cc_find_ground_z;
 pub use sa_world::bindings::intel_get_task_hold as cc_task_hold;
 pub use sa_world::bindings::vector_mul_scalar as cc_vec_mul_s;
@@ -323,7 +323,7 @@ fn doors_fixed_cam(
         right[0] = x(f(l88[0])).fsub_m(f(l50[0])).to_f32().to_bits();
         right[1] = x(f(l88[1])).fsub_m(f(l50[1])).to_f32().to_bits();
         right[2] = 0;
-        cc_normalise(vbuf(&mut right));
+        cc_normalise(GPtr::<u8>::cast::<[f32;3]>(vbuf(&mut right)));
         l88
     };
     let mut base = base;
@@ -344,7 +344,7 @@ fn jump_cut_copies(this: GPtr<u8>, looking_at_vector: Option<u8>) {
     let slot = cam(this).byte_add(0x21C);
     let old = rd::<GPtr<u8>>(slot, 0);
     if !old.is_null() {
-        clean_up_old_reference(old, slot.cast::<GPtr<u8>>());
+        clean_up_old_reference(old, slot.cast::<u8>());
     }
     wr::<GPtr<u8>>(cam(this), 0x21C, tgt(this));
     let slot = cam(this).byte_add(0x21C);
@@ -778,7 +778,7 @@ fn vehicle_target(this: GPtr<u8>, l11: &mut bool, l20: &mut u32) -> u16 {
                     let t = tgt(this);
                     cc_vec_sub(vbuf(&mut l40), pos(t), vbuf(&mut l50));
                     l40[2] = 0;
-                    cc_normalise(vbuf(&mut l40));
+                    cc_normalise(GPtr::<u8>::cast::<[f32;3]>(vbuf(&mut l40)));
                     let mut l64 = [0u32; 3];
                     let mut l14 = [0u32; 3];
                     stairs_push_out(
@@ -827,7 +827,7 @@ fn vehicle_target(this: GPtr<u8>, l11: &mut bool, l20: &mut u32) -> u16 {
             d[0] = x(f(src[0])).fsub_m(f(l50[0])).to_f32().to_bits();
             d[1] = x(f(src[1])).fsub_m(f(l50[1])).to_f32().to_bits();
             d[2] = 0;
-            cc_normalise(vbuf(&mut d));
+            cc_normalise(GPtr::<u8>::cast::<[f32;3]>(vbuf(&mut d)));
             let first = GPtr::<u8>::from_addr(doors[0] as usize);
             let second = GPtr::<u8>::from_addr(doors[1] as usize);
             doors_fixed_cam(this, first, second, l88, l50, 0x8CCF1C, 0x8CCF18);
@@ -1220,7 +1220,7 @@ fn ped_fixed_from_stairs_or_garage(this: GPtr<u8>, stairs: GPtr<u8>, l11: bool) 
             let t = tgt(this);
             cc_vec_sub(vbuf(&mut l40), pos(t), vbuf(&mut l50));
             l40[2] = 0;
-            cc_normalise(vbuf(&mut l40));
+            cc_normalise(GPtr::<u8>::cast::<[f32;3]>(vbuf(&mut l40)));
             let mut l64 = [0u32; 3];
             let mut l24 = [0u32; 3];
             stairs_push_out(
@@ -1274,7 +1274,7 @@ fn ped_fixed_from_stairs_or_garage(this: GPtr<u8>, stairs: GPtr<u8>, l11: bool) 
     let dvp = vbuf(&mut dv);
     if sel == 1 {
         if rd::<GPtr<u8>>(this, 0x81C).is_null() && l11 {
-            cc_normalise(dvp);
+            cc_normalise(dvp.cast::<[f32;3]>());
             if !stairs.is_null() {
                 let n = zone_extent(stairs);
                 let k2 = xi(n).fmul_m(kd(0x858CB0)).fadd_m(kd(0x86326C)).to_f32().to_bits();
@@ -1289,14 +1289,14 @@ fn ped_fixed_from_stairs_or_garage(this: GPtr<u8>, stairs: GPtr<u8>, l11: bool) 
                 l30 = r;
             }
         } else {
-            cc_normalise(dvp);
+            cc_normalise(dvp.cast::<[f32;3]>());
             cc_vec_s_mul(vbuf(&mut l24), f32::from_bits(0x4150_0000), dvp);
             let mut r = [0u32; 3];
             cc_vec_add(vbuf(&mut r), vbuf(&mut l30), vbuf(&mut l24));
             l30 = r;
         }
     } else {
-        cc_normalise(dvp);
+        cc_normalise(dvp.cast::<[f32;3]>());
         cc_vec_s_mul(vbuf(&mut l24), f32::from_bits(0x4150_0000), dvp);
         let mut r = [0u32; 3];
         cc_vec_add(vbuf(&mut r), vbuf(&mut l40), vbuf(&mut l24));
@@ -1530,7 +1530,7 @@ fn looking_at_player(this: GPtr<u8>, dx_in: u16, l10_in: bool, l11: bool, l13: b
                 let mut l14 = [0u32; 3];
                 cc_vec_sub(vbuf(&mut l14), cam(this).byte_add(0x19C), pos(ped0()));
                 l14[2] = 0;
-                cc_normalise(vbuf(&mut l14));
+                cc_normalise(GPtr::<u8>::cast::<[f32;3]>(vbuf(&mut l14)));
                 cc_atan_xy(f32::from_bits(0x3A83_126F), f32::from_bits(0x3F80_0000)) as f32
             } else {
                 st0(cc_atan_xy(f32::from_bits(rd::<u32>(c, 0x190)), f32::from_bits(rd::<u32>(c, 0x194))))

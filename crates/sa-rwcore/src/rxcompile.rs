@@ -104,7 +104,7 @@ fn error_set_code(code: u32) {
         plugin_id: 1,
         error_code: code as i32,
     };
-    rw_error_set(GPtr::from_raw(&mut e));
+    rw_error_set(GPtr::from_raw(&mut e).cast());
 }
 
 /// Index of `node` in `nodes` as the original computes it (signed division by 0x28).

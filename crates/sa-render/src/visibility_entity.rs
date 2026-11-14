@@ -11,7 +11,7 @@ use crate::common::{ftol32, g, rd, wr, x, xi};
 
 use crate::bindings::render_atomic_with_alpha;
 use crate::bindings::render_one_non_road;
-use sa_core::bindings::rp_clump_for_all_atomics as clump_for_all_atomics;
+use sa_rwcore::bindings::rp_clump_for_all_atomics as clump_for_all_atomics;
 orig! {
     /// `G->dOpenDevice.fpRenderStateSet(state, value)` (`[G] + 0x20`)
     fn rw_render_state_set(state: u32, value: u32) -> u32 = cdecl table 0xC97B24 0x20 => unported;
@@ -87,7 +87,7 @@ pub fn render_fading_clump(mi: GPtr<u8>, clump: GPtr<u8>, alpha: i32) {
         rw_render_state_set(0xB, 2);
     }
     let mut a = alpha;
-    clump_for_all_atomics(clump, RENDER_ATOMIC_WITH_ALPHA_CB, GPtr::from_raw(&raw mut a).cast());
+    clump_for_all_atomics(clump, RENDER_ATOMIC_WITH_ALPHA_CB, GPtr::<u8>::addr(GPtr::from_raw(&raw mut a).cast()) as u32);
     if rd::<u8>(mi, 0x12) & 4 != 0 {
         rw_render_state_set(0xB, 6);
     }

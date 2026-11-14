@@ -2,6 +2,7 @@
 //! damage events reach CJ's group). Ported from the 1.0 US bytes; gta-reversed `EventDamage.cpp` as a reading aid.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -57,7 +58,7 @@ pub fn event_damage_affects_ped_group(this: GPtr<u8>, group: GPtr<u8>) -> u8 {
             *v = x(rd::<f32>(sp, o)).fsub_m(rd::<f32>(mp, o)).to_f32();
         }
         let dp = GPtr::from_raw(d.as_mut_ptr()).cast::<u8>();
-        vector_normalise(dp);
+        vector_normalise(dp.cast::<[f32;3]>());
         let seen = intel_can_see_entity_with_lights(rd::<GPtr<u8>>(m, 0x47C), rd::<GPtr<u8>>(this, 0x14), 0);
         if X87::from_f64_exact(seen).fcom(x(g::<f32>(0x858B50).read())).test_any(0x41) {
             continue;

@@ -52,8 +52,8 @@ const E_RW_WRITE: u32 = 0x8000_001C;
 pub use crate::bindings::free_list_destroy as rw_free_list_destroy;
 pub use crate::bindings::free_list_create_prealloc as rw_free_list_create_and_preallocate;
 pub use crate::bindings::read_chunk_header_call;
-pub use sa_core::bindings::rw_stream_skip as rw_stream_skip_call;
-pub use sa_core::bindings::stream_read as rw_stream_read_call;
+pub use crate::bindings::rw_stream_skip as rw_stream_skip_call;
+pub use crate::bindings::stream_read as rw_stream_read_call;
 orig! {
     /// `G->fileFuncs.rwfopen(name, mode)` (G+0xC8)
     pub fn rw_fopen(name: GPtr<u8>, mode: GPtr<u8>) -> u32 = cdecl table 0xC97B24 0xC8 => unported;

@@ -14,11 +14,11 @@ use crate::bindings::wander_set_next_min_scan_time;
 use sa_core::bindings::tm_get_active_task;
 use sa_core::bindings::vector_difference;
 use sa_stream::bindings::streaming_is_very_busy;
-use sa_world::bindings::event_group_add;
+use crate::bindings::event_group_add;
 use sa_world::bindings::event_group_get_event_of_type;
 use sa_world::bindings::intel_find_task_by_type;
 use sa_world::bindings::la_riots_active_here;
-use sa_core::bindings::vector_magnitude_sqr;
+use sa_world::bindings::vector_magnitude_sqr;
 use sa_core::bindings::world_get_is_line_of_sight_clear;
 use crate::bindings::ctor_4aecd0 as event_chat_partner_ctor;
 orig! {
@@ -121,7 +121,7 @@ pub fn wander_look_for_chat_partners(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         let om = rd::<GPtr<u8>>(other, 0x14);
         let opos = entity_pos(other);
         vector_difference(d_p, opos, ped_pos);
-        let m2 = X87::from_f64_exact(vector_magnitude_sqr(d_p.cast::<f32>()));
+        let m2 = X87::from_f64_exact(vector_magnitude_sqr(d_p.cast::<u8>()).to_f64());
         let r = k(K_CHAT_RANGE);
         if x(r).fmul_m(r).fcom(m2).test_any(0x41) {
             continue;

@@ -6,6 +6,7 @@
 //! function goes through `orig!` at the original address.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -15,21 +16,18 @@ use crate::common::*;
 const TIME_MS: usize = 0xB7CB84;
 
 use crate::bindings::event_pool_new;
-use sa_core::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference;
 use sa_core::bindings::entity_register_reference;
 use sa_world::bindings::event_base_dtor;
-use sa_world::bindings::localisation_blood;
-use sa_world::bindings::task_simple_ctor;
+use crate::bindings::localisation_blood;
+use crate::bindings::task_simple_ctor;
 use sa_world::bindings::ped_say;
+use sa_world::bindings::ped_audio_add_audio_event;
 orig! {
     /// `CEvent::GetEventType` (vtable +4)
     fn v_event_type(e: GPtr<u8>) -> i32 = thiscall vslot 0x4 => unported;
     /// `CEvent::GetEventPriority` (vtable +8)
     fn v_event_priority(e: GPtr<u8>) -> i32 = thiscall vslot 0x8 => unported;
-    /// `CAEPedAudioEntity::AddAudioEvent(int32 event, float volume, float speed, CPhysical*, uint8, int32, uint32)`
-    /// (0x4E2BB0, `ret 0x1C`)
-    #[allow(clippy::too_many_arguments)]
-    fn ped_audio_add_audio_event(a: GPtr<u8>, ev: u32, vol: u32, speed: u32, ent: GPtr<u8>, b: u32, c: u32, d: u32) = thiscall 0x4E2BB0 => unported;
 }
 
 // ---- vt_85b4c8 (an event with a float at +0xC) -------------------------------------------------------------------
@@ -144,7 +142,7 @@ pub fn throw_projectile_control_throw(this: GPtr<u8>, release: u32, target: GPtr
         let old = rd::<GPtr<u8>>(slot, 0);
         if target != old {
             if !old.is_null() {
-                entity_clean_up_old_reference(old, slot.cast::<GPtr<u8>>());
+                entity_clean_up_old_reference(old, slot.cast::<u8>());
             }
             wr::<GPtr<u8>>(slot, 0, target);
             entity_register_reference(target, slot);
@@ -191,7 +189,7 @@ pub fn die_say_death_sample(this: GPtr<u8>, ped: GPtr<u8>) {
         5 => {
             say(0x156);
             if localisation_blood() != 0 {
-                ped_audio_add_audio_event(ped.byte_add(0x138), 0x77, 0, 0x3F80_0000, ped, 0, 0, 0);
+                ped_audio_add_audio_event(ped.byte_add(0x138), 0x77, f32::from_bits(0), f32::from_bits(0x3F80_0000), ped, 0, 0, 0);
             }
         }
         _ => say(0x157),

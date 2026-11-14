@@ -24,8 +24,23 @@ orig! {
 }
 
 orig! {
+    /// `CFireManager::Init` (0x538BC0)
+    pub fn fire_manager_init(m: GPtr<u8>) = thiscall 0x538BC0 => crate::fire::manager_init;
+}
+
+orig! {
+    /// `CFire::Extinguish` (0x5393F0)
+    pub fn fire_extinguish(f: GPtr<u8>) = thiscall 0x5393F0 => crate::fire::extinguish;
+}
+
+orig! {
     /// `CFireManager::ExtinguishPointWithWater` (0x5394C0)
     pub fn extinguish_point_with_water(man: GPtr<u8>, x: f32, y: f32, z: f32, r: f32, w: f32) -> u8 = thiscall 0x5394C0 => crate::fire::extinguish_point_with_water;
+}
+
+orig! {
+    /// `CFireManager::StartFire-` (0x53A050)
+    pub fn start_fire_on(mgr: GPtr<u8>, target: GPtr<u8>, creator: GPtr<u8>, size: f32, a: u8, time: u32, generation: i8) -> GPtr<u8> = thiscall 0x53A050 => crate::fire::start_fire_target;
 }
 
 orig! {
@@ -39,13 +54,63 @@ orig! {
 }
 
 orig! {
+    /// `CWeaponInfo::GetCrouchReloadAnimationID` (0x685700)
+    pub fn get_crouch_reload_animation_id_call(wi: GPtr<u8>) -> u32 = thiscall 0x685700 => crate::weapon_info::get_crouch_reload_animation_id;
+}
+
+orig! {
     /// `CGlass::WasGlassHitByBullet` (0x71C0D0)
     pub fn glass_was_hit_by_bullet(e: GPtr<u8>, x: f32, y: f32, z: f32) = cdecl 0x71C0D0 => unported;
 }
 
 orig! {
+    /// `CExplosion::AddExplosion` (0x736A50)
+    pub fn add_explosion(victim: GPtr<u8>, creator: GPtr<u8>, ty: i32, x: f32, y: f32, z: f32, life: u32, sound: u8, shake: f32, visible: u8) -> u8 = cdecl 0x736A50 => crate::explosion::add_explosion;
+}
+
+orig! {
+    /// `CProjectileInfo::AddProjectile` (0x737C80)
+    pub fn add_projectile(creator: GPtr<u8>, wt: u32, x: f32, y: f32, z: f32, force: f32, dir: GPtr<u8>, target: GPtr<u8>) -> u8 = cdecl 0x737C80 => crate::projectile_add::add_projectile;
+}
+
+orig! {
+    /// `CWeapon::AddGunshell` (0x73A3E0)
+    pub fn add_gunshell(w: GPtr<u8>, e: GPtr<u8>, pos: GPtr<u8>, dir: GPtr<f32>, size: f32) = thiscall 0x73A3E0 => crate::weapon::add_gunshell;
+}
+
+orig! {
+    /// `CWeapon::GenerateDamageEvent` (0x73A530)
+    pub fn generate_damage_event(victim: GPtr<u8>, creator: GPtr<u8>, ty: i32, damage: i32, piece: i32, dir: u32) -> u8 = cdecl 0x73A530 => crate::weapon_impact::generate_damage_event;
+}
+
+orig! {
+    /// `CWeapon::Reload` (0x73AEB0)
+    pub fn weapon_reload(w: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x73AEB0 => crate::weapon::reload;
+}
+
+orig! {
+    /// `CWeapon::CanBeUsedFor2Player-Static` (0x73B240)
+    pub fn can_be_used_for_2_player(ty: i32) -> u8 = cdecl 0x73B240 => crate::weapon::can_be_used_for_2_player;
+}
+
+orig! {
+    /// `CWeapon::TargetWeaponRangeMultiplier` (0x73B380)
+    pub fn target_weapon_range_multiplier(victim: GPtr<u8>, owner: GPtr<u8>) -> sa_math::x87::X87 = reg("args = stack stack") 0x73B380 => crate::weapon::target_weapon_range_multiplier;
+}
+
+orig! {
     /// `CWeapon::CheckForShootingVehicleOccupant` (0x73F480)
     pub fn check_for_shooting_vehicle_occupant(e: GPtr<u8>, cp: GPtr<u8>, ty: i32, a: GPtr<u8>, b: GPtr<u8>) -> u8 = cdecl 0x73F480 => crate::weapon_fire::check_for_shooting_vehicle_occupant;
+}
+
+orig! {
+    /// `CWeaponInfo::GetWeaponInfo-original` (0x743C60)
+    pub fn get_weapon_info(wt: i32, skill: u8) -> GPtr<u8> = cdecl 0x743C60 => crate::weapon_info::get_weapon_info;
+}
+
+orig! {
+    /// `CWeaponInfo::FindWeaponType` (0x743D10)
+    pub fn find_weapon_type(name: GPtr<u8>) -> i32 = cdecl 0x743D10 => crate::weapon_info::find_weapon_type;
 }
 
 orig! {

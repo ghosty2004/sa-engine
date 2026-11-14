@@ -380,11 +380,11 @@ const D3DERR_DEVICELOST: i32 = 0x8876_0868u32 as i32;
 const D3DERR_DEVICENOTRESET: i32 = 0x8876_0869u32 as i32;
 const D3DERR_INVALIDCALL: i32 = 0x8876_086Cu32 as i32;
 
-use sa_core::bindings::frame_get_ltm;
-use sa_core::bindings::rw_matrix_invert as matrix_invert;
-use sa_core::bindings::rw_raster_create as raster_create;
-use sa_core::bindings::rw_raster_destroy as raster_destroy;
-use sa_core::bindings::set_transform;
+use crate::bindings::frame_get_ltm;
+use crate::bindings::rw_matrix_invert as matrix_invert;
+use crate::bindings::rw_raster_create as raster_create;
+use crate::bindings::rw_raster_destroy as raster_destroy;
+use crate::bindings::set_transform;
 orig! {
     /// `IDirect3DDevice9::SetRenderTarget(index, surface)` (+0x94)
     fn dev_set_render_target(dev: GPtr<u8>, index: u32, surface: u32) -> i32 = stdcall vslot 0x94 => unported;
@@ -466,7 +466,7 @@ fn swap_chain_zbuffer(camera: GPtr<u8>, w: i32, h: i32) -> u32 {
     }
     wr::<u32>(camera, 0x64, 0);
     raster_destroy(p8(z));
-    let nz = raster_create(w, h, 0, 1);
+    let nz = raster_create((w as u32) as i32, (h as u32) as i32, 0, 1);
     if !nz.is_null() {
         wr::<u32>(camera, 0x64, nz.addr() as u32);
     }

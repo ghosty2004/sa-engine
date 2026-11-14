@@ -16,7 +16,7 @@ use sa_math::x87::X87;
 
 use crate::bindings::get_entry_exit_index;
 use sa_core::bindings::crt_strncpy;
-use sa_core::bindings::matrix_dtor;
+use crate::bindings::matrix_dtor;
 use sa_core::bindings::matrix_mul_vec;
 use sa_core::bindings::matrix_set_rotate_z as set_rotate_z;
 use sa_core::bindings::add_item as quad_tree_add_item;
@@ -129,7 +129,7 @@ pub fn add_one(
     for i in 0..2 {
         let mut out = [0f32; 3];
         let vp: GPtr<u8> = GPtr::from_raw(v.as_mut_ptr().wrapping_add(3 * i)).cast();
-        let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::from_raw(out.as_mut_ptr()).cast()), mp, vp));
+        let r = matrix_mul_vec(GPtr::from_raw(out.as_mut_ptr()).cast(), mp, vp);
         for k in 0..3 {
             v[3 * i + k] = f(r, 4 * k as isize).read();
         }

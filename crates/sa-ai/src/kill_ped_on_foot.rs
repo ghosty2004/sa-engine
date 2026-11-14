@@ -26,11 +26,11 @@ use crate::bindings::task_complex_dtor;
 use crate::bindings::task_timer_is_out_of_time as timer_is_out_of_time;
 use crate::bindings::vehicle_is_driver;
 use crate::bindings::vehicle_is_passenger;
-use sa_core::bindings::entity_clean_up_old_reference;
-use sa_core::bindings::find_player_ped;
+use sa_world::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::find_player_ped;
 use sa_core::bindings::general_random_int_in_range as random_in_range;
 use sa_core::bindings::ped_give_weapon;
-use sa_stream::bindings::find_player_wanted;
+use sa_world::bindings::find_player_wanted;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::area_codes_ctor;
 use sa_world::bindings::can_ped_open_locks as vehicle_can_ped_open_locks;
@@ -38,7 +38,7 @@ use sa_world::bindings::compute_target_door_to_exit;
 use sa_world::bindings::cull_zones_no_police;
 use sa_world::bindings::membership_get_leader;
 use sa_world::bindings::ped_drop_held_entity as ped_drop_entity_held;
-use sa_world::bindings::ped_groups_get_peds_group as peds_group;
+use crate::bindings::ped_groups_get_peds_group as peds_group;
 use sa_world::bindings::ped_say;
 use sa_world::bindings::stand_still_ctor;
 use sa_world::bindings::weapon_is_type_melee;
@@ -46,7 +46,7 @@ use crate::bindings::drag_ped_from_car_ctor;
 use crate::bindings::is_gang_ped_type;
 use sa_world::bindings::car_enter_exit_is_room_for_ped_to_leave_car as is_room_for_ped_to_leave_car;
 use sa_world::bindings::destroy_car_ctor;
-use sa_world::bindings::event_group_add;
+use crate::bindings::event_group_add;
 use sa_world::bindings::leave_car_ctor;
 use sa_world::bindings::pause_ctor;
 use sa_world::bindings::ped_set_current_weapon as ped_set_current_weapon_type;
@@ -125,7 +125,7 @@ fn create(this: GPtr<u8>, ty: u32, ped: GPtr<u8>) -> GPtr<u8> {
 fn update_room_flag(this: GPtr<u8>) -> bool {
     let t = target(this);
     let door = compute_target_door_to_exit(rd::<GPtr<u8>>(t, 0x58C), t) as u32;
-    let room = is_room_for_ped_to_leave_car(rd::<GPtr<u8>>(target(this), 0x58C), door, GPtr::NULL);
+    let room = is_room_for_ped_to_leave_car(rd::<GPtr<u8>>(target(this), 0x58C), door as i32, GPtr::NULL);
     let fl = rd::<u8>(this, 0xC);
     let fl = fl ^ (((room << 2) ^ fl) & 4);
     wr::<u8>(this, 0xC, fl);
@@ -182,7 +182,7 @@ pub fn kill_ped_on_foot_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x86D894);
     let t = target(this);
     if !t.is_null() {
-        entity_clean_up_old_reference(t, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x10)));
+        entity_clean_up_old_reference(t, this.byte_add(0x10));
     }
     task_complex_dtor(this);
 }
@@ -254,9 +254,9 @@ pub fn kill_ped_on_foot_create_sub_task(this: GPtr<u8>, ty: u32, ped: GPtr<u8>) 
             if t == find_player_ped(0) {
                 ped_say(ped, 0x103, 0, f32::from_bits(0x3F80_0000), 0, 0, 0);
             } else {
-                let grp = peds_group(t);
+                let grp = GPtr::<u8>::from_addr(peds_group(t.addr() as u32) as usize);
                 let leader_is_player = !grp.is_null() && {
-                    let leader = membership_get_leader(peds_group(target(this)).byte_add(8));
+                    let leader = membership_get_leader(GPtr::from_addr(peds_group(GPtr::<u8>::addr(target(this)) as u32) as usize).byte_add(8));
                     leader == find_player_ped(0)
                 };
                 if !leader_is_player {
@@ -432,7 +432,7 @@ pub fn kill_ped_on_foot_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<
                         let mut i = 0u32;
                         while i < 13 {
                             if rd::<i32>(ped, 0x5AC + i as isize * 0x1C) > 0 {
-                                ped_set_current_weapon_slot(ped, i);
+                                ped_set_current_weapon_slot(ped, i as i32);
                                 break;
                             }
                             i += 1;

@@ -911,12 +911,12 @@ pub(crate) fn register() {
     host::set::<fn(u32) -> u32>("sa_core::platform::call::time_begin_period", time_period);
     host::set::<fn(u32) -> u32>("sa_core::platform::call::time_end_period", time_period);
 
-    host::set::<fn(GPtr<u8>, GPtr<u8>) -> GPtr<u8>>("sa_core::filemgr::fopen", fopen);
+    host::set::<fn(GPtr<u8>, GPtr<u8>) -> GPtr<u8>>("sa_core::bindings::fopen", fopen);
     host::set::<fn(GPtr<u8>, u32, u32, GPtr<u8>) -> u32>("sa_core::filemgr::fread", fread);
     host::set::<fn(GPtr<u8>, u32, u32, GPtr<u8>) -> u32>("sa_core::filemgr::fwrite", fwrite);
     host::set::<fn(GPtr<u8>, i32, i32) -> i32>("sa_core::filemgr::fseek", fseek);
     host::set::<fn(GPtr<u8>, i32, GPtr<u8>) -> GPtr<u8>>("sa_core::filemgr::fgets", fgets);
-    host::set::<fn(GPtr<u8>) -> i32>("sa_core::filemgr::fclose", fclose);
+    host::set::<fn(GPtr<u8>) -> i32>("sa_core::bindings::fclose", fclose);
     host::set::<fn(GPtr<u8>, i32) -> GPtr<u8>>("sa_core::filemgr::getcwd", getcwd);
     host::set::<fn(GPtr<u8>) -> i32>("sa_core::filemgr::chdir", chdir);
     host::set::<fn(GPtr<u8>) -> i32>("sa_core::filemgr::rwftell", rwftell);
@@ -1049,8 +1049,8 @@ pub(crate) fn register() {
     host::set::<fn() -> GPtr<u8>>("sa_stream::cdstream::get_current_thread", get_current_thread);
     host::set::<fn(GPtr<u8>) -> i32>("sa_stream::cdstream::get_thread_priority", get_thread_priority);
     host::set::<fn(GPtr<u8>, i32) -> i32>("sa_stream::cdstream::set_thread_priority", set_thread_priority);
-    host::set::<fn(u32, u32, u32) -> GPtr<u8>>("sa_stream::cdstream::malloc_align", malloc_align);
-    host::set::<fn(GPtr<u8>)>("sa_stream::cdstream::free_align", free_align);
+    host::set::<fn(u32, u32, u32) -> GPtr<u8>>("sa_core::bindings::mem_malloc_align", malloc_align);
+    host::set::<fn(GPtr<u8>)>("sa_core::bindings::mem_free_align", free_align);
 
     host::set::<fn(GPtr<ComObj>) -> i32>("sa_input::pad::did_acquire", did_acquire);
     host::set::<fn(GPtr<ComObj>) -> i32>("sa_input::pad::did_poll", did_poll);

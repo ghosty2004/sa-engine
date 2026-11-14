@@ -32,45 +32,40 @@ sa_core::globals! {
 /// `CCamera TheCamera`
 const THE_CAMERA: usize = 0xB6F028;
 
-pub use sa_world::bindings::get_weapon_skill_type_call as ped_get_weapon_skill;
-pub use sa_core::bindings::get_pad;
+pub use crate::bindings::get_weapon_skill_type_call as ped_get_weapon_skill;
+pub use sa_input::bindings::get_pad;
 pub use sa_core::bindings::tm_get_task_secondary as get_task_secondary;
-pub use sa_core::bindings::world_add;
-pub use sa_core::bindings::world_remove;
+pub use sa_world::bindings::world_add;
+pub use sa_world::bindings::world_remove;
 pub use sa_world::bindings::camera_clear_player_weapon_mode;
 pub use sa_world::bindings::event_group_get_event_of_type as get_event_of_type;
 pub use sa_world::bindings::get_task_jet_pack;
 pub use sa_world::bindings::is_coop_game_going_on;
-pub use sa_world::bindings::make_changes_for_new_weapon;
+pub use crate::bindings::make_changes_for_new_weapon;
 pub use sa_world::bindings::membership_get_member as group_get_member;
 pub use sa_world::bindings::ped_groups_are_in_same_group as are_in_same_group;
 pub use sa_world::bindings::physical_get_lighting_total as get_lighting_total;
 pub use sa_world::bindings::stats_get_fat_and_muscle_modifier as get_fat_and_muscle_modifier;
 pub use sa_world::bindings::tm_find_active_task_by_type as find_active_task_by_type;
 pub use crate::bindings::tell_group_to_start_following_player;
-pub use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+pub use sa_world::bindings::entity_clean_up_old_reference as clean_up_old_reference;
 pub use sa_world::bindings::clear_cross_hair;
-pub use sa_world::bindings::ped_get_weapon_skill as ped_get_weapon_skill_current;
-pub use sa_world::bindings::ped_is_ped_in_control as ped_is_in_control;
-pub use sa_world::bindings::wanted_set_wanted_level;
-pub use sa_world::bindings::wanted_set_wanted_level_no_drop;
+pub use crate::bindings::ped_get_weapon_skill as ped_get_weapon_skill_current;
+pub use crate::bindings::ped_is_ped_in_control as ped_is_in_control;
+pub use crate::bindings::wanted_set_wanted_level;
+pub use crate::bindings::wanted_set_wanted_level_no_drop;
+pub use sa_world::bindings::max_f;
 orig! {
     /// `CWanted::CheatWantedLevel` (0x562540)
     pub fn wanted_cheat_wanted_level(w: GPtr<u8>, l: i32) = thiscall 0x562540 => crate::wanted::cheat_wanted_level;
     /// `CWeapon::CanBeUsedFor2Player()` (0x73DEF0)
     pub fn weapon_can_be_used_for_2_player(w: GPtr<u8>) -> u8 = thiscall 0x73DEF0 => unported;
-    /// `std::max<float>`-like instance (0x420800): `a` when `a > b` (ordered), else `b`
-    pub fn max_f(a: f32, b: f32) -> f64 = cdecl 0x420800 => max_f_port;
     /// scalar deleting destructor (vtable slot 0)
     pub fn entity_vdelete(e: GPtr<u8>, flag: i32) = thiscall vslot 0x0 => unported;
     /// `CPlayerPed::PlayerWantsToAttack` (0x60CC50)
     pub fn player_wants_to_attack(p: GPtr<u8>) = thiscall 0x60CC50 => unported;
     /// `CTask::GetTaskType` (vtable slot 0x10)
     pub fn task_get_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-}
-
-pub fn max_f_port(a: f32, b: f32) -> f64 {
-    if x(a).fcom(x(b)).test_any(0x41) { f64::from(b) } else { f64::from(a) }
 }
 
 fn pdata(p: GPtr<u8>) -> GPtr<u8> {
@@ -218,7 +213,7 @@ pub fn can_player_start_mission(this: GPtr<u8>) -> u8 {
     if !get_task_secondary(rd::<GPtr<u8>>(this, 0x47C).byte_add(4), 0).is_null() {
         return 0;
     }
-    if (crate::common::ped_is_alive(this) as u32) as u8 == 0 {
+    if ((crate::common::ped_is_alive(this) as u8) as u32) as u8 == 0 {
         return 0;
     }
     get_event_of_type(rd::<GPtr<u8>>(this, 0x47C).byte_add(0x68), 0x20).is_null() as u8
@@ -234,7 +229,7 @@ pub fn clear_weapon_target(this: GPtr<u8>) {
     let r: GPtr<GPtr<u8>> = this.byte_add(0x71C).cast();
     let e = r.read();
     if !e.is_null() {
-        clean_up_old_reference(e, r);
+        clean_up_old_reference(e, r.cast::<u8>());
     }
     r.write(GPtr::NULL);
     camera_clear_player_weapon_mode(g::<u8>(THE_CAMERA));
@@ -247,7 +242,7 @@ pub fn clear_3rd_person_mouse_target(this: GPtr<u8>) {
     let r: GPtr<GPtr<u8>> = this.byte_add(0x79C).cast();
     let e = r.read();
     if !e.is_null() {
-        clean_up_old_reference(e, r);
+        clean_up_old_reference(e, r.cast::<u8>());
         r.write(GPtr::NULL);
     }
 }
@@ -324,7 +319,7 @@ pub fn does_player_want_new_weapon(this: GPtr<u8>, ty: i32, in_vehicle: u32) -> 
     let active = || i32::from(rd::<i8>(this, 0x718));
     if !get_task_jet_pack(rd::<GPtr<u8>>(this, 0x47C)).is_null() && active() == slot {
         let flag = || {
-            let sk = ped_get_weapon_skill(this, cur) as u8;
+            let sk = (ped_get_weapon_skill(this, cur) as i32) as u8;
             (rd::<u32>(get_weapon_info(cur, i32::from(sk) as u8), 0x18) >> 1) & 1
         };
         if flag() != 0 && flag() == 0 {
@@ -389,7 +384,7 @@ pub fn find_target_priority(this: GPtr<u8>, e: GPtr<u8>) -> X87 {
 #[hook(addr = 0x609F80, conv = thiscall, name = "CPlayerPed::CanIKReachThisTarget", expect = "8B 44 24 10 56", this = "CPlayerPed")]
 pub fn can_ik_reach_this_target(this: GPtr<u8>, tx: f32, ty: f32, tz: f32, w: GPtr<u8>, _b: u32) -> u8 {
     let t = rd::<i32>(w, 0);
-    let sk = ped_get_weapon_skill(this, t) as u8;
+    let sk = (ped_get_weapon_skill(this, t) as i32) as u8;
     if (rd::<u32>(get_weapon_info(t, i32::from(sk) as u8), 0x18) >> 1) & 1 != 0 {
         return 1;
     }
@@ -431,7 +426,7 @@ pub fn handle_sprint_energy(this: GPtr<u8>, sprint: u32, rate: f32) -> u8 {
             return 0;
         }
         let v = x(rd::<f32>(d, 0x18)).fsub(x(sa_core::timer::TIME_STEP.get()).fmul_m(rate)).to_f32();
-        wr::<f32>(d, 0x18, X87::from_f64_exact(max_f(-150.0, v)).to_f32());
+        wr::<f32>(d, 0x18, X87::from_f64_exact(max_f(-150.0, v).to_f64()).to_f32());
         return 1;
     }
     let m = X87::from_f64_exact(get_fat_and_muscle_modifier(7));
@@ -508,7 +503,7 @@ pub fn is_hidden(this: GPtr<u8>) -> u32 {
 #[hook(addr = 0x609CD0, conv = thiscall, name = "CPlayerPed::GetWeaponRadiusOnScreen", expect = "56 8B F1 0F BE 86 18 07 00 00", this = "CPlayerPed")]
 pub fn get_weapon_radius_on_screen(this: GPtr<u8>) -> X87 {
     let w = rd::<i32>(this, 0x5A0 + isize::from(rd::<i8>(this, 0x718)) * 0x1C);
-    let sk = ped_get_weapon_skill_current(this) as u8;
+    let sk = (ped_get_weapon_skill_current(this) as u32) as u8;
     let info = get_weapon_info(w, i32::from(sk) as u8);
     let a = x(0.5).fdiv(x(rd::<f32>(info, 0x38)));
     if rd::<u32>(info, 0) == 0 {
@@ -576,7 +571,7 @@ pub fn player_has_just_attacked_someone(this: GPtr<u8>) {
 // --- hook list (generated) ---
 
 use crate::bindings::ped_speech_initialise;
-use sa_core::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference;
 use sa_core::bindings::membership_set_leader as group_membership_set_leader;
 use sa_core::bindings::ped_group_process;
 use sa_world::bindings::ped_groups_add_group;
@@ -625,7 +620,7 @@ pub fn player_ped_ctor(this: GPtr<u8>, player_id: i32, group_created: u32) -> GP
     player_ped_set_initial_state(this, group_created);
     let r = rd::<GPtr<u8>>(this, 0x71C);
     if !r.is_null() {
-        entity_clean_up_old_reference(r, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x71C)));
+        entity_clean_up_old_reference(r, this.byte_add(0x71C));
     }
     wr::<u32>(this, 0x71C, 0);
     ped_set_ped_state(this, 1);

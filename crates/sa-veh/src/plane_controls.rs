@@ -13,15 +13,15 @@ use crate::common::{f32_of, ftol32, g, jne_mask, jp5, rd, wr, x, xi};
 
 use crate::bindings::keep_area_around_player_clear;
 use crate::bindings::pad_get_hand_brake;
-use sa_core::bindings::find_player_ped;
-use sa_core::bindings::get_pad as pad_get_pad;
+use sa_world::bindings::find_player_ped;
+use sa_input::bindings::get_pad as pad_get_pad;
 use sa_pop::bindings::pad_get_look_left;
 use sa_pop::bindings::pad_get_look_right;
 use sa_world::bindings::pad_get_accelerate;
 use sa_world::bindings::pad_get_brake;
 use sa_world::bindings::pad_get_steering_left_right;
 use sa_world::bindings::pad_get_steering_up_down;
-use sa_world::bindings::plane_set_gear_up;
+use crate::bindings::plane_set_gear_up;
 use sa_pop::bindings::get_car_gun_up_down as pad_get_car_gun_up_down;
 
 /// `CTimer::ms_fTimeStep`.
@@ -98,17 +98,17 @@ pub fn plane_process_control_inputs(this: GPtr<u8>, ped_type: u32) {
     let stick = |this: GPtr<u8>, step_local: &mut f32| {
         *step_local = ts();
         state.write(0);
-        let lr = pad_get_steering_left_right(pad_get_pad(id as u32));
+        let lr = pad_get_steering_left_right(pad_get_pad((id as u32) as i32));
         ease(this, 0x990, xi(i32::from(lr)).fmul_m(f32::from_bits(0x3C00_0000)), *step_local);
         *step_local = ts();
-        let ud = pad_get_steering_up_down(pad_get_pad(id as u32));
+        let ud = pad_get_steering_up_down(pad_get_pad((id as u32) as i32));
         ease(this, 0x98C, xi(i32::from(ud)).fmul_m(f32::from_bits(0x3C00_0000)), *step_local);
     };
     if g::<u8>(0xB6_EC2E).read() != 0 && g::<u8>(0xC1_CC03).read() != 0 {
-        pad_get_pad(id as u32);
+        pad_get_pad((id as u32) as i32);
         let mut mouse = x(g::<f32>(0xB7_3424).read()).fcom(x(0.0)).test_parity(0x44);
         if !mouse {
-            pad_get_pad(id as u32);
+            pad_get_pad((id as u32) as i32);
             mouse = x(g::<f32>(0xB7_3428).read()).fcom(x(0.0)).test_parity(0x44);
         }
         if !mouse {
@@ -116,19 +116,19 @@ pub fn plane_process_control_inputs(this: GPtr<u8>, ped_type: u32) {
                 || !jne_mask(x(rd::<f32>(this, 0x98C)).fabs(), x(0.0), 0x41);
             if moving
                 && state.read() == 2
-                && pad_get_steering_left_right(pad_get_pad(id as u32)) == 0
-                && pad_get_steering_up_down(pad_get_pad(id as u32)) == 0
+                && pad_get_steering_left_right(pad_get_pad((id as u32) as i32)) == 0
+                && pad_get_steering_up_down(pad_get_pad((id as u32) as i32)) == 0
             {
                 mouse = true;
             }
         }
         if mouse {
             state.write(2);
-            if rd::<u16>(pad_get_pad(id as u32), 0x2C) == 0 {
-                pad_get_pad(id as u32);
+            if rd::<u16>(pad_get_pad((id as u32) as i32), 0x2C) == 0 {
+                pad_get_pad((id as u32) as i32);
                 let k = g::<f32>(0x87_1908).read();
                 wr::<f32>(this, 0x990, f32_of(x(g::<f32>(0xB7_3424).read()).fmul_m(k).fadd_m(rd::<f32>(this, 0x990))));
-                pad_get_pad(id as u32);
+                pad_get_pad((id as u32) as i32);
                 wr::<f32>(this, 0x98C, f32_of(x(g::<f32>(0xB7_3428).read()).fmul_m(k).fadd_m(rd::<f32>(this, 0x98C))));
             }
             let lim = x(g::<f32>(0x87_190C).read());
@@ -138,8 +138,8 @@ pub fn plane_process_control_inputs(this: GPtr<u8>, ped_type: u32) {
             if !jp5(x(rd::<f32>(this, 0x98C)).fabs(), lim) {
                 wr::<f32>(this, 0x98C, f32_of(decay().fmul_m(rd::<f32>(this, 0x98C))));
             }
-        } else if pad_get_steering_left_right(pad_get_pad(id as u32)) != 0
-            || pad_get_steering_up_down(pad_get_pad(id as u32)) != 0
+        } else if pad_get_steering_left_right(pad_get_pad((id as u32) as i32)) != 0
+            || pad_get_steering_up_down(pad_get_pad((id as u32) as i32)) != 0
             || state.read() != 2
         {
             stick(this, &mut step_local);
@@ -161,14 +161,14 @@ pub fn plane_process_control_inputs(this: GPtr<u8>, ped_type: u32) {
     };
     let r = if vortex {
         step_local = ts();
-        let lr = pad_get_steering_left_right(pad_get_pad(id as u32));
+        let lr = pad_get_steering_left_right(pad_get_pad((id as u32) as i32));
         let v = xi(i32::from(lr)).fmul_m(f32::from_bits(0x3C00_0000)).fsub_m(roll).fmul_m(step_local);
         let v = v.fmul_m(f32::from_bits(0x3E4C_CCCD)).fadd_m(roll);
         wr::<f32>(this, 0x988, f32_of(v));
         clamp1(v)
     } else {
-        let right = f32_of(xi(i32::from(pad_get_look_right(pad_get_pad(id as u32)))));
-        let v = if pad_get_look_left(pad_get_pad(id as u32)) != 0 { eased(x(-1.0), ts(), step_local) } else { eased(x(right), ts(), step_local) };
+        let right = f32_of(xi(i32::from(pad_get_look_right(pad_get_pad((id as u32) as i32)))));
+        let v = if pad_get_look_left(pad_get_pad((id as u32) as i32)) != 0 { eased(x(-1.0), ts(), step_local) } else { eased(x(right), ts(), step_local) };
         wr::<f32>(this, 0x988, f32_of(v));
         clamp1(v)
     };
@@ -180,12 +180,12 @@ pub fn plane_process_control_inputs(this: GPtr<u8>, ped_type: u32) {
     let h = rd::<GPtr<u8>>(this, 0x384);
     let steer = x(rd::<f32>(h, 0xA0)).fmul_m(f32::from_bits(0x3C8E_FA35)).fmul_m(rd::<f32>(this, 0x988)).fmul(t).fchs();
     wr::<f32>(this, 0x494, f32_of(steer));
-    if vortex && pad_get_hand_brake(pad_get_pad(id as u32)) != 0 {
+    if vortex && pad_get_hand_brake(pad_get_pad((id as u32) as i32)) != 0 {
         wr::<f32>(this, 0x494, f32_of(x(rd::<f32>(this, 0x494)).fmul_m(1.5)));
         wr::<f32>(this, 0x988, f32_of(x(rd::<f32>(this, 0x988)).fmul_m(1.5)));
     }
-    let acc = i32::from(pad_get_accelerate(pad_get_pad(id as u32)) as i16);
-    let brk = i32::from(pad_get_brake(pad_get_pad(id as u32)) as i16);
+    let acc = i32::from(pad_get_accelerate(pad_get_pad((id as u32) as i32)) as i16);
+    let brk = i32::from(pad_get_brake(pad_get_pad((id as u32) as i32)) as i16);
     wr::<f32>(this, 0x994, f32_of(xi(acc - brk).fmul_m(f32::from_bits(0x3B80_8081))));
     gear(this, id);
     if rd::<i16>(this, 0x22) == 0x208 {
@@ -194,18 +194,18 @@ pub fn plane_process_control_inputs(this: GPtr<u8>, ped_type: u32) {
     wr::<u8>(this, 0x428, rd::<u8>(this, 0x428) & 0xDF);
     wr::<u32>(this, 0x49C, 0);
     let mut braked = false;
-    if !jne_mask(x(fwd), x(0.0), 0x41) && pad_get_brake(pad_get_pad(id as u32)) as i16 != 0 {
-        let b = i32::from(pad_get_brake(pad_get_pad(id as u32)) as i16);
+    if !jne_mask(x(fwd), x(0.0), 0x41) && pad_get_brake(pad_get_pad((id as u32) as i32)) as i16 != 0 {
+        let b = i32::from(pad_get_brake(pad_get_pad((id as u32) as i32)) as i16);
         let k = if !jne_mask(x(fwd), x(f32::from_bits(0x3EB3_3333)), 0x41) { 0x3B00_8081 } else { 0x3B80_8081 };
         wr::<f32>(this, 0x4A0, f32_of(xi(b).fmul_m(f32::from_bits(k))));
         braked = true;
     }
     if !braked {
         let slow = speed(this).fcom(x(f32::from_bits(0x3DCC_CCCD))) == Cmp::Less;
-        let idle = slow && (pad_get_brake(pad_get_pad(id as u32)) as i16) < 10 && (pad_get_accelerate(pad_get_pad(id as u32)) as i16) < 10;
+        let idle = slow && (pad_get_brake(pad_get_pad((id as u32) as i32)) as i16) < 10 && (pad_get_accelerate(pad_get_pad((id as u32) as i32)) as i16) < 10;
         wr::<u32>(this, 0x4A0, if idle { 0x3F00_0000 } else { 0 });
     }
-    if rd::<u16>(pad_get_pad(id as u32), 0x10E) != 0 {
+    if rd::<u16>(pad_get_pad((id as u32) as i32), 0x10E) != 0 {
         wr::<u32>(this, 0x4A0, 0x3F80_0000);
         wr::<u8>(this, 0x428, rd::<u8>(this, 0x428) | 0x20);
         wr::<u32>(this, 0x49C, 0);
@@ -226,7 +226,7 @@ pub fn plane_process_control_inputs(this: GPtr<u8>, ped_type: u32) {
 
 /// The landing gear (0x6CB321..0x6CB4F3).
 fn gear(this: GPtr<u8>, id: i32) {
-    let pad = pad_get_pad(id as u32);
+    let pad = pad_get_pad((id as u32) as i32);
     let one = 0x3F80_0000u32;
     let rate = || x(ts()).fmul_m(f32::from_bits(0x3CA3_D70A));
     let set_wheels = |v: u8| {
@@ -272,10 +272,10 @@ fn gear(this: GPtr<u8>, id: i32) {
 
 /// The Hydra's thrust angle (0x6CB4FF..0x6CB5EA).
 fn thrust(this: GPtr<u8>, id: i32) {
-    if !jne_mask(xi(i32::from(pad_get_car_gun_up_down(pad_get_pad(id as u32)))).fabs(), x(10.0), 0x41) {
+    if !jne_mask(xi(i32::from(pad_get_car_gun_up_down(pad_get_pad((id as u32) as i32)))).fabs(), x(10.0), 0x41) {
         wr::<u16>(this, 0x86E, rd::<u16>(this, 0x86C));
         let delta = || {
-            let ud = pad_get_car_gun_up_down(pad_get_pad(id as u32));
+            let ud = pad_get_car_gun_up_down(pad_get_pad((id as u32) as i32));
             let d = ftol32(xi(i32::from(ud)).fmul_m(ts()).fmul_m(g::<f32>(0x8D_33DC).read()).fmul_m(f32::from_bits(0x3C00_0000)));
             i32::from(d as i16) + i32::from(rd::<u16>(this, 0x86C))
         };

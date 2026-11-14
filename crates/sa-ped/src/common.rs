@@ -8,7 +8,6 @@ pub use sa_world::collision::fpu::Fpu;
 pub use sa_world::physical::shared::lp;
 pub use sa_world::world::common::{at, f32_of, ftol32, g, rd, wr, x, xi};
 
-use sa_core::orig;
 
 /// `CPools::ms_pPedPool` (CPool<CPed, CCopPed>: objects +0, byte map +4, size +8; slot 0x7C4)
 pub const PED_POOL: usize = 0xB74490;
@@ -45,16 +44,12 @@ pub fn pool_size(pool: GPtr<u8>) -> i32 {
     rd::<i32>(pool, 8)
 }
 
-pub use sa_core::bindings::set_model_is_deletable;
-pub use sa_core::bindings::stats_increment_stat as increment_stat;
+pub use sa_stream::bindings::set_model_is_deletable;
+pub use sa_world::bindings::stats_increment_stat as increment_stat;
 pub use sa_core::bindings::streaming_request_model as request_model;
 pub use sa_world::bindings::get_stat_value;
 pub use sa_core::bindings::get_weapon_info;
-pub use sa_core::bindings::ped_is_alive;
-pub use sa_stream::bindings::find_player_wanted;
-orig! {
-    /// `FindPlayerPed(int32 playerId)` (0x56E210)
-    pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
-    /// `FindPlayerVehicle(int32 playerId, bool bIncludeRemote)` (0x56E0D0)
-    pub fn find_player_vehicle(id: i32, remote: u8) -> GPtr<u8> = cdecl 0x56E0D0 => sa_world::world::cworld::find_player_vehicle_port;
-}
+pub use crate::bindings::ped_is_alive;
+pub use sa_world::bindings::find_player_wanted;
+pub use sa_world::bindings::find_player_ped;
+pub use sa_world::bindings::find_player_vehicle;

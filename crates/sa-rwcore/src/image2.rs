@@ -23,8 +23,8 @@ fn a32<T: sa_core::mem::GameData>(p: GPtr<T>) -> u32 {
 /// E_RW_STRING_TRUNCATION.
 const E_RW_TRUNCATED: u32 = 0x8000_001E;
 
-use sa_core::bindings::image_allocate_pixels as rw_image_allocate_pixels;
-use sa_core::bindings::image_destroy as rw_image_destroy;
+use crate::bindings::image_allocate_pixels as rw_image_allocate_pixels;
+use crate::bindings::image_destroy as rw_image_destroy;
 use crate::bindings::image_find_format;
 use crate::bindings::plugin_deinit_object;
 use crate::bindings::plugin_init_object;
@@ -34,15 +34,15 @@ use crate::bindings::rw_image_read as rw_image_read_call;
 use crate::bindings::rw_raster_lock_palette;
 use crate::bindings::rw_raster_unlock_palette;
 use crate::bindings::rw_texture_set_mask_name;
-use sa_core::bindings::raster_set_from_image as rw_raster_set_from_image;
-use sa_core::bindings::rw_raster_create;
-use sa_core::bindings::rw_raster_destroy;
-use sa_core::bindings::rw_raster_lock;
-use sa_core::bindings::rw_raster_unlock;
-use sa_core::bindings::rw_stream_close;
-use sa_core::bindings::rw_stream_open;
-use sa_core::bindings::rw_texture_create;
-use sa_core::bindings::rw_texture_set_name;
+use crate::bindings::raster_set_from_image as rw_raster_set_from_image;
+use crate::bindings::rw_raster_create;
+use crate::bindings::rw_raster_destroy;
+use crate::bindings::rw_raster_lock;
+use crate::bindings::rw_raster_unlock;
+use crate::bindings::rw_stream_close;
+use crate::bindings::rw_stream_open;
+use crate::bindings::rw_texture_create;
+use crate::bindings::rw_texture_set_name;
 orig! {
     /// `_rwerror(code, a)` (0x8088D0, two arguments)
     fn rw_error2(code: u32, a: u32) -> u32 = cdecl 0x8088D0 => unported;
@@ -115,7 +115,7 @@ fn error_set_code(code: u32) {
         error_code: 0,
     };
     e.error_code = code as i32;
-    rw_error_set(GPtr::from_raw(&mut e));
+    rw_error_set(GPtr::from_raw(&mut e).cast());
 }
 
 /// `rep movsd` of `n >> 2` dwords then `rep movsb` of `n & 3` bytes, forwards.
@@ -198,7 +198,7 @@ pub fn rw_texture_default_read_callback(name: GPtr<u8>, mask: GPtr<u8>) -> GPtr<
         return GPtr::NULL;
     }
     let mut image = a32(img);
-    let raster = rw_raster_create(w, h, depth, format);
+    let raster = rw_raster_create((w as u32) as i32, (h as u32) as i32, (depth as u32) as i32, format);
     if raster.is_null() {
         rw_image_destroy(p8(image));
         return GPtr::NULL;
@@ -392,7 +392,7 @@ pub fn d3d9_raster_set_image(r: GPtr<u8>, image: GPtr<u8>, _flags: u32) -> u32 {
     }
     if rd::<u8>(r, 0x22) & 4 != 0 {
         was_locked = 1;
-    } else if GPtr::<u8>::addr(rw_raster_lock(r, 0, 5)) as u32 == 0 {
+    } else if GPtr::<u8>::addr(GPtr::from_addr(rw_raster_lock(r, 0, 5) as usize)) as u32 == 0 {
         return 0;
     }
     let pal_format = format & 0x6000;
@@ -455,7 +455,7 @@ pub fn d3d9_raster_set_image(r: GPtr<u8>, image: GPtr<u8>, _flags: u32) -> u32 {
                 error_code: 0,
             };
             e.error_code = rw_error1(0x8000_000C) as i32;
-            rw_error_set(GPtr::from_raw(&mut e));
+            rw_error_set(GPtr::from_raw(&mut e).cast());
         }
     }
     if pal_format != 0 && pal_was_locked == 0 {

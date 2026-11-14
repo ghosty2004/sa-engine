@@ -55,30 +55,24 @@ use sa_core::bindings::rx_locked_pipe_unlock;
 use sa_core::bindings::rx_pipeline_create;
 use sa_core::bindings::rx_pipeline_destroy;
 use sa_core::bindings::rx_pipeline_lock;
-use sa_core::bindings::frame_get_ltm as rw_frame_get_ltm;
-use sa_core::bindings::rp_atomic_register_plugin;
-use sa_core::bindings::rp_atomic_register_plugin_stream;
-use sa_core::bindings::rp_geometry_register_plugin;
-use sa_core::bindings::rp_geometry_register_plugin_stream;
-use sa_core::bindings::rw_d3d9_get_caps;
+use crate::bindings::frame_get_ltm as rw_frame_get_ltm;
+use crate::bindings::rp_atomic_register_plugin;
+use crate::bindings::rp_atomic_register_plugin_stream;
+use crate::bindings::rp_geometry_register_plugin;
+use crate::bindings::rp_geometry_register_plugin_stream;
+use crate::bindings::rw_d3d9_get_caps;
 use crate::bindings::atomic_set_pipeline as atomic_set_pipeline_call;
 use crate::bindings::bones_used_call as skin_find_used_bones;
 use crate::bindings::skin_deinitialize as skin_deinitialize_call;
 use crate::bindings::skin_initialize as skin_initialize_call;
 use crate::bindings::skin_split_data_destroy as split_data_destroy_call;
-use sa_core::bindings::rw_matrix_multiply;
+use crate::bindings::rw_matrix_multiply;
+use crate::bindings::rp_skin_get_skin_to_bone_matrices as get_skin_to_bone_matrices_call;
 orig! {
-    /// `RpSkinGetSkinToBoneMatrices(skin)` (0x7C7810)
-    fn get_skin_to_bone_matrices_call(skin: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C7810 => skin_to_bone_ptr;
     /// `_rwD3D9VSGetInverseWorldMatrix(out)` (0x7647B0)
     fn vs_get_inverse_world_matrix(out: GPtr<u8>) = cdecl 0x7647B0 => crate::d3d9vsmat::vs_get_inverse_world_matrix;
     /// `_rpD3D9SkinPipelineCreate()` (0x7CB2B0)
     fn d3d9_skin_pipeline_create_call() -> GPtr<u8> = cdecl 0x7CB2B0 => rp_d3d9_skin_pipeline_create;
-}
-
-#[cfg_attr(sa_phase_a, allow(dead_code))]
-fn skin_to_bone_ptr(skin: GPtr<u8>) -> GPtr<u8> {
-    p8(rp_skin_get_skin_to_bone_matrices(skin))
 }
 
 /// Last atomic / frame / hierarchy of `_rpD3D9SkinVertexShaderMatrixUpdate`.
@@ -152,7 +146,7 @@ pub fn rp_d3d9_skin_vertex_shader_matrix_update(out: GPtr<u8>, atomic: GPtr<u8>,
     g::<u32>(VS_CACHE_HIER).write(h.addr() as u32);
     g::<u32>(VS_CACHE_FRAME).write(frame);
     g::<u32>(VS_CACHE_ATOMIC_FRAME).write(rd::<u32>(atomic, 4));
-    let mut bone = get_skin_to_bone_matrices_call(skin);
+    let mut bone = GPtr::from_addr(get_skin_to_bone_matrices_call(skin) as usize);
     let flags = rd::<u32>(h, 0);
     let (mut a, mut l, mut inv) = (Mat([0; 16]), Mat([0; 16]), Mat([0; 16]));
     let mut o = out;
@@ -580,7 +574,7 @@ pub fn rx_node_definition_get_d3d9_skin_atomic_all_in_one() -> u32 {
 /// node; a lock failure destroys it (NULL).
 #[hook(addr = 0x7CB2B0, conv = cdecl, name = "_rpD3D9SkinPipelineCreate", expect = "E8 6B FA 02 00")]
 pub fn rp_d3d9_skin_pipeline_create() -> GPtr<u8> {
-    let caps = rw_d3d9_get_caps();
+    let caps = GPtr::from_addr(rw_d3d9_get_caps() as usize);
     let hw = (rd::<u8>(caps, 0x1E) & 1) as u32;
     g::<u32>(D3D9_SKIN_HWTL).write(hw);
     if hw != 0 && rd::<u32>(caps, 0xC4) & 0xFFFF >= 0x101 && rd::<u32>(caps, 0xCC) & 0xFFFF >= 0x101 {

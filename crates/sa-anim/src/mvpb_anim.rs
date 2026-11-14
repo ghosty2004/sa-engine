@@ -72,7 +72,7 @@ pub fn rp_anim_blend_clump_init_skinned() {
     rp_anim_blend_allocate_data(clump);
     let data = clump_data(clump);
     let atomic = get_first_atomic(clump);
-    let skin = rp_skin_geometry_get_skin(rd::<GPtr<u8>>(atomic, 0x18));
+    let skin = GPtr::from_addr(rp_skin_geometry_get_skin(rd::<GPtr<u8>>(atomic, 0x18)) as usize);
     let n = rp_skin_get_num_bones(skin) as i32;
     clump_data_set_number_of_bones(data, n);
     let hier = get_anim_hierarchy_from_skin_clump(clump);
@@ -108,10 +108,10 @@ pub fn rp_anim_blend_clump_init_unskinned() {
     let data = clump_data(clump);
     let frame = rd::<GPtr<u8>>(clump, 4);
     let mut cnt = 0u32;
-    rw_frame_for_all_children(frame, 0x4D6610, GPtr::<u32>::cast::<u8>(GPtr::from_raw(&mut cnt)));
+    rw_frame_for_all_children(frame, 0x4D6610, GPtr::<u8>::addr(GPtr::<u32>::cast::<u8>(GPtr::from_raw(&mut cnt))) as u32);
     clump_data_set_number_of_bones(data, cnt as i32);
     let mut cursor = rd::<u32>(data, 0x10);
-    rw_frame_for_all_children(frame, 0x4D6670, GPtr::<u32>::cast::<u8>(GPtr::from_raw(&mut cursor)));
+    rw_frame_for_all_children(frame, 0x4D6670, GPtr::<u8>::addr(GPtr::<u32>::cast::<u8>(GPtr::from_raw(&mut cursor))) as u32);
     clump_data_for_all_frames(data, 0x4D6640, 0);
     let f0 = rd::<GPtr<u8>>(data, 0x10);
     wr::<u8>(f0, 0, rd::<u8>(f0, 0) | 8);
@@ -259,7 +259,7 @@ pub fn cutscene_mgr_hide_requested_objects() {
     for k in 0..n.max(0) {
         let e: GPtr<u8> = GPtr::from_addr(0xBC20D0 + 0x2C * k as usize);
         let mut mi = 0i32;
-        if model_info_get_model_info(e.byte_add(0xC), GPtr::<i32>::cast::<u8>(GPtr::from_raw(&mut mi))).is_null() {
+        if model_info_get_model_info(e.byte_add(0xC), GPtr::from_raw(&mut mi)).is_null() {
             continue;
         }
         let mut pos = [
@@ -274,7 +274,7 @@ pub fn cutscene_mgr_hide_requested_objects() {
             GPtr::<f32>::cast::<u32>(GPtr::from_raw(pos.as_mut_ptr())),
             1.5,
             1,
-            GPtr::from_raw(&mut cnt),
+            GPtr::<i16>::cast::<u16>(GPtr::from_raw(&mut cnt)),
             32,
             GPtr::from_raw(objs.as_mut_ptr()),
             1,
@@ -312,7 +312,7 @@ pub fn cutscene_mgr_create_cutscene_object(id: i32) -> GPtr<u8> {
     if (300..=319).contains(&id) {
         let mi = rd::<GPtr<u8>>(mis, 4 * id as isize);
         let off = ((id * 3 - 0x384) << 4) as usize;
-        base_model_info_set_col_model(mi, GPtr::from_addr(0x968A30 + off), 0);
+        base_model_info_set_col_model(mi.cast::<u8>(), GPtr::from_addr(0x968A30 + off), 0);
         let c = rd::<GPtr<u8>>(rd::<GPtr<u8>>(mis, 4 * id as isize), 0x1C);
         wr::<u32>(GPtr::from_addr(0x968A54 + off), 0, 0);
         update_cutscene_object_bounding_box(c, id);

@@ -7,10 +7,10 @@ use sa_core::{hook, orig};
 
 use super::common::{cam_pos, g, rd, wr, x};
 
-use sa_core::bindings::find_player_ped;
+use crate::bindings::find_player_ped;
 use sa_core::bindings::matrix_mul_vec;
 use sa_stream::bindings::get_2d_effect;
-use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
+use crate::bindings::placeable_allocate_matrix as allocate_matrix;
 use sa_stream::bindings::simple_transform_update_matrix as update_matrix;
 use crate::bindings::find_objects_in_range;
 orig! {
@@ -77,7 +77,7 @@ pub fn is_interior_effect_visible(_this: GPtr<u8>, _effect: GPtr<u8>, e: GPtr<u8
             update_matrix(e.byte_add(4), rd::<GPtr<u8>>(e, 0x14));
         }
         let mut out = [0f32; 3];
-        let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(p(&mut out)), rd::<GPtr<u8>>(e, 0x14), p(c)));
+        let r = matrix_mul_vec(p(&mut out), rd::<GPtr<u8>>(e, 0x14), p(c));
         *c = read3(r);
         for k in 0..3 {
             if !x(c[k]).fcom(x(mn[k])).test_parity(0x05) {

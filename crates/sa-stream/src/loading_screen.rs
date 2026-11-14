@@ -131,12 +131,12 @@ pub use sa_core::bindings::sprite_draw_rect;
 pub use crate::bindings::hud_colours_get_rgb as hud_get_rgb;
 pub use crate::bindings::load_splashes as load_splashes_call;
 pub use crate::bindings::remove_txd;
-pub use sa_core::bindings::loading_screen_new_chunk_loaded as new_chunk_loaded_call;
-pub use sa_core::bindings::loading_screen_set_loading_bar_msg as set_loading_bar_msg_call;
-pub use sa_core::bindings::pop_current_txd;
-pub use sa_core::bindings::push_current_txd;
-pub use sa_core::bindings::set_current_txd;
-pub use sa_core::bindings::txd_add_ref;
+pub use crate::bindings::loading_screen_new_chunk_loaded as new_chunk_loaded_call;
+pub use crate::bindings::loading_screen_set_loading_bar_msg as set_loading_bar_msg_call;
+pub use crate::bindings::pop_current_txd;
+pub use crate::bindings::push_current_txd;
+pub use crate::bindings::set_current_txd;
+pub use crate::bindings::txd_add_ref;
 orig! {
     /// `RwRenderStateSet(state, value)` (`RwEngineInstance` +0x20)
     pub fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
@@ -238,7 +238,7 @@ pub fn render_splash() {
     c.byte_add(3).write(if fade_in { 255u8.wrapping_sub(FADE_ALPHA.get()) } else { FADE_ALPHA.get() });
     // 0x590099: samp NOPs this call (no black fade over its splash; docs/samp/startup.md).
     if !sa_core::samp::toggled(sa_core::samp::toggle::SAMP_STARTUP) {
-        sprite_draw_rect(r.cast::<f32>(), c);
+        sprite_draw_rect(r.cast::<u8>(), c);
     }
 }
 

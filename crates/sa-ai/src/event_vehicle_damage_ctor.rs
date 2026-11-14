@@ -11,7 +11,7 @@ use crate::common::*;
 
 use crate::bindings::event_base_dtor as event_dtor;
 use crate::bindings::event_ctor;
-use sa_core::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference;
 use sa_core::bindings::entity_register_reference;
 
 /// `CEventVehicleDamage::CEventVehicleDamage(CVehicle*, CEntity* attacker, eWeaponType)` (0x4B18D0, thiscall, `ret
@@ -67,7 +67,7 @@ pub fn event_5f6190_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x86C6D0);
     let e = rd::<GPtr<u8>>(this, 0x10);
     if !e.is_null() {
-        entity_clean_up_old_reference(e, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x10)));
+        entity_clean_up_old_reference(e, this.byte_add(0x10));
     }
     event_dtor(this);
 }

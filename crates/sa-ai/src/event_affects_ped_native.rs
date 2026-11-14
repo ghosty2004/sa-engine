@@ -29,7 +29,7 @@ const MODEL_INFO_PTRS: usize = 0xA9_B0C8;
        unverified = "native-6", route = "L2", hazards = "ax-al-return", recs = "grove-walk",
        note = "the false paths leave EAX's upper bytes from the last call or load")]
 pub fn walk_into_object_affects_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
-    if ped_is_player(ped) != 0 || ped_is_alive(ped) == 0 {
+    if ped_is_player(ped) != 0 || ped_is_alive(ped) as u8 == 0 {
         return 0;
     }
     let obj = rd::<GPtr<u8>>(this, 0x14);

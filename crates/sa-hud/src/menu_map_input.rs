@@ -97,26 +97,19 @@ const IMM_100: f32 = f32::from_bits(0x42C8_0000);
 use sa_world::bindings::clear_blip_call;
 use crate::bindings::transform_radar_point_to_screen_space_call;
 use crate::bindings::transform_real_world_point_to_radar_space_call;
-use sa_world::bindings::check_for_accept as check_for_accept_call;
-use sa_world::bindings::check_for_selected as check_for_selected_call;
-use sa_world::bindings::create_new_menu as create_new_menu_call;
-use sa_world::bindings::insert_menu as insert_menu_call;
-use sa_world::bindings::set_active_menu_item as set_active_menu_item_call;
-use sa_world::bindings::set_blip_sprite as set_blip_sprite_call;
-use sa_world::bindings::switch_off_menu_call;
+use crate::bindings::check_for_accept as check_for_accept_call;
+use crate::bindings::check_for_selected as check_for_selected_call;
+use crate::bindings::create_new_menu as create_new_menu_call;
+use crate::bindings::insert_menu as insert_menu_call;
+use crate::bindings::set_active_menu_item as set_active_menu_item_call;
+use crate::bindings::set_blip_sprite as set_blip_sprite_call;
+use crate::bindings::switch_off_menu_call;
+use crate::bindings::limit_radar_point_call_st0;
 orig! {
     /// `CPad::IsMouseRButtonPressed()` (0x572E70; called with ECX = the pad, which it does not read)
     fn is_mouse_rbutton_pressed_call() -> u8 = cdecl 0x572E70 => crate::menu_mgr::is_mouse_rbutton_pressed;
-    /// `CRadar::LimitRadarPoint(CVector2D&)` (0x5832F0, ST0; discarded here)
-    fn limit_radar_point_call_st0(p: GPtr<f32>) -> f64 = cdecl 0x5832F0 => limit_radar_point_st0_rust;
     /// `CMenuManager::SaveStatsToFile()` (0x57DDE0, thiscall)
     fn save_stats_to_file_call(this: GPtr<u8>) = thiscall 0x57DDE0 => crate::menu_stats_file::save_stats_to_file;
-}
-
-/// The Rust path of [`limit_radar_point_call_st0`] (phases B/C).
-#[allow(dead_code)]
-fn limit_radar_point_st0_rust(p: GPtr<f32>) -> f64 {
-    crate::radar::limit_radar_point(p).to_f64()
 }
 
 /// The Rust path of [`create_new_menu_call`] (phases B/C).
@@ -139,7 +132,7 @@ fn local<T, const N: usize>(buf: &mut [T; N]) -> GPtr<T> {
 
 /// `GetPad(this->m_nPlayerNumber)` (the result only where the bytes use it).
 fn pad(this: GPtr<u8>) -> GPtr<u8> {
-    get_pad(u32::from(b8(this, 0xEA)))
+    get_pad(u32::from(b8(this, 0xEA)) as i32)
 }
 
 fn word(addr: usize) -> u16 {
@@ -736,7 +729,7 @@ fn legend_menu(this: GPtr<u8>) {
         let w = f32_of(stretch_x_call(this, IMM_100));
         let py = f32_of(stretch_y_call(this, IMM_250));
         let px = f32_of(stretch_x_call(this, IMM_77));
-        let menu = create_new_menu_call(0, g(STR_FEP_OPT), px, py, w, 2, 1, 1, 1);
+        let menu = create_new_menu_call(0, g(STR_FEP_OPT), px.to_bits(), py.to_bits(), w.to_bits(), 2, 1, 1, 1);
         wr::<u8>(this, 0x30, menu);
         let n = GPtr::<u8>::NULL;
         let r = |i: usize| g::<u8>(STR_FED_BL1 + 8 * i);
@@ -746,22 +739,22 @@ fn legend_menu(this: GPtr<u8>) {
     if (b8(this, 0x30) as i8) < 0 {
         return;
     }
-    let item = check_for_accept_call(u32::from(b8(this, 0x30))) as u8;
+    let item = (check_for_accept_call(u32::from(b8(this, 0x30))) as i8) as u8;
     if (item as i8) >= 0 {
         let off = 0x45 + isize::from(item as i8);
         wr::<u8>(this, off, u8::from(b8(this, off) == 0));
         insert_blip_prefs(this, &mut bufs);
         let menu = b8(this, 0x30);
-        if check_for_selected_call(menu) as u8 == 4 {
+        if (check_for_selected_call(menu) as i8) as u8 == 4 {
             set_active_menu_item_call(u32::from(b8(this, 0x30)), 0);
         } else {
-            let row = (check_for_selected_call(b8(this, 0x30)) as u8).wrapping_add(1);
+            let row = ((check_for_selected_call(b8(this, 0x30)) as i8) as u8).wrapping_add(1);
             set_active_menu_item_call(u32::from(b8(this, 0x30)), u32::from(row));
         }
     }
     if !space_new() && !space_old() {
         event(2);
-        switch_off_menu_call(b8(this, 0x30) as u32);
+        switch_off_menu_call((b8(this, 0x30) as u32) as u8);
         wr::<u8>(this, 0x30, 0x9D);
     }
 }

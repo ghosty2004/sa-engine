@@ -32,11 +32,10 @@ const FREELIST_PREALLOC: usize = 0x8E266C;
 const RESOURCES_INSTANCES: usize = 0xC9BC5C;
 
 pub use crate::bindings::free_list_purge as freelist_purge_call;
+pub use crate::bindings::free_list_create_prealloc as freelist_create_prealloc_call;
 orig! {
     /// `_rwFreeListCreateInternal(...)` (0x8019B0)
     pub fn freelist_create_internal_call(size: u32, per_block: u32, align: u32, n: u32, space: GPtr<u8>, hint: u32) -> GPtr<u8> = cdecl 0x8019B0 => rw_freelist_create_internal;
-    /// `RwFreeListCreateAndPreallocateSpace(...)` (0x801B70)
-    pub fn freelist_create_prealloc_call(size: u32, per_block: u32, align: u32, n: u32, space: GPtr<u8>, hint: u32) -> GPtr<u8> = cdecl 0x801B70 => rw_freelist_create_internal;
     /// `_rwResourcesArenaInit(mem, size)` (0x80FFE0)
     pub fn arena_init_call(mem: GPtr<u8>, size: u32) -> u32 = cdecl 0x80FFE0 => rw_resources_arena_init;
     /// `_rwResourcesArenaFreeBlock(data)` (0x810040)

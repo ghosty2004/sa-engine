@@ -13,7 +13,7 @@ use sa_core::bindings::general_random_int_in_range as random_int_in_range;
 use sa_core::bindings::get_weapon_info;
 use sa_core::bindings::stricmp as crt_stricmp;
 use sa_core::bindings::task_new;
-use sa_core::bindings::world_add;
+use sa_world::bindings::world_add;
 use sa_world::bindings::civilian_ped_ctor;
 use sa_world::bindings::cop_ped_ctor;
 use sa_world::bindings::emergency_ped_ctor;
@@ -28,7 +28,7 @@ use sa_world::bindings::set_char_created_by as ped_set_char_created_by;
 use sa_world::bindings::set_ped_decision_maker_type as intel_set_ped_decision_maker_type;
 use sa_world::bindings::task_wander_cop_ctor;
 use sa_world::bindings::wander_get_wander_task_by_ped_type as get_wander_task_by_ped_type;
-use sa_world::bindings::add_ped as add_ped_call;
+use crate::bindings::add_ped as add_ped_call;
 use sa_world::bindings::ped_set_current_weapon_slot;
 use sa_world::bindings::place_ped_at_effect;
 use sa_world::bindings::set_orientation as placeable_set_orientation;
@@ -45,7 +45,7 @@ orig! {
 fn give_weapon(ped: GPtr<u8>, w: u32) {
     ped_give_delayed_weapon(ped, w as i32, 0x61A9);
     let slot = rd::<u32>(get_weapon_info(w as i32, 1), 0x14);
-    ped_set_current_weapon_slot(ped, slot);
+    ped_set_current_weapon_slot(ped, slot as i32);
 }
 
 /// `CPopulation::AddPed(ePedType type, uint32 model, const CVector& pos, bool makeWander)` (0x612710, entry
@@ -189,7 +189,7 @@ pub fn add_ped(ty: u32, model: u32, pos: GPtr<f32>, make_wander: u8) -> GPtr<u8>
         event_group_add(rd::<GPtr<u8>>(ped, 0x47C).byte_add(0x68), evp.cast(), 0);
         let w = random_int_in_range(0xA, 0xE) as u32;
         ped_give_delayed_weapon(ped, w as i32, 0);
-        ped_set_current_weapon_type(ped, w);
+        ped_set_current_weapon_type(ped, w as i32);
         event_player_dtor(evp.cast::<u8>());
     }
     if cheat(0x96913E) {
@@ -224,7 +224,7 @@ pub fn add_ped(ty: u32, model: u32, pos: GPtr<f32>, make_wander: u8) -> GPtr<u8>
         if !best.is_null() {
             let mut ev = [0u32; 8];
             let evp = GPtr::from_raw(ev.as_mut_ptr());
-            event_acquaintance_ped_ctor(evp.cast::<u8>(), best);
+            event_acquaintance_ped_ctor(GPtr::<u8>::addr(evp.cast::<u8>()) as u32, best.addr() as u32);
             evp.write(0x0085_8E68);
             wr::<u16>(evp.cast(), 0xE, 0x3E8);
             event_group_add(rd::<GPtr<u8>>(ped, 0x47C).byte_add(0x68), evp.cast(), 0);
@@ -242,10 +242,7 @@ use sa_world::bindings::ctor_4aedf0 as event_player_ctor;
 use sa_world::bindings::dtor_4aeea0 as event_player_dtor;
 use sa_world::bindings::event_acquaintance_ped_dtor;
 use sa_world::bindings::ped_set_current_weapon as ped_set_current_weapon_type;
-orig! {
-    /// `rand()` call sites go through `crate::common::rand_at`; `CWorld::FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
-}
+use sa_world::bindings::find_player_ped;
 
 /// `_stricmp(name, s) == 0` against a string of the exe.
 fn name_is(name: GPtr<u8>, s: usize) -> bool {

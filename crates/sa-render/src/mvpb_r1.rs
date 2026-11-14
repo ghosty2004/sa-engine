@@ -21,34 +21,24 @@ fn f(bits: u32) -> f32 {
 use sa_core::bindings::crt_pow;
 use sa_core::bindings::entity_register_reference;
 use sa_core::bindings::matrix_mul_vec;
-use sa_stream::bindings::placeable_allocate_matrix;
-use sa_stream::bindings::simple_transform_update_matrix;
+use sa_world::bindings::placeable_allocate_matrix;
+use crate::bindings::simple_transform_update_matrix;
 use sa_core::bindings::rw_d3d9_get_current_d3d_device;
 use sa_core::bindings::rw_im2d_render_primitive as im2d_render_primitive;
-use sa_core::bindings::stats_increment_stat;
+use sa_world::bindings::stats_increment_stat;
+use crate::bindings::set_vertices_quad_call as sprite2d_set_vertices;
+use sa_world::bindings::creates_objects as surface_creates_objects;
+use sa_world::bindings::creates_plants as surface_creates_plants;
 orig! {
     /// `IDirect3DDevice9::GetGammaRamp(iSwapChain, D3DGAMMARAMP*)` (COM slot 0x58)
     fn d3d_get_gamma_ramp(dev: GPtr<GPtr<u32>>, swap_chain: u32, ramp: GPtr<u8>) = stdcall vslot 0x58 => unported;
     /// `IDirect3DDevice9::SetGammaRamp(iSwapChain, flags, const D3DGAMMARAMP*)` (COM slot 0x54)
     fn d3d_set_gamma_ramp(dev: GPtr<GPtr<u32>>, swap_chain: u32, flags: u32, ramp: GPtr<u8>) = stdcall vslot 0x54 => unported;
-    /// `SurfaceInfos_c::CreatesPlants(surface)` (0x55E9D0, bool in AL)
-    fn surface_creates_plants(this: GPtr<u8>, surface: u32) -> u8 = thiscall 0x55E9D0 => unported;
-    /// `SurfaceInfos_c::CreatesObjects(surface)` (0x55E9F0, bool in AL)
-    fn surface_creates_objects(this: GPtr<u8>, surface: u32) -> u8 = thiscall 0x55E9F0 => unported;
-    /// `CSprite2d::SetVertices(x1, y1, x2, y2, x3, y3, x4, y4, c1, c2, c3, c4)` (0x727590)
-    #[allow(clippy::too_many_arguments)]
-    fn sprite2d_set_vertices(a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, c1: GPtr<u8>, c2: GPtr<u8>, c3: GPtr<u8>, c4: GPtr<u8>) = cdecl 0x727590 => unported;
     /// `RwRenderStateSet(state, value)` (RwEngineInstance slot 0x20)
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
 }
 
-orig! {
-    /// `CCoronas::RegisterCorona(id, attachTo, r, g, b, a, const CVector& pos, size, range, RwTexture*
-    /// tex, flare, refl, los, trail, normalAngle, neonFade, pullTowardsCam, fullBrightAtStart,
-    /// fadeSpeed, onlyFromBelow, reflectionDelay)` (0x6FC180; every argument a dword slot)
-    #[allow(clippy::too_many_arguments)]
-    fn register_corona_o(id: u32, attach: GPtr<u8>, r: u32, g: u32, b: u32, a: u32, pos: GPtr<u8>, size: u32, range: u32, tex: u32, flare: u32, refl: u32, los: u32, trail: u32, normal_angle: u32, neon_fade: u32, pull: u32, full_bright: u32, fade_speed: u32, only_from_below: u32, refl_delay: u32) = cdecl 0x6FC180 => crate::mvpb_r1::register_corona_type;
-}
+use crate::bindings::register_corona_6fc180 as register_corona_o;
 
 // ------------------------------------------------------------------ CGamma ------------------------
 
@@ -147,7 +137,7 @@ pub fn set_plant_friendly_flag_in_atomic_mi(mi: GPtr<u8>) -> bool {
     while i < n {
         let tri = data.byte_add(0x18).cast::<GPtr<u8>>().read().byte_add(i as isize * 8);
         let s = tri.byte_add(6).read() as u32;
-        if surface_creates_plants(g(0xB79538), s) != 0 || surface_creates_objects(g(0xB79538), tri.byte_add(6).read() as u32) != 0 {
+        if surface_creates_plants(GPtr::<u8>::cast::<sa_world::collision::surface::SurfaceInfos>(g(0xB79538)), s) as u8 != 0 || surface_creates_objects(GPtr::<u8>::cast::<sa_world::collision::surface::SurfaceInfos>(g(0xB79538)), tri.byte_add(6).read() as u32) as u8 != 0 {
             flags.write(flags.read() | 2);
             return true;
         }
@@ -308,7 +298,7 @@ const NUM_CORONAS: u32 = 0xC3E038;
        note = "the original tail-jumps after rewriting its 10th argument slot; the port passes a fresh copy")]
 pub fn register_corona_by_type(id: u32, attach: GPtr<u8>, r: u32, gg: u32, b: u32, a: u32, pos: GPtr<u8>, size: u32, range: u32, kind: u32, flare: u32, refl: u32, los: u32, trail: u32, normal_angle: u32, neon_fade: u32, pull: u32, full_bright: u32, fade_speed: u32, only_from_below: u32, refl_delay: u32) {
     let tex = g::<u32>(0xC3E000).wrapping_index((kind as u8) as i32).read();
-    register_corona_o(id, attach, r, gg, b, a, pos, size, range, tex, flare, refl, los, trail, normal_angle, neon_fade, pull, full_bright, fade_speed, only_from_below, refl_delay);
+    register_corona_o(GPtr::<u8>::addr(GPtr::from_addr(id as usize)) as u32, attach, r, gg, b, a, pos, f32::from_bits(size).to_bits(), f32::from_bits(range).to_bits(), tex, flare, refl, los, trail, f32::from_bits(normal_angle).to_bits(), neon_fade, f32::from_bits(pull).to_bits(), full_bright, f32::from_bits(fade_speed).to_bits(), only_from_below, refl_delay);
 }
 
 /// `CCoronas::RegisterCorona(id, attachTo, r, g, b, a, const CVector& pos, size, range, RwTexture*, ...)`
@@ -335,7 +325,7 @@ pub fn register_corona_type(id: u32, attach: GPtr<u8>, r: u32, gg: u32, b: u32, 
             simple_transform_update_matrix(attach.byte_add(4), attach.byte_add(0x14).cast::<GPtr<u8>>().read());
         }
         let mut tmp = [0f32; 3];
-        let res = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::from_raw(tmp.as_mut_ptr()).cast()), attach.byte_add(0x14).cast::<GPtr<u8>>().read(), pos));
+        let res = matrix_mul_vec(GPtr::from_raw(tmp.as_mut_ptr()).cast(), attach.byte_add(0x14).cast::<GPtr<u8>>().read(), pos);
         res.cast::<[f32; 3]>().read()
     } else {
         pos.cast::<[f32; 3]>().read()
@@ -471,7 +461,8 @@ pub fn affect_colour_with_lighting(kind: u32, lighting: u32, r: u32, gg: u32, b:
 
 use sa_core::bindings::vector_normalise;
 use sa_world::bindings::dist_to_line as collision_dist_to_line;
-use sa_world::bindings::update_corona_coors as update_corona_coors_o;
+use crate::bindings::update_corona_coors as update_corona_coors_o;
+use crate::bindings::register_corona as register_corona_by_type_o;
 orig! {
     /// `CPlaneTrails::Update()` (0x7174F0)
     fn plane_trails_update_o() = cdecl 0x7174F0 => crate::mvpb_r1::plane_trails_update;
@@ -479,9 +470,6 @@ orig! {
     fn escalators_update() = cdecl 0x718580 => unported;
     /// `CPlaneTrail::RegisterPoint(CVector)` (0x7172D0, the vector by value)
     fn plane_trail_register_point_o(this: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x7172D0 => crate::mvpb_r1::plane_trail_register_point;
-    /// `CCoronas::RegisterCorona(..., eCoronaType, ...)` (0x6FC580)
-    #[allow(clippy::too_many_arguments)]
-    fn register_corona_by_type_o(id: u32, attach: GPtr<u8>, r: u32, g: u32, b: u32, a: u32, pos: GPtr<u8>, size: u32, range: u32, kind: u32, flare: u32, refl: u32, los: u32, trail: u32, normal_angle: u32, neon_fade: u32, pull: u32, full_bright: u32, fade_speed: u32, only_from_below: u32, refl_delay: u32) = cdecl 0x6FC580 => crate::mvpb_r1::register_corona_by_type;
 }
 
 /// `CMovingThings::Update()` (0x7185B0): `CPlaneTrails::Update()`, then (tail jump) `CEscalators::Update()`.
@@ -555,11 +543,11 @@ pub fn plane_trails_update() {
             let p = GPtr::from_raw(pos.as_mut_ptr()).cast::<u8>();
             if g::<u32>(0xB7CB84).read().wrapping_add(add) & 0x200 != 0 {
                 register_corona_by_type_o(
-                    id, GPtr::NULL, rgb[0], rgb[1], rgb[2], 0xFF, p, 0x40A0_0000, 0x44FA_0000, 1, 0, 0, 0, 0, 0, 0,
-                    0x3FC0_0000, 0, 0x4170_0000, 0, 0,
+                    id, GPtr::NULL, rgb[0], rgb[1], rgb[2], 0xFF, p, f32::from_bits(0x40A0_0000).to_bits(), f32::from_bits(0x44FA_0000).to_bits(), 1, 0, 0, 0, 0, f32::from_bits(0).to_bits(), 0,
+                    f32::from_bits(0x3FC0_0000).to_bits(), 0, f32::from_bits(0x4170_0000).to_bits(), 0, 0,
                 );
             } else {
-                update_corona_coors_o(id, p, f32::from_bits(0x44FA_0000), f32::from_bits(0));
+                update_corona_coors_o(id, p, f32::from_bits(0x44FA_0000).to_bits(), f32::from_bits(0).to_bits());
             }
         }
     }
@@ -650,7 +638,7 @@ pub fn update_in_tunnelness() {
             [h.fsin().fchs().to_f32(), h.fcos().to_f32(), 0.0]
         };
         fw[2] = 0.0;
-        vector_normalise(GPtr::from_raw(fw.as_mut_ptr()).cast());
+        vector_normalise(GPtr::<u8>::cast::<[f32;3]>(GPtr::from_raw(fw.as_mut_ptr()).cast()));
         let k100 = f(0x42C8_0000);
         let zk = X87::from_f32(fw[2]).fmul_m(k100).to_f32();
         let mut q = [
@@ -845,7 +833,7 @@ pub fn plant_update_ambient_color() {
 // ------------------------------------------------------------------ CPlantMgr (wind, entries) -----
 
 use crate::bindings::loc_tri_release as plant_loc_tri_release_o;
-use sa_core::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference;
 use sa_core::bindings::memory_free;
 use sa_core::bindings::memory_malloc;
 use sa_world::bindings::entity_get_col_model;
@@ -955,7 +943,7 @@ pub fn plant_col_ent_entry_release_entry(this: GPtr<u8>) {
     }
     let e = this.cast::<GPtr<u8>>().read();
     if !e.is_null() {
-        entity_clean_up_old_reference(e, this.cast::<GPtr<u8>>());
+        entity_clean_up_old_reference(e, this.cast::<u8>());
         this.cast::<u32>().write(0);
     }
     list_remove(this, g(0xC0399C), 0xC, 0x10);
@@ -1105,8 +1093,8 @@ pub fn grass_gen_point_in_triangle(out: GPtr<f32>, v0: GPtr<f32>, v1: GPtr<f32>,
 // ------------------------------------------------------------------ FxSystem_c / CRope -----------
 
 use sa_core::bindings::object_new;
-use sa_core::bindings::world_add;
-use sa_stream::bindings::fx_get_fx_quality;
+use sa_world::bindings::world_add;
+use crate::bindings::fx_get_fx_quality;
 use sa_core::bindings::object_ctor_5a1d70 as object_ctor;
 orig! {
     /// `FxPrim_c::AddParticle(pos, vel, timeSince, mult, zRot, brightness, createLocal)` (vtable slot 0x14)
@@ -1203,12 +1191,7 @@ pub fn rope_create_hook_object(this: GPtr<u8>) {
 
 // ------------------------------------------------------------------ CRegisteredCorona ------------
 
-orig! {
-    /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, bool buildings, bool vehicles,
-    /// bool peds, bool objects, bool dummies, bool seeThrough, bool cameraIgnore)` (0x56A490, bool in AL)
-    #[allow(clippy::too_many_arguments)]
-    fn world_get_is_line_of_sight_clear(a: GPtr<u8>, b: GPtr<u8>, p2: u32, p3: u32, p4: u32, p5: u32, p6: u32, p7: u32, p8: u32) -> u8 = cdecl 0x56A490 => unported;
-}
+use sa_core::bindings::world_get_is_line_of_sight_clear;
 
 /// The fade-out step: `ftol(max(faded - timeStep * fadeSpeed, 0))` (x87; `0 <= v` keeps v).
 fn corona_fade_out(c: GPtr<u8>) {
@@ -1349,14 +1332,14 @@ pub fn coronas_do_sun_and_moon() {
     if sun_z(0xBDCC_CCCD) {
         let size = X87::from_f32(g::<f32>(0xB7C4DC).read()).fmul_m(f(0x402E_F1AA)).to_f32().to_bits();
         register_corona_o(
-            1, GPtr::NULL, b(0xB7C4D0), b(0xB7C4D2), b(0xB7C4D4), 0xFF, p, size, 0x4974_23FE,
-            g::<u32>(0xC3E000).read(), 0, 0, 0, 0, 0, 0, 0x3FC0_0000, 0, 0x4170_0000, 0, 0,
+            GPtr::<u8>::addr(GPtr::from_addr(1)) as u32, GPtr::NULL, b(0xB7C4D0), b(0xB7C4D2), b(0xB7C4D4), 0xFF, p, f32::from_bits(size).to_bits(), f32::from_bits(0x4974_23FE).to_bits(),
+            g::<u32>(0xC3E000).read(), 0, 0, 0, 0, f32::from_bits(0).to_bits(), 0, f32::from_bits(0x3FC0_0000).to_bits(), 0, f32::from_bits(0x4170_0000).to_bits(), 0, 0,
         );
         if sun_z(0x0000_0000) && g::<u32>(0xB72914).read() == 0 {
             let size = X87::from_f32(g::<f32>(0xB7C4DC).read()).fmul_m(f(0x40C0_0000)).to_f32().to_bits();
             register_corona_o(
-                2, GPtr::NULL, b(0xB7C4D6), b(0xB7C4D8), b(0xB7C4DA), 0xFF, p, size, 0x4974_23FE,
-                g::<u32>(0xC3E000).read(), 1, 0, 1, 0, 0, 0, 0x3FC0_0000, 0, 0x4170_0000, 0, 0,
+                GPtr::<u8>::addr(GPtr::from_addr(2)) as u32, GPtr::NULL, b(0xB7C4D6), b(0xB7C4D8), b(0xB7C4DA), 0xFF, p, f32::from_bits(size).to_bits(), f32::from_bits(0x4974_23FE).to_bits(),
+                g::<u32>(0xC3E000).read(), 1, 0, 1, 0, f32::from_bits(0).to_bits(), 0, f32::from_bits(0x3FC0_0000).to_bits(), 0, f32::from_bits(0x4170_0000).to_bits(), 0, 0,
             );
         }
     }

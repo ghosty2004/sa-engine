@@ -56,13 +56,12 @@ pub use sa_core::bindings::timer_suspend;
 pub use sa_world::bindings::check_mission_pack_valid_menu;
 pub use sa_core::bindings::file_mgr_seek as file_seek;
 pub use sa_core::bindings::file_set_dir_my_documents;
-pub use sa_core::bindings::messages_clear_all_displayed_by_game as clear_all_messages_displayed_by_game_call;
-pub use sa_core::bindings::text_get as text_get_call;
-pub use sa_core::bindings::text_unload as text_unload_call;
-pub use sa_world::bindings::gxt_char_to_ascii as gxt_char_to_ascii_call;
+pub use crate::bindings::messages_clear_all_displayed_by_game as clear_all_messages_displayed_by_game_call;
+pub use crate::bindings::text_get as text_get_call;
+pub use crate::bindings::text_unload as text_unload_call;
+pub use crate::bindings::gxt_char_to_ascii as gxt_char_to_ascii_call;
+pub use sa_core::bindings::crt_new_821195 as operator_new;
 orig! {
-    /// CRT `operator new` (0x821195)
-    pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x821195 => unported;
     /// CRT `sprintf(buf, fmt)` (0x821BB5)
     pub fn sprintf0(buf: GPtr<u8>, fmt: GPtr<u8>) -> i32 = cdecl 0x821BB5 => unported;
     /// CRT `sprintf(buf, fmt, a)` (0x821BB5)

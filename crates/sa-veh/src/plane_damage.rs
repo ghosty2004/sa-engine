@@ -10,8 +10,8 @@ use crate::common::{f32_of, g, jne_mask, rd, wr, x};
 
 use crate::bindings::fx_set_vel_add;
 use crate::bindings::set_component_visibility;
-use sa_core::bindings::find_player_ped;
-use sa_core::bindings::find_player_vehicle;
+use sa_world::bindings::find_player_ped;
+use sa_world::bindings::find_player_vehicle;
 use sa_core::bindings::fx_play;
 use sa_core::bindings::general_random_int_in_range as random_in_range_i;
 use sa_world::bindings::fx_create_system as create_fx_system;
@@ -19,8 +19,8 @@ use sa_world::bindings::fx_kill;
 use sa_world::bindings::fx_set_local_particles;
 use sa_world::bindings::get_modelling_matrix;
 use sa_world::bindings::multiply3x3_vm as multiply_3x3_t;
-use sa_core::bindings::vector_magnitude_sqr as magnitude_sqr;
-use sa_core::bindings::vector_sub as vec_sub;
+use sa_world::bindings::vector_magnitude_sqr as magnitude_sqr;
+use sa_world::bindings::vector_sub as vec_sub;
 use crate::bindings::bouncing_panel_set_panel;
 use crate::bindings::can_vehicle_be_damaged;
 use crate::bindings::dmg_draw_car_colliding_particles;
@@ -158,7 +158,7 @@ pub fn plane_vehicle_damage(this: GPtr<u8>, intensity: f32, comp: u32, damager: 
             f32_of(x(rd::<f32>(fr, 0x44)).fsub_m(lp[1])).to_bits(),
             f32_of(x(rd::<f32>(fr, 0x48)).fsub_m(lp[2])).to_bits(),
         ];
-        let d2 = X87::from_f64_exact(magnitude_sqr(GPtr::<u8>::cast::<f32>(buf(&mut d))));
+        let d2 = X87::from_f64_exact(magnitude_sqr(buf(&mut d)).to_f64());
         if d2.fcom(x(min).fmul_m(min)) == Cmp::Less {
             min = f32_of(d2.fsqrt());
             node = n;

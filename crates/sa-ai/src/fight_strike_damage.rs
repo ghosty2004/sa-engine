@@ -47,7 +47,7 @@ use sa_core::bindings::get_weapon_info as weapon_info_get;
 use sa_core::bindings::ped_is_alive;
 use sa_core::bindings::tm_get_active_task;
 use sa_core::bindings::vector_normalise;
-use sa_world::bindings::event_sound_quiet_dtor;
+use crate::bindings::event_sound_quiet_dtor;
 use sa_world::bindings::fx_add_blood;
 use sa_world::bindings::get_event_global_group;
 use sa_world::bindings::intel_get_task_fighting;
@@ -226,14 +226,14 @@ pub fn fight_hit_ped(this: GPtr<u8>, attacker: GPtr<u8>, victim: GPtr<u8>, pos: 
             x(rd::<f32>(ap, 8)).fsub_m(rd::<f32>(vp, 8)).to_f32(),
         ];
         let dp: GPtr<u8> = GPtr::from_raw(d.as_mut_ptr()).cast();
-        vector_normalise(dp);
-        if ped_is_alive(victim) == 0 {
+        vector_normalise(dp.cast::<[f32;3]>());
+        if ped_is_alive(victim) as u8 == 0 {
             d = [0.0, 0.0, 2.0];
         }
         let mut amount = 8;
         if kick {
             amount = 0x10;
-            if ped_is_alive(victim) != 0 {
+            if ped_is_alive(victim) as u8 != 0 {
                 let k = g::<f32>(0x85_8CE8).read();
                 for v in d.iter_mut() {
                     *v = x(*v).fmul_m(k).to_f32();

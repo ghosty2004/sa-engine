@@ -22,40 +22,41 @@ use crate::bindings::vehicle_ctor;
 use crate::bindings::vehicle_set_model_index;
 use sa_core::bindings::entity_register_reference as register_reference;
 use sa_core::bindings::matrix_attach;
-use sa_core::bindings::matrix_dtor;
+use sa_world::bindings::matrix_dtor;
 use sa_core::bindings::matrix_set_translate;
 use sa_core::bindings::matrix_update_rw;
-use sa_core::bindings::set_model_is_deletable;
+use sa_stream::bindings::set_model_is_deletable;
 use sa_core::bindings::set_model_txd_is_deletable;
 use sa_core::bindings::streaming_request_model as request_model;
-use sa_core::bindings::world_remove;
+use sa_world::bindings::world_remove;
 use sa_stream::bindings::choose_vehicle_colour;
 use sa_stream::bindings::fill_frame_array;
 use sa_stream::bindings::get_first_object;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::event_group_add;
-use sa_world::bindings::is_law_enforcement_vehicle;
+use crate::bindings::is_law_enforcement_vehicle;
 use sa_world::bindings::is_player_on_a_mission;
-use sa_world::bindings::join_car_with_road_system;
+use sa_pop::bindings::join_car_with_road_system;
 use sa_world::bindings::la_riots_active_here;
 use sa_core::bindings::matrix_ctor_rw;
 use sa_world::bindings::ped_groups_get_peds_group as get_peds_group;
 use sa_world::bindings::player_get_wanted_level as get_wanted_level;
-use sa_core::bindings::heli_ctor;
-use sa_core::bindings::plane_ctor;
-use sa_core::bindings::world_add;
+use crate::bindings::heli_ctor;
+use crate::bindings::plane_ctor;
+use sa_world::bindings::world_add;
 use sa_pop::bindings::find_tunnel_attributes_for_coors;
 use sa_world::bindings::add_vehicle_upgrade;
-use sa_world::bindings::create_mission_train;
-use sa_world::bindings::get_vehicle_appearance;
+use crate::bindings::create_mission_train;
+use crate::bindings::get_vehicle_appearance;
 use sa_world::bindings::group_intelligence_add_event as pgi_add_event;
 use sa_world::bindings::placeable_set_posn as set_posn;
-use sa_world::bindings::plane_set_gear_up as set_gear_up;
-use sa_world::bindings::set_train_speed;
+use crate::bindings::plane_set_gear_up as set_gear_up;
+use crate::bindings::set_train_speed;
 use sa_world::bindings::set_velocity;
-use sa_world::bindings::vehicle_41bdd0 as set_engine_on;
-use sa_world::bindings::vehicle_new;
+use crate::bindings::vehicle_41bdd0 as set_engine_on;
+use crate::bindings::vehicle_new;
 use sa_world::bindings::vehicle_pool_get_at;
+use sa_world::bindings::find_player_ped;
 orig! {
     /// Virtual slot 0 (`scalar deleting destructor`)
     fn entity_vdelete(e: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
@@ -74,8 +75,6 @@ orig! {
     fn find_unsuspecting_target_ped(px: f32, py: f32, pz: f32, qx: f32, qy: f32, qz: f32) -> GPtr<u8> = cdecl 0x566DA0 => unported;
     /// `CWorld::FindUnsuspectingTargetCar(CVector, CVector)` (0x566C90)
     fn find_unsuspecting_target_car(px: f32, py: f32, pz: f32, qx: f32, qy: f32, qz: f32) -> GPtr<u8> = cdecl 0x566C90 => sa_world::world::cworld2::find_unsuspecting_target_car;
-    /// `FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
     /// `CAutomobile::SetupSuspensionLines()` (0x6A65D0)
     fn setup_suspension_lines(a: GPtr<u8>) = thiscall 0x6A65D0 => crate::mvpb_a5::setup_suspension_lines;
 }
@@ -273,7 +272,7 @@ fn gen_status_1() {
     if !le(dy.fmul(dy).fadd(x(dx).fmul_m(dx)).fsqrt(), x(60.0)) {
         let mut first = [GPtr::<u8>::NULL];
         let dir = g::<u8>(GEN_DIRECTION).read();
-        create_mission_train(0.0, 0.0, 0.0, dir, cfg as u32, GPtr::<GPtr<u8>>::cast::<u32>(GPtr::from_raw(first.as_mut_ptr())), GPtr::<GPtr<u8>>::cast::<u32>(GPtr::NULL), node_idx, track, 0);
+        create_mission_train(0.0, 0.0, 0.0, dir, cfg as u32, GPtr::from_raw(first.as_mut_ptr()), GPtr::NULL, node_idx, track, 0);
         let speed = if g::<i32>(GEN_TRACK).read() == 0 {
             let mut s = rand_at(0x6F_7C46) % 30;
             let n = track_nodes(g::<i32>(GEN_TRACK).read()).byte_add(10 * g::<i32>(GEN_NODE).read() as isize);
@@ -544,7 +543,7 @@ fn plane_gen_status_1(count: i32) {
                     // the CEventDanger the original builds at esp+0x58 (0x1C bytes below its SEH record)
                     let mut ev = [0u32; 7];
                     let evp = GPtr::<u32>::from_raw(ev.as_mut_ptr()).cast::<u8>();
-                    let grp = get_peds_group(ped);
+                    let grp = GPtr::from_addr(get_peds_group(ped.addr() as u32) as usize);
                     if !grp.is_null() && rd::<u8>(grp, 0x2D0) != 1 {
                         event_danger_ctor(evp, h, 200.0);
                         wr::<u16>(evp, 0xE, 0x5E1);

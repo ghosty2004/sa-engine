@@ -27,22 +27,24 @@ const MODEL_INFO_PTRS: usize = 0xA9B0C8;
 /// `CTxdStore::ms_pTxdPool`
 const TXD_POOL: usize = 0xC8800C;
 
-pub use sa_core::bindings::load_all_requested_models;
+pub use sa_stream::bindings::load_all_requested_models;
 pub use sa_core::bindings::stricmp as crt_stricmp;
 pub use sa_core::bindings::strncmp as crt_strncmp;
 pub use sa_core::bindings::strtok as crt_strtok;
 pub use sa_core::bindings::timer_resume;
 pub use sa_core::bindings::timer_suspend;
 pub use sa_core::bindings::tm_get_task_secondary as get_task_secondary;
-pub use sa_core::bindings::world_remove;
-pub use sa_core::bindings::load_line;
-pub use sa_core::bindings::clothes_rebuild_player as rebuild_player_call;
+pub use sa_world::bindings::world_remove;
+pub use sa_stream::bindings::load_line;
+pub use crate::bindings::clothes_rebuild_player as rebuild_player_call;
 pub use sa_core::bindings::file_close;
 pub use sa_core::bindings::get_uppercase_key;
 pub use sa_core::bindings::open_file as file_open;
 pub use sa_stream::bindings::add_image_to_list;
 pub use sa_stream::bindings::get_animation_block_index;
-pub use sa_world::bindings::get_texture_dependency as get_texture_dependency_call;
+pub use crate::bindings::get_texture_dependency as get_texture_dependency_call;
+pub use sa_stream::bindings::add_tex_dictionary_ref;
+pub use sa_stream::bindings::remove_tex_dictionary_ref;
 orig! {
     /// `CClothes::LoadClothesFile` (0x5A7B30)
     pub fn load_clothes_file() = cdecl 0x5A7B30 => load_clothes_file_port;
@@ -54,10 +56,6 @@ orig! {
     pub fn create_skinned_clump(c: GPtr<u8>, txd: GPtr<u8>, d: GPtr<u8>, old: GPtr<u8>, cut: u32) -> GPtr<u8> = cdecl 0x5A69D0 => unported;
     /// `CClothes::RequestMotionGroupAnims` (0x5A8120)
     pub fn request_motion_group_anims_call() = cdecl 0x5A8120 => request_motion_group_anims;
-    /// `CBaseModelInfo::AddTexDictionaryRef` (0x4C4B80)
-    pub fn add_tex_dictionary_ref(mi: GPtr<u8>) = thiscall 0x4C4B80 => unported;
-    /// `CBaseModelInfo::RemoveTexDictionaryRef` (0x4C4B90)
-    pub fn remove_tex_dictionary_ref(mi: GPtr<u8>) = thiscall 0x4C4B90 => unported;
     /// `CBaseModelInfo::DeleteRwObject` (vtable slot 0x20)
     pub fn mi_delete_rw_object(mi: GPtr<u8>) = thiscall vslot 0x20 => unported;
     /// `CClumpModelInfo::SetClump(RpClump*)` (vtable slot 0x40)
@@ -207,7 +205,7 @@ pub fn get_player_motion_group_to_load() -> i32 {
 /// `ret 0xC`): texture key set; the dependent model part (if any) gets the model key.
 #[hook(addr = 0x5A8050, conv = thiscall, name = "CPedClothesDesc::SetTextureAndModel-hash", expect = "8B 54 24 0C 56", this = "CPedClothesDesc")]
 pub fn set_texture_and_model_hash(this: GPtr<u8>, tex: u32, model: u32, part: i32) {
-    let dep = get_texture_dependency_call(part as u32);
+    let dep = get_texture_dependency_call((part as u32) as i32);
     wr::<u32>(this, 0x28 + (part as isize).wrapping_mul(4), tex);
     if dep != 10 {
         wr::<u32>(this, (dep as isize).wrapping_mul(4), model);
@@ -220,7 +218,7 @@ pub fn set_texture_and_model_hash(this: GPtr<u8>, tex: u32, model: u32, part: i3
 pub fn set_texture_and_model_name(this: GPtr<u8>, tex: u32, model: u32, part: i32) {
     let tk = if tex == 0 { 0 } else { get_uppercase_key(GPtr::from_addr(tex as usize)) };
     let mk = if model == 0 { 0 } else { get_uppercase_key(GPtr::from_addr(model as usize)) };
-    let dep = get_texture_dependency_call(part as u32);
+    let dep = get_texture_dependency_call((part as u32) as i32);
     wr::<u32>(this, 0x28 + (part as isize).wrapping_mul(4), tk);
     if dep != 10 {
         wr::<u32>(this, (dep as isize).wrapping_mul(4), mk);
@@ -234,7 +232,7 @@ pub fn set_texture_and_model_name(this: GPtr<u8>, tex: u32, model: u32, part: i3
 pub fn init() {
     let pc = PLAYER_CLOTHES.ptr().cast::<u8>();
     for i in 0..0x12 {
-        let dep = get_texture_dependency_call(i as u32);
+        let dep = get_texture_dependency_call((i as u32) as i32);
         wr::<i32>(pc, 0x28 + 4 * i as isize, -1);
         if dep != 10 {
             wr::<i32>(pc, 4 * dep as isize, -1);
@@ -376,10 +374,10 @@ pub fn construct_ped_model(model: u32, desc: GPtr<u8>, old: GPtr<u8>, cut: u32) 
     let c = create_skinned_clump(rd::<GPtr<u8>>(mi, 0x1C), txd, desc, old, cut);
     if !c.is_null() {
         request_motion_group_anims_call();
-        add_tex_dictionary_ref(mi);
+        add_tex_dictionary_ref(mi.cast::<sa_stream::shared::CBaseModelInfo>());
         mi_delete_rw_object(mi);
         mi_set_clump(mi, c);
-        remove_tex_dictionary_ref(mi);
+        remove_tex_dictionary_ref(mi.cast::<sa_stream::shared::CBaseModelInfo>());
         load_all_requested_models(1);
     }
     timer_resume();

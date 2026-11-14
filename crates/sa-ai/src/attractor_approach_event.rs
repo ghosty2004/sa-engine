@@ -2,6 +2,7 @@
 //! peds' attractor scan (batch `std11-ai-1`). Ported from the 1.0 US bytes (gta-reversed as a reading aid; where it
 //! differs, the bytes are followed). Unverified (docs/verify/HOWTO.md).
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::hook;
 
@@ -48,7 +49,7 @@ pub fn is_approachable(fx: GPtr<u8>, mat: GPtr<u8>, _slot: i32, ped: GPtr<u8>) -
         return 0;
     }
     let mut e = [f32_of(x(px).fsub_m(d[0])), f32_of(x(py).fsub_m(d[1])), 0.0];
-    vector_normalise(vp(&mut e));
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(vp(&mut e)));
     let dot = x(e[1]).fmul_m(c[1]).fadd(x(c[2]).fmul_m(e[2])).fadd(x(e[0]).fmul_m(c[0]));
     if dot.fcom(x(g::<f32>(0x86C534).read())).test_any(0x41) {
         return 0;

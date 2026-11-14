@@ -88,7 +88,7 @@ pub fn two_player_vectors(
     wr::<f32>(out_front, 8, fz);
     wr::<u32>(vp, 0, rd::<u32>(out_front, 0));
     wr::<u32>(vp, 4, rd::<u32>(out_front, 4));
-    vector_normalise(vp);
+    vector_normalise(vp.cast::<[f32;3]>());
     let ped0 = || g::<GPtr<u8>>(PLAYER0_PED).read();
     let ped1 = || g::<GPtr<u8>>(PLAYER1_PED).read();
     let (a, c) = (pos_of(ped0()), pos_of(ped1()));
@@ -121,7 +121,7 @@ pub fn two_player_vectors(
     wr::<u32>(wp, 8, 0);
     wr::<f32>(wp, 0, f.fstp());
     wr::<f32>(wp, 4, f.fstp());
-    vector_normalise(wp);
+    vector_normalise(wp.cast::<[f32;3]>());
     f.fld(rd::<f32>(wp, 4));
     f.fmul_m(rd::<f32>(vp, 4));
     f.fld(rd::<f32>(wp, 0));

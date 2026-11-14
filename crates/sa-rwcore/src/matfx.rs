@@ -66,17 +66,17 @@ use sa_core::bindings::rx_pipeline_destroy;
 use sa_core::bindings::rx_pipeline_lock;
 use sa_core::bindings::atomic_geometry_set_usage_flags;
 use sa_core::bindings::enable_clipping_if_needed as d3d9_enable_clipping_if_needed;
-use sa_core::bindings::get_render_state as rw_d3d9_get_render_state;
-use sa_core::bindings::rp_atomic_register_plugin;
-use sa_core::bindings::rp_atomic_register_plugin_stream;
-use sa_core::bindings::rp_material_register_plugin;
-use sa_core::bindings::rp_material_register_plugin_stream;
-use sa_core::bindings::rw_d3d9_get_caps;
+use crate::bindings::get_render_state as rw_d3d9_get_render_state;
+use crate::bindings::rp_atomic_register_plugin;
+use crate::bindings::rp_atomic_register_plugin_stream;
+use crate::bindings::rp_material_register_plugin;
+use crate::bindings::rp_material_register_plugin_stream;
+use crate::bindings::rw_d3d9_get_caps;
 use sa_core::bindings::rw_tex_dictionary_add_texture;
 use sa_core::bindings::rw_tex_dictionary_find_named_texture;
 use sa_core::bindings::rw_tex_dictionary_get_current;
-use sa_core::bindings::set_streams as d3d9_set_streams;
-use sa_core::bindings::vertex_alpha_enable as d3d9_vertex_alpha_enable;
+use crate::bindings::set_streams as d3d9_set_streams;
+use crate::bindings::vertex_alpha_enable as d3d9_vertex_alpha_enable;
 use crate::bindings::atomic_set_pipeline_call;
 use crate::bindings::destroy_effects_call;
 use crate::bindings::geometry_get_usage_flags as atomic_geometry_get_usage_flags;
@@ -86,12 +86,12 @@ use crate::bindings::set_bump_map_texture as set_bump_map_texture_call;
 use sa_core::bindings::all_in_one_get_instance_cb;
 use sa_core::bindings::all_in_one_set_instance_cb;
 use sa_core::bindings::all_in_one_set_render_cb;
-use sa_core::bindings::rw_texture_destroy;
+use crate::bindings::rw_texture_destroy;
 use sa_core::bindings::rx_pipeline_find_node_by_name;
-use sa_core::bindings::set_render_state as rw_d3d9_set_render_state;
-use sa_core::bindings::set_surface_properties as rw_d3d9_set_surface_properties;
-use sa_core::bindings::set_texture as rw_d3d9_set_texture;
-use sa_core::bindings::set_tss as rw_d3d9_set_texture_stage_state;
+use crate::bindings::set_render_state as rw_d3d9_set_render_state;
+use crate::bindings::set_surface_properties as rw_d3d9_set_surface_properties;
+use crate::bindings::set_texture as rw_d3d9_set_texture;
+use crate::bindings::set_tss as rw_d3d9_set_texture_stage_state;
 orig! {
     /// Bumped-texture builder (0x816290): (baseTexture, bumpTexture)
     fn matfx_create_bumped_texture(base: GPtr<u8>, bump: GPtr<u8>) -> GPtr<u8> = cdecl 0x816290 => unported;
@@ -741,7 +741,7 @@ pub fn rp_matfx_pipelines_create() -> u32 {
     all_in_one_set_instance_cb(node, 0x816120);
     all_in_one_set_render_cb(node, 0x815C20);
 
-    let caps = rw_d3d9_get_caps();
+    let caps = GPtr::from_addr(rw_d3d9_get_caps() as usize);
     let stages = rd::<u32>(caps, 0x94);
     g::<u32>(0xC9ABBC).write(stages);
     if stages >= 2 {

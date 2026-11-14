@@ -8,7 +8,7 @@ use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
 use crate::bindings::clear_all_suppressed_car_models;
-use sa_world::bindings::effect_2d_init;
+use sa_render::bindings::effect_2d_init;
 use crate::bindings::stuck_car_check_init;
 use sa_core::bindings::file_set_dir_my_documents as set_dir_my_documents;
 use sa_core::bindings::inform_friends_event_queue_init;
@@ -26,7 +26,7 @@ use sa_core::bindings::file_read;
 use sa_core::bindings::file_set_dir as set_dir;
 use sa_core::bindings::find_txd_slot;
 use sa_core::bindings::open_file;
-use sa_world::bindings::decision_maker_types_get_instance;
+use sa_ai::bindings::decision_maker_types_get_instance;
 orig! {
     fn script_resource_manager_initialise(this: GPtr<u8>) = thiscall 0x470480 => unported;
     /// CRT `sprintf(buf, fmt, n)` (0x821BB5)
@@ -507,18 +507,18 @@ pub fn reinitialise_switch_statement_data() {
     w16(0xA43F50, 0);
 }
 
-use sa_core::bindings::world_remove;
-use sa_stream::bindings::ped_is_player;
-use sa_stream::bindings::placeable_allocate_matrix;
-use sa_stream::bindings::simple_transform_update_matrix;
+use sa_world::bindings::world_remove;
+use sa_ped::bindings::ped_is_player;
+use sa_world::bindings::placeable_allocate_matrix;
+use sa_render::bindings::simple_transform_update_matrix;
 use sa_world::bindings::entity_get_col_model;
 use sa_world::bindings::ped_can_be_deleted;
-use sa_world::bindings::population_remove_ped;
+use sa_pop::bindings::population_remove_ped;
 use sa_world::bindings::process_col_models;
 use sa_world::bindings::remove_from_interesting_vehicle_list;
 use sa_world::bindings::vehicle_can_be_deleted;
-use sa_world::bindings::vehicle_remove_passenger;
-use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+use sa_veh::bindings::vehicle_remove_passenger;
+use sa_world::bindings::entity_clean_up_old_reference as clean_up_old_reference;
 use sa_world::bindings::find_objects_kinda_colliding;
 orig! {
     /// The entity's virtual deleting destructor (vtable slot 0)
@@ -596,7 +596,7 @@ pub fn clear_space_for_mission_entity(pos: GPtr<u8>, ours: GPtr<u8>) {
                     population_remove_ped(GPtr::from_addr(driver as usize));
                     let d = slot.read();
                     if d != 0 {
-                        clean_up_old_reference(GPtr::from_addr(d as usize), slot.cast::<GPtr<u8>>());
+                        clean_up_old_reference(GPtr::from_addr(d as usize), slot.cast::<u8>());
                     }
                     slot.write(0);
                 }

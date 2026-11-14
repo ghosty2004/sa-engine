@@ -10,8 +10,8 @@ use sa_core::{hook, orig};
 use crate::common::*;
 
 use sa_world::bindings::anim_blend_animation;
-use sa_core::bindings::anim_set_delete_callback as assoc_set_delete_callback;
-use sa_core::bindings::assoc_set_finish_callback;
+use sa_anim::bindings::anim_set_delete_callback as assoc_set_delete_callback;
+use sa_anim::bindings::assoc_set_finish_callback;
 use sa_core::bindings::clump_get_association;
 use crate::bindings::go_to_vehicle_and_lean_do_tidy_up;
 use sa_world::bindings::ped_set_move_state;
@@ -20,7 +20,7 @@ use sa_core::bindings::general_get_radian_angle_between_points;
 use sa_core::bindings::general_limit_radian_angle;
 use sa_world::bindings::achieve_heading_ctor;
 use sa_world::bindings::stand_still_ctor;
-use sa_core::bindings::task_new;
+use crate::bindings::task_new;
 orig! {
     /// `CTask::GetTaskType()` (vtable slot 0x10)
     fn task_get_type(t: GPtr<u8>) -> u32 = thiscall vslot 0x10 => unported;
@@ -140,14 +140,14 @@ pub fn lean_on_vehicle_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     let blend = |this: GPtr<u8>, ped: GPtr<u8>, anim: i32, delta: u32| {
         let a = anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0x34, anim as u32, f32::from_bits(delta));
         wr::<GPtr<u8>>(this, 0x14, a);
-        assoc_set_finish_callback(a, LEAN_FINISH_ANIM_CB, GPtr::from_addr((this.addr() as u32) as usize));
+        assoc_set_finish_callback(a, LEAN_FINISH_ANIM_CB, GPtr::<u8>::addr(GPtr::from_addr((this.addr() as u32) as usize)) as u32);
         0
     };
     if rd::<u8>(this, 0x29) != 0 {
         if id == ANIM_LEAN_IN {
             wr::<u32>(rd::<GPtr<u8>>(this, 0x14), 0x1C, F_MINUS_8);
         } else if id == ANIM_LEAN_LOOP {
-            assoc_set_delete_callback(rd::<GPtr<u8>>(this, 0x14), DEFAULT_ANIM_CB, GPtr::NULL);
+            assoc_set_delete_callback(rd::<GPtr<u8>>(this, 0x14), DEFAULT_ANIM_CB, GPtr::<u8>::addr(GPtr::NULL) as u32);
             return blend(this, ped, ANIM_LEAN_OUT, F_1000);
         } else if id == ANIM_LEAN_OUT {
             wr::<u32>(rd::<GPtr<u8>>(this, 0x14), 0x24, F_3);
@@ -174,7 +174,7 @@ pub fn lean_on_vehicle_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         && task_timer_is_out_of_time(this.byte_add(0x1C)) != 0
         && rd::<i16>(rd::<GPtr<u8>>(this, 0x14), 0x2C) != ANIM_LEAN_OUT as i16
     {
-        assoc_set_delete_callback(rd::<GPtr<u8>>(this, 0x14), DEFAULT_ANIM_CB, GPtr::NULL);
+        assoc_set_delete_callback(rd::<GPtr<u8>>(this, 0x14), DEFAULT_ANIM_CB, GPtr::<u8>::addr(GPtr::NULL) as u32);
         return blend(this, ped, ANIM_LEAN_OUT, F_1000);
     }
     0

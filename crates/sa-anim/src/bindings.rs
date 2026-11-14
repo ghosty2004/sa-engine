@@ -19,6 +19,36 @@ orig! {
 }
 
 orig! {
+    /// `CAnimBlendAssocGroup::GetAnimation-AnimationId` (0x4CE090)
+    pub fn assoc_group_get_animation_4ce090(g: GPtr<u8>, id: i32) -> GPtr<u8> = thiscall 0x4CE090 => crate::group::get_animation_id;
+}
+
+orig! {
+    /// `CAnimBlendAssociation::SetCurrentTime` (0x4CEA80)
+    pub fn assoc_set_current_time(a: GPtr<u8>, t: f32) = thiscall 0x4CEA80 => crate::assoc::set_current_time;
+}
+
+orig! {
+    /// `CAnimBlendAssociation::Start` (0x4CEB70)
+    pub fn assoc_start(a: GPtr<u8>, t: f32) = thiscall 0x4CEB70 => crate::assoc::start;
+}
+
+orig! {
+    /// `CAnimBlendAssociation::SetDeleteCallback` (0x4CEBC0)
+    pub fn anim_set_delete_callback(a: GPtr<u8>, cb: u32, data: u32) = thiscall 0x4CEBC0 => crate::assoc::set_delete_callback;
+}
+
+orig! {
+    /// `CAnimBlendAssociation::SetFinishCallback` (0x4CEBE0)
+    pub fn assoc_set_finish_callback(a: GPtr<u8>, cb: u32, data: u32) = thiscall 0x4CEBE0 => crate::assoc::set_finish_callback;
+}
+
+orig! {
+    /// `CAnimBlendClumpData::Destructor` (0x4CF100)
+    pub fn anim_blend_clump_data_dtor(this: GPtr<u8>) = thiscall 0x4CF100 => crate::clumpdata::destructor;
+}
+
+orig! {
     /// `CAnimBlendClumpData::SetNumberOfBones` (0x4CF140)
     pub fn clump_data_set_number_of_bones(d: GPtr<u8>, n: i32) = thiscall 0x4CF140 => crate::clumpdata::set_number_of_bones;
 }
@@ -104,8 +134,38 @@ orig! {
 }
 
 orig! {
+    /// `CAnimManager::GetAnimationBlock-` (0x4D3940)
+    pub fn get_animation_block(name: GPtr<u8>) -> GPtr<u8> = cdecl 0x4D3940 => crate::manager::get_animation_block;
+}
+
+orig! {
     /// `CAnimManager::GetFirstAssocGroup` (0x4D39B0)
     pub fn call_get_first_assoc_group(name: GPtr<u8>) -> i32 = cdecl 0x4D39B0 => crate::manager::get_first_assoc_group;
+}
+
+orig! {
+    /// `CAnimManager::CreateAnimAssocGroups` (0x4D3CC0)
+    pub fn anim_create_anim_assoc_groups() = cdecl 0x4D3CC0 => crate::manager::create_anim_assoc_groups;
+}
+
+orig! {
+    /// `CAnimManager::RegisterAnimBlock` (0x4D3E50)
+    pub fn anim_register_anim_block(name: GPtr<u8>) -> i32 = cdecl 0x4D3E50 => crate::manager::register_anim_block;
+}
+
+orig! {
+    /// `CAnimManager::AddAnimBlockRef` (0x4D3FB0)
+    pub fn anim_add_block_ref(i: i32) = cdecl 0x4D3FB0 => crate::manager::add_anim_block_ref;
+}
+
+orig! {
+    /// `CAnimManager::UncompressAnimation` (0x4D41C0)
+    pub fn uncompress_animation(h: GPtr<u8>) = cdecl 0x4D41C0 => crate::manager::uncompress_animation;
+}
+
+orig! {
+    /// `CAnimManager::GetAnimation-1` (0x4D42F0)
+    pub fn anim_get_animation(name: GPtr<u8>, block: GPtr<u8>) -> GPtr<u8> = cdecl 0x4D42F0 => crate::manager::get_animation_name;
 }
 
 orig! {
@@ -116,6 +176,16 @@ orig! {
 orig! {
     /// `RpAnimBlend::RpAnimBlendAllocateData` (0x4D5F50)
     pub fn allocate_data_call(c: GPtr<u8>) = cdecl 0x4D5F50 => crate::rp_anim_blend::rp_anim_blend_allocate_data;
+}
+
+orig! {
+    /// `RpAnimBlend::RpAnimBlendClumpIsInitialized` (0x4D6760)
+    pub fn clump_is_initialized(clump: GPtr<u8>) -> u32 = cdecl 0x4D6760 => crate::rp_anim_blend::rp_anim_blend_clump_is_initialized;
+}
+
+orig! {
+    /// `RpAnimBlend::RpAnimBlendClumpRemoveAllAssociations` (0x4D6C00)
+    pub fn anim_blend_clump_remove_all_associations(clump: GPtr<u8>) = cdecl 0x4D6C00 => crate::rp_anim_blend::rp_anim_blend_clump_remove_all_associations;
 }
 
 orig! {
@@ -146,6 +216,21 @@ orig! {
 orig! {
     /// `BoneNode_c::CalcWldMat` (0x616CD0)
     pub fn bone_calc_wld_mat(this: GPtr<u8>, parent: GPtr<u8>) = thiscall 0x616CD0 => crate::bones::calc_wld_mat;
+}
+
+orig! {
+    /// `IKChainManager_c::AbortLookAt` (0x618280)
+    pub fn ik_abort_look_at(m: GPtr<u8>, ped: GPtr<u8>, blend: i32) = thiscall 0x618280 => crate::ik::abort_look_at;
+}
+
+orig! {
+    /// `CVehicleAnimGroup::GetGroup` (0x6E3B00)
+    pub fn vehicle_anim_group_get_group(g: GPtr<u8>, anim: i32) -> i32 = thiscall 0x6E3B00 => crate::vehgroup::get_group;
+}
+
+orig! {
+    /// `CVehicleAnimGroup::ComputeAnimDoorOffsets` (0x6E3D10)
+    pub fn anim_door_offsets(g: GPtr<u8>, out: GPtr<u8>, door: i32) -> GPtr<u8> = thiscall 0x6E3D10 => crate::vehgroup::compute_anim_door_offsets;
 }
 
 orig! {

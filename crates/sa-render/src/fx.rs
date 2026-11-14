@@ -83,8 +83,8 @@ pub use sa_core::bindings::list_remove_item;
 pub use sa_core::bindings::memory_free;
 pub use sa_core::bindings::memory_malloc;
 pub use sa_core::bindings::rw_matrix_create;
-pub use sa_core::bindings::rw_matrix_destroy;
-pub use sa_core::bindings::rw_matrix_multiply;
+pub use sa_rwcore::bindings::rw_matrix_destroy;
+pub use sa_rwcore::bindings::rw_matrix_multiply;
 pub use sa_core::bindings::rw_matrix_update;
 pub use sa_core::bindings::rw_v3d_transform_points;
 pub use sa_world::bindings::sound_dtor as ae_sound_dtor;
@@ -93,18 +93,17 @@ pub use crate::bindings::fx_rw_matrix_create;
 pub use crate::bindings::fx_rw_matrix_destroy;
 pub use crate::bindings::init_static_systems;
 pub use crate::bindings::pool_get_mem;
-pub use sa_core::bindings::fx_play as system_play;
-pub use sa_core::bindings::fx_stop as system_stop;
-pub use sa_world::bindings::create_fx_system_bp;
-pub use sa_world::bindings::find_fx_system_bp;
-pub use sa_world::bindings::fx_create_system as create_fx_system_name;
-pub use sa_world::bindings::fx_kill as system_kill;
-pub use sa_world::bindings::fx_play_and_kill as system_play_and_kill;
+pub use crate::bindings::fx_play as system_play;
+pub use crate::bindings::fx_stop as system_stop;
+pub use crate::bindings::create_fx_system_bp;
+pub use crate::bindings::find_fx_system_bp;
+pub use crate::bindings::fx_create_system as create_fx_system_name;
+pub use crate::bindings::fx_kill as system_kill;
+pub use crate::bindings::fx_play_and_kill as system_play_and_kill;
+pub use sa_core::bindings::crt_new as operator_new;
+pub use sa_core::bindings::list_ctor;
+pub use sa_core::bindings::list_item_ctor;
 orig! {
-    /// `List_c::List_c()` (0x4A8DD0): head, tail, count = 0
-    pub fn list_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4A8DD0 => list_ctor_port;
-    /// `ListItem_c::ListItem_c()` (0x4A8DB0): prev, next = 0
-    pub fn list_item_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4A8DB0 => list_item_ctor_port;
     /// `FxManager_c::Update(RwCamera*, float)` (0x4A9A80)
     pub fn fx_manager_update(this: GPtr<u8>, cam: GPtr<u8>, dt: u32) = thiscall 0x4A9A80 => fx_manager_update_port;
     /// `FxManager_c::GetFrustumInfo()` (0x4A9130)
@@ -127,8 +126,6 @@ orig! {
     pub fn rw_render_state_get(state: u32, out: GPtr<u8>) -> i32 = cdecl table 0xC97B24 0x24 => unported;
     /// `ListItem_c::~ListItem_c()` (0x49EA70)
     pub fn list_item_dtor(this: GPtr<u8>) = thiscall 0x49EA70 => unported;
-    /// CRT `operator new` (0x82119A)
-    pub fn operator_new(n: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
     /// CRT `sprintf(buf, fmt, arg)` (0x821BB5)
     pub fn sprintf1(buf: GPtr<u8>, fmt: GPtr<u8>, a: u32) -> i32 = cdecl 0x821BB5 => unported;
     /// `FxPrim_c::FxPrim_c()` (0x4A9F20)
@@ -163,21 +160,6 @@ fn copy_dwords(dst: GPtr<u8>, src: GPtr<u8>, n: isize) {
     for i in 0..n {
         wr::<u32>(dst, i * 4, rd::<u32>(src, i * 4));
     }
-}
-
-/// `List_c::List_c()` (0x4A8DD0, catalogued outside RENDER; phases B/C path only).
-pub fn list_ctor_port(this: GPtr<u8>) -> GPtr<u8> {
-    wr::<u32>(this, 0, 0);
-    wr::<u32>(this, 4, 0);
-    wr::<u32>(this, 8, 0);
-    this
-}
-
-/// `ListItem_c::ListItem_c()` (0x4A8DB0, catalogued outside RENDER; phases B/C path only).
-pub fn list_item_ctor_port(this: GPtr<u8>) -> GPtr<u8> {
-    wr::<u32>(this, 0, 0);
-    wr::<u32>(this, 4, 0);
-    this
 }
 
 // ---------------------------------------------------------------------------------------------

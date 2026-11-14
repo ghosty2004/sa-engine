@@ -20,45 +20,23 @@ use sa_world::bindings::get_wheel_status;
 use sa_world::bindings::get_adhesion_group;
 use sa_world::bindings::get_adhesive_limit;
 use sa_world::bindings::get_wet_multiplier;
-use sa_core::bindings::vector_sub;
+use sa_world::bindings::vector_sub;
 use sa_world::bindings::vector_add;
 use sa_world::bindings::vector_scale as scalar_mul_vector;
 use sa_world::bindings::vector_sub_assign;
+use sa_core::bindings::cross_product;
+use sa_core::bindings::vector_dot_product as dot_product;
+use sa_core::bindings::vector_normalise;
+use sa_world::bindings::physical_apply_turn_force as apply_turn_force;
 orig! {
     /// `cHandlingDataMgr::HasFrontWheelDrive(uint8)` (0x6A0480)
     fn has_front_wheel_drive(mgr: GPtr<u8>, id: u32) -> u32 = thiscall 0x6A0480 => crate::handling::has_front_wheel_drive;
     /// `cHandlingDataMgr::HasRearWheelDrive(uint8)` (0x6A04B0)
     fn has_rear_wheel_drive(mgr: GPtr<u8>, id: u32) -> u32 = thiscall 0x6A04B0 => crate::handling::has_rear_wheel_drive;
-    /// `CPhysical::ApplyTurnForce(CVector, CVector)` (0x542A50)
-    fn apply_turn_force(e: GPtr<u8>, force: CVector, point: CVector) = thiscall 0x542A50 => sa_world::physical::forces::apply_turn_force;
-    /// `DotProduct(const RwV3d*, const RwV3d*)` (0x40FDB0), ST0
-    fn dot_product(a: GPtr<u8>, b: GPtr<u8>) -> f64 = cdecl 0x40FDB0 => dot_product_native;
-    /// `CVector::Normalise()` (0x59C910)
-    fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => normalise_native;
-    /// `CrossProduct(CVector*, const CVector*, const CVector*)` (0x59C730)
-    fn cross_product(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C730 => cross_product_native;
     /// `CEntity::TreatAsPlayerForCollisions()` (0x541F70)
     fn treat_as_player_for_collisions(e: GPtr<u8>) -> u8 = thiscall 0x541F70 => sa_world::world::entity::treat_as_player_for_collisions;
     /// `CVehicle::ProcessWheel(...)` (0x6D6C00)
     fn process_wheel(v: GPtr<u8>, fwd: GPtr<u8>, right: GPtr<u8>, speed: GPtr<u8>, point: GPtr<u8>, wheels: i32, thrust: f32, brake: f32, adhesion: f32, wheel: u32, wheel_speed: GPtr<u8>, state: GPtr<i32>, status: u32) = thiscall 0x6D6C00 => crate::mvpd_v1::vehicle_process_wheel;
-}
-
-/// Phases B/C side of `DotProduct` 0x40FDB0 (sa-math's port of the same sum order).
-pub fn dot_product_native(a: GPtr<u8>, b: GPtr<u8>) -> f64 {
-    sa_math::vector::dot_product_x87(&rv(a, 0), &rv(b, 0)).to_f64()
-}
-
-/// Phases B/C side of `CVector::Normalise` 0x59C910.
-pub fn normalise_native(v: GPtr<u8>) {
-    let [a, b, c] = sa_math::vector::normalise([rd::<f32>(v, 0), rd::<f32>(v, 4), rd::<f32>(v, 8)]);
-    wv(v, CVector::new(a, b, c));
-}
-
-/// Phases B/C side of `CrossProduct` 0x59C730.
-pub fn cross_product_native(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> {
-    let r = sa_math::vector::cross_product(&rv(a, 0), &rv(b, 0));
-    wv(out, r);
-    out
 }
 
 /// `CTimer::ms_fTimeStep`
@@ -131,14 +109,14 @@ fn wheel(
     // V20: wheel forward, V4c: wheel right
     let mut fwd = rv(m, 0x10);
     let fp = GPtr::from_raw(&mut fwd).cast::<u8>();
-    let d = X87::from_f64_exact(dot_product(fp, normal)).to_f32();
+    let d = X87::from_f64_exact(dot_product(fp, normal).to_f64()).to_f32();
     let mut tmp = CVector::default();
     let t = scalar_mul_vector(GPtr::from_raw(&mut tmp).cast(), d, normal);
     vector_sub_assign(fp, t);
-    vector_normalise(fp);
+    vector_normalise(fp.cast::<[f32;3]>());
     let mut out = CVector::default();
     let mut right = rv(cross_product(GPtr::from_raw(&mut out).cast(), fp, normal), 0);
-    vector_normalise(GPtr::from_raw(&mut right).cast());
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(GPtr::from_raw(&mut right).cast()));
     if let Some((sin, cos)) = steer
         && (!hydra_check || rd::<u16>(this, 0x22) != 0x208)
     {

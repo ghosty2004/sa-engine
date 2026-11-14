@@ -1000,7 +1000,7 @@ pub fn render_2d_stuff() {
         let top = X87::from_i32(half(h))
             .fsub(X87::from_i32(h).fmul_m(f32::from_bits(k::INV_448)).fmul_m(f32::from_bits(k_top)));
         let mut r = [0.0f32, top.to_f32(), X87::from_i32(w).to_f32(), 0.0];
-        sprite2d_draw_rect(GPtr::<u8>::cast::<f32>(GPtr::from_raw(r.as_mut_ptr()).cast()), bl);
+        sprite2d_draw_rect(GPtr::from_raw(r.as_mut_ptr()).cast(), bl);
         // bottom band: CRect(0, h, w, h/2 + h*(1/448)*k_bottom)
         let hh = X87::from_i32(h);
         let b = X87::from_f32(f32::from_bits(k::INV_448))
@@ -1008,12 +1008,12 @@ pub fn render_2d_stuff() {
             .fmul_m(f32::from_bits(k_bottom))
             .fadd(X87::from_i32(half(h)));
         let mut r = [0.0f32, hh.to_f32(), X87::from_i32(w).to_f32(), b.to_f32()];
-        sprite2d_draw_rect(GPtr::<u8>::cast::<f32>(GPtr::from_raw(r.as_mut_ptr()).cast()), bl);
+        sprite2d_draw_rect(GPtr::from_raw(r.as_mut_ptr()).cast(), bl);
         // left: CRect(0, h, w/2 - w*(1/640)*210, 0)
         let l = X87::from_i32(half(w))
             .fsub(X87::from_i32(w).fmul_m(f32::from_bits(k::INV_640)).fmul_m(f32::from_bits(k::K210)));
         let mut r = [0.0f32, X87::from_i32(h).to_f32(), l.to_f32(), 0.0];
-        sprite2d_draw_rect(GPtr::<u8>::cast::<f32>(GPtr::from_raw(r.as_mut_ptr()).cast()), bl);
+        sprite2d_draw_rect(GPtr::from_raw(r.as_mut_ptr()).cast(), bl);
         // right: CRect(w/2 + w*(1/640)*210, h, w, 0)
         let ww = X87::from_i32(w);
         let rr = X87::from_f32(f32::from_bits(k::INV_640))
@@ -1021,7 +1021,7 @@ pub fn render_2d_stuff() {
             .fmul_m(f32::from_bits(k::K210))
             .fadd(X87::from_i32(half(w)));
         let mut r = [rr.to_f32(), X87::from_i32(h).to_f32(), ww.to_f32(), 0.0];
-        sprite2d_draw_rect(GPtr::<u8>::cast::<f32>(GPtr::from_raw(r.as_mut_ptr()).cast()), bl);
+        sprite2d_draw_rect(GPtr::from_raw(r.as_mut_ptr()).cast(), bl);
     }
     audio_engine_display_radio_station_name(g(AUDIO_ENGINE));
     hud_draw();

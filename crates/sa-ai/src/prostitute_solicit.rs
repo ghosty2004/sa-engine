@@ -16,9 +16,9 @@ use sa_world::bindings::car_enter_exit_get_position_to_open_car_door as position
 use crate::bindings::intel_get_ped_entities;
 use crate::bindings::pad_conversation_no_just_down;
 use crate::bindings::pad_conversation_yes_just_down;
-use sa_core::bindings::find_player_ped;
-use sa_core::bindings::get_pad as pad_get_pad;
-use sa_core::bindings::matrix_dtor;
+use sa_world::bindings::find_player_ped;
+use sa_input::bindings::get_pad as pad_get_pad;
+use sa_world::bindings::matrix_dtor;
 use sa_core::bindings::matrix_invert as matrix_invert_into;
 use sa_core::bindings::matrix_mul_vec;
 use sa_core::bindings::messages_clear_messages;
@@ -46,10 +46,8 @@ use sa_world::bindings::vehicle_is_on_its_side;
 use sa_world::bindings::vehicle_is_upside_down;
 use crate::bindings::is_task_valid;
 use sa_world::bindings::wanted_set_wanted_level;
+use crate::bindings::seek_entity_xy_offset_ctor as seek_entity_xy_ctor;
 orig! {
-    /// `CTaskComplexSeekEntity<CEntitySeekPosCalculatorXYOffset>` constructor (0x661DC0, `ret 0x20`)
-    #[allow(clippy::too_many_arguments)]
-    fn seek_entity_xy_ctor(t: GPtr<u8>, e: GPtr<u8>, a: u32, b: u32, c: u32, d: u32, f: u32, b7: u32, b8: u32) -> GPtr<u8> = thiscall 0x661DC0 => unported;
     /// `CTaskComplexProstituteSolicit::CreateSubTask(int32, CPed*)` (0x666360)
     fn create_sub_task(t: GPtr<u8>, ty: i32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x666360 => prostitute_solicit_create_sub_task;
 }
@@ -107,7 +105,7 @@ pub fn prostitute_solicit_is_task_valid(prostitute: GPtr<u8>, client: GPtr<u8>) 
     }
     let mut d = [0f32; 3];
     vector_sub(GPtr::from_raw(d.as_mut_ptr()).cast(), pos(client), pos(prostitute));
-    let sq = X87::from_f64_exact(vector_magnitude_sqr(GPtr::from_raw(d.as_mut_ptr()).cast()));
+    let sq = X87::from_f64_exact(vector_magnitude_sqr(GPtr::from_raw(d.as_mut_ptr()).cast()).to_f64());
     if !sq.fcom(x(100.0)).test_any(0x41) {
         return 0;
     }
@@ -189,7 +187,7 @@ pub fn prostitute_solicit_create_sub_task(this: GPtr<u8>, ty: i32, ped: GPtr<u8>
             let s8 = dist_sq(pos(ped), &p8, false);
             let mut door = if !s8.fcom(s10).test_any(0x41) { p10 } else { p8 };
             let mut off = [0f32; 3];
-            matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::from_raw(off.as_mut_ptr()).cast()), mp, GPtr::from_raw(door.as_mut_ptr()).cast());
+            matrix_mul_vec(GPtr::from_raw(off.as_mut_ptr()).cast(), mp, GPtr::from_raw(door.as_mut_ptr()).cast());
             let mut t = alloc(0x58);
             if !t.is_null() {
                 t = seek_entity_xy_ctor(
@@ -479,8 +477,8 @@ pub fn prostitute_solicit_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPt
         let (cx, cy) = (rd::<f32>(cp, 0), rd::<f32>(cp, 4));
         let cm = rd::<f32>(c, 0x8C);
         let vm = x(rd::<f32>(veh, 0x8C)).fmul_m(g::<f32>(0x86_3E0C).read()).to_f32();
-        let lo = X87::from_f64_exact(min_f(150.0, vm)).to_f32();
-        let m = X87::from_f64_exact(max_f(lo, cm));
+        let lo = X87::from_f64_exact(min_f(150.0f32.to_bits(), vm.to_bits()).to_f64()).to_f32();
+        let m = X87::from_f64_exact(max_f(lo, cm).to_f64());
         let side = r & 1 != 0;
         let ty = if side { cy } else { rd::<f32>(pos(ped), 4) };
         let dy = x(ty).fsub_m(vy).to_f32();

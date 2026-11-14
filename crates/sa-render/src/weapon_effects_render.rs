@@ -19,28 +19,18 @@ use sa_core::bindings::get_weapon_info;
 use sa_world::bindings::get_weapon_radius_on_screen;
 use sa_world::bindings::is_coop_game_going_on;
 use sa_world::bindings::ped_get_weapon_skill as get_weapon_skill;
+use sa_world::bindings::max_f;
+use sa_world::bindings::min_f;
 orig! {
     /// `RwRenderStateSet(state, value)` (`RwGlobals` +0x20)
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xc97b24 0x20 => unported;
     /// `CSprite::RenderOneXLUSprite_Triangle(x1, y1, x2, y2, x3, y3, z, r, g, b, intensity, recipZ, alpha)` (0x70d320)
     fn sprite_triangle(x1: u32, y1: u32, x2: u32, y2: u32, x3: u32, y3: u32, pz: f32, r: u8, gg: u8, b: u8, intensity: u32, recip_z: u32, alpha: u8) = cdecl 0x70d320 => crate::sprite_render::render_one_xlu_sprite_triangle;
-    /// `std::min<float>` (0x404330, ST0)
-    fn min_f(a: f32, b: f32) -> f64 = cdecl 0x404330 => self::min_f_port;
-    /// `std::max<float>` (0x420800, ST0)
-    fn max_f(a: f32, b: f32) -> f64 = cdecl 0x420800 => self::max_f_port;
     /// `CWeapon::FindNearestTargetEntityWithScreenCoors(float x, float y, float range, CVector pos,
     /// float*, float*)` (0x73e240; dwords as pushed)
     fn find_nearest_target(sx: u32, sy: u32, range: u32, px: u32, py: u32, pz: u32, a: u32, b: u32) -> GPtr<u8> = cdecl 0x73e240 => unported;
     /// `FUN_0056ef90(int index)` on `CWorld::Players[i]` (0x56ef90)
     fn player_info_crosshair(this: GPtr<u8>, index: u32) = thiscall 0x56ef90 => unported;
-}
-
-pub fn min_f_port(a: f32, b: f32) -> f64 {
-    sa_world::world::mvpa_math::min_f(a, b).to_f64()
-}
-
-pub fn max_f_port(a: f32, b: f32) -> f64 {
-    sa_world::world::mvpa_math::max_f(a, b).to_f64()
 }
 
 const CROSSHAIRS: usize = 0xc8_a838;
@@ -244,8 +234,8 @@ fn triangles(ch: GPtr<u8>, flash: GPtr<f32>, player: GPtr<u8>, i: usize) {
         return;
     }
     // 1.2, 0.3; 5 (0x858C80), 25 (0x858FE8), 2.5 (0x858FA0), 30 (0x8D6148)
-    let v = X87::from_f64_exact(min_f(rd::<f32>(ch, 0x18), k(0x3f99_999a))).to_f32();
-    let size = X87::from_f64_exact(max_f(v, k(0x3e99_999a)));
+    let v = X87::from_f64_exact(min_f(rd::<f32>(ch, 0x18).to_bits(), k(0x3f99_999a).to_bits()).to_f64()).to_f32();
+    let size = X87::from_f64_exact(max_f(v, k(0x3e99_999a)).to_f64());
     crate::common::wr::<f32>(ch, 0x18, size.to_f32());
     let mut r1 = x(k(0x40a0_0000)).fmul(size).to_f32();
     let mut r2 = size.fmul_m(k(0x41c8_0000)).to_f32();
@@ -403,7 +393,7 @@ fn sniper(cam: usize) {
     if !ped.is_null() {
         let slot = i32::from(rd::<u8>(ped, 0x718) as i8);
         let ty = rd::<u32>(ped, (0x5a0 + 0x1c * slot) as isize);
-        let skill = get_weapon_skill(ped);
+        let skill = get_weapon_skill(ped) as u32;
         let info = get_weapon_info(ty as i32, (skill as i32) as u8);
         let m = rd::<GPtr<u8>>(ped, 0x14);
         let pp = if m.is_null() { ped.byte_add(4) } else { m.byte_add(0x30) };

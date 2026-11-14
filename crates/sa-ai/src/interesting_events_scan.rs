@@ -1,16 +1,17 @@
 //! WRITER-NATIVE (batch `native-20`): `CInterestingEvents::ScanForNearbyEntities` (0x605A30), unreversed in
 //! gta-reversed. Ported from the 1.0 US bytes; x87 arithmetic follows the original's instruction order.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::hook;
 
 use crate::common::*;
 
-use sa_core::bindings::find_player_ped;
+use sa_world::bindings::find_player_ped;
 use sa_core::bindings::vector_normalise_and_mag;
-use sa_core::bindings::world_clear_scan_codes;
+use sa_world::bindings::world_clear_scan_codes;
 use sa_world::bindings::crt_floor as floor;
-use sa_world::bindings::interesting_events_add;
+use crate::bindings::interesting_events_add;
 
 /// `CWorld::ms_aRepeatSectors` (0xB992B8, 16 x 16 x 3 lists)
 const REPEAT_SECTORS: usize = 0xB9_92B8;
@@ -74,7 +75,7 @@ pub fn interesting_events_scan_for_nearby_entities(this: GPtr<u8>) {
         wr::<f32>(dir, 4, x(rd::<f32>(pp, 4)).fsub_m(s[1]).to_f32());
         wr::<f32>(dir, 8, x(rd::<f32>(pp, 8)).fsub_m(s[2]).to_f32());
         wr::<u32>(this, 0x150, 0);
-        let mag = X87::from_f64_exact(vector_normalise_and_mag(dir));
+        let mag = X87::from_f64_exact(vector_normalise_and_mag(dir).to_f64());
         if !mag.fcom(x(0.0)).test_parity(0x44) {
             let fwd = rd::<GPtr<u8>>(player, 0x14).byte_add(0x10);
             for o in [0, 4, 8] {

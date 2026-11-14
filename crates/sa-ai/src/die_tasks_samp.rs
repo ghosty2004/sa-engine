@@ -19,16 +19,16 @@ const DIE_CB: u32 = 0x62FC10;
 
 use sa_world::bindings::anim_blend_animation;
 use sa_stream::bindings::anim_blend_animation_hier;
-use sa_core::bindings::assoc_set_finish_callback;
+use sa_anim::bindings::assoc_set_finish_callback;
 use crate::bindings::death_dtor as event_death_dtor;
 use crate::bindings::simple_die_ctor;
 use sa_stream::bindings::ped_is_player;
-use sa_world::bindings::event_group_add;
+use crate::bindings::event_group_add;
 use sa_world::bindings::intel_clear_tasks;
 use sa_world::bindings::leave_car_ctor;
 use sa_world::bindings::ped_set_ped_state;
 use sa_world::bindings::ped_stop_non_partial_anims;
-use sa_world::bindings::task_complex_ctor;
+use crate::bindings::task_complex_ctor;
 use sa_world::bindings::vector_mul_scalar as vector_mul;
 orig! {
     /// `CTask::GetSubTask` (vtable +8)
@@ -66,7 +66,7 @@ pub fn die_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
         anim_blend_animation(GPtr::from_addr(clump as usize), rd::<u32>(this, 8), rd::<u32>(this, 0xC), f32::from_bits(delta))
     };
     wr::<GPtr<u8>>(this, 0x24, a);
-    assoc_set_finish_callback(a, DIE_CB, GPtr::from_addr((this.addr() as u32) as usize));
+    assoc_set_finish_callback(a, DIE_CB, GPtr::<u8>::addr(GPtr::from_addr((this.addr() as u32) as usize)) as u32);
     let a = rd::<GPtr<u8>>(this, 0x24);
     wr::<u8>(a, 0x2E, rd::<u8>(a, 0x2E) & 0xF7);
     if !x(rd::<f32>(this, 0x1C)).fcom(x(g::<f32>(0x858B50).read())).test_any(0x41) {
@@ -164,7 +164,7 @@ pub fn die_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
             return t;
         }
         let w = rd::<u32>(this, 0xC);
-        task_complex_ctor(t);
+        task_complex_ctor(t.addr() as u32);
         wr::<u32>(t, 0xC, w);
         wr::<u32>(t, 0, 0x86DE04);
         wr::<u32>(t, 0x10, 0);

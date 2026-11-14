@@ -26,7 +26,7 @@ use crate::bindings::get_tile_centre;
 use crate::bindings::set_char_created_by;
 use crate::bindings::set_ped_decision_maker_type;
 use crate::bindings::tm_set_task as task_manager_set_task;
-use sa_core::bindings::load_all_requested_models;
+use sa_stream::bindings::load_all_requested_models;
 use sa_core::bindings::task_new;
 use sa_stream::bindings::stream_peds_for_interior;
 orig! {

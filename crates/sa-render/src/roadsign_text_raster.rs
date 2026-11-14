@@ -7,8 +7,8 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
-use sa_core::bindings::rw_raster_lock;
-use sa_core::bindings::rw_raster_unlock;
+use sa_rwcore::bindings::rw_raster_lock;
+use sa_rwcore::bindings::rw_raster_unlock;
 orig! {
     /// `RoadsignGetLineAndRow(char c (AL), int32* col, int32* row)` (0x6FE260, register convention, caller pops)
     fn roadsign_get_line_and_row(c: u8, col: GPtr<i32>, row: GPtr<i32>) = reg("args = al stack stack") 0x6FE260 => crate::roadsign_line_row::roadsign_get_line_and_row;
@@ -28,7 +28,7 @@ const CHARSET_PIXELS: usize = 0xC3EF88;
        unverified = "mvpm-render-6", route = "L2", hazards = "ax-al-return,heap-writes", recs = "driving",
        note = "writes the locked sign raster; RoadsignGetLineAndRow is a register-convention callee (AL + two stack pointers)")]
 pub fn roadsign_generate_text_raster(text: GPtr<u8>, num: i32, charset: GPtr<u8>, _unused: i32, sign: GPtr<u8>) -> u8 {
-    let lock = GPtr::<u8>::addr(rw_raster_lock(sign, 0, 5)) as u32;
+    let lock = GPtr::<u8>::addr(GPtr::from_addr(rw_raster_lock(sign, 0, 5) as usize)) as u32;
     if lock == 0 {
         return 0;
     }

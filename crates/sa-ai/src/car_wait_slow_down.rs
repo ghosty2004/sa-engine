@@ -9,12 +9,12 @@ use sa_core::{hook, orig};
 use crate::common::*;
 
 use crate::bindings::car_drive_dtor;
-use sa_core::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference;
 use sa_core::bindings::entity_register_reference;
 use sa_world::bindings::ped_set_ped_position_in_car;
-use sa_world::bindings::task_simple_dtor;
-use sa_core::bindings::task_new as task_new_c;
-use sa_world::bindings::task_simple_ctor;
+use crate::bindings::task_simple_dtor;
+use crate::bindings::task_new as task_new_c;
+use crate::bindings::task_simple_ctor;
 orig! {
     /// `CEvent::GetEventType()` (vtable slot 4)
     fn event_get_type(e: GPtr<u8>) -> i32 = thiscall vslot 0x4 => unported;
@@ -67,7 +67,7 @@ pub fn car_wait_to_slow_down_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x86_ED98);
     let v = rd::<GPtr<u8>>(this, 8);
     if !v.is_null() {
-        entity_clean_up_old_reference(v, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(8)));
+        entity_clean_up_old_reference(v, this.byte_add(8));
     }
     task_simple_dtor(this);
 }

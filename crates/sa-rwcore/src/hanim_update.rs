@@ -13,9 +13,9 @@ use sa_math::x87::X87;
 use crate::common::{f32_of, g, p8, rd, wr};
 
 use crate::bindings::frame_dirty;
-use sa_core::bindings::frame_get_ltm;
-use sa_core::bindings::rw_frame_update_objects as frame_update_objects;
-use sa_core::bindings::rw_matrix_multiply as matrix_multiply;
+use crate::bindings::frame_get_ltm;
+use crate::bindings::rw_frame_update_objects as frame_update_objects;
+use crate::bindings::rw_matrix_multiply as matrix_multiply;
 orig! {
     /// A key-frame apply callback `cb(matrix, keyFrame)`
     fn call_apply_cb(f: u32, m: GPtr<u8>, kf: GPtr<u8>) = cdecl dyn => unported;

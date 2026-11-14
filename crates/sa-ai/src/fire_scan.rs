@@ -12,7 +12,7 @@ use crate::common::*;
 use crate::bindings::task_is_go_to_task;
 use sa_core::bindings::tm_get_active_task;
 use sa_core::bindings::tm_get_simplest_active_task;
-use sa_world::bindings::event_group_add;
+use crate::bindings::event_group_add;
 use crate::bindings::dtor_4b1f00 as event_walk_into_fire_dtor;
 use sa_world::bindings::fire_find_nearest_fire;
 orig! {

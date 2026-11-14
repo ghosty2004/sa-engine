@@ -27,11 +27,11 @@ sa_core::globals! {
 }
 
 pub use crate::bindings::get_weapon_reload_time_call;
-pub use sa_core::bindings::entity_get_is_on_screen;
+pub use sa_world::bindings::entity_get_is_on_screen;
 pub use sa_core::bindings::fx_create_mat_from_vec;
 pub use sa_core::bindings::intel_get_task_use_gun;
 pub use sa_core::bindings::rw_matrix_create;
-pub use sa_core::bindings::rw_matrix_destroy;
+pub use sa_rwcore::bindings::rw_matrix_destroy;
 pub use sa_stream::bindings::col_model_remove_collision_volumes;
 pub use sa_stream::bindings::model_info_add_ref as model_add_ref;
 pub use sa_stream::bindings::model_info_remove_ref as model_remove_ref;
@@ -41,16 +41,16 @@ pub use sa_world::bindings::fx_prt_mult_ctor as fx_prt_mult;
 pub use sa_world::bindings::fx_system_set_matrix as fx_set_matrix;
 pub use sa_world::bindings::get_percentage_progress as stats_get_percentage_progress;
 pub use sa_core::bindings::clump_get_association;
-pub use sa_world::bindings::can_be_used_for_2_player as can_be_used_for_2_player_call;
+pub use crate::bindings::can_be_used_for_2_player as can_be_used_for_2_player_call;
 pub use sa_world::bindings::dist_to_line;
 pub use sa_world::bindings::fx_add_particle;
 pub use sa_world::bindings::fx_create_system as create_fx_system;
 pub use sa_world::bindings::fx_set_const_time;
-pub use sa_world::bindings::get_crouch_reload_animation_id_call;
+pub use crate::bindings::get_crouch_reload_animation_id_call;
 pub use sa_world::bindings::get_weapon_skill_type_call as ped_get_weapon_skill;
 pub use sa_world::bindings::ped_weapon_audio_add_audio_event as ped_weapon_audio_add_event;
 pub use sa_world::bindings::process_line_of_sight as world_process_line_of_sight;
-pub use sa_world::bindings::weapon_reload as reload_call;
+pub use crate::bindings::weapon_reload as reload_call;
 orig! {
     /// `CWeaponInfo::Initialise()` (0x5BF750)
     pub fn weapon_info_initialise() = cdecl 0x5BF750 => crate::weapon_info::initialise;
@@ -204,7 +204,7 @@ fn refill(this: GPtr<u8>, owner: GPtr<u8>) {
     let info = if owner.is_null() {
         get_weapon_info(ty, 1)
     } else {
-        let s = ped_get_weapon_skill(owner, ty) as u8;
+        let s = (ped_get_weapon_skill(owner, ty) as i32) as u8;
         get_weapon_info(ru(this, 0) as i32, s)
     };
     let clip = i32::from(rh(info, 0x20) as i16) as u32;
@@ -246,10 +246,10 @@ pub fn initialise(this: GPtr<u8>, ty: i32, ammo: i32, owner: GPtr<u8>) {
     let m1 = ru(get_weapon_info(ru(this, 0) as i32, 1), 0xC) as i32;
     let m2 = ru(get_weapon_info(ru(this, 0) as i32, 1), 0x10) as i32;
     if m1 != -1 {
-        model_add_ref(model_info(m1));
+        model_add_ref(GPtr::<u8>::cast::<sa_stream::shared::CBaseModelInfo>(model_info(m1)));
     }
     if m2 != -1 {
-        model_add_ref(model_info(m2));
+        model_add_ref(GPtr::<u8>::cast::<sa_stream::shared::CBaseModelInfo>(model_info(m2)));
     }
     wu(this, 0x18, 0);
     wb(this, 0x15, 0);
@@ -261,11 +261,11 @@ pub fn initialise(this: GPtr<u8>, ty: i32, ammo: i32, owner: GPtr<u8>) {
 pub fn shutdown(this: GPtr<u8>) {
     let m1 = ru(get_weapon_info(ru(this, 0) as i32, 1), 0xC) as i32;
     if m1 != -1 {
-        model_remove_ref(model_info(m1));
+        model_remove_ref(GPtr::<u8>::cast::<sa_stream::shared::CBaseModelInfo>(model_info(m1)));
     }
     let m2 = ru(get_weapon_info(ru(this, 0) as i32, 1), 0x10) as i32;
     if m2 != -1 {
-        model_remove_ref(model_info(m2));
+        model_remove_ref(GPtr::<u8>::cast::<sa_stream::shared::CBaseModelInfo>(model_info(m2)));
     }
     wu(this, 0, 0);
     wu(this, 4, 0);
@@ -295,7 +295,7 @@ pub fn shutdown_weapons() {
     explosion_shutdown();
     projectile_info_shutdown();
     bullet_info_shutdown();
-    col_model_remove_collision_volumes(g(PELLET_TEST_COL));
+    col_model_remove_collision_volumes(GPtr::<u8>::cast::<sa_world::collision::shared::CColModel>(g(PELLET_TEST_COL)).cast::<u8>());
 }
 
 /// `CWeapon::UpdateWeapons()` (0x73A360): shot infos, explosions, projectiles, bullets.
@@ -491,7 +491,7 @@ pub fn add_gunshell(this: GPtr<u8>, creator: GPtr<u8>, pos: GPtr<u8>, dir: GPtr<
     }
     let mut vel = [vx, vy, vz];
     let shell = g::<GPtr<u8>>(0xA9AE14).read();
-    fx_add_particle(shell, pos, lp(&mut vel).cast(), 0.0, lp(&mut mult).cast(), -1.0, f32::from_bits(0x3F99_999A), f32::from_bits(0x3F19_999A), 0);
+    fx_add_particle(shell, pos, lp(&mut vel).cast(), 0.0f32.to_bits(), lp(&mut mult).cast(), (-1.0f32).to_bits(), f32::from_bits(0x3F99_999A), f32::from_bits(0x3F19_999A), 0);
 }
 
 /// `CWeapon::DoWeaponEffect(CVector origin, CVector target)` (0x73E690, thiscall `ret 0x18`): for the
@@ -567,7 +567,7 @@ pub fn fire_from_car(this: GPtr<u8>, veh: GPtr<u8>, left: u8, right: u8) -> u8 {
                 true
             } else {
                 let mut f = Fpu::new();
-                f.push(st0(stats_get_percentage_progress()));
+                f.push(st0(stats_get_percentage_progress().to_f64()));
                 f.fcomp_m(100.0);
                 !f.jp(5)
             };
@@ -652,7 +652,7 @@ pub fn update(this: GPtr<u8>, ped: GPtr<u8>) {
     let info = if ped.is_null() {
         get_weapon_info(ty, 1)
     } else {
-        let sk = ped_get_weapon_skill(ped, ty) as u8;
+        let sk = (ped_get_weapon_skill(ped, ty) as i32) as u8;
         get_weapon_info(ru(this, 0) as i32, sk)
     };
     match ru(this, 4) {

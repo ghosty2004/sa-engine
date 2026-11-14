@@ -646,7 +646,7 @@ pub fn speech_reserve_ped_conversation_speech_slots() -> u8 {
 // ---- batch 6 -------------------------------------------------------------------------------------
 
 use sa_world::bindings::ped_get_ped_talking;
-use sa_core::bindings::find_player_ped;
+use sa_world::bindings::find_player_ped;
 orig! {
     /// `CAEPedSpeechAudioEntity::ReservePlayerConversationSpeechSlot()` (0x4E3870)
     fn speech_reserve_player_conversation_speech_slot_call() -> u8 = cdecl 0x4E3870 => speech_reserve_player_conversation_speech_slot;
@@ -858,7 +858,7 @@ pub fn vehicle_destructor(this: GPtr<u8>) {
 
 use crate::bindings::sound_set_position;
 use sa_world::bindings::fx_get_play_status;
-use sa_world::bindings::fx_get_composite_matrix;
+use sa_render::bindings::fx_get_composite_matrix;
 
 /// `CAEFireAudioEntity::UpdateParameters(CAESound*, int16 curPlayPos)` (0x4DCF60). Play position > 0:
 /// with an fx system (+0x84) the sound follows its composite matrix position (a 64-byte local, pos at
@@ -1251,7 +1251,7 @@ pub fn collision_get_collision_sound_status(
 
 use crate::bindings::play_train_brake_sound as vehicle_play_train_brake_sound;
 use crate::bindings::play_skid_sound_call as vehicle_play_skid_sound;
-use sa_world::bindings::audio_stop_radio as engine_stop_radio;
+use crate::bindings::audio_stop_radio as engine_stop_radio;
 
 /// `SetFlags(4, 0)` + `StopSound` on the sound at `this + off` (when set), which is then cleared.
 fn vehicle_stop_engine_sound(this: GPtr<u8>, off: isize) -> bool {
@@ -1304,7 +1304,7 @@ pub fn vehicle_terminate_port(this: GPtr<u8>) {
     if rd::<u8>(this, 0xA5) != 0 {
         let rt = rd::<u8>(this, 0x9B) as i8;
         if rt == 0 || rt == 2 || rt == 3 {
-            engine_stop_radio(g(0xB6BC90), GPtr::from_addr((this.addr() as u32 + 0x80) as usize), 0);
+            engine_stop_radio(g(0xB6BC90), GPtr::<u8>::addr(GPtr::from_addr((this.addr() as u32 + 0x80) as usize)) as u32, 0);
         }
     }
     let slot = rd::<u16>(this, 0xE0);
@@ -1349,7 +1349,7 @@ pub fn vehicle_just_wrecked_vehicle(this: GPtr<u8>) {
     if rd::<u8>(this, 0xA5) != 0 {
         let rt = rd::<u8>(this, 0x9B) as i8;
         if rt == 0 || rt == 2 || rt == 3 {
-            engine_stop_radio(g(0xB6BC90), GPtr::from_addr((this.addr() as u32 + 0x80) as usize), 0);
+            engine_stop_radio(g(0xB6BC90), GPtr::<u8>::addr(GPtr::from_addr((this.addr() as u32 + 0x80) as usize)) as u32, 0);
         }
         g::<u32>(0xB6B98C).write(0);
         g::<u32>(0xB6B99C).write(0);
@@ -2216,11 +2216,11 @@ pub fn speech_get_sound_and_bank_ids(this: GPtr<u8>, ctx: u32, out: GPtr<u8>) ->
 }
 
 use crate::bindings::ae_find_vehicle_of_player;
-use sa_core::bindings::ped_is_alive;
+use sa_ped::bindings::ped_is_alive;
 use sa_stream::bindings::streaming_is_very_busy;
-use sa_core::bindings::vector_magnitude_sqr as vector_magnitude_sqr_st0;
+use sa_world::bindings::vector_magnitude_sqr as vector_magnitude_sqr_st0;
 use crate::bindings::ae_resolve_probability as ae_resolve_probability_bits;
-use sa_core::bindings::vector_sub;
+use sa_world::bindings::vector_sub;
 orig! {
     /// `CAEPedSpeechAudioEntity::IsGlobalContextImportantForStreaming(int16)` (0x4E4510)
     fn speech_is_important_for_streaming(this: GPtr<u8>, ctx: u32) -> u8 = thiscall 0x4E4510 => unported;
@@ -2313,7 +2313,7 @@ pub fn speech_add_say_event(
     } else if rd::<u8>(this, 0x98) != 0 {
         return NONE;
     }
-    if ped_is_alive(g(rd::<u32>(this, 4) as usize)) == 0 && pain == 0 {
+    if ped_is_alive(g(rd::<u32>(this, 4) as usize)) as u8 == 0 && pain == 0 {
         return NONE;
     }
     if speech_is_important_for_streaming(this, ctx) != 0 || force_audible as u8 != 0 || front_end as u8 != 0 {
@@ -2400,9 +2400,9 @@ pub fn speech_add_say_event(
     r as u16
 }
 
-use sa_core::bindings::matrix_dtor as matrix_destructor;
+use sa_world::bindings::matrix_dtor as matrix_destructor;
 use sa_world::bindings::task_facial_stop_all;
-use sa_core::bindings::tm_get_task_secondary as task_manager_get_task_secondary;
+use sa_ai::bindings::tm_get_task_secondary as task_manager_get_task_secondary;
 
 /// `CAEPedSpeechAudioEntity::UpdateParameters(CAESound*, int16 curPlayPos)` (0x4E3520). Position -1 (the
 /// speech ended): +0x98 = 0 (CJ: `s_bAPlayerSpeaking` = 0), its speech slot (+0xA8) cleared, +0xA0 = 0,
@@ -3173,7 +3173,7 @@ pub fn fire_play_fire_sounds(this: GPtr<u8>, event: u32, posn: u32) {
 
 // ---- pass 3: vehicle (2) -------------------------------------------------------------------------
 
-use sa_world::bindings::uses_siren as vehicle_uses_siren;
+use sa_veh::bindings::uses_siren as vehicle_uses_siren;
 
 /// `CAEVehicleAudioEntity::Initialise` model jump-table index bytes (models 0x1C0..0x247, read in place):
 /// 0 -> +0xB0 = 1, 1 -> 0.
@@ -3400,7 +3400,7 @@ pub fn speech_add_script_say_event(
     speech_load_and_play_speech(this, 0);
 }
 
-use sa_world::bindings::facial_set_request as task_facial_set_request;
+use sa_ai::bindings::facial_set_request as task_facial_set_request;
 
 /// `CAEPedSpeechAudioEntity::PlayLoadedSound()` (0x4E5CD0): nothing without an entity (+4). A `CAESound`
 /// local (only +8 cleared in the original; the residue kept through `peek`) is initialised with bank slot `+0xA8 + 0x14`
@@ -3480,7 +3480,7 @@ pub fn speech_play_loaded_sound(this: GPtr<u8>) {
             if c != 0x152 && c != 0x151 {
                 let intel = rd::<u32>(g(rd::<u32>(this, 4) as usize), 0x47C);
                 let t = GPtr::<u8>::addr(task_manager_get_task_secondary(g(intel as usize + 4), 3)) as u32;
-                task_facial_set_request(g(t as usize), 7, 0xAF0, 0xFFFF_FFFF, 0);
+                task_facial_set_request(GPtr::<u8>::addr(g(t as usize)) as u32, 7, 0xAF0, 0xFFFF_FFFF, 0);
             }
         } else {
             clear_speech_slot(speech_slot(rd::<i16>(this, 0xA8)));
@@ -4243,7 +4243,7 @@ pub fn weapon_play_goggle_sound(this: GPtr<u8>, sfx: u32, event: u32) {
 
 /// `vector_magnitude_sqr_st0` with its ST0 result as `X87` (orig! returns stay register-sized).
 fn vector_magnitude_sqr(v: GPtr<u8>) -> crate::common::X87 {
-    crate::common::X87::from_f64_exact(vector_magnitude_sqr_st0(v.cast::<f32>()))
+    crate::common::X87::from_f64_exact(vector_magnitude_sqr_st0(v.cast::<u8>()).to_f64())
 }
 
 /// `speech_get_speech_context_volume_offset_call_st0` with its ST0 result as `X87`.

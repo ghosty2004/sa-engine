@@ -17,20 +17,19 @@ use sa_world::bindings::init_sprite_buffer;
 use crate::bindings::render_buffered_one_xlu_sprite;
 use sa_world::bindings::rw_im3d_render_indexed_primitive;
 use sa_world::bindings::rw_im3d_transform;
-use sa_stream::bindings::placeable_allocate_matrix;
-use sa_stream::bindings::simple_transform_update_matrix;
+use sa_world::bindings::placeable_allocate_matrix;
+use crate::bindings::simple_transform_update_matrix;
 use sa_core::bindings::calc_screen_coors;
 use sa_core::bindings::matrix_mul_vec;
 use sa_world::bindings::rw_im3d_end;
-use sa_world::bindings::sprite_flush_sprite_buffer as flush_sprite_buffer;
+use crate::bindings::sprite_flush_sprite_buffer as flush_sprite_buffer;
 use sa_world::bindings::world_process_vertical_line as process_vertical_line;
+use sa_core::bindings::vector_normalise;
 orig! {
     /// `RwRenderStateSet(state, value)` (`RwGlobals` +0x20)
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
     /// The sun-reflection fade of a point `(x, y, z, r)` (0x6FBA20, ST0)
     fn sun_reflection_fade(px: f32, py: f32, pz: f32, r: f32) -> f64 = cdecl 0x6FBA20 => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    fn vector_normalise(v: GPtr<f32>) = thiscall 0x59C910 => unported;
 }
 
 /// `TempBufferVerticesStored`, `TempBufferIndicesStored`, `aTempBufferIndices`, `TempBufferRenderVertices`.
@@ -121,7 +120,7 @@ pub fn render_reflections() {
                 placeable_allocate_matrix(e);
                 simple_transform_update_matrix(e.byte_add(4), rd::<GPtr<u8>>(e, 0x14));
             }
-            let r = matrix_mul_vec(GPtr::from_raw(tmp.as_mut_ptr()), rd::<GPtr<u8>>(e, 0x14), c);
+            let r = GPtr::<u8>::cast::<f32>(matrix_mul_vec(GPtr::<f32>::cast::<u8>(GPtr::from_raw(tmp.as_mut_ptr())), rd::<GPtr<u8>>(e, 0x14), c));
             [r.read(), r.wrapping_index(1).read(), r.wrapping_index(2).read()]
         } else {
             [rd::<f32>(c, 0), rd::<f32>(c, 4), rd::<f32>(c, 8)]
@@ -305,7 +304,7 @@ pub fn render_sun_reflection() {
     let py = sy.fadd_m(rd::<f32>(cp, 4)).to_f32(); // [esp+0x2c]
     let mut dir = [sun(0), sun(1), 0.0]; // [esp+0x34]
     let zb = fbits(x(g::<f32>(WEATHER_C).read()).fmul_m(0.5).fadd_m(k(0x3DCC_CCCD))); // [esp+0x30]
-    vector_normalise(GPtr::from_raw(dir.as_mut_ptr()));
+    vector_normalise(GPtr::<f32>::cast::<[f32;3]>(GPtr::from_raw(dir.as_mut_ptr())));
     let (dx, dy) = (dir[0], dir[1]);
     let a30 = x(dy).fmul_m(30.0);
     let b30 = x(dx).fmul_m(30.0);
@@ -398,12 +397,11 @@ pub const HOOKS: &[HookReg] = &[HOOK_RENDER_REFLECTIONS, HOOK_RENDER_SUN_REFLECT
 
 use sa_core::bindings::calc_screen_coors as cr_calc_screen_coors;
 use sa_world::bindings::cr_render_one_xlu_sprite_rotate_aspect;
-use sa_stream::bindings::placeable_allocate_matrix as cr_allocate_matrix;
-use sa_stream::bindings::simple_transform_update_matrix as cr_update_matrix;
+use sa_world::bindings::placeable_allocate_matrix as cr_allocate_matrix;
+use crate::bindings::simple_transform_update_matrix as cr_update_matrix;
 use sa_world::bindings::process_line_of_sight as cr_process_line_of_sight;
+use sa_core::bindings::vector_normalise as cr_normalise;
 orig! {
-    /// `CVector::Normalise()` (0x59C910)
-    fn cr_normalise(v: GPtr<sa_math::vector::CVector>) = thiscall 0x59C910 => sa_world::collision::data::normalise_port;
     /// `CSprite::RenderBufferedOneXLUSprite2D(x, y, w, h, const RwRGBA&, int16 intensity, uint8 alpha)` (0x70F440)
     fn cr_render_buffered_one_xlu_sprite_2d(px: f32, py: f32, w: f32, h: f32, colour: GPtr<u8>, intensity: u32, alpha: u32) = cdecl 0x70F440 => crate::mvpd_r3::render_buffered_one_xlu_sprite_2d;
 }
@@ -502,7 +500,7 @@ pub fn coronas_render() {
                 rd::<GPtr<u8>>(ent, 0x14)
             };
             let mut tmp = [0u32; 3];
-            let r = matrix_mul_vec(GPtr::<u32>::from_raw(tmp.as_mut_ptr()).cast(), m, c);
+            let r = GPtr::<u8>::cast::<f32>(matrix_mul_vec(GPtr::<f32>::cast::<u8>(GPtr::<u32>::from_raw(tmp.as_mut_ptr()).cast()), m, c));
             p = [rd::<u32>(r.cast(), 0), rd::<u32>(r.cast(), 4), rd::<u32>(r.cast(), 8)];
         }
         let ok = cr_calc_screen_coors(
@@ -569,7 +567,7 @@ pub fn coronas_render() {
                 fbits(x(f(p[1])).fsub_m(rd::<f32>(cp, 4))),
                 fbits(x(f(p[2])).fsub_m(rd::<f32>(cp, 8))),
             ];
-            cr_normalise(GPtr::<u32>::from_raw(d.as_mut_ptr()).cast());
+            cr_normalise(GPtr::<sa_math::vector::CVector>::cast::<[f32;3]>(GPtr::<u32>::from_raw(d.as_mut_ptr()).cast()));
             let near = x(rd::<f32>(c, 0x20));
             let dxn = x(f(d[0])).fmul(near);
             let dyn_ = x(f(d[1])).fmul(near).to_f32();

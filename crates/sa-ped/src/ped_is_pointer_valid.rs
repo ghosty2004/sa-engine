@@ -4,7 +4,7 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::hook;
 
-use sa_core::bindings::find_player_ped;
+use sa_world::bindings::find_player_ped;
 
 /// `CPools::ms_pPedPool` (0xB74490): +0 objects, +4 byte map; ped size 0x7C4.
 const PED_POOL: usize = 0xB7_4490;

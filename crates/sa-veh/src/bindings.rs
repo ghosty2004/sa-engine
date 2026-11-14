@@ -9,8 +9,23 @@ use sa_core::mem::{GBool, GPtr};
 use sa_core::orig;
 
 orig! {
+    /// `thunk_FUN_01567620` (0x41BDD0)
+    pub fn vehicle_41bdd0(v: GPtr<u8>, b: u32) = thiscall 0x41BDD0 => crate::vehicle2::set_flag_428_bit4;
+}
+
+orig! {
     /// `FUN_00424100` (0x424100)
     pub fn area_check_stub(px: u32, py: u32) -> u8 = cdecl 0x424100 => crate::train_control::area_check_stub_native;
+}
+
+orig! {
+    /// `CVehicleRecording::Init` (0x459390)
+    pub fn vehicle_recording_init() = cdecl 0x459390 => crate::checks::recording_init;
+}
+
+orig! {
+    /// `CVehicleRecording::StopPlaybackWithIndex` (0x459440)
+    pub fn stop_playback_with_index(i: i32) = cdecl 0x459440 => crate::checks2::stop_playback_with_index;
 }
 
 orig! {
@@ -19,8 +34,23 @@ orig! {
 }
 
 orig! {
+    /// `CVehicleRecording::StopPlaybackRecordedCar` (0x45A280)
+    pub fn stop_playback_recorded_car(v: GPtr<u8>) = cdecl 0x45A280 => crate::checks2::stop_playback_recorded_car;
+}
+
+orig! {
+    /// `CUpsideDownCarCheck::IsCarUpsideDown-vehicle` (0x463830)
+    pub fn upside_down_car_check_is_car_upside_down(c: GPtr<u8>, v: GPtr<u8>) -> u8 = thiscall 0x463830 => crate::checks::is_car_upside_down;
+}
+
+orig! {
     /// `FxSystem_c::SetVelAdd` (0x4AA730)
     pub fn fx_set_vel_add(fx: GPtr<u8>, v: GPtr<u8>) = thiscall 0x4AA730 => unported;
+}
+
+orig! {
+    /// `FUN_004afe70` (0x4AFE70)
+    pub fn kob_dtor(e: GPtr<u8>) = thiscall 0x4AFE70 => crate::bike_knock_off_rider::event_knock_off_bike_destructor;
 }
 
 orig! {
@@ -94,6 +124,21 @@ orig! {
 }
 
 orig! {
+    /// `CCarEnterExit::GetPositionToOpenCarDoor` (0x64E740)
+    pub fn car_enter_exit_get_position_to_open_car_door(out: GPtr<u8>, veh: GPtr<u8>, door: i32) -> GPtr<u8> = cdecl 0x64E740 => crate::car_door_positions::get_position_to_open_car_door;
+}
+
+orig! {
+    /// `CCarEnterExit::ComputePassengerIndexFromCarDoor` (0x64F1E0)
+    pub fn car_enter_exit_compute_passenger_index_from_car_door(veh: GPtr<u8>, door: i32) -> i32 = cdecl 0x64F1E0 => crate::enterexit::compute_passenger_index_from_car_door;
+}
+
+orig! {
+    /// `CCarEnterExit::IsRoomForPedToLeaveCar` (0x6504C0)
+    pub fn car_enter_exit_is_room_for_ped_to_leave_car(v: GPtr<u8>, door: i32, pos: GPtr<u8>) -> u8 = cdecl 0x6504C0 => crate::car_door_positions::is_room_for_ped_to_leave_car;
+}
+
+orig! {
     /// `CAutomobile::ResetSuspension` (0x6A2AE0)
     pub fn automobile_reset_suspension(car: GPtr<u8>) = thiscall 0x6A2AE0 => crate::automobile::reset_suspension;
 }
@@ -124,6 +169,11 @@ orig! {
 }
 
 orig! {
+    /// `CAutomobile::Constructor` (0x6B0A90)
+    pub fn automobile_ctor(this: GPtr<u8>, mi: u32, created_by: u32, setup: u8) -> GPtr<u8> = thiscall 0x6B0A90 => crate::mvpd_v7::automobile_constructor;
+}
+
+orig! {
     /// `CAutomobile::SetBumperDamage` (0x6B1350)
     pub fn car_set_panel_damage(v: GPtr<u8>, panel: u32, b: u32) = thiscall 0x6B1350 => unported;
 }
@@ -144,6 +194,16 @@ orig! {
 }
 
 orig! {
+    /// `CBike::CalculateLeanMatrix` (0x6B7150)
+    pub fn bike_calculate_lean_matrix(b: GPtr<u8>) = thiscall 0x6B7150 => crate::bike2::calculate_lean_matrix;
+}
+
+orig! {
+    /// `CBike::ProcessRiderAnims` (0x6B7280)
+    pub fn process_rider_anims(ped: GPtr<u8>, v: GPtr<u8>, data: GPtr<u8>, handling: GPtr<u8>, a5: u32) = cdecl 0x6B7280 => unported;
+}
+
+orig! {
     /// `CDamageManager::ResetDamageStatus` (0x6C20E0)
     pub fn dm_reset_damage_status(dm: GPtr<u8>) = thiscall 0x6C20E0 => crate::damage::reset_damage_status;
 }
@@ -159,8 +219,58 @@ orig! {
 }
 
 orig! {
+    /// `CDamageManager::GetDoorStatus` (0x6C2230)
+    pub fn damage_get_door_status(d: GPtr<u8>, door: i32) -> u32 = thiscall 0x6C2230 => crate::damage::get_door_status;
+}
+
+orig! {
+    /// `CDamageManager::SetEngineStatus` (0x6C22A0)
+    pub fn set_engine_status(d: GPtr<u8>, s: u32) = thiscall 0x6C22A0 => crate::damage::set_engine_status;
+}
+
+orig! {
+    /// `CDamageManager::GetEngineStatus` (0x6C22C0)
+    pub fn get_engine_status(d: GPtr<u8>) -> u32 = thiscall 0x6C22C0 => crate::damage::get_engine_status;
+}
+
+orig! {
+    /// `CDamageManager::ProgressPanelDamage` (0x6C23C0)
+    pub fn progress_panel_damage(dm: GPtr<u8>, panel: u32) -> u8 = thiscall 0x6C23C0 => crate::damage::progress_panel_damage;
+}
+
+orig! {
+    /// `CDamageManager::ApplyDamage` (0x6C24B0)
+    pub fn apply_damage(dm: GPtr<u8>, v: GPtr<u8>, comp: i32, intensity: f32, mult: f32) -> u8 = thiscall 0x6C24B0 => crate::damage::apply_damage;
+}
+
+orig! {
+    /// `CDamageManager::GetCarNodeIndexFromPanel` (0x6C26A0)
+    pub fn node_from_panel(p: u32) -> i32 = cdecl 0x6C26A0 => crate::automobile2::get_car_node_index_from_panel;
+}
+
+orig! {
+    /// `CDamageManager::GetCarNodeIndexFromDoor` (0x6C26F0)
+    pub fn get_car_node_index_from_door(d: u32) -> i32 = cdecl 0x6C26F0 => crate::automobile2::get_car_node_index_from_door;
+}
+
+orig! {
+    /// `CHeli` (0x6C4190)
+    pub fn heli_ctor(this: GPtr<u8>, mi: i32, created_by: u32) -> GPtr<u8> = thiscall 0x6C4190 => crate::air2::heli_ctor;
+}
+
+orig! {
     /// `CMonsterTruck::ExtendSuspension` (0x6C7D80)
     pub fn call_extend_suspension(a: GPtr<u8>) = thiscall 0x6C7D80 => crate::vehicle_suspension_nodes::monster_truck_extend_suspension_port;
+}
+
+orig! {
+    /// `CPlane::Constructor` (0x6C8E20)
+    pub fn plane_ctor(this: GPtr<u8>, mi: i32, created_by: u32) -> GPtr<u8> = thiscall 0x6C8E20 => crate::air2::plane_ctor;
+}
+
+orig! {
+    /// `CPlane::SetGearUp` (0x6CAC20)
+    pub fn plane_set_gear_up(v: GPtr<u8>) = thiscall 0x6CAC20 => crate::heli::set_gear_up;
 }
 
 orig! {
@@ -179,6 +289,11 @@ orig! {
 }
 
 orig! {
+    /// `CVehicle::GetVehicleAppearance` (0x6D1080)
+    pub fn get_vehicle_appearance(v: GPtr<u8>) -> u32 = thiscall 0x6D1080 => crate::vehicle2::get_vehicle_appearance;
+}
+
+orig! {
     /// `CVehicle::ProcessWheelRotation` (0x6D1230)
     pub fn process_wheel_rotation(v: GPtr<u8>, state: u32, fwd: GPtr<u8>, speed: GPtr<u8>, radius: f32) -> f64 = thiscall 0x6D1230 => unported;
 }
@@ -194,6 +309,16 @@ orig! {
 }
 
 orig! {
+    /// `CVehicle::RemovePassenger` (0x6D1610)
+    pub fn vehicle_remove_passenger(v: GPtr<u8>, p: GPtr<u8>) = thiscall 0x6D1610 => crate::vehicle2::remove_passenger;
+}
+
+orig! {
+    /// `CVehicle::IsUpsideDown` (0x6D1D90)
+    pub fn vehicle_is_upside_down(v: GPtr<u8>) -> u8 = thiscall 0x6D1D90 => crate::vehicle2::is_upside_down;
+}
+
+orig! {
     /// `CVehicle::CanDoorsBeDamaged` (0x6D1E60)
     pub fn can_doors_be_damaged(v: GPtr<u8>) -> u8 = thiscall 0x6D1E60 => crate::vehicle::can_doors_be_damaged;
 }
@@ -201,6 +326,11 @@ orig! {
 orig! {
     /// `CVehicle::ProcessCarAlarm` (0x6D21F0)
     pub fn process_car_alarm(v: GPtr<u8>) = thiscall 0x6D21F0 => crate::vehicle2::process_car_alarm;
+}
+
+orig! {
+    /// `CVehicle::IsLawEnforcementVehicle` (0x6D2370)
+    pub fn is_law_enforcement_vehicle(v: GPtr<u8>) -> u8 = thiscall 0x6D2370 => crate::vehicle::is_law_enforcement_vehicle;
 }
 
 orig! {
@@ -214,13 +344,28 @@ orig! {
 }
 
 orig! {
+    /// `CVehicle::SetComponentAtomicAlpha` (0x6D2960)
+    pub fn set_component_atomic_alpha(a: GPtr<u8>, alpha: u32) = cdecl 0x6D2960 => crate::vehicle::set_component_atomic_alpha;
+}
+
+orig! {
     /// `CVehicle::UpdateClumpAlpha` (0x6D2980)
     pub fn update_clump_alpha(v: GPtr<u8>) = thiscall 0x6D2980 => crate::vehicle2::update_clump_alpha;
 }
 
 orig! {
+    /// `CVehicle::PickRandomPassenger` (0x6D2A10)
+    pub fn pick_random_passenger(v: GPtr<u8>) -> GPtr<u8> = thiscall 0x6D2A10 => crate::vehicle2::pick_random_passenger;
+}
+
+orig! {
     /// `CVehicle::AddDamagedVehicleParticles` (0x6D2A80)
     pub fn add_damaged_vehicle_particles(v: GPtr<u8>) = thiscall 0x6D2A80 => crate::vehicle2::add_damaged_vehicle_particles;
+}
+
+orig! {
+    /// `CVehicle::GetReplacementUpgrade` (0x6D3A50)
+    pub fn get_replacement_upgrade(v: GPtr<u8>, node: u32) -> i32 = thiscall 0x6D3A50 => crate::vehicle2::get_replacement_upgrade;
 }
 
 orig! {
@@ -241,6 +386,11 @@ orig! {
 orig! {
     /// `CVehicle::SetModelIndex` (0x6D6A40)
     pub fn vehicle_set_model_index(v: GPtr<u8>, mi: u32) = thiscall 0x6D6A40 => unported;
+}
+
+orig! {
+    /// `CVehicle::UsesSiren` (0x6D8470)
+    pub fn uses_siren(veh: GPtr<u8>) -> u8 = thiscall 0x6D8470 => crate::vehicle2::uses_siren;
 }
 
 orig! {
@@ -279,6 +429,11 @@ orig! {
 }
 
 orig! {
+    /// `new` (0x6E2D50)
+    pub fn vehicle_new(size: u32) -> GPtr<u8> = cdecl 0x6E2D50 => crate::vehicle2::operator_new;
+}
+
+orig! {
     /// `delete` (0x6E2D90)
     pub fn vehicle_delete(p: GPtr<u8>) = cdecl 0x6E2D90 => crate::vehicle2::operator_delete;
 }
@@ -286,6 +441,11 @@ orig! {
 orig! {
     /// `CDoor::Process` (0x6F4040)
     pub fn door_process(d: GPtr<u8>, v: GPtr<u8>, mf: GPtr<u8>, tf: GPtr<u8>, off: GPtr<u8>) -> u8 = thiscall 0x6F4040 => unported;
+}
+
+orig! {
+    /// `CDoor::IsClosed` (0x6F4800)
+    pub fn door_is_closed(d: GPtr<u8>) -> u8 = thiscall 0x6F4800 => crate::door::is_closed;
 }
 
 orig! {
@@ -304,8 +464,23 @@ orig! {
 }
 
 orig! {
+    /// `CTrain::SetTrainSpeed` (0x6F5E20)
+    pub fn set_train_speed(v: GPtr<u8>, k: f32) = cdecl 0x6F5E20 => crate::train::set_train_speed;
+}
+
+orig! {
     /// `CTrainNode::GetLightingFromCollision` (0x6F5F80)
     pub fn get_lighting_from_collision(n: GPtr<u8>) -> u8 = thiscall 0x6F5F80 => crate::train2::get_lighting_from_collision;
+}
+
+orig! {
+    /// `CTrain::Constructor` (0x6F6030)
+    pub fn train_ctor(this: GPtr<u8>, mi: u32, created_by: u32) -> GPtr<u8> = thiscall 0x6F6030 => crate::train2::train_ctor;
+}
+
+orig! {
+    /// `CTrain::MarkSurroundingEntitiesForCollisionWithTrain` (0x6F6640)
+    pub fn mark_surrounding_entities(x: f32, y: f32, z: f32, r: f32, e: GPtr<u8>, b: u32) = cdecl 0x6F6640 => crate::train2::mark_surrounding_entities_for_collision_with_train;
 }
 
 orig! {
@@ -316,6 +491,11 @@ orig! {
 orig! {
     /// `CTrain::FindPositionOnTrackFromCoors` (0x6F6CC0)
     pub fn train_find_position_on_track_from_coors(t: GPtr<u8>) = thiscall 0x6F6CC0 => unported;
+}
+
+orig! {
+    /// `CTrain::CreateMissionTrain` (0x6F7550)
+    pub fn create_mission_train(x: f32, y: f32, z: f32, dir: u8, ty: u32, first: GPtr<GPtr<u8>>, last: GPtr<GPtr<u8>>, node: i32, track: i32, mission: u8) = cdecl 0x6F7550 => crate::mvpb_a5::create_mission_train;
 }
 
 orig! {

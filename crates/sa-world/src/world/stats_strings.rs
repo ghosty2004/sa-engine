@@ -125,13 +125,15 @@ pub fn find_criminal_rating_string() -> GPtr<u8> {
 use crate::bindings::german_game;
 use crate::bindings::metric;
 use sa_core::bindings::ascii_to_gxt_char;
-use sa_core::bindings::find_player_ped;
+use crate::bindings::find_player_ped;
 use sa_core::bindings::sprintf1 as sprintf_i;
 use crate::bindings::find_most_favorite_radio_station;
 use crate::bindings::get_weapon_skill_type_call as get_weapon_skill;
 use crate::bindings::gxt_char_strcpy;
 use crate::bindings::gxt_char_to_ascii;
 use crate::bindings::stats_populate_favorite_radio_station_list as populate_favorite_radio_station_list;
+use crate::bindings::get_percentage_progress;
+use crate::bindings::get_stat_value;
 orig! {
     /// CRT `sprintf(buf, fmt)` (0x821BB5)
     fn sprintf_0(buf: GPtr<u8>, fmt: GPtr<u8>) -> i32 = cdecl 0x821BB5 => unported;
@@ -141,10 +143,6 @@ orig! {
     fn sprintf_ds(buf: GPtr<u8>, fmt: GPtr<u8>, v: f64, s: GPtr<u8>) -> i32 = cdecl 0x821BB5 => unported;
     /// CRT `sprintf(buf, fmt, int, char*, int)` (0x821BB5)
     fn sprintf_isi(buf: GPtr<u8>, fmt: GPtr<u8>, a: i32, s: GPtr<u8>, b: i32) -> i32 = cdecl 0x821BB5 => unported;
-    /// `CStats::GetStatValue(uint16)` (0x558E40, ST0)
-    fn get_stat_value(stat: u32) -> X87 = reg("args = stack") 0x558E40 => unported;
-    /// `CStats::GetPercentageProgress()` (0x5591E0, ST0)
-    fn get_percentage_progress() -> X87 = reg("args = stack") 0x5591E0 => unported;
     /// `CStats::ConvertToMins(int32)` (0x559540)
     fn convert_to_mins(v: i32) -> i32 = cdecl 0x559540 => super::stats::convert_to_mins;
     /// `CStats::ConvertToSecs(int32)` (0x559560)
@@ -418,11 +416,11 @@ fn entry(e: GPtr<u8>, id: i16, line: i32, n: &mut i32) -> Option<i32> {
             10 => {
                 g::<i16>(BAR_CHART).write(id);
                 line!();
-                return Some(int_line(ftol32(get_stat_value(edi as u32))));
+                return Some(int_line(ftol32(sa_math::x87::X87::from_f64_exact(get_stat_value((edi as u32) as u16)))));
             }
             5 => {
                 line!();
-                let w = ftol32(get_stat_value(edi as u32));
+                let w = ftol32(sa_math::x87::X87::from_f64_exact(get_stat_value((edi as u32) as u16)));
                 g::<u8>(G_STRING2).write(0);
                 if metric() == 0 {
                     sprintf_i(s(G_STRING2), s(0x863EFC), w);
@@ -434,28 +432,28 @@ fn entry(e: GPtr<u8>, id: i16, line: i32, n: &mut i32) -> Option<i32> {
             }
             3 => {
                 line!();
-                return Some(double_line(0x863EF4, get_stat_value(edi as u32).to_f64()));
+                return Some(double_line(0x863EF4, sa_math::x87::X87::from_f64_exact(get_stat_value((edi as u32) as u16)).to_f64()));
             }
             4 => {
                 line!();
-                let v = ftol32(get_stat_value(edi as u32));
+                let v = ftol32(sa_math::x87::X87::from_f64_exact(get_stat_value((edi as u32) as u16)));
                 g::<u8>(G_STRING2).write(0);
                 sprintf_i(s(G_STRING2), s(0x863F10), v);
                 return Some(std_tail());
             }
             9 => {
                 line!();
-                let mins = convert_to_mins(ftol32(get_stat_value(edi as u32)));
-                let secs = convert_to_secs(ftol32(get_stat_value(edi as u32)));
+                let mins = convert_to_mins(ftol32(sa_math::x87::X87::from_f64_exact(get_stat_value((edi as u32) as u16))));
+                let secs = convert_to_secs(ftol32(sa_math::x87::X87::from_f64_exact(get_stat_value((edi as u32) as u16))));
                 return Some(time_line(mins, secs));
             }
             1 => {
                 line!();
-                return Some(double_line(0x863F1C, get_stat_value(edi as u32).to_f64()));
+                return Some(double_line(0x863F1C, sa_math::x87::X87::from_f64_exact(get_stat_value((edi as u32) as u16)).to_f64()));
             }
             6 => {
                 line!();
-                let v = get_stat_value(edi as u32).to_f32();
+                let v = sa_math::x87::X87::from_f64_exact(get_stat_value((edi as u32) as u16)).to_f32();
                 g::<u8>(G_STRING2).write(0);
                 let a = gxt_char_to_ascii(text_get(g(THE_TEXT), s(0x863EDC)), 0);
                 sprintf_ds(s(G_STRING2), s(0x863ED4), f64::from(v), a);
@@ -464,10 +462,10 @@ fn entry(e: GPtr<u8>, id: i16, line: i32, n: &mut i32) -> Option<i32> {
             7 => {
                 if metric() != 0 {
                     line!();
-                    return Some(double_line(0x863EEC, get_stat_value(edi as u32).to_f64()));
+                    return Some(double_line(0x863EEC, sa_math::x87::X87::from_f64_exact(get_stat_value((edi as u32) as u16)).to_f64()));
                 }
                 line!();
-                let v = get_stat_value(edi as u32).fmul_m(g::<f32>(F_FEET).read()).to_f64();
+                let v = sa_math::x87::X87::from_f64_exact(get_stat_value((edi as u32) as u16)).fmul_m(g::<f32>(F_FEET).read()).to_f64();
                 return Some(double_line(0x863EE4, v));
             }
             _ => {
@@ -490,7 +488,7 @@ fn entry(e: GPtr<u8>, id: i16, line: i32, n: &mut i32) -> Option<i32> {
             return None;
         }
         line!();
-        return Some(double_line(0x863F14, get_stat_value(edi as u32).to_f64()));
+        return Some(double_line(0x863F14, sa_math::x87::X87::from_f64_exact(get_stat_value((edi as u32) as u16)).to_f64()));
     }
     if edi as u32 > 0xF3 {
         return None;
@@ -630,7 +628,7 @@ fn special_high(edi: i32, line: i32, n: &mut i32) -> Option<i32> {
             };
             let mut b = al.wrapping_sub(0x15);
             if *n == line {
-                return Some(int_line(ftol32(get_stat_value(u32::from(b) + 0x44))));
+                return Some(int_line(ftol32(sa_math::x87::X87::from_f64_exact(get_stat_value((u32::from(b) + 0x44) as u16)))));
             }
             let ped = find_player_ped(-1);
             *n += 1;
@@ -652,7 +650,7 @@ fn special_high(edi: i32, line: i32, n: &mut i32) -> Option<i32> {
             *n += 1;
             for i in 1u16..11 {
                 sprintf_numbered(G_STRING, 0x8641BC, 0x8641C8, 0x8641B4, i32::from(i), i < 10);
-                let skill = (get_weapon_skill(find_player_ped(-1), (u32::from(i) + 0x15) as i32) as u8) as i8;
+                let skill = ((get_weapon_skill(find_player_ped(-1), (u32::from(i) + 0x15) as i32) as i32) as u8) as i8;
                 let key = match skill {
                     1 => 0x86419C,
                     2 => 0x8641A4,

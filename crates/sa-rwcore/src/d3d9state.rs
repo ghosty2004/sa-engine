@@ -98,8 +98,8 @@ const T_FOG: u32 = 0x8848FC;
 const T_FILTER: u32 = 0x884950;
 
 pub use crate::bindings::set_texture_internal as set_texture_internal_call;
-pub use sa_core::bindings::set_render_state as set_render_state_call;
-pub use sa_core::bindings::vertex_alpha_enable as rs_vertex_alpha_call;
+pub use crate::bindings::set_render_state as set_render_state_call;
+pub use crate::bindings::vertex_alpha_enable as rs_vertex_alpha_call;
 orig! {
     /// `IDirect3DDevice9::SetRenderState` (vtable +0xE4)
     pub fn dev_set_render_state(dev: GPtr<u8>, state: u32, value: u32) -> i32 = stdcall vslot 0xE4 => unported;
@@ -443,7 +443,7 @@ pub fn set_surface_properties(sp: GPtr<u8>, color: GPtr<u8>, flags: u32) -> u32 
 }
 
 pub use crate::bindings::flush_cache as flush_cache_call;
-pub use sa_core::bindings::set_tss as set_tss_call;
+pub use crate::bindings::set_tss as set_tss_call;
 orig! {
     /// `RwD3D9SetSamplerState(stage, type, value)` (0x7FC3C0)
     pub fn set_sampler_call(stage: u32, ty: u32, value: u32) = cdecl 0x7FC3C0 => set_sampler_state;

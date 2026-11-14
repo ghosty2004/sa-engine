@@ -4,18 +4,13 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 
 use super::common::{g, x, xi};
 
 use crate::bindings::find_ground_z_for_3d_coord;
-orig! {
-    /// `CPickups::GenerateNewOne(CVector, uint32 model, uint8 type, uint32 ammo, uint32 money, bool, const char*)`
-    /// (0x456F20)
-    #[allow(clippy::too_many_arguments)]
-    fn generate_new_one(px: f32, py: f32, pz: f32, model: u32, ty: u32, ammo: u32, money: u32, empty: u32, msg: u32) -> i32 = cdecl 0x456F20 => unported;
-}
+use sa_stream::bindings::generate_new_one;
 
 /// `ModelIndices::MI_MONEY` (int16, set at run time)
 const MI_MONEY: usize = 0x8CD59C;
@@ -55,7 +50,7 @@ pub fn create_some_money(px: f32, py: f32, pz: f32, amount: i32) {
         if found != 0 {
             let r = rand_at(0x458A3B) & 3;
             let model = u32::from(g::<u16>(MI_MONEY).read());
-            generate_new_one(px, py, pz, model, 8, r.wrapping_add(each) as u32, 0, 0, 0);
+            generate_new_one(px, py, pz, model, 8, r.wrapping_add(each) as u32, 0, 0, GPtr::NULL);
         }
         left -= 1;
     }

@@ -11,7 +11,7 @@ use super::common::{ftol32, g, rd, wr, x};
 
 use crate::bindings::placeable_get_matrix;
 use sa_core::bindings::matrix_mul_vec;
-use sa_stream::bindings::placeable_allocate_matrix;
+use crate::bindings::placeable_allocate_matrix;
 use sa_stream::bindings::simple_transform_update_matrix;
 use crate::bindings::call_is_point_behind_occluder as occluder_is_point_behind;
 use crate::bindings::call_is_point_within_occlusion_area as occluder_is_point_within_area;
@@ -52,7 +52,7 @@ fn corner_hidden(occ: GPtr<u8>, p: &mut [f32; 3]) -> bool {
 /// `matrix * v` into a fresh vector.
 fn transform(m: GPtr<u8>, mut v: [f32; 3]) -> [f32; 3] {
     let mut out = [0f32; 3];
-    let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::from_raw(&mut out).cast()), m, GPtr::from_raw(&mut v).cast()));
+    let r = matrix_mul_vec(GPtr::from_raw(&mut out).cast(), m, GPtr::from_raw(&mut v).cast());
     [rd::<f32>(r, 0), rd::<f32>(r, 4), rd::<f32>(r, 8)]
 }
 
@@ -148,8 +148,8 @@ use crate::bindings::remove_all_projectiles as projectile_info_remove_all_projec
 use crate::bindings::remove_from_interesting_vehicle_list as car_ctrl_remove_from_interesting_vehicle_list;
 use crate::bindings::vehicle_can_be_deleted;
 use crate::bindings::vehicle_remove_passenger;
-use sa_core::bindings::entity_clean_up_old_reference;
-use sa_core::bindings::find_player_ped;
+use crate::bindings::entity_clean_up_old_reference;
+use crate::bindings::find_player_ped;
 use sa_stream::bindings::ped_is_player;
 use crate::bindings::garages_is_point_within_hide_out_garage;
 use crate::bindings::remove_from_moving_list;
@@ -204,7 +204,7 @@ pub fn world_clear_exciting_stuff_from_area(point: GPtr<u8>, r: f32, projectiles
         if ped_is_player(p) != 0 || ped_can_be_deleted(p) == 0 || !within_2d(ent_pos(p), point, r) {
             continue;
         }
-        let grp = ped_groups_get_peds_group(find_player_ped(-1));
+        let grp = GPtr::from_addr(ped_groups_get_peds_group(GPtr::<u8>::addr(find_player_ped(-1)) as u32) as usize);
         if !grp.is_null() && membership_is_follower(grp.byte_add(8), p) != 0 {
             continue;
         }
@@ -213,7 +213,7 @@ pub fn world_clear_exciting_stuff_from_area(point: GPtr<u8>, r: f32, projectiles
     let n = rd::<i32>(vehs, 8);
     'veh: for i in 0..n.max(0) {
         let Some(v) = live(vehs, i, 0xA18) else { continue };
-        let grp = ped_groups_get_peds_group(find_player_ped(-1));
+        let grp = GPtr::from_addr(ped_groups_get_peds_group(GPtr::<u8>::addr(find_player_ped(-1)) as u32) as usize);
         let mut j = 0;
         while j < rd::<u8>(v, 0x488) as i32 {
             let pass = rd::<GPtr<u8>>(v, 0x464 + 4 * j as isize);
@@ -236,7 +236,7 @@ pub fn world_clear_exciting_stuff_from_area(point: GPtr<u8>, r: f32, projectiles
             population_remove_ped(driver);
             let d = rd::<GPtr<u8>>(v, 0x460);
             if !d.is_null() {
-                entity_clean_up_old_reference(d, GPtr::<u8>::cast::<GPtr<u8>>(v.byte_add(0x460)));
+                entity_clean_up_old_reference(d, v.byte_add(0x460));
             }
             wr::<u32>(v, 0x460, 0);
         }
@@ -278,7 +278,7 @@ pub fn world_clear_exciting_stuff_from_area(point: GPtr<u8>, r: f32, projectiles
 use sa_stream::bindings::clock_get_is_time_in_range;
 use crate::bindings::flush_single as single_list_flush;
 use crate::bindings::is_coop_game_going_on as game_logic_is_coop_game_going_on;
-use sa_core::bindings::get_pad as pad_get_pad;
+use sa_input::bindings::get_pad as pad_get_pad;
 use sa_core::bindings::quad_tree_get_all_matching_rect;
 use crate::bindings::camera_is_sphere_visible_m as camera_is_sphere_visible;
 use crate::bindings::markers_place_marker_cone;
@@ -411,8 +411,8 @@ use crate::bindings::add_big_message_q as messages_add_big_message_q;
 use crate::bindings::camera_set_cam_position_for_fixed_mode;
 use crate::bindings::pick_random_passenger as vehicle_pick_random_passenger;
 use sa_core::bindings::camera_restore_with_jump_cut;
-use sa_core::bindings::find_player_vehicle;
-use sa_core::bindings::stats_increment_stat;
+use crate::bindings::find_player_vehicle;
+use crate::bindings::stats_increment_stat;
 use sa_core::bindings::text_get;
 use sa_core::bindings::vector_magnitude;
 use crate::bindings::add_big_message_with_number as messages_add_big_message_with_number;
@@ -731,7 +731,7 @@ pub fn interior_manager_prune_visible_effects(_this: GPtr<u8>, fx: GPtr<u8>, n: 
                 simple_transform_update_matrix(ent.byte_add(4), rd::<GPtr<u8>>(ent, 0x14));
             }
             let mut out = [0f32; 3];
-            let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::from_raw(&mut out).cast()), rd::<GPtr<u8>>(ent, 0x14), rd::<GPtr<u8>>(ek, 8 + 4 * i as isize)));
+            let r = matrix_mul_vec(GPtr::from_raw(&mut out).cast(), rd::<GPtr<u8>>(ent, 0x14), rd::<GPtr<u8>>(ek, 8 + 4 * i as isize));
             let (px, py) = (rd::<f32>(r, 0), rd::<f32>(r, 4));
             let cp = cam_position();
             let a = x(rd::<f32>(cp, 0)).fsub_m(px);
@@ -769,7 +769,7 @@ pub fn interior_manager_prune_visible_effects(_this: GPtr<u8>, fx: GPtr<u8>, n: 
 use sa_core::bindings::general_random_int_in_range as general_get_random_number_in_range_int;
 use sa_core::bindings::list_get_num_items;
 use sa_core::bindings::vector_normalise;
-use sa_core::bindings::world_remove;
+use crate::bindings::world_remove;
 use crate::bindings::camera_is_sphere_visible as camera_is_sphere_visible_r;
 orig! {
     /// `CWaterLevel::GetWaterDepth(const CVector&, float* depth, float* level, float* bed)` (0x6EA960, cdecl)
@@ -817,7 +817,7 @@ pub fn water_creature_manager_update(this: GPtr<u8>, dt: f32) {
         let mut v = [rand_signed(0x6E4F78), 0.0, 0.0];
         v[1] = rand_signed(0x6E4F97);
         let vp = GPtr::from_raw(&mut v).cast::<u8>();
-        vector_normalise(vp);
+        vector_normalise(vp.cast::<[f32;3]>());
         let r = sa_core::orig::at_site(0x6E4FC7, sa_core::crt::rand);
         let s = X87::from_i32(r)
             .fmul_m(g::<f32>(0x858C7C).read())
@@ -894,12 +894,12 @@ use crate::bindings::ped_shoulder_bone_rotation;
 use crate::bindings::realtime_shadow_do_shadow_this_frame as shadow_manager_do_shadow_this_frame;
 use crate::bindings::shadows_store_shadow_for_ped_object;
 use sa_core::bindings::entity_update_rp_hanim as entity_update_rp_h_anim;
-use sa_core::bindings::frame_get_ltm as rw_frame_get_ltm;
+use sa_rwcore::bindings::frame_get_ltm as rw_frame_get_ltm;
 use sa_core::bindings::get_first_atomic;
 use sa_core::bindings::matrix_assign;
-use sa_core::bindings::matrix_dtor;
+use crate::bindings::matrix_dtor;
 use sa_core::bindings::rp_hanim_hierarchy_get_matrix_array as rp_h_anim_hierarchy_get_matrix_array;
-use sa_core::bindings::rp_skin_geometry_get_skin;
+use sa_rwcore::bindings::rp_skin_geometry_get_skin;
 use sa_stream::bindings::get_anim_hierarchy_from_clump;
 use crate::bindings::physical_process_control;
 use crate::bindings::world_process_vertical_line;
@@ -999,7 +999,7 @@ pub fn cutscene_object_pre_render(this: GPtr<u8>) {
         let clump = rd::<GPtr<u8>>(this, 0x18);
         if rd::<u8>(clump, 0) == 2 {
             let a = get_first_atomic(clump);
-            if !a.is_null() && !rp_skin_geometry_get_skin(rd::<GPtr<u8>>(a, 0x18)).is_null() {
+            if !a.is_null() && !GPtr::<u8>::from_addr(rp_skin_geometry_get_skin(rd::<GPtr<u8>>(a, 0x18)) as usize).is_null() {
                 let a = get_first_atomic(clump);
                 let data = rd::<GPtr<u8>>(clump, g::<u32>(0xB5F878).read() as isize);
                 let src = rd::<GPtr<u8>>(rd::<GPtr<u8>>(data, 0x10), 0x10).byte_add(0x10);

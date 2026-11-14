@@ -10,7 +10,7 @@ use sa_math::x87::X87;
 
 use super::common::{g, rd, wr, x};
 
-use sa_core::bindings::rw_frame_update_objects;
+use sa_rwcore::bindings::rw_frame_update_objects;
 use crate::bindings::wind_find_wind_modifier as wind_modifiers_find;
 
 /// `CTimer::m_UserPause` (0xB7CB49), `m_CodePause` (0xB7CB48), `m_snTimeInMilliseconds` (0xB7CB84)

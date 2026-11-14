@@ -11,9 +11,9 @@ use sa_core::{hook, orig};
 use crate::common::*;
 
 use sa_core::bindings::entity_register_reference;
-use sa_world::bindings::task_complex_ctor;
+use crate::bindings::task_complex_ctor;
 use sa_world::bindings::wander_get_wander_task_by_ped_type;
-use sa_world::bindings::tm_set_task as task_manager_set_task;
+use crate::bindings::tm_set_task as task_manager_set_task;
 orig! {
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_get_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
@@ -34,7 +34,7 @@ const BEHIND_SCALE: usize = 0x858B18;
        unverified = "carjack-1", route = "L2", hazards = "heap-writes", recs = "carjack",
        note = "entry `push -1; jmp` into the protection fragment 0x403A25")]
 pub fn leave_car_and_flee_ctor(this: GPtr<u8>, veh: GPtr<u8>, point: GPtr<u8>, door: u32, delay: u32, wait: u32) -> GPtr<u8> {
-    task_complex_ctor(this);
+    task_complex_ctor(this.addr() as u32);
     wr::<u32>(this, 0x10, door);
     wr::<u32>(this, 0, 0x86E8AC);
     wr::<GPtr<u8>>(this, 0xC, veh);

@@ -146,8 +146,8 @@ pub fn calc_screen_coors(input: GPtr<[f32; 3]>, out: GPtr<[f32; 3]>) -> bool {
 /// The common part of both `CalcScreenCoors`: returns `1/z` (still on the x87 stack) on success.
 fn project(input: GPtr<[f32; 3]>, out: GPtr<[f32; 3]>) -> Option<X87> {
     let mut tmp = [0f32; 3];
-    let t = GPtr::<f32>::cast::<[f32;3]>(matrix_mul_vector(
-        GPtr::<[f32;3]>::cast::<f32>(GPtr::from_raw(tmp.as_mut_ptr().cast())),
+    let t = GPtr::<u8>::cast::<[f32;3]>(matrix_mul_vector(
+        GPtr::<[f32;3]>::cast::<u8>(GPtr::from_raw(tmp.as_mut_ptr().cast())),
         GPtr::from_addr(CAMERA_VIEW_MATRIX as usize),
         input.cast::<u8>(),
     ));

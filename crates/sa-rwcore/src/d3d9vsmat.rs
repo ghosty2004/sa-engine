@@ -71,10 +71,11 @@ const ONE_BITS: u32 = 0x3F80_0000;
 const HALF_BITS: u32 = 0x3F00_0000;
 
 use crate::bindings::matrix_ortho_normalize as rw_matrix_ortho_normalize;
-use sa_core::bindings::frame_get_ltm as rw_frame_get_ltm;
-use sa_core::bindings::get_render_state as rw_d3d9_get_render_state;
-use sa_core::bindings::rw_matrix_invert;
-use sa_core::bindings::rw_matrix_multiply;
+use crate::bindings::frame_get_ltm as rw_frame_get_ltm;
+use crate::bindings::get_render_state as rw_d3d9_get_render_state;
+use crate::bindings::rw_matrix_invert;
+use crate::bindings::rw_matrix_multiply;
+use crate::bindings::rw_inv_sqrt;
 orig! {
     /// `D3DXMatrixMultiply(out, a, b)` (0x7672E1)
     pub fn d3dx_matrix_multiply(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = stdcall 0x7672E1 => unported;
@@ -86,8 +87,6 @@ orig! {
     pub fn d3dx_vec3_transform_normal(out: GPtr<u8>, v: GPtr<u8>, m: GPtr<u8>) -> u32 = stdcall 0x766AB7 => unported;
     /// `D3DXVec3TransformCoord(out, v, m)` (0x766A32)
     pub fn d3dx_vec3_transform_coord(out: GPtr<u8>, v: GPtr<u8>, m: GPtr<u8>) -> u32 = stdcall 0x766A32 => unported;
-    /// `_rwInvSqrt(x)` (0x7EDB90), result in ST0
-    fn rw_inv_sqrt(v: f32) -> f64 = cdecl 0x7EDB90 => unported;
     /// `IDirect3DDevice9::SetVertexShaderConstantF(reg, data, count)` (vtable +0x178)
     pub fn device_set_vs_constant_f(dev: GPtr<u8>, reg: u32, data: GPtr<u8>, count: u32) -> i32 = stdcall vslot 0x178 => unported;
 
@@ -516,7 +515,7 @@ pub fn vs_get_radius_in_local_space(radius: f32, out: GPtr<u8>) {
     let (vx, vy, vz) = (rd::<f32>(vp, 0), rd::<f32>(vp, 4), rd::<f32>(vp, 8));
     let s = x(vy).fmul_m(vy).fadd(x(vx).fmul_m(vx));
     let len2 = f32_of(s.fadd(x(vz).fmul_m(vz)));
-    let r = X87::from_f64_exact(rw_inv_sqrt(len2)).fmul_m(radius);
+    let r = X87::from_f64_exact(rw_inv_sqrt(len2).to_f64()).fmul_m(radius);
     wr::<f32>(out, 0, f32_of(r));
 }
 

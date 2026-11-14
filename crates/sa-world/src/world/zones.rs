@@ -69,8 +69,8 @@ pub use crate::bindings::can_player_start_a_gang_war_here;
 pub use crate::bindings::find_smallest_zone_for_position as find_smallest_zone_for_position_call;
 pub use crate::bindings::init_zones_population_settings as init_zones_population_settings_call;
 pub use crate::bindings::zone_locked_or_unlocked as get_current_zone_locked_or_unlocked_call;
-pub use sa_core::bindings::the_zones_init as init_call;
-pub use sa_stream::bindings::get_level_from_position as get_level_from_position_call;
+pub use crate::bindings::the_zones_init as init_call;
+pub use crate::bindings::get_level_from_position as get_level_from_position_call;
 orig! {
     /// `CTheZones::PointLiesWithinZone(const CVector*, CZone*)` (0x572270)
     pub fn point_lies_within_zone_call(p: GPtr<f32>, z: GPtr<u8>) -> u8 = cdecl 0x572270 => point_lies_within_zone;

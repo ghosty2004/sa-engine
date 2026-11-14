@@ -54,13 +54,13 @@ const PED_DENSITY_MULTIPLIER: usize = 0x8D2530;
 use crate::bindings::play_preloaded_beat_track;
 use crate::bindings::preload_beat_track;
 use crate::bindings::remove_script_texture_dictionary;
-use sa_core::bindings::load_all_requested_models;
+use sa_stream::bindings::load_all_requested_models;
 use sa_core::bindings::rubbish_set_visibility;
 use sa_core::bindings::timer_resume;
 use sa_core::bindings::timer_stop;
 use sa_core::bindings::timer_suspend;
 use sa_core::bindings::timer_update;
-use sa_stream::bindings::find_player_wanted;
+use sa_world::bindings::find_player_wanted;
 use sa_world::bindings::audio_get_mission_audio_loading_status as get_mission_audio_loading_status;
 use sa_world::bindings::audio_is_mission_audio_sample_finished as is_mission_audio_sample_finished;
 use sa_world::bindings::audio_play_loaded_mission_audio as play_loaded_mission_audio;
@@ -114,13 +114,13 @@ use sa_world::bindings::find_node_coors_for_script;
 use sa_world::bindings::find_node_orientation_for_car_placement;
 use crate::bindings::physical_45afb0;
 use sa_world::bindings::set_entity_blip;
-use sa_core::bindings::find_player_ped;
-use sa_core::bindings::pop_current_txd;
-use sa_core::bindings::push_current_txd;
-use sa_core::bindings::set_current_txd;
+use sa_world::bindings::find_player_ped;
+use sa_stream::bindings::pop_current_txd;
+use sa_stream::bindings::push_current_txd;
+use sa_stream::bindings::set_current_txd;
 use sa_core::bindings::sprite2d_set_texture as sprite_set_texture;
 use sa_core::bindings::text_get;
-use sa_core::bindings::txd_add_ref;
+use sa_stream::bindings::txd_add_ref;
 use sa_world::bindings::find_ground_z_for_coord as ground_z;
 use sa_world::bindings::get_actual_pickup_index;
 use sa_world::bindings::get_actual_script_thing_index;
@@ -129,18 +129,18 @@ use sa_world::bindings::placeable_set_heading as set_heading;
 use sa_world::bindings::remove_from_moving_list;
 use sa_world::bindings::set_velocity as physical_set_velocity;
 use sa_world::bindings::stop_all_law_enforcers_in_their_tracks;
-use sa_world::bindings::switch_vehicle_to_real_physics;
+use sa_pop::bindings::switch_vehicle_to_real_physics;
 use crate::bindings::global_index as get_index_of_global_variable;
 use crate::bindings::vehicle_get_ref;
 use sa_core::bindings::add_txd_slot;
-use sa_core::bindings::clear_exciting_stuff_from_area;
+use sa_world::bindings::clear_exciting_stuff_from_area;
 use sa_core::bindings::find_txd_slot;
 use sa_core::bindings::get_atan_of_xy;
 use sa_core::bindings::load_txd;
 use sa_world::bindings::add_to_previous_brief_array;
 use sa_world::bindings::change_blip_scale;
 use sa_world::bindings::clear_this_big_print;
-use sa_world::bindings::find_node_closest_to_coors;
+use sa_pop::bindings::find_node_closest_to_coors;
 use sa_world::bindings::get_garage_number_by_name;
 use sa_world::bindings::place_marker_set;
 orig! {
@@ -259,16 +259,16 @@ fn model_operand(v: u32) -> u32 {
 
 use sa_world::bindings::clear_space_for_mission_entity;
 use sa_stream::bindings::pick_random_car;
-use sa_core::bindings::automobile_ctor;
+use sa_veh::bindings::automobile_ctor;
 use sa_core::bindings::bike_ctor;
 use sa_core::bindings::bmx_ctor;
-use sa_core::bindings::heli_ctor;
-use sa_world::bindings::join_car_with_road_system;
+use sa_veh::bindings::heli_ctor;
+use sa_pop::bindings::join_car_with_road_system;
 use sa_core::bindings::monster_truck_ctor;
-use sa_core::bindings::plane_ctor;
+use sa_veh::bindings::plane_ctor;
 use sa_core::bindings::quad_bike_ctor;
 use sa_core::bindings::trailer_ctor;
-use sa_world::bindings::vehicle_new;
+use sa_veh::bindings::vehicle_new;
 use sa_world::bindings::placeable_set_posn as set_posn_v;
 orig! {
     /// `CEntity::GetDistanceFromCentreOfMassToBaseOfModel()` (vtable slot 0xD4), ST0 (a float function's
@@ -690,7 +690,7 @@ pub fn process_commands_900_to_999(s: Scr, command: u32) -> i8 {
         0x0395 => {
             collect(s, 5);
             let v = xyz_ground();
-            clear_exciting_stuff_from_area(GPtr::<u32>::cast::<u8>(GPtr::from_raw(v.as_ptr().cast_mut())), f32::from_bits(sp(3)), sp(4) & 0xFF);
+            clear_exciting_stuff_from_area(GPtr::<u32>::cast::<u8>(GPtr::from_raw(v.as_ptr().cast_mut())), f32::from_bits(sp(3)), (sp(4) & 0xFF) as u8);
         }
         // 039C SET_CAR_WATERTIGHT (0x4843DA): vehicle not null-checked; `m_nVehicleSubType` (+0x590) 0
         // (automobile): byte +0x868 bit 2 = P1 != 0; 9 (bike): byte +0x614 bit 2; otherwise nothing.
@@ -789,7 +789,7 @@ pub fn process_commands_900_to_999(s: Scr, command: u32) -> i8 {
             let np = GPtr::from_raw(n.as_mut_ptr());
             let mut list = [0u32; 16];
             let lp = GPtr::from_raw(list.as_mut_ptr());
-            find_objects_of_type_in_range(m1, GPtr::from_raw(centre.as_ptr().cast_mut()), f32::from_bits(r), 1, np.cast::<i16>(), 16, lp, 1, 0, 0, 0, 0);
+            find_objects_of_type_in_range(m1, GPtr::from_raw(centre.as_ptr().cast_mut()), f32::from_bits(r), 1, np.cast::<u16>(), 16, lp, 1, 0, 0, 0, 0);
             let count = i32::from(np.read() as i16);
             if count <= 0 {
                 return 0;
@@ -904,7 +904,7 @@ pub fn process_commands_900_to_999(s: Scr, command: u32) -> i8 {
             if GPtr::<i32>::from_addr(CAR_PARK_CAR_COUNT).read() >= 0x2D {
                 return 0;
             }
-            let model = pick_random_car(GPtr::from_addr(LOADED_CAR_GROUP), 0, 1);
+            let model = pick_random_car(GPtr::<u8>::cast::<sa_stream::loaded_car_group::CLoadedCarGroup>(GPtr::from_addr(LOADED_CAR_GROUP)), 0, 1);
             if model == -1 {
                 return 0;
             }
@@ -933,7 +933,7 @@ pub fn process_commands_900_to_999(s: Scr, command: u32) -> i8 {
                 }
                 None => {
                     let mem = vehicle_new(0x988);
-                    if mem.is_null() { GPtr::NULL } else { automobile_ctor(mem, model, 1, 1) }
+                    if mem.is_null() { GPtr::NULL } else { automobile_ctor(mem, model as u32, 1, 1) }
                 }
             };
             let x = fld_fst(spf(0)).to_bits();

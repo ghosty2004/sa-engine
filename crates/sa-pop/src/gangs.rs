@@ -90,7 +90,7 @@ pub fn initialise() {
 }
 
 pub use crate::bindings::init_sequence;
-pub use sa_core::bindings::zones_fill_zones_with_gang_colours as fill_zones_with_gang_colours;
+pub use sa_world::bindings::zones_fill_zones_with_gang_colours as fill_zones_with_gang_colours;
 orig! {
     /// `CCarCtrl::FindSequenceElement(int32)` (0x421770)
     pub fn find_sequence_element(i: i32) -> i32 = cdecl 0x421770 => crate::carctrl::find_sequence_element;

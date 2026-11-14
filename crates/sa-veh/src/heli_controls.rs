@@ -10,8 +10,8 @@ use crate::common::{f32_of, g, jne_mask, jp5, rd, wr, x, xi};
 
 use crate::bindings::keep_area_around_player_clear;
 use sa_core::bindings::cross_product;
-use sa_core::bindings::find_player_ped;
-use sa_core::bindings::get_pad as pad_get_pad;
+use sa_world::bindings::find_player_ped;
+use sa_input::bindings::get_pad as pad_get_pad;
 use sa_core::bindings::vector_normalise;
 use sa_pop::bindings::pad_get_look_left;
 use sa_pop::bindings::pad_get_look_right;
@@ -81,7 +81,7 @@ fn stabiliser(this: GPtr<u8>, a: &[u32; 3], k: isize) -> f32 {
        note = "pow(0.98, timeStep) through orig::x87_binary(0x822130), FSQRT of the speed; the pad pointer is re-fetched per use, as the original")]
 pub fn heli_process_control_inputs(this: GPtr<u8>, ped_type: u32) {
     let id = i32::from(ped_type as u8);
-    let pad = pad_get_pad(id as u32);
+    let pad = pad_get_pad((id as u32) as i32);
     let acc = i32::from(pad_get_accelerate(pad) as i16);
     let brk = i32::from(pad_get_brake(pad) as i16);
     wr::<f32>(this, 0x998, f32_of(xi(acc - brk).fmul_m(f32::from_bits(0x3B80_8081))));
@@ -94,10 +94,10 @@ pub fn heli_process_control_inputs(this: GPtr<u8>, ped_type: u32) {
         wr::<f32>(this, 0x994, f32_of(xi(-i32::from(lr)).fmul_m(f32::from_bits(0x3C00_0000))));
     };
     if g::<u8>(0xB6_EC2E).read() != 0 && g::<u8>(0xC1_CC03).read() != 0 {
-        pad_get_pad(id as u32);
+        pad_get_pad((id as u32) as i32);
         let mut mouse = x(g::<f32>(0xB7_3424).read()).fcom(x(0.0)).test_parity(0x44);
         if !mouse {
-            pad_get_pad(id as u32);
+            pad_get_pad((id as u32) as i32);
             mouse = x(g::<f32>(0xB7_3428).read()).fcom(x(0.0)).test_parity(0x44);
         }
         if !mouse {
@@ -105,19 +105,19 @@ pub fn heli_process_control_inputs(this: GPtr<u8>, ped_type: u32) {
                 || !jne_mask(x(rd::<f32>(this, 0x990)).fabs(), x(0.0), 0x41);
             if moving
                 && state.read() == 2
-                && pad_get_steering_left_right(pad_get_pad(id as u32)) == 0
-                && pad_get_steering_up_down(pad_get_pad(id as u32)) == 0
+                && pad_get_steering_left_right(pad_get_pad((id as u32) as i32)) == 0
+                && pad_get_steering_up_down(pad_get_pad((id as u32) as i32)) == 0
             {
                 mouse = true;
             }
         }
         if mouse {
             state.write(2);
-            if rd::<u16>(pad_get_pad(id as u32), 0x2C) == 0 {
-                pad_get_pad(id as u32);
+            if rd::<u16>(pad_get_pad((id as u32) as i32), 0x2C) == 0 {
+                pad_get_pad((id as u32) as i32);
                 let k = g::<f32>(0x87_1674).read();
                 wr::<f32>(this, 0x994, f32_of(x(g::<f32>(0xB7_3424).read()).fmul_m(k).fsubr_m(rd::<f32>(this, 0x994))));
-                pad_get_pad(id as u32);
+                pad_get_pad((id as u32) as i32);
                 wr::<f32>(this, 0x990, f32_of(x(g::<f32>(0xB7_3428).read()).fmul_m(k).fadd_m(rd::<f32>(this, 0x990))));
             }
             let lim = x(g::<f32>(0x87_1678).read());
@@ -146,14 +146,14 @@ pub fn heli_process_control_inputs(this: GPtr<u8>, ped_type: u32) {
         let mut up = [0u32, 0, 0x3F80_0000];
         let mut a = [0u32; 3];
         cross_product(buf(&mut a), buf(&mut up), m);
-        vector_normalise(buf(&mut a));
+        vector_normalise(GPtr::<u8>::cast::<[f32;3]>(buf(&mut a)));
         let pitch = stabiliser(this, &a, 0x24);
         wr::<f32>(this, 0x990, pitch);
         let mut up2 = [0u32, 0, 0x3F80_0000];
         let mut b = [0u32; 3];
         let rr = cross_product(buf(&mut b), rd::<GPtr<u8>>(this, 0x14).byte_add(0x10), buf(&mut up2));
         let mut a2 = [rd::<u32>(rr, 0), rd::<u32>(rr, 4), rd::<u32>(rr, 8)];
-        vector_normalise(buf(&mut a2));
+        vector_normalise(GPtr::<u8>::cast::<[f32;3]>(buf(&mut a2)));
         let yaw = stabiliser(this, &a2, 0x1C);
         wr::<f32>(this, 0x994, yaw);
     }

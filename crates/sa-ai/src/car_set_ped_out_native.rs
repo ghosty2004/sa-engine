@@ -8,10 +8,10 @@ use sa_core::hook;
 
 use crate::common::*;
 
-use sa_core::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference;
 use sa_core::bindings::entity_register_reference;
-use sa_world::bindings::task_simple_dtor;
-use sa_world::bindings::task_simple_ctor;
+use crate::bindings::task_simple_dtor;
+use crate::bindings::task_simple_ctor;
 
 /// `CTaskSimpleCarSetPedOut` vtable
 const VTABLE: u32 = 0x86_EEB8;
@@ -48,7 +48,7 @@ pub fn car_set_ped_out_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, VTABLE);
     let v = rd::<GPtr<u8>>(this, 8);
     if !v.is_null() {
-        entity_clean_up_old_reference(v, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(8)));
+        entity_clean_up_old_reference(v, this.byte_add(8));
     }
     task_simple_dtor(this);
 }

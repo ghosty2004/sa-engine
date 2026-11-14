@@ -70,10 +70,10 @@ pub use sa_core::bindings::object_save_construct as save_structure_construct;
 pub use sa_core::bindings::object_save_extract as save_structure_extract;
 pub use sa_core::bindings::rp_anim_blend_clump_init;
 pub use sa_core::bindings::rp_hanim_hierarchy_get_matrix_array as rp_h_anim_hierarchy_get_matrix_array;
-pub use sa_core::bindings::set_mission_doesnt_require_model;
-pub use sa_core::bindings::txd_add_ref as txd_store_add_ref;
-pub use sa_core::bindings::world_add;
-pub use sa_core::bindings::world_remove;
+pub use sa_stream::bindings::set_mission_doesnt_require_model;
+pub use sa_stream::bindings::txd_add_ref as txd_store_add_ref;
+pub use crate::bindings::world_add;
+pub use crate::bindings::world_remove;
 pub use sa_stream::bindings::model_info_add_ref;
 pub use sa_stream::bindings::model_info_remove_ref;
 pub use sa_stream::bindings::model_info_sways_in_wind;
@@ -187,7 +187,7 @@ pub fn cutscene_setup_lighting(this: GPtr<u8>) -> u8 {
 #[hook(addr = 0x59F330, conv = thiscall, name = "CObject::RefModelInfo", expect = "8B 44 24 04 66 89 81 4A 01 00 00", this = "CObject")]
 pub fn ref_model_info(this: GPtr<u8>, idx: i32) {
     wr::<u16>(this, 0x14A, idx as u16);
-    model_info_add_ref(g::<GPtr<u8>>(MODEL_INFO_PTRS).wrapping_index(idx).read());
+    model_info_add_ref(GPtr::<u8>::cast::<sa_stream::shared::CBaseModelInfo>(g::<GPtr<u8>>(MODEL_INFO_PTRS).wrapping_index(idx).read()));
 }
 
 /// `CObject::SetRemapTexture(RwTexture*, int16 txd)` (0x59F350, `ret 8`): the whole argument dword is
@@ -828,11 +828,11 @@ pub fn grab_object_to_carry_with_rope(this: GPtr<u8>, obj: GPtr<u8>) {
     let h = X87::from_f64_exact(ropes_find_pickup_height(obj)).to_f32();
     let mut v = [0u32, 0, h.to_bits()];
     let mut r = [0u32; 3];
-    let res = GPtr::<f32>::cast::<u8>(super::entity::matrix_mul_vec(
-        GPtr::<u8>::cast::<f32>(GPtr::from_raw(r.as_mut_ptr()).cast()),
+    let res = super::entity::matrix_mul_vec(
+        GPtr::from_raw(r.as_mut_ptr()).cast(),
         rd(rd::<GPtr<u8>>(rope, 0x318), 0x14),
         GPtr::from_raw(v.as_mut_ptr()).cast(),
-    ));
+    );
     let z = x(rd(res, 8));
     let y = x(rd(res, 4));
     let xx = x(rd(res, 0));
@@ -881,7 +881,7 @@ pub fn setup_car_pipe_atomics_for_clump(model: u32, clump: GPtr<u8>) {
     let key = rd::<u32>(g::<GPtr<u8>>(MODEL_INFO_PTRS).wrapping_index(model as i32).read(), 4);
     for i in 0..6usize {
         if g::<u32>(0xBC4040 + i * 4).read() == key {
-            super::entity::rp_clump_for_all_atomics(clump, 0x5B1A90, GPtr::NULL);
+            super::entity::rp_clump_for_all_atomics(clump, 0x5B1A90, GPtr::<u8>::addr(GPtr::NULL) as u32);
             return;
         }
     }
@@ -1137,7 +1137,7 @@ pub fn object_destructor(this: GPtr<u8>) -> u32 {
     radar_clear_blip_for_entity(3, h);
     let r = rd::<i16>(this, 0x14A);
     if r != -1 {
-        model_info_remove_ref(g::<GPtr<u8>>(MODEL_INFO_PTRS).byte_add(isize::from(r) * 4).read());
+        model_info_remove_ref(GPtr::<u8>::cast::<sa_stream::shared::CBaseModelInfo>(g::<GPtr<u8>>(MODEL_INFO_PTRS).byte_add(isize::from(r) * 4).read()));
     }
     let t = rd::<i16>(this, 0x16A);
     if t != -1 {

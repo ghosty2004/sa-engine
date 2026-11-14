@@ -14,17 +14,15 @@ use crate::bindings::in_air_and_land_ctor;
 use crate::bindings::task_complex_dtor;
 use sa_core::bindings::entity_register_reference;
 use sa_world::bindings::groups_is_in_players_group;
-use sa_world::bindings::task_complex_ctor;
-use sa_core::bindings::task_new as task_new_c;
-use sa_world::bindings::task_simple_ctor;
+use crate::bindings::task_complex_ctor;
+use crate::bindings::task_new as task_new_c;
+use crate::bindings::task_simple_ctor;
+use crate::bindings::climb_ctor as simple_climb_ctor_c;
 orig! {
     /// `CTask::GetTaskType()` (vtable slot 0x10)
     fn task_get_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
     /// `CTaskSimpleJump(bool canClimb)` (0x679AA0)
     fn simple_jump_ctor(t: GPtr<u8>, can_climb: u32) -> GPtr<u8> = thiscall 0x679AA0 => unported;
-    /// `CTaskSimpleClimb(CEntity*, const CVector&, float heading, uint8 surface, int8 stage, bool force)` (0x67A110)
-    #[allow(clippy::too_many_arguments)]
-    fn simple_climb_ctor_c(t: GPtr<u8>, e: GPtr<u8>, pos: GPtr<u8>, heading: u32, surface: u32, stage: u32, force: u32) -> GPtr<u8> = thiscall 0x67A110 => simple_climb_ctor;
 }
 
 use sa_world::world::common::entity_pos as pos;
@@ -92,7 +90,7 @@ pub fn jump_create_sub_task(this: GPtr<u8>, ty: i32, ped: GPtr<u8>) -> GPtr<u8> 
             if t.is_null() {
                 return t;
             }
-            task_complex_ctor(t);
+            task_complex_ctor(t.addr() as u32);
             wr::<u32>(t, 0, 0x87_04AC);
             wr::<u8>(t, 0xC, 1);
             wr::<u8>(t, 0xD, 0);

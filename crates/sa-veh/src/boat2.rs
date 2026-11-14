@@ -26,7 +26,7 @@ pub use crate::bindings::vehicle_ctor;
 pub use crate::bindings::vehicle_delete;
 pub use crate::bindings::vehicle_destructor;
 pub use crate::bindings::vehicle_set_model_index;
-pub use sa_core::bindings::get_pad;
+pub use sa_input::bindings::get_pad;
 pub use sa_stream::bindings::choose_vehicle_colour;
 pub use sa_stream::bindings::fill_frame_array;
 pub use sa_world::bindings::audio_terminate;
@@ -336,7 +336,7 @@ pub fn process_control_inputs(b: Boat, pad: u32) {
         wr::<u8>(b, 0x63D, 3);
     }
     let pn = i32::from(pn);
-    let br = crate::common::xi(i32::from(pad_get_brake(get_pad(pn as u32)) as i16));
+    let br = crate::common::xi(i32::from(pad_get_brake(get_pad((pn as u32) as i32)) as i16));
     let v = br
         .fmul_m(k(0x859A3C))
         .fsub_m(rd::<f32>(b, 0x4A0))
@@ -354,7 +354,7 @@ pub fn process_control_inputs(b: Boat, pad: u32) {
     wr::<f32>(b, 0x4A0, v.to_f32());
     if !jp5(v, x(k(0x858C28))) {
         wr::<u32>(b, 0x4A0, 0);
-        let acc = crate::common::xi(i32::from(pad_get_accelerate(get_pad(pn as u32)) as i16));
+        let acc = crate::common::xi(i32::from(pad_get_accelerate(get_pad((pn as u32) as i32)) as i16));
         wr::<f32>(b, 0x49C, acc.fmul_m(k(0x859A3C)).to_f32());
     } else {
         wr::<f32>(b, 0x49C, v.fmul_m(k(0x858EE4)).to_f32());
@@ -363,15 +363,15 @@ pub fn process_control_inputs(b: Boat, pad: u32) {
     let mode = g::<u32>(0xC1CC04);
     // None: skip the steering update; Some(true): mouse path; Some(false): stick path
     let path: Option<bool> = if g::<u8>(0xB6EC2E).read() != 0 && g::<u8>(0xC1CC02).read() != 0 {
-        get_pad(pn as u32);
+        get_pad((pn as u32) as i32);
         // mouse x non-zero, or the stick idle in mouse mode while still steering
         if x(k(0xB73424)).fcom(zero).test_parity(0x44)
             || (!crate::common::jne_mask(fabs(x(rd::<f32>(b, 0x58C))), zero, 0x41)
                 && mode.read() == 2
-                && pad_get_steering_left_right(get_pad(pn as u32)) == 0)
+                && pad_get_steering_left_right(get_pad((pn as u32) as i32)) == 0)
         {
             Some(true)
-        } else if pad_get_steering_left_right(get_pad(pn as u32)) == 0 && mode.read() == 2 {
+        } else if pad_get_steering_left_right(get_pad((pn as u32) as i32)) == 0 && mode.read() == 2 {
             None
         } else {
             Some(false)
@@ -381,13 +381,13 @@ pub fn process_control_inputs(b: Boat, pad: u32) {
     };
     match path {
         Some(true) => {
-            if rd::<u16>(get_pad(pn as u32), 0x2C) == 0 {
-                get_pad(pn as u32);
+            if rd::<u16>(get_pad((pn as u32) as i32), 0x2C) == 0 {
+                get_pad((pn as u32) as i32);
                 let s = x(k(0xB73424)).fmul_m(k(0x872190)).fadd_m(rd::<f32>(b, 0x58C));
                 wr::<f32>(b, 0x58C, s.to_f32());
             }
             mode.write(2);
-            if !jp5(fabs(x(rd::<f32>(b, 0x58C))), x(k(0x872194))) || rd::<u16>(get_pad(pn as u32), 0x2C) != 0 {
+            if !jp5(fabs(x(rd::<f32>(b, 0x58C))), x(k(0x872194))) || rd::<u16>(get_pad((pn as u32) as i32), 0x2C) != 0 {
                 let p = sa_math::x87::X87::from_f64_exact(sa_core::orig::x87_binary(
                     0x822130,
                     x(k(0x872198)).to_f64(),
@@ -398,7 +398,7 @@ pub fn process_control_inputs(b: Boat, pad: u32) {
         }
         Some(false) => {
             let ts = k(0xB7CB5C);
-            let st = -i32::from(pad_get_steering_left_right(get_pad(pn as u32)));
+            let st = -i32::from(pad_get_steering_left_right(get_pad((pn as u32) as i32)));
             let s = crate::common::xi(st)
                 .fmul_m(k(0x858B88))
                 .fsub_m(rd::<f32>(b, 0x58C))

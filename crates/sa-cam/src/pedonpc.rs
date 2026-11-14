@@ -26,7 +26,7 @@ pub use sa_core::bindings::rp_hanim_id_get_index;
 pub use sa_core::bindings::rw_v3d_transform_points;
 pub use sa_world::bindings::placeable_get_heading;
 pub use crate::bindings::pad_540f80;
-pub use sa_core::bindings::convert_ped_node_2_bone_tag as convert_ped_node_2_bone_tag_call;
+pub use crate::bindings::convert_ped_node_2_bone_tag as convert_ped_node_2_bone_tag_call;
 pub use sa_core::bindings::rw_matrix_scale;
 orig! {
     /// `CPad::SniperZoomOut()` (0x540B80, AL) / `SniperZoomIn()` (0x540B30, AL)
@@ -175,7 +175,7 @@ pub fn process_1rst_person_ped_on_pc(
             allocate_matrix(e);
             simple_transform_update_matrix(e.byte_add(4), rd::<GPtr<u8>>(e, 0x14));
         }
-        let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(b.byte_add(0x48)), rd::<GPtr<u8>>(e, 0x14), eye));
+        let r = matrix_mul_vec(b.byte_add(0x48), rd::<GPtr<u8>>(e, 0x14), eye);
         sx = rd::<u32>(r, 0);
         wr::<u32>(b, 0x24, sx);
         sy = rd::<u32>(r, 4);
@@ -195,7 +195,7 @@ pub fn process_1rst_person_ped_on_pc(
         }
         copy3(b.byte_add(0x18), rd::<GPtr<u8>>(e, 0x14).byte_add(0x10));
         wr::<u32>(b, 0x20, 0);
-        vector_normalise(b.byte_add(0x18));
+        vector_normalise(GPtr::<u8>::cast::<[f32;3]>(b.byte_add(0x18)));
         f.fld(rd(b, 0x30));
         f.fmul_m(rd(b, 0x30));
         let t = rd::<GPtr<u8>>(this, 0x21C);
@@ -429,7 +429,7 @@ fn output(this: GPtr<u8>, b: GPtr<u8>, f: &mut Fpu) {
     wr::<u32>(front, 4, rd::<u32>(b, 0x34));
     wr::<f32>(b, 0x38, f.fstp());
     wr::<u32>(front, 8, rd::<u32>(b, 0x38));
-    vector_normalise(front);
+    vector_normalise(front.cast::<[f32;3]>());
     f.fld(rd(front, 0));
     f.fmul_m(k(K_0_4));
     f.fld(rd(front, 4));

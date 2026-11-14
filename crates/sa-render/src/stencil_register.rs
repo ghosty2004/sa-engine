@@ -14,7 +14,7 @@ use crate::stencilshadows::{ACTIVE_OBJECTS, FREE_OBJECTS};
 
 use sa_world::bindings::entity_get_col_model as get_col_model;
 use crate::bindings::call_destroy as destroy;
-use sa_core::bindings::world_clear_scan_codes as clear_scan_codes;
+use sa_world::bindings::world_clear_scan_codes as clear_scan_codes;
 orig! {
     /// `CStencilShadowObject::CreateFor(CEntity*, uint8 type)` (0x711280, `ret 8`)
     fn create_for(o: GPtr<u8>, e: GPtr<u8>, ty: u32) -> u8 = thiscall 0x711280 => unported;

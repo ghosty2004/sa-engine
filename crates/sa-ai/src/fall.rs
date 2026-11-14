@@ -18,13 +18,13 @@ const IN_AIR_DELETE_ANIM_CB: u32 = 0x678E60;
 const DEFAULT_ANIM_CB: u32 = 0x4D1390;
 
 use sa_world::bindings::anim_blend_animation;
-use sa_core::bindings::anim_set_delete_callback as assoc_set_delete_callback;
-use sa_core::bindings::assoc_set_finish_callback;
+use sa_anim::bindings::anim_set_delete_callback as assoc_set_delete_callback;
+use sa_anim::bindings::assoc_set_finish_callback;
 use crate::bindings::climb_test_for_climb;
 use sa_core::bindings::clump_get_association;
-use sa_core::bindings::assoc_set_current_time;
+use sa_anim::bindings::assoc_set_current_time;
 use sa_core::bindings::entity_register_reference;
-use sa_core::bindings::get_pad as pad_get_pad;
+use sa_input::bindings::get_pad as pad_get_pad;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::achieve_heading_ctor;
 use sa_world::bindings::clothes_get_is_wearing_balaclava as clothes_is_wearing_balaclava;
@@ -34,16 +34,16 @@ use sa_world::bindings::damage_calc_dtor;
 use sa_world::bindings::event_damage_affects_ped;
 use sa_world::bindings::event_damage_ctor;
 use sa_world::bindings::event_damage_dtor;
-use sa_world::bindings::event_group_add;
-use sa_world::bindings::event_sound_quiet_dtor as sound_quiet_dtor;
+use crate::bindings::event_group_add;
+use crate::bindings::event_sound_quiet_dtor as sound_quiet_dtor;
 use sa_world::bindings::get_event_global_group;
 use sa_world::bindings::get_pad_from_player as player_get_pad;
 use sa_world::bindings::ped_audio_add_audio_event;
 use sa_world::bindings::ped_say;
 use sa_world::bindings::ped_set_ped_state;
 use sa_world::bindings::physical_apply_move_force_5429f0 as physical_apply_move_force_vec;
-use sa_world::bindings::task_complex_ctor;
-use sa_world::bindings::task_simple_ctor;
+use crate::bindings::task_complex_ctor;
+use crate::bindings::task_simple_ctor;
 use sa_world::bindings::vector_mul_scalar as vector_mul;
 use sa_world::bindings::vehicle_is_pointer_valid;
 use sa_world::bindings::world_process_vertical_line;
@@ -100,7 +100,7 @@ use sa_core::field::gf as gm;
 /// `ret 8`; the vtable 0x8704AC is written by the island 0x405FDF): +0xC/+0xD = the bools, +0xE = 0.
 #[hook(addr = 0x678C80, conv = thiscall, name = "CTaskComplexInAirAndLand::Constructor", expect = "56 8B F1 E8 28 17 FA FF")]
 pub fn in_air_and_land_ctor(this: GPtr<u8>, glide: u8, vault: u8) -> GPtr<u8> {
-    task_complex_ctor(this);
+    task_complex_ctor(this.addr() as u32);
     wr::<u8>(this, 0xC, glide);
     wr::<u32>(this, 0, 0x8704AC);
     wr::<u8>(this, 0xD, vault);
@@ -242,7 +242,7 @@ pub fn in_air_and_land_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GP
                 if !a.is_null() {
                     wr::<u8>(a, 0x2E, rd::<u8>(a, 0x2E) | 4);
                     wr::<u32>(a, 0x1C, 0xC100_0000);
-                    assoc_set_finish_callback(a, DEFAULT_ANIM_CB, GPtr::NULL);
+                    assoc_set_finish_callback(a, DEFAULT_ANIM_CB, GPtr::<u8>::addr(GPtr::NULL) as u32);
                     wr::<u32>(rd::<GPtr<u8>>(this, 8), 0x1C, 0);
                 }
                 let vz = x(rd::<f32>(ped, 0x4C));
@@ -341,7 +341,7 @@ fn in_air_done(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         wr::<u32>(a, 0x1C, 0xC47A_0000);
         let a = rd::<GPtr<u8>>(this, 0x1C);
         wr::<u8>(a, 0x2E, rd::<u8>(a, 0x2E) | 4);
-        assoc_set_finish_callback(rd::<GPtr<u8>>(this, 0x1C), DEFAULT_ANIM_CB, GPtr::NULL);
+        assoc_set_finish_callback(rd::<GPtr<u8>>(this, 0x1C), DEFAULT_ANIM_CB, GPtr::<u8>::addr(GPtr::NULL) as u32);
         wr::<u32>(this, 0x1C, 0);
     }
     wr::<u32>(ped, 0x46C, rd::<u32>(ped, 0x46C) & 0xFFFF_FDFF);
@@ -415,7 +415,7 @@ pub fn in_air_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
             if !x(rd::<f32>(ped, 0x4C)).fcom(gf(0x8703A8)).test_parity(0x41) {
                 let a = anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0, 0x79, f32::from_bits(0x4080_0000));
                 wr::<GPtr<u8>>(this, 0x1C, a);
-                assoc_set_delete_callback(a, IN_AIR_DELETE_ANIM_CB, GPtr::from_addr((this.addr() as u32) as usize));
+                assoc_set_delete_callback(a, IN_AIR_DELETE_ANIM_CB, GPtr::<u8>::addr(GPtr::from_addr((this.addr() as u32) as usize)) as u32);
                 wr::<u32>(rd::<GPtr<u8>>(this, 0x1C), 0x1C, 0x3F00_0000);
                 wr::<u32>(rd::<GPtr<u8>>(this, 0x1C), 0x18, 0x3F80_0000);
             }
@@ -431,7 +431,7 @@ pub fn in_air_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         }
         let a = rd::<GPtr<u8>>(this, 0x1C);
         if !a.is_null() {
-            assoc_set_delete_callback(a, IN_AIR_DELETE_ANIM_CB, GPtr::from_addr((this.addr() as u32) as usize));
+            assoc_set_delete_callback(a, IN_AIR_DELETE_ANIM_CB, GPtr::<u8>::addr(GPtr::from_addr((this.addr() as u32) as usize)) as u32);
         }
     }
     'body: {
@@ -484,7 +484,7 @@ pub fn in_air_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
             let mut out = [0u32; 3];
             let op = buf(&mut out);
             vector_mul(op, fwd, f);
-            physical_apply_move_force_vec(ped, f32::from_bits(out[0]), f32::from_bits(out[1]), f32::from_bits(out[2]));
+            physical_apply_move_force_vec(ped, sa_math::vector::CVector::new(f32::from_bits(out[0]), f32::from_bits(out[1]), f32::from_bits(out[2])));
             let n = ftol32(gf(TIME_STEP).fmul_m(gm(0x858B38)).fmul_m(gm(0x858C4C)));
             wr::<i32>(this, 0x28, rd::<i32>(this, 0x28).wrapping_add(n));
             break 'body;
@@ -533,10 +533,10 @@ pub fn in_air_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         if a.is_null() || rd::<u16>(a, 0x2C) == 0x78 {
             break 'body;
         }
-        assoc_set_delete_callback(a, DEFAULT_ANIM_CB, GPtr::NULL);
+        assoc_set_delete_callback(a, DEFAULT_ANIM_CB, GPtr::<u8>::addr(GPtr::NULL) as u32);
         let n = anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0, 0x78, f32::from_bits(0x4080_0000));
         wr::<GPtr<u8>>(this, 0x1C, n);
-        assoc_set_delete_callback(n, IN_AIR_DELETE_ANIM_CB, GPtr::from_addr((this.addr() as u32) as usize));
+        assoc_set_delete_callback(n, IN_AIR_DELETE_ANIM_CB, GPtr::<u8>::addr(GPtr::from_addr((this.addr() as u32) as usize)) as u32);
     }
     // 0x680A7A
     if rd::<u8>(this, 0x24) & 1 == 0 || rd::<u32>(this, 0x38) != 0 {
@@ -686,7 +686,7 @@ pub fn evasive_step_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
     let a = anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0, 0x7E, f32::from_bits(0x4100_0000));
     wr::<GPtr<u8>>(this, 0x10, a);
     wr::<u8>(a, 0x2E, rd::<u8>(a, 0x2E) & 0xFB);
-    assoc_set_finish_callback(rd::<GPtr<u8>>(this, 0x10), 0x653290, GPtr::from_addr((this.addr() as u32) as usize));
+    assoc_set_finish_callback(rd::<GPtr<u8>>(this, 0x10), 0x653290, GPtr::<u8>::addr(GPtr::from_addr((this.addr() as u32) as usize)) as u32);
 }
 
 /// `fild` of a dword the original treats as unsigned (`fild`, then `fadd [0x858C54]` = 2^32 when negative).
@@ -738,7 +738,7 @@ pub fn get_up_make_abortable(this: GPtr<u8>, ped: GPtr<u8>, prio: i32, ev: GPtr<
     }
     let a = rd::<GPtr<u8>>(this, 0xC);
     if !a.is_null() && !keep {
-        assoc_set_finish_callback(a, DEFAULT_ANIM_CB, GPtr::NULL);
+        assoc_set_finish_callback(a, DEFAULT_ANIM_CB, GPtr::<u8>::addr(GPtr::NULL) as u32);
         wr::<u32>(this, 0xC, 0);
         wr::<u8>(this, 9, 1);
         wr::<u8>(this, 8, 1);
@@ -791,7 +791,7 @@ pub fn fall_make_abortable(this: GPtr<u8>, ped: GPtr<u8>, prio: i32, ev: GPtr<u8
     let a = rd::<GPtr<u8>>(this, 0x14);
     if !a.is_null() {
         wr::<f32>(a, 0x1C, f32_of(v));
-        assoc_set_finish_callback(rd::<GPtr<u8>>(this, 0x14), DEFAULT_ANIM_CB, GPtr::NULL);
+        assoc_set_finish_callback(rd::<GPtr<u8>>(this, 0x14), DEFAULT_ANIM_CB, GPtr::<u8>::addr(GPtr::NULL) as u32);
     }
     wr::<u32>(this, 0x14, 0);
     wr::<u32>(this, 0x1C, 0);
@@ -849,7 +849,7 @@ pub fn fall_start_anim_port(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         }
         let a = rd::<GPtr<u8>>(this, 0x14);
         if !a.is_null() {
-            assoc_set_finish_callback(a, 0x6786B0, GPtr::from_addr(me as usize));
+            assoc_set_finish_callback(a, 0x6786B0, GPtr::<u8>::addr(GPtr::from_addr(me as usize)) as u32);
         }
         return 1;
     }
@@ -863,7 +863,7 @@ pub fn fall_start_anim_port(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         wr::<u8>(a, 0x2E, rd::<u8>(a, 0x2E) | 5);
         let a = rd::<GPtr<u8>>(this, 0x14);
         wr::<u8>(a, 0x2E, rd::<u8>(a, 0x2E) & 0xF7);
-        assoc_set_finish_callback(rd::<GPtr<u8>>(this, 0x14), 0x6786B0, GPtr::from_addr(me as usize));
+        assoc_set_finish_callback(rd::<GPtr<u8>>(this, 0x14), 0x6786B0, GPtr::<u8>::addr(GPtr::from_addr(me as usize)) as u32);
         return 1;
     }
     let (id, grp) = (rd::<u32>(this, 0xC), rd::<u32>(this, 0x10));
@@ -872,7 +872,7 @@ pub fn fall_start_anim_port(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     wr::<u8>(a, 0x2E, rd::<u8>(a, 0x2E) | 4);
     let a = rd::<GPtr<u8>>(this, 0x14);
     wr::<u8>(a, 0x2E, rd::<u8>(a, 0x2E) & 0xF7);
-    assoc_set_finish_callback(rd::<GPtr<u8>>(this, 0x14), 0x6786B0, GPtr::from_addr(me as usize));
+    assoc_set_finish_callback(rd::<GPtr<u8>>(this, 0x14), 0x6786B0, GPtr::<u8>::addr(GPtr::from_addr(me as usize)) as u32);
     if rd::<u32>(this, 0xC) == 0x6A {
         assoc_set_current_time(rd::<GPtr<u8>>(this, 0x14), f32::from_bits(0x3ECC_CCCD));
     }
@@ -969,7 +969,7 @@ fn get_up_damage(ped: GPtr<u8>, veh: GPtr<u8>) -> u8 {
     let mut ev = [0u32; 0x11];
     let cp = buf(&mut calc);
     let ep = buf(&mut ev);
-    damage_calc_ctor(cp, veh, f32::from_bits(dmg.to_bits()), 0x32, 3, 0);
+    damage_calc_ctor(cp, veh.addr() as u32, f32::from_bits(dmg.to_bits()).to_bits(), 0x32, 3, 0);
     let flag = (rd::<u32>(ped, 0x46C) >> 8) & 0xFFFF_FF01;
     event_damage_ctor(ep, veh, g::<u32>(TIME_MS).read(), 0x32, 3, 0, 0, flag);
     if event_damage_affects_ped(ep, ped) != 0 {
@@ -1026,7 +1026,7 @@ pub fn get_up_start_anim_port(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     let id = if f.is_null() { 0x70 } else { 0x73 };
     let a = anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0, id, f32::from_bits(0x447A_0000));
     wr::<GPtr<u8>>(this, 0xC, a);
-    assoc_set_finish_callback(a, 0x678110, GPtr::from_addr((this.addr() as u32) as usize));
+    assoc_set_finish_callback(a, 0x678110, GPtr::<u8>::addr(GPtr::from_addr((this.addr() as u32) as usize)) as u32);
     ped_set_ped_state(ped, 1);
     1
 }

@@ -55,51 +55,52 @@ use sa_core::bindings::directory_read_dir_file;
 use sa_core::bindings::geometry_add_ref as rp_geometry_add_ref;
 use sa_core::bindings::get_first_atomic;
 use sa_core::bindings::get_uppercase_key;
-use sa_core::bindings::rp_atomic_create;
+use sa_rwcore::bindings::rp_atomic_create;
 use sa_core::bindings::rp_atomic_set_frame;
-use sa_core::bindings::rp_atomic_set_geometry;
-use sa_core::bindings::rp_clump_create;
+use sa_rwcore::bindings::rp_atomic_set_geometry;
+use sa_rwcore::bindings::rp_clump_create;
 use sa_core::bindings::rp_geometry_destroy;
-use sa_core::bindings::rp_geometry_lock;
+use sa_rwcore::bindings::rp_geometry_lock;
 use sa_core::bindings::rp_geometry_triangle_set_material;
-use sa_core::bindings::rp_geometry_unlock;
+use sa_rwcore::bindings::rp_geometry_unlock;
 use sa_core::bindings::rp_hanim_id_get_index;
-use sa_core::bindings::rp_skin_geometry_get_skin;
-use sa_core::bindings::rp_skin_get_skin_to_bone_matrices;
-use sa_core::bindings::rw_frame_create;
+use sa_rwcore::bindings::rp_skin_geometry_get_skin;
+use sa_rwcore::bindings::rp_skin_get_skin_to_bone_matrices;
+use sa_rwcore::bindings::rw_frame_create;
 use sa_core::bindings::rw_tex_dictionary_add_texture;
 use sa_core::bindings::rw_tex_dictionary_find_named_texture;
-use sa_core::bindings::rw_texture_set_name;
-use sa_core::bindings::streaming_remove_model as remove_model;
+use sa_rwcore::bindings::rw_texture_set_name;
+use sa_stream::bindings::streaming_remove_model as remove_model;
 use sa_core::bindings::timer_resume;
 use sa_core::bindings::timer_suspend;
-use sa_core::bindings::rp_clump_add_atomic;
+use sa_rwcore::bindings::rp_clump_add_atomic;
 use sa_core::bindings::rp_material_set_texture;
 use sa_stream::bindings::rp_skin_atomic_set_hanim_hierarchy;
-use sa_core::bindings::rw_frame_add_child;
+use sa_rwcore::bindings::rw_frame_add_child;
 use sa_stream::bindings::rw_tex_dictionary_remove_texture;
 use sa_stream::bindings::rw_tex_dictionary_set_current;
 use sa_world::bindings::get_first_texture;
 use sa_world::bindings::get_stat_value;
-use sa_core::bindings::rp_geometry_create;
+use sa_rwcore::bindings::rp_geometry_create;
 use sa_world::bindings::rp_material_create;
-use sa_core::bindings::rp_material_destroy;
+use sa_rwcore::bindings::rp_material_destroy;
 use sa_world::bindings::rp_morph_target_calc_bounding_sphere;
-use sa_core::bindings::rw_raster_unlock;
+use sa_rwcore::bindings::rw_raster_unlock;
 use sa_core::bindings::rw_v3d_normalize;
 use sa_core::bindings::append_string_to_key;
-use sa_core::bindings::load_all_requested_models;
-use sa_core::bindings::rp_clump_for_all_atomics;
-use sa_core::bindings::rp_skin_atomic_get_hanim_hierarchy;
+use sa_stream::bindings::load_all_requested_models;
+use sa_rwcore::bindings::rp_clump_for_all_atomics;
+use sa_rwcore::bindings::rp_skin_atomic_get_hanim_hierarchy;
 use sa_core::bindings::rp_skin_get_num_bones;
-use sa_core::bindings::rw_raster_lock;
+use sa_rwcore::bindings::rw_raster_lock;
 use sa_core::bindings::rw_tex_dictionary_for_all_textures;
-use sa_core::bindings::rw_texture_destroy;
+use sa_rwcore::bindings::rw_texture_destroy;
 use sa_stream::bindings::call_load_requested_models as load_requested_models;
 use sa_stream::bindings::rp_skin_get_vertex_bone_weights;
-use sa_world::bindings::clothes_desc_set_texture_and_model as set_texture_and_model;
+use crate::bindings::clothes_desc_set_texture_and_model as set_texture_and_model;
 use sa_world::bindings::copy_texture;
 use sa_world::bindings::rp_geometry_triangle_set_vertex_indices;
+use sa_core::bindings::crt_new as operator_new;
 orig! {
     /// `CPedClothesDesc::SetModel(uint32, eClothesModelPart)` (0x5A7910)
     fn set_model_hash(this: GPtr<u8>, key: u32, part: i32) = thiscall 0x5A7910 => crate::clothes::set_model_hash;
@@ -115,8 +116,6 @@ orig! {
     fn request_file(index: i32, offset: u32, size: u32, img: i32, flags: i32) = cdecl 0x40A080 => unported;
     /// `FUN_007316d0(int32 i)` (0x7316D0): the TXD slot of default TXD `i`
     fn default_txd_slot(i: i32) -> i32 = cdecl 0x7316D0 => crate::default_txd_slot::default_txd_slot;
-    /// CRT `operator new` (0x82119A)
-    fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
     /// `RpSkinGeometrySetSkin(RpGeometry*, RpSkin*)` (0x7C7560)
     fn rp_skin_geometry_set_skin(gm: GPtr<u8>, skin: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C7560 => unported;
     /// `RpSkinCreate(numVertices, numBones, RwMatrixWeights*, uint32* indices, RwMatrix* inverseMatrices)` (0x7C75B0)
@@ -363,12 +362,12 @@ pub fn preprocess_clothes_desc(desc: GPtr<u8>, cutscene: u8) {
                             c = model(b);
                         }
                         let t = get_dependent_texture(b as i32);
-                        set_texture_and_model(desc, d, c, t as u32);
+                        set_texture_and_model(desc, d, c, (t as u32) as i32);
                     }
                 }
                 2 if model(part) == a => {
                     let t = get_dependent_texture(part as i32);
-                    set_texture_and_model(desc, d, a, t as u32);
+                    set_texture_and_model(desc, d, a, (t as u32) as i32);
                 }
                 3 if model(part) == a => set_model_hash(desc, 0, b as i32),
                 _ => {}
@@ -419,8 +418,8 @@ pub fn store_bone_array(clump: GPtr<u8>, i: i32) {
     let cp = local(&mut ctx);
     wr::<GPtr<u8>>(cp, 4, GPtr::NULL);
     wr::<GPtr<u8>>(cp, 0, rdata(0x867160)); // "normal"
-    rp_clump_for_all_atomics(clump, 0x5A47E0, cp);
-    let h = rp_skin_atomic_get_hanim_hierarchy(rd::<GPtr<u8>>(cp, 4));
+    rp_clump_for_all_atomics(clump, 0x5A47E0, cp.addr() as u32);
+    let h = GPtr::from_addr(rp_skin_atomic_get_hanim_hierarchy(rd::<GPtr<u8>>(cp, 4)) as usize);
     let row = g::<u16>(BONE_INDICES + (i as isize as usize).wrapping_mul(128));
     let mut k: i32 = 0;
     if rd::<i32>(h, 4) > 0 {
@@ -457,7 +456,7 @@ pub fn blend_geometry3(clump: GPtr<u8>, n0: GPtr<u8>, n1: GPtr<u8>, n2: GPtr<u8>
     for (k, n) in [n0, n1, n2].into_iter().enumerate() {
         wr::<GPtr<u8>>(cp, 4, GPtr::NULL);
         wr::<GPtr<u8>>(cp, 0, n);
-        rp_clump_for_all_atomics(clump, 0x5A47E0, cp);
+        rp_clump_for_all_atomics(clump, 0x5A47E0, cp.addr() as u32);
         atoms[k] = rd::<GPtr<u8>>(cp, 4);
     }
     let mut geo = [GPtr::<u8>::NULL; 3];
@@ -470,7 +469,7 @@ pub fn blend_geometry3(clump: GPtr<u8>, n0: GPtr<u8>, n1: GPtr<u8>, n2: GPtr<u8>
         let gm = rd::<GPtr<u8>>(atoms[k], 0x18);
         let mt = rd::<GPtr<u8>>(gm, 0x5C);
         geo[k] = gm;
-        let skin = rp_skin_geometry_get_skin(gm);
+        let skin = GPtr::from_addr(rp_skin_geometry_get_skin(gm) as usize);
         vtx[k] = rd::<GPtr<u8>>(mt, 0x14);
         nrm[k] = rd::<GPtr<u8>>(mt, 0x18);
         uv[k] = rd::<GPtr<u8>>(gm, 0x34);
@@ -612,8 +611,8 @@ pub fn build_bone_index_conversion_table(table: GPtr<u8>, h: GPtr<u8>, i: i32) {
 pub fn place_texture_on_top_of_texture(dst: GPtr<u8>, src: GPtr<u8>) {
     let dr = rd::<GPtr<u8>>(dst, 0);
     let sr = rd::<GPtr<u8>>(src, 0);
-    let sp = rw_raster_lock(sr, 0, 3);
-    let dp = rw_raster_lock(dr, 0, 3);
+    let sp = GPtr::<u8>::from_addr(rw_raster_lock(sr, 0, 3) as usize);
+    let dp = GPtr::<u8>::from_addr(rw_raster_lock(dr, 0, 3) as usize);
     let mut i: i32 = 0;
     while i < rd::<i32>(sr, 0xC).wrapping_mul(rd::<i32>(sr, 0x10)) {
         let px = rd::<u32>(sp, 4 * i as isize);
@@ -642,8 +641,8 @@ pub fn blend_textures2(dst: GPtr<u8>, src: GPtr<u8>, r1: f32, r2: f32, _n: i32) 
     let sr = rd::<GPtr<u8>>(src, 0);
     let dr = rd::<GPtr<u8>>(dst, 0);
     timer_suspend();
-    let sp = rw_raster_lock(sr, 0, 2);
-    let dp = rw_raster_lock(dr, 0, 3);
+    let sp = GPtr::<u8>::from_addr(rw_raster_lock(sr, 0, 2) as usize);
+    let dp = GPtr::<u8>::from_addr(rw_raster_lock(dr, 0, 3) as usize);
     let mut i: i32 = 0;
     while i < rd::<i32>(sr, 0xC).wrapping_mul(rd::<i32>(sr, 0x10)) {
         let (s, d) = (sp.byte_add(4 * i as isize), dp.byte_add(4 * i as isize));
@@ -676,9 +675,9 @@ pub fn blend_textures3(dst: GPtr<u8>, s1: GPtr<u8>, s2: GPtr<u8>, r1: f32, r2: f
     let dr = rd::<GPtr<u8>>(dst, 0);
     let r2r = rd::<GPtr<u8>>(s2, 0);
     timer_suspend();
-    let p1 = rw_raster_lock(r1r, 0, 2);
-    let p2 = rw_raster_lock(r2r, 0, 2);
-    let dp = rw_raster_lock(dr, 0, 3);
+    let p1 = GPtr::<u8>::from_addr(rw_raster_lock(r1r, 0, 2) as usize);
+    let p2 = GPtr::<u8>::from_addr(rw_raster_lock(r2r, 0, 2) as usize);
+    let dp = GPtr::<u8>::from_addr(rw_raster_lock(dr, 0, 3) as usize);
     let mut i: i32 = 0;
     while i < rd::<i32>(r1r, 0xC).wrapping_mul(rd::<i32>(r1r, 0x10)) {
         let o = 4 * i as isize;
@@ -714,10 +713,10 @@ pub fn blend_textures_tattoo(dst: GPtr<u8>, s1: GPtr<u8>, s2: GPtr<u8>, r1: f32,
     let r1r = rd::<GPtr<u8>>(s1, 0);
     let tr = rd::<GPtr<u8>>(tat, 0);
     timer_suspend();
-    let p1 = rw_raster_lock(r1r, 0, 2);
-    let p2 = rw_raster_lock(r2r, 0, 2);
-    let dp = rw_raster_lock(dr, 0, 3);
-    let tp = rw_raster_lock(tr, 0, 2);
+    let p1 = GPtr::<u8>::from_addr(rw_raster_lock(r1r, 0, 2) as usize);
+    let p2 = GPtr::<u8>::from_addr(rw_raster_lock(r2r, 0, 2) as usize);
+    let dp = GPtr::<u8>::from_addr(rw_raster_lock(dr, 0, 3) as usize);
+    let tp = GPtr::<u8>::from_addr(rw_raster_lock(tr, 0, 2) as usize);
     let k255 = f32::from_bits(0x3B80_8081); // 0x859A3C, 1/255
     let mut i: i32 = 0;
     while i < rd::<i32>(r1r, 0xC).wrapping_mul(rd::<i32>(r1r, 0x10)) {
@@ -1003,7 +1002,7 @@ pub fn construct_geometry_and_skin_arrays(
         if gm.is_null() {
             continue;
         }
-        let skin = rp_skin_geometry_get_skin(gm);
+        let skin = GPtr::from_addr(rp_skin_geometry_get_skin(gm) as usize);
         let nvert = rd::<i32>(gm, 0x14);
         build_bone_index_conversion_table_call(tp, h, k as i32);
         for i in 0..nvert.max(0) as isize {
@@ -1109,15 +1108,15 @@ pub fn create_skinned_clump(bones: GPtr<u8>, dict: GPtr<u8>, new_desc: GPtr<u8>,
     let gsp = local(&mut gs);
     construct_geometry_array_call(gsp, dp, np.read(), rf, rm);
     let atomic = get_first_atomic(bones);
-    let skin = rp_skin_geometry_get_skin(rd::<GPtr<u8>>(atomic, 0x18));
-    let hier = rp_skin_atomic_get_hanim_hierarchy(atomic);
+    let skin = GPtr::from_addr(rp_skin_geometry_get_skin(rd::<GPtr<u8>>(atomic, 0x18)) as usize);
+    let hier = GPtr::from_addr(rp_skin_atomic_get_hanim_hierarchy(atomic) as usize);
     let (mut geo, mut weights, mut indices) = (0u32, 0u32, 0u32);
     let (geo_p, w_p, i_p) = (local(&mut geo), local(&mut weights), local(&mut indices));
     construct_geometry_and_skin_arrays_call(hier, geo_p, w_p, i_p, 10, gsp, msp);
     let gm = rd::<GPtr<u8>>(geo_p, 0);
     let nverts = rd::<u32>(gm, 0x14);
     let nbones = rp_skin_get_num_bones(skin);
-    let inv = rp_skin_get_skin_to_bone_matrices(skin);
+    let inv = GPtr::from_addr(rp_skin_get_skin_to_bone_matrices(skin) as usize);
     let (wts, idx) = (rd::<GPtr<u8>>(w_p, 0), rd::<GPtr<u8>>(i_p, 0));
     let new_skin = rp_skin_create(nverts, nbones, wts, idx, inv);
     rp_skin_geometry_set_skin(gm, new_skin);

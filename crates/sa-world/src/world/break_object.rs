@@ -26,7 +26,7 @@ use sa_core::bindings::rw_v3d_normalize;
 use sa_core::bindings::rw_v3d_transform_vector;
 use sa_core::bindings::crt_acos;
 use sa_core::bindings::crt_new;
-use sa_core::bindings::frame_get_ltm;
+use sa_rwcore::bindings::frame_get_ltm;
 use sa_core::bindings::matrix_mul_vec;
 use sa_core::bindings::rw_v3d_transform_points;
 use crate::bindings::break_object_exit;
@@ -361,7 +361,7 @@ pub fn break_object_do_collision_response(this: GPtr<u8>, grp: GPtr<u8>, ts: f32
         v[0] = f32_of(rand_unit(sites[2]).fmul_m(f32::from_bits(0x3E99_999A)).fsub_m(f32::from_bits(0x3E19_999A))).to_bits();
         v[1] = f32_of(rand_unit(sites[3]).fmul_m(f32::from_bits(0x3E99_999A)).fsub_m(f32::from_bits(0x3E19_999A))).to_bits();
         let sys = g::<GPtr<u8>>(0xA9_AE24).read();
-        fx_add_particle(sys, buf(&mut p), buf(&mut v), f32::from_bits(0), mp, f32::from_bits(0xBF80_0000), f32::from_bits(0x3F99_999A), f32::from_bits(0x3F19_999A), 0);
+        fx_add_particle(sys, buf(&mut p), buf(&mut v), f32::from_bits(0).to_bits(), mp, f32::from_bits(0xBF80_0000).to_bits(), f32::from_bits(0x3F99_999A), f32::from_bits(0x3F19_999A), 0);
     }
     if rd::<u8>(this, 2) != 0 {
         let len = X87::from_f64_exact(rw_v3d_length(grp.byte_add(0x40)));
@@ -508,12 +508,12 @@ pub fn break_object_render(this: GPtr<u8>, draw_last: u8) {
         let cur = if tex.is_null() { GPtr::<u8>::NULL } else { rd::<GPtr<u8>>(tex, 0) };
         if last != cur {
             fx_render_end();
-            fx_render_begin(cur, GPtr::NULL, 1);
+            fx_render_begin(cur.addr() as u32, GPtr::<u8>::addr(GPtr::NULL) as u32, 1);
             last = cur;
         }
         if cur.is_null() && last.is_null() {
             fx_render_end();
-            fx_render_begin(GPtr::NULL, GPtr::NULL, 1);
+            fx_render_begin(GPtr::<u8>::addr(GPtr::NULL) as u32, GPtr::<u8>::addr(GPtr::NULL) as u32, 1);
             last = GPtr::NULL;
         }
         let grp = group(this, i);
@@ -596,7 +596,7 @@ pub fn break_object_init(this: GPtr<u8>, obj: GPtr<u8>, vel: GPtr<u8>, vel_rand:
             centre[k] = f32_of(v).to_bits();
         }
         let mut out = [0u32; 3];
-        let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(buf(&mut out)), rd::<GPtr<u8>>(obj, 0x14), buf(&mut centre)));
+        let r = matrix_mul_vec(buf(&mut out), rd::<GPtr<u8>>(obj, 0x14), buf(&mut centre));
         for (k, o) in [(0usize, 0isize), (1, 4), (2, 8)] {
             origin[k] = rd::<u32>(r, o);
         }

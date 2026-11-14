@@ -56,6 +56,7 @@ const F1_BITS: u32 = 0x3F80_0000;
 const K_388: f32 = f32::from_bits(0x43C2_0000);
 
 pub use sa_world::bindings::pad_get_ped_walk_left_right;
+pub use sa_world::bindings::font_get_string_width_st0 as get_string_width_st0;
 orig! {
     /// `CMenuManager::CheckFrontEndUpInput()` (0x573840, thiscall)
     pub fn check_front_end_up_input_call(this: GPtr<u8>) -> u8 = thiscall 0x573840 => crate::menu_mgr::check_front_end_up_input;
@@ -74,8 +75,6 @@ orig! {
     /// Unnamed `CPad` thunk (0x4410E0, thiscall; `jmp` into `.HOODLUM`): d-pad right just pressed,
     /// `[pad+0x16] != 0 && [pad+0x46] == 0` (AL)
     pub fn pad_dpad_right_just_pressed(pad: GPtr<u8>) -> u8 = thiscall 0x4410E0 => unported;
-    /// `CFont::GetStringWidth(const GxtChar*, bool full, bool scriptText)` (0x71A0E0, ST0)
-    pub fn get_string_width_st0(text: GPtr<u8>, full: u32, script: u32) -> f64 = cdecl 0x71A0E0 => crate::font_print::get_string_width_call_st0;
 }
 
 fn b8(p: GPtr<u8>, off: isize) -> u8 {

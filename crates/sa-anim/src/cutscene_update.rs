@@ -386,7 +386,7 @@ pub fn cutscene_load_cutscene_data_loading() {
             let obj = gu32((OBJS as i32 + (idx - 1) * 4) as usize).read();
             let clump = GPtr::<u32>::from_addr(obj as usize + 0x18).read();
             let atomic = get_first_atomic(GPtr::from_addr(clump as usize));
-            let skinned = !atomic.is_null() && GPtr::<u8>::addr(rp_skin_geometry_get_skin(GPtr::from_addr((atomic.byte_add(0x18).cast::<u32>().read()) as usize))) as u32 != 0;
+            let skinned = !atomic.is_null() && GPtr::<u8>::addr(GPtr::from_addr(rp_skin_geometry_get_skin(GPtr::from_addr((atomic.byte_add(0x18).cast::<u32>().read()) as usize)) as usize)) as u32 != 0;
             if skinned {
                 let bone = crt_atol(e.byte_add(0x30));
                 let h = GPtr::<u8>::addr(get_anim_hierarchy_from_skin_clump(GPtr::from_addr(clump as usize))) as u32;

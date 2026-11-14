@@ -21,7 +21,7 @@ use crate::bindings::add_police_car_occupants as car_ai_add_police_car_occupants
 use crate::bindings::find_ground_z_for_coord as world_find_ground_z_for_coord;
 use crate::bindings::tm_set_task as task_manager_set_task;
 use crate::bindings::vector_mul_scalar as vec_mul_scalar;
-use sa_core::bindings::world_remove;
+use crate::bindings::world_remove;
 orig! {
     /// `CSetPiece::GetSpawnCoord1(CVector2D* out)` (0x4997A0, `ret 4`); returns `out`
     fn set_piece_get_spawn_coord1(sp: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall 0x4997A0 => unported;
@@ -294,7 +294,7 @@ use crate::bindings::placeable_set_posn;
 use crate::bindings::update_rw_matrix as entity_update_rw_matrix;
 use crate::bindings::vector_add as vec_add;
 use crate::bindings::weapon_reload;
-use sa_core::bindings::entity_update_rw_frame;
+use crate::bindings::entity_update_rw_frame;
 use sa_core::bindings::ped_is_alive;
 use sa_core::bindings::text_get;
 use crate::bindings::add_explosion as explosion_add_explosion;
@@ -366,7 +366,7 @@ fn frontend_audio(ev: u32) {
 
 /// `CHud::SetHelpMessage(TheText.Get(key), a, b, c)`.
 fn help_text(key: usize, a: u32, b: u32, c: u32) {
-    hud_set_help_message(text_get(GPtr::from_addr(THE_TEXT), GPtr::from_addr(key)), a, b as u8, c);
+    hud_set_help_message(text_get(GPtr::from_addr(THE_TEXT), GPtr::from_addr(key)), a as u8, b as u8, c as u8);
 }
 
 /// The on-foot pick-up distance test: `|player.z - obj.z|` (`fchs` unless `test ah, 5; jp` against
@@ -782,7 +782,7 @@ fn update_default(pk: GPtr<u8>, player: GPtr<u8>, vehicle: GPtr<u8>, id: i32, re
         let special = mi == mi_g(0x8CD5E4) || mi == mi_g(0x8CD5F4) || mi == mi_g(0x8CD5F8);
         if (!special || player_ped_can_player_start_mission(player) != 0)
             && vehicle.is_null()
-            && ped_is_alive(player) != 0
+            && ped_is_alive(player) as u8 != 0
             && near_enough(player, obj())
         {
             picked = true;
@@ -1004,7 +1004,7 @@ pub fn render_pick_up_text() {
             let q = xi(g::<i32>(0xC17044).read() / 640).to_f32();
             let h = text_scale(q, rd::<f32>(e, 0x10));
             let w = text_scale(q, rd::<f32>(e, 0xC));
-            font_set_scale(f32::from_bits(w), f32::from_bits(h));
+            font_set_scale(f32::from_bits(w).to_bits(), f32::from_bits(h).to_bits());
             font_set_orientation(0);
             font_set_centre_size(xi(g::<i32>(0xC17044).read()).to_f32());
             let mut c = [0u8; 4];

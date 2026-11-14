@@ -27,11 +27,11 @@ use sa_core::bindings::audio_zones_update;
 use sa_core::bindings::camera_fade;
 use sa_core::bindings::camera_restore_with_jump_cut;
 use sa_core::bindings::camera_set_fade_colour;
-use sa_core::bindings::clear_exciting_stuff_from_area;
+use crate::bindings::clear_exciting_stuff_from_area;
 use sa_core::bindings::clothes_rebuild_player;
 use sa_core::bindings::clothes_rebuild_player_if_needed;
-use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
-use sa_core::bindings::get_pad;
+use crate::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+use sa_input::bindings::get_pad;
 use sa_core::bindings::matrix_set_rotate_z_only;
 use sa_core::bindings::player_info_make_player_safe;
 use sa_core::bindings::player_ped_reset_sprint_energy;
@@ -39,8 +39,8 @@ use sa_core::bindings::post_effects_script_reset_for_effects;
 use sa_core::bindings::references_remove_references_to_player;
 use sa_core::bindings::stream_zone_models;
 use sa_core::bindings::time_cycle_stop_extra_colour;
-use sa_core::bindings::world_add;
-use sa_core::bindings::world_remove;
+use crate::bindings::world_add;
+use crate::bindings::world_remove;
 use sa_stream::bindings::remove_buildings_not_in_area;
 use crate::bindings::clear_space_for_mission_entity;
 orig! {
@@ -116,7 +116,7 @@ pub fn restore_player_stuff_during_resurrection(player: GPtr<u8>, px: u32, py: u
     let vref = player.byte_add(0x58C);
     let v = rd::<GPtr<u8>>(player, 0x58C);
     if !v.is_null() {
-        clean_up_old_reference(v, vref.cast::<GPtr<u8>>());
+        clean_up_old_reference(v, vref.cast::<u8>());
     }
     wr::<u32>(player, 0x58C, 0);
     let pd = rd::<GPtr<u8>>(player, 0x480);

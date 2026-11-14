@@ -53,12 +53,12 @@ use crate::bindings::clean_up_this_object;
 use crate::bindings::clean_up_this_ped;
 use crate::bindings::clean_up_this_vehicle;
 use sa_world::bindings::clear_space_for_mission_entity;
-use sa_world::bindings::switch_roads_off_in_area;
-use sa_core::bindings::get_weapon_info;
-use sa_core::bindings::ped_give_weapon as give_weapon;
+use sa_pop::bindings::switch_roads_off_in_area;
+use sa_weapon::bindings::get_weapon_info;
+use sa_ped::bindings::ped_give_weapon as give_weapon;
 use sa_core::bindings::player_info_make_player_safe as make_player_safe;
 use sa_core::bindings::text_get;
-use sa_stream::bindings::ped_is_player;
+use sa_ped::bindings::ped_is_player;
 use sa_world::bindings::civilian_ped_ctor;
 use sa_world::bindings::compute_target_door_to_enter_as_passenger;
 use sa_world::bindings::cop_ped_ctor;
@@ -66,16 +66,16 @@ use sa_world::bindings::emergency_ped_ctor;
 use sa_world::bindings::find_ground_z_for_coord as find_ground_z_raw;
 use sa_world::bindings::force_weather_now;
 use sa_world::bindings::ped_new;
-use sa_world::bindings::ped_remove_weapon_model as remove_weapon_model;
-use sa_world::bindings::ped_set_current_weapon_slot as set_current_weapon_slot;
-use sa_world::bindings::player_get_wanted_level as get_wanted_level;
+use sa_ped::bindings::ped_remove_weapon_model as remove_weapon_model;
+use sa_ped::bindings::ped_set_current_weapon_slot as set_current_weapon_slot;
+use sa_ped::bindings::player_get_wanted_level as get_wanted_level;
 use sa_world::bindings::set_char_created_by;
 use sa_world::bindings::set_ped_in_as_passenger_ctor;
 use sa_world::bindings::set_ped_in_as_passenger_dtor;
 use sa_world::bindings::set_ped_in_as_passenger_process_ped;
 use sa_world::bindings::weather_release_weather as release_weather;
 use crate::bindings::get_correct_ped_model_index;
-use sa_world::bindings::set_maximum_wanted_level;
+use sa_ped::bindings::set_maximum_wanted_level;
 orig! {
     /// `CUpsideDownCarCheck::AddCarToCheck(int32)` (0x4638D0)
     fn add_car_to_check(c: GPtr<u8>, h: i32) = thiscall 0x4638D0 => unported;
@@ -129,12 +129,12 @@ fn print_with_number(s: Scr, now: bool) {
 fn give_weapon_to_char(s: Scr) {
     collect(s, 3);
     let ped = ped_at_ref(pool(PED_POOL), spi(0));
-    let slot = give_weapon(ped, sp(1) as i32, sp(2), 1) as u32;
+    let slot = (give_weapon(ped, (sp(1) as i32) as u32, sp(2), 1) as i32) as u32;
     if ped_is_player(ped) != 0 {
         ped.byte_add(0x480).cast::<GPtr<u8>>().read().byte_add(0x20).write(slot as u8);
         return;
     }
-    set_current_weapon_slot(ped, (slot as i32) as u32);
+    set_current_weapon_slot(ped, ((slot as i32) as u32) as i32);
     if ped.byte_add(0x46C).cast::<u32>().read() & 0x100 != 0
         && !ped.byte_add(0x58C).cast::<GPtr<u8>>().read().is_null()
     {
@@ -335,7 +335,7 @@ pub fn process_commands_400_to_499(s: Scr, command: u32) -> i8 {
                         .byte_add(0x20)
                         .write(slot as u8);
                 } else {
-                    set_current_weapon_slot(ped, (slot as i32) as u32);
+                    set_current_weapon_slot(ped, ((slot as i32) as u32) as i32);
                 }
             };
             if sp(1) == 0 {

@@ -32,7 +32,7 @@ sa_core::globals! {
     pub static ENGINE_REGISTRY @ 0x8E2298: [u32; 6] = [0x158, 0x158, 0, 0, 0, 0];
 }
 
-pub use sa_core::bindings::rw_stream_skip as stream_skip;
+pub use crate::bindings::rw_stream_skip as stream_skip;
 pub use crate::bindings::plugin_add as add_plugin_call;
 pub use crate::bindings::read_chunk_header_call as stream_read_chunk_header;
 pub use crate::bindings::registry_get_plugin_offset as get_plugin_offset_call;

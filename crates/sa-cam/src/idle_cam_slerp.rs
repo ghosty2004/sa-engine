@@ -5,7 +5,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 
 use crate::common::{g, rd, wr, x};
@@ -16,11 +16,7 @@ use sa_core::bindings::get_atan_of_xy as general_get_atan_of_xy;
 use sa_core::bindings::vector_normalise;
 use sa_world::bindings::multiply3x3_vm;
 use crate::bindings::hand_shaker_process;
-orig! {
-    /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, bool x7)` (0x56A490)
-    #[allow(clippy::too_many_arguments)]
-    fn world_get_is_line_of_sight_clear(a: GPtr<u8>, b: GPtr<u8>, bu: u32, ve: u32, pe: u32, ob: u32, du: u32, st: u32, ig: u32) -> u8 = cdecl 0x56A490 => unported;
-}
+use sa_core::bindings::world_get_is_line_of_sight_clear;
 
 const PI: u32 = 0x4049_0FDB;
 const TWO_PI: u32 = 0x40C9_0FDB;
@@ -256,7 +252,7 @@ fn nudge_vertical_front(front: GPtr<u8>) {
 /// `right = normalise(front x up)` (through a temporary), `up = right x front`.
 fn reorthogonalise(front: GPtr<u8>, up: GPtr<u8>, right: GPtr<u8>, tmp: GPtr<u8>) {
     copy3(right, cross_product(tmp, front, up));
-    vector_normalise(right);
+    vector_normalise(right.cast::<[f32;3]>());
     copy3(up, cross_product(tmp, right, front));
 }
 
@@ -280,7 +276,7 @@ pub fn idle_cam_finalise(this: GPtr<u8>, ax: f32, ay: f32, shake: f32) {
     wr::<f32>(front, 0, x(ay).fcos().fmul(cx).fchs().to_f32());
     wr::<f32>(front, 4, x(ay).fsin().fmul(cx).fchs().to_f32());
     wr::<f32>(front, 8, x(ax).fsin().to_f32());
-    vector_normalise(front);
+    vector_normalise(front.cast::<[f32;3]>());
     let cam = rd::<GPtr<u8>>(this, 0x98);
     let f = |o: isize| rd::<f32>(cam, o);
     wr::<f32>(this, 0x18, x(f(0x190)).fadd_m(f(0x19C)).to_f32());
@@ -298,14 +294,14 @@ pub fn idle_cam_finalise(this: GPtr<u8>, ax: f32, ay: f32, shake: f32) {
     wr::<u32>(up, 4, 0);
     wr::<f32>(up, 8, x(a).fcos().to_f32());
     copy3(right, cross_product(tmp, front, up));
-    vector_normalise(right);
+    vector_normalise(right.cast::<[f32;3]>());
     copy3(up, cross_product(tmp, right, front));
     nudge_vertical_front(front);
     reorthogonalise(front, up, right, tmp);
     wr::<u32>(up, 0, 0);
     wr::<u32>(up, 4, 0);
     wr::<u32>(up, 8, 0x3F80_0000);
-    vector_normalise(front);
+    vector_normalise(front.cast::<[f32;3]>());
     nudge_vertical_front(front);
     reorthogonalise(front, up, right, tmp);
 }

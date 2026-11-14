@@ -11,13 +11,13 @@ use sa_core::hook;
 
 use sa_core::bindings::crt_strncpy;
 use sa_core::bindings::memory_malloc as mgr_malloc;
-use sa_core::bindings::pop_current_txd;
-use sa_core::bindings::push_current_txd;
-use sa_core::bindings::rw_stream_skip as stream_skip;
-use sa_core::bindings::set_current_txd;
-use sa_core::bindings::stream_read;
+use sa_stream::bindings::pop_current_txd;
+use sa_stream::bindings::push_current_txd;
+use sa_rwcore::bindings::rw_stream_skip as stream_skip;
+use sa_stream::bindings::set_current_txd;
+use sa_rwcore::bindings::stream_read;
 use sa_core::bindings::find_txd_slot;
-use sa_core::bindings::rw_texture_read as texture_read;
+use sa_rwcore::bindings::rw_texture_read as texture_read;
 
 /// `C2dEffect::ms_nTxdSlot` (.data, -1) and the geometry plugin offset.
 const TXD_SLOT: usize = 0x8D4948;

@@ -48,16 +48,16 @@ const ANIM_BLOCKS: u32 = 0xB5D4A0;
 const VT_AUDIO_ENTITY: u32 = 0x859988;
 
 use crate::bindings::ped_speech_initialise as speech_init;
-use sa_world::bindings::population_update_ped_count;
+use sa_pop::bindings::population_update_ped_count;
 use crate::bindings::task_complex_facial_ctor as task_primary_ctor;
 use sa_core::bindings::eh_vector_ctor;
 use sa_core::bindings::eh_vector_dtor;
 use sa_core::bindings::entity_update_rp_hanim as entity_update_after_model;
 use sa_core::bindings::ped_clear_weapons as ped_dtor_weapons;
 use sa_core::bindings::rp_anim_blend_clump_init as anim_blend_clump_init;
-use sa_core::bindings::set_mission_doesnt_require_model;
+use sa_stream::bindings::set_mission_doesnt_require_model;
 use sa_core::bindings::task_new;
-use sa_core::bindings::world_remove as world_remove_references;
+use sa_world::bindings::world_remove as world_remove_references;
 use sa_stream::bindings::anim_remove_block_ref as remove_anim_block_ref;
 use sa_world::bindings::add_animation;
 use sa_world::bindings::dtor_cleanup_43a960;
@@ -76,16 +76,17 @@ use sa_world::bindings::wanted_remove_cop;
 use crate::bindings::ped_ctor as ped_ctor_call;
 use crate::bindings::ped_set_model_index as ped_set_model_index_call;
 use sa_core::bindings::intel_pool_new;
-use sa_core::bindings::ped_give_weapon as give_weapon;
+use crate::bindings::ped_give_weapon as give_weapon;
 use sa_core::bindings::tm_set_task_secondary as task_manager_set_task;
 use sa_stream::bindings::get_default_cop_model;
 use sa_world::bindings::acquaintance_ped_ctor as event_hate_ctor;
 use sa_world::bindings::get_ped_type_acquaintances;
-use sa_world::bindings::ped_set_current_weapon as set_current_weapon;
+use crate::bindings::ped_set_current_weapon as set_current_weapon;
 use sa_world::bindings::physical_ctor;
 use sa_world::bindings::speech_constructor as speech_ctor;
 use sa_world::bindings::stand_still_ctor as task_secondary_ctor;
 use sa_world::bindings::tm_set_task as task_manager_set_task_secondary;
+use sa_stream::bindings::create_hit_col_model_skinned;
 orig! {
     /// `CPedIK::CPedIK(CPed*)` (0x5FD8C0)
     fn ped_ik_ctor(ik: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x5FD8C0 => unported;
@@ -129,8 +130,6 @@ orig! {
     fn anim_blend_clump_fill_frame_array(c: GPtr<u8>, out: GPtr<u8>) = cdecl 0x4D64A0 => unported;
     /// `CPopulation::IsMale`-style model test `(int32 model, int32 k)` (0x610210)
     fn model_test_610210(m: i32, k: i32) -> u8 = cdecl 0x610210 => unported;
-    /// `CPedModelInfo::CreateHitColModelSkinned(RpClump*)` (0x4C6D90)
-    fn create_hit_col_model_skinned(mi: GPtr<u8>, c: GPtr<u8>) = thiscall 0x4C6D90 => unported;
 }
 
 /// The pool index of `p` (`(p - objects) / size` as the exe's signed magic-number division).
@@ -344,7 +343,7 @@ pub fn ped_constructor(this: GPtr<u8>, ped_type: u32) -> GPtr<u8> {
             let player = find_player_ped(-1);
             let mut ev = [0u32; sa_core::layouts::size::CEventAcquaintancePedHate / 4];
             let e = lp(&mut ev).cast::<u8>();
-            event_hate_ctor(e, player);
+            event_hate_ctor(e.addr() as u32, player.addr() as u32);
             wr::<u32>(e, 0, 0x858E68);
             wr::<u16>(e, 0xE, 1000);
             event_group_add(rd::<GPtr<u8>>(p, 0x47C).byte_add(0x68), e, 0);
@@ -380,7 +379,7 @@ pub fn ped_destructor(this: GPtr<u8>) {
     dtor_cleanup_43a960(p);
     let v = rd::<GPtr<u8>>(p, 0x58C);
     if !v.is_null() {
-        crate::ped::clean_up_old_reference(v, p.byte_add(0x58C).cast());
+        crate::ped::clean_up_old_reference(v, GPtr::<GPtr<u8>>::cast::<u8>(p.byte_add(0x58C).cast()));
     }
     wr::<u32>(p, 0x58C, 0);
     let fire = rd::<GPtr<u8>>(p, 0x730);
@@ -411,7 +410,7 @@ pub fn ped_destructor(this: GPtr<u8>) {
     }
     let look = rd::<GPtr<u8>>(p, 0x738);
     if !look.is_null() {
-        crate::ped::clean_up_old_reference(look, p.byte_add(0x738).cast());
+        crate::ped::clean_up_old_reference(look, GPtr::<GPtr<u8>>::cast::<u8>(p.byte_add(0x738).cast()));
     }
     eh_vector_dtor(p.byte_add(0x5A0), 0x1C, 0xD, 0x4411A0);
     wr::<u32>(wa, 0, VT_AUDIO_ENTITY);
@@ -484,7 +483,7 @@ pub fn cop_ped_destructor(this: GPtr<u8>) {
     }
     let c = rd::<GPtr<u8>>(this, 0x7A8);
     if !c.is_null() {
-        crate::ped::clean_up_old_reference(c, this.byte_add(0x7A8).cast());
+        crate::ped::clean_up_old_reference(c, GPtr::<GPtr<u8>>::cast::<u8>(this.byte_add(0x7A8).cast()));
     }
     cop_clear_criminals(this);
     ped_dtor_call(this);
@@ -554,7 +553,7 @@ pub fn cop_ped_ctor(this: GPtr<u8>, cop_type: u32) -> GPtr<u8> {
     let special = |model: u32, weapon: u32, armour: u32, acc: u8, b: u8| {
         ped_set_model_index_call(p, model);
         give_delayed_weapon(p, weapon as i32, 1000);
-        set_current_weapon(p, (weapon as i32) as u32);
+        set_current_weapon(p, ((weapon as i32) as u32) as i32);
         wr::<u32>(p, 0x548, armour);
         wr::<u8>(p, 0x719, acc);
         wr::<u8>(p, 0x71A, b);
@@ -585,7 +584,7 @@ pub fn cop_ped_ctor(this: GPtr<u8>, cop_type: u32) -> GPtr<u8> {
     wr::<u8>(p, 0x79D, 0);
     wr::<u32>(p, 0x7A4, 0);
     if !crim.is_null() {
-        crate::ped::clean_up_old_reference(crim, p.byte_add(0x71C).cast());
+        crate::ped::clean_up_old_reference(crim, GPtr::<GPtr<u8>>::cast::<u8>(p.byte_add(0x71C).cast()));
     }
     wr::<u32>(p, 0x71C, 0);
     speech_init(p.byte_add(0x294), p);
@@ -654,7 +653,7 @@ pub fn ped_set_model_index(this: GPtr<u8>, model: u32) {
     let data = rd::<GPtr<u8>>(clump, g::<i32>(CLUMP_ANIM_OFFSET).read() as isize);
     wr::<GPtr<u8>>(data, 0xC, p.byte_add(0x4D8));
     if rd::<u32>(mi, 0x34) == 0 {
-        create_hit_col_model_skinned(mi, rd::<GPtr<u8>>(p, 0x18));
+        create_hit_col_model_skinned(mi.cast::<sa_stream::shared::CBaseModelInfo>(), rd::<GPtr<u8>>(p, 0x18));
     }
     entity_update_after_model(p);
 }

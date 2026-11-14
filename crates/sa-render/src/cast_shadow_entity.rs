@@ -11,21 +11,20 @@ use sa_world::collision::data::CdPtr;
 use crate::common::{g, k, rd, wr, x, xi};
 
 use sa_core::bindings::matrix_copy_to_rw_matrix as copy_to_rw_matrix;
-use sa_core::bindings::rw_matrix_invert;
+use sa_rwcore::bindings::rw_matrix_invert;
 use sa_core::bindings::rw_v3d_transform_points;
 use sa_world::bindings::calculate_triangle_planes;
 use sa_core::bindings::rw_matrix_scale;
 use sa_core::bindings::rw_matrix_translate;
 use sa_world::bindings::test_sphere_triangle;
-use sa_core::bindings::col_sphere_set;
+use sa_world::bindings::col_sphere_set;
 use sa_core::bindings::rw_matrix_rotate;
-use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
-use sa_stream::bindings::simple_transform_update_matrix;
+use sa_world::bindings::placeable_allocate_matrix as allocate_matrix;
+use crate::bindings::simple_transform_update_matrix;
+use sa_world::bindings::get_triangle_point;
 orig! {
     /// `CRealTimeShadow::GetShadowCamera()` (0x7059E0)
     fn get_shadow_camera(rt: GPtr<u8>) -> GPtr<u8> = thiscall 0x7059E0 => unported;
-    /// `CCollisionData::GetTrianglePoint(CVector&, int)` (0x40F5E0)
-    fn get_triangle_point(cd: CdPtr, out: GPtr<sa_math::vector::CVector>, idx: i32) = thiscall 0x40F5E0 => sa_world::collision::data::get_triangle_point;
     /// `ShadowRenderTriangleCB` (0x709CF0): EAX = normal, EBX = triangle, EDI = projection param; returns EBX
     fn shadow_render_triangle_cb(normal: GPtr<u8>, tri: GPtr<u8>, param: GPtr<u8>) -> GPtr<u8> = reg("args = eax ebx edi") 0x709CF0 => crate::harness5::shadow_render_triangle_cb;
 }
@@ -97,7 +96,7 @@ pub fn cast_shadow_entity_xyz(
     if cd.is_null() {
         return;
     }
-    calculate_triangle_planes(cm);
+    calculate_triangle_planes(cm.cast::<sa_world::collision::shared::CColModel>());
     let rw_cam = rd::<GPtr<u8>>(cam, 0);
     let frame = rd::<GPtr<u8>>(rw_cam, 4);
     let mut m = [0u32; 16];
@@ -142,7 +141,7 @@ pub fn cast_shadow_entity_xyz(
     let mut centre = [l[0].to_bits(), l[1].to_bits(), l[2].to_bits()];
     let mut sphere = [0u32; 0x14 / 4];
     let sp: GPtr<u8> = GPtr::from_raw(sphere.as_mut_ptr()).cast();
-    col_sphere_set(sp, f32::from_bits(0x4000_0000), GPtr::<u32>::cast::<u8>(GPtr::from_raw(centre.as_mut_ptr())), 0, 0, 0xFF);
+    col_sphere_set(sp, f32::from_bits(0x4000_0000).to_bits(), GPtr::from_raw(centre.as_mut_ptr()), 0, 0, 0xFF);
 
     let cdp = CdPtr::from_addr(cd.addr());
     let mut i: i32 = 0;
@@ -151,9 +150,9 @@ pub fn cast_shadow_entity_xyz(
         let (va, vb, vc) = (rd::<u16>(tri, 0), rd::<u16>(tri, 2), rd::<u16>(tri, 4));
         let mut tp = [0f32; 9];
         let tpp: GPtr<u8> = GPtr::from_raw(tp.as_mut_ptr()).cast();
-        get_triangle_point(cdp, tpp.cast(), i32::from(va));
-        get_triangle_point(cdp, tpp.byte_add(0xC).cast(), i32::from(vb));
-        get_triangle_point(cdp, tpp.byte_add(0x18).cast(), i32::from(vc));
+        get_triangle_point(cdp.cast::<sa_world::collision::shared::CCollisionData>(), tpp.cast(), i32::from(va));
+        get_triangle_point(cdp.cast::<sa_world::collision::shared::CCollisionData>(), tpp.byte_add(0xC).cast(), i32::from(vb));
+        get_triangle_point(cdp.cast::<sa_world::collision::shared::CCollisionData>(), tpp.byte_add(0x18).cast(), i32::from(vc));
         let plane = rd::<GPtr<u8>>(cd, 0x1C).byte_add(10 * i as isize);
         if test_sphere_triangle(sp, rd::<GPtr<u8>>(cd, 0x14), tri, plane) != 0 {
             let n_of = |o: isize| xi(i32::from(rd::<i16>(plane, o))).fmul_m(k(NORMAL_SCALE)).to_f32();

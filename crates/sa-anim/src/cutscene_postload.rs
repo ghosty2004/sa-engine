@@ -59,8 +59,8 @@ pub fn cutscene_load_data_postload() {
     let mut size = 0u32;
     let po = GPtr::from_raw(&mut offset as *mut u32);
     let ps = GPtr::from_raw(&mut size as *mut u32);
-    if directory_find_item(dir(), name, po, ps) != 0 {
-        streaming_make_space_for(size << 10);
+    if u8::from(directory_find_item(GPtr::<u8>::cast::<sa_core::directory::CDirectory>(dir()), name, po, ps)) != 0 {
+        streaming_make_space_for((size << 10) as i32);
         streaming_im_gonna_use_streaming_memory();
         rw_stream_skip(stream, offset << 11);
         load_anim_file(stream, 1, ga(0xBC2CC0));
@@ -73,7 +73,7 @@ pub fn cutscene_load_data_postload() {
     rw_stream_close(stream, GPtr::NULL);
     let f = GPtr::<u8>::addr(file_mgr_open_file(ga(0x85EEB0), ga(0x859C6C))) as u32;
     sprintf_s(name, ga(0x8689A4), ga(0xBC3F0C));
-    if directory_find_item(dir(), name, po, ps) != 0 {
+    if u8::from(directory_find_item(GPtr::<u8>::cast::<sa_core::directory::CDirectory>(dir()), name, po, ps)) != 0 {
         streaming_im_gonna_use_streaming_memory();
         file_mgr_seek(GPtr::from_addr(f as usize), (offset << 11) as i32, 0);
         camera_load_path_splines(ga(0xB6F028), f);

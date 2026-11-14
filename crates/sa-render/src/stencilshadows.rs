@@ -38,22 +38,21 @@ const FX: usize = 0xA9AE00;
 /// `Scene.m_pRwCamera`.
 const SCENE_CAMERA: usize = 0xC1703C;
 
-pub use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+pub use sa_world::bindings::entity_clean_up_old_reference as clean_up_old_reference;
 pub use sa_core::bindings::little_test;
 pub use sa_world::bindings::rw_im3d_end;
 pub use crate::bindings::call_destroy;
 pub use sa_core::bindings::memory_free;
 pub use sa_core::bindings::memory_malloc;
-pub use sa_stream::bindings::fx_get_fx_quality as get_fx_quality;
+pub use crate::bindings::fx_get_fx_quality as get_fx_quality;
 pub use sa_world::bindings::rw_im3d_render_indexed_primitive;
 pub use sa_world::bindings::rw_im3d_transform;
+pub use sa_core::bindings::vector_normalise;
 orig! {
     /// `RwRenderStateSet` (`RwEngineInstance` slot 0x20)
     pub fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
     /// `RwD3D9SetStencilClear(uint32)` (0x7F9D30)
     pub fn rw_d3d9_set_stencil_clear(v: u32) -> i32 = cdecl 0x7F9D30 => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    pub fn vector_normalise(this: GPtr<f32>) = thiscall 0x59C910 => unported;
     /// `CStencilShadows::RegisterStencilShadows(CVector* camPos, bool)` (0x711760)
     pub fn register_stencil_shadows(cam: GPtr<u8>, flag: u32) = cdecl 0x711760 => unported;
     /// `CStencilShadows::RenderForVehicle(CStencilShadowObject*, CVector*)` (0x70FAE0)
@@ -120,7 +119,7 @@ pub fn init() -> u8 {
 /// Normalises `v` (`CVector::Normalise` on a stack copy) into the sun direction.
 fn set_sun_direction(v: [f32; 3]) {
     let mut t = v;
-    vector_normalise(GPtr::from_raw(t.as_mut_ptr()));
+    vector_normalise(GPtr::<f32>::cast::<[f32;3]>(GPtr::from_raw(t.as_mut_ptr())));
     let s = SUN_DIRECTION.ptr().cast::<f32>();
     s.wrapping_index(2).write(t[2]);
     s.write(t[0]);
@@ -154,7 +153,7 @@ pub fn sun_set_position_from_entity(p: GPtr<u8>) -> u8 {
 pub fn destroy(this: GPtr<u8>) {
     let owner = rd::<GPtr<u8>>(this, 0);
     if !owner.is_null() {
-        clean_up_old_reference(owner, this.cast::<GPtr<u8>>());
+        clean_up_old_reference(owner, this.cast::<u8>());
     }
     let buf = rd::<u32>(this, 0x10);
     wr::<u32>(this, 0, 0);
@@ -302,7 +301,7 @@ pub fn process(cam: GPtr<u8>) -> u8 {
 
 pub use sa_core::bindings::rgba_ctor;
 pub use sa_core::bindings::sprite2d_init_per_frame;
-pub use sa_core::bindings::sprite_draw_rect as sprite2d_draw_rect;
+pub use crate::bindings::sprite_draw_rect as sprite2d_draw_rect;
 orig! {
     /// `CStencilShadows::Render(CRGBA*)` (0x710D50)
     pub fn stencil_render(rgba: GPtr<u8>) = cdecl 0x710D50 => unported;
@@ -386,7 +385,7 @@ pub fn render_stencil_shadows() -> u8 {
     rp.wrapping_index(3).write(a as u8);
     let h = X87::from_i32(RS_MAXIMUM_HEIGHT.get()).to_f32();
     let mut rect = [0.0f32, h, w, 0.0];
-    sprite2d_draw_rect(GPtr::from_raw(rect.as_mut_ptr()), rp);
+    sprite2d_draw_rect(GPtr::<f32>::cast::<u8>(GPtr::from_raw(rect.as_mut_ptr())), rp);
     states(&[(0x15, 0), (8, 1), (6, 1), (0xC, 0), (7, 2), (0x14, 2)]);
     1
 }

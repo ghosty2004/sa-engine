@@ -20,7 +20,7 @@ use crate::bindings::process_siren_and_horn;
 use crate::bindings::reset_player_breath;
 use crate::bindings::update_clump_alpha;
 use sa_core::bindings::fx_play;
-use sa_core::bindings::get_pad;
+use sa_input::bindings::get_pad;
 use sa_pop::bindings::scan_for_ped_danger;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::apply_spring_collision;
@@ -38,7 +38,7 @@ use sa_world::bindings::get_skidmark_type;
 use sa_world::bindings::get_wet_multiplier;
 use sa_world::bindings::pad_start_shake as start_shake;
 use sa_world::bindings::physical_process_control;
-use sa_core::bindings::vector_magnitude_sqr;
+use sa_world::bindings::vector_magnitude_sqr;
 use crate::bindings::area_check_stub;
 use crate::bindings::process_delayed_explosion;
 use sa_core::bindings::clump_get_association as get_association;
@@ -50,23 +50,17 @@ use sa_world::bindings::stats_get_fat_and_muscle_modifier as get_fat_and_muscle_
 use sa_world::bindings::vector_add;
 use sa_world::bindings::vector_div as vector_div_scalar;
 use sa_world::bindings::vector_scale as scalar_mul_vector;
+use sa_core::bindings::cross_product;
+use sa_core::bindings::vector_dot_product as dot_product;
+use sa_core::bindings::vector_normalise;
+use sa_world::bindings::physical_apply_move_force_5429f0 as apply_move_force;
+use sa_world::bindings::physical_apply_turn_force as apply_turn_force;
+use sa_world::bindings::physical_get_speed as get_speed;
 orig! {
     /// `CVehicle::ActivateBombWhenEntered()` (0x6D2570)
     fn activate_bomb_when_entered(v: GPtr<u8>) = thiscall 0x6D2570 => crate::vehicle2::activate_bomb_when_entered;
-    /// `CPhysical::ApplyTurnForce(CVector, CVector)` (0x542A50)
-    fn apply_turn_force(e: GPtr<u8>, force: CVector, point: CVector) = thiscall 0x542A50 => sa_world::physical::forces::apply_turn_force;
-    /// `DotProduct(const RwV3d*, const RwV3d*)` (0x40FDB0), ST0
-    fn dot_product(a: GPtr<u8>, b: GPtr<u8>) -> f64 = cdecl 0x40FDB0 => crate::automobile_ai::dot_native;
-    /// `CPhysical::ApplyMoveForce(CVector)` (0x5429F0)
-    fn apply_move_force(e: GPtr<u8>, force: CVector) = thiscall 0x5429F0 => sa_world::physical::forces::apply_move_force;
     /// `CBike::ProcessBuoyancy()` (0x6B5FB0)
     fn bike_process_buoyancy(v: GPtr<u8>) = thiscall 0x6B5FB0 => crate::mvpd_v3::bike_process_buoyancy;
-    /// `CVector::Normalise()` (0x59C910)
-    fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => crate::train_control::normalise_native;
-    /// `CPhysical::GetSpeed(CVector)` (0x542CE0)
-    fn get_speed(e: GPtr<u8>, out: GPtr<CVector>, point: CVector) -> GPtr<CVector> = thiscall 0x542CE0 => sa_world::physical::forces::get_speed;
-    /// `CrossProduct(CVector*, const CVector*, const CVector*)` (0x59C730)
-    fn cross_product(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C730 => crate::train_control::cross_native;
     /// `CVehicle::ProcessBikeWheel(...)` (0x6D73B0)
     fn process_bike_wheel(v: GPtr<u8>, fwd: GPtr<u8>, right: GPtr<u8>, speed: GPtr<u8>, point: GPtr<u8>, wheels: i32, thrust: f32, brake: f32, adhesion: f32, destab: f32, wheel: u32, wheel_speed: GPtr<u8>, state: GPtr<i32>, special: u32, status: u32) = thiscall 0x6D73B0 => crate::mvpd_v1::vehicle_process_bike_wheel;
     /// `CBike::ProcessAI(uint32&)` (vtable +0x108)
@@ -452,13 +446,13 @@ fn fake_physics(this: GPtr<u8>, st: u8, f: &mut Frame) {
     let fl = x(f32::from_bits(fl)).fmul_m(ts()).to_f32();
     let rest = !x(fl)
         .fmul_m(fl)
-        .fcom(st0(vector_magnitude_sqr(GPtr::<u8>::cast::<f32>(this.byte_add(0x74)))))
+        .fcom(st0(vector_magnitude_sqr(this.byte_add(0x74)).to_f64()))
         .test_any(1)
         && {
             let tl = x(f32::from_bits(tl)).fmul_m(ts()).to_f32();
             !x(tl)
                 .fmul_m(tl)
-                .fcom(st0(vector_magnitude_sqr(GPtr::<u8>::cast::<f32>(this.byte_add(0x80)))))
+                .fcom(st0(vector_magnitude_sqr(this.byte_add(0x80)).to_f64()))
                 .test_any(1)
                 && !ge(ld(this, 0xD4), x(f32::from_bits(sl)))
         };
@@ -614,7 +608,7 @@ fn pedal_push(this: GPtr<u8>) {
     }
     let m = mat(this);
     if le(
-        st0(dot_product(this.byte_add(0x44), m.byte_add(0x10))),
+        st0(dot_product(this.byte_add(0x44), m.byte_add(0x10)).to_f64()),
         c(0x3E80_0000),
     ) {
         return;
@@ -654,7 +648,7 @@ fn suspension(this: GPtr<u8>, f: &mut Frame) {
         );
         let mut out = CVector::default();
         f.dirs[i] = rv(multiply3x3(gp(&mut out), mat(this), gp(&mut d)), 0);
-        vector_normalise(gp(&mut f.dirs[i]));
+        vector_normalise(GPtr::<u8>::cast::<[f32;3]>(gp(&mut f.dirs[i])));
     }
     wr::<u32>(this, 0x748, 0);
     wr::<u32>(this, 0x744, 0);
@@ -1100,10 +1094,10 @@ fn wheel_axes(this: GPtr<u8>, mut fwd: CVector, normal: GPtr<u8>, upright: bool)
     fwd.x = x(fwd.x).fsub(dx).to_f32();
     fwd.y = x(fwd.y).fsub(dy).to_f32();
     fwd.z = x(fwd.z).fsub(dz).to_f32();
-    vector_normalise(gp(&mut fwd));
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(gp(&mut fwd)));
     let mut out = CVector::default();
     let mut right = rv(cross_product(gp(&mut out), gp(&mut fwd), normal), 0);
-    vector_normalise(gp(&mut right));
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(gp(&mut right)));
     if upright {
         right.z = 0.0;
     }
@@ -1328,11 +1322,11 @@ fn lean_angle(this: GPtr<u8>, f: &mut Frame) {
         let mut t = CVector::default();
         let tp = gp(&mut t);
         cross_product(tp, mat(this).byte_add(0x10), this.byte_add(0x618));
-        vector_normalise(tp);
+        vector_normalise(tp.cast::<[f32;3]>());
         let mut o = CVector::default();
         let r = rv(cross_product(gp(&mut o), tp, mat(this).byte_add(0x10)), 0);
         wv(this, 0x618, r);
-        vector_normalise(this.byte_add(0x618));
+        vector_normalise(GPtr::<u8>::cast::<[f32;3]>(this.byte_add(0x618)));
     }
     let v = if f.extra & 2 == 0 && rd::<u8>(this, 0x614) & 8 == 0 {
         if rd::<u8>(this, 0x614) & 0x10 != 0 {
@@ -1361,7 +1355,7 @@ fn lean_angle(this: GPtr<u8>, f: &mut Frame) {
             0,
         );
         wv(this, 0x624, r);
-        vector_normalise(this.byte_add(0x624));
+        vector_normalise(GPtr::<u8>::cast::<[f32;3]>(this.byte_add(0x624)));
         let side = this.byte_add(0x624);
         let num = if rd::<u32>(this, 0xFC) != 0 {
             X87::zero()
@@ -1736,7 +1730,7 @@ fn wheelie_control(this: GPtr<u8>, f: &mut Frame) {
     let mut o = CVector::default();
     let op = gp(&mut o);
     cross_product(op, gp(&mut zup), mat(this));
-    vector_normalise(op);
+    vector_normalise(op.cast::<[f32;3]>());
     let o = rv(op, 0);
     let point = CVector::new(
         x(o.x).fchs().to_f32(),

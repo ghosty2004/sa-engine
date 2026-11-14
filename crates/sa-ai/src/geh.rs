@@ -49,34 +49,34 @@ use crate::bindings::stare_at_ped_ctor as stare_ctor;
 use crate::bindings::task_complex_dtor;
 use crate::bindings::veh_spare_hassle_pos;
 use crate::bindings::wait_area_ctor;
-use sa_core::bindings::entity_clean_up_old_reference;
-use sa_core::bindings::find_player_ped;
+use sa_world::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::find_player_ped;
 use sa_core::bindings::ped_is_alive;
-use sa_core::bindings::vector_sub;
+use sa_world::bindings::vector_sub;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::dtor_6389f0 as seq_dtor;
-use sa_world::bindings::event_group_add;
+use crate::bindings::event_group_add;
 use sa_world::bindings::fx_get_play_status;
 use sa_world::bindings::ik_look_at;
 use sa_world::bindings::intel_find_task_by_type as intel_find_task;
 use sa_world::bindings::intel_is_friendly_with;
 use sa_world::bindings::kill_ped_on_foot_ctor as kill_on_foot_ctor;
 use sa_world::bindings::leave_car_ctor;
-use sa_world::bindings::membership_is_member;
+use crate::bindings::membership_is_member;
 use sa_world::bindings::partner_chat_ctor;
 use sa_world::bindings::partner_greet_ctor;
-use sa_world::bindings::ped_groups_get_peds_group as groups_get_peds_group;
+use crate::bindings::ped_groups_get_peds_group as groups_get_peds_group;
 use sa_world::bindings::seek_entity_standard_ctor as seek_entity_ctor;
 use sa_world::bindings::sequence_add_task as seq_add;
 use sa_world::bindings::sequence_ctor as seq_ctor;
 use sa_world::bindings::signal_at_ped_ctor as signal_ctor;
 use sa_world::bindings::simple_car_drive_ctor as car_drive_ctor;
 use sa_world::bindings::smart_flee_entity_ctor as flee_entity_ctor;
-use sa_world::bindings::task_complex_ctor;
-use sa_world::bindings::task_simple_ctor;
-use sa_world::bindings::task_simple_dtor;
+use crate::bindings::task_complex_ctor;
+use crate::bindings::task_simple_ctor;
+use crate::bindings::task_simple_dtor;
 use sa_world::bindings::task_walk_alongside_ctor as walk_alongside_ctor;
-use sa_world::bindings::tm_find_active_task_by_type as task_manager_find_active;
+use crate::bindings::tm_find_active_task_by_type as task_manager_find_active;
 use sa_world::bindings::use_sequence_ctor;
 use sa_world::bindings::weapon_is_type_melee as weapon_is_melee;
 orig! {
@@ -396,7 +396,7 @@ pub fn geh_compute_response_leader_entered_car(e: P, pg: P, _orig: P) -> P {
             // No seat left: CTaskComplexLeaveAnyCar(0, true, false) on the stack.
             let mut lt = Local::new();
             let t = lt.ptr();
-            task_complex_ctor(t);
+            task_complex_ctor(t.addr() as u32);
             wr::<u32>(t, 0, VT_LEAVE_ANY_CAR);
             wr::<u32>(t, 0xC, 0);
             wr::<u8>(t, 0x10, 1);
@@ -661,7 +661,7 @@ pub fn geh_compute_response_new_gang_member(e: P, pg: P, _orig: P) -> P {
     let seq = ls.ptr();
     seq_ctor(seq);
     let t = new_task(0x14, |t| {
-        task_complex_ctor(t);
+        task_complex_ctor(t.addr() as u32);
         wr::<u32>(t, 0, VT_LEAVE_ANY_CAR);
         wr::<u32>(t, 0xC, 0);
         wr::<u8>(t, 0x10, 0);
@@ -696,12 +696,12 @@ pub fn geh_compute_response_gather(_e: P, pg: P, orig: P) -> P {
         let b = g::<u32>(0x859E30).read();
         let mut lt = Local::new();
         let t = lt.ptr();
-        seek_entity_ctor(t, orig, 50000, 1000, 0x40F0_0000, b, a, 1, 1);
+        seek_entity_ctor(t, orig, 50000, 1000, f32::from_bits(0x40F0_0000), b, a, 1, 1);
         set_response(intel, m, t);
         wr::<u32>(t, 0, 0x859DF8);
         let ent = p(t, 0xC);
         if !ent.is_null() {
-            entity_clean_up_old_reference(ent, GPtr::<u8>::cast::<GPtr<u8>>(t.byte_add(0xC)));
+            entity_clean_up_old_reference(ent, t.byte_add(0xC));
         }
         wr::<u32>(t, 0x40, 0x859DC4);
         task_complex_dtor(t);
@@ -815,7 +815,7 @@ fn partner_finish(pg: P, ped: P, closest: P, ty: i32, tag: u32, ev: P) {
             continue;
         }
         let time = random_in_range(3000, 6000);
-        ik_look_at(GPtr::from_addr(0xC15448), GPtr::from_addr(tag as usize), m, closest, time as u32, 5, GPtr::NULL, 1, 0x3E80_0000, 500, 3, 0);
+        ik_look_at(GPtr::from_addr(0xC15448), GPtr::from_addr(tag as usize), m, closest, (time as u32) as i32, 5, GPtr::NULL, 1, f32::from_bits(0x3E80_0000), 500, 3, 0);
     }
     wr::<P>(pg, 0, ped);
     create_partner_event_dtor(ev);
@@ -885,7 +885,7 @@ pub fn geh_compute_response_sexy_ped(e: P, pg: P, orig: P) -> P {
         let gi = rd::<u32>(p(find_player_ped(-1), 0x480), 0x38) as usize;
         GPtr::from_addr(gi.wrapping_mul(0x2D4).wrapping_add(off))
     };
-    if pg == player_group(0xC09920) || membership_is_member(player_group(0xC09928), ped) != 0 {
+    if pg == player_group(0xC09920) || membership_is_member(player_group(0xC09928), ped) as u8 != 0 {
         return GPtr::NULL;
     }
     match task_id {
@@ -1075,7 +1075,7 @@ pub fn geh_compute_member_responses(e: P, pg: P, _orig: P) -> P {
     let clone = v_event_clone(e);
     for k in 0..8 {
         let m = member(pg, k);
-        if m.is_null() || ped_is_alive(m) == 0 {
+        if m.is_null() || ped_is_alive(m) as u8 == 0 {
             continue;
         }
         if v_event_24(clone) != 0 {
@@ -1110,9 +1110,9 @@ pub fn geh_compute_response_ped_friend(e: P, pg: P, orig: P) -> P {
         GPtr::from_addr(gi.wrapping_mul(0x2D4).wrapping_add(off))
     };
     if pg == player_group(0xC09920)
-        || membership_is_member(player_group(0xC09928), ped) != 0
+        || membership_is_member(player_group(0xC09928), ped) as u8 != 0
         || p(pg, 0) == ped
-        || membership_is_member(pg.byte_add(8), ped) != 0
+        || membership_is_member(pg.byte_add(8), ped) as u8 != 0
     {
         return GPtr::NULL;
     }
@@ -1136,7 +1136,7 @@ pub fn geh_compute_response_player_command(e: P, pg: P, orig: P) -> P {
                 return GPtr::NULL;
             }
             let mut id = -1;
-            let g = groups_get_peds_group(target);
+            let g = GPtr::from_addr(groups_get_peds_group(target.addr() as u32) as usize);
             if !g.is_null() {
                 id = groups_get_group_id(g);
             }

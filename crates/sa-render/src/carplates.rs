@@ -51,28 +51,28 @@ const K_M23: u32 = 0xC1B8_0000;
 const K_M9: u32 = 0xC110_0000;
 
 pub use sa_core::bindings::atol;
-pub use sa_core::bindings::pop_current_txd;
-pub use sa_core::bindings::push_current_txd;
-pub use sa_core::bindings::rp_clump_for_all_atomics;
+pub use sa_stream::bindings::pop_current_txd;
+pub use sa_stream::bindings::push_current_txd;
+pub use sa_rwcore::bindings::rp_clump_for_all_atomics;
 pub use sa_core::bindings::rp_geometry_for_all_materials;
-pub use sa_core::bindings::rw_raster_create;
-pub use sa_core::bindings::rw_raster_destroy;
-pub use sa_core::bindings::rw_texture_create;
-pub use sa_core::bindings::set_current_txd;
+pub use sa_rwcore::bindings::rw_raster_create;
+pub use sa_rwcore::bindings::rw_raster_destroy;
+pub use sa_rwcore::bindings::rw_texture_create;
+pub use sa_stream::bindings::set_current_txd;
 pub use sa_core::bindings::strtok;
 pub use sa_pop::bindings::create_plate_texture as create_plate_texture_call;
 pub use sa_stream::bindings::remove_txd;
 pub use sa_core::bindings::rp_material_set_texture;
-pub use sa_core::bindings::rw_texture_destroy;
-pub use sa_core::bindings::rw_raster_unlock;
+pub use sa_rwcore::bindings::rw_texture_destroy;
+pub use sa_rwcore::bindings::rw_raster_unlock;
 pub use sa_core::bindings::file_close as file_mgr_close_file;
 pub use sa_core::bindings::file_set_dir as file_mgr_set_dir;
 pub use sa_core::bindings::find_txd_slot;
-pub use sa_core::bindings::load_line;
+pub use sa_stream::bindings::load_line;
 pub use sa_core::bindings::open_file as file_mgr_open_file;
-pub use sa_core::bindings::rw_raster_lock;
-pub use sa_core::bindings::rw_texture_read;
-pub use sa_core::bindings::rw_texture_set_name;
+pub use sa_rwcore::bindings::rw_raster_lock;
+pub use sa_rwcore::bindings::rw_texture_read;
+pub use sa_rwcore::bindings::rw_texture_set_name;
 pub use sa_core::bindings::stricmp;
 orig! {
     /// `CCustomCarPlateMgr::GetCharacterPositionInCharSet(char c (AL), uint32& col, uint32& row)` (0x6FD7C0)
@@ -117,7 +117,7 @@ pub fn initialise() -> u8 {
     }
     pop_current_txd();
     let raster = rd::<GPtr<u8>>(GPtr::from_addr(CHARSET_TEX.get() as usize), 0);
-    let p = rw_raster_lock(raster, 0, 2);
+    let p = GPtr::<u8>::from_addr(rw_raster_lock(raster, 0, 2) as usize);
     CHARSET_LOCKED.set(p.addr() as u32);
     u8::from(!p.is_null())
 }
@@ -221,7 +221,7 @@ pub fn get_character_position_in_char_set(c: u8, col: GPtr<u32>, row: GPtr<u32>)
 /// 32x16-byte cells copied from the charset data, `out` unlocked, true. `palette` is unused.
 #[hook(addr = 0x6FDD70, conv = cdecl, name = "CCustomCarPlateMgr::RenderLicenseplateTextToRaster", expect = "83 EC 10 56 8B 74 24 24")]
 pub fn render_licenseplate_text_to_raster(text: GPtr<u8>, charset: GPtr<u8>, _palette: u32, out: GPtr<u8>) -> u8 {
-    let dst0 = rw_raster_lock(out, 0, 5);
+    let dst0 = GPtr::<u8>::from_addr(rw_raster_lock(out, 0, 5) as usize);
     if dst0.is_null() || CHARSET_LOCKED.get() == 0 {
         return 0;
     }
@@ -359,7 +359,7 @@ pub fn atomic_set_carplate_texture_cb(a: GPtr<u8>, text: u32) -> GPtr<u8> {
 pub fn setup_clump(c: GPtr<u8>, text: u32, design: u32) -> u32 {
     CURRENT_PLATE_TYPE.set(design as u8);
     PLATE_MATERIAL.set(0);
-    rp_clump_for_all_atomics(c, ATOMIC_SET_CB, GPtr::from_addr(text as usize));
+    rp_clump_for_all_atomics(c, ATOMIC_SET_CB, GPtr::<u8>::addr(GPtr::from_addr(text as usize)) as u32);
     PLATE_MATERIAL.get()
 }
 
@@ -398,7 +398,7 @@ pub fn setup_clump_after_vehicle_upgrade(c: GPtr<u8>, plate: u32, design: u32) -
     }
     CURRENT_PLATE_TYPE.set(design as u8);
     PLATE_MATERIAL.set(plate);
-    rp_clump_for_all_atomics(c, ATOMIC_UPGRADE_CB, GPtr::NULL);
+    rp_clump_for_all_atomics(c, ATOMIC_UPGRADE_CB, GPtr::<u8>::addr(GPtr::NULL) as u32);
     1
 }
 

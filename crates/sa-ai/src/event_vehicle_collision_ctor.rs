@@ -7,7 +7,7 @@ use sa_core::hook;
 
 use crate::common::*;
 
-use sa_core::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference;
 use sa_core::bindings::entity_register_reference;
 
 /// `CEventVehicleCollision::CEventVehicleCollision(int16 pieceType, float damageIntensity, CVehicle* vehicle, const
@@ -61,7 +61,7 @@ pub fn event_vehicle_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x85_AE88);
     let v = rd::<GPtr<u8>>(this, 0x14);
     if !v.is_null() {
-        entity_clean_up_old_reference(v, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x14)));
+        entity_clean_up_old_reference(v, this.byte_add(0x14));
     }
     wr::<u32>(this, 0, 0x85_AB38);
 }

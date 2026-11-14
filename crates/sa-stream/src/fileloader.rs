@@ -110,19 +110,16 @@ pub mod call {
     pub use sa_core::bindings::frame_clone_and_link_clones as rw_frame_clone_and_link_clones;
     pub use sa_core::bindings::get_model_info as get_model_info_full;
     pub use sa_core::bindings::get_uppercase_key;
-    pub use sa_core::bindings::loading_screen;
+    pub use crate::bindings::loading_screen;
     pub use sa_core::bindings::rp_clump_for_all_atomics;
     pub use sa_core::bindings::rw_stream_close;
     pub use sa_core::bindings::rw_stream_find_chunk_call as rw_stream_find_chunk;
+    pub use sa_core::bindings::fclose;
+    pub use sa_core::bindings::fopen;
+    pub use crate::bindings::set_base_model_info_flags;
     orig! {
-        /// CRT `fopen` thunk (0x8232D8)
-        pub fn fopen(name: GPtr<u8>, mode: GPtr<u8>) -> GPtr<u8> = cdecl 0x8232D8 => unported;
-        /// CRT `fclose` (0x82318B)
-        pub fn fclose(f: GPtr<u8>) -> i32 = cdecl 0x82318B => unported;
         /// CRT `sprintf` (0x821BB5), one argument
         pub fn sprintf1(d: GPtr<u8>, fmt: GPtr<u8>, a: GPtr<u8>) -> i32 = cdecl 0x821BB5 => unported;
-        /// CBaseModelInfo::SetBaseModelInfoFlags (0x5B3AD0)
-        pub fn set_base_model_info_flags(mi: GPtr<u8>, flags: u32) = cdecl 0x5B3AD0 => unported;
         /// CAtomicModelInfo::SetAtomicModelInfoFlags (0x5B3B20)
         pub fn set_atomic_model_info_flags(mi: GPtr<u8>, flags: u32) = cdecl 0x5B3B20 => unported;
         /// CModelInfo::AddAtomicModel (0x4C6620)
@@ -351,7 +348,7 @@ pub fn load_time_cycles_modifier(line: GPtr<u8>) {
     let mut v1 = [a[0], a[1], a[2]];
     let mut v2 = [a[3], a[4], a[5]];
     let mut bx = [0u32; 6];
-    box_set(GPtr::from_raw(bx.as_mut_ptr()).cast(), GPtr::from_raw(v1.as_mut_ptr()).cast(), GPtr::from_raw(v2.as_mut_ptr()).cast());
+    box_set(GPtr::from_raw(bx.as_mut_ptr()).cast(), GPtr::<u8>::cast::<u32>(GPtr::from_raw(v1.as_mut_ptr()).cast()), GPtr::<u8>::cast::<u32>(GPtr::from_raw(v2.as_mut_ptr()).cast()));
     time_cycle_add_one(GPtr::from_raw(bx.as_mut_ptr()).cast(), far_clip, extra, f(intensity), f(falloff), f(lod2));
 }
 
@@ -563,7 +560,7 @@ pub fn load_atomic_file_stream(stream: GPtr<u8>, id: i32) -> bool {
             return false;
         }
         ATOMIC_MODEL_ID.set(id);
-        rp_clump_for_all_atomics(clump, 0x537150, clump);
+        rp_clump_for_all_atomics(clump, 0x537150, clump.addr() as u32);
         rp_clump_destroy(clump);
     }
     if rdp(mi, 0x1C).is_null() {
@@ -582,7 +579,7 @@ pub fn load_atomic_file(name: GPtr<u8>) {
     if rw_stream_find_chunk(stream, 0x10, GPtr::<u8>::cast::<u32>(GPtr::NULL), GPtr::<u8>::cast::<u32>(GPtr::NULL)) != 0 {
         let clump = rp_clump_stream_read(stream);
         if !clump.is_null() {
-            rp_clump_for_all_atomics(clump, 0x5B3930, clump);
+            rp_clump_for_all_atomics(clump, 0x5B3930, clump.addr() as u32);
             rp_clump_destroy(clump);
         }
     }
@@ -644,7 +641,7 @@ pub fn load_clump_file_stream(stream: GPtr<u8>, id: i32) -> bool {
                 }
                 let cf = rw_frame_clone_and_link_clones(rdp(child, 4));
                 rw_frame_add_child(frame, cf);
-                rp_clump_for_all_atomics(child, 0x537290, parent);
+                rp_clump_for_all_atomics(child, 0x537290, parent.addr() as u32);
                 rp_clump_destroy(child);
                 if rw_stream_find_chunk(stream, 0x10, GPtr::<u8>::cast::<u32>(GPtr::NULL), GPtr::<u8>::cast::<u32>(GPtr::NULL)) == 0 {
                     break;
@@ -687,7 +684,7 @@ pub fn load_clump_file(name: GPtr<u8>) {
             continue;
         }
         let node = get_frame_node_name(rdp(clump, 4));
-        let mi = get_model_info_full(node, GPtr::NULL);
+        let mi = get_model_info_full(node, GPtr::<u8>::cast::<i32>(GPtr::NULL)).cast::<u8>();
         if !mi.is_null() {
             v_set_clump(mi, clump);
         } else {
@@ -735,7 +732,7 @@ pub fn find_related_model_info_cb(atomic: GPtr<u8>, clump: GPtr<u8>) -> GPtr<u8>
     let mut id = 0i32;
     let node = get_frame_node_name(rdp(atomic, 4));
     get_name_and_damage(node, GPtr::from_raw(name.as_mut_ptr()), lp(&mut damaged));
-    let mi = get_model_info_full(GPtr::from_raw(name.as_mut_ptr()), lp(&mut id));
+    let mi = get_model_info_full(GPtr::from_raw(name.as_mut_ptr()), GPtr::<u8>::cast::<i32>(lp(&mut id))).cast::<u8>();
     if !mi.is_null() {
         let mi = v_as_atomic(mi);
         attach_atomic(mi, atomic, damaged != 0, clump, id);
@@ -790,7 +787,7 @@ pub fn load_object(line: GPtr<u8>) -> i32 {
     let mi = if flags & 0x1000 == 0 { add_atomic_model(id) } else { add_damage_atomic_model(id) };
     wr32(mi, 0x18, dist);
     wr32(mi, 4, get_uppercase_key(mp));
-    set_tex_dictionary(mi, tp);
+    set_tex_dictionary(mi.cast::<crate::shared::CBaseModelInfo>(), tp);
     set_atomic_model_info_flags(mi, flags);
     id
 }
@@ -828,7 +825,7 @@ pub fn load_time_object(line: GPtr<u8>) -> i32 {
     let ti = v_get_time_info(mi);
     wr32(mi, 0x18, dist);
     wr32(mi, 4, get_uppercase_key(mp));
-    set_tex_dictionary(mi, tp);
+    set_tex_dictionary(mi.cast::<crate::shared::CBaseModelInfo>(), tp);
     wr8(ti, 0, on as u8);
     wr8(ti, 1, off as u8);
     set_atomic_model_info_flags(mi, flags);
@@ -855,9 +852,9 @@ pub fn load_weapon_object(line: GPtr<u8>) -> i32 {
     let mi = add_weapon_model(id);
     wr32(mi, 4, get_uppercase_key(mp));
     wr32(mi, 0x18, dist);
-    set_tex_dictionary(mi, tp);
+    set_tex_dictionary(mi.cast::<crate::shared::CBaseModelInfo>(), tp);
     v_set_anim_file(mi, ap);
-    set_col_model(mi, s(0x968FD0), 0);
+    set_col_model(mi.cast::<crate::shared::CBaseModelInfo>().cast::<u8>(), s(0x968FD0), 0);
     id
 }
 
@@ -874,8 +871,8 @@ pub fn load_clump_object(line: GPtr<u8>) -> i32 {
     }
     let mi = add_clump_model(id);
     wr32(mi, 4, get_uppercase_key(mp));
-    set_tex_dictionary(mi, tp);
-    set_col_model(mi, s(0x968A00), 0);
+    set_tex_dictionary(mi.cast::<crate::shared::CBaseModelInfo>(), tp);
+    set_col_model(mi.cast::<crate::shared::CBaseModelInfo>().cast::<u8>(), s(0x968A00), 0);
     id
 }
 
@@ -899,10 +896,10 @@ pub fn load_animated_clump_object(line: GPtr<u8>) -> i32 {
     }
     let mi = add_clump_model(id);
     wr32(mi, 4, get_uppercase_key(mp));
-    set_tex_dictionary(mi, tp);
+    set_tex_dictionary(mi.cast::<crate::shared::CBaseModelInfo>(), tp);
     wr32(mi, 0x18, dist);
     v_set_anim_file(mi, ap);
-    set_base_model_info_flags(mi, flags);
+    set_base_model_info_flags(mi.cast::<crate::shared::CBaseModelInfo>(), flags);
     if flags & 0x20 != 0 {
         wr8(mi, 0x13, rd8(mi, 0x13) | 4);
     } else {
@@ -925,11 +922,9 @@ use crate::bindings::col_store_include_model_index;
 use crate::bindings::load_col_v1_call;
 use crate::bindings::load_col_v2_call;
 use crate::bindings::load_col_v3_call;
+use sa_core::bindings::crt_new as operator_new;
+use sa_core::bindings::memory_malloc as malloc;
 orig! {
-    /// CMemoryMgr::Malloc (0x72F420)
-    fn malloc(size: u32, hint: u32) -> GPtr<u8> = cdecl 0x72F420 => unported;
-    /// CRT `operator new` (0x82119A)
-    fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
     /// CCollisionData::GetNoOfShadowVerts (0x537510)
     fn get_no_of_shadow_verts(cd: GPtr<u8>) -> u32 = thiscall 0x537510 => unported;
     /// CPlantMgr::SetPlantFriendlyFlagInAtomicMI (0x5DB650)
@@ -987,11 +982,11 @@ pub fn load_collision_model(data: GPtr<u8>, cm: GPtr<u8>) {
         while i < rd16(cd, 0) as i32 {
             col_sphere_set(
                 a.byte_add(0x14 * i as isize),
-                f32::from_bits(rd32(p, 0)),
-                p.byte_add(4),
-                (rd8(p, 0x10) as u32) as u8,
-                (rd8(p, 0x11) as u32) as u8,
-                (rd8(p, 0x13) as u32) as u8,
+                f32::from_bits(rd32(p, 0)).to_bits(),
+                GPtr::<u8>::cast::<u32>(p.byte_add(4)),
+                ((rd8(p, 0x10) as u32) as u8) as u32,
+                ((rd8(p, 0x11) as u32) as u8) as u32,
+                ((rd8(p, 0x13) as u32) as u8) as u32,
             );
             p = p.byte_add(0x14);
             i += 1;
@@ -1204,7 +1199,7 @@ const FOURCC_COL4: u32 = 0x344C_4F43;
 
 /// A new CColModel from its pool (constructed; null when the pool is full).
 fn new_col_model() -> GPtr<u8> {
-    let m = col_model_new(0x30);
+    let m = GPtr::<sa_core::pools::ColModelSlot>::cast::<u8>(col_model_new(0x30));
     if m.is_null() { GPtr::NULL } else { col_model_ctor(m) }
 }
 
@@ -1251,7 +1246,7 @@ pub fn load_collision_file_buffer(buf: GPtr<u8>, size: u32, col_id: u8) -> bool 
             let mut col = rdp(mi, 0x14);
             if col.is_null() {
                 col = new_col_model();
-                set_col_model(mi, col, 1);
+                set_col_model(mi.cast::<crate::shared::CBaseModelInfo>().cast::<u8>(), col, 1);
             }
             let len = fsize.wrapping_sub(0x18);
             match version {
@@ -1295,7 +1290,7 @@ pub fn load_collision_file(filename: GPtr<u8>, col_id: u8) {
         read(f, GPtr::from_raw(name.as_mut_ptr()), 0x18);
         read(f, buf, hdr[1].wrapping_sub(0x18));
         let np = GPtr::from_raw(name.as_mut_ptr());
-        let mi = get_model_info_full(np, GPtr::NULL);
+        let mi = get_model_info_full(np, GPtr::<u8>::cast::<i32>(GPtr::NULL)).cast::<u8>();
         if mi.is_null() || rd8(mi, 0x12) & 0x80 == 0 {
             continue;
         }
@@ -1304,7 +1299,7 @@ pub fn load_collision_file(filename: GPtr<u8>, col_id: u8) {
             col = existing;
         } else {
             let c = new_col_model();
-            set_col_model(mi, c, 1);
+            set_col_model(mi.cast::<crate::shared::CBaseModelInfo>().cast::<u8>(), c, 1);
         }
         match version {
             0 => load_col_v1_call(buf, col, np),
@@ -1345,7 +1340,7 @@ pub fn load_collision_file_first_time(buf: GPtr<u8>, size: u32, col_id: u8) -> b
         }
         let np = GPtr::from_raw(name.as_mut_ptr());
         if mi.is_null() || rd32(mi, 4) != get_uppercase_key(np) {
-            mi = get_model_info_full(np, lp(&mut id));
+            mi = get_model_info_full(np, GPtr::<u8>::cast::<i32>(lp(&mut id))).cast::<u8>();
         }
         if !mi.is_null() {
             col_store_include_model_index(col_id as i32, id);
@@ -1358,7 +1353,7 @@ pub fn load_collision_file_first_time(buf: GPtr<u8>, size: u32, col_id: u8) -> b
                     _ => load_col_v3_call(after, len, col, np),
                 }
                 wr8(col, 0x28, col_id);
-                set_col_model(mi, col, 1);
+                set_col_model(mi.cast::<crate::shared::CBaseModelInfo>().cast::<u8>(), col, 1);
                 col_accel_add_cache_col(id, col);
             }
         }
@@ -1431,7 +1426,7 @@ pub fn load_vehicle_object(line: GPtr<u8>) -> i32 {
     );
     let mi = add_vehicle_model(id);
     wr32(mi, 4, get_uppercase_key(p(&mut model)));
-    set_tex_dictionary(mi, p(&mut txd));
+    set_tex_dictionary(mi.cast::<crate::shared::CBaseModelInfo>(), p(&mut txd));
     let pool = crate::shared::TXD_POOL.get().cast::<u8>();
     let ti = rd16(mi, 0xA) as isize;
     let def = if (rd8(rdp(pool, 4), ti) as i8) < 0 { GPtr::NULL } else { rdp(pool, 0).byte_add(12 * ti) };
@@ -1576,9 +1571,9 @@ pub fn load_ped_object(line: GPtr<u8>) -> i32 {
     );
     let mi = add_ped_model(id);
     wr32(mi, 4, get_uppercase_key(p(&mut model)));
-    set_tex_dictionary(mi, p(&mut txd));
+    set_tex_dictionary(mi.cast::<crate::shared::CBaseModelInfo>(), p(&mut txd));
     v_set_anim_file(mi, p(&mut anim_file));
-    set_col_model(mi, s(0x968DF0), 0);
+    set_col_model(mi.cast::<crate::shared::CBaseModelInfo>().cast::<u8>(), s(0x968DF0), 0);
     wr32(mi, 0x28, find_ped_type(p(&mut ped_type)) as u32);
     wr32(mi, 0x2C, get_ped_stat_type(p(&mut stat)) as u32);
     let mut group = count;
@@ -1619,9 +1614,9 @@ pub fn load_ped_object(line: GPtr<u8>) -> i32 {
 // ------------------------------------------------------------------------------- 2d effects ---
 
 use sa_core::bindings::rw_texture_read;
-use sa_core::bindings::pop_current_txd;
-use sa_core::bindings::push_current_txd;
-use sa_core::bindings::set_current_txd;
+use crate::bindings::pop_current_txd;
+use crate::bindings::push_current_txd;
+use crate::bindings::set_current_txd;
 use crate::bindings::get_2d_effect_store;
 orig! {
     /// CBaseModelInfo::Add2dEffect (0x4C4D20)
@@ -1901,15 +1896,13 @@ use sa_core::bindings::memory_malloc as call_malloc;
 use sa_core::bindings::world_add;
 use crate::bindings::col_accel_is_cache_loading;
 use crate::bindings::generate_new_one as generate_new_pickup;
+use crate::bindings::entry_exit_add_one;
+use crate::bindings::delete_collision_model;
 orig! {
-    /// CEntryExitManager::AddOne (0x43FA00)
-    fn entry_exit_add_one(a: f32, b: f32, c: f32, d: f32, e: f32, f2: f32, g: f32, h: f32, i: f32, j: f32, k: f32, area: i32, flags: i32, extra: i32, t1: i32, t2: i32, sky: i32, title: GPtr<u8>) -> i32 = cdecl 0x43FA00 => unported;
     /// CColAccel::addIPLEntity (0x5B3040)
     fn col_accel_add_ipl_entity(list: GPtr<u8>, count: i32, idx: u32) = cdecl 0x5B3040 => unported;
     /// CColAccel::cacheIPLSection (0x5B2F10)
     fn col_accel_cache_ipl_section(list: GPtr<u8>, count: i32) = cdecl 0x5B2F10 => unported;
-    /// CBaseModelInfo::DeleteCollisionModel (0x4C4C40)
-    fn delete_collision_model(mi: GPtr<u8>) = thiscall 0x4C4C40 => unported;
 }
 
 /// `CFileLoader::LoadObjectInstance(line)` (0x538690): `"%d %s %d %f %f %f %f %f %f %f %d"` into a
@@ -1968,7 +1961,7 @@ pub fn load_entry_exit(line: GPtr<u8>) {
         np.byte_add(1)
     };
     let idx = entry_exit_add_one(
-        f(v[0]), f(v[1]), f(v[2]), f(v[3]), f(v[4]), f(v[5]), f(v[6]), f(v[7]), f(v[8]), f(v[9]), f(v[10]), area, flags, extra, t1, t2, sky, title,
+        f(v[0]), f(v[1]), f(v[2]), f(v[3]), f(v[4]), f(v[5]), f(v[6]), f(v[7]), f(v[8]), f(v[9]), f(v[10]), area, flags as u32, extra as u32, t1 as u32, t2 as u32, sky as u32, title,
     );
     let pool = GPtr::<GPtr<u8>>::from_addr(0x96A7D8).read();
     let e = if rd8(rdp(pool, 4), idx as isize) & 0x80 == 0 {
@@ -2105,8 +2098,8 @@ pub fn link_lods(extra: i32) {
                         }
                         let col = rdp(ent_mi, 0x14);
                         if rdp(lod_mi, 0x14) != col && !col.is_null() {
-                            delete_collision_model(lod_mi);
-                            set_col_model(lod_mi, rdp(ent_mi, 0x14), 0);
+                            delete_collision_model(lod_mi.cast::<crate::shared::CBaseModelInfo>());
+                            set_col_model(lod_mi.cast::<crate::shared::CBaseModelInfo>().cast::<u8>(), rdp(ent_mi, 0x14), 0);
                         }
                     } else if rd8(ent_mi, 0x12) & 0x20 != 0 {
                         wr32(ent_mi, 0x18, 0x43C8_0000);
@@ -2136,7 +2129,7 @@ use crate::bindings::rw_tex_dictionary_destroy;
 use crate::bindings::rw_tex_dictionary_set_current;
 use sa_core::bindings::col_store_remove_all_collision as remove_all_collision;
 use sa_core::bindings::init_trains;
-use sa_core::bindings::loading_screen_new_chunk_loaded as new_chunk_loaded;
+use crate::bindings::loading_screen_new_chunk_loaded as new_chunk_loaded;
 use sa_core::bindings::rw_tex_dictionary_get_current;
 use crate::bindings::add_image_to_list;
 use crate::bindings::load_collision_file_call;

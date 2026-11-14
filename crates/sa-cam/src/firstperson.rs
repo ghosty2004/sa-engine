@@ -242,15 +242,15 @@ fn main_part(this: GPtr<u8>, b: GPtr<u8>, f: &mut Fpu) {
     let front = this.byte_add(0x190);
     let up = this.byte_add(0x1B4);
     copy3(front, m.byte_add(0x10));
-    vector_normalise(front);
+    vector_normalise(front.cast::<[f32;3]>());
     copy3(up, rd::<GPtr<u8>>(b, 0x70).byte_add(0x20));
-    vector_normalise(up);
+    vector_normalise(up.cast::<[f32;3]>());
     let r = cross_product(b.byte_add(0x5C), front, up);
     copy3(b.byte_add(0x2C), r);
-    vector_normalise(b.byte_add(0x2C));
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(b.byte_add(0x2C)));
     let r = cross_product(b.byte_add(0x5C), b.byte_add(0x2C), front);
     copy3(up, r);
-    vector_normalise(up);
+    vector_normalise(up.cast::<[f32;3]>());
     // 0x518404: under water
     wr::<u32>(b, 0x10, 0);
     let wl = get_water_level(
@@ -337,7 +337,7 @@ fn under_water_blur(f: &mut Fpu) {
         f.fld(d(WATER_R));
         ri = ftol32(f.pop());
     }
-    set_motion_blur_call(GPtr::from_addr(THE_CAMERA), ri as u32, gi as u32, bi as u32, alpha as u32, 2);
+    set_motion_blur_call(GPtr::from_addr(THE_CAMERA), (ri as u32) as i32, (gi as u32) as i32, (bi as u32) as i32, (alpha as u32) as i32, 2);
 }
 
 /// Registrations of this module.

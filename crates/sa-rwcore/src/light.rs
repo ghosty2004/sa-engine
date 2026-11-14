@@ -51,9 +51,9 @@ use crate::bindings::plugin_read_data_chunks;
 use crate::bindings::rw_sqrt;
 use sa_core::bindings::rw_stream_find_chunk_call;
 use crate::bindings::free_list_destroy as rw_free_list_destroy;
-use sa_core::bindings::rp_light_create as rp_light_create_call;
-use sa_core::bindings::rw_frame_update_objects;
-use sa_core::bindings::stream_read as rw_stream_read_call;
+use crate::bindings::rp_light_create as rp_light_create_call;
+use crate::bindings::rw_frame_update_objects;
+use crate::bindings::stream_read as rw_stream_read_call;
 
 fn light_free_list() -> GPtr<u8> {
     p8(rd::<u32>(module(LIGHT_MODULE), 0))
@@ -153,7 +153,7 @@ pub fn rp_light_stream_read(s: GPtr<u8>) -> GPtr<u8> {
     if !(0x34000..=0x36003).contains(&v) {
         let mut e = RwError { plugin_id: 2, error_code: 0 };
         e.error_code = rw_error1(E_RW_BADVERSION) as i32;
-        rw_error_set(GPtr::from_raw(&mut e));
+        rw_error_set(GPtr::from_raw(&mut e).cast());
         return GPtr::NULL;
     }
     let mut st = [0u32; 6];

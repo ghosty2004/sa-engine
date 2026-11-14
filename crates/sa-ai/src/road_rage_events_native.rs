@@ -9,8 +9,8 @@ use sa_core::hook;
 use crate::common::*;
 
 use sa_core::bindings::entity_register_reference;
-use sa_world::bindings::task_complex_ctor;
-use sa_world::bindings::event_vehicle_damage_dtor;
+use crate::bindings::task_complex_ctor;
+use crate::bindings::event_vehicle_damage_dtor;
 
 /// `CTaskComplexRoadRage::CTaskComplexRoadRage(CPed* target)` (0x6220A0, `ret 4`; the entry `push -1; jmp
 /// 0x406017` pushes the SEH handler from a protection chunk): `CTaskComplex` base, vtable 0x86D9F0, +0xC = target
@@ -20,7 +20,7 @@ use sa_world::bindings::event_vehicle_damage_dtor;
        unverified = "native-9", route = "L2", hazards = "heap-writes", recs = "grove-walk,car-ai",
        note = "entry jmp to the protection chunk 0x406017 (SEH handler push)")]
 pub fn road_rage_ctor(this: GPtr<u8>, target: GPtr<u8>) -> GPtr<u8> {
-    task_complex_ctor(this);
+    task_complex_ctor(this.addr() as u32);
     wr::<u32>(this, 0, 0x86_D9F0);
     wr::<GPtr<u8>>(this, 0xC, target);
     if !target.is_null() {

@@ -162,7 +162,7 @@ pub fn play_preloaded_beat_track(this: GPtr<u8>, flag: u32) {
     wr::<u8>(this, 0, flag as u8);
 }
 
-pub use sa_core::bindings::audio_stop_cutscene_track as stop_cutscene_track_call;
+pub use crate::bindings::audio_stop_cutscene_track as stop_cutscene_track_call;
 
 /// `CAudioEngine::StopBeatTrack()` (0x5071A0): `StopCutsceneTrack(true)`.
 #[hook(addr = 0x5071A0, conv = thiscall, name = "CAudioEngine::StopBeatTrack", expect = "6A 01 E8 D9 FE FF FF")]

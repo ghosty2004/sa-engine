@@ -10,7 +10,7 @@ use sa_math::x87::X87;
 
 use crate::common::{g, jp, rd, wr, x};
 
-use sa_world::bindings::sprite_flush_sprite_buffer;
+use crate::bindings::sprite_flush_sprite_buffer;
 
 /// `CSprite::RenderBufferedOneXLUSprite_Rotate_Dimension(CVector pos, float w, float h, uint8 r, g, b,
 /// int16 intensity, float recipNearZ, float angle, uint8 alpha)` (0x70EAB0): 3D mode (0xC6A15C = 0); the
@@ -90,12 +90,12 @@ pub fn render_buffered_one_xlu_sprite_rotate_dimension(px: f32, py: f32, pz: f32
 }
 
 use crate::bindings::transform_points;
-use sa_core::bindings::box_set;
-use sa_core::bindings::sphere_set;
-use sa_stream::bindings::placeable_allocate_matrix;
+use sa_world::bindings::box_set;
+use sa_world::bindings::sphere_set;
+use sa_world::bindings::placeable_allocate_matrix;
 use sa_world::bindings::entity_get_col_model as get_col_model;
 use sa_world::bindings::test_sphere_box;
-use sa_stream::bindings::simple_transform_update_matrix;
+use crate::bindings::simple_transform_update_matrix;
 orig! {
     /// `CPlantMgr::_ProcessEntryCollisionDataSections_RemoveLocTris(entry, center, iTriMax, first, last)`
     /// (0x5DBF20; bool in AL)
@@ -145,10 +145,10 @@ pub fn plant_process_entry_collision_data_sections(entry: GPtr<u8>, center: GPtr
         transform_points(lp(&mut out), 2, rd::<GPtr<u8>>(e, 0x14), lp(&mut inp));
         let mut bx = [0u32; 8];
         let o = lp(&mut out);
-        box_set(lp(&mut bx), o, o.byte_add(0xC));
+        box_set(lp(&mut bx), o.cast::<u32>(), GPtr::<u8>::cast::<u32>(o.byte_add(0xC)));
         box_recalc(lp(&mut bx));
         let mut sph = [0u32; 4];
-        sphere_set(lp(&mut sph), 0x42C8_0000, center);
+        sphere_set(lp(&mut sph), f32::from_bits(0x42C8_0000).to_bits(), center.cast::<u32>());
         if test_sphere_box(GPtr::<u8>::cast::<f32>(lp(&mut sph)), GPtr::<u8>::cast::<f32>(lp(&mut bx))) != 0 {
             plant_add_loc_tris(entry, center, max, i32::from(rd::<i16>(sec, 0x18)), i32::from(rd::<i16>(sec, 0x1A)));
         }

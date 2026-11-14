@@ -17,10 +17,10 @@ use crate::common::*;
 use sa_world::bindings::ped_placement_find_z_coor_for_ped as find_z_coor_for_ped;
 use sa_core::bindings::general_limit_radian_angle as limit_radian_angle;
 use sa_core::bindings::matrix_copy_to_rw_matrix as matrix_copy_to_rw;
-use sa_core::bindings::matrix_dtor;
+use sa_world::bindings::matrix_dtor;
 use sa_core::bindings::matrix_set_rotate_z_only;
 use sa_core::bindings::matrix_update_matrix as matrix_update;
-use sa_core::bindings::anim_door_offsets as veh_anim_group_door_offsets;
+use sa_anim::bindings::anim_door_offsets as veh_anim_group_door_offsets;
 use sa_world::bindings::bike_corrected_world_door_position as bike_get_corrected_world_door_position;
 use sa_world::bindings::matrix_copy_ctor;
 use sa_world::bindings::multiply3x3;
@@ -33,7 +33,7 @@ use sa_core::bindings::matrix_mul_assign;
 use sa_core::bindings::matrix_set_rotate_z;
 use sa_core::bindings::rt_quat_convert_from_matrix;
 use sa_core::bindings::rt_quat_setup_slerp_cache;
-use sa_core::bindings::vehicle_anim_group_get_group as veh_anim_group_get_group;
+use sa_anim::bindings::vehicle_anim_group_get_group as veh_anim_group_get_group;
 orig! {
     /// `FUN_0064e4b0(int32 animGroup, int32 animId)` (0x64E4B0, cdecl, ST0): the group's critical blend time
     fn veh_anim_critical_blend_time(group: u32, anim: u32) -> f64 = cdecl 0x64E4B0 => unported;
@@ -138,13 +138,13 @@ pub fn line_up_get_local_position_to_open_car_door(
     let blended = matches!(id, Some(0x185 | 0x186)) && rd::<u32>(anim_group_ptr(group), 8) >> 5 & 1 != 0;
     let (mut o1c, mut obx, mut o24);
     if blended {
-        veh_anim_group_door_offsets(anim_group_ptr(group), p34, kind);
+        veh_anim_group_door_offsets(anim_group_ptr(group), p34, kind as i32);
         let b = rd::<f32>(assoc, 0x18);
         let inv = x(gf(F_ONE)).fsub_m(b);
         let l1c = x(rd::<f32>(p34, 0)).fmul(inv).to_f32();
         let l20 = x(rd::<f32>(p34, 4)).fmul(inv).to_f32();
         let l24 = x(rd::<f32>(p34, 8)).fmul(inv).to_f32();
-        veh_anim_group_door_offsets(GPtr::from_addr(VEH_ANIM_GROUPS), p34, kind);
+        veh_anim_group_door_offsets(GPtr::from_addr(VEH_ANIM_GROUPS), p34, kind as i32);
         let bx = x(b);
         o1c = x(rd::<f32>(p34, 0)).fmul(bx).fadd_m(l1c).to_f32();
         let l44 = x(rd::<f32>(p34, 4)).fmul(bx).to_f32();
@@ -152,7 +152,7 @@ pub fn line_up_get_local_position_to_open_car_door(
         obx = x(l44).fadd_m(l20).to_f32();
         o24 = x(l48).fadd_m(l24).to_f32();
     } else {
-        veh_anim_group_door_offsets(anim_group_ptr(group), p40, kind);
+        veh_anim_group_door_offsets(anim_group_ptr(group), p40, kind as i32);
         o1c = rd::<f32>(p40, 0);
         obx = rd::<f32>(p40, 4);
         o24 = rd::<f32>(p40, 8);
@@ -544,7 +544,7 @@ pub fn line_up_ped_with_car_process_ped(this: GPtr<u8>, ped: GPtr<u8>, veh: GPtr
         let base = d4.fsubr_m(rd::<f32>(pos, 8));
         let l18 = base.fadd(x(rz2).fmul_m(dot)).fadd_m(gf(F_ONE)).to_f32();
         let old_z = rd::<f32>(qp, 8);
-        find_z_coor_for_ped(qp);
+        find_z_coor_for_ped(qp.cast::<f32>());
         if !x(l18)
             .fsub_m(gf(0x858B8C))
             .fcom(x(rd::<f32>(qp, 8)))

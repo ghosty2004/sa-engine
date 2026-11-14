@@ -200,6 +200,7 @@ pub mod call {
     pub use crate::bindings::tidy_up_d3d_index_buffers;
     pub use crate::bindings::tidy_up_d3d_textures;
     pub use crate::bindings::timer_initialise;
+    pub use crate::bindings::crt_new as operator_new;
     orig! {
         pub fn memory_mgr_init() = cdecl 0x72F3B0 => unported;
         pub fn localisation_initialise() = cdecl 0x56D180 => unported;
@@ -233,8 +234,6 @@ pub mod call {
         pub fn hud_initialise() = cdecl 0x5BA850 => unported;
         pub fn player_skin_initialise() = cdecl 0x6FF8A0 => unported;
         pub fn post_effects_initialise() = cdecl 0x704630 => unported;
-        /// `operator new` (0x82119A)
-        pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
         /// the chained restore callback stored at 0xBD0114
         pub fn prev_d3d_restore_callback() = cdecl cell 0xBD0114 => unported;
     }
@@ -665,9 +664,9 @@ pub fn initialise_render_ware() -> bool {
     if !cam.is_null() {
         let frame = call::rw_frame_create();
         call::rw_object_has_frame_set_frame(cam, frame);
-        let fb = call::rw_raster_create(w, h, 0, 2);
+        let fb = call::rw_raster_create((w as u32) as i32, (h as u32) as i32, 0, 2);
         cam.byte_add(0x60).cast::<GPtr<u8>>().write(fb);
-        let zb = call::rw_raster_create(w, h, 0, 1);
+        let zb = call::rw_raster_create((w as u32) as i32, (h as u32) as i32, 0, 1);
         cam.byte_add(0x64).cast::<GPtr<u8>>().write(zb);
         let ok = !cam.byte_add(4).cast::<GPtr<u8>>().read().is_null() && {
             let fb = cam.byte_add(0x60).cast::<GPtr<u8>>().read();
@@ -1161,7 +1160,7 @@ pub fn do_fade() {
     }
     let mut colour = fade_colour(rgbv, CAMERA_FADE_TARGET_IS_SPLASH.get().get());
     let mut rect = fade_rect(RS_MAXIMUM_WIDTH.get(), RS_MAXIMUM_HEIGHT.get());
-    call::sprite2d_draw_rect(GPtr::<[f32;4]>::cast::<f32>(GPtr::from_raw(&raw mut rect)), GPtr::<[u8;4]>::cast::<u8>(GPtr::from_raw(&raw mut colour)));
+    call::sprite2d_draw_rect(GPtr::<[f32;4]>::cast::<u8>(GPtr::from_raw(&raw mut rect)), GPtr::<[u8;4]>::cast::<u8>(GPtr::from_raw(&raw mut colour)));
 }
 
 /// `TestModelIndices` (0x53ED30, cdecl): empty in 1.0 US (`ret`, nop padding).

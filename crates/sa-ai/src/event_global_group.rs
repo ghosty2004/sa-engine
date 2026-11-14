@@ -2,7 +2,7 @@
 #![allow(clippy::unreadable_literal)]
 
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
@@ -11,10 +11,7 @@ const EVENT_GLOBAL_GROUP: usize = 0xA9AF6C;
 /// `CEventGlobalGroup` vtable
 const VTABLE: u32 = 0x85AAB4;
 
-orig! {
-    /// `operator new(size)` (0x82119A)
-    fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
-}
+use sa_core::bindings::crt_new as operator_new;
 
 /// `GetEventGlobalGroup()` (0x4ABA50, cdecl): the singleton (0xA9AF6C); when null, a new 0x4C-byte object
 /// (`operator new`; null stays null) with vtable 0x85AAB4, +4 = +8 = 0 and +0xC..+0x4C zeroed, stored and

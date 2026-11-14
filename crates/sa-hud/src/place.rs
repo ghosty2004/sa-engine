@@ -20,10 +20,10 @@ const PLAYERS_PED: usize = 0xB7CD98;
 /// `CGame::currArea`
 const CURR_AREA: usize = 0xB72914;
 
-pub use sa_core::bindings::text_get;
+pub use crate::bindings::text_get;
 pub use sa_world::bindings::eem_get_position_relative_to_outside_world as position_relative_to_outside_world;
 pub use sa_world::bindings::find_smallest_zone_for_position;
-pub use sa_world::bindings::hud_set_zone_name as set_zone_name;
+pub use crate::bindings::hud_set_zone_name as set_zone_name;
 orig! {
     /// `CZone::GetTranslatedName()` (0x5720C0)
     pub fn get_translated_name_call(zone: GPtr<u8>) -> GPtr<u8> = thiscall 0x5720C0 => get_translated_name;
@@ -104,10 +104,10 @@ pub fn process(this: GPtr<u8>) {
     }
     let z: GPtr<u8> = rd(this, 0);
     if z.is_null() {
-        set_zone_name(GPtr::from_addr((sa_core::abi::peek_stack(0x571F20, -0x10).unwrap_or(0)) as usize), 0);
+        set_zone_name(GPtr::<u8>::addr(GPtr::from_addr((sa_core::abi::peek_stack(0x571F20, -0x10).unwrap_or(0)) as usize)) as u32, 0);
     } else {
         let name = get_translated_name_call(z);
-        set_zone_name(GPtr::from_addr((name.addr() as u32) as usize), 0);
+        set_zone_name(GPtr::<u8>::addr(GPtr::from_addr((name.addr() as u32) as usize)) as u32, 0);
     }
 }
 

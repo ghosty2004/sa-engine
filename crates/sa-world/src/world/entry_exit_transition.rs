@@ -39,7 +39,7 @@ use crate::bindings::shopping_remove_loaded_shop;
 use crate::bindings::task_facial_stop_all;
 use crate::bindings::vector_add as vec_add;
 use crate::bindings::vector_mul_scalar as vec_mul_scalar;
-use sa_core::bindings::vector_sub as vec_sub;
+use crate::bindings::vector_sub as vec_sub;
 use crate::bindings::water_find_nearest_water_and_flow;
 use sa_core::bindings::audio_zones_update;
 use sa_core::bindings::camera_fade;
@@ -47,9 +47,9 @@ use sa_core::bindings::camera_restore_with_jump_cut;
 use sa_core::bindings::camera_set_fade_colour;
 use sa_core::bindings::clothes_rebuild_player_if_needed;
 use sa_core::bindings::game_tidy_up_memory;
-use sa_core::bindings::get_pad as pad_get_pad;
+use sa_input::bindings::get_pad as pad_get_pad;
 use sa_core::bindings::ipl_store_add_ipls_needed_at_posn as ipl_store_add_ipls_needed;
-use sa_core::bindings::load_all_requested_models as streaming_load_all_requested_models;
+use sa_stream::bindings::load_all_requested_models as streaming_load_all_requested_models;
 use sa_core::bindings::rubbish_set_visibility as fun_7204c0;
 use sa_core::bindings::scripts_process as the_scripts_process;
 use sa_core::bindings::streaming_load_scene;
@@ -215,7 +215,7 @@ pub fn entry_exit_transition_started(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         if m.fcom(ten).test_any(0x41) {
             warping().write(0);
         }
-        vector_normalise(buf(&mut d));
+        vector_normalise(GPtr::<u8>::cast::<[f32;3]>(buf(&mut d)));
         let door = find_nearest_door(this, 10.0);
         if !door.is_null() {
             let mem = task_new(0x38);
@@ -228,7 +228,7 @@ pub fn entry_exit_transition_started(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
                 let r = vec_sub(buf(&mut out), dp, buf(&mut centre));
                 d = [rd::<u32>(r, 0), rd::<u32>(r, 4), rd::<u32>(r, 8)];
                 d[2] = 0;
-                vector_normalise(buf(&mut d));
+                vector_normalise(GPtr::<u8>::cast::<[f32;3]>(buf(&mut d)));
                 ep
             });
         } else {
@@ -318,7 +318,7 @@ fn show_name(this: GPtr<u8>) -> u8 {
     let e = entry_exit_get_display_name_of(this);
     if !e.is_null() {
         let s = text_get(GPtr::from_addr(0xC1_B340), e);
-        hud_set_zone_name(s, 1);
+        hud_set_zone_name(s.addr() as u32, 1);
     }
     0
 }
@@ -362,7 +362,7 @@ pub fn entry_exit_transition_finished(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
                 camera_set_fade_colour(camera(), 0, 0, 0);
                 camera_fade(camera(), 0.5, 0);
                 state().write(2);
-                let group = get_peds_group(ped);
+                let group = GPtr::from_addr(get_peds_group(ped.addr() as u32) as usize);
                 if !group.is_null() {
                     let mem = event_new(0x10);
                     let ev = if mem.is_null() {
@@ -401,7 +401,7 @@ pub fn entry_exit_transition_finished(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
                 set_area_code_for_visible_objects();
                 state().write(1);
                 curr_area().write(u32::from(rd::<u8>(spawn_point().read(), 0x32)));
-                let group = get_peds_group(ped);
+                let group = GPtr::from_addr(get_peds_group(ped.addr() as u32) as usize);
                 if group.is_null() {
                     return 0;
                 }

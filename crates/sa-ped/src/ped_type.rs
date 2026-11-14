@@ -163,9 +163,9 @@ pub fn ped_type_shutdown() {
     crt_free(a.byte_add(-4));
 }
 
-use sa_stream::bindings::crt_new as ps_operator_new;
+use sa_core::bindings::crt_new_821195 as ps_operator_new;
 use sa_core::bindings::file_close as ps_close_file;
-use sa_core::bindings::load_line as ps_load_line;
+use sa_stream::bindings::load_line as ps_load_line;
 use sa_core::bindings::open_file as ps_open_file;
 orig! {
     /// CRT `sscanf(line, "%s %f %f %d %d %d %d %f %f %d %d", ...)` (0x8220AD)

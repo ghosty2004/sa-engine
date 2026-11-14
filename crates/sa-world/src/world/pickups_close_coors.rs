@@ -13,22 +13,13 @@ use super::common::{f32_of, x, xi};
 
 use crate::bindings::find_ground_z_for_3d_coord;
 use sa_core::bindings::get_weapon_info;
-use sa_core::bindings::find_player_coors;
+use crate::bindings::find_player_coors;
+use crate::bindings::world_test_sphere_against_world as test_sphere_against_world;
+use sa_core::bindings::world_get_is_line_of_sight_clear as get_is_line_of_sight_clear;
+use sa_stream::bindings::generate_new_one;
 orig! {
     /// `CPickups::TestForPickupsInBubble(CVector, float)` (0x456450)
     fn test_for_pickups_in_bubble(px: f32, py: f32, pz: f32, radius: f32) -> u8 = cdecl 0x456450 => unported;
-    /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, bool buildings, bool vehicles, bool peds,
-    /// bool objects, bool dummies, bool seeThrough, bool cameraIgnore)` (0x56A490)
-    #[allow(clippy::too_many_arguments)]
-    fn get_is_line_of_sight_clear(a: GPtr<u8>, b: GPtr<u8>, bd: u32, v: u32, p: u32, o: u32, d: u32, s: u32, i: u32) -> u8 = cdecl 0x56A490 => unported;
-    /// `CWorld::TestSphereAgainstWorld(CVector, float, CEntity* ignore, bool buildings, bool vehicles, bool peds,
-    /// bool objects, bool dummies, bool cameraIgnore)` (0x569E20)
-    #[allow(clippy::too_many_arguments)]
-    fn test_sphere_against_world(cx: f32, cy: f32, cz: f32, r: f32, ignore: u32, b: u32, v: u32, p: u32, o: u32, d: u32, cam: u32) -> GPtr<u8> = cdecl 0x569E20 => unported;
-    /// `CPickups::GenerateNewOne(CVector, uint32 model, uint8 type, uint32 ammo, uint32 money, bool, const char*)`
-    /// (0x456F20)
-    #[allow(clippy::too_many_arguments)]
-    fn generate_new_one(px: u32, py: u32, pz: u32, model: u32, ty: u32, ammo: u32, money: u32, empty: u32, msg: u32) -> i32 = cdecl 0x456F20 => unported;
 }
 
 /// `CPickups::GenerateNewOne_WeaponType(CVector coors, eWeaponType, ePickupType, uint32 ammo, bool isEmpty,
@@ -39,7 +30,7 @@ orig! {
 #[allow(clippy::too_many_arguments)]
 pub fn pickups_generate_new_one_weapon_type(px: u32, py: u32, pz: u32, weapon: u32, ty: u32, ammo: u32, empty: u32, msg: u32) -> i32 {
     let model = super::common::rd::<u32>(get_weapon_info(weapon as i32, 1), 0xC);
-    generate_new_one(px, py, pz, model, ty, ammo, 0, empty, msg)
+    generate_new_one(f32::from_bits(px), f32::from_bits(py), f32::from_bits(pz), model, ty, ammo, 0, empty, GPtr::from_addr(msg as usize))
 }
 
 use sa_core::field::ptr_of as vp;
@@ -98,7 +89,7 @@ pub fn pickups_create_pickup_coors_close_to_coors(in_x: f32, in_y: f32, in_z: f3
         if get_is_line_of_sight_clear(vp(&mut q), vp(&mut p0), 1, lo, 0, lo, 0, 0, 0) == 0 {
             continue;
         }
-        if i <= 16 && !test_sphere_against_world(cx, cy, cz, 1.2, 0, 0, 1, 0, 0, 0, 0).is_null() {
+        if i <= 16 && !test_sphere_against_world(sa_math::vector::CVector::new(cx, cy, cz), 1.2, GPtr::<u8>::addr(GPtr::NULL) as u32, 0, 1, 0, 0, 0, 0).is_null() {
             continue;
         }
         out_x.write(cx);

@@ -31,9 +31,9 @@ use crate::bindings::entity_scanner_scan;
 use sa_world::bindings::ped_set_move_state;
 use crate::bindings::task_is_go_to_task;
 use crate::bindings::use_gun_clear_anim;
-use sa_core::bindings::entity_clean_up_old_reference;
-use sa_core::bindings::entity_get_is_on_screen;
-use sa_core::bindings::entity_update_rw_frame;
+use sa_world::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::entity_get_is_on_screen;
+use sa_world::bindings::entity_update_rw_frame;
 use sa_core::bindings::general_random_int_in_range as random_in_range;
 use sa_core::bindings::intel_get_task_use_gun;
 use sa_core::bindings::load_monitor_end;
@@ -43,24 +43,24 @@ use sa_core::bindings::ped_is_alive;
 use sa_core::bindings::rw_matrix_update;
 use sa_core::bindings::tm_get_active_task;
 use sa_core::bindings::tm_get_simplest_active_task;
-use sa_core::bindings::tm_get_task_secondary;
-use sa_core::bindings::tm_set_task_secondary;
+use crate::bindings::tm_get_task_secondary;
+use crate::bindings::tm_set_task_secondary;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::eg_flush;
-use sa_world::bindings::event_group_add as eg_add;
+use crate::bindings::event_group_add as eg_add;
 use sa_world::bindings::event_script_command_ctor as script_command_ctor;
 use sa_world::bindings::event_script_command_dtor as script_command_dtor;
 use sa_world::bindings::fx_system_set_matrix;
 use sa_world::bindings::ik_is_looking;
 use sa_world::bindings::intel_is_friendly_with;
-use sa_world::bindings::ped_groups_get_peds_group;
+use crate::bindings::ped_groups_get_peds_group;
 use sa_world::bindings::ped_scripted_task_record_process as scripted_task_record_process;
 use sa_world::bindings::physical_get_lighting_total;
 use sa_world::bindings::player_on_foot_ctor;
 use sa_world::bindings::simple_car_drive_ctor as car_drive_ctor;
 use sa_world::bindings::simple_transform_update_rw_matrix;
 use sa_world::bindings::stand_still_ctor;
-use sa_world::bindings::tm_set_task;
+use crate::bindings::tm_set_task;
 use sa_world::bindings::wander_get_wander_task_by_ped_type as wander_task_by_ped_type;
 use crate::bindings::car_drive_timed_ctor;
 use sa_core::bindings::get_anim_hierarchy_from_skin_clump;
@@ -70,6 +70,8 @@ use sa_core::bindings::rp_hanim_id_get_index as hanim_id_get_index;
 use sa_core::bindings::rw_v3d_transform_point;
 use sa_world::bindings::duck_ctor;
 use sa_world::bindings::group_intel_get_task_script_command as pgi_get_task_script_command;
+use sa_world::bindings::find_objects_in_range as world_find_objects_in_range;
+use sa_world::bindings::ik_look_at;
 orig! {
     /// `CTaskManager::CTaskManager(CPed*)` (0x6816A0, `ret 4`)
     fn tm_ctor(tm: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x6816A0 => unported;
@@ -127,16 +129,6 @@ orig! {
     fn pgi_compute_default_tasks(i: GPtr<u8>, p: GPtr<u8>) = thiscall 0x5F88D0 => unported;
     /// `CBike::FixHandsToBars(CPed*)` (0x6B7F90, `ret 4`)
     fn bike_fix_hands_to_bars(b: GPtr<u8>, p: GPtr<u8>) = thiscall 0x6B7F90 => unported;
-    /// `CIKChainManager_c::LookAt(char*, CPed*, CEntity*, int32, int32, RwV3d*, bool, float, int32, int32, bool)`
-    /// (0x618970, `ret 0x2C`)
-    #[allow(clippy::too_many_arguments)]
-    fn ik_look_at(m: GPtr<u8>, purpose: u32, ped: GPtr<u8>, target: u32, time: i32, bone: i32, offset: GPtr<u8>,
-        use_offset: u32, speed: u32, blend: u32, prio: u32, b: u32) = thiscall 0x618970 => unported;
-    /// `CWorld::FindObjectsInRange(const CVector&, float, bool, int16*, int16, CEntity**, bool, bool, bool, bool,
-    /// bool)` (0x564A20, cdecl)
-    #[allow(clippy::too_many_arguments)]
-    fn world_find_objects_in_range(pos: GPtr<u8>, range: u32, b2d: u32, count: GPtr<u8>, max: u32, out: GPtr<u8>,
-        b: u32, v: u32, p: u32, o: u32, d: u32) = cdecl 0x564A20 => unported;
     /// `CTask::Clone` (vtable +4)
     fn v_clone(t: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x4 => unported;
     /// `CTask::IsSimple` (vtable +0xC)
@@ -267,7 +259,7 @@ pub fn intel_process(this: GPtr<u8>) {
     load_monitor_start(lm(), 0);
     vehicle_scanner_scan(this.byte_add(0xD4), ped(this));
     let p = ped(this);
-    if ped_is_alive(p) != 0 {
+    if ped_is_alive(p) as u8 != 0 {
         entity_scanner_scan(this.byte_add(0x124), 1, p);
     }
     event_scanner_scan(this.byte_add(0x18C), ped(this));
@@ -381,12 +373,12 @@ pub fn intel_clear_tasks(this: GPtr<u8>, primary: u8, secondary: u8) {
             if i == 3 {
                 continue;
             }
-            let t = tm_get_task_secondary(tm(this), i as u32);
+            let t = tm_get_task_secondary(tm(this), (i as u32) as i32);
             if t.is_null() {
                 continue;
             }
             if v_make_abortable(t, ped(this), 1, 0) != 0 {
-                tm_set_task_secondary(tm(this), GPtr::NULL, i as u32);
+                tm_set_task_secondary(tm(this), GPtr::NULL, (i as u32) as i32);
             } else {
                 v_make_abortable(t, ped(this), 0, 0);
             }
@@ -438,7 +430,7 @@ pub fn intel_flush_immediately(this: GPtr<u8>, set_default: u8) {
     tm_flush_immediately(tmp);
     scripted_task_record_process();
     if !d.is_null() {
-        let grp = ped_groups_get_peds_group(ped(this));
+        let grp = GPtr::from_addr(ped_groups_get_peds_group(GPtr::<u8>::addr(ped(this)) as u32) as usize);
         if !grp.is_null() && ped_is_player(ped(this)) == 0 {
             pgi_compute_default_tasks(grp.byte_add(0x30), ped(this));
             tm_set_task(tmp, d, 3, 0);
@@ -629,7 +621,7 @@ pub fn intel_look_at_interesting_entities_port(this: GPtr<u8>) {
     wr::<u32>(fp, 0xC, 0xFFFF_FFFF);
     let p = ped(this);
     let pos = entity_pos(p);
-    world_find_objects_in_range(pos, 0x41700000, 0, fp.byte_add(0xC), 0x400, fp.byte_add(0x28), 0, 1, 1, 1, 0);
+    world_find_objects_in_range(pos, f32::from_bits(0x41700000), 0, fp.byte_add(0xC), 0x400, fp.byte_add(0x28), 0, 1, 1, 1, 0);
     let mut n: i32 = 0;
     let mut i: i32 = 0;
     while i < rd::<i16>(fp, 0xC) as i32 {
@@ -649,7 +641,7 @@ pub fn intel_look_at_interesting_entities_port(this: GPtr<u8>) {
     wr::<u32>(fp, 0x10, 0);
     wr::<u32>(fp, 0x14, 0);
     wr::<u32>(fp, 0x18, 0);
-    ik_look_at(ik, 0x86CD60, ped(this), target, time, -1, fp.byte_add(0x10), 0, 0x3E800000, 500, 3, 0);
+    ik_look_at(ik, GPtr::from_addr(0x86CD60), ped(this), GPtr::from_addr(target as usize), time, -1, fp.byte_add(0x10), 0, f32::from_bits(0x3E800000), 500, 3, 0);
 }
 
 /// `CPedIntelligence::ProcessStaticCounter` (0x605650): counts frames (+0x274) in which a ped doing a go-to task
@@ -876,8 +868,8 @@ pub fn intel_can_see_entity_with_lights(this: GPtr<u8>, e: GPtr<u8>, _b: u32) ->
 /// The inlined "secondary task `slot` if it has type `ty`" selection with every `GetTaskSecondary` call of the
 /// original (null test, type, result).
 fn secondary_if(tmp: GPtr<u8>, slot: i32, ty: i32) -> GPtr<u8> {
-    if !tm_get_task_secondary(tmp, slot as u32).is_null() && v_task_type(tm_get_task_secondary(tmp, slot as u32)) == ty {
-        tm_get_task_secondary(tmp, slot as u32)
+    if !tm_get_task_secondary(tmp, (slot as u32) as i32).is_null() && v_task_type(tm_get_task_secondary(tmp, (slot as u32) as i32)) == ty {
+        tm_get_task_secondary(tmp, (slot as u32) as i32)
     } else {
         GPtr::NULL
     }
@@ -975,7 +967,7 @@ pub fn scripted_task_record_process_port() {
             }
             let q = rd::<GPtr<u8>>(r, 0xC);
             if !q.is_null() {
-                entity_clean_up_old_reference(q, GPtr::<u8>::cast::<GPtr<u8>>(r.byte_add(0xC)));
+                entity_clean_up_old_reference(q, r.byte_add(0xC));
             }
             clear(r);
             continue;
@@ -988,7 +980,7 @@ pub fn scripted_task_record_process_port() {
             let cur = if status == 5 {
                 Some(brain_task_store_get_task(p))
             } else {
-                let grp = ped_groups_get_peds_group(p);
+                let grp = GPtr::from_addr(ped_groups_get_peds_group(p.addr() as u32) as usize);
                 if grp.is_null() {
                     None
                 } else {

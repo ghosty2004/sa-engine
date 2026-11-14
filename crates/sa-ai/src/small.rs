@@ -8,12 +8,12 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
-use sa_core::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference;
 use sa_core::bindings::entity_register_reference;
 use sa_core::bindings::ped_is_alive;
-use sa_world::bindings::task_complex_ctor;
-use sa_world::bindings::task_simple_ctor;
-use sa_world::bindings::task_simple_dtor;
+use crate::bindings::task_complex_ctor;
+use crate::bindings::task_simple_ctor;
+use crate::bindings::task_simple_dtor;
 orig! {
     fn v_delete(t: GPtr<u8>, flags: u32) -> GPtr<u8> = thiscall vslot 0x0 => unported;
     /// `CTask::Clone` (vtable +4)
@@ -115,7 +115,7 @@ pub fn script_command_clone_script_task(this: GPtr<u8>) -> GPtr<u8> {
 /// affects-dead-peds flag (+0x14), else 0.
 #[hook(addr = 0x4B0AF0, conv = thiscall, name = "CEventScriptCommand::AffectsPed", expect = "56 8B F1 8B 4C 24 08")]
 pub fn script_command_affects_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u32 {
-    (ped_is_alive(ped) != 0 || rd::<u8>(this, 0x14) != 0) as u32
+    (ped_is_alive(ped) as u8 != 0 || rd::<u8>(this, 0x14) != 0) as u32
 }
 
 /// `CTaskComplexSequence::CTaskComplexSequence` (0x632BD0; continues through the island 0x4015DA that writes the
@@ -123,7 +123,7 @@ pub fn script_command_affects_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u32 {
 /// (+0x10) zeroed; returns this.
 #[hook(addr = 0x632BD0, conv = thiscall, name = "CTaskComplexSequence::Constructor", expect = "56 57 8B F1 E8 D7 77 FE FF")]
 pub fn sequence_ctor(this: GPtr<u8>) -> GPtr<u8> {
-    task_complex_ctor(this);
+    task_complex_ctor(this.addr() as u32);
     wr::<u32>(this, 0xC, 0);
     wr::<u32>(this, 0x30, 0);
     wr::<u32>(this, 0x34, 0);
@@ -271,7 +271,7 @@ pub fn record_data_ctor(this: GPtr<u8>) -> GPtr<u8> {
 pub fn record_data_flush(this: GPtr<u8>) {
     let p = rd::<GPtr<u8>>(this, 0xC);
     if !p.is_null() {
-        entity_clean_up_old_reference(p, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0xC)));
+        entity_clean_up_old_reference(p, this.byte_add(0xC));
     }
     wr::<u32>(this, 0xC, 0);
     wr::<u32>(this, 4, 0);
@@ -287,7 +287,7 @@ pub fn record_data_flush(this: GPtr<u8>) {
 pub fn record_data_set_event(this: GPtr<u8>, ped: GPtr<u8>, opcode: i32, ev: u32) {
     let p = rd::<GPtr<u8>>(this, 0xC);
     if !p.is_null() {
-        entity_clean_up_old_reference(p, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0xC)));
+        entity_clean_up_old_reference(p, this.byte_add(0xC));
     }
     wr::<u32>(this, 4, 0);
     wr::<u32>(this, 8, 0);

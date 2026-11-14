@@ -51,7 +51,7 @@ fn cam_target_slot(this: GPtr<u8>) -> GPtr<u8> {
 fn retarget(slot: GPtr<u8>, new: impl FnOnce() -> GPtr<u8>) {
     let old = slot.cast::<GPtr<u8>>().read();
     if !old.is_null() {
-        clean_up_old_reference(old, slot.cast::<GPtr<u8>>());
+        clean_up_old_reference(old, slot.cast::<u8>());
     }
     let e = new();
     slot.cast::<GPtr<u8>>().write(e);
@@ -136,7 +136,7 @@ pub fn update_target_entity(this: GPtr<u8>) {
             let cur = cs.cast::<GPtr<u8>>().read();
             if target() != cur {
                 if !cur.is_null() {
-                    clean_up_old_reference(cur, cs.cast::<GPtr<u8>>());
+                    clean_up_old_reference(cur, cs.cast::<u8>());
                 }
                 cam_target_slot(this).cast::<GPtr<u8>>().write(target());
                 let cs = cam_target_slot(this);
@@ -159,7 +159,7 @@ pub fn update_target_entity(this: GPtr<u8>) {
     if rd::<i32>(focus_ped(), PED_STATE) == 0x3B && !locked && !busy && rd::<u32>(this, 0xB4) != 0 {
         let old = target();
         if !old.is_null() {
-            clean_up_old_reference(old, slot.cast::<GPtr<u8>>());
+            clean_up_old_reference(old, slot.cast::<u8>());
         }
         slot.cast::<GPtr<u8>>()
             .write(rd::<GPtr<u8>>(focus_ped(), PED_VEHICLE));

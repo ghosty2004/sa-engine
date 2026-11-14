@@ -22,29 +22,29 @@ pub use sa_world::bindings::ped_set_move_state;
 pub use crate::bindings::ped_set_radio_station;
 pub use crate::bindings::say_jacked;
 pub use crate::bindings::vehicle_is_driver;
-pub use sa_core::bindings::assoc_set_current_time;
+pub use sa_anim::bindings::assoc_set_current_time;
 pub use sa_core::bindings::crt_new;
-pub use sa_core::bindings::entity_clean_up_old_reference;
+pub use sa_world::bindings::entity_clean_up_old_reference;
 pub use sa_core::bindings::entity_register_reference;
-pub use sa_core::bindings::stats_increment_stat;
-pub use sa_core::bindings::task_new;
+pub use sa_world::bindings::stats_increment_stat;
+pub use crate::bindings::task_new;
 pub use sa_core::bindings::text_get;
-pub use sa_stream::bindings::find_player_wanted;
+pub use sa_world::bindings::find_player_wanted;
 pub use sa_stream::bindings::ped_is_player;
 pub use sa_stream::bindings::rand;
 pub use sa_world::bindings::add_animation as anim_add_animation;
 pub use sa_world::bindings::add_message_q as messages_add_message_q;
-pub use sa_world::bindings::event_group_add;
+pub use crate::bindings::event_group_add;
 pub use sa_world::bindings::event_new;
 pub use sa_world::bindings::intel_get_task_duck;
 pub use sa_world::bindings::kob_dtor as event_knock_off_bike_dtor_o;
-pub use sa_world::bindings::task_complex_ctor;
-pub use sa_core::bindings::vector_magnitude_sqr;
-pub use sa_core::bindings::vector_sub;
+pub use crate::bindings::task_complex_ctor;
+pub use sa_world::bindings::vector_magnitude_sqr;
+pub use sa_world::bindings::vector_sub;
 pub use sa_world::bindings::vehicle_audio_player_about_to_exit_as_driver;
 pub use sa_core::bindings::world_get_is_line_of_sight_clear;
 pub use crate::bindings::say_jacking_o;
-pub use sa_core::bindings::assoc_set_finish_callback;
+pub use sa_anim::bindings::assoc_set_finish_callback;
 pub use sa_core::bindings::clump_get_association;
 pub use sa_core::bindings::general_get_radian_angle_between_points;
 pub use sa_core::bindings::general_limit_radian_angle;
@@ -52,7 +52,8 @@ pub use sa_world::bindings::anim_blend_animation;
 pub use sa_world::bindings::kob_ctor as event_knock_off_bike_ctor_o;
 pub use sa_world::bindings::ped_audio_add_audio_event;
 pub use sa_world::bindings::ped_say;
-pub use sa_world::bindings::task_simple_ctor;
+pub use crate::bindings::task_simple_ctor;
+pub use sa_world::bindings::vector_magnitude_sqr as vector_magnitude_sqr_x;
 orig! {
     /// `CTask::operator delete(void*)` (0x61A5B0): frees a task pool slot.
     pub fn task_delete(p: GPtr<u8>) = cdecl 0x61A5B0 => unported;
@@ -65,8 +66,6 @@ orig! {
     pub fn task_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, priority: i32, event: GPtr<u8>) -> u8 = thiscall vslot 0x18 => unported;
     /// `CTaskComplex::CreateNextSubTask(CPed*)` (vtable slot 0x20)
     pub fn task_create_next_sub_task(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x20 => unported;
-    /// `CVector::SquaredMagnitude()` (0x406DA0, the full 80-bit ST0)
-    pub fn vector_magnitude_sqr_x(v: GPtr<u8>) -> X87 = reg("args = ecx") 0x406DA0 => unported;
     /// `CGeneral::GetRandomNumberInRange(float, float)` (0x41BD90, the full 80-bit ST0; draws its own rand)
     pub fn general_random_float_in_range_x(min: f32, max: f32) -> X87 = reg("args = stack") 0x41BD90 => unported;
     /// `CVehicle::GetRideAnimData()` (vtable slot 0xBC)

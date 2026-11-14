@@ -11,19 +11,17 @@ use crate::common::*;
 use crate::bindings::event_base_dtor as event_dtor;
 use crate::bindings::ik_abort_point_arm;
 use crate::bindings::ik_is_arm_pointing;
-use sa_core::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference;
 use sa_core::bindings::entity_register_reference;
-use sa_core::bindings::tm_set_task_secondary;
+use crate::bindings::tm_set_task_secondary;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::hold_entity_drop_entity;
 use sa_world::bindings::ped_get_held_entity as ped_get_entity_held;
-use sa_world::bindings::tm_find_active_task_by_type;
+use crate::bindings::tm_find_active_task_by_type;
 use sa_world::bindings::turn_to_face_entity_ctor;
-use sa_core::bindings::task_new as task_new_c;
+use crate::bindings::task_new as task_new_c;
+use sa_world::bindings::hold_entity_ctor;
 orig! {
-    /// `CTaskSimpleHoldEntity(CEntity*, CVector*, uint8 boneFrame, uint8 flags, int32 anim, int32 group, bool)` (0x6913A0)
-    #[allow(clippy::too_many_arguments)]
-    fn hold_entity_ctor(t: GPtr<u8>, e: GPtr<u8>, pos: GPtr<u8>, bone: u32, flags: u32, anim: i32, group: i32, b: u32) -> GPtr<u8> = thiscall 0x6913A0 => unported;
     /// `CTaskComplexPassObject::AbortIK(CPed*)` (0x661290)
     fn pass_object_abort_ik(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x661290 => unported;
 }
@@ -37,7 +35,7 @@ pub fn event_pass_object_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x86_F8B8);
     let e = rd::<GPtr<u8>>(this, 0xC);
     if !e.is_null() {
-        entity_clean_up_old_reference(e, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0xC)));
+        entity_clean_up_old_reference(e, this.byte_add(0xC));
     }
     event_dtor(this);
 }

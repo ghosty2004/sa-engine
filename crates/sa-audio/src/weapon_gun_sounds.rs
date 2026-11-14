@@ -17,11 +17,8 @@ use sa_world::bindings::engine_is_loading_tune_active;
 use crate::bindings::ae_random_float as ae_random_float_st0;
 use crate::bindings::ae_resolve_probability;
 use crate::bindings::sound_register_with_physical_entity;
+use crate::bindings::sound_initialise;
 orig! {
-    /// `CAESound::Initialise(slot, sfx, CAEAudioEntity*, CVector pos, volume, maxDistance, speed, timeScale,
-    /// ignoredServiceCycles, flags, speedVariance, playPos)` (0x4EFE50)
-    #[allow(clippy::too_many_arguments)]
-    fn sound_initialise(sound: GPtr<u8>, slot: u32, sfx: u32, entity: GPtr<u8>, px: u32, py: u32, pz: u32, vol: u32, max_dist: u32, speed: u32, time_scale: u32, ignored: u32, flags: u32, var: u32, play_pos: u32) = thiscall 0x4EFE50 => unported;
     /// `CAEAudioEnvironment::GetPositionRelativeToCamera(CVector* out, CPlaceable*)` (0x4D8340)
     fn env_position_relative_to_camera(out: GPtr<u8>, placeable: GPtr<u8>) -> u32 = cdecl 0x4D8340 => unported;
 }
@@ -53,7 +50,7 @@ fn position(e: GPtr<u8>) -> [u32; 3] {
 #[allow(clippy::too_many_arguments)]
 fn play(this: GPtr<u8>, sfx: u32, pos: [u32; 3], vol: u32, max_dist: u32, speed: u32, flags: u32, register: Option<GPtr<u8>>, event: Option<u32>) {
     let sound = this.byte_add(8);
-    sound_initialise(sound, 5, sfx, this, pos[0], pos[1], pos[2], vol, max_dist, speed, 0x3F80_0000, 0, flags, 0, 0);
+    sound_initialise(sound, 5, sfx, this.addr() as u32, pos[0], pos[1], pos[2], vol, max_dist, speed, 0x3F80_0000, 0, flags, 0, 0);
     if let Some(e) = register {
         sound_register_with_physical_entity(sound, e);
     }

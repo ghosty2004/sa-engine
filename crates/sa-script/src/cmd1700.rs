@@ -41,7 +41,7 @@ use crate::bindings::collect_next;
 use crate::bindings::vehicle_get_ref as vehicle_get_ref_;
 use sa_core::bindings::world_get_is_line_of_sight_clear as get_is_line_of_sight_clear;
 use sa_world::bindings::add_vehicle_upgrade;
-use sa_world::bindings::create_mission_train;
+use sa_veh::bindings::create_mission_train;
 orig! {
     /// `CTheScripts::AddScriptCheckpoint(CVector at, CVector pointTo, float radius, int32 type)` (0x4935A0)
     fn add_script_checkpoint(x: u32, y: u32, z: u32, px: u32, py: u32, pz: u32, radius: u32, ty: u32) -> i32 = cdecl 0x4935A0 => unported;
@@ -57,14 +57,14 @@ orig! {
 
 use sa_world::bindings::find_node_coors_for_script;
 use sa_world::bindings::find_node_orientation_for_car_placement;
-use sa_world::bindings::find_nth_node_closest_to_coors;
+use sa_pop::bindings::find_nth_node_closest_to_coors;
 use crate::bindings::get_actual_blip_array_index as blip_index;
 use crate::bindings::start_playback_recorded_car;
 use crate::bindings::task_drive_point_route_ctor;
-use sa_world::bindings::vehicle_41bdd0;
+use sa_veh::bindings::vehicle_41bdd0;
 use sa_core::bindings::ped_group_process;
-use sa_core::bindings::set_mission_doesnt_require_model;
-use sa_core::bindings::task_new;
+use sa_stream::bindings::set_mission_doesnt_require_model;
+use sa_ai::bindings::task_new;
 use sa_core::bindings::vector_magnitude;
 use sa_stream::bindings::get_num_remaps;
 use sa_world::bindings::arrest_ped_ctor as task_arrest_ped_ctor;
@@ -73,9 +73,9 @@ use sa_world::bindings::find_ground_z_for_coord as find_ground_z;
 use sa_world::bindings::get_distance_from_centre_of_mass_to_base_of_model;
 use sa_world::bindings::group_intel_set_decision_maker_type as set_group_decision_maker_type;
 use sa_world::bindings::membership_is_leader;
-use sa_world::bindings::membership_is_member;
+use sa_ai::bindings::membership_is_member;
 use sa_world::bindings::membership_remove_member;
-use sa_world::bindings::ped_groups_get_peds_group as get_peds_group;
+use sa_ai::bindings::ped_groups_get_peds_group as get_peds_group;
 use sa_world::bindings::run_anim_ctor as task_run_anim_ctor;
 use sa_world::bindings::seek_entity_standard_ctor as task_seek_entity_ctor;
 use sa_world::bindings::sequence_add_task;
@@ -83,20 +83,20 @@ use crate::bindings::give_ped_scripted_task as give;
 use crate::bindings::go_to_point_aiming_ctor as task_go_to_point_aiming_ctor;
 use crate::bindings::remove_script_search_light;
 use crate::bindings::task_trigger_look_at_ctor;
-use sa_core::bindings::vector_magnitude_sqr as vector_squared_magnitude;
+use sa_world::bindings::vector_magnitude_sqr as vector_squared_magnitude;
 use sa_stream::bindings::find_other_upgrade;
 use sa_world::bindings::car_drive_mission_ctor as task_car_drive_mission_ctor;
 use sa_world::bindings::change_blip_scale;
 use sa_world::bindings::dm_load_enum as load_decision_maker;
-use sa_world::bindings::get_new_unique_script_thing_index;
+use crate::bindings::get_new_unique_script_thing_index;
 use sa_world::bindings::get_num_fires_in_range;
 use sa_world::bindings::ik_look_at;
 use sa_world::bindings::join_car_with_road_system_goto_coors;
 use sa_world::bindings::ped_pool_get_at;
 use sa_world::bindings::ped_remove_weapon_when_entering_vehicle as remove_weapon_when_entering_vehicle;
 use sa_world::bindings::set_entity_blip;
-use sa_world::bindings::set_train_speed;
-use sa_world::bindings::sit_ctor_o as task_sit_down_ctor;
+use sa_veh::bindings::set_train_speed;
+use sa_ai::bindings::sit_ctor_o as task_sit_down_ctor;
 use sa_world::bindings::task_turn_to_face_ctor;
 orig! {
     /// `CPed::AttachPedToBike(CEntity*, CVector offset, uint16 pos, float, float, eWeaponType)` (0x5E7E60), 8 dwords
@@ -332,8 +332,8 @@ pub fn process_commands_1700_to_1799(s: Scr, command: u32) -> i8 {
                 f32::from_bits(sp(3)),
                 dir as u8,
                 sp(0),
-                GPtr::from_raw(first.as_mut_ptr()),
-                GPtr::NULL,
+                GPtr::<u32>::cast::<GPtr<u8>>(GPtr::from_raw(first.as_mut_ptr())),
+                GPtr::<u32>::cast::<GPtr<u8>>(GPtr::NULL),
                 -1,
                 -1,
                 1,
@@ -465,11 +465,11 @@ pub fn process_commands_1700_to_1799(s: Scr, command: u32) -> i8 {
                     GPtr::from_addr(0x85A3F0),
                     p,
                     GPtr::NULL,
-                    time,
-                    u32::MAX,
+                    time as i32,
+                    u32::MAX as i32,
                     GPtr::<u32>::cast::<u8>(GPtr::from_raw(pos.as_mut_ptr())),
                     0,
-                    0x3E80_0000,
+                    f32::from_bits(0x3E80_0000),
                     0x1F4,
                     6,
                     1,
@@ -554,7 +554,7 @@ pub fn process_commands_1700_to_1799(s: Scr, command: u32) -> i8 {
             let (p, time) = (sp(0), sp(1));
             let t = new_task(0x14, |t| {
                 let time = if time as i32 == -1 { rd(0x86DB28) } else { time };
-                task_sit_down_ctor(t, time, 0, 0)
+                task_sit_down_ctor(t, time as i32, 0, 0)
             });
             give(s, p as i32, t, command);
         }
@@ -708,7 +708,7 @@ pub fn process_commands_1700_to_1799(s: Scr, command: u32) -> i8 {
         0x06C9 => {
             collect(s, 1);
             let p = ped(sp(0));
-            let g = get_peds_group(p);
+            let g = GPtr::from_addr(get_peds_group(p.addr() as u32) as usize);
             if !g.is_null() {
                 let m = g.byte_add(8);
                 if membership_is_leader(m, p) == 0 {
@@ -774,7 +774,7 @@ pub fn process_commands_1700_to_1799(s: Scr, command: u32) -> i8 {
             let o = object_at_ref(pool(OBJECT_POOL), spi(1));
             let (time, radius) = (sp(2), sp(3));
             let t = new_task(0x4C, |t| {
-                task_seek_entity_ctor(t, o, time, 0x3E8, radius, rd(0x859E30), rd(0x859E34), 1, 1)
+                task_seek_entity_ctor(t, o, time, 0x3E8, f32::from_bits(radius), rd(0x859E30), rd(0x859E34), 1, 1)
             });
             give(s, p as i32, t, command);
         }
@@ -846,7 +846,7 @@ pub fn process_commands_1700_to_1799(s: Scr, command: u32) -> i8 {
                 let m = GPtr::<u8>::from_addr((0xC09928 + g * 0x2D4) as usize);
                 if command == 0x06EE {
                     if GPtr::<u8>::from_addr((0xC098E0 + g) as usize).read() != 0 {
-                        b = membership_is_member(m, p) != 0;
+                        b = membership_is_member(m, p) as u8 != 0;
                     }
                 } else {
                     b = membership_is_leader(m, p) != 0;
@@ -899,7 +899,7 @@ pub fn process_commands_1700_to_1799(s: Scr, command: u32) -> i8 {
                 f32::from_bits(0x4974_23FE),
                 0,
                 1,
-                sp(3).wrapping_sub(1),
+                (sp(3).wrapping_sub(1)) as i32,
                 0,
                 0,
                 GPtr::NULL,
@@ -960,7 +960,7 @@ pub fn process_commands_1700_to_1799(s: Scr, command: u32) -> i8 {
                     for k in 0..3 {
                         d[k] = X87::from_f32(f(ep[k])).fsub_m(f(pos[k])).to_f32().to_bits();
                     }
-                    let m = X87::from_f64_exact(vector_squared_magnitude(GPtr::<u32>::cast::<f32>(GPtr::from_raw(d.as_mut_ptr()))));
+                    let m = X87::from_f64_exact(vector_squared_magnitude(GPtr::<u32>::cast::<u8>(GPtr::from_raw(d.as_mut_ptr()))).to_f64());
                     if m.fcom(X87::from_f32(r2)) == sa_math::x87::Cmp::Less {
                         found = true;
                     }

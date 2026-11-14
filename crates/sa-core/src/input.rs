@@ -284,7 +284,7 @@ pub fn keyboard_handler(event: i32, param: GPtr<i32>) -> i32 {
 /// `padID`); every button 1..16 is reported, with button 0 for buttons that are not down
 /// (gta-reversed skips them).
 pub fn handle_pad_button_down(status: GPtr<i32>) -> i32 {
-    let _ = get_pad(status.read() as u32);
+    let _ = get_pad((status.read() as u32) as i32);
     let two = PAD_NUMBER.get() != 0;
     let pad = two as i32;
     ccm_update_joy_button_state(ccm(), pad);
@@ -308,7 +308,7 @@ pub fn handle_pad_button_down(status: GPtr<i32>) -> i32 {
 /// 2..16; button 0 is reported for buttons still down. Camera modes 0x11/0xF of the active camera
 /// route to the config-menu handler.
 pub fn handle_pad_button_up(status: GPtr<i32>) -> i32 {
-    let _ = get_pad(status.read() as u32);
+    let _ = get_pad((status.read() as u32) as i32);
     let two = PAD_NUMBER.get() != 0;
     let pad = two as i32;
     let active = CAMERA_ACTIVE_CAM.get() as usize;

@@ -54,12 +54,12 @@ const SCRIPT_SPACE: usize = 0xA49960;
 const PED_FLAGS: isize = 0x46C;
 const PED_VEHICLE: isize = 0x58C;
 
-pub use sa_core::bindings::entity_update_rw_frame as update_rw_frame;
+pub use sa_world::bindings::entity_update_rw_frame as update_rw_frame;
 pub use sa_stream::bindings::setup_big_building;
 pub use sa_world::bindings::object_create;
 pub use sa_world::bindings::update_rw_matrix;
 use crate::bindings::vehicle_get_ref;
-use sa_core::bindings::get_pad;
+use sa_input::bindings::get_pad;
 use sa_world::bindings::grant_ammo;
 use sa_world::bindings::pad_get_horn as get_horn;
 use sa_world::bindings::remove_from_interesting_vehicle_list;
@@ -70,8 +70,8 @@ use sa_world::bindings::vehicle_set_created_by as set_vehicle_created_by;
 pub use sa_world::bindings::set_orientation;
 use crate::bindings::is_ped_dead;
 use sa_core::bindings::set_wanted_level;
-use sa_stream::bindings::find_player_wanted;
-use sa_world::bindings::player_set_wanted_level_no_drop as set_wanted_level_no_drop;
+use sa_world::bindings::find_player_wanted;
+use sa_ped::bindings::player_set_wanted_level_no_drop as set_wanted_level_no_drop;
 orig! {
     /// `CRunningScript::LocateCharCharCommand(int32 command)` (0x4870F0)
     pub fn locate_char_char_command(s: Scr, command: u32) = thiscall 0x4870F0 => unported;
@@ -304,7 +304,7 @@ pub fn process_commands_200_to_299(s: Scr, command: u32) -> i8 {
             collect(s, 1);
             let ped = player_info(sp(0)).cast::<GPtr<u8>>().read();
             let b = if ped.byte_add(0x530).cast::<u32>().read() == 0x32 {
-                get_horn(get_pad(spi(0) as u32)) != 0
+                get_horn(get_pad((spi(0) as u32) as i32)) != 0
             } else {
                 false
             };

@@ -9,7 +9,7 @@ use crate::common::*;
 
 use crate::bindings::chat_ctor;
 use crate::bindings::go_to_point_ctor as goto_point_ctor;
-use sa_core::bindings::task_new as task_new_c;
+use crate::bindings::task_new as task_new_c;
 
 /// `CTaskSimpleGoToPoint::Clone()` (0x66CC60, SEH frame): `operator new(0x30)`, then the constructor with
 /// +8 (move state), &+0xC (target), +0x18 (radius), +0x20 bit 0 (must overshoot) and bit 3 (stop exactly).

@@ -23,7 +23,7 @@ use crate::bindings::get_remap_index;
 use crate::bindings::get_vehicle_appearance;
 use crate::bindings::remove_cars_blocking_door_not_inside;
 use crate::bindings::set_remap;
-use sa_core::bindings::get_pad;
+use sa_input::bindings::get_pad;
 use sa_core::bindings::hud_set_help_message as set_help_message;
 use sa_core::bindings::random_float_in_range;
 use crate::bindings::find_doors_with_garage as find_doors;
@@ -34,14 +34,15 @@ use crate::bindings::get_stat_value;
 use crate::bindings::set_stat_value;
 use crate::bindings::store_and_remove_cars;
 use sa_core::bindings::audio_report_frontend_event as report_frontend_audio_event;
-use sa_core::bindings::find_player_coors;
-use sa_core::bindings::find_player_ped;
-use sa_core::bindings::find_player_vehicle;
-use sa_core::bindings::stats_increment_stat as increment_stat;
+use crate::bindings::find_player_coors;
+use crate::bindings::find_player_ped;
+use crate::bindings::find_player_vehicle;
+use crate::bindings::stats_increment_stat as increment_stat;
 use sa_core::bindings::streaming_request_model as request_model;
 use sa_core::bindings::text_get;
 use sa_stream::bindings::choose_vehicle_colour;
-use sa_stream::bindings::find_player_wanted;
+use crate::bindings::find_player_wanted;
+use crate::bindings::max_f;
 orig! {
     /// `CGarage::IsStaticPlayerCarEntirelyInside()` (0x44A830)
     fn is_static_player_car_entirely_inside(gp: GPtr<u8>) -> u8 = thiscall 0x44A830 => crate::world::mvpb_world3::garage_is_static_player_car_entirely_inside;
@@ -79,8 +80,6 @@ orig! {
     fn give_player_detonator() = cdecl 0x448660 => unported;
     /// `CGarages::IsCarSprayable(CVehicle*)` (0x4479A0)
     fn is_car_sprayable(veh: GPtr<u8>) -> u8 = cdecl 0x4479A0 => crate::world::misc2::is_car_sprayable;
-    /// `std::max<float>` (0x420800), ST0
-    fn max_f(a: f32, b: f32) -> f64 = cdecl 0x420800 => crate::world::entity_prerender::max_f_port;
     /// `CVehicle::DestroyVehicleAndDriverAndPassengers(CVehicle*)` (0x6D2250)
     fn destroy_vehicle_and_occupants(veh: GPtr<u8>) = cdecl 0x6D2250 => unported;
     /// `CWorld::CallOffChaseForArea(float, float, float, float)` (0x566A60)
@@ -630,7 +629,7 @@ fn spray_closed(gp: GPtr<u8>) {
         if !ge(ld(player_vehicle(), 0x4C0), c(0x4472_8000)) {
             charge_it = true;
         }
-        let h = X87::from_f64_exact(max_f(1000.0, rd::<f32>(player_vehicle(), 0x4C0))).to_f32();
+        let h = X87::from_f64_exact(max_f(1000.0, rd::<f32>(player_vehicle(), 0x4C0)).to_f64()).to_f32();
         wr::<f32>(player_vehicle(), 0x4C0, h);
         if rd::<u32>(player_vehicle(), 0x590) == 0 {
             wr::<u32>(player_vehicle(), 0x8E4, 0);
@@ -710,20 +709,20 @@ fn repaint(veh: GPtr<u8>) -> bool {
     for _ in 0..10 {
         let p = pos_ptr(veh);
         let mut pos = [rd::<f32>(p, 0), rd::<f32>(p, 4), rd::<f32>(p, 8)];
-        pos[0] = X87::from_f64_exact(random_float_in_range(-3.0, 3.0))
+        pos[0] = X87::from_f64_exact(random_float_in_range(-3.0, 3.0).to_f64())
             .fadd_m(pos[0])
             .to_f32();
-        pos[1] = X87::from_f64_exact(random_float_in_range(-3.0, 3.0))
+        pos[1] = X87::from_f64_exact(random_float_in_range(-3.0, 3.0).to_f64())
             .fadd_m(pos[1])
             .to_f32();
-        vel[2] = X87::from_f64_exact(random_float_in_range(0.0, f32::from_bits(0x3D4C_CCCD))).to_f32();
+        vel[2] = X87::from_f64_exact(random_float_in_range(0.0, f32::from_bits(0x3D4C_CCCD)).to_f64()).to_f32();
         fx_add_particle(
             g::<GPtr<u8>>(0xA9_AE20).read(),
             GPtr::<f32>::cast::<u8>(GPtr::from_raw(pos.as_mut_ptr())),
             GPtr::<f32>::cast::<u8>(GPtr::from_raw(vel.as_mut_ptr())),
-            0.0,
+            0.0f32.to_bits(),
             mp,
-            -1.0,
+            (-1.0f32).to_bits(),
             f32::from_bits(0x3F99_999A),
             f32::from_bits(0x3F19_999A),
             0,

@@ -14,7 +14,6 @@
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
-use sa_math::vector::CVector;
 use sa_math::x87::X87;
 
 use super::fpu::Fpu;
@@ -37,11 +36,11 @@ use crate::bindings::crt_floor;
 use crate::bindings::find_player_speed;
 use crate::bindings::is_extra_entity_to_ignore;
 use crate::bindings::tm_find_active_task_by_type as find_active_task_by_type;
-use sa_core::bindings::matrix_dtor;
+use crate::bindings::matrix_dtor;
 use sa_core::bindings::matrix_invert;
 use sa_core::bindings::matrix_mul_vec;
 use sa_core::bindings::vector_magnitude as magnitude;
-use sa_core::bindings::world_clear_scan_codes as clear_scan_codes;
+use crate::bindings::world_clear_scan_codes as clear_scan_codes;
 use sa_stream::bindings::ped_is_player;
 use sa_stream::bindings::simple_transform_update_matrix;
 use crate::bindings::calculate_col_point_inside_box;
@@ -61,18 +60,15 @@ use crate::bindings::test_sphere_triangle as test_sphere_triangle_call;
 use crate::bindings::uncompress_vector;
 use crate::bindings::vector_add;
 use crate::bindings::vector_mul_scalar as vector_scale;
-use sa_core::bindings::col_sphere_set;
+use crate::bindings::col_sphere_set;
 use sa_core::bindings::entity_register_reference as register_reference;
-use sa_core::bindings::find_player_ped;
-use sa_core::bindings::find_player_vehicle;
-use sa_core::bindings::vector_sub;
-use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
+use crate::bindings::find_player_ped;
+use crate::bindings::find_player_vehicle;
+use crate::bindings::vector_sub;
+use crate::bindings::placeable_allocate_matrix as allocate_matrix;
+use sa_core::bindings::cross_product;
+use sa_core::bindings::vector_normalise as normalise;
 orig! {
-    /// `CVector::CrossProduct(CVector* out, const CVector* a, const CVector* b)` (0x59C730)
-    fn cross_product(out: GPtr<CVector>, a: GPtr<CVector>, b: GPtr<CVector>) -> GPtr<CVector>
-        = cdecl 0x59C730 => super::data::cross_product_port;
-    /// `CVector::Normalise` (0x59C910, thiscall)
-    fn normalise(v: GPtr<CVector>) = thiscall 0x59C910 => super::data::normalise_port;
     /// `FUN_0050D590(CPed*)` (cdecl, ST0; animates the skinned ped col model and returns a height)
     fn ped_col_fn_50d590(ped: GPtr<u8>) -> f64 = cdecl 0x50D590 => unported;
     /// `CCollision::GetBoundingBoxFromTwoSpheres(CColBox*, const CColSphere&, const CColSphere&)` (0x415230)
@@ -185,7 +181,7 @@ fn tri_frame(f: &mut Fpu, e1: [X87; 3], v0: [f32; 3], v2: [f32; 3], c: [f32; 3],
     let mut pb = [0u32; 3];
     let dp = vec_local(&mut db, [dx, dy, dz]);
     let np = vec_local(&mut nb, n);
-    cross_product(local(&mut pb).cast(), dp.cast(), np.cast());
+    cross_product(GPtr::<sa_math::vector::CVector>::cast::<u8>(local(&mut pb).cast()), GPtr::<sa_math::vector::CVector>::cast::<u8>(dp.cast()), GPtr::<sa_math::vector::CVector>::cast::<u8>(np.cast()));
     let [px, py, pz] = [f32::from_bits(pb[0]), f32::from_bits(pb[1]), f32::from_bits(pb[2])];
     // v2 - v0
     f.fld(v2[0]);
@@ -706,7 +702,7 @@ pub fn process_sphere_triangle(sphere: GPtr<u8>, verts: GPtr<u8>, tri: GPtr<u8>,
         *d = f.fstp().to_bits();
     }
     let np = local(&mut nb);
-    normalise(np.cast());
+    normalise(GPtr::<sa_math::vector::CVector>::cast::<[f32;3]>(np.cast()));
     for k in 0..3isize {
         wr::<f32>(cp, 4 * k, closest[k as usize]);
     }
@@ -769,7 +765,7 @@ fn process_frame(f: &mut Fpu, e1: [X87; 3], v0: [f32; 3], v2: [f32; 3], c: [f32;
     let mut pb = [0u32; 3];
     let dp = vec_local(&mut db, [dx, dy, dz]);
     let np = vec_local(&mut nb, n);
-    cross_product(local(&mut pb).cast(), dp.cast(), np.cast());
+    cross_product(GPtr::<sa_math::vector::CVector>::cast::<u8>(local(&mut pb).cast()), GPtr::<sa_math::vector::CVector>::cast::<u8>(dp.cast()), GPtr::<sa_math::vector::CVector>::cast::<u8>(np.cast()));
     let [px, py, pz] = [f32::from_bits(pb[0]), f32::from_bits(pb[1]), f32::from_bits(pb[2])];
     f.fld(v2[0]);
     f.fsub_m(v0[0]);
@@ -1084,7 +1080,7 @@ pub fn check_camera_collision_peds(sx: i32, sy: i32, pos: GPtr<u8>, dir: GPtr<u8
     let idx = (((sy & 0xF) << 4) + (sx & 0xF)) as usize;
     let mut node = g::<GPtr<u8>>(0xB992BC + 12 * idx).read();
     let mut db = [rd::<u32>(dir, 0), rd::<u32>(dir, 4), 0];
-    normalise(local(&mut db).cast());
+    normalise(GPtr::<sa_math::vector::CVector>::cast::<[f32;3]>(local(&mut db).cast()));
     let mut hit = 0u8;
     while !node.is_null() {
         let ped = rd::<GPtr<u8>>(node, 0);
@@ -1149,7 +1145,7 @@ pub(crate) fn entity_bound_sphere(e: GPtr<u8>, sp: GPtr<u8>) {
     let r = bound_radius(e);
     let mut cb = [0u32; 3];
     let c = get_bound_centre(e, local(&mut cb));
-    col_sphere_set(sp, r, c, 0, 0, 0xFF);
+    col_sphere_set(sp, r.to_bits(), c.cast::<u32>(), 0, 0, 0xFF);
 }
 
 /// The inline overlap test of the camera collision checks: `d = spS.c - sp.c` (register values),
@@ -1397,7 +1393,7 @@ pub fn build_cache_of_camera_collision(spa: GPtr<u8>, spb: GPtr<u8>) -> u8 {
     let mut cb = [cx.to_bits(), cy.to_bits(), cz.to_bits()];
     let mut sb = [0u32; 5];
     let sps = local(&mut sb);
-    col_sphere_set(sps, r, local(&mut cb), 0, 0, 0xFF);
+    col_sphere_set(sps, r.to_bits(), GPtr::<u8>::cast::<u32>(local(&mut cb)), 0, 0, 0xFF);
     let lo = |x: f32| {
         let (s, sf) = sector_coord(x);
         if sector_floor(s) > 0 { sector_floor(X87::from_f32(sf)) } else { 0 }
@@ -1688,9 +1684,9 @@ pub fn sphere_cast_vs_caches(sp: GPtr<u8>, dir: GPtr<u8>, count: i32, cache: GPt
                     let l = local(&mut lb);
                     col_line_ctor(l, local(&mut s1m), local(&mut s2m));
                     let mut eb = [0u32; 3];
-                    let pe = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(local(&mut eb)), inv, l.byte_add(0x10)));
+                    let pe = matrix_mul_vec(local(&mut eb), inv, l.byte_add(0x10));
                     let mut sb = [0u32; 3];
-                    let ps = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(local(&mut sb)), inv, l));
+                    let ps = matrix_mul_vec(local(&mut sb), inv, l);
                     let mut l2b = [0u32; 8];
                     let l2 = local(&mut l2b);
                     col_line_ctor(l2, ps, pe);

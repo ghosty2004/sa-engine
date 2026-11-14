@@ -9,27 +9,28 @@ use sa_math::x87::X87;
 
 use crate::common::{f32_of, ftol32, g, jne_mask, rd, wr, x, xi};
 
-use sa_core::bindings::frame_get_ltm;
-use sa_core::bindings::matrix_dtor;
+use sa_rwcore::bindings::frame_get_ltm;
+use sa_world::bindings::matrix_dtor;
 use sa_core::bindings::object_ctor;
 use sa_core::bindings::object_new;
-use sa_core::bindings::rp_atomic_clone;
+use sa_rwcore::bindings::rp_atomic_clone;
 use sa_core::bindings::rp_atomic_set_frame;
-use sa_core::bindings::rw_frame_create;
+use sa_rwcore::bindings::rw_frame_create;
 use sa_core::bindings::vector_dot_product as dot_product;
 use sa_core::bindings::vector_normalise;
-use sa_core::bindings::world_add;
+use sa_world::bindings::world_add;
 use sa_stream::bindings::entity_is_visible;
-use sa_core::bindings::frame_for_all_objects;
+use sa_rwcore::bindings::frame_for_all_objects;
 use sa_stream::bindings::set_atomic_render_callback;
 use sa_world::bindings::entity_attach_to_rw_object;
 use sa_world::bindings::entity_get_col_model;
 use sa_core::bindings::matrix_ctor_rw;
 use sa_world::bindings::process_col_models;
 use sa_world::bindings::vector_scale as scalar_mul_vec;
-use sa_core::bindings::vector_sub as vec_sub;
+use sa_world::bindings::vector_sub as vec_sub;
 use sa_world::bindings::matrix_add_pos;
 use sa_world::bindings::object_set_centre_of_mass as object_set_centre_offset;
+use sa_world::bindings::physical_apply_move_force_5429f0 as apply_move_force;
 orig! {
     /// virtual `CEntity::SetModelIndexNoCreate(uint32)` (vtable +0x18)
     fn v_set_model_index_no_create(e: GPtr<u8>, mi: u32) = thiscall vslot 0x18 => unported;
@@ -39,8 +40,6 @@ orig! {
     fn object_ref_model_info(o: GPtr<u8>, mi: i32) = thiscall 0x59F330 => unported;
     /// `CObject::SetRemapTexture(RwTexture*, int16 txd)` (0x59F350)
     fn object_set_remap_texture(o: GPtr<u8>, tex: u32, txd: i32) = thiscall 0x59F350 => unported;
-    /// `CPhysical::ApplyMoveForce(CVector)` (0x5429F0)
-    fn apply_move_force(e: GPtr<u8>, force: CVector) = thiscall 0x5429F0 => unported;
 }
 
 use sa_core::field::ptr_of as buf;
@@ -79,7 +78,7 @@ pub fn automobile_spawn_flying_component(this: GPtr<u8>, node: i32, kind: u32) -
         return GPtr::NULL;
     }
     let mut atomic = [0u32; 1];
-    frame_for_all_objects(frame, 0x6A_0750, buf(&mut atomic));
+    frame_for_all_objects(frame, 0x6A_0750, GPtr::<u8>::addr(buf(&mut atomic)) as u32);
     if atomic[0] == 0 {
         return GPtr::NULL;
     }
@@ -104,7 +103,7 @@ pub fn automobile_spawn_flying_component(this: GPtr<u8>, node: i32, kind: u32) -
                 let vp = if vm.is_null() { this.byte_add(4) } else { vm.byte_add(0x30) };
                 let mut d = [0u32; 3];
                 let r = vec_sub(buf(&mut d), buf(&mut tmp).byte_add(0x30), vp);
-                let off = f32_of(X87::from_f64_exact(dot_product(r, vm)).fchs());
+                let off = f32_of(X87::from_f64_exact(dot_product(r, vm).to_f64()).fchs());
                 object_set_centre_offset(obj, off, 0.0, 0.0);
                 matrix_dtor(buf(&mut tmp));
             }
@@ -190,7 +189,7 @@ pub fn automobile_spawn_flying_component(this: GPtr<u8>, node: i32, kind: u32) -
         f32_of(x(rd::<f32>(op, 4)).fsub_m(rd::<f32>(vp, 4))).to_bits(),
         f32_of(x(rd::<f32>(op, 8)).fsub_m(rd::<f32>(vp, 8))).to_bits(),
     ];
-    vector_normalise(buf(&mut dir));
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(buf(&mut dir)));
     if wheelish {
         let m = rd::<GPtr<u8>>(this, 0x14);
         for (k, d) in dir.iter_mut().enumerate() {
@@ -226,7 +225,7 @@ pub fn automobile_spawn_flying_component(this: GPtr<u8>, node: i32, kind: u32) -
             let mut e2 = [0u32; 3];
             let r = vec_sub(buf(&mut e2), cp, pos_ptr(this));
             dir = [rd::<u32>(r, 0), rd::<u32>(r, 4), rd::<u32>(r, 8)];
-            vector_normalise(buf(&mut dir));
+            vector_normalise(GPtr::<u8>::cast::<[f32;3]>(buf(&mut dir)));
             dir[2] = f32_of(x(f32::from_bits(dir[2])).fadd_m(f32::from_bits(0x3E99_999A))).to_bits();
             let mut out = [0u32; 3];
             let r = scalar_mul_vec(buf(&mut out), g::<f32>(0x87_1020).read(), buf(&mut dir));

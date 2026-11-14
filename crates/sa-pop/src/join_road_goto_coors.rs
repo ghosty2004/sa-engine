@@ -5,22 +5,15 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::{g, rd, wr, x};
 
-use sa_world::bindings::get_position as node_get_position;
-use sa_world::bindings::join_car_with_road_system;
+use crate::bindings::get_position as node_get_position;
+use crate::bindings::join_car_with_road_system;
 use crate::bindings::find_links_to_go_with_these_nodes;
 use crate::bindings::remove_one_path_node as auto_pilot_remove_one_path_node;
-orig! {
-    /// `CPathFind::DoPathSearch(...)` (0x4515D0, thiscall, `ret 0x4C`)
-    #[allow(clippy::too_many_arguments)]
-    fn do_path_search(this: GPtr<u8>, path_type: u32, ox: f32, oy: f32, oz: f32, origin_addr: u32, tx: f32, ty: f32, tz: f32,
-        out_nodes: GPtr<u32>, out_count: GPtr<i16>, max_nodes: i32, out_distance: GPtr<f32>, max_search: f32,
-        target_addr: GPtr<u32>, max_depth: f32, same_lane: u32, forbidden: u32, allow_water: u32, for_boats: u32)
-        = thiscall 0x4515D0 => crate::pathfind::do_path_search;
-}
+use crate::bindings::do_path_search;
 
 /// `ThePaths`: the `this` of `RemoveBadStartNode` comes out of the no-CD VM 0xCB73E0 (descriptor 0x155FFEC, called
 /// at 0x156A590 with the flags and EAX saved around it). Evaluated on the exe image (unicorn, 293 instructions, no

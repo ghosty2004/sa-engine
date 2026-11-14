@@ -9,6 +9,16 @@ use sa_core::mem::{GBool, GPtr};
 use sa_core::orig;
 
 orig! {
+    /// `CPlayerPed::GetWantedLevel` (0x41BE60)
+    pub fn player_get_wanted_level(p: GPtr<u8>) -> i32 = thiscall 0x41BE60 => crate::player_ped::get_wanted_level;
+}
+
+orig! {
+    /// `CPedDamageResponseCalculator::Constructor` (0x4AD3F0)
+    pub fn damage_calc_ctor(c: GPtr<u8>, src: u32, dmg: u32, wt: u32, piece: u32, b: u32) -> GPtr<u8> = thiscall 0x4AD3F0 => crate::damage::constructor;
+}
+
+orig! {
     /// `CEventPlayerCommandToGroup::Constructor` (0x4B23D0)
     pub fn event_player_command_to_group_ctor(e: GPtr<u8>, cmd: i32, target: GPtr<u8>) -> GPtr<u8> = thiscall 0x4B23D0 => unported;
 }
@@ -19,8 +29,18 @@ orig! {
 }
 
 orig! {
+    /// `CPedDamageResponseCalculator::ComputeDamageResponse` (0x4B5AC0)
+    pub fn damage_calc_compute_damage_response(c: GPtr<u8>, ped: GPtr<u8>, resp: GPtr<u8>, b: u32) = thiscall 0x4B5AC0 => crate::damage::compute_damage_response;
+}
+
+orig! {
     /// `CAEPedSpeechAudioEntity::Initialise` (0x4E68D0)
     pub fn ped_speech_initialise(e: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x4E68D0 => unported;
+}
+
+orig! {
+    /// `CWanted::SetMaximumWantedLevel` (0x561E70)
+    pub fn set_maximum_wanted_level(level: i32) = cdecl 0x561E70 => crate::wanted::set_maximum_wanted_level;
 }
 
 orig! {
@@ -29,8 +49,43 @@ orig! {
 }
 
 orig! {
+    /// `CWanted::RegisterCrime` (0x562410)
+    pub fn wanted_register_crime(w: GPtr<u8>, crime: i32, pos: GPtr<f32>, ped: GPtr<u8>, flag: u8) = thiscall 0x562410 => crate::wanted::register_crime;
+}
+
+orig! {
+    /// `CWanted::SetWantedLevel` (0x562470)
+    pub fn wanted_set_wanted_level(w: GPtr<u8>, level: i32) = thiscall 0x562470 => crate::wanted::set_wanted_level;
+}
+
+orig! {
+    /// `CWanted::SetWantedLevelNoDrop` (0x562570)
+    pub fn wanted_set_wanted_level_no_drop(w: GPtr<u8>, l: i32) = thiscall 0x562570 => crate::wanted::set_wanted_level_no_drop;
+}
+
+orig! {
+    /// `CWanted::CanCopJoinPursuit-method` (0x562FB0)
+    pub fn wanted_can_cop_join_pursuit(w: GPtr<u8>, cop: GPtr<u8>) -> u8 = thiscall 0x562FB0 => crate::wanted::can_cop_join_pursuit_method;
+}
+
+orig! {
+    /// `CPlayerInfo::GetPos_Hook` (0x56DFB0)
+    pub fn player_info_get_pos(pi: GPtr<u8>, out: GPtr<u32>) -> GPtr<u32> = thiscall 0x56DFB0 => crate::player_info::get_pos;
+}
+
+orig! {
     /// `CPlayerPedData::SetInitialState` (0x56F210)
     pub fn ped_data_set_initial_state(d: GPtr<u8>) = thiscall 0x56F210 => crate::player_info::set_initial_state;
+}
+
+orig! {
+    /// `CClothes::GetTextureDependency` (0x5A7EA0)
+    pub fn get_texture_dependency(t: i32) -> i32 = cdecl 0x5A7EA0 => crate::clothes::get_texture_dependency;
+}
+
+orig! {
+    /// `CPedClothesDesc::SetTextureAndModel-hash` (0x5A8050)
+    pub fn clothes_desc_set_texture_and_model(d: GPtr<u8>, tex: u32, model: u32, ty: i32) = thiscall 0x5A8050 => crate::clothes::set_texture_and_model_hash;
 }
 
 orig! {
@@ -39,8 +94,23 @@ orig! {
 }
 
 orig! {
+    /// `CClothes::RebuildPlayer` (0x5A82C0)
+    pub fn clothes_rebuild_player(ped: GPtr<u8>, ignore_fat_and_muscle: u32) = cdecl 0x5A82C0 => crate::clothes::rebuild_player;
+}
+
+orig! {
+    /// `CPed::SetMoveAnimSpeed` (0x5DEC10)
+    pub fn ped_set_move_anim_speed(p: GPtr<u8>, a: GPtr<u8>) = thiscall 0x5DEC10 => crate::ped::set_move_anim_speed;
+}
+
+orig! {
     /// `CPed::ClearAimFlag` (0x5DEF20)
     pub fn clear_aim_flag(ped: GPtr<u8>) = thiscall 0x5DEF20 => crate::ped::clear_aim_flag;
+}
+
+orig! {
+    /// `CPed::GetLocalDirection` (0x5DEF60)
+    pub fn get_local_direction(p: GPtr<u8>, dir: GPtr<f32>) -> i32 = thiscall 0x5DEF60 => crate::ped::get_local_direction;
 }
 
 orig! {
@@ -49,8 +119,43 @@ orig! {
 }
 
 orig! {
+    /// `CPed::IsPlayer` (0x5DF8F0)
+    pub fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => crate::ped::is_player;
+}
+
+orig! {
+    /// `CPed::PositionAttachedPed` (0x5DFDF0)
+    pub fn ped_position_attached_ped(ped: GPtr<u8>) = thiscall 0x5DFDF0 => crate::ped_coll::position_attached_ped;
+}
+
+orig! {
+    /// `CPed::IsAlive` (0x5E0170)
+    pub fn ped_is_alive(ped: GPtr<u8>) -> u32 = thiscall 0x5E0170 => crate::ped::is_alive;
+}
+
+orig! {
+    /// `CPed::DropEntityThatThisPedIsHolding` (0x5E0360)
+    pub fn ped_drop_held_entity(p: GPtr<u8>, b: u32) = thiscall 0x5E0360 => crate::ped_coll::drop_entity_that_this_ped_is_holding;
+}
+
+orig! {
     /// `CPed::ClearLookFlag` (0x5E1950)
     pub fn ped_clear_look_flag(ped: GPtr<u8>) = thiscall 0x5E1950 => crate::ped::clear_look_flag;
+}
+
+orig! {
+    /// `CPed::IsPedInControl` (0x5E3960)
+    pub fn ped_is_ped_in_control(ped: GPtr<u8>) -> u8 = thiscall 0x5E3960 => crate::ped::is_ped_in_control;
+}
+
+orig! {
+    /// `CPed::RemoveWeaponModel` (0x5E3990)
+    pub fn ped_remove_weapon_model(p: GPtr<u8>, mi: i32) = thiscall 0x5E3990 => crate::ped_render::remove_weapon_model;
+}
+
+orig! {
+    /// `CPed::GetWeaponSkill-WeaponType` (0x5E3B60)
+    pub fn get_weapon_skill_type_call(p: GPtr<u8>, ty: i32) -> u8 = thiscall 0x5E3B60 => crate::ped::get_weapon_skill_type;
 }
 
 orig! {
@@ -64,6 +169,31 @@ orig! {
 }
 
 orig! {
+    /// `CPed::GiveWeapon-` (0x5E6080)
+    pub fn ped_give_weapon(p: GPtr<u8>, ty: u32, ammo: u32, b: u32) -> u32 = thiscall 0x5E6080 => crate::ped_render::give_weapon;
+}
+
+orig! {
+    /// `CPed::SetCurrentWeapon-Slot` (0x5E61F0)
+    pub fn ped_set_current_weapon_slot(ped: GPtr<u8>, slot: i32) = thiscall 0x5E61F0 => crate::ped_weapon::set_current_weapon_slot;
+}
+
+orig! {
+    /// `CPed::SetCurrentWeapon-WepType` (0x5E6280)
+    pub fn ped_set_current_weapon(p: GPtr<u8>, w: i32) = thiscall 0x5E6280 => crate::ped_weapon::set_current_weapon_type;
+}
+
+orig! {
+    /// `CPed::GetWeaponSkill-Current` (0x5E6580)
+    pub fn ped_get_weapon_skill(p: GPtr<u8>) -> u8 = thiscall 0x5E6580 => crate::ped::get_weapon_skill_current;
+}
+
+orig! {
+    /// `CPed::AttachPedToEntity` (0x5E7CB0)
+    pub fn attach_ped_to_entity(ped: GPtr<u8>, e: GPtr<u8>, ox: u32, oy: u32, oz: u32, dir: u32, lim: u32, w: i32) -> GPtr<u8> = thiscall 0x5E7CB0 => crate::ped_coll::attach_ped_to_entity;
+}
+
+orig! {
     /// `CPed::Constructor` (0x5E8030)
     pub fn ped_ctor(p: GPtr<u8>, ty: u32) -> GPtr<u8> = thiscall 0x5E8030 => crate::ped_life::ped_constructor;
 }
@@ -74,8 +204,63 @@ orig! {
 }
 
 orig! {
+    /// `CPedType::FindPedType` (0x608790)
+    pub fn find_ped_type(name: GPtr<u8>) -> i32 = cdecl 0x608790 => crate::ped_type::find_ped_type;
+}
+
+orig! {
+    /// `CPedType::PoliceDontCareAboutCrimesAgainstPedType` (0x608A40)
+    pub fn ped_type_police_dont_care(ty: i32) -> u8 = cdecl 0x608A40 => crate::ped_type::police_dont_care_about_crimes_against_ped_type;
+}
+
+orig! {
+    /// `CPlayerPed::GetPadFromPlayer` (0x609560)
+    pub fn get_pad_from_player(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x609560 => crate::player_ped::get_pad_from_player;
+}
+
+orig! {
+    /// `CPlayerPed::ClearWeaponTarget` (0x609C80)
+    pub fn player_clear_weapon_target(p: GPtr<u8>) = thiscall 0x609C80 => crate::player_ped::clear_weapon_target;
+}
+
+orig! {
+    /// `CPlayerPed::SetWantedLevelNoDrop` (0x609F30)
+    pub fn player_set_wanted_level_no_drop(p: GPtr<u8>, level: i32) = thiscall 0x609F30 => crate::player_ped::set_wanted_level_no_drop;
+}
+
+orig! {
+    /// `CPlayerPed::GetPlayerInfoForThisPlayerPed` (0x609FF0)
+    pub fn get_player_info(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x609FF0 => crate::player_ped::get_player_info_for_this_player_ped;
+}
+
+orig! {
+    /// `CPlayerPed::ClearAdrenaline` (0x60A070)
+    pub fn player_ped_clear_adrenaline(p: GPtr<u8>) = thiscall 0x60A070 => crate::player_ped::clear_adrenaline;
+}
+
+orig! {
     /// `CPlayerPed::TellGroupToStartFollowingPlayer` (0x60A1D0)
     pub fn tell_group_to_start_following_player(p: GPtr<u8>, a: u32, b: u32, c: u32) = thiscall 0x60A1D0 => crate::player_target::tell_group_to_start_following_player;
+}
+
+orig! {
+    /// `CPlayerPed::HandleSprintEnergy` (0x60A550)
+    pub fn handle_sprint_energy(p: GPtr<u8>, b: u32, f: f32) -> u8 = thiscall 0x60A550 => crate::player_ped::handle_sprint_energy;
+}
+
+orig! {
+    /// `CPlayerPed::MakeChangesForNewWeapon-` (0x60B460)
+    pub fn make_changes_for_new_weapon(ped: GPtr<u8>, ty: i32) = thiscall 0x60B460 => crate::player_ctrl::make_changes_for_new_weapon;
+}
+
+orig! {
+    /// `CPlayerPed::DoesTargetHaveToBeBroken` (0x60C0C0)
+    pub fn does_target_have_to_be_broken_call(p: GPtr<u8>, t: GPtr<u8>, w: GPtr<u8>) -> u8 = thiscall 0x60C0C0 => crate::player_target::does_target_have_to_be_broken;
+}
+
+orig! {
+    /// `CPedPlacement::FindZCoorForPed` (0x616920)
+    pub fn ped_placement_find_z_coor_for_ped(v: GPtr<f32>) -> u8 = cdecl 0x616920 => crate::ped_coll::find_z_coor_for_ped;
 }
 
 orig! {

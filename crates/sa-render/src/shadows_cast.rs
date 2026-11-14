@@ -9,28 +9,21 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
-use sa_math::vector::CVector;
+use sa_core::hook;
 use sa_math::x87::X87;
 
-use sa_world::collision::data::{CdPtr, CmPtr};
 
 use crate::common::{ftol32, g, jne, jp, k, rd, wr, x, xi};
 
 use sa_world::bindings::rw_im3d_render_indexed_primitive;
 use sa_world::bindings::rw_im3d_transform;
 use crate::bindings::render_buffer_stop_storing as stop_storing;
-use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
-use sa_stream::bindings::simple_transform_update_matrix;
+use sa_world::bindings::placeable_allocate_matrix as allocate_matrix;
+use crate::bindings::simple_transform_update_matrix;
 use sa_world::bindings::rw_im3d_end;
-orig! {
-    /// `CCollision::CalculateTrianglePlanes(CColModel*)` (0x418580)
-    fn calculate_triangle_planes(cm: CmPtr) = cdecl 0x418580 => sa_world::collision::data::calculate_triangle_planes_col_model;
-    /// `CCollisionData::GetTrianglePoint(CVector&, int)` (0x40f5e0)
-    fn get_triangle_point(cd: CdPtr, out: GPtr<CVector>, idx: i32) = thiscall 0x40f5e0 => sa_world::collision::data::get_triangle_point;
-    /// `CShadows::AffectColourWithLighting(type, lighting, r, g, b, uint8* outR, outG, outB)` (0x707850)
-    fn affect_colour_with_lighting(kind: u32, lighting: u32, r: u32, gg: u32, b: u32, out_r: GPtr<u8>, out_g: GPtr<u8>, out_b: GPtr<u8>) = cdecl 0x707850 => crate::mvpb_r1::affect_colour_with_lighting;
-}
+use crate::bindings::affect_colour_with_lighting;
+use sa_world::bindings::calculate_triangle_planes;
+use sa_world::bindings::get_triangle_point;
 
 /// The three function-local statics' guard bits (trivially initialised).
 const STATIC_GUARD: usize = 0xc4_b8c8;

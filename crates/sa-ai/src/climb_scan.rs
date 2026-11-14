@@ -11,21 +11,22 @@ use sa_core::{hook, orig};
 use crate::common::*;
 
 use sa_core::bindings::atexit as crt_atexit;
-use sa_core::bindings::matrix_dtor;
+use sa_world::bindings::matrix_dtor;
 use sa_core::bindings::matrix_invert_59bdd0 as matrix_invert;
 use sa_core::bindings::matrix_mul_vec;
 use sa_core::bindings::matrix_set_translate_only;
 use sa_core::bindings::vector_magnitude;
-use sa_core::bindings::world_clear_scan_codes;
-use sa_stream::bindings::placeable_allocate_matrix;
+use sa_world::bindings::world_clear_scan_codes;
+use sa_world::bindings::placeable_allocate_matrix;
 use sa_stream::bindings::simple_transform_update_matrix;
 use sa_world::bindings::entity_get_bound_centre;
 use sa_world::bindings::entity_get_col_model;
 use sa_world::bindings::get_task_swim as intel_get_task_swim;
 use sa_world::bindings::placeable_get_matrix;
 use sa_world::bindings::stats_get_fat_and_muscle_modifier;
-use sa_core::bindings::vector_sub;
+use sa_world::bindings::vector_sub;
 use sa_core::bindings::matrix_assign;
+use sa_world::bindings::process_col_models as collision_process_col_models;
 orig! {
     /// `CTaskSimpleClimb::CreateColModel()` (0x67A890)
     fn climb_create_col_model() -> u8 = cdecl 0x67A890 => unported;
@@ -33,10 +34,6 @@ orig! {
     /// (0x67DE10, cdecl)
     #[allow(clippy::too_many_arguments)]
     fn scan_sector_list_c(list: GPtr<u8>, ped: GPtr<u8>, pos: GPtr<u8>, angle: GPtr<u8>, surface: GPtr<u8>, launch: u32, stand_up: u32, vault: u32) -> GPtr<u8> = cdecl 0x67DE10 => climb_scan_to_grab_sector_list;
-    /// `CCollision::ProcessColModels(const CMatrix&, CColModel&, const CMatrix&, CColModel&, CColPoint*,
-    /// CColPoint*, float*, bool)` (0x4185C0)
-    #[allow(clippy::too_many_arguments)]
-    fn collision_process_col_models(m1: GPtr<u8>, c1: GPtr<u8>, m2: GPtr<u8>, c2: GPtr<u8>, cps: GPtr<u8>, lcps: u32, dists: u32, b: u32) -> i32 = cdecl 0x4185C0 => unported;
     /// `SurfaceInfos_c::CanClimb(surface)` (0x55EA10) on `g_surfaceInfos` (0xB79538)
     fn surface_can_climb(s: GPtr<u8>, surface: u32) -> u8 = thiscall 0x55EA10 => unported;
 }
@@ -166,7 +163,7 @@ pub fn climb_scan_to_grab_sector_list(list: GPtr<u8>, ped: GPtr<u8>, pos: GPtr<u
     let model_p: GPtr<u8> = GPtr::from_addr(model);
     let mut centre = [0u32; 3];
     let centre_p = buf(&mut centre);
-    let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(centre_p.cast::<f32>(), rd::<GPtr<u8>>(ped, 0x14), model_p.byte_add(0x18)));
+    let r = matrix_mul_vec(centre_p.cast::<u8>(), rd::<GPtr<u8>>(ped, 0x14), model_p.byte_add(0x18));
     copy3(centre_p, r);
     let radius = rd::<f32>(model_p, 0x24);
     let cpts: GPtr<u8> = GPtr::from_addr(COL_PTS);
@@ -222,7 +219,7 @@ pub fn climb_scan_to_grab_sector_list(list: GPtr<u8>, ped: GPtr<u8>, pos: GPtr<u
         }
         let em = rd::<GPtr<u8>>(e, 0x14);
         let pm = rd::<GPtr<u8>>(ped, 0x14);
-        if collision_process_col_models(pm, model_p, em, entity_get_col_model(e), cpts, 0, 0, 0) > 0 {
+        if collision_process_col_models(pm, model_p, em, entity_get_col_model(e), cpts, GPtr::NULL, GPtr::NULL, 0) > 0 {
             if stand_up || vault {
                 restore_spheres(e, saved);
                 return e;
@@ -280,7 +277,7 @@ pub fn climb_scan_to_grab_sector_list(list: GPtr<u8>, ped: GPtr<u8>, pos: GPtr<u
             matrix_set_translate_only(edge, f32::from_bits(rd::<u32>(cpts, 0)), f32::from_bits(rd::<u32>(cpts, 4)), f32::from_bits(rd::<u32>(cpts, 8)));
             let ecol = entity_get_col_model(e);
             let emat = placeable_get_matrix(e);
-            if collision_process_col_models(edge, GPtr::from_addr(FIND_EDGE_COL), emat, ecol, cpts, 0, 0, 0) > 0 {
+            if collision_process_col_models(edge, GPtr::from_addr(FIND_EDGE_COL), emat, ecol, cpts, GPtr::NULL, GPtr::NULL, 0) > 0 {
                 if flat_hit() {
                     copy3(pos, cpts);
                     wr::<u8>(surface, 0, rd::<u8>(cpts, 0x23));
@@ -349,7 +346,7 @@ pub fn climb_scan_to_grab(ped: GPtr<u8>, pos: GPtr<u8>, angle: GPtr<u8>, surface
         wr::<f32>(pos, 4 * k, v);
     }
     let mut pt = [0u32; 3];
-    matrix_mul_vec(GPtr::<u8>::cast::<f32>(buf(&mut pt)), rd::<GPtr<u8>>(ped, 0x14), GPtr::from_addr(CLIMB_COL + 0x18));
+    matrix_mul_vec(buf(&mut pt), rd::<GPtr<u8>>(ped, 0x14), GPtr::from_addr(CLIMB_COL + 0x18));
     let (px, py) = (f32::from_bits(pt[0]), f32::from_bits(pt[1]));
     let r = c(CLIMB_COL + 0x24);
     let start_x = sector_of(x(px).fsub_m(r));
@@ -410,7 +407,7 @@ pub fn climb_scan_to_grab(ped: GPtr<u8>, pos: GPtr<u8>, angle: GPtr<u8>, surface
             let invp = buf(&mut inv);
             let im = matrix_invert(invp, rd::<GPtr<u8>>(collided, 0x14));
             let mut out = [0u32; 3];
-            let o = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(buf(&mut out)), im, pos));
+            let o = matrix_mul_vec(buf(&mut out), im, pos);
             copy3(pos, o);
             matrix_dtor(invp);
             let cm = rd::<GPtr<u8>>(collided, 0x14);
@@ -445,11 +442,7 @@ fn scan_edge(ped: GPtr<u8>, edge: &mut [f32; 3], stand_up: u32, vault: u32) -> G
     climb_scan_to_grab_c(ped, buf(&mut tmp), sp, sp.byte_add(4), 0, stand_up, vault, GPtr::from_raw(edge.as_mut_ptr()).cast())
 }
 
-orig! {
-    /// `CTaskSimpleClimb::ScanToGrab` (0x67FD30), called through its stub
-    #[allow(clippy::too_many_arguments)]
-    fn climb_scan_to_grab_c(ped: GPtr<u8>, pos: GPtr<u8>, angle: GPtr<u8>, surface: GPtr<u8>, launch: u32, stand_up: u32, vault: u32, over: GPtr<u8>) -> GPtr<u8> = cdecl 0x67FD30 => climb_scan_to_grab;
-}
+use crate::bindings::climb_scan_to_grab as climb_scan_to_grab_c;
 
 /// `bool CTaskSimpleClimb::TestForVault(CPed* ped, const CVector& point, float angle)` (0x6804D0, `ret 0xC`).
 ///

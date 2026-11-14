@@ -139,13 +139,13 @@ pub fn rt_quat_rotate(q: GPtr<u8>, axis: GPtr<u8>, angle: f32, op: u32) -> u32 {
     if q.is_null() || axis.is_null() {
         let code = rw_error1(0x8000_0016);
         let mut e = RwError { plugin_id: QUAT_PLUGIN, error_code: code as i32 };
-        rw_error_set(GPtr::from_raw(&mut e));
+        rw_error_set(GPtr::from_raw(&mut e).cast());
         return 0;
     }
     if op > 2 {
         let code = rw_error2(0x8000_0003, 0x8E21FC);
         let mut e = RwError { plugin_id: QUAT_PLUGIN, error_code: code as i32 };
-        rw_error_set(GPtr::from_raw(&mut e));
+        rw_error_set(GPtr::from_raw(&mut e).cast());
         return 0;
     }
     let h = x(angle).fmul_m(gf(C_HALF_RAD));

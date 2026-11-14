@@ -4,7 +4,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use sa_core::field::gu as g;
 
@@ -12,14 +12,8 @@ use sa_math::fpu::x;
 
 use sa_math::fpu::xi;
 
-orig! {
-    /// `FxPrtMult_c::FxPrtMult_c(r, g, b, a, size, spin, life)` (0x4AB290)
-    #[allow(clippy::too_many_arguments)]
-    fn fx_prt_mult_ctor(p: GPtr<u8>, r: f32, g: f32, b: f32, a: f32, size: f32, spin: f32, life: f32) -> GPtr<u8> = thiscall 0x4AB290 => unported;
-    /// `FxSystem_c::AddParticle(RwV3d*, RwV3d*, float, FxPrtMult_c*, float, float, float, uint8)` (0x4AA440)
-    #[allow(clippy::too_many_arguments)]
-    fn fx_add_particle(fx: GPtr<u8>, pos: GPtr<u8>, vel: GPtr<u8>, time: f32, mult: GPtr<u8>, rot: f32, bright: f32, cam: f32, local: u32) = thiscall 0x4AA440 => unported;
-}
+use crate::bindings::fx_add_particle;
+use sa_world::bindings::fx_prt_mult_ctor;
 
 /// `CTimer::ms_fTimeStep` (0xB7CB5C)
 const TIME_STEP: u32 = 0xB7_CB5C;
@@ -124,9 +118,9 @@ pub fn fx_add_sparks(
             sys,
             GPtr::from_raw(&mut pos as *mut [f32; 3]).cast(),
             GPtr::from_raw(&mut vel as *mut [f32; 3]).cast(),
-            time,
+            time.to_bits(),
             mp,
-            -1.0,
+            (-1.0f32).to_bits(),
             f32::from_bits(0x3F99_999A),
             f32::from_bits(0x3F19_999A),
             0,

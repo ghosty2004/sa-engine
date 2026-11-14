@@ -10,7 +10,7 @@ use sa_math::x87::X87;
 use crate::common::{b, g, rd, wr, x};
 
 use crate::bindings::vehicle_set_model_index;
-use sa_core::bindings::frame_get_ltm as rw_frame_get_ltm;
+use sa_rwcore::bindings::frame_get_ltm as rw_frame_get_ltm;
 use sa_stream::bindings::fill_frame_array;
 use crate::bindings::automobile_reset_suspension;
 use crate::bindings::call_extend_suspension;

@@ -9,7 +9,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 
 use crate::common::{f32_of, ftol32, g, rd, wr, x, xi};
@@ -69,14 +69,11 @@ pub use sa_world::bindings::crt_ceil;
 pub use sa_world::bindings::crt_floor;
 pub use crate::bindings::clear_actual_blip_call;
 pub use crate::bindings::stream_radar_sections_xy_call;
-pub use sa_core::bindings::streaming_remove_model as remove_model;
+pub use sa_stream::bindings::streaming_remove_model as remove_model;
 pub use sa_core::bindings::streaming_request_model as request_model;
-pub use sa_world::bindings::set_coord_blip as set_coord_blip_call;
+pub use crate::bindings::set_coord_blip as set_coord_blip_call;
 pub use sa_world::bindings::zone_locked_or_unlocked;
-orig! {
-    /// `FindPlayerPed(int32)` (0x56E210)
-    pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
-}
+pub use sa_world::bindings::find_player_ped;
 
 fn menu_map() -> bool {
     g::<u8>(MENU_DRAW_RADAR_OR_MAP).read() != 0
@@ -565,7 +562,7 @@ pub fn set_short_range_coord_blip(
     display: i32,
     name: GPtr<u8>,
 ) -> i32 {
-    let h = set_coord_blip_call(blip_type, px, py, pz, colour as u32, display as i8, name);
+    let h = set_coord_blip_call(blip_type, px, py, pz, (colour as u32) as i32, (display as i8) as i32, name);
     if h == -1 {
         return h;
     }

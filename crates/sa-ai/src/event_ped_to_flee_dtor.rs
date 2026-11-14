@@ -7,7 +7,7 @@ use sa_core::hook;
 
 use crate::common::*;
 
-use sa_core::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference;
 
 /// `CEventPedToFlee::~CEventPedToFlee()` (0x4AF2D0, thiscall; entry `push -1; jmp 0x402297`, the protection chunk
 /// that pushes the SEH handler): vtable 0x85B178, `CleanUpOldReference(&+0xC)` when the ped (+0xC) is set, then
@@ -19,7 +19,7 @@ pub fn event_ped_to_flee_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x0085_B178);
     let p = rd::<GPtr<u8>>(this, 0xC);
     if !p.is_null() {
-        entity_clean_up_old_reference(p, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0xC)));
+        entity_clean_up_old_reference(p, this.byte_add(0xC));
     }
     wr::<u32>(this, 0, 0x0085_AB38);
 }

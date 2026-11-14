@@ -11,7 +11,7 @@ use sa_math::x87::X87;
 
 use sa_world::bindings::dm_get_panel_status;
 use crate::bindings::vehicle_render;
-use sa_core::bindings::matrix_dtor;
+use sa_world::bindings::matrix_dtor;
 use sa_core::bindings::matrix_mul_vec;
 use sa_core::bindings::matrix_rotate_y;
 use sa_core::bindings::matrix_set_rotate_x;
@@ -19,9 +19,8 @@ use sa_core::bindings::matrix_update_rw;
 use sa_world::bindings::player_set_wanted_level_no_drop;
 use sa_core::bindings::matrix_attach;
 use sa_world::bindings::register_corona;
+use sa_core::bindings::vector_normalise_and_mag as normalise_and_mag;
 orig! {
-    /// `CVector::NormaliseAndMag()` (0x59C970, ST0)
-    fn normalise_and_mag(v: GPtr<u8>) -> f32 = thiscall 0x59C970 => unported;
     /// `CShadows::StoreCarLightShadow(CVehicle*, int32 id, RwTexture*, CVector* pos, float frontX,
     /// float frontY, float sideX, float sideY, uint8 r, uint8 g, uint8 b, float maxViewAngle)` (0x70C500)
     fn store_car_light_shadow(v: GPtr<u8>, id: u32, tex: GPtr<u8>, pos: GPtr<u8>, fx: f32, fy: f32, sx: f32, sy: f32, r: u32, gg: u32, b: u32, angle: f32) = cdecl 0x70C500 => unported;
@@ -274,12 +273,12 @@ pub fn do_tail_light_effect(this: GPtr<u8>, id: i32, mat: GPtr<u8>, right: u8, f
     let cam = sa_world::world::common::cam_pos();
     let pptr = GPtr::from_raw(p.as_mut_ptr()).cast::<u8>();
     let qptr = GPtr::from_raw(q.as_mut_ptr()).cast::<u8>();
-    let w = GPtr::<f32>::cast::<u8>(matrix_mul_vec(pptr.cast::<f32>(), mat, qptr));
+    let w = matrix_mul_vec(pptr.cast::<u8>(), mat, qptr);
     let dz = f32_of(x(cam.wrapping_index(2).read()).fsub_m(rd::<f32>(w, 8)));
     let dy = f32_of(x(cam.wrapping_index(1).read()).fsub_m(rd::<f32>(w, 4)));
     let dx = f32_of(x(cam.read()).fsub_m(rd::<f32>(w, 0)));
     let mut d = [dx, dy, dz];
-    let mag = normalise_and_mag(GPtr::from_raw(d.as_mut_ptr()).cast());
+    let mag = normalise_and_mag(GPtr::from_raw(d.as_mut_ptr()).cast()).to_f32();
     let fx = x(rd::<f32>(mat, 0x10)).fchs();
     let fy = x(rd::<f32>(mat, 0x14)).fchs();
     let fz = x(rd::<f32>(mat, 0x18)).fchs();
@@ -324,7 +323,7 @@ pub fn do_tail_light_effect(this: GPtr<u8>, id: i32, mat: GPtr<u8>, right: u8, f
     }
     let far = f32_of(x(g::<f32>(0xB6F118).read()).fmul_m(150.0));
     let cid = (this.addr() as u32).wrapping_add(u32::from(right)).wrapping_add((id as u32).wrapping_mul(2)).wrapping_add(8);
-    register_corona(cid, GPtr::from_addr((this.addr() as u32) as usize), red, 0, 0, 0x80, qptr, size, far, 1, 0, 1, 0, 0, sdot, 0, 0.5, 0, 15.0, 0, 0);
+    register_corona(cid, GPtr::from_addr((this.addr() as u32) as usize), red, 0, 0, 0x80, qptr, size.to_bits(), far.to_bits(), 1, 0, 1, 0, 0, sdot.to_bits(), 0, 0.5f32.to_bits(), 0, 15.0f32.to_bits(), 0, 0);
     u8::from(done)
 }
 

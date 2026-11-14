@@ -16,17 +16,10 @@ use crate::common::{g, jp, k, rd, wr, x};
 
 use sa_core::bindings::general_random_int_in_range as random_int_in_range;
 use sa_core::bindings::vector_normalise;
-use sa_world::bindings::get_water_level_no_waves as water_level_no_waves;
-orig! {
-    /// `CGeneral::GetRandomNumberInRange(float, float)` (0x41BD90, ST0)
-    fn random_float_in_range(lo: u32, hi: u32) -> f64 = cdecl 0x41BD90 => unported;
-    /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, 7 bools)` (0x56A490, bool in AL)
-    #[allow(clippy::too_many_arguments)]
-    fn is_line_of_sight_clear(a: GPtr<u8>, b: GPtr<u8>, bld: u32, veh: u32, ped: u32, obj: u32, dum: u32, see: u32, cam: u32) -> u8 = cdecl 0x56A490 => unported;
-    /// `CBirds::CreateNumberOfBirds` (0x711EF0)
-    #[allow(clippy::too_many_arguments)]
-    fn create_number_of_birds_o(sx: u32, sy: u32, sz: u32, tx: u32, ty: u32, tz: u32, count: i32, ty_: i32, check: u32) = cdecl 0x711EF0 => crate::mvpd_r2::create_number_of_birds;
-}
+use crate::bindings::get_water_level_no_waves as water_level_no_waves;
+use sa_core::bindings::world_get_is_line_of_sight_clear as is_line_of_sight_clear;
+use crate::bindings::create_number_of_birds as create_number_of_birds_o;
+use sa_core::bindings::random_float_in_range;
 
 const BIRDS: usize = 0xC6A8B0;
 const NUM_BIRDS: usize = 0xC6A8A4;
@@ -72,7 +65,7 @@ pub fn create_number_of_birds(sx: u32, sy: u32, sz: u32, tx: u32, ty: u32, tz: u
             x(f32::from_bits(target[1])).fsub_m(rd::<f32>(b, 4)).to_f32(),
             x(f32::from_bits(target[2])).fsub_m(rd::<f32>(b, 8)).to_f32(),
         ];
-        vector_normalise(lp(&mut d));
+        vector_normalise(GPtr::<u8>::cast::<[f32;3]>(lp(&mut d)));
         let k24 = k(0x4019_999A);
         let zk = x(x(d[2]).fmul_m(md).to_f32()).fmul_m(k24);
         let xk = x(x(d[0]).fmul_m(md).fmul_m(k24).to_f32());
@@ -221,7 +214,7 @@ pub fn birds_update() {
             1 => (0x4170_0000, 0x41C8_0000, 0x42A0_0000),
             _ => (0x4000_0000, 0x4120_0000, 0x4220_0000),
         };
-        let h = X87::from_f64_exact(random_float_in_range(lo, hi)).fadd_m(c[2]);
+        let h = X87::from_f64_exact(random_float_in_range(f32::from_bits(lo), f32::from_bits(hi)).to_f64()).fadd_m(c[2]);
         let height = h.to_f32();
         if h.fcom(x(k(0x40A0_0000))).test_any(0x41) {
             break 'spawn;
@@ -233,7 +226,7 @@ pub fn birds_update() {
             if !jp(x(f32::from_bits(v[0])), X87::zero(), 0x44) {
                 v[0] = 0x3C23_D70A;
             }
-            vector_normalise(lp(&mut v));
+            vector_normalise(GPtr::<u8>::cast::<[f32;3]>(lp(&mut v)));
             let a = X87::from_i32((rand_at(0x71_24FB) & 0xFF) - 0x80).fmul_m(k(0x3B80_0000));
             a.fadd(x(f32::from_bits(v[0])).fpatan(x(f32::from_bits(v[1]))))
         };
@@ -241,14 +234,14 @@ pub fn birds_update() {
         let px = angle.fsin().fmul_m(df).fadd_m(c[0]).to_f32().to_bits();
         let py = angle.fcos().fmul_m(df).fadd_m(c[1]).to_f32().to_bits();
         let mut wl = 0f32;
-        if water_level_no_waves(f32::from_bits(px), f32::from_bits(py), f32::from_bits(height.to_bits()), lp(&mut wl), GPtr::NULL, GPtr::NULL) != 0 && jp(x(wl).fadd_m(k(0x4080_0000)), x(height), 5) {
+        if water_level_no_waves(f32::from_bits(px).to_bits(), f32::from_bits(py).to_bits(), f32::from_bits(height.to_bits()).to_bits(), GPtr::<u8>::cast::<f32>(lp(&mut wl)), GPtr::NULL, GPtr::NULL) != 0 && jp(x(wl).fadd_m(k(0x4080_0000)), x(height), 5) {
             break 'spawn;
         }
         let mut f: [u32; 3] = [g::<u32>(0xB6F9AC).read(), g::<u32>(0xB6F9B0).read(), 0];
-        vector_normalise(lp(&mut f));
+        vector_normalise(GPtr::<u8>::cast::<[f32;3]>(lp(&mut f)));
         let tx = x(f32::from_bits(f[0])).fmul_m(k(0x4100_0000)).fadd_m(c[0]).to_f32().to_bits();
         let ty = x(f32::from_bits(f[1])).fmul_m(k(0x4100_0000)).fadd_m(c[1]).to_f32().to_bits();
-        create_number_of_birds_o(px, py, height.to_bits(), tx, ty, height.to_bits(), n, kind, 1);
+        create_number_of_birds_o(px, py, height.to_bits(), tx, ty, height.to_bits(), (n as u32) as i32, (kind as u32) as i32, 1);
     }
     let i = (g::<u32>(0xB7CB4C).read() % 6) as isize;
     let b = g::<u8>(BIRDS).byte_add(i * 0x44);
@@ -305,12 +298,12 @@ pub fn birds_update() {
 use sa_world::bindings::camera_is_sphere_visible_m;
 use crate::bindings::stencil_graphics_high_quality;
 use sa_core::bindings::defined_state;
-use sa_core::bindings::find_player_vehicle;
-use sa_core::bindings::matrix_dtor;
+use sa_world::bindings::find_player_vehicle;
+use sa_world::bindings::matrix_dtor;
 use sa_core::bindings::render_weapon_peds_for_pc;
 use sa_core::bindings::rs_camera_begin_update;
 use sa_core::bindings::rw_camera_end_update;
-use sa_core::bindings::rw_raster_destroy;
+use sa_rwcore::bindings::rw_raster_destroy;
 use sa_core::bindings::link_list_clear as fun_53e8d0;
 use sa_core::bindings::render_scene;
 use sa_core::bindings::rw_camera_clear;
@@ -486,9 +479,12 @@ pub fn mirrors_before_main_render() {
     camera_restore_after_mirror(g(THE_CAMERA));
 }
 
-use sa_core::bindings::find_player_ped;
-use sa_world::bindings::cam_no_rain;
-use sa_world::bindings::player_no_rain;
+use sa_world::bindings::find_player_ped;
+use crate::bindings::cam_no_rain;
+use crate::bindings::player_no_rain;
+use crate::bindings::fx_add_particle;
+use sa_world::bindings::fx_prt_mult_ctor;
+use sa_world::bindings::world_process_vertical_line as process_vertical_line;
 orig! {
     /// `CCamera::GetLookingLRBFirstPerson()` (0x50AE60, bool in AL)
     fn camera_looking_lrb_first_person(this: GPtr<u8>) -> u8 = thiscall 0x50AE60 => unported;
@@ -496,16 +492,6 @@ orig! {
     fn car_has_roof(v: GPtr<u8>) -> u8 = thiscall 0x6D25D0 => unported;
     /// `CWeather::AddSandStormParticles()` (0x72A820)
     fn add_sand_storm_particles() = cdecl 0x72A820 => unported;
-    /// `FxPrtMult_c::FxPrtMult_c(r, g, b, a, size, angle, life)` (0x4AB290)
-    #[allow(clippy::too_many_arguments)]
-    fn fx_prt_mult_ctor(p: GPtr<u8>, r: u32, gg: u32, b: u32, a: u32, size: u32, angle: u32, life: u32) -> GPtr<u8> = thiscall 0x4AB290 => unported;
-    /// `FxSystem_c::AddParticle(RwV3d* pos, RwV3d* vel, float time, FxPrtMult_c*, float rot, float bright,
-    /// float camDist, uint8 local)` (0x4AA440)
-    #[allow(clippy::too_many_arguments)]
-    fn fx_add_particle(fx: GPtr<u8>, pos: GPtr<u8>, vel: GPtr<u8>, time: u32, mult: GPtr<u8>, rot: u32, bright: u32, cam: u32, local: u32) = thiscall 0x4AA440 => unported;
-    /// `CWorld::ProcessVerticalLine(const CVector&, float, CColPoint&, CEntity*&, 6 bools, CStoredCollPoly*)` (0x5674E0)
-    #[allow(clippy::too_many_arguments)]
-    fn process_vertical_line(pos: GPtr<u8>, z: u32, cp: GPtr<u8>, ent: GPtr<u8>, b: u32, v: u32, p: u32, o: u32, d: u32, s: u32, poly: u32) -> u8 = cdecl 0x5674E0 => unported;
 }
 
 /// `CWeather::Rain` (f32)
@@ -587,8 +573,8 @@ pub fn add_rain() {
         let mut colp = [0u8; 0x2C];
         let mut ent = 0u32;
         while cols != 0 {
-            fx_prt_mult_ctor(lp(&mut prt), 0x3F80_0000, 0x3F80_0000, 0x3F80_0000, 0x3E80_0000, 0x3CA3_D70A, 0, 0x3CF5_C28F);
-            let rr = X87::from_f64_exact(random_float_in_range(0, dist));
+            fx_prt_mult_ctor(lp(&mut prt), f32::from_bits(0x3F80_0000), f32::from_bits(0x3F80_0000), f32::from_bits(0x3F80_0000), f32::from_bits(0x3E80_0000), f32::from_bits(0x3CA3_D70A), f32::from_bits(0), f32::from_bits(0x3CF5_C28F));
+            let rr = X87::from_f64_exact(random_float_in_range(f32::from_bits(0), f32::from_bits(dist)).to_f64());
             let mut vel = [0f32; 3];
             let rad = rr.to_f32();
             let a = rand_at(0x72_ABD5);
@@ -600,7 +586,7 @@ pub fn add_rain() {
             let px = angle.fsin().fmul_m(rad).fadd_m(rd::<f32>(cam_pos(), 0)).to_f32();
             let py = angle.fcos().fmul_m(rad).fadd_m(rd::<f32>(cam_pos(), 4)).to_f32();
             let mut p: [f32; 3] = [px, py, 40.0];
-            let hit = process_vertical_line(lp(&mut p), 0xC220_0000, lp(&mut colp), lp(&mut ent), 1, 0, 0, 0, 1, 0, 0);
+            let hit = process_vertical_line(lp(&mut p), f32::from_bits(0xC220_0000), lp(&mut colp), lp(&mut ent), 1, 0, 0, 0, 1, 0, GPtr::NULL);
             if hit != 0 {
                 let z = x(f32::from_bits(u32::from_le_bytes([colp[8], colp[9], colp[10], colp[11]]))).fadd_m(k(0x3DCC_CCCD)).to_f32();
                 let mut n = splashes;
@@ -612,7 +598,7 @@ pub fn add_rain() {
                         let jy = X87::from_i32(rand_at(0x72_AD04)).fmul_m(k(0x3800_0100)).fmul_m(k(0x41F0_0000)).fadd_m(q[1]).fsub_m(k(0x4170_0000));
                         q[1] = jy.to_f32();
                         rand_at(0x72_AD2B);
-                        fx_add_particle(g::<GPtr<u8>>(0xA9AE30).read(), lp(&mut q), lp(&mut vel), 0, lp(&mut prt), 0xBF80_0000, 0x3F99_999A, 0x3F19_999A, 0);
+                        fx_add_particle(g::<GPtr<u8>>(0xA9AE30).read(), lp(&mut q), lp(&mut vel), f32::from_bits(0).to_bits(), lp(&mut prt), f32::from_bits(0xBF80_0000).to_bits(), f32::from_bits(0x3F99_999A), f32::from_bits(0x3F19_999A), 0);
                         n -= 1;
                         if n == 0 {
                             break;
@@ -641,7 +627,7 @@ pub fn add_rain() {
         g::<u32>(0xC81410).write(0x3F80_0000);
     }
     let mut prt = [0u8; 0x40];
-    fx_prt_mult_ctor(lp(&mut prt), 0x3F66_6666, 0x3F66_6666, 0x3F80_0000, g::<u32>(0xC81410).read(), 0x3F80_0000, 0, 0x3E4C_CCCD);
+    fx_prt_mult_ctor(lp(&mut prt), f32::from_bits(0x3F66_6666), f32::from_bits(0x3F66_6666), f32::from_bits(0x3F80_0000), f32::from_bits(g::<u32>(0xC81410).read()), f32::from_bits(0x3F80_0000), f32::from_bits(0), f32::from_bits(0x3E4C_CCCD));
     let c = cam_pos();
     let mut p: [f32; 3] = [
         x(g::<f32>(0xB6F9AC).read()).fmul_m(k(0x4120_0000)).fadd_m(rd::<f32>(c, 0)).to_f32(),
@@ -656,7 +642,7 @@ pub fn add_rain() {
         x(g::<f32>(0xC813E4).read()).fmul_m(k(0x4170_0000)).to_f32(),
         x(g::<f32>(0xC813E8).read()).fmul_m(k(0x4170_0000)).to_f32(),
     ];
-    fx_add_particle(g::<GPtr<u8>>(0xA9AE1C).read(), lp(&mut p), lp(&mut wv), 0, lp(&mut prt), 0xBF80_0000, 0x3F99_999A, 0x3F19_999A, 0);
+    fx_add_particle(g::<GPtr<u8>>(0xA9AE1C).read(), lp(&mut p), lp(&mut wv), f32::from_bits(0).to_bits(), lp(&mut prt), f32::from_bits(0xBF80_0000).to_bits(), f32::from_bits(0x3F99_999A), f32::from_bits(0x3F19_999A), 0);
 }
 
 pub const HOOKS: &[HookReg] = &[

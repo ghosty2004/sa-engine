@@ -36,12 +36,12 @@ const DISPLAY_BRIEF_FLAG: usize = 0xA44488;
 pub use sa_core::bindings::ascii_to_gxt_char;
 pub use sa_world::bindings::hud_set_message;
 pub use crate::bindings::insert_string_in_string_call;
-pub use sa_core::bindings::insert_number_in_string as insert_number_in_string_call;
-pub use sa_core::bindings::messages_clear_messages as clear_messages_call;
-pub use sa_core::bindings::messages_string_copy as string_copy_call;
-pub use sa_world::bindings::add_to_previous_brief_array as add_to_previous_brief_array_call;
-pub use sa_world::bindings::messages_string_compare as string_compare_call;
-pub use sa_world::bindings::msg_insert_player_control_keys as insert_player_control_keys_in_string_call;
+pub use crate::bindings::insert_number_in_string as insert_number_in_string_call;
+pub use crate::bindings::messages_clear_messages as clear_messages_call;
+pub use crate::bindings::messages_string_copy as string_copy_call;
+pub use crate::bindings::add_to_previous_brief_array as add_to_previous_brief_array_call;
+pub use crate::bindings::messages_string_compare as string_compare_call;
+pub use crate::bindings::msg_insert_player_control_keys as insert_player_control_keys_in_string_call;
 orig! {
     /// `CHud::GetRidOfAllHudMessages(bool)` (0x588A50)
     pub fn hud_get_rid_of_all_hud_messages(flag: u32) = cdecl 0x588A50 => unported;
@@ -903,7 +903,7 @@ pub fn clear_this_big_print(text: GPtr<u8>) {
 const HUD_BIG_MESSAGE_X: usize = 0xBAA3DC;
 const HUD_BIG_MESSAGE: usize = 0xBAACC0;
 
-pub use sa_world::bindings::clear_this_big_print as clear_this_big_print_call;
+pub use crate::bindings::clear_this_big_print as clear_this_big_print_call;
 
 /// `CMessages::ClearThisPrintBigNow(eMessageStyle)` (0x69ED80): clears the style's first text (if any)
 /// through `ClearThisBigPrint`, then `BigMessageX[style] = 0` and `m_BigMessage[style][0] = 0`.

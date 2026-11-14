@@ -137,11 +137,9 @@ pub mod call {
     pub use crate::bindings::save_data_to_work_buffer as save_data;
     pub use crate::bindings::trailer_ctor;
     pub use crate::bindings::train_ctor;
+    pub use crate::bindings::crt_new as operator_new;
+    pub use crate::bindings::crt_new_821195 as operator_new_array;
     orig! {
-        /// `operator new[]` (0x821195: `jmp operator new`)
-        pub fn operator_new_array(size: u32) -> GPtr<u8> = cdecl 0x821195 => unported;
-        /// `operator new` (0x82119A, CRT)
-        pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
         /// `printf(fmt)` (0x821982, CRT)
         pub fn printf0(fmt: GPtr<u8>) -> i32 = cdecl 0x821982 => unported;
         /// `printf(fmt, int, double, double, double)` (0x821982, CRT; the doubles are pushed as qwords)
@@ -994,7 +992,7 @@ pub fn load_vehicle_pool() -> u8 {
             2 => make(0xA18, call::heli_ctor),
             3 => make(0xA04, call::plane_ctor),
             4 => make(0x7E8, call::boat_ctor),
-            5 => make(0x6AC, call::train_ctor),
+            5 => make(0x6AC, |t, m, c| call::train_ctor(t, m as u32, c)),
             8 | 9 => {
                 let v = if ty == 8 {
                     make(0x814, call::bike_ctor)
@@ -1011,7 +1009,7 @@ pub fn load_vehicle_pool() -> u8 {
                 if m.is_null() {
                     GPtr::NULL
                 } else {
-                    call::automobile_ctor(m, model, 1, 1)
+                    call::automobile_ctor(m, model as u32, 1, 1)
                 }
             }
         };

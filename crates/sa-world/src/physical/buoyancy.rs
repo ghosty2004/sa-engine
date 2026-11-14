@@ -31,11 +31,10 @@ const PROCESSING_BOAT: isize = 0xBA;
 const IMMERSION: isize = 0xBC;
 const TURN_POINT: isize = 0xC0;
 
+pub use crate::bindings::get_water_level;
+pub use crate::bindings::placeable_get_top_direction as get_top_direction;
+pub use sa_core::bindings::matrix_assign;
 orig! {
-    /// `CWaterLevel::GetWaterLevel(float x, float y, float z, float* out, bool waves, CVector*
-    /// normal)` (0x6EB690, cdecl, AL)
-    pub fn get_water_level(x: f32, y: f32, z: f32, out: GPtr<f32>, waves: u32, normal: Ent) -> u8
-        = cdecl 0x6EB690 => unported;
     /// `cBuoyancy::PreCalcSetup(CPhysical*, float)` (0x6C2B90)
     pub fn pre_calc_setup(b: Buoy, e: Ent, buoyancy: f32) = thiscall 0x6C2B90 => unported;
     /// `cBuoyancy::SimpleCalcBuoyancy(CPhysical*)` (0x6C3B00)
@@ -46,10 +45,6 @@ orig! {
     /// `cBuoyancy::CalcBuoyancyForce(CPhysical*, CVector*, CVector*)` (0x6C2750)
     pub fn calc_buoyancy_force_call(b: Buoy, e: Ent, turn: GPtr<CVector>, force: GPtr<CVector>) -> u8
         = thiscall 0x6C2750 => calc_buoyancy_force;
-    /// `CPlaceable::GetTopDirection()` (0x41CCB0, hidden return pointer)
-    pub fn get_top_direction(e: Ent, out: GPtr<CVector>) -> GPtr<CVector> = thiscall 0x41CCB0 => unported;
-    /// `CMatrix::operator=(const CMatrix&)` (0x59BBC0)
-    pub fn matrix_assign(dst: Ent, src: Ent) = thiscall 0x59BBC0 => unported;
 }
 
 sa_core::globals! {
@@ -84,7 +79,7 @@ pub fn calc_buoyancy_force(this: Buoy, e: Ent, turn: GPtr<CVector>, force: GPtr<
         return 0;
     }
     let mut o = CVector::new(0.0, 0.0, 0.0);
-    let t = rv_bits(multiply3x3(lp(&mut o), this.byte_add(MATRIX_COPY), this.byte_add(TURN_POINT).cast()).cast(), 0);
+    let t = rv_bits(multiply3x3(lp(&mut o).cast(), this.byte_add(MATRIX_COPY), this.byte_add(TURN_POINT).cast()).cast(), 0);
     wv_bits(turn.cast(), 0, t);
     let fo: Ent = force.cast();
     wu(fo, 0, 0);
@@ -120,7 +115,7 @@ pub fn calc_buoyancy_force(this: Buoy, e: Ent, turn: GPtr<CVector>, force: GPtr<
 fn find_water_level_common(this: Buoy, initial: Ent, offset: Ent, state: GPtr<u32>, normal: Ent) {
     state.write(1);
     let mut o = CVector::new(0.0, 0.0, 0.0);
-    let w = rv(multiply3x3(lp(&mut o), this.byte_add(MATRIX_COPY), offset.cast()).cast(), 0);
+    let w = rv(multiply3x3(lp(&mut o).cast(), this.byte_add(MATRIX_COPY), offset.cast()).cast(), 0);
     let mut f = Fpu::new();
     f.fld(w[0]);
     f.fadd_m(rf(this, 0));
@@ -129,7 +124,7 @@ fn find_water_level_common(this: Buoy, initial: Ent, offset: Ent, state: GPtr<u3
     f.fadd_m(rf(this, 4));
     let py = f.fstp();
     let oz: GPtr<f32> = offset.byte_add(8).cast();
-    get_water_level(px, py, rf(this, 8), oz, 1, normal);
+    get_water_level(px, py, rf(this, 8), oz.cast::<u8>(), 1, normal);
     f.fld(w[2]);
     f.fadd_m(rf(initial, 8));
     f.fsubr_m(oz.read());
@@ -269,7 +264,7 @@ pub fn simple_sum_buoyancy_data(this: Buoy, p: Ent, _state: u32) -> X87 {
 pub fn process_buoyancy(this: Buoy, e: Ent, buoyancy: f32, turn: GPtr<CVector>, force: GPtr<CVector>) -> u8 {
     let pos = rv(pos_ptr(e), 0);
     let touching = (ru(e, PFLAGS) >> 27) & 1;
-    if get_water_level(pos[0], pos[1], pos[2], this.byte_add(WATER_LEVEL).cast(), touching, GPtr::NULL) == 0 {
+    if get_water_level(pos[0], pos[1], pos[2], GPtr::<f32>::cast::<u8>(this.byte_add(WATER_LEVEL).cast()), touching as u8, GPtr::NULL) == 0 {
         return 0;
     }
     matrix_assign(this.byte_add(MATRIX_COPY), matrix(e));
@@ -306,7 +301,7 @@ pub fn process_buoyancy(this: Buoy, e: Ent, buoyancy: f32, turn: GPtr<CVector>, 
                 f.fsub_m(rf(pos_ptr(e), 8));
                 let d = f.fstp();
                 let mut o = CVector::new(0.0, 0.0, 0.0);
-                let top = rv(get_top_direction(e, lp(&mut o)).cast(), 0);
+                let top = rv(GPtr::<f32>::cast::<sa_math::vector::CVector>(get_top_direction(e, GPtr::<sa_math::vector::CVector>::cast::<f32>(lp(&mut o)))).cast(), 0);
                 let mut dir = [0f32; 3];
                 for (i, t) in top.iter().enumerate() {
                     f.fld(*t);

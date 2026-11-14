@@ -9,7 +9,7 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
-use sa_world::bindings::acquaintance_get;
+use crate::bindings::acquaintance_get;
 use crate::bindings::area_codes_dtor;
 use crate::bindings::car_enter_exit_remove_car_sit_anim;
 use crate::bindings::compute_closest_surface_point_ped as geom_compute_closest_surface_point;
@@ -35,7 +35,7 @@ use sa_world::bindings::wanted_can_cop_join_pursuit;
 use sa_core::bindings::car_set_ped_out_dtor as task_car_set_ped_out_dtor;
 use sa_core::bindings::car_set_ped_out_process_ped as task_car_set_ped_out_process_ped;
 use sa_core::bindings::entity_register_reference;
-use sa_core::bindings::find_player_ped;
+use sa_world::bindings::find_player_ped;
 use sa_core::bindings::general_random_int_in_range as general_get_random_number_in_range_int;
 use sa_core::bindings::get_weapon_info as weapon_info_get;
 use sa_core::bindings::ped_is_alive;
@@ -44,30 +44,30 @@ use sa_core::bindings::tm_get_simplest_active_task;
 use sa_core::bindings::vector_difference;
 use sa_core::bindings::vector_dot_product as vector_dot_product_st0;
 use sa_core::bindings::vector_normalise;
-use sa_stream::bindings::find_player_wanted;
+use sa_world::bindings::find_player_wanted;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::area_codes_ctor;
 use sa_world::bindings::can_physical_be_damaged as physical_can_be_damaged;
-use sa_world::bindings::decision_maker_types_get_instance;
+use crate::bindings::decision_maker_types_get_instance;
 use sa_world::bindings::event_ctor_4aeac0 as fun_004aeac0;
 use sa_world::bindings::event_damage_dtor as damage_dtor;
 use sa_world::bindings::event_dtor_4aeb90 as fun_004aeb90;
-use sa_world::bindings::event_group_add;
+use crate::bindings::event_group_add;
 use sa_world::bindings::get_ped_flag as ped_type_get_ped_flag;
 use sa_world::bindings::get_task_jet_pack as intel_get_task_jet_pack;
-use sa_world::bindings::group_intelligence_add_event as pgi_add_event;
+use crate::bindings::group_intelligence_add_event as pgi_add_event;
 use sa_world::bindings::ik_is_looking;
 use sa_world::bindings::intel_find_task_by_type;
 use sa_world::bindings::membership_get_leader;
 use sa_world::bindings::membership_get_member;
 use sa_world::bindings::membership_is_leader;
-use sa_world::bindings::membership_is_member;
+use crate::bindings::membership_is_member;
 use sa_world::bindings::ped_groups_are_in_same_group;
-use sa_world::bindings::ped_groups_get_peds_group;
+use crate::bindings::ped_groups_get_peds_group;
 use sa_world::bindings::report_crime as crime_report_crime;
-use sa_world::bindings::tm_find_active_task_by_type;
+use crate::bindings::tm_find_active_task_by_type;
 use sa_world::bindings::tm_find_task_by_type;
-use sa_core::bindings::vector_magnitude_sqr as vector_magnitude_sqr_st0;
+use sa_world::bindings::vector_magnitude_sqr as vector_magnitude_sqr_st0;
 use sa_core::bindings::world_get_is_line_of_sight_clear;
 use crate::bindings::event_get_sound_level as event_get_sound_level_st0;
 use crate::bindings::history_get_current_event;
@@ -75,7 +75,7 @@ use crate::bindings::scan_vehicle_potential_collision;
 use crate::bindings::wanted_is_in_pursuit;
 use sa_core::bindings::car_set_ped_out_ctor as task_car_set_ped_out_ctor;
 use sa_core::bindings::ped_is_alive as ped_is_alive_eax;
-use sa_core::bindings::vector_sub;
+use sa_world::bindings::vector_sub;
 use sa_world::bindings::event_damage_ctor as damage_ctor;
 use sa_world::bindings::event_gun_shot_ctor as gun_shot_ctor;
 use sa_world::bindings::generate_damage_event as weapon_generate_damage_event;
@@ -267,7 +267,7 @@ pub fn event_editable_response_inform_respected_friends_4b2b00(this: GPtr<u8>, p
     if max == 0 {
         return 0;
     }
-    let respect = acquaintance_get(ped.byte_add(0x4E0), 0);
+    let respect = acquaintance_get(GPtr::<u8>::addr(ped.byte_add(0x4E0)) as u32, 0);
     let list = intel(ped).byte_add(0x130);
     let mut count = 0i32;
     let mut i = 0isize;
@@ -283,7 +283,7 @@ pub fn event_editable_response_inform_respected_friends_4b2b00(this: GPtr<u8>, p
                     rd::<u32>(w, 0x2C) == 0
                 }
             } else if ped_is_player(ped) != 0 {
-                let a = acquaintance_get(p.byte_add(0x4E0), 0);
+                let a = acquaintance_get(GPtr::<u8>::addr(p.byte_add(0x4E0)) as u32, 0);
                 ped_type_get_ped_flag(rd::<u32>(ped, 0x598) as i32) & a != 0
             } else {
                 ped_type_get_ped_flag(rd::<u32>(p, 0x598) as i32) & respect != 0
@@ -321,7 +321,7 @@ pub fn event_editable_response_inform_respected_friends_4b2b00(this: GPtr<u8>, p
 /// clone when refused; AL = 1.
 #[hook(addr = 0x4B7DF0, conv = thiscall, name = "CEventEditableResponse::InformGroup", expect = "53 8B 5C 24 08")]
 pub fn event_editable_response_inform_group_4b7df0(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
-    let grp = ped_groups_get_peds_group(ped);
+    let grp = GPtr::from_addr(ped_groups_get_peds_group(ped.addr() as u32) as usize);
     if grp.is_null() {
         return 0;
     }
@@ -554,7 +554,7 @@ pub fn event_sound_quiet_ctor_5e05b0(this: GPtr<u8>, ent: GPtr<u8>, level: u32, 
 /// task → false. The other ped is re-read from +0x14 at every use.
 #[hook(addr = 0x4ACB10, conv = thiscall, name = "CEventPedCollisionWithPed::AffectsPed", expect = "53 56 8B 74 24 0C")]
 pub fn event_ped_collision_with_ped_affects_ped_4acb10(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
-    if ped_is_alive(ped) == 0 || rd::<u32>(ped, 0xFC) != 0 {
+    if ped_is_alive(ped) as u8 == 0 || rd::<u32>(ped, 0xFC) != 0 {
         return 0;
     }
     let o = rd::<GPtr<u8>>(this, 0x14);
@@ -568,7 +568,7 @@ pub fn event_ped_collision_with_ped_affects_ped_4acb10(this: GPtr<u8>, ped: GPtr
         return 0;
     }
     if rd::<i16>(this, 0x30) < 4 {
-        let grp = ped_groups_get_peds_group(rd::<GPtr<u8>>(this, 0x14));
+        let grp = GPtr::from_addr(ped_groups_get_peds_group(GPtr::<u8>::addr(rd::<GPtr<u8>>(this, 0x14)) as u32) as usize);
         if grp.is_null() || membership_is_leader(grp.byte_add(8), rd::<GPtr<u8>>(this, 0x14)) == 0 {
             return 0;
         }
@@ -617,7 +617,7 @@ pub fn event_ped_collision_with_ped_affects_ped_4acb10(this: GPtr<u8>, ped: GPtr
 /// building needs `d <= [0x858F40]`; no active task 0x10B; and the current event type != 0x1F.
 #[hook(addr = 0x4AD070, conv = thiscall, name = "CEventBuildingCollision::AffectsPed", expect = "83 EC 0C 56 8B 74 24 14")]
 pub fn event_building_collision_affects_ped_4ad070(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
-    if ped_is_player(ped) != 0 || ped_is_alive(ped) == 0 || rd::<u16>(this, 0xE) == 1 {
+    if ped_is_player(ped) != 0 || ped_is_alive(ped) as u8 == 0 || rd::<u16>(this, 0xE) == 1 {
         return 0;
     }
     if !x(rd::<f32>(this, 0x20)).fcom(gf(0x86C8F4)).test_any(0x41)
@@ -630,7 +630,7 @@ pub fn event_building_collision_affects_ped_4ad070(this: GPtr<u8>, ped: GPtr<u8>
     }
     let mut v = [rd::<u32>(this, 0x18), rd::<u32>(this, 0x1C), 0u32];
     let vp = buf(&mut v);
-    vector_normalise(vp);
+    vector_normalise(vp.cast::<[f32;3]>());
     let m = rd::<GPtr<u8>>(ped, 0x14);
     let dot = x(rd::<f32>(vp, 4))
         .fmul_m(rd::<f32>(m, 0x14))
@@ -686,7 +686,7 @@ pub fn event_script_command_get_event_priority_4b0b20(this: GPtr<u8>) -> u32 {
 /// `level - other.GetSoundLevel(null, pedPos) < [0x858B3C]`. Comparisons pass on NaN (`test ah, 5; jp`).
 #[hook(addr = 0x4B5240, conv = thiscall, name = "CEventSoundQuiet::AffectsPed", expect = "83 EC 0C 53 57")]
 pub fn event_sound_quiet_affects_ped_4b5240(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
-    if ped_is_player(ped) != 0 || ped_is_alive(ped) == 0 || ev_get_source_entity(this).is_null() {
+    if ped_is_player(ped) != 0 || ped_is_alive(ped) as u8 == 0 || ev_get_source_entity(this).is_null() {
         return 0;
     }
     let l = event_get_sound_level(this, GPtr::NULL, ent_pos(ped));
@@ -1009,7 +1009,7 @@ pub fn event_knock_off_bike_ctor_4afcf0(
 /// bit 0.
 #[hook(addr = 0x4AFEE0, conv = thiscall, name = "CEventKnockOffBike::AffectsPed", expect = "56 8B 74 24 08")]
 pub fn event_knock_off_bike_affects_ped_4afee0(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
-    if ped_is_alive(ped) == 0 {
+    if ped_is_alive(ped) as u8 == 0 {
         return 0;
     }
     let v = rd::<GPtr<u8>>(this, 0x38);
@@ -1100,7 +1100,7 @@ pub fn event_vehicle_on_fire_ctor_4b10c0(this: GPtr<u8>, veh: GPtr<u8>) -> GPtr<
 #[hook(addr = 0x4B0AB0, conv = thiscall, name = "CEventScriptCommand::IsValid", expect = "56 8B F1 8B 4C 24 08")]
 pub fn event_script_command_is_valid_4b0ab0(this: GPtr<u8>, ped: GPtr<u8>) -> u32 {
     if !ped.is_null() {
-        return ped_is_alive_eax(ped) as u32;
+        return (ped_is_alive_eax(ped) as u8) as u32;
     }
     if rd::<u8>(this, 8) != 0 {
         return 1;
@@ -1114,7 +1114,7 @@ pub fn event_script_command_is_valid_4b0ab0(this: GPtr<u8>, ped: GPtr<u8>) -> u3
 #[hook(addr = 0x4B1860, conv = thiscall, name = "CEventCopCarBeingStolen::AffectsPed", expect = "56 8B F1 8B 4E 0C")]
 pub fn event_cop_car_being_stolen_affects_ped_4b1860(this: GPtr<u8>, ped: GPtr<u8>) -> u32 {
     let h = rd::<GPtr<u8>>(this, 0xC);
-    if h.is_null() || rd::<u32>(this, 0x10) == 0 || ped_is_alive(h) == 0 || ped_is_alive(ped) == 0 {
+    if h.is_null() || rd::<u32>(this, 0x10) == 0 || ped_is_alive(h) as u8 == 0 || ped_is_alive(ped) as u8 == 0 {
         return 0;
     }
     if rd::<u32>(ped, 0x598) != 6 {
@@ -1169,7 +1169,7 @@ pub fn event_area_codes_affects_ped_4b2270(this: GPtr<u8>, ped: GPtr<u8>) -> u8 
             return 0;
         }
     }
-    if ped_is_alive(rd::<GPtr<u8>>(this, 0xC)) == 0 || ped_is_alive(ped) == 0 {
+    if ped_is_alive(rd::<GPtr<u8>>(this, 0xC)) as u8 == 0 || ped_is_alive(ped) as u8 == 0 {
         return 0;
     }
     let a = rd::<GPtr<u8>>(ped, 0x584);
@@ -1213,7 +1213,7 @@ pub fn event_gun_shot_affects_ped_4b2cd0(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
             return 0;
         }
     }
-    if ped_is_alive(ped) == 0 || ped == rd::<GPtr<u8>>(this, 0x14) || ped_is_player(ped) != 0 {
+    if ped_is_alive(ped) as u8 == 0 || ped == rd::<GPtr<u8>>(this, 0x14) || ped_is_player(ped) != 0 {
         return 0;
     }
     let b = ent_pos(rd::<GPtr<u8>>(this, 0x14));
@@ -1265,7 +1265,7 @@ pub fn event_damage_report_criminal_event_4b3440(this: GPtr<u8>, ped: GPtr<u8>) 
     if ev_is_criminal_event(this) == 0 || rd::<u32>(this, 0x14) == 0 {
         return;
     }
-    let dc = ped_type_police_dont_care(rd::<u32>(ped, 0x598));
+    let dc = ped_type_police_dont_care(rd::<u32>(ped, 0x598) as i32);
     let bslot = (ped.addr() as u32 & !0xFF) | u32::from(dc);
     let w = rd::<i32>(this, 0x1C);
     let cop = rd::<u32>(ped, 0x598) == 6;
@@ -1279,7 +1279,7 @@ pub fn event_damage_report_criminal_event_4b3440(this: GPtr<u8>, ped: GPtr<u8>) 
         return;
     };
     let pos = ent_pos(rd::<GPtr<u8>>(this, 0x14));
-    wanted_register_crime(find_player_wanted(-1), crime, pos, ped, bslot);
+    wanted_register_crime(find_player_wanted(-1), crime as i32, pos.cast::<f32>(), ped, bslot as u8);
 }
 
 /// `CEventDamage::AffectsPed(CPed*)` (0x4B35A0, `ret 4`, AL): see the inline steps; `FindPlayerPed(-1)`
@@ -1293,7 +1293,7 @@ pub fn event_damage_affects_ped_4b35a0(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     if rd::<u8>(this, 0x42) != 0 && rd::<u8>(this, 0x43) == 0 {
         return 1;
     }
-    if ped_is_alive(ped) == 0 {
+    if ped_is_alive(ped) as u8 == 0 {
         return 0;
     }
     if ped == find_player_ped(-1) && rd::<u8>(rd::<GPtr<u8>>(find_player_ped(-1), 0x480), 0x34) & 0x10 == 0 {
@@ -1354,7 +1354,7 @@ pub fn event_damage_affects_ped_4b35a0(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
             let mut l = [0u32; 3];
             let lp = buf(&mut l);
             vector_difference(lp, sp, pp);
-            vector_normalise(lp);
+            vector_normalise(lp.cast::<[f32;3]>());
             let r = intel_can_see_entity_with_lights(intel(ped), rd::<GPtr<u8>>(this, 0x14), 0);
             if !r.fcom(gf(0x858B50)).test_parity(0x41) {
                 return 0;
@@ -1415,7 +1415,7 @@ const IK_CHAIN_MAN: usize = 0xC15448;
 #[hook(addr = 0x4B4830, conv = thiscall, name = "CEventDeadPed::AffectsPed", expect = "57 8B F9 8B 47 14")]
 pub fn event_dead_ped_affects_ped_4b4830(this: GPtr<u8>, ped: GPtr<u8>) -> u32 {
     let d = rd::<GPtr<u8>>(this, 0x14);
-    if d.is_null() || ped == d || ped_is_alive(ped) == 0 {
+    if d.is_null() || ped == d || ped_is_alive(ped) as u8 == 0 {
         return 0;
     }
     let ik = GPtr::<u8>::from_addr(IK_CHAIN_MAN);
@@ -1463,7 +1463,7 @@ pub fn event_knock_off_bike_report_criminal_event_4b4e80(this: GPtr<u8>, ped: GP
         return;
     }
     let pos = ent_pos(ped);
-    wanted_register_crime(find_player_wanted(-1), 5, pos, ped, 0);
+    wanted_register_crime(find_player_wanted(-1), 5, pos.cast::<f32>(), ped, 0);
 }
 
 /// `CEventGunAimedAt::AffectsPed(CPed*)` (0x4B4EE0, `ret 4`, AL): not a player, not doing task 0x259
@@ -1481,7 +1481,7 @@ pub fn event_gun_aimed_at_affects_ped_4b4ee0(this: GPtr<u8>, ped: GPtr<u8>) -> u
         return 0;
     }
     let a = rd::<GPtr<u8>>(this, 0x14);
-    if a.is_null() || intel_is_in_seeing_range(intel(ped), ent_pos(a)) == 0 || ped_is_alive(ped) == 0 {
+    if a.is_null() || intel_is_in_seeing_range(intel(ped), ent_pos(a)) == 0 || ped_is_alive(ped) as u8 == 0 {
         return 0;
     }
     if ped_groups_are_in_same_group(ped, rd::<GPtr<u8>>(this, 0x14)) != 0 {
@@ -1513,10 +1513,10 @@ pub fn event_vehicle_on_fire_affects_ped_4b4fd0(this: GPtr<u8>, ped: GPtr<u8>) -
     if !pv.is_null() && rd::<u32>(ped, 0x46C) & 0x100 != 0 && pv != v {
         return 0;
     }
-    if ped_is_player(ped) != 0 || ped_is_alive(ped) == 0 {
+    if ped_is_player(ped) != 0 || ped_is_alive(ped) as u8 == 0 {
         return 0;
     }
-    let grp = ped_groups_get_peds_group(ped);
+    let grp = GPtr::from_addr(ped_groups_get_peds_group(ped.addr() as u32) as usize);
     let follower = !grp.is_null() && membership_is_leader(grp.byte_add(8), ped) == 0;
     if rd::<u32>(ped, 0x46C) & 0x100 != 0 {
         return u8::from(!follower);
@@ -1537,7 +1537,7 @@ pub fn event_vehicle_on_fire_affects_ped_4b4fd0(this: GPtr<u8>, ped: GPtr<u8>) -
 /// ped in x/y (`ey² + ex²`) → EAX = 1, else EAX = 0 (u32 here).
 #[hook(addr = 0x4B5120, conv = thiscall, name = "CEventGunShotWhizzedBy::AffectsPed", expect = "83 EC 18 56 57")]
 pub fn event_gun_shot_whizzed_by_affects_ped_4b5120(this: GPtr<u8>, ped: GPtr<u8>) -> u32 {
-    if ped_is_player(ped) != 0 || ped_is_alive(ped) == 0 {
+    if ped_is_player(ped) != 0 || ped_is_alive(ped) as u8 == 0 {
         return 0;
     }
     let mut l = [0u32; 3];
@@ -1546,7 +1546,7 @@ pub fn event_gun_shot_whizzed_by_affects_ped_4b5120(this: GPtr<u8>, ped: GPtr<u8
         let v = x(rd::<f32>(this, 0x24 + o)).fsub_m(rd::<f32>(this, 0x18 + o));
         wr::<f32>(lp, o, f32_of(v));
     }
-    vector_normalise(lp);
+    vector_normalise(lp.cast::<[f32;3]>());
     let m = rd::<GPtr<u8>>(ped, 0x14);
     let pp = if m.is_null() { ped.byte_add(4) } else { m.byte_add(0x30) };
     let px = x(rd::<f32>(pp, 0)).fsub_m(rd::<f32>(this, 0x18));
@@ -1590,7 +1590,7 @@ pub fn event_danger_affects_ped_4b5470(this: GPtr<u8>, ped: GPtr<u8>) -> u32 {
     if !r.fmul(r).fcom(s).test_parity(5) {
         return 0;
     }
-    ped_is_alive_eax(ped) as u32
+    (ped_is_alive_eax(ped) as u8) as u32
 }
 
 /// `CEventDamage::CloneEditable` (0x4B5D40): inlined `operator new` + copy ctor (0x4B33B0); then
@@ -1672,7 +1672,7 @@ pub fn event_knock_off_bike_clone_4b7590(this: GPtr<u8>) -> GPtr<u8> {
         this.byte_add(0xC),
         this.byte_add(0x18),
         rd::<u32>(this, 0x24),
-        rd::<u32>(this, 0x28),
+        f32::from_bits(rd::<u32>(this, 0x28)),
         i32::from(rd::<i8>(this, 0x36)) as u32,
         u32::from(rd::<u8>(this, 0x34)),
         rd::<u32>(this, 0x2C),
@@ -1712,8 +1712,8 @@ pub fn event_global_group_add_events_to_group_4ab8a0(this: GPtr<u8>, grp: GPtr<u
 pub fn event_editable_response_trigger_look_at_4ac5a0(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     let s = ev_get_source_entity(this);
     if !s.is_null() {
-        let bone = if rd::<u8>(s, 0x36) & 7 == 3 { 5 } else { 0xFFFF_FFFF };
-        ik_look_at(GPtr::from_addr(IK_CHAIN_MAN), GPtr::from_addr(0x85ABC4), ped, s, 0x7D0, bone, GPtr::NULL, 1, 0x3E80_0000, 0x1F4, 3, 0);
+        let bone = if rd::<u8>(s, 0x36) & 7 == 3 { 5 } else { -1 };
+        ik_look_at(GPtr::from_addr(IK_CHAIN_MAN), GPtr::from_addr(0x85ABC4), ped, s, 0x7D0, bone as i32, GPtr::NULL, 1, f32::from_bits(0x3E80_0000), 0x1F4, 3, 0);
     }
     1
 }
@@ -1726,7 +1726,7 @@ pub fn event_building_collision_is_head_on_collision_4ad1e0(this: GPtr<u8>, ped:
     let f = rd::<GPtr<u8>>(ped, 0x14).byte_add(0x10);
     let mut v = [rd::<u32>(this, 0x18), rd::<u32>(this, 0x1C), 0u32];
     let vp = buf(&mut v);
-    vector_normalise(vp);
+    vector_normalise(vp.cast::<[f32;3]>());
     let dot = x(rd::<f32>(vp, 4))
         .fmul_m(rd::<f32>(f, 4))
         .fadd(x(rd::<f32>(vp, 8)).fmul_m(rd::<f32>(f, 8)))
@@ -1750,7 +1750,7 @@ pub fn event_potential_walk_into_vehicle_affects_ped_4ae420(this: GPtr<u8>, ped:
     if ped_is_player(ped) != 0 && enter.is_null() && task_is_go_to_task(simplest) == 0 {
         return 0;
     }
-    if ped_is_alive(ped) == 0 || rd::<u32>(ped, 0x46C) & 0x100 != 0 || rd::<u32>(this, 0x18) == 1 {
+    if ped_is_alive(ped) as u8 == 0 || rd::<u32>(ped, 0x46C) & 0x100 != 0 || rd::<u32>(this, 0x18) == 1 {
         return 0;
     }
     let w = tm_find_active_task_by_type(intel(ped).byte_add(4), 0x1FC);
@@ -1809,7 +1809,7 @@ pub fn event_potential_walk_into_vehicle_affects_ped_4ae420(this: GPtr<u8>, ped:
 /// The first active task of types 0x4B2, 0x4BF, 0x4B3 of a ped (intelligence re-read per lookup).
 fn find_walk_task(ped: impl Fn() -> GPtr<u8>) -> GPtr<u8> {
     for ty in [0x4B2, 0x4BF, 0x4B3] {
-        let t = tm_find_active_task_by_type(intel(ped()).byte_add(4), ty as u32);
+        let t = tm_find_active_task_by_type(intel(ped()).byte_add(4), (ty as u32) as i32);
         if !t.is_null() {
             return t;
         }
@@ -1823,7 +1823,7 @@ fn find_walk_task(ped: impl Fn() -> GPtr<u8>) -> GPtr<u8> {
 /// FindTaskByType`) at it (+0x10) → false; true when the simplest active task is a go-to task.
 #[hook(addr = 0x4AE800, conv = thiscall, name = "CEventPotentialWalkIntoPed::AffectsPed", expect = "53 57 8B 7C 24 0C")]
 pub fn event_potential_walk_into_ped_affects_ped_4ae800(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
-    if ped_is_alive(ped) == 0 || rd::<u32>(this, 0x20) == 0 || rd::<u32>(this, 0x24) == 1 {
+    if ped_is_alive(ped) as u8 == 0 || rd::<u32>(this, 0x20) == 0 || rd::<u32>(this, 0x24) == 1 {
         return 0;
     }
     let t = find_walk_task(|| ped);
@@ -1859,7 +1859,7 @@ pub fn event_acquaintance_ped_affects_ped_group_4af970(this: GPtr<u8>, grp: GPtr
         return 0;
     }
     let m = grp.byte_add(8);
-    if membership_is_member(m, p) != 0 {
+    if membership_is_member(m, p) as u8 != 0 {
         return 0;
     }
     let is_2x = || ev_get_event_type(this) == 0x27 || ev_get_event_type(this) == 0x26;
@@ -1876,7 +1876,7 @@ pub fn event_acquaintance_ped_affects_ped_group_4af970(this: GPtr<u8>, grp: GPtr
     let p = rd::<GPtr<u8>>(this, 0x14);
     let id = rd::<i32>(pd, 0x38);
     let pm = GPtr::<u8>::from_addr(id.wrapping_mul(0x2D4).wrapping_add(0xC09928) as u32 as usize);
-    u8::from(membership_is_member(pm, p) == 0)
+    u8::from(membership_is_member(pm, p) as u8 == 0)
 }
 
 /// `CEventAcquaintancePed::AffectsPed(CPed*)` (0x4AFA30, `ret 4`, AL): a ped (+0x14), the target's
@@ -1886,7 +1886,7 @@ pub fn event_acquaintance_ped_affects_ped_4afa30(this: GPtr<u8>, ped: GPtr<u8>) 
     if rd::<u32>(this, 0x14) == 0 || rd::<u32>(ped, 0x730) != 0 {
         return 0;
     }
-    if ped_is_alive(ped) == 0 || ped_is_alive(rd::<GPtr<u8>>(this, 0x14)) == 0 {
+    if ped_is_alive(ped) as u8 == 0 || ped_is_alive(rd::<GPtr<u8>>(this, 0x14)) as u8 == 0 {
         return 0;
     }
     u8::from(ped_groups_are_in_same_group(ped, rd::<GPtr<u8>>(this, 0x14)) == 0)
@@ -2045,7 +2045,7 @@ pub fn event_scanner_scan_for_events_607e30(this: GPtr<u8>, ped: GPtr<u8>) {
         }
     }
 
-    if !x(rd::<f32>(ped, 0x540)).fcom(gf(0x858B50)).test_parity(0x41) && ped_is_alive(ped) != 0 {
+    if !x(rd::<f32>(ped, 0x540)).fcom(gf(0x858B50)).test_parity(0x41) && ped_is_alive(ped) as u8 != 0 {
         if g::<u32>(TIME_MS).read() <= g::<u32>(0xC0B038).read() {
             return;
         }
@@ -2122,12 +2122,12 @@ pub const HOOKS: &[HookReg] = &[
 
 /// `vector_dot_product_st0` with its ST0 result as `X87` (orig! returns stay register-sized).
 fn vector_dot_product(a: GPtr<u8>, b: GPtr<u8>) -> X87 {
-    X87::from_f64_exact(vector_dot_product_st0(a, b))
+    X87::from_f64_exact(vector_dot_product_st0(a, b).to_f64())
 }
 
 /// `vector_magnitude_sqr_st0` with its ST0 result as `X87` (orig! returns stay register-sized).
 fn vector_magnitude_sqr(v: GPtr<u8>) -> X87 {
-    X87::from_f64_exact(vector_magnitude_sqr_st0(v.cast::<f32>()))
+    X87::from_f64_exact(vector_magnitude_sqr_st0(v.cast::<u8>()).to_f64())
 }
 
 /// `event_get_sound_level_st0` with its ST0 result as `X87` (orig! returns stay register-sized).

@@ -10,12 +10,11 @@ use sa_core::bindings::eh_vector_ctor as eh_vector_constructor_iterator;
 use sa_core::bindings::sscanf1;
 use sa_core::bindings::strtok;
 use sa_core::bindings::file_close;
-use sa_core::bindings::load_line;
+use sa_stream::bindings::load_line;
 use sa_core::bindings::open_file as file_open;
-use sa_stream::bindings::find_ped_type;
+use crate::bindings::find_ped_type;
+use sa_core::bindings::crt_new_821195 as operator_new;
 orig! {
-    /// CRT `operator new` (0x821195)
-    fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x821195 => unported;
     /// `CPedType::LoadPedData()` (0x608B30)
     fn load_ped_data_call() = cdecl 0x608b30 => load_ped_data;
 }

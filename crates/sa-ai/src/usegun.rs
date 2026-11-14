@@ -31,27 +31,27 @@ const MINUS_FOUR: u32 = 0xC080_0000;
 const EIGHT: u32 = 0x4100_0000;
 
 use sa_world::bindings::anim_blend_animation as ug_blend_animation;
-use sa_core::bindings::anim_set_delete_callback as ug_set_delete_callback;
-use sa_core::bindings::assoc_set_finish_callback as ug_set_finish_callback;
-use sa_core::bindings::assoc_start as ug_assoc_start;
+use sa_anim::bindings::anim_set_delete_callback as ug_set_delete_callback;
+use sa_anim::bindings::assoc_set_finish_callback as ug_set_finish_callback;
+use sa_anim::bindings::assoc_start as ug_assoc_start;
 use sa_core::bindings::clump_get_association as ug_clump_get_association;
 use crate::bindings::duck_is_task_in_use_by_other_tasks as ug_duck_in_use_by_other_tasks;
 use crate::bindings::fight_6240b0 as ug_fight_6240b0;
 use crate::bindings::fight_ctor as ug_fight_ctor;
 use crate::bindings::fight_dtor_orig as ug_fight_dtor;
-use sa_core::bindings::ik_abort_look_at as ug_ik_abort_look_at;
+use sa_anim::bindings::ik_abort_look_at as ug_ik_abort_look_at;
 use crate::bindings::ik_abort_point_arm as ug_ik_abort_point_arm;
 use crate::bindings::ik_is_arm_pointing as ug_ik_is_arm_pointing;
 use sa_world::bindings::ped_set_move_state as ug_ped_set_move_state;
 use crate::bindings::ug_abort_ik_orig;
-use sa_core::bindings::entity_clean_up_old_reference as ug_clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference as ug_clean_up_old_reference;
 use sa_core::bindings::entity_register_reference as ug_register_reference;
 use sa_core::bindings::get_weapon_info as ug_get_weapon_info;
 use sa_core::bindings::intel_get_task_use_gun as ug_get_task_use_gun;
 use sa_core::bindings::matrix_mul_vec as ug_matrix_mul_vector;
 use sa_core::bindings::ped_is_alive as ug_ped_is_alive;
 use sa_core::bindings::tm_get_simplest_active_task as ug_get_simplest_active_task;
-use sa_core::bindings::tm_get_task_secondary as ug_task_manager_get_task_secondary;
+use crate::bindings::tm_get_task_secondary as ug_task_manager_get_task_secondary;
 use sa_core::bindings::vector_normalise as ug_vector_normalise;
 use sa_stream::bindings::ped_is_player as ug_ped_is_player;
 use sa_world::bindings::get_pad_from_player as ug_player_get_pad;
@@ -62,26 +62,23 @@ use sa_world::bindings::pad_get_ped_walk_up_down as ug_pad_walk_up_down;
 use sa_core::bindings::ped_get_bone_position as ug_ped_get_bone_position;
 use sa_world::bindings::ped_get_transformed_bone_position as ug_ped_get_transformed_bone_position;
 use sa_world::bindings::ped_get_weapon_skill as ug_ped_get_weapon_skill;
-use sa_world::bindings::task_simple_ctor as ug_task_simple_ctor;
-use sa_world::bindings::task_simple_dtor as ug_task_simple_dtor;
+use crate::bindings::task_simple_ctor as ug_task_simple_ctor;
+use crate::bindings::task_simple_dtor as ug_task_simple_dtor;
 use sa_world::bindings::vector_add as ug_vector_add;
-use sa_core::bindings::vector_sub as ug_vector_sub;
+use sa_world::bindings::vector_sub as ug_vector_sub;
 use sa_world::bindings::vector_sub_assign as ug_vector_sub_assign;
 use crate::bindings::weapon_fire as ug_weapon_fire;
-use sa_core::bindings::assoc_set_current_time as ug_set_current_time;
+use sa_anim::bindings::assoc_set_current_time as ug_set_current_time;
 use sa_world::bindings::add_animation as ug_add_animation;
 use sa_world::bindings::get_at_direction as ug_get_at_direction;
 use sa_world::bindings::ped_do_gun_flash as ug_ped_do_gun_flash;
 use sa_world::bindings::ped_say as ug_ped_say;
+use crate::bindings::ik_point_arm as ug_ik_point_arm;
+use sa_world::bindings::camera_find_3rd_person_cam_target_vector as ug_find_3rd_person_cam_target_vector;
+use sa_world::bindings::ik_look_at as ug_ik_look_at;
 orig! {
     /// `IKChainManager_c::IsFacingTarget(ped, slot)` (0x618330)
     fn ug_ik_is_facing_target(m: GPtr<u8>, ped: GPtr<u8>, slot: i32) -> u8 = thiscall 0x618330 => unported;
-    /// `IKChainManager_c::LookAt(name, ped, target, time, bone, pos, useTorso, speed, blend, priority, b)` (0x618970)
-    #[allow(clippy::too_many_arguments)]
-    fn ug_ik_look_at(m: GPtr<u8>, name: u32, ped: GPtr<u8>, target: GPtr<u8>, time: i32, bone: i32, pos: GPtr<u8>, torso: u32, speed: u32, blend: i32, prio: i32, b: u32) = thiscall 0x618970 => unported;
-    /// `IKChainManager_c::PointArm(name, arm, ped, target, bone, pos, speed, blendTime, cosLimit)` (0x618B60)
-    #[allow(clippy::too_many_arguments)]
-    fn ug_ik_point_arm(m: GPtr<u8>, name: u32, arm: i32, ped: GPtr<u8>, target: GPtr<u8>, bone: i32, pos: GPtr<u8>, speed: u32, blend: u32, limit: u32) = thiscall 0x618B60 => unported;
     /// `CTask::GetTaskType()` (vtable +0x10)
     fn ug_v_get_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
     /// `CTask::MakeAbortable(ped, priority, event)` (vtable +0x18)
@@ -102,9 +99,6 @@ orig! {
     fn ug_pedik_point_gun_at_position(ik: GPtr<u8>, v: GPtr<u8>, amount: u32) -> u8 = thiscall 0x5FDE20 => unported;
     /// `CPedIK::PointGunInDirection(zAngle, angle2, bool, float)` (0x5FDC00)
     fn ug_pedik_point_gun_in_direction(ik: GPtr<u8>, a: u32, b: u32, c: u32, amount: u32) -> u8 = thiscall 0x5FDC00 => unported;
-    /// `CCamera::Find3rdPersonCamTargetVector(range, CVector source, CVector& camPos, CVector& pointAt)` (0x514970)
-    #[allow(clippy::too_many_arguments)]
-    fn ug_find_3rd_person_cam_target_vector(cam: GPtr<u8>, range: u32, sx: u32, sy: u32, sz: u32, cam_pos: GPtr<u8>, point: GPtr<u8>) = thiscall 0x514970 => unported;
     // This class's own methods (called through their original addresses).
     /// `CTaskSimpleUseGun::Destructor` (0x61DF30)
     fn ug_destructor_orig(t: GPtr<u8>) = thiscall 0x61DF30 => unported;
@@ -206,11 +200,11 @@ pub fn use_gun_destructor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x86D724);
     let t = rd::<GPtr<u8>>(this, 0x1C);
     if !t.is_null() {
-        ug_clean_up_old_reference(t, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x1C)));
+        ug_clean_up_old_reference(t, this.byte_add(0x1C));
     }
     let a = rd::<GPtr<u8>>(this, 0x2C);
     if !a.is_null() {
-        ug_set_delete_callback(a, DEFAULT_ANIM_CB, GPtr::NULL);
+        ug_set_delete_callback(a, DEFAULT_ANIM_CB, GPtr::<u8>::addr(GPtr::NULL) as u32);
     }
     ug_task_simple_dtor(this);
 }
@@ -247,7 +241,7 @@ pub fn use_gun_control_gun(this: GPtr<u8>, ped: GPtr<u8>, target: GPtr<u8>, cmd:
     wr::<u8>(this, 9, 1);
     if target != old {
         if !old.is_null() {
-            ug_clean_up_old_reference(old, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x1C)));
+            ug_clean_up_old_reference(old, this.byte_add(0x1C));
         }
         wr::<GPtr<u8>>(this, 0x1C, target);
         if !target.is_null() {
@@ -332,7 +326,7 @@ pub fn use_gun_require_pistol_whip(ped: GPtr<u8>, target: GPtr<u8>) -> u8 {
             let mut bone = [0f32; 3];
             let bp: GPtr<u8> = GPtr::from_raw(&mut bone as *mut [f32; 3]).cast();
             ug_ped_get_bone_position(cand, bp, 5, 0);
-            if ug_ped_is_alive(cand) == 0 {
+            if ug_ped_is_alive(cand) as u8 == 0 {
                 break 'cand;
             }
             let pp = ent_pos(ped);
@@ -787,14 +781,14 @@ pub fn use_gun_aim_gun(this: GPtr<u8>, ped: GPtr<u8>) {
                 if rd::<u8>(this, 0x3A) == 0 && look_ok(this) {
                     ug_ik_look_at(
                         ik(),
-                        name_look,
+                        GPtr::from_addr(name_look as usize),
                         ped,
                         rd::<GPtr<u8>>(this, 0x1C),
                         9_999_999,
                         bone,
                         GPtr::NULL,
                         1,
-                        0x3E80_0000,
+                        f32::from_bits(0x3E80_0000),
                         0xFA,
                         3,
                         0,
@@ -854,24 +848,24 @@ pub fn use_gun_aim_gun(this: GPtr<u8>, ped: GPtr<u8>) {
             let (sx, sy, sz) = (rd::<u32>(r, 0), rd::<u32>(r, 4), rd::<u32>(r, 8));
             ug_find_3rd_person_cam_target_vector(
                 GPtr::from_addr(THE_CAMERA),
-                0x41A0_0000,
-                sx,
-                sy,
-                sz,
+                f32::from_bits(0x41A0_0000),
+                f32::from_bits(sx),
+                f32::from_bits(sy),
+                f32::from_bits(sz),
                 cp,
                 pp,
             );
             if look_ok(this) {
                 ug_ik_look_at(
                     ik(),
-                    name_look,
+                    GPtr::from_addr(name_look as usize),
                     ped,
                     GPtr::NULL,
                     9_999_999,
                     -1,
                     pp,
                     1,
-                    0x3E80_0000,
+                    f32::from_bits(0x3E80_0000),
                     0xFA,
                     3,
                     0,
@@ -912,14 +906,14 @@ pub fn use_gun_aim_gun(this: GPtr<u8>, ped: GPtr<u8>) {
                 if look_ok(this) {
                     ug_ik_look_at(
                         ik(),
-                        name_look,
+                        GPtr::from_addr(name_look as usize),
                         ped,
                         GPtr::NULL,
                         9_999_999,
                         -1,
                         tp,
                         1,
-                        0x3E80_0000,
+                        f32::from_bits(0x3E80_0000),
                         0xFA,
                         3,
                         0,
@@ -958,14 +952,14 @@ pub fn use_gun_aim_gun(this: GPtr<u8>, ped: GPtr<u8>) {
                 if look_ok(this) && rd::<u8>(this, 0x3A) == 0 {
                     ug_ik_look_at(
                         ik(),
-                        name_look,
+                        GPtr::from_addr(name_look as usize),
                         ped,
                         ped,
                         9_999_999,
                         0x16,
                         pp,
                         1,
-                        0x3E80_0000,
+                        f32::from_bits(0x3E80_0000),
                         0xFA,
                         3,
                         0,
@@ -1043,7 +1037,7 @@ pub fn use_gun_make_abortable(this: GPtr<u8>, ped: GPtr<u8>, priority: i32, _eve
         if priority == 2 {
             wr::<u32>(a, 0x1C, 0xC47A_0000);
         }
-        ug_set_delete_callback(rd::<GPtr<u8>>(this, 0x2C), DEFAULT_ANIM_CB, GPtr::NULL);
+        ug_set_delete_callback(rd::<GPtr<u8>>(this, 0x2C), DEFAULT_ANIM_CB, GPtr::<u8>::addr(GPtr::NULL) as u32);
         wr::<u32>(this, 0x2C, 0);
     }
     wr::<u8>(this, 8, 1);
@@ -1060,7 +1054,7 @@ pub fn use_gun_make_abortable(this: GPtr<u8>, ped: GPtr<u8>, priority: i32, _eve
 #[hook(addr = 0x624ED0, conv = thiscall, name = "CTaskSimpleUseGun::SetPedPosition", expect = "53 56 57 8B 7C 24 10")]
 pub fn use_gun_set_ped_position(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     let ty = rd::<u32>(active_weapon(ped), 0);
-    let skill = ug_ped_get_weapon_skill(ped);
+    let skill = ug_ped_get_weapon_skill(ped) as u32;
     let wi = ug_get_weapon_info(ty as i32, (skill as i32) as u8);
     if rd::<GPtr<u8>>(this, 0x30) == wi {
         if rd::<u8>(this, 0xD) & 1 != 0 {
@@ -1100,7 +1094,7 @@ pub fn use_gun_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
         {
             wr::<u32>(a, 0x1C, 0xC100_0000);
         }
-        ug_set_delete_callback(rd::<GPtr<u8>>(this, 0x2C), DEFAULT_ANIM_CB, GPtr::NULL);
+        ug_set_delete_callback(rd::<GPtr<u8>>(this, 0x2C), DEFAULT_ANIM_CB, GPtr::<u8>::addr(GPtr::NULL) as u32);
         wr::<u32>(this, 0x2C, 0);
     }
     let finish = |this: GPtr<u8>| {
@@ -1153,7 +1147,7 @@ pub fn use_gun_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
                 let a = rd::<GPtr<u8>>(this, 0x2C);
                 wr::<u8>(a, 0x2E, rd::<u8>(a, 0x2E) & 0xFE);
             }
-            ug_set_finish_callback(rd::<GPtr<u8>>(this, 0x2C), FINISH_GUN_ANIM_CB, GPtr::from_addr(data as usize));
+            ug_set_finish_callback(rd::<GPtr<u8>>(this, 0x2C), FINISH_GUN_ANIM_CB, GPtr::<u8>::addr(GPtr::from_addr(data as usize)) as u32);
             finish(this);
         }
         4 => {
@@ -1174,7 +1168,7 @@ pub fn use_gun_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
                 let a = ug_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), rd::<u32>(wi, 0x1C), anim_id, f32::from_bits(EIGHT));
                 wr::<GPtr<u8>>(this, 0x2C, a);
                 ug_assoc_start(a, f32::from_bits(0));
-                ug_set_finish_callback(rd::<GPtr<u8>>(this, 0x2C), FINISH_GUN_ANIM_CB, GPtr::from_addr(data as usize));
+                ug_set_finish_callback(rd::<GPtr<u8>>(this, 0x2C), FINISH_GUN_ANIM_CB, GPtr::<u8>::addr(GPtr::from_addr(data as usize)) as u32);
                 let n = rd::<u8>(this, 0xF);
                 wr::<u16>(this, 0x36, rd::<u16>(this, 0x36).wrapping_sub(1));
                 wr::<u8>(this, 0x10, n);
@@ -1195,7 +1189,7 @@ pub fn use_gun_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
                 f32::from_bits(EIGHT),
             );
             wr::<GPtr<u8>>(this, 0x2C, a);
-            ug_set_finish_callback(a, FINISH_GUN_ANIM_CB, GPtr::from_addr(data as usize));
+            ug_set_finish_callback(a, FINISH_GUN_ANIM_CB, GPtr::<u8>::addr(GPtr::from_addr(data as usize)) as u32);
             finish(this);
         }
         _ => finish(this),
@@ -1474,7 +1468,7 @@ pub fn use_gun_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
             return 0;
         }
         let ty = rd::<u32>(active_weapon(ped), 0);
-        let skill = ug_ped_get_weapon_skill(ped);
+        let skill = ug_ped_get_weapon_skill(ped) as u32;
         let wi = ug_get_weapon_info(ty as i32, (skill as i32) as u8);
         wr::<GPtr<u8>>(this, 0x30, wi);
         if rd::<u32>(wi, 0) != 0 && rd::<u32>(wi, 0x18) & 0x100 == 0 {
@@ -1487,7 +1481,7 @@ pub fn use_gun_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         }
     } else {
         let ty = rd::<u32>(active_weapon(ped), 0);
-        let skill = ug_ped_get_weapon_skill(ped);
+        let skill = ug_ped_get_weapon_skill(ped) as u32;
         let wi = ug_get_weapon_info(ty as i32, (skill as i32) as u8);
         if rd::<GPtr<u8>>(this, 0x30) != wi {
             ug_v_make_abortable(this, ped, 1, GPtr::NULL);
@@ -1567,7 +1561,7 @@ pub fn use_gun_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         if rd::<u8>(this, 0xF) == 5 && rd::<i8>(this, 0x10) <= 3 {
             let a = anim_of(this);
             if !a.is_null() {
-                ug_set_delete_callback(a, DEFAULT_ANIM_CB, GPtr::NULL);
+                ug_set_delete_callback(a, DEFAULT_ANIM_CB, GPtr::<u8>::addr(GPtr::NULL) as u32);
             }
             wr::<u32>(this, 0x2C, 0);
             ug_abort_ik_orig(this, ped);
@@ -1601,7 +1595,7 @@ pub fn use_gun_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
                     let mut v = [0u32; 3];
                     let vp: GPtr<u8> = GPtr::from_raw(&mut v as *mut [u32; 3]).cast();
                     ug_matrix_mul_vector(
-                        vp.cast::<f32>(),
+                        vp.cast::<u8>(),
                         rd::<GPtr<u8>>(ped, 0x14),
                         GPtr::from_addr(0xC177D0 + 12 * idx),
                     );
@@ -1668,10 +1662,10 @@ pub fn use_gun_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
                     let (sx, sy, sz) = (rd::<u32>(r, 0), rd::<u32>(r, 4), rd::<u32>(r, 8));
                     ug_find_3rd_person_cam_target_vector(
                         GPtr::from_addr(THE_CAMERA),
-                        0x41A0_0000,
-                        sx,
-                        sy,
-                        sz,
+                        f32::from_bits(0x41A0_0000),
+                        f32::from_bits(sx),
+                        f32::from_bits(sy),
+                        f32::from_bits(sz),
                         cp,
                         pp,
                     );
@@ -1682,7 +1676,7 @@ pub fn use_gun_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
                 }
                 if nonzero(rd::<f32>(pp, 0)) || nonzero(rd::<f32>(pp, 4)) {
                     ug_vector_sub_assign(pp, ent_pos(ped));
-                    ug_vector_normalise(pp);
+                    ug_vector_normalise(pp.cast::<[f32;3]>());
                     let mut h = x(rd::<f32>(pp, 0))
                         .fchs()
                         .fpatan(x(rd::<f32>(pp, 4)))

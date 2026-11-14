@@ -17,15 +17,15 @@ use sa_math::x87::X87;
 use crate::common::{g, jp, k, rd, wr, x};
 
 use crate::bindings::rw_texture_set_raster;
-use sa_core::bindings::find_player_ped;
+use sa_world::bindings::find_player_ped;
 use sa_core::bindings::get_first_atomic;
-use sa_core::bindings::rp_clump_for_all_atomics;
+use sa_rwcore::bindings::rp_clump_for_all_atomics;
 use sa_core::bindings::rw_camera_begin_update;
 use sa_core::bindings::rw_camera_end_update;
-use sa_core::bindings::rw_frame_update_objects;
+use sa_rwcore::bindings::rw_frame_update_objects;
 use sa_core::bindings::rw_im2d_render_primitive as im2d_render_primitive;
 use sa_core::bindings::rw_matrix_update;
-use sa_core::bindings::rw_raster_destroy;
+use sa_rwcore::bindings::rw_raster_destroy;
 use sa_core::bindings::rw_v3d_transform_points;
 use sa_core::bindings::vector_normalise;
 use sa_pop::bindings::rw_frame_ortho_normalize;
@@ -33,9 +33,10 @@ use sa_core::bindings::ped_get_bone_position;
 use crate::bindings::rw_im2d_render_indexed_primitive as im2d_render_indexed_primitive;
 use crate::bindings::shadow_camera_set_light;
 use sa_core::bindings::rw_camera_clear;
-use sa_core::bindings::rw_raster_create;
+use sa_rwcore::bindings::rw_raster_create;
 use sa_world::bindings::camera_is_sphere_visible;
-use sa_world::bindings::rw_frame_rotate;
+use sa_core::bindings::rw_frame_rotate;
+use crate::bindings::calc_ped_shadow_values;
 orig! {
     /// `RwRenderStateSet` (`RwEngineInstance` slot 0x20)
     fn rs(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
@@ -45,13 +46,10 @@ orig! {
     fn rts_manager_reinit(this: GPtr<u8>) = thiscall 0x706870 => crate::mvpd_r1::rts_manager_reinit_port;
     /// `CShadowCamera::MakeGradientRaster()` (0x705D20)
     fn shadow_camera_make_gradient_raster(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x705D20 => unported;
-    /// `CShadows::CalcPedShadowValues(CVector sun, float& dx, float& dy, float& fx, float& fy, float& sx,
-    /// float& sy)` (0x7076C0; the vector by value, three dwords)
-    #[allow(clippy::too_many_arguments)]
-    fn calc_ped_shadow_values(sx: u32, sy: u32, sz: u32, a: GPtr<u8>, b: GPtr<u8>, c: GPtr<u8>, d: GPtr<u8>, e: GPtr<u8>, f: GPtr<u8>) = cdecl 0x7076C0 => unported;
 }
 
 use crate::bindings::set_center_o;
+use crate::bindings::store_shadow_to_be_rendered as store_shadow_to_be_rendered_tex_o;
 orig! {
     /// `CShadowCamera::Im2DRenderQuad` (0x705A20)
     #[allow(clippy::too_many_arguments)]
@@ -79,10 +77,6 @@ orig! {
     /// `CShadows::StoreRealTimeShadow(CPhysical*, 6 floats)` (0x707CA0)
     #[allow(clippy::too_many_arguments)]
     fn store_real_time_shadow_o(e: GPtr<u8>, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32) = cdecl 0x707CA0 => crate::mvpd_r1::store_real_time_shadow;
-    /// `CShadows::StoreShadowToBeRendered(type, RwTexture*, CVector*, 4 floats, intensity, r, g, b,
-    /// zDistance, drawOnWater, scale, CRealTimeShadow*, drawOnBuildings)` (0x707390)
-    #[allow(clippy::too_many_arguments)]
-    fn store_shadow_to_be_rendered_tex_o(ty: u32, tex: GPtr<u8>, pos: GPtr<u8>, fx: u32, fy: u32, sx: u32, sy: u32, intensity: u32, r: u32, gg: u32, b: u32, zd: u32, water: u32, scale: u32, rts: GPtr<u8>, bld: u32) = cdecl 0x707390 => crate::mvpd_r1::store_shadow_to_be_rendered_tex;
 }
 
 /// `RwEngineInstance` (0xC97B24): its +0x18 is the Im2D near screen z.
@@ -212,8 +206,8 @@ pub fn set_light_properties(this: GPtr<u8>, angle: u32, _unused: u32, set_light:
     if frame.is_null() {
         return GPtr::NULL;
     }
-    rw_frame_rotate(frame, lp(&mut y_axis), angle, 0);
-    rw_frame_rotate(frame, lp(&mut x_axis), 0xC2B4_0000, 2);
+    rw_frame_rotate(frame, lp(&mut y_axis), f32::from_bits(angle), 0);
+    rw_frame_rotate(frame, lp(&mut x_axis), f32::from_bits(0xC2B4_0000), 2);
     if set_light as u8 != 0 {
         shadow_camera_set_light(this.byte_add(8), rd::<GPtr<u8>>(this, 0x28));
     }
@@ -279,7 +273,7 @@ pub fn update_clump(this: GPtr<u8>, clump: GPtr<u8>) -> GPtr<u8> {
         let geom = rd::<GPtr<u8>>(atomic, 0x18);
         let flags = rd::<u32>(geom, 8);
         wr::<u32>(geom, 8, flags & 0xFFFF_FF13);
-        rp_clump_for_all_atomics(clump, 0x705620, GPtr::NULL);
+        rp_clump_for_all_atomics(clump, 0x705620, GPtr::<u8>::addr(GPtr::NULL) as u32);
         wr::<u32>(geom, 8, flags);
         invert_raster_o(this);
         rw_camera_end_update(rd::<GPtr<u8>>(this, 0));
@@ -508,7 +502,7 @@ fn shadow_camera_reinit_inline(cam: GPtr<u8>) {
     let w = rd::<u32>(raster, 0xC);
     wr::<u32>(camera, 0x60, 0);
     rw_raster_destroy(raster);
-    let r = rw_raster_create(w as i32, w as i32, 0, 5);
+    let r = rw_raster_create(((w as i32) as u32) as i32, ((w as i32) as u32) as i32, 0, 5);
     wr::<GPtr<u8>>(rd::<GPtr<u8>>(cam, 0), 0x60, r);
     rw_texture_set_raster(rd::<GPtr<u8>>(cam, 4), r);
 }
@@ -637,7 +631,7 @@ pub fn store_real_time_shadow(e: GPtr<u8>, a2: u32, a3: u32, a4: u32, a5: u32, a
     let a_angle = nx.fpatan(ny).fmul_m(k(0x4265_2EE0)).to_f32().to_bits();
     let frame = set_light_properties_o(rts, a_angle, a_unused, 1);
     let mut dir: [u32; 3] = frame.byte_add(0x30).cast::<[u32; 3]>().read();
-    vector_normalise(lp(&mut dir));
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(lp(&mut dir)));
     let (mut s2, mut s3, mut s4, mut s5, mut s6, mut s7) = (a2, a3, a4, a5, a6, a7);
     calc_ped_shadow_values(dir[0], dir[1], dir[2], lp(&mut s4), lp(&mut s5), lp(&mut s6), lp(&mut s7), lp(&mut s2), lp(&mut s3));
     pos[0] = x(f32::from_bits(s2)).fmul_m(k(0x4020_0000)).fsubr_m(pos[0]).to_f32();
@@ -647,8 +641,8 @@ pub fn store_real_time_shadow(e: GPtr<u8>, a2: u32, a3: u32, a4: u32, a5: u32, a
     store_shadow_to_be_rendered_tex_o(3, tex, lp(&mut pos), p4, p5, p6, p7, st, st, st, st, 0x4080_0000, 0, K_ONE, rts, 0);
 }
 
-use sa_stream::bindings::placeable_allocate_matrix;
-use sa_stream::bindings::simple_transform_update_matrix;
+use sa_world::bindings::placeable_allocate_matrix;
+use crate::bindings::simple_transform_update_matrix;
 orig! {
     /// `CEntity::GetBoundRect()` (vtable slot 0x24, thiscall, `CRect` through a hidden pointer)
     fn v_get_bound_rect(e: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x24 => unported;
@@ -792,18 +786,13 @@ pub fn cast_real_time_shadow_sector_list(list: GPtr<u8>, a2: u32, a3: u32, a4: u
     }
 }
 
+use sa_world::bindings::fire_manager_start_fire;
+use crate::bindings::store_static_shadow as store_static_shadow_o;
 orig! {
     /// `CStaticShadow::Free()` (0x707670)
     fn static_shadow_free(this: GPtr<u8>) = thiscall 0x707670 => unported;
     /// `CShadows::GeneratePolysForStaticShadow(int16 index)` (0x70B730; the index pushed as a dword)
     fn generate_polys_for_static_shadow(i: u32) = cdecl 0x70B730 => unported;
-    /// `CFireManager::StartFire(CVector pos, float size, uint8, CEntity*, uint32 time, int8 gens, uint8)`
-    /// (0x539F00; the vector by value)
-    #[allow(clippy::too_many_arguments)]
-    fn fire_manager_start_fire(this: GPtr<u8>, px: u32, py: u32, pz: u32, size: u32, a: u32, creator: u32, time: u32, gens: u32, b: u32) -> GPtr<u8> = thiscall 0x539F00 => unported;
-    /// `CShadows::StoreStaticShadow` (0x70BA00)
-    #[allow(clippy::too_many_arguments)]
-    fn store_static_shadow_o(id: u32, ty: u32, tex: u32, pos: GPtr<u8>, fx: u32, fy: u32, sx: u32, sy: u32, intensity: u32, r: u32, gg: u32, b: u32, zd: u32, scale: u32, dd: u32, temp: u32, up: u32) -> u8 = cdecl 0x70BA00 => crate::mvpd_r1::store_static_shadow;
 }
 
 /// `CShadows::aStaticShadows` (48 × 0x40 at 0xC4A030).
@@ -987,8 +976,8 @@ pub fn update_permanent_shadows() {
             (ni, nr, ng, nb)
         };
         let ok = store_static_shadow_o(
-            b.addr() as u32, u32::from(ty), rd::<u32>(b, 0x2C), b, rd::<u32>(b, 0xC), rd::<u32>(b, 0x10), rd::<u32>(b, 0x14), rd::<u32>(b, 0x18),
-            inten, r, gg, bb, rd::<u32>(b, 0x1C), K_ONE, 0x4220_0000, 0, 0,
+            b.addr() as u32, u32::from(ty), rd::<u32>(b, 0x2C), b, f32::from_bits(rd::<u32>(b, 0xC)).to_bits(), f32::from_bits(rd::<u32>(b, 0x10)).to_bits(), f32::from_bits(rd::<u32>(b, 0x14)).to_bits(), f32::from_bits(rd::<u32>(b, 0x18)).to_bits(),
+            inten, r, gg, bb, f32::from_bits(rd::<u32>(b, 0x1C)).to_bits(), f32::from_bits(K_ONE).to_bits(), f32::from_bits(0x4220_0000).to_bits(), 0, f32::from_bits(0).to_bits(),
         );
         if ok == 0 && rd::<u8>(b, 0x32) != 8 {
             wr::<u8>(b, 0x32, 0);
@@ -1007,7 +996,7 @@ pub fn update_permanent_shadows() {
     let fire = |j: isize| {
         let p = ent(j);
         wr::<u8>(p, 0x32, 7);
-        fire_manager_start_fire(g::<u8>(0xB71F80), rd::<u32>(p, 0), rd::<u32>(p, 4), rd::<u32>(p, 8), 0x3FE6_6666, 0, 0, 2000, 0, 1);
+        fire_manager_start_fire(g::<u8>(0xB71F80), sa_math::vector::CVector::new(f32::from_bits(rd::<u32>(p, 0)), f32::from_bits(rd::<u32>(p, 4)), f32::from_bits(rd::<u32>(p, 8))), f32::from_bits(0x3FE6_6666), 0, GPtr::<u8>::addr(GPtr::NULL) as u32, 2000, 0, 1);
     };
     for j in 0..48isize {
         let bj = ent(j);
@@ -1069,14 +1058,10 @@ pub fn update_permanent_shadows() {
     }
 }
 
-use sa_core::bindings::find_player_vehicle;
-use sa_core::bindings::world_clear_scan_codes;
+use sa_world::bindings::find_player_vehicle;
+use sa_world::bindings::world_clear_scan_codes;
 use sa_world::bindings::crt_floor;
-orig! {
-    /// `CShadows::CastPlayerShadowSectorList` (0x70A470)
-    #[allow(clippy::too_many_arguments)]
-    fn cast_player_shadow_sector_list_o(list: GPtr<u8>, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, a8: u32, a9: u32, a10: u32, a11: u32, a12: u32, a13: u32, a14: u32, a15: u32, a16: u32, a17: u32, a18: u32, a19: u32) = cdecl 0x70A470 => crate::mvpd_r1::cast_player_shadow_sector_list;
-}
+use crate::bindings::cast_player_shadow_sector_list as cast_player_shadow_sector_list_o;
 
 /// One sector bound of `GeneratePolysForStaticShadow`: `v * 0.02 + 60` (f32 kept, the original stores
 /// it into its own argument slot), `ftol(floor(v as double))`; when that passes `test` (> 0 for the
@@ -1193,7 +1178,7 @@ pub fn store_car_light_shadow(veh: GPtr<u8>, id: u32, tex: u32, pos: GPtr<u8>, f
     let sp = sp.fmul(sp).fadd(x(rd::<f32>(veh, 0x48)).fmul(x(rd::<f32>(veh, 0x48)))).fadd(x(rd::<f32>(veh, 0x4C)).fmul(x(rd::<f32>(veh, 0x4C)))).fsqrt();
     let slow = sp.fmul_m(g::<f32>(0xB7CB5C).read()).fcom(x(k(0x3ECC_CCCD))).test_any(0x41);
     if slow && veh != find_player_vehicle(-1, 0) {
-        store_static_shadow_o(veh.addr() as u32 + id, 2, tex, pos, fx, fy, sx, sy, 0x80, r, gg, b, 0x40C0_0000, K_ONE, 0, 0, 0x3ECC_CCCD);
+        store_static_shadow_o(veh.addr() as u32 + id, 2, tex, pos, f32::from_bits(fx).to_bits(), f32::from_bits(fy).to_bits(), f32::from_bits(sx).to_bits(), f32::from_bits(sy).to_bits(), 0x80, r, gg, b, f32::from_bits(0x40C0_0000).to_bits(), f32::from_bits(K_ONE).to_bits(), f32::from_bits(0).to_bits(), 0, f32::from_bits(0x3ECC_CCCD).to_bits());
         return;
     }
     let mine = u32::from(veh == find_player_vehicle(-1, 0));
@@ -1205,11 +1190,7 @@ use sa_world::bindings::rw_im3d_end;
 use crate::bindings::set_render_mode_for_shadow_type;
 use sa_world::bindings::rw_im3d_render_indexed_primitive;
 use sa_world::bindings::rw_im3d_transform;
-orig! {
-    /// `CShadows::AffectColourWithLighting(type, lightByte, r, g, b, uint8* rOut, gOut, bOut)` (0x707850)
-    #[allow(clippy::too_many_arguments)]
-    fn affect_colour_with_lighting(ty: u32, light: u32, r: u32, gg: u32, b: u32, ro: GPtr<u8>, go: GPtr<u8>, bo: GPtr<u8>) = cdecl 0x707850 => unported;
-}
+use crate::bindings::affect_colour_with_lighting;
 
 /// `TempBufferVerticesStored` / `TempBufferIndicesStored` / index list / `TempVertexBuffer`.
 const TB_VERTS: usize = 0xC4B950;
@@ -1323,11 +1304,11 @@ pub fn render_static_shadows() {
     rs(8, 1);
 }
 
-use sa_core::bindings::find_player_coors;
+use sa_world::bindings::find_player_coors;
 use sa_core::bindings::vector_magnitude;
 use sa_world::bindings::entity_get_col_model as get_col_model;
 use sa_world::bindings::get_vehicle_appearance;
-use sa_core::bindings::vector_sub;
+use sa_world::bindings::vector_sub;
 use sa_world::bindings::vec_mul_assign as vector_mul_assign;
 
 /// `CShadows::RenderExtraPlayerShadows()` (0x707FA0): with a non-zero time-cycle light shadow

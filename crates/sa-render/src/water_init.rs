@@ -11,14 +11,14 @@ use crate::waterlevel::{
     TEX_SEABD32, TEX_WATERCLEAR256, TEX_WATERWAKE, WATER_CONFIGURATION, WATERCLEAR256_RASTER, WATERWAKE_RASTER,
 };
 
-use sa_core::bindings::pop_current_txd;
-use sa_core::bindings::push_current_txd;
-use sa_core::bindings::set_current_txd;
+use sa_stream::bindings::pop_current_txd;
+use sa_stream::bindings::push_current_txd;
+use sa_stream::bindings::set_current_txd;
 use sa_core::bindings::file_close as close_file;
 use sa_core::bindings::find_txd_slot;
-use sa_core::bindings::load_line;
+use sa_stream::bindings::load_line;
 use sa_core::bindings::open_file;
-use sa_core::bindings::rw_texture_read;
+use sa_rwcore::bindings::rw_texture_read;
 orig! {
     /// CRT `sscanf(line, fmt, 29 pointers)` (0x8220AD)
     fn sscanf29(s: GPtr<u8>, fmt: GPtr<u8>, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, a8: u32, a9: u32, a10: u32, a11: u32, a12: u32, a13: u32, a14: u32, a15: u32, a16: u32, a17: u32, a18: u32, a19: u32, a20: u32, a21: u32, a22: u32, a23: u32, a24: u32, a25: u32, a26: u32, a27: u32, a28: u32) -> i32 = cdecl 0x8220AD => unported;

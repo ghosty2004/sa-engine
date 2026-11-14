@@ -17,7 +17,7 @@ pub use sa_world::bindings::automobile_set_panel_damage as car_set_bumper_damage
 pub use sa_world::bindings::set_door_damage as car_set_door_damage;
 pub use crate::bindings::dm_reset_damage_status as reset_damage_status_call;
 pub use sa_world::bindings::door_open;
-pub use sa_world::bindings::progress_panel_damage as progress_panel_damage_call;
+pub use crate::bindings::progress_panel_damage as progress_panel_damage_call;
 orig! {
     /// `CDamageManager::GetComponentGroup(tComponent, tComponentGroup*, uint8*)` (0x6C2040)
     pub fn get_component_group_call(dm: GPtr<u8>, comp: i32, group: GPtr<i32>, sub: GPtr<u8>) -> u8 = thiscall 0x6C2040 => get_component_group;

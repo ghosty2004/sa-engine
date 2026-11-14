@@ -3,7 +3,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::vector::CVector;
 use sa_math::x87::X87;
 
@@ -19,14 +19,10 @@ use sa_world::bindings::event_damage_ctor;
 use sa_world::bindings::event_damage_dtor;
 use sa_world::bindings::event_group_add;
 use sa_world::bindings::kob_ctor;
-use sa_world::bindings::kob_dtor;
+use crate::bindings::kob_dtor;
 use sa_world::bindings::player_handle_breath;
-orig! {
-    /// `CPhysical::ApplyMoveForce(CVector)` (0x5429F0)
-    fn apply_move_force(p: GPtr<u8>, force: CVector) = thiscall 0x5429F0 => sa_world::physical::forces::apply_move_force;
-    /// `CPhysical::ApplyTurnForce(CVector force, CVector point)` (0x542A50)
-    fn apply_turn_force(p: GPtr<u8>, force: CVector, point: CVector) = thiscall 0x542A50 => sa_world::physical::forces::apply_turn_force;
-}
+use sa_world::bindings::physical_apply_move_force_5429f0 as apply_move_force;
+use sa_world::bindings::physical_apply_turn_force as apply_turn_force;
 
 const TIME_STEP: usize = 0xB7_CB5C;
 
@@ -64,7 +60,7 @@ fn occupant_in_water(this: GPtr<u8>, ped: GPtr<u8>, is_driver: bool) {
             this.byte_add(0x44),
             this.byte_add(0xE0),
             rd::<u32>(this, 0xD8),
-            0,
+            f32::from_bits(0),
             0x35,
             0,
             0,
@@ -84,7 +80,7 @@ fn occupant_in_water(this: GPtr<u8>, ped: GPtr<u8>, is_driver: bool) {
     }
     let mut calc = [0u32; 8];
     let cp = GPtr::from_raw(calc.as_mut_ptr()).cast::<u8>();
-    damage_calc_ctor(cp, this, f32::from_bits(g::<u32>(TIME_STEP).read()), 0x35, 3, 0);
+    damage_calc_ctor(cp, this.addr() as u32, f32::from_bits(g::<u32>(TIME_STEP).read()).to_bits(), 0x35, 3, 0);
     let mut ev = [0u32; 0x20];
     let evp = GPtr::from_raw(ev.as_mut_ptr()).cast::<u8>();
     event_damage_ctor(evp, this, g::<u32>(0xB7_CB84).read(), 0x35, 3, 0, 0, 1);

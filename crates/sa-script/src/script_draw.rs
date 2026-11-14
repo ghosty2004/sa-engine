@@ -9,7 +9,7 @@ use sa_core::{hook, orig};
 use sa_math::x87::X87;
 
 use sa_core::bindings::sprite2d_draw;
-use sa_core::bindings::sprite_draw_rect as sprite2d_draw_rect;
+use sa_render::bindings::sprite_draw_rect as sprite2d_draw_rect;
 use sa_world::bindings::sprite2d_draw_quad;
 use sa_world::bindings::draw_window_call as draw_window;
 orig! {
@@ -92,7 +92,7 @@ pub fn draw_script_sprites_and_rectangles(before_fade: u32) {
             }
             3 => {
                 let mut rect = rect_of(e);
-                sprite2d_draw_rect(GPtr::<u8>::cast::<f32>(GPtr::from_raw(rect.as_mut_ptr()).cast()), colour);
+                sprite2d_draw_rect(GPtr::from_raw(rect.as_mut_ptr()).cast(), colour);
             }
             4 => {
                 let mut rect = rect_of(e);

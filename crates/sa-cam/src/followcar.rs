@@ -156,7 +156,7 @@ pub use crate::bindings::get_vectors_ready_for_rw;
 pub use crate::bindings::improve_near_clip;
 pub use crate::bindings::round_decimals;
 pub use sa_core::bindings::cross_product;
-pub use sa_core::bindings::get_pad;
+pub use sa_input::bindings::get_pad;
 pub use sa_core::bindings::tm_get_active_task as get_active_task;
 pub use sa_core::bindings::vector_dot_product as dot_product;
 pub use sa_core::bindings::vector_normalise;
@@ -166,13 +166,12 @@ pub use sa_world::bindings::pad_get_steering_up_down as get_steering_up_down;
 pub use sa_world::bindings::placeable_get_heading as get_heading;
 pub use crate::bindings::cc_get_arr_pos as get_arr_pos_for_vehicle_type;
 pub use sa_core::bindings::get_atan_of_xy;
+pub use sa_world::bindings::max_f;
 orig! {
     /// `CCamera::ApplyVehicleCameraTweaks(CVehicle*)` (0x50A480)
     pub fn apply_vehicle_camera_tweaks(cam: GPtr<u8>, veh: GPtr<u8>) = thiscall 0x50A480 => crate::camfx::apply_vehicle_camera_tweaks;
     /// `CVehicle::GetHeightAboveRoad()` (vtable slot +0xD4, ST0)
     pub fn v_get_height_above_road(veh: GPtr<u8>) -> f64 = thiscall vslot 0xD4 => unported;
-    /// `a > b ? a : b` (0x420800, cdecl floats as dwords, ST0)
-    pub fn max_f(a: u32, b: u32) -> f64 = cdecl 0x420800 => unported;
     /// `CTask::GetTaskType()` (vtable slot +0x10)
     pub fn v_get_task_type(task: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
     /// `CCamera::SetColVarsVehicle(int32 type, int32 zoom)` (0x50CCA0)
@@ -501,7 +500,7 @@ pub fn process_follow_car_sa(
     wr::<f32>(front, 0, f32_of(x(t[0]).fsub_m(rd::<f32>(this, 0x1D8))));
     wr::<f32>(front, 4, f32_of(x(t[1]).fsub_m(rd::<f32>(this, 0x1DC))));
     wr::<f32>(front, 8, f32_of(x(t[2]).fsub_m(rd::<f32>(this, 0x1E0))));
-    vector_normalise(front);
+    vector_normalise(front.cast::<[f32;3]>());
     let hx = x(t[0]).fsub_m(rd::<f32>(this, 0x1E4));
     let hy = x(t[1]).fsub_m(rd::<f32>(this, 0x1E8));
     let hz = x(t[2]).fsub_m(rd::<f32>(this, 0x1EC));
@@ -716,7 +715,7 @@ pub fn process_follow_car_sa(
             lv = 0.0;
             lh2 = 0.0;
             lasin = al;
-            let r = max_f(0, tt.to_bits());
+            let r = max_f(f32::from_bits(0), f32::from_bits(tt.to_bits())).to_f64();
             FOLLOW_CAR_MOUSE_TIMER.set(f32_of(X87::from_f64_exact(r)));
             mouse_used = true;
         }
@@ -922,9 +921,9 @@ fn slope_pitch(this: GPtr<u8>, v: GPtr<u8>, t: &[f32; 3], lup: &mut f32) {
     let mut rr: [f32; 3] = [0.0; 3];
     let mut uu: [f32; 3] = [0.0; 3];
     cross_product(vp(&mut rr), rd::<GPtr<u8>>(v, 0x14).byte_add(0x10), vp(&mut zup));
-    vector_normalise(vp(&mut rr));
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(vp(&mut rr)));
     cross_product(vp(&mut uu), vp(&mut rr), rd::<GPtr<u8>>(v, 0x14).byte_add(0x10));
-    vector_normalise(vp(&mut uu));
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(vp(&mut uu)));
     let ud = x(uu[1])
         .fmul_m(rd::<f32>(front, 4))
         .fadd(x(uu[2]).fmul_m(rd::<f32>(front, 8)))
@@ -951,7 +950,7 @@ fn slope_pitch(this: GPtr<u8>, v: GPtr<u8>, t: &[f32; 3], lup: &mut f32) {
     let rr_ = if !jne(a, bc, 0x41) {
         let num = f32_of(x(d(K_SLOPE_SIDE)).fadd_m(rd::<f32>(cm, 0xC)));
         let arg = f32_of(x(k(K_HPI)).fsub(a));
-        X87::from_f64_exact(max_f(0, arg.to_bits())).fcos().fdivr_m(num)
+        X87::from_f64_exact(max_f(f32::from_bits(0), f32::from_bits(arg.to_bits())).to_f64()).fcos().fdivr_m(num)
     } else {
         let num = x(d(K_SLOPE_BACK)).fsub_m(rd::<f32>(cm, 4));
         num.fdiv(a.fcos())
@@ -969,7 +968,7 @@ fn slope_pitch(this: GPtr<u8>, v: GPtr<u8>, t: &[f32; 3], lup: &mut f32) {
     if rd::<i32>(v, 0x590) != 0 || rd::<u8>(v, 0x960) <= 1 {
         return;
     }
-    let dp = X87::from_f64_exact(dot_product(v.byte_add(0x50), m.byte_add(0x10))).fabs();
+    let dp = X87::from_f64_exact(dot_product(v.byte_add(0x50), m.byte_add(0x10)).to_f64()).fabs();
     if jp(dp, x(k(K_0_05)), 0x05) {
         return;
     }
@@ -988,7 +987,7 @@ pub use crate::bindings::get_look_behind_for_ped;
 pub use sa_pop::bindings::get_look_behind_for_car;
 pub use sa_pop::bindings::pad_get_look_left as get_look_left;
 pub use sa_pop::bindings::pad_get_look_right as get_look_right;
-pub use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
+pub use sa_world::bindings::placeable_allocate_matrix as allocate_matrix;
 pub use sa_stream::bindings::simple_transform_update_matrix;
 pub use crate::bindings::cc_well_buffer_me as well_buffer_me;
 
@@ -1116,7 +1115,7 @@ pub fn rot_cam_if_in_front_car(this: GPtr<u8>, target: GPtr<u8>, orientation: u3
 
 pub use crate::bindings::handle_camera_motion_for_ducking;
 pub use sa_core::bindings::entity_update_rp_hanim as update_rp_hanim;
-pub use sa_core::bindings::entity_update_rw_frame as update_rw_frame;
+pub use sa_world::bindings::entity_update_rw_frame as update_rw_frame;
 pub use sa_world::bindings::get_task_swim;
 pub use sa_core::bindings::ped_get_bone_position;
 pub use sa_world::bindings::ped_set_ped_position_in_car;
@@ -1255,7 +1254,7 @@ pub fn look_behind(this: GPtr<u8>) -> u8 {
         let e = tgt();
         ensure_matrix(e);
         copy3(front, rd::<GPtr<u8>>(e, 0x14).byte_add(0x10));
-        vector_normalise(front);
+        vector_normalise(front.cast::<[f32;3]>());
         let e = tgt();
         if rd::<i32>(e, 0x590) == 5 {
             wr::<f32>(source, 8, f32_of(x(rd::<f32>(source, 8)).fsub_m(k(K_HALF))));
@@ -1295,7 +1294,7 @@ pub fn look_behind(this: GPtr<u8>) -> u8 {
             8,
             f32_of(dd.fsubr_m(rd::<f32>(source, 8)).fadd_m(k(0x3E99_999A))),
         );
-        vector_normalise(source);
+        vector_normalise(source.cast::<[f32;3]>());
         let mut zz = x(d(0x8CCE4C)).fadd_m(d(PED_ZOOM_SMOOTHED));
         if !jne(x(k(0x3F19_999A)), zz, 0x41) {
             zz = x(k(0x3F19_999A));
@@ -1414,7 +1413,7 @@ pub fn look_right(this: GPtr<u8>, right: u32) -> u8 {
         ensure_matrix(e);
         let mut fw: [f32; 3] = [0.0; 3];
         copy3(vp(&mut fw), rd::<GPtr<u8>>(e, 0x14).byte_add(0x10));
-        vector_normalise(vp(&mut fw));
+        vector_normalise(GPtr::<u8>::cast::<[f32;3]>(vp(&mut fw)));
         let at = X87::from_f64_exact(get_atan_of_xy(f32::from_bits(fw[0].to_bits()), f32::from_bits(fw[1].to_bits())));
         let a = at.fadd(x(dir).fmul_m(k(K_HPI)));
         wr::<f32>(source, 0, f32_of(a.fcos().fmul_m(dist).fadd_m(p[0])));
@@ -1512,11 +1511,11 @@ pub fn look_right(this: GPtr<u8>, right: u32) -> u8 {
         let e = tgt();
         ensure_matrix(e);
         copy3(up, rd::<GPtr<u8>>(e, 0x14).byte_add(0x20));
-        vector_normalise(up);
+        vector_normalise(up.cast::<[f32;3]>());
         let e = tgt();
         ensure_matrix(e);
         copy3(front, rd::<GPtr<u8>>(e, 0x14).byte_add(0x10));
-        vector_normalise(front);
+        vector_normalise(front.cast::<[f32;3]>());
         let mut tmp: [f32; 3] = [0.0; 3];
         let r = if right {
             cross_product(vp(&mut tmp), front, up)
@@ -1524,7 +1523,7 @@ pub fn look_right(this: GPtr<u8>, right: u32) -> u8 {
             cross_product(vp(&mut tmp), up, front)
         };
         copy3(front, r);
-        vector_normalise(front);
+        vector_normalise(front.cast::<[f32;3]>());
         if get_vehicle_appearance(tgt()) as i32 == 2 {
             sub_scaled(source, front, k(0x3FB9_999A));
         }

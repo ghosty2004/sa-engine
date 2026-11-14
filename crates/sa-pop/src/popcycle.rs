@@ -219,7 +219,7 @@ pub fn ped_is_acceptable_in_current_zone(model: i32) -> u8 {
     }
 }
 
-pub use sa_stream::bindings::cheat_is_zone_streaming_allowed as is_zone_streaming_allowed;
+pub use sa_world::bindings::cheat_is_zone_streaming_allowed as is_zone_streaming_allowed;
 
 /// `CPopCycle::PickPedMIToStreamInForCurrentZone()` (0x60FFD0): see `docs/re/specs/POP/CPopCycle.md`.
 /// The group pick stops at `r < p[g]` (not `PickARandomGroupOfOtherPeds`' `p[g] >= r`).

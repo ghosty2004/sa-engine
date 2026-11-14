@@ -12,7 +12,7 @@ use crate::common::*;
 use sa_core::bindings::tm_get_active_task;
 use sa_world::bindings::event_attractor_ctor;
 use sa_world::bindings::event_attractor_dtor;
-use sa_world::bindings::event_group_add;
+use crate::bindings::event_group_add;
 use crate::bindings::add_effect;
 use crate::bindings::attractor_scanner_clear;
 orig! {
@@ -188,7 +188,7 @@ pub fn attractor_scanner_scan_in_range(this: GPtr<u8>, ped: GPtr<u8>) {
 
 use crate::bindings::scripted_2d_effects_get_index;
 use sa_core::bindings::matrix_assign;
-use sa_core::bindings::matrix_dtor;
+use sa_world::bindings::matrix_dtor;
 use sa_core::bindings::matrix_set_scale;
 use sa_world::bindings::attractor_manager_has_empty_slot;
 use sa_world::bindings::get_ped_attractor_manager;

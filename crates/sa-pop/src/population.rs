@@ -68,12 +68,10 @@ pub fn loaded_gang_cars(gang: i32) -> GPtr<CLoadedCarGroup> {
         .cast()
 }
 
-pub use sa_core::bindings::world_remove;
+pub use sa_world::bindings::world_remove;
+pub use sa_stream::bindings::car_group_clear as loaded_car_group_clear;
+pub use sa_stream::bindings::pick_random_car;
 orig! {
-    /// `CLoadedCarGroup::PickRandomCar(bool, bool)` (0x611C50)
-    pub fn pick_random_car(g: GPtr<CLoadedCarGroup>, a: u8, b: u8) -> i32 = thiscall 0x611C50 => sa_stream::loaded_car_group::pick_random_car;
-    /// `CLoadedCarGroup::Clear()` (0x611B90)
-    pub fn loaded_car_group_clear(g: GPtr<CLoadedCarGroup>) = thiscall 0x611B90 => sa_stream::loaded_car_group::clear;
     /// virtual slot 0 (scalar deleting destructor) of a `CPed`
     pub fn delete_entity(e: GPtr<u8>, flags: i32) = thiscall vslot 0 => unported;
     /// `CPedGroupPlacer::PlaceGroup(ePedType, int32, const CVector&, ePedGroupDefaultTaskAllocatorType)` (0x5FD810)
@@ -251,10 +249,7 @@ pub fn update_ped_count(ped: GPtr<u8>, ty: u8) {
     cell.write(if add { v.wrapping_add(1) } else { v.wrapping_sub(1) });
 }
 
-orig! {
-    /// `FindPlayerVehicle(int32, bool)` (0x56E0D0)
-    pub fn find_player_vehicle(id: i32, remote: u8) -> GPtr<u8> = cdecl 0x56E0D0 => sa_world::world::cworld::find_player_vehicle_port;
-}
+pub use sa_world::bindings::find_player_vehicle;
 
 /// `CPopulation::PedCreationDistMultiplier()` (0x6116C0): with a player vehicle,
 /// `clamp(sqrt(vy*vy + vx*vx) - 0.1 + 1.0, 1.0, 1.5)` of its move speed (FindPlayerVehicle called five

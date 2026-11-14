@@ -11,20 +11,20 @@ use sa_core::{hook, orig};
 
 use crate::common::{f32_of, ftol32, g, rd, xi};
 
-use sa_core::bindings::set_indices;
-use sa_core::bindings::set_texture;
-use sa_core::bindings::set_vertex_declaration;
+use sa_rwcore::bindings::set_indices;
+use sa_rwcore::bindings::set_texture;
+use sa_rwcore::bindings::set_vertex_declaration;
 use sa_core::bindings::enable_clipping_if_needed;
-use sa_core::bindings::get_render_state;
-use sa_core::bindings::set_streams;
-use sa_core::bindings::vertex_alpha_enable;
+use sa_rwcore::bindings::get_render_state;
+use sa_rwcore::bindings::set_streams;
+use sa_rwcore::bindings::vertex_alpha_enable;
 use crate::bindings::instance_data_render as instance_data_render_call;
 use crate::bindings::instance_data_render_lighting as instance_data_render_lighting_call;
-use sa_core::bindings::set_pixel_shader;
-use sa_core::bindings::set_render_state;
-use sa_core::bindings::set_surface_properties;
-use sa_core::bindings::set_tss;
-use sa_core::bindings::set_vertex_shader;
+use sa_rwcore::bindings::set_pixel_shader;
+use sa_rwcore::bindings::set_render_state;
+use sa_rwcore::bindings::set_surface_properties;
+use sa_rwcore::bindings::set_tss;
+use sa_rwcore::bindings::set_vertex_shader;
 orig! {
     /// `G->dOpenDevice.fpRenderStateSet(state, value)` (`[G] + 0x20`)
     fn rw_render_state_set(state: u32, value: u32) -> u32 = cdecl table 0xC97B24 0x20 => unported;

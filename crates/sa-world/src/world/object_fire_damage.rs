@@ -10,8 +10,8 @@ use super::common::{g, rd, wr, x};
 use crate::bindings::add_permanent_shadow;
 use crate::bindings::audio_report_object_destruction;
 use crate::bindings::remove_from_moving_list;
-use sa_core::bindings::find_player_ped;
-use sa_core::bindings::find_player_vehicle;
+use crate::bindings::find_player_ped;
+use crate::bindings::find_player_vehicle;
 use crate::bindings::break_manager_add;
 orig! {
     /// virtual slot +0x20 (`CEntity::DeleteRwObject`)
@@ -71,17 +71,17 @@ pub fn object_fire_damage(this: GPtr<u8>, damage: f32, damager: GPtr<u8>) {
                 1,
                 g::<u32>(0xC4_03E8).read(),
                 GPtr::from_raw(&mut pos as *mut [u32; 3]).cast(),
-                0x4040_0000,
-                0,
-                0,
-                0xC040_0000,
+                f32::from_bits(0x4040_0000),
+                f32::from_bits(0),
+                f32::from_bits(0),
+                f32::from_bits(0xC040_0000),
                 200,
                 0,
                 0,
                 0,
-                0x4120_0000,
+                f32::from_bits(0x4120_0000),
                 30000,
-                0x3F80_0000,
+                f32::from_bits(0x3F80_0000),
             );
         }
         200 | 202 => {

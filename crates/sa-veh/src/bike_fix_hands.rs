@@ -11,7 +11,7 @@ use crate::common::{model_info, rd, wr, x};
 
 use sa_core::bindings::get_anim_hierarchy_from_skin_clump;
 use sa_core::bindings::matrix_attach;
-use sa_core::bindings::matrix_dtor;
+use sa_world::bindings::matrix_dtor;
 use sa_core::bindings::matrix_mul_assign;
 use sa_core::bindings::matrix_mul_vec;
 use sa_core::bindings::rp_hanim_hierarchy_get_matrix_array;
@@ -63,7 +63,7 @@ fn shift(p: GPtr<u8>, dx: f32, dy: f32, dz: X87) {
 #[allow(clippy::too_many_arguments)]
 fn hand(bars: GPtr<u8>, p: &mut [f32; 3], hier: GPtr<u8>, ped: GPtr<u8>, ids: [i32; 6], k1: f32, k2: f32) {
     let mut out = [0f32; 3];
-    let w = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(vp(&mut out)), bars, vp(p)));
+    let w = matrix_mul_vec(vp(&mut out), bars, vp(p));
     let w = [rd::<f32>(w, 0), rd::<f32>(w, 4), rd::<f32>(w, 8)];
     let b = bone_pos(hier, ids[0]);
     let (bx, by, bz) = (rd::<f32>(b, 0), rd::<f32>(b, 4), rd::<f32>(b, 8));

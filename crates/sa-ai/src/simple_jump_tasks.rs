@@ -13,39 +13,32 @@ use sa_core::bindings::clump_get_association;
 use crate::bindings::event_handler_current_type;
 use sa_core::bindings::matrix_mul_vec;
 use sa_stream::bindings::ped_is_player;
-use sa_world::bindings::event_group_add;
-use sa_world::bindings::event_sound_quiet_dtor;
+use crate::bindings::event_group_add;
+use crate::bindings::event_sound_quiet_dtor;
 use sa_world::bindings::get_event_global_group;
 use sa_world::bindings::is_steep_slope as surface_is_steep_slope;
 use sa_world::bindings::physical_apply_move_force_5429f0 as physical_apply_move_force;
 use sa_world::bindings::stats_get_fat_and_muscle_modifier;
-use sa_core::bindings::assoc_set_finish_callback;
+use sa_anim::bindings::assoc_set_finish_callback;
 use sa_core::bindings::get_anim_hierarchy_from_skin_clump as anim_hierarchy_from_skin_clump;
 use sa_core::bindings::rp_hanim_hierarchy_get_matrix_array as hanim_get_matrix_array;
 use sa_core::bindings::rp_hanim_id_get_index as hanim_id_get_index;
 use sa_core::bindings::rw_v3d_transform_points;
 use sa_world::bindings::anim_blend_animation;
 use sa_world::bindings::game_logic_allowed_direction as game_logic_player_allowed_direction;
-use sa_world::bindings::localisation_blood;
+use crate::bindings::localisation_blood;
+use sa_world::bindings::add_permanent_shadow as shadows_add_permanent_shadow;
+use sa_world::bindings::event_sound_quiet_ctor;
+use sa_world::bindings::world_test_sphere_against_world as world_test_sphere;
 orig! {
     /// `CTaskSimpleJump::StartLaunchAnim(CPed*)` (0x67D7A0)
     fn start_launch_anim_c(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x67D7A0 => start_launch_anim;
     /// `CTaskSimpleJump::CheckIfJumpBlocked(CPed*)` (0x67D590)
     fn check_if_jump_blocked(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x67D590 => check_if_jump_blocked_port;
-    /// `CWorld::TestSphereAgainstWorld(CVector, float, CEntity*, bool, bool, bool, bool, bool, bool)` (0x569E20)
-    #[allow(clippy::too_many_arguments)]
-    fn world_test_sphere(x: u32, y: u32, z: u32, r: f32, ignore: u32, b: u32, v: u32, p: u32, o: u32, d: u32, c: u32) -> GPtr<u8> = cdecl 0x569E20 => unported;
     /// `CEntity::TestCollision(bool)` (vtable slot 0x34)
     fn entity_test_collision(e: GPtr<u8>, b: u32) -> u8 = thiscall vslot 0x34 => unported;
     /// `CTaskSimpleJump::Launch(CPed*)` (0x679B80)
     fn launch(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x679B80 => launch_port;
-    /// `CShadows::AddPermanentShadow(type, RwTexture*, CVector*, frontX, frontY, sideX, sideY, r, g, b, a, z, lifetime,
-    /// scale)` (0x706F60)
-    #[allow(clippy::too_many_arguments)]
-    fn shadows_add_permanent_shadow(ty: u32, tex: u32, pos: GPtr<u8>, fx: f32, fy: f32, sx: f32, sy: f32, r: u32, g: u32, b: u32, a: u32, z: f32, life: u32, scale: f32) = cdecl 0x706F60 => unported;
-    /// `CEventSoundQuiet(CEntity*, float, uint32, CVector)` (0x5E05B0)
-    #[allow(clippy::too_many_arguments)]
-    fn event_sound_quiet_ctor(e: GPtr<u8>, ent: GPtr<u8>, volume: f32, time: u32, pos: GPtr<u8>) -> GPtr<u8> = thiscall 0x5E05B0 => unported;
 }
 
 /// `CTaskSimpleJump::JumpAnimFinishCB` (0x67A020), passed as the original address.
@@ -117,7 +110,7 @@ pub fn start_launch_anim(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         let s = X87::from_f64_exact(stats_get_fat_and_muscle_modifier(2)).to_f32();
         wr::<f32>(rd::<GPtr<u8>>(this, 0x28), 0x24, s);
     }
-    assoc_set_finish_callback(rd::<GPtr<u8>>(this, 0x28), JUMP_ANIM_FINISH_CB, this);
+    assoc_set_finish_callback(rd::<GPtr<u8>>(this, 0x28), JUMP_ANIM_FINISH_CB, this.addr() as u32);
     wr::<u32>(ped, 0x55C, rd::<u32>(ped, 0x558));
     1
 }
@@ -207,14 +200,14 @@ pub fn check_if_jump_blocked_port(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         .fadd_m(rd::<f32>(rd::<GPtr<u8>>(col, 8), 0x30))
         .fadd_m(q)
         .to_f32();
-    let hit = world_test_sphere(px.to_bits(), py.to_bits(), pz.to_bits(), q, 0, 1, 1, 0, 1, 0, 0);
+    let hit = world_test_sphere(sa_math::vector::CVector::new(f32::from_bits(px.to_bits()), f32::from_bits(py.to_bits()), f32::from_bits(pz.to_bits())), q, GPtr::<u8>::addr(GPtr::NULL) as u32, 1, 1, 0, 1, 0, 0);
     wr::<u8>(this, 0x22, u8::from(!hit.is_null()));
     let p = pos_ptr(ped);
     let saved = [rd::<u32>(p, 0), rd::<u32>(p, 4), rd::<u32>(p, 8)];
     let mut v = [0f32, 0.0, 0.75];
     let mut out = [0u32; 3];
     let outp: GPtr<u8> = GPtr::from_raw(out.as_mut_ptr()).cast();
-    matrix_mul_vec(outp.cast::<f32>(), rd::<GPtr<u8>>(ped, 0x14), GPtr::from_raw(v.as_mut_ptr()).cast());
+    matrix_mul_vec(outp.cast::<u8>(), rd::<GPtr<u8>>(ped, 0x14), GPtr::from_raw(v.as_mut_ptr()).cast());
     let set_pos = |v: [u32; 3]| {
         let m = rd::<GPtr<u8>>(ped, 0x14);
         let d = if m.is_null() { ped.byte_add(4) } else { m.byte_add(0x30) };
@@ -292,7 +285,7 @@ pub fn launch_port(this: GPtr<u8>, ped: GPtr<u8>) {
     if g::<u8>(0x96_916C).read() != 0 && ped_is_player(ped) != 0 {
         force = x(force).fmul_m(10.0).to_f32();
     }
-    physical_apply_move_force(ped, f32::from_bits(0), f32::from_bits(0), f32::from_bits(force.to_bits()));
+    physical_apply_move_force(ped, sa_math::vector::CVector::new(f32::from_bits(0), f32::from_bits(0), f32::from_bits(force.to_bits())));
     if rd::<u8>(this, 0x22) != 0 {
         wr::<u32>(ped, 0x44, 0);
         wr::<u32>(ped, 0x48, 0);

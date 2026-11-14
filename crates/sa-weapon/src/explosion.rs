@@ -26,19 +26,16 @@ pub use sa_core::bindings::vector_normalise as normalise;
 pub use sa_world::bindings::vec_mul_assign;
 pub use sa_world::bindings::vector_add_assign as vec_add_assign;
 pub use crate::bindings::try_to_start_fire_at_coors;
-pub use sa_world::bindings::add_explosion as add_explosion_call;
+pub use crate::bindings::add_explosion as add_explosion_call;
 pub use sa_world::bindings::fx_create_system as create_fx_system;
 pub use sa_world::bindings::set_cars_on_fire;
 pub use sa_world::bindings::set_world_on_fire;
 pub use sa_world::bindings::world_process_vertical_line as process_vertical_line;
+pub use sa_world::bindings::add_light;
 orig! {
     /// `CWorld::TriggerExplosion(const CVector&, float radius, float visibleDistance, CEntity* victim,
     /// CEntity* creator, bool processVehicleBombTimer, float damage)` (0x56B790); raw words as pushed
     pub fn trigger_explosion(pos: GPtr<u8>, radius: u32, vis: u32, victim: GPtr<u8>, creator: GPtr<u8>, b: u32, dmg: u32) = cdecl 0x56B790 => unported;
-    /// `CPointLights::AddLight(uint8 type, CVector point, CVector dir, float radius, float r, g, b, uint8 fog,
-    /// bool shadows, CEntity*)` (0x7000E0)
-    #[allow(clippy::too_many_arguments)]
-    pub fn add_light(ty: u32, px: f32, py: f32, pz: f32, dx: u32, dy: u32, dz: u32, radius: f32, r: f32, g: f32, b: f32, fog: u32, shadows: u32, e: GPtr<u8>) = cdecl 0x7000E0 => unported;
     /// `CWorld::SetPedsOnFire(float x, y, z, float radius, CEntity*)` (0x565610)
     pub fn set_peds_on_fire(x: u32, y: u32, z: u32, r: f32, e: GPtr<u8>) = cdecl 0x565610 => unported;
     /// `CExplosion::ClearAllExplosions()` (0x736840)
@@ -239,11 +236,11 @@ pub fn update() {
             4..=6 => {
                 let victim = rp(e, 0x1C);
                 if !victim.is_null() && sa_core::orig::at_site(0x737717 + 5, rand) & 0x1F == 0 {
-                    let a = st0(random_float(-0.5, 0.5)).to_f32();
-                    let b = st0(random_float(-0.5, 0.5)).to_f32();
+                    let a = st0(random_float(-0.5, 0.5).to_f64()).to_f32();
+                    let b = st0(random_float(-0.5, 0.5).to_f64()).to_f32();
                     let mut v = [b, a, 0.0];
-                    normalise(lp(&mut v).cast());
-                    let k = st0(random_float(1.0, 2.0)).to_f32();
+                    normalise(GPtr::<u8>::cast::<[f32;3]>(lp(&mut v).cast()));
+                    let k = st0(random_float(1.0, 2.0).to_f64()).to_f32();
                     vec_mul_assign(lp(&mut v).cast(), k);
                     vec_add_assign(lp(&mut v).cast(), pos_ptr(rp(e, 0x1C)));
                     let z = x(v[2]).fadd_m(2.0).to_f32();
@@ -251,13 +248,13 @@ pub fn update() {
                     try_to_start_fire_at_coors(v[0], v[1], z, 0, 1, 0, 10.0);
                 }
                 if frame_counter() & 1 != 0 {
-                    add_light(0, p0[0], p0[1], p0[2], 0, 0, 0, 15.0, 1.0, f32::from_bits(0x3F33_3333), 0.5, 0, 1, GPtr::NULL);
+                    add_light(0, p0[0], p0[1], p0[2], f32::from_bits(0), f32::from_bits(0), f32::from_bits(0), 15.0, 1.0, f32::from_bits(0x3F33_3333), 0.5, 0, 1, GPtr::NULL);
                 }
             }
             0 | 2 | 3 | 7 | 8 | 9 => {
                 if frame_counter() & 1 != 0 {
                     let p = rv(e, 4);
-                    add_light(0, p[0], p[1], p[2], 0, 0, 0, 20.0, 1.0, 1.0, 0.5, 0, 1, GPtr::NULL);
+                    add_light(0, p[0], p[1], p[2], f32::from_bits(0), f32::from_bits(0), f32::from_bits(0), 20.0, 1.0, 1.0, 0.5, 0, 1, GPtr::NULL);
                 }
                 if ty == 7 && random_int(0, 100) < 5 {
                     let victim = rp(e, 0x1C);
@@ -324,27 +321,22 @@ pub fn update() {
 }
 
 pub use crate::bindings::pad_start_shake_distance;
-pub use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+pub use sa_world::bindings::entity_clean_up_old_reference as clean_up_old_reference;
 pub use sa_core::bindings::entity_register_reference as register_reference;
-pub use sa_core::bindings::get_pad as pad_get_pad;
-pub use sa_core::bindings::stats_increment_stat;
+pub use sa_input::bindings::get_pad as pad_get_pad;
+pub use sa_world::bindings::stats_increment_stat;
 pub use sa_world::bindings::cam_shake;
 pub use sa_world::bindings::find_ground_z_for_3d_coord;
 pub use sa_world::bindings::is_coop_game_going_on;
 pub use sa_world::bindings::report_crime;
-pub use sa_core::bindings::vector_sub;
+pub use sa_world::bindings::vector_sub;
 pub use sa_world::bindings::get_water_level_no_waves;
 pub use sa_world::bindings::interesting_events_add;
+pub use sa_world::bindings::find_player_ped;
+pub use sa_world::bindings::add_permanent_shadow;
 orig! {
-    /// `FindPlayerPed(int32)` (0x56E210)
-    pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
     /// `CAEExplosionAudioEntity::AddAudioEvent(int32 event, CVector& pos, float volume)` (0x4DCBE0, thiscall)
     pub fn explosion_audio_add_event(ae: GPtr<u8>, ev: i32, pos: GPtr<u8>, vol: f32) = thiscall 0x4DCBE0 => unported;
-    /// `CShadows::AddPermanentShadow(uint8 type, RwTexture*, const CVector*, float frontX, float frontY,
-    /// float sideX, float sideY, int16 intensity, uint8 r, g, b, float drawDistance, uint32 time,
-    /// float upDistance)` (0x706F60); small integers as pushed words
-    #[allow(clippy::too_many_arguments)]
-    pub fn add_permanent_shadow(ty: u32, tex: u32, pos: GPtr<u8>, fx: f32, fy: f32, sx: f32, sy: f32, intensity: u32, r: u32, g: u32, b: u32, dist: f32, time: u32, up: f32) = cdecl 0x706F60 => unported;
 }
 
 /// `g_fxMan`
@@ -465,7 +457,7 @@ pub fn add_explosion(victim: GPtr<u8>, creator: GPtr<u8>, ty: i32, px: f32, py: 
     for (off, ent) in [(0x18isize, creator), (0x1C, victim)] {
         let old = rp(e, off);
         if !old.is_null() {
-            clean_up_old_reference(old, GPtr::<u8>::cast::<GPtr<u8>>(e.byte_add(off)));
+            clean_up_old_reference(old, e.byte_add(off));
         }
         wp(e, off, ent);
         if !ent.is_null() {
@@ -531,7 +523,7 @@ pub fn add_explosion(victim: GPtr<u8>, creator: GPtr<u8>, ty: i32, px: f32, py: 
                 pos[2] = gz.to_f32();
             }
             let mut level = [0f32; 1];
-            if get_water_level_no_waves(pos[0], pos[1], pos[2], lp(&mut level).cast(), GPtr::<u8>::cast::<f32>(GPtr::NULL), GPtr::<u8>::cast::<f32>(GPtr::NULL)) != 0 && {
+            if get_water_level_no_waves((pos[0]).to_bits(), (pos[1]).to_bits(), (pos[2]).to_bits(), GPtr::<u8>::cast::<f32>(lp(&mut level).cast()), GPtr::<u8>::cast::<f32>(GPtr::NULL), GPtr::<u8>::cast::<f32>(GPtr::NULL)) != 0 && {
                 let mut f = Fpu::new();
                 f.fld(pos[2]);
                 f.fcomp_m(level[0]);
@@ -655,7 +647,7 @@ pub fn add_explosion(victim: GPtr<u8>, creator: GPtr<u8>, ty: i32, px: f32, py: 
             }
             let s = rand_unit(0x73738B).fmul_m(cf(0x3ECC_CCCE)).fmul_m(7000.0).fadd_m(5600.0);
             let time = ftol32(s) as u32;
-            crate::fire::start_fire_no_target_call(g(0xB71F80), t[0], t[1], t[2], cf(0x3F4C_CCCD), u8::from(i != 0) as u32, rp(e, 0x18), time, 3, 1);
+            crate::fire::start_fire_no_target_call(g(0xB71F80), sa_math::vector::CVector::new(t[0], t[1], t[2]), cf(0x3F4C_CCCD), u32::from(i != 0), rp(e, 0x18).addr() as u32, time, 3, 1);
         }
         if !creator.is_null() && etype(creator) == 3 && ru(creator, 0x598) == 0 {
             stats_increment_stat(0xD8, 1.0);

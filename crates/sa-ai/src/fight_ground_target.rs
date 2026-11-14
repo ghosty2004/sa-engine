@@ -15,8 +15,8 @@ use sa_core::bindings::vector_dot_product as dot_product;
 use sa_stream::bindings::ped_is_player;
 use sa_core::bindings::ped_get_bone_position;
 use sa_world::bindings::placeable_get_matrix;
-use sa_core::bindings::vector_sub;
-use sa_world::bindings::localisation_kicking_when_down;
+use sa_world::bindings::vector_sub;
+use crate::bindings::localisation_kicking_when_down;
 orig! {
     /// `CTask::GetTaskType()` (vtable slot 0x10)
     fn task_get_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
@@ -87,7 +87,7 @@ pub fn fight_ground_target(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
             return u8::from(target == rd::<GPtr<u8>>(ped, 0x568));
         }
         ped_get_bone_position(target, bp, 3, 0);
-        if ped_is_alive(rd::<GPtr<u8>>(this, 0x18)) != 0 {
+        if ped_is_alive(rd::<GPtr<u8>>(this, 0x18)) as u8 != 0 {
             let low = x(rd::<f32>(pos(ped), 8)).fsub_m(f32::from_bits(K1));
             if low.fcom(x(bone[2])).test_any(0x41) {
                 if rd::<u32>(rd::<GPtr<u8>>(this, 0x18), 0x46C) & 0x0400_0000 == 0 {
@@ -124,7 +124,7 @@ pub fn fight_ground_target(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         let m = placeable_get_matrix(t);
         let mut d = [0f32; 3];
         let out = vector_sub(GPtr::from_raw(d.as_mut_ptr()).cast(), pos(t), pos(ped));
-        let r = X87::from_f64_exact(dot_product(out, m));
+        let r = X87::from_f64_exact(dot_product(out, m).to_f64());
         return u8::from(!r.fabs().fcom(x(r1)).test_parity(0x05));
     }
     if ped_is_player(ped) == 0 {

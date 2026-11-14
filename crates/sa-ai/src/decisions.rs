@@ -17,8 +17,8 @@ use crate::bindings::decision_maker_types_remove;
 use crate::bindings::editable_response_ctor;
 use crate::bindings::editable_response_dtor;
 use sa_world::bindings::decision_maker_types_add;
-use sa_world::bindings::decision_maker_types_get_instance;
-use sa_world::bindings::event_group_add as eg_add;
+use crate::bindings::decision_maker_types_get_instance;
+use crate::bindings::event_group_add as eg_add;
 orig! {
     /// `CDecision::SetDefault` (0x600530)
     fn decision_set_default(d: GPtr<u8>) = thiscall 0x600530 => unported;

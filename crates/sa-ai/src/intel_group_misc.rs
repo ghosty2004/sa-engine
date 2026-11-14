@@ -20,19 +20,19 @@ const GROUPS: usize = 0xC09920;
 /// `sizeof(CPedGroup)`
 const GROUP_SIZE: usize = 0x2D4;
 
-use sa_world::bindings::acquaintance_get;
+use crate::bindings::acquaintance_get;
 use crate::bindings::membership_remove_member;
 use crate::bindings::pgi_flush;
-use sa_core::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference;
 use sa_stream::bindings::ped_is_player;
-use sa_world::bindings::event_group_add;
+use crate::bindings::event_group_add;
 use sa_world::bindings::event_script_command_dtor;
 use sa_world::bindings::get_ped_flag as ped_type_get_ped_flag;
 use sa_world::bindings::group_intel_set_script_command_task as pgi_set_script_command_task;
 use sa_world::bindings::intel_find_task_by_type;
-use sa_world::bindings::ped_groups_get_peds_group as groups_get_peds_group;
-use sa_world::bindings::tm_find_active_task_by_type;
-use sa_world::bindings::tm_set_task;
+use crate::bindings::ped_groups_get_peds_group as groups_get_peds_group;
+use crate::bindings::tm_find_active_task_by_type;
+use crate::bindings::tm_set_task;
 use sa_world::bindings::event_script_command_ctor;
 orig! {
     /// Virtual slot +0 (scalar deleting destructor, `ret 4`).
@@ -43,7 +43,7 @@ orig! {
 fn release_reference(slot: GPtr<u8>) {
     let e = rd::<GPtr<u8>>(slot, 0);
     if !e.is_null() {
-        entity_clean_up_old_reference(e, slot.cast::<GPtr<u8>>());
+        entity_clean_up_old_reference(e, slot.cast::<u8>());
         wr::<u32>(slot, 0, 0);
     }
 }
@@ -54,7 +54,7 @@ fn release_reference(slot: GPtr<u8>) {
 #[hook(addr = 0x600DC0, conv = thiscall, name = "CPedIntelligence::AddTaskPhysResponse", expect = "8B 44 24 08 8B 54 24 04",
        unverified = "ai7-8", route = "L2", hazards = "heap-writes")]
 pub fn intel_add_task_phys_response(this: GPtr<u8>, task: GPtr<u8>, b: u32) {
-    tm_set_task(this.byte_add(4), task, 0, b);
+    tm_set_task(this.byte_add(4), task, 0, b as u8);
 }
 
 /// `CPedIntelligence::Respects(CPed*)` (0x601C90, `ret 4`): the ped's acquaintance set 0 (respect, ped +0x4E0) has
@@ -62,7 +62,7 @@ pub fn intel_add_task_phys_response(this: GPtr<u8>, task: GPtr<u8>, b: u32) {
 #[hook(addr = 0x601C90, conv = thiscall, name = "CPedIntelligence::Respects", expect = "8B 09 56 6A 00",
        unverified = "ai7-8", route = "L2", hazards = "none")]
 pub fn intel_respects(this: GPtr<u8>, other: GPtr<u8>) -> u32 {
-    let acq = acquaintance_get(rd::<GPtr<u8>>(this, 0).byte_add(0x4E0), 0);
+    let acq = acquaintance_get(GPtr::<u8>::addr(rd::<GPtr<u8>>(this, 0).byte_add(0x4E0)) as u32, 0);
     let flag = ped_type_get_ped_flag(rd::<u32>(other, 0x598) as i32);
     (flag & 0xFFFF_FF00) | u32::from(acq & flag != 0)
 }
@@ -101,7 +101,7 @@ pub fn intel_remove_all_interesting_entities(this: GPtr<u8>) {
         let slot = this.byte_add(0x288 + k * 4);
         let e = rd::<GPtr<u8>>(slot, 0);
         if !e.is_null() {
-            entity_clean_up_old_reference(e, slot.cast::<GPtr<u8>>());
+            entity_clean_up_old_reference(e, slot.cast::<u8>());
         }
         wr::<u32>(slot, 0, 0);
     }
@@ -113,7 +113,7 @@ pub fn intel_remove_all_interesting_entities(this: GPtr<u8>) {
 #[hook(addr = 0x600E20, conv = thiscall, name = "CPedIntelligence::AddTaskPrimaryMaybeInGroup", expect = "64 A1 00 00 00 00",
        unverified = "ai7-8", route = "L2", hazards = "heap-writes")]
 pub fn intel_add_task_primary_maybe_in_group(this: GPtr<u8>, task: GPtr<u8>, b: u32) {
-    let grp = groups_get_peds_group(rd::<GPtr<u8>>(this, 0));
+    let grp = GPtr::from_addr(groups_get_peds_group(GPtr::<u8>::addr(rd::<GPtr<u8>>(this, 0)) as u32) as usize);
     if ped_is_player(rd::<GPtr<u8>>(this, 0)) == 0 && !grp.is_null() {
         pgi_set_script_command_task(grp.byte_add(0x30), rd::<GPtr<u8>>(this, 0), task);
         if !task.is_null() {

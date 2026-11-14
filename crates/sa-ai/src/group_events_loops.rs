@@ -9,25 +9,22 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
-use sa_core::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference;
 use sa_world::bindings::membership_get_leader;
 use sa_world::bindings::membership_get_member;
-use sa_world::bindings::sequence_flush;
+use crate::bindings::sequence_flush;
 use sa_world::bindings::intel_find_task_by_type;
+use sa_core::bindings::world_get_is_line_of_sight_clear as world_los_clear;
 orig! {
     /// `CEventPlayerCommandToGroup::AffectsPedGroup(CPedGroup*)` (0x4B24D0, `ret 4`; AL)
     fn player_command_to_group_affects(e: GPtr<u8>, g: GPtr<u8>) -> u8 = thiscall 0x4B24D0 => unported;
-    /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, bool buildings, bool vehicles, bool peds,
-    /// bool objects, bool dummies, bool seeThrough, bool ignoreSomeObjects)` (0x56A490, cdecl)
-    #[allow(clippy::too_many_arguments)]
-    fn world_los_clear(a: GPtr<u8>, b: GPtr<u8>, bu: u32, ve: u32, pe: u32, ob: u32, du: u32, st: u32, ig: u32) -> u8 = cdecl 0x56A490 => unported;
 }
 
 /// Drops the entity reference held in the slot (when set) and clears the slot.
 fn drop_ref(slot: GPtr<u8>) {
     let e = rd::<GPtr<u8>>(slot, 0);
     if !e.is_null() {
-        entity_clean_up_old_reference(e, slot.cast::<GPtr<u8>>());
+        entity_clean_up_old_reference(e, slot.cast::<u8>());
         wr::<u32>(slot, 0, 0);
     }
 }
@@ -140,7 +137,7 @@ pub fn interesting_events_invalidate_non_visible_events(this: GPtr<u8>) {
         wr::<u32>(slot, -4, 0);
         let e = rd::<GPtr<u8>>(slot, 0);
         if !e.is_null() {
-            entity_clean_up_old_reference(e, slot.cast::<GPtr<u8>>());
+            entity_clean_up_old_reference(e, slot.cast::<u8>());
         }
         wr::<u32>(slot, 0, 0);
         if i32::from(rd::<i8>(this, 0x154)) == i as i32 {

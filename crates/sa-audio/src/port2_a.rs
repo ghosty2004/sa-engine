@@ -1178,7 +1178,7 @@ pub fn ps_can_we_play_new_scanner_dialogue() -> u8 {
 }
 
 use crate::bindings::sm_cancel_sounds_in_bank_slot;
-use sa_core::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference;
 use crate::bindings::script_clear_mission_audio_call;
 orig! {
     /// `CAEAudioHardware::GetSoundLoadingStatus(uint16 bank, uint16 sound, int16 slot)` (0x4D8F00)
@@ -1255,7 +1255,7 @@ pub fn sound_manager_reset(this: GPtr<u8>) {
             wr::<u16>(s, 0x60, 1);
             let e = rd::<GPtr<u8>>(s, 0);
             if !e.is_null() {
-                entity_clean_up_old_reference(e, s.cast::<GPtr<u8>>());
+                entity_clean_up_old_reference(e, s.cast::<u8>());
                 wr::<u32>(s, 0, 0);
             }
         }
@@ -1638,7 +1638,7 @@ pub fn ps_update_parameters(this: GPtr<u8>, sound: GPtr<u8>, pos: u32) {
 }
 
 use crate::bindings::ae_random_float;
-use sa_world::bindings::audio_stop_radio as engine_stop_radio;
+use crate::bindings::audio_stop_radio as engine_stop_radio;
 use crate::bindings::position_relative_to_camera_vec as env_get_position_relative_to_camera;
 use crate::bindings::radio_start_radio_manual;
 
@@ -1649,7 +1649,7 @@ pub fn sound_unregister_with_physical_entity(this: GPtr<u8>) {
     let r = this.byte_add(8);
     let e = rd::<GPtr<u8>>(r, 0);
     if !e.is_null() {
-        entity_clean_up_old_reference(e, r.cast::<GPtr<u8>>());
+        entity_clean_up_old_reference(e, r.cast::<u8>());
         wr::<u32>(r, 0, 0);
     }
 }
@@ -1783,7 +1783,7 @@ pub fn radio_check_for_station_retune_during_pause(this: GPtr<u8>) {
         engine_report_frontend_audio_event(engine, 0x25, f32::from_bits(0), f32::from_bits(0x3F80_0000));
         wr::<u8>(this, 0xE9, 0xFF);
     } else {
-        engine_stop_radio(engine, GPtr::NULL, 1);
+        engine_stop_radio(engine, GPtr::<u8>::addr(GPtr::NULL) as u32, 1);
     }
     engine_report_frontend_audio_event(engine, 0x22, f32::from_bits(0), f32::from_bits(0x3F80_0000));
     let due = rd::<u32>(this, 0x5C).wrapping_add(700);
@@ -3636,8 +3636,8 @@ pub fn sound_get_relative_playback_frequency_with_doppler(this: GPtr<u8>) -> f32
 }
 
 use sa_world::bindings::get_remap_index as vehicle_get_remap_index;
-use sa_core::bindings::find_player_ped as world_find_player_ped;
-use sa_stream::bindings::find_player_wanted as world_find_player_wanted;
+use sa_world::bindings::find_player_ped as world_find_player_ped;
+use sa_world::bindings::find_player_wanted as world_find_player_wanted;
 use sa_world::bindings::find_smallest_zone_for_position as zones_find_smallest_zone_for_position;
 use sa_world::bindings::get_task_jet_pack as ped_intelligence_get_task_jet_pack;
 use sa_world::bindings::get_task_swim as ped_intelligence_get_task_swim;
@@ -4159,7 +4159,7 @@ use crate::bindings::hw_get_playing_track_id;
 use crate::bindings::hw_get_track_length_ms;
 use crate::bindings::hw_stop_track;
 use crate::bindings::radio_is_vehicle_radio_active;
-use sa_core::bindings::get_pad as pad_get_pad;
+use sa_input::bindings::get_pad as pad_get_pad;
 use crate::bindings::get_user_track_play_mode_call as user_get_user_track_play_mode;
 use crate::bindings::hw_play_track;
 use crate::bindings::hw_set_bass_setting;
@@ -4735,7 +4735,7 @@ pub fn sm_cancel_sounds_of_this_event_playing_for_this_entity_and_physical(
             wr::<u16>(s, 0x60, 1);
             wr::<u32>(s, -4, 0);
             if !p.is_null() {
-                entity_clean_up_old_reference(p, s.cast::<GPtr<u8>>());
+                entity_clean_up_old_reference(p, s.cast::<u8>());
                 wr::<u32>(s, 0, 0);
             }
         }

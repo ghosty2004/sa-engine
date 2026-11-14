@@ -31,7 +31,7 @@ pub use crate::bindings::remove_from_moving_list;
 pub use crate::bindings::simple_transform_update_rw_matrix;
 pub use sa_core::bindings::eh_vector_ctor;
 pub use sa_core::bindings::eh_vector_dtor;
-pub use sa_core::bindings::entity_update_rw_frame;
+pub use crate::bindings::entity_update_rw_frame;
 pub use sa_core::bindings::matrix_update_rw_matrix;
 pub use sa_stream::bindings::ped_is_player;
 orig! {

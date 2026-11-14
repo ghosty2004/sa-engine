@@ -161,7 +161,7 @@ pub fn cutscene_delete_cutscene_data_overlay() {
         let slot = p(HIDDEN + 4 * i);
         let e = rd::<GPtr<u8>>(slot, 0);
         if !e.is_null() {
-            entity_clean_up_old_reference(e, slot.cast::<GPtr<u8>>());
+            entity_clean_up_old_reference(e, slot.cast::<u8>());
             let e = rd::<GPtr<u8>>(slot, 0);
             wr::<u32>(e, 0x1C, rd::<u32>(e, 0x1C) | 0x80);
         }
@@ -261,7 +261,7 @@ pub fn cutscene_delete_cutscene_data_overlay() {
             if flags & 2 == 0 {
                 streaming_set_model_is_deletable(model);
             }
-            ped_give_weapon(ped, (gu32(WEAPON_TYPES + 4 * i).read()) as i32, gu32(WEAPON_AMMO + 4 * i).read(), 1);
+            ped_give_weapon(ped, ((gu32(WEAPON_TYPES + 4 * i).read()) as i32) as u32, gu32(WEAPON_AMMO + 4 * i).read(), 1);
             i += 1;
         }
         gu32(WEAPON_COUNT).write(0);

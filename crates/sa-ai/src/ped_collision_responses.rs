@@ -19,7 +19,7 @@ use crate::bindings::compute_entity_hit_side_ped as geometry_compute_entity_hit_
 use sa_world::bindings::duck_ctor;
 use crate::bindings::evasive_step_ctor;
 use sa_world::bindings::fall_and_get_up_ctor2;
-use crate::bindings::flee_any_means_ctor;
+use sa_world::bindings::flee_any_means_ctor;
 use sa_world::bindings::follow_point_route_ctor;
 use sa_world::bindings::gang_drive_by_ctor;
 use crate::bindings::geometry_compute_route_round_entity_bbox;
@@ -50,15 +50,15 @@ use sa_world::bindings::intel_get_task_duck;
 use sa_world::bindings::kill_ped_on_foot_ctor;
 use sa_world::bindings::membership_get_leader;
 use sa_world::bindings::mental_state_increment_anger;
-use sa_world::bindings::ped_groups_get_peds_group;
+use crate::bindings::ped_groups_get_peds_group;
 use sa_world::bindings::seek_entity_aiming_ctor;
 use sa_world::bindings::sequence_add_task;
 use sa_world::bindings::sequence_ctor;
 use sa_world::bindings::smart_flee_entity_ctor;
-use sa_world::bindings::tm_find_active_task_by_type;
+use crate::bindings::tm_find_active_task_by_type;
 use sa_world::bindings::use_sequence_ctor;
-use sa_core::bindings::vector_magnitude_sqr;
-use sa_core::bindings::vector_sub;
+use sa_world::bindings::vector_magnitude_sqr;
+use sa_world::bindings::vector_sub;
 use crate::bindings::avoid_other_ped_ctor;
 use crate::bindings::handler_is_kill_task_appropriate;
 use crate::bindings::intel_get_move_state_from_go_to_task;
@@ -130,7 +130,7 @@ fn new_task(size: u32, ctor: impl FnOnce(GPtr<u8>) -> GPtr<u8>) -> GPtr<u8> {
 }
 
 fn look_at_ped(p: GPtr<u8>, other: GPtr<u8>) {
-    ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), GPtr::from_addr(S_COMP_PED_COLL_PED_RESP as usize), p, other, 2000, 5, GPtr::NULL, 1, 0x3E80_0000, 500, 3, 0);
+    ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), GPtr::from_addr(S_COMP_PED_COLL_PED_RESP as usize), p, other, 2000, 5, GPtr::NULL, 1, f32::from_bits(0x3E80_0000), 500, 3, 0);
 }
 
 fn new_say() -> GPtr<u8> {
@@ -143,7 +143,7 @@ fn evasive_step(p: GPtr<u8>, other: GPtr<u8>) -> GPtr<u8> {
     let f = rd::<GPtr<u8>>(p, 0x14).byte_add(0x10);
     let mut v = [rd::<u32>(f, 0), f32_of(x(rd::<f32>(f, 4)).fchs()).to_bits(), 0];
     let vp: GPtr<u8> = GPtr::from_raw(v.as_mut_ptr()).cast();
-    vector_normalise(vp);
+    vector_normalise(vp.cast::<[f32;3]>());
     new_task(0x1C, |t| evasive_step_ctor(t, other, vp))
 }
 
@@ -223,10 +223,10 @@ pub fn event_handler_compute_ped_collision_with_ped_response(this: GPtr<u8>, e: 
     let mut result = GPtr::<u8>::NULL;
     let set_say = |t: GPtr<u8>| wr::<GPtr<u8>>(this, 0x2C, t);
 
-    let group = ped_groups_get_peds_group(p);
+    let group = GPtr::from_addr(ped_groups_get_peds_group(p.addr() as u32) as usize);
     if !group.is_null() {
         let leader = membership_get_leader(group.byte_add(8));
-        let other_group = ped_groups_get_peds_group(other);
+        let other_group = GPtr::from_addr(ped_groups_get_peds_group(other.addr() as u32) as usize);
         let other_leader = if other_group.is_null() { GPtr::NULL } else { membership_get_leader(other_group.byte_add(8)) };
         flag_a = false;
         if group == other_group {
@@ -259,10 +259,10 @@ pub fn event_handler_compute_ped_collision_with_ped_response(this: GPtr<u8>, e: 
                 {
                     break 'body;
                 }
-            } else if X87::from_f64_exact(general_random_float_in_range(0.0, 1.0)).fcom(x(gf(K_LOOK_CHANCE))).test_parity(0x05) {
+            } else if X87::from_f64_exact(general_random_float_in_range(0.0, 1.0).to_f64()).fcom(x(gf(K_LOOK_CHANCE))).test_parity(0x05) {
                 // not below 0.25: nothing more here
             } else {
-                let r = X87::from_f64_exact(general_random_float_in_range(0.0, 1.0));
+                let r = X87::from_f64_exact(general_random_float_in_range(0.0, 1.0).to_f64());
                 if !r.fcom(x(gf(K_LOOK_ONLY))).test_parity(0x05) {
                     look_at_ped(ped(this), other);
                 } else if !r.fcom(x(gf(K_SAY))).test_parity(0x05) {
@@ -444,7 +444,7 @@ pub fn event_handler_compute_potential_ped_collide_response(this: GPtr<u8>, e: G
                         let vp: GPtr<u8> = GPtr::from_raw(v.as_mut_ptr()).cast();
                         vector_sub(vp, pos_ptr(leader), pos_ptr(ped(this)));
                         wr::<u32>(vp, 8, 0);
-                        let d2 = X87::from_f64_exact(vector_magnitude_sqr(vp.cast::<f32>()));
+                        let d2 = X87::from_f64_exact(vector_magnitude_sqr(vp.cast::<u8>()).to_f64());
                         let r = rd::<f32>(seek, 0x1C);
                         let r2 = x(r).fmul_m(r);
                         if !d2.fsub(r2).fcom(r2).test_parity(0x05) {

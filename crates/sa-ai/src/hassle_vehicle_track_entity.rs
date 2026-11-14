@@ -10,7 +10,7 @@ use crate::common::*;
 
 use crate::bindings::task_complex_dtor;
 use crate::bindings::vehicle_set_hassle_pos_id;
-use sa_core::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference;
 use sa_stream::bindings::anim_remove_block_ref;
 use sa_stream::bindings::get_animation_block_index as anim_get_block_index;
 orig! {
@@ -38,12 +38,12 @@ pub fn gang_hassle_vehicle_dtor(this: GPtr<u8>) {
         }
         let veh = rd::<GPtr<u8>>(this, 0x10);
         if !veh.is_null() {
-            entity_clean_up_old_reference(veh, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x10)));
+            entity_clean_up_old_reference(veh, this.byte_add(0x10));
         }
     }
     let e = rd::<GPtr<u8>>(this, 0x34);
     if !e.is_null() {
-        entity_clean_up_old_reference(e, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x34)));
+        entity_clean_up_old_reference(e, this.byte_add(0x34));
     }
     if rd::<u8>(this, 0x30) != 0 {
         anim_remove_block_ref(anim_get_block_index(GPtr::from_addr(0x86F92C)) as u32);

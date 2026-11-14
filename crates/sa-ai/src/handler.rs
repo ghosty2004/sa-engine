@@ -35,22 +35,22 @@ use sa_world::bindings::damage_calc_dtor as calc_dtor;
 use sa_world::bindings::die_ctor;
 use sa_world::bindings::event_damage_affects_ped as damage_affects_ped;
 use sa_world::bindings::event_damage_dtor as damage_dtor;
-use sa_world::bindings::event_group_add;
+use crate::bindings::event_group_add;
 use sa_world::bindings::event_group_event_ctor as group_event_ctor;
 use sa_world::bindings::event_group_event_dtor as group_event_dtor;
 use sa_world::bindings::event_group_get_event_of_type;
-use sa_world::bindings::group_intelligence_add_event as pgi_add_event;
+use crate::bindings::group_intelligence_add_event as pgi_add_event;
 use sa_world::bindings::kob_ctor;
 use sa_world::bindings::kob_dtor;
 use sa_world::bindings::membership_get_leader;
 use sa_world::bindings::membership_is_leader;
-use sa_world::bindings::ped_groups_get_peds_group;
+use crate::bindings::ped_groups_get_peds_group;
 use sa_world::bindings::sequence_add_task;
 use sa_world::bindings::sequence_ctor;
-use sa_world::bindings::tm_find_active_task_by_type;
+use crate::bindings::tm_find_active_task_by_type;
 use crate::bindings::dragged_out_car_ctor;
 use crate::bindings::handler_is_temporary_event;
-use sa_core::bindings::assoc_set_current_time as anim_set_current_time;
+use sa_anim::bindings::assoc_set_current_time as anim_set_current_time;
 use sa_world::bindings::add_animation as anim_add_animation;
 use sa_world::bindings::clump_get_first_association_4d6a70 as clump_get_first_association_flags;
 use sa_world::bindings::damage_calc_ctor as calc_ctor;
@@ -59,9 +59,10 @@ use sa_world::bindings::damage_compute_death_anim;
 use sa_world::bindings::enter_car_as_passenger_ctor;
 use sa_world::bindings::event_damage_ctor as damage_ctor;
 use sa_world::bindings::fx_add_blood;
-use sa_world::bindings::interesting_events_add;
+use crate::bindings::interesting_events_add;
 use sa_world::bindings::ped_set_ped_state;
 use sa_world::bindings::vector_scale;
+use sa_core::bindings::random_float_in_range as general_random_float_in_range;
 orig! {
     /// `CEvent::GetEventType` (vtable +4)
     fn v_event_type(e: GPtr<u8>) -> i32 = thiscall vslot 0x4 => unported;
@@ -87,8 +88,6 @@ orig! {
     fn fall_to_death_calc_fall(ped: GPtr<u8>, dir: GPtr<u8>, rail: GPtr<u8>) -> u8 = cdecl 0x6796C0 => unported;
     /// `CEventHandler::RegisterKill(CPed*, CEntity*, eWeaponType, bool)` (0x4B9340, static)
     fn register_kill(ped: GPtr<u8>, src: GPtr<u8>, wt: u32, head: u32) = cdecl 0x4B9340 => unported;
-    /// `CGeneral::GetRandomNumberInRange<float>(min, max)` (0x41BD90; draws its own rand, ST0)
-    fn general_random_float_in_range(min: u32, max: u32) -> f64 = cdecl 0x41BD90 => unported;
     /// `CEventGotKnockedOverByCar::CEventGotKnockedOverByCar(CVehicle*)` (0x4B1B60, `ret 4`)
     fn knocked_over_by_car_ctor(e: GPtr<u8>, veh: GPtr<u8>) -> GPtr<u8> = thiscall 0x4B1B60 => unported;
     /// `CEventGotKnockedOverByCar` destructor (0x4B1C10)
@@ -172,7 +171,7 @@ pub fn event_handler_compute_damage_response(
     _unused: GPtr<u8>,
 ) {
     let ped = rd::<GPtr<u8>>(this, 0);
-    if ped_is_alive(ped) == 0 {
+    if ped_is_alive(ped) as u8 == 0 {
         return;
     }
     let src = rd::<GPtr<u8>>(ev, 0x14);
@@ -371,9 +370,9 @@ fn death_anim_from_simplest(ped: GPtr<u8>, ev: GPtr<u8>, t: GPtr<u8>) {
                     m.byte_add(0x30)
                 };
                 let mut pos = [rd::<u32>(p, 0), rd::<u32>(p, 4), rd::<u32>(p, 8)];
-                let r = X87::from_f64_exact(general_random_float_in_range(0xBF00_0000, 0x3F00_0000));
+                let r = X87::from_f64_exact(general_random_float_in_range(f32::from_bits(0xBF00_0000), f32::from_bits(0x3F00_0000)).to_f64());
                 pos[0] = f32_of(r.fadd_m(f32::from_bits(pos[0]))).to_bits();
-                let r = X87::from_f64_exact(general_random_float_in_range(0xBF00_0000, 0x3F00_0000));
+                let r = X87::from_f64_exact(general_random_float_in_range(f32::from_bits(0xBF00_0000), f32::from_bits(0x3F00_0000)).to_f64());
                 pos[1] = f32_of(r.fadd_m(f32::from_bits(pos[1]))).to_bits();
                 fx_add_blood(
                     g(G_FX),
@@ -588,7 +587,7 @@ fn kob_build(this: GPtr<u8>, evp: GPtr<u8>, mut speed: [u32; 3], mut dirv: [u32;
         GPtr::from_raw(&mut speed as *mut [u32; 3]).cast(),
         GPtr::from_raw(&mut dirv as *mut [u32; 3]).cast(),
         0x4248_0000,
-        0,
+        f32::from_bits(0),
         weapon,
         dir,
         0,
@@ -644,7 +643,7 @@ pub fn event_handler_compute_knock_off_bike_response(
         if damage_affects_ped(dp, rd::<GPtr<u8>>(this, 0)) != 0 {
             let mut calc = [0u32; 0x10];
             let cp: GPtr<u8> = GPtr::from_raw(&mut calc as *mut [u32; 0x10]).cast();
-            calc_ctor(cp, GPtr::from_addr(rd::<u32>(ev, 0x38) as usize), f32::from_bits(rd::<u32>(ev, 0x28)), 0x36, 3, 1);
+            calc_ctor(cp, GPtr::<u8>::addr(GPtr::from_addr(rd::<u32>(ev, 0x38) as usize)) as u32, f32::from_bits(rd::<u32>(ev, 0x28)).to_bits(), 0x36, 3, 1);
             calc_compute_damage_response(cp, rd::<GPtr<u8>>(this, 0), dp.byte_add(0x38), 1);
             calc_dtor(cp);
         }
@@ -778,7 +777,7 @@ fn kob_respond(this: GPtr<u8>, kob: GPtr<u8>) {
             fall_and_get_up_ctor(t, anim, 0, (time as i32) as u32)
         };
         wr::<GPtr<u8>>(this, 0x24, t);
-        let group = ped_groups_get_peds_group(rd::<GPtr<u8>>(this, 0));
+        let group = GPtr::from_addr(ped_groups_get_peds_group(GPtr::<u8>::addr(rd::<GPtr<u8>>(this, 0)) as u32) as usize);
         if !group.is_null() {
             let ms = group.byte_add(8);
             if membership_is_leader(ms, rd::<GPtr<u8>>(this, 0)) == 0 && rd::<u8>(kob, 0x35) & 1 == 0 {
@@ -822,11 +821,7 @@ fn kob_respond(this: GPtr<u8>, kob: GPtr<u8>) {
     let mut dr = [0u32; 0x10];
     let dp: GPtr<u8> = GPtr::from_raw(&mut dr as *mut [u32; 0x10]).cast();
     dragged_out_car_ctor(dp, veh, GPtr::from_addr(dragger as usize), (rd::<u8>(kob, 0x35) & 1) as u32);
-    event_group_add(
-        rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0), 0x47C).byte_add(0x68),
-        dp,
-        1,
-    );
+    event_group_add(rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0), 0x47C).byte_add(0x68), dp, 1);
     bike_flag(true);
     dragged_out_car_dtor(dp);
 }
@@ -1132,14 +1127,14 @@ use crate::bindings::hit_head_ctor;
 use crate::bindings::task_is_go_to_task;
 use crate::bindings::walk_round_object_ctor;
 use sa_core::bindings::general_random_int_in_range;
-use sa_world::bindings::can_ped_target_ped as geometry_can_ped_target_ped;
+use crate::bindings::can_ped_target_ped as geometry_can_ped_target_ped;
 use sa_world::bindings::complex_jump_ctor;
 use sa_world::bindings::groups_is_in_players_group as ped_groups_is_in_players_group;
 use sa_world::bindings::ik_is_looking;
 use sa_world::bindings::ik_look_at;
 use sa_world::bindings::intel_find_task_by_type;
 use crate::bindings::climb_ctor;
-use sa_core::bindings::tm_get_task_secondary;
+use crate::bindings::tm_get_task_secondary;
 orig! {
     /// `CEventBuildingCollision::IsHeadOnCollision(CPed*)` (0x4AD1E0, `ret 4`)
     fn building_collision_is_head_on(e: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x4AD1E0 => unported;
@@ -1308,7 +1303,7 @@ pub fn event_handler_compute_building_collision_response(this: GPtr<u8>, e: GPtr
     }
     if !kill.is_null() {
         let target = kill_target(kill);
-        if target.is_null() || geometry_can_ped_target_ped(rd::<GPtr<u8>>(this, 0), target, 1) != 0 {
+        if target.is_null() || geometry_can_ped_target_ped(rd::<GPtr<u8>>(this, 0), target, 1) as u8 != 0 {
             set(GPtr::NULL);
             return;
         }
@@ -1358,7 +1353,7 @@ pub fn event_handler_compute_building_collision_response(this: GPtr<u8>, e: GPtr
         let ped = rd::<GPtr<u8>>(this, 0);
         if ik_is_looking(GPtr::from_addr(IK_CHAIN_MANAGER), ped) == 0 {
             ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), GPtr::from_addr(S_COMP_BLDG_COLL_RESP as usize), rd::<GPtr<u8>>(this, 0), ent, 3000, 5, GPtr::NULL, 1,
-                       0x3E80_0000, 500, 3, 0);
+                       f32::from_bits(0x3E80_0000), 500, 3, 0);
         }
         tm_get_task_secondary(rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0), 0x47C).byte_add(4), 2);
     }

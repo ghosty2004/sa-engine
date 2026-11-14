@@ -9,9 +9,9 @@ use crate::common::{g, rd, wr};
 
 use sa_world::bindings::anim_get_anim_block_name as anim_block_name;
 use sa_core::bindings::get_weapon_info as weapon_info;
-use sa_core::bindings::anim_add_block_ref as add_anim_block_ref;
+use sa_anim::bindings::anim_add_block_ref as add_anim_block_ref;
 use sa_stream::bindings::anim_remove_block_ref as remove_anim_block_ref;
-use sa_core::bindings::get_animation_block as animation_block;
+use sa_anim::bindings::get_animation_block as animation_block;
 use sa_core::bindings::streaming_request_model as request_model;
 
 /// `CAnimManager::ms_aAnimAssocGroups` (pointer at 0xB4EA34; 0x14 bytes per group, the block pointer at +0)

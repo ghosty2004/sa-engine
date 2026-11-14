@@ -35,13 +35,10 @@ pub const COL_POINT_SIZE: usize = 0x2C;
 /// The original's local `CColPoint` array (32 entries, the `CCollision` maximum).
 pub type LocalColPoints = [u32; 32 * COL_POINT_SIZE / 4];
 
+pub use crate::bindings::does_not_collide_with_flyers;
+pub use crate::bindings::entity_get_bound_centre_534290 as get_bound_centre_ref;
+pub use crate::bindings::entity_get_is_touching as get_is_touching_vec;
 orig! {
-    /// `CEntity::GetBoundCentre(CVector&)` (0x534290)
-    pub fn get_bound_centre_ref(e: Ent, out: Ent) -> Ent = thiscall 0x534290 => crate::world::entity::get_bound_centre_ref;
-    /// `CEntity::GetIsTouching(const CVector&, float)` (0x5344B0, EAX 0/1)
-    pub fn get_is_touching_vec(e: Ent, pos: Ent, radius: f32) -> u32 = thiscall 0x5344B0 => crate::world::entity::get_is_touching_vec;
-    /// `CEntity::DoesNotCollideWithFlyers()` (0x532D40)
-    pub fn does_not_collide_with_flyers(e: Ent) -> u8 = thiscall 0x532D40 => crate::world::entity::does_not_collide_with_flyers;
     /// virtual `CPhysical::SpecialEntityPreCollisionStuff(CPhysical*, bool, bool&, bool&, bool&, bool&)`
     /// (vtable +0x3C)
     pub fn special_entity_pre_collision_stuff_v(e: Ent, other: Ent, b: u32, p1: Ent, p2: Ent, p3: Ent, p4: Ent)
@@ -403,13 +400,11 @@ pub fn process_shift_sector_list(this: Ent, x: i32, y: i32) -> u8 {
     1
 }
 
+pub use crate::bindings::switch_vehicle_to_real_physics;
+pub use sa_core::bindings::matrix_force_up_vector;
 orig! {
-    /// `CCarCtrl::SwitchVehicleToRealPhysics(CVehicle*)` (0x423FC0)
-    pub fn switch_vehicle_to_real_physics(v: Ent) = cdecl 0x423FC0 => unported;
     /// `CCarCtrl::FindGhostRoadHeight(CVehicle*)` (0x422370, ST0)
     pub fn find_ghost_road_height(v: Ent) -> f64 = cdecl 0x422370 => unported;
-    /// `CMatrix::ForceUpVector(CVector)` (0x59B7E0, vector by value)
-    pub fn matrix_force_up_vector(m: Ent, up: CVector) = thiscall 0x59B7E0 => unported;
     /// virtual `CVehicle::GetHeightAboveRoad()` (vtable +0xD4, ST0)
     pub fn get_height_above_road_v(v: Ent) -> f64 = thiscall vslot 0xD4 => unported;
     /// virtual `CPhysical::SpecialEntityCalcCollisionSteps(bool&, bool&)` (vtable +0x40, AL)
@@ -674,9 +669,9 @@ fn process_collision_ghost(this: Ent) {
         }
         let line = rp(col_data, 0x10).byte_add(0x20 * i as isize);
         let mut o1 = CVector::new(0.0, 0.0, 0.0);
-        let s = rv(matrix_mul_point(lp(&mut o1), matrix(this), line.cast()).cast(), 0);
+        let s = rv(GPtr::<u8>::cast::<sa_math::vector::CVector>(matrix_mul_point(GPtr::<sa_math::vector::CVector>::cast::<u8>(lp(&mut o1)), matrix(this), GPtr::<sa_math::vector::CVector>::cast::<u8>(line.cast()))).cast(), 0);
         let mut o2 = CVector::new(0.0, 0.0, 0.0);
-        let e = rv(matrix_mul_point(lp(&mut o2), matrix(this), line.byte_add(0x10).cast()).cast(), 0);
+        let e = rv(GPtr::<u8>::cast::<sa_math::vector::CVector>(matrix_mul_point(GPtr::<sa_math::vector::CVector>::cast::<u8>(lp(&mut o2)), matrix(this), GPtr::<sa_math::vector::CVector>::cast::<u8>(line.byte_add(0x10).cast()))).cast(), 0);
         let cp = this.byte_add(cps + 0x2C * i as isize);
         wv_bits(cp, 0x10, [0, 0, 0x3F80_0000]);
         wb(cp, 0x20, 0x3C);
@@ -757,6 +752,9 @@ fn process_collision_ghost(this: Ent) {
     wb(this, 0x42B, rb(this, 0x42B) | 1);
 }
 
+pub use crate::bindings::get_adhesive_limit as get_adhesive_limit_call;
+pub use crate::bindings::placeable_allocate_matrix as allocate_matrix_call;
+pub use sa_stream::bindings::simple_transform_update_matrix as simple_transform_update_matrix_call;
 orig! {
     /// `CPhysical::ApplyCollision(CEntity*, CColPoint&, float&, float&)` (0x548680, AL)
     pub fn apply_collision_2(e: Ent, other: Ent, cp: Ent, d1: GPtr<f32>, d2: GPtr<f32>) -> u8 = thiscall 0x548680 => crate::physical::pair_collision::apply_collision_2;
@@ -764,14 +762,8 @@ orig! {
     /// intensity as the dword the original pushes)
     pub fn set_damaged_piece_record_call(e: Ent, intensity: u32, other: Ent, cp: Ent, dist: f32)
         = thiscall 0x5428C0 => super::forces::set_damaged_piece_record;
-    /// `SurfaceInfos_c::GetAdhesiveLimit(CColPoint&)` (0x55EB50, thiscall on `g_surfaceInfos`, ST0)
-    pub fn get_adhesive_limit_call(si: Ent, cp: Ent) -> f64 = thiscall 0x55EB50 => get_adhesive_limit_port;
     /// `CPhysical::ApplyFriction(CPhysical*, float, CColPoint&)` (0x545980, AL)
     pub fn apply_friction_other(e: Ent, other: Ent, adhesive: f32, cp: Ent) -> u8 = thiscall 0x545980 => unported;
-    /// `CPlaceable::AllocateMatrix()` (0x54F560)
-    pub fn allocate_matrix_call(e: Ent) = thiscall 0x54F560 => unported;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*)` (0x54F1B0)
-    pub fn simple_transform_update_matrix_call(t: Ent, m: Ent) = thiscall 0x54F1B0 => unported;
 }
 
 /// Phases B/C side of `GetAdhesiveLimit` (the port returns the f32 table entry as an `X87`, exact).
@@ -912,31 +904,22 @@ pub fn process_collision_sector_list_simple_car(this: Ent, sector: Ent) -> u8 {
 
 pub use crate::bindings::vector_add_assign;
 pub use crate::bindings::vector_div as vector_div_scalar;
-pub use sa_core::bindings::find_player_ped;
-pub use sa_core::bindings::vector_sub;
+pub use crate::bindings::find_player_ped;
+pub use crate::bindings::vector_sub;
+pub use crate::bindings::apply_friction_self as apply_friction_self_call;
+pub use crate::bindings::apply_soft_collision_1;
+pub use crate::bindings::entity_get_is_static as get_is_static_call;
+pub use crate::bindings::get_adhesion_group as get_adhesion_group_call;
+pub use crate::bindings::kill_ped_with_car;
+pub use crate::bindings::object_damage;
+pub use sa_core::bindings::matrix_invert;
+pub use crate::bindings::vector_magnitude_sqr as squared_magnitude;
+pub use sa_core::bindings::vector_dot_product as dot_product;
 orig! {
     /// `CPhysical::ApplySoftCollision(CPhysical*, CColPoint&, float&, float&)` (0x54A2C0, AL)
     pub fn apply_soft_collision_2(e: Ent, other: Ent, cp: Ent, d1: GPtr<f32>, d2: GPtr<f32>) -> u8 = thiscall 0x54A2C0 => crate::physical::pair_collision::apply_soft_collision_2;
     /// `CPhysical::ApplyCollisionAlt(CEntity*, CColPoint&, float&, CVector&, CVector&)` (0x544D50, AL)
     pub fn apply_collision_alt(e: Ent, other: Ent, cp: Ent, d: GPtr<f32>, move_: Ent, turn: Ent) -> u8 = thiscall 0x544D50 => unported;
-    /// `CPhysical::ApplySoftCollision(CEntity*, CColPoint&, float&)` (0x543890, AL)
-    pub fn apply_soft_collision_1(e: Ent, other: Ent, cp: Ent, d: GPtr<f32>) -> u8 = thiscall 0x543890 => super::collide::apply_soft_collision;
-    /// `CPhysical::ApplyFriction(float, CColPoint&)` (0x5454C0, AL)
-    pub fn apply_friction_self_call(e: Ent, adhesive: f32, cp: Ent) -> u8 = thiscall 0x5454C0 => super::friction::apply_friction;
-    /// `CEntity::GetIsStatic()` (0x4633E0)
-    pub fn get_is_static_call(e: Ent) -> u32 = thiscall 0x4633E0 => crate::world::entity::get_is_static;
-    /// `CVector::SquaredMagnitude()` (0x406DA0, ST0)
-    pub fn squared_magnitude(v: Ent) -> f64 = thiscall 0x406DA0 => squared_magnitude_port;
-    /// `DotProduct(const CVector&, const CVector&)` (0x40FDB0, cdecl, ST0)
-    pub fn dot_product(a: Ent, b: Ent) -> f64 = cdecl 0x40FDB0 => unported;
-    /// `CPed::KillPedWithCar(CVehicle*, float, bool)` (0x5F0360)
-    pub fn kill_ped_with_car(ped: Ent, veh: Ent, impulse: f32, b: u32) = thiscall 0x5F0360 => unported;
-    /// `CObject::ObjectDamage(float, const CVector*, const CVector*, CEntity*, eWeaponType)` (0x5A0D90)
-    pub fn object_damage(obj: Ent, damage: f32, pt: Ent, normal: Ent, by: Ent, weapon: u32) = thiscall 0x5A0D90 => unported;
-    /// `SurfaceInfos_c::GetAdhesionGroup(uint32)` (0x55E5C0, thiscall on `g_surfaceInfos`)
-    pub fn get_adhesion_group_call(si: Ent, id: u32) -> u32 = thiscall 0x55E5C0 => get_adhesion_group_port;
-    /// `Invert(const CMatrix& src, CMatrix& dst)` (0x59B920, returns dst)
-    pub fn matrix_invert(src: Ent, dst: Ent) -> Ent = cdecl 0x59B920 => unported;
 }
 
 /// Phases B/C side of `CVector::SquaredMagnitude` (sums of f32 products at PC 24: exact as f64).
@@ -1025,11 +1008,11 @@ fn pcsl_contacts(this: Ent, e: Ent, n: i32, friction: bool, piece_a_only: bool, 
         f.fdivp(1);
         let mut adh = f.fstp();
         if etype(this) == ty::VEHICLE && etype(e) == ty::VEHICLE {
-            f.push(X87::from_f64_exact(squared_magnitude(this.byte_add(MOVE_SPEED))));
+            f.push(X87::from_f64_exact(squared_magnitude(this.byte_add(MOVE_SPEED)).to_f64()));
             f.fcomp_m(G_8CD7B0.get());
             let mut scale = !f.jne(0x41);
             if !scale {
-                f.push(X87::from_f64_exact(squared_magnitude(this.byte_add(TURN_SPEED))));
+                f.push(X87::from_f64_exact(squared_magnitude(this.byte_add(TURN_SPEED)).to_f64()));
                 f.fcomp_m(G_8CD7B4.get());
                 scale = !f.jne(0x41);
             }
@@ -1066,7 +1049,7 @@ fn pcsl_object_crush(obj: Ent, veh: Ent, this_is_obj: bool) {
     let mut diag = [0f32; 3];
     vector_sub(lp(&mut diag).cast(), cm.byte_add(0xC), cm);
     let mut o = CVector::new(0.0, 0.0, 0.0);
-    let p = rv(matrix_mul_point(lp(&mut o), matrix(obj), lp(&mut diag).cast()).cast(), 0);
+    let p = rv(GPtr::<u8>::cast::<sa_math::vector::CVector>(matrix_mul_point(GPtr::<sa_math::vector::CVector>::cast::<u8>(lp(&mut o)), matrix(obj), GPtr::<sa_math::vector::CVector>::cast::<u8>(lp(&mut diag).cast()))).cast(), 0);
     // the transformed point overwrites the diagonal's local (the second product uses it)
     diag = p;
     let vm = matrix(veh);
@@ -1087,7 +1070,7 @@ fn pcsl_object_crush(obj: Ent, veh: Ent, this_is_obj: bool) {
         let r = matrix_invert(vm, mp);
         matrix_assign(mp, r);
         let mut o2 = CVector::new(0.0, 0.0, 0.0);
-        let q = rv(matrix_mul_point(lp(&mut o2), mp, lp(&mut diag).cast()).cast(), 0);
+        let q = rv(GPtr::<u8>::cast::<sa_math::vector::CVector>(matrix_mul_point(GPtr::<sa_math::vector::CVector>::cast::<u8>(lp(&mut o2)), mp, GPtr::<sa_math::vector::CVector>::cast::<u8>(lp(&mut diag).cast()))).cast(), 0);
         f.fld(q[2]);
         f.fcomp_m(cf(k::K_858B50));
         !f.jp(5)
@@ -1195,10 +1178,10 @@ fn pcsl_alt(this: Ent, e: Ent, s: &mut PcslState, result: &mut u8) -> Option<u8>
                     f.fld(rf(matrix(this), 0x28));
                     f.fcomp_m(cf(k::K_858C24));
                     if !f.jne(0x41) {
-                        f.push(X87::from_f64_exact(squared_magnitude(this.byte_add(MOVE_SPEED))));
+                        f.push(X87::from_f64_exact(squared_magnitude(this.byte_add(MOVE_SPEED)).to_f64()));
                         f.fcomp_m(G_8CD7B0.get());
                         if !f.jp(5) {
-                            f.push(X87::from_f64_exact(squared_magnitude(this.byte_add(TURN_SPEED))));
+                            f.push(X87::from_f64_exact(squared_magnitude(this.byte_add(TURN_SPEED)).to_f64()));
                             f.fcomp_m(G_8CD7B4.get());
                             zero = !f.jp(5);
                         }
@@ -1209,7 +1192,7 @@ fn pcsl_alt(this: Ent, e: Ent, s: &mut PcslState, result: &mut u8) -> Option<u8>
                         let scale = if st == 4 {
                             true
                         } else {
-                            f.push(X87::from_f64_exact(dot_product(cp.byte_add(0x10), matrix(this).byte_add(0x20))));
+                            f.push(X87::from_f64_exact(dot_product(cp.byte_add(0x10), matrix(this).byte_add(0x20)).to_f64()));
                             f.fcomp_m(cf(k::K_863C1C));
                             !f.jp(5)
                         };
@@ -1487,7 +1470,7 @@ fn pcsl_after(this: Ent, e: Ent, s: &PcslState) {
     if etype(e) == ty::PED && etype(this) == ty::VEHICLE {
         let kill = if ped_is_player(e) != 0 {
             if ru(e, EFLAGS) & 0x1000 != 0 {
-                f.push(X87::from_f64_exact(squared_magnitude(this.byte_add(MOVE_SPEED))));
+                f.push(X87::from_f64_exact(squared_magnitude(this.byte_add(MOVE_SPEED)).to_f64()));
                 f.fcomp_m(cf(k::K_858CD8));
                 !f.jne(0x41)
             } else {
@@ -1503,11 +1486,11 @@ fn pcsl_after(this: Ent, e: Ent, s: &PcslState) {
     }
     let tt = etype(this);
     if tt == ty::PED && etype(e) == ty::VEHICLE && ru(e, 0x594) == 6 {
-        f.push(X87::from_f64_exact(dot_product(e.byte_add(MOVE_SPEED), this.byte_add(LAST_IMPACT_VELOCITY))));
+        f.push(X87::from_f64_exact(dot_product(e.byte_add(MOVE_SPEED), this.byte_add(LAST_IMPACT_VELOCITY)).to_f64()));
         f.fcomp_m(cf(k::K_858CC4));
         let mut kill = !f.jne(0x41);
         if !kill && ru(this, 0x474) & 0x10_0000 != 0 {
-            f.push(X87::from_f64_exact(squared_magnitude(e.byte_add(MOVE_SPEED))));
+            f.push(X87::from_f64_exact(squared_magnitude(e.byte_add(MOVE_SPEED)).to_f64()));
             f.fcomp_m(cf(k::K_859978));
             kill = !f.jne(0x41);
         }

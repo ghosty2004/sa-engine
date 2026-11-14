@@ -10,8 +10,8 @@ use sa_math::x87::{Cmp, X87};
 use crate::common::{entity_get_col_model, f32_of, rd, wr, x, xi};
 use sa_world::world::common::entity_pos;
 
-use sa_core::bindings::find_player_ped;
-use sa_core::bindings::find_player_vehicle;
+use sa_world::bindings::find_player_ped;
+use sa_world::bindings::find_player_vehicle;
 use sa_world::bindings::can_physical_be_damaged as physical_can_be_damaged;
 
 /// `CVehicle::FindTyreNearestPoint(float x, float y)` (0x6D7BC0): the wheel quadrant of the point

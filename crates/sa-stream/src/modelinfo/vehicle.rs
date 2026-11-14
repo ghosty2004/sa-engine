@@ -271,18 +271,26 @@ pub mod call {
     pub use sa_core::bindings::find_player_vehicle;
     pub use sa_core::bindings::frame_for_all_children as rw_frame_for_all_children;
     pub use sa_core::bindings::general_random_int_in_range as get_random_number_in_range;
-    pub use sa_core::bindings::load_line;
+    pub use crate::bindings::load_line;
     pub use sa_core::bindings::material_list_append_call as rp_material_list_append_material;
     pub use sa_core::bindings::material_list_deinitialize as rp_material_list_deinitialize;
-    pub use sa_core::bindings::pop_current_txd;
-    pub use sa_core::bindings::push_current_txd;
+    pub use crate::bindings::pop_current_txd;
+    pub use crate::bindings::push_current_txd;
     pub use sa_core::bindings::quaternion_set;
     pub use sa_core::bindings::rp_clump_for_all_atomics;
     pub use sa_core::bindings::rp_geometry_for_all_materials;
     pub use sa_core::bindings::rp_mat_fx_material_set_effects;
     pub use sa_core::bindings::rw_matrix_rotate;
     pub use sa_core::bindings::rw_matrix_transform;
-    pub use sa_core::bindings::set_current_txd;
+    pub use crate::bindings::set_current_txd;
+    pub use sa_core::bindings::crt_new as operator_new;
+    pub use sa_core::bindings::fclose;
+    pub use sa_core::bindings::fopen;
+    pub use sa_core::bindings::memory_malloc as malloc;
+    pub use crate::bindings::clump_delete_rw_object;
+    pub use crate::bindings::clump_init;
+    pub use crate::bindings::clump_set_clump;
+    pub use crate::bindings::clump_set_frame_ids;
     orig! {
         /// RwTextureGetFindCallBack (0x7F34F0)
         pub fn rw_texture_get_find_call_back() -> u32 = cdecl 0x7F34F0 => unported;
@@ -298,24 +306,14 @@ pub mod call {
         pub fn clear_atomic_flag(atomic: GPtr<u8>, flag: u32) = cdecl 0x732310 => unported;
         /// CVisibilityPlugins::ClearClumpForAllAtomicsFlag (0x732350)
         pub fn clear_clump_for_all_atomics_flag(clump: GPtr<u8>, flag: u32) = cdecl 0x732350 => unported;
-        /// CClumpModelInfo::Init (0x4C4E40)
-        pub fn clump_init(mi: GPtr<u8>) = thiscall 0x4C4E40 => unported;
-        /// CClumpModelInfo::SetClump (0x4C4F70)
-        pub fn clump_set_clump(mi: GPtr<u8>, clump: GPtr<u8>) = thiscall 0x4C4F70 => unported;
-        /// CClumpModelInfo::SetFrameIds (0x4C5460)
-        pub fn clump_set_frame_ids(mi: GPtr<u8>, ids: u32) = thiscall 0x4C5460 => unported;
         /// CClumpModelInfo::CreateInstance (0x4C5140)
         pub fn clump_create_instance(mi: GPtr<u8>) -> GPtr<u8> = thiscall 0x4C5140 => unported;
-        /// CClumpModelInfo::DeleteRwObject (0x4C4E70)
-        pub fn clump_delete_rw_object(mi: GPtr<u8>) = thiscall 0x4C4E70 => unported;
         /// CCustomCarPlateMgr::GeneratePlateText (0x6FD5B0)
         pub fn generate_plate_text(buf: GPtr<u8>, len: i32) -> u8 = cdecl 0x6FD5B0 => unported;
         /// CCustomCarPlateMgr::SetupClump (0x6FE0F0)
         pub fn plate_setup_clump(clump: GPtr<u8>, text: GPtr<u8>, ty: u8) -> GPtr<u8> = cdecl 0x6FE0F0 => unported;
         /// CCarFXRenderer::CustomCarPipeClumpSetup (0x5D5B40)
         pub fn custom_car_pipe_clump_setup(clump: GPtr<u8>) -> u8 = cdecl 0x5D5B40 => unported;
-        /// CMemoryMgr::Malloc (0x72F420)
-        pub fn malloc(size: u32, hint: u32) -> GPtr<u8> = cdecl 0x72F420 => unported;
         /// CMemoryMgr::InitScratchPad (0x72F480)
         pub fn init_scratch_pad() = cdecl 0x72F480 => unported;
         /// CPool<CVehicleStructure>::New via CVehicleStructure::operator new (0x4C9570)
@@ -324,14 +322,8 @@ pub mod call {
         pub fn vehicle_structure_ctor(s: GPtr<u8>) -> GPtr<u8> = thiscall 0x4C8D60 => super::vehicle_structure_ctor;
         /// CVehicleModelInfo::~CVehicleModelInfo (0x4C5920)
         pub fn dtor(mi: GPtr<u8>) = thiscall 0x4C5920 => super::destructor;
-        /// CRT `operator new` (0x82119A)
-        pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
         /// CRT `isdigit` (0x822789)
         pub fn isdigit(c: i32) -> i32 = cdecl 0x822789 => unported;
-        /// CRT `fopen` via 0x8232D8
-        pub fn fopen(name: GPtr<u8>, mode: GPtr<u8>) -> GPtr<u8> = cdecl 0x8232D8 => unported;
-        /// CRT `fclose` (0x82318B)
-        pub fn fclose(f: GPtr<u8>) -> i32 = cdecl 0x82318B => unported;
     }
 }
 use call::*;
@@ -918,19 +910,19 @@ pub fn set_atomic_render_callbacks(mi: GPtr<u8>) {
     let clump = rdp(mi, 0x1C);
     match rd32(mi, vmi::VEHICLE_TYPE) {
         6 => {
-            rp_clump_for_all_atomics(clump, lit::SET_ATOMIC_RENDERER_CB_TRAIN, GPtr::NULL);
+            rp_clump_for_all_atomics(clump, lit::SET_ATOMIC_RENDERER_CB_TRAIN, GPtr::<u8>::addr(GPtr::NULL) as u32);
         }
         8 | 4 => {
-            rp_clump_for_all_atomics(clump, lit::SET_ATOMIC_RENDERER_CB_PLANE, GPtr::NULL);
+            rp_clump_for_all_atomics(clump, lit::SET_ATOMIC_RENDERER_CB_PLANE, GPtr::<u8>::addr(GPtr::NULL) as u32);
         }
         5 => {
-            rp_clump_for_all_atomics(clump, lit::SET_ATOMIC_RENDERER_CB_BOAT, clump);
+            rp_clump_for_all_atomics(clump, lit::SET_ATOMIC_RENDERER_CB_BOAT, clump.addr() as u32);
         }
         3 => {
-            rp_clump_for_all_atomics(clump, lit::SET_ATOMIC_RENDERER_CB_REAL_HELI, clump);
+            rp_clump_for_all_atomics(clump, lit::SET_ATOMIC_RENDERER_CB_REAL_HELI, clump.addr() as u32);
         }
         _ => {
-            rp_clump_for_all_atomics(clump, lit::SET_ATOMIC_RENDERER_CB, clump);
+            rp_clump_for_all_atomics(clump, lit::SET_ATOMIC_RENDERER_CB, clump.addr() as u32);
         }
     }
 }
@@ -968,7 +960,7 @@ pub fn set_vehicle_component_flags(mi: GPtr<u8>, frame: GPtr<u8>, flags: u32) {
     let hflags_addr = 0xC2B9DC + rd8(mi, vmi::HANDLING_ID) as usize * 0xE0 + 0xCC;
     let hflags = || GPtr::<u32>::from_addr(hflags_addr).read();
     let set = |f: u32| {
-        rw_frame_for_all_objects(frame, lit::SET_ATOMIC_FLAG_CB, GPtr::from_addr(f as usize));
+        rw_frame_for_all_objects(frame, lit::SET_ATOMIC_FLAG_CB, GPtr::<u8>::addr(GPtr::from_addr(f as usize)) as u32);
     };
     if flags & 0x1000 != 0 {
         set(0x80);
@@ -1044,7 +1036,7 @@ pub fn set_editable_materials_cb_atomic(atomic: GPtr<u8>, data: GPtr<u8>) -> GPt
 pub fn set_editable_materials(clump: GPtr<u8>) {
     let mut cursor: GPtr<u8> = RESTORE_ENTRIES.ptr().cast();
     let pc = GPtr::from_raw(&raw mut cursor);
-    rp_clump_for_all_atomics(clump, lit::SET_EDITABLE_MATERIALS_CB_ATOMIC, pc.cast());
+    rp_clump_for_all_atomics(clump, lit::SET_EDITABLE_MATERIALS_CB_ATOMIC, GPtr::<u8>::addr(pc.cast()) as u32);
     cursor.cast::<u32>().write(0);
 }
 
@@ -1160,7 +1152,7 @@ pub fn set_env_map_coeff_atomic_cb(atomic: GPtr<u8>, data: GPtr<u8>) -> GPtr<u8>
 pub fn disable_env_map(mi: GPtr<u8>) {
     let clump = rdp(mi, 0x1C);
     if !clump.is_null() {
-        rp_clump_for_all_atomics(clump, lit::SET_ENVIRONMENT_MAP_ATOMIC_CB, GPtr::from_addr(0xFFFF));
+        rp_clump_for_all_atomics(clump, lit::SET_ENVIRONMENT_MAP_ATOMIC_CB, GPtr::<u8>::addr(GPtr::from_addr(0xFFFF)) as u32);
     }
 }
 
@@ -1189,7 +1181,7 @@ pub fn set_env_map_coeff(mi: GPtr<u8>, coeff: f32) {
     let v = env_map_coeff_to_int(coeff);
     let clump = rdp(mi, 0x1C);
     if !clump.is_null() {
-        rp_clump_for_all_atomics(clump, lit::SET_ENV_MAP_COEFF_ATOMIC_CB, GPtr::from_addr(v as u32 as usize));
+        rp_clump_for_all_atomics(clump, lit::SET_ENV_MAP_COEFF_ATOMIC_CB, GPtr::<u8>::addr(GPtr::from_addr(v as u32 as usize)) as u32);
     }
 }
 
@@ -1197,7 +1189,7 @@ pub fn set_env_map_coeff(mi: GPtr<u8>, coeff: f32) {
 /// bike steer angle = 999.99 (0x4479FF5C).
 #[hook(addr = 0x4C7630, conv = thiscall, name = "CVehicleModelInfo::Init", expect = "56 8B F1 E8 08 D8 FF FF", this = "CVehicleModelInfo")]
 pub fn init(mi: GPtr<u8>) {
-    clump_init(mi);
+    clump_init(mi.cast::<crate::shared::CBaseModelInfo>());
     wr32(mi, vmi::VEHICLE_TYPE, 0xFFFF_FFFF);
     wr16(mi, vmi::WHEEL_MODEL_INDEX, -1);
     wr32(mi, vmi::BIKE_STEER_ANGLE, 0x4479_FF5C);
@@ -1477,8 +1469,8 @@ pub fn store_atomic_used_materials_cb(atomic: GPtr<u8>, list: GPtr<u8>) -> GPtr<
 /// `CVehicleModelInfo::CollapseFramesCB` (0x4C8E30): recurse, move the objects to `data`, destroy.
 #[hook(addr = 0x4C8E30, conv = cdecl, name = "CVehicleModelInfo::CollapseFramesCB", expect = "56 8B 74 24 08")]
 pub fn collapse_frames_cb(frame: GPtr<u8>, data: GPtr<u8>) -> GPtr<u8> {
-    rw_frame_for_all_children(frame, lit::COLLAPSE_FRAMES_CB, data);
-    rw_frame_for_all_objects(frame, lit::MOVE_OBJECTS_CB, data);
+    rw_frame_for_all_children(frame, lit::COLLAPSE_FRAMES_CB, data.addr() as u32);
+    rw_frame_for_all_objects(frame, lit::MOVE_OBJECTS_CB, data.addr() as u32);
     rw_frame_destroy(frame);
     frame
 }
@@ -1638,7 +1630,7 @@ pub fn reduce_materials_in_vehicle(mi: GPtr<u8>) {
     list.materials = malloc(0x50, 0);
     let lp = GPtr::from_raw(&raw mut list).cast::<u8>();
     get_current_time_in_cycles();
-    rp_clump_for_all_atomics(clump, lit::STORE_ATOMIC_USED_MATERIALS_CB, lp);
+    rp_clump_for_all_atomics(clump, lit::STORE_ATOMIC_USED_MATERIALS_CB, lp.addr() as u32);
     let mut k = 0;
     loop {
         let st = rdp(mi, vmi::VEHICLE_STRUCT);
@@ -1655,6 +1647,7 @@ pub fn reduce_materials_in_vehicle(mi: GPtr<u8>) {
     clear_clump_for_all_atomics_flag(clump, 0x2000);
 }
 
+use sa_core::bindings::rw_frame_transform;
 orig! {
     fn store_atomic_used_materials_call(atomic: GPtr<u8>, list: GPtr<u8>) -> GPtr<u8> = cdecl 0x4C8B60 => store_atomic_used_materials_cb;
     fn set_vehicle_component_flags_call(mi: GPtr<u8>, frame: GPtr<u8>, flags: u32) = thiscall 0x4C7C10 => set_vehicle_component_flags;
@@ -1669,8 +1662,6 @@ orig! {
     fn vehicle_structure_pool_new(pool: GPtr<u8>) -> GPtr<u8> = thiscall 0x4C94C0 => unported;
     /// CVehicleStructure::~CVehicleStructure (0x4C7410)
     fn vehicle_structure_dtor(st: GPtr<u8>) = thiscall 0x4C7410 => unported;
-    /// RwFrameTransform (0x7F0F70)
-    fn rw_frame_transform(frame: GPtr<u8>, m: GPtr<u8>, op: u32) -> GPtr<u8> = cdecl 0x7F0F70 => unported;
     /// RwHelper GetFirstChild (0x734900)
     fn get_first_child(frame: GPtr<u8>) -> GPtr<u8> = cdecl 0x734900 => unported;
 }
@@ -1707,7 +1698,7 @@ pub fn preprocess_hierarchy(mi: GPtr<u8>) {
             let (name, _, flags) = desc(table(), k);
             if flags & 0x20208 != 0 {
                 let mut search: [GPtr<u8>; 2] = [name, GPtr::NULL];
-                rw_frame_for_all_children(clump_frame(), lit::FIND_FRAME_FROM_NAME_WITHOUT_ID_CB, GPtr::from_raw(search.as_mut_ptr()).cast());
+                rw_frame_for_all_children(clump_frame(), lit::FIND_FRAME_FROM_NAME_WITHOUT_ID_CB, GPtr::<u8>::addr(GPtr::from_raw(search.as_mut_ptr()).cast()) as u32);
                 let frame = search[1];
                 if !frame.is_null() {
                     let (_, id, flags) = desc(table(), k);
@@ -1751,7 +1742,7 @@ pub fn preprocess_hierarchy(mi: GPtr<u8>) {
             let (_, id, flags) = desc(table(), k);
             if flags & 0x11_0000 != 0 {
                 let mut search: [GPtr<u8>; 2] = [GPtr::from_addr(id as u32 as usize), GPtr::NULL];
-                rw_frame_for_all_children(clump_frame(), lit::FIND_FRAME_FROM_ID_CB, GPtr::from_raw(search.as_mut_ptr()).cast());
+                rw_frame_for_all_children(clump_frame(), lit::FIND_FRAME_FROM_ID_CB, GPtr::<u8>::addr(GPtr::from_raw(search.as_mut_ptr()).cast()) as u32);
                 let mut f = search[1];
                 while !f.is_null() {
                     if !get_first_object(f).is_null() {
@@ -1779,7 +1770,7 @@ pub fn preprocess_hierarchy(mi: GPtr<u8>) {
         let (_, id, flags) = desc(table(), k);
         if flags & 0x20208 == 0 {
             let mut search: [GPtr<u8>; 2] = [GPtr::from_addr(id as u32 as usize), GPtr::NULL];
-            rw_frame_for_all_children(clump_frame(), lit::FIND_FRAME_FROM_ID_CB, GPtr::from_raw(search.as_mut_ptr()).cast());
+            rw_frame_for_all_children(clump_frame(), lit::FIND_FRAME_FROM_ID_CB, GPtr::<u8>::addr(GPtr::from_raw(search.as_mut_ptr()).cast()) as u32);
             let frame = search[1];
             if !frame.is_null() {
                 if desc(table(), k).2 & 0x10 != 0 {
@@ -1787,9 +1778,9 @@ pub fn preprocess_hierarchy(mi: GPtr<u8>) {
                 }
                 if desc(table(), k).2 & 2 != 0 {
                     let mut pair: [GPtr<u8>; 2] = [GPtr::NULL, GPtr::NULL];
-                    rw_frame_for_all_children(frame, lit::COLLAPSE_FRAMES_CB, frame);
+                    rw_frame_for_all_children(frame, lit::COLLAPSE_FRAMES_CB, frame.addr() as u32);
                     rw_frame_update_objects(frame);
-                    rw_frame_for_all_objects(frame, lit::GET_OK_AND_DAMAGED_ATOMIC_CB, GPtr::from_raw(pair.as_mut_ptr()).cast());
+                    rw_frame_for_all_objects(frame, lit::GET_OK_AND_DAMAGED_ATOMIC_CB, GPtr::<u8>::addr(GPtr::from_raw(pair.as_mut_ptr()).cast()) as u32);
                     let (ok, dam) = (pair[0], pair[1]);
                     if !ok.is_null() && !dam.is_null() {
                         wr32(dam, 0x48, rd32(ok, 0x48));
@@ -1842,7 +1833,7 @@ pub fn preprocess_hierarchy(mi: GPtr<u8>) {
                             set_atomic_render_callback(c, lit::RENDER_WHEEL_ATOMIC_CB);
                         }
                     } else {
-                        rw_frame_for_all_children(frame, lit::COLLAPSE_FRAMES_CB, frame);
+                        rw_frame_for_all_children(frame, lit::COLLAPSE_FRAMES_CB, frame.addr() as u32);
                         rw_frame_update_objects(frame);
                         set_atomic_render_callback(wheel, lit::RENDER_WHEEL_ATOMIC_CB);
                     }
@@ -1863,10 +1854,10 @@ pub fn set_clump(mi: GPtr<u8>, clump: GPtr<u8>) {
     let p = vehicle_structure_pool_new(vehicle_structure_pool());
     let st = if p.is_null() { GPtr::NULL } else { vehicle_structure_ctor(p) };
     wrp(mi, vmi::VEHICLE_STRUCT, st);
-    clump_set_clump(mi, clump);
+    clump_set_clump(mi.cast::<crate::shared::CBaseModelInfo>(), clump);
     set_atomic_render_callbacks_call(mi);
     let ids = VEHICLE_DESCS.ptr().cast::<u32>().wrapping_index(rd32(mi, vmi::VEHICLE_TYPE) as i32).read();
-    clump_set_frame_ids(mi, ids);
+    clump_set_frame_ids(mi.cast::<crate::shared::CBaseModelInfo>(), GPtr::<u8>::from_addr(ids as usize));
     set_render_pipelines_call(mi);
     preprocess_hierarchy_call(mi);
     reduce_materials_call(mi);
@@ -1921,7 +1912,7 @@ pub fn create_instance(mi: GPtr<u8>) -> GPtr<u8> {
         }
         used.wrapping_index(1).write(c2 as u8);
     }
-    rp_clump_for_all_atomics(clump, lit::SET_ENVIRONMENT_MAP_ATOMIC_CB, GPtr::NULL);
+    rp_clump_for_all_atomics(clump, lit::SET_ENVIRONMENT_MAP_ATOMIC_CB, GPtr::<u8>::addr(GPtr::NULL) as u32);
     clump
 }
 
@@ -1937,13 +1928,13 @@ pub fn delete_rw_object(mi: GPtr<u8>) {
         sa_core::pool::pool_delete(pool, st.cast());
         wrp(mi, vmi::VEHICLE_STRUCT, GPtr::NULL);
     }
-    clump_delete_rw_object(mi);
+    clump_delete_rw_object(mi.cast::<crate::shared::CBaseModelInfo>());
 }
 
 use sa_core::bindings::file_close as close_file;
-use sa_core::bindings::loading_screen_new_chunk_loaded as new_chunk_loaded;
+use crate::bindings::loading_screen_new_chunk_loaded as new_chunk_loaded;
 use sa_core::bindings::open_file;
-use sa_core::bindings::txd_add_ref;
+use crate::bindings::txd_add_ref;
 use sa_core::bindings::add_txd_slot;
 use sa_core::bindings::load_txd;
 orig! {
@@ -2062,7 +2053,7 @@ pub fn load_vehicle_upgrades() {
                         strtok(line, dp);
                         let mut tok = strtok(GPtr::NULL, dp);
                         while !tok.is_null() {
-                            let m = get_model_info_full(tok, idp.cast::<u8>());
+                            let m = get_model_info_full(tok, idp.cast::<i32>()).cast::<u8>();
                             setup_vehicle_upgrade_flags(m, tok);
                             add_wheel_upgrade_call(wheel_set, id);
                             tok = strtok(GPtr::NULL, dp);
@@ -2072,20 +2063,20 @@ pub fn load_vehicle_upgrades() {
                         let tok = strtok(line, dp);
                         if !tok.is_null() {
                             id = -1;
-                            let veh = get_model_info_full(tok, idp.cast::<u8>());
+                            let veh = get_model_info_full(tok, idp.cast::<i32>()).cast::<u8>();
                             let mut n = 0isize;
                             let mut tok = strtok(GPtr::NULL, dp);
                             while !tok.is_null() {
-                                let m = get_model_info_full(tok, idp.cast::<u8>());
+                                let m = get_model_info_full(tok, idp.cast::<i32>()).cast::<u8>();
                                 setup_vehicle_upgrade_flags(m, tok);
                                 wr16(veh, vmi::UPGRADES + 2 * n, id as i16);
                                 n += 1;
                                 tok = strtok(GPtr::NULL, dp);
                             }
-                            let m = get_model_info_full(s(0x85BB28), idp.cast::<u8>());
+                            let m = get_model_info_full(s(0x85BB28), idp.cast::<i32>()).cast::<u8>();
                             setup_vehicle_upgrade_flags(m, s(0x85BB28));
                             wr16(veh, vmi::UPGRADES + 2 * n, id as i16);
-                            let m = get_model_info_full(s(0x85BB20), idp.cast::<u8>());
+                            let m = get_model_info_full(s(0x85BB20), idp.cast::<i32>()).cast::<u8>();
                             setup_vehicle_upgrade_flags(m, s(0x85BB20));
                             wr16(veh, vmi::UPGRADES + 2 + 2 * n, id as i16);
                         }
@@ -2095,10 +2086,10 @@ pub fn load_vehicle_upgrades() {
                         id = -1;
                         let tok = strtok(line, dp);
                         if !tok.is_null() {
-                            let m = get_model_info_full(tok, id1p.cast::<u8>());
+                            let m = get_model_info_full(tok, id1p.cast::<i32>()).cast::<u8>();
                             setup_vehicle_upgrade_flags(m, tok);
                             let tok2 = strtok(GPtr::NULL, dp);
-                            let m = get_model_info_full(tok2, idp.cast::<u8>());
+                            let m = get_model_info_full(tok2, idp.cast::<i32>()).cast::<u8>();
                             setup_vehicle_upgrade_flags(m, tok2);
                             add_upgrade_link_call(LINKED_UPGRADES.ptr().cast(), id1, id);
                         }
@@ -2207,7 +2198,7 @@ pub fn load_vehicle_colours() {
                 }
                 let fmt = if per == 2 { 0x8696E4 } else { 0x869680 };
                 let n = sscanf_n(line, s(fmt), &t);
-                let mi = get_model_info_full(GPtr::from_raw(name.as_mut_ptr()), GPtr::<i32>::cast::<u8>(GPtr::NULL));
+                let mi = get_model_info_full(GPtr::from_raw(name.as_mut_ptr()), GPtr::NULL).cast::<u8>();
                 // (n - 1) / per, signed toward zero, stored as a byte
                 let nv = ((n - 1) / per) as u8;
                 wr8(mi, vmi::NUM_COLOR_VARIATIONS, nv);

@@ -1,5 +1,6 @@
 //! Destructors of complex tasks that hold one entity reference (batch `frontier-1-2`), ported from the 1.0 US bytes.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::hook;
 
@@ -17,7 +18,7 @@ pub fn complex_task_8706f8_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x87_06F8);
     let e = rd::<GPtr<u8>>(this, 0xC);
     if !e.is_null() {
-        entity_clean_up_old_reference(e, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0xC)));
+        entity_clean_up_old_reference(e, this.byte_add(0xC));
     }
     task_complex_dtor(this);
 }

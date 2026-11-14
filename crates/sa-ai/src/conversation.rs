@@ -65,13 +65,13 @@ const ONE_F: u32 = 0x3F80_0000;
 use crate::bindings::pad_conversation_no_just_down;
 use crate::bindings::pad_conversation_yes_just_down;
 use sa_core::bindings::add_message_jump;
-use sa_core::bindings::entity_get_is_on_screen;
+use sa_world::bindings::entity_get_is_on_screen;
 use sa_core::bindings::entity_register_reference;
-use sa_core::bindings::find_player_coors;
-use sa_core::bindings::find_player_ped;
-use sa_core::bindings::find_player_vehicle;
+use sa_world::bindings::find_player_coors;
+use sa_world::bindings::find_player_ped;
+use sa_world::bindings::find_player_vehicle;
 use sa_core::bindings::general_random_int_in_range;
-use sa_core::bindings::get_pad;
+use sa_input::bindings::get_pad;
 use sa_core::bindings::text_get;
 use sa_core::bindings::vector_dot_product;
 use sa_core::bindings::vector_magnitude;
@@ -80,7 +80,7 @@ use sa_world::bindings::clear_small_messages_only;
 use sa_world::bindings::count_members_excluding_leader as membership_count_excluding_leader;
 use sa_world::bindings::disable_ped_speech as ped_disable_ped_speech;
 use sa_world::bindings::enable_ped_speech as ped_enable_ped_speech;
-use sa_world::bindings::event_group_add;
+use crate::bindings::event_group_add;
 use sa_world::bindings::event_script_command_ctor;
 use sa_world::bindings::event_script_command_dtor;
 use sa_world::bindings::get_stat_value as stats_get_stat_value;
@@ -93,12 +93,13 @@ use sa_world::bindings::player_get_wanted_level;
 use sa_world::bindings::sequence_add_task;
 use sa_world::bindings::sequence_ctor;
 use sa_world::bindings::stand_still_ctor;
-use sa_core::bindings::vector_sub;
+use sa_world::bindings::vector_sub;
 use crate::bindings::conv_is_player_in_position;
-use sa_core::bindings::ik_abort_look_at;
+use sa_anim::bindings::ik_abort_look_at;
 use sa_world::bindings::clothes_has_visible_new_hair_cut;
 use sa_world::bindings::kill_ped_on_foot_ctor;
 use sa_world::bindings::ped_say;
+use sa_world::bindings::ik_look_at;
 orig! {
     /// `CPed::PedIsReadyForConversation(bool)` (0x43ABA0, `ret 4`)
     fn ped_is_ready_for_conversation(p: GPtr<u8>, random: u32) -> u8 = thiscall 0x43ABA0 => unported;
@@ -114,10 +115,6 @@ orig! {
     fn conversations_is_going_on() -> u8 = cdecl 0x43AAC0 => unported;
     /// `CPedClothesDesc::HasVisibleTattoo` (0x5A79D0)
     fn clothes_has_visible_tattoo(c: GPtr<u8>) -> u8 = thiscall 0x5A79D0 => unported;
-    /// `IKChainManager_c::LookAt(const char* purpose, CPed*, CEntity* target, int32 time, ePedBones, CVector* pos,
-    /// bool useTorso, float speed, int32 blendTime, int32 priority, bool)` (0x618970, `ret 0x2C`)
-    #[allow(clippy::too_many_arguments)]
-    fn ik_look_at(m: GPtr<u8>, purpose: u32, ped: GPtr<u8>, target: GPtr<u8>, time: u32, bone: u32, pos: u32, torso: u32, speed: u32, blend: u32, prio: u32, a: u32) = thiscall 0x618970 => unported;
     /// `CPedToPlayerConversations::EndConversation()` (0x43AB10)
     fn p2p_end_conversation() = cdecl 0x43AB10 => unported;
 }
@@ -533,13 +530,13 @@ fn p2p_is_candidate(ped: GPtr<u8>, player: GPtr<u8>) -> bool {
     let (mut sub, mut top) = ([0u32; 3], [0u32; 3]);
     let d = vector_sub(local(&mut sub), pos(player), pos(ped));
     let up = GPtr::<f32>::cast::<u8>(placeable_get_top_direction(ped, GPtr::<u8>::cast::<f32>(local(&mut top))));
-    if X87::from_f64_exact(vector_dot_product(up, d)).fcom(cf(0x858B50)).test_any(0x41) {
+    if X87::from_f64_exact(vector_dot_product(up, d).to_f64()).fcom(cf(0x858B50)).test_any(0x41) {
         return false;
     }
     let (mut sub, mut top) = ([0u32; 3], [0u32; 3]);
     let d = vector_sub(local(&mut sub), pos(ped), pos(player));
     let up = GPtr::<f32>::cast::<u8>(placeable_get_top_direction(player, GPtr::<u8>::cast::<f32>(local(&mut top))));
-    if X87::from_f64_exact(vector_dot_product(up, d)).fcom(cf(0x858B50)).test_any(0x41) {
+    if X87::from_f64_exact(vector_dot_product(up, d).to_f64()).fcom(cf(0x858B50)).test_any(0x41) {
         return false;
     }
     let pp = pos(ped);
@@ -598,8 +595,8 @@ fn p2p_state_inactive(player: GPtr<u8>) {
                 P2P_TIME_OF_LAST.set(t);
                 P2P_START_TIME.set(t);
                 ped_disable_ped_speech(ped, 0);
-                ik_look_at(g(IK_CHAIN_MAN), 0x8594C4, ped, player, 100000, 5, 0, 0, 0x3E80_0000, 500, 8, 0);
-                ik_look_at(g(IK_CHAIN_MAN), 0x8594AC, player, ped, 100000, 5, 0, 0, 0x3E80_0000, 500, 8, 0);
+                ik_look_at(g(IK_CHAIN_MAN), GPtr::from_addr(0x8594C4), ped, player, 100000, 5, GPtr::NULL, 0, f32::from_bits(0x3E80_0000), 500, 8, 0);
+                ik_look_at(g(IK_CHAIN_MAN), GPtr::from_addr(0x8594AC), player, ped, 100000, 5, GPtr::NULL, 0, f32::from_bits(0x3E80_0000), 500, 8, 0);
                 return;
             }
             Opening::Skip => {

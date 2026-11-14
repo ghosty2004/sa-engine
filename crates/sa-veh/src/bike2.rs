@@ -12,10 +12,10 @@ use crate::common::{f32_of, g, jne_mask, rd, wr, x};
 type Bike = GPtr<u8>;
 
 pub use crate::bindings::vehicle_destructor;
-pub use sa_core::bindings::assoc_set_current_time;
+pub use sa_anim::bindings::assoc_set_current_time;
 pub use sa_core::bindings::cross_product;
-pub use sa_core::bindings::find_player_ped;
-pub use sa_core::bindings::matrix_dtor;
+pub use sa_world::bindings::find_player_ped;
+pub use sa_world::bindings::matrix_dtor;
 pub use sa_core::bindings::matrix_mul_assign;
 pub use sa_core::bindings::matrix_rotate_y;
 pub use sa_core::bindings::matrix_set_rotate_x;
@@ -31,13 +31,14 @@ pub use sa_world::bindings::skip_physics;
 pub use crate::bindings::do_head_light_beam;
 pub use crate::bindings::vehicle_delete;
 pub use crate::bindings::vehicle_render;
-pub use sa_core::bindings::assoc_set_finish_callback;
+pub use sa_anim::bindings::assoc_set_finish_callback;
 pub use sa_core::bindings::clump_get_association;
 pub use sa_core::bindings::matrix_assign;
 pub use sa_core::bindings::rw_matrix_transform;
 pub use sa_world::bindings::anim_blend_animation as blend_animation;
-pub use sa_world::bindings::bike_calculate_lean_matrix as calculate_lean_matrix_call;
+pub use crate::bindings::bike_calculate_lean_matrix as calculate_lean_matrix_call;
 pub use sa_world::bindings::matrix_copy_ctor;
+pub use crate::bindings::process_rider_anims;
 orig! {
     /// `CBike::Destructor()` (0x6B57A0)
     pub fn bike_destructor_call(bk: GPtr<u8>) = thiscall 0x6B57A0 => destructor;
@@ -45,8 +46,6 @@ orig! {
     pub fn bmx_destructor_call(bk: GPtr<u8>) = thiscall 0x6BF9D0 => bmx_destructor;
     /// `CRideAnimData::~CRideAnimData()` (0x6D0B30, a `ret`)
     pub fn ride_anim_data_dtor_call(r: GPtr<u8>) = thiscall 0x6D0B30 => ride_anim_data_destructor;
-    /// `CBike::ProcessRiderAnims(CPed*, CVehicle*, CRideAnimData*, tBikeHandlingData*, int16)` (0x6B7280)
-    pub fn process_rider_anims(ped: GPtr<u8>, v: GPtr<u8>, data: GPtr<u8>, handling: GPtr<u8>, a5: u32) = cdecl 0x6B7280 => unported;
     /// `RwRenderStateGet` (RwEngineInstance +0x24)
     pub fn rw_render_state_get(state: u32, out: GPtr<u32>) -> i32 = cdecl table 0xC97B24 0x24 => unported;
     /// `RwRenderStateSet` (RwEngineInstance +0x20)
@@ -518,7 +517,7 @@ pub fn bmx_process_bunny_hop(bk: Bike) {
                     let speed = g::<u32>(0x871524).read();
                     wr::<u8>(assoc, 0x2E, rd::<u8>(assoc, 0x2E) | 1);
                     wr::<u32>(assoc, 0x24, speed);
-                    assoc_set_finish_callback(assoc, 0x6C_0390, bk);
+                    assoc_set_finish_callback(assoc, 0x6C_0390, bk.addr() as u32);
                 }
             }
         } else {

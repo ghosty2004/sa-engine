@@ -13,7 +13,7 @@ use crate::bindings::ig_get_entity;
 use sa_core::bindings::rw_matrix_rotate;
 use sa_core::bindings::rw_matrix_translate;
 use crate::bindings::rw_v3d_transform_vectors;
-use sa_core::bindings::rw_matrix_multiply;
+use sa_rwcore::bindings::rw_matrix_multiply;
 use crate::bindings::get_tile_status as interior_get_tile_status;
 use crate::bindings::is_pt_inside as interior_is_pt_inside;
 

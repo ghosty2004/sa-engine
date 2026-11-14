@@ -9,7 +9,7 @@ use sa_core::hook;
 
 use crate::common::*;
 
-use sa_core::bindings::col_sphere_set;
+use sa_world::bindings::col_sphere_set;
 
 /// The static `CColModel` (0xC17824): bounding box min (+0) and max (+0xC), bounding sphere centre (+0x18) and
 /// radius (+0x24), collision data pointer (+0x2C, 0xC17850); its `CCollisionData` at 0xC17854 (sphere count word
@@ -37,8 +37,8 @@ pub fn set_up_sphere_col_model(_this: GPtr<u8>, radius: u32) {
     let mut centre = [0u32; 3];
     col_sphere_set(
         GPtr::from_addr(g::<u32>(COL_SPHERES_PTR).read() as usize),
-        f32::from_bits(radius),
-        GPtr::<u32>::cast::<u8>(GPtr::from_raw(centre.as_mut_ptr())),
+        f32::from_bits(radius).to_bits(),
+        GPtr::from_raw(centre.as_mut_ptr()),
         0,
         0,
         0xFF,

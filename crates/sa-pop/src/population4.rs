@@ -19,14 +19,14 @@ const THE_CAMERA: usize = 0xB6F028;
 use sa_world::bindings::camera_is_sphere_visible;
 use crate::bindings::cull_zones_fewer_peds as fewer_peds;
 use sa_world::bindings::is_sunbather;
-use sa_core::bindings::entity_update_rw_frame as update_rw_frame;
+use sa_world::bindings::entity_update_rw_frame as update_rw_frame;
 use sa_core::bindings::object_new;
 use sa_core::bindings::random_float_in_range as grn_f;
 use sa_core::bindings::stricmp;
 use sa_core::bindings::task_new;
 use sa_core::bindings::tm_set_task_secondary as set_task_secondary;
-use sa_core::bindings::world_add;
-use sa_stream::bindings::find_player_wanted;
+use sa_world::bindings::world_add;
+use sa_world::bindings::find_player_wanted;
 use sa_stream::bindings::get_anim_group_name;
 use sa_world::bindings::brains_check_if_new_entity_needs_script as check_if_new_entity_needs_script;
 use sa_world::bindings::find_ground_z_for_3d_coord;
@@ -42,16 +42,16 @@ use crate::bindings::dont_create_civilians;
 use crate::bindings::generate_peds_at_attractors;
 use sa_core::bindings::general_random_int_in_range as grn_i;
 use sa_core::bindings::get_weapon_info;
-use sa_core::bindings::load_all_requested_models;
+use sa_stream::bindings::load_all_requested_models;
 use sa_core::bindings::object_ctor_5a1d70 as object_ctor;
 use sa_stream::bindings::col_load_collision as load_collision;
-use sa_world::bindings::add_ped;
-use sa_world::bindings::frenzy_on_going;
-use sa_world::bindings::gang_war_fighting_going_on;
+use crate::bindings::add_ped;
+use crate::bindings::frenzy_on_going;
+use crate::bindings::gang_war_fighting_going_on;
 use sa_world::bindings::hold_entity_ctor;
 use sa_world::bindings::is_position_clear_for_ped;
 use sa_world::bindings::placeable_set_heading as set_heading;
-use sa_world::bindings::population_remove_ped as remove_ped;
+use crate::bindings::population_remove_ped as remove_ped;
 use sa_world::bindings::sunbathe_ctor;
 use sa_world::bindings::task_wander_criminal_ctor as wander_criminal_ctor;
 use sa_world::bindings::tm_set_task as set_task;
@@ -59,11 +59,10 @@ use sa_world::bindings::vector_add as vec_add;
 use sa_world::bindings::vector_add_assign as vec_add_assign;
 use sa_world::bindings::vector_mul_scalar as vec_mul;
 use sa_world::bindings::world_process_vertical_line as process_vertical_line;
+use sa_world::bindings::find_player_ped;
+use crate::bindings::pdm_call;
+use sa_core::bindings::cross_product;
 orig! {
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
-    /// `CPopulation::PedCreationDistMultiplier()` (0x6116C0, ST0)
-    fn pdm_call() -> f64 = cdecl 0x6116C0 => pdm_abi;
     /// `CPopCycle::FindNewPedType(ePedType*, int32*, bool, bool)` (0x60FBD0)
     fn find_new_ped_type(t: GPtr<i32>, m: GPtr<i32>, no_gangs: u8, no_cops: u8) -> u8 = cdecl 0x60FBD0 => crate::population2::find_new_ped_type;
     /// `CPopulation::ChooseCivilianCoupleOccupations(int32&, int32&)` (0x613180)
@@ -90,16 +89,8 @@ orig! {
     fn can_sunbathe() -> u8 = cdecl 0x632140 => unported;
     /// `CWaterLevel::CreateBeachToy(const CVector&, eBeachToy)` (0x6EABA0)
     fn create_beach_toy(pos: GPtr<f32>, toy: i32) -> GPtr<u8> = cdecl 0x6EABA0 => crate::misc4::create_beach_toy;
-    /// `CVector::CrossProduct(CVector* out, const CVector*, const CVector*)` (0x59C730)
-    fn cross_product(out: GPtr<f32>, a: GPtr<f32>, b: GPtr<f32>) -> GPtr<f32> = cdecl 0x59C730 => unported;
     /// `CPathFind::GeneratePedCreationCoors_Interior(float, float, CVector*, CNodeAddress*, CNodeAddress*, float*)` (0x44ECA0)
     fn generate_ped_creation_coors_interior(this: GPtr<u8>, px: f32, py: f32, out: GPtr<f32>, a: GPtr<u32>, b: GPtr<u32>, orient: GPtr<f32>) -> u8 = thiscall 0x44ECA0 => crate::pathfind::generate_ped_creation_coors_interior;
-}
-
-/// The `orig!` routing target of 0x6116C0 (an ST0 result crosses `orig!` as an f64).
-#[cfg_attr(sa_phase_a, allow(dead_code))]
-fn pdm_abi() -> f64 {
-    crate::population::ped_creation_dist_multiplier().to_f64()
 }
 
 /// The `orig!` routing target of 0x6143E0.
@@ -110,12 +101,12 @@ fn fdtnpot_abi(t: i32, px: f32, py: f32, pz: f32) -> f64 {
 
 /// `PedCreationDistMultiplier()` in ST0.
 fn pdm() -> X87 {
-    X87::from_f64_exact(pdm_call())
+    X87::from_f64_exact(pdm_call().to_f64())
 }
 
 /// `GetRandomNumberInRange<float>(lo, hi)` stored as f32.
 fn rnd_f(lo: f32, hi: f32) -> f32 {
-    X87::from_f64_exact(grn_f(lo, hi)).to_f32()
+    X87::from_f64_exact(grn_f(lo, hi).to_f64()).to_f32()
 }
 
 use sa_world::world::common::entity_pos_f as entity_pos;
@@ -305,7 +296,7 @@ fn add_to_population_body(r1: f32, r2: f32, r3: f32, r4: f32, s: &mut Slots, tou
             return room;
         }
         if s.ped_type == 4 || s.ped_type == 5 {
-            let r = X87::from_f64_exact(grn_f(0.0, 1.0));
+            let r = X87::from_f64_exact(grn_f(0.0, 1.0).to_f64());
             if !jne_mask(r, x(f32::from_bits(0x3F66_6666)), 0x41) {
                 choose_civilian_couple_occupations(
                     GPtr::from_raw(husband.as_mut_ptr()),
@@ -726,7 +717,7 @@ fn sunbathe(ped: GPtr<u8>, cpos: &mut [f32; 3]) -> bool {
     ) {
         return true;
     }
-    let hd = X87::from_f64_exact(grn_f(0.0, 1.0))
+    let hd = X87::from_f64_exact(grn_f(0.0, 1.0).to_f64())
         .fmul_m(f32::from_bits(0x40C9_0FDB))
         .to_f32();
     wr::<f32>(ped, 0x55C, hd);
@@ -745,15 +736,15 @@ fn sunbathe(ped: GPtr<u8>, cpos: &mut [f32; 3]) -> bool {
             let m: GPtr<f32> = rd::<GPtr<u8>>(toy, 0x14).cast();
             let mut tmp = [0f32; 3];
             cross_product(
-                GPtr::from_raw(tmp.as_mut_ptr()),
-                m.wrapping_index(8),
-                m.wrapping_index(4),
+                GPtr::<f32>::cast::<u8>(GPtr::from_raw(tmp.as_mut_ptr())),
+                GPtr::<f32>::cast::<u8>(m.wrapping_index(8)),
+                GPtr::<f32>::cast::<u8>(m.wrapping_index(4)),
             );
             for (k, v) in tmp.iter().enumerate() {
                 m.wrapping_index(k as i32).write(*v);
             }
             let m: GPtr<f32> = rd::<GPtr<u8>>(toy, 0x14).cast();
-            cross_product(GPtr::from_raw(tmp.as_mut_ptr()), m.wrapping_index(8), m);
+            cross_product(GPtr::<f32>::cast::<u8>(GPtr::from_raw(tmp.as_mut_ptr())), GPtr::<f32>::cast::<u8>(m.wrapping_index(8)), m.cast::<u8>());
             for (k, v) in tmp.iter().enumerate() {
                 m.wrapping_index(4 + k as i32).write(*v);
             }
@@ -822,7 +813,7 @@ fn others(ped: GPtr<u8>, pt: i32) {
     let t = if t.is_null() {
         GPtr::NULL
     } else {
-        hold_entity_ctor(t, o, GPtr::from_raw(v.as_mut_ptr()), 1, 1, 0x13E, 0x51, 0)
+        hold_entity_ctor(t, o, GPtr::<f32>::cast::<u8>(GPtr::from_raw(v.as_mut_ptr())), 1, 1, 0x13E, 0x51, 0)
     };
     set_task_secondary(rd::<GPtr<u8>>(ped, 0x47C).byte_add(4), t, 4);
 }
@@ -922,7 +913,7 @@ pub fn populate_interior(num_peds: i32, px: f32, py: f32, pz: f32) {
 use sa_core::bindings::matrix_update_rw_matrix as matrix_update_rw;
 use sa_world::bindings::automobile_place_on_road_properly as place_on_road_properly;
 use sa_world::bindings::intel_process;
-use sa_world::bindings::join_car_with_road_system;
+use crate::bindings::join_car_with_road_system;
 use sa_world::bindings::kill_ped_on_foot_ctor;
 use sa_world::bindings::ped_new;
 use sa_world::bindings::ped_set_current_weapon as set_current_weapon;
@@ -938,11 +929,10 @@ use sa_world::bindings::cop_ped_ctor;
 use sa_world::bindings::event_group_add;
 use sa_world::bindings::event_script_command_ctor;
 use sa_world::bindings::event_script_command_dtor;
-use sa_world::bindings::find_nth_node_closest_to_coors;
+use crate::bindings::find_nth_node_closest_to_coors;
 use sa_world::bindings::find_objects_in_range;
+use sa_core::bindings::vector_normalise;
 orig! {
-    /// `CVector::Normalise()` (0x59C910)
-    fn vector_normalise(v: GPtr<f32>) = thiscall 0x59C910 => unported;
     /// virtual slot 0x10 of a `CEntity`: `SetIsStatic(bool)`
     fn entity_set_is_static(e: GPtr<u8>, b: u8) = thiscall vslot 0x10 => unported;
 }
@@ -983,7 +973,7 @@ fn create_waiting_cop_cars(mut n: i32, px: f32, py: f32, pz: f32) {
         let v = if v.is_null() {
             GPtr::NULL
         } else {
-            automobile_ctor(v, model, 1, 1)
+            automobile_ctor(v, model as u32, 1, 1)
         };
         wr::<u8>(v, 0x36, (rd::<u8>(v, 0x36) & 7) | 0x20);
         let base = g::<GPtr<u8>>(0x96F854 + (a & 0xFFFF) as usize * 4).read();
@@ -1004,7 +994,7 @@ fn create_waiting_cop_cars(mut n: i32, px: f32, py: f32, pz: f32) {
         let dy = x(py).fsub_m(pos.wrapping_index(1).read());
         let dx = x(px).fsub_m(pos.read());
         let mut d = [dx.to_f32(), dy.to_f32(), 0.0];
-        vector_normalise(GPtr::from_raw(d.as_mut_ptr()));
+        vector_normalise(GPtr::<f32>::cast::<[f32;3]>(GPtr::from_raw(d.as_mut_ptr())));
         let m = rd::<GPtr<u8>>(v, 0x14);
         wr::<f32>(m, 0x10, d[0]);
         wr::<f32>(m, 0x14, d[1]);
@@ -1149,7 +1139,7 @@ fn spawn_waiting_cop(p: &[f32; 3], px: f32, py: f32, pz: f32) {
         x(py).fsub_m(p[1]).to_f32(),
         x(pz).fsub_m(p[2]).to_f32(),
     ];
-    vector_normalise(GPtr::from_raw(v.as_mut_ptr()));
+    vector_normalise(GPtr::<f32>::cast::<[f32;3]>(GPtr::from_raw(v.as_mut_ptr())));
     let h = x(v[0]).fchs().fpatan(x(v[1])).to_f32();
     wr::<f32>(cop, 0x55C, h);
     wr::<f32>(cop, 0x558, h);
@@ -1197,7 +1187,7 @@ pub fn place_couple(t1: i32, m1: i32, t2: i32, m2: i32, px: f32, py: f32, pz: f3
 }
 
 use sa_core::bindings::entity_register_reference as register_reference;
-use sa_core::bindings::world_remove;
+use sa_world::bindings::world_remove;
 use sa_world::bindings::entity_get_col_model;
 use sa_world::bindings::camera_is_sphere_visible_m;
 use sa_world::bindings::die_ctor as task_die_ctor;

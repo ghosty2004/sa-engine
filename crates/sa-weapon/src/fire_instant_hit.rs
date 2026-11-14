@@ -36,14 +36,12 @@ use crate::weapon_fire::{
 use crate::bindings::audio_report_bullet_hit;
 use sa_core::bindings::ped_get_bone_position;
 use sa_world::bindings::ped_get_transformed_bone_position;
-use sa_world::bindings::add_gunshell as add_gunshell_call;
+use crate::bindings::add_gunshell as add_gunshell_call;
 use sa_world::bindings::cam_get_two_player_aim_vector;
 use sa_world::bindings::fx_trigger_gunshot;
+use sa_world::bindings::camera_find_3rd_person_cam_target_vector;
+use sa_world::bindings::process_col_models as collision_process_col_models;
 orig! {
-    /// `CCamera::Find3rdPersonCamTargetVector(float dist, CVector source, CVector& camTarget, CVector&
-    /// pointTarget)` (0x514970, thiscall `ret 0x18`)
-    #[allow(clippy::too_many_arguments)]
-    fn camera_find_3rd_person_cam_target_vector(cam: GPtr<u8>, dist: f32, sx: f32, sy: f32, sz: f32, cam_target: GPtr<u8>, point: GPtr<u8>) = thiscall 0x514970 => unported;
     /// `CWeapon::DoDoomAiming(CEntity* owner, CVector* start, CVector* end)` (0x73CDC0)
     fn do_doom_aiming(owner: GPtr<u8>, start: GPtr<u8>, end: GPtr<u8>) = cdecl 0x73CDC0 => unported;
     /// `FUN_006E61B0(CVector start, CVector end, CVector* out)` (`CWaterLevel::TestLineAgainstWater`), AL
@@ -57,10 +55,6 @@ orig! {
     fn set_up_pellet_col(this: GPtr<u8>, n: i32, owner: GPtr<u8>, victim: GPtr<u8>, point: GPtr<u8>, cp: GPtr<u8>, mat: GPtr<u8>) -> u8 = thiscall 0x73C710 => unported;
     /// `CPedModelInfo::AnimatePedColModelSkinned(RpClump*)` (0x4C6F70, thiscall)
     fn ped_mi_animate_col_model_skinned(mi: GPtr<u8>, clump: GPtr<u8>) -> GPtr<u8> = thiscall 0x4C6F70 => unported;
-    /// `CCollision::ProcessColModels(const CMatrix&, CColModel&, const CMatrix&, CColModel&, CColPoint*
-    /// spherePoints, CColPoint* linePoints, float* lineDists, bool)` (0x4185C0)
-    #[allow(clippy::too_many_arguments)]
-    fn collision_process_col_models(m1: GPtr<u8>, c1: GPtr<u8>, m2: GPtr<u8>, c2: GPtr<u8>, sp: GPtr<u8>, lp_: GPtr<u8>, dists: GPtr<u8>, b: u32) -> i32 = cdecl 0x4185C0 => unported;
 }
 
 /// `CWorld::pIgnoreEntity` (0xB7CD68) and the line-test options `bIncludeDeadPeds` (0xB7CD6F),
@@ -273,7 +267,7 @@ pub fn fire_instant_hit(
     muzzle_fx: u32,
 ) -> u8 {
     let ty = ru(this, 0);
-    let skill = if !firer.is_null() && etype(firer) == 3 { ped_get_weapon_skill(firer, ty as i32) as u8 } else { 1 };
+    let skill = if !firer.is_null() && etype(firer) == 3 { (ped_get_weapon_skill(firer, ty as i32) as i32) as u8 } else { 1 };
     let info = get_weapon_info(ty as i32, skill);
     let mut m: [f32; 3] = muzzle.cast::<[f32; 3]>().read();
     let mut s: [f32; 3] = origin.cast::<[f32; 3]>().read();
@@ -318,7 +312,7 @@ pub fn fire_instant_hit(
             let dy = x(e[1]).fsub_m(s[1]).to_f32();
             let dx = x(e[0]).fsub_m(s[0]).to_f32();
             dir = [dx, dy, dz];
-            normalise(fptr(&mut dir));
+            normalise(GPtr::<u8>::cast::<[f32;3]>(fptr(&mut dir)));
             let veh = rp(ped, 0x58C);
             if ru(ped, 0x46C) & 0x100 != 0 && !veh.is_null() {
                 g::<GPtr<u8>>(IGNORE_ENTITY).write(veh);
@@ -365,7 +359,7 @@ pub fn fire_instant_hit(
             e[2] = inv.fmul(dz).to_f32();
             dir[2] = e[2];
             let range = rf(info, 8);
-            let mr = st0(target_weapon_range_multiplier_call(target_ent, ped)).fmul_m(range);
+            let mr = st0(target_weapon_range_multiplier_call(target_ent, ped).to_f64()).fmul_m(range);
             let exm = x(e[0]).fmul(mr);
             e[1] = x(e[1]).fmul(mr).to_f32();
             e[2] = x(e[2]).fmul(mr).to_f32();
@@ -381,22 +375,22 @@ pub fn fire_instant_hit(
                 spread = sp.to_f32();
                 let half = sp.fmul_m(0.5);
                 let lo = if !x(cf(0x3E4C_CCCD)).fcom(half).test_parity(5) { cf(0x3E4C_CCCD) } else { half.to_f32() };
-                spread = st0(random_float(lo, spread)).to_f32();
+                spread = st0(random_float(lo, spread).to_f64()).to_f32();
                 let mode = g::<u16>(CAM0_MODE).read();
                 let (vs, vc) = if mode == 0x35 || mode == 0x37 {
                     let mut up: [f32; 3] = g::<[f32; 3]>(CAM0_UP).read();
                     let mut out = [0f32; 3];
                     let r = cross_product(fptr(&mut out), g(CAM0_FRONT), fptr(&mut up));
                     let mut a: [f32; 3] = r.cast::<[f32; 3]>().read();
-                    normalise(fptr(&mut a));
+                    normalise(GPtr::<u8>::cast::<[f32;3]>(fptr(&mut a)));
                     (a, up)
                 } else {
                     let mut zup = [0.0, 0.0, 1.0];
                     let mut out = [0f32; 3];
                     let mut a: [f32; 3] = cross_product(fptr(&mut out), fptr(&mut e), fptr(&mut zup)).cast::<[f32; 3]>().read();
-                    normalise(fptr(&mut a));
+                    normalise(GPtr::<u8>::cast::<[f32;3]>(fptr(&mut a)));
                     let mut u: [f32; 3] = cross_product(fptr(&mut out), fptr(&mut a), fptr(&mut e)).cast::<[f32; 3]>().read();
-                    normalise(fptr(&mut u));
+                    normalise(GPtr::<u8>::cast::<[f32;3]>(fptr(&mut u)));
                     (a, u)
                 };
                 sway(&mut e, vs, vc, spread);
@@ -437,7 +431,7 @@ pub fn fire_instant_hit(
                 let dy = x(e[1]).fsub_m(s[1]).to_f32();
                 let dx = x(e[0]).fsub_m(s[0]).to_f32();
                 dir = [dx, dy, dz];
-                normalise(fptr(&mut dir));
+                normalise(GPtr::<u8>::cast::<[f32;3]>(fptr(&mut dir)));
                 let pd = rp(ped, 0x480);
                 if !is_zero(spread) {
                     spread = range_factor(info, Some(3.0))
@@ -455,16 +449,16 @@ pub fn fire_instant_hit(
                         let mut up: [f32; 3] = g::<[f32; 3]>(CAM0_UP).read();
                         let mut a: [f32; 3] =
                             cross_product(fptr(&mut out), g(CAM0_FRONT), fptr(&mut up)).cast::<[f32; 3]>().read();
-                        normalise(fptr(&mut a));
+                        normalise(GPtr::<u8>::cast::<[f32;3]>(fptr(&mut a)));
                         (a, up)
                     } else {
                         let mut zup = [0.0, 0.0, 1.0];
                         let mut a: [f32; 3] =
                             cross_product(fptr(&mut out), fptr(&mut e), fptr(&mut zup)).cast::<[f32; 3]>().read();
-                        normalise(fptr(&mut a));
+                        normalise(GPtr::<u8>::cast::<[f32;3]>(fptr(&mut a)));
                         let mut u: [f32; 3] =
                             cross_product(fptr(&mut out), fptr(&mut a), fptr(&mut e)).cast::<[f32; 3]>().read();
-                        normalise(fptr(&mut u));
+                        normalise(GPtr::<u8>::cast::<[f32;3]>(fptr(&mut u)));
                         (a, u)
                     };
                     sway(&mut e, vs, vc, spread);
@@ -493,7 +487,7 @@ pub fn fire_instant_hit(
                 let dx = x(rd_f(&cp, 0)).fsub_m(cam_target[0]);
                 let d = dy.fmul(dy).fadd(dx.fmul(dx)).fsqrt().to_f32();
                 let range = rf(info, 8);
-                if lt_x(st0(target_weapon_range_multiplier_call(hit, ped)).fmul_m(range), d) {
+                if lt_x(st0(target_weapon_range_multiplier_call(hit, ped).to_f64()).fmul_m(range), d) {
                     hit = GPtr::NULL;
                 } else if !hit.is_null() {
                     check_for_shooting_vehicle_occupant_call(hitp, cpp, ty as i32, fptr(&mut cam_target), fptr(&mut e));
@@ -518,12 +512,12 @@ pub fn fire_instant_hit(
                 e[0] = x(e[0]).fsub_m(s[0]).to_f32();
                 e[1] = x(e[1]).fsub_m(s[1]).to_f32();
                 e[2] = x(e[2]).fsub_m(s[2]).to_f32();
-                normalise(fptr(&mut e));
+                normalise(GPtr::<u8>::cast::<[f32;3]>(fptr(&mut e)));
                 let model = rh(firer, 0x22);
                 spread = if matches!(model, 0x1BF | 0x1D5 | 0x234) { cf(0x3DCC_CCCD) } else { cf(0x3E99_999A) };
             }
             scatter(&mut e, spread, [0x74_090E, 0x74_0925, 0x74_093C]);
-            normalise(fptr(&mut e));
+            normalise(GPtr::<u8>::cast::<[f32;3]>(fptr(&mut e)));
             g::<GPtr<u8>>(IGNORE_ENTITY).write(firer);
             extend(&mut e, s, rf(info, 8));
             vehicle_line = true;
@@ -616,7 +610,7 @@ pub fn fire_instant_hit(
             ensure_matrix(firer);
             let mat = rp(firer, 0x14);
             let mut right = [rf(mat, 0), rf(mat, 4)];
-            add_gunshell_call(this, firer, fptr(&mut pos), GPtr::<f32>::cast::<u32>(lp(&mut right).cast()), cf(size));
+            add_gunshell_call(this, firer, fptr(&mut pos), lp(&mut right).cast(), cf(size));
         }
     }
 

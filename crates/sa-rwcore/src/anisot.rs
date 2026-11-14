@@ -17,14 +17,14 @@ pub fn texture_get_max_anisotropy(tex: GPtr<u8>) -> u8 {
     tex.byte_add(off as i32 as isize).read()
 }
 
-use sa_core::bindings::rw_d3d9_get_caps as an_get_caps;
+use crate::bindings::rw_d3d9_get_caps as an_get_caps;
 
 /// `RpAnisotGetMaxSupportedMaxAnisotropy()` (0x748F20, cdecl, AL): the byte at `RwD3D9GetCaps() + 0x6C`
 /// (the low byte of `MaxAnisotropy`; the upper EAX bits are the caps pointer's).
 #[hook(addr = 0x748F20, conv = cdecl, name = "RpAnisotGetMaxSupportedMaxAnisotropy", expect = "E8 FB 1D 0B 00",
        route = "L2", hazards = "ax-al-return", recs = "boot")]
 pub fn get_max_supported_max_anisotropy() -> u8 {
-    an_get_caps().byte_add(0x6C).read()
+    GPtr::from_addr(an_get_caps() as usize).byte_add(0x6C).read()
 }
 
 /// `RpAnisotTextureSetMaxAnisotropy(RwTexture*, int8)` (0x748F30, cdecl): the extension byte := value,

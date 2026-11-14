@@ -84,7 +84,7 @@ pub fn get_position_relative_to_outside_world(this: GPtr<u8>, pos: GPtr<f32>) {
 #[hook(addr = 0x43EA90, conv = cdecl, name = "IsTeleportPointValid", expect = "56 8B 74 24 0C")]
 pub fn is_teleport_point_valid(from: GPtr<u8>, to: GPtr<u8>) -> u8 {
     let (a, b, c) = (rd::<u32>(to, 0), rd::<u32>(to, 4), rd::<u32>(to, 8));
-    if !test_sphere_against_world(f32::from_bits(a), f32::from_bits(b), f32::from_bits(c), f32::from_bits(0x3EB3_3333), GPtr::NULL, 0, 1, 1, 1, 1, 1).is_null() {
+    if !test_sphere_against_world(sa_math::vector::CVector::new(f32::from_bits(a), f32::from_bits(b), f32::from_bits(c)), f32::from_bits(0x3EB3_3333), GPtr::<u8>::addr(GPtr::NULL) as u32, 0, 1, 1, 1, 1, 1).is_null() {
         return 0;
     }
     (get_is_line_of_sight_clear(from, to, 1, 1, 0, 1, 1, 0, 0) != 0) as u8

@@ -7,7 +7,7 @@ use sa_core::{hook, orig};
 
 use crate::common::rd;
 
-pub use sa_core::bindings::matrix_dtor;
+pub use sa_world::bindings::matrix_dtor;
 pub use sa_core::bindings::matrix_invert;
 pub use sa_core::bindings::vector_from_multiply;
 pub use sa_world::bindings::entity_get_col_model as get_col_model;

@@ -37,11 +37,11 @@ const NO_CLIP: u32 = 4;
 use crate::bindings::dynamic_vertex_buffer_lock;
 use crate::bindings::flush_cache;
 use crate::bindings::get_current_texture;
-use sa_core::bindings::set_render_state;
+use crate::bindings::set_render_state;
 use crate::bindings::set_stream_source;
 use crate::bindings::set_transform_world;
-use sa_core::bindings::set_tss;
-use sa_core::bindings::vertex_alpha_enable;
+use crate::bindings::set_tss;
+use crate::bindings::vertex_alpha_enable;
 orig! {
     fn dev_set_vertex_declaration(dev: GPtr<u8>, decl: u32) -> i32 = stdcall vslot 0x15C => unported;
     fn dev_set_vertex_shader(dev: GPtr<u8>, vs: u32) -> i32 = stdcall vslot 0x170 => unported;

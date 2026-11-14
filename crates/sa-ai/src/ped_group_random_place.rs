@@ -5,7 +5,7 @@
 use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::orig::at_site;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_world::world::common::find_player_ped;
 
 use crate::common::*;
@@ -14,13 +14,13 @@ use crate::bindings::group_intel_process;
 use crate::bindings::membership_process;
 use crate::bindings::wander_gang_ctor;
 use sa_core::bindings::membership_set_leader;
-use sa_world::bindings::add_ped as population_add_ped;
+use sa_pop::bindings::add_ped as population_add_ped;
 use sa_world::bindings::be_in_group_ctor;
 use sa_world::bindings::choose_gang_occupation as population_choose_gang_occupation;
 use sa_world::bindings::membership_add_follower;
 use sa_world::bindings::ped_groups_add_group;
-use sa_world::bindings::population_remove_ped;
-use sa_world::bindings::tm_set_task;
+use sa_pop::bindings::population_remove_ped;
+use crate::bindings::tm_set_task;
 use sa_core::bindings::world_get_is_line_of_sight_clear;
 use crate::bindings::group_intel_set_default_task_allocator;
 use sa_core::bindings::general_get_radian_angle_between_points;
@@ -28,10 +28,7 @@ use sa_world::bindings::camera_is_sphere_visible;
 use sa_world::bindings::find_ground_z_for_3d_coord as world_find_ground_z_for_3d_coord;
 use sa_world::bindings::is_position_clear_for_ped as ped_placement_is_position_clear;
 use sa_world::bindings::set_clump_alpha as visibility_set_clump_alpha;
-orig! {
-    /// `CPopulation::PedCreationDistMultiplier()` (0x6116C0, ST0)
-    fn population_ped_creation_dist_multiplier() -> f64 = cdecl 0x6116C0 => unported;
-}
+use sa_pop::bindings::pdm_call as population_ped_creation_dist_multiplier;
 
 /// 2*pi (0x858CBC), 1.0 (0x858624), 0.5 (0x858B8C), 1/32767 (0x858C7C)
 const K_TWO_PI: usize = 0x858CBC;
@@ -98,7 +95,7 @@ pub fn place_random_group(_this: GPtr<u8>, ped_type: u32, n: i32, origin: GPtr<u
         let dy = x(oy).fsub_m(rd::<f32>(pp, 4));
         let dx = x(ox).fsub_m(rd::<f32>(pp, 0));
         let d = dx.fmul(dx).fadd(dy.fmul(dy)).fsqrt().to_f32();
-        let lim = X87::from_f64_exact(population_ped_creation_dist_multiplier()).fmul_m(kf(K_CREATE_DIST));
+        let lim = X87::from_f64_exact(population_ped_creation_dist_multiplier().to_f64()).fmul_m(kf(K_CREATE_DIST));
         if !lim.fcom(x(d)).test_any(0x41) {
             return 0;
         }

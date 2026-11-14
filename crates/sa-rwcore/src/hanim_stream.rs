@@ -251,7 +251,7 @@ pub fn rt_anim_interpolator_set_key_frame_callbacks(it: GPtr<u8>, ty: u32) -> u3
     }
     let mut e = [0x1B7u32, 0];
     e[1] = rw_error1(2);
-    rw_error_set(GPtr::from_raw(e.as_mut_ptr()));
+    rw_error_set(GPtr::<u32>::cast::<crate::common::RwError>(GPtr::from_raw(e.as_mut_ptr())).cast::<u8>());
     0
 }
 

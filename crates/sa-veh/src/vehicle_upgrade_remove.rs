@@ -9,8 +9,8 @@ use sa_core::{hook, orig};
 use crate::common::{model_info, rd, wr};
 
 use crate::bindings::vis_get_model_info;
-use sa_core::bindings::rp_atomic_destroy;
-use sa_core::bindings::rp_clump_for_all_atomics;
+use sa_rwcore::bindings::rp_atomic_destroy;
+use sa_rwcore::bindings::rp_clump_for_all_atomics;
 use sa_core::bindings::rw_frame_destroy;
 use sa_stream::bindings::find_other_upgrade;
 use sa_stream::bindings::get_atomic_id as vis_get_atomic_id;
@@ -40,7 +40,7 @@ fn remove_parts(this: GPtr<u8>, t: u32, replacement: bool) -> bool {
         remove_replacement_upgrade(this, t);
         true
     } else {
-        rp_clump_for_all_atomics(rd::<GPtr<u8>>(this, 0x18), REMOVE_UPGRADE_CB, GPtr::from_addr(t as usize));
+        rp_clump_for_all_atomics(rd::<GPtr<u8>>(this, 0x18), REMOVE_UPGRADE_CB, GPtr::<u8>::addr(GPtr::from_addr(t as usize)) as u32);
         false
     }
 }
@@ -102,7 +102,7 @@ pub fn remove_upgrade_cb(atomic: GPtr<u8>, ty: u32) -> GPtr<u8> {
     rp_atomic_destroy(atomic);
     rw_frame_destroy(frame);
     if !mi.is_null() {
-        model_info_remove_ref(mi);
+        model_info_remove_ref(mi.cast::<sa_stream::shared::CBaseModelInfo>());
     }
     atomic
 }

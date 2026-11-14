@@ -35,6 +35,7 @@ pub fn module(offset_global: usize) -> GPtr<u8> {
 }
 
 pub use sa_core::bindings::rw_error1;
+pub use sa_core::bindings::rw_error_set;
 orig! {
     /// `G->rwmalloc(size, hint)` (`RwGlobals` +0x134)
     pub fn rw_malloc(size: u32, hint: u32) -> GPtr<u8> = cdecl table 0xC97B24 0x134 => unported;
@@ -50,8 +51,6 @@ orig! {
     pub fn rw_memory_free(fl: GPtr<u8>, p: GPtr<u8>) -> GPtr<u8> = cdecl table 0xC97B24 0x148 => unported;
     /// `_rwerror(code, a)` (0x8088D0, varargs; two arguments)
     pub fn rw_error2(code: u32, a: u32) -> u32 = cdecl 0x8088D0 => unported;
-    /// `RwErrorSet(const RwError*)` (0x808820)
-    pub fn rw_error_set(e: GPtr<RwError>) -> GPtr<RwError> = cdecl 0x808820 => unported;
 }
 
 /// `RwError` {pluginID, errorCode}.
@@ -80,7 +79,7 @@ pub fn error1_code(code: u32) -> u32 {
     };
     let c = rw_error1(code);
     e.error_code = c as i32;
-    rw_error_set(GPtr::from_raw(&mut e));
+    rw_error_set(GPtr::from_raw(&mut e).cast());
     c
 }
 
@@ -91,7 +90,7 @@ pub fn error2(code: u32, a: u32) {
         error_code: 0,
     };
     e.error_code = rw_error2(code, a) as i32;
-    rw_error_set(GPtr::from_raw(&mut e));
+    rw_error_set(GPtr::from_raw(&mut e).cast());
 }
 
 /// `RwLLLink` / `RwLinkList` helpers (next +0, prev +4; a list head is a link to itself when empty).

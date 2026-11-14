@@ -16,7 +16,7 @@ use sa_core::bindings::atexit;
 use sa_core::bindings::crt_free_8214bd as crt_free;
 use sa_core::bindings::eh_vector_ctor;
 use sa_core::bindings::ped_is_alive;
-use sa_core::bindings::rw_texture_destroy;
+use sa_rwcore::bindings::rw_texture_destroy;
 use crate::bindings::add_interior_info as interior_add_interior_info;
 orig! {
     /// `InteriorGroup_c::CalcIsVisible()` (0x595200)
@@ -141,7 +141,7 @@ pub fn interior_group_exit(this: GPtr<u8>) {
             continue;
         }
         if ped_is_pointer_valid(p) != 0 {
-            if ped_is_alive(rd::<GPtr<u8>>(this, o)) == 0 {
+            if ped_is_alive(rd::<GPtr<u8>>(this, o)) as u8 == 0 {
                 g::<u8>(0xBB_3D9C + k).write(0);
             }
             population_remove_ped(rd::<GPtr<u8>>(this, o));

@@ -8,7 +8,7 @@ use sa_core::hook;
 use super::common::{g, rd, wr};
 
 use sa_core::bindings::matrix_mul_vec;
-use sa_stream::bindings::placeable_allocate_matrix;
+use crate::bindings::placeable_allocate_matrix;
 use sa_stream::bindings::simple_transform_update_matrix;
 use crate::bindings::are_nodes_loaded_for_area;
 
@@ -48,7 +48,7 @@ pub fn interior_group_are_paths_loaded(this: GPtr<u8>) -> u32 {
         }
         let mut out = [0u32; 3];
         let cp: GPtr<u8> = GPtr::from_raw(c as *mut [u32; 3]).cast();
-        let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::from_raw(&mut out as *mut [u32; 3]).cast()), rd::<GPtr<u8>>(e, 0x14), cp));
+        let r = matrix_mul_vec(GPtr::from_raw(&mut out as *mut [u32; 3]).cast(), rd::<GPtr<u8>>(e, 0x14), cp);
         for k in 0..3isize {
             wr::<u32>(cp, 4 * k, rd::<u32>(r, 4 * k));
         }

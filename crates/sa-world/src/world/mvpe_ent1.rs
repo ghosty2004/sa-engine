@@ -25,11 +25,12 @@ const ENTRY_EXIT_POOL: usize = 0x96A7D8;
 const K_RAD_TO_DEG: usize = 0x859878;
 
 use crate::bindings::rw_frame_set_identity;
-use sa_core::bindings::rw_frame_update_objects;
+use sa_rwcore::bindings::rw_frame_update_objects;
 use sa_stream::bindings::get_2d_effect;
-use crate::bindings::rw_frame_rotate;
+use sa_core::bindings::rw_frame_rotate;
 use crate::bindings::rw_frame_translate;
 use crate::bindings::transform_from_object_space as transform_ref;
+use sa_stream::bindings::entry_exit_add_one;
 orig! {
     /// `CScriptsForBrains::RequestAttractorScriptBrainWithThisName(const char*)` (0x46AA80, `ret 4`)
     fn request_attractor_brain(b: u32, name: GPtr<u8>) = thiscall 0x46aa80 => unported;
@@ -50,12 +51,6 @@ orig! {
     fn transform_ptr(e: GPtr<u8>, out: GPtr<u8>, off: GPtr<u8>) -> GPtr<u8> = thiscall 0x533560 => super::entity::transform_from_object_space_ptr;
     /// CRT `srand(uint32)` (0x821B11)
     fn srand(seed: u32) = cdecl 0x821b11 => sa_core::crt::srand_owned;
-    /// `CEntryExitManager::AddOne(float x, y, z, float angle, float sx, float sy, float sz(0), float exitX,
-    /// exitY, exitZ, float exitAngle, int32 area, int32 flags, int32 skyColor, int32 timeOn, int32 timeOff,
-    /// int32 numPeds, const char* name)` (0x43FA00, cdecl; returns the pool index or -1)
-    #[allow(clippy::too_many_arguments)]
-    fn entry_exit_add_one(x: u32, y: u32, z: u32, ang: u32, sx: u32, sy: u32, sz: u32, ex: u32, ey: u32, ez: u32,
-        eang: u32, area: i32, flags: u32, sky: u32, on: u32, off: u32, peds: u32, name: GPtr<u8>) -> i32 = cdecl 0x43fa00 => unported;
     /// `CEscalators::AddOne(const CVector& bottom, const CVector& top, const CVector& end, const CVector&
     /// start, bool moveDown, CEntity*)` (0x717C90, cdecl)
     fn escalators_add_one(a: u32, b: u32, c: u32, d: u32, down: u32, e: u32) = cdecl 0x717c90 => super::escalators::add_one;
@@ -181,17 +176,17 @@ fn create_enex(this: GPtr<u8>, eff: GPtr<u8>) {
     let ang = f32_of(h2.fmul_m(k).fadd_m(rd::<f32>(eff, 0x10)));
     let flags = (u32::from(rd::<u8>(eff, 0x3A)) << 8).wrapping_add(u32::from(rd::<u8>(eff, 0x2E)));
     let idx = entry_exit_add_one(
-        entry[0],
-        entry[1],
-        entry[2],
-        ang.to_bits(),
-        rd::<u32>(eff, 0x14),
-        rd::<u32>(eff, 0x18),
-        0,
-        exit[0],
-        exit[1],
-        exit[2],
-        exit_ang.to_bits(),
+        f32::from_bits(entry[0]),
+        f32::from_bits(entry[1]),
+        f32::from_bits(entry[2]),
+        f32::from_bits(ang.to_bits()),
+        f32::from_bits(rd::<u32>(eff, 0x14)),
+        f32::from_bits(rd::<u32>(eff, 0x18)),
+        f32::from_bits(0),
+        f32::from_bits(exit[0]),
+        f32::from_bits(exit[1]),
+        f32::from_bits(exit[2]),
+        f32::from_bits(exit_ang.to_bits()),
         i32::from(rd::<i16>(eff, 0x2C)),
         flags,
         u32::from(rd::<u8>(eff, 0x2F)),
@@ -240,9 +235,9 @@ fn create_roadsign(this: GPtr<u8>, eff: GPtr<u8>) {
     let mut ax = [0x3F80_0000u32, 0, 0];
     let mut ay = [0u32, 0x3F80_0000, 0];
     let mut az = [0u32, 0, 0x3F80_0000];
-    rw_frame_rotate(frame, local(&mut az), rd::<u32>(eff, 0x20), 0);
-    rw_frame_rotate(frame, local(&mut ax), rd::<u32>(eff, 0x18), 2);
-    rw_frame_rotate(frame, local(&mut ay), rd::<u32>(eff, 0x1C), 2);
+    rw_frame_rotate(frame, local(&mut az), f32::from_bits(rd::<u32>(eff, 0x20)), 0);
+    rw_frame_rotate(frame, local(&mut ax), f32::from_bits(rd::<u32>(eff, 0x18)), 2);
+    rw_frame_rotate(frame, local(&mut ay), f32::from_bits(rd::<u32>(eff, 0x1C)), 2);
     let mut pos = [rd::<u32>(eff, 0), rd::<u32>(eff, 4), rd::<u32>(eff, 8)];
     rw_frame_translate(frame, local(&mut pos), 2);
     rw_frame_update_objects(frame);
@@ -250,7 +245,7 @@ fn create_roadsign(this: GPtr<u8>, eff: GPtr<u8>) {
 }
 
 use crate::bindings::physical_process_control;
-use sa_core::bindings::vector_magnitude_sqr as vector_sq_mag;
+use crate::bindings::vector_magnitude_sqr as vector_sq_mag;
 use crate::bindings::attach_entity_to_entity_quat as attach_quat;
 use crate::bindings::buoyancy_process as process_buoyancy;
 use crate::bindings::object_damage;
@@ -258,7 +253,10 @@ use crate::bindings::object_lock_door;
 use crate::bindings::set_velocity;
 use crate::bindings::vector_add;
 use crate::bindings::vector_div;
-use sa_core::bindings::vector_sub;
+use crate::bindings::vector_sub;
+use crate::bindings::physical_apply_move_force_5429f0 as apply_move_force;
+use crate::bindings::physical_apply_turn_force as apply_turn_force;
+use crate::bindings::physical_get_speed;
 orig! {
     /// `CBaseModelInfo::GetModelType()` (vtable +0x24)
     fn v_model_type(mi: GPtr<u8>) -> u32 = thiscall vslot 0x24 => unported;
@@ -270,12 +268,6 @@ orig! {
     fn model_check_59f050(model: i32) -> u8 = cdecl 0x59f050 => unported;
     /// `CRopes::IsCarriedByRope(CPhysical*)` (0x555F80, cdecl, AL)
     fn ropes_is_carried_by_rope(e: GPtr<u8>) -> u8 = cdecl 0x555f80 => unported;
-    /// `CPhysical::GetSpeed(CVector point)` (0x542CE0, hidden result pointer, `ret 0x10`)
-    fn physical_get_speed(e: GPtr<u8>, out: GPtr<CVector>, point: CVector) -> GPtr<CVector> = thiscall 0x542ce0 => crate::physical::forces::get_speed;
-    /// `CPhysical::ApplyMoveForce(CVector)` (0x5429F0, `ret 0xC`)
-    fn apply_move_force(e: GPtr<u8>, f: CVector) = thiscall 0x5429f0 => crate::physical::forces::apply_move_force;
-    /// `CPhysical::ApplyTurnForce(CVector force, CVector point)` (0x542A50, `ret 0x18`)
-    fn apply_turn_force(e: GPtr<u8>, f: CVector, p: CVector) = thiscall 0x542a50 => crate::physical::forces::apply_turn_force;
     /// `CAudioEngine::ReportDoorMovement(CPhysical*)` (0x506F50, `ret 4`)
     fn report_door_movement(a: u32, e: GPtr<u8>) = thiscall 0x506f50 => unported;
 }
@@ -359,7 +351,7 @@ pub fn object_process_control(this: GPtr<u8>) {
         }
         let t = f32_of(x(g::<f32>(TIME_STEP).read()).fmul_m(g::<f32>(0x859CD8).read()));
         let below = |v: GPtr<u8>| {
-            let m = X87::from_f64_exact(vector_sq_mag(v.cast::<f32>()));
+            let m = X87::from_f64_exact(vector_sq_mag(v.cast::<u8>()).to_f64());
             gt(x(t).fmul_m(t), m)
         };
         if below(this.byte_add(0x74)) && below(this.byte_add(0x80)) {
@@ -491,10 +483,10 @@ fn attach_to_damager(this: GPtr<u8>, zero: f32) {
     let mut sp = [0u32; 3];
     let s = physical_get_speed(d, local(&mut sp).cast(), cv(rp));
     vector_sub(rp, this.byte_add(0x44), s.cast());
-    if X87::from_f64_exact(vector_sq_mag(rp.cast::<f32>())).fcom(x(g::<f32>(0x866F50).read())).test_parity(5) {
+    if X87::from_f64_exact(vector_sq_mag(rp.cast::<u8>()).to_f64()).fcom(x(g::<f32>(0x866F50).read())).test_parity(5) {
         return;
     }
-    if X87::from_f64_exact(vector_sq_mag(GPtr::<u8>::cast::<f32>(this.byte_add(0x50)))).fcom(x(g::<f32>(0x866F54).read())).test_parity(5) {
+    if X87::from_f64_exact(vector_sq_mag(this.byte_add(0x50)).to_f64()).fcom(x(g::<f32>(0x866F54).read())).test_parity(5) {
         return;
     }
     attach_quat(this, d, GPtr::NULL, GPtr::NULL);

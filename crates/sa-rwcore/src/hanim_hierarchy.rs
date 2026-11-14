@@ -10,8 +10,8 @@ use crate::common::{g, p8, rd, rw_free, rw_malloc, rw_memory_alloc, rw_memory_fr
 use crate::bindings::hanim_hierarchy_create as hierarchy_create_call;
 use crate::bindings::interpolator_create;
 use crate::bindings::interpolator_destroy;
-use sa_core::bindings::frame_for_all_children;
-use sa_core::bindings::rw_frame_update_objects as frame_update_objects;
+use crate::bindings::frame_for_all_children;
+use crate::bindings::rw_frame_update_objects as frame_update_objects;
 
 const HANIM_FREELIST: usize = 0xC9B8CC;
 const HANIM_FRAME_OFFSET: usize = 0xC9B8C8;
@@ -129,7 +129,7 @@ pub fn rp_hanim_hierarchy_attach(h: GPtr<u8>) -> GPtr<u8> {
     let parent = p8(rd::<u32>(h, 0x14));
     bind_frame(h, parent);
     frame_update_objects(parent);
-    frame_for_all_children(parent, 0x7C4F90, GPtr::from_addr(a32(h) as usize));
+    frame_for_all_children(parent, 0x7C4F90, GPtr::<u8>::addr(GPtr::from_addr(a32(h) as usize)) as u32);
     h
 }
 
@@ -140,7 +140,7 @@ pub fn rp_hanim_hierarchy_attach(h: GPtr<u8>) -> GPtr<u8> {
 pub fn rp_hanim_hierarchy_attach_frame_cb(frame: GPtr<u8>, h: GPtr<u8>) -> GPtr<u8> {
     bind_frame(h, frame);
     frame_update_objects(frame);
-    frame_for_all_children(frame, 0x7C4F90, GPtr::from_addr(a32(h) as usize));
+    frame_for_all_children(frame, 0x7C4F90, GPtr::<u8>::addr(GPtr::from_addr(a32(h) as usize)) as u32);
     frame
 }
 
@@ -182,7 +182,7 @@ pub fn rp_hanim_hierarchy_attach_frame_index(h: GPtr<u8>, index: i32) -> GPtr<u8
     bind_frame_index(h, parent, id);
     frame_update_objects(parent);
     let mut data = [a32(h), id];
-    frame_for_all_children(parent, 0x7C50A0, GPtr::from_addr((GPtr::from_raw(data.as_mut_ptr()).addr() as u32) as usize));
+    frame_for_all_children(parent, 0x7C50A0, GPtr::<u8>::addr(GPtr::from_addr((GPtr::from_raw(data.as_mut_ptr()).addr() as u32) as usize)) as u32);
     h
 }
 
@@ -194,7 +194,7 @@ pub fn rp_hanim_hierarchy_attach_frame_index_cb(frame: GPtr<u8>, data: GPtr<u32>
     let id = data.byte_add(4).read();
     bind_frame_index(h, frame, id);
     frame_update_objects(frame);
-    frame_for_all_children(frame, 0x7C50A0, GPtr::from_addr((data.addr() as u32) as usize));
+    frame_for_all_children(frame, 0x7C50A0, GPtr::<u8>::addr(GPtr::from_addr((data.addr() as u32) as usize)) as u32);
     frame
 }
 

@@ -72,7 +72,7 @@ pub fn fx_add_blood(this: GPtr<u8>, pos: GPtr<u8>, dir: GPtr<u8>, amount: i32, l
         let sys = g::<GPtr<u8>>(0xA9_AE00).read();
         v[2] = f.fadd(f).fsub_m(one).fadd_m(v[2]).to_f32();
         let vp: GPtr<u8> = GPtr::from_raw(v.as_mut_ptr()).cast();
-        fx_add_particle(sys, pos, vp, 0.0, mp, -1.0, light, f32::from_bits(0x3F19_999A), 0);
+        fx_add_particle(sys, pos, vp, 0.0f32.to_bits(), mp, (-1.0f32).to_bits(), light, f32::from_bits(0x3F19_999A), 0);
     }
     let h = g::<f32>(0x85_8B8C).read();
     let hz = x(rd::<f32>(dir, 8)).fmul_m(h).to_f32();

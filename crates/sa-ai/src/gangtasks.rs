@@ -34,7 +34,7 @@ fn rand_scaled(site: u32, k_addr: usize) -> i32 {
 
 use crate::bindings::be_in_couple_abort_arm_ik;
 use crate::bindings::do_gang_abuse_speech_orig;
-use sa_core::bindings::ik_abort_look_at;
+use sa_anim::bindings::ik_abort_look_at;
 use crate::bindings::membership_count_members;
 use crate::bindings::partner_ctor_orig;
 use crate::bindings::ped_is_playing_hand_signal;
@@ -44,15 +44,15 @@ use crate::bindings::seek_entity_xy_offset_ctor;
 use crate::bindings::should_load_gang_anims;
 use crate::bindings::wander_gang_ctor;
 use sa_core::bindings::entity_register_reference;
-use sa_core::bindings::find_player_ped as world_find_player_ped;
+use sa_world::bindings::find_player_ped as world_find_player_ped;
 use sa_core::bindings::general_get_radian_angle_between_points as general_radian_angle_between_points;
 use sa_core::bindings::general_limit_radian_angle;
 use sa_core::bindings::general_random_int_in_range;
 use sa_core::bindings::streaming_request_model;
-use sa_core::bindings::tm_get_task_secondary;
-use sa_core::bindings::tm_set_task_secondary;
+use crate::bindings::tm_get_task_secondary;
+use crate::bindings::tm_set_task_secondary;
 use sa_core::bindings::vector_from_multiply3x3 as vector_from_multiply_3x3;
-use sa_core::bindings::anim_add_block_ref;
+use sa_anim::bindings::anim_add_block_ref;
 use sa_stream::bindings::anim_remove_block_ref;
 use sa_stream::bindings::ped_is_player;
 use sa_stream::bindings::streaming_is_very_busy;
@@ -62,10 +62,10 @@ use sa_world::bindings::membership_get_member;
 use sa_world::bindings::ped_drop_held_entity;
 use sa_world::bindings::ped_say;
 use sa_world::bindings::simple_car_drive_ctor;
-use sa_world::bindings::task_complex_ctor;
-use sa_world::bindings::task_simple_ctor;
+use crate::bindings::task_complex_ctor;
+use crate::bindings::task_simple_ctor;
 use sa_world::bindings::task_walk_alongside_ctor as walk_alongside_ped_ctor;
-use sa_world::bindings::tm_find_active_task_by_type;
+use crate::bindings::tm_find_active_task_by_type;
 use sa_world::bindings::turn_to_face_entity_ctor;
 use sa_stream::bindings::get_animation_block_index as anim_get_block_index;
 use sa_world::bindings::kill_ped_on_foot_ctor;
@@ -274,7 +274,7 @@ pub fn gang_hassle_ped_create_first_sub_task(this: GPtr<u8>, _ped: GPtr<u8>) -> 
         rd::<GPtr<u8>>(this, 0xC),
         0xF423F,
         0x3E8,
-        r.to_bits(),
+        f32::from_bits(r.to_bits()),
         c28,
         c30,
         0,
@@ -420,7 +420,7 @@ pub fn signal_at_ped_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPt
         5,
         GPtr::NULL,
         1,
-        0x3E19_999A,
+        f32::from_bits(0x3E19_999A),
         0x1F4,
         3,
         0,
@@ -500,7 +500,7 @@ pub fn gang_follower_ctor(
     vz: u32,
     f: u32,
 ) -> GPtr<u8> {
-    task_complex_ctor(this);
+    task_complex_ctor(this.addr() as u32);
     wr::<u32>(this, 0, 0x86F938);
     wr::<u32>(this, 0x40, 0);
     wr::<u32>(this, 0x44, 0);
@@ -681,7 +681,7 @@ pub fn partner_ctor(
     vy: u32,
     vz: u32,
 ) -> GPtr<u8> {
-    task_complex_ctor(this);
+    task_complex_ctor(this.addr() as u32);
     wr::<u8>(this, 0x58, lead as u8);
     wr::<u8>(this, 0x5D, face as u8);
     wr::<u32>(this, 0x3C, dist);
@@ -762,7 +762,7 @@ pub fn partner_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
             true
         } else {
             let tm = rd::<GPtr<u8>>(partner, 0x47C).byte_add(4);
-            let t = tm_find_active_task_by_type(tm, rd::<i32>(this, 0x34) as u32);
+            let t = tm_find_active_task_by_type(tm, (rd::<i32>(this, 0x34) as u32) as i32);
             t.is_null() || rd::<GPtr<u8>>(t, 0x38) != ped || rd::<u8>(this, 0x5C) != 0
         }
     };

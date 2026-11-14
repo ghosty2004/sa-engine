@@ -16,11 +16,12 @@ use crate::common::{ftol32, g, jp, k, rd, wr, x, xi};
 
 use sa_world::bindings::rw_im3d_render_indexed_primitive;
 use sa_world::bindings::rw_im3d_transform;
-use sa_core::bindings::world_clear_scan_codes as clear_scan_codes;
+use sa_world::bindings::world_clear_scan_codes as clear_scan_codes;
 use crate::bindings::render_buffer_stop_storing as stop_storing_call;
 use crate::bindings::set_render_mode_for_shadow_type;
-use sa_world::bindings::get_water_level_no_waves;
+use crate::bindings::get_water_level_no_waves;
 use sa_world::bindings::rw_im3d_end;
+use crate::bindings::cast_player_shadow_sector_list;
 orig! {
     /// `RwRenderStateSet(state, value)` (`RwGlobals` +0x20)
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xc97b24 0x20 => unported;
@@ -28,8 +29,6 @@ orig! {
     fn cast_real_time_shadow_sector_list(list: GPtr<u8>, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, a8: u32, a9: u32, a10: u32, a11: u32, a12: u32, a13: u32, a14: u32, a15: u32, a16: u32, a17: u32, a18: u32, a19: u32) = cdecl 0x70a7e0 => crate::mvpd_r1::cast_real_time_shadow_sector_list;
     /// `CShadows::CastShadowSectorList(list, ...)` (0x70a630, 19 dwords)
     fn cast_shadow_sector_list(list: GPtr<u8>, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, a8: u32, a9: u32, a10: u32, a11: u32, a12: u32, a13: u32, a14: u32, a15: u32, a16: u32, a17: u32, a18: u32, a19: u32) = cdecl 0x70a630 => crate::mvpd_r1::cast_shadow_sector_list;
-    /// `CShadows::CastPlayerShadowSectorList(list, ...)` (0x70a470, 19 dwords)
-    fn cast_player_shadow_sector_list(list: GPtr<u8>, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, a8: u32, a9: u32, a10: u32, a11: u32, a12: u32, a13: u32, a14: u32, a15: u32, a16: u32, a17: u32, a18: u32, a19: u32) = cdecl 0x70a470 => crate::mvpd_r1::cast_player_shadow_sector_list;
     /// `FUN_006e8550(int x, int y, float* inout, float big, float small)` (0x6e8550): the waves at a point
     fn waves_for_coordinate(px: i32, py: i32, out: GPtr<f32>, big: u32, small: u32) = cdecl 0x6e8550 => crate::waterlevel::waves_for_coordinate;
 }
@@ -275,7 +274,7 @@ fn water_pass(os: GPtr<u8>, pos_copy: &[u32; 3]) {
     let mut level = 0f32;
     let mut big = 0f32;
     let mut small = 0f32;
-    if get_water_level_no_waves(f32::from_bits(pos_copy[0]), f32::from_bits(pos_copy[1]), f32::from_bits(pos_copy[2]), GPtr::<f32>::cast::<u8>(GPtr::from_raw(&mut level)), GPtr::from_raw(&mut big), GPtr::from_raw(&mut small)) == 0 {
+    if get_water_level_no_waves(f32::from_bits(pos_copy[0]).to_bits(), f32::from_bits(pos_copy[1]).to_bits(), f32::from_bits(pos_copy[2]).to_bits(), GPtr::from_raw(&mut level), GPtr::from_raw(&mut big), GPtr::from_raw(&mut small)) == 0 {
         return;
     }
     if jp(x(level), x(rd::<f32>(os, 8)), 0x5) {

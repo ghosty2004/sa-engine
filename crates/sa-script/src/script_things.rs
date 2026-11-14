@@ -6,7 +6,7 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::hook;
 
-use sa_world::bindings::decision_maker_types_get_instance;
+use sa_ai::bindings::decision_maker_types_get_instance;
 
 /// The int16 id counter of each thing type (0..=8): its address for index 0 and the record stride.
 const COUNTERS: [(u32, u32); 9] = [

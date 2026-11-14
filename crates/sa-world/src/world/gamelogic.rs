@@ -3,7 +3,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::{Cmp, X87};
 
 use super::common::{g, rd, wr, x};
@@ -55,17 +55,13 @@ const PLAYER1_PED: usize = 0xB7CF28;
 
 pub use crate::bindings::camera_get_game_cam_position;
 pub use sa_core::bindings::camera_set_fade_colour;
-pub use sa_core::bindings::entity_get_is_on_screen;
-pub use sa_core::bindings::get_pad;
+pub use crate::bindings::entity_get_is_on_screen;
+pub use sa_input::bindings::get_pad;
 pub use crate::bindings::ped_get_transformed_bone_position;
 pub use sa_core::bindings::camera_fade;
 pub use sa_core::bindings::entity_register_reference as register_reference;
 pub use sa_core::bindings::world_get_is_line_of_sight_clear as get_is_line_of_sight_clear;
-orig! {
-    /// `CCollision::Test2DLineAgainst2DLine` (0x4138D0)
-    pub fn test_2d_line_against_2d_line(x1: u32, y1: u32, dx1: u32, dy1: u32, x2: u32, y2: u32, dx2: f32, dy2: f32) -> u8
-        = cdecl 0x4138D0 => test2d_port;
-}
+pub use crate::bindings::test_2d_line_against_2d_line;
 
 #[allow(clippy::too_many_arguments)]
 pub fn test2d_port(x1: u32, y1: u32, dx1: u32, dy1: u32, x2: u32, y2: u32, dx2: f32, dy2: f32) -> u8 {

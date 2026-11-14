@@ -3,19 +3,13 @@
 //! six calls follow the bytes). Unverified (docs/verify/HOWTO.md).
 
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 
 use crate::common::{x, xi};
 
-orig! {
-    /// `CWaterLevel::RenderWaterTriangle(x1, y1, CRenPar p1, x2, y2, p2, x3, y3, p3)` (0x6EE240)
-    #[allow(clippy::too_many_arguments)]
-    fn render_water_triangle(x1: i32, y1: i32, a0: u32, a1: u32, a2: u32, a3: u32, x2: i32, y2: i32, b0: u32, b1: u32, b2: u32, b3: u32, x3: i32, y3: i32, c0: u32, c1: u32, c2: u32, c3: u32) = cdecl 0x6EE240 => crate::waterlevel::render_water_triangle;
-    /// `CWaterLevel::RenderWaterRectangle(minX, maxX, y1, y2, p1, p2, p3, p4)` (0x6EC5D0)
-    #[allow(clippy::too_many_arguments)]
-    fn render_water_rectangle(x1: i32, x2: i32, y1: i32, y2: i32, a0: u32, a1: u32, a2: u32, a3: u32, b0: u32, b1: u32, b2: u32, b3: u32, c0: u32, c1: u32, c2: u32, c3: u32, d0: u32, d1: u32, d2: u32, d3: u32) = cdecl 0x6EC5D0 => crate::waterlevel::render_water_rectangle;
-}
+use crate::bindings::o_render_water_rectangle as render_water_rectangle;
+use crate::bindings::render_water_triangle;
 
 /// A `CRenPar` by value: z, big waves, small waves (f32 bits), then the flow bytes dword.
 #[derive(Clone, Copy)]

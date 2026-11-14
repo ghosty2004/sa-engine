@@ -19,12 +19,12 @@ pub use sa_core::bindings::atexit;
 pub use sa_core::bindings::deactivate_directional as light_deactivate_directional;
 pub use sa_core::bindings::set_ambient_colours as light_set_ambient_colours;
 pub use sa_stream::bindings::col_model_ctor;
-pub use sa_stream::bindings::collision_data_ctor;
+pub use sa_world::bindings::collision_data_ctor;
 pub use sa_world::bindings::entity_render;
 pub use sa_world::bindings::remove_lights_affecting_object as point_lights_remove_lights_affecting_object;
 pub use sa_world::bindings::renderer_setup_lighting_for_entity;
 pub use sa_core::bindings::eh_vector_ctor as eh_vector_constructor_iterator;
-pub use sa_world::bindings::is_law_enforcement_vehicle;
+pub use crate::bindings::is_law_enforcement_vehicle;
 orig! {
     /// `CVehicleModelInfo::SetDirtTextures(CVehicleModelInfo*, int32)` (0x5D5DB0)
     pub fn set_dirt_textures(mi: GPtr<u8>, level: i32) = cdecl 0x5D5DB0 => unported;
@@ -211,14 +211,14 @@ pub fn operator_delete(p: GPtr<u8>) {
 }
 
 pub use crate::bindings::vis_get_model_info;
-pub use sa_core::bindings::frame_for_all_children as rw_frame_for_all_children;
-pub use sa_core::bindings::rp_atomic_destroy;
+pub use sa_rwcore::bindings::frame_for_all_children as rw_frame_for_all_children;
+pub use sa_rwcore::bindings::rp_atomic_destroy;
 pub use sa_stream::bindings::get_atomic_id as vis_get_atomic_id;
 pub use sa_stream::bindings::model_info_remove_ref as base_model_info_remove_ref;
 pub use sa_stream::bindings::ped_is_player;
 pub use sa_stream::bindings::rp_clump_remove_atomic;
 pub use sa_world::bindings::ped_pre_render_after_test;
-pub use sa_core::bindings::frame_for_all_objects as rw_frame_for_all_objects;
+pub use sa_rwcore::bindings::frame_for_all_objects as rw_frame_for_all_objects;
 orig! {
     /// virtual `CEntity::Render()` (vtable +0x48)
     pub fn entity_render_virtual(e: GPtr<u8>) = thiscall vslot 0x48 => unported;
@@ -284,7 +284,7 @@ pub fn remove_all_upgrades_cb(atomic: GPtr<u8>, _data: u32) -> GPtr<u8> {
     if !mi.is_null() {
         rp_clump_remove_atomic(rd::<GPtr<u8>>(atomic, 0x3C), atomic);
         rp_atomic_destroy(atomic);
-        base_model_info_remove_ref(mi);
+        base_model_info_remove_ref(mi.cast::<sa_stream::shared::CBaseModelInfo>());
     }
     atomic
 }
@@ -329,8 +329,8 @@ pub fn set_component_visibility(v: Veh, frame: GPtr<u8>, state: u32) {
     if state == 2 {
         wr::<u8>(v, 0x42A, rd::<u8>(v, 0x42A) | 1);
     }
-    rw_frame_for_all_objects(frame, 0x6D2690, GPtr::from_addr(state as usize));
-    rw_frame_for_all_children(frame, 0x6D26D0, GPtr::from_addr(state as usize));
+    rw_frame_for_all_objects(frame, 0x6D2690, GPtr::<u8>::addr(GPtr::from_addr(state as usize)) as u32);
+    rw_frame_for_all_children(frame, 0x6D26D0, GPtr::<u8>::addr(GPtr::from_addr(state as usize)) as u32);
 }
 
 /// `CVehicle::GetVehicleAppearance()` (0x6D1080): from handling model flags (`+0x384` -> `+0xCC`) &
@@ -365,7 +365,7 @@ pub fn can_ped_open_locks(v: Veh, ped: GPtr<u8>) -> u8 {
 }
 
 pub use sa_core::bindings::entity_register_reference;
-pub use sa_core::bindings::rp_clump_for_all_atomics;
+pub use sa_rwcore::bindings::rp_clump_for_all_atomics;
 pub use sa_stream::bindings::txd_store_remove_ref;
 pub use sa_world::bindings::entity_delete_rw_object;
 pub use sa_world::bindings::get_clump_alpha as vis_get_clump_alpha;
@@ -464,7 +464,7 @@ pub fn delete_rw_object(v: Veh) {
         wr::<u16>(v, 0x598, 0xFFFF);
         wr::<u16>(v, 0x59A, 0xFFFF);
     }
-    rp_clump_for_all_atomics(rd::<GPtr<u8>>(v, 0x18), 0x6D34D0, GPtr::NULL);
+    rp_clump_for_all_atomics(rd::<GPtr<u8>>(v, 0x18), 0x6D34D0, GPtr::<u8>::addr(GPtr::NULL) as u32);
     for k in 0..7 {
         wr::<u32>(v, 0x43A + 4 * k, 0xFFFF_FFFF);
     }
@@ -550,11 +550,11 @@ pub fn height_above_ceiling(_v: Veh, h: f32, model: u32) -> X87 {
 }
 
 pub use crate::bindings::audio_set_radio_bass_setting;
-pub use sa_core::bindings::entity_clean_up_old_reference;
-pub use sa_core::bindings::find_player_ped;
+pub use sa_world::bindings::entity_clean_up_old_reference;
+pub use sa_world::bindings::find_player_ped;
 pub use sa_core::bindings::matrix_mul_vec;
 pub use sa_core::bindings::ped_give_weapon;
-pub use sa_core::bindings::set_model_is_deletable as streaming_set_model_is_deletable;
+pub use sa_stream::bindings::set_model_is_deletable as streaming_set_model_is_deletable;
 pub use sa_pop::bindings::create_plate_texture;
 pub use sa_world::bindings::entity_set_model_index;
 pub use sa_world::bindings::event_group_add;
@@ -678,7 +678,7 @@ pub fn remove_passenger(v: Veh, ped: GPtr<u8>) {
             let slot = v.byte_add(0x464 + 4 * i as isize);
             let p = slot.cast::<GPtr<u8>>().read();
             if !p.is_null() {
-                entity_clean_up_old_reference(p, slot.cast::<GPtr<u8>>());
+                entity_clean_up_old_reference(p, slot.cast::<u8>());
             }
             slot.cast::<u32>().write(0);
             wr::<u8>(v, 0x484, rd::<u8>(v, 0x484).wrapping_sub(1));
@@ -786,7 +786,7 @@ pub fn update_winch(v: Veh) {
     let mut out = [0u32; 3];
     let outp = GPtr::from_raw(&raw mut out).cast::<u8>();
     matrix_mul_vec(
-        outp.cast::<f32>(),
+        outp.cast::<u8>(),
         rd::<GPtr<u8>>(v, 0x14),
         GPtr::from_raw(&raw mut vec).cast::<u8>(),
     );
@@ -846,7 +846,7 @@ pub fn remove_driver(v: Veh, keep: u32) {
     let slot = v.byte_add(0x460);
     let p = rd::<GPtr<u8>>(v, 0x460);
     if !p.is_null() {
-        entity_clean_up_old_reference(p, slot.cast::<GPtr<u8>>());
+        entity_clean_up_old_reference(p, slot.cast::<u8>());
     }
     wr::<u32>(v, 0x460, 0);
 }
@@ -885,12 +885,12 @@ fn kill_ped_slot(v: Veh, off: isize) {
 }
 
 pub use sa_core::bindings::streaming_request_model;
-pub use sa_core::bindings::txd_add_ref as txd_store_add_ref;
+pub use sa_stream::bindings::txd_add_ref as txd_store_add_ref;
 pub use sa_stream::bindings::vmi_set_vehicle_colour;
 pub use sa_world::bindings::cam_no_rain as cull_zones_cam_no_rain;
 pub use sa_world::bindings::get_first_texture;
 pub use sa_world::bindings::pad_get_horn;
-pub use sa_world::bindings::uses_siren as uses_siren_o;
+pub use crate::bindings::uses_siren as uses_siren_o;
 orig! {
     /// `CAutomobile::CustomCarPlate_BeforeRenderingStart(CVehicleModelInfo*)` (0x6A2F00)
     pub fn custom_car_plate_before_rendering_start(a: GPtr<u8>, mi: GPtr<u8>) = thiscall 0x6A2F00 => unported;
@@ -1112,7 +1112,7 @@ pub fn can_ped_step_out_car(v: Veh, ignore_speed: u32) -> u8 {
 
 pub use sa_world::bindings::physical_apply_move_force_5429f0 as physical_apply_move_force;
 pub use sa_world::bindings::player_info_add_health;
-pub use sa_core::bindings::stats_increment_stat;
+pub use sa_world::bindings::stats_increment_stat;
 pub use sa_world::bindings::apply_turn_force_6 as physical_apply_turn_force_65da70;
 
 /// The driver's weight effect on the vehicle (`SetDriver`'s tail, `-0.02` at 0x85904C): bikes get
@@ -1125,7 +1125,7 @@ fn apply_occupant_weight(v: Veh, ped: GPtr<u8>) {
         let fx = f.fmul_m(rd::<f32>(m, 0x20)).to_f32();
         let fy = f.fmul_m(rd::<f32>(m, 0x24)).to_f32();
         let fz = f.fmul_m(rd::<f32>(m, 0x28)).to_f32();
-        physical_apply_move_force(v, f32::from_bits(fx.to_bits()), f32::from_bits(fy.to_bits()), f32::from_bits(fz.to_bits()));
+        physical_apply_move_force(v, sa_math::vector::CVector::new(f32::from_bits(fx.to_bits()), f32::from_bits(fy.to_bits()), f32::from_bits(fz.to_bits())));
     } else {
         let (pm, vm) = (rd::<GPtr<u8>>(ped, 0x14), rd::<GPtr<u8>>(v, 0x14));
         let dy = x(rd::<f32>(pm, 0x34)).fsub_m(rd::<f32>(vm, 0x34)).to_f32();
@@ -1145,7 +1145,7 @@ pub fn set_driver(v: Veh, ped: GPtr<u8>) {
     let slot = v.byte_add(0x460);
     let old = rd::<GPtr<u8>>(v, 0x460);
     if !old.is_null() {
-        entity_clean_up_old_reference(old, slot.cast::<GPtr<u8>>());
+        entity_clean_up_old_reference(old, slot.cast::<u8>());
     }
     wr::<GPtr<u8>>(v, 0x460, ped);
     entity_register_reference(ped, slot);
@@ -1244,7 +1244,7 @@ pub fn car_has_roof(v: Veh) -> u8 {
 pub fn set_window_open_flag(v: Veh, node: u32) {
     let f = clump_get_frame_from_id(rd::<GPtr<u8>>(v, 0x18), (node & 0xFF) as i32);
     if !f.is_null() {
-        rw_frame_for_all_objects(f, 0x4C7B90, GPtr::from_addr(0x1000));
+        rw_frame_for_all_objects(f, 0x4C7B90, GPtr::<u8>::addr(GPtr::from_addr(0x1000)) as u32);
     }
 }
 
@@ -1253,7 +1253,7 @@ pub fn set_window_open_flag(v: Veh, node: u32) {
 pub fn clear_window_open_flag(v: Veh, node: u32) {
     let f = clump_get_frame_from_id(rd::<GPtr<u8>>(v, 0x18), (node & 0xFF) as i32);
     if !f.is_null() {
-        rw_frame_for_all_objects(f, 0x4C7BB0, GPtr::from_addr(0x1000));
+        rw_frame_for_all_objects(f, 0x4C7BB0, GPtr::<u8>::addr(GPtr::from_addr(0x1000)) as u32);
     }
 }
 
@@ -1294,8 +1294,8 @@ pub fn is_vehicle_normal(v: Veh) -> u8 {
 /// objects and children; returns the frame.
 #[hook(addr = 0x6D26D0, conv = cdecl, name = "CVehicle::SetVehicleAtomicVisibilityCB-Frame", expect = "56 8B 74 24 08")]
 pub fn set_vehicle_atomic_visibility_cb_frame(frame: GPtr<u8>, data: u32) -> GPtr<u8> {
-    rw_frame_for_all_objects(frame, 0x6D2690, GPtr::from_addr(data as usize));
-    rw_frame_for_all_children(frame, 0x6D26D0, GPtr::from_addr(data as usize));
+    rw_frame_for_all_objects(frame, 0x6D2690, GPtr::<u8>::addr(GPtr::from_addr(data as usize)) as u32);
+    rw_frame_for_all_children(frame, 0x6D26D0, GPtr::<u8>::addr(GPtr::from_addr(data as usize)) as u32);
     frame
 }
 
@@ -1303,8 +1303,8 @@ pub fn set_vehicle_atomic_visibility_cb_frame(frame: GPtr<u8>, data: u32) -> GPt
 /// over the objects and itself over the children; returns the frame.
 #[hook(addr = 0x6D3420, conv = cdecl, name = "CVehicle::RemoveObjectsCB-Frame", expect = "56 8B 74 24 08")]
 pub fn remove_objects_cb_frame(frame: GPtr<u8>, data: u32) -> GPtr<u8> {
-    rw_frame_for_all_objects(frame, 0x6D33B0, GPtr::from_addr(data as usize));
-    rw_frame_for_all_children(frame, 0x6D3420, GPtr::from_addr(data as usize));
+    rw_frame_for_all_objects(frame, 0x6D33B0, GPtr::<u8>::addr(GPtr::from_addr(data as usize)) as u32);
+    rw_frame_for_all_children(frame, 0x6D3420, GPtr::<u8>::addr(GPtr::from_addr(data as usize)) as u32);
     frame
 }
 
@@ -1312,7 +1312,7 @@ pub fn remove_objects_cb_frame(frame: GPtr<u8>, data: u32) -> GPtr<u8> {
 /// the 15 upgrade slots (+0x43A) = -1.
 #[hook(addr = 0x6D3AB0, conv = thiscall, name = "CVehicle::RemoveAllUpgrades", expect = "56 57 8B F1 8B 46 18", this = "CVehicle")]
 pub fn remove_all_upgrades(v: Veh) {
-    rp_clump_for_all_atomics(rd::<GPtr<u8>>(v, 0x18), 0x6D34D0, GPtr::NULL);
+    rp_clump_for_all_atomics(rd::<GPtr<u8>>(v, 0x18), 0x6D34D0, GPtr::<u8>::addr(GPtr::NULL) as u32);
     for k in 0..7 {
         wr::<u32>(v, 0x43A + 4 * k, 0xFFFF_FFFF);
     }
@@ -1348,10 +1348,10 @@ pub fn set_vehicle_created_by(v: Veh, by: u32) {
 }
 
 pub use crate::bindings::get_atomic_id as vis_get_model_info_index;
-pub use sa_core::bindings::rp_atomic_clone;
+pub use sa_rwcore::bindings::rp_atomic_clone;
 pub use sa_core::bindings::rp_atomic_set_frame;
 pub use sa_stream::bindings::get_num_remaps as vmi_get_num_remaps;
-pub use sa_core::bindings::rp_clump_add_atomic;
+pub use sa_rwcore::bindings::rp_clump_add_atomic;
 pub use sa_world::bindings::add_ped_in_car as population_add_ped_in_car;
 
 /// `CVehicle::IsPassenger(int32 modelIndex)` (0x6D1C00): a passenger slot holds a ped of that model.
@@ -1456,7 +1456,7 @@ pub fn set_up_driver(v: Veh, a: u32, b2: u32, c: u32) -> GPtr<u8> {
 pub fn get_replacement_upgrade(v: Veh, node: u32) -> i32 {
     let f = clump_get_frame_from_id(rd::<GPtr<u8>>(v, 0x18), node as i32);
     let mut data = [node, 0u32];
-    rw_frame_for_all_objects(f, 0x6D3490, GPtr::from_addr((GPtr::from_raw(&raw mut data).addr() as u32) as usize));
+    rw_frame_for_all_objects(f, 0x6D3490, GPtr::<u8>::addr(GPtr::from_addr((GPtr::from_raw(&raw mut data).addr() as u32) as usize)) as u32);
     if data[1] == 0 {
         return -1;
     }
@@ -1497,8 +1497,8 @@ pub use sa_core::bindings::rw_frame_destroy;
 pub use sa_world::bindings::add_vehicle_upgrade;
 pub use sa_world::bindings::fire_extinguish;
 pub use sa_world::bindings::garages_trigger_message;
-pub use sa_world::bindings::get_engine_status as dm_get_engine_status;
-pub use sa_world::bindings::set_engine_status as dm_set_engine_status;
+pub use crate::bindings::get_engine_status as dm_get_engine_status;
+pub use crate::bindings::set_engine_status as dm_set_engine_status;
 
 /// `CVehicle::GetPlaneGunsAutoAimAngle()` (0x6D3E00): the per-model constant (0x871E00..0x871E24) for
 /// 425, 447, 464, 476, 487, 497, 520, 548, 564, 576; else 0.0 (ST0).
@@ -1576,11 +1576,11 @@ pub fn remove_replacement_upgrade(v: Veh, node: u32) {
     let f = clump_get_frame_from_id(rd::<GPtr<u8>>(v, 0x18), node as i32);
     let mut slot = 0u32;
     let sp = GPtr::from_raw(&raw mut slot).addr() as u32;
-    rw_frame_for_all_objects(f, 0x6D33B0, GPtr::from_addr(sp as usize));
-    rw_frame_for_all_children(f, 0x6D3420, GPtr::from_addr(sp as usize));
+    rw_frame_for_all_objects(f, 0x6D33B0, GPtr::<u8>::addr(GPtr::from_addr(sp as usize)) as u32);
+    rw_frame_for_all_children(f, 0x6D3420, GPtr::<u8>::addr(GPtr::from_addr(sp as usize)) as u32);
     let f2 = clump_get_frame_from_id(rd::<GPtr<u8>>(mi_of(v), 0x1C), node as i32);
     g::<u32>(0xC1CB58).write(rd::<u32>(v, 0x18));
-    rw_frame_for_all_objects(f2, 0x6D3450, GPtr::from_addr((f.addr() as u32) as usize));
+    rw_frame_for_all_objects(f2, 0x6D3450, GPtr::<u8>::addr(GPtr::from_addr((f.addr() as u32) as usize)) as u32);
 }
 
 /// `CVehicle::SetRemap(int32)` (0x6D0C00, the remap read sits in a .HOODLUM fragment at 0x407645): -1
@@ -1630,7 +1630,7 @@ pub fn remove_objects_cb_object(obj: GPtr<u8>, data: GPtr<u32>) -> GPtr<u8> {
                 rw_frame_destroy(frame);
             }
             if !mi.is_null() {
-                base_model_info_remove_ref(mi);
+                base_model_info_remove_ref(mi.cast::<sa_stream::shared::CBaseModelInfo>());
             }
         }
     }
@@ -1662,7 +1662,7 @@ fn tow_pos(v: Veh, out: GPtr<u8>, off: isize, add: bool) {
     wr::<f32>(out, 4, if add { y.fadd_m(one) } else { y.fsub_m(one) }.to_f32());
     let mut tmp = [0u32; 3];
     let tp = GPtr::from_raw(&raw mut tmp).cast::<u8>();
-    let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(tp.cast::<f32>(), rd::<GPtr<u8>>(v, 0x14), out));
+    let r = matrix_mul_vec(tp.cast::<u8>(), rd::<GPtr<u8>>(v, 0x14), out);
     for k in 0..3 {
         wr::<u32>(out, 4 * k, rd::<u32>(r, 4 * k));
     }
@@ -1862,15 +1862,7 @@ pub fn add_passenger_fixed_seat(v: Veh, ped: GPtr<u8>, seat: u32) -> u8 {
         let fx = f.fmul_m(rd::<f32>(m, 0x20)).to_f32();
         let fy = f.fmul_m(rd::<f32>(m, 0x24)).to_f32();
         let fz = f.fmul_m(rd::<f32>(m, 0x28)).to_f32();
-        physical_apply_turn_force(
-            v,
-            fx.to_bits(),
-            fy.to_bits(),
-            fz.to_bits(),
-            px.to_bits(),
-            py.to_bits(),
-            pz.to_bits(),
-        );
+        physical_apply_turn_force(v, sa_math::vector::CVector::new(f32::from_bits(fx.to_bits()), f32::from_bits(fy.to_bits()), f32::from_bits(fz.to_bits())), sa_math::vector::CVector::new(f32::from_bits(px.to_bits()), f32::from_bits(py.to_bits()), f32::from_bits(pz.to_bits())));
     } else {
         let pm = rd::<GPtr<u8>>(ped, 0x14);
         let dy = x(rd::<f32>(pm, 0x34)).fsub_m(rd::<f32>(m, 0x34)).to_f32();
@@ -1963,15 +1955,7 @@ pub fn apply_boat_water_resistance(v: Veh, bh: GPtr<u8>, depth: f32) {
     let fx = fm.fmul_m(rd::<f32>(m3, 0x10)).to_f32();
     let fy = fm.fmul_m(rd::<f32>(m3, 0x14)).to_f32();
     let fz = fm.fmul_m(rd::<f32>(m3, 0x18)).to_f32();
-    physical_apply_turn_force(
-        v,
-        fx.to_bits(),
-        fy.to_bits(),
-        fz.to_bits(),
-        dx.to_bits(),
-        dy.to_bits(),
-        dz.to_bits(),
-    );
+    physical_apply_turn_force(v, sa_math::vector::CVector::new(f32::from_bits(fx.to_bits()), f32::from_bits(fy.to_bits()), f32::from_bits(fz.to_bits())), sa_math::vector::CVector::new(f32::from_bits(dx.to_bits()), f32::from_bits(dy.to_bits()), f32::from_bits(dz.to_bits())));
     let vz = rd::<f32>(v, 0x4C);
     if !x(vz).fcom(x(c(0x858B50))).test_any(0x41) {
         wr::<f32>(v, 0x4C, x(pz).fmul_m(vz).to_f32());
@@ -1987,7 +1971,7 @@ pub fn apply_boat_water_resistance(v: Veh, bh: GPtr<u8>, depth: f32) {
 }
 
 pub use sa_core::bindings::matrix_attach;
-pub use sa_core::bindings::matrix_dtor;
+pub use sa_world::bindings::matrix_dtor;
 pub use sa_core::bindings::matrix_rotate_x;
 pub use sa_core::bindings::matrix_rotate_y;
 pub use sa_core::bindings::matrix_set_rotate_x;
@@ -2240,7 +2224,7 @@ pub fn constructor(v: Veh, created_by: u32) -> GPtr<u8> {
 
 pub use sa_core::bindings::destroy_fx_system as fx_destroy_fx_system;
 pub use sa_pop::bindings::darkel_register_car_blown_up as darkel_register_car_blown_up_by_player;
-pub use sa_core::bindings::rw_texture_destroy;
+pub use sa_rwcore::bindings::rw_texture_destroy;
 pub use sa_world::bindings::physical_dtor;
 pub use sa_world::bindings::clear_blip_for_entity as radar_clear_blip_for_entity;
 orig! {
@@ -2336,7 +2320,7 @@ pub fn destructor(v: Veh) {
     physical_dtor(v);
 }
 
-pub use sa_core::bindings::find_player_vehicle;
+pub use sa_world::bindings::find_player_vehicle;
 pub use sa_pop::bindings::clear_cross_hair_immediately;
 pub use sa_world::bindings::fx_system_set_matrix;
 pub use crate::bindings::get_plane_num_guns as get_plane_num_guns_o;
@@ -2500,6 +2484,7 @@ pub fn add_damaged_vehicle_particles(v: Veh) {
 }
 
 pub use sa_world::bindings::surface_is_sand;
+pub use sa_core::bindings::random_float_in_range as random_float_in_range_st0;
 orig! {
     /// `SurfaceInfos_c::CreatesWheelGrass(uint32)` (0x55E910)
     pub fn surface_creates_wheel_grass(s: GPtr<u8>, surf: u32) -> u8 = thiscall 0x55E910 => unported;
@@ -2525,8 +2510,6 @@ orig! {
     pub fn fx_add_wheel_dust(fx: GPtr<u8>, v: GPtr<u8>, px: u32, py: u32, pz: u32, a: u32, l: u32) = thiscall 0x4A09C0 => unported;
     /// `Fx_c::AddWheelSand(CVehicle*, CVector pos, uint8, float)` (0x4A0610)
     pub fn fx_add_wheel_sand(fx: GPtr<u8>, v: GPtr<u8>, px: u32, py: u32, pz: u32, a: u32, l: u32) = thiscall 0x4A0610 => unported;
-    /// `CGeneral::GetRandomNumberInRange<float>(float, float)` (0x41BD90)
-    pub fn random_float_in_range_st0(min: u32, max: u32) -> f64 = cdecl 0x41BD90 => unported;
 }
 
 /// `g_fx` (`Fx_c`).
@@ -2569,7 +2552,7 @@ pub fn add_wheel_dirt_and_water(v: Veh, cp: GPtr<u8>, below: u32, band: u32, in_
         if x(rain()).fcom(x(g::<f32>(0x858B50).read())).test_any(0x41) {
             return true;
         }
-        X87::from_f64_exact(random_float_in_range_st0(rain().to_bits(), 0x3F81_47AE))
+        X87::from_f64_exact(random_float_in_range_st0(f32::from_bits(rain().to_bits()), f32::from_bits(0x3F81_47AE)).to_f64())
             .fcom(x(g::<f32>(0x858B8C).read()))
             .test_any(0x41)
     };
@@ -2801,7 +2784,7 @@ pub fn physical_get_lighting_from_col(p: GPtr<u8>, interior: u32) -> X87 {
 /// [`random_float_in_range_st0`] as an x87 value (ST0, returned through the f64 ABI).
 #[allow(dead_code)]
 pub fn random_float_in_range(min: u32, max: u32) -> X87 {
-    X87::from_f64_exact(random_float_in_range_st0(min, max))
+    X87::from_f64_exact(random_float_in_range_st0(f32::from_bits(min), f32::from_bits(max)).to_f64())
 }
 
 /// This module's phase B registrations (`#[native]`).

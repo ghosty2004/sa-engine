@@ -14,7 +14,7 @@ use crate::common::{k, rd, wr};
 
 use sa_core::bindings::vector_normalise;
 use sa_world::bindings::find_player_centre_of_world;
-use sa_core::bindings::find_player_coors;
+use sa_world::bindings::find_player_coors;
 
 const CHECKPOINTS: usize = 0xC7_F158;
 const SIZE: usize = 0x38;
@@ -125,7 +125,7 @@ pub fn checkpoints_place_marker(id: u32, ty: u32, pos: GPtr<f32>, dir: GPtr<f32>
         let o = 0x1C + 4 * i;
         wr::<f32>(c, o, xf(rd::<f32>(c, o)).fsub_m(rd::<f32>(c, 0x10 + 4 * i)).to_f32());
     }
-    vector_normalise(c.byte_add(0x1C));
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(c.byte_add(0x1C)));
     c
 }
 

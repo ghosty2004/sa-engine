@@ -16,7 +16,7 @@ use crate::common::{ftol32, g, jne, jp, k, rd, wr, x, xi};
 
 use sa_core::bindings::rw_matrix_update;
 use sa_core::bindings::rp_geometry_for_all_materials;
-use sa_stream::bindings::fx_get_fx_quality as get_fx_quality;
+use crate::bindings::fx_get_fx_quality as get_fx_quality;
 use sa_world::bindings::rw_frame_translate;
 orig! {
     /// `CGrassRenderer::GenPointInTriangle(CVector* out, v0, v1, v2, float r1, float r2)` (0x5dab00)

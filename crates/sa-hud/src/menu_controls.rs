@@ -106,14 +106,13 @@ use crate::bindings::display_helper_text_call;
 use sa_stream::bindings::hud_colours_get_rgb;
 use crate::bindings::analogue_pad_down as pad_analogue_down;
 use crate::bindings::analogue_pad_up as pad_analogue_up;
+use crate::bindings::font_set_scale;
 orig! {
     /// `CControllerConfigManager::GetControllerSettingTextWithOrderNumber(eControllerAction, eContSetOrder)`
     /// (0x531E20, thiscall)
     fn ccm_setting_text(this: GPtr<u8>, action: i32, order: u32) -> GPtr<u8> = thiscall 0x531E20 => unported;
     /// `CControllerConfigManager::GetButtonComboText(eControllerAction)` (0x52F560, thiscall)
     fn ccm_button_combo_text(this: GPtr<u8>, action: i32) -> GPtr<u8> = thiscall 0x52F560 => unported;
-    /// `CFont::SetScale(float w, float h)` (0x719380)
-    fn font_set_scale(w: f32, h: f32) = cdecl 0x719380 => font_set_scale_rust;
     /// `CMenuManager::DrawControllerBound(uint16 y, bool onlyCheck)` (0x57E6E0, thiscall)
     fn draw_controller_bound_call(this: GPtr<u8>, y: u32, only_check: u32) = thiscall 0x57E6E0 => draw_controller_bound;
 }
@@ -158,7 +157,7 @@ fn set_color(r: u32, gg: u32, bb: u32, a: u32) {
 fn set_scale(this: GPtr<u8>, sx: f32, sy: f32) {
     let hh = f32_of(stretch_y_call(this, sy));
     let ww = f32_of(stretch_x_call(this, sx));
-    font_set_scale(ww, hh);
+    font_set_scale(ww.to_bits(), hh.to_bits());
 }
 
 /// `SetWrapx(StretchX(100) + W)` (`fiadd`).
@@ -349,7 +348,7 @@ pub fn draw_controller_bound(this: GPtr<u8>, y: u32, only_check: u32) {
             let mut rect = [left, bottom, right, top];
             let mut col = [0u8; 4];
             let cp = rgba_ctor(GPtr::from_raw(col.as_mut_ptr()), 0xAC, 0xCB, 0xF1, 0xFF);
-            sprite_draw_rect(GPtr::<u8>::cast::<f32>(GPtr::<f32>::from_raw(rect.as_mut_ptr()).cast()), cp);
+            sprite_draw_rect(GPtr::<f32>::from_raw(rect.as_mut_ptr()).cast(), cp);
             set_color(255, 255, 255, 255);
         }
         font_set_orientation(1);
@@ -752,7 +751,7 @@ pub fn draw_controller_setup_screen(this: GPtr<u8>) {
     let mut rect = [left, bottom, right, top];
     let mut col = [0u8; 4];
     let colp = rgba_ctor(GPtr::from_raw(col.as_mut_ptr()), 0x31, 0x65, 0x94, 0x64);
-    sprite_draw_rect(GPtr::<u8>::cast::<f32>(GPtr::<f32>::from_raw(rect.as_mut_ptr()).cast()), colp);
+    sprite_draw_rect(GPtr::<f32>::from_raw(rect.as_mut_ptr()).cast(), colp);
 
     let rows = i32::from(row_count(this, 0));
     let mut row: u8 = 0;

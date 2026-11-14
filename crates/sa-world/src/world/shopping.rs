@@ -56,7 +56,7 @@ use sa_core::bindings::strtok;
 use crate::bindings::find_weapon_type;
 use sa_core::bindings::get_model_info;
 use sa_core::bindings::get_uppercase_key;
-use sa_core::bindings::load_line;
+use sa_stream::bindings::load_line;
 
 /// `line` starts with `"end"`.
 fn is_end(line: GPtr<u8>) -> bool {
@@ -307,11 +307,11 @@ pub fn load_stats() {
                 let tok = strtok(line, d());
                 match sec {
                     4..=6 => key = get_uppercase_key(tok),
-                    9 => key = find_weapon_type(tok),
+                    9 => key = find_weapon_type(tok) as u32,
                     2 => {}
                     _ => {
                         key = u32::MAX;
-                        get_model_info(tok, GPtr::<u32>::cast::<u8>(GPtr::from_raw(&raw mut key)));
+                        get_model_info(tok, GPtr::<u32>::cast::<i32>(GPtr::from_raw(&raw mut key)));
                     }
                 }
                 let n = NUM_BUYABLE_ITEMS.get();

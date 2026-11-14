@@ -54,10 +54,7 @@ pub fn automobile_close_all_doors(this: GPtr<u8>) {
 
 use sa_core::bindings::entity_register_reference;
 use sa_world::bindings::apply_turn_force_6;
-orig! {
-    /// `CPhysical::ApplyTurnForce(CVector force, CVector point)` (0x542A50)
-    fn apply_turn_force(e: GPtr<u8>, force: CVector, point: CVector) = thiscall 0x542A50 => sa_world::physical::forces::apply_turn_force;
-}
+use sa_world::bindings::physical_apply_turn_force as apply_turn_force;
 
 /// `.rdata` -0.1f (0x858EF4), -0.02f (0x85904C), -0.2f (0x858FDC)
 const K_M0_1: u32 = 0xBDCC_CCCD;

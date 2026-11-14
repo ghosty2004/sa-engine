@@ -62,7 +62,7 @@ const ANIM_CLUMP_OFFSET: usize = 0xB5F878; // the RpAnimBlendClumpData plugin of
 
 pub use crate::bindings::cutscene_finish_cutscene as finish_cutscene;
 pub use sa_core::bindings::streaming_remove_current_zones_models;
-pub use sa_core::bindings::assoc_set_current_time;
+pub use crate::bindings::assoc_set_current_time;
 pub use sa_core::bindings::camera_set_wide_screen_on;
 pub use sa_core::bindings::clothes_rebuild_player_if_needed;
 pub use sa_core::bindings::crt_free_8214bd as crt_free2;
@@ -86,11 +86,9 @@ pub use sa_core::bindings::timer_suspend;
 pub use crate::bindings::assoc_group_get_animation;
 pub use sa_core::bindings::rp_clump_for_all_atomics;
 pub use sa_core::bindings::rw_v3d_transform_points;
+pub use sa_core::bindings::directory_ctor;
+pub use sa_core::bindings::directory_dtor;
 orig! {
-    /// `CDirectory::CDirectory(capacity)` (0x5322A0)
-    pub fn directory_ctor(d: GPtr<u8>, capacity: i32) -> GPtr<u8> = thiscall 0x5322A0 => unported;
-    /// `CDirectory::~CDirectory()` (0x5322D0)
-    pub fn directory_dtor(d: GPtr<u8>) = thiscall 0x5322D0 => unported;
     /// `CCutsceneMgr::Update_overlay()` (0x5B1720)
     pub fn update_overlay() = cdecl 0x5B1720 => unported;
     /// `FUN_00746070` (the last skip test: skip when it returns 0)
@@ -146,7 +144,7 @@ pub fn initialise() {
     g::<u8>(WAS_SKIPPED).write(0);
     g::<u8>(HAS_FILE_IO_STARTED).write(0);
     let p = operator_new2(0x10);
-    let d = if p.is_null() { GPtr::NULL } else { directory_ctor(p, 0x200) };
+    let d = if p.is_null() { GPtr::NULL } else { GPtr::<sa_core::directory::CDirectory>::cast::<u8>(directory_ctor(p.cast::<sa_core::directory::CDirectory>(), 0x200)) };
     g::<u32>(PCUTSCENE_DIR).write(d.addr() as u32);
 }
 
@@ -243,7 +241,7 @@ pub fn remove_cutscene_player() {
 pub fn shutdown() {
     let d = g::<GPtr<u8>>(PCUTSCENE_DIR).read();
     if !d.is_null() {
-        directory_dtor(d);
+        directory_dtor(d.cast::<sa_core::directory::CDirectory>());
         crt_free2(d);
     }
 }
@@ -328,7 +326,7 @@ pub fn update_cutscene_object_bounding_box(clump: GPtr<u8>, model: i32) {
     let cm = g::<u8>(CUTOBJ_COLMODELS).byte_add((model.wrapping_mul(0x30).wrapping_sub(0x3840)) as isize);
     let mut r = rd::<f32>(cm, 0x24);
     let mut slot = r;
-    rp_clump_for_all_atomics(clump, 0x5B0130, GPtr::from_raw(&mut r as *mut f32).cast());
+    rp_clump_for_all_atomics(clump, 0x5B0130, GPtr::<u8>::addr(GPtr::from_raw(&mut r as *mut f32).cast()) as u32);
     if x(slot).fcom(x(20.0)) == Cmp::Less {
         slot = 20.0;
     }

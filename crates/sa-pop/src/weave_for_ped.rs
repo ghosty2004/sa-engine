@@ -9,7 +9,7 @@ use sa_math::x87::X87;
 
 use crate::common::{g, rd};
 
-use sa_core::bindings::find_player_ped;
+use sa_world::bindings::find_player_ped;
 use sa_core::bindings::get_atan_of_xy as general_get_atan_of_xy;
 
 /// `CModelInfo::ms_modelInfoPtrs` (0xA9B0C8)

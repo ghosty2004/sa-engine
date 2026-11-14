@@ -321,7 +321,7 @@ pub fn render_roadsign_atomic(atomic: GPtr<u8>, cam: GPtr<u8>) -> GPtr<u8> {
     atomic
 }
 
-use sa_world::bindings::sprite_flush_sprite_buffer;
+use crate::bindings::sprite_flush_sprite_buffer;
 orig! {
     /// `CSprite::Set4Vertices2D(RwD3D9Vertex*, const CRect&, const CRGBA& ×4)` (0x70E1C0)
     #[allow(clippy::too_many_arguments)]
@@ -449,8 +449,8 @@ pub fn render_buffered_one_xlu_sprite(px: f32, py: f32, pz: f32, w: f32, h: f32,
     sprite_buffer_tail(idx);
 }
 
-use sa_core::bindings::find_player_coors;
-use sa_world::bindings::get_water_level_no_waves as water_level_no_waves;
+use sa_world::bindings::find_player_coors;
+use crate::bindings::get_water_level_no_waves as water_level_no_waves;
 orig! {
     /// `CGrassRenderer::DrawTriPlants(PPTriPlant*, int32 count, RpAtomic** models, RwMatrix*)` (0x5DAD00)
     fn grass_draw_tri_plants(plants: GPtr<u8>, n: i32, models: u32, m: u32) = cdecl 0x5DAD00 => unported;
@@ -560,7 +560,7 @@ pub fn set_up_water_fog(x0: i32, y0: i32, x1: i32, y1: i32) {
     let y0f = X87::from_i32(y0).to_f32();
     let x0f = X87::from_i32(x0).to_f32();
     let (mut level, mut big, mut small) = (0f32, 0f32, 0f32);
-    let found = water_level_no_waves(f32::from_bits(x0f.to_bits()), f32::from_bits(y0f.to_bits()), f32::from_bits(0), lp(&mut level), GPtr::<u8>::cast::<f32>(lp(&mut big)), GPtr::<u8>::cast::<f32>(lp(&mut small)));
+    let found = water_level_no_waves(f32::from_bits(x0f.to_bits()).to_bits(), f32::from_bits(y0f.to_bits()).to_bits(), f32::from_bits(0).to_bits(), GPtr::<u8>::cast::<f32>(lp(&mut level)), GPtr::<u8>::cast::<f32>(lp(&mut big)), GPtr::<u8>::cast::<f32>(lp(&mut small)));
     let h = if found == 0 {
         X87::zero()
     } else if jp(x(big), X87::zero(), 0x44) || jp(x(small), X87::zero(), 0x44) {
@@ -812,9 +812,9 @@ pub fn skidmarks_render() {
     rs(6, 1);
 }
 
-use sa_core::bindings::fx_play as fx_system_play;
-use sa_core::bindings::fx_stop as fx_system_stop;
-use sa_core::bindings::rw_matrix_multiply;
+use crate::bindings::fx_play as fx_system_play;
+use crate::bindings::fx_stop as fx_system_stop;
+use sa_rwcore::bindings::rw_matrix_multiply;
 use sa_core::bindings::rw_v3d_length;
 use crate::bindings::fx_rw_matrix_create;
 use crate::bindings::fx_rw_matrix_destroy;

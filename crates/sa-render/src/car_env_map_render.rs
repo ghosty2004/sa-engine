@@ -23,24 +23,24 @@ use sa_math::x87::X87;
 use crate::common::{ftol32, g, rd, wr, x, xi};
 
 use crate::bindings::env_atm_pool_new;
-use sa_core::bindings::set_indices;
-use sa_core::bindings::set_texture;
-use sa_core::bindings::set_vertex_declaration;
+use sa_rwcore::bindings::set_indices;
+use sa_rwcore::bindings::set_texture;
+use sa_rwcore::bindings::set_vertex_declaration;
 use sa_core::bindings::enable_clipping_if_needed;
-use sa_core::bindings::frame_get_ltm;
-use sa_core::bindings::get_render_state;
-use sa_core::bindings::set_streams;
+use sa_rwcore::bindings::frame_get_ltm;
+use sa_rwcore::bindings::get_render_state;
+use sa_rwcore::bindings::set_streams;
 use sa_core::bindings::vector_normalise;
-use sa_core::bindings::vertex_alpha_enable;
-use sa_stream::bindings::fx_get_fx_quality as get_fx_quality;
+use sa_rwcore::bindings::vertex_alpha_enable;
+use crate::bindings::fx_get_fx_quality as get_fx_quality;
 use sa_stream::bindings::get_atomic_id;
 use crate::bindings::instance_data_render;
 use crate::bindings::instance_data_render_lighting;
 use sa_core::bindings::enable_light;
 use sa_core::bindings::rw_d3d9_set_light as set_light;
-use sa_core::bindings::set_render_state;
-use sa_core::bindings::set_transform;
-use sa_core::bindings::set_tss;
+use sa_rwcore::bindings::set_render_state;
+use sa_rwcore::bindings::set_transform;
+use sa_rwcore::bindings::set_tss;
 orig! {
     /// `G->dOpenDevice.fpRenderStateSet(state, value)` (`[G] + 0x20`)
     fn rw_render_state_set(state: u32, value: u32) -> u32 = cdecl table 0xC97B24 0x20 => unported;
@@ -193,8 +193,8 @@ pub fn env_wave_uv(atomic: GPtr<u8>, env: GPtr<u8>, atm: GPtr<u8>, out: GPtr<u8>
         let mut backwards = false;
         if !x(d[0]).fmul_m(d[0]).fadd(x(d[1]).fmul_m(d[1])).fcom(zero).test_any(0x41) {
             let mut up = [rd::<f32>(ltm, 0x10), rd::<f32>(ltm, 0x14), rd::<f32>(ltm, 0x18)];
-            vector_normalise(ptr(&mut d));
-            vector_normalise(ptr(&mut up));
+            vector_normalise(GPtr::<u8>::cast::<[f32;3]>(ptr(&mut d)));
+            vector_normalise(GPtr::<u8>::cast::<[f32;3]>(ptr(&mut up)));
             let dot = x(up[2]).fmul_m(d[2]).fadd(x(d[0]).fmul_m(up[0])).fadd(x(up[1]).fmul_m(d[1]));
             backwards = !dot.fcom(zero).test_parity(5);
         }

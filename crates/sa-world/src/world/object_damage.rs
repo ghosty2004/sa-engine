@@ -21,10 +21,10 @@ use crate::bindings::matrix_copy_ctor;
 use crate::bindings::multiply3x3 as multiply3x3_mv;
 use crate::bindings::remove_from_moving_list;
 use crate::bindings::try_to_explode;
-use sa_core::bindings::find_player_ped;
-use sa_core::bindings::find_player_vehicle;
+use crate::bindings::find_player_ped;
+use crate::bindings::find_player_vehicle;
 use sa_core::bindings::fx_create_mat_from_vec as create_mat_from_vec;
-use sa_core::bindings::matrix_dtor;
+use crate::bindings::matrix_dtor;
 use crate::bindings::break_manager_add;
 use crate::bindings::create_fx_system_bp as create_fx_system_pos;
 use crate::bindings::vector_add_assign as vec_add_assign;
@@ -51,7 +51,7 @@ use crate::world::common::entity_pos as ent_pos;
 /// 23), move and turn speed zeroed, `broken` sets +0x140 bit 10, then `DeleteRwObject`.
 fn smash(e: GPtr<u8>, broken: bool) {
     wr::<u32>(e, 0x1C, rd::<u32>(e, 0x1C) & 0xFFFF_FF7E);
-    if get_is_static(e) == 0 {
+    if get_is_static(e) as u8 == 0 {
         remove_from_moving_list(e);
     }
     wr::<u32>(e, 0x1C, rd::<u32>(e, 0x1C) | 4);

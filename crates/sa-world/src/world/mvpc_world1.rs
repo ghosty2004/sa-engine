@@ -35,15 +35,17 @@ use crate::bindings::col_line_ctor;
 use crate::bindings::coll_test_line_of_sight;
 use crate::bindings::entity_get_bound_centre as get_bound_centre;
 use crate::bindings::entity_get_col_model as get_col_model;
-use sa_core::bindings::matrix_dtor;
+use crate::bindings::matrix_dtor;
 use sa_stream::bindings::col_model_ctor;
-use sa_stream::bindings::col_model_dtor;
-use sa_stream::bindings::collision_data_ctor as col_data_ctor;
-use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
+use crate::bindings::col_model_dtor;
+use crate::bindings::collision_data_ctor as col_data_ctor;
+use crate::bindings::placeable_allocate_matrix as allocate_matrix;
 use sa_stream::bindings::simple_transform_update_matrix;
 use crate::bindings::camera_to_ignore_this_object;
 use sa_core::bindings::matrix_set_translate;
-use sa_core::bindings::world_clear_scan_codes as clear_scan_codes;
+use crate::bindings::world_clear_scan_codes as clear_scan_codes;
+use crate::bindings::find_of_type_in_range_list as objects_of_type_in_range_list;
+use crate::bindings::process_col_models;
 orig! {
     /// `CCollision::ProcessVerticalLine(...)` (0x417BF0, AL)
     #[allow(clippy::too_many_arguments)]
@@ -77,14 +79,6 @@ orig! {
     /// `CWorld::FindObjectsKindaCollidingSectorList(...)` (0x565000)
     fn kinda_colliding_list_call(l: GPtr<u8>, c: GPtr<u8>, r: f32, two_d: u8, count: GPtr<u8>, max: i16, out: GPtr<u8>)
         = cdecl 0x565000 => find_objects_kinda_colliding_sector_list;
-    /// `CWorld::FindObjectsOfTypeInRangeSectorList(...)` (0x5635C0)
-    #[allow(clippy::too_many_arguments)]
-    fn objects_of_type_in_range_list(model: i32, l: GPtr<u8>, p: GPtr<u8>, r: f32, two_d: u8, count: GPtr<u8>, max: i16,
-        out: GPtr<u8>) = cdecl 0x5635C0 => unported;
-    /// `CCollision::ProcessColModels(...)` (0x4185C0, count of colpoints)
-    #[allow(clippy::too_many_arguments)]
-    fn process_col_models(m1: GPtr<u8>, c1: GPtr<u8>, m2: GPtr<u8>, c2: GPtr<u8>, cps: u32, lcps: u32, ld: u32,
-        b: u32) -> i32 = cdecl 0x4185C0 => unported;
 }
 
 /// `if (ms_nCurrentScanCode >= 0xFFFF) { ClearScanCodes(); ms_nCurrentScanCode = 1; } else ++` (the
@@ -494,7 +488,7 @@ pub fn test_sphere_against_sector_list(list: GPtr<u8>, x: f32, y: f32, z: f32, r
         }
         let m = ensure_matrix(e);
         let em = get_col_model(e);
-        if process_col_models(mat, model, m, em, TEMP_COL_PTS, 0, 0, 0) != 0 {
+        if process_col_models(mat, model, m, em, GPtr::from_addr(TEMP_COL_PTS as usize), GPtr::NULL, GPtr::NULL, 0) != 0 {
             found = e;
             break;
         }
@@ -803,7 +797,7 @@ pub fn find_lod_of_type_in_range(model: i32, pt: GPtr<u8>, radius: f32, two_d: u
         let mut x = x0;
         while x <= x1 {
             let list = g::<u8>((0xB99EB8u32 as i32).wrapping_add(y.wrapping_mul(30).wrapping_add(x).wrapping_mul(4)) as u32 as usize);
-            objects_of_type_in_range_list(model, list, pt, radius, two_d, count, max, out);
+            objects_of_type_in_range_list(model, list, pt, radius, two_d, count.cast::<i16>(), max, out.cast::<GPtr<u8>>());
             x += 1;
         }
         y += 1;

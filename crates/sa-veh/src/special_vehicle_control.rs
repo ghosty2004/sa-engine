@@ -3,7 +3,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 
 use crate::common::{g, rd, wr, x};
@@ -11,10 +11,7 @@ use crate::common::{g, rd, wr, x};
 use crate::bindings::automobile_process_control;
 use sa_world::bindings::ped_say;
 use crate::bindings::call_extend_suspension as monster_truck_extend_suspension;
-orig! {
-    /// `min(float, float)` (0x404330), ST0
-    fn min_f(a: f32, b: f32) -> f64 = cdecl 0x404330 => crate::train_control::min_native;
-}
+use sa_world::bindings::min_f;
 
 /// `CMonsterTruck::ProcessControl()` (0x6C8250): per wheel a ratio +0x7D4 below 1.0 becomes
 /// `(+0x878 - +0x838) / (+0x878 - +0x888)`, clamped to 0 when negative and the flag byte 0x8D33B0 is
@@ -77,7 +74,7 @@ pub fn trailer_process_control(this: GPtr<u8>) {
     } else if !x(leg).fcom(x(1.0)).test_parity(0x05) {
         let v = if !x(leg).fcom(x(f32::from_bits(0x3DCC_CCCD))).test_any(0x41) {
             let s = x(ts).fmul_m(f32::from_bits(0x3B03_126F)).fadd_m(leg).to_f32();
-            X87::from_f64_exact(min_f(1.0, s))
+            X87::from_f64_exact(min_f(1.0f32.to_bits(), s.to_bits()).to_f64())
         } else {
             x(ts).fmul_m(f32::from_bits(0x3A03_126F)).fadd_m(leg)
         };

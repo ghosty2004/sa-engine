@@ -133,7 +133,7 @@ pub use sa_core::bindings::is_foreground_app;
 pub use sa_core::bindings::is_video_mode_exclusive;
 pub use sa_core::bindings::tm_get_simplest_active_task as get_simplest_active_task;
 pub use crate::bindings::call_controller_state_check_for_input;
-pub use sa_core::bindings::pad_clear as call_pad_clear;
+pub use crate::bindings::pad_clear as call_pad_clear;
 orig! {
     /// `CControllerState::Clear` (0x53EF80)
     pub fn call_controller_state_clear(s: GPtr<u8>) = thiscall 0x53EF80 => controller_state_clear;

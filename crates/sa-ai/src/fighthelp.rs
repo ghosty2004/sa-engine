@@ -72,33 +72,33 @@ use sa_core::field::ptr_of as buf;
 
 use sa_world::bindings::anim_blend_animation;
 use sa_world::bindings::anim_get_anim_block_name;
-use sa_core::bindings::anim_set_delete_callback;
-use sa_core::bindings::assoc_set_finish_callback as anim_set_finish_callback;
+use sa_anim::bindings::anim_set_delete_callback;
+use sa_anim::bindings::assoc_set_finish_callback as anim_set_finish_callback;
 use sa_core::bindings::clump_get_association as clump_get_association_id;
 use crate::bindings::fight_61c9b0;
 use sa_world::bindings::ped_set_move_state;
-use sa_core::bindings::find_player_ped as world_find_player_ped;
+use sa_world::bindings::find_player_ped as world_find_player_ped;
 use sa_core::bindings::get_weapon_info as weapon_info_get;
-use sa_core::bindings::matrix_dtor;
+use sa_world::bindings::matrix_dtor;
 use sa_core::bindings::matrix_set_translate_only;
 use sa_core::bindings::ped_is_alive;
 use sa_core::bindings::streaming_request_model;
-use sa_core::bindings::anim_add_block_ref;
+use sa_anim::bindings::anim_add_block_ref;
 use sa_stream::bindings::anim_remove_block_ref;
 use sa_stream::bindings::ped_is_player;
-use sa_stream::bindings::placeable_allocate_matrix;
+use sa_world::bindings::placeable_allocate_matrix;
 use sa_stream::bindings::simple_transform_update_matrix;
 use sa_world::bindings::entity_get_bound_centre;
-use sa_world::bindings::event_group_add;
-use sa_world::bindings::event_sound_quiet_dtor;
+use crate::bindings::event_group_add;
+use crate::bindings::event_sound_quiet_dtor;
 use sa_world::bindings::find_objects_in_range as world_find_objects_in_range;
 use sa_world::bindings::get_event_global_group;
 use sa_world::bindings::intel_get_task_duck;
 use sa_world::bindings::matrix_copy_ctor;
 use sa_world::bindings::player_get_wanted_level;
 use sa_world::bindings::stats_get_fat_and_muscle_modifier;
-use sa_core::bindings::assoc_set_current_time as anim_set_current_time;
-use sa_core::bindings::get_animation_block as anim_get_animation_block;
+use sa_anim::bindings::assoc_set_current_time as anim_set_current_time;
+use sa_anim::bindings::get_animation_block as anim_get_animation_block;
 use sa_stream::bindings::animate_ped_col_model_skinned_world as ped_mi_animate_col_model_skinned_world;
 use sa_world::bindings::entity_get_col_model;
 use sa_world::bindings::event_sound_quiet_ctor;
@@ -138,7 +138,7 @@ pub fn fight_start_anim(this: GPtr<u8>, ped: GPtr<u8>, mv: i32) {
     }
     let a = rd::<GPtr<u8>>(this, 0x1C);
     if !a.is_null() {
-        anim_set_delete_callback(a, DEFAULT_ANIM_CB, GPtr::NULL);
+        anim_set_delete_callback(a, DEFAULT_ANIM_CB, GPtr::<u8>::addr(GPtr::NULL) as u32);
         wr::<u32>(this, 0x1C, 0);
     }
     let cmd = rd::<i8>(this, 0x26);
@@ -159,7 +159,7 @@ pub fn fight_start_anim(this: GPtr<u8>, ped: GPtr<u8>, mv: i32) {
             }
             let a = anim_blend_animation(GPtr::from_addr(clump() as usize), combo_group(rd::<i8>(this, 0x24)), 0xDE, f32::from_bits(0x4100_0000));
             wr::<GPtr<u8>>(this, 0x1C, a);
-            anim_set_finish_callback(a, FIGHT_ANIM_CB, GPtr::from_addr((this.addr() as u32) as usize));
+            anim_set_finish_callback(a, FIGHT_ANIM_CB, GPtr::<u8>::addr(GPtr::from_addr((this.addr() as u32) as usize)) as u32);
             start_anim_end(this);
         }
         3..=10 => {
@@ -194,7 +194,7 @@ pub fn fight_start_anim(this: GPtr<u8>, ped: GPtr<u8>, mv: i32) {
             let a = anim_blend_animation(GPtr::from_addr(clump() as usize), 0, id, f32::from_bits(0x4100_0000));
             wr::<GPtr<u8>>(this, 0x1C, a);
             if rd::<u8>(this, 0x26) == 3 {
-                anim_set_delete_callback(rd::<GPtr<u8>>(this, 0x1C), FIGHT_ANIM_CB, GPtr::from_addr((this.addr() as u32) as usize));
+                anim_set_delete_callback(rd::<GPtr<u8>>(this, 0x1C), FIGHT_ANIM_CB, GPtr::<u8>::addr(GPtr::from_addr((this.addr() as u32) as usize)) as u32);
                 let a = rd::<GPtr<u8>>(this, 0x1C);
                 wr::<u8>(a, 0x2E, rd::<u8>(a, 0x2E) | 4);
             } else {
@@ -204,7 +204,7 @@ pub fn fight_start_anim(this: GPtr<u8>, ped: GPtr<u8>, mv: i32) {
                 wr::<u8>(a, 0x2E, rd::<u8>(a, 0x2E) & 0xDF);
                 let a = rd::<GPtr<u8>>(this, 0x1C);
                 wr::<u8>(a, 0x2E, rd::<u8>(a, 0x2E) | 8);
-                anim_set_finish_callback(rd::<GPtr<u8>>(this, 0x1C), FIGHT_ANIM_CB, GPtr::from_addr((this.addr() as u32) as usize));
+                anim_set_finish_callback(rd::<GPtr<u8>>(this, 0x1C), FIGHT_ANIM_CB, GPtr::<u8>::addr(GPtr::from_addr((this.addr() as u32) as usize)) as u32);
             }
             start_anim_end(this);
         }
@@ -217,7 +217,7 @@ pub fn fight_start_anim(this: GPtr<u8>, ped: GPtr<u8>, mv: i32) {
             let id = (i32::from(m as i8) + 0xD6) as u32;
             let a = anim_blend_animation(GPtr::from_addr(clump() as usize), group, id, f32::from_bits(0x4100_0000));
             wr::<GPtr<u8>>(this, 0x1C, a);
-            anim_set_finish_callback(a, FIGHT_ANIM_CB, GPtr::from_addr((this.addr() as u32) as usize));
+            anim_set_finish_callback(a, FIGHT_ANIM_CB, GPtr::<u8>::addr(GPtr::from_addr((this.addr() as u32) as usize)) as u32);
             if rd::<u8>(this, 0x25) == 3 {
                 let a = rd::<GPtr<u8>>(this, 0x1C);
                 // fcomp [0.0]; test ah, 0x44; jnp: skipped only when the time equals 0
@@ -312,7 +312,7 @@ fn start_anim_idle(this: GPtr<u8>, ped: GPtr<u8>) {
         let clump = rd::<u32>(ped, 0x18);
         let a = anim_blend_animation(GPtr::from_addr(clump as usize), combo_group(set), 0xDF, f32::from_bits(0x4100_0000));
         wr::<GPtr<u8>>(this, 0x20, a);
-        anim_set_delete_callback(a, FIGHT_ANIM_CB, GPtr::from_addr((this.addr() as u32) as usize));
+        anim_set_delete_callback(a, FIGHT_ANIM_CB, GPtr::<u8>::addr(GPtr::from_addr((this.addr() as u32) as usize)) as u32);
     } else if !x(rd::<f32>(idle, 0x18)).fcom(x(c(0x858624))).test_parity(5)
         && !x(rd::<f32>(idle, 0x1C)).fcom(x(c(0x858B50))).test_parity(0x41)
     {
@@ -550,7 +550,7 @@ fn strike_entity(
             r = f32_of(x(radius(k)).fmul_m(c(0x858B8C)).fadd_m(r));
         }
         rd::<u8>(p, 0x1C) & 1 != 0
-            || ped_is_alive(p) == 0
+            || ped_is_alive(p) as u8 == 0
             || (rd::<u32>(p, 0x46C) & 0x100 != 0 && {
                 let veh = rd::<GPtr<u8>>(p, 0x58C);
                 !veh.is_null() && rd::<i32>(veh, 0x590) == 9
@@ -747,7 +747,7 @@ pub fn fight_choose_attack_player(this: GPtr<u8>, ped: GPtr<u8>) -> u32 {
         let mut best_abs = 1000.0f32;
         for i in 0..16isize {
             let q = rd::<GPtr<u8>>(list, i * 4);
-            if q.is_null() || ped_is_alive(q) == 0 {
+            if q.is_null() || ped_is_alive(q) as u8 == 0 {
                 continue;
             }
             let pp = ent_pos(ped);

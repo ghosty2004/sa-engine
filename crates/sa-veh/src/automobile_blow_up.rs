@@ -9,11 +9,11 @@ use sa_math::x87::X87;
 use crate::common::{f32_of, g, rd, wr, x, xi};
 
 use crate::bindings::car_set_panel_damage as set_bumper_damage;
-use sa_core::bindings::find_player_ped;
-use sa_core::bindings::find_player_vehicle;
-use sa_core::bindings::stats_increment_stat;
+use sa_world::bindings::find_player_ped;
+use sa_world::bindings::find_player_vehicle;
+use sa_world::bindings::stats_increment_stat;
 use sa_pop::bindings::darkel_register_car_blown_up;
-use sa_core::bindings::frame_for_all_objects;
+use sa_rwcore::bindings::frame_for_all_objects;
 use sa_world::bindings::cam_shake;
 use sa_world::bindings::entity_get_col_model;
 use sa_world::bindings::set_door_damage;
@@ -87,7 +87,7 @@ pub fn automobile_blow_up_car(this: GPtr<u8>, damager: GPtr<u8>, hide: u32) {
         }
         spawn_flying_component(this, 5, 1);
         let mut atomic = [0u32; 1];
-        frame_for_all_objects(rd::<GPtr<u8>>(this, 0x65C), 0x6A_0750, GPtr::from_raw(&mut atomic as *mut [u32; 1]).cast());
+        frame_for_all_objects(rd::<GPtr<u8>>(this, 0x65C), 0x6A_0750, GPtr::<u8>::addr(GPtr::from_raw(&mut atomic as *mut [u32; 1]).cast()) as u32);
         if atomic[0] != 0 {
             wr::<u8>(GPtr::from_addr(atomic[0] as usize), 2, 0);
         }
@@ -147,7 +147,7 @@ pub fn automobile_blow_up_car(this: GPtr<u8>, damager: GPtr<u8>, hide: u32) {
     let col = entity_get_col_model(this);
     pz = f32_of(x(fz).fadd_m(pz).fsub(x(u3).fadd_m(0.5).fmul_m(rd::<f32>(col, 0x14))));
     let ty = if rc { 5 } else { 4 };
-    add_explosion(this, damager, ty, f32::from_bits(px.to_bits()), f32::from_bits(py.to_bits()), f32::from_bits(pz.to_bits()), 0, 1, f32::from_bits(0xBF80_0000), hide);
+    add_explosion(this, damager, ty as i32, f32::from_bits(px.to_bits()), f32::from_bits(py.to_bits()), f32::from_bits(pz.to_bits()), 0, 1, f32::from_bits(0xBF80_0000), hide as u8);
 }
 
 /// This module's registrations.

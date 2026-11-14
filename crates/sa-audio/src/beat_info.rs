@@ -38,11 +38,10 @@ use crate::bindings::data_stream_initialise;
 use crate::bindings::stream_get_active_track_id as stream_thread_get_active_track_id;
 use crate::bindings::stream_get_track_play_time as stream_thread_get_track_play_time;
 use sa_core::bindings::crt_free_8214bd as operator_delete;
+use sa_core::bindings::crt_new as operator_new;
 orig! {
     /// `CAEMP3TrackLoader::GetTrackInfo(uint32)` (0x4E0A70)
     fn track_loader_get_track_info(this: u32, track: u32) -> u32 = thiscall 0x4E0A70 => unported;
-    /// CRT `operator new` (0x82119A)
-    fn operator_new(size: u32) -> u32 = cdecl 0x82119A => unported;
 }
 
 fn zero_window(this: u32) {
@@ -151,7 +150,7 @@ pub fn track_loader_get_track_info_port(this: u32, track: u32) -> u32 {
     } else {
         (strlen(cstr(name)) + 0x15) as u32
     };
-    let path = operator_new(length);
+    let path = GPtr::<u8>::addr(operator_new(length)) as u32;
     if dvd {
         strcpy(cstr(path), cstr(r32(this + 0x18)));
         strcat(cstr(path), cstr(STREAMS_DIR));
@@ -161,8 +160,8 @@ pub fn track_loader_get_track_info_port(this: u32, track: u32) -> u32 {
     // the original re-reads the pack id from the lookup here
     let name = r32(this + 0x10) + 16 * u32::from(r8(r32(this + 0xC) + 12 * track));
     strcat(cstr(path), cstr(name));
-    let info = operator_new(TRACK_INFO_SIZE);
-    let mem = operator_new(0x28);
+    let info = GPtr::<u8>::addr(operator_new(TRACK_INFO_SIZE)) as u32;
+    let mem = GPtr::<u8>::addr(operator_new(0x28)) as u32;
     let stream = if mem != 0 {
         let lookup = r32(this + 0xC) + 12 * track;
         GPtr::<u8>::addr(data_stream_ctor(GPtr::from_addr(mem as usize), track as i32, GPtr::from_addr(path as usize), r32(lookup + 4), r32(lookup + 8), 1)) as u32

@@ -10,12 +10,12 @@ use sa_math::x87::X87;
 use crate::common::{g, rd, wr};
 
 use crate::bindings::atomic_default_render;
-use sa_core::bindings::frame_get_ltm;
+use sa_rwcore::bindings::frame_get_ltm;
 use sa_core::bindings::get_anim_hierarchy_from_skin_clump;
 use sa_core::bindings::get_weapon_info;
 use sa_core::bindings::rp_hanim_hierarchy_get_matrix_array;
 use sa_core::bindings::rp_hanim_id_get_index;
-use sa_core::bindings::rw_frame_update_objects;
+use sa_rwcore::bindings::rw_frame_update_objects;
 use sa_world::bindings::ped_get_weapon_skill;
 use sa_world::bindings::ped_reset_gun_flash_alpha;
 use sa_world::bindings::rp_clump_render;
@@ -87,7 +87,7 @@ pub fn render_weapon_peds_for_pc() {
             rw_frame_update_objects(frame);
             rp_clump_render(rd::<GPtr<u8>>(ped, 0x4F4));
             let ty = active_weapon_type(ped);
-            let info = get_weapon_info(ty as i32, (ped_get_weapon_skill(ped) as i32) as u8);
+            let info = get_weapon_info(ty as i32, ((ped_get_weapon_skill(ped) as u32) as i32) as u8);
             if (rd::<u32>(info, 0x18) >> 11) & 1 != 0 {
                 let idx = rp_hanim_id_get_index(hier, 0x22);
                 let src = rp_hanim_hierarchy_get_matrix_array(hier).byte_add((idx << 6) as isize);

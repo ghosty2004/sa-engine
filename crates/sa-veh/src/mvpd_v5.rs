@@ -23,22 +23,18 @@ use sa_world::bindings::event_damage_ctor;
 use sa_world::bindings::event_damage_dtor;
 use sa_world::bindings::event_group_add;
 use sa_world::bindings::kob_ctor;
-use sa_world::bindings::kob_dtor;
+use crate::bindings::kob_dtor;
 use sa_world::bindings::player_handle_breath;
 use sa_world::bindings::surface_is_water;
 use sa_world::bindings::vec_mul_assign as vector_mul_assign;
 use sa_world::bindings::vector_div;
+use sa_core::bindings::vector_normalise as normalise;
+use sa_world::bindings::physical_apply_move_force_5429f0 as apply_move_force;
+use sa_world::bindings::physical_apply_turn_force as apply_turn_force;
+use sa_world::bindings::physical_get_speed as get_speed;
 orig! {
     /// `CVehicle::BlowUpCar(CEntity*, bool)` (virtual, vtable +0xA4)
     fn blow_up_car_virtual(v: GPtr<u8>, damager: GPtr<u8>, in_cutscene: u32) = thiscall vslot 0xA4 => unported;
-    /// `CPhysical::ApplyMoveForce(CVector)` (0x5429F0)
-    fn apply_move_force(p: GPtr<u8>, force: CVector) = thiscall 0x5429F0 => sa_world::physical::forces::apply_move_force;
-    /// `CPhysical::ApplyTurnForce(CVector force, CVector point)` (0x542A50)
-    fn apply_turn_force(p: GPtr<u8>, force: CVector, point: CVector) = thiscall 0x542A50 => sa_world::physical::forces::apply_turn_force;
-    /// `CPhysical::GetSpeed(CVector point)` (0x542CE0, hidden result pointer)
-    fn get_speed(p: GPtr<u8>, out: GPtr<CVector>, point: CVector) -> GPtr<CVector> = thiscall 0x542CE0 => sa_world::physical::forces::get_speed;
-    /// `CVector::Normalise()` (0x59C910)
-    fn normalise(v: GPtr<CVector>) = thiscall 0x59C910 => sa_world::collision::data::normalise_port;
 }
 
 const TIME_STEP: usize = 0xB7_CB5C;
@@ -66,11 +62,11 @@ fn occupant(this: GPtr<u8>, ped: GPtr<u8>, is_driver: bool) {
             f32_of(x(rd::<f32>(this, 0x48)).fchs()),
             f32_of(x(rd::<f32>(this, 0x4C)).fchs()),
         );
-        normalise(GPtr::from_raw(&mut v));
+        normalise(GPtr::<sa_math::vector::CVector>::cast::<[f32;3]>(GPtr::from_raw(&mut v)));
         let f = f32_of(X87::from_f64_exact(vector_magnitude(GPtr::<u8>::cast::<u32>(this.byte_add(0x44)))).fmul_m(rd::<f32>(this, 0x8C)));
         let mut ev = [0u32; 0x20];
         let evp = GPtr::from_raw(ev.as_mut_ptr()).cast::<u8>();
-        kob_ctor(evp, this, this.byte_add(0x44), GPtr::from_raw(&mut v).cast(), f.to_bits(), 0, 0x35, 0, 0, GPtr::NULL, 0, 0);
+        kob_ctor(evp, this, this.byte_add(0x44), GPtr::from_raw(&mut v).cast(), f.to_bits(), f32::from_bits(0), 0x35, 0, 0, GPtr::NULL, 0, 0);
         event_group_add(group(ped), evp, 0);
         if ped_is_player(ped) != 0 {
             player_handle_breath(ped, 1, 0x3F80_0000);
@@ -87,7 +83,7 @@ fn occupant(this: GPtr<u8>, ped: GPtr<u8>, is_driver: bool) {
     }
     let mut calc = [0u32; 8];
     let cp = GPtr::from_raw(calc.as_mut_ptr()).cast::<u8>();
-    damage_calc_ctor(cp, this, f32::from_bits(g::<u32>(TIME_STEP).read()), 0x35, 3, 0);
+    damage_calc_ctor(cp, this.addr() as u32, f32::from_bits(g::<u32>(TIME_STEP).read()).to_bits(), 0x35, 3, 0);
     let mut ev = [0u32; 0x20];
     let evp = GPtr::from_raw(ev.as_mut_ptr()).cast::<u8>();
     event_damage_ctor(evp, this, g::<u32>(0xB7_CB84).read(), 0x35, 3, 0, 0, 1);
@@ -284,15 +280,15 @@ pub fn automobile_process_buoyancy(this: GPtr<u8>) {
 use crate::bindings::do_drive_by_shootings;
 use crate::bindings::do_soft_ground_resistance;
 use crate::bindings::process_wheel_rotation;
-use sa_core::bindings::find_player_ped;
-use sa_core::bindings::get_pad;
-use sa_core::bindings::prune_references;
+use sa_world::bindings::find_player_ped;
+use sa_input::bindings::get_pad;
+use sa_world::bindings::prune_references;
 use sa_pop::bindings::car_gun_just_down;
 use sa_world::bindings::max_f;
 use sa_world::bindings::min_f;
 use sa_world::bindings::stats_get_fat_and_muscle_modifier as get_fat_and_muscle_modifier;
 use sa_world::bindings::vector_add;
-use sa_core::bindings::vector_magnitude_sqr;
+use sa_world::bindings::vector_magnitude_sqr;
 use sa_world::bindings::vector_scale;
 use crate::bindings::activate_bomb;
 use crate::bindings::calculate_gear_for_simple_car;
@@ -407,7 +403,7 @@ pub fn bike_process_ai(this: GPtr<u8>, flags: GPtr<u32>) -> u8 {
         }
         4 => {
             wr::<u32>(this, 0x4A0, 0);
-            let still = !X87::from_f64_exact(vector_magnitude_sqr(GPtr::<u8>::cast::<f32>(this.byte_add(0x44)))).fcom(x(0.01)).test_parity(0x05);
+            let still = !X87::from_f64_exact(vector_magnitude_sqr(this.byte_add(0x44)).to_f64()).fcom(x(0.01)).test_parity(0x05);
             let hb = if still || rd::<u8>(this, 0x614) & 0x10 != 0 { rd::<u8>(this, 0x428) | 0x20 } else { rd::<u8>(this, 0x428) & 0xDF };
             wr::<u8>(this, 0x428, hb);
             wr::<u32>(this, 0x49C, 0);
@@ -427,7 +423,7 @@ pub fn bike_process_ai(this: GPtr<u8>, flags: GPtr<u32>) -> u8 {
             1
         }
         9 => {
-            if !X87::from_f64_exact(vector_magnitude_sqr(GPtr::<u8>::cast::<f32>(this.byte_add(0x44)))).fcom(x(0.01)).test_parity(0x05) {
+            if !X87::from_f64_exact(vector_magnitude_sqr(this.byte_add(0x44)).to_f64()).fcom(x(0.01)).test_parity(0x05) {
                 wr::<u8>(this, 0x428, rd::<u8>(this, 0x428) | 0x20);
                 wr::<u32>(this, 0x4A0, 0x3F80_0000);
             } else {
@@ -482,10 +478,10 @@ fn player_ai(this: GPtr<u8>, flags: GPtr<u32>) {
     if !(skip_check && rd::<u8>(this, 0x804) != 0) {
         let tenth = f32::from_bits(0x3DCC_CCCD);
         let m = f32_of(X87::from_f64_exact(vector_magnitude(GPtr::<u8>::cast::<u32>(this.byte_add(0x44)))));
-        let mn = f32_of(X87::from_f64_exact(min_f(tenth, m)));
+        let mn = f32_of(X87::from_f64_exact(min_f(tenth.to_bits(), m.to_bits()).to_f64()));
         let ctl = rd::<f32>(this, ctl_off);
         let r = f32_of(x(mn).fdiv_m(tenth));
-        let g2 = X87::from_f64_exact(max_f(r, ctl)).fadd_m(rd::<f32>(this, ctl_off));
+        let g2 = X87::from_f64_exact(max_f(r, ctl).to_f64()).fadd_m(rd::<f32>(this, ctl_off));
         let a = x(rd::<f32>(bh, torque_k)).fmul_m(rd::<f32>(this, 0x90)).fmul_m(rd::<f32>(this, 0x650)).fmul_m(mn);
         let k = f32_of(g2.fmul(a).fmul_m(0.5));
         let torque = f32_of(X87::from_f64_exact(get_fat_and_muscle_modifier(11)).fmul_m(k));

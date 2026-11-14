@@ -27,11 +27,11 @@ use crate::bindings::task_is_go_to_task;
 use crate::bindings::use_attractor_ctor;
 use crate::bindings::vehicle_is_driver;
 use crate::bindings::walk_round_object_ctor;
-use sa_core::bindings::find_player_ped;
-use sa_core::bindings::find_player_vehicle;
+use sa_world::bindings::find_player_ped;
+use sa_world::bindings::find_player_vehicle;
 use sa_core::bindings::general_random_int_in_range;
-use sa_core::bindings::stats_increment_stat;
-use sa_core::bindings::tm_get_task_secondary;
+use sa_world::bindings::stats_increment_stat;
+use crate::bindings::tm_get_task_secondary;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::attractor_manager_has_empty_slot;
 use sa_world::bindings::darkel_register_kill_by_player;
@@ -41,14 +41,14 @@ use sa_world::bindings::get_ped_attractor_manager;
 use sa_world::bindings::ik_look_at;
 use sa_world::bindings::intel_find_task_by_type;
 use sa_world::bindings::intel_get_task_duck;
-use sa_world::bindings::interesting_events_add;
+use crate::bindings::interesting_events_add;
 use sa_world::bindings::kill_ped_on_foot_ctor;
 use sa_world::bindings::ped_restart_non_partial_anims;
 use sa_world::bindings::ped_say;
 use sa_world::bindings::seek_entity_standard_ctor;
 use sa_world::bindings::smart_flee_entity_ctor;
-use sa_world::bindings::task_simple_ctor;
-use sa_world::bindings::tm_set_task;
+use crate::bindings::task_simple_ctor;
+use crate::bindings::tm_set_task;
 use sa_world::bindings::wander_get_wander_task_by_ped_type;
 use sa_world::bindings::weapon_is_type_melee;
 use crate::bindings::gang_join_respond_ctor;
@@ -271,7 +271,7 @@ pub fn handler_compute_sexy_vehicle_response(this: GPtr<u8>, e: GPtr<u8>, _activ
     }
     interesting_events_add(GPtr::from_addr(INTERESTING_EVENTS), 8, veh);
     set(this, new_task(0x20, |t| stand_still_ctor(t, 5000, 0, 0, f32::from_bits(0x4100_0000))));
-    ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), GPtr::from_addr(S_SEXY_VEHICLE as usize), ped(this), veh, 5000, -1i32 as u32, GPtr::NULL, 1, 0x3E80_0000, 500, 3, 0);
+    ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), GPtr::from_addr(S_SEXY_VEHICLE as usize), ped(this), veh, 5000, (-1i32 as u32) as i32, GPtr::NULL, 1, f32::from_bits(0x3E80_0000), 500, 3, 0);
 }
 
 /// `CEventHandler::ComputePedToFleeResponse` (0x4B9B50): with the ped (+0xC): `CPed::Say(0x45, 0, 1.0, 0, 0, 0)`,
@@ -500,7 +500,7 @@ pub fn handler_compute_water_cannon_response(this: GPtr<u8>, e: GPtr<u8>, _activ
     let side = geometry_compute_ped_hit_side(ped(this), dir);
     set(this, new_task(0x18, |t| fall_and_get_up_ctor2(t, side as u32, 0)));
     let ts = x(g::<f32>(TIME_STEP).read());
-    physical_apply_move_force(ped(this), 0.0, 0.0, f32_of(ts.fadd(ts)));
+    physical_apply_move_force(ped(this), sa_math::vector::CVector::new(0.0, 0.0, f32_of(ts.fadd(ts))));
     let k = g::<f32>(K_CANNON_SPEED).read();
     let half = g::<f32>(K_HALF).read();
     for (o, d) in [(0x44isize, 0isize), (0x48, 4)] {
@@ -795,7 +795,7 @@ pub fn handler_compute_ped_to_chase_response(this: GPtr<u8>, e: GPtr<u8>, _activ
     if other.is_null() {
         return;
     }
-    set(this, new_task(0x4C, |t| seek_entity_standard_ctor(t, other, 30000, 1000, gu(SEEK_A), gu(SEEK_B), gu(SEEK_C), 1, 1)));
+    set(this, new_task(0x4C, |t| seek_entity_standard_ctor(t, other, 30000, 1000, f32::from_bits(gu(SEEK_A)), gu(SEEK_B), gu(SEEK_C), 1, 1)));
 }
 
 /// Every registration of this module.

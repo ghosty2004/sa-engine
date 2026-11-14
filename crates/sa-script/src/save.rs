@@ -33,8 +33,8 @@ use sa_core::field::g;
 
 use crate::bindings::script_attach_anim_group_to_char_model;
 use sa_core::bindings::scripts_init as the_scripts_init;
-use sa_core::bindings::world_add;
-use sa_core::bindings::world_remove;
+use sa_world::bindings::world_add;
+use sa_world::bindings::world_remove;
 use sa_core::bindings::load_data_from_work_buffer as load_data;
 use sa_core::bindings::save_data_to_work_buffer as save_data;
 use sa_world::bindings::building_replace_with_new_model;

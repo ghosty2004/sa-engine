@@ -23,12 +23,12 @@ const OBJECT_POOL: usize = 0xB7449C;
 const MISSION_LOCALS: usize = 0xA48960;
 
 use crate::bindings::brain_task_store_set_task;
-use sa_core::bindings::task_new;
+use sa_ai::bindings::task_new;
 use crate::bindings::brains_start_new_streamed_script_brain as start_new_streamed_script_brain;
 use crate::bindings::brains_start_or_request as start_or_request_call;
 use crate::bindings::start_new_streamed_script;
 use sa_core::bindings::streaming_request_model as request_model;
-use sa_world::bindings::remove_from_waiting_for_script_brain_array;
+use crate::bindings::remove_from_waiting_for_script_brain_array;
 orig! {
     /// `CTheScripts::AddToWaitingForScriptBrainArray(CEntity*, int16 brainIndex)` (0x46AB60, cdecl)
     fn add_to_waiting_for_script_brain_array(e: GPtr<u8>, index: u32) = cdecl 0x46AB60 => unported;

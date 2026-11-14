@@ -11,9 +11,8 @@ use sa_math::x87::X87;
 use crate::common::{k, rd, wr};
 
 use sa_core::bindings::crt_free_8214bd as operator_delete;
+use sa_core::bindings::crt_new as operator_new;
 orig! {
-    /// CRT `operator new` (0x82119A)
-    fn operator_new(size: u32) -> GPtr<u32> = cdecl 0x82119A => unported;
     /// `IUnknown::Release` (COM vtable slot 2, stdcall)
     fn com_release(obj: GPtr<u8>) -> u32 = stdcall vslot 0x8 => unported;
 }
@@ -83,7 +82,7 @@ pub fn d3d_index_data_buffer_resize(this: GPtr<u8>, size: i32) {
     if size == rd::<i32>(this, 8) {
         return;
     }
-    let arr = operator_new((size as u32).wrapping_mul(4));
+    let arr = GPtr::<u8>::cast::<u32>(operator_new((size as u32).wrapping_mul(4)));
     let mut i = 0i32;
     while i < rd::<i32>(this, 0x10) && i < size {
         arr.wrapping_index(i).write(rd::<GPtr<u32>>(this, 0x14).wrapping_index(i).read());

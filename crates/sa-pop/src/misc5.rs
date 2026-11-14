@@ -20,17 +20,15 @@ use sa_world::bindings::set_blip_sprite;
 use sa_core::bindings::text_get;
 use sa_stream::bindings::get_zone_info;
 use sa_world::bindings::add_message_q;
-use sa_world::bindings::can_player_start_a_gang_war_here;
+use crate::bindings::can_player_start_a_gang_war_here;
 use sa_world::bindings::group_find_distance_to_nearest_member as ped_group_find_distance_to_nearest_member;
 use sa_world::bindings::set_coord_blip;
+use sa_world::bindings::add_to_previous_brief_array;
 orig! {
     /// `CTheZones::Calc2DDistanceBetween2Zones(CZone*, CZone*)` (0x5725B0, ST0)
     fn calc_2d_distance_between_2_zones(a: GPtr<u8>, b: GPtr<u8>) -> f64 = cdecl 0x5725B0 => unported;
     /// `CGangWars::PickZoneToAttack()` (0x443B00)
     fn pick_zone_to_attack_o() -> u8 = cdecl 0x443B00 => crate::misc5::pick_zone_to_attack;
-    /// `CMessages::AddToPreviousBriefArray(const char*, int32 x6, const char*)` (0x69DD50)
-    #[allow(clippy::too_many_arguments)]
-    fn add_to_previous_brief_array(text: u32, a: i32, b: i32, c: i32, d: i32, e: i32, f: i32, s: u32) = cdecl 0x69DD50 => unported;
     /// `CGangWars::ClearTheStreets()` (0x4444B0)
     fn clear_the_streets() = cdecl 0x4444B0 => crate::misc2::clear_the_streets;
 }
@@ -232,7 +230,7 @@ pub fn start_defensive_gang_war() {
         f32::from_bits(g::<u32>(POINT_OF_ATTACK).read()),
         f32::from_bits(g::<u32>(POINT_OF_ATTACK + 4).read()),
         f32::from_bits(g::<u32>(POINT_OF_ATTACK + 8).read()),
-        colour,
+        colour as i32,
         2,
         GPtr::from_addr(0x8598F4),
     );
@@ -320,7 +318,7 @@ pub fn start_offensive_gang_war() {
     let text = GPtr::<u8>::addr(text_get(gp(THE_TEXT), GPtr::from_addr(0x859920))) as u32;
     add_message_q(GPtr::from_addr(text as usize), 0x1194, 1, 1);
     let text = GPtr::<u8>::addr(text_get(gp(THE_TEXT), GPtr::from_addr(0x859920))) as u32;
-    add_to_previous_brief_array(text, -1, -1, -1, -1, -1, -1, 0);
+    add_to_previous_brief_array(GPtr::from_addr(text as usize), -1, -1, -1, -1, -1, -1, GPtr::NULL);
     g::<u32>(0x96AB60).write(g::<u32>(TIME_MS).read());
     g::<i32>(STATE).write(1);
     clear_the_streets();
@@ -349,8 +347,8 @@ pub fn start_offensive_gang_war() {
     g::<i32>(0x96AB28).write(0);
 }
 
-use sa_world::bindings::are_nodes_loaded_for_area;
-use sa_world::bindings::get_position as path_node_get_position;
+use crate::bindings::are_nodes_loaded_for_area;
+use crate::bindings::get_position as path_node_get_position;
 use crate::bindings::pick_gang_car;
 use sa_core::bindings::matrix_set_rotate_z_only;
 use sa_world::bindings::automobile_place_on_road_properly;
@@ -364,22 +362,14 @@ use sa_core::bindings::streaming_request_model as request_model;
 use sa_world::bindings::create_car_for_script;
 use sa_world::bindings::find_ground_z_for_3d_coord;
 use sa_world::bindings::set_entity_blip;
+use sa_stream::bindings::generate_new_one as generate_new_pickup;
+use crate::bindings::find_node_closest_to_coors;
+use crate::bindings::find_nth_node_closest_to_coors;
 orig! {
     /// `CGangWars::PedStreamedInForThisGang(int32)` (0x4439D0)
     fn ped_streamed_in_for_this_gang(gang: i32) -> u8 = cdecl 0x4439D0 => crate::misc2::ped_streamed_in_for_this_gang;
     /// `CGangWars::PickStreamedInPedForThisGang(int32, int32*)` (0x443A20)
     fn pick_streamed_in_ped_for_this_gang(gang: i32, out: GPtr<i32>) -> u8 = cdecl 0x443A20 => crate::misc2::pick_streamed_in_ped_for_this_gang;
-    /// `CPathFind::FindNodeClosestToCoors(CVector, uint8, float, uint16, int32, uint16, bool, bool)` (0x44F460;
-    /// hidden return pointer, vector and floats as raw dwords)
-    #[allow(clippy::too_many_arguments)]
-    fn find_node_closest_to_coors(this: GPtr<u8>, out: GPtr<u32>, x: u32, y: u32, z: u32, ty: u32, dist: u32, a: u32, b: u32, c: u32, d: u32, e: u32) -> GPtr<u32> = thiscall 0x44F460 => unported;
-    /// `CPathFind::FindNthNodeClosestToCoors(CVector, uint8, float, bool, bool, int32, bool, bool, CNodeAddress*)`
-    /// (0x44F8C0; hidden return pointer, raw dwords)
-    #[allow(clippy::too_many_arguments)]
-    fn find_nth_node_closest_to_coors(this: GPtr<u8>, out: GPtr<u32>, x: u32, y: u32, z: u32, ty: u32, dist: u32, a: u32, b: u32, n: u32, c: u32, d: u32, e: u32) -> GPtr<u32> = thiscall 0x44F8C0 => unported;
-    /// `CPickups::GenerateNewOne(CVector, uint32, uint8, uint32, uint32, bool, const char*)` (0x456F20; raw dwords)
-    #[allow(clippy::too_many_arguments)]
-    fn generate_new_pickup(x: u32, y: u32, z: u32, model: u32, ty: u32, ammo: u32, money: u32, empty: u32, msg: u32) -> i32 = cdecl 0x456F20 => unported;
 }
 
 /// `ThePaths` (0x96F050)
@@ -444,11 +434,11 @@ pub fn create_defending_group(_unused: i32) -> u8 {
     let node = find_node_closest_to_coors(
         gp(THE_PATHS),
         GPtr::from_raw(ret.as_mut_ptr()),
-        px,
-        py,
-        pz,
+        f32::from_bits(px),
+        f32::from_bits(py),
+        f32::from_bits(pz),
         0,
-        400f32.to_bits(),
+        f32::from_bits(400f32.to_bits()),
         0,
         0,
         0,
@@ -554,7 +544,7 @@ pub fn create_defending_group(_unused: i32) -> u8 {
         set_as_acquaintance(ped.byte_add(0x4E0), 4, flag);
         let w = [0x16, 0x1C, 0x19, 0x1D][(i & 3) as usize];
         ped_give_delayed_weapon(ped, w, 0x1388);
-        ped_set_current_weapon(ped, w as u32);
+        ped_set_current_weapon(ped, (w as u32) as i32);
         wr::<u32>(ped, 0x474, rd::<u32>(ped, 0x474) | 0x3000);
         let colour = gang1_colour();
         let pool = g::<GPtr<u8>>(0xB74490).read();
@@ -573,17 +563,17 @@ pub fn create_defending_group(_unused: i32) -> u8 {
         find_nth_node_closest_to_coors(
             gp(THE_PATHS),
             GPtr::from_raw(ret.as_mut_ptr()),
-            g::<u32>(POINT_OF_ATTACK).read(),
-            g::<u32>(POINT_OF_ATTACK + 4).read(),
-            g::<u32>(POINT_OF_ATTACK + 8).read(),
+            f32::from_bits(g::<u32>(POINT_OF_ATTACK).read()),
+            f32::from_bits(g::<u32>(POINT_OF_ATTACK + 4).read()),
+            f32::from_bits(g::<u32>(POINT_OF_ATTACK + 8).read()),
             0,
-            100f32.to_bits(),
+            f32::from_bits(100f32.to_bits()),
             0,
             0,
-            nth,
+            nth as i32,
             0,
             1,
-            0,
+            GPtr::NULL,
         );
         let cn = gp(path_nodes(ret[0] & 0xFFFF).wrapping_add((ret[0] >> 16).wrapping_mul(0x1C)) as usize);
         let c = |o: isize| xi(i32::from(rd::<i16>(cn, o))).fmul_m(0.125).to_f32();
@@ -604,7 +594,7 @@ pub fn create_defending_group(_unused: i32) -> u8 {
             x(npos[0]).fsub_m(cx).to_f32(),
             0.0,
         ];
-        vector_normalise(GPtr::from_raw(dir.as_mut_ptr()));
+        vector_normalise(GPtr::<f32>::cast::<[f32;3]>(GPtr::from_raw(dir.as_mut_ptr())));
         let veh = create_car_for_script(model as u32, cx.to_bits(), cy.to_bits(), cz.to_bits(), 0);
         let m = rd::<GPtr<u8>>(veh, 0x14);
         wr::<f32>(m, 0x10, dir[0]);
@@ -639,29 +629,26 @@ pub fn create_defending_group(_unused: i32) -> u8 {
         g::<u16>(0x8CD5C0).read()
     };
     generate_new_pickup(
-        kx.to_bits(),
-        ky.to_bits(),
-        kz.to_bits(),
+        f32::from_bits(kx.to_bits()),
+        f32::from_bits(ky.to_bits()),
+        f32::from_bits(kz.to_bits()),
         u32::from(model),
         5,
         0,
         0,
         0,
-        0,
+        GPtr::NULL,
     );
     1
 }
 
-use sa_core::bindings::world_remove;
+use sa_world::bindings::world_remove;
 use sa_stream::bindings::object_can_be_deleted;
 use sa_world::bindings::ped_can_be_deleted;
 use sa_world::bindings::vehicle_can_be_deleted;
+use sa_world::bindings::find_objects_intersecting_cube;
+use sa_core::bindings::vector_normalise;
 orig! {
-    /// `CVector::Normalise()` (0x59C910)
-    fn vector_normalise(v: GPtr<f32>) = thiscall 0x59C910 => unported;
-    /// `CWorld::FindObjectsIntersectingCube(const CVector&, const CVector&, int16*, int16, CEntity**, bool x5)` (0x568DD0)
-    #[allow(clippy::too_many_arguments)]
-    fn find_objects_intersecting_cube(a: GPtr<u32>, b: GPtr<u32>, count: GPtr<i16>, max: u32, out: GPtr<u32>, bb: u32, bv: u32, bp: u32, bo: u32, bd: u32) = cdecl 0x568DD0 => unported;
     /// virtual slot 0 (scalar deleting destructor) of a `CEntity`
     fn delete_entity(e: GPtr<u8>, flags: i32) = thiscall vslot 0 => unported;
 }
@@ -711,7 +698,7 @@ pub fn get_road_block_node_info(node: u32, width: GPtr<f32>, dir: GPtr<f32>) -> 
     let u = c(fb, 2).fsub(c(fa, 2));
     dir.write(u.to_f32());
     dir.wrapping_index(1).write(t.fchs().to_f32());
-    vector_normalise(dir);
+    vector_normalise(dir.cast::<[f32;3]>());
     1
 }
 
@@ -729,11 +716,11 @@ pub fn clear_space_for_road_block_object(ax: u32, ay: u32, az: u32, bx: u32, by:
     let mut count = [0i16; 2];
     let mut list = [0u32; 2];
     find_objects_intersecting_cube(
-        GPtr::from_raw(a.as_mut_ptr()),
-        GPtr::from_raw(b.as_mut_ptr()),
-        GPtr::from_raw(count.as_mut_ptr()),
+        GPtr::<u32>::cast::<u8>(GPtr::from_raw(a.as_mut_ptr())),
+        GPtr::<u32>::cast::<u8>(GPtr::from_raw(b.as_mut_ptr())),
+        GPtr::<i16>::cast::<u8>(GPtr::from_raw(count.as_mut_ptr())),
         2,
-        GPtr::from_raw(list.as_mut_ptr()),
+        GPtr::<u32>::cast::<u8>(GPtr::from_raw(list.as_mut_ptr())),
         0,
         1,
         1,
@@ -765,9 +752,9 @@ pub fn clear_space_for_road_block_object(ax: u32, ay: u32, az: u32, bx: u32, by:
 }
 
 use sa_core::bindings::entity_register_reference as register_reference;
-use sa_core::bindings::matrix_dtor;
+use sa_world::bindings::matrix_dtor;
 use sa_core::bindings::task_new;
-use sa_core::bindings::world_add;
+use sa_world::bindings::world_add;
 use sa_stream::bindings::get_default_cop_car_model;
 use sa_world::bindings::civilian_ped_ctor;
 use sa_world::bindings::cop_ped_ctor;
@@ -785,13 +772,8 @@ use sa_world::bindings::event_script_command_ctor;
 use sa_world::bindings::event_script_command_dtor;
 use sa_world::bindings::give_delayed_weapon as ped_give_delayed_weapon;
 use sa_world::bindings::ped_placement_find_z_coor_for_ped as find_z_coor_for_ped;
-orig! {
-    /// `CWorld::FindPlayerVehicle(int32, bool)` (0x56E0D0)
-    fn find_player_vehicle(id: i32, remote: u8) -> GPtr<u8> = cdecl 0x56E0D0 => sa_world::world::cworld::find_player_vehicle_port;
-    /// `CTaskComplexKillPedOnFoot::CTaskComplexKillPedOnFoot(CPed*, int32, uint32, uint32, uint32, bool)` (0x620E30)
-    #[allow(clippy::too_many_arguments)]
-    fn kill_ped_on_foot_ctor(t: GPtr<u8>, target: GPtr<u8>, time: i32, a: u32, b: u32, c: u32, d: u32) -> GPtr<u8> = thiscall 0x620E30 => unported;
-}
+use sa_world::bindings::find_player_vehicle;
+use sa_world::bindings::kill_ped_on_foot_ctor;
 
 /// The two ped offset tables of `GenerateRoadBlockPedsForCar` (stack locals, contiguous in the original:
 /// set A then set B), as f32 bits: A = (-1.5, 1.9), (-1.5, -2.6), (1.5, 1.9), (1.5, -2.6), (-1.5, 0),
@@ -891,8 +873,8 @@ pub fn generate_road_block_peds_for_car(veh: GPtr<u8>, pair: i32, ped_type: i32)
         off[1] = x(ratio).fmul_m(f32::from_bits(o[1])).to_f32();
         off[0] = x(ratio).fmul_m(f32::from_bits(o[0])).to_f32();
         let mut res = [0u32; 3];
-        let r = GPtr::<f32>::cast::<u32>(matrix_mul_vector(
-            GPtr::<u32>::cast::<f32>(GPtr::from_raw(res.as_mut_ptr())),
+        let r = GPtr::<u8>::cast::<u32>(matrix_mul_vector(
+            GPtr::<u32>::cast::<u8>(GPtr::from_raw(res.as_mut_ptr())),
             rd::<GPtr<u8>>(veh, 0x14),
             GPtr::<f32>::cast::<u8>(GPtr::from_raw(off.as_mut_ptr())),
         ));
@@ -919,7 +901,7 @@ pub fn generate_road_block_peds_for_car(veh: GPtr<u8>, pair: i32, ped_type: i32)
             ped_set_current_weapon(p, 0x16);
             p
         };
-        find_z_coor_for_ped(GPtr::<u32>::cast::<u8>(GPtr::from_raw(pos.as_mut_ptr())));
+        find_z_coor_for_ped(GPtr::<u32>::cast::<f32>(GPtr::from_raw(pos.as_mut_ptr())));
         let z = x(f32::from_bits(pos[2])).to_f32();
         let y = x(f32::from_bits(pos[1])).to_f32();
         let m = rd::<GPtr<u8>>(ped, 0x14);
@@ -1005,7 +987,7 @@ pub fn generate_road_block_peds_for_car(veh: GPtr<u8>, pair: i32, ped_type: i32)
             };
             if w != 0 {
                 ped_give_delayed_weapon(ped, w, 0x61A9);
-                ped_set_current_weapon_slot(ped, rd::<i32>(weapon_info_get(w, 1), 0x14) as u32);
+                ped_set_current_weapon_slot(ped, (rd::<i32>(weapon_info_get(w, 1), 0x14) as u32) as i32);
             }
         }
         world_add(ped);
@@ -1119,21 +1101,21 @@ pub fn start_frenzy(
     g::<i32>(0x96A6D4).write(rd::<i32>(weapon(player(), slot), 0xC));
     let saved = g::<i32>(0x96A6D8).read();
     if saved != 0 {
-        model_add_ref(model_info(rd::<i32>(weapon_info_get(saved, 1), 0xC)));
+        model_add_ref(GPtr::<u8>::cast::<sa_stream::shared::CBaseModelInfo>(model_info(rd::<i32>(weapon_info_get(saved, 1), 0xC))));
     }
     for i in 0..2 {
         if crate::common::find_player_ped(i).is_null() {
             continue;
         }
-        ped_give_weapon(crate::common::find_player_ped(i), w, 30000, 1);
-        ped_set_current_weapon(crate::common::find_player_ped(i), w as u32);
+        ped_give_weapon(crate::common::find_player_ped(i), w as u32, 30000, 1);
+        ped_set_current_weapon(crate::common::find_player_ped(i), (w as u32) as i32);
         make_changes_for_new_weapon(crate::common::find_player_ped(i), w);
     }
     if sa_world::world::common::find_player_vehicle(-1, 0).is_null() {
         return;
     }
     let slot = i32::from(rd::<i8>(rd::<GPtr<u8>>(player(), 0x480), 0x20));
-    ped_set_current_weapon_slot(player(), slot as u32);
+    ped_set_current_weapon_slot(player(), (slot as u32) as i32);
     let p1 = player();
     let clip = i32::from(rd::<i16>(
         weapon_info_get(rd::<i32>(cur_weapon(player()), 0), 1),
@@ -1169,7 +1151,7 @@ pub fn deal_with_weapon_change_at_end_of_frenzy() {
     if w < 0x2F {
         let saved = g::<i32>(0x96A6D8).read();
         if saved != 0 {
-            model_remove_ref(model_info(rd::<i32>(weapon_info_get(saved, 1), 0xC)));
+            model_remove_ref(GPtr::<u8>::cast::<sa_stream::shared::CBaseModelInfo>(model_info(rd::<i32>(weapon_info_get(saved, 1), 0xC))));
         }
         let slot = i32::from(rd::<u8>(weapon_info_get(w, 1), 0x14));
         let ty = rd::<i32>(weapon(player(), slot), 0);
@@ -1182,13 +1164,13 @@ pub fn deal_with_weapon_change_at_end_of_frenzy() {
         ped_remove_weapon_anims(player(), w as u32, -1000.0);
         let mi = model_info(rd::<i32>(weapon_info_get(w, 1), 0xC));
         if rd::<i16>(mi, 8) > 0 {
-            model_remove_ref(model_info(rd::<i32>(weapon_info_get(w, 1), 0xC)));
+            model_remove_ref(GPtr::<u8>::cast::<sa_stream::shared::CBaseModelInfo>(model_info(rd::<i32>(weapon_info_get(w, 1), 0xC))));
         }
         let pd = rd::<GPtr<u8>>(player(), 0x480);
         let s = rd::<u8>(weapon_info_get(g::<i32>(0x96A6DC).read(), 1), 0x14);
         wr::<u8>(pd, 0x20, s);
         let (ammo, ty) = (g::<u32>(0x96A6D4).read(), g::<i32>(0x96A6D8).read());
-        ped_give_weapon(player(), ty, ammo, 1);
+        ped_give_weapon(player(), ty as u32, ammo, 1);
     }
     if sa_world::world::common::find_player_vehicle(-1, 0).is_null() {
         return;
@@ -1198,7 +1180,7 @@ pub fn deal_with_weapon_change_at_end_of_frenzy() {
     let v = if rd::<u32>(player(), 0x610) == 0 { 0 } else { 4 };
     wr::<u8>(rd::<GPtr<u8>>(player(), 0x480), 0x20, v);
     let slot = i32::from(rd::<i8>(rd::<GPtr<u8>>(player(), 0x480), 0x20));
-    ped_set_current_weapon_slot(player(), slot as u32);
+    ped_set_current_weapon_slot(player(), (slot as u32) as i32);
     let ty = rd::<i32>(cur_weapon(player()), 0);
     make_changes_for_new_weapon(player(), ty);
 }
@@ -1210,20 +1192,13 @@ use crate::bindings::generate_one_emergency_services_car;
 use sa_world::bindings::camera_is_sphere_visible;
 use sa_world::bindings::ped_get_ref as ped_pool_get_ref;
 use sa_world::bindings::placeable_set_posn;
+use crate::bindings::generate_car_creation_coors2;
+use sa_world::bindings::gang_drive_by_ctor;
+use sa_core::bindings::random_float_in_range;
 orig! {
     /// `0x406E80` (stub into `.HOODLUM`; uncatalogued): the model `CreateAttackWave` requests for `Gang2`
     /// (`f(Gang2 + 0x12, 0, 0)`)
     fn gang2_request_model_o(a: i32, b: i32, c: i32) -> i32 = cdecl 0x406E80 => unported;
-    /// `CCarCtrl::GenerateCarCreationCoors2(CVector, float, float, float, bool, float, float, CVector*,
-    /// CNodeAddress*, CNodeAddress*, float*, bool, bool)` (0x424210; floats and the vector as raw dwords)
-    #[allow(clippy::too_many_arguments)]
-    fn generate_car_creation_coors2(px: u32, py: u32, pz: u32, dx: u32, dy: u32, dot: u32, ahead: u32, r1: u32, r2: u32, out: GPtr<f32>, n1: GPtr<u32>, n2: GPtr<u32>, frac: GPtr<f32>, restrict: u32, no_random: u32) -> u8 = cdecl 0x424210 => unported;
-    /// `CGeneral::GetRandomNumberInRange(float, float)` (0x41BD90, ST0; raw bits)
-    fn random_float_in_range(lo: u32, hi: u32) -> f64 = cdecl 0x41BD90 => unported;
-    /// `CTaskSimpleGangDriveBy::CTaskSimpleGangDriveBy(CEntity*, const CVector*, float, int8, int8, bool)`
-    /// (0x6217D0; float as raw bits)
-    #[allow(clippy::too_many_arguments)]
-    fn gang_drive_by_ctor(t: GPtr<u8>, target: GPtr<u8>, pos: u32, dist: u32, a: u32, b: u32, c: u32) -> GPtr<u8> = thiscall 0x6217D0 => unported;
 }
 
 /// The 32-bit stack residue at `entry ESP + off` (footprint snapshot, window 0x1000).
@@ -1399,15 +1374,15 @@ fn create_attack_wave_body(ferocity: i32, wave: i32, w: &mut (i32, i32), touched
             n1[0] = (n1[0] & 0xFFFF_0000) | 0xFFFF;
             n2[0] = (n2[0] & 0xFFFF_0000) | 0xFFFF;
             let ok = generate_car_creation_coors2(
-                ppos[0].to_bits(),
-                ppos[1].to_bits(),
-                ppos[2].to_bits(),
-                0x3F80_0000,
-                0,
-                0xBF80_0000,
+                f32::from_bits(ppos[0].to_bits()),
+                f32::from_bits(ppos[1].to_bits()),
+                f32::from_bits(ppos[2].to_bits()),
+                f32::from_bits(0x3F80_0000),
+                f32::from_bits(0),
+                f32::from_bits(0xBF80_0000),
                 1,
-                50f32.to_bits(),
-                50f32.to_bits(),
+                f32::from_bits(50f32.to_bits()),
+                f32::from_bits(50f32.to_bits()),
                 GPtr::from_raw(cand.as_mut_ptr()),
                 GPtr::from_raw(n1.as_mut_ptr()),
                 GPtr::from_raw(n2.as_mut_ptr()),
@@ -1443,7 +1418,7 @@ fn create_attack_wave_body(ferocity: i32, wave: i32, w: &mut (i32, i32), touched
         let db = x(ppos[1]).fsub_m(point[1]);
         prev = point;
         let mut dir = [db.to_f32(), da.to_f32(), 0.0f32];
-        vector_normalise(GPtr::from_raw(dir.as_mut_ptr()));
+        vector_normalise(GPtr::<f32>::cast::<[f32;3]>(GPtr::from_raw(dir.as_mut_ptr())));
         for d in dir.iter_mut() {
             *d = x(*d).fmul_m(f32::from_bits(0x3F99_999A)).to_f32();
         }
@@ -1505,10 +1480,10 @@ fn create_attack_wave_body(ferocity: i32, wave: i32, w: &mut (i32, i32), touched
                 let evp = GPtr::from_raw(ev.as_mut_ptr());
                 event_script_command_ctor(evp.cast::<u8>(), 3, t, 0);
                 event_group_add(rd::<GPtr<u8>>(ped, 0x47C).byte_add(0x68), evp.cast::<u8>(), 0);
-                let rnd = X87::from_f64_exact(random_float_in_range(0xBE99_999A, 0x3FA6_6666));
+                let rnd = X87::from_f64_exact(random_float_in_range(f32::from_bits(0xBE99_999A), f32::from_bits(0x3FA6_6666)).to_f64());
                 let wt = if jne_mask(rnd, diff(), 0x41) { w.1 } else { w.0 };
-                ped_give_weapon(ped, wt, 5000, 0);
-                ped_set_current_weapon(ped, wt as u32);
+                ped_give_weapon(ped, wt as u32, 5000, 0);
+                ped_set_current_weapon(ped, (wt as u32) as i32);
                 wr::<u8>(ped, 0x71A, diff().fmul_m(25.0).fadd_m(70.0).ftol() as u8);
                 wr::<u32>(ped, 0x474, rd::<u32>(ped, 0x474) | 0x3000);
                 wr::<u32>(ped, 0x544, 0x42F0_0000);
@@ -1543,15 +1518,15 @@ fn create_attack_wave_body(ferocity: i32, wave: i32, w: &mut (i32, i32), touched
         };
         if let Some(m) = model {
             generate_new_pickup(
-                kx.to_bits(),
-                ky.to_bits(),
-                kz.to_bits(),
+                f32::from_bits(kx.to_bits()),
+                f32::from_bits(ky.to_bits()),
+                f32::from_bits(kz.to_bits()),
                 u32::from(m),
                 5,
                 0,
                 0,
                 0,
-                0,
+                GPtr::NULL,
             );
         }
     }
@@ -1612,7 +1587,7 @@ fn create_attack_wave_body(ferocity: i32, wave: i32, w: &mut (i32, i32), touched
             gang_drive_by_ctor(
                 t,
                 crate::common::find_player_ped(-1),
-                0,
+                GPtr::NULL,
                 100f32.to_bits(),
                 0x32,
                 8,

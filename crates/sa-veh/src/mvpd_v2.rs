@@ -337,7 +337,7 @@ use sa_world::bindings::event_group_add;
 use sa_world::bindings::fx_add_particle;
 use sa_world::bindings::fx_create_system as fx_create_fx_system;
 use sa_world::bindings::fx_kill;
-use sa_world::bindings::get_engine_status as dm_get_engine_status;
+use crate::bindings::get_engine_status as dm_get_engine_status;
 use sa_world::bindings::get_event_global_group;
 use crate::bindings::process_delayed_explosion;
 use sa_core::bindings::general_random_int_in_range as random_i32;
@@ -434,19 +434,19 @@ pub fn automobile_process_car_on_fire_and_explode(this: GPtr<u8>, explode: u32) 
                         let p = entity_pos(this);
                         let mut pos = [rd::<f32>(p, 0), rd::<f32>(p, 4), rd::<f32>(p, 8)];
                         let (v, z, o) = if rc { (0.5f32, 0.4f32, 0.7f32) } else { (1.5, 1.0, 2.0) };
-                        let vx = f32_of(X87::from_f64_exact(random_float(-v, v)));
-                        let vy = f32_of(X87::from_f64_exact(random_float(-v, v)));
-                        let vz = f32_of(X87::from_f64_exact(random_float(0.0, z)));
+                        let vx = f32_of(X87::from_f64_exact(random_float(-v, v).to_f64()));
+                        let vy = f32_of(X87::from_f64_exact(random_float(-v, v).to_f64()));
+                        let vz = f32_of(X87::from_f64_exact(random_float(0.0, z).to_f64()));
                         let mut vel = [vx, vy, vz];
-                        pos[0] = f32_of(X87::from_f64_exact(random_float(-o, o)).fadd_m(pos[0]));
-                        pos[1] = f32_of(X87::from_f64_exact(random_float(-o, o)).fadd_m(pos[1]));
+                        pos[0] = f32_of(X87::from_f64_exact(random_float(-o, o).to_f64()).fadd_m(pos[0]));
+                        pos[1] = f32_of(X87::from_f64_exact(random_float(-o, o).to_f64()).fadd_m(pos[1]));
                         fx_add_particle(
                             g::<GPtr<u8>>(0xA9_AE20).read(),
                             GPtr::from_raw(pos.as_mut_ptr()).cast(),
                             GPtr::from_raw(vel.as_mut_ptr()).cast(),
-                            f32::from_bits(0),
+                            f32::from_bits(0).to_bits(),
                             mp,
-                            f32::from_bits(0xBF80_0000),
+                            f32::from_bits(0xBF80_0000).to_bits(),
                             f32::from_bits(0x3F99_999A),
                             f32::from_bits(0x3F19_999A),
                             0,
@@ -519,12 +519,12 @@ pub fn automobile_process_car_on_fire_and_explode(this: GPtr<u8>, explode: u32) 
     process_delayed_explosion(this);
 }
 
-use sa_core::bindings::matrix_dtor;
+use sa_world::bindings::matrix_dtor;
 use sa_core::bindings::matrix_mul_vec;
 use sa_core::bindings::vector_magnitude;
 use sa_world::bindings::get_water_level;
 use sa_world::bindings::vector_ne;
-use sa_world::bindings::bike_calculate_lean_matrix as calculate_lean_matrix;
+use crate::bindings::bike_calculate_lean_matrix as calculate_lean_matrix;
 use sa_world::bindings::matrix_copy_ctor;
 
 /// `rand()` static guard / value of `AddExhaustParticles` (0xC1CDB8 bit 0 / 0xC1CDB4).
@@ -620,7 +620,7 @@ pub fn vehicle_add_exhaust_particles(this: GPtr<u8>) {
     if !fwd_speed.fcom(x(0.05)).test_parity(0x05) {
         if g::<u32>(EXHAUST_GUARD).read() & 1 == 0 {
             g::<u32>(EXHAUST_GUARD).write(g::<u32>(EXHAUST_GUARD).read() | 1);
-            let r = random_float(f32::from_bits(0xBFE6_6666), f32::from_bits(0xBF66_6666));
+            let r = random_float(f32::from_bits(0xBFE6_6666), f32::from_bits(0xBF66_6666)).to_f64();
             g::<f32>(EXHAUST_BACK).write(f32_of(X87::from_f64_exact(r)));
         }
         let m = rd::<GPtr<u8>>(this, 0x14);
@@ -631,7 +631,7 @@ pub fn vehicle_add_exhaust_particles(this: GPtr<u8>) {
         vel[1] = f32_of(x(rd::<f32>(this, 0x48)).fmul_m(30.0));
     }
     let mut world_l = [0u32; 3];
-    matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::from_raw(world_l.as_mut_ptr()).cast()), mp, pl);
+    matrix_mul_vec(GPtr::from_raw(world_l.as_mut_ptr()).cast(), mp, pl);
     let mut level = 0f32;
     let lp = GPtr::from_raw(&mut level).cast::<u8>();
     let mut water_l = false;
@@ -644,7 +644,7 @@ pub fn vehicle_add_exhaust_particles(this: GPtr<u8>) {
     }
     if double {
         let mut tmp = [0u32; 3];
-        let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::from_raw(tmp.as_mut_ptr()).cast()), mp, GPtr::from_raw(pos_r.as_mut_ptr()).cast()));
+        let r = matrix_mul_vec(GPtr::from_raw(tmp.as_mut_ptr()).cast(), mp, GPtr::from_raw(pos_r.as_mut_ptr()).cast());
         world_r = [rd::<u32>(r, 0), rd::<u32>(r, 4), rd::<u32>(r, 8)];
         if rd::<u32>(this, 0x40) & 0x800_0000 != 0
             && get_water_level(f32::from_bits(world_r[0]), f32::from_bits(world_r[1]), f32::from_bits(world_r[2]), lp, 1, GPtr::NULL) != 0
@@ -674,9 +674,9 @@ pub fn vehicle_add_exhaust_particles(this: GPtr<u8>) {
         if in_water {
             wr::<f32>(mlt, 0xC, f32_of(x(a1).fmul_m(0.5)));
             wr::<u32>(mlt, 0x10, 0x3F19_999A);
-            fx_add_particle(g::<GPtr<u8>>(0xA9_AE08).read(), pos, vp, f32::from_bits(0), mlt, f32::from_bits(0xBF80_0000), f32::from_bits(bright), f32::from_bits(0x3F19_999A), 0);
+            fx_add_particle(g::<GPtr<u8>>(0xA9_AE08).read(), pos, vp, f32::from_bits(0).to_bits(), mlt, f32::from_bits(0xBF80_0000).to_bits(), f32::from_bits(bright), f32::from_bits(0x3F19_999A), 0);
         } else {
-            fx_add_particle(g::<GPtr<u8>>(0xA9_AE24).read(), pos, vp, f32::from_bits(0), mlt, f32::from_bits(0xBF80_0000), f32::from_bits(bright), f32::from_bits(0x3F19_999A), 0);
+            fx_add_particle(g::<GPtr<u8>>(0xA9_AE24).read(), pos, vp, f32::from_bits(0).to_bits(), mlt, f32::from_bits(0xBF80_0000).to_bits(), f32::from_bits(bright), f32::from_bits(0x3F19_999A), 0);
         }
     };
     for _ in 0..2 {

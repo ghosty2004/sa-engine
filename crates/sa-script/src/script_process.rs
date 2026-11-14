@@ -36,7 +36,7 @@ const ACTIVE_SCRIPTS: usize = 0xA8B42C;
 /// `CPools::ms_pPedPool`
 const PED_POOL: usize = 0xB74490;
 
-use sa_core::bindings::loading_screen_new_chunk_loaded;
+use sa_stream::bindings::loading_screen_new_chunk_loaded;
 use sa_world::bindings::intel_record_event_for_script;
 use sa_core::bindings::rgba_ctor;
 orig! {

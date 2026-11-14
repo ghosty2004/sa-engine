@@ -39,17 +39,17 @@ pub use crate::bindings::ped_get_held_entity as get_entity_that_this_ped_is_hold
 pub use crate::bindings::population_remove_ped;
 pub use crate::bindings::set_engine_status;
 pub use sa_core::bindings::eh_vector_ctor;
-pub use sa_core::bindings::get_pad;
+pub use sa_input::bindings::get_pad;
 pub use sa_core::bindings::list_dtor;
 pub use sa_core::bindings::list_item_ctor;
 pub use sa_core::bindings::list_item_dtor;
 pub use sa_core::bindings::list_remove_head;
-pub use sa_core::bindings::load_all_requested_models;
+pub use sa_stream::bindings::load_all_requested_models;
 pub use sa_core::bindings::quad_tree_delete_item;
-pub use sa_core::bindings::set_model_is_deletable;
+pub use sa_stream::bindings::set_model_is_deletable;
 pub use sa_core::bindings::set_wanted_level;
 pub use sa_core::bindings::streaming_request_model as request_model;
-pub use sa_core::bindings::anim_add_block_ref as add_anim_block_ref;
+pub use sa_anim::bindings::anim_add_block_ref as add_anim_block_ref;
 pub use sa_stream::bindings::anim_remove_block_ref as remove_anim_block_ref;
 pub use sa_stream::bindings::get_2d_effect;
 pub use sa_stream::bindings::get_animation_block_index;
@@ -60,7 +60,7 @@ pub use sa_core::bindings::get_weapon_info;
 pub use sa_core::bindings::list_add_item;
 pub use sa_core::bindings::list_ctor;
 pub use sa_core::bindings::rw_v3d_transform_points;
-pub use sa_core::bindings::stats_increment_stat as increment_stat;
+pub use crate::bindings::stats_increment_stat as increment_stat;
 orig! {
     /// `CAudioEngine::GetRadioStationListenTimes` (0x507020) on `AudioEngine` (0xB6BC90)
     pub fn get_radio_station_listen_times(ae: GPtr<u8>) -> GPtr<u32> = thiscall 0x507020 => unported;

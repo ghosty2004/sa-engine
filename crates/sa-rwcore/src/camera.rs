@@ -52,7 +52,8 @@ pub use crate::bindings::plugin_deinit_object as registry_deinit_object;
 pub use crate::bindings::plugin_init_object as registry_init_object;
 pub use crate::bindings::registry_get_plugin_offset;
 pub use crate::bindings::free_list_create_prealloc as free_list_create_and_preallocate_space;
-pub use sa_core::bindings::rw_frame_update_objects as frame_update_objects;
+pub use crate::bindings::rw_frame_update_objects as frame_update_objects;
+use sa_core::bindings::rw_v3d_transform_points as transform_points;
 orig! {
     /// `RwMatrixOptimize(m, tolerance)` (0x7F17E0)
     pub fn matrix_optimize(m: GPtr<u8>, tol: GPtr<f32>) -> GPtr<u8> = cdecl 0x7F17E0 => crate::matrix::rw_matrix_optimize;
@@ -60,8 +61,6 @@ orig! {
     pub fn build_persp_clip_planes(c: GPtr<u8>) = cdecl 0x7EE740 => rw_camera_build_persp_clip_planes;
     /// Parallel corners and planes (0x7EEDE0)
     pub fn build_parallel_clip_planes(c: GPtr<u8>) = cdecl 0x7EEDE0 => rw_camera_build_parallel_clip_planes;
-    /// `RwV3dTransformPoints(out, in, n, matrix)` (0x7EDD90)
-    fn transform_points(out: GPtr<RwV3d>, inp: GPtr<RwV3d>, n: i32, m: GPtr<u8>) -> GPtr<RwV3d> = cdecl 0x7EDD90 => crate::vector::rw_v3d_transform_points;
     /// `G->stdFunc[..](out, in, n)` (begin update +0x4C, end update +0x70)
     pub fn call_std_func(f: u32, out: u32, inp: GPtr<u8>, n: i32) -> i32 = cdecl dyn => unported;
     /// `_rwFrameSyncDirty()` (0x809550)
@@ -1546,7 +1545,7 @@ pub fn rw_camera_build_persp_clip_planes(c: GPtr<u8>) {
     f.stp(0);
     // 7eeadc push edx
     // 7eeadd call 0x7edb90
-    f.push(X87::from_f64_exact(inv_sqrt(f32::from_bits(t123))));
+    f.push(X87::from_f64_exact(inv_sqrt(f32::from_bits(t123)).to_f64()));
     // 7eeae2 fld DWORD PTR [esi+0x28]
     f.push(x(rd::<f32>(c, 0xbc)));
     // 7eeae5 fmul st,st(1)
@@ -1722,7 +1721,7 @@ pub fn rw_camera_build_persp_clip_planes(c: GPtr<u8>) {
     f.stp(0);
     // 7eebad push eax
     // 7eebae call 0x7edb90
-    f.push(X87::from_f64_exact(inv_sqrt(f32::from_bits(t143))));
+    f.push(X87::from_f64_exact(inv_sqrt(f32::from_bits(t143)).to_f64()));
     // 7eebb3 fld DWORD PTR [esi+0x3c]
     f.push(x(rd::<f32>(c, 0xd0)));
     // 7eebb6 fmul st,st(1)
@@ -1918,7 +1917,7 @@ pub fn rw_camera_build_persp_clip_planes(c: GPtr<u8>) {
     f.stp(0);
     // 7eec98 push ecx
     // 7eec99 call 0x7edb90
-    f.push(X87::from_f64_exact(inv_sqrt(f32::from_bits(t166))));
+    f.push(X87::from_f64_exact(inv_sqrt(f32::from_bits(t166)).to_f64()));
     // 7eec9e fld DWORD PTR [esi+0x50]
     f.push(x(rd::<f32>(c, 0xe4)));
     // 7eeca1 fmul st,st(1)
@@ -2094,7 +2093,7 @@ pub fn rw_camera_build_persp_clip_planes(c: GPtr<u8>) {
     f.stp(0);
     // 7eed6a push edx
     // 7eed6b call 0x7edb90
-    f.push(X87::from_f64_exact(inv_sqrt(f32::from_bits(t186))));
+    f.push(X87::from_f64_exact(inv_sqrt(f32::from_bits(t186)).to_f64()));
     // 7eed70 fld DWORD PTR [esi+0x64]
     f.push(x(rd::<f32>(c, 0xf8)));
     // 7eed73 fmul st,st(1)
@@ -2381,7 +2380,7 @@ pub fn rw_camera_build_parallel_clip_planes(c: GPtr<u8>) {
     wr::<f32>(c, 0x170, t31);
     f.pop();
     // 7eeed2 call 0x7edd90
-    transform_points(c.byte_add(0x124).cast(), c.byte_add(0x124).cast(), 8, m);
+    transform_points(GPtr::<RwV3d>::cast::<f32>(c.byte_add(0x124).cast()), GPtr::<RwV3d>::cast::<f32>(c.byte_add(0x124).cast()), 8, m);
     // 7eeed7 add ebx,0x20
     // 7eeeda mov eax,esi
     // 7eeedc mov ecx,DWORD PTR [ebx]
@@ -2635,7 +2634,7 @@ pub fn rw_camera_build_parallel_clip_planes(c: GPtr<u8>) {
     f.stp(0);
     // 7ef006 push edx
     // 7ef007 call 0x7edb90
-    f.push(X87::from_f64_exact(inv_sqrt(f32::from_bits(t67))));
+    f.push(X87::from_f64_exact(inv_sqrt(f32::from_bits(t67)).to_f64()));
     // 7ef00c fld DWORD PTR [esi+0x28]
     f.push(x(rd::<f32>(c, 0xbc)));
     // 7ef00f fmul st,st(1)
@@ -2811,7 +2810,7 @@ pub fn rw_camera_build_parallel_clip_planes(c: GPtr<u8>) {
     f.stp(0);
     // 7ef0d8 push eax
     // 7ef0d9 call 0x7edb90
-    f.push(X87::from_f64_exact(inv_sqrt(f32::from_bits(t87))));
+    f.push(X87::from_f64_exact(inv_sqrt(f32::from_bits(t87)).to_f64()));
     // 7ef0de fld DWORD PTR [esi+0x3c]
     f.push(x(rd::<f32>(c, 0xd0)));
     // 7ef0e1 fmul st,st(1)

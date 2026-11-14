@@ -67,20 +67,20 @@ fn fild_u32(v: u32) -> X87 {
 
 use sa_core::bindings::font_set_centre_size;
 use sa_core::bindings::font_set_drop_color;
-use sa_core::bindings::font_set_scale;
+use crate::bindings::font_set_scale;
 use sa_core::bindings::camera_draw_borders_for_wide_screen;
 use sa_core::bindings::defined_state_2d;
 use sa_core::bindings::rgba_ctor;
-use sa_core::bindings::credits_render_credits as render_credits_call;
-use sa_core::bindings::font_draw_fonts;
-use sa_core::bindings::font_print_string;
-use sa_core::bindings::font_set_background;
-use sa_core::bindings::font_set_color;
-use sa_core::bindings::font_set_edge;
-use sa_core::bindings::font_set_font_style;
-use sa_core::bindings::font_set_orientation;
-use sa_core::bindings::font_set_proportional;
-use sa_core::bindings::text_get;
+use crate::bindings::credits_render_credits as render_credits_call;
+use crate::bindings::font_draw_fonts;
+use crate::bindings::font_print_string;
+use crate::bindings::font_set_background;
+use crate::bindings::font_set_color;
+use crate::bindings::font_set_edge;
+use crate::bindings::font_set_font_style;
+use crate::bindings::font_set_orientation;
+use crate::bindings::font_set_proportional;
+use crate::bindings::text_get;
 orig! {
     /// `CCredits::PrintCreditText(float, float, const GxtChar*, uint32&, float, bool)` (0x5A8660)
     fn print_credit_text_call(sx: f32, sy: f32, text: GPtr<u8>, offset: GPtr<u32>, scroll: f32, hi: u32) = cdecl 0x5A8660 => print_credit_text;
@@ -118,7 +118,7 @@ pub fn print_credit_text(sx: f32, sy: f32, text: GPtr<u8>, offset: GPtr<u32>, sc
     // `fcomp 20; test ah, 0x41; jne skip`, then `fld 20; fsubr st, st(1)` (height - 20), `fld pos;
     // fcompp; test ah, 5; jp skip`
     if !p.fcom(x(k(K_20))).test_any(0x41) && !x(pos).fcom(h.fsub_m(k(K_20))).test_parity(0x05) {
-        font_set_scale(f32::from_bits(sx.to_bits()), f32::from_bits(sy.to_bits()));
+        font_set_scale(f32::from_bits(sx.to_bits()).to_bits(), f32::from_bits(sy.to_bits()).to_bits());
         font_set_color(rgba(0, 0, 0, 0xFF));
         let half = g::<i32>(RS_MAX_WIDTH).read() / 2;
         font_print_string(f32_of(xi(half)), pos, text);

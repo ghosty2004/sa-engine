@@ -19,6 +19,26 @@ orig! {
 }
 
 orig! {
+    /// `Fx_c::GetFxQuality` (0x49EA50)
+    pub fn fx_get_fx_quality(fx: GPtr<u8>) -> u32 = thiscall 0x49EA50 => crate::draw::fx_get_fx_quality;
+}
+
+orig! {
+    /// `Fx_c::RenderBegin` (0x4A13B0)
+    pub fn fx_render_begin(raster: u32, ltm: u32, flags: u32) = cdecl 0x4A13B0 => crate::fx::fx_render_begin;
+}
+
+orig! {
+    /// `Fx_c::RenderAddTri_` (0x4A1410)
+    pub fn fx_render_add_tri(x0: u32, y0: u32, z0: u32, x1: u32, y1: u32, z1: u32, x2: u32, y2: u32, z2: u32, u0: u32, v0: u32, u1: u32, v1: u32, u2: u32, v2: u32, r0: u32, g0: u32, b0: u32, a0: u32, r1: u32, g1: u32, b1: u32, a1: u32, r2: u32, g2: u32, b2: u32, a2: u32) = cdecl 0x4A1410 => crate::mvpc_fx2::fx_render_add_tri;
+}
+
+orig! {
+    /// `Fx_c::RenderEnd` (0x4A1600)
+    pub fn fx_render_end() = cdecl 0x4A1600 => crate::mvpa_render3::fx_render_end;
+}
+
+orig! {
     /// `FxEmitterBP_c::UpdateParticle` (0x4A21D0)
     pub fn update_particle(this: GPtr<u8>, dt: u32, prt: GPtr<u8>) -> u8 = thiscall 0x4A21D0 => unported;
 }
@@ -44,6 +64,11 @@ orig! {
 }
 
 orig! {
+    /// `FxManager_c::FindFxSystemBP` (0x4A9360)
+    pub fn find_fx_system_bp(this: GPtr<u8>, name: GPtr<u8>) -> GPtr<u8> = thiscall 0x4A9360 => crate::fx::fx_manager_find_fx_system_bp;
+}
+
+orig! {
     /// `FxManager_c::FxRwMatrixCreate` (0x4A9440)
     pub fn fx_rw_matrix_create(this: GPtr<u8>) -> u32 = thiscall 0x4A9440 => crate::fx::fx_manager_fx_rw_matrix_create;
 }
@@ -51,6 +76,16 @@ orig! {
 orig! {
     /// `FxManager_c::FxRwMatrixDestroy` (0x4A9460)
     pub fn fx_rw_matrix_destroy(this: GPtr<u8>, m: u32) = thiscall 0x4A9460 => crate::fx::fx_manager_fx_rw_matrix_destroy;
+}
+
+orig! {
+    /// `FxManager_c::CreateFxSystem-3` (0x4A96B0)
+    pub fn create_fx_system_bp(this: GPtr<u8>, bp: GPtr<u8>, m: GPtr<u8>, parent: GPtr<u8>, ignore_bounds: u32) -> GPtr<u8> = thiscall 0x4A96B0 => crate::mvpc_fx1::create_fx_system_bp;
+}
+
+orig! {
+    /// `FxManager_c::CreateFxSystem-4` (0x4A9BE0)
+    pub fn fx_create_system(m: GPtr<u8>, name: GPtr<u8>, pos: GPtr<u8>, mat: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4A9BE0 => crate::fx::fx_manager_create_fx_system_name;
 }
 
 orig! {
@@ -69,6 +104,36 @@ orig! {
 }
 
 orig! {
+    /// `FxSystem_c::Play` (0x4AA2F0)
+    pub fn fx_play(f: GPtr<u8>) = thiscall 0x4AA2F0 => crate::fx::fx_system_play;
+}
+
+orig! {
+    /// `FxSystem_c::Stop` (0x4AA390)
+    pub fn fx_stop(f: GPtr<u8>) = thiscall 0x4AA390 => crate::fx::fx_system_stop;
+}
+
+orig! {
+    /// `FxSystem_c::PlayAndKill` (0x4AA3D0)
+    pub fn fx_play_and_kill(fx: GPtr<u8>) = thiscall 0x4AA3D0 => crate::fx::fx_system_play_and_kill;
+}
+
+orig! {
+    /// `FxSystem_c::Kill` (0x4AA3F0)
+    pub fn fx_kill(f: GPtr<u8>) = thiscall 0x4AA3F0 => crate::fx::fx_system_kill;
+}
+
+orig! {
+    /// `FxSystem_c::AddParticle-v3d` (0x4AA440)
+    pub fn fx_add_particle(f: GPtr<u8>, pos: GPtr<u8>, vel: GPtr<u8>, t: u32, m: GPtr<u8>, rot: u32, br: f32, a: f32, b: u32) = thiscall 0x4AA440 => crate::mvpb_r1::fx_system_add_particle;
+}
+
+orig! {
+    /// `FxSystem_c::GetCompositeMatrix` (0x4AA8C0)
+    pub fn fx_get_composite_matrix(fx: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall 0x4AA8C0 => crate::fx::fx_system_get_composite_matrix;
+}
+
+orig! {
     /// `FxPrtMult_c` (0x4AB270)
     pub fn fx_prt_mult_default_ctor(p: u32) -> u32 = thiscall 0x4AB270 => crate::generated::generated_setters::g_fx_prt_mult_c_4ab270;
 }
@@ -79,8 +144,28 @@ orig! {
 }
 
 orig! {
+    /// `CSimpleTransform::UpdateMatrix` (0x54F1B0)
+    pub fn simple_transform_update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => crate::mvpd_unk::simple_transform_update_matrix;
+}
+
+orig! {
     /// `CRenderer::RenderOneNonRoad` (0x553260)
     pub fn render_one_non_road(e: GPtr<u8>) = cdecl 0x553260 => crate::renderer::render_one_non_road;
+}
+
+orig! {
+    /// `CRenderer::ShouldModelBeStreamed` (0x554EB0)
+    pub fn call_should_model_be_streamed(e: GPtr<u8>, p: GPtr<f32>, far: f32) -> u8 = cdecl 0x554EB0 => crate::renderer::should_model_be_streamed;
+}
+
+orig! {
+    /// `CRenderer::RequestObjectsInFrustum` (0x555960)
+    pub fn call_request_objects_in_frustum(a: GPtr<u8>, b: i32) = cdecl 0x555960 => crate::renderer::request_objects_in_frustum;
+}
+
+orig! {
+    /// `CRope::Remove` (0x556780)
+    pub fn rope_remove(rope: GPtr<u8>) = thiscall 0x556780 => crate::mvpa_render1::rope_remove;
 }
 
 orig! {
@@ -89,8 +174,18 @@ orig! {
 }
 
 orig! {
+    /// `CClothesBuilder::CopyTexture` (0x5A5730)
+    pub fn copy_texture(t: GPtr<u8>) -> GPtr<u8> = cdecl 0x5A5730 => crate::car_dirt::copy_texture;
+}
+
+orig! {
     /// `CCustomBuildingDNPipeline::GetExtraVertColourPtr` (0x5D6E90)
     pub fn get_extra_vert_colour_ptr(g: GPtr<u8>) -> u32 = cdecl 0x5D6E90 => crate::pipe_ids::get_extra_vert_colour_ptr;
+}
+
+orig! {
+    /// `CCustomBuildingDNPipeline::PreRenderUpdate-Atomic` (0x5D7200)
+    pub fn dn_pre_render_update(a: GPtr<u8>, force: u32) = cdecl 0x5D7200 => crate::building_dn::pre_render_update_atomic;
 }
 
 orig! {
@@ -159,8 +254,43 @@ orig! {
 }
 
 orig! {
+    /// `CWaterLevel::GetWaterLevelNoWaves` (0x6E8580)
+    pub fn get_water_level_no_waves(x: u32, y: u32, z: u32, out: GPtr<f32>, a: GPtr<f32>, b: GPtr<f32>) -> u8 = cdecl 0x6E8580 => crate::waterlevel::get_water_level_no_waves;
+}
+
+orig! {
+    /// `CWaterLevel::FindNearestWaterAndItsFlow` (0x6E9D70)
+    pub fn water_find_nearest_water_and_flow() = cdecl 0x6E9D70 => crate::waterlevel::find_nearest_water_and_its_flow;
+}
+
+orig! {
     /// `CWaterLevel::RenderWaterRectangle` (0x6EC5D0)
     pub fn o_render_water_rectangle(x1: i32, x2: i32, y1: i32, y2: i32, p1z: u32, p1b: u32, p1s: u32, p1f: u32, p2z: u32, p2b: u32, p2s: u32, p2f: u32, p3z: u32, p3b: u32, p3s: u32, p3f: u32, p4z: u32, p4b: u32, p4s: u32, p4f: u32) = cdecl 0x6EC5D0 => crate::waterlevel::render_water_rectangle;
+}
+
+orig! {
+    /// `CWaterLevel::RenderWaterTriangle` (0x6EE240)
+    pub fn render_water_triangle(x1: i32, y1: i32, p1z: u32, p1b: u32, p1s: u32, p1f: u32, x2: i32, y2: i32, p2z: u32, p2b: u32, p2s: u32, p2f: u32, x3: i32, y3: i32, p3z: u32, p3b: u32, p3s: u32, p3f: u32) = cdecl 0x6EE240 => crate::waterlevel::render_water_triangle;
+}
+
+orig! {
+    /// `FUN_006f9eb0` (0x6F9EB0)
+    pub fn effect_2d_init(e: GPtr<u8>) -> u32 = thiscall 0x6F9EB0 => crate::mvpc_render1::effect_pairs_reset;
+}
+
+orig! {
+    /// `CCoronas::RegisterCorona-type` (0x6FC180)
+    pub fn register_corona_6fc180(id: u32, attach: GPtr<u8>, r: u32, g: u32, b: u32, a: u32, pos: GPtr<u8>, size: u32, range: u32, tex: u32, flare: u32, refl: u32, los: u32, trail: u32, normal_angle: u32, neon_fade: u32, pull: u32, full_bright: u32, fade_speed: u32, only_from_below: u32, refl_delay: u32) = cdecl 0x6FC180 => crate::mvpb_r1::register_corona_type;
+}
+
+orig! {
+    /// `CCoronas::UpdateCoronaCoors` (0x6FC4D0)
+    pub fn update_corona_coors(id: u32, pos: GPtr<u8>, range: u32, normal_angle: u32) = cdecl 0x6FC4D0 => crate::mvpb_r1::update_corona_coors;
+}
+
+orig! {
+    /// `CCoronas::RegisterCorona-texture` (0x6FC580)
+    pub fn register_corona(id: u32, attach: GPtr<u8>, r: u32, gg: u32, b: u32, a: u32, pos: GPtr<u8>, size: u32, range: u32, kind: u32, flare: u32, refl: u32, los: u32, trail: u32, angle: u32, neon: u32, pull: u32, bright: u32, fade: u32, below: u32, delay: u32) = cdecl 0x6FC580 => crate::mvpb_r1::register_corona_by_type;
 }
 
 orig! {
@@ -180,12 +310,17 @@ orig! {
 
 orig! {
     /// `CPostEffects::DrawQuad` (0x700EC0)
-    pub fn draw_quad(x0: u32, y0: u32, w: u32, h: u32, r: u32, gr: u32, b: u32, a: u32, raster: u32) = cdecl 0x700EC0 => unported;
+    pub fn draw_quad(x0: u32, y0: u32, w: u32, h: u32, r: u32, gr: u32, b: u32, a: u32, raster: u32) = cdecl 0x700EC0 => crate::postfx_speed_fx::draw_quad_bits;
 }
 
 orig! {
     /// `CPostEffects::HeatHazeFXInit` (0x701450)
     pub fn heat_haze_fx_init() = cdecl 0x701450 => crate::posteffects::heat_haze_fx_init;
+}
+
+orig! {
+    /// `CPostEffects::SetupBackBufferVertex` (0x7043D0)
+    pub fn setup_back_buffer_vertex() = cdecl 0x7043D0 => crate::posteffects::setup_back_buffer_vertex;
 }
 
 orig! {
@@ -214,13 +349,43 @@ orig! {
 }
 
 orig! {
+    /// `CShadows::StoreShadowToBeRendered-Texture` (0x707390)
+    pub fn store_shadow_to_be_rendered(ty: u32, tex: GPtr<u8>, pos: GPtr<u8>, fx: u32, fy: u32, sx: u32, sy: u32, r: u32, g: u32, b: u32, a: u32, zdist: u32, water: u32, scale: u32, rt: GPtr<u8>, buildings: u32) = cdecl 0x707390 => crate::mvpd_r1::store_shadow_to_be_rendered_tex;
+}
+
+orig! {
     /// `CShadows::SetRenderModeForShadowType` (0x707460)
     pub fn set_render_mode_for_shadow_type(ty: u32) = cdecl 0x707460 => crate::shadows::set_render_mode_for_shadow_type;
 }
 
 orig! {
+    /// `CShadows::CalcPedShadowValues` (0x7076C0)
+    pub fn calc_ped_shadow_values(sx: u32, sy: u32, sz: u32, a: GPtr<u8>, b: GPtr<u8>, c: GPtr<u8>, d: GPtr<u8>, e: GPtr<u8>, f: GPtr<u8>) = cdecl 0x7076C0 => unported;
+}
+
+orig! {
     /// `RenderBuffer::StopStoring` (0x7077A0)
     pub fn render_buffer_stop_storing() = cdecl 0x7077A0 => crate::shadows_render::render_buffer_stop_storing;
+}
+
+orig! {
+    /// `CShadows::AffectColourWithLighting` (0x707850)
+    pub fn affect_colour_with_lighting(ty: u32, light: u32, r: u32, gg: u32, b: u32, ro: GPtr<u8>, go: GPtr<u8>, bo: GPtr<u8>) = cdecl 0x707850 => crate::mvpb_r1::affect_colour_with_lighting;
+}
+
+orig! {
+    /// `CShadows::CastPlayerShadowSectorList<CPtrListSingleLink<CPhysical*>>` (0x70A470)
+    pub fn cast_player_shadow_sector_list(list: GPtr<u8>, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, a8: u32, a9: u32, a10: u32, a11: u32, a12: u32, a13: u32, a14: u32, a15: u32, a16: u32, a17: u32, a18: u32, a19: u32) = cdecl 0x70A470 => crate::mvpd_r1::cast_player_shadow_sector_list;
+}
+
+orig! {
+    /// `CShadows::StoreStaticShadow` (0x70BA00)
+    pub fn store_static_shadow(id: u32, ty: u32, tex: u32, pos: GPtr<u8>, fx: u32, fy: u32, sx: u32, sy: u32, intensity: u32, r: u32, gr: u32, b: u32, zd: u32, scale: u32, draw: u32, temp: u32, up: u32) -> u8 = cdecl 0x70BA00 => crate::mvpd_r1::store_static_shadow;
+}
+
+orig! {
+    /// `CSprite::FlushSpriteBuffer` (0x70CF20)
+    pub fn sprite_flush_sprite_buffer() = cdecl 0x70CF20 => crate::sprite::flush_sprite_buffer;
 }
 
 orig! {
@@ -239,13 +404,43 @@ orig! {
 }
 
 orig! {
+    /// `CBirds::CreateNumberOfBirds` (0x711EF0)
+    pub fn create_number_of_birds(sx: u32, sy: u32, sz: u32, tx: u32, ty: u32, tz: u32, count: i32, ty_: i32, check: u32) = cdecl 0x711EF0 => crate::mvpd_r2::create_number_of_birds;
+}
+
+orig! {
     /// `CBrightLights::RenderOutGeometryBuffer` (0x722150)
     pub fn bright_lights_render_out_geometry_buffer() = cdecl 0x722150 => unported;
 }
 
 orig! {
+    /// `CSprite2d::RenderVertexBuffer` (0x7273D0)
+    pub fn render_vertex_buffer() = cdecl 0x7273D0 => crate::sprite2d::render_vertex_buffer;
+}
+
+orig! {
+    /// `CSprite2d::SetVertices-CRectCRGBA4` (0x727420)
+    pub fn set_vertices_rect(rect: GPtr<u8>, c1: GPtr<u8>, c2: GPtr<u8>, c3: GPtr<u8>, c4: GPtr<u8>) = cdecl 0x727420 => crate::sprite2d::set_vertices_rect;
+}
+
+orig! {
+    /// `CSprite2d::SetVertices-ffffffffCRGBA` (0x727590)
+    pub fn set_vertices_quad_call(a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, c1: GPtr<u8>, c2: GPtr<u8>, c3: GPtr<u8>, c4: GPtr<u8>) = cdecl 0x727590 => crate::sprite2d::set_vertices_quad;
+}
+
+orig! {
     /// `CSprite2d::SetVertices-RwD3D9Vertex` (0x727A00)
     pub fn set_vertices_d3d9(v: GPtr<u8>, r: GPtr<u8>, c1: GPtr<u8>, c2: GPtr<u8>, c3: GPtr<u8>, c4: GPtr<u8>, u1: u32, v1: u32, u2: u32, v2: u32, u3: u32, v3: u32, u4: u32, v4: u32) = cdecl 0x727A00 => crate::sprite2d::set_vertices_d3d9;
+}
+
+orig! {
+    /// `CSprite2d::DrawRect-CRGBA` (0x727B60)
+    pub fn sprite_draw_rect(r: GPtr<u8>, c: GPtr<u8>) = cdecl 0x727B60 => crate::sprite2d::draw_rect;
+}
+
+orig! {
+    /// `CSprite2d::Draw2DPolygon` (0x7285B0)
+    pub fn sprite2d_draw_2d_polygon(x1: u32, y1: u32, x2: u32, y2: u32, x3: u32, y3: u32, x4: u32, y4: u32, colour: GPtr<u8>) = cdecl 0x7285B0 => crate::specialfx_render::draw_2d_polygon;
 }
 
 orig! {
@@ -256,6 +451,26 @@ orig! {
 orig! {
     /// `CWorldScan::ScanWorld` (0x72CAE0)
     pub fn world_scan(points: GPtr<u8>, n: i32, f: u32) = cdecl 0x72CAE0 => unported;
+}
+
+orig! {
+    /// `CCullZones::CamNoRain` (0x72DDB0)
+    pub fn cam_no_rain() -> u8 = cdecl 0x72DDB0 => crate::cullzones::cam_no_rain;
+}
+
+orig! {
+    /// `CCullZones::PlayerNoRain` (0x72DDC0)
+    pub fn player_no_rain() -> u8 = cdecl 0x72DDC0 => crate::cullzones::player_no_rain;
+}
+
+orig! {
+    /// `FUN_0072f4a0` (0x72F4A0)
+    pub fn lock_scratch_pad() = cdecl 0x72F4A0 => crate::collision_plugin_mi::lock_scratch_pad_port;
+}
+
+orig! {
+    /// `FUN_0072f4b0` (0x72F4B0)
+    pub fn release_scratch_pad() = cdecl 0x72F4B0 => crate::collision_plugin_mi::release_scratch_pad_port;
 }
 
 orig! {

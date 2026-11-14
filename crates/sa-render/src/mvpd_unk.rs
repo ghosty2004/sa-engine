@@ -15,9 +15,9 @@ use crate::common::{rd, wr, x};
 use sa_core::bindings::matrix_attach;
 use sa_core::bindings::matrix_set_rotate_z_only;
 use sa_core::bindings::matrix_set_translate;
-use sa_core::bindings::rp_atomic_clone;
+use sa_rwcore::bindings::rp_atomic_clone;
 use sa_core::bindings::rw_tex_dictionary_for_all_textures;
-use sa_core::bindings::rp_clump_add_atomic;
+use sa_rwcore::bindings::rp_clump_add_atomic;
 use sa_core::bindings::rp_atomic_set_frame;
 
 /// `CMatrix::CMatrix(RwMatrix*, bool owns)` (0x59C050, thiscall, `ret 8`): `m_pAttachMatrix` (+0x40) =

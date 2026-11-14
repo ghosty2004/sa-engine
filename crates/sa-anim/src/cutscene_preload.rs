@@ -46,6 +46,7 @@ use sa_core::bindings::strtok as crt_strtok;
 use sa_core::bindings::time_cycle_stop_extra_colour;
 use sa_core::bindings::request_special_model as streaming_request_special_model;
 use sa_core::bindings::streaming_request_model;
+use sa_core::bindings::crt_new_821195 as operator_new;
 orig! {
     /// `FindCutsceneAudioTrackId(const char*)` (0x5AFA50), AX (the caller pushes all of EAX)
     fn find_cutscene_audio_track_id(name: GPtr<u8>) -> u32 = cdecl 0x5AFA50 => crate::cutscene::find_cutscene_audio_track_id;
@@ -53,8 +54,6 @@ orig! {
     fn audio_preload_cutscene_track(e: GPtr<u8>, id: u32, b: u32) = thiscall 0x507E30 => unported;
     /// CRT `sprintf(buf, fmt, const char*)` (0x821BB5)
     fn crt_sprintf1(buf: GPtr<u8>, fmt: GPtr<u8>, s: GPtr<u8>) -> i32 = cdecl 0x821BB5 => unported;
-    /// CRT `operator new[]` (0x821195)
-    fn operator_new(n: u32) -> GPtr<u8> = cdecl 0x821195 => unported;
     /// CRT `sscanf` (0x8220AD) with three targets
     fn sscanf3(s: GPtr<u8>, fmt: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, c: GPtr<u8>) -> i32 = cdecl 0x8220AD => unported;
     /// CRT `sscanf` (0x8220AD) with four targets
@@ -258,8 +257,8 @@ pub fn cutscene_load_cutscene_data_preload() {
     crt_sprintf1(gp(G_STRING), gp(S_CUT_FMT), gp(NAME));
     let mut offset = 0u32;
     let mut size = 0u32;
-    if directory_find_item(g::<GPtr<u8>>(CUTSCENE_DIR).read(), gp(G_STRING), GPtr::from_raw(&mut offset),
-                           GPtr::from_raw(&mut size)) == 0
+    if u8::from(directory_find_item(GPtr::<u8>::cast::<sa_core::directory::CDirectory>(g::<GPtr<u8>>(CUTSCENE_DIR).read()), gp(G_STRING), GPtr::from_raw(&mut offset),
+                           GPtr::from_raw(&mut size))) == 0
     {
         load_cutscene_data_postload();
         return;
@@ -307,7 +306,7 @@ pub fn cutscene_load_cutscene_data_preload() {
                 m.write(1);
             } else if m.read() == 2 {
                 let mut idx = 0i32;
-                if !model_info_get_model_info(name, GPtr::<i32>::cast::<u8>(GPtr::from_raw(&mut idx))).is_null() {
+                if !model_info_get_model_info(name, GPtr::from_raw(&mut idx)).is_null() {
                     m.write(idx as u32);
                     streaming_request_model(idx, 0x1C);
                 } else {

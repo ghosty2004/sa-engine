@@ -21,7 +21,7 @@ const CB_OFFSCREEN: u32 = 0x4D2E10;
 use sa_core::bindings::get_first_atomic;
 use sa_core::bindings::rp_skin_geometry_get_skin;
 use sa_core::bindings::rw_frame_update_objects;
-use sa_core::bindings::uncompress_animation;
+use crate::bindings::uncompress_animation;
 use crate::bindings::clump_data_for_all_frames as for_all_frames;
 orig! {
     /// `CAnimBlendAssociation::UpdateBlend(float timeStep)` (0x4D1490), AL
@@ -45,7 +45,7 @@ fn update_key_frames_b(data: GPtr<u8>, frames: GPtr<u8>, n: i32) {
 /// The skinned test of the update: the clump's first atomic has a skinned geometry.
 fn is_skinned(clump: GPtr<u8>) -> bool {
     let a = get_first_atomic(clump);
-    !a.is_null() && !rp_skin_geometry_get_skin(rd::<GPtr<u8>>(a, 0x18)).is_null()
+    !a.is_null() && !GPtr::<u8>::from_addr(rp_skin_geometry_get_skin(rd::<GPtr<u8>>(a, 0x18)) as usize).is_null()
 }
 
 /// `RpAnimBlendClumpUpdateAnimations(RpClump*, float timeStep, bool onScreen)` (0x4D34F0, cdecl). The clump data

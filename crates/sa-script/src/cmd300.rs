@@ -55,16 +55,16 @@ const CAR_GENERATORS: usize = 0xC27AD0;
 const SCRIPT_HAS_FADED_OUT: usize = 0xA4448A;
 
 use crate::bindings::add_clock;
-use sa_world::bindings::camera_restore;
+use sa_cam::bindings::camera_restore;
 use crate::bindings::get_actual_blip_array_index;
 use crate::bindings::report_mission_audio_event;
 use crate::bindings::set_ammo;
 use sa_world::bindings::set_coord_blip;
 use sa_core::bindings::camera_set_fade_colour as set_fade_colour;
-use sa_core::bindings::entity_update_rw_frame as update_rw_frame;
-use sa_core::bindings::get_pad;
+use sa_world::bindings::entity_update_rw_frame as update_rw_frame;
+use sa_input::bindings::get_pad;
 use sa_stream::bindings::car_generator_switch_on;
-use sa_stream::bindings::ped_is_player;
+use sa_ped::bindings::ped_is_player;
 use sa_world::bindings::camera_get_fading as get_fading;
 use sa_world::bindings::change_blip_colour;
 use sa_world::bindings::change_blip_scale;
@@ -218,7 +218,7 @@ pub fn process_commands_300_to_399(s: Scr, command: u32) -> i8 {
         // zero-extended; GetPad's `add esp,4` leaves the other three pushes as StartShake's arguments).
         0x015B => {
             collect(s, 3);
-            let pad = get_pad(spi(0) as u32);
+            let pad = get_pad((spi(0) as u32) as i32);
             start_shake(pad, sp(1) & 0xFFFF, sp(2) & 0xFF, 0);
         }
         // 0158 POINT_CAMERA_AT_CAR (0x47C3F9): null vehicle -> nothing; TakeControl(veh, (u16)P1,
@@ -518,7 +518,7 @@ pub fn process_commands_300_to_399(s: Scr, command: u32) -> i8 {
             let (x, y) = (sp(0), sp(1));
             let z = ground_rule(x, y, sp(2));
             get_actual_blip_array_index(collect_next(s));
-            let h = set_coord_blip(4, f32::from_bits(x), f32::from_bits(y), f32::from_bits(z), sp(3), sp(4) as i8, s.byte_add(8));
+            let h = set_coord_blip(4, f32::from_bits(x), f32::from_bits(y), f32::from_bits(z), sp(3) as i32, (sp(4) as i8) as i32, s.byte_add(8));
             set_sp(0, h as u32);
             store(s, 1);
         }

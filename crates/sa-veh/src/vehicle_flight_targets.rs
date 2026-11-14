@@ -10,7 +10,7 @@ use sa_math::x87::X87;
 use crate::common::{b, g, rd, wr, x};
 
 use sa_core::bindings::get_atan_of_xy;
-use sa_core::bindings::get_pad;
+use sa_input::bindings::get_pad;
 use sa_pop::bindings::fire_fixed_machine_guns;
 use sa_world::bindings::pad_get_car_gun_fired;
 

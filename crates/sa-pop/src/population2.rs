@@ -89,30 +89,32 @@ fn pool_slot(pool: GPtr<u8>, i: i32, stride: i32) -> GPtr<u8> {
     objs.byte_add(i.wrapping_mul(stride) as isize)
 }
 
-pub use sa_core::bindings::entity_get_is_on_screen;
-pub use sa_core::bindings::entity_resolve_references;
+pub use sa_world::bindings::entity_get_is_on_screen;
+pub use sa_world::bindings::entity_resolve_references;
 pub use sa_core::bindings::streaming_request_model as request_model;
-pub use sa_core::bindings::world_add;
+pub use sa_world::bindings::world_add;
 pub use sa_stream::bindings::entity_is_visible;
 pub use sa_stream::bindings::is_object_glass as glass_is_object_glass;
 pub use sa_stream::bindings::object_can_be_deleted;
 pub use sa_stream::bindings::ped_is_player;
-pub use sa_stream::bindings::placeable_allocate_matrix;
+pub use sa_world::bindings::placeable_allocate_matrix;
 pub use sa_stream::bindings::simple_transform_update_matrix;
 pub use sa_world::bindings::entity_get_col_model;
 pub use sa_world::bindings::get_clump_alpha;
 pub use sa_world::bindings::ped_can_be_deleted;
 pub use sa_world::bindings::physical_add_to_moving_list;
 pub use crate::bindings::generate_peds_at_attractors as generate_peds_at_attractors_call;
-pub use sa_core::bindings::convert_to_dummy_object as convert_to_dummy_object_call;
+pub use crate::bindings::convert_to_dummy_object as convert_to_dummy_object_call;
 pub use sa_world::bindings::crt_floor;
 pub use sa_world::bindings::entity_get_bound_centre as entity_get_bound_centre_vec;
 pub use sa_world::bindings::entity_get_bound_centre_534290 as entity_get_bound_centre_ref;
 pub use sa_world::bindings::find_objects_kinda_colliding as world_find_objects_kinda_colliding;
-pub use sa_world::bindings::gang_war_fighting_going_on as gang_war_fighting_going_on_call;
+pub use crate::bindings::gang_war_fighting_going_on as gang_war_fighting_going_on_call;
 pub use sa_world::bindings::intel_get_task_hold;
-pub use sa_world::bindings::population_remove_ped as remove_ped_call;
+pub use crate::bindings::population_remove_ped as remove_ped_call;
 pub use sa_world::bindings::process_col_models;
+pub use sa_world::bindings::entity_get_is_touching;
+pub use crate::bindings::pdm_call as ped_creation_dist_multiplier_call;
 orig! {
     /// `CPopulation::ConvertToRealObject(CDummyObject*)` (0x614580)
     pub fn convert_to_real_object_call(d: GPtr<u8>) = cdecl 0x614580 => convert_to_real_object;
@@ -132,8 +134,6 @@ orig! {
     pub fn remove_peds_if_the_pool_gets_full_call() = cdecl 0x616300 => remove_peds_if_the_pool_gets_full;
     /// `CPopulation::GeneratePedsAtStartOfGame()` (0x615C90)
     pub fn generate_peds_at_start_of_game_call() = cdecl 0x615C90 => generate_peds_at_start_of_game;
-    /// `CPopulation::PedCreationDistMultiplier()` (0x6116C0), ST0 as f32 (exact: a value in [1, 1.5])
-    pub fn ped_creation_dist_multiplier_call() -> f32 = cdecl 0x6116C0 => pcdm_f32;
     /// `CPopulation::FindDummyDistForModel(int32)` (0x610ED0), ST0 as f32 (exact: 80 or 750)
     pub fn find_dummy_dist_for_model_call(m: i32) -> f32 = cdecl 0x610ED0 => fddfm_f32;
     /// `CPopulation::AddToPopulation(float, float, float, float)` (0x614720)
@@ -150,15 +150,8 @@ orig! {
     pub fn mi_as_atomic(mi: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x04 => unported;
     /// virtual slot 0x10 of a `CTask`: `GetTaskType()`
     pub fn task_get_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CEntity::GetIsTouching(const CVector&, float)` (0x5344B0)
-    pub fn entity_get_is_touching(e: GPtr<u8>, c: GPtr<f32>, r: f32) -> u8 = thiscall 0x5344B0 => unported;
     /// `CStreaming::GetDefaultCabDriverModel()` (0x407D50)
     pub fn get_default_cab_driver_model() -> i32 = cdecl 0x407D50 => unported;
-}
-
-/// `PedCreationDistMultiplier` as the f32 the `orig!` declaration returns.
-pub fn pcdm_f32() -> f32 {
-    crate::population::ped_creation_dist_multiplier().to_f32()
 }
 
 /// `FindDummyDistForModel` as the f32 the `orig!` declaration returns.
@@ -267,7 +260,7 @@ pub fn test_safe_for_real_object(d: GPtr<u8>) -> u8 {
                 if rd::<u16>(e, 0x2C) == scan.read() {
                     continue;
                 }
-                if entity_get_is_touching(e, GPtr::from_raw(centre.as_mut_ptr()), radius) == 0 {
+                if entity_get_is_touching(e, GPtr::<f32>::cast::<u8>(GPtr::from_raw(centre.as_mut_ptr())), radius) as u8 == 0 {
                     continue;
                 }
                 wr(e, 0x2C, scan.read());
@@ -468,17 +461,17 @@ pub fn manage_ped(ped: GPtr<u8>, centre: GPtr<u8>) {
         d = 0.0;
     }
     let mut far = false;
-    let m = x(ped_creation_dist_multiplier_call()).fmul_m(cam_gen_dist_multiplier()).fmul_m(65.0);
+    let m = x(ped_creation_dist_multiplier_call().to_f32()).fmul_m(cam_gen_dist_multiplier()).fmul_m(65.0);
     if !jp5(m, x(d)) {
         far = true;
     } else if rd::<u8>(ped, 0x470) & 0x40 == 0 {
-        let m = x(ped_creation_dist_multiplier_call()).fmul_m(cam_gen_dist_multiplier()).fmul_m(54.5);
+        let m = x(ped_creation_dist_multiplier_call().to_f32()).fmul_m(cam_gen_dist_multiplier()).fmul_m(54.5);
         if !jp5(m, x(d)) {
             far = true;
         }
     }
     if !far {
-        let m = x(ped_creation_dist_multiplier_call()).fmul_m(25.0);
+        let m = x(ped_creation_dist_multiplier_call().to_f32()).fmul_m(25.0);
         if jp5(m, x(d)) {
             let t = time_ms();
             let add = if rd::<i32>(ped, 0x598) == 6 { 10000 } else { 4000 };
@@ -663,7 +656,7 @@ fn update_totals(extra: u32) {
 
 /// `PedCreationDistMultiplier() * k` stored as an f32 argument.
 fn pcdm_times(k: f32) -> f32 {
-    x(ped_creation_dist_multiplier_call()).fmul_m(k).to_f32()
+    x(ped_creation_dist_multiplier_call().to_f32()).fmul_m(k).to_f32()
 }
 
 /// `CPopulation::GeneratePedsAtStartOfGame()` (0x615C90): 100 rounds of the totals (here the total is
@@ -688,9 +681,9 @@ pub fn generate_peds_at_start_of_game() {
 /// `m*25`, `m*25 - 10`, `m*cam*50.5`, `m*cam*42.5`.
 fn update_radii() -> (f32, f32, f32, f32) {
     let a = pcdm_times(25.0);
-    let b = x(ped_creation_dist_multiplier_call()).fmul_m(25.0).fsub_m(10.0).to_f32();
-    let c = x(ped_creation_dist_multiplier_call()).fmul_m(cam_gen_dist_multiplier()).fmul_m(50.5).to_f32();
-    let d = x(ped_creation_dist_multiplier_call()).fmul_m(cam_gen_dist_multiplier()).fmul_m(42.5).to_f32();
+    let b = x(ped_creation_dist_multiplier_call().to_f32()).fmul_m(25.0).fsub_m(10.0).to_f32();
+    let c = x(ped_creation_dist_multiplier_call().to_f32()).fmul_m(cam_gen_dist_multiplier()).fmul_m(50.5).to_f32();
+    let d = x(ped_creation_dist_multiplier_call().to_f32()).fmul_m(cam_gen_dist_multiplier()).fmul_m(42.5).to_f32();
     (a, b, c, d)
 }
 
@@ -758,7 +751,7 @@ use sa_core::field::pa as s;
 
 pub use sa_core::bindings::file_set_dir as set_dir;
 pub use sa_core::bindings::get_model_info;
-pub use sa_core::bindings::load_line;
+pub use sa_stream::bindings::load_line;
 pub use sa_world::bindings::la_riots_active_here;
 pub use sa_core::bindings::change_dir;
 orig! {
@@ -835,7 +828,7 @@ fn load_groups(file: usize, mut counts: GPtr<u16>, groups: GPtr<u16>, slots: i32
             let len = e - pos;
             strncpy(GPtr::from_raw(name.as_mut_ptr()), lp.byte_add(pos as isize), len as u32);
             name[len] = 0;
-            if !get_model_info(GPtr::from_raw(name.as_mut_ptr()), GPtr::<i32>::cast::<u8>(GPtr::from_raw(&mut idx))).is_null() {
+            if !get_model_info(GPtr::from_raw(name.as_mut_ptr()), GPtr::from_raw(&mut idx)).cast::<u8>().is_null() {
                 groups.wrapping_index(row + count).write(idx as u16);
                 count += 1;
             }
@@ -1129,11 +1122,10 @@ pub use sa_world::bindings::ped_mi_can_be_created_at_this_attractor;
 pub use sa_core::bindings::matrix_mul_vec;
 pub use sa_stream::bindings::get_default_cop_model;
 pub use sa_world::bindings::find_objects_in_range as world_find_objects_in_range;
+pub use crate::bindings::choose_civilian_occupation as choose_civilian_occupation_call;
 orig! {
     /// `CEntity::GetRandom2dEffect(int32 type, bool mustBeFree)` (0x533410)
     pub fn entity_get_random_2d_effect(e: GPtr<u8>, ty: i32, free: u8) -> GPtr<u8> = thiscall 0x533410 => unported;
-    /// `CPopulation::ChooseCivilianOccupation(bool, bool, int32, int32, int32, bool, bool, bool, const char*)` (0x612F90)
-    pub fn choose_civilian_occupation_call(male: u8, female: u8, race: i32, exclude: i32, stat: i32, a: u8, b: u8, c: u8, name: GPtr<u8>) -> i32 = cdecl 0x612F90 => choose_civilian_occupation;
     /// `CPopulation::AddPedAtAttractor(int32, C2dEffect*, CVector, CEntity*, int32)` (0x614210)
     pub fn add_ped_at_attractor(mi: i32, eff: GPtr<u8>, px: f32, py: f32, pz: f32, ent: GPtr<u8>, dm: i32) -> u8 = cdecl 0x614210 => unported;
 }
@@ -1220,7 +1212,7 @@ pub fn generate_peds_at_attractors(
                 }
                 let mut out = [0f32; 3];
                 let lp: GPtr<f32> = GPtr::from_raw(local.as_mut_ptr()).cast();
-                let w = matrix_mul_vec(GPtr::from_raw(out.as_mut_ptr()), rd(e, 0x14), lp.cast::<u8>());
+                let w = GPtr::<u8>::cast::<f32>(matrix_mul_vec(GPtr::<f32>::cast::<u8>(GPtr::from_raw(out.as_mut_ptr())), rd(e, 0x14), lp.cast::<u8>()));
                 let wp = [w.cast::<u32>().read(), w.cast::<u32>().wrapping_index(1).read(), w.cast::<u32>().wrapping_index(2).read()];
                 local = wp;
                 let dx = x(px).fsub_m(f32::from_bits(local[0]));
@@ -1306,7 +1298,7 @@ pub fn random_gang_size() -> i32 {
     ftol32(v).wrapping_add(min)
 }
 
-pub use sa_core::bindings::set_model_is_deletable;
+pub use sa_stream::bindings::set_model_is_deletable;
 pub use sa_core::bindings::set_model_txd_is_deletable;
 
 /// `CPopulation::FindSpecificDriverModelForCar_ToUse(int32 carModel)` (0x611900): the driver of the special
@@ -1579,8 +1571,8 @@ pub fn choose_civilian_occupation_for_vehicle(male: u8, veh: GPtr<u8>) -> i32 {
 
 pub use sa_world::bindings::compute_target_door_to_enter_as_passenger;
 pub use crate::bindings::choose_gang_ped_model as choose_gang_ped_model_call;
-pub use sa_world::bindings::add_ped as add_ped_call;
-pub use sa_world::bindings::population_update_ped_count as update_ped_count_call;
+pub use crate::bindings::add_ped as add_ped_call;
+pub use crate::bindings::population_update_ped_count as update_ped_count_call;
 orig! {
     /// `CPopulation::FindSpecificDriverModelForCar_ToUse(int32)` (0x611900)
     pub fn find_specific_driver_model_for_car_to_use_call(car: i32) -> i32 = cdecl 0x611900 => find_specific_driver_model_for_car_to_use;

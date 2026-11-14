@@ -11,7 +11,7 @@ use sa_core::mem::GPtr;
 use sa_core::hook;
 use sa_math::x87::{Cmp, X87};
 
-use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference as clean_up_old_reference;
 use sa_core::bindings::entity_register_reference as register_reference;
 use sa_world::bindings::get_actual_script_thing_index;
 
@@ -34,7 +34,7 @@ fn clean_up_entity(l: GPtr<u8>) {
     let slot = l.byte_add(0x48);
     let e = slot.cast::<GPtr<u8>>().read();
     if !e.is_null() {
-        clean_up_old_reference(e, slot.cast::<GPtr<u8>>());
+        clean_up_old_reference(e, slot.cast::<u8>());
     }
 }
 

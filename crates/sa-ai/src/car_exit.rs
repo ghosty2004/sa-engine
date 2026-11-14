@@ -12,7 +12,7 @@ use sa_math::x87::Cmp;
 use crate::common::*;
 
 use sa_world::bindings::anim_blend_animation;
-use sa_core::bindings::assoc_set_finish_callback as anim_set_finish_callback;
+use sa_anim::bindings::assoc_set_finish_callback as anim_set_finish_callback;
 use crate::bindings::car_drive_timed_ctor;
 use crate::bindings::car_enter_exit_car_has_door_to_open;
 use crate::bindings::car_enter_exit_remove_car_sit_anim;
@@ -29,7 +29,7 @@ use sa_world::bindings::ped_placement_find_z_coor_for_ped;
 use crate::bindings::ped_replace_weapon_when_exiting_vehicle;
 use crate::bindings::ped_update_stat_leaving_vehicle;
 use crate::bindings::simple_die_ctor as simple_die_ctor1;
-use sa_core::bindings::vehicle_anim_group_get_group;
+use sa_anim::bindings::vehicle_anim_group_get_group;
 use crate::bindings::vehicle_clear_getting_out_flags;
 use sa_core::bindings::car_set_ped_out_dtor;
 use sa_core::bindings::car_set_ped_out_process_ped as car_set_ped_out_process_ped_orig;
@@ -51,7 +51,7 @@ use sa_world::bindings::world_process_vertical_line;
 use crate::bindings::car_set_ped_out_position_ped_out_of_collision;
 use crate::bindings::close_door_from_outside_ctor;
 use sa_core::bindings::car_set_ped_out_ctor;
-use sa_world::bindings::tm_set_task as task_manager_set_task;
+use crate::bindings::tm_set_task as task_manager_set_task;
 orig! {
     // ---- virtual slots ----
     /// `CTask::GetTaskType` (vtable +0x10)
@@ -133,7 +133,7 @@ pub fn car_get_out_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
     let (grp, anim) = (rd::<u32>(p, 0), rd::<u32>(p, 4));
     let a = anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), grp, anim, f32::from_bits(0x447A_0000));
     wr::<GPtr<u8>>(this, 0xC, a);
-    anim_set_finish_callback(a, 0x647480, GPtr::from_addr((this.addr() as u32) as usize));
+    anim_set_finish_callback(a, 0x647480, GPtr::<u8>::addr(GPtr::from_addr((this.addr() as u32) as usize)) as u32);
 }
 
 /// `CTaskSimpleCarGetOut::ProcessPed(CPed*)` (0x64DC70). No vehicle (+0x14): true. Finished (+8): when the
@@ -233,7 +233,7 @@ pub fn car_jump_out_set_ped_position(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     let mut pos = [rd::<u32>(src, 0), rd::<u32>(src, 4), rd::<u32>(src, 8)];
     let pp = buf(&mut pos);
     g::<u32>(0xB7CD68).write(rd::<u32>(this, 0x10));
-    ped_placement_find_z_coor_for_ped(pp);
+    ped_placement_find_z_coor_for_ped(pp.cast::<f32>());
     g::<u32>(0xB7CD68).write(0);
     let v = rd::<GPtr<u8>>(this, 0x10);
     let rate = if rd::<i32>(v, 0x590) == 9 || rd::<i32>(v, 0x594) == 2 {
@@ -292,7 +292,7 @@ pub fn car_jump_out_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
     let (grp, anim) = (rd::<u32>(p, 0), rd::<u32>(p, 4));
     let a = anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), grp, anim, f32::from_bits(0x4100_0000));
     wr::<GPtr<u8>>(this, 0xC, a);
-    anim_set_finish_callback(a, 0x647700, GPtr::from_addr((this.addr() as u32) as usize));
+    anim_set_finish_callback(a, 0x647700, GPtr::<u8>::addr(GPtr::from_addr((this.addr() as u32) as usize)) as u32);
 }
 
 /// `CTaskSimpleCarWaitToSlowDown::ProcessPed(CPed*)` (0x646AD0). No vehicle (+8) or mode (+0x10) 2: true.
@@ -889,7 +889,7 @@ pub fn car_set_ped_out_position_ped_out_of_collision_port(ped: GPtr<u8>, veh: GP
         let y = f32_of(x(rd::<f32>(p, 4))).to_bits();
         let z = x(rd::<f32>(p, 8));
         let z = f32_of(if up { z.fadd_m(dz) } else { z.fsub_m(dz) }).to_bits();
-        let e = world_test_sphere_against_world(f32::from_bits(rd::<u32>(p, 0)), f32::from_bits(y), f32::from_bits(z), f32::from_bits(0x3ECC_CCCD), veh, 1, 1, 0, 0, 0, 0);
+        let e = world_test_sphere_against_world(sa_math::vector::CVector::new(f32::from_bits(rd::<u32>(p, 0)), f32::from_bits(y), f32::from_bits(z)), f32::from_bits(0x3ECC_CCCD), veh.addr() as u32, 1, 1, 0, 0, 0, 0);
         if !e.is_null() && e != rd::<GPtr<u8>>(veh, 0xFC) {
             hit = true;
         }
@@ -995,7 +995,7 @@ pub fn leave_car_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8>
                 ped_set_ped_state(ped, 0);
                 return c(0x32E);
             }
-            if car_enter_exit_is_room_for_ped_to_leave_car(veh(), rd::<u32>(this, 0x10), GPtr::NULL) == 0 {
+            if car_enter_exit_is_room_for_ped_to_leave_car(veh(), rd::<u32>(this, 0x10) as i32, GPtr::NULL) == 0 {
                 let v = veh();
                 let bike_or_bit9 =
                     || rd::<i32>(v, 0x590) == 9 || (rd::<u32>(rd::<GPtr<u8>>(v, 0x384), 0xCC) >> 9) & 1 != 0;
@@ -1027,7 +1027,7 @@ pub fn leave_car_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8>
                     }
                     _ => 0,
                 };
-                if car_enter_exit_is_room_for_ped_to_leave_car(veh(), alt, GPtr::NULL) == 0 {
+                if car_enter_exit_is_room_for_ped_to_leave_car(veh(), alt as i32, GPtr::NULL) == 0 {
                     return force(this);
                 }
                 let v = veh();

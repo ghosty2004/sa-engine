@@ -61,11 +61,9 @@ mod k {
 pub use sa_core::bindings::file_close;
 pub use sa_core::bindings::file_set_dir;
 pub use sa_core::bindings::open_file as file_open;
-pub use sa_core::bindings::load_line;
+pub use sa_stream::bindings::load_line;
+pub use sa_core::bindings::get_surface_id_from_name as get_surface_id_from_name_call;
 orig! {
-    /// `SurfaceInfos_c::GetSurfaceIdFromName` (0x55D220)
-    pub fn get_surface_id_from_name_call(this: SiPtr, name: GPtr<u8>) -> u32
-        = thiscall 0x55D220 => get_surface_id_from_name;
     /// `SurfaceInfos_c::LoadAdhesiveLimits` (0x55D0E0)
     pub fn load_adhesive_limits_call(this: SiPtr) = thiscall 0x55D0E0 => load_adhesive_limits;
     /// `SurfaceInfos_c::LoadSurfaceInfos` (0x55EB90)
@@ -449,7 +447,7 @@ pub fn load_surface_infos(this: SiPtr) {
             }
             t[35] = GPtr::from_raw(bullet.as_mut_ptr());
             sscanf_n(line, s(0x864D48), &t);
-            let id = get_surface_id_from_name_call(this, GPtr::from_raw(name.as_mut_ptr()));
+            let id = get_surface_id_from_name_call(this.cast::<crate::collision::surface::SurfaceInfos>().cast::<u8>(), GPtr::from_raw(name.as_mut_ptr()));
             let f1 = entry::<u32>(this, id, 0x94);
             // adhesion group (bits 0-2)
             for (lit, v) in [
@@ -558,7 +556,7 @@ pub fn load_surface_audio_infos(this: SiPtr) {
                 t[1 + k] = lp(v);
             }
             sscanf_n(line, s(0x864DC8), &t);
-            let id = get_surface_id_from_name_call(this, GPtr::from_raw(name.as_mut_ptr()));
+            let id = get_surface_id_from_name_call(this.cast::<crate::collision::surface::SurfaceInfos>().cast::<u8>(), GPtr::from_raw(name.as_mut_ptr()));
             let f2 = entry::<u32>(this, id, 0x98);
             let mut g = f2.read();
             for (k, v) in d.iter().enumerate() {

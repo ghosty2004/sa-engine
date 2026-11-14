@@ -85,19 +85,7 @@ pub fn is_in_air(ped: GPtr<u8>) -> u32 {
     ) != 0;
     if !hit && !falling {
         pos[2] = x(pos[2]).fsub_m(1.0).to_f32();
-        let e = world_test_sphere_against_world(
-            f32::from_bits(pos[0].to_bits()),
-            f32::from_bits(pos[1].to_bits()),
-            f32::from_bits(pos[2].to_bits()),
-            f32::from_bits(0x3E19_999A),
-            ped,
-            1,
-            0,
-            0,
-            0,
-            0,
-            0,
-        );
+        let e = world_test_sphere_against_world(sa_math::vector::CVector::new(f32::from_bits(pos[0].to_bits()), f32::from_bits(pos[1].to_bits()), f32::from_bits(pos[2].to_bits())), f32::from_bits(0x3E19_999A), ped.addr() as u32, 1, 0, 0, 0, 0, 0);
         if !e.is_null() {
             hit = true;
         }
@@ -277,7 +265,7 @@ pub fn is_wander_path_clear(a: GPtr<f32>, b: GPtr<f32>, max_height_diff: f32, ma
     if n == 0 {
         return 4;
     }
-    vector_normalise(fp(&mut d));
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(fp(&mut d)));
     let mut cp = [0u32; 0x2C / 4];
     let mut i = 1;
     while i < n {
@@ -447,7 +435,7 @@ fn clear_target_pass(ped: GPtr<u8>, pp: GPtr<f32>, list: GPtr<GPtr<u8>>, out: GP
             x(out.wrapping_index(1).read()).fsub_m(pp.wrapping_index(1).read()).to_f32(),
             x(out.wrapping_index(2).read()).fsub_m(pp.wrapping_index(2).read()).to_f32(),
         ];
-        vector_normalise(fp(&mut u));
+        vector_normalise(GPtr::<u8>::cast::<[f32;3]>(fp(&mut u)));
         let s = x(g::<f32>(K_CLEAR_MARGIN).read()).fadd_m(*dist);
         let sx = x(u[0]).fmul(s);
         let sy = x(u[1]).fmul(s).to_f32();
@@ -539,7 +527,7 @@ pub fn compute_clear_target(ped: GPtr<u8>, target: GPtr<f32>, out: GPtr<f32>) {
         x(pp.wrapping_index(1).read()).fsub_m(out.wrapping_index(1).read()).to_f32(),
         x(pp.wrapping_index(2).read()).fsub_m(out.wrapping_index(2).read()).to_f32(),
     ];
-    vector_normalise(fp(&mut u));
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(fp(&mut u)));
     let m = g::<f32>(K_CLEAR_MARGIN).read();
     for v in &mut u {
         *v = x(*v).fmul_m(m).to_f32();

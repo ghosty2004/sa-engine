@@ -92,19 +92,18 @@ const PED_ZOOM: isize = 0xC8;
 pub use sa_core::bindings::rw_camera_set_near_clip_plane as set_near_clip_raw;
 pub use sa_core::bindings::vector_magnitude;
 pub use sa_stream::bindings::animate_ped_col_model_skinned_world;
-pub use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
+pub use sa_world::bindings::placeable_allocate_matrix as allocate_matrix;
 pub use sa_stream::bindings::simple_transform_update_matrix;
 pub use sa_world::bindings::entity_get_col_model as get_col_model;
 pub use sa_world::bindings::get_task_jet_pack;
 pub use sa_world::bindings::get_task_swim;
 pub use sa_world::bindings::get_using_parachute;
-pub use sa_core::bindings::vector_sub;
+pub use sa_world::bindings::vector_sub;
 pub use crate::bindings::cone_cast_collision_resolve as cone_cast_collision_resolve_raw;
 pub use crate::bindings::get_rough_distance_to_ground;
 pub use sa_world::bindings::get_water_level as get_water_level_raw;
+pub use sa_world::bindings::min_f;
 orig! {
-    /// `std::min<float>(a, b)` instance (0x404330, ST0): `b` unless `a < b`
-    pub fn min_f(a: f32, b: f32) -> f64 = cdecl 0x404330 => min_f_port;
     /// `CCollision::CheckPeds(const CVector& pos, const CVector& dir, float& t)` (0x4154A0, AL)
     pub fn check_peds(pos: GPtr<f32>, dir: GPtr<f32>, t: GPtr<f32>) -> u8 = cdecl 0x4154A0 => sa_world::collision::misc::check_peds;
 }
@@ -112,15 +111,6 @@ orig! {
 /// Phase B path of `get_rough_distance_to_ground` (ST0 as f64).
 pub fn get_rough_distance_to_ground_st0(this: GPtr<u8>) -> f64 {
     crate::camctl::get_rough_distance_to_ground(this).to_f64()
-}
-
-/// Phase B path of `min_f` (0x404330): `fld a; fcomp b; test ah,5; jp` -> `b`, else `a`.
-pub fn min_f_port(a: f32, b: f32) -> f64 {
-    if jp(x(a), x(b), 0x05) {
-        f64::from(b)
-    } else {
-        f64::from(a)
-    }
 }
 
 /// Phase B path of `cone_cast_collision_resolve_raw`.
@@ -203,7 +193,7 @@ pub fn improve_near_clip(this: GPtr<u8>, veh: GPtr<u8>, ped: GPtr<u8>, source: G
         let kind = rd::<u32>(veh, 0x594);
         if kind == 4 || kind == 3 {
             if !jne(x(CUR_DIST_FOR_CAM.get()), x(INC_AIR_MIN_CUR_DIST.get()), 0x41) {
-                let gh = X87::from_f64_exact(calculate_ground_height(this, 0));
+                let gh = X87::from_f64_exact(calculate_ground_height(this, 0).to_f64());
                 let above = x(rd::<f32>(active_cam(this), 0x1A4)).fsub(gh);
                 if !jne(above, x(INC_HIGH_ABOVE_GROUND.get()), 0x41) {
                     let cam = SCENE_CAMERA.get();
@@ -282,7 +272,7 @@ fn ped_not_standing(this: GPtr<u8>, ped: GPtr<u8>, source: GPtr<u8>, target: GPt
     let a = X87::from_f64_exact(vector_magnitude(d.cast::<u32>()))
         .fmul_m(INC_JETPACK_DIST_SCALE.get())
         .to_f32();
-    let l = X87::from_f64_exact(min_f(a, b));
+    let l = X87::from_f64_exact(min_f(a.to_bits(), b.to_bits()).to_f64());
     let l32 = l.to_f32(); // fst [esp+0x34]
     let cam = SCENE_CAMERA.get();
     let near = x(rd::<f32>(cam, RW_CAM_NEAR));

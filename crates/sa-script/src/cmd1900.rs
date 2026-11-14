@@ -41,13 +41,13 @@ const K_DEG2RAD: u32 = 0x3C8E_FA35;
 use sa_world::bindings::object_get_ref_;
 use crate::bindings::scripted_task_status;
 use sa_core::bindings::crt_strncpy as strncpy_;
-use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference as clean_up_old_reference;
 use sa_core::bindings::entity_register_reference as register_reference;
-use sa_core::bindings::get_weapon_info;
+use sa_weapon::bindings::get_weapon_info;
 use sa_core::bindings::make_upper_case;
-use sa_core::bindings::matrix_dtor;
-use sa_core::bindings::task_new;
-use sa_world::bindings::clothes_desc_set_texture_and_model as set_texture_and_model;
+use sa_world::bindings::matrix_dtor;
+use sa_ai::bindings::task_new;
+use sa_ped::bindings::clothes_desc_set_texture_and_model as set_texture_and_model;
 use sa_world::bindings::find_zone_by_label;
 use sa_world::bindings::flush_immediately;
 use sa_world::bindings::get_modelling_matrix;
@@ -65,7 +65,7 @@ use sa_world::bindings::use_sequence_ctor as task_use_sequence_ctor;
 use crate::bindings::give_ped_scripted_task;
 use crate::bindings::read_label;
 use crate::bindings::vehicle_get_ref;
-use sa_core::bindings::get_pad;
+use sa_input::bindings::get_pad;
 use sa_core::bindings::quat_get as quaternion_get;
 use sa_core::bindings::quaternion_set;
 use sa_stream::bindings::find_ipl_slot;
@@ -79,6 +79,7 @@ use sa_world::bindings::heading_task_ctor as task_slide_to_coord_ctor;
 use sa_world::bindings::kill_ped_on_foot_ctor as task_kill_ped_on_foot_ctor;
 use sa_world::bindings::ped_get_ref as ped_get_ref_;
 use sa_world::bindings::placeable_set_posn;
+use sa_world::bindings::seek_entity_standard_ctor as task_seek_entity_ctor;
 orig! {
     /// A virtual `CVehicle` method without arguments (thiscall through the vtable slot read at run time)
     fn vcall0(f: u32, this: GPtr<u8>) = thiscall dyn => unported;
@@ -90,10 +91,6 @@ orig! {
     fn release_one_mission_train(t: GPtr<u8>) = cdecl 0x6F5DF0 => unported;
     /// `CBaseModelInfo` virtual slot 0x10 (`GetModelType()`), AL
     fn model_info_type(mi: GPtr<u8>) -> u8 = thiscall vslot 0x10 => unported;
-    /// `CTaskComplexSeekEntity<CEntitySeekPosCalculatorStandard>::CTaskComplexSeekEntity(CEntity*, int32 time,
-    /// int32 scanInterval, float, float, float, bool, bool)` (0x46AC10); floats raw
-    #[allow(clippy::too_many_arguments)]
-    fn task_seek_entity_ctor(t: GPtr<u8>, e: GPtr<u8>, time: u32, scan: u32, a: u32, b: u32, c: u32, d: u32, e2: u32) -> GPtr<u8> = thiscall 0x46AC10 => unported;
     fn remove_ipl_when_far_away(slot: u32) = cdecl 0x4058D0 => unported;
     /// `CAcquaintance::ClearAcquaintances(int32)` (0x6089A0)
     fn clear_acquaintances(a: GPtr<u8>, ty: u32) = thiscall 0x6089A0 => unported;
@@ -266,7 +263,7 @@ pub fn process_commands_1900_to_1999(s: Scr, command: u32) -> i8 {
             let task = new_task(0x4C, |k| {
                 let a = GPtr::<u32>::from_addr(0x859E34).read();
                 let b = GPtr::<u32>::from_addr(0x859E30).read();
-                task_seek_entity_ctor(k, v, t, 1000, p3, b, a, 1, 1)
+                task_seek_entity_ctor(k, v, t, 1000, f32::from_bits(p3), b, a, 1, 1)
             });
             give_ped_scripted_task(s, p0 as i32, task, command);
         }
@@ -349,7 +346,7 @@ pub fn process_commands_1900_to_1999(s: Scr, command: u32) -> i8 {
             collect(s, 4);
             let (a, b, c) = (sp(1), sp(2), sp(3));
             let d = player_info(sp(0)).byte_add(8).cast::<GPtr<u8>>().read();
-            set_texture_and_model(d, a, b, c);
+            set_texture_and_model(d, a, b, c as i32);
         }
         // 0786 GET_NUMBER_OF_FIRES_IN_AREA (0x46BA33)
         0x0786 => number_of_fires_in_area(s),
@@ -745,7 +742,7 @@ pub fn process_commands_1900_to_1999(s: Scr, command: u32) -> i8 {
         0x07CC => {
             collect(s, 2);
             let on = sp(1) != 0;
-            get_pad(sp(0)).byte_add(0x119).write(u8::from(!on));
+            get_pad(sp(0) as i32).byte_add(0x119).write(u8::from(!on));
         }
         // 07CD TASK_CHAR_SLIDE_TO_COORD (0x46CA88)
         0x07CD => task_char_slide_to_coord(s, command),
@@ -777,7 +774,7 @@ fn heli_keep_entity_in_view(s: Scr) {
     let field = h.byte_add(0x41C);
     let old = field.cast::<GPtr<u8>>().read();
     if !old.is_null() {
-        clean_up_old_reference(old, field.cast::<GPtr<u8>>());
+        clean_up_old_reference(old, field.cast::<u8>());
     }
     field.cast::<GPtr<u8>>().write(e);
     register_reference(e, field);

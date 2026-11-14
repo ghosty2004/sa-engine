@@ -83,14 +83,14 @@ use crate::bindings::free_list_destroy;
 use crate::bindings::rp_world_sector_register_plugin as sector_register_plugin_call;
 use crate::bindings::rp_world_sector_register_plugin_stream as sector_register_plugin_stream_call;
 use crate::bindings::rw_engine_register_plugin as engine_register_plugin;
-use sa_core::bindings::clump_register_plugin;
-use sa_core::bindings::rp_atomic_register_plugin as atomic_register_plugin;
-use sa_core::bindings::rp_atomic_register_plugin_stream as atomic_register_plugin_stream;
-use sa_core::bindings::rp_geometry_register_plugin as geometry_register_plugin;
-use sa_core::bindings::rp_geometry_register_plugin_stream as geometry_register_plugin_stream;
-use sa_core::bindings::rp_material_register_plugin as material_register_plugin;
-use sa_core::bindings::rp_material_register_plugin_stream as material_register_plugin_stream;
-use sa_core::bindings::rw_frame_update_objects as frame_update_objects;
+use crate::bindings::clump_register_plugin;
+use crate::bindings::rp_atomic_register_plugin as atomic_register_plugin;
+use crate::bindings::rp_atomic_register_plugin_stream as atomic_register_plugin_stream;
+use crate::bindings::rp_geometry_register_plugin as geometry_register_plugin;
+use crate::bindings::rp_geometry_register_plugin_stream as geometry_register_plugin_stream;
+use crate::bindings::rp_material_register_plugin as material_register_plugin;
+use crate::bindings::rp_material_register_plugin_stream as material_register_plugin_stream;
+use crate::bindings::rw_frame_update_objects as frame_update_objects;
 orig! {
     /// `RpWorldRegisterPlugin` (0x74FCD0)
     fn world_register_plugin_call(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x74FCD0 => rp_world_register_plugin;
@@ -681,7 +681,7 @@ orig! {
     fn call_camera_update(f: u32, camera: GPtr<u8>) -> GPtr<u8> = cdecl dyn => unported;
 }
 
-use sa_core::bindings::frame_get_ltm;
+use crate::bindings::frame_get_ltm;
 orig! {
     /// The camera's previous frame-sync callback (world extension +0x18)
     fn call_camera_sync(f: u32, camera: GPtr<u8>) -> GPtr<u8> = cdecl dyn => unported;
@@ -751,7 +751,7 @@ pub fn world_camera_sync(camera: GPtr<u8>) -> GPtr<u8> {
                     if n.is_null() {
                         let mut e = crate::common::RwError { plugin_id: 2, error_code: 0 };
                         e.error_code = crate::common::rw_error2(0x8000_0013, size) as i32;
-                        crate::common::rw_error_set(GPtr::from_raw(&mut e));
+                        crate::common::rw_error_set(GPtr::from_raw(&mut e).cast::<crate::common::RwError>().cast::<u8>());
                         failed = true;
                     } else {
                         wr::<u32>(ext, 0, n.addr() as u32);

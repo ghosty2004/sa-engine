@@ -38,7 +38,10 @@ EXCLUDE_CLASS = re.compile(r'^(CAEAudioChannel|CAEStaticChannel|CAEStreamingChan
                            r'CAE\w*Decoder|CAEDataStream\w*|CAESmoothFadeThread|CAEMFDecoder)$')
 # CAEAudioHardware::Service (determinism hook), the thread Starts (patched ResumeThread sites),
 # CAEAudioUtility::GetCurrentTimeInMS (patched QPC site), AudioLog10 (x87 fyl2x, waits for the X87 branch).
-EXCLUDE_ADDR = {0x4D9870, 0x4F11F0, 0x4EEA10, 0x4D9E80, 0x4D9E50}
+# The user-track player (vt_866db0: Destructor 0x59CB70, Play 0x59CD50) decodes the player's own audio files and
+# 0x4F4620 writes the user-tracks file: sound decoding and OS file output stay original like the decoders
+# (catalog/state.csv: specified, "not-ported"; DEDUP-1 pass 2).
+EXCLUDE_ADDR = {0x4D9870, 0x4F11F0, 0x4EEA10, 0x4D9E80, 0x4D9E50, 0x59CB70, 0x59CD50, 0x4F4620}
 # PORT-AUDIO-1 ports reached through orig! only (docs/arch/audio-port.md "Not hooked").
 PORTED_UNHOOKED = {0x4D9E10, 0x4E37B0, 0x4EF880, 0x4E44F0, 0x4E4600, 0x4F4FF0, 0x4F6000, 0x4F5F30,
                    0x4F5D00, 0x4F5C60, 0x4F60B0, 0x4F6150, 0x4F51F0, 0x4F53D0, 0x4FA0C0, 0x4F8DF0}

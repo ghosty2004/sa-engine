@@ -14,7 +14,7 @@ use super::common::{ftol32, g, rd, x, xi};
 use crate::bindings::crt_ceil;
 use crate::bindings::update_fat_and_muscle_stats;
 use sa_core::bindings::display_script_stat_update_message;
-use sa_core::bindings::stats_increment_stat;
+use crate::bindings::stats_increment_stat;
 
 /// `fild` of an unsigned dword (`+ 2^32` when the sign bit is set, 0x858C54).
 fn u2f(v: u32) -> X87 {

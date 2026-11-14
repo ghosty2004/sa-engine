@@ -153,13 +153,10 @@ pub use sa_core::bindings::rp_atomic_destroy;
 pub use sa_core::bindings::rp_atomic_set_frame;
 pub use sa_core::bindings::rw_frame_destroy;
 pub use sa_core::bindings::get_uppercase_key;
+pub use sa_core::bindings::base_model_info_set_col_model as set_col_model;
+pub use sa_core::bindings::get_model_info as get_model_info_call;
+pub use crate::bindings::mi_set_tex_dictionary as set_tex_dictionary;
 orig! {
-    /// `CModelInfo::GetModelInfo(const char*, int32*)` (0x4C5940)
-    pub fn get_model_info_call(name: GPtr<u8>, idx: GPtr<i32>) -> MiPtr = cdecl 0x4C5940 => get_model_info_full;
-    /// `CBaseModelInfo::SetColModel` (0x4C4BC0)
-    pub fn set_col_model(this: MiPtr, col: GPtr<u8>, owns: u32) = thiscall 0x4C4BC0 => super::base::set_col_model;
-    /// `CBaseModelInfo::SetTexDictionary` (0x4C4B40)
-    pub fn set_tex_dictionary(this: MiPtr, name: GPtr<u8>) = thiscall 0x4C4B40 => super::base::set_tex_dictionary;
     /// `CBaseModelInfo::Init2dEffects` (0x4C4C20)
     pub fn init_2d_effects(this: MiPtr) = thiscall 0x4C4C20 => super::base::init_2d_effects;
     /// `CBaseModelInfo` Shutdown vcall thunk (0x4C6200)
@@ -272,7 +269,7 @@ pub fn get_model_info_uint16(name: GPtr<u8>, out: GPtr<u16>) -> MiPtr {
     if !out.is_null() {
         out.write(idx as u16);
     }
-    m
+    m.cast::<crate::shared::CBaseModelInfo>()
 }
 
 /// `CModelInfo::Get2dEffectStore` (0x4C5A60): `&ms_2dFXInfoStore`.
@@ -460,8 +457,8 @@ pub fn initialise() {
         }
         vcall_init(p);
         model_info_slot(FIRST_TEMP_MODEL + k).write(p);
-        set_col_model(p, GPtr::from_addr((TEMP_COL_MODELS + 0x30 * k as u32) as usize), 0);
-        set_tex_dictionary(p, GPtr::from_addr(STR_GENERIC as usize));
+        set_col_model(p.cast::<crate::shared::CBaseModelInfo>().cast::<u8>(), GPtr::from_addr((TEMP_COL_MODELS + 0x30 * k as u32) as usize), 0);
+        set_tex_dictionary(p.cast::<crate::shared::CBaseModelInfo>(), GPtr::from_addr(STR_GENERIC as usize));
         if k > 0 {
             f::<u32>(p, mi::DRAW_DISTANCE).write(0x42A0_0000);
         }

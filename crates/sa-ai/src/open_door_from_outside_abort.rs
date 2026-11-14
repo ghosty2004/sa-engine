@@ -9,7 +9,7 @@ use sa_core::{hook, orig};
 use crate::common::*;
 
 use crate::bindings::compute_anim_id;
-use sa_core::bindings::find_player_ped;
+use sa_world::bindings::find_player_ped;
 orig! {
     /// `CVehicle::ProcessOpenDoor(CPed*, uint32 door, uint32 group, uint32 anim, float time)` (vtable +0x70)
     fn v_vehicle_process_open_door(v: GPtr<u8>, ped: GPtr<u8>, door: u32, group: u32, anim: u32, time: u32) = thiscall vslot 0x70 => unported;

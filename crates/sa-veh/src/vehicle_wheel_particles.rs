@@ -13,7 +13,7 @@ use crate::common::{ftol32, g, rand_at, rd, x, xi};
 use sa_core::bindings::vector_magnitude;
 use sa_world::bindings::fx_prt_mult_ctor;
 use sa_world::bindings::get_friction_effect;
-use sa_core::bindings::vector_sub;
+use sa_world::bindings::vector_sub;
 use sa_world::bindings::fx_add_particle;
 use sa_world::bindings::fx_add_sparks as add_sparks;
 use sa_world::bindings::get_water_level;
@@ -21,36 +21,18 @@ use sa_world::bindings::surface_is_water as is_water;
 use sa_world::bindings::vector_add_assign;
 use sa_world::bindings::vector_mul_scalar;
 use sa_world::bindings::vector_sub_assign;
+use sa_world::bindings::report_collision;
+use sa_core::bindings::random_float_in_range as random_in_range;
+use sa_core::bindings::vector_normalise_and_mag as normalise_and_mag;
 orig! {
-    /// `CVector::NormaliseAndMag()` (0x59C970), ST0
-    fn normalise_and_mag(v: GPtr<u8>) -> f64 = thiscall 0x59C970 => normalise_and_mag_native;
-    /// `CAudioEngine::ReportCollision(CEntity*, CEntity*, eSurfaceType, eSurfaceType, CVector&, CVector*, float, float, bool, bool)` (0x506EB0) on `AudioEngine` (0xB6BC90)
-    fn report_collision(ae: GPtr<u8>, e1: GPtr<u8>, e2: GPtr<u8>, s1: u32, s2: u32, pos: GPtr<u8>, normal: u32, impulse: f32, volume: f32, bullet: u32, b2: u32) = thiscall 0x506EB0 => unported;
     /// `CVehicle::MakeDirty(CColPoint&)` (0x6D2BF0)
     fn make_dirty(v: GPtr<u8>, cp: GPtr<u8>) = thiscall 0x6D2BF0 => crate::vehicle2::make_dirty;
     /// `CVehicle::AddWheelDirtAndWater(CColPoint&, uint32, uint8, uint8)` (0x6D2D50)
     fn add_wheel_dirt_and_water(v: GPtr<u8>, cp: GPtr<u8>, below: u32, band: u32, in_water: u32) -> u32 = thiscall 0x6D2D50 => crate::vehicle2::add_wheel_dirt_and_water;
-    /// `CGeneral::GetRandomNumberInRange(float, float)` (0x41BD90), ST0
-    fn random_in_range(min: f32, max: f32) -> f64 = cdecl 0x41BD90 => random_in_range_native;
     /// `CSkidmarks::RegisterOne(uint32, const CVector&, float, float, eSkidmarkType, bool*, float)` (0x720930)
     fn skidmarks_register_one(id: u32, pos: GPtr<u8>, dx: u32, dy: u32, kind: u32, blood: GPtr<u8>, length: f32) = cdecl 0x720930 => unported;
     /// `CVehicle::FindWheelWidth(bool rear)` (vtable +0xFC), ST0
     fn v_find_wheel_width(v: GPtr<u8>, rear: u32) -> f64 = thiscall vslot 0xFC => unported;
-}
-
-/// Phases B/C side of `CVector::NormaliseAndMag` 0x59C970.
-pub fn normalise_and_mag_native(v: GPtr<u8>) -> f64 {
-    let mut c = rv(v, 0);
-    let m = c.normalise_and_mag_x87();
-    v.cast::<f32>().write(c.x);
-    v.byte_add(4).cast::<f32>().write(c.y);
-    v.byte_add(8).cast::<f32>().write(c.z);
-    m.to_f64()
-}
-
-/// Phases B/C side of `CGeneral::GetRandomNumberInRange(float, float)` 0x41BD90.
-pub fn random_in_range_native(min: f32, max: f32) -> f64 {
-    sa_core::general::get_random_number_in_range_f32(min, max).to_f64()
 }
 
 fn rv(p: GPtr<u8>, off: isize) -> CVector {
@@ -255,7 +237,7 @@ fn sparks(this: GPtr<u8>, state: u32, skid_ratio: f32, cp: GPtr<u8>, from: GPtr<
         d = CVector::new(r.x, r.y, x(r.z).fadd_m(2.5).to_f32());
         amount = 10.0;
     }
-    let force = st0(normalise_and_mag(GPtr::from_raw(&mut d).cast())).to_f32();
+    let force = st0(normalise_and_mag(GPtr::from_raw(&mut d).cast()).to_f64()).to_f32();
     let ms = rv(this, 0x44);
     add_sparks(
         GPtr::from_addr(0xA9_AE00),
@@ -271,19 +253,7 @@ fn sparks(this: GPtr<u8>, state: u32, skid_ratio: f32, cp: GPtr<u8>, from: GPtr<
     let s2 = (force.to_bits() & 0xFFFF_FF00) | u32::from(rd::<u8>(cp, 0x23));
     let s1 = (amount.to_bits() & 0xFFFF_FF00) | u32::from(rd::<u8>(cp, 0x20));
     let ped = find_player_ped(0);
-    report_collision(
-        GPtr::from_addr(0xB6_BC90),
-        this,
-        ped,
-        s1,
-        s2,
-        from,
-        0,
-        1.0,
-        1.0,
-        0,
-        1,
-    );
+    report_collision(GPtr::from_addr(0xB6_BC90), this, ped, s1, s2, from, GPtr::NULL, 1.0, 1.0, 0, 1);
 }
 
 /// 0x6DF1BE..0x6DF303: the spinning wheel's smoke particle.
@@ -299,15 +269,9 @@ fn spin_smoke(this: GPtr<u8>, from: GPtr<u8>) {
     scale_by_class(this, mp);
     let gas = ld(this, 0x49C).fabs().to_f32();
     let k = f32::from_bits(0xC1F0_0000);
-    let vx = st0(random_in_range(
-        0.0,
-        x(gas).fmul_m(rd::<f32>(this, 0x44)).fmul_m(k).to_f32(),
-    ))
+    let vx = st0(random_in_range(0.0, x(gas).fmul_m(rd::<f32>(this, 0x44)).fmul_m(k).to_f32()).to_f64())
     .to_f32();
-    let vy = st0(random_in_range(
-        0.0,
-        x(gas).fmul_m(rd::<f32>(this, 0x48)).fmul_m(k).to_f32(),
-    ))
+    let vy = st0(random_in_range(0.0, x(gas).fmul_m(rd::<f32>(this, 0x48)).fmul_m(k).to_f32()).to_f64())
     .to_f32();
     let r = rand_at(0x6D_F299) % 10000;
     let vz = xi(r)
@@ -315,7 +279,7 @@ fn spin_smoke(this: GPtr<u8>, from: GPtr<u8>) {
         .fmul_m(f32::from_bits(0x3F4C_CCCD))
         .to_f32();
     let mut vel = CVector::new(vx, vy, vz);
-    let b = st0(random_in_range(0.5, 1.0));
+    let b = st0(random_in_range(0.5, 1.0).to_f64());
     set_pm(mp, 2, b.to_f32());
     let gg = b.fmul_m(k_09());
     set_pm(mp, 1, gg.to_f32());
@@ -324,9 +288,9 @@ fn spin_smoke(this: GPtr<u8>, from: GPtr<u8>) {
         g::<GPtr<u8>>(0xA9_AE24).read(),
         from,
         GPtr::from_raw(&mut vel).cast(),
-        0.0,
+        0.0f32.to_bits(),
         mp,
-        -1.0,
+        (-1.0f32).to_bits(),
         f32::from_bits(rd::<u32>(this, 0x12C)),
         f32::from_bits(0x3F19_999A),
         0,
@@ -376,7 +340,7 @@ fn skid_smoke(this: GPtr<u8>, from: GPtr<u8>, ts: f32) {
     let n = ftol32(st0(vector_magnitude(tp.cast::<u32>())).fmul_m(factor)).max(1);
     let nf = xi(n).to_f32();
     for i in 0..n {
-        let b = st0(random_in_range(0.5, 1.0));
+        let b = st0(random_in_range(0.5, 1.0).to_f64());
         set_pm(mp, 2, b.to_f32());
         let gg = b.fmul_m(k_09());
         set_pm(mp, 1, gg.to_f32());
@@ -391,9 +355,9 @@ fn skid_smoke(this: GPtr<u8>, from: GPtr<u8>, ts: f32) {
             g::<GPtr<u8>>(0xA9_AE24).read(),
             pp,
             GPtr::from_raw(&mut vel).cast(),
-            f32::from_bits(0x3E99_999A),
+            f32::from_bits(0x3E99_999A).to_bits(),
             mp,
-            -1.0,
+            (-1.0f32).to_bits(),
             f32::from_bits(rd::<u32>(this, 0x12C)),
             f32::from_bits(0x3F19_999A),
             0,

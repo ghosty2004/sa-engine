@@ -48,26 +48,17 @@ const STAT_PROPERTY_DAMAGED: u32 = 0x7D;
 /// The `double` 0.01 at 0x85A308 (`fcomp qword`).
 const D_85A308: u64 = 0x3F84_7AE1_47AE_147B;
 
-pub use sa_core::bindings::stats_increment_stat as increment_stat;
+pub use crate::bindings::stats_increment_stat as increment_stat;
 pub use crate::bindings::create_some_money;
+pub use crate::bindings::object_damage;
+pub use crate::bindings::trigger_water_hydrant;
+pub use crate::bindings::vector_mul_scalar as vector_mul;
+pub use crate::bindings::window_responds_to_collision;
+pub use crate::bindings::find_player_vehicle;
+pub use sa_stream::bindings::is_object_glass;
 orig! {
-    /// `CGlass::IsObjectGlass(CEntity*)` (0x46A760, cdecl, AL)
-    pub fn is_object_glass(e: Ent) -> u8 = cdecl 0x46a760 => unported;
-    /// `CGlass::WindowRespondsToCollision(CEntity*, float, CVector speed, CVector point, bool)`
-    /// (0x71BC40, cdecl; both vectors by value)
-    pub fn window_responds_to_collision(e: Ent, damage: f32, sx: f32, sy: f32, sz: f32, px: f32, py: f32, pz: f32,
-        explosion: u32) = cdecl 0x71bc40 => unported;
     /// `CGlass::WindowRespondsToSoftCollision(CEntity*, float)` (0x71AF70, cdecl)
     pub fn window_responds_to_soft_collision(e: Ent, damage: f32) = cdecl 0x71af70 => unported;
-    /// `CObject::ObjectDamage(float, const CVector*, const CVector*, CEntity*, eWeaponType)` (0x5A0D90)
-    pub fn object_damage(o: Ent, damage: f32, point: Ent, normal: Ent, damager: Ent, weapon: u32)
-        = thiscall 0x5a0d90 => unported;
-    /// `Fx_c::TriggerWaterHydrant(CVector&)` (0x4A0D70, thiscall on `g_fx`)
-    pub fn trigger_water_hydrant(fx: Ent, pos: Ent) = thiscall 0x4a0d70 => unported;
-    /// `CWorld::FindPlayerVehicle(int32, bool)` (0x56E0D0, cdecl)
-    pub fn find_player_vehicle(id: i32, remote: u32) -> Ent = cdecl 0x56e0d0 => unported;
-    /// `operator*(const CVector&, float)` (0x40FEC0, cdecl, out first)
-    pub fn vector_mul(out: Ent, v: Ent, s: f32) -> Ent = cdecl 0x40fec0 => crate::world::mvpa_math::vector_mul_scalar;
     /// `CPhysical::UnsetIsInSafePosition()` (0x548320)
     pub fn unset_is_in_safe_position_call(e: Ent) = thiscall 0x548320 => crate::physical::attach::unset_is_in_safe_position;
 }
@@ -92,7 +83,7 @@ fn report(a: Ent, b: Ent, surf_a: u8, surf_b: u8, cp: Ent, impact: f32) {
         cp,
         cp.byte_add(0x10),
         impact,
-        0x3F80_0000,
+        f32::from_bits(0x3F80_0000),
         0,
         0,
     );
@@ -174,7 +165,7 @@ fn sub3(a: [f32; 3], b: [f32; 3]) -> [f32; 3] {
 fn pair_mass(e: Ent, d: [f32; 3], n: Ent, factor: f32, check_move: bool) -> f32 {
     let mut dv = cv(d);
     let mut out = CVector::new(0.0, 0.0, 0.0);
-    let c = rv(cross_product(lp(&mut out), lp(&mut dv), n.cast()).cast(), 0);
+    let c = rv(cross_product(lp(&mut out).cast(), lp(&mut dv).cast(), n.cast()).cast(), 0);
     let mut f = Fpu::new();
     f.fld(c[2]);
     f.fld(c[1]);
@@ -424,9 +415,9 @@ pub fn apply_collision_2(this: Ent, ent: Ent, cp: Ent, d1: GPtr<f32>, d2: GPtr<f
         this_on_ent = false;
     }
     let mut co_t = CVector::new(0.0, 0.0, 0.0);
-    let mut com_t = rv(multiply3x3(lp(&mut co_t), matrix(this), this.byte_add(CENTRE_OF_MASS).cast()).cast(), 0);
+    let mut com_t = rv(multiply3x3(lp(&mut co_t).cast(), matrix(this), this.byte_add(CENTRE_OF_MASS).cast()).cast(), 0);
     let mut co_e = CVector::new(0.0, 0.0, 0.0);
-    let mut com_e = rv(multiply3x3(lp(&mut co_e), matrix(ent), ent.byte_add(CENTRE_OF_MASS).cast()).cast(), 0);
+    let mut com_e = rv(multiply3x3(lp(&mut co_e).cast(), matrix(ent), ent.byte_add(CENTRE_OF_MASS).cast()).cast(), 0);
     if pflags(this) & 0x40 != 0 {
         com_t = [0.0; 3];
     }
@@ -894,9 +885,9 @@ fn object_hit(this: Ent, ent: Ent, cp: Ent, d1: GPtr<f32>, d2: GPtr<f32>, r: [f3
     let d = sub3(r, com_t);
     let mut dv = cv(d);
     let mut out = CVector::new(0.0, 0.0, 0.0);
-    let c = cross_product(lp(&mut out), lp(&mut dv), n_ptr.cast());
+    let c = cross_product(lp(&mut out).cast(), lp(&mut dv).cast(), n_ptr.cast());
     let mut f = Fpu::new();
-    f.push(X87::from_f64_exact(vector_sq_mag(c.cast())));
+    f.push(X87::from_f64_exact(vector_sq_mag(c.cast()).to_f64()));
     f.fdiv_m(rf(this, TURN_MASS));
     f.fld(cf(k::K_858624));
     f.fdiv_m(rf(this, MASS));
@@ -1022,16 +1013,12 @@ fn object_hit(this: Ent, ent: Ent, cp: Ent, d1: GPtr<f32>, d2: GPtr<f32>, r: [f3
     None
 }
 
+pub use crate::bindings::apply_soft_collision_1;
+pub use crate::bindings::apply_speed as apply_speed_call;
+pub use crate::bindings::vec_mul_assign as vector_scale_assign;
 orig! {
-    /// `CPhysical::ApplySoftCollision(CEntity*, CColPoint&, float&)` (0x543890, AL)
-    pub fn apply_soft_collision_1(e: Ent, entity: Ent, cp: Ent, damage: GPtr<f32>) -> u8
-        = thiscall 0x543890 => crate::physical::collide::apply_soft_collision;
     /// virtual `CBaseModelInfo::AsAtomicModelInfoPtr()` (vtable +4, EAX)
     pub fn model_info_as_atomic_v(mi: Ent) -> Ent = thiscall vslot 0x4 => unported;
-    /// `CPhysical::ApplySpeed()` (0x547B80)
-    pub fn apply_speed_call(e: Ent) = thiscall 0x547b80 => crate::physical::attach::apply_speed_port;
-    /// `CVector::operator*=(float)` (0x40FEF0)
-    pub fn vector_scale_assign(v: Ent, s: f32) = thiscall 0x40fef0 => unported;
 }
 
 /// `CModelInfo::ms_modelInfoPtrs` (0xA9B0C8)
@@ -1124,9 +1111,9 @@ pub fn apply_soft_collision_2(this: Ent, ent: Ent, cp: Ent, d1: GPtr<f32>, d2: G
         this_on_ent = false;
     }
     let mut co_t = CVector::new(0.0, 0.0, 0.0);
-    let mut com_t = rv(multiply3x3(lp(&mut co_t), matrix(this), this.byte_add(CENTRE_OF_MASS).cast()).cast(), 0);
+    let mut com_t = rv(multiply3x3(lp(&mut co_t).cast(), matrix(this), this.byte_add(CENTRE_OF_MASS).cast()).cast(), 0);
     let mut co_e = CVector::new(0.0, 0.0, 0.0);
-    let mut com_e = rv(multiply3x3(lp(&mut co_e), matrix(ent), ent.byte_add(CENTRE_OF_MASS).cast()).cast(), 0);
+    let mut com_e = rv(multiply3x3(lp(&mut co_e).cast(), matrix(ent), ent.byte_add(CENTRE_OF_MASS).cast()).cast(), 0);
     if pflags(this) & 0x40 != 0 {
         com_t = [0.0; 3];
     }
@@ -1496,9 +1483,9 @@ fn soft_object_hit(this: Ent, ent: Ent, cp: Ent, d1: GPtr<f32>, d2: GPtr<f32>, r
     let d = sub3(r, com_t);
     let mut dv = cv(d);
     let mut out = CVector::new(0.0, 0.0, 0.0);
-    let c = cross_product(lp(&mut out), lp(&mut dv), n_ptr.cast());
+    let c = cross_product(lp(&mut out).cast(), lp(&mut dv).cast(), n_ptr.cast());
     let mut f = Fpu::new();
-    f.push(X87::from_f64_exact(vector_sq_mag(c.cast())));
+    f.push(X87::from_f64_exact(vector_sq_mag(c.cast()).to_f64()));
     f.fdiv_m(rf(this, TURN_MASS));
     f.fld(cf(k::K_858624));
     f.fdiv_m(rf(this, MASS));

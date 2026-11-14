@@ -169,6 +169,11 @@ orig! {
 }
 
 orig! {
+    /// `CTheScripts::RemoveFromWaitingForScriptBrainArray` (0x46ABC0)
+    pub fn remove_from_waiting_for_script_brain_array(ped: GPtr<u8>, idx: u32) = cdecl 0x46ABC0 => crate::script_brains::remove_from_waiting_for_script_brain_array;
+}
+
+orig! {
     /// `CRunningScript::ScriptTaskPickUpObject` (0x46AF50)
     pub fn script_task_pick_up_object(s: GPtr<u8>, command: u32) = thiscall 0x46AF50 => unported;
 }
@@ -216,6 +221,11 @@ orig! {
 orig! {
     /// `CTheScripts::ScriptAttachAnimGroupToCharModel` (0x474800)
     pub fn script_attach_anim_group_to_char_model(model: i32, ifp: GPtr<u8>) -> u8 = cdecl 0x474800 => unported;
+}
+
+orig! {
+    /// `CTheScripts::GetNewUniqueScriptThingIndex` (0x483720)
+    pub fn get_new_unique_script_thing_index(i: i32, ty: u32) -> i32 = cdecl 0x483720 => crate::script_things::get_new_unique_script_thing_index;
 }
 
 orig! {

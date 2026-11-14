@@ -10,7 +10,7 @@ use sa_math::x87::X87;
 
 use crate::common::{ftol32, g, k, rd, wr, x};
 
-use sa_core::bindings::world_clear_scan_codes as clear_scan_codes;
+use sa_world::bindings::world_clear_scan_codes as clear_scan_codes;
 orig! {
     /// `CPlantMgr::_CalcDistanceSqrToEntity(CEntity*, const CVector*)` (0x5DBE40): EBX = entity, ESI =
     /// position, ST0 result

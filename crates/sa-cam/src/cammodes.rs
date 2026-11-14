@@ -50,7 +50,7 @@ pub use crate::bindings::get_vectors_ready_for_rw as get_vectors_ready_for_rw_ca
 pub use sa_core::bindings::cross_product;
 pub use sa_core::bindings::get_weapon_info;
 pub use sa_core::bindings::vector_normalise;
-pub use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
+pub use sa_world::bindings::placeable_allocate_matrix as allocate_matrix;
 pub use sa_stream::bindings::simple_transform_update_matrix;
 pub use sa_world::bindings::entity_get_col_model as get_col_model;
 pub use sa_world::bindings::multiply3x3 as multiply_3x3;
@@ -58,7 +58,7 @@ pub use sa_core::bindings::ped_get_bone_position;
 pub use sa_world::bindings::ped_get_weapon_skill;
 pub use sa_world::bindings::placeable_set_heading;
 pub use sa_world::bindings::update_rw_matrix;
-pub use sa_core::bindings::vector_sub;
+pub use sa_world::bindings::vector_sub;
 pub use sa_world::bindings::world_test_sphere_against_world as test_sphere_against_world;
 pub use sa_world::bindings::get_water_level;
 pub use sa_world::bindings::get_water_level_no_waves;
@@ -95,7 +95,7 @@ fn target_right(r: &mut V3) {
     let o = cross_product(tmp.p(), fwd, z_up.p());
     copy3(r.p(), o);
     r.0[2] = 0;
-    vector_normalise(r.p());
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(r.p()));
 }
 
 /// `up = cross(R, front)` (into a stack temporary), then `up.Normalise()`.
@@ -103,7 +103,7 @@ fn up_from(this: GPtr<u8>, r: &mut V3) {
     let mut tmp = V3([0; 3]);
     let o = cross_product(tmp.p(), r.p(), this.byte_add(0x190));
     copy3(this.byte_add(0x1B4), o);
-    vector_normalise(this.byte_add(0x1B4));
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(this.byte_add(0x1B4)));
 }
 
 /// `(float)(uint32)v` (`fild` + 2^32 when negative), stored as f32.
@@ -159,7 +159,7 @@ pub fn process_peds_dead_baby(this: GPtr<u8>) {
         DEAD_BABY_B70050.set(0);
         let mut wl: u32 = 0;
         let wlp = GPtr::<u32>::from_raw(&mut wl).cast::<u8>();
-        if get_water_level_no_waves(f32::from_bits(sx), f32::from_bits(sy), f32::from_bits(sz), wlp, GPtr::<u8>::cast::<f32>(GPtr::NULL), GPtr::<u8>::cast::<f32>(GPtr::NULL)) != 0 {
+        if get_water_level_no_waves(f32::from_bits(sx).to_bits(), f32::from_bits(sy).to_bits(), f32::from_bits(sz).to_bits(), wlp.cast::<f32>(), GPtr::<u8>::cast::<f32>(GPtr::NULL), GPtr::<u8>::cast::<f32>(GPtr::NULL)) != 0 {
             let w = x(f32::from_bits(wlp.cast::<u32>().read())).fadd_m(k(K_1_5));
             if !w.fcom(x(f32::from_bits(sz))).test_any(0x41) {
                 sz = w.to_f32().to_bits();
@@ -171,7 +171,7 @@ pub fn process_peds_dead_baby(this: GPtr<u8>) {
         for (i, v) in d.iter().enumerate() {
             wr::<f32>(front, i as isize * 4, *v);
         }
-        vector_normalise(front);
+        vector_normalise(front.cast::<[f32;3]>());
         up_from(this, &mut r);
         wr::<u8>(this, 0xA, 0);
     } else {
@@ -183,7 +183,7 @@ pub fn process_peds_dead_baby(this: GPtr<u8>) {
         // centre: x raw, y through fld/fstp, z + 0.2 stored as f32
         let cy = x(f32::from_bits(sy)).to_f32().to_bits();
         let cz = x(f32::from_bits(sz)).fadd_m(k(K_0_2)).to_f32().to_bits();
-        if test_sphere_against_world(f32::from_bits(sx), f32::from_bits(cy), f32::from_bits(cz), f32::from_bits(SPHERE_RADIUS), target, 1, 1, 0, 1, 0, 1).is_null() {
+        if test_sphere_against_world(sa_math::vector::CVector::new(f32::from_bits(sx), f32::from_bits(cy), f32::from_bits(cz)), f32::from_bits(SPHERE_RADIUS), target.addr() as u32, 1, 1, 0, 1, 0, 1).is_null() {
             sz = x(TIME_STEP.get())
                 .fmul_m(DEAD_BABY_RISE.get())
                 .fadd_m(f32::from_bits(sz))
@@ -214,7 +214,7 @@ pub fn process_peds_dead_baby(this: GPtr<u8>) {
             x(qy).fsub_m(f32::from_bits(sy)).to_f32().to_bits(),
             0,
         ]);
-        vector_normalise(d.p());
+        vector_normalise(GPtr::<u8>::cast::<[f32;3]>(d.p()));
         let dx2 = x(d.f(0)).fmul_m(k(K_0_2));
         let dy2 = x(d.f(1)).fmul_m(k(K_0_2));
         let dz2 = x(d.f(2)).fmul_m(k(K_0_2)).to_f32();
@@ -222,7 +222,7 @@ pub fn process_peds_dead_baby(this: GPtr<u8>) {
         let cx = dx2.fadd_m(f32::from_bits(sx)).to_f32().to_bits();
         let cy = dy2.fadd_m(f32::from_bits(sy)).to_f32().to_bits();
         let cz = x(dz2).fadd_m(f32::from_bits(sz)).to_f32().to_bits();
-        if test_sphere_against_world(f32::from_bits(cx), f32::from_bits(cy), f32::from_bits(cz), f32::from_bits(SPHERE_RADIUS), target, 1, 1, 0, 1, 0, 1).is_null() {
+        if test_sphere_against_world(sa_math::vector::CVector::new(f32::from_bits(cx), f32::from_bits(cy), f32::from_bits(cz)), f32::from_bits(SPHERE_RADIUS), target.addr() as u32, 1, 1, 0, 1, 0, 1).is_null() {
             sx = qx.to_bits();
             sy = qy.to_bits();
             sz = sz_copy;
@@ -251,7 +251,7 @@ pub fn process_peds_dead_baby(this: GPtr<u8>) {
         wr::<f32>(front, 0, x(fx).fadd_m(rd::<f32>(front, 0)).to_f32());
         wr::<f32>(front, 4, rywc.fadd_m(rd::<f32>(front, 4)).to_f32());
         wr::<f32>(front, 8, rzwc.fadd_m(rd::<f32>(front, 8)).to_f32());
-        vector_normalise(front);
+        vector_normalise(front.cast::<[f32;3]>());
         up_from(this, &mut r);
     }
     let src = this.byte_add(0x19C);
@@ -317,13 +317,13 @@ pub fn process_special_fixed_for_syphon(this: GPtr<u8>, target: GPtr<u8>, _a: f3
     wr::<f32>(up, 0, x(rd::<f32>(up, 0)).fadd_m(rd::<f32>(this, 0x16C)).to_f32());
     wr::<f32>(up, 4, x(rd::<f32>(this, 0x170)).fadd_m(rd::<f32>(up, 4)).to_f32());
     wr::<f32>(up, 8, x(rd::<f32>(this, 0x174)).fadd_m(rd::<f32>(up, 8)).to_f32());
-    vector_normalise(up);
+    vector_normalise(up.cast::<[f32;3]>());
     let mut r = V3([0; 3]);
     cross_product(r.p(), up, front);
-    vector_normalise(r.p());
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(r.p()));
     let o = cross_product(l.p(), r.p(), up);
     copy3(front, o);
-    vector_normalise(front);
+    vector_normalise(front.cast::<[f32;3]>());
     wr::<u32>(this, 0xB4, 0x428C_0000);
 
     let p = rd::<GPtr<u8>>(this, 0x21C);
@@ -332,7 +332,7 @@ pub fn process_special_fixed_for_syphon(this: GPtr<u8>, target: GPtr<u8>, _a: f3
     }
     let slot = isize::from(rd::<i8>(p, 0x718));
     let ty = rd::<u32>(p, slot * 0x1C + 0x5A0);
-    let wi = get_weapon_info(ty as i32, (ped_get_weapon_skill(p) as i32) as u8);
+    let wi = get_weapon_info(ty as i32, ((ped_get_weapon_skill(p) as u32) as i32) as u8);
     if wi.is_null() {
         return;
     }
@@ -431,16 +431,16 @@ pub fn process_attached_cam(this: GPtr<u8>) {
             wr::<f32>(front, i as isize * 4, *v);
         }
     }
-    vector_normalise(front);
+    vector_normalise(front.cast::<[f32;3]>());
     let mut u = V3([0, 0, 0x3F80_0000]);
     let mut r = V3([0; 3]);
     let mut tmp = V3([0; 3]);
     let o = cross_product(tmp.p(), front, u.p());
     copy3(r.p(), o);
-    vector_normalise(r.p());
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(r.p()));
     let o = cross_product(tmp.p(), r.p(), front);
     copy3(u.p(), o);
-    vector_normalise(u.p());
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(u.p()));
 
     let mut wl: u32 = 0;
     let wlp = GPtr::<u32>::from_raw(&mut wl).cast::<u8>();

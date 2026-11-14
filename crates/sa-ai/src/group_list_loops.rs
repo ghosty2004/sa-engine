@@ -11,11 +11,11 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
-use sa_core::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::intel_find_task_by_type;
 use sa_world::bindings::membership_get_leader;
-use sa_world::bindings::task_complex_ctor;
+use crate::bindings::task_complex_ctor;
 use sa_world::bindings::weapon_is_type_melee;
 use crate::bindings::membership_add_member;
 use crate::bindings::membership_remove_member;
@@ -297,7 +297,7 @@ pub fn cover_point_release_cover_point_for_ped(this: GPtr<u8>, ped: GPtr<u8>) {
         let v = rd::<GPtr<u8>>(slot, 0);
         if v == ped {
             if !v.is_null() {
-                entity_clean_up_old_reference(v, slot.cast::<GPtr<u8>>());
+                entity_clean_up_old_reference(v, slot.cast::<u8>());
             }
             wr::<u32>(slot, 0, 0);
         }
@@ -333,7 +333,7 @@ pub fn node_list_reverse(this: GPtr<u8>) {
 #[hook(addr = 0x6358B0, conv = thiscall, name = "CTaskComplexUseScriptedBrain::Constructor", expect = "56 8B F1 E8 F8 4A FE FF",
        unverified = "ai8-4", route = "L2", hazards = "heap-writes")]
 pub fn use_scripted_brain_ctor(this: GPtr<u8>, name: GPtr<u8>) -> GPtr<u8> {
-    task_complex_ctor(this);
+    task_complex_ctor(this.addr() as u32);
     wr::<u32>(this, 0, 0x86E568);
     wr::<u8>(this, 0xC, 0);
     wr::<u32>(this, 0x18, 0);

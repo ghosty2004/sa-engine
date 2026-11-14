@@ -12,24 +12,22 @@ use crate::common::{g, jne_mask, jp5, model_info, rd, wr, x, xi};
 pub const GLOBALS: &[GlobalDesc] = &[];
 
 use sa_core::bindings::display_script_stat_update_message;
-use sa_core::bindings::matrix_dtor;
-use sa_core::bindings::stats_increment_stat as increment_stat;
-use sa_stream::bindings::find_player_wanted;
+use sa_world::bindings::matrix_dtor;
+use sa_world::bindings::stats_increment_stat as increment_stat;
+use sa_world::bindings::find_player_wanted;
 use sa_world::bindings::find_objects_kinda_colliding;
 use sa_world::bindings::is_player_on_a_mission;
 use sa_world::bindings::set_char_created_by as ped_set_char_created_by;
 use sa_core::bindings::audio_report_frontend_event as report_frontend_audio_event;
-use sa_core::bindings::end_gang_war;
-use sa_world::bindings::check_damaged_weapon_type;
+use crate::bindings::end_gang_war;
+use crate::bindings::check_damaged_weapon_type;
 use sa_world::bindings::decrement_stat;
 use sa_world::bindings::membership_is_member;
+use sa_world::bindings::find_player_ped;
+use sa_world::bindings::find_player_vehicle;
 orig! {
     /// `CGangWars::UpdateTerritoryUnderControlPercentage()` (0x443DE0)
     fn update_territory_under_control_percentage() = cdecl 0x443DE0 => crate::misc2::update_territory_under_control_percentage;
-    /// `CWorld::FindPlayerVehicle(int32, bool)` (0x56E0D0)
-    fn find_player_vehicle(id: i32, remote: u8) -> GPtr<u8> = cdecl 0x56E0D0 => sa_world::world::cworld::find_player_vehicle_port;
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
     /// `CDarkel::ThisPedShouldBeKilledForFrenzy(const CPed&)` (0x43D2F0)
     fn this_ped_should_be_killed_for_frenzy(ped: GPtr<u8>) -> u8 = cdecl 0x43D2F0 => crate::misc2::this_ped_should_be_killed_for_frenzy;
     /// `CGangWars::AddKillToProvocation(ePedType)` (0x443950)
@@ -174,9 +172,8 @@ use sa_core::bindings::font_set_scale;
 use sa_core::bindings::font_set_wrapx;
 use sa_core::bindings::rgba_ctor;
 use sa_stream::bindings::hud_colours_get_rgb;
+use crate::bindings::get_y_pos_based_on_health_st0 as get_y_pos_based_on_health;
 orig! {
-    /// `CHud::GetYPosBasedOnHealth(uint8, float, int8)` (0x588B60, ST0)
-    fn get_y_pos_based_on_health(player: u32, y: f32, offset: u32) -> f64 = cdecl 0x588B60 => unported;
     /// CRT `sprintf` (0x821BB5) with two int arguments
     fn sprintf2(buf: GPtr<u8>, fmt: GPtr<u8>, a: u32, b: u32) -> i32 = cdecl 0x821BB5 => unported;
     /// CRT `sprintf` (0x821BB5) with one int argument
@@ -187,7 +184,7 @@ orig! {
 /// second call's float argument, left in place on the stack).
 fn darkel_y(y: f32) -> f32 {
     let pif = u32::from(g::<u8>(0xB7CD74).read());
-    let r = X87::from_f64_exact(get_y_pos_based_on_health(pif, y, 0xC)).to_f32();
+    let r = X87::from_f64_exact(get_y_pos_based_on_health(pif as u8, y, 0xC)).to_f32();
     X87::from_f64_exact(get_y_pos_based_on_health(1, r, 0xC)).to_f32()
 }
 
@@ -245,8 +242,8 @@ pub fn darkel_draw_messages() {
     font_set_proportional(1);
     font_set_background(0, 0);
     font_set_scale(
-        w().fmul_m(f32::from_bits(0x3ACC_CCCD)).fmul_m(0.5).to_f32(),
-        h().to_f32(),
+        (w().fmul_m(f32::from_bits(0x3ACC_CCCD)).fmul_m(0.5).to_f32()).to_bits(),
+        (h().to_f32()).to_bits(),
     );
     font_set_orientation(2);
     font_set_right_justify_wrap(f32::from_bits(0));
@@ -307,7 +304,7 @@ pub fn register_kill_by_player(ped: GPtr<u8>, weapon: i32, head_shot: u8, player
             increment_stat(0xF0, 1.0);
             let grp = rd::<i32>(rd::<GPtr<u8>>(find_player_ped(-1), 0x480), 0x38);
             let membership = g::<u8>((0xC09928 + grp * 0x2D4) as usize);
-            if membership_is_member(membership, ped) as u32 & 0xFF != 0 {
+            if (membership_is_member(membership, ped) as u8) as u32 & 0xFF != 0 {
                 increment_stat(0xA3, 1.0);
                 display_script_stat_update_message(0, 0x150, 1.0);
             }
@@ -362,11 +359,11 @@ pub fn register_kill_by_player(ped: GPtr<u8>, weapon: i32, head_shot: u8, player
 }
 
 use sa_core::bindings::boat_ctor;
-use sa_world::bindings::find_node_closest_to_coors;
+use crate::bindings::find_node_closest_to_coors;
 use crate::bindings::set_up_driver_and_passengers_for_vehicle;
 use sa_core::bindings::train_ctor;
 use sa_core::bindings::general_random_int_in_range as random_int_in_range;
-use sa_core::bindings::world_add;
+use sa_world::bindings::world_add;
 use sa_stream::bindings::is_boat_model;
 use sa_stream::bindings::pick_random_car;
 use sa_stream::bindings::set_custom_car_plate_text;
@@ -384,7 +381,7 @@ use sa_world::bindings::set_posn as placeable_set_posn;
 use sa_core::bindings::trailer_ctor;
 use sa_world::bindings::vehicle_new;
 use sa_world::bindings::vehicle_set_created_by;
-use sa_core::bindings::find_player_coors as find_player_coors_out;
+use sa_world::bindings::find_player_coors as find_player_coors_out;
 use sa_core::bindings::streaming_request_model as request_model;
 use sa_world::bindings::find_ground_z_for_coord;
 use sa_world::bindings::set_orientation as placeable_set_orientation;
@@ -447,7 +444,7 @@ pub fn do_internal_processing(this: GPtr<u8>) {
             let pcp = GPtr::from_raw(pc.as_mut_ptr());
             find_player_coors_out(pcp, -1);
             get_zone_info(pcp, GPtr::<GPtr<u8>>::cast::<u8>(GPtr::NULL));
-            model = pick_random_car(g(0xC0E9F8), 1, 1);
+            model = pick_random_car(GPtr::<u8>::cast::<sa_stream::loaded_car_group::CLoadedCarGroup>(g(0xC0E9F8)), 1, 1);
             if model < 0 {
                 return;
             }
@@ -549,7 +546,7 @@ pub fn do_internal_processing(this: GPtr<u8>) {
             2 => (0x9BC, Some(quad_bike_ctor), false),
             3 => (0xA18, Some(heli_ctor), false),
             4 => (0xA04, Some(plane_ctor), false),
-            6 => (0x6AC, Some(train_ctor), false),
+            6 => (0x6AC, Some(|t, m, c| train_ctor(t, m as u32, c)), false),
             9 => (0x814, Some(bike_ctor), true),
             10 => (0x838, Some(bmx_ctor), true),
             11 => (0x9F4, Some(trailer_ctor), false),
@@ -571,7 +568,7 @@ pub fn do_internal_processing(this: GPtr<u8>) {
                     }
                     v
                 }
-                None => automobile_ctor(m, model, 3, 1),
+                None => automobile_ctor(m, model as u32, 3, 1),
             }
         };
         get_distance_from_centre_of_mass_to_base_of_model(veh);

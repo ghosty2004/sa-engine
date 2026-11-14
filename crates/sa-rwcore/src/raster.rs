@@ -1164,17 +1164,17 @@ const ANISOT_TEXTURE_OFFSET: usize = 0xC92478;
 
 use sa_core::bindings::rw_stream_find_chunk_call as rw_stream_find_chunk;
 use crate::bindings::stream_write_chunk_header as write_chunk_header;
-use sa_core::bindings::rw_stream_skip;
-use sa_core::bindings::rw_stream_write;
+use crate::bindings::rw_stream_skip;
+use crate::bindings::rw_stream_write;
 use crate::bindings::plugin_get_size;
 use crate::bindings::read_int32 as rw_stream_read_int32;
 use crate::bindings::registry_add_always_cb as plugin_add_stream_always_cb;
 use crate::bindings::rw_raster_lock_palette as rw_raster_lock_palette_call;
 use crate::bindings::rw_raster_unlock_palette as rw_raster_unlock_palette_call;
 use crate::bindings::rw_stream_write_int32;
-use sa_core::bindings::rw_raster_lock as rw_raster_lock_call;
-use sa_core::bindings::rw_raster_unlock as rw_raster_unlock_call;
-use sa_core::bindings::stream_read as rw_stream_read;
+use crate::bindings::rw_raster_lock as rw_raster_lock_call;
+use crate::bindings::rw_raster_unlock as rw_raster_unlock_call;
+use crate::bindings::stream_read as rw_stream_read;
 orig! {
     /// The mipmap generate callback `M+0x2C (raster, image)` (stored pointer)
     fn call_mipmap_generate_cb(f: u32, r: GPtr<u8>, image: u32) -> u32 = cdecl dyn => unported;
@@ -1571,7 +1571,7 @@ pub fn d3d9_native_texture_write(s: GPtr<u8>, t: GPtr<u8>, _flags: u32) -> u32 {
         let mut level: i32 = 0;
         if levels != 0 {
             loop {
-                let mut pixels = GPtr::<u8>::addr(rw_raster_lock_call(r, level as u32, 2)) as u32;
+                let mut pixels = GPtr::<u8>::addr(GPtr::from_addr(rw_raster_lock_call(r, level as u32, 2) as usize)) as u32;
                 if pixels == 0 {
                     return 0;
                 }
@@ -1629,26 +1629,19 @@ pub fn d3d9_raster_is_compressed(r: GPtr<u8>) -> u32 {
 
 use crate::bindings::d3d_resource_create_texture;
 use crate::bindings::rw_texture_set_mask_name;
-use sa_core::bindings::rw_texture_create;
-use sa_core::bindings::rw_texture_set_name;
+use crate::bindings::rw_texture_create;
+use crate::bindings::rw_texture_set_name;
 use crate::bindings::auto_mipmap as check_auto_mipmap_texture_4cbf80;
 use crate::bindings::check_valid_texture_format_call;
-use sa_core::bindings::rw_raster_destroy as rw_raster_destroy_call;
+use crate::bindings::rw_raster_destroy as rw_raster_destroy_call;
+use crate::bindings::rw_raster_create as rw_raster_create_call;
 orig! {
     /// `_rwD3D9CheckAutoMipmapGenCubeTextureFormat(fmt)` (0x4CC020)
     fn check_auto_mipmap_cube_call(fmt: u32) -> u32 = cdecl 0x4CC020 => d3d9_check_auto_mipmap_gen_cube_texture_format;
     /// `_rwD3D9RasterCreateFromDDSFormat(w, h, d3dFormat, flags)` (0x4CD050)
     fn raster_create_from_dds_format(w: u32, h: u32, fmt: u32, flags: u32) -> GPtr<u8> = cdecl 0x4CD050 => unported;
-    /// `RwRasterCreate(w, h, depth, flags)` (0x7FB230)
-    fn rw_raster_create_call(w: u32, h: u32, depth: u32, flags: u32) -> GPtr<u8> = cdecl 0x7FB230 => rw_raster_create_u;
     /// `IDirect3DDevice9::CreateCubeTexture(edge, levels, usage, fmt, pool, out, shared)` (+0x64)
     fn dev_create_cube_texture(dev: GPtr<u8>, edge: u32, levels: u32, usage: u32, fmt: u32, pool: u32, out: GPtr<u8>, shared: u32) -> i32 = stdcall vslot 0x64 => unported;
-}
-
-/// The phase B/C path of `rw_raster_create_call` (unsigned arguments).
-#[cfg_attr(sa_phase_a, allow(dead_code))]
-fn rw_raster_create_u(w: u32, h: u32, depth: u32, flags: u32) -> GPtr<u8> {
-    rw_raster_create(w as i32, h as i32, depth as i32, flags)
 }
 
 /// The cube-texture creation shared by the two cube paths of `_rwD3D9NativeTextureRead`: levels check
@@ -1708,7 +1701,7 @@ pub fn d3d9_native_texture_read(s: GPtr<u8>, out: GPtr<u32>, _size: u32) -> u32 
         if check_valid_texture_format_call(fmt) == 0 {
             return 0;
         }
-        r = rw_raster_create_call(w, h, info.depth as u32, ty | 0x80 | format);
+        r = rw_raster_create_call(w as i32, h as i32, (info.depth as u32) as i32, ty | 0x80 | format);
         if r.is_null() {
             return 0;
         }
@@ -1738,7 +1731,7 @@ pub fn d3d9_native_texture_read(s: GPtr<u8>, out: GPtr<u32>, _size: u32) -> u32 
         wr::<u32>(e, 0x18, fmt);
         wr::<u8>(e, 0xA, a);
     } else if info.flags & 2 != 0 {
-        r = rw_raster_create_call(w, h, info.depth as u32, ty | 0x80 | format);
+        r = rw_raster_create_call(w as i32, h as i32, (info.depth as u32) as i32, ty | 0x80 | format);
         if r.is_null() {
             return 0;
         }
@@ -1751,7 +1744,7 @@ pub fn d3d9_native_texture_read(s: GPtr<u8>, out: GPtr<u32>, _size: u32) -> u32 
         wr::<u8>(r, 0x21, rd::<u8>(r, 0x21) & 0x7F);
         wr::<u8>(e, 8, info.flags & 1);
     } else if format & 0xFFFF_6FFF != 0 {
-        r = rw_raster_create_call(w, h, info.depth as u32, ty | format);
+        r = rw_raster_create_call(w as i32, h as i32, (info.depth as u32) as i32, ty | format);
         if r.is_null() {
             return 0;
         }
@@ -1804,7 +1797,7 @@ pub fn d3d9_native_texture_read(s: GPtr<u8>, out: GPtr<u32>, _size: u32) -> u32 
     loop {
         let mut level: u32 = 0;
         while level < levels {
-            let pixels = GPtr::<u8>::addr(rw_raster_lock_call(r, level, 1)) as u32;
+            let pixels = GPtr::<u8>::addr(GPtr::from_addr(rw_raster_lock_call(r, level, 1) as usize)) as u32;
             let mut size: u32 = 0;
             if rw_stream_read(s, GPtr::from_raw(&mut size).cast(), 4) != 4 {
                 rw_raster_unlock_call(r);

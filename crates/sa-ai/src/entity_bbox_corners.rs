@@ -13,7 +13,7 @@ use crate::common::*;
 
 use sa_core::bindings::vector_from_multiply;
 use sa_core::bindings::vector_normalise;
-use sa_stream::bindings::placeable_allocate_matrix;
+use sa_world::bindings::placeable_allocate_matrix;
 use sa_stream::bindings::simple_transform_update_matrix;
 orig! {
     /// `InteriorManager_c::GetBoundingBox(CEntity*, CVector* corners)` (0x598090, `ret 8`)
@@ -224,7 +224,7 @@ pub fn ped_geometry_compute_entity_bbox_corners_uncached(z_pos: f32, entity: GPt
     let e1 = [f32_of(x(p1f).fadd_m(wc[0])), f32_of(x(wc[1]).fadd(p2)), f32_of(x(wc[2]).fadd(zr))];
     let e2 = [f32_of(x(wc[0]).fsub_m(p1f)), f32_of(x(wc[1]).fsub(p2)), f32_of(x(wc[2]).fsub_m(zf))];
     let mut v = [vx, vy, 0.0];
-    vector_normalise(ptr(&mut v));
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(ptr(&mut v)));
     let (nx, ny, nz) = (v[0], v[1], v[2]);
     // Projections of the other two axes on V and its perpendicular: dot = (Vx·a.x + Vy·a.y) · h, cross = (Vx·a.y −
     // Vy·a.x) · h, in the operand order of each branch.

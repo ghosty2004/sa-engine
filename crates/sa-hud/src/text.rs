@@ -25,7 +25,7 @@ const GET_MISSION_FLAG: usize = 0xB72910;
 
 pub use sa_core::bindings::crt_free as crt_delete;
 pub use sa_core::bindings::get_uppercase_key;
-pub use sa_core::bindings::messages_clear_all_displayed_by_game as clear_all_messages_displayed_by_game_call;
+pub use crate::bindings::messages_clear_all_displayed_by_game as clear_all_messages_displayed_by_game_call;
 orig! {
     /// CRT `sprintf(buf, fmt)` (0x821BB5)
     pub fn sprintf0(buf: GPtr<u8>, fmt: GPtr<u8>) -> i32 = cdecl 0x821BB5 => unported;

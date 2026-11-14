@@ -18,15 +18,15 @@ use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 use sa_math::x87::X87;
 
-use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference as clean_up_old_reference;
 use sa_core::bindings::entity_register_reference as register_reference;
-use sa_stream::bindings::placeable_allocate_matrix;
-use sa_stream::bindings::simple_transform_update_matrix;
+use sa_world::bindings::placeable_allocate_matrix;
+use sa_render::bindings::simple_transform_update_matrix;
 use sa_world::bindings::find_ground_z_for_coord;
 use sa_world::bindings::get_actual_script_thing_index;
 use sa_world::bindings::heli_search_light_cone;
 use sa_world::bindings::multiply3x3;
-use sa_world::bindings::get_new_unique_script_thing_index;
+use crate::bindings::get_new_unique_script_thing_index;
 orig! {
     /// `CCheckpoints::DeleteCP(uint32 id, uint16 type)` (0x722FC0, cdecl)
     fn checkpoints_delete_cp(id: u32, ty: u32) = cdecl 0x722FC0 => unported;
@@ -76,7 +76,7 @@ fn set_ref(p: GPtr<u8>, off: usize, e: GPtr<u8>, reg: bool) {
     let slot = p.byte_add(off as isize);
     let old = rd::<GPtr<u8>>(p, off);
     if !old.is_null() {
-        clean_up_old_reference(old, slot.cast::<GPtr<u8>>());
+        clean_up_old_reference(old, slot.cast::<u8>());
     }
     wr(p, off, e);
     if reg && !e.is_null() {
@@ -149,7 +149,7 @@ pub fn add_script_search_light(px: u32, py: u32, pz: u32, entity: GPtr<u8>, tx: 
     set_ref(l, 0x50, GPtr::NULL, false);
     let bulb = rd::<GPtr<u8>>(l, 0x54);
     if !bulb.is_null() {
-        clean_up_old_reference(bulb, GPtr::<u8>::cast::<GPtr<u8>>(l.byte_add(0x54)));
+        clean_up_old_reference(bulb, l.byte_add(0x54));
     }
     let n = gp::<u16>(NUM_SEARCH_LIGHTS);
     n.write(n.read().wrapping_add(1));

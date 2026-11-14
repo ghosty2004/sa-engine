@@ -4,19 +4,14 @@
 
 use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
 use sa_core::bindings::matrix_mul_vec;
-use sa_stream::bindings::placeable_allocate_matrix;
+use sa_world::bindings::placeable_allocate_matrix;
 use sa_stream::bindings::simple_transform_update_matrix;
-orig! {
-    /// `CTaskSimpleClimb::ScanToGrab(CPed*, CVector& pos, float& angle, uint8& surface, bool launch, bool, bool,
-    /// CVector* posOverride)` (0x67FD30, cdecl)
-    #[allow(clippy::too_many_arguments)]
-    fn climb_scan_to_grab(ped: GPtr<u8>, pos: GPtr<u8>, angle: GPtr<u8>, surface: GPtr<u8>, launch: u32, a: u32, b: u32, over: GPtr<u8>) -> GPtr<u8> = cdecl 0x67FD30 => crate::climb_scan::climb_scan_to_grab;
-}
+use crate::bindings::climb_scan_to_grab;
 
 /// `CTaskSimpleClimb::ms_fAtEdgeOffsetHorz` (0x8D2F24), `ms_fAtEdgeOffsetVert` (0xC18F78)
 const EDGE_HORZ: usize = 0x8D_2F24;
@@ -50,7 +45,7 @@ pub fn climb_test_for_climb(ped: GPtr<u8>, pos: GPtr<u8>, angle: GPtr<u8>, surfa
             simple_transform_update_matrix(e.byte_add(4), rd::<GPtr<u8>>(e, 0x14));
         }
         let mut out = [0u32; 3];
-        matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::from_raw(out.as_mut_ptr()).cast()), rd::<GPtr<u8>>(e, 0x14), wpp);
+        matrix_mul_vec(GPtr::from_raw(out.as_mut_ptr()).cast(), rd::<GPtr<u8>>(e, 0x14), wpp);
         wp = out;
         let m = rd::<GPtr<u8>>(e, 0x14);
         let h = if !m.is_null() {

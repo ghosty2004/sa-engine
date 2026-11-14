@@ -15,15 +15,15 @@ use crate::bindings::conversation_node_clear_recursively;
 use crate::bindings::go_to_vehicle_and_lean_do_tidy_up as go_to_vehicle_and_lean_tidy_up;
 use crate::bindings::should_load_gang_anims;
 use crate::bindings::walk_alongside_create_sub_task as walk_alongside_create_sub_task_o;
-use sa_core::bindings::entity_get_is_on_screen;
-use sa_core::bindings::anim_add_block_ref as add_anim_block_ref;
+use sa_world::bindings::entity_get_is_on_screen;
+use sa_anim::bindings::anim_add_block_ref as add_anim_block_ref;
 use sa_stream::bindings::anim_remove_block_ref as remove_anim_block_ref;
 use sa_world::bindings::leave_car_ctor;
 use crate::bindings::play_hand_signal_anim_ctor_61b2b0 as play_hand_signal_anim_ctor;
 use crate::bindings::seek_entity_xy_offset_ctor;
 use sa_core::bindings::streaming_request_model as request_model;
-use sa_core::bindings::tm_get_task_secondary as task_manager_get_task_secondary;
-use sa_core::bindings::tm_set_task_secondary as task_manager_set_task_secondary;
+use crate::bindings::tm_get_task_secondary as task_manager_get_task_secondary;
+use crate::bindings::tm_set_task_secondary as task_manager_set_task_secondary;
 use sa_stream::bindings::get_animation_block_index;
 use sa_world::bindings::go_to_point_and_stand_still_ctor;
 use sa_world::bindings::physical_get_speed;
@@ -178,7 +178,7 @@ pub fn be_in_group_monitor_secondary(this: GPtr<u8>, ped: GPtr<u8>) {
     let task = pgi_get_task_secondary(g, ped);
     let slot = pgi_get_task_secondary_slot(g, ped);
     let tm = |p: GPtr<u8>| rd::<GPtr<u8>>(p, 0x47C).byte_add(4);
-    let cur = task_manager_get_task_secondary(tm(ped), slot);
+    let cur = task_manager_get_task_secondary(tm(ped), slot as i32);
     let stored = rd::<u32>(this, 0x20);
     if stored != 0 && task.addr() as u32 == stored {
         if cur.is_null() {
@@ -191,8 +191,8 @@ pub fn be_in_group_monitor_secondary(this: GPtr<u8>, ped: GPtr<u8>) {
     if task.addr() as u32 == stored {
         return;
     }
-    if !task_manager_get_task_secondary(tm(ped), rd::<u32>(this, 0x24)).is_null() {
-        let o = task_manager_get_task_secondary(tm(ped), rd::<u32>(this, 0x24));
+    if !task_manager_get_task_secondary(tm(ped), rd::<u32>(this, 0x24) as i32).is_null() {
+        let o = task_manager_get_task_secondary(tm(ped), rd::<u32>(this, 0x24) as i32);
         v_make_abortable(o, ped, 0, 0);
     }
     if !cur.is_null() && v_make_abortable(cur, ped, 1, 0) == 0 {
@@ -202,7 +202,7 @@ pub fn be_in_group_monitor_secondary(this: GPtr<u8>, ped: GPtr<u8>) {
     wr::<u32>(this, 0x24, slot);
     if !task.is_null() {
         let c = v_task_clone(task);
-        task_manager_set_task_secondary(tm(ped), c, slot);
+        task_manager_set_task_secondary(tm(ped), c, slot as i32);
     }
 }
 
@@ -419,7 +419,7 @@ pub fn go_to_vehicle_and_lean_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) ->
     let oy = f32_of(x(rd::<f32>(pp, 4)).fsub_m(rd::<f32>(vp, 4)));
     let oz = f32_of(x(rd::<f32>(pp, 8)).fsub_m(rd::<f32>(vp, 8)));
     let mut out = [0.0f32; 3];
-    let sp = GPtr::<u8>::cast::<f32>(physical_get_speed(veh, GPtr::<f32>::cast::<u8>(GPtr::from_raw(out.as_mut_ptr())), ox, oy, oz));
+    let sp = GPtr::<sa_math::vector::CVector>::cast::<f32>(physical_get_speed(veh, GPtr::<f32>::cast::<sa_math::vector::CVector>(GPtr::from_raw(out.as_mut_ptr())), sa_math::vector::CVector::new(ox, oy, oz)));
     let moving = if rd::<u32>(rd::<GPtr<u8>>(this, 0xC), 0x460) != 0 {
         true
     } else {

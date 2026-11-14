@@ -11,14 +11,14 @@ use sa_core::hook;
 use crate::common::{GPtr, X87, ae_resolve_probability, f32_of, g, rd, wr, x, xi};
 
 use crate::bindings::sound_stop_and_forget;
-use sa_core::bindings::find_player_ped;
+use sa_world::bindings::find_player_ped;
 use sa_core::bindings::vector_magnitude;
 use sa_core::bindings::vector_normalise;
 use sa_world::bindings::entity_get_is_type_physical as entity_is_physical;
 use sa_world::bindings::process_line_of_sight as world_process_line_of_sight;
 use crate::bindings::get_piecewise_linear;
 use crate::bindings::vector_equal;
-use sa_core::bindings::vector_sub;
+use sa_world::bindings::vector_sub;
 use sa_world::bindings::get_right_direction as placeable_get_right;
 use sa_world::bindings::placeable_get_top_direction as placeable_get_top;
 use sa_world::bindings::vector_scale as scalar_mul_vector;
@@ -173,7 +173,7 @@ fn city_noise_side(
         }
         let mut fwd = [0f32; 3];
         placeable_get_top(g(THE_CAMERA), GPtr::<u8>::cast::<f32>(vp(&mut fwd)));
-        vector_normalise(vp(&mut fwd));
+        vector_normalise(GPtr::<u8>::cast::<[f32;3]>(vp(&mut fwd)));
         let d1 = f32_of(x(fwd[2]).fmul_m(vel[2]).fadd(x(fwd[1]).fmul_m(vel[1])).fadd(x(fwd[0]).fmul_m(vel[0])));
         let d2 = f32_of(x(fwd[2]).fmul_m(hvel[2]).fadd(x(fwd[1]).fmul_m(hvel[1])).fadd(x(fwd[0]).fmul_m(hvel[0])));
         let mut a = [0f32; 3];
@@ -273,7 +273,7 @@ fn city_noise(sound: GPtr<u8>) {
     }
     let mut right = [0f32; 3];
     placeable_get_right(g(THE_CAMERA), GPtr::<u8>::cast::<f32>(vp(&mut right)));
-    vector_normalise(vp(&mut right));
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(vp(&mut right)));
     let k4 = c(0x858B90);
     let r4 = [f32_of(x(right[0]).fmul_m(k4)), f32_of(x(right[1]).fmul_m(k4)), f32_of(x(right[2]).fmul_m(k4))];
     let mut default_pos = [f32::from_bits(0xBF67EF9E), f32::from_bits(0x3ED89375), 0.0];

@@ -15,30 +15,30 @@ const TIME_MS: usize = 0xB7CB84;
 
 use crate::bindings::get_group_id;
 use sa_world::bindings::pause_ctor as task_simple_pause_ctor;
-use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference as clean_up_old_reference;
 use sa_core::bindings::entity_register_reference as register_reference;
-use sa_core::bindings::entity_update_rw_frame;
+use sa_world::bindings::entity_update_rw_frame;
 use sa_core::bindings::matrix_update_rw_matrix;
 use sa_core::bindings::ped_is_alive;
-use sa_core::bindings::anim_add_block_ref as add_anim_block_ref;
+use sa_anim::bindings::anim_add_block_ref as add_anim_block_ref;
 use sa_stream::bindings::anim_remove_block_ref as remove_anim_block_ref;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::entity_get_col_model;
-use sa_world::bindings::event_group_add;
+use crate::bindings::event_group_add;
 use sa_world::bindings::event_group_event_ctor;
 use sa_world::bindings::event_group_event_dtor;
-use sa_core::bindings::get_animation_block;
+use sa_anim::bindings::get_animation_block;
 use sa_world::bindings::get_event_global_group;
-use sa_world::bindings::membership_is_member as group_membership_is_member;
-use sa_world::bindings::ped_groups_get_peds_group as get_peds_group;
+use crate::bindings::membership_is_member as group_membership_is_member;
+use crate::bindings::ped_groups_get_peds_group as get_peds_group;
 use sa_world::bindings::physical_add_to_moving_list as add_to_moving_list;
 use sa_world::bindings::remove_from_moving_list;
 use sa_world::bindings::simple_transform_update_rw_matrix;
-use sa_world::bindings::task_simple_ctor;
+use crate::bindings::task_simple_ctor;
 use crate::bindings::facial_get_anim_id;
 use crate::bindings::task_complex_dtor;
-use sa_core::bindings::anim_set_delete_callback as assoc_set_delete_callback;
-use sa_core::bindings::assoc_set_finish_callback;
+use sa_anim::bindings::anim_set_delete_callback as assoc_set_delete_callback;
+use sa_anim::bindings::assoc_set_finish_callback;
 use sa_core::bindings::clump_get_association;
 use sa_core::bindings::streaming_request_model as request_model;
 use sa_stream::bindings::anim_blend_animation_hier as blend_animation_hier;
@@ -46,8 +46,8 @@ use sa_stream::bindings::get_animation_block_index;
 use sa_world::bindings::anim_blend_animation as blend_animation;
 use sa_world::bindings::anim_get_anim_block_name as get_anim_block_name;
 use sa_world::bindings::event_sound_quiet_ctor;
-use sa_world::bindings::event_sound_quiet_dtor;
-use sa_world::bindings::group_intelligence_add_event as pgi_add_event;
+use crate::bindings::event_sound_quiet_dtor;
+use crate::bindings::group_intelligence_add_event as pgi_add_event;
 use sa_world::bindings::placeable_set_posn;
 orig! {
     /// `CTaskSimpleFacial::CTaskSimpleFacial(int32 type, int32 duration)` (0x690C70, `ret 8`)
@@ -144,7 +144,7 @@ pub fn task_simple_facial_get_anim_id(ty: i32) -> i32 {
 #[hook(addr = 0x690DC0, conv = thiscall, name = "CTaskComplexFacial::CreateNextSubTask", this = "CTaskComplexFacial",
        expect = "64 A1 00 00 00 00", route = "L2", hazards = "heap-writes")]
 pub fn task_complex_facial_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
-    if ped_is_alive(ped) == 0 && v_make_abortable(rd::<GPtr<u8>>(this, 8), ped, 2, 0) != 0 {
+    if ped_is_alive(ped) as u8 == 0 && v_make_abortable(rd::<GPtr<u8>>(this, 8), ped, 2, 0) != 0 {
         return new_inline_pause();
     }
     let req = rd::<u32>(this, 0x18);
@@ -198,7 +198,7 @@ pub fn task_complex_facial_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) 
 #[hook(addr = 0x690FC0, conv = thiscall, name = "CTaskComplexFacial::ControlSubTask", this = "CTaskComplexFacial",
        expect = "64 A1 00 00 00 00", route = "L2", hazards = "heap-writes")]
 pub fn task_complex_facial_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
-    if ped_is_alive(ped) == 0 && v_make_abortable(rd::<GPtr<u8>>(this, 8), ped, 2, 0) != 0 {
+    if ped_is_alive(ped) as u8 == 0 && v_make_abortable(rd::<GPtr<u8>>(this, 8), ped, 2, 0) != 0 {
         return new_inline_pause();
     }
     if rd::<u8>(this, 0xE) != 0 && v_make_abortable(rd::<GPtr<u8>>(this, 8), ped, 1, 0) != 0 {
@@ -413,7 +413,7 @@ pub fn hold_entity_drop_entity(this: GPtr<u8>, ped: GPtr<u8>, add_event: u8) {
             entity_update_rw_frame(ent);
         }
     }
-    clean_up_old_reference(rd::<GPtr<u8>>(this, 8), slot.cast::<GPtr<u8>>());
+    clean_up_old_reference(rd::<GPtr<u8>>(this, 8), slot.cast::<u8>());
     wr::<u32>(this, 8, 0);
 }
 
@@ -459,9 +459,9 @@ pub fn hold_entity_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
     let t = v_get_task_type(this);
     let a = rd::<GPtr<u8>>(this, 0x38);
     if t == 0x134 {
-        assoc_set_finish_callback(a, 0x691740, this);
+        assoc_set_finish_callback(a, 0x691740, this.addr() as u32);
     } else {
-        assoc_set_delete_callback(a, 0x691740, this);
+        assoc_set_delete_callback(a, 0x691740, this.addr() as u32);
     }
 }
 
@@ -480,7 +480,7 @@ pub fn hold_entity_finish_anim_cb(assoc: GPtr<u8>, t: GPtr<u8>) {
     if v_get_task_type(t) == 0x134 && x(rd::<f32>(assoc, 0x18)).fcom(X87::zero()) == sa_math::x87::Cmp::Greater {
         let e = rd::<GPtr<u8>>(t, 8);
         if !e.is_null() {
-            clean_up_old_reference(e, GPtr::<u8>::cast::<GPtr<u8>>(t.byte_add(8)));
+            clean_up_old_reference(e, t.byte_add(8));
             wr::<u32>(t, 8, 0);
         }
     }
@@ -525,7 +525,7 @@ pub fn pgi_is_current_event_valid(this: GPtr<u8>) -> u8 {
         return 1;
     }
     let src = v_get_source_entity(inner);
-    if group_membership_is_member(rd::<GPtr<u8>>(this, 0).byte_add(8), src) != 0 {
+    if group_membership_is_member(rd::<GPtr<u8>>(this, 0).byte_add(8), src) as u8 != 0 {
         return 0;
     }
     1
@@ -563,7 +563,7 @@ pub fn go_to_vehicle_and_lean_dtor(this: GPtr<u8>) {
     }
     let e = rd::<GPtr<u8>>(this, 0xC);
     if !e.is_null() {
-        clean_up_old_reference(e, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0xC)));
+        clean_up_old_reference(e, this.byte_add(0xC));
     }
     task_complex_dtor(this);
 }
@@ -603,7 +603,7 @@ pub fn inform_friends_event_queue_process() {
             event_group_add(g, rd::<GPtr<u8>>(e, 4), 0);
             let p = rd::<GPtr<u8>>(e, 0);
             if !p.is_null() {
-                clean_up_old_reference(p, e.cast::<GPtr<u8>>());
+                clean_up_old_reference(p, e.cast::<u8>());
                 wr::<u32>(e, 0, 0);
             }
         }
@@ -636,7 +636,7 @@ pub fn inform_group_event_process(this: GPtr<u8>) {
     if rd::<u32>(this, 0xC) >= now() {
         return;
     }
-    let g = get_peds_group(ped);
+    let g = GPtr::from_addr(get_peds_group(ped.addr() as u32) as usize);
     if !g.is_null() {
         let id = get_group_id(g);
         if id >= 0 && rd::<u8>(GPtr::from_addr(0xC098E0), id as isize) != 0 {
@@ -650,7 +650,7 @@ pub fn inform_group_event_process(this: GPtr<u8>) {
     }
     let p = rd::<GPtr<u8>>(this, 0);
     if !p.is_null() {
-        clean_up_old_reference(p, this.cast::<GPtr<u8>>());
+        clean_up_old_reference(p, this.cast::<u8>());
         wr::<u32>(this, 0, 0);
     }
     let ev = rd::<GPtr<u8>>(this, 8);

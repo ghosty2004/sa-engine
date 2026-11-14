@@ -12,7 +12,7 @@ use sa_math::x87::Cmp;
 
 use crate::common::*;
 
-use sa_world::bindings::acquaintance_ped_ctor;
+use crate::bindings::acquaintance_ped_ctor;
 use crate::bindings::car_drive_timed_ctor;
 use crate::bindings::dtor_4af0a0 as sexy_vehicle_dtor;
 use crate::bindings::fnr_get_last_waypoint;
@@ -36,45 +36,45 @@ use crate::bindings::task_timer_is_out_of_time;
 use crate::bindings::wander_create_first_sub_task as wander_create_first_sub_task_orig;
 use crate::bindings::wander_set_next_min_scan_time as ws_set_next_min_scan_time;
 use sa_world::bindings::wanted_can_cop_join_pursuit;
-use sa_core::bindings::col_sphere_set;
-use sa_core::bindings::entity_get_is_on_screen as entity_get_is_on_screen_ws;
-use sa_core::bindings::find_player_ped;
-use sa_core::bindings::find_player_vehicle;
+use sa_world::bindings::col_sphere_set;
+use sa_world::bindings::entity_get_is_on_screen as entity_get_is_on_screen_ws;
+use sa_world::bindings::find_player_ped;
+use sa_world::bindings::find_player_vehicle;
 use sa_core::bindings::general_random_int_in_range as gen_random_in_range;
-use sa_core::bindings::get_pad as pad_get_pad_ws;
+use sa_input::bindings::get_pad as pad_get_pad_ws;
 use sa_core::bindings::tm_get_active_task;
 use sa_core::bindings::tm_get_simplest_active_task;
 use sa_core::bindings::vector_dot_product as vector_dot_product_ws;
 use sa_core::bindings::vector_normalise;
-use sa_stream::bindings::find_player_wanted;
+use sa_world::bindings::find_player_wanted;
 use sa_world::bindings::count_members_excluding_leader as membership_count_members_excluding_leader;
 use sa_world::bindings::ctor_48df30 as scratch_head_ctor_48df30;
 use sa_world::bindings::event_acquaintance_ped_dtor as acquaintance_ped_dtor;
-use sa_world::bindings::event_group_add as event_group_add_ws;
+use crate::bindings::event_group_add as event_group_add_ws;
 use sa_world::bindings::go_to_point_and_stand_still_ctor;
 use sa_world::bindings::ik_is_looking;
 use sa_world::bindings::ped_groups_are_in_same_group;
-use sa_world::bindings::ped_groups_get_peds_group;
+use crate::bindings::ped_groups_get_peds_group;
 use sa_world::bindings::player_set_wanted_level_no_drop;
 use sa_world::bindings::run_anim_ctor;
 use sa_world::bindings::sequence_add_task;
 use sa_world::bindings::sequence_ctor;
 use sa_world::bindings::stand_still_ctor as stand_still_ctor_ws;
 use sa_world::bindings::stand_still_ctor;
-use sa_world::bindings::task_complex_ctor;
+use crate::bindings::task_complex_ctor;
 use sa_world::bindings::task_wander_cop_ctor as wander_cop_ctor;
 use sa_world::bindings::task_wander_criminal_ctor as wander_criminal_ctor;
 use sa_world::bindings::vector_add as vector_add_ws;
-use sa_core::bindings::vector_magnitude_sqr as vector_magnitude_sqr_ws;
+use sa_world::bindings::vector_magnitude_sqr as vector_magnitude_sqr_ws;
 use sa_world::bindings::vector_mul_scalar as vector_mul_ws;
 use sa_world::bindings::vector_ne as vectors_differ_509760;
-use sa_core::bindings::vector_sub;
+use sa_world::bindings::vector_sub;
 use sa_world::bindings::wander_standard_ctor;
 use sa_core::bindings::world_get_is_line_of_sight_clear as world_los_clear;
 use crate::bindings::ctor_4af010 as sexy_vehicle_ctor;
 use crate::bindings::is_wander_path_clear;
-use sa_core::bindings::ik_abort_look_at;
-use sa_core::bindings::tm_get_task_secondary as tm_get_task_secondary_ws;
+use sa_anim::bindings::ik_abort_look_at;
+use crate::bindings::tm_get_task_secondary as tm_get_task_secondary_ws;
 use sa_world::bindings::ik_look_at as ik_look_at_ws;
 use sa_world::bindings::intel_find_task_by_type as intel_find_task_by_type_ws;
 use sa_world::bindings::leave_car_ctor;
@@ -427,7 +427,7 @@ pub fn fpr_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
             wr::<f32>(dv, 0, dx);
             wr::<f32>(dv, 4, dy);
             wr::<f32>(dv, 8, dz);
-            vector_normalise(dv);
+            vector_normalise(dv.cast::<[f32;3]>());
             let (nx, ny, nz) = (rd::<f32>(dv, 0), rd::<f32>(dv, 4), rd::<f32>(dv, 8));
             let ra = x(qx).fsub_m(rd::<f32>(pb, 0));
             let rb = x(qy).fsub_m(rd::<f32>(pb, 4));
@@ -558,7 +558,7 @@ pub fn fpr_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
 #[allow(clippy::too_many_arguments)]
 #[sa_core::native(addr = 0x671510, conv = thiscall, name = "CTaskComplexFollowPointRoute::Constructor")]
 pub fn fpr_ctor(this: GPtr<u8>, ms: u32, route: GPtr<u8>, mode: u32, radius: u32, slow: u32, overshoot: u32, blending: u32, stand_still: u32) -> GPtr<u8> {
-    task_complex_ctor(this);
+    task_complex_ctor(this.addr() as u32);
     wr::<u32>(this, 0xC, mode);
     wr::<u32>(this, 0x14, ms);
     let bits = ((((blending & 1) << 1) | (stand_still & 1)) << 2) | (overshoot & 1);
@@ -1667,7 +1667,7 @@ fn route_corner_blend(this: GPtr<u8>, ped: GPtr<u8>, l: &BlendLayout) -> Option<
     wr::<f32>(vp, 0, dx);
     wr::<f32>(vp, 4, dy);
     wr::<u32>(vp, 8, 0);
-    vector_normalise(vp);
+    vector_normalise(vp.cast::<[f32;3]>());
     let p = rd::<GPtr<u8>>(this, l.route).byte_add(off + 4);
     let w = (l.next)(this, vp.byte_add(0x18), ped);
     let ny = x(rd::<f32>(w, 4)).fsub_m(rd::<f32>(p, 4));
@@ -1675,7 +1675,7 @@ fn route_corner_blend(this: GPtr<u8>, ped: GPtr<u8>, l: &BlendLayout) -> Option<
     wr::<u32>(vp, 0x14, 0);
     wr::<f32>(vp, 0xC, f32_of(nx));
     wr::<f32>(vp, 0x10, f32_of(ny));
-    vector_normalise(vp.byte_add(0xC));
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(vp.byte_add(0xC)));
     let f = |o: isize| rd::<f32>(vp, o);
     let dot = x(f(4)).fmul_m(f(0x10)).fadd(x(f(0)).fmul_m(f(0xC))).fadd(x(f(0x14)).fmul_m(f(8)));
     let one = g::<f32>(0x858624).read();
@@ -1775,7 +1775,7 @@ pub fn aop_nearby_peds_in_sphere_port(_this: GPtr<u8>, _ped: GPtr<u8>, s: GPtr<u
         }
         let mut sp = [0u32; 5];
         let spp = buf(&mut sp);
-        col_sphere_set(spp, f32::from_bits(g::<u32>(0x86FCC0).read()), ent_pos(p), 0, 0, 0xFF);
+        col_sphere_set(spp, f32::from_bits(g::<u32>(0x86FCC0).read()).to_bits(), GPtr::<u8>::cast::<u32>(ent_pos(p)), 0, 0, 0xFF);
         if col_sphere_intersect_sphere(s, spp) == 0 {
             continue;
         }
@@ -1796,7 +1796,7 @@ pub fn aop_nearby_peds_in_sphere_port(_this: GPtr<u8>, _ped: GPtr<u8>, s: GPtr<u
 #[hook(addr = 0x672080, conv = thiscall, name = "CTaskComplexAvoidOtherPedWhileWandering::ComputeAvoidSphere", expect = "8B 44 24 04 81 EC 80 00 00 00")]
 pub fn aop_compute_avoid_sphere_port(this: GPtr<u8>, ped: GPtr<u8>, s: GPtr<u8>) {
     let list = rd::<GPtr<u8>>(ped, 0x47C).byte_add(0x130);
-    col_sphere_set(s, f32::from_bits(g::<u32>(0x86FCC0).read()), ent_pos(rd::<GPtr<u8>>(this, 0xC)), 0, 0, 0xFF);
+    col_sphere_set(s, f32::from_bits(g::<u32>(0x86FCC0).read()).to_bits(), GPtr::<u8>::cast::<u32>(ent_pos(rd::<GPtr<u8>>(this, 0xC))), 0, 0, 0xFF);
     let mut a = [0u32; 16];
     let mut b = [0u32; 16];
     for (i, slot) in b.iter_mut().enumerate() {
@@ -2003,7 +2003,7 @@ pub fn ws_look_for_sexy_cars_port(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
 /// `SetNextMinScanTime`; true. Else false.
 #[hook(addr = 0x670100, conv = thiscall, name = "CTaskComplexWanderStandard::LookForGangMembers", expect = "6A FF 68 A8 55 84 00")]
 pub fn ws_look_for_gang_members_port(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
-    if !ped_groups_get_peds_group(ped).is_null() {
+    if !GPtr::<u8>::from_addr(ped_groups_get_peds_group(ped.addr() as u32) as usize).is_null() {
         return 0;
     }
     let mut t = [0u32; 3];
@@ -2033,13 +2033,13 @@ pub fn ws_look_for_gang_members_port(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         if b2.fcom(x(g::<f32>(0x858FE8).read())).test_parity(5) {
             continue;
         }
-        let grp = ped_groups_get_peds_group(e);
+        let grp = GPtr::from_addr(ped_groups_get_peds_group(e.addr() as u32) as usize);
         if grp.is_null() || (membership_count_members_excluding_leader(grp.byte_add(8)) as i32) <= 0 {
             continue;
         }
         let mut ev = [0u32; 6];
         let evp = buf(&mut ev);
-        acquaintance_ped_ctor(evp, e);
+        acquaintance_ped_ctor(evp.addr() as u32, e.addr() as u32);
         wr::<u32>(evp, 0, 0x86CAC8);
         wr::<u16>(evp, 0xE, 0x3AC);
         event_group_add_ws(rd::<GPtr<u8>>(ped, 0x47C).byte_add(0x68), evp, 0);
@@ -2140,11 +2140,11 @@ pub fn aop_set_up_ik(this: GPtr<u8>, ped: GPtr<u8>) {
     let mut d = [0u32; 3];
     let dp = buf(&mut d);
     vector_sub(dp, this.byte_add(0x1C), ent_pos(ped));
-    let m2 = X87::from_f64_exact(vector_magnitude_sqr_ws(dp.cast::<f32>()));
+    let m2 = X87::from_f64_exact(vector_magnitude_sqr_ws(dp.cast::<u8>()).to_f64());
     if m2.fcom(x(g::<f32>(0x85EED4).read())).test_any(0x41) {
         return;
     }
-    vector_normalise(dp);
+    vector_normalise(dp.cast::<[f32;3]>());
     let (vx, vy, vz) = (rd::<f32>(dp, 0), rd::<f32>(dp, 4), rd::<f32>(dp, 8));
     let m = rd::<GPtr<u8>>(ped, 0x14);
     let dot = x(vz).fmul_m(rd::<f32>(m, 0x18)).fadd(x(vy).fmul_m(rd::<f32>(m, 0x14))).fadd(x(vx).fmul_m(rd::<f32>(m, 0x10)));
@@ -2159,7 +2159,7 @@ pub fn aop_set_up_ik(this: GPtr<u8>, ped: GPtr<u8>) {
     let ny = f32_of(x(ty).fadd(x(vy).fadd(x(vy))));
     let nz = f32_of(x(vz2).fadd(pz).fadd_m(g::<f32>(0x86FD40).read()));
     let mut posn = [nx.to_bits(), ny.to_bits(), nz.to_bits()];
-    ik_look_at_ws(ik, GPtr::from_addr(0x86FEF0), ped, GPtr::NULL, 0x1388, 0xFFFF_FFFF, buf(&mut posn), 0, 0x3E80_0000, 0x1F4, 3, 0);
+    ik_look_at_ws(ik, GPtr::from_addr(0x86FEF0), ped, GPtr::NULL, 0x1388, -1, buf(&mut posn), 0, f32::from_bits(0x3E80_0000), 0x1F4, 3, 0);
     wr::<u8>(this, 0x5C, rd::<u8>(this, 0x5C) | 1);
 }
 
@@ -2236,7 +2236,7 @@ pub fn aop_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
         let dot = X87::from_f64_exact(vector_dot_product_ws(
             rd::<GPtr<u8>>(ped, 0x14).byte_add(0x10),
             rd::<GPtr<u8>>(o, 0x14).byte_add(0x10),
-        ));
+        ).to_f64());
         if !dot.fcom(x(g::<f32>(0x86CD98).read())).test_any(1) {
             let mut a = [0u32; 3];
             let mut b = [0u32; 3];
@@ -2245,8 +2245,8 @@ pub fn aop_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
             vector_mul_ws(bp, o.byte_add(0x44), 50.0);
             wr::<u32>(ap, 8, 0);
             wr::<u32>(bp, 8, 0);
-            let m1 = f32_of(X87::from_f64_exact(vector_magnitude_sqr_ws(bp.cast::<f32>())).fadd_m(g::<f32>(0x870144).read()));
-            let m2 = X87::from_f64_exact(vector_magnitude_sqr_ws(ap.cast::<f32>()));
+            let m1 = f32_of(X87::from_f64_exact(vector_magnitude_sqr_ws(bp.cast::<u8>()).to_f64()).fadd_m(g::<f32>(0x870144).read()));
+            let m2 = X87::from_f64_exact(vector_magnitude_sqr_ws(ap.cast::<u8>()).to_f64());
             if !m2.fcom(x(m1)).test_parity(0x41) && !x(d).fcom(x(g::<f32>(0x870140).read())).test_any(0x41) {
                 return quit(this, ped);
             }
@@ -2341,14 +2341,14 @@ pub fn avoid_other_ped_compute_sphere(_this: GPtr<u8>, out: GPtr<u8>, peds: GPtr
         }
     }
     let r = max.fsqrt().fadd_m(g::<f32>(K_AVOID_SPHERE_MARGIN).read()).to_f32();
-    col_sphere_set(out, f32::from_bits(r.to_bits()), GPtr::from_raw(centre.as_mut_ptr()).cast(), 0, 0, 0xFF);
+    col_sphere_set(out, f32::from_bits(r.to_bits()).to_bits(), GPtr::<u8>::cast::<u32>(GPtr::from_raw(centre.as_mut_ptr()).cast()), 0, 0, 0xFF);
 }
 
 use sa_core::bindings::vector_difference;
 use sa_core::bindings::vector_magnitude;
 use sa_world::bindings::find_ground_z_for_3d_coord as world_find_ground_z_for_3d_coord;
 use sa_world::bindings::get_peds_interior_group as interior_get_peds_interior_group;
-use sa_world::bindings::path_find_these_2_nodes_are_adjacent;
+use sa_pop::bindings::path_find_these_2_nodes_are_adjacent;
 orig! {
     /// `CTaskComplexFollowNodeRoute::CanGoStraightThere(CPed*, const CVector& from, const CVector& to, float maxDist)`
     /// (0x66EF20, `ret 0x10`; the distance as raw bits)

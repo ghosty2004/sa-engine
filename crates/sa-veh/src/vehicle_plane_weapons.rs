@@ -7,7 +7,7 @@ use sa_core::{hook, orig};
 
 use crate::common::{f32_of, g, rd, wr, x};
 
-use sa_core::bindings::get_pad as pad_get_pad;
+use sa_input::bindings::get_pad as pad_get_pad;
 use sa_world::bindings::pad_get_car_gun_fired;
 use sa_world::bindings::pad_get_enter_targeting;
 use sa_world::bindings::pad_get_target;
@@ -15,11 +15,10 @@ use sa_world::bindings::vector_add_assign as vec_add_assign;
 use sa_world::bindings::vector_mul_scalar as vec_mul_scalar;
 use sa_world::bindings::weapon_effects_is_locked_on;
 use sa_pop::bindings::car_gun_just_down as pad_car_gun_just_down;
+use sa_world::bindings::add_projectile;
 orig! {
     /// `CWorld::FindPlayerSlotWithVehiclePointer(CEntity*)` (0x564000)
     fn find_player_slot_with_vehicle(v: GPtr<u8>) -> i32 = cdecl 0x564000 => unported;
-    /// `CProjectileInfo::AddProjectile(CEntity*, eWeaponType, CVector, float, CVector*, CEntity*)` (0x737C80)
-    fn add_projectile(creator: GPtr<u8>, wt: i32, x: f32, y: f32, z: f32, force: u32, dir: GPtr<u8>, target: GPtr<u8>) -> u8 = cdecl 0x737C80 => unported;
     /// `CVehicle::ScanAndMarkTargetForHeatSeekingMissile(CEntity*)` (0x6E0400)
     fn scan_and_mark_target(v: GPtr<u8>, e: GPtr<u8>) -> GPtr<u8> = thiscall 0x6E0400 => unported;
 }
@@ -60,7 +59,7 @@ fn crosshair(r: u8, gb: u8, size: u32) {
        unverified = "veh4-2", route = "L2", hazards = "heap-writes",
        note = "Hydra: AddProjectile (projectile pool) and the crosshair statics 0xC8A83C/0xC8A84C..4E/0xC8A85C; returns the locked target (EAX)")]
 pub fn vehicle_get_plane_weapon_firing_status(this: GPtr<u8>, is_firing: GPtr<u8>, ordnance: GPtr<u8>) -> GPtr<u8> {
-    let pad = pad_get_pad(find_player_slot_with_vehicle(this) as u32);
+    let pad = pad_get_pad((find_player_slot_with_vehicle(this) as u32) as i32);
     let model = i32::from(rd::<i16>(this, 0x22));
     let case = match model {
         425 | 576 => 0,
@@ -128,7 +127,7 @@ fn hydra(this: GPtr<u8>, pad: GPtr<u8>, ordnance: GPtr<u8>) -> GPtr<u8> {
         vec_add_assign(t1p, r2);
         let s = |k: usize| f32_of(x(f32::from_bits(t1[k])).fadd_m(pos[k]));
         let (sx, sy, sz) = (s(0), s(1), s(2));
-        add_projectile(this, 0x3A, sx, sy, sz, 0, m.byte_add(0x10), GPtr::NULL);
+        add_projectile(this, 0x3A, sx, sy, sz, f32::from_bits(0), m.byte_add(0x10), GPtr::NULL);
         wr::<u32>(this, 0x4D4, now());
     }
     if pad_car_gun_just_down(pad) == 2 {

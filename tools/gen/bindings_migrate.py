@@ -35,7 +35,7 @@ sys.path.insert(0, os.path.join(B.ROOT, 'tools', 'lib'))
 # C varargs: every caller passes its own argument list, so one fixed signature cannot describe them.
 VARARGS = {
     0x821982: 'printf', 0x821BB5: 'sprintf', 0x8220AD: 'sscanf', 0x8088D0: 'RwError-style varargs',
-    0x822E7E: 'vsprintf', 0x823AD0: 'sprintf_s',
+    0x822E7E: 'vsprintf', 0x823AD0: 'sprintf_s', 0x823A30: 'fprintf',
 }
 INTS = ('u8', 'i8', 'u16', 'i16', 'u32', 'i32', 'usize', 'isize', 'u64', 'i64')
 WIDTH = {'u8': 1, 'i8': 1, 'bool': 1, 'u16': 2, 'i16': 2, 'u32': 4, 'i32': 4, 'usize': 4, 'isize': 4, 'f32': 4}
@@ -130,6 +130,10 @@ def alias_map(s, uses, global_aliases):
         last = v.split('::')[-1]
         if k not in out and last in global_aliases:
             out[k] = global_aliases[last]
+    # names a glob import brings in: the workspace's unique `pub type` aliases of simple types
+    for k, v in global_aliases.items():
+        if k not in out and SIMPLE.match(v):
+            out[k] = v
     return out
 
 
@@ -153,12 +157,20 @@ def norm(t, aliases):
     return t
 
 
-SIMPLE = re.compile(r'^(?:%s|sa_math::vector::CVector|sa_math::x87::X87|GPtr<(?:%s|sa_math::vector::CVector|GPtr<%s>|\[%s;\d+\])>|\[%s;\d+\]|\(\))$'
+SIMPLE = re.compile(r'^(?:GPtr<sa_[a-z_0-9]+(?:::\w+)+>|%s|sa_math::vector::CVector|sa_math::x87::X87|GPtr<(?:%s|sa_math::vector::CVector|GPtr<%s>|\[%s;\d+\])>|\[%s;\d+\]|\(\))$'
                     % ((B.PRIM,) * 5))
 
 
 def is_ptr(t):
     return t.startswith('GPtr<')
+
+
+TYPED_PTR = re.compile(r'^GPtr<(?:[A-Za-z_][\w:]*)>$')
+
+
+def simple(t):
+    """A type a binding can carry (or, for a typed struct pointer, convert from with `.cast()`)."""
+    return SIMPLE.match(t) is not None or TYPED_PTR.match(t) is not None
 
 
 # ---- conversions at the call site --------------------------------------------------------------------
@@ -225,7 +237,7 @@ def conv(e, frm, to):
     if is_ptr(to) and not is_ptr(frm) and frm in INTS:
         if lit and int(e.strip().replace('_', ''), 0) == 0:
             return 'GPtr::NULL'
-        return f'GPtr::from_addr({atom(e)} as usize)'
+        return f'GPtr::<{to[5:-1]}>::from_addr({atom(e)} as usize)'
     # a pointer expression whose pointee only the old parameter type decided names it (UFCS)
     plain = re.fullmatch(r'[\w.]+', e.strip()) is not None
     ufcs = frm.replace('GPtr<', 'GPtr::<', 1)
@@ -251,6 +263,11 @@ def conv(e, frm, to):
         return f'f32::from_bits({e.strip() if frm == "u32" else atom(e) + " as u32"})'
     if frm == 'f32' and to == 'f64':
         return f'f64::from({e.strip()})'
+    x87 = ('X87', 'sa_math::x87::X87')
+    if frm in x87 and to in ('f64', 'f32'):
+        return f'{atom(e)}.to_{to}()'
+    if frm == 'f64' and to in x87:
+        return f'sa_math::x87::X87::from_f64_exact({e.strip()})'
     if frm == 'f64' and to == 'f32':
         return f'({atom(e)} as f32)'
     return None
@@ -277,6 +294,14 @@ def pick_int(types, width):
     return f'{s}{8 * width}'
 
 
+CVEC = 'sa_math::vector::CVector'
+
+
+def words(args):
+    """Stack words of an argument list (a `CVector` by value is three)."""
+    return sum(3 if t == CVEC else 1 for t in args)
+
+
 def canonical(addr, sigs, notes, prefer=None):
     """sigs: list of (conv, spec, args, ret) of the mergeable declarations (and the current binding). Returns
     (conv, spec, args, ret) or None when they cannot share one."""
@@ -296,9 +321,10 @@ def canonical(addr, sigs, notes, prefer=None):
     counts = collections.Counter(len(a) for _, _, a, _ in sigs)
     words = collections.Counter(sum(3 if t == 'sa_math::vector::CVector' else 1 for t in a) for _, _, a, _ in sigs)
     if len(counts) > 1 and len(words) == 1:
-        # a `CVector` by value is three stack words: the same arguments, another spelling (kept apart)
-        n = len(prefer) if prefer is not None else max(counts, key=lambda k: (counts[k], k))
-        notes.append(f'CVector by value vs its words: the declarations of {n} arguments merged, the others kept')
+        # a `CVector` by value is three stack words: the same arguments, another spelling; the binding takes the
+        # vector (callers that pass the words build it at the call)
+        n = min(counts)
+        notes.append(f'CVector by value vs its words: the binding takes {n} arguments (the vectors)')
     elif len(counts) > 1:
         f = f or facts(addr)
         n = f['stack']
@@ -316,13 +342,13 @@ def canonical(addr, sigs, notes, prefer=None):
     widths = None
     for k in range(n):
         ts = [s[2][k] for s in pool]
-        if len(set(ts)) == 1:
+        if len(set(ts)) == 1 and SIMPLE.match(ts[0]):
             args.append(ts[0])
             continue
         if any(is_ptr(t) for t in ts):
             ps = collections.Counter(t for t in ts if is_ptr(t))
             prim = [t for t in ps if SIMPLE.match(t) and 'CVector' not in t]
-            args.append(max(prim or ps, key=lambda t: (ps[t], t == 'GPtr<u8>')))
+            args.append(max(prim, key=lambda t: (ps[t], t == 'GPtr<u8>')) if prim else 'GPtr<u8>')
         elif any(t == 'f32' for t in ts) and conv_[0] in ('cdecl', 'stdcall', 'thiscall') and all(t in INTS + ('f32',) for t in ts):
             args.append('f32')
         elif all(t in INTS + ('bool',) for t in ts):
@@ -340,17 +366,18 @@ def canonical(addr, sigs, notes, prefer=None):
             notes.append(f'argument {k}: {sorted(set(ts))}')
             return None
     rets = [s[3] for s in pool]
-    if len(set(rets)) == 1:
+    if len(set(rets)) == 1 and (not rets[0] or SIMPLE.match(rets[0])):
         ret = rets[0]
     else:
         vals = [r for r in rets if r]
         f = f or facts(addr)
         use = f['ret']
         if any(is_ptr(r) for r in vals):
-            ps = collections.Counter(r for r in vals if is_ptr(r))
-            ret = max(ps, key=lambda t: (ps[t], t == 'GPtr<u8>'))
-        elif vals and all(r in ('f32', 'f64') for r in vals):
-            ret = 'f64' if 'f64' in vals else 'f32'
+            ps = collections.Counter(r for r in vals if is_ptr(r) and SIMPLE.match(r))
+            ret = max(ps, key=lambda t: (ps[t], t == 'GPtr<u8>')) if ps else 'GPtr<u8>'
+        elif vals and all(r in ('f32', 'f64') + B.X87_TYPES for r in vals):
+            # the widest read of ST0: all 80 bits, else a double, else a float
+            ret = next(t for t in ('sa_math::x87::X87', 'f64', 'f32') if t in vals)
         elif vals and all(r in INTS + ('bool',) for r in vals):
             ws = {'byte': 1, 'word': 2, 'dword': 4}
             have = {WIDTH.get(r, 4) for r in vals}
@@ -417,15 +444,31 @@ def rewrite_calls(text, callees, problems, where, qual=None, ctx=None):
             break
         inner = text[po + 1:pc]
         args = split_exprs(inner) if inner.strip() else []
-        if len(args) != len(c.frm_args):
+        if len(args) != len(c.frm_args) or words(c.frm_args) != words(c.to_args):
             problems.append(f'{where}: {m.group(2)}: {len(args)} arguments at a call, declared {len(c.frm_args)}')
             out.append(text[i:pc + 1])
             i = pc + 1
             continue
         new_args = []
         ok = True
-        for a, ft, tt in zip(args, c.frm_args, c.to_args):
-            a2 = rewrite_calls(a, callees, problems, where, qual, ctx)
+        k = 0
+        for tt in c.to_args:
+            ft = c.frm_args[k] if k < len(c.frm_args) else None
+            if tt == CVEC and ft != CVEC:
+                # three words the caller passes -> the vector the binding takes
+                parts = []
+                for j in range(3):
+                    a2 = rewrite_calls(args[k + j], callees, problems, where, qual, ctx)
+                    v = conv(a2, c.frm_args[k + j], 'f32')
+                    if v is None:
+                        ok = False
+                        problems.append(f'{where}: {m.group(2)}: no conversion {c.frm_args[k + j]} -> f32')
+                        v = a2
+                    parts.append(bare(v))
+                new_args.append(f'{CVEC}::new({", ".join(parts)})')
+                k += 3
+                continue
+            a2 = rewrite_calls(args[k], callees, problems, where, qual, ctx)
             v = conv(a2, ft, tt)
             if v is not None:
                 v = bare(v)
@@ -434,8 +477,9 @@ def rewrite_calls(text, callees, problems, where, qual=None, ctx=None):
                 problems.append(f'{where}: {m.group(2)}: no conversion {ft} -> {tt}')
                 v = a2
             new_args.append(v)
+            k += 1
         call = f'{m.group(1)}{m.group(2)}({", ".join(new_args)})' if ok else text[st:pc + 1]
-        if ok and len(call) > 100 and '\n' in inner:
+        if ok and len(call) > 100 and '\n' in inner and len(args) == len(new_args):
             call = text[st:po + 1] + rebuild_multiline(inner, args, new_args) + ')'
         after = s[pc + 1:].lstrip()
         if ok and not c.frm_ret and c.to_ret:
@@ -583,6 +627,11 @@ def resolve(dry, report):
             d.args = [norm(t, aliases) for t in d.args]
             d.ret = norm(d.ret, aliases)
             d.abs_target = resolve_target_abs(d, s, deps)
+            if d.conv == 'reg' and d.ret in B.X87_TYPES:
+                for conv in ('cdecl', 'stdcall', 'thiscall'):
+                    if B.x87_spec({'conv': conv, 'args': ';'.join('a:' + t for t in d.args), 'ret': d.ret}) == d.spec:
+                        d.conv, d.spec = conv, ''
+                        break
             decls.append(d)
     by_addr = collections.defaultdict(list)
     for d in decls:
@@ -602,12 +651,10 @@ def resolve(dry, report):
         good = []
         for d in ds:
             why = None
-            if d.attrs or d.block_attrs:
+            if (d.attrs and not re.fullmatch(r'(?:#\s*\[\s*allow\([^\]]*\)\s*\]\s*)+', d.attrs)) or d.block_attrs:
                 why = 'attributes'
-            elif not all(SIMPLE.match(t) for t in d.args + ([d.ret] if d.ret else [])):
-                why = 'types: ' + ', '.join(t for t in d.args + [d.ret] if t and not SIMPLE.match(t))
-            elif d.name in hosts:
-                why = 'host stand-in key'
+            elif not all(simple(t) for t in d.args + ([d.ret] if d.ret else [])):
+                why = 'types: ' + ', '.join(t for t in d.args + [d.ret] if t and not simple(t))
             elif d.abs_target is None:
                 why = 'target not resolvable: ' + d.target
             if why:
@@ -628,7 +675,7 @@ def resolve(dry, report):
             for d in good:
                 notes_out.append(f'0x{addr:X}\tkept\t{d.rel}\t{d.name}\tno common signature: {"; ".join(notes)}')
             continue
-        members = [d for d in good if len(d.args) == len(sig[2]) and (d.conv, d.spec) == sig[:2]]
+        members = [d for d in good if (d.conv, d.spec) == sig[:2] and words(d.args) == words(sig[2])]
         for d in good:
             if d not in members:
                 stats['kept: other shape'] += 1
@@ -643,16 +690,14 @@ def resolve(dry, report):
         if row and row['target'] != 'unported':
             tg.add(row['target'])
         if len(tg) > 1:
-            # the registered port wins; declarations reaching other Rust functions (per-crate wrappers) stay
-            if regs.get(addr) in tg:
+            # the registered port wins: the other targets are per-crate phase B adapters of the same function
+            # (an ST0 result rounded to f64 for the plain forms); the binding reaches the port itself
+            if regs.get(addr):
                 target = regs[addr]
                 for d in members:
                     if d.abs_target not in ('unported', target):
-                        stats['kept: other port'] += 1
-                        notes_out.append(f'0x{addr:X}\tkept\t{d.rel}\t{d.name}\ttarget {d.abs_target}, the registered port is {target}')
-                members = [d for d in members if d.abs_target in ('unported', target)]
-                if not members:
-                    continue
+                        stats['adapters replaced by the registered port'] += 1
+                        notes_out.append(f'0x{addr:X}\tadapter\t{d.rel}\t{d.name}\t{d.abs_target} -> {target}')
             else:
                 stats['kept: several ports'] += len(members)
                 for d in members:
@@ -690,7 +735,13 @@ def resolve(dry, report):
             via = [(d.conv, d.spec, tuple(d.args), d.ret) for d in members if d.abs_target == target]
             if row and row['target'] == target:
                 via.append((row['conv'], row['spec'], tuple(sig_of_row(row)[0]), row['ret']))
-            psig = via[0] if via else sig
+            ps = port_signature(target, galias) if target == regs.get(addr) else None
+            psig = (sig[0], sig[1], tuple(ps[0]), ps[1]) if ps and len(ps[0]) == len(sig[2]) else (via[0] if via else sig)
+            if not all(SIMPLE.match(t) for t in list(psig[2]) + ([psig[3]] if psig[3] else [])):
+                stats['kept: port types not nameable in the binding crate'] += len(members)
+                for d in members:
+                    notes_out.append(f'0x{addr:X}\tkept\t{d.rel}\t{d.name}\tport {target} types {psig[2]}')
+                continue
             if psig != sig:
                 if psig[:2] != sig[:2] or len(psig[2]) != len(sig[2]):
                     stats['kept: port shape differs'] += len(members)
@@ -707,6 +758,8 @@ def resolve(dry, report):
         new = {'address': f'0x{addr:X}', 'crate': owner, 'name': name, 'conv': sig[0], 'spec': sig[1],
                'args': ';'.join(f'{n}:{t}' for n, t in zip(argnames, sig[2])), 'ret': sig[3], 'target': target,
                'catalogue_name': row['catalogue_name'] if row else ((r.get('name') or r.get('gr_name') or r.get('ghidra_name') or '') if r else '')}
+        # a ported twin stays while the binding itself stays below its port
+        new['port'] = (row.get('port') or '') if row and target == 'unported' else ''
         plan.append((addr, row, new, members))
         # a caller that read a wider result than the original returns (AL / AX as EAX) saw undefined high bits
         for d in members + ([] if not row else []):
@@ -821,12 +874,21 @@ def apply(plan, rows, texts, deps):
         if src2 != src:
             open(p, 'w', encoding='utf-8').write(src2)
     for crate, add in need_dep.items():
-        p = os.path.join(B.CRATES, crate, 'Cargo.toml')
-        t = open(p).read()
         for a in sorted(add):
-            if not re.search(r'^%s\s*=' % re.escape(a), t, re.M):
-                t = re.sub(r'(\[dependencies\]\n)', r'\1%s = { path = "../%s" }\n' % (a, a), t, count=1)
-        open(p, 'w').write(t)
+            add_dependency(crate, a)
+    keys = {}
+    for addr, row, new, members in plan:
+        for d in members:
+            mp = module_of(d.rel)
+            mods = inline_mods(B.strip_comments(texts[d.path]), d.span[0])
+            if mods:
+                mp += '::' + '::'.join(mods)
+            keys[mp + '::' + d.name] = B.crate_mod(new['crate']) + '::bindings::' + new['name']
+    for p in B.rust_files():
+        t = open(p, encoding='utf-8').read()
+        t2 = re.sub(r'"(sa_[a-z_0-9]+(?:::[A-Za-z0-9_]+)+)"', lambda m: '"%s"' % keys.get(m.group(1), m.group(1)), t)
+        if t2 != t:
+            open(p, 'w', encoding='utf-8').write(t2)
     out = dict(rows)
     out.update(new_rows)
     rs = sorted(out.values(), key=lambda r: (r['crate'], int(r['address'], 16)))
@@ -898,3 +960,206 @@ def apply_decl_edits(src, eds):
     src = re.sub(r'\n[ \t]*\n([ \t]*\n)+', '\n\n', src)
     return src
 
+
+# ---- bindings back onto their ports --------------------------------------------------------------------
+def port_signature(path, galias):
+    """(args, ret) of the Rust function at absolute `path` (`sa_x::a::b::f`), normalised, or None."""
+    parts = path.split('::')
+    crate = parts[0].replace('_', '-')
+    mods, name = parts[1:-1], parts[-1]
+    cands = [os.path.join(B.CRATES, crate, 'src', *mods) + '.rs',
+             os.path.join(B.CRATES, crate, 'src', *mods, 'mod.rs')]
+    if not mods:
+        cands = [os.path.join(B.CRATES, crate, 'src', 'lib.rs')]
+    for cand in cands:
+        if not os.path.exists(cand):
+            continue
+        src = open(cand, encoding='utf-8').read()
+        s = B.strip_comments(src)
+        m = re.search(r'\bfn\s+%s\s*\(' % re.escape(name), s)
+        if not m:
+            continue
+        e = close_paren(s, m.end() - 1)
+        al = alias_map(s, use_map(s), galias)
+        args = [norm(a.split(':', 1)[1], al) for a in split_exprs(s[m.end():e]) if ':' in a]
+        r = re.match(r'\s*->\s*([^{]+?)\s*(?:where\b[^{]*)?\{', s[e + 1:])
+        ret = norm(r.group(1), al) if r else ''
+        return [absolute_struct(t, crate) for t in args], absolute_struct(ret, crate)
+    return None
+
+
+_structs = {}
+
+
+def absolute_struct(t, crate):
+    """`GPtr<Name>` with `Name` a struct of `crate` -> `GPtr<sa_crate::module::Name>` (a binding names it so)."""
+    m = re.fullmatch(r'GPtr<([A-Z]\w*)>', t)
+    if not m:
+        return t
+    if crate not in _structs:
+        found = {}
+        for d, _, fs in os.walk(os.path.join(B.CRATES, crate, 'src')):
+            for f in sorted(fs):
+                if f.endswith('.rs'):
+                    p = os.path.join(d, f)
+                    for n in re.findall(r'^pub struct (\w+)', open(p, encoding='utf-8').read(), re.M):
+                        found.setdefault(n, []).append(module_of(os.path.relpath(p, B.ROOT)))
+        _structs[crate] = {n: ms[0] for n, ms in found.items() if len(ms) == 1}
+    mp = _structs[crate].get(m.group(1))
+    return f'GPtr<{mp}::{m.group(1)}>' if mp else t
+
+
+def repoint(addr_file, dry):
+    """For the addresses listed in `addr_file` (first column): when the address has a registered port and every
+    crate that imports the binding may depend on the port's crate (tools/lib/layers.py), the binding moves to
+    that crate and targets the port, with the port's signature (phases B/C and host tests call it directly, as
+    the merged declarations did); importers convert at their calls."""
+    import layers
+    deps = B.direct_deps()
+    galias = global_aliases()
+    regs = registered()
+    rows = {int(r['address'], 16): r for r in B.load_rows()}
+    rows_by_name = {(r['crate'], r['name']): a for a, r in rows.items()}
+    users = collections.defaultdict(set)
+    for p, crate, local, key, span, vis in binding_importers(rows_by_name):
+        users[rows_by_name[key]].add(crate)
+    want = [int(line.split('\t')[0], 16) for line in open(addr_file) if line.strip()]
+    plan, stats = [], collections.Counter()
+    taken = collections.defaultdict(set)
+    for r in rows.values():
+        taken[r['crate']].add(r['name'])
+    for a in want:
+        row = rows.get(a)
+        port = regs.get(a)
+        if not row or not port or row['target'] != 'unported':
+            stats['skipped: no registered port'] += 1
+            continue
+        pc = port.split('::')[0].replace('_', '-')
+        if not all(u == pc or layers.may_depend(u, pc) for u in users[a]):
+            stats['kept on the registry: a caller below the port'] += 1
+            continue
+        sig = port_signature(port, galias)
+        if sig is None or not all(SIMPLE.match(t) for t in sig[0] + ([sig[1]] if sig[1] else [])):
+            stats['kept on the registry: port signature not nameable'] += 1
+            continue
+        old_args, old_ret = sig_of_row(row)
+        if len(sig[0]) != len(old_args) or (old_ret and not sig[1]):
+            stats['kept on the registry: port arity differs'] += 1
+            continue
+        new = dict(row)
+        new['crate'] = pc
+        new['target'] = port
+        names = [n.split(':', 1)[0] for n in B.row_args(row['args'])]
+        new['args'] = ';'.join(f'{n}:{t}' for n, t in zip(names, sig[0]))
+        new['ret'] = sig[1]
+        if pc != row['crate']:
+            if new['name'] in taken[pc]:
+                new['name'] = f"{new['name']}_{a:x}"
+            taken[pc].add(new['name'])
+        plan.append((a, row, new, []))
+        stats['bindings moved onto their port'] += 1
+        if (list(sig[0]), sig[1]) != (old_args, old_ret):
+            stats['  of which with another signature'] += 1
+    if not dry:
+        texts = {p: open(p, encoding='utf-8').read() for p in B.rust_files()}
+        apply(plan, rows, texts, deps)
+    return stats
+
+
+def twin(addr_file, dry):
+    """For the addresses listed in `addr_file` whose binding stays below its registered port (a caller in a
+    lower layer reaches the port through the phase B registry): the binding takes the port's signature and the
+    CSV names the port (`port` column); the generator then also writes the binding into the port's crate with
+    the port as target, and the callers that may depend on that crate import it from there (phases B/C and host
+    tests call the port directly, as their declarations did before the migration)."""
+    import layers
+    deps = B.direct_deps()
+    galias = global_aliases()
+    regs = registered()
+    rows = {int(r['address'], 16): r for r in B.load_rows()}
+    want = [int(line.split('\t')[0], 16) for line in open(addr_file) if line.strip()]
+    plan, stats, twins = [], collections.Counter(), {}
+    for a in want:
+        row = rows.get(a)
+        port = regs.get(a)
+        if not row or not port or row['target'] != 'unported' or row.get('port'):
+            continue
+        pc = port.split('::')[0].replace('_', '-')
+        if pc == row['crate'] or not layers.may_depend(pc, row['crate']):
+            continue
+        sig = port_signature(port, galias)
+        reach = B.closure(deps).get(row["crate"], set()) | {row["crate"]}
+        if sig is None or not all(SIMPLE.match(t) and all(c.replace("_", "-") in reach for c in re.findall(r"\b(sa_[a-z_0-9]+)::", t)) for t in sig[0] + ([sig[1]] if sig[1] else [])):
+            stats['no twin: port signature not nameable'] += 1
+            continue
+        old_args, old_ret = sig_of_row(row)
+        if len(sig[0]) != len(old_args) or (old_ret and not sig[1]):
+            stats['no twin: port arity differs'] += 1
+            continue
+        twins[a] = port
+        if (list(sig[0]), sig[1]) != (old_args, old_ret):
+            new = dict(row)
+            names = [n.split(':', 1)[0] for n in B.row_args(row['args'])]
+            new['args'] = ';'.join(f'{n}:{t}' for n, t in zip(names, sig[0]))
+            new['ret'] = sig[1]
+            plan.append((a, row, new, []))
+            stats['  of which with the port signature now'] += 1
+        stats['bindings with a ported twin'] += 1
+    if dry:
+        return stats
+    texts = {p: open(p, encoding='utf-8').read() for p in B.rust_files()}
+    if plan:
+        apply(plan, rows, texts, deps)
+    rows = {int(r['address'], 16): r for r in B.load_rows()}
+    for a, port in twins.items():
+        rows[a]['port'] = port
+    write_rows(rows.values())
+    # the importers that may depend on the port's crate take the twin
+    rows_by_name = {(r['crate'], r['name']): a for a, r in rows.items()}
+    tw = B.twin_rows(list(rows.values()))
+    tname = {int(t['address'], 16): t for t in tw}
+    edits = collections.defaultdict(list)
+    need = collections.defaultdict(set)
+    for p, crate, local, key, span, vis in binding_importers(rows_by_name):
+        a = rows_by_name[key]
+        t = tname.get(a)
+        if not t:
+            continue
+        pc = t['crate']
+        if crate != pc and not layers.may_depend(crate, pc):
+            continue
+        path = ('crate' if pc == crate else B.crate_mod(pc)) + '::bindings::' + t['name']
+        edits[p].append((span, f'use {path}{"" if t["name"] == local else " as " + local};'))
+        if crate != pc and pc not in deps[crate]:
+            need[crate].add(pc)
+        stats['callers moved onto a twin'] += 1
+    for p, es in edits.items():
+        src = open(p, encoding='utf-8').read()
+        for (a, b), new in sorted(es, reverse=True):
+            src = src[:a] + new + src[b:]
+        open(p, 'w', encoding='utf-8').write(src)
+    for crate, add in need.items():
+        for a in sorted(add):
+            add_dependency(crate, a)
+    return stats
+
+
+def write_rows(rows):
+    import csv
+    rs = sorted(rows, key=lambda r: (r['crate'], int(r['address'], 16)))
+    with open(B.CSV, 'w', newline='') as fh:
+        w = csv.DictWriter(fh, B.FIELDS, lineterminator='\n')
+        w.writeheader()
+        for r in rs:
+            w.writerow({k: r.get(k) or '' for k in B.FIELDS})
+
+
+def add_dependency(crate, dep):
+    """`dep` into `crate`'s `[dependencies]` (a `[dev-dependencies]` entry does not count)."""
+    p = os.path.join(B.CRATES, crate, 'Cargo.toml')
+    t = open(p).read()
+    m = re.search(r'^\[dependencies\]\n(.*?)(?=^\[|\Z)', t, re.M | re.S)
+    if m and re.search(r'^%s\s*=' % re.escape(dep), m.group(1), re.M):
+        return
+    t = re.sub(r'(\[dependencies\]\n)', r'\1%s = { path = "../%s" }\n' % (dep, dep), t, count=1)
+    open(p, 'w').write(t)

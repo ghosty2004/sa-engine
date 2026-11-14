@@ -233,16 +233,12 @@ pub fn speed_fx(speed: f32) {
     im_render_states_restore();
 }
 
-orig! {
-    /// `CPostEffects::DrawQuad` (0x700EC0), called as the original calls it
-    #[allow(clippy::too_many_arguments)]
-    fn draw_quad_call(px: u32, py: u32, w: u32, h: u32, r: u32, g: u32, b: u32, a: u32, raster: u32) = cdecl 0x700EC0 => draw_quad_bits;
-}
+use crate::bindings::draw_quad as draw_quad_call;
 
 #[allow(clippy::too_many_arguments)]
 // reached only through `draw_quad_call` in phases B/C (phase A calls the original address)
 #[cfg_attr(sa_phase_a, allow(dead_code))]
-fn draw_quad_bits(px: u32, py: u32, w: u32, h: u32, r: u32, g: u32, b: u32, a: u32, raster: u32) {
+pub(crate) fn draw_quad_bits(px: u32, py: u32, w: u32, h: u32, r: u32, g: u32, b: u32, a: u32, raster: u32) {
     draw_quad(
         f32::from_bits(px),
         f32::from_bits(py),

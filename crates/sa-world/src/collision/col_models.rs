@@ -94,7 +94,7 @@ fn copy_surf(dst: GPtr<u8>, src: GPtr<u8>) {
 /// local followed by three dword moves).
 fn xform_point(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) {
     let mut t = [0u32; 3];
-    let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(local(&mut t)), m, v));
+    let r = matrix_mul_vec(local(&mut t), m, v);
     copy3(out, r);
 }
 

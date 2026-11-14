@@ -96,7 +96,7 @@ fn turn_part(this: Ent, force: [f32; 3], point: [f32; 3], adjust_infinite: bool,
         }
     } else {
         let mut out = CVector::new(0.0, 0.0, 0.0);
-        let r = multiply3x3(lp(&mut out), matrix(this), this.byte_add(CENTRE_OF_MASS).cast());
+        let r = multiply3x3(lp(&mut out).cast(), matrix(this), this.byte_add(CENTRE_OF_MASS).cast());
         com = cv(rv(r.cast(), 0));
     }
     let mut force = cv(force);
@@ -117,7 +117,7 @@ fn turn_part(this: Ent, force: [f32; 3], point: [f32; 3], adjust_infinite: bool,
     let rz = f.fstp();
     let mut r = CVector::new(rx, ry, rz);
     let mut out = CVector::new(0.0, 0.0, 0.0);
-    let c = cross_product(lp(&mut out), lp(&mut r), lp(&mut force));
+    let c = cross_product(lp(&mut out).cast(), lp(&mut r).cast(), lp(&mut force).cast());
     let c = rv(c.cast(), 0);
     f.fld(cf(k::K_858624));
     f.fdiv_m(turn_mass);
@@ -223,7 +223,7 @@ pub fn get_speed(this: Ent, out: GPtr<CVector>, point: CVector) -> GPtr<CVector>
     let mut com = CVector::new(0.0, 0.0, 0.0);
     if pflags(this) & 0x40 == 0 {
         let mut o = CVector::new(0.0, 0.0, 0.0);
-        let r = multiply3x3(lp(&mut o), matrix(this), this.byte_add(CENTRE_OF_MASS).cast());
+        let r = multiply3x3(lp(&mut o).cast(), matrix(this), this.byte_add(CENTRE_OF_MASS).cast());
         com = cv(rv(r.cast(), 0));
     }
     let mut f = Fpu::new();
@@ -248,7 +248,7 @@ pub fn get_speed(this: Ent, out: GPtr<CVector>, point: CVector) -> GPtr<CVector>
     let mut w = CVector::new(wx, wy, wz);
     let mut r = CVector::new(rx, ry, rz);
     let mut o = CVector::new(0.0, 0.0, 0.0);
-    let c = rv(cross_product(lp(&mut o), lp(&mut w), lp(&mut r)).cast(), 0);
+    let c = rv(cross_product(lp(&mut o).cast(), lp(&mut w).cast(), lp(&mut r).cast()).cast(), 0);
     f.fld(rf(this, MOVE_SPEED));
     f.fadd_m(c[0]);
     let sx = f.fstp();
@@ -317,7 +317,7 @@ pub fn apply_turn_speed(this: Ent) {
     for row in [0isize, 0x10, 0x20] {
         let m = matrix(this);
         let mut o = CVector::new(0.0, 0.0, 0.0);
-        let c = rv(cross_product(lp(&mut o), lp(&mut av), m.byte_add(row).cast()).cast(), 0);
+        let c = rv(cross_product(lp(&mut o).cast(), lp(&mut av).cast(), m.byte_add(row).cast()).cast(), 0);
         for (i, ci) in c.iter().enumerate() {
             let m = matrix(this);
             let off = row + 4 * i as isize;
@@ -339,9 +339,9 @@ pub fn apply_turn_speed(this: Ent) {
     }
     let mut nv = cv(n);
     let mut o = CVector::new(0.0, 0.0, 0.0);
-    let r = multiply3x3(lp(&mut o), matrix(this), lp(&mut nv));
+    let r = multiply3x3(lp(&mut o).cast(), matrix(this), lp(&mut nv).cast());
     let mut o2 = CVector::new(0.0, 0.0, 0.0);
-    let c = rv(cross_product(lp(&mut o2), lp(&mut av), r).cast(), 0);
+    let c = rv(cross_product(lp(&mut o2).cast(), lp(&mut av).cast(), r).cast(), 0);
     for (i, ci) in c.iter().enumerate() {
         let m = matrix(this);
         let off = 0x30 + 4 * i as isize;
@@ -369,7 +369,7 @@ pub fn apply_gravity(this: Ent) {
         f.fmul_m(cf(k::K_863BFC));
         let z = f.fstp();
         let mut o = CVector::new(0.0, 0.0, 0.0);
-        let p = rv(multiply3x3(lp(&mut o), matrix(this), this.byte_add(CENTRE_OF_MASS).cast()).cast(), 0);
+        let p = rv(multiply3x3(lp(&mut o).cast(), matrix(this), this.byte_add(CENTRE_OF_MASS).cast()).cast(), 0);
         apply_force_call(this, CVector::new(0.0, 0.0, z), cv(p), 1);
         return;
     }
@@ -383,18 +383,13 @@ pub fn apply_gravity(this: Ent) {
     wf(this, MOVE_SPEED + 8, f.fstp());
 }
 
+pub use crate::bindings::apply_force as apply_force_call;
+pub use crate::bindings::physical_apply_move_force_5429f0 as apply_move_force_call;
+pub use crate::bindings::physical_apply_turn_force as apply_turn_force_call;
+pub use crate::bindings::physical_get_speed as get_speed_call;
 orig! {
-    /// `CPhysical::ApplyForce(CVector, CVector, bool)` (0x542B50)
-    pub fn apply_force_call(e: Ent, force: CVector, point: CVector, update_turn: u8)
-        = thiscall 0x542B50 => apply_force;
-    /// `CPhysical::ApplyMoveForce(CVector)` (0x5429F0)
-    pub fn apply_move_force_call(e: Ent, force: CVector) = thiscall 0x5429F0 => apply_move_force;
-    /// `CPhysical::ApplyTurnForce(CVector, CVector)` (0x542A50)
-    pub fn apply_turn_force_call(e: Ent, force: CVector, point: CVector) = thiscall 0x542A50 => apply_turn_force;
     /// `CPhysical::ApplyFrictionForce(CVector, CVector)` (0x543220)
     pub fn apply_friction_force_call(e: Ent, force: CVector, point: CVector) = thiscall 0x543220 => apply_friction_force;
-    /// `CPhysical::GetSpeed(CVector)` (0x542CE0)
-    pub fn get_speed_call(e: Ent, out: GPtr<CVector>, point: CVector) -> GPtr<CVector> = thiscall 0x542CE0 => get_speed;
 }
 
 /// `CPhysical::ApplyAirResistance()` (0x544C40). With `m_fAirResistance > 0.1f` and not a vehicle:
@@ -482,7 +477,7 @@ pub fn set_damaged_piece_record(this: Ent, intensity: u32, entity: Ent, cp: Ent,
         let slot: GPtr<Ent> = this.byte_add(DAMAGE_ENTITY).cast();
         let old = slot.read();
         if !old.is_null() {
-            clean_up_old_reference(old, slot);
+            clean_up_old_reference(old, slot.cast::<u8>());
         }
         slot.write(entity);
         register_reference(entity, slot.cast());

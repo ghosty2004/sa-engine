@@ -12,7 +12,7 @@ use crate::common::wr;
 
 pub use sa_core::bindings::eh_vector_ctor;
 pub use sa_core::bindings::plant_surf_prop_initialise;
-pub use sa_world::bindings::effect_2d_init as effect_pairs_reset_call;
+pub use crate::bindings::effect_2d_init as effect_pairs_reset_call;
 
 use sa_core::field::g;
 
@@ -143,12 +143,12 @@ pub fn plant_mgr_reload_config() -> u8 {
     1
 }
 
-pub use sa_core::bindings::rw_raster_destroy;
+pub use sa_rwcore::bindings::rw_raster_destroy;
 pub use sa_core::bindings::find_txd_slot as txd_find_slot;
-pub use sa_core::bindings::rw_texture_read;
-pub use sa_core::bindings::pop_current_txd as txd_pop_current;
-pub use sa_core::bindings::push_current_txd as txd_push_current;
-pub use sa_core::bindings::set_current_txd as txd_set_current;
+pub use sa_rwcore::bindings::rw_texture_read;
+pub use sa_stream::bindings::pop_current_txd as txd_pop_current;
+pub use sa_stream::bindings::push_current_txd as txd_push_current;
+pub use sa_stream::bindings::set_current_txd as txd_set_current;
 orig! {
     /// `C3dMarkers::Init()` (0x724E40)
     pub fn markers_init() = cdecl 0x724E40 => crate::markers::init;
@@ -430,9 +430,9 @@ pub fn find_wind_modifier(x: u32, y: u32, z: u32, out_x: GPtr<f32>, out_y: GPtr<
 }
 
 pub use sa_core::bindings::crt_strncpy as strncpy;
-pub use sa_core::bindings::rw_raster_create;
-pub use sa_core::bindings::rw_texture_create;
-pub use sa_core::bindings::rw_texture_set_name;
+pub use sa_rwcore::bindings::rw_raster_create;
+pub use sa_rwcore::bindings::rw_texture_create;
+pub use sa_rwcore::bindings::rw_texture_set_name;
 orig! {
     /// `CCustomRoadsignMgr::RoadsignGenerateTextRaster(text, numLetters, charset, a, raster)` (0x6FEB70)
     pub fn roadsign_generate_text_raster(text: GPtr<u8>, n: i32, charset: u32, a: u32, raster: GPtr<u8>) -> u8 = cdecl 0x6FEB70 => unported;
@@ -447,7 +447,7 @@ orig! {
        unverified = "mvpc-render-1", route = "L2", hazards = "heap-writes", recs = "grove-walk",
        note = "creates a raster and a texture (RW heap)")]
 pub fn roadsign_create_texture(text: GPtr<u8>, n: i32) -> GPtr<u8> {
-    let raster = rw_raster_create(n.wrapping_mul(8), 0x10, 0x20, 0x504);
+    let raster = rw_raster_create((n.wrapping_mul(8) as u32) as i32, 0x10, 0x20, 0x504);
     if raster.is_null() {
         return GPtr::NULL;
     }
@@ -475,7 +475,7 @@ pub fn roadsign_create_texture(text: GPtr<u8>, n: i32) -> GPtr<u8> {
 
 pub use sa_core::bindings::file_close as cfm_close_file;
 pub use sa_core::bindings::open_file as cfm_open_file;
-pub use sa_core::bindings::load_line as file_loader_load_line;
+pub use sa_stream::bindings::load_line as file_loader_load_line;
 orig! {
     /// `ProcSurfaceInfo_c::Init(const char* surface, const char* model, float spacing, float minDist,
     /// int minRot, int maxRot, float minScl, maxScl, minSclZ, maxSclZ, zOffMin, zOffMax, int align,
@@ -522,11 +522,11 @@ pub fn proc_object_man_load_data_file(this: GPtr<u8>) {
     cfm_close_file(f);
 }
 
-pub use sa_core::bindings::frame_get_ltm as rw_frame_get_ltm;
-pub use sa_core::bindings::rw_matrix_invert;
+pub use sa_rwcore::bindings::frame_get_ltm as rw_frame_get_ltm;
+pub use sa_rwcore::bindings::rw_matrix_invert;
 pub use sa_core::bindings::rw_v3d_transform_points;
-pub use sa_core::bindings::rp_atomic_resync_interpolated_sphere;
-pub use sa_core::bindings::rp_clump_for_all_atomics;
+pub use sa_rwcore::bindings::rp_atomic_resync_interpolated_sphere;
+pub use sa_rwcore::bindings::rp_clump_for_all_atomics;
 orig! {
     /// `RpClumpGetNumAtomics(RpClump*)` (0x7498E0)
     pub fn rp_clump_get_num_atomics(c: GPtr<u8>) -> i32 = cdecl 0x7498E0 => unported;
@@ -612,7 +612,7 @@ pub fn rp_clump_get_bounding_sphere(clump: GPtr<u8>, sphere: GPtr<u8>, use_ltm: 
         return GPtr::NULL;
     }
     let mut sum = [0f32; 3];
-    rp_clump_for_all_atomics(clump, 0x734970, GPtr::from_raw(sum.as_mut_ptr()).cast());
+    rp_clump_for_all_atomics(clump, 0x734970, GPtr::<u8>::addr(GPtr::from_raw(sum.as_mut_ptr()).cast()) as u32);
     let inv = X87::from_f32(f32::from_bits(0x3F80_0000)).fdiv_m(nf);
     let mut s2 = [0f32; 4];
     for j in 0..3 {
@@ -620,7 +620,7 @@ pub fn rp_clump_get_bounding_sphere(clump: GPtr<u8>, sphere: GPtr<u8>, use_ltm: 
         s2[j] = sum[j];
     }
     let s2p = GPtr::from_raw(s2.as_mut_ptr()).cast::<u8>();
-    rp_clump_for_all_atomics(clump, 0x734ED0, s2p);
+    rp_clump_for_all_atomics(clump, 0x734ED0, s2p.addr() as u32);
     let mut m = [0u32; 16];
     let mp = GPtr::from_raw(m.as_mut_ptr()).cast::<u8>();
     let frame = crate::common::rd::<GPtr<u8>>(clump, 4);
@@ -637,8 +637,8 @@ pub fn rp_clump_get_bounding_sphere(clump: GPtr<u8>, sphere: GPtr<u8>, use_ltm: 
     clump
 }
 
-pub use sa_core::bindings::find_player_ped;
-pub use sa_pop::bindings::store_shadow_to_be_rendered;
+pub use sa_world::bindings::find_player_ped;
+pub use crate::bindings::store_shadow_to_be_rendered;
 pub use sa_core::bindings::ped_get_bone_position;
 pub use sa_world::bindings::camera_is_sphere_visible;
 
@@ -688,9 +688,8 @@ pub fn shadows_store_shadow_for_ped_object(ped: GPtr<u8>, disp_x: u32, disp_y: u
     store_shadow_to_be_rendered(1, GPtr::from_addr(tex as usize), pp, fx, fy, sx, sy, i, i, i, i, 0x4080_0000, 0, 0x3F80_0000, GPtr::NULL, u32::from(is_player));
 }
 
+pub use sa_world::bindings::max_f as float_max;
 orig! {
-    /// `FUN_00420800(float a, float b)` (0x420800, cdecl, ST0): the larger
-    pub fn float_max(a: u32, b: u32) -> f64 = cdecl 0x420800 => unported;
     /// `AddAnExtraDirectionalLight(RpWorld*, float dx, dy, dz, r, g, b)` (0x735840)
     pub fn add_extra_directional_light(world: u32, dx: u32, dy: u32, dz: u32, r: u32, g: u32, b: u32) -> u8 = cdecl 0x735840 => unported;
 }
@@ -771,7 +770,7 @@ pub fn point_lights_generate_lights_affecting_object(pos: GPtr<f32>, total: GPtr
             let dot = X87::from_f32(nz).fmul_m(lf(0x14)).fadd(X87::from_f32(ny).fmul_m(lf(0x10))).fadd(X87::from_f32(nx).fmul_m(lf(0xC)));
             let v = dot.fchs().fsub_m(kf(0x3F00_0000));
             let v = v.fadd(v).to_f32();
-            let m = X87::from_f64_exact(float_max(0, v.to_bits()));
+            let m = X87::from_f64_exact(float_max(f32::from_bits(0), f32::from_bits(v.to_bits())).to_f64());
             f = m.fmul_m(f).to_f32();
         }
         if !crate::common::jne(X87::from_f32(f), X87::zero(), 0x41) {

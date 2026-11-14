@@ -9,15 +9,14 @@ use sa_core::mem::GPtr;
 use sa_core::orig;
 use sa_math::x87::X87;
 
-use sa_core::bindings::world_add;
-use sa_core::bindings::world_remove;
+use crate::bindings::world_add;
+use crate::bindings::world_remove;
 use crate::bindings::find_text_index_for_string;
 use crate::bindings::is_visible;
+use crate::bindings::give_us_a_pick_up_object as give_us_a_pickup_object_call;
 orig! {
     /// virtual scalar deleting destructor (+0)
     fn delete_entity(e: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
-    /// `CPickup::GiveUsAPickUpObject(CObject**, int32 slot)` (0x4567E0)
-    fn give_us_a_pickup_object_call(p: GPtr<u8>, out: GPtr<u8>, slot: i32) = thiscall 0x4567E0 => give_us_a_pickup_object;
 }
 
 const PICKUPS: usize = 0x9788C0;
@@ -109,7 +108,7 @@ pub fn generate_new_one(x: f32, y: f32, z: f32, model: u32, kind: u32, ammo: u32
     let obj = p.byte_add(4);
     obj.cast::<u32>().write(0);
     if f & 8 != 0 {
-        give_us_a_pickup_object_call(p, obj, -1);
+        give_us_a_pickup_object_call(p, obj.cast::<GPtr<u8>>(), -1);
         let o = obj.cast::<u32>().read();
         if o != 0 {
             world_add(GPtr::from_addr(o as usize));
@@ -121,119 +120,9 @@ pub fn generate_new_one(x: f32, y: f32, z: f32, model: u32, kind: u32, ammo: u32
     ((u32::from(n) << 16) | i) as i32
 }
 
-use sa_core::bindings::object_ctor_5a1d70 as object_ctor;
-use crate::bindings::pick_up_should_be_invisible;
-use crate::bindings::set_orientation;
-use crate::bindings::simple_transform_update_rw_matrix as transform_update_rw_matrix;
-use sa_core::bindings::entity_register_reference as register_reference;
-use sa_core::bindings::entity_update_rw_frame as update_rw_frame;
-use sa_core::bindings::get_weapon_info;
-use sa_core::bindings::make_sure_slot_in_object_pool_is_empty;
-use sa_core::bindings::object_new_at;
-use crate::bindings::object_create;
-use crate::bindings::pickup_get_posn;
-use sa_core::bindings::matrix_update_rw_matrix;
 orig! {
     /// virtual `CBaseModelInfo::GetModelType()` (+0x10, AL)
     fn model_type(mi: GPtr<u8>) -> u8 = thiscall vslot 0x10 => unported;
-}
-
-use sa_core::field::rd32;
-fn or32(p: GPtr<u8>, o: isize, v: u32) {
-    p.byte_add(o).cast::<u32>().write(rd32(p, o) | v)
-}
-fn and32(p: GPtr<u8>, o: isize, v: u32) {
-    p.byte_add(o).cast::<u32>().write(rd32(p, o) & v)
-}
-
-/// `CPickup::GiveUsAPickUpObject(CObject** out, int32 poolSlot)` (0x4567E0): `*out = NULL`; nothing in
-/// area 2 (`[0xB5F84C]`); a weapon model looks its weapon info up first. With a pool slot the slot is
-/// emptied and (unless `*out` got set meanwhile) a `CObject` made in it, else `CObject::Create`. The
-/// object (type 5) is placed at the pickup, oriented (0, 0, -pi/2), its RW frame updated, flagged
-/// (no collision, pickup flags, invisibility from `PickUpShouldBeInvisible`), referenced, given the
-/// ammo for the two money / ammo models, and marked for types 7 and 0x12 (ammo / 5).
-///
-/// Not registered: 0x4567E0 is hooked by sa-world pickups.rs (batch mvpi-world-1) (duplicate port left unregistered when STD-6 merged both).
-pub fn give_us_a_pickup_object(this: GPtr<u8>, out: GPtr<u8>, pool_slot: i32) {
-    out.cast::<u32>().write(0);
-    if GPtr::<u32>::from_addr(0xB5F84C).read() == 2 {
-        return;
-    }
-    let model = u32::from(this.byte_add(0x18).cast::<u16>().read());
-    let mi = |m: u32| GPtr::<u8>::from_addr(GPtr::<u32>::from_addr(0xA9B0C8 + 4 * m as usize).read() as usize);
-    if model_type(mi(model)) == 4 {
-        get_weapon_info(rd32(mi(model), 0x24) as i32, 1);
-    }
-    let obj = if pool_slot >= 0 {
-        make_sure_slot_in_object_pool_is_empty(pool_slot);
-        let cur = rd32(out, 0);
-        if cur != 0 {
-            GPtr::from_addr(cur as usize)
-        } else {
-            let p = object_new_at(0x17C, pool_slot << 8);
-            if p.is_null() { p } else { object_ctor(p, model as i32, 0) }
-        }
-    } else {
-        object_create(model, 0)
-    };
-    if rd32(out, 0) == 0 {
-        out.cast::<u32>().write(obj.addr() as u32);
-        if obj.is_null() {
-            return;
-        }
-    }
-    let obj = GPtr::<u8>::from_addr(rd32(out, 0) as usize);
-    obj.byte_add(0x13C).write(5);
-    let mut pos = [0f32; 3];
-    let pp = GPtr::<f32>::cast::<u8>(pickup_get_posn(this, GPtr::<u8>::cast::<f32>(GPtr::from_raw(pos.as_mut_ptr()).cast())));
-    let dst = if rd32(obj, 0x14) != 0 { GPtr::<u8>::from_addr(rd32(obj, 0x14) as usize).byte_add(0x30) } else { obj.byte_add(4) };
-    for k in 0..3isize {
-        dst.byte_add(4 * k).cast::<f32>().write(X87::from_f32(pp.byte_add(4 * k).cast::<f32>().read()).to_f32());
-    }
-    if i32::from(obj.byte_add(0x22).cast::<i16>().read()) == i32::from(GPtr::<u16>::from_addr(0x8CD750).read()) {
-        or32(obj, 0x1C, 0x10_0000);
-    }
-    set_orientation(obj, f32::from_bits(0), f32::from_bits(0), f32::from_bits(0xBFC9_0FDB));
-    let rw = rd32(obj, 0x18);
-    if rw != 0 {
-        let frame_matrix = GPtr::<u8>::from_addr(rd32(GPtr::from_addr(rw as usize), 4) as usize + 0x10);
-        if rd32(obj, 0x14) != 0 {
-            matrix_update_rw_matrix(GPtr::from_addr(rd32(obj, 0x14) as usize), frame_matrix);
-        } else {
-            transform_update_rw_matrix(obj.byte_add(4), frame_matrix);
-        }
-    }
-    update_rw_frame(obj);
-    and32(obj, 0x40, !2);
-    or32(obj, 0x40, 0x80_0000);
-    and32(obj, 0x1C, !1);
-    or32(obj, 0x140, 1);
-    let f = rd32(obj, 0x140);
-    obj.byte_add(0x140).cast::<u32>().write(f ^ ((u32::from(this.byte_add(0x1D).read()) ^ f) & 2));
-    or32(obj, 0x1C, 0x20_0000);
-    let inv = u32::from(pick_up_should_be_invisible(this));
-    let f = rd32(obj, 0x140);
-    obj.byte_add(0x140).cast::<u32>().write(f ^ (((inv << 25) ^ f) & 0x200_0000));
-    or32(obj, 0x1C, 0x8000_0000);
-    register_reference(obj, out);
-    let m = this.byte_add(0x18).cast::<u16>().read();
-    let ammo_byte = if m == GPtr::<u16>::from_addr(0x8CD5CC).read() || m == GPtr::<u16>::from_addr(0x8CD5F0).read() {
-        this.byte_add(8).read()
-    } else {
-        0
-    };
-    obj.byte_add(0x13D).write(ammo_byte);
-    match this.byte_add(0x1C).read() {
-        7 => {
-            or32(obj, 0x140, 8);
-            or32(obj, 0x40, 0x2000_0000);
-        }
-        0x12 => {
-            or32(obj, 0x140, 4);
-            obj.byte_add(0x13E).cast::<u16>().write((rd32(this, 8) as i32 / 5) as u16);
-        }
-        _ => {}
-    }
 }
 
 /// Every `#[hook]` of this module.

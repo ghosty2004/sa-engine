@@ -42,22 +42,22 @@ use crate::bindings::reset_area_code_for_visible_objects;
 use crate::bindings::set_user_value as vis_set_user_value;
 use crate::bindings::simple_transform_update_rw_matrix;
 use crate::bindings::tag_manager_is_tag;
-use sa_core::bindings::assoc_set_current_time;
+use sa_anim::bindings::assoc_set_current_time;
 use sa_core::bindings::camera_set_fade_colour;
 use sa_core::bindings::crt_strlwr as crt_strupr;
 use sa_core::bindings::file_close;
 use sa_core::bindings::file_set_dir;
 use sa_core::bindings::get_first_atomic;
-use sa_core::bindings::get_pad;
+use sa_input::bindings::get_pad;
 use sa_core::bindings::list_add_item;
 use sa_core::bindings::list_remove_all;
 use sa_core::bindings::list_remove_item;
 use sa_core::bindings::matrix_update_rw_matrix;
 use sa_core::bindings::open_file as file_open;
 use sa_core::bindings::quad_tree_delete_item;
-use sa_core::bindings::stats_check_for_stats_message;
-use sa_core::bindings::world_remove;
-use sa_core::bindings::load_line;
+use crate::bindings::stats_check_for_stats_message;
+use crate::bindings::world_remove;
+use sa_stream::bindings::load_line;
 use sa_stream::bindings::model_info_add_ref as mi_add_ref;
 use sa_stream::bindings::streaming_add_entity;
 use sa_stream::bindings::strnicmp;
@@ -542,7 +542,7 @@ pub fn entity_create_rw_object(this: GPtr<u8>) {
             }
         }
     }
-    mi_add_ref(mi);
+    mi_add_ref(mi.cast::<sa_stream::shared::CBaseModelInfo>());
     let r = streaming_add_entity(this);
     wr::<GPtr<u8>>(this, 0x28, r);
     entity_create_effects(this);

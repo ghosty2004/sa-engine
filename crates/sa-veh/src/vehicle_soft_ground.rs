@@ -5,17 +5,14 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::vector::CVector;
 use sa_math::x87::X87;
 
 use crate::common::{g, rd, wr, x};
 
 use sa_world::bindings::get_adhesion_group;
-orig! {
-    /// `CPhysical::ApplyMoveForce(CVector)` (0x5429F0)
-    fn apply_move_force(e: GPtr<u8>, force: CVector) = thiscall 0x5429F0 => sa_world::physical::forces::apply_move_force;
-}
+use sa_world::bindings::physical_apply_move_force_5429f0 as apply_move_force;
 
 /// Some wheel (ratio at `ratio + 4k` below 1.0, i.e. touching) stands on a surface (byte at
 /// `surface + 0x2C k`) that `pred` accepts; the wheels are tested in order.

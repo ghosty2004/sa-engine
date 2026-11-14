@@ -14,6 +14,16 @@ orig! {
 }
 
 orig! {
+    /// `CControllerConfigManager::ClearSettingsAssociatedWithAction` (0x52FD70)
+    pub fn call_clear_settings(this: GPtr<u8>, action: i32, ty: i32) = thiscall 0x52FD70 => crate::ccm::clear_settings_associated_with_action;
+}
+
+orig! {
+    /// `CControllerConfigManager::SetControllerKeyAssociatedWithAction` (0x530490)
+    pub fn call_set_key(this: GPtr<u8>, action: i32, key: u32, ty: i32) = thiscall 0x530490 => crate::ccm::set_controller_key_associated_with_action;
+}
+
+orig! {
     /// `CControllerConfigManager::MakeControllerActionsBlank` (0x530500)
     pub fn call_make_blank(this: GPtr<u8>) = thiscall 0x530500 => crate::ccm::make_controller_actions_blank;
 }
@@ -24,6 +34,11 @@ orig! {
 }
 
 orig! {
+    /// `CControllerConfigManager::InitDefaultControlConfigJoyPad` (0x530B00)
+    pub fn call_init_joypad(this: GPtr<u8>, buttons: u32) = thiscall 0x530B00 => crate::ccm::init_default_control_config_joy_pad;
+}
+
+orig! {
     /// `CControllerConfigManager::ReinitControls` (0x531F20)
     pub fn reinit_controls() = cdecl 0x531F20 => unported;
 }
@@ -31,4 +46,14 @@ orig! {
 orig! {
     /// `CControllerState::CheckForInput` (0x53EFF0)
     pub fn call_controller_state_check_for_input(state: GPtr<u8>) -> u8 = thiscall 0x53EFF0 => crate::pad::controller_state_check_for_input;
+}
+
+orig! {
+    /// `CPad::GetPad` (0x53FB70)
+    pub fn get_pad(i: i32) -> GPtr<u8> = cdecl 0x53FB70 => crate::pad::get_pad;
+}
+
+orig! {
+    /// `CPad::Clear` (0x541A70)
+    pub fn pad_clear(pad: GPtr<u8>, a: u32, b: u32) = thiscall 0x541A70 => crate::pad::clear;
 }

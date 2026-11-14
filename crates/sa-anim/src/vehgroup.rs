@@ -11,7 +11,6 @@
 use sa_core::abi::HookReg;
 use sa_core::hook;
 use sa_core::mem::GPtr;
-use sa_core::orig;
 use sa_math::x87::{Cmp, X87};
 
 use crate::common::{rd, wr, x};
@@ -27,30 +26,11 @@ pub fn group(i: i32) -> GPtr<u8> {
     VEHICLE_ANIM_GROUPS.ptr().cast::<u8>().byte_add(i.wrapping_mul(0x94) as isize)
 }
 
-pub use sa_core::bindings::uncompress_animation;
-pub use sa_core::bindings::anim_door_offsets as call_compute_anim_door_offsets;
+pub use crate::bindings::uncompress_animation;
+pub use crate::bindings::anim_door_offsets as call_compute_anim_door_offsets;
 pub use sa_core::bindings::anim_get_anim_association as get_anim_association;
-pub use sa_core::bindings::vehicle_anim_group_get_group as call_get_group;
-orig! {
-    /// CRT `pow(double, double)` (0x8220F0): the computation `_CIpow` (0x822130) shares
-    pub fn crt_pow(a: f64, b: f64) -> f64 = cdecl 0x8220F0 => crt_pow_host;
-}
-
-/// Phase B/C path of [`crt_pow`]: only `pow(2.0, integer)` is used here, which is exact
-/// (overflow → +inf, underflow → +0).
-pub fn crt_pow_host(a: f64, b: f64) -> f64 {
-    assert!(a == 2.0 && b == (b as i64) as f64, "crt_pow_host: only pow(2, integer)");
-    let e = b as i64;
-    if e > 1023 {
-        f64::INFINITY
-    } else if e >= -1022 {
-        f64::from_bits(((e + 1023) as u64) << 52)
-    } else if e >= -1074 {
-        f64::from_bits(1u64 << (e + 1074))
-    } else {
-        0.0
-    }
-}
+pub use crate::bindings::vehicle_anim_group_get_group as call_get_group;
+pub use sa_core::bindings::crt_pow;
 
 /// `CVehicleAnimGroup::CopyAnimGroup(src)` (0x5B9E40): both group bytes, the dwords +4..+0x20, then
 /// the in/out timings interleaved (+0x30, +0x24, +0x34, +0x28, +0x38, +0x2C, +0x3C); the door
@@ -225,7 +205,7 @@ pub fn uses_kart_driving_anims(index: i32) -> u32 {
 // Not hooked (INF-20): protection code at 0x1473D70/0x1473D9C uses 0x645602, inside the patched entry, as an
 // immediate (`adc eax, 0x645602`). The port stays a plain function.
 pub fn get_anim_door_offset(out: GPtr<u8>, index: i32, door: i32) -> GPtr<u8> {
-    call_compute_anim_door_offsets(group(index), out, door as u32);
+    call_compute_anim_door_offsets(group(index), out, (door as u32) as i32);
     out
 }
 

@@ -15,13 +15,12 @@ use sa_core::bindings::rw_stream_find_chunk_call as find_chunk;
 use crate::bindings::rw_texture_stream_read_call as texture_stream_read;
 use crate::bindings::matfx_setup_dual_state as setup_dual_state;
 use crate::bindings::set_bump_map_texture;
-use sa_core::bindings::rp_mat_fx_material_set_effects as set_effects;
-use sa_core::bindings::rw_texture_destroy as texture_destroy;
+use crate::bindings::rp_mat_fx_material_set_effects as set_effects;
+use crate::bindings::rw_texture_destroy as texture_destroy;
+use sa_core::bindings::rw_error_set as error_set;
 orig! {
     /// `RwErrorGet(out)` (0x808880)
     fn error_get(out: GPtr<RwError>) -> GPtr<RwError> = cdecl 0x808880 => crate::engine::rw_error_get;
-    /// `RwErrorSet(err)` (0x808820)
-    fn error_set(e: GPtr<RwError>) -> GPtr<RwError> = cdecl 0x808820 => unported;
     /// `_rpMatFXMaterialFindEffect(material, type)` (0x811150)
     fn find_effect(m: GPtr<u8>, ty: u32) -> GPtr<u8> = cdecl 0x811150 => crate::matfx::rp_matfx_material_find_effect;
     /// `RpMatFXMaterialSetDualBlendModes(material, src, dst)` (0x8128C0)
@@ -63,7 +62,7 @@ fn read_texture(s: GPtr<u8>) -> Result<GPtr<u8>, ()> {
     }
     error_get(GPtr::from_raw(&mut e));
     if e.error_code as u32 != 0x8000_0000 && e.error_code != 0x16 {
-        error_set(GPtr::from_raw(&mut e));
+        error_set(GPtr::from_raw(&mut e).cast());
         return Err(());
     }
     Ok(GPtr::NULL)

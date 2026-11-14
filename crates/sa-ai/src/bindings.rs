@@ -44,8 +44,18 @@ orig! {
 }
 
 orig! {
+    /// `CDecisionMakerTypes::GetInstance` (0x4684F0)
+    pub fn decision_maker_types_get_instance() -> GPtr<u8> = cdecl 0x4684F0 => crate::misc::decision_maker_types_get_instance_4684f0;
+}
+
+orig! {
     /// `CPedIntelligence::GetPedEntities` (0x4893E0)
     pub fn intel_get_ped_entities(i: GPtr<u8>) -> GPtr<u8> = thiscall 0x4893E0 => unported;
+}
+
+orig! {
+    /// `CEventGroup::Add-` (0x4AB420)
+    pub fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, b: u8) -> GPtr<u8> = thiscall 0x4AB420 => crate::group::event_group_add;
 }
 
 orig! {
@@ -86,6 +96,11 @@ orig! {
 orig! {
     /// `CEventEditableResponse::~CEventEditableResponse` (0x4AC480)
     pub fn editable_response_dtor(e: GPtr<u8>) = thiscall 0x4AC480 => unported;
+}
+
+orig! {
+    /// `FUN_004ac720` (0x4AC720)
+    pub fn event_gun_shot_dtor(this: GPtr<u8>) = thiscall 0x4AC720 => crate::event_ref_dtors::event_gun_shot_dtor_4ac720;
 }
 
 orig! {
@@ -199,6 +214,11 @@ orig! {
 }
 
 orig! {
+    /// `CEventAcquaintancePed::Constructor` (0x4AF820)
+    pub fn acquaintance_ped_ctor(e: u32, p: u32) -> u32 = thiscall 0x4AF820 => crate::gen_ctors::g_event_acquaintance_ped_constructor_4af820;
+}
+
+orig! {
     /// `FUN_004b0d00` (0x4B0D00)
     pub fn dtor_4b0d00(this: GPtr<u8>) = thiscall 0x4B0D00 => unported;
 }
@@ -211,6 +231,11 @@ orig! {
 orig! {
     /// `FUN_004b17f0` (0x4B17F0)
     pub fn event_cop_car_being_stolen_dtor(e: GPtr<u8>) = thiscall 0x4B17F0 => unported;
+}
+
+orig! {
+    /// `FUN_004b1990` (0x4B1990)
+    pub fn event_vehicle_damage_dtor(ev: GPtr<u8>) = thiscall 0x4B1990 => crate::event_vehicle_damage::event_vehicle_damage_dtor;
 }
 
 orig! {
@@ -241,6 +266,11 @@ orig! {
 orig! {
     /// `CEventEditableResponse::ComputeResponseTaskOfType` (0x4B5730)
     pub fn editable_compute_response_task_of_type(e: GPtr<u8>, ped: GPtr<u8>, ty: i32) -> u8 = thiscall 0x4B5730 => crate::events2::event_editable_response_compute_response_task_of_type_4b5730;
+}
+
+orig! {
+    /// `CEventEditableResponse::ComputeResponseTaskType-group` (0x4B57A0)
+    pub fn compute_response_task_type_group(e: GPtr<u8>, g: GPtr<u8>) = thiscall 0x4B57A0 => crate::events2::event_editable_response_compute_response_task_type_group_4b57a0;
 }
 
 orig! {
@@ -329,6 +359,21 @@ orig! {
 }
 
 orig! {
+    /// `CLocalisation::Blood` (0x56D230)
+    pub fn localisation_blood() -> u8 = cdecl 0x56D230 => crate::fight_ground_target::localisation_blood_native;
+}
+
+orig! {
+    /// `CLocalisation::KickingWhenDown` (0x56D270)
+    pub fn localisation_kicking_when_down() -> u8 = cdecl 0x56D270 => crate::fight_ground_target::localisation_kicking_when_down_native;
+}
+
+orig! {
+    /// `FUN_005dea00` (0x5DEA00)
+    pub fn event_sound_quiet_dtor(e: GPtr<u8>) = thiscall 0x5DEA00 => crate::mvpb_ai::event_dtor_5dea00;
+}
+
+orig! {
     /// `CPed::SetRadioStation` (0x5DFD90)
     pub fn ped_set_radio_station(p: GPtr<u8>) = thiscall 0x5DFD90 => unported;
 }
@@ -374,6 +419,11 @@ orig! {
 }
 
 orig! {
+    /// `CPedAttractorManager::IsPedRegisteredWithEffect-Ped` (0x5EBCB0)
+    pub fn is_ped_registered_with_effect(m: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x5EBCB0 => crate::attractor_registry::is_ped_registered_with_effect_ped;
+}
+
+orig! {
     /// `CPedAttractorManager::DeRegisterPed-` (0x5EC850)
     pub fn attractor_manager_deregister_ped(m: GPtr<u8>, ped: GPtr<u8>, a: GPtr<u8>) -> u8 = thiscall 0x5EC850 => unported;
 }
@@ -411,6 +461,11 @@ orig! {
 orig! {
     /// `CPedGeometryAnalyser::ComputeEntityBoundingBoxSegmentPlanesUncached` (0x5F1750)
     pub fn bbox_segment_planes_uncached(corners: GPtr<u8>, centre: GPtr<u8>, normals: GPtr<u8>, d: GPtr<u8>) = cdecl 0x5F1750 => crate::mvpa_ai1::compute_entity_bounding_box_segment_planes_uncached;
+}
+
+orig! {
+    /// `CPedGeometryAnalyser::CanPedTargetPed` (0x5F1C40)
+    pub fn can_ped_target_ped(a: GPtr<u8>, b: GPtr<u8>, c: u32) -> u32 = cdecl 0x5F1C40 => crate::mvpa_ai1::can_ped_target_ped;
 }
 
 orig! {
@@ -484,6 +539,11 @@ orig! {
 }
 
 orig! {
+    /// `CPedGroupMembership::IsMember` (0x5F6A10)
+    pub fn membership_is_member(this: GPtr<u8>, ped: GPtr<u8>) -> u32 = thiscall 0x5F6A10 => crate::small::membership_is_member;
+}
+
+orig! {
     /// `CPedGroupMembership::CountMembers` (0x5F6A50)
     pub fn membership_count_members(m: GPtr<u8>) -> i32 = thiscall 0x5F6A50 => unported;
 }
@@ -499,8 +559,18 @@ orig! {
 }
 
 orig! {
+    /// `CPedGroupIntelligence::AddEvent-` (0x5F7470)
+    pub fn group_intelligence_add_event(gi: GPtr<u8>, e: GPtr<u8>) -> u8 = thiscall 0x5F7470 => crate::mvpb_ai::pgi_add_event;
+}
+
+orig! {
     /// `CPedGroupIntelligence::SetTask` (0x5F7540)
     pub fn pgi_set_task(i: GPtr<u8>, ped: GPtr<u8>, task: GPtr<u8>, pairs: GPtr<u8>, slot: i32, flag: u32) = thiscall 0x5F7540 => unported;
+}
+
+orig! {
+    /// `CPedGroups::GetPedsGroup` (0x5F7E80)
+    pub fn ped_groups_get_peds_group(ped: u32) -> u32 = cdecl 0x5F7E80 => crate::misc::ped_groups_get_peds_group_5f7e80;
 }
 
 orig! {
@@ -594,8 +664,18 @@ orig! {
 }
 
 orig! {
+    /// `CInterestingEvents::Add` (0x602590)
+    pub fn interesting_events_add(ie: GPtr<u8>, t: i32, e: GPtr<u8>) = thiscall 0x602590 => crate::interesting_events_add::interesting_events_add;
+}
+
+orig! {
     /// `CVehiclePotentialCollisionScanner::ScanForVehiclePotentialCollisionEvents` (0x603720)
     pub fn scan_vehicle_potential_collision(s: GPtr<u8>, ped: GPtr<u8>, ents: GPtr<u8>, n: u32) = thiscall 0x603720 => unported;
+}
+
+orig! {
+    /// `CDecision::MakeDecision` (0x6040D0)
+    pub fn decision_make_decision(this: GPtr<u8>, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, a8: u32) = thiscall 0x6040D0 => unported;
 }
 
 orig! {
@@ -606,6 +686,11 @@ orig! {
 orig! {
     /// `CPedIntelligence::CanSeeEntityWithLights` (0x605550)
     pub fn intel_can_see_entity_with_lights(i: GPtr<u8>, e: GPtr<u8>, b: u32) -> f64 = thiscall 0x605550 => unported;
+}
+
+orig! {
+    /// `CAcquaintance::GetAcquaintances` (0x608970)
+    pub fn acquaintance_get(a: u32, i: u32) -> u32 = thiscall 0x608970 => crate::gen_leaves::g_cacquaintance_get_acquaintances_608970;
 }
 
 orig! {
@@ -634,13 +719,38 @@ orig! {
 }
 
 orig! {
+    /// `IKChainManager_c::PointArm` (0x618B60)
+    pub fn ik_point_arm(m: GPtr<u8>, name: u32, arm: i32, ped: GPtr<u8>, target: GPtr<u8>, bone: i32, pos: GPtr<u8>, speed: u32, blend: u32, limit: u32) = thiscall 0x618B60 => unported;
+}
+
+orig! {
     /// `CTask::IsGoToTask` (0x61A360)
     pub fn task_is_go_to_task(t: GPtr<u8>) -> u8 = cdecl 0x61A360 => crate::tasks::task_is_go_to_task;
 }
 
 orig! {
+    /// `FUN_0061a390` (0x61A390)
+    pub fn task_simple_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A390 => crate::mvpa_ai1::task_simple_ctor;
+}
+
+orig! {
+    /// `FUN_0061a3a0` (0x61A3A0)
+    pub fn task_simple_dtor(t: GPtr<u8>) = thiscall 0x61A3A0 => crate::mvpb_ai::task_simple_dtor_61a3a0;
+}
+
+orig! {
+    /// `CTaskComplex` (0x61A3B0)
+    pub fn task_complex_ctor(t: u32) -> u32 = thiscall 0x61A3B0 => crate::gen_ctors::g_ctask_complex_61a3b0;
+}
+
+orig! {
     /// `FUN_0061a3d0` (0x61A3D0)
     pub fn task_complex_dtor(t: GPtr<u8>) = thiscall 0x61A3D0 => crate::mvpb_ai::task_complex_dtor_61a3d0;
+}
+
+orig! {
+    /// `CTask::operator new` (0x61A5A0)
+    pub fn task_new(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => crate::mvpa_ai1::task_operator_new;
 }
 
 orig! {
@@ -744,8 +854,18 @@ orig! {
 }
 
 orig! {
+    /// `CTaskComplexSitDownThenIdleThenStandUp::Constructor` (0x631460)
+    pub fn sit_ctor_o(t: GPtr<u8>, ms: i32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x631460 => crate::use_attractor_tasks::sit_down_then_idle_then_stand_up_ctor;
+}
+
+orig! {
     /// `CTaskComplexHitResponse::Constructor` (0x631D70)
     pub fn hit_response_ctor(t: GPtr<u8>, side: i32) -> GPtr<u8> = thiscall 0x631D70 => unported;
+}
+
+orig! {
+    /// `CTaskComplexSequence::Flush` (0x632C10)
+    pub fn sequence_flush(s: GPtr<u8>) = thiscall 0x632C10 => crate::small::sequence_flush;
 }
 
 orig! {
@@ -994,11 +1114,6 @@ orig! {
 }
 
 orig! {
-    /// `CTaskComplexFleeAnyMeans::Constructor` (0x65CC60)
-    pub fn flee_any_means_ctor(t: GPtr<u8>, e: GPtr<u8>, b: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, a8: u32) -> GPtr<u8> = thiscall 0x65CC60 => unported;
-}
-
-orig! {
     /// `CEventLeanOnVehicle::Constructor` (0x65DAF0)
     pub fn event_lean_on_vehicle_ctor(this: GPtr<u8>, a: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x65DAF0 => unported;
 }
@@ -1011,6 +1126,11 @@ orig! {
 orig! {
     /// `CTaskComplexGangLeader::DoGangAbuseSpeech` (0x65E860)
     pub fn do_gang_abuse_speech_orig(talker: GPtr<u8>, target: GPtr<u8>) = cdecl 0x65E860 => unported;
+}
+
+orig! {
+    /// `CTaskComplexGangFollower::Constructor` (0x65EAA0)
+    pub fn gang_follower_ctor(t: GPtr<u8>, g: GPtr<u8>, leader: u32, i: u32, x: u32, y: u32, z: u32, r: u32) -> GPtr<u8> = thiscall 0x65EAA0 => unported;
 }
 
 orig! {
@@ -1155,12 +1275,37 @@ orig! {
 
 orig! {
     /// `CTaskSimpleClimb::Constructor` (0x67A110)
-    pub fn climb_ctor(t: GPtr<u8>, e: GPtr<u8>, pos: GPtr<u8>, heading: u32, surf: u32, height: u32, force: u32) -> GPtr<u8> = thiscall 0x67A110 => unported;
+    pub fn climb_ctor(t: GPtr<u8>, e: GPtr<u8>, pos: GPtr<u8>, heading: u32, surf: u32, height: u32, force: u32) -> GPtr<u8> = thiscall 0x67A110 => crate::jump_sub_tasks::simple_climb_ctor;
+}
+
+orig! {
+    /// `CTaskSimpleClimb::ScanToGrab` (0x67FD30)
+    pub fn climb_scan_to_grab(ped: GPtr<u8>, pos: GPtr<u8>, angle: GPtr<u8>, surface: GPtr<u8>, launch: u32, stand_up: u32, vault: u32, over: GPtr<u8>) -> GPtr<u8> = cdecl 0x67FD30 => crate::climb_scan::climb_scan_to_grab;
 }
 
 orig! {
     /// `CTaskSimpleClimb::TestForClimb` (0x6803A0)
     pub fn climb_test_for_climb(ped: GPtr<u8>, pos: GPtr<u8>, heading: GPtr<u8>, surf: GPtr<u8>, launch: u32) -> GPtr<u8> = cdecl 0x6803A0 => unported;
+}
+
+orig! {
+    /// `CTaskManager::FindActiveTaskByType` (0x681740)
+    pub fn tm_find_active_task_by_type(tm: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x681740 => crate::tasks::task_manager_find_active_task_by_type;
+}
+
+orig! {
+    /// `CTaskManager::GetTaskSecondary` (0x681810)
+    pub fn tm_get_task_secondary(tm: GPtr<u8>, i: i32) -> GPtr<u8> = thiscall 0x681810 => crate::tasks::task_manager_get_task_secondary;
+}
+
+orig! {
+    /// `CTaskManager::SetTask` (0x681AF0)
+    pub fn tm_set_task(tm: GPtr<u8>, t: GPtr<u8>, slot: i32, b: u8) = thiscall 0x681AF0 => crate::taskmgr::task_manager_set_task;
+}
+
+orig! {
+    /// `CTaskManager::SetTaskSecondary` (0x681B60)
+    pub fn tm_set_task_secondary(tm: GPtr<u8>, t: GPtr<u8>, i: i32) = thiscall 0x681B60 => crate::taskmgr::task_manager_set_task_secondary;
 }
 
 orig! {
@@ -1221,6 +1366,11 @@ orig! {
 orig! {
     /// `CTaskSimpleFacial::GetAnimId` (0x690CC0)
     pub fn facial_get_anim_id(ty: i32) -> i32 = cdecl 0x690CC0 => crate::mvpb_ai2::task_simple_facial_get_anim_id;
+}
+
+orig! {
+    /// `CTaskComplexFacial::SetRequest` (0x691230)
+    pub fn facial_set_request(task: u32, ty: u32, duration: u32, ty2: u32, f: u32) -> u32 = thiscall 0x691230 => crate::gen_leaves::g_task_complex_facial_set_request_691230;
 }
 
 orig! {

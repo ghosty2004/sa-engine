@@ -1137,10 +1137,7 @@ pub fn calculate_col_point_inside_box(bx: GPtr<f32>, p: GPtr<f32>, cp: GPtr<f32>
     ww(cp, 10, dist_z);
 }
 
-sa_core::orig! {
-    /// `CVector::Normalise` (0x59C910)
-    pub fn vec_normalise(v: GPtr<sa_math::vector::CVector>) = thiscall 0x59C910 => super::data::normalise_port;
-}
+pub use sa_core::bindings::vector_normalise as vec_normalise;
 
 /// `CCollision::ProcessSphereSphere(const CColSphere& a, const CColSphere& b, CColPoint& cp, float&
 /// maxTouch)` (0x416450, AL). `d = a.c - b.c` (stored), `touch = sqrt((d.z*d.z + d.x*d.x) + d.y*d.y) -
@@ -1192,7 +1189,7 @@ pub fn process_sphere_sphere(a: GPtr<f32>, b: GPtr<f32>, cp: GPtr<f32>, max_touc
         return 0;
     }
     let dp = GPtr::from_raw(d.as_mut_ptr()).cast::<sa_math::vector::CVector>();
-    vec_normalise(dp);
+    vec_normalise(dp.cast::<[f32;3]>());
     f.fld(d[0]);
     f.fmul_m(touch);
     f.fld(d[1]);
@@ -1343,7 +1340,7 @@ pub fn process_line_sphere(line: GPtr<f32>, sp: GPtr<f32>, cp: GPtr<f32>, depth:
         g.fsub_m(c(i as isize));
         n[i] = g.fstp();
     }
-    vec_normalise(GPtr::from_raw(n.as_mut_ptr()).cast());
+    vec_normalise(GPtr::<sa_math::vector::CVector>::cast::<[f32;3]>(GPtr::from_raw(n.as_mut_ptr()).cast()));
     ww(cp, 0, px);
     ww(cp, 1, py);
     ww(cp, 2, pz);

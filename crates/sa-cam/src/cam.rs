@@ -263,7 +263,7 @@ pub fn get_vectors_ready_for_rw(this: GPtr<u8>) {
     wr::<u32>(up, 0, 0);
     wr::<u32>(up, 4, 0);
     wr::<u32>(up, 8, 0x3F80_0000);
-    vector_normalise(front);
+    vector_normalise(front.cast::<[f32;3]>());
     let fx = x(rd(front, 0));
     let fy = x(rd(this, 0x194));
     if !crate::common::jp(fx, x(k(ZERO)), 0x44) && !crate::common::jp(fy, x(k(ZERO)), 0x44) {
@@ -275,7 +275,7 @@ pub fn get_vectors_ready_for_rw(this: GPtr<u8>) {
     let lp = GPtr::<u32>::from_raw(loc.as_mut_ptr()).cast::<u8>();
     let r = cross_product(lp.byte_add(12), front, up);
     copy3(lp, r);
-    vector_normalise(lp);
+    vector_normalise(lp.cast::<[f32;3]>());
     let r = cross_product(lp.byte_add(12), lp, front);
     copy3(up, r);
 }

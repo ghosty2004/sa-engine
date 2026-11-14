@@ -30,7 +30,7 @@ pub use sa_core::bindings::deactivate_directional;
 pub use sa_core::bindings::general_angle_between_points as get_angle_between_points;
 pub use sa_core::bindings::general_get_radian_angle_between_points as get_radian_angle_between_points;
 pub use sa_core::bindings::general_limit_radian_angle as limit_radian_angle;
-pub use sa_core::bindings::get_pad;
+pub use sa_input::bindings::get_pad;
 pub use sa_core::bindings::set_ambient_colours;
 pub use sa_stream::bindings::get_first_object;
 pub use sa_stream::bindings::set_component_atomic_alpha;
@@ -49,10 +49,10 @@ pub use sa_world::bindings::set_ped_decision_maker_type;
 pub use sa_world::bindings::set_seeing_range;
 pub use sa_world::bindings::tm_find_active_task_by_type as find_active_task_by_type;
 pub use crate::bindings::ped_clear_look_flag as clear_look_flag_call;
-pub use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+pub use sa_world::bindings::entity_clean_up_old_reference as clean_up_old_reference;
 pub use sa_core::bindings::entity_register_reference as register_reference;
 pub use sa_world::bindings::get_skill_stat_index;
-pub use sa_world::bindings::get_weapon_skill_type_call;
+pub use crate::bindings::get_weapon_skill_type_call;
 orig! {
     /// `CTaskSimpleHoldEntity::CanThrowEntity` (0x691700)
     pub fn can_throw_entity(t: GPtr<u8>) -> u8 = thiscall 0x691700 => unported;
@@ -387,7 +387,7 @@ pub fn set_look_flag_heading(this: GPtr<u8>, heading: u32, _b: u32, over: u32) {
     wr::<u32>(this, 0x73C, heading);
     let e = look_ref(this).read();
     if !e.is_null() {
-        clean_up_old_reference(e, look_ref(this));
+        clean_up_old_reference(e, GPtr::<GPtr<u8>>::cast::<u8>(look_ref(this)));
     }
     look_ref(this).write(GPtr::NULL);
     wr::<u32>(this, 0x748, 0);
@@ -404,7 +404,7 @@ pub fn set_look_flag_entity(this: GPtr<u8>, ent: GPtr<u8>, _b: u32, over: u32) {
     wr::<u32>(this, 0x46C, (rd::<u32>(this, 0x46C) & !8) | 4);
     let e = look_ref(this).read();
     if !e.is_null() {
-        clean_up_old_reference(e, look_ref(this));
+        clean_up_old_reference(e, GPtr::<GPtr<u8>>::cast::<u8>(look_ref(this)));
     }
     look_ref(this).write(ent);
     register_reference(ent, GPtr::<GPtr<u8>>::cast::<u8>(look_ref(this)));
@@ -419,7 +419,7 @@ pub fn set_aim_flag_entity(this: GPtr<u8>, ent: GPtr<u8>) {
     wr::<u32>(this, 0x46C, (rd::<u32>(this, 0x46C) & !0x20) | 0x10);
     let e = look_ref(this).read();
     if !e.is_null() {
-        clean_up_old_reference(e, look_ref(this));
+        clean_up_old_reference(e, GPtr::<GPtr<u8>>::cast::<u8>(look_ref(this)));
     }
     look_ref(this).write(ent);
     register_reference(ent, GPtr::<GPtr<u8>>::cast::<u8>(look_ref(this)));
@@ -746,7 +746,7 @@ pub fn set_look_heading(this: GPtr<u8>, heading: u32) {
     wr::<u32>(this, 0x73C, heading);
     let e = look_ref(this).read();
     if !e.is_null() {
-        clean_up_old_reference(e, look_ref(this));
+        clean_up_old_reference(e, GPtr::<GPtr<u8>>::cast::<u8>(look_ref(this)));
     }
     look_ref(this).write(GPtr::NULL);
     wr::<u32>(this, 0x748, 0);
@@ -766,7 +766,7 @@ pub fn set_look_entity(this: GPtr<u8>, ent: GPtr<u8>) {
     wr::<u32>(this, 0x46C, (rd::<u32>(this, 0x46C) & !8) | 4);
     let e = look_ref(this).read();
     if !e.is_null() {
-        clean_up_old_reference(e, look_ref(this));
+        clean_up_old_reference(e, GPtr::<GPtr<u8>>::cast::<u8>(look_ref(this)));
     }
     look_ref(this).write(ent);
     register_reference(ent, GPtr::<GPtr<u8>>::cast::<u8>(look_ref(this)));
@@ -913,7 +913,7 @@ pub fn calculate_new_orientation(this: GPtr<u8>) {
 #[hook(addr = 0x5E6580, conv = thiscall, name = "CPed::GetWeaponSkill-Current", expect = "0F BE 81 18 07 00 00", this = "CPed")]
 pub fn get_weapon_skill_current(this: GPtr<u8>) -> u8 {
     let slot = i32::from(rd::<i8>(this, 0x718));
-    get_weapon_skill_type_call(this, rd::<i32>(weapon(this, slot), 0)) as u8
+    (get_weapon_skill_type_call(this, rd::<i32>(weapon(this, slot), 0)) as i32) as u8
 }
 
 /// `CPed::CanSeeEntity(CEntity*, float threshold)` (0x5E0730, `ret 8`, AL): the angle to the entity

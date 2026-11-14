@@ -10,7 +10,7 @@ use crate::common::{f32_of, g, jne_mask, jp5, model_info, rd, wr, x};
 use crate::bindings::store_shadow_for_vehicle;
 use crate::bindings::vehicle_pre_render;
 use sa_core::bindings::matrix_attach;
-use sa_core::bindings::matrix_dtor;
+use sa_world::bindings::matrix_dtor;
 use sa_core::bindings::matrix_mul_vec;
 use sa_core::bindings::matrix_set_rotate_x;
 use sa_core::bindings::matrix_set_rotate_z;
@@ -76,7 +76,7 @@ pub fn heli_pre_render(this: GPtr<u8>) {
         let mut target = [rd::<u32>(this, 0x9F4), rd::<u32>(this, 0x9F8), rd::<u32>(this, 0x9FC)];
         let mut offset = [0u32, 0x4060_0000, 0xBE99_999A];
         let mut out = [0u32; 3];
-        let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(buf(&mut out)), rd::<GPtr<u8>>(this, 0x14), buf(&mut offset)));
+        let r = matrix_mul_vec(buf(&mut out), rd::<GPtr<u8>>(this, 0x14), buf(&mut offset));
         add_heli_search_light(r, buf(&mut target), 20.0, rd::<u32>(this, 0xA00), (this.addr() as u32).wrapping_add(0xB), 1, 1);
     }
     entity_get_col_model(this);

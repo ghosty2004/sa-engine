@@ -33,7 +33,7 @@ const ENTER_AS_DRIVER_DEFAULT_TIME: usize = 0x86E698;
 /// (spec open question: its name).
 const NEXT_ENTER_CAR_DWORD: usize = 0x8D237C;
 
-use sa_core::bindings::task_new;
+use sa_ai::bindings::task_new;
 use sa_world::bindings::leave_car_ctor as task_complex_leave_car_ctor;
 use crate::bindings::give_ped_scripted_task;
 use sa_world::bindings::compute_target_door_to_enter_as_passenger;
@@ -91,8 +91,8 @@ use sa_world::bindings::stand_still_ctor as task_stand_still_ctor;
 use sa_world::bindings::task_use_atm_ctor;
 use sa_world::bindings::tired_ctor as task_tired_ctor;
 use crate::bindings::global_index;
-use sa_core::bindings::stats_increment_stat as increment_stat;
-use sa_core::bindings::tm_set_task_secondary as set_task_secondary;
+use sa_world::bindings::stats_increment_stat as increment_stat;
+use sa_ai::bindings::tm_set_task_secondary as set_task_secondary;
 use sa_stream::bindings::rand as crt_rand;
 use sa_world::bindings::duck_ctor as task_duck_ctor;
 use sa_world::bindings::fall_and_get_up_ctor2 as task_fall_and_get_up_ctor;
@@ -105,26 +105,24 @@ use sa_world::bindings::leave_car_and_flee_ctor as task_leave_car_and_flee_ctor;
 use sa_world::bindings::multiply3x3 as multiply_3x3;
 use sa_world::bindings::multiply3x3_vm as multiply_3x3_vm;
 use sa_world::bindings::pause_ctor as task_pause_ctor;
-use sa_world::bindings::player_info_get_pos as player_get_pos;
+use sa_ped::bindings::player_info_get_pos as player_get_pos;
 use sa_world::bindings::point_route_add;
 use sa_world::bindings::say_ctor as task_say_ctor;
 use sa_world::bindings::set_clump_alpha;
 use sa_world::bindings::vec_mul_assign as vector_mul_assign;
 use sa_world::bindings::vector_add_assign;
 use sa_world::bindings::vector_mul_scalar as vector_mul;
+use sa_core::bindings::cross_product;
+use sa_core::bindings::vector_normalise;
 orig! {
     /// `CStats::RegisterBestPosition(eStats, int32)` (0x55A160)
     fn register_best_position(stat: u32, pos: u32) = cdecl 0x55A160 => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    fn vector_normalise(v: GPtr<u32>) = thiscall 0x59C910 => unported;
     /// `CUserDisplay::OnscnTimer.SetCounterFlashWhenFirstDisplayed(uint16 varId, bool)` (0x44CEB0)
     fn set_counter_flash_when_first_displayed(t: GPtr<u8>, id: u32, b: u32) = thiscall 0x44CEB0 => unported;
     /// virtual `CEntity::SetIsStatic(bool)` (vtable +0x10)
     fn vcall_set_is_static(f: u32, e: GPtr<u8>, b: u32) = thiscall dyn => unported;
     /// `CVector::operator/=(float)` (0x411A30), the float as its raw dword
     fn vector_div_assign(v: GPtr<u32>, k: u32) = thiscall 0x411A30 => unported;
-    /// `CrossProduct(CVector* out, const CVector&, const CVector&)` (0x59C730), returns `out`
-    fn cross_product(out: GPtr<u32>, a: GPtr<u32>, b: GPtr<u32>) -> GPtr<u32> = cdecl 0x59C730 => unported;
     /// `CTaskComplexDriveToPoint::CTaskComplexDriveToPoint(CVehicle*, const CVector&, float speed, int32 mode,
     /// int32 model, float radius, int32 style)` (0x63CE00)
     fn task_drive_to_point_ctor(t: GPtr<u8>, v: GPtr<u8>, p: GPtr<u32>, speed: u32, mode: u32, model: u32, radius: u32, style: u32) -> GPtr<u8> = thiscall 0x63CE00 => unported;
@@ -175,7 +173,7 @@ fn set_load_collision_flag(s: Scr, e: GPtr<u8>) {
         let v = ef.read();
         if v & 0x40000 != 0 {
             ef.write(v & 0xFFFB_FFFF);
-            if entity_get_is_static(e) == 0 {
+            if entity_get_is_static(e) as u8 == 0 {
                 add_to_moving_list(e);
             }
         }
@@ -362,14 +360,14 @@ pub fn process_commands_1400_to_1499(s: Scr, command: u32) -> i8 {
                 ld(5).fsub_m(spf(2)).to_f32().to_bits(),
             ];
             let dp = GPtr::from_raw(dir.as_mut_ptr());
-            vector_normalise(dp);
+            vector_normalise(dp.cast::<[f32;3]>());
             add_light(0, f32::from_bits(pos[0]), f32::from_bits(pos[1]), f32::from_bits(pos[2]), f32::from_bits(0), f32::from_bits(0), f32::from_bits(0), f32::from_bits(0x40A0_0000), f32::from_bits(0x3F80_0000), f32::from_bits(0x3F4C_CCCD), f32::from_bits(0), 0, 0, GPtr::NULL);
             trigger_gunshot(GPtr::from_addr(0xA9AE00), GPtr::NULL, GPtr::<u32>::cast::<u8>(GPtr::from_raw(pos.as_mut_ptr())), dp.cast::<u8>(), 1);
         }
         // 058C GET_PROGRESS_PERCENTAGE (0x48EDA0, gr: unregistered): `SP0 = CStats::GetPercentageProgress()`
         // (fstp f32); StoreParameters(1).
         0x058C => {
-            set_sp(0, X87::from_f64_exact(get_percentage_progress()).to_f32().to_bits());
+            set_sp(0, X87::from_f64_exact(get_percentage_progress().to_f64()).to_f32().to_bits());
             store(s, 1);
         }
         // 0594 SET_VEHICLE_TO_FADE_IN (0x48EDBB, gr: unregistered): `SetClumpAlpha(veh(SP0)->m_pRwClump, SP1)`.
@@ -515,7 +513,7 @@ pub fn process_commands_1400_to_1499(s: Scr, command: u32) -> i8 {
         0x05A3 => {
             collect(s, 1);
             let o = object_at_ref(pool(OBJECT_POOL), spi(0));
-            set_flag(s, entity_get_is_static(o) != 0);
+            set_flag(s, entity_get_is_static(o) as u8 != 0);
         }
         // 05A4 GET_ANGLE_BETWEEN_2D_VECTORS (0x48F2A2, gr: unregistered): a = (SP0, SP1), b = (SP2, SP3), all in
         // x87 registers: `c = (b.y*a.y + b.x*a.x) / (sqrt(b.y² + b.x²) * sqrt(a.y² + a.x²))`; `SP0 = _CIacos(c) *
@@ -593,22 +591,22 @@ pub fn process_commands_1400_to_1499(s: Scr, command: u32) -> i8 {
                 let ms = o.byte_add(0x44).cast::<u32>();
                 let mut fv = [ms.read(), ms.wrapping_index(1).read(), ms.wrapping_index(2).read()];
                 let fp = GPtr::from_raw(fv.as_mut_ptr());
-                vector_normalise(fp);
+                vector_normalise(fp.cast::<[f32;3]>());
                 let fz = X87::from_f32(f32::from_bits(fv[2]));
                 if fz.fcom(X87::one()) != sa_math::x87::Cmp::Equal {
                     let mut fc = fv;
                     let mut up = [0u32, 0, 0x3F80_0000];
                     let mut tmp = [0u32; 3];
-                    let c = cross_product(GPtr::from_raw(tmp.as_mut_ptr()), fp, GPtr::from_raw(up.as_mut_ptr()));
+                    let c = GPtr::<u8>::cast::<u32>(cross_product(GPtr::<u32>::cast::<u8>(GPtr::from_raw(tmp.as_mut_ptr())), fp.cast::<u8>(), GPtr::<u32>::cast::<u8>(GPtr::from_raw(up.as_mut_ptr()))));
                     let mut r = [c.read(), c.wrapping_index(1).read(), c.wrapping_index(2).read()];
                     let rp = GPtr::from_raw(r.as_mut_ptr());
-                    vector_normalise(rp);
+                    vector_normalise(rp.cast::<[f32;3]>());
                     let mut tmp2 = [0u32; 3];
                     let fcp = GPtr::from_raw(fc.as_mut_ptr());
-                    let c = cross_product(GPtr::from_raw(tmp2.as_mut_ptr()), rp, fcp);
+                    let c = GPtr::<u8>::cast::<u32>(cross_product(GPtr::<u32>::cast::<u8>(GPtr::from_raw(tmp2.as_mut_ptr())), rp.cast::<u8>(), fcp.cast::<u8>()));
                     let mut u = [c.read(), c.wrapping_index(1).read(), c.wrapping_index(2).read()];
                     let up_ = GPtr::from_raw(u.as_mut_ptr());
-                    vector_normalise(up_);
+                    vector_normalise(up_.cast::<[f32;3]>());
                     let mut m = [ms.read(), ms.wrapping_index(1).read(), ms.wrapping_index(2).read()];
                     let mp = GPtr::from_raw(m.as_mut_ptr());
                     let mut t1 = [0u32; 3];
@@ -745,7 +743,7 @@ pub fn process_commands_1400_to_1499(s: Scr, command: u32) -> i8 {
             if ped != -1 {
                 let p = ped_at_ref(pool(PED_POOL), ped);
                 let name = if char_ { 0x85A2EC } else { 0x85A2CC };
-                ik_look_at(GPtr::from_addr(0xC15448), GPtr::from_addr(name as usize), p, target, time, bone, GPtr::NULL, 0, 0x3E80_0000, 0x1F4, 6, 1);
+                ik_look_at(GPtr::from_addr(0xC15448), GPtr::from_addr(name as usize), p, target, time as i32, bone as i32, GPtr::NULL, 0, f32::from_bits(0x3E80_0000), 0x1F4, 6, 1);
             } else {
                 let t = new_task(0x30, |t| {
                     task_trigger_look_at_ctor(t, target, time, bone, 0, 0, 0, 1, 0x3E80_0000, 0x3E8, 3)
@@ -770,7 +768,7 @@ pub fn process_commands_1400_to_1499(s: Scr, command: u32) -> i8 {
             if ped != -1 {
                 let p = ped_at_ref(pool(PED_POOL), ped);
                 let m = p.byte_add(0x47C).cast::<GPtr<u8>>().read().byte_add(4);
-                set_task_secondary(m, sec, slot);
+                set_task_secondary(m, sec, slot as i32);
             } else {
                 let t = new_task(0x14, |t| task_affect_secondary_ctor(t, 1, slot, sec));
                 sequence_add(t);
@@ -915,7 +913,7 @@ pub fn process_commands_1400_to_1499(s: Scr, command: u32) -> i8 {
                 v => v as u32,
             };
             let t = new_task(0x4C, |t| {
-                task_seek_entity_ctor(t, target, time, 0x3E8, dist, rd(0x859E30), rd(0x859E34), 1, 1)
+                task_seek_entity_ctor(t, target, time, 0x3E8, f32::from_bits(dist), rd(0x859E30), rd(0x859E34), 1, 1)
             });
             give_ped_scripted_task(s, ped as i32, t, command);
         }

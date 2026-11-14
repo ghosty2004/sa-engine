@@ -100,7 +100,7 @@ pub fn break_glass_physically(px: f32, py: f32, pz: f32, radius: f32) {
         sphere[2] = row(rd::<GPtr<u8>>(o, 0x14).byte_add(0x20)).to_bits();
         sphere[3] = radius.to_bits();
         let sp: GPtr<u8> = GPtr::from_raw(sphere.as_mut_ptr()).cast();
-        calculate_triangle_planes(cm);
+        calculate_triangle_planes(cm.cast::<sa_world::collision::shared::CColModel>());
         let mut hit = false;
         let mut t = 0i32;
         while t < i32::from(rd::<i16>(data, 4)) {
@@ -147,10 +147,10 @@ pub fn break_glass_physically(px: f32, py: f32, pz: f32, radius: f32) {
         }
         let mut a0 = [v[0][0], v[0][1], min_z];
         let mut p0 = [0f32; 3];
-        matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::from_raw(p0.as_mut_ptr()).cast()), rd(o, 0x14), GPtr::from_raw(a0.as_mut_ptr()).cast());
+        matrix_mul_vec(GPtr::from_raw(p0.as_mut_ptr()).cast(), rd(o, 0x14), GPtr::from_raw(a0.as_mut_ptr()).cast());
         let mut a1 = [v[far][0], v[far][1], min_z];
         let mut p1 = [0f32; 3];
-        matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::from_raw(p1.as_mut_ptr()).cast()), rd(o, 0x14), GPtr::from_raw(a1.as_mut_ptr()).cast());
+        matrix_mul_vec(GPtr::from_raw(p1.as_mut_ptr()).cast(), rd(o, 0x14), GPtr::from_raw(a1.as_mut_ptr()).cast());
         report_glass_collision_event(g(0xB6_BC90), 0x7E, pos(o).cast());
         let shatter = (rd::<u32>(o, 0x140) >> 4) & 0xFFFF_FF01;
         let rx = x(p1[0]).fsub_m(p0[0]).to_f32();

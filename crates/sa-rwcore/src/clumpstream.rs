@@ -21,15 +21,15 @@ const E_VERSION: u32 = 0x8000_0004;
 use crate::bindings::resources_free_res_entry;
 use sa_core::bindings::geometry_add_ref;
 use sa_core::bindings::geometry_stream_read;
-use sa_core::bindings::object_has_frame_set_frame;
-use sa_core::bindings::rp_atomic_create as atomic_create;
-use sa_core::bindings::rp_atomic_destroy as atomic_destroy;
-use sa_core::bindings::rp_clump_create as clump_create;
+use crate::bindings::object_has_frame_set_frame;
+use crate::bindings::rp_atomic_create as atomic_create;
+use crate::bindings::rp_atomic_destroy as atomic_destroy;
+use crate::bindings::rp_clump_create as clump_create;
 use sa_core::bindings::rp_clump_destroy as clump_destroy;
-use sa_core::bindings::rp_clump_for_all_atomics as clump_for_all_atomics;
+use crate::bindings::rp_clump_for_all_atomics as clump_for_all_atomics;
 use sa_core::bindings::rw_error1 as rw_error;
-use sa_core::bindings::rw_frame_update_objects as frame_update_objects;
-use sa_core::bindings::stream_read;
+use crate::bindings::rw_frame_update_objects as frame_update_objects;
+use crate::bindings::stream_read;
 use crate::bindings::atomic_get_world;
 use crate::bindings::atomic_stream_read_call;
 use crate::bindings::clump_for_all_cameras;
@@ -41,11 +41,11 @@ use crate::bindings::plugin_read_data_chunks as registry_read_data_chunks;
 use crate::bindings::read_int32 as stream_read_int32;
 use sa_core::bindings::rp_geometry_destroy as geometry_destroy;
 use sa_core::bindings::rw_stream_find_chunk_call as stream_find_chunk;
+use sa_core::bindings::frame_list_deinitialize;
+use sa_core::bindings::frame_list_stream_read;
+use sa_core::bindings::rw_error_set;
 orig! {
     fn rw_error2(code: u32, a: u32) -> u32 = cdecl 0x8088D0 => unported;
-    fn rw_error_set(e: GPtr<RwError>) -> GPtr<RwError> = cdecl 0x808820 => unported;
-    fn frame_list_stream_read(s: GPtr<u8>, fl: GPtr<u8>) -> GPtr<u8> = cdecl 0x807970 => unported;
-    fn frame_list_deinitialize(fl: GPtr<u8>) -> GPtr<u8> = cdecl 0x807720 => unported;
     fn geometry_list_destroy(l: GPtr<u8>) -> GPtr<u8> = cdecl 0x74AE50 => unported;
     fn light_stream_read(s: GPtr<u8>) -> GPtr<u8> = cdecl 0x751F00 => unported;
     fn camera_stream_read(s: GPtr<u8>) -> GPtr<u8> = cdecl 0x808DE0 => unported;
@@ -56,7 +56,7 @@ orig! {
 fn error(code: u32) {
     let mut e = RwError { plugin_id: 2, error_code: 0 };
     e.error_code = rw_error(code) as i32;
-    rw_error_set(GPtr::from_raw(&mut e));
+    rw_error_set(GPtr::from_raw(&mut e).cast());
 }
 
 fn ok_version(v: u32) -> bool {
@@ -288,7 +288,7 @@ pub fn clump_stream_read(s: GPtr<u8>) -> GPtr<u8> {
     let c2 = |c: GPtr<u8>, flp: GPtr<u8>| {
         frame_list_deinitialize(flp);
         registry_deinit_object(GPtr::from_addr(CLUMP_REGISTRY as usize), c);
-        clump_for_all_atomics(c, 0x74BCC0, GPtr::NULL);
+        clump_for_all_atomics(c, 0x74BCC0, GPtr::<u8>::addr(GPtr::NULL) as u32);
         destroy_clump_tail(c);
     };
     // C3: the list's geometries destroyed and the array freed, then C2
@@ -327,7 +327,7 @@ pub fn clump_stream_read(s: GPtr<u8>) -> GPtr<u8> {
         if arr.is_null() {
             let mut e = RwError { plugin_id: 2, error_code: 0 };
             e.error_code = rw_error2(0x8000_0013, (n as u32).wrapping_mul(4)) as i32;
-            rw_error_set(GPtr::from_raw(&mut e));
+            rw_error_set(GPtr::from_raw(&mut e).cast());
             c2(c, flp);
             return GPtr::NULL;
         }

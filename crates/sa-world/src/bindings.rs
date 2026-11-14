@@ -20,7 +20,7 @@ orig! {
 
 orig! {
     /// `FUN_00404330` (0x404330)
-    pub fn min_f(a: f32, b: f32) -> f64 = cdecl 0x404330 => unported;
+    pub fn min_f(a: u32, b: u32) -> sa_math::x87::X87 = reg("args = stack stack") 0x404330 => sa_core::common::min_f;
 }
 
 orig! {
@@ -30,7 +30,7 @@ orig! {
 
 orig! {
     /// `FUN_00406ce0` (0x406CE0)
-    pub fn floor_f(v: f32) -> f64 = cdecl 0x406CE0 => unported;
+    pub fn floor_f(v: u32) -> f64 = cdecl 0x406CE0 => unported;
 }
 
 orig! {
@@ -39,13 +39,28 @@ orig! {
 }
 
 orig! {
+    /// `FUN_00406da0` (0x406DA0)
+    pub fn vector_magnitude_sqr(v: GPtr<u8>) -> sa_math::x87::X87 = reg("args = ecx") 0x406DA0 => crate::world::mvpa_math::vector_squared_magnitude;
+}
+
+orig! {
     /// `SetNextScanCode` (0x4072E0)
     pub fn set_next_scan_code() = cdecl 0x4072E0 => unported;
 }
 
 orig! {
+    /// `CCheat::IsZoneStreamingAllowed` (0x407410)
+    pub fn cheat_is_zone_streaming_allowed() -> u8 = cdecl 0x407410 => crate::world::cheat::is_zone_streaming_allowed;
+}
+
+orig! {
     /// `thunk_FUN_01566860` (0x4082A0)
     pub fn ped_pool_get_at(pool: GPtr<u8>, i: u32) -> GPtr<u8> = thiscall 0x4082A0 => unported;
+}
+
+orig! {
+    /// `CBox::Set` (0x40EDE0)
+    pub fn box_set(b: GPtr<u8>, min: GPtr<u32>, max: GPtr<u32>) = thiscall 0x40EDE0 => crate::collision::misc::box_set;
 }
 
 orig! {
@@ -59,13 +74,53 @@ orig! {
 }
 
 orig! {
+    /// `CCollisionData` (0x40F030)
+    pub fn collision_data_ctor(cd: GPtr<u8>) -> GPtr<u8> = thiscall 0x40F030 => crate::world::mvpa_math::collision_data_ctor;
+}
+
+orig! {
+    /// `CCollisionData::RemoveCollisionVolumes` (0x40F070)
+    pub fn col_data_remove_collision_volumes(this: GPtr<crate::collision::shared::CCollisionData>) = thiscall 0x40F070 => crate::collision::data::remove_collision_volumes;
+}
+
+orig! {
+    /// `CCollisionData::GetTrianglePoint` (0x40F5E0)
+    pub fn get_triangle_point(cd: GPtr<crate::collision::shared::CCollisionData>, out: GPtr<sa_math::vector::CVector>, idx: i32) = thiscall 0x40F5E0 => crate::collision::data::get_triangle_point;
+}
+
+orig! {
+    /// `CColModel` (0x40F700)
+    pub fn col_model_dtor(col: GPtr<u8>) = thiscall 0x40F700 => crate::world::mvpa_math::col_model_dtor;
+}
+
+orig! {
+    /// `CColModel::operator new` (0x40FC30)
+    pub fn col_model_new(size: u32) -> GPtr<sa_core::pools::ColModelSlot> = cdecl 0x40FC30 => crate::collision::data::col_model_operator_new;
+}
+
+orig! {
     /// `thunk_FUN_015637e0` (0x40FC80)
     pub fn col_point_assign(this: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = thiscall 0x40FC80 => unported;
 }
 
 orig! {
+    /// `CSphere::Set` (0x40FCF0)
+    pub fn sphere_set(s: GPtr<u8>, r: u32, c: GPtr<u32>) = thiscall 0x40FCF0 => crate::collision::misc::sphere_set;
+}
+
+orig! {
+    /// `CColSphere::Set` (0x40FD10)
+    pub fn col_sphere_set(s: GPtr<u8>, r: u32, c: GPtr<u32>, m: u32, f: u32, l: u32) = thiscall 0x40FD10 => crate::collision::misc::col_sphere_set;
+}
+
+orig! {
     /// `FUN_0040fe30` (0x40FE30)
     pub fn vector_add(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE30 => crate::world::mvpa_math::vector_add;
+}
+
+orig! {
+    /// `VectorSub` (0x40FE60)
+    pub fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => crate::world::mvpa_math::vector_sub;
 }
 
 orig! {
@@ -124,6 +179,11 @@ orig! {
 }
 
 orig! {
+    /// `CCollision::DistToMathematicalLine` (0x412970)
+    pub fn dist_to_mathematical_line(a: GPtr<f32>, b: GPtr<f32>, p: GPtr<f32>) -> sa_math::x87::X87 = reg("args = stack stack stack") 0x412970 => crate::collision::prim::dist_to_mathematical_line;
+}
+
+orig! {
     /// `CCollision::ProcessLineSphere` (0x412AA0)
     pub fn process_line_sphere(line: GPtr<f32>, sphere: GPtr<f32>, cp: GPtr<f32>, depth: GPtr<f32>) -> u8 = cdecl 0x412AA0 => crate::collision::prim::process_line_sphere;
 }
@@ -136,6 +196,11 @@ orig! {
 orig! {
     /// `CCollision::ProcessLineBox` (0x413100)
     pub fn process_line_box(line: GPtr<u8>, bx: GPtr<u8>, cp: GPtr<u8>, min: GPtr<u8>) -> u8 = cdecl 0x413100 => crate::collision::mvpe_coll1::process_line_box;
+}
+
+orig! {
+    /// `CCollision::Test2DLineAgainst2DLine` (0x4138D0)
+    pub fn test_2d_line_against_2d_line(x1: u32, y1: u32, dx1: u32, dy1: u32, x2: u32, y2: u32, dx2: f32, dy2: f32) -> u8 = cdecl 0x4138D0 => crate::world::gamelogic::test2d_port;
 }
 
 orig! {
@@ -161,6 +226,16 @@ orig! {
 orig! {
     /// `CCollision::SphereCastVersusVsPoly` (0x415CF0)
     pub fn sphere_cast_versus_vs_poly(a: GPtr<u8>, b: GPtr<u8>, tri: GPtr<u8>, plane: GPtr<u8>, verts: GPtr<u8>) -> u8 = cdecl 0x415CF0 => crate::collision::sphere_cast::sphere_cast_versus_vs_poly;
+}
+
+orig! {
+    /// `CCollision::CalculateTrianglePlanes-colData` (0x416330)
+    pub fn calculate_triangle_planes_416330(cd: GPtr<crate::collision::shared::CCollisionData>) = cdecl 0x416330 => crate::collision::data::calculate_triangle_planes_col_data;
+}
+
+orig! {
+    /// `CCollision::RemoveTrianglePlanes-colData` (0x416400)
+    pub fn collision_remove_triangle_planes(cd: GPtr<crate::collision::shared::CCollisionData>) = cdecl 0x416400 => crate::collision::data::remove_triangle_planes_col_data;
 }
 
 orig! {
@@ -190,7 +265,7 @@ orig! {
 
 orig! {
     /// `CCollision::CalculateTrianglePlanes-CColModelPtr` (0x418580)
-    pub fn calculate_triangle_planes(cm: GPtr<u8>) = cdecl 0x418580 => unported;
+    pub fn calculate_triangle_planes(cm: GPtr<crate::collision::shared::CColModel>) = cdecl 0x418580 => crate::collision::data::calculate_triangle_planes_col_model;
 }
 
 orig! {
@@ -201,11 +276,6 @@ orig! {
 orig! {
     /// `CCollision::SphereCastVsEntity` (0x419F00)
     pub fn sphere_cast_vs_entity(a: GPtr<u8>, b: GPtr<u8>, e: GPtr<u8>) -> u8 = cdecl 0x419F00 => crate::collision::sphere_cast::sphere_cast_vs_entity;
-}
-
-orig! {
-    /// `thunk_FUN_01567620` (0x41BDD0)
-    pub fn vehicle_41bdd0(v: GPtr<u8>, b: u32) = thiscall 0x41BDD0 => unported;
 }
 
 orig! {
@@ -234,23 +304,13 @@ orig! {
 }
 
 orig! {
-    /// `CCarAI::GetCarToGoToCoors` (0x41CE30)
-    pub fn car_ai_get_car_to_go_to_coors(v: GPtr<u8>, p: GPtr<u8>, style: u32, b: u32) -> f64 = cdecl 0x41CE30 => unported;
-}
-
-orig! {
     /// `FUN_00420800` (0x420800)
-    pub fn max_f(a: f32, b: f32) -> f64 = cdecl 0x420800 => unported;
+    pub fn max_f(a: f32, b: f32) -> sa_math::x87::X87 = reg("args = stack stack") 0x420800 => crate::world::mvpa_math::max_f;
 }
 
 orig! {
     /// `thunk_FUN_01565640` (0x420920)
     pub fn node_eq(a: GPtr<u8>, b: GPtr<u8>) -> u8 = thiscall 0x420920 => unported;
-}
-
-orig! {
-    /// `CPathNode::GetPosition` (0x420A10)
-    pub fn get_position(node: GPtr<u8>, out: GPtr<f32>) -> GPtr<f32> = thiscall 0x420A10 => unported;
 }
 
 orig! {
@@ -309,11 +369,6 @@ orig! {
 }
 
 orig! {
-    /// `CCarCtrl::JoinCarWithRoadSystem` (0x42F5A0)
-    pub fn join_car_with_road_system(v: GPtr<u8>) = cdecl 0x42F5A0 => unported;
-}
-
-orig! {
     /// `CCarCtrl::JoinCarWithRoadSystemGotoCoors` (0x42F870)
     pub fn join_car_with_road_system_goto_coors(v: GPtr<u8>, c: GPtr<u32>, a: u32, b: u32) -> u8 = cdecl 0x42F870 => unported;
 }
@@ -366,11 +421,6 @@ orig! {
 orig! {
     /// `CDarkel::FrenzyOnGoing` (0x43D1F0)
     pub fn frenzy_on_going() -> u8 = cdecl 0x43D1F0 => unported;
-}
-
-orig! {
-    /// `CDarkel::CheckDamagedWeaponType` (0x43D9E0)
-    pub fn check_damaged_weapon_type(weapon: i32, ty: i32) -> u8 = cdecl 0x43D9E0 => unported;
 }
 
 orig! {
@@ -484,11 +534,6 @@ orig! {
 }
 
 orig! {
-    /// `CGangWars::GangWarFightingGoingOn` (0x443AC0)
-    pub fn gang_war_fighting_going_on() -> u8 = cdecl 0x443AC0 => unported;
-}
-
-orig! {
     /// `CGangWars::CanPlayerStartAGangWarHere` (0x443F80)
     pub fn can_player_start_a_gang_war_here(zi: GPtr<u8>) -> u8 = cdecl 0x443F80 => unported;
 }
@@ -520,12 +565,12 @@ orig! {
 
 orig! {
     /// `CGarage::IsPointInsideGarage-CVector` (0x448740)
-    pub fn garage_is_point_inside(gp: GPtr<u8>, x: u32, y: u32, z: u32) -> u8 = thiscall 0x448740 => unported;
+    pub fn garage_is_point_inside(gr: GPtr<u8>, p: sa_math::vector::CVector) -> u8 = thiscall 0x448740 => unported;
 }
 
 orig! {
     /// `CGarage::IsPointInsideGarage-CVector-float` (0x4487D0)
-    pub fn garage_is_point_inside_r(g: GPtr<u8>, x: f32, y: f32, z: f32, r: f32) -> u8 = thiscall 0x4487D0 => unported;
+    pub fn garage_is_point_inside_r(gr: GPtr<u8>, p: sa_math::vector::CVector, margin: f32) -> u8 = thiscall 0x4487D0 => unported;
 }
 
 orig! {
@@ -594,11 +639,6 @@ orig! {
 }
 
 orig! {
-    /// `CPathFind::These2NodesAreAdjacent` (0x44D230)
-    pub fn path_find_these_2_nodes_are_adjacent(pf: GPtr<u8>, a: u32, b: u32) -> u8 = thiscall 0x44D230 => unported;
-}
-
-orig! {
     /// `CPathFind::SetLinksBridgeLights` (0x44D960)
     pub fn path_set_links_bridge_lights(pf: GPtr<u8>, x0: f32, x1: f32, y0: f32, y1: f32, b: u32) = thiscall 0x44D960 => unported;
 }
@@ -614,11 +654,6 @@ orig! {
 }
 
 orig! {
-    /// `CPathFind::FindNthNodeClosestToCoors` (0x44F8C0)
-    pub fn find_nth_node_closest_to_coors(paths: GPtr<u8>, out: GPtr<u32>, x: f32, y: f32, z: f32, ty: u32, max: f32, a: u32, b: u32, n: u32, c: u32, d: u32, e: GPtr<u32>) -> GPtr<u32> = thiscall 0x44F8C0 => unported;
-}
-
-orig! {
     /// `CPathFind::FindNodeOrientationForCarPlacement` (0x450320)
     pub fn find_node_orientation_for_car_placement(paths: GPtr<u8>, addr: u32) -> f64 = thiscall 0x450320 => unported;
 }
@@ -626,11 +661,6 @@ orig! {
 orig! {
     /// `CPathFind::FindNodeCoorsForScript-LinkedNode` (0x4505E0)
     pub fn find_node_coors_for_script(paths: GPtr<u8>, out: GPtr<u8>, addr: u32, found: GPtr<u8>) -> GPtr<u8> = thiscall 0x4505E0 => unported;
-}
-
-orig! {
-    /// `CPathFind::SwitchRoadsOffInArea` (0x452C80)
-    pub fn switch_roads_off_in_area(p: GPtr<u8>, x1: f32, x2: f32, y1: f32, y2: f32, z1: f32, z2: f32, off: u32, cars: u32, force: u32) = thiscall 0x452C80 => unported;
 }
 
 orig! {
@@ -694,11 +724,6 @@ orig! {
 }
 
 orig! {
-    /// `CVehicleRecording::StopPlaybackRecordedCar` (0x45A280)
-    pub fn stop_playback_recorded_car(v: GPtr<u8>) = cdecl 0x45A280 => unported;
-}
-
-orig! {
     /// `CRemote::TakeRemoteControlledCarFromPlayer` (0x45AE80)
     pub fn take_remote_controlled_car_from_player(b: u32) = cdecl 0x45AE80 => unported;
 }
@@ -725,7 +750,7 @@ orig! {
 
 orig! {
     /// `CEntity::GetIsStatic` (0x4633E0)
-    pub fn entity_get_is_static(e: GPtr<u8>) -> u8 = thiscall 0x4633E0 => unported;
+    pub fn entity_get_is_static(e: GPtr<u8>) -> u32 = thiscall 0x4633E0 => crate::world::entity::get_is_static;
 }
 
 orig! {
@@ -754,11 +779,6 @@ orig! {
 }
 
 orig! {
-    /// `CDecisionMakerTypes::GetInstance` (0x4684F0)
-    pub fn decision_maker_types_get_instance() -> GPtr<u8> = cdecl 0x4684F0 => unported;
-}
-
-orig! {
     /// `CEntity::GetModellingMatrix` (0x46A2D0)
     pub fn get_modelling_matrix(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x46A2D0 => unported;
 }
@@ -770,7 +790,7 @@ orig! {
 
 orig! {
     /// `CTaskComplexSeekEntityStandard::Constructor` (0x46AC10)
-    pub fn seek_entity_standard_ctor(t: GPtr<u8>, e: GPtr<u8>, a: u32, b: u32, c: u32, d: u32, f: u32, g: u32, h: u32) -> GPtr<u8> = thiscall 0x46AC10 => unported;
+    pub fn seek_entity_standard_ctor(t: GPtr<u8>, e: GPtr<u8>, a: u32, b: u32, c: f32, d: u32, f: u32, g: u32, h: u32) -> GPtr<u8> = thiscall 0x46AC10 => unported;
 }
 
 orig! {
@@ -785,7 +805,7 @@ orig! {
 
 orig! {
     /// `CTheScripts::GetNewUniqueScriptThingIndex` (0x483720)
-    pub fn get_new_unique_script_thing_index(i: i32, ty: u8) -> i32 = cdecl 0x483720 => unported;
+    pub fn get_new_unique_script_thing_index(i: i32, ty: u32) -> i32 = cdecl 0x483720 => unported;
 }
 
 orig! {
@@ -889,6 +909,11 @@ orig! {
 }
 
 orig! {
+    /// `Fx_c::TriggerWaterHydrant` (0x4A0D70)
+    pub fn trigger_water_hydrant(fx: GPtr<u8>, pos: GPtr<u8>) = thiscall 0x4A0D70 => unported;
+}
+
+orig! {
     /// `Fx_c::TriggerGunshot` (0x4A0DE0)
     pub fn fx_trigger_gunshot(fx: GPtr<u8>, e: GPtr<u8>, pos: GPtr<u8>, dir: GPtr<u8>, b: u32) = thiscall 0x4A0DE0 => unported;
 }
@@ -900,7 +925,7 @@ orig! {
 
 orig! {
     /// `Fx_c::RenderBegin` (0x4A13B0)
-    pub fn fx_render_begin(raster: GPtr<u8>, ltm: GPtr<u8>, flags: u32) = cdecl 0x4A13B0 => unported;
+    pub fn fx_render_begin(raster: u32, ltm: u32, flags: u32) = cdecl 0x4A13B0 => unported;
 }
 
 orig! {
@@ -945,7 +970,7 @@ orig! {
 
 orig! {
     /// `FxSystem_c::AddParticle-v3d` (0x4AA440)
-    pub fn fx_add_particle(f: GPtr<u8>, pos: GPtr<u8>, vel: GPtr<u8>, t: f32, m: GPtr<u8>, rot: f32, br: f32, a: f32, b: u32) = thiscall 0x4AA440 => unported;
+    pub fn fx_add_particle(f: GPtr<u8>, pos: GPtr<u8>, vel: GPtr<u8>, t: u32, m: GPtr<u8>, rot: u32, br: f32, a: f32, b: u32) = thiscall 0x4AA440 => unported;
 }
 
 orig! {
@@ -995,7 +1020,7 @@ orig! {
 
 orig! {
     /// `CEventGroup::Add-` (0x4AB420)
-    pub fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
+    pub fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, b: u8) -> GPtr<u8> = thiscall 0x4AB420 => unported;
 }
 
 orig! {
@@ -1030,7 +1055,7 @@ orig! {
 
 orig! {
     /// `CPedDamageResponseCalculator::Constructor` (0x4AD3F0)
-    pub fn damage_calc_ctor(c: GPtr<u8>, src: GPtr<u8>, dmg: f32, wt: u32, piece: u32, b: u8) -> GPtr<u8> = thiscall 0x4AD3F0 => unported;
+    pub fn damage_calc_ctor(c: GPtr<u8>, src: u32, dmg: u32, wt: u32, piece: u32, b: u32) -> GPtr<u8> = thiscall 0x4AD3F0 => unported;
 }
 
 orig! {
@@ -1090,7 +1115,7 @@ orig! {
 
 orig! {
     /// `CEventAcquaintancePed::Constructor` (0x4AF820)
-    pub fn acquaintance_ped_ctor(e: GPtr<u8>, p: GPtr<u8>) -> GPtr<u8> = thiscall 0x4AF820 => unported;
+    pub fn acquaintance_ped_ctor(e: u32, p: u32) -> u32 = thiscall 0x4AF820 => unported;
 }
 
 orig! {
@@ -1100,7 +1125,7 @@ orig! {
 
 orig! {
     /// `CEventKnockOffBike::Constructor-first` (0x4AFCF0)
-    pub fn kob_ctor(e: GPtr<u8>, veh: GPtr<u8>, speed: GPtr<u8>, impact: GPtr<u8>, dmg: u32, a4: u32, weapon: u32, dir: u32, a7: u32, a8: GPtr<u8>, a9: u32, a10: u32) -> GPtr<u8> = thiscall 0x4AFCF0 => unported;
+    pub fn kob_ctor(e: GPtr<u8>, veh: GPtr<u8>, speed: GPtr<u8>, impact: GPtr<u8>, dmg: u32, a4: f32, weapon: u32, dir: u32, a7: u32, a8: GPtr<u8>, a9: u32, a10: u32) -> GPtr<u8> = thiscall 0x4AFCF0 => unported;
 }
 
 orig! {
@@ -1260,7 +1285,7 @@ orig! {
 
 orig! {
     /// `CAEUserRadioTrackManager::ScanUserTracks` (0x4F4BA0)
-    pub fn user_radio_scan(this: GPtr<u8>) -> u8 = thiscall 0x4F4BA0 => unported;
+    pub fn user_radio_scan(this: u32) -> bool = thiscall 0x4F4BA0 => unported;
 }
 
 orig! {
@@ -1304,6 +1329,11 @@ orig! {
 }
 
 orig! {
+    /// `CAudioEngine::ReportCollision` (0x506EB0)
+    pub fn report_collision(ae: GPtr<u8>, e1: GPtr<u8>, e2: GPtr<u8>, s1: u32, s2: u32, pos: GPtr<u8>, normal: GPtr<u8>, impulse: f32, volume: f32, bullet: u32, b2: u32) = thiscall 0x506EB0 => unported;
+}
+
+orig! {
     /// `CAudioEngine::ReportObjectDestruction` (0x506ED0)
     pub fn audio_report_object_destruction(ae: GPtr<u8>, e: GPtr<u8>) = thiscall 0x506ED0 => unported;
 }
@@ -1315,12 +1345,12 @@ orig! {
 
 orig! {
     /// `CAudioEngine::ReportWeaponEvent` (0x506F40)
-    pub fn report_weapon_event(engine: GPtr<u8>, event: u32, weapon: u32, physical: GPtr<u8>) = thiscall 0x506F40 => unported;
+    pub fn report_weapon_event(engine: GPtr<u8>, event: u32, weapon: u32, physical: u32) = thiscall 0x506F40 => unported;
 }
 
 orig! {
     /// `CAudioEngine::StopRadio` (0x506F70)
-    pub fn audio_stop_radio(engine: GPtr<u8>, settings: GPtr<u8>, b: u32) = thiscall 0x506F70 => unported;
+    pub fn audio_stop_radio(engine: GPtr<u8>, settings: u32, b: u32) = thiscall 0x506F70 => unported;
 }
 
 orig! {
@@ -1346,6 +1376,11 @@ orig! {
 orig! {
     /// `CAudioEngine::IsMissionAudioSampleFinished` (0x5072C0)
     pub fn audio_is_mission_audio_sample_finished(e: GPtr<u8>, slot: u32) -> u8 = thiscall 0x5072C0 => unported;
+}
+
+orig! {
+    /// `CAudioEngine::ReportMissionAudioEvent-obj` (0x507350)
+    pub fn report_mission_audio_event(a: GPtr<u8>, ev: u32, o: GPtr<u8>) = thiscall 0x507350 => unported;
 }
 
 orig! {
@@ -1399,11 +1434,6 @@ orig! {
 }
 
 orig! {
-    /// `CCamera::Restore` (0x50B930)
-    pub fn camera_restore(cam: GPtr<u8>) = thiscall 0x50B930 => unported;
-}
-
-orig! {
     /// `CCamera::SetCameraDirectlyBehindForFollowPed_CamOnAString` (0x50BD40)
     pub fn camera_set_directly_behind(cam: GPtr<u8>) = thiscall 0x50BD40 => unported;
 }
@@ -1415,7 +1445,7 @@ orig! {
 
 orig! {
     /// `CCamera::SetMotionBlur` (0x50BF40)
-    pub fn camera_set_motion_blur(this: GPtr<u8>, r: u32, gr: u32, b: u32, a: u32, kind: u32) = thiscall 0x50BF40 => unported;
+    pub fn camera_set_motion_blur(this: GPtr<u8>, r: i32, gr: i32, b: i32, a: i32, kind: i32) = thiscall 0x50BF40 => unported;
 }
 
 orig! {
@@ -1426,11 +1456,6 @@ orig! {
 orig! {
     /// `CCamera::Using1stPersonWeaponMode` (0x50BFF0)
     pub fn camera_using_1st_person_weapon_mode(c: GPtr<u8>) -> u8 = thiscall 0x50BFF0 => unported;
-}
-
-orig! {
-    /// `CCamera::SetZoomValueFollowPedScript` (0x50C160)
-    pub fn set_zoom_value_follow_ped_script(this: GPtr<u8>, zoom: u16) = thiscall 0x50C160 => unported;
 }
 
 orig! {
@@ -1449,16 +1474,6 @@ orig! {
 }
 
 orig! {
-    /// `CCamera::ResetDuckingSystem` (0x50CEF0)
-    pub fn camera_reset_ducking_system(cam: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x50CEF0 => unported;
-}
-
-orig! {
-    /// `CCamera::InitialiseScriptableComponents` (0x50D2D0)
-    pub fn camera_initialise_scriptable_components(cam: GPtr<u8>) = thiscall 0x50D2D0 => unported;
-}
-
-orig! {
     /// `CPlaceable::GetAtDirection` (0x50E420)
     pub fn get_at_direction(p: GPtr<u8>, out: GPtr<f32>) -> GPtr<f32> = thiscall 0x50E420 => crate::world::entity::get_at_direction;
 }
@@ -1466,6 +1481,11 @@ orig! {
 orig! {
     /// `CCam::Get_TwoPlayer_AimVector` (0x513E40)
     pub fn cam_get_two_player_aim_vector(cam: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall 0x513E40 => unported;
+}
+
+orig! {
+    /// `CCamera::Find3rdPersonCamTargetVector` (0x514970)
+    pub fn camera_find_3rd_person_cam_target_vector(cam: GPtr<u8>, range: f32, sx: f32, sy: f32, sz: f32, cam_pos: GPtr<u8>, point: GPtr<u8>) = thiscall 0x514970 => unported;
 }
 
 orig! {
@@ -1496,6 +1516,11 @@ orig! {
 orig! {
     /// `CEntity::SetModelIndex` (0x532AE0)
     pub fn entity_set_model_index(e: GPtr<u8>, m: u32) = thiscall 0x532AE0 => unported;
+}
+
+orig! {
+    /// `CEntity::UpdateRwFrame` (0x532B00)
+    pub fn entity_update_rw_frame(e: GPtr<u8>) = thiscall 0x532B00 => crate::world::entity::update_rw_frame;
 }
 
 orig! {
@@ -1530,12 +1555,22 @@ orig! {
 
 orig! {
     /// `CEntity::GetBoundCentre-ref` (0x534290)
-    pub fn entity_get_bound_centre_534290(e: GPtr<u8>, out: GPtr<u8>) = thiscall 0x534290 => unported;
+    pub fn entity_get_bound_centre_534290(e: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall 0x534290 => crate::world::entity::get_bound_centre_ref;
 }
 
 orig! {
     /// `CEntity::Render` (0x534310)
     pub fn entity_render(e: GPtr<u8>) = thiscall 0x534310 => unported;
+}
+
+orig! {
+    /// `CEntity::GetIsTouching-vec` (0x5344B0)
+    pub fn entity_get_is_touching(e: GPtr<u8>, c: GPtr<u8>, r: f32) -> u32 = thiscall 0x5344B0 => crate::world::entity::get_is_touching_vec;
+}
+
+orig! {
+    /// `CEntity::GetIsOnScreen` (0x534540)
+    pub fn entity_get_is_on_screen(e: GPtr<u8>) -> u8 = thiscall 0x534540 => crate::world::entity::get_is_on_screen_port;
 }
 
 orig! {
@@ -1546,6 +1581,11 @@ orig! {
 orig! {
     /// `CEntity::UpdateAnim` (0x535F00)
     pub fn entity_update_anim(e: GPtr<u8>) = thiscall 0x535F00 => unported;
+}
+
+orig! {
+    /// `CEntity::PreRender` (0x535FA0)
+    pub fn entity_pre_render(e: GPtr<u8>) = thiscall 0x535FA0 => crate::world::entity_prerender::pre_render;
 }
 
 orig! {
@@ -1575,12 +1615,12 @@ orig! {
 
 orig! {
     /// `CFireManager::StartFire-NoTarget` (0x539F00)
-    pub fn fire_manager_start_fire(this: GPtr<u8>, px: f32, py: f32, pz: f32, size: f32, a: u32, creator: GPtr<u8>, time: u32, gens: u32, b: u32) -> GPtr<u8> = thiscall 0x539F00 => unported;
+    pub fn fire_manager_start_fire(fm: GPtr<u8>, pos: sa_math::vector::CVector, size: f32, a: u32, creator: u32, time: u32, gens: u32, b: u32) -> GPtr<u8> = thiscall 0x539F00 => unported;
 }
 
 orig! {
     /// `CFireManager::StartFire-` (0x53A050)
-    pub fn start_fire_on(mgr: GPtr<u8>, target: GPtr<u8>, creator: GPtr<u8>, size: f32, a: u32, time: u32, generation: u32) -> GPtr<u8> = thiscall 0x53A050 => unported;
+    pub fn start_fire_on(mgr: GPtr<u8>, target: GPtr<u8>, creator: GPtr<u8>, size: f32, a: u8, time: u32, generation: i8) -> GPtr<u8> = thiscall 0x53A050 => unported;
 }
 
 orig! {
@@ -1720,22 +1760,22 @@ orig! {
 
 orig! {
     /// `CPhysical::ApplyMoveForce-vec` (0x5429F0)
-    pub fn physical_apply_move_force_5429f0(p: GPtr<u8>, x: f32, y: f32, z: f32) = thiscall 0x5429F0 => unported;
+    pub fn physical_apply_move_force_5429f0(p: GPtr<u8>, force: sa_math::vector::CVector) = thiscall 0x5429F0 => crate::physical::forces::apply_move_force;
 }
 
 orig! {
     /// `CPhysical::ApplyTurnForce` (0x542A50)
-    pub fn physical_apply_turn_force(p: GPtr<u8>, fx: u32, fy: u32, fz: u32, px: u32, py: u32, pz: u32) = thiscall 0x542A50 => unported;
+    pub fn physical_apply_turn_force(e: GPtr<u8>, force: sa_math::vector::CVector, point: sa_math::vector::CVector) = thiscall 0x542A50 => crate::physical::forces::apply_turn_force;
 }
 
 orig! {
     /// `CPhysical::ApplyForce` (0x542B50)
-    pub fn apply_force(p: GPtr<u8>, fx: u32, fy: u32, fz: u32, px: u32, py: u32, pz: u32, b: u8) = thiscall 0x542B50 => unported;
+    pub fn apply_force(e: GPtr<u8>, force: sa_math::vector::CVector, point: sa_math::vector::CVector, update_turn: u8) = thiscall 0x542B50 => crate::physical::forces::apply_force;
 }
 
 orig! {
     /// `CPhysical::GetSpeed` (0x542CE0)
-    pub fn physical_get_speed(p: GPtr<u8>, out: GPtr<u8>, x: f32, y: f32, z: f32) -> GPtr<u8> = thiscall 0x542CE0 => unported;
+    pub fn physical_get_speed(e: GPtr<u8>, out: GPtr<sa_math::vector::CVector>, point: sa_math::vector::CVector) -> GPtr<sa_math::vector::CVector> = thiscall 0x542CE0 => crate::physical::forces::get_speed;
 }
 
 orig! {
@@ -1745,7 +1785,7 @@ orig! {
 
 orig! {
     /// `CPhysical::ApplyTurnSpeed` (0x542E20)
-    pub fn apply_turn_speed(p: GPtr<u8>) = thiscall 0x542E20 => unported;
+    pub fn apply_turn_speed(p: GPtr<u8>) = thiscall 0x542E20 => crate::physical::forces::apply_turn_speed;
 }
 
 orig! {
@@ -1754,8 +1794,23 @@ orig! {
 }
 
 orig! {
+    /// `CPhysical::AddCollisionRecord` (0x543490)
+    pub fn add_collision_record(e: GPtr<u8>, other: GPtr<u8>) = thiscall 0x543490 => crate::physical::base::add_collision_record;
+}
+
+orig! {
     /// `CPhysical::GetHasCollidedWith` (0x543540)
     pub fn get_has_collided_with(p: GPtr<u8>, e: GPtr<u8>) -> u8 = thiscall 0x543540 => unported;
+}
+
+orig! {
+    /// `CPhysical::ApplyCollision-1` (0x5435C0)
+    pub fn apply_collision_call(e: GPtr<u8>, entity: GPtr<u8>, cp: GPtr<u8>, damage: GPtr<f32>) -> u8 = thiscall 0x5435C0 => crate::physical::collide::apply_collision;
+}
+
+orig! {
+    /// `CPhysical::ApplySoftCollision-1` (0x543890)
+    pub fn apply_soft_collision_1(e: GPtr<u8>, entity: GPtr<u8>, cp: GPtr<u8>, damage: GPtr<f32>) -> u8 = thiscall 0x543890 => crate::physical::collide::apply_soft_collision;
 }
 
 orig! {
@@ -1774,8 +1829,13 @@ orig! {
 }
 
 orig! {
+    /// `CPhysical::DettachEntityFromEntity` (0x5442F0)
+    pub fn dettach_entity_from_entity(e: GPtr<u8>, x: u32, y: u32, z: f32, use_collision: u8) = thiscall 0x5442F0 => crate::physical::attach::dettach_entity_from_entity;
+}
+
+orig! {
     /// `CPhysical::GetLightingFromCol` (0x5447B0)
-    pub fn get_lighting_from_col(e: GPtr<u8>, interior: u32) -> f64 = thiscall 0x5447B0 => unported;
+    pub fn get_lighting_from_col(e: GPtr<u8>, interior: u32) -> f64 = thiscall 0x5447B0 => crate::physical::base::get_lighting_from_col_port;
 }
 
 orig! {
@@ -1786,6 +1846,21 @@ orig! {
 orig! {
     /// `CPhysical::CanPhysicalBeDamaged` (0x5448B0)
     pub fn can_physical_be_damaged(p: GPtr<u8>, w: u32, out: GPtr<u8>) -> u8 = thiscall 0x5448B0 => unported;
+}
+
+orig! {
+    /// `CPhysical::ApplyFriction-self` (0x5454C0)
+    pub fn apply_friction_self(e: GPtr<u8>, friction: f32, cp: GPtr<u8>) -> u8 = thiscall 0x5454C0 => crate::physical::friction::apply_friction;
+}
+
+orig! {
+    /// `CPhysical::PositionAttachedEntity` (0x546FF0)
+    pub fn position_attached_entity(e: GPtr<u8>) = thiscall 0x546FF0 => crate::physical::friction_attach::position_attached_entity;
+}
+
+orig! {
+    /// `CPhysical::ApplySpeed` (0x547B80)
+    pub fn apply_speed(e: GPtr<u8>) = thiscall 0x547B80 => crate::physical::attach::apply_speed_port;
 }
 
 orig! {
@@ -1805,7 +1880,7 @@ orig! {
 
 orig! {
     /// `CPhysical::CheckCollision` (0x54D920)
-    pub fn check_collision(e: GPtr<u8>) -> u8 = thiscall 0x54D920 => unported;
+    pub fn check_collision(e: GPtr<u8>) -> u8 = thiscall 0x54D920 => crate::physical::attach::check_collision;
 }
 
 orig! {
@@ -1824,8 +1899,13 @@ orig! {
 }
 
 orig! {
+    /// `CPlaceable::AllocateMatrix` (0x54F560)
+    pub fn placeable_allocate_matrix(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x54F560 => crate::world::entity::allocate_matrix;
+}
+
+orig! {
     /// `CPlaceable::SetMatrix` (0x54F610)
-    pub fn placeable_set_matrix(e: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F610 => unported;
+    pub fn placeable_set_matrix(e: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F610 => crate::world::mvpa2::placeable_set_matrix;
 }
 
 orig! {
@@ -1855,7 +1935,7 @@ orig! {
 
 orig! {
     /// `CRenderer::RequestObjectsInFrustum` (0x555960)
-    pub fn call_request_objects_in_frustum(a: GPtr<f32>, b: u32) = cdecl 0x555960 => unported;
+    pub fn call_request_objects_in_frustum(a: GPtr<u8>, b: i32) = cdecl 0x555960 => unported;
 }
 
 orig! {
@@ -1905,12 +1985,22 @@ orig! {
 
 orig! {
     /// `CStats::GetPercentageProgress` (0x5591E0)
-    pub fn get_percentage_progress() -> f64 = cdecl 0x5591E0 => unported;
+    pub fn get_percentage_progress() -> sa_math::x87::X87 = reg("args = stack") 0x5591E0 => unported;
+}
+
+orig! {
+    /// `CStats::CheckForThreshold` (0x5595F0)
+    pub fn check_for_threshold(value: GPtr<u32>, range: u32) -> u8 = cdecl 0x5595F0 => crate::world::stats::check_for_threshold;
 }
 
 orig! {
     /// `CStats::IsStatCapped` (0x559630)
     pub fn is_stat_capped(id: u32) -> u8 = cdecl 0x559630 => unported;
+}
+
+orig! {
+    /// `CStats::CheckForStatsMessage` (0x559760)
+    pub fn stats_check_for_stats_message() = cdecl 0x559760 => crate::world::mvpb_stats::check_for_stats_message;
 }
 
 orig! {
@@ -1939,6 +2029,11 @@ orig! {
 }
 
 orig! {
+    /// `CStats::IncrementStat` (0x55C180)
+    pub fn stats_increment_stat(id: u32, value: f32) = cdecl 0x55C180 => crate::world::mvpb_stats::increment_stat;
+}
+
+orig! {
     /// `CStats::SetNewRecordStat` (0x55C410)
     pub fn set_new_record_stat(stat: u32, v: f32) = cdecl 0x55C410 => unported;
 }
@@ -1955,7 +2050,7 @@ orig! {
 
 orig! {
     /// `SurfaceInfos_c::GetAdhesionGroup` (0x55E5C0)
-    pub fn get_adhesion_group(si: GPtr<u8>, id: u32) -> u32 = thiscall 0x55E5C0 => unported;
+    pub fn get_adhesion_group(si: GPtr<u8>, id: u32) -> u32 = thiscall 0x55E5C0 => crate::physical::mvpe_phys1::get_adhesion_group_port;
 }
 
 orig! {
@@ -2001,6 +2096,16 @@ orig! {
 orig! {
     /// `SurfaceInfos_c::CantSprintOn` (0x55E870)
     pub fn surface_cant_sprint_on(s: GPtr<u8>, id: u32) -> u8 = thiscall 0x55E870 => unported;
+}
+
+orig! {
+    /// `SurfaceInfos_c::CreatesPlants` (0x55E9D0)
+    pub fn creates_plants(this: GPtr<crate::collision::surface::SurfaceInfos>, surface: u32) -> u32 = thiscall 0x55E9D0 => crate::collision::surface::creates_plants;
+}
+
+orig! {
+    /// `SurfaceInfos_c::CreatesObjects` (0x55E9F0)
+    pub fn creates_objects(this: GPtr<crate::collision::surface::SurfaceInfos>, surface: u32) -> u32 = thiscall 0x55E9F0 => crate::collision::surface::creates_objects;
 }
 
 orig! {
@@ -2050,7 +2155,7 @@ orig! {
 
 orig! {
     /// `SurfaceInfos_c::GetAdhesiveLimit` (0x55EB50)
-    pub fn get_adhesive_limit(si: GPtr<u8>, cp: GPtr<u8>) -> f64 = thiscall 0x55EB50 => unported;
+    pub fn get_adhesive_limit(si: GPtr<u8>, cp: GPtr<u8>) -> f64 = thiscall 0x55EB50 => crate::physical::mvpe_phys1::get_adhesive_limit_port;
 }
 
 orig! {
@@ -2059,13 +2164,8 @@ orig! {
 }
 
 orig! {
-    /// `CWanted::SetMaximumWantedLevel` (0x561E70)
-    pub fn set_maximum_wanted_level(level: i32) = cdecl 0x561E70 => unported;
-}
-
-orig! {
     /// `CWanted::RegisterCrime` (0x562410)
-    pub fn wanted_register_crime(w: GPtr<u8>, crime: u32, pos: GPtr<u8>, ped: GPtr<u8>, flag: u32) = thiscall 0x562410 => unported;
+    pub fn wanted_register_crime(w: GPtr<u8>, crime: i32, pos: GPtr<f32>, ped: GPtr<u8>, flag: u8) = thiscall 0x562410 => unported;
 }
 
 orig! {
@@ -2096,6 +2196,26 @@ orig! {
 orig! {
     /// `CWorld::ResetLineTestOptions` (0x5631C0)
     pub fn world_reset_line_test_options() = cdecl 0x5631C0 => unported;
+}
+
+orig! {
+    /// `CWorld::Add` (0x563220)
+    pub fn world_add(e: GPtr<u8>) = cdecl 0x563220 => crate::world::cworld2::add;
+}
+
+orig! {
+    /// `CWorld::Remove` (0x563280)
+    pub fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => crate::world::cworld2::remove;
+}
+
+orig! {
+    /// `CWorld::ClearScanCodes` (0x563470)
+    pub fn world_clear_scan_codes() = cdecl 0x563470 => crate::world::clear_scan_codes::clear_scan_codes;
+}
+
+orig! {
+    /// `CWorld::FindObjectsOfTypeInRangeSectorList<CPtrListDoubleLink<CPhysical*>>` (0x5635C0)
+    pub fn find_of_type_in_range_list(m: i32, list: GPtr<u8>, p: GPtr<u8>, r: f32, two_d: u8, n: GPtr<i16>, max: i16, out: GPtr<GPtr<u8>>) = cdecl 0x5635C0 => crate::world::cworld2::find_objects_of_type_in_range_sector_list;
 }
 
 orig! {
@@ -2165,7 +2285,12 @@ orig! {
 
 orig! {
     /// `CWorld::TestSphereAgainstWorld` (0x569E20)
-    pub fn world_test_sphere_against_world(cx: f32, cy: f32, cz: f32, r: f32, ignore: GPtr<u8>, b: u32, v: u32, p: u32, o: u32, d: u32, c: u32) -> GPtr<u8> = cdecl 0x569E20 => unported;
+    pub fn world_test_sphere_against_world(c: sa_math::vector::CVector, radius: f32, ignore: u32, b: u32, v: u32, p: u32, o: u32, d: u32, cam: u32) -> GPtr<u8> = cdecl 0x569E20 => unported;
+}
+
+orig! {
+    /// `CWorld::ClearExcitingStuffFromArea` (0x56A0D0)
+    pub fn clear_exciting_stuff_from_area(pos: GPtr<u8>, radius: f32, b: u8) = cdecl 0x56A0D0 => crate::world::mvpd_w3::world_clear_exciting_stuff_from_area;
 }
 
 orig! {
@@ -2214,13 +2339,33 @@ orig! {
 }
 
 orig! {
+    /// `CWorld::FindPlayerCoors` (0x56E010)
+    pub fn find_player_coors(out: GPtr<f32>, id: i32) -> GPtr<f32> = cdecl 0x56E010 => crate::world::cworld::find_player_coors;
+}
+
+orig! {
     /// `CWorld::FindPlayerSpeed` (0x56E090)
     pub fn find_player_speed(id: i32) -> GPtr<u8> = cdecl 0x56E090 => crate::world::cworld::find_player_speed;
 }
 
 orig! {
+    /// `CWorld::FindPlayerVehicle` (0x56E0D0)
+    pub fn find_player_vehicle(id: i32, remote: u8) -> GPtr<u8> = cdecl 0x56E0D0 => crate::world::cworld::find_player_vehicle;
+}
+
+orig! {
     /// `CWorld::FindPlayerTrain` (0x56E160)
     pub fn find_player_train(id: i32) -> GPtr<u8> = cdecl 0x56E160 => unported;
+}
+
+orig! {
+    /// `CWorld::FindPlayerPed` (0x56E210)
+    pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => crate::world::cworld::find_player_ped;
+}
+
+orig! {
+    /// `CWorld::FindPlayerWanted` (0x56E230)
+    pub fn find_player_wanted(id: i32) -> GPtr<u8> = cdecl 0x56E230 => crate::world::cworld::find_player_wanted;
 }
 
 orig! {
@@ -2244,6 +2389,21 @@ orig! {
 }
 
 orig! {
+    /// `CEntity::CleanUpOldReference-` (0x571A00)
+    pub fn entity_clean_up_old_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571A00 => crate::world::entity::clean_up_old_reference;
+}
+
+orig! {
+    /// `CEntity::ResolveReferences` (0x571A40)
+    pub fn entity_resolve_references(e: GPtr<u8>) = thiscall 0x571A40 => crate::world::entity::resolve_references;
+}
+
+orig! {
+    /// `CEntity::PruneReferences` (0x571A90)
+    pub fn prune_references(e: GPtr<u8>) = thiscall 0x571A90 => crate::world::entity::prune_references;
+}
+
+orig! {
     /// `CTheZones::InitZonesPopulationSettings` (0x5720D0)
     pub fn init_zones_population_settings() = cdecl 0x5720D0 => crate::world::zones::init_zones_population_settings;
 }
@@ -2254,8 +2414,23 @@ orig! {
 }
 
 orig! {
+    /// `CTheZones::GetLevelFromPosition` (0x572300)
+    pub fn get_level_from_position(p: GPtr<f32>) -> i32 = cdecl 0x572300 => crate::world::zones::get_level_from_position;
+}
+
+orig! {
     /// `CTheZones::FindSmallestZoneForPosition` (0x572360)
     pub fn find_smallest_zone_for_position(pos: GPtr<f32>, b: u8) -> GPtr<u8> = cdecl 0x572360 => crate::world::zones::find_smallest_zone_for_position;
+}
+
+orig! {
+    /// `CTheZones::FillZonesWithGangColours` (0x572440)
+    pub fn zones_fill_zones_with_gang_colours(disable_radar: u8) = cdecl 0x572440 => crate::world::zones::fill_zones_with_gang_colours;
+}
+
+orig! {
+    /// `CTheZones::Init` (0x572670)
+    pub fn the_zones_init() = cdecl 0x572670 => crate::world::zones::init;
 }
 
 orig! {
@@ -2280,17 +2455,17 @@ orig! {
 
 orig! {
     /// `CMenuSystem::SwitchOffMenu` (0x580750)
-    pub fn switch_off_menu_call(menu: u32) = cdecl 0x580750 => unported;
+    pub fn switch_off_menu_call(menu: u8) = cdecl 0x580750 => unported;
 }
 
 orig! {
     /// `CMenuSystem::CheckForAccept` (0x5807C0)
-    pub fn check_for_accept(menu: u32) -> i8 = cdecl 0x5807C0 => unported;
+    pub fn check_for_accept(menu: u32) -> u8 = cdecl 0x5807C0 => unported;
 }
 
 orig! {
     /// `CMenuSystem::CheckForSelected` (0x5807E0)
-    pub fn check_for_selected(menu: u8) -> i8 = cdecl 0x5807E0 => unported;
+    pub fn check_for_selected(menu: u8) -> u8 = cdecl 0x5807E0 => unported;
 }
 
 orig! {
@@ -2305,12 +2480,12 @@ orig! {
 
 orig! {
     /// `CMenuSystem::CreateNewMenu` (0x582300)
-    pub fn create_new_menu(ty: u32, title: GPtr<u8>, x: f32, y: f32, w: f32, columns: u32, interactive: u32, background: u32, align: u32) -> u8 = cdecl 0x582300 => unported;
+    pub fn create_new_menu(ty: u32, title: GPtr<u8>, x: u32, y: u32, w: u32, columns: u32, interactive: u32, background: u32, align: u32) -> u8 = cdecl 0x582300 => unported;
 }
 
 orig! {
     /// `CRadar::SetCoordBlip` (0x583820)
-    pub fn set_coord_blip(ty: i32, x: f32, y: f32, z: f32, colour: u32, display: i8, name: GPtr<u8>) -> i32 = cdecl 0x583820 => unported;
+    pub fn set_coord_blip(ty: i32, x: f32, y: f32, z: f32, colour: i32, display: i32, name: GPtr<u8>) -> i32 = cdecl 0x583820 => unported;
 }
 
 orig! {
@@ -2355,7 +2530,7 @@ orig! {
 
 orig! {
     /// `CHud::SetZoneName` (0x588BB0)
-    pub fn hud_set_zone_name(s: GPtr<u8>, b: u8) = cdecl 0x588BB0 => unported;
+    pub fn hud_set_zone_name(s: u32, b: u8) = cdecl 0x588BB0 => unported;
 }
 
 orig! {
@@ -2474,6 +2649,11 @@ orig! {
 }
 
 orig! {
+    /// `CMatrix` (0x59ACD0)
+    pub fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => crate::world::mvpa_math::matrix_dtor;
+}
+
+orig! {
     /// `CMatrix` (0x59BCF0)
     pub fn matrix_copy_ctor(m: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = thiscall 0x59BCF0 => unported;
 }
@@ -2500,12 +2680,17 @@ orig! {
 
 orig! {
     /// `tColLighting::GetCurrentLighting` (0x59F0C0)
-    pub fn col_lighting_get_current(l: u8, scale: f32) -> f64 = cdecl 0x59F0C0 => unported;
+    pub fn col_lighting_get_current(l: u8, scale: f32) -> sa_math::x87::X87 = reg("args = stack stack") 0x59F0C0 => crate::collision::mvpb_coll::col_lighting_get_current_lighting;
 }
 
 orig! {
     /// `CObject::Render` (0x59F180)
     pub fn object_render(o: GPtr<u8>) = thiscall 0x59F180 => unported;
+}
+
+orig! {
+    /// `CObject::SetMatrixForTrainCrossing` (0x59F200)
+    pub fn set_matrix_for_train_crossing(m: GPtr<u8>, angle: f32) = cdecl 0x59F200 => crate::world::object::set_matrix_for_train_crossing;
 }
 
 orig! {
@@ -2549,18 +2734,13 @@ orig! {
 }
 
 orig! {
-    /// `CClothes::GetTextureDependency` (0x5A7EA0)
-    pub fn get_texture_dependency(t: u32) -> i32 = cdecl 0x5A7EA0 => unported;
-}
-
-orig! {
     /// `CPedClothesDesc::Constructor` (0x5A8020)
     pub fn clothes_desc_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x5A8020 => unported;
 }
 
 orig! {
     /// `CPedClothesDesc::SetTextureAndModel-hash` (0x5A8050)
-    pub fn clothes_desc_set_texture_and_model(d: GPtr<u8>, tex: u32, model: u32, ty: u32) = thiscall 0x5A8050 => unported;
+    pub fn clothes_desc_set_texture_and_model(d: GPtr<u8>, tex: u32, model: u32, ty: i32) = thiscall 0x5A8050 => unported;
 }
 
 orig! {
@@ -2575,7 +2755,7 @@ orig! {
 
 orig! {
     /// `CCustomBuildingDNPipeline::PreRenderUpdate-Atomic` (0x5D7200)
-    pub fn dn_pre_render_update(a: GPtr<u8>, force: u32) -> GPtr<u8> = cdecl 0x5D7200 => unported;
+    pub fn dn_pre_render_update(a: GPtr<u8>, force: u32) = cdecl 0x5D7200 => unported;
 }
 
 orig! {
@@ -2625,7 +2805,7 @@ orig! {
 
 orig! {
     /// `CPed::GetLocalDirection` (0x5DEF60)
-    pub fn get_local_direction(p: GPtr<u8>, dir: GPtr<u8>) -> i32 = thiscall 0x5DEF60 => unported;
+    pub fn get_local_direction(p: GPtr<u8>, dir: GPtr<f32>) -> i32 = thiscall 0x5DEF60 => unported;
 }
 
 orig! {
@@ -2710,7 +2890,7 @@ orig! {
 
 orig! {
     /// `CPed::GetWeaponSkill-WeaponType` (0x5E3B60)
-    pub fn get_weapon_skill_type_call(p: GPtr<u8>, ty: i32) -> i32 = thiscall 0x5E3B60 => unported;
+    pub fn get_weapon_skill_type_call(p: GPtr<u8>, ty: i32) -> u8 = thiscall 0x5E3B60 => unported;
 }
 
 orig! {
@@ -2740,12 +2920,12 @@ orig! {
 
 orig! {
     /// `CPed::SetCurrentWeapon-Slot` (0x5E61F0)
-    pub fn ped_set_current_weapon_slot(ped: GPtr<u8>, slot: u32) = thiscall 0x5E61F0 => unported;
+    pub fn ped_set_current_weapon_slot(ped: GPtr<u8>, slot: i32) = thiscall 0x5E61F0 => unported;
 }
 
 orig! {
     /// `CPed::SetCurrentWeapon-WepType` (0x5E6280)
-    pub fn ped_set_current_weapon(p: GPtr<u8>, w: u32) = thiscall 0x5E6280 => unported;
+    pub fn ped_set_current_weapon(p: GPtr<u8>, w: i32) = thiscall 0x5E6280 => unported;
 }
 
 orig! {
@@ -2755,7 +2935,7 @@ orig! {
 
 orig! {
     /// `CPed::GetWeaponSkill-Current` (0x5E6580)
-    pub fn ped_get_weapon_skill(p: GPtr<u8>) -> u32 = thiscall 0x5E6580 => unported;
+    pub fn ped_get_weapon_skill(p: GPtr<u8>) -> u8 = thiscall 0x5E6580 => unported;
 }
 
 orig! {
@@ -2765,7 +2945,7 @@ orig! {
 
 orig! {
     /// `CPed::AttachPedToEntity` (0x5E7CB0)
-    pub fn attach_ped_to_entity(ped: GPtr<u8>, e: GPtr<u8>, ox: f32, oy: f32, oz: f32, dir: u32, lim: f32, w: u32) -> GPtr<u8> = thiscall 0x5E7CB0 => unported;
+    pub fn attach_ped_to_entity(ped: GPtr<u8>, e: GPtr<u8>, ox: u32, oy: u32, oz: u32, dir: u32, lim: u32, w: i32) -> GPtr<u8> = thiscall 0x5E7CB0 => unported;
 }
 
 orig! {
@@ -2791,11 +2971,6 @@ orig! {
 orig! {
     /// `CPedAttractorManager::HasEmptySlot` (0x5EBB00)
     pub fn attractor_manager_has_empty_slot(m: GPtr<u8>, effect: GPtr<u8>, entity: GPtr<u8>) -> u8 = thiscall 0x5EBB00 => unported;
-}
-
-orig! {
-    /// `CPedAttractorManager::IsPedRegisteredWithEffect-Ped` (0x5EBCB0)
-    pub fn is_ped_registered_with_effect(m: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x5EBCB0 => unported;
 }
 
 orig! {
@@ -2829,8 +3004,8 @@ orig! {
 }
 
 orig! {
-    /// `CPedGeometryAnalyser::CanPedTargetPed` (0x5F1C40)
-    pub fn can_ped_target_ped(a: GPtr<u8>, b: GPtr<u8>, c: u32) -> u8 = cdecl 0x5F1C40 => unported;
+    /// `CPed::KillPedWithCar` (0x5F0360)
+    pub fn kill_ped_with_car(p: GPtr<u8>, veh: GPtr<u8>, impulse: f32, b: u32) = thiscall 0x5F0360 => unported;
 }
 
 orig! {
@@ -2855,7 +3030,7 @@ orig! {
 
 orig! {
     /// `CPedGroupMembership::IsMember` (0x5F6A10)
-    pub fn membership_is_member(this: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x5F6A10 => unported;
+    pub fn membership_is_member(this: GPtr<u8>, ped: GPtr<u8>) -> u32 = thiscall 0x5F6A10 => unported;
 }
 
 orig! {
@@ -2870,12 +3045,12 @@ orig! {
 
 orig! {
     /// `CPedGroupIntelligence::AddEvent-` (0x5F7470)
-    pub fn group_intelligence_add_event(gi: GPtr<u8>, e: GPtr<u8>) -> GPtr<u8> = thiscall 0x5F7470 => unported;
+    pub fn group_intelligence_add_event(gi: GPtr<u8>, e: GPtr<u8>) -> u8 = thiscall 0x5F7470 => unported;
 }
 
 orig! {
     /// `CPedGroups::GetPedsGroup` (0x5F7E80)
-    pub fn ped_groups_get_peds_group(ped: GPtr<u8>) -> GPtr<u8> = cdecl 0x5F7E80 => unported;
+    pub fn ped_groups_get_peds_group(ped: u32) -> u32 = cdecl 0x5F7E80 => unported;
 }
 
 orig! {
@@ -3050,7 +3225,7 @@ orig! {
 
 orig! {
     /// `CAcquaintance::GetAcquaintances` (0x608970)
-    pub fn acquaintance_get(a: GPtr<u8>, i: u32) -> u32 = thiscall 0x608970 => unported;
+    pub fn acquaintance_get(a: u32, i: u32) -> u32 = thiscall 0x608970 => unported;
 }
 
 orig! {
@@ -3065,7 +3240,7 @@ orig! {
 
 orig! {
     /// `CPedType::PoliceDontCareAboutCrimesAgainstPedType` (0x608A40)
-    pub fn ped_type_police_dont_care(ty: u32) -> u8 = cdecl 0x608A40 => unported;
+    pub fn ped_type_police_dont_care(ty: i32) -> u8 = cdecl 0x608A40 => unported;
 }
 
 orig! {
@@ -3174,11 +3349,6 @@ orig! {
 }
 
 orig! {
-    /// `CPopulation::UpdatePedCount` (0x611570)
-    pub fn population_update_ped_count(p: GPtr<u8>, b: u32) = cdecl 0x611570 => unported;
-}
-
-orig! {
     /// `CPopulation::IsSunbather-ModelID` (0x611760)
     pub fn is_sunbather(m: i32) -> u8 = cdecl 0x611760 => unported;
 }
@@ -3190,7 +3360,7 @@ orig! {
 
 orig! {
     /// `CPopulation::AddPed` (0x612710)
-    pub fn add_ped(ty: u32, model: u32, pos: GPtr<f32>, b: u32) -> GPtr<u8> = cdecl 0x612710 => unported;
+    pub fn add_ped(ty: u32, model: u32, pos: GPtr<f32>, b: u8) -> GPtr<u8> = cdecl 0x612710 => unported;
 }
 
 orig! {
@@ -3205,7 +3375,7 @@ orig! {
 
 orig! {
     /// `CPedPlacement::FindZCoorForPed` (0x616920)
-    pub fn ped_placement_find_z_coor_for_ped(v: GPtr<u8>) -> u8 = cdecl 0x616920 => unported;
+    pub fn ped_placement_find_z_coor_for_ped(v: GPtr<f32>) -> u8 = cdecl 0x616920 => unported;
 }
 
 orig! {
@@ -3215,22 +3385,12 @@ orig! {
 
 orig! {
     /// `IKChainManager_c::LookAt` (0x618970)
-    pub fn ik_look_at(m: GPtr<u8>, name: GPtr<u8>, ped: GPtr<u8>, target: GPtr<u8>, time: u32, bone: u32, pos: GPtr<u8>, torso: u32, speed: u32, blend: u32, prio: u32, b: u32) -> u32 = thiscall 0x618970 => unported;
-}
-
-orig! {
-    /// `FUN_0061a390` (0x61A390)
-    pub fn task_simple_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A390 => unported;
-}
-
-orig! {
-    /// `FUN_0061a3a0` (0x61A3A0)
-    pub fn task_simple_dtor(t: GPtr<u8>) = thiscall 0x61A3A0 => unported;
+    pub fn ik_look_at(m: GPtr<u8>, name: GPtr<u8>, ped: GPtr<u8>, target: GPtr<u8>, time: i32, bone: i32, pos: GPtr<u8>, torso: u32, speed: f32, blend: u32, prio: u32, b: u32) -> u32 = thiscall 0x618970 => unported;
 }
 
 orig! {
     /// `CTaskComplex` (0x61A3B0)
-    pub fn task_complex_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A3B0 => unported;
+    pub fn task_complex_ctor(t: u32) -> u32 = thiscall 0x61A3B0 => unported;
 }
 
 orig! {
@@ -3279,11 +3439,6 @@ orig! {
 }
 
 orig! {
-    /// `CTaskComplexSitDownThenIdleThenStandUp::Constructor` (0x631460)
-    pub fn sit_ctor_o(t: GPtr<u8>, ms: u32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x631460 => unported;
-}
-
-orig! {
     /// `CTaskComplexSunbathe::Constructor` (0x631F80)
     pub fn sunbathe_ctor(t: GPtr<u8>, towel: GPtr<u8>, b: u8) -> GPtr<u8> = thiscall 0x631F80 => unported;
 }
@@ -3296,11 +3451,6 @@ orig! {
 orig! {
     /// `CTaskComplexSequence::Constructor` (0x632BD0)
     pub fn sequence_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x632BD0 => unported;
-}
-
-orig! {
-    /// `CTaskComplexSequence::Flush` (0x632C10)
-    pub fn sequence_flush(s: GPtr<u8>) = thiscall 0x632C10 => unported;
 }
 
 orig! {
@@ -3405,7 +3555,7 @@ orig! {
 
 orig! {
     /// `CCarEnterExit::GetPositionToOpenCarDoor` (0x64E740)
-    pub fn car_enter_exit_get_position_to_open_car_door(out: GPtr<u8>, veh: GPtr<u8>, door: u32) -> GPtr<u8> = cdecl 0x64E740 => unported;
+    pub fn car_enter_exit_get_position_to_open_car_door(out: GPtr<u8>, veh: GPtr<u8>, door: i32) -> GPtr<u8> = cdecl 0x64E740 => unported;
 }
 
 orig! {
@@ -3420,12 +3570,12 @@ orig! {
 
 orig! {
     /// `CCarEnterExit::ComputePassengerIndexFromCarDoor` (0x64F1E0)
-    pub fn car_enter_exit_compute_passenger_index_from_car_door(veh: GPtr<u8>, door: u32) -> i32 = cdecl 0x64F1E0 => unported;
+    pub fn car_enter_exit_compute_passenger_index_from_car_door(veh: GPtr<u8>, door: i32) -> i32 = cdecl 0x64F1E0 => unported;
 }
 
 orig! {
     /// `CCarEnterExit::IsRoomForPedToLeaveCar` (0x6504C0)
-    pub fn car_enter_exit_is_room_for_ped_to_leave_car(v: GPtr<u8>, door: u32, pos: GPtr<u8>) -> u8 = cdecl 0x6504C0 => unported;
+    pub fn car_enter_exit_is_room_for_ped_to_leave_car(v: GPtr<u8>, door: i32, pos: GPtr<u8>) -> u8 = cdecl 0x6504C0 => unported;
 }
 
 orig! {
@@ -3461,6 +3611,11 @@ orig! {
 orig! {
     /// `CTaskComplexSmartFleeEntity::Constructor` (0x65C430)
     pub fn smart_flee_entity_ctor(t: GPtr<u8>, e: GPtr<u8>, b: u32, d: f32, time: u32, period: u32, f: u32) -> GPtr<u8> = thiscall 0x65C430 => unported;
+}
+
+orig! {
+    /// `CTaskComplexFleeAnyMeans::Constructor` (0x65CC60)
+    pub fn flee_any_means_ctor(t: GPtr<u8>, e: GPtr<u8>, b: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, a8: u32) -> GPtr<u8> = thiscall 0x65CC60 => unported;
 }
 
 orig! {
@@ -3535,7 +3690,7 @@ orig! {
 
 orig! {
     /// `CTaskManager::FindActiveTaskByType` (0x681740)
-    pub fn tm_find_active_task_by_type(tm: GPtr<u8>, ty: u32) -> GPtr<u8> = thiscall 0x681740 => unported;
+    pub fn tm_find_active_task_by_type(tm: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x681740 => unported;
 }
 
 orig! {
@@ -3545,7 +3700,7 @@ orig! {
 
 orig! {
     /// `CTaskManager::SetTask` (0x681AF0)
-    pub fn tm_set_task(tm: GPtr<u8>, t: GPtr<u8>, slot: u32, b: u32) = thiscall 0x681AF0 => unported;
+    pub fn tm_set_task(tm: GPtr<u8>, t: GPtr<u8>, slot: i32, b: u8) = thiscall 0x681AF0 => unported;
 }
 
 orig! {
@@ -3589,18 +3744,13 @@ orig! {
 }
 
 orig! {
-    /// `CTaskComplexFacial::SetRequest` (0x691230)
-    pub fn facial_set_request(task: GPtr<u8>, ty: u32, duration: u32, ty2: u32, f: u32) -> u32 = thiscall 0x691230 => unported;
-}
-
-orig! {
     /// `CTaskComplexFacial::StopAll` (0x691250)
     pub fn task_facial_stop_all(task: GPtr<u8>) = thiscall 0x691250 => unported;
 }
 
 orig! {
     /// `CTaskSimpleHoldEntity::Constructor-1` (0x6913A0)
-    pub fn hold_entity_ctor(t: GPtr<u8>, e: GPtr<u8>, off: GPtr<f32>, bone: u32, flags: u32, anim: i32, group: i32, b: u32) -> GPtr<u8> = thiscall 0x6913A0 => unported;
+    pub fn hold_entity_ctor(t: GPtr<u8>, e: GPtr<u8>, off: GPtr<u8>, bone: u32, flags: u32, anim: i32, group: i32, b: u32) -> GPtr<u8> = thiscall 0x6913A0 => unported;
 }
 
 orig! {
@@ -3749,21 +3899,6 @@ orig! {
 }
 
 orig! {
-    /// `CDamageManager::ApplyDamage` (0x6C24B0)
-    pub fn apply_damage(dm: GPtr<u8>, v: GPtr<u8>, comp: u32, intensity: f32, mult: f32) -> u8 = thiscall 0x6C24B0 => unported;
-}
-
-orig! {
-    /// `CDamageManager::GetCarNodeIndexFromPanel` (0x6C26A0)
-    pub fn node_from_panel(p: u32) -> u32 = cdecl 0x6C26A0 => unported;
-}
-
-orig! {
-    /// `CDamageManager::GetCarNodeIndexFromDoor` (0x6C26F0)
-    pub fn get_car_node_index_from_door(d: u32) -> u32 = cdecl 0x6C26F0 => unported;
-}
-
-orig! {
     /// `cBuoyancy::ProcessBuoyancy` (0x6C3EF0)
     pub fn buoyancy_process(b: GPtr<u8>, e: GPtr<u8>, buoyancy: f32, turn: GPtr<sa_math::vector::CVector>, force: GPtr<sa_math::vector::CVector>) -> u8 = thiscall 0x6C3EF0 => crate::physical::buoyancy::process_buoyancy;
 }
@@ -3854,11 +3989,6 @@ orig! {
 }
 
 orig! {
-    /// `CVehicle::GetReplacementUpgrade` (0x6D3A50)
-    pub fn get_replacement_upgrade(v: GPtr<u8>, node: u32) -> u32 = thiscall 0x6D3A50 => unported;
-}
-
-orig! {
     /// `CVehicle::CanBeDriven` (0x6D5400)
     pub fn vehicle_can_be_driven(v: GPtr<u8>) -> u8 = thiscall 0x6D5400 => unported;
 }
@@ -3900,7 +4030,7 @@ orig! {
 
 orig! {
     /// `CWaterLevel::GetWaterLevelNoWaves` (0x6E8580)
-    pub fn get_water_level_no_waves(x: f32, y: f32, z: f32, out: GPtr<u8>, a: GPtr<f32>, b: GPtr<f32>) -> u8 = cdecl 0x6E8580 => unported;
+    pub fn get_water_level_no_waves(x: u32, y: u32, z: u32, out: GPtr<f32>, a: GPtr<f32>, b: GPtr<f32>) -> u8 = cdecl 0x6E8580 => unported;
 }
 
 orig! {
@@ -3929,33 +4059,18 @@ orig! {
 }
 
 orig! {
-    /// `CTrain::SetTrainSpeed` (0x6F5E20)
-    pub fn set_train_speed(v: GPtr<u8>, k: f32) = cdecl 0x6F5E20 => unported;
-}
-
-orig! {
-    /// `CTrain::MarkSurroundingEntitiesForCollisionWithTrain` (0x6F6640)
-    pub fn mark_surrounding_entities(x: f32, y: f32, z: f32, r: f32, e: GPtr<u8>, b: u32) = cdecl 0x6F6640 => unported;
-}
-
-orig! {
-    /// `CTrain::CreateMissionTrain` (0x6F7550)
-    pub fn create_mission_train(x: f32, y: f32, z: f32, dir: u8, ty: u32, first: GPtr<u32>, last: GPtr<u32>, node: i32, track: i32, mission: u8) = cdecl 0x6F7550 => unported;
-}
-
-orig! {
-    /// `FUN_006f9eb0` (0x6F9EB0)
-    pub fn effect_2d_init(e: GPtr<u8>) -> u32 = thiscall 0x6F9EB0 => unported;
+    /// `CCoronas::RegisterCorona-type` (0x6FC180)
+    pub fn register_corona_6fc180(id: u32, attach: GPtr<u8>, r: u32, g: u32, b: u32, a: u32, pos: GPtr<u8>, size: u32, range: u32, tex: u32, flare: u32, refl: u32, los: u32, trail: u32, normal_angle: u32, neon_fade: u32, pull: u32, full_bright: u32, fade_speed: u32, only_from_below: u32, refl_delay: u32) = cdecl 0x6FC180 => unported;
 }
 
 orig! {
     /// `CCoronas::UpdateCoronaCoors` (0x6FC4D0)
-    pub fn update_corona_coors(id: u32, pos: GPtr<u8>, range: f32, normal_angle: f32) = cdecl 0x6FC4D0 => unported;
+    pub fn update_corona_coors(id: u32, pos: GPtr<u8>, range: u32, normal_angle: u32) = cdecl 0x6FC4D0 => unported;
 }
 
 orig! {
     /// `CCoronas::RegisterCorona-texture` (0x6FC580)
-    pub fn register_corona(id: u32, attach: GPtr<u8>, r: u32, gg: u32, b: u32, a: u32, pos: GPtr<u8>, size: f32, range: f32, kind: u32, flare: u32, refl: u32, los: u32, trail: u32, angle: f32, neon: u32, pull: f32, bright: u32, fade: f32, below: u32, delay: u32) = cdecl 0x6FC580 => unported;
+    pub fn register_corona(id: u32, attach: GPtr<u8>, r: u32, gg: u32, b: u32, a: u32, pos: GPtr<u8>, size: u32, range: u32, kind: u32, flare: u32, refl: u32, los: u32, trail: u32, angle: u32, neon: u32, pull: u32, bright: u32, fade: u32, below: u32, delay: u32) = cdecl 0x6FC580 => unported;
 }
 
 orig! {
@@ -3995,7 +4110,12 @@ orig! {
 
 orig! {
     /// `CShadows::AddPermanentShadow` (0x706F60)
-    pub fn add_permanent_shadow(ty: u32, tex: u32, pos: GPtr<u8>, fx: u32, fy: u32, sx: u32, sy: u32, r: u32, g: u32, b: u32, a: u32, dist: u32, time: u32, up: u32) = cdecl 0x706F60 => unported;
+    pub fn add_permanent_shadow(ty: u32, tex: u32, pos: GPtr<u8>, fx: f32, fy: f32, sx: f32, sy: f32, r: u32, g: u32, b: u32, a: u32, dist: f32, time: u32, up: f32) = cdecl 0x706F60 => unported;
+}
+
+orig! {
+    /// `CShadows::StoreShadowToBeRendered-Texture` (0x707390)
+    pub fn store_shadow_to_be_rendered(ty: u32, tex: GPtr<u8>, pos: GPtr<u8>, fx: u32, fy: u32, sx: u32, sy: u32, r: u32, g: u32, b: u32, a: u32, zdist: u32, water: u32, scale: u32, rt: GPtr<u8>, buildings: u32) = cdecl 0x707390 => unported;
 }
 
 orig! {
@@ -4005,12 +4125,7 @@ orig! {
 
 orig! {
     /// `CShadows::StoreStaticShadow` (0x70BA00)
-    pub fn store_static_shadow(id: u32, ty: u32, tex: u32, pos: GPtr<u8>, fx: f32, fy: f32, sx: f32, sy: f32, intensity: u32, r: u32, gr: u32, b: u32, zd: f32, scale: f32, draw: f32, temp: u32, up: f32) -> u8 = cdecl 0x70BA00 => unported;
-}
-
-orig! {
-    /// `CSprite::FlushSpriteBuffer` (0x70CF20)
-    pub fn sprite_flush_sprite_buffer() = cdecl 0x70CF20 => unported;
+    pub fn store_static_shadow(id: u32, ty: u32, tex: u32, pos: GPtr<u8>, fx: u32, fy: u32, sx: u32, sy: u32, intensity: u32, r: u32, gr: u32, b: u32, zd: u32, scale: u32, draw: u32, temp: u32, up: u32) -> u8 = cdecl 0x70BA00 => unported;
 }
 
 orig! {
@@ -4020,7 +4135,7 @@ orig! {
 
 orig! {
     /// `CSprite::RenderOneXLUSprite` (0x70D000)
-    pub fn sprite_render_one_xlu_sprite(px: f32, py: f32, pz: u32, hw: f32, hh: f32, r: u32, gg: u32, bb: u32, intensity: u32, rhw: u32, a: u32, u_dir: u32, v_dir: u32) = cdecl 0x70D000 => unported;
+    pub fn sprite_render_one_xlu_sprite(px: f32, py: f32, pz: f32, hw: f32, hh: f32, r: u32, gg: u32, bb: u32, intensity: u32, rhw: f32, a: u32, u_dir: u32, v_dir: u32) = cdecl 0x70D000 => unported;
 }
 
 orig! {
@@ -4045,7 +4160,7 @@ orig! {
 
 orig! {
     /// `CGlass::WindowRespondsToCollision` (0x71BC40)
-    pub fn window_responds_to_collision(e: GPtr<u8>, damage: u32, sx: u32, sy: u32, sz: u32, px: u32, py: u32, pz: u32, explosion: u32) = cdecl 0x71BC40 => unported;
+    pub fn window_responds_to_collision(e: GPtr<u8>, damage: f32, sx: f32, sy: f32, sz: f32, px: f32, py: f32, pz: f32, explosion: u32) = cdecl 0x71BC40 => unported;
 }
 
 orig! {
@@ -4074,23 +4189,8 @@ orig! {
 }
 
 orig! {
-    /// `CSprite2d::RenderVertexBuffer` (0x7273D0)
-    pub fn render_vertex_buffer() = cdecl 0x7273D0 => unported;
-}
-
-orig! {
-    /// `CSprite2d::SetVertices-CRectCRGBA4` (0x727420)
-    pub fn set_vertices_rect(rect: GPtr<u8>, c1: GPtr<u8>, c2: GPtr<u8>, c3: GPtr<u8>, c4: GPtr<u8>) = cdecl 0x727420 => unported;
-}
-
-orig! {
     /// `CSprite2d::Draw-ffffffffCRGBA` (0x728520)
     pub fn sprite2d_draw_quad(this: GPtr<u8>, x1: f32, y1: f32, x2: f32, y2: f32, x3: f32, y3: f32, x4: f32, y4: f32, colour: GPtr<u8>) = thiscall 0x728520 => unported;
-}
-
-orig! {
-    /// `CSprite2d::Draw2DPolygon` (0x7285B0)
-    pub fn sprite2d_draw_2d_polygon(x1: f32, y1: f32, x2: f32, y2: f32, x3: f32, y3: f32, x4: f32, y4: f32, colour: GPtr<u8>) = cdecl 0x7285B0 => unported;
 }
 
 orig! {
@@ -4160,17 +4260,17 @@ orig! {
 
 orig! {
     /// `CExplosion::AddExplosion` (0x736A50)
-    pub fn add_explosion(victim: GPtr<u8>, creator: GPtr<u8>, ty: u32, x: f32, y: f32, z: f32, life: u32, sound: u32, shake: f32, visible: u32) -> u8 = cdecl 0x736A50 => unported;
+    pub fn add_explosion(victim: GPtr<u8>, creator: GPtr<u8>, ty: i32, x: f32, y: f32, z: f32, life: u32, sound: u8, shake: f32, visible: u8) -> u8 = cdecl 0x736A50 => unported;
+}
+
+orig! {
+    /// `CProjectileInfo::AddProjectile` (0x737C80)
+    pub fn add_projectile(creator: GPtr<u8>, wt: u32, x: f32, y: f32, z: f32, force: f32, dir: GPtr<u8>, target: GPtr<u8>) -> u8 = cdecl 0x737C80 => unported;
 }
 
 orig! {
     /// `CProjectileInfo::RemoveAllProjectiles` (0x7399B0)
     pub fn remove_all_projectiles() = cdecl 0x7399B0 => unported;
-}
-
-orig! {
-    /// `CWeapon::AddGunshell` (0x73A3E0)
-    pub fn add_gunshell(w: GPtr<u8>, e: GPtr<u8>, pos: GPtr<u8>, dir: GPtr<u32>, size: f32) = thiscall 0x73A3E0 => unported;
 }
 
 orig! {
@@ -4195,7 +4295,7 @@ orig! {
 
 orig! {
     /// `CWeapon::TargetWeaponRangeMultiplier` (0x73B380)
-    pub fn target_weapon_range_multiplier(victim: GPtr<u8>, owner: GPtr<u8>) -> f64 = cdecl 0x73B380 => unported;
+    pub fn target_weapon_range_multiplier(victim: GPtr<u8>, owner: GPtr<u8>) -> sa_math::x87::X87 = reg("args = stack stack") 0x73B380 => unported;
 }
 
 orig! {
@@ -4206,6 +4306,11 @@ orig! {
 orig! {
     /// `CWeapon::Update` (0x73DB40)
     pub fn weapon_update(w: GPtr<u8>, owner: GPtr<u8>) = thiscall 0x73DB40 => unported;
+}
+
+orig! {
+    /// `CWeapon::PickTargetForHeatSeekingMissile` (0x73F910)
+    pub fn pick_target_for_heat_seeking_missile(ox: f32, oy: f32, oz: f32, dx: f32, dy: f32, dz: f32, mul: f32, ignore: GPtr<u8>, from_veh: u32, last: GPtr<u8>) -> GPtr<u8> = cdecl 0x73F910 => unported;
 }
 
 orig! {
@@ -4235,7 +4340,7 @@ orig! {
 
 orig! {
     /// `CWeaponInfo::FindWeaponType` (0x743D10)
-    pub fn find_weapon_type(name: GPtr<u8>) -> u32 = cdecl 0x743D10 => unported;
+    pub fn find_weapon_type(name: GPtr<u8>) -> i32 = cdecl 0x743D10 => unported;
 }
 
 orig! {
@@ -4281,11 +4386,6 @@ orig! {
 orig! {
     /// `RwFrameTranslate` (0x7F0E30)
     pub fn rw_frame_translate(frame: GPtr<u8>, v: GPtr<u8>, combine: u32) -> GPtr<u8> = cdecl 0x7F0E30 => unported;
-}
-
-orig! {
-    /// `RwFrameRotate` (0x7F1010)
-    pub fn rw_frame_rotate(f: GPtr<u8>, axis: GPtr<u8>, angle: u32, combine: u32) -> GPtr<u8> = cdecl 0x7F1010 => unported;
 }
 
 orig! {

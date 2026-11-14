@@ -231,10 +231,10 @@ fn new_scalar(size: u32) -> GPtr<u8> {
 pub fn expect_allocator(addr: u32) {
     use sa_core::orig::host::set;
     type Alloc = fn(u32) -> GPtr<u8>;
-    set::<Alloc>("sa_core::pools::call::operator_new_array", new_array);
-    set::<Alloc>("sa_core::pools::call::operator_new", new_scalar);
-    set::<Alloc>("sa_stream::misc::operator_new_array", new_array);
-    set::<Alloc>("sa_stream::misc::operator_new", new_scalar);
+    set::<Alloc>("sa_core::bindings::crt_new_821195", new_array);
+    set::<Alloc>("sa_core::bindings::crt_new", new_scalar);
+    set::<Alloc>("sa_core::bindings::crt_new_821195", new_array);
+    set::<Alloc>("sa_core::bindings::crt_new", new_scalar);
     ALLOC.with(|c| c.set(addr));
 }
 

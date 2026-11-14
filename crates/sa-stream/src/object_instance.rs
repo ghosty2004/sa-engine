@@ -20,6 +20,7 @@ use crate::bindings::simple_transform_update_matrix as update_matrix;
 use crate::bindings::set_matrix_for_train_crossing;
 use sa_core::bindings::matrix_set_rotate_z_only as set_rotate_z_only;
 use sa_core::bindings::rect_restrict;
+use crate::bindings::allocate_static_matrix;
 orig! {
     /// `CDummy::operator new(size)` (0x5326E0)
     fn dummy_new(size: u32) -> GPtr<u8> = cdecl 0x5326E0 => unported;
@@ -33,8 +34,6 @@ orig! {
     fn get_bound_rect(this: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x24 => unported;
     /// virtual `CBaseModelInfo::GetModelType()` (+0x10, AL)
     fn model_type(this: GPtr<u8>) -> u8 = thiscall vslot 0x10 => unported;
-    /// `CPlaceable::AllocateStaticMatrix()` (0x54F4C0)
-    fn allocate_static_matrix(this: GPtr<u8>) = thiscall 0x54F4C0 => unported;
     /// `CMatrix::SetRotate(const CQuaternion&)` (0x59BBF0)
     fn set_rotate_quat(m: GPtr<u8>, q: GPtr<u8>) = thiscall 0x59BBF0 => unported;
     /// `CColStore::GetBoundingBox(int32)` (0x410800)

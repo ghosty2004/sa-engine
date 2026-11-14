@@ -55,16 +55,16 @@ use crate::bindings::dynamic_vertex_buffer_destroy;
 use crate::bindings::dynamic_vertex_buffer_lock;
 use crate::bindings::geometry_get_usage_flags;
 use crate::bindings::index_buffer_create;
-use sa_core::bindings::set_render_state;
+use crate::bindings::set_render_state;
 use crate::bindings::set_transform_world;
 use crate::bindings::inst_color;
 use crate::bindings::inst_tangent;
 use crate::bindings::inst_v2d;
 use crate::bindings::inst_v3d;
 use crate::bindings::resources_free_res_entry as free_res_entry;
-use sa_core::bindings::frame_get_ltm;
-use sa_core::bindings::get_render_state;
-use sa_core::bindings::rw_d3d9_get_caps as get_caps;
+use crate::bindings::frame_get_ltm;
+use crate::bindings::get_render_state;
+use crate::bindings::rw_d3d9_get_caps as get_caps;
 orig! {
     /// `IDirect3DVertexBuffer9::Lock` / `Unlock`
     fn vb_lock(vb: GPtr<u8>, offset: u32, size: u32, data: GPtr<u32>, flags: u32) -> i32 = stdcall vslot 0x2C => unported;
@@ -334,7 +334,7 @@ fn stream_for(usage: u32, bit: u32, last: u32) -> u32 {
 #[hook(addr = 0x7C9680, conv = cdecl, name = "FUN_007c9680", expect = "81 EC AC 00 00 00 53 55 56 57",
        unverified = "std10-skin-1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn skin_geometry_instance(atomic: GPtr<u8>, header: GPtr<u8>, has_hierarchy: u32) -> u32 {
-    let caps = p8(GPtr::<u8>::addr(get_caps()) as u32);
+    let caps = p8(GPtr::<u8>::addr(GPtr::from_addr(get_caps() as usize)) as u32);
     let geo = p8(rd::<u32>(atomic, 0x18));
     let skin = p8(rd::<u32>(geo, g::<i32>(SKIN_GEOMETRY_OFFSET).read() as isize));
     let gflags = rd::<u32>(geo, 8);

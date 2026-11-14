@@ -28,7 +28,7 @@ pub fn query_models_killed_by_player(model: i32, player: i32) -> u32 {
 
 use sa_core::bindings::matrix_update_rw_matrix;
 use sa_core::bindings::object_new;
-use sa_core::bindings::world_add;
+use sa_world::bindings::world_add;
 use sa_core::bindings::object_ctor_5a1d70 as object_ctor;
 use sa_world::bindings::simple_transform_update_rw_matrix;
 orig! {
@@ -125,7 +125,7 @@ pub fn create_beach_toy(pos: GPtr<f32>, toy: i32) -> GPtr<u8> {
 
 use sa_core::bindings::load_data_from_work_buffer as load_data;
 use sa_core::bindings::save_data_to_work_buffer as save_data;
-use sa_core::bindings::car_generators_init;
+use crate::bindings::car_generators_init;
 
 /// `CTheCarGenerators::CarGeneratorArray[i]` (0xC27AD0, 500 x 0x20).
 fn generator(i: u32) -> GPtr<u8> {

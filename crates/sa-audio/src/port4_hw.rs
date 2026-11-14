@@ -94,6 +94,7 @@ use crate::bindings::track_ctor as track_loader_ctor;
 use sa_core::bindings::is_foreground_app;
 pub(crate) use crate::bindings::current_time_ms;
 use crate::bindings::track_initialise as track_loader_initialise;
+pub(crate) use sa_core::bindings::crt_new as operator_new;
 orig! {
     // DirectSound (IDirectSound8 / IDirectSoundBuffer8 / IDirectSound3DBuffer / IKsPropertySet)
     fn com_query_interface_raw(obj: GPtr<u8>, iid: u32, out: u32) -> i32 = stdcall vslot 0x00 => unported;
@@ -157,8 +158,6 @@ orig! {
     fn enter_critical_section(cs: u32) = stdcall cell 0x8580EC => unported;
     fn leave_critical_section(cs: u32) = stdcall cell 0x8580E8 => unported;
     fn co_initialize(r: u32) -> i32 = stdcall cell 0x858350 => unported;
-    /// `operator new` (0x82119A)
-    pub(crate) fn operator_new(n: u32) -> u32 = cdecl 0x82119A => unported;
 
     // ports of this module, called as the original calls them
     fn ac_ctor(this: u32, ds: u32, id: u32, rate: u32, bits: u32) -> u32 = thiscall 0x4D7890 => unported;
@@ -1643,7 +1642,7 @@ pub fn stream_thread_initialise(this: u32, ch: u32) -> bool {
     set_thread_priority(h, 0);
     initialize_critical_section(this + 0x38);
     w32(this + 8, ch);
-    let tl = operator_new(0x1C);
+    let tl = GPtr::<u8>::addr(operator_new(0x1C)) as u32;
     let tl = if tl != 0 { track_loader_ctor(tl) } else { 0 };
     w32(this + 0xC, tl);
     track_loader_initialise(tl);
@@ -1737,7 +1736,7 @@ fn stream_thread_load_decoder(this: u32, user: bool, track: u32) -> u32 {
     if user {
         user_radio_load_user_track(USER_RADIO, track)
     } else {
-        let m = operator_new(0x28);
+        let m = GPtr::<u8>::addr(operator_new(0x28)) as u32;
         if m != 0 {
             // the original pushes the constructor's `checkLength` (0) before `GetDataStream`'s argument
             let s = track_loader_get_data_stream(r32(this + 0xC), track);

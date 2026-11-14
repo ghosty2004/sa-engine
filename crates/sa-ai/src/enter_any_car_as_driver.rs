@@ -1,6 +1,7 @@
 //! `CTaskComplexEnterAnyCarAsDriver::CreateFirstSubTask` (PEDHIT: a ped near the BMX hit looks for a car). Ported
 //! from the 1.0 US bytes; gta-reversed `TaskComplexEnterAnyCarAsDriver.cpp` as a reading aid.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -8,7 +9,7 @@ use crate::common::*;
 
 use crate::bindings::car_enter_exit_is_vehicle_stealable as is_vehicle_stealable;
 use crate::bindings::scanner_closest_vehicle;
-use sa_world::bindings::task_simple_ctor as task_complex_ctor;
+use crate::bindings::task_simple_ctor as task_complex_ctor;
 orig! {
     /// `CTaskComplexEnterCar::CTaskComplexEnterCar(CVehicle*, bool asDriver, bool, bool, bool)` (0x63A220)
     fn enter_car_ctor(t: GPtr<u8>, v: GPtr<u8>, driver: u32, a: u32, b: u32, c: u32) -> GPtr<u8> = thiscall 0x63A220 => unported;

@@ -11,12 +11,12 @@ use crate::weapon::ped_is_player;
 use crate::weapon_fire::{find_player_ped, matrix_dtor, vector_magnitude};
 
 use sa_core::bindings::entity_register_reference;
-use sa_core::bindings::find_player_vehicle;
+use sa_world::bindings::find_player_vehicle;
 use sa_core::bindings::matrix_assign;
 use sa_core::bindings::memory_malloc as memory_mgr_malloc;
 use sa_core::bindings::object_new;
 use sa_core::bindings::streaming_request_model;
-use sa_core::bindings::world_add;
+use sa_world::bindings::world_add;
 use sa_world::bindings::change_blip_colour as radar_change_blip_colour;
 use sa_world::bindings::change_blip_scale as radar_change_blip_scale;
 use sa_world::bindings::fx_create_system;
@@ -24,19 +24,16 @@ use sa_world::bindings::get_modelling_matrix as entity_get_modelling_matrix;
 use sa_world::bindings::multiply3x3;
 use sa_world::bindings::placeable_get_matrix;
 use sa_world::bindings::placeable_set_matrix;
-use sa_core::bindings::col_sphere_set;
+use sa_world::bindings::col_sphere_set;
 use sa_core::bindings::general_limit_radian_angle as limit_radian_angle;
 use sa_core::bindings::matrix_rotate_z;
 use sa_core::bindings::matrix_set_translate;
 use sa_world::bindings::report_weapon_event as audio_report_weapon_event;
 use sa_world::bindings::set_entity_blip as radar_set_entity_blip;
+use sa_stream::bindings::col_model_allocate_data;
 orig! {
     /// `CProjectile::CProjectile(int32 model)` (0x5A4030, thiscall)
     fn projectile_ctor(p: GPtr<u8>, model: i32) -> GPtr<u8> = thiscall 0x5A4030 => unported;
-    /// `CColModel::AllocateData(int32 spheres, int32 boxes, int32 lines, int32 vertices, int32 triangles,
-    /// bool disk)` (0x40F870, thiscall)
-    #[allow(clippy::too_many_arguments)]
-    fn col_model_allocate_data(cm: GPtr<u8>, s: i32, b: i32, l: i32, v: i32, t: i32, d: u32) = thiscall 0x40F870 => unported;
 }
 
 /// `CProjectileInfo::gaProjectileInfo` (32 x 0x24 at 0xC891A8: type +0, creator +4, target +8, destroy
@@ -265,12 +262,12 @@ pub fn add_projectile(creator: GPtr<u8>, ty: u32, ox: f32, oy: f32, oz: f32, for
                 let radius = || x(rf(cm, 0x24)).fmul_m(cf(0x3F40_0000)).to_f32();
                 if data.is_null() {
                     col_model_allocate_data(cm, 1, 0, 0, 0, 0, 0);
-                    col_sphere_set(rp(rp(cm, 0x2C), 8), radius(), cm.byte_add(0x18), 0x38, 0, 0xFF);
+                    col_sphere_set(rp(rp(cm, 0x2C), 8), radius().to_bits(), GPtr::<u8>::cast::<u32>(cm.byte_add(0x18)), 0x38, 0, 0xFF);
                 } else if rh(data, 0) == 0 && rp(data, 8).is_null() {
                     wh(data, 0, 1);
                     let s = memory_mgr_malloc(0x14, 0);
                     wp(data, 8, s);
-                    col_sphere_set(s, radius(), cm.byte_add(0x18), 0x38, 0, 0xFF);
+                    col_sphere_set(s, radius().to_bits(), GPtr::<u8>::cast::<u32>(cm.byte_add(0x18)), 0x38, 0, 0xFF);
                 }
             }
         }
@@ -349,7 +346,7 @@ pub fn add_projectile(creator: GPtr<u8>, ty: u32, ox: f32, oy: f32, oz: f32, for
         let own = creator == find_player_ped(-1) || creator == find_player_vehicle(-1, 0);
         radar_change_blip_colour(blip, if own { 0xFFFF_FFFF } else { 0xFF00_00FF });
     }
-    audio_report_weapon_event(g(0xB6_BC90), 0x94, ty, slot.read());
+    audio_report_weapon_event(g(0xB6_BC90), 0x94, ty, GPtr::<u8>::addr(slot.read()) as u32);
     matrix_dtor(mp);
     1
 }

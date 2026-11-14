@@ -7,7 +7,7 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::hook;
 
-use sa_world::bindings::decision_maker_types_get_instance;
+use sa_ai::bindings::decision_maker_types_get_instance;
 
 fn rd8(a: u32) -> u8 {
     GPtr::<u8>::from_addr(a as usize).read()

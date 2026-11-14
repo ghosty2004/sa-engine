@@ -34,18 +34,18 @@ const SCRIPT_RESOURCE_MANAGER: usize = 0xA485A8;
 pub use sa_core::bindings::streaming_request_model as request_model;
 pub use sa_stream::bindings::get_animation_block_index;
 pub use sa_stream::bindings::remove_buildings_not_in_area;
-pub use sa_core::bindings::get_animation_block;
+pub use sa_anim::bindings::get_animation_block;
 use crate::bindings::add_counter;
 use crate::bindings::clear_script_road_blocks;
 use sa_world::bindings::find_node_coors_for_script;
-use sa_world::bindings::find_nth_node_closest_to_coors;
+use sa_pop::bindings::find_nth_node_closest_to_coors;
 use sa_core::bindings::get_uppercase_key;
 use sa_core::bindings::start_extra_colour;
 use sa_core::bindings::text_get;
 use sa_core::bindings::time_cycle_stop_extra_colour as stop_extra_colour;
-use sa_world::bindings::attach_ped_to_entity;
+use sa_ped::bindings::attach_ped_to_entity;
 use sa_world::bindings::find_ground_z_for_coord;
-use sa_world::bindings::get_vehicle_appearance;
+use sa_veh::bindings::get_vehicle_appearance;
 pub use crate::bindings::add_to_resource_manager;
 use crate::bindings::give_ped_scripted_task;
 use crate::bindings::global_index;
@@ -54,7 +54,7 @@ use sa_core::bindings::hud_set_help_message as set_help_message;
 use sa_core::bindings::vector_magnitude;
 use sa_world::bindings::add_to_previous_brief_array;
 use sa_world::bindings::multiply3x3 as multiply_3x3;
-use sa_world::bindings::register_corona;
+use sa_render::bindings::register_corona;
 use sa_world::bindings::speech_set_cj_mood as set_cj_mood;
 use sa_world::bindings::vector_add_assign;
 use sa_world::bindings::vector_mul_scalar as vector_mul_float;
@@ -419,7 +419,7 @@ pub fn process_commands_1200_to_1299(s: Scr, command: u32) -> i8 {
                 f32::from_bits(K_999999),
                 0,
                 1,
-                sp(3).wrapping_sub(1),
+                (sp(3).wrapping_sub(1)) as i32,
                 0,
                 0,
                 GPtr::NULL,
@@ -453,18 +453,18 @@ pub fn process_commands_1200_to_1299(s: Scr, command: u32) -> i8 {
                 sp(8) & 0xFF,
                 0xFF,
                 GPtr::<u32>::cast::<u8>(GPtr::from_raw(pos.as_ptr().cast_mut())),
-                f32::from_bits(sp(3)),
-                f32::from_bits(0x4316_0000),
+                f32::from_bits(sp(3)).to_bits(),
+                f32::from_bits(0x4316_0000).to_bits(),
                 sp(4) & 0xFF,
                 sp(5) & 0xFF,
                 1,
                 0,
                 0,
-                f32::from_bits(0),
+                f32::from_bits(0).to_bits(),
                 0,
-                f32::from_bits(0x3E4C_CCCD),
+                f32::from_bits(0x3E4C_CCCD).to_bits(),
                 0,
-                f32::from_bits(0x4170_0000),
+                f32::from_bits(0x4170_0000).to_bits(),
                 0,
                 0,
             );
@@ -486,7 +486,7 @@ pub fn process_commands_1200_to_1299(s: Scr, command: u32) -> i8 {
             let a = X87::from_f32(spf(6)).fmul_m(f(K_DEG2RAD)).to_f32().to_bits();
             let obj = object_at_ref(pool(OBJECT_POOL), spi(1));
             let ped = ped_at_ref(pool(PED_POOL), spi(0));
-            attach_ped_to_entity(ped, obj, f32::from_bits(sp(2)), f32::from_bits(sp(3)), f32::from_bits(sp(4)), sp(5) & 0xFFFF, f32::from_bits(a), sp(7));
+            attach_ped_to_entity(ped, obj, f32::from_bits(sp(2)).to_bits(), f32::from_bits(sp(3)).to_bits(), f32::from_bits(sp(4)).to_bits(), sp(5) & 0xFFFF, f32::from_bits(a).to_bits(), sp(7) as i32);
             0
         }
         // 04F7 DISPLAY_NTH_ONSCREEN_COUNTER_WITH_STRING (0x48C52F, gr: unregistered): idx =

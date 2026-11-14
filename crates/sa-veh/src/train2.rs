@@ -32,7 +32,7 @@ pub use crate::bindings::vehicle_delete;
 pub use crate::bindings::vehicle_destructor;
 pub use crate::bindings::vehicle_pre_render;
 pub use crate::bindings::vehicle_set_model_index;
-pub use sa_core::bindings::world_clear_scan_codes as clear_scan_codes;
+pub use sa_world::bindings::world_clear_scan_codes as clear_scan_codes;
 pub use sa_stream::bindings::choose_vehicle_colour;
 pub use sa_stream::bindings::fill_frame_array;
 pub use sa_world::bindings::audio_terminate;

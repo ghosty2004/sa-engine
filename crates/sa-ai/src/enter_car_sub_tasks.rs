@@ -29,19 +29,19 @@ use crate::bindings::vehicle_clear_getting_in_flags;
 use crate::bindings::vehicle_is_driver;
 use sa_core::bindings::car_set_ped_out_ctor as t_set_ped_out;
 use sa_core::bindings::entity_register_reference;
-use sa_core::bindings::find_player_ped;
+use sa_world::bindings::find_player_ped;
 use sa_core::bindings::hud_set_help_message;
 use sa_core::bindings::ped_is_alive;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::compute_target_door_to_exit;
 use sa_world::bindings::enter_car_dtor;
-use sa_world::bindings::event_group_add;
+use crate::bindings::event_group_add;
 use sa_world::bindings::event_group_event_ctor;
 use sa_world::bindings::event_group_event_dtor;
 use sa_world::bindings::event_leader_entered_car_as_driver_ctor;
 use sa_world::bindings::get_event_global_group;
 use sa_world::bindings::get_nearest_car_door;
-use sa_world::bindings::group_intelligence_add_event;
+use crate::bindings::group_intelligence_add_event;
 use sa_world::bindings::intel_is_friendly_with as intelligence_is_friendly_with;
 use sa_world::bindings::is_law_enforcement_vehicle as vehicle_is_law_enforcement;
 use sa_world::bindings::leave_car_ctor as t_leave_car_5;
@@ -49,7 +49,7 @@ use sa_world::bindings::membership_is_leader as group_membership_is_leader;
 use sa_world::bindings::pad_get_accelerate;
 use sa_world::bindings::pad_get_brake;
 use sa_world::bindings::ped_groups_are_in_same_group;
-use sa_world::bindings::ped_groups_get_peds_group;
+use crate::bindings::ped_groups_get_peds_group;
 use sa_world::bindings::player_set_real_move_anim as player_ped_set_real_move_anim;
 use sa_world::bindings::stand_still_ctor as t_stand_still;
 use crate::bindings::car_drive_timed_ctor as t_drive_timed;
@@ -155,7 +155,7 @@ fn new_task(size: u32, ctor: impl FnOnce(GPtr<u8>) -> GPtr<u8>) -> GPtr<u8> {
 /// pool (`ctor`; null without a slot) wrapped in a stack `CEventGroupEvent(ped, event)` is added to the group's
 /// intelligence and the wrapper destroyed.
 fn leader_event(ped: GPtr<u8>, size: u32, ctor: impl FnOnce(GPtr<u8>) -> GPtr<u8>) {
-    let grp = ped_groups_get_peds_group(ped);
+    let grp = GPtr::from_addr(ped_groups_get_peds_group(ped.addr() as u32) as usize);
     if grp.is_null() || group_membership_is_leader(grp.byte_add(8), ped) == 0 {
         return;
     }
@@ -240,7 +240,7 @@ pub fn create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     {
         return sub(this, FINISHED, ped);
     }
-    let grp = ped_groups_get_peds_group(ped);
+    let grp = GPtr::from_addr(ped_groups_get_peds_group(ped.addr() as u32) as usize);
     if driver_no_quit(this) && !grp.is_null() && group_membership_is_leader(grp.byte_add(8), ped) != 0 {
         let e = event_new(0x18);
         let e = if e.is_null() {
@@ -573,7 +573,7 @@ fn slow_jack(this: GPtr<u8>, ped: GPtr<u8>, align: bool) -> GPtr<u8> {
             false
         } else {
             let v = veh(this);
-            let idx = compute_passenger_index_from_car_door(v, door(this) as u32);
+            let idx = compute_passenger_index_from_car_door(v, (door(this) as u32) as i32);
             rd::<GPtr<u8>>(this, 0x40) == rd::<GPtr<u8>>(v, 0x464 + 4 * idx as isize)
         };
         if !keep {
@@ -614,11 +614,7 @@ fn drag_event(this: GPtr<u8>, ped: GPtr<u8>) {
     let mut local = [0u32; 16];
     let lp = GPtr::from_raw(local.as_mut_ptr()).cast::<u8>();
     event_dragged_out_car_ctor(lp, v, ped, u32::from(rd::<GPtr<u8>>(v, 0x460) == j));
-    event_group_add(
-        rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0x40), 0x47C).byte_add(0x68),
-        lp,
-        1,
-    );
+    event_group_add(rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0x40), 0x47C).byte_add(0x68), lp, 1);
     let j = rd::<GPtr<u8>>(this, 0x40);
     if rd::<GPtr<u8>>(veh(this), 0x460) == j {
         leader_event(j, 0x14, event_leader_exited_car_ctor);
@@ -757,7 +753,7 @@ pub fn create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
             }
             if rd::<u32>(veh(this), 0x460) != 0 {
                 drag_driver_out(this, ped, |drv| {
-                    ped_is_alive(drv) != 0 && x(rd::<f32>(drv, 0x540)).fcom(x(0.0)).test_parity(0x41)
+                    ped_is_alive(drv) as u8 != 0 && x(rd::<f32>(drv, 0x540)).fcom(x(0.0)).test_parity(0x41)
                 });
             }
             let hd = rd::<GPtr<u8>>(veh(this), 0x384);
@@ -835,7 +831,7 @@ fn get_in_next(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
         return sub(this, 0x32C, ped);
     }
     if rd::<u32>(v, 0x460) != 0 {
-        drag_driver_out(this, ped, |drv| ped_is_alive(drv) == 0);
+        drag_driver_out(this, ped, |drv| ped_is_alive(drv) as u8 == 0);
     }
     sub(this, 0x328, ped)
 }
@@ -1012,11 +1008,11 @@ fn chat_reactions(this: GPtr<u8>, ped: GPtr<u8>) {
             GPtr::from_addr(0x86EA98),
             p,
             ped,
-            (base - v) as u32,
+            ((base - v) as u32) as i32,
             5,
             GPtr::NULL,
             0,
-            0x3F00_0000,
+            f32::from_bits(0x3F00_0000),
             0x15E,
             3,
             0,

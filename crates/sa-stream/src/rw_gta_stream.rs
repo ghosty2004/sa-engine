@@ -107,11 +107,9 @@ pub use sa_core::bindings::rw_tex_dictionary_for_all_textures;
 pub use sa_core::bindings::stream_read as rw_stream_read;
 pub use sa_core::bindings::rp_geometry_destroy;
 pub use sa_core::bindings::rw_stream_find_chunk_call as rw_stream_find_chunk;
+pub use sa_core::bindings::frame_list_deinitialize as rw_frame_list_deinitialize;
+pub use sa_core::bindings::frame_list_stream_read as rw_frame_list_stream_read;
 orig! {
-    /// `_rwFrameListStreamRead(stream, frameList)` (0x807970)
-    pub fn rw_frame_list_stream_read(stream: GPtr<u8>, fl: GPtr<PtrList>) -> GPtr<PtrList> = cdecl 0x807970 => unported;
-    /// `_rwFrameListDeinitialize(frameList)` (0x807720)
-    pub fn rw_frame_list_deinitialize(fl: GPtr<PtrList>) -> GPtr<PtrList> = cdecl 0x807720 => unported;
     /// `RwEngineInstance->stdFunc[rwSTANDARDNATIVETEXTUREREAD](stream, &texture, length)` (+0xB0)
     pub fn rw_native_texture_read(stream: GPtr<u8>, tex: GPtr<GPtr<u8>>, len: u32) -> i32 = cdecl table 0xC97B24 0xB0 => unported;
     /// `RpAnisotTextureGetMaxAnisotropy(tex)` (0x748F50, AL)
@@ -318,7 +316,7 @@ pub fn rp_clump_gta_stream_read1(stream: GPtr<u8>) -> u8 {
     if rw_stream_find_chunk(stream, RW_ID_FRAMELIST, GPtr::NULL, lvp.wrapping_index(1)) == 0 {
         return 0;
     }
-    if rw_frame_list_stream_read(stream, FRAME_LIST.ptr()).is_null() {
+    if GPtr::<u8>::cast::<PtrList>(rw_frame_list_stream_read(stream, GPtr::<PtrList>::cast::<u8>(FRAME_LIST.ptr()))).is_null() {
         return 0;
     }
     if rw_stream_find_chunk(stream, RW_ID_GEOMETRYLIST, GPtr::NULL, lvp.wrapping_index(1)) != 0
@@ -327,7 +325,7 @@ pub fn rp_clump_gta_stream_read1(stream: GPtr<u8>) -> u8 {
         CLUMP_STREAM_POSITION.set(stream_pos(stream));
         return 1;
     }
-    rw_frame_list_deinitialize(FRAME_LIST.ptr());
+    rw_frame_list_deinitialize(GPtr::<PtrList>::cast::<u8>(FRAME_LIST.ptr()));
     0
 }
 
@@ -342,7 +340,7 @@ pub fn rp_clump_gta_stream_read2(stream: GPtr<u8>) -> GPtr<u8> {
     rw_stream_skip(stream, CLUMP_STREAM_POSITION.get().wrapping_sub(stream_pos(stream)));
     let fail = |clump: GPtr<u8>| {
         geometry_list_deinitialise(GEOM_LIST.ptr());
-        rw_frame_list_deinitialize(FRAME_LIST.ptr());
+        rw_frame_list_deinitialize(GPtr::<PtrList>::cast::<u8>(FRAME_LIST.ptr()));
         rp_clump_destroy(clump);
         GPtr::NULL
     };
@@ -366,7 +364,7 @@ pub fn rp_clump_gta_stream_read2(stream: GPtr<u8>) -> GPtr<u8> {
         i += 1;
     }
     geometry_list_deinitialise(GEOM_LIST.ptr());
-    rw_frame_list_deinitialize(FRAME_LIST.ptr());
+    rw_frame_list_deinitialize(GPtr::<PtrList>::cast::<u8>(FRAME_LIST.ptr()));
     clump
 }
 

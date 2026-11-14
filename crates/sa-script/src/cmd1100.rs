@@ -63,25 +63,25 @@ const K_DEG2RAD: u32 = 0x3C8E_FA35;
 
 use crate::bindings::tell_heli_to_go_to_coors;
 use crate::bindings::vehicle_get_ref as vehicle_pool_ref_424160;
-use sa_core::bindings::entity_update_rw_frame as update_rw_frame;
-use sa_core::bindings::get_pad;
+use sa_world::bindings::entity_update_rw_frame as update_rw_frame;
+use sa_input::bindings::get_pad;
 use sa_core::bindings::ped_clear_weapons as clear_weapons;
-use sa_core::bindings::ped_is_alive;
+use sa_ped::bindings::ped_is_alive;
 use sa_core::bindings::text_get;
-use sa_world::bindings::attach_ped_to_entity;
-use sa_world::bindings::can_ped_target_ped;
+use sa_ped::bindings::attach_ped_to_entity;
+use sa_ai::bindings::can_ped_target_ped;
 use sa_world::bindings::dettach_ped_from_entity;
 use sa_world::bindings::disable_ped_speech;
 use sa_world::bindings::enable_ped_speech;
 use sa_world::bindings::find_ground_z_for_coord;
 use sa_stream::bindings::generate_new_one;
 use sa_world::bindings::get_actual_pickup_index;
-use sa_world::bindings::get_engine_status;
-use sa_world::bindings::get_pad_from_player;
-use sa_world::bindings::get_vehicle_appearance;
+use sa_veh::bindings::get_engine_status;
+use sa_ped::bindings::get_pad_from_player;
+use sa_veh::bindings::get_vehicle_appearance;
 use sa_world::bindings::membership_is_leader;
 use sa_world::bindings::pad_get_target;
-use sa_world::bindings::ped_groups_get_peds_group as get_peds_group;
+use sa_ai::bindings::ped_groups_get_peds_group as get_peds_group;
 use sa_world::bindings::pickup_get_posn;
 use sa_world::bindings::update_rw_matrix;
 use sa_core::bindings::vector_magnitude;
@@ -417,7 +417,7 @@ pub fn process_commands_1100_to_1199(s: Scr, command: u32) -> i8 {
             let veh = vehicle_at_ref(pool(VEHICLE_POOL), spi(1));
             let (x, y) = (fld_fst(spf(2)).to_bits(), fld_fst(spf(3)).to_bits());
             let a = deg2rad(sp(6)).to_bits();
-            attach_ped_to_entity(ped, veh, f32::from_bits(x), f32::from_bits(y), f32::from_bits(sp(4)), sp(5) & 0xFFFF, f32::from_bits(a), sp(7));
+            attach_ped_to_entity(ped, veh, f32::from_bits(x).to_bits(), f32::from_bits(y).to_bits(), f32::from_bits(sp(4)).to_bits(), sp(5) & 0xFFFF, f32::from_bits(a).to_bits(), sp(7) as i32);
         }
         // 046C GET_DRIVER_OF_CAR (0x48A974, gr: unregistered): no null check; P0 = m_pDriver (+0x460) ?
         // PedPool->GetRef(it) : -1; StoreParameters(1).
@@ -433,7 +433,7 @@ pub fn process_commands_1100_to_1199(s: Scr, command: u32) -> i8 {
         0x046D => {
             collect(s, 1);
             let ped = ped_at_ref(pool(PED_POOL), spi(0));
-            let g = get_peds_group(ped);
+            let g = GPtr::from_addr(get_peds_group(ped.addr() as u32) as usize);
             let mut n = 0u8;
             if !g.is_null() && membership_is_leader(g.byte_add(8), ped) != 0 {
                 n = count_members_excluding_leader(g.byte_add(8)) as u8;
@@ -474,7 +474,7 @@ pub fn process_commands_1100_to_1199(s: Scr, command: u32) -> i8 {
             let mut b = false;
             for i in 0..16 {
                 let e = arr.wrapping_index(i).read();
-                if !e.is_null() && ped_is_alive(e) == 0 && can_ped_target_ped(ped, e, 1) != 0 {
+                if !e.is_null() && ped_is_alive(e) as u8 == 0 && can_ped_target_ped(ped, e, 1) as u8 != 0 {
                     b = true;
                     break;
                 }
@@ -527,7 +527,7 @@ pub fn process_commands_1100_to_1199(s: Scr, command: u32) -> i8 {
         // P0..P3 = the four int16 at pad +0/+2/+4/+6 (`movsx`); StoreParameters(4).
         0x0494 => {
             collect(s, 1);
-            let pad = get_pad(spi(0) as u32).cast::<u16>();
+            let pad = get_pad((spi(0) as u32) as i32).cast::<u16>();
             for i in 0..4 {
                 set_sp(i, i32::from(pad.wrapping_index(i).read() as i16) as u32);
             }

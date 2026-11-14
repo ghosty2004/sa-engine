@@ -25,7 +25,7 @@ const ACTIVE_SEQUENCE: usize = 0x8D2E98;
 const TIMED_HOLD_WORD: u32 = 0xBCC7FC20;
 
 use crate::bindings::affect_secondary_behaviour_ctor;
-use sa_core::bindings::task_new;
+use sa_ai::bindings::task_new;
 use crate::bindings::give_ped_scripted_task;
 use sa_world::bindings::run_named_anim_ctor;
 

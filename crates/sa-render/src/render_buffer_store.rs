@@ -8,7 +8,7 @@ use sa_math::x87::X87;
 
 use crate::common::{g, rd};
 
-use sa_core::bindings::frame_get_ltm;
+use sa_rwcore::bindings::frame_get_ltm;
 orig! {
     /// `RenderBuffer::RenderStuffInBuffer()` (0x707800)
     fn render_stuff_in_buffer() = cdecl 0x707800 => unported;

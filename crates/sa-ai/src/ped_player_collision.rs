@@ -23,8 +23,8 @@ use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::ik_look_at;
 use sa_world::bindings::intel_find_task_by_type;
 use sa_world::bindings::ped_say;
-use sa_world::bindings::tm_find_active_task_by_type;
-use sa_core::bindings::vector_sub;
+use crate::bindings::tm_find_active_task_by_type;
+use sa_world::bindings::vector_sub;
 orig! {
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
@@ -68,7 +68,7 @@ fn say(this: GPtr<u8>) {
 }
 
 fn look_at(this: GPtr<u8>, player: GPtr<u8>) {
-    ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), GPtr::from_addr(S_COMP_PED_COLL_PLAYER_RESP as usize), ped(this), player, 2000, 5, GPtr::NULL, 1, 0x3E80_0000, 500, 3, 0);
+    ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), GPtr::from_addr(S_COMP_PED_COLL_PLAYER_RESP as usize), ped(this), player, 2000, 5, GPtr::NULL, 1, f32::from_bits(0x3E80_0000), 500, 3, 0);
 }
 
 /// `CTaskComplexEvasiveStep(player, &dir)` with `dir = (-forward.y, forward.x, 0)` of the player's matrix, normalised.
@@ -76,7 +76,7 @@ fn evasive_step(player: GPtr<u8>) -> GPtr<u8> {
     let f = rd::<GPtr<u8>>(player, 0x14).byte_add(0x10);
     let mut v = [f32_of(x(rd::<f32>(f, 4)).fchs()).to_bits(), f32_of(x(rd::<f32>(f, 0))).to_bits(), 0u32];
     let vp: GPtr<u8> = GPtr::from_raw(v.as_mut_ptr()).cast();
-    vector_normalise(vp);
+    vector_normalise(vp.cast::<[f32;3]>());
     new_task(0x1C, |t| evasive_step_ctor(t, player, vp))
 }
 
@@ -203,9 +203,9 @@ pub fn handler_compute_ped_collision_with_player_response(this: GPtr<u8>, e: GPt
                 let tm = intel(player).byte_add(4);
                 if !tm_get_active_task(tm).is_null()
                     && v_task_type(tm_get_active_task(tm)) == 0x391
-                    && !X87::from_f64_exact(general_random_float_in_range(0.0, 1.0)).fcom(x(gf(K_LOOK_CHANCE))).test_parity(0x05)
+                    && !X87::from_f64_exact(general_random_float_in_range(0.0, 1.0).to_f64()).fcom(x(gf(K_LOOK_CHANCE))).test_parity(0x05)
                 {
-                    let r = X87::from_f64_exact(general_random_float_in_range(0.0, 1.0));
+                    let r = X87::from_f64_exact(general_random_float_in_range(0.0, 1.0).to_f64());
                     if !r.fcom(x(gf(K_LOOK_ONLY))).test_parity(0x05) {
                         look_at(this, player);
                     } else if !r.fcom(X87::from_f64_exact(g::<f64>(K_SAY_F64).read())).test_parity(0x05) {

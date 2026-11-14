@@ -66,31 +66,20 @@ pub use crate::bindings::get_anim_hierarchy_from_clump;
 pub use sa_core::bindings::get_anim_hierarchy_from_skin_clump;
 pub use sa_core::bindings::rp_hanim_id_get_index;
 pub use crate::bindings::col_model_allocate_data;
+pub use sa_core::bindings::base_model_info_ctor as base_model_info_constructor;
+pub use sa_core::bindings::box_set;
+pub use sa_core::bindings::rp_hanim_hierarchy_get_matrix_array;
+pub use sa_core::bindings::rw_matrix_invert;
+pub use sa_core::bindings::rw_matrix_transform;
+pub use sa_core::bindings::rw_v3d_transform_points;
+pub use sa_core::bindings::sphere_set;
+pub use crate::bindings::clump_delete_rw_object;
+pub use crate::bindings::clump_set_clump;
+pub use crate::bindings::clump_set_frame_ids;
+pub use crate::bindings::create_hit_col_model_skinned as create_hit_col_model_skinned_call;
 orig! {
-    /// `CClumpModelInfo::SetClump` (0x4C4F70)
-    pub fn clump_set_clump(this: MiPtr, clump: GPtr<u8>) = thiscall 0x4C4F70 => super::clump::set_clump;
-    /// `CClumpModelInfo::SetFrameIds` (0x4C5460)
-    pub fn clump_set_frame_ids(this: MiPtr, ids: GPtr<u8>) = thiscall 0x4C5460 => super::clump::set_frame_ids;
-    /// `CClumpModelInfo::DeleteRwObject` (0x4C4E70)
-    pub fn clump_delete_rw_object(this: MiPtr) = thiscall 0x4C4E70 => super::clump::delete_rw_object;
-    /// `CBaseModelInfo::CBaseModelInfo` (0x4C4A60)
-    pub fn base_model_info_constructor(this: MiPtr) -> MiPtr = thiscall 0x4C4A60 => unported;
-    /// `CPedModelInfo::CreateHitColModelSkinned` (0x4C6D90)
-    pub fn create_hit_col_model_skinned_call(this: MiPtr, clump: GPtr<u8>) = thiscall 0x4C6D90 => create_hit_col_model_skinned;
     /// `CPedModelInfo::~CPedModelInfo` (0x4C62F0)
     pub fn ped_destructor_call(this: MiPtr) = thiscall 0x4C62F0 => destructor;
-    /// `CSphere::Set(float, const CVector&)` (0x40FCF0)
-    pub fn sphere_set(sphere: GPtr<u8>, radius: f32, centre: GPtr<RwV3d>) = thiscall 0x40FCF0 => unported;
-    /// `CBox::Set(const CVector&, const CVector&)` (0x40EDE0)
-    pub fn box_set(b: GPtr<u8>, min: GPtr<RwV3d>, max: GPtr<RwV3d>) = thiscall 0x40EDE0 => unported;
-    /// `RwMatrixInvert` (0x7F2070)
-    pub fn rw_matrix_invert(dst: GPtr<RwMatrix>, src: GPtr<RwMatrix>) -> GPtr<RwMatrix> = cdecl 0x7F2070 => unported;
-    /// `RwMatrixTransform` (0x7F25A0)
-    pub fn rw_matrix_transform(m: GPtr<RwMatrix>, t: GPtr<RwMatrix>, op: i32) -> GPtr<RwMatrix> = cdecl 0x7F25A0 => unported;
-    /// `RwV3dTransformPoints` (0x7EDD90)
-    pub fn rw_v3d_transform_points(out: GPtr<RwV3d>, inp: GPtr<RwV3d>, n: i32, m: GPtr<RwMatrix>) -> GPtr<RwV3d> = cdecl 0x7EDD90 => unported;
-    /// `RpHAnimHierarchyGetMatrixArray` (0x7C5120)
-    pub fn rp_hanim_hierarchy_get_matrix_array(hier: GPtr<u8>) -> GPtr<RwMatrix> = cdecl 0x7C5120 => unported;
 }
 
 fn hit_col(this: MiPtr) -> GPtr<u8> {
@@ -112,7 +101,7 @@ fn node(k: usize) -> (i32, u8, RwV3d, u32) {
 /// `&hier.matrices[RpHAnimIDGetIndex(hier, id)]` (the original's `shl 6; add`).
 fn bone_matrix(hier: GPtr<u8>, id: i32) -> GPtr<RwMatrix> {
     let idx = rp_hanim_id_get_index(hier, id as u32);
-    let mats = rp_hanim_hierarchy_get_matrix_array(hier);
+    let mats = GPtr::<u8>::cast::<RwMatrix>(rp_hanim_hierarchy_get_matrix_array(hier));
     mats.cast::<u8>().byte_add(((idx as u32) << 6) as i32 as isize).cast()
 }
 
@@ -126,9 +115,9 @@ fn transform_via_working(hier: GPtr<u8>, id: i32, v: &mut RwV3d) {
     let (wm1, wm2) = (WORKING_MATRIX_1.get().cast::<RwMatrix>(), WORKING_MATRIX_2.get().cast::<RwMatrix>());
     wm2.write(wm1.read());
     let m = bone_matrix(hier, id);
-    rw_matrix_transform(wm2, m, 1);
+    rw_matrix_transform(wm2.cast::<u8>(), m.cast::<u8>(), 1);
     let p = GPtr::from_raw(v as *mut RwV3d);
-    rw_v3d_transform_points(p, p, 1, wm2);
+    rw_v3d_transform_points(p.cast::<f32>(), p.cast::<f32>(), 1, wm2.cast::<u8>());
 }
 
 /// `CPedModelInfo::GetModelType` (0x4C57C0): AL = 7 (unhookable).
@@ -166,7 +155,7 @@ pub fn increment_voice(this: MiPtr) {
 /// `CPedModelInfo::CPedModelInfo` (0x4C57A0): base ctor, vptr 0x85BDC0, `m_pHitColModel = 0`.
 #[hook(addr = 0x4C57A0, conv = thiscall, name = "CPedModelInfo::CPedModelInfo", expect = "56 8B F1 E8 B8 F2 FF FF", this = "CPedModelInfo")]
 pub fn constructor(this: MiPtr) -> MiPtr {
-    base_model_info_constructor(this);
+    base_model_info_constructor(this.cast::<u8>());
     f::<u32>(this, mi::VTABLE).write(VTBL_PED_MODEL_INFO);
     f::<u32>(this, HIT_COL_MODEL).write(0);
     this
@@ -197,7 +186,7 @@ pub fn scalar_deleting_destructor(this: MiPtr, flags: u32) -> MiPtr {
 /// `CPedModelInfo::DeleteRwObject` (0x4C6C50): clump part, then the hit col model (cleared).
 #[hook(addr = 0x4C6C50, conv = thiscall, name = "CPedModelInfo::DeleteRwObject", expect = "56 57 8B F1 E8 17 E2 FF FF", this = "CPedModelInfo")]
 pub fn delete_rw_object(this: MiPtr) {
-    clump_delete_rw_object(this);
+    clump_delete_rw_object(this.cast::<crate::shared::CBaseModelInfo>());
     delete_hit_col(this);
     f::<u32>(this, HIT_COL_MODEL).write(0);
 }
@@ -205,13 +194,13 @@ pub fn delete_rw_object(this: MiPtr) {
 /// `CPedModelInfo::SetClump(RpClump*)` (0x4C7340, `ret 4`).
 #[hook(addr = 0x4C7340, conv = thiscall, name = "CPedModelInfo::SetClump", expect = "56 57 8B 7C 24 0C", this = "CPedModelInfo")]
 pub fn set_clump(this: MiPtr, clump: GPtr<u8>) {
-    clump_set_clump(this, clump);
-    clump_set_frame_ids(this, GPtr::from_addr(PED_IDS as usize));
+    clump_set_clump(this.cast::<crate::shared::CBaseModelInfo>(), clump);
+    clump_set_frame_ids(this.cast::<crate::shared::CBaseModelInfo>(), GPtr::from_addr(PED_IDS as usize));
     if hit_col(this).is_null() {
-        create_hit_col_model_skinned_call(this, clump);
+        create_hit_col_model_skinned_call(this.cast::<crate::shared::CBaseModelInfo>(), clump);
     }
     let rw = f::<GPtr<u8>>(this, mi::RW_OBJECT).read();
-    rp_clump_for_all_atomics(rw, SET_ATOMIC_RENDERER_CB, GPtr::from_addr(RENDER_PED_CB as usize));
+    rp_clump_for_all_atomics(rw, SET_ATOMIC_RENDERER_CB, GPtr::<u8>::addr(GPtr::from_addr(RENDER_PED_CB as usize)) as u32);
     get_anim_hierarchy_from_clump(clump);
 }
 
@@ -220,10 +209,10 @@ pub fn set_clump(this: MiPtr, clump: GPtr<u8>) {
 #[hook(addr = 0x4C6D90, conv = thiscall, name = "CPedModelInfo::CreateHitColModelSkinned", expect = "6A FF E9 96 CA F3 FF", this = "CPedModelInfo")]
 pub fn create_hit_col_model_skinned(this: MiPtr, clump: GPtr<u8>) {
     let hier = get_anim_hierarchy_from_skin_clump(clump);
-    let mem = col_model_operator_new(0x30);
+    let mem = GPtr::<sa_core::pools::ColModelSlot>::cast::<u8>(col_model_operator_new(0x30));
     let cm = if mem.is_null() { GPtr::NULL } else { col_model_constructor(mem) };
     col_model_allocate_data(cm, (NUM_COL_NODES as i32) as u32, 0, 0, 0, 0, 0);
-    rw_matrix_invert(WORKING_MATRIX_1.get().cast(), clump_frame_matrix(clump));
+    rw_matrix_invert(GPtr::<RwMatrix>::cast::<u8>(WORKING_MATRIX_1.get().cast()), GPtr::<RwMatrix>::cast::<u8>(clump_frame_matrix(clump)));
     let mut sphere = cm.byte_add(0x2C).cast::<GPtr<u8>>().read().byte_add(8).cast::<GPtr<u8>>().read();
     for k in 0..NUM_COL_NODES {
         let (bone, piece, centre, radius) = node(k);
@@ -236,10 +225,10 @@ pub fn create_hit_col_model_skinned(this: MiPtr, clump: GPtr<u8>) {
         sphere = sphere.byte_add(0x14);
     }
     let mut zero = RwV3d::default();
-    sphere_set(cm.byte_add(0x18), 1.5, GPtr::from_raw(&mut zero));
+    sphere_set(cm.byte_add(0x18), 1.5f32.to_bits(), GPtr::<RwV3d>::cast::<u32>(GPtr::from_raw(&mut zero)));
     let mut lo = RwV3d { x: -0.5, y: -0.5, z: -1.2 };
     let mut hi = RwV3d { x: 0.5, y: 0.5, z: 1.2 };
-    box_set(cm, GPtr::from_raw(&mut lo), GPtr::from_raw(&mut hi));
+    box_set(cm, GPtr::<RwV3d>::cast::<u32>(GPtr::from_raw(&mut lo)), GPtr::<RwV3d>::cast::<u32>(GPtr::from_raw(&mut hi)));
     cm.byte_add(0x28).write(0);
     f::<GPtr<u8>>(this, HIT_COL_MODEL).write(cm);
 }
@@ -254,9 +243,9 @@ pub fn box_around(c: RwV3d) -> (RwV3d, RwV3d) {
 
 fn set_bounds(this: MiPtr, centre: RwV3d) {
     let mut c = centre;
-    sphere_set(hit_col(this).byte_add(0x18), 1.5, GPtr::from_raw(&mut c));
+    sphere_set(hit_col(this).byte_add(0x18), 1.5f32.to_bits(), GPtr::<RwV3d>::cast::<u32>(GPtr::from_raw(&mut c)));
     let (mut lo, mut hi) = box_around(c);
-    box_set(hit_col(this), GPtr::from_raw(&mut lo), GPtr::from_raw(&mut hi));
+    box_set(hit_col(this), GPtr::<RwV3d>::cast::<u32>(GPtr::from_raw(&mut lo)), GPtr::<RwV3d>::cast::<u32>(GPtr::from_raw(&mut hi)));
 }
 
 /// `CPedModelInfo::AnimatePedColModelSkinned(RpClump*)` (0x4C6F70, `ret 4`): returns the hit col
@@ -264,12 +253,12 @@ fn set_bounds(this: MiPtr, centre: RwV3d) {
 #[hook(addr = 0x4C6F70, conv = thiscall, name = "CPedModelInfo::AnimatePedColModelSkinned", expect = "83 EC 34 56 8B F1", this = "CPedModelInfo")]
 pub fn animate_ped_col_model_skinned(this: MiPtr, clump: GPtr<u8>) -> GPtr<u8> {
     if hit_col(this).is_null() {
-        create_hit_col_model_skinned_call(this, clump);
+        create_hit_col_model_skinned_call(this.cast::<crate::shared::CBaseModelInfo>(), clump);
         return hit_col(this);
     }
     let col_data = hit_col(this).byte_add(0x2C).cast::<GPtr<u8>>().read();
     let hier = get_anim_hierarchy_from_skin_clump(clump);
-    rw_matrix_invert(WORKING_MATRIX_1.get().cast(), clump_frame_matrix(clump));
+    rw_matrix_invert(GPtr::<RwMatrix>::cast::<u8>(WORKING_MATRIX_1.get().cast()), GPtr::<RwMatrix>::cast::<u8>(clump_frame_matrix(clump)));
     let mut off = 0isize;
     for k in 0..NUM_COL_NODES {
         let (bone, _, centre, _) = node(k);
@@ -291,7 +280,7 @@ pub fn animate_ped_col_model_skinned(this: MiPtr, clump: GPtr<u8>) -> GPtr<u8> {
 #[hook(addr = 0x4C7170, conv = thiscall, name = "CPedModelInfo::AnimatePedColModelSkinnedWorld", expect = "83 EC 28 53 55", this = "CPedModelInfo")]
 pub fn animate_ped_col_model_skinned_world(this: MiPtr, clump: GPtr<u8>) -> GPtr<u8> {
     if hit_col(this).is_null() {
-        create_hit_col_model_skinned_call(this, clump);
+        create_hit_col_model_skinned_call(this.cast::<crate::shared::CBaseModelInfo>(), clump);
     }
     let col_data = hit_col(this).byte_add(0x2C).cast::<GPtr<u8>>().read();
     let hier = get_anim_hierarchy_from_skin_clump(clump);
@@ -301,7 +290,7 @@ pub fn animate_ped_col_model_skinned_world(this: MiPtr, clump: GPtr<u8>) -> GPtr
         let mut v = centre;
         let m = bone_matrix(hier, bone);
         let p = GPtr::from_raw(&mut v as *mut RwV3d);
-        rw_v3d_transform_points(p, p, 1, m);
+        rw_v3d_transform_points(p.cast::<f32>(), p.cast::<f32>(), 1, m.cast::<u8>());
         let spheres = col_data.byte_add(8).cast::<GPtr<u8>>().read();
         spheres.byte_add(off).cast::<RwV3d>().write(v);
         off += 0x14;
@@ -309,7 +298,7 @@ pub fn animate_ped_col_model_skinned_world(this: MiPtr, clump: GPtr<u8>) -> GPtr
     let mut root = RwV3d::default();
     let m = bone_matrix(hier, 3);
     let p = GPtr::from_raw(&mut root as *mut RwV3d);
-    rw_v3d_transform_points(p, p, 1, m);
+    rw_v3d_transform_points(p.cast::<f32>(), p.cast::<f32>(), 1, m.cast::<u8>());
     set_bounds(this, root);
     hit_col(this)
 }

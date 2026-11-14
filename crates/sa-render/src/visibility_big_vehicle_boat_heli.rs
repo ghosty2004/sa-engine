@@ -14,7 +14,7 @@ use crate::common::{g, rd};
 use crate::bindings::alpha_list_insert_sorted;
 use crate::bindings::atomic_default_render;
 use crate::bindings::dot_with_camera;
-use sa_core::bindings::frame_get_ltm;
+use sa_rwcore::bindings::frame_get_ltm;
 use crate::bindings::render_atomic_with_alpha as render_alpha_atomic;
 
 /// `CVisibilityPlugins` globals: angle to camera 0xC88020, distance from camera 0xC88024, the big-vehicle near

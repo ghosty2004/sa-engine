@@ -22,7 +22,8 @@ use crate::bindings::call_calc_total_time as hier_calc_total_time;
 use crate::bindings::call_get_first_assoc_group as get_first_assoc_group;
 use crate::bindings::call_remove_quaternion_flips as hier_remove_quaternion_flips;
 use crate::bindings::call_set_name as hier_set_name;
-use sa_core::bindings::get_animation_block;
+use crate::bindings::get_animation_block;
+use sa_core::bindings::crt_new as operator_new;
 orig! {
     /// `CAnimBlendSequence::SetName(name)` (0x4D0C50)
     fn seq_set_name(s: GPtr<u8>, name: GPtr<u8>) = thiscall 0x4D0C50 => crate::sequence::set_name;
@@ -30,8 +31,6 @@ orig! {
     fn seq_set_bone_tag(s: GPtr<u8>, tag: i32) = thiscall 0x4D0C70 => crate::sequence::set_bone_tag;
     /// `CAnimBlendSequence::SetNumFrames(count, hasTranslation, compressed, data)` (0x4D0CD0)
     fn seq_set_num_frames(s: GPtr<u8>, n: i32, trans: u8, compressed: u8, data: GPtr<u8>) = thiscall 0x4D0CD0 => crate::sequence::set_num_frames;
-    /// `operator new(size)` (0x82119A)
-    fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
 }
 
 /// `CAnimManager::ms_numAnimBlocks`, `ms_numAnimations`, `ms_aAnimBlocks`, `ms_aAnimations`.

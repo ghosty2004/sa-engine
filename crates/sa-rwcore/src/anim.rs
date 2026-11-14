@@ -61,12 +61,12 @@ use crate::bindings::free_list_destroy;
 use crate::bindings::hanim_hierarchy_create;
 use crate::bindings::interpolator_destroy;
 use crate::bindings::rw_engine_register_plugin as engine_register_plugin;
-use sa_core::bindings::frame_register_plugin;
-use sa_core::bindings::frame_register_plugin_stream;
-use sa_core::bindings::register_scheme_call;
-use sa_core::bindings::rp_material_register_plugin as material_register_plugin;
-use sa_core::bindings::rp_material_register_plugin_stream as material_register_plugin_stream;
-use sa_core::bindings::rw_matrix_destroy as matrix_destroy;
+use crate::bindings::frame_register_plugin;
+use crate::bindings::frame_register_plugin_stream;
+use crate::bindings::register_scheme_call;
+use crate::bindings::rp_material_register_plugin as material_register_plugin;
+use crate::bindings::rp_material_register_plugin_stream as material_register_plugin_stream;
+use crate::bindings::rw_matrix_destroy as matrix_destroy;
 orig! {
     /// `_rwSListCreate(entrySize, hint)` (0x809160)
     fn slist_create(size: u32, hint: u32) -> GPtr<u8> = cdecl 0x809160 => crate::rxpipeline::rw_slist_create;
@@ -87,7 +87,7 @@ fn anim_error(code: u32) {
         error_code: 0,
     };
     e.error_code = rw_error1(code) as i32;
-    rw_error_set(GPtr::from_raw(&mut e));
+    rw_error_set(GPtr::from_raw(&mut e).cast());
 }
 
 /// `RtAnimInitialize()` (0x7CCCA0): registers the ANIMTOOLKIT engine module (0x1B7, size 0); returns

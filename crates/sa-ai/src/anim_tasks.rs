@@ -15,9 +15,9 @@ use crate::common::*;
 /// `CTaskSimpleRunNamedAnim` vtable (0x86D54C).
 const VT_RUN_NAMED_ANIM: u32 = 0x86D54C;
 
-use sa_core::bindings::anim_get_animation;
-use sa_core::bindings::get_animation_block as anim_get_animation_block;
-use sa_world::bindings::task_simple_ctor;
+use sa_anim::bindings::anim_get_animation;
+use sa_anim::bindings::get_animation_block as anim_get_animation_block;
+use crate::bindings::task_simple_ctor;
 
 /// The byte loop the compiler emits for `strcpy(dst, src)` (the terminating NUL included).
 fn copy_str(dst: GPtr<u8>, src: GPtr<u8>) {

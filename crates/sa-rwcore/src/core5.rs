@@ -23,8 +23,8 @@ use sa_core::bindings::rw_tex_dictionary_for_all_textures as tex_dictionary_for_
 use crate::bindings::atomic_stream_read_call as clump_atomic_stream_read;
 use crate::bindings::plugin_get_size;
 use crate::bindings::rw_stream_write_int32 as stream_write_int32;
-use sa_core::bindings::rw_stream_write as stream_write;
-use sa_core::bindings::stream_read;
+use crate::bindings::rw_stream_write as stream_write;
+use crate::bindings::stream_read;
 orig! {
     /// `RpGeometryStreamGetSize(geometry)` (0x74CE20)
     fn geometry_stream_get_size(g: GPtr<u8>) -> u32 = cdecl 0x74CE20 => geometry_stream_get_size_port;
@@ -687,11 +687,10 @@ use crate::bindings::destroy_transform_pipeline_call as immediate_close_b;
 use crate::bindings::device_system_request;
 use sa_core::bindings::calloc as crt_calloc;
 use sa_core::bindings::crt_realloc;
+use sa_core::bindings::crt_malloc;
 orig! {
     /// The device's camera clear through `RwGlobals` +0x9C `(camera, color, mode)`
     fn device_camera_clear(c: GPtr<u8>, color: u32, mode: u32) -> u32 = cdecl table 0xC97B24 0x9C => unported;
-    /// CRT `malloc(size)` (0x824257)
-    fn crt_malloc(size: u32) -> u32 = cdecl 0x824257 => unported;
 }
 
 /// A module close callback's freelist step: the freelist at `RwGlobals + [offset_global]` destroyed and
@@ -788,7 +787,7 @@ pub fn engine_set_focus(enable: u32) -> u32 {
        unverified = "rw5-core-2", route = "L3-only", hazards = "none", recs = "grove-walk",
        note = "CRT heap allocation (addresses differ per run)")]
 pub fn memory_default_malloc(size: u32) -> u32 {
-    crt_malloc(size)
+    GPtr::<u8>::addr(crt_malloc(size)) as u32
 }
 
 /// `_rwMemoryDefaultRealloc(p, size)` (0x8020B0): CRT `realloc`.

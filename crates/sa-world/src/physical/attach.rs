@@ -16,88 +16,56 @@ use crate::collision::fpu::Fpu;
 /// +0x44 are 0 as the original's inlined default constructor leaves them).
 pub type LocalMatrix = [u32; 18];
 
-pub use sa_core::bindings::world_clear_scan_codes;
+pub use crate::bindings::world_clear_scan_codes;
+pub use crate::bindings::add_collision_record as add_collision_record_call;
+pub use crate::bindings::apply_collision_call;
+pub use crate::bindings::apply_friction_self;
+pub use crate::bindings::apply_speed;
+pub use crate::bindings::check_collision as check_collision_call;
+pub use crate::bindings::get_task_climb;
+pub use crate::bindings::matrix_copy_ctor;
+pub use crate::bindings::placeable_get_matrix as get_matrix;
+pub use crate::bindings::position_attached_entity;
+pub use crate::bindings::process_col_models;
+pub use crate::bindings::simple_transform_update_rw_matrix;
+pub use crate::bindings::vec_mul_assign as vector_scale_assign;
+pub use crate::bindings::entity_update_rw_frame as update_rw_frame;
+pub use sa_rwcore::bindings::frame_get_ltm as rw_frame_get_ltm;
+pub use sa_core::bindings::matrix_assign;
+pub use sa_core::bindings::matrix_copy_to_rw_matrix as matrix_copy_to_rw;
+pub use crate::bindings::matrix_dtor;
+pub use sa_core::bindings::matrix_invert;
+pub use sa_core::bindings::matrix_mul_assign;
+pub use sa_core::bindings::matrix_mul_vec as matrix_mul_point;
+pub use sa_core::bindings::matrix_update_matrix;
+pub use sa_core::bindings::matrix_update_rw_matrix;
+pub use sa_core::bindings::rt_quat_convert_from_matrix;
+pub use crate::bindings::vector_magnitude_sqr as magnitude_sqr;
+pub use crate::bindings::world_add;
+pub use crate::bindings::world_remove;
+pub use sa_stream::bindings::ped_is_player;
+pub use crate::bindings::placeable_allocate_matrix as allocate_matrix;
+pub use sa_stream::bindings::simple_transform_update_matrix;
+pub use crate::bindings::physical_apply_turn_force as apply_turn_force_call;
 orig! {
     /// virtual `CEntity::SetIsStatic(bool)` (vtable +0x10, thiscall; the dword the original pushes)
     pub fn set_is_static_v(e: Ent, v: u32) = thiscall vslot 0x10 => unported;
-    /// `CWorld::Remove(CEntity*)` (0x563280)
-    pub fn world_remove(e: Ent) = cdecl 0x563280 => unported;
-    /// `CWorld::Add(CEntity*)` (0x563220)
-    pub fn world_add(e: Ent) = cdecl 0x563220 => unported;
-    /// `CCollision::ProcessColModels(const CMatrix&, CColModel&, const CMatrix&, CColModel&,
-    /// CColPoint*, CColPoint*, float*, bool)` (0x4185C0)
-    pub fn process_col_models(m1: Ent, c1: Ent, m2: Ent, c2: Ent, cps: Ent, lcps: Ent, dists: Ent, b: u32) -> i32
-        = cdecl 0x4185C0 => unported;
-    /// `CPlaceable::AllocateMatrix()` (0x54F560)
-    pub fn allocate_matrix(e: Ent) = thiscall 0x54F560 => unported;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*)` (0x54F1B0, thiscall on the placement)
-    pub fn simple_transform_update_matrix(t: Ent, m: Ent) = thiscall 0x54F1B0 => unported;
-    /// `CSimpleTransform::UpdateRwMatrix(RwMatrix*)` (0x54EF40)
-    pub fn simple_transform_update_rw_matrix(t: Ent, m: Ent) = thiscall 0x54EF40 => unported;
-    /// `CPlaceable::GetMatrix()` (0x411990, returns the matrix)
-    pub fn get_matrix(e: Ent) -> Ent = thiscall 0x411990 => unported;
     /// `CMatrix::ResetOrientation()` (0x59AEA0)
     pub fn matrix_reset_orientation(m: GPtr<LocalMatrix>) = thiscall 0x59AEA0 => unported;
     /// `CMatrix::RotateZ(float)` (0x59B390)
     pub fn matrix_rotate_z(m: GPtr<LocalMatrix>, a: u32) = thiscall 0x59B390 => unported;
     /// `CMatrix::RotateX(float)` (0x59B1E0)
     pub fn matrix_rotate_x(m: GPtr<LocalMatrix>, a: u32) = thiscall 0x59B1E0 => unported;
-    /// `CMatrix::operator=(const CMatrix&)` (0x59BBC0)
-    pub fn matrix_assign(dst: Ent, src: Ent) = thiscall 0x59BBC0 => unported;
-    /// `CMatrix::operator*=(const CMatrix&)` (0x411A80)
-    pub fn matrix_mul_assign(dst: Ent, rhs: Ent) = thiscall 0x411A80 => unported;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    pub fn matrix_dtor(m: Ent) = thiscall 0x59ACD0 => unported;
-    /// `CMatrix::CMatrix(const CMatrix&)` (0x59BCF0)
-    pub fn matrix_copy_ctor(m: Ent, src: Ent) = thiscall 0x59BCF0 => unported;
-    /// `CMatrix::UpdateMatrix(RwMatrix*)` (0x59AD20)
-    pub fn matrix_update_matrix(m: Ent, rw: Ent) = thiscall 0x59AD20 => unported;
-    /// `CMatrix::UpdateRwMatrix(RwMatrix*)` (0x59AD70)
-    pub fn matrix_update_rw_matrix(m: Ent, rw: Ent) = thiscall 0x59AD70 => unported;
-    /// `CMatrix::CopyToRwMatrix(RwMatrix*)` (0x59B8B0)
-    pub fn matrix_copy_to_rw(m: Ent, rw: Ent) = thiscall 0x59B8B0 => unported;
-    /// `Invert(const CMatrix& src, CMatrix& dst)` (0x59B920, cdecl)
-    pub fn matrix_invert(src: Ent, dst: Ent) -> Ent = cdecl 0x59B920 => unported;
-    /// `RwFrameGetLTM(RwFrame*)` (0x7F0990)
-    pub fn rw_frame_get_ltm(f: Ent) -> Ent = cdecl 0x7F0990 => unported;
-    /// `RtQuatConvertFromMatrix(RtQuat*, const RwMatrix*)` (0x7EB5C0)
-    pub fn rt_quat_convert_from_matrix(q: Ent, m: Ent) -> Ent = cdecl 0x7EB5C0 => unported;
-    /// `operator*(const CMatrix&, const CVector&)` (0x59C890, hidden return pointer)
-    pub fn matrix_mul_point(out: GPtr<CVector>, m: Ent, v: GPtr<CVector>) -> GPtr<CVector> = cdecl 0x59C890 => unported;
-    /// `CEntity::UpdateRwFrame()` (0x532B00)
-    pub fn update_rw_frame(e: Ent) = thiscall 0x532B00 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0)
-    pub fn ped_is_player(p: Ent) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CPedIntelligence::GetTaskClimb()` (0x601180)
-    pub fn get_task_climb(i: Ent) -> Ent = thiscall 0x601180 => unported;
     /// `CPhysical::ProcessCollisionSectorList(int32 x, int32 y)` (0x54BA60)
     pub fn process_collision_sector_list(e: Ent, x: i32, y: i32) -> u8 = thiscall 0x54BA60 => crate::physical::mvpe_phys1::process_collision_sector_list;
     /// `CPhysical::ProcessCollisionSectorList_SimpleCar(CRepeatSector*)` (0x54CFF0)
     pub fn process_collision_sector_list_simple_car(e: Ent, s: Ent) -> u8 = thiscall 0x54CFF0 => crate::physical::mvpe_phys1::process_collision_sector_list_simple_car;
-    /// `CPhysical::ApplySpeed()` (0x547B80)
-    pub fn apply_speed(e: Ent) = thiscall 0x547B80 => apply_speed_port;
-    /// `CPhysical::ApplyFriction(float, CColPoint&)` (0x5454C0)
-    pub fn apply_friction_self(e: Ent, friction: f32, cp: Ent) -> u8 = thiscall 0x5454C0 => unported;
     /// `CPhysical::ApplyFriction()` (0x5483D0)
     pub fn apply_friction_void_call(e: Ent) = thiscall 0x5483D0 => apply_friction_void;
     /// `CPhysical::ApplyGravity()` (0x542FE0)
     pub fn apply_gravity_call(e: Ent) = thiscall 0x542FE0 => crate::physical::forces::apply_gravity;
     /// `CPhysical::ApplyAirResistance()` (0x544C40)
     pub fn apply_air_resistance_call(e: Ent) = thiscall 0x544C40 => crate::physical::forces::apply_air_resistance;
-    /// `CPhysical::PositionAttachedEntity()` (0x546FF0)
-    pub fn position_attached_entity(e: Ent) = thiscall 0x546FF0 => crate::physical::friction_attach::position_attached_entity;
-    /// `CPhysical::CheckCollision()` (0x54D920)
-    pub fn check_collision_call(e: Ent) -> u8 = thiscall 0x54D920 => check_collision;
-    /// `CPhysical::AddCollisionRecord(CEntity*)` (0x543490)
-    pub fn add_collision_record_call(e: Ent, other: Ent) = thiscall 0x543490 => crate::physical::base::add_collision_record;
-    /// `CPhysical::ApplyCollision(CEntity*, CColPoint&, float&)` (0x5435C0)
-    pub fn apply_collision_call(e: Ent, entity: Ent, cp: Ent, damage: GPtr<f32>) -> u8 = thiscall 0x5435C0 => crate::physical::collide::apply_collision;
-    /// `CVector::MagnitudeSqr()` (0x406DA0, ST0)
-    pub fn magnitude_sqr(v: Ent) -> f64 = thiscall 0x406DA0 => unported;
-    /// `CVector::operator*=(float)` (0x40FEF0)
-    pub fn vector_scale_assign(v: Ent, s: f32) = thiscall 0x40FEF0 => unported;
-    /// `CPhysical::ApplyTurnForce(CVector, CVector)` (0x542A50)
-    pub fn apply_turn_force_call(e: Ent, force: CVector, point: CVector) = thiscall 0x542A50 => crate::physical::forces::apply_turn_force;
 }
 
 /// `CWorld::m_aTempColPts` (0xB9ACD0)
@@ -417,7 +385,7 @@ pub fn attach_entity_to_entity_quat(this: Ent, entity: Ent, offset: Ent, rotatio
 pub fn place_physical_relative_to_other_physical(rel: Ent, to_place: Ent, offset: CVector) {
     let mut off = offset;
     let mut o = CVector::new(0.0, 0.0, 0.0);
-    let p = rv(matrix_mul_point(lp(&mut o), matrix(rel), lp(&mut off)).cast(), 0);
+    let p = rv(GPtr::<u8>::cast::<sa_math::vector::CVector>(matrix_mul_point(GPtr::<sa_math::vector::CVector>::cast::<u8>(lp(&mut o)), matrix(rel), GPtr::<sa_math::vector::CVector>::cast::<u8>(lp(&mut off)))).cast(), 0);
     let mut f = Fpu::new();
     f.fld(sa_core::timer::TIME_STEP.get());
     f.fmul_m(cf(k::K_858C20));
@@ -763,7 +731,7 @@ pub fn apply_friction_void(this: Ent) {
             return;
         }
         let g = G_8CD7F4.get();
-        f.push(X87::from_f64_exact(magnitude_sqr(this.byte_add(MOVE_SPEED))));
+        f.push(X87::from_f64_exact(magnitude_sqr(this.byte_add(MOVE_SPEED)).to_f64()));
         f.fld(g);
         f.fmul_m(g);
         f.fcompp();
@@ -771,7 +739,7 @@ pub fn apply_friction_void(this: Ent) {
             return;
         }
         let g = G_8CD7F0.get();
-        f.push(X87::from_f64_exact(magnitude_sqr(this.byte_add(TURN_SPEED))));
+        f.push(X87::from_f64_exact(magnitude_sqr(this.byte_add(TURN_SPEED)).to_f64()));
         f.fld(g);
         f.fmul_m(g);
         f.fcompp();
@@ -800,13 +768,12 @@ pub const HOOKS: &[HookReg] = &[
 ];
 
 pub use crate::bindings::set_next_scan_code;
+pub use crate::bindings::physical_remove_and_add as remove_and_add_call;
 orig! {
     /// `CMatrix::Reorthogonalise()` (0x59B6A0)
     pub fn matrix_reorthogonalise(m: Ent) = thiscall 0x59B6A0 => unported;
     /// `CPhysical::ProcessShiftSectorList(int32 x, int32 y)` (0x546670)
     pub fn process_shift_sector_list(e: Ent, x: i32, y: i32) -> u8 = thiscall 0x546670 => crate::physical::mvpe_phys1::process_shift_sector_list;
-    /// `CPhysical::RemoveAndAdd()` (0x542560)
-    pub fn remove_and_add_call(e: Ent) = thiscall 0x542560 => crate::physical::base::remove_and_add;
 }
 
 sa_core::globals! {
@@ -959,17 +926,13 @@ sa_core::globals! {
     pub static SPEED_Z_LIMIT @ 0x8CDF08: f32 = f32::from_bits(0x414E6666);
 }
 
+pub use crate::bindings::apply_move_speed as apply_move_speed_call;
+pub use crate::bindings::apply_turn_speed as apply_turn_speed_call;
+pub use crate::bindings::placeable_get_heading as get_heading;
+pub use crate::bindings::report_mission_audio_event;
 orig! {
     /// `CTimer::UpdateTimeStep(float)` (0x541F40)
     pub fn update_time_step(ts: u32) = cdecl 0x541F40 => crate::physical::base::update_time_step;
-    /// `CPhysical::ApplyMoveSpeed()` (0x542DD0)
-    pub fn apply_move_speed_call(e: Ent) = thiscall 0x542DD0 => crate::physical::forces::apply_move_speed;
-    /// `CPhysical::ApplyTurnSpeed()` (0x542E20)
-    pub fn apply_turn_speed_call(e: Ent) = thiscall 0x542E20 => crate::physical::forces::apply_turn_speed;
-    /// `CAudioEngine::ReportMissionAudioEvent(uint16, CObject*)` (0x507350, thiscall on AudioEngine)
-    pub fn report_mission_audio_event(ae: Ent, ev: u32, obj: Ent) = thiscall 0x507350 => unported;
-    /// `CPlaceable::GetHeading()` (0x441DB0, ST0)
-    pub fn get_heading(e: Ent) -> f64 = thiscall 0x441DB0 => unported;
 }
 
 /// `TIME_STEP = saved > 1e-5f (or NaN) ? saved : 1e-5f` (`fld; fld; fcomp; jp; fstp`).

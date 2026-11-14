@@ -7,9 +7,9 @@ use sa_core::hook;
 
 use crate::common::{g, wr};
 
-use sa_core::bindings::stream_read;
+use sa_rwcore::bindings::stream_read;
 use crate::bindings::spec_mat_pool_new as spec_pool_new;
-use sa_core::bindings::rw_texture_read as texture_read;
+use sa_rwcore::bindings::rw_texture_read as texture_read;
 
 /// `CCustomCarEnvMapPipeline::ms_specularMapPluginOffset` and the specular-material pool pointer.
 const SPEC_OFFSET: usize = 0x8D12CC;

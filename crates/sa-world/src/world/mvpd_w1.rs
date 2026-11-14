@@ -18,12 +18,13 @@ use crate::bindings::get_event_global_group;
 use crate::bindings::ped_scripted_task_record_process;
 use crate::bindings::population_remove_ped;
 use crate::bindings::simple_transform_update_rw_matrix;
-use sa_core::bindings::entity_update_rw_frame;
+use crate::bindings::entity_update_rw_frame;
 use sa_core::bindings::load_monitor_end as load_monitor_end_timer;
 use sa_core::bindings::load_monitor_start as load_monitor_start_timer;
 use sa_core::bindings::matrix_update_rw_matrix;
 use crate::bindings::ped_position_attached_ped;
 use crate::bindings::remove_from_moving_list;
+use crate::bindings::find_player_ped;
 orig! {
     /// `CEventGlobalGroup::AddEventsToPed(CPed*)` (0x4AB9C0, `ret 4`)
     fn add_events_to_ped(grp: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x4AB9C0 => unported;
@@ -45,8 +46,6 @@ orig! {
     fn v_process_collision(e: GPtr<u8>) = thiscall vslot 0x2C => unported;
     /// entity virtual +0x30 (`ProcessShift`)
     fn v_process_shift(e: GPtr<u8>) = thiscall vslot 0x30 => unported;
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210, cdecl)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => crate::world::cworld::find_player_ped_port;
     /// `CObject::ProcessControlLogic()` (0x5A29A0)
     fn object_process_control_logic(o: GPtr<u8>) = thiscall 0x5A29A0 => unported;
     /// `CVehicleRecording::SaveOrRetrieveDataForThisFrame()` (0x45A610, cdecl)
@@ -318,14 +317,14 @@ pub fn world_process() {
 
 use crate::bindings::make_vehicle_update_data;
 use crate::bindings::mark_everything_as_new as replay_mark_everything_as_new;
-use sa_core::bindings::find_player_coors;
+use crate::bindings::find_player_coors;
 use sa_core::bindings::font_print_string;
 use sa_core::bindings::font_set_background;
 use sa_core::bindings::font_set_color;
 use sa_core::bindings::font_set_font_style;
 use sa_core::bindings::font_set_orientation;
 use sa_core::bindings::font_set_proportional;
-use sa_core::bindings::get_pad as pad_get_pad;
+use sa_input::bindings::get_pad as pad_get_pad;
 use sa_core::bindings::replay_finish_playback;
 use sa_core::bindings::replay_init;
 use sa_core::bindings::rgba_ctor;
@@ -448,7 +447,7 @@ pub fn replay_display() {
     let k = g::<f32>(0x858CE8).read();
     let sy = xi(h).fmul_m(g::<f32>(0x859524).read()).fmul_m(k).to_f32();
     let sx = xi(w).fmul_m(g::<f32>(0x859520).read()).fmul_m(k).to_f32();
-    font_set_scale(sx, sy);
+    font_set_scale(sx.to_bits(), sy.to_bits());
     font_set_orientation(1);
     font_set_background(0, 0);
     font_set_centre_size(xi(g::<i32>(0xC17044).read().wrapping_add(-0x14)).to_f32());
@@ -812,7 +811,7 @@ pub fn garages_print_messages() {
     let sh = g::<f32>(0x859524).read();
     let sy = xi(g::<i32>(0xC17048).read()).fmul_m(sh).fmul_m(g::<f32>(0x859994).read()).to_f32();
     let sx = xi(g::<i32>(0xC17044).read()).fmul_m(sw).fmul_m(g::<f32>(0x858B8C).read()).to_f32();
-    font_set_scale(sx, sy);
+    font_set_scale(sx.to_bits(), sy.to_bits());
     font_set_proportional(1);
     font_set_background(0, 0);
     let w = xi(g::<i32>(0xC17044).read());

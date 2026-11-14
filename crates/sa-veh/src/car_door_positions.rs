@@ -20,7 +20,7 @@ use crate::common::{jne_mask, jp5, model_info, rd, wr, x};
 use sa_core::bindings::matrix_mul_vec as matrix_mul_vector;
 use sa_core::bindings::tm_get_active_task as task_manager_get_active_task;
 use sa_stream::bindings::ped_is_player;
-use sa_core::bindings::anim_door_offsets;
+use sa_anim::bindings::anim_door_offsets;
 use sa_world::bindings::bike_corrected_world_door_position;
 use sa_world::bindings::multiply3x3;
 use sa_world::bindings::path_to_door_blocked;
@@ -28,8 +28,8 @@ use sa_world::bindings::ped_groups_are_in_same_group;
 use sa_core::bindings::world_get_is_line_of_sight_clear;
 use sa_world::bindings::world_process_vertical_line;
 use sa_world::bindings::world_test_sphere_against_world;
-use sa_world::bindings::car_enter_exit_get_position_to_open_car_door as get_position_to_open_car_door_o;
-use sa_world::bindings::car_enter_exit_is_room_for_ped_to_leave_car as is_room_for_ped_to_leave_car_o;
+use crate::bindings::car_enter_exit_get_position_to_open_car_door as get_position_to_open_car_door_o;
+use crate::bindings::car_enter_exit_is_room_for_ped_to_leave_car as is_room_for_ped_to_leave_car_o;
 orig! {
     /// `CVehicle` virtual slot 0xD4 (ST0)
     fn vehicle_vslot_d4(v: GPtr<u8>) -> f64 = thiscall vslot 0xD4 => unported;
@@ -75,7 +75,7 @@ fn rear_dummy(mi: GPtr<u8>) -> [f32; 3] {
 fn door_offset(hd: GPtr<u8>, ty: u32) -> [f32; 3] {
     let g = GPtr::<u8>::from_addr(ANIM_GROUPS + 0x94 * rd::<u8>(hd, 0xDE) as usize);
     let mut d = [0f32; 3];
-    anim_door_offsets(g, vp(&mut d), ty);
+    anim_door_offsets(g, vp(&mut d), ty as i32);
     d
 }
 
@@ -165,7 +165,7 @@ pub fn get_position_to_open_car_door(out: GPtr<u8>, veh: GPtr<u8>, door: i32) ->
             f(x(a[2]).fadd(x(d[2]).fchs())),
         ];
         let mut r = [0f32; 3];
-        matrix_mul_vector(GPtr::<u8>::cast::<f32>(vp(&mut r)), mat, vp(&mut b));
+        matrix_mul_vector(vp(&mut r), mat, vp(&mut b));
         write3(out, r);
         return out;
     }
@@ -200,7 +200,7 @@ pub fn get_position_to_open_car_door(out: GPtr<u8>, veh: GPtr<u8>, door: i32) ->
         f(x(a[2]).fsub_m(c[2])),
     ];
     let mut r = [0f32; 3];
-    matrix_mul_vector(GPtr::<u8>::cast::<f32>(vp(&mut r)), mat, vp(&mut b));
+    matrix_mul_vector(vp(&mut r), mat, vp(&mut b));
     write3(out, r);
     out
 }
@@ -241,9 +241,9 @@ pub fn is_room_for_ped_to_leave_car(veh: GPtr<u8>, door: i32, offset: GPtr<u8>) 
         p[0] = f(x(p[0]).fchs());
     }
     let mut q = [0f32; 3];
-    matrix_mul_vector(GPtr::<u8>::cast::<f32>(vp(&mut q)), mat, vp(&mut p));
+    matrix_mul_vector(vp(&mut q), mat, vp(&mut p));
     let mut t = [0f32; 3];
-    get_position_to_open_car_door_o(vp(&mut t), veh, door as u32);
+    get_position_to_open_car_door_o(vp(&mut t), veh, (door as u32) as i32);
     if !offset.is_null() {
         let mut o = read3(offset);
         if door == 8 || door == 9 {
@@ -280,7 +280,7 @@ pub fn is_room_for_ped_to_leave_car(veh: GPtr<u8>, door: i32, offset: GPtr<u8>) 
     }
     let bld = u32::from(vtype != 6);
     let [tx, ty, tz] = t.map(f32::to_bits);
-    let hit = world_test_sphere_against_world(f32::from_bits(tx), f32::from_bits(ty), f32::from_bits(tz), f32::from_bits(0x3EB3_3333), veh, bld, 1, 0, 1, 0, 0);
+    let hit = world_test_sphere_against_world(sa_math::vector::CVector::new(f32::from_bits(tx), f32::from_bits(ty), f32::from_bits(tz)), f32::from_bits(0x3EB3_3333), veh.addr() as u32, bld, 1, 0, 1, 0, 0);
     if !hit.is_null()
         && !(rd::<u16>(hit, 0x22) == 0x260 && rd::<u16>(veh, 0x22) == 0x241)
         && hit != rd::<GPtr<u8>>(veh, 0xFC)
@@ -405,7 +405,7 @@ pub fn get_nearest_car_door(ped: GPtr<u8>, veh: GPtr<u8>, out: GPtr<u8>, door: G
         }
     }
     let want = rd::<i32>(door, 0);
-    if want != 0 && is_room_for_ped_to_leave_car_o(veh, want as u32, drv_off) != 0 {
+    if want != 0 && is_room_for_ped_to_leave_car_o(veh, (want as u32) as i32, drv_off) != 0 {
         return match rd::<i32>(door, 0) {
             10 => {
                 write3(out, lf);

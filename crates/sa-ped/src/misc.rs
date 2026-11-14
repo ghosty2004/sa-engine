@@ -21,15 +21,15 @@ const MISSION_FAILED_TIME: usize = 0x96A8AC;
 const PARACHUTE_LOAD_STATE: usize = 0x8E69CC;
 
 pub use sa_core::bindings::crt_free_8214bd as crt_free;
-pub use sa_core::bindings::end_gang_war;
-pub use sa_core::bindings::txd_add_ref;
+pub use sa_pop::bindings::end_gang_war;
+pub use sa_stream::bindings::txd_add_ref;
 pub use sa_core::bindings::txd_create;
 pub use sa_world::bindings::take_remote_controlled_car_from_player;
 pub use sa_core::bindings::add_big_message;
 pub use sa_core::bindings::add_txd_slot as txd_add_slot;
-pub use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+pub use sa_world::bindings::entity_clean_up_old_reference as clean_up_old_reference;
 pub use sa_core::bindings::entity_register_reference as register_reference;
-pub use sa_core::bindings::ped_give_weapon;
+pub use crate::bindings::ped_give_weapon;
 pub use sa_core::bindings::text_get;
 pub use sa_stream::bindings::remove_txd_slot as txd_remove_slot;
 pub use sa_world::bindings::world_test_sphere_against_world as test_sphere_against_world;
@@ -163,7 +163,7 @@ pub fn remove_criminal_to_kill(this: GPtr<u8>, _ped: GPtr<u8>, i: i32) {
     let r = criminal(this, i);
     let e = r.read();
     if !e.is_null() {
-        clean_up_old_reference(e, r);
+        clean_up_old_reference(e, r.cast::<u8>());
         r.write(GPtr::NULL);
     }
 }
@@ -183,7 +183,7 @@ pub fn clear_criminals_to_kill(this: GPtr<u8>) {
         wr::<u32>(r.read(), 0x790, 0x3F80_0000);
         let e = r.read();
         if !e.is_null() {
-            clean_up_old_reference(e, r);
+            clean_up_old_reference(e, r.cast::<u8>());
         }
         r.write(GPtr::NULL);
     }
@@ -195,7 +195,7 @@ pub fn set_partner(this: GPtr<u8>, p: GPtr<u8>) {
     let r: GPtr<GPtr<u8>> = this.byte_add(0x7A8).cast();
     let e = r.read();
     if !e.is_null() {
-        clean_up_old_reference(e, r);
+        clean_up_old_reference(e, r.cast::<u8>());
     }
     r.write(p);
     if !p.is_null() {
@@ -222,19 +222,7 @@ pub fn skin_shutdown() {
 /// `CWorld::TestSphereAgainstWorld(pos, 0.25, null, false, true, false, false, false, false)` returns.
 #[hook(addr = 0x6168E0, conv = cdecl, name = "CPedPlacement::IsPositionClearOfCars-Pos", expect = "8B 44 24 04 8B 10")]
 pub fn is_position_clear_of_cars_pos(pos: GPtr<u32>) -> GPtr<u8> {
-    test_sphere_against_world(
-        f32::from_bits(pos.read()),
-        f32::from_bits(pos.wrapping_index(1).read()),
-        f32::from_bits(pos.wrapping_index(2).read()),
-        f32::from_bits(0x3E80_0000),
-        GPtr::NULL,
-        0,
-        1,
-        0,
-        0,
-        0,
-        0,
-    )
+    test_sphere_against_world(sa_math::vector::CVector::new(f32::from_bits(pos.read()), f32::from_bits(pos.wrapping_index(1).read()), f32::from_bits(pos.wrapping_index(2).read())), f32::from_bits(0x3E80_0000), GPtr::<u8>::addr(GPtr::NULL) as u32, 0, 1, 0, 0, 0, 0)
 }
 
 /// `__init_PlayerClothes` (0x84FF30, static initialiser): zeroes `PlayerClothes`.

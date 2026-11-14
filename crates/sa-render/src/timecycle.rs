@@ -144,13 +144,14 @@ const CALC_BOX_FLOATS_B: [(isize, u32); 8] = [
 pub use sa_core::bindings::atexit;
 pub use sa_core::bindings::rgba_ctor;
 pub use sa_core::bindings::vector_normalise;
-pub use sa_world::bindings::cam_no_rain;
+pub use crate::bindings::cam_no_rain;
 pub use sa_world::bindings::is_vision_fx_active;
-pub use sa_world::bindings::player_no_rain;
+pub use crate::bindings::player_no_rain;
 pub use sa_core::bindings::file_close as file_mgr_close_file;
 pub use sa_core::bindings::file_set_dir as file_mgr_set_dir;
-pub use sa_core::bindings::load_line;
+pub use sa_stream::bindings::load_line;
 pub use sa_core::bindings::open_file as file_mgr_open_file;
+pub use crate::bindings::calc_ped_shadow_values;
 orig! {
     /// `CTimeCycle::CalcColoursForPoint(CVector point, CColourSet* out)` (0x5603D0; the CVector by value)
     pub fn calc_colours_for_point(px: u32, py: u32, pz: u32, out: GPtr<u8>) = cdecl 0x5603D0 => unported;
@@ -160,8 +161,6 @@ orig! {
     pub fn colour_set_ctor_call(s: GPtr<u8>, time_id: i32, weather_id: i32) -> GPtr<u8> = thiscall 0x55F4B0 => unported;
     /// `CColourSet::Interpolate(a, b, fa, fb, ignoreSky)` (0x55F870)
     pub fn colour_set_interpolate_call(s: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, fa: u32, fb: u32, ignore_sky: u32) = thiscall 0x55F870 => unported;
-    /// `CShadows::CalcPedShadowValues(CVector sunPos, float* frontX, frontY, sideX, sideY, dispX, dispY)` (0x7076C0)
-    pub fn calc_ped_shadow_values(x: u32, y: u32, z: u32, fx: GPtr<u8>, fy: GPtr<u8>, sx: GPtr<u8>, sy: GPtr<u8>, dx: GPtr<u8>, dy: GPtr<u8>) = cdecl 0x7076C0 => unported;
     /// `CTimeCycle::SetConstantParametersForPostFX()` (0x560210)
     pub fn set_constant_parameters_for_post_fx_call() = cdecl 0x560210 => unported;
     /// CRT `sscanf(line, fmt, ...)` (0x8220AD) with the 52 pointers `CTimeCycle::Initialise` passes
@@ -614,7 +613,7 @@ pub fn calc_colours_for_point_port(px: u32, py: u32, pz: u32, out: GPtr<u8>) {
     wr::<f32>(sun, 0, f32_of(ang.fsin().fadd_m(k(K_0_7))));
     wr::<u32>(sun, 4, 0xBF33_3333);
     wr::<f32>(sun, 8, f32_of(ang.fcos().fsubr_m(k(K_0_2))));
-    vector_normalise(sun);
+    vector_normalise(sun.cast::<[f32;3]>());
 
     // the extra-colour box
     let wb = GPtr::<u8>::from_addr(wbox as usize);
@@ -968,7 +967,7 @@ pub fn initialise() {
     dir.write(f32_of(a2.fcos().fmul(c1)));
     dir.wrapping_index(1).write(f32_of(a2.fsin().fmul(c1)));
     dir.wrapping_index(2).write(f32_of(a1.fsin()));
-    vector_normalise(dir.cast());
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(dir.cast()));
     FOG_REDUCTION.set(0);
     EXTRA_COLOUR_ON.set(0);
 }

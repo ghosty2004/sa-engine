@@ -18,22 +18,24 @@ pub use sa_core::bindings::rw_camera_create;
 pub use sa_core::bindings::rw_camera_destroy;
 pub use sa_core::bindings::rw_camera_set_far_clip_plane;
 pub use sa_core::bindings::rw_camera_set_near_clip_plane;
-pub use sa_core::bindings::rw_frame_create;
+pub use sa_rwcore::bindings::rw_frame_create;
 pub use sa_core::bindings::rw_frame_destroy;
-pub use sa_core::bindings::rw_frame_update_objects;
+pub use sa_rwcore::bindings::rw_frame_update_objects;
 pub use sa_core::bindings::rw_matrix_update;
-pub use sa_core::bindings::rw_raster_create;
-pub use sa_core::bindings::rw_raster_destroy;
-pub use sa_core::bindings::rw_texture_create;
-pub use sa_stream::bindings::fx_get_fx_quality;
-pub use sa_core::bindings::rw_texture_destroy;
+pub use sa_rwcore::bindings::rw_raster_create;
+pub use sa_rwcore::bindings::rw_raster_destroy;
+pub use sa_rwcore::bindings::rw_texture_create;
+pub use crate::bindings::fx_get_fx_quality;
+pub use sa_rwcore::bindings::rw_texture_destroy;
 pub use crate::bindings::custom_pipe_atomic_setup;
 pub use crate::bindings::real_time_shadow_destroy as real_time_shadow_destroy_call;
 pub use crate::bindings::shadow_camera_create as shadow_camera_create_call;
 pub use crate::bindings::shadow_camera_destroy as shadow_camera_destroy_call;
 pub use crate::bindings::shadow_camera_set_light as shadow_camera_set_light_call;
-pub use sa_core::bindings::object_has_frame_set_frame as rw_object_has_frame_set_frame;
-pub use sa_core::bindings::rp_light_create;
+pub use sa_rwcore::bindings::object_has_frame_set_frame as rw_object_has_frame_set_frame;
+pub use sa_rwcore::bindings::rp_light_create;
+pub use sa_core::bindings::rp_light_set_color;
+pub use sa_core::bindings::rw_camera_set_view_window;
 orig! {
     /// `Light::RemoveExtraDirectionalLights(RpWorld*)` (0x7359E0)
     pub fn remove_extra_directional_lights(world: GPtr<u8>) = cdecl 0x7359E0 => unported;
@@ -45,10 +47,6 @@ orig! {
     pub fn fx_emitter_create_particles(this: GPtr<u8>, a: u32, b: u32) = thiscall 0x4A41E0 => unported;
     /// `RwCameraSetProjection(RwCamera*, RwCameraProjection)` (0x7EE3A0)
     pub fn rw_camera_set_projection(c: GPtr<u8>, p: u32) -> GPtr<u8> = cdecl 0x7EE3A0 => unported;
-    /// `RwCameraSetViewWindow(RwCamera*, const RwV2d*)` (0x7EE410)
-    pub fn rw_camera_set_view_window(c: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EE410 => unported;
-    /// `RpLightSetColor(RpLight*, const RwRGBAReal*)` (0x751A90)
-    pub fn rp_light_set_color(l: GPtr<u8>, c: GPtr<u8>) -> GPtr<u8> = cdecl 0x751A90 => unported;
     /// `CRealTimeShadowManager::GetRealTimeShadow(CPhysical*)` (0x706970)
     pub fn get_real_time_shadow(this: GPtr<u8>, e: GPtr<u8>) = thiscall 0x706970 => unported;
     /// `FxSystem_c::Exit()` (0x4AA840)
@@ -408,7 +406,7 @@ pub fn shadow_camera_create(this: GPtr<u8>, n: u32) -> GPtr<u8> {
         if rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0), 4).is_null() {
             break 'b false;
         }
-        let raster = rw_raster_create(size, size, 0, 5);
+        let raster = rw_raster_create((size as u32) as i32, (size as u32) as i32, 0, 5);
         if raster.is_null() {
             break 'b false;
         }

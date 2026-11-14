@@ -8,7 +8,7 @@ use sa_core::hook;
 use crate::common::*;
 
 use crate::bindings::stare_at_ped_ctor;
-use sa_core::bindings::task_new as task_new_c;
+use crate::bindings::task_new as task_new_c;
 
 /// `CTaskComplexStareAtPed::Clone()` (0x660390, SEH frame): the remaining time (timer +0x18 / +0x1C running, flag
 /// +0x20: `start + duration - now`, else the stored time +0x14), `operator new(0x28)` and the constructor with

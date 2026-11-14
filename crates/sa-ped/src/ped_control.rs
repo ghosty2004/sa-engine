@@ -108,26 +108,26 @@ const CHASE_SAVED: usize = 0xB9B994;
 const CHASE_MOVED: usize = 0x8CDF21;
 const CHASE_NEAR_NODE: usize = 0x8CDF20;
 
-use sa_world::bindings::population_update_ped_count as update_ped_count;
+use sa_pop::bindings::population_update_ped_count as update_ped_count;
 use sa_core::bindings::camera_process;
 use sa_core::bindings::camera_restore_with_jump_cut;
 use sa_core::bindings::camera_set_fade_colour;
 use sa_core::bindings::destroy_fx_system as fx_destroy_system;
-use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
-use sa_core::bindings::entity_get_is_on_screen;
+use sa_world::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+use sa_world::bindings::entity_get_is_on_screen;
 use sa_core::bindings::entity_register_reference as register_reference;
 use sa_core::bindings::entity_update_rp_hanim;
 use sa_core::bindings::fx_play;
 use sa_core::bindings::general_random_int_in_range as general_get_random_number_in_range_i;
 use sa_core::bindings::get_anim_hierarchy_from_skin_clump;
-use sa_core::bindings::get_pad as pad_get_pad;
+use sa_input::bindings::get_pad as pad_get_pad;
 use sa_core::bindings::intel_get_task_use_gun as get_task_use_gun;
-use sa_core::bindings::load_all_requested_models as streaming_load_all_requested_models;
-use sa_core::bindings::prune_references;
+use sa_stream::bindings::load_all_requested_models as streaming_load_all_requested_models;
+use sa_world::bindings::prune_references;
 use sa_core::bindings::random_float_in_range as general_get_random_number_in_range_f;
 use sa_core::bindings::rp_hanim_hierarchy_get_matrix_array as hanim_get_matrix_array;
 use sa_core::bindings::rp_hanim_id_get_index as hanim_id_get_index;
-use sa_core::bindings::rw_frame_update_objects;
+use sa_rwcore::bindings::rw_frame_update_objects;
 use sa_core::bindings::rw_v3d_transform_points;
 use sa_core::bindings::task_new as task_operator_new;
 use sa_core::bindings::timer_stop;
@@ -136,9 +136,9 @@ use sa_core::bindings::tm_get_active_task as task_mgr_get_active_task;
 use sa_core::bindings::tm_get_simplest_active_task as task_mgr_get_simplest_active_task;
 use sa_core::bindings::vector_magnitude;
 use sa_stream::bindings::animate_ped_col_model_skinned_world as ped_mi_animate_ped_col_model_skinned_world;
-use sa_core::bindings::clump_get_frame_from_name;
+use sa_stream::bindings::clump_get_frame_from_name;
 use sa_stream::bindings::fx_get_fx_quality;
-use sa_stream::bindings::ped_is_player;
+use crate::bindings::ped_is_player;
 use sa_world::bindings::add_permanent_shadow;
 use sa_world::bindings::anim_get_next_association as get_next_association;
 use sa_core::bindings::audio_report_frontend_event;
@@ -188,13 +188,13 @@ use sa_world::bindings::pad_get_exit_vehicle;
 use sa_world::bindings::pad_get_target;
 use sa_world::bindings::pad_weapon_just_down;
 use sa_world::bindings::ped_audio_add_audio_event as ped_audio_add_event;
-use sa_world::bindings::ped_is_ped_in_control as is_ped_in_control;
+use crate::bindings::ped_is_ped_in_control as is_ped_in_control;
 use sa_world::bindings::ped_reset_gun_flash_alpha;
 use sa_world::bindings::ped_shoulder_bone_rotation;
 use sa_world::bindings::ped_weapon_audio_add_audio_event as weapon_audio_add_event;
 use sa_world::bindings::physical_get_lighting_total;
 use sa_world::bindings::placeable_get_top_direction as get_top_direction;
-use sa_world::bindings::player_clear_weapon_target;
+use crate::bindings::player_clear_weapon_target;
 use sa_world::bindings::player_no_rain;
 use sa_world::bindings::process_col_models;
 use sa_world::bindings::process_line_of_sight;
@@ -215,10 +215,10 @@ use sa_world::bindings::tm_find_active_task_by_type as task_mgr_find_active_task
 use sa_world::bindings::tm_set_task as task_mgr_set_task;
 use sa_world::bindings::vector_add;
 use sa_world::bindings::vector_add_assign;
-use sa_core::bindings::vector_magnitude_sqr as magnitude_sqr;
+use sa_world::bindings::vector_magnitude_sqr as magnitude_sqr;
 use sa_world::bindings::vector_mul_scalar;
 use sa_world::bindings::vector_scale as scalar_mul_vector;
-use sa_core::bindings::vector_sub;
+use sa_world::bindings::vector_sub;
 use sa_world::bindings::vehicle_can_be_driven;
 use crate::bindings::ped_clear_look_flag;
 use crate::bindings::request_delayed_weapon;
@@ -227,23 +227,23 @@ use sa_core::bindings::clump_get_association;
 use sa_core::bindings::general_limit_radian_angle as limit_radian_angle;
 use sa_core::bindings::get_uppercase_key as keygen_get_uppercase_key;
 use sa_core::bindings::ped_get_bone_position as get_bone_position;
-use sa_core::bindings::stats_increment_stat;
+use sa_world::bindings::stats_increment_stat;
 use sa_world::bindings::call_request_objects_in_frustum as renderer_request_objects_in_frustum;
 use sa_world::bindings::cop_add_criminal_to_kill as cop_add_criminal_to_kill_call;
 use sa_world::bindings::event_script_command_ctor;
 use sa_world::bindings::event_sound_quiet_ctor;
-use sa_world::bindings::find_node_closest_to_coors as paths_find_node_closest_to_coors;
+use sa_pop::bindings::find_node_closest_to_coors as paths_find_node_closest_to_coors;
 use sa_world::bindings::find_player_speed;
 use sa_world::bindings::fx_add_blood;
 use sa_world::bindings::fx_prt_mult_ctor;
 use sa_world::bindings::get_adhesion_group;
 use sa_world::bindings::group_find_distance_to_nearest_member;
-use sa_world::bindings::handle_sprint_energy;
+use crate::bindings::handle_sprint_energy;
 use sa_world::bindings::pad_get_accelerate;
 use sa_world::bindings::pad_get_ped_walk_left_right;
 use sa_world::bindings::pad_get_weapon;
 use sa_world::bindings::ped_get_transformed_bone_position as get_transformed_bone_position;
-use sa_world::bindings::ped_get_weapon_skill;
+use crate::bindings::ped_get_weapon_skill;
 use sa_world::bindings::ped_say;
 use sa_world::bindings::physical_process_control;
 use sa_world::bindings::weapon_effects_mark_target;
@@ -493,7 +493,7 @@ pub fn process_control(this: GPtr<u8>) {
         && rd::<u32>(this, 0x588) == NO_GROUND_Z
     {
         // fcomp 0.01f; test ah, 5; jp skip: go on Less only
-        let m = X87::from_f64_exact(magnitude_sqr(GPtr::<u8>::cast::<f32>(this.byte_add(0x44))));
+        let m = X87::from_f64_exact(magnitude_sqr(this.byte_add(0x44)).to_f64());
         if !m.fcom(x(f32c(0x3C23_D70A))).test_parity(5) {
             let veh = rd::<GPtr<u8>>(this, 0x58C);
             if !veh.is_null() {
@@ -544,7 +544,7 @@ pub fn process_control(this: GPtr<u8>) {
         let pd = rd::<GPtr<u8>>(find_player_ped(-1), 0x480);
         let grp = rd::<i32>(pd, 0x38);
         let m = g::<u8>(GROUP_MEMBERSHIP_0).byte_add(grp.wrapping_mul(0x2D4) as isize);
-        if group_is_member(m, this) != 0 {
+        if group_is_member(m, this) as u8 != 0 {
             wr::<u32>(this, 0x478, rd::<u32>(this, 0x478) & 0xFFFF_FEFF);
         }
     }
@@ -651,7 +651,7 @@ pub fn process_control(this: GPtr<u8>) {
             let cpos = if cm.is_null() { cam.byte_add(4) } else { cm.byte_add(0x30) };
             let mut d = [0u32; 3];
             let dv = vector_sub(lp(&mut d).cast(), pos_ptr(this), cpos);
-            let m2 = X87::from_f64_exact(magnitude_sqr(dv.cast::<f32>()));
+            let m2 = X87::from_f64_exact(magnitude_sqr(dv.cast::<u8>()).to_f64());
             // fcomp 2500.0f; test ah, 5; jp skip: go on Less only
             if !m2.fcom(x(2500.0)).test_parity(5) {
                 let r = at_site(0x5E93B1, rand) & 0x7F;
@@ -671,17 +671,17 @@ pub fn process_control(this: GPtr<u8>) {
                     1,
                     g::<u32>(BLOOD_POOL_TEX).read(),
                     lp(&mut p).cast(),
-                    size.to_bits(),
-                    0,
-                    0,
-                    neg.to_bits(),
+                    f32::from_bits(size.to_bits()),
+                    f32::from_bits(0),
+                    f32::from_bits(0),
+                    f32::from_bits(neg.to_bits()),
                     0xFF,
                     0xC8,
                     0,
                     0,
-                    0x4080_0000,
+                    f32::from_bits(0x4080_0000),
                     time as u32,
-                    0x3F80_0000,
+                    f32::from_bits(0x3F80_0000),
                 );
             }
         }
@@ -819,7 +819,7 @@ pub fn cop_add_criminal_to_kill(this: GPtr<u8>, criminal: GPtr<u8>) -> i32 {
         let c = rd::<GPtr<u8>>(slot, 0);
         // fcomp 0; test ah, 0x41; jp keep: keep when health > 0 or NaN
         if !c.is_null() && !x(rd::<f32>(c, 0x540)).fcom(X87::zero()).test_parity(0x41) {
-            clean_up_old_reference(c, slot.cast::<GPtr<u8>>());
+            clean_up_old_reference(c, slot.cast::<u8>());
             wr::<u32>(slot, 0, 0);
         }
     }
@@ -1105,8 +1105,8 @@ pub fn foot_splash_particles(ped: GPtr<u8>, pos: GPtr<f32>, count: i32, _unused:
             f32_of(x(rd::<f32>(m, 0x14)).fmul_m(1.5)),
             f32_of(x(rd::<f32>(m, 0x18)).fmul_m(1.5)),
         ];
-        fx_add_particle(g::<GPtr<u8>>(FX_SPLASH).read(), lp(&mut p).cast(), lp(&mut v0).cast(), f32::from_bits(0), lp(&mut mult).cast(), f32::from_bits(0xBF80_0000), f32::from_bits(0x3F99_999A), f32::from_bits(0x3F19_999A), 0);
-        fx_add_particle(g::<GPtr<u8>>(FX_SPLASH).read(), lp(&mut p).cast(), lp(&mut v1).cast(), f32::from_bits(0), lp(&mut mult).cast(), f32::from_bits(0xBF80_0000), f32::from_bits(0x3F99_999A), f32::from_bits(0x3F19_999A), 0);
+        fx_add_particle(g::<GPtr<u8>>(FX_SPLASH).read(), lp(&mut p).cast(), lp(&mut v0).cast(), f32::from_bits(0).to_bits(), lp(&mut mult).cast(), f32::from_bits(0xBF80_0000).to_bits(), f32::from_bits(0x3F99_999A), f32::from_bits(0x3F19_999A), 0);
+        fx_add_particle(g::<GPtr<u8>>(FX_SPLASH).read(), lp(&mut p).cast(), lp(&mut v1).cast(), f32::from_bits(0).to_bits(), lp(&mut mult).cast(), f32::from_bits(0xBF80_0000).to_bits(), f32::from_bits(0x3F99_999A), f32::from_bits(0x3F19_999A), 0);
         n -= 1;
         if n == 0 {
             break;
@@ -1143,7 +1143,7 @@ pub fn foot_dust_particles(ped: GPtr<u8>, pos: GPtr<f32>, count: i32, _unused: u
         let vy = f32_of(rand_scaled(0x5E38EC, f32c(0x3E99_999A)).fsub_m(f32c(0x3E19_999A)));
         let mut v = [vx, vy, 0.0];
         if g::<u8>(NO_FOOT_DUST).read() == 0 {
-            fx_add_particle(g::<GPtr<u8>>(FX_SMOKE_II3_EXPAND).read(), lp(&mut p).cast(), lp(&mut v).cast(), f32::from_bits(0), lp(&mut mult).cast(), f32::from_bits(0xBF80_0000), f32::from_bits(0x3F99_999A), f32::from_bits(0x3F19_999A), 0);
+            fx_add_particle(g::<GPtr<u8>>(FX_SMOKE_II3_EXPAND).read(), lp(&mut p).cast(), lp(&mut v).cast(), f32::from_bits(0).to_bits(), lp(&mut mult).cast(), f32::from_bits(0xBF80_0000).to_bits(), f32::from_bits(0x3F99_999A), f32::from_bits(0x3F19_999A), 0);
         }
         n -= 1;
         if n == 0 {
@@ -1182,17 +1182,17 @@ pub fn do_foot_landed(this: GPtr<u8>, left_foot: u8, make_wobble: u8) {
             1,
             g::<u32>(BLOOD_POOL_TEX).read(),
             pp,
-            f32_of(x(f[0]).fmul_m(f32c(0x3E85_1EB8))).to_bits(),
-            f32_of(x(f[1]).fmul_m(f32c(0x3E85_1EB8))).to_bits(),
-            f32_of(x(r[0]).fmul_m(f32c(0x3E0F_5C29))).to_bits(),
-            f32_of(x(r[1]).fmul_m(f32c(0x3E0F_5C29))).to_bits(),
+            f32::from_bits(f32_of(x(f[0]).fmul_m(f32c(0x3E85_1EB8))).to_bits()),
+            f32::from_bits(f32_of(x(f[1]).fmul_m(f32c(0x3E85_1EB8))).to_bits()),
+            f32::from_bits(f32_of(x(r[0]).fmul_m(f32c(0x3E0F_5C29))).to_bits()),
+            f32::from_bits(f32_of(x(r[1]).fmul_m(f32c(0x3E0F_5C29))).to_bits()),
             0xFF,
             0xC8,
             0,
             0,
-            0x4080_0000,
+            f32::from_bits(0x4080_0000),
             0xBB8,
-            0x3F80_0000,
+            f32::from_bits(0x3F80_0000),
         );
         let n = rd::<u32>(this, 0x750);
         if n > 0x14 {
@@ -1217,17 +1217,17 @@ pub fn do_foot_landed(this: GPtr<u8>, left_foot: u8, make_wobble: u8) {
                 1,
                 g::<u32>(SHADOW_PED_TEX).read(),
                 pp,
-                f32_of(x(f[0]).fmul_m(f32c(0xBE85_1EB8))).to_bits(),
-                f32_of(x(f[1]).fmul_m(f32c(0xBE85_1EB8))).to_bits(),
-                f32_of(x(r[0]).fmul_m(f32c(0xBDCC_CCCD))).to_bits(),
-                f32_of(x(r[1]).fmul_m(f32c(0xBDCC_CCCD))).to_bits(),
+                f32::from_bits(f32_of(x(f[0]).fmul_m(f32c(0xBE85_1EB8))).to_bits()),
+                f32::from_bits(f32_of(x(f[1]).fmul_m(f32c(0xBE85_1EB8))).to_bits()),
+                f32::from_bits(f32_of(x(r[0]).fmul_m(f32c(0xBDCC_CCCD))).to_bits()),
+                f32::from_bits(f32_of(x(r[1]).fmul_m(f32c(0xBDCC_CCCD))).to_bits()),
                 0x78,
                 0xFA,
                 0xFA,
                 0x32,
-                0x4080_0000,
+                f32::from_bits(0x4080_0000),
                 time,
-                0x3F80_0000,
+                f32::from_bits(0x3F80_0000),
             );
         }
     }
@@ -1615,7 +1615,7 @@ pub fn player_process_control(this: GPtr<u8>) {
         let slot = this.byte_add(0x79C);
         let old = rd::<GPtr<u8>>(slot, 0);
         if !old.is_null() {
-            clean_up_old_reference(old, slot.cast::<GPtr<u8>>());
+            clean_up_old_reference(old, slot.cast::<u8>());
             wr::<u32>(slot, 0, 0);
         }
         let target = rd::<GPtr<u8>>(this, 0x71C);
@@ -1625,7 +1625,7 @@ pub fn player_process_control(this: GPtr<u8>) {
         let mut clamp = true;
         if ty == 3 {
             let wt = rd::<i32>(active_weapon(this), 0);
-            let skill = ped_get_weapon_skill(this) as i32;
+            let skill = (ped_get_weapon_skill(this) as u32) as i32;
             let info = get_weapon_info(wt, skill as u8);
             let t = rd::<GPtr<u8>>(this, 0x71C);
             c = f32_of(x(rd::<f32>(t, 0x540)).fdiv_m(rd::<f32>(t, 0x544)));
@@ -1634,7 +1634,7 @@ pub fn player_process_control(this: GPtr<u8>) {
             if ped_is_alive(t) != 0 && rd::<i32>(get_weapon_info(rd::<i32>(active_weapon(this), 0), 1), 0) == 1 {
                 let mut tmp = [0u32; 3];
                 let dv = vector_sub(lp(&mut tmp).cast(), pos_ptr(t), pos_ptr(this));
-                let m2 = X87::from_f64_exact(magnitude_sqr(dv.cast::<f32>()));
+                let m2 = X87::from_f64_exact(magnitude_sqr(dv.cast::<u8>()).to_f64());
                 if x(range).fmul_m(range).fcom(m2) == Cmp::Greater {
                     head = true;
                 }
@@ -1905,7 +1905,7 @@ pub fn player_process_control(this: GPtr<u8>) {
                 for i in 0..7 {
                     let m = group_get_member(grp(this).byte_add(8), i);
                     if !m.is_null()
-                        && X87::from_f64_exact(general_get_random_number_in_range_f(0.0, 1.0)).fcom(x(0.5)) == Cmp::Less
+                        && X87::from_f64_exact(general_get_random_number_in_range_f(0.0, 1.0).to_f64()).fcom(x(0.5)) == Cmp::Less
                     {
                         let off = general_get_random_number_in_range_i(0xBB8, 0x1194);
                         ped_say(m, 0x5C, off as u32, f32::from_bits(0x3F80_0000), 0, 0, 0);
@@ -1959,7 +1959,7 @@ pub fn render(this: GPtr<u8>) {
         if vt != 9 && rd::<i32>(veh, 0x594) != 2 && ped_is_player(this) == 0 {
             let mut tmp = [0u32; 3];
             let dv = vector_sub(lp(&mut tmp).cast(), pos_ptr(this), camera_pos().cast());
-            let d2 = X87::from_f64_exact(magnitude_sqr(dv.cast::<f32>()));
+            let d2 = X87::from_f64_exact(magnitude_sqr(dv.cast::<u8>()).to_f64());
             let k = if vt == 5 { 40.0 } else { 25.0 };
             let lk = x(g::<f32>(0xB6F118).read()).fmul_m(k);
             if d2.fcom(lk.fmul(lk)) == Cmp::Greater {
@@ -2293,11 +2293,11 @@ pub fn pre_render_after_test(this: GPtr<u8>) {
                     let mut mult = [0u32; 8];
                     fx_prt_mult_ctor(lp(&mut mult).cast(), f32::from_bits(0x3F80_0000), f32::from_bits(0x3F80_0000), f32::from_bits(0x3F80_0000), f32::from_bits(0x3EB3_3333), f32::from_bits(0x3C23_D70A), f32::from_bits(0), f32::from_bits(0x3CF5_C28F));
                     let mut p = [rd::<f32>(sph, 0), rd::<f32>(sph, 4), rd::<f32>(sph, 8)];
-                    p[0] = f32_of(X87::from_f64_exact(general_get_random_number_in_range_f(f32c(0xBDA3_D70A), f32c(0x3DA3_D70A))).fadd_m(p[0]));
-                    p[1] = f32_of(X87::from_f64_exact(general_get_random_number_in_range_f(f32c(0xBDA3_D70A), f32c(0x3DA3_D70A))).fadd_m(p[1]));
+                    p[0] = f32_of(X87::from_f64_exact(general_get_random_number_in_range_f(f32c(0xBDA3_D70A), f32c(0x3DA3_D70A)).to_f64()).fadd_m(p[0]));
+                    p[1] = f32_of(X87::from_f64_exact(general_get_random_number_in_range_f(f32c(0xBDA3_D70A), f32c(0x3DA3_D70A)).to_f64()).fadd_m(p[1]));
                     p[2] = f32_of(x(rd::<f32>(sph, 0xC)).fmul_m(0.75).fadd_m(p[2]));
                     let mut v = [f32_of(x(s[0]).fmul_m(50.0)), f32_of(x(s[1]).fmul_m(50.0)), f32_of(x(s[2]).fmul_m(50.0))];
-                    fx_add_particle(g::<GPtr<u8>>(FX_SPLASH).read(), lp(&mut p).cast(), lp(&mut v).cast(), f32::from_bits(0), lp(&mut mult).cast(), f32::from_bits(0xBF80_0000), f32::from_bits(0x3F99_999A), f32::from_bits(0x3F19_999A), 0);
+                    fx_add_particle(g::<GPtr<u8>>(FX_SPLASH).read(), lp(&mut p).cast(), lp(&mut v).cast(), f32::from_bits(0).to_bits(), lp(&mut mult).cast(), f32::from_bits(0xBF80_0000).to_bits(), f32::from_bits(0x3F99_999A), f32::from_bits(0x3F19_999A), 0);
                 }
             }
         }
@@ -2317,7 +2317,7 @@ pub fn pre_render_after_test(this: GPtr<u8>) {
         let wet = i32::from(rd::<i8>(rd::<GPtr<u8>>(this, 0x480), 0x8C));
         let alpha = f32::from_bits(mult[3]);
         mult[3] = f32_of(xi(wet).fmul_m(alpha).fmul_m(f32c(0x3C23_D70A))).to_bits();
-        fx_add_particle(g::<GPtr<u8>>(FX_WATER_SPLASH).read(), lp(&mut p).cast(), lp(&mut v).cast(), f32::from_bits(0), lp(&mut mult).cast(), f32::from_bits(0xBF80_0000), f32::from_bits(0x3F99_999A), f32::from_bits(0x3F19_999A), 0);
+        fx_add_particle(g::<GPtr<u8>>(FX_WATER_SPLASH).read(), lp(&mut p).cast(), lp(&mut v).cast(), f32::from_bits(0).to_bits(), lp(&mut mult).cast(), f32::from_bits(0xBF80_0000).to_bits(), f32::from_bits(0x3F99_999A), f32::from_bits(0x3F19_999A), 0);
     }
 
     if rd::<u32>(this, 0x46C) & 0x100 != 0 {
@@ -2653,7 +2653,7 @@ fn leave_or_enter(this: GPtr<u8>, pad: GPtr<u8>, player_index: i32) -> bool {
     let min_y = f32_of(x(p.wrapping_index(1).read()).fsub_m(10.0));
     let p = pos_ptr(rd::<GPtr<u8>>(this, 0)).cast::<f32>();
     let max_y = f32_of(x(p.wrapping_index(1).read()).fadd_m(10.0));
-    let sector = |v: f32| ftol32(X87::from_f64_exact(floor_f(f32_of(x(v).fmul_m(f32c(0x3CA3_D70A)).fadd_m(60.0)))));
+    let sector = |v: f32| ftol32(X87::from_f64_exact(floor_f(f32_of(x(v).fmul_m(f32c(0x3CA3_D70A)).fadd_m(60.0)).to_bits())));
     let x0 = sector(min_x);
     let y0 = sector(min_y);
     let x1 = sector(max_x);
@@ -2785,7 +2785,7 @@ pub fn player_info_process(this: GPtr<u8>, player_index: i32) {
     if g::<u8>(REPLAY_MODE).read() == 1 {
         return;
     }
-    let pad = pad_get_pad(player_index as u32);
+    let pad = pad_get_pad((player_index as u32) as i32);
     let now = || g::<u32>(TIME_MS).read();
 
     // block 0: taxi fare
@@ -2886,7 +2886,7 @@ pub fn player_info_process(this: GPtr<u8>, player_index: i32) {
                 camera_fade(cam, f32::from_bits(0x3F80_0000), 1);
                 camera_process(cam);
                 timer_stop();
-                renderer_request_objects_in_frustum(GPtr::NULL, 0);
+                renderer_request_objects_in_frustum(GPtr::<f32>::cast::<u8>(GPtr::NULL), 0);
                 streaming_load_all_requested_models(0);
                 timer_update();
             }

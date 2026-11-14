@@ -73,9 +73,8 @@ pub use crate::bindings::open_file;
 pub use crate::bindings::open_file_for_writing;
 pub use crate::bindings::stricmp;
 pub use crate::bindings::get_uppercase_key;
+pub use crate::bindings::crt_new as operator_new;
 orig! {
-    /// CRT `operator new` (0x82119A)
-    pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
     /// CRT `printf` (0x821982), one-argument form
     pub fn printf(fmt: GPtr<u8>) -> i32 = cdecl 0x821982 => unported;
     /// `CDirectory::FindItem(name)` (0x532450)

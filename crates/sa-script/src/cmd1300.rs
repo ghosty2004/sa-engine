@@ -48,7 +48,7 @@ const HUNTER_GUN_OFFSET: usize = 0x8D3394;
 const TIME_STEP: usize = 0xB7CB5C;
 
 pub use sa_world::bindings::clear_drunk_blur;
-use sa_world::bindings::add_explosion;
+use sa_weapon::bindings::add_explosion;
 use crate::bindings::physical_45afb0;
 use crate::bindings::set_ammo;
 use crate::bindings::vehicle_get_ref;
@@ -58,20 +58,20 @@ use sa_world::bindings::audio_get_current_radio_station_id as get_current_radio_
 use sa_world::bindings::find_ground_z_for_coord;
 use sa_world::bindings::get_actual_pickup_index;
 use sa_world::bindings::get_has_collided_with;
-use sa_world::bindings::get_vehicle_appearance;
-use sa_world::bindings::is_law_enforcement_vehicle;
+use sa_veh::bindings::get_vehicle_appearance;
+use sa_veh::bindings::is_law_enforcement_vehicle;
 use sa_world::bindings::is_within_area;
 use sa_world::bindings::set_velocity;
 use sa_world::bindings::skip_physics;
 use sa_world::bindings::vehicle_can_be_deleted as can_be_deleted;
 use sa_core::bindings::matrix_mul_vec as matrix_mul_vector;
-use sa_core::bindings::ped_give_weapon as give_weapon;
+use sa_ped::bindings::ped_give_weapon as give_weapon;
 use sa_stream::bindings::generate_new_one;
-use sa_world::bindings::add_gunshell;
+use sa_weapon::bindings::add_gunshell;
 use sa_world::bindings::add_ped_in_car;
 use sa_world::bindings::fire_instant_hit;
 use sa_world::bindings::load_mission_text;
-use sa_world::bindings::ped_set_current_weapon as set_current_weapon;
+use sa_ped::bindings::ped_set_current_weapon as set_current_weapon;
 use sa_world::bindings::report_weapon_event;
 use sa_world::bindings::vector_add;
 use sa_world::bindings::vector_mul_scalar as vector_mul_float;
@@ -104,15 +104,15 @@ fn fire_hunter_gun(s: Scr) {
     let mut t1 = [0u32; 3];
     let a = GPtr::<u8>::cast::<u32>(vector_mul_float(GPtr::<u32>::cast::<u8>(GPtr::from_raw(t1.as_mut_ptr())), veh.byte_add(0x44), f32::from_bits(step)));
     let mut t2 = [0u32; 3];
-    let b = GPtr::<f32>::cast::<u32>(matrix_mul_vector(GPtr::<u32>::cast::<f32>(GPtr::from_raw(t2.as_mut_ptr())), mat, GPtr::<u32>::cast::<u8>(GPtr::from_raw(ofs.as_ptr().cast_mut()))));
+    let b = GPtr::<u8>::cast::<u32>(matrix_mul_vector(GPtr::<u32>::cast::<u8>(GPtr::from_raw(t2.as_mut_ptr())), mat, GPtr::<u32>::cast::<u8>(GPtr::from_raw(ofs.as_ptr().cast_mut()))));
     let mut t3 = [0u32; 3];
     let r = GPtr::<u8>::cast::<u32>(vector_add(GPtr::<u32>::cast::<u8>(GPtr::from_raw(t3.as_mut_ptr())), b.cast::<u8>(), a.cast::<u8>()));
     let pos = [r.read(), r.wrapping_index(1).read(), r.wrapping_index(2).read()];
     let pp = GPtr::from_raw(pos.as_ptr().cast_mut());
     fire_instant_hit(w, veh, pp.cast::<u8>(), pp.cast::<u8>(), GPtr::NULL, GPtr::NULL, GPtr::NULL, 0, 1);
     let dir = [0u32, 0x3DCC_CCCD];
-    add_gunshell(w, veh, pp.cast::<u8>(), GPtr::from_raw(dir.as_ptr().cast_mut()), f32::from_bits(0x3CCC_CCCD));
-    report_weapon_event(GPtr::from_addr(AUDIO_ENGINE), 0x95, 0x26, veh);
+    add_gunshell(w, veh, pp.cast::<u8>(), GPtr::<u32>::cast::<f32>(GPtr::from_raw(dir.as_ptr().cast_mut())), f32::from_bits(0x3CCC_CCCD));
+    report_weapon_event(GPtr::from_addr(AUDIO_ENGINE), 0x95, 0x26, veh.addr() as u32);
     veh.byte_add(0x4D4).cast::<u32>().write(sa_core::timer::TIME_MS.get());
 }
 
@@ -535,7 +535,7 @@ pub fn process_commands_1300_to_1399(s: Scr, command: u32) -> i8 {
         // 0, 0, -1.0f, 0).
         0x0565 => {
             collect(s, 4);
-            add_explosion(GPtr::NULL, GPtr::NULL, sp(3), f32::from_bits(sp(0)), f32::from_bits(sp(1)), f32::from_bits(sp(2)), 0, 0, f32::from_bits(0xBF80_0000), 0);
+            add_explosion(GPtr::NULL, GPtr::NULL, sp(3) as i32, f32::from_bits(sp(0)), f32::from_bits(sp(1)), f32::from_bits(sp(2)), 0, 0, f32::from_bits(0xBF80_0000), 0);
             0
         }
         // 0566 SET_OBJECT_AREA_VISIBLE (0x48D9B2, gr: unregistered): no null check; byte +0x2F = (u8)P1.

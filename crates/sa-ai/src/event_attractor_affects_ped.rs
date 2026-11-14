@@ -13,7 +13,7 @@ use sa_core::bindings::general_random_int_in_range as random_in_range;
 use sa_core::bindings::matrix_mul_vec as matrix_mul_vector;
 use sa_core::bindings::ped_is_alive;
 use sa_core::bindings::tm_get_active_task;
-use sa_stream::bindings::find_player_wanted;
+use sa_world::bindings::find_player_wanted;
 use sa_stream::bindings::get_2d_effect;
 use sa_world::bindings::ik_is_looking;
 use sa_world::bindings::intel_find_task_by_type;
@@ -44,7 +44,7 @@ const IK_CHAIN_MAN: usize = 0xC15448;
 #[hook(addr = 0x4AF4B0, conv = thiscall, name = "CEventAttractor::AffectsPed", expect = "83 EC 0C 53 8B 5C 24 14",
        unverified = "std11-ai-1", route = "L2", hazards = "ax-al-return", recs = "grove-walk")]
 pub fn event_attractor_affects_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
-    if ped_is_alive(ped) == 0 {
+    if ped_is_alive(ped) as u8 == 0 {
         return 0;
     }
     if event_get_type(this) == 0x1B && rd::<u32>(this, 0x18) == 0 {
@@ -93,8 +93,8 @@ pub fn event_attractor_affects_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     let m = placeable_get_matrix(rd::<GPtr<u8>>(this, 0x18));
     let mut point = [0f32; 3];
     let pp: GPtr<u8> = GPtr::from_raw(point.as_mut_ptr()).cast();
-    matrix_mul_vector(pp.cast::<f32>(), m, fx);
-    ik_look_at(ik, GPtr::from_addr(0x85B1FC), ped, GPtr::NULL, time as u32, -1i32 as u32, pp, 0, 0x3E80_0000, 500, 3, 0);
+    matrix_mul_vector(pp.cast::<u8>(), m, fx);
+    ik_look_at(ik, GPtr::from_addr(0x85B1FC), ped, GPtr::NULL, (time as u32) as i32, (-1i32 as u32) as i32, pp, 0, f32::from_bits(0x3E80_0000), 500, 3, 0);
     0
 }
 

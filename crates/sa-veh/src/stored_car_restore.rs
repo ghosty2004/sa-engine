@@ -9,18 +9,18 @@ use sa_core::{hook, orig};
 use crate::common::{g, rd, wr, xi};
 
 use sa_core::bindings::streaming_request_model;
-use sa_core::bindings::world_add;
+use sa_world::bindings::world_add;
 use sa_stream::bindings::has_vehicle_upgrade_loaded as streaming_has_vehicle_upgrade_loaded;
 use sa_stream::bindings::request_vehicle_upgrade as streaming_request_vehicle_upgrade;
 use sa_world::bindings::set_remap as vehicle_set_remap;
-use sa_world::bindings::vehicle_new;
-use sa_core::bindings::automobile_ctor;
+use crate::bindings::vehicle_new;
+use crate::bindings::automobile_ctor;
 use sa_core::bindings::bike_ctor;
 use sa_core::bindings::bmx_ctor;
 use sa_core::bindings::boat_ctor;
-use sa_core::bindings::heli_ctor;
+use crate::bindings::heli_ctor;
 use sa_core::bindings::monster_truck_ctor;
-use sa_core::bindings::plane_ctor;
+use crate::bindings::plane_ctor;
 use sa_core::bindings::quad_bike_ctor;
 use sa_core::bindings::trailer_ctor;
 orig! {
@@ -91,7 +91,7 @@ pub fn stored_car_restore(this: GPtr<u8>) -> GPtr<u8> {
             v
         }
         10 => make(0x9F4, &|v| trailer_ctor(v, mi as i32, 1)),
-        _ => make(0x988, &|v| automobile_ctor(v, mi as i32, 1, 1)),
+        _ => make(0x988, &|v| automobile_ctor(v, (mi as i32) as u32, 1, 1)),
     };
     let m = rd::<GPtr<u8>>(veh, 0x14);
     if !m.is_null() {

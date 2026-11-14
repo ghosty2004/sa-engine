@@ -22,7 +22,7 @@ use sa_core::bindings::general_get_radian_angle_between_points;
 use sa_core::bindings::general_limit_radian_angle;
 use sa_core::bindings::vector_normalise;
 use sa_stream::bindings::ped_is_player;
-use sa_world::bindings::event_group_add;
+use crate::bindings::event_group_add;
 use sa_world::bindings::event_group_get_event_of_type;
 use sa_world::bindings::get_task_climb as intel_get_task_climb;
 use sa_world::bindings::get_task_jet_pack as intel_get_task_jet_pack;
@@ -31,8 +31,8 @@ use sa_world::bindings::physical_apply_move_force_5429f0 as physical_apply_move_
 use sa_world::bindings::placeable_set_posn;
 use sa_world::bindings::set_orientation as placeable_set_orientation;
 use sa_world::bindings::vector_add;
-use sa_core::bindings::vector_magnitude_sqr as vector_squared_magnitude;
-use sa_core::bindings::vector_sub;
+use sa_world::bindings::vector_magnitude_sqr as vector_squared_magnitude;
+use sa_world::bindings::vector_sub;
 use sa_core::bindings::world_get_is_line_of_sight_clear;
 use sa_world::bindings::world_process_vertical_line;
 orig! {
@@ -159,7 +159,7 @@ fn push_out(this: GPtr<u8>, ped: GPtr<u8>, cnt: f32, d: &[u32; 3]) -> Next {
         return Next::Tail;
     }
     let mut v = [f32_of(x(fv(d, 1)).fchs()).to_bits(), d[0], 0x3F80_0000];
-    vector_normalise(local(&mut v));
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(local(&mut v)));
     let mut cp1 = [0u32; 11];
     let mut cp2 = [0u32; 11];
     let mut ent = [0u32; 1];
@@ -192,7 +192,7 @@ fn push_out(this: GPtr<u8>, ped: GPtr<u8>, cnt: f32, d: &[u32; 3]) -> Next {
     let fy = f32_of(x(fv(&v, 1)).fmul_m(four));
     let fx = f32_of(x(fv(&v, 0)).fmul_m(four));
     v[2] = 0x3F80_0000;
-    physical_apply_move_force(ped, f32::from_bits(fx.to_bits()), f32::from_bits(fy.to_bits()), f32::from_bits(0x4080_0000));
+    physical_apply_move_force(ped, sa_math::vector::CVector::new(f32::from_bits(fx.to_bits()), f32::from_bits(fy.to_bits()), f32::from_bits(0x4080_0000)));
     if choice > -1 {
         let q = g::<f32>(0x858C84).read();
         let mut off = [0u32; 3];
@@ -247,7 +247,7 @@ fn body(this: GPtr<u8>, ped: GPtr<u8>) -> Next {
     let cnt = rd::<u16>(this, 0xC) as f32; // fild; fstp dword (exact)
     let q = cf(0x858B90).fmul(t).fdivr_m(g::<f32>(0x858B40).read());
     if !x(cnt).fcom(q).test_any(0x41) {
-        let m = X87::from_f64_exact(vector_squared_magnitude(GPtr::<u8>::cast::<f32>(local(&mut d))));
+        let m = X87::from_f64_exact(vector_squared_magnitude(local(&mut d)).to_f64());
         if !x(cnt).fmul_m(g::<f32>(0x858C58).read()).fcom(m).test_any(0x41) {
             return stuck(this, ped);
         }

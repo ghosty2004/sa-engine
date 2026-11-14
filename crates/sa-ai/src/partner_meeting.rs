@@ -62,7 +62,7 @@ pub fn partner_compute_meeting_positions(
     let s48 = x(d[2]).fmul(k).to_f32();
     let mut s20 = x(s44).fadd_m(p[1]).to_f32();
     let mut s24 = x(s48).fadd_m(p[2]).to_f32();
-    vector_normalise(GPtr::from_raw(d.as_mut_ptr()).cast());
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(GPtr::from_raw(d.as_mut_ptr()).cast()));
     let mut mx = x(s1c);
     let mut my = x(s20);
     if v_task_type(this) != 0x4B4 {

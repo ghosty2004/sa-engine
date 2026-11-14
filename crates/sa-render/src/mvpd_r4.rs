@@ -11,12 +11,12 @@ use sa_math::x87::X87;
 
 use crate::common::{g, jp, k, rd, x};
 
-use sa_core::bindings::find_player_ped;
-use sa_core::bindings::get_pad as pad_get_pad;
+use sa_world::bindings::find_player_ped;
+use sa_input::bindings::get_pad as pad_get_pad;
 use sa_core::bindings::tm_get_simplest_active_task as task_manager_simplest_active;
-use sa_world::bindings::cam_no_rain;
+use crate::bindings::cam_no_rain;
 use sa_world::bindings::pad_start_shake;
-use sa_world::bindings::player_no_rain;
+use crate::bindings::player_no_rain;
 use crate::bindings::update_weather_region;
 orig! {
     /// `CWeather::FindWeatherTypesList()` (0x72A520)
@@ -430,7 +430,7 @@ pub fn weather_update() {
     weather_audio_service(g(0xC81360));
 }
 
-use sa_core::bindings::find_player_coors;
+use sa_world::bindings::find_player_coors;
 use sa_core::bindings::vector_normalise;
 use sa_world::bindings::crt_printf;
 
@@ -480,7 +480,7 @@ pub fn checkpoints_update() {
             d.write(x(speed.read()).fadd_m(d.read()).to_f32());
             d.wrapping_index(1).write(x(d.wrapping_index(1).read()).fadd_m(speed.read()).to_f32());
             d.wrapping_index(2).write(x(speed.read()).fadd_m(d.wrapping_index(2).read()).to_f32());
-            vector_normalise(d.cast());
+            vector_normalise(GPtr::<u8>::cast::<[f32;3]>(d.cast()));
         }
         if ty.read() == 6 {
             let up = x(speed.read()).fadd_m(k(0x3C23_D70A)).to_f32();
@@ -526,7 +526,7 @@ pub fn checkpoints_update() {
 
 use sa_world::bindings::camera_is_sphere_visible_m;
 use sa_core::bindings::get_surf_properties as plant_get_surf_properties;
-use sa_stream::bindings::fx_get_fx_quality;
+use crate::bindings::fx_get_fx_quality;
 orig! {
     /// `RwRenderStateSet` (`RwEngineInstance` slot 0x20)
     fn rs(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;

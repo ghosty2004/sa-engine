@@ -9,14 +9,14 @@ use sa_core::hook;
 use crate::common::*;
 
 use crate::bindings::dtor_4aca70 as ped_collision_with_ped_dtor;
-use sa_core::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference;
 
 /// The shared body: vtable `vt`, `CleanUpOldReference(&+0x14)` when the vehicle (+0x14) is set, `CEvent`'s vtable.
 fn vehicle_event_dtor(this: GPtr<u8>, vt: u32) {
     wr::<u32>(this, 0, vt);
     let v = rd::<GPtr<u8>>(this, 0x14);
     if !v.is_null() {
-        entity_clean_up_old_reference(v, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x14)));
+        entity_clean_up_old_reference(v, this.byte_add(0x14));
     }
     wr::<u32>(this, 0, 0x0085_AB38);
 }

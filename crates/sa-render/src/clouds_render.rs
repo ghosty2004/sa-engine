@@ -12,13 +12,13 @@ use crate::common::{THE_CAMERA, ftol32, g, jne, jp, k, rd, wr, x, xi};
 use crate::bindings::rs_restore;
 use crate::bindings::rs_set_immediate;
 use sa_world::bindings::rw_im3d_transform;
-use sa_core::bindings::find_player_ped;
+use sa_world::bindings::find_player_ped;
 use crate::bindings::im_render_states_store as rs_store;
 use crate::bindings::rw_im3d_render_primitive;
-use sa_world::bindings::cam_no_rain;
+use crate::bindings::cam_no_rain;
 use sa_world::bindings::get_at_direction;
 use sa_world::bindings::get_right_direction;
-use sa_world::bindings::player_no_rain;
+use crate::bindings::player_no_rain;
 use sa_world::bindings::rw_im3d_end;
 orig! {
     /// `RwRenderStateSet(state, value)` (`RwGlobals` +0x20)
@@ -211,14 +211,13 @@ use sa_world::bindings::init_sprite_buffer;
 use crate::bindings::render_buffered_one_xlu_sprite;
 use sa_world::bindings::rw_im3d_render_indexed_primitive;
 use sa_core::bindings::can_see_outside_from_curr_area;
-use sa_world::bindings::sprite_flush_sprite_buffer as flush_sprite_buffer;
+use crate::bindings::sprite_flush_sprite_buffer as flush_sprite_buffer;
 use sa_world::bindings::sprite_render_one_xlu_sprite as render_one_xlu_sprite;
+use sa_core::bindings::vector_normalise;
 orig! {
     /// `CSprite::RenderBufferedOneXLUSprite_Rotate_Dimension(x, y, z, w, h, r, g, b, intensity, recipNearZ,
     /// angle, alpha)` (0x70EAB0)
     fn render_buffered_one_xlu_sprite_rotate_dimension(px: f32, py: f32, pz: f32, w: f32, h: f32, r: u32, gg: u32, b: u32, intensity: u32, recip_z: u32, angle: f32, alpha: u32) = cdecl 0x70EAB0 => crate::mvpd_r5::render_buffered_one_xlu_sprite_rotate_dimension;
-    /// `CVector::Normalise()` (0x59C910)
-    fn vector_normalise(v: GPtr<sa_math::vector::CVector>) = thiscall 0x59C910 => sa_world::collision::data::normalise_port;
 }
 
 /// `CClock` game clock: seconds (u16), minutes, hours, days (bytes).
@@ -400,7 +399,7 @@ pub fn clouds_render() {
                 rs(11, 2);
                 let ms = moon_size();
                 let rhw = bits(one().fdiv_m(f(far())));
-                render_one_xlu_sprite(f32::from_bits(out[0]), f32::from_bits(out[1]), far(), f32::from_bits(bits(ms.fmul_m(w))), f32::from_bits(bits(x(h).fmul(ms))), 0, 0, 0, 0xFF, rhw, 0xFF, 0, 0);
+                render_one_xlu_sprite(f32::from_bits(out[0]), f32::from_bits(out[1]), f32::from_bits(far()), f32::from_bits(bits(ms.fmul_m(w))), f32::from_bits(bits(x(h).fmul(ms))), 0, 0, 0, 0xFF, f32::from_bits(rhw), 0xFF, 0, 0);
 
                 rs(1, raster_of(MOON_MASK_TEX));
                 rs(10, 5);
@@ -414,7 +413,7 @@ pub fn clouds_render() {
                 let mask_w = bits(x(wms).fmul_m(k(0x3FD9_999A)));
                 let my = bits(hms.fmul_m(k(0x3F33_3334)).fadd_m(f(out[1])));
                 let mx = bits(x(wms).fmul_m(k(0x40AC_CCCD)).fmul(x(days).fsub_m(0.5)).fadd_m(f(out[0])));
-                render_one_xlu_sprite(f32::from_bits(mx), f32::from_bits(my), far(), f32::from_bits(mask_w), f32::from_bits(mask_h), 0, 0, 0, 0, rhw, 0xFF, 0, 0);
+                render_one_xlu_sprite(f32::from_bits(mx), f32::from_bits(my), f32::from_bits(far()), f32::from_bits(mask_w), f32::from_bits(mask_h), 0, 0, 0, 0, f32::from_bits(rhw), 0xFF, 0, 0);
 
                 rs(10, 7);
                 rs(11, 2);
@@ -426,7 +425,7 @@ pub fn clouds_render() {
                 let blue = ftol32(xi(c).fmul_m(k(0x3F59_999A))) as u32;
                 let hh = bits(x(h).fmul(ms));
                 let hw = bits(ms.fmul_m(w));
-                render_one_xlu_sprite(f32::from_bits(out[0]), f32::from_bits(out[1]), far(), f32::from_bits(hw), f32::from_bits(hh), c as u32, c as u32, blue, 0xFF, rhw, 0xFF, 0, 0);
+                render_one_xlu_sprite(f32::from_bits(out[0]), f32::from_bits(out[1]), f32::from_bits(far()), f32::from_bits(hw), f32::from_bits(hh), c as u32, c as u32, blue, 0xFF, f32::from_bits(rhw), 0xFF, 0, 0);
                 rs(10, 2);
                 rs(11, 2);
             }
@@ -475,7 +474,7 @@ pub fn clouds_render() {
             let sc = ftol32(xi(r).fmul_m(k(0x3ACC_CCCD)).fadd_m(0.5).fmul(xi(lc))) as u32;
             if calc(&mut inp, &mut out, &mut w, &mut h) {
                 let rhw = bits(one().fdiv_m(f(out[2])));
-                render_one_xlu_sprite(f32::from_bits(out[0]), f32::from_bits(out[1]), out[2], f32::from_bits(bits(x(w).fmul_m(5.0))), f32::from_bits(bits(x(h).fmul_m(5.0))), sc, sc, sc, 0xFF, rhw, 0xFF, 0, 0);
+                render_one_xlu_sprite(f32::from_bits(out[0]), f32::from_bits(out[1]), f32::from_bits(out[2]), f32::from_bits(bits(x(w).fmul_m(5.0))), f32::from_bits(bits(x(h).fmul_m(5.0))), sc, sc, sc, 0xFF, f32::from_bits(rhw), 0xFF, 0, 0);
             }
             flush_sprite_buffer();
         }
@@ -563,9 +562,9 @@ pub fn clouds_render() {
     // 0.1 (0x858B1C)
     let tenth = k(0x3DCC_CCCD);
     let mut size = [xi(q % 7 - 3).fmul_m(tenth).to_f32(), xi((q & 7) - 4).fmul_m(tenth).to_f32(), 1.0f32];
-    vector_normalise(GPtr::<f32>::from_raw(size.as_mut_ptr()).cast());
+    vector_normalise(GPtr::<sa_math::vector::CVector>::cast::<[f32;3]>(GPtr::<f32>::from_raw(size.as_mut_ptr()).cast()));
     let mut dir = [xi(q % 9 - 5).to_f32(), xi(q % 10 - 5).to_f32(), tenth];
-    vector_normalise(GPtr::<f32>::from_raw(dir.as_mut_ptr()).cast());
+    vector_normalise(GPtr::<sa_math::vector::CVector>::cast::<[f32;3]>(GPtr::<f32>::from_raw(dir.as_mut_ptr()).cast()));
     // 1000 (0x858C4C)
     let bx = x(dir[0]).fmul_m(1000.0).fadd_m(c[0]).to_f32();
     let by = x(dir[1]).fmul_m(1000.0).fadd_m(c[1]); // kept on the x87 stack
@@ -648,7 +647,7 @@ pub fn render_sky_polys() {
         n = [rd::<u32>(m, 0x10), rd::<u32>(m, 0x14), rd::<u32>(m, 0x18)];
     }
     n[2] = 0;
-    vector_normalise(GPtr::<u32>::from_raw(n.as_mut_ptr()).cast());
+    vector_normalise(GPtr::<sa_math::vector::CVector>::cast::<[f32;3]>(GPtr::<u32>::from_raw(n.as_mut_ptr()).cast()));
     let f = f32::from_bits;
     let b = |v: f32| v.to_bits();
     let (nx, ny, nz) = (f(n[0]), f(n[1]), f(n[2]));
@@ -1109,10 +1108,13 @@ pub fn render_bottom_from_height() {
 }
 
 use crate::bindings::rw_im3d_render_primitive as rw_im3d_render_primitive_v;
-use sa_stream::bindings::fx_get_fx_quality as get_fx_quality;
+use crate::bindings::fx_get_fx_quality as get_fx_quality;
 use sa_world::bindings::vector_add_assign;
 use sa_world::bindings::vector_mul_scalar as vector_mul;
 use sa_world::bindings::vector_ne;
+use sa_world::bindings::find_player_coors;
+use sa_world::bindings::find_player_vehicle;
+use sa_core::bindings::random_float_in_range as random_float;
 orig! {
     /// `CClouds::VolumetricCloudsGetMaxDistance()` (0x713630, ST0)
     fn volumetric_clouds_get_max_distance() -> f64 = cdecl 0x713630 => self::max_distance_port;
@@ -1120,22 +1122,11 @@ orig! {
     fn volumetric_clouds_delete(i: i32) = cdecl 0x7135F0 => crate::clouds::volumetric_clouds_delete;
     /// `CClouds::VolumetricClouds_Create(CVector*)` (0x715F40)
     fn volumetric_clouds_create(pos: GPtr<f32>) = cdecl 0x715F40 => unported;
-    /// `FindPlayerVehicle(int32, bool)` (0x56E0D0)
-    fn find_player_vehicle(id: i32, remote: u8) -> GPtr<u8> = cdecl 0x56E0D0 => sa_world::world::cworld::find_player_vehicle_port;
-    /// `FindPlayerCoors(CVector* out, int32)` (0x56E010)
-    fn find_player_coors(out: GPtr<f32>, id: i32) -> GPtr<f32> = cdecl 0x56E010 => sa_world::world::cworld::find_player_coors_port;
-    /// `CGeneral::GetRandomNumberInRange<float>(min, max)` (0x41BD90, ST0)
-    fn random_float(min: f32, max: f32) -> f64 = cdecl 0x41BD90 => self::random_float_port;
 }
 
 #[cfg_attr(sa_phase_a, allow(dead_code))]
 fn max_distance_port() -> f64 {
     crate::clouds::volumetric_clouds_get_max_distance().to_f64()
-}
-
-#[cfg_attr(sa_phase_a, allow(dead_code))]
-fn random_float_port(min: f32, max: f32) -> f64 {
-    sa_core::general::get_random_number_in_range_f32(min, max).to_f64()
 }
 
 /// `CGame::currArea`.
@@ -1300,9 +1291,9 @@ pub fn volumetric_clouds_render() {
             let pos = if m.is_null() { veh.byte_add(4) } else { m.byte_add(0x30) };
             vector_add_assign(GPtr::<f32>::cast::<u8>(GPtr::<u32>::from_raw(v.as_mut_ptr()).cast()), GPtr::<f32>::cast::<u8>(pos.cast()));
         }
-        v[0] = bits(X87::from_f64_exact(random_float(-200.0, 200.0)).fadd_m(f(v[0])));
-        v[1] = bits(X87::from_f64_exact(random_float(-200.0, 200.0)).fadd_m(f(v[1])));
-        v[2] = bits(X87::from_f64_exact(random_float(-50.0, 50.0)).fadd_m(f(v[2])));
+        v[0] = bits(X87::from_f64_exact(random_float(-200.0, 200.0).to_f64()).fadd_m(f(v[0])));
+        v[1] = bits(X87::from_f64_exact(random_float(-200.0, 200.0).to_f64()).fadd_m(f(v[1])));
+        v[2] = bits(X87::from_f64_exact(random_float(-50.0, 50.0).to_f64()).fadd_m(f(v[2])));
         volumetric_clouds_create(GPtr::<u32>::from_raw(v.as_mut_ptr()).cast());
     }
 
@@ -1375,7 +1366,7 @@ pub fn volumetric_clouds_render() {
         for (l, out) in la.iter_mut().enumerate() {
             let mut v = rel;
             if [v[0], v[1], v[2]].iter().any(|&c| jp(x(c), x(0.0), 0x44)) {
-                vector_normalise(GPtr::<f32>::from_raw(v.as_mut_ptr()).cast());
+                vector_normalise(GPtr::<sa_math::vector::CVector>::cast::<[f32;3]>(GPtr::<f32>::from_raw(v.as_mut_ptr()).cast()));
             }
             let lp = VC_LIGHTS + 0xC * l;
             let (lx, ly, lz) = (g::<f32>(lp).read(), g::<f32>(lp + 4).read(), g::<f32>(lp + 8).read());

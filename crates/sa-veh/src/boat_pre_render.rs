@@ -9,17 +9,17 @@ use crate::common::{f32_of, ftol32, g, jne_mask, jp5, rd, wr, x};
 
 use crate::bindings::door_process;
 use crate::bindings::vehicle_pre_render;
-use sa_core::bindings::frame_get_ltm;
+use sa_rwcore::bindings::frame_get_ltm;
 use sa_core::bindings::fx_play;
 use sa_core::bindings::fx_stop;
 use sa_core::bindings::matrix_attach;
-use sa_core::bindings::matrix_dtor;
+use sa_world::bindings::matrix_dtor;
 use sa_core::bindings::matrix_set_rotate;
 use sa_core::bindings::matrix_update_rw;
 use sa_core::bindings::rw_matrix_update;
-use sa_core::bindings::frame_for_all_objects;
+use sa_rwcore::bindings::frame_for_all_objects;
 use sa_stream::bindings::get_first_object;
-use sa_stream::bindings::set_component_atomic_alpha;
+use crate::bindings::set_component_atomic_alpha;
 use sa_world::bindings::fx_copy_parent_matrix;
 use sa_world::bindings::fx_create_system as create_fx_system;
 use sa_world::bindings::fx_get_play_status;
@@ -46,7 +46,7 @@ fn length(p: GPtr<u8>) -> f32 {
 /// The atomic of a frame's first atomic object, by `GetCurrentAtomicObjectCB` (0x6A0750).
 fn frame_atomic(frame: GPtr<u8>) -> GPtr<u8> {
     let mut a = [0u32; 1];
-    frame_for_all_objects(frame, 0x6A_0750, buf(&mut a));
+    frame_for_all_objects(frame, 0x6A_0750, GPtr::<u8>::addr(buf(&mut a)) as u32);
     GPtr::from_addr(a[0] as usize)
 }
 

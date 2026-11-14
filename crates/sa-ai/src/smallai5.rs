@@ -16,10 +16,10 @@ const INFORM_GROUP_QUEUE: usize = 0xA9B018;
 
 use crate::bindings::decision_maker_types_remove;
 use crate::bindings::entity_scanner_scan;
-use sa_core::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference;
 use sa_core::bindings::ped_is_alive;
-use sa_world::bindings::decision_maker_types_get_instance;
-use sa_world::bindings::task_complex_ctor;
+use crate::bindings::decision_maker_types_get_instance;
+use crate::bindings::task_complex_ctor;
 orig! {
     /// `CInformGroupEvent::Process` (0x4B29E0)
     fn inform_group_event_process(e: GPtr<u8>) = thiscall 0x4B29E0 => unported;
@@ -83,7 +83,7 @@ pub fn object_scanner_scan_for_objects_in_range(this: GPtr<u8>, ped: GPtr<u8>) {
     if rd::<u32>(ped, 0x58C) != 0 && rd::<u32>(ped, 0x46C) & 0x100 != 0 {
         return;
     }
-    if ped_is_alive(ped) != 0 {
+    if ped_is_alive(ped) as u8 != 0 {
         entity_scanner_scan(this, 2, ped);
     }
 }
@@ -146,7 +146,7 @@ pub fn sequence_add_task(this: GPtr<u8>, task: GPtr<u8>) -> u8 {
 /// this.
 #[hook(addr = 0x632E50, conv = thiscall, name = "CTaskComplexBeInGroup::Constructor", expect = "56 8B F1 E8 58 75 FE FF")]
 pub fn be_in_group_ctor(this: GPtr<u8>, id: u32, leader: u8) -> GPtr<u8> {
-    task_complex_ctor(this);
+    task_complex_ctor(this.addr() as u32);
     wr::<u32>(this, 0xC, id);
     wr::<u32>(this, 0x14, 0);
     wr::<u32>(this, 0x18, 0);
@@ -166,7 +166,7 @@ pub fn inform_group_event_queue_flush() {
         let e: GPtr<u8> = GPtr::from_addr(INFORM_GROUP_QUEUE + 0x10 * i);
         let p = rd::<GPtr<u8>>(e, 0);
         if !p.is_null() {
-            entity_clean_up_old_reference(p, e.cast::<GPtr<u8>>());
+            entity_clean_up_old_reference(p, e.cast::<u8>());
             wr::<u32>(e, 0, 0);
         }
         let ev = rd::<GPtr<u8>>(e, 8);

@@ -64,7 +64,7 @@ pub use sa_core::bindings::tm_set_task_secondary as task_manager_set_task_second
 pub use sa_core::bindings::world_clear_scan_codes;
 pub use crate::bindings::bone_calc_wld_mat;
 pub use sa_core::bindings::clump_get_association as rp_anim_blend_clump_get_association;
-pub use sa_core::bindings::ik_abort_look_at as call_abort_look_at;
+pub use crate::bindings::ik_abort_look_at as call_abort_look_at;
 pub use sa_core::bindings::ped_get_bone_position;
 pub use sa_core::bindings::rt_quat_convert_from_matrix;
 pub use sa_core::bindings::rt_quat_rotate;
@@ -74,11 +74,10 @@ pub use sa_core::bindings::rw_v3d_transform_point;
 pub use sa_core::bindings::rw_v3d_transform_vector;
 pub use sa_core::bindings::vector_magnitude_sqr;
 pub use sa_core::bindings::vector_sub;
+pub use sa_core::bindings::crt_new_821195 as operator_new;
 orig! {
     /// `RtQuatTransformVectors(out, in, n, quat)` (0x7EBBB0)
     pub fn rt_quat_transform_vectors(out: GPtr<f32>, inp: GPtr<f32>, n: i32, q: GPtr<f32>) -> GPtr<f32> = cdecl 0x7EBBB0 => unported;
-    /// `operator new` (0x821195)
-    pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x821195 => unported;
     /// `BoneNodeManager_c::GetBoneNode()` (0x617460)
     pub fn get_bone_node(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x617460 => crate::bones::manager_get_bone_node;
     /// `BoneNodeManager_c::ReturnBoneNode(node)` (0x617470)
@@ -822,7 +821,7 @@ pub fn can_accept(_this: GPtr<u8>, ped: GPtr<u8>, range: f32) -> u8 {
     if obj.is_null() || rd::<u32>(obj, 4).wrapping_add(0x10) == 0 {
         return 0;
     }
-    if ped_is_alive(ped) == 0 || entity_get_is_on_screen(ped) == 0 {
+    if ped_is_alive(ped) as u8 == 0 || entity_get_is_on_screen(ped) == 0 {
         return 0;
     }
     if g::<u16>(CAM_MODE_WORD).read() == 7 {
@@ -838,7 +837,7 @@ pub fn can_accept(_this: GPtr<u8>, ped: GPtr<u8>, range: f32) -> u8 {
     let pp: GPtr<f32> = if pm.is_null() { ped.byte_add(4).cast() } else { pm.byte_add(0x30).cast() };
     let mut d = [0f32; 3];
     let r = GPtr::<u8>::cast::<f32>(vector_sub(GPtr::<f32>::cast::<u8>(GPtr::from_raw(d.as_mut_ptr())), pp.cast::<u8>(), cam.cast::<u8>()));
-    let msq = X87::from_f64_exact(vector_magnitude_sqr(r));
+    let msq = X87::from_f64_exact(vector_magnitude_sqr(r.cast::<u8>()).to_f64());
     let r2 = x(range).fmul_m(range);
     u8::from(!matches!(r2.fcom(msq), Cmp::Less))
 }

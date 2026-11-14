@@ -46,27 +46,22 @@ use crate::bindings::try_to_explode;
 use crate::bindings::vec_mul_assign;
 use crate::bindings::vehicle_inflict_damage;
 use sa_core::bindings::col_box_set;
-use sa_core::bindings::find_player_ped;
+use crate::bindings::find_player_ped;
 use sa_stream::bindings::is_object_glass;
 use crate::bindings::damage_calc_ctor;
 use crate::bindings::generate_damage_event;
 use crate::bindings::process_sphere_box;
-use sa_core::bindings::col_sphere_set;
+use crate::bindings::col_sphere_set;
+use crate::bindings::trigger_water_hydrant;
+use crate::bindings::apply_force;
+use crate::bindings::physical_apply_move_force_5429f0 as apply_move_force;
+use crate::bindings::physical_apply_turn_force as apply_turn_force;
+use crate::bindings::physical_get_speed as get_speed;
 orig! {
     /// `CGlass::WindowRespondsToExplosion(CEntity*, CVector point)` (0x71C1A0)
     fn window_responds_to_explosion(e: GPtr<u8>, point: CVector) = cdecl 0x71C1A0 => unported;
     /// `CEntity::SetIsStatic(bool)` (vtable +0x10)
     fn v_set_is_static(e: GPtr<u8>, s: u32) = thiscall vslot 0x10 => unported;
-    /// `Fx_c::TriggerWaterHydrant(CVector&)` (0x4A0D70) on `g_fx` (0xA9AE00)
-    fn trigger_water_hydrant(fx: GPtr<u8>, pos: GPtr<u8>) = thiscall 0x4A0D70 => unported;
-    /// `CPhysical::GetSpeed(CVector point)` (0x542CE0): the result through the hidden pointer
-    fn get_speed(e: GPtr<u8>, out: GPtr<CVector>, point: CVector) -> GPtr<CVector> = thiscall 0x542CE0 => crate::physical::forces::get_speed;
-    /// `CPhysical::ApplyForce(CVector force, CVector point, bool updateTurnSpeed)` (0x542B50)
-    fn apply_force(e: GPtr<u8>, force: CVector, point: CVector, update_turn: u8) = thiscall 0x542B50 => crate::physical::forces::apply_force;
-    /// `CPhysical::ApplyMoveForce(CVector)` (0x5429F0)
-    fn apply_move_force(e: GPtr<u8>, force: CVector) = thiscall 0x5429F0 => crate::physical::forces::apply_move_force;
-    /// `CPhysical::ApplyTurnForce(CVector force, CVector point)` (0x542A50)
-    fn apply_turn_force(e: GPtr<u8>, force: CVector, point: CVector) = thiscall 0x542A50 => crate::physical::forces::apply_turn_force;
     /// `CVehicle::VehicleDamage(float, eVehicleCollisionComponent, CEntity*, CVector*, CVector*, eWeaponType)` (vtable +0xE0)
     fn v_vehicle_damage(v: GPtr<u8>, dmg: u32, comp: u32, e: GPtr<u8>, p: GPtr<u8>, d: GPtr<u8>, weapon: u32) = thiscall vslot 0xE0 => unported;
 }
@@ -119,7 +114,7 @@ fn static_fraction(radius: f32, dist: f32) -> f32 {
 fn ped_damage_events(ped: GPtr<u8>, creator: GPtr<u8>, amount: f32, dir: i32) {
     let mut calc = [0u32; 8];
     let mut ev = [0u32; 0x20];
-    damage_calc_ctor(p(&mut calc), creator, amount, 0x33, 3, 0);
+    damage_calc_ctor(p(&mut calc), creator.addr() as u32, amount.to_bits(), 0x33, 3, 0);
     let talk = (rd::<u32>(ped, 0x46C) >> 8) & 0xFFFF_FF01;
     event_damage_ctor(p(&mut ev), creator, g::<u32>(TIME_MS).read(), 0x33, 3, dir as u32, 0, talk);
     if event_damage_affects_ped(p(&mut ev), ped) != 0 {
@@ -258,11 +253,11 @@ pub fn trigger_explosion_sector_list(list: GPtr<u8>, point: GPtr<u8>, radius: f3
             2 => {
                 if rd::<u32>(e, 0x594) == 10 && !rd::<GPtr<u8>>(e, 0x460).is_null() {
                     let mut ev = [0u32; 0x20];
-                    kob_ctor(p(&mut ev), e, e.byte_add(0x44), p(&mut imp), 0, 0, 0x33, 0, 0, GPtr::NULL, 1, 0);
+                    kob_ctor(p(&mut ev), e, e.byte_add(0x44), p(&mut imp), 0, f32::from_bits(0), 0x33, 0, 0, GPtr::NULL, 1, 0);
                     let drv = rd::<GPtr<u8>>(e, 0x460);
                     event_group_add(rd::<GPtr<u8>>(drv, 0x47C).byte_add(0x68), p(&mut ev), 0);
                     let mut v2 = [imp[0], imp[1]];
-                    let dir = get_local_direction(rd::<GPtr<u8>>(e, 0x460), p(&mut v2));
+                    let dir = get_local_direction(rd::<GPtr<u8>>(e, 0x460), GPtr::<u8>::cast::<f32>(p(&mut v2)));
                     let dmg = ftol32(x(rel).fmul_m(damage).fmul_m(1100.0));
                     generate_damage_event(rd::<GPtr<u8>>(e, 0x460), e, 0x33, dmg, 3, dir as u32);
                     kob_dtor(p(&mut ev));
@@ -281,7 +276,7 @@ pub fn trigger_explosion_sector_list(list: GPtr<u8>, point: GPtr<u8>, radius: f3
                 let mut centre = [0f32; 3];
                 multiply3x3_vm(p(&mut centre), p(&mut ndir), rd::<GPtr<u8>>(e, 0x14));
                 let mut sphere = [0u32; 5];
-                col_sphere_set(p(&mut sphere), dist, p(&mut centre), 0, 0, 0xFF);
+                col_sphere_set(p(&mut sphere), dist.to_bits(), GPtr::<u8>::cast::<u32>(p(&mut centre)), 0, 0, 0xFF);
                 let col_max = get_col_model(e);
                 let col_min = get_col_model(e);
                 let mut bx = [0u32; 7];
@@ -352,7 +347,7 @@ pub fn trigger_explosion_sector_list(list: GPtr<u8>, point: GPtr<u8>, radius: f3
             }
             3 => {
                 let mut v2 = [neg(imp[0]), neg(iy)];
-                let dir = get_local_direction(e, p(&mut v2));
+                let dir = get_local_direction(e, GPtr::<u8>::cast::<f32>(p(&mut v2)));
                 let att = rd::<GPtr<u8>>(e, 0xFC);
                 let wrecked = !att.is_null() && rd::<u8>(att, 0x36) & 7 == 2 && rd::<u8>(att, 0x36) & 0xF8 == 0x28;
                 if wrecked {
@@ -367,7 +362,7 @@ pub fn trigger_explosion_sector_list(list: GPtr<u8>, point: GPtr<u8>, radius: f3
                             .fadd(x(imp[0]).fmul_m(rd::<f32>(e, 0x44)))
                             .fmul_m(mass);
                         if !dot.fcom(f.fadd(f)).test_any(0x41) {
-                            f = X87::from_f64_exact(max_f(0.0, f.fsub(dot).to_f32()));
+                            f = X87::from_f64_exact(max_f(0.0, f.fsub(dot).to_f32()).to_f64());
                         }
                         imp[0] = x(imp[0]).fmul(f).to_f32();
                         imp[1] = x(imp[1]).fmul(f).to_f32();
@@ -403,7 +398,7 @@ pub fn trigger_explosion_sector_list(list: GPtr<u8>, point: GPtr<u8>, radius: f3
                         .fadd(x(imp[0]).fmul_m(rd::<f32>(e, 0x44)))
                         .fmul_m(mass);
                     if !dot.fcom(x(factor).fmul_m(4.0)).test_any(0x41) {
-                        factor = X87::from_f64_exact(max_f(0.0, x(factor).fsub(dot).to_f32())).to_f32();
+                        factor = X87::from_f64_exact(max_f(0.0, x(factor).fsub(dot).to_f32()).to_f64()).to_f32();
                     }
                     vec_mul_assign(p(&mut imp), factor);
                     apply_move_force(e, CVector::new(imp[0], imp[1], imp[2]));
@@ -412,7 +407,7 @@ pub fn trigger_explosion_sector_list(list: GPtr<u8>, point: GPtr<u8>, radius: f3
                     let col = rd::<GPtr<u8>>(info, 0x14);
                     let half = x(rd::<f32>(col, 0x24)).fmul_m(0.5).to_f32();
                     let ratio = x(rd::<f32>(e, 0x90)).fdiv_m(rd::<f32>(e, 0x8C)).to_f32();
-                    let k = X87::from_f64_exact(min_f(1.0, ratio)).to_f32();
+                    let k = X87::from_f64_exact(min_f(1.0f32.to_bits(), ratio.to_bits()).to_f64()).to_f32();
                     vec_mul_assign(p(&mut imp), k);
                     apply_turn_force(e, CVector::new(imp[0], imp[1], imp[2]), CVector::new(0.0, 0.0, half));
                 }

@@ -33,11 +33,10 @@ pub mod call {
     pub use crate::bindings::add_item;
     pub use crate::bindings::quad_tree_delete_item as delete_item;
     pub use crate::bindings::quad_tree_get_all_matching_rect as get_all_matching_rect;
+    pub use crate::bindings::crt_new as operator_new;
     orig! {
         /// The quad-tree node pool's `New` (0x552B50, slot 0x28)
         pub fn quad_tree_pool_new(pool: GPtr<u8>) -> GPtr<u8> = thiscall 0x552B50 => unported;
-        /// `operator new` (0x82119A)
-        pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
         /// The quad-tree node pool constructor (0x552AF0)
         pub fn pool_ctor(p: GPtr<u8>, size: i32, name: GPtr<u8>) -> GPtr<u8> = thiscall 0x552AF0 => unported;
         pub fn find_sector_vec(node: GPtr<u8>, v: GPtr<u8>) -> i32 = thiscall 0x552640 => super::find_sector_vec;

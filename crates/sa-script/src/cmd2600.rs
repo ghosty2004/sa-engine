@@ -62,15 +62,15 @@ const MOUSE_Y: usize = 0xB73428;
 use crate::bindings::conversations_done_setting_up_conversation;
 use crate::bindings::player_ped_force_group_to_never_follow;
 use crate::bindings::vehicle_get_ref;
-use sa_core::bindings::find_player_ped;
-use sa_core::bindings::get_pad as pad_get_pad;
-use sa_core::bindings::task_new;
+use sa_world::bindings::find_player_ped;
+use sa_input::bindings::get_pad as pad_get_pad;
+use sa_ai::bindings::task_new;
 use sa_core::bindings::text_get;
 use sa_world::bindings::apply_cheat;
 use sa_world::bindings::get_task_climb as intel_get_task_climb;
 use sa_world::bindings::get_task_swim as intel_get_task_swim;
 use sa_world::bindings::hud_help_message_displayed;
-use sa_world::bindings::ped_groups_get_peds_group as get_peds_group;
+use sa_ai::bindings::ped_groups_get_peds_group as get_peds_group;
 use crate::bindings::give_ped_scripted_task;
 use crate::bindings::is_ped_dead;
 use crate::bindings::set_up_conversation_node as conversations_set_up_conversation_node;
@@ -126,7 +126,7 @@ fn random_char_in_area(s: Scr) -> u32 {
             || rd_u8(ped, 0x470) & 8 != 0
             || is_ped_dead(s, ped) != 0
             || rd_u32(ped, 0x46C) & 0x100 != 0
-            || !get_peds_group(ped).is_null()
+            || !GPtr::<u8>::from_addr(get_peds_group(ped.addr() as u32) as usize).is_null()
         {
             continue;
         }

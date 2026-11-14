@@ -16,9 +16,9 @@ use sa_core::bindings::tm_get_simplest_active_task;
 use sa_core::bindings::vector_difference;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::entity_get_bound_centre;
-use sa_world::bindings::event_group_add;
-use sa_core::bindings::vector_magnitude_sqr;
-use sa_core::bindings::vector_sub;
+use crate::bindings::event_group_add;
+use sa_world::bindings::vector_magnitude_sqr;
+use sa_world::bindings::vector_sub;
 orig! {
     /// `CObjectScanner::CObjectScanner()` (0x606010)
     fn object_scanner_ctor(s: GPtr<u8>) -> GPtr<u8> = thiscall 0x606010 => unported;
@@ -116,7 +116,7 @@ fn test_object(ped: GPtr<u8>, task: GPtr<u8>, obj: GPtr<u8>, ms: u32) {
     let mut v = [0f32; 3];
     let v_p: GPtr<u8> = GPtr::from_raw(v.as_mut_ptr()).cast();
     vector_difference(v_p, entity_pos(ped), entity_pos(obj));
-    let m2 = X87::from_f64_exact(vector_magnitude_sqr(v_p.cast::<f32>()));
+    let m2 = X87::from_f64_exact(vector_magnitude_sqr(v_p.cast::<u8>()).to_f64());
     let range = k(K_RANGE);
     if x(range).fmul_m(range).fcom(m2).test_any(0x41) {
         return;

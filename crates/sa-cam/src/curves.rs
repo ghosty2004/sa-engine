@@ -32,46 +32,19 @@ fn dist_to_mathematical_line_2d_abi(x: f32, y: f32, dx: f32, dy: f32, px: f32, p
     sa_world::collision::prim::dist_to_mathematical_line_2d(x, y, dx, dy, px, py).to_f64()
 }
 
+pub use crate::bindings::calc_speed_variation_in_bend_bits as calc_speed_variation_in_bend_call;
+pub use crate::bindings::calc_speed_variation_in_bend_bits;
 orig! {
     /// `CCollision::DistToMathematicalLine2D(x, y, dx, dy, px, py)` (0x412A30, ST0)
     pub fn dist_to_mathematical_line_2d(x: f32, y: f32, dx: f32, dy: f32, px: f32, py: f32) -> f64 = cdecl 0x412A30 => dist_to_mathematical_line_2d_abi;
-    /// `CCurves::CalcSpeedVariationInBend` (0x43C660, ST0)
-    pub fn calc_speed_variation_in_bend_call(start: GPtr<u8>, end: GPtr<u8>, sdx: f32, sdy: f32, edx: f32, edy: f32) -> f64 = cdecl 0x43C660 => calc_speed_variation_in_bend_abi;
-    /// The same call with the direction components pushed as dwords (`CalcCurvePoint`'s `mov`/`push`)
-    pub fn calc_speed_variation_in_bend_bits(start: GPtr<u8>, end: GPtr<u8>, sdx: u32, sdy: u32, edx: u32, edy: u32) -> f64 = cdecl 0x43C660 => calc_speed_variation_in_bend_bits_abi;
     /// `CCurves::CalcCorrectedDist(curr, total, speedVariation, float* interp)` (0x43C880, ST0); dwords
     pub fn calc_corrected_dist_bits(curr: u32, total: u32, var: u32, interp: GPtr<f32>) -> f64 = cdecl 0x43C880 => calc_corrected_dist_bits_abi;
-}
-
-#[cfg_attr(sa_phase_a, allow(dead_code))]
-fn calc_speed_variation_in_bend_bits_abi(
-    start: GPtr<u8>,
-    end: GPtr<u8>,
-    sdx: u32,
-    sdy: u32,
-    edx: u32,
-    edy: u32,
-) -> f64 {
-    let f = f32::from_bits;
-    calc_speed_variation_in_bend(start, end, f(sdx), f(sdy), f(edx), f(edy)).to_f64()
 }
 
 #[cfg_attr(sa_phase_a, allow(dead_code))]
 fn calc_corrected_dist_bits_abi(curr: u32, total: u32, var: u32, interp: GPtr<f32>) -> f64 {
     let f = f32::from_bits;
     calc_corrected_dist(f(curr), f(total), f(var), interp).to_f64()
-}
-
-#[cfg_attr(sa_phase_a, allow(dead_code))]
-fn calc_speed_variation_in_bend_abi(
-    start: GPtr<u8>,
-    end: GPtr<u8>,
-    sdx: f32,
-    sdy: f32,
-    edx: f32,
-    edy: f32,
-) -> f64 {
-    calc_speed_variation_in_bend(start, end, sdx, sdy, edx, edy).to_f64()
 }
 
 /// `fld -1.0; fdiv st, st(2); fmulp st(1), st`: `n * (-1 / st1)` with `n` in ST0, the cross product
@@ -234,7 +207,7 @@ pub fn calc_speed_scale_factor(
     edy: f32,
 ) -> X87 {
     let mut f = Fpu::new();
-    let v = calc_speed_variation_in_bend_call(start, end, sdx, sdy, edx, edy);
+    let v = calc_speed_variation_in_bend_call(start, end, sdx, sdy, edx, edy).to_f64();
     f.push(X87::from_f64_exact(v));
     f.fld(sdx);
     f.fmul_m(edy);
@@ -358,11 +331,11 @@ pub fn calc_curve_point(
     let sv = calc_speed_variation_in_bend_bits(
         start,
         end,
-        rd::<u32>(sd, 0),
-        rd::<u32>(sd, 4),
-        rd::<u32>(ed, 0),
-        rd::<u32>(ed, 4),
-    );
+        f32::from_bits(rd::<u32>(sd, 0)),
+        f32::from_bits(rd::<u32>(sd, 4)),
+        f32::from_bits(rd::<u32>(ed, 0)),
+        f32::from_bits(rd::<u32>(ed, 4)),
+    ).to_f64();
     let mut s54 = X87::from_f64_exact(sv).to_f32();
     let mut s50: f32;
     let s48: f32;

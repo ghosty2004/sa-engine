@@ -23,8 +23,8 @@ const WAITING_FOR_BRAIN: usize = 0xA476B0;
 /// The default script-brain activation radius (0x859D9C, f32 read as a dword).
 const BRAIN_RADIUS: usize = 0x859D9C;
 
-use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
-use sa_core::bindings::set_mission_doesnt_require_model;
+use sa_world::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+use sa_stream::bindings::set_mission_doesnt_require_model;
 use crate::bindings::running_script_init;
 
 use sa_core::field::at;
@@ -76,7 +76,7 @@ pub fn remove_from_waiting_for_script_brain_array(entity: GPtr<u8>, model_index:
         let ent = at::<GPtr<u8>>(e, 0).read();
         if ent == entity && at::<u16>(e, 4).read() == id {
             if !ent.is_null() {
-                clean_up_old_reference(ent, e.cast::<GPtr<u8>>());
+                clean_up_old_reference(ent, e.cast::<u8>());
             }
             at::<u32>(e, 0).write(0);
             at::<u16>(e, 4).write(0xFFFF);

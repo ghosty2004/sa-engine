@@ -35,6 +35,7 @@ use sa_world::bindings::ped_give_object_to_hold as ped_give_object_to_ped_to_hol
 use sa_world::bindings::set_ped_decision_maker_type as intel_set_ped_decision_maker_type;
 use crate::bindings::group_intel_set_default_task_allocator as pgi_set_default_task_allocator;
 use crate::bindings::membership_add_member;
+use crate::bindings::gang_follower_ctor;
 orig! {
     /// `CPedGroupIntelligence::CPedGroupIntelligence` (0x5F7250)
     fn pgi_ctor(i: GPtr<u8>) -> GPtr<u8> = thiscall 0x5F7250 => unported;
@@ -44,10 +45,6 @@ orig! {
     fn membership_get_object_for_ped_to_hold() -> i32 = cdecl 0x5F6950 => unported;
     /// `CPedGroup::Flush` (0x5FB790)
     fn group_flush(g: GPtr<u8>) = thiscall 0x5FB790 => unported;
-    /// `CTaskComplexGangFollower::CTaskComplexGangFollower(CPedGroup*, CPed*, uint8, CVector, float)` (0x65EAA0,
-    /// `ret 0x1C`; the vector by value)
-    #[allow(clippy::too_many_arguments)]
-    fn gang_follower_ctor(t: GPtr<u8>, g: GPtr<u8>, leader: u32, i: u32, x: u32, y: u32, z: u32, r: u32) -> GPtr<u8> = thiscall 0x65EAA0 => unported;
     /// 0x65EE90 (`ret 4`): a `CTaskComplexGangFollower` flag setter
     fn gang_follower_65ee90(t: GPtr<u8>, b: u32) = thiscall 0x65EE90 => unported;
     /// `CTaskComplexGangLeader::CTaskComplexGangLeader(CPedGroup*)` (0x65DED0, `ret 4`)
@@ -212,7 +209,7 @@ pub fn membership_set_leader(this: GPtr<u8>, ped: GPtr<u8>) {
 pub fn membership_process_port(this: GPtr<u8>) {
     for i in 0..8 {
         let m = member(this, i);
-        if m.is_null() || ped_is_alive(m) != 0 {
+        if m.is_null() || ped_is_alive(m) as u8 != 0 {
             continue;
         }
         if i == 7 && ped_is_player(rd::<GPtr<u8>>(this, 0x20)) != 0 {
@@ -490,7 +487,7 @@ orig! {
 pub fn group_teleport(this: GPtr<u8>, pos: GPtr<f32>) {
     let rp = |i: i32| pos.wrapping_index(i).read();
     let leader = rd::<GPtr<u8>>(this, 0x28);
-    if !leader.is_null() && ped_is_alive(leader) != 0 {
+    if !leader.is_null() && ped_is_alive(leader) as u8 != 0 {
         v_ped_teleport(leader, rp(0).to_bits(), rp(1).to_bits(), rp(2).to_bits(), 0);
     }
     let ge = rd::<GPtr<u8>>(this, 0x34);
@@ -500,7 +497,7 @@ pub fn group_teleport(this: GPtr<u8>, pos: GPtr<f32>) {
     if !leader.is_null() && rd::<u32>(leader, 0x46C) & 0x100 == 0 {
         for k in 0..7 {
             let f = rd::<GPtr<u8>>(this, 0xC + k * 4);
-            if f.is_null() || rd::<u32>(f, 0x46C) & 0x100 == 0 || rd::<u8>(f, 0x484) == 2 || ped_is_alive(f) == 0 {
+            if f.is_null() || rd::<u32>(f, 0x46C) & 0x100 == 0 || rd::<u8>(f, 0x484) == 2 || ped_is_alive(f) as u8 == 0 {
                 continue;
             }
             let veh = rd::<GPtr<u8>>(f, 0x58C);
@@ -515,7 +512,7 @@ pub fn group_teleport(this: GPtr<u8>, pos: GPtr<f32>) {
     }
     for k in 0..7 {
         let f = rd::<GPtr<u8>>(this, 0xC + k * 4);
-        if f.is_null() || ped_is_alive(f) == 0 {
+        if f.is_null() || ped_is_alive(f) as u8 == 0 {
             continue;
         }
         let off = g::<f32>(FORMATION_OFFSETS + k as usize * 8);

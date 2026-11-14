@@ -26,14 +26,14 @@ const VEHICLE_POOL: usize = 0xB74494;
 const OBJECT_POOL: usize = 0xB7449C;
 
 use sa_core::bindings::entity_register_reference as register_reference;
-use sa_core::bindings::world_clear_scan_codes;
-use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
+use sa_world::bindings::world_clear_scan_codes;
+use sa_world::bindings::placeable_allocate_matrix as allocate_matrix;
 use sa_stream::bindings::simple_transform_update_matrix;
 use sa_world::bindings::crt_floor as floor;
 use sa_world::bindings::double_node_delete as list_node_delete;
 use sa_world::bindings::double_node_new as list_node_new;
-use sa_core::bindings::find_player_coors;
-use sa_core::bindings::find_player_vehicle;
+use sa_world::bindings::find_player_coors;
+use sa_world::bindings::find_player_vehicle;
 orig! {
     /// `CObject::CanBeUsedToTakeCoverBehind()` (0x5A1B60)
     fn object_can_be_used_to_take_cover_behind(o: GPtr<u8>) -> u8 = thiscall 0x5A1B60 => unported;

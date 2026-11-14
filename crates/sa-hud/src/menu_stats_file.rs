@@ -69,13 +69,11 @@ const K_0_001: f32 = f32::from_bits(0x3A83_126F);
 const K_100: f32 = f32::from_bits(0x42C8_0000);
 
 use sa_core::bindings::atol;
+use sa_core::bindings::fclose;
+use sa_core::bindings::fopen;
 orig! {
     /// CRT `_strdate(char buf[9])` (0x823A8E): `MM/DD/YY` from `GetLocalTime`
     fn strdate(buf: GPtr<u8>) -> GPtr<u8> = cdecl 0x823A8E => unported;
-    /// CRT `fopen` (0x8232D8)
-    fn fopen(path: GPtr<u8>, mode: GPtr<u8>) -> GPtr<u8> = cdecl 0x8232D8 => unported;
-    /// CRT `fclose` (0x82318B)
-    fn fclose(f: GPtr<u8>) -> i32 = cdecl 0x82318B => unported;
     /// CRT `fprintf(f, fmt)` (0x823A30)
     fn fprintf0(f: GPtr<u8>, fmt: GPtr<u8>) -> i32 = cdecl 0x823A30 => unported;
     /// CRT `fprintf(f, fmt, a)` (0x823A30)

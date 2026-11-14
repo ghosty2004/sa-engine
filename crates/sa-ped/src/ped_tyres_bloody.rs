@@ -16,7 +16,7 @@ const SCAN_CODE: usize = 0xB7CD78;
 /// `CModelInfo::ms_modelInfoPtrs`
 const MODEL_INFO_PTRS: usize = 0xA9B0C8;
 
-use sa_core::bindings::get_pad;
+use sa_input::bindings::get_pad;
 use sa_core::bindings::matrix_mul_vec;
 use sa_world::bindings::localisation_blood;
 use sa_world::bindings::pad_start_shake;
@@ -46,7 +46,7 @@ fn col_model(v: GPtr<u8>) -> GPtr<u8> {
 /// The shared wheel test: `W = matrix * o`; `|W.z - ped.z| < 2` and `(W.y - ped.y)² + (W.x - ped.x)² < 1`.
 fn wheel_on_ped(ped: GPtr<u8>, v: GPtr<u8>, o: &mut [f32; 3]) -> Option<[f32; 3]> {
     let mut w = [0f32; 3];
-    matrix_mul_vec(GPtr::<u8>::cast::<f32>(lp(&mut w).cast()), rd::<GPtr<u8>>(v, 0x14), lp(o).cast());
+    matrix_mul_vec(lp(&mut w).cast(), rd::<GPtr<u8>>(v, 0x14), lp(o).cast());
     let pp = vec3(ent_pos(ped));
     if !within(w[2], pp[2], 2.0) {
         return None;

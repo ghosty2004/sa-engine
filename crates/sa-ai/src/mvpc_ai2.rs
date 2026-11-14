@@ -18,15 +18,15 @@ use sa_stream::bindings::get_2d_effect as model_get_2d_effect;
 use sa_world::bindings::event_acquaintance_ped_dtor;
 use crate::bindings::acquaintance_ped_hate_ctor as event_acquaintance_ped_hate_ctor;
 use crate::bindings::add_effect as attractor_scanner_offer;
-use sa_world::bindings::acquaintance_get;
-use sa_world::bindings::acquaintance_ped_ctor as event_acquaintance_ped_ctor;
-use sa_world::bindings::can_ped_target_ped;
-use sa_world::bindings::decision_maker_types_get_instance;
-use sa_world::bindings::event_group_add;
+use crate::bindings::acquaintance_get;
+use crate::bindings::acquaintance_ped_ctor as event_acquaintance_ped_ctor;
+use crate::bindings::can_ped_target_ped;
+use crate::bindings::decision_maker_types_get_instance;
+use crate::bindings::event_group_add;
 use sa_world::bindings::get_ped_flag as ped_type_get_ped_flag;
-use sa_world::bindings::group_intelligence_add_event as pgi_add_event;
+use crate::bindings::group_intelligence_add_event as pgi_add_event;
 use sa_world::bindings::la_riots_active_here;
-use sa_world::bindings::ped_groups_get_peds_group as get_peds_group;
+use crate::bindings::ped_groups_get_peds_group as get_peds_group;
 orig! {
     /// `FUN_00603af0` (0x603AF0, cdecl, AL): the riot gang-member test of two peds
     fn riot_peds_test(ped: GPtr<u8>, other: GPtr<u8>) -> u8 = cdecl 0x603AF0 => unported;
@@ -69,7 +69,7 @@ pub fn acq_scanner_scan_entities(this: GPtr<u8>, ped: GPtr<u8>, ty: i32, ents: G
     while i < n {
         let other = rd::<GPtr<u8>>(ents, 4 * i as isize);
         i += 1;
-        if other.is_null() || ped_is_alive(other) == 0 {
+        if other.is_null() || ped_is_alive(other) as u8 == 0 {
             continue;
         }
         let a = pos(ped);
@@ -82,7 +82,7 @@ pub fn acq_scanner_scan_entities(this: GPtr<u8>, ped: GPtr<u8>, ty: i32, ents: G
         wr::<f32>(dp, 0, dx);
         wr::<f32>(dp, 4, dy);
         wr::<f32>(dp, 8, dz);
-        vector_normalise(dp);
+        vector_normalise(dp.cast::<[f32;3]>());
         let m = rd::<GPtr<u8>>(ped, 0x14);
         let dot = x(rd::<f32>(dp, 8))
             .fmul_m(rd::<f32>(m, 0x18))
@@ -99,7 +99,7 @@ pub fn acq_scanner_scan_entities(this: GPtr<u8>, ped: GPtr<u8>, ty: i32, ents: G
             let mut t = 4i32;
             while t >= 0 && !found {
                 if ty == -1 || ty == t {
-                    let acq = acquaintance_get(GPtr::from_addr((ped.byte_add(0x4E0).addr() as u32) as usize), t as u32);
+                    let acq = acquaintance_get(GPtr::<u8>::addr(GPtr::from_addr((ped.byte_add(0x4E0).addr() as u32) as usize)) as u32, t as u32);
                     if acq & ped_type_get_ped_flag(rd::<i32>(other, 0x598)) != 0 {
                         found = true;
                     }
@@ -129,7 +129,7 @@ pub fn acq_scanner_scan_entities(this: GPtr<u8>, ped: GPtr<u8>, ty: i32, ents: G
             continue;
         }
         let check = (rd::<u32>(ped, 0x46C) & 0x100 == 0 && rd::<u32>(other, 0x46C) & 0x100 == 0) as u32;
-        if (can_ped_target_ped(ped, other, 0x100 | check) as u32) as u8 != 0 {
+        if ((can_ped_target_ped(ped, other, 0x100 | check) as u8) as u32) as u8 != 0 {
             best = acq_probe_o(this, ped, ty, best, other, out_ped, out_ty);
         }
     }
@@ -160,7 +160,7 @@ pub fn acq_scanner_probe(this: GPtr<u8>, ped: GPtr<u8>, ty: i32, best: i32, othe
         if tried {
             let skip_acq = ty == -1 && t == 2 && rd::<i32>(other, 0x598) == 6;
             let acquainted = skip_acq || {
-                let acq = acquaintance_get(GPtr::from_addr((ped.byte_add(0x4E0).addr() as u32) as usize), t as u32);
+                let acq = acquaintance_get(GPtr::<u8>::addr(GPtr::from_addr((ped.byte_add(0x4E0).addr() as u32) as usize)) as u32, t as u32);
                 acq & ped_type_get_ped_flag(rd::<i32>(other, 0x598)) != 0
                     || (la_riots_active_here() != 0 && riot_peds_test(ped, other) != 0)
             };
@@ -203,7 +203,7 @@ pub fn acq_scanner_probe(this: GPtr<u8>, ped: GPtr<u8>, ty: i32, best: i32, othe
 /// Constructs a `CEventAcquaintancePed` of `other` in `ev`, sets `vtable`, adds it to `ped`'s event group
 /// (`Add(event, false)`), restores the vtable and destroys it; true when the group took it.
 fn raise_acquaintance(ev: GPtr<u8>, ped: GPtr<u8>, other: GPtr<u8>, vtable: u32) -> u8 {
-    event_acquaintance_ped_ctor(GPtr::from_addr((ev.addr() as u32) as usize), GPtr::from_addr((other.addr() as u32) as usize));
+    event_acquaintance_ped_ctor(GPtr::<u8>::addr(GPtr::from_addr((ev.addr() as u32) as usize)) as u32, GPtr::<u8>::addr(GPtr::from_addr((other.addr() as u32) as usize)) as u32);
     wr::<u32>(ev, 0, vtable);
     let r = event_group_add(rd::<GPtr<u8>>(ped, 0x47C).byte_add(0x68), ev, 0);
     wr::<u32>(ev, 0, vtable);
@@ -245,10 +245,10 @@ pub fn acq_scanner_raise_event(_this: GPtr<u8>, ped: GPtr<u8>, t: i32, other: GP
                     let r = event_group_add(rd::<GPtr<u8>>(ped, 0x47C).byte_add(0x68), ea, 0);
                     !r.is_null() as u8
                 } else {
-                    let grp = GPtr::<u8>::addr(get_peds_group(GPtr::from_addr((ped.addr() as u32) as usize))) as u32;
+                    let grp = GPtr::<u8>::addr(GPtr::from_addr(get_peds_group(GPtr::<u8>::addr(GPtr::from_addr((ped.addr() as u32) as usize)) as u32) as usize)) as u32;
                     if grp != 0 {
                         wr::<u16>(ea, 0xE, 0x5DE);
-                        GPtr::<u8>::addr(pgi_add_event(GPtr::from_addr(grp as usize + 0x30), ea)) as u8
+                        GPtr::<u8>::addr(GPtr::from_addr(pgi_add_event(GPtr::from_addr(grp as usize + 0x30), ea) as usize)) as u8
                     } else {
                         wr::<u16>(ea, 0xE, 0x3E8);
                         let r = event_group_add(rd::<GPtr<u8>>(ped, 0x47C).byte_add(0x68), ea, 0);
@@ -264,7 +264,7 @@ pub fn acq_scanner_raise_event(_this: GPtr<u8>, ped: GPtr<u8>, t: i32, other: GP
             }
             let mut b = [0u32; 10];
             let eb = local(&mut b);
-            event_acquaintance_ped_ctor(GPtr::from_addr((eb.addr() as u32) as usize), GPtr::from_addr((other.addr() as u32) as usize));
+            event_acquaintance_ped_ctor(GPtr::<u8>::addr(GPtr::from_addr((eb.addr() as u32) as usize)) as u32, GPtr::<u8>::addr(GPtr::from_addr((other.addr() as u32) as usize)) as u32);
             wr::<u32>(eb, 0x18, g::<u32>(TIME_MS).read());
             wr::<u32>(eb, 0, 0x86CB10);
             let p = pos(other);

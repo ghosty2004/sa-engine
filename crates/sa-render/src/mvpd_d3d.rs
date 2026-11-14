@@ -17,6 +17,7 @@ use sa_math::x87::X87;
 
 use crate::common::{g, k, rd, wr, x};
 
+use sa_core::bindings::crt_new as operator_new;
 orig! {
     /// `IUnknown::Release` (COM slot 8)
     fn com_release(o: GPtr<u8>) -> u32 = stdcall vslot 0x8 => unported;
@@ -29,8 +30,6 @@ orig! {
     /// `IDirect3DDevice9::CreateIndexBuffer(len, usage, fmt, pool, IDirect3DIndexBuffer9**, HANDLE*)` (COM slot 0x6C)
     #[allow(clippy::too_many_arguments)]
     fn dev_create_index_buffer(dev: GPtr<u8>, len: u32, usage: u32, fmt: u32, pool: u32, out: GPtr<u8>, h: u32) -> u32 = stdcall vslot 0x6C => unported;
-    /// CRT `operator new` (0x82119A)
-    fn operator_new(n: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
     /// `D3DTextureBuffer::Push(IDirect3DTexture9*)` (0x72FFF0)
     fn tex_buffer_push(this: GPtr<u8>, t: GPtr<u8>) = thiscall 0x72FFF0 => unported;
     /// `D3DTextureBuffer::Resize(int32)` (0x730020)

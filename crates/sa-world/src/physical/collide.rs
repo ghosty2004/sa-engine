@@ -7,20 +7,14 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::vector::CVector;
 
 use super::forces::{apply_force_call, apply_move_force_call, get_speed_call};
 use super::shared::*;
 use crate::collision::fpu::Fpu;
 
-orig! {
-    /// `CAudioEngine::ReportCollision(CEntity*, CEntity*, surfA, surfB, const CVector& pos, const
-    /// CVector* normal, float impact1, float impact2, bool, bool)` (0x506EB0, thiscall on
-    /// `AudioEngine` 0xB6BC90; every argument a dword)
-    pub fn report_collision(ae: Ent, e1: Ent, e2: Ent, surf_a: u32, surf_b: u32, pos: Ent, normal: Ent,
-        impact1: f32, impact2: u32, b1: u32, b2: u32) = thiscall 0x506EB0 => unported;
-}
+pub use crate::bindings::report_collision;
 
 sa_core::globals! {
     list GLOBALS;
@@ -43,7 +37,7 @@ fn report(this: Ent, entity: Ent, cp: Ent, normal: Ent, impact: f32) {
         cp,
         normal,
         impact,
-        0x3F80_0000,
+        f32::from_bits(0x3F80_0000),
         0,
         0,
     );
@@ -119,7 +113,7 @@ pub fn apply_collision(this: Ent, entity: Ent, cp: Ent, damage: GPtr<f32>) -> u8
         return 0;
     }
     let mut co = CVector::new(0.0, 0.0, 0.0);
-    let com = rv(multiply3x3(lp(&mut co), matrix(this), this.byte_add(CENTRE_OF_MASS).cast()).cast(), 0);
+    let com = rv(multiply3x3(lp(&mut co).cast(), matrix(this), this.byte_add(CENTRE_OF_MASS).cast()).cast(), 0);
     let mut d = [0f32; 3];
     for (i, d) in d.iter_mut().enumerate() {
         f.fld(r[i]);
@@ -129,7 +123,7 @@ pub fn apply_collision(this: Ent, entity: Ent, cp: Ent, damage: GPtr<f32>) -> u8
     let mut dv = cv(d);
     let mut nv = cv(nl);
     let mut xo = CVector::new(0.0, 0.0, 0.0);
-    let c = rv(cross_product(lp(&mut xo), lp(&mut dv), lp(&mut nv)).cast(), 0);
+    let c = rv(cross_product(lp(&mut xo).cast(), lp(&mut dv).cast(), lp(&mut nv).cast()).cast(), 0);
     f.fld(c[2]);
     f.fld(c[1]);
     f.fld(c[0]);
@@ -186,12 +180,8 @@ pub fn apply_collision(this: Ent, entity: Ent, cp: Ent, damage: GPtr<f32>) -> u8
     1
 }
 
-orig! {
-    /// `CPhysical::ApplyCollision(CEntity*, CColPoint&, float&)` (0x5435C0)
-    pub fn apply_collision_call(e: Ent, entity: Ent, cp: Ent, damage: GPtr<f32>) -> u8 = thiscall 0x5435C0 => apply_collision;
-    /// `CVector::Normalise()` (0x59C910, thiscall)
-    pub fn normalise(v: GPtr<CVector>) = thiscall 0x59C910 => crate::collision::data::normalise_port;
-}
+pub use crate::bindings::apply_collision_call;
+pub use sa_core::bindings::vector_normalise as normalise;
 
 /// `1 / ((((c.x*c.x) + c.y*c.y) + c.z*c.z) / turnMass + 1/mass)` as the collision functions compute
 /// it from `c = CrossProduct(d, n)` (registers, the result stored as f32).
@@ -282,7 +272,7 @@ pub fn apply_soft_collision(this: Ent, entity: Ent, cp: Ent, damage: GPtr<f32>) 
             f.fld(nv.z);
             f.fsub_m(tz);
             nv.z = f.fstp();
-            normalise(lp(&mut nv));
+            normalise(GPtr::<sa_math::vector::CVector>::cast::<[f32;3]>(lp(&mut nv)));
         } else {
             f.fcomp_m(cf(k::K_858B8C));
             if !f.jne(0x41) {
@@ -300,7 +290,7 @@ pub fn apply_soft_collision(this: Ent, entity: Ent, cp: Ent, damage: GPtr<f32>) 
     f.faddp(1);
     let s = f.fstp();
     let mut co = CVector::new(0.0, 0.0, 0.0);
-    let mut com = rv(multiply3x3(lp(&mut co), matrix(this), this.byte_add(CENTRE_OF_MASS).cast()).cast(), 0);
+    let mut com = rv(multiply3x3(lp(&mut co).cast(), matrix(this), this.byte_add(CENTRE_OF_MASS).cast()).cast(), 0);
     if rb(this, PFLAGS) & 0x40 != 0 {
         com = [0.0; 3];
     }
@@ -312,7 +302,7 @@ pub fn apply_soft_collision(this: Ent, entity: Ent, cp: Ent, damage: GPtr<f32>) 
     }
     let mut dv = cv(d);
     let mut xo = CVector::new(0.0, 0.0, 0.0);
-    let c = rv(cross_product(lp(&mut xo), lp(&mut dv), lp(&mut nv)).cast(), 0);
+    let c = rv(cross_product(lp(&mut xo).cast(), lp(&mut dv).cast(), lp(&mut nv).cast()).cast(), 0);
     let m = collision_mass(this, c);
     let piece = rb(cp, 0x21);
     if etype(this) == ty::VEHICLE && ru(this, 0x594) == 0 && (0xD..=0x10).contains(&piece) {

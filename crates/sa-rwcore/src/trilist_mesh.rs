@@ -32,7 +32,7 @@ fn out_of_memory(size: u32) {
         error_code: 0,
     };
     e.error_code = rw_error2(0x8000_0013, size) as i32;
-    rw_error_set(GPtr::from_raw(&mut e));
+    rw_error_set(GPtr::from_raw(&mut e).cast());
 }
 
 /// `_rpTriListMeshGenerate(RpBuildMesh* bm, void* data)` (0x75D530, cdecl). An array of pointers to the `n`

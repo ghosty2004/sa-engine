@@ -10,9 +10,9 @@ use sa_math::x87::X87;
 use crate::common::{g, rd, x};
 
 use crate::bindings::stencil_graphics_high_quality;
-use sa_stream::bindings::placeable_allocate_matrix;
-use sa_stream::bindings::simple_transform_update_matrix;
-use sa_world::bindings::store_static_shadow;
+use sa_world::bindings::placeable_allocate_matrix;
+use crate::bindings::simple_transform_update_matrix;
+use crate::bindings::store_static_shadow;
 
 /// `CTimeCycle::m_CurrentColours.m_nShadowStrength` (0xB7C4EC, i16)
 const SHADOW_STRENGTH: usize = 0xB7C4EC;
@@ -84,19 +84,19 @@ pub fn shadows_store_shadow_for_pole(ent: GPtr<u8>, off_x: f32, off_y: f32, off_
         1,
         g::<u32>(POST_SHADOW_TEX).read(),
         GPtr::from_raw(out.as_mut_ptr()).cast(),
-        f32::from_bits(fx.to_bits()),
-        f32::from_bits(fy.to_bits()),
-        f32::from_bits(side_x.to_bits()),
-        f32::from_bits(side_y.to_bits()),
+        f32::from_bits(fx.to_bits()).to_bits(),
+        f32::from_bits(fy.to_bits()).to_bits(),
+        f32::from_bits(side_x.to_bits()).to_bits(),
+        f32::from_bits(side_y.to_bits()).to_bits(),
         intensity as u32,
         0,
         0,
         0,
-        f32::from_bits(0x4110_0000),
-        f32::from_bits(0x3F80_0000),
-        f32::from_bits(0x4220_0000),
+        f32::from_bits(0x4110_0000).to_bits(),
+        f32::from_bits(0x3F80_0000).to_bits(),
+        f32::from_bits(0x4220_0000).to_bits(),
         0,
-        f32::from_bits(0),
+        f32::from_bits(0).to_bits(),
     );
 }
 

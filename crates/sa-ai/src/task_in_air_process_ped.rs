@@ -9,8 +9,8 @@ use sa_math::vector::CVector;
 
 use crate::common::*;
 
-use sa_core::bindings::anim_set_delete_callback as set_delete_callback;
-use sa_core::bindings::assoc_set_finish_callback as set_finish_callback;
+use sa_anim::bindings::anim_set_delete_callback as set_delete_callback;
+use sa_anim::bindings::assoc_set_finish_callback as set_finish_callback;
 use crate::bindings::climb_test_for_climb;
 use sa_core::bindings::entity_register_reference;
 use sa_stream::bindings::ped_is_player;
@@ -20,9 +20,8 @@ use sa_core::bindings::clump_get_association;
 use sa_world::bindings::anim_blend_animation as blend_animation;
 use sa_world::bindings::ped_say;
 use sa_world::bindings::physical_apply_move_force as apply_move_force_xyz;
+use sa_world::bindings::physical_apply_move_force_5429f0 as apply_move_force;
 orig! {
-    /// `CPhysical::ApplyMoveForce(CVector)` (0x5429F0)
-    fn apply_move_force(p: GPtr<u8>, force: CVector) = thiscall 0x5429F0 => unported;
     /// `CTask::GetTaskType()` (vtable slot 0x10)
     fn task_get_type(t: GPtr<u8>) -> u32 = thiscall vslot 0x10 => unported;
 }
@@ -102,7 +101,7 @@ pub fn task_simple_in_air_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
             if le(speed_z(), kf(0x8703A8)) {
                 let a = blend_animation(clump(), 0, 0x79, 4.0);
                 wr::<GPtr<u8>>(this, 0x1C, a);
-                set_delete_callback(a, DELETE_ANIM_CB, GPtr::from_addr((this.addr() as u32) as usize));
+                set_delete_callback(a, DELETE_ANIM_CB, GPtr::<u8>::addr(GPtr::from_addr((this.addr() as u32) as usize)) as u32);
                 wr::<u32>(anim(), 0x1C, 0x3F00_0000);
                 wr::<u32>(anim(), 0x18, 0x3F80_0000);
             }
@@ -116,7 +115,7 @@ pub fn task_simple_in_air_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
             }
         }
         if !anim().is_null() {
-            set_delete_callback(anim(), DELETE_ANIM_CB, GPtr::from_addr((this.addr() as u32) as usize));
+            set_delete_callback(anim(), DELETE_ANIM_CB, GPtr::<u8>::addr(GPtr::from_addr((this.addr() as u32) as usize)) as u32);
         }
     }
 
@@ -232,7 +231,7 @@ fn falling(this: GPtr<u8>, ped: GPtr<u8>, p: &mut [u32; 3], col_dist: f32) -> bo
             if !a.is_null() && rd::<u8>(this, 0x24) & 2 != 0 {
                 wr::<u32>(a, 0x1C, 0xC47A_0000);
                 wr::<u8>(a, 0x2E, rd::<u8>(a, 0x2E) | 4);
-                set_finish_callback(rd::<GPtr<u8>>(this, 0x1C), DEFAULT_ANIM_CB, GPtr::NULL);
+                set_finish_callback(rd::<GPtr<u8>>(this, 0x1C), DEFAULT_ANIM_CB, GPtr::<u8>::addr(GPtr::NULL) as u32);
                 wr::<u32>(this, 0x1C, 0);
             }
             wr::<u32>(ped, 0x46C, rd::<u32>(ped, 0x46C) & 0xFFFF_FDFF);
@@ -247,10 +246,10 @@ fn falling(this: GPtr<u8>, ped: GPtr<u8>, p: &mut [u32; 3], col_dist: f32) -> bo
     if a.is_null() || rd::<u16>(a, 0x2C) == 0x78 {
         return false;
     }
-    set_delete_callback(a, DEFAULT_ANIM_CB, GPtr::NULL);
+    set_delete_callback(a, DEFAULT_ANIM_CB, GPtr::<u8>::addr(GPtr::NULL) as u32);
     let n = blend_animation(rd::<GPtr<u8>>(ped, 0x18), 0, 0x78, 4.0);
     wr::<GPtr<u8>>(this, 0x1C, n);
-    set_delete_callback(n, DELETE_ANIM_CB, GPtr::from_addr((this.addr() as u32) as usize));
+    set_delete_callback(n, DELETE_ANIM_CB, GPtr::<u8>::addr(GPtr::from_addr((this.addr() as u32) as usize)) as u32);
     false
 }
 

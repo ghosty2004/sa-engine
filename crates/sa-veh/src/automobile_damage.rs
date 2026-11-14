@@ -12,7 +12,7 @@ use crate::common::{ftol32, g, rand_at, rd, wr, x};
 
 use sa_world::bindings::dm_get_panel_status as get_panel_status;
 use crate::bindings::get_light_status;
-use sa_core::bindings::get_pad;
+use sa_input::bindings::get_pad;
 use sa_core::bindings::vector_magnitude;
 use sa_world::bindings::audio_add_event as add_audio_event;
 use sa_world::bindings::event_group_add;
@@ -28,28 +28,21 @@ use crate::bindings::damage_knock_off_rider;
 use crate::bindings::dmg_draw_car_colliding_particles;
 use sa_core::bindings::entity_register_reference as register_reference;
 use sa_core::bindings::vector_difference;
-use sa_core::bindings::vector_sub;
-use sa_world::bindings::apply_damage;
+use sa_world::bindings::vector_sub;
+use crate::bindings::apply_damage;
 use sa_world::bindings::entity_get_col_model as get_col_model;
-use sa_world::bindings::get_engine_status;
-use sa_world::bindings::pick_random_passenger;
-use sa_world::bindings::set_engine_status;
+use crate::bindings::get_engine_status;
+use crate::bindings::pick_random_passenger;
+use crate::bindings::set_engine_status;
 use sa_world::bindings::vector_scale as scalar_mul_vector;
+use sa_core::bindings::vector_dot_product as dot_product;
 orig! {
-    /// `DotProduct(const RwV3d*, const RwV3d*)` (0x40FDB0), ST0
-    fn dot_product(a: GPtr<u8>, b: GPtr<u8>) -> f64 = cdecl 0x40FDB0 => dot_product_native;
     /// `CEventVehicleDamageCollision::CEventVehicleDamageCollision(CVehicle*, CVehicle*, eWeaponType)` (0x6A0620)
     fn event_vehicle_damage_collision_ctor(ev: GPtr<u8>, v: GPtr<u8>, other: GPtr<u8>, weapon: u32) -> GPtr<u8> = thiscall 0x6A0620 => unported;
     /// `CVehicle::ReactToVehicleDamage(CPed*)` (0x6D5490)
     fn react_to_vehicle_damage(v: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x6D5490 => unported;
     /// `CAutomobile::BlowUpCar(CEntity*, bool)` (vtable +0xA4)
     fn v_blow_up_car(v: GPtr<u8>, culprit: GPtr<u8>, in_cutscene: u32) = thiscall vslot 0xA4 => unported;
-}
-
-/// Phases B/C side of `DotProduct` 0x40FDB0 (sa-math's port of the same sum order).
-pub fn dot_product_native(a: GPtr<u8>, b: GPtr<u8>) -> f64 {
-    let v = |p: GPtr<u8>| sa_math::vector::CVector::new(rd::<f32>(p, 0), rd::<f32>(p, 4), rd::<f32>(p, 8));
-    sa_math::vector::dot_product_x87(&v(a), &v(b)).to_f64()
 }
 
 /// `CTimer::ms_fTimeStep`
@@ -203,7 +196,7 @@ pub fn automobile_vehicle_damage(
                 rd::<f32>(damager, 0x4DC),
                 rd::<GPtr<u8>>(damager, 0x14).byte_add(0x10),
             );
-            let r = X87::from_f64_exact(dot_product(s, dir));
+            let r = X87::from_f64_exact(dot_product(s, dir).to_f64());
             if !ge(r, zero) {
                 let v = r.fmul_m(rd::<f32>(damager, 0x8C)).fadd_m(dmg);
                 dmg = if le(zero, v) { v.to_f32() } else { 0.0 };
@@ -253,7 +246,7 @@ fn automobile_vehicle_damage_tail(
         {
             return;
         }
-    } else if !X87::from_f64_exact(get_percentage_progress())
+    } else if !X87::from_f64_exact(get_percentage_progress().to_f64())
         .fcom(c(0x42C8_0000))
         .test_any(1)
     {
@@ -495,7 +488,7 @@ fn component_damage(this: GPtr<u8>, dmg: f32, comp: u32, coors: GPtr<u8>, dir: G
     let apply = |part: i32| {
         let h = rd::<GPtr<u8>>(this, 0x384);
         let mult = rd::<f32>(h, 0xC8);
-        apply_damage(dm, this, part as u32, x(dmg).fmul_m(4.0).to_f32(), mult);
+        apply_damage(dm, this, (part as u32) as i32, x(dmg).fmul_m(4.0).to_f32(), mult);
     };
     // `g * mass < dmg` (the `fld g; fmul mass; fcomp dmg; test ah, 5; jnp` tests)
     let heavy = |g_addr: usize| !ge(gf(g_addr).fmul_m(mass()), x(dmg));
@@ -514,7 +507,7 @@ fn component_damage(this: GPtr<u8>, dmg: f32, comp: u32, coors: GPtr<u8>, dir: G
             apply(0x10);
             let m = rd::<GPtr<u8>>(this, 0x14);
             // A14: dir . right, A10: (coors - pos) . right / bbox max x
-            let side_dir = X87::from_f64_exact(dot_product(dir, m)).to_f32();
+            let side_dir = X87::from_f64_exact(dot_product(dir, m).to_f64()).to_f32();
             let pos = if m.is_null() {
                 this.byte_add(4)
             } else {
@@ -522,7 +515,7 @@ fn component_damage(this: GPtr<u8>, dmg: f32, comp: u32, coors: GPtr<u8>, dir: G
             };
             let mut out = [0f32; 3];
             let r = vector_sub(GPtr::from_raw(out.as_mut_ptr()).cast(), coors, pos);
-            let off = X87::from_f64_exact(dot_product(r, m)).to_f32();
+            let off = X87::from_f64_exact(dot_product(r, m).to_f64()).to_f32();
             let off = x(off).fdiv_m(rd::<f32>(get_col_model(this), 0xC)).to_f32();
             let mut bits = 0u32;
             let o = x(off);
@@ -566,7 +559,7 @@ fn component_damage(this: GPtr<u8>, dmg: f32, comp: u32, coors: GPtr<u8>, dir: G
             };
             let mut out = [0f32; 3];
             let r = vector_sub(GPtr::from_raw(out.as_mut_ptr()).cast(), coors, pos);
-            let a10 = X87::from_f64_exact(dot_product(r, m)).to_f32();
+            let a10 = X87::from_f64_exact(dot_product(r, m).to_f64()).to_f32();
             let v = x(a10).fdiv_m(rd::<f32>(get_col_model(this), 0xC));
             let van = rd::<u8>(this, 0x429) & 1 != 0;
             let mut bits = 0u32;

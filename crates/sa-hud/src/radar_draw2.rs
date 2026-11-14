@@ -194,12 +194,12 @@ use crate::bindings::get_int_colour_call;
 use crate::bindings::get_radar_trace_colour_call;
 use crate::bindings::has_this_blip_been_revealed_call;
 use sa_stream::bindings::hud_colours_get_rgb;
-use sa_world::bindings::sprite2d_draw_2d_polygon;
+use sa_render::bindings::sprite2d_draw_2d_polygon;
 use crate::bindings::transform_radar_point_to_screen_space_call;
 use crate::bindings::transform_real_world_point_to_radar_space_call;
-use sa_core::bindings::get_pad;
+use sa_input::bindings::get_pad;
 use sa_core::bindings::rgba_ctor;
-use sa_world::bindings::can_player_start_a_gang_war_here;
+use sa_pop::bindings::can_player_start_a_gang_war_here;
 use sa_world::bindings::crt_ceil;
 use sa_world::bindings::crt_floor;
 use sa_world::bindings::ee_get_position_relative_to_outside_world;
@@ -221,24 +221,21 @@ use crate::bindings::show_radar_trace_with_height_call;
 use crate::bindings::stream_radar_sections_xy_call;
 use sa_core::bindings::rw_im2d_render_primitive;
 use sa_core::bindings::sprite2d_draw as sprite2d_draw_rect;
-use sa_core::bindings::sprite_draw_rect as sprite2d_draw_rect_static;
+use sa_render::bindings::sprite_draw_rect as sprite2d_draw_rect_static;
 use sa_world::bindings::markers_place_marker_cone as place_marker_cone;
 use sa_world::bindings::pickup_get_posn;
 use sa_world::bindings::place_marker_set;
-use sa_world::bindings::set_vertices_rect as sprite2d_set_vertices;
+use sa_render::bindings::set_vertices_rect as sprite2d_set_vertices;
+use sa_world::bindings::find_player_ped;
+use sa_world::bindings::find_player_vehicle;
+use crate::bindings::limit_radar_point_call_st0;
 orig! {
     /// `CRadar::DisplayThisBlip(eRadarSprite, int8 priority)` (0x583B40)
     fn display_this_blip_call(sprite: i32, prio: u8) -> u8 = cdecl 0x583B40 => crate::radar::display_this_blip;
     /// `CTheScripts::ScriptDebugLine3D(x1, y1, z1, x2, y2, z2, uint32 colour1, uint32 colour2)` (0x485DE0)
     fn script_debug_line_3d(x1: f32, y1: f32, z1: f32, x2: f32, y2: f32, z2: f32, c1: u32, c2: u32) = cdecl 0x485DE0 => unported;
-    /// `CRadar::LimitRadarPoint(CVector2D&)` (0x5832F0, ST0)
-    fn limit_radar_point_call_st0(p: GPtr<f32>) -> f64 = cdecl 0x5832F0 => limit_radar_point_call_st0_rust;
     /// `CRadar::CalculateBlipAlpha(float)` (0x583420)
     fn calculate_blip_alpha_call(dist: f32) -> u8 = cdecl 0x583420 => crate::radar::calculate_blip_alpha;
-    /// `FindPlayerVehicle(int32, bool)` (0x56E0D0)
-    fn find_player_vehicle(id: i32, remote: u8) -> GPtr<u8> = cdecl 0x56E0D0 => sa_world::world::cworld::find_player_vehicle_port;
-    /// `FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
     /// `CRadar::SetupAirstripBlips()` (0x587D20)
     fn setup_airstrip_blips_call() = cdecl 0x587D20 => crate::radar_draw::setup_airstrip_blips;
     /// `CRadar::DrawEntityBlip(int32 index, uint8 isSprite)` (0x587000)
@@ -1024,7 +1021,7 @@ pub fn show_radar_trace_with_height(px: f32, py: f32, size: u32, r: u32, gg: u32
                 let bottom = f32_of(x(hf).fadd_m(py));
                 let cp = rgba_ctor(local(&mut c), colour[0], colour[1], colour[2], colour[3]);
                 let mut rect = [left, bottom, right, top];
-                sprite2d_draw_rect_static(local(&mut rect), cp);
+                sprite2d_draw_rect_static(GPtr::<f32>::cast::<u8>(local(&mut rect)), cp);
             }
         }
         1 => {
@@ -1036,7 +1033,7 @@ pub fn show_radar_trace_with_height(px: f32, py: f32, size: u32, r: u32, gg: u32
             let cp = rgba_ctor(local(&mut c), 0, 0, 0, a);
             let l = f32_of(x(px).fsub_m(w3));
             let rr = f32_of(x(w3).fadd_m(px));
-            sprite2d_draw_2d_polygon(px, tip, px, tip, rr, top, l, top, cp);
+            sprite2d_draw_2d_polygon(px.to_bits(), tip.to_bits(), px.to_bits(), tip.to_bits(), rr.to_bits(), top.to_bits(), l.to_bits(), top.to_bits(), cp);
             let s1 = fild_u32(size.wrapping_add(1));
             let h = sy_x87().fmul(s1);
             let top = f32_of(x(py).fsub(h));
@@ -1045,7 +1042,7 @@ pub fn show_radar_trace_with_height(px: f32, py: f32, size: u32, r: u32, gg: u32
             let cp = rgba_ctor(local(&mut c), r, gg, bb, a);
             let l = f32_of(x(px).fsub_m(w));
             let rr = f32_of(x(w).fadd_m(px));
-            sprite2d_draw_2d_polygon(px, tip, px, tip, rr, top, l, top, cp);
+            sprite2d_draw_2d_polygon(px.to_bits(), tip.to_bits(), px.to_bits(), tip.to_bits(), rr.to_bits(), top.to_bits(), l.to_bits(), top.to_bits(), cp);
         }
         0 => {
             let sy = sy_x87();
@@ -1056,7 +1053,7 @@ pub fn show_radar_trace_with_height(px: f32, py: f32, size: u32, r: u32, gg: u32
             let cp = rgba_ctor(local(&mut c), 0, 0, 0, a);
             let l = f32_of(x(px).fsub_m(w3));
             let rr = f32_of(x(w3).fadd_m(px));
-            sprite2d_draw_2d_polygon(rr, base, l, base, px, tip, px, tip, cp);
+            sprite2d_draw_2d_polygon(rr.to_bits(), base.to_bits(), l.to_bits(), base.to_bits(), px.to_bits(), tip.to_bits(), px.to_bits(), tip.to_bits(), cp);
             let s1 = fild_u32(size.wrapping_add(1));
             let h = sy_x87().fmul(s1);
             let tip = f32_of(x(py).fsub(h));
@@ -1065,7 +1062,7 @@ pub fn show_radar_trace_with_height(px: f32, py: f32, size: u32, r: u32, gg: u32
             let cp = rgba_ctor(local(&mut c), r, gg, bb, a);
             let l = f32_of(x(px).fsub_m(w));
             let rr = f32_of(x(w).fadd_m(px));
-            sprite2d_draw_2d_polygon(rr, base, l, base, px, tip, px, tip, cp);
+            sprite2d_draw_2d_polygon(rr.to_bits(), base.to_bits(), l.to_bits(), base.to_bits(), px.to_bits(), tip.to_bits(), px.to_bits(), tip.to_bits(), cp);
         }
         _ => {}
     }
@@ -1153,11 +1150,11 @@ pub fn draw_blips() {
             let mut rect = [f32_of(x(k(K_1)).fsubr(sxpx)), f32_of(max_h_x87()), f32_of(sxpx.fadd_m(k(K_1))), 0.0];
             let mut col = [0u8; 4];
             let cp = hud_colours_get_rgb(g(HUD_COLOUR), local(&mut col), 6);
-            sprite2d_draw_rect_static(local(&mut rect), cp);
+            sprite2d_draw_rect_static(GPtr::<f32>::cast::<u8>(local(&mut rect)), cp);
             let sypy = max_h_x87().fmul_m(k(K_1_448)).fmul_m(screen[1]);
             let mut rect = [0.0, f32_of(sypy.fadd_m(k(K_1))), f32_of(max_w_x87()), f32_of(x(k(K_1)).fsubr(sypy))];
             let cp = hud_colours_get_rgb(g(HUD_COLOUR), local(&mut col), 6);
-            sprite2d_draw_rect_static(local(&mut rect), cp);
+            sprite2d_draw_rect_static(GPtr::<f32>::cast::<u8>(local(&mut rect)), cp);
         }
     }
     let mut flag: u8 = 1;
@@ -1295,16 +1292,10 @@ pub fn show_radar_marker(px: u32, py: u32, pz: u32, colour: u32, radius: u32) {
 /// This module's registrations.
 pub const HOOKS: &[HookReg] = &[HOOK_DRAW_RADAR_SPRITE, HOOK_DRAW_COORD_BLIP, HOOK_DRAW_MAP, HOOK_DRAW_RADAR_MAP, HOOK_DRAW_RADAR_SECTION_MAP, HOOK_DRAW_RADAR_MASK, HOOK_DRAW_RADAR_GANG_OVERLAY, HOOK_DRAW_AREA_ON_RADAR, HOOK_DRAW_RADAR_SECTION, HOOK_DRAW_3D_MARKERS, HOOK_SHOW_RADAR_TRACE_WITH_HEIGHT, HOOK_DRAW_BLIPS, HOOK_SHOW_RADAR_MARKER];
 
-/// The Rust path of [`limit_radar_point_call`] as an ST0 value.
-#[allow(dead_code)]
-fn limit_radar_point_call_st0_rust(p: GPtr<f32>) -> f64 {
-    crate::radar::limit_radar_point(p).to_f64()
-}
-
 /// [`limit_radar_point_call_st0`] as an x87 value (ST0, returned through the f64 ABI).
 #[allow(dead_code)]
 fn limit_radar_point_call(p: GPtr<f32>) -> X87 {
-    X87::from_f64_exact(limit_radar_point_call_st0(p))
+    X87::from_f64_exact(limit_radar_point_call_st0(p).to_f64())
 }
 
 /// [`find_player_heading_st0`] as an x87 value (ST0, returned through the f64 ABI).

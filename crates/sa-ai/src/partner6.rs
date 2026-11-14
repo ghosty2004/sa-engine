@@ -26,7 +26,7 @@ const F8: u32 = 0x4100_0000;
 /// `4.0f` (run-anim blend delta, pushed as an immediate)
 const F4: u32 = 0x4080_0000;
 
-use sa_world::bindings::acquaintance_ped_ctor as event_acquaintance_ped_ctor;
+use crate::bindings::acquaintance_ped_ctor as event_acquaintance_ped_ctor;
 use crate::bindings::be_in_couple_abort_arm_ik;
 use crate::bindings::car_enter_exit_is_vehicle_stealable;
 use crate::bindings::event_vehicle_to_steal_ctor;
@@ -37,7 +37,7 @@ use crate::bindings::ped_stop_playing_hand_signal;
 use crate::bindings::run_timed_anim_ctor2;
 use crate::bindings::should_load_gang_anims;
 use crate::bindings::simple_chat_ctor;
-use sa_core::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference;
 use sa_core::bindings::entity_register_reference as wfp_register_reference;
 use sa_core::bindings::entity_register_reference;
 use sa_core::bindings::general_get_node_heading_from_vector;
@@ -45,12 +45,12 @@ use sa_core::bindings::general_random_int_in_range;
 use sa_core::bindings::ped_is_alive;
 use sa_core::bindings::streaming_request_model;
 use sa_core::bindings::vector2d_normalise;
-use sa_core::bindings::anim_add_block_ref;
+use sa_anim::bindings::anim_add_block_ref;
 use sa_stream::bindings::anim_remove_block_ref;
 use sa_stream::bindings::get_animation_block_index as anim_get_block_index;
 use sa_world::bindings::attractor_manager_get_ped_using_effect;
 use sa_world::bindings::event_acquaintance_ped_dtor;
-use sa_world::bindings::event_group_add;
+use crate::bindings::event_group_add;
 use sa_world::bindings::get_ped_attractor_manager;
 use sa_world::bindings::go_to_point_and_stand_still_ctor;
 use sa_world::bindings::ik_is_looking;
@@ -60,9 +60,9 @@ use sa_world::bindings::placeable_get_top_direction;
 use sa_world::bindings::run_anim_ctor;
 use sa_world::bindings::sequence_add_task;
 use sa_world::bindings::sequence_ctor;
-use sa_world::bindings::task_complex_ctor;
-use sa_world::bindings::tm_find_active_task_by_type;
-use sa_world::bindings::tm_set_task;
+use crate::bindings::task_complex_ctor;
+use crate::bindings::tm_find_active_task_by_type;
+use crate::bindings::tm_set_task;
 use sa_world::bindings::turn_to_face_entity_ctor;
 use sa_world::bindings::vector_add;
 use sa_world::bindings::wander_standard_ctor;
@@ -70,10 +70,11 @@ use crate::bindings::avoid_other_ped_ctor as avoid_other_ped_while_wandering_cto
 use crate::bindings::chat_ctor as complex_chat_ctor;
 use crate::bindings::is_task_valid as prostitute_solicit_is_task_valid;
 use crate::bindings::partner_shove_ctor as partner_shove_ctor_orig;
-use sa_world::bindings::get_position as path_node_get_position;
+use sa_pop::bindings::get_position as path_node_get_position;
 use sa_world::bindings::partner_chat_ctor as partner_chat_ctor_orig;
 use sa_world::bindings::partner_greet_ctor as partner_greet_ctor_orig;
 use sa_world::bindings::stand_still_ctor;
+use crate::bindings::ik_point_arm;
 orig! {
     // ---- virtual slots ----
     /// `CTask::GetTaskType` (vtable +0x10)
@@ -104,8 +105,6 @@ orig! {
     // ---- other catalogued functions ----
     /// `CAEPedSpeechAudioEntity::RequestPedConversation(CPed*, CPed*)` (0x4E50E0, cdecl)
     fn request_ped_conversation(a: GPtr<u8>, b: GPtr<u8>) -> u8 = cdecl 0x4E50E0 => unported;
-    /// `IKChainManager_c::PointArm(name, arm, ped, target, bone, pos, speed, blendTime, cosLimit)` (0x618B60, `ret 0x24`)
-    fn ik_point_arm(m: GPtr<u8>, name: u32, arm: i32, ped: GPtr<u8>, target: GPtr<u8>, bone: i32, pos: GPtr<u8>, speed: u32, blend: u32, limit: u32) = thiscall 0x618B60 => unported;
     /// `CScripted2dEffects::GetEffectPairs(const C2dEffect*)` (0x6FA840, cdecl)
     fn scripted_2d_effects_get_effect_pairs(effect: GPtr<u8>) -> GPtr<u8> = cdecl 0x6FA840 => unported;
     /// `CTaskComplexWanderStandard::ScanForStuff(CPed*)` (0x672600, `ret 4`)
@@ -307,12 +306,12 @@ pub fn partner_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     if partner.is_null() {
         return GPtr::NULL;
     }
-    let t = tm_find_active_task_by_type(task_mgr(partner), rd::<i32>(this, 0x34) as u32);
+    let t = tm_find_active_task_by_type(task_mgr(partner), (rd::<i32>(this, 0x34) as u32) as i32);
     if t.is_null() || rd::<GPtr<u8>>(t, 0x38) != ped {
         return GPtr::NULL;
     }
     let find_partner_task =
-        || tm_find_active_task_by_type(task_mgr(rd::<GPtr<u8>>(this, 0x38)), rd::<i32>(this, 0x34) as u32);
+        || tm_find_active_task_by_type(task_mgr(rd::<GPtr<u8>>(this, 0x38)), (rd::<i32>(this, 0x34) as u32) as i32);
     match rd::<u8>(this, 0x59) {
         6 => {
             if rd::<u8>(this, 0x6E) == 0 {
@@ -461,7 +460,7 @@ fn couple_fail(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
 #[hook(addr = 0x684930, conv = thiscall, name = "CTaskComplexBeInCouple::ControlSubTask", expect = "6A FF 64 A1 00 00 00 00")]
 pub fn be_in_couple_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     let partner = || rd::<GPtr<u8>>(this, 0x10);
-    if partner().is_null() || ped_is_alive(partner()) == 0 {
+    if partner().is_null() || ped_is_alive(partner()) as u8 == 0 {
         return couple_fail(this, ped);
     }
     let t = intel_find_task_by_type(rd::<GPtr<u8>>(partner(), 0x47C), 0x4BF);
@@ -547,11 +546,11 @@ pub fn be_in_couple_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> 
     if rd::<u8>(this, 0x16) != 0 {
         if ik_is_looking(ik_man(), ped) == 0 && general_random_int_in_range(0, 100) > 0x50 {
             let time = general_random_int_in_range(2000, 4000);
-            ik_look_at(ik_man(), GPtr::from_addr(0x870838), ped, partner(), time as u32, 5, GPtr::NULL, 0, 0x3E80_0000, 0x1F4, 3, 0);
+            ik_look_at(ik_man(), GPtr::from_addr(0x870838), ped, partner(), (time as u32) as i32, 5, GPtr::NULL, 0, f32::from_bits(0x3E80_0000), 0x1F4, 3, 0);
         }
         if ik_is_looking(ik_man(), partner()) == 0 && general_random_int_in_range(0, 100) > 0x50 {
             let time = general_random_int_in_range(2000, 4000);
-            ik_look_at(ik_man(), GPtr::from_addr(0x870838), partner(), ped, time as u32, 5, GPtr::NULL, 0, 0x3E80_0000, 0x1F4, 3, 0);
+            ik_look_at(ik_man(), GPtr::from_addr(0x870838), partner(), ped, (time as u32) as i32, 5, GPtr::NULL, 0, f32::from_bits(0x3E80_0000), 0x1F4, 3, 0);
         }
     }
     rd::<GPtr<u8>>(this, 8)
@@ -878,7 +877,7 @@ pub fn paired_attractor_set_partnership(this: GPtr<u8>, partner: GPtr<u8>, lead:
 pub fn paired_attractor_clear_partnership(this: GPtr<u8>) {
     let partner = rd::<GPtr<u8>>(this, 0x10);
     if !partner.is_null() {
-        entity_clean_up_old_reference(partner, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x10)));
+        entity_clean_up_old_reference(partner, this.byte_add(0x10));
         wr::<u32>(this, 0x10, 0);
     }
     wr::<u8>(this, 0x14, 0);
@@ -930,7 +929,7 @@ fn attractor_partner_clone(this: GPtr<u8>, vtbl: u32) -> GPtr<u8> {
     }
     let lead = rd::<u8>(this, 0xC);
     let pair = rd::<u32>(this, 0x10);
-    task_complex_ctor(p);
+    task_complex_ctor(p.addr() as u32);
     wr::<u32>(p, 0x10, pair);
     wr::<u8>(p, 0xC, lead);
     wr::<u32>(p, 0, vtbl);
@@ -960,7 +959,7 @@ fn attractor_partner_use_sequence(this: GPtr<u8>, lead_off: isize, follow_off: i
     if p.is_null() {
         return GPtr::NULL;
     }
-    task_complex_ctor(p);
+    task_complex_ctor(p.addr() as u32);
     wr::<u32>(p, 0xC, idx);
     let s = GPtr::<u8>::from_addr((idx << 6).wrapping_add(0xC178F0) as usize);
     wr::<u32>(p, 0, 0x86E518);
@@ -1174,7 +1173,7 @@ pub fn wander_prostitute_scan_for_stuff(this: GPtr<u8>, ped: GPtr<u8>) {
         }
         let mut ev = [0u32; 8];
         let ep = slot(&mut ev);
-        event_acquaintance_ped_ctor(ep, e);
+        event_acquaintance_ped_ctor(ep.addr() as u32, e.addr() as u32);
         wr::<u32>(ep, 0, 0x86CA38);
         wr::<u16>(ep, 0xE, 0x51D);
         event_group_add(intel.byte_add(0x68), ep, 0);
@@ -1191,7 +1190,7 @@ pub fn wander_prostitute_scan_for_stuff(this: GPtr<u8>, ped: GPtr<u8>) {
        unverified = "newgame-1", route = "L2", hazards = "heap-writes", recs = "pause-restart",
        note = "reached after New Game from the pause menu (--start-in-world run, frame 483)")]
 pub fn wait_for_ped_ctor_port(this: GPtr<u8>, ped: GPtr<u8>, f: u32, time: u32, b: u32) -> GPtr<u8> {
-    task_complex_ctor(this);
+    task_complex_ctor(this.addr() as u32);
     wr::<u32>(this, 0, 0x8706F8);
     wr::<u32>(this, 0x1C, 0);
     wr::<u32>(this, 0x20, 0);

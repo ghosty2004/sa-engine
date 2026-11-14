@@ -8,7 +8,7 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
-use sa_core::bindings::vehicle_anim_group_get_group;
+use sa_anim::bindings::vehicle_anim_group_get_group;
 use crate::bindings::vehicle_clear_getting_out_flags;
 orig! {
     /// `CVehicle::ProcessOpenDoor(CPed*, uint32 door, uint32 group, uint32 anim, float time)` (vtable +0x70)

@@ -18,7 +18,7 @@ use sa_world::bindings::point_route_add as point_route_add_48e180;
 use crate::bindings::task_timer_is_out_of_time;
 use sa_core::bindings::vector_normalise;
 use sa_stream::bindings::ped_is_player;
-use sa_stream::bindings::placeable_allocate_matrix;
+use sa_world::bindings::placeable_allocate_matrix;
 use sa_stream::bindings::simple_transform_update_matrix;
 use sa_world::bindings::go_to_point_and_stand_still_ctor;
 use crate::bindings::create_route_task as object_create_route_task_orig;
@@ -166,7 +166,7 @@ pub fn building_compute_move_dir(this: GPtr<u8>, ped: GPtr<u8>, out: GPtr<u8>) {
         }
         return;
     }
-    vector_normalise(out);
+    vector_normalise(out.cast::<[f32;3]>());
 }
 
 /// `CTaskComplexWalkRoundBuildingAttempt::CreateNextSubTask(CPed*)` (0x656E70, `ret 4`): a pending finish
@@ -447,7 +447,7 @@ pub fn object_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     if !fwd.fcom(k).test_parity(0x05) {
         return abort(ped);
     }
-    let r = X87::from_f64_exact(vector_dot_product(this.byte_add(0x48), m));
+    let r = X87::from_f64_exact(vector_dot_product(this.byte_add(0x48), m).to_f64());
     if r.fcom(k).test_parity(0x05) {
         return sub();
     }
@@ -561,7 +561,7 @@ pub fn car_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     let dy = x(rd::<f32>(r, 4)).fsub_m(rd::<f32>(pp, 4));
     let dx = x(rd::<f32>(r, 0)).fsub_m(rd::<f32>(pp, 0));
     let mut u = [dx.to_f32(), dy.to_f32(), dz.to_f32()];
-    let mag = X87::from_f64_exact(vector_normalise_and_mag(GPtr::from_raw(u.as_mut_ptr()).cast())).to_f32();
+    let mag = X87::from_f64_exact(vector_normalise_and_mag(GPtr::from_raw(u.as_mut_ptr()).cast()).to_f64()).to_f32();
     let pm = rd::<GPtr<u8>>(ped, 0x14);
     let dot = x(u[2])
         .fmul_m(rd::<f32>(pm, 0x18))
@@ -666,7 +666,7 @@ pub fn object_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     let dy = x(rd::<f32>(r, 4)).fsub_m(rd::<f32>(pp, 4));
     let dx = x(rd::<f32>(r, 0)).fsub_m(rd::<f32>(pp, 0));
     let mut u = [dx.to_f32(), dy.to_f32(), dz.to_f32()];
-    let mag = X87::from_f64_exact(vector_normalise_and_mag(GPtr::from_raw(u.as_mut_ptr()).cast())).to_f32();
+    let mag = X87::from_f64_exact(vector_normalise_and_mag(GPtr::from_raw(u.as_mut_ptr()).cast()).to_f64()).to_f32();
     let pm = rd::<GPtr<u8>>(ped, 0x14);
     let dot = x(u[2])
         .fmul_m(rd::<f32>(pm, 0x18))
@@ -769,7 +769,7 @@ pub fn building_attempt_compute_crap_route(this: GPtr<u8>, ped: GPtr<u8>) {
             x(hp[2]).fsub_m(start[2]).to_f32(),
         ];
         let k = g::<f32>(K_CRAP_ROUTE_MARGIN).read();
-        let mag = vector_normalise_and_mag(GPtr::from_raw(d.as_mut_ptr()).cast());
+        let mag = vector_normalise_and_mag(GPtr::from_raw(d.as_mut_ptr()).cast()).to_f64();
         if X87::from_f64_exact(mag).fcom(x(k)).c0() {
             return;
         }
@@ -880,7 +880,7 @@ pub fn building_attempt_compute_route(this: GPtr<u8>, ped: GPtr<u8>) {
         let b = x(ny).fadd(by).to_f32();
         let c = x(nz).fadd_m(cz).to_f32();
         let mut o = [a, b, c];
-        vector_normalise(GPtr::from_raw(o.as_mut_ptr()).cast());
+        vector_normalise(GPtr::<u8>::cast::<[f32;3]>(GPtr::from_raw(o.as_mut_ptr()).cast()));
         for v in o.iter_mut() {
             *v = x(*v).fmul_m(k_probe).to_f32();
         }

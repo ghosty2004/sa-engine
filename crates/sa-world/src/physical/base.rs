@@ -11,15 +11,18 @@ use sa_math::x87::X87;
 use super::shared::*;
 use crate::collision::fpu::Fpu;
 
+pub use crate::bindings::double_node_delete as ptr_node_double_delete;
+pub use crate::bindings::double_node_new as ptr_node_double_new;
+pub use crate::bindings::entity_get_bound_centre as get_bound_centre;
+pub use crate::bindings::get_lighting_from_col as get_lighting_from_col_call;
+pub use sa_core::bindings::crt_free_8214bd as crt_free;
+pub use sa_core::bindings::entity_destructor as entity_dtor;
+pub use sa_core::bindings::matrix_set_unity;
+pub use sa_stream::bindings::allocate_static_matrix;
+pub use crate::bindings::physical_apply_move_force_5429f0 as apply_move_force_call;
 orig! {
     /// `CEntity::CEntity()` (0x532A90, thiscall, returns this)
     pub fn entity_ctor(e: Ent) -> Ent = thiscall 0x532A90 => unported;
-    /// `CEntity::~CEntity()` (0x535E90, thiscall)
-    pub fn entity_dtor(e: Ent) -> u32 = thiscall 0x535E90 => unported;
-    /// `CPlaceable::AllocateStaticMatrix()` (0x54F4C0, thiscall)
-    pub fn allocate_static_matrix(e: Ent) = thiscall 0x54F4C0 => unported;
-    /// `CMatrix::SetUnity()` (0x59AE70, thiscall)
-    pub fn matrix_set_unity(m: Ent) = thiscall 0x59AE70 => unported;
     /// `CRealTimeShadowManager::ReturnRealTimeShadow(CRealTimeShadow*)` (0x705B30, thiscall on
     /// `g_realTimeShadowMan` 0xC40350)
     pub fn return_real_time_shadow(mgr: Ent, shadow: Ent) = thiscall 0x705B30 => unported;
@@ -29,30 +32,18 @@ orig! {
     pub fn entity_remove(e: Ent) = thiscall 0x534AE0 => unported;
     /// `CEntity::Add()` (0x533020, thiscall)
     pub fn entity_add(e: Ent) = thiscall 0x533020 => unported;
-    /// `CPtrNodeDoubleLink::operator new(size)` (0x5523C0, cdecl)
-    pub fn ptr_node_double_new(size: u32) -> Ent = cdecl 0x5523C0 => unported;
-    /// `CPtrNodeDoubleLink::operator delete(void*)` (0x5523D0, cdecl)
-    pub fn ptr_node_double_delete(p: Ent) = cdecl 0x5523D0 => unported;
     /// `CEntryInfoNode::operator new(size)` (0x536DC0, cdecl)
     pub fn entry_info_node_new(size: u32) -> Ent = cdecl 0x536DC0 => entry_info_node_new_port;
     /// `CEntryInfoNode::operator delete(void*)` (0x536DD0, cdecl)
     pub fn entry_info_node_delete(p: Ent) = cdecl 0x536DD0 => entry_info_node_delete_port;
     /// virtual `CEntity::GetBoundRect(CRect* out)` (vtable +0x24, thiscall, returns out)
     pub fn get_bound_rect_v(e: Ent, out: GPtr<[f32; 4]>) -> GPtr<[f32; 4]> = thiscall vslot 0x24 => unported;
-    /// `CEntity::GetBoundCentre(CVector& out)` (0x534250, thiscall)
-    pub fn get_bound_centre(e: Ent, out: GPtr<CVector>) = thiscall 0x534250 => unported;
     /// `CTimeCycle::GetAmbientRed_BeforeBrightness()` (0x560390, ST0)
     pub fn tc_ambient_red_bb() -> f64 = cdecl 0x560390 => unported;
     /// `CTimeCycle::GetAmbientGreen_BeforeBrightness()` (0x5603A0, ST0)
     pub fn tc_ambient_green_bb() -> f64 = cdecl 0x5603A0 => unported;
     /// `CTimeCycle::GetAmbientBlue_BeforeBrightness()` (0x5603B0, ST0)
     pub fn tc_ambient_blue_bb() -> f64 = cdecl 0x5603B0 => unported;
-    /// `CPhysical::GetLightingFromCol(bool)` (0x5447B0; the dword the original pushes)
-    pub fn get_lighting_from_col_call(e: Ent, interior: u32) -> f64 = thiscall 0x5447B0 => get_lighting_from_col_port;
-    /// `operator delete(void*)` (CRT `free`, 0x8214BD)
-    pub fn crt_free(p: Ent) = cdecl 0x8214BD => unported;
-    /// `CPhysical::ApplyMoveForce(CVector)` (0x5429F0)
-    pub fn apply_move_force_call(e: Ent, force: CVector) = thiscall 0x5429F0 => crate::physical::forces::apply_move_force;
 }
 
 pub fn entry_info_node_new_port(size: u32) -> Ent {
@@ -176,10 +167,7 @@ pub fn scalar_deleting_destructor(this: Ent, flags: u8) -> Ent {
     this
 }
 
-orig! {
-    /// `CPhysical::~CPhysical` (0x542450)
-    pub fn destructor_call(e: Ent) -> u32 = thiscall 0x542450 => destructor;
-}
+pub use crate::bindings::physical_dtor as destructor_call;
 
 /// Unlinks `link` from the list whose head `list` points at (`if (*list == link) *list =
 /// link->next; prev->next = next; next->prev = prev`, each re-read).
@@ -564,7 +552,7 @@ const DAMAGE_CLASS: [u8; 0x37] = [
 #[hook(addr = 0x5449B0, conv = thiscall, name = "CPhysical::GetBoundRect", expect = "83 EC 1C 56 8D 44 24 04", this = "CPhysical")]
 pub fn get_bound_rect(this: Ent, out: GPtr<[f32; 4]>) -> GPtr<[f32; 4]> {
     let mut c = CVector::new(0.0, 0.0, 0.0);
-    get_bound_centre(this, lp(&mut c));
+    get_bound_centre(this, GPtr::<sa_math::vector::CVector>::cast::<u8>(lp(&mut c)));
     let model = rh(this, MODEL_INDEX) as i16 as i32;
     let mi = sa_core::pools::MODEL_INFO_PTRS.ptr().cast::<GPtr<u8>>().wrapping_index(model).read();
     let col = rp(mi, 0x14);

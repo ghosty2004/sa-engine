@@ -45,26 +45,26 @@ const NUM_TEXT_LINES: usize = 0xA44B68;
 
 use crate::bindings::add_brain_for_code_use;
 use sa_world::bindings::clear_space_for_mission_entity;
-use sa_world::bindings::get_new_unique_script_thing_index;
+use crate::bindings::get_new_unique_script_thing_index;
 use crate::bindings::get_proper_index_from_index_used_by_script as get_proper_index;
 use crate::bindings::physical_45afb0 as set_turn_speed;
 use crate::bindings::remove_vehicle_upgrade;
 use crate::bindings::task_drive_point_route_ctor;
 use sa_core::bindings::crt_strncpy as strncpy_;
 use sa_core::bindings::rgba_ctor;
-use sa_core::bindings::task_new;
+use sa_ai::bindings::task_new;
 use sa_core::bindings::text_get;
 use sa_core::bindings::tm_get_simplest_active_task as get_simplest_active_task;
 use sa_world::bindings::apply_force;
-use sa_world::bindings::decision_maker_types_get_instance as dm_types_instance;
+use sa_ai::bindings::decision_maker_types_get_instance as dm_types_instance;
 use sa_world::bindings::find_ground_z_for_coord as find_ground_z;
-use sa_stream::bindings::get_level_from_position;
+use sa_world::bindings::get_level_from_position;
 use sa_world::bindings::get_ped_flag;
 use sa_world::bindings::get_special_col_model;
 use sa_world::bindings::get_task_swim;
-use sa_world::bindings::get_vehicle_appearance;
+use sa_veh::bindings::get_vehicle_appearance;
 use sa_world::bindings::is_coop_game_going_on;
-use sa_world::bindings::mark_surrounding_entities;
+use sa_veh::bindings::mark_surrounding_entities;
 use sa_world::bindings::physical_add_to_moving_list as add_to_moving_list;
 use sa_world::bindings::sequence_add_task as task_sequence_add;
 use sa_world::bindings::sequence_ctor as task_sequence_ctor;
@@ -74,11 +74,11 @@ use crate::bindings::give_ped_scripted_task;
 use crate::bindings::play_anim_script_command;
 use crate::bindings::read_label;
 use crate::bindings::vehicle_get_ref;
-use sa_core::bindings::get_pad;
+use sa_input::bindings::get_pad;
 use sa_core::bindings::script_connect_lods;
 use sa_core::bindings::vector_magnitude;
-use sa_core::bindings::vector_magnitude_sqr as vec_squared_magnitude;
-use sa_core::bindings::vector_sub as vec_sub;
+use sa_world::bindings::vector_magnitude_sqr as vec_squared_magnitude;
+use sa_world::bindings::vector_sub as vec_sub;
 use sa_stream::bindings::is_boat_model;
 use sa_stream::bindings::stunt_jump_add_one;
 use sa_world::bindings::add_vehicle_upgrade;
@@ -91,15 +91,13 @@ use sa_world::bindings::multiply3x3;
 use sa_world::bindings::partner_greet_ctor as task_partner_greet_ctor;
 use sa_world::bindings::radar_set_blip_friendly as set_blip_friendly;
 use sa_world::bindings::swim_ctor as task_swim_ctor;
-use sa_world::bindings::tm_find_active_task_by_type as find_active_task_by_type;
+use sa_ai::bindings::tm_find_active_task_by_type as find_active_task_by_type;
 use sa_world::bindings::vec_mul_assign;
 use sa_world::bindings::vector_add_assign as vec_add_assign;
 use sa_world::bindings::vector_div as vec_div;
+use sa_core::bindings::cross_product;
+use sa_core::bindings::vector_normalise as vec_normalise;
 orig! {
-    /// `CVector::Normalise()` (0x59C910)
-    fn vec_normalise(v: GPtr<u32>) = thiscall 0x59C910 => unported;
-    /// `CrossProduct(CVector* out, const CVector* a, const CVector* b)` (0x59C730), returns out
-    fn cross_product(out: GPtr<u32>, a: GPtr<u32>, b: GPtr<u32>) -> GPtr<u32> = cdecl 0x59C730 => unported;
     /// `CEntity` virtual slot 0x10 (`SetIsStatic(bool)`)
     fn set_is_static(e: GPtr<u8>, b: u32) = thiscall vslot 0x10 => unported;
     /// 0x407800 (cdecl `(int32 model)`, AL: `CStreaming::IsObjectInCdImage`)
@@ -806,7 +804,7 @@ pub fn process_commands_2000_to_2099(s: Scr, command: u32) -> i8 {
         0x082A => {
             collect(s, 2);
             let on = sp(1) != 0;
-            get_pad(sp(0)).byte_add(0x11A).write(u8::from(!on));
+            get_pad(sp(0) as i32).byte_add(0x11A).write(u8::from(!on));
         }
         // 0830 SET_POOL_TABLE_COORDS (0x4742AC): `CWorld::SnookerTableMax` (0x8CDEF4..) = (P3, P4, P5), `Min`
         // (0x8CDF00..) = (P0, P1, P2) (raw; store order max.z, max.x, max.y, min.z, min.x, min.y).
@@ -862,14 +860,14 @@ fn apply_force_to_car(s: Scr) {
     vec_add_assign(pp.cast::<u8>(), a.cast::<u8>());
     let mut n = fv;
     let np = GPtr::from_raw(n.as_mut_ptr());
-    vec_normalise(np);
+    vec_normalise(np.cast::<[f32;3]>());
     let mut t2 = [0u32; 3];
     let b = GPtr::<u8>::cast::<u32>(multiply3x3(GPtr::<u32>::cast::<u8>(GPtr::from_raw(t2.as_mut_ptr())), m(v), com.cast::<u8>()));
     let mut t3 = [0u32; 3];
     let r = GPtr::<u8>::cast::<u32>(vec_sub(GPtr::<u32>::cast::<u8>(GPtr::from_raw(t3.as_mut_ptr())), pp.cast::<u8>(), b.cast::<u8>()));
     let mut t4 = [0u32; 3];
-    let c = cross_product(GPtr::from_raw(t4.as_mut_ptr()), r, np);
-    let sq = X87::from_f64_exact(vec_squared_magnitude(c.cast::<f32>()));
+    let c = GPtr::<u8>::cast::<u32>(cross_product(GPtr::<u32>::cast::<u8>(GPtr::from_raw(t4.as_mut_ptr())), r.cast::<u8>(), np.cast::<u8>()));
+    let sq = X87::from_f64_exact(vec_squared_magnitude(c.cast::<u8>()).to_f64());
     let tm = v.byte_add(0x90).cast::<f32>().read();
     let mass = v.byte_add(0x8C).cast::<f32>().read();
     let k = sq
@@ -878,7 +876,7 @@ fn apply_force_to_car(s: Scr) {
         .fdivr_m(f(K_ONE))
         .to_f32();
     vec_mul_assign(fp.cast::<u8>(), f32::from_bits(k.to_bits()));
-    apply_force(v, fv[0], fv[1], fv[2], p[0], p[1], p[2], 1);
+    apply_force(v, sa_math::vector::CVector::new(f32::from_bits(fv[0]), f32::from_bits(fv[1]), f32::from_bits(fv[2])), sa_math::vector::CVector::new(f32::from_bits(p[0]), f32::from_bits(p[1]), f32::from_bits(p[2])), 1);
 }
 
 /// 07DA ADD_TO_CAR_ROTATION_VELOCITY (0x472576) / 07DB SET_CAR_ROTATION_VELOCITY (0x472677): `v = VEH(P0)`.

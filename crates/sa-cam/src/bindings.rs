@@ -9,6 +9,21 @@ use sa_core::mem::{GBool, GPtr};
 use sa_core::orig;
 
 orig! {
+    /// `CCamera::IsSphereVisible-` (0x420C40)
+    pub fn camera_is_sphere_visible_m(cam: GPtr<u8>, c: GPtr<u8>, r: f32, m: GPtr<u8>) -> u8 = thiscall 0x420C40 => crate::camctl::is_sphere_visible_with_matrix;
+}
+
+orig! {
+    /// `CCurves::CalcSpeedVariationInBend` (0x43C660)
+    pub fn calc_speed_variation_in_bend_bits(start: GPtr<u8>, end: GPtr<u8>, sdx: f32, sdy: f32, edx: f32, edy: f32) -> sa_math::x87::X87 = reg("args = stack stack stack stack stack stack") 0x43C660 => crate::curves::calc_speed_variation_in_bend;
+}
+
+orig! {
+    /// `ConvertPedNode2BoneTag` (0x4D58A0)
+    pub fn convert_ped_node_2_bone_tag(n: i32) -> i32 = cdecl 0x4D58A0 => crate::camproc::convert_ped_node_2_bone_tag;
+}
+
+orig! {
     /// `CCam::WellBufferMe` (0x509AE0)
     pub fn cc_well_buffer_me(target: f32, value: GPtr<f32>, speed: GPtr<f32>, top: f32, step: f32, angle: u8) = cdecl 0x509AE0 => crate::cam::well_buffer_me;
 }
@@ -44,6 +59,16 @@ orig! {
 }
 
 orig! {
+    /// `CCam::Using3rdPersonMouseCam` (0x50A850)
+    pub fn cam_using_3rd_person_mouse_cam(cam: GPtr<u8>) -> u8 = thiscall 0x50A850 => crate::cam::using_3rd_person_mouse_cam;
+}
+
+orig! {
+    /// `CCamera::ClearPlayerWeaponMode` (0x50AB10)
+    pub fn camera_clear_player_weapon_mode(c: GPtr<u8>) = thiscall 0x50AB10 => crate::camera::clear_player_weapon_mode;
+}
+
+orig! {
     /// `CCamera::GetArrPosForVehicleType` (0x50AF00)
     pub fn cc_get_arr_pos(this: GPtr<u8>, kind: i32, out: GPtr<i32>) -> u8 = thiscall 0x50AF00 => crate::camctl::get_arr_pos_for_vehicle_type;
 }
@@ -54,8 +79,43 @@ orig! {
 }
 
 orig! {
+    /// `CCamera::Restore` (0x50B930)
+    pub fn camera_restore(cam: GPtr<u8>) = thiscall 0x50B930 => crate::camctl::restore;
+}
+
+orig! {
+    /// `CCamera::RestoreWithJumpCut` (0x50BAB0)
+    pub fn camera_restore_with_jump_cut(c: GPtr<u8>) = thiscall 0x50BAB0 => crate::camctl::restore_with_jump_cut;
+}
+
+orig! {
+    /// `CCamera::SetCameraDirectlyBehindForFollowPed_CamOnAString` (0x50BD40)
+    pub fn camera_set_directly_behind(cam: GPtr<u8>) = thiscall 0x50BD40 => crate::camctl::set_camera_directly_behind_for_follow_ped_cam_on_a_string;
+}
+
+orig! {
+    /// `CCamera::SetMotionBlur` (0x50BF40)
+    pub fn camera_set_motion_blur(this: GPtr<u8>, r: i32, gr: i32, b: i32, a: i32, kind: i32) = thiscall 0x50BF40 => crate::camera::set_motion_blur;
+}
+
+orig! {
+    /// `CCamera::SetZoomValueFollowPedScript` (0x50C160)
+    pub fn set_zoom_value_follow_ped_script(this: GPtr<u8>, zoom: u16) = thiscall 0x50C160 => crate::camera::set_zoom_value_follow_ped_script;
+}
+
+orig! {
+    /// `CCamera::ResetDuckingSystem` (0x50CEF0)
+    pub fn camera_reset_ducking_system(cam: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x50CEF0 => crate::camfx::reset_ducking_system;
+}
+
+orig! {
     /// `CCamera::HandleCameraMotionForDucking` (0x50CFA0)
     pub fn handle_camera_motion_for_ducking(cam: GPtr<u8>, ped: GPtr<u8>, src: GPtr<u8>, targ: GPtr<u8>, instant: u32) = thiscall 0x50CFA0 => crate::camfx::handle_camera_motion_for_ducking;
+}
+
+orig! {
+    /// `CCamera::InitialiseScriptableComponents` (0x50D2D0)
+    pub fn camera_initialise_scriptable_components(cam: GPtr<u8>) = thiscall 0x50D2D0 => crate::camfx::initialise_scriptable_components;
 }
 
 orig! {
@@ -86,6 +146,11 @@ orig! {
 orig! {
     /// `CCam::Process_WheelCam` (0x512110)
     pub fn cam_process_wheel_cam(c: GPtr<u8>, t: GPtr<u8>, o: u32, sv: u32, svw: u32) -> u8 = thiscall 0x512110 => unported;
+}
+
+orig! {
+    /// `CCamera::CalculateGroundHeight` (0x514B80)
+    pub fn calculate_ground_height(cam: GPtr<u8>, ty: i32) -> sa_math::x87::X87 = reg("args = ecx stack; pop") 0x514B80 => crate::camctl::calculate_ground_height_port;
 }
 
 orig! {
@@ -151,4 +216,9 @@ orig! {
 orig! {
     /// `FUN_00540f80` (0x540F80)
     pub fn pad_540f80(pad: GPtr<u8>) -> i16 = thiscall 0x540F80 => unported;
+}
+
+orig! {
+    /// `CCamera::DeleteCutSceneCamDataMemory` (0x5B24A0)
+    pub fn camera_delete_cut_scene_cam_data_memory(c: GPtr<u8>) = thiscall 0x5B24A0 => crate::camctl::delete_cut_scene_cam_data_memory;
 }

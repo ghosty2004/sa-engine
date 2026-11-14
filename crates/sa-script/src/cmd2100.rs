@@ -42,7 +42,7 @@ const INTERIOR_MAN: usize = 0xBAF670;
 
 use crate::bindings::add_brain_for_code_use;
 use sa_world::bindings::clump_get_association;
-use sa_core::bindings::clump_is_initialized;
+use sa_anim::bindings::clump_is_initialized;
 use crate::bindings::get_proper_index_from_index_used_by_script as get_proper_index;
 use sa_world::bindings::object_get_ref_;
 use crate::bindings::set_coords_of_script_car;
@@ -50,12 +50,12 @@ use sa_world::bindings::set_entity_blip;
 use crate::bindings::start_playback_recorded_car;
 use sa_core::bindings::crt_strncpy as strncpy_;
 use sa_core::bindings::get_uppercase_key;
-use sa_core::bindings::task_new;
-use sa_core::bindings::world_add as world_add_;
-use sa_core::bindings::world_remove as world_remove_;
-use sa_stream::bindings::ped_is_player;
+use sa_ai::bindings::task_new;
+use sa_world::bindings::world_add as world_add_;
+use sa_world::bindings::world_remove as world_remove_;
+use sa_ped::bindings::ped_is_player;
 use sa_world::bindings::entry_exit_at;
-use sa_world::bindings::event_group_add;
+use sa_ai::bindings::event_group_add;
 use sa_world::bindings::event_script_command_ctor;
 use sa_world::bindings::event_script_command_dtor;
 use sa_world::bindings::find_ground_z_for_coord as find_ground_z;
@@ -74,8 +74,8 @@ use crate::bindings::give_ped_scripted_task;
 use crate::bindings::global_index;
 use crate::bindings::play_anim_script_command;
 use crate::bindings::read_label;
-use sa_core::bindings::assoc_set_current_time as set_current_time;
-use sa_core::bindings::get_pad;
+use sa_anim::bindings::assoc_set_current_time as set_current_time;
+use sa_input::bindings::get_pad;
 use sa_core::bindings::ped_get_bone_position as get_bone_position;
 use sa_core::bindings::time_cycle_stop_extra_colour as stop_extra_colour;
 use sa_core::bindings::vector_magnitude;
@@ -83,6 +83,10 @@ use sa_world::bindings::change_blip_scale;
 use sa_world::bindings::fx_attach_to_bone;
 use sa_world::bindings::get_actual_script_thing_index;
 use sa_world::bindings::set_texture_and_model as set_texture_and_model_names;
+use sa_core::bindings::find_objects_of_type_in_range;
+use sa_render::bindings::create_number_of_birds;
+use sa_world::bindings::die_ctor as task_die_ctor;
+use sa_world::bindings::find_objects_in_range;
 orig! {
     /// `CVehicle::SetTowLink(CVehicle*, bool)` through the vtable slot +0xF4, read at run time; AL discarded
     fn vcall_set_tow_link(f: u32, this: GPtr<u8>, c: GPtr<u8>, b: u32) = thiscall dyn => unported;
@@ -93,9 +97,6 @@ orig! {
     fn interior_is_group_active(m: GPtr<u8>, g: u32) -> u8 = thiscall 0x598280 => unported;
     /// `CTaskComplexFollowPedFootsteps::CTaskComplexFollowPedFootsteps(CPed*)` (0x694E20)
     fn task_follow_footsteps_ctor(t: GPtr<u8>, p: GPtr<u8>) -> GPtr<u8> = thiscall 0x694E20 => unported;
-    /// `CTaskComplexDie::CTaskComplexDie(...)` (0x630040), 9 dwords; floats raw
-    #[allow(clippy::too_many_arguments)]
-    fn task_die_ctor(t: GPtr<u8>, a: u32, b: u32, c: u32, d: u32, e: u32, f: u32, g: u32, h: u32, i: u32) -> GPtr<u8> = thiscall 0x630040 => unported;
     /// `CEventGlobalGroup::GetSoundLevel(CEntity*, CVector&)` (0x4AB900), ST0 (read as f64)
     fn get_sound_level(g: GPtr<u8>, e: GPtr<u8>, pos: GPtr<u32>) -> f64 = thiscall 0x4AB900 => unported;
     /// `CCarCtrl::ScriptGenerateOneEmergencyServicesCar(uint32 model, CVector)` (0x42FBC0), AL; vector raw
@@ -105,22 +106,12 @@ orig! {
     fn task_kinda_stay_ctor(t: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x62F610 => unported;
     fn task_kinda_stay_process_ped(t: GPtr<u8>, p: GPtr<u8>) -> u8 = thiscall 0x62F660 => unported;
     fn task_kinda_stay_dtor(t: GPtr<u8>) = thiscall 0x62F650 => unported;
-    /// `CWorld::FindObjectsInRange(const CVector&, float, bool, int16*, int16, CEntity**, bool x5)` (0x564A20)
-    #[allow(clippy::too_many_arguments)]
-    fn find_objects_in_range(pos: GPtr<u32>, r: u32, two_d: u32, count: GPtr<u16>, max: u32, out: GPtr<u32>, b: u32, v: u32, p: u32, o: u32, d: u32) = cdecl 0x564A20 => unported;
-    /// `CWorld::FindObjectsOfTypeInRange(uint32, const CVector&, float, bool, int16*, int16, CEntity**, bool x5)`
-    /// (0x564C70)
-    #[allow(clippy::too_many_arguments)]
-    fn find_objects_of_type_in_range(model: u32, pos: GPtr<u32>, r: u32, two_d: u32, count: GPtr<u16>, max: u32, out: GPtr<u32>, b: u32, v: u32, p: u32, o: u32, d: u32) = cdecl 0x564C70 => unported;
     /// `CTheScripts::AddToSwitchJumpTable(int32 value, int32 address)` (0x470390)
     fn add_to_switch_jump_table(v: u32, a: u32) = cdecl 0x470390 => unported;
     /// `CTheScripts::UseSwitchJumpTable(int32* out)` (0x4703C0; writes 0 first, then the target when found)
     fn use_switch_jump_table(out: GPtr<u32>) = cdecl 0x4703C0 => unported;
     /// `CVehicleRecording::RemoveRecordingFile(int32)` (0x45A0A0)
     fn remove_recording_file(i: u32) = cdecl 0x45A0A0 => unported;
-    /// `CBirds::CreateNumberOfBirds(CVector, CVector, int32, int32, bool)` (0x711EF0); vectors raw
-    #[allow(clippy::too_many_arguments)]
-    fn create_number_of_birds(ax: u32, ay: u32, az: u32, bx: u32, by: u32, bz: u32, n: u32, ty: u32, c: u32) = cdecl 0x711EF0 => unported;
     fn gang_war_going_on() -> u8 = cdecl 0x443AA0 => unported;
     /// `CShopping::SetPlayerHasBought(uint32)` (0x49B610) / `RemoveLoadedShop()` (0x49AE30)
     fn set_player_has_bought(k: u32) = cdecl 0x49B610 => unported;
@@ -234,7 +225,7 @@ pub fn process_commands_2100_to_2199(s: Scr, command: u32) -> i8 {
             let c = o.byte_add(0x18).cast::<GPtr<u8>>();
             let r = !c.read().is_null()
                 && c.read().read() == 2
-                && clump_is_initialized(c.read()) != 0
+                && clump_is_initialized(c.read()) as u8 != 0
                 && !clump_get_association(c.read(), lp).is_null();
             set_flag(s, r);
         }
@@ -532,7 +523,7 @@ pub fn process_commands_2100_to_2199(s: Scr, command: u32) -> i8 {
         0x0876 => {
             collect(s, 8);
             let c = |i: i32| X87::from_i32(spi(i)).to_f32().to_bits();
-            create_number_of_birds(c(0), c(1), c(2), c(3), c(4), c(5), sp(6), sp(7), 0);
+            create_number_of_birds(c(0), c(1), c(2), c(3), c(4), c(5), sp(6) as i32, sp(7) as i32, 0);
         }
         // 0878 SET_VEHICLE_DIRT_LEVEL (0x471A00): `VEH(P0)+0x4B0` = P1 (raw).
         0x0878 => {
@@ -599,7 +590,7 @@ pub fn process_commands_2100_to_2199(s: Scr, command: u32) -> i8 {
         0x0881 => {
             collect(s, 2);
             let on = sp(1) != 0;
-            get_pad(sp(0)).byte_add(0x11B).write(u8::from(!on));
+            get_pad(sp(0) as i32).byte_add(0x11B).write(u8::from(!on));
         }
         // 0883 ATTACH_FX_SYSTEM_TO_CHAR_BONE (0x471C3C): `p = PED(P1)`; `i = GetActualScriptThingIndex(P0, 1)`; `i >=
         // 0` and `fx = [0xA44114 + 8 * i]` non-null -> `fx->AttachToBone(p, P2)`.
@@ -763,7 +754,7 @@ fn damage_char(s: Scr) {
         return;
     }
     health.cast::<u32>().write(0);
-    let t = new_task(0x28, |t| task_die_ctor(t, 0, 0, 0xF, 0x4080_0000, 0, 0, 0, 0, 0));
+    let t = new_task(0x28, |t| task_die_ctor(t, 0, 0, 0xF, f32::from_bits(0x4080_0000), f32::from_bits(0), 0, 0, 0, 0));
     let mut ev = [0u32; 8];
     let e = GPtr::from_raw(ev.as_mut_ptr()).cast::<u8>();
     event_script_command_ctor(e, 3, t, 0);
@@ -788,12 +779,12 @@ fn closest_stealable_object(s: Scr) {
     let mut count = [0u16; 2];
     let mut list = [0u32; 16];
     find_objects_in_range(
-        GPtr::from_raw(pos.as_mut_ptr()),
-        r,
+        GPtr::<u32>::cast::<u8>(GPtr::from_raw(pos.as_mut_ptr())),
+        f32::from_bits(r),
         1,
-        GPtr::from_raw(count.as_mut_ptr()),
+        GPtr::<u16>::cast::<u8>(GPtr::from_raw(count.as_mut_ptr())),
         0x10,
-        GPtr::from_raw(list.as_mut_ptr()),
+        GPtr::<u32>::cast::<u8>(GPtr::from_raw(list.as_mut_ptr())),
         0,
         0,
         0,
@@ -902,7 +893,7 @@ fn uses_collision_of_closest_object(s: Scr) {
     find_objects_of_type_in_range(
         model,
         GPtr::from_raw(pos.as_mut_ptr()),
-        r,
+        f32::from_bits(r),
         1,
         GPtr::from_raw(count.as_mut_ptr()),
         0x10,

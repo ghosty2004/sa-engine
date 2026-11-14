@@ -183,14 +183,15 @@ pub use crate::bindings::rw_im3d_render_primitive;
 pub use sa_core::bindings::cross_product;
 pub use sa_core::bindings::rw_v3d_transform_points;
 pub use sa_core::bindings::vector_normalise;
-pub use sa_core::bindings::rw_texture_destroy;
+pub use sa_rwcore::bindings::rw_texture_destroy;
 pub use sa_world::bindings::rw_im3d_end;
 pub use crate::bindings::world_scan as world_scan_scan_world;
 pub use sa_core::bindings::can_see_water_from_curr_area;
-pub use sa_world::bindings::get_water_level_no_waves as o_get_water_level_no_waves;
+pub use crate::bindings::get_water_level_no_waves as o_get_water_level_no_waves;
 pub use sa_world::bindings::rw_im3d_transform;
-pub use sa_world::bindings::water_find_nearest_water_and_flow as o_find_nearest_water_and_its_flow;
+pub use crate::bindings::water_find_nearest_water_and_flow as o_find_nearest_water_and_its_flow;
 pub use sa_world::bindings::world_process_vertical_line as process_vertical_line;
+pub use sa_world::bindings::find_player_ped;
 orig! {
     /// `CWaterLevel::MarkQuadsAndPolysToBeRendered` (0x6E5810)
     pub fn o_mark_quads_and_polys(x: i32, y: i32, interior: u8) = cdecl 0x6E5810 => crate::waterlevel::mark_quads_and_polys_to_be_rendered;
@@ -233,8 +234,6 @@ orig! {
     pub fn o_add_to_block(bx: i32, by: i32, idx: i32, kind: i32) = cdecl 0x6E5750 => crate::waterlevel::add_to_block;
     /// `CWaterLevel::ScanThroughBlocks()` (0x6E6D10)
     pub fn o_scan_through_blocks() = cdecl 0x6E6D10 => crate::waterlevel::scan_through_blocks;
-    /// `FindPlayerPed(int32)` (0x56E210)
-    pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
     /// `FUN_006ea8a0`: `CWaterLevel::GetGroundLevel` (0x6EA8A0)
     pub fn o_get_ground_level(p: GPtr<f32>, out: GPtr<f32>, col: GPtr<u8>, offset: u32) -> u8 = cdecl 0x6EA8A0 => crate::waterlevel::get_ground_level;
     /// `CWaterLevel::AddWaveToResult` (0x6E81E0)
@@ -443,7 +442,7 @@ pub fn calculate_waves_only_for_coordinate(
     f.fadd_m(nx.read());
     let v = f.fstp();
     nx.write(v);
-    vector_normalise(n.cast());
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(n.cast()));
     // colour multiplier
     let g1 = x(nz.read()).fadd_m(ny.read()).fadd_m(nx.read()).fmul_m(k(W_GLARE_DOT));
     // `fld 0; fcomp g1; test ah, 0x41; jne` keeps g1 when 0 <= g1 or unordered
@@ -534,7 +533,7 @@ pub fn add_wave_to_result(px: u32, py: u32, level: GPtr<f32>, big: u32, small: u
     for i in 0..3 {
         wr::<u32>(normal, i * 4, rd::<u32>(r, i * 4));
     }
-    vector_normalise(normal);
+    vector_normalise(normal.cast::<[f32;3]>());
 }
 
 /// `FUN_006e5bb0` (0x6E5BB0, `CWaterQuad` level): `(x, y)` must lie in the quad's box (x0 <= x <= x1 from
@@ -739,7 +738,7 @@ pub fn get_water_level(px: u32, py: u32, pz: u32, level: GPtr<f32>, waves: u8, n
     let mut small = 0u32;
     let bp = GPtr::from_raw(&mut big as *mut u32).cast::<f32>();
     let sp = GPtr::from_raw(&mut small as *mut u32).cast::<f32>();
-    if o_get_water_level_no_waves(f32::from_bits(px), f32::from_bits(py), f32::from_bits(pz), level.cast::<u8>(), bp, sp) == 0 {
+    if o_get_water_level_no_waves(f32::from_bits(px).to_bits(), f32::from_bits(py).to_bits(), f32::from_bits(pz).to_bits(), level.cast::<f32>(), bp, sp) == 0 {
         return 0;
     }
     if waves == 0 && !x(level.read()).fsub_m(f32::from_bits(pz)).fcom(x(k(THREE))).test_any(0x41) {
@@ -905,10 +904,10 @@ pub fn get_water_depth(p: GPtr<f32>, depth: GPtr<f32>, water: GPtr<f32>, ground:
     let lp = GPtr::from_raw(&mut level as *mut u32).cast::<f32>();
     let pu = p.cast::<u32>();
     if o_get_water_level_no_waves(
-        f32::from_bits(pu.read()),
-        f32::from_bits(pu.wrapping_index(1).read()),
-        f32::from_bits(pu.wrapping_index(2).read()),
-        lp.cast::<u8>(),
+        f32::from_bits(pu.read()).to_bits(),
+        f32::from_bits(pu.wrapping_index(1).read()).to_bits(),
+        f32::from_bits(pu.wrapping_index(2).read()).to_bits(),
+        lp.cast::<f32>(),
         GPtr::NULL,
         GPtr::NULL,
     ) == 0
@@ -1387,10 +1386,10 @@ pub fn set_up_water_fog(x1: i32, y1: i32, x2: i32, y2: i32) {
     let y1f = f32_of(xi(y1));
     let (mut level, mut big, mut small) = (0f32, 0f32, 0f32);
     let ok = o_get_water_level_no_waves(
-        f32::from_bits(x1f.to_bits()),
-        f32::from_bits(y1f.to_bits()),
-        f32::from_bits(0),
-        GPtr::<f32>::cast::<u8>(GPtr::from_raw(&mut level)),
+        f32::from_bits(x1f.to_bits()).to_bits(),
+        f32::from_bits(y1f.to_bits()).to_bits(),
+        f32::from_bits(0).to_bits(),
+        GPtr::from_raw(&mut level),
         GPtr::from_raw(&mut big),
         GPtr::from_raw(&mut small),
     );

@@ -13,7 +13,7 @@ use crate::bindings::force_weather_now;
 use crate::bindings::handle_special_cheats;
 use crate::bindings::set_texture_and_model;
 use sa_core::bindings::clothes_rebuild_player as rebuild_player;
-use sa_core::bindings::find_player_ped;
+use crate::bindings::find_player_ped;
 use sa_stream::bindings::reclassify_loaded_cars;
 use sa_stream::bindings::stream_peds_into_random_slots;
 use crate::bindings::beach_party_cheat as beach_party_cheat_call;

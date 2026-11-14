@@ -33,19 +33,20 @@ use crate::bindings::task_is_go_to_task;
 use crate::bindings::walk_round_car_ctor;
 use sa_core::bindings::base_model_info_ctor;
 use sa_core::bindings::entity_register_reference;
-use sa_core::bindings::find_player_ped;
-use sa_core::bindings::rp_atomic_destroy;
+use sa_world::bindings::find_player_ped;
+use sa_rwcore::bindings::rp_atomic_destroy;
 use sa_core::bindings::rw_frame_destroy;
-use sa_core::bindings::task_new as task_new_o;
-use sa_core::bindings::tm_get_task_secondary;
-use sa_core::bindings::tm_set_task_secondary;
+use crate::bindings::task_new as task_new_o;
+use crate::bindings::tm_get_task_secondary;
+use crate::bindings::tm_set_task_secondary;
 use sa_stream::bindings::anim_remove_block_ref as remove_anim_block_ref;
-use sa_world::bindings::compute_response_task_type_group as editable_compute_response_task_type_group;
-use sa_world::bindings::event_group_add;
-use sa_world::bindings::facial_set_request;
-use sa_world::bindings::membership_is_member;
-use sa_world::bindings::ped_groups_get_peds_group as get_peds_group;
-use sa_world::bindings::tm_set_task;
+use crate::bindings::compute_response_task_type_group as editable_compute_response_task_type_group;
+use crate::bindings::event_group_add;
+use crate::bindings::facial_set_request;
+use crate::bindings::membership_is_member;
+use crate::bindings::ped_groups_get_peds_group as get_peds_group;
+use crate::bindings::tm_set_task;
+use sa_core::bindings::mem_free_align as free_align;
 orig! {
     /// `CEventHandler::ComputeVehicleCollisionResponse(CEvent*, CTask* active, CTask* simplest)` (0x4BD6A0, `ret 0xC`)
     fn r_vehicle_collision(h: GPtr<u8>, ev: GPtr<u8>, active: GPtr<u8>, simplest: GPtr<u8>) = thiscall 0x4BD6A0 => unported;
@@ -187,8 +188,6 @@ orig! {
     fn record_associate_with_task(r: GPtr<u8>, t: u32) = thiscall 0x608520 => crate::small::record_data_associate_with_task;
     /// `CAnimBlendAssociation::~CAnimBlendAssociation` (0x4CECF0)
     fn anim_assoc_dtor(a: GPtr<u8>) = thiscall 0x4CECF0 => crate::mvpc_ai1::anim_blend_association_dtor;
-    /// `CMemoryMgr::FreeAlign(void*)` (0x72F4F0, cdecl)
-    fn free_align(p: GPtr<u8>) = cdecl 0x72F4F0 => sa_core::memory::free_align;
     /// `CPedScriptedTaskRecord::GetStatus(const CPed*)` (0x608750, cdecl)
     fn scripted_task_get_status(p: GPtr<u8>) -> i32 = cdecl 0x608750 => unported;
     /// `CPedIntelligence::FindRespectedFriendInInformRange` (0x600CF0, AL)
@@ -348,7 +347,7 @@ pub fn event_handler_set_event_response_task(this: GPtr<u8>, ev: GPtr<u8>) {
             if expr != -1 {
                 let tm = rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0), 0x47C).byte_add(4);
                 let facial = tm_get_task_secondary(tm, 3);
-                facial_set_request(GPtr::from_addr((facial.addr() as u32) as usize), expr as u32, 10000, 0xFFFF_FFFF, 0);
+                facial_set_request(GPtr::<u8>::addr(GPtr::from_addr((facial.addr() as u32) as usize)) as u32, expr as u32, 10000, 0xFFFF_FFFF, 0);
             }
         }
     }
@@ -376,7 +375,7 @@ pub fn event_handler_compute_vehicle_potential_passive_collision_response(this: 
     if ms == 1 {
         return;
     }
-    if GPtr::<u8>::addr(get_peds_group(GPtr::from_addr(rd::<u32>(this, 0) as usize))) as u32 != 0 {
+    if GPtr::<u8>::addr(GPtr::from_addr(get_peds_group(GPtr::<u8>::addr(GPtr::from_addr(rd::<u32>(this, 0) as usize)) as u32) as usize)) as u32 != 0 {
         ms = 6;
     }
     let door = intel_is_ped_going_for_car_door(rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0), 0x47C));
@@ -411,7 +410,7 @@ pub fn event_handler_compute_script_command_response(this: GPtr<u8>, ev: GPtr<u8
     }
     let task = v_clone_script_task(ev);
     tm_clear_task_event_response(rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0), 0x47C).byte_add(4));
-    tm_set_task(rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0), 0x47C).byte_add(4), task, slot as u32, 1);
+    tm_set_task(rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0), 0x47C).byte_add(4), task, (slot as u32) as i32, 1);
     let rec = record_associated_with_event(ev.addr() as u32);
     if !rec.is_null() {
         record_associate_with_task(rec, task.addr() as u32);
@@ -449,7 +448,7 @@ pub fn inform_group_event_queue_add(ent: GPtr<u8>, group: GPtr<u8>, ev: GPtr<u8>
         editable_compute_response_task_type_group(ev, group);
         let gid = rd::<i32>(rd::<GPtr<u8>>(find_player_ped(-1), 0x480), 0x38);
         let m = g::<u8>((0xC09928 + gid * 0x2D4) as u32 as usize);
-        delay = if (membership_is_member(m, ent) as u32) as u8 == 0
+        delay = if ((membership_is_member(m, ent) as u8) as u32) as u8 == 0
             && rd::<u8>(ent, 0x484) != 2
             && rd::<u32>(rd::<GPtr<u8>>(ev, 0x14), 0x46C) & 0x100 != 0
             && rd::<u16>(ev, 0xE) != 0xC8
@@ -763,7 +762,7 @@ pub fn acq_scanner_scan(this: GPtr<u8>, ped: GPtr<u8>, ents: GPtr<u8>, n: i32) {
 #[hook(addr = 0x603A30, conv = thiscall, name = "FUN_00603a30", expect = "56 8B 74 24 08 57 8B F9",
        route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn acq_scanner_can_scan(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
-    let alive = ped_is_alive(ped);
+    let alive = ped_is_alive(ped) as u8;
     if alive == 0 {
         return alive;
     }

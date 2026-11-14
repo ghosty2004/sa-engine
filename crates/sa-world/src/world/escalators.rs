@@ -41,15 +41,14 @@ sa_core::globals! {
 }
 
 pub use crate::bindings::stunt_jump_pool_new;
-pub use sa_core::bindings::matrix_dtor;
+pub use crate::bindings::matrix_dtor;
 pub use crate::bindings::escalator_switch_off as switch_off_call;
+pub use sa_core::bindings::crt_new as operator_new;
 orig! {
     /// `CEscalator::AddThisOne(...)` (0x717970)
     pub fn add_this_one(e: GPtr<u8>, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32) = thiscall 0x717970 => unported;
     /// `CEscalator::Update` (0x717D30)
     pub fn escalator_update(e: GPtr<u8>) = thiscall 0x717D30 => unported;
-    /// CRT `operator new` (0x82119A)
-    pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
     /// `CPool<CStuntJump>::CPool(int32 size, const char* name)` (`thunk_FUN_0156fa80`, 0x49C8F0)
     pub fn stunt_jump_pool_ctor(p: GPtr<u8>, size: i32, name: GPtr<u8>) -> GPtr<u8> = thiscall 0x49C8F0 => unported;
     /// `CPool<CStuntJump>::Clear` (0x49C9A0)

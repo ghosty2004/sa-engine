@@ -43,7 +43,7 @@ orig! {
 fn error2_p2(code: u32, a: u32) {
     let mut e = RwError { plugin_id: 2, error_code: 0 };
     e.error_code = rw_error2(code, a) as i32;
-    rw_error_set(GPtr::from_raw(&mut e));
+    rw_error_set(GPtr::from_raw(&mut e).cast());
 }
 
 fn build_mesh_free_list() -> GPtr<u8> {

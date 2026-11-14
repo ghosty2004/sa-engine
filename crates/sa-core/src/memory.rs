@@ -33,9 +33,8 @@ pub const SCRATCH_PAD: u32 = 0xC8E0C8;
 
 pub use crate::bindings::calloc;
 pub use crate::bindings::crt_realloc as realloc;
+pub use crate::bindings::crt_malloc as malloc;
 orig! {
-    /// CRT `malloc` (0x824257)
-    pub fn malloc(size: u32) -> GPtr<u8> = cdecl 0x824257 => unported;
     /// CRT `free` (0x82413F)
     pub fn free(p: GPtr<u8>) = cdecl 0x82413F => unported;
     /// `CMemoryHeap::Malloc` (0x72ED80, thiscall)

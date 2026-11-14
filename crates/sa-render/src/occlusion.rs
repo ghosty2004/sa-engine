@@ -399,9 +399,9 @@ fn near_plane_crossing(a: i32, b: i32, out: GPtr<f32>) -> u8 {
     let vb = CORNER_VECS.ptr().cast::<f32>().wrapping_index(b * 3);
     let mut tmp = [0f32; 3];
     let tp = GPtr::from_raw(tmp.as_mut_ptr());
-    let r = matrix_mul_vec(tp, g(VIEW_MATRIX), va.cast::<u8>());
+    let r = GPtr::<u8>::cast::<f32>(matrix_mul_vec(tp.cast::<u8>(), g(VIEW_MATRIX), va.cast::<u8>()));
     let za = x(r.wrapping_index(2).read()).fsub_m(k(0x3F8C_CCCD)).to_f32();
-    let r = matrix_mul_vec(tp, g(VIEW_MATRIX), vb.cast::<u8>());
+    let r = GPtr::<u8>::cast::<f32>(matrix_mul_vec(tp.cast::<u8>(), g(VIEW_MATRIX), vb.cast::<u8>()));
     let zb = X87::from_f64_exact(
         x(r.wrapping_index(2).read())
             .fsub_m(k(0x3F8C_CCCD))

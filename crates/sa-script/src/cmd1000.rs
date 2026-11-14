@@ -40,7 +40,7 @@ const K_10000: u32 = 0x461C_4000;
 use crate::bindings::audio_engine_clear_mission_audio as clear_mission_audio;
 use crate::bindings::pad_set_drunk_input_delay as set_drunk_input_delay;
 use sa_core::bindings::camera_set_near_clip_script as set_near_clip_script;
-use sa_core::bindings::get_pad;
+use sa_input::bindings::get_pad;
 use sa_core::bindings::player_info_make_player_safe as make_player_safe;
 use sa_world::bindings::audio_retune_radio as retune_radio;
 use sa_world::bindings::can_player_start_mission;
@@ -76,11 +76,11 @@ use sa_core::bindings::file_close;
 use sa_core::bindings::file_mgr_seek as file_seek;
 use sa_core::bindings::file_read;
 use sa_core::bindings::file_set_dir;
-use sa_core::bindings::find_player_coors;
+use sa_world::bindings::find_player_coors;
 use sa_core::bindings::open_file as file_open;
 use sa_world::bindings::extinguish_all_car_fires_in_area;
 use sa_world::bindings::multiply3x3 as multiply_3x3;
-use sa_world::bindings::tm_find_active_task_by_type as find_active_task_by_type;
+use sa_ai::bindings::tm_find_active_task_by_type as find_active_task_by_type;
 use sa_world::bindings::vector_add_assign;
 orig! {
     /// `CWorld::ClearPedsFromArea(float x1, float y1, float z1, float x2, float y2, float z2)` (0x5667F0);
@@ -197,7 +197,7 @@ pub fn process_commands_1000_to_1099(s: Scr, command: u32) -> i8 {
         0x03EF => {
             collect(s, 1);
             let info = player_info(sp(0));
-            let pad = get_pad(spi(0) as u32);
+            let pad = get_pad((spi(0) as u32) as i32);
             let p = pad.byte_add(0x10E);
             p.write(p.read() | 0x80);
             make_player_safe(info, 1, f(K_10000));
@@ -247,7 +247,7 @@ pub fn process_commands_1000_to_1099(s: Scr, command: u32) -> i8 {
         // 03FD SET_DRUNK_INPUT_DELAY (0x489731): CPad::GetPad(P0)->SetDrunkInputDelay(P1).
         0x03FD => {
             collect(s, 2);
-            let pad = get_pad(spi(0) as u32);
+            let pad = get_pad((spi(0) as u32) as i32);
             set_drunk_input_delay(pad, spi(1));
         }
         // 03FE SET_CHAR_MONEY (0x48975D): no null check. Reads `m_nPedFlags` dword +0x470, writes

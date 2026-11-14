@@ -52,11 +52,11 @@ use sa_core::bindings::rw_v3d_length as length;
 use sa_core::bindings::rw_v3d_normalize as normalize;
 use crate::bindings::fx_prt_mult_default_ctor as prt_mult_ctor;
 use sa_core::bindings::list_get_num_items;
-use sa_world::bindings::fx_add_particle as add_particle;
-use sa_world::bindings::fx_get_composite_matrix as get_composite_matrix;
-use sa_world::bindings::fx_render_add_tri as render_add_tri;
-use sa_world::bindings::fx_render_begin as render_begin;
-use sa_world::bindings::fx_render_end as render_end;
+use crate::bindings::fx_add_particle as add_particle;
+use crate::bindings::fx_get_composite_matrix as get_composite_matrix;
+use crate::bindings::fx_render_add_tri as render_add_tri;
+use crate::bindings::fx_render_begin as render_begin;
+use crate::bindings::fx_render_end as render_end;
 orig! {
     /// `RwRenderStateSet(state, value)` (`RwEngineInstance` +0x20)
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
@@ -182,7 +182,7 @@ pub fn fx_emitter_bp_render(this: GPtr<u8>, camera: u32, txd: u32, brightness: u
         rw_render_state_set(0xA, blend(1));
         rw_render_state_set(0xB, blend(0));
     }
-    render_begin(GPtr::from_addr(cur_raster as usize), GPtr::NULL, 1);
+    render_begin(GPtr::<u8>::addr(GPtr::from_addr(cur_raster as usize)) as u32, GPtr::<u8>::addr(GPtr::NULL) as u32, 1);
     let cam_m: GPtr<u8> = g(rd::<u32>(g::<u8>(camera as usize), 4) as usize + 0x10);
     let mut prt = rd::<u32>(list, 0);
     let mut st = Frame { bright: f32::from_bits(brightness), raster: 0, info: [0; INFO_SIZE / 4], mult: [0; 7] };
@@ -215,7 +215,7 @@ pub fn fx_emitter_bp_render_heat_haze(this: GPtr<u8>, camera: u32, _txd: u32, br
     rw_render_state_set(0xC, 1);
     rw_render_state_set(0xA, 5);
     rw_render_state_set(0xB, 2);
-    render_begin(GPtr::from_addr(cur_raster as usize), GPtr::NULL, 1);
+    render_begin(GPtr::<u8>::addr(GPtr::from_addr(cur_raster as usize)) as u32, GPtr::<u8>::addr(GPtr::NULL) as u32, 1);
     let cam_m: GPtr<u8> = g(rd::<u32>(g::<u8>(camera as usize), 4) as usize + 0x10);
     let mut prt = rd::<u32>(list, 0);
     let mut st = Frame { bright: f32::from_bits(brightness), raster: 0, info: [0; INFO_SIZE / 4], mult: [0; 7] };
@@ -505,7 +505,7 @@ fn texture(this: GPtr<u8>, info: GPtr<u8>, cur_raster: &mut u32, st: &mut Frame)
     if *cur_raster != st.raster {
         render_end();
         *cur_raster = st.raster;
-        render_begin(GPtr::from_addr(st.raster as usize), GPtr::NULL, 1);
+        render_begin(GPtr::<u8>::addr(GPtr::from_addr(st.raster as usize)) as u32, GPtr::<u8>::addr(GPtr::NULL) as u32, 1);
     }
 }
 
@@ -584,9 +584,9 @@ fn smoke(prt: GPtr<u8>, info: GPtr<u8>, st: &mut Frame) {
         g(g::<u32>(FX_SMOKE_SYSTEM).read() as usize),
         ptr(&mut pos),
         ptr(&mut vel),
-        f32::from_bits(0),
+        f32::from_bits(0).to_bits(),
         mult,
-        f32::from_bits(0xBF80_0000),
+        f32::from_bits(0xBF80_0000).to_bits(),
         f32::from_bits(0x3F99_999A),
         f32::from_bits(0x3F19_999A),
         0,

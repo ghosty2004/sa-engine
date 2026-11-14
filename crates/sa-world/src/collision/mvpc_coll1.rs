@@ -38,7 +38,7 @@ use crate::bindings::multiply3x3 as multiply_3x3;
 use crate::bindings::process_line_sphere;
 use crate::bindings::test_line_sphere;
 use crate::bindings::vector_add;
-use sa_core::bindings::vector_sub;
+use crate::bindings::vector_sub;
 use sa_core::bindings::atexit;
 use sa_core::bindings::matrix_invert;
 use sa_core::bindings::matrix_mul_vec;
@@ -48,13 +48,12 @@ use crate::bindings::test_line_box_dw;
 use crate::bindings::test_line_triangle;
 use crate::bindings::uncompress_vector;
 use crate::bindings::vector_mul_scalar as vector_scale;
+use crate::bindings::calculate_triangle_planes_416330 as calculate_triangle_planes;
 orig! {
     /// the no-CD protection VM entry (0xCB73E0, pops its two arguments), called from the static
     /// initialiser of `TestLineOfSight`'s inverse matrix
     #[cfg_attr(not(sa_phase_a), allow(dead_code))]
     fn protection_vm(code: u32, n: u32) = stdcall 0xCB73E0 => unported;
-    /// `CCollision::CalculateTrianglePlanes(CCollisionData*)` (0x416330)
-    fn calculate_triangle_planes(cd: GPtr<u8>) = cdecl 0x416330 => unported;
     /// `SurfaceInfos_c::IsSeeThrough(uint32)` (0x55E6B0, AL)
     fn is_see_through(si: u32, id: u32) -> u8 = thiscall 0x55E6B0 => unported;
     /// `SurfaceInfos_c::IsShootThrough(uint32)` (0x55E6D0, AL)
@@ -84,8 +83,8 @@ fn static_matrix_init(guard: usize, m: usize, dtor: u32) {
 fn transform_line(line: GPtr<u8>, inv: GPtr<u8>, buf: GPtr<u8>) {
     let mut e = [0u32; 3];
     let mut s = [0u32; 3];
-    let pe = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(local(&mut e)), inv, line.byte_add(0x10)));
-    let ps = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(local(&mut s)), inv, line));
+    let pe = matrix_mul_vec(local(&mut e), inv, line.byte_add(0x10));
+    let ps = matrix_mul_vec(local(&mut s), inv, line);
     col_line_ctor(buf, ps, pe);
 }
 
@@ -148,7 +147,7 @@ pub fn test_line_of_sight(line: GPtr<u8>, transform: GPtr<u8>, model: GPtr<u8>, 
         }
         i += 1;
     }
-    calculate_triangle_planes(cd);
+    calculate_triangle_planes(cd.cast::<crate::collision::shared::CCollisionData>());
     let mut i = 0i32;
     while i < rd::<i16>(cd, 4) as i32 {
         let tri = rd::<GPtr<u8>>(cd, 0x18).byte_add(i as isize * 8);
@@ -217,7 +216,7 @@ pub fn process_line_of_sight(line: GPtr<u8>, transform: GPtr<u8>, model: GPtr<u8
         }
         i += 1;
     }
-    calculate_triangle_planes(cd);
+    calculate_triangle_planes(cd.cast::<crate::collision::shared::CCollisionData>());
     let mut i = 0i32;
     while i < rd::<i16>(cd, 4) as i32 {
         let tri = rd::<GPtr<u8>>(cd, 0x18).byte_add(i as isize * 8);
@@ -246,7 +245,7 @@ fn finish_colpoint(min: GPtr<u8>, max: GPtr<u8>, cp: GPtr<u8>, transform: GPtr<u
         return false;
     }
     let mut t = [0u32; 3];
-    let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(local(&mut t)), transform, cp));
+    let r = matrix_mul_vec(local(&mut t), transform, cp);
     copy3(cp, r);
     let mut t2 = [0u32; 3];
     let r = multiply_3x3(local(&mut t2), transform, cp.byte_add(0x10));
@@ -348,7 +347,7 @@ pub fn process_vertical_line(line: GPtr<u8>, transform: GPtr<u8>, model: GPtr<u8
         }
         i += 1;
     }
-    calculate_triangle_planes(cd);
+    calculate_triangle_planes(cd.cast::<crate::collision::shared::CCollisionData>());
     g::<u8>(0x965A20).write(0);
     let stat = GPtr::<u8>::from_addr(0x9659FC);
     let mut i = 0i32;
@@ -367,7 +366,7 @@ pub fn process_vertical_line(line: GPtr<u8>, transform: GPtr<u8>, model: GPtr<u8
         return 0;
     }
     let mut t = [0u32; 3];
-    let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(local(&mut t)), transform, cp));
+    let r = matrix_mul_vec(local(&mut t), transform, cp);
     copy3(cp, r);
     let r = multiply_3x3(local(&mut t), transform, cp.byte_add(0x10));
     copy3(cp.byte_add(0x10), r);
@@ -376,7 +375,7 @@ pub fn process_vertical_line(line: GPtr<u8>, transform: GPtr<u8>, model: GPtr<u8
             wr::<u32>(poly, 4 * k, rd::<u32>(stat, 4 * k));
         }
         for v in [0isize, 0xC, 0x18] {
-            let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(local(&mut t)), transform, poly.byte_add(v)));
+            let r = matrix_mul_vec(local(&mut t), transform, poly.byte_add(v));
             copy3(poly.byte_add(v), r);
         }
     }

@@ -42,7 +42,7 @@ pub fn create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     }
     if rd::<u32>(ped, 0x474) & 0x20_0000 != 0 {
         let pos = this.byte_add(0x10);
-        find_z_coor_for_ped(pos);
+        find_z_coor_for_ped(pos.cast::<f32>());
         let v = [rd::<f32>(pos, 0), rd::<f32>(pos, 4), rd::<f32>(pos, 8)];
         let m = rd::<GPtr<u8>>(ped, 0x14);
         if m.is_null() {

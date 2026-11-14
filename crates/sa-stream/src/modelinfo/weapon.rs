@@ -26,12 +26,10 @@ pub const RENDER_WEAPON_CB: u32 = 0x733670;
 pub use crate::bindings::get_first_object;
 pub use crate::bindings::set_component_atomic_alpha;
 pub use sa_core::bindings::rp_clump_for_all_atomics;
-pub use sa_core::bindings::clump_get_frame_from_name as get_frame_from_name;
+pub use crate::bindings::clump_get_frame_from_name as get_frame_from_name;
+pub use crate::bindings::clump_init;
+pub use crate::bindings::clump_set_clump;
 orig! {
-    /// `CClumpModelInfo::Init` (0x4C4E40)
-    pub fn clump_init(this: MiPtr) = thiscall 0x4C4E40 => super::clump::init;
-    /// `CClumpModelInfo::SetClump` (0x4C4F70)
-    pub fn clump_set_clump(this: MiPtr, clump: GPtr<u8>) = thiscall 0x4C4F70 => super::clump::set_clump;
     /// `CWeaponModelInfo::~CWeaponModelInfo` (0x4C5790)
     pub fn weapon_destructor_call(this: MiPtr) = thiscall 0x4C5790 => destructor;
 }
@@ -57,15 +55,15 @@ pub fn scalar_deleting_destructor(this: MiPtr, flags: u32) -> MiPtr {
 /// `CWeaponModelInfo::Init` (0x4C98F0): `CClumpModelInfo::Init`, `m_weaponInfo = 0`.
 #[hook(addr = 0x4C98F0, conv = thiscall, name = "CWeaponModelInfo::Init", expect = "56 8B F1 E8 48 B5 FF FF", this = "CWeaponModelInfo")]
 pub fn init(this: MiPtr) {
-    clump_init(this);
+    clump_init(this.cast::<crate::shared::CBaseModelInfo>());
     f::<u32>(this, 0x24).write(0);
 }
 
 /// `CWeaponModelInfo::SetClump(RpClump*)` (0x4C9910, `ret 4`).
 #[hook(addr = 0x4C9910, conv = thiscall, name = "CWeaponModelInfo::SetClump", expect = "56 8B 74 24 08", this = "CWeaponModelInfo")]
 pub fn set_clump(this: MiPtr, clump: GPtr<u8>) {
-    clump_set_clump(this, clump);
-    rp_clump_for_all_atomics(clump, SET_ATOMIC_RENDERER_CB, GPtr::from_addr(RENDER_WEAPON_CB as usize));
+    clump_set_clump(this.cast::<crate::shared::CBaseModelInfo>(), clump);
+    rp_clump_for_all_atomics(clump, SET_ATOMIC_RENDERER_CB, GPtr::<u8>::addr(GPtr::from_addr(RENDER_WEAPON_CB as usize)) as u32);
     let frame = get_frame_from_name(clump, GPtr::from_addr(STR_GUNFLASH as usize));
     if frame.is_null() {
         return;

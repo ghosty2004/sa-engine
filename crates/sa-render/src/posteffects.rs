@@ -70,19 +70,18 @@ const WEATHER_RAIN: usize = 0xC81324;
 /// 0.0 (0x858B50)
 const K_ZERO: u32 = 0;
 
-pub use sa_core::bindings::rw_raster_create;
-pub use sa_core::bindings::rw_raster_destroy;
-pub use sa_core::bindings::rw_raster_unlock;
+pub use sa_rwcore::bindings::rw_raster_create;
+pub use sa_rwcore::bindings::rw_raster_destroy;
+pub use sa_rwcore::bindings::rw_raster_unlock;
 pub use crate::bindings::heat_haze_fx_init as heat_haze_fx_init_call;
-pub use sa_core::bindings::rw_raster_lock;
-pub use sa_core::bindings::setup_back_buffer_vertex as setup_back_buffer_vertex_call;
+pub use sa_rwcore::bindings::rw_raster_lock;
+pub use crate::bindings::setup_back_buffer_vertex as setup_back_buffer_vertex_call;
+pub use sa_core::bindings::crt_pow;
 orig! {
     /// `CPostEffects::ImmediateModeFilterStuffInitialize()` (0x703CC0)
     pub fn immediate_mode_filter_stuff_initialize_call() = cdecl 0x703CC0 => immediate_mode_filter_stuff_initialize;
     /// CRT `printf` (one argument here)
     pub fn printf(fmt: GPtr<u8>) -> i32 = cdecl 0x821982 => unported;
-    /// CRT `pow(double, double)` (0x8220F0)
-    pub fn crt_pow(a: f64, b: f64) -> f64 = cdecl 0x8220F0 => crt_pow_host;
     /// `RwRenderStateSet` (`RwEngineInstance` slot 0x20)
     pub fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
 }
@@ -155,7 +154,7 @@ pub fn initialise() {
     if r.is_null() {
         return;
     }
-    let p = rw_raster_lock(r, 0, 1);
+    let p = GPtr::from_addr(rw_raster_lock(r, 0, 1) as usize);
     for i in 0..0x10000isize {
         let v = sa_core::orig::at_site(0x704675, sa_core::crt::rand) as u8;
         wr(p, i * 4 + 3, v);
@@ -172,22 +171,6 @@ pub fn initialise() {
 pub fn immediate_mode_render_states_restore() {
     for (i, st) in [0xA, 0xB, 0xE, 0x14, 6, 8, 7, 0xC, 2, 9].into_iter().enumerate() {
         rw_render_state_set(st, SAVED_RENDER_STATES.get()[i]);
-    }
-}
-
-/// Phase B/C path of [`crt_pow`]: only `pow(2.0, integer)` is used here, which is exact
-/// (overflow → +inf, underflow → +0).
-pub fn crt_pow_host(a: f64, b: f64) -> f64 {
-    assert!(a == 2.0 && b == (b as i64) as f64, "crt_pow_host: only pow(2, integer)");
-    let e = b as i64;
-    if e > 1023 {
-        f64::INFINITY
-    } else if e >= -1022 {
-        f64::from_bits(((e + 1023) as u64) << 52)
-    } else if e >= -1074 {
-        f64::from_bits(1u64 << (e + 1074))
-    } else {
-        0.0
     }
 }
 
@@ -244,7 +227,7 @@ pub fn setup_back_buffer_vertex() {
             RASTER_FRONT_BUFFER.set(0);
         }
         let depth = rd::<i32>(rd::<GPtr<u8>>(camera(), 0x60), 0x14);
-        r = rw_raster_create(w, h, depth, 5);
+        r = rw_raster_create((w as u32) as i32, (h as u32) as i32, (depth as u32) as i32, 5);
         RASTER_FRONT_BUFFER.set(r.addr() as u32);
         if r.is_null() {
             printf(GPtr::from_addr(STR_ERROR_SUBRASTERING));

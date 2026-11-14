@@ -45,7 +45,7 @@ pub use sa_stream::bindings::reclassify_loaded_cars as streaming_reclassify_load
 pub use sa_core::bindings::clothes_rebuild_player;
 pub use sa_core::bindings::get_key as key_gen_get_key;
 pub use sa_core::bindings::hud_set_help_message;
-pub use sa_core::bindings::stats_increment_stat;
+pub use crate::bindings::stats_increment_stat;
 pub use sa_core::bindings::text_get;
 pub use sa_stream::bindings::stream_peds_into_random_slots as streaming_stream_peds_into_random_slots;
 orig! {

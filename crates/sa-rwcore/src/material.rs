@@ -52,10 +52,10 @@ use crate::bindings::registry_copy_object as plugin_copy_object;
 use sa_core::bindings::rw_stream_find_chunk_call;
 use crate::bindings::rw_texture_stream_read_call;
 use crate::bindings::plugin_invoke_rights;
-use sa_core::bindings::material_list_append_call;
-use sa_core::bindings::rp_material_destroy as rp_material_destroy_call;
-use sa_core::bindings::rw_texture_destroy as rw_texture_destroy_call;
-use sa_core::bindings::stream_read as rw_stream_read_call;
+use crate::bindings::material_list_append_call;
+use crate::bindings::rp_material_destroy as rp_material_destroy_call;
+use crate::bindings::rw_texture_destroy as rw_texture_destroy_call;
+use crate::bindings::stream_read as rw_stream_read_call;
 orig! {
     /// `RpMaterialStreamRead(stream)` (0x74DD30)
     fn rp_material_stream_read_call(s: GPtr<u8>) -> GPtr<u8> = cdecl 0x74DD30 => rp_material_stream_read;
@@ -68,7 +68,7 @@ fn error1_p2(code: u32) {
         error_code: 0,
     };
     e.error_code = rw_error1(code) as i32;
-    rw_error_set(GPtr::from_raw(&mut e));
+    rw_error_set(GPtr::from_raw(&mut e).cast());
 }
 
 /// `RwErrorSet({2, _rwerror(code, a)})`.
@@ -78,7 +78,7 @@ fn error2_p2(code: u32, a: u32) {
         error_code: 0,
     };
     e.error_code = rw_error2(code, a) as i32;
-    rw_error_set(GPtr::from_raw(&mut e));
+    rw_error_set(GPtr::from_raw(&mut e).cast());
 }
 
 /// The material freelist `G + [0xC92514]` +0.

@@ -96,14 +96,14 @@ pub use sa_core::bindings::text_get;
 pub use crate::bindings::call_init_default;
 pub use crate::bindings::call_init_mouse;
 pub use crate::bindings::call_make_blank;
-pub use sa_core::bindings::call_clear_settings;
-pub use sa_core::bindings::call_init_joypad;
-pub use sa_core::bindings::call_set_key;
+pub use crate::bindings::call_clear_settings;
+pub use crate::bindings::call_init_joypad;
+pub use crate::bindings::call_set_key;
 pub use sa_core::bindings::file_mgr_seek as file_seek;
 pub use sa_core::bindings::file_read;
 pub use sa_core::bindings::file_write;
 pub use sa_core::bindings::find_player_vehicle;
-pub use sa_core::bindings::get_pad;
+pub use crate::bindings::get_pad;
 pub use sa_core::bindings::get_string_length_call as get_string_length;
 pub use sa_core::bindings::messages_string_copy as string_copy;
 orig! {
@@ -296,7 +296,7 @@ fn update_joy_in_config_menus(button: i32, pad_number: i32, v: i16) {
     if button == 0 {
         return;
     }
-    let pad = get_pad(pad_number as u32);
+    let pad = get_pad((pad_number as u32) as i32);
     if pad.is_null() {
         return;
     }
@@ -1083,7 +1083,7 @@ pub fn get_gxt_string_of_command_keys(this: GPtr<u8>, action: u16, out: GPtr<u8>
         }
     }
     let n = get_string_length(s) as i32;
-    string_copy(out, s, len.wrapping_sub(n) as u16);
+    string_copy(out, s, (len.wrapping_sub(n) as u16) as u32);
 }
 
 /// `SetControllerKeyAssociatedWithAction(action, key, type)` (0x530490): `ResetSettingOrder(action)`,
@@ -1102,7 +1102,7 @@ pub fn set_controller_key_associated_with_action(this: GPtr<u8>, action: i32, k:
 pub fn make_controller_actions_blank(this: GPtr<u8>) {
     for t in 0..4 {
         for a in 0..NUM_ACTIONS {
-            call_clear_settings(this, a as u32, t as u32);
+            call_clear_settings(this, (a as u32) as i32, (t as u32) as i32);
         }
     }
 }
@@ -1319,7 +1319,7 @@ const DEFAULT_KEYS_B: [(i32, u32, i32); 25] = [
 /// keyboard look-behind / mouse-look (gta-reversed FixBugs differs).
 #[hook(addr = 0x530640, conv = thiscall, name = "CControllerConfigManager::InitDefaultControlConfiguration", expect = "53 56 33 DB 53", this = "CControllerConfigManager")]
 pub fn init_default_control_configuration(this: GPtr<u8>) {
-    let set = |a: i32, k: u32, t: i32| call_set_key(this, a as u32, k, t as u32);
+    let set = |a: i32, k: u32, t: i32| call_set_key(this, (a as u32) as i32, k, (t as u32) as i32);
     let fwd = prot_go_forward_key();
     set(4, fwd, 0);
     set(5, 0x3FC, 0);
@@ -1395,7 +1395,7 @@ pub fn init_default_control_config_joy_pad(this: GPtr<u8>, buttons: u32) {
     let list: &[(i32, u32)] = if special { &JOYPAD_SPECIAL } else { &JOYPAD_DEFAULT };
     for &(a, b) in list {
         if b <= n {
-            call_set_key(this, a as u32, b, 3);
+            call_set_key(this, (a as u32) as i32, b, 3);
         }
     }
 }
@@ -1591,7 +1591,7 @@ fn del_blank(key: u32, kind: i32) -> Option<bool> {
 fn clear_matching(this: GPtr<u8>, k: u32, kind: i32, actions: &[i32]) {
     for &a in actions {
         if key(this, a, kind) == k {
-            call_clear_settings(this, a as u32, kind as u32);
+            call_clear_settings(this, (a as u32) as i32, (kind as u32) as i32);
         }
     }
 }
@@ -1617,7 +1617,7 @@ pub fn delete_matching_3rd_person_controls(this: GPtr<u8>, action: i32, k: u32, 
     if key(this, 0x10, kind) == k {
         let m = control_method();
         if (action != 1 && m == 1) || m == 0 {
-            call_clear_settings(this, 0x10, kind as u32);
+            call_clear_settings(this, 0x10, (kind as u32) as i32);
         }
     }
     clear_matching(this, k, kind, &[0x11]);
@@ -1636,7 +1636,7 @@ pub fn delete_matching_1rst_3rd_person_controls(this: GPtr<u8>, action: i32, k: 
     if key(this, 1, kind) == k {
         let m = control_method();
         if (action != 0x10 && m == 1) || m == 0 {
-            call_clear_settings(this, 1, kind as u32);
+            call_clear_settings(this, 1, (kind as u32) as i32);
         }
     }
     clear_matching(this, k, kind, &[0, 0x2D, 4, 5]);
@@ -1783,7 +1783,7 @@ pub fn reinit_controls() {
     let cm: GPtr<u8> = GPtr::from_addr(CONTROLS_MANAGER);
     for t in 0..4 {
         for a in 0..NUM_ACTIONS {
-            call_clear_settings(cm, a as u32, t as u32);
+            call_clear_settings(cm, (a as u32) as i32, (t as u32) as i32);
         }
     }
     call_init_default(cm);

@@ -48,7 +48,7 @@ use sa_core::bindings::get_ambient_green;
 use sa_core::bindings::get_ambient_red;
 use sa_core::bindings::matrix_attach;
 use sa_core::bindings::matrix_detach;
-use sa_core::bindings::matrix_dtor;
+use sa_world::bindings::matrix_dtor;
 use sa_core::bindings::matrix_mul_assign;
 use sa_core::bindings::matrix_rotate_z;
 use sa_core::bindings::matrix_set_rotate_z_only;
@@ -56,8 +56,8 @@ use sa_core::bindings::matrix_set_translate;
 use sa_core::bindings::matrix_set_unity;
 use sa_core::bindings::tm_get_simplest_active_task as task_mgr_get_simplest_active_task;
 use sa_core::bindings::vector2d_normalise;
-use sa_core::bindings::world_add;
-use sa_core::bindings::world_remove;
+use sa_world::bindings::world_add;
+use sa_world::bindings::world_remove;
 use sa_world::bindings::bike_calculate_lean_matrix;
 use sa_world::bindings::buoyancy_process;
 use sa_world::bindings::clump_get_first_association_4d6a70 as clump_get_first_association_flags;
@@ -82,7 +82,7 @@ use sa_world::bindings::placeable_set_matrix;
 use sa_world::bindings::player_handle_breath;
 use sa_world::bindings::vector_add;
 use sa_world::bindings::vector_add_assign;
-use sa_core::bindings::vector_magnitude_sqr as magnitude_sqr;
+use sa_world::bindings::vector_magnitude_sqr as magnitude_sqr;
 use sa_world::bindings::vector_mul_scalar;
 use sa_world::bindings::vector_scale as scalar_mul_vector;
 use sa_world::bindings::vector_sub_assign;
@@ -96,7 +96,7 @@ use sa_world::bindings::audio_report_water_splash;
 use sa_world::bindings::matrix_copy_ctor;
 use sa_world::bindings::multiply3x3 as multiply_3x3;
 use sa_world::bindings::ped_get_transformed_bone_position as get_transformed_bone_position;
-use sa_world::bindings::ped_set_move_anim_speed as set_move_anim_speed;
+use crate::bindings::ped_set_move_anim_speed as set_move_anim_speed;
 orig! {
     /// `CTask::GetTaskType` (vtable slot 0x10)
     fn task_get_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
@@ -288,7 +288,7 @@ pub fn update_position(this: GPtr<u8>) {
             let s = vector_add(lp(&mut sum).cast(), c, ground.byte_add(0x44));
             v = [rd::<f32>(s, 0), rd::<f32>(s, 4), rd::<f32>(s, 8)];
             let tsv = ts.read();
-            let k = X87::from_f64_exact(magnitude_sqr(GPtr::<u8>::cast::<f32>(rd::<GPtr<u8>>(this, 0x568).byte_add(0x50))))
+            let k = X87::from_f64_exact(magnitude_sqr(rd::<GPtr<u8>>(this, 0x568).byte_add(0x50)).to_f64())
                 .fmul_m(-1.0)
                 .to_f32();
             let mut o1 = [0.0f32; 3];
@@ -300,7 +300,7 @@ pub fn update_position(this: GPtr<u8>) {
         } else {
             let p = this.byte_add(0x56C);
             let mut out = [0.0f32; 3];
-            let r = physical_get_speed(ground, lp(&mut out).cast(), f32::from_bits(rd::<u32>(p, 0)), f32::from_bits(rd::<u32>(p, 4)), f32::from_bits(rd::<u32>(p, 8)));
+            let r = GPtr::<sa_math::vector::CVector>::cast::<u8>(physical_get_speed(ground, GPtr::<u8>::cast::<sa_math::vector::CVector>(lp(&mut out).cast()), sa_math::vector::CVector::new(f32::from_bits(rd::<u32>(p, 0)), f32::from_bits(rd::<u32>(p, 4)), f32::from_bits(rd::<u32>(p, 8)))));
             v = [rd::<f32>(r, 0), rd::<f32>(r, 4), rd::<f32>(r, 8)];
         }
         dx = x(v[0]).fadd_m(rd::<f32>(this, 0x550)).fsub_m(rd::<f32>(this, 0x44)).to_f32();
@@ -349,7 +349,7 @@ pub fn update_position(this: GPtr<u8>) {
         } else {
             let ty = rd::<i32>(ge, 0x590);
             if ty == 9 {
-                let m = X87::from_f64_exact(magnitude_sqr(GPtr::<u8>::cast::<f32>(ge.byte_add(0x44))));
+                let m = X87::from_f64_exact(magnitude_sqr(ge.byte_add(0x44)).to_f64());
                 if m.fcom(x(f32::from_bits(0x3D23_D70B))).test_any(0x41) {
                     x(lf)
                 } else {
@@ -512,7 +512,7 @@ pub fn process_buoyancy(this: GPtr<u8>) {
         }
     }
     wr::<u32>(this, 0x40, rd::<u32>(this, 0x40) | 0x0800_0100);
-    apply_move_force(this, f32::from_bits(force[0].to_bits()), f32::from_bits(force[1].to_bits()), f32::from_bits(force[2].to_bits()));
+    apply_move_force(this, sa_math::vector::CVector::new(f32::from_bits(force[0].to_bits()), f32::from_bits(force[1].to_bits()), f32::from_bits(force[2].to_bits())));
 
     let q = x(force[2]).fdiv_m(rd::<f32>(this, 0x8C));
     let p = x(ts.read()).fmul_m(f32::from_bits(EIGHT_THOUSANDTHS));
@@ -772,7 +772,7 @@ pub fn teleport(this: GPtr<u8>, dx: u32, dy: u32, dz: u32, _reset_rotation: u32)
     let r = at::<GPtr<u8>>(this, 0xDC);
     let e = r.read();
     if !e.is_null() {
-        crate::ped::clean_up_old_reference(e, r);
+        crate::ped::clean_up_old_reference(e, r.cast::<u8>());
     }
     r.write(GPtr::from_addr(0));
     world_add(this);
@@ -850,8 +850,8 @@ pub fn set_move_anim(this: GPtr<u8>) {
         }
         7 => {
             let fast_leader = is_in_players_group(this) != 0
-                && !group_get_leader(get_peds_group(this).byte_add(8)).is_null()
-                && rd::<i32>(group_get_leader(get_peds_group(this).byte_add(8)), 0x534) >= 6;
+                && !group_get_leader(GPtr::from_addr(get_peds_group(this.addr() as u32) as usize).byte_add(8)).is_null()
+                && rd::<i32>(group_get_leader(GPtr::from_addr(get_peds_group(this.addr() as u32) as usize).byte_add(8)), 0x534) >= 6;
             blend_animation(clump(), (if fast_leader { 0x36 } else { group }) as u32, 2, f32::from_bits(0x3F80_0000))
         }
         _ => return,

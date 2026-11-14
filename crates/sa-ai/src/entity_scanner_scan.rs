@@ -16,8 +16,8 @@ const REPEAT_SECTORS: usize = 0xB992B8;
 
 use crate::bindings::entity_scanner_clear as scanner_clear;
 use sa_core::bindings::entity_register_reference as register_reference;
-use sa_core::bindings::find_player_ped;
-use sa_core::bindings::world_clear_scan_codes;
+use sa_world::bindings::find_player_ped;
+use sa_world::bindings::world_clear_scan_codes;
 use sa_world::bindings::crt_floor as floor;
 
 use sa_core::field::gf as ldf;

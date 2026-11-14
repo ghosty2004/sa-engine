@@ -86,13 +86,13 @@ use crate::bindings::env_distance_attenuation_st0;
 use sa_core::bindings::vector_magnitude as vector_magnitude_st0;
 use sa_core::bindings::audio_report_frontend_event as engine_report_frontend_audio_event;
 use sa_world::bindings::audio_start_radio as engine_start_radio;
-use sa_world::bindings::cam_no_rain as cull_cam_no_rain;
+use sa_render::bindings::cam_no_rain as cull_cam_no_rain;
 use sa_world::bindings::la_riots_active_here;
-use sa_world::bindings::player_no_rain as cull_player_no_rain;
+use sa_render::bindings::player_no_rain as cull_player_no_rain;
 use crate::bindings::amb_stop as amb_stop_ambience_track;
 use crate::bindings::position_relative_to_camera_vec as env_position_relative_to_camera;
 use sa_world::bindings::audio_get_current_radio_station_id as engine_get_current_radio_station_id;
-use sa_world::bindings::audio_stop_radio as engine_stop_radio;
+use crate::bindings::audio_stop_radio as engine_stop_radio;
 use sa_world::bindings::find_most_favorite_radio_station as stats_find_most_favorite_radio_station;
 orig! {
     /// `CAudioEngine::IsRadioOn()` (0x506FD0, AL)
@@ -302,19 +302,19 @@ pub fn amb_update_ambience_track_and_volume(this: GPtr<u8>) {
         if engine_is_radio_on(eng) == 0 {
             engine_start_radio(eng, u32::from(st as u8), 2);
         } else if engine_get_current_radio_station_id(eng) as u8 != st as u8 {
-            engine_stop_radio(eng, GPtr::NULL, 0);
+            engine_stop_radio(eng, GPtr::<u8>::addr(GPtr::NULL) as u32, 0);
         }
         return;
     }
     if prev_station >= 0 {
         if engine_is_radio_on(eng) != 0 {
-            engine_stop_radio(eng, GPtr::NULL, 0);
+            engine_stop_radio(eng, GPtr::<u8>::addr(GPtr::NULL) as u32, 0);
         }
         return;
     }
     if engine_is_radio_on(eng) != 0 {
         if rd::<u8>(this, 0) != 0 {
-            engine_stop_radio(eng, GPtr::NULL, 0);
+            engine_stop_radio(eng, GPtr::<u8>::addr(GPtr::NULL) as u32, 0);
             engine_report_frontend_audio_event(eng, 0x23, f32::from_bits(0), f32::from_bits(0x3F80_0000));
         }
         wr::<u8>(this, 1, rd::<u8>(this, 0));
@@ -736,8 +736,8 @@ pub fn radio_update_radio_volumes(this: GPtr<u8>) {
 
 // ---- CAEAudioEnvironment::GetPositionRelativeToCamera(CVector*, const CVector*) -------------------------
 
-use sa_core::bindings::find_player_ped;
-use sa_core::bindings::matrix_dtor;
+use sa_world::bindings::find_player_ped;
+use sa_world::bindings::matrix_dtor;
 use sa_core::bindings::matrix_assign as matrix_copy_ctor;
 
 /// `CAEAudioEnvironment::GetPositionRelativeToCamera(CVector* out, const CVector* pos)` (0x4D80B0, cdecl), from
@@ -1205,7 +1205,7 @@ pub fn utility_get_bank_and_sound_from_script_slot_audio_event(
 
 // ---- destructors and forwarders --------------------------------------------------------------------
 
-use sa_core::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference;
 use sa_core::bindings::crt_free_8214bd as crt_delete;
 use sa_core::bindings::eh_vector_dtor as eh_vector_destructor_iterator;
 use sa_core::bindings::memory_free as file_close;
@@ -1222,7 +1222,7 @@ orig! {
 pub fn sound_destructor(this: GPtr<u8>) {
     let e = rd::<GPtr<u8>>(this, 8);
     if !e.is_null() {
-        entity_clean_up_old_reference(e, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(8)));
+        entity_clean_up_old_reference(e, this.byte_add(8));
         wr::<u32>(this, 8, 0);
     }
 }

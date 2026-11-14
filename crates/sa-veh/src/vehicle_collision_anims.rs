@@ -20,31 +20,20 @@ pub use sa_core::bindings::get_atan_of_xy;
 pub use sa_world::bindings::vector_ctor_iterator;
 pub use sa_world::bindings::get_stat_value;
 pub use sa_world::bindings::world_process_vertical_line as process_vertical_line;
+pub use crate::bindings::process_rider_anims;
+pub use sa_anim::bindings::assoc_set_current_time;
+pub use sa_core::bindings::clump_get_association;
+pub use sa_stream::bindings::ped_is_player;
+pub use sa_world::bindings::add_collision_record;
+pub use sa_world::bindings::anim_blend_animation as blend_animation;
+pub use sa_world::bindings::col_point_assign;
+pub use sa_world::bindings::get_adhesion_group;
+pub use crate::bindings::get_vehicle_appearance;
+pub use sa_world::bindings::ped_set_move_state;
+pub use sa_core::bindings::vector_normalise as normalise;
 orig! {
-    /// `CPhysical::AddCollisionRecord(CEntity*)` (0x543490)
-    pub fn add_collision_record(e: Ent, other: Ent) = thiscall 0x543490 => sa_world::physical::base::add_collision_record;
-    /// `CColPoint::operator=(const CColPoint&)` (stub 0x40FC80 → 0x15637E0)
-    pub fn col_point_assign(dst: Ent, src: Ent) -> Ent = thiscall 0x40fc80 => unported;
-    /// `SurfaceInfos_c::GetAdhesionGroup(uint32)` (0x55E5C0)
-    pub fn get_adhesion_group(si: Ent, id: u32) -> u32 = thiscall 0x55e5c0 => sa_world::physical::mvpe_phys1::get_adhesion_group_port;
-    /// `CPed::IsPlayer()` (0x5DF8F0, AL)
-    pub fn ped_is_player(p: Ent) -> u8 = thiscall 0x5df8f0 => unported;
-    /// `RpAnimBlendClumpGetAssociation(RpClump*, uint32 animId)` (0x4D68B0)
-    pub fn clump_get_association(clump: Ent, id: u32) -> Ent = cdecl 0x4d68b0 => unported;
-    /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float)` (0x4D4610)
-    pub fn blend_animation(clump: Ent, group: u32, id: u32, delta: f32) -> Ent = cdecl 0x4d4610 => unported;
-    /// `CVehicle::GetVehicleAppearance()` (0x6D1080)
-    pub fn get_vehicle_appearance(v: Ent) -> u32 = thiscall 0x6d1080 => crate::vehicle2::get_vehicle_appearance;
     /// virtual `CVehicle::GetHeightAboveRoad()` (vtable +0xD4, ST0)
     pub fn get_height_above_road_v(v: Ent) -> f64 = thiscall vslot 0xD4 => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    pub fn normalise(v: GPtr<sa_math::vector::CVector>) = thiscall 0x59c910 => sa_world::collision::data::normalise_port;
-    /// `CPed::SetMoveState(eMoveState)` (0x5DEC00)
-    pub fn ped_set_move_state(p: Ent, s: i32) = thiscall 0x5dec00 => unported;
-    /// `CAnimBlendAssociation::SetCurrentTime(float)` (0x4CEA80)
-    pub fn assoc_set_current_time(a: Ent, t: f32) = thiscall 0x4cea80 => unported;
-    /// `CBike::ProcessRiderAnims(CPed*, CVehicle*, CRideAnimData*, tBikeHandlingData*, int16)` (0x6B7280)
-    pub fn process_rider_anims(ped: Ent, v: Ent, data: Ent, handling: u32, a5: u32) = cdecl 0x6b7280 => unported;
 }
 /// `TheCamera.m_nActiveCam` (0xB6F081, byte)
 const CAM_ACTIVE: usize = 0xB6F081;
@@ -543,7 +532,7 @@ pub fn automobile_place_on_road_properly(this: Ent) {
         f.fsub_m(b);
         fw[i] = f.fstp();
     }
-    normalise(lp(&mut fw).cast());
+    normalise(GPtr::<sa_math::vector::CVector>::cast::<[f32;3]>(lp(&mut fw).cast()));
     wf(matrix(this), 0x10, fw[0]);
     wf(matrix(this), 0x14, fw[1]);
     wf(matrix(this), 0x18, fw[2]);
@@ -1376,7 +1365,7 @@ pub fn bmx_process_driving_anims(this: Ent, ped: Ent, _b: u8) {
             }
             bmx_damp(this);
         } else {
-            process_rider_anims(ped, this, this.byte_add(0x640), ru(this, 0x63C), 0);
+            process_rider_anims(ped, this, this.byte_add(0x640), GPtr::from_addr(ru(this, 0x63C) as usize), 0);
         }
         let src = if !edi.is_null() { edi } else { ebx };
         if src.is_null() {

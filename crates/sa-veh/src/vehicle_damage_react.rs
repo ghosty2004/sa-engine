@@ -16,7 +16,7 @@ const IK_CHAIN_MAN: usize = 0xC15448;
 const NAME: u32 = 0x871E68;
 
 fn look(ped: GPtr<u8>, target: GPtr<u8>, time: i32) {
-    ik_look_at(GPtr::from_addr(IK_CHAIN_MAN), GPtr::from_addr(NAME as usize), ped, target, time as u32, 5, GPtr::NULL, 0, 0x3E80_0000, 500, 3, 0);
+    ik_look_at(GPtr::from_addr(IK_CHAIN_MAN), GPtr::from_addr(NAME as usize), ped, target, (time as u32) as i32, 5, GPtr::NULL, 0, f32::from_bits(0x3E80_0000), 500, 3, 0);
 }
 
 /// `CVehicle::ReactToVehicleDamage(CPed* causer)` (0x6D5490, thiscall, `ret 4`). Look time `2000 - ftol((rand() &

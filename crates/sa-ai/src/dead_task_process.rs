@@ -29,18 +29,20 @@ const BLOOD_POOL_TEX: usize = 0xC40400;
 use sa_world::bindings::anim_blend_animation;
 use crate::bindings::event_dead_ped_ctor;
 use crate::bindings::event_dead_ped_dtor;
-use sa_core::bindings::find_player_ped;
+use sa_world::bindings::find_player_ped;
 use sa_core::bindings::get_weapon_info as weapon_info_get;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::accident_manager_get_instance;
-use sa_world::bindings::event_group_add;
+use crate::bindings::event_group_add;
 use sa_world::bindings::get_event_global_group;
 use sa_world::bindings::get_water_level_no_waves as water_get_water_level_no_waves;
-use sa_world::bindings::localisation_blood;
+use crate::bindings::localisation_blood;
 use sa_world::bindings::ped_remove_weapon_model;
 use sa_world::bindings::ped_set_ped_state;
 use sa_core::bindings::ped_remove_weapon_anims;
 use sa_world::bindings::compute_target_door_to_exit as car_enter_exit_compute_target_door_to_exit;
+use sa_world::bindings::add_permanent_shadow as shadows_add_permanent_shadow;
+use sa_world::bindings::store_static_shadow as shadows_store_static_shadow;
 orig! {
     /// `CPed::CreateDeadPedWeaponPickups` (0x4591D0)
     fn ped_create_dead_ped_weapon_pickups(p: GPtr<u8>) = thiscall 0x4591D0 => unported;
@@ -50,16 +52,6 @@ orig! {
     fn accident_manager_report_accident(m: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x56CE80 => unported;
     /// `CPed::DeadPedMakesTyresBloody` (0x6B4200)
     fn ped_dead_ped_makes_tyres_bloody(p: GPtr<u8>) = thiscall 0x6B4200 => unported;
-    /// `CShadows::StoreStaticShadow(uint32 id, uint8 type, RwTexture*, const CVector*, float frontX, float frontY,
-    /// float sideX, float sideY, int16 intensity, uint8 r, uint8 g, uint8 b, float zDistance, float scale, float
-    /// drawDistance, bool temporary, float upDistance)` (0x70BA00, cdecl)
-    #[allow(clippy::too_many_arguments)]
-    fn shadows_store_static_shadow(id: u32, ty: u32, tex: u32, pos: GPtr<u8>, fx: u32, fy: u32, sx: u32, sy: u32, i: u32, r: u32, g: u32, b: u32, zd: u32, sc: u32, dd: u32, tmp: u32, up: u32) -> u32 = cdecl 0x70BA00 => unported;
-    /// `CShadows::AddPermanentShadow(uint8 type, RwTexture*, const CVector*, float frontX, float frontY, float sideX,
-    /// float sideY, int16 intensity, uint8 r, uint8 g, uint8 b, float zDistance, uint32 time, float scale)`
-    /// (0x706F60, cdecl)
-    #[allow(clippy::too_many_arguments)]
-    fn shadows_add_permanent_shadow(ty: u32, tex: u32, pos: GPtr<u8>, fx: u32, fy: u32, sx: u32, sy: u32, i: u32, r: u32, g: u32, b: u32, zd: u32, t: u32, sc: u32) = cdecl 0x706F60 => unported;
 }
 
 use sa_core::field::ptr_of as local;
@@ -236,7 +228,7 @@ fn blood_pool(this: GPtr<u8>, ped: GPtr<u8>) {
     if t2 <= g::<u32>(TIME_MS).read().wrapping_sub(g::<u32>(PREV_TIME_MS).read()) {
         let mut level = [0u32; 1];
         let p = pos_of(ped);
-        if water_get_water_level_no_waves(f32::from_bits(rd::<u32>(p, 0)), f32::from_bits(rd::<u32>(p, 4)), f32::from_bits(rd::<u32>(p, 8)), local(&mut level), GPtr::NULL, GPtr::NULL) != 0
+        if water_get_water_level_no_waves(f32::from_bits(rd::<u32>(p, 0)).to_bits(), f32::from_bits(rd::<u32>(p, 4)).to_bits(), f32::from_bits(rd::<u32>(p, 8)).to_bits(), GPtr::<u8>::cast::<f32>(local(&mut level)), GPtr::NULL, GPtr::NULL) != 0
             && !x(rd::<f32>(pos_of(ped), 8)).fcom(x(f32::from_bits(level[0]))).test_parity(0x41)
         {
             wr::<u8>(this, 0xC, rd::<u8>(this, 0xC) | 4);
@@ -250,11 +242,11 @@ fn blood_pool(this: GPtr<u8>, ped: GPtr<u8>) {
         let v = x_of_u32(t2);
         let side_y = f32_of(x(k(0x86DEC8)).fmul(v)).to_bits();
         let front_x = f32_of(v.fmul_m(k(0x86DECC))).to_bits();
-        shadows_store_static_shadow((this.addr() as u32).wrapping_add(0x11), 1, tex, local(&mut pos), front_x, 0, 0, side_y,
-                                    0xFF, 200, 0, 0, 0x4080_0000, 0x3F80_0000, 0x4220_0000, 0, 0);
+        shadows_store_static_shadow((this.addr() as u32).wrapping_add(0x11), 1, tex, local(&mut pos), f32::from_bits(front_x).to_bits(), f32::from_bits(0).to_bits(), f32::from_bits(0).to_bits(), f32::from_bits(side_y).to_bits(),
+                                    0xFF, 200, 0, 0, f32::from_bits(0x4080_0000).to_bits(), f32::from_bits(0x3F80_0000).to_bits(), f32::from_bits(0x4220_0000).to_bits(), 0, f32::from_bits(0).to_bits());
     } else {
-        shadows_add_permanent_shadow(1, tex, local(&mut pos), 0x3F40_0001, 0, 0, 0xBF40_0001, 0xFF, 200, 0, 0,
-                                     0x4080_0000, 0x9C40, 0x3F80_0000);
+        shadows_add_permanent_shadow(1, tex, local(&mut pos), f32::from_bits(0x3F40_0001), f32::from_bits(0), f32::from_bits(0), f32::from_bits(0xBF40_0001), 0xFF, 200, 0, 0,
+                                     f32::from_bits(0x4080_0000), 0x9C40, f32::from_bits(0x3F80_0000));
         wr::<u8>(this, 0xC, rd::<u8>(this, 0xC) | 4);
     }
 }

@@ -17,19 +17,19 @@ use sa_core::{hook, orig};
 use crate::common::*;
 
 use sa_world::bindings::anim_blend_animation;
-use sa_core::bindings::assoc_set_finish_callback as anim_set_finish_callback;
-use sa_core::bindings::ik_abort_look_at;
+use sa_anim::bindings::assoc_set_finish_callback as anim_set_finish_callback;
+use sa_anim::bindings::ik_abort_look_at;
 use crate::bindings::ped_scanner_get_closest_ped_in_range as scanner_closest_ped;
 use crate::bindings::task_complex_dtor;
 use sa_core::bindings::general_random_int_in_range as random_int;
 use sa_core::bindings::streaming_request_model;
-use sa_core::bindings::anim_add_block_ref;
+use sa_anim::bindings::anim_add_block_ref;
 use sa_stream::bindings::anim_remove_block_ref;
 use sa_stream::bindings::get_animation_block_index as anim_get_block_index;
 use sa_world::bindings::ik_is_looking;
 use sa_world::bindings::placeable_get_top_direction as placeable_get_forward;
-use sa_world::bindings::task_complex_ctor;
-use sa_world::bindings::task_simple_ctor;
+use crate::bindings::task_complex_ctor;
+use crate::bindings::task_simple_ctor;
 use sa_world::bindings::get_right_direction as placeable_get_right;
 use sa_world::bindings::ik_look_at;
 use sa_world::bindings::stand_still_ctor;
@@ -149,7 +149,7 @@ pub fn sit_complex_clone(this: GPtr<u8>) -> GPtr<u8> {
     let on_step = rd::<u8>(this, 0x10);
     let instant = rd::<u8>(this, 0x11);
     let ms = rd::<u32>(this, 0xC);
-    task_complex_ctor(t);
+    task_complex_ctor(t.addr() as u32);
     wr::<u8>(t, 0x11, instant);
     wr::<u32>(t, 0, 0x86DF60);
     wr::<u32>(t, 0xC, ms);
@@ -219,7 +219,7 @@ fn blend_with_callback(this: GPtr<u8>, ped: GPtr<u8>, step_anim: u32, seat_anim:
         anim_blend_animation(GPtr::from_addr(clump as usize), 0, seat_anim, f32::from_bits(0x4080_0000))
     };
     wr::<GPtr<u8>>(this, 0xC, a);
-    anim_set_finish_callback(a, cb, GPtr::from_addr((this.addr() as u32) as usize));
+    anim_set_finish_callback(a, cb, GPtr::<u8>::addr(GPtr::from_addr((this.addr() as u32) as usize)) as u32);
 }
 
 /// `CTaskSimpleSitDown::StartAnim(CPed*)` (0x6379F0, thiscall, `ret 4`): blends (0x35, 0x134) on a step, else (0,
@@ -337,7 +337,7 @@ pub fn sit_idle_make_abortable(this: GPtr<u8>, ped: GPtr<u8>, prio: i32, _ev: GP
     let a = rd::<GPtr<u8>>(this, 0x10);
     if !a.is_null() {
         wr::<u32>(a, 0x1C, 0xC47A_0000);
-        anim_set_finish_callback(rd::<GPtr<u8>>(this, 0x10), DEFAULT_ANIM_CB, GPtr::NULL);
+        anim_set_finish_callback(rd::<GPtr<u8>>(this, 0x10), DEFAULT_ANIM_CB, GPtr::<u8>::addr(GPtr::NULL) as u32);
         wr::<u32>(this, 0x10, 0);
     }
     if ik_is_looking(ik(), ped) != 0 {
@@ -386,7 +386,7 @@ pub fn sit_idle_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
                     .fadd(x(d[1]).fmul_m(rd::<f32>(f, 4)))
                     .fadd(x(d[0]).fmul_m(rd::<f32>(f, 0)));
                 if !dot.fcom(x(g::<f32>(0x858CC4).read())).test_any(0x41) && random_int(0, 100) < 25 {
-                    ik_look_at(ik(), GPtr::from_addr(TASK_SIT_IDLE as usize), ped, other, ftol32(x(look_time)) as u32, 5, GPtr::NULL, 0, 0x3E80_0000, 750, 3, 0);
+                    ik_look_at(ik(), GPtr::from_addr(TASK_SIT_IDLE as usize), ped, other, (ftol32(x(look_time)) as u32) as i32, 5, GPtr::NULL, 0, f32::from_bits(0x3E80_0000), 750, 3, 0);
                     looked = true;
                 }
             }
@@ -416,7 +416,7 @@ pub fn sit_idle_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
                 p[1] = f32_of(ry.fadd_m(p[1]));
                 p[2] = f32_of(x(rz).fadd_m(p[2]));
                 let pg = GPtr::from_raw(p.as_mut_ptr()).cast::<u8>();
-                ik_look_at(ik(), GPtr::from_addr(TASK_SIT_IDLE as usize), ped, GPtr::NULL, ftol32(x(look_time)) as u32, -1i32 as u32, pg, 0, 0x3E80_0000, 750, 3, 0);
+                ik_look_at(ik(), GPtr::from_addr(TASK_SIT_IDLE as usize), ped, GPtr::NULL, (ftol32(x(look_time)) as u32) as i32, (-1i32 as u32) as i32, pg, 0, f32::from_bits(0x3E80_0000), 750, 3, 0);
             }
         }
     }

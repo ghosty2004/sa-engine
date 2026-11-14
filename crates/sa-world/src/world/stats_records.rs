@@ -7,7 +7,7 @@ use sa_math::x87::X87;
 
 use super::common::{ftol32, g, x, xi};
 
-use sa_core::bindings::stats_check_for_stats_message as check_for_stats_message;
+use crate::bindings::stats_check_for_stats_message as check_for_stats_message;
 
 /// `CStats::StatTypesFloat` (0xB79380, ids below 82) and `CStats::StatTypesInt` (0xB78E20, by id).
 const FLOAT_STATS: usize = 0xB7_9380;

@@ -8,10 +8,10 @@ use sa_core::hook;
 
 use crate::common::*;
 
-use sa_core::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference;
 use sa_world::bindings::event_acquaintance_ped_dtor as event_base_dtor;
 use sa_world::bindings::get_ped_flag as ped_type_flag;
-use sa_world::bindings::acquaintance_get;
+use crate::bindings::acquaintance_get;
 
 use sa_world::world::common::entity_pos as pos_of;
 
@@ -24,7 +24,7 @@ use sa_world::world::common::entity_pos as pos_of;
        recs = "grove-walk", note = "EAX's upper bytes: the FPU status word on the hit path")]
 pub fn find_respected_friend_in_inform_range(this: GPtr<u8>) -> u8 {
     let ped = rd::<GPtr<u8>>(this, 0);
-    let mask = acquaintance_get(ped.byte_add(0x4E0), 0);
+    let mask = acquaintance_get(GPtr::<u8>::addr(ped.byte_add(0x4E0)) as u32, 0);
     let mut i = 0i32;
     loop {
         if i >= rd::<i32>(this, 0xC4) {
@@ -69,7 +69,7 @@ pub fn walk_into_object_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x85AF18);
     let e = rd::<GPtr<u8>>(this, 0x14);
     if !e.is_null() {
-        entity_clean_up_old_reference(e, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x14)));
+        entity_clean_up_old_reference(e, this.byte_add(0x14));
     }
     wr::<u32>(this, 0, 0x85AB38);
 }

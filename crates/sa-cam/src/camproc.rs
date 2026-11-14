@@ -20,9 +20,9 @@ pub use crate::bindings::round_decimals as round_decimals_call;
 pub use sa_core::bindings::cross_product;
 pub use sa_core::bindings::crt_free_8214bd as crt_free;
 pub use sa_core::bindings::eh_vector_dtor;
-pub use sa_core::bindings::find_player_ped;
-pub use sa_core::bindings::get_pad;
-pub use sa_core::bindings::matrix_dtor;
+pub use sa_world::bindings::find_player_ped;
+pub use sa_input::bindings::get_pad;
+pub use sa_world::bindings::matrix_dtor;
 pub use sa_core::bindings::rgba_ctor;
 pub use sa_core::bindings::sprite_draw_rect;
 pub use sa_core::bindings::vector_normalise;
@@ -32,7 +32,7 @@ pub use sa_world::bindings::pad_get_brake as get_brake;
 pub use sa_world::bindings::placeable_dtor;
 pub use crate::bindings::cone_cast_collision_resolve;
 pub use crate::bindings::idle_set_target;
-pub use sa_core::bindings::find_player_vehicle;
+pub use sa_world::bindings::find_player_vehicle;
 pub use sa_pop::bindings::get_boat_pointer;
 pub use sa_world::bindings::get_water_level;
 orig! {
@@ -294,7 +294,7 @@ pub fn process_fixed(this: GPtr<u8>, target: GPtr<u8>, _f1: u32, _f2: u32, _f3: 
         let d = f32_of(x(rd::<f32>(target, 4 * i)).fsub_m(rd::<f32>(src, 4 * i)));
         wr::<f32>(front, 4 * i, d);
     }
-    vector_normalise(front);
+    vector_normalise(front.cast::<[f32;3]>());
     copy3(this.byte_add(0x148), target);
     get_vectors_ready_for_rw(this);
     wr::<u32>(up, 0, 0);
@@ -304,14 +304,14 @@ pub fn process_fixed(this: GPtr<u8>, target: GPtr<u8>, _f1: u32, _f2: u32, _f3: 
     wr::<f32>(up, 0, f32_of(x(rd::<f32>(up, 0)).fadd_m(rd::<f32>(this, 0x16C))));
     wr::<f32>(up, 4, f32_of(x(rd::<f32>(this, 0x170)).fadd_m(rd::<f32>(up, 4))));
     wr::<f32>(up, 8, f32_of(x(rd::<f32>(this, 0x174)).fadd_m(rd::<f32>(up, 8))));
-    vector_normalise(up);
+    vector_normalise(up.cast::<[f32;3]>());
     // locals: [esp+0x10] dist, [esp+0x14] target copy, [esp+0x20] cross / cone-cast out, [esp+0x2c] right
     let mut right = [0u32; 3];
     let mut cross = [0u32; 3];
     let rp = GPtr::from_raw(right.as_mut_ptr()).cast::<u8>();
     let cp = GPtr::from_raw(cross.as_mut_ptr()).cast::<u8>();
     cross_product(rp, front, up);
-    vector_normalise(rp);
+    vector_normalise(rp.cast::<[f32;3]>());
     let r = cross_product(cp, rp, front);
     copy3(up, r);
     wr::<u32>(this, 0xB4, 0x428C_0000);
@@ -634,13 +634,13 @@ pub fn draw_borders_for_wide_screen(this: GPtr<u8>) {
     let mut q = [0xC0A0_0000u32, 0xC0A0_0000, w5.to_bits(), r[1]];
     let qp = GPtr::from_raw(q.as_mut_ptr()).cast::<u8>();
     let c = rgba_ctor(cp, 0, 0, 0, 0xFF);
-    sprite_draw_rect(qp.cast::<f32>(), c);
+    sprite_draw_rect(qp.cast::<u8>(), c);
     let h5 = f32_of(X87::from_i32(g::<i32>(0xC17048).read().wrapping_add(5)));
     let w5 = f32_of(X87::from_i32(g::<i32>(0xC17044).read().wrapping_add(5)));
     q = [0xC0A0_0000, r[3], w5.to_bits(), h5.to_bits()];
     let qp = GPtr::from_raw(q.as_mut_ptr()).cast::<u8>();
     let c = rgba_ctor(cp, 0, 0, 0, 0xFF);
-    sprite_draw_rect(qp.cast::<f32>(), c);
+    sprite_draw_rect(qp.cast::<u8>(), c);
 }
 
 pub use crate::bindings::get_look_behind_for_ped as pad_look_behind_for_ped;
@@ -649,7 +649,7 @@ pub use sa_pop::bindings::clear_cross_hair_immediately;
 pub use sa_pop::bindings::get_look_behind_for_car as pad_look_behind_for_car;
 pub use sa_pop::bindings::pad_get_look_left as pad_look_left;
 pub use sa_pop::bindings::pad_get_look_right as pad_look_right;
-pub use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
+pub use sa_world::bindings::placeable_allocate_matrix as allocate_matrix;
 pub use sa_stream::bindings::simple_transform_update_matrix;
 pub use sa_world::bindings::cam_follow_car_sa;
 pub use sa_world::bindings::cam_follow_ped_sa;
@@ -659,11 +659,12 @@ pub use sa_world::bindings::intel_get_task_fighting as get_task_fighting;
 pub use sa_world::bindings::vector_add as vec_add;
 pub use crate::bindings::cam_process_wheel_cam as cam_wheel_cam;
 pub use crate::bindings::keep_track_of_the_speed;
-pub use sa_core::bindings::cam_using_3rd_person_mouse_cam as using_3rd_person_mouse_cam;
+pub use crate::bindings::cam_using_3rd_person_mouse_cam as using_3rd_person_mouse_cam;
 pub use sa_core::bindings::get_atan_of_xy as get_atan_of_xy_bits;
 pub use sa_world::bindings::vector_div as vec_div_s;
 pub use sa_world::bindings::vector_mul_scalar as vec_mul_s;
 pub use sa_world::bindings::vector_scale as vec_s_mul;
+pub use sa_world::bindings::max_f;
 orig! {
     /// `CCam` mode processors taking `(const CVector& target, float orientation, float speedVar,
     /// float speedVarWanted)` (the floats pushed as dwords)
@@ -695,8 +696,6 @@ orig! {
     pub fn cam_dw_plane_cam3(c: GPtr<u8>, b: u32) = thiscall 0x51D100 => unported;
     /// `CTaskSimpleClimb::GetCameraTargetPos(CPed*, CVector&)` (0x67A390)
     pub fn climb_get_camera_target_pos(t: GPtr<u8>, ped: GPtr<u8>, out: GPtr<u8>) = thiscall 0x67A390 => unported;
-    /// `a > b ? a : b` (0x420800, cdecl floats, ST0); dwords
-    pub fn max_f(a: u32, b: u32) -> f64 = cdecl 0x420800 => unported;
     /// `CCam::LookBehind()` (0x520690) / `CCam::LookRight(bool)` (0x520E40)
     pub fn cam_look_behind(c: GPtr<u8>) = thiscall 0x520690 => unported;
     pub fn cam_look_right(c: GPtr<u8>, right: u32) = thiscall 0x520E40 => unported;
@@ -1080,7 +1079,7 @@ pub fn cam_process(this: GPtr<u8>) {
                 f32_of(x(g::<f32>(VEC_TRACK_LINEAR + 4 * i).read()).fsub_m(rd::<f32>(src, 4 * i as isize)));
             wr::<f32>(front, 4 * i as isize, v);
         }
-        vector_normalise(front);
+        vector_normalise(front.cast::<[f32;3]>());
         get_vectors_ready_for_rw(this);
         g::<u8>(VEC_TRACK_LINEAR_PROCESSED).write(0);
     }
@@ -1104,7 +1103,7 @@ fn process_vehicle_target(
     let mut f = v3();
     f[0] = rd::<u32>(entity_matrix(ent()), 0x10);
     f[1] = rd::<u32>(entity_matrix(ent()), 0x14);
-    vector_normalise(vp(&mut f));
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(vp(&mut f)));
     let (fx, fy) = (f32::from_bits(f[0]), f32::from_bits(f[1]));
     let l = x(fy).fmul_m(fy).fadd(x(fx).fmul_m(fx)).fsqrt();
     // fcom 0.0; test ah, 0x44; jnp: skip only when exactly 0
@@ -1213,7 +1212,7 @@ fn process_player_target(this: GPtr<u8>, tgt: &mut [u32; 3]) -> u32 {
         dd[1] = f32_of(x(f32::from_bits(n1)).fsub_m(rd::<f32>(spos, 4))).to_bits();
         dd[2] = f32_of(x(pf(2)).fsub_m(rd::<f32>(spos, 8))).to_bits();
         let vb = vec_s_mul(vp(&mut t74), f32::from_bits(f32_of(x(1.0).fsub_m(b)).to_bits()), svel);
-        let mx = max_f(0x3F80_0000, ts_bits) as f32;
+        let mx = max_f(f32::from_bits(0x3F80_0000), f32::from_bits(ts_bits)).to_f64() as f32;
         let bd = vec_s_mul(vp(&mut t68), f32::from_bits(b.to_bits()), vp(&mut dd));
         let q = vec_div_s(vp(&mut t5c), bd, f32::from_bits(mx.to_bits()));
         let v = vec_add(vp(&mut t80), q, vb);
@@ -1227,7 +1226,7 @@ fn process_player_target(this: GPtr<u8>, tgt: &mut [u32; 3]) -> u32 {
 }
 
 pub use crate::bindings::get_look_at_position_on_target as idle_get_look_at_position_on_target;
-pub use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+pub use sa_world::bindings::entity_clean_up_old_reference as clean_up_old_reference;
 pub use sa_core::bindings::world_get_is_line_of_sight_clear as get_is_line_of_sight_clear;
 
 /// `CIdleCam::SetTarget(CEntity*)` (0x50A280, `ret 4`). The entry `jmp 0x403961` is a protection
@@ -1256,12 +1255,12 @@ pub fn idle_cam_set_target(this: GPtr<u8>, e: GPtr<u8>) {
     }
     if !e.is_null() {
         if !old.is_null() {
-            clean_up_old_reference(old, this.cast::<GPtr<u8>>());
+            clean_up_old_reference(old, this.cast::<u8>());
         }
         wr::<GPtr<u8>>(this, 0, e);
         register_reference(e, this);
     } else if !old.is_null() {
-        clean_up_old_reference(old, this.cast::<GPtr<u8>>());
+        clean_up_old_reference(old, this.cast::<u8>());
         wr::<u32>(this, 0, 0);
     }
     wr::<f32>(this, 0x10, now);

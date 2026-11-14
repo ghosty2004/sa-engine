@@ -322,7 +322,7 @@ pub use crate::bindings::are_swat_required as wanted_are_swat_required;
 pub use crate::bindings::car_group_pick_least_used_model;
 pub use crate::bindings::cd_stream_get_status;
 pub use crate::bindings::col_load_collision;
-pub use crate::bindings::crt_new as operator_new_alias;
+pub use sa_core::bindings::crt_new_821195 as operator_new_alias;
 pub use crate::bindings::entity_is_visible;
 pub use crate::bindings::find_other_upgrade as linked_upgrades_find_other_upgrade;
 pub use crate::bindings::find_player_wanted;
@@ -381,38 +381,41 @@ pub use crate::bindings::remove_txd as txd_remove_txd;
 pub use crate::bindings::streaming_is_very_busy as call_is_very_busy;
 pub use sa_core::bindings::anim_create_anim_assoc_groups;
 pub use sa_core::bindings::anim_register_anim_block;
-pub use sa_core::bindings::call_delete_all_rw_objects;
-pub use sa_core::bindings::call_remove_loaded_vehicle;
+pub use crate::bindings::call_delete_all_rw_objects;
+pub use crate::bindings::call_remove_loaded_vehicle;
 pub use sa_core::bindings::find_player_coors;
 pub use sa_core::bindings::find_player_vehicle;
 pub use sa_core::bindings::general_random_int_in_range as call_get_random_number_in_range_i32;
 pub use sa_core::bindings::get_uppercase_key;
 pub use sa_core::bindings::ipl_store_add_ipls_needed_at_posn as ipl_add_ipls_needed_at_posn;
-pub use sa_core::bindings::load_all_requested_models as call_load_all_requested_models;
+pub use crate::bindings::load_all_requested_models as call_load_all_requested_models;
 pub use sa_core::bindings::load_anim_file as anim_load_anim_file;
-pub use sa_core::bindings::load_line as file_loader_load_line;
-pub use sa_core::bindings::request_special_model as call_request_special_model;
+pub use crate::bindings::load_line as file_loader_load_line;
+pub use crate::bindings::request_special_model as call_request_special_model;
 pub use sa_core::bindings::rw_stream_close;
-pub use sa_core::bindings::set_current_txd as txd_set_current_txd;
-pub use sa_core::bindings::set_mission_doesnt_require_model as call_set_mission_doesnt_require_model;
-pub use sa_core::bindings::set_model_is_deletable as call_set_model_is_deletable;
+pub use crate::bindings::set_current_txd as txd_set_current_txd;
+pub use crate::bindings::set_mission_doesnt_require_model as call_set_mission_doesnt_require_model;
+pub use crate::bindings::set_model_is_deletable as call_set_model_is_deletable;
 pub use sa_core::bindings::stream_zone_models as call_stream_zone_models;
-pub use sa_core::bindings::streaming_init_image_list as call_init_image_list;
-pub use sa_core::bindings::streaming_make_space_for as call_make_space_for;
-pub use sa_core::bindings::streaming_remove_current_zones_models as call_remove_current_zones_models;
-pub use sa_core::bindings::streaming_remove_model as call_remove_model;
+pub use crate::bindings::streaming_init_image_list as call_init_image_list;
+pub use crate::bindings::streaming_make_space_for as call_make_space_for;
+pub use crate::bindings::streaming_remove_current_zones_models as call_remove_current_zones_models;
+pub use crate::bindings::streaming_remove_model as call_remove_model;
 pub use sa_core::bindings::streaming_request_model as call_request_model;
 pub use sa_core::bindings::timer_resume;
 pub use sa_core::bindings::timer_suspend;
-pub use sa_core::bindings::txd_add_ref;
+pub use crate::bindings::txd_add_ref;
+pub use sa_core::bindings::crt_new as operator_new;
+pub use sa_core::bindings::file_close as fclose;
+pub use crate::bindings::car_group_clear;
+pub use sa_core::bindings::directory_ctor;
+pub use sa_core::bindings::directory_dtor;
+pub use sa_core::bindings::directory_find_item;
 orig! {
     /// `CdStreamGetLastPosn()` (0x406450)
     pub fn cd_stream_get_last_posn() -> u32 = cdecl 0x406450 => unported;
     /// `GetGTA3ImgSize()` (0x406360)
     pub fn get_gta3_img_size() -> u32 = cdecl 0x406360 => unported;
-    // --- CLoadedCarGroup (owner M)
-    /// `CLoadedCarGroup::Clear` (0x611B90)
-    pub fn car_group_clear(g: GPtr<u8>) = thiscall 0x611B90 => unported;
     /// `CLoadedCarGroup::AddMember` (0x611BB0)
     pub fn car_group_add_member(g: GPtr<u8>, model: i32) = thiscall 0x611BB0 => unported;
     /// `CLoadedCarGroup::RemoveMember` (0x611BD0)
@@ -479,18 +482,8 @@ orig! {
     pub fn rt_dict_destroy(dict: GPtr<u8>) -> i32 = cdecl 0x7CF130 => unported;
     /// CRT `sscanf(s, "%d", int*)` (0x8220AD)
     pub fn sscanf_int(s: GPtr<u8>, fmt: GPtr<u8>, out: GPtr<i32>) -> i32 = cdecl 0x8220AD => unported;
-    /// CRT `operator new` (0x82119A)
-    pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
-    /// `CFileMgr::CloseFile(FILE*)` (0x5389D0)
-    pub fn fclose(f: GPtr<u8>) -> i32 = cdecl 0x5389D0 => sa_core::filemgr::close_file;
     /// `CDirectory::AddItem(const DirectoryInfo&)` (0x532310)
     pub fn directory_add_item(dir: GPtr<sa_core::directory::CDirectory>, info: GPtr<sa_core::directory::DirectoryInfo>) = thiscall 0x532310 => sa_core::directory::add_item;
-    /// `CDirectory::FindItem(name, pos&, size&)` (0x5324A0)
-    pub fn directory_find_item(dir: GPtr<sa_core::directory::CDirectory>, name: GPtr<u8>, pos: GPtr<u32>, size: GPtr<u32>) -> bool = thiscall 0x5324A0 => sa_core::directory::find_item_by_name;
-    /// `CDirectory::CDirectory(capacity)` (0x5322A0)
-    pub fn directory_ctor(dir: GPtr<sa_core::directory::CDirectory>, capacity: u32) -> GPtr<sa_core::directory::CDirectory> = thiscall 0x5322A0 => sa_core::directory::constructor_capacity;
-    /// `CDirectory::~CDirectory()` (0x5322D0)
-    pub fn directory_dtor(dir: GPtr<sa_core::directory::CDirectory>) = thiscall 0x5322D0 => sa_core::directory::destructor;
     /// `CPopulation::DoesCarGroupHaveModelId(group, model)` (0x406F50)
     pub fn population_does_car_group_have_model_id(group: i32, model: i32) -> u8 = cdecl 0x406F50 => unported;
     /// `CEntity::LivesInThisNonOverlapSector(int32, int32)` (0x533050, thiscall)
@@ -2050,8 +2043,8 @@ pub fn stream_zone_models_gangs(_pos: GPtr<f32>) {
 pub fn reclassify_loaded_cars() {
     let mut a = g::<[u16; 23]>(APPROPRIATE_LOADED_CARS).read();
     let mut b = g::<[u16; 23]>(INAPPROPRIATE_LOADED_CARS).read();
-    car_group_clear(g(APPROPRIATE_LOADED_CARS));
-    car_group_clear(g(INAPPROPRIATE_LOADED_CARS));
+    car_group_clear(GPtr::<u8>::cast::<crate::loaded_car_group::CLoadedCarGroup>(g(APPROPRIATE_LOADED_CARS)));
+    car_group_clear(GPtr::<u8>::cast::<crate::loaded_car_group::CLoadedCarGroup>(g(INAPPROPRIATE_LOADED_CARS)));
     for copy in [GPtr::from_raw(a.as_mut_ptr()).cast::<u8>(), GPtr::from_raw(b.as_mut_ptr()).cast::<u8>()] {
         let mut i = 0;
         while i < car_group_count_members(copy) {
@@ -2922,7 +2915,7 @@ pub fn has_vehicle_upgrade_loaded(model: i32) -> bool {
 pub fn finish_loading_large_file(buf: GPtr<u8>, id: i32) -> bool {
     if load_state(id) != 4 {
         if id < 20000 {
-            mi_remove_ref(mi(id));
+            mi_remove_ref(GPtr::<u8>::cast::<crate::shared::CBaseModelInfo>(mi(id)));
         }
         return false;
     }
@@ -2935,7 +2928,7 @@ pub fn finish_loading_large_file(buf: GPtr<u8>, id: i32) -> bool {
         if fl_finish_load_clump_file(s, id) != 0 {
             ok = call_add_to_loaded_vehicles_list(id);
         }
-        mi_remove_ref(m);
+        mi_remove_ref(m.cast::<crate::shared::CBaseModelInfo>());
         txd_remove_ref_without_delete(mi_txd(m));
         if mi_get_anim_file_index(m) != -1 {
             anim_remove_anim_block_ref_without_delete(mi_get_anim_file_index(m));
@@ -3122,7 +3115,7 @@ pub fn request_special_model(id: i32, name: GPtr<u8>, flags_arg: i32) {
     );
     mi_clear_tex_dictionary(m);
     let txd_name = if txd_find_txd_slot(name) == -1 { GPtr::from_addr(0x858A34) } else { name };
-    mi_set_tex_dictionary(m, txd_name);
+    mi_set_tex_dictionary(m.cast::<crate::shared::CBaseModelInfo>(), txd_name);
     let p = info(id);
     field::<u32, _>(p, 0x8).write(pos & 0xFF_FFFF);
     field::<u32, _>(p, 0xC).write(size);
@@ -3443,15 +3436,15 @@ pub fn remove_least_used_model(flags_arg: u32) -> bool {
         p = prev_of(p);
     }
     let cam_z = camera_pos().wrapping_index(2).read();
-    let ground = camera_calculate_ground_height(g(CAMERA), 0) as f32;
+    let ground = camera_calculate_ground_height(g(CAMERA), 0).to_f32();
     let high = !x(cam_z).fsub_m(ground).fcom(x(k(F_50))).test_any(0x41);
     let peds_zone = || NUM_PEDS_LOADED.get() > 4 && call_remove_loaded_zone_model();
     let vehicles = |lim_world: i32| {
         let c = vehicles_loaded_count();
         let over = !(c < lim_world && (curr_area() == 0 || vehicles_loaded_count() < 5));
-        over && call_remove_loaded_vehicle() != 0
+        over && u8::from(call_remove_loaded_vehicle()) != 0
     };
-    if high && (peds_zone() || (vehicles_loaded_count() > 4 && call_remove_loaded_vehicle() != 0)) {
+    if high && (peds_zone() || (vehicles_loaded_count() > 4 && u8::from(call_remove_loaded_vehicle()) != 0)) {
         return true;
     }
     if !LOADING_SCENE.get().get()
@@ -3546,7 +3539,7 @@ pub fn process_loading_channel(ch: i32) -> bool {
                 let drop = id < 20000
                     && mi_get_model_type(mi(id)) == 6
                     && DESIRED_NUM_VEHICLES_LOADED.get() <= vehicles_loaded_count()
-                    && !(call_remove_loaded_vehicle() != 0)
+                    && !(u8::from(call_remove_loaded_vehicle()) != 0)
                     && flags(id) & 6 == 0;
                 if drop {
                     let t = mi_txd(mi(id));
@@ -3560,7 +3553,7 @@ pub fn process_loading_channel(ch: i32) -> bool {
                     }
                 } else {
                     if !(RESOURCE_ID_IPL..RESOURCE_ID_DAT).contains(&id) {
-                        call_make_space_for(((size << 11) as i32) as u32);
+                        call_make_space_for((((size << 11) as i32) as u32) as i32);
                     }
                     let off = ch_offset(ch, i).read();
                     call_convert_buffer_to_object(buf.byte_add((off.wrapping_mul(0x800)) as isize), id);
@@ -3821,7 +3814,7 @@ pub fn update() {
     if g::<u8>(TIMER_USER_PAUSE).read() != 0 || g::<u8>(TIMER_CODE_PAUSE).read() != 0 {
         return;
     }
-    let ground = camera_calculate_ground_height(g(CAMERA), 0) as f32;
+    let ground = camera_calculate_ground_height(g(CAMERA), 0).to_f32();
     let h = x(camera_pos().wrapping_index(2).read()).fsub_m(ground).to_f32();
     if !DISABLE_STREAMING.get().get() && g::<u8>(RENDERER_LOADING_PRIORITY).read() == 0 {
         if x(h).fcom(x(k(F_50))).test_parity(0x05) {
@@ -4095,7 +4088,7 @@ pub fn init2() {
             set_load_state(slot + RESOURCE_ID_TXD, 1);
         }
     }
-    car_group_clear(VEHICLES_LOADED.ptr().cast());
+    car_group_clear(GPtr::<u8>::cast::<crate::loaded_car_group::CLoadedCarGroup>(VEHICLES_LOADED.ptr().cast()));
     for i in 0..8 {
         PEDS_LOADED.ptr().cast::<i32>().wrapping_index(i).write(-1);
     }
@@ -4219,7 +4212,7 @@ pub fn load_cd_directory_file(path: GPtr<u8>, img: i32) {
         dot.write(0);
         let is = |s: u32| strnicmp(ext, GPtr::from_addr(s as usize), 3) == 0;
         if is(0x86964C) {
-            if mi_get_model_info_by_name(name, GPtr::<i32>::cast::<u8>(GPtr::from_raw(&raw mut id))).is_null() {
+            if mi_get_model_info_by_name(name, GPtr::from_raw(&raw mut id)).cast::<u8>().is_null() {
                 let mut e2 = ep.read();
                 e2.pos |= (img as u32) << 24;
                 ep.write(e2);

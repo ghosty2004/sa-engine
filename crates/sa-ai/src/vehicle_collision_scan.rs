@@ -15,8 +15,8 @@ use crate::bindings::intel_get_move_state_from_go_to_task;
 use crate::bindings::task_is_go_to_task;
 use sa_core::bindings::tm_get_simplest_active_task;
 use sa_world::bindings::entity_get_col_model;
-use sa_world::bindings::event_group_add;
-use sa_core::bindings::vector_magnitude_sqr as vector_squared_magnitude;
+use crate::bindings::event_group_add;
+use sa_world::bindings::vector_magnitude_sqr as vector_squared_magnitude;
 use crate::bindings::event_walk_into_vehicle_ctor;
 use sa_core::bindings::vector_from_multiply;
 
@@ -97,7 +97,7 @@ pub fn vehicle_scanner_scan_for_potential_collision_events(this: GPtr<u8>, ped: 
         return;
     }
     if rd::<u8>(ped, 0x474) & 8 == 0 {
-        let m2v = X87::from_f64_exact(vector_squared_magnitude(GPtr::<u8>::cast::<f32>(GPtr::from_raw(d.as_mut_ptr()).cast())));
+        let m2v = X87::from_f64_exact(vector_squared_magnitude(GPtr::from_raw(d.as_mut_ptr()).cast()).to_f64());
         if x(r).fmul_m(r).fcom(m2v).test_any(0x41) {
             return;
         }

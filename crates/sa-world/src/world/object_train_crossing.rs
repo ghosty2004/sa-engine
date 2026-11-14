@@ -11,9 +11,9 @@ use super::common::{entity_pos as pos, g, rd, wr, x};
 
 use crate::bindings::path_set_links_bridge_lights;
 use crate::bindings::simple_transform_update_rw_matrix;
-use sa_core::bindings::entity_update_rw_frame;
+use crate::bindings::entity_update_rw_frame;
 use sa_core::bindings::matrix_update_rw_matrix;
-use sa_stream::bindings::set_matrix_for_train_crossing;
+use crate::bindings::set_matrix_for_train_crossing;
 orig! {
     /// `CTrain::FindNearestTrain(CVector pos, bool enginesOnly)` (0x6F7090, cdecl, by value)
     fn find_nearest_train(px: f32, py: f32, pz: f32, engines_only: u32) -> GPtr<u8> = cdecl 0x6F7090 => unported;

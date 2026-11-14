@@ -6,17 +6,17 @@ use sa_core::abi::{HookReg, NativeReg};
 use sa_core::mem::GPtr;
 use sa_core::{hook, native};
 
-use sa_core::bindings::pop_current_txd as txd_pop_current;
-use sa_core::bindings::push_current_txd as txd_push_current;
-use sa_core::bindings::rw_texture_create as texture_create;
-use sa_core::bindings::set_current_txd as txd_set_current;
-use sa_core::bindings::rw_raster_unlock as raster_unlock;
+use sa_stream::bindings::pop_current_txd as txd_pop_current;
+use sa_stream::bindings::push_current_txd as txd_push_current;
+use sa_rwcore::bindings::rw_texture_create as texture_create;
+use sa_stream::bindings::set_current_txd as txd_set_current;
+use sa_rwcore::bindings::rw_raster_unlock as raster_unlock;
 use sa_core::bindings::find_txd_slot as txd_find_slot;
-use sa_core::bindings::rw_raster_create as raster_create;
-use sa_core::bindings::rw_raster_lock as raster_lock;
-use sa_core::bindings::rw_texture_read as texture_read;
-use sa_core::bindings::rw_texture_set_name as texture_set_name;
-use sa_world::bindings::copy_texture as copy_texture_call;
+use sa_rwcore::bindings::rw_raster_create as raster_create;
+use sa_rwcore::bindings::rw_raster_lock as raster_lock;
+use sa_rwcore::bindings::rw_texture_read as texture_read;
+use sa_rwcore::bindings::rw_texture_set_name as texture_set_name;
+use crate::bindings::copy_texture as copy_texture_call;
 
 /// "vehicle" (0x86982C), the dirt texture's name "vehiclegrunge256" (0x86BB28).
 const VEHICLE_TXD: u32 = 0x86982C;
@@ -48,7 +48,7 @@ pub fn initialise_dirt_texture() -> u32 {
         GPtr::<u32>::from_addr(DIRT_TEXTURES + 4 * i as usize).write(copy.addr() as u32);
         texture_set_name(copy, GPtr::from_addr(DIRT_NAME as usize));
         let r = GPtr::<u8>::from_addr(rd32(GPtr::from_addr(GPtr::<u32>::from_addr(DIRT_TEXTURES + 4 * i as usize).read() as usize), 0) as usize);
-        let pix = raster_lock(r, 0, 3);
+        let pix = GPtr::from_addr(raster_lock(r, 0, 3) as usize);
         let add = (level / 16) as u8;
         let mut row = 0isize;
         for _ in 0..h.max(0) {
@@ -81,9 +81,9 @@ pub fn copy_texture(t: GPtr<u8>) -> GPtr<u8> {
     let src = GPtr::<u8>::from_addr(rd32(t, 0) as usize);
     let fmt = u32::from(src.byte_add(0x23).read());
     let flags = ((fmt & 0xFFFF_FF6F) << 8) | 4;
-    let dst = raster_create(rd32(src, 0xC) as i32, rd32(src, 0x10) as i32, rd32(src, 0x14) as i32, flags);
-    let s = raster_lock(src, 0, 2);
-    let d = raster_lock(dst, 0, 1);
+    let dst = raster_create(((rd32(src, 0xC) as i32) as u32) as i32, ((rd32(src, 0x10) as i32) as u32) as i32, ((rd32(src, 0x14) as i32) as u32) as i32, flags);
+    let s = GPtr::<u8>::from_addr(raster_lock(src, 0, 2) as usize);
+    let d = GPtr::from_addr(raster_lock(dst, 0, 1) as usize);
     let n = rd32(src, 0x18).wrapping_mul(rd32(src, 0x10));
     for k in 0..n as isize {
         d.byte_add(k).write(s.byte_add(k).read());

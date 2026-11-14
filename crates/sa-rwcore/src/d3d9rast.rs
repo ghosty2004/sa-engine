@@ -649,9 +649,9 @@ orig! {
     fn swap_chain_get_back_buffer(sc: GPtr<u8>, index: u32, ty: u32, out: GPtr<u8>) -> i32 = stdcall vslot 0x14 => unported;
 }
 
-use sa_core::bindings::image_allocate_pixels;
-use sa_core::bindings::image_destroy;
-use sa_core::bindings::rw_image_create as image_create;
+use crate::bindings::image_allocate_pixels;
+use crate::bindings::image_destroy;
+use crate::bindings::rw_image_create as image_create;
 orig! {
     /// `FUN_004cc0c0` (0x4CC0C0, proposed `_rwD3D9CheckValidFormatForRasterType`): EAX = cube flag,
     /// ECX = raster type, EDX = `D3DFORMAT`; non-zero when the device takes the format for the type

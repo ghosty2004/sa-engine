@@ -104,7 +104,7 @@ pub fn handler_compute_dead_ped_response(this: GPtr<u8>, e: GPtr<u8>, _active: G
         if [7u16, 0x2E, 8, 0x33, 0x22, 0x10, 0x2D].contains(&mode) || cam_get_weapon_first_person_on(cam) != 0 {
             return;
         }
-        ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), GPtr::from_addr(S_DEAD_PED as usize), ped(this), dead, 500, 5, GPtr::NULL, 1, 0x3E80_0000, 500, 3, 0);
+        ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), GPtr::from_addr(S_DEAD_PED as usize), ped(this), dead, 500, 5, GPtr::NULL, 1, f32::from_bits(0x3E80_0000), 500, 3, 0);
         return;
     }
     match i32::from(rd::<i16>(e, 0xE)) {

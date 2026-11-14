@@ -56,14 +56,14 @@ pub use crate::bindings::clump_for_all_cameras as for_all_cameras_call;
 pub use crate::bindings::frame_destroy_hierarchy;
 pub use crate::bindings::free_list_create_prealloc as free_list_create_and_preallocate_space;
 pub use crate::bindings::light_register_plugin;
-pub use sa_core::bindings::frame_clone_and_link_clones;
-pub use sa_core::bindings::frame_get_ltm;
-pub use sa_core::bindings::object_has_frame_set_frame as object_set_frame;
-pub use sa_core::bindings::rp_atomic_clone as atomic_clone;
-pub use sa_core::bindings::rp_atomic_destroy as atomic_destroy;
-pub use sa_core::bindings::rp_atomic_set_geometry as atomic_set_geometry;
-pub use sa_core::bindings::rp_clump_add_atomic as add_atomic_call;
-pub use sa_core::bindings::rp_clump_create as create_call;
+pub use crate::bindings::frame_clone_and_link_clones;
+pub use crate::bindings::frame_get_ltm;
+pub use crate::bindings::object_has_frame_set_frame as object_set_frame;
+pub use crate::bindings::rp_atomic_clone as atomic_clone;
+pub use crate::bindings::rp_atomic_destroy as atomic_destroy;
+pub use crate::bindings::rp_atomic_set_geometry as atomic_set_geometry;
+pub use crate::bindings::rp_clump_add_atomic as add_atomic_call;
+pub use crate::bindings::rp_clump_create as create_call;
 orig! {
     /// `atomic->renderCallBack(atomic)` (the frame pushed for `RwFrameGetLTM` is still on the stack as a
     /// second argument)
@@ -483,7 +483,7 @@ pub fn clone(src: GPtr<u8>) -> GPtr<u8> {
                 error_code: 0,
             };
             e.error_code = rw_error1(5) as i32;
-            rw_error_set(GPtr::from_raw(&mut e));
+            rw_error_set(GPtr::from_raw(&mut e).cast());
             break;
         }
         object_set_frame(na, p8(rd::<u32>(frame, 0xA0)));

@@ -12,13 +12,13 @@ use crate::common::*;
 use crate::bindings::dtor_4ae7a0 as walk_into_ped_dtor;
 use crate::bindings::intel_get_move_state_from_go_to_task;
 use crate::bindings::task_is_go_to_task;
-use sa_core::bindings::col_sphere_set;
+use sa_world::bindings::col_sphere_set;
 use sa_core::bindings::ped_is_alive;
 use sa_core::bindings::tm_get_simplest_active_task;
 use sa_core::bindings::vector_difference;
 use sa_core::bindings::vector_dot_product;
-use sa_world::bindings::event_group_add;
-use sa_core::bindings::vector_magnitude_sqr;
+use crate::bindings::event_group_add;
+use sa_world::bindings::vector_magnitude_sqr;
 use crate::bindings::approx_equal;
 use crate::bindings::walk_into_ped_ctor;
 use sa_world::bindings::vector_mul_scalar as vector_mul;
@@ -64,7 +64,7 @@ pub fn walk_into_ped_scanner_scan(_this: GPtr<u8>, ped: GPtr<u8>, enabled: u32) 
     let mut p2 = [0f32; 3];
     for i in 0..16 {
         let other = rd::<GPtr<u8>>(intel, 0x130 + 4 * i);
-        if other.is_null() || ped_is_alive(other) == 0 || rd::<u8>(other, 0x1C) & 1 == 0 {
+        if other.is_null() || ped_is_alive(other) as u8 == 0 || rd::<u8>(other, 0x1C) & 1 == 0 {
             continue;
         }
         let m = rd::<GPtr<u8>>(ped, 0x14);
@@ -76,7 +76,7 @@ pub fn walk_into_ped_scanner_scan(_this: GPtr<u8>, ped: GPtr<u8>, enabled: u32) 
         if dot.fcom(x(k(0x858B50))).test_any(0x41) {
             continue;
         }
-        col_sphere_set(sphere_p, f32::from_bits(0x3F33_3333), entity_pos(other), 0, 0, 0xFF);
+        col_sphere_set(sphere_p, f32::from_bits(0x3F33_3333).to_bits(), GPtr::<u8>::cast::<u32>(entity_pos(other)), 0, 0, 0xFF);
         if col_sphere_intersect_edge(
             sphere_p,
             entity_pos(ped),
@@ -87,7 +87,7 @@ pub fn walk_into_ped_scanner_scan(_this: GPtr<u8>, ped: GPtr<u8>, enabled: u32) 
         {
             continue;
         }
-        let m2 = X87::from_f64_exact(vector_magnitude_sqr(d_p.cast::<f32>()));
+        let m2 = X87::from_f64_exact(vector_magnitude_sqr(d_p.cast::<u8>()).to_f64());
         if m2.fcom(x(best)).test_parity(5) {
             continue;
         }
@@ -100,7 +100,7 @@ pub fn walk_into_ped_scanner_scan(_this: GPtr<u8>, ped: GPtr<u8>, enabled: u32) 
     let s = tm_get_simplest_active_task(rd::<GPtr<u8>>(closest, 0x47C).byte_add(4));
     if !s.is_null()
         && task_is_go_to_task(s) != 0
-        && !X87::from_f64_exact(vector_dot_product(rd::<GPtr<u8>>(ped, 0x14).byte_add(0x10), rd::<GPtr<u8>>(closest, 0x14).byte_add(0x10)))
+        && !X87::from_f64_exact(vector_dot_product(rd::<GPtr<u8>>(ped, 0x14).byte_add(0x10), rd::<GPtr<u8>>(closest, 0x14).byte_add(0x10)).to_f64())
             .fcom(x(k(0x86CD98)))
             .test_any(1)
     {
@@ -112,8 +112,8 @@ pub fn walk_into_ped_scanner_scan(_this: GPtr<u8>, ped: GPtr<u8>, enabled: u32) 
         vector_mul(vb_p, closest.byte_add(0x44), f32::from_bits(0x4248_0000));
         wr::<f32>(va_p, 8, 0.0);
         wr::<f32>(vb_p, 8, 0.0);
-        let a = X87::from_f64_exact(vector_magnitude_sqr(va_p.cast::<f32>())).to_f32();
-        let b = X87::from_f64_exact(vector_magnitude_sqr(vb_p.cast::<f32>())).fadd_m(k(0x86CD94)).to_f32();
+        let a = X87::from_f64_exact(vector_magnitude_sqr(va_p.cast::<u8>()).to_f64()).to_f32();
+        let b = X87::from_f64_exact(vector_magnitude_sqr(vb_p.cast::<u8>()).to_f64()).fadd_m(k(0x86CD94)).to_f32();
         if !x(best).fcom(x(k(0x86CD90))).test_any(0x41)
             && approx_equal(f32::from_bits(b.to_bits()), f32::from_bits(0), f32::from_bits(0x3C23_D70A)) == 0
             && !x(b).fcom(x(a)).test_any(0x41)

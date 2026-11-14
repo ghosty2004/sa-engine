@@ -75,27 +75,27 @@ const NAV_ZONE_INFO_INDEX: u32 = 0xBA37B4;
 use crate::bindings::clean_up_this_object;
 use crate::bindings::clear_all_script_fire_flags;
 use sa_world::bindings::create_new_menu;
-use sa_world::bindings::get_new_unique_script_thing_index;
+use crate::bindings::get_new_unique_script_thing_index;
 use crate::bindings::path_find_unmark_all_road_nodes_as_dont_wander as unmark_all_road_nodes_as_dont_wander;
 use crate::bindings::report_mission_audio_event as report_mission_audio_event_pos;
 use crate::bindings::set_up_conversation_node;
 use sa_world::bindings::vehicle_pool_get_at;
 use sa_core::bindings::get_uppercase_key;
-use sa_core::bindings::rp_clump_for_all_atomics;
-use sa_core::bindings::stats_increment_stat as increment_stat;
+use sa_rwcore::bindings::rp_clump_for_all_atomics;
+use sa_world::bindings::stats_increment_stat as increment_stat;
 use sa_core::bindings::stricmp;
-use sa_core::bindings::task_new;
+use sa_ai::bindings::task_new;
 use sa_stream::bindings::pick_random_car;
-use sa_world::bindings::damage_get_door_status as get_door_status;
-use sa_world::bindings::decision_maker_types_get_instance;
-use sa_world::bindings::facial_set_request;
+use sa_veh::bindings::damage_get_door_status as get_door_status;
+use sa_ai::bindings::decision_maker_types_get_instance;
+use sa_ai::bindings::facial_set_request;
 use sa_world::bindings::find_ground_z_for_coord as find_ground_z_raw;
 use sa_core::bindings::find_objects_of_type_in_range;
 use sa_world::bindings::find_zone_by_label;
 use sa_world::bindings::get_task_swim;
 use sa_world::bindings::hold_entity_drop_entity;
-use sa_world::bindings::is_law_enforcement_vehicle;
-use sa_world::bindings::pick_random_passenger;
+use sa_veh::bindings::is_law_enforcement_vehicle;
+use sa_veh::bindings::pick_random_passenger;
 use sa_world::bindings::set_up_skip;
 use sa_world::bindings::task_facial_stop_all as facial_stop_all;
 use sa_world::bindings::vehicle_can_be_deleted as can_be_deleted;
@@ -108,8 +108,8 @@ use crate::bindings::script_task_pick_up_object;
 use crate::bindings::set_char_coordinates;
 use crate::bindings::vehicle_get_ref;
 use sa_core::bindings::destroy_fx_system;
-use sa_core::bindings::get_pad;
-use sa_core::bindings::tm_get_task_secondary as get_task_secondary;
+use sa_input::bindings::get_pad;
+use sa_ai::bindings::tm_get_task_secondary as get_task_secondary;
 use sa_core::bindings::vector_magnitude;
 use sa_world::bindings::find_nearest_entry_exit;
 use sa_world::bindings::find_player_centre_of_world;
@@ -117,12 +117,13 @@ use sa_world::bindings::fire_extinguish_point as extinguish_point;
 use sa_world::bindings::fx_add_blood;
 use sa_world::bindings::get_actual_script_thing_index;
 use sa_world::bindings::get_remap_index;
-use sa_world::bindings::get_replacement_upgrade;
+use sa_veh::bindings::get_replacement_upgrade;
 use sa_world::bindings::get_upgrade;
-use sa_world::bindings::get_vehicle_appearance;
+use sa_veh::bindings::get_vehicle_appearance;
 use sa_world::bindings::ped_say;
 use sa_world::bindings::set_entry_exit_flag;
 use sa_world::bindings::set_stat_value;
+use sa_world::bindings::report_mission_audio_event as report_mission_audio_event_obj;
 orig! {
     /// `CHeli::SwitchPoliceHelis(bool)` (0x6C4800)
     fn switch_police_helis(on: u32) = cdecl 0x6C4800 => unported;
@@ -134,8 +135,6 @@ orig! {
     fn reset_stuff_upon_resurrection() = cdecl 0x442980 => unported;
     /// 0x6E76E0 (cdecl, no arguments; gr `CWaterLevel::SyncWater`)
     fn sync_water_6e76e0() = cdecl 0x6E76E0 => unported;
-    /// `CAudioEngine::ReportMissionAudioEvent(uint16, CObject*)` (0x507350)
-    fn report_mission_audio_event_obj(a: GPtr<u8>, ev: u32, o: GPtr<u8>) = thiscall 0x507350 => unported;
     /// `CAudioEngine::AttachMissionAudioToObject(uint8 slot, CObject*)` (0x507320)
     fn attach_mission_audio_to_object(a: GPtr<u8>, slot: u32, o: GPtr<u8>) = thiscall 0x507320 => unported;
     /// `CAutomobile::GetMovingCollisionOffset()` (0x6A2150), ST0 (a loaded float: exact as f64)
@@ -244,7 +243,7 @@ fn create_menu_grid(s: Scr) {
         .fmul_m(spf(1))
         .to_f32()
         .to_bits();
-    let id = create_new_menu(1, GPtr::from_raw(title.as_mut_ptr()), f32::from_bits(x), f32::from_bits(y), f32::from_bits(w), sp(3), sp(4), sp(5), sp(6));
+    let id = create_new_menu(1, GPtr::from_raw(title.as_mut_ptr()), f32::from_bits(x).to_bits(), f32::from_bits(y).to_bits(), f32::from_bits(w).to_bits(), sp(3), sp(4), sp(5), sp(6));
     set_sp(0, u32::from(id));
     store(s, 1);
 }
@@ -274,11 +273,11 @@ fn get_current_car_mod(s: Scr) {
         8 => get_upgrade(v, 15),
         9 => get_upgrade(v, 16),
         10 => get_upgrade(v, 17),
-        12 => get_replacement_upgrade(v, 2),
-        13 => get_replacement_upgrade(v, 0x13),
-        14 => get_replacement_upgrade(v, 0xC),
-        15 => get_replacement_upgrade(v, 0xD),
-        16 => get_replacement_upgrade(v, 0x14),
+        12 => get_replacement_upgrade(v, 2) as u32,
+        13 => get_replacement_upgrade(v, 0x13) as u32,
+        14 => get_replacement_upgrade(v, 0xC) as u32,
+        15 => get_replacement_upgrade(v, 0xD) as u32,
+        16 => get_replacement_upgrade(v, 0x14) as u32,
         _ => u32::MAX,
     };
     set_sp(0, r);
@@ -380,7 +379,7 @@ fn set_char_uses_collision_closest_object_of_type(s: Scr) {
         GPtr::from_raw(pos.as_mut_ptr()),
         f32::from_bits(radius),
         1,
-        GPtr::<u16>::cast::<i16>(GPtr::from_raw(n.as_mut_ptr())),
+        GPtr::from_raw(n.as_mut_ptr()),
         16,
         GPtr::from_raw(list.as_mut_ptr()),
         1,
@@ -499,7 +498,7 @@ fn drop_second_object(s: Scr) {
 /// 0)`; SP1 = -1 when m == -1, else `(i8) ms_modelInfoPtrs[m]` byte +0x4D (the vehicle class); `StoreParameters(2)`.
 fn get_random_car_model_in_memory(s: Scr) {
     collect(s, 1);
-    let m = pick_random_car(GPtr::from_addr(LOADED_CARS), 0, u32::from(sp(0) != 0));
+    let m = pick_random_car(GPtr::<u8>::cast::<sa_stream::loaded_car_group::CLoadedCarGroup>(GPtr::from_addr(LOADED_CARS)), 0, u32::from(sp(0) != 0) as u8);
     set_sp(0, m as u32);
     if m == -1 {
         set_sp(1, m as u32);
@@ -610,7 +609,7 @@ pub fn process_commands_2400_to_2499(s: Scr, command: u32) -> i8 {
         0x0960 => {
             collect(s, 2);
             let on = sp(1) != 0;
-            get_pad(sp(0)).byte_add(0x11F).write(u8::from(!on));
+            get_pad(sp(0) as i32).byte_add(0x11F).write(u8::from(!on));
         }
         // 0961 SET_CHAR_KEEP_TASK (0x478089): `PED(SP0)` flags +0x478 bit 4 = SP1 != 0 (no null check)
         0x0961 => {
@@ -637,7 +636,7 @@ pub fn process_commands_2400_to_2499(s: Scr, command: u32) -> i8 {
             collect(s, 2);
             let tm = ped(sp(0)).byte_add(0x47C).cast::<GPtr<u8>>().read().byte_add(4);
             let t = get_task_secondary(tm, 3);
-            facial_set_request(t, 7, sp(1), u32::MAX, 0);
+            facial_set_request(t.addr() as u32, 7, sp(1), u32::MAX, 0);
         }
         // 0968 STOP_CHAR_FACIAL_TALK (0x478266): `GetTaskSecondary(3)->StopAll()`
         0x0968 => {
@@ -821,7 +820,7 @@ pub fn process_commands_2400_to_2499(s: Scr, command: u32) -> i8 {
         0x0992 => {
             collect(s, 2);
             let on = sp(1) != 0;
-            get_pad(sp(0)).byte_add(0x11D).write(u8::from(!on));
+            get_pad(sp(0) as i32).byte_add(0x11D).write(u8::from(!on));
         }
         // 0994 MARK_ROAD_NODE_AS_DONT_WANDER (0x478E13) / 0995 UNMARK_ALL_ROAD_NODES_AS_DONT_WANDER (0x478E41)
         0x0994 => {
@@ -895,7 +894,7 @@ pub fn process_commands_2400_to_2499(s: Scr, command: u32) -> i8 {
             if !o.is_null() {
                 let rw = o.byte_add(0x18).cast::<GPtr<u8>>().read();
                 if !rw.is_null() {
-                    rp_clump_for_all_atomics(rw, SET_ATOMIC_RENDERER_CB, GPtr::from_addr(RENDER_FADING_CLUMP_CB as usize));
+                    rp_clump_for_all_atomics(rw, SET_ATOMIC_RENDERER_CB, GPtr::<u8>::addr(GPtr::from_addr(RENDER_FADING_CLUMP_CB as usize)) as u32);
                 }
                 let fl = o.byte_add(0x140).cast::<u32>();
                 fl.write(fl.read() | 0x40_0000);

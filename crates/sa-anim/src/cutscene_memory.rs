@@ -67,7 +67,7 @@ pub fn cutscene_remove_everything() {
     col_store_remove_all_collision();
     gb(STREAMING_FLAG).write(1);
     streaming_remove_current_zones_models();
-    while streaming_remove_loaded_vehicle() != 0 {}
+    while u8::from(streaming_remove_loaded_vehicle()) != 0 {}
     radar_remove_radar_sections();
     for m in [7, 0x15A, 0x14E, 0x159] {
         streaming_set_model_is_deletable(m);
@@ -124,7 +124,7 @@ pub fn cutscene_load_everything() {
         if flags & 2 == 0 {
             streaming_set_model_is_deletable(model);
         }
-        ped_give_weapon(player, ty() as i32, gu(WEAPON_AMMO + 4 * i).read(), 1);
+        ped_give_weapon(player, (ty() as i32) as u32, gu(WEAPON_AMMO + 4 * i).read(), 1);
         i += 1;
         if i as i32 >= gu(NUM_WEAPONS).read() as i32 {
             break;

@@ -14,10 +14,10 @@ use crate::bindings::event_script_command_dtor;
 use crate::bindings::player_get_wanted_level;
 use crate::bindings::task_jetpack_ctor;
 use crate::bindings::update_stats_add_to_health;
-use sa_core::bindings::find_player_ped;
+use crate::bindings::find_player_ped;
 use sa_core::bindings::player_ped_reset_sprint_energy;
 use sa_core::bindings::set_wanted_level;
-use sa_core::bindings::stats_increment_stat;
+use crate::bindings::stats_increment_stat;
 use sa_core::bindings::task_new;
 orig! {
     /// `CPickups::PickedUpOyster()` (0x4552D0)

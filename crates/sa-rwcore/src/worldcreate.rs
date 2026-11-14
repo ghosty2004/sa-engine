@@ -52,8 +52,8 @@ use crate::bindings::mesh_destroy;
 use crate::bindings::plugin_deinit_object;
 use crate::bindings::plugin_init_object;
 use crate::bindings::mesh_optimise_call;
-use sa_core::bindings::frame_get_ltm;
-use sa_core::bindings::rw_frame_update_objects as frame_update_objects;
+use crate::bindings::frame_get_ltm;
+use crate::bindings::rw_frame_update_objects as frame_update_objects;
 orig! {
     /// `RpWorldUnlock(world)` (0x74F210)
     fn world_unlock_call(w: GPtr<u8>) -> GPtr<u8> = cdecl 0x74F210 => rp_world_unlock;
@@ -82,7 +82,7 @@ fn world_error2(code: u32, a: u32) {
         error_code: 0,
     };
     e.error_code = rw_error2(code, a) as i32;
-    rw_error_set(GPtr::from_raw(&mut e));
+    rw_error_set(GPtr::from_raw(&mut e).cast());
 }
 
 /// `RwErrorSet({2, _rwerror(code)})`.
@@ -92,7 +92,7 @@ fn world_error1(code: u32) {
         error_code: 0,
     };
     e.error_code = rw_error1(code) as i32;
-    rw_error_set(GPtr::from_raw(&mut e));
+    rw_error_set(GPtr::from_raw(&mut e).cast());
 }
 
 /// Copies the three words `src+so..` to `dst+do_`.

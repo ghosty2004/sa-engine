@@ -8,11 +8,11 @@
 #![allow(clippy::unnecessary_cast, clippy::erasing_op, clippy::neg_multiply)]
 
 #[allow(unused_imports)]
-use sa_core::abi::HookReg;
+use crate::abi::HookReg;
 #[allow(unused_imports)]
-use sa_core::mem::{GPtr, GameData};
+use crate::mem::{GPtr, GameData};
 #[allow(unused_imports)]
-use sa_core::{hook, orig};
+use crate::{hook, orig};
 #[allow(unused_imports)]
 use sa_math::x87::X87;
 
@@ -33,7 +33,7 @@ pub mod generated_thunks;
 
 // The shared field / global / x87 helpers (ADR-003 §3.2), named as the generated bodies use them.
 #[allow(unused_imports)]
-use sa_core::field::{g, p8 as p, rd, wr};
+use crate::field::{g, p8 as p, rd, wr};
 #[allow(unused_imports)]
 use sa_math::fpu::x;
 

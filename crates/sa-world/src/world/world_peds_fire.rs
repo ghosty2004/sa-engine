@@ -14,7 +14,7 @@ use sa_core::bindings::ped_is_alive;
 use sa_core::bindings::tm_get_active_task as get_active_task;
 use sa_stream::bindings::ped_is_player;
 use crate::bindings::generate_damage_event;
-use sa_core::bindings::vector_sub;
+use crate::bindings::vector_sub;
 orig! {
     /// `CTask::GetTaskType()` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
@@ -70,7 +70,7 @@ pub fn set_peds_choking(px: f32, py: f32, pz: f32, radius: f32, creator: GPtr<u8
         let r = vector_sub(GPtr::from_raw(&mut out as *mut [f32; 3]).cast(), ped_pos(ped),
                            GPtr::from_raw(&mut target as *mut [f32; 3]).cast());
         let mut v2 = [rd::<u32>(r, 0), rd::<u32>(r, 4)];
-        let dir = get_local_direction(ped, GPtr::from_raw(&mut v2 as *mut [u32; 2]).cast());
+        let dir = get_local_direction(ped, GPtr::<u8>::cast::<f32>(GPtr::from_raw(&mut v2 as *mut [u32; 2]).cast()));
         generate_damage_event(ped, creator, 0x11, 1, 3, dir as u32);
     });
 }
@@ -133,7 +133,7 @@ pub fn find_unsuspecting_target_ped(px: f32, py: f32, _pz: f32, tx: f32, ty: f32
             continue;
         }
         let ped = rd::<GPtr<u8>>(pool, 0).byte_add(i as isize * 0x7C4);
-        if ped.is_null() || rd::<u8>(ped, 0x484) != 1 || ped_is_alive(ped) == 0 {
+        if ped.is_null() || rd::<u8>(ped, 0x484) != 1 || ped_is_alive(ped) as u8 == 0 {
             continue;
         }
         let pt = rd::<i32>(ped, 0x598);

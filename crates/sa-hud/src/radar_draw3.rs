@@ -150,10 +150,10 @@ use crate::bindings::add_blip_to_legend_list_call;
 use crate::bindings::draw_rotating_radar_sprite_call;
 use crate::bindings::get_radar_trace_colour_call;
 use crate::bindings::has_this_blip_been_revealed_call;
-use sa_world::bindings::sprite2d_draw_2d_polygon;
+use sa_render::bindings::sprite2d_draw_2d_polygon;
 use crate::bindings::transform_radar_point_to_screen_space_call;
 use crate::bindings::transform_real_world_point_to_radar_space_call;
-use sa_core::bindings::font_print_string;
+use crate::bindings::font_print_string;
 use sa_core::bindings::ped_at_ref as ped_pool_get_at_ref;
 use sa_core::bindings::rgba_ctor;
 use sa_world::bindings::ee_get_position_relative_to_outside_world;
@@ -167,27 +167,19 @@ use crate::bindings::draw_radar_sprite_call;
 use crate::bindings::show_radar_marker_call;
 use crate::bindings::show_radar_trace_with_height_call;
 use sa_core::bindings::sprite2d_draw as sprite2d_draw_rect;
-use sa_core::bindings::sprite_draw_rect as sprite2d_draw_rect_static;
-use sa_core::bindings::text_get;
+use sa_render::bindings::sprite_draw_rect as sprite2d_draw_rect_static;
+use crate::bindings::text_get;
 use sa_world::bindings::get_actual_pickup_index;
+use sa_world::bindings::find_player_vehicle;
+use crate::bindings::limit_radar_point_call_st0;
 orig! {
     /// `CSprite2d::DrawCircleAtNearClip(const CVector2D&, float radius, const CRGBA&, int32 numVerts)` (0x727D60)
     fn sprite2d_draw_circle_at_near_clip(pos: GPtr<u32>, radius: f32, colour: GPtr<u8>, n: i32) = cdecl 0x727D60 => unported;
-    /// `FindPlayerVehicle(int32, bool)` (0x56E0D0)
-    fn find_player_vehicle(id: i32, remote: u8) -> GPtr<u8> = cdecl 0x56E0D0 => sa_world::world::cworld::find_player_vehicle_port;
-    /// `CRadar::LimitRadarPoint(CVector2D&)` (0x5832F0, ST0)
-    fn limit_radar_point_call_st0(p: GPtr<f32>) -> f64 = cdecl 0x5832F0 => limit_radar_point_st0_rust;
-}
-
-/// The Rust path of the ST0 declaration above (phases B/C).
-#[allow(dead_code)]
-fn limit_radar_point_st0_rust(p: GPtr<f32>) -> f64 {
-    crate::radar::limit_radar_point(p).to_f64()
 }
 
 /// [`limit_radar_point_call_st0`] as an x87 value.
 fn limit_radar_point(p: GPtr<f32>) -> X87 {
-    X87::from_f64_exact(limit_radar_point_call_st0(p))
+    X87::from_f64_exact(limit_radar_point_call_st0(p).to_f64())
 }
 
 /// The GXT key `DrawLegend` looks up for sprite `-5..=63` (jump table 0x5831D8, index `sprite + 5`); 0 = the
@@ -329,7 +321,7 @@ pub fn draw_legend(px: i32, py: i32, sprite: i32) {
             let mut c = [0u8; 4];
             let cp = rgba_ctor(local(&mut c), 0, 0, 0, 0xFF);
             let mut r1 = rect(l, bt, r, t);
-            sprite2d_draw_rect_static(local(&mut r1), cp);
+            sprite2d_draw_rect_static(GPtr::<f32>::cast::<u8>(local(&mut r1)), cp);
             let sx4 = max_w().fmul_m(k(K_1_640)).fmul_m(k(K_4));
             let l = f32_of(x(cx).fsub(sx4));
             let sy4 = max_h().fmul_m(k(K_1_448)).fmul_m(k(K_4));
@@ -337,7 +329,7 @@ pub fn draw_legend(px: i32, py: i32, sprite: i32) {
             let r = f32_of(sx4.fadd_m(cx));
             let bt = f32_of(sy4.fadd_m(cy));
             let mut r2 = rect(l, bt, r, t);
-            sprite2d_draw_rect_static(local(&mut r2), arrow_p);
+            sprite2d_draw_rect_static(GPtr::<f32>::cast::<u8>(local(&mut r2)), arrow_p);
         }
         1 => {
             let cy = f32_of(xi(cyi));
@@ -350,14 +342,14 @@ pub fn draw_legend(px: i32, py: i32, sprite: i32) {
             let cp = rgba_ctor(local(&mut c), 0, 0, 0, 0xFF);
             let x4 = f32_of(x(cx).fsub_m(sxk));
             let x3 = f32_of(x(sxk).fadd_m(cx));
-            sprite2d_draw_2d_polygon(cx, bottom, cx, bottom, x3, top, x4, top, cp);
+            sprite2d_draw_2d_polygon(cx.to_bits(), bottom.to_bits(), cx.to_bits(), bottom.to_bits(), x3.to_bits(), top.to_bits(), x4.to_bits(), top.to_bits(), cp);
             let sy5 = max_h().fmul_m(k(K_1_448)).fmul_m(k(K_5));
             let t2 = f32_of(x(cy).fsub(sy5));
             let sx5 = max_w().fmul_m(k(K_1_640)).fmul_m(k(K_5));
             let b2 = f32_of(sy5.fadd_m(cy));
             let x4 = f32_of(x(cx).fsub(sx5));
             let x3 = f32_of(sx5.fadd_m(cx));
-            sprite2d_draw_2d_polygon(cx, b2, cx, b2, x3, t2, x4, t2, arrow_p);
+            sprite2d_draw_2d_polygon(cx.to_bits(), b2.to_bits(), cx.to_bits(), b2.to_bits(), x3.to_bits(), t2.to_bits(), x4.to_bits(), t2.to_bits(), arrow_p);
         }
         0 => {
             let cy = f32_of(xi(cyi));
@@ -370,14 +362,14 @@ pub fn draw_legend(px: i32, py: i32, sprite: i32) {
             let cp = rgba_ctor(local(&mut c), 0, 0, 0, 0xFF);
             let x2 = f32_of(x(cx).fsub_m(sxk));
             let x1 = f32_of(x(sxk).fadd_m(cx));
-            sprite2d_draw_2d_polygon(x1, base, x2, base, cx, tip, cx, tip, cp);
+            sprite2d_draw_2d_polygon(x1.to_bits(), base.to_bits(), x2.to_bits(), base.to_bits(), cx.to_bits(), tip.to_bits(), cx.to_bits(), tip.to_bits(), cp);
             let sy5 = max_h().fmul_m(k(K_1_448)).fmul_m(k(K_5));
             let t = f32_of(x(cy).fsub(sy5));
             let bt = f32_of(sy5.fadd_m(cy));
             let sx5 = max_w().fmul_m(k(K_1_640)).fmul_m(k(K_5));
             let x2 = f32_of(x(cx).fsub(sx5));
             let x1 = f32_of(sx5.fadd_m(cx));
-            sprite2d_draw_2d_polygon(x1, bt, x2, bt, cx, t, cx, t, arrow_p);
+            sprite2d_draw_2d_polygon(x1.to_bits(), bt.to_bits(), x2.to_bits(), bt.to_bits(), cx.to_bits(), t.to_bits(), cx.to_bits(), t.to_bits(), arrow_p);
         }
         _ => {}
     }

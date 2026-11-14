@@ -23,14 +23,13 @@ const NUM_SOUNDS: isize = 300;
 pub use crate::bindings::ae_random_float;
 pub use crate::bindings::position_relative_to_camera_vec;
 pub use sa_core::bindings::eh_vector_ctor;
-pub use sa_core::bindings::entity_clean_up_old_reference as cleanup_old_reference;
+pub use sa_world::bindings::entity_clean_up_old_reference as cleanup_old_reference;
 pub use sa_core::bindings::entity_register_reference as register_reference;
 pub use crate::bindings::env_distance_attenuation_st0 as distance_attenuation;
+pub use crate::bindings::sound_set_position;
 orig! {
     /// `CAEAudioHardware::GetSoundHeadroom(uint16 soundId, int16 bankSlot)` (0x4D8E30, ST0)
     pub fn hw_get_sound_headroom(hw: GPtr<u8>, sound: u32, slot: u32) -> f32 = thiscall 0x4D8E30 => unported;
-    /// `CAESound::SetPosition(CVector)` (0x4EF880; the vector by value = three dwords)
-    pub fn sound_set_position(this: GPtr<u8>, px: u32, py: u32, pz: u32) = thiscall 0x4EF880 => set_position;
     /// `CAEAudioEntity::UpdateParameters(CAESound*, int16 curPlayPos)` (virtual, vtable slot 0)
     pub fn entity_update_parameters(entity: GPtr<u8>, sound: GPtr<u8>, cur: u32) = thiscall vslot 0x00 => unported;
     /// `CAEAudioEnvironment::GetDirectionalMikeAttenuation(const CVector&)` (0x4D7F60, ST0)
@@ -46,7 +45,7 @@ fn release_physical(s: GPtr<u8>) {
     let r = s.byte_add(8);
     let e = rd::<GPtr<u8>>(s, 8);
     if !e.is_null() {
-        cleanup_old_reference(e, r.cast::<GPtr<u8>>());
+        cleanup_old_reference(e, r.cast::<u8>());
         wr::<u32>(s, 8, 0);
     }
 }
@@ -160,7 +159,7 @@ pub fn initialise(
     wr::<i32>(this, 0xC, -1);
     wr::<u32>(this, 0x10, 0xBF80_0000); // -1.0
     wr::<u32>(this, 0x3C, 0);
-    sound_set_position(this, px, py, pz);
+    sound_set_position(this.addr() as u32, px, py, pz);
     wr::<u32>(this, 0x50, time_scale);
     wr::<u16>(this, 0x70, 0xFFFF);
     wr::<u16>(this, 0x5E, 0);
@@ -280,7 +279,7 @@ pub fn update_parameters(this: GPtr<u8>, cur: u32) {
             } else {
                 m.byte_add(0x30)
             };
-            sound_set_position(this, rd(p, 0), rd(p, 4), rd(p, 8));
+            sound_set_position(this.addr() as u32, rd(p, 0), rd(p, 4), rd(p, 8));
         }
     }
     if rd::<u8>(this, 0x56) & 4 == 0 {

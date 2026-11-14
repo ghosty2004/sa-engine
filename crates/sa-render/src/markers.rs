@@ -101,10 +101,10 @@ pub use sa_core::bindings::atexit;
 pub use sa_core::bindings::cross_product;
 pub use sa_core::bindings::eh_vector_ctor;
 pub use sa_core::bindings::eh_vector_dtor;
-pub use sa_core::bindings::load_all_requested_models;
+pub use sa_stream::bindings::load_all_requested_models;
 pub use sa_core::bindings::matrix_assign;
 pub use sa_core::bindings::matrix_attach;
-pub use sa_core::bindings::matrix_dtor;
+pub use sa_world::bindings::matrix_dtor;
 pub use sa_core::bindings::matrix_mul;
 pub use sa_core::bindings::matrix_mul_assign;
 pub use sa_core::bindings::matrix_rotate_z;
@@ -112,26 +112,26 @@ pub use sa_core::bindings::matrix_scale;
 pub use sa_core::bindings::matrix_set_translate;
 pub use sa_core::bindings::matrix_set_unity;
 pub use sa_core::bindings::matrix_update_rw;
-pub use sa_core::bindings::pop_current_txd;
-pub use sa_core::bindings::push_current_txd;
-pub use sa_core::bindings::rp_atomic_clone;
-pub use sa_core::bindings::rp_atomic_destroy;
+pub use sa_stream::bindings::pop_current_txd;
+pub use sa_stream::bindings::push_current_txd;
+pub use sa_rwcore::bindings::rp_atomic_clone;
+pub use sa_rwcore::bindings::rp_atomic_destroy;
 pub use sa_core::bindings::rp_atomic_set_frame;
-pub use sa_core::bindings::rp_clump_create;
+pub use sa_rwcore::bindings::rp_clump_create;
 pub use sa_core::bindings::rp_clump_destroy;
-pub use sa_core::bindings::rw_frame_create;
+pub use sa_rwcore::bindings::rw_frame_create;
 pub use sa_core::bindings::rw_frame_destroy;
-pub use sa_core::bindings::rw_frame_update_objects;
-pub use sa_core::bindings::set_current_txd;
+pub use sa_rwcore::bindings::rw_frame_update_objects;
+pub use sa_stream::bindings::set_current_txd;
 pub use sa_core::bindings::streaming_request_model as request_model;
 pub use sa_core::bindings::vector_normalise;
 pub use sa_stream::bindings::has_collision_loaded;
 pub use sa_core::bindings::load_data_from_work_buffer;
 pub use sa_stream::bindings::model_info_add_ref as model_add_ref;
-pub use sa_core::bindings::rp_clump_add_atomic;
+pub use sa_rwcore::bindings::rp_clump_add_atomic;
 pub use sa_core::bindings::save_data_to_work_buffer;
 pub use sa_stream::bindings::set_atomic_render_callback;
-pub use sa_world::bindings::get_water_level_no_waves;
+pub use crate::bindings::get_water_level_no_waves;
 pub use sa_core::bindings::matrix_ctor_rw;
 pub use sa_world::bindings::process_line_of_sight;
 pub use sa_world::bindings::rp_clump_render;
@@ -139,7 +139,7 @@ pub use sa_world::bindings::rw_frame_set_identity;
 pub use sa_core::bindings::change_dir;
 pub use sa_core::bindings::find_txd_slot;
 pub use sa_core::bindings::get_model_info;
-pub use sa_core::bindings::rp_clump_for_all_atomics;
+pub use sa_rwcore::bindings::rp_clump_for_all_atomics;
 pub use sa_stream::bindings::hud_colours_get_rgb as hud_get_rgb;
 pub use sa_world::bindings::find_ground_z_for_3d_coord as find_ground_z_for_3d_coord_st0;
 pub use sa_world::bindings::find_player_centre_of_world;
@@ -256,7 +256,7 @@ pub fn add_marker(
         3 => CLUMP_ARRAY.get()[0],
         _ => g::<u32>(0xC7C6DC + usize::from(ty) * 4).read(),
     };
-    rp_clump_for_all_atomics(GPtr::from_addr(clump as usize), MARKER_ATOMIC_CB, GPtr::from_raw(&mut found).cast());
+    rp_clump_for_all_atomics(GPtr::from_addr(clump as usize), MARKER_ATOMIC_CB, GPtr::<u8>::addr(GPtr::from_raw(&mut found).cast()) as u32);
     let atomic = rp_atomic_clone(found);
     rp_atomic_set_frame(atomic, rw_frame_create());
     set_atomic_render_callback(atomic, 0);
@@ -382,11 +382,11 @@ pub fn init() {
     change_dir(GPtr::from_addr(0x859F7C));
     let mk = |name: u32| -> GPtr<u8> {
         let mut idx = 0i32;
-        let mi = get_model_info(GPtr::from_addr(name as usize), GPtr::<i32>::cast::<u8>(GPtr::from_raw(&mut idx)));
+        let mi = get_model_info(GPtr::from_addr(name as usize), GPtr::from_raw(&mut idx));
         request_model(idx, 2);
         load_all_requested_models(0);
         let atomic = model_create_instance(mi);
-        model_add_ref(mi);
+        model_add_ref(mi.cast::<sa_stream::shared::CBaseModelInfo>());
         let clump = rp_clump_create();
         let f = rd::<GPtr<u8>>(atomic, 4);
         rw_frame_set_identity(f);
@@ -422,7 +422,7 @@ pub fn shutdown() {
         if c == 0 {
             continue;
         }
-        rp_clump_for_all_atomics(GPtr::from_addr(c as usize), REMOVE_REFS_CB, GPtr::NULL);
+        rp_clump_for_all_atomics(GPtr::from_addr(c as usize), REMOVE_REFS_CB, GPtr::<u8>::addr(GPtr::NULL) as u32);
         rp_clump_destroy(GPtr::from_addr(e.read() as usize));
         for j in 0..7usize {
             if j != i && g::<u32>(0xC7C6DC + j * 4).read() == e.read() {
@@ -537,10 +537,10 @@ fn place_alpha(m: GPtr<u8>, t: u16, dist: f32, size: u32, a: u8) {
 fn place_water(m: GPtr<u8>, pc: [u32; 3], size: u32) {
     let mut out = 0u32;
     let found = get_water_level_no_waves(
-        f32::from_bits(rd::<u32>(m, 0x30)),
-        f32::from_bits(rd::<u32>(m, 0x34)),
-        f32::from_bits(rd::<u32>(m, 0x38)),
-        GPtr::from_raw(&mut out).cast(),
+        f32::from_bits(rd::<u32>(m, 0x30)).to_bits(),
+        f32::from_bits(rd::<u32>(m, 0x34)).to_bits(),
+        f32::from_bits(rd::<u32>(m, 0x38)).to_bits(),
+        GPtr::<u8>::cast::<f32>(GPtr::from_raw(&mut out).cast()),
         GPtr::NULL,
         GPtr::NULL,
     );
@@ -830,11 +830,11 @@ pub fn marker_render(this: GPtr<u8>) {
             let p = cross_product(tp, GPtr::from_raw(up.as_mut_ptr().cast()), n);
             let mut v1 = [rd::<u32>(p, 0), rd::<u32>(p, 4), rd::<u32>(p, 8)];
             let v1p = GPtr::<u8>::from_raw(v1.as_mut_ptr().cast());
-            vector_normalise(v1p);
+            vector_normalise(v1p.cast::<[f32;3]>());
             let p = cross_product(tp, n, v1p);
             let mut v2 = [rd::<u32>(p, 0), rd::<u32>(p, 4), rd::<u32>(p, 8)];
             let v2p = GPtr::<u8>::from_raw(v2.as_mut_ptr().cast());
-            vector_normalise(v2p);
+            vector_normalise(v2p.cast::<[f32;3]>());
             for i in 0..3 {
                 wr::<u32>(rp, i * 4, rd::<u32>(v1p, i * 4));
                 wr::<u32>(rp, 0x10 + i * 4, rd::<u32>(v2p, i * 4));
@@ -928,11 +928,11 @@ pub fn direction_arrows_draw() {
             let p = cross_product(tp, GPtr::from_raw(up.as_mut_ptr().cast()), dp);
             let mut v1 = [rd::<u32>(p, 0), rd::<u32>(p, 4), rd::<u32>(p, 8)];
             let v1p = GPtr::<u8>::from_raw(v1.as_mut_ptr().cast());
-            vector_normalise(v1p);
+            vector_normalise(v1p.cast::<[f32;3]>());
             let p = cross_product(tp, dp, v1p);
             let mut v2 = [rd::<u32>(p, 0), rd::<u32>(p, 4), rd::<u32>(p, 8)];
             let v2p = GPtr::<u8>::from_raw(v2.as_mut_ptr().cast());
-            vector_normalise(v2p);
+            vector_normalise(v2p.cast::<[f32;3]>());
             for j in 0..3 {
                 wr::<u32>(bp, j * 4, rd::<u32>(v1p, j * 4));
                 wr::<u32>(bp, 0x10 + j * 4, rd::<u32>(v2p, j * 4));
@@ -954,7 +954,7 @@ pub fn direction_arrows_draw() {
         matrix_update_rw(ap);
         rw_frame_update_objects(frame);
         USER_MARKER_COLOUR.set(0xFF00_0000);
-        rp_clump_for_all_atomics(clump, USER_MARKER_ATOMIC_CB, GPtr::NULL);
+        rp_clump_for_all_atomics(clump, USER_MARKER_ATOMIC_CB, GPtr::<u8>::addr(GPtr::NULL) as u32);
         rp_clump_render(clump);
         for row in 0..3isize {
             for c in 0..3isize {
@@ -969,7 +969,7 @@ pub fn direction_arrows_draw() {
         c.wrapping_index(1).write(rd::<u32>(e, 0x24) as u8);
         c.wrapping_index(2).write(rd::<u32>(e, 0x28) as u8);
         c.wrapping_index(3).write(rd::<u32>(e, 0x2C) as u8);
-        rp_clump_for_all_atomics(clump, USER_MARKER_ATOMIC_CB, GPtr::NULL);
+        rp_clump_for_all_atomics(clump, USER_MARKER_ATOMIC_CB, GPtr::<u8>::addr(GPtr::NULL) as u32);
         rp_clump_render(clump);
         wr::<u8>(e, 0, 0);
         matrix_dtor(bp);
@@ -1019,7 +1019,7 @@ pub fn user_3d_markers_draw() {
         c.wrapping_index(1).write(rd::<u32>(u, 0x14) as u8);
         c.wrapping_index(2).write(rd::<u32>(u, 0x18) as u8);
         c.wrapping_index(3).write(0xFF);
-        rp_clump_for_all_atomics(clump, USER_MARKER_ATOMIC_CB, GPtr::NULL);
+        rp_clump_for_all_atomics(clump, USER_MARKER_ATOMIC_CB, GPtr::<u8>::addr(GPtr::NULL) as u32);
         rp_clump_render(clump);
     }
     if saved {

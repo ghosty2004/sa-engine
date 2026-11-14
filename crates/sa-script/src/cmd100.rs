@@ -62,7 +62,7 @@ use sa_stream::bindings::rand as crt_rand;
 
 use crate::bindings::highlight_important_area;
 use crate::bindings::set_coords_of_script_car;
-use sa_world::bindings::vehicle_41bdd0;
+use sa_veh::bindings::vehicle_41bdd0;
 use sa_core::bindings::add_big_message;
 use sa_core::bindings::add_message_jump;
 use sa_core::bindings::text_get;
@@ -71,7 +71,7 @@ use sa_world::bindings::add_message_q;
 use sa_world::bindings::find_ground_z_for_coord as ground_z;
 use sa_world::bindings::get_distance_from_centre_of_mass_to_base_of_model as distance_to_base;
 use sa_world::bindings::is_within_area as is_within_area_2d;
-use sa_world::bindings::join_car_with_road_system;
+use sa_pop::bindings::join_car_with_road_system;
 use crate::bindings::set_char_coordinates;
 use sa_world::bindings::camera_is_sphere_visible as is_sphere_visible;
 use sa_world::bindings::join_car_with_road_system_goto_coors;

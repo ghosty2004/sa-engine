@@ -12,17 +12,17 @@ use crate::common::*;
 use crate::bindings::close_door_inside_compute_anim_id;
 use crate::bindings::close_door_outside_compute_anim_id;
 use crate::bindings::slow_be_dragged_out_compute_anim_id;
-use sa_core::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference;
 use sa_core::bindings::ped_is_alive;
-use sa_core::bindings::task_new as task_new_o;
+use crate::bindings::task_new as task_new_o;
 use sa_world::bindings::membership_get_leader;
 use sa_world::bindings::membership_get_member;
 use sa_world::bindings::sequence_ctor;
-use sa_world::bindings::task_simple_ctor;
+use crate::bindings::task_simple_ctor;
 use crate::bindings::event_get_sound_level;
 use crate::bindings::slow_drag_ped_out_compute_anim_id;
 use sa_core::bindings::entity_register_reference;
-use sa_world::bindings::tm_find_active_task_by_type;
+use crate::bindings::tm_find_active_task_by_type;
 orig! {
     /// the scalar deleting destructor (vtable +0, `ret 4`)
     fn v_delete(t: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
@@ -155,19 +155,19 @@ pub fn seek_cover_until_target_dead_get_target_ped(this: GPtr<u8>) -> GPtr<u8> {
     let idx = rd::<i32>(this, 0xC);
     if idx < 0 {
         let p = rd::<GPtr<u8>>(this, 0x10);
-        if !p.is_null() && ped_is_alive(p) != 0 {
+        if !p.is_null() && ped_is_alive(p) as u8 != 0 {
             return rd::<GPtr<u8>>(this, 0x10);
         }
         return GPtr::NULL;
     }
     let grp = |t: GPtr<u8>| GPtr::<u8>::from_addr((rd::<i32>(t, 0xC).wrapping_mul(0x2D4) as u32).wrapping_add(0xC09928) as usize);
     let l = membership_get_leader(grp(this));
-    if !l.is_null() && ped_is_alive(l) != 0 {
+    if !l.is_null() && ped_is_alive(l) as u8 != 0 {
         return l;
     }
     for i in 0..7 {
         let p = membership_get_member(grp(this), i);
-        if !p.is_null() && ped_is_alive(p) != 0 {
+        if !p.is_null() && ped_is_alive(p) as u8 != 0 {
             return p;
         }
     }
@@ -562,7 +562,7 @@ fn brain_store_empty(e: usize) {
     let ped = g::<GPtr<u8>>(e).read();
     g::<u32>(e + 0xC).write(0);
     if !ped.is_null() {
-        entity_clean_up_old_reference(ped, GPtr::<u8>::cast::<GPtr<u8>>(g(e)));
+        entity_clean_up_old_reference(ped, g(e));
         g::<u32>(e).write(0);
     }
 }

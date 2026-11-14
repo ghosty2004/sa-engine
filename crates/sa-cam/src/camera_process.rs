@@ -21,15 +21,15 @@ use sa_core::bindings::camera_process_music_fade as process_music_fade;
 use sa_core::bindings::cross_product;
 use sa_core::bindings::draw_set_fov;
 use sa_core::bindings::entity_register_reference as register_reference;
-use sa_core::bindings::find_player_ped;
-use sa_core::bindings::find_player_vehicle;
+use sa_world::bindings::find_player_ped;
+use sa_world::bindings::find_player_vehicle;
 use sa_core::bindings::rw_camera_set_far_clip_plane;
 use sa_core::bindings::rw_camera_set_near_clip_plane;
 use sa_core::bindings::vector_normalise as normalise;
 use sa_pop::bindings::cam_stairs_for_player;
 use sa_world::bindings::process_line_of_sight;
 use sa_world::bindings::vector_add;
-use sa_core::bindings::vector_sub;
+use sa_world::bindings::vector_sub;
 use crate::bindings::calculate_derived_values;
 use crate::bindings::copy_camera_matrix_to_rw_cam;
 use crate::bindings::keep_track_of_the_speed;
@@ -258,12 +258,12 @@ pub fn camera_process(this: GPtr<u8>) {
                 set(0x10 + i * 4, x(rd(cam, 0x148 + i * 4)).fsub_m(f(0x30 + i * 4)));
             }
             copy3(p(0x3C), p(0x10));
-            normalise(p(0x3C));
+            normalise(GPtr::<u8>::cast::<[f32;3]>(p(0x3C)));
             cross_product(p(0x10), p(0x3C), p(0x24));
-            normalise(p(0x10));
+            normalise(GPtr::<u8>::cast::<[f32;3]>(p(0x10)));
             cross_product(p(0x78), p(0x10), p(0x3C));
             copy3(p(0x24), p(0x78));
-            normalise(p(0x24));
+            normalise(GPtr::<u8>::cast::<[f32;3]>(p(0x24)));
         } else {
             copy3(p(0x3C), cam.byte_add(0x190));
         }
@@ -296,22 +296,22 @@ pub fn camera_process(this: GPtr<u8>) {
         let s = a.fsin();
         setf(0x1C, s.to_f32());
         set(0x38, s.fmul(kd).fadd_m(f(0x38)));
-        normalise(p(0x24));
+        normalise(GPtr::<u8>::cast::<[f32;3]>(p(0x24)));
         let ku = x(drunk.read()).fmul_m(k(K_DRUNK_UP));
         set(0x24, x(f(0x20)).fmul(ku).fadd_m(f(0x24)));
         set(0x28, x(f(0x1C)).fmul(ku).fadd_m(f(0x28)));
-        normalise(p(0x24));
-        normalise(p(0x3C));
+        normalise(GPtr::<u8>::cast::<[f32;3]>(p(0x24)));
+        normalise(GPtr::<u8>::cast::<[f32;3]>(p(0x3C)));
         let kf = x(drunk.read()).fmul_m(k(K_DRUNK_FRONT));
         set(0x3C, x(f(0x20)).fmul(kf).fadd_m(f(0x3C)));
         set(0x40, x(f(0x1C)).fmul(kf).fadd_m(f(0x40)));
-        normalise(p(0x3C));
+        normalise(GPtr::<u8>::cast::<[f32;3]>(p(0x3C)));
         cross_product(p(0x78), p(0x3C), p(0x24));
         copy3(p(0x5C), p(0x78));
-        normalise(p(0x5C));
+        normalise(GPtr::<u8>::cast::<[f32;3]>(p(0x5C)));
         cross_product(p(0x78), p(0x5C), p(0x3C));
         copy3(p(0x24), p(0x78));
-        normalise(p(0x24));
+        normalise(GPtr::<u8>::cast::<[f32;3]>(p(0x24)));
         phase.write(x(phase.read()).fadd_m(k(K_DRUNK_STEP)).to_f32());
     }
     // 15.
@@ -565,7 +565,7 @@ fn transition(this: GPtr<u8>, b: GPtr<u8>) {
             set(0x3C + i * 4, x(f(0x4C + i * 4)).fsub_m(f(0x30 + i * 4)));
         }
         store_values_during_inter_pol(this, p(0x30), this.byte_add(0x8E4), this.byte_add(0x8F0), this.byte_add(0x110));
-        normalise(p(0x3C));
+        normalise(GPtr::<u8>::cast::<[f32;3]>(p(0x3C)));
         if looking_at_player() == 1 {
             setf(0x24, 0.0);
             setf(0x28, 0.0);
@@ -573,7 +573,7 @@ fn transition(this: GPtr<u8>, b: GPtr<u8>) {
         } else {
             copy3(p(0x24), this.byte_add(0x8F0));
         }
-        normalise(p(0x24));
+        normalise(GPtr::<u8>::cast::<[f32;3]>(p(0x24)));
         orthonormalise(this, b);
         wr::<u32>(b, 0x58, rd::<u32>(this, 0x110));
     } else if !x(fs).fcom(x(c10)).test_any(0x41) && !x(fs).fcom(x(k(K_1))).test_parity(0x41) {
@@ -604,7 +604,7 @@ fn transition(this: GPtr<u8>, b: GPtr<u8>) {
         set(0x40, x(f(0x50)).fsub_m(f(0x34)));
         set(0x44, x(f(0x54)).fsub_m(f(0x38)));
         store_values_during_inter_pol(this, p(0x30), p(0x4C), p(0x24), p(0x58));
-        normalise(p(0x3C));
+        normalise(GPtr::<u8>::cast::<[f32;3]>(p(0x3C)));
         if looking_at_player() == 1 {
             setf(0x24, 0.0);
             setf(0x28, 0.0);
@@ -649,25 +649,25 @@ fn push_out(b: GPtr<u8>, s: GPtr<u8>, dy_first: bool) {
 fn orthonormalise(this: GPtr<u8>, b: GPtr<u8>) {
     let p = |o: isize| b.byte_add(o);
     let mode = rd::<u16>(active_cam(this), 0xC);
-    normalise(p(0x3C));
+    normalise(GPtr::<u8>::cast::<[f32;3]>(p(0x3C)));
     if mode == 1 || mode == 0x25 {
         wr::<f32>(b, 0x5C, -1.0);
         wr::<f32>(b, 0x60, 0.0);
         wr::<f32>(b, 0x64, 0.0);
         cross_product(p(0x78), p(0x3C), p(0x5C));
     } else {
-        normalise(p(0x24));
+        normalise(GPtr::<u8>::cast::<[f32;3]>(p(0x24)));
         cross_product(p(0x6C), p(0x3C), p(0x24));
         for i in 0..3 {
             wr::<u32>(b, 0x5C + i * 4, rd::<u32>(b, 0x6C + i * 4));
         }
-        normalise(p(0x5C));
+        normalise(GPtr::<u8>::cast::<[f32;3]>(p(0x5C)));
         cross_product(p(0x78), p(0x5C), p(0x3C));
     }
     for i in 0..3 {
         wr::<u32>(b, 0x24 + i * 4, rd::<u32>(b, 0x78 + i * 4));
     }
-    normalise(p(0x24));
+    normalise(GPtr::<u8>::cast::<[f32;3]>(p(0x24)));
 }
 
 /// This module's registrations.

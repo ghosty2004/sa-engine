@@ -14,12 +14,9 @@ use sa_core::bindings::vector_normalise_and_mag as normalise_and_mag;
 use sa_world::bindings::rw_im3d_end;
 use sa_world::bindings::rw_im3d_render_indexed_primitive;
 use sa_world::bindings::rw_im3d_transform;
+use sa_core::bindings::cross_product;
+use sa_core::bindings::vector_normalise as normalise;
 orig! {
-    /// `CVector::Normalise()` (0x59C910)
-    fn normalise(v: GPtr<CVector>) = thiscall 0x59C910 => sa_world::collision::data::normalise_port;
-    /// `CVector::CrossProduct(CVector* out, const CVector* a, const CVector* b)` (0x59C730)
-    fn cross_product(out: GPtr<CVector>, a: GPtr<CVector>, b: GPtr<CVector>) -> GPtr<CVector>
-        = cdecl 0x59C730 => sa_world::collision::data::cross_product_port;
     /// `RwRenderStateSet` (RwEngineInstance +0x20)
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
 }
@@ -70,7 +67,7 @@ pub fn vehicle_do_head_light_beam(this: GPtr<u8>, light_id: u32, mat: GPtr<u8>, 
         return;
     }
     let mut p = [0f32; 3];
-    matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::from_raw(p.as_mut_ptr()).cast()), mat, GPtr::from_raw(dummy.as_mut_ptr()).cast());
+    matrix_mul_vec(GPtr::from_raw(p.as_mut_ptr()).cast(), mat, GPtr::from_raw(dummy.as_mut_ptr()).cast());
     if is_right as u8 == 0 {
         let k = x(f32::from_bits(dummy[0])).fdouble();
         let a = k.fmul_m(vf(mat, 0));
@@ -98,10 +95,10 @@ pub fn vehicle_do_head_light_beam(this: GPtr<u8>, light_id: u32, mat: GPtr<u8>, 
     let uy = f32_of(angle.fmul_m(vf(mat, 9)));
     let uz = angle.fmul_m(vf(mat, 10));
     let mut n = CVector::new(f32_of(x(vf(mat, 4)).fsub_m(ux)), f32_of(x(vf(mat, 5)).fsub_m(uy)), f32_of(x(vf(mat, 6)).fsub(uz)));
-    normalise(GPtr::from_raw(&mut n));
+    normalise(GPtr::<sa_math::vector::CVector>::cast::<[f32;3]>(GPtr::from_raw(&mut n)));
     let mut r = CVector::default();
-    cross_product(GPtr::from_raw(&mut r), GPtr::from_raw(&mut n), GPtr::from_raw(&mut d));
-    normalise(GPtr::from_raw(&mut r));
+    cross_product(GPtr::<sa_math::vector::CVector>::cast::<u8>(GPtr::from_raw(&mut r)), GPtr::<sa_math::vector::CVector>::cast::<u8>(GPtr::from_raw(&mut n)), GPtr::<sa_math::vector::CVector>::cast::<u8>(GPtr::from_raw(&mut d)));
+    normalise(GPtr::<sa_math::vector::CVector>::cast::<[f32;3]>(GPtr::from_raw(&mut r)));
     let tenth = f32::from_bits(0x3DCC_CCCD);
     let fx = x(vf(mat, 4)).fmul_m(tenth);
     let fy = x(vf(mat, 5)).fmul_m(tenth);
@@ -176,7 +173,7 @@ pub fn vehicle_do_head_light_beam(this: GPtr<u8>, light_id: u32, mat: GPtr<u8>, 
 }
 use sa_world::bindings::get_wheel_status as dm_get_wheel_status;
 use sa_core::bindings::matrix_attach;
-use sa_core::bindings::matrix_dtor;
+use sa_world::bindings::matrix_dtor;
 use sa_core::bindings::matrix_rotate_y;
 use sa_core::bindings::matrix_update_rw;
 use sa_world::bindings::fx_add_particle;
@@ -460,12 +457,12 @@ fn water_particles(this: GPtr<u8>, wheel: isize, side: f32) {
         } else {
             g::<GPtr<u8>>(0xA9_AE20).read()
         };
-        fx_add_particle(fx, pp, vp, f32::from_bits(0), mp, f32::from_bits(0xBF80_0000), f32::from_bits(0x3F99_999A), f32::from_bits(0x3F19_999A), 0);
+        fx_add_particle(fx, pp, vp, f32::from_bits(0).to_bits(), mp, f32::from_bits(0xBF80_0000).to_bits(), f32::from_bits(0x3F99_999A), f32::from_bits(0x3F19_999A), 0);
     } else if surface_is_sand(infos, surf) != 0 {
         let mut m2 = [0u32; 8];
         let m2p = GPtr::from_raw(m2.as_mut_ptr()).cast::<u8>();
         fx_prt_mult_ctor(m2p, f32::from_bits(0x3F4F_5C29), f32::from_bits(0x3F2B_851F), f32::from_bits(0x3F11_EB85), f32::from_bits(0x3EB3_3333), f32::from_bits(0x3F00_0000), f32::from_bits(0), f32::from_bits(0x3D4C_CCCD));
-        fx_add_particle(g::<GPtr<u8>>(0xA9_AE18).read(), pp, vp, f32::from_bits(0), m2p, f32::from_bits(0xBF80_0000), f32::from_bits(0x3F99_999A), f32::from_bits(0x3F19_999A), 0);
+        fx_add_particle(g::<GPtr<u8>>(0xA9_AE18).read(), pp, vp, f32::from_bits(0).to_bits(), m2p, f32::from_bits(0xBF80_0000).to_bits(), f32::from_bits(0x3F99_999A), f32::from_bits(0x3F19_999A), 0);
     }
 }
 

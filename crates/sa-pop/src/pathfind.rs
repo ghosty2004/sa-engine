@@ -181,11 +181,11 @@ fn region_value(c: X87) -> i32 {
 pub use sa_core::bindings::atexit;
 pub use sa_core::bindings::memory_free as mem_free;
 pub use sa_core::bindings::load_data_from_work_buffer;
-pub use sa_core::bindings::path_find_update_streaming as update_streaming_call;
+pub use crate::bindings::path_find_update_streaming as update_streaming_call;
 pub use sa_core::bindings::save_data_to_work_buffer;
-pub use sa_world::bindings::are_nodes_loaded_for_area as are_nodes_loaded_for_area_call;
-pub use sa_world::bindings::find_node_closest_to_coors as find_node_closest_to_coors_call;
-pub use sa_world::bindings::switch_roads_off_in_area as switch_roads_off_in_area_call;
+pub use crate::bindings::are_nodes_loaded_for_area as are_nodes_loaded_for_area_call;
+pub use crate::bindings::find_node_closest_to_coors as find_node_closest_to_coors_call;
+pub use crate::bindings::switch_roads_off_in_area as switch_roads_off_in_area_call;
 orig! {
     /// the constructor of the 0x977BE8 object (0x4541E0, thiscall, returns `this`)
     pub fn ctor_977be8(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4541E0 => unported;
@@ -1127,10 +1127,10 @@ fn gt_or_nan(a: X87, b: X87) -> bool {
 }
 
 pub use sa_core::bindings::memory_malloc as mem_malloc;
-pub use sa_core::bindings::stream_read as rw_stream_read;
-pub use sa_core::bindings::streaming_remove_model as remove_model;
+pub use sa_rwcore::bindings::stream_read as rw_stream_read;
+pub use sa_stream::bindings::streaming_remove_model as remove_model;
 pub use sa_core::bindings::streaming_request_model as request_model;
-pub use sa_world::bindings::get_position as get_position_call;
+pub use crate::bindings::get_position as get_position_call;
 orig! {
     /// `CPathFind::MarkRegionsForCoors(CVector, float)` (0x44DB60)
     pub fn mark_regions_for_coors_call(this: GPtr<u8>, px: f32, py: f32, pz: f32, r: f32) = thiscall 0x44DB60 => mark_regions_for_coors;
@@ -1749,10 +1749,7 @@ pub fn these_2_nodes_are_adjacent(_this: GPtr<u8>, a: u32, b: u32) -> u8 {
 // ---------------------------------------------------------------------------------------------------------
 // CPathFind: more closest-node searches
 
-orig! {
-    /// `CVector::Normalise()` (0x59C910)
-    pub fn vector_normalise(v: GPtr<f32>) = thiscall 0x59C910 => unported;
-}
+pub use sa_core::bindings::vector_normalise;
 
 /// `CPathFind::FindNodeClosestToCoorsFavourDirection(CVector pos, uint8 type, float dirX, float dirY)` (0x44FCE0,
 /// hidden return, `ret 0x1C`). The direction is normalised (`1.0f / len`; a zero length gives `(1.0, dirY)`); over
@@ -1938,7 +1935,7 @@ pub fn find_node_orientation_for_car_placement(this: GPtr<u8>, addr: u32) -> X87
     let dy = x(dy).fsub(coord(n, 0xA)).to_f32();
     let mut v = [dx, dy, 0.0];
     let vp = GPtr::from_raw(v.as_mut_ptr());
-    vector_normalise(vp);
+    vector_normalise(vp.cast::<[f32;3]>());
     x(vp.read())
         .fchs()
         .fpatan(x(vp.wrapping_index(1).read()))
@@ -3066,7 +3063,7 @@ pub fn find_node_pair_closest_to_coors(
     let mut v = [ax.fsub(bx).to_f32(), x(ay).fsub(by).to_f32(), x(az).fsub_m(bz).to_f32()];
     v[2] = 0.0;
     let vp = GPtr::from_raw(v.as_mut_ptr());
-    vector_normalise(vp);
+    vector_normalise(vp.cast::<[f32;3]>());
     let h = x(vp.read()).fchs().fpatan(x(vp.wrapping_index(1).read())).fmul_m(f32::from_bits(0x4265_2EE0));
     out_heading.write(h.to_f32());
 }
@@ -3260,7 +3257,7 @@ pub fn find_node_coors_for_script_two_nodes(
     let vy = x(pos(nb)[1]).fsub_m(pos(na)[1]).to_f32();
     let mut v = [vx, vy, stale_z];
     let vp = GPtr::from_raw(v.as_mut_ptr());
-    vector_normalise(vp);
+    vector_normalise(vp.cast::<[f32;3]>());
     let mut side = [vp.wrapping_index(1).read(), x(vp.read()).fchs().to_f32(), 0.0];
     let f = xi(i32::from(width)).fmul_m(0.0625).fadd_m(f32::from_bits(0x402C_CCCD)).to_f32();
     let mut scaled = [0f32; 3];
@@ -3271,12 +3268,12 @@ pub fn find_node_coors_for_script_two_nodes(
     out
 }
 
-pub use sa_core::bindings::rw_stream_close;
+pub use sa_rwcore::bindings::rw_stream_close;
 pub use sa_core::bindings::sprintf1 as sprintf_i;
-pub use sa_core::bindings::rw_stream_open;
+pub use sa_rwcore::bindings::rw_stream_open;
 pub use sa_core::bindings::timer_resume;
 pub use sa_core::bindings::timer_suspend;
-pub use sa_stream::bindings::load_path_find_data_from_stream_call;
+pub use crate::bindings::load_path_find_data_from_stream_call;
 
 /// `CPathFind::LoadPathFindData(int32 area)` (0x452F40): with the timer suspended, formats the file name
 /// (`[0x859AB4]` into the buffer 0xB71670), opens it as a file stream for reading, loads it and closes it.

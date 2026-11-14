@@ -20,31 +20,32 @@ const PICK_UP_BIKE_CB: u32 = 0x6462F0;
 const K_ZERO: usize = 0x858B50;
 
 use sa_world::bindings::anim_blend_animation;
-use sa_core::bindings::assoc_set_finish_callback;
+use sa_anim::bindings::assoc_set_finish_callback;
 use sa_core::bindings::clump_get_association;
 use crate::bindings::go_to_point_ctor;
 use crate::bindings::ik_chain_update_target;
-use sa_core::bindings::vehicle_anim_group_get_group as veh_anim_group_get_group;
-use sa_core::bindings::entity_clean_up_old_reference;
+use sa_anim::bindings::vehicle_anim_group_get_group as veh_anim_group_get_group;
+use sa_world::bindings::entity_clean_up_old_reference;
 use sa_core::bindings::entity_register_reference;
 use sa_core::bindings::fx_play as fx_system_play;
-use sa_core::bindings::get_pad as pad_get_pad;
-use sa_core::bindings::tm_get_task_secondary;
-use sa_core::bindings::tm_set_task_secondary;
+use sa_input::bindings::get_pad as pad_get_pad;
+use crate::bindings::tm_get_task_secondary;
+use crate::bindings::tm_set_task_secondary;
 use sa_stream::bindings::anim_remove_block_ref as anim_remove_anim_block_ref;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::fx_copy_parent_matrix as fx_system_copy_parent_matrix;
 use sa_world::bindings::fx_kill as fx_system_kill;
 use sa_world::bindings::intel_find_task_by_type;
 use sa_world::bindings::membership_get_leader;
-use sa_world::bindings::ped_groups_get_peds_group as groups_get_peds_group;
+use crate::bindings::ped_groups_get_peds_group as groups_get_peds_group;
 use sa_world::bindings::ped_restore_heading_rate;
 use sa_world::bindings::run_anim_ctor;
-use sa_world::bindings::task_simple_ctor;
-use sa_world::bindings::task_simple_dtor;
+use crate::bindings::task_simple_ctor;
+use crate::bindings::task_simple_dtor;
 use sa_world::bindings::fx_create_system as fx_manager_create_fx_system;
 use sa_world::bindings::is_sunbather as population_is_sunbather;
 use sa_world::bindings::swim_ctor;
+use sa_world::bindings::die_ctor as complex_die_ctor;
 orig! {
     /// `CTask::MakeAbortable(CPed*, int32 priority, const CEvent*)` (vtable +0x18, `ret 0xC`)
     fn v_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, prio: i32, ev: u32) -> u8 = thiscall vslot 0x18 => unported;
@@ -60,10 +61,6 @@ orig! {
     fn ik_chain_update_entity(c: GPtr<u8>, e: u32) = thiscall 0x617E00 => unported;
     /// `IKChain_c::UpdateOffset(int32 bone, CVector offset)` (0x617E20, `ret 0x10`; the vector by value)
     fn ik_chain_update_offset(c: GPtr<u8>, bone: u32, x: u32, y: u32, z: u32) = thiscall 0x617E20 => unported;
-    /// `CTaskComplexDie::CTaskComplexDie(eWeaponType, AssocGroupId, AnimationId, float delta, float speed, bool,
-    /// bool, eFallDir, bool)` (0x630040, `ret 0x24`)
-    #[allow(clippy::too_many_arguments)]
-    fn complex_die_ctor(t: GPtr<u8>, w: u32, g: u32, a: u32, d: u32, s: u32, b1: u32, b2: u32, dir: u32, b3: u32) -> GPtr<u8> = thiscall 0x630040 => unported;
 }
 
 /// `CTaskSimplePickUpBike::StartAnim(const CPed*)` (0x64AE90, `ret 4`): by the door (+0x14) and the bike's roll
@@ -88,7 +85,7 @@ pub fn pick_up_bike_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
     let group = veh_anim_group_get_group(ag, anim as i32) as u32;
     let a = anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), group, anim, f32::from_bits(0x4100_0000));
     wr::<GPtr<u8>>(this, 0xC, a);
-    assoc_set_finish_callback(a, PICK_UP_BIKE_CB, GPtr::from_addr((this.addr() as u32) as usize));
+    assoc_set_finish_callback(a, PICK_UP_BIKE_CB, GPtr::<u8>::addr(GPtr::from_addr((this.addr() as u32) as usize)) as u32);
 }
 
 /// `CTaskSimplePickUpBike::ProcessPed(CPed*)` (0x64D910, `ret 4`): done (AL = 1) when finished (+8) or without a
@@ -164,7 +161,7 @@ pub fn swim_dtor(this: GPtr<u8>) {
         let slot = this.byte_add(off);
         let e = rd::<GPtr<u8>>(slot, 0);
         if !e.is_null() {
-            entity_clean_up_old_reference(e, slot.cast::<GPtr<u8>>());
+            entity_clean_up_old_reference(e, slot.cast::<u8>());
         }
     }
     task_simple_dtor(this);
@@ -290,7 +287,7 @@ pub fn ik_look_at_update_look_at_info(this: GPtr<u8>, _name: u32, _ped: u32, tar
     let slot = this.byte_add(0x28);
     let old = rd::<GPtr<u8>>(slot, 0);
     if !old.is_null() {
-        entity_clean_up_old_reference(old, slot.cast::<GPtr<u8>>());
+        entity_clean_up_old_reference(old, slot.cast::<u8>());
     }
     wr::<GPtr<u8>>(slot, 0, target);
     if !target.is_null() {
@@ -335,9 +332,9 @@ pub fn in_water_create_first_sub_task(_this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8
     }
     if rd::<u32>(ped, 0x470) & 0x10_0000 != 0 {
         let t = task_new(0x28);
-        return if t.is_null() { t } else { complex_die_ctor(t, 0x35, 0, 0x8C, 0x4080_0000, 0, 0, 0, 0, 0) };
+        return if t.is_null() { t } else { complex_die_ctor(t, 0x35, 0, 0x8C, f32::from_bits(0x4080_0000), f32::from_bits(0), 0, 0, 0, 0) };
     }
-    let grp = groups_get_peds_group(ped);
+    let grp = GPtr::from_addr(groups_get_peds_group(ped.addr() as u32) as usize);
     if !grp.is_null() {
         let ms = grp.byte_add(8);
         if !membership_get_leader(ms).is_null() && rd::<u32>(membership_get_leader(ms), 0x480) != 0 {

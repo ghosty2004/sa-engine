@@ -74,14 +74,13 @@ pub use crate::bindings::rw_texture_set_find_call_back;
 pub use sa_core::bindings::get_uppercase_key;
 pub use sa_core::bindings::rw_stream_close;
 pub use sa_core::bindings::rw_stream_find_chunk_call as rw_stream_find_chunk;
-pub use sa_core::bindings::streaming_remove_model as remove_model;
+pub use crate::bindings::streaming_remove_model as remove_model;
+pub use sa_core::bindings::crt_new as operator_new;
 orig! {
     /// `RwTextureSetReadCallBack(cb)` (0x7F3500)
     pub fn rw_texture_set_read_call_back(cb: u32) -> i32 = cdecl 0x7F3500 => unported;
     /// CRT `sprintf(buf, fmt, s)` (0x821BB5)
     pub fn sprintf_s(buf: GPtr<u8>, fmt: GPtr<u8>, s: GPtr<u8>) -> i32 = cdecl 0x821BB5 => unported;
-    /// CRT `operator new` (0x82119A)
-    pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
     /// `RwTexDictionaryGtaStreamRead1(stream)` (0x731070)
     pub fn rw_tex_dictionary_gta_stream_read1(stream: GPtr<u8>) -> GPtr<u8> = cdecl 0x731070 => crate::rw_gta_stream::rw_tex_dictionary_gta_stream_read1;
     /// `RwTexDictionaryGtaStreamRead2(stream, dict)` (0x731150)

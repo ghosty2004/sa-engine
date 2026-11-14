@@ -17,8 +17,8 @@ use crate::bindings::stand_still_dtor;
 use crate::bindings::stand_still_process_ped;
 use crate::bindings::task_timer_is_out_of_time;
 use sa_core::bindings::entity_register_reference;
-use sa_core::bindings::find_player_ped;
-use sa_core::bindings::matrix_dtor;
+use sa_world::bindings::find_player_ped;
+use sa_world::bindings::matrix_dtor;
 use sa_core::bindings::matrix_invert;
 use sa_core::bindings::vector_difference;
 use sa_core::bindings::vector_from_multiply3x3;
@@ -27,13 +27,13 @@ use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::attach_ped_to_entity as ped_attach_to_entity;
 use sa_world::bindings::dettach_ped_from_entity as ped_dettach_from_entity;
 use sa_world::bindings::go_to_point_and_stand_still_ctor;
-use sa_world::bindings::membership_is_member;
+use crate::bindings::membership_is_member;
 use sa_world::bindings::ped_groups_are_in_same_group;
 use sa_world::bindings::ped_say;
 use sa_world::bindings::sequence_add_task;
 use sa_world::bindings::sequence_ctor;
 use sa_world::bindings::stand_still_ctor;
-use sa_world::bindings::task_complex_ctor;
+use crate::bindings::task_complex_ctor;
 use sa_world::bindings::tired_ctor;
 use sa_core::bindings::general_get_radian_angle_between_points as general_get_radian_angle_between_points_st0;
 use sa_core::bindings::general_limit_radian_angle as general_limit_radian_angle_st0;
@@ -86,7 +86,7 @@ fn seek_ctor(
     b7: u32,
     b8: u32,
 ) -> GPtr<u8> {
-    task_complex_ctor(this);
+    task_complex_ctor(this.addr() as u32);
     for (off, a) in [0xC, 0x10, 0x14, 0x18].into_iter().zip(&args[..4]) {
         wr::<u32>(this, off, *a);
     }
@@ -451,7 +451,7 @@ fn attach_to_boat(ped: GPtr<u8>, boat: GPtr<u8>, xy: bool) -> GPtr<u8> {
         }
     }
     copy3(n, v1);
-    vector_normalise(n);
+    vector_normalise(n.cast::<[f32;3]>());
     let c = g::<f32>(0x858C84).read();
     let a = x(rd::<f32>(n, 8)).fmul_m(c);
     let b = x(rd::<f32>(n, 4)).fmul_m(c);
@@ -464,7 +464,7 @@ fn attach_to_boat(ped: GPtr<u8>, boat: GPtr<u8>, xy: bool) -> GPtr<u8> {
         wr::<f32>(v1, k, f32_of(x(rd::<f32>(bp, k)).fsub_m(rd::<f32>(v1, k))));
     }
     copy3(p, v1);
-    if ped_placement_find_z_coor_for_ped(p) != 0 {
+    if ped_placement_find_z_coor_for_ped(p.cast::<f32>()) != 0 {
         copy3(v1, p);
     }
     let bm = rd::<GPtr<u8>>(boat, 0x14);
@@ -481,7 +481,7 @@ fn attach_to_boat(ped: GPtr<u8>, boat: GPtr<u8>, xy: bool) -> GPtr<u8> {
     let slot = i32::from(rd::<i8>(ped, 0x718));
     let w = rd::<u32>(ped, 0x5A0 + slot as isize * 0x1C);
     let dir = ftol32(lim) as u32;
-    ped_attach_to_entity(ped, boat, f32::from_bits(rd::<u32>(o, 0)), f32::from_bits(rd::<u32>(o, 4)), f32::from_bits(rd::<u32>(o, 8)), dir, f32::from_bits(0x3E4C_CCCD), w);
+    ped_attach_to_entity(ped, boat, f32::from_bits(rd::<u32>(o, 0)).to_bits(), f32::from_bits(rd::<u32>(o, 4)).to_bits(), f32::from_bits(rd::<u32>(o, 8)).to_bits(), dir, f32::from_bits(0x3E4C_CCCD).to_bits(), w as i32);
     let t = task_new(0x20);
     let t = if t.is_null() { GPtr::NULL } else { stand_still_ctor(t, 0x7D0, 0, 0, f32::from_bits(0x4100_0000)) };
     matrix_dtor(m);
@@ -669,7 +669,7 @@ fn seek_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>, xy: bool) -> GPtr<u8> {
         let pd = rd::<GPtr<u8>>(find_player_ped(-1), 0x480);
         let id = rd::<i32>(pd, 0x38);
         let gm = GPtr::<u8>::from_addr(id.wrapping_mul(0x2D4).wrapping_add(0xC09928) as u32 as usize);
-        if membership_is_member(gm, ped) != 0 {
+        if membership_is_member(gm, ped) as u8 != 0 {
             let ms = rd::<u32>(ped, 0x534);
             if (5..=7).contains(&ms)
                 && u32::from(rd::<u16>(ped, 0x20)).wrapping_add(g::<u32>(0xB7CB4C).read()) & 0x3FFF == 0

@@ -32,13 +32,13 @@ use crate::bindings::d3d9_instance;
 use crate::bindings::delete_vertex_shader;
 use crate::bindings::flush_cache;
 use crate::bindings::geometry_get_usage_flags;
-use sa_core::bindings::set_render_state;
+use crate::bindings::set_render_state;
 use crate::bindings::set_transform_world;
-use sa_core::bindings::set_tss;
+use crate::bindings::set_tss;
 use crate::bindings::resources_free_res_entry as res_free;
-use sa_core::bindings::frame_get_ltm;
-use sa_core::bindings::get_render_state;
-use sa_core::bindings::set_texture;
+use crate::bindings::frame_get_ltm;
+use crate::bindings::get_render_state;
+use crate::bindings::set_texture;
 orig! {
     /// `IDirect3DDevice9::SetPixelShader` (+0x1AC)
     fn dev_set_pixel_shader(dev: GPtr<u8>, ps: u32) -> i32 = stdcall vslot 0x1AC => unported;

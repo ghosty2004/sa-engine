@@ -11,7 +11,7 @@ pub use crate::bindings::frustum_info_ctor as fx_sphere_ctor;
 pub use sa_core::bindings::eh_vector_ctor as eh_vector_constructor_iterator;
 pub use sa_core::bindings::list_add_item;
 pub use sa_core::bindings::rw_matrix_create;
-pub use sa_core::bindings::rw_matrix_multiply;
+pub use sa_rwcore::bindings::rw_matrix_multiply;
 pub use sa_core::bindings::rw_v3d_transform_points;
 pub use crate::bindings::frustum_is_collision as fx_frustum_is_collision;
 orig! {

@@ -15,8 +15,8 @@ use crate::bindings::event_group_add;
 use crate::bindings::ped_set_current_weapon as set_current_weapon;
 use crate::bindings::set_texture_and_model;
 use sa_core::bindings::clothes_rebuild_player as rebuild_player;
-use sa_core::bindings::find_player_ped;
-use sa_core::bindings::load_all_requested_models;
+use crate::bindings::find_player_ped;
+use sa_stream::bindings::load_all_requested_models;
 use sa_core::bindings::streaming_request_model as request_model;
 use sa_stream::bindings::reclassify_loaded_cars;
 use sa_stream::bindings::stream_peds_into_random_slots;
@@ -65,7 +65,7 @@ pub fn suicide_cheat() {
     let mut ev = [0u32; 0x20];
     let c = GPtr::from_raw(&mut calc as *mut [u32; 8]).cast::<u8>();
     let e = GPtr::from_raw(&mut ev as *mut [u32; 0x20]).cast::<u8>();
-    damage_calc_ctor(c, GPtr::NULL, 1000.0, 0, 3, 0);
+    damage_calc_ctor(c, GPtr::<u8>::addr(GPtr::NULL) as u32, 1000.0f32.to_bits(), 0, 3, 0);
     event_damage_ctor(e, GPtr::NULL, g::<u32>(0xB7_CB84).read(), 0, 3, 0, 0, 0);
     if event_damage_affects_ped(e, find_player_ped(-1)) != 0 {
         compute_damage_response(c, find_player_ped(-1), e.byte_add(0x38), 1);

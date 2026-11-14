@@ -19,7 +19,7 @@ const PAIR: isize = 0x14;
 /// Pairs per array.
 const PAIRS: isize = 8;
 
-use sa_world::bindings::sequence_flush;
+use crate::bindings::sequence_flush;
 use crate::bindings::pgi_set_task;
 orig! {
     /// Virtual slot +0 (scalar deleting destructor, `ret 4`): `delete obj` with flags 1.

@@ -12,21 +12,19 @@
 //! +6 i8 lines.
 #![allow(clippy::unreadable_literal, clippy::needless_range_loop)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 use sa_world::collision::fpu::Fpu;
 use sa_world::physical::attach::{allocate_matrix, process_col_models, simple_transform_update_matrix};
 use sa_world::physical::shared::*;
 
+pub use crate::bindings::process_rider_anims;
+pub use sa_world::bindings::add_collision_record;
+pub use sa_world::bindings::col_point_assign;
 orig! {
-    /// `CBike::ProcessRiderAnims(CPed*, CVehicle*, CRideAnimData*, tBikeHandlingData*, int16)` (0x6B7280)
-    pub fn process_rider_anims(ped: Ent, v: Ent, data: Ent, handling: u32, a5: u32) = cdecl 0x6B7280 => unported;
-    /// `CPhysical::AddCollisionRecord(CEntity*)` (0x543490)
-    pub fn add_collision_record(e: Ent, other: Ent) = thiscall 0x543490 => sa_world::physical::base::add_collision_record;
     /// `CAutomobile::ProcessEntityCollision(CEntity*, CColPoint*)` (0x6ACE70, EAX count)
     pub fn automobile_process_entity_collision(v: Ent, e: Ent, cps: Ent) -> i32 = thiscall 0x6ACE70 => unported;
-    /// `CColPoint::operator=(const CColPoint&)` (stub 0x40FC80 → 0x15637E0)
-    pub fn col_point_assign(dst: Ent, src: Ent) -> Ent = thiscall 0x40FC80 => unported;
 }
 
 /// `if (!e->m_matrix) { AllocateMatrix(); m_placement.UpdateMatrix(m_matrix); }`
@@ -46,7 +44,7 @@ pub fn quad_bike_process_driving_anims(this: Ent, ped: Ent, _b: u32) {
     if ru(this, EFLAGS) & 0x20000 != 0 {
         return;
     }
-    process_rider_anims(ped, this, this.byte_add(0x98C), ru(this, 0x988), 0);
+    process_rider_anims(ped, this, this.byte_add(0x98C), GPtr::from_addr(ru(this, 0x988) as usize), 0);
 }
 
 /// The ground contact bookkeeping of one wheel (shared by the monster truck and trailer loops):

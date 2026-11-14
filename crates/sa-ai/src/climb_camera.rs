@@ -5,19 +5,15 @@
 
 use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
 use sa_core::bindings::matrix_mul_vec;
-use sa_stream::bindings::placeable_allocate_matrix;
+use sa_world::bindings::placeable_allocate_matrix;
 use sa_stream::bindings::simple_transform_update_matrix;
 use sa_world::bindings::placeable_get_matrix;
-orig! {
-    /// `CWorld::ProcessVerticalLine(const CVector&, float, CColPoint&, CEntity*&, bool x7)` (0x5674E0)
-    #[allow(clippy::too_many_arguments)]
-    fn world_process_vertical_line(o: GPtr<u8>, z: f32, cp: GPtr<u8>, ent: GPtr<u8>, b: u32, v: u32, p: u32, ob: u32, d: u32, see: u32, poly: u32) -> u8 = cdecl 0x5674E0 => unported;
-}
+use sa_world::bindings::world_process_vertical_line;
 
 use sa_core::field::gf as c;
 
@@ -55,7 +51,7 @@ fn handhold(this: GPtr<u8>) -> ([u32; 3], X87) {
         simple_transform_update_matrix(e.byte_add(4), rd::<GPtr<u8>>(e, 0x14));
     }
     let mut out = [0u32; 3];
-    let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(buf(&mut out)), rd::<GPtr<u8>>(e, 0x14), buf(&mut pos)));
+    let r = matrix_mul_vec(buf(&mut out), rd::<GPtr<u8>>(e, 0x14), buf(&mut pos));
     pos = [rd::<u32>(r, 0), rd::<u32>(r, 4), rd::<u32>(r, 8)];
     let e = rd::<GPtr<u8>>(this, 0x24);
     let m = rd::<GPtr<u8>>(e, 0x14);
@@ -129,7 +125,7 @@ pub fn climb_get_camera_stick_modifier(this: GPtr<u8>, entity: GPtr<u8>, alpha: 
             let zmin = x(f32::from_bits(pos[2])).fsub_m(c(0x85_8B3C)).to_f32();
             let mut cp = [0u32; 11];
             let mut hit_entity = [0u32; 1];
-            let hit = world_process_vertical_line(buf(&mut pos), zmin, buf(&mut cp), buf(&mut hit_entity), 1, 1, 0, 1, 0, 0, 0);
+            let hit = world_process_vertical_line(buf(&mut pos), zmin, buf(&mut cp), buf(&mut hit_entity), 1, 1, 0, 1, 0, 0, GPtr::NULL);
             if hit != 0 {
                 let mut v = x(f32::from_bits(pos[2])).fsub_m(f32::from_bits(cp[2])).fsub_m(c(0x85_8624));
                 let zero = x(c(0x85_8B50));
@@ -203,7 +199,7 @@ fn handhold_for_vault(this: GPtr<u8>) -> ([u32; 3], X87) {
     }
     let gm = placeable_get_matrix(e);
     let mut out = [0u32; 3];
-    let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(buf(&mut out)), gm, buf(&mut pos)));
+    let r = matrix_mul_vec(buf(&mut out), gm, buf(&mut pos));
     pos = [rd::<u32>(r, 0), rd::<u32>(r, 4), rd::<u32>(r, 8)];
     let e = rd::<GPtr<u8>>(this, 0x24);
     let m = rd::<GPtr<u8>>(e, 0x14);

@@ -23,23 +23,23 @@ const CONVERSATION_NODES: usize = 0x969570;
 use crate::bindings::base_event_takes_priority;
 use crate::bindings::dtor_669d20;
 use crate::bindings::editable_response_dtor;
-use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference as clean_up_old_reference;
 use sa_core::bindings::entity_register_reference as register_reference;
 use sa_stream::bindings::get_2d_effect;
-use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
+use sa_world::bindings::placeable_allocate_matrix as allocate_matrix;
 use sa_stream::bindings::simple_transform_update_matrix;
-use sa_world::bindings::compute_response_task_type_group;
+use crate::bindings::compute_response_task_type_group;
 use sa_world::bindings::event_will_respond as will_respond;
-use sa_world::bindings::membership_is_member as group_membership_is_member;
-use sa_world::bindings::task_complex_ctor;
-use sa_world::bindings::task_simple_ctor;
+use crate::bindings::membership_is_member as group_membership_is_member;
+use crate::bindings::task_complex_ctor;
+use crate::bindings::task_simple_ctor;
 use crate::bindings::task_complex_dtor;
-use sa_core::bindings::find_player_coors;
+use sa_world::bindings::find_player_coors;
 use sa_core::bindings::matrix_mul_vec;
 use sa_world::bindings::eg_flush as event_group_flush;
 use sa_world::bindings::entity_get_bound_centre;
 use sa_world::bindings::multiply3x3;
-use sa_world::bindings::task_simple_dtor;
+use crate::bindings::task_simple_dtor;
 orig! {
     /// `CCover::AddCoverPoint(int32, CEntity*, CVector*, char, uint8)` (0x698F30, cdecl)
     fn add_cover_point(ty: u32, e: GPtr<u8>, pos: GPtr<f32>, a: u32, b: u32) = cdecl 0x698F30 => unported;
@@ -101,7 +101,7 @@ pub fn cover_remove_points_for_entity(e: GPtr<u8>) {
             continue;
         }
         if !ent.is_null() {
-            clean_up_old_reference(ent, GPtr::<u8>::cast::<GPtr<u8>>(pt.byte_add(0x10)));
+            clean_up_old_reference(ent, pt.byte_add(0x10));
         }
         let n = rd::<i32>(GPtr::from_addr(COVER_NUM_POINTS), 0);
         wr::<u8>(pt, 0, 0);
@@ -146,7 +146,7 @@ pub fn cover_find_points_for_building(b: GPtr<u8>) {
             simple_transform_update_matrix(b.byte_add(4), rd::<GPtr<u8>>(b, 0x14));
         }
         let mut pos = [0.0f32; 3];
-        matrix_mul_vec(GPtr::from_raw(pos.as_mut_ptr()), rd::<GPtr<u8>>(b, 0x14), eff);
+        matrix_mul_vec(GPtr::<f32>::cast::<u8>(GPtr::from_raw(pos.as_mut_ptr())), rd::<GPtr<u8>>(b, 0x14), eff);
         add_cover_point(3, b, GPtr::from_raw(pos.as_mut_ptr()), rd::<u8>(eff, 0x18) as u32, slot);
     }
 }
@@ -156,7 +156,7 @@ pub fn cover_find_points_for_building(b: GPtr<u8>) {
 #[hook(addr = 0x690D20, conv = thiscall, name = "CTaskComplexFacial::Constructor", this = "CTaskComplexFacial",
        expect = "51 56 8B F1 E8 87 96 F8 FF", route = "L2", hazards = "heap-writes")]
 pub fn task_complex_facial_ctor(this: GPtr<u8>) -> GPtr<u8> {
-    task_complex_ctor(this);
+    task_complex_ctor(this.addr() as u32);
     wr::<u32>(this, 0, 0x870ADC);
     wr::<u32>(this, 0x10, 0xFFFF_FFFF);
     wr::<u32>(this, 0x18, 0xFFFF_FFFF);
@@ -174,7 +174,7 @@ fn ref_dtor(this: GPtr<u8>, vt: u32, off: isize, last: u32) {
     wr::<u32>(this, 0, vt);
     let e = rd::<GPtr<u8>>(this, off);
     if !e.is_null() {
-        clean_up_old_reference(e, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(off)));
+        clean_up_old_reference(e, this.byte_add(off));
     }
     if last != 0 {
         wr::<u32>(this, 0, last);
@@ -322,7 +322,7 @@ pub fn car_set_ped_in_as_passenger_ctor(this: GPtr<u8>, veh: GPtr<u8>, door: u32
 #[hook(addr = 0x66F450, conv = thiscall, name = "CTaskComplexWander::Constructor", this = "CTaskComplexWander",
        expect = "56 8B F1 E8 58 AF FA FF", route = "L2", hazards = "heap-writes")]
 pub fn task_complex_wander_ctor(this: GPtr<u8>, ms: u32, dir: u8, flag: u8, f: u32) -> GPtr<u8> {
-    task_complex_ctor(this);
+    task_complex_ctor(this.addr() as u32);
     wr::<u32>(this, 0xC, ms);
     wr::<u8>(this, 0x10, dir);
     wr::<u32>(this, 0, 0x86FE84);
@@ -363,7 +363,7 @@ pub fn pgi_add_event(this: GPtr<u8>, ev: GPtr<u8>) -> u8 {
     let src = v_get_source_entity(rd::<GPtr<u8>>(ev, 0x10));
     if !src.is_null()
         && rd::<u8>(src, 0x36) & 7 == 3
-        && group_membership_is_member(rd::<GPtr<u8>>(this, 0).byte_add(8), src) != 0
+        && group_membership_is_member(rd::<GPtr<u8>>(this, 0).byte_add(8), src) as u8 != 0
     {
         return 0;
     }
@@ -481,13 +481,13 @@ pub fn entity_scanner_clear(this: GPtr<u8>) {
         let off = 0xC + 4 * i;
         let e = rd::<GPtr<u8>>(this, off);
         if !e.is_null() {
-            clean_up_old_reference(e, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(off)));
+            clean_up_old_reference(e, this.byte_add(off));
             wr::<u32>(this, off, 0);
         }
     }
     let e = rd::<GPtr<u8>>(this, 0x4C);
     if !e.is_null() {
-        clean_up_old_reference(e, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x4C)));
+        clean_up_old_reference(e, this.byte_add(0x4C));
         wr::<u32>(this, 0x4C, 0);
     }
 }

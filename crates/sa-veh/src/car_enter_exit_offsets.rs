@@ -6,9 +6,9 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::hook;
 
-use sa_core::bindings::load_all_requested_models;
-use sa_core::bindings::uncompress_animation;
-use sa_core::bindings::anim_add_block_ref as add_anim_block_ref;
+use sa_stream::bindings::load_all_requested_models;
+use sa_anim::bindings::uncompress_animation;
+use sa_anim::bindings::anim_add_block_ref as add_anim_block_ref;
 use sa_stream::bindings::anim_remove_block_ref as remove_anim_block_ref;
 use sa_stream::bindings::get_animation_block_index;
 use sa_core::bindings::anim_get_anim_association as get_anim_association;

@@ -36,13 +36,13 @@ pub use crate::bindings::delete_vertex_declaration;
 pub use crate::bindings::dynamic_vertex_buffer_lock as dyn_lock;
 pub use crate::bindings::flush_cache;
 pub use crate::bindings::get_current_texture;
-pub use sa_core::bindings::set_render_state;
+pub use crate::bindings::set_render_state;
 pub use crate::bindings::set_stream_source;
-pub use sa_core::bindings::set_tss;
-pub use sa_core::bindings::set_indices;
-pub use sa_core::bindings::set_pixel_shader;
-pub use sa_core::bindings::set_vertex_declaration;
-pub use sa_core::bindings::set_vertex_shader;
+pub use crate::bindings::set_tss;
+pub use crate::bindings::set_indices;
+pub use crate::bindings::set_pixel_shader;
+pub use crate::bindings::set_vertex_declaration;
+pub use crate::bindings::set_vertex_shader;
 orig! {
     /// `IDirect3DDevice9::GetAvailableTextureMem` (+0x10)
     pub fn dev_get_available_texture_mem(dev: GPtr<u8>) -> u32 = stdcall vslot 0x10 => unported;

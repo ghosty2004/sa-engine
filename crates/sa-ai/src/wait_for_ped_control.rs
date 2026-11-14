@@ -19,9 +19,9 @@ use sa_core::bindings::general_get_radian_angle_between_points as radian_angle_b
 use sa_core::bindings::general_limit_radian_angle as limit_radian_angle;
 use sa_core::bindings::matrix_mul_vec;
 use sa_core::bindings::ped_is_alive;
-use sa_world::bindings::event_group_add;
+use crate::bindings::event_group_add;
 use sa_world::bindings::intel_find_task_by_type;
-use sa_core::bindings::vector_sub;
+use sa_world::bindings::vector_sub;
 
 use sa_world::world::common::entity_pos as pos;
 
@@ -42,7 +42,7 @@ pub fn wait_for_ped_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> 
     if target.is_null() {
         return GPtr::NULL;
     }
-    if ped_is_alive(target) == 0 {
+    if ped_is_alive(target) as u8 == 0 {
         let mut ev = [0u32; 16];
         let e: GPtr<u8> = GPtr::from_raw(ev.as_mut_ptr()).cast();
         let now = g::<u32>(0xB7CB84).read();
@@ -62,7 +62,7 @@ pub fn wait_for_ped_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> 
         let mut out = [0u32; 3];
         let vp: GPtr<u8> = GPtr::from_raw(v.as_mut_ptr()).cast();
         let op: GPtr<u8> = GPtr::from_raw(out.as_mut_ptr()).cast();
-        matrix_mul_vec(op.cast::<f32>(), rd::<GPtr<u8>>(ped, 0x14), vp);
+        matrix_mul_vec(op.cast::<u8>(), rd::<GPtr<u8>>(ped, 0x14), vp);
         let t = pos(rd::<GPtr<u8>>(this, 0xC));
         (
             x(f32::from_bits(out[0])).fsub_m(rd::<f32>(t, 0)),

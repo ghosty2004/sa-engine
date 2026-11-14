@@ -16,7 +16,7 @@ const RADIUS: u32 = 0x3EB3_3333;
 
 /// A sphere of radius 0.35 at `p` touches buildings, vehicles, peds, objects or dummies.
 fn blocked(p: [u32; 3]) -> bool {
-    !test_sphere_against_world(f32::from_bits(p[0]), f32::from_bits(p[1]), f32::from_bits(p[2]), f32::from_bits(RADIUS), GPtr::NULL, 1, 1, 1, 1, 1, 0).is_null()
+    !test_sphere_against_world(sa_math::vector::CVector::new(f32::from_bits(p[0]), f32::from_bits(p[1]), f32::from_bits(p[2])), f32::from_bits(RADIUS), GPtr::<u8>::addr(GPtr::NULL) as u32, 1, 1, 1, 1, 1, 0).is_null()
 }
 
 /// `CEntryExit::FindValidTeleportPoint(CVector* out)` (0x43EAF0): `out` = the exit position of the

@@ -57,7 +57,7 @@ fn change_cam_target_reference(this: GPtr<u8>) {
     let slot = active_cam(this).byte_add(0x21C);
     let old = slot.cast::<GPtr<u8>>().read();
     if !old.is_null() {
-        clean_up_old_reference(old, slot.cast::<GPtr<u8>>());
+        clean_up_old_reference(old, slot.cast::<u8>());
     }
     active_cam(this)
         .byte_add(0x21C)
@@ -403,7 +403,7 @@ pub fn process_shake_float(this: GPtr<u8>, _unused: u32) {
     let tmp_p = GPtr::from_raw(tmp.as_mut_ptr()).cast::<u8>();
     multiply3x3(tmp_p, front, hs.byte_add(0x3C));
     copy_vec(front, tmp_p);
-    vector_normalise(front);
+    vector_normalise(front.cast::<[f32;3]>());
     let s = x(roll).fsin().to_f32();
     wr::<f32>(up, 0, s);
     wr::<u32>(up, 4, 0);
@@ -415,7 +415,7 @@ pub fn process_shake_float(this: GPtr<u8>, _unused: u32) {
     let mut out = [0u32; 3];
     let out_p = GPtr::from_raw(out.as_mut_ptr()).cast::<u8>();
     cross_product(r_p, front, up);
-    vector_normalise(r_p);
+    vector_normalise(r_p.cast::<[f32;3]>());
     let res = cross_product(out_p, r_p, front);
     copy_vec(up, res);
 
@@ -429,7 +429,7 @@ pub fn process_shake_float(this: GPtr<u8>, _unused: u32) {
 
     let res = cross_product(out_p, front, up);
     copy_vec(r_p, res);
-    vector_normalise(r_p);
+    vector_normalise(r_p.cast::<[f32;3]>());
     let res = cross_product(out_p, r_p, front);
     copy_vec(up, res);
 }

@@ -10,7 +10,7 @@ use sa_math::x87::X87;
 use crate::common::{ftol32, g, rd, x, xi};
 
 use crate::bindings::get_atomic_id;
-use sa_core::bindings::rp_clump_for_all_atomics as clump_for_all_atomics;
+use sa_rwcore::bindings::rp_clump_for_all_atomics as clump_for_all_atomics;
 
 /// The weapon-upgrade fire-rate factor: `level / 16` of the plane (+0x9D8, type 4) or heli (+0xA10,
 /// type 3) weapon level, else 1.
@@ -73,7 +73,7 @@ pub fn vehicle_get_plane_ordnance_rate_of_fire(this: GPtr<u8>, ordnance: u32) ->
        unverified = "veh4-4", route = "L2", hazards = "none")]
 pub fn vehicle_get_upgrade(this: GPtr<u8>, slot: i32) -> i32 {
     let mut data = [slot as u32, 0];
-    clump_for_all_atomics(rd::<GPtr<u8>>(this, 0x18), 0x6D_3370, GPtr::from_raw(&mut data as *mut [u32; 2]).cast());
+    clump_for_all_atomics(rd::<GPtr<u8>>(this, 0x18), 0x6D_3370, GPtr::<u8>::addr(GPtr::from_raw(&mut data as *mut [u32; 2]).cast()) as u32);
     if data[1] != 0 {
         return get_atomic_id(GPtr::from_addr(data[1] as usize));
     }

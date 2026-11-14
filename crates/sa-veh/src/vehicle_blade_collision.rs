@@ -8,11 +8,11 @@ use sa_math::x87::X87;
 
 use crate::common::{f32_of, ftol32, g, x};
 
-use sa_core::bindings::box_set;
-use sa_core::bindings::col_sphere_set;
+use sa_world::bindings::box_set;
+use sa_world::bindings::col_sphere_set;
 use sa_core::bindings::matrix_mul_vec;
-use sa_core::bindings::sphere_set;
-use sa_core::bindings::world_clear_scan_codes as clear_scan_codes;
+use sa_world::bindings::sphere_set;
+use sa_world::bindings::world_clear_scan_codes as clear_scan_codes;
 orig! {
     /// `CVehicle::BladeColSectorList(CPtrListSingleLink&, CColModel&, CMatrix&, int16 rotorType, float
     /// damageMult)` (0x6DAF00, AL)
@@ -84,15 +84,15 @@ pub fn vehicle_do_blade_collision(this: GPtr<u8>, px: f32, py: f32, pz: f32, mat
         hi[k] = f32_of(x(p[k]).fadd_m(mx[k])).to_bits();
     }
     let buf = |b: &mut [u32; 3]| -> GPtr<u8> { GPtr::from_raw(b as *mut [u32; 3]).cast() };
-    box_set(GPtr::from_addr(MODEL), buf(&mut lo), buf(&mut hi));
+    box_set(GPtr::from_addr(MODEL), GPtr::<u8>::cast::<u32>(buf(&mut lo)), GPtr::<u8>::cast::<u32>(buf(&mut hi)));
     let mut pos = [px.to_bits(), py.to_bits(), pz.to_bits()];
-    sphere_set(GPtr::from_addr(MODEL + 0x18), r.to_bits(), buf(&mut pos));
+    sphere_set(GPtr::from_addr(MODEL + 0x18), f32::from_bits(r.to_bits()).to_bits(), GPtr::<u8>::cast::<u32>(buf(&mut pos)));
     g::<u32>(MODEL + 0x2C).write(0xC1_CD68);
-    col_sphere_set(GPtr::from_addr(MODEL + 0x60), f32::from_bits(r.to_bits()), buf(&mut pos), 0, 0, 0xFF);
+    col_sphere_set(GPtr::from_addr(MODEL + 0x60), f32::from_bits(r.to_bits()).to_bits(), GPtr::<u8>::cast::<u32>(buf(&mut pos)), 0, 0, 0xFF);
     g::<u32>(MODEL + 0x38).write(0xC1_CD98);
     g::<u16>(MODEL + 0x30).write(1);
     let mut c = [0u32; 3];
-    matrix_mul_vec(GPtr::<u8>::cast::<f32>(buf(&mut c)), matrix, buf(&mut pos));
+    matrix_mul_vec(buf(&mut c), matrix, buf(&mut pos));
     let (cx, cy) = (f32::from_bits(c[0]), f32::from_bits(c[1]));
     let mut hit = false;
     let x0 = if sector(cx, r, false) > 0 { sector(cx, r, false) } else { 0 };

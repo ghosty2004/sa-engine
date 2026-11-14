@@ -29,17 +29,17 @@ pub use crate::bindings::d3d9_instance;
 pub use crate::bindings::flush_cache;
 pub use crate::bindings::light_local_enable;
 pub use crate::bindings::lights_enable;
-pub use sa_core::bindings::set_render_state;
+pub use crate::bindings::set_render_state;
 pub use crate::bindings::set_transform_world;
-pub use sa_core::bindings::set_tss;
-pub use sa_core::bindings::frame_get_ltm;
+pub use crate::bindings::set_tss;
+pub use crate::bindings::frame_get_ltm;
 pub use crate::bindings::atomic_get_world_bounding_sphere;
 pub use crate::bindings::resources_free_res_entry as res_free;
-pub use sa_core::bindings::get_render_state;
-pub use sa_core::bindings::set_streams;
-pub use sa_core::bindings::set_surface_properties;
-pub use sa_core::bindings::set_texture;
-pub use sa_core::bindings::vertex_alpha_enable;
+pub use crate::bindings::get_render_state;
+pub use crate::bindings::set_streams;
+pub use crate::bindings::set_surface_properties;
+pub use crate::bindings::set_texture;
+pub use crate::bindings::vertex_alpha_enable;
 orig! {
     /// `IDirect3DDevice9::SetPixelShader` (+0x1AC)
     pub fn dev_set_pixel_shader(dev: GPtr<u8>, ps: u32) -> i32 = stdcall vslot 0x1AC => unported;

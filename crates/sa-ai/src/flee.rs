@@ -16,21 +16,21 @@ const IK_CHAIN_MAN: usize = 0xC15448;
 use sa_world::bindings::smart_flee_point_ctor as flee_point_ctor;
 use crate::bindings::task_timer_is_out_of_time;
 use sa_core::bindings::general_random_int_in_range as general_get_random_number_in_range;
-use sa_world::bindings::event_group_add;
+use crate::bindings::event_group_add;
 use sa_world::bindings::get_event_global_group;
 use sa_world::bindings::ik_is_looking;
-use sa_world::bindings::interesting_events_add;
+use crate::bindings::interesting_events_add;
 use sa_world::bindings::ped_say;
 use sa_world::bindings::run_anim_ctor;
 use sa_world::bindings::sequence_add_task;
 use sa_world::bindings::sequence_ctor;
 use sa_world::bindings::stand_still_ctor;
-use sa_world::bindings::task_complex_ctor;
+use crate::bindings::task_complex_ctor;
 use sa_world::bindings::tired_ctor;
 use sa_world::bindings::wander_ctor;
 use crate::bindings::flee_entity_create_sub_task;
 use sa_core::bindings::general_get_node_heading_from_vector;
-use sa_core::bindings::ik_abort_look_at;
+use sa_anim::bindings::ik_abort_look_at;
 use sa_world::bindings::ik_look_at;
 orig! {
     /// `CTask::GetTaskType()` (vtable +0x10)
@@ -108,7 +108,7 @@ pub fn flee_point_create_sub_task_port(this: GPtr<u8>, ty: i32, ped: GPtr<u8>) -
             if t.is_null() {
                 return GPtr::NULL;
             }
-            task_complex_ctor(t);
+            task_complex_ctor(t.addr() as u32);
             wr::<u32>(t, 0, 0x858EB0);
             wr::<u32>(t, 0xC, 0);
             wr::<u8>(t, 0x10, 0);
@@ -200,7 +200,7 @@ pub fn flee_point_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
         }
     }
     if rd::<u32>(this, 0x30) == 6 && ik_is_looking(ik(), ped) == 0 && general_get_random_number_in_range(0, 0x64) <= 5 {
-        ik_look_at(ik(), GPtr::from_addr(0x86F770), ped, GPtr::NULL, 0x7D0, 0xFFFF_FFFF, this.byte_add(0x18), 0, 0x3E80_0000, 0x1F4, 3, 0);
+        ik_look_at(ik(), GPtr::from_addr(0x86F770), ped, GPtr::NULL, 0x7D0, -1, this.byte_add(0x18), 0, f32::from_bits(0x3E80_0000), 0x1F4, 3, 0);
     }
     res
 }
@@ -255,8 +255,8 @@ pub fn flee_entity_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<
     interesting_events_add(GPtr::from_addr(0xC0B058), 0xD, ped);
     if rd::<u32>(ped, 0x46C) & 0x100 == 0 && ik_is_looking(ik(), ped) == 0 {
         let e = rd::<GPtr<u8>>(this, 0xC);
-        let bone = if rd::<u8>(e, 0x36) & 7 == 3 { 5 } else { 0xFFFF_FFFF };
-        ik_look_at(ik(), GPtr::from_addr(0x86F7B0), ped, GPtr::from_addr((e.addr() as u32) as usize), 0xBB8, bone, GPtr::NULL, 1, 0x3E80_0000, 0x1F4, 3, 0);
+        let bone = if rd::<u8>(e, 0x36) & 7 == 3 { 5 } else { -1 };
+        ik_look_at(ik(), GPtr::from_addr(0x86F7B0), ped, GPtr::from_addr((e.addr() as u32) as usize), 0xBB8, bone as i32, GPtr::NULL, 1, f32::from_bits(0x3E80_0000), 0x1F4, 3, 0);
     }
     flee_entity_create_sub_task(this, 0x38E)
 }

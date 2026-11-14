@@ -128,7 +128,7 @@ pub struct CBaseModelInfo {
 #[allow(unsafe_code)]
 unsafe impl GameData for CBaseModelInfo {}
 #[cfg(target_pointer_width = "32")]
-const _: () = assert!(core::mem::size_of::<CBaseModelInfo>() == size::CBaseModelInfo);
+const _: () = assert!(core::mem::size_of::<crate::shared::CBaseModelInfo>() == size::CBaseModelInfo);
 
 /// Field offsets of [`CBaseModelInfo`] (for `GPtr::byte_add` field access).
 pub mod mi {

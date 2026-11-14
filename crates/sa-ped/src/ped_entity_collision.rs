@@ -19,42 +19,27 @@ use sa_world::collision::fpu::Fpu;
 use sa_world::physical::attach::{allocate_matrix, process_col_models, simple_transform_update_matrix};
 use sa_world::physical::shared::*;
 
-use sa_world::bindings::damage_calc_compute_damage_response as calc_compute;
-use sa_world::bindings::damage_calc_ctor as calc_ctor;
+use crate::bindings::damage_calc_compute_damage_response as calc_compute;
+use crate::bindings::damage_calc_ctor as calc_ctor;
 use sa_world::bindings::entity_get_is_type_physical as get_is_type_physical;
-use sa_world::bindings::get_local_direction;
+use crate::bindings::get_local_direction;
 use sa_world::bindings::placeable_set_heading as set_heading;
+use sa_core::bindings::clump_get_association;
+use sa_core::bindings::intel_get_task_use_gun as get_task_use_gun;
+use sa_core::bindings::matrix_set_rotate_z_only;
+use sa_world::bindings::add_collision_record;
+use sa_world::bindings::col_point_assign;
+use sa_world::bindings::damage_calc_dtor as calc_dtor;
+use sa_world::bindings::event_damage_affects_ped;
+use sa_world::bindings::event_damage_ctor;
+use sa_world::bindings::event_damage_dtor;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::is_steep_slope;
+use sa_world::bindings::placeable_get_heading as get_heading;
+use sa_core::bindings::vector_normalise as normalise;
 orig! {
-    /// `CPhysical::AddCollisionRecord(CEntity*)` (0x543490)
-    fn add_collision_record(e: Ent, other: Ent) = thiscall 0x543490 => sa_world::physical::base::add_collision_record;
-    /// `CColPoint::operator=(const CColPoint&)` (stub 0x40FC80 → 0x15637E0)
-    fn col_point_assign(dst: Ent, src: Ent) -> Ent = thiscall 0x40fc80 => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    fn normalise(v: GPtr<sa_math::vector::CVector>) = thiscall 0x59c910 => sa_world::collision::data::normalise_port;
-    /// `CPedIntelligence::GetTaskUseGun()` (0x600F70)
-    fn get_task_use_gun(intel: Ent) -> Ent = thiscall 0x600f70 => unported;
-    /// `CPlaceable::GetHeading()` (0x441DB0, ST0)
-    fn get_heading(e: Ent) -> f64 = thiscall 0x441db0 => unported;
-    /// `CMatrix::SetRotateZOnly(float)` (0x59B020)
-    fn matrix_set_rotate_z_only(m: Ent, h: f32) = thiscall 0x59b020 => unported;
-    /// `SurfaceInfos_c::IsSteepSlope(uint32)` (0x55E770)
-    fn is_steep_slope(si: Ent, id: u32) -> u32 = thiscall 0x55e770 => is_steep_slope_port;
     /// `SurfaceInfos_c::IsSoftLanding(uint32)` (0x55E690)
     fn is_soft_landing(si: Ent, id: u32) -> u32 = thiscall 0x55e690 => is_soft_landing_port;
-    /// `RpAnimBlendClumpGetAssociation(RpClump*, uint32 animId)` (0x4D68B0)
-    fn clump_get_association(clump: Ent, id: u32) -> Ent = cdecl 0x4d68b0 => unported;
-    /// `CEventDamage::CEventDamage(CEntity*, uint32 time, eWeaponType, ePedPieceTypes, uint8 dir, bool, bool)`
-    /// (0x4AD830)
-    fn event_damage_ctor(ev: Ent, src: Ent, time: u32, weapon: u32, piece: u32, dir: u32, a: u32, b: u32) -> Ent
-        = thiscall 0x4ad830 => unported;
-    /// `CEventDamage::AffectsPed(CPed*)` (0x4B35A0, AL)
-    fn event_damage_affects_ped(ev: Ent, ped: Ent) -> u8 = thiscall 0x4b35a0 => unported;
-    /// `CEventDamage::~CEventDamage()` (0x4AD960)
-    fn event_damage_dtor(ev: Ent) = thiscall 0x4ad960 => unported;
-    /// `CPedDamageResponseCalculator::~CPedDamageResponseCalculator()` (0x4AD420)
-    fn calc_dtor(c: Ent) = thiscall 0x4ad420 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420)
-    fn event_group_add(g: Ent, e: Ent, b: u32) -> Ent = thiscall 0x4ab420 => unported;
 }
 
 /// Phases B/C side of `IsSteepSlope` 0x55E770.
@@ -114,7 +99,7 @@ fn fall_damage_event(this: Ent, e: Ent, dir: u32, damage: u32) {
     if event_damage_affects_ped(evp, this) != 0 {
         let mut calc = [0u32; 5];
         let cp = lp(&mut calc).cast::<u8>();
-        calc_ctor(cp, GPtr::from_addr((e.addr() as u32) as usize), f32::from_bits(damage), 0x36, 3, 0);
+        calc_ctor(cp, GPtr::<u8>::addr(GPtr::from_addr((e.addr() as u32) as usize)) as u32, f32::from_bits(damage).to_bits(), 0x36, 3, 0);
         calc_compute(cp, this, evp.byte_add(0x38), 1);
         event_group_add(rp(this, 0x47C).byte_add(0x68), evp, 0);
         calc_dtor(cp);
@@ -356,7 +341,7 @@ pub fn ped_process_entity_collision(this: Ent, e: Ent, cps: Ent) -> i32 {
                         let mut v2 = [0f32; 2];
                         v2[0] = g.fstp();
                         v2[1] = g.fstp();
-                        let d = get_local_direction(this, GPtr::<f32>::cast::<u8>(lp(&mut v2).cast()));
+                        let d = get_local_direction(this, lp(&mut v2).cast());
                         dir = 0x3E80_0000 | (d as u32 & 0xFF);
                     }
                     fall_damage_event(this, e, dir, damage.to_bits());
@@ -445,7 +430,7 @@ pub fn ped_process_entity_collision(this: Ent, e: Ent, cps: Ent) -> i32 {
             last -= 1;
         } else if etype(e) == ty::VEHICLE && ru(e, 0x594) == 6 && rb(e, PFLAGS) & 4 != 0 && lt(rf(cp, 0x18), 0.0) {
             wu(cp, 0x18, 0);
-            normalise(cp.byte_add(0x10).cast());
+            normalise(GPtr::<sa_math::vector::CVector>::cast::<[f32;3]>(cp.byte_add(0x10).cast()));
         }
         i += 1;
     }
@@ -517,9 +502,9 @@ pub fn ped_process_entity_collision(this: Ent, e: Ent, cps: Ent) -> i32 {
                 }
                 g.fstp_st(0);
             }
-            normalise(lp(&mut v).cast());
+            normalise(GPtr::<sa_math::vector::CVector>::cast::<[f32;3]>(lp(&mut v).cast()));
             wv(nrm, 0, v);
-            if is_steep_slope(GPtr::from_addr(SURFACE_INFOS), u32::from(rb(nrm, 0x13))) as u8 != 0 {
+            if (is_steep_slope(GPtr::from_addr(SURFACE_INFOS), u32::from(rb(nrm, 0x13))) as u32) as u8 != 0 {
                 wu(this, 0x470, ru(this, 0x470) | 0x20);
             }
         }
@@ -530,7 +515,7 @@ pub fn ped_process_entity_collision(this: Ent, e: Ent, cps: Ent) -> i32 {
         wf(nrm, 0, nvec[0]);
         wf(nrm, 4, nvec[1]);
         wu(nrm, 8, 0);
-        normalise(nrm.cast());
+        normalise(GPtr::<sa_math::vector::CVector>::cast::<[f32;3]>(nrm.cast()));
         let k = cf(0x3EB3_3333);
         let mut g = Fpu::new();
         g.fld(rf(nrm, 0));
@@ -726,7 +711,7 @@ fn ground_contact(this: Ent, e: Ent, cps: Ent, n: i32, lcp: Ent, b43: u8, top: f
     wv_bits(this, 0x578, rv_bits(lcp, 0x10));
     let surf = rb(lcp, 0x23);
     wb(this, CONTACT_SURFACE, surf);
-    if is_steep_slope(GPtr::from_addr(SURFACE_INFOS), u32::from(surf)) as u8 != 0 {
+    if (is_steep_slope(GPtr::from_addr(SURFACE_INFOS), u32::from(surf)) as u32) as u8 != 0 {
         wu(this, 0x470, ru(this, 0x470) | 0x20);
     }
 }

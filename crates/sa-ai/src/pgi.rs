@@ -15,7 +15,7 @@ use sa_core::{hook, orig};
 use crate::common::*;
 
 use crate::bindings::base_event_takes_priority as group_event_base_takes_priority;
-use sa_world::bindings::group_intelligence_add_event as pgi_add_event;
+use crate::bindings::group_intelligence_add_event as pgi_add_event;
 orig! {
     fn v_delete(o: GPtr<u8>, flags: u32) -> GPtr<u8> = thiscall vslot 0x0 => unported;
     /// `CEvent::GetEventType` (vtable +4)

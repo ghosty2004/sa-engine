@@ -56,11 +56,11 @@ pub fn clear_crimes_being_qd(first: GPtr<u8>, count: u32) {
     }
 }
 
-pub use sa_world::bindings::gang_war_fighting_going_on;
+pub use sa_pop::bindings::gang_war_fighting_going_on;
 pub use crate::bindings::initialise_call;
-pub use sa_world::bindings::wanted_can_cop_join_pursuit as can_cop_join_pursuit_method_call;
-pub use sa_world::bindings::wanted_set_wanted_level as set_wanted_level_call;
-pub use sa_world::bindings::wanted_set_wanted_level_no_drop as set_wanted_level_no_drop_call;
+pub use crate::bindings::wanted_can_cop_join_pursuit as can_cop_join_pursuit_method_call;
+pub use crate::bindings::wanted_set_wanted_level as set_wanted_level_call;
+pub use crate::bindings::wanted_set_wanted_level_no_drop as set_wanted_level_no_drop_call;
 orig! {
     /// `CWanted::AddCrimeToQ` (0x562000)
     pub fn add_crime_to_q_call(this: GPtr<u8>, ty: i32, ped: GPtr<u8>, coors: GPtr<f32>, reported: u8, dont_care: u8) -> u8 = thiscall 0x562000 => add_crime_to_q;
@@ -682,13 +682,14 @@ pub use sa_world::bindings::is_ped_pointer_valid;
 pub use sa_world::bindings::set_player_wanted_level_for_forbidden_territories;
 pub use sa_core::bindings::add_big_message;
 pub use sa_core::bindings::text_get;
-pub use sa_world::bindings::ped_type_police_dont_care as police_dont_care_about_crimes_against_ped_type;
-pub use sa_world::bindings::player_get_wanted_level;
-pub use sa_world::bindings::player_set_wanted_level_no_drop;
-pub use sa_world::bindings::set_maximum_wanted_level as set_maximum_wanted_level_call;
+pub use crate::bindings::ped_type_police_dont_care as police_dont_care_about_crimes_against_ped_type;
+pub use crate::bindings::player_get_wanted_level;
+pub use crate::bindings::player_set_wanted_level_no_drop;
+pub use crate::bindings::set_maximum_wanted_level as set_maximum_wanted_level_call;
 pub use sa_world::bindings::set_new_record_stat;
 pub use sa_world::bindings::set_stat_value;
-pub use sa_world::bindings::wanted_register_crime as register_crime_call;
+pub use crate::bindings::wanted_register_crime as register_crime_call;
+pub use sa_world::bindings::find_player_coors;
 orig! {
     /// `CWanted::UpdateCrimesQ` (0x562760)
     pub fn update_crimes_q_call(this: GPtr<u8>) = thiscall 0x562760 => update_crimes_q;
@@ -696,8 +697,6 @@ orig! {
     pub fn work_out_police_presence_call(px: f32, py: f32, pz: f32, radius: f32) -> i32 = cdecl 0x5625F0 => work_out_police_presence;
     /// `CWanted::RegisterCrime_Immediately` (0x562430)
     pub fn register_crime_immediately_call(this: GPtr<u8>, ty: i32, coors: GPtr<f32>, ped: GPtr<u8>, dont_care: u32) = thiscall 0x562430 => register_crime_immediately_u32;
-    /// `FindPlayerCoors(CVector* out, int32)` (0x56E010)
-    pub fn find_player_coors(out: GPtr<f32>, id: i32) -> GPtr<f32> = cdecl 0x56E010 => sa_world::world::cworld::find_player_coors_port;
     /// `CCrime::FindImmediateDetectionRange` (0x531FC0)
     pub fn find_immediate_detection_range_call(ty: i32) -> f64 = cdecl 0x531FC0 => find_immediate_detection_range_f64;
 }
@@ -909,7 +908,7 @@ pub fn report_crime(ty: i32, victim: GPtr<u8>, offender: GPtr<u8>) {
     }
     let mut dont_care: u8 = 0;
     if !victim.is_null() && rd::<u8>(victim, 0x36) & 7 == 3 {
-        dont_care = police_dont_care_about_crimes_against_ped_type(rd::<i32>(victim, 0x598) as u32);
+        dont_care = police_dont_care_about_crimes_against_ped_type((rd::<i32>(victim, 0x598) as u32) as i32);
     }
     if ty == 2 {
         if rd::<u8>(victim, 0x36) & 7 == 3
@@ -939,7 +938,7 @@ pub fn report_crime(ty: i32, victim: GPtr<u8>, offender: GPtr<u8>) {
         let presence = work_out_police_presence_call(p[0], p[1], p[2], range);
         let immediate = presence != 0 || (matches!(ty, 4 | 5 | 0xD | 0xE) && german_game() != 0);
         if !immediate {
-            register_crime_call(wanted_of(), ty as u32, GPtr::<f32>::cast::<u8>(lp(&mut pos).cast()), victim, u32::from(dont_care));
+            register_crime_call(wanted_of(), (ty as u32) as i32, lp(&mut pos).cast(), victim, u32::from(dont_care) as u8);
         } else {
             register_crime_immediately_call(wanted_of(), ty, lp(&mut pos).cast(), victim, u32::from(dont_care));
             set_wanted_level_no_drop_call(wanted_of(), 1);

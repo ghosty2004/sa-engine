@@ -8,7 +8,7 @@ use sa_core::hook;
 use crate::common::*;
 
 use sa_core::bindings::entity_register_reference;
-use sa_world::bindings::task_complex_ctor;
+use crate::bindings::task_complex_ctor;
 
 /// `CTaskComplexLeaveCar::CTaskComplexLeaveCar(CVehicle*, int32 door, int32 delay, bool sensible, bool
 /// forceGetOut)` (0x63B8C0, `ret 0x14`, SEH frame): `CTaskComplex` base, +0x10 = door, +0x14 = delay, +0x18 =
@@ -17,7 +17,7 @@ use sa_world::bindings::task_complex_ctor;
 #[hook(addr = 0x63B8C0, conv = thiscall, name = "CTaskComplexLeaveCar", expect = "6A FF 68 18 16 84 00",
        unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
 pub fn leave_car_ctor(this: GPtr<u8>, veh: GPtr<u8>, door: u32, delay: u32, sensible: u32, force: u32) -> GPtr<u8> {
-    task_complex_ctor(this);
+    task_complex_ctor(this.addr() as u32);
     wr::<u32>(this, 0x10, door);
     wr::<u32>(this, 0x14, delay);
     wr::<u8>(this, 0x18, sensible as u8);

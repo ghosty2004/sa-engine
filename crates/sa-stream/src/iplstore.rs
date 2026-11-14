@@ -102,23 +102,24 @@ pub use crate::bindings::remove_ipl_and_ignore as remove_ipl_and_ignore_call;
 pub use crate::bindings::request_ipl_and_ignore as request_ipl_and_ignore_call;
 pub use sa_core::bindings::add_item as quad_add_item;
 pub use sa_core::bindings::find_player_vehicle;
-pub use sa_core::bindings::load_all_requested_models;
+pub use crate::bindings::load_all_requested_models;
 pub use sa_core::bindings::load_data_from_work_buffer;
 pub use sa_core::bindings::quad_for_all_matching;
 pub use sa_core::bindings::quad_tree_delete_item as quad_delete_item;
 pub use sa_core::bindings::rect_restrict;
 pub use sa_core::bindings::save_data_to_work_buffer;
-pub use sa_core::bindings::streaming_remove_model as remove_model;
+pub use crate::bindings::streaming_remove_model as remove_model;
 pub use sa_core::bindings::streaming_request_model as request_model;
 pub use sa_core::bindings::timer_resume;
 pub use sa_core::bindings::timer_suspend;
+pub use sa_core::bindings::crt_new as operator_new;
+pub use sa_core::bindings::crt_new_821195 as operator_new_array;
+pub use sa_core::bindings::rect_is_point_inside as rect_is_point_inside_tol;
 orig! {
     /// `CIplPool::New()` (0x4059B0, UNK-game)
     pub fn ipl_pool_new(p: GPtr<CPool<IplDef>>) -> GPtr<IplDef> = thiscall 0x4059B0 => pool::pool_new;
     /// `CIplDefPool::CPool(size, name)` (0x405900, sa-core)
     pub fn ipl_pool_ctor(p: GPtr<u8>, size: i32, name: GPtr<u8>) -> GPtr<u8> = thiscall 0x405900 => unported;
-    /// `CRect::IsPointInside(const CVector2D&, float tolerance)` (0x4042D0, AL)
-    pub fn rect_is_point_inside_tol(r: GPtr<u8>, p: GPtr<u8>, tol: f32) -> u8 = thiscall 0x4042D0 => unported;
     /// entity `vtbl[0]`: the virtual deleting destructor (`delete` flag 1)
     pub fn entity_delete(e: GPtr<u8>, flags: i32) -> GPtr<u8> = thiscall vslot 0x00 => unported;
     /// entity `vtbl[2]`: `CEntity::Add()`
@@ -133,9 +134,6 @@ orig! {
     pub fn col_accel_set_ipl_def(slot: i32, def: IplDef) = cdecl 0x5B2ED0 => unported;
     /// `CFileLoader::LoadLine(char*& data, int32& size)` (0x536FE0)
     pub fn load_line(data: GPtr<GPtr<u8>>, size: GPtr<i32>) -> GPtr<u8> = cdecl 0x536FE0 => crate::fileloader::load_line_buffer;
-    /// CRT `operator new` (0x82119A), `operator new[]` (0x821195), `operator delete[]` (0x8213AE), `free` (0x8214BD)
-    pub fn operator_new(n: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
-    pub fn operator_new_array(n: u32) -> GPtr<u8> = cdecl 0x821195 => unported;
     /// Rust-internal calls through the hook table
     pub fn set_ipls_required_call(posn: GPtr<f32>, area: i32) = cdecl 0x404700 => set_ipls_required;
     pub fn remove_ipl_slot_call(slot: i32) = cdecl 0x405B60 => remove_ipl_slot;

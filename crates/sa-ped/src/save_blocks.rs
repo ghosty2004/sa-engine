@@ -26,9 +26,9 @@ const PED_TYPES: usize = 0xC0BBE8;
 
 use sa_world::bindings::clothes_desc_ctor;
 use sa_core::bindings::get_weapon_info;
-use sa_core::bindings::load_all_requested_models;
-use sa_core::bindings::ped_give_weapon as give_weapon;
-use sa_world::bindings::ped_set_current_weapon_slot as set_current_weapon;
+use sa_stream::bindings::load_all_requested_models;
+use crate::bindings::ped_give_weapon as give_weapon;
+use crate::bindings::ped_set_current_weapon_slot as set_current_weapon;
 use sa_world::bindings::set_char_created_by;
 use sa_core::bindings::load_data_from_work_buffer as load_data;
 use sa_core::bindings::save_data_to_work_buffer as save_data;
@@ -170,7 +170,7 @@ pub fn ped_type_save() -> u8 {
     for t in 0..32u32 {
         for k in 0..5u32 {
             let a = g::<GPtr<u8>>(PED_TYPES).read().byte_add((t * 0x14) as isize);
-            vp.cast::<u32>().write(get_acquaintances(a, k));
+            vp.cast::<u32>().write(get_acquaintances(a.addr() as u32, k));
             save_data(vp, 4);
         }
     }
@@ -303,10 +303,10 @@ pub fn ped_save_structure_extract(this: GPtr<u8>, ped: GPtr<u8>) {
                 load_all_requested_models(0);
             }
         }
-        give_weapon(ped, rd::<u32>(w, 0) as i32, rd::<u32>(w, 0xC), 0);
+        give_weapon(ped, (rd::<u32>(w, 0) as i32) as u32, rd::<u32>(w, 0xC), 0);
         wr::<u32>(ped, 0x5A8 + 0x1C * k, rd::<u32>(w, 8));
     }
-    set_current_weapon(ped, i32::from(rd::<u8>(this, 0x181) as i8) as u32);
+    set_current_weapon(ped, (i32::from(rd::<u8>(this, 0x181) as i8) as u32) as i32);
     wr::<u8>(ped, 0x2F, rd::<u8>(this, 0x182));
     let idx = rd::<i32>(this, 0x184);
     let ee = if idx == -1 {

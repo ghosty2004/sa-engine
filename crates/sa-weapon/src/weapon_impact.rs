@@ -34,10 +34,10 @@ pub use crate::bindings::audio_report_bullet_hit;
 pub use sa_world::bindings::col_lighting_get_current as get_current_lighting;
 pub use crate::bindings::fx_add_tyre_burst;
 pub use crate::bindings::pad_start_shake_distance;
-pub use sa_core::bindings::assoc_set_current_time;
-pub use sa_core::bindings::get_pad as pad_get_pad;
+pub use sa_anim::bindings::assoc_set_current_time;
+pub use sa_input::bindings::get_pad as pad_get_pad;
 pub use sa_core::bindings::ped_is_alive;
-pub use sa_core::bindings::stats_increment_stat;
+pub use sa_world::bindings::stats_increment_stat;
 pub use sa_core::bindings::tm_get_active_task as task_manager_get_active_task;
 pub use sa_core::bindings::tm_get_simplest_active_task as task_manager_get_simplest_active_task;
 pub use sa_core::bindings::vector_magnitude as magnitude;
@@ -58,7 +58,7 @@ pub use sa_world::bindings::ped_groups_are_in_same_group as are_in_same_group;
 pub use sa_world::bindings::physical_add_to_moving_list;
 pub use sa_world::bindings::report_crime;
 pub use sa_world::bindings::vector_scale;
-pub use sa_core::bindings::vector_sub;
+pub use sa_world::bindings::vector_sub;
 pub use crate::bindings::fx_add_bullet_impact;
 pub use crate::bindings::glass_was_hit_by_bullet;
 pub use sa_core::bindings::clump_get_association;
@@ -72,16 +72,15 @@ pub use sa_world::bindings::damage_compute_death_anim as event_damage_compute_de
 pub use sa_world::bindings::event_damage_ctor;
 pub use sa_world::bindings::event_group_add;
 pub use sa_world::bindings::fx_add_blood;
-pub use sa_world::bindings::generate_damage_event as generate_damage_event_call;
+pub use crate::bindings::generate_damage_event as generate_damage_event_call;
 pub use sa_world::bindings::get_local_direction as ped_get_local_direction;
 pub use sa_world::bindings::object_damage;
 pub use sa_world::bindings::ped_get_weapon_skill as ped_get_weapon_skill_current;
 pub use sa_world::bindings::vehicle_inflict_damage;
+pub use sa_world::bindings::find_player_ped;
 orig! {
     /// `CTask::GetTaskType()` (vtable slot 0x10, thiscall)
     pub fn task_get_type(task: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `FindPlayerPed(int32)` (0x56E210)
-    pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
     /// `CBulletTraces::AddTrace(const CVector* from, const CVector* to, eWeaponType, CEntity*)` (0x726AF0)
     pub fn bullet_traces_add_trace(from: GPtr<u8>, to: GPtr<u8>, ty: i32, e: GPtr<u8>) = cdecl 0x726AF0 => unported;
     /// `CStats::UpdateStatsWhenWeaponHit(eWeaponType)` (0x55CEB0)
@@ -149,7 +148,7 @@ pub fn generate_damage_event(victim: GPtr<u8>, creator: GPtr<u8>, ty: i32, damag
     let mut ev = [0u32; EVENT_DAMAGE_SIZE / 4];
     let calc_p: GPtr<u8> = lp(&mut calc).cast();
     let ev_p: GPtr<u8> = lp(&mut ev).cast();
-    calc_ctor(calc_p, creator, xi(damage).to_f32(), ty as u32, piece as u32, 0);
+    calc_ctor(calc_p, creator.addr() as u32, (xi(damage).to_f32()).to_bits(), ty as u32, piece as u32, 0);
     let in_veh = (ru(victim, PED_FLAGS) >> 8) & 0xFFFF_FF01;
     event_damage_ctor(ev_p, creator, time_ms(), ty as u32, piece as u32, dir, 0, in_veh);
 
@@ -169,7 +168,7 @@ pub fn generate_damage_event(victim: GPtr<u8>, creator: GPtr<u8>, ty: i32, damag
             }
             break 'body;
         }
-        if ped_is_alive(victim) == 0 {
+        if ped_is_alive(victim) as u8 == 0 {
             break 'body;
         }
         if event_damage_affects_ped(ev_p, victim) == 0 {
@@ -239,7 +238,7 @@ fn report_hit_angle(victim: GPtr<u8>, cp: GPtr<u8>, start: GPtr<u8>, end: GPtr<u
         x(rf(end, 4)).fsub_m(rf(start, 4)).to_f32(),
         x(rf(end, 8)).fsub_m(rf(start, 8)).to_f32(),
     ];
-    normalise(lp(&mut dir).cast());
+    normalise(GPtr::<u8>::cast::<[f32;3]>(lp(&mut dir).cast()));
     let dot = x(dir[2])
         .fmul_m(rf(cp, 0x18))
         .fadd(x(dir[1]).fmul_m(rf(cp, 0x14)))
@@ -260,7 +259,7 @@ fn bullet_impact_fx(cp: GPtr<u8>, amount: u8) {
     if camera_is_sphere_visible(g(THE_CAMERA), cp, 1.0) == 0 {
         return;
     }
-    let l = st0(get_current_lighting(u32::from(rb(cp, 0x25)) as u8, 0.5)).to_f32();
+    let l = st0(get_current_lighting(u32::from(rb(cp, 0x25)) as u8, 0.5).to_f64()).to_f32();
     fx_add_bullet_impact(g(G_FX), cp, cp.byte_add(0x10), u32::from(rb(cp, 0x23)), u32::from(amount), l);
 }
 
@@ -273,7 +272,7 @@ fn push_at_hit(victim: GPtr<u8>, cp: GPtr<u8>, f: f32) {
     let fvp = vector_scale(lp(&mut fv).cast(), f, cp.byte_add(0x10));
     let a = rv_bits(ptp, 0);
     let b = rv_bits(fvp, 0);
-    physical_apply_force(victim, b[0], b[1], b[2], a[0], a[1], a[2], 1);
+    physical_apply_force(victim, sa_math::vector::CVector::new(f32::from_bits(b[0]), f32::from_bits(b[1]), f32::from_bits(b[2])), sa_math::vector::CVector::new(f32::from_bits(a[0]), f32::from_bits(a[1]), f32::from_bits(a[2])), 1);
 }
 
 /// A `CEventVehicleDamageWeapon(veh, firedBy, type)` on the stack, added to `ped`'s event group, then
@@ -350,7 +349,7 @@ pub fn do_bullet_impact(this: GPtr<u8>, fired_by: GPtr<u8>, victim: GPtr<u8>, st
     let ty = || ru(this, 0) as i32;
     let mut wi = get_weapon_info(ty(), 1);
     if !fired_by.is_null() && etype(fired_by) == 3 {
-        let skill = ped_get_weapon_skill_current(fired_by) as u8;
+        let skill = (ped_get_weapon_skill_current(fired_by) as u32) as u8;
         wi = get_weapon_info(ty(), skill);
     }
     let mut fired_by_player = GPtr::<u8>::NULL;
@@ -463,7 +462,7 @@ pub fn do_bullet_impact(this: GPtr<u8>, fired_by: GPtr<u8>, victim: GPtr<u8>, st
                 report_hit_angle(victim, cp, start, end);
                 let p = rv(pos_ptr(victim), 0);
                 let mut v2 = [x(rf(start, 0)).fsub_m(p[0]).to_f32(), x(rf(start, 4)).fsub_m(p[1]).to_f32()];
-                let dir = ped_get_local_direction(victim, lp(&mut v2).cast()) as u32;
+                let dir = ped_get_local_direction(victim, GPtr::<u8>::cast::<f32>(lp(&mut v2).cast())) as u32;
                 let mut dmg = i32::from(rh(wi, 0x22) as i16);
                 if inc_hit < 0 {
                     dmg = dmg.wrapping_mul(inc_hit).wrapping_neg();
@@ -526,7 +525,7 @@ pub fn do_bullet_impact(this: GPtr<u8>, fired_by: GPtr<u8>, victim: GPtr<u8>, st
                         if f.jp(5) {
                             break 'force;
                         }
-                        if entity_get_is_static(victim) != 0 {
+                        if entity_get_is_static(victim) as u8 != 0 {
                             let mut f = Fpu::new();
                             f.fld(rf(oi, 0x14));
                             f.fcomp_m(0.0);
@@ -535,7 +534,7 @@ pub fn do_bullet_impact(this: GPtr<u8>, fired_by: GPtr<u8>, victim: GPtr<u8>, st
                                 physical_add_to_moving_list(victim);
                             }
                         }
-                        if entity_get_is_static(victim) != 0 {
+                        if entity_get_is_static(victim) as u8 != 0 {
                             break 'force;
                         }
                         s4 = if rb(victim, 0x40) & 0xA0 != 0 { 0xBE4C_CCCD } else { 0xC000_0000 };
@@ -593,7 +592,7 @@ pub fn do_bullet_impact(this: GPtr<u8>, fired_by: GPtr<u8>, victim: GPtr<u8>, st
                     };
                     if g::<i32>(0xB7298C).read() < 2 {
                         let m = x(rf(victim, 0x8C)).fmul_m(cf(0x3A83_126F)).to_f32();
-                        s4 = st0(min_f32(1.0, m)).fmul_m(f32::from_bits(s4)).to_f32().to_bits();
+                        s4 = st0(min_f32(1.0f32.to_bits(), m.to_bits()).to_f64()).fmul_m(f32::from_bits(s4)).to_f32().to_bits();
                         push_at_hit(victim, cp, f32::from_bits(s4));
                     }
                 }
@@ -622,7 +621,7 @@ pub fn do_bullet_impact(this: GPtr<u8>, fired_by: GPtr<u8>, victim: GPtr<u8>, st
     let p2 = pos_ptr(find_player_ped(-1));
     let p3 = pos_ptr(find_player_ped(-1));
     let (z, y, xx) = (ru(p1, 8), ru(p2, 4), ru(p3, 0));
-    let pad = pad_get_pad((pt as i32) as u32);
+    let pad = pad_get_pad(((pt as i32) as u32) as i32);
     pad_start_shake_distance(pad, 0xF0, 0x80, f32::from_bits(xx), f32::from_bits(y), f32::from_bits(z));
 }
 

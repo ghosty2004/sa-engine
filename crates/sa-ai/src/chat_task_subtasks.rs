@@ -14,7 +14,7 @@ use crate::common::*;
 use crate::bindings::simple_chat_ctor;
 use sa_core::bindings::general_random_int_in_range as random_int;
 use sa_world::bindings::intel_find_task_by_type;
-use sa_world::bindings::interesting_events_add;
+use crate::bindings::interesting_events_add;
 use sa_world::bindings::ped_get_ped_talking as ped_get_talking;
 use sa_world::bindings::ped_say;
 use sa_world::bindings::run_anim_ctor;

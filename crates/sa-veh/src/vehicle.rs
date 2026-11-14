@@ -18,10 +18,10 @@ use crate::common::{b, g, model_info, rd, wr, x};
 /// `CVehicle*` (thiscall `this`).
 type Veh = GPtr<u8>;
 
-pub use sa_core::bindings::rp_clump_for_all_atomics;
+pub use sa_rwcore::bindings::rp_clump_for_all_atomics;
 pub use sa_core::bindings::rp_geometry_for_all_materials;
 pub use sa_stream::bindings::col_model_remove_collision_volumes;
-pub use sa_core::bindings::rw_texture_destroy;
+pub use sa_rwcore::bindings::rw_texture_destroy;
 pub use sa_world::bindings::rope_release_picked_up_object;
 pub use sa_world::bindings::ropes_find_rope;
 orig! {
@@ -345,7 +345,7 @@ pub fn pick_up_entity_with_winch(v: Veh, e: GPtr<u8>) {
 /// (0x6D3300), upgrade)`.
 #[hook(addr = 0x6D3630, conv = thiscall, name = "CVehicle::RemoveUpgrade", expect = "8B 44 24 04 8B 49 18", this = "CVehicle")]
 pub fn remove_upgrade(v: Veh, upgrade: u32) {
-    rp_clump_for_all_atomics(rd::<GPtr<u8>>(v, 0x18), 0x6D3300, GPtr::from_addr(upgrade as usize));
+    rp_clump_for_all_atomics(rd::<GPtr<u8>>(v, 0x18), 0x6D3300, GPtr::<u8>::addr(GPtr::from_addr(upgrade as usize)) as u32);
 }
 
 /// `CVehicle::Shutdown()` (0x6D0B40, static): `m_aSpecialColModel[4]` (0xC1CC78, CColModel 0x30):
@@ -356,7 +356,7 @@ pub fn shutdown() {
     while s < 0xC1CD38 {
         let slot = g::<u8>(s);
         if rd::<u32>(slot, 0x2C) != 0 {
-            col_model_remove_collision_volumes(slot);
+            col_model_remove_collision_volumes(slot.cast());
         }
         s += 0x30;
     }

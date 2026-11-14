@@ -26,8 +26,8 @@ use crate::bindings::plugin_init_object;
 use crate::bindings::clamp_raster_size;
 use crate::bindings::rw_image_create_resample;
 use crate::bindings::rw_image_read;
-use sa_core::bindings::image_destroy as rw_image_destroy_call;
-use sa_core::bindings::rw_raster_create as rw_raster_create_call;
+use crate::bindings::image_destroy as rw_image_destroy_call;
+use crate::bindings::rw_raster_create as rw_raster_create_call;
 orig! {
     /// `_rwerror(code, a)` (0x8088D0, two arguments)
     fn rw_error2(code: u32, a: u32) -> u32 = cdecl 0x8088D0 => unported;
@@ -115,7 +115,7 @@ pub fn rw_image_allocate_pixels(img: GPtr<u8>) -> GPtr<u8> {
             error_code: 0,
         };
         e.error_code = rw_error2(0x8000_0013, size) as i32;
-        rw_error_set(GPtr::from_raw(&mut e));
+        rw_error_set(GPtr::from_raw(&mut e).cast());
         return GPtr::NULL;
     }
     let pal = if has_pal { a32(p).wrapping_add(pix) } else { 0 };
@@ -330,7 +330,7 @@ pub fn rw_raster_read(name: GPtr<u8>) -> GPtr<u8> {
         rw_image_destroy_call(img);
         img = resampled;
     }
-    let raster = rw_raster_create_call(w, h, depth, format);
+    let raster = rw_raster_create_call((w as u32) as i32, (h as u32) as i32, (depth as u32) as i32, format);
     if raster.is_null() {
         rw_image_destroy_call(img);
         return GPtr::NULL;
@@ -348,7 +348,7 @@ pub fn rw_raster_read_masked_raster(name: GPtr<u8>, mask: GPtr<u8>) -> GPtr<u8> 
     if img.is_null() {
         return GPtr::NULL;
     }
-    let raster = rw_raster_create_call(rd::<i32>(img, 4), rd::<i32>(img, 8), 0, 0);
+    let raster = rw_raster_create_call((rd::<i32>(img, 4) as u32) as i32, (rd::<i32>(img, 8) as u32) as i32, 0, 0);
     if raster.is_null() {
         rw_image_destroy_call(img);
         return GPtr::NULL;
@@ -491,8 +491,8 @@ pub fn d3d9_image_find_raster_format(r: GPtr<u8>, img: GPtr<u8>, flags: u32) -> 
     }
 }
 
-use sa_core::bindings::image_allocate_pixels as rw_image_allocate_pixels_call;
-use sa_core::bindings::rw_image_create as rw_image_create_call;
+use crate::bindings::image_allocate_pixels as rw_image_allocate_pixels_call;
+use crate::bindings::rw_image_create as rw_image_create_call;
 orig! {
     /// `G->stringFuncs.rwstrlen(s)` (G+0x120)
     fn rw_strlen(s: GPtr<u8>) -> u32 = cdecl table 0xC97B24 0x120 => unported;
@@ -520,7 +520,7 @@ pub fn rw_image_set_path(path: GPtr<u8>) -> GPtr<u8> {
                 error_code: 0,
             };
             e.error_code = rw_error2(0x8000_0013, n) as i32;
-            rw_error_set(GPtr::from_raw(&mut e));
+            rw_error_set(GPtr::from_raw(&mut e).cast());
             return GPtr::NULL;
         }
         wr::<u32>(imod(), 4, p);

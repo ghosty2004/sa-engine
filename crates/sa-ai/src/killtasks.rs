@@ -26,11 +26,11 @@ const EVENT_BASE_VTBL: u32 = 0x858E68;
 
 use crate::bindings::acquaintance_ped_hate_ctor as event_ped_hate_ctor;
 use sa_core::bindings::entity_register_reference;
-use sa_core::bindings::find_player_ped as world_find_player_ped;
+use sa_world::bindings::find_player_ped as world_find_player_ped;
 use sa_core::bindings::general_random_int_in_range;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::event_acquaintance_ped_dtor as event_base_dtor;
-use sa_world::bindings::event_group_add;
+use crate::bindings::event_group_add;
 use sa_world::bindings::intel_find_task_by_type;
 use sa_world::bindings::ped_set_current_weapon;
 use sa_world::bindings::set_ped_decision_maker_type as intel_set_ped_decision_maker_type;
@@ -38,7 +38,7 @@ use sa_world::bindings::simple_car_drive_ctor;
 use sa_core::bindings::ped_give_weapon;
 use sa_world::bindings::car_drive_mission_ctor;
 use sa_world::bindings::cop_add_criminal_to_kill;
-use sa_world::bindings::interesting_events_add;
+use crate::bindings::interesting_events_add;
 use sa_world::bindings::kill_ped_on_foot_ctor;
 use sa_world::bindings::leave_car_ctor;
 orig! {

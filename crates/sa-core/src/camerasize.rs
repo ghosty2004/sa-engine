@@ -30,13 +30,12 @@ use crate::field::at;
 /// Calls into other functions (original or Rust, decided by their hooks).
 pub mod call {
     use super::*;
+    pub use crate::bindings::rw_camera_set_view_window;
     orig! {
         /// `RwEngineGetCurrentVideoMode` (0x7F2D20; ported in sa-rwcore, which depends on sa-core)
         pub fn rw_engine_get_current_video_mode() -> i32 = cdecl 0x7F2D20 => unported;
         /// `RwEngineGetVideoModeInfo(RwVideoMode*, RwInt32)` (0x7F2CF0; ported in sa-rwcore)
         pub fn rw_engine_get_video_mode_info(info: GPtr<RwVideoMode>, mode: i32) -> GPtr<RwVideoMode> = cdecl 0x7F2CF0 => unported;
-        /// `RwCameraSetViewWindow(RwCamera*, const RwV2d*)` (0x7EE410; ported in sa-rwcore)
-        pub fn rw_camera_set_view_window(camera: GPtr<u8>, view_window: GPtr<[f32; 2]>) -> GPtr<u8> = cdecl 0x7EE410 => unported;
     }
 }
 
@@ -113,7 +112,7 @@ pub fn camera_size(camera: GPtr<u8>, rect: GPtr<u8>, view_window: f32, aspect: f
             vw[0] = X87::from_i32(w).fmul_m(view_window).fdiv(X87::from_i32(h)).to_f32();
         }
     }
-    call::rw_camera_set_view_window(camera, GPtr::from_raw(&raw mut vw));
+    call::rw_camera_set_view_window(camera, GPtr::<[f32;2]>::cast::<u8>(GPtr::from_raw(&raw mut vw)));
     RS_MAXIMUM_WIDTH.set(at::<i32>(rect, RECT_W).read());
     RS_MAXIMUM_HEIGHT.set(at::<i32>(rect, RECT_H).read());
 }
@@ -142,11 +141,11 @@ mod tests {
         info.write(unsafe { MODE });
         info
     }
-    fn set_vw(camera: GPtr<u8>, vw: GPtr<[f32; 2]>) -> GPtr<u8> {
+    fn set_vw(camera: GPtr<u8>, vw: GPtr<u8>) -> GPtr<u8> {
         // SAFETY: single-threaded test data.
         #[allow(unsafe_code)]
         unsafe {
-            LAST_VW = vw.read()
+            LAST_VW = vw.cast::<[f32; 2]>().read()
         };
         camera
     }
@@ -195,8 +194,8 @@ mod tests {
             "sa_core::camerasize::call::rw_engine_get_video_mode_info",
             mode_info,
         );
-        host::set::<fn(GPtr<u8>, GPtr<[f32; 2]>) -> GPtr<u8>>(
-            "sa_core::camerasize::call::rw_camera_set_view_window",
+        host::set::<fn(GPtr<u8>, GPtr<u8>) -> GPtr<u8>>(
+            "sa_core::bindings::rw_camera_set_view_window",
             set_vw,
         );
         // The camera holds 32-bit raster pointers (the 1.0 US layout), so the rasters must sit below
@@ -236,7 +235,7 @@ mod tests {
         for k in [
             "sa_core::camerasize::call::rw_engine_get_current_video_mode",
             "sa_core::camerasize::call::rw_engine_get_video_mode_info",
-            "sa_core::camerasize::call::rw_camera_set_view_window",
+            "sa_core::bindings::rw_camera_set_view_window",
         ] {
             host::clear(k);
         }

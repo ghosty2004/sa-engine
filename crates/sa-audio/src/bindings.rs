@@ -9,6 +9,11 @@ use sa_core::mem::{GBool, GPtr};
 use sa_core::orig;
 
 orig! {
+    /// `FUN_00406ce0` (0x406CE0)
+    pub fn floor_f(v: u32) -> f64 = cdecl 0x406CE0 => crate::port4_service::floor_of_float;
+}
+
+orig! {
     /// `CAEAmbienceTrackManager::StopAmbienceTrack` (0x4D6CC0)
     pub fn amb_stop(this: GPtr<u8>) = thiscall 0x4D6CC0 => crate::radio::stop_ambience_track;
 }
@@ -474,6 +479,11 @@ orig! {
 }
 
 orig! {
+    /// `CAEUserRadioTrackManager::ScanUserTracks` (0x4F4BA0)
+    pub fn user_radio_scan(this: u32) -> bool = thiscall 0x4F4BA0 => crate::port4_init::user_radio_scan_user_tracks;
+}
+
+orig! {
     /// `CAEVehicleAudioEntity::RequestBankSlot` (0x4F4D10)
     pub fn request_bank_slot(bank: u32) -> u32 = cdecl 0x4F4D10 => crate::vehicle::request_bank_slot;
 }
@@ -496,6 +506,11 @@ orig! {
 orig! {
     /// `CAEVehicleAudioEntity::UpdateVehicleEngineSound` (0x4F56D0)
     pub fn update_vehicle_engine_sound(this: GPtr<u8>, ty: u32, speed: u32, vol: u32) -> u32 = thiscall 0x4F56D0 => unported;
+}
+
+orig! {
+    /// `CAEVehicleAudioEntity::TurnOnRadioForVehicle` (0x4F5B20)
+    pub fn turn_on_radio_for_vehicle(this: GPtr<u8>) = thiscall 0x4F5B20 => crate::vehicle::turn_on_radio_for_vehicle;
 }
 
 orig! {
@@ -529,6 +544,21 @@ orig! {
 }
 
 orig! {
+    /// `CAudioEngine::ReportWeaponEvent` (0x506F40)
+    pub fn report_weapon_event(engine: GPtr<u8>, event: u32, weapon: u32, physical: u32) = thiscall 0x506F40 => crate::engine::report_weapon_event;
+}
+
+orig! {
+    /// `CAudioEngine::StopRadio` (0x506F70)
+    pub fn audio_stop_radio(engine: GPtr<u8>, settings: u32, b: u32) = thiscall 0x506F70 => crate::engine::stop_radio;
+}
+
+orig! {
+    /// `CAudioEngine::StopCutsceneTrack` (0x507080)
+    pub fn audio_stop_cutscene_track(e: GPtr<u8>, b: u32) = thiscall 0x507080 => crate::engine::stop_cutscene_track;
+}
+
+orig! {
     /// `CAudioEngine::IsAmbienceTrackActive` (0x507210)
     pub fn engine_is_ambience_track_active(engine: GPtr<u8>) -> u8 = thiscall 0x507210 => unported;
 }
@@ -541,4 +571,9 @@ orig! {
 orig! {
     /// `CAudioEngine::IsAmbienceRadioActive` (0x507280)
     pub fn engine_is_ambience_radio_active(e: GPtr<u8>) -> u8 = thiscall 0x507280 => unported;
+}
+
+orig! {
+    /// `CLoadingScreen::Pause` (0x590310)
+    pub fn loading_screen_pause() = cdecl 0x590310 => crate::port4_init::loading_screen_pause_native;
 }

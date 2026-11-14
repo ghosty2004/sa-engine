@@ -10,7 +10,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_stream::modelinfo::base::MiPtr;
 
 sa_core::globals! {
@@ -56,16 +56,11 @@ pub use sa_core::bindings::file_close;
 pub use sa_core::bindings::file_write;
 pub use sa_core::bindings::open_file_for_writing;
 pub use sa_stream::bindings::col_model_ctor;
-pub use sa_stream::bindings::col_model_new;
+pub use crate::bindings::col_model_new;
 pub use sa_stream::bindings::col_store_include_model_index as include_model_index;
-orig! {
-    /// CRT `operator new` (0x821195)
-    pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x821195 => unported;
-    /// `CBaseModelInfo::SetColModel(CColModel*, bool)` (0x4C4BC0)
-    pub fn set_col_model(mi: MiPtr, col: GPtr<u8>, owns: u32) = thiscall 0x4C4BC0 => sa_stream::modelinfo::base::set_col_model;
-    /// `CBaseModelInfo::DeleteCollisionModel` (0x4C4C40)
-    pub fn delete_collision_model(mi: MiPtr) = thiscall 0x4C4C40 => unported;
-}
+pub use sa_core::bindings::base_model_info_set_col_model as set_col_model;
+pub use sa_core::bindings::crt_new_821195 as operator_new;
+pub use sa_stream::bindings::delete_collision_model;
 
 pub fn col_model_new_port(size: u32) -> GPtr<u8> {
     crate::collision::data::col_model_operator_new(size).cast()
@@ -167,14 +162,14 @@ pub fn cache_load_col() {
     while i < NUM_COL_ITEMS.get() {
         let item = |i: i32| COL_ITEMS.get().byte_add((i * 0x30) as isize);
         let m = mi(at::<i32>(item(i), 0x28).read());
-        let p = col_model_new(0x30);
+        let p = GPtr::<sa_core::pools::ColModelSlot>::cast::<u8>(col_model_new(0x30));
         let cm = if p.is_null() { p } else { col_model_ctor(p) };
         copy_words(cm, item(i), 10);
         at::<u8>(cm, 0x28).write(at::<u8>(item(i), 0x2C).read());
         let b = at::<u8>(item(i), 0x2D).read();
         let f = at::<u8>(cm, 0x29).read();
         at::<u8>(cm, 0x29).write(f ^ ((b ^ f) & 1));
-        set_col_model(m, cm, 1);
+        set_col_model(m.cast::<sa_stream::shared::CBaseModelInfo>().cast::<u8>(), cm, 1);
         let model = at::<i32>(item(i), 0x28).read();
         let slot = at::<u8>(item(i), 0x2C).read() as i32;
         include_model_index(slot, model);
@@ -267,8 +262,8 @@ pub fn cache_ipl_section(entities: GPtr<GPtr<u8>>) {
                     if flags() & 2 != 0 {
                         let lod = mi(at::<i32>(item(), 0xC).read());
                         let m = mi(at::<i32>(item(), 8).read());
-                        delete_collision_model(lod);
-                        set_col_model(lod, at::<GPtr<u8>>(m.cast(), 0x14).read(), 0);
+                        delete_collision_model(lod.cast::<sa_stream::shared::CBaseModelInfo>());
+                        set_col_model(lod.cast::<sa_stream::shared::CBaseModelInfo>().cast::<u8>(), at::<GPtr<u8>>(m.cast(), 0x14).read(), 0);
                     }
                     n = NUM_IPL_ITEMS.get().wrapping_add(1);
                     NUM_IPL_ITEMS.set(n);

@@ -13,9 +13,9 @@ use crate::bindings::population_remove_ped as remove_ped;
 use crate::bindings::remove_from_interesting_vehicle_list;
 use crate::bindings::vehicle_can_be_deleted as can_be_deleted;
 use crate::bindings::vehicle_remove_passenger as remove_passenger;
-use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
-use sa_core::bindings::find_player_ped;
-use sa_core::bindings::world_remove;
+use crate::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+use crate::bindings::find_player_ped;
+use crate::bindings::world_remove;
 orig! {
     /// the deleting destructor (vtable +0)
     fn v_delete(e: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
@@ -63,7 +63,7 @@ pub fn clear_cars_from_area(x0: f32, y0: f32, z0: f32, x1: f32, y1: f32, z1: f32
             remove_ped(drv);
             let d = rd::<GPtr<u8>>(veh, 0x460);
             if !d.is_null() {
-                clean_up_old_reference(d, GPtr::<u8>::cast::<GPtr<u8>>(veh.byte_add(0x460)));
+                clean_up_old_reference(d, veh.byte_add(0x460));
             }
             wr::<u32>(veh, 0x460, 0);
         }

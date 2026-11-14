@@ -11,13 +11,13 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
-use sa_world::bindings::is_ped_registered_with_effect;
+use crate::bindings::is_ped_registered_with_effect;
 use sa_core::bindings::general_random_int_in_range as random_int;
 use sa_world::bindings::get_ped_attractor_manager;
-use sa_world::bindings::interesting_events_add;
-use sa_world::bindings::task_complex_ctor;
+use crate::bindings::interesting_events_add;
+use crate::bindings::task_complex_ctor;
 use sa_world::bindings::task_use_atm_ctor as use_atm_ctor;
-use sa_world::bindings::sit_ctor_o;
+use crate::bindings::sit_ctor_o;
 use sa_world::bindings::stand_still_ctor;
 use sa_world::bindings::sunbathe_ctor;
 orig! {
@@ -92,7 +92,7 @@ pub fn get_tail_of_queue(this: GPtr<u8>) -> GPtr<u8> {
        expect = "56 8B F1 E8 48 8F FE FF", unverified = "std13-ai-1", route = "L2", hazards = "heap-writes",
        recs = "grove-walk")]
 pub fn sit_down_then_idle_then_stand_up_ctor(this: GPtr<u8>, ms: i32, on_step: u32, instant: u32) -> GPtr<u8> {
-    task_complex_ctor(this);
+    task_complex_ctor(this.addr() as u32);
     wr::<i32>(this, 0xC, ms);
     wr::<u32>(this, 0, 0x86DF60);
     wr::<u8>(this, 0x10, on_step as u8);
@@ -172,7 +172,7 @@ pub fn use_attractor_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPt
                 GPtr::NULL
             } else {
                 let step = u32::from(attractor_get_type(rd::<GPtr<u8>>(this, 0xC)) == 9);
-                sit_ctor_o(t, ms as u32, step, flag21)
+                sit_ctor_o(t, (ms as u32) as i32, step, flag21)
             }
         }
         2 => new(0x10, &|t| wait_for_bus_ctor(t)),

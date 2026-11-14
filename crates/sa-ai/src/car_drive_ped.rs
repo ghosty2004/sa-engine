@@ -179,17 +179,17 @@ pub fn car_drive_process_arm_bopping(this: GPtr<u8>, ped: GPtr<u8>, enable: u8, 
 use crate::bindings::event_cop_car_being_stolen_ctor;
 use crate::bindings::event_cop_car_being_stolen_dtor;
 use sa_world::bindings::gang_drive_by_ctor;
-use sa_core::bindings::ik_abort_look_at;
+use sa_anim::bindings::ik_abort_look_at;
 use crate::bindings::task_timer_is_out_of_time;
 use crate::bindings::vehicle_is_passenger;
 use crate::bindings::vehicle_set_getting_out_flags;
-use sa_core::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference;
 use sa_core::bindings::entity_register_reference;
-use sa_core::bindings::find_player_ped as world_find_player_ped;
+use sa_world::bindings::find_player_ped as world_find_player_ped;
 use sa_world::bindings::car_drive_wander_ctor;
 use sa_world::bindings::damage_get_door_status;
 use sa_world::bindings::door_is_closed;
-use sa_world::bindings::event_group_add;
+use crate::bindings::event_group_add;
 use sa_world::bindings::event_script_command_ctor;
 use sa_world::bindings::event_script_command_dtor;
 use sa_world::bindings::get_event_global_group;
@@ -200,11 +200,11 @@ use sa_world::bindings::is_law_enforcement_vehicle as vehicle_is_law_enforcement
 use sa_world::bindings::leave_car_ctor;
 use sa_world::bindings::membership_is_leader;
 use sa_world::bindings::ped_get_held_entity;
-use sa_world::bindings::ped_groups_get_peds_group;
+use crate::bindings::ped_groups_get_peds_group;
 use sa_world::bindings::ped_say;
 use sa_world::bindings::sequence_add_task;
 use sa_world::bindings::sequence_ctor;
-use sa_world::bindings::tm_find_active_task_by_type;
+use crate::bindings::tm_find_active_task_by_type;
 use sa_world::bindings::upside_down_car_check_is_car_upside_down as upside_down_is_car_upside_down;
 use crate::bindings::hold_entity_play_anim;
 use sa_world::bindings::pad_get_accelerate;
@@ -314,7 +314,7 @@ pub fn car_drive_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         if !pv.is_null() && pv != rd::<GPtr<u8>>(this, 8) {
             let slot = this.byte_add(8);
             if !rd::<GPtr<u8>>(this, 8).is_null() {
-                entity_clean_up_old_reference(rd::<GPtr<u8>>(this, 8), slot.cast::<GPtr<u8>>());
+                entity_clean_up_old_reference(rd::<GPtr<u8>>(this, 8), slot.cast::<u8>());
             }
             let v = rd::<GPtr<u8>>(ped, 0x58C);
             wr::<GPtr<u8>>(this, 8, v);
@@ -333,7 +333,7 @@ pub fn car_drive_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     }
     let mut ev = [0u32; 0x10];
     let ev_p: GPtr<u8> = GPtr::from_raw(ev.as_mut_ptr()).cast();
-    let grp = ped_groups_get_peds_group(ped);
+    let grp = GPtr::from_addr(ped_groups_get_peds_group(ped.addr() as u32) as usize);
     if upside_down_is_car_upside_down(GPtr::from_addr(UPSIDE_DOWN_CARS), rd::<GPtr<u8>>(this, 8)) != 0 {
         if ped != world_find_player_ped(-1)
             && in_vehicle(world_find_player_ped(-1))
@@ -463,7 +463,7 @@ pub fn car_drive_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     } else {
         car_drive_trigger_ik(this, ped);
     }
-    if rd::<u8>(ped, 0x484) == 1 && ped_groups_get_peds_group(ped).is_null() {
+    if rd::<u8>(ped, 0x484) == 1 && GPtr::<u8>::from_addr(ped_groups_get_peds_group(ped.addr() as u32) as usize).is_null() {
         let v = rd::<GPtr<u8>>(this, 8);
         if rd::<u32>(v, 0x460) == 0 && rd::<GPtr<u8>>(v, 0x464) == ped {
             if rd::<u8>(this, 0x1C) == 0 {

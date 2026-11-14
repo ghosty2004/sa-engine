@@ -5,11 +5,8 @@
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
-use sa_math::vector::CVector;
 use sa_math::x87::X87;
 
-use sa_world::collision::data::CdPtr;
-use sa_world::collision::surface::SiPtr;
 
 use crate::common::{ftol32, g, jp, k, rd, wr, x, xi};
 
@@ -17,16 +14,13 @@ use sa_core::bindings::get_surf_properties;
 use crate::bindings::loc_tri_release;
 use crate::bindings::proc_object_process_triangle_added as process_triangle_added;
 use crate::bindings::transform_points;
-use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
-use sa_stream::bindings::simple_transform_update_matrix;
+use sa_world::bindings::placeable_allocate_matrix as allocate_matrix;
+use crate::bindings::simple_transform_update_matrix;
 use sa_world::bindings::entity_get_col_model as get_col_model;
+use sa_world::bindings::creates_objects;
+use sa_world::bindings::creates_plants;
+use sa_world::bindings::get_triangle_point;
 orig! {
-    /// `CCollisionData::GetTrianglePoint(CVector&, int)` (0x40f5e0)
-    fn get_triangle_point(cd: CdPtr, out: GPtr<CVector>, idx: i32) = thiscall 0x40f5e0 => sa_world::collision::data::get_triangle_point;
-    /// `SurfaceInfos_c::CreatesPlants(id)` (0x55e9d0)
-    fn creates_plants(si: SiPtr, id: u32) -> u32 = thiscall 0x55e9d0 => sa_world::collision::surface::creates_plants;
-    /// `SurfaceInfos_c::CreatesObjects(id)` (0x55e9f0)
-    fn creates_objects(si: SiPtr, id: u32) -> u32 = thiscall 0x55e9f0 => sa_world::collision::surface::creates_objects;
     /// `CPlantLocTri::Add(const CVector&, const CVector&, const CVector&, uint8 surface, uint8 light,
     /// bool plants, bool objects)` (0x5dc290; dwords as pushed)
     fn loc_tri_add(this: GPtr<u8>, v0: GPtr<u8>, v1: GPtr<u8>, v2: GPtr<u8>, surface: u32, light: u32, plants: u32, objects: u32) -> u32 = thiscall 0x5dc290 => plant_loc_tri_add;

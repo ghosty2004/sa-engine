@@ -7,7 +7,7 @@ use sa_core::hook;
 
 use crate::common::*;
 
-use sa_world::bindings::join_car_with_road_system;
+use sa_pop::bindings::join_car_with_road_system;
 
 /// `CTaskSimpleSetPedAsAutoDriver::ProcessPed(CPed*)` (0x649020, thiscall, `ret 4`; the ped is unused). With the
 /// vehicle at +8 (read again before every store, no NULL check): `CCarCtrl::JoinCarWithRoadSystem(vehicle)`; the

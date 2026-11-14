@@ -9,7 +9,7 @@ use sa_core::hook;
 use crate::common::{f32_of, g, jne_mask, rd, wr, x};
 
 use sa_core::bindings::matrix_attach;
-use sa_core::bindings::matrix_dtor;
+use sa_world::bindings::matrix_dtor;
 use sa_core::bindings::matrix_rotate_x;
 use sa_core::bindings::matrix_rotate_y;
 use sa_core::bindings::matrix_set_rotate_x;

@@ -37,9 +37,9 @@ use sa_core::bindings::open_file as file_open;
 use sa_core::bindings::sscanf1;
 use sa_core::bindings::strncmp;
 use sa_stream::bindings::get_anim_group_name;
-use sa_core::bindings::load_line;
+use sa_stream::bindings::load_line;
 use sa_world::bindings::crt_floor as floor;
-use sa_world::bindings::find_weapon_type;
+use crate::bindings::find_weapon_type;
 orig! {
     /// `CWeaponInfo::FindWeaponFireType(const char*)` (0x5bcf30)
     fn find_weapon_fire_type(s: GPtr<u8>) -> u32 = cdecl 0x5bcf30 => crate::weapon_info::find_weapon_fire_type;
@@ -152,7 +152,7 @@ pub fn load_weapon_data() {
                 0xA3 => {
                     sscanf12(line, ga(F_MELEE), s(0x98), s(0xC0), s(0xE0), s(0x10), s(0x14), s(0x1C), s(0x24), s(0x28),
                         s(0x100), s(0x64), s(0x20), s(0xA0));
-                    let ty = find_weapon_type(s(0xC0)) as i32;
+                    let ty = (find_weapon_type(s(0xC0)) as u32) as i32;
                     let info = g::<u8>(WEAPON_INFOS).byte_add((ty as isize).wrapping_mul(0x70));
                     let ft = find_weapon_fire_type(s(0xE0));
                     wu(info, 4, ru(base, 0x10));
@@ -181,7 +181,7 @@ pub fn load_weapon_data() {
                     sscanf30(line, ga(F_GUN), s(0x98), s(0xC0), s(0xE0), s(0x10), s(0x14), s(0x1C), s(0x24), s(0x28),
                         s(0xA0), s(0x90), s(0x54), s(0x30), s(0x34), s(0x38), s(0x2C), s(0x8C), s(0x5C), s(0x94), s(0x4C),
                         s(0x88), s(0x6C), s(0x80), s(0x74), s(0x84), s(0x7C), s(0x20), s(0x3C), s(0x48), s(0x44), s(0x40));
-                    let ty = find_weapon_type(s(0xC0)) as i32;
+                    let ty = (find_weapon_type(s(0xC0)) as u32) as i32;
                     wu(base, 0x70, ty as u32);
                     let mut skill = si(0x2C);
                     if (0x16..=0x20).contains(&ty) {

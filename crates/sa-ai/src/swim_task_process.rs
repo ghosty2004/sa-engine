@@ -56,32 +56,32 @@ const G_FX: usize = 0xA9AE00;
 
 use sa_world::bindings::anim_blend_animation;
 use sa_world::bindings::anim_get_anim_block_name;
-use sa_core::bindings::assoc_start;
+use sa_anim::bindings::assoc_start;
 use crate::bindings::climb_test_for_climb;
 use sa_core::bindings::clump_get_association;
 use crate::bindings::pad_jump_just_down;
 use sa_world::bindings::ped_set_move_state;
 use sa_world::bindings::player_control_button_sprint;
 use sa_core::bindings::entity_register_reference;
-use sa_core::bindings::entity_update_rw_frame;
+use sa_world::bindings::entity_update_rw_frame;
 use sa_core::bindings::general_angle_between_points;
 use sa_core::bindings::general_get_radian_angle_between_points as general_radian_angle_between_points;
 use sa_core::bindings::general_limit_radian_angle;
 use sa_core::bindings::general_random_int_in_range as general_random_in_range;
-use sa_core::bindings::matrix_dtor;
+use sa_world::bindings::matrix_dtor;
 use sa_core::bindings::matrix_set_translate;
 use sa_core::bindings::matrix_update_rw;
 use sa_core::bindings::rp_hanim_hierarchy_get_matrix_array as hanim_get_matrix_array;
 use sa_core::bindings::rw_matrix_create;
 use sa_core::bindings::rw_matrix_update;
-use sa_core::bindings::anim_add_block_ref as anim_add_anim_block_ref;
+use sa_anim::bindings::anim_add_block_ref as anim_add_anim_block_ref;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::camera_get_look_direction;
 use sa_world::bindings::damage_calc_compute_damage_response as calc_compute_damage_response;
 use sa_world::bindings::damage_calc_dtor as calc_dtor;
 use sa_world::bindings::event_damage_affects_ped as damage_affects_ped;
 use sa_world::bindings::event_damage_dtor as damage_dtor;
-use sa_world::bindings::event_group_add;
+use crate::bindings::event_group_add;
 use sa_world::bindings::fx_add_particle as fx_system_add_particle;
 use sa_world::bindings::fx_kill as fx_system_kill;
 use sa_world::bindings::fx_play_and_kill as fx_system_play_and_kill;
@@ -101,15 +101,15 @@ use sa_world::bindings::ped_restore_heading_rate;
 use sa_world::bindings::physical_apply_move_force;
 use sa_world::bindings::player_handle_breath as player_handle_player_breath;
 use sa_world::bindings::vector_add;
-use sa_core::bindings::vector_sub;
+use sa_world::bindings::vector_sub;
 use sa_core::bindings::general_limit_angle;
 use sa_core::bindings::get_anim_hierarchy_from_skin_clump;
-use sa_core::bindings::get_animation_block as anim_get_animation_block;
+use sa_anim::bindings::get_animation_block as anim_get_animation_block;
 use sa_core::bindings::matrix_mul_assign;
 use sa_core::bindings::matrix_rotate_x;
 use sa_core::bindings::matrix_rotate_y;
 use sa_core::bindings::rp_hanim_id_get_index as hanim_id_get_index;
-use sa_core::bindings::rw_matrix_destroy;
+use sa_rwcore::bindings::rw_matrix_destroy;
 use sa_core::bindings::streaming_request_model;
 use sa_world::bindings::damage_calc_ctor as calc_ctor;
 use sa_world::bindings::event_damage_ctor as damage_ctor;
@@ -119,6 +119,8 @@ use sa_world::bindings::get_button_sprint_results as player_get_button_sprint_re
 use sa_world::bindings::handle_sprint_energy as player_handle_sprint_energy;
 use sa_world::bindings::ped_say;
 use sa_world::bindings::stats_get_fat_and_muscle_modifier;
+use sa_world::bindings::max_f;
+use sa_world::bindings::min_f;
 orig! {
     /// `RpAnimBlendClumpSetBlendDeltas(RpClump*, uint32 flags, float delta)` (0x4D67E0, cdecl)
     fn clump_set_blend_deltas(clump: u32, flags: u32, delta: u32) = cdecl 0x4D67E0 => unported;
@@ -136,10 +138,6 @@ orig! {
     fn o_swim_destroy_fx_system(t: GPtr<u8>) = thiscall 0x68AA50 => unported;
     /// `CTaskSimpleSwim::CreateFxSystem(CPed*, RwMatrix*)` (0x68A9F0, `ret 8`)
     fn o_swim_create_fx_system(t: GPtr<u8>, ped: GPtr<u8>, m: GPtr<u8>) = thiscall 0x68A9F0 => unported;
-    /// `FUN_00420800(float a, float b)` (0x420800, cdecl, ST0): `a > b ? a : b` (`test ah, 0x41`)
-    fn max_f(a: u32, b: u32) -> f64 = cdecl 0x420800 => unported;
-    /// `FUN_00404330(float a, float b)` (0x404330, cdecl, ST0): `a < b ? a : b` (`test ah, 5; jp`)
-    fn min_f(a: u32, b: u32) -> f64 = cdecl 0x404330 => unported;
     /// `CStats::UpdateStatsWhenSwimming(bool underWater, bool sprinting)` (0x55C990, cdecl)
     fn stats_update_stats_when_swimming(under: u32, sprint: u32) = cdecl 0x55C990 => unported;
     /// `CPedIK::RotateTorso(AnimBlendFrameData*, LimbOrientation&, bool)` (0x5FDDB0, `ret 0xC`)
@@ -194,8 +192,8 @@ fn store_wrapped(p: GPtr<u8>, off: isize, v: X87) {
 fn turn_input(rot: f32, cur: f32) -> X87 {
     let d = x(rot).fsub_m(cur).fchs();
     let d = wrap_pi(d).unwrap_or(d).fmul_m(k(K_TEN));
-    let r1 = X87::from_f64_exact(max_f(0xBF80_0000, bits(d)));
-    X87::from_f64_exact(min_f(0x3F80_0000, bits(r1)))
+    let r1 = X87::from_f64_exact(max_f(f32::from_bits(0xBF80_0000), f32::from_bits(bits(d))).to_f64());
+    X87::from_f64_exact(min_f(0x3F80_0000, bits(r1)).to_f64())
 }
 
 /// `this +0x24 / +0x28 / +0x30 / +0x2C` decay of the tail of `ProcessControlInput`: a value inside
@@ -311,7 +309,7 @@ pub fn swim_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         o_swim_process_control_ai(this, ped);
         if rd::<u16>(this, 0xA) == 4 {
             let mut calc = [0u32; 5];
-            calc_ctor(local(&mut calc), GPtr::NULL, f32::from_bits(g::<u32>(TIME_STEP).read()), 0x35, 3, 0);
+            calc_ctor(local(&mut calc), GPtr::<u8>::addr(GPtr::NULL) as u32, f32::from_bits(g::<u32>(TIME_STEP).read()).to_bits(), 0x35, 3, 0);
             let in_veh = (rd::<u32>(ped, 0x46C) >> 8) & 0xFFFF_FF01;
             let mut ev = [0u32; 0x11];
             damage_ctor(local(&mut ev), GPtr::NULL, g::<u32>(TIME_MS).read(), 0x35, 3, 0, 0, in_veh);
@@ -399,14 +397,14 @@ pub fn swim_process_control_input(this: GPtr<u8>, ped: GPtr<u8>) {
                 wr::<f32>(ped, 0x55C, f32_of(aim));
                 let d = aim.fsub_m(rd::<f32>(ped, 0x558)).fchs();
                 let d = wrap_pi(d).unwrap_or(d).fmul_m(k(K_TEN));
-                let r1 = X87::from_f64_exact(max_f(0xBF80_0000, bits(d)));
-                lr = f32_of(X87::from_f64_exact(min_f(0x3F80_0000, bits(r1))));
+                let r1 = X87::from_f64_exact(max_f(f32::from_bits(0xBF80_0000), f32::from_bits(bits(d))).to_f64());
+                lr = f32_of(X87::from_f64_exact(min_f(0x3F80_0000, bits(r1)).to_f64()));
                 add_f(this, 0x28, x(ts()).fmul_m(k(0x870888)).fmul_m(lr));
                 add_f(this, 0x30, x(ts()).fmul_m(k(0x87088C)).fmul_m(lr));
                 let a = X87::from_f64_exact(sa_core::orig::x87_unary(CI_ASIN, f64::from(fz)));
                 let v = a.fsub_m(rd::<f32>(this, 0x24)).fmul_m(k(K_TEN));
-                let r1 = X87::from_f64_exact(max_f(0xBF80_0000, bits(v)));
-                X87::from_f64_exact(min_f(0x3F80_0000, bits(r1)))
+                let r1 = X87::from_f64_exact(max_f(f32::from_bits(0xBF80_0000), f32::from_bits(bits(v))).to_f64());
+                X87::from_f64_exact(min_f(0x3F80_0000, bits(r1)).to_f64())
             } else {
                 if x(mag).fcom(x(k(K_ZERO))).test_any(0x41) {
                     swim_pitch_tail(this, ped);
@@ -772,10 +770,10 @@ pub fn swim_process_swim_anims(this: GPtr<u8>, ped: GPtr<u8>) {
                     wr::<u16>(this, 0xA, 0);
                 } else if !rd::<GPtr<u8>>(ped, 0x480).is_null() {
                     let r = X87::from_f64_exact(player_get_button_sprint_results(ped, 2));
-                    wr::<f32>(a, 0x24, f32_of(X87::from_f64_exact(max_f(0x3F80_0000, bits(r)))));
+                    wr::<f32>(a, 0x24, f32_of(X87::from_f64_exact(max_f(f32::from_bits(0x3F80_0000), f32::from_bits(bits(r))).to_f64())));
                 } else if !x(rd::<f32>(this, 0x10)).fcom(x(k(K_ONE))).test_any(0x41) {
                     let v = x(rd::<f32>(this, 0x10)).fsub_m(k(K_ONE));
-                    wr::<f32>(a, 0x24, f32_of(X87::from_f64_exact(min_f(0x3FC0_0000, bits(v)))));
+                    wr::<f32>(a, 0x24, f32_of(X87::from_f64_exact(min_f(0x3FC0_0000, bits(v)).to_f64())));
                 }
             }
         }
@@ -852,7 +850,7 @@ fn swim_anims_under_water(this: GPtr<u8>, ped: GPtr<u8>) {
         if !x(total(a)).fcom(x(rd::<f32>(a, 0x20))).test_parity(0x44) {
             assoc_start(a, f32::from_bits(0));
             let r = X87::from_f64_exact(player_get_button_sprint_results(ped, 3));
-            wr::<f32>(a, 0x24, f32_of(X87::from_f64_exact(max_f(0x3F33_3333, bits(r)))));
+            wr::<f32>(a, 0x24, f32_of(X87::from_f64_exact(max_f(f32::from_bits(0x3F33_3333), f32::from_bits(bits(r))).to_f64())));
         }
         wr::<u32>(this, 0xC, 0x13A);
     } else {
@@ -1058,7 +1056,7 @@ fn swim_under_water_pitch(this: GPtr<u8>, ped: GPtr<u8>, level: f32, buoy: f32) 
         }
         if !x(rd::<f32>(this, 0x34)).fcom(x(h)).test_parity(0x05) {
             let b = x(ts()).fmul_m(k(0x8708E0)).fadd_m(rd::<f32>(this, 0x34));
-            wr::<f32>(this, 0x34, f32_of(X87::from_f64_exact(min_f(h.to_bits(), bits(b)))));
+            wr::<f32>(this, 0x34, f32_of(X87::from_f64_exact(min_f(h.to_bits(), bits(b)).to_f64())));
         }
         let r = step_pitch(this);
         let d = x(k(0x8708C0)).fsub_m(k(0x8708C8));
@@ -1133,8 +1131,8 @@ pub fn swim_process_effects(this: GPtr<u8>, ped: GPtr<u8>) {
             let mut mult = [0u32; 8];
             fx_prt_mult_ctor(local(&mut mult), f32::from_bits(0x3F80_0000), f32::from_bits(0x3F80_0000), f32::from_bits(0x3F80_0000), f32::from_bits(0x3E4C_CCCD), f32::from_bits(0x3ECC_CCCD), f32::from_bits(0), f32::from_bits(0x3F00_0000));
             let mut vel = [0u32; 3];
-            fx_system_add_particle(g::<GPtr<u8>>(0xA9AE34).read(), local(&mut pos), local(&mut vel), f32::from_bits(0), local(&mut mult),
-                                   f32::from_bits(rot.to_bits()), f32::from_bits(0x3F99_999A), f32::from_bits(0x3F19_999A), 0);
+            fx_system_add_particle(g::<GPtr<u8>>(0xA9AE34).read(), local(&mut pos), local(&mut vel), f32::from_bits(0).to_bits(), local(&mut mult),
+                                   f32::from_bits(rot.to_bits()).to_bits(), f32::from_bits(0x3F99_999A), f32::from_bits(0x3F19_999A), 0);
             ped_audio_add_audio_event(audio, 0x4C, f32::from_bits(0), f32::from_bits(0x3F80_0000), GPtr::NULL, 0, 0, 0);
             if rd::<u16>(this, 0xA) == 2 {
                 swim_sprint_splashes(ped, audio);
@@ -1167,8 +1165,8 @@ pub fn swim_process_effects(this: GPtr<u8>, ped: GPtr<u8>) {
                 fx_prt_mult_ctor(g(0xC19668), f32::from_bits(0x3F80_0000), f32::from_bits(0x3F80_0000), f32::from_bits(0x3F80_0000), f32::from_bits(0x3E80_0000), f32::from_bits(0x3E99_999A), f32::from_bits(0), f32::from_bits(0x3F00_0000));
             }
             let mut vel = [0u32, 0, 0x4000_0000];
-            fx_system_add_particle(g::<GPtr<u8>>(0xA9AE08).read(), local(&mut bp), local(&mut vel), f32::from_bits(0), g(0xC19668),
-                                   f32::from_bits(0xBF80_0000), f32::from_bits(0x3F99_999A), f32::from_bits(0x3F19_999A), 0);
+            fx_system_add_particle(g::<GPtr<u8>>(0xA9AE08).read(), local(&mut bp), local(&mut vel), f32::from_bits(0).to_bits(), g(0xC19668),
+                                   f32::from_bits(0xBF80_0000).to_bits(), f32::from_bits(0x3F99_999A), f32::from_bits(0x3F19_999A), 0);
         }
         _ => {}
     }

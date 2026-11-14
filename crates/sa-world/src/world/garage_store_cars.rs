@@ -8,7 +8,7 @@ use sa_core::{hook, orig};
 use super::common::{g, rd, wr};
 
 use crate::bindings::garage_is_point_inside;
-use sa_core::bindings::world_remove;
+use crate::bindings::world_remove;
 use crate::bindings::stored_car_store;
 orig! {
     /// `CGarage::EntityHasASphereWayOutsideGarage(CEntity*, float)` (0x449050)
@@ -54,7 +54,7 @@ pub fn store_and_remove_cars_for_this_hide_out(this: GPtr<u8>, stored: GPtr<u8>,
         }
         let m = rd::<GPtr<u8>>(v, 0x14);
         let p = if m.is_null() { v.byte_add(4) } else { m.byte_add(0x30) };
-        if garage_is_point_inside(this, rd::<u32>(p, 0), rd::<u32>(p, 4), rd::<u32>(p, 8)) == 0 {
+        if garage_is_point_inside(this, sa_math::vector::CVector::new(f32::from_bits(rd::<u32>(p, 0)), f32::from_bits(rd::<u32>(p, 4)), f32::from_bits(rd::<u32>(p, 8)))) == 0 {
             continue;
         }
         if rd::<u8>(v, 0x4A4) == 2 {

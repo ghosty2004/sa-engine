@@ -19,20 +19,19 @@ use crate::bindings::population_remove_ped;
 use crate::bindings::remove_from_moving_list;
 use crate::bindings::simple_transform_update_rw_matrix;
 use sa_core::bindings::compress_from_full_matrix;
-use sa_core::bindings::entity_update_rw_frame;
-use sa_core::bindings::find_player_ped;
-use sa_core::bindings::find_player_vehicle;
+use crate::bindings::entity_update_rw_frame;
+use crate::bindings::find_player_ped;
+use crate::bindings::find_player_vehicle;
 use sa_core::bindings::matrix_update_rw_matrix;
-use sa_core::bindings::world_remove;
+use crate::bindings::world_remove;
 use sa_stream::bindings::ped_is_player;
-use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
+use crate::bindings::placeable_allocate_matrix as allocate_matrix;
 use sa_stream::bindings::simple_transform_update_matrix;
 use crate::bindings::find_node_closest_to_coors;
 use crate::bindings::garage_is_point_inside_r;
 use sa_core::bindings::matrix_mul_vec;
+use crate::bindings::position_attached_entity;
 orig! {
-    /// `CPhysical::PositionAttachedEntity` (0x546FF0)
-    fn position_attached_entity(e: GPtr<u8>) = thiscall 0x546FF0 => unported;
     /// `CEntity::Add` (vtable +0x8)
     fn v_add(e: GPtr<u8>) = thiscall vslot 0x8 => unported;
     /// `CEntity::Remove` (vtable +0xC)
@@ -262,9 +261,9 @@ pub fn garage_is_entity_entirely_outside(this: GPtr<u8>, e: GPtr<u8>, margin: f3
         }
         let sphere = rd::<GPtr<u8>>(cd, 8).byte_add(0x14 * i as isize);
         let mut out = [0.0f32; 3];
-        let c = matrix_mul_vec(GPtr::from_raw(out.as_mut_ptr()), rd::<GPtr<u8>>(e, 0x14), sphere);
+        let c = GPtr::<u8>::cast::<f32>(matrix_mul_vec(GPtr::<f32>::cast::<u8>(GPtr::from_raw(out.as_mut_ptr())), rd::<GPtr<u8>>(e, 0x14), sphere));
         let r = x(margin).fadd_m(rd::<f32>(rd::<GPtr<u8>>(cd, 8), 0x14 * i as isize + 0xC)).to_f32();
-        if garage_is_point_inside_r(this, c.read(), c.wrapping_index(1).read(), c.wrapping_index(2).read(), r) != 0 {
+        if garage_is_point_inside_r(this, sa_math::vector::CVector::new(c.read(), c.wrapping_index(1).read(), c.wrapping_index(2).read()), r) != 0 {
             return 0;
         }
         i += 1;
@@ -289,7 +288,7 @@ pub fn garage_tidy_up_garage(this: GPtr<u8>) {
                 if st == 0 || st == 9 {
                     let m = rd::<GPtr<u8>>(v, 0x14);
                     let p = entity_pos(v);
-                    if garage_is_point_inside(this, rd::<u32>(p, 0), rd::<u32>(p, 4), rd::<u32>(p, 8)) != 0
+                    if garage_is_point_inside(this, sa_math::vector::CVector::new(f32::from_bits(rd::<u32>(p, 0)), f32::from_bits(rd::<u32>(p, 4)), f32::from_bits(rd::<u32>(p, 8)))) != 0
                         && (rd::<u8>(v, 0x36) & 0xF8 == 0x28 || !x(rd::<f32>(m, 0x28)).fcom(x(0.5)).test_parity(5))
                     {
                         world_remove(v);

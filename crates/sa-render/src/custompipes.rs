@@ -62,20 +62,19 @@ use sa_core::bindings::all_in_one_get_instance_cb;
 use sa_core::bindings::all_in_one_set_instance_cb;
 use sa_core::bindings::all_in_one_set_render_cb;
 use sa_core::bindings::node_def_atomic as node_def_atomic_all_in_one;
-use sa_core::bindings::rw_d3d9_get_caps;
+use sa_rwcore::bindings::rw_d3d9_get_caps;
 use sa_core::bindings::rx_locked_pipe_add_fragment;
 use sa_core::bindings::rx_locked_pipe_unlock;
 use sa_core::bindings::rx_pipeline_create;
 use sa_core::bindings::rx_pipeline_destroy;
 use sa_core::bindings::rx_pipeline_find_node_by_name;
 use sa_core::bindings::rx_pipeline_lock;
+use sa_core::bindings::crt_new as operator_new;
 orig! {
     /// `RxD3D9AllInOneGetReinstanceCallBack(node)` (0x7573B0)
     fn all_in_one_get_reinstance_cb(node: u32) -> u32 = cdecl 0x7573B0 => unported;
     /// `RxD3D9AllInOneSetReinstanceCallBack(node, cb)` (0x7573A0)
     fn all_in_one_set_reinstance_cb(node: u32, cb: u32) = cdecl 0x7573A0 => unported;
-    /// CRT `operator new` (0x82119A)
-    fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
 
     /// `CCustomCarEnvMapPipeline::CreateCustomObjPipe()` (0x5D9F80)
     fn car_create_custom_obj_pipe_call() -> u32 = cdecl 0x5D9F80 => car_env_map_create_custom_obj_pipe;
@@ -147,7 +146,7 @@ pub fn car_env_map_create_custom_obj_pipe() -> u32 {
 ///
 /// Not registered: 0x5D8980 is hooked by sa-render mvpa_render1.rs (verified) (duplicate port left unregistered when STD-5 merged both).
 pub fn is_environment_mapping_supported() -> u32 {
-    let caps = (GPtr::<u8>::addr(rw_d3d9_get_caps()) as u32) as usize;
+    let caps = (GPtr::<u8>::addr(GPtr::from_addr(rw_d3d9_get_caps() as usize)) as u32) as usize;
     if g::<i32>(caps + 0x94).read() <= 1 {
         return 0;
     }

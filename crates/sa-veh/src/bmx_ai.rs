@@ -25,7 +25,7 @@ use sa_world::bindings::get_pad_from_player;
 use sa_world::bindings::physical_process_control;
 use crate::bindings::activate_bomb;
 use sa_core::bindings::clump_get_association as get_association;
-use sa_core::bindings::prune_references;
+use sa_world::bindings::prune_references;
 use sa_world::bindings::handle_sprint_energy;
 use sa_world::bindings::pad_get_accelerate as get_accelerate;
 use sa_world::bindings::pad_get_steering_left_right as get_steering_left_right;
@@ -33,17 +33,13 @@ use sa_world::bindings::player_control_button_sprint as control_button_sprint;
 use sa_world::bindings::stats_get_fat_and_muscle_modifier as get_fat_and_muscle_modifier;
 use sa_world::bindings::vector_add;
 use sa_world::bindings::vector_scale as scalar_mul_vector;
+use sa_core::bindings::vector_dot_product as dot_product;
+use sa_world::bindings::max_f;
+use sa_world::bindings::physical_apply_move_force_5429f0 as apply_move_force;
+use sa_world::bindings::physical_apply_turn_force as apply_turn_force;
 orig! {
-    /// `CPhysical::ApplyTurnForce(CVector, CVector)` (0x542A50)
-    fn apply_turn_force(e: GPtr<u8>, force: CVector, point: CVector) = thiscall 0x542A50 => sa_world::physical::forces::apply_turn_force;
-    /// `CPhysical::ApplyMoveForce(CVector)` (0x5429F0)
-    fn apply_move_force(e: GPtr<u8>, force: CVector) = thiscall 0x5429F0 => sa_world::physical::forces::apply_move_force;
-    /// `DotProduct(const RwV3d*, const RwV3d*)` (0x40FDB0), ST0
-    fn dot_product(a: GPtr<u8>, b: GPtr<u8>) -> f64 = cdecl 0x40FDB0 => dot_native;
     /// `CBmx::ProcessBunnyHop()` (0x6C0590)
     fn process_bunny_hop(v: GPtr<u8>) = thiscall 0x6C0590 => crate::bike2::bmx_process_bunny_hop;
-    /// `max(float, float)` (0x420800), ST0
-    fn max_f(a: f32, b: f32) -> f64 = cdecl 0x420800 => max_native;
     /// `CPad::GetAccelerateJustDown()` (0x540440): bool in AL
     fn get_accelerate_just_down(pad: GPtr<u8>) -> u32 = thiscall 0x540440 => unported;
     /// `CStats::UpdateStatsWhenCycling(bool, CBmx*)` (0x55C780)
@@ -54,20 +50,6 @@ orig! {
     fn reduce_horn_counter(v: GPtr<u8>) = thiscall 0x6B5F90 => crate::bike::reduce_horn_counter;
     /// `CBike::ProcessControlInputs(uint8)` (vtable +0x60)
     fn v_process_control_inputs(v: GPtr<u8>, player: u32) = thiscall vslot 0x60 => unported;
-}
-
-/// Phases B/C side of `max` 0x420800: `a` when `a > b`, else `b`.
-pub fn max_native(a: f32, b: f32) -> f64 {
-    if x(a).fcom(x(b)).test_any(0x41) {
-        f64::from(b)
-    } else {
-        f64::from(a)
-    }
-}
-
-/// Phases B/C side of `DotProduct` 0x40FDB0.
-pub fn dot_native(a: GPtr<u8>, b: GPtr<u8>) -> f64 {
-    sa_math::vector::dot_product_x87(&rv(a, 0), &rv(b, 0)).to_f64()
 }
 
 /// `CTimer::ms_fTimeStep`
@@ -355,7 +337,7 @@ fn player(this: GPtr<u8>, flags: GPtr<u32>) {
     // in-air steering roll (all compressions exactly 1.0)
     if (0..4isize).all(|i| rd::<u32>(this, 0x710 + 4 * i) == F1) {
         let m = rd::<GPtr<u8>>(this, 0x14);
-        let d = st0(dot_product(this.byte_add(0x50), m.byte_add(0x20))).to_f32();
+        let d = st0(dot_product(this.byte_add(0x50), m.byte_add(0x20)).to_f64()).to_f32();
         let lim = c(0x3D23_D70A);
         let lr0 = || i32::from((get_steering_left_right(pad) as u32) as u16 as i16);
         let wants = if !ge(x(d), lim) && !ge(xi(lr0()), X87::zero()) {
@@ -395,7 +377,7 @@ fn player(this: GPtr<u8>, flags: GPtr<u32>) {
             .fmul_m(0.5)
             .fsubr_m(1.0)
             .to_f32();
-        let rate = st0(max_f(0.5, r)).to_f32();
+        let rate = st0(max_f(0.5, r).to_f64()).to_f32();
         handle_sprint_energy(ped, 0, rate);
         if !le(st0(get_button_sprint_results(ped, 1)), X87::zero()) {
             wr::<u32>(this, 0x818, 0x409C_CCCD);
@@ -410,7 +392,7 @@ fn player(this: GPtr<u8>, flags: GPtr<u32>) {
             wr::<u32>(this, 0x818, 0x409C_CCCD);
         } else {
             let v = ld(this, 0x818).fsub_m(f32::from_bits(0x3ECC_CCCD)).to_f32();
-            wr::<f32>(this, 0x818, st0(max_f(0.0, v)).to_f32());
+            wr::<f32>(this, 0x818, st0(max_f(0.0, v).to_f64()).to_f32());
         }
     }
     update_stats_when_cycling(u32::from((rd::<u8>(this, 0x614) >> 5) & 1), this);

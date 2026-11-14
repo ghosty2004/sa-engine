@@ -5,12 +5,11 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
-use sa_core::bindings::stream_read;
+use sa_rwcore::bindings::stream_read;
+use sa_core::bindings::crt_new_821195 as operator_new;
 orig! {
     /// `CTheScripts::CheckStreamedScriptVersion(RwStream*, const char*)` (0x464FF0; `mov al, 1; ret`)
     fn check_streamed_script_version(stream: GPtr<u8>, name: GPtr<u8>) -> u8 = cdecl 0x464FF0 => unported;
-    /// `operator new(size)` (0x821195)
-    fn operator_new(n: u32) -> GPtr<u8> = cdecl 0x821195 => unported;
 }
 
 /// `CStreamedScripts::LoadStreamedScript(RwStream*, int32 index)` (stub 0x470840 → 0x1565EC0, thiscall, `ret 8`).

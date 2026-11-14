@@ -12,7 +12,7 @@ use crate::common::*;
 
 use crate::bindings::event_pool_new;
 use sa_core::bindings::ped_is_alive;
-use sa_world::bindings::membership_is_member;
+use crate::bindings::membership_is_member;
 orig! {
     /// `CEventAcquaintancePed::AffectsPed(CPed*)` (0x4AFA30)
     fn acquaintance_ped_affects_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x4AFA30 => unported;
@@ -84,7 +84,7 @@ pub fn vt_85ae88_get_source_entity_4ae230(this: GPtr<u8>) -> u32 {
 #[hook(addr = 0x4AE0E0, conv = thiscall, name = "CEventGroupEvent::AffectsPedGroup", expect = "8B 41 0C 8B 4C 24 04")]
 pub fn event_group_event_affects_ped_group_4ae0e0(this: GPtr<u8>, group: GPtr<u8>) -> u8 {
     let ped = rd::<GPtr<u8>>(this, 0xC);
-    u8::from(membership_is_member(group.byte_add(8), ped) != 0)
+    u8::from(membership_is_member(group.byte_add(8), ped) as u8 != 0)
 }
 
 /// `CEventInAir::Clone` (0x4B76A0): inlined `operator new` + ctor (`+4 = 0`, `+8 = 0`, `vtbl = 0x85B3C0`).
@@ -132,20 +132,20 @@ pub fn event_takes_priority_over_4abc30(this: GPtr<u8>, other: GPtr<u8>) -> u8 {
 /// `vt_85b070::AffectsPed(CPed*)` (0x4AEDC0): `ped->IsAlive() && this[+0x10] != null`.
 #[hook(addr = 0x4AEDC0, conv = thiscall, name = "vt_85b070::AffectsPed", expect = "56 8B F1 8B 4C 24 08")]
 pub fn vt_85b070_affects_ped_4aedc0(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
-    u8::from(ped_is_alive(ped) != 0 && rd::<u32>(this, 0x10) != 0)
+    u8::from(ped_is_alive(ped) as u8 != 0 && rd::<u32>(this, 0x10) != 0)
 }
 
 /// `vt_85b0f8::AffectsPed(CPed*)` (0x4AF100): `ped->IsAlive() && this[+0xC] != null`.
 #[hook(addr = 0x4AF100, conv = thiscall, name = "vt_85b0f8::AffectsPed", expect = "56 8B F1 8B 4C 24 08")]
 pub fn vt_85b0f8_affects_ped_4af100(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
-    u8::from(ped_is_alive(ped) != 0 && rd::<u32>(this, 0xC) != 0)
+    u8::from(ped_is_alive(ped) as u8 != 0 && rd::<u32>(this, 0xC) != 0)
 }
 
 /// `vt_85ae88::AffectsPed(CPed*)` (0x4AE2D0): alive, no `+0xFC` (attached-to), `+0x46C` bit 8 clear,
 /// source ped (+0x14) set and its `+0x590` (vehicle type) != 5.
 #[hook(addr = 0x4AE2D0, conv = thiscall, name = "vt_85ae88::AffectsPed", expect = "56 8B 74 24 08")]
 pub fn vt_85ae88_affects_ped_4ae2d0(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
-    if ped_is_alive(ped) == 0 || rd::<u32>(ped, 0xFC) != 0 || rd::<u32>(ped, 0x46C) & 0x100 != 0 {
+    if ped_is_alive(ped) as u8 == 0 || rd::<u32>(ped, 0xFC) != 0 || rd::<u32>(ped, 0x46C) & 0x100 != 0 {
         return 0;
     }
     let src = rd::<GPtr<u8>>(this, 0x14);
@@ -158,7 +158,7 @@ pub fn vt_85ae88_affects_ped_4ae2d0(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
 // ---- scalar deleting destructors: `call dtor; if (flags & 1) CEvent::operator delete; return this` ---
 
 use crate::bindings::dtor_5f6200;
-use sa_world::bindings::event_sound_quiet_dtor as dtor_5dea00;
+use crate::bindings::event_sound_quiet_dtor as dtor_5dea00;
 orig! {
     fn dtor_420f30(this: GPtr<u8>) = thiscall 0x420F30 => unported;
     fn dtor_5fed80(this: GPtr<u8>) = thiscall 0x5FED80 => unported;
@@ -351,7 +351,7 @@ pub fn event_in_air_sdd_4b64d0(this: GPtr<u8>, flags: u32) -> GPtr<u8> {
 // ---- Clone / CloneEditable ----------------------------------------------------------------------
 
 use crate::bindings::event_base_dtor;
-use sa_core::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference;
 use crate::bindings::building_collision_ctor;
 use crate::bindings::create_partner_event_ctor as ctor_5f6190;
 use crate::bindings::ctor_4aecd0;
@@ -361,7 +361,7 @@ use crate::bindings::event_walk_into_vehicle_ctor as walk_into_vehicle_ctor;
 use crate::bindings::object_collision_ctor;
 use crate::bindings::ped_collision_ctor;
 use crate::bindings::walk_into_ped_ctor;
-use sa_world::bindings::acquaintance_ped_ctor;
+use crate::bindings::acquaintance_ped_ctor;
 use sa_world::bindings::ctor_4aedf0;
 use sa_world::bindings::event_group_event_ctor as group_event_ctor;
 orig! {
@@ -398,7 +398,7 @@ fn acquaintance_clone(this: GPtr<u8>, vtbl: u32) -> GPtr<u8> {
     if e.is_null() {
         return GPtr::NULL;
     }
-    acquaintance_ped_ctor(e, GPtr::from_addr(rd::<u32>(this, 0x14) as usize));
+    acquaintance_ped_ctor(e.addr() as u32, GPtr::<u8>::addr(GPtr::from_addr(rd::<u32>(this, 0x14) as usize)) as u32);
     wr::<u32>(e, 0, vtbl);
     e
 }
@@ -597,7 +597,7 @@ pub fn event_lean_on_vehicle_dtor_65dc10(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x86F878);
     let v = rd::<GPtr<u8>>(this, 0xC);
     if !v.is_null() {
-        entity_clean_up_old_reference(v, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0xC)));
+        entity_clean_up_old_reference(v, this.byte_add(0xC));
     }
     event_base_dtor(this);
 }
@@ -632,7 +632,7 @@ pub fn event_group_event_dtor_4ae070(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x85AE48);
     let p = rd::<GPtr<u8>>(this, 0xC);
     if !p.is_null() {
-        entity_clean_up_old_reference(p, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0xC)));
+        entity_clean_up_old_reference(p, this.byte_add(0xC));
     }
     let e = rd::<GPtr<u8>>(this, 0x10);
     if !e.is_null() {
@@ -700,7 +700,7 @@ pub fn event_group_event_base_takes_priority_4ae100(this: GPtr<u8>, other: GPtr<
 
 use crate::bindings::ik_get_look_at_entity;
 use sa_world::bindings::ik_is_looking;
-use sa_world::bindings::tm_find_active_task_by_type;
+use crate::bindings::tm_find_active_task_by_type;
 use crate::bindings::gang_hassle_ped_ctor;
 orig! {
     /// `CTask::GetTaskType` (vtable +0x10)
@@ -779,7 +779,7 @@ use sa_core::bindings::entity_register_reference as entity_register_reference_ev
 fn find_chat_task(ped: GPtr<u8>) -> GPtr<u8> {
     for t in [0x4B2, 0x4BF, 0x4B3] {
         let intel = rd::<GPtr<u8>>(ped, 0x47C);
-        let r = tm_find_active_task_by_type(intel.byte_add(4), t as u32);
+        let r = tm_find_active_task_by_type(intel.byte_add(4), (t as u32) as i32);
         if !r.is_null() {
             return r;
         }
@@ -822,11 +822,11 @@ pub fn event_player_collision_with_ped_dtor_5fee80(this: GPtr<u8>) {
 /// task, their task types differ (source's type read first).
 #[hook(addr = 0x4AEF00, conv = thiscall, name = "vt_85b0b0::AffectsPed", expect = "53 56 57 8B 7C 24 10")]
 pub fn vt_85b0b0_affects_ped_4aef00(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
-    if ped_is_alive(ped) == 0 {
+    if ped_is_alive(ped) as u8 == 0 {
         return 0;
     }
     let src = rd::<GPtr<u8>>(this, 0x14);
-    if src.is_null() || ped_is_alive(src) == 0 {
+    if src.is_null() || ped_is_alive(src) as u8 == 0 {
         return 0;
     }
     let ik = g::<u8>(0xC15448);

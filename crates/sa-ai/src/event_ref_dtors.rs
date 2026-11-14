@@ -10,8 +10,8 @@ use sa_core::hook;
 
 use crate::common::*;
 
-use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
-use sa_world::bindings::event_gun_shot_dtor;
+use sa_world::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+use crate::bindings::event_gun_shot_dtor;
 
 /// `CEvent`'s vtable, stored last by every event destructor.
 const CEVENT_VTABLE: u32 = 0x85_AB38;
@@ -20,7 +20,7 @@ const CEVENT_VTABLE: u32 = 0x85_AB38;
 fn release_ref(this: GPtr<u8>, off: isize) {
     let e = rd::<GPtr<u8>>(this, off);
     if !e.is_null() {
-        clean_up_old_reference(e, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(off)));
+        clean_up_old_reference(e, this.byte_add(off));
     }
 }
 

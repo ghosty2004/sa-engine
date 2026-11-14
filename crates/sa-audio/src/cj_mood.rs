@@ -10,7 +10,7 @@ use sa_math::x87::Cmp;
 
 use crate::common::*;
 
-use sa_core::bindings::find_player_ped;
+use sa_world::bindings::find_player_ped;
 use sa_world::bindings::get_stat_value;
 use sa_world::bindings::membership_get_member;
 use sa_world::bindings::count_members_excluding_leader as membership_count_excluding_leader;

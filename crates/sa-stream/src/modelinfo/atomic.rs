@@ -41,19 +41,13 @@ pub use sa_core::bindings::rw_frame_create;
 pub use sa_core::bindings::rw_frame_destroy;
 pub use sa_core::bindings::strncmp;
 pub use crate::bindings::is_cbpc_pipeline_attached;
+pub use crate::bindings::add_tex_dictionary_ref;
+pub use crate::bindings::base_init;
+pub use crate::bindings::model_info_add_ref as add_ref;
+pub use crate::bindings::model_info_remove_ref as remove_ref;
+pub use crate::bindings::remove_tex_dictionary_ref;
+pub use crate::bindings::set_base_model_info_flags;
 orig! {
-    /// `CBaseModelInfo::Init` (0x4C4B10)
-    pub fn base_init(this: MiPtr) = thiscall 0x4C4B10 => super::base::init;
-    /// `CBaseModelInfo::AddTexDictionaryRef` (0x4C4B80)
-    pub fn add_tex_dictionary_ref(this: MiPtr) = thiscall 0x4C4B80 => super::base::add_tex_dictionary_ref;
-    /// `CBaseModelInfo::RemoveTexDictionaryRef` (0x4C4B90)
-    pub fn remove_tex_dictionary_ref(this: MiPtr) = thiscall 0x4C4B90 => super::base::remove_tex_dictionary_ref;
-    /// `CBaseModelInfo::AddRef` (0x4C4BA0)
-    pub fn add_ref(this: MiPtr) = thiscall 0x4C4BA0 => super::base::add_ref;
-    /// `CBaseModelInfo::RemoveRef` (0x4C4BB0)
-    pub fn remove_ref(this: MiPtr) = thiscall 0x4C4BB0 => super::base::remove_ref;
-    /// `CBaseModelInfo::SetBaseModelInfoFlags` (0x5B3AD0)
-    pub fn set_base_model_info_flags(m: MiPtr, flags: u32) = cdecl 0x5B3AD0 => super::base::set_base_model_info_flags;
     /// `CAtomicModelInfo::Init` (0x4C4430)
     pub fn atomic_init(this: MiPtr) = thiscall 0x4C4430 => init;
     /// `CAtomicModelInfo::DeleteRwObject` (0x4C4440)
@@ -177,7 +171,7 @@ fn setup_pipeline(atomic: GPtr<u8>) {
 /// `CAtomicModelInfo::Init` (0x4C4430): `jmp CBaseModelInfo::Init`.
 #[hook(addr = 0x4C4430, conv = thiscall, name = "CAtomicModelInfo::Init", expect = "E9 DB 06 00 00 90", this = "CAtomicModelInfo")]
 pub fn init(this: MiPtr) {
-    base_init(this)
+    base_init(this.cast::<crate::shared::CBaseModelInfo>())
 }
 
 /// `CAtomicModelInfo::SetAtomic(RpAtomic*)` (0x4C4360, `ret 4`).
@@ -189,7 +183,7 @@ pub fn set_atomic(this: MiPtr, atomic: GPtr<u8>) {
     }
     f::<GPtr<u8>>(this, mi::RW_OBJECT).write(atomic);
     add_2dfx_count(this, atomic_2dfx_count(atomic), false);
-    add_tex_dictionary_ref(this);
+    add_tex_dictionary_ref(this.cast::<crate::shared::CBaseModelInfo>());
     if vcall_get_anim_file_index(this) != -1 {
         add_anim_block_ref(vcall_get_anim_file_index(this));
     }
@@ -214,7 +208,7 @@ pub fn delete_rw_object(this: MiPtr) {
     rp_atomic_destroy(atomic);
     rw_frame_destroy(frame);
     f::<u32>(this, mi::RW_OBJECT).write(0);
-    remove_tex_dictionary_ref(this);
+    remove_tex_dictionary_ref(this.cast::<crate::shared::CBaseModelInfo>());
     if vcall_get_anim_file_index(this) != -1 {
         remove_anim_block_ref(vcall_get_anim_file_index(this) as u32);
     }
@@ -237,9 +231,9 @@ pub fn create_instance_rwmat(this: MiPtr, m: GPtr<RwMatrix>) -> GPtr<u8> {
     if rw(this).is_null() {
         return GPtr::NULL;
     }
-    add_ref(this);
+    add_ref(this.cast::<crate::shared::CBaseModelInfo>());
     let clone = clone_on_new_frame(rw(this), Some(m));
-    remove_ref(this);
+    remove_ref(this.cast::<crate::shared::CBaseModelInfo>());
     clone
 }
 
@@ -249,9 +243,9 @@ pub fn create_instance_void(this: MiPtr) -> GPtr<u8> {
     if rw(this).is_null() {
         return GPtr::NULL;
     }
-    add_ref(this);
+    add_ref(this.cast::<crate::shared::CBaseModelInfo>());
     let clone = clone_on_new_frame(rw(this), None);
-    remove_ref(this);
+    remove_ref(this.cast::<crate::shared::CBaseModelInfo>());
     clone
 }
 
@@ -326,7 +320,7 @@ pub fn atomic_flags_word(w: u16, flags: u32) -> u16 {
 /// `SetBaseModelInfoFlags`, then [`atomic_flags_word`] (as byte and word read-modify-writes).
 #[hook(addr = 0x5B3B20, conv = cdecl, name = "CAtomicModelInfo::SetAtomicModelInfoFlags", expect = "8B 54 24 04 53")]
 pub fn set_atomic_model_info_flags(m: MiPtr, flags: u32) {
-    set_base_model_info_flags(m, flags);
+    set_base_model_info_flags(m.cast::<crate::shared::CBaseModelInfo>(), flags);
     let p = f::<u16>(m, mi::FLAGS);
     p.write(atomic_flags_word(p.read(), flags));
 }
@@ -336,7 +330,7 @@ pub fn set_atomic_model_info_flags(m: MiPtr, flags: u32) {
 /// `CDamageAtomicModelInfo::Init` (0x4C48B0): base init, `m_pDamagedAtomic = 0`.
 #[hook(addr = 0x4C48B0, conv = thiscall, name = "CDamageAtomicModelInfo::Init", expect = "56 8B F1 E8 58 02 00 00", this = "CDamageAtomicModelInfo")]
 pub fn damage_init(this: MiPtr) {
-    base_init(this);
+    base_init(this.cast::<crate::shared::CBaseModelInfo>());
     f::<u32>(this, DAMAGED_ATOMIC).write(0);
 }
 

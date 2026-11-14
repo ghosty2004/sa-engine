@@ -14,11 +14,11 @@ use crate::bindings::attractor_manager_deregister_ped as deregister_ped;
 use crate::bindings::eh_handle_events;
 use crate::bindings::scripted_2d_effects_get_index;
 use sa_world::bindings::wanted_can_cop_join_pursuit;
-use sa_core::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference;
 use sa_core::bindings::entity_register_reference;
-use sa_stream::bindings::find_player_wanted;
+use sa_world::bindings::find_player_wanted;
 use sa_world::bindings::get_ped_attractor_manager;
-use sa_world::bindings::task_simple_ctor;
+use crate::bindings::task_simple_ctor;
 use crate::bindings::task_complex_dtor;
 orig! {
     /// `CPedAttractorManager::RegisterPedWithAttractor(CPed*, C2dEffectPedAttractor*, CEntity*, int32)` (0x5EFCA0)
@@ -50,7 +50,7 @@ pub fn event_attractor_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x85B1B8);
     let e = rd::<GPtr<u8>>(this, 0x18);
     if !e.is_null() {
-        entity_clean_up_old_reference(e, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x18)));
+        entity_clean_up_old_reference(e, this.byte_add(0x18));
     }
     wr::<u32>(this, 0, 0x85AB38);
 }
@@ -66,7 +66,7 @@ pub fn task_complex_use_effect_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u
     let slot = this.byte_add(0x18);
     let old = rd::<GPtr<u8>>(this, 0x18);
     if !old.is_null() {
-        entity_clean_up_old_reference(old, slot.cast::<GPtr<u8>>());
+        entity_clean_up_old_reference(old, slot.cast::<u8>());
     }
     wr::<GPtr<u8>>(this, 0x18, ped);
     if !ped.is_null() {
@@ -109,7 +109,7 @@ pub fn task_complex_use_effect_dtor(this: GPtr<u8>) {
     }
     let e = rd::<GPtr<u8>>(this, 0x10);
     if !e.is_null() {
-        entity_clean_up_old_reference(e, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x10)));
+        entity_clean_up_old_reference(e, this.byte_add(0x10));
     }
     task_complex_dtor(this);
 }

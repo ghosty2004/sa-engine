@@ -3,13 +3,9 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
-orig! {
-    /// `CDecision::MakeDecision(int32, bool, int32, int32, int32, int32, int16*, int16*)` (0x6040D0, `ret 0x20`)
-    #[allow(clippy::too_many_arguments)]
-    fn decision_make_decision(this: GPtr<u8>, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, a8: u32) = thiscall 0x6040D0 => unported;
-}
+use crate::bindings::decision_make_decision;
 
 /// `FUN_00606060(int32 index, 8 dwords)` (0x606060, thiscall on a `CDecisionMaker`, `ret 0x24`): the decision
 /// `this + index * 0x3C` makes the decision with the other eight arguments (`CDecision::MakeDecision`, tail of the

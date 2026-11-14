@@ -23,11 +23,9 @@ sa_core::globals! {
 pub type VehicleStructureSlot = Slot<0x314>;
 
 pub use crate::bindings::building_ctor;
+pub use sa_core::bindings::crt_new as operator_new;
+pub use sa_core::bindings::crt_new_821195 as operator_new_array;
 orig! {
-    /// CRT `operator new` (0x82119A)
-    pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
-    /// CRT `operator new[]` (0x821195: `jmp operator new`)
-    pub fn operator_new_array(size: u32) -> GPtr<u8> = cdecl 0x821195 => unported;
     /// `CDummyPool::New()` (0x532630)
     pub fn dummy_pool_new(p: GPtr<CPool<DummySlot>>) -> GPtr<DummySlot> = thiscall 0x532630 => unported;
     /// `CDummy::CDummy()` (0x532540)

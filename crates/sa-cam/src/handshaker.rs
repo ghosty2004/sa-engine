@@ -22,7 +22,7 @@ pub const HAND_SHAKER_CTOR: u32 = 0x517740;
 /// 1/32767 (0x858C7C), the `rand()` scale of `Reset`.
 const RAND_SCALE: u32 = 0x3800_0100;
 
-pub use sa_core::bindings::matrix_dtor;
+pub use sa_world::bindings::matrix_dtor;
 pub use sa_core::bindings::matrix_set_rotate;
 pub use crate::bindings::hand_shaker_reset as reset_call;
 orig! {

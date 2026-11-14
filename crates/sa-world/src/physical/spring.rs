@@ -248,7 +248,7 @@ pub fn apply_spring_dampening(this: Ent, damping: f32, limit: f32, dir: Ent, poi
         _ => {}
     }
     let mut co = CVector::new(0.0, 0.0, 0.0);
-    let com = rv(multiply3x3(lp(&mut co), matrix(this), this.byte_add(CENTRE_OF_MASS).cast()).cast(), 0);
+    let com = rv(multiply3x3(lp(&mut co).cast(), matrix(this), this.byte_add(CENTRE_OF_MASS).cast()).cast(), 0);
     let mut d = [0f32; 3];
     for (i, d) in d.iter_mut().enumerate() {
         f.fld(rf(point, 4 * i as isize));
@@ -257,7 +257,7 @@ pub fn apply_spring_dampening(this: Ent, damping: f32, limit: f32, dir: Ent, poi
     }
     let mut dv = cv(d);
     let mut xo = CVector::new(0.0, 0.0, 0.0);
-    let c = rv(cross_product(lp(&mut xo), lp(&mut dv), dir.cast()).cast(), 0);
+    let c = rv(cross_product(lp(&mut xo).cast(), lp(&mut dv).cast(), dir.cast()).cast(), 0);
     mass_times(&mut f, this, c, imp);
     f.fld(limit);
     f.fabs();

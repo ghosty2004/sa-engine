@@ -64,13 +64,13 @@ use crate::bindings::sound_stop_and_forget;
 use crate::bindings::twin_initialise;
 use crate::bindings::twin_loop_stop_sound_and_forget as twin_stop_and_forget;
 use crate::bindings::twin_play;
-use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
-use sa_core::bindings::find_player_ped;
+use sa_world::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+use sa_world::bindings::find_player_ped;
 use sa_core::bindings::memory_free;
 use sa_core::bindings::memory_malloc;
 use sa_stream::bindings::cd_stream_read;
 use sa_world::bindings::ae_random_int;
-use sa_world::bindings::floor_f;
+use crate::bindings::floor_f;
 use sa_world::bindings::sound_dtor;
 orig! {
     fn hw_get_channel_play_times(this: u32, slot: u32, out: u32) = thiscall 0x4D8820 => unported;
@@ -255,7 +255,7 @@ pub fn audio_hardware_play_sound(this: u32, slot: u32, ch: u32, sfx: u32, bank: 
     let len = ch_get_length(r32(chp));
     if flags & 8 != 0 && pos > 0 {
         let v = xi(pos as i32).fmul(xf(f32::from_bits(0x3C23_D70A))).fmul(xi(len as i32)).to_f32();
-        pos = ftol(X87::from_f64_exact(floor_f(f32::from_bits(v.to_bits())))) as u16 as i16;
+        pos = ftol(X87::from_f64_exact(floor_f(f32::from_bits(v.to_bits()).to_bits()))) as u16 as i16;
     }
     if (pos as i32) > len as i32 {
         pos = len as u16 as i16;
@@ -410,7 +410,7 @@ pub fn sound_manager_request_new_sound(this: u32, src: u32) -> u32 {
             sound_assign(s, src);
             let ent = r32(src + 8);
             if ent != 0 {
-                clean_up_old_reference(GPtr::from_addr(ent as usize), GPtr::from_addr((src + 8) as usize));
+                clean_up_old_reference(GPtr::from_addr(ent as usize), GPtr::<GPtr<u8>>::cast::<u8>(GPtr::from_addr((src + 8) as usize)));
                 w32(src + 8, 0);
             }
             sound_new_vpsl_entry(s);
@@ -588,7 +588,7 @@ pub fn sound_manager_service(this: u32) {
         let ent = r32(s + 8);
         w16(s + 0x58, 0);
         if ent != 0 {
-            clean_up_old_reference(GPtr::from_addr(ent as usize), GPtr::from_addr((s + 8) as usize));
+            clean_up_old_reference(GPtr::from_addr(ent as usize), GPtr::<GPtr<u8>>::cast::<u8>(GPtr::from_addr((s + 8) as usize)));
             w32(s + 8, 0);
         }
         w16(s + 0x5E, 0);

@@ -20,12 +20,12 @@ const SCRIPTED_TASKS: usize = 0xC0B1E8;
 
 use crate::bindings::brain_task_store_set_task;
 use crate::bindings::record_set_event;
-use sa_stream::bindings::ped_is_player;
-use sa_world::bindings::event_group_add;
+use sa_ped::bindings::ped_is_player;
+use sa_ai::bindings::event_group_add;
 use sa_world::bindings::event_script_command_ctor;
 use sa_world::bindings::event_script_command_dtor;
 use sa_world::bindings::group_intel_set_script_command_task;
-use sa_world::bindings::ped_groups_get_peds_group as get_peds_group;
+use sa_ai::bindings::ped_groups_get_peds_group as get_peds_group;
 use sa_world::bindings::sequence_add_task;
 use crate::bindings::get_vacant_slot;
 use sa_world::bindings::group_intel_get_task_script_command;
@@ -84,7 +84,7 @@ pub fn give_ped_scripted_task(this: GPtr<u8>, ped_handle: i32, task: GPtr<u8>, o
         return;
     }
     let ped = ped_at(ped_handle);
-    let group = get_peds_group(ped);
+    let group = GPtr::from_addr(get_peds_group(ped.addr() as u32) as usize);
     let ty = at::<u8>(this, 0xC9).read();
     let brain = if matches!(ty, 5 | 2 | 0 | 3) {
         let locals: GPtr<u8> =

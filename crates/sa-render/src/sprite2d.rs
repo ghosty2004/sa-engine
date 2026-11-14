@@ -54,14 +54,13 @@ const RS_VERTEXALPHAENABLE: u32 = 0xC;
 
 pub use crate::bindings::rw_im2d_render_indexed_primitive;
 pub use sa_core::bindings::rw_im2d_render_primitive;
-pub use sa_core::bindings::rw_texture_destroy;
-pub use sa_core::bindings::rw_texture_read;
-pub use sa_world::bindings::set_vertices_rect as set_vertices_rect_call;
+pub use sa_rwcore::bindings::rw_texture_destroy;
+pub use sa_rwcore::bindings::rw_texture_read;
+pub use crate::bindings::set_vertices_rect as set_vertices_rect_call;
+pub use crate::bindings::set_vertices_quad_call;
 orig! {
     /// `RwRenderStateSet(state, value)` through `RwEngineInstance` +0x20
     pub fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `CSprite2d::SetVertices(x1, y1, .. y4, const CRGBA&, x4)` (0x727590)
-    pub fn set_vertices_quad_call(x1: u32, y1: u32, x2: u32, y2: u32, x3: u32, y3: u32, x4: u32, y4: u32, c1: GPtr<u8>, c2: GPtr<u8>, c3: GPtr<u8>, c4: GPtr<u8>) = cdecl 0x727590 => set_vertices_quad;
 }
 
 /// The D3DCOLOR of a `CRGBA` (bytes r, g, b, a): `a << 24 | r << 16 | g << 8 | b`.
@@ -489,7 +488,7 @@ pub fn draw_any_rect(
 }
 
 pub use crate::bindings::set_vertices_d3d9 as set_vertices_d3d9_call;
-pub use sa_world::bindings::render_vertex_buffer as render_vertex_buffer_call;
+pub use crate::bindings::render_vertex_buffer as render_vertex_buffer_call;
 
 /// `CSprite2d::Draw(const CRect& r, const CRGBA& c)` (0x728350, thiscall, `ret 8`): the quad in
 /// colour c (`SetVertices(r, c, c, c, c)`), texture raster = `texture ? texture->raster : NULL` (the
@@ -545,7 +544,7 @@ use sa_core::bindings::font_set_font_style as bc_font_set_font_style;
 use sa_core::bindings::font_set_orientation as bc_font_set_orientation;
 use sa_core::bindings::rgba_ctor as bc_rgba;
 use sa_core::bindings::sprintf1 as bc_sprintf;
-use sa_core::bindings::sprite_draw_rect as bc_draw_rect;
+use crate::bindings::sprite_draw_rect as bc_draw_rect;
 use sa_core::bindings::font_set_right_justify_wrap as bc_font_set_right_justify_wrap;
 use sa_core::bindings::font_set_scale as bc_font_set_scale;
 use sa_core::bindings::font_set_wrapx as bc_font_set_wrapx;
@@ -591,7 +590,7 @@ pub fn draw_bar_chart(x: f32, y: f32, width: u32, height: u32, progress: f32, pr
     let [cr, cg, cb, ca] = color.to_le_bytes();
     let mut colour = color;
     set([x, bottom, end, y]);
-    bc_draw_rect(GPtr::<u8>::cast::<f32>(rp()), GPtr::from_raw(&raw mut colour).cast());
+    bc_draw_rect(rp(), GPtr::from_raw(&raw mut colour).cast());
     // the remainder in the halved colour
     let end2 = if X87::from_f32(fill).fcom(X87::from_f32(right)).test_parity(5) { right } else { fill };
     set([end2, bottom, right, y]);
@@ -601,7 +600,7 @@ pub fn draw_bar_chart(x: f32, y: f32, width: u32, height: u32, progress: f32, pr
     let ob = GPtr::<u8>::from_raw(obj.as_mut_ptr());
     let op = || ob;
     bc_rgba(op(), hr, hg, hb, u32::from(ca));
-    bc_draw_rect(GPtr::<u8>::cast::<f32>(rp()), op());
+    bc_draw_rect(rp(), op());
     let pa = progress_add as u8 as i8;
     if pa != 0 {
         let a = if X87::from_f32(fill).fcom(X87::from_f32(right)).test_parity(5) { right } else { fill };
@@ -613,29 +612,29 @@ pub fn draw_bar_chart(x: f32, y: f32, width: u32, height: u32, progress: f32, pr
         set([left, bottom, a, y]);
         let [ar, ag, ab, _] = add_color.to_le_bytes();
         bc_rgba(op(), u32::from(ar), u32::from(ag), u32::from(ab), u32::from(ca));
-        bc_draw_rect(GPtr::<u8>::cast::<f32>(rp()), op());
+        bc_draw_rect(rp(), op());
     }
     if draw_black_border as u8 != 0 {
         let sh = X87::from_i32(GPtr::<i32>::from_addr(0xC17048).read()).fmul_m(f32::from_bits(0x3B12_4925));
         let sh2 = sh.fadd(sh);
         set([x, sh2.fadd_m(y).to_f32(), right, y]);
         bc_rgba(op(), 0, 0, 0, u32::from(ca));
-        bc_draw_rect(GPtr::<u8>::cast::<f32>(rp()), op());
+        bc_draw_rect(rp(), op());
         let sh = X87::from_i32(GPtr::<i32>::from_addr(0xC17048).read()).fmul_m(f32::from_bits(0x3B12_4925));
         let sh2 = sh.fadd(sh);
         set([x, sh2.fsubr_m(bottom).to_f32(), right, bottom]);
         bc_rgba(op(), 0, 0, 0, u32::from(ca));
-        bc_draw_rect(GPtr::<u8>::cast::<f32>(rp()), op());
+        bc_draw_rect(rp(), op());
         let sw = X87::from_i32(GPtr::<i32>::from_addr(0xC17044).read()).fmul_m(f32::from_bits(0x3ACC_CCCD));
         let sw2 = sw.fadd(sw);
         set([x, bottom, sw2.fadd_m(x).to_f32(), y]);
         bc_rgba(op(), 0, 0, 0, u32::from(ca));
-        bc_draw_rect(GPtr::<u8>::cast::<f32>(rp()), op());
+        bc_draw_rect(rp(), op());
         let sw = X87::from_i32(GPtr::<i32>::from_addr(0xC17044).read()).fmul_m(f32::from_bits(0x3ACC_CCCD));
         let sw2 = sw.fadd(sw);
         set([right, bottom, sw2.fsubr_m(right).to_f32(), y]);
         bc_rgba(op(), 0, 0, 0, u32::from(ca));
-        bc_draw_rect(GPtr::<u8>::cast::<f32>(rp()), op());
+        bc_draw_rect(rp(), op());
     }
     if draw_percentage as u8 != 0 {
         let mut buf = [0u8; 16];
@@ -652,7 +651,7 @@ pub fn draw_bar_chart(x: f32, y: f32, width: u32, height: u32, progress: f32, pr
         bc_font_set_font_style(1);
         let sy = X87::from_f32(h).fmul_m(f32::from_bits(0x3D23_D70A)).to_f32();
         let sx = X87::from_f32(h).fmul_m(f32::from_bits(0x3CF5_C28F)).to_f32();
-        bc_font_set_scale(sx, sy);
+        bc_font_set_scale(sx.to_bits(), sy.to_bits());
         let mut px = X87::from_f32(fill).ftol() as u32;
         let pw = X87::from_i32((px & 0xFFFF) as i32);
         // fcompp of x + 50 with it; test ah, 0x41; jne: right orientation unless greater

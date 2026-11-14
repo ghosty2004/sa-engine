@@ -2,12 +2,13 @@
 //! `CTaskComplexLeaveAnyCar` constructor (0x421150, a `.HOODLUM` stub), reached by the road-rage task on the
 //! native walk. Ported from the 1.0 US bytes (PORT-AI-8's generated bodies, ai8g-1 / ai8g-2, as a check).
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
 use crate::common::*;
 
-use sa_world::bindings::task_complex_ctor;
+use crate::bindings::task_complex_ctor;
 use crate::bindings::road_rage_create_sub_task;
 orig! {
     /// `CTask::MakeAbortable(CPed*, int32 priority, const CEvent*)` (vtable slot 0x18)
@@ -83,7 +84,7 @@ pub fn road_rage_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
        expect = "E9 6B 56 14 01",
        unverified = "native-11", route = "L2", hazards = "heap-writes", recs = "grove-walk,car-ai")]
 pub fn leave_any_car_ctor(this: GPtr<u8>, delay: u32, sensible: u32, force: u32) -> GPtr<u8> {
-    task_complex_ctor(this);
+    task_complex_ctor(this.addr() as u32);
     wr::<u32>(this, 0xC, delay);
     wr::<u32>(this, 0, 0x85_8EB0);
     wr::<u8>(this, 0x10, sensible as u8);

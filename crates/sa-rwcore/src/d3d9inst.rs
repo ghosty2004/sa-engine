@@ -50,22 +50,16 @@ const F_INV_65535: u32 = 0x3780_0080;
 const F_TANGENT_EPS: u32 = 0x2B8C_BCCC;
 
 pub use crate::bindings::inst_v3d as inst_v3d_call;
+pub use crate::bindings::rw_inv_sqrt;
 orig! {
     /// `IDirect3DIndexBuffer9::Lock(this, offset, size, &data, flags)` (vtbl +0x2C)
     pub fn ib_lock(ib: GPtr<u8>, offset: u32, size: u32, data: GPtr<u32>, flags: u32) -> i32 = stdcall vslot 0x2C => unported;
     /// `IDirect3DIndexBuffer9::Unlock(this)` (vtbl +0x30)
     pub fn ib_unlock(ib: GPtr<u8>) -> i32 = stdcall vslot 0x30 => unported;
-    /// `_rwInvSqrt(x)` (0x7EDB90), result in ST0
-    pub fn rw_inv_sqrt(v: f32) -> f64 = cdecl 0x7EDB90 => inv_sqrt_f64;
     /// `_rpD3D9GetMinMaxValuesV3d(v, n, min, max)` (0x755830)
     pub fn min_max_v3d_call(v: GPtr<u8>, n: i32, min: GPtr<u8>, max: GPtr<u8>) = cdecl 0x755830 => get_min_max_values_v3d;
     /// `_rpD3D9GetMinMaxValuesV2d(uv, n, min, max)` (0x7558F0)
     pub fn min_max_v2d_call(uv: GPtr<u8>, n: i32, min: GPtr<u8>, max: GPtr<u8>) = cdecl 0x7558F0 => get_min_max_values_v2d;
-}
-
-#[cfg_attr(sa_phase_a, allow(dead_code))]
-fn inv_sqrt_f64(v: f32) -> f64 {
-    crate::vector::rw_inv_sqrt(v).to_f64()
 }
 
 // ---- raw access on 32-bit game addresses -------------------------------------------------------
@@ -709,7 +703,7 @@ pub fn inst_tangent(ty: u32, dst: u32, pos: u32, uv: u32, hdr: u32, stride: u32)
     for _ in 0..nvi.max(0) {
         let (vx, vy, vz) = (x(rf(e)), x(rf(e + 4)), x(rf(e + 8)));
         let len2 = vy.fmul(vy).fadd(vx.fmul(vx)).fadd(vz.fmul(vz)).to_f32();
-        let inv = X87::from_f64_exact(rw_inv_sqrt(len2));
+        let inv = X87::from_f64_exact(rw_inv_sqrt(len2).to_f64());
         wf(e, inv.fmul_m(rf(e)).to_f32());
         wf(e + 4, x(rf(e + 4)).fmul(inv).to_f32());
         wf(e + 8, x(rf(e + 8)).fmul(inv).to_f32());

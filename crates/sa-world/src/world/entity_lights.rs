@@ -78,16 +78,10 @@ use crate::bindings::add_light;
 use crate::bindings::store_static_shadow;
 use crate::bindings::transform_from_object_space as transform_ref;
 use crate::bindings::update_corona_coors;
+use crate::bindings::register_corona_6fc180 as register_corona;
 orig! {
     /// `Light::GetDayNightBalance()` (0x6FAB30, ST0)
     fn get_day_night_balance() -> f64 = cdecl 0x6fab30 => unported;
-    /// `CCoronas::RegisterCorona(uint32 id, CEntity*, r, g, b, a, const CVector& pos, float size,
-    /// float farClip, RwTexture*, flare, reflection, LOS check, trail, float normalAngle, bool
-    /// longDistance, float nearClip, uint8, float fadeSpeed, bool onlyFromBelow, bool
-    /// updateHeight)` (0x6FC180, cdecl, every argument a dword)
-    fn register_corona(id: u32, attach: GPtr<u8>, r: u32, gr: u32, b: u32, a: u32, pos: GPtr<u8>, size: f32,
-        far_clip: f32, tex: u32, flare: u32, refl: u32, los: u32, trail: u32, normal_angle: f32, long_distance: u32,
-        near_clip: f32, unk: u32, fade_speed: f32, from_below: u32, update_height: u32) = cdecl 0x6fc180 => unported;
     /// `CBridge::ShouldLightsBeFlashing()` (0x41BC90, AL)
     fn bridge_should_lights_be_flashing() -> u8 = cdecl 0x41bc90 => unported;
 }
@@ -206,7 +200,7 @@ fn sun_glare(this: GPtr<u8>, eff: GPtr<u8>, c: i32) {
     d.x = f.fstp();
     d.y = f.fstp();
     d.z = f.fstp();
-    normalise(lp(&mut d));
+    normalise(GPtr::<sa_math::vector::CVector>::cast::<[f32;3]>(lp(&mut d)));
     let cam = cam_pos();
     f.fld(cam.read());
     f.fsub_m(e[0]);
@@ -246,7 +240,7 @@ fn sun_glare(this: GPtr<u8>, eff: GPtr<u8>, c: i32) {
     h.fld(d.z);
     h.fadd_m(sz);
     d.z = h.fstp();
-    normalise(lp(&mut d));
+    normalise(GPtr::<sa_math::vector::CVector>::cast::<[f32;3]>(lp(&mut d)));
     let idx = g::<i32>(CURRENT_STORED_VALUE).read();
     let sun = g::<f32>(VECTOR_TO_SUN).wrapping_index(3 * idx);
     let mut f = Fpu::new();
@@ -284,8 +278,8 @@ fn sun_glare(this: GPtr<u8>, eff: GPtr<u8>, c: i32) {
     let gr = scaled_byte(&mut f, i32::from(g::<u16>(SUN_CORE_GREEN).read()) + 0x1FE, cf(F_THIRD));
     let r = scaled_byte(&mut f, i32::from(g::<u16>(SUN_CORE_RED).read()) + 0x1FE, cf(F_THIRD));
     let id = (this.addr() as u32).wrapping_add(c as u32).wrapping_add(0x21);
-    register_corona(id, GPtr::NULL, r, gr, b, 0xFF, lp(&mut ep).cast(), radius, 120.0,
-        g::<u32>(CORONA_TEX_STAR).read(), 0, 0, 0, 0, 0.0, 0, 1.5, 0, 15.0, 0, 0);
+    register_corona(GPtr::<u8>::addr(GPtr::from_addr(id as usize)) as u32, GPtr::NULL, r, gr, b, 0xFF, lp(&mut ep).cast(), radius.to_bits(), 120.0f32.to_bits(),
+        g::<u32>(CORONA_TEX_STAR).read(), 0, 0, 0, 0, 0.0f32.to_bits(), 0, 1.5f32.to_bits(), 0, 15.0f32.to_bits(), 0, 0);
 }
 
 /// The light effect `c` (0x6FCA8D..0x6FD484).
@@ -435,7 +429,7 @@ fn light(this: GPtr<u8>, eff: GPtr<u8>, c: i32, seed: u32, dnb: f32) {
                 simple_transform_update_matrix(this.byte_add(4), rd::<GPtr<u8>>(this, 0x14));
             }
             let mut out = CVector::new(0.0, 0.0, 0.0); // +0x98
-            let l = rv(multiply3x3(lp(&mut out), rd::<GPtr<u8>>(this, 0x14), lp(&mut o)).cast(), 0);
+            let l = rv(GPtr::<u8>::cast::<sa_math::vector::CVector>(multiply3x3(GPtr::<sa_math::vector::CVector>::cast::<u8>(lp(&mut out)), rd::<GPtr<u8>>(this, 0x14), GPtr::<sa_math::vector::CVector>::cast::<u8>(lp(&mut o)))).cast(), 0);
             let cam = cam_pos();
             let mut f = Fpu::new();
             f.fld(cam.read());
@@ -509,8 +503,8 @@ fn light(this: GPtr<u8>, eff: GPtr<u8>, c: i32, seed: u32, dnb: f32) {
             let b = col(0x12);
             let gr = col(0x11);
             let r = col(0x10);
-            register_corona(id, GPtr::NULL, r, gr, b, a, lp(&mut ep).cast(), size, far_clip, tex, flare, refl,
-                flags & 1, 0, 0.0, (flags >> 4) & 1, 0.8, 0, 15.0, (flags >> 8) & 1, (flags >> 10) & 1);
+            register_corona(GPtr::<u8>::addr(GPtr::from_addr(id as usize)) as u32, GPtr::NULL, r, gr, b, a, lp(&mut ep).cast(), size.to_bits(), far_clip.to_bits(), tex, flare, refl,
+                flags & 1, 0, 0.0f32.to_bits(), (flags >> 4) & 1, 0.8f32.to_bits(), 0, 15.0f32.to_bits(), (flags >> 8) & 1, (flags >> 10) & 1);
         } else {
             apply = false;
             coors = true;
@@ -518,10 +512,10 @@ fn light(this: GPtr<u8>, eff: GPtr<u8>, c: i32, seed: u32, dnb: f32) {
     }
     if !lit {
         if on {
-            register_corona(id, GPtr::NULL, 0, 0, 0, 0xFF, lp(&mut ep).cast(), rd::<f32>(eff, 0x1C), far_clip, tex,
-                flare, refl, flags & 1, 0, 0.0, (flags >> 4) & 1, 1.5, 0, 15.0, 0, 0);
+            register_corona(GPtr::<u8>::addr(GPtr::from_addr(id as usize)) as u32, GPtr::NULL, 0, 0, 0, 0xFF, lp(&mut ep).cast(), rd::<f32>(eff, 0x1C).to_bits(), far_clip.to_bits(), tex,
+                flare, refl, flags & 1, 0, 0.0f32.to_bits(), (flags >> 4) & 1, 1.5f32.to_bits(), 0, 15.0f32.to_bits(), 0, 0);
         } else if coors {
-            update_corona_coors(id, lp(&mut ep).cast(), far_clip, 0.0);
+            update_corona_coors(id, lp(&mut ep).cast(), far_clip.to_bits(), 0.0f32.to_bits());
         }
     }
 
@@ -585,10 +579,10 @@ fn light(this: GPtr<u8>, eff: GPtr<u8>, c: i32, seed: u32, dnb: f32) {
         let b = ch(cb);
         let gg = ch(cg);
         let r = ch(cr);
-        store_static_shadow(id, 2, stex, lp(&mut ep).cast(), size, 0.0, 0.0, -size, 0x80, r, gg, b, zd, 1.0, 40.0, 0,
-            0.0);
+        store_static_shadow(id, 2, stex, lp(&mut ep).cast(), size.to_bits(), 0.0f32.to_bits(), 0.0f32.to_bits(), (-size).to_bits(), 0x80, r, gg, b, zd.to_bits(), 1.0f32.to_bits(), 40.0f32.to_bits(), 0,
+            0.0f32.to_bits());
     } else if on {
-        store_static_shadow(id, 2, stex, lp(&mut ep).cast(), size, 0.0, 0.0, -size, 0, 0, 0, 0, zd, 1.0, 40.0, 0, 0.0);
+        store_static_shadow(id, 2, stex, lp(&mut ep).cast(), size.to_bits(), 0.0f32.to_bits(), 0.0f32.to_bits(), (-size).to_bits(), 0, 0, 0, 0, zd.to_bits(), 1.0f32.to_bits(), 40.0f32.to_bits(), 0, 0.0f32.to_bits());
     }
 }
 

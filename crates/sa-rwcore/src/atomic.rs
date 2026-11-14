@@ -50,12 +50,12 @@ pub use sa_core::bindings::rw_v3d_transform_point as v3d_transform_point;
 pub use crate::bindings::atomic_get_world as get_world_call;
 pub use crate::bindings::read_int32 as stream_read_int32;
 pub use crate::bindings::rw_sqrt;
-pub use sa_core::bindings::frame_get_ltm;
-pub use sa_core::bindings::object_has_frame_set_frame as object_set_frame;
-pub use sa_core::bindings::rp_atomic_create as create_call;
-pub use sa_core::bindings::rp_atomic_resync_interpolated_sphere as resync_interpolated_sphere_call;
+pub use crate::bindings::frame_get_ltm;
+pub use crate::bindings::object_has_frame_set_frame as object_set_frame;
+pub use crate::bindings::rp_atomic_create as create_call;
+pub use crate::bindings::rp_atomic_resync_interpolated_sphere as resync_interpolated_sphere_call;
 pub use sa_core::bindings::rp_geometry_destroy as geometry_destroy;
-pub use sa_core::bindings::rw_frame_update_objects as frame_update_objects;
+pub use crate::bindings::rw_frame_update_objects as frame_update_objects;
 orig! {
     /// `_rwPluginRegistryAddPlgnStrmRightsCB` (0x808950)
     pub fn registry_add_rights_cb(reg: GPtr<u8>, id: u32, cb: u32) -> i32 = cdecl 0x808950 => crate::plugin::registry_add_plugin_stream_rights_cb;

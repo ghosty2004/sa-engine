@@ -12,7 +12,7 @@ use super::common::{ftol32, g, rd, wr, x, xi};
 use crate::bindings::is_vision_fx_active;
 use crate::bindings::pick_up_should_be_invisible;
 use sa_core::bindings::text_get;
-use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
+use crate::bindings::placeable_allocate_matrix as allocate_matrix;
 use sa_stream::bindings::simple_transform_update_matrix;
 use crate::bindings::find_string_for_text_index;
 use crate::bindings::register_corona;
@@ -87,8 +87,8 @@ pub fn do_pick_up_effects(e: GPtr<u8>) {
                 let pos = pos_of(e);
                 let gb = ftol32(xi(red).fmul_m(k(0x858CB0))) as u32;
                 let id = (slot.as_ptr() as u32).wrapping_sub(3);
-                register_corona(id, GPtr::NULL, red as u32, gb, gb, 0xFF, pos, f32::from_bits(size.to_bits()), f32::from_bits(0x42C8_0000), 1, 0, 0, 0, 0, f32::from_bits(0), 0,
-                    f32::from_bits(0x3FC0_0000), 0, f32::from_bits(0x4170_0000), 0, 0);
+                register_corona(id, GPtr::NULL, red as u32, gb, gb, 0xFF, pos, f32::from_bits(size.to_bits()).to_bits(), f32::from_bits(0x42C8_0000).to_bits(), 1, 0, 0, 0, 0, f32::from_bits(0).to_bits(), 0,
+                    f32::from_bits(0x3FC0_0000).to_bits(), 0, f32::from_bits(0x4170_0000).to_bits(), 0, 0);
             }
         }
     } else {

@@ -46,7 +46,7 @@ const DUMMY: usize = 0x859EE0;
 
 use sa_world::bindings::create_new_menu;
 use crate::bindings::find_closest_attractor;
-use sa_world::bindings::get_car_node_index_from_door;
+use sa_veh::bindings::get_car_node_index_from_door;
 use crate::bindings::get_proper_index_from_index_used_by_script;
 use crate::bindings::make_player_group_reappear;
 use crate::bindings::markers_force_render;
@@ -55,26 +55,26 @@ use crate::bindings::script_attach_anim_group_to_char_model;
 use sa_world::bindings::task_use_effect_ctor;
 use sa_core::bindings::crt_strncpy as strncpy_;
 use sa_core::bindings::cutscene_is_skip_button_being_pressed as is_cutscene_skip_button_being_pressed;
-use sa_core::bindings::find_player_ped;
+use sa_world::bindings::find_player_ped;
 use sa_core::bindings::start_extra_colour;
 use sa_core::bindings::streaming_request_model as request_model;
 use sa_core::bindings::stricmp;
 use sa_core::bindings::strncmp;
-use sa_core::bindings::task_new;
+use sa_ai::bindings::task_new;
 use sa_core::bindings::time_cycle_stop_extra_colour as stop_extra_colour;
-use sa_stream::bindings::ped_is_player;
+use sa_ped::bindings::ped_is_player;
 use sa_world::bindings::add_entry_exit_to_stack;
 use sa_world::bindings::count_members_excluding_leader;
 use sa_world::bindings::dtor_cleanup_43a960 as remove_conversation_for_ped;
 use sa_world::bindings::entry_exit_at;
 use sa_world::bindings::event_attractor_dtor;
-use sa_world::bindings::event_group_add;
+use sa_ai::bindings::event_group_add;
 use sa_world::bindings::find_nearest_entry_exit;
 use sa_world::bindings::find_smallest_zone_for_position;
 use sa_world::bindings::find_zone_by_label;
-use sa_world::bindings::ped_groups_get_peds_group as get_peds_group;
+use sa_ai::bindings::ped_groups_get_peds_group as get_peds_group;
 use sa_world::bindings::ped_pool_get_at;
-use sa_world::bindings::plane_set_gear_up;
+use sa_veh::bindings::plane_set_gear_up;
 use sa_world::bindings::set_char_created_by;
 use sa_world::bindings::switch_off_menu_call as switch_off_menu;
 use crate::bindings::add_script_to_list;
@@ -87,10 +87,12 @@ use sa_core::bindings::vector_magnitude;
 use sa_world::bindings::check_for_accept;
 use sa_world::bindings::check_for_selected;
 use sa_world::bindings::event_attractor_ctor;
-use sa_world::bindings::get_texture_dependency;
+use sa_ped::bindings::get_texture_dependency;
 use sa_world::bindings::init_zones_population_settings;
 use sa_world::bindings::insert_menu;
 use sa_world::bindings::update_moving_collision;
+use sa_core::bindings::vector_normalise_and_mag as normalise_and_mag;
+use sa_world::bindings::fx_add_sparks;
 orig! {
     /// `CMenuSystem::ActivateOneItem(uint8, uint8, bool)` (0x581B30)
     fn activate_one_item(id: u32, row: u32, on: u32) = cdecl 0x581B30 => unported;
@@ -132,14 +134,6 @@ orig! {
     fn append_to_next_cutscene(a: GPtr<u8>, b: GPtr<u8>) = cdecl 0x4D5DB0 => unported;
     /// `CRadar::SetBlipEntryExit(int32, CEntryExit*)` (0x583F00)
     fn set_blip_entry_exit(h: u32, e: GPtr<u8>) = cdecl 0x583F00 => unported;
-    /// `CVector::NormaliseAndMag()` (0x59C970), ST0 (read as f64: the callee's PC-24 result is exact)
-    fn normalise_and_mag(v: GPtr<u32>) -> f64 = thiscall 0x59C970 => unported;
-    /// `Fx_c::AddSparks(CVector& pos, CVector& dir, float, int32 count, CVector across, uint8, float, float)`
-    /// (0x49F040); floats and the by-value vector as raw dwords
-    fn fx_add_sparks(
-        fx: GPtr<u8>, pos: GPtr<u32>, dir: GPtr<u32>, force: u32, count: u32, ax: u32, ay: u32, az: u32,
-        blur: u32, spread: u32, life: u32
-    ) = thiscall 0x49F040 => unported;
     /// `CPedIntelligence::GetEffectInUse()` (0x6018D0)
     fn get_effect_in_use(i: GPtr<u8>) -> u32 = thiscall 0x6018D0 => unported;
     /// `CPedIntelligence::SetEffectInUse(C2dEffect*)` (0x6018E0)
@@ -211,10 +205,10 @@ fn random_char_in_sphere(s: Scr, drugs_buyers: bool) {
         if drugs_buyers {
             let model = i32::from(ped.byte_add(0x22).cast::<i16>().read());
             let mi = GPtr::<GPtr<u8>>::from_addr(0xA9B0C8usize.wrapping_add((model as u32).wrapping_mul(4) as usize)).read();
-            if mi.byte_add(0x32).read() & 1 == 0 || !get_peds_group(ped).is_null() {
+            if mi.byte_add(0x32).read() & 1 == 0 || !GPtr::<u8>::from_addr(get_peds_group(ped.addr() as u32) as usize).is_null() {
                 continue;
             }
-        } else if !get_peds_group(ped).is_null() || ped.byte_add(0x474).cast::<u32>().read() & 0x80_0000 != 0 {
+        } else if !GPtr::<u8>::from_addr(get_peds_group(ped.addr() as u32) as usize).is_null() || ped.byte_add(0x474).cast::<u32>().read() & 0x80_0000 != 0 {
             continue;
         }
         let m = ped.byte_add(0x14).cast::<GPtr<u8>>().read();
@@ -337,7 +331,7 @@ fn create_menu(s: Scr) {
         .fmul_m(spf(1))
         .to_f32()
         .to_bits();
-    let id = create_new_menu(0, tp, f32::from_bits(x), f32::from_bits(y), f32::from_bits(w), sp(3), sp(4), sp(5), sp(6));
+    let id = create_new_menu(0, tp, f32::from_bits(x).to_bits(), f32::from_bits(y).to_bits(), f32::from_bits(w).to_bits(), sp(3), sp(4), sp(5), sp(6));
     set_sp(0, u32::from(id));
     store(s, 1);
 }
@@ -658,7 +652,7 @@ pub fn process_commands_2200_to_2299(s: Scr, command: u32) -> i8 {
             collect(s, 3);
             let v = vehicle_at_ref(pool(VEHICLE_POOL), spi(0));
             let door = sp(1);
-            let node = get_car_node_index_from_door(door);
+            let node = get_car_node_index_from_door(door) as u32;
             if vehicle_is_door_missing(v, door) == 0
                 && v.byte_add(0x648 + 4 * node as isize).cast::<u32>().read() != 0
             {
@@ -669,7 +663,7 @@ pub fn process_commands_2200_to_2299(s: Scr, command: u32) -> i8 {
         0x08A7 => {
             collect(s, 2);
             let v = vehicle_at_ref(pool(VEHICLE_POOL), spi(0));
-            let node = get_car_node_index_from_door(sp(1));
+            let node = get_car_node_index_from_door(sp(1)) as u32;
             let b = vehicle_is_door_fully_open(v, node) != 0;
             set_flag(s, b);
         }
@@ -800,7 +794,7 @@ pub fn process_commands_2200_to_2299(s: Scr, command: u32) -> i8 {
             collect(s, 2);
             let info = player_info(sp(0));
             let i = sp(1);
-            let t = get_texture_dependency(i);
+            let t = get_texture_dependency(i as i32);
             let desc = info.byte_add(8).cast::<GPtr<u8>>().read();
             set_sp(0, desc.byte_add(0x28 + 4 * i as i32 as isize).cast::<u32>().read());
             set_sp(1, desc.byte_add(4 * t as isize).cast::<u32>().read());
@@ -857,20 +851,8 @@ pub fn process_commands_2200_to_2299(s: Scr, command: u32) -> i8 {
             let mut pos = [sp(0), sp(1), sp(2)];
             let mut dir = [sp(3), sp(4), sp(5)];
             let dp = GPtr::from_raw(dir.as_mut_ptr());
-            let force = X87::from_f64_exact(normalise_and_mag(dp)).to_f32().to_bits();
-            fx_add_sparks(
-                GPtr::from_addr(0xA9AE00),
-                GPtr::from_raw(pos.as_mut_ptr()),
-                dp,
-                force,
-                sp(6),
-                0,
-                0,
-                0,
-                1,
-                0x3ECC_CCCD,
-                0x3F80_0000,
-            );
+            let force = X87::from_f64_exact(normalise_and_mag(dp.cast::<u8>()).to_f64()).to_f32().to_bits();
+            fx_add_sparks(GPtr::from_addr(0xA9AE00), GPtr::<u32>::cast::<u8>(GPtr::from_raw(pos.as_mut_ptr())), dp.cast::<u8>(), f32::from_bits(force), sp(6) as i32, sa_math::vector::CVector::new(f32::from_bits(0), f32::from_bits(0), f32::from_bits(0)), 1, f32::from_bits(0x3ECC_CCCD), f32::from_bits(0x3F80_0000));
         }
         // 08A0 TASK_USE_CLOSEST_MAP_ATTRACTOR (0x474C0A): see [`task_use_closest_map_attractor`].
         0x08A0 => return task_use_closest_map_attractor(s, command),
@@ -885,14 +867,14 @@ pub fn process_commands_2200_to_2299(s: Scr, command: u32) -> i8 {
         // 08D8 GET_MENU_ITEM_ACCEPTED (0x475632): `P0 = (int8)CheckForAccept(P0)` (movsx); StoreParameters(1).
         0x08D8 => {
             collect(s, 1);
-            let r = check_for_accept(sp(0));
+            let r = check_for_accept(sp(0)) as i8;
             set_sp(0, i32::from(r) as u32);
             store(s, 1);
         }
         // 08D7 GET_MENU_ITEM_SELECTED (0x475602): `SP0 = (int8)CheckForSelected(SP0)` (movsx); `StoreParameters(1)`
         0x08D7 => {
             collect(s, 1);
-            let r = check_for_selected(sp(0) as u8);
+            let r = check_for_selected(sp(0) as u8) as i8;
             set_sp(0, i32::from(r) as u32);
             store(s, 1);
         }
@@ -904,7 +886,7 @@ pub fn process_commands_2200_to_2299(s: Scr, command: u32) -> i8 {
         // 08DA DELETE_MENU (0x475693): `SwitchOffMenu((u8)SP0)`
         0x08DA => {
             collect(s, 1);
-            switch_off_menu(sp(0) & 0xFF);
+            switch_off_menu((sp(0) & 0xFF) as u8);
         }
         // 08DB SET_MENU_COLUMN (0x4756B4)
         0x08DB => set_menu_column(s),

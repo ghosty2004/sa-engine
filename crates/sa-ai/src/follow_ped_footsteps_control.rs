@@ -17,8 +17,9 @@ use crate::bindings::task_is_go_to_task;
 use sa_core::bindings::ped_is_alive;
 use sa_core::bindings::tm_get_simplest_active_task as task_manager_get_simplest_active_task;
 use sa_core::bindings::vector_normalise;
-use sa_core::bindings::vector_magnitude_sqr as vector_magnitude;
-use sa_core::bindings::vector_sub;
+use sa_world::bindings::vector_magnitude_sqr as vector_magnitude;
+use sa_world::bindings::vector_sub;
+use sa_core::bindings::world_get_is_line_of_sight_clear;
 orig! {
     /// `CTask::GetTaskType()` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
@@ -26,9 +27,6 @@ orig! {
     fn v_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, prio: u32, event: u32) -> u8 = thiscall vslot 0x18 => unported;
     /// `CTaskComplexFollowPedFootsteps::CreateSubTask(int32, CPed*)` (vtable +0x2C)
     fn v_create_sub_task(t: GPtr<u8>, ty: i32, ped: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x2C => unported;
-    /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, bool x7)` (0x56A490), AL
-    #[allow(clippy::too_many_arguments)]
-    fn world_get_is_line_of_sight_clear(a: GPtr<u8>, b: GPtr<u8>, c1: u32, c2: u32, c3: u32, c4: u32, c5: u32, c6: u32, c7: u32) -> u8 = cdecl 0x56A490 => unported;
     /// `CPointRoute` remove the point at an index (0x5F13A0, `ret 4`)
     fn point_route_remove(r: GPtr<u8>, i: i32) = thiscall 0x5F13A0 => unported;
 }
@@ -73,7 +71,7 @@ pub fn follow_ped_footsteps_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> G
         }
     };
     let followed = rd::<GPtr<u8>>(this, 0xC);
-    if followed.is_null() || rd::<u32>(this, 0x18) == 0 || ped_is_alive(followed) == 0 {
+    if followed.is_null() || rd::<u32>(this, 0x18) == 0 || ped_is_alive(followed) as u8 == 0 {
         return switch_to(0x516);
     }
     if v_task_type(rd::<GPtr<u8>>(this, 8)) == 0x38B {
@@ -98,7 +96,7 @@ pub fn follow_ped_footsteps_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> G
     let mut tmp = [0u32; 3];
     let r = vector_sub(GPtr::from_raw(tmp.as_mut_ptr()).cast(), tptr, entity_pos(ped));
     let mut d = [rd::<f32>(r, 0), rd::<f32>(r, 4), rd::<f32>(r, 8)];
-    let d3 = X87::from_f64_exact(vector_magnitude(GPtr::<u8>::cast::<f32>(GPtr::from_raw(d.as_mut_ptr()).cast()))).to_f32();
+    let d3 = X87::from_f64_exact(vector_magnitude(GPtr::from_raw(d.as_mut_ptr()).cast()).to_f64()).to_f32();
     let d2 = x(d[1]).fmul_m(d[1]).fadd(x(d[0]).fmul_m(d[0])).fsqrt().to_f32();
     let los = || rd::<u16>(this, 0x1E) & 1 != 0;
     let route = || rd::<GPtr<u8>>(this, 0x18);
@@ -146,7 +144,7 @@ pub fn follow_ped_footsteps_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> G
             *item = x(f32::from_bits(t[k])).fsub_m(last[k]).to_f32();
         }
         let vp = GPtr::from_raw(v.as_mut_ptr()).cast::<u8>();
-        let m = X87::from_f64_exact(vector_magnitude(vp.cast::<f32>()));
+        let m = X87::from_f64_exact(vector_magnitude(vp.cast::<u8>()).to_f64());
         if !sq_cmp(kf(0x870C24), m).test_parity(0x05) {
             if n >= 2 {
                 let prev = [rd::<f32>(pt(n - 2), 0), rd::<f32>(pt(n - 2), 4), rd::<f32>(pt(n - 2), 8)];
@@ -155,8 +153,8 @@ pub fn follow_ped_footsteps_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> G
                     *item = x(last[k]).fsub_m(prev[k]).to_f32();
                 }
                 let wp = GPtr::from_raw(w.as_mut_ptr()).cast::<u8>();
-                vector_normalise(wp);
-                vector_normalise(vp);
+                vector_normalise(wp.cast::<[f32;3]>());
+                vector_normalise(vp.cast::<[f32;3]>());
                 let dot = x(w[1]).fmul_m(v[1]).fadd(x(w[0]).fmul_m(v[0])).fadd(x(w[2]).fmul_m(v[2]));
                 if !dot.fcom(x(kf(0x858EF0))).test_any(0x01) {
                     point_route_remove(route(), rd::<i32>(route(), 0) - 1);
@@ -175,12 +173,12 @@ pub fn follow_ped_footsteps_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> G
         for (k, item) in v.iter_mut().enumerate() {
             *item = x(rd::<f32>(p, 4 * k as isize)).fsub_m(p0[k]).to_f32();
         }
-        total = X87::from_f64_exact(vector_magnitude(GPtr::<u8>::cast::<f32>(GPtr::from_raw(v.as_mut_ptr()).cast()))).fadd_m(total).to_f32();
+        total = X87::from_f64_exact(vector_magnitude(GPtr::from_raw(v.as_mut_ptr()).cast()).to_f64()).fadd_m(total).to_f32();
         i += 1;
     }
     let mut tmp = [0u32; 3];
     let r = vector_sub(GPtr::from_raw(tmp.as_mut_ptr()).cast(), entity_pos(ped), entity_pos(rd::<GPtr<u8>>(this, 0xC)));
-    let len = X87::from_f64_exact(vector_magnitude(r.cast::<f32>())).fadd_m(total);
+    let len = X87::from_f64_exact(vector_magnitude(r.cast::<u8>()).to_f64()).fadd_m(total);
     let state: u16 = if sq_cmp(kf(0x870C2C), len).test_parity(0x05) { 4 } else { 6 };
     wr::<u16>(this, 0x1C, state);
     let s = rd::<GPtr<u8>>(this, 8);

@@ -20,12 +20,12 @@ use sa_math::x87::X87;
 use crate::common::{f32_of, g, rd, wr, x, xi};
 
 use sa_core::bindings::entity_register_reference;
-use sa_core::bindings::get_pad as pad_get;
-use sa_core::bindings::matrix_dtor;
+use sa_input::bindings::get_pad as pad_get;
+use sa_world::bindings::matrix_dtor;
 use sa_core::bindings::vector_normalise;
 use sa_pop::bindings::car_gun_just_down as pad_car_gun_just_down;
 use sa_pop::bindings::get_car_gun_up_down as pad_car_gun_up_down;
-use sa_pop::bindings::rope_remove;
+use crate::bindings::rope_remove;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::max_f;
 use sa_world::bindings::physical_add_to_moving_list;
@@ -36,13 +36,12 @@ use sa_core::bindings::matrix_mul_vec;
 use sa_world::bindings::find_ground_z_for_3d_coord;
 use sa_world::bindings::matrix_copy_ctor;
 use sa_world::bindings::physical_get_speed;
+use sa_core::bindings::matrix_force_up_vector;
 orig! {
     /// `CAudioEngine::ReportMissionAudioEvent(int32 event, CPhysical*, float, float)` (0x5073B0)
     fn report_mission_audio_event(engine: GPtr<u8>, event: u32, physical: u32, a3: u32, a4: u32) = thiscall 0x5073B0 => unported;
     /// `CRope::UpdateWeightInRope(CVector pos, float, CVector* out)` (0x5561B0, AL)
     fn rope_update_weight_call(rope: GPtr<u8>, px: u32, py: u32, pz: u32, a5: u32, out: GPtr<u8>) -> u8 = thiscall 0x5561B0 => rope_update_weight;
-    /// `CMatrix::ForceUpVector(CVector up)` (0x59B7E0)
-    fn matrix_force_up_vector(m: GPtr<u8>, ux: u32, uy: u32, uz: u32) = thiscall 0x59B7E0 => unported;
     /// `CEntity::SetIsStatic(bool)` (virtual slot 4)
     fn entity_set_is_static(e: GPtr<u8>, v: u32) = thiscall vslot 0x10 => unported;
 }
@@ -156,7 +155,7 @@ fn pickup_point(fr: &mut Frame, e: GPtr<u8>, v: usize, out: usize, vec: [u32; 3]
     }
     let pv = fr.p(v);
     let po = fr.p(out);
-    matrix_mul_vec(po.cast::<f32>(), rd::<GPtr<u8>>(e, 0x14), pv);
+    matrix_mul_vec(po.cast::<u8>(), rd::<GPtr<u8>>(e, 0x14), pv);
     po
 }
 
@@ -421,7 +420,7 @@ fn hanging(rope: GPtr<u8>, fr: &mut Frame) {
             fr.setd(0x18, ry.to_bits());
             fr.setd(0x1C, rz.to_bits());
             let o = fr.p(0x54);
-            physical_get_speed(holder, o, f32::from_bits(rx.to_bits()), f32::from_bits(ry.to_bits()), f32::from_bits(rz.to_bits()));
+            physical_get_speed(holder, o.cast::<sa_math::vector::CVector>(), sa_math::vector::CVector::new(f32::from_bits(rx.to_bits()), f32::from_bits(ry.to_bits()), f32::from_bits(rz.to_bits())));
             if matches!(rd::<u8>(rope, 0x325), 4..=7) {
                 for i in 0..3 {
                     fr.setd(0x14 + 4 * i, 0);
@@ -437,7 +436,7 @@ fn hanging(rope: GPtr<u8>, fr: &mut Frame) {
             fr.setf(0x44, x(rd::<f32>(p, 4)).fsub_m(rd::<f32>(rope, 4)));
             fr.setf(0x48, x(rd::<f32>(p, 8)).fsub_m(rd::<f32>(rope, 8)));
             let dirp = fr.p(0x40);
-            vector_normalise(dirp);
+            vector_normalise(dirp.cast::<[f32;3]>());
             let mut vx = fr.x(0x24);
             let dot = fr.x(0x48).fmul_m(fr.f(0x2C)).fadd(fr.x(0x40).fmul(vx)).fadd(fr.x(0x44).fmul_m(fr.f(0x28)));
             fr.setf(0x50, dot);
@@ -490,7 +489,7 @@ fn hanging(rope: GPtr<u8>, fr: &mut Frame) {
                 fr.setd(0x14, ux);
                 fr.setd(0x18, uy);
                 fr.setd(0x1C, uz);
-                matrix_force_up_vector(m, ux, uy, uz);
+                matrix_force_up_vector(m, sa_math::vector::CVector::new(f32::from_bits(ux), f32::from_bits(uy), f32::from_bits(uz)));
                 let new = fr.p(0xA4);
                 matrix_copy_ctor(new, rd::<GPtr<u8>>(e, 0x14));
                 for o in [0usize, 4, 8, 0x10, 0x14, 0x18, 0x20, 0x24, 0x28] {
@@ -506,7 +505,7 @@ fn hanging(rope: GPtr<u8>, fr: &mut Frame) {
                 fr.setd(0x14, ux);
                 fr.setd(0x18, uy);
                 fr.setd(0x1C, uz);
-                matrix_force_up_vector(rd::<GPtr<u8>>(e, 0x14), ux, uy, uz);
+                matrix_force_up_vector(rd::<GPtr<u8>>(e, 0x14), sa_math::vector::CVector::new(f32::from_bits(ux), f32::from_bits(uy), f32::from_bits(uz)));
             }
         }
         // 0x558121
@@ -779,7 +778,7 @@ fn ped_search(rope: GPtr<u8>, fr: &mut Frame) {
         }
         let inv = x(c(0x858624)).fdiv_m(rd::<f32>(rope, 0x308));
         let t = dzz.fmul(inv).fsubr_m(rd::<f32>(rope, 0x31C)).fsub(inv.fmul_m(rd::<f32>(rope, 0x30C)));
-        let v = max_f(f32_of(t), c(0x858C58));
+        let v = max_f(f32_of(t), c(0x858C58)).to_f64();
         wr::<f32>(rope, 0x31C, f32_of(X87::from_f64_exact(v)));
         return;
     }
@@ -823,7 +822,7 @@ pub fn rope_update_weight(rope: GPtr<u8>, px: u32, py: u32, pz: u32, _a5: u32, o
         place(&d, k, out);
         for i in n + 1..32 {
             let dp = GPtr::from_raw(d.as_mut_ptr()).cast::<u8>();
-            vector_normalise(dp);
+            vector_normalise(dp.cast::<[f32;3]>());
             let l = len();
             d = [f32_of(x(d[0]).fmul_m(l)), f32_of(x(d[1]).fmul_m(l)), f32_of(x(d[2]).fmul_m(l))];
             place(&d, xi((i - n) as i32), seg(i));

@@ -14,7 +14,7 @@ use crate::common::{g, rd, wr};
 const LINE: usize = 0xB71670;
 
 use sa_core::bindings::crt_free;
-use sa_stream::bindings::crt_new;
+use sa_core::bindings::crt_new_821195 as crt_new;
 use sa_world::bindings::vector_ctor_iterator;
 orig! {
     /// `CFileMgr::LoadFile(const char* path, uint8* buf, int32 size, const char* mode)` (0x538890)

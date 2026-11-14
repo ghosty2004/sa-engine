@@ -36,18 +36,18 @@ const MODEL0_LOAD_STATE: u32 = 0x8E4CD0;
 /// `CTheScripts::ScriptResourceManager` 0xA485A8.
 const SCRIPT_RESOURCE_MANAGER: usize = 0xA485A8;
 
-use sa_world::bindings::add_explosion;
+use sa_weapon::bindings::add_explosion;
 use crate::bindings::switch_ped_roads_off_in_area;
 use sa_core::bindings::general_random_int_in_range as random_int_in_range;
-use sa_core::bindings::set_mission_doesnt_require_model;
+use sa_stream::bindings::set_mission_doesnt_require_model;
 use sa_core::bindings::streaming_request_model as request_model;
 use sa_core::bindings::stricmp;
-use sa_core::bindings::task_new;
+use sa_ai::bindings::task_new;
 use sa_core::bindings::text_get;
-use sa_stream::bindings::ped_is_player;
+use sa_ped::bindings::ped_is_player;
 use sa_world::bindings::add_big_message_q;
 use sa_world::bindings::die_ctor as task_complex_die_ctor;
-use sa_world::bindings::event_group_add;
+use sa_ai::bindings::event_group_add;
 use sa_world::bindings::event_script_command_ctor;
 use sa_world::bindings::event_script_command_dtor;
 use sa_world::bindings::find_ground_z_for_coord;
@@ -59,11 +59,12 @@ use sa_world::bindings::stop_all_law_enforcers_in_their_tracks;
 use crate::bindings::add_to_resource_manager;
 use crate::bindings::collect_next;
 use crate::bindings::remove_from_resource_manager;
-use sa_core::bindings::get_pad;
+use sa_input::bindings::get_pad;
 use sa_stream::bindings::get_anim_group_name;
 use sa_world::bindings::find_player_slot_with_ped_pointer;
 use sa_world::bindings::get_garage_number_by_name;
-use sa_world::bindings::register_corona;
+use sa_render::bindings::register_corona;
+use sa_core::bindings::random_float_in_range;
 orig! {
     /// `CRestart::CancelOverrideRestart()` (0x460800)
     fn cancel_override_restart() = cdecl 0x460800 => unported;
@@ -71,9 +72,6 @@ orig! {
     fn darkel_read_status() -> u16 = cdecl 0x43D1E0 => unported;
     /// `CRunningScript::LocateCharCarCommand(int32 command)` (0x487420)
     fn locate_char_car_command(s: Scr, command: u32) = thiscall 0x487420 => unported;
-    /// `CGeneral::GetRandomNumberInRange(float, float)` (0x41BD90), floats as raw dwords, ST0 (a PC=24
-    /// result: exact as f64)
-    fn random_float_in_range(lo: u32, hi: u32) -> f64 = cdecl 0x41BD90 => unported;
     /// `CVehicle::BlowUpCar(CEntity*, bool)` (vtable slot 0xA4)
     fn blow_up_car(v: GPtr<u8>, culprit: GPtr<u8>, in_cutscene: u32) = thiscall vslot 0xA4 => unported;
     /// `CGangs::SetGangWeapons(int16 gang, int32, int32, int32)` (0x5DE550)
@@ -234,7 +232,7 @@ pub fn process_commands_500_to_599(s: Scr, command: u32) -> i8 {
         // 0208 GENERATE_RANDOM_FLOAT_IN_RANGE (0x47E385): P0 = GetRandomNumberInRange(P0, P1) (`fstp`).
         0x0208 => {
             collect(s, 2);
-            let r = random_float_in_range(sp(0), sp(1));
+            let r = random_float_in_range(f32::from_bits(sp(0)), f32::from_bits(sp(1))).to_f64();
             set_sp(0, X87::from_f64_exact(r).to_f32().to_bits());
             store(s, 1);
         }
@@ -263,7 +261,7 @@ pub fn process_commands_500_to_599(s: Scr, command: u32) -> i8 {
         // gr: unregistered.
         0x020C => {
             collect(s, 4);
-            add_explosion(GPtr::NULL, GPtr::NULL, sp(3), f32::from_bits(sp(0)), f32::from_bits(sp(1)), f32::from_bits(sp(2)), 0, 1, f32::from_bits(0xBF80_0000), 0);
+            add_explosion(GPtr::NULL, GPtr::NULL, sp(3) as i32, f32::from_bits(sp(0)), f32::from_bits(sp(1)), f32::from_bits(sp(2)), 0, 1, f32::from_bits(0xBF80_0000), 0);
         }
         // 020D IS_CAR_UPRIGHT (0x47E500): no null checks; flag = `m_matrix->up.z >= 0.0f` (`fcomp
         // [0x858B50]; test ah,1; je`, ordered). gr: unregistered.
@@ -346,7 +344,7 @@ pub fn process_commands_500_to_599(s: Scr, command: u32) -> i8 {
         0x0221 => {
             collect(s, 2);
             let on = sp(1) != 0;
-            get_pad(sp(0)).byte_add(0x118).write(u8::from(on));
+            get_pad(sp(0) as i32).byte_add(0x118).write(u8::from(on));
         }
         // 0223 SET_CHAR_HEALTH (0x47E87D): ped not null-checked. P1 == 0 (integer test): `new
         // CTaskComplexDie(0, 0, 0xF, 4.0f, 0, false, false, 0, false)` (null when new fails), a stack
@@ -565,18 +563,18 @@ pub fn process_commands_500_to_599(s: Scr, command: u32) -> i8 {
                 sp(8) & 0xFF,
                 0xFF,
                 GPtr::<u32>::cast::<u8>(GPtr::from_raw(pos.as_ptr().cast_mut())),
-                f32::from_bits(sp(3)),
-                f32::from_bits(0x43E1_0000),
+                f32::from_bits(sp(3)).to_bits(),
+                f32::from_bits(0x43E1_0000).to_bits(),
                 sp(4) & 0xFF,
                 sp(5) & 0xFF,
                 1,
                 0,
                 0,
-                f32::from_bits(0),
+                f32::from_bits(0).to_bits(),
                 0,
-                f32::from_bits(0x3FC0_0000),
+                f32::from_bits(0x3FC0_0000).to_bits(),
                 0,
-                f32::from_bits(0x4170_0000),
+                f32::from_bits(0x4170_0000).to_bits(),
                 0,
                 0,
             );

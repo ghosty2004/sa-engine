@@ -28,39 +28,25 @@ use super::shared::*;
 use crate::collision::fpu::Fpu;
 
 pub use sa_core::bindings::random_float_in_range as random_float;
+pub use crate::bindings::apply_soft_collision_1 as apply_soft_collision_1_call;
+pub use crate::bindings::bike_calculate_lean_matrix;
+pub use crate::bindings::dettach_entity_from_entity as dettach_entity_from_entity_call;
+pub use crate::bindings::placeable_set_matrix;
+pub use crate::bindings::vector_add;
+pub use crate::bindings::vector_add_assign;
+pub use crate::bindings::vector_div;
+pub use crate::bindings::vector_scale as scalar_mul_vector;
+pub use sa_core::bindings::matrix_mul as matrix_mul_mat;
+pub use sa_core::bindings::matrix_set_translate_only;
+pub use crate::bindings::vector_magnitude_sqr as vector_sq_mag;
+pub use crate::bindings::vector_sub;
 orig! {
-    /// `CPhysical::ApplySoftCollision(CEntity*, CColPoint&, float&)` (0x543890, AL)
-    pub fn apply_soft_collision_1_call(e: Ent, entity: Ent, cp: Ent, damage: GPtr<f32>) -> u8
-        = thiscall 0x543890 => crate::physical::collide::apply_soft_collision;
     /// virtual `CVehicle::AddMovingCollisionSpeed(CVector&)` (vtable +0xC4, hidden out first)
     pub fn add_moving_collision_speed_v(e: Ent, out: Ent, point: Ent) -> Ent = thiscall vslot 0xC4 => unported;
-    /// `operator/(const CVector&, float)` (0x4119D0, cdecl, out first)
-    pub fn vector_div(out: Ent, v: Ent, s: f32) -> Ent = cdecl 0x4119d0 => crate::world::mvpa_math::vector_div_scalar;
-    /// `CVector::operator+=(const CVector&)` (0x411A00, thiscall)
-    pub fn vector_add_assign(v: Ent, o: Ent) -> Ent = thiscall 0x411a00 => crate::world::mvpa_math::vector_add_assign;
-    /// `CVector::SquaredMagnitude()` (0x406DA0, thiscall, ST0; the port returns an X87, so unported here)
-    pub fn vector_sq_mag(v: Ent) -> f64 = thiscall 0x406da0 => unported;
-    /// `operator+(const CVector&, const CVector&)` (0x40FE30, cdecl, out first)
-    pub fn vector_add(out: Ent, a: Ent, b: Ent) -> Ent = cdecl 0x40fe30 => crate::world::mvpa_math::vector_add;
-    /// `VectorSub(CVector*, const CVector*, const CVector*)` (0x40FE60, cdecl)
-    pub fn vector_sub(out: Ent, a: Ent, b: Ent) -> Ent = cdecl 0x40fe60 => crate::world::mvpa_math::vector_sub;
-    /// `operator*(float, const CVector&)` (0x40FE90, cdecl, out first)
-    pub fn scalar_mul_vector(out: Ent, s: f32, v: Ent) -> Ent = cdecl 0x40fe90 => crate::world::mvpa_math::scalar_mul_vector;
     /// `CMatrix::Rotate(const CVector&)` (0x541E90, thiscall; no catalogue name)
     pub fn matrix_rotate_vec(m: Ent, v: Ent) = thiscall 0x541e90 => unported;
-    /// `CMatrix::operator*(const CMatrix&, const CMatrix&)` (0x59BE30, cdecl, out first)
-    pub fn matrix_mul_mat(out: Ent, a: Ent, b: Ent) -> Ent = cdecl 0x59be30 => unported;
-    /// `CMatrix::SetTranslateOnly(float, float, float)` (0x59AF80, thiscall)
-    pub fn matrix_set_translate_only(m: Ent, x: f32, y: f32, z: f32) = thiscall 0x59af80 => unported;
-    /// `CPlaceable::SetMatrix(const CMatrix&)` (0x54F610, thiscall)
-    pub fn placeable_set_matrix(e: Ent, m: Ent) = thiscall 0x54f610 => crate::world::mvpa2::placeable_set_matrix;
-    /// `CBike::CalculateLeanMatrix()` (0x6B7150, thiscall; sa-veh's port is outside this crate)
-    pub fn bike_calculate_lean_matrix(b: Ent) = thiscall 0x6b7150 => unported;
     /// `CPhysical::DettachAutoAttachedEntity()` (0x5446A0)
     pub fn dettach_auto_attached_entity_call(e: Ent) = thiscall 0x5446a0 => crate::physical::attach::dettach_auto_attached_entity;
-    /// `CPhysical::DettachEntityFromEntity(float, float, float, bool)` (0x5442F0)
-    pub fn dettach_entity_from_entity_call(e: Ent, x: u32, y: u32, z: f32, apply_turn: u8)
-        = thiscall 0x5442f0 => crate::physical::attach::dettach_entity_from_entity;
     /// `CPhysical::ApplyFrictionMoveForce(CVector)` (0x5430A0)
     pub fn apply_friction_move_force_call(e: Ent, force: CVector)
         = thiscall 0x5430a0 => crate::physical::forces::apply_friction_move_force;
@@ -100,7 +86,7 @@ fn report2(this: Ent, entity: Ent, cp: Ent, normal: Ent, impact: f32, impact2: u
         cp,
         normal,
         impact,
-        impact2,
+        f32::from_bits(impact2),
         0,
         0,
     );
@@ -273,7 +259,7 @@ pub fn apply_collision_alt(this: Ent, entity: Ent, cp: Ent, damage: GPtr<f32>, o
         return 0;
     }
     let mut co = CVector::new(0.0, 0.0, 0.0);
-    multiply3x3(lp(&mut co), matrix(this), this.byte_add(CENTRE_OF_MASS).cast());
+    multiply3x3(lp(&mut co).cast(), matrix(this), this.byte_add(CENTRE_OF_MASS).cast());
     let mut com = va(co);
     if rb(this, PFLAGS) & 0x40 != 0 {
         com = [0.0; 3];
@@ -287,7 +273,7 @@ pub fn apply_collision_alt(this: Ent, entity: Ent, cp: Ent, damage: GPtr<f32>, o
     let mut dv = cv(d);
     let mut nv = cv(nl);
     let mut xo = CVector::new(0.0, 0.0, 0.0);
-    let c = rv(cross_product(lp(&mut xo), lp(&mut dv), lp(&mut nv)).cast(), 0);
+    let c = rv(cross_product(lp(&mut xo).cast(), lp(&mut dv).cast(), lp(&mut nv).cast()).cast(), 0);
     let m = collision_mass(this, c);
     let et = rb(this, TYPE);
     let t = et & 7;
@@ -384,7 +370,7 @@ pub fn apply_collision_alt(this: Ent, entity: Ent, cp: Ent, damage: GPtr<f32>, o
         vector_div(lp(&mut dm).cast(), lp(&mut fv).cast(), rf(this, MASS));
         if etype(this) == ty::VEHICLE {
             let plain = if (ru(this, EFLAGS) >> 12) & 1 != 0 {
-                f.push(X87::from_f64_exact(vector_sq_mag(this.byte_add(MOVE_SPEED))));
+                f.push(X87::from_f64_exact(vector_sq_mag(this.byte_add(MOVE_SPEED)).to_f64()));
                 f.fcomp_m(cf(k::K_858B1C));
                 !f.jne(0x41) || (etype(entity) != ty::BUILDING && rb(entity, PFLAGS) & 4 == 0)
             } else {
@@ -410,7 +396,7 @@ pub fn apply_collision_alt(this: Ent, entity: Ent, cp: Ent, damage: GPtr<f32>, o
             vector_add_assign(out_move, lp(&mut dm).cast());
         }
         let mut c2 = CVector::new(0.0, 0.0, 0.0);
-        multiply3x3(lp(&mut c2), matrix(this), this.byte_add(CENTRE_OF_MASS).cast());
+        multiply3x3(lp(&mut c2).cast(), matrix(this), this.byte_add(CENTRE_OF_MASS).cast());
         let c2 = va(c2);
         let mut d2 = [0f32; 3];
         for i in 0..3 {
@@ -421,7 +407,7 @@ pub fn apply_collision_alt(this: Ent, entity: Ent, cp: Ent, damage: GPtr<f32>, o
         let mut d2v = cv(d2);
         let mut fvv = cv(fv);
         let mut xo2 = CVector::new(0.0, 0.0, 0.0);
-        let cr = cross_product(lp(&mut xo2), lp(&mut d2v), lp(&mut fvv));
+        let cr = cross_product(lp(&mut xo2).cast(), lp(&mut d2v).cast(), lp(&mut fvv).cast());
         let mut dt = [0f32; 3];
         vector_div(lp(&mut dt).cast(), cr.cast(), rf(this, TURN_MASS));
         vector_add_assign(out_turn, lp(&mut dt).cast());
@@ -470,12 +456,12 @@ fn pae_load_tests(f: &mut Fpu, at: Ent) -> PaeNext {
     if f.jne(0x41) {
         return PaeNext::Normal;
     }
-    f.push(X87::from_f64_exact(dot_product(at.byte_add(LAST_IMPACT_VELOCITY), matrix(at).byte_add(0x20))));
+    f.push(X87::from_f64_exact(dot_product(at.byte_add(LAST_IMPACT_VELOCITY), matrix(at).byte_add(0x20)).to_f64()));
     f.fcomp_m(cf(k::K_858CB0));
     if f.jp(5) {
         return PaeNext::Normal;
     }
-    f.push(X87::from_f64_exact(magnitude_sqr(at.byte_add(MOVE_SPEED))));
+    f.push(X87::from_f64_exact(magnitude_sqr(at.byte_add(MOVE_SPEED)).to_f64()));
     f.fld(cf(k::K_863B94));
     f.fmul_m(cf(k::K_863B94));
     f.fcompp();
@@ -566,7 +552,7 @@ fn pae_body(this: Ent, at: Ent, pa: Ent, pb: Ent, mcp: GPtr<LocalMatrix>) {
             matrix_mul_assign(pa, pc);
         }
         let mut oo = CVector::new(0.0, 0.0, 0.0);
-        let o = rv(multiply3x3(lp(&mut oo), pb, this.byte_add(ATTACH_OFFSET).cast()).cast(), 0);
+        let o = rv(multiply3x3(lp(&mut oo).cast(), pb, this.byte_add(ATTACH_OFFSET).cast()).cast(), 0);
         let bpos = rv(pb, 0x30);
         f.fld(bpos[2]);
         f.fadd_m(o[2]);
@@ -671,7 +657,7 @@ fn pae_body(this: Ent, at: Ent, pa: Ent, pb: Ent, mcp: GPtr<LocalMatrix>) {
         matrix_assign(pa, r);
         matrix_dtor(pt);
         let mut oo = CVector::new(0.0, 0.0, 0.0);
-        let o = rv(matrix_mul_point(lp(&mut oo), pb, this.byte_add(ATTACH_OFFSET).cast()).cast(), 0);
+        let o = rv(GPtr::<u8>::cast::<sa_math::vector::CVector>(matrix_mul_point(GPtr::<sa_math::vector::CVector>::cast::<u8>(lp(&mut oo)), pb, GPtr::<sa_math::vector::CVector>::cast::<u8>(this.byte_add(ATTACH_OFFSET).cast()))).cast(), 0);
         matrix_set_translate_only(pa, o[0], o[1], o[2]);
     }
     placeable_set_matrix(this, pa);
@@ -762,7 +748,7 @@ fn pae_throw(f: &mut Fpu, this: Ent, at: Ent) {
     if rb(this, PFLAGS) & 4 != 0 {
         return;
     }
-    f.push(X87::from_f64_exact(random_float(-1.0, 1.0)));
+    f.push(X87::from_f64_exact(random_float(-1.0, 1.0).to_f64()));
     let r = f.fstp();
     let m = get_matrix(at);
     f.fld(r);
@@ -1313,7 +1299,7 @@ pub fn apply_friction_other(this: Ent, other: Ent, limit: f32, cp: Ent) -> u8 {
         let mut uav = cv(ua);
         let mut dv = cv(d);
         let mut xo = CVector::new(0.0, 0.0, 0.0);
-        let c = rv(cross_product(lp(&mut xo), lp(&mut dv), lp(&mut uav)).cast(), 0);
+        let c = rv(cross_product(lp(&mut xo).cast(), lp(&mut dv).cast(), lp(&mut uav).cast()).cast(), 0);
         push_collision_mass(&mut f, other, c);
         f.fld(lb);
         f.fmul_st(1);
@@ -1405,7 +1391,7 @@ pub fn apply_friction_other(this: Ent, other: Ent, limit: f32, cp: Ent) -> u8 {
         let mut uav = cv(ua);
         let mut dv = cv(d);
         let mut xo = CVector::new(0.0, 0.0, 0.0);
-        let c = rv(cross_product(lp(&mut xo), lp(&mut dv), lp(&mut uav)).cast(), 0);
+        let c = rv(cross_product(lp(&mut xo).cast(), lp(&mut dv).cast(), lp(&mut uav).cast()).cast(), 0);
         push_collision_mass(&mut f, this, c);
         let m2 = rf(other, MASS);
         f.fld(m2);
@@ -1561,7 +1547,7 @@ pub fn apply_friction_other(this: Ent, other: Ent, limit: f32, cp: Ent) -> u8 {
     let mut uav = cv(ua);
     let mut dv = cv(d);
     let mut xo = CVector::new(0.0, 0.0, 0.0);
-    let c = rv(cross_product(lp(&mut xo), lp(&mut dv), lp(&mut uav)).cast(), 0);
+    let c = rv(cross_product(lp(&mut xo).cast(), lp(&mut dv).cast(), lp(&mut uav).cast()).cast(), 0);
     push_collision_mass(&mut f, this, c);
     let mt = f.fstp();
     let mut co2 = [0f32; 3];
@@ -1574,7 +1560,7 @@ pub fn apply_friction_other(this: Ent, other: Ent, limit: f32, cp: Ent) -> u8 {
     }
     let mut d2v = cv(d2);
     let mut xo2 = CVector::new(0.0, 0.0, 0.0);
-    let c2 = rv(cross_product(lp(&mut xo2), lp(&mut d2v), lp(&mut uav)).cast(), 0);
+    let c2 = rv(cross_product(lp(&mut xo2).cast(), lp(&mut d2v).cast(), lp(&mut uav).cast()).cast(), 0);
     push_collision_mass(&mut f, other, c2);
     f.fld(lb);
     f.fmul_st(1);

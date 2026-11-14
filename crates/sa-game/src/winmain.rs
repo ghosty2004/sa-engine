@@ -58,10 +58,10 @@ const GAMMA: usize = 0xC92134;
 
 use sa_core::bindings::di_mouse_init;
 use sa_core::bindings::get_mouse_set_up;
-use sa_core::bindings::get_pad;
+use sa_input::bindings::get_pad;
 use sa_core::bindings::pad_update_pads as update_pads;
 use sa_core::bindings::rs_event_handler;
-use sa_core::bindings::rw_d3d9_get_caps;
+use sa_rwcore::bindings::rw_d3d9_get_caps;
 use sa_core::bindings::file_close as close_file;
 use sa_core::bindings::file_set_dir as set_dir;
 use sa_core::bindings::file_set_dir_my_documents as set_dir_my_documents;
@@ -120,7 +120,7 @@ use sa_core::bindings::cheat_reset_cheats as reset_cheats;
 use sa_core::bindings::timer_stop;
 use sa_stream::bindings::pad_stop_pads_shaking as stop_pads_shaking;
 use sa_core::bindings::game_shut_down_for_restart as shut_down_for_restart;
-use sa_core::bindings::menu_unload_textures;
+use sa_hud::bindings::menu_unload_textures;
 sa_core::orig! {
     fn initialise_when_restarting() = cdecl 0x53C680 => unported;
 }
@@ -469,7 +469,7 @@ fn process_game_logic() -> String {
             }
             initialise_core_data_after_rw();
             wr::<u32>(GAME_STATE, 6);
-            let caps = rw_d3d9_get_caps();
+            let caps = GPtr::<u8>::from_addr(rw_d3d9_get_caps() as usize);
             wr::<u8>(ANISOTROPY_SUPPORTED, ((caps.byte_add(0x24).cast::<u32>().read() >> 17) & 1) as u8);
         }
         6 => {

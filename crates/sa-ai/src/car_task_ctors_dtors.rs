@@ -9,10 +9,10 @@ use sa_core::hook;
 
 use crate::common::*;
 
-use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference as clean_up_old_reference;
 use sa_core::bindings::entity_register_reference as register_reference;
-use sa_world::bindings::task_simple_ctor;
-use sa_world::bindings::task_simple_dtor;
+use crate::bindings::task_simple_ctor;
+use crate::bindings::task_simple_dtor;
 
 /// `FUN_00647710` (0x647710), proposed `CTaskSimpleCarForcePedOut::CTaskSimpleCarForcePedOut(CVehicle*, int32
 /// door)` (thiscall, `ret 8`): `CTaskSimple`'s constructor, vtable 0x86EE94, the vehicle at +8 and the door at +0xC,
@@ -37,7 +37,7 @@ fn car_task_dtor(this: GPtr<u8>, vt: u32) {
     wr::<u32>(this, 0, vt);
     let veh = rd::<GPtr<u8>>(this, 8);
     if !veh.is_null() {
-        clean_up_old_reference(veh, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(8)));
+        clean_up_old_reference(veh, this.byte_add(8));
     }
     task_simple_dtor(this);
 }

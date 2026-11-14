@@ -120,7 +120,7 @@ pub fn kill_ped_on_foot_melee_create_sub_task(this: GPtr<u8>, ty: u32, ped: GPtr
                     target(),
                     50_000,
                     1000,
-                    g::<u32>(0x85_BACC).read(),
+                    f32::from_bits(g::<u32>(0x85_BACC).read()),
                     g::<u32>(0x85_9E30).read(),
                     g::<u32>(0x85_9E34).read(),
                     1,

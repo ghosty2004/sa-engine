@@ -133,6 +133,8 @@ pub const THREAD_ENTRY: u32 = 0x406560;
 pub use crate::bindings::cd_stream_open as cd_stream_open_call;
 pub use crate::bindings::cd_stream_read as cd_stream_read_call;
 pub use crate::bindings::cd_stream_sync as cd_stream_sync_call;
+pub use sa_core::bindings::mem_free_align as free_align;
+pub use sa_core::bindings::mem_malloc_align as malloc_align;
 orig! {
     /// KERNEL32 `CloseHandle` (IAT 0x858078)
     pub fn close_handle(h: GPtr<u8>) -> i32 = stdcall cell 0x858078 => unported;
@@ -174,10 +176,6 @@ orig! {
     pub fn get_disk_free_space_a(root: GPtr<u8>, spc: GPtr<u32>, bps: GPtr<u32>, free: GPtr<u32>, total: GPtr<u32>) -> i32 = stdcall cell 0x8580C0 => unported;
     /// CRT `printf(fmt, s)` (0x821982)
     pub fn printf_s(fmt: GPtr<u8>, s: GPtr<u8>) -> i32 = cdecl 0x821982 => unported;
-    /// `CMemoryMgr::MallocAlign(size, align, hint)` (0x72F4C0)
-    pub fn malloc_align(size: u32, align: u32, hint: u32) -> GPtr<u8> = cdecl 0x72F4C0 => unported;
-    /// `CMemoryMgr::FreeAlign(p)` (0x72F4F0)
-    pub fn free_align(p: GPtr<u8>) = cdecl 0x72F4F0 => unported;
     /// `CdStreamRemoveImages()` (0x406690)
     pub fn cd_stream_remove_images_call() = cdecl 0x406690 => cd_stream_remove_images;
     /// `CdStreamInitThread()` (0x4068F0)

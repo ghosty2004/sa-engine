@@ -323,7 +323,7 @@ pub fn was_glass_hit_by_bullet(e: GPtr<u8>, px: u32, py: u32, pz: u32) {
     if r & 3 != 2 {
         return;
     }
-    window_responds_to_collision(e, 0, 0, 0, 0, px, py, pz, 0);
+    window_responds_to_collision(e, f32::from_bits(0), f32::from_bits(0), f32::from_bits(0), f32::from_bits(0), f32::from_bits(px), f32::from_bits(py), f32::from_bits(pz), 0);
 }
 
 /// `CGlass::WindowRespondsToSoftCollision(CEntity*, float force)` (0x71AF70): an entity that uses
@@ -422,13 +422,13 @@ pub fn window_responds_to_explosion(e: GPtr<u8>, px: f32, py: f32, pz: f32) {
     let p = entity_pos(e);
     window_responds_to_collision(
         e,
-        0x461C_4000,
-        sx.to_bits(),
-        sy.to_bits(),
-        sz.to_bits(),
-        rd::<u32>(p, 0),
-        rd::<u32>(p, 4),
-        rd::<u32>(p, 8),
+        f32::from_bits(0x461C_4000),
+        f32::from_bits(sx.to_bits()),
+        f32::from_bits(sy.to_bits()),
+        f32::from_bits(sz.to_bits()),
+        f32::from_bits(rd::<u32>(p, 0)),
+        f32::from_bits(rd::<u32>(p, 4)),
+        f32::from_bits(rd::<u32>(p, 8)),
         1,
     );
 }

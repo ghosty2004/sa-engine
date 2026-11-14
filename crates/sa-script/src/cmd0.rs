@@ -48,7 +48,7 @@ const K_SHAKE_SCALE: u32 = 0x3A83_126F;
 /// `.rdata` 0x859014: -100.0f
 const K_MINUS_100: u32 = 0xC2C8_0000;
 
-pub use sa_core::bindings::task_new;
+pub use sa_ai::bindings::task_new;
 pub use sa_world::bindings::cam_shake_no_pos;
 pub use sa_world::bindings::get_distance_from_centre_of_mass_to_base_of_model;
 pub use sa_world::bindings::player_on_foot_ctor as task_simple_player_on_foot_ctor;
@@ -57,12 +57,12 @@ pub use crate::bindings::add_script_to_list;
 pub use crate::bindings::remove_script_from_list;
 pub use crate::bindings::shutdown_this_script;
 pub use crate::bindings::start_new_script;
-pub use sa_core::bindings::load_all_requested_models;
-pub use sa_core::bindings::request_special_model;
+pub use sa_stream::bindings::load_all_requested_models;
+pub use sa_stream::bindings::request_special_model;
 pub use sa_world::bindings::clear_space_for_mission_entity;
 pub use sa_world::bindings::find_ground_z_for_coord;
 pub use sa_world::bindings::set_char_created_by;
-pub use sa_world::bindings::tm_set_task as task_manager_set_task;
+pub use sa_ai::bindings::tm_set_task as task_manager_set_task;
 orig! {
     /// `CPlayerPed::SetupPlayerPed(int32)` (0x60D790)
     pub fn setup_player_ped(idx: i32) = cdecl 0x60D790 => unported;

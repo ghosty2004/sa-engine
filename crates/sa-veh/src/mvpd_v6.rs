@@ -255,10 +255,10 @@ pub fn automobile_hydraulic_control(this: GPtr<u8>) {
         let ang = x(lr).fpatan(ud).fadd_m(g::<f32>(0x8D_31BC).read());
         let cosv = f32_of(ang.fcos().fmul(mag));
         let sinv = f32_of(ang.fsin().fmul(mag));
-        f[0] = f32_of(X87::from_f64_exact(max_f(0.0, f32_of(x(cosv).fchs()))));
-        f[1] = f32_of(X87::from_f64_exact(max_f(0.0, f32_of(x(sinv).fchs()))));
-        f[2] = f32_of(X87::from_f64_exact(max_f(0.0, sinv)));
-        f[3] = f32_of(X87::from_f64_exact(max_f(0.0, cosv)));
+        f[0] = f32_of(X87::from_f64_exact(max_f(0.0, f32_of(x(cosv).fchs())).to_f64()));
+        f[1] = f32_of(X87::from_f64_exact(max_f(0.0, f32_of(x(sinv).fchs())).to_f64()));
+        f[2] = f32_of(X87::from_f64_exact(max_f(0.0, sinv).to_f64()));
+        f[3] = f32_of(X87::from_f64_exact(max_f(0.0, cosv).to_f64()));
     }
     let mut old_z = [0f32; 4];
     let cx = rd::<u16>(this, 0x86C);

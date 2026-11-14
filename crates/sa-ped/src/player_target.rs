@@ -37,20 +37,20 @@ const RAD_TO_DEG: f32 = f32::from_bits(0x4265_2EE0);
 pub use crate::bindings::event_player_command_to_group_ctor;
 pub use crate::bindings::event_player_command_to_group_dtor;
 pub use crate::bindings::get_default_player_motion_group;
-pub use sa_world::bindings::get_weapon_skill_type_call as ped_get_weapon_skill_type;
-pub use sa_core::bindings::assoc_set_current_time;
+pub use crate::bindings::get_weapon_skill_type_call as ped_get_weapon_skill_type;
+pub use sa_anim::bindings::assoc_set_current_time;
 pub use sa_core::bindings::display_script_stat_update_message;
-pub use sa_core::bindings::entity_clean_up_old_reference;
-pub use sa_core::bindings::entity_get_is_on_screen;
+pub use sa_world::bindings::entity_clean_up_old_reference;
+pub use sa_world::bindings::entity_get_is_on_screen;
 pub use sa_core::bindings::entity_register_reference;
 pub use sa_core::bindings::get_atan_of_xy;
-pub use sa_core::bindings::get_pad;
+pub use sa_input::bindings::get_pad;
 pub use sa_core::bindings::intel_get_task_use_gun;
 pub use sa_core::bindings::ped_group_process as group_process;
 pub use sa_core::bindings::task_new as task_operator_new;
-pub use sa_core::bindings::world_clear_scan_codes;
-pub use sa_stream::bindings::ped_is_player;
-pub use sa_stream::bindings::placeable_allocate_matrix;
+pub use sa_world::bindings::world_clear_scan_codes;
+pub use crate::bindings::ped_is_player;
+pub use sa_world::bindings::placeable_allocate_matrix;
 pub use sa_stream::bindings::simple_transform_update_matrix;
 pub use sa_world::bindings::add_animation;
 pub use sa_world::bindings::be_in_group_ctor as task_be_in_group_ctor;
@@ -95,27 +95,27 @@ pub use sa_world::bindings::tag_manager_is_tag as tag_is_tag;
 pub use sa_world::bindings::tm_find_active_task_by_type as task_mgr_find_active_task_by_type;
 pub use sa_world::bindings::world_reset_line_test_options;
 pub use crate::bindings::tell_group_to_start_following_player as tell_group_to_start_following_player_call;
-pub use sa_core::bindings::anim_set_delete_callback as assoc_set_delete_callback;
+pub use sa_anim::bindings::anim_set_delete_callback as assoc_set_delete_callback;
 pub use sa_core::bindings::clump_get_association;
-pub use sa_core::bindings::find_player_coors;
+pub use sa_world::bindings::find_player_coors;
 pub use sa_core::bindings::general_get_radian_angle_between_points as get_radian_angle_between_points;
 pub use sa_core::bindings::general_limit_radian_angle as limit_radian_angle;
 pub use sa_core::bindings::ped_get_bone_position;
 pub use sa_core::bindings::vector_magnitude;
-pub use sa_core::bindings::vector_sub;
+pub use sa_world::bindings::vector_sub;
 pub use sa_world::bindings::acq_clear_as_acquaintance;
 pub use sa_world::bindings::aim_weapon_left_right as pad_aim_weapon_left_right;
 pub use sa_world::bindings::anim_blend_animation as blend_animation;
-pub use sa_world::bindings::does_target_have_to_be_broken_call;
+pub use crate::bindings::does_target_have_to_be_broken_call;
 pub use sa_world::bindings::entity_get_bound_centre;
 pub use sa_world::bindings::event_script_command_ctor;
 pub use sa_world::bindings::find_objects_in_range as world_find_objects_in_range;
 pub use sa_world::bindings::get_nearest_car_door;
-pub use sa_world::bindings::get_pad_from_player;
+pub use crate::bindings::get_pad_from_player;
 pub use sa_world::bindings::get_ped_flag as ped_type_get_ped_flag;
 pub use sa_world::bindings::group_intelligence_add_event as group_intel_add_event;
 pub use sa_world::bindings::intel_is_in_seeing_range;
-pub use sa_world::bindings::ped_get_weapon_skill as ped_get_weapon_skill_current;
+pub use crate::bindings::ped_get_weapon_skill as ped_get_weapon_skill_current;
 pub use sa_world::bindings::ped_say;
 pub use sa_world::bindings::process_line_of_sight as world_process_line_of_sight;
 pub use sa_world::bindings::radar_set_blip_friendly;
@@ -127,6 +127,8 @@ pub use sa_world::bindings::smart_flee_entity_ctor as task_smart_flee_entity_cto
 pub use sa_world::bindings::target_weapon_range_multiplier;
 pub use sa_world::bindings::vector_mul_scalar;
 pub use sa_world::bindings::world_test_sphere_against_world;
+pub use sa_world::bindings::camera_find_3rd_person_cam_target_vector;
+pub use sa_core::bindings::vector_normalise;
 orig! {
     /// `CPedGroupMembership::RemoveAllFollowers(bool)` (0x5FB190)
     pub fn membership_remove_all_followers(m: GPtr<u8>, b: u32) = thiscall 0x5FB190 => unported;
@@ -180,14 +182,10 @@ orig! {
     pub fn cranes_is_this_car_being_carried(v: GPtr<u8>) -> u8 = cdecl 0x6F3FF0 => unported;
     /// `CPlayerInfo::EvaluateCarPosition(CEntity*, CPed*, float, float*, CVehicle**)` (0x56DAD0, `ret 0x14`)
     pub fn evaluate_car_position(pi: GPtr<u8>, e: GPtr<u8>, ped: GPtr<u8>, d: f32, out_d: GPtr<f32>, out_v: GPtr<GPtr<u8>>) = thiscall 0x56DAD0 => crate::player_info::evaluate_car_position;
-    /// `CCamera::Find3rdPersonCamTargetVector(float range, CVector source, CVector& cam, CVector& point)` (0x514970, `ret 0x18`)
-    pub fn camera_find_3rd_person_cam_target_vector(cam: GPtr<u8>, range: f32, sx: f32, sy: f32, sz: f32, out_cam: GPtr<f32>, out_point: GPtr<f32>) = thiscall 0x514970 => unported;
     /// `CPlayerPed::EvaluateNeighbouringTarget` (0x60D1C0, `ret 0x18`)
     pub fn evaluate_neighbouring_target_call(p: GPtr<u8>, t: GPtr<u8>, out_t: GPtr<GPtr<u8>>, out_s: GPtr<f32>, max_dist: f32, heading: f32, left: u32) = thiscall 0x60D1C0 => evaluate_neighbouring_target;
     /// `CPlayerPed::EvaluateTarget` (0x60D020, `ret 0x18`)
     pub fn evaluate_target_call(p: GPtr<u8>, t: GPtr<u8>, out_t: GPtr<GPtr<u8>>, out_s: GPtr<f32>, max_dist: f32, heading: f32, b: u32) = thiscall 0x60D020 => evaluate_target;
-    /// `CVector::Normalise` (0x59C910)
-    pub fn vector_normalise(v: GPtr<f32>) = thiscall 0x59C910 => unported;
     /// `RwEngineInstance->dOpenDevice.fpRenderStateSet(state, value)` (table slot 0x20)
     pub fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
     /// `CAnimBlendAssociation` deleting destructor (vtable slot 0)
@@ -350,14 +348,14 @@ pub fn does_target_have_to_be_broken(this: GPtr<u8>, target: GPtr<u8>, weapon: G
     if rd::<i8>(target, 0x1C) >= 0 {
         return 1;
     }
-    let mult = X87::from_f64_exact(target_weapon_range_multiplier(target, this)).to_f32();
+    let mult = X87::from_f64_exact(target_weapon_range_multiplier(target, this).to_f64()).to_f32();
     let s = ent_pos(this);
     let t = ent_pos(target);
     let dx = x(t.read()).fsub_m(s.read()).to_f32();
     let ty = rd::<i32>(weapon, 0);
     let dy = x(t.wrapping_index(1).read()).fsub_m(s.wrapping_index(1).read()).to_f32();
     let dz = x(t.wrapping_index(2).read()).fsub_m(s.wrapping_index(2).read()).to_f32();
-    let skill = ped_get_weapon_skill_type(this, ty) as u8;
+    let skill = (ped_get_weapon_skill_type(this, ty) as i32) as u8;
     let info = get_weapon_info(ty, i32::from(skill) as u8);
     let d = x(dz).fmul_m(dz).fadd(x(dy).fmul_m(dy)).fadd(x(dx).fmul_m(dx)).fsqrt();
     let r = x(rd::<f32>(info, 4)).fmul_m(mult);
@@ -479,7 +477,7 @@ pub fn find_ped_to_attack(this: GPtr<u8>) -> GPtr<u8> {
         if ped.is_null() || ped_is_player(ped) != 0 || ped_is_alive(ped) as u8 == 0 {
             continue;
         }
-        if membership_is_member(player_group(this).byte_add(8), ped) != 0 {
+        if membership_is_member(player_group(this).byte_add(8), ped) as u8 != 0 {
             continue;
         }
         let pt = rd::<i32>(ped, 0x598);
@@ -692,7 +690,7 @@ pub fn keep_area_around_player_clear(this: GPtr<u8>) {
         if ped.is_null() || rd::<u8>(ped, 0x484) != 1 || rd::<u32>(ped, 0x46C) & 0x100 != 0 {
             continue;
         }
-        if ped_is_alive(ped) as u8 == 0 || membership_is_member(g::<u8>(GROUPS + 8), ped) != 0 {
+        if ped_is_alive(ped) as u8 == 0 || membership_is_member(g::<u8>(GROUPS + 8), ped) as u8 != 0 {
             continue;
         }
         if entity_get_is_on_screen(ped) != 0 && rd::<u8>(ped, 0x478) & 0x10 == 0 {
@@ -779,7 +777,7 @@ pub fn make_this_ped_join_our_group(this: GPtr<u8>, ped: GPtr<u8>) {
     if rd::<i32>(ped, 0x598) != 8 && g::<u8>(0x96917C).read() == 0 && g::<u8>(0x96917D).read() == 0 && g::<u8>(0x96917E).read() == 0 {
         return;
     }
-    if membership_is_member(player_group(this).byte_add(8), ped) != 0 {
+    if membership_is_member(player_group(this).byte_add(8), ped) as u8 != 0 {
         return;
     }
     speech_set_cj_mood(-1i32 as u16, 10000, 1, -1i32 as u32, -1i32 as u32);
@@ -805,7 +803,7 @@ pub fn make_this_ped_join_our_group(this: GPtr<u8>, ped: GPtr<u8>) {
         event_dont_join_player_group_dtor(evp);
         return;
     }
-    let old = ped_groups_get_peds_group(ped);
+    let old = GPtr::from_addr(ped_groups_get_peds_group(ped.addr() as u32) as usize);
     if !old.is_null() {
         membership_remove_member(old.byte_add(8), ped);
     }
@@ -1042,7 +1040,7 @@ pub fn find_object_to_steal(_this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
 /// (and not in this ped's group) a heap `CEventGunAimedAt(this)` in a stack `CEventGroupEvent(tgt, e)` added to
 /// the group intelligence; without a group a stack `CEventGunAimedAt(this)` added to the target's event group.
 fn gun_aimed_at(this: GPtr<u8>, tgt: GPtr<u8>) {
-    let grp = ped_groups_get_peds_group(tgt);
+    let grp = GPtr::from_addr(ped_groups_get_peds_group(tgt.addr() as u32) as usize);
     if !grp.is_null() {
         if ped_groups_are_in_same_group(tgt, this) != 0 {
             return;
@@ -1071,7 +1069,7 @@ fn set_reference(this: GPtr<u8>, off: isize, e: GPtr<u8>) {
     let slot = this.byte_add(off);
     let old = rd::<GPtr<u8>>(this, off);
     if !old.is_null() {
-        entity_clean_up_old_reference(old, slot.cast::<GPtr<u8>>());
+        entity_clean_up_old_reference(old, slot.cast::<u8>());
     }
     wr::<GPtr<u8>>(this, off, e);
     entity_register_reference(e, slot);
@@ -1085,7 +1083,7 @@ pub fn compute_3rd_person_mouse_target(this: GPtr<u8>, use_cam: u32) {
     let mut tgt = GPtr::<u8>::NULL;
     if g::<u8>(USE_MOUSE_3RD_PERSON).read() != 0 {
         let ty = rd::<i32>(active_weapon(this), 0);
-        let skill = ped_get_weapon_skill_current(this) as u8;
+        let skill = (ped_get_weapon_skill_current(this) as u32) as u8;
         let range = rd::<f32>(get_weapon_info(ty, i32::from(skill) as u8), 4);
         let pp = ent_pos(this);
         let p = vec3(pp);
@@ -1093,7 +1091,7 @@ pub fn compute_3rd_person_mouse_target(this: GPtr<u8>, use_cam: u32) {
         let mut t = [0f32; 3];
         if use_cam as u8 != 0 {
             let q = vec3(pp);
-            camera_find_3rd_person_cam_target_vector(g::<u8>(0xB6F028), range, q[0], q[1], q[2], lp(&mut s).cast(), lp(&mut t).cast());
+            camera_find_3rd_person_cam_target_vector(g::<u8>(0xB6F028), range, q[0], q[1], q[2], GPtr::<f32>::cast::<u8>(lp(&mut s).cast()), GPtr::<f32>::cast::<u8>(lp(&mut t).cast()));
         } else {
             let cam = usize::from(g::<u8>(0xB6F081).read()) * 0x238;
             s = vec3(g::<f32>(0xB6F338 + cam));
@@ -1142,7 +1140,7 @@ pub fn compute_3rd_person_mouse_target(this: GPtr<u8>, use_cam: u32) {
         return;
     }
     let ty = rd::<i32>(active_weapon(this), 0);
-    let skill = ped_get_weapon_skill_current(this) as u8;
+    let skill = (ped_get_weapon_skill_current(this) as u32) as u8;
     if rd::<u8>(get_weapon_info(ty, i32::from(skill) as u8), 0x18) & 1 == 0 {
         return;
     }
@@ -1169,7 +1167,7 @@ pub fn compute_3rd_person_mouse_target(this: GPtr<u8>, use_cam: u32) {
 
 /// `TargetWeaponRangeMultiplier(victim, this) * range` (x87, f32 stored as the maxDist argument)
 fn range_for(this: GPtr<u8>, victim: GPtr<u8>, range: f32) -> f32 {
-    X87::from_f64_exact(target_weapon_range_multiplier(victim, this)).fmul_m(range).to_f32()
+    X87::from_f64_exact(target_weapon_range_multiplier(victim, this).to_f64()).fmul_m(range).to_f32()
 }
 
 /// `CanIKReachThisTarget(e's position by value, &W[act], true)`
@@ -1208,7 +1206,7 @@ fn ped_lock_on_excluded(this: GPtr<u8>, p: GPtr<u8>) -> bool {
 // keycells and patch_refs tests reject the hook).
 pub fn find_next_weapon_lock_on_target(this: GPtr<u8>, cur: GPtr<u8>, left: u32) -> u8 {
     let ty = rd::<i32>(active_weapon(this), 0);
-    let skill = ped_get_weapon_skill_current(this) as u8;
+    let skill = (ped_get_weapon_skill_current(this) as u32) as u8;
     let range = rd::<f32>(get_weapon_info(ty, i32::from(skill) as u8), 4);
     let mut best = GPtr::<u8>::NULL;
     let mut best_score: f32 = -10000.0;
@@ -1307,7 +1305,7 @@ fn abs_lt(a: X87) -> X87 {
 #[hook(addr = 0x60DC50, conv = thiscall, name = "CPlayerPed::FindWeaponLockOnTarget", expect = "81 EC 94 00 00 00", this = "CPlayerPed")]
 pub fn find_weapon_lock_on_target(this: GPtr<u8>) -> u8 {
     let ty = rd::<i32>(active_weapon(this), 0);
-    let skill = ped_get_weapon_skill_current(this) as u8;
+    let skill = (ped_get_weapon_skill_current(this) as u32) as u8;
     let info = get_weapon_info(ty, i32::from(skill) as u8);
     let range = rd::<f32>(info, 4);
     let t = rd::<GPtr<u8>>(this, 0x71C);
@@ -1317,13 +1315,13 @@ pub fn find_weapon_lock_on_target(this: GPtr<u8>) -> u8 {
         let dx = x(tp.read()).fsub_m(sp.read());
         let dy = x(tp.wrapping_index(1).read()).fsub_m(sp.wrapping_index(1).read());
         let d = dy.fmul(dy).fadd(dx.fmul(dx)).fsqrt().to_f32();
-        let m = X87::from_f64_exact(target_weapon_range_multiplier(t, this)).fmul_m(range);
+        let m = X87::from_f64_exact(target_weapon_range_multiplier(t, this).to_f64()).fmul_m(range);
         if !m.fcom(x(d)).test_any(1) {
             return 1;
         }
         let old = rd::<GPtr<u8>>(this, 0x71C);
         if !old.is_null() {
-            entity_clean_up_old_reference(old, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x71C)));
+            entity_clean_up_old_reference(old, this.byte_add(0x71C));
         }
         wr::<u32>(this, 0x71C, 0);
         return 0;
@@ -1421,7 +1419,7 @@ pub fn find_weapon_lock_on_target(this: GPtr<u8>) -> u8 {
             continue;
         }
         let mut nf = vec3(rd::<GPtr<u8>>(this, 0x14).byte_add(0x10).cast());
-        vector_normalise(lp(&mut nf).cast());
+        vector_normalise(GPtr::<f32>::cast::<[f32;3]>(lp(&mut nf).cast()));
         let mut tmp = [0f32; 3];
         let mut q = [0f32; 3];
         let r = GPtr::<u8>::cast::<f32>(vector_mul_scalar(GPtr::<f32>::cast::<u8>(lp(&mut tmp).cast()), GPtr::<f32>::cast::<u8>(lp(&mut nf).cast()), g::<f32>(0x8D2440).read()));
@@ -1436,7 +1434,7 @@ pub fn find_weapon_lock_on_target(this: GPtr<u8>) -> u8 {
         let dvp = GPtr::<u8>::cast::<f32>(vector_sub(GPtr::<f32>::cast::<u8>(lp(&mut dv).cast()), GPtr::<f32>::cast::<u8>(ent_pos(p)), GPtr::<f32>::cast::<u8>(ent_pos(this))));
         let d = X87::from_f64_exact(vector_magnitude(dvp.cast::<u32>())).to_f32();
         let r = rd::<f32>(info, 4);
-        let md = X87::from_f64_exact(target_weapon_range_multiplier(p, this)).fmul_m(r).to_f32();
+        let md = X87::from_f64_exact(target_weapon_range_multiplier(p, this).to_f64()).fmul_m(r).to_f32();
         if !x(d).fcom(x(md)).test_parity(5) {
             evaluate_target_call(this, p, pb, ps, md, h, 0);
         }
@@ -1493,7 +1491,7 @@ fn pull_toward_camera(v: &mut [f32; 3]) {
         x(c.wrapping_index(1).read()).fsub_m(v[1]).to_f32(),
         x(c.wrapping_index(2).read()).fsub_m(v[2]).to_f32(),
     ];
-    vector_normalise(lp(&mut d).cast());
+    vector_normalise(GPtr::<f32>::cast::<[f32;3]>(lp(&mut d).cast()));
     for k in 0..3 {
         v[k] = x(d[k]).fadd_m(v[k]).to_f32();
     }
@@ -1692,7 +1690,7 @@ pub fn set_real_move_anim(this: GPtr<u8>) {
                 && intel_get_task_jet_pack(intel()).is_null()
                 && {
                     let p = vec3(ent_pos(this));
-                    world_test_sphere_against_world(p[0], p[1], p[2], 0.5, GPtr::NULL, 1, 0, 0, 0, 0, 0).is_null()
+                    world_test_sphere_against_world(sa_math::vector::CVector::new(p[0], p[1], p[2]), 0.5, GPtr::<u8>::addr(GPtr::NULL) as u32, 1, 0, 0, 0, 0, 0).is_null()
                 };
             if tired {
                 if idle_tired.is_null() {
@@ -1779,7 +1777,7 @@ pub fn set_real_move_anim(this: GPtr<u8>) {
                 let half = !x(rd::<f32>(sprint, 0x20)).fdiv_m(total_time(sprint)).fcom(X87::from_f64_exact(0.5)).test_parity(5);
                 let a = add_animation(clump(), 0, if half { 6 } else { 7 });
                 wr::<f32>(a, 0x18, 1.0);
-                assoc_set_delete_callback(a, 0x5DFD70, this);
+                assoc_set_delete_callback(a, 0x5DFD70, this.addr() as u32);
                 wr::<u32>(this, 0x560, 0);
                 or_flags(sprint, 4);
                 wr::<f32>(sprint, 0x1C, -1000.0);

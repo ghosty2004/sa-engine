@@ -54,7 +54,7 @@ pub use sa_core::bindings::find_txd_slot as txd_find_txd_slot;
 pub use sa_core::bindings::crt_free_8214bd as operator_delete;
 pub use crate::bindings::get_2d_effect_store as get_2d_effect_store_call;
 pub use crate::bindings::txd_store_remove_ref as txd_remove_ref;
-pub use sa_core::bindings::txd_add_ref;
+pub use crate::bindings::txd_add_ref;
 orig! {
     /// `CColModel::operator delete` (0x40FC40)
     pub fn col_model_operator_delete(col: GPtr<u8>) = cdecl 0x40FC40 => unported;

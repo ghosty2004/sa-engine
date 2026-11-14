@@ -10,7 +10,7 @@ use super::common::{ftol32, g, x};
 
 use crate::bindings::garages_trigger_message as trigger_message;
 use crate::bindings::get_stat_value;
-use sa_core::bindings::stats_increment_stat as increment_stat;
+use crate::bindings::stats_increment_stat as increment_stat;
 use sa_core::bindings::audio_report_frontend_event as report_frontend_audio_event;
 
 /// `CWorld::Players[0].m_nMoney` (0xB7CE50).

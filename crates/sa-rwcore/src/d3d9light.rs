@@ -51,11 +51,11 @@ const CB_DTOR: u32 = 0x755BF0;
 const CB_COPY: u32 = 0x755CE0;
 
 use crate::bindings::light_register_plugin as rp_light_register_plugin;
-use sa_core::bindings::frame_get_ltm as rw_frame_get_ltm;
-use sa_core::bindings::rw_d3d9_get_caps;
+use crate::bindings::frame_get_ltm as rw_frame_get_ltm;
+use crate::bindings::rw_d3d9_get_caps;
 use sa_core::bindings::enable_light as rw_d3d9_enable_light;
 use sa_core::bindings::rw_d3d9_set_light;
-use sa_core::bindings::set_render_state as rw_d3d9_set_render_state;
+use crate::bindings::set_render_state as rw_d3d9_set_render_state;
 orig! {
     /// `RpLightGetConeAngle(light)` (0x751AE0), result in ST0
     fn rp_light_get_cone_angle(l: GPtr<u8>) -> f64 = cdecl 0x751AE0 => unported;
@@ -185,7 +185,7 @@ pub fn rp_d3d9_light_get_attenuation_params(l: GPtr<u8>, params: GPtr<u8>) -> GP
 #[hook(addr = 0x755D80, conv = cdecl, name = "_rwD3D9LightsOpen", expect = "A1 C4 26 C9 00")]
 pub fn rw_d3d9_lights_open() -> u32 {
     free_lists();
-    let caps = rw_d3d9_get_caps();
+    let caps = GPtr::from_addr(rw_d3d9_get_caps() as usize);
     let m = rd::<u32>(caps, 0xA0);
     g::<u32>(MAX_ACTIVE).write(m);
     if m == 0 {

@@ -11,16 +11,11 @@ use sa_world::bindings::object_damage;
 use sa_world::bindings::ped_weapon_audio_add_audio_event as ped_weapon_audio_event;
 use sa_world::bindings::physical_add_to_moving_list;
 use crate::bindings::fight_strike_damage_c;
+use sa_world::bindings::apply_force as physical_apply_force;
+use sa_world::bindings::ped_audio_add_audio_event as ped_audio_event;
 orig! {
     /// `CEntity::SetIsStatic(bool)` (vtable slot 0x10)
     fn entity_set_is_static(e: GPtr<u8>, b: u32) = thiscall vslot 0x10 => unported;
-    /// `CPhysical::ApplyForce(CVector force, CVector point, bool)` (0x542B50)
-    #[allow(clippy::too_many_arguments)]
-    fn physical_apply_force(p: GPtr<u8>, fx: u32, fy: u32, fz: u32, px: u32, py: u32, pz: u32, b: u32) = thiscall 0x542B50 => unported;
-    /// `CAEPedAudioEntity::AddAudioEvent(eAudioEvents, float volume, float speed, CPhysical*, uint8 surface, int32,
-    /// uint32)` (0x4E2BB0)
-    #[allow(clippy::too_many_arguments)]
-    fn ped_audio_event(a: GPtr<u8>, ev: u32, vol: f32, speed: f32, p: GPtr<u8>, surface: u32, b: u32, c: u32) = thiscall 0x4E2BB0 => unported;
     /// `Fx_c::AddPunchImpact(const CVector&, const CVector&, int32)` (0x49F670) on `g_fx` (0xA9AE00)
     fn fx_add_punch_impact(fx: GPtr<u8>, pos: GPtr<u8>, vel: GPtr<u8>, n: i32) = thiscall 0x49F670 => unported;
 }
@@ -61,7 +56,7 @@ pub fn fight_hit_object(this: GPtr<u8>, ped: GPtr<u8>, obj: GPtr<u8>, pos: GPtr<
             let d = |o: isize| x(rd::<f32>(pos, o)).fsub_m(rd::<f32>(op, o)).to_f32().to_bits();
             let (dx, dy, dz) = (d(0), d(4), d(8));
             let f = |o: isize| x(rd::<f32>(np, o)).fmul_m(k).to_f32().to_bits();
-            physical_apply_force(obj, f(0), f(4), f(8), dx, dy, dz, 1);
+            physical_apply_force(obj, sa_math::vector::CVector::new(f32::from_bits(f(0)), f32::from_bits(f(4)), f32::from_bits(f(8))), sa_math::vector::CVector::new(f32::from_bits(dx), f32::from_bits(dy), f32::from_bits(dz)), 1);
         }
     }
     let slot = i32::from(rd::<i8>(ped, 0x718));

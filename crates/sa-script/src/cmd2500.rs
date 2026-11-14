@@ -80,13 +80,13 @@ use sa_core::bindings::car_set_ped_out_process_ped as task_car_set_ped_out_proce
 use sa_core::bindings::clear_this_print_big_now;
 use sa_core::bindings::disable_all_ped_speech;
 use sa_core::bindings::enable_all_ped_speech;
-use sa_core::bindings::find_player_ped;
-use sa_core::bindings::find_player_vehicle;
-use sa_core::bindings::task_new;
+use sa_world::bindings::find_player_ped;
+use sa_world::bindings::find_player_vehicle;
+use sa_ai::bindings::task_new;
 use sa_core::bindings::text_get;
 use sa_core::bindings::timer_stop;
 use sa_core::bindings::timer_update;
-use sa_stream::bindings::find_player_wanted;
+use sa_world::bindings::find_player_wanted;
 use sa_stream::bindings::manage_all_population;
 use sa_world::bindings::all_resprays_close_or_open;
 use sa_world::bindings::audio_retune_radio as retune_radio;
@@ -95,11 +95,11 @@ use sa_world::bindings::cam_follow_ped_sa as cam_process_follow_ped_sa;
 use sa_world::bindings::clear_wanted_level_and_go_on_parole;
 use sa_world::bindings::compute_target_door_to_exit;
 use sa_world::bindings::count_members_excluding_leader;
-use sa_world::bindings::decision_maker_types_get_instance;
+use sa_ai::bindings::decision_maker_types_get_instance;
 use sa_world::bindings::do_weapon_stuff_at_start_of_2p_game;
 use sa_world::bindings::enable_burglary_houses;
 use sa_world::bindings::font_get_string_width_st0 as get_string_width;
-use sa_world::bindings::gang_war_fighting_going_on;
+use sa_pop::bindings::gang_war_fighting_going_on;
 use sa_world::bindings::get_has_collided_with;
 use sa_world::bindings::get_ped_attractor_manager;
 use sa_world::bindings::get_task_jet_pack;
@@ -110,26 +110,26 @@ use sa_world::bindings::task_use_goggles_ctor;
 use sa_world::bindings::use_detonator;
 use crate::bindings::give_ped_scripted_task;
 use crate::bindings::play_anim_script_command;
-use sa_core::bindings::get_pad;
+use sa_input::bindings::get_pad;
 use sa_core::bindings::insert_number_in_string;
-use sa_core::bindings::stats_increment_stat as increment_stat;
+use sa_world::bindings::stats_increment_stat as increment_stat;
 use sa_core::bindings::streaming_load_scene as load_scene;
 use sa_core::bindings::vector_magnitude;
-use sa_core::bindings::vector_sub;
+use sa_world::bindings::vector_sub;
 use sa_stream::bindings::create_car_generator;
 use sa_stream::bindings::is_car_model;
 use sa_world::bindings::add_light;
 use sa_world::bindings::find_most_favorite_radio_station;
 use sa_world::bindings::get_actual_pickup_index;
 use sa_world::bindings::get_actual_script_thing_index;
-use sa_world::bindings::is_ped_registered_with_effect;
+use sa_ai::bindings::is_ped_registered_with_effect;
 use sa_world::bindings::ped_say;
 use sa_world::bindings::placeable_set_posn as set_posn_v;
 use sa_world::bindings::request_objects_in_direction;
 use sa_world::bindings::set_up_skip;
 use sa_world::bindings::signal_at_ped_ctor as task_signal_at_ped_ctor;
-use sa_world::bindings::tm_find_active_task_by_type as find_active_task_by_type;
-use sa_world::bindings::tm_set_task as task_manager_set_task;
+use sa_ai::bindings::tm_find_active_task_by_type as find_active_task_by_type;
+use sa_ai::bindings::tm_set_task as task_manager_set_task;
 orig! {
     /// `CMenuSystem::SetColumnWidth(uint8 menu, uint8 column, uint16 width)` (0x582050)
     fn set_column_width(menu: u32, column: u32, width: u32) = cdecl 0x582050 => unported;
@@ -654,7 +654,7 @@ pub fn process_commands_2500_to_2599(s: Scr, command: u32) -> i8 {
         // 09E7 IS_PLAYER_CONTROL_ON (0x47B109): flag = `!(CPad::GetPad(SP0) byte +0x10E bit 5)`
         0x09E7 => {
             collect(s, 1);
-            let b = get_pad(sp(0)).byte_add(0x10E).read();
+            let b = get_pad(sp(0) as i32).byte_add(0x10E).read();
             set_flag(s, (b >> 5) & 1 == 0);
         }
         // 09E8 GET_CHAR_AREA_VISIBLE (0x47B145): SP0 = byte `PED(SP0)` +0x2F
@@ -922,7 +922,7 @@ pub fn process_commands_2500_to_2599(s: Scr, command: u32) -> i8 {
             let mut label = [0u8; 16];
             let lp = label8(s, &mut label);
             let t = text_get(GPtr::from_addr(THE_TEXT), lp);
-            set_zone_name(t, 1);
+            set_zone_name(t.addr() as u32, 1);
         }
         // 0A1A TASK_PLAY_ANIM_SECONDARY (0x47BB08): `PlayAnimScriptCommand(command)` (ECX = the command)
         0x0A1A => play_anim_script_command(s, command),

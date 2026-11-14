@@ -48,7 +48,7 @@ const NONE_STR: usize = 0x859E38;
 /// The 9999.9f immediate (0x461C3F9A) of the random car/char searches.
 const K_9999_9: u32 = 0x461C_3F9A;
 
-use sa_core::bindings::clump_is_initialized as rp_anim_blend_clump_is_initialized;
+use sa_anim::bindings::clump_is_initialized as rp_anim_blend_clump_is_initialized;
 use crate::bindings::conversations_done_setting_up_conversation as done_setting_up_conversation;
 use crate::bindings::object_has_been_damaged as object_is_damaged;
 use crate::bindings::phone_task_stop;
@@ -56,30 +56,30 @@ use sa_world::bindings::rgba_set_463370;
 use sa_world::bindings::task_gun_control_ctor;
 use sa_world::bindings::task_use_effect_ctor;
 use crate::bindings::tell_heli_to_go_to_coors;
-use sa_world::bindings::vehicle_41bdd0 as set_engine_on;
+use sa_veh::bindings::vehicle_41bdd0 as set_engine_on;
 use crate::bindings::vehicle_get_ref;
 use sa_world::bindings::vehicle_pool_get_at;
-use sa_core::bindings::clothes_rebuild_player as rebuild_player;
-use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+use sa_ped::bindings::clothes_rebuild_player as rebuild_player;
+use sa_world::bindings::entity_clean_up_old_reference as clean_up_old_reference;
 use sa_core::bindings::entity_register_reference as register_reference;
 use sa_core::bindings::replay_init;
 use sa_core::bindings::rgba_ctor;
 use sa_core::bindings::rp_anim_blend_clump_init;
 use sa_core::bindings::streaming_disable_cop_bikes as disable_cop_bikes;
-use sa_core::bindings::task_new;
+use sa_ai::bindings::task_new;
 use sa_stream::bindings::is_object_glass;
-use sa_core::bindings::anim_get_animation as get_animation;
-use sa_world::bindings::decision_maker_types_get_instance as dm_types_instance;
+use sa_anim::bindings::anim_get_animation as get_animation;
+use sa_ai::bindings::decision_maker_types_get_instance as dm_types_instance;
 use sa_world::bindings::entity_get_is_static as get_is_static;
 use sa_world::bindings::find_ground_z_for_coord as find_ground_z;
 use sa_world::bindings::find_zone_by_label;
-use sa_core::bindings::get_animation_block;
+use sa_anim::bindings::get_animation_block;
 use sa_world::bindings::get_ped_flag;
-use sa_world::bindings::get_vehicle_appearance;
+use sa_veh::bindings::get_vehicle_appearance;
 use sa_world::bindings::hold_entity_drop_entity as drop_entity;
 use sa_world::bindings::intel_get_task_hold as get_task_hold;
 use sa_world::bindings::load_shop;
-use sa_world::bindings::ped_groups_get_peds_group as get_peds_group;
+use sa_ai::bindings::ped_groups_get_peds_group as get_peds_group;
 use sa_world::bindings::placeable_get_heading as get_heading;
 use sa_world::bindings::remove_from_moving_list;
 use sa_world::bindings::set_char_created_by;
@@ -96,7 +96,7 @@ use sa_core::bindings::matrix_rotate_y;
 use sa_core::bindings::matrix_set_rotate_z;
 use sa_core::bindings::vector_magnitude;
 use sa_stream::bindings::anim_blend_animation_hier as blend_animation;
-use sa_world::bindings::apply_damage;
+use sa_veh::bindings::apply_damage;
 use sa_world::bindings::break_manager_add;
 use sa_world::bindings::compute_target_door_to_enter_as_passenger as compute_target_door_as_passenger;
 use sa_world::bindings::gang_drive_by_ctor as task_drive_by_ctor;
@@ -107,6 +107,8 @@ use sa_world::bindings::set_ped_in_as_driver_ctor as task_set_ped_in_as_driver_c
 use sa_world::bindings::set_ped_in_as_passenger_ctor as task_set_ped_in_as_passenger_ctor;
 use sa_world::bindings::tm_find_task_by_type as find_task_by_type;
 use sa_world::bindings::vehicle_set_created_by as set_vehicle_created_by;
+use sa_world::bindings::die_ctor as task_die_ctor;
+use sa_world::bindings::flee_any_means_ctor as task_flee_any_means_ctor;
 orig! {
     /// A virtual `CTask` method without arguments returning EAX (`GetTaskType`, vtable +0x10), read at run time
     fn vcall_task_type(f: u32, this: GPtr<u8>) -> u32 = thiscall dyn => unported;
@@ -149,10 +151,6 @@ orig! {
     fn set_ped_type_as_acquaintance(a: u32, t: u32, f: u32) = cdecl 0x608E20 => unported;
     /// `CPedIntelligence::IsRespondingToEvent(eEventType)` (0x600DB0), AL
     fn is_responding_to_event(intel: GPtr<u8>, ev: u32) -> u8 = thiscall 0x600DB0 => unported;
-    /// `CTaskComplexFleeAnyMeans::CTaskComplexFleeAnyMeans(CEntity*, bool, float, int32, int32, float, float,
-    /// float, float)` (0x65CC60); floats raw
-    #[allow(clippy::too_many_arguments)]
-    fn task_flee_any_means_ctor(t: GPtr<u8>, target: GPtr<u8>, b: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, a8: u32) -> GPtr<u8> = thiscall 0x65CC60 => unported;
     /// 0x46A340 (thiscall on the 0x28-byte patrol-point anim record, `(const char* anim, const char* block)`;
     /// a `.HOODLUM` stub: strcpy of both names to +0 and +0x18)
     fn patrol_anim_ctor(rec: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) = thiscall 0x46A340 => unported;
@@ -163,10 +161,6 @@ orig! {
     fn load_prices(s: GPtr<u8>) = cdecl 0x49B8D0 => unported;
     /// `CShopping::GetPrice(uint32)` (0x49AD50)
     fn get_price(i: u32) -> u32 = cdecl 0x49AD50 => unported;
-    /// `CTaskComplexDie::CTaskComplexDie(eWeaponType, AssocGroupId, AnimationId, float, float, bool, bool,
-    /// eFallDir, bool)` (0x630040); floats raw
-    #[allow(clippy::too_many_arguments)]
-    fn task_die_ctor(t: GPtr<u8>, a: u32, b: u32, c: u32, d: u32, e: u32, f: u32, g: u32, h: u32, i: u32) -> GPtr<u8> = thiscall 0x630040 => unported;
 }
 
 /// `VEH(h)` (`CPool<CVehicle>::GetAtRef`, no null check by the callers).
@@ -425,7 +419,7 @@ pub fn process_commands_1800_to_1899(s: Scr, command: u32) -> i8 {
             let v = veh(sp(0));
             let intensity = GPtr::<u32>::from_addr(0x871640).read();
             let comp = sp(1).wrapping_add(if command == 0x0730 { 11 } else { 5 });
-            apply_damage(v.byte_add(0x5A0), v, comp, f32::from_bits(intensity), f32::from_bits(0x3F80_0000));
+            apply_damage(v.byte_add(0x5A0), v, comp as i32, f32::from_bits(intensity), f32::from_bits(0x3F80_0000));
         }
         // 0731 SET_CAR_ROLL (0x46DCF0): `v = VEH(P0)`; `p` = the entity position (copied); `m_matrix->
         // SetRotateZ((float)GetHeading())`; `m_matrix->RotateY(P1 * 0.017453292)`; `0x46AE00(m_matrix, &p)`.
@@ -626,7 +620,7 @@ pub fn process_commands_1800_to_1899(s: Scr, command: u32) -> i8 {
         // `GivePedScriptedTask(P0, ...)` (P0 read after the constructor).
         0x0762 => {
             collect(s, 1);
-            let t = new_task(0x28, |t| task_die_ctor(t, 0, 0, 0xF, 0x4080_0000, 0, 0, 0, 0, 0));
+            let t = new_task(0x28, |t| task_die_ctor(t, 0, 0, 0xF, f32::from_bits(0x4080_0000), f32::from_bits(0), 0, 0, 0, 0));
             give_ped_scripted_task(s, sp(0) as i32, t, command);
         }
         // 0763 SET_CAR_AS_MISSION_CAR (0x46EC43): `v = VEH(P0)`, `h = GetRef(v)`; if the script uses the mission
@@ -695,7 +689,7 @@ fn follow_entity(s: Scr, mission: u8, plane: bool) {
     let field = v.byte_add(0x41C);
     let old = field.cast::<GPtr<u8>>().read();
     if !old.is_null() {
-        clean_up_old_reference(old, field.cast::<GPtr<u8>>());
+        clean_up_old_reference(old, field.cast::<u8>());
     }
     field.cast::<GPtr<u8>>().write(t);
     register_reference(t, field);
@@ -811,7 +805,7 @@ fn break_object(s: Scr) {
     if is_object_glass(o) != 0 {
         let p = ent_pos(o);
         let (px, py, pz) = (p.read(), p.byte_add(4).read(), p.byte_add(8).read());
-        window_responds_to_collision(o, 0x47C3_4FF3, 0, 0, 0, px, py, pz, 0);
+        window_responds_to_collision(o, f32::from_bits(0x47C3_4FF3), f32::from_bits(0), f32::from_bits(0), f32::from_bits(0), f32::from_bits(px), f32::from_bits(py), f32::from_bits(pz), 0);
         let fl = o.byte_add(0x140).cast::<u32>();
         fl.write(fl.read() | 0x400);
         return;
@@ -833,7 +827,7 @@ fn break_object(s: Scr) {
     );
     let e = o.byte_add(0x1C).cast::<u32>();
     e.write(e.read() & 0xFFFF_FF7E);
-    if get_is_static(o) == 0 {
+    if get_is_static(o) as u8 == 0 {
         remove_from_moving_list(o);
     }
     let f40 = o.byte_add(0x40).cast::<u32>();
@@ -1002,7 +996,7 @@ fn random_char_in_sphere(s: Scr) {
             continue;
         }
         let ty = p.byte_add(0x598).cast::<u32>().read();
-        if this_is_a_valid_random_ped(s, ty, sp(4), sp(5), sp(6)) == 0 || !get_peds_group(p).is_null() {
+        if this_is_a_valid_random_ped(s, ty, sp(4), sp(5), sp(6)) == 0 || !GPtr::<u8>::from_addr(get_peds_group(p.addr() as u32) as usize).is_null() {
             continue;
         }
         let q = ent_pos(p).cast::<f32>();
@@ -1157,7 +1151,7 @@ fn play_object_anim(s: Scr) {
         set_flag(s, false);
         return;
     }
-    if rp_anim_blend_clump_is_initialized(rw.read()) == 0 {
+    if rp_anim_blend_clump_is_initialized(rw.read()) as u8 == 0 {
         rp_anim_blend_clump_init(rw.read());
     }
     blend_animation(rw.read(), a, flags, f32::from_bits(delta));

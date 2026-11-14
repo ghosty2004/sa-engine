@@ -20,7 +20,7 @@ use sa_math::x87::Cmp;
 use crate::common::*;
 
 use sa_world::bindings::anim_blend_animation;
-use sa_core::bindings::assoc_set_finish_callback as anim_set_finish_callback;
+use sa_anim::bindings::assoc_set_finish_callback as anim_set_finish_callback;
 use crate::bindings::car_enter_exit_compute_door_flag;
 use sa_world::bindings::car_enter_exit_compute_passenger_index_from_car_door as compute_passenger_index_from_car_door;
 use sa_world::bindings::car_enter_exit_is_room_for_ped_to_leave_car;
@@ -36,10 +36,10 @@ use crate::bindings::ped_set_radio_station;
 use crate::bindings::ped_update_stat_leaving_vehicle;
 use crate::bindings::say_jacked;
 use crate::bindings::slow_be_dragged_out_compute_anim_id;
-use sa_core::bindings::vehicle_anim_group_get_group;
-use sa_core::bindings::find_player_ped;
+use sa_anim::bindings::vehicle_anim_group_get_group;
+use sa_world::bindings::find_player_ped;
 use sa_stream::bindings::ped_is_player;
-use sa_core::bindings::anim_door_offsets as vehicle_anim_group_compute_anim_door_offsets;
+use sa_anim::bindings::anim_door_offsets as vehicle_anim_group_compute_anim_door_offsets;
 use sa_world::bindings::get_vehicle_type_for_audio as vehicle_audio_get_vehicle_type_for_audio;
 use sa_world::bindings::is_law_enforcement_vehicle as vehicle_is_law_enforcement_vehicle;
 use sa_world::bindings::multiply3x3;
@@ -56,7 +56,8 @@ use sa_world::bindings::wander_get_wander_task_by_ped_type;
 use crate::bindings::say_jacking_o;
 use crate::bindings::slow_drag_ped_out_compute_anim_id as slow_drag_ped_out_compute_anim_id_o;
 use sa_core::bindings::car_set_ped_out_ctor;
-use sa_world::bindings::tm_set_task as task_manager_set_task;
+use crate::bindings::tm_set_task as task_manager_set_task;
+use sa_core::bindings::crt_new as operator_new;
 orig! {
     /// `CTask::MakeAbortable(CPed*, int32 priority, const CEvent*)` (vtable +0x18)
     fn v_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, priority: i32, event: GPtr<u8>) -> u8 = thiscall vslot 0x18 => unported;
@@ -83,8 +84,6 @@ orig! {
     fn complex_slow_be_dragged_out_create_sub_task_o(t: GPtr<u8>, ty: u32) -> GPtr<u8> = thiscall 0x64C6A0 => complex_slow_be_dragged_out_create_sub_task;
     /// `CTaskComplexCarSlowBeDraggedOutAndStandUp::CreateSubTask(int32 type, CPed*)` (0x648710, `ret 8`)
     fn stand_up_create_sub_task(t: GPtr<u8>, ty: u32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x648710 => unported;
-    /// CRT `operator new` (0x82119A, cdecl)
-    fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
     /// `CPed::CalculateNewOrientation` (0x5E52E0)
     fn ped_calculate_new_orientation(p: GPtr<u8>) = thiscall 0x5E52E0 => unported;
 }
@@ -188,7 +187,7 @@ pub fn slow_drag_ped_out_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
             let jacked = if door == DOOR_DRIVER {
                 rd::<GPtr<u8>>(veh, 0x460)
             } else {
-                let i = compute_passenger_index_from_car_door(veh, door);
+                let i = compute_passenger_index_from_car_door(veh, door as i32);
                 let v = rd::<GPtr<u8>>(this, 0x10);
                 rd::<GPtr<u8>>(v, (0x464 + i.wrapping_mul(4)) as isize)
             };
@@ -243,7 +242,7 @@ pub fn slow_be_dragged_out_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
     slow_be_dragged_out_compute_anim_id(this, p, p.byte_add(4));
     let a = anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), l[0], l[1], f32::from_bits(0x447A_0000));
     wr::<GPtr<u8>>(this, 0xC, a);
-    anim_set_finish_callback(a, 0x6483A0, GPtr::from_addr((this.addr() as u32) as usize));
+    anim_set_finish_callback(a, 0x6483A0, GPtr::<u8>::addr(GPtr::from_addr((this.addr() as u32) as usize)) as u32);
     let f = rd::<u16>(rd::<GPtr<u8>>(this, 0xC), 0x2E);
     wr::<u8>(this, 0x19, ((f >> 11) & 1) as u8);
 }
@@ -365,7 +364,7 @@ pub fn set_ped_slow_dragged_out_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8
     vehicle_anim_group_compute_anim_door_offsets(
         anim_group(rd::<GPtr<u8>>(this, 8)),
         buf(&mut door_off),
-        if door == 8 || door == 9 { 6 } else { 5 },
+        (if door == 8 || door == 9 { 6 } else { 5 }) as i32,
     );
     // offset = (door.x - getup.x, door.y - getup.y, 0)
     let mut offset = [
@@ -379,7 +378,7 @@ pub fn set_ped_slow_dragged_out_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8
     for (i, c) in pos.iter_mut().enumerate() {
         *c = f32_of(x(f32::from_bits(*c)).fadd_m(rd::<f32>(base, i as isize * 4))).to_bits();
     }
-    ped_placement_find_z_coor_for_ped(buf(&mut pos));
+    ped_placement_find_z_coor_for_ped(GPtr::<u8>::cast::<f32>(buf(&mut pos)));
     wr::<u32>(ped, 0x44, 0);
     wr::<u32>(ped, 0x48, 0);
     wr::<u32>(ped, 0x4C, 0);
@@ -403,7 +402,7 @@ pub fn set_ped_slow_dragged_out_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8
     wr::<f32>(ped, 0x55C, f32_of(h));
     wr::<f32>(ped, 0x558, f32_of(h));
     ped_calculate_new_orientation(ped);
-    if car_enter_exit_is_room_for_ped_to_leave_car(rd::<GPtr<u8>>(this, 8), rd::<u32>(this, 0xC), buf(&mut offset)) == 0 {
+    if car_enter_exit_is_room_for_ped_to_leave_car(rd::<GPtr<u8>>(this, 8), rd::<u32>(this, 0xC) as i32, buf(&mut offset)) == 0 {
         ped_position_ped_out_of_collision(ped, rd::<u32>(this, 0xC), rd::<GPtr<u8>>(this, 8), 1);
     }
     wr::<u32>(ped, 0x474, rd::<u32>(ped, 0x474) | 8);

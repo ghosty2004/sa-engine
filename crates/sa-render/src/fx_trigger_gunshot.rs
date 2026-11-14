@@ -8,11 +8,11 @@ use sa_math::x87::X87;
 use crate::common::{g, k, rd};
 
 use sa_core::bindings::fx_create_mat_from_vec;
-use sa_stream::bindings::placeable_allocate_matrix;
-use sa_stream::bindings::simple_transform_update_matrix;
+use sa_world::bindings::placeable_allocate_matrix;
+use crate::bindings::simple_transform_update_matrix;
 use sa_world::bindings::fx_copy_parent_matrix as fx_system_copy_parent_matrix;
-use sa_world::bindings::fx_create_system;
-use sa_world::bindings::fx_play_and_kill as fx_system_play_and_kill;
+use crate::bindings::fx_create_system;
+use crate::bindings::fx_play_and_kill as fx_system_play_and_kill;
 use sa_world::bindings::multiply3x3_vm as multiply3x3_transposed;
 use crate::bindings::fx_rw_matrix_create;
 use crate::bindings::fx_rw_matrix_destroy;

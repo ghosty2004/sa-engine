@@ -13,9 +13,9 @@ use super::common::{g, rd, wr, x};
 
 use crate::bindings::entity_get_col_model;
 use crate::bindings::entity_get_is_static;
-use sa_core::bindings::vector_sub;
+use crate::bindings::vector_sub;
 use sa_core::bindings::matrix_assign;
-use sa_core::bindings::matrix_dtor;
+use crate::bindings::matrix_dtor;
 use sa_core::bindings::matrix_invert;
 use sa_core::bindings::matrix_mul_vec;
 
@@ -142,7 +142,7 @@ fn pre_collision_body(this: GPtr<u8>, other: GPtr<u8>, ignore_stuck: u8, disable
             set(disabled);
             return true;
         }
-        if rd::<u8>(this, 0x13C) != 3 && oflags & 0x40 == 0 && entity_get_is_static(this) != 0 {
+        if rd::<u8>(this, 0x13C) != 3 && oflags & 0x40 == 0 && entity_get_is_static(this) as u8 != 0 {
             return true;
         }
         if matches!(rd::<u16>(other, 0x22), 0x196 | 0x1E6 | 0x212) {
@@ -167,7 +167,7 @@ fn pre_collision_body(this: GPtr<u8>, other: GPtr<u8>, ignore_stuck: u8, disable
         let d_p: GPtr<u8> = GPtr::from_raw(d.as_mut_ptr()).cast();
         vector_sub(d_p, col.byte_add(0xC), col);
         let mut out = [0u32; 3];
-        let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::from_raw(out.as_mut_ptr()).cast()), rd::<GPtr<u8>>(this, 0x14), d_p));
+        let r = matrix_mul_vec(GPtr::from_raw(out.as_mut_ptr()).cast(), rd::<GPtr<u8>>(this, 0x14), d_p);
         let mut p = [rd::<u32>(r, 0), rd::<u32>(r, 4), rd::<u32>(r, 8)];
         let p_p: GPtr<u8> = GPtr::from_raw(p.as_mut_ptr()).cast();
         let om = rd::<GPtr<u8>>(other, 0x14);
@@ -176,7 +176,7 @@ fn pre_collision_body(this: GPtr<u8>, other: GPtr<u8>, ignore_stuck: u8, disable
             let inv = matrix_invert(om, cm_p);
             matrix_assign(cm_p, inv);
             let mut o2 = [0u32; 3];
-            let r2 = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::from_raw(o2.as_mut_ptr()).cast()), cm_p, p_p));
+            let r2 = matrix_mul_vec(GPtr::from_raw(o2.as_mut_ptr()).cast(), cm_p, p_p);
             !x(rd::<f32>(r2, 8)).fcom(x(k(K_ZERO))).test_parity(5)
         };
         if hit {
@@ -216,7 +216,7 @@ fn pre_collision_body(this: GPtr<u8>, other: GPtr<u8>, ignore_stuck: u8, disable
 use crate::bindings::crt_ceil;
 use crate::bindings::multiply3x3 as multiply_3x3;
 use crate::bindings::physical_get_speed;
-use sa_core::bindings::vector_magnitude_sqr as vector_squared_magnitude;
+use crate::bindings::vector_magnitude_sqr as vector_squared_magnitude;
 orig! {
     /// The `ceilf`-style wrapper 0x538AD0 (`ceil((double) f)`, ST0)
     fn ceil_of_float(v: f32) -> f64 = cdecl 0x538AD0 => unported;
@@ -300,7 +300,7 @@ pub fn object_special_entity_calc_collision_steps(this: GPtr<u8>, _a: GPtr<u8>, 
         let r = multiply_3x3(GPtr::from_raw(out.as_mut_ptr()).cast(), rd::<GPtr<u8>>(this, 0x14), col);
         let p = [rd::<u32>(r, 0), rd::<u32>(r, 4), rd::<u32>(r, 8)];
         let mut sp = [0u32; 3];
-        let s = physical_get_speed(this, GPtr::from_raw(sp.as_mut_ptr()).cast(), f32::from_bits(p[0]), f32::from_bits(p[1]), f32::from_bits(p[2]));
+        let s = GPtr::<sa_math::vector::CVector>::cast::<u8>(physical_get_speed(this, GPtr::<u8>::cast::<sa_math::vector::CVector>(GPtr::from_raw(sp.as_mut_ptr()).cast()), sa_math::vector::CVector::new(f32::from_bits(p[0]), f32::from_bits(p[1]), f32::from_bits(p[2]))));
         let v = [rd::<f32>(s, 0), rd::<f32>(s, 4), rd::<f32>(s, 8)];
         let m2 = x(v[2]).fmul_m(v[2]).fadd(x(v[1]).fmul_m(v[1])).fadd(x(v[0]).fmul_m(v[0])).fmul_m(ts()).fmul_m(ts());
         if m2.fcom(x(k(0x866FC0))).c0() {
@@ -324,23 +324,23 @@ pub fn object_special_entity_calc_collision_steps(this: GPtr<u8>, _a: GPtr<u8>, 
         let r2 = multiply_3x3(GPtr::from_raw(o2.as_mut_ptr()).cast(), rd::<GPtr<u8>>(this, 0x14), GPtr::from_raw(b.as_mut_ptr()).cast());
         b = [rd::<u32>(r2, 0), rd::<u32>(r2, 4), rd::<u32>(r2, 8)];
         let mut out = [0u32; 3];
-        let s1 = physical_get_speed(this, GPtr::from_raw(out.as_mut_ptr()).cast(), f32::from_bits(a[0]), f32::from_bits(a[1]), f32::from_bits(a[2]));
+        let s1 = GPtr::<sa_math::vector::CVector>::cast::<u8>(physical_get_speed(this, GPtr::<u8>::cast::<sa_math::vector::CVector>(GPtr::from_raw(out.as_mut_ptr()).cast()), sa_math::vector::CVector::new(f32::from_bits(a[0]), f32::from_bits(a[1]), f32::from_bits(a[2]))));
         let mut va = [rd::<u32>(s1, 0), rd::<u32>(s1, 4), rd::<u32>(s1, 8)];
-        let s2 = physical_get_speed(this, GPtr::from_raw(out.as_mut_ptr()).cast(), f32::from_bits(b[0]), f32::from_bits(b[1]), f32::from_bits(b[2]));
+        let s2 = GPtr::<sa_math::vector::CVector>::cast::<u8>(physical_get_speed(this, GPtr::<u8>::cast::<sa_math::vector::CVector>(GPtr::from_raw(out.as_mut_ptr()).cast()), sa_math::vector::CVector::new(f32::from_bits(b[0]), f32::from_bits(b[1]), f32::from_bits(b[2]))));
         let mut vb = [rd::<u32>(s2, 0), rd::<u32>(s2, 4), rd::<u32>(s2, 8)];
         let pa: GPtr<u8> = GPtr::from_raw(va.as_mut_ptr()).cast();
         let pb: GPtr<u8> = GPtr::from_raw(vb.as_mut_ptr()).cast();
-        let ma = X87::from_f64_exact(vector_squared_magnitude(pa.cast::<f32>())).to_f32();
-        let mb = X87::from_f64_exact(vector_squared_magnitude(pb.cast::<f32>()));
+        let ma = X87::from_f64_exact(vector_squared_magnitude(pa.cast::<u8>()).to_f64()).to_f32();
+        let mb = X87::from_f64_exact(vector_squared_magnitude(pb.cast::<u8>()).to_f64());
         let pick = if !mb.fcom(x(ma)).test_parity(5) { pa } else { pb };
-        let m2 = X87::from_f64_exact(vector_squared_magnitude(pick.cast::<f32>())).fmul_m(ts()).fmul_m(ts());
+        let m2 = X87::from_f64_exact(vector_squared_magnitude(pick.cast::<u8>()).to_f64()).fmul_m(ts()).fmul_m(ts());
         if m2.fcom(x(k(0x85B324))).c0() {
             return 1;
         }
         return step_count(X87::from_f64_exact(ceil_of_float(m2.fsqrt().fmul_m(k(0x859F60)).to_f32())));
     }
     if rd::<u32>(this, 0x140) & 0x2000 == 0 && info_kind != 2 && info_kind != 4 {
-        let m2 = X87::from_f64_exact(vector_squared_magnitude(ms.cast::<f32>())).fmul_m(ts()).fmul_m(ts());
+        let m2 = X87::from_f64_exact(vector_squared_magnitude(ms.cast::<u8>()).to_f64()).fmul_m(ts()).fmul_m(ts());
         if m2.fcom(x(k(0x85B324))).c0() {
             return 1;
         }
@@ -355,7 +355,7 @@ pub fn object_special_entity_calc_collision_steps(this: GPtr<u8>, _a: GPtr<u8>, 
         m = x(dz.to_f32());
     }
     let s = x(k(0x8D0A28)).fmul(m).to_f32();
-    let m2 = X87::from_f64_exact(vector_squared_magnitude(ms.cast::<f32>())).fmul_m(ts()).fmul_m(ts());
+    let m2 = X87::from_f64_exact(vector_squared_magnitude(ms.cast::<u8>()).to_f64()).fmul_m(ts()).fmul_m(ts());
     if m2.fcom(x(s).fmul_m(s)).c0() {
         return 1;
     }

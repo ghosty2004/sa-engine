@@ -4,7 +4,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 
 use super::shared::*;
@@ -18,17 +18,9 @@ use sa_core::bindings::vector_normalise as normalise;
 use crate::bindings::audio_report_water_splash;
 use sa_core::bindings::general_angle_between_points as get_angle_between_points;
 use sa_core::bindings::general_limit_angle as limit_angle;
-orig! {
-    /// `FxPrtMult_c::FxPrtMult_c(r, g, b, a, size, spin, life)` (0x4AB290)
-    #[allow(clippy::too_many_arguments)]
-    fn fx_prt_mult_ctor(p: GPtr<u8>, r: f32, g: f32, b: f32, a: f32, size: f32, spin: f32, life: f32) -> GPtr<u8> = thiscall 0x4AB290 => unported;
-    /// `FxSystem_c::AddParticle(RwV3d*, RwV3d*, float, FxPrtMult_c*, float, float, float, uint8)` (0x4AA440)
-    #[allow(clippy::too_many_arguments)]
-    fn fx_add_particle(sys: GPtr<u8>, pos: GPtr<u8>, vel: GPtr<u8>, time: f32, mult: GPtr<u8>, rot: f32, bright: f32, near: f32, local: u32) = thiscall 0x4AA440 => unported;
-    /// `CAEPedAudioEntity::AddAudioEvent(int32, float, float, CPhysical*, uint8, int32, uint32)` (0x4E2BB0)
-    #[allow(clippy::too_many_arguments)]
-    fn ped_audio_add_event(ae: GPtr<u8>, ev: i32, vol: f32, speed: f32, e: GPtr<u8>, a: u32, b: i32, c: u32) = thiscall 0x4E2BB0 => unported;
-}
+use crate::bindings::fx_add_particle;
+use crate::bindings::fx_prt_mult_ctor;
+use crate::bindings::ped_audio_add_audio_event as ped_audio_add_event;
 
 /// The speed cap 0.1 (0x8D3388, `.data`).
 const SPEED_CAP: usize = 0x8D_3388;
@@ -107,14 +99,14 @@ pub fn add_splash_particles(_this: GPtr<u8>, e: GPtr<u8>, fx: f32, fy: f32, fz: 
         let pz = x(dz).fmul(t).to_f32();
         let mut v = [px.fadd_m(fx).to_f32(), x(py).fadd_m(fy).to_f32(), x(pz).fadd_m(fz).to_f32()];
         let mut p = [0f32; 3];
-        matrix_mul_vec(GPtr::<u8>::cast::<f32>(p3(&mut p)), rp(e, 0x14), p3(&mut v));
+        matrix_mul_vec(p3(&mut p), rp(e, 0x14), p3(&mut v));
         if etype(e) != 3 {
             let pos = pos_ptr(e);
             dir = [x(p[0]).fsub_m(rf(pos, 0)).to_f32(), x(p[1]).fsub_m(rf(pos, 4)).to_f32(),
                 x(p[2]).fsub_m(rf(pos, 8)).to_f32()];
         }
         dir[2] = 0.0;
-        normalise(p3(&mut dir));
+        normalise(GPtr::<u8>::cast::<[f32;3]>(p3(&mut dir)));
         let dxm = x(dir[0]).fmul_m(m);
         let dym = x(dir[1]).fmul_m(m);
         let dzm = x(dir[2]).fmul_m(m).to_f32();
@@ -133,7 +125,7 @@ pub fn add_splash_particles(_this: GPtr<u8>, e: GPtr<u8>, fx: f32, fy: f32, fz: 
         p[0] = dxf.fadd_m(p[0]).to_f32();
         p[1] = x(dyf).fadd_m(p[1]).to_f32();
         p[2] = x(dzf).fadd_m(p[2]).to_f32();
-        fx_add_particle(GPtr::<GPtr<u8>>::from_addr(0xA9_AE38).read(), p3(&mut p), p3(&mut vel), 0.0, mp, -1.0,
+        fx_add_particle(GPtr::<GPtr<u8>>::from_addr(0xA9_AE38).read(), p3(&mut p), p3(&mut vel), 0.0f32.to_bits(), mp, (-1.0f32).to_bits(),
             cf(0x3F99_999A), cf(0x3F19_999A), 0);
     }
     if etype(e) == 3 {
@@ -162,8 +154,8 @@ pub fn add_splash_particles(_this: GPtr<u8>, e: GPtr<u8>, fx: f32, fy: f32, fz: 
             } else {
                 p[2] = x(p[2]).fadd_m(0.5).to_f32();
             }
-            fx_add_particle(GPtr::<GPtr<u8>>::from_addr(0xA9_AE34).read(), p3(&mut p), p3(&mut zero_v), 0.0, wp_,
-                ang, cf(0x3F99_999A), cf(0x3F19_999A), 0);
+            fx_add_particle(GPtr::<GPtr<u8>>::from_addr(0xA9_AE34).read(), p3(&mut p), p3(&mut zero_v), 0.0f32.to_bits(), wp_,
+                ang.to_bits(), cf(0x3F99_999A), cf(0x3F19_999A), 0);
             ped_audio_add_event(e.byte_add(0x138), 0x4C, 0.0, 1.0, GPtr::NULL, 0, 0, 0);
         }
     }

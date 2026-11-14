@@ -5,7 +5,7 @@
 
 use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
@@ -15,11 +15,7 @@ use sa_world::bindings::is_shallow_water as surface_is_shallow_water;
 use sa_world::bindings::vector_mul_scalar;
 use sa_world::bindings::vec_mul_assign as vector_mul_assign;
 use sa_world::bindings::vector_add_assign;
-orig! {
-    /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, bool x7)` (0x56A490)
-    #[allow(clippy::too_many_arguments)]
-    fn world_get_is_line_of_sight_clear(a: GPtr<u8>, b: GPtr<u8>, bu: u32, ve: u32, pe: u32, ob: u32, du: u32, st: u32, ig: u32) -> u8 = cdecl 0x56A490 => unported;
-}
+use sa_core::bindings::world_get_is_line_of_sight_clear;
 
 /// `CVector::operator/=(float)` (0x411A30; not a catalogued function, inlined here): `inv = 1 / s` kept on the
 /// x87 stack, each component `inv * c` stored.

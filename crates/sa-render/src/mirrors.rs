@@ -20,9 +20,9 @@ const SCENE_CAMERA: usize = 0xC1703C;
 /// `g_fx` (0xA9AE00).
 const FX: usize = 0xA9AE00;
 
-pub use sa_core::bindings::rw_raster_create;
-pub use sa_core::bindings::rw_raster_destroy;
-pub use sa_stream::bindings::fx_get_fx_quality as get_fx_quality;
+pub use sa_rwcore::bindings::rw_raster_create;
+pub use sa_rwcore::bindings::rw_raster_destroy;
+pub use crate::bindings::fx_get_fx_quality as get_fx_quality;
 
 /// `CMirrors::CreateBuffer()` (0x7230A0): once (`pBuffer` null), with the frame buffer's depth
 /// (`Scene.m_pRwCamera->frameBuffer->depth`): at FX quality >= 1 a 1024x512 camera raster (type 5) and
@@ -37,10 +37,10 @@ pub fn create_buffer() {
     let fb: GPtr<u8> = rd(cam, 0x60);
     let depth: i32 = rd(fb, 0x14);
     if get_fx_quality(g(FX)) as i32 >= 1 {
-        let b = rw_raster_create(0x400, 0x200, depth, 5);
+        let b = rw_raster_create(0x400, 0x200, (depth as u32) as i32, 5);
         BUFFER.set(b.addr() as u32);
         if !b.is_null() {
-            let z = rw_raster_create(0x400, 0x200, depth, 1);
+            let z = rw_raster_create(0x400, 0x200, (depth as u32) as i32, 1);
             Z_BUFFER.set(z.addr() as u32);
             if !z.is_null() {
                 return;
@@ -49,9 +49,9 @@ pub fn create_buffer() {
             BUFFER.set(0);
         }
     }
-    let b = rw_raster_create(0x200, 0x100, depth, 5);
+    let b = rw_raster_create(0x200, 0x100, (depth as u32) as i32, 5);
     BUFFER.set(b.addr() as u32);
-    let z = rw_raster_create(0x200, 0x100, depth, 1);
+    let z = rw_raster_create(0x200, 0x100, (depth as u32) as i32, 1);
     Z_BUFFER.set(z.addr() as u32);
 }
 

@@ -21,19 +21,18 @@ const MI_PARACHUTE: i32 = 0x173;
 pub use sa_world::bindings::clothes_desc_ctor;
 pub use sa_core::bindings::crt_strncpy;
 pub use sa_core::bindings::get_atan_of_xy;
-pub use sa_core::bindings::rw_texture_destroy;
+pub use sa_rwcore::bindings::rw_texture_destroy;
 pub use sa_stream::bindings::calculate_ground_height as camera_calculate_ground_height;
 pub use sa_world::bindings::is_coop_game_going_on;
 pub use sa_world::bindings::stats_get_fat_and_muscle_modifier as get_fat_and_muscle_modifier;
 pub use crate::bindings::initialise_call as wanted_initialise;
 pub use crate::bindings::ped_data_set_initial_state;
-pub use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+pub use sa_world::bindings::entity_clean_up_old_reference as clean_up_old_reference;
 pub use sa_core::bindings::entity_register_reference as register_reference;
+pub use sa_core::bindings::crt_new as operator_new;
 orig! {
     /// `CPlayerSkin::GetSkinTexture(const char*)` (0x6FFA10)
     pub fn get_skin_texture(name: GPtr<u8>) -> GPtr<u8> = cdecl 0x6FFA10 => unported;
-    /// `operator new` (0x82119A)
-    pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
     /// `CPedClothesDesc::Initialise` (0x5A78F0)
     pub fn clothes_desc_initialise(d: GPtr<u8>) = thiscall 0x5A78F0 => crate::clothes::desc_initialise;
 }
@@ -169,7 +168,7 @@ pub fn set_last_target_vehicle(this: GPtr<u8>, v: GPtr<u8>) {
     let r: GPtr<GPtr<u8>> = this.byte_add(0xD8).cast();
     let e = r.read();
     if !e.is_null() {
-        clean_up_old_reference(e, r);
+        clean_up_old_reference(e, r.cast::<u8>());
     }
     r.write(v);
     if !v.is_null() {
@@ -309,7 +308,7 @@ pub fn stream_parachute_weapon(this: GPtr<u8>, unk: u32) {
                 wr::<u32>(this, 0x18C, left - t);
             } else {
                 let z = ent_pos(v).wrapping_index(2).read();
-                let h = X87::from_f64_exact(camera_calculate_ground_height(g::<u8>(THE_CAMERA), 0));
+                let h = X87::from_f64_exact(camera_calculate_ground_height(g::<u8>(THE_CAMERA), 0).to_f64());
                 let above = x(z).fsub(h);
                 if !above.fcom(x(50.0)).test_any(0x41) {
                     wr::<u32>(this, 0x18C, 0x1388);

@@ -38,9 +38,9 @@ pub const MODE_A: u32 = 0x863A2C;
 pub const RW_ENGINE_INSTANCE: u32 = 0xC97B24;
 
 pub use crate::bindings::init_user_directories;
+pub use crate::bindings::fclose;
+pub use crate::bindings::fopen;
 orig! {
-    /// CRT `fopen` (0x8232D8)
-    pub fn fopen(path: GPtr<u8>, mode: GPtr<u8>) -> GPtr<u8> = cdecl 0x8232D8 => unported;
     /// CRT `fread` (0x823521)
     pub fn fread(buf: GPtr<u8>, size: u32, n: u32, f: GPtr<u8>) -> u32 = cdecl 0x823521 => unported;
     /// CRT `fwrite` (0x823674)
@@ -49,8 +49,6 @@ orig! {
     pub fn fseek(f: GPtr<u8>, offset: i32, origin: i32) -> i32 = cdecl 0x82374F => unported;
     /// CRT `fgets` (0x823798)
     pub fn fgets(buf: GPtr<u8>, n: i32, f: GPtr<u8>) -> GPtr<u8> = cdecl 0x823798 => unported;
-    /// CRT `fclose` (0x82318B)
-    pub fn fclose(f: GPtr<u8>) -> i32 = cdecl 0x82318B => unported;
     /// CRT `_getcwd` (0x836E91)
     pub fn getcwd(buf: GPtr<u8>, n: i32) -> GPtr<u8> = cdecl 0x836E91 => unported;
     /// CRT `_chdir` (0x836F1E)

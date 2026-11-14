@@ -13,7 +13,7 @@ use crate::common::{g, rd};
 use crate::bindings::alpha_list_insert_sorted;
 use crate::bindings::atomic_default_render;
 use crate::bindings::render_atomic_with_alpha;
-use sa_core::bindings::frame_get_ltm;
+use sa_rwcore::bindings::frame_get_ltm;
 use crate::bindings::dot_with_camera as dot_with_camera_call;
 
 /// `ms_pCameraPosn`, `gVehicleAngleToCamera`, `gVehicleDistanceFromCamera`, `ms_bigVehicleLod0Dist`,

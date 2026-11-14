@@ -13,14 +13,14 @@ use sa_core::{hook, orig};
 use crate::common::*;
 
 use crate::bindings::car_drive_create_sub_task as car_drive_create_sub_task_orig;
-use sa_core::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference;
 use sa_core::bindings::entity_register_reference;
-use sa_world::bindings::join_car_with_road_system as car_ctrl_join_car_with_road_system;
+use sa_pop::bindings::join_car_with_road_system as car_ctrl_join_car_with_road_system;
 use sa_world::bindings::leave_any_car_ctor;
-use sa_world::bindings::task_complex_ctor;
+use crate::bindings::task_complex_ctor;
 use sa_world::bindings::upside_down_car_check_is_car_upside_down;
 use sa_world::bindings::wander_get_wander_task_by_ped_type;
-use sa_world::bindings::car_ai_get_car_to_go_to_coors;
+use sa_pop::bindings::car_ai_get_car_to_go_to_coors;
 use sa_world::bindings::enter_car_as_driver_ctor;
 use sa_world::bindings::enter_car_as_passenger_ctor;
 use sa_world::bindings::simple_car_drive_ctor as car_drive_simple_ctor;
@@ -201,7 +201,7 @@ pub fn car_drive_create_sub_task(this: GPtr<u8>, ty: i32, ped: GPtr<u8>) -> GPtr
             if t.is_null() {
                 return GPtr::NULL;
             }
-            task_complex_ctor(t);
+            task_complex_ctor(t.addr() as u32);
             wr::<u32>(t, 0, 0x86EA14);
             t
         }
@@ -259,7 +259,7 @@ pub fn car_drive_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8>
                 let r = this.byte_add(0xC);
                 let old = rd::<GPtr<u8>>(this, 0xC);
                 if !old.is_null() {
-                    entity_clean_up_old_reference(old, r.cast::<GPtr<u8>>());
+                    entity_clean_up_old_reference(old, r.cast::<u8>());
                 }
                 let v = rd::<GPtr<u8>>(ped, 0x58C);
                 wr::<GPtr<u8>>(this, 0xC, v);
@@ -385,7 +385,7 @@ pub fn drive_to_point_drive(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     let (v, style) = (rd::<GPtr<u8>>(this, 0xC), rd::<u32>(this, 0x18));
     match rd::<u32>(this, 0x30) {
         0 => {
-            car_ai_get_car_to_go_to_coors(v, p, style, 0);
+            car_ai_get_car_to_go_to_coors(v, p.cast::<f32>(), style as u8, 0);
         }
         1 => {
             car_ai_get_car_to_go_to_coors_accurate(v, p, style, 0);

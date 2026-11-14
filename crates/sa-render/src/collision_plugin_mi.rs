@@ -7,14 +7,14 @@ use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
 use sa_core::bindings::base_model_info_set_col_model as set_col_model;
-use sa_core::bindings::stream_read;
+use sa_rwcore::bindings::stream_read;
 use sa_stream::bindings::col_model_ctor;
-use sa_stream::bindings::col_model_new;
+use sa_world::bindings::col_model_new;
 use sa_stream::bindings::load_col_v1_call as load_collision_model;
 use sa_stream::bindings::load_col_v2_call as load_collision_model_ver2;
 use sa_stream::bindings::load_col_v3_call as load_collision_model_ver3;
-use sa_stream::bindings::lock_scratch_pad;
-use sa_stream::bindings::release_scratch_pad;
+use crate::bindings::lock_scratch_pad;
+use crate::bindings::release_scratch_pad;
 orig! {
     /// `CColModel::MakeMultipleAlloc()` (0x40F740)
     fn make_multiple_alloc(this: GPtr<u8>) = thiscall 0x40F740 => unported;
@@ -55,7 +55,7 @@ pub fn collision_clump_stream_read(s: GPtr<u8>, len: u32, _clump: GPtr<u8>, _off
     lock_scratch_pad();
     let buf = GPtr::<u8>::from_addr(COL_BUFFER);
     stream_read(s, buf, len);
-    let mem = col_model_new(0x30);
+    let mem = GPtr::<sa_core::pools::ColModelSlot>::cast::<u8>(col_model_new(0x30));
     let cm = if mem.is_null() { GPtr::NULL } else { col_model_ctor(mem) };
     let fourcc = buf.cast::<u32>().read();
     let ver = match fourcc {
@@ -73,7 +73,7 @@ pub fn collision_clump_stream_read(s: GPtr<u8>, len: u32, _clump: GPtr<u8>, _off
     }
     make_multiple_alloc(cm);
     let mi = GPtr::<u8>::from_addr(GPtr::<u32>::from_addr(CURRENT_MODEL).read() as usize);
-    set_col_model(mi, cm, 1);
+    set_col_model(mi.cast(), cm, 1);
     let mi = GPtr::<u8>::from_addr(GPtr::<u32>::from_addr(CURRENT_MODEL).read() as usize);
     let f = mi.byte_add(0x13);
     f.write(f.read() | 8);

@@ -23,13 +23,14 @@ use crate::bindings::placeable_dtor;
 use crate::bindings::rp_clump_render;
 use crate::bindings::simple_transform_update_rw_matrix;
 use crate::bindings::tag_manager_is_tag;
-use sa_core::bindings::find_player_ped;
-use sa_core::bindings::find_player_vehicle;
+use crate::bindings::find_player_ped;
+use crate::bindings::find_player_vehicle;
 use sa_core::bindings::matrix_update_rw_matrix;
-use sa_core::bindings::world_clear_scan_codes;
+use crate::bindings::world_clear_scan_codes;
 use sa_stream::bindings::get_2d_effect;
 use crate::bindings::garage_is_entity_entirely_outside;
-use sa_core::bindings::entity_resolve_references;
+use crate::bindings::entity_resolve_references;
+use crate::bindings::find_of_type_in_range_list;
 orig! {
     /// `CCustomRoadsignMgr::RenderRoadsignAtomic(RpAtomic*, const CVector&)` (0x6FF350, cdecl)
     fn render_roadsign_atomic(a: GPtr<u8>, cam: GPtr<u8>) = cdecl 0x6FF350 => unported;
@@ -51,8 +52,6 @@ orig! {
     fn v_vehicle_bc(v: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0xBC => unported;
     /// `CWorld::FindObjectsInRangeSectorList` (0x563500, cdecl)
     fn find_in_range_list(list: GPtr<u8>, p: GPtr<u8>, r: f32, two_d: u8, n: GPtr<i16>, max: i16, out: GPtr<GPtr<u8>>) = cdecl 0x563500 => crate::world::cworld2::find_objects_in_range_sector_list;
-    /// `CWorld::FindObjectsOfTypeInRangeSectorList` (0x5635C0, cdecl)
-    fn find_of_type_in_range_list(m: i32, list: GPtr<u8>, p: GPtr<u8>, r: f32, two_d: u8, n: GPtr<i16>, max: i16, out: GPtr<GPtr<u8>>) = cdecl 0x5635C0 => crate::world::cworld2::find_objects_of_type_in_range_sector_list;
 }
 
 /// `CEntity::UpdateRwMatrix` (0x446F90 -> .HOODLUM 0x1569BF0): with an RW object, its parent frame's matrix

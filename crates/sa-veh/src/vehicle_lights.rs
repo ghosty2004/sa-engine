@@ -16,28 +16,17 @@ use crate::bindings::has_valid_45c;
 use sa_world::bindings::register_corona;
 use sa_world::bindings::add_light;
 use sa_core::bindings::matrix_mul_vec as matrix_mul_vector;
+use sa_core::bindings::vector_normalise_and_mag as normalise_and_mag;
+use sa_world::bindings::max_f;
 orig! {
     /// `CVehicle::GetVehicleLightsStatus()` (0x6D55C0)
     fn get_vehicle_lights_status(v: GPtr<u8>) -> u8 = thiscall 0x6D55C0 => crate::vehicle2::get_vehicle_lights_status;
-    /// `max(float, float)` (0x420800), ST0
-    fn max_f(a: f32, b: f32) -> f64 = cdecl 0x420800 => max_native;
     /// `CVehicle::DoTailLightEffect(int32, CMatrix&, uint8, uint8, uint32, uint8)` (0x6E1780)
     fn do_tail_light_effect(v: GPtr<u8>, id: i32, m: GPtr<u8>, right: u8, forced_off: u8, flags: u32, on: u8) -> u8 = thiscall 0x6E1780 => crate::mvpb_a2::do_tail_light_effect;
     /// `CVehicle::DoHeadLightEffect(int32, CMatrix&, uint8, uint8)` (0x6E0A50)
     fn do_head_light_effect(v: GPtr<u8>, id: i32, m: GPtr<u8>, right: u8, forced_off: u8) -> u8 = thiscall 0x6E0A50 => crate::mvpb_a3::do_head_light_effect;
-    /// `CVector::NormaliseAndMag()` (0x59C970), ST0
-    fn normalise_and_mag(v: GPtr<u8>) -> f64 = thiscall 0x59C970 => normalise_and_mag_native;
     /// `CVehicle::DoHeadLightReflection(CMatrix&, uint32, uint8, uint8)` (0x6E1720)
     fn do_head_light_reflection(v: GPtr<u8>, m: GPtr<u8>, flags: u32, left: u32, right: u32) = thiscall 0x6E1720 => crate::vehicle2::do_head_light_reflection;
-}
-
-/// Phases B/C side of `max` 0x420800: `a` when `a > b`, else `b`.
-pub fn max_native(a: f32, b: f32) -> f64 {
-    if x(a).fcom(x(b)).test_any(0x41) {
-        f64::from(b)
-    } else {
-        f64::from(a)
-    }
 }
 
 /// Phases B/C side of `operator*(CMatrix, CVector)` 0x59C890.
@@ -52,14 +41,6 @@ pub fn matrix_mul_vector_native(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr
     let r = sa_math::vector::matrix_mul_vector(&mat, &rv(v, 0));
     wv(out, r);
     out
-}
-
-/// Phases B/C side of `CVector::NormaliseAndMag` 0x59C970.
-pub fn normalise_and_mag_native(v: GPtr<u8>) -> f64 {
-    let mut c = rv(v, 0);
-    let m = c.normalise_and_mag_x87();
-    wv(v, c);
-    m.to_f64()
 }
 
 /// `CTimer::ms_fTimeStep`
@@ -172,7 +153,7 @@ pub fn vehicle_do_vehicle_lights(this: GPtr<u8>, matrix: GPtr<u8>, flags: u32) {
                     .fmul_m(f32::from_bits(0x3C23_D70A))
                     .fsubr_m(rd::<f32>(this, 0x958))
                     .to_f32();
-                let r = X87::from_f64_exact(max_f(0.0, v));
+                let r = X87::from_f64_exact(max_f(0.0, v).to_f64());
                 wr::<f32>(this, 0x958, r.to_f32());
             }
         } else {
@@ -372,14 +353,14 @@ fn headlight_coronas(this: GPtr<u8>, matrix: GPtr<u8>, off: bool, right: bool) {
     }
     let lp = GPtr::from_raw(&mut local).cast::<u8>();
     let mut world = CVector::default();
-    let w = GPtr::<f32>::cast::<u8>(matrix_mul_vector(GPtr::<u8>::cast::<f32>(GPtr::from_raw(&mut world).cast()), matrix, lp));
+    let w = matrix_mul_vector(GPtr::from_raw(&mut world).cast(), matrix, lp);
     let cam = cam_pos();
     let mut dir = CVector::new(
         ld(cam, 0).fsub_m(rd::<f32>(w, 0)).to_f32(),
         ld(cam, 4).fsub_m(rd::<f32>(w, 4)).to_f32(),
         ld(cam, 8).fsub_m(rd::<f32>(w, 8)).to_f32(),
     );
-    let dist = X87::from_f64_exact(normalise_and_mag(GPtr::from_raw(&mut dir).cast())).to_f32();
+    let dist = X87::from_f64_exact(normalise_and_mag(GPtr::from_raw(&mut dir).cast()).to_f64()).to_f32();
     let facing = x(dir.z)
         .fmul_m(rd::<f32>(matrix, 0x18))
         .fadd(x(dir.y).fmul_m(rd::<f32>(matrix, 0x14)))
@@ -410,18 +391,18 @@ fn headlight_coronas(this: GPtr<u8>, matrix: GPtr<u8>, off: bool, right: bool) {
             b,
             0xFF,
             lp,
-            f32::from_bits(size),
-            f32::from_bits(range()),
+            f32::from_bits(size).to_bits(),
+            f32::from_bits(range()).to_bits(),
             4,
             0,
             0,
             0,
             0,
-            f32::from_bits(angle),
+            f32::from_bits(angle).to_bits(),
             0,
-            f32::from_bits(0x3E99_999A),
+            f32::from_bits(0x3E99_999A).to_bits(),
             0,
-            f32::from_bits(0x4170_0000),
+            f32::from_bits(0x4170_0000).to_bits(),
             0,
             0,
         );
@@ -453,18 +434,18 @@ fn headlight_coronas(this: GPtr<u8>, matrix: GPtr<u8>, off: bool, right: bool) {
         b as u32,
         0x80,
         lp,
-        f32::from_bits(size.to_bits()),
-        f32::from_bits(range()),
+        f32::from_bits(size.to_bits()).to_bits(),
+        f32::from_bits(range()).to_bits(),
         1,
         0,
         1,
         0,
         0,
-        f32::from_bits(angle),
+        f32::from_bits(angle).to_bits(),
         0,
-        f32::from_bits(0x3F00_0000),
+        f32::from_bits(0x3F00_0000).to_bits(),
         0,
-        f32::from_bits(0x4170_0000),
+        f32::from_bits(0x4170_0000).to_bits(),
         0,
         0,
     );

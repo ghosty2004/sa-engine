@@ -14,7 +14,7 @@ use crate::common::{ftol32, g, jne, jp, k, rd, x, xi};
 
 use sa_core::bindings::calc_screen_coors;
 use sa_world::bindings::init_sprite_buffer;
-use sa_world::bindings::sprite_flush_sprite_buffer as flush_sprite_buffer;
+use crate::bindings::sprite_flush_sprite_buffer as flush_sprite_buffer;
 use sa_world::bindings::world_process_vertical_line as process_vertical_line;
 orig! {
     /// `RwRenderStateSet(state, value)` (`RwGlobals` +0x20)

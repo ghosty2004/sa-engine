@@ -18,7 +18,7 @@ sa_core::globals! {
 }
 
 pub use sa_stream::bindings::col_model_ctor;
-pub use sa_stream::bindings::col_model_dtor;
+pub use sa_world::bindings::col_model_dtor;
 orig! {
     /// `CAEExplosionAudioEntity::CAEExplosionAudioEntity()` (0x5074B0, thiscall)
     pub fn explosion_audio_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x5074B0 => unported;

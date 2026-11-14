@@ -22,13 +22,15 @@ use sa_world::bindings::find_player_speed;
 use sa_world::bindings::get_lighting_from_col;
 use crate::bindings::rw_raster_pop_context;
 use sa_core::bindings::file_set_dir_my_documents as set_dir_my_documents;
-use sa_core::bindings::find_player_ped;
-use sa_core::bindings::find_player_vehicle;
+use sa_world::bindings::find_player_ped;
+use sa_world::bindings::find_player_vehicle;
 use sa_core::bindings::rs_camera_begin_update;
 use sa_core::bindings::timer_resume;
 use sa_core::bindings::timer_suspend;
-use sa_world::bindings::cam_no_rain;
-use sa_world::bindings::player_no_rain;
+use crate::bindings::cam_no_rain;
+use crate::bindings::player_no_rain;
+use sa_core::bindings::fclose;
+use sa_core::bindings::fopen;
 orig! {
     /// `RwRenderStateSet(state, value)` (`RwGlobals` +0x20)
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xc97b24 0x20 => unported;
@@ -59,10 +61,6 @@ orig! {
     fn cctv() = cdecl 0x702f40 => unported;
     /// CRT `sprintf(buf, fmt, int)` (0x821bb5)
     fn sprintf1(buf: GPtr<u8>, fmt: GPtr<u8>, v: u32) -> i32 = cdecl 0x821bb5 => unported;
-    /// CRT `fopen` (0x8232d8)
-    fn fopen(name: GPtr<u8>, mode: GPtr<u8>) -> GPtr<u8> = cdecl 0x8232d8 => unported;
-    /// CRT `fclose` (0x82318b)
-    fn fclose(f: GPtr<u8>) -> i32 = cdecl 0x82318b => unported;
     /// `JPegCompressScreenToFile(RwCamera*, const char*)` (0x5d0820)
     fn jpeg_compress_screen_to_file(cam: GPtr<u8>, name: GPtr<u8>) = cdecl 0x5d0820 => unported;
 }
@@ -334,7 +332,7 @@ fn speed_fx_block() {
             any = false;
         } else if ty == 0 && rd::<u32>(veh, 0x38c) & 0x8_0000 != 0 && !jp(x(rd::<f32>(veh, 0x8a4)), x(0.0), 0x5) {
             let fwd = rd::<GPtr<u8>>(veh, 0x14).byte_add(0x10);
-            let dot = X87::from_f64_exact(dot_product(veh.byte_add(0x44), fwd));
+            let dot = X87::from_f64_exact(dot_product(veh.byte_add(0x44), fwd).to_f64());
             // 0.2 (0x858CC4)
             if !jne(dot, x(k(0x3e4c_cccd)), 0x41) {
                 let v = dot.fmul(x(rd::<f32>(veh, 0x49c)).fadd_m(1.0));

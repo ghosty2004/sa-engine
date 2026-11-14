@@ -18,16 +18,11 @@ const _: () = assert!(sa_core::layouts::size::CPedDamageResponseCalculator == 0x
 pub use sa_world::bindings::are_friends;
 pub use sa_world::bindings::intel_get_task_fighting as get_task_fighting;
 pub use sa_world::bindings::ped_groups_are_in_same_group as are_in_same_group;
-pub use sa_stream::bindings::ped_is_player;
+pub use crate::bindings::ped_is_player;
+pub use sa_world::bindings::min_f;
 orig! {
     /// `CLocalisation::KillPeds` (0x56D2C0)
     pub fn localisation_kill_peds() -> u8 = cdecl 0x56D2C0 => unported;
-    /// `std::min<float>(a, b)` instance (0x404330): `b` unless `a < b`
-    pub fn min_f(a: f32, b: f32) -> f64 = cdecl 0x404330 => min_f_port;
-}
-
-pub fn min_f_port(a: f32, b: f32) -> f64 {
-    if x(a).fcom(x(b)).test_parity(5) { f64::from(b) } else { f64::from(a) }
 }
 
 /// `CPedDamageResponseCalculator::CPedDamageResponseCalculator(CEntity* damager, float damage,
@@ -191,7 +186,7 @@ pub fn account_for_ped_damage_stats(this: GPtr<u8>, ped: GPtr<u8>, _resp: GPtr<u
     };
     if scale {
         let v = x(rd::<f32>(this, 4)).fmul_m(0.1).to_f32();
-        wr::<f32>(this, 4, X87::from_f64_exact(min_f(12.5, v)).to_f32());
+        wr::<f32>(this, 4, X87::from_f64_exact(min_f(12.5f32.to_bits(), v.to_bits()).to_f64()).to_f32());
     }
 }
 

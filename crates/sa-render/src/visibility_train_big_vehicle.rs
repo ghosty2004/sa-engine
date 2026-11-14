@@ -15,7 +15,7 @@ use crate::common::{g, rd};
 use crate::bindings::alpha_list_insert_sorted;
 use crate::bindings::atomic_default_render;
 use crate::bindings::dot_with_camera;
-use sa_core::bindings::frame_get_ltm;
+use sa_rwcore::bindings::frame_get_ltm;
 
 /// `gVehicleAngleToCamera`, `gVehicleDistanceFromCamera`, `ms_vehicleLod0Dist`... (`CVisibilityPlugins`):
 /// the small-vehicle LOD distance (0xC8802C), the big-vehicle LOD0 distance (0xC88038), `ms_vehicleLod1Dist`

@@ -12,7 +12,7 @@ use sa_core::{hook, orig};
 use crate::common::*;
 
 use sa_world::bindings::anim_blend_animation;
-use sa_core::bindings::assoc_set_finish_callback as anim_set_finish_callback;
+use sa_anim::bindings::assoc_set_finish_callback as anim_set_finish_callback;
 use crate::bindings::car_enter_exit_car_has_door_to_open;
 use crate::bindings::car_enter_exit_compute_door_flag;
 use sa_world::bindings::car_enter_exit_compute_passenger_index_from_car_door;
@@ -27,38 +27,38 @@ use crate::bindings::event_cop_car_being_stolen_dtor;
 use crate::bindings::line_up_ped_with_car_ctor;
 use crate::bindings::line_up_ped_with_car_process_ped as line_up_process_ped;
 use sa_world::bindings::ped_placement_find_z_coor_for_ped;
-use sa_core::bindings::vehicle_anim_group_get_group;
+use sa_anim::bindings::vehicle_anim_group_get_group;
 use crate::bindings::vehicle_clear_getting_in_flags;
 use sa_core::bindings::car_set_ped_out_ctor;
 use sa_core::bindings::car_set_ped_out_dtor;
 use sa_core::bindings::car_set_ped_out_process_ped;
-use sa_core::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference;
 use sa_core::bindings::entity_register_reference;
-use sa_core::bindings::find_player_ped;
-use sa_core::bindings::get_pad as pad_get_pad;
+use sa_world::bindings::find_player_ped;
+use sa_input::bindings::get_pad as pad_get_pad;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::add_passenger_auto as vehicle_add_passenger_auto;
 use sa_world::bindings::compute_target_door_to_exit as car_enter_exit_compute_target_door_to_exit;
-use sa_world::bindings::event_group_add;
+use crate::bindings::event_group_add;
 use sa_world::bindings::event_group_event_ctor;
 use sa_world::bindings::event_group_event_dtor;
 use sa_world::bindings::event_leader_entered_car_as_driver_ctor;
 use sa_world::bindings::get_engine_status as damage_get_engine_status;
 use sa_world::bindings::get_event_global_group;
-use sa_world::bindings::group_intelligence_add_event;
+use crate::bindings::group_intelligence_add_event;
 use sa_world::bindings::intel_get_task_duck as intelligence_get_task_duck;
 use sa_world::bindings::is_law_enforcement_vehicle as vehicle_is_law_enforcement;
 use sa_world::bindings::membership_is_leader as group_membership_is_leader;
 use sa_world::bindings::pad_get_target;
-use sa_world::bindings::ped_groups_get_peds_group;
+use crate::bindings::ped_groups_get_peds_group;
 use sa_world::bindings::ped_update_stat_entering_vehicle;
 use sa_world::bindings::physical_apply_move_force_5429f0 as physical_apply_move_force;
 use sa_world::bindings::placeable_get_top_direction;
 use sa_world::bindings::player_ped_clear_adrenaline;
 use sa_world::bindings::report_crime as crime_report_crime;
 use sa_world::bindings::simple_car_drive_ctor as car_drive_simple_ctor;
-use sa_world::bindings::tm_find_active_task_by_type;
-use sa_world::bindings::tm_set_task;
+use crate::bindings::tm_find_active_task_by_type;
+use crate::bindings::tm_set_task;
 use sa_world::bindings::vector_scale;
 use crate::bindings::car_enter_exit_car_has_openable_door;
 use sa_core::bindings::general_get_radian_angle_between_points;
@@ -67,6 +67,7 @@ use sa_world::bindings::add_animation as anim_add_animation;
 use sa_world::bindings::ped_remove_weapon_when_entering_vehicle;
 use sa_world::bindings::ped_set_move_state;
 use sa_world::bindings::ped_set_ped_state;
+use sa_core::bindings::crt_new as operator_new;
 orig! {
     // ---- CVehicle virtual slots ----
     /// `CVehicle::OpenDoor(CPed*, int32 component, eDoors door, float ratio, bool playSound)` (vtable +0x6C)
@@ -83,8 +84,6 @@ orig! {
     fn v_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, priority: i32, event: GPtr<u8>) -> u8 = thiscall vslot 0x18 => unported;
     /// `CVehicle::SetGettingInFlags(uint8)` (0x6D3000, reads the low byte of its argument)
     fn vehicle_set_getting_in_flags(v: GPtr<u8>, f: u32) = thiscall 0x6D3000 => unported;
-    /// CRT `operator new` (0x82119A)
-    fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_get_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
     /// `CPed` vtable +0x5C (no arguments, result unused)
@@ -149,7 +148,7 @@ pub fn car_align_set_ped_position(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     car_enter_exit_get_position_to_open_car_door(
         slot(&mut v),
         rd::<GPtr<u8>>(this, 0x10),
-        rd::<u32>(this, 0x20),
+        rd::<u32>(this, 0x20) as i32,
     );
     line_up_process_ped(
         rd::<GPtr<u8>>(this, 0x24),
@@ -371,7 +370,7 @@ pub fn car_align_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
     car_enter_exit_get_position_to_open_car_door(
         slot(&mut v),
         rd::<GPtr<u8>>(this, 0x10),
-        rd::<u32>(this, 0x20),
+        rd::<u32>(this, 0x20) as i32,
     );
     let m = rd::<GPtr<u8>>(ped, 0x14);
     let pos = if m.is_null() {
@@ -396,7 +395,7 @@ pub fn car_align_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
     let group = vehicle_anim_group_get_group(veh_anim_group(rd::<GPtr<u8>>(this, 0x10)), anim as i32) as u32;
     let a = anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), group, anim, f32::from_bits(0x4080_0000));
     wr::<GPtr<u8>>(this, 0xC, a);
-    anim_set_finish_callback(a, 0x645E40, GPtr::from_addr((this.addr() as u32) as usize));
+    anim_set_finish_callback(a, 0x645E40, GPtr::<u8>::addr(GPtr::from_addr((this.addr() as u32) as usize)) as u32);
 }
 
 /// `CTaskSimpleCarOpenDoorFromOutside::StartAnim(CPed*)` (0x64AD90): `ComputeAnimID(&group, &anim)`,
@@ -409,7 +408,7 @@ pub fn open_door_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
     open_door_compute_anim_id_orig(this, slot(&mut group), slot(&mut anim));
     let a = anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), group, anim, f32::from_bits(0x4080_0000));
     wr::<GPtr<u8>>(this, 0xC, a);
-    anim_set_finish_callback(a, 0x646020, GPtr::from_addr((this.addr() as u32) as usize));
+    anim_set_finish_callback(a, 0x646020, GPtr::<u8>::addr(GPtr::from_addr((this.addr() as u32) as usize)) as u32);
 }
 
 /// `CTaskSimpleCarCloseDoorFromInside::StartAnim(CPed*)` (0x64AFB0): `ComputeAnimID(&group, &anim)`,
@@ -422,7 +421,7 @@ pub fn close_inside_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
     close_inside_compute_anim_id_orig(this, slot(&mut group), slot(&mut anim));
     let a = anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), group, anim, f32::from_bits(0x447A_0000));
     wr::<GPtr<u8>>(this, 0xC, a);
-    anim_set_finish_callback(a, 0x646490, GPtr::from_addr((this.addr() as u32) as usize));
+    anim_set_finish_callback(a, 0x646490, GPtr::<u8>::addr(GPtr::from_addr((this.addr() as u32) as usize)) as u32);
 }
 
 /// `CTaskSimpleCarCloseDoorFromOutside::StartAnim(CPed*)` (0x64B080). The ped position (matrix +0x30, else
@@ -448,7 +447,7 @@ pub fn close_outside_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
     };
     let p = ped_pos();
     let mut v = [rd::<u32>(p, 0), rd::<u32>(p, 4), rd::<u32>(p, 8)];
-    ped_placement_find_z_coor_for_ped(slot(&mut v));
+    ped_placement_find_z_coor_for_ped(GPtr::<u8>::cast::<f32>(slot(&mut v)));
     let p = ped_pos();
     let d = x(rd::<f32>(p, 8)).fsub_m(g::<f32>(0x858624).read());
     if !d.fcom(x(f32::from_bits(v[2]))).test_any(0x41) {
@@ -503,7 +502,7 @@ pub fn close_outside_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
     close_outside_compute_anim_id_orig(this, gp, slot(&mut anim));
     let a = anim_add_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), rd::<u32>(gp, 0), anim);
     wr::<GPtr<u8>>(this, 0xC, a);
-    anim_set_finish_callback(a, 0x646680, GPtr::from_addr((this.addr() as u32) as usize));
+    anim_set_finish_callback(a, 0x646680, GPtr::<u8>::addr(GPtr::from_addr((this.addr() as u32) as usize)) as u32);
 }
 
 /// `CTaskSimpleCarGetIn::StartAnim(CPed*)` (0x64B2D0): door (+0x1C) 8/9/10/11/18 -> anim 0x168/0x16A/
@@ -531,7 +530,7 @@ pub fn get_in_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
     }
     let a = anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), group, anim, f32::from_bits(0x4080_0000));
     wr::<GPtr<u8>>(this, 0xC, a);
-    anim_set_finish_callback(a, 0x6467F0, GPtr::from_addr((this.addr() as u32) as usize));
+    anim_set_finish_callback(a, 0x6467F0, GPtr::<u8>::addr(GPtr::from_addr((this.addr() as u32) as usize)) as u32);
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -781,7 +780,7 @@ pub fn get_in_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         f32_of(f),
         rd::<GPtr<u8>>(veh, 0x14).byte_add(0x10),
     );
-    physical_apply_move_force(veh, f32::from_bits(rd::<u32>(r, 0)), f32::from_bits(rd::<u32>(r, 4)), f32::from_bits(rd::<u32>(r, 8)));
+    physical_apply_move_force(veh, sa_math::vector::CVector::new(f32::from_bits(rd::<u32>(r, 0)), f32::from_bits(rd::<u32>(r, 4)), f32::from_bits(rd::<u32>(r, 8))));
     0
 }
 
@@ -795,7 +794,7 @@ fn set_ped_vehicle_ref(this: GPtr<u8>, ped: GPtr<u8>) {
     let r = ped.byte_add(0x58C);
     let old = rd::<GPtr<u8>>(r, 0);
     if !old.is_null() {
-        entity_clean_up_old_reference(old, r.cast::<GPtr<u8>>());
+        entity_clean_up_old_reference(old, r.cast::<u8>());
     }
     let v = rd::<GPtr<u8>>(this, 0x10);
     wr::<GPtr<u8>>(r, 0, v);
@@ -812,7 +811,7 @@ fn throw_out_occupant(this: GPtr<u8>, ped: GPtr<u8>, occ: impl Fn() -> GPtr<u8>)
         return;
     }
     for ty in [0x2C0, 0x338, 0x2C1, 0x33A] {
-        if !tm_find_active_task_by_type(rd::<GPtr<u8>>(occ(), 0x47C).byte_add(4), ty as u32).is_null() {
+        if !tm_find_active_task_by_type(rd::<GPtr<u8>>(occ(), 0x47C).byte_add(4), (ty as u32) as i32).is_null() {
             return;
         }
     }
@@ -897,7 +896,7 @@ pub fn set_ped_in_as_driver_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     if rd::<u8>(this, 0x18) != 0 {
         warp_ped_to_vehicle(this, ped);
     }
-    let grp = ped_groups_get_peds_group(ped);
+    let grp = GPtr::from_addr(ped_groups_get_peds_group(ped.addr() as u32) as usize);
     if !grp.is_null() && group_membership_is_leader(grp.byte_add(8), ped) != 0 && rd::<u32>(grp, 0x34) == 0 {
         let e = event_new(0x18);
         let ev = if e.is_null() {
@@ -1009,7 +1008,7 @@ pub fn set_ped_in_as_passenger_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 
     let seat = if rd::<u8>(v, 0x429) & 2 != 0 {
         -1
     } else {
-        let s = car_enter_exit_compute_passenger_index_from_car_door(v, rd::<u32>(this, 0x14));
+        let s = car_enter_exit_compute_passenger_index_from_car_door(v, rd::<u32>(this, 0x14) as i32);
         if s != -1 {
             let off = (s as isize).wrapping_mul(4).wrapping_add(0x464);
             throw_out_occupant(this, ped, || rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0x10), off));
@@ -1136,7 +1135,7 @@ pub fn enter_car_create_task_utility_line_up_ped_with_car(this: GPtr<u8>, ped: G
     let r = car_enter_exit_get_position_to_open_car_door(
         slot(&mut out),
         rd::<GPtr<u8>>(this, 0xC),
-        rd::<u32>(this, 0x14),
+        rd::<u32>(this, 0x14) as i32,
     );
     let mut off = [0f32; 3];
     for (i, o) in (0isize..).zip(off.iter_mut()) {

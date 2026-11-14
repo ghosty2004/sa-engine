@@ -29,8 +29,8 @@ use crate::bindings::material_list_get_material_call as material_list_get;
 use sa_core::bindings::rw_stream_find_chunk_call as stream_find_chunk;
 use crate::bindings::stream_write_chunk_header;
 use sa_core::bindings::rw_error1 as rw_error;
-use sa_core::bindings::rw_stream_write as stream_write;
-use sa_core::bindings::stream_read;
+use crate::bindings::rw_stream_write as stream_write;
+use crate::bindings::stream_read;
 orig! {
     /// `IDirect3DVertexDeclaration9::GetDeclaration(elements, count)` (+0x10)
     fn decl_get_declaration(decl: GPtr<u8>, elements: GPtr<u8>, count: GPtr<u32>) -> i32 = stdcall vslot 0x10 => unported;
@@ -233,7 +233,7 @@ pub fn native_data_geometry_stream_read(stream: GPtr<u8>, geometry: GPtr<u8>) ->
     if !(0x34000..=0x36003).contains(&version) {
         let mut e = RwError { plugin_id: 2, error_code: 0 };
         e.error_code = rw_error(0x8000_0004) as i32;
-        rw_error_set(GPtr::from_raw(&mut e));
+        rw_error_set(GPtr::from_raw(&mut e).cast());
         return GPtr::NULL;
     }
     let mut platform: u32 = 0;

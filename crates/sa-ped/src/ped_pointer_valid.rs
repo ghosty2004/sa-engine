@@ -6,7 +6,7 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
-use sa_core::bindings::find_player_ped;
+use sa_world::bindings::find_player_ped;
 orig! {
     /// `CEntity::IsEntityPointerValid(CEntity*)` (0x533310)
     fn entity_is_entity_pointer_valid(e: GPtr<u8>) -> u8 = cdecl 0x533310 => unported;

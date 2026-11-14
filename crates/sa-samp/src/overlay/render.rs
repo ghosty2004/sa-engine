@@ -16,24 +16,24 @@ use super::draw::{Cmd, DrawList};
 use super::font::FontAtlas;
 use super::skin;
 
-use sa_core::bindings::font_draw_fonts;
-use sa_core::bindings::font_print_string;
-use sa_core::bindings::font_set_background;
-use sa_core::bindings::font_set_color;
-use sa_core::bindings::font_set_edge;
-use sa_core::bindings::font_set_font_style;
-use sa_core::bindings::font_set_orientation;
-use sa_core::bindings::font_set_proportional;
-use sa_core::bindings::pop_current_txd as txd_pop_current;
-use sa_core::bindings::push_current_txd as txd_push_current;
+use sa_hud::bindings::font_draw_fonts;
+use sa_hud::bindings::font_print_string;
+use sa_hud::bindings::font_set_background;
+use sa_hud::bindings::font_set_color;
+use sa_hud::bindings::font_set_edge;
+use sa_hud::bindings::font_set_font_style;
+use sa_hud::bindings::font_set_orientation;
+use sa_hud::bindings::font_set_proportional;
+use sa_stream::bindings::pop_current_txd as txd_pop_current;
+use sa_stream::bindings::push_current_txd as txd_push_current;
 use sa_core::bindings::rw_im2d_render_primitive;
-use sa_core::bindings::rw_raster_destroy;
-use sa_core::bindings::rw_raster_lock;
-use sa_core::bindings::set_current_txd as txd_set_current;
+use sa_rwcore::bindings::rw_raster_destroy;
+use sa_rwcore::bindings::rw_raster_lock;
+use sa_stream::bindings::set_current_txd as txd_set_current;
 use sa_core::bindings::sprite2d_draw;
 use sa_core::bindings::sprite2d_set_texture;
-use sa_core::bindings::sprite_draw_rect as sprite2d_draw_rect;
-use sa_core::bindings::txd_add_ref;
+use sa_render::bindings::sprite_draw_rect as sprite2d_draw_rect;
+use sa_stream::bindings::txd_add_ref;
 use sa_core::bindings::add_txd_slot as txd_add_slot;
 use sa_core::bindings::calc_screen_coors;
 use sa_core::bindings::file_close;
@@ -43,12 +43,12 @@ use sa_core::bindings::font_set_centre_size;
 use sa_core::bindings::font_set_drop_color;
 use sa_core::bindings::font_set_drop_shadow_position;
 use sa_core::bindings::font_set_justify;
-use sa_core::bindings::font_set_scale;
+use sa_hud::bindings::font_set_scale;
 use sa_core::bindings::font_set_wrapx;
 use sa_core::bindings::load_txd as txd_load;
 use sa_core::bindings::open_file as file_open;
-use sa_core::bindings::rw_raster_create;
-use sa_core::bindings::rw_raster_unlock;
+use sa_rwcore::bindings::rw_raster_create;
+use sa_rwcore::bindings::rw_raster_unlock;
 use sa_core::bindings::world_get_is_line_of_sight_clear as line_of_sight_clear;
 orig! {
     /// `RwRenderStateSet(state, value)` through `RwEngineInstance` +0x20
@@ -141,7 +141,7 @@ pub fn upload_rgba(w: u32, h: u32, rgba: &[u8], mipmaps: bool) -> Option<u32> {
         return None;
     }
     let flags = RASTER_TEXTURE_8888 | if mipmaps { RASTER_MIPMAP } else { 0 };
-    let r = rw_raster_create(w as i32, h as i32, 32, flags);
+    let r = rw_raster_create(((w as i32) as u32) as i32, ((h as i32) as u32) as i32, 32, flags);
     if r.is_null() {
         return None;
     }
@@ -151,7 +151,7 @@ pub fn upload_rgba(w: u32, h: u32, rgba: &[u8], mipmaps: bool) -> Option<u32> {
         vec![(w, h, rgba[..(w * h * 4) as usize].to_vec())]
     };
     for (level, (lw, lh, pixels)) in levels.iter().enumerate() {
-        let px = GPtr::<u8>::addr(rw_raster_lock(r, level as u32, LOCK_WRITE)) as u32;
+        let px = GPtr::<u8>::addr(GPtr::from_addr(rw_raster_lock(r, level as u32, LOCK_WRITE) as usize)) as u32;
         if px == 0 {
             return if level == 0 { None } else { Some(r.addr() as u32) };
         }
@@ -274,7 +274,7 @@ fn cstr(s: &[u8]) -> Vec<u8> {
 
 /// The `CFont` calls of a text textdraw in samp's setter order, then `PrintString` and `SetEdge(0)`.
 pub fn game_font(f: &TextdrawFont, text: &[u8]) {
-    font_set_scale(f.scale.0, f.scale.1);
+    font_set_scale(f.scale.0.to_bits(), f.scale.1.to_bits());
     font_set_color(f.colour);
     font_set_justify(0);
     font_set_orientation(u32::from(f.orientation));
@@ -346,7 +346,7 @@ pub fn draw(
                 let mut r = [rect[0], rect[3], rect[2], rect[1]];
                 let mut c = crgba(*colour);
                 sprite2d_draw_rect(
-                    GPtr::<u8>::cast::<f32>(GPtr::from_raw(r.as_mut_ptr().cast::<u8>())),
+                    GPtr::from_raw(r.as_mut_ptr().cast::<u8>()),
                     GPtr::from_raw(&mut c).cast(),
                 );
             }

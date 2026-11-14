@@ -15,14 +15,14 @@ use sa_math::x87::X87;
 
 use crate::common::{g, rd, wr, x};
 
-use sa_core::bindings::matrix_dtor;
+use sa_world::bindings::matrix_dtor;
 use sa_core::bindings::matrix_invert;
 use sa_core::bindings::matrix_mul_vec;
-use sa_stream::bindings::simple_transform_update_matrix;
+use crate::bindings::simple_transform_update_matrix;
 use sa_world::bindings::bike_calculate_lean_matrix;
 use sa_world::bindings::entity_get_col_model;
 use crate::bindings::transform_points;
-use sa_stream::bindings::placeable_allocate_matrix;
+use sa_world::bindings::placeable_allocate_matrix;
 orig! {
     /// `CCollisionData::GetShadTrianglePoint(CVector& out, int32 i)` (0x40F640, `ret 8`)
     fn col_data_get_shad_triangle_point(cd: GPtr<u8>, out: GPtr<u8>, i: i32) = thiscall 0x40F640 => unported;
@@ -74,9 +74,9 @@ fn build_volume(obj: GPtr<u8>, len: f32, bike: bool) -> u8 {
     let mut sunv = sun;
     let mut o = [0f32; 3];
     let mut s = [0f32; 3];
-    let op = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::from_raw(o.as_mut_ptr()).cast()), invp, GPtr::from_raw(zero.as_mut_ptr()).cast()));
+    let op = matrix_mul_vec(GPtr::from_raw(o.as_mut_ptr()).cast(), invp, GPtr::from_raw(zero.as_mut_ptr()).cast());
     let o = v3(op);
-    let sp = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::from_raw(s.as_mut_ptr()).cast()), invp, GPtr::from_raw(sunv.as_mut_ptr()).cast()));
+    let sp = matrix_mul_vec(GPtr::from_raw(s.as_mut_ptr()).cast(), invp, GPtr::from_raw(sunv.as_mut_ptr()).cast());
     let s = v3(sp);
     wr::<u32>(obj, 0xC, 0);
     let dz = x(s[2]).fsub_m(o[2]).to_f32();

@@ -1355,9 +1355,9 @@ pub fn gamma_init(this: GPtr<u8>) {
     this.byte_add(8).cast::<u32>().write(0xC47A_0000);
     this.byte_add(0xC).cast::<u32>().write(0x447A_0000);
     let mut caps = [0u32; 0x130 / 4];
-    let dev = GPtr::from_addr((GPtr::<u32>::addr(call::rw_d3d9_get_current_d3d_device()) as u32) as usize);
+    let dev = call::rw_d3d9_get_current_d3d_device();
     call::d3d_device_get_device_caps(dev, GPtr::from_raw(caps.as_mut_ptr()).cast());
-    let flags = call::rw_d3d9_get_caps().byte_add(0xEC).cast::<u32>();
+    let flags = GPtr::<u8>::from_addr(call::rw_d3d9_get_caps() as usize).byte_add(0xEC).cast::<u32>();
     let v = flags.read();
     if v & 0x80 != 0 {
         flags.write(v & !0x80);
@@ -1596,7 +1596,7 @@ pub fn securom_state_display() {
     let c = GPtr::<u8>::cast::<u32>(call::crgba_ctor(GPtr::<u32>::cast::<u8>(GPtr::from_raw(&raw mut rgba)), 200, 200, 200, 0xFF)).read();
     call::font_set_color(c);
     call::font_set_font_style(1);
-    call::font_set_scale(f32::from_bits(0x3F00_0000), f32::from_bits(0x3F4C_CCCD));
+    call::font_set_scale(f32::from_bits(0x3F00_0000).to_bits(), f32::from_bits(0x3F4C_CCCD).to_bits());
     call::font_set_edge(2);
     let c = GPtr::<u8>::cast::<u32>(call::crgba_ctor(GPtr::<u32>::cast::<u8>(GPtr::from_raw(&raw mut rgba)), 0, 0, 0, 0xFF)).read();
     call::font_set_drop_color(c);

@@ -56,7 +56,7 @@ use crate::bindings::plugin_init_object;
 use crate::bindings::rw_sqrt;
 use crate::bindings::mesh_optimise_call as rp_mesh_optimise;
 use crate::bindings::resources_free_res_entry as rw_resources_free_res_entry;
-use sa_core::bindings::material_list_append_call;
+use crate::bindings::material_list_append_call;
 orig! {
     /// `RpGeometryAddMorphTargets(geometry, n)` (0x74C310)
     fn add_morph_targets_call(gm: GPtr<u8>, n: i32) -> i32 = cdecl 0x74C310 => rp_geometry_add_morph_targets;
@@ -71,7 +71,7 @@ fn error1_p2(code: u32) {
         error_code: 0,
     };
     e.error_code = rw_error1(code) as i32;
-    rw_error_set(GPtr::from_raw(&mut e));
+    rw_error_set(GPtr::from_raw(&mut e).cast());
 }
 
 /// `RwErrorSet({2, _rwerror(code, a)})`.
@@ -81,7 +81,7 @@ fn error2_p2(code: u32, a: u32) {
         error_code: 0,
     };
     e.error_code = rw_error2(code, a) as i32;
-    rw_error_set(GPtr::from_raw(&mut e));
+    rw_error_set(GPtr::from_raw(&mut e).cast());
 }
 
 /// `cb_GEOMETRYMODULE_RwEngine_Open(instance, offset, size)` (0x74BFA0).
@@ -584,10 +584,10 @@ pub fn rp_geometry_register_plugin_stream(id: u32, read: u32, write: u32, get_si
 use crate::bindings::plugin_read_data_chunks;
 use crate::bindings::read_real as rw_stream_read_real_call;
 use sa_core::bindings::rw_stream_find_chunk_call;
-use sa_core::bindings::rp_geometry_create as rp_geometry_create_call;
-use sa_core::bindings::rp_geometry_lock as rp_geometry_lock_call;
-use sa_core::bindings::rp_geometry_unlock as rp_geometry_unlock_call;
-use sa_core::bindings::stream_read as rw_stream_read_call;
+use crate::bindings::rp_geometry_create as rp_geometry_create_call;
+use crate::bindings::rp_geometry_lock as rp_geometry_lock_call;
+use crate::bindings::rp_geometry_unlock as rp_geometry_unlock_call;
+use crate::bindings::stream_read as rw_stream_read_call;
 orig! {
     /// `_rpMaterialSetDefaultSurfaceProperties(props)` (0x74D870)
     fn set_default_surface_properties(p: GPtr<u8>) -> u32 = cdecl 0x74D870 => unported;

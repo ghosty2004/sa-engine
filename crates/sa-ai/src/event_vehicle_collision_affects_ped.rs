@@ -34,7 +34,7 @@ use sa_world::world::common::entity_pos as pos_ptr;
 
 /// `DotProduct(a, b) + d < 0.0` (x87: the ST0 dot plus the float, `fcomp` C0 alone).
 fn behind(a: GPtr<u8>, b: GPtr<u8>, d: u32) -> bool {
-    X87::from_f64_exact(vector_dot_product(a, b)).fadd_m(f32::from_bits(d)).fcom(x(g::<f32>(ZERO).read())) == Cmp::Less
+    X87::from_f64_exact(vector_dot_product(a, b).to_f64()).fadd_m(f32::from_bits(d)).fcom(x(g::<f32>(ZERO).read())) == Cmp::Less
 }
 
 /// `CEventVehicleCollision::AffectsPed(CPed*)` (0x4B2EE0, `ret 4`). A dead ped: false. Word +0xE set: true. No
@@ -49,7 +49,7 @@ fn behind(a: GPtr<u8>, b: GPtr<u8>, d: u32) -> bool {
 #[hook(addr = 0x4B2EE0, conv = thiscall, name = "CEventVehicleCollision::AffectsPed", expect = "83 EC 48 53 8B 5C 24 50",
        unverified = "carjack-1", route = "L2", hazards = "ax-al-return,uninit-locals", recs = "carjack")]
 pub fn event_vehicle_collision_affects_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
-    if ped_is_alive(ped) == 0 {
+    if ped_is_alive(ped) as u8 == 0 {
         return 0;
     }
     if rd::<u16>(this, 0xE) != 0 {
@@ -60,7 +60,7 @@ pub fn event_vehicle_collision_affects_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 
         return 0;
     }
     let fwd = rd::<GPtr<u8>>(ped, 0x14).byte_add(0x10);
-    let d = X87::from_f64_exact(vector_dot_product(this.byte_add(0x18), fwd)).fchs();
+    let d = X87::from_f64_exact(vector_dot_product(this.byte_add(0x18), fwd).to_f64()).fchs();
     if d.fcom(x(g::<f32>(FACING_MIN).read())) == Cmp::Less {
         return 0;
     }

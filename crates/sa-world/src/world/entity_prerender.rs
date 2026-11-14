@@ -63,15 +63,19 @@ const F_16: u32 = 0x41800000;
 use crate::bindings::get_water_level_no_waves;
 use crate::bindings::update_rw_matrix;
 use sa_core::bindings::rp_geometry_for_all_materials;
-use sa_core::bindings::rw_frame_update_objects;
+use sa_rwcore::bindings::rw_frame_update_objects;
 use sa_core::bindings::vector_magnitude;
 use sa_stream::bindings::is_object_glass;
 use crate::bindings::dn_pre_render_update as dn_pre_render_update_atomic;
 use crate::bindings::entity_process_lights_for_entity as process_lights_for_entity;
 use crate::bindings::vector_add;
 use crate::bindings::vector_mul_scalar as vector_mul;
-use sa_core::bindings::entity_update_rw_frame as update_rw_frame;
-use sa_core::bindings::vector_sub;
+use crate::bindings::entity_update_rw_frame as update_rw_frame;
+use crate::bindings::vector_sub;
+use crate::bindings::add_light;
+use crate::bindings::register_corona_6fc180 as register_corona;
+use crate::bindings::store_shadow_to_be_rendered as store_shadow;
+use crate::bindings::max_f;
 orig! {
     /// `CBaseModelInfo::AsAtomicModelInfoPtr()` (vtable slot 4)
     fn mi_as_atomic(mi: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x4 => unported;
@@ -103,36 +107,11 @@ orig! {
     /// uint32 localId)` (0x70c750)
     #[allow(clippy::too_many_arguments)]
     fn store_shadow_for_pole(e: GPtr<u8>, ox: u32, oy: u32, oz: u32, h: u32, w: u32, id: u32) = cdecl 0x70c750 => unported;
-    /// `CShadows::StoreShadowToBeRendered(uint8 type, RwTexture*, const CVector* pos, float frontX,
-    /// frontY, sideX, sideY, int16 intensity, uint8 r, g, b, float zDist, bool drawOnWater, float scale,
-    /// CRealTimeShadow*, bool drawOnBuildings)` (0x707390)
-    #[allow(clippy::too_many_arguments)]
-    fn store_shadow(ty: u32, tex: u32, pos: GPtr<u8>, fx: u32, fy: u32, sx: u32, sy: u32, intensity: u32, r: u32,
-        gr: u32, b: u32, zdist: u32, water: u32, scale: u32, rt: u32, buildings: u32) = cdecl 0x707390 => unported;
-    /// `CPointLights::AddLight(uint8 type, CVector pos, CVector dir, float radius, float r, g, b,
-    /// uint8 fogType, bool extraShadows, CEntity*)` (0x7000e0; both vectors by value)
-    #[allow(clippy::too_many_arguments)]
-    fn add_light(ty: u32, px: u32, py: u32, pz: u32, dx: u32, dy: u32, dz: u32, radius: u32, r: u32, gr: u32, b: u32,
-        fog: u32, shadows: u32, ent: u32) = cdecl 0x7000e0 => unported;
-    /// `CCoronas::RegisterCorona(uint32 id, CEntity*, uint8 r, g, b, a, const CVector* pos, float size,
-    /// float farClip, RwTexture*, flare, reflection, checkObstacles, unused, float angle, longDistance,
-    /// float nearClip, fadeState, float fadeSpeed, onlyFromBelow, reflectionDelay)` (0x6fc180)
-    #[allow(clippy::too_many_arguments)]
-    fn register_corona(id: GPtr<u8>, attach: u32, r: u32, gr: u32, b: u32, a: u32, pos: GPtr<u8>, size: u32,
-        far: u32, tex: u32, flare: u32, refl: u32, obst: u32, unused: u32, angle: u32, long_dist: u32, near: u32,
-        fade: u32, fade_speed: u32, below: u32, delay: u32) = cdecl 0x6fc180 => unported;
     /// `CMotionBlurStreaks::RegisterStreak(uint32 id, uint8 r, g, b, a, CVector left, CVector right)`
     /// (0x721dc0; both vectors by value)
     #[allow(clippy::too_many_arguments)]
     fn register_streak(id: GPtr<u8>, r: u32, gr: u32, b: u32, a: u32, lx: u32, ly: u32, lz: u32, rx: u32, ry: u32,
         rz: u32) = cdecl 0x721dc0 => unported;
-    /// `max(float, float)` (0x420800, ST0)
-    fn max_f(a: f32, b: f32) -> f64 = cdecl 0x420800 => max_f_port;
-}
-
-/// Phases B/C path of `max(float, float)`: the ST0 as an f64.
-pub fn max_f_port(a: f32, b: f32) -> f64 {
-    super::mvpa_math::max_f(a, b).to_f64()
 }
 
 fn mi_of(e: GPtr<u8>) -> GPtr<u8> {
@@ -296,8 +275,8 @@ fn object_effects(this: GPtr<u8>) {
         let c = u32::from(w & 0xFF);
         // EAX = the position's z dword with its low word replaced by the strength
         let intensity = (pos[2] & 0xFFFF_0000) | u32::from(w);
-        store_shadow(1, g::<u32>(TEX_SHADOW_CAR).read(), local(&mut pos), F_0_4, 0, 0, F_M0_4, intensity, c, c, c, F_20, 0,
-            F_1, 0, 0);
+        store_shadow(1, GPtr::from_addr((g::<u32>(TEX_SHADOW_CAR).read()) as usize), local(&mut pos), F_0_4, 0, 0, F_M0_4, intensity, c, c, c, F_20, 0,
+            F_1, GPtr::NULL, 0);
         return;
     }
     if is_mi(m, 0x8CD6E0) || is_mi(m, 0x8CD71C) || is_mi(m, 0x8CD700) || is_mi(m, 0x8CD740) || is_mi(m, 0x8CD6FC) {
@@ -307,8 +286,8 @@ fn object_effects(this: GPtr<u8>) {
             return;
         }
         let mut pos = v3(pos_ptr(this));
-        store_shadow(1, g::<u32>(TEX_SHADOW_CAR).read(), local(&mut pos), F_2, 0, 0, F_M2, 0x80, 0x80, 0x80, 0x80,
-            K_50, 0, F_1, 0, 0);
+        store_shadow(1, GPtr::from_addr((g::<u32>(TEX_SHADOW_CAR).read()) as usize), local(&mut pos), F_2, 0, 0, F_M2, 0x80, 0x80, 0x80, 0x80,
+            K_50, 0, F_1, GPtr::NULL, 0);
         return;
     }
     if is_mi(m, 0x8CD718) {
@@ -328,16 +307,16 @@ fn missile_effects(this: GPtr<u8>) {
     let gr = ftol32(x(r).fmul_m(f32::from_bits(K_160))) as u32;
     let rr = ftol32(x(r).fmul_m(f32::from_bits(K_200))) as u32;
     let tex = g::<u32>(TEX_SHADOW_LIGHT).read();
-    store_shadow(2, tex, local(&mut pos), F_8, 0, 0, F_M8, 0xFF, rr, gr, b, F_20, 0, F_1, 0, 0);
+    store_shadow(2, GPtr::from_addr(tex as usize), local(&mut pos), F_8, 0, 0, F_M8, 0xFF, rr, gr, b, F_20, 0, F_1, GPtr::NULL, 0);
     let lb = bits(x(r).fmul_m(f32::from_bits(K_0_6)));
     let lg = bits(x(r).fmul_m(f32::from_bits(K_0_8)));
-    add_light(0, pos[0], pos[1], pos[2], 0, 0, 0, F_8, r.to_bits(), lg, lb, 0, 1, 0);
+    add_light(0, f32::from_bits(pos[0]), f32::from_bits(pos[1]), f32::from_bits(pos[2]), f32::from_bits(0), f32::from_bits(0), f32::from_bits(0), f32::from_bits(F_8), f32::from_bits(r.to_bits()), f32::from_bits(lg), f32::from_bits(lb), 0, 1, GPtr::NULL);
     let ctex = g::<u32>(TEX_CORONA).read();
     let size = bits(x(r).fmul_m(f32::from_bits(K_6)));
     let cb = ftol32(x(r).fmul_m(f32::from_bits(K_190))) as u32;
     let cg = ftol32(x(r).fmul_m(f32::from_bits(K_220))) as u32;
     let cr = ftol32(x(r).fmul_m(f32::from_bits(K_255))) as u32;
-    register_corona(this, 0, cr, cg, cb, 0xFF, local(&mut pos), size, F_300, ctex, 0, 1, 0, 0, 0, 0, F_1_5, 0, F_15, 0, 0);
+    register_corona(this.addr() as u32, GPtr::NULL, cr, cg, cb, 0xFF, local(&mut pos), f32::from_bits(size).to_bits(), f32::from_bits(F_300).to_bits(), ctex, 0, 1, 0, 0, f32::from_bits(0).to_bits(), 0, f32::from_bits(F_1_5).to_bits(), 0, f32::from_bits(F_15).to_bits(), 0, 0);
 }
 
 /// The flare model (0x8CD75C, 0x5363C4): `m = max((rand() & 15) * 0.0625, 0.5)` (the ST0 of `max`
@@ -348,17 +327,17 @@ fn flare_effects(this: GPtr<u8>) {
     let mut pos = v3(pos_ptr(this));
     let ri = sa_core::orig::at_site(0x5363F1, sa_core::crt::rand) & 0xF;
     let a = xi(ri).fmul_m(f32::from_bits(K_1_16)).to_f32();
-    let st = X87::from_f64_exact(max_f(a, f32::from_bits(F_0_5)));
+    let st = X87::from_f64_exact(max_f(a, f32::from_bits(F_0_5)).to_f64());
     let m = st.to_f32();
     let s = ftol32(st.fmul_m(f32::from_bits(K_200))) as u32;
-    store_shadow(2, g::<u32>(TEX_SHADOW_LIGHT).read(), local(&mut pos), F_8, 0, 0, F_M8, 0xFF, s, s, s, F_20, 0, F_1,
-        0, 0);
+    store_shadow(2, GPtr::from_addr((g::<u32>(TEX_SHADOW_LIGHT).read()) as usize), local(&mut pos), F_8, 0, 0, F_M8, 0xFF, s, s, s, F_20, 0, F_1,
+        GPtr::NULL, 0);
     let mb = m.to_bits();
-    add_light(0, pos[0], pos[1], pos[2], 0, 0, 0, F_32, mb, mb, mb, 0, 1, 0);
+    add_light(0, f32::from_bits(pos[0]), f32::from_bits(pos[1]), f32::from_bits(pos[2]), f32::from_bits(0), f32::from_bits(0), f32::from_bits(0), f32::from_bits(F_32), f32::from_bits(mb), f32::from_bits(mb), f32::from_bits(mb), 0, 1, GPtr::NULL);
     let c = ftol32(x(m).fmul_m(f32::from_bits(K_255))) as u32;
     let ctex = g::<u32>(TEX_CORONA).read();
     let size = bits(x(m).fmul_m(f32::from_bits(K_6)));
-    register_corona(this, 0, c, c, c, 0xFF, local(&mut pos), size, F_300, ctex, 0, 1, 0, 0, 0, 0, F_1_5, 0, F_15, 0, 0);
+    register_corona(this.addr() as u32, GPtr::NULL, c, c, c, 0xFF, local(&mut pos), f32::from_bits(size).to_bits(), f32::from_bits(F_300).to_bits(), ctex, 0, 1, 0, 0, f32::from_bits(0).to_bits(), 0, f32::from_bits(F_1_5).to_bits(), 0, f32::from_bits(F_15).to_bits(), 0, 0);
 }
 
 /// Models 0x156 / 0x158 (0x536559 / 0x536639): when the 2D move speed (+0x44/+0x48, x87 `fsqrt`) is
@@ -384,7 +363,7 @@ fn streak(this: GPtr<u8>, wet: bool) {
     let p = pos_ptr(this);
     let mut level = [0u32; 1];
     let lv = local(&mut level);
-    if get_water_level_no_waves(f32::from_bits(rd::<u32>(p, 0)), f32::from_bits(rd::<u32>(p, 4)), f32::from_bits(rd::<u32>(p, 8)), lv, GPtr::NULL, GPtr::NULL) != 0
+    if get_water_level_no_waves(f32::from_bits(rd::<u32>(p, 0)).to_bits(), f32::from_bits(rd::<u32>(p, 4)).to_bits(), f32::from_bits(rd::<u32>(p, 8)).to_bits(), lv.cast::<f32>(), GPtr::NULL, GPtr::NULL) != 0
         && !x(rd::<f32>(pos_ptr(this), 8)).fcom(x(rd::<f32>(lv, 0))).test_parity(0x41)
     {
         return;

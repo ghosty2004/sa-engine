@@ -31,21 +31,21 @@ pub use crate::bindings::vehicle_render;
 pub use sa_core::bindings::crt_free as free;
 pub use sa_core::bindings::destroy_fx_system as fx_destroy;
 pub use sa_core::bindings::entity_register_reference;
-pub use sa_core::bindings::find_player_coors;
-pub use sa_core::bindings::find_player_ped;
-pub use sa_core::bindings::get_pad;
-pub use sa_core::bindings::matrix_dtor;
+pub use sa_world::bindings::find_player_coors;
+pub use sa_world::bindings::find_player_ped;
+pub use sa_input::bindings::get_pad;
+pub use sa_world::bindings::matrix_dtor;
 pub use sa_core::bindings::matrix_set_translate;
 pub use sa_core::bindings::matrix_update_rw;
-pub use sa_core::bindings::world_remove;
-pub use sa_stream::bindings::find_player_wanted;
-pub use sa_core::bindings::frame_for_all_objects as rw_frame_for_all_objects;
+pub use sa_world::bindings::world_remove;
+pub use sa_world::bindings::find_player_wanted;
+pub use sa_rwcore::bindings::frame_for_all_objects as rw_frame_for_all_objects;
 pub use sa_stream::bindings::get_first_object;
 pub use sa_stream::bindings::get_wheel_posn;
 pub use sa_stream::bindings::num_of_helis_required;
 pub use sa_stream::bindings::vmi_set_vehicle_colour as set_vehicle_colour;
 pub use sa_world::bindings::audio_terminate;
-pub use sa_core::bindings::automobile_ctor;
+pub use crate::bindings::automobile_ctor;
 pub use sa_world::bindings::entity_render;
 pub use sa_world::bindings::fx_add_particle;
 pub use sa_world::bindings::fx_kill;
@@ -53,7 +53,7 @@ pub use sa_world::bindings::heli_search_light_cone as search_light_cone;
 pub use sa_core::bindings::matrix_ctor_rw;
 pub use sa_world::bindings::player_no_rain;
 pub use crate::bindings::get_plane_num_guns;
-pub use sa_stream::bindings::set_component_atomic_alpha;
+pub use crate::bindings::set_component_atomic_alpha;
 pub use sa_world::bindings::fx_get_composite_matrix;
 pub use sa_world::bindings::fx_prt_mult_ctor;
 orig! {
@@ -256,7 +256,7 @@ pub fn heli_render(h: Ptr) {
         rw_frame_for_all_objects(
             frame,
             GET_CURRENT_ATOMIC_OBJECT_CB,
-            GPtr::from_raw(&raw mut atomic).cast(),
+            GPtr::<u8>::addr(GPtr::from_raw(&raw mut atomic).cast()) as u32,
         );
         if !atomic.is_null() {
             set_component_atomic_alpha(atomic, alpha);
@@ -272,7 +272,7 @@ pub fn heli_render(h: Ptr) {
 /// phase `+0xA14 = rand() * [0x858C7C] * [0x858B44] + [0x858CA0]`. Returns `this`.
 #[hook(addr = 0x6C4190, conv = thiscall, name = "CHeli", expect = "6A FF E9 01 FB D3 FF", this = "CHeli")]
 pub fn heli_ctor(h: Ptr, mi: i32, created_by: u32) -> Ptr {
-    automobile_ctor(h, mi, created_by, 1);
+    automobile_ctor(h, mi as u32, created_by, 1);
     let b988 = rd::<u8>(h, 0x988) & 0xFC;
     let f40 = rd::<u32>(h, 0x40) | 0x0100_0000;
     wr::<u32>(h, 0, 0x0087_1680);
@@ -328,7 +328,7 @@ pub fn heli_ctor(h: Ptr, mi: i32, created_by: u32) -> Ptr {
 /// 0x208 copies the word 0x8D33C4 to `+0x86C`. Returns `this`.
 #[hook(addr = 0x6C8E20, conv = thiscall, name = "CPlane::Constructor", expect = "6A FF 68 48 85 84 00", this = "CPlane")]
 pub fn plane_ctor(p: Ptr, mi: i32, created_by: u32) -> Ptr {
-    automobile_ctor(p, mi, created_by, 1);
+    automobile_ctor(p, mi as u32, created_by, 1);
     let mip = crate::common::model_info(mi);
     wr::<u32>(p, 0, 0x0087_1948);
     wr::<u32>(p, 0x594, 4);
@@ -415,7 +415,7 @@ pub fn plane_process_control(p: Ptr) {
     if rd::<u8>(p, 0x36) & 0xF8 == 0 && matches!(rd::<u16>(p, 0x22), 0x200 | 0x201) {
         let drv = rd::<GPtr<u8>>(p, 0x460);
         let n = i32::from(!drv.is_null() && rd::<u32>(drv, 0x598) == 1);
-        let pad = get_pad(n as u32);
+        let pad = get_pad((n as u32) as i32);
         if rd::<u16>(pad, 0x26) != 0 && rd::<u16>(pad, 0x56) == 0 {
             wr::<u8>(p, 0xA00, u8::from(rd::<u8>(p, 0xA00) == 0));
         }
@@ -471,9 +471,9 @@ pub fn plane_process_control(p: Ptr) {
             g::<GPtr<u8>>(0xA9AE20).read(),
             mp.byte_add(0x30),
             vp,
-            f32::from_bits(time),
+            f32::from_bits(time).to_bits(),
             mlt,
-            f32::from_bits(0xBF80_0000),
+            f32::from_bits(0xBF80_0000).to_bits(),
             f32::from_bits(0x3F99_999A),
             f32::from_bits(0x3F19_999A),
             0,

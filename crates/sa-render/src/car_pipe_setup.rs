@@ -9,7 +9,7 @@ use sa_math::x87::X87;
 use crate::common::{g, rd, wr};
 
 use sa_core::bindings::atomic_geometry_set_usage_flags as geometry_set_usage_flags;
-use sa_core::bindings::rp_clump_for_all_atomics as clump_for_all_atomics;
+use sa_rwcore::bindings::rp_clump_for_all_atomics as clump_for_all_atomics;
 use sa_core::bindings::rp_geometry_for_all_materials as geometry_for_all_materials;
 use crate::bindings::custom_pipe_atomic_setup as custom_pipe_atomic_setup_call;
 use crate::bindings::get_extra_vert_colour_ptr;
@@ -170,7 +170,7 @@ pub fn env_map_pre_render_update() {
     }
     let frame = rd::<GPtr<u8>>(g::<GPtr<u8>>(P_DIRECT).read(), 4);
     let mut at = [rd::<u32>(frame, 0x30), rd::<u32>(frame, 0x34), rd::<u32>(frame, 0x38)];
-    vector_normalise(GPtr::from_raw(at.as_mut_ptr()).cast());
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(GPtr::from_raw(at.as_mut_ptr()).cast()));
     for (i, w) in at.iter().enumerate() {
         wr::<u32>(l, 0x40 + 4 * i as isize, *w);
     }
@@ -208,7 +208,7 @@ pub fn car_fx_pre_render_update() {
 #[hook(addr = 0x5D5B40, conv = cdecl, name = "CCarFXRenderer::CustomCarPipeClumpSetup", expect = "56 8B 74 24 08 6A 00 68 30 5B 5D 00",
        route = "L2", hazards = "heap-writes", recs = "new-game")]
 pub fn custom_car_pipe_clump_setup(clump: GPtr<u8>) -> GPtr<u8> {
-    clump_for_all_atomics(clump, 0x5D5B30, GPtr::NULL);
+    clump_for_all_atomics(clump, 0x5D5B30, GPtr::<u8>::addr(GPtr::NULL) as u32);
     clump
 }
 

@@ -13,7 +13,7 @@ use super::common::{ftol32, g, rd, wr, xi};
 
 use sa_core::bindings::list_add_item;
 use sa_core::bindings::list_remove_item;
-use sa_core::bindings::world_remove;
+use crate::bindings::world_remove;
 use crate::bindings::furniture_group_init;
 use crate::bindings::furniture_load_furniture as load_furniture;
 orig! {

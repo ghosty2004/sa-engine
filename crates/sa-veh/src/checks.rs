@@ -24,8 +24,8 @@ sa_core::globals! {
 }
 
 pub use sa_core::bindings::text_get;
-pub use sa_core::bindings::vehicle_recording_init as recording_init_call;
-pub use sa_world::bindings::upside_down_car_check_is_car_upside_down as is_car_upside_down_call;
+pub use crate::bindings::vehicle_recording_init as recording_init_call;
+pub use crate::bindings::upside_down_car_check_is_car_upside_down as is_car_upside_down_call;
 orig! {
     /// `CVehicle` virtual slot 0xE4 (gta-reversed: `CanPedStepOutCar(bool)`), called with `false`
     pub fn vehicle_vslot_e4(v: GPtr<u8>, arg: u32) -> u8 = thiscall vslot 0xE4 => unported;

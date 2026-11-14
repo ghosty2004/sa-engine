@@ -3,7 +3,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::vector::CVector;
 use sa_math::x87::X87;
 
@@ -14,21 +14,12 @@ use sa_world::bindings::apply_spring_collision;
 use sa_world::bindings::apply_spring_collision_alt;
 use sa_world::bindings::apply_spring_dampening;
 use sa_world::bindings::entity_get_col_model as get_col_model;
-orig! {
-    /// `CVector::CrossProduct(CVector* out, const CVector* a, const CVector* b)` (0x59C730)
-    fn cross_product(out: GPtr<CVector>, a: GPtr<CVector>, b: GPtr<CVector>) -> GPtr<CVector>
-        = cdecl 0x59C730 => sa_world::collision::data::cross_product_port;
-    /// `CVector::Normalise()` (0x59C910)
-    fn normalise(v: GPtr<CVector>) = thiscall 0x59C910 => sa_world::collision::data::normalise_port;
-    /// `CPhysical::ApplyMoveForce(CVector)` (0x5429F0, the vector by value)
-    fn apply_move_force(p: GPtr<u8>, force: CVector) = thiscall 0x5429F0 => sa_world::physical::forces::apply_move_force;
-    /// `CPhysical::ApplyTurnForce(CVector force, CVector point)` (0x542A50)
-    fn apply_turn_force(p: GPtr<u8>, force: CVector, point: CVector) = thiscall 0x542A50 => sa_world::physical::forces::apply_turn_force;
-    /// `CPhysical::GetSpeed(CVector point)` (0x542CE0, hidden result pointer)
-    fn get_speed(p: GPtr<u8>, out: GPtr<CVector>, point: CVector) -> GPtr<CVector> = thiscall 0x542CE0 => sa_world::physical::forces::get_speed;
-    /// `Multiply3x3(CVector* out, const CMatrix& m, const CVector& v)` (0x59C790)
-    fn multiply3x3(out: GPtr<CVector>, m: GPtr<u8>, v: GPtr<CVector>) -> GPtr<CVector> = cdecl 0x59C790 => sa_world::physical::shared::multiply3x3_port;
-}
+use sa_core::bindings::cross_product;
+use sa_core::bindings::vector_normalise as normalise;
+use sa_world::bindings::multiply3x3;
+use sa_world::bindings::physical_apply_move_force_5429f0 as apply_move_force;
+use sa_world::bindings::physical_apply_turn_force as apply_turn_force;
+use sa_world::bindings::physical_get_speed as get_speed;
 
 /// `CTimer::ms_fTimeStep` (0xB7CB5C).
 const TIME_STEP: usize = 0xB7_CB5C;
@@ -62,7 +53,7 @@ fn spin_loss(this: GPtr<u8>, k_addr: usize) -> X87 {
 /// cross product through `CrossProduct` 0x59C730 (squares summed x, y, z).
 fn inline_get_mass(this: GPtr<u8>, point: GPtr<u8>, dir: &mut [f32; 3]) -> X87 {
     let mut c = CVector::default();
-    cross_product(GPtr::from_raw(&mut c), point.cast(), GPtr::from_raw(dir.as_mut_ptr()).cast());
+    cross_product(GPtr::<sa_math::vector::CVector>::cast::<u8>(GPtr::from_raw(&mut c)), GPtr::<sa_math::vector::CVector>::cast::<u8>(point.cast()), GPtr::<sa_math::vector::CVector>::cast::<u8>(GPtr::from_raw(dir.as_mut_ptr()).cast()));
     let (cx, cy, cz) = (x(c.x), x(c.y), x(c.z));
     cx.fmul(cx)
         .fadd(cy.fmul(cy))
@@ -499,7 +490,7 @@ pub fn vehicle_process_bike_wheel(
     let my = f32_of(x(r30).fadd_m(f24));
     let mz = f32_of(rz.fadd_m(f28));
     let mut dir = CVector::new(mx, my, mz);
-    normalise(GPtr::from_raw(&mut dir));
+    normalise(GPtr::<sa_math::vector::CVector>::cast::<[f32;3]>(GPtr::from_raw(&mut dir)));
     let speed = f32_of(x(mz).fmul_m(mz).fadd(x(my).fmul_m(my)).fadd(x(mx).fmul_m(mx)).fsqrt());
     let mass = rd::<f32>(this, 0x8C);
     let mut d3 = [dir.x, dir.y, dir.z];
@@ -704,7 +695,7 @@ pub fn automobile_process_suspension(this: GPtr<u8>) {
                 let z = f32_of(x(len).fmul_m(spring[i]).fchs().fadd_m(vf(line, 2)));
                 let mut v = CVector::new(vf(line, 0), f32_of(x(vf(line, 1))), z);
                 let mut out = CVector::default();
-                cp[i] = read_vec(multiply3x3(GPtr::from_raw(&mut out), rd::<GPtr<u8>>(this, 0x14), GPtr::from_raw(&mut v)).cast());
+                cp[i] = read_vec(GPtr::<u8>::cast::<sa_math::vector::CVector>(multiply3x3(GPtr::<sa_math::vector::CVector>::cast::<u8>(GPtr::from_raw(&mut out)), rd::<GPtr<u8>>(this, 0x14), GPtr::<sa_math::vector::CVector>::cast::<u8>(GPtr::from_raw(&mut v)))).cast());
                 let t = x(rd::<f32>(this, 0x878 + 4 * i as isize)).fdiv_m(len).fsubr_m(1.0);
                 spring[i] = f32_of(x(spring[i]).fsub(t).fdiv(x(1.0).fsub(t)));
             }
@@ -736,7 +727,7 @@ pub fn automobile_process_suspension(this: GPtr<u8>) {
     let mut z = CVector::new(0.0, 0.0, 1.0);
     let mut r = CVector::default();
     let mat = rd::<GPtr<u8>>(this, 0x14);
-    cross_product(GPtr::from_raw(&mut r), mat.byte_add(0x10).cast(), GPtr::from_raw(&mut z));
+    cross_product(GPtr::<sa_math::vector::CVector>::cast::<u8>(GPtr::from_raw(&mut r)), GPtr::<sa_math::vector::CVector>::cast::<u8>(mat.byte_add(0x10).cast()), GPtr::<sa_math::vector::CVector>::cast::<u8>(GPtr::from_raw(&mut z)));
     let m = rd::<GPtr<u8>>(this, 0x14);
     let dot = x(r.y).fmul_m(vf(m, 1)).fadd(x(r.z).fmul_m(vf(m, 2))).fadd(x(r.x).fmul_m(vf(m, 0))).fabs();
     if !lt(dot, x(f32::from_bits(0x3F19_999A))) {
@@ -750,7 +741,7 @@ pub fn automobile_process_suspension(this: GPtr<u8>) {
     apply_turn_force(this, force, point);
     let mut a = CVector::new(0.0, 0.0, 1.0);
     let mut out = CVector::default();
-    let r2 = read_vec(cross_product(GPtr::from_raw(&mut out), GPtr::from_raw(&mut a), rd::<GPtr<u8>>(this, 0x14).byte_add(0x10).cast()).cast());
+    let r2 = read_vec(GPtr::<u8>::cast::<sa_math::vector::CVector>(cross_product(GPtr::<sa_math::vector::CVector>::cast::<u8>(GPtr::from_raw(&mut out)), GPtr::<sa_math::vector::CVector>::cast::<u8>(GPtr::from_raw(&mut a)), GPtr::<sa_math::vector::CVector>::cast::<u8>(rd::<GPtr<u8>>(this, 0x14).byte_add(0x10).cast()))).cast());
     let k2 = x(roll).fmul_m(rd::<f32>(this, 0x8C)).fmul_m(d);
     apply_move_force(this, CVector::new(f32_of(k2.fmul_m(r2.x)), f32_of(k2.fmul_m(r2.y)), f32_of(k2.fmul_m(r2.z))));
 }

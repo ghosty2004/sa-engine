@@ -367,7 +367,7 @@ pub fn the_scripts_is_vehicle_stopped(v: GPtr<u8>) -> u8 {
     u8::from(vehicle_stopped(v))
 }
 
-use sa_stream::bindings::ped_is_player;
+use sa_ped::bindings::ped_is_player;
 use sa_core::bindings::clump_get_association;
 
 /// `CTheScripts::IsPedStopped(CPed*)` (0x486110, cdecl). The flags load (`mov eax, [esi+0x46C]`) sits behind a `jmp`

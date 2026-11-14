@@ -8,11 +8,11 @@ use sa_core::{hook, orig};
 use crate::common::{g, p8, rd};
 
 use crate::bindings::animation_destroy;
-use sa_core::bindings::frame_for_all_children;
-use sa_core::bindings::frame_for_all_objects;
-use sa_core::bindings::rp_clump_for_all_atomics as clump_for_all_atomics;
-use sa_core::bindings::rp_skin_atomic_get_hanim_hierarchy as skin_atomic_get_hierarchy;
-use sa_core::bindings::rp_skin_geometry_get_skin as skin_geometry_get_skin;
+use crate::bindings::frame_for_all_children;
+use crate::bindings::frame_for_all_objects;
+use crate::bindings::rp_clump_for_all_atomics as clump_for_all_atomics;
+use crate::bindings::rp_skin_atomic_get_hanim_hierarchy as skin_atomic_get_hierarchy;
+use crate::bindings::rp_skin_geometry_get_skin as skin_geometry_get_skin;
 orig! {
     /// `RpHAnimFrameGetHierarchy(frame)` (0x7C5160)
     fn frame_get_hierarchy(f: GPtr<u8>) -> u32 = cdecl 0x7C5160 => crate::hanim_stream::rp_hanim_frame_get_hierarchy;
@@ -41,7 +41,7 @@ pub fn get_2d_effect_atomic_callback(atomic: GPtr<u8>, data: GPtr<u32>) -> GPtr<
        route = "L2", hazards = "none", recs = "new-game")]
 pub fn get_2d_effect_atomic(clump: GPtr<u8>) -> GPtr<u8> {
     let mut out = 0u32;
-    clump_for_all_atomics(clump, 0x734850, GPtr::from_addr((GPtr::from_raw(&mut out as *mut u32).addr() as u32) as usize));
+    clump_for_all_atomics(clump, 0x734850, GPtr::<u8>::addr(GPtr::from_addr((GPtr::from_raw(&mut out as *mut u32).addr() as u32) as usize)) as u32);
     p8(out)
 }
 
@@ -58,7 +58,7 @@ pub fn get_first_object_callback(object: GPtr<u8>, data: GPtr<u32>) -> GPtr<u8> 
        route = "L2", hazards = "none")]
 pub fn get_first_object(frame: GPtr<u8>) -> GPtr<u8> {
     let mut out = 0u32;
-    frame_for_all_objects(frame, 0x7348B0, GPtr::from_addr((GPtr::from_raw(&mut out as *mut u32).addr() as u32) as usize));
+    frame_for_all_objects(frame, 0x7348B0, GPtr::<u8>::addr(GPtr::from_addr((GPtr::from_raw(&mut out as *mut u32).addr() as u32) as usize)) as u32);
     p8(out)
 }
 
@@ -75,7 +75,7 @@ pub fn get_first_frame_callback(frame: GPtr<u8>, data: GPtr<u32>) -> GPtr<u8> {
        route = "L2", hazards = "none")]
 pub fn get_first_child(frame: GPtr<u8>) -> GPtr<u8> {
     let mut out = 0u32;
-    frame_for_all_children(frame, 0x7348F0, GPtr::from_addr((GPtr::from_raw(&mut out as *mut u32).addr() as u32) as usize));
+    frame_for_all_children(frame, 0x7348F0, GPtr::<u8>::addr(GPtr::from_addr((GPtr::from_raw(&mut out as *mut u32).addr() as u32) as usize)) as u32);
     p8(out)
 }
 
@@ -84,7 +84,7 @@ pub fn get_first_child(frame: GPtr<u8>) -> GPtr<u8> {
 #[hook(addr = 0x734A20, conv = cdecl, name = "RwHelper::SkinAtomicGetHAnimHierarchCB", expect = "8B 44 24 04 50 E8 16 2B 09 00",
        unverified = "std6-rw-1", route = "L2", hazards = "none")]
 pub fn skin_atomic_get_hanim_hierarchy_cb(atomic: GPtr<u8>, data: GPtr<u32>) -> GPtr<u8> {
-    data.write(GPtr::<u8>::addr(skin_atomic_get_hierarchy(atomic)) as u32);
+    data.write(GPtr::<u8>::addr(GPtr::from_addr(skin_atomic_get_hierarchy(atomic) as usize)) as u32);
     GPtr::NULL
 }
 
@@ -93,7 +93,7 @@ pub fn skin_atomic_get_hanim_hierarchy_cb(atomic: GPtr<u8>, data: GPtr<u32>) -> 
        route = "L2", hazards = "none")]
 pub fn get_anim_hierarchy_from_skin_clump(clump: GPtr<u8>) -> u32 {
     let mut out = 0u32;
-    clump_for_all_atomics(clump, 0x734A20, GPtr::from_addr((GPtr::from_raw(&mut out as *mut u32).addr() as u32) as usize));
+    clump_for_all_atomics(clump, 0x734A20, GPtr::<u8>::addr(GPtr::from_addr((GPtr::from_raw(&mut out as *mut u32).addr() as u32) as usize)) as u32);
     out
 }
 
@@ -104,7 +104,7 @@ pub fn get_anim_hierarchy_from_skin_clump(clump: GPtr<u8>) -> u32 {
 pub fn anim_hierarchy_from_frame_cb(frame: GPtr<u8>, data: GPtr<u32>) -> GPtr<u8> {
     let h = frame_get_hierarchy(frame);
     if h == 0 {
-        frame_for_all_children(frame, 0x734A70, GPtr::from_addr((data.addr() as u32) as usize));
+        frame_for_all_children(frame, 0x734A70, GPtr::<u8>::addr(GPtr::from_addr((data.addr() as u32) as usize)) as u32);
         return frame;
     }
     data.write(h);
@@ -118,10 +118,10 @@ pub fn anim_hierarchy_from_frame_cb(frame: GPtr<u8>, data: GPtr<u32>) -> GPtr<u8
 pub fn get_anim_hierarchy_from_frame(frame: GPtr<u8>) -> u32 {
     let mut out = frame_get_hierarchy(frame);
     if out == 0 {
-        frame_for_all_children(frame, 0x734A70, GPtr::from_addr((GPtr::from_raw(&mut out as *mut u32).addr() as u32) as usize));
+        frame_for_all_children(frame, 0x734A70, GPtr::<u8>::addr(GPtr::from_addr((GPtr::from_raw(&mut out as *mut u32).addr() as u32) as usize)) as u32);
     }
     if out == 0 {
-        frame_for_all_children(frame, 0x734A70, GPtr::from_addr((GPtr::from_raw(&mut out as *mut u32).addr() as u32) as usize));
+        frame_for_all_children(frame, 0x734A70, GPtr::<u8>::addr(GPtr::from_addr((GPtr::from_raw(&mut out as *mut u32).addr() as u32) as usize)) as u32);
     }
     out
 }
@@ -139,8 +139,8 @@ pub fn get_anim_hierarchy_from_clump(clump: GPtr<u8>) -> u32 {
 #[hook(addr = 0x734B90, conv = cdecl, name = "RwHelper::AtomicRemoveAnimFromSkinCB", expect = "56 57 8B 7C 24 0C 8B 47 18",
        route = "L2", hazards = "heap-writes")]
 pub fn atomic_remove_anim_from_skin_cb(atomic: GPtr<u8>, _data: u32) -> GPtr<u8> {
-    if GPtr::<u8>::addr(skin_geometry_get_skin(p8(rd::<u32>(atomic, 0x18)))) as u32 != 0 {
-        let h = GPtr::<u8>::addr(skin_atomic_get_hierarchy(atomic)) as u32;
+    if GPtr::<u8>::addr(GPtr::from_addr(skin_geometry_get_skin(p8(rd::<u32>(atomic, 0x18))) as usize)) as u32 != 0 {
+        let h = GPtr::<u8>::addr(GPtr::from_addr(skin_atomic_get_hierarchy(atomic) as usize)) as u32;
         if h != 0 {
             let interp = p8(rd::<u32>(p8(h), 0x20));
             let anim = rd::<u32>(interp, 0);

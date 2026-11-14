@@ -7,6 +7,10 @@ license.workspace = true
 publish.workspace = true
 
 [dependencies]
+sa-input = { path = "../sa-input" }
+sa-rwcore = { path = "../sa-rwcore" }
+sa-pop = { path = "../sa-pop" }
+sa-anim = { path = "../sa-anim" }
 sa-stream = { path = "../sa-stream" }
 sa-core = { path = "../sa-core" }
 sa-math = { path = "../sa-math" }

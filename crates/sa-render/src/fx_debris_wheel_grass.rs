@@ -4,7 +4,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use sa_core::field::gu as g;
 fn gf(a: u32) -> f32 {
@@ -15,17 +15,11 @@ use sa_math::fpu::xi;
 use sa_core::crt::rand_at;
 
 use crate::bindings::fx_prt_mult_default_ctor;
-use sa_core::bindings::find_player_ped;
-use sa_core::bindings::find_player_vehicle;
+use sa_world::bindings::find_player_ped;
+use sa_world::bindings::find_player_vehicle;
 use sa_pop::bindings::fx_enable_prim;
-orig! {
-    /// `FxPrtMult_c::FxPrtMult_c(r, g, b, a, size, spin, life)` (0x4AB290)
-    #[allow(clippy::too_many_arguments)]
-    fn fx_prt_mult_ctor(p: GPtr<u8>, r: f32, g: f32, b: f32, a: f32, size: f32, spin: f32, life: f32) -> GPtr<u8> = thiscall 0x4AB290 => unported;
-    /// `FxSystem_c::AddParticle(RwV3d*, RwV3d*, float, FxPrtMult_c*, float, float, float, uint8)` (0x4AA440)
-    #[allow(clippy::too_many_arguments)]
-    fn fx_add_particle(fx: GPtr<u8>, pos: GPtr<u8>, vel: GPtr<u8>, time: f32, mult: GPtr<u8>, rot: f32, bright: f32, cam: f32, local: u32) = thiscall 0x4AA440 => unported;
-}
+use crate::bindings::fx_add_particle;
+use sa_world::bindings::fx_prt_mult_ctor;
 
 /// `TheCamera` matrix (+0x14); null: the placement position `TheCamera` +4 (0xB6F02C).
 fn camera_pos() -> GPtr<f32> {
@@ -111,9 +105,9 @@ pub fn fx_add_debris(_this: GPtr<u8>, pos: GPtr<f32>, colour: GPtr<u8>, scale: f
             g::<GPtr<u8>>(0xA9AE0C).read(),
             pos.cast(),
             GPtr::from_raw(vel.as_mut_ptr()).cast(),
-            0.0,
+            0.0f32.to_bits(),
             mp,
-            -1.0,
+            (-1.0f32).to_bits(),
             f32::from_bits(0x3F99_999A),
             f32::from_bits(0x3F19_999A),
             0,
@@ -228,9 +222,9 @@ pub fn fx_add_wheel_grass(
             sys,
             GPtr::from_raw(pos.as_mut_ptr()).cast(),
             GPtr::from_raw(vel.as_mut_ptr()).cast(),
-            0.0,
+            0.0f32.to_bits(),
             mp,
-            -1.0,
+            (-1.0f32).to_bits(),
             bright,
             f32::from_bits(0x3F19_999A),
             0,

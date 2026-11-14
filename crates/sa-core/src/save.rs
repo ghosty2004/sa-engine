@@ -123,6 +123,7 @@ pub mod call {
     pub use crate::bindings::open_file;
     pub use crate::bindings::strncmp;
     pub use crate::bindings::get_key;
+    pub use crate::bindings::crt_new_821195 as operator_new;
     orig! {
         /// CRT `sprintf(buf, fmt, char*, int, char*)` (0x821BB5)
         pub fn sprintf_sis(buf: GPtr<u8>, fmt: GPtr<u8>, a: GPtr<u8>, n: i32, b: GPtr<u8>) -> i32 = cdecl 0x821BB5 => unported;
@@ -130,8 +131,6 @@ pub mod call {
         pub fn sprintf_si(buf: GPtr<u8>, fmt: GPtr<u8>, a: GPtr<u8>, n: i32) -> i32 = cdecl 0x821BB5 => unported;
         /// CRT `sprintf(buf, fmt, char*, char*)` (0x821BB5)
         pub fn sprintf_ss(buf: GPtr<u8>, fmt: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> i32 = cdecl 0x821BB5 => unported;
-        /// `operator new` (0x821195)
-        pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x821195 => unported;
         /// `CFileMgr::GetErrorReadWrite` (0x538A50)
         pub fn get_error_read_write(f: GPtr<u8>) -> u32 = cdecl 0x538A50 => crate::filemgr::get_error_read_write;
         /// KERNEL32 `DeleteFileA` at 0x619103 (C_PcSave::DeleteSlot)
@@ -1204,7 +1203,7 @@ pub fn do_game_specific_stuff_after_success_load() {
     call::gang_wars_clear_specific_zones_to_trigger_gang_war();
     let active = u32::from(g::<u8>(0x96AB90).read());
     g::<u8>(0x96AB91).write(0);
-    call::zones_fill_zones_with_gang_colours(active);
+    call::zones_fill_zones_with_gang_colours(active as u8);
 }
 
 /// `CGenericGameStorage::DoGameSpecificStuffBeforeSave()` (0x618F50): `CRopes::Shutdown()`,

@@ -4,7 +4,7 @@
 
 use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
@@ -12,22 +12,15 @@ use sa_core::bindings::general_random_int_in_range;
 use sa_world::bindings::destroy_car_ctor;
 use sa_world::bindings::enter_car_as_driver_ctor;
 use sa_world::bindings::give_delayed_weapon as ped_give_delayed_weapon;
-use sa_world::bindings::interesting_events_add;
+use crate::bindings::interesting_events_add;
 use sa_world::bindings::shake_fist_ctor;
 use sa_world::bindings::turn_to_face_entity_ctor;
 use crate::bindings::road_rage_create_sub_task as road_rage_create_sub_task_c;
-use sa_core::bindings::task_new as task_new_c;
+use crate::bindings::task_new as task_new_c;
 use sa_world::bindings::leave_car_ctor;
 use sa_world::bindings::ped_set_current_weapon;
-orig! {
-    /// `CTaskComplexKillPedOnFoot(CPed*, int32 time, uint32 flags, int32 delay, int32 chance, int8 level)` (0x620E30)
-    #[allow(clippy::too_many_arguments)]
-    fn kill_ped_on_foot_ctor(t: GPtr<u8>, target: GPtr<u8>, time: i32, flags: u32, delay: i32, chance: i32, level: u32) -> GPtr<u8> = thiscall 0x620E30 => unported;
-    /// `CTaskComplexSeekEntity<CEntitySeekPosCalculatorStandard>(CEntity*, int32, int32, float, float, float, bool,
-    /// bool)` (0x46AC10)
-    #[allow(clippy::too_many_arguments)]
-    fn seek_entity_standard_ctor(t: GPtr<u8>, e: GPtr<u8>, time: i32, interval: i32, radius: f32, a: u32, b: u32, c: u32, d: u32) -> GPtr<u8> = thiscall 0x46AC10 => unported;
-}
+use sa_world::bindings::kill_ped_on_foot_ctor;
+use sa_world::bindings::seek_entity_standard_ctor;
 
 /// `CModelInfo::ms_modelInfoPtrs` (0xA9B0C8)
 const MODEL_INFO_PTRS: usize = 0xA9_B0C8;
@@ -64,7 +57,7 @@ pub fn road_rage_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8
             2
         };
         ped_give_delayed_weapon(ped, w as i32, 1);
-        ped_set_current_weapon(ped, w);
+        ped_set_current_weapon(ped, w as i32);
     }
     interesting_events_add(GPtr::from_addr(0xC0_B058), 0x12, ped);
     let t = rd::<GPtr<u8>>(this, 0xC);

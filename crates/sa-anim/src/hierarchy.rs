@@ -30,7 +30,7 @@ pub use crate::bindings::call_remove_uncompressed_data;
 pub use crate::bindings::call_set_name;
 pub use crate::bindings::call_shutdown;
 pub use crate::bindings::call_uncompress;
-pub use sa_core::bindings::uncompress_animation;
+pub use crate::bindings::uncompress_animation;
 orig! {
     /// `CAnimManager::RemoveFromUncompressedCache(CAnimBlendHierarchy*)` (0x4D42A0)
     pub fn remove_from_uncompressed_cache(h: GPtr<u8>) = cdecl 0x4D42A0 => crate::manager::remove_from_uncompressed_cache;

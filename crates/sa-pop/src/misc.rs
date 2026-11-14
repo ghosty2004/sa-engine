@@ -38,12 +38,12 @@ const CHEAT_GREEN_LIGHTS: usize = 0x96914E;
 pub use crate::bindings::deal_with_weapon_change_at_end_of_frenzy;
 pub use sa_core::bindings::entity_register_reference as register_reference;
 pub use sa_core::bindings::get_atan_of_xy;
-pub use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
+pub use sa_world::bindings::placeable_allocate_matrix as allocate_matrix;
 pub use sa_stream::bindings::simple_transform_update_matrix as update_matrix;
 pub use sa_world::bindings::la_riots_active_here;
 pub use sa_world::bindings::set_user_value;
 pub use sa_core::bindings::hud_set_help_message;
-pub use sa_world::bindings::frenzy_on_going as frenzy_on_going_call;
+pub use crate::bindings::frenzy_on_going as frenzy_on_going_call;
 orig! {
     /// virtual slot 9 (`GetModelType`) of a `CBaseModelInfo`
     pub fn model_info_get_type(mi: GPtr<u8>) -> i32 = thiscall vslot 0x24 => unported;

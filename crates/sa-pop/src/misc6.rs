@@ -52,7 +52,7 @@ fn transform(m: GPtr<u8>, v: [f32; 3]) -> [u32; 3] {
     let mut vin = v;
     let mut out = [0f32; 3];
     matrix_mul_vec(
-        GPtr::from_raw(out.as_mut_ptr()),
+        GPtr::<f32>::cast::<u8>(GPtr::from_raw(out.as_mut_ptr())),
         m,
         GPtr::<f32>::cast::<u8>(GPtr::from_raw(vin.as_mut_ptr())),
     );
@@ -149,7 +149,7 @@ pub fn display_actual_light(e: GPtr<u8>) {
         }
         let m = matrix(e);
         let mut lp = [0f32; 3];
-        matrix_mul_vec(GPtr::from_raw(lp.as_mut_ptr()), m, GPtr::<f32>::cast::<u8>(eff.cast()));
+        matrix_mul_vec(GPtr::<f32>::cast::<u8>(GPtr::from_raw(lp.as_mut_ptr())), m, GPtr::<f32>::cast::<u8>(eff.cast()));
         for k in 0..3 {
             centre[k] = x(centre[k]).fadd_m(lp[k]).to_f32();
         }
@@ -178,18 +178,18 @@ pub fn display_actual_light(e: GPtr<u8>) {
             cb,
             0xFF,
             GPtr::<f32>::cast::<u8>(GPtr::from_raw(lp.as_mut_ptr())),
-            f32::from_bits(radius.to_bits()),
-            f32::from_bits(50f32.to_bits()),
+            f32::from_bits(radius.to_bits()).to_bits(),
+            f32::from_bits(50f32.to_bits()).to_bits(),
             0,
             0,
             1,
             0,
             0,
-            f32::from_bits(0),
+            f32::from_bits(0).to_bits(),
             0,
-            f32::from_bits(1.5f32.to_bits()),
+            f32::from_bits(1.5f32.to_bits()).to_bits(),
             0,
-            f32::from_bits(15f32.to_bits()),
+            f32::from_bits(15f32.to_bits()).to_bits(),
             0,
             0,
         );
@@ -262,19 +262,19 @@ pub fn display_actual_light(e: GPtr<u8>) {
                     2,
                     g::<u32>(0xC403F4).read(),
                     GPtr::<f32>::cast::<u8>(GPtr::from_raw(centre.as_mut_ptr())),
-                    f32::from_bits(8f32.to_bits()),
-                    f32::from_bits(0),
-                    f32::from_bits(0),
-                    f32::from_bits((-8f32).to_bits()),
+                    f32::from_bits(8f32.to_bits()).to_bits(),
+                    f32::from_bits(0).to_bits(),
+                    f32::from_bits(0).to_bits(),
+                    f32::from_bits((-8f32).to_bits()).to_bits(),
                     0x80,
                     r,
                     gg,
                     b,
-                    f32::from_bits(12f32.to_bits()),
-                    f32::from_bits(1f32.to_bits()),
-                    f32::from_bits(40f32.to_bits()),
+                    f32::from_bits(12f32.to_bits()).to_bits(),
+                    f32::from_bits(1f32.to_bits()).to_bits(),
+                    f32::from_bits(40f32.to_bits()).to_bits(),
                     0,
-                    f32::from_bits(0),
+                    f32::from_bits(0).to_bits(),
                 );
             }
         }

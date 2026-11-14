@@ -6,7 +6,7 @@ use sa_core::native;
 
 use crate::common::{g, rd, wr, x};
 
-use sa_core::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference;
 use sa_core::bindings::entity_register_reference;
 
 /// `CIdleCam::SetTarget(CEntity* target)` (0x50A280, thiscall, `ret 4`). The entry jumps into the protection chunk
@@ -39,12 +39,12 @@ pub fn idle_cam_set_target(this: GPtr<u8>, target: GPtr<u8>) {
     }
     if !target.is_null() {
         if !old.is_null() {
-            entity_clean_up_old_reference(old, this.cast::<GPtr<u8>>());
+            entity_clean_up_old_reference(old, this.cast::<u8>());
         }
         wr::<GPtr<u8>>(this, 0, target);
         entity_register_reference(target, this);
     } else if !old.is_null() {
-        entity_clean_up_old_reference(old, this.cast::<GPtr<u8>>());
+        entity_clean_up_old_reference(old, this.cast::<u8>());
         wr::<u32>(this, 0, 0);
     }
     wr::<f32>(this, 0x10, now);

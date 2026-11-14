@@ -69,7 +69,7 @@ pub fn remove_entity_from_list(m: GPtr<u8>, handle: i32, ty: u32) {
                     let v = fl.read();
                     if v & 0x40000 != 0 {
                         fl.write(v & 0xFFFB_FFFF);
-                        if entity_get_is_static(ent) == 0 {
+                        if entity_get_is_static(ent) as u8 == 0 {
                             physical_add_to_moving_list(ent);
                         }
                     }
@@ -84,8 +84,8 @@ pub fn remove_entity_from_list(m: GPtr<u8>, handle: i32, ty: u32) {
 }
 
 use crate::bindings::audio_engine_clear_mission_audio;
-use sa_world::bindings::camera_initialise_scriptable_components;
-use sa_world::bindings::camera_restore;
+use sa_cam::bindings::camera_initialise_scriptable_components;
+use sa_cam::bindings::camera_restore;
 use crate::bindings::clean_up_this_object as scripts_clean_up_this_object;
 use crate::bindings::clean_up_this_ped as scripts_clean_up_this_ped;
 use crate::bindings::clean_up_this_vehicle as scripts_clean_up_this_vehicle;
@@ -113,29 +113,29 @@ use sa_core::bindings::camera_fade;
 use sa_core::bindings::camera_set_wide_screen_off;
 use sa_core::bindings::clear_skip as game_logic_clear_skip;
 use sa_core::bindings::clear_specific_zones_to_trigger_gang_war as gang_wars_clear_specific_zones;
-use sa_core::bindings::find_player_ped as world_find_player_ped;
-use sa_core::bindings::get_pad;
+use sa_world::bindings::find_player_ped as world_find_player_ped;
+use sa_input::bindings::get_pad;
 use sa_core::bindings::hud_set_help_message;
 use sa_core::bindings::player_info_make_player_safe;
 use sa_core::bindings::post_effects_script_reset_for_effects;
 use sa_core::bindings::streaming_disable_cop_bikes;
 use sa_core::bindings::time_cycle_stop_extra_colour;
-use sa_core::bindings::zones_fill_zones_with_gang_colours;
-use sa_stream::bindings::find_player_wanted as world_find_player_wanted;
+use sa_world::bindings::zones_fill_zones_with_gang_colours;
+use sa_world::bindings::find_player_wanted as world_find_player_wanted;
 use sa_stream::bindings::set_mission_doesnt_require_special_char as streaming_set_mission_doesnt_require_special_char;
 use sa_world::bindings::all_resprays_close_or_open as garages_all_resprays_close_or_open;
 use sa_world::bindings::enable_ped_speech as ped_enable_ped_speech;
-use sa_world::bindings::fx_kill as fx_system_kill;
+use sa_render::bindings::fx_kill as fx_system_kill;
 use sa_world::bindings::get_actual_script_thing_index as scripts_get_actual_script_thing_index;
 use sa_world::bindings::group_intel_set_decision_maker_type;
 use sa_world::bindings::group_intel_set_default_task_allocator_type;
-use sa_world::bindings::sequence_flush;
+use sa_ai::bindings::sequence_flush;
 use sa_world::bindings::tm_find_task_by_type as task_manager_find_task_by_type;
 use sa_world::bindings::weather_release_weather;
 use crate::bindings::cleanup_remove_entity_from_list;
 use crate::bindings::clear_ped_type_as_acquaintance as ped_type_clear_ped_type_as_acquaintance;
 use crate::bindings::remove_script_search_light as scripts_remove_script_search_light;
-use sa_world::bindings::camera_reset_ducking_system;
+use sa_cam::bindings::camera_reset_ducking_system;
 use sa_world::bindings::get_ped_flag as ped_type_get_ped_flag;
 use sa_world::bindings::ped_groups_remove_group;
 orig! {
@@ -274,7 +274,7 @@ pub fn mission_cleanup_process(this: GPtr<u8>) {
     if r8(0x96AB91) != 0 {
         let b = u32::from(r8(0x96AB90) == 0);
         w8(0x96AB91, 0);
-        zones_fill_zones_with_gang_colours(b);
+        zones_fill_zones_with_gang_colours(b as u8);
     }
     w32(0x8D2534, u32::MAX);
     w8(0x96AB93, 0);

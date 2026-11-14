@@ -43,29 +43,28 @@ const G_FX: usize = 0xA9AE00;
 const G_FX_MAN: usize = 0xA9AE80;
 
 use crate::bindings::remove_script_effect_system;
-use sa_core::bindings::fx_play;
+use sa_render::bindings::fx_play;
 use sa_world::bindings::find_ground_z_for_coord as find_ground_z_raw;
-use sa_world::bindings::fx_kill;
+use sa_render::bindings::fx_kill;
 use sa_world::bindings::get_actual_script_thing_index;
 use sa_world::bindings::get_modelling_matrix;
 use sa_core::bindings::create_fx_system_mat;
 use sa_core::bindings::fx_create_mat_from_vec as create_mat_from_vec;
 use sa_world::bindings::attach_entity_to_entity;
+use sa_world::bindings::dettach_entity_from_entity;
 orig! {
     /// `CEntity` virtual slot 7 (+0x1C, `CreateRwObject`)
     fn entity_create_rw_object(e: GPtr<u8>) = thiscall vslot 0x1C => unported;
     /// `CTheScripts::AddScriptEffectSystem(FxSystem_c*)` (0x492F90)
     fn add_script_effect_system(fx: GPtr<u8>) -> i32 = cdecl 0x492F90 => unported;
-    /// `CPhysical::DettachEntityFromEntity(float x, float y, float z, bool useCollision)` (0x5442F0)
-    fn dettach_entity_from_entity(e: GPtr<u8>, x: f32, y: f32, z: u32, use_collision: u32) = thiscall 0x5442F0 => unported;
 }
 
-use sa_world::bindings::get_car_node_index_from_door as node_from_door;
-use sa_core::bindings::fx_stop;
+use sa_veh::bindings::get_car_node_index_from_door as node_from_door;
+use sa_render::bindings::fx_stop;
 use sa_world::bindings::get_stat_value;
 use sa_world::bindings::intel_clear_tasks as clear_tasks;
 use crate::bindings::global_index as get_index_of_global_variable;
-use sa_world::bindings::node_from_panel;
+use sa_veh::bindings::node_from_panel;
 orig! {
     /// `CAutomobile::FixTyre(eWheels)` (0x6A3580)
     fn fix_tyre(v: GPtr<u8>, w: u32) = thiscall 0x6A3580 => unported;
@@ -79,7 +78,7 @@ orig! {
 }
 
 use crate::bindings::scripted_task_status;
-use sa_world::bindings::fx_play_and_kill;
+use sa_render::bindings::fx_play_and_kill;
 use sa_world::bindings::get_actual_pickup_index;
 use sa_world::bindings::pickup_get_posn;
 orig! {
@@ -95,14 +94,13 @@ orig! {
 }
 
 use crate::bindings::decision_maker_unload as unload_decision_maker;
-use sa_core::bindings::task_new;
+use sa_ai::bindings::task_new;
 use sa_stream::bindings::set_custom_car_plate_text;
 use crate::bindings::give_ped_scripted_task;
 use crate::bindings::remove_from_resource_manager;
 use sa_world::bindings::dive_and_get_up_ctor;
+use sa_core::bindings::vector_normalise;
 orig! {
-    /// `CVector::Normalise()` (0x59C910)
-    fn vector_normalise(v: GPtr<u32>) = thiscall 0x59C910 => unported;
     /// `CTaskComplexShuffleSeats::CTaskComplexShuffleSeats(CVehicle*)` (0x63D130)
     fn shuffle_seats_ctor(t: GPtr<u8>, veh: GPtr<u8>) -> GPtr<u8> = thiscall 0x63D130 => unported;
     /// `CBaseModelInfo::GetModelType()` (vtable slot 0x10), AL
@@ -117,10 +115,10 @@ use sa_world::bindings::destroy_car_ctor;
 use sa_world::bindings::get_ped_attractor_manager;
 use sa_world::bindings::ik_is_looking;
 use sa_world::bindings::sequence_add_task;
-use sa_core::bindings::ik_abort_look_at;
+use sa_anim::bindings::ik_abort_look_at;
 use sa_world::bindings::attach_entity_to_entity_quat;
 use sa_world::bindings::attractor_manager_get_ped_using_effect as get_ped_using_effect;
-use sa_world::bindings::fx_create_system as create_fx_system_vec;
+use sa_render::bindings::fx_create_system as create_fx_system_vec;
 use sa_world::bindings::task_gun_control_ctor as gun_control_ctor;
 orig! {
     /// `CTaskSimpleClearLookAt::CTaskSimpleClearLookAt()` (0x634670)
@@ -131,7 +129,7 @@ orig! {
 }
 
 use crate::bindings::task_trigger_look_at_ctor as trigger_look_at_ctor;
-use sa_core::bindings::get_weapon_info;
+use sa_weapon::bindings::get_weapon_info;
 use sa_world::bindings::ik_look_at;
 orig! {
     /// `CTaskSimpleThrowControl::CTaskSimpleThrowControl(CEntity*, const CVector*)` (0x61F8B0)
@@ -140,7 +138,7 @@ orig! {
 
 use sa_core::bindings::general_random_int_in_range as random_int_in_range;
 use sa_world::bindings::leave_any_car_ctor;
-use sa_world::bindings::task_simple_dtor as task_base_dtor;
+use sa_ai::bindings::task_simple_dtor as task_base_dtor;
 use sa_world::bindings::partner_chat_ctor;
 orig! {
     /// `CTaskSimpleTogglePedThreatScanner::CTaskSimpleTogglePedThreatScanner(bool, bool, bool)` (0x492D10)
@@ -474,13 +472,13 @@ pub fn process_commands_1600_to_1699(s: Scr, command: u32) -> i8 {
         0x068A => {
             collect(s, 2);
             let v = vehicle_at_ref(pool(VEHICLE_POOL), spi(0));
-            let n = node_from_door(sp(1));
+            let n = node_from_door(sp(1)) as u32;
             fix_door(v, n, sp(1));
         }
         0x0698 => {
             collect(s, 2);
             let v = vehicle_at_ref(pool(VEHICLE_POOL), spi(0));
-            let n = node_from_panel(sp(1));
+            let n = node_from_panel(sp(1)) as u32;
             fix_panel(v, n, sp(1));
         }
         // 0654 SET_OBJECT_RENDER_SCORCHED (0x4944A1): no null check; dword +0x40 bit 29 = P1 != 0. gr: unregistered.
@@ -514,14 +512,14 @@ pub fn process_commands_1600_to_1699(s: Scr, command: u32) -> i8 {
             collect(s, 3);
             let v = vehicle_at_ref(pool(VEHICLE_POOL), spi(0));
             let b = u32::from(sp(2) != 0);
-            let n = node_from_door(sp(1));
+            let n = node_from_door(sp(1)) as u32;
             pop_door(v, n, sp(1), b);
         }
         0x0697 => {
             collect(s, 3);
             let v = vehicle_at_ref(pool(VEHICLE_POOL), spi(0));
             let b = u32::from(sp(2) != 0);
-            let n = node_from_panel(sp(1));
+            let n = node_from_panel(sp(1)) as u32;
             pop_panel(v, n, sp(1), b);
         }
         // 064F PLAY_AND_KILL_FX_SYSTEM (0x49439F): with a slot: FxSystem_c::PlayAndKill();
@@ -559,7 +557,7 @@ pub fn process_commands_1600_to_1699(s: Scr, command: u32) -> i8 {
             collect(s, 2);
             let v = vehicle_at_ref(pool(VEHICLE_POOL), spi(0));
             let d = sp(1);
-            let node = node_from_door(d);
+            let node = node_from_door(d) as u32;
             if is_door_missing(v, d) == 0
                 && v.byte_add(0x648 + node as isize * 4).cast::<u32>().read() != 0
             {
@@ -604,7 +602,7 @@ pub fn process_commands_1600_to_1699(s: Scr, command: u32) -> i8 {
             collect(s, 4);
             let dir = [sp(1), sp(2), 0];
             let dp = GPtr::from_raw(dir.as_ptr().cast_mut());
-            vector_normalise(dp);
+            vector_normalise(dp.cast::<[f32;3]>());
             let mem = task_new(0x24);
             let t = if mem.is_null() { GPtr::NULL } else { dive_and_get_up_ctor(mem, GPtr::NULL, sp(3), dp.cast::<u8>(), 1) };
             give_ped_scripted_task(s, sp(0) as i32, t, command);
@@ -788,7 +786,7 @@ pub fn process_commands_1600_to_1699(s: Scr, command: u32) -> i8 {
                 let uc = u32::from(sp(4) != 0);
                 let y = deg2rad(ny);
                 let x = deg2rad(spf(1));
-                dettach_entity_from_entity(e, x, y, z, uc);
+                dettach_entity_from_entity(e, x.to_bits(), y.to_bits(), f32::from_bits(z), uc as u8);
             }
         }
         // 064B CREATE_FX_SYSTEM (0x494228): label (32); `CollectParameters(4)`; the discarded
@@ -853,11 +851,11 @@ pub fn process_commands_1600_to_1699(s: Scr, command: u32) -> i8 {
                     GPtr::from_addr(S_TASK_LOOK_AT_OBJECT),
                     ped,
                     obj,
-                    time,
-                    u32::MAX,
+                    time as i32,
+                    u32::MAX as i32,
                     GPtr::NULL,
                     0,
-                    0x3E80_0000,
+                    f32::from_bits(0x3E80_0000),
                     0x1F4,
                     6,
                     1,
@@ -989,7 +987,7 @@ fn detach_object(s: Scr) {
     let use_collision = u32::from(sp(4) != 0);
     let y = deg2rad(ny);
     let x = deg2rad(spf(1));
-    dettach_entity_from_entity(e, x, y, z, use_collision);
+    dettach_entity_from_entity(e, x.to_bits(), y.to_bits(), f32::from_bits(z), use_collision as u8);
 }
 
 pub const HOOKS: &[HookReg] = &[HOOK_PROCESS_COMMANDS_1600_TO_1699];

@@ -510,7 +510,7 @@ fn los_test(b: GPtr<u8>, ped: GPtr<u8>, o: GPtr<u8>) -> bool {
     cross_product(b.byte_add(0x2C), s, b.byte_add(0x50));
     push_st0(&mut f, vector_magnitude(GPtr::<u8>::cast::<u32>(b.byte_add(0x2C))));
     let mag = f.fstp().to_bits();
-    push_st0(&mut f, max_f(K_0_7, mag));
+    push_st0(&mut f, max_f(f32::from_bits(K_0_7), f32::from_bits(mag)).to_f64());
     f.fdivr_m(k(K_2));
     vector_scale_assign(b.byte_add(0x2C), f32::from_bits(f.fstp().to_bits()));
     for i in 0..3 {
@@ -1315,7 +1315,7 @@ fn clip_and_output(this: GPtr<u8>, b: GPtr<u8>, ped: GPtr<u8>, wi: GPtr<u8>, at:
         wr::<u32>(front, 4, rd::<u32>(b, 0x30));
         wr::<f32>(b, 0x34, f.fstp());
         wr::<u32>(front, 8, rd::<u32>(b, 0x34));
-        crate::camproc::vector_normalise(front);
+        crate::camproc::vector_normalise(front.cast::<[f32;3]>());
     }
     get_vectors_ready_for_rw(this);
     // 0x522B69: the ped heading and the quick-aim pitch
@@ -1508,7 +1508,7 @@ pub fn find_3rd_person_cam_target_vector(
         f.fld(rd(b, 0x18));
         f.fadd_m(rd(dir, 8));
         wr::<f32>(dir, 8, f.fstp());
-        crate::camproc::vector_normalise(dir);
+        crate::camproc::vector_normalise(dir.cast::<[f32;3]>());
     }
     // 0x514AC3: project the muzzle onto the aim line
     f.fld(rd(b, 0x24));

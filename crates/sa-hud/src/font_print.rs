@@ -52,25 +52,24 @@ const K_M1E6_BITS: u32 = 0xC974_2400;
 
 pub use sa_core::bindings::get_string_length_call;
 pub use crate::bindings::hud_colours_get_rgba as hud_get_rgba;
-pub use sa_world::bindings::msg_insert_player_control_keys as insert_player_control_keys_call;
+pub use crate::bindings::msg_insert_player_control_keys as insert_player_control_keys_call;
 pub use sa_core::bindings::rgba_ctor;
 pub use sa_world::bindings::min_f as min_f_st0;
 pub use crate::bindings::find_sub_font_character_call;
 pub use crate::bindings::font_get_text_rect as get_text_rect_call;
 pub use crate::bindings::font_render_font_buffer as render_font_buffer_call;
 pub use crate::bindings::process_current_string as process_current_string_call;
-pub use sa_core::bindings::font_print_string as print_string_call;
-pub use sa_core::bindings::font_set_color as set_color_call;
-pub use sa_core::bindings::sprite_draw_rect;
-pub use sa_world::bindings::draw_window_call as draw_window;
+pub use crate::bindings::font_print_string as print_string_call;
+pub use crate::bindings::font_set_color as set_color_call;
+pub use sa_render::bindings::sprite_draw_rect;
+pub use crate::bindings::draw_window_call as draw_window;
 pub use sa_world::bindings::rgba_set_463370 as rgba_assign;
+pub use sa_world::bindings::font_get_string_width_st0 as get_string_width_call_st0;
 orig! {
     /// `CFont::GetCharacterSize(uint8)` (0x719750)
     pub fn get_character_size_call_st0(c: u32) -> f64 = cdecl 0x719750 => get_character_size_call_st0_rust;
     /// `CFont::GetScriptLetterSize(uint8)` (0x719670)
     pub fn get_script_letter_size_call_st0(c: u32) -> f64 = cdecl 0x719670 => get_script_letter_size_call_st0_rust;
-    /// `CFont::GetStringWidth(const GxtChar*, bool full, bool scriptText)` (0x71A0E0)
-    pub fn get_string_width_call_st0(s: GPtr<u8>, full: u32, script: u32) -> f64 = cdecl 0x71A0E0 => get_string_width_call_st0_rust;
     /// `CFont::ParseToken(const GxtChar*, CRGBA&, bool isBlip, char* out)` (0x718F00)
     pub fn parse_token_call(s: GPtr<u8>, color: GPtr<u8>, is_blip: u32, out: GPtr<u8>) -> GPtr<u8> = cdecl 0x718F00 => parse_token;
     /// `CFont::PrintString(float x, float y, const GxtChar* start, const GxtChar* end, float spacing)`
@@ -710,7 +709,7 @@ pub fn print_string(px: f32, py: f32, text: GPtr<u8>) {
             wr(r, 8, x(rd(r, 8)).fadd_m(K_ONE).to_f32());
             draw_window(g(FRONT_END_MENU_MANAGER), rp.cast::<u8>(), GPtr::NULL, 0, back, 0, 1);
         } else {
-            sprite_draw_rect(rp, det_ptr().byte_add(det::BACKGROUND_COLOR));
+            sprite_draw_rect(rp.cast::<u8>(), det_ptr().byte_add(det::BACKGROUND_COLOR));
         }
         wr::<u8>(det_ptr(), det::BACKGROUND, 0);
     }
@@ -962,8 +961,8 @@ const K_17: f32 = f32::from_bits(0x4188_0000);
 /// `CFontChar` (render state) +0x2A, proportional
 const RS_PROP_ON: isize = 0x2A;
 
-pub use sa_world::bindings::sprite_flush_sprite_buffer as flush_sprite_buffer;
-pub use sa_world::bindings::render_vertex_buffer;
+pub use sa_render::bindings::sprite_flush_sprite_buffer as flush_sprite_buffer;
+pub use sa_render::bindings::render_vertex_buffer;
 orig! {
     /// `CSprite2d::SetRenderState()` (0x727B30, thiscall)
     pub fn sprite2d_set_render_state(this: GPtr<u8>) = thiscall 0x727B30 => unported;
@@ -1270,7 +1269,7 @@ pub use sa_core::bindings::font_set_centre_size as set_centre_size_call;
 pub use sa_core::bindings::font_set_drop_shadow_position as set_drop_shadow_position_call;
 pub use sa_core::bindings::font_set_justify as set_justify_call;
 pub use sa_core::bindings::font_set_right_justify_wrap as set_right_justify_wrap_call;
-pub use sa_core::bindings::font_set_scale as set_scale_call;
+pub use crate::bindings::font_set_scale as set_scale_call;
 pub use crate::bindings::font_set_slant as set_slant_call;
 pub use sa_core::bindings::font_set_wrapx as set_wrapx_call;
 pub use crate::bindings::sprite2d_set_texture;
@@ -1280,18 +1279,18 @@ pub use sa_core::bindings::open_file as file_open;
 pub use sa_core::bindings::sscanf1;
 pub use sa_core::bindings::add_txd_slot;
 pub use sa_core::bindings::find_txd_slot;
-pub use sa_core::bindings::load_line;
+pub use sa_stream::bindings::load_line;
 pub use sa_core::bindings::load_txd;
 pub use sa_stream::bindings::remove_txd_slot;
 pub use sa_stream::bindings::sprite2d_delete;
-pub use sa_core::bindings::font_set_background as set_background_call;
-pub use sa_core::bindings::font_set_font_style as set_font_style_call;
-pub use sa_core::bindings::font_set_orientation as set_orientation_call;
-pub use sa_core::bindings::font_set_proportional as set_proportional_call;
-pub use sa_core::bindings::pop_current_txd;
-pub use sa_core::bindings::push_current_txd;
-pub use sa_core::bindings::set_current_txd;
-pub use sa_core::bindings::txd_add_ref;
+pub use crate::bindings::font_set_background as set_background_call;
+pub use crate::bindings::font_set_font_style as set_font_style_call;
+pub use crate::bindings::font_set_orientation as set_orientation_call;
+pub use crate::bindings::font_set_proportional as set_proportional_call;
+pub use sa_stream::bindings::pop_current_txd;
+pub use sa_stream::bindings::push_current_txd;
+pub use sa_stream::bindings::set_current_txd;
+pub use sa_stream::bindings::txd_add_ref;
 orig! {
     /// `CFont::LoadFontValues()` (0x7187C0)
     pub fn load_font_values_call() = cdecl 0x7187C0 => load_font_values;
@@ -1321,7 +1320,7 @@ pub fn initialise() {
     sprite2d_set_texture(g(FONT_SPRITES), g(0x86A638), g(0x86A640));
     sprite2d_set_texture(g(FONT_SPRITES + 4), g(0x86A628), g(0x86A630));
     load_font_values_call();
-    set_scale_call(f32::from_bits(0x3F80_0000), f32::from_bits(0x3F80_0000));
+    set_scale_call(f32::from_bits(0x3F80_0000).to_bits(), f32::from_bits(0x3F80_0000).to_bits());
     let width = || xi(g::<i32>(RS_MAX_WIDTH).read()).to_f32().to_bits();
     set_slant_ref_point_call(width(), 0);
     set_slant_call(0);
@@ -1478,12 +1477,6 @@ pub fn get_script_letter_size_call(c: u32) -> X87 {
     X87::from_f64_exact(get_script_letter_size_call_st0(c))
 }
 
-/// The Rust path of [`get_string_width_call`] as an ST0 value.
-#[allow(dead_code)]
-fn get_string_width_call_st0_rust(s: GPtr<u8>, full: u32, script: u32) -> f64 {
-    get_string_width(s, full, script).to_f64()
-}
-
 /// [`get_string_width_call_st0`] as an x87 value (ST0, returned through the f64 ABI).
 #[allow(dead_code)]
 pub fn get_string_width_call(s: GPtr<u8>, full: u32, script: u32) -> X87 {
@@ -1493,7 +1486,7 @@ pub fn get_string_width_call(s: GPtr<u8>, full: u32, script: u32) -> X87 {
 /// [`min_f_st0`] as an x87 value (ST0, returned through the f64 ABI).
 #[allow(dead_code)]
 pub fn min_f(a: f32, b: f32) -> X87 {
-    X87::from_f64_exact(min_f_st0(a, b))
+    X87::from_f64_exact(min_f_st0(a.to_bits(), b.to_bits()).to_f64())
 }
 
 /// The Rust path of [`get_letter_id_prop_value_call`] as an ST0 value.

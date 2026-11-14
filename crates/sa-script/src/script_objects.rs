@@ -15,8 +15,8 @@ const TIME_MS: usize = 0xB7CB84;
 /// `CObject::nNoTempObjects` (0xBB4A70, int16)
 const NO_TEMP_OBJECTS: usize = 0xBB4A70;
 
-use sa_core::bindings::world_add;
-use sa_core::bindings::world_remove;
+use sa_world::bindings::world_add;
+use sa_world::bindings::world_remove;
 use sa_stream::bindings::setup_big_building;
 
 use sa_core::field::at;

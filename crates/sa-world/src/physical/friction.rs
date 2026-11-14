@@ -6,7 +6,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::vector::CVector;
 use sa_math::x87::X87;
 
@@ -16,19 +16,10 @@ use crate::collision::fpu::Fpu;
 
 pub use crate::bindings::vector_add_assign;
 pub use crate::bindings::vector_scale as scale_vector;
-orig! {
-    /// `SurfaceInfos_c::GetFrictionEffect(uint32 surface)` (0x55E650, thiscall on `g_surfaceInfos`)
-    pub fn get_friction_effect(si: Ent, surface: u32) -> i32 = thiscall 0x55E650 => unported;
-    /// `CVector::DotProduct(const CVector*, const CVector*)` (0x40FDB0, ST0)
-    pub fn dot_product(a: Ent, b: Ent) -> f64 = cdecl 0x40FDB0 => unported;
-    /// `CVector::Normalise()` (0x59C910)
-    pub fn normalise(v: GPtr<CVector>) = thiscall 0x59C910 => crate::collision::data::normalise_port;
-    /// `Fx_c::AddSparks(CVector& origin, CVector& dir, float force, int32 amount, CVector across,
-    /// eSparkType, float spread, float life)` (0x49F040, thiscall on `g_fx` 0xA9AE00; every argument a
-    /// dword)
-    pub fn fx_add_sparks(fx: Ent, origin: Ent, dir: Ent, force: u32, amount: u32, ax: u32, ay: u32, az: u32,
-        kind: u32, spread: u32, life: u32) = thiscall 0x49F040 => unported;
-}
+pub use crate::bindings::get_friction_effect;
+pub use sa_core::bindings::vector_dot_product as dot_product;
+pub use sa_core::bindings::vector_normalise as normalise;
+pub use crate::bindings::fx_add_sparks;
 
 /// `g_surfaceInfos` (0xB79538)
 pub const SURFACE_INFOS: usize = 0xB79538;
@@ -212,7 +203,7 @@ pub fn apply_friction(this: Ent, friction: f32, cp: Ent) -> u8 {
     f.fstp_st(0);
     let mut w = CVector::new(wx, wy, wz);
     let mut co = CVector::new(0.0, 0.0, 0.0);
-    let com = rv(multiply3x3(lp(&mut co), matrix(this), this.byte_add(CENTRE_OF_MASS).cast()).cast(), 0);
+    let com = rv(multiply3x3(lp(&mut co).cast(), matrix(this), this.byte_add(CENTRE_OF_MASS).cast()).cast(), 0);
     let mut d = [0f32; 3];
     for (i, d) in d.iter_mut().enumerate() {
         f.fld(r[i]);
@@ -221,7 +212,7 @@ pub fn apply_friction(this: Ent, friction: f32, cp: Ent) -> u8 {
     }
     let mut dv = cv(d);
     let mut xo = CVector::new(0.0, 0.0, 0.0);
-    let c = rv(cross_product(lp(&mut xo), lp(&mut dv), lp(&mut w)).cast(), 0);
+    let c = rv(cross_product(lp(&mut xo).cast(), lp(&mut dv).cast(), lp(&mut w).cast()).cast(), 0);
     neg_mass_times(&mut f, this, c, speed);
     f.fld(friction);
     f.fchs();
@@ -245,14 +236,14 @@ pub fn apply_friction(this: Ent, friction: f32, cp: Ent) -> u8 {
         return 1;
     }
     let si: Ent = GPtr::from_addr(SURFACE_INFOS);
-    if get_friction_effect(si, rb(cp, 0x23) as u32) == 0 {
+    if get_friction_effect(si, rb(cp, 0x23) as u32) as i32 == 0 {
         return 1;
     }
-    if get_friction_effect(si, rb(cp, 0x20) as u32) != 1 && etype(this) != ty::VEHICLE {
+    if get_friction_effect(si, rb(cp, 0x20) as u32) as i32 != 1 && etype(this) != ty::VEHICLE {
         return 1;
     }
     if etype(this) == ty::VEHICLE && ru(this, 0x594) == 10 && ru(this, 0x460) != 0 {
-        f.push(X87::from_f64_exact(dot_product(n, matrix(this))));
+        f.push(X87::from_f64_exact(dot_product(n, matrix(this)).to_f64()));
         f.fabs();
         f.fcomp_m(cf(k::K_863C14));
         if !f.jp(5) {
@@ -272,8 +263,8 @@ pub fn apply_friction(this: Ent, friction: f32, cp: Ent) -> u8 {
     let tnp = GPtr::<u8>::cast::<sa_math::vector::CVector>(scale_vector(GPtr::<sa_math::vector::CVector>::cast::<u8>(lp(&mut tn)), cf(k::K_858B1C), GPtr::<sa_math::vector::CVector>::cast::<u8>(n.cast())));
     vector_add_assign(GPtr::<sa_math::vector::CVector>::cast::<u8>(lp(&mut dir)), tnp.cast::<u8>());
     let mut cr = CVector::new(0.0, 0.0, 0.0);
-    cross_product(lp(&mut cr), n.cast(), this.byte_add(MOVE_SPEED).cast());
-    normalise(lp(&mut cr));
+    cross_product(lp(&mut cr).cast(), n.cast(), this.byte_add(MOVE_SPEED).cast());
+    normalise(GPtr::<sa_math::vector::CVector>::cast::<[f32;3]>(lp(&mut cr)));
     let across = [across.x.to_bits(), across.y.to_bits(), across.z.to_bits()];
     for _ in 0..8 {
         let rnd = sa_core::orig::at_site(0x5458C5, rand);
@@ -299,19 +290,7 @@ pub fn apply_friction(this: Ent, friction: f32, cp: Ent) -> u8 {
         f.fadd_m(rf(cp, 8));
         let oz = f.fstp();
         let mut origin = CVector::new(ox, oy, oz);
-        fx_add_sparks(
-            GPtr::from_addr(G_FX),
-            lp(&mut origin).cast(),
-            lp(&mut dir).cast(),
-            force.to_bits(),
-            1,
-            across[0],
-            across[1],
-            across[2],
-            0,
-            0x3DCC_CCCD,
-            0x3F80_0000,
-        );
+        fx_add_sparks(GPtr::from_addr(G_FX), lp(&mut origin).cast(), lp(&mut dir).cast(), f32::from_bits(force.to_bits()), 1, sa_math::vector::CVector::new(f32::from_bits(across[0]), f32::from_bits(across[1]), f32::from_bits(across[2])), 0, f32::from_bits(0x3DCC_CCCD), f32::from_bits(0x3F80_0000));
     }
     1
 }

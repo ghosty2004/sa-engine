@@ -10,7 +10,7 @@ use sa_math::x87::X87;
 use crate::common::{f32_of, rd, wr, x, xi};
 
 use sa_core::bindings::entity_register_reference;
-use sa_core::bindings::find_player_ped;
+use sa_world::bindings::find_player_ped;
 use sa_core::bindings::vector_dot_product;
 use sa_core::bindings::vector_magnitude;
 use sa_world::bindings::get_percentage_progress;
@@ -56,7 +56,7 @@ pub fn bike_vehicle_damage(this: GPtr<u8>, intensity: f32, _component: u32, _dam
         return;
     }
     let mut d = rd::<f32>(this, 0xD8);
-    if rd::<u8>(this, 0x36) & 0xF8 == 0 && !lt(st0(get_percentage_progress()), x(100.0)) {
+    if rd::<u8>(this, 0x36) & 0xF8 == 0 && !lt(st0(get_percentage_progress().to_f64()), x(100.0)) {
         d = f32_of(x(d).fmul_m(0.5));
     }
     let cl = rd::<u8>(this, 0x614);
@@ -83,7 +83,7 @@ pub fn bike_vehicle_damage(this: GPtr<u8>, intensity: f32, _component: u32, _dam
     let dmg = rd::<GPtr<u8>>(this, 0xDC);
     if !dmg.is_null() && rd::<u8>(dmg, 0x36) & 7 == 1 {
         let up = rd::<GPtr<u8>>(this, 0x14).byte_add(0x20);
-        if gt(st0(vector_dot_product(this.byte_add(0xE0), up)), x(f32::from_bits(0x3F19_999A))) {
+        if gt(st0(vector_dot_product(this.byte_add(0xE0), up).to_f64()), x(f32::from_bits(0x3F19_999A))) {
             return;
         }
     }

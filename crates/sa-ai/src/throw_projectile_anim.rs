@@ -15,7 +15,7 @@ const THROW_CB: u32 = 0x61F890;
 const K_NEAR_SQ: usize = 0x858628;
 
 use sa_world::bindings::anim_blend_animation;
-use sa_core::bindings::assoc_set_finish_callback;
+use sa_anim::bindings::assoc_set_finish_callback;
 use sa_core::bindings::get_weapon_info as weapon_info_get;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::vector_ne;
@@ -72,7 +72,7 @@ pub fn throw_projectile_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
         anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), rd::<u32>(info, 0x1C), anim, f32::from_bits(0x447A_0000))
     };
     wr::<GPtr<u8>>(this, 0xC, a);
-    assoc_set_finish_callback(a, THROW_CB, GPtr::from_addr((this.addr() as u32) as usize));
+    assoc_set_finish_callback(a, THROW_CB, GPtr::<u8>::addr(GPtr::from_addr((this.addr() as u32) as usize)) as u32);
 }
 
 /// `CTaskSimpleThrowProjectile::ProcessPed(CPed*)` (0x62AF50, `ret 4`): done (AL = 1) when finished (+8) or when the

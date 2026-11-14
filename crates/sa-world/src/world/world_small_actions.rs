@@ -15,17 +15,15 @@ use crate::bindings::population_remove_ped as remove_ped;
 use crate::bindings::remove_from_moving_list;
 use crate::bindings::simple_transform_update_rw_matrix as transform_update_rw;
 use sa_core::bindings::entity_register_reference as register_reference;
-use sa_core::bindings::entity_update_rw_frame as update_rw_frame;
-use sa_core::bindings::find_player_ped;
+use crate::bindings::entity_update_rw_frame as update_rw_frame;
+use crate::bindings::find_player_ped;
 use sa_core::bindings::matrix_update_rw_matrix as matrix_update_rw;
 use crate::bindings::get_num_fires_in_range;
+use crate::bindings::fire_manager_start_fire as start_fire;
+use crate::bindings::world_test_sphere_against_world as test_sphere_against_world;
 orig! {
     /// `CProjectileInfo::RemoveDetonatorProjectiles()` (0x738860)
     fn remove_detonator_projectiles() = cdecl 0x738860 => unported;
-    /// `CWorld::TestSphereAgainstWorld(CVector, float, CEntity*, bool x6)` (0x569E20)
-    fn test_sphere_against_world(c: CVector, radius: f32, ignore: u32, b: u32, v: u32, p: u32, o: u32, d: u32, cam: u32) -> GPtr<u8> = cdecl 0x569E20 => unported;
-    /// `CFireManager::StartFire(CVector, float, uint8, CEntity*, uint32, int8, uint8)` (0x539F00)
-    fn start_fire(fm: GPtr<u8>, pos: CVector, size: f32, a: u32, creator: u32, time: u32, gens: u32, b: u32) -> GPtr<u8> = thiscall 0x539F00 => unported;
     /// `CWorld::RepositionOneObject(CEntity*)` (0x569850)
     fn reposition_one_object(e: GPtr<u8>) = cdecl 0x569850 => unported;
     /// `CEntity::Remove()` (vtable +0xC)

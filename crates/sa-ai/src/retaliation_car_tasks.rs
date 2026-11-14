@@ -15,20 +15,20 @@ use crate::common::*;
 use sa_world::bindings::leave_car_and_flee_ctor;
 use crate::bindings::vehicle_is_driver;
 use crate::bindings::vehicle_is_passenger;
-use sa_core::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference;
 use sa_core::bindings::entity_register_reference;
 use sa_core::bindings::get_weapon_info as weapon_info_get;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::compute_target_door_to_exit;
 use sa_world::bindings::is_player_on_a_mission;
 use sa_world::bindings::ped_get_weapon_skill;
-use sa_world::bindings::task_complex_ctor;
+use crate::bindings::task_complex_ctor;
 use sa_world::bindings::wander_get_wander_task_by_ped_type;
 use sa_world::bindings::weapon_is_type_melee;
 use crate::bindings::create_sub_task_o_63e040 as enter_car_create_sub_task;
 use sa_world::bindings::ped_set_current_weapon_slot;
 use sa_world::bindings::simple_car_drive_ctor as car_drive_ctor;
-use sa_world::bindings::tm_set_task as task_manager_set_task;
+use crate::bindings::tm_set_task as task_manager_set_task;
 orig! {
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_get_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
@@ -75,7 +75,7 @@ pub fn destroy_car_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
             let mut i = 0u32;
             while i < 13 {
                 if rd::<i32>(ped, 0x5AC + i as isize * 0x1C) > 0 {
-                    ped_set_current_weapon_slot(ped, i);
+                    ped_set_current_weapon_slot(ped, i as i32);
                     return rd::<GPtr<u8>>(this, 8);
                 }
                 i += 1;
@@ -114,7 +114,7 @@ pub fn drag_ped_from_car_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) ->
     let slot = this.byte_add(0xC);
     let old = rd::<GPtr<u8>>(this, 0xC);
     if !old.is_null() {
-        entity_clean_up_old_reference(old, slot.cast::<GPtr<u8>>());
+        entity_clean_up_old_reference(old, slot.cast::<u8>());
     }
     let v = rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0x50), 0x58C);
     wr::<GPtr<u8>>(this, 0xC, v);
@@ -151,7 +151,7 @@ static STALE_REF_CELL: core::sync::atomic::AtomicU32 = core::sync::atomic::Atomi
        unverified = "carjack-1", route = "L2", hazards = "heap-writes", recs = "carjack",
        note = "the original registers the vehicle reference at its argument slot; the port at a static cell")]
 pub fn destroy_car_armed_ctor(this: GPtr<u8>, veh: GPtr<u8>, a: u32, b: u32, c: u32) -> GPtr<u8> {
-    task_complex_ctor(this);
+    task_complex_ctor(this.addr() as u32);
     wr::<u32>(this, 0, 0x86D9C4);
     wr::<GPtr<u8>>(this, 0x10, veh);
     for off in (0x14..=0x34).step_by(4) {
@@ -245,7 +245,7 @@ pub fn destroy_car_armed_calculate_search_position_and_ranges(this: GPtr<u8>, pe
     wr::<f32>(this, 0x48, f32_of(len));
     let slot = isize::from(rd::<i8>(ped, 0x718));
     let ty = rd::<u32>(ped, 0x5A0 + slot * 0x1C);
-    let skill = ped_get_weapon_skill(ped);
+    let skill = ped_get_weapon_skill(ped) as u32;
     let info = weapon_info_get(ty as i32, (skill as i32) as u8);
     let r = x(rd::<f32>(info, 8)).fmul_m(g::<f32>(0x858B8C).read());
     wr::<f32>(this, 0x38, f32_of(r));

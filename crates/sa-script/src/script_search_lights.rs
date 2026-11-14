@@ -14,7 +14,7 @@ use sa_core::hook;
 /// `CTheScripts::ScriptSearchLightArray` (0xA94D68, 8 of 0x7C)
 const SEARCH_LIGHTS: usize = 0xA94D68;
 
-use sa_core::bindings::entity_update_rw_frame;
+use sa_world::bindings::entity_update_rw_frame;
 use sa_core::bindings::matrix_rotate_z;
 use sa_core::bindings::matrix_update_rw_matrix;
 use sa_core::bindings::vector_normalise;
@@ -37,7 +37,7 @@ fn search_light_move(sl: GPtr<u8>, t: GPtr<u8>) -> bool {
     let len = x(d[2]).fmul_m(d[2]).fadd(x(d[1]).fmul_m(d[1])).fadd(x(d[0]).fmul_m(d[0])).fsqrt();
     if len.fcom(x(rd::<f32>(sl, 0x40))).test_parity(0x41) {
         let mut v = d;
-        vector_normalise(GPtr::from_raw(v.as_mut_ptr()).cast());
+        vector_normalise(GPtr::<u8>::cast::<[f32;3]>(GPtr::from_raw(v.as_mut_ptr()).cast()));
         let speed = x(rd::<f32>(sl, 0x40));
         let s = [x(v[0]).fmul(speed).to_f32(), x(v[1]).fmul(speed).to_f32(), speed.fmul_m(v[2]).to_f32()];
         for (i, si) in s.iter().enumerate() {
@@ -136,7 +136,7 @@ pub fn the_scripts_process_all_search_lights() {
             x(rd::<f32>(sl, 0x18)).fsub_m(rd::<f32>(tp, 4)).to_f32(),
             x(rd::<f32>(sl, 0x1C)).fsub_m(rd::<f32>(tp, 8)).to_f32(),
         ];
-        vector_normalise(GPtr::from_raw(d.as_mut_ptr()).cast());
+        vector_normalise(GPtr::<u8>::cast::<[f32;3]>(GPtr::from_raw(d.as_mut_ptr()).cast()));
         let heading = x(d[0]).fchs().fpatan(x(d[1])).to_f32();
         let m = rd::<GPtr<u8>>(tower, 0x14);
         let base = [rd::<f32>(m, 0x30), rd::<f32>(m, 0x34), rd::<f32>(m, 0x38)];

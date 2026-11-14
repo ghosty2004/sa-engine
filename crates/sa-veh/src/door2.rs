@@ -13,7 +13,7 @@ use sa_math::x87::X87;
 use crate::common::{g, jne_mask, jp5, rd, wr, x, xi};
 
 pub use sa_core::bindings::cross_product;
-pub use sa_core::bindings::matrix_dtor;
+pub use sa_world::bindings::matrix_dtor;
 pub use sa_core::bindings::matrix_update_rw;
 pub use sa_world::bindings::matrix_copy_ctor;
 pub use sa_core::bindings::matrix_ctor_rw;
@@ -56,13 +56,7 @@ pub fn process_impact(
     offset: GPtr<u8>,
 ) -> u8 {
     let mut vel = [0f32; 3];
-    physical_get_speed(
-        veh,
-        vec_ptr(&mut vel),
-        f32::from_bits(rd::<u32>(offset, 0)),
-        f32::from_bits(rd::<u32>(offset, 4)),
-        f32::from_bits(rd::<u32>(offset, 8)),
-    );
+    physical_get_speed(veh, GPtr::<u8>::cast::<sa_math::vector::CVector>(vec_ptr(&mut vel)), sa_math::vector::CVector::new(f32::from_bits(rd::<u32>(offset, 0)), f32::from_bits(rd::<u32>(offset, 4)), f32::from_bits(rd::<u32>(offset, 8))));
     let mut c = [0f32; 3];
     let cp = cross_product(vec_ptr(&mut c), old_turn, offset);
     let oz = x(rd::<f32>(cp, 8)).fadd_m(rd::<f32>(old_move, 8));
@@ -153,13 +147,7 @@ pub fn process(
     offset: GPtr<u8>,
 ) -> u8 {
     let mut vel = [0f32; 3];
-    physical_get_speed(
-        veh,
-        vec_ptr(&mut vel),
-        f32::from_bits(rd::<u32>(offset, 0)),
-        f32::from_bits(rd::<u32>(offset, 4)),
-        f32::from_bits(rd::<u32>(offset, 8)),
-    );
+    physical_get_speed(veh, GPtr::<u8>::cast::<sa_math::vector::CVector>(vec_ptr(&mut vel)), sa_math::vector::CVector::new(f32::from_bits(rd::<u32>(offset, 0)), f32::from_bits(rd::<u32>(offset, 4)), f32::from_bits(rd::<u32>(offset, 8))));
     let mut c = [0f32; 3];
     let cp = cross_product(vec_ptr(&mut c), old_turn, offset);
     let oz = x(rd::<f32>(cp, 8)).fadd_m(rd::<f32>(old_move, 8));
@@ -368,13 +356,7 @@ pub fn process_panel(
     let mut cp = [0f32; 3];
     multiply3x3_mv(vec_ptr(&mut cp), rd::<GPtr<u8>>(veh, 0x14), fmp.byte_add(0x30));
     let mut vel = [0f32; 3];
-    physical_get_speed(
-        veh,
-        vec_ptr(&mut vel),
-        f32::from_bits(cp[0].to_bits()),
-        f32::from_bits(cp[1].to_bits()),
-        f32::from_bits(cp[2].to_bits()),
-    );
+    physical_get_speed(veh, GPtr::<u8>::cast::<sa_math::vector::CVector>(vec_ptr(&mut vel)), sa_math::vector::CVector::new(f32::from_bits(cp[0].to_bits()), f32::from_bits(cp[1].to_bits()), f32::from_bits(cp[2].to_bits())));
     let mut turn = [tx, ty, tz];
     let mut xo = [0f32; 3];
     let xr = cross_product(vec_ptr(&mut xo), vec_ptr(&mut turn), vec_ptr(&mut cp));

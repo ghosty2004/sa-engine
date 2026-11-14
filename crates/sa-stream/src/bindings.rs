@@ -99,8 +99,23 @@ orig! {
 }
 
 orig! {
+    /// `CStreaming::InitImageList` (0x4083C0)
+    pub fn streaming_init_image_list() = cdecl 0x4083C0 => crate::streaming::init_image_list;
+}
+
+orig! {
+    /// `CStreaming::RemoveModel` (0x4089A0)
+    pub fn streaming_remove_model(id: i32) = cdecl 0x4089A0 => crate::streaming::remove_model;
+}
+
+orig! {
     /// `CStreaming::RequestVehicleUpgrade` (0x408C70)
     pub fn request_vehicle_upgrade(m: i32, flags: i32) = cdecl 0x408C70 => unported;
+}
+
+orig! {
+    /// `CStreaming::DeleteAllRwObjects` (0x4090A0)
+    pub fn call_delete_all_rw_objects() = cdecl 0x4090A0 => crate::streaming::delete_all_rw_objects;
 }
 
 orig! {
@@ -114,8 +129,28 @@ orig! {
 }
 
 orig! {
+    /// `CStreaming::SetModelIsDeletable` (0x409C10)
+    pub fn set_model_is_deletable(id: i32) = cdecl 0x409C10 => crate::streaming::set_model_is_deletable;
+}
+
+orig! {
+    /// `CStreaming::SetMissionDoesntRequireModel` (0x409C90)
+    pub fn set_mission_doesnt_require_model(model: i32) = cdecl 0x409C90 => crate::streaming::set_mission_doesnt_require_model;
+}
+
+orig! {
+    /// `CStreaming::RequestSpecialModel` (0x409D10)
+    pub fn request_special_model(id: i32, name: GPtr<u8>, flags: i32) = cdecl 0x409D10 => crate::streaming::request_special_model;
+}
+
+orig! {
     /// `CStreaming::ReclassifyLoadedCars` (0x40AFA0)
     pub fn reclassify_loaded_cars() = cdecl 0x40AFA0 => crate::streaming::reclassify_loaded_cars;
+}
+
+orig! {
+    /// `CStreaming::RemoveCurrentZonesModels` (0x40B080)
+    pub fn streaming_remove_current_zones_models() = cdecl 0x40B080 => crate::streaming::remove_current_zones_models;
 }
 
 orig! {
@@ -134,6 +169,11 @@ orig! {
 }
 
 orig! {
+    /// `CStreaming::RemoveLoadedVehicle` (0x40C020)
+    pub fn call_remove_loaded_vehicle() -> bool = cdecl 0x40C020 => crate::streaming::remove_loaded_vehicle;
+}
+
+orig! {
     /// `CStreaming::RemoveTxdModel` (0x40C180)
     pub fn call_remove_txd_model(slot: i32) = cdecl 0x40C180 => crate::streaming::remove_txd_model;
 }
@@ -144,6 +184,11 @@ orig! {
 }
 
 orig! {
+    /// `CStreaming::MakeSpaceFor` (0x40E120)
+    pub fn streaming_make_space_for(n: i32) = cdecl 0x40E120 => crate::streaming::make_space_for;
+}
+
+orig! {
     /// `CStreaming::LoadRequestedModels` (0x40E3A0)
     pub fn call_load_requested_models() = cdecl 0x40E3A0 => crate::streaming::load_requested_models;
 }
@@ -151,6 +196,11 @@ orig! {
 orig! {
     /// `CStreaming::FlushRequestList` (0x40E4E0)
     pub fn call_flush_request_list() = cdecl 0x40E4E0 => crate::streaming::flush_request_list;
+}
+
+orig! {
+    /// `CStreaming::LoadAllRequestedModels` (0x40EA10)
+    pub fn load_all_requested_models(prio: u8) = cdecl 0x40EA10 => crate::streaming::load_all_requested_models;
 }
 
 orig! {
@@ -180,7 +230,7 @@ orig! {
 
 orig! {
     /// `CColModel::operator new` (0x40FC30)
-    pub fn col_model_new(size: u32) -> GPtr<u8> = cdecl 0x40FC30 => unported;
+    pub fn col_model_new(size: u32) -> GPtr<sa_core::pools::ColModelSlot> = cdecl 0x40FC30 => unported;
 }
 
 orig! {
@@ -206,6 +256,11 @@ orig! {
 orig! {
     /// `CBaseModelInfo::SwaysInWind` (0x4212C0)
     pub fn model_info_sways_in_wind(mi: GPtr<u8>) -> u32 = thiscall 0x4212C0 => unported;
+}
+
+orig! {
+    /// `CEntryExitManager::AddOne` (0x43FA00)
+    pub fn entry_exit_add_one(a: f32, b: f32, c: f32, d: f32, e: f32, f2: f32, g: f32, h: f32, i: f32, j: f32, k: f32, area: i32, flags: u32, extra: u32, t1: u32, t2: u32, sky: u32, title: GPtr<u8>) -> i32 = cdecl 0x43FA00 => unported;
 }
 
 orig! {
@@ -239,18 +294,38 @@ orig! {
 }
 
 orig! {
+    /// `CBaseModelInfo::Init` (0x4C4B10)
+    pub fn base_init(this: GPtr<crate::shared::CBaseModelInfo>) = thiscall 0x4C4B10 => crate::modelinfo::base::init;
+}
+
+orig! {
     /// `CBaseModelInfo::SetTexDictionary` (0x4C4B40)
-    pub fn mi_set_tex_dictionary(mi: GPtr<u8>, name: GPtr<u8>) = thiscall 0x4C4B40 => unported;
+    pub fn mi_set_tex_dictionary(mi: GPtr<crate::shared::CBaseModelInfo>, name: GPtr<u8>) = thiscall 0x4C4B40 => crate::modelinfo::base::set_tex_dictionary;
+}
+
+orig! {
+    /// `CBaseModelInfo::AddTexDictionaryRef` (0x4C4B80)
+    pub fn add_tex_dictionary_ref(mi: GPtr<crate::shared::CBaseModelInfo>) = thiscall 0x4C4B80 => crate::modelinfo::base::add_tex_dictionary_ref;
+}
+
+orig! {
+    /// `CBaseModelInfo::RemoveTexDictionaryRef` (0x4C4B90)
+    pub fn remove_tex_dictionary_ref(mi: GPtr<crate::shared::CBaseModelInfo>) = thiscall 0x4C4B90 => crate::modelinfo::base::remove_tex_dictionary_ref;
 }
 
 orig! {
     /// `CBaseModelInfo::AddRef` (0x4C4BA0)
-    pub fn model_info_add_ref(mi: GPtr<u8>) = thiscall 0x4C4BA0 => unported;
+    pub fn model_info_add_ref(mi: GPtr<crate::shared::CBaseModelInfo>) = thiscall 0x4C4BA0 => crate::modelinfo::base::add_ref;
 }
 
 orig! {
     /// `CBaseModelInfo::RemoveRef` (0x4C4BB0)
-    pub fn model_info_remove_ref(mi: GPtr<u8>) = thiscall 0x4C4BB0 => unported;
+    pub fn model_info_remove_ref(mi: GPtr<crate::shared::CBaseModelInfo>) = thiscall 0x4C4BB0 => crate::modelinfo::base::remove_ref;
+}
+
+orig! {
+    /// `CBaseModelInfo::DeleteCollisionModel` (0x4C4C40)
+    pub fn delete_collision_model(mi: GPtr<crate::shared::CBaseModelInfo>) = thiscall 0x4C4C40 => crate::modelinfo::base::delete_collision_model;
 }
 
 orig! {
@@ -259,13 +334,38 @@ orig! {
 }
 
 orig! {
+    /// `CClumpModelInfo::Init` (0x4C4E40)
+    pub fn clump_init(mi: GPtr<crate::shared::CBaseModelInfo>) = thiscall 0x4C4E40 => crate::modelinfo::clump::init;
+}
+
+orig! {
+    /// `CClumpModelInfo::DeleteRwObject` (0x4C4E70)
+    pub fn clump_delete_rw_object(this: GPtr<crate::shared::CBaseModelInfo>) = thiscall 0x4C4E70 => crate::modelinfo::clump::delete_rw_object;
+}
+
+orig! {
+    /// `CClumpModelInfo::SetClump` (0x4C4F70)
+    pub fn clump_set_clump(this: GPtr<crate::shared::CBaseModelInfo>, clump: GPtr<u8>) = thiscall 0x4C4F70 => crate::modelinfo::clump::set_clump;
+}
+
+orig! {
     /// `CClumpModelInfo::GetFrameFromId` (0x4C53C0)
     pub fn get_frame_from_id(clump: GPtr<u8>, id: i32) -> GPtr<u8> = cdecl 0x4C53C0 => crate::modelinfo::clump::get_frame_from_id;
 }
 
 orig! {
+    /// `CClumpModelInfo::GetFrameFromName` (0x4C5400)
+    pub fn clump_get_frame_from_name(c: GPtr<u8>, name: GPtr<u8>) -> GPtr<u8> = cdecl 0x4C5400 => crate::modelinfo::clump::get_frame_from_name;
+}
+
+orig! {
     /// `CClumpModelInfo::FillFrameArray` (0x4C5440)
     pub fn fill_frame_array(clump: GPtr<u8>, frames: GPtr<u8>) = cdecl 0x4C5440 => unported;
+}
+
+orig! {
+    /// `CClumpModelInfo::SetFrameIds` (0x4C5460)
+    pub fn clump_set_frame_ids(this: GPtr<crate::shared::CBaseModelInfo>, ids: GPtr<u8>) = thiscall 0x4C5460 => crate::modelinfo::clump::set_frame_ids;
 }
 
 orig! {
@@ -286,6 +386,11 @@ orig! {
 orig! {
     /// `CModelInfo::IsCarModel` (0x4C5AA0)
     pub fn is_car_model(mi: u32) -> u8 = cdecl 0x4C5AA0 => unported;
+}
+
+orig! {
+    /// `CPedModelInfo::CreateHitColModelSkinned` (0x4C6D90)
+    pub fn create_hit_col_model_skinned(mi: GPtr<crate::shared::CBaseModelInfo>, c: GPtr<u8>) = thiscall 0x4C6D90 => crate::modelinfo::ped::create_hit_col_model_skinned;
 }
 
 orig! {
@@ -350,7 +455,7 @@ orig! {
 
 orig! {
     /// `CCamera::CalculateGroundHeight` (0x514B80)
-    pub fn calculate_ground_height(cam: GPtr<u8>, ty: i32) -> f64 = thiscall 0x514B80 => unported;
+    pub fn calculate_ground_height(cam: GPtr<u8>, ty: i32) -> sa_math::x87::X87 = reg("args = ecx stack; pop") 0x514B80 => unported;
 }
 
 orig! {
@@ -366,6 +471,11 @@ orig! {
 orig! {
     /// `CEntity::IsVisible` (0x536BC0)
     pub fn entity_is_visible(e: GPtr<u8>) -> u8 = thiscall 0x536BC0 => unported;
+}
+
+orig! {
+    /// `CFileLoader::LoadLine-File` (0x536F80)
+    pub fn load_line(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x536F80 => crate::fileloader::load_line_file;
 }
 
 orig! {
@@ -399,6 +509,11 @@ orig! {
 }
 
 orig! {
+    /// `CLoadingScreen::LoadingScreen` (0x53DED0)
+    pub fn loading_screen(title: GPtr<u8>, msg: GPtr<u8>, unused: GPtr<u8>) = cdecl 0x53DED0 => crate::loading_screen::loading_screen;
+}
+
+orig! {
     /// `CPad::StopPadsShaking` (0x541D70)
     pub fn pad_stop_pads_shaking() = cdecl 0x541D70 => unported;
 }
@@ -406,6 +521,11 @@ orig! {
 orig! {
     /// `CSimpleTransform::UpdateMatrix` (0x54F1B0)
     pub fn simple_transform_update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => unported;
+}
+
+orig! {
+    /// `CPlaceable::AllocateStaticMatrix` (0x54F4C0)
+    pub fn allocate_static_matrix(this: GPtr<u8>) = thiscall 0x54F4C0 => unported;
 }
 
 orig! {
@@ -479,6 +599,11 @@ orig! {
 }
 
 orig! {
+    /// `CLoadingScreen::SetLoadingBarMsg` (0x590240)
+    pub fn loading_screen_set_loading_bar_msg(msg: GPtr<u8>, msg2: GPtr<u8>) = cdecl 0x590240 => crate::loading_screen::set_loading_bar_msg;
+}
+
+orig! {
     /// `CLoadingScreen::Pause` (0x590310)
     pub fn loading_screen_pause() = cdecl 0x590310 => unported;
 }
@@ -486,6 +611,11 @@ orig! {
 orig! {
     /// `CLoadingScreen::Continue` (0x590320)
     pub fn loading_screen_continue() = cdecl 0x590320 => crate::loading_screen::continue_;
+}
+
+orig! {
+    /// `CLoadingScreen::NewChunkLoaded` (0x590D00)
+    pub fn loading_screen_new_chunk_loaded() = cdecl 0x590D00 => crate::loading_screen::new_chunk_loaded;
 }
 
 orig! {
@@ -501,6 +631,11 @@ orig! {
 orig! {
     /// `CColAccel::isCacheLoading` (0x5B2AC0)
     pub fn col_accel_is_cache_loading() -> u8 = cdecl 0x5B2AC0 => unported;
+}
+
+orig! {
+    /// `CBaseModelInfo::SetBaseModelInfoFlags` (0x5B3AD0)
+    pub fn set_base_model_info_flags(mi: GPtr<crate::shared::CBaseModelInfo>, flags: u32) = cdecl 0x5B3AD0 => crate::modelinfo::base::set_base_model_info_flags;
 }
 
 orig! {
@@ -524,8 +659,13 @@ orig! {
 }
 
 orig! {
+    /// `CLoadedCarGroup::Clear` (0x611B90)
+    pub fn car_group_clear(g: GPtr<crate::loaded_car_group::CLoadedCarGroup>) = thiscall 0x611B90 => crate::loaded_car_group::clear;
+}
+
+orig! {
     /// `CLoadedCarGroup::PickRandomCar` (0x611C50)
-    pub fn pick_random_car(this: GPtr<u8>, a: u32, b: u32) -> i32 = thiscall 0x611C50 => unported;
+    pub fn pick_random_car(this: GPtr<crate::loaded_car_group::CLoadedCarGroup>, a: u8, b: u8) -> i32 = thiscall 0x611C50 => crate::loaded_car_group::pick_random_car;
 }
 
 orig! {
@@ -576,6 +716,26 @@ orig! {
 orig! {
     /// `RwTexDictionaryGtaStreamRead` (0x730FC0)
     pub fn rw_tex_dictionary_gta_stream_read(stream: GPtr<u8>) -> GPtr<u8> = cdecl 0x730FC0 => crate::rw_gta_stream::rw_tex_dictionary_gta_stream_read;
+}
+
+orig! {
+    /// `CTxdStore::PushCurrentTxd` (0x7316A0)
+    pub fn push_current_txd() = cdecl 0x7316A0 => crate::txdstore::push_current_txd;
+}
+
+orig! {
+    /// `CTxdStore::PopCurrentTxd` (0x7316B0)
+    pub fn pop_current_txd() = cdecl 0x7316B0 => crate::txdstore::pop_current_txd;
+}
+
+orig! {
+    /// `CTxdStore::SetCurrentTxd` (0x7319C0)
+    pub fn set_current_txd(slot: i32) = cdecl 0x7319C0 => crate::txdstore::set_current_txd;
+}
+
+orig! {
+    /// `CTxdStore::AddRef` (0x731A00)
+    pub fn txd_add_ref(slot: i32) = cdecl 0x731A00 => crate::txdstore::add_ref;
 }
 
 orig! {
@@ -656,11 +816,6 @@ orig! {
 orig! {
     /// `RpMatFXMaterialGetEffects` (0x812140)
     pub fn matfx_get_effects(m: GPtr<u8>) -> u32 = cdecl 0x812140 => unported;
-}
-
-orig! {
-    /// `operator_new` (0x821195)
-    pub fn crt_new(size: u32) -> GPtr<u8> = cdecl 0x821195 => unported;
 }
 
 orig! {

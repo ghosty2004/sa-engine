@@ -27,7 +27,7 @@ sa_core::globals! {
 pub use sa_core::bindings::get_model_info as get_model_info_by_name;
 pub use crate::bindings::assoc_group_destroy_associations as call_destroy_associations;
 pub use crate::bindings::assoc_group_get_animation as call_get_animation_name;
-pub use sa_core::bindings::anim_get_animation as manager_get_animation_name;
+pub use crate::bindings::anim_get_animation as manager_get_animation_name;
 orig! {
     /// the static association's vector deleting destructor (vtable slot 0)
     pub fn static_vdelete(this: GPtr<u8>, fl: u32) -> GPtr<u8> = thiscall vslot 0x0 => unported;
@@ -257,7 +257,7 @@ pub fn create_associations_3(this: GPtr<u8>, block_name: GPtr<u8>, anim_names: G
         if found != -1 {
             g::<u32>(0xAAE948).write(0);
             let obj = obj_names.byte_add((found as u32).wrapping_mul(stride) as i32 as isize);
-            let mi = get_model_info_by_name(obj, GPtr::<i32>::cast::<u8>(GPtr::NULL));
+            let mi = get_model_info_by_name(obj, GPtr::NULL);
             if !mi.is_null() {
                 let clump = model_create_instance(mi);
                 rp_anim_blend_clump_init(clump);

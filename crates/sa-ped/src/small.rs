@@ -7,7 +7,7 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
-pub use sa_world::bindings::get_weapon_skill_type_call;
+pub use crate::bindings::get_weapon_skill_type_call;
 pub use sa_world::bindings::entity_delete_rw_object;
 pub use sa_core::bindings::get_weapon_info as get_weapon_info_call;
 orig! {
@@ -85,7 +85,7 @@ pub fn ctor_85b4c8(this: GPtr<u8>, arg: u32) -> GPtr<u8> {
 pub fn can_we_run_and_fire_with_weapon(this: GPtr<u8>) -> u8 {
     let slot = i32::from(rd::<i8>(this, 0x718));
     let ty = rd::<i32>(this, (slot * 0x1C + 0x5A0) as isize);
-    let skill = get_weapon_skill_type_call(this, ty) as u8;
+    let skill = (get_weapon_skill_type_call(this, ty) as i32) as u8;
     let wi = get_weapon_info_call(ty, i32::from(skill) as u8);
     ((rd::<u32>(wi, 0x18) >> 1) & 1) as u8
 }

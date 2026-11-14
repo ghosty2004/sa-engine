@@ -46,7 +46,7 @@ import sys
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 CSV = os.path.join(ROOT, 'catalog', 'bindings.csv')
 CRATES = os.path.join(ROOT, 'crates')
-FIELDS = ['address', 'crate', 'name', 'conv', 'spec', 'args', 'ret', 'target', 'catalogue_name']
+FIELDS = ['address', 'crate', 'name', 'conv', 'spec', 'args', 'ret', 'target', 'catalogue_name', 'port']
 SUBSYS_CRATE = {
     'CORE': 'sa-core', 'STREAM': 'sa-stream', 'WORLD': 'sa-world', 'COLL': 'sa-world', 'PHYS': 'sa-world',
     'POP': 'sa-pop', 'SCRIPT': 'sa-script', 'WEAPON': 'sa-weapon', 'PED': 'sa-ped', 'INPUT': 'sa-input',
@@ -492,13 +492,34 @@ def load_rows():
     return list(csv.DictReader(open(CSV)))
 
 
+X87_TYPES = ('sa_math::x87::X87', 'X87')
+
+
+def x87_spec(r):
+    """A `cdecl` / `stdcall` / `thiscall` function returning the full 80-bit ST0 (`X87`): `orig!`'s plain forms
+    round ST0 to an `f64`, so the binding goes through the register convention (`regconv`), which keeps all 80
+    bits: `reg("args = [ecx] stack..[; pop]")`, the same arguments and stack cleanup as the convention."""
+    n = len([a for a in row_args(r['args']) if a])
+    regs = ['ecx'] if r['conv'] == 'thiscall' else []
+    stack = n - len(regs)
+    words = ' '.join(regs + ['stack'] * stack) or 'stack'
+    pop = '; pop' if r['conv'] in ('stdcall', 'thiscall') and stack else ''
+    if not regs and not stack:
+        return '"args = stack"'
+    return f'"args = {words}{pop}"'
+
+
 def render(crate, rows):
     """One `orig!` invocation per binding (a single large block would exceed the macro recursion limit)."""
     s = HEADER
+    own = re.compile(r'(?<![\w:])%s::' % crate_mod(crate))
     for r in sorted(rows, key=lambda r: int(r['address'], 16)):
-        args = ', '.join(a.replace(':', ': ', 1) for a in row_args(r['args']) if a)
-        ret = f' -> {r["ret"]}' if r['ret'] else ''
+        # types by absolute path (`GPtr<sa_stream::shared::CBaseModelInfo>`) are `crate::` paths in their own crate
+        args = own.sub('crate::', ', '.join(a.replace(':', ': ', 1) for a in row_args(r['args']) if a))
+        ret = f' -> {own.sub("crate::", r["ret"])}' if r['ret'] else ''
         form = f'reg({r["spec"]}) {r["address"]}' if r['conv'] == 'reg' else f'{r["conv"]} {r["address"]}'
+        if r['conv'] != 'reg' and r['ret'] in X87_TYPES:
+            form = f'reg({x87_spec(r)}) {r["address"]}'
         cn = r['catalogue_name'] or 'FUN_%08x' % int(r['address'], 16)
         s += '\norig! {\n'
         s += f'    /// `{cn}` ({r["address"]})\n'
@@ -507,10 +528,31 @@ def render(crate, rows):
     return s
 
 
+def twin_rows(rows):
+    """The ported twins: a binding whose crate lies below its port's crate (`port` column, a caller in a lower
+    layer reaches the port through the phase B registry) is also declared in the port's crate, with the port as
+    its `=>` target, for the callers that may depend on that crate."""
+    names = collections.defaultdict(set)
+    for r in rows:
+        names[r['crate']].add(r['name'])
+    out = []
+    for r in sorted(rows, key=lambda r: int(r['address'], 16)):
+        if not r.get('port'):
+            continue
+        pc = r['port'].split('::', 1)[0].replace('_', '-')
+        t = dict(r)
+        t['crate'], t['target'], t['port'] = pc, r['port'], ''
+        if t['name'] in names[pc]:
+            t['name'] = f"{r['name']}_{int(r['address'], 16):x}"
+        names[pc].add(t['name'])
+        out.append(t)
+    return out
+
+
 def generate(check):
     rows = load_rows()
     by = collections.defaultdict(list)
-    for r in rows:
+    for r in rows + twin_rows(rows):
         by[r['crate']].append(r)
     bad = []
     for crate in sorted(set(by) | {c for c in os.listdir(CRATES) if os.path.exists(os.path.join(CRATES, c, 'src', 'bindings.rs'))}):
@@ -562,6 +604,24 @@ def check_redeclared(rows):
 
 def main():
     rep = sys.argv[sys.argv.index('--report') + 1] if '--report' in sys.argv else None
+    if '--repoint' in sys.argv:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        sys.path.insert(0, os.path.join(ROOT, 'tools', 'lib'))
+        import bindings_migrate
+        stats = bindings_migrate.repoint(sys.argv[sys.argv.index('--repoint') + 1], '--dry' in sys.argv)
+        for k, v in sorted(stats.items()):
+            print(f'{k}: {v}')
+        if '--dry' in sys.argv:
+            return 0
+    if '--twin' in sys.argv:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        sys.path.insert(0, os.path.join(ROOT, 'tools', 'lib'))
+        import bindings_migrate
+        stats = bindings_migrate.twin(sys.argv[sys.argv.index('--twin') + 1], '--dry' in sys.argv)
+        for k, v in sorted(stats.items()):
+            print(f'{k}: {v}')
+        if '--dry' in sys.argv:
+            return 0
     if '--resolve' in sys.argv:
         sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
         import bindings_migrate
@@ -585,7 +645,7 @@ def main():
         bad.append(f'{e}: repeats the binding in catalog/bindings.csv (import it)')
     print(f'bindings: {len(rows)} in {len({r["crate"] for r in rows})} crates; '
           f'{len(other)} other declarations of bound addresses (signature or target conflicts)')
-    if rep and '--migrate' not in sys.argv:
+    if rep and not any(a in sys.argv for a in ('--migrate', '--resolve', '--repoint', '--twin')):
         open(rep, 'w').write('\n'.join(other) + '\n')
     for b in bad:
         print('FAIL', b)

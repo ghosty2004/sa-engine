@@ -14,9 +14,8 @@ use sa_core::{hook, orig};
 use crate::common::*;
 
 use sa_core::bindings::crt_free_8214bd as operator_delete;
+use sa_core::bindings::crt_new as operator_new;
 orig! {
-    /// `operator new(size_t)` (0x82119A)
-    fn operator_new(n: u32) -> u32 = cdecl 0x82119A => unported;
     /// `vector<CPedTaskPair>::_Xlen()` (0x5ECB30, throws `length_error`)
     fn xlen(v: GPtr<u8>) = thiscall 0x5ECB30 => unported;
     /// `vector<CPedTaskPair>::_Ucopy(first, last, dest)` (0x5EB960, `ret 0xC`; in-place insertion only)
@@ -128,7 +127,7 @@ pub fn insert_n(v: GPtr<u8>, at: u32, n: u32, valp: GPtr<u8>) {
             new_cap = size_o(v).wrapping_add(n);
         }
         let bytes = new_cap * E;
-        let buf = operator_new(bytes);
+        let buf = GPtr::<u8>::addr(operator_new(bytes)) as u32;
         let p = ucopy_o(rd::<u32>(v, 4), at, buf);
         fill_n_o(p, n, vp);
         ucopy_o(at, rd::<u32>(v, 8), p.wrapping_add(n * E));

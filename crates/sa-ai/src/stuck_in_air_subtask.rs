@@ -12,11 +12,11 @@ use crate::common::*;
 use crate::bindings::fall_and_get_up_ctor;
 use sa_world::bindings::flee_point_ctor as go_to_point_ctor;
 use crate::bindings::pad_jump_just_down;
-use sa_core::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference;
 use sa_core::bindings::general_get_radian_angle_between_points;
 use sa_world::bindings::get_pad_from_player;
 use sa_world::bindings::stand_still_ctor;
-use sa_world::bindings::task_complex_ctor;
+use crate::bindings::task_complex_ctor;
 use sa_core::bindings::clump_get_association;
 use sa_core::bindings::general_limit_radian_angle;
 use sa_world::bindings::pad_get_ped_walk_left_right;
@@ -39,7 +39,7 @@ pub fn event_object_collision_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x85ACA8);
     let o = rd::<GPtr<u8>>(this, 0x14);
     if !o.is_null() {
-        entity_clean_up_old_reference(o, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x14)));
+        entity_clean_up_old_reference(o, this.byte_add(0x14));
     }
     wr::<u32>(this, 0, 0x85AB38);
 }
@@ -79,7 +79,7 @@ pub fn task_complex_stuck_in_air_create_sub_task(_this: GPtr<u8>, ty: i32, ped: 
             if t.is_null() {
                 return t;
             }
-            task_complex_ctor(t);
+            task_complex_ctor(t.addr() as u32);
             wr::<u8>(t, 0x10, 0);
             wr::<u32>(t, 0, 0x870570);
             wr::<i32>(t, 0xC, -1);

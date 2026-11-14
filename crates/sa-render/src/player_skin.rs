@@ -5,16 +5,16 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
-use sa_core::bindings::pop_current_txd as txd_pop_current;
-use sa_core::bindings::push_current_txd as txd_push_current;
-use sa_core::bindings::rw_texture_create as texture_create;
-use sa_core::bindings::rw_texture_set_name as texture_set_name;
-use sa_core::bindings::image_destroy;
-use sa_core::bindings::raster_set_from_image;
-use sa_core::bindings::rw_raster_create as raster_create;
+use sa_stream::bindings::pop_current_txd as txd_pop_current;
+use sa_stream::bindings::push_current_txd as txd_push_current;
+use sa_rwcore::bindings::rw_texture_create as texture_create;
+use sa_rwcore::bindings::rw_texture_set_name as texture_set_name;
+use sa_rwcore::bindings::image_destroy;
+use sa_rwcore::bindings::raster_set_from_image;
+use sa_rwcore::bindings::rw_raster_create as raster_create;
 use sa_core::bindings::rw_tex_dictionary_add_texture as tex_dictionary_add_texture;
-use sa_core::bindings::rw_texture_read as texture_read;
-use sa_core::bindings::set_current_txd as txd_set_current;
+use sa_rwcore::bindings::rw_texture_read as texture_read;
+use sa_stream::bindings::set_current_txd as txd_set_current;
 orig! {
     /// CRT `sprintf(buf, fmt, s)` (0x821BB5)
     fn sprintf1(buf: u32, fmt: u32, s: GPtr<u8>) -> i32 = cdecl 0x821BB5 => unported;
@@ -54,7 +54,7 @@ pub fn get_skin_texture(name: GPtr<u8>) -> GPtr<u8> {
     let base = l.as_mut_ptr() as usize;
     let p = |i: usize| -> GPtr<u8> { GPtr::from_addr(base + 4 * i) };
     image_find_raster_format(img, 4, p(3), p(2), p(1), p(0));
-    let r = raster_create((l[3]) as i32, (l[2]) as i32, (l[1]) as i32, l[0]);
+    let r = raster_create((((l[3]) as i32) as u32) as i32, (((l[2]) as i32) as u32) as i32, (((l[1]) as i32) as u32) as i32, l[0]);
     raster_set_from_image(r, img);
     let t = texture_create(r);
     texture_set_name(t, name);

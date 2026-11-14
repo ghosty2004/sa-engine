@@ -39,13 +39,12 @@ const MATRIX_INSTANCES: usize = 0xC979C0;
 pub use crate::bindings::free_list_create_prealloc as freelist_create_prealloc;
 pub use crate::bindings::matrix_normal_error as normal_error_call;
 pub use crate::bindings::matrix_orthogonal_error as orthogonal_error_call;
+pub use crate::bindings::rw_inv_sqrt as inv_sqrt_call;
 orig! {
     /// `M->multiply(dst, a, b)` (stored pointer)
     pub fn call_multiply(f: u32, dst: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) = cdecl dyn => unported;
     /// `_rwMatrixIdentityError(m)` (0x7F1590, not ported)
     pub fn identity_error_call(m: GPtr<u8>) -> f64 = cdecl 0x7F1590 => unported;
-    /// `_rwInvSqrt(x)` (0x7EDB90)
-    pub fn inv_sqrt_call(v: f32) -> f64 = cdecl 0x7EDB90 => inv_sqrt_f64;
     /// `RwMatrixRotateOneMinusCosineSine(m, axis, omc, sin, op)` (0x7F1D00)
     pub fn rotate_omcs_call(m: GPtr<u8>, axis: GPtr<RwV3d>, omc: f32, sin: f32, op: i32) -> GPtr<u8> = cdecl 0x7F1D00 => rw_matrix_rotate_one_minus_cosine_sine;
     /// `_rwMatrixInvertOrthoNormalizedOrGeneral(dst, src)` (0x7F2160)
@@ -59,10 +58,6 @@ pub(crate) fn normal_error_f64(m: GPtr<u8>) -> f64 {
 #[cfg_attr(sa_phase_a, allow(dead_code))]
 pub(crate) fn orthogonal_error_f64(m: GPtr<u8>) -> f64 {
     rw_matrix_orthogonal_error(m).to_f64()
-}
-#[cfg_attr(sa_phase_a, allow(dead_code))]
-fn inv_sqrt_f64(v: f32) -> f64 {
-    crate::vector::rw_inv_sqrt(v).to_f64()
 }
 
 fn mmod() -> GPtr<u8> {
@@ -279,7 +274,7 @@ pub fn build_rotation(axis: GPtr<RwV3d>, omc: f32, sin: f32, out: &mut [u32; 16]
 /// returns m. (The original stores `rad` over its angle argument slot: not reproduced.)
 #[hook(addr = 0x7F1FD0, conv = cdecl, name = "RwMatrixRotate", expect = "83 EC 0C D9 44 24 18")]
 pub fn rw_matrix_rotate(m: GPtr<u8>, axis: GPtr<RwV3d>, angle: f32, op: i32) -> GPtr<u8> {
-    rotate_impl(|s| X87::from_f64_exact(inv_sqrt_call(s)), m, axis, angle, op)
+    rotate_impl(|s| X87::from_f64_exact(inv_sqrt_call(s).to_f64()), m, axis, angle, op)
 }
 
 /// [`rw_matrix_rotate`] with the inverse sqrt table given (host tests).

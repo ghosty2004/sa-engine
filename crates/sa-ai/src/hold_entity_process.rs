@@ -16,16 +16,16 @@ use crate::common::*;
 
 use sa_core::bindings::entity_register_reference;
 use sa_core::bindings::matrix_mul_vec;
-use sa_core::bindings::tm_get_task_secondary;
+use crate::bindings::tm_get_task_secondary;
 use sa_stream::bindings::ped_is_player;
-use sa_world::bindings::event_group_add;
+use crate::bindings::event_group_add;
 use sa_world::bindings::event_script_command_dtor;
 use sa_world::bindings::get_pad_from_player as player_get_pad;
 use sa_world::bindings::hold_entity_drop_entity as hold_drop_entity;
 use sa_world::bindings::pad_exit_vehicle_just_down;
 use sa_world::bindings::physical_add_to_moving_list;
 use sa_world::bindings::placeable_get_matrix;
-use sa_core::bindings::vector_sub;
+use sa_world::bindings::vector_sub;
 use sa_world::bindings::event_script_command_ctor;
 orig! {
     /// `CTask::GetTaskType` (vtable +0x10)
@@ -183,7 +183,7 @@ pub fn hold_entity_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
             }
             let mut p = [0f32; 3];
             let pp: GPtr<u8> = GPtr::from_raw(p.as_mut_ptr()).cast();
-            matrix_mul_vec(pp.cast::<f32>(), placeable_get_matrix(entity), this.byte_add(0x40));
+            matrix_mul_vec(pp.cast::<u8>(), placeable_get_matrix(entity), this.byte_add(0x40));
             let pm = rd::<GPtr<u8>>(ped, 0x14);
             let pos = if pm.is_null() { ped.byte_add(4) } else { pm.byte_add(0x30) };
             p[0] = x(p[0]).fsub_m(rd::<f32>(pos, 0)).to_f32();

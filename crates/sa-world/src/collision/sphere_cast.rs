@@ -50,9 +50,9 @@ use crate::bindings::sphere_cast_versus_vs_poly as sphere_cast_versus_vs_poly_ca
 use crate::bindings::sphere_cast_vs_bbox;
 use crate::bindings::sphere_cast_vs_sphere;
 use sa_core::bindings::col_box_set;
-use sa_core::bindings::col_sphere_set;
-use sa_core::bindings::matrix_dtor;
-use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
+use crate::bindings::col_sphere_set;
+use crate::bindings::matrix_dtor;
+use crate::bindings::placeable_allocate_matrix as allocate_matrix;
 orig! {
     /// `CColBox::operator=(const CColBox&)` (0x40EEC0, thiscall, `ret 4`): copies min, max (6 dwords),
     /// the surface/piece word and the light byte (0x1B bytes).
@@ -593,10 +593,10 @@ pub fn sphere_cast_vs_entity(a: GPtr<u8>, b: GPtr<u8>, e: GPtr<u8>) -> u8 {
     col_line_ctor(l0, a, b);
     let mut o1b = [0u32; 3];
     let o1 = local(&mut o1b);
-    matrix_mul_vec(o1.cast::<f32>(), m, l0.byte_add(0x10));
+    matrix_mul_vec(o1.cast::<u8>(), m, l0.byte_add(0x10));
     let mut o2b = [0u32; 3];
     let o2 = local(&mut o2b);
-    matrix_mul_vec(o2.cast::<f32>(), m, l0);
+    matrix_mul_vec(o2.cast::<u8>(), m, l0);
     let mut l1b = [0u32; 8];
     let l1 = local(&mut l1b);
     col_line_ctor(l1, o2, o1);
@@ -607,11 +607,11 @@ pub fn sphere_cast_vs_entity(a: GPtr<u8>, b: GPtr<u8>, e: GPtr<u8>) -> u8 {
     let mut cb = [0u32; 3];
     let c = local(&mut cb);
     copy_dwords(c, l1, 0, 3);
-    col_sphere_set(sa, rd::<f32>(a, 0xC), c, 0, 0, 0xFF);
+    col_sphere_set(sa, rd::<f32>(a, 0xC).to_bits(), c.cast::<u32>(), 0, 0, 0xFF);
     for k in 0..3 {
         wr::<u32>(c, 4 * k, rd::<u32>(l1, 0x10 + 4 * k));
     }
-    col_sphere_set(sb, rd::<f32>(a, 0xC), c, 0, 0, 0xFF);
+    col_sphere_set(sb, rd::<f32>(a, 0xC).to_bits(), c.cast::<u32>(), 0, 0, 0xFF);
     matrix_dtor(m);
     let cm = get_col_model(e);
     let cd = rd::<GPtr<u8>>(cm, 0x2C);
@@ -707,8 +707,8 @@ use crate::bindings::camera_to_ignore_this_object;
 use crate::bindings::col_point_assign;
 use sa_core::bindings::ped_is_alive;
 use sa_stream::bindings::col_model_ctor;
-use sa_stream::bindings::col_model_dtor;
-use sa_stream::bindings::collision_data_ctor;
+use crate::bindings::col_model_dtor;
+use crate::bindings::collision_data_ctor;
 orig! {
     /// `CPedModelInfo::AnimatePedColModelSkinned(RpClump*)` (0x4C6F70, thiscall, returns the col model)
     fn animate_ped_col_model_skinned(mi: sa_stream::modelinfo::base::MiPtr, clump: GPtr<u8>) -> GPtr<u8>
@@ -866,7 +866,7 @@ pub fn process_line_of_sight_sector_list(list: GPtr<u8>, line: GPtr<u8>, out: GP
         let cm = if rd::<u8>(e, 0x36) & 7 == 3 {
             let skinned = flags & 1 != 0
                 || !rd::<GPtr<u8>>(e, 0xFC).is_null()
-                || (dead_peds && ped_is_alive(e) == 0)
+                || (dead_peds && ped_is_alive(e) as u8 == 0)
                 || (bikers && rd::<u32>(e, 0x478) & 0x100000 != 0);
             if skinned {
                 let mi = g::<sa_stream::modelinfo::base::MiPtr>(MODEL_INFO_PTRS + rd::<i16>(e, 0x22) as isize as usize * 4).read();

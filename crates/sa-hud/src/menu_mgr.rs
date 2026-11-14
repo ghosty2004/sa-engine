@@ -74,7 +74,7 @@ pub use sa_core::bindings::file_set_dir;
 pub use sa_core::bindings::file_write;
 pub use sa_core::bindings::open_file as file_open;
 pub use sa_core::bindings::rgba_ctor;
-pub use sa_core::bindings::sprite_draw_rect;
+pub use sa_render::bindings::sprite_draw_rect;
 pub use sa_core::bindings::timer_update;
 pub use sa_world::bindings::audio_is_cutscene_track_active;
 pub use sa_core::bindings::audio_report_frontend_event;
@@ -89,22 +89,22 @@ pub use sa_core::bindings::audio_set_bass_enhance;
 pub use sa_core::bindings::audio_set_radio_auto_retune;
 pub use sa_core::bindings::camera_fade;
 pub use sa_core::bindings::file_set_dir_my_documents;
-pub use sa_core::bindings::font_print_string;
-pub use sa_core::bindings::font_set_color;
-pub use sa_core::bindings::font_set_edge;
-pub use sa_core::bindings::font_set_font_style;
-pub use sa_core::bindings::font_set_orientation;
-pub use sa_core::bindings::get_pad;
-pub use sa_core::bindings::load_all_requested_models as streaming_load_all_requested_models;
+pub use crate::bindings::font_print_string;
+pub use crate::bindings::font_set_color;
+pub use crate::bindings::font_set_edge;
+pub use crate::bindings::font_set_font_style;
+pub use crate::bindings::font_set_orientation;
+pub use sa_input::bindings::get_pad;
+pub use sa_stream::bindings::load_all_requested_models as streaming_load_all_requested_models;
 pub use sa_core::bindings::rw_engine_get_current_sub_system as rw_engine_get_current_subsystem;
-pub use sa_core::bindings::text_get;
-pub use sa_core::bindings::text_load;
+pub use crate::bindings::text_get;
+pub use crate::bindings::text_load;
 pub use sa_core::bindings::timer_stop;
 pub use sa_stream::bindings::call_load_requested_models as streaming_load_requested_models;
-pub use sa_stream::bindings::fx_get_fx_quality as fx_get_quality;
+pub use sa_render::bindings::fx_get_fx_quality as fx_get_quality;
 pub use sa_world::bindings::ae_random_int as audio_random_in_range;
-pub use sa_world::bindings::hud_set_zone_name;
-pub use sa_world::bindings::load_mission_text as text_load_mission_text;
+pub use crate::bindings::hud_set_zone_name;
+pub use crate::bindings::load_mission_text as text_load_mission_text;
 orig! {
     /// `CAudioEngine::Reset()` (0x507A90, thiscall)
     pub fn audio_reset(this: GPtr<u8>) = thiscall 0x507A90 => unported;
@@ -247,14 +247,14 @@ pub fn stretch_y_with(h: i32, v: f32) -> X87 {
 /// analogue test, or the pad's d-pad word (`new != 0 && old == 0`). AL.
 fn check_front_end(this: GPtr<u8>, key_new: usize, analogue: fn(GPtr<u8>) -> u8, dpad: isize) -> u8 {
     let pad_n = u32::from(b8(this, 0xEA));
-    get_pad(pad_n);
+    get_pad(pad_n as i32);
     if key_just_pressed(key_new, key_new - 0x270) {
         return 1;
     }
-    if analogue(get_pad(u32::from(b8(this, 0xEA)))) != 0 {
+    if analogue(get_pad(u32::from(b8(this, 0xEA)) as i32)) != 0 {
         return 1;
     }
-    let pad = get_pad(u32::from(b8(this, 0xEA)));
+    let pad = get_pad(u32::from(b8(this, 0xEA)) as i32);
     u8::from(rd::<u16>(pad, dpad) != 0 && rd::<u16>(pad, dpad + 0x30) == 0)
 }
 
@@ -477,7 +477,7 @@ pub fn switch_to_new_screen(this: GPtr<u8>, screen_arg: u32) {
         wr::<u32>(this, 0x54, 9);
     }
     if b8(this, 0x15E) == 3 {
-        audio_stop_radio(g(AUDIO_ENGINE), GPtr::NULL, 0);
+        audio_stop_radio(g(AUDIO_ENGINE), GPtr::<u8>::addr(GPtr::NULL) as u32, 0);
         audio_report_frontend_event(g(AUDIO_ENGINE), 0x23, f32::from_bits(0), f32::from_bits(0x3F80_0000));
     }
     if b8(this, 0x15D) == 3 {
@@ -542,7 +542,7 @@ pub fn do_settings_before_starting_a_game(this: GPtr<u8>) {
     }
     stats_update_respect_stat(1);
     g::<u8>(0x96918C).write(0);
-    hud_set_zone_name(GPtr::NULL, 1);
+    hud_set_zone_name(GPtr::<u8>::addr(GPtr::NULL) as u32, 1);
     let cam = g(THE_CAMERA);
     camera_set_fade_colour(cam, 0, 0, 0);
     camera_fade(cam, f32::from_bits(0), 0);
@@ -708,7 +708,7 @@ const K_10: f32 = f32::from_bits(0x4120_0000);
 pub fn draw_window(_this: GPtr<u8>, rect: GPtr<u8>, key: GPtr<u8>, colour: u32, back: u32, _unused: u32, bg: u32) {
     if bg as u8 != 0 {
         let mut c = back;
-        sprite_draw_rect(rect.cast::<f32>(), local(&mut c));
+        sprite_draw_rect(rect.cast::<u8>(), local(&mut c));
     }
     if key.is_null() || b8(key, 0) == 0 {
         return;
@@ -798,7 +798,7 @@ pub fn process_streaming(this: GPtr<u8>, load_all: u32) {
 pub use crate::bindings::font_get_number_lines;
 pub use sa_core::bindings::font_set_centre_size;
 pub use sa_core::bindings::font_set_drop_shadow_position;
-pub use sa_core::bindings::font_set_scale;
+pub use crate::bindings::font_set_scale;
 pub use sa_stream::bindings::hud_colours_get_rgb;
 pub use sa_core::bindings::ascii_to_gxt_char;
 pub use sa_core::bindings::defined_state_2d as defined_state;
@@ -810,12 +810,12 @@ pub use sa_core::bindings::strncmp as crt_strncmp;
 pub use crate::bindings::ccm_load_settings;
 pub use crate::bindings::small_message_screen_call;
 pub use sa_core::bindings::file_mgr_seek as file_seek;
-pub use sa_core::bindings::font_draw_fonts;
-pub use sa_core::bindings::font_init_per_frame;
-pub use sa_core::bindings::font_set_background;
-pub use sa_core::bindings::font_set_proportional;
+pub use crate::bindings::font_draw_fonts;
+pub use crate::bindings::font_init_per_frame;
+pub use crate::bindings::font_set_background;
+pub use crate::bindings::font_set_proportional;
 pub use sa_core::bindings::rs_camera_begin_update;
-pub use sa_world::bindings::draw_window_call;
+pub use crate::bindings::draw_window_call;
 orig! {
     /// `OutputDebugStringA` (import slot 0x858118)
     pub fn output_debug_string(s: GPtr<u8>) = stdcall cell 0x858118 => unported;
@@ -956,7 +956,7 @@ pub fn small_message_screen(this: GPtr<u8>, key: GPtr<u8>) {
     } else {
         xi(w()).fmul_m(f32::from_bits(0x3A65_6042)).to_f32().to_bits()
     };
-    font_set_scale(f32::from_bits(sx), f32::from_bits(sy));
+    font_set_scale(f32::from_bits(sx).to_bits(), f32::from_bits(sy).to_bits());
     let a = if h() == 0x1C0 { x(f32::from_bits(0x4325_0000)) } else { xi(h()).fmul_m(f32::from_bits(0x3EBC_9249)) };
     let bb = if w() == 0x280 { x(f32::from_bits(0x42BE_0000)) } else { xi(w()).fmul_m(f32::from_bits(0x3E18_0000)) };
     let cc = if h() == 0x1C0 { x(f32::from_bits(0x42FA_0000)) } else { xi(h()).fmul_m(f32::from_bits(0x3E8E_DB6E)) };
@@ -1026,7 +1026,7 @@ fn black_screen() {
     ];
     let mut c = 0u32;
     let col = rgba_ctor(local(&mut c), 0, 0, 0, 0xFF);
-    sprite_draw_rect(GPtr::<u8>::cast::<f32>(local(&mut rect)), col);
+    sprite_draw_rect(local(&mut rect), col);
 }
 
 /// `CMenuManager::MessageScreen(const char* key, bool blackBackground, bool cameraUpdateStarted)`
@@ -1060,15 +1060,16 @@ pub fn message_screen(this: GPtr<u8>, key: GPtr<u8>, black: u32, started: u32) {
 
 pub use sa_core::bindings::audio_engine_service as audio_service;
 pub use sa_core::bindings::is_video_mode_exclusive;
-pub use sa_core::bindings::pad_clear;
+pub use sa_input::bindings::pad_clear;
 pub use sa_world::bindings::pad_clear_mouse_history;
-pub use sa_world::bindings::switch_off_menu_call as menu_system_switch_off_menu;
+pub use crate::bindings::switch_off_menu_call as menu_system_switch_off_menu;
 pub use sa_core::bindings::di_mouse_init;
 pub use sa_core::bindings::do_rw_stuff_end_of_frame;
 pub use sa_core::bindings::do_rw_stuff_start_of_frame;
-pub use sa_core::bindings::menu_unload_textures as unload_textures_call;
+pub use crate::bindings::menu_unload_textures as unload_textures_call;
 pub use sa_core::bindings::tidy_up_d3d_index_buffers;
 pub use sa_core::bindings::tidy_up_d3d_textures;
+pub use sa_world::bindings::find_player_ped;
 orig! {
     /// `CAudioEngine::IsRadioRetuneInProgress()` (0x506FF0, thiscall)
     pub fn audio_is_radio_retune_in_progress(this: GPtr<u8>) -> u8 = thiscall 0x506FF0 => unported;
@@ -1082,8 +1083,6 @@ orig! {
     pub fn initialise_call(this: GPtr<u8>) = thiscall 0x5744D0 => initialise;
     /// `CMenuManager::LoadAllTextures()` (0x572EC0, thiscall)
     pub fn load_all_textures(this: GPtr<u8>) = thiscall 0x572EC0 => load_all_textures_port;
-    /// `FindPlayerPed(int32)` (0x56E210)
-    pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
     /// `CMenuManager::CheckForMenuClosing()` (0x576B70, thiscall)
     pub fn check_for_menu_closing_call(this: GPtr<u8>) = thiscall 0x576B70 => check_for_menu_closing;
     /// `CMenuManager::ProcessStreaming(bool)` (0x573CF0, thiscall)
@@ -1096,7 +1095,7 @@ orig! {
 
 /// `CPad::GetPad(m_nPlayerNumber (+0xEA))`
 fn menu_pad(this: GPtr<u8>) -> GPtr<u8> {
-    get_pad(u32::from(b8(this, 0xEA)))
+    get_pad(u32::from(b8(this, 0xEA)) as i32)
 }
 
 /// `SetGamma((float)brightness * (1/512), true)`
@@ -1172,11 +1171,11 @@ pub fn check_for_menu_closing(this: GPtr<u8>) {
             wr::<u8>(this, 0x5C, 1);
         }
         if b8(this, 0x5C) == 0 {
-            audio_stop_radio(g(AUDIO_ENGINE), GPtr::NULL, 0);
+            audio_stop_radio(g(AUDIO_ENGINE), GPtr::<u8>::addr(GPtr::NULL) as u32, 0);
             audio_report_frontend_event(g(AUDIO_ENGINE), 0x23, f32::from_bits(0), f32::from_bits(0x3F80_0000));
             let menu = b8(this, 0x30);
             if (menu as i8) >= 0 {
-                menu_system_switch_off_menu(u32::from(menu));
+                menu_system_switch_off_menu(u32::from(menu) as u8);
                 wr::<u8>(this, 0x30, 0x9D);
             }
             reset_input(this, 1);
@@ -1551,13 +1550,13 @@ pub use crate::bindings::sprite2d_set_texture;
 pub use sa_core::bindings::game_tidy_up_memory;
 pub use sa_core::bindings::streaming_i_have_used_streaming_memory;
 pub use sa_core::bindings::streaming_im_gonna_use_streaming_memory;
-pub use sa_core::bindings::streaming_make_space_for;
+pub use sa_stream::bindings::streaming_make_space_for;
 pub use sa_core::bindings::add_txd_slot;
 pub use sa_core::bindings::load_txd;
-pub use sa_core::bindings::pop_current_txd;
-pub use sa_core::bindings::push_current_txd;
-pub use sa_core::bindings::set_current_txd;
-pub use sa_core::bindings::txd_add_ref;
+pub use sa_stream::bindings::pop_current_txd;
+pub use sa_stream::bindings::push_current_txd;
+pub use sa_stream::bindings::set_current_txd;
+pub use sa_stream::bindings::txd_add_ref;
 orig! {
     /// `CSprite2d::SetAddressing(RwTextureAddressMode)` (0x727320, thiscall)
     pub fn sprite2d_set_addressing(this: GPtr<u8>, mode: u32) = thiscall 0x727320 => unported;
@@ -1569,7 +1568,7 @@ orig! {
 /// the table `SetTexture` + `SetAddressing(3)` on consecutive sprites from `this + sprites`; pop the txd,
 /// `IHaveUsedStreamingMemory`.
 fn load_front_end_txd(this: GPtr<u8>, size: u32, tidy: bool, name: usize, file: usize, table: (usize, usize), sprites: isize) {
-    streaming_make_space_for(size);
+    streaming_make_space_for(size as i32);
     streaming_im_gonna_use_streaming_memory();
     if tidy {
         game_tidy_up_memory(0, 1);
@@ -1797,7 +1796,7 @@ pub fn process_menu_options(this: GPtr<u8>, lr: u32, go_back: GPtr<u8>, accept: 
 }
 
 pub use sa_core::bindings::get_video_mode_list;
-pub use sa_core::bindings::rw_texture_set_mipmapping;
+pub use sa_rwcore::bindings::rw_texture_set_mipmapping;
 orig! {
     /// `RwD3D9EngineGetMaxMultiSamplingLevels()` (0x7F84E0)
     pub fn rw_d3d9_max_multisampling_levels() -> u32 = cdecl 0x7F84E0 => unported;
@@ -2131,7 +2130,7 @@ pub fn display_helper_text(this: GPtr<u8>, key: GPtr<u8>) {
     let mut alpha: u32 = 0xFF;
     let h = stretch_y_call(this, f32::from_bits(if map { 0x3F00_0000 } else { 0x3F19_999A })).to_f32();
     let w = stretch_x_call(this, f32::from_bits(0x3ECC_CCCD)).to_f32();
-    font_set_scale(f32::from_bits(w.to_bits()), f32::from_bits(h.to_bits()));
+    font_set_scale(f32::from_bits(w.to_bits()).to_bits(), f32::from_bits(h.to_bits()).to_bits());
     font_set_font_style(2);
     font_set_orientation(2);
     font_set_edge(0);
@@ -2201,8 +2200,8 @@ pub fn display_helper_text(this: GPtr<u8>, key: GPtr<u8>) {
     font_print_string_from_bottom(px, py, text);
 }
 
-pub use sa_core::bindings::call_clear_settings as ccm_clear_settings;
-pub use sa_core::bindings::call_set_key as ccm_set_key;
+pub use sa_input::bindings::call_clear_settings as ccm_clear_settings;
+pub use sa_input::bindings::call_set_key as ccm_set_key;
 orig! {
     /// `CControllerConfigManager::DeleteMatchingActionInitiators(action, key, type)` (0x531C90, thiscall)
     pub fn ccm_delete_matching(this: GPtr<u8>, action: u32, key: u32, ty: u32) = thiscall 0x531C90 => unported;
@@ -2278,25 +2277,25 @@ pub fn check_codes_for_controls(this: GPtr<u8>, ty: u32) {
     }
     if b8(this, 0x1B0B) != 0 {
         for t in 0..4 {
-            ccm_clear_settings(ccm, rd(this, 0x1B0C), t);
+            ccm_clear_settings(ccm, rd::<u32>(this, 0x1B0C) as i32, t);
         }
         wr::<u8>(this, 0x1B0B, 0);
     }
-    ccm_clear_settings(ccm, action, flag);
+    ccm_clear_settings(ccm, action as i32, flag as i32);
     match ty {
         0 => {
             let key = || rd::<u32>(rd::<GPtr<u8>>(this, 0xF0), 0);
             ccm_delete_matching(ccm, action, key(), 0);
             ccm_delete_matching(ccm, action, key(), 1);
-            ccm_set_key(ccm, action, key(), flag);
+            ccm_set_key(ccm, action as i32, key(), flag as i32);
         }
         2 => {
             ccm_delete_matching(ccm, action, rd(this, 0x1AE0), 2);
-            ccm_set_key(ccm, action, rd(this, 0x1AE0), flag);
+            ccm_set_key(ccm, action as i32, rd(this, 0x1AE0), flag as i32);
         }
         3 => {
             ccm_delete_matching(ccm, action, rd(this, 0x1AE4), 3);
-            ccm_set_key(ccm, action, rd(this, 0x1AE4), flag);
+            ccm_set_key(ccm, action as i32, rd(this, 0x1AE4), flag as i32);
         }
         _ => {}
     }
@@ -2306,7 +2305,7 @@ pub fn check_codes_for_controls(this: GPtr<u8>, ty: u32) {
 
 pub use sa_core::bindings::font_set_alpha_fade;
 pub use sa_core::bindings::pad_update_pads;
-pub use sa_core::bindings::menu_message_screen as message_screen_call;
+pub use crate::bindings::menu_message_screen as message_screen_call;
 pub use sa_core::bindings::message_loop as win_message_loop;
 pub use sa_core::bindings::rs_event_handler;
 orig! {

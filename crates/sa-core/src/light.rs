@@ -168,37 +168,25 @@ pub use crate::bindings::get_ambient_green as tc_get_ambient_green;
 pub use crate::bindings::get_ambient_green_obj as tc_get_ambient_green_obj;
 pub use crate::bindings::get_ambient_red as tc_get_ambient_red;
 pub use crate::bindings::get_ambient_red_obj as tc_get_ambient_red_obj;
+pub use crate::bindings::light_destroy as rp_light_destroy;
+pub use crate::bindings::object_has_frame_set_frame as rw_object_has_frame_set_frame;
+pub use crate::bindings::rp_light_create;
+pub use crate::bindings::rp_light_set_color;
+pub use crate::bindings::rw_frame_create;
+pub use crate::bindings::rw_frame_destroy;
+pub use crate::bindings::rw_frame_rotate;
+pub use crate::bindings::rw_frame_transform;
+pub use crate::bindings::rw_frame_update_objects;
+pub use crate::bindings::rw_matrix_update;
+pub use crate::bindings::cross_product;
+pub use crate::bindings::vector_normalise;
 orig! {
-    /// `RpLightSetColor` (0x751A90)
-    pub fn rp_light_set_color(light: GPtr<RpLight>, color: GPtr<RwRGBAReal>) -> GPtr<RpLight> = cdecl 0x751A90 => unported;
-    /// `RpLightCreate` (0x752110)
-    pub fn rp_light_create(kind: i32) -> GPtr<RpLight> = cdecl 0x752110 => unported;
     /// `RpLightSetRadius` (0x751A70)
     pub fn rp_light_set_radius(light: GPtr<RpLight>, radius: f32) -> GPtr<RpLight> = cdecl 0x751A70 => unported;
-    /// `RpLightDestroy` (0x7520D0)
-    pub fn rp_light_destroy(light: GPtr<RpLight>) -> i32 = cdecl 0x7520D0 => unported;
     /// `RpWorldAddLight` (0x751910)
     pub fn rp_world_add_light(world: GPtr<RpWorld>, light: GPtr<RpLight>) -> GPtr<RpWorld> = cdecl 0x751910 => unported;
     /// `RpWorldRemoveLight` (0x751960)
     pub fn rp_world_remove_light(world: GPtr<RpWorld>, light: GPtr<RpLight>) -> GPtr<RpWorld> = cdecl 0x751960 => unported;
-    /// `RwFrameCreate` (0x7F0410)
-    pub fn rw_frame_create() -> GPtr<RwFrame> = cdecl 0x7F0410 => unported;
-    /// `RwFrameDestroy` (0x7F05A0)
-    pub fn rw_frame_destroy(frame: GPtr<RwFrame>) -> i32 = cdecl 0x7F05A0 => unported;
-    /// `_rwObjectHasFrameSetFrame` (0x804EF0)
-    pub fn rw_object_has_frame_set_frame(object: GPtr<RpLight>, frame: GPtr<RwFrame>) = cdecl 0x804EF0 => unported;
-    /// `RwFrameRotate` (0x7F1010)
-    pub fn rw_frame_rotate(frame: GPtr<RwFrame>, axis: GPtr<RwV3d>, angle: f32, combine: i32) -> GPtr<RwFrame> = cdecl 0x7F1010 => unported;
-    /// `RwFrameTransform` (0x7F0F70)
-    pub fn rw_frame_transform(frame: GPtr<RwFrame>, m: GPtr<RwMatrix>, combine: i32) -> GPtr<RwFrame> = cdecl 0x7F0F70 => unported;
-    /// `RwFrameUpdateObjects` (0x7F0910)
-    pub fn rw_frame_update_objects(frame: GPtr<RwFrame>) -> GPtr<RwFrame> = cdecl 0x7F0910 => unported;
-    /// `RwMatrixUpdate` (0x7F18A0)
-    pub fn rw_matrix_update(m: GPtr<RwMatrix>) -> GPtr<RwMatrix> = cdecl 0x7F18A0 => unported;
-    /// `CVector::CrossProduct(out, a, b)` (0x59C730): `*out = a x b`
-    pub fn cross_product(out: GPtr<RwV3d>, a: GPtr<RwV3d>, b: GPtr<RwV3d>) -> GPtr<RwV3d> = cdecl 0x59C730 => unported;
-    /// `CVector::Normalise` (0x59C910)
-    pub fn vector_normalise(v: GPtr<RwV3d>) = thiscall 0x59C910 => unported;
     /// `Light::SetAmbientAndDirectionalColours` (0x735A20)
     pub fn call_set_ambient_and_directional_colours(mult: f32) = cdecl 0x735A20 => set_ambient_and_directional_colours;
 }
@@ -214,7 +202,7 @@ fn light_frame(light: GPtr<RpLight>) -> GPtr<RwFrame> {
 }
 
 fn set_color(light: GPtr<RpLight>, c: GPtr<RwRGBAReal>) {
-    let _ = rp_light_set_color(light, c);
+    let _ = GPtr::<u8>::cast::<RpLight>(rp_light_set_color(light.cast::<u8>(), c.cast::<u8>()));
 }
 
 fn set_color_local(light: GPtr<RpLight>, mut c: RwRGBAReal) {
@@ -253,7 +241,7 @@ pub fn lights_create(world: GPtr<RpWorld>) -> GPtr<RpWorld> {
     if world.is_null() {
         return GPtr::NULL;
     }
-    let amb = rp_light_create(2);
+    let amb = GPtr::<u8>::cast::<RpLight>(rp_light_create(2));
     P_AMBIENT.set(amb);
     set_light_flags(amb, 1);
     set_color_local(
@@ -265,7 +253,7 @@ pub fn lights_create(world: GPtr<RpWorld>) -> GPtr<RpWorld> {
             alpha: 0.0,
         },
     );
-    let dir = rp_light_create(1);
+    let dir = GPtr::<u8>::cast::<RpLight>(rp_light_create(1));
     P_DIRECT.set(dir);
     set_light_flags(dir, 1);
     set_color_local(
@@ -278,20 +266,20 @@ pub fn lights_create(world: GPtr<RpWorld>) -> GPtr<RpWorld> {
         },
     );
     let _ = rp_light_set_radius(P_DIRECT.get(), 2.0);
-    let frame = rw_frame_create();
-    rw_object_has_frame_set_frame(P_DIRECT.get(), frame);
+    let frame = GPtr::<u8>::cast::<RwFrame>(rw_frame_create());
+    rw_object_has_frame_set_frame(GPtr::<RpLight>::cast::<u8>(P_DIRECT.get()), frame.cast::<u8>());
     let mut axis = RwV3d {
         x: 1.0,
         y: 1.0,
         z: 0.0,
     };
-    let _ = rw_frame_rotate(frame, GPtr::from_raw(&raw mut axis), 160.0, 1);
+    let _ = GPtr::<u8>::cast::<RwFrame>(rw_frame_rotate(frame.cast::<u8>(), GPtr::<RwV3d>::cast::<u8>(GPtr::from_raw(&raw mut axis)), 160.0, 1));
     let _ = rp_world_add_light(world, P_AMBIENT.get());
     let _ = rp_world_add_light(world, P_DIRECT.get());
     let extra = P_EXTRA_DIRECTIONALS.ptr().cast::<GPtr<RpLight>>();
     for i in 0..6 {
         let slot = extra.wrapping_index(i);
-        let l = rp_light_create(1);
+        let l = GPtr::<u8>::cast::<RpLight>(rp_light_create(1));
         slot.write(l);
         set_light_flags(l, 0);
         set_color_local(
@@ -304,8 +292,8 @@ pub fn lights_create(world: GPtr<RpWorld>) -> GPtr<RpWorld> {
             },
         );
         let _ = rp_light_set_radius(slot.read(), 2.0);
-        let f = rw_frame_create();
-        rw_object_has_frame_set_frame(slot.read(), f);
+        let f = GPtr::<u8>::cast::<RwFrame>(rw_frame_create());
+        rw_object_has_frame_set_frame(GPtr::<RpLight>::cast::<u8>(slot.read()), f.cast::<u8>());
         let _ = rp_world_add_light(world, slot.read());
     }
     world
@@ -320,13 +308,13 @@ pub fn lights_destroy(world: GPtr<RpWorld>) -> GPtr<RpWorld> {
     }
     if !P_AMBIENT.get().is_null() {
         let _ = rp_world_remove_light(world, P_AMBIENT.get());
-        let _ = rp_light_destroy(P_AMBIENT.get());
+        let _ = rp_light_destroy(GPtr::<RpLight>::cast::<u8>(P_AMBIENT.get()));
         P_AMBIENT.set(GPtr::NULL);
     }
     if !P_DIRECT.get().is_null() {
         let _ = rp_world_remove_light(world, P_DIRECT.get());
-        let _ = rw_frame_destroy(light_frame(P_DIRECT.get()));
-        let _ = rp_light_destroy(P_DIRECT.get());
+        let _ = rw_frame_destroy(GPtr::<RwFrame>::cast::<u8>(light_frame(P_DIRECT.get()))) as i32;
+        let _ = rp_light_destroy(GPtr::<RpLight>::cast::<u8>(P_DIRECT.get()));
         P_DIRECT.set(GPtr::NULL);
     }
     let extra = P_EXTRA_DIRECTIONALS.ptr().cast::<GPtr<RpLight>>();
@@ -334,8 +322,8 @@ pub fn lights_destroy(world: GPtr<RpWorld>) -> GPtr<RpWorld> {
         let slot = extra.wrapping_index(i);
         if !slot.read().is_null() {
             let _ = rp_world_remove_light(world, slot.read());
-            let _ = rw_frame_destroy(light_frame(slot.read()));
-            let _ = rp_light_destroy(slot.read());
+            let _ = rw_frame_destroy(GPtr::<RwFrame>::cast::<u8>(light_frame(slot.read()))) as i32;
+            let _ = rp_light_destroy(GPtr::<RpLight>::cast::<u8>(slot.read()));
             slot.write(GPtr::NULL);
         }
     }
@@ -406,19 +394,19 @@ pub fn set_lights_with_time_of_day_colour(_world: GPtr<RpWorld>) {
         z: 1.0,
     };
     let mut tmp = RwV3d::default();
-    let r = cross_product(
-        GPtr::from_raw(&raw mut tmp),
-        GPtr::from_raw(&raw mut z),
-        GPtr::from_raw(&raw mut sun),
-    )
+    let r = GPtr::<u8>::cast::<RwV3d>(cross_product(
+        GPtr::<RwV3d>::cast::<u8>(GPtr::from_raw(&raw mut tmp)),
+        GPtr::<RwV3d>::cast::<u8>(GPtr::from_raw(&raw mut z)),
+        GPtr::<RwV3d>::cast::<u8>(GPtr::from_raw(&raw mut sun)),
+    ))
     .read();
     let mut right = r;
-    vector_normalise(GPtr::from_raw(&raw mut right));
-    let u = cross_product(
-        GPtr::from_raw(&raw mut tmp),
-        GPtr::from_raw(&raw mut right),
-        GPtr::from_raw(&raw mut sun),
-    )
+    vector_normalise(GPtr::<RwV3d>::cast::<[f32;3]>(GPtr::from_raw(&raw mut right)));
+    let u = GPtr::<u8>::cast::<RwV3d>(cross_product(
+        GPtr::<RwV3d>::cast::<u8>(GPtr::from_raw(&raw mut tmp)),
+        GPtr::<RwV3d>::cast::<u8>(GPtr::from_raw(&raw mut right)),
+        GPtr::<RwV3d>::cast::<u8>(GPtr::from_raw(&raw mut sun)),
+    ))
     .read();
     let mut m = RwMatrix {
         right: u,
@@ -430,7 +418,7 @@ pub fn set_lights_with_time_of_day_colour(_world: GPtr<RpWorld>) {
         },
         ..RwMatrix::default()
     };
-    let _ = rw_frame_transform(light_frame(P_DIRECT.get()), GPtr::from_raw(&raw mut m), 0);
+    let _ = GPtr::<u8>::cast::<RwFrame>(rw_frame_transform(GPtr::<RwFrame>::cast::<u8>(light_frame(P_DIRECT.get())), GPtr::<RwMatrix>::cast::<u8>(GPtr::from_raw(&raw mut m)), 0));
 }
 
 /// `WorldReplaceNormalLightsWithScorched(world, lighting)` (0x7357E0): ambient = `{l, l, l, ?}`
@@ -522,8 +510,8 @@ pub fn add_an_extra_directional_light(
     at.write(neg(x));
     at.wrapping_index(1).write(neg(y));
     at.wrapping_index(2).write(neg(z));
-    let _ = rw_matrix_update(frame.cast::<RwMatrix>().byte_add(0x10));
-    let _ = rw_frame_update_objects(frame);
+    let _ = GPtr::<u8>::cast::<RwMatrix>(rw_matrix_update(GPtr::<RwMatrix>::cast::<u8>(frame.cast::<RwMatrix>().byte_add(0x10))));
+    let _ = GPtr::<u8>::cast::<RwFrame>(rw_frame_update_objects(frame.cast::<u8>()));
     set_light_flags(lights.wrapping_index(slot as i32).read(), 1);
     LIGHT_STRENGTHS
         .ptr()

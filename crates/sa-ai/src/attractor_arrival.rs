@@ -9,7 +9,7 @@ use sa_core::{hook, orig};
 use crate::common::*;
 
 use crate::bindings::go_to_attractor_ctor;
-use sa_world::bindings::is_ped_registered_with_effect;
+use crate::bindings::is_ped_registered_with_effect;
 use crate::bindings::peds_push_back;
 use crate::bindings::set_task_for_ped;
 orig! {

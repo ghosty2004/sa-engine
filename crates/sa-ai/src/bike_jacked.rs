@@ -75,7 +75,7 @@ pub fn bike_jacked_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
             veh.byte_add(0x44),
             veh.byte_add(0xE0),
             0,
-            0,
+            f32::from_bits(0),
             0x37,
             0,
             rd::<u32>(this, 0x1C),
@@ -103,7 +103,7 @@ pub fn bike_jacked_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         let group = rd::<u32>(vehicle_get_ride_anim_data(veh), 0);
         let a = anim_blend_animation(rd::<GPtr<u8>>(ped, 0x18), group, 0xC9, 8.0);
         wr::<GPtr<u8>>(this, 0xC, a);
-        assoc_set_finish_callback(a, 0x64_8D30, this);
+        assoc_set_finish_callback(a, 0x64_8D30, this.addr() as u32);
         ped_audio_add_audio_event(ped.byte_add(0x138), 0x48, 0.0, 1.0, GPtr::NULL, 0, 0, 0);
     }
     if rd::<u32>(this, 0x28) == 0 {

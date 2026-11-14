@@ -14,7 +14,7 @@ use crate::common::*;
 use crate::bindings::car_drive_mission_flee_scene_ctor;
 use sa_world::bindings::duck_ctor;
 use crate::bindings::evasive_step_ctor;
-use crate::bindings::flee_any_means_ctor;
+use sa_world::bindings::flee_any_means_ctor;
 use crate::bindings::handler_is_kill_task_appropriate;
 use sa_world::bindings::hands_up_ctor;
 use crate::bindings::kill_criminal_ctor;
@@ -24,7 +24,7 @@ use crate::bindings::use_attractor_ctor;
 use crate::bindings::use_attractor_run_ctor;
 use crate::bindings::use_attractor_sprint_ctor;
 use crate::bindings::vehicle_is_driver;
-use sa_core::bindings::find_player_ped;
+use sa_world::bindings::find_player_ped;
 use sa_core::bindings::general_random_int_in_range;
 use sa_core::bindings::vector_dot_product as vector_dot;
 use sa_stream::bindings::ped_is_player;
@@ -35,11 +35,11 @@ use sa_world::bindings::flee_entity_ctor;
 use sa_world::bindings::ik_look_at;
 use sa_world::bindings::intel_get_task_duck;
 use sa_world::bindings::intel_is_friendly_with;
-use sa_world::bindings::interesting_events_add;
+use crate::bindings::interesting_events_add;
 use sa_world::bindings::is_player_on_a_mission as scripts_is_player_on_a_mission;
 use sa_world::bindings::kill_ped_on_foot_ctor;
 use sa_world::bindings::mental_state_increment_anger;
-use sa_world::bindings::ped_groups_get_peds_group;
+use crate::bindings::ped_groups_get_peds_group;
 use sa_world::bindings::ped_say;
 use sa_world::bindings::player_ped_annoy_player_ped;
 use sa_world::bindings::shake_fist_ctor;
@@ -556,7 +556,7 @@ pub fn handler_compute_vehicle_collision_response(this: GPtr<u8>, e: GPtr<u8>, _
             let p = ped(this);
             let mut tmp = [0u32; 3];
             let scaled = vector_scale(GPtr::from_raw(tmp.as_mut_ptr()).cast(), f32::from_bits(rd::<u32>(p, 0x4DC)), rd::<GPtr<u8>>(p, 0x14).byte_add(0x10));
-            let d = X87::from_f64_exact(vector_dot(scaled, e.byte_add(0x18)));
+            let d = X87::from_f64_exact(vector_dot(scaled, e.byte_add(0x18)).to_f64());
             if !d.fcom(x(gf(K_ZERO))).test_parity(0x05) {
                 let v = d.fmul_m(rd::<f32>(p, 0x8C)).fadd_m(f32::from_bits(impulse));
                 impulse = if x(gf(K_ZERO)).fcom(v).test_any(0x41) { f32_of(v).to_bits() } else { 0 };
@@ -600,7 +600,7 @@ pub fn handler_compute_vehicle_collision_response(this: GPtr<u8>, e: GPtr<u8>, _
         if ms == 1 {
             return;
         }
-        if !ped_groups_get_peds_group(p).is_null() {
+        if !GPtr::<u8>::from_addr(ped_groups_get_peds_group(p.addr() as u32) as usize).is_null() {
             ms = 6;
         }
         let door = intel_is_ped_going_for_car_door(rd::<GPtr<u8>>(ped(this), 0x47C));
@@ -616,7 +616,7 @@ pub fn handler_compute_vehicle_collision_response(this: GPtr<u8>, e: GPtr<u8>, _
         let zero = !x(rd::<f32>(pd, 0x14)).fcom(x(gf(K_ZERO))).test_parity(0x44);
         if zero && !rd::<GPtr<u8>>(veh, 0x460).is_null() {
             player_ped_annoy_player_ped(p, 0);
-            ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), GPtr::from_addr(S_VEHICLE_COLLISION as usize), ped(this), veh, 1300, -1i32 as u32, GPtr::NULL, 1, 0x3E80_0000, 500, 3, 0);
+            ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), GPtr::from_addr(S_VEHICLE_COLLISION as usize), ped(this), veh, 1300, (-1i32 as u32) as i32, GPtr::NULL, 1, f32::from_bits(0x3E80_0000), 500, 3, 0);
             let wtype = || rd::<u32>(p, 0x5A0 + 0x1C * isize::from(rd::<i8>(p, 0x718)));
             if wtype() == 0
                 || ped_get_weapon_slot(p, wtype()) == 2
@@ -626,7 +626,7 @@ pub fn handler_compute_vehicle_collision_response(this: GPtr<u8>, e: GPtr<u8>, _
                 wr::<GPtr<u8>>(this, 0x30, new_task(0x10, shake_fist_ctor));
             }
         } else {
-            ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), GPtr::from_addr(S_VEHICLE_COLLISION as usize), p, veh, 800, -1i32 as u32, GPtr::NULL, 1, 0x3E80_0000, 500, 3, 0);
+            ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), GPtr::from_addr(S_VEHICLE_COLLISION as usize), p, veh, 800, (-1i32 as u32) as i32, GPtr::NULL, 1, f32::from_bits(0x3E80_0000), 500, 3, 0);
         }
         anger_check(this, veh);
         return;

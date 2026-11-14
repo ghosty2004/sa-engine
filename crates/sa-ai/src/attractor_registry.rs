@@ -16,7 +16,7 @@ use crate::common::*;
 
 use crate::bindings::attractor_is_registered_with_ped_o;
 use crate::bindings::scripted_2d_effects_get_index as scripted_2d_effects_get_index_o;
-use sa_world::bindings::is_ped_registered_with_effect as is_ped_registered_with_effect_ped_o;
+use crate::bindings::is_ped_registered_with_effect as is_ped_registered_with_effect_ped_o;
 orig! {
     /// `CPedAttractorManager::IsPedRegistered<CPedAttractor>(CPed*, SArray&)` (0x5EB640, `ret 8`)
     fn is_ped_registered_o(m: GPtr<u8>, ped: GPtr<u8>, arr: GPtr<u8>) -> u8 = thiscall 0x5EB640 => is_ped_registered;

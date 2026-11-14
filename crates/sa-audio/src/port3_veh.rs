@@ -49,10 +49,11 @@ use sa_world::bindings::surface_55ea90;
 use sa_world::bindings::surface_55ead0;
 use crate::bindings::play_skid_sound_call;
 use crate::bindings::sound_set_flags;
-use sa_world::bindings::audio_stop_radio as engine_stop_radio;
+use crate::bindings::audio_stop_radio as engine_stop_radio;
 use sa_world::bindings::get_wheel_status;
 use sa_world::bindings::surface_55ea70;
 use sa_world::bindings::surface_55eb10;
+use crate::bindings::sound_set_position;
 orig! {
     /// `CAEVehicleAudioEntity::GetSirenState(bool&, bool&, cVehicleParams&)` (0x4F62A0)
     fn get_siren_state(this: GPtr<u8>, siren: GPtr<u8>, fast: GPtr<u8>, params: GPtr<u8>) = thiscall 0x4F62A0 => crate::vehicle::get_siren_state;
@@ -88,8 +89,6 @@ orig! {
     fn play_flat_tyre_sound_call(this: GPtr<u8>, sfx: u32, speed: u32, volume: u32) = thiscall 0x4F8650 => play_flat_tyre_sound;
     /// `CAEVehicleAudioEntity::PlayRoadNoiseSound` (0x4F84D0)
     fn play_road_noise_sound_call(this: GPtr<u8>, sfx: u32, speed: u32, volume: u32) = thiscall 0x4F84D0 => play_road_noise_sound;
-    /// `CAESound::SetPosition(CVector)` (0x4EF880)
-    fn sound_set_position(sound: GPtr<u8>, px: u32, py: u32, pz: u32) = thiscall 0x4EF880 => crate::sound::set_position;
     /// `CAEVehicleAudioEntity::GetAircraftNearPosition(CVector* out)` (0x4F96A0): returns `out`
     fn get_aircraft_near_position(this: GPtr<u8>, out: GPtr<u8>) -> u32 = thiscall 0x4F96A0 => unported;
     /// `CAEVehicleAudioEntity::Process*(cVehicleParams&)` bodies `ProcessVehicle` dispatches to
@@ -313,7 +312,7 @@ pub fn update_parameters(this: GPtr<u8>, sound: GPtr<u8>, pos: u32) {
     let pos16 = pos as u16;
     if ev == 0x63 && pos16 != 0xFFFF {
         let p = veh_pos(this);
-        sound_set_position(sound, p[0], p[1], p[2]);
+        sound_set_position(sound.addr() as u32, p[0], p[1], p[2]);
         if !x(gf(0xC8132C)).fcom(x(gf(0x858B8C))).test_any(0x01) {
             sound_stop_sound(sound);
         }
@@ -340,7 +339,7 @@ pub fn update_parameters(this: GPtr<u8>, sound: GPtr<u8>, pos: u32) {
         } else {
             veh_pos(this)
         };
-        sound_set_position(sound, p[0], p[1], p[2]);
+        sound_set_position(sound.addr() as u32, p[0], p[1], p[2]);
     }
     let ty = rd::<u8>(this, 0x80);
     if (ty == 0 || ty == 1) && rd::<u32>(this, 0x108) == s {
@@ -701,7 +700,7 @@ pub fn player_about_to_exit_vehicle_as_driver(this: GPtr<u8>) {
         return;
     }
     if matches!(rd::<i8>(this, 0x9B), 0 | 2 | 3) {
-        engine_stop_radio(g(ENGINE), this.byte_add(0x80), 0);
+        engine_stop_radio(g(ENGINE), GPtr::<u8>::addr(this.byte_add(0x80)) as u32, 0);
     }
     g::<u32>(PLAYER_ATTACHED_FOR_RADIO).write(0);
     g::<u32>(VEHICLE_AUDIO_SETTINGS_FOR_RADIO).write(0);
@@ -2397,7 +2396,7 @@ pub fn process_train_track_sound(this: GPtr<u8>, params: GPtr<u8>) {
 }
 
 use crate::bindings::play_train_brake_sound as play_train_brake_sound_call;
-use sa_core::bindings::get_pad as pad_get_pad;
+use sa_input::bindings::get_pad as pad_get_pad;
 use sa_world::bindings::pad_get_accelerate;
 use sa_world::bindings::pad_get_brake;
 
@@ -3134,7 +3133,7 @@ pub fn process_generic_jet(
     };
     let (dz, dy, dx) = (d(2), d(1), d(0));
     let mut n = [dx, dy, dz];
-    vector_normalise(GPtr::from_raw(n.as_mut_ptr().cast::<u8>()));
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(GPtr::from_raw(n.as_mut_ptr().cast::<u8>())));
     let m: GPtr<u8> = g(rd::<u32>(veh(), 0x14) as usize);
     let dot = x(n[1])
         .fmul_m(rd::<f32>(m, 0x14))
@@ -3529,7 +3528,7 @@ pub fn process_ai_heli(this: GPtr<u8>, params: GPtr<u8>) {
     };
     let (dz, dy, dx) = (d(2), d(1), d(0));
     let mut n = [dx, dy, dz];
-    vector_normalise(GPtr::from_raw(n.as_mut_ptr().cast::<u8>()));
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(GPtr::from_raw(n.as_mut_ptr().cast::<u8>())));
     let m: GPtr<u8> = g(rd::<u32>(veh(), 0x14) as usize);
     let dot = x(n[1])
         .fmul_m(rd::<f32>(m, 0x14))
@@ -3627,7 +3626,7 @@ pub fn process_dummy_heli(this: GPtr<u8>, params: GPtr<u8>) {
     };
     let (dz, dy, dx) = (d(2), d(1), d(0));
     let mut n = [dx, dy, dz];
-    vector_normalise(GPtr::from_raw(n.as_mut_ptr().cast::<u8>()));
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(GPtr::from_raw(n.as_mut_ptr().cast::<u8>())));
     let m: GPtr<u8> = g(rd::<u32>(veh(), 0x14) as usize);
     let dot = x(n[1])
         .fmul_m(rd::<f32>(m, 0x14))

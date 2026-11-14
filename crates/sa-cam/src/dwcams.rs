@@ -50,12 +50,12 @@ const K_30: u32 = 0x41F0_0000;
 const K_10000: u32 = 0x461C_4000;
 
 pub use crate::bindings::hand_shaker_process;
-pub use sa_core::bindings::col_sphere_set;
+pub use sa_world::bindings::col_sphere_set;
 pub use sa_core::bindings::cross_product;
 pub use sa_core::bindings::matrix_mul_vec;
 pub use sa_core::bindings::rw_camera_set_near_clip_plane;
 pub use sa_core::bindings::vector_normalise;
-pub use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
+pub use sa_world::bindings::placeable_allocate_matrix as allocate_matrix;
 pub use sa_stream::bindings::simple_transform_update_matrix;
 pub use sa_world::bindings::entity_get_bound_centre as get_bound_centre;
 pub use sa_world::bindings::entity_get_col_model as get_col_model;
@@ -98,7 +98,7 @@ fn orient(this: GPtr<u8>, src: GPtr<u8>, roll: f32) {
     let mut t: [f32; 3] = [0.0; 3];
     let o = cross_product(vp(&mut t), front, up);
     copy3(vp(&mut r), o);
-    vector_normalise(vp(&mut r));
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(vp(&mut r)));
     let o = cross_product(vp(&mut t), vp(&mut r), front);
     copy3(up, o);
     let zero = x(k(K_ZERO));
@@ -108,7 +108,7 @@ fn orient(this: GPtr<u8>, src: GPtr<u8>, roll: f32) {
     }
     let o = cross_product(vp(&mut t), front, up);
     copy3(vp(&mut r), o);
-    vector_normalise(vp(&mut r));
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(vp(&mut r)));
     let o = cross_product(vp(&mut t), vp(&mut r), front);
     copy3(up, o);
 }
@@ -135,7 +135,7 @@ pub fn finalise_dw_ciney_cams(
     for (i, v) in d.into_iter().enumerate() {
         wr::<f32>(front, 4 * i as isize, v);
     }
-    vector_normalise(front);
+    vector_normalise(front.cast::<[f32;3]>());
     orient(this, src, f32::from_bits(roll));
     wr::<u32>(this, 0xB4, fov);
     rw_camera_set_near_clip_plane(g::<GPtr<u8>>(SCENE_CAMERA).read(), f32::from_bits(K_NEAR_CLIP));
@@ -146,7 +146,7 @@ pub fn finalise_dw_ciney_cams(
     let mut t: [f32; 3] = [0.0; 3];
     multiply3x3_vm(vp(&mut t), front, GPtr::from_addr(HAND_SHAKER + 0x3C));
     copy3(front, vp(&mut t));
-    vector_normalise(front);
+    vector_normalise(front.cast::<[f32;3]>());
     orient(this, src, roll2);
 }
 
@@ -235,7 +235,7 @@ pub fn get_core_data_for_dw_ciney_cam_mode(
     let radius = rd::<u32>(rd::<GPtr<u8>>(mi, 0x14), 0x24);
     let mut c: [f32; 3] = [0.0; 3];
     let cp = get_bound_centre(e, vp(&mut c));
-    col_sphere_set(sphere, f32::from_bits(radius), cp, 0, 0, 0xFF);
+    col_sphere_set(sphere, f32::from_bits(radius).to_bits(), cp.cast::<u32>(), 0, 0, 0xFF);
 }
 
 /// `CCam::IsTimeToExitThisDWCineyCamMode(int32 mode, const CVector* src, const CVector* dst, float t,
@@ -374,13 +374,13 @@ pub fn get_look_from_lamp_post_pos(
             copy3(vp(&mut top), cm.byte_add(0xC));
             ensure_matrix(e);
             let mut t: [f32; 3] = [0.0; 3];
-            let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(vp(&mut t)), rd::<GPtr<u8>>(e, 0x14), vp(&mut top)));
+            let r = matrix_mul_vec(vp(&mut t), rd::<GPtr<u8>>(e, 0x14), vp(&mut top));
             copy3(vp(&mut top), r);
             let mut dir: [f32; 3] = [0.0; 3];
             for (j, v) in dir.iter_mut().enumerate() {
                 *v = f32_of(x(top[j]).fsub_m(rd::<f32>(tp, 4 * j as isize)));
             }
-            vector_normalise(vp(&mut dir));
+            vector_normalise(GPtr::<u8>::cast::<[f32;3]>(vp(&mut dir)));
             for (j, v) in dir.iter_mut().enumerate() {
                 *v = f32_of(x(*v).fadd_m(rd::<f32>(tp, 4 * j as isize)));
             }
@@ -753,8 +753,8 @@ pub fn process_dw_plane_cam1(this: GPtr<u8>, _arg: u32) -> u8 {
         stu(b, dst, mu(b, srco));
     }
     st(b, 0x10, f.fstp());
-    vector_normalise(b.byte_add(0x64));
-    vector_normalise(b.byte_add(0x3C));
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(b.byte_add(0x64)));
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(b.byte_add(0x3C)));
     for o in [0x3C, 0x40, 0x44] {
         f.fld(m(b, o));
         f.fmul_m(g::<f32>(0x8CCDB4).read());
@@ -1007,8 +1007,8 @@ pub fn process_dw_plane_cam2(this: GPtr<u8>, _arg: u32) -> u8 {
         stu(b, dst, mu(b, srco));
     }
     st(b, 0x10, f.fstp());
-    vector_normalise(b.byte_add(0x20));
-    vector_normalise(b.byte_add(0x2C));
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(b.byte_add(0x20)));
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(b.byte_add(0x2C)));
     f.fld(k(K_ONE));
     f.fsub_m(m(b, 0x10));
     f.fld(m(b, 0x2C));
@@ -1428,10 +1428,7 @@ pub fn process_dw_plane_spotter_cam(this: GPtr<u8>, _arg: u32) -> u8 {
 
 pub use sa_world::bindings::placeable_get_matrix as get_matrix;
 pub use crate::bindings::hand_shaker_reset;
-orig! {
-    /// `a > b ? a : b` (0x420800, cdecl floats as dwords, ST0)
-    pub fn max_f(a: u32, b: u32) -> f64 = cdecl 0x420800 => unported;
-}
+pub use sa_world::bindings::max_f;
 
 /// The 3D distance `|a - b|` of two frame vectors as the bytes compute it (`dx*dx` first with
 /// `fmulp st(3)`, then `+ dz*dz`, then `+ dy*dy`), left on the stack.
@@ -1603,7 +1600,7 @@ pub fn process_dw_cam_man_cam(this: GPtr<u8>, _arg: u32) -> u8 {
                 stu(b, 0x40, rd::<u32>(cm, 0x10));
                 stu(b, 0x44, rd::<u32>(cm, 0x14));
                 let mx = get_matrix(rd::<GPtr<u8>>(slot, 0));
-                let o = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(b.byte_add(0x80)), mx, b.byte_add(0x3C)));
+                let o = matrix_mul_vec(b.byte_add(0x80), mx, b.byte_add(0x3C));
                 let (ox, oy, oz) = (rd::<u32>(o, 0), rd::<u32>(o, 4), rd::<u32>(o, 8));
                 stu(b, 0x3C, ox);
                 stu(b, 0x40, oy);
@@ -1623,7 +1620,7 @@ pub fn process_dw_cam_man_cam(this: GPtr<u8>, _arg: u32) -> u8 {
                     st(b, d, f.fstp());
                     stu(b, d - 0x20, mu(b, d));
                 }
-                vector_normalise(b.byte_add(0x30));
+                vector_normalise(GPtr::<u8>::cast::<[f32;3]>(b.byte_add(0x30)));
                 f.fld(m(b, 0x30));
                 f.fadd_m(m(b, 0x18));
                 st(b, 0x30, f.fstp());
@@ -1677,7 +1674,7 @@ pub fn process_dw_cam_man_cam(this: GPtr<u8>, _arg: u32) -> u8 {
         f.fld(m(b, 0x20));
         f.fsub_m(kd(POST + 8));
         st(b, 0x38, f.fstp());
-        vector_normalise(b.byte_add(0x30));
+        vector_normalise(GPtr::<u8>::cast::<[f32;3]>(b.byte_add(0x30)));
         f.fld(m(b, 0x30));
         f.fmul_m(kd(0x8CCD48));
         f.fld(m(b, 0x34));
@@ -1778,7 +1775,7 @@ pub fn process_dw_cam_man_cam(this: GPtr<u8>, _arg: u32) -> u8 {
         if !f.jne(0x41) {
             stu(b, 0x10, K_ONE);
         } else {
-            let r = max_f(mu(b, 0x10), g::<u32>(0x8CCD2C).read());
+            let r = max_f(f32::from_bits(mu(b, 0x10)), f32::from_bits(g::<u32>(0x8CCD2C).read())).to_f64();
             st(b, 0x10, f32_of(X87::from_f64_exact(r)));
         }
     }

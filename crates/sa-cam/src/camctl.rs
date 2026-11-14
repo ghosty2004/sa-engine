@@ -62,13 +62,13 @@ pub use crate::bindings::process_vector_move_linear;
 pub use crate::bindings::process_vector_track_linear;
 pub use sa_core::bindings::crt_free_8214bd as crt_free;
 pub use sa_core::bindings::eh_vector_ctor;
-pub use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+pub use sa_world::bindings::entity_clean_up_old_reference as clean_up_old_reference;
 pub use sa_core::bindings::entity_register_reference as register_reference;
 pub use sa_core::bindings::matrix_assign;
-pub use sa_core::bindings::matrix_dtor;
+pub use sa_world::bindings::matrix_dtor;
 pub use sa_core::bindings::matrix_invert_59bdd0 as matrix_invert;
 pub use sa_core::bindings::matrix_update_matrix;
-pub use sa_core::bindings::rw_frame_update_objects;
+pub use sa_rwcore::bindings::rw_frame_update_objects;
 pub use sa_core::bindings::rw_matrix_update;
 pub use sa_pop::bindings::rw_frame_ortho_normalize;
 pub use sa_world::bindings::get_vehicle_appearance;
@@ -78,16 +78,16 @@ pub use crate::bindings::calculate_derived_values;
 pub use crate::bindings::cam_init;
 pub use crate::bindings::cc_get_arr_pos as get_arr_pos_for_vehicle_type_call;
 pub use crate::bindings::copy_camera_matrix_to_rw_cam;
-pub use sa_core::bindings::col_sphere_set;
+pub use sa_world::bindings::col_sphere_set;
 pub use sa_core::bindings::matrix_attach;
 pub use sa_core::bindings::matrix_set_scale;
 pub use sa_core::bindings::rw_v3d_transform_points;
-pub use sa_stream::bindings::calculate_ground_height;
-pub use sa_world::bindings::camera_clear_player_weapon_mode as clear_player_weapon_mode;
-pub use sa_world::bindings::camera_initialise_scriptable_components as initialise_scriptable_components;
-pub use sa_world::bindings::camera_is_sphere_visible_m as is_sphere_visible_m;
-pub use sa_world::bindings::camera_set_motion_blur as set_motion_blur_call;
-pub use sa_world::bindings::set_zoom_value_follow_ped_script as set_zoom_value_follow_ped_script_call;
+pub use crate::bindings::calculate_ground_height;
+pub use crate::bindings::camera_clear_player_weapon_mode as clear_player_weapon_mode;
+pub use crate::bindings::camera_initialise_scriptable_components as initialise_scriptable_components;
+pub use crate::bindings::camera_is_sphere_visible_m as is_sphere_visible_m;
+pub use crate::bindings::camera_set_motion_blur as set_motion_blur_call;
+pub use crate::bindings::set_zoom_value_follow_ped_script as set_zoom_value_follow_ped_script_call;
 pub use sa_world::bindings::world_process_vertical_line as process_vertical_line;
 orig! {
     /// `CCamera::SetPercentAlongCutScene(float)` (0x50C070)
@@ -168,7 +168,7 @@ fn for_a_ped(this: GPtr<u8>, ped: GPtr<u8>, flag: isize) {
     wr::<GPtr<u8>>(tc, 0x958, ped);
     let old = slot.cast::<GPtr<u8>>().read();
     if !old.is_null() {
-        clean_up_old_reference(old, slot.cast::<GPtr<u8>>());
+        clean_up_old_reference(old, slot.cast::<u8>());
     }
     active_cam(tc).byte_add(0x21C).cast::<GPtr<u8>>().write(ped);
     let slot = active_cam(tc).byte_add(0x21C);
@@ -301,7 +301,7 @@ pub fn process_scripted_commands(this: GPtr<u8>) {
 /// `CalculateGroundHeight(0)` (`fsubr dword`).
 #[hook(addr = 0x516B00, conv = thiscall, name = "CCamera::GetRoughDistanceToGround", expect = "56 6A 00 8B F1", this = "CCamera")]
 pub fn get_rough_distance_to_ground(this: GPtr<u8>) -> X87 {
-    let gh = X87::from_f64_exact(calculate_ground_height(this, 0));
+    let gh = X87::from_f64_exact(calculate_ground_height(this, 0).to_f64());
     gh.fsubr_m(rd::<f32>(active_cam(this), 0x1A4))
 }
 
@@ -547,7 +547,7 @@ pub fn take_control(this: GPtr<u8>, target: GPtr<u8>, mode: u16, switch_type: u1
     let old = rd::<GPtr<u8>>(this, 0x958);
     wr::<u8>(this, 0x2C, 0);
     if !old.is_null() {
-        clean_up_old_reference(old, slot.cast::<GPtr<u8>>());
+        clean_up_old_reference(old, slot.cast::<u8>());
     }
     wr::<GPtr<u8>>(this, 0x958, target);
     register_reference(target, slot);
@@ -845,8 +845,8 @@ pub fn cone_cast_collision_resolve(
     let mut s2 = [0u32; 5];
     let p1 = GPtr::from_raw(s1.as_mut_ptr()).cast::<u8>();
     let p2 = GPtr::from_raw(s2.as_mut_ptr()).cast::<u8>();
-    col_sphere_set(p1, radius, target, 0, 0, 0xFF);
-    col_sphere_set(p2, radius, source, 0, 0, 0xFF);
+    col_sphere_set(p1, radius.to_bits(), target.cast::<u32>(), 0, 0, 0xFF);
+    col_sphere_set(p2, radius.to_bits(), source.cast::<u32>(), 0, 0, 0xFF);
     let hit = camera_cone_cast_vs_world_collision(p1, p2, dist, angle);
     if hit == 0 {
         copy_vec(out, 0, source);
@@ -896,7 +896,7 @@ fn restore_target(this: GPtr<u8>) {
     let target = if veh.is_null() {
         wr::<u16>(this, 0xC38, 4);
         if !old.is_null() {
-            clean_up_old_reference(old, slot.cast::<GPtr<u8>>());
+            clean_up_old_reference(old, slot.cast::<u8>());
         }
         let p = focus_ped();
         wr::<GPtr<u8>>(this, 0x958, p);
@@ -904,7 +904,7 @@ fn restore_target(this: GPtr<u8>) {
     } else {
         wr::<u16>(this, 0xC38, 0x12);
         if !old.is_null() {
-            clean_up_old_reference(old, slot.cast::<GPtr<u8>>());
+            clean_up_old_reference(old, slot.cast::<u8>());
         }
         let v = find_player_vehicle(-1, 0);
         wr::<GPtr<u8>>(this, 0x958, v);
@@ -922,7 +922,7 @@ fn restore_target(this: GPtr<u8>) {
         let old = rd::<GPtr<u8>>(this, 0x958);
         wr::<u16>(this, 0xC38, 4);
         if !old.is_null() {
-            clean_up_old_reference(old, slot.cast::<GPtr<u8>>());
+            clean_up_old_reference(old, slot.cast::<u8>());
         }
         let p = focus_ped();
         wr::<GPtr<u8>>(this, 0x958, p);
@@ -949,7 +949,7 @@ pub fn restore(this: GPtr<u8>) {
     let sslot = this.byte_add(0x95C);
     let st = rd::<GPtr<u8>>(this, 0x95C);
     if !st.is_null() {
-        clean_up_old_reference(st, sslot.cast::<GPtr<u8>>());
+        clean_up_old_reference(st, sslot.cast::<u8>());
         wr::<GPtr<u8>>(this, 0x95C, GPtr::NULL);
     }
     wr::<u8>(this, 0x41, 0);
@@ -987,7 +987,7 @@ pub fn restore_with_jump_cut(this: GPtr<u8>) {
     if rd::<u8>(this, 0x43) != 0 && !p0().is_null() && !p1().is_null() {
         let old = rd::<GPtr<u8>>(this, 0x958);
         if !old.is_null() {
-            clean_up_old_reference(old, slot.cast::<GPtr<u8>>());
+            clean_up_old_reference(old, slot.cast::<u8>());
         }
         let (a, b) = (p0(), p1());
         let (va, vb) = (rd::<GPtr<u8>>(a, 0x58C), rd::<GPtr<u8>>(b, 0x58C));
@@ -1468,7 +1468,7 @@ pub fn take_control_attach_to_entity(
         let slot = this.byte_add(0x958);
         let old = rd::<GPtr<u8>>(this, 0x958);
         if !old.is_null() {
-            clean_up_old_reference(old, slot.cast::<GPtr<u8>>());
+            clean_up_old_reference(old, slot.cast::<u8>());
         }
         wr::<GPtr<u8>>(this, 0x958, target);
         register_reference(target, slot);
@@ -1496,7 +1496,7 @@ pub fn take_control_attach_to_entity(
     let slot = this.byte_add(0x95C);
     let old = rd::<GPtr<u8>>(this, 0x95C);
     if !old.is_null() {
-        clean_up_old_reference(old, slot.cast::<GPtr<u8>>());
+        clean_up_old_reference(old, slot.cast::<u8>());
     }
     wr::<GPtr<u8>>(this, 0x95C, attached);
     register_reference(attached, slot);

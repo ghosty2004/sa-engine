@@ -13,11 +13,11 @@ use crate::common::{ftol32, g, jne_mask, jp5, rand_at, rd, wr, x, xi};
 pub const GLOBALS: &[GlobalDesc] = &[];
 
 use sa_core::bindings::entity_register_reference;
-use sa_core::bindings::find_player_vehicle;
+use sa_world::bindings::find_player_vehicle;
 use sa_core::bindings::random_float_in_range;
 use sa_stream::bindings::car_group_pick_least_used_model as loaded_car_group_pick_least_used_model;
-use sa_stream::bindings::find_player_wanted;
-use sa_world::bindings::join_car_with_road_system;
+use sa_world::bindings::find_player_wanted;
+use crate::bindings::join_car_with_road_system;
 
 /// `ThePaths.m_pPathNodes[area]` (0x96F854) is loaded.
 fn area_loaded(area: u32) -> bool {
@@ -49,7 +49,7 @@ pub fn find_switch_distance_far(veh: GPtr<u8>) -> X87 {
 pub fn find_police_car_speed_for_wanted_level(veh: GPtr<u8>) -> i32 {
     let w = wanted_level() as u32;
     let k = match w {
-        0 => return ftol32(X87::from_f64_exact(random_float_in_range(12.0, 16.0))),
+        0 => return ftol32(X87::from_f64_exact(random_float_in_range(12.0, 16.0).to_f64())),
         1 => return 25,
         2 => return 34,
         3 => 54.0,
@@ -410,7 +410,7 @@ pub fn generate_random_cars() {
     }
     let mad = g::<f32>(0x9690BC);
     if la_riots_active_here() != 0 && !jne_mask(x(mad.read()), x(480.0), 0x41) {
-        mad.write(random_float_in_range(240.0, 480.0) as f32);
+        mad.write(random_float_in_range(240.0, 480.0).to_f64() as f32);
     }
     let ts = g::<f32>(0xB7CB5C).read();
     mad.write(x(ts).fmul_m(f32::from_bits(0x3CA3_D70A)).fsubr_m(mad.read()).to_f32());
@@ -461,7 +461,7 @@ pub fn choose_police_car_model(ignore_lvpd: u32) -> i32 {
 
 use crate::bindings::set_up_driver as vehicle_set_up_driver;
 use crate::bindings::setup_passenger as vehicle_setup_passenger;
-use sa_core::bindings::world_remove;
+use sa_world::bindings::world_remove;
 use sa_world::bindings::is_this_car_being_targetted_by_any_crane;
 use sa_world::bindings::ped_give_object_to_hold;
 use sa_world::bindings::ped_update_stat_entering_vehicle;
@@ -605,15 +605,15 @@ pub fn set_up_driver_and_passengers_for_vehicle(veh: GPtr<u8>, pt: i32, min: i32
 }
 
 use crate::bindings::auto_pilot_modify_speed;
-use sa_core::bindings::find_player_ped;
+use sa_world::bindings::find_player_ped;
 use sa_world::bindings::accident_manager_get_instance;
-use sa_world::bindings::gang_war_fighting_going_on;
+use crate::bindings::gang_war_fighting_going_on;
 use crate::bindings::car_has_reason_to_stop;
 use crate::bindings::find_maximum_speed_call as find_maximum_speed_for_this_car_in_traffic;
 use crate::bindings::generate_one_emergency_services_car;
 use crate::bindings::should_car_stop_for_bridge;
 use crate::bindings::should_car_stop_for_light;
-use sa_core::bindings::find_player_coors;
+use sa_world::bindings::find_player_coors;
 use sa_world::bindings::fire_find_nearest_fire;
 orig! {
     /// `CAccidentManager::GetNumberOfFreeAccidents()` (0x56CEE0)

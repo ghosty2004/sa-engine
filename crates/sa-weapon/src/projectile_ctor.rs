@@ -2,18 +2,13 @@
 //! from the 1.0 US bytes. Unverified (docs/verify/HOWTO.md).
 
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
-orig! {
-    /// `CObject::CObject()` (0x5A1D10)
-    fn object_ctor(o: Ent) -> Ent = thiscall 0x5A1D10 => unported;
-    /// `CObject::SetIsStatic(bool)` (0x5A0760, `ret 4`)
-    fn object_set_is_static(o: Ent, s: u32) = thiscall 0x5A0760 => unported;
-    /// `CEntity::SetModelIndex(uint32)` (0x532AE0, `ret 4`)
-    fn entity_set_model_index(e: Ent, model: i32) = thiscall 0x532AE0 => unported;
-}
+use sa_core::bindings::object_ctor;
+use sa_core::bindings::object_set_is_static;
+use sa_world::bindings::entity_set_model_index;
 
 /// `CProjectile::CProjectile(int32 modelIndex)` (0x5A4030, thiscall, `ret 4`; called by
 /// `CProjectileInfo::AddProjectile`): `CObject`'s constructor; physical flags +0x1C |= 0x80000000; vtable
@@ -35,7 +30,7 @@ pub fn projectile_ctor(this: Ent, model: i32) -> Ent {
     wu(this, 0xA0, 0x3A51_B718);
     object_set_is_static(this, 0);
     wu(this, 0x40, ru(this, 0x40) | 0x80_0000);
-    entity_set_model_index(this, model);
+    entity_set_model_index(this, model as u32);
     wb(this, 0x13C, 5);
     this
 }

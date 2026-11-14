@@ -3,6 +3,7 @@
 //! (docs/verify/HOWTO.md).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::hook;
 
@@ -11,10 +12,10 @@ use crate::common::*;
 use sa_world::bindings::ped_placement_find_z_coor_for_ped as find_z_coor_for_ped;
 use sa_core::bindings::general_get_radian_angle_between_points as radian_angle_between_points;
 use sa_core::bindings::general_limit_radian_angle as limit_radian_angle;
-use sa_core::bindings::matrix_dtor;
+use sa_world::bindings::matrix_dtor;
 use sa_core::bindings::matrix_set_rotate_z_only;
 use sa_core::bindings::matrix_set_unity;
-use sa_stream::bindings::placeable_allocate_matrix;
+use sa_world::bindings::placeable_allocate_matrix;
 use sa_stream::bindings::simple_transform_update_matrix;
 use sa_world::bindings::multiply3x3;
 use sa_core::bindings::matrix_assign;
@@ -71,7 +72,7 @@ pub fn place_ped_at_effect(fx: GPtr<u8>, entity: GPtr<u8>, ped: GPtr<u8>, forwar
         x(pf(1)).fadd(x(f[1]).fmul_m(forward)).to_f32().to_bits(),
         x(pf(2)).fadd_m(fz).to_f32().to_bits(),
     ];
-    find_z_coor_for_ped(pa(&mut p));
+    find_z_coor_for_ped(GPtr::<u8>::cast::<f32>(pa(&mut p)));
     let m = rd::<GPtr<u8>>(ped, 0x14);
     if m.is_null() {
         wr::<u32>(ped, 4, p[0]);

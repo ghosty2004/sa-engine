@@ -26,10 +26,9 @@ pub const GLOBALS: &[GlobalDesc] = &[];
 const MENU_NUMBER: usize = 0xBA82D8;
 const MENU_IN_USE: usize = 0xBA82E0;
 
-pub use sa_world::bindings::switch_off_menu_call;
+pub use crate::bindings::switch_off_menu_call;
+pub use sa_core::bindings::crt_new as operator_new;
 orig! {
-    /// `operator new(uint32)` (0x82119A)
-    pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
     /// `CMenuSystem::InputStandardMenu(uint8)` (0x580800)
     pub fn input_standard_menu(menu: u32) = cdecl 0x580800 => input_standard_menu_port;
     /// `CMenuSystem::InputGridMenu(uint8)` (0x580BD0)
@@ -166,7 +165,7 @@ pub fn get_car_colour_from_grid_with(p: GPtr<u8>, index: u32) -> u8 {
 pub fn initialise() {
     for i in 0..2u32 {
         if g::<u8>(MENU_IN_USE + i as usize).read() != 0 {
-            switch_off_menu_call(i);
+            switch_off_menu_call(i as u8);
         }
     }
     CURRENT_MENU_IN_USE.set(0);
@@ -372,7 +371,7 @@ pub fn process(menu: u32) {
 
 pub use crate::bindings::analogue_pad_down as pad_analogue_down;
 pub use crate::bindings::analogue_pad_up as pad_analogue_up;
-pub use sa_core::bindings::get_pad;
+pub use sa_input::bindings::get_pad;
 pub use sa_core::bindings::audio_report_frontend_event as report_frontend_audio_event;
 
 /// `AudioEngine`

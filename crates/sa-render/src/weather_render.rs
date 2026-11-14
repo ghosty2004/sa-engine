@@ -14,12 +14,11 @@ use sa_world::bindings::rw_im3d_render_indexed_primitive;
 use sa_world::bindings::rw_im3d_transform;
 use sa_core::bindings::general_random_int_in_range as random_in_range;
 use sa_core::bindings::vector_magnitude;
-use sa_world::bindings::cam_no_rain;
-use sa_world::bindings::player_no_rain;
+use crate::bindings::cam_no_rain;
+use crate::bindings::player_no_rain;
 use sa_world::bindings::rw_im3d_end;
+use sa_core::bindings::crt_new_821195 as operator_new;
 orig! {
-    /// `operator new(size)` (0x821195)
-    fn operator_new(size: u32) -> u32 = cdecl 0x821195 => unported;
     /// `RwRenderStateSet(state, value)` (`RwGlobals` +0x20)
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
 }
@@ -128,10 +127,10 @@ pub fn render_rain_streaks() {
     g::<u32>(TEMP_INDICES_STORED).write(0);
     g::<u32>(TEMP_VERTICES_STORED).write(0);
     if g::<u32>(STREAK_X).read() == 0 {
-        g::<u32>(STREAK_Y).write(operator_new(0x80));
-        g::<u32>(STREAK_X).write(operator_new(0x80));
-        g::<u32>(STREAK_Z).write(operator_new(0x80));
-        g::<u32>(STREAK_ALPHA).write(operator_new(0x20));
+        g::<u32>(STREAK_Y).write(GPtr::<u8>::addr(operator_new(0x80)) as u32);
+        g::<u32>(STREAK_X).write(GPtr::<u8>::addr(operator_new(0x80)) as u32);
+        g::<u32>(STREAK_Z).write(GPtr::<u8>::addr(operator_new(0x80)) as u32);
+        g::<u32>(STREAK_ALPHA).write(GPtr::<u8>::addr(operator_new(0x20)) as u32);
         for i in 0..32u32 {
             arr(STREAK_Y, i).write(0);
             arr(STREAK_X, i).write(0);

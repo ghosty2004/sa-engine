@@ -33,12 +33,12 @@ pub use crate::bindings::audio_report_bullet_hit;
 pub use sa_world::bindings::col_lighting_get_current;
 pub use crate::bindings::extinguish_point_with_water;
 pub use crate::bindings::fx_add_tyre_burst;
-pub use sa_core::bindings::assoc_set_current_time;
+pub use sa_anim::bindings::assoc_set_current_time;
 pub use sa_core::bindings::vector_normalise as normalise;
 pub use sa_world::bindings::clump_get_first_association_4d6a70 as clump_get_first_association;
 pub use sa_world::bindings::entity_get_is_static;
 pub use sa_world::bindings::fx_add_blood;
-pub use sa_world::bindings::generate_damage_event;
+pub use crate::bindings::generate_damage_event;
 pub use sa_world::bindings::get_local_direction as ped_get_local_direction;
 pub use sa_world::bindings::localisation_blood;
 pub use sa_world::bindings::ped_is_ped_in_control;
@@ -46,7 +46,7 @@ pub use sa_world::bindings::ped_is_pointer_valid;
 pub use sa_world::bindings::physical_add_to_moving_list;
 pub use sa_world::bindings::report_crime;
 pub use sa_world::bindings::vector_scale;
-pub use sa_core::bindings::vector_sub;
+pub use sa_world::bindings::vector_sub;
 pub use sa_world::bindings::vehicle_inflict_damage;
 pub use crate::bindings::check_for_shooting_vehicle_occupant;
 pub use crate::bindings::fx_add_bullet_impact;
@@ -59,12 +59,11 @@ pub use sa_world::bindings::physical_apply_move_force_5429f0 as physical_apply_m
 pub use sa_world::bindings::process_line_of_sight;
 pub use sa_world::bindings::set_cars_on_fire;
 pub use sa_world::bindings::set_world_on_fire;
-pub use sa_world::bindings::start_fire_on as start_fire_target;
+pub use crate::bindings::start_fire_on as start_fire_target;
+pub use sa_world::bindings::find_player_ped;
 orig! {
     /// `CWorld::SprayPaintWorld(CVector&, CVector&, float, bool)` (0x565B70)
     pub fn spray_paint_world(pos: GPtr<u8>, out: GPtr<u8>, range: f32, b: u8) -> i32 = cdecl 0x565B70 => unported;
-    /// `FindPlayerPed(int32)` (0x56E210)
-    pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
     /// `CVehicle::BurstTyre(uint8 component, bool)` (vtable +0xB0, thiscall; the dword holding the piece byte is pushed)
     pub fn vehicle_burst_tyre(veh: GPtr<u8>, piece: u32, b: u8) = thiscall vslot 0xB0 => unported;
     /// `CEntity::SetIsStatic(bool)` (vtable +0x10, thiscall)
@@ -199,7 +198,7 @@ pub fn add_shot(creator: GPtr<u8>, ty: i32, ox: f32, oy: f32, oz: f32, tx: f32, 
         let r = sa_core::orig::at_site(0x739D44, rand) % 20;
         wf(s, 0x18, x(rand_table(r)).fadd_m(rf(s, 0x18)).to_f32());
     }
-    normalise(s.byte_add(0x10));
+    normalise(GPtr::<u8>::cast::<[f32;3]>(s.byte_add(0x10)));
     let speed = if ru(info, 0x18) & 0x20000 != 0 {
         let r = sa_core::orig::at_site(0x739D74, rand) % 20;
         x(rf(info, 0x5C)).fadd_m(rand_table(r))
@@ -388,7 +387,7 @@ fn shot_hit_peds(s: GPtr<u8>, info: GPtr<u8>) {
         let pp = pos_ptr(p);
         let cp = pos_ptr(rp(s, 0x20));
         let mut v = [x(rf(cp, 0)).fsub_m(rf(pp, 0)).to_f32(), x(rf(cp, 4)).fsub_m(rf(pp, 4)).to_f32()];
-        let dir = ped_get_local_direction(p, lp(&mut v).cast());
+        let dir = ped_get_local_direction(p, GPtr::<u8>::cast::<f32>(lp(&mut v).cast()));
         let dmg = i32::from(rh(info, 0x22) as i16);
         generate_damage_event(p, rp(s, 0x20), ru(s, 0) as i32, dmg, 3, dir as u32);
         wb(s, 0x29, 1);
@@ -513,7 +512,7 @@ fn bullet_hit(b: GPtr<u8>, ty: i32, hit: &mut GPtr<u8>, cpp: GPtr<u8>, oldp: GPt
     let e = *hit;
     let impact = || {
         if camera_is_sphere_visible(g(THE_CAMERA), cpp, 1.0) != 0 {
-            let l = st0(col_lighting_get_current(ru(cpp, 0x25) as u8, 0.5)).to_f32();
+            let l = st0(col_lighting_get_current(ru(cpp, 0x25) as u8, 0.5).to_f64()).to_f32();
             fx_add_bullet_impact(fx, cpp, normal, u32::from(rb(cpp, 0x23)), 8, l);
         }
     };
@@ -531,7 +530,7 @@ fn bullet_hit(b: GPtr<u8>, ty: i32, hit: &mut GPtr<u8>, cpp: GPtr<u8>, oldp: GPt
                 let mut d = [0f32; 3];
                 vector_sub(lp(&mut d).cast(), pos, cpp);
                 let mut d2 = [d[0], d[1]];
-                let dir = ped_get_local_direction(e, lp(&mut d2).cast());
+                let dir = ped_get_local_direction(e, GPtr::<u8>::cast::<f32>(lp(&mut d2).cast()));
                 let dmg = i32::from(rh(b, 0x28) as i16);
                 generate_damage_event(e, rp(b, 4), ty, dmg, i32::from(rb(cpp, 0x24)), i32::from(dir as u8) as u32);
                 let crime = if ru(e, 0x598) == 6 { 5 } else { 4 };
@@ -592,7 +591,7 @@ fn bullet_hit(b: GPtr<u8>, ty: i32, hit: &mut GPtr<u8>, cpp: GPtr<u8>, oldp: GPt
         let o = rv(oldp, 0);
         let n = rv(newp, 0);
         let mut d = [x(n[0]).fsub_m(o[0]).to_f32(), x(n[1]).fsub_m(o[1]).to_f32(), x(n[2]).fsub_m(o[2]).to_f32()];
-        normalise(lp(&mut d).cast());
+        normalise(GPtr::<u8>::cast::<[f32;3]>(lp(&mut d).cast()));
         let nv = rv(normal, 0);
         let dot = x(nv[0]).fmul_m(d[0]).fadd(x(nv[2]).fmul_m(d[2])).fadd(x(nv[1]).fmul_m(d[1]));
         let dot32 = dot.to_f32();
@@ -624,17 +623,17 @@ fn object_hit(b: GPtr<u8>, o: GPtr<u8>, creator: GPtr<u8>, cpp: GPtr<u8>, normal
         let info = rp(o, 0x160);
         // `fcomp 99.9f; test ah, 5; jp`: only `< 99.9` continues
         if !x(rf(info, 0x18)).fcom(X87::constant(0x42C7_CCCD)).test_parity(0x05) {
-            if entity_get_is_static(o) != 0 {
+            if entity_get_is_static(o) as u8 != 0 {
                 // `fcomp 0.0; test ah, 0x41; jp`: `<= 0` continues
                 if !x(rf(info, 0x14)).fcom(X87::zero()).test_parity(0x41) {
                     entity_set_is_static(o, 0);
                     physical_add_to_moving_list(o);
                 }
             }
-            if entity_get_is_static(o) == 0 {
+            if entity_get_is_static(o) as u8 == 0 {
                 let mut f = [0f32; 3];
                 vector_scale(lp(&mut f).cast(), cf(0xC0F0_0000), normal);
-                physical_apply_move_force(o, f[0], f[1], f[2]);
+                physical_apply_move_force(o, sa_math::vector::CVector::new(f[0], f[1], f[2]));
             }
             object_damage(o, 50.0, cpp, normal, rp(b, 4), (ru(b, 0) as i32) as u32);
             return;

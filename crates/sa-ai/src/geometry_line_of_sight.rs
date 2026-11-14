@@ -8,7 +8,7 @@ use sa_core::hook;
 
 use crate::common::*;
 
-use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
+use sa_world::bindings::placeable_allocate_matrix as allocate_matrix;
 use sa_stream::bindings::simple_transform_update_matrix;
 use sa_world::bindings::col_line_ctor;
 use sa_world::bindings::coll_test_line_of_sight as test_line_of_sight;

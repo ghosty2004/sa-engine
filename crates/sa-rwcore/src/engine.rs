@@ -74,6 +74,7 @@ use crate::bindings::plugin_init_object as registry_init_object;
 use crate::bindings::device_system_request as system_request;
 use crate::bindings::free_list_destroy as freelist_destroy;
 use crate::bindings::image_set_gamma;
+use sa_core::bindings::rw_error_set as error_set;
 orig! {
     /// `RwDevice::fpSystem(request, pOut, pInOut, nIn)` (stored pointer)
     fn device_system(f: u32, request: i32, out: GPtr<u8>, inout: GPtr<u8>, n: i32) -> i32 = cdecl dyn => unported;
@@ -87,8 +88,6 @@ orig! {
     fn rw_error2(code: u32, a: u32) -> u32 = cdecl 0x8088D0 => unported;
     /// `_rwerror(code)` (0x8088D0)
     fn rw_error1(code: u32) -> u32 = cdecl 0x8088D0 => rw_error;
-    /// `RwErrorSet(const RwError*)` (0x808820)
-    fn error_set(e: GPtr<RwError>) -> GPtr<RwError> = cdecl 0x808820 => rw_error_set;
     /// `_rwDeviceGetHandle()` (0x7F9C20, D3D9 driver)
     fn device_get_handle() -> GPtr<u8> = cdecl 0x7F9C20 => unported;
     /// `_rwFreeListSetFlags(flag)` (0x801970)
@@ -146,7 +145,7 @@ fn set_error(code: u32) {
         plugin_id: 1,
         error_code: code as i32,
     };
-    error_set(GPtr::from_raw(&mut e));
+    error_set(GPtr::from_raw(&mut e).cast());
 }
 
 // ------------------------------------------------------------------ device requests ----------

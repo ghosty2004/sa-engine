@@ -11,22 +11,18 @@ use crate::common::{rd, wr, x};
 use sa_core::mem::GPtr;
 
 use crate::bindings::ped_get_bike_riding_skill;
-use sa_core::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference;
 use sa_core::bindings::tm_get_active_task as task_manager_get_active_task;
 use sa_pop::bindings::cam_stairs_for_player as cull_zones_cam_stairs_for_player;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::event_group_add;
 use sa_world::bindings::get_local_direction as ped_get_local_direction;
 use sa_pop::bindings::cull_zones_find_zone_with_stairs_for_player;
-use sa_world::bindings::kob_dtor as event_knock_off_bike_dtor;
+use crate::bindings::kob_dtor as event_knock_off_bike_dtor;
+use sa_world::bindings::kob_ctor as event_knock_off_bike_ctor;
 orig! {
     /// `CTask::GetTaskType()` (vtable slot 0x10)
     fn task_get_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CEventKnockOffBike::CEventKnockOffBike(CVehicle*, CVector* moveSpeed, CVector* impactVelocity, float
-    /// damageIntensity, float height, uint8 type, uint8 direction, int32 time, CPed*, bool isVictimDriver, bool
-    /// forceKnockOff)` (0x4AFCF0)
-    #[allow(clippy::too_many_arguments)]
-    fn event_knock_off_bike_ctor(e: GPtr<u8>, veh: GPtr<u8>, move_speed: GPtr<u8>, impact: GPtr<u8>, damage: u32, height: f32, kind: u32, dir: u32, time: u32, ped: u32, driver: u32, force: u32) -> GPtr<u8> = thiscall 0x4AFCF0 => unported;
 }
 
 use sa_math::fpu::fbits as c;
@@ -170,10 +166,10 @@ pub fn damage_knock_off_rider(
     let height = |f: f32| x(c(0x3D4C_CCCD)).fmul_m(f).to_f32();
     let mut dir: i32 = -10;
     if !driver.is_null() {
-        dir = ped_get_local_direction(driver, dir2p);
+        dir = ped_get_local_direction(driver, dir2p.cast::<f32>());
         let mut ev = [0u32; 16];
         let evp: GPtr<u8> = GPtr::from_raw(&mut ev as *mut [u32; 16]).cast();
-        event_knock_off_bike_ctor(evp, veh, veh.byte_add(0x44), impact, damage.to_bits(), height(force), 0x31, dir as u32, 0, 0, 1, 0);
+        event_knock_off_bike_ctor(evp, veh, veh.byte_add(0x44), impact, damage.to_bits(), height(force), 0x31, dir as u32, 0, GPtr::NULL, 1, 0);
         let d = rd::<GPtr<u8>>(veh, 0x460);
         event_group_add(rd::<GPtr<u8>>(d, 0x47C).byte_add(0x68), evp, 0);
         event_knock_off_bike_dtor(evp);
@@ -181,11 +177,11 @@ pub fn damage_knock_off_rider(
     let passenger = rd::<GPtr<u8>>(veh, 0x464);
     if !passenger.is_null() {
         if dir == -10 {
-            dir = ped_get_local_direction(passenger, dir2p);
+            dir = ped_get_local_direction(passenger, dir2p.cast::<f32>());
         }
         let mut ev = [0u32; 16];
         let evp: GPtr<u8> = GPtr::from_raw(&mut ev as *mut [u32; 16]).cast();
-        event_knock_off_bike_ctor(evp, veh, veh.byte_add(0x44), impact, damage.to_bits(), height(force), 0x31, dir as u32, 0, 0, 0, 0);
+        event_knock_off_bike_ctor(evp, veh, veh.byte_add(0x44), impact, damage.to_bits(), height(force), 0x31, dir as u32, 0, GPtr::NULL, 0, 0);
         let p = rd::<GPtr<u8>>(veh, 0x464);
         event_group_add(rd::<GPtr<u8>>(p, 0x47C).byte_add(0x68), evp, 0);
         event_knock_off_bike_dtor(evp);
@@ -202,11 +198,11 @@ pub fn event_knock_off_bike_destructor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x85_B2E0);
     let p = rd::<GPtr<u8>>(this, 0x38);
     if !p.is_null() {
-        entity_clean_up_old_reference(p, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x38)));
+        entity_clean_up_old_reference(p, this.byte_add(0x38));
     }
     let v = rd::<GPtr<u8>>(this, 0x30);
     if !v.is_null() {
-        entity_clean_up_old_reference(v, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x30)));
+        entity_clean_up_old_reference(v, this.byte_add(0x30));
     }
     wr::<u32>(this, 0, 0x85_AB38);
 }

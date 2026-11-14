@@ -67,10 +67,7 @@ fn atan_xy(x: f32, y: f32) -> X87 {
 }
 
 use sa_world::bindings::process_line_of_sight;
-orig! {
-    /// `CVector::Normalise()` (0x59C910, thiscall)
-    fn vector_normalise(v: GPtr<f32>) = thiscall 0x59C910 => unported;
-}
+use sa_core::bindings::vector_normalise;
 
 /// `ProcessLineOfSight(from, to, cp, ent, 1, 0, 0, 0, 0, 0, 0, 1)` (buildings only, shoot-through), as
 /// every call of FlyAIHeliInCertainDirection makes it.
@@ -164,7 +161,7 @@ pub fn fly_ai_heli_in_certain_direction(heli: GPtr<u8>, heading: f32, distance: 
         let c = x_(heading).fcos().to_f32(); // [E+0x1C]
         let s = x_(heading).fsin().to_f32(); // [E+0x20]
         let mut d = [c, s, -1.0]; // [E+0x4C]
-        vector_normalise(vp(&mut d));
+        vector_normalise(GPtr::<f32>::cast::<[f32;3]>(vp(&mut d)));
         let mut b = [
             x_(d[0]).fmul_m(60.0).fadd_m(a[0]).to_f32(),
             x_(d[1]).fmul_m(60.0).fadd_m(a[1]).to_f32(),
@@ -211,7 +208,7 @@ pub fn fly_ai_heli_in_certain_direction(heli: GPtr<u8>, heading: f32, distance: 
         } else {
             let m = rd::<GPtr<u8>>(heli, 0x14);
             let mut rv = [rd::<f32>(m, 0), rd::<f32>(m, 4), 0.0]; // [E+0x40]
-            vector_normalise(vp(&mut rv));
+            vector_normalise(GPtr::<f32>::cast::<[f32;3]>(vp(&mut rv)));
             let hit_dist = |cp: &[u32; 11], a: &[f32; 3]| {
                 let dx = x_(f32::from_bits(cp[0])).fsub_m(a[0]);
                 let dy = x_(f32::from_bits(cp[1])).fsub_m(a[1]);
@@ -399,7 +396,7 @@ pub fn fly_ai_heli_in_certain_direction(heli: GPtr<u8>, heading: f32, distance: 
     if probe_set_jump || rd::<u8>(heli, 0x9B8) != 0 {
         let m = rd::<GPtr<u8>>(heli, 0x14);
         let mut f = [rd::<f32>(m, 0x10), rd::<f32>(m, 0x14), 0.0];
-        vector_normalise(vp(&mut f));
+        vector_normalise(GPtr::<f32>::cast::<[f32;3]>(vp(&mut f)));
         let v = x_(f[1])
             .fmul_m(rd::<f32>(heli, 0x48))
             .fadd(x_(f[2]).fmul_m(rd::<f32>(heli, 0x4C)))
@@ -468,7 +465,7 @@ pub fn fly_ai_heli_to_target_fixed_orientation(heli: GPtr<u8>, orientation: f32,
             x_(orientation).fsin().to_f32(),
             -1.0,
         ]; // [S+0xC]
-        vector_normalise(vp(&mut d));
+        vector_normalise(GPtr::<f32>::cast::<[f32;3]>(vp(&mut d)));
         let dz60 = x_(d[2]).fmul_m(60.0).to_f32(); // [S+0x38]
         let mut e = [
             x_(d[0]).fmul_m(60.0).fadd_m(s[0]).to_f32(),
@@ -577,23 +574,13 @@ pub fn fly_ai_heli_to_target_fixed_orientation(heli: GPtr<u8>, orientation: f32,
 // ---------------------------------------------------------------------------------------------------------
 // Parking
 
-use sa_world::bindings::get_position;
+use crate::bindings::get_position;
 use sa_core::bindings::task_new;
 use sa_world::bindings::task_complex_ctor;
 use sa_world::bindings::tm_set_task as task_manager_set_task;
 use sa_world::bindings::leave_any_car_ctor as task_leave_any_car_ctor;
-orig! {
-    /// `CCarCtrl::SteerAICarWithPhysicsHeadingForTarget(CVehicle*, CPhysical*, float x, float y, float*, float*, float*, bool*)` (0x433280)
-    #[allow(clippy::too_many_arguments)]
-    fn steer_heading_for_target(v: GPtr<u8>, target: GPtr<u8>, x: f32, y: f32, steer: GPtr<f32>, gas: GPtr<f32>, brake: GPtr<f32>, hb: GPtr<u8>) = cdecl 0x433280 => crate::carctrl3::steer_ai_car_with_physics_heading_for_target;
-    /// `CCollision::DistToMathematicalLine(const CVector*, const CVector*, const CVector*)` (0x412970, ST0)
-    fn dist_to_mathematical_line(a: GPtr<f32>, b: GPtr<f32>, p: GPtr<f32>) -> f64 = cdecl 0x412970 => dist_to_mathematical_line_abi;
-}
-
-#[cfg_attr(sa_phase_a, allow(dead_code))]
-fn dist_to_mathematical_line_abi(a: GPtr<f32>, b: GPtr<f32>, p: GPtr<f32>) -> f64 {
-    sa_world::collision::prim::dist_to_mathematical_line(a, b, p).to_f64()
-}
+use crate::bindings::steer_heading_for_target;
+use sa_world::bindings::dist_to_mathematical_line;
 
 /// `ThePaths.m_pPathNodes[area]` (0x96F854).
 fn path_nodes(area: u32) -> GPtr<u8> {
@@ -637,7 +624,7 @@ fn occupants_leave_car(veh: GPtr<u8>) {
         let t = if t.is_null() {
             GPtr::NULL
         } else {
-            task_complex_ctor(t);
+            task_complex_ctor(t.addr() as u32);
             wr::<u32>(t, 0, 0x0085_8EB0);
             wr::<u32>(t, 0xC, 0);
             wr::<u8>(t, 0x10, 1);
@@ -704,7 +691,7 @@ pub fn steer_ai_car_park_parallel(
             x_(n[1]).fsub_m(c[1]).to_f32(),
             x_(n[2]).fsub_m(c[2]).to_f32(),
         ];
-        vector_normalise(vp(&mut d));
+        vector_normalise(GPtr::<f32>::cast::<[f32;3]>(vp(&mut d)));
         let n = node_pos(next);
         [
             x_(d[0]).fadd_m(n[0]).to_f32(),
@@ -770,7 +757,7 @@ pub fn steer_ai_car_park_perpendicular(
         let mut b = [cx, cy, 0.0];
         let p = entity_pos(veh);
         let mut v = [vx(p, 0), vx(p, 1), 0.0];
-        let d = X87::from_f64_exact(dist_to_mathematical_line(vp(&mut a), vp(&mut b), vp(&mut v)));
+        let d = X87::from_f64_exact(dist_to_mathematical_line(vp(&mut a), vp(&mut b), vp(&mut v)).to_f64());
         if !ge5(d, x_(6.0)) {
             wr::<u8>(veh, 0x3BA, 0x31);
         }
@@ -802,22 +789,8 @@ pub fn steer_ai_car_park_perpendicular(
 // Steering along a vehicle recording
 
 use crate::bindings::stop_playback_with_index;
-orig! {
-    /// `CCarCtrl::FindAngleToWeaveThroughTraffic(CVehicle*, CPhysical*, float, float, float)` (0x4325C0, ST0)
-    fn find_angle_to_weave_call(veh: GPtr<u8>, ignore: GPtr<u8>, heading: f32, target: f32, range: f32) -> f64 = cdecl 0x4325C0 => find_angle_to_weave_abi;
-    /// `CCarCtrl::FindMaxSteerAngle(CVehicle*)` (0x427FE0, ST0)
-    fn find_max_steer_angle(v: GPtr<u8>) -> f64 = cdecl 0x427FE0 => find_max_steer_angle_abi;
-}
-
-#[cfg_attr(sa_phase_a, allow(dead_code))]
-fn find_angle_to_weave_abi(veh: GPtr<u8>, ignore: GPtr<u8>, heading: f32, target: f32, range: f32) -> f64 {
-    crate::carctrl3::find_angle_to_weave_through_traffic(veh, ignore, heading, target, range).to_f64()
-}
-
-#[cfg_attr(sa_phase_a, allow(dead_code))]
-fn find_max_steer_angle_abi(v: GPtr<u8>) -> f64 {
-    crate::carctrl2::find_max_steer_angle(v).to_f64()
-}
+use crate::bindings::find_angle_to_weave_call;
+use crate::bindings::find_max_steer_angle;
 
 /// `|V - p|` (3D) as the recording steering computes it: `dx = V.x - p.x`, `dy`, `dz` on the FPU,
 /// `sqrt((dz * dz + dy * dy) + dx * dx)`.
@@ -918,9 +891,9 @@ pub fn steer_ai_car_with_physics_follow_pre_recorded_path(
     let ty = x_(rd::<f32>(f, 0x18)).fsub_m(vx(p, 1)).to_f32();
     let tx = x_(rd::<f32>(f, 0x14)).fsub_m(vx(p, 0)).to_f32();
     let at = atan_xy(tx, ty).to_f32();
-    let w = X87::from_f64_exact(find_angle_to_weave_call(veh, GPtr::NULL, at, h, 2.0)).fsub_m(h);
+    let w = X87::from_f64_exact(find_angle_to_weave_call(veh, GPtr::NULL, at, h, 2.0).to_f64()).fsub_m(h);
     let mut s = wrap_down(wrap_up(w)).to_f32();
-    let ms = X87::from_f64_exact(find_max_steer_angle(veh));
+    let ms = X87::from_f64_exact(find_max_steer_angle(veh).to_f64());
     let nms = ms.fchs();
     if !ge5(x_(s), nms) {
         s = nms.to_f32();
@@ -963,11 +936,10 @@ pub fn steer_ai_car_with_physics_follow_pre_recorded_path(
 
 use sa_world::bindings::process_line_sphere;
 use sa_world::bindings::world_process_vertical_line as process_vertical_line;
+use sa_core::bindings::cross_product;
 orig! {
     /// `CCollision::IsStoredPolyStillValidVerticalLine(const CVector&, float zEnd, CColPoint&, CStoredCollPoly*)` (0x414D70)
     fn is_stored_poly_still_valid_vertical_line(p: GPtr<f32>, z: f32, cp: GPtr<u8>, poly: GPtr<u8>) -> u8 = cdecl 0x414D70 => unported;
-    /// `CVector::CrossProduct(CVector* out, const CVector* a, const CVector* b)` (0x59C730, `a x b`, returns `out`)
-    fn cross_product(out: GPtr<f32>, a: GPtr<f32>, b: GPtr<f32>) -> GPtr<f32> = cdecl 0x59C730 => unported;
     /// `CVehicle` vtable slot 0xD4 `GetHeightAboveRoad()` (ST0)
     fn vehicle_get_height_above_road(v: GPtr<u8>) -> f64 = thiscall vslot 0xD4 => unported;
     /// `CVehicle::UpdateLightingFromStoredPolys()` (0x6D0CC0, thiscall)
@@ -1124,7 +1096,7 @@ pub fn drag_car_to_point(veh: GPtr<u8>, target: GPtr<f32>) {
     wr::<f32>(m, 0x18, pitch.fsin().to_f32());
     let m = rd::<GPtr<u8>>(veh, 0x14);
     let mut up = [0f32; 3]; // [T+0x6C]
-    let u = cross_product(vp(&mut up), m.cast(), m.byte_add(0x10).cast());
+    let u = GPtr::<u8>::cast::<f32>(cross_product(GPtr::<f32>::cast::<u8>(vp(&mut up)), GPtr::<f32>::cast::<u8>(m.cast()), GPtr::<f32>::cast::<u8>(m.byte_add(0x10).cast())));
     let (ux, uy, uz) = (vx(u, 0), vx(u, 1), vx(u, 2));
     let sx = x_(tx).fadd_m(rx);
     let sy = x_(ty).fadd_m(ry);
@@ -1153,7 +1125,7 @@ pub fn drag_car_to_point(veh: GPtr<u8>, target: GPtr<f32>) {
     let mut fc = f; // [T+0x78]
     let mut c = [0f32; 3]; // [T+0xE4]
     let m = rd::<GPtr<u8>>(veh, 0x14);
-    cross_product(vp(&mut c), m.byte_add(0x10).cast(), vp(&mut fc));
+    cross_product(GPtr::<f32>::cast::<u8>(vp(&mut c)), GPtr::<f32>::cast::<u8>(m.byte_add(0x10).cast()), GPtr::<f32>::cast::<u8>(vp(&mut fc)));
     let s = x_(c[2]).fmul_m(-10.0);
     let v = if ge5(s, x_(0.5)) {
         x_(0.5)
@@ -1426,17 +1398,11 @@ pub fn fly_ai_plane_in_certain_direction(plane: GPtr<u8>) {
 // ---------------------------------------------------------------------------------------------------------
 // Racing
 
+use crate::bindings::one_way_lane_offset;
 orig! {
-    /// `CCarPathLink::OneWayLaneOffset()` (0x44DB00, thiscall, ST0)
-    fn one_way_lane_offset(link: GPtr<u8>) -> f64 = thiscall 0x44DB00 => one_way_lane_offset_abi;
     /// `CCarCtrl::FindIntersection2Lines(x1, y1, dx1, dy1, x2, y2, dx2, dy2, float* ox, float* oy)` (0x4226F0)
     #[allow(clippy::too_many_arguments)]
     fn find_intersection_2_lines(x1: f32, y1: f32, dx1: f32, dy1: f32, x2: f32, y2: f32, dx2: f32, dy2: f32, ox: GPtr<f32>, oy: GPtr<f32>) = cdecl 0x4226F0 => crate::carctrl2::find_intersection_2_lines;
-}
-
-#[cfg_attr(sa_phase_a, allow(dead_code))]
-fn one_way_lane_offset_abi(link: GPtr<u8>) -> f64 {
-    crate::pathfind::one_way_lane_offset(link).to_f64()
 }
 
 /// The navi link (`CCarPathLink`, 14 bytes) of a `CCarPathLinkAddress`: `ThePaths.m_pNaviNodes[a >> 10]`
@@ -1471,7 +1437,7 @@ fn link_dir(l: GPtr<u8>, o: isize, sign: i8) -> f32 {
 
 /// `(OneWayLaneOffset(l) + ((float)count - 1)) * d * 5.4` (a fresh OneWayLaneOffset call per use).
 fn lane_edge(l: GPtr<u8>, count: u8, d: f32) -> X87 {
-    X87::from_f64_exact(one_way_lane_offset(l))
+    X87::from_f64_exact(one_way_lane_offset(l).to_f64())
         .fadd(xi_(i32::from(count)).fsub_m(1.0))
         .fmul_m(d)
         .fmul_m(k(0x40AC_CCCD))
@@ -1684,10 +1650,8 @@ use crate::bindings::node_lt;
 use crate::bindings::remove_one_path_node;
 use crate::bindings::should_car_stop_for_bridge;
 use crate::bindings::stop_car_if_nodes_are_invalid;
+use crate::bindings::do_path_search;
 orig! {
-    /// `CPathFind::DoPathSearch(...)` (0x4515D0, thiscall on ThePaths, gr parameter order)
-    #[allow(clippy::too_many_arguments)]
-    fn do_path_search(this: GPtr<u8>, path_type: u32, ox: f32, oy: f32, oz: f32, origin_addr: u32, tx: f32, ty: f32, tz: f32, out_nodes: GPtr<u32>, out_count: GPtr<i16>, max_nodes: i32, out_distance: GPtr<f32>, max_search: f32, target_addr: GPtr<u32>, max_depth: f32, same_lane: u32, forbidden: u32, allow_water: u32, for_boats: u32) = thiscall 0x4515D0 => crate::pathfind::do_path_search;
     /// `CPathFind::FindLinkBetweenNodes(CNodeAddress, CNodeAddress)` (0x451350, thiscall, hidden return pointer)
     fn find_link_between_nodes(this: GPtr<u8>, out: GPtr<u16>, a: u32, b: u32) -> GPtr<u16> = thiscall 0x451350 => crate::pathfind::find_link_between_nodes;
     /// `CCarCtrl::ClitargetOrientationToLink(CVehicle*, CCarPathLinkAddress, int8 side, float* heading, float x, float y)` (0x422760)
@@ -2015,7 +1979,7 @@ pub fn steer_ai_car_with_physics_follow_path_racing(
     );
     // 6. the steer
     let w =
-        X87::from_f64_exact(find_angle_to_weave_call(veh, GPtr::NULL, angle, heading, 2.0)).fsub_m(heading);
+        X87::from_f64_exact(find_angle_to_weave_call(veh, GPtr::NULL, angle, heading, 2.0).to_f64()).fsub_m(heading);
     let mut st = wrap_down(wrap_up(w));
     let mut steer_f = st.to_f32(); // [E+0x18]
     let (mx, my, mz) = (rd::<f32>(veh, 0x44), rd::<f32>(veh, 0x48), rd::<f32>(veh, 0x4C));

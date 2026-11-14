@@ -8,7 +8,7 @@ use sa_core::hook;
 
 use crate::common::*;
 
-use sa_core::bindings::entity_clean_up_old_reference;
+use sa_world::bindings::entity_clean_up_old_reference;
 use crate::bindings::task_complex_dtor;
 
 /// `CEventStuckInAir::~CEventStuckInAir` (0x4B1520, thiscall): vtable 0x85B508; with the ped (+0xC) set,
@@ -20,7 +20,7 @@ pub fn event_stuck_in_air_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x85B508);
     let ped = rd::<GPtr<u8>>(this, 0xC);
     if !ped.is_null() {
-        entity_clean_up_old_reference(ped, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0xC)));
+        entity_clean_up_old_reference(ped, this.byte_add(0xC));
     }
     wr::<u32>(this, 0, 0x85AB38);
 }

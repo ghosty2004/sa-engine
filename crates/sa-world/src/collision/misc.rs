@@ -23,7 +23,7 @@ sa_core::globals! {
     pub static NUM_ENTITIES_SET_INVISIBLE @ 0x9655DC: i32 = 0;
 }
 
-pub use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+pub use crate::bindings::entity_clean_up_old_reference as clean_up_old_reference;
 pub use sa_stream::bindings::col_model_remove_collision_volumes;
 orig! {
     /// `CCollision::CheckCameraCollisionPeds(int32 x, int32 y, const CVector& pos, const CVector& dir,
@@ -76,7 +76,7 @@ pub fn reset_made_invisible_objects() {
             f.write(f.read() | 0x80);
             let e = slot.read();
             if !e.is_null() {
-                clean_up_old_reference(e, slot);
+                clean_up_old_reference(e, slot.cast::<u8>());
             }
             slot.write(GPtr::NULL);
         }
@@ -95,10 +95,10 @@ pub fn temp_col_models_shutdown() {
         0x968FA0, 0x968FD0,
     ];
     for a in SINGLE {
-        col_model_remove_collision_volumes(temp_model(a));
+        col_model_remove_collision_volumes(GPtr::<u8>::cast::<crate::collision::shared::CColModel>(temp_model(a)).cast::<u8>());
     }
     for i in 0..20 {
-        col_model_remove_collision_volumes(temp_model(0x968A30 + 0x30 * i));
+        col_model_remove_collision_volumes(GPtr::<u8>::cast::<crate::collision::shared::CColModel>(temp_model(0x968A30 + 0x30 * i)).cast::<u8>());
     }
 }
 
@@ -106,9 +106,9 @@ use sa_core::field::pa as temp_model;
 
 pub use sa_stream::bindings::col_model_allocate_data as col_model_allocate_data_call;
 pub use crate::bindings::col_line_set as col_line_set_call;
-pub use sa_core::bindings::box_set as box_set_call;
-pub use sa_core::bindings::col_sphere_set as col_sphere_set_call;
-pub use sa_core::bindings::sphere_set as sphere_set_call;
+pub use crate::bindings::box_set as box_set_call;
+pub use crate::bindings::col_sphere_set as col_sphere_set_call;
+pub use crate::bindings::sphere_set as sphere_set_call;
 
 fn copy3(dst: GPtr<u8>, src: GPtr<u32>) {
     for i in 0..3 {
@@ -196,13 +196,13 @@ pub fn temp_col_models_initialise() {
         GPtr::from_raw(v.as_ptr().cast_mut())
     }
     fn sphere_set(s: GPtr<u8>, r: u32, c: [u32; 3]) {
-        sphere_set_call(s, r, GPtr::<u32>::cast::<u8>(p(&c)));
+        sphere_set_call(s, f32::from_bits(r).to_bits(), p(&c));
     }
     fn box_set(b: GPtr<u8>, min: [u32; 3], max: [u32; 3]) {
-        box_set_call(b, GPtr::<u32>::cast::<u8>(p(&min)), GPtr::<u32>::cast::<u8>(p(&max)));
+        box_set_call(b, p(&min), p(&max));
     }
     fn col_sphere_set(s: GPtr<u8>, r: u32, c: [u32; 3], m: u32, pc: u32, l: u32) {
-        col_sphere_set_call(s, f32::from_bits(r), GPtr::<u32>::cast::<u8>(p(&c)), m as u8, pc as u8, l as u8);
+        col_sphere_set_call(s, f32::from_bits(r).to_bits(), p(&c), (m as u8) as u32, (pc as u8) as u32, (l as u8) as u32);
     }
     fn col_line_set(l: GPtr<u8>, a: [u32; 3], b: [u32; 3]) {
         col_line_set_call(l, p(&a), p(&b));

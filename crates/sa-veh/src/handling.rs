@@ -167,7 +167,7 @@ use sa_core::bindings::sscanf1 as hd_sscanf_x;
 use sa_core::bindings::strtok as hd_strtok;
 use sa_core::bindings::file_close as hd_close_file;
 use sa_core::bindings::file_set_dir as hd_set_dir;
-use sa_core::bindings::load_line as hd_load_line;
+use sa_stream::bindings::load_line as hd_load_line;
 use sa_core::bindings::open_file as hd_open_file;
 use sa_pop::bindings::get_boat_pointer as hd_get_boat_pointer;
 orig! {

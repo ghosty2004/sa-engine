@@ -14,8 +14,8 @@ use crate::bindings::atomic_set_pipeline;
 use crate::bindings::bones_used_call;
 use crate::bindings::engine_get_plugin_offset;
 use crate::bindings::skin_initialize;
-use sa_core::bindings::rw_stream_skip as stream_skip;
-use sa_core::bindings::stream_read;
+use crate::bindings::rw_stream_skip as stream_skip;
+use crate::bindings::stream_read;
 orig! {
     /// `_rpSkinGeometryNativeRead(stream, geometry)` (0x7C88B0)
     fn geometry_native_read(s: GPtr<u8>, geom: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C88B0 => unported;
