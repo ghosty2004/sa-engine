@@ -2385,7 +2385,7 @@ orig! {
 
 orig! {
     /// `CMemoryMgr::FreeAlign` (0x72F4F0)
-    pub fn mem_free_align(p: GPtr<u8>) = cdecl 0x72F4F0 => crate::memory::free_align;
+    pub fn mem_free_align(p: GPtr<u8>) = cdecl 0x72F4F0 => unported;
 }
 
 orig! {
@@ -3195,7 +3195,7 @@ orig! {
 
 orig! {
     /// `_strncpy` (0x821F40)
-    pub fn crt_strncpy(d: GPtr<u8>, s: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x821F40 => crate::crt::strncpy_port;
+    pub fn crt_strncpy(d: GPtr<u8>, s: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x821F40 => unported;
 }
 
 orig! {
@@ -3205,7 +3205,7 @@ orig! {
 
 orig! {
     /// `_pow` (0x8220F0)
-    pub fn crt_pow(x: f64, y: f64) -> f64 = cdecl 0x8220F0 => crate::crt::pow2_int;
+    pub fn crt_pow(x: f64, y: f64) -> f64 = cdecl 0x8220F0 => unported;
 }
 
 orig! {

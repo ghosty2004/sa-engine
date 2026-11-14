@@ -71,38 +71,3 @@ mod tests {
 pub fn rand_at(site: u32) -> i32 {
     crate::orig::at_site(site, rand)
 }
-
-/// Phases B/C: CRT `pow(double, double)` (0x8220F0) as the ports use it, only `pow(2.0, integer)`, which is
-/// exact (overflow → +inf, underflow → +0).
-pub fn pow2_int(a: f64, b: f64) -> f64 {
-    assert!(a == 2.0 && b == (b as i64) as f64, "crt::pow2_int: only pow(2, integer)");
-    let e = b as i64;
-    if e > 1023 {
-        f64::INFINITY
-    } else if e >= -1022 {
-        f64::from_bits(((e + 1023) as u64) << 52)
-    } else if e >= -1074 {
-        f64::from_bits(1u64 << (e + 1074))
-    } else {
-        0.0
-    }
-}
-
-/// CRT `strncpy` semantics (phases B/C path of CRT `strncpy`, 0x821F40): copies up to `n` bytes, stops after the
-/// terminating NUL and pads the rest of the `n` bytes with zeros; returns `dst`.
-pub fn strncpy_port(dst: crate::mem::GPtr<u8>, src: crate::mem::GPtr<u8>, n: u32) -> crate::mem::GPtr<u8> {
-    let mut i = 0u32;
-    while i < n {
-        let c = src.byte_add(i as isize).read();
-        dst.byte_add(i as isize).write(c);
-        i += 1;
-        if c == 0 {
-            break;
-        }
-    }
-    while i < n {
-        dst.byte_add(i as isize).write(0);
-        i += 1;
-    }
-    dst
-}

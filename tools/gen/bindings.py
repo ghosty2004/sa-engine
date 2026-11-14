@@ -665,6 +665,19 @@ def main():
     for a in repeated:
         if a not in VARARGS:
             bad.append(f'0x{a:X}: declared in more than one module and not bound (bindings.py --resolve)')
+    # a binding a host stand-in replaces (`orig::host::set("sa_x::bindings::name", ..)`: sa-game's platform layer,
+    # the L1 harness) must stay `unported` without a twin: the stand-in is consulted only on that path, and a
+    # direct call to the port would mix it with the stand-in's state (e.g. an allocator pair)
+    by_key = {(crate_mod(r['crate']), r['name']): r for r in rows}
+    for p in rust_files():
+        t = open(p, encoding='utf-8').read()
+        if 'set::<' not in t:
+            continue
+        for m in re.finditer(r'set::<[^;]*?"(sa_[a-z_0-9]+)::bindings::(\w+)"', t, re.S):
+            r = by_key.get((m.group(1), m.group(2)))
+            if r and (r['target'] != 'unported' or r.get('port')):
+                bad.append(f'{r["address"]} {r["name"]}: a host stand-in replaces it ({os.path.relpath(p, ROOT)}); '
+                           f'its binding must be `unported` without a ported twin')
     print(f'bindings: {len(rows)} in {len({r["crate"] for r in rows})} crates; '
           f'{len(other)} other declarations of bound addresses ({sum(1 for a, _ in other if a in VARARGS)} C varargs '
           f'per caller), {len(repeated)} unbound addresses declared in more than one module')

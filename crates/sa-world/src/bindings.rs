@@ -4400,7 +4400,7 @@ orig! {
 
 orig! {
     /// `FUN_008219f0` (0x8219F0)
-    pub fn crt_floor(v: f64) -> f64 = cdecl 0x8219F0 => crate::physical::base::floor_f64;
+    pub fn crt_floor(v: f64) -> f64 = cdecl 0x8219F0 => unported;
 }
 
 orig! {
