@@ -172,8 +172,8 @@ async function start(files) {
       statusEl.className = m.error ? 'err' : '';
       $('ministatus').textContent = m.error ? `error: ${m.error}` : m.blocked ? `${m.blocked} blocked` : '';
       // the SA:MP UI's cursor (dialogs, scoreboard, class-selection panel) takes the pointer like the menus
-      inMenu = m.state !== 9 || !!m.uiCursor;
-      if (m.uiCursor && document.pointerLockElement === canvas) { selfRelease = true; document.exitPointerLock?.(); }
+      inMenu = m.state !== 9 || !!m.uiCursor || !!m.menuActive;
+      if ((m.uiCursor || m.menuActive) && document.pointerLockElement === canvas) { selfRelease = true; document.exitPointerLock?.(); }
       canvas.classList.toggle('menu', inMenu && document.pointerLockElement !== canvas);
       $('blocked').textContent = m.blocked ? `blocked iterations: ${m.blocked}, last: ${m.lastBlocked} (not ported yet)` : '';
     }

@@ -409,6 +409,14 @@ pub fn ui_cursor() -> bool {
     crate::samp::ui_cursor_visible()
 }
 
+/// Whether the front-end menu is active over the game (the pause menu: `FrontEndMenuManager.m_bMenuActive`, gGameState
+/// stays IDLE): the page then sends absolute pointer positions and clicks as in the main menu, and the game draws its
+/// cursor.
+#[wasm_bindgen]
+pub fn menu_active() -> bool {
+    sa_core::game::MENU_ACTIVE.get().get()
+}
+
 /// In-game frames presented so far.
 #[wasm_bindgen]
 pub fn in_game_presents() -> u32 {
