@@ -43,7 +43,7 @@ pub struct Reader {
 
 /// Every absolute read of a hooked entry's bytes in gta_sa.exe 1.0 US (`.text`, the no-CD `.text` and
 /// `.HOODLUM`), found by the test below.
-pub const READERS: [Reader; 50] = [
+pub const READERS: [Reader; 51] = [
     // CStreaming::AreAnimsUsedByRequestedModels entry (0x407AD0)
     Reader {
         at: 0x401BCE,
@@ -463,6 +463,15 @@ pub const READERS: [Reader; 50] = [
         disp_off: 2,
         key: 0x737C82,
         value: 0xCC9F_B6E9,
+    },
+    // Batch frontier-1-1: CTaskSimpleBikeJacked::CTaskSimpleBikeJacked entry 0x648B90 (`push -1; jmp 0x40681E`):
+    // `mov ecx, [0x648B93]` at 0x156DAD4 (the jmp's rel32).
+    Reader {
+        at: 0x156DAD4,
+        insn: [0x8B, 0x0D, 0x93, 0x8B, 0x64, 0x00],
+        disp_off: 2,
+        key: 0x648B93,
+        value: 0xFFDB_DC87,
     },
 ];
 

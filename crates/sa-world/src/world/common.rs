@@ -67,6 +67,13 @@ sa_core::globals! {
     pub static PLAYER1_WANTED @ 0xB7CF2C: GPtr<u8> = GPtr::NULL;
 }
 
+/// An entity's position as the original reads it inline: `m_matrix ? &m_matrix->pos : &m_placement.pos`
+/// (+0x14 matrix, its +0x30; else +0x4).
+pub fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
+    let m = rd::<GPtr<u8>>(e, 0x14);
+    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
+}
+
 /// The camera position the original reads: `[0xB6F03C] + 0x30` when set, else the vector at 0xB6F02C.
 pub fn cam_pos() -> GPtr<f32> {
     let e = CAM_ENTITY.get();

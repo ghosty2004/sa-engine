@@ -13,6 +13,7 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 use sa_math::x87::X87;
+use sa_math::x87::ci_acos;
 
 /// Opcodes with a Rust case, ascending.
 pub const PORTED: &[u16] = &[
@@ -254,29 +255,6 @@ fn unstatic(o: GPtr<u8>) {
         vcall_set_is_static(f, o, 0);
         add_to_moving_list(o);
     }
-}
-
-/// `_CIacos` (0x822380) of a register value as the CRT computes it under the game's CW 0x7F (its CW switch
-/// keeps PC = 24): |d| < 1: `atan2(sqrt((1 + d) * (1 - d)), d)` (PC=24 for the arithmetic, FPATAN unrounded);
-/// d = ±1: 0 / pi; |d| > 1, ±inf or NaN: the indefinite NaN. FPATAN and pi at 53 bits (ledger MATH-2), as
-/// sa-anim's `ci_acos` (node.rs).
-fn ci_acos(d: X87) -> X87 {
-    let indefinite = X87::from_f64_exact(f64::from_bits(0xFFF8_0000_0000_0000));
-    if d.is_nan() {
-        return indefinite;
-    }
-    let v = d.to_f64();
-    if v.abs() < 1.0 {
-        let s = X87::one().fadd(d).fmul(X87::one().fsub(d)).fsqrt();
-        return s.fpatan(d);
-    }
-    if v == 1.0 {
-        return X87::zero();
-    }
-    if v == -1.0 {
-        return X87::from_f64_exact(core::f64::consts::PI);
-    }
-    indefinite
 }
 
 /// The "-100 ground rule" (`fld z; fcom [-100.0]; test ah,0x41; jp keep`, else `fstp st(0)` and ST0 =

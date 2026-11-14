@@ -16,6 +16,7 @@ use sa_core::hook;
 use sa_core::mem::GPtr;
 use sa_core::orig;
 use sa_math::x87::{Cmp, X87};
+use sa_math::x87::ci_acos;
 
 use crate::common::{rd, wr, x};
 use crate::sequence::{self, FLAG_ROT, FLAG_TRANS, K_INV1024, K_INV4096, k_inv60};
@@ -341,30 +342,6 @@ pub fn get_end_translation_compressed(this: GPtr<u8>, out: GPtr<f32>, weight: f3
         let p = out.byte_add(4 * k);
         p.write(x(b).fmul_m(p.read()).to_f32());
     }
-}
-
-/// `_CIacos` (0x822380) of `d` (an f32 value) as the CRT computes it under the game's CW 0x7F (its
-/// CW switch keeps PC = 24): |d| < 1: `atan2(sqrt((1 + d) * (1 - d)), d)` (PC=24 for the arithmetic,
-/// FPATAN unrounded); d = ±1: 0 / pi; |d| > 1, ±inf or NaN: the indefinite NaN. FPATAN and pi are modelled
-/// at 53 bits (`sa_math::x87`, ledger MATH-2): the stored f32 results are what L2 checks.
-fn ci_acos(d: X87) -> X87 {
-    let indefinite = X87::from_f64_exact(f64::from_bits(0xFFF8_0000_0000_0000));
-    if d.is_nan() {
-        return indefinite;
-    }
-    let v = d.to_f64();
-    if v.abs() < 1.0 {
-        let s = X87::one().fadd(d).fmul(X87::one().fsub(d)).fsqrt();
-        return s.fpatan(d);
-    }
-    if v == 1.0 {
-        return X87::zero();
-    }
-    if v == -1.0 {
-        return X87::from_f64_exact(core::f64::consts::PI);
-    }
-    // the CRT error path (`__math_exit` / matherr bookkeeping not modelled)
-    indefinite
 }
 
 /// `CAnimBlendNode::CalcTheta(const CQuaternion* a, const CQuaternion* b, float* theta, float* invSin)`

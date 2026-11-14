@@ -1,4 +1,5 @@
-//! `CPedGeometryAnalyser::{IsInAir, LiesInsideBoundingBox}` (batch `mvpi-ai-1`). Ported from the 1.0 US bytes; unverified
+//! `CPedGeometryAnalyser::{IsInAir, LiesInsideBoundingBox}` (batch `mvpi-ai-1`) and more of the analyser (see each
+//! hook's batch; `IsEntityBlockingTarget` is FRONTIER-1's). Ported from the 1.0 US bytes; unverified
 //! (docs/verify/HOWTO.md).
 #![allow(clippy::unreadable_literal)]
 
@@ -8,6 +9,7 @@ use sa_core::{hook, orig};
 use sa_math::x87::Cmp;
 
 use crate::common::*;
+use sa_world::world::common::entity_pos;
 
 /// `CModelInfo::ms_modelInfoPtrs`
 const MODEL_INFO_PTRS: usize = 0xA9B0C8;
@@ -30,6 +32,8 @@ orig! {
     fn compute_entity_bounding_box_corners_uncached(z: u32, e: GPtr<u8>, corners: GPtr<u8>) = cdecl 0x5F1FA0 => unported;
     /// `CPedGeometryAnalyser::ComputeEntityBoundingBoxPlanesUncached(float z, const CVector* corners, CVector* normals, float* ds)` (0x5F1670)
     fn compute_entity_bounding_box_planes_uncached(z: u32, corners: GPtr<u8>, normals: GPtr<u8>, ds: GPtr<u8>) = cdecl 0x5F1670 => unported;
+    /// `eh vector constructor iterator(void*, size, count, ctor)` (0x403D60, stdcall)
+    fn vector_ctor_iterator(p: GPtr<u8>, size: u32, count: i32, ctor: u32) = stdcall 0x403D60 => unported;
     fn world_test_sphere_against_world(cx: u32, cy: u32, cz: u32, r: u32, ignore: GPtr<u8>, b: u32, v: u32, p: u32, o: u32, d: u32, c: u32) -> GPtr<u8> = cdecl 0x569E20 => unported;
 }
 
@@ -485,6 +489,61 @@ fn clear_target_pass(ped: GPtr<u8>, pp: GPtr<f32>, list: GPtr<GPtr<u8>>, out: GP
 /// unused) and, when `ms_iProcessLineNumCrossings` is odd (signed % 2 == 1), out += u (f32 each), else stop.
 ///
 /// Stack: the original stores the blocking distance in its own `out` argument slot and the line-of-sight
+/// `CPedGeometryAnalyser::IsEntityBlockingTarget(CEntity* entity, const CVector& point, float radius)` (0x5F3970,
+/// cdecl; entry `sub esp, 0x78; push esi; nop; nop; jmp 0x4096F8`, a protection fragment that only loads the entity
+/// into ESI). From the bytes: false when `|entity.z - point.z| > [0x858B3C]`; with `d` = the entity's position minus
+/// the point (x, y stored as f32), false when `R² + radius² < sqrt(dy² + dx²)` (R = the col model's bounding radius,
+/// +0x24; the original compares squared radii with an unsquared distance, kept); then the four bounding-box planes at
+/// the entity's z (`ComputeEntityBoundingBoxCornersUncached` / `PlanesUncached`; the normals are built by the vector
+/// constructor iterator first, the plane distances overwrite `d`): false as soon as
+/// `((n.x p.x + n.z p.z) + p.y n.y) + D + radius * [0x858B8C] > 0`; else true.
+#[hook(addr = 0x5F3970, conv = cdecl, name = "CPedGeometryAnalyser::IsEntityBlockingTarget",
+       expect = "83 EC 78 56 90 90 E9",
+       unverified = "frontier-1-1", route = "L2", hazards = "none",
+       note = "entry jumps into the protection fragment 0x4096F8 (mov esi, [esp+0x80]; jmp back)")]
+pub fn is_entity_blocking_target(entity: GPtr<u8>, point: GPtr<u8>, radius: f32) -> u8 {
+    let p = entity_pos(entity);
+    let d = [
+        x(rd::<f32>(p, 0)).fsub_m(rd::<f32>(point, 0)).to_f32(),
+        x(rd::<f32>(p, 4)).fsub_m(rd::<f32>(point, 4)).to_f32(),
+    ];
+    let dz = x(rd::<f32>(p, 8)).fsub_m(rd::<f32>(point, 8)).fabs();
+    if !dz.fcom(x(g::<f32>(0x85_8B3C).read())).test_any(0x41) {
+        return 0;
+    }
+    let mi = g::<GPtr<u8>>(MODEL_INFO_PTRS + 4 * rd::<i16>(entity, 0x22) as isize as usize).read();
+    let r_bound = x(rd::<f32>(rd::<GPtr<u8>>(mi, 0x14), 0x24));
+    let mag = x(d[1]).fmul_m(d[1]).fadd(x(d[0]).fmul_m(d[0])).fsqrt();
+    let sum = r_bound.fmul(r_bound).fadd(x(radius).fmul_m(radius));
+    if !sum.fcom(mag).test_parity(0x05) {
+        return 0;
+    }
+    let mut normals = [0u32; 12];
+    let np: GPtr<u8> = GPtr::from_raw(normals.as_mut_ptr()).cast();
+    vector_ctor_iterator(np, 0xC, 4, 0x40_4350);
+    let k = x(radius).fmul_m(g::<f32>(0x85_8B8C).read()).to_f32();
+    let z = rd::<u32>(entity_pos(entity), 8);
+    let mut corners = [0u32; 12];
+    let cp: GPtr<u8> = GPtr::from_raw(corners.as_mut_ptr()).cast();
+    compute_entity_bounding_box_corners_uncached(z, entity, cp);
+    let mut ds = [0u32; 4];
+    let dp: GPtr<u8> = GPtr::from_raw(ds.as_mut_ptr()).cast();
+    compute_entity_bounding_box_planes_uncached(z, cp, np, dp);
+    for i in 0..4isize {
+        let n = np.byte_add(0xC * i);
+        let v = x(rd::<f32>(n, 0))
+            .fmul_m(rd::<f32>(point, 0))
+            .fadd(x(rd::<f32>(n, 8)).fmul_m(rd::<f32>(point, 8)))
+            .fadd(x(rd::<f32>(point, 4)).fmul_m(rd::<f32>(n, 4)))
+            .fadd_m(rd::<f32>(dp, 4 * i))
+            .fadd_m(k);
+        if !v.fcom(x(g::<f32>(0x85_8B50).read())).test_any(0x41) {
+            return 0;
+        }
+    }
+    1
+}
+
 /// entity output in its `ped` argument slot (and the vehicle list pointer in the `target` slot); not reproduced.
 #[hook(addr = 0x5f5d80, conv = cdecl, name = "CPedGeometryAnalyser::ComputeClearTarget", expect = "8B 44 24 08 8B 10 83 EC 44",
        unverified = "mvpj-ai-2", route = "L2", hazards = "x87-transcendental,stack-residue", recs = "grove-walk",
@@ -543,4 +602,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_IS_WANDER_PATH_CLEAR,
     HOOK_GET_IS_LINE_OF_SIGHT_CLEAR_PED,
     HOOK_COMPUTE_CLEAR_TARGET,
+    HOOK_IS_ENTITY_BLOCKING_TARGET,
 ];

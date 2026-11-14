@@ -1,12 +1,15 @@
 //! `CTaskComplexProstituteSolicit` (PEDHIT: reached by the wander scan of a ped near the player's car, then her
-//! task's sub-tasks): `IsTaskValid` and `CreateSubTask`. Ported from the 1.0 US bytes (`IsTaskValid` 0x661BB0 with
+//! task's sub-tasks): `IsTaskValid`, `CreateSubTask` and (FRONTIER-1) `ControlSubTask`. Ported from the 1.0 US bytes (`IsTaskValid` 0x661BB0 with
 //! the displaced fragment 0x40160B, which only loads `ped+0x46C`; `CreateSubTask` 0x666360 leaves through the
 //! fragment 0x401BAF, which only reloads the SEH link).
 
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
+use sa_core::orig::at_site;
+
 use crate::common::*;
+use sa_world::world::common::entity_pos as pos;
 
 orig! {
     /// `FindPlayerPed(int32)` (0x56E210)
@@ -19,12 +22,6 @@ orig! {
     fn vehicle_is_on_its_side(v: GPtr<u8>) -> u8 = thiscall 0x6D1DD0 => unported;
     /// `CTaskManager::GetSimplestActiveTask()` (0x6819D0)
     fn tm_get_simplest_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x6819D0 => unported;
-    /// `CTask::GetTaskType` (vtable slot 0x10)
-    fn task_get_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `operator-(const CVector&, const CVector&)` (0x40FE60, cdecl, returns out)
-    fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => unported;
-    /// `CVector::SquaredMagnitude()` (0x406DA0, ST0)
-    fn vector_magnitude_sqr(v: GPtr<u8>) -> f64 = thiscall 0x406DA0 => unported;
     /// `CTheScripts::IsPlayerOnAMission()` (0x464D50)
     fn is_player_on_a_mission() -> u8 = cdecl 0x464D50 => unported;
     /// `CGameLogic::IsCoopGameGoingOn()` (0x441390)
@@ -50,12 +47,44 @@ orig! {
     fn seek_entity_xy_ctor(t: GPtr<u8>, e: GPtr<u8>, a: u32, b: u32, c: u32, d: u32, f: u32, b7: u32, b8: u32) -> GPtr<u8> = thiscall 0x661DC0 => unported;
     /// `CMatrix::~CMatrix()` (0x59ACD0)
     fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
-}
-
-/// The position an entity's placement gives (`m_matrix ? &m_matrix->pos : &m_placement.pos`).
-fn pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
+    /// `CTaskComplexProstituteSolicit::IsTaskValid(CPed*, CPed*)` (0x661BB0)
+    fn is_task_valid(prostitute: GPtr<u8>, client: GPtr<u8>) -> u8 = cdecl 0x661BB0 => prostitute_solicit_is_task_valid;
+    /// `CTaskComplexProstituteSolicit::CreateSubTask(int32, CPed*)` (0x666360)
+    fn create_sub_task(t: GPtr<u8>, ty: i32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x666360 => prostitute_solicit_create_sub_task;
+    /// `CAEPedSpeechAudioEntity::SetCJMood(int16, uint32, int16, int16, int16)` (0x4E3ED0)
+    fn speech_set_cj_mood(mood: i32, time: u32, gang: i32, fat: i32, dressed: i32) = cdecl 0x4E3ED0 => unported;
+    /// `CPad::ConversationYesJustDown()` (0x5411D0)
+    fn pad_conversation_yes_just_down(pad: GPtr<u8>) -> u8 = thiscall 0x5411D0 => unported;
+    /// `CPad::ConversationNoJustDown()` (0x541200)
+    fn pad_conversation_no_just_down(pad: GPtr<u8>) -> u8 = thiscall 0x541200 => unported;
+    /// `CPad::GetAccelerate()` (0x5403F0)
+    fn pad_get_accelerate(pad: GPtr<u8>) -> i16 = thiscall 0x5403F0 => unported;
+    /// `CPad::GetBrake()` (0x540080)
+    fn pad_get_brake(pad: GPtr<u8>) -> i16 = thiscall 0x540080 => unported;
+    /// `CPad::GetPad(int32)` (0x53FB70)
+    fn pad_get_pad(id: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
+    /// `CPad::StartShake(int16 time, uint8 freq, uint32 delay)` (0x53F920)
+    fn pad_start_shake(pad: GPtr<u8>, time: u32, freq: u32, delay: u32) = thiscall 0x53F920 => unported;
+    /// `operator*(CVector* out, const CVector&, float)` (0x40FEC0, cdecl, returns out)
+    fn vector_mul_scalar(out: GPtr<u8>, v: GPtr<u8>, s: f32) -> GPtr<u8> = cdecl 0x40FEC0 => unported;
+    /// `CWanted::SetWantedLevel(int32)` (0x562470)
+    fn wanted_set_wanted_level(w: GPtr<u8>, level: i32) = thiscall 0x562470 => unported;
+    /// `CPedIntelligence::GetPedEntities()` (0x4893E0): the scanner's 16 entity slots
+    fn intel_get_ped_entities(intel: GPtr<u8>) -> GPtr<u8> = thiscall 0x4893E0 => unported;
+    /// `CMessages::ClearMessages(bool)` (0x69DCD0)
+    fn messages_clear_messages(flag: u32) = cdecl 0x69DCD0 => unported;
+    /// `Min(float, float)` (0x404330, ST0)
+    fn min_f(a: f32, b: f32) -> f64 = cdecl 0x404330 => unported;
+    /// `Max(float, float)` (0x420800, ST0)
+    fn max_f(a: f32, b: f32) -> f64 = cdecl 0x420800 => unported;
+    /// `CPhysical::ApplyTurnForce(CVector force, CVector point)` (0x65DA70, by value)
+    fn physical_apply_turn_force(p: GPtr<u8>, fx: f32, fy: f32, fz: f32, px: f32, py: f32, pz: f32) = thiscall 0x65DA70 => unported;
+    /// `CAEVehicleAudioEntity::AddAudioEvent(int32, float)` (0x4F6420)
+    fn vehicle_audio_add_audio_event(a: GPtr<u8>, event: u32, p: f32) = thiscall 0x4F6420 => unported;
+    /// `CPlayerPed::GetPlayerInfoForThisPlayerPed()` (0x609FF0)
+    fn player_ped_get_player_info(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x609FF0 => unported;
+    /// `CPlayerInfo::AddHealth(int32)` (0x56EAB0)
+    fn player_info_add_health(pi: GPtr<u8>, amount: i32) = thiscall 0x56EAB0 => unported;
 }
 
 /// `CTaskComplexProstituteSolicit::IsTaskValid(CPed* prostitute, CPed* client)` (0x661BB0, cdecl; AL): true only
@@ -218,5 +247,325 @@ pub fn prostitute_solicit_create_sub_task(this: GPtr<u8>, ty: i32, ped: GPtr<u8>
     }
 }
 
+/// `TheText` (0xC1B340)
+const THE_TEXT: usize = 0xC1_B340;
+/// The first pad (`CPad::Pads[0]`, 0xB73458)
+const PAD0: usize = 0xB7_3458;
+
+/// `TheText.Get(key)` added to the message queue (`AddMessageQ(text, time, 1, true)`).
+fn message(key: usize, time: u32) {
+    messages_add_message_q(text_get(g::<u8>(THE_TEXT), g::<u8>(key)), time, 1, 1);
+}
+
+/// `x87 compare: ST0 < m` (`fcom(p) m; fnstsw; test ah, 5; jp` not taken).
+fn below(v: X87, m: f32) -> bool {
+    !v.fcom(x(m)).test_parity(0x05)
+}
+
+/// `CTaskComplexProstituteSolicit::ControlSubTask(CPed* prostitute)` (0x6669D0, thiscall, `ret 4`). Fields: +0x8 the
+/// sub-task, +0xC the client, +0x10 the meeting point, +0x1C / +0x20 / +0x24 times, +0x28 / +0x2A word counters,
+/// +0x2C flag word. Unreversed in gta-reversed; from the 1.0 US bytes:
+/// - flag bit 8 is set to bit 1; an invalid solicit (`IsTaskValid(prostitute, client)` false) sets bit 2, clears 8;
+/// - `dt = ftol(CTimer::ms_fTimeStep * [0x858B38] * [0x858C4C])`;
+/// - bit 2 set (leaving): with +0x2A running, count it down by dt and when it ends set the CJ mood (9, 120000) and let
+///   the client say 0xB (+0x2A = 0); with +0x2A at 0 start the leave-car sub-task 0x2C0 once the current one aborts;
+/// - sub-task 0xCB (waiting at the window): conversation "yes" (bit 10, the client says 0xC4, next sub-task) or "no"
+///   (the client says 0xC3, bit 2);
+/// - 0x38B / 0x2BC (walking to / entering the car): bit 2 when the car is farther than `[0x86F85C]` (squared) from
+///   the meeting point;
+/// - 0x2D5 (in the car): unless `[0xB6F0D8] == 1` (then +0x1C = now, +0x2A = 8000, bits 7 and 11, bit 8 cleared):
+///   "stopped" = `|car speed * 50|² < [0x86F84C]` (bit 7 and +0x1C restarted otherwise); once a second the scanner's 16
+///   peds set bits 4 / 3 (`|ped - prostitute|²` below `[0x86F854]` / `[0x86F850]`), and a cop (type 6) with bit 1 and
+///   no wanted level who sees the client (line of sight with the car's collision bit cleared) sets bit 5; then
+///   bit 0 (parked): after 4 s stopped, the help text 0x86FC60 (bit 0 → 1) or, when bit 3, 0x86FC58 once (bit 12);
+///   bit 1 (in action): bit 6 counts a stat 0xBE once; accelerate / brake, bit 4 or a cop who saw (wanted level 1)
+///   stop it (bits 0 and 11, +0x1C = now; messages 0x86FC3C / 0x86FC58 by the random draw and +0x2A); otherwise the
+///   rocking (+0x28 counts down, a random range `[-0.5, -0.9]` force by +0x2A, pad shake below 1000, a turn force on
+///   the car on one side by the random's bit 0, vehicle audio event 0x6C, ped speech 0x70 / 0x74 with bit 9), then
+///   +0x2A counts down (bit 2 at 0) and every second the client pays 2 (money cheat: earns 2; stat 0x21, the
+///   prostitute's +0x756 counter) or, broke, the scene ends (messages 0x86FC44 / 0x86FC3C), and gets 2 health unless
+///   bit 11.
+///
+/// Returns the current sub-task unless noted.
+#[hook(addr = 0x6669D0, conv = thiscall, name = "CTaskComplexProstituteSolicit::ControlSubTask",
+       this = "CTaskComplexProstituteSolicit", expect = "83 EC 30 53 56 8B F1",
+       unverified = "frontier-1-1", route = "L2", hazards = "heap-writes",
+       note = "rand at_site 0x666EA5 (and inside GetRandomNumberInRange); messages, stats, money, pad shake, turn force on the client's car")]
+#[allow(clippy::too_many_lines, clippy::cognitive_complexity)]
+pub fn prostitute_solicit_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    let sub = || rd::<GPtr<u8>>(this, 8);
+    let client = || rd::<GPtr<u8>>(this, 0xC);
+    let fl = || rd::<u16>(this, 0x2C);
+    let set_fl = |v: u16| wr::<u16>(this, 0x2C, v);
+    let f = fl();
+    if f & 2 != 0 {
+        if f & 0x100 == 0 {
+            set_fl(f | 0x100);
+        }
+    } else if f & 0x100 != 0 {
+        set_fl(f & 0xFEFF);
+    }
+    if is_task_valid(ped, client()) == 0 {
+        set_fl((fl() & 0xFEFF) | 4);
+    }
+    let dt = ftol32(
+        x(g::<f32>(0xB7_CB5C).read())
+            .fmul_m(g::<f32>(0x85_8B38).read())
+            .fmul_m(g::<f32>(0x85_8C4C).read()),
+    );
+    let pad = g::<u8>(PAD0);
+
+    if rd::<u8>(this, 0x2C) & 4 != 0 {
+        let c = rd::<u16>(this, 0x2A);
+        if c != 0 {
+            let n = u32::from(c).wrapping_sub(dt as u32) as u16;
+            wr::<u16>(this, 0x2A, n);
+            if n as i16 > 0 {
+                return sub();
+            }
+            speech_set_cj_mood(9, 120_000, -1, -1, -1);
+            ped_say(client(), 0xB, 0, 1.0, 0, 0, 0);
+            let r = sub();
+            wr::<u16>(this, 0x2A, 0);
+            return r;
+        }
+        if task_get_type(sub()) == 0x2C0 {
+            return sub();
+        }
+        if task_make_abortable(sub(), ped, 1, GPtr::NULL) == 0 {
+            return sub();
+        }
+        return create_sub_task(this, 0x2C0, ped);
+    }
+
+    if task_get_type(sub()) == 0xCB {
+        if pad_conversation_yes_just_down(pad) != 0 {
+            wr::<u8>(this, 0x2D, rd::<u8>(this, 0x2D) | 4);
+            let c = client();
+            if !c.is_null() {
+                ped_say(c, 0xC4, 0, 1.0, 0, 0, 0);
+            }
+            return task_create_next_sub_task(this, ped);
+        }
+        if pad_conversation_no_just_down(pad) == 0 {
+            return sub();
+        }
+        let c = client();
+        if !c.is_null() {
+            ped_say(c, 0xC3, 0, 1.0, 0, 0, 0);
+        }
+        set_fl(fl() | 4);
+        return sub();
+    }
+    if task_get_type(sub()) == 0x38B || task_get_type(sub()) == 0x2BC {
+        let p = pos(rd::<GPtr<u8>>(client(), 0x58C));
+        let dx = x(rd::<f32>(p, 0)).fsub_m(rd::<f32>(this, 0x10));
+        let dy = x(rd::<f32>(p, 4)).fsub_m(rd::<f32>(this, 0x14));
+        let dz = x(rd::<f32>(p, 8)).fsub_m(rd::<f32>(this, 0x18));
+        let sq = dx.fmul(dx).fadd(dz.fmul(dz)).fadd(dy.fmul(dy));
+        if !sq.fcom(x(g::<f32>(0x86_F85C).read())).test_any(0x41) {
+            set_fl(fl() | 4);
+        }
+        return sub();
+    }
+    if task_get_type(sub()) != 0x2D5 {
+        return sub();
+    }
+
+    let now = g::<u32>(0xB7_CB84).read();
+    if g::<u32>(0xB6_F0D8).read() == 1 {
+        let f = fl();
+        let r = sub();
+        wr::<u32>(this, 0x1C, now);
+        wr::<u16>(this, 0x2A, 8000);
+        set_fl((f & 0xFEFF) | 0x880);
+        return r;
+    }
+    let mut v = [0u32; 3];
+    let vp: GPtr<u8> = GPtr::from_raw(v.as_mut_ptr()).cast();
+    vector_mul_scalar(vp, rd::<GPtr<u8>>(client(), 0x58C).byte_add(0x44), 50.0);
+    let slow = below(vector_magnitude_sqr_x(vp), g::<f32>(0x86_F84C).read());
+    if !slow || rd::<u8>(this, 0x2C) & 0x80 != 0 {
+        wr::<u8>(this, 0x2C, rd::<u8>(this, 0x2C) & 0x7F);
+        wr::<u32>(this, 0x1C, now);
+    }
+    let wanted = find_player_wanted(-1);
+    if now > rd::<u32>(this, 0x20) {
+        wr::<u8>(this, 0x2C, rd::<u8>(this, 0x2C) & 0xC7);
+        wr::<u32>(this, 0x20, now.wrapping_add(1000));
+        let list = intel_get_ped_entities(rd::<GPtr<u8>>(ped, 0x47C));
+        for i in 0..16isize {
+            let e = rd::<GPtr<u8>>(list, i * 4);
+            let c = client();
+            if e.is_null() || e == c || rd::<u32>(e, 0x598) == 0x16 {
+                continue;
+            }
+            let mut d = [0u32; 3];
+            let dp: GPtr<u8> = GPtr::from_raw(d.as_mut_ptr()).cast();
+            vector_sub(dp, pos(e), pos(ped));
+            let sq = vector_magnitude_sqr_x(dp);
+            if below(sq, g::<f32>(0x86_F854).read()) {
+                wr::<u8>(this, 0x2C, rd::<u8>(this, 0x2C) | 0x10);
+            }
+            if below(sq, g::<f32>(0x86_F850).read()) {
+                wr::<u8>(this, 0x2C, rd::<u8>(this, 0x2C) | 8);
+            }
+            if rd::<u32>(e, 0x598) != 6
+                || rd::<u8>(this, 0x2C) & 2 == 0
+                || wanted.is_null()
+                || rd::<i32>(wanted, 0x2C) >= 1
+            {
+                continue;
+            }
+            let veh = rd::<GPtr<u8>>(c, 0x58C);
+            let saved = rd::<u32>(veh, 0x1C) & 1;
+            wr::<u32>(veh, 0x1C, rd::<u32>(veh, 0x1C) & !1);
+            let seen = world_get_is_line_of_sight_clear(pos(e), pos(client()), 1, 1, 0, 1, 0, 1, 0);
+            let veh = rd::<GPtr<u8>>(client(), 0x58C);
+            let f = rd::<u32>(veh, 0x1C);
+            wr::<u32>(veh, 0x1C, f ^ ((saved ^ f) & 1));
+            if seen != 0 {
+                wr::<u8>(this, 0x2C, rd::<u8>(this, 0x2C) | 0x20);
+            }
+        }
+    }
+
+    let f = fl();
+    if f & 1 != 0 {
+        if slow && now.wrapping_sub(rd::<u32>(this, 0x1C)) > 4000 {
+            if f & 8 == 0 {
+                set_fl((f & 0xFFFE) | 2);
+                wr::<u32>(this, 0x24, now);
+                message(0x86_FC60, 2000);
+            } else if f & 0x1000 == 0 {
+                message(0x86_FC58, 3000);
+                let r = sub();
+                wr::<u8>(this, 0x2D, rd::<u8>(this, 0x2D) | 0x10);
+                return r;
+            }
+        }
+        return sub();
+    }
+    if f & 2 == 0 {
+        return sub();
+    }
+    if f & 0x40 != 0 {
+        set_fl(f & 0xFFBF);
+        wr::<u16>(this, 0x2A, 15000);
+        stats_increment_stat(0xBE, 1.0);
+    }
+    let stop = pad_get_accelerate(pad) != 0 || pad_get_brake(pad) != 0;
+    let mut r = at_site(0x66_6EA5, rand) as u32;
+    let mut cop = false;
+    if rd::<u8>(this, 0x2C) & 0x20 != 0 && !wanted.is_null() && rd::<i32>(wanted, 0x2C) < 1 {
+        wanted_set_wanted_level(find_player_wanted(-1), 1);
+        cop = true;
+    }
+
+    if stop || rd::<u8>(this, 0x2C) & 0x10 != 0 || cop {
+        wr::<u32>(this, 0x1C, now);
+        let f = (fl() & 0xFFFD) | 0x801;
+        set_fl(f);
+        let low = rd::<i16>(this, 0x2A) < 3000;
+        if stop {
+            if r < 0x1FFF_FFFF || low {
+                set_fl(f | 4);
+                wr::<u16>(this, 0x2A, 0);
+                message(0x86_FC3C, 3000);
+                return sub();
+            }
+        } else {
+            if low {
+                set_fl(f | 4);
+                let s = sub();
+                wr::<u16>(this, 0x2A, 0);
+                return s;
+            }
+            message(0x86_FC58, 3000);
+        }
+        let s = sub();
+        wr::<u16>(this, 0x2A, 8000);
+        return s;
+    }
+
+    let n = rd::<u16>(this, 0x28).wrapping_sub(dt as u16);
+    wr::<u16>(this, 0x28, n);
+    if n as i16 <= 0 {
+        let mut rf = general_random_float_in_range_x(-0.5, -0.9).to_f32();
+        let a = rd::<i16>(this, 0x2A);
+        if a > 10000 {
+            wr::<u16>(this, 0x28, 850);
+        } else if a > 5000 {
+            wr::<u16>(this, 0x28, 450);
+        } else if a > 1000 {
+            wr::<u16>(this, 0x28, 120);
+        } else {
+            rf = x(rf).fmul_m(g::<f32>(0x85_8B8C).read()).to_f32();
+            wr::<u16>(this, 0x28, 850);
+            pad_start_shake(pad_get_pad(0), 1000, 0x78, 0);
+        }
+        let c = client();
+        let veh = rd::<GPtr<u8>>(c, 0x58C);
+        let vp = pos(veh);
+        let (vx, vy) = (rd::<f32>(vp, 0), rd::<f32>(vp, 4));
+        let cp = pos(c);
+        let (cx, cy) = (rd::<f32>(cp, 0), rd::<f32>(cp, 4));
+        let cm = rd::<f32>(c, 0x8C);
+        let vm = x(rd::<f32>(veh, 0x8C)).fmul_m(g::<f32>(0x86_3E0C).read()).to_f32();
+        let lo = X87::from_f64_exact(min_f(150.0, vm)).to_f32();
+        let m = X87::from_f64_exact(max_f(lo, cm));
+        let side = r & 1 != 0;
+        let ty = if side { cy } else { rd::<f32>(pos(ped), 4) };
+        let dy = x(ty).fsub_m(vy).to_f32();
+        let tx = if side { cx } else { rd::<f32>(pos(ped), 0) };
+        let dx = x(tx).fsub_m(vx).to_f32();
+        let fz = m.fmul_m(rf).to_f32();
+        physical_apply_turn_force(veh, 0.0, 0.0, fz, dx, dy, 0.0);
+        vehicle_audio_add_audio_event(rd::<GPtr<u8>>(client(), 0x58C).byte_add(0x138), 0x6C, 0.0);
+        if rd::<u8>(this, 0x2D) & 2 != 0 && r > 0x0FFF_FFFF {
+            r &= 0xFFFF;
+            ped_say(ped, if r < 0xFF { 0x70 } else { 0x74 }, 0, 0.5, 0, 0, 0);
+        }
+    }
+
+    let n = rd::<u16>(this, 0x2A).wrapping_sub(dt as u16);
+    wr::<u16>(this, 0x2A, n);
+    if n as i16 <= 0 {
+        wr::<u16>(this, 0x2A, 3000);
+        set_fl((fl() & 0xFFFD) | 4);
+    }
+    if now.wrapping_sub(rd::<u32>(this, 0x24)) <= 1000 {
+        return sub();
+    }
+    wr::<u32>(this, 0x24, now);
+    let pi = player_ped_get_player_info(client());
+    if g::<u8>(0x96_918A).read() != 0 {
+        wr::<i32>(pi, 0xB8, rd::<i32>(pi, 0xB8).wrapping_add(2));
+    } else {
+        let money = rd::<i32>(pi, 0xB8);
+        if money >= 2 {
+            wr::<i32>(pi, 0xB8, money - 2);
+            stats_increment_stat(0x21, 2.0);
+            wr::<u16>(ped, 0x756, rd::<u16>(ped, 0x756).wrapping_add(1));
+        } else {
+            wr::<i32>(pi, 0xB8, 0);
+            wr::<u16>(this, 0x2A, 0);
+            set_fl((fl() & 0xFFFD) | 4);
+            messages_clear_messages(0);
+            message(0x86_FC44, 2000);
+            message(0x86_FC3C, 3000);
+        }
+    }
+    if rd::<u8>(this, 0x2D) & 8 != 0 {
+        return sub();
+    }
+    player_info_add_health(pi, 2);
+    sub()
+}
+
 /// This module's registrations.
-pub const HOOKS: &[HookReg] = &[HOOK_PROSTITUTE_SOLICIT_IS_TASK_VALID, HOOK_PROSTITUTE_SOLICIT_CREATE_SUB_TASK];
+pub const HOOKS: &[HookReg] = &[
+    HOOK_PROSTITUTE_SOLICIT_IS_TASK_VALID,
+    HOOK_PROSTITUTE_SOLICIT_CREATE_SUB_TASK,
+    HOOK_PROSTITUTE_SOLICIT_CONTROL_SUB_TASK,
+];

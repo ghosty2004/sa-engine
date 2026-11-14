@@ -1227,3 +1227,26 @@ mod tests {
         assert!(m.abs() <= 1.0);
     }
 }
+
+/// CRT `_CIacos` (0x822380) of `d` as the CRT computes it under the game's CW 0x7F (its CW switch keeps PC = 24):
+/// |d| < 1: `atan2(sqrt((1 + d) * (1 - d)), d)` (PC=24 for the arithmetic, FPATAN unrounded); d = ±1: 0 / pi;
+/// |d| > 1, ±inf or NaN: the indefinite NaN. FPATAN and pi are modelled at 53 bits (ledger MATH-2).
+pub fn ci_acos(d: X87) -> X87 {
+    let indefinite = X87::from_f64_exact(f64::from_bits(0xFFF8_0000_0000_0000));
+    if d.is_nan() {
+        return indefinite;
+    }
+    let v = d.to_f64();
+    if v.abs() < 1.0 {
+        let s = X87::one().fadd(d).fmul(X87::one().fsub(d)).fsqrt();
+        return s.fpatan(d);
+    }
+    if v == 1.0 {
+        return X87::zero();
+    }
+    if v == -1.0 {
+        return X87::from_f64_exact(core::f64::consts::PI);
+    }
+    // the CRT error path (`__math_exit` / matherr bookkeeping not modelled)
+    indefinite
+}

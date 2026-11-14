@@ -237,3 +237,6 @@ pub mod event_vehicle_dtors;
 pub mod prostitute_solicit;
 pub mod enter_any_car_as_driver;
 pub mod follow_ped_footsteps_control;
+// FRONTIER-1
+pub mod bike_jacked;
+pub mod go_to_point_fine;

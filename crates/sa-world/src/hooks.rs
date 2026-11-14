@@ -157,6 +157,7 @@ pub const MODULES: &[&[HookReg]] = &[
     world::office_edge_desks::HOOKS,
     world::world_peds_fire::HOOKS,
     world::world_clear_cars::HOOKS,
+    world::object_train_crossing::HOOKS,
     crate::generated::HOOKS,
     // SAVE-1
     world::save_blocks::HOOKS,
