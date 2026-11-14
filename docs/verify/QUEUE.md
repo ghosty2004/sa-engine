@@ -41,6 +41,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | batch | 2 | AUDIO | 63b156bd | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
 | boot-render-2 | 3 | RW, UNK-game | 2077fc01 | master | 0 | 0 | 0 | 3 | 0 | L2 3 |
 | boot-rw-1 | 1 | RW | 2077fc01 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
+| carjack-1 | 1 | AI | 4b8a01b9 | worktree-agent-a1c6b8a6b0d220dec | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | climb-1 | 4 | AI | eae25835 | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
 | climb-2 | 1 | AI | 2c460985 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | climb-3 | 1 | AI | 9f5e84b0 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
@@ -50,6 +51,8 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | climb-7 | 1 | AI | 10b24ec2 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | climb-8 | 1 | WORLD | b2d609d0 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | clump-1 | 4 | RW | da9de7f1 | master | 0 | 0 | 0 | 4 | 0 | L2 3, split 1 |
+| framelimit-ai | 5 | AI, UNK-game | 4b8a01b9 | worktree-agent-a1c6b8a6b0d220dec | 5 | 0 | 0 | 0 | 0 | L2 5 |
+| framelimit-render | 1 | RENDER | 4b8a01b9 | worktree-agent-a1c6b8a6b0d220dec | 1 | 0 | 0 | 0 | 0 | L3-only 1 |
 | gen2-anim-1 | 1 | UNK-game | ed288e85 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | gen2-coll-1 | 20 | UNK-game | ed288e85 | master | 0 | 0 | 0 | 20 | 0 | L2 8, split 12 |
 | gen2-core-1 | 4 | UNK-game | ed288e85 | master | 0 | 0 | 0 | 4 | 0 | L2 4 |
@@ -1637,6 +1640,21 @@ SA_UNVERIFIED=boot-rw-1 LANE=$LANE tools/e2e/port-l2.sh batch:boot-rw-1 $SA_ROOT
 |---|---|---|---|---|
 | 0x4C9990 | `_rxD3D9DefaultDestroyInstanceCallback` | L3-batch | L2 | heap-writes |
 
+## carjack-1
+
+1 hooks in sa-ai; hazards: ax-al-return (1), uninit-locals (1); recordings calling them: carjack (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh carjack-1 $SA_ROOT/target/e2e/corpus/carjack.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=carjack-1 LANE=$LANE tools/e2e/port-l2.sh batch:carjack-1 $SA_ROOT/target/e2e/corpus/carjack.sarec --runs "plain l2 rust" --tag carjack-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x4B2EE0 | `CEventVehicleCollision::AffectsPed` | written | L2 | ax-al-return,uninit-locals |
+
 ## climb-1
 
 4 hooks in sa-ai; hazards: ax-al-return (2), entry-protection-read (2), heap-writes (2), x87-transcendental (4); recordings calling them: grove-walk (4).
@@ -1779,6 +1797,40 @@ SA_UNVERIFIED=clump-1 LANE=$LANE tools/e2e/port-l2.sh batch:clump-1 $SA_ROOT/tar
 | 0x5A5BC0 | `CClothesBuilder::BlendTextures-Dst-Src1-Src2-Tat` | L3-batch | L2 | heap-writes |
 | 0x5A5F70 | `CClothesBuilder::GetTextureFromTxdAndLoadNextTxd` | L3-batch | split | heap-writes |
 | 0x5A6530 | `CClothesBuilder::ConstructGeometryAndSkinArrays` | L3-batch | L2 | heap-writes,uninit-locals |
+
+## framelimit-ai
+
+5 hooks in sa-ai; hazards: heap-writes (5); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh framelimit-ai $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=framelimit-ai LANE=$LANE tools/e2e/port-l2.sh batch:framelimit-ai $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag framelimit-ai
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x4AC920 | `FUN_004ac920` | written | L2 | heap-writes |
+| 0x4AF700 | `FUN_004af700` | written | L2 | heap-writes |
+| 0x649020 | `CTaskSimpleSetPedAsAutoDriver::ProcessPed` | written | L2 | heap-writes |
+| 0x664590 | `CTaskGoToVehicleAndLean::CreateNextSubTask` | written | L2 | heap-writes |
+| 0x6648C0 | `CTaskLeanOnVehicle::ProcessPed` | written | L2 | heap-writes |
+
+## framelimit-render
+
+1 hooks in sa-render; hazards: heap-writes (1); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh framelimit-render $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=framelimit-render LANE=$LANE tools/e2e/port-l2.sh batch:framelimit-render $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag framelimit-render
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x706870 | `CRealTimeShadowManager::ReInit` | written | L3-only | heap-writes |
 
 ## gen2-anim-1
 
