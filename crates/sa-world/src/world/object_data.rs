@@ -14,21 +14,16 @@ use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 use sa_math::x87::X87;
 
-use sa_stream::bindings::load_line;
+use sa_core::bindings::load_line;
+use crate::bindings::find_fx_system_bp;
+use sa_core::bindings::file_close;
+use sa_core::bindings::file_set_dir;
+use sa_core::bindings::get_model_info;
+use sa_core::bindings::open_file as file_open;
 orig! {
-    /// `CFileMgr::SetDir(const char*)` (0x5387D0)
-    fn file_set_dir(dir: u32) = cdecl 0x5387D0 => unported;
-    /// `CFileMgr::OpenFile(const char*, const char*)` (0x538900)
-    fn file_open(path: GPtr<u8>, mode: u32) -> GPtr<u8> = cdecl 0x538900 => unported;
-    /// `CFileMgr::CloseFile(FILE*)` (0x5389D0)
-    fn file_close(f: GPtr<u8>) -> u32 = cdecl 0x5389D0 => unported;
     /// CRT `sscanf` (0x8220AD) with the 24 conversions of the object.dat format
     #[allow(clippy::too_many_arguments)]
     fn sscanf24(s: GPtr<u8>, fmt: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, a8: u32, a9: u32, a10: u32, a11: u32, a12: u32, a13: u32, a14: u32, a15: u32, a16: u32, a17: u32, a18: u32, a19: u32, a20: u32, a21: u32, a22: u32, a23: u32) -> i32 = cdecl 0x8220AD => unported;
-    /// `FxManager_c::FindFxSystemBP(const char*)` (0x4A9360)
-    fn find_fx_system_bp(this: GPtr<u8>, name: GPtr<u8>) -> u32 = thiscall 0x4A9360 => unported;
-    /// `CModelInfo::GetModelInfo(const char*, int32*)` (0x4C5940)
-    fn get_model_info(name: GPtr<u8>, index: u32) -> GPtr<u8> = cdecl 0x4C5940 => unported;
 }
 
 /// `CObjectData::ms_aObjectInfo`.
@@ -90,8 +85,8 @@ pub fn initialise(file_name: GPtr<u8>) {
     at(3).byte_add(0x1E).write(0);
     copy0(4);
     at(4).byte_add(0x1D).write(5);
-    file_set_dir(0x858B54);
-    let file = file_open(file_name, 0x859C6C);
+    file_set_dir(GPtr::from_addr(0x858B54));
+    let file = file_open(file_name, GPtr::from_addr(0x859C6C));
     let mut count = 5u32;
     let mut e = at(5);
     let mut model_name = [0u8; 0x100];
@@ -141,7 +136,7 @@ pub fn initialise(file_name: GPtr<u8>) {
             w32(e, 0x30, 0);
             e.byte_add(0x20).write(ints[5] as u8);
             if (ints[5] as i32) > 0 {
-                w32(e, 0x30, find_fx_system_bp(GPtr::from_addr(0xA9AE80), GPtr::from_raw(effect_name.as_mut_ptr())));
+                w32(e, 0x30, GPtr::<u8>::addr(find_fx_system_bp(GPtr::from_addr(0xA9AE80), GPtr::from_raw(effect_name.as_mut_ptr()))) as u32);
             }
             let hundred = GPtr::<f32>::from_addr(0x858628).read();
             let k = GPtr::<f32>::from_addr(0x863984).read();
@@ -151,7 +146,7 @@ pub fn initialise(file_name: GPtr<u8>) {
             e.byte_add(0x1E).write(ints[3] as u8);
             e.byte_add(0x1F).write(ints[4] as u8);
             e.byte_add(0x10).cast::<f32>().write(buoy.to_f32());
-            let mi = get_model_info(GPtr::from_raw(model_name.as_mut_ptr()), 0);
+            let mi = get_model_info(GPtr::from_raw(model_name.as_mut_ptr()), GPtr::NULL);
             if !mi.is_null() {
                 let idx = mi.byte_add(0x10).cast::<u16>();
                 let defaults = f(e, 0) == f(d0, 0) && f(e, 0x18) == f(d0, 0x18) && b(e, 0x1C) == b(d0, 0x1C);

@@ -41,13 +41,14 @@ use sa_stream::bindings::col_model_dtor;
 use sa_stream::bindings::collision_data_ctor as col_data_ctor;
 use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
 use sa_stream::bindings::simple_transform_update_matrix;
+use crate::bindings::camera_to_ignore_this_object;
+use sa_core::bindings::matrix_set_translate;
+use sa_core::bindings::world_clear_scan_codes as clear_scan_codes;
 orig! {
     /// `CCollision::ProcessVerticalLine(...)` (0x417BF0, AL)
     #[allow(clippy::too_many_arguments)]
     fn coll_process_vertical_line(line: GPtr<u8>, m: GPtr<u8>, model: GPtr<u8>, cp: GPtr<u8>, min: GPtr<u8>,
         see: u32, shoot: u32, poly: GPtr<u8>) -> u8 = cdecl 0x417BF0 => unported;
-    /// `CWorld::CameraToIgnoreThisObject(CEntity*)` (0x563F40, AL)
-    fn camera_to_ignore_this_object(e: GPtr<u8>) -> u8 = cdecl 0x563F40 => unported;
     /// `CWorld::ProcessVerticalLineSector(...)` (0x564500, AL)
     #[allow(clippy::too_many_arguments)]
     fn process_vertical_line_sector_call(s: GPtr<u8>, r: GPtr<u8>, line: GPtr<u8>, cp: GPtr<u8>, out: GPtr<u8>,
@@ -80,10 +81,6 @@ orig! {
     #[allow(clippy::too_many_arguments)]
     fn objects_of_type_in_range_list(model: i32, l: GPtr<u8>, p: GPtr<u8>, r: f32, two_d: u8, count: GPtr<u8>, max: i16,
         out: GPtr<u8>) = cdecl 0x5635C0 => unported;
-    /// `CWorld::ClearScanCodes()` (0x563470; the port is unhookable)
-    fn clear_scan_codes() = cdecl 0x563470 => super::cworld::clear_scan_codes;
-    /// `CMatrix::SetTranslate(float, float, float)` (0x59AF40, `ret 0xC`)
-    fn matrix_set_translate(m: GPtr<u8>, x: f32, y: f32, z: f32) = thiscall 0x59AF40 => unported;
     /// `CCollision::ProcessColModels(...)` (0x4185C0, count of colpoints)
     #[allow(clippy::too_many_arguments)]
     fn process_col_models(m1: GPtr<u8>, c1: GPtr<u8>, m2: GPtr<u8>, c2: GPtr<u8>, cps: u32, lcps: u32, ld: u32,

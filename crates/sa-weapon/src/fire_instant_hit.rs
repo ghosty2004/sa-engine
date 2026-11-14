@@ -13,6 +13,7 @@
 //! sa-hook's determinism mode zeroes the frame at the entry (`detwin.rs`, `fire_instant_hit_scrub`), and
 //! this port starts the direction (and the col point) at zero, which is what the scrubbed original reads.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -33,21 +34,18 @@ use crate::weapon_fire::{
 };
 
 use crate::bindings::audio_report_bullet_hit;
-use sa_world::bindings::ped_get_bone_position;
+use sa_core::bindings::ped_get_bone_position;
 use sa_world::bindings::ped_get_transformed_bone_position;
+use sa_world::bindings::add_gunshell as add_gunshell_call;
+use sa_world::bindings::cam_get_two_player_aim_vector;
+use sa_world::bindings::fx_trigger_gunshot;
 orig! {
     /// `CCamera::Find3rdPersonCamTargetVector(float dist, CVector source, CVector& camTarget, CVector&
     /// pointTarget)` (0x514970, thiscall `ret 0x18`)
     #[allow(clippy::too_many_arguments)]
     fn camera_find_3rd_person_cam_target_vector(cam: GPtr<u8>, dist: f32, sx: f32, sy: f32, sz: f32, cam_target: GPtr<u8>, point: GPtr<u8>) = thiscall 0x514970 => unported;
-    /// `CCam::Get_TwoPlayer_AimVector(CVector& out)` (0x513E40, thiscall)
-    fn cam_get_two_player_aim_vector(cam: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall 0x513E40 => unported;
     /// `CWeapon::DoDoomAiming(CEntity* owner, CVector* start, CVector* end)` (0x73CDC0)
     fn do_doom_aiming(owner: GPtr<u8>, start: GPtr<u8>, end: GPtr<u8>) = cdecl 0x73CDC0 => unported;
-    /// `Fx_c::TriggerGunshot(CEntity*, CVector& origin, CVector& direction, bool doGunflash)` (0x4A0DE0, thiscall)
-    fn fx_trigger_gunshot(fx: GPtr<u8>, e: GPtr<u8>, origin: GPtr<u8>, dir: GPtr<u8>, flash: u32) = thiscall 0x4A0DE0 => unported;
-    /// `CWeapon::AddGunshell(CEntity*, CVector* pos, CVector2D* dir, float size)` (0x73A3E0, thiscall)
-    fn add_gunshell_call(this: GPtr<u8>, creator: GPtr<u8>, pos: GPtr<u8>, dir: GPtr<f32>, size: f32) = thiscall 0x73A3E0 => crate::weapon::add_gunshell;
     /// `FUN_006E61B0(CVector start, CVector end, CVector* out)` (`CWaterLevel::TestLineAgainstWater`), AL
     #[allow(clippy::too_many_arguments)]
     fn test_line_against_water(sx: f32, sy: f32, sz: f32, ex: f32, ey: f32, ez: f32, out: GPtr<u8>) -> u8 = cdecl 0x6E61B0 => unported;
@@ -275,7 +273,7 @@ pub fn fire_instant_hit(
     muzzle_fx: u32,
 ) -> u8 {
     let ty = ru(this, 0);
-    let skill = if !firer.is_null() && etype(firer) == 3 { ped_get_weapon_skill(firer, ty as i32) } else { 1 };
+    let skill = if !firer.is_null() && etype(firer) == 3 { ped_get_weapon_skill(firer, ty as i32) as u8 } else { 1 };
     let info = get_weapon_info(ty as i32, skill);
     let mut m: [f32; 3] = muzzle.cast::<[f32; 3]>().read();
     let mut s: [f32; 3] = origin.cast::<[f32; 3]>().read();
@@ -313,9 +311,9 @@ pub fn fire_instant_hit(
             // 1. bone aim
             e = [rf(info, 8), 0.0, 0.0];
             let hier = get_anim_hierarchy_from_skin_clump(rp(firer, 0x18));
-            let idx = rp_hanim_id_get_index(hier, ru(rp(firer, 0x4A0), 0x14) as i32);
+            let idx = rp_hanim_id_get_index(hier, (ru(rp(firer, 0x4A0), 0x14) as i32) as u32);
             let mat = rp_hanim_hierarchy_get_matrix_array(hier).byte_add((idx << 6) as isize);
-            rw_v3d_transform_points(fptr(&mut e), fptr(&mut e), 1, mat);
+            rw_v3d_transform_points(GPtr::<u8>::cast::<f32>(fptr(&mut e)), GPtr::<u8>::cast::<f32>(fptr(&mut e)), 1, mat);
             let dz = x(e[2]).fsub_m(s[2]).to_f32();
             let dy = x(e[1]).fsub_m(s[1]).to_f32();
             let dx = x(e[0]).fsub_m(s[0]).to_f32();
@@ -407,8 +405,8 @@ pub fn fire_instant_hit(
                 if !target_ent.is_null() && etype(target_ent) == 3 && ped_is_player(target_ent) != 0 {
                     let mv = target_ent.byte_add(0x44);
                     let c = x(cf(0x3EA8_F5C3));
-                    let m1 = st0(vector_magnitude(mv));
-                    let v = if m1.fcom(c).test_any(0x41) { st0(vector_magnitude(mv)) } else { c };
+                    let m1 = st0(vector_magnitude(mv.cast::<u32>()));
+                    let v = if m1.fcom(c).test_any(0x41) { st0(vector_magnitude(mv.cast::<u32>())) } else { c };
                     spread = v.fmul_m(cf(0x3F68_BA2F)).fadd_m(cf(0x3F4C_CCCD)).fmul_m(spread).to_f32();
                 }
                 scatter(&mut e, spread, [0x74_0254, 0x74_026B, 0x74_0282]);
@@ -618,7 +616,7 @@ pub fn fire_instant_hit(
             ensure_matrix(firer);
             let mat = rp(firer, 0x14);
             let mut right = [rf(mat, 0), rf(mat, 4)];
-            add_gunshell_call(this, firer, fptr(&mut pos), lp(&mut right).cast(), cf(size));
+            add_gunshell_call(this, firer, fptr(&mut pos), GPtr::<f32>::cast::<u32>(lp(&mut right).cast()), cf(size));
         }
     }
 

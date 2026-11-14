@@ -3,6 +3,7 @@
 //! Unverified (docs/verify/HOWTO.md).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -17,17 +18,13 @@ use sa_core::bindings::tm_get_simplest_active_task;
 use sa_core::bindings::vector_difference;
 use sa_core::bindings::vector_dot_product;
 use sa_world::bindings::event_group_add;
-use sa_world::bindings::vector_magnitude_sqr;
+use sa_core::bindings::vector_magnitude_sqr;
+use crate::bindings::approx_equal;
+use crate::bindings::walk_into_ped_ctor;
+use sa_world::bindings::vector_mul_scalar as vector_mul;
 orig! {
-    /// `operator*(const CVector&, float)` (0x40FEC0, returns the hidden out pointer)
-    fn vector_mul(out: GPtr<u8>, v: GPtr<u8>, f: u32) -> GPtr<u8> = cdecl 0x40FEC0 => unported;
     /// `CColSphere::IntersectEdge(const CVector& a, const CVector& b, CVector& p1, CVector& p2)` (0x4100E0, `ret 0x10`)
     fn col_sphere_intersect_edge(s: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, p1: GPtr<u8>, p2: GPtr<u8>) -> u8 = thiscall 0x4100E0 => unported;
-    /// `approxEqual(float, float, float)` (0x4EEA80)
-    fn approx_equal(a: u32, b: u32, eps: u32) -> u8 = cdecl 0x4EEA80 => unported;
-    /// `CEventPotentialWalkIntoPed::CEventPotentialWalkIntoPed(CPed*, const CVector& target, int32 moveState)` (0x4AE6E0,
-    /// `ret 0xC`)
-    fn walk_into_ped_ctor(e: GPtr<u8>, other: GPtr<u8>, target: GPtr<u8>, ms: u32) -> GPtr<u8> = thiscall 0x4AE6E0 => unported;
 }
 
 use sa_core::field::gf as k;
@@ -52,7 +49,7 @@ pub fn walk_into_ped_scanner_scan(_this: GPtr<u8>, ped: GPtr<u8>, enabled: u32) 
     }
     let intel = rd::<GPtr<u8>>(ped, 0x47C);
     let task = tm_get_simplest_active_task(intel.byte_add(4));
-    if task.is_null() || task_is_go_to_task(task) == 0 || intel_get_move_state_from_go_to_task(intel) == 1 {
+    if task.is_null() || task_is_go_to_task(task) == 0 || intel_get_move_state_from_go_to_task(intel) as u32 == 1 {
         return;
     }
     let target = task.byte_add(0xC);
@@ -79,7 +76,7 @@ pub fn walk_into_ped_scanner_scan(_this: GPtr<u8>, ped: GPtr<u8>, enabled: u32) 
         if dot.fcom(x(k(0x858B50))).test_any(0x41) {
             continue;
         }
-        col_sphere_set(sphere_p, 0x3F33_3333, entity_pos(other), 0, 0, 0xFF);
+        col_sphere_set(sphere_p, f32::from_bits(0x3F33_3333), entity_pos(other), 0, 0, 0xFF);
         if col_sphere_intersect_edge(
             sphere_p,
             entity_pos(ped),
@@ -90,7 +87,7 @@ pub fn walk_into_ped_scanner_scan(_this: GPtr<u8>, ped: GPtr<u8>, enabled: u32) 
         {
             continue;
         }
-        let m2 = X87::from_f64_exact(vector_magnitude_sqr(d_p));
+        let m2 = X87::from_f64_exact(vector_magnitude_sqr(d_p.cast::<f32>()));
         if m2.fcom(x(best)).test_parity(5) {
             continue;
         }
@@ -111,20 +108,20 @@ pub fn walk_into_ped_scanner_scan(_this: GPtr<u8>, ped: GPtr<u8>, enabled: u32) 
         let mut vb = [0f32; 3];
         let va_p: GPtr<u8> = GPtr::from_raw(va.as_mut_ptr()).cast();
         let vb_p: GPtr<u8> = GPtr::from_raw(vb.as_mut_ptr()).cast();
-        vector_mul(va_p, ped.byte_add(0x44), 0x4248_0000);
-        vector_mul(vb_p, closest.byte_add(0x44), 0x4248_0000);
+        vector_mul(va_p, ped.byte_add(0x44), f32::from_bits(0x4248_0000));
+        vector_mul(vb_p, closest.byte_add(0x44), f32::from_bits(0x4248_0000));
         wr::<f32>(va_p, 8, 0.0);
         wr::<f32>(vb_p, 8, 0.0);
-        let a = X87::from_f64_exact(vector_magnitude_sqr(va_p)).to_f32();
-        let b = X87::from_f64_exact(vector_magnitude_sqr(vb_p)).fadd_m(k(0x86CD94)).to_f32();
+        let a = X87::from_f64_exact(vector_magnitude_sqr(va_p.cast::<f32>())).to_f32();
+        let b = X87::from_f64_exact(vector_magnitude_sqr(vb_p.cast::<f32>())).fadd_m(k(0x86CD94)).to_f32();
         if !x(best).fcom(x(k(0x86CD90))).test_any(0x41)
-            && approx_equal(b.to_bits(), 0, 0x3C23_D70A) == 0
+            && approx_equal(f32::from_bits(b.to_bits()), f32::from_bits(0), f32::from_bits(0x3C23_D70A)) == 0
             && !x(b).fcom(x(a)).test_any(0x41)
         {
             return;
         }
     }
-    let ms = intel_get_move_state_from_go_to_task(rd::<GPtr<u8>>(ped, 0x47C));
+    let ms = intel_get_move_state_from_go_to_task(rd::<GPtr<u8>>(ped, 0x47C)) as u32;
     let mut ev = [0u32; 0x10];
     let ev_p: GPtr<u8> = GPtr::from_raw(ev.as_mut_ptr()).cast();
     walk_into_ped_ctor(ev_p, closest, target, ms);

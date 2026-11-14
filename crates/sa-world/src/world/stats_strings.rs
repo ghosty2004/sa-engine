@@ -12,10 +12,7 @@ use sa_math::x87::X87;
 use super::common::{ftol32, g, x, xi};
 
 use sa_core::bindings::text_get;
-orig! {
-    /// `CStats::FindCriminalRatingNumber()` (0x559080)
-    fn find_criminal_rating_number() -> i32 = cdecl 0x559080 => super::stats::find_criminal_rating_number;
-}
+use crate::bindings::find_criminal_rating_number;
 
 /// `TheText`
 const THE_TEXT: usize = 0xC1B340;
@@ -130,6 +127,11 @@ use crate::bindings::metric;
 use sa_core::bindings::ascii_to_gxt_char;
 use sa_core::bindings::find_player_ped;
 use sa_core::bindings::sprintf1 as sprintf_i;
+use crate::bindings::find_most_favorite_radio_station;
+use crate::bindings::get_weapon_skill_type_call as get_weapon_skill;
+use crate::bindings::gxt_char_strcpy;
+use crate::bindings::gxt_char_to_ascii;
+use crate::bindings::stats_populate_favorite_radio_station_list as populate_favorite_radio_station_list;
 orig! {
     /// CRT `sprintf(buf, fmt)` (0x821BB5)
     fn sprintf_0(buf: GPtr<u8>, fmt: GPtr<u8>) -> i32 = cdecl 0x821BB5 => unported;
@@ -155,20 +157,10 @@ orig! {
     fn sprintf_dsd(buf: GPtr<u8>, fmt: GPtr<u8>, a: f64, s: GPtr<u8>, b: f64) -> i32 = cdecl 0x821BB5 => unported;
     /// CRT `sprintf(buf, fmt, int, char*)` (0x821BB5)
     fn sprintf_is(buf: GPtr<u8>, fmt: GPtr<u8>, a: i32, s: GPtr<u8>) -> i32 = cdecl 0x821BB5 => unported;
-    /// `CStats::PopulateFavoriteRadioStationList()` (0x558EC0)
-    fn populate_favorite_radio_station_list() -> u8 = cdecl 0x558EC0 => unported;
-    /// `CStats::FindMostFavoriteRadioStation()` (0x558FA0)
-    fn find_most_favorite_radio_station() -> i32 = cdecl 0x558FA0 => unported;
     /// `CStats::FindLeastFavoriteRadioStation()` (0x559010)
     fn find_least_favorite_radio_station() -> i32 = cdecl 0x559010 => unported;
     /// `CAudioEngine::GetRadioStationNameKey(int32, char*)` (0x507010)
     fn get_radio_station_name_key(this: GPtr<u8>, id: i32, out: GPtr<u8>) = thiscall 0x507010 => unported;
-    /// `CPed::GetWeaponSkill(eWeaponType)` (0x5E3B60, AL)
-    fn get_weapon_skill(ped: GPtr<u8>, ty: u32) -> u8 = thiscall 0x5E3B60 => unported;
-    /// `GxtCharToAscii(const GxtChar*, uint8 start)` (0x69F7E0)
-    fn gxt_char_to_ascii(s: GPtr<u8>, start: u32) -> GPtr<u8> = cdecl 0x69F7E0 => unported;
-    /// `GxtCharStrcpy(GxtChar* dst, const GxtChar* src)` (0x718660)
-    fn gxt_char_strcpy(dst: GPtr<u8>, src: GPtr<u8>) = cdecl 0x718660 => unported;
     /// 0x719240: removes every `~...~` token from a GXT string in place
     fn strip_tokens(s: GPtr<u8>) = cdecl 0x719240 => unported;
 }
@@ -620,7 +612,7 @@ fn special_high(edi: i32, line: i32, n: &mut i32) -> Option<i32> {
             let mut key = [0u8; 8];
             let kp = GPtr::<u8>::from_raw(key.as_mut_ptr());
             *n += 1;
-            let station = if edi == 326 { find_most_favorite_radio_station() } else { find_least_favorite_radio_station() };
+            let station = if edi == 326 { find_most_favorite_radio_station() as i32 } else { find_least_favorite_radio_station() };
             get_radio_station_name_key(g(0xB6BC90), station, kp);
             line!();
             Some(txt(kp))
@@ -660,7 +652,7 @@ fn special_high(edi: i32, line: i32, n: &mut i32) -> Option<i32> {
             *n += 1;
             for i in 1u16..11 {
                 sprintf_numbered(G_STRING, 0x8641BC, 0x8641C8, 0x8641B4, i32::from(i), i < 10);
-                let skill = get_weapon_skill(find_player_ped(-1), u32::from(i) + 0x15) as i8;
+                let skill = (get_weapon_skill(find_player_ped(-1), (u32::from(i) + 0x15) as i32) as u8) as i8;
                 let key = match skill {
                     1 => 0x86419C,
                     2 => 0x8641A4,

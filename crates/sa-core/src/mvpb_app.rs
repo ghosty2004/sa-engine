@@ -173,35 +173,29 @@ use crate::bindings::sprite2d_set_recip_near_clip;
 use crate::bindings::sprite_draw_rect as sprite2d_draw_rect;
 use crate::bindings::timer_update;
 use crate::bindings::visibility_plugins_set_render_ware_camera as vis_set_render_ware_camera;
+use crate::bindings::camera_size;
+use crate::bindings::defined_state;
+use crate::bindings::draw_calculate_aspect_ratio;
+use crate::bindings::font_set_alpha_fade;
+use crate::bindings::render_scene as render_scene_o;
+use crate::bindings::rs_camera_begin_update;
+use crate::bindings::rs_mouse_set_pos;
+use crate::bindings::rw_camera_clear;
 orig! {
-    /// `CDraw::CalculateAspectRatio()` (0x6FF420; float in ST0, popped by every caller here)
-    fn draw_calculate_aspect_ratio() -> f32 = cdecl 0x6FF420 => unported;
     /// `CTimer::GetCurrentTimeInCycles()` as the `Game::Idle` busy-wait calls it (0x53E930; a
     /// determinism-mode site: retargeted to a constant that ends the wait)
     fn timer_cycles_idle_wait() -> u32 = cdecl callsite 0x53E930 => crate::timer::get_current_time_in_cycles;
     /// `CTimer::GetCurrentTimeInCycles()` as `Game::Idle` calls it for `g_LastTickTime` (0x53E94F; a
     /// determinism-mode site: retargeted to 0)
     fn timer_cycles_idle_last_tick() -> u32 = cdecl callsite 0x53E94F => crate::timer::get_current_time_in_cycles;
-    /// `CFont::SetAlphaFade(float)` (0x719500)
-    fn font_set_alpha_fade(a: u32) = cdecl 0x719500 => unported;
     /// `CAudioEngine::DisplayRadioStationName()` (0x507030)
     fn audio_engine_display_radio_station_name(this: GPtr<u8>) = thiscall 0x507030 => unported;
-    /// `CameraSize(RwCamera*, RwRect*, float viewWindow, float aspectRatio)` (0x72FC70)
-    fn camera_size(cam: GPtr<u8>, rect: GPtr<u8>, view_window: u32, aspect: u32) = cdecl 0x72FC70 => unported;
-    /// `RwCameraClear(RwCamera*, RwRGBA*, int clearMode)` (0x7EE340)
-    fn rw_camera_clear(cam: GPtr<u8>, colour: GPtr<u8>, mode: u32) -> GPtr<u8> = cdecl 0x7EE340 => unported;
-    /// `RsCameraBeginUpdate(RwCamera*)` (0x619450)
-    fn rs_camera_begin_update(cam: GPtr<u8>) -> i32 = cdecl 0x619450 => crate::platform::rs_camera_begin_update;
     /// `RwRenderStateSet(state, value)` (RwEngineInstance 0xC97B24, slot 0x20)
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `DefinedState()` (0x734650)
-    fn defined_state() = cdecl 0x734650 => crate::input::defined_state;
     /// `CHud::Draw()` (0x58FAE0)
     fn hud_draw() = cdecl 0x58FAE0 => unported;
     /// `Light::SetLightsWithTimeOfDayColour(RpWorld*)` (0x7354E0)
     fn set_lights_with_time_of_day_colour(world: GPtr<u8>) = cdecl 0x7354E0 => unported;
-    /// `RsMouseSetPos(RwV2d*)` (0x6194A0)
-    fn rs_mouse_set_pos(pos: GPtr<u8>) = cdecl 0x6194A0 => unported;
     /// `CRenderer::ConstructRenderList()` (0x5556E0)
     fn renderer_construct_render_list() = cdecl 0x5556E0 => unported;
     /// `CRenderer::PreRender()` (0x553910)
@@ -216,8 +210,6 @@ orig! {
     fn do_rw_stuff_start_of_frame_horizon_o(a: u32, b: u32, c: u32, d: u32, e: u32, f: u32, g: u32) -> u8 = cdecl 0x53D7A0 => crate::mvpb_app::do_rw_stuff_start_of_frame_horizon;
     /// `CMirrors::RenderMirrorBuffer()` (0x726090)
     fn mirrors_render_mirror_buffer() = cdecl 0x726090 => unported;
-    /// `RenderScene()` (0x53DF40)
-    fn render_scene_o() = cdecl 0x53DF40 => crate::mvpb_app::render_scene;
     /// `RenderEffects()` (0x53E170)
     fn render_effects_o() = cdecl 0x53E170 => crate::mvpb_app::render_effects;
     /// `Render2dStuff()` (0x53E230)
@@ -285,6 +277,7 @@ orig! {
 use crate::bindings::audio_zones_update;
 use crate::bindings::camera_draw_borders_for_wide_screen;
 use crate::bindings::scripts_process;
+use crate::bindings::path_find_update_streaming;
 orig! {
     // ---- Render2dStuff
     fn replay_display() = cdecl 0x45C210 => unported;
@@ -306,8 +299,6 @@ orig! {
     fn clock_update() = cdecl 0x52CF10 => unported;
     fn weather_update() = cdecl 0x72B850 => unported;
     fn collision_update() = cdecl 0x411E20 => unported;
-    /// `CPathFind::UpdateStreaming(bool)` (0x450A60)
-    fn path_find_update_streaming(this: GPtr<u8>, force: u32) = thiscall 0x450A60 => unported;
     fn train_update_trains() = cdecl 0x6F5900 => unported;
     fn heli_update_helis() = cdecl 0x6C79A0 => unported;
     fn darkel_update() = cdecl 0x43DAC0 => unported;
@@ -334,6 +325,7 @@ orig! {
 use crate::bindings::camera_process;
 use crate::bindings::camera_process_fade;
 use crate::bindings::pop_cycle_update;
+use crate::bindings::interior_man_update;
 orig! {
     fn car_ctrl_prune_vehicles_of_interest() = cdecl 0x423F10 => unported;
     fn garages_update() = cdecl 0x44C8C0 => unported;
@@ -371,7 +363,6 @@ orig! {
     fn fx_update(this: GPtr<u8>, cam: GPtr<u8>, dt: u32) = thiscall 0x49E640 => unported;
     /// `BreakManager_c::Update(float timeStep)` (0x59E670)
     fn break_man_update(this: GPtr<u8>, dt: u32) = thiscall 0x59E670 => unported;
-    fn interior_man_update(this: GPtr<u8>) = thiscall 0x598F50 => unported;
     fn proc_obj_man_update(this: GPtr<u8>) = thiscall 0x5A3110 => unported;
     /// `WaterCreatureManager_c::Update(float timeStep)` (0x6E4F10)
     fn water_creature_man_update(this: GPtr<u8>, dt: u32) = thiscall 0x6E4F10 => unported;
@@ -386,7 +377,7 @@ fn camera() -> GPtr<u8> {
 /// the x87 product, the tangent rounded to f32 by `fstp dword [esp]` (the `1.0` FPTAN pushes is popped).
 fn camera_size_from_fov(cam: GPtr<u8>) {
     let view = view_window();
-    camera_size(cam, GPtr::NULL, view, g::<u32>(DRAW_ASPECT).read());
+    camera_size(cam, GPtr::NULL, f32::from_bits(view), f32::from_bits(g::<u32>(DRAW_ASPECT).read()));
 }
 
 fn view_window() -> u32 {
@@ -418,7 +409,7 @@ fn camera_position_ptr() -> GPtr<u8> {
        unverified = "mvpb-core-1", route = "L3-only", hazards = "x87-transcendental",
        recs = "grove-walk", note = "frame orchestrator: every callee is a nested call; FPTAN view window")]
 pub fn frontend_idle() {
-    let _ = draw_calculate_aspect_ratio();
+    let _ = draw_calculate_aspect_ratio() as f32;
     timer_update();
     sprite2d_set_recip_near_clip();
     sprite2d_init_per_frame();
@@ -477,8 +468,8 @@ pub fn do_rw_stuff_start_of_frame(
     bottom_blue: u32,
     alpha: u32,
 ) -> bool {
-    let _ = draw_calculate_aspect_ratio();
-    font_set_alpha_fade(0x437F_0000);
+    let _ = draw_calculate_aspect_ratio() as f32;
+    font_set_alpha_fade(f32::from_bits(0x437F_0000));
     let a = alpha as u8;
     let mut top = [top_red as u8, top_green as u8, top_blue as u8, a];
     let mut bottom = [bottom_red as u8, bottom_green as u8, bottom_blue as u8, a];
@@ -515,10 +506,10 @@ pub fn do_rw_stuff_start_of_frame_horizon(_a: u32, _b: u32, _c: u32, _d: u32, _e
     let arg = X87::from_f32(g::<f32>(DRAW_FOV).read())
         .fmul_m(f32::from_bits(k::PI_OVER_360))
         .to_f32();
-    let _ = draw_calculate_aspect_ratio();
+    let _ = draw_calculate_aspect_ratio() as f32;
     let a = X87::from_f32(arg);
     let view = a.fptan().map_or(a, |(t, _)| t).to_f32().to_bits();
-    camera_size(camera(), GPtr::NULL, view, g::<u32>(DRAW_ASPECT).read());
+    camera_size(camera(), GPtr::NULL, f32::from_bits(view), f32::from_bits(g::<u32>(DRAW_ASPECT).read()));
     vis_set_render_ware_camera(camera());
     rw_camera_clear(camera(), g(COLOUR_TOP), 6);
     if rs_camera_begin_update(camera()) == 0 {
@@ -575,7 +566,7 @@ pub fn idle(param: GPtr<u8>) {
     if param.is_null() {
         return;
     }
-    let world_frame = g::<u8>(MENU_ACTIVE).read() == 0 && camera_get_screen_fade_status(g(THE_CAMERA)) != 2;
+    let world_frame = g::<u8>(MENU_ACTIVE).read() == 0 && camera_get_screen_fade_status(g(THE_CAMERA)) as i32 != 2;
     if world_frame {
         let mut pos = [
             X87::from_i32(g::<i32>(RS_MAX_WIDTH).read()).fmul_m(f32::from_bits(k::HALF)).to_f32(),
@@ -601,7 +592,7 @@ pub fn idle(param: GPtr<u8>) {
             return;
         }
         defined_state();
-        rw_camera_set_far_clip_plane(camera(), g::<u32>(TC_FAR_CLIP).read());
+        rw_camera_set_far_clip_plane(camera(), f32::from_bits(g::<u32>(TC_FAR_CLIP).read()));
         // `fld [fogStart]; fstp [cam+0x88]`: a plain float copy
         let fog = g::<f32>(TC_FOG_START).read();
         camera().byte_add(0x88).cast::<f32>().write(X87::from_f32(fog).to_f32());
@@ -623,9 +614,9 @@ pub fn idle(param: GPtr<u8>) {
         render_2d_stuff_o();
         crate::samp::frame(crate::samp::FramePhase::After2d);
     } else {
-        let _ = draw_calculate_aspect_ratio();
+        let _ = draw_calculate_aspect_ratio() as f32;
         let view = view_window();
-        camera_size(camera(), GPtr::NULL, view, g::<u32>(DRAW_ASPECT).read());
+        camera_size(camera(), GPtr::NULL, f32::from_bits(view), f32::from_bits(g::<u32>(DRAW_ASPECT).read()));
         vis_set_render_ware_camera(camera());
         rw_camera_clear(camera(), g(COLOUR_TOP), 2);
         if rs_camera_begin_update(camera()) == 0 {
@@ -891,13 +882,13 @@ pub fn render_scene() {
         let off = span.fmul(e).to_f32();
         rw_camera_end_update(cam);
         let new_near = X87::from_f32(off).fadd_m(near_f).to_f32();
-        rw_camera_set_near_clip_plane(camera(), new_near.to_bits());
+        rw_camera_set_near_clip_plane(camera(), f32::from_bits(new_near.to_bits()));
         rw_camera_begin_update(camera());
         shadows_update_static_shadows();
         shadows_render_static_shadows();
         shadows_render_stored_shadows();
         rw_camera_end_update(camera());
-        rw_camera_set_near_clip_plane(camera(), near_f.to_bits());
+        rw_camera_set_near_clip_plane(camera(), f32::from_bits(near_f.to_bits()));
         rw_camera_begin_update(camera());
     }
     break_man_render(g(G_BREAK_MAN), 1);
@@ -1009,7 +1000,7 @@ pub fn render_2d_stuff() {
         let top = X87::from_i32(half(h))
             .fsub(X87::from_i32(h).fmul_m(f32::from_bits(k::INV_448)).fmul_m(f32::from_bits(k_top)));
         let mut r = [0.0f32, top.to_f32(), X87::from_i32(w).to_f32(), 0.0];
-        sprite2d_draw_rect(GPtr::from_raw(r.as_mut_ptr()).cast(), bl);
+        sprite2d_draw_rect(GPtr::<u8>::cast::<f32>(GPtr::from_raw(r.as_mut_ptr()).cast()), bl);
         // bottom band: CRect(0, h, w, h/2 + h*(1/448)*k_bottom)
         let hh = X87::from_i32(h);
         let b = X87::from_f32(f32::from_bits(k::INV_448))
@@ -1017,12 +1008,12 @@ pub fn render_2d_stuff() {
             .fmul_m(f32::from_bits(k_bottom))
             .fadd(X87::from_i32(half(h)));
         let mut r = [0.0f32, hh.to_f32(), X87::from_i32(w).to_f32(), b.to_f32()];
-        sprite2d_draw_rect(GPtr::from_raw(r.as_mut_ptr()).cast(), bl);
+        sprite2d_draw_rect(GPtr::<u8>::cast::<f32>(GPtr::from_raw(r.as_mut_ptr()).cast()), bl);
         // left: CRect(0, h, w/2 - w*(1/640)*210, 0)
         let l = X87::from_i32(half(w))
             .fsub(X87::from_i32(w).fmul_m(f32::from_bits(k::INV_640)).fmul_m(f32::from_bits(k::K210)));
         let mut r = [0.0f32, X87::from_i32(h).to_f32(), l.to_f32(), 0.0];
-        sprite2d_draw_rect(GPtr::from_raw(r.as_mut_ptr()).cast(), bl);
+        sprite2d_draw_rect(GPtr::<u8>::cast::<f32>(GPtr::from_raw(r.as_mut_ptr()).cast()), bl);
         // right: CRect(w/2 + w*(1/640)*210, h, w, 0)
         let ww = X87::from_i32(w);
         let rr = X87::from_f32(f32::from_bits(k::INV_640))
@@ -1030,7 +1021,7 @@ pub fn render_2d_stuff() {
             .fmul_m(f32::from_bits(k::K210))
             .fadd(X87::from_i32(half(w)));
         let mut r = [rr.to_f32(), X87::from_i32(h).to_f32(), ww.to_f32(), 0.0];
-        sprite2d_draw_rect(GPtr::from_raw(r.as_mut_ptr()).cast(), bl);
+        sprite2d_draw_rect(GPtr::<u8>::cast::<f32>(GPtr::from_raw(r.as_mut_ptr()).cast()), bl);
     }
     audio_engine_display_radio_station_name(g(AUDIO_ENGINE));
     hud_draw();

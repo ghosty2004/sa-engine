@@ -29,10 +29,17 @@ pub use crate::bindings::d3d9_instance;
 pub use crate::bindings::flush_cache;
 pub use crate::bindings::light_local_enable;
 pub use crate::bindings::lights_enable;
-pub use crate::bindings::set_render_state;
+pub use sa_core::bindings::set_render_state;
 pub use crate::bindings::set_transform_world;
-pub use crate::bindings::set_tss;
+pub use sa_core::bindings::set_tss;
 pub use sa_core::bindings::frame_get_ltm;
+pub use crate::bindings::atomic_get_world_bounding_sphere;
+pub use crate::bindings::resources_free_res_entry as res_free;
+pub use sa_core::bindings::get_render_state;
+pub use sa_core::bindings::set_streams;
+pub use sa_core::bindings::set_surface_properties;
+pub use sa_core::bindings::set_texture;
+pub use sa_core::bindings::vertex_alpha_enable;
 orig! {
     /// `IDirect3DDevice9::SetPixelShader` (+0x1AC)
     pub fn dev_set_pixel_shader(dev: GPtr<u8>, ps: u32) -> i32 = stdcall vslot 0x1AC => unported;
@@ -46,29 +53,14 @@ orig! {
     pub fn dev_draw_primitive(dev: GPtr<u8>, prim: u32, start: u32, count: u32) -> i32 = stdcall vslot 0x144 => unported;
     /// `IDirect3DDevice9::DrawIndexedPrimitive` (+0x148)
     pub fn dev_draw_indexed_primitive(dev: GPtr<u8>, prim: u32, base: u32, min: u32, num: u32, start: u32, count: u32) -> i32 = stdcall vslot 0x148 => unported;
-
-    /// `RpAtomicGetWorldBoundingSphere(atomic)` (0x749330)
-    pub fn atomic_get_world_bounding_sphere(a: GPtr<u8>) -> GPtr<u8> = cdecl 0x749330 => unported;
     /// `RwD3D9CameraIsSphereFullyInsideFrustum(camera, sphere)` (0x7FAD30)
     pub fn sphere_inside(camera: GPtr<u8>, sphere: GPtr<u8>) -> u32 = cdecl 0x7FAD30 => crate::d3d9dev::camera_is_sphere_fully_inside_frustum;
     /// `RwD3D9CameraIsBBoxFullyInsideFrustum(camera, bbox)` (0x7FAD90)
     pub fn bbox_inside(camera: GPtr<u8>, bbox: GPtr<u8>) -> u32 = cdecl 0x7FAD90 => crate::d3d9dev::camera_is_bbox_fully_inside_frustum;
-    /// `RwD3D9GetRenderState(state, out)` (0x7FC320)
-    pub fn get_render_state(state: u32, out: GPtr<u32>) = cdecl 0x7FC320 => crate::d3d9state::get_render_state;
-    /// `RwD3D9SetTexture(texture, stage)` (0x7FDE70)
-    pub fn set_texture(t: GPtr<u8>, stage: u32) -> u32 = cdecl 0x7FDE70 => crate::d3d9state::set_texture;
-    /// `_rwD3D9RenderStateVertexAlphaEnable(enable)` (0x7FE0A0)
-    pub fn vertex_alpha_enable(v: u32) -> u32 = cdecl 0x7FE0A0 => crate::d3d9state::rs_vertex_alpha_enable;
     /// `_rwD3D9RenderStateIsVertexAlphaEnable()` (0x7FE190)
     pub fn is_vertex_alpha_enable() -> u32 = cdecl 0x7FE190 => crate::d3d9state::rs_is_vertex_alpha_enable;
-    /// `RwD3D9SetSurfaceProperties(surfaceProps, color, flags)` (0x7FC4D0)
-    pub fn set_surface_properties(sp: GPtr<u8>, color: GPtr<u8>, flags: u32) -> u32 = cdecl 0x7FC4D0 => crate::d3d9state::set_surface_properties;
-    /// `_rwD3D9SetStreams(streams, useOffsets)` (0x7FA090)
-    pub fn set_streams(s: GPtr<u8>, use_offsets: u32) = cdecl 0x7FA090 => crate::d3d9dev::set_streams;
     /// `_rwD3D9RasterHasAlpha(texture)` (0x4C9EA0, called with the material's texture)
     pub fn raster_has_alpha(t: GPtr<u8>) -> u32 = cdecl 0x4C9EA0 => unported;
-    /// `RwResourcesFreeResEntry(entry)` (0x807DE0)
-    pub fn res_free(e: GPtr<u8>) -> u32 = cdecl 0x807DE0 => unported;
     /// `_rwD3D9LightDirectionalEnable(light)` (0x756260)
     pub fn light_directional_enable(l: GPtr<u8>) -> u32 = cdecl 0x756260 => unported;
     /// The reinstance callback `(object, resEntry, instanceCb)` through its stored pointer

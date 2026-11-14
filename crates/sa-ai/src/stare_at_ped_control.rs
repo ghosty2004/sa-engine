@@ -2,13 +2,14 @@
 //! (0x6605C0), reached in fist fights (gang members staring at the player) on the native build. Ported from the
 //! 1.0 US bytes; x87 arithmetic follows the original's instruction order.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
 use crate::common::*;
 
 use crate::bindings::do_gang_abuse_speech_orig as gang_do_abuse_speech;
-use crate::bindings::ik_abort_look_at;
+use sa_core::bindings::ik_abort_look_at;
 use crate::bindings::should_load_gang_anims as gang_should_load_gang_anims;
 use crate::bindings::task_complex_dtor;
 use sa_core::bindings::entity_clean_up_old_reference;
@@ -16,24 +17,21 @@ use sa_core::bindings::general_random_int_in_range;
 use sa_core::bindings::streaming_request_model;
 use sa_core::bindings::tm_get_task_secondary;
 use sa_core::bindings::tm_set_task_secondary;
-use sa_stream::bindings::anim_add_block_ref;
+use sa_core::bindings::anim_add_block_ref;
 use sa_stream::bindings::anim_remove_block_ref;
 use sa_stream::bindings::get_animation_block_index as anim_get_block_index;
 use sa_world::bindings::ik_is_looking;
 use sa_world::bindings::membership_get_leader;
-use sa_world::bindings::vector_magnitude_sqr;
-use sa_world::bindings::vector_sub;
+use sa_core::bindings::vector_magnitude_sqr;
+use sa_core::bindings::vector_sub;
+use crate::bindings::ik_get_look_at_entity;
+use sa_core::bindings::task_new as task_new_c;
+use sa_world::bindings::run_anim_ctor;
 orig! {
     /// `IKChainManager_c::LookAt(const char*, CPed*, CEntity*, int32 time, int32 bone, RwV3d*, bool, float speed,
     /// int32 blend, int32 priority, bool)` (0x618970)
     #[allow(clippy::too_many_arguments)]
     fn ik_look_at(m: GPtr<u8>, name: u32, ped: GPtr<u8>, target: GPtr<u8>, time: i32, bone: i32, posn: u32, b: u32, speed: f32, blend: i32, prio: i32, b2: u32) = thiscall 0x618970 => unported;
-    /// `IKChainManager_c::GetLookAtEntity(CPed*)` (0x6181D0)
-    fn ik_get_look_at_entity(m: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x6181D0 => unported;
-    /// `CTask::operator new(uint32)` (0x61A5A0)
-    fn task_new_c(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => crate::mvpa_ai1::task_operator_new;
-    /// `CTaskSimpleRunAnim(AssocGroupId, AnimationId, float blend, bool)` (0x61A8B0)
-    fn run_anim_ctor(t: GPtr<u8>, group: u32, anim: u32, blend: f32, b: u32) -> GPtr<u8> = thiscall 0x61A8B0 => unported;
 }
 
 /// `"gangs"` (0x86F92C)
@@ -51,10 +49,10 @@ pub fn stare_at_ped_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x86_FA2C);
     let t = rd::<GPtr<u8>>(this, 0x10);
     if !t.is_null() {
-        entity_clean_up_old_reference(t, this.byte_add(0x10));
+        entity_clean_up_old_reference(t, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x10)));
     }
     if rd::<u8>(this, 0x25) != 0 {
-        anim_remove_block_ref(anim_get_block_index(GPtr::from_addr(GANGS)));
+        anim_remove_block_ref(anim_get_block_index(GPtr::from_addr(GANGS)) as u32);
         wr::<u8>(this, 0x25, 0);
     }
     task_complex_dtor(this);
@@ -96,7 +94,7 @@ pub fn stare_at_ped_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> 
             }
         }
     } else if gang_should_load_gang_anims() == 0 {
-        anim_remove_block_ref(anim_get_block_index(GPtr::from_addr(GANGS)));
+        anim_remove_block_ref(anim_get_block_index(GPtr::from_addr(GANGS)) as u32);
         wr::<u8>(this, 0x25, 0);
     }
     let ik: GPtr<u8> = GPtr::from_addr(IK_MAN);
@@ -137,7 +135,7 @@ pub fn stare_at_ped_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> 
     let mut d = [0f32; 3];
     let dp: GPtr<u8> = GPtr::from_raw(d.as_mut_ptr()).cast();
     vector_sub(dp, tp, lp);
-    if X87::from_f64_exact(vector_magnitude_sqr(dp)).fcom(x(64.0)).test_parity(0x41) {
+    if X87::from_f64_exact(vector_magnitude_sqr(dp.cast::<f32>())).fcom(x(64.0)).test_parity(0x41) {
         return fail();
     }
     let tasks = rd::<GPtr<u8>>(ped, 0x47C).byte_add(4);

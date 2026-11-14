@@ -9,6 +9,7 @@
 //! flags +0x4C (bit 0, bit 3, bits 5-6), +0x50..+0x5C.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -19,11 +20,9 @@ const VT_FOLLOW_NODE_ROUTE: u32 = 0x8700A8;
 /// The dword the constructor copies into +0x28 (0x8A5F44, an empty-node-address constant).
 const EMPTY_NODE_ADDRESS: usize = 0x8A5F44;
 
+use crate::bindings::point_route_new;
+use sa_world::bindings::task_complex_ctor;
 orig! {
-    /// `CTaskComplex::CTaskComplex` (0x61A3B0)
-    fn task_complex_ctor(t: u32) -> u32 = thiscall 0x61A3B0 => crate::gen_ctors::g_ctask_complex_61a3b0;
-    /// `CPointRoute::operator new(uint32)` (0x41B7C0, cdecl)
-    fn point_route_new(size: u32) -> GPtr<u8> = cdecl 0x41B7C0 => sa_world::world::mvpa2::point_route_new;
     /// `CNodeRoute::operator new(uint32)` (0x41B860, cdecl)
     fn node_route_new(size: u32) -> GPtr<u8> = cdecl 0x41B860 => node_route_new_host;
 }
@@ -57,7 +56,7 @@ pub fn follow_node_route_ctor(
     time: u32,
     flag3: u32,
 ) -> GPtr<u8> {
-    task_complex_ctor(this.addr() as u32);
+    task_complex_ctor(GPtr::from_addr((this.addr() as u32) as usize));
     wr::<u32>(this, 0, VT_FOLLOW_NODE_ROUTE);
     wr::<u32>(this, 0xC, target.read());
     wr::<u32>(this, 0x10, target.wrapping_index(1).read());

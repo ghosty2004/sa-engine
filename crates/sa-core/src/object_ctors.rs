@@ -16,13 +16,10 @@ use crate::field::rd;
 
 use crate::bindings::eh_vector_ctor;
 use crate::bindings::pad_clear;
+use crate::bindings::base_model_info_ctor as base_model_info_ctor_call;
+use crate::bindings::list_ctor as list_ctor_call;
+use crate::bindings::list_item_ctor as list_item_ctor_call;
 orig! {
-    /// `CBaseModelInfo::CBaseModelInfo()` (0x4C4A60)
-    fn base_model_info_ctor_call(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4C4A60 => base_model_info_ctor;
-    /// `ListItem_c::ListItem_c()` (0x4A8DB0)
-    fn list_item_ctor_call(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4A8DB0 => list_item_ctor;
-    /// `List_c::List_c()` (0x4A8DD0)
-    fn list_ctor_call(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4A8DD0 => list_ctor;
     /// `CBoundingBox::CBoundingBox()` (0x40FAF0)
     fn bounding_box_ctor_call(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x40FAF0 => bounding_box_ctor;
     /// `CCam::Init()` (0x50E180)

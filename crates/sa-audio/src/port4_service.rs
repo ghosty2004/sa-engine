@@ -33,26 +33,52 @@ fn game_paused() -> bool {
 use sa_core::bindings::is_foreground_app;
 use sa_core::bindings::timer_get_is_slow_motion_active as timer_is_slow_motion_active;
 use sa_stream::bindings::cd_stream_get_status;
+use crate::bindings::ae_resolve_probability;
+use crate::bindings::amb_service as ambience_service;
+use crate::bindings::are_sounds_of_this_event_playing_for_this_entity as sm_are_sounds_of_event;
+use crate::bindings::cut_service as cutscene_service;
+use crate::bindings::env_get_doppler;
+use crate::bindings::frontend_add_audio_event as frontend_add_audio_event_call;
+use crate::bindings::hw_get_track_play_time;
+use crate::bindings::hw_is_sound_bank_loaded;
+use crate::bindings::hw_is_sound_loaded;
+use crate::bindings::hw_load_sound_bank;
+use crate::bindings::hw_rescale_channel_volumes;
+use crate::bindings::hw_service;
+use crate::bindings::hw_set_channel_frequency_scaling_factor;
+use crate::bindings::hw_set_channel_volume;
+use crate::bindings::hw_set_effects_fader_scaling_factor as hw_set_effects_fader;
+use crate::bindings::hw_set_music_fader;
+use crate::bindings::hw_set_stream_fader;
+use crate::bindings::hw_stop_sound;
+use crate::bindings::player_vehicle_audio_settings_for_radio as vehicle_player_settings_for_radio;
+use crate::bindings::position_relative_to_camera_vec as env_get_position_relative_to_camera;
+use crate::bindings::radio_service;
+use crate::bindings::radio_start_radio;
+use crate::bindings::sm_are_sounds_playing_in_bank_slot;
+use crate::bindings::sm_request_new_sound;
+use crate::bindings::sm_service;
+use crate::bindings::sound_initialise;
+use crate::bindings::sound_set_position;
+use crate::bindings::sound_stop_and_forget;
+use crate::bindings::twin_initialise;
+use crate::bindings::twin_loop_stop_sound_and_forget as twin_stop_and_forget;
+use crate::bindings::twin_play;
+use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::memory_free;
+use sa_core::bindings::memory_malloc;
+use sa_stream::bindings::cd_stream_read;
+use sa_world::bindings::ae_random_int;
+use sa_world::bindings::floor_f;
+use sa_world::bindings::sound_dtor;
 orig! {
-    // CAEAudioHardware / channels
-    fn hw_get_track_play_time(this: u32) -> u32 = thiscall 0x4D8F60 => unported;
     fn hw_get_channel_play_times(this: u32, slot: u32, out: u32) = thiscall 0x4D8820 => unported;
     fn hw_get_virtual_channel_sound_lengths(this: u32, out: u32) = thiscall 0x4D8E90 => unported;
     fn hw_get_virtual_channel_sound_loop_start_times(this: u32, out: u32) = thiscall 0x4D8EB0 => unported;
-    fn hw_stop_sound(this: u32, slot: u32, ch: u32) = thiscall 0x4D88E0 => unported;
     fn hw_play_sound(this: u32, slot: u32, ch: u32, sfx: u32, bank: u32, pt: u32, flags: u32, speed: u32) = thiscall 0x4D86B0 => audio_hardware_play_sound;
-    fn hw_set_channel_volume(this: u32, slot: u32, ch: u32, vol: u32, a: u32) = thiscall 0x4D8870 => audio_hardware_set_channel_volume;
     fn hw_set_channel_position(this: u32, slot: u32, ch: u32, pos: u32, a: u32) = thiscall 0x4D8920 => unported;
-    fn hw_set_channel_frequency_scaling_factor(this: u32, slot: u32, ch: u32, f: u32) = thiscall 0x4D8960 => unported;
-    fn hw_service(this: u32) = thiscall 0x4D9870 => audio_hardware_service;
     fn hw_update_reverb_environment(this: u32) = thiscall 0x4D8DA0 => audio_hardware_update_reverb_environment;
-    fn hw_rescale_channel_volumes(this: u32) = thiscall 0x4D8990 => unported;
-    fn hw_is_sound_bank_loaded(this: u32, bank: u32, slot: u32) -> u8 = thiscall 0x4D88C0 => unported;
-    fn hw_is_sound_loaded(this: u32, bank: u32, sfx: u32, slot: u32) -> u8 = thiscall 0x4D8EF0 => unported;
-    fn hw_load_sound_bank(this: u32, bank: u32, slot: u32) = thiscall 0x4D88A0 => unported;
-    fn hw_set_music_fader(this: u32, f: u32) = thiscall 0x4D9550 => unported;
-    fn hw_set_effects_fader(this: u32, f: u32) = thiscall 0x4D9560 => unported;
-    fn hw_set_stream_fader(this: u32, f: u32) = thiscall 0x4D95B0 => unported;
     fn hw_request_virtual_channel_sound_info(this: u32, idx: u32, sfx: u32, bank: u32) = thiscall 0x4D8E60 => unported;
     fn ch_synch_playback_raw(ch: GPtr<u8>) = thiscall vslot 0x18 => unported;
     fn ch_service_raw(ch: GPtr<u8>) = thiscall vslot 0x04 => unported;
@@ -67,49 +93,18 @@ orig! {
     fn bank_update_virtual_channels(this: u32, a: u32, b: u32, c: u32) = thiscall 0x4E0450 => unported;
     fn bank_service(this: u32) = thiscall 0x4DFE30 => mp3_bank_loader_service;
     fn env_get_reverb(env: u32, depth: u32) = cdecl 0x4D8010 => unported;
-    fn env_get_doppler(a: u32, b: u32, c: u32, d: u32, e: u32) -> f64 = cdecl 0x4D7E40 => unported;
-    fn env_get_position_relative_to_camera(out: u32, pos: u32) = cdecl 0x4D80B0 => unported;
-    fn floor_f(v: u32) -> f64 = cdecl 0x406CE0 => floor_of_float;
-
-    // CAESound / CAESoundManager
-    fn sound_initialise(s: u32, slot: u32, sfx: u32, ent: u32, x: u32, y: u32, z: u32, vol: u32, maxd: u32, speed: u32, ts: u32, ign: u32, flags: u32, var: u32, pp: u32) = thiscall 0x4EFE50 => unported;
-    fn sound_dtor(s: u32) = thiscall 0x4EF660 => unported;
     fn sound_assign(s: u32, src: u32) -> u32 = thiscall 0x4EF680 => unported;
     fn sound_new_vpsl_entry(s: u32) = thiscall 0x4EF7A0 => unported;
-    fn sound_set_position(s: u32, x: u32, y: u32, z: u32) = thiscall 0x4EF880 => sound_set_position_native;
     fn sound_update_parameters(s: u32, pt: u32) = thiscall 0x4EFF50 => unported;
     fn sound_calculate_volume(s: u32) = thiscall 0x4EFA10 => unported;
-    fn sound_stop_and_forget(s: u32) = thiscall 0x4EF850 => unported;
     fn entity_update_parameters_raw(ent: GPtr<u8>, s: u32, pt: u32) = thiscall vslot 0x00 => unported;
-    fn sm_request_new_sound(this: u32, s: u32) -> u32 = thiscall 0x4EFB10 => sound_manager_request_new_sound;
-    fn sm_service(this: u32) = thiscall 0x4F0000 => sound_manager_service;
-    fn sm_are_sounds_playing_in_bank_slot(this: u32, slot: u32) -> u16 = thiscall 0x4EF520 => unported;
-    fn sm_are_sounds_of_event(this: u32, ev: u32, ent: u32) -> u16 = thiscall 0x4EF570 => unported;
     fn sm_cancel_sounds_of_event(this: u32, ev: u32, ent: u32) = thiscall 0x4EFB90 => unported;
-    fn clean_up_old_reference(ent: u32, slot: u32) = thiscall 0x571A00 => unported;
-    fn twin_initialise(t: u32, slot: u32, s1: u32, s2: u32, ent: u32, a: u32, b: u32, c: u32, d: u32) = thiscall 0x4F28A0 => unported;
-    fn twin_play(t: u32, x: u32, y: u32, z: u32, vol: u32, a: u32, b: u32, c: u32, flags: u32) = thiscall 0x4F2CB0 => twin_loop_play_twin_loop_sound;
-    fn twin_stop_and_forget(t: u32) = thiscall 0x4F2960 => unported;
-
-    // other subsystems
-    fn frontend_add_audio_event_call(this: u32, ev: u32, vol: u32, speed: u32) = thiscall 0x4DD4A0 => frontend_add_audio_event;
     fn radio_is_vehicle_radio_active(this: u32) -> u8 = thiscall 0x4E9800 => unported;
-    fn radio_start_radio(this: u32, settings: u32) = thiscall 0x4EB550 => unported;
-    fn radio_service(this: u32, pt: u32) = thiscall 0x4EB9A0 => unported;
-    fn cutscene_service(this: u32, pt: u32) = thiscall 0x4DBFB0 => unported;
-    fn ambience_service(this: u32, pt: u32) = thiscall 0x4D76C0 => unported;
-    fn vehicle_player_settings_for_radio() -> u32 = cdecl 0x4F4ED0 => vehicle_get_player_settings_for_radio;
-    fn find_player_ped(i: i32) -> u32 = cdecl 0x56E210 => unported;
     fn global_weapon_service_ambient_gun_fire(this: u32) = thiscall 0x4DF210 => unported;
     fn collision_service(this: u32) = thiscall 0x4DA2C0 => unported;
     fn script_service(this: u32) = thiscall 0x4EC900 => unported;
     fn ped_speech_service() = cdecl 0x4E3710 => unported;
     fn police_scanner_service() = cdecl 0x4E7630 => unported;
-    fn ae_random_int(a: i32, b: i32) -> i32 = cdecl 0x4D9C10 => unported;
-    fn ae_resolve_probability(p: u32) -> u8 = cdecl 0x4D9C80 => unported;
-    fn cd_stream_read(ch: i32, buf: u32, off: u32, n: u32) -> i32 = cdecl 0x406A20 => unported;
-    fn memory_malloc(n: u32, hint: u32) -> u32 = cdecl 0x72F420 => unported;
-    fn memory_free(p: u32) = cdecl 0x72F430 => unported;
 }
 
 fn local(v: &mut u32) -> u32 {
@@ -176,7 +171,7 @@ pub fn audio_hardware_set_channel_volume(this: u32, slot: u32, ch: u32, vol: u32
 pub fn audio_hardware_service(this: u32) {
     is_foreground_app();
     li_commit(r32(this + 0xE0C));
-    hw_rescale_channel_volumes(this);
+    hw_rescale_channel_volumes(GPtr::from_addr(this as usize));
     if r8(this + 0xDA8) != 0 {
         hw_update_reverb_environment(this);
     }
@@ -260,7 +255,7 @@ pub fn audio_hardware_play_sound(this: u32, slot: u32, ch: u32, sfx: u32, bank: 
     let len = ch_get_length(r32(chp));
     if flags & 8 != 0 && pos > 0 {
         let v = xi(pos as i32).fmul(xf(f32::from_bits(0x3C23_D70A))).fmul(xi(len as i32)).to_f32();
-        pos = ftol(X87::from_f64_exact(floor_f(v.to_bits()))) as u16 as i16;
+        pos = ftol(X87::from_f64_exact(floor_f(f32::from_bits(v.to_bits())))) as u16 as i16;
     }
     if (pos as i32) > len as i32 {
         pos = len as u16 as i16;
@@ -310,11 +305,11 @@ pub fn mp3_bank_loader_service(this: u32) {
                 }
                 let n = if r16(rq + 0x1C) == 0xFFFF { (r32(rq + 8).wrapping_add(0x12C4) >> 11) + 2 } else { 4 };
                 let sec = r32(rq + 4) >> 11;
-                let buf = memory_malloc(n << 11, 0);
+                let buf = GPtr::<u8>::addr(memory_malloc(n << 11, 0)) as u32;
                 w32(rq + 0x10, buf);
                 w32(rq + 0xC, r32(rq + 4).wrapping_sub(sec << 11).wrapping_add(buf));
                 let pak = r32(r32(this + 0x20) + r8(rq + 0x1E) as u32 * 4);
-                cd_stream_read(chan, buf, pak | (sec & 0xFF_FFFF), n);
+                cd_stream_read(chan, GPtr::from_addr(buf as usize), pak | (sec & 0xFF_FFFF), n);
                 w32(rq + 0x14, 2);
             }
             2 => {
@@ -330,7 +325,7 @@ pub fn mp3_bank_loader_service(this: u32) {
                     w16(slot_info(rq + 0x1A) + 0x10, r16(rq + 0x18));
                     w16(slot_info(rq + 0x1A) + 0x12, r16(data));
                     w16(this + 0x66C + (r16(rq + 0x1A) as i16 as i32 as u32) * 2, 0xFFFF);
-                    memory_free(r32(rq + 0x10));
+                    memory_free(GPtr::from_addr(r32(rq + 0x10) as usize));
                     reset();
                     w16(this + 0x666, r16(this + 0x666).wrapping_sub(1));
                 } else {
@@ -355,12 +350,12 @@ pub fn mp3_bank_loader_service(this: u32) {
                     w32(rq + 4, off);
                     let sec = off >> 11;
                     let n = (size >> 11) + 2;
-                    memory_free(r32(rq + 0x10));
-                    let buf = memory_malloc(n << 11, 0);
+                    memory_free(GPtr::from_addr(r32(rq + 0x10) as usize));
+                    let buf = GPtr::<u8>::addr(memory_malloc(n << 11, 0)) as u32;
                     w32(rq + 0x10, buf);
                     w32(rq + 0xC, r32(rq + 4).wrapping_sub(sec << 11).wrapping_add(buf));
                     let pak = r32(r32(this + 0x20) + r8(rq + 0x1E) as u32 * 4);
-                    cd_stream_read(chan, buf, pak | (sec & 0xFF_FFFF), n);
+                    cd_stream_read(chan, GPtr::from_addr(buf as usize), pak | (sec & 0xFF_FFFF), n);
                     w32(rq + 0x14, 3);
                 }
             }
@@ -376,7 +371,7 @@ pub fn mp3_bank_loader_service(this: u32) {
                 let nx = (snd + 1) % 0x190;
                 w32(slot_info(rq + 0x1A).wrapping_add((nx * 12) as u32) + 0x14, r32(rq + 8));
                 w16(this + 0x66C + (r16(rq + 0x1A) as i16 as i32 as u32) * 2, r16(rq + 0x1C));
-                memory_free(r32(rq + 0x10));
+                memory_free(GPtr::from_addr(r32(rq + 0x10) as usize));
                 reset();
                 w32(rq + 0x10, 0);
                 w16(this + 0x666, r16(this + 0x666).wrapping_sub(1));
@@ -415,7 +410,7 @@ pub fn sound_manager_request_new_sound(this: u32, src: u32) -> u32 {
             sound_assign(s, src);
             let ent = r32(src + 8);
             if ent != 0 {
-                clean_up_old_reference(ent, src + 8);
+                clean_up_old_reference(GPtr::from_addr(ent as usize), GPtr::from_addr((src + 8) as usize));
                 w32(src + 8, 0);
             }
             sound_new_vpsl_entry(s);
@@ -452,7 +447,7 @@ fn sound_frequency(s: u32) -> f32 {
 fn sound_position(s: u32, out: &mut [u32; 3]) {
     let pos = s + 0x24;
     if r8(s + 0x56) & 1 == 0 {
-        env_get_position_relative_to_camera(local_arr(out), pos);
+        env_get_position_relative_to_camera(GPtr::from_addr(local_arr(out) as usize), GPtr::from_addr(pos as usize));
     } else {
         out[0] = r32(pos);
         out[1] = r32(pos + 4);
@@ -523,7 +518,7 @@ pub fn sound_manager_service(this: u32) {
         if r != 0xFFFF {
             w16(s_of(r) + 0x5C, r16(pos_of(c)));
             if r16(s_of(r16(phys(c))) + 0x68) != 0 {
-                hw_stop_sound(HW, r16(this + 2) as u32, c);
+                hw_stop_sound(GPtr::from_addr(HW as usize), r16(this + 2) as u32, c);
             }
         }
         c = (c as u16).wrapping_add(1) as i16 as i32 as u32;
@@ -593,7 +588,7 @@ pub fn sound_manager_service(this: u32) {
         let ent = r32(s + 8);
         w16(s + 0x58, 0);
         if ent != 0 {
-            clean_up_old_reference(ent, s + 8);
+            clean_up_old_reference(GPtr::from_addr(ent as usize), GPtr::from_addr((s + 8) as usize));
             w32(s + 8, 0);
         }
         w16(s + 0x5E, 0);
@@ -675,7 +670,7 @@ pub fn sound_manager_service(this: u32) {
             } else {
                 w16(s_of(r) + 0x5E, 0);
                 w16(phys(c), 0xFFFF);
-                hw_stop_sound(HW, r16(this + 2) as u32, c);
+                hw_stop_sound(GPtr::from_addr(HW as usize), r16(this + 2) as u32, c);
             }
         }
         c = (c as u16).wrapping_add(1) as i16 as i32 as u32;
@@ -709,7 +704,7 @@ pub fn sound_manager_service(this: u32) {
                 let mut pos = [0u32; 3];
                 sound_position(s, &mut pos);
                 hw_set_channel_position(HW, r16(this + 2) as u32, ch, local_arr(&mut pos), 0);
-                hw_set_channel_frequency_scaling_factor(HW, r16(this + 2) as u32, ch, freq.to_bits());
+                hw_set_channel_frequency_scaling_factor(GPtr::from_addr(HW as usize), r16(this + 2) as u32, ch, freq.to_bits());
                 chn = chn.wrapping_add(1);
             }
         }
@@ -724,10 +719,10 @@ pub fn sound_manager_service(this: u32) {
                 if !sm_paused() || r8(s + 0x56) & 0x10 != 0 {
                     hw_set_channel_volume(HW, r16(this + 2) as u32, c, r32(s + 0x60), 0);
                     let freq = sound_frequency(s);
-                    hw_set_channel_frequency_scaling_factor(HW, r16(this + 2) as u32, c, freq.to_bits());
+                    hw_set_channel_frequency_scaling_factor(GPtr::from_addr(HW as usize), r16(this + 2) as u32, c, freq.to_bits());
                 } else {
                     hw_set_channel_volume(HW, r16(this + 2) as u32, c, 0xC2C8_0000, 0);
-                    hw_set_channel_frequency_scaling_factor(HW, r16(this + 2) as u32, c, 0);
+                    hw_set_channel_frequency_scaling_factor(GPtr::from_addr(HW as usize), r16(this + 2) as u32, c, 0);
                 }
                 let mut pos = [0u32; 3];
                 sound_position(s, &mut pos);
@@ -771,7 +766,7 @@ pub fn audio_engine_service(this: u32) {
     if !game_paused() {
         frontend_add_audio_event_call(this + 0xB4, 0x24, 0, 0x3F80_0000);
     }
-    let pt = hw_get_track_play_time(HW);
+    let pt = hw_get_track_play_time(GPtr::from_addr(HW as usize));
     hw_get_channel_play_times(HW, r16(this + 4) as u32, 0);
     if r8(this) != 0 && pt == 0xFFFF_FFFC {
         w8(this + 1, 1);
@@ -779,24 +774,24 @@ pub fn audio_engine_service(this: u32) {
         w8(this + 1, 0);
         if radio_is_vehicle_radio_active(0x8CB6F8) != 0 {
             let s = vehicle_player_settings_for_radio();
-            radio_start_radio(0x8CB6F8, s);
+            radio_start_radio(GPtr::from_addr(0x8CB6F8), s);
         }
     }
-    cutscene_service(0x8AE554, pt);
-    ambience_service(0x8AC15C, pt);
-    radio_service(0x8CB6F8, pt);
-    if find_player_ped(0) != 0 {
+    cutscene_service(GPtr::from_addr(0x8AE554), pt);
+    ambience_service(GPtr::from_addr(0x8AC15C), pt);
+    radio_service(GPtr::from_addr(0x8CB6F8), pt);
+    if GPtr::<u8>::addr(find_player_ped(0)) as u32 != 0 {
         global_weapon_service_ambient_gun_fire(r32(this + 0x1E34));
     }
     collision_service(this + 0x4BC);
     if game_paused() {
-        hw_set_music_fader(HW, 0x3F80_0000);
-        hw_set_effects_fader(HW, 0x3F80_0000);
-        hw_set_stream_fader(HW, 0x3F80_0000);
+        hw_set_music_fader(GPtr::from_addr(HW as usize), 0x3F80_0000);
+        hw_set_effects_fader(GPtr::from_addr(HW as usize), 0x3F80_0000);
+        hw_set_stream_fader(GPtr::from_addr(HW as usize), 0x3F80_0000);
     } else if r8(0xB5F851) != 0 {
-        hw_set_stream_fader(HW, 0);
+        hw_set_stream_fader(GPtr::from_addr(HW as usize), 0);
     } else {
-        hw_set_stream_fader(HW, 0x3F80_0000);
+        hw_set_stream_fader(GPtr::from_addr(HW as usize), 0x3F80_0000);
     }
     script_service(this + 0x2A0);
     ped_speech_service();
@@ -820,7 +815,7 @@ impl EvSound {
     #[allow(clippy::too_many_arguments)]
     fn init(&mut self, slot: u32, sfx: u32, ent: u32, pos: [u32; 3], vol: u32, maxd: u32, speed: u32, ts: u32) {
         let a = self.addr();
-        sound_initialise(a, slot, sfx, ent, pos[0], pos[1], pos[2], vol, maxd, speed, ts, 0, 0, 0, 0);
+        sound_initialise(GPtr::from_addr(a as usize), slot, sfx, ent, pos[0], pos[1], pos[2], vol, maxd, speed, ts, 0, 0, 0, 0);
     }
     fn set32(&mut self, off: u32, v: u32) {
         let a = self.addr();
@@ -863,7 +858,7 @@ pub fn frontend_add_audio_event(this: u32, event: u32, boost: u32, speed: u32) {
     let evvol = r8(r32(0xBD00F8).wrapping_add(event)) as i8 as i32;
     let vol = xi(evvol).fadd(xf(f32::from_bits(boost))).to_f32().to_bits();
     let mut sd = EvSound { s: [0; 0x1D] };
-    let loaded = |bank: u32, slot: u32| hw_is_sound_bank_loaded(HW, bank, slot) != 0;
+    let loaded = |bank: u32, slot: u32| hw_is_sound_bank_loaded(GPtr::from_addr(HW as usize), bank, slot) != 0;
     let frame_ok = |off: u32| {
         let fr = r32(FRAME_COUNTER);
         if fr < r32(this + off).wrapping_add(5) {
@@ -943,7 +938,7 @@ pub fn frontend_add_audio_event(this: u32, event: u32, boost: u32, speed: u32) {
         }
         0x10 => {
             if loaded(0x8F, 5) {
-                let (a, b) = if ae_resolve_probability(0x3F00_0000) != 0 { (0x3F98_3809, ONE) } else { (ONE, 0x3F98_3809) };
+                let (a, b) = if ae_resolve_probability(f32::from_bits(0x3F00_0000)) != 0 { (0x3F98_3809, ONE) } else { (ONE, 0x3F98_3809) };
                 for (pos, sp) in [(m, a), (pp, b)] {
                     sd.init(5, 0x1C, ent, pos, vol, ONE, sp, ONE);
                     sd.set16(0x56, 0x110F);
@@ -967,14 +962,14 @@ pub fn frontend_add_audio_event(this: u32, event: u32, boost: u32, speed: u32) {
                 return end(&mut sd);
             }
             if r16(this + 0x80) as i16 > 10 {
-                if sm_are_sounds_playing_in_bank_slot(SM, 0x2A) != 0 {
+                if sm_are_sounds_playing_in_bank_slot(GPtr::from_addr(SM as usize), 0x2A) as u16 != 0 {
                     return end(&mut sd);
                 }
                 w16(this + 0x82, r16(this + 0x82).wrapping_add(1));
                 if r16(this + 0x82) as i16 > 0x1F {
                     w16(this + 0x82, 0x1C);
                 }
-                hw_load_sound_bank(HW, r16(this + 0x82) as u32, 0x2A);
+                hw_load_sound_bank(GPtr::from_addr(HW as usize), r16(this + 0x82) as u32, 0x2A);
                 w16(this + 0x80, 0);
                 return end(&mut sd);
             }
@@ -1004,7 +999,7 @@ pub fn frontend_add_audio_event(this: u32, event: u32, boost: u32, speed: u32) {
             }
         }
         0x21 => {
-            if sm_are_sounds_of_event(SM, 0x21, ent) == 0 {
+            if sm_are_sounds_of_event(GPtr::from_addr(SM as usize), 0x21, GPtr::from_addr(ent as usize)) == 0 {
                 if !loaded(0x3B, 0) {
                     return end(&mut sd);
                 }
@@ -1022,7 +1017,7 @@ pub fn frontend_add_audio_event(this: u32, event: u32, boost: u32, speed: u32) {
             if loaded(0x3B, 0) {
                 let (twin, busy, flags) = if !game_paused() { (this + 0x9C, 0x124, 0x14B) } else { (this + 0x144, 0x1CC, 0x15B) };
                 if r16(this + busy) == 0 {
-                    twin_initialise(twin, 0, 2, 1, ent, 0xC8, 0x28A, 0xFFFF_FFFF, 0xFFFF_FFFF);
+                    twin_initialise(GPtr::from_addr(twin as usize), 0, 2, 1, ent, 0xC8, 0x28A, 0xFFFF_FFFF, 0xFFFF_FFFF);
                     twin_play(twin, f[0], f[1], f[2], vol, ONE, ONE, ONE, flags);
                 }
             }
@@ -1030,15 +1025,15 @@ pub fn frontend_add_audio_event(this: u32, event: u32, boost: u32, speed: u32) {
         0x23 => {
             if !game_paused() {
                 if r16(this + 0x124) != 0 {
-                    twin_stop_and_forget(this + 0x9C);
+                    twin_stop_and_forget(GPtr::from_addr((this + 0x9C) as usize));
                 }
             } else if r16(this + 0x1CC) != 0 {
-                twin_stop_and_forget(this + 0x144);
+                twin_stop_and_forget(GPtr::from_addr((this + 0x144) as usize));
             }
         }
         0x24 => {
             if r16(this + 0x1CC) != 0 {
-                twin_stop_and_forget(this + 0x144);
+                twin_stop_and_forget(GPtr::from_addr((this + 0x144) as usize));
             }
         }
         0x25 => {
@@ -1079,7 +1074,7 @@ pub fn frontend_add_audio_event(this: u32, event: u32, boost: u32, speed: u32) {
             }
         }
         0x65 | 0x2F | 0x31 => {
-            if loaded(0x3B, 0) && sm_are_sounds_of_event(SM, event, ent) == 0 {
+            if loaded(0x3B, 0) && sm_are_sounds_of_event(GPtr::from_addr(SM as usize), event, GPtr::from_addr(ent as usize)) == 0 {
                 let (sfx, flags) = match event {
                     0x65 => (0xD, 0x101),
                     0x2F => (3, 0x103),
@@ -1095,9 +1090,9 @@ pub fn frontend_add_audio_event(this: u32, event: u32, boost: u32, speed: u32) {
         0x30 => sm_cancel_sounds_of_event(SM, 0x2F, ent),
         0x32 => {
             let seed = r8(this + 0x7D) as i8 as i16 as u16 as u32;
-            if hw_is_sound_loaded(HW, 0x52, (seed << 1) & 0xFFFF, 2) != 0
-                && hw_is_sound_loaded(HW, 0x52, (seed * 2 + 1) & 0xFFFF, 5) != 0
-                && sm_are_sounds_of_event(SM, 0x32, ent) == 0
+            if hw_is_sound_loaded(GPtr::from_addr(HW as usize), 0x52, (seed << 1) & 0xFFFF, 2) != 0
+                && hw_is_sound_loaded(GPtr::from_addr(HW as usize), 0x52, (seed * 2 + 1) & 0xFFFF, 5) != 0
+                && sm_are_sounds_of_event(GPtr::from_addr(SM as usize), 0x32, GPtr::from_addr(ent as usize)) == 0
             {
                 for (slot, sfx, pos) in [(2, (seed << 1) & 0xFFFF, m), (5, (seed * 2 + 1) & 0xFFFF, pp)] {
                     sd.init(slot, sfx, ent, pos, vol, ONE, ONE, ONE);
@@ -1117,7 +1112,7 @@ pub fn frontend_add_audio_event(this: u32, event: u32, boost: u32, speed: u32) {
 /// The common exit of `AddAudioEvent`: `~CAESound()` of the stack sound.
 fn end(sd: &mut EvSound) {
     let a = sd.addr();
-    sound_dtor(a);
+    sound_dtor(GPtr::from_addr(a as usize));
 }
 
 /// `CAETwinLoopSoundEntity::PlayTwinLoopSound(CVector pos, float volume, float maxDistance?,
@@ -1132,10 +1127,10 @@ fn end(sd: &mut EvSound) {
 pub fn twin_loop_play_twin_loop_sound(this: u32, x: u32, y: u32, z: u32, vol: u32, a: u32, b: u32, c: u32, flags: u32) {
     let mut sd = EvSound { s: [0; 0x1D] };
     if r32(this + 0xA0) != 0 {
-        sound_stop_and_forget(r32(this + 0xA0));
+        sound_stop_and_forget(GPtr::from_addr(r32(this + 0xA0) as usize));
     }
     if r32(this + 0xA4) != 0 {
-        sound_stop_and_forget(r32(this + 0xA4));
+        sound_stop_and_forget(GPtr::from_addr(r32(this + 0xA4) as usize));
     }
     let fl = flags | 0x24;
     let mut pt = r16(this + 0x9A) as u32;
@@ -1143,7 +1138,7 @@ pub fn twin_loop_play_twin_loop_sound(this: u32, x: u32, y: u32, z: u32, vol: u3
         pt = ae_random_int(0, 0x63) as u32;
     }
     let sa = sd.addr();
-    sound_initialise(sa, r16(this + 0x7C) as u32, r16(this + 0x7E) as u32, this, x, y, z, vol, b, a, c, 0, fl, 0, 0);
+    sound_initialise(GPtr::from_addr(sa as usize), r16(this + 0x7C) as u32, r16(this + 0x7E) as u32, this, x, y, z, vol, b, a, c, 0, fl, 0, 0);
     sd.set16(0x5C, pt as u16);
     w32(this + 0xA0, sd.request());
     let mut pt = r16(this + 0x9C) as u32;
@@ -1151,7 +1146,7 @@ pub fn twin_loop_play_twin_loop_sound(this: u32, x: u32, y: u32, z: u32, vol: u3
         pt = ae_random_int(0, 0x63) as u32;
     }
     let sa = sd.addr();
-    sound_initialise(sa, r16(this + 0x7C) as u32, r16(this + 0x80) as u32, this, x, y, z, 0xC2C8_0000, b, a, c, 0, fl, 0, 0);
+    sound_initialise(GPtr::from_addr(sa as usize), r16(this + 0x7C) as u32, r16(this + 0x80) as u32, this, x, y, z, 0xC2C8_0000, b, a, c, 0, fl, 0, 0);
     sd.set16(0x5C, pt as u16);
     w32(this + 0xA4, sd.request());
     let t = r32(TIME_PAUSE_MS);
@@ -1159,7 +1154,7 @@ pub fn twin_loop_play_twin_loop_sound(this: u32, x: u32, y: u32, z: u32, vol: u3
     w32(this + 0x94, rr.wrapping_add(t));
     w8(this + 0x98, 1);
     let sa = sd.addr();
-    sound_dtor(sa);
+    sound_dtor(GPtr::from_addr(sa as usize));
 }
 
 /// Every `#[hook]` of this module.

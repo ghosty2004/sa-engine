@@ -150,7 +150,7 @@ use crate::bindings::add_blip_to_legend_list_call;
 use crate::bindings::draw_rotating_radar_sprite_call;
 use crate::bindings::get_radar_trace_colour_call;
 use crate::bindings::has_this_blip_been_revealed_call;
-use crate::bindings::sprite2d_draw_2d_polygon;
+use sa_world::bindings::sprite2d_draw_2d_polygon;
 use crate::bindings::transform_radar_point_to_screen_space_call;
 use crate::bindings::transform_real_world_point_to_radar_space_call;
 use sa_core::bindings::font_print_string;
@@ -163,28 +163,20 @@ use sa_world::bindings::object_at_ref as object_pool_get_at;
 use sa_world::bindings::pickup_get_posn;
 use sa_world::bindings::placeable_get_heading as placeable_get_heading_st0;
 use sa_world::bindings::vehicle_at_ref as vehicle_pool_get_at;
+use crate::bindings::draw_radar_sprite_call;
+use crate::bindings::show_radar_marker_call;
+use crate::bindings::show_radar_trace_with_height_call;
+use sa_core::bindings::sprite2d_draw as sprite2d_draw_rect;
+use sa_core::bindings::sprite_draw_rect as sprite2d_draw_rect_static;
+use sa_core::bindings::text_get;
+use sa_world::bindings::get_actual_pickup_index;
 orig! {
-    /// `CText::Get(const char*)` (0x6A0050)
-    fn text_get(this: GPtr<u8>, key: GPtr<u8>) -> GPtr<u8> = thiscall 0x6A0050 => crate::text::text_get;
-    /// `CSprite2d::Draw(const CRect&, const CRGBA&)` (0x728350)
-    fn sprite2d_draw_rect(this: GPtr<u8>, rect: GPtr<f32>, colour: GPtr<u8>) = thiscall 0x728350 => unported;
-    /// `CSprite2d::DrawRect(const CRect&, const CRGBA&)` (0x727B60)
-    fn sprite2d_draw_rect_static(rect: GPtr<f32>, colour: GPtr<u8>) = cdecl 0x727B60 => unported;
     /// `CSprite2d::DrawCircleAtNearClip(const CVector2D&, float radius, const CRGBA&, int32 numVerts)` (0x727D60)
     fn sprite2d_draw_circle_at_near_clip(pos: GPtr<u32>, radius: f32, colour: GPtr<u8>, n: i32) = cdecl 0x727D60 => unported;
-    /// `CPickups::GetActualPickupIndex(int32)` (0x4552A0)
-    fn get_actual_pickup_index(h: i32) -> i32 = cdecl 0x4552A0 => sa_world::world::pickups::get_actual_pickup_index;
     /// `FindPlayerVehicle(int32, bool)` (0x56E0D0)
     fn find_player_vehicle(id: i32, remote: u8) -> GPtr<u8> = cdecl 0x56E0D0 => sa_world::world::cworld::find_player_vehicle_port;
-    /// `CRadar::ShowRadarMarker(CVector pos, uint32 colour, float radius)` (0x584480)
-    fn show_radar_marker_call(px: u32, py: u32, pz: u32, colour: u32, radius: u32) = cdecl 0x584480 => crate::radar_draw2::show_radar_marker;
     /// `CRadar::LimitRadarPoint(CVector2D&)` (0x5832F0, ST0)
     fn limit_radar_point_call_st0(p: GPtr<f32>) -> f64 = cdecl 0x5832F0 => limit_radar_point_st0_rust;
-    /// `CRadar::DrawRadarSprite(uint16 sprite, float x, float y, uint8 alpha)` (0x585FF0)
-    fn draw_radar_sprite_call(sprite: u32, px: f32, py: f32, alpha: u32) = cdecl 0x585FF0 => crate::radar_draw2::draw_radar_sprite;
-    /// `CRadar::ShowRadarTraceWithHeight(float x, float y, uint32 size, uint8 r, uint8 g, uint8 b, uint8 a,
-    /// eRadarTraceHeight)` (0x584070)
-    fn show_radar_trace_with_height_call(px: f32, py: f32, size: u32, r: u32, gg: u32, bb: u32, a: u32, mode: u32) = cdecl 0x584070 => crate::radar_draw2::show_radar_trace_with_height;
 }
 
 /// The Rust path of the ST0 declaration above (phases B/C).
@@ -474,7 +466,7 @@ pub fn draw_entity_blip(index: i32, is_sprite: u8) {
             }
         }
         6 => {
-            let i = get_actual_script_thing_index(handle, 2);
+            let i = get_actual_script_thing_index(handle as u32, 2);
             if i < 0 {
                 return;
             }
@@ -494,7 +486,7 @@ pub fn draw_entity_blip(index: i32, is_sprite: u8) {
                 return;
             }
             let mut out = [0u32; 3];
-            let r = pickup_get_posn(p, local(&mut out));
+            let r = GPtr::<f32>::cast::<u32>(pickup_get_posn(p, GPtr::<u32>::cast::<f32>(local(&mut out))));
             pos = vec3(r.cast());
         }
         8 => {

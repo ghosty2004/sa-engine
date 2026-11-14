@@ -3,6 +3,7 @@
 //! (docs/verify/HOWTO.md).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -71,7 +72,7 @@ pub fn is_in_air(ped: GPtr<u8>) -> u32 {
     let mut ent = 0u32;
     let mut hit = world_process_vertical_line(
         GPtr::from_raw(pos.as_mut_ptr()).cast(),
-        z_end.to_bits(),
+        f32::from_bits(z_end.to_bits()),
         GPtr::from_raw(cp.as_mut_ptr()).cast(),
         GPtr::from_raw(&raw mut ent).cast(),
         1,
@@ -80,15 +81,15 @@ pub fn is_in_air(ped: GPtr<u8>) -> u32 {
         1,
         0,
         0,
-        0,
+        GPtr::NULL,
     ) != 0;
     if !hit && !falling {
         pos[2] = x(pos[2]).fsub_m(1.0).to_f32();
         let e = world_test_sphere_against_world(
-            pos[0].to_bits(),
-            pos[1].to_bits(),
-            pos[2].to_bits(),
-            0x3E19_999A,
+            f32::from_bits(pos[0].to_bits()),
+            f32::from_bits(pos[1].to_bits()),
+            f32::from_bits(pos[2].to_bits()),
+            f32::from_bits(0x3E19_999A),
             ped,
             1,
             0,
@@ -130,7 +131,7 @@ pub fn lies_inside_bounding_box(ped: GPtr<u8>, pos: GPtr<f32>, e: GPtr<u8>) -> u
     let mut normals = [0f32; 12];
     let mut ds = [0f32; 4];
     let cp: GPtr<u8> = GPtr::from_raw(corners.as_mut_ptr()).cast();
-    compute_entity_bounding_box_corners_uncached(z, e, cp);
+    compute_entity_bounding_box_corners_uncached(f32::from_bits(z), e, cp);
     compute_entity_bounding_box_planes_uncached(
         z,
         cp,
@@ -164,7 +165,7 @@ use sa_core::bindings::vector_normalise_and_mag;
 use sa_world::bindings::crt_floor;
 use sa_world::bindings::get_water_level as water_get_water_level;
 use sa_world::bindings::process_line_of_sight as world_process_line_of_sight;
-use sa_world::bindings::world_get_is_line_of_sight_clear;
+use sa_core::bindings::world_get_is_line_of_sight_clear;
 
 use sa_core::field::ptr_of as fp;
 
@@ -285,11 +286,11 @@ pub fn is_wander_path_clear(a: GPtr<f32>, b: GPtr<f32>, max_height_diff: f32, ma
         let py = x(x(d[1]).fmul(fi).to_f32()).fadd_m(av(1)).to_f32();
         let pz = x(x(d[2]).fmul(fi).to_f32()).fadd_m(av(2)).to_f32();
         let mut level = 0f32;
-        if water_get_water_level(px.to_bits(), py.to_bits(), pz.to_bits(), fp(&mut level), 0, 0) != 0 {
+        if water_get_water_level(f32::from_bits(px.to_bits()), f32::from_bits(py.to_bits()), f32::from_bits(pz.to_bits()), fp(&mut level), 0, GPtr::NULL) != 0 {
             let z_end = if x(av(2)).fcom(x(bv(2))).test_any(0x41) { bv(2) } else { av(2) };
             let mut pos = [px, py, level];
             let mut ent = 0u32;
-            if world_process_vertical_line(fp(&mut pos), z_end.to_bits(), fp(&mut cp), fp(&mut ent), 1, 0, 0, 0, 0, 0, 0) == 0 {
+            if world_process_vertical_line(fp(&mut pos), f32::from_bits(z_end.to_bits()), fp(&mut cp), fp(&mut ent), 1, 0, 0, 0, 0, 0, GPtr::NULL) == 0 {
                 return 2;
             }
         }
@@ -297,7 +298,7 @@ pub fn is_wander_path_clear(a: GPtr<f32>, b: GPtr<f32>, max_height_diff: f32, ma
     }
     let mut ent = 0u32;
     let z_end = x(av(2)).fsub_m(5.0).to_f32();
-    if world_process_vertical_line(a.cast(), z_end.to_bits(), fp(&mut cp), fp(&mut ent), 1, 0, 0, 0, 0, 0, 0) == 0 {
+    if world_process_vertical_line(a.cast(), f32::from_bits(z_end.to_bits()), fp(&mut cp), fp(&mut ent), 1, 0, 0, 0, 0, 0, GPtr::NULL) == 0 {
         return 3;
     }
     let hit_z = |cp: &[u32; 11]| f32::from_bits(cp[2]);
@@ -309,7 +310,7 @@ pub fn is_wander_path_clear(a: GPtr<f32>, b: GPtr<f32>, max_height_diff: f32, ma
         let py = x(x(d[1]).fmul(fj).to_f32()).fadd_m(av(1)).to_f32();
         let mut pos = [px, py, h];
         let z_end = x(h).fsub_m(2.0).to_f32();
-        if world_process_vertical_line(fp(&mut pos), z_end.to_bits(), fp(&mut cp), fp(&mut ent), 1, 0, 0, 0, 0, 0, 0) == 0 {
+        if world_process_vertical_line(fp(&mut pos), f32::from_bits(z_end.to_bits()), fp(&mut cp), fp(&mut ent), 1, 0, 0, 0, 0, 0, GPtr::NULL) == 0 {
             return 3;
         }
         if !x(hit_z(&cp)).fsub_m(h).fabs().fcom(X87::one()).test_any(0x41) {
@@ -356,7 +357,7 @@ pub fn get_is_line_of_sight_clear_ped(ped: GPtr<u8>, target: GPtr<f32>, e: GPtr<
     let mut corners = [0f32; 12];
     let mut normals = [0f32; 12];
     let mut ds = [0f32; 4];
-    compute_entity_bounding_box_corners_uncached(z, e, fp(&mut corners));
+    compute_entity_bounding_box_corners_uncached(f32::from_bits(z), e, fp(&mut corners));
     compute_entity_bounding_box_planes_uncached(z, fp(&mut corners), fp(&mut normals), fp(&mut ds));
     dist.cast::<u32>().write(0);
     let eps = g::<f32>(K_CLEAR_MARGIN).read();
@@ -501,7 +502,7 @@ pub fn is_entity_blocking_target(entity: GPtr<u8>, point: GPtr<u8>, radius: f32)
     let z = rd::<u32>(entity_pos(entity), 8);
     let mut corners = [0u32; 12];
     let cp: GPtr<u8> = GPtr::from_raw(corners.as_mut_ptr()).cast();
-    compute_entity_bounding_box_corners_uncached(z, entity, cp);
+    compute_entity_bounding_box_corners_uncached(f32::from_bits(z), entity, cp);
     let mut ds = [0u32; 4];
     let dp: GPtr<u8> = GPtr::from_raw(ds.as_mut_ptr()).cast();
     compute_entity_bounding_box_planes_uncached(z, cp, np, dp);

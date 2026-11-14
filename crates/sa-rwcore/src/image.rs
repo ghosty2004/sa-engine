@@ -23,23 +23,18 @@ pub const IMAGE_REGISTRY: u32 = 0x8E2670;
 use crate::bindings::image_find_format;
 use crate::bindings::plugin_deinit_object;
 use crate::bindings::plugin_init_object;
+use crate::bindings::clamp_raster_size;
+use crate::bindings::rw_image_create_resample;
+use crate::bindings::rw_image_read;
+use sa_core::bindings::image_destroy as rw_image_destroy_call;
+use sa_core::bindings::rw_raster_create as rw_raster_create_call;
 orig! {
     /// `_rwerror(code, a)` (0x8088D0, two arguments)
     fn rw_error2(code: u32, a: u32) -> u32 = cdecl 0x8088D0 => unported;
-    /// `RwImageRead(name)` (0x802FD0)
-    fn rw_image_read(name: GPtr<u8>) -> GPtr<u8> = cdecl 0x802FD0 => unported;
     /// `RwImageReadMaskedImage(name, mask)` (0x8035C0)
     fn rw_image_read_masked_image(name: GPtr<u8>, mask: GPtr<u8>) -> GPtr<u8> = cdecl 0x8035C0 => unported;
-    /// `RwImageDestroy(image)` (0x802740)
-    fn rw_image_destroy_call(img: GPtr<u8>) -> u32 = cdecl 0x802740 => rw_image_destroy;
-    /// `RwImageCreateResample(image, w, h)` (0x80CD10)
-    fn rw_image_create_resample(img: GPtr<u8>, w: i32, h: i32) -> GPtr<u8> = cdecl 0x80CD10 => rw_image_create_resample_port;
-    /// `RwRasterCreate(w, h, depth, flags)` (0x7FB230)
-    fn rw_raster_create_call(w: i32, h: i32, depth: i32, flags: u32) -> GPtr<u8> = cdecl 0x7FB230 => crate::raster::rw_raster_create;
     /// `_rwD3D9RGBToPixel(out, rgba, format)` (0x7FEE20), the recursive DEFAULT case
     fn rgb_to_pixel_call(out: GPtr<u32>, rgba: GPtr<u8>, format: u32) -> u32 = cdecl 0x7FEE20 => d3d9_rgb_to_pixel;
-    /// `_rwD3D9ClampRasterSize(&w, &h, flags)` (0x7FED70)
-    fn clamp_raster_size(w: GPtr<u8>, h: GPtr<u8>, flags: u32) -> u32 = cdecl 0x7FED70 => unported;
     /// `FUN_004cc580(raster, format)`: sets type/flags/format and depth of the raster (0x4CC580)
     fn raster_set_format(r: GPtr<u8>, format: u32) -> u32 = cdecl 0x4CC580 => unported;
 
@@ -479,12 +474,12 @@ pub fn d3d9_image_find_raster_format(r: GPtr<u8>, img: GPtr<u8>, flags: u32) -> 
     let ty = flags & 7;
     match ty {
         0 => {
-            clamp_raster_size(r.byte_add(0xC), r.byte_add(0x10), flags);
+            clamp_raster_size(GPtr::<u8>::cast::<i32>(r.byte_add(0xC)), GPtr::<u8>::cast::<i32>(r.byte_add(0x10)), flags);
             let f = image_find_format(img);
             raster_set_format(r, f | (flags & 0xFFFF_6FFF))
         }
         4 | 5 => {
-            clamp_raster_size(r.byte_add(0xC), r.byte_add(0x10), flags);
+            clamp_raster_size(GPtr::<u8>::cast::<i32>(r.byte_add(0xC)), GPtr::<u8>::cast::<i32>(r.byte_add(0x10)), flags);
             let f = image_find_format(img);
             raster_set_format(r, ty | (f | (flags & 0x9000)))
         }
@@ -496,15 +491,13 @@ pub fn d3d9_image_find_raster_format(r: GPtr<u8>, img: GPtr<u8>, flags: u32) -> 
     }
 }
 
+use sa_core::bindings::image_allocate_pixels as rw_image_allocate_pixels_call;
+use sa_core::bindings::rw_image_create as rw_image_create_call;
 orig! {
     /// `G->stringFuncs.rwstrlen(s)` (G+0x120)
     fn rw_strlen(s: GPtr<u8>) -> u32 = cdecl table 0xC97B24 0x120 => unported;
     /// `G->rwrealloc(p, size, hint)` (G+0x13C)
     fn rw_realloc_call(p: u32, size: u32, hint: u32) -> u32 = cdecl table 0xC97B24 0x13C => unported;
-    /// `RwImageCreate(w, h, depth)` (0x8026E0)
-    fn rw_image_create_call(w: i32, h: i32, depth: i32) -> GPtr<u8> = cdecl 0x8026E0 => rw_image_create;
-    /// `RwImageAllocatePixels(image)` (0x8027A0)
-    fn rw_image_allocate_pixels_call(img: GPtr<u8>) -> GPtr<u8> = cdecl 0x8027A0 => rw_image_allocate_pixels;
     /// `RwImageFreePixels(image)` (0x802860)
     fn rw_image_free_pixels_call(img: GPtr<u8>) -> GPtr<u8> = cdecl 0x802860 => rw_image_free_pixels;
     /// `RwImageCopy(dst, src)` (0x803950, `_rwImageCopyResample` in rw-names)

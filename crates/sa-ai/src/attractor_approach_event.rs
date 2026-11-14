@@ -3,7 +3,7 @@
 //! differs, the bytes are followed). Unverified (docs/verify/HOWTO.md).
 
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
@@ -11,11 +11,8 @@ use sa_core::bindings::entity_register_reference;
 use sa_core::bindings::vector_from_multiply;
 use sa_core::bindings::vector_normalise;
 use sa_world::bindings::multiply3x3;
-use sa_world::bindings::world_get_is_line_of_sight_clear;
-orig! {
-    /// `CPedGeometryAnalyser::IsWanderPathClear(const CVector&, const CVector&, float, int32)` (0x5F2F70)
-    fn is_wander_path_clear(a: GPtr<u8>, b: GPtr<u8>, max_height_diff: f32, max_steps: i32) -> u32 = cdecl 0x5F2F70 => unported;
-}
+use sa_core::bindings::world_get_is_line_of_sight_clear;
+use crate::bindings::is_wander_path_clear;
 
 use sa_world::world::common::entity_pos as pos;
 

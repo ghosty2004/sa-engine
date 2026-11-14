@@ -15,21 +15,18 @@ type Dm = GPtr<u8>;
 pub use crate::bindings::car_set_panel_damage;
 pub use sa_world::bindings::automobile_set_panel_damage as car_set_bumper_damage;
 pub use sa_world::bindings::set_door_damage as car_set_door_damage;
+pub use crate::bindings::dm_reset_damage_status as reset_damage_status_call;
+pub use sa_world::bindings::door_open;
+pub use sa_world::bindings::progress_panel_damage as progress_panel_damage_call;
 orig! {
-    /// `CDoor::Open(float)` (0x6F4790)
-    pub fn door_open(door: GPtr<u8>, ratio: f32) = thiscall 0x6F4790 => unported;
     /// `CDamageManager::GetComponentGroup(tComponent, tComponentGroup*, uint8*)` (0x6C2040)
     pub fn get_component_group_call(dm: GPtr<u8>, comp: i32, group: GPtr<i32>, sub: GPtr<u8>) -> u8 = thiscall 0x6C2040 => get_component_group;
     /// `CDamageManager::ProgressWheelDamage(uint8)` (0x6C2440)
     pub fn progress_wheel_damage_call(dm: GPtr<u8>, wheel: u32) -> u8 = thiscall 0x6C2440 => progress_wheel_damage;
     /// `CDamageManager::ProgressDoorDamage(uint8, CAutomobile*)` (0x6C2320)
     pub fn progress_door_damage_call(dm: GPtr<u8>, door: u32, car: GPtr<u8>) -> u8 = thiscall 0x6C2320 => progress_door_damage;
-    /// `CDamageManager::ProgressPanelDamage(uint8)` (0x6C23C0)
-    pub fn progress_panel_damage_call(dm: GPtr<u8>, panel: u32) -> u8 = thiscall 0x6C23C0 => progress_panel_damage;
     /// `CDamageManager::SetLightStatus(eLights, uint32)` (0x6C2100)
     pub fn set_light_status_call(dm: GPtr<u8>, light: u32, status: u32) = thiscall 0x6C2100 => set_light_status;
-    /// `CDamageManager::ResetDamageStatus()` (0x6C20E0)
-    pub fn reset_damage_status_call(dm: GPtr<u8>) = thiscall 0x6C20E0 => reset_damage_status;
 }
 
 /// `CDamageManager::Init()` (0x6A0520): `rep stosd` of 6 zero dwords; returns `this`.

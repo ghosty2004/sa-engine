@@ -19,21 +19,18 @@ use sa_world::bindings::fx_kill;
 use sa_world::bindings::fx_set_local_particles;
 use sa_world::bindings::get_modelling_matrix;
 use sa_world::bindings::multiply3x3_vm as multiply_3x3_t;
-use sa_world::bindings::vector_magnitude_sqr as magnitude_sqr;
-use sa_world::bindings::vector_sub as vec_sub;
+use sa_core::bindings::vector_magnitude_sqr as magnitude_sqr;
+use sa_core::bindings::vector_sub as vec_sub;
+use crate::bindings::bouncing_panel_set_panel;
+use crate::bindings::can_vehicle_be_damaged;
+use crate::bindings::dmg_draw_car_colliding_particles;
 orig! {
     /// `CAutomobile::VehicleDamage(float, eVehicleCollisionComponent, CEntity*, CVector*, CVector*, eWeaponType)` (0x6A7650)
     fn automobile_vehicle_damage(v: GPtr<u8>, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32) = thiscall 0x6A7650 => unported;
-    /// `CVehicle::CanVehicleBeDamaged(CEntity*, eWeaponType, bool*)` (0x6D1280, AL)
-    fn can_vehicle_be_damaged(v: GPtr<u8>, e: u32, weapon: u32, out: GPtr<u8>) -> u8 = thiscall 0x6D1280 => unported;
     /// `CDamageManager::ProgressAeroplaneDamage(uint8)` (0x6C2460, AL)
     fn progress_aeroplane_damage(d: GPtr<u8>, node: u32) -> u8 = thiscall 0x6C2460 => unported;
     /// `CDamageManager::GetAeroplaneCompStatus(int32)` (0x6C2300)
     fn get_aeroplane_comp_status(d: GPtr<u8>, node: u32) -> u32 = thiscall 0x6C2300 => unported;
-    /// `CBouncingPanel::SetPanel(int16 frame, int16 axis, float limit)` (0x6F4920)
-    fn bouncing_panel_set_panel(p: GPtr<u8>, frame: u32, axis: u32, limit: u32) = thiscall 0x6F4920 => unported;
-    /// `CAutomobile::dmgDrawCarCollidingParticles(const CVector&, float, eWeaponType)` (0x6A6DC0)
-    fn dmg_draw_car_colliding_particles(v: GPtr<u8>, coors: u32, intensity: f32, weapon: u32) = thiscall 0x6A6DC0 => unported;
     /// virtual `CVehicle::BlowUpCar(CEntity*, bool)` (vtable +0xA4)
     fn v_blow_up_car(v: GPtr<u8>, damager: GPtr<u8>, hide: u32) = thiscall vslot 0xA4 => unported;
 }
@@ -103,7 +100,7 @@ pub fn plane_vehicle_damage(this: GPtr<u8>, intensity: f32, comp: u32, damager: 
         }
     } else {
         let mut flag = [0u32; 1];
-        if can_vehicle_be_damaged(this, damager, weapon, buf(&mut flag)) == 0 {
+        if can_vehicle_be_damaged(this, GPtr::from_addr(damager as usize), weapon, buf(&mut flag)) == 0 {
             return;
         }
         if !matches!(weapon, 0x13 | 0x14 | 0x15 | 0x33) {
@@ -161,7 +158,7 @@ pub fn plane_vehicle_damage(this: GPtr<u8>, intensity: f32, comp: u32, damager: 
             f32_of(x(rd::<f32>(fr, 0x44)).fsub_m(lp[1])).to_bits(),
             f32_of(x(rd::<f32>(fr, 0x48)).fsub_m(lp[2])).to_bits(),
         ];
-        let d2 = X87::from_f64_exact(magnitude_sqr(buf(&mut d)));
+        let d2 = X87::from_f64_exact(magnitude_sqr(GPtr::<u8>::cast::<f32>(buf(&mut d))));
         if d2.fcom(x(min).fmul_m(min)) == Cmp::Less {
             min = f32_of(d2.fsqrt());
             node = n;
@@ -194,7 +191,7 @@ pub fn plane_vehicle_damage(this: GPtr<u8>, intensity: f32, comp: u32, damager: 
             set_component_visibility(this, rd::<GPtr<u8>>(this, 0x648 + 4 * node as isize), 2);
         }
     }
-    dmg_draw_car_colliding_particles(this, coors, f32_of(x(scale).fmul_m(amount)), weapon);
+    dmg_draw_car_colliding_particles(this, GPtr::from_addr(coors as usize), f32_of(x(scale).fmul_m(amount)), weapon);
     let fr = rd::<GPtr<u8>>(this, 0x648 + 4 * node as isize);
     let mut fpos = [rd::<u32>(fr, 0x40), rd::<u32>(fr, 0x44), rd::<u32>(fr, 0x48)];
     let smoke = rd::<GPtr<u8>>(this, 0x9F8);
@@ -206,7 +203,7 @@ pub fn plane_vehicle_damage(this: GPtr<u8>, intensity: f32, comp: u32, damager: 
     if mm.is_null() {
         return;
     }
-    let fx = create_fx_system(GPtr::from_addr(0xA9_AE80), 0x85_AA80, buf(&mut fpos), mm, 0);
+    let fx = create_fx_system(GPtr::from_addr(0xA9_AE80), GPtr::from_addr(0x85_AA80), buf(&mut fpos), mm, 0);
     wr::<GPtr<u8>>(this, 0x9F8, fx);
     if fx.is_null() {
         return;

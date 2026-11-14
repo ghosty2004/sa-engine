@@ -10,7 +10,7 @@ use sa_world::world::common::{find_player_ped, find_player_vehicle};
 
 use crate::common::{ftol32, g, rand_at, rd, wr, x};
 
-use crate::bindings::dm_get_panel_status as get_panel_status;
+use sa_world::bindings::dm_get_panel_status as get_panel_status;
 use crate::bindings::get_light_status;
 use sa_core::bindings::get_pad;
 use sa_core::bindings::vector_magnitude;
@@ -23,39 +23,27 @@ use sa_world::bindings::interesting_events_add;
 use sa_world::bindings::pad_start_shake as start_shake;
 use sa_world::bindings::ped_say;
 use sa_world::bindings::player_set_wanted_level_no_drop as set_wanted_level_no_drop;
+use crate::bindings::can_vehicle_be_damaged;
+use crate::bindings::damage_knock_off_rider;
+use crate::bindings::dmg_draw_car_colliding_particles;
+use sa_core::bindings::entity_register_reference as register_reference;
+use sa_core::bindings::vector_difference;
+use sa_core::bindings::vector_sub;
+use sa_world::bindings::apply_damage;
+use sa_world::bindings::entity_get_col_model as get_col_model;
+use sa_world::bindings::get_engine_status;
+use sa_world::bindings::pick_random_passenger;
+use sa_world::bindings::set_engine_status;
+use sa_world::bindings::vector_scale as scalar_mul_vector;
 orig! {
-    /// `CBike::DamageKnockOffRider(CVehicle*, float, uint16, CEntity*, CVector&, CVector&)` (0x6B5A10, cdecl)
-    fn damage_knock_off_rider(v: GPtr<u8>, dmg: u32, comp: u32, e: GPtr<u8>, coors: GPtr<u8>, dir: GPtr<u8>) -> u8 = cdecl 0x6B5A10 => unported;
-    /// `operator*(float, const CVector&)` (0x40FE90, cdecl, hidden return pointer)
-    fn scalar_mul_vector(out: GPtr<u8>, s: f32, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE90 => sa_world::world::mvpa_math::scalar_mul_vector;
     /// `DotProduct(const RwV3d*, const RwV3d*)` (0x40FDB0), ST0
     fn dot_product(a: GPtr<u8>, b: GPtr<u8>) -> f64 = cdecl 0x40FDB0 => dot_product_native;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    fn register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => sa_world::world::entity::register_reference;
-    /// `CAutomobile::dmgDrawCarCollidingParticles(const CVector&, float, eWeaponType)` (0x6A6DC0)
-    fn dmg_draw_car_colliding_particles(v: GPtr<u8>, coors: GPtr<u8>, intensity: f32, weapon: u32) = thiscall 0x6A6DC0 => unported;
-    /// `CVehicle::CanVehicleBeDamaged(CEntity*, eWeaponType, bool*)` (0x6D1280)
-    fn can_vehicle_be_damaged(v: GPtr<u8>, e: GPtr<u8>, weapon: u32, out: GPtr<u8>) -> u8 = thiscall 0x6D1280 => unported;
-    /// `CDamageManager::ApplyDamage(CAutomobile*, tComponent, float, float)` (0x6C24B0)
-    fn apply_damage(dm: GPtr<u8>, car: GPtr<u8>, comp: i32, intensity: f32, mult: f32) -> u8 = thiscall 0x6C24B0 => crate::damage::apply_damage;
-    /// `VectorSub(CVector*, const CVector*, const CVector*)` (0x40FE60)
-    fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => sa_world::world::mvpa_math::vector_sub;
-    /// `CEntity::GetColModel()` (0x535300)
-    fn get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => sa_world::world::entity::get_col_model;
-    /// `CVector::Difference(const CVector&, const CVector&)` (0x40FE00, thiscall on the output): `a - b`
-    fn vector_difference(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = thiscall 0x40FE00 => unported;
     /// `CEventVehicleDamageCollision::CEventVehicleDamageCollision(CVehicle*, CVehicle*, eWeaponType)` (0x6A0620)
     fn event_vehicle_damage_collision_ctor(ev: GPtr<u8>, v: GPtr<u8>, other: GPtr<u8>, weapon: u32) -> GPtr<u8> = thiscall 0x6A0620 => unported;
     /// `CVehicle::ReactToVehicleDamage(CPed*)` (0x6D5490)
     fn react_to_vehicle_damage(v: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x6D5490 => unported;
-    /// `CVehicle::PickRandomPassenger()` (0x6D2A10)
-    fn pick_random_passenger(v: GPtr<u8>) -> GPtr<u8> = thiscall 0x6D2A10 => crate::vehicle2::pick_random_passenger;
     /// `CAutomobile::BlowUpCar(CEntity*, bool)` (vtable +0xA4)
     fn v_blow_up_car(v: GPtr<u8>, culprit: GPtr<u8>, in_cutscene: u32) = thiscall vslot 0xA4 => unported;
-    /// `CDamageManager::GetEngineStatus()` (0x6C22C0)
-    fn get_engine_status(dm: GPtr<u8>) -> u32 = thiscall 0x6C22C0 => crate::damage::get_engine_status;
-    /// `CDamageManager::SetEngineStatus(uint32)` (0x6C22A0)
-    fn set_engine_status(dm: GPtr<u8>, s: u32) = thiscall 0x6C22A0 => crate::damage::set_engine_status;
 }
 
 /// Phases B/C side of `DotProduct` 0x40FDB0 (sa-math's port of the same sum order).
@@ -296,7 +284,7 @@ fn automobile_vehicle_damage_tail(
         }
         let p = pick_random_passenger(this);
         if !p.is_null() {
-            ped_say(p, 0x21, 0x5DC, 0x3F80_0000, 0, 0, 0);
+            ped_say(p, 0x21, 0x5DC, f32::from_bits(0x3F80_0000), 0, 0, 0);
         }
     } else if rd::<u16>(this, 0x22) == 0x1A8 {
         if !ge(ld(this, 0x4C0), c(0x43C8_0000)) {
@@ -327,14 +315,14 @@ fn damage_effects(
         && rd::<u8>(this, 0x36) & 0xF8 != 0x20
     {
         let pv = find_player_vehicle(-1, 0);
-        let mine = X87::from_f64_exact(vector_magnitude(this.byte_add(0x44))).to_f32();
-        if !X87::from_f64_exact(vector_magnitude(pv.byte_add(0x44)))
+        let mine = X87::from_f64_exact(vector_magnitude(GPtr::<u8>::cast::<u32>(this.byte_add(0x44)))).to_f32();
+        if !X87::from_f64_exact(vector_magnitude(GPtr::<u8>::cast::<u32>(pv.byte_add(0x44))))
             .fcom(x(mine))
             .test_any(1)
         {
             let pv = find_player_vehicle(-1, 0);
             if !le(
-                X87::from_f64_exact(vector_magnitude(pv.byte_add(0x44))),
+                X87::from_f64_exact(vector_magnitude(GPtr::<u8>::cast::<u32>(pv.byte_add(0x44)))),
                 c(0x3DCC_CCCD),
             ) {
                 let ped = find_player_ped(-1);
@@ -457,13 +445,13 @@ fn health_damage(this: GPtr<u8>, d: f32, culprit: GPtr<u8>) {
                 1 => 0x42,
                 _ => 0x44,
             };
-            ped_say(rd::<GPtr<u8>>(this, 0x460), ctx, 0, 0x3F28_F5C3, 0, 0, 0);
+            ped_say(rd::<GPtr<u8>>(this, 0x460), ctx, 0, f32::from_bits(0x3F28_F5C3), 0, 0, 0);
         }
         if find_player_vehicle(-1, 0) == this && !e.is_null() {
             let p = pick_random_passenger(this);
             if !p.is_null() {
                 let ctx = if etype(e) == 3 { 0x24 } else { 0x1D };
-                ped_say(p, ctx, 0, 0x3F80_0000, 0, 0, 0);
+                ped_say(p, ctx, 0, f32::from_bits(0x3F80_0000), 0, 0, 0);
             }
         }
         interesting_events_add(GPtr::from_addr(0xC0_B058), 0x11, this);
@@ -507,7 +495,7 @@ fn component_damage(this: GPtr<u8>, dmg: f32, comp: u32, coors: GPtr<u8>, dir: G
     let apply = |part: i32| {
         let h = rd::<GPtr<u8>>(this, 0x384);
         let mult = rd::<f32>(h, 0xC8);
-        apply_damage(dm, this, part, x(dmg).fmul_m(4.0).to_f32(), mult);
+        apply_damage(dm, this, part as u32, x(dmg).fmul_m(4.0).to_f32(), mult);
     };
     // `g * mass < dmg` (the `fld g; fmul mass; fcomp dmg; test ah, 5; jnp` tests)
     let heavy = |g_addr: usize| !ge(gf(g_addr).fmul_m(mass()), x(dmg));

@@ -48,36 +48,23 @@ use sa_core::bindings::atexit;
 use sa_core::bindings::matrix_assign;
 use sa_core::bindings::matrix_invert;
 use sa_core::bindings::matrix_mul_vec;
+use crate::bindings::multiply3x3;
+use crate::bindings::process_line_box;
+use crate::bindings::process_line_sphere;
+use crate::bindings::process_line_triangle;
+use crate::bindings::process_sphere_box;
+use crate::bindings::test_sphere_box;
+use crate::bindings::test_sphere_triangle;
+use sa_core::bindings::matrix_mul_assign;
 orig! {
-    /// `CMatrix::operator*=(const CMatrix&)` (0x411A80, thiscall)
-    fn matrix_mul_assign(dst: GPtr<u8>, m: GPtr<u8>) -> GPtr<u8> = thiscall 0x411a80 => unported;
-    /// `Multiply3x3(const CMatrix&, const CVector&)` (0x59C790, cdecl, out first)
-    fn multiply3x3(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59c790 => crate::world::mvpa_math::multiply3x3;
-    /// `CCollision::TestSphereBox(const CColSphere&, const CBox&)` (0x4120C0, AL)
-    fn test_sphere_box(s: GPtr<f32>, bx: GPtr<f32>) -> u8 = cdecl 0x4120c0 => super::prim::test_sphere_box;
     /// `CCollision::CalculateTrianglePlanes(CCollisionData*)` (0x416330)
     fn calculate_triangle_planes(cd: super::data::CdPtr) = cdecl 0x416330 => super::data::calculate_triangle_planes_col_data;
-    /// `CCollision::TestSphereTriangle` (0x4165B0, AL)
-    fn test_sphere_triangle(sp: GPtr<u8>, verts: GPtr<u8>, tri: GPtr<u8>, plane: GPtr<u8>) -> u8
-        = cdecl 0x4165b0 => super::mvpe_coll1::test_sphere_triangle;
     /// `CCollision::ProcessSphereSphere(const CColSphere&, const CColSphere&, CColPoint&, float&)` (0x416450, AL)
     fn process_sphere_sphere(a: GPtr<f32>, b: GPtr<f32>, cp: GPtr<f32>, max: GPtr<f32>) -> u8
         = cdecl 0x416450 => super::prim::process_sphere_sphere;
-    /// `CCollision::ProcessSphereBox(const CColSphere&, const CColBox&, CColPoint&, float&)` (0x412130, AL)
-    fn process_sphere_box(sp: GPtr<f32>, bx: GPtr<f32>, cp: GPtr<f32>, min: GPtr<f32>) -> u8
-        = cdecl 0x412130 => super::prim::process_sphere_box;
     /// `CCollision::ProcessSphereTriangle(sphere, verts, tri, plane, CColPoint&, float&)` (0x416BA0, AL)
     fn process_sphere_triangle(sp: GPtr<u8>, verts: GPtr<u8>, tri: GPtr<u8>, plane: GPtr<u8>, cp: GPtr<u8>, min: GPtr<u8>) -> u8
         = cdecl 0x416ba0 => super::mvpe_coll1::process_sphere_triangle;
-    /// `CCollision::ProcessLineSphere(const CColLine&, const CColSphere&, CColPoint&, float&)` (0x412AA0, AL)
-    fn process_line_sphere(line: GPtr<f32>, sp: GPtr<f32>, cp: GPtr<f32>, depth: GPtr<f32>) -> u8
-        = cdecl 0x412aa0 => super::prim::process_line_sphere;
-    /// `CCollision::ProcessLineBox(const CColLine&, const CColBox&, CColPoint&, float&)` (0x413100, AL)
-    fn process_line_box(line: GPtr<u8>, bx: GPtr<u8>, cp: GPtr<u8>, min: GPtr<u8>) -> u8
-        = cdecl 0x413100 => super::mvpe_coll1::process_line_box;
-    /// `CCollision::ProcessLineTriangle(line, verts, tri, plane, CColPoint&, float&, CStoredCollPoly*)` (0x4140F0, AL)
-    fn process_line_triangle(line: GPtr<u8>, verts: GPtr<u8>, tri: GPtr<u8>, plane: GPtr<u8>, cp: GPtr<u8>,
-        min: GPtr<u8>, poly: GPtr<u8>) -> u8 = cdecl 0x4140f0 => super::mvpc_coll1::process_line_triangle;
 }
 
 use sa_core::field::pa as p;
@@ -107,7 +94,7 @@ fn copy_surf(dst: GPtr<u8>, src: GPtr<u8>) {
 /// local followed by three dword moves).
 fn xform_point(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) {
     let mut t = [0u32; 3];
-    let r = matrix_mul_vec(local(&mut t), m, v);
+    let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(local(&mut t)), m, v));
     copy3(out, r);
 }
 

@@ -58,6 +58,10 @@ const HINT: u32 = 0x30411;
 use crate::bindings::d3d_resource_create_texture as resource_create_texture;
 use crate::bindings::free_list_create as freelist_create;
 use crate::bindings::get_current_texture;
+use crate::bindings::auto_mipmap;
+use crate::bindings::check_valid_texture_format_call as valid_texture;
+use crate::bindings::clamp_raster_size;
+use crate::bindings::set_texture_internal;
 orig! {
     /// `IUnknown::Release()` (+8)
     fn release(o: GPtr<u8>) -> u32 = stdcall vslot 0x8 => unported;
@@ -74,8 +78,6 @@ orig! {
 
     /// USER32 `GetClientRect(hwnd, rect)` (IAT 0x858304)
     fn get_client_rect(hwnd: u32, rect: GPtr<i32>) -> i32 = stdcall cell 0x858304 => unported;
-    /// `_rwD3D9CheckValidTextureFormat(fmt)` (0x4CBDE0)
-    fn valid_texture(f: u32) -> u32 = cdecl 0x4CBDE0 => crate::raster::d3d9_check_valid_texture_format;
     /// `_rwD3D9CheckValidZBufferFormat(fmt)` (0x4CBD80)
     fn valid_zbuffer(f: u32) -> u32 = cdecl 0x4CBD80 => crate::raster::d3d9_check_valid_zbuffer_format;
     /// `_rwD3D9CheckValidCameraTextureFormat(fmt)` (0x4CBE20)
@@ -84,16 +86,10 @@ orig! {
     fn valid_zbuffer_texture(f: u32) -> u32 = cdecl 0x4CBE80 => crate::raster::d3d9_check_valid_zbuffer_texture_format;
     /// `_rwD3D9CheckAutoMipmapGenTextureFormat(fmt)` (0x4CBFD0)
     fn auto_mipmap_rt(f: u32) -> u32 = cdecl 0x4CBFD0 => crate::raster::d3d9_check_auto_mipmap_gen_texture_format;
-    /// `thunk_FUN_004cbf8a(fmt)` (0x4CBF80)
-    fn auto_mipmap(f: u32) -> u32 = cdecl 0x4CBF80 => check_auto_mipmap_texture_format;
-    /// `FUN_007fed70(&width, &height, flags)`: the raster size clamp
-    fn clamp_raster_size(w: GPtr<i32>, h: GPtr<i32>, flags: u32) = cdecl 0x7FED70 => crate::d3d9state::clamp_raster_size;
     /// `_rxD3D9VideoMemoryRasterListAdd(raster)` (0x4CB530)
     fn vm_list_add(r: GPtr<u8>) = cdecl 0x4CB530 => crate::raster::vm_raster_list_add;
     /// `D3DResourceSystem::DestroyTexture(texture)` (0x730B70)
     fn resource_destroy_texture(t: GPtr<u8>) = cdecl 0x730B70 => unported;
-    /// `FUN_007fdcd0(raster, stage)`: the stage's texture set
-    fn set_texture_internal(r: GPtr<u8>, stage: u32) -> u32 = cdecl 0x7FDCD0 => crate::d3d9state::set_texture_internal;
 }
 
 use sa_core::field::gr32 as u;
@@ -653,14 +649,13 @@ orig! {
     fn swap_chain_get_back_buffer(sc: GPtr<u8>, index: u32, ty: u32, out: GPtr<u8>) -> i32 = stdcall vslot 0x14 => unported;
 }
 
-use crate::bindings::image_allocate_pixels;
-use crate::bindings::image_destroy;
+use sa_core::bindings::image_allocate_pixels;
+use sa_core::bindings::image_destroy;
+use sa_core::bindings::rw_image_create as image_create;
 orig! {
     /// `FUN_004cc0c0` (0x4CC0C0, proposed `_rwD3D9CheckValidFormatForRasterType`): EAX = cube flag,
     /// ECX = raster type, EDX = `D3DFORMAT`; non-zero when the device takes the format for the type
     fn check_format_for_type(cube: u32, ty: u32, f: u32) -> u32 = reg("args = eax ecx edx") 0x4CC0C0 => unported;
-    /// `RwImageCreate(width, height, depth)` (0x8026E0)
-    fn image_create(w: i32, h: i32, depth: i32) -> GPtr<u8> = cdecl 0x8026E0 => crate::image::rw_image_create;
     /// `_rwD3D9ImageGetRaster(image, raster, flags)` (0x7FF270)
     fn image_get_raster(img: GPtr<u8>, r: GPtr<u8>, flags: u32) -> u32 = cdecl 0x7FF270 => crate::image2::d3d9_image_get_raster;
     /// `_rwD3D9RasterSetImage(raster, image, flags)` (0x8001E0)

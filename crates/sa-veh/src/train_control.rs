@@ -22,27 +22,32 @@ use sa_world::bindings::audio_add_event as add_audio_event;
 use sa_world::bindings::get_pad_from_player;
 use sa_world::bindings::pad_start_shake as start_shake;
 use sa_world::bindings::physical_process_control;
+use crate::bindings::area_check_stub;
+use crate::bindings::get_lighting_from_collision;
+use sa_core::bindings::entity_update_rw_frame as update_rw_frame;
+use sa_core::bindings::vector_sub;
+use sa_world::bindings::apply_move_speed;
+use sa_world::bindings::buoyancy_process as process_buoyancy;
+use sa_world::bindings::cam_shake;
+use sa_world::bindings::col_lighting_get_current as get_current_lighting;
+use sa_world::bindings::mark_surrounding_entities as mark_surrounding_entities_for_collision_with_train;
+use sa_world::bindings::pad_get_accelerate as get_accelerate;
+use sa_world::bindings::pad_get_brake as get_brake;
+use sa_world::bindings::physical_remove_and_add as remove_and_add;
+use sa_world::bindings::placeable_get_top_direction as get_top_direction;
+use sa_world::bindings::simple_transform_update_rw_matrix;
+use sa_world::bindings::skip_physics;
 orig! {
     /// `CTrain::FindNumCarriagesPulled()` (0x6F5CD0)
     fn find_num_carriages_pulled(t: GPtr<u8>) -> u32 = thiscall 0x6F5CD0 => crate::train::find_num_carriages_pulled;
-    /// `CPad::GetAccelerate()` (0x5403F0): int16 in AX
-    fn get_accelerate(pad: GPtr<u8>) -> u32 = thiscall 0x5403F0 => unported;
-    /// `CPad::GetBrake()` (0x540080): int16 in AX
-    fn get_brake(pad: GPtr<u8>) -> u32 = thiscall 0x540080 => unported;
     /// `CGameLogic::CalcDistanceToForbiddenTrainCrossing(CVector, CVector, bool, CVector&)` (0x4418E0), ST0
     fn calc_distance_to_forbidden_train_crossing(px: f32, py: f32, pz: f32, mx: f32, my: f32, mz: f32, ignore: u8, out: GPtr<u8>) -> f64 = cdecl 0x4418E0 => calc_distance_native;
-    /// `CPlaceable::GetTopDirection(CVector*)`-style accessor (0x41CCB0)
-    fn get_top_direction(e: GPtr<u8>, out: GPtr<f32>) -> GPtr<f32> = thiscall 0x41CCB0 => sa_world::world::entity::get_top_direction;
     /// `min(float, float)` (0x404330), ST0
     fn min_f(a: f32, b: f32) -> f64 = cdecl 0x404330 => min_native;
     /// `max(float, float)` (0x420800), ST0
     fn max_f(a: f32, b: f32) -> f64 = cdecl 0x420800 => max_native;
-    /// `CCamera::CamShake(float, float, float, float)` (0x50A9F0) on `TheCamera` (0xB6F028)
-    fn cam_shake(cam: GPtr<u8>, strength: f32, px: f32, py: f32, pz: f32) = thiscall 0x50A9F0 => unported;
     /// `CTrainNode::GetPosn()` (0x6F5440, hidden return pointer)
     fn train_node_get_posn(n: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall 0x6F5440 => node_posn_native;
-    /// `VectorSub(CVector*, const CVector*, const CVector*)` (0x40FE60)
-    fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => sa_world::world::mvpa_math::vector_sub;
     /// `CVector::Normalise()` (0x59C910)
     fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => normalise_native;
     /// `CTrain::IsInTunnel()` (0x6F6320)
@@ -53,26 +58,6 @@ orig! {
     fn add_nearby_ped_as_random_passenger(t: GPtr<u8>) = thiscall 0x6F8170 => unported;
     /// `CrossProduct(CVector*, const CVector*, const CVector*)` (0x59C730)
     fn cross_product(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C730 => cross_native;
-    /// `CTrainNode::GetLightingFromCollision()` (0x6F5F80): the lighting byte in AL
-    fn get_lighting_from_collision(n: GPtr<u8>) -> u8 = thiscall 0x6F5F80 => crate::train2::get_lighting_from_collision;
-    /// `tColLighting::GetCurrentLighting(float)` (0x59F0C0, by-value lighting byte), ST0
-    fn get_current_lighting(l: u8, scale: f32) -> f64 = cdecl 0x59F0C0 => current_lighting_native;
-    /// `CPhysical::ApplyMoveSpeed()` (0x542DD0)
-    fn apply_move_speed(v: GPtr<u8>) = thiscall 0x542DD0 => sa_world::physical::forces::apply_move_speed;
-    /// `CSimpleTransform::UpdateRwMatrix(RwMatrix*)` (0x54EF40)
-    fn simple_transform_update_rw_matrix(t: GPtr<u8>, rw: GPtr<u8>) -> u32 = thiscall 0x54EF40 => sa_world::world::mvpa_math::simple_transform_update_rw_matrix;
-    /// `CEntity::UpdateRwFrame()` (0x532B00)
-    fn update_rw_frame(e: GPtr<u8>) = thiscall 0x532B00 => sa_world::world::entity::update_rw_frame;
-    /// `CPhysical::RemoveAndAdd()` (0x542560)
-    fn remove_and_add(e: GPtr<u8>) = thiscall 0x542560 => sa_world::physical::base::remove_and_add;
-    /// `CTrain::MarkSurroundingEntitiesForCollisionWithTrain(CVector, float, CEntity*, bool)` (0x6F6640)
-    fn mark_surrounding_entities_for_collision_with_train(px: f32, py: f32, pz: f32, radius: f32, train: GPtr<u8>, only: u32) = cdecl 0x6F6640 => crate::train2::mark_surrounding_entities_for_collision_with_train;
-    /// `FUN_00424100(float x, float y)` (0x424100): `xor al, al; ret`
-    fn area_check_stub(px: u32, py: u32) -> u8 = cdecl 0x424100 => area_check_stub_native;
-    /// `CPhysical::SkipPhysics()` (0x5433B0)
-    fn skip_physics(v: GPtr<u8>) = thiscall 0x5433B0 => sa_world::physical::base::skip_physics;
-    /// `cBuoyancy::ProcessBuoyancy(CPhysical*, float, CVector*, CVector*)` (0x6C3EF0) on `mod_Buoyancy` (0xC1C890)
-    fn process_buoyancy(b: GPtr<u8>, e: GPtr<u8>, buoyancy: f32, turn: GPtr<u8>, force: GPtr<u8>) -> u8 = thiscall 0x6C3EF0 => unported;
     /// `CPhysical::ApplyMoveForce(CVector)` (0x5429F0)
     fn apply_move_force(e: GPtr<u8>, force: CVector) = thiscall 0x5429F0 => sa_world::physical::forces::apply_move_force;
     /// `CPhysical::ApplyTurnForce(CVector, CVector)` (0x542A50)
@@ -883,8 +868,8 @@ fn derailed(this: GPtr<u8>, old: CVector) {
         GPtr::from_addr(0xC1_C890),
         this,
         rd::<f32>(this, 0xA0),
-        GPtr::from_raw(&mut turn).cast(),
-        GPtr::from_raw(&mut force).cast(),
+        GPtr::<u8>::cast::<sa_math::vector::CVector>(GPtr::from_raw(&mut turn).cast()),
+        GPtr::<u8>::cast::<sa_math::vector::CVector>(GPtr::from_raw(&mut force).cast()),
     );
     if ok == 0 {
         return;

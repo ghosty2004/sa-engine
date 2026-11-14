@@ -23,9 +23,10 @@ use sa_core::bindings::entity_register_reference;
 use sa_core::bindings::matrix_mul_vec;
 use sa_stream::bindings::placeable_allocate_matrix;
 use sa_stream::bindings::simple_transform_update_matrix;
+use sa_core::bindings::rw_d3d9_get_current_d3d_device;
+use sa_core::bindings::rw_im2d_render_primitive as im2d_render_primitive;
+use sa_core::bindings::stats_increment_stat;
 orig! {
-    /// `RwD3D9GetCurrentD3DDevice()` (0x7F9D50)
-    fn rw_d3d9_get_current_d3d_device() -> GPtr<GPtr<u32>> = cdecl 0x7F9D50 => unported;
     /// `IDirect3DDevice9::GetGammaRamp(iSwapChain, D3DGAMMARAMP*)` (COM slot 0x58)
     fn d3d_get_gamma_ramp(dev: GPtr<GPtr<u32>>, swap_chain: u32, ramp: GPtr<u8>) = stdcall vslot 0x58 => unported;
     /// `IDirect3DDevice9::SetGammaRamp(iSwapChain, flags, const D3DGAMMARAMP*)` (COM slot 0x54)
@@ -39,10 +40,6 @@ orig! {
     fn sprite2d_set_vertices(a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, c1: GPtr<u8>, c2: GPtr<u8>, c3: GPtr<u8>, c4: GPtr<u8>) = cdecl 0x727590 => unported;
     /// `RwRenderStateSet(state, value)` (RwEngineInstance slot 0x20)
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
-    /// 0x734E90: the 2D primitive draw used by `CSprite2d` (`RwIm2DRenderPrimitive(type, verts, n)`)
-    fn im2d_render_primitive(prim: u32, verts: GPtr<u8>, n: u32) -> i32 = cdecl 0x734E90 => unported;
-    /// `CStats::IncrementStat(uint16 stat, float value)` (0x55C180; stat pushed as a dword)
-    fn stats_increment_stat(stat: u32, value: u32) = cdecl 0x55C180 => unported;
 }
 
 orig! {
@@ -82,7 +79,7 @@ pub fn set_gamma(this: GPtr<u8>, gamma: f32, force: u32) {
     } else {
         target.write(gm);
     }
-    let dev = rw_d3d9_get_current_d3d_device();
+    let dev = GPtr::<u32>::cast::<GPtr<u32>>(rw_d3d9_get_current_d3d_device());
     if dev.is_null() {
         return;
     }
@@ -90,7 +87,7 @@ pub fn set_gamma(this: GPtr<u8>, gamma: f32, force: u32) {
     let saved = g::<u8>(0xC920C8);
     if saved.read() == 0 {
         saved.write(1);
-        d3d_get_gamma_ramp(rw_d3d9_get_current_d3d_device(), 0, g(0xC8D4C8));
+        d3d_get_gamma_ramp(GPtr::<u32>::cast::<GPtr<u32>>(rw_d3d9_get_current_d3d_device()), 0, g(0xC8D4C8));
     }
     let mut i = 0i32;
     while i < 0x100 {
@@ -222,7 +219,7 @@ pub fn clock_update() {
                 } else {
                     weekday.write(wd.wrapping_add(1));
                 }
-                stats_increment_stat(0x86, 0x3F80_0000);
+                stats_increment_stat(0x86, f32::from_bits(0x3F80_0000));
                 let month = g::<u8>(0xB70155);
                 let m = month.read();
                 if day.read() >= g::<u8>(0x8CCF23 + m as u32).read() {
@@ -338,7 +335,7 @@ pub fn register_corona_type(id: u32, attach: GPtr<u8>, r: u32, gg: u32, b: u32, 
             simple_transform_update_matrix(attach.byte_add(4), attach.byte_add(0x14).cast::<GPtr<u8>>().read());
         }
         let mut tmp = [0f32; 3];
-        let res = matrix_mul_vec(GPtr::from_raw(tmp.as_mut_ptr()).cast(), attach.byte_add(0x14).cast::<GPtr<u8>>().read(), pos);
+        let res = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::from_raw(tmp.as_mut_ptr()).cast()), attach.byte_add(0x14).cast::<GPtr<u8>>().read(), pos));
         res.cast::<[f32; 3]>().read()
     } else {
         pos.cast::<[f32; 3]>().read()
@@ -473,6 +470,8 @@ pub fn affect_colour_with_lighting(kind: u32, lighting: u32, r: u32, gg: u32, b:
 // ------------------------------------------------------------------ CMovingThings / CPlaneTrails --
 
 use sa_core::bindings::vector_normalise;
+use sa_world::bindings::dist_to_line as collision_dist_to_line;
+use sa_world::bindings::update_corona_coors as update_corona_coors_o;
 orig! {
     /// `CPlaneTrails::Update()` (0x7174F0)
     fn plane_trails_update_o() = cdecl 0x7174F0 => crate::mvpb_r1::plane_trails_update;
@@ -483,11 +482,6 @@ orig! {
     /// `CCoronas::RegisterCorona(..., eCoronaType, ...)` (0x6FC580)
     #[allow(clippy::too_many_arguments)]
     fn register_corona_by_type_o(id: u32, attach: GPtr<u8>, r: u32, g: u32, b: u32, a: u32, pos: GPtr<u8>, size: u32, range: u32, kind: u32, flare: u32, refl: u32, los: u32, trail: u32, normal_angle: u32, neon_fade: u32, pull: u32, full_bright: u32, fade_speed: u32, only_from_below: u32, refl_delay: u32) = cdecl 0x6FC580 => crate::mvpb_r1::register_corona_by_type;
-    /// `CCoronas::UpdateCoronaCoors(id, const CVector&, range, normalAngle)` (0x6FC4D0)
-    fn update_corona_coors_o(id: u32, pos: GPtr<u8>, range: u32, normal_angle: u32) = cdecl 0x6FC4D0 => crate::mvpb_r1::update_corona_coors;
-    /// `CCollision::DistToLine(const CVector* lineStart, const CVector* lineEnd, const CVector* point)`
-    /// (0x417610, float in ST0)
-    fn collision_dist_to_line(a: GPtr<u8>, b: GPtr<u8>, p: GPtr<u8>) -> f32 = cdecl 0x417610 => unported;
 }
 
 /// `CMovingThings::Update()` (0x7185B0): `CPlaneTrails::Update()`, then (tail jump) `CEscalators::Update()`.
@@ -565,7 +559,7 @@ pub fn plane_trails_update() {
                     0x3FC0_0000, 0, 0x4170_0000, 0, 0,
                 );
             } else {
-                update_corona_coors_o(id, p, 0x44FA_0000, 0);
+                update_corona_coors_o(id, p, f32::from_bits(0x44FA_0000), f32::from_bits(0));
             }
         }
     }
@@ -677,11 +671,11 @@ pub fn update_in_tunnelness() {
         }
         let pp = GPtr::from_raw(p.as_mut_ptr()).cast::<u8>();
         let qq = GPtr::from_raw(q.as_mut_ptr()).cast::<u8>();
-        let d1 = collision_dist_to_line(pp, qq, g(0xC81430));
+        let d1 = collision_dist_to_line(pp, qq, g(0xC81430)) as f32;
         if X87::from_f32(k100).fcom(X87::from_f32(d1)).test_parity(0x05) {
             dist = d1;
         }
-        let d2 = collision_dist_to_line(pp, qq, g(0xC81424));
+        let d2 = collision_dist_to_line(pp, qq, g(0xC81424)) as f32;
         if X87::from_f32(dist).fcom(X87::from_f32(d2)).test_parity(0x05) {
             dist = d2;
         }
@@ -709,21 +703,17 @@ use crate::bindings::grass_set_global_wind_bending;
 use crate::bindings::plant_col_entity_cache_update;
 use crate::bindings::plant_process_entry_col_data_sections as plant_process_entry_collision_data_sections;
 use sa_world::bindings::camera_get_look_direction;
+use crate::bindings::grass_set_current_scan_code as grass_set_current_scan_code_o;
+use crate::bindings::plant_calculate_wind_bending as plant_calculate_wind_bending_o;
+use crate::bindings::plant_update_ambient_color as plant_update_ambient_color_o;
+use sa_core::bindings::get_ambient_blue as time_cycle_get_ambient_blue;
+use sa_core::bindings::get_ambient_green as time_cycle_get_ambient_green;
+use sa_core::bindings::get_ambient_red as time_cycle_get_ambient_red;
 orig! {
     /// `CRegisteredCorona::Update()` (0x6FABF0)
     fn registered_corona_update_o(this: GPtr<u8>) = thiscall 0x6FABF0 => crate::mvpb_r1::registered_corona_update;
     /// `CRope::Update()` (0x557530)
     fn rope_update(this: GPtr<u8>) = thiscall 0x557530 => unported;
-    /// `CGrassRenderer::SetCurrentScanCode(uint16)` (0x5DABB0; pushed as a dword)
-    fn grass_set_current_scan_code_o(code: u32) = cdecl 0x5DABB0 => crate::mvpb_r1::grass_set_current_scan_code;
-    /// `CPlantMgr::UpdateAmbientColor()` (0x5DB310)
-    fn plant_update_ambient_color_o() = cdecl 0x5DB310 => crate::mvpb_r1::plant_update_ambient_color;
-    /// `CPlantMgr::CalculateWindBending()` (0x5DB3D0, float in ST0)
-    fn plant_calculate_wind_bending_o() -> f32 = cdecl 0x5DB3D0 => crate::mvpb_r1::plant_calculate_wind_bending_f32;
-    /// `CTimeCycle::GetAmbientRed/Green/Blue()` (floats in ST0)
-    fn time_cycle_get_ambient_red() -> f32 = cdecl 0x560330 => unported;
-    fn time_cycle_get_ambient_green() -> f32 = cdecl 0x560340 => unported;
-    fn time_cycle_get_ambient_blue() -> f32 = cdecl 0x560350 => unported;
 }
 
 /// `CCoronas::Update()` (0x6FADF0): `LightsMult` (0x8D4B5C) = `timeStep * 0.03 + LightsMult`, capped at
@@ -836,9 +826,9 @@ pub fn plant_mgr_update(cam: GPtr<u8>) -> bool {
 #[hook(addr = 0x5DB310, conv = cdecl, name = "CPlantMgr::UpdateAmbientColor", expect = "83 EC 10 53 E8 17 50 F8 FF",
        unverified = "mvpb-render-1", route = "L2", hazards = "none")]
 pub fn plant_update_ambient_color() {
-    let r = time_cycle_get_ambient_red();
-    let gg = time_cycle_get_ambient_green();
-    let b = time_cycle_get_ambient_blue();
+    let r = time_cycle_get_ambient_red() as f32;
+    let gg = time_cycle_get_ambient_green() as f32;
+    let b = time_cycle_get_ambient_blue() as f32;
     let k1 = f(0x4020_0000);
     let k2 = f(0xC37F_0000);
     let ch = |c: f32| -> u32 {
@@ -859,13 +849,11 @@ use sa_core::bindings::entity_clean_up_old_reference;
 use sa_core::bindings::memory_free;
 use sa_core::bindings::memory_malloc;
 use sa_world::bindings::entity_get_col_model;
+use sa_core::bindings::get_surf_properties as plant_surf_get_surf_properties;
+use sa_stream::bindings::rand as crt_rand;
 orig! {
-    /// CRT `rand()` (0x821B1E)
-    fn crt_rand() -> i32 = cdecl 0x821B1E => unported;
     /// `ProcObjectMan_c::ProcessTriangleRemoved(CPlantLocTri*)` (0x5A3F70)
     fn proc_obj_man_process_triangle_removed(this: GPtr<u8>, tri: GPtr<u8>) = thiscall 0x5A3F70 => unported;
-    /// `CPlantSurfPropMgr::GetSurfProperties(uint16)` (0x6F9DE0; the id pushed from `movzx dx, byte`)
-    fn plant_surf_get_surf_properties(id: u32) -> GPtr<u16> = cdecl 0x6F9DE0 => unported;
 }
 
 /// `CPlantMgr::CalculateWindBending()` (0x5DB3D0, float in ST0): the first call stores a `rand()`
@@ -967,7 +955,7 @@ pub fn plant_col_ent_entry_release_entry(this: GPtr<u8>) {
     }
     let e = this.cast::<GPtr<u8>>().read();
     if !e.is_null() {
-        entity_clean_up_old_reference(e, this);
+        entity_clean_up_old_reference(e, this.cast::<GPtr<u8>>());
         this.cast::<u32>().write(0);
     }
     list_remove(this, g(0xC0399C), 0xC, 0x10);
@@ -993,7 +981,7 @@ pub fn plant_loc_tri_release(this: GPtr<u8>) {
         list_remove(this, g(0xC03994), 0x4C, 0x50);
         0xFE
     } else {
-        let slot = plant_surf_get_surf_properties(this.byte_add(0x46).read() as u32).read() as u32;
+        let slot = GPtr::<u8>::cast::<u16>(plant_surf_get_surf_properties(this.byte_add(0x46).read() as u32)).read() as u32;
         list_remove(this, g(0xC03988 + slot * 4), 0x4C, 0x50);
         0xFF
     };
@@ -1119,12 +1107,11 @@ pub fn grass_gen_point_in_triangle(out: GPtr<f32>, v0: GPtr<f32>, v1: GPtr<f32>,
 use sa_core::bindings::object_new;
 use sa_core::bindings::world_add;
 use sa_stream::bindings::fx_get_fx_quality;
+use sa_core::bindings::object_ctor_5a1d70 as object_ctor;
 orig! {
     /// `FxPrim_c::AddParticle(pos, vel, timeSince, mult, zRot, brightness, createLocal)` (vtable slot 0x14)
     #[allow(clippy::too_many_arguments)]
     fn fx_prim_add_particle(prim: GPtr<u8>, pos: GPtr<u8>, vel: GPtr<u8>, time: u32, mult: GPtr<u8>, zrot: u32, bright: u32, local: u32) = thiscall vslot 0x14 => unported;
-    /// `CObject::CObject(int modelId, bool create)` (0x5A1D70)
-    fn object_ctor(this: GPtr<u8>, model: i32, create: u32) -> GPtr<u8> = thiscall 0x5A1D70 => unported;
     /// `CEntity::SetIsStatic(bool)` (vtable slot 0x10)
     fn entity_set_is_static(this: GPtr<u8>, v: u32) = thiscall vslot 0x10 => unported;
 }
@@ -1145,10 +1132,10 @@ pub fn fx_system_add_particle(this: GPtr<u8>, pos: GPtr<u8>, vel: GPtr<u8>, time
     let r = sa_core::orig::at_site(0x4AA450, crt_rand) as u32 & 0xFFFF;
     let p = X87::from_i32(r as i32).fmul_m(f(0x3800_0000)).fmul_m(f(0x42C8_0000)).ftol() as i32;
     let fx = g::<u8>(0xA9AE00);
-    if fx_get_fx_quality(fx) == 0 && p < 0x32 {
+    if fx_get_fx_quality(fx) as i32 == 0 && p < 0x32 {
         return;
     }
-    if fx_get_fx_quality(fx) == 1 && p < 0x19 {
+    if fx_get_fx_quality(fx) as i32 == 1 && p < 0x19 {
         return;
     }
     let mut bright = 1.0f32;
@@ -1319,12 +1306,8 @@ pub fn registered_corona_update(c: GPtr<u8>) {
 
 // ------------------------------------------------------------------ CCoronas::DoSunAndMoon --------
 
-orig! {
-    /// `CGame::CanSeeOutSideFromCurrArea()` (0x53C4A0, bool in AL)
-    fn game_can_see_outside_from_curr_area() -> u8 = cdecl 0x53C4A0 => unported;
-    /// `CSprite::CalcScreenCoors(const RwV3d&, RwV3d* out, float* w, float* h, bool, bool)` (0x70CE30)
-    fn sprite_calc_screen_coors(inp: GPtr<u8>, out: GPtr<u8>, w: GPtr<u8>, h: GPtr<u8>, a: u32, b: u32) -> u8 = cdecl 0x70CE30 => unported;
-}
+use sa_core::bindings::calc_screen_coors as sprite_calc_screen_coors;
+use sa_core::bindings::can_see_outside_from_curr_area as game_can_see_outside_from_curr_area;
 
 /// `CCoronas::DoSunAndMoon()` (0x6FC5A0): sun position = `m_VectorToSun[m_CurrentStoredValue]` (12 bytes
 /// from 0xB7CA50) times `CCoronas::SunDistance`-style scale (`0xC3EF9C * 0.95`, kept on the x87; each
@@ -1352,7 +1335,7 @@ pub fn coronas_do_sun_and_moon() {
         X87::from_f32(s[1]).fadd_m(cam.wrapping_index(1).read()).to_f32(),
         X87::from_f32(s[2]).fadd_m(cam.wrapping_index(2).read()).to_f32(),
     ];
-    if game_can_see_outside_from_curr_area() == 0 {
+    if game_can_see_outside_from_curr_area() as u8 == 0 {
         return;
     }
     let p = GPtr::from_raw(pos.as_mut_ptr()).cast::<u8>();
@@ -1381,10 +1364,10 @@ pub fn coronas_do_sun_and_moon() {
     let mut w = 0f32;
     let mut h = 0f32;
     let ok = sprite_calc_screen_coors(
-        p,
-        GPtr::from_raw(scr.as_mut_ptr()).cast(),
-        GPtr::from_raw(&mut w as *mut f32).cast(),
-        GPtr::from_raw(&mut h as *mut f32).cast(),
+        p.cast::<f32>(),
+        GPtr::<u8>::cast::<f32>(GPtr::from_raw(scr.as_mut_ptr()).cast()),
+        GPtr::<u8>::cast::<f32>(GPtr::from_raw(&mut w as *mut f32).cast()),
+        GPtr::<u8>::cast::<f32>(GPtr::from_raw(&mut h as *mut f32).cast()),
         1,
         1,
     );

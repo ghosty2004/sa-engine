@@ -180,6 +180,12 @@ fn region_value(c: X87) -> i32 {
 
 pub use sa_core::bindings::atexit;
 pub use sa_core::bindings::memory_free as mem_free;
+pub use sa_core::bindings::load_data_from_work_buffer;
+pub use sa_core::bindings::path_find_update_streaming as update_streaming_call;
+pub use sa_core::bindings::save_data_to_work_buffer;
+pub use sa_world::bindings::are_nodes_loaded_for_area as are_nodes_loaded_for_area_call;
+pub use sa_world::bindings::find_node_closest_to_coors as find_node_closest_to_coors_call;
+pub use sa_world::bindings::switch_roads_off_in_area as switch_roads_off_in_area_call;
 orig! {
     /// the constructor of the 0x977BE8 object (0x4541E0, thiscall, returns `this`)
     pub fn ctor_977be8(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4541E0 => unported;
@@ -187,25 +193,13 @@ orig! {
     pub fn dtor_977be8_body(this: GPtr<u8>) = thiscall 0x454200 => unported;
     /// `CCollision::DistToLineSqr(const CVector* start, const CVector* end, const CVector* point)` (0x412850)
     pub fn dist_to_line_sqr(a: GPtr<f32>, b: GPtr<f32>, p: GPtr<f32>) -> f64 = cdecl 0x412850 => unported;
-    /// `CGenericGameStorage::SaveDataToWorkBuffer(void*, int32)` (0x5D1270)
-    pub fn save_data_to_work_buffer(data: GPtr<u8>, size: i32) = cdecl 0x5D1270 => unported;
-    /// `CGenericGameStorage::LoadDataFromWorkBuffer(void*, int32)` (0x5D1300)
-    pub fn load_data_from_work_buffer(data: GPtr<u8>, size: i32) = cdecl 0x5D1300 => unported;
 
     /// `CPathFind::CalcDistToAnyConnectingLinks(CPathNode*, CVector)` (0x44F190)
     pub fn calc_dist_to_any_connecting_links_call(this: GPtr<u8>, node: GPtr<u8>, px: f32, py: f32, pz: f32) -> f64 = thiscall 0x44F190 => calc_dist_to_any_connecting_links_abi;
     /// `CPathFind::FindNodeClosestInRegion(...)` (0x44F2C0)
     pub fn find_node_closest_in_region_call(this: GPtr<u8>, out: GPtr<u32>, region: u32, px: f32, py: f32, pz: f32, node_type: u32, dist: GPtr<f32>, low_traffic: u32, unkn: u32, boats: u32, unused: u32) = thiscall 0x44F2C0 => find_node_closest_in_region;
-    /// `CPathFind::FindNodeClosestToCoors(CVector, ...)` (0x44F460)
-    pub fn find_node_closest_to_coors_call(this: GPtr<u8>, out: GPtr<u32>, px: f32, py: f32, pz: f32, node_type: u32, max_dist: f32, low_traffic: u32, unused: u32, unkn: u32, boats: u32, ignore_interior: u32) -> GPtr<u32> = thiscall 0x44F460 => find_node_closest_to_coors;
     /// `CPathFind::CountNeighboursToBeSwitchedOff(const CPathNode&)` (0x4504F0)
     pub fn count_neighbours_to_be_switched_off_call(this: GPtr<u8>, node: GPtr<u8>) -> i32 = thiscall 0x4504F0 => count_neighbours_to_be_switched_off;
-    /// `CPathFind::UpdateStreaming(bool)` (0x450A60)
-    pub fn update_streaming_call(this: GPtr<u8>, force: u32) = thiscall 0x450A60 => update_streaming;
-    /// `CPathFind::AreNodesLoadedForArea(float, float, float, float)` (0x44DD10)
-    pub fn are_nodes_loaded_for_area_call(this: GPtr<u8>, x0: f32, x1: f32, y0: f32, y1: f32) -> u8 = thiscall 0x44DD10 => are_nodes_loaded_for_area;
-    /// `CPathFind::SwitchRoadsOffInArea(...)` (0x452C80)
-    pub fn switch_roads_off_in_area_call(this: GPtr<u8>, x0: f32, x1: f32, y0: f32, y1: f32, z0: f32, z1: f32, off: u32, cars: u32, back: u32) = thiscall 0x452C80 => switch_roads_off_in_area;
 }
 
 // ---------------------------------------------------------------------------------------------------------
@@ -1134,15 +1128,12 @@ fn gt_or_nan(a: X87, b: X87) -> bool {
 
 pub use sa_core::bindings::memory_malloc as mem_malloc;
 pub use sa_core::bindings::stream_read as rw_stream_read;
+pub use sa_core::bindings::streaming_remove_model as remove_model;
+pub use sa_core::bindings::streaming_request_model as request_model;
+pub use sa_world::bindings::get_position as get_position_call;
 orig! {
     /// `CPathFind::MarkRegionsForCoors(CVector, float)` (0x44DB60)
     pub fn mark_regions_for_coors_call(this: GPtr<u8>, px: f32, py: f32, pz: f32, r: f32) = thiscall 0x44DB60 => mark_regions_for_coors;
-    /// `CStreaming::RequestModel(int32, int32)` (0x4087E0)
-    pub fn request_model(id: i32, flags: i32) = cdecl 0x4087E0 => sa_stream::streaming::request_model;
-    /// `CStreaming::RemoveModel(int32)` (0x4089A0)
-    pub fn remove_model(id: i32) = cdecl 0x4089A0 => sa_stream::streaming::remove_model;
-    /// `CPathNode::GetPosition(CVector*)` (0x420A10)
-    pub fn get_position_call(node: GPtr<u8>, out: GPtr<f32>) -> GPtr<f32> = thiscall 0x420A10 => get_position;
     /// `CPathFind::ThisNodeHasToBeSwitchedOff(CPathNode*)` (0x44D3E0)
     pub fn this_node_has_to_be_switched_off_call(this: GPtr<u8>, node: GPtr<u8>) -> u8 = thiscall 0x44D3E0 => this_node_has_to_be_switched_off;
     /// `CPathFind::SwitchOffNodeAndNeighbours(...)` (0x452160)
@@ -1363,9 +1354,8 @@ pub fn load_path_find_data_from_stream(this: GPtr<u8>, stream: GPtr<u8>, area: i
 // ---------------------------------------------------------------------------------------------------------
 // CPathFind: path search and link helpers
 
+pub use crate::bindings::do_path_search as do_path_search_call;
 orig! {
-    /// `CPathFind::DoPathSearch(...)` (0x4515D0)
-    pub fn do_path_search_call(this: GPtr<u8>, path_type: u32, ox: f32, oy: f32, oz: f32, origin_addr: u32, tx: f32, ty: f32, tz: f32, out_nodes: GPtr<u32>, out_count: GPtr<i16>, max_nodes: i32, out_distance: GPtr<f32>, max_search: f32, target_addr: GPtr<u32>, max_depth: f32, same_lane: u32, forbidden: u32, allow_water: u32, for_boats: u32) = thiscall 0x4515D0 => do_path_search;
     /// `CPathFind::AddDynamicLinkBetween2Nodes_For1Node(CNodeAddress, CNodeAddress)` (0x44E000)
     pub fn add_dynamic_link_between_2_nodes_for_1_node_call(this: GPtr<u8>, a: u32, b: u32) = thiscall 0x44E000 => add_dynamic_link_between_2_nodes_for_1_node;
 }
@@ -2383,11 +2373,10 @@ fn wander_direction(nx: f32, ny: f32) -> u8 {
     }
 }
 
+pub use sa_world::bindings::find_ground_z_for_3d_coord;
 orig! {
     /// `CPathFind::FindRegionForCoors(float, float)` (0x44D830)
     pub fn find_region_for_coors_call(this: GPtr<u8>, px: f32, py: f32) -> i32 = thiscall 0x44D830 => find_region_for_coors;
-    /// `CWorld::FindGroundZFor3DCoord(float x, float y, float z, bool* found, CEntity** outEntity)` (0x5696C0)
-    pub fn find_ground_z_for_3d_coord(px: f32, py: f32, pz: f32, found: GPtr<u8>, ent: GPtr<GPtr<u8>>) -> f64 = cdecl 0x5696C0 => unported;
 }
 
 /// `CPathFind::GeneratePedCreationCoors_Interior(float x, float y, CVector* outCoords, CNodeAddress*,
@@ -2472,7 +2461,7 @@ pub fn generate_ped_creation_coors_interior(
                     out.wrapping_index(1).read(),
                     zq,
                     GPtr::from_raw(found.as_mut_ptr()),
-                    GPtr::NULL,
+                    GPtr::<GPtr<u8>>::cast::<u8>(GPtr::NULL),
                 ));
                 if found[0] != 0 && lt(fabs(z.fsub_m(out.wrapping_index(2).read())), x(3.0)) {
                     out.wrapping_index(2).write(z.to_f32());
@@ -2484,14 +2473,9 @@ pub fn generate_ped_creation_coors_interior(
     0
 }
 
-orig! {
-    /// `CVector2D::Normalise()` (0x44E480)
-    pub fn vector2d_normalise(v: GPtr<f32>) = thiscall 0x44E480 => unported;
-    /// `operator*(const CVector&, float)` (0x40FEC0, hidden return)
-    pub fn vector_mul(out: GPtr<f32>, v: GPtr<f32>, f: f32) -> GPtr<f32> = cdecl 0x40FEC0 => unported;
-    /// `operator+(const CVector&, const CVector&)` (0x40FE30, hidden return)
-    pub fn vector_add(out: GPtr<f32>, a: GPtr<f32>, b: GPtr<f32>) -> GPtr<f32> = cdecl 0x40FE30 => unported;
-}
+pub use sa_core::bindings::vector2d_normalise;
+pub use sa_world::bindings::vector_add;
+pub use sa_world::bindings::vector_mul_scalar as vector_mul;
 
 /// `CPathFind::FindNodeCoorsForScript(CNodeAddress, bool* found)` (0x4505E0, hidden `CVector*` return): (0, 0, 0)
 /// and `*found = 0` when the area is 0xFFFF or not loaded; else `*found = 1` and the node position, moved for a
@@ -2535,16 +2519,16 @@ pub fn find_node_coors_for_script(this: GPtr<u8>, out: GPtr<f32>, addr: u32, fou
     let p4 = get_position_call(n, GPtr::from_raw(t3.as_mut_ptr()));
     v[1] = x(p3.wrapping_index(1).read()).fsub_m(p4.wrapping_index(1).read()).to_f32();
     let vp = GPtr::from_raw(v.as_mut_ptr());
-    vector2d_normalise(vp);
+    vector2d_normalise(vp.cast::<u8>());
     let (vx, vy) = (x(vp.read()), x(vp.wrapping_index(1).read()));
     let (nx, ny) = if lt(vx, x(0.0)) { (vy, vx.fchs()) } else { (vy.fchs(), vx) };
     v = [nx.to_f32(), ny.to_f32(), 0.0];
     let f = xi(i32::from(width)).fmul_m(0.0625).fadd_m(f32::from_bits(0x402C_CCCD)).to_f32();
     let mut scaled = [0f32; 3];
-    let s = vector_mul(GPtr::from_raw(scaled.as_mut_ptr()), GPtr::from_raw(v.as_mut_ptr()), f);
+    let s = GPtr::<u8>::cast::<f32>(vector_mul(GPtr::<f32>::cast::<u8>(GPtr::from_raw(scaled.as_mut_ptr())), GPtr::<f32>::cast::<u8>(GPtr::from_raw(v.as_mut_ptr())), f));
     let mut t4 = [0f32; 3];
     let pos = get_position_call(n, GPtr::from_raw(t4.as_mut_ptr()));
-    vector_add(out, pos, s);
+    vector_add(out.cast::<u8>(), pos.cast::<u8>(), s.cast::<u8>());
     out
 }
 
@@ -2679,11 +2663,8 @@ pub fn remove_interior(this: GPtr<u8>, id: i32) {
     }
 }
 
-pub use crate::bindings::camera_is_sphere_visible;
-orig! {
-    /// `CCamera::IsSphereVisible(const CVector&, float, RwMatrix*)` (0x420C40)
-    pub fn camera_is_sphere_visible_m(cam: GPtr<u8>, c: GPtr<f32>, r: f32, m: GPtr<u8>) -> u8 = thiscall 0x420C40 => unported;
-}
+pub use sa_world::bindings::camera_is_sphere_visible;
+pub use sa_world::bindings::camera_is_sphere_visible_m;
 
 /// `FUN_0044E790`: gr's `CPathFind::GeneratePedCreationCoors(float x, float y, float minDist1, float maxDist1,
 /// float minDist2, float maxDist2, CVector* outCoords, CNodeAddress* outA, CNodeAddress* outB, float* outOrientation,
@@ -2813,12 +2794,12 @@ pub fn generate_ped_creation_coors(
                 let pp = GPtr::from_raw(p.as_mut_ptr());
                 let cam = g::<u8>(0xB6F028);
                 let ok = if !matrix.is_null() {
-                    if camera_is_sphere_visible_m(cam, pp, 2.0, matrix) != 0 {
+                    if camera_is_sphere_visible_m(cam, pp.cast::<u8>(), 2.0, matrix) != 0 {
                         gt(x(dist), min1) && lt(x(dist), x(max1))
                     } else {
                         gt(x(dist), min2) && lt(x(dist), x(max2)) && rand_at(0x44EBB6) & 1 != 0
                     }
-                } else if camera_is_sphere_visible(cam, pp, 2.0) != 0 {
+                } else if camera_is_sphere_visible(cam, pp.cast::<u8>(), 2.0) != 0 {
                     gt(x(dist), min1) && lt(x(dist), x(max1))
                 } else {
                     gt(x(dist), min2) && lt(x(dist), x(max2)) && rand_at(0x44EBB6) & 1 != 0
@@ -2833,7 +2814,7 @@ pub fn generate_ped_creation_coors(
                 out.wrapping_index(2).write(p[2]);
                 let mut found = [0u8];
                 let zq = x(p[2]).fadd_m(2.0).to_f32();
-                let z = X87::from_f64_exact(find_ground_z_for_3d_coord(p[0], p[1], zq, GPtr::from_raw(found.as_mut_ptr()), GPtr::NULL));
+                let z = X87::from_f64_exact(find_ground_z_for_3d_coord(p[0], p[1], zq, GPtr::from_raw(found.as_mut_ptr()), GPtr::<GPtr<u8>>::cast::<u8>(GPtr::NULL)));
                 if found[0] == 0 {
                     continue;
                 }
@@ -3283,25 +3264,19 @@ pub fn find_node_coors_for_script_two_nodes(
     let mut side = [vp.wrapping_index(1).read(), x(vp.read()).fchs().to_f32(), 0.0];
     let f = xi(i32::from(width)).fmul_m(0.0625).fadd_m(f32::from_bits(0x402C_CCCD)).to_f32();
     let mut scaled = [0f32; 3];
-    let s = vector_mul(GPtr::from_raw(scaled.as_mut_ptr()), GPtr::from_raw(side.as_mut_ptr()), f);
+    let s = GPtr::<u8>::cast::<f32>(vector_mul(GPtr::<f32>::cast::<u8>(GPtr::from_raw(scaled.as_mut_ptr())), GPtr::<f32>::cast::<u8>(GPtr::from_raw(side.as_mut_ptr())), f));
     let mut t = [0f32; 3];
     let p = get_position_call(na, GPtr::from_raw(t.as_mut_ptr()));
-    vector_add(out, p, s);
+    vector_add(out.cast::<u8>(), p.cast::<u8>(), s.cast::<u8>());
     out
 }
 
 pub use sa_core::bindings::rw_stream_close;
 pub use sa_core::bindings::sprintf1 as sprintf_i;
-orig! {
-    /// `CTimer::Suspend()` (0x5619D0)
-    pub fn timer_suspend() = cdecl 0x5619D0 => sa_core::timer::suspend;
-    /// `CTimer::Resume()` (0x561A00)
-    pub fn timer_resume() = cdecl 0x561A00 => sa_core::timer::resume;
-    /// `RwStreamOpen(RwStreamType, RwStreamAccessType, const void*)` (0x7ECEF0)
-    pub fn rw_stream_open(ty: i32, access: i32, data: GPtr<u8>) -> GPtr<u8> = cdecl 0x7ECEF0 => unported;
-    /// `CPathFind::LoadPathFindData(RwStream*, int32)` (0x4529F0)
-    pub fn load_path_find_data_from_stream_call(this: GPtr<u8>, s: GPtr<u8>, area: i32) = thiscall 0x4529F0 => load_path_find_data_from_stream;
-}
+pub use sa_core::bindings::rw_stream_open;
+pub use sa_core::bindings::timer_resume;
+pub use sa_core::bindings::timer_suspend;
+pub use sa_stream::bindings::load_path_find_data_from_stream_call;
 
 /// `CPathFind::LoadPathFindData(int32 area)` (0x452F40): with the timer suspended, formats the file name
 /// (`[0x859AB4]` into the buffer 0xB71670), opens it as a file stream for reading, loads it and closes it.
@@ -3312,7 +3287,7 @@ pub fn load_path_find_data_area(this: GPtr<u8>, area: i32) {
     sprintf_i(buf, g(0x859AB4), area);
     let s = rw_stream_open(2, 1, buf);
     load_path_find_data_from_stream_call(this, s, area);
-    rw_stream_close(s, 0);
+    rw_stream_close(s, GPtr::NULL);
     timer_resume();
 }
 

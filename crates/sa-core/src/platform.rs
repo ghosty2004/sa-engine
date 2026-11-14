@@ -213,8 +213,14 @@ pub mod call {
     pub use crate::bindings::sprite2d_draw_rect4;
     pub use crate::bindings::sprite2d_init_per_frame;
     pub use crate::bindings::visibility_plugins_set_render_ware_camera;
+    pub use crate::bindings::font_set_alpha_fade;
+    pub use crate::bindings::rs_camera_show_raster;
+    pub use crate::bindings::rs_event_handler;
+    pub use crate::bindings::rs_rw_initialize;
+    pub use crate::bindings::rs_rw_terminate;
+    pub use crate::bindings::rw_texture_set_auto_mipmapping;
+    pub use crate::bindings::rw_texture_set_mipmapping;
     orig! {
-        pub fn font_set_alpha_fade(alpha: f32) = cdecl 0x719500 => unported;
         /// `Ps::psTimer` (0x745270)
         pub fn ps_timer() -> u32 = cdecl 0x745270 => super::ps_timer;
         /// `Ps::psWindowSetText` (0x7451B0)
@@ -245,16 +251,8 @@ pub mod call {
         pub fn ps_error_message(msg: GPtr<u8>) -> i32 = cdecl 0x7451D0 => super::ps_error_message;
         /// `Ps::psWarningMessage` (0x7451F0)
         pub fn ps_warning_message(msg: GPtr<u8>) -> i32 = cdecl 0x7451F0 => super::ps_warning_message;
-        /// `Rs::RsEventHandler` (0x619B60)
-        pub fn rs_event_handler(event: i32, param: GPtr<u8>) -> i32 = cdecl 0x619B60 => super::rs_event_handler;
         /// `Rs::RsInitialize` (0x619600)
         pub fn rs_initialize() -> i32 = cdecl 0x619600 => super::rs_initialize;
-        /// `Rs::RsRwInitialize` (0x619C90, deferred)
-        pub fn rs_rw_initialize(param: GPtr<u8>) -> i32 = cdecl 0x619C90 => super::rs_rw_initialize;
-        /// `Rs::RsRwTerminate` (0x6195E0)
-        pub fn rs_rw_terminate() = cdecl 0x6195E0 => super::rs_rw_terminate;
-        /// `RsCameraShowRaster` (0x619440, a `jmp psCameraShowRaster`; not a CORE row of this port)
-        pub fn rs_camera_show_raster(camera: GPtr<u8>) -> GPtr<u8> = cdecl 0x619440 => super::rs_camera_show_raster;
         /// `Ps::psCameraShowRaster` (0x745240)
         pub fn ps_camera_show_raster_call(camera: GPtr<u8>) -> GPtr<u8> = cdecl 0x745240 => super::ps_camera_show_raster;
         /// `App::AppEventHandler` (0x53EC10)
@@ -287,10 +285,6 @@ pub mod call {
         pub fn rw_engine_open(params: GPtr<u32>) -> i32 = cdecl 0x7F2F70 => unported;
         /// `RwEngineStart()` (0x7F2E70)
         pub fn rw_engine_start() -> i32 = cdecl 0x7F2E70 => unported;
-        /// `RwTextureSetMipmapping(RwBool)` (0x7F3530)
-        pub fn rw_texture_set_mipmapping(enable: i32) -> i32 = cdecl 0x7F3530 => unported;
-        /// `RwTextureSetAutoMipmapping(RwBool)` (0x7F3560)
-        pub fn rw_texture_set_auto_mipmapping(enable: i32) -> i32 = cdecl 0x7F3560 => unported;
         /// `IDirect3DDevice9::GetDeviceCaps(D3DCAPS9*)`
         pub fn d3d_device_get_device_caps(dev: GPtr<u32>, caps: GPtr<u8>) -> i32 = stdcall vslot 0x1C => unported;
         /// the handler stored in `RsGlobal.keyboard.inputEventHandler`
@@ -306,6 +300,7 @@ pub mod call {
     pub use crate::bindings::rw_camera_end_update;
     pub use crate::bindings::text_load;
     pub use crate::bindings::text_unload;
+    pub use crate::bindings::flush_obrs_printfs;
     orig! {
         /// `RwCameraShowRaster` (0x7EE370)
         pub fn rw_camera_show_raster(camera: GPtr<u8>, dev: u32, flags: u32) -> GPtr<u8> = cdecl 0x7EE370 => unported;
@@ -327,8 +322,6 @@ pub mod call {
         pub fn rw_strchr(s: GPtr<u8>, c: i32) -> GPtr<u8> = cdecl table 0xC97B24 0x10C => unported;
         /// `RwEngineInstance->memoryFuncs.rwfree` (+0x138)
         pub fn rw_free(p: GPtr<u8>) = cdecl table 0xC97B24 0x138 => unported;
-        /// `FlushObrsPrintfs` (0x734640, a lone `ret`)
-        pub fn flush_obrs_printfs() = cdecl 0x734640 => super::flush_obrs_printfs;
         /// `Input::diPadSetRanges(LPDIRECTINPUTDEVICE8, DWORD)` (0x746D80)
         pub fn di_pad_set_ranges(dev: u32, num: u32) -> i32 = cdecl 0x746D80 => unported;
     }
@@ -471,22 +464,15 @@ pub mod call {
     pub use crate::bindings::font_set_orientation;
     pub use crate::bindings::font_set_proportional;
     pub use crate::bindings::sprintf1 as crt_sprintf1;
-    orig! {
-        // Securom::SecuromStateDisplay
-        /// `CRGBA::CRGBA(r, g, b, a)` (0x7170C0)
-        pub fn crgba_ctor(this: GPtr<u32>, r: u32, g: u32, b: u32, a: u32) -> GPtr<u32> = thiscall 0x7170C0 => unported;
-        /// `CFont::SetScale(w, h)` (0x719380)
-        pub fn font_set_scale(w: f32, h: f32) = cdecl 0x719380 => unported;
-        /// `CFont::SetDropColor(CRGBA)` (0x719510)
-        pub fn font_set_drop_color(c: u32) = cdecl 0x719510 => unported;
-        /// `CFont::SetWrapx` (0x7194D0)
-        pub fn font_set_wrapx(x: f32) = cdecl 0x7194D0 => unported;
-        /// `CFont::SetRightJustifyWrap` (0x7194F0)
-        pub fn font_set_right_justify_wrap(x: u32) = cdecl 0x7194F0 => unported;
-    }
+    pub use crate::bindings::font_set_drop_color;
+    pub use crate::bindings::font_set_right_justify_wrap;
+    pub use crate::bindings::font_set_scale;
+    pub use crate::bindings::font_set_wrapx;
+    pub use crate::bindings::rgba_ctor as crgba_ctor;
     pub use crate::bindings::crt_pow;
     pub use crate::bindings::rw_d3d9_get_current_d3d_device;
     pub use crate::bindings::rw_image_create;
+    pub use crate::bindings::image_allocate_pixels as rw_image_allocate_pixels;
     orig! {
         /// `IDirect3DDevice9::SetGammaRamp(swapchain, flags, ramp)` (+0x54)
         pub fn d3d_dev_set_gamma_ramp(dev: GPtr<u32>, swap: u32, flags: u32, ramp: GPtr<u8>) = stdcall vslot 0x54 => unported;
@@ -502,8 +488,6 @@ pub mod call {
         pub fn d3d_surface_lock_rect(surface: GPtr<u32>, locked: GPtr<[u32; 2]>, rect: GPtr<[i32; 4]>, flags: u32) -> i32 = stdcall vslot 0x34 => unported;
         /// USER32 `GetWindowRect` at 0x74530B
         pub fn get_window_rect_grab(hwnd: u32, rect: GPtr<[i32; 4]>) -> i32 = stdcall site 0x74530B => unported;
-        /// `RwImageAllocatePixels` (0x8027A0)
-        pub fn rw_image_allocate_pixels(image: GPtr<u8>) -> GPtr<u8> = cdecl 0x8027A0 => unported;
     }
     orig! {
         // Win::Win32_InitApplication
@@ -1332,7 +1316,7 @@ pub fn gamma_set_gamma(this: GPtr<u8>, gamma: f32, force: u32) {
     } else if force as u8 == 0 {
         return;
     }
-    let dev = call::rw_d3d9_get_current_d3d_device();
+    let dev = GPtr::<u32>::addr(call::rw_d3d9_get_current_d3d_device()) as u32;
     if dev == 0 {
         return;
     }
@@ -1340,7 +1324,7 @@ pub fn gamma_set_gamma(this: GPtr<u8>, gamma: f32, force: u32) {
     let changed = GPtr::<u8>::from_addr(0xC920C8);
     if changed.read() == 0 {
         changed.write(1);
-        let d = call::rw_d3d9_get_current_d3d_device();
+        let d = GPtr::<u32>::addr(call::rw_d3d9_get_current_d3d_device()) as u32;
         call::d3d_dev_get_gamma_ramp(GPtr::from_addr(d as usize), 0, GPtr::from_addr(0xC8D4C8));
     }
     let k = rdata::<f32>(0x859AA0).read();
@@ -1371,7 +1355,7 @@ pub fn gamma_init(this: GPtr<u8>) {
     this.byte_add(8).cast::<u32>().write(0xC47A_0000);
     this.byte_add(0xC).cast::<u32>().write(0x447A_0000);
     let mut caps = [0u32; 0x130 / 4];
-    let dev = GPtr::from_addr(call::rw_d3d9_get_current_d3d_device() as usize);
+    let dev = GPtr::from_addr((GPtr::<u32>::addr(call::rw_d3d9_get_current_d3d_device()) as u32) as usize);
     call::d3d_device_get_device_caps(dev, GPtr::from_raw(caps.as_mut_ptr()).cast());
     let flags = call::rw_d3d9_get_caps().byte_add(0xEC).cast::<u32>();
     let v = flags.read();
@@ -1609,16 +1593,16 @@ fn append(dst: GPtr<u8>, lit: GPtr<u8>, n: usize) {
 #[hook(addr = 0x744AE0, conv = cdecl, name = "Securom::SecuromStateDisplay", expect = "81 EC 04 02 00 00")]
 pub fn securom_state_display() {
     let mut rgba = 0u32;
-    let c = call::crgba_ctor(GPtr::from_raw(&raw mut rgba), 200, 200, 200, 0xFF).read();
+    let c = GPtr::<u8>::cast::<u32>(call::crgba_ctor(GPtr::<u32>::cast::<u8>(GPtr::from_raw(&raw mut rgba)), 200, 200, 200, 0xFF)).read();
     call::font_set_color(c);
     call::font_set_font_style(1);
     call::font_set_scale(f32::from_bits(0x3F00_0000), f32::from_bits(0x3F4C_CCCD));
     call::font_set_edge(2);
-    let c = call::crgba_ctor(GPtr::from_raw(&raw mut rgba), 0, 0, 0, 0xFF).read();
+    let c = GPtr::<u8>::cast::<u32>(call::crgba_ctor(GPtr::<u32>::cast::<u8>(GPtr::from_raw(&raw mut rgba)), 0, 0, 0, 0xFF)).read();
     call::font_set_drop_color(c);
     call::font_set_proportional(1);
     call::font_set_wrapx(640.0);
-    call::font_set_right_justify_wrap(0);
+    call::font_set_right_justify_wrap(f32::from_bits(0));
     call::font_set_orientation(1);
     let mut text = [0u8; 0x100];
     let mut gxt = [0u8; 0x100];
@@ -1660,7 +1644,7 @@ pub fn securom_state_display() {
 /// (original leak, kept). Returns the image.
 #[hook(addr = 0x7452B0, conv = cdecl, name = "Ps::psGrabScreen", expect = "83 EC 2C 55 56")]
 pub fn ps_grab_screen(_camera: GPtr<u8>) -> GPtr<u8> {
-    let dev = GPtr::<u32>::from_addr(call::rw_d3d9_get_current_d3d_device() as usize);
+    let dev = GPtr::<u32>::from_addr((GPtr::<u32>::addr(call::rw_d3d9_get_current_d3d_device()) as u32) as usize);
     let mut mode = [0u32; 4];
     call::d3d_dev_get_display_mode(dev, 0, GPtr::from_raw(&raw mut mode));
     let mut surface: u32 = 0;

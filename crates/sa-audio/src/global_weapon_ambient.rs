@@ -34,7 +34,7 @@ const FOGGYNESS_SF: usize = 0xC812FC;
 const CAMERA_MATRIX: usize = 0xB6F03C;
 const CAMERA_PLACEMENT_POS: usize = 0xB6F02C;
 
-use crate::bindings::ae_random_int;
+use sa_world::bindings::ae_random_int;
 use crate::bindings::hw_is_sound_bank_loaded;
 use crate::bindings::sm_request_new_sound;
 use crate::bindings::sound_stop_sound;
@@ -44,17 +44,15 @@ use sa_core::bindings::random_float_in_range as random_float;
 use sa_core::bindings::vector_magnitude;
 use sa_world::bindings::placeable_set_posn;
 use sa_world::bindings::sound_dtor;
-use sa_world::bindings::vector_magnitude_sqr;
-use sa_world::bindings::vector_sub;
+use sa_core::bindings::vector_magnitude_sqr;
+use sa_core::bindings::vector_sub;
+use crate::bindings::sound_initialise;
+use sa_world::bindings::report_weapon_event;
 orig! {
     /// `std::min<float>(a, b)` by value (0x404330, ST0)
     fn min_float(a: u32, b: u32) -> f64 = cdecl 0x404330 => unported;
     /// `CAEGlobalWeaponAudioEntity::PickAmbientGunFire(int32* shots, eWeaponType*, uint32* delay)` (0x4DEFE0)
     fn pick_ambient_gun_fire(this: GPtr<u8>, shots: GPtr<u8>, weapon: GPtr<u8>, delay: GPtr<u8>) = thiscall 0x4DEFE0 => unported;
-    /// `CAESound::Initialise(...)` (0x4EFE50, `ret 0x38`)
-    fn sound_initialise(sound: GPtr<u8>, slot: u32, sfx: u32, entity: GPtr<u8>, px: u32, py: u32, pz: u32, vol: u32, max_dist: u32, speed: u32, doppler: u32, delay: u32, flags: u32, freq_var: u32, play_time: u32) = thiscall 0x4EFE50 => unported;
-    /// `CAudioEngine::ReportWeaponEvent(event, weaponType, CPhysical*)` (0x506F40)
-    fn report_weapon_event(engine: GPtr<u8>, event: u32, weapon: u32, physical: u32) = thiscall 0x506F40 => crate::engine::report_weapon_event;
 }
 
 use sa_core::field::gr32 as r32;
@@ -77,11 +75,11 @@ fn camera_pos() -> GPtr<u8> {
 /// = 4, `RequestNewSound`.
 #[allow(clippy::too_many_arguments)]
 fn play(sound: GPtr<u8>, this: GPtr<u8>, slot: u32, sfx: u32, pos: usize, vol: u32, s1c: u32, s18: u32) -> u32 {
-    sound_initialise(sound, slot, sfx, this, r32(pos), r32(pos + 4), r32(pos + 8), vol, 0x3F80_0000, 0x3F80_0000, 0x3F80_0000, 0, 0, 0, 0);
+    sound_initialise(sound, slot, sfx, this.addr() as u32, r32(pos), r32(pos + 4), r32(pos + 8), vol, 0x3F80_0000, 0x3F80_0000, 0x3F80_0000, 0, 0, 0, 0);
     wr::<u32>(sound, 0x1C, s1c);
     wr::<u32>(sound, 0x18, s18);
     wr::<u16>(sound, 0x56, 4);
-    sm_request_new_sound(sound_manager(), sound)
+    sm_request_new_sound(GPtr::<u8>::addr(sound_manager()) as u32, sound.addr() as u32)
 }
 
 /// `CAEGlobalWeaponAudioEntity::ServiceAmbientGunFire()` (0x4DF210, thiscall). A stack `CAESound` (+8
@@ -150,7 +148,7 @@ pub fn service_ambient_gun_fire(this: GPtr<u8>) {
             let region = g::<u16>(WEATHER_REGION).read();
             if region == 1 {
                 if r32(FRAME_COUNTER) & 0x3FF == 0 {
-                    placeable_set_posn(physical(), camera_pos());
+                    placeable_set_posn(physical(), GPtr::<u8>::cast::<f32>(camera_pos()));
                     let a = X87::from_f64_exact(random_float(0.0, f32::from_bits(0x40C90FDB))).to_f32();
                     let r = X87::from_f64_exact(random_float(40.0, 80.0));
                     let p = entity_pos(physical());
@@ -167,7 +165,7 @@ pub fn service_ambient_gun_fire(this: GPtr<u8>) {
             } else if region == 3 {
                 let mut tmp = [0u32; 3];
                 let d = vector_sub(GPtr::from_raw(tmp.as_mut_ptr().cast::<u8>()), camera_pos(), gp(WATERFALL_1));
-                let m = X87::from_f64_exact(vector_magnitude_sqr(d));
+                let m = X87::from_f64_exact(vector_magnitude_sqr(d.cast::<f32>()));
                 if !m.fcom(x(f32::from_bits(r32(0x8AE5DC)))).test_parity(5)
                     && hw_is_sound_bank_loaded(audio_hardware(), 0x27, 2) != 0
                     && r32(WATERFALL) == 0
@@ -191,7 +189,7 @@ pub fn service_ambient_gun_fire(this: GPtr<u8>) {
                 if !fog.fcom(x(f32::from_bits(r32(0x858B8C)))).test_any(1) && r32(FRAME_COUNTER) & 0x3FF == 0 {
                     let mut tmp = [0u32; 3];
                     let d = vector_sub(GPtr::from_raw(tmp.as_mut_ptr().cast::<u8>()), camera_pos(), gp(FOG_HORN_0));
-                    let m = X87::from_f64_exact(vector_magnitude_sqr(d));
+                    let m = X87::from_f64_exact(vector_magnitude_sqr(d.cast::<f32>()));
                     if !m.fcom(x(f32::from_bits(r32(0x8AE5EC)))).test_parity(5)
                         && hw_is_sound_bank_loaded(audio_hardware(), 0x3B, 0) != 0
                         && r32(FOG_HORN) == 0
@@ -207,14 +205,14 @@ pub fn service_ambient_gun_fire(this: GPtr<u8>) {
         1 => {
             if r32(DELAY).wrapping_add(last) <= now {
                 let mut tmp = [0u32; 3];
-                let pc = find_player_coors(GPtr::from_raw(tmp.as_mut_ptr().cast::<u8>()), -1);
+                let pc = GPtr::<f32>::cast::<u8>(find_player_coors(GPtr::<u8>::cast::<f32>(GPtr::from_raw(tmp.as_mut_ptr().cast::<u8>())), -1));
                 let mut v = [rd::<f32>(pc, 0), rd::<f32>(pc, 4), rd::<f32>(pc, 8)];
                 let ph = physical();
                 let p = entity_pos(ph);
                 v[0] = x(v[0]).fsub_m(rd::<f32>(p, 0)).to_f32();
                 v[1] = x(v[1]).fsub_m(rd::<f32>(p, 4)).to_f32();
                 v[2] = x(v[2]).fsub_m(rd::<f32>(p, 8)).to_f32();
-                let m = X87::from_f64_exact(vector_magnitude(GPtr::from_raw(v.as_mut_ptr().cast::<u8>())));
+                let m = X87::from_f64_exact(vector_magnitude(GPtr::<u8>::cast::<u32>(GPtr::from_raw(v.as_mut_ptr().cast::<u8>()))));
                 let reset = |state: bool| {
                     if state {
                         w32(STATE, 0);
@@ -225,7 +223,7 @@ pub fn service_ambient_gun_fire(this: GPtr<u8>) {
                     reset(true);
                 } else {
                     wr::<u8>(ph, 0x36, (rd::<u8>(ph, 0x36) & 0xFE) | 6);
-                    report_weapon_event(GPtr::from_addr(crate::common::AUDIO_ENGINE), 0x91, r32(WEAPON_TYPE), physical().addr() as u32);
+                    report_weapon_event(GPtr::from_addr(crate::common::AUDIO_ENGINE), 0x91, r32(WEAPON_TYPE), GPtr::from_addr((physical().addr() as u32) as usize));
                     let shots = r32(GUN_SHOTS).wrapping_sub(1);
                     w32(GUN_SHOTS, shots);
                     if shots == 0 {

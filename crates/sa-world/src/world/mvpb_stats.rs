@@ -26,21 +26,15 @@ use sa_core::bindings::find_player_vehicle;
 use sa_core::bindings::get_pad as pad_get_pad;
 use sa_core::bindings::tag_manager_get_percentage_tagged;
 use sa_core::bindings::text_get;
+use sa_core::bindings::check_for_threshold;
+use sa_core::bindings::display_script_stat_update_message;
+use sa_core::bindings::find_player_coors;
+use sa_core::bindings::hud_set_help_message;
+use sa_core::bindings::stats_check_for_stats_message as check_for_stats_message_o;
+use sa_core::bindings::stats_increment_stat as increment_stat_o;
 orig! {
     /// `CStats::ProcessReactionStatsOnIncrement(uint8)` (0x55B900, cdecl)
     fn process_reaction_stats_on_increment(id: u32) = cdecl 0x55B900 => unported;
-    /// `CStats::CheckForStatsMessage` (0x559760, cdecl)
-    fn check_for_stats_message_o() = cdecl 0x559760 => crate::world::mvpb_stats::check_for_stats_message;
-    /// `CStats::IncrementStat(uint16, float)` (0x55C180, cdecl)
-    fn increment_stat_o(id: u32, v: f32) = cdecl 0x55C180 => crate::world::mvpb_stats::increment_stat;
-    /// `CHud::SetHelpMessage(const char*, bool, bool, bool)` (0x588BE0, cdecl)
-    fn hud_set_help_message(s: GPtr<u8>, a: u32, b: u32, c: u32) = cdecl 0x588BE0 => unported;
-    /// `CWorld::FindPlayerCoors(CVector* out, int32)` (0x56E010, cdecl)
-    fn find_player_coors(out: GPtr<f32>, id: i32) -> GPtr<f32> = cdecl 0x56E010 => unported;
-    /// `CStats::CheckForThreshold(float*, float)` (0x5595F0, cdecl)
-    fn check_for_threshold(stat: GPtr<u32>, t: u32) -> u8 = cdecl 0x5595F0 => crate::world::stats::check_for_threshold;
-    /// `CStats::DisplayScriptStatUpdateMessage(uint8, uint32, float)` (0x55B980, cdecl)
-    fn display_script_stat_update_message(up: u32, stat: u32, v: u32) = cdecl 0x55B980 => unported;
 }
 
 fn info() -> GPtr<u8> {
@@ -143,7 +137,7 @@ pub fn check_for_stats_message() {
     while i < g::<u32>(0xB794D0).read() {
         let e: GPtr<u8> = GPtr::from_addr(0xB78200 + 0x10 * i as usize);
         if rd::<u8>(e, 2) == 0 {
-            let v = X87::from_f64_exact(get_stat_value(rd::<u16>(e, 0) as u32));
+            let v = X87::from_f64_exact(get_stat_value((rd::<u16>(e, 0) as u32) as u16));
             let c = v.fcom(x(rd::<f32>(e, 4)));
             let show = if rd::<u8>(e, 3) != 0 { !c.c0() } else { !c.test_parity(0x41) };
             if show {
@@ -277,8 +271,8 @@ pub fn update_respect_stat(reset: u8) {
     let up = x(v).fcom(lastf(shown)) == Cmp::Greater;
     let is99 = |c: GPtr<u32>| !lastf(c).fcom(x(k)).test_parity(0x44);
     if !up && lastf(last).fcom(x(2.0)) != Cmp::Less {
-        if !is99(last) && !is99(shown) && (check_for_threshold(shown.cast(), v.to_bits()) != 0 || x(v).fcom(x(2.0)) == Cmp::Less) {
-            display_script_stat_update_message(0, 0x40, v.to_bits());
+        if !is99(last) && !is99(shown) && (check_for_threshold(GPtr::<u32>::cast::<f32>(shown.cast()), f32::from_bits(v.to_bits())) != 0 || x(v).fcom(x(2.0)) == Cmp::Less) {
+            display_script_stat_update_message(0, 0x40, f32::from_bits(v.to_bits()));
         }
         if x(v).fcom(lastf(last)) == Cmp::Greater {
             shown.write(v.to_bits());
@@ -288,8 +282,8 @@ pub fn update_respect_stat(reset: u8) {
         last.write(v.to_bits());
         return;
     }
-    if !is99(last) && !is99(shown) && (check_for_threshold(shown.cast(), v.to_bits()) != 0 || lastf(last).fcom(x(2.0)) == Cmp::Less) {
-        display_script_stat_update_message(1, 0x40, v.to_bits());
+    if !is99(last) && !is99(shown) && (check_for_threshold(GPtr::<u32>::cast::<f32>(shown.cast()), f32::from_bits(v.to_bits())) != 0 || lastf(last).fcom(x(2.0)) == Cmp::Less) {
+        display_script_stat_update_message(1, 0x40, f32::from_bits(v.to_bits()));
     }
     if x(v).fcom(lastf(last)) == Cmp::Less {
         shown.write(v.to_bits());

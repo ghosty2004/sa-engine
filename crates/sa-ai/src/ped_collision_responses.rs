@@ -8,6 +8,7 @@
 //! failure writes NULL where the original does (and dereferences NULL where the original does).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -15,19 +16,19 @@ use crate::common::*;
 
 use crate::bindings::car_drive_mission_flee_scene_ctor;
 use crate::bindings::compute_entity_hit_side_ped as geometry_compute_entity_hit_side;
-use crate::bindings::duck_ctor;
+use sa_world::bindings::duck_ctor;
 use crate::bindings::evasive_step_ctor;
-use crate::bindings::fall_and_get_up_ctor2;
+use sa_world::bindings::fall_and_get_up_ctor2;
 use crate::bindings::flee_any_means_ctor;
-use crate::bindings::follow_point_route_ctor;
-use crate::bindings::gang_drive_by_ctor;
+use sa_world::bindings::follow_point_route_ctor;
+use sa_world::bindings::gang_drive_by_ctor;
 use crate::bindings::geometry_compute_route_round_entity_bbox;
-use crate::bindings::hands_up_ctor;
+use sa_world::bindings::hands_up_ctor;
 use crate::bindings::hit_response_ctor;
 use crate::bindings::intel_get_ped_fov_range;
 use crate::bindings::kill_criminal_ctor;
 use crate::bindings::kill_ped_on_foot_stealth_ctor;
-use crate::bindings::say_ctor;
+use sa_world::bindings::say_ctor;
 use crate::bindings::seek_set_move_state_radius;
 use crate::bindings::task_is_go_to_task;
 use crate::bindings::use_attractor_ctor;
@@ -56,24 +57,17 @@ use sa_world::bindings::sequence_ctor;
 use sa_world::bindings::smart_flee_entity_ctor;
 use sa_world::bindings::tm_find_active_task_by_type;
 use sa_world::bindings::use_sequence_ctor;
-use sa_world::bindings::vector_magnitude_sqr;
-use sa_world::bindings::vector_sub;
+use sa_core::bindings::vector_magnitude_sqr;
+use sa_core::bindings::vector_sub;
+use crate::bindings::avoid_other_ped_ctor;
+use crate::bindings::handler_is_kill_task_appropriate;
+use crate::bindings::intel_get_move_state_from_go_to_task;
+use crate::bindings::partner_shove_ctor;
+use sa_world::bindings::leave_car_ctor;
+use sa_world::bindings::task_gun_control_ctor as gun_control_ctor;
 orig! {
     /// `CEvent::GetEventType` (vtable +4)
     fn v_event_type(e: GPtr<u8>) -> i32 = thiscall vslot 0x4 => unported;
-    /// `CPedIntelligence::GetMoveStateFromGoToTask` (0x601D70)
-    fn intel_get_move_state_from_go_to_task(i: GPtr<u8>) -> i32 = thiscall 0x601D70 => unported;
-    /// `CEventHandler::IsKillTaskAppropriate(CPed*, CPed*, const CEvent&)` (0x4BC3E0, static)
-    fn handler_is_kill_task_appropriate(ped: GPtr<u8>, other: GPtr<u8>, e: GPtr<u8>) -> u8 = cdecl 0x4BC3E0 => unported;
-    /// `CTaskComplexPartnerShove::CTaskComplexPartnerShove(name, CPed*, bool, float, int32, CVector)` (0x6846F0, `ret 0x20`)
-    fn partner_shove_ctor(t: GPtr<u8>, name: u32, ped: GPtr<u8>, b: u32, f: u32, n: i32, vx: u32, vy: u32, vz: u32) -> GPtr<u8> = thiscall 0x6846F0 => unported;
-    /// `CTaskComplexAvoidOtherPedWhileWandering(CPed*, const CVector& target, int32 moveState)` (0x66A100, `ret 0xC`)
-    fn avoid_other_ped_ctor(t: GPtr<u8>, ped: GPtr<u8>, target: GPtr<u8>, ms: i32) -> GPtr<u8> = thiscall 0x66A100 => unported;
-    /// `CTaskComplexLeaveCar::CTaskComplexLeaveCar(CVehicle*, int32, int32, bool, bool)` (0x63B8C0, `ret 0x14`)
-    fn leave_car_ctor(t: GPtr<u8>, veh: GPtr<u8>, a: i32, b: i32, c: u32, d: u32) -> GPtr<u8> = thiscall 0x63B8C0 => unported;
-    /// `CTaskSimpleGunControl::CTaskSimpleGunControl(CEntity*, const CVector*, const CVector*, eGunCommand, int16, int32)`
-    /// (0x61F3F0, `ret 0x18`)
-    fn gun_control_ctor(t: GPtr<u8>, e: GPtr<u8>, a: u32, b: u32, cmd: u32, n: u32, time: i32) -> GPtr<u8> = thiscall 0x61F3F0 => unported;
 }
 
 /// `g_ikChainMan` (`IKChainManager_c`)
@@ -136,11 +130,11 @@ fn new_task(size: u32, ctor: impl FnOnce(GPtr<u8>) -> GPtr<u8>) -> GPtr<u8> {
 }
 
 fn look_at_ped(p: GPtr<u8>, other: GPtr<u8>) {
-    ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), S_COMP_PED_COLL_PED_RESP, p, other, 2000, 5, 0, 1, 0x3E80_0000, 500, 3, 0);
+    ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), GPtr::from_addr(S_COMP_PED_COLL_PED_RESP as usize), p, other, 2000, 5, GPtr::NULL, 1, 0x3E80_0000, 500, 3, 0);
 }
 
 fn new_say() -> GPtr<u8> {
-    new_task(0x1C, |t| say_ctor(t, 0x1C, -1))
+    new_task(0x1C, |t| say_ctor(t, 0x1C, -1i32 as u32))
 }
 
 /// The evasive step both group branches build: direction `(forward.x, -forward.y, 0)` of the ped's matrix (as the
@@ -286,7 +280,7 @@ pub fn event_handler_compute_ped_collision_with_ped_response(this: GPtr<u8>, e: 
                     let vp: GPtr<u8> = GPtr::from_raw(v.as_mut_ptr()).cast();
                     vector_sub(vp, pos_ptr(ped(this)), pos_ptr(lead));
                     wr::<u32>(vp, 8, 0);
-                    let dist = f32_of(X87::from_f64_exact(vector_magnitude(vp)));
+                    let dist = f32_of(X87::from_f64_exact(vector_magnitude(vp.cast::<u32>())));
                     if !avoid.is_null() {
                         wr::<u8>(avoid, 0x5C, rd::<u8>(avoid, 0x5C) | 2);
                     }
@@ -330,7 +324,7 @@ fn no_group_response(this: GPtr<u8>, other: GPtr<u8>, simplest: GPtr<u8>, my_ms:
     let set_say = |t: GPtr<u8>| wr::<GPtr<u8>>(this, 0x2C, t);
     let fall = |result: &mut GPtr<u8>| {
         let side = geometry_compute_entity_hit_side(other, ped(this));
-        *result = new_task(0x18, |t| fall_and_get_up_ctor2(t, side, 0));
+        *result = new_task(0x18, |t| fall_and_get_up_ctor2(t, side as u32, 0));
     };
     let hit = |result: &mut GPtr<u8>| {
         let side = geometry_compute_entity_hit_side(other, ped(this));
@@ -431,7 +425,7 @@ pub fn event_handler_compute_potential_ped_collide_response(this: GPtr<u8>, e: G
     match i32::from(rd::<i16>(e, 0xE)) {
         200 => wr::<GPtr<u8>>(this, 0x24, GPtr::NULL),
         0x4B9 => {
-            let t = new_task(0x74, |t| partner_shove_ctor(t, S_COMP_POT_PED_COLL_RESP, other, 1, 0x3F00_0000, 1, 0, 0, 0));
+            let t = new_task(0x74, |t| partner_shove_ctor(t, GPtr::from_addr(S_COMP_POT_PED_COLL_RESP as usize), other, 1, 0x3F00_0000, 1, 0, 0, 0));
             wr::<GPtr<u8>>(this, 0x24, t);
         }
         0x395 => {
@@ -450,7 +444,7 @@ pub fn event_handler_compute_potential_ped_collide_response(this: GPtr<u8>, e: G
                         let vp: GPtr<u8> = GPtr::from_raw(v.as_mut_ptr()).cast();
                         vector_sub(vp, pos_ptr(leader), pos_ptr(ped(this)));
                         wr::<u32>(vp, 8, 0);
-                        let d2 = X87::from_f64_exact(vector_magnitude_sqr(vp));
+                        let d2 = X87::from_f64_exact(vector_magnitude_sqr(vp.cast::<f32>()));
                         let r = rd::<f32>(seek, 0x1C);
                         let r2 = x(r).fmul_m(r);
                         if !d2.fsub(r2).fcom(r2).test_parity(0x05) {
@@ -459,7 +453,7 @@ pub fn event_handler_compute_potential_ped_collide_response(this: GPtr<u8>, e: G
                     }
                 }
             }
-            let t = new_task(0x60, |t| avoid_other_ped_ctor(t, other, e.byte_add(0x14), ms));
+            let t = new_task(0x60, |t| avoid_other_ped_ctor(t, other, e.byte_add(0x14), ms as u32));
             wr::<GPtr<u8>>(this, 0x24, t);
             if !follower.is_null() {
                 wr::<u8>(t, 0x5C, rd::<u8>(t, 0x5C) | 4);
@@ -471,7 +465,7 @@ pub fn event_handler_compute_potential_ped_collide_response(this: GPtr<u8>, e: G
 
 /// `CTaskComplexSmartFleeEntity(other, false, <defaults>)` (0x40 bytes) with the original's default-argument globals.
 fn smart_flee(other: GPtr<u8>) -> GPtr<u8> {
-    new_task(0x40, |t| smart_flee_entity_ctor(t, other, 0, gu(FLEE_SAFE_DIST), gu(FLEE_TIME), gu(FLEE_PERIOD), gu(FLEE_SHIFT)))
+    new_task(0x40, |t| smart_flee_entity_ctor(t, other, 0, f32::from_bits(gu(FLEE_SAFE_DIST)), gu(FLEE_TIME), gu(FLEE_PERIOD), gu(FLEE_SHIFT)))
 }
 
 /// `CTaskComplexFleeAnyMeans(other, true, <defaults>)` (0x54 bytes).
@@ -555,12 +549,12 @@ pub fn event_handler_compute_ped_threat_response(this: GPtr<u8>, e: GPtr<u8>, _a
             set(new_task(0x1C, |t| use_sequence_ctor(t, idx)));
         }
         0x19D => set(new_task(0x34, |t| hands_up_ctor(t, 5000))),
-        0x1AB => set(new_task(0x28, |t| duck_ctor(t, 0, 0x967F, -1))),
+        0x1AB => set(new_task(0x28, |t| duck_ctor(t, 0, 0x967F, -1i32 as u32))),
         0x19F => {
             if !intel_get_task_duck(intel(p()), 1).is_null() {
                 return;
             }
-            set(new_task(0x28, |t| duck_ctor(t, 0, 5000, -1)));
+            set(new_task(0x28, |t| duck_ctor(t, 0, 5000, -1i32 as u32)));
         }
         0x2C0 => {
             if rd::<GPtr<u8>>(p(), 0x58C).is_null() || rd::<u32>(p(), 0x46C) & 0x100 == 0 {
@@ -613,7 +607,7 @@ pub fn event_handler_compute_ped_threat_response(this: GPtr<u8>, e: GPtr<u8>, _a
             let seq = new_task(0x40, sequence_ctor);
             let kill = kill_on_foot(other, -1);
             sequence_add_task(seq, kill);
-            let wander = new_task(0x24, |t| car_drive_wander_ctor(t, rd::<GPtr<u8>>(p(), 0x58C), 0, 0x4120_0000));
+            let wander = new_task(0x24, |t| car_drive_wander_ctor(t, rd::<GPtr<u8>>(p(), 0x58C), 0, f32::from_bits(0x4120_0000)));
             sequence_add_task(seq, wander);
             set(seq);
         }
@@ -625,7 +619,7 @@ pub fn event_handler_compute_ped_threat_response(this: GPtr<u8>, e: GPtr<u8>, _a
                 set(new_task(0x20, |t| kill_criminal_ctor(t, other, 1)));
             }
         }
-        0x3FC => set(new_task(0x3C, |t| gun_control_ctor(t, other, 0, 0, 0, 1, 10000))),
+        0x3FC => set(new_task(0x3C, |t| gun_control_ctor(t, other, GPtr::NULL, 0, 0, 1, 10000))),
         0x3A5 => set(new_task(0x18, |t| seek_entity_aiming_ctor(t, other, 0x4120_0000, 0x40A0_0000))),
         0x3FE => {
             let pd = p();
@@ -644,10 +638,10 @@ pub fn event_handler_compute_ped_threat_response(this: GPtr<u8>, e: GPtr<u8>, _a
                 let slot = i32::from(rd::<i8>(pd, 0x718)) as isize;
                 rd::<u32>(pd, 0x5A0 + slot * 0x1C)
             };
-            if rd::<u32>(weapon_info_get(weapon_type(), 1), 0) != 1 {
+            if rd::<u32>(weapon_info_get(weapon_type() as i32, 1), 0) != 1 {
                 return;
             }
-            let mut range = rd::<u32>(weapon_info_get(weapon_type(), 1), 4);
+            let mut range = rd::<u32>(weapon_info_get(weapon_type() as i32, 1), 4);
             let pd = p();
             let fov = X87::from_f64_exact(intel_get_ped_fov_range(intel(pd))).fadd_m(gf(K_FOV_PAD));
             if x(f32::from_bits(range)).fcom(fov).test_any(0x41) {
@@ -656,11 +650,11 @@ pub fn event_handler_compute_ped_threat_response(this: GPtr<u8>, e: GPtr<u8>, _a
             let mut v = [0u32; 3];
             let vp: GPtr<u8> = GPtr::from_raw(v.as_mut_ptr()).cast();
             vector_sub(vp, pos_ptr(other), pos_ptr(pd));
-            if X87::from_f64_exact(vector_magnitude(vp)).fcom(x(f32::from_bits(range))).test_parity(0x05) {
+            if X87::from_f64_exact(vector_magnitude(vp.cast::<u32>())).fcom(x(f32::from_bits(range))).test_parity(0x05) {
                 set(GPtr::NULL);
                 return;
             }
-            set(new_task(0x44, |t| gang_drive_by_ctor(t, other, 0, range, 0x5A, 8, 0)));
+            set(new_task(0x44, |t| gang_drive_by_ctor(t, other, GPtr::NULL, range, 0x5A, 8, 0)));
         }
         _ => {}
     }

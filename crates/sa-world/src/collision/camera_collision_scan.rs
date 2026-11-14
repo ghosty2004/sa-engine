@@ -6,15 +6,12 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 
 use crate::world::common::{g, rd, x};
 
-orig! {
-    /// `CPedModelInfo::AnimatePedColModelSkinnedWorld(RpClump*)` (0x4C7170, `ret 4`)
-    fn ped_mi_animate_col_model_skinned_world(mi: GPtr<u8>, clump: u32) = thiscall 0x4C7170 => unported;
-}
+use sa_stream::bindings::animate_ped_col_model_skinned_world as ped_mi_animate_col_model_skinned_world;
 
 /// `CModelInfo::ms_modelInfoPtrs` (0xA9B0C8)
 const MODEL_INFOS: u32 = 0xA9B0C8;
@@ -40,7 +37,7 @@ fn model_info(e: GPtr<u8>) -> GPtr<u8> {
        note = "writes the candidate depths into its own argument slot (not modelled); animates the hit col model of the ped's model info")]
 pub fn ped_hit_sphere_min_depth(ped: GPtr<u8>) -> f32 {
     let mi = model_info(ped);
-    ped_mi_animate_col_model_skinned_world(mi, rd::<u32>(ped, 0x18));
+    ped_mi_animate_col_model_skinned_world(mi, GPtr::from_addr(rd::<u32>(ped, 0x18) as usize));
     let cam = GPtr::<u8>::from_addr((CAMS + u32::from(g::<u8>(ACTIVE_CAM).read()) * 0x238) as usize);
     let (nx, ny, nz) = (rd::<f32>(cam, 0x190), rd::<f32>(cam, 0x194), rd::<f32>(cam, 0x198));
     let d0 = x(nz)

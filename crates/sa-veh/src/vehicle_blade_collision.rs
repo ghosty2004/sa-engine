@@ -88,11 +88,11 @@ pub fn vehicle_do_blade_collision(this: GPtr<u8>, px: f32, py: f32, pz: f32, mat
     let mut pos = [px.to_bits(), py.to_bits(), pz.to_bits()];
     sphere_set(GPtr::from_addr(MODEL + 0x18), r.to_bits(), buf(&mut pos));
     g::<u32>(MODEL + 0x2C).write(0xC1_CD68);
-    col_sphere_set(GPtr::from_addr(MODEL + 0x60), r.to_bits(), buf(&mut pos), 0, 0, 0xFF);
+    col_sphere_set(GPtr::from_addr(MODEL + 0x60), f32::from_bits(r.to_bits()), buf(&mut pos), 0, 0, 0xFF);
     g::<u32>(MODEL + 0x38).write(0xC1_CD98);
     g::<u16>(MODEL + 0x30).write(1);
     let mut c = [0u32; 3];
-    matrix_mul_vec(buf(&mut c), matrix, buf(&mut pos));
+    matrix_mul_vec(GPtr::<u8>::cast::<f32>(buf(&mut c)), matrix, buf(&mut pos));
     let (cx, cy) = (f32::from_bits(c[0]), f32::from_bits(c[1]));
     let mut hit = false;
     let x0 = if sector(cx, r, false) > 0 { sector(cx, r, false) } else { 0 };

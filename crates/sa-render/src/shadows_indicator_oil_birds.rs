@@ -4,7 +4,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 
 use crate::common::{k, rd, wr};
@@ -12,14 +12,8 @@ use crate::common::{k, rd, wr};
 use sa_world::bindings::col_line_ctor;
 use sa_world::bindings::place_marker_set;
 use sa_world::bindings::test_line_sphere;
-orig! {
-    /// `CCollision::DistToLine(const CVector* start, const CVector* end, const CVector* point)` (0x417610, ST0)
-    fn dist_to_line(a: GPtr<u8>, b: GPtr<u8>, p: GPtr<u8>) -> f64 = cdecl 0x417610 => unported;
-    /// `CFireManager::StartFire(CVector pos, float size, uint8, CEntity* creator, uint32 time, int8 generations,
-    /// uint8)` (0x539F00, thiscall, the vector by value)
-    fn fire_manager_start_fire(this: GPtr<u8>, px: u32, py: u32, pz: u32, size: u32, a: u32, creator: u32, time: u32,
-        gens: u32, b: u32) -> GPtr<u8> = thiscall 0x539F00 => unported;
-}
+use sa_world::bindings::dist_to_line;
+use sa_world::bindings::fire_manager_start_fire;
 
 use sa_core::field::g as gp;
 
@@ -86,7 +80,7 @@ pub fn shadows_gun_shot_sets_oil_on_fire(start: GPtr<f32>, end: GPtr<f32>) {
     }
     let sh = gp::<u8>(PERMANENT_SHADOWS + 0x38 * found as usize);
     wr::<u8>(sh, 0x32, 5);
-    fire_manager_start_fire(gp(FIRE_MANAGER), rd::<u32>(sh, 0), rd::<u32>(sh, 4), rd::<u32>(sh, 8), 0x3FE6_6666, 0, 0,
+    fire_manager_start_fire(gp(FIRE_MANAGER), f32::from_bits(rd::<u32>(sh, 0)), f32::from_bits(rd::<u32>(sh, 4)), f32::from_bits(rd::<u32>(sh, 8)), f32::from_bits(0x3FE6_6666), 0, GPtr::NULL,
         0x7D0, 0, 1);
 }
 
@@ -111,7 +105,7 @@ pub fn birds_handle_gun_shot(start: GPtr<u8>, end: GPtr<u8>) {
         let lp = GPtr::from_raw(line.as_mut_ptr()).cast::<u8>();
         col_line_ctor(lp, start, end);
         let mut sphere = [rd::<u32>(b, 0), rd::<u32>(b, 4), rd::<u32>(b, 8), 0x3F00_0000, 0];
-        if test_line_sphere(lp, GPtr::from_raw(sphere.as_mut_ptr()).cast()) == 0 {
+        if test_line_sphere(lp.cast::<f32>(), GPtr::<u8>::cast::<f32>(GPtr::from_raw(sphere.as_mut_ptr()).cast())) == 0 {
             continue;
         }
         gp::<u32>(0xC6_AA48).write(rd::<u32>(b, 0));

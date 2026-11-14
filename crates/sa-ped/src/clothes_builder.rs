@@ -15,6 +15,7 @@
 //!
 //! `CPedClothesDesc` (0x78): +0 model keys[10], +0x28 texture keys[18], +0x70 fat stat, +0x74 muscle stat.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -48,7 +49,7 @@ const CLOTHES_MODEL: i32 = 0x180;
 /// The streaming index of TXD slot 0
 const TXD_INDEX: i32 = 20000;
 
-use crate::bindings::clothes_desc_ctor as desc_ctor;
+use sa_world::bindings::clothes_desc_ctor as desc_ctor;
 use sa_core::bindings::crt_free_8214bd as operator_delete;
 use sa_core::bindings::directory_read_dir_file;
 use sa_core::bindings::geometry_add_ref as rp_geometry_add_ref;
@@ -72,69 +73,56 @@ use sa_core::bindings::rw_texture_set_name;
 use sa_core::bindings::streaming_remove_model as remove_model;
 use sa_core::bindings::timer_resume;
 use sa_core::bindings::timer_suspend;
-use sa_stream::bindings::rp_clump_add_atomic;
-use sa_stream::bindings::rp_material_set_texture;
+use sa_core::bindings::rp_clump_add_atomic;
+use sa_core::bindings::rp_material_set_texture;
 use sa_stream::bindings::rp_skin_atomic_set_hanim_hierarchy;
-use sa_stream::bindings::rw_frame_add_child;
+use sa_core::bindings::rw_frame_add_child;
 use sa_stream::bindings::rw_tex_dictionary_remove_texture;
 use sa_stream::bindings::rw_tex_dictionary_set_current;
 use sa_world::bindings::get_first_texture;
 use sa_world::bindings::get_stat_value;
-use sa_world::bindings::rp_geometry_create;
+use sa_core::bindings::rp_geometry_create;
 use sa_world::bindings::rp_material_create;
-use sa_world::bindings::rp_material_destroy;
+use sa_core::bindings::rp_material_destroy;
 use sa_world::bindings::rp_morph_target_calc_bounding_sphere;
-use sa_world::bindings::rw_raster_unlock;
-use sa_world::bindings::rw_v3d_normalize;
+use sa_core::bindings::rw_raster_unlock;
+use sa_core::bindings::rw_v3d_normalize;
+use sa_core::bindings::append_string_to_key;
+use sa_core::bindings::load_all_requested_models;
+use sa_core::bindings::rp_clump_for_all_atomics;
+use sa_core::bindings::rp_skin_atomic_get_hanim_hierarchy;
+use sa_core::bindings::rp_skin_get_num_bones;
+use sa_core::bindings::rw_raster_lock;
+use sa_core::bindings::rw_tex_dictionary_for_all_textures;
+use sa_core::bindings::rw_texture_destroy;
+use sa_stream::bindings::call_load_requested_models as load_requested_models;
+use sa_stream::bindings::rp_skin_get_vertex_bone_weights;
+use sa_world::bindings::clothes_desc_set_texture_and_model as set_texture_and_model;
+use sa_world::bindings::copy_texture;
+use sa_world::bindings::rp_geometry_triangle_set_vertex_indices;
 orig! {
     /// `CPedClothesDesc::SetModel(uint32, eClothesModelPart)` (0x5A7910)
     fn set_model_hash(this: GPtr<u8>, key: u32, part: i32) = thiscall 0x5A7910 => crate::clothes::set_model_hash;
     /// `CPedClothesDesc::SetModel(const char*, eClothesModelPart)` (0x5A7920)
     fn set_model_name(this: GPtr<u8>, name: u32, part: i32) = thiscall 0x5A7920 => crate::clothes::set_model_name;
-    /// `CPedClothesDesc::SetTextureAndModel(uint32, uint32, eClothesTexturePart)` (0x5A8050)
-    fn set_texture_and_model(this: GPtr<u8>, tex: u32, model: u32, part: i32) = thiscall 0x5A8050 => crate::clothes::set_texture_and_model_hash;
     /// `CClothes::GetDependentTexture(eClothesModelPart)` (0x5A7F30)
     fn get_dependent_texture(m: i32) -> i32 = cdecl 0x5A7F30 => crate::clothes::get_dependent_texture;
     /// `CDirectory::Init(int32 capacity, DirectoryInfo* entries)` (0x5322F0)
     fn directory_init(dir: GPtr<u8>, capacity: u32, entries: GPtr<u8>) = thiscall 0x5322F0 => unported;
     /// `CDirectory::FindItem(uint32 key, uint32& offset, uint32& size)` (0x5324D0)
     fn directory_find_item(dir: GPtr<u8>, key: u32, offset: GPtr<u32>, size: GPtr<u32>) -> u8 = thiscall 0x5324D0 => unported;
-    /// `CKeyGen::AppendStringToKey(uint32, const char*)` (0x53CF70)
-    fn append_string_to_key(key: u32, s: GPtr<u8>) -> u32 = cdecl 0x53CF70 => unported;
     /// `CStreaming::RequestFile(int32 index, int32 offset, int32 size, int32 imgId, int32 flags)` (0x40A080)
     fn request_file(index: i32, offset: u32, size: u32, img: i32, flags: i32) = cdecl 0x40A080 => unported;
-    /// `CStreaming::LoadAllRequestedModels(bool)` (0x40EA10)
-    fn load_all_requested_models(only_priority: u8) = cdecl 0x40EA10 => unported;
-    /// `CStreaming::LoadRequestedModels()` (0x40E3A0)
-    fn load_requested_models() = cdecl 0x40E3A0 => unported;
     /// `FUN_007316d0(int32 i)` (0x7316D0): the TXD slot of default TXD `i`
     fn default_txd_slot(i: i32) -> i32 = cdecl 0x7316D0 => crate::default_txd_slot::default_txd_slot;
     /// CRT `operator new` (0x82119A)
     fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
-    /// `CClothesBuilder::CopyTexture(RwTexture*)` (0x5A5730)
-    fn copy_texture(t: GPtr<u8>) -> GPtr<u8> = cdecl 0x5A5730 => unported;
-    /// `RpClumpForAllAtomics(RpClump*, callback, void*)` (0x749B70)
-    fn rp_clump_for_all_atomics(c: GPtr<u8>, cb: u32, data: GPtr<u8>) -> GPtr<u8> = cdecl 0x749B70 => unported;
-    /// `RwTexDictionaryForAllTextures(RwTexDictionary*, callback, void*)` (0x7F3730)
-    fn rw_tex_dictionary_for_all_textures(d: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> = cdecl 0x7F3730 => unported;
-    /// `RwTextureDestroy(RwTexture*)` (0x7F3820)
-    fn rw_texture_destroy(t: GPtr<u8>) -> u32 = cdecl 0x7F3820 => unported;
-    /// `RwRasterLock(RwRaster*, uint8 level, int32 mode)` (0x7FB2D0)
-    fn rw_raster_lock(r: GPtr<u8>, level: u32, mode: u32) -> GPtr<u8> = cdecl 0x7FB2D0 => unported;
-    /// `RpGeometryTriangleSetVertexIndices(const RpGeometry*, RpTriangle*, uint16, uint16, uint16)` (0x74C690)
-    fn rp_geometry_triangle_set_vertex_indices(gm: GPtr<u8>, tri: GPtr<u8>, v0: u32, v1: u32, v2: u32) -> GPtr<u8> = cdecl 0x74C690 => unported;
     /// `RpSkinGeometrySetSkin(RpGeometry*, RpSkin*)` (0x7C7560)
     fn rp_skin_geometry_set_skin(gm: GPtr<u8>, skin: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C7560 => unported;
     /// `RpSkinCreate(numVertices, numBones, RwMatrixWeights*, uint32* indices, RwMatrix* inverseMatrices)` (0x7C75B0)
     fn rp_skin_create(nv: u32, nb: u32, weights: GPtr<u8>, indices: GPtr<u8>, inv: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C75B0 => unported;
-    /// `RpSkinGetNumBones(RpSkin*)` (0x7C77E0)
-    fn rp_skin_get_num_bones(skin: GPtr<u8>) -> u32 = cdecl 0x7C77E0 => unported;
-    /// `RpSkinGetVertexBoneWeights(RpSkin*)` (0x7C77F0)
-    fn rp_skin_get_vertex_bone_weights(skin: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C77F0 => unported;
     /// `RpSkinGetVertexBoneIndices(RpSkin*)` (0x7C7800)
     fn rp_skin_get_vertex_bone_indices(skin: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C7800 => unported;
-    /// `RpSkinAtomicGetHAnimHierarchy(const RpAtomic*)` (0x7C7540)
-    fn rp_skin_atomic_get_hanim_hierarchy(a: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C7540 => unported;
     /// `RpSkinAtomicSetType(RpAtomic*, RpSkinType)` (0x7C7830)
     fn rp_skin_atomic_set_type(a: GPtr<u8>, ty: u32) -> GPtr<u8> = cdecl 0x7C7830 => unported;
     /// `RpHAnimHierarchyCreateFromHierarchy(RpHAnimHierarchy*, RpHAnimHierarchyFlag, int32 maxKeyFrameSize)` (0x7C4ED0)
@@ -375,12 +363,12 @@ pub fn preprocess_clothes_desc(desc: GPtr<u8>, cutscene: u8) {
                             c = model(b);
                         }
                         let t = get_dependent_texture(b as i32);
-                        set_texture_and_model(desc, d, c, t);
+                        set_texture_and_model(desc, d, c, t as u32);
                     }
                 }
                 2 if model(part) == a => {
                     let t = get_dependent_texture(part as i32);
-                    set_texture_and_model(desc, d, a, t);
+                    set_texture_and_model(desc, d, a, t as u32);
                 }
                 3 if model(part) == a => set_model_hash(desc, 0, b as i32),
                 _ => {}
@@ -611,7 +599,7 @@ pub fn build_bone_index_conversion_table(table: GPtr<u8>, h: GPtr<u8>, i: i32) {
         if id == -1 {
             break;
         }
-        let r = rp_hanim_id_get_index(h, id) as u8;
+        let r = rp_hanim_id_get_index(h, id as u32) as u8;
         table.byte_add(k as isize).write(if r == 0xFF { 0 } else { r });
     }
 }
@@ -988,7 +976,7 @@ pub fn construct_geometry_and_skin_arrays(
         for _ in 0..ntri.max(0) {
             let v = |o: isize| (rd::<u16>(st, o).wrapping_add(base as u16)) as u32;
             let (v2, v1, v0) = (v(4), v(2), v(0));
-            rp_geometry_triangle_set_vertex_indices(geo, tri, v0, v1, v2);
+            rp_geometry_triangle_set_vertex_indices(geo, tri, v0 as u16, v1 as u16, v2 as u16);
             rp_geometry_triangle_set_material(geo, tri, rd::<GPtr<u8>>(mats, 4 * k as isize));
             tri = tri.byte_add(8);
             st = st.byte_add(8);
@@ -1101,7 +1089,7 @@ pub fn create_skinned_clump(bones: GPtr<u8>, dict: GPtr<u8>, new_desc: GPtr<u8>,
     blend_ratios_call(dp, fp, mp, np);
     let (rm, rf) = (mp.read(), fp.read());
     if (texture.read() != 0 || ratios.read() != 0) && cutscene == 0 {
-        rw_tex_dictionary_for_all_textures(dict, 0x5A44A0, 0);
+        rw_tex_dictionary_for_all_textures(dict, 0x5A44A0, GPtr::NULL);
         construct_textures_call(dict, dp.byte_add(0x28), np.read(), rf, rm);
     }
     let mut ms = [0u32; 10];

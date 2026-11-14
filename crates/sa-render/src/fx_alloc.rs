@@ -62,11 +62,10 @@ pub fn prim_dtor(this: GPtr<u8>) -> u32 {
     0
 }
 
+use crate::bindings::init_static_systems;
 orig! {
     /// `FxManager_c::DestroyAllFxSystems()` (0x4A98B0)
     fn destroy_all_fx_systems(this: GPtr<u8>) = thiscall 0x4A98B0 => unported;
-    /// `Fx_c::InitStaticSystems()` (0x49E660)
-    fn init_static_systems(this: GPtr<u8>) = thiscall 0x49E660 => unported;
 }
 
 /// `Fx_c::Reset()` (0x49EAE0): `g_fxMan.DestroyAllFxSystems()`, then (tail jump)

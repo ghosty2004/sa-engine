@@ -29,18 +29,13 @@ orig! {
 }
 
 orig! {
-    /// `CCarAI::AddPoliceCarOccupants` (0x41C070)
-    pub fn add_police_car_occupants(v: GPtr<u8>, always: u8) = cdecl 0x41C070 => crate::carctrl4::add_police_car_occupants;
-}
-
-orig! {
     /// `CCarAI::UpdateCarAI` (0x41DA30)
     pub fn update_car_ai(v: GPtr<u8>) = cdecl 0x41DA30 => crate::carctrl4::update_car_ai;
 }
 
 orig! {
-    /// `thunk_FUN_01565640` (0x420920)
-    pub fn node_eq(a: GPtr<u16>, b: GPtr<u16>) -> u32 = thiscall 0x420920 => crate::pathfind::node_address_eq;
+    /// `thunk_FUN_0156ab40` (0x420950)
+    pub fn node_address_ne(a: GPtr<u16>, b: GPtr<u16>) -> u32 = thiscall 0x420950 => crate::pathfind::node_address_ne;
 }
 
 orig! {
@@ -49,13 +44,8 @@ orig! {
 }
 
 orig! {
-    /// `CPathNode::GetPosition` (0x420A10)
-    pub fn get_position(node: GPtr<u8>, out: GPtr<f32>) -> GPtr<f32> = thiscall 0x420A10 => crate::pathfind::get_position;
-}
-
-orig! {
-    /// `CCamera::IsSphereVisible` (0x420D40)
-    pub fn camera_is_sphere_visible(cam: GPtr<u8>, c: GPtr<f32>, r: f32) -> u8 = thiscall 0x420D40 => unported;
+    /// `CCarCtrl::GetNewVehicleDependingOnCarModel` (0x421440)
+    pub fn get_new_vehicle_call(mi: i32, created_by: u32) -> GPtr<u8> = cdecl 0x421440 => crate::carctrl5::get_new_vehicle_depending_on_car_model;
 }
 
 orig! {
@@ -84,18 +74,38 @@ orig! {
 }
 
 orig! {
+    /// `CCarCtrl::FindLinksToGoWithTheseNodes` (0x42B470)
+    pub fn find_links_to_go_with_these_nodes(v: GPtr<u8>) = cdecl 0x42B470 => crate::carctrl4::find_links_to_go_with_these_nodes;
+}
+
+orig! {
+    /// `CCarCtrl::GenerateOneEmergencyServicesCar` (0x42B7D0)
+    pub fn generate_one_emergency_services_car(model: i32, x: f32, y: f32, z: f32) -> GPtr<u8> = cdecl 0x42B7D0 => unported;
+}
+
+orig! {
     /// `CCarCtrl::ScanForPedDanger` (0x42CE40)
     pub fn scan_for_ped_danger(v: GPtr<u8>) = cdecl 0x42CE40 => crate::carctrl4::scan_for_ped_danger;
 }
 
 orig! {
-    /// `CCarCtrl::JoinCarWithRoadSystemGotoCoors` (0x42F870)
-    pub fn join_car_with_road_system_goto_coors(v: GPtr<u8>, c: GPtr<f32>, a: u32, b: u32) -> u8 = cdecl 0x42F870 => unported;
+    /// `CCarCtrl::PickNextNodeRandomly` (0x42DE80)
+    pub fn pick_next_node_randomly(v: GPtr<u8>) = cdecl 0x42DE80 => crate::carctrl4::pick_next_node_randomly;
+}
+
+orig! {
+    /// `CCarCtrl::PickNextNodeAccordingStrategy` (0x432B10)
+    pub fn pick_next_node_according_strategy(v: GPtr<u8>) -> u8 = cdecl 0x432B10 => crate::carctrl4::pick_next_node_according_strategy;
 }
 
 orig! {
     /// `CCarCtrl::JoinCarWithRoadAccordingToMission` (0x432CB0)
     pub fn join_car_with_road_according_to_mission(v: GPtr<u8>) = cdecl 0x432CB0 => unported;
+}
+
+orig! {
+    /// `CCarCtrl::FindMaximumSpeedForThisCarInTraffic` (0x434400)
+    pub fn find_maximum_speed_call(v: GPtr<u8>) -> f64 = cdecl 0x434400 => crate::carctrl3::find_maximum_speed_abi;
 }
 
 orig! {
@@ -129,8 +139,18 @@ orig! {
 }
 
 orig! {
+    /// `CGangWars::DontCreateCivilians` (0x4439C0)
+    pub fn dont_create_civilians() -> u8 = cdecl 0x4439C0 => crate::gangs::dont_create_civilians;
+}
+
+orig! {
     /// `CGangWars::TellGangMembersTo` (0x444530)
     pub fn tell_gang_members_to(b: u32) = cdecl 0x444530 => unported;
+}
+
+orig! {
+    /// `CGangWars::ReleaseCarsInAttackWave` (0x445E20)
+    pub fn release_cars_in_attack_wave_o() = cdecl 0x445E20 => unported;
 }
 
 orig! {
@@ -139,18 +159,28 @@ orig! {
 }
 
 orig! {
-    /// `CPathFind::AreNodesLoadedForArea` (0x44DD10)
-    pub fn are_nodes_loaded_for_area(this: GPtr<u8>, x0: f32, x1: f32, y0: f32, y1: f32) -> u8 = thiscall 0x44DD10 => crate::pathfind::are_nodes_loaded_for_area;
+    /// `CPathFind::DoPathSearch` (0x4515D0)
+    pub fn do_path_search(this: GPtr<u8>, path_type: u32, ox: f32, oy: f32, oz: f32, origin_addr: u32, tx: f32, ty: f32, tz: f32, out_nodes: GPtr<u32>, out_count: GPtr<i16>, max_nodes: i32, out_distance: GPtr<f32>, max_search: f32, target_addr: GPtr<u32>, max_depth: f32, same_lane: u32, forbidden: u32, allow_water: u32, for_boats: u32) = thiscall 0x4515D0 => crate::pathfind::do_path_search;
 }
 
 orig! {
-    /// `CPathFind::FindNodeClosestToCoors` (0x44F460)
-    pub fn find_node_closest_to_coors(this: GPtr<u8>, out: GPtr<u32>, px: f32, py: f32, pz: f32, node_type: u32, max_dist: f32, low_traffic: u32, unused: u32, unkn: u32, boats: u32, ignore_interior: u32) -> GPtr<u32> = thiscall 0x44F460 => crate::pathfind::find_node_closest_to_coors;
+    /// `CVehicleRecording::StopPlaybackWithIndex` (0x459440)
+    pub fn stop_playback_with_index(i: i32) = cdecl 0x459440 => unported;
 }
 
 orig! {
     /// `CTrafficLights::ShouldCarStopForBridge` (0x49D420)
     pub fn should_car_stop_for_bridge(v: GPtr<u8>) -> u8 = cdecl 0x49D420 => crate::misc2::should_car_stop_for_bridge;
+}
+
+orig! {
+    /// `CTrafficLights::FindTrafficLightTypeFromOrientation` (0x49D4D0)
+    pub fn find_traffic_light_type_from_orientation(a: f32) -> i32 = cdecl 0x49D4D0 => crate::misc::find_traffic_light_type_from_orientation;
+}
+
+orig! {
+    /// `CTrafficLights::FindOrientationForTrafficLightType` (0x49D520)
+    pub fn find_orientation_call(e: GPtr<u8>) -> f64 = cdecl 0x49D520 => crate::misc6::find_orientation_abi;
 }
 
 orig! {
@@ -165,7 +195,7 @@ orig! {
 
 orig! {
     /// `CPad::GetCarGunUpDown` (0x53FC10)
-    pub fn get_car_gun_up_down(pad: GPtr<u8>) -> u32 = thiscall 0x53FC10 => unported;
+    pub fn get_car_gun_up_down(pad: GPtr<u8>) -> i16 = thiscall 0x53FC10 => unported;
 }
 
 orig! {
@@ -185,7 +215,7 @@ orig! {
 
 orig! {
     /// `CPad::CarGunJustDown` (0x53FFE0)
-    pub fn car_gun_just_down(pad: GPtr<u8>) -> u32 = thiscall 0x53FFE0 => unported;
+    pub fn car_gun_just_down(pad: GPtr<u8>) -> i16 = thiscall 0x53FFE0 => unported;
 }
 
 orig! {
@@ -194,18 +224,23 @@ orig! {
 }
 
 orig! {
-    /// `CPopulation::IsSunbather-ModelID` (0x611760)
-    pub fn is_sunbather(m: i32) -> u8 = cdecl 0x611760 => crate::population::is_sunbather;
-}
-
-orig! {
-    /// `CPopulation::AddPedInCar` (0x613A00)
-    pub fn add_ped_in_car(veh: GPtr<u8>, driver: u8, gang: i32, seat: i32, male: u8, criminal: u8) -> GPtr<u8> = cdecl 0x613A00 => crate::population2::add_ped_in_car;
+    /// `CGangs::ChooseGangPedModel` (0x5DE5A0)
+    pub fn choose_gang_ped_model(gang: i16) -> i32 = cdecl 0x5DE5A0 => crate::gangs::choose_gang_ped_model;
 }
 
 orig! {
     /// `CPopulation::PickGangCar` (0x614490)
     pub fn pick_gang_car(gang: i32) -> i32 = cdecl 0x614490 => crate::population::pick_gang_car;
+}
+
+orig! {
+    /// `CPopulation::GeneratePedsAtAttractors` (0x615970)
+    pub fn generate_peds_at_attractors(px: f32, py: f32, pz: f32, a: f32, b: f32, c: f32, d: f32, dm: i32, n: i32) -> i32 = cdecl 0x615970 => crate::population2::generate_peds_at_attractors;
+}
+
+orig! {
+    /// `CDamageManager::SetWheelStatus` (0x6C21A0)
+    pub fn dm_set_wheel_status(dm: GPtr<u8>, wheel: i32, status: u8) = thiscall 0x6C21A0 => unported;
 }
 
 orig! {
@@ -219,18 +254,8 @@ orig! {
 }
 
 orig! {
-    /// `CVehicle::AddVehicleUpgrade` (0x6E3290)
-    pub fn add_vehicle_upgrade(v: GPtr<u8>, mi: i32) = thiscall 0x6E3290 => unported;
-}
-
-orig! {
-    /// `CBoat::Constructor` (0x6F2940)
-    pub fn boat_ctor(this: GPtr<u8>, mi: i32, created_by: u32) -> GPtr<u8> = thiscall 0x6F2940 => unported;
-}
-
-orig! {
-    /// `CTrain::Constructor` (0x6F6030)
-    pub fn train_ctor(this: GPtr<u8>, mi: i32, created_by: u32) -> GPtr<u8> = thiscall 0x6F6030 => unported;
+    /// `cHandlingDataMgr::GetBoatPointer` (0x6F5300)
+    pub fn get_boat_pointer(mgr: GPtr<u8>, id: u8) -> GPtr<u8> = thiscall 0x6F5300 => unported;
 }
 
 orig! {
@@ -240,7 +265,17 @@ orig! {
 
 orig! {
     /// `CShadows::StoreShadowToBeRendered-Texture` (0x707390)
-    pub fn store_shadow_to_be_rendered(ty: u32, tex: u32, pos: GPtr<u8>, fx: u32, fy: u32, sx: u32, sy: u32, r: u32, g: u32, b: u32, a: u32, zdist: u32, water: u32, scale: u32, rt: u32, buildings: u32) = cdecl 0x707390 => unported;
+    pub fn store_shadow_to_be_rendered(ty: u32, tex: GPtr<u8>, pos: GPtr<u8>, fx: u32, fy: u32, sx: u32, sy: u32, r: u32, g: u32, b: u32, a: u32, zdist: u32, water: u32, scale: u32, rt: GPtr<u8>, buildings: u32) = cdecl 0x707390 => unported;
+}
+
+orig! {
+    /// `CCullZones::FindTunnelAttributesForCoors` (0x72D9F0)
+    pub fn find_tunnel_attributes_for_coors(x: f32, y: f32, z: f32) -> u32 = cdecl 0x72D9F0 => unported;
+}
+
+orig! {
+    /// `CCullZones::FindZoneWithStairsAttributeForPlayer` (0x72DAD0)
+    pub fn cull_zones_find_zone_with_stairs_for_player() -> GPtr<u8> = cdecl 0x72DAD0 => unported;
 }
 
 orig! {

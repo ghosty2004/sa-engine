@@ -2,18 +2,16 @@
 //! class (vtable 0x858E68) and `CEventPotentialWalkIntoObject`'s destructor (0x4AE670) (batch `std13-ai-1`). Ported from the 1.0 US bytes. Unverified (docs/verify/HOWTO.md).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
 use sa_core::bindings::entity_clean_up_old_reference;
 use sa_world::bindings::event_acquaintance_ped_dtor as event_base_dtor;
 use sa_world::bindings::get_ped_flag as ped_type_flag;
-orig! {
-    /// `CAcquaintance::GetAcquaintances(int type)` (0x608970, `ret 4`)
-    fn acquaintance_get(a: GPtr<u8>, t: u32) -> u32 = thiscall 0x608970 => unported;
-}
+use sa_world::bindings::acquaintance_get;
 
 use sa_world::world::common::entity_pos as pos_of;
 
@@ -34,7 +32,7 @@ pub fn find_respected_friend_in_inform_range(this: GPtr<u8>) -> u8 {
         }
         let e = rd::<GPtr<u8>>(this, 0x130 + 4 * i as isize);
         i += 1;
-        if !e.is_null() && mask & ped_type_flag(rd::<u32>(e, 0x598)) != 0 {
+        if !e.is_null() && mask & ped_type_flag(rd::<u32>(e, 0x598) as i32) != 0 {
             let b = pos_of(e);
             let a = pos_of(rd::<GPtr<u8>>(this, 0));
             let dx = x(rd::<f32>(a, 0)).fsub_m(rd::<f32>(b, 0));
@@ -59,7 +57,7 @@ pub fn find_respected_friend_in_inform_range(this: GPtr<u8>) -> u8 {
        route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn event_dtor_420f30(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x858E68);
-    event_base_dtor(this);
+    event_base_dtor(this.cast::<u32>());
 }
 
 /// `CEventPotentialWalkIntoObject::~CEventPotentialWalkIntoObject()` (0x4AE670, thiscall, SEH frame; catalogue
@@ -71,7 +69,7 @@ pub fn walk_into_object_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x85AF18);
     let e = rd::<GPtr<u8>>(this, 0x14);
     if !e.is_null() {
-        entity_clean_up_old_reference(e, this.byte_add(0x14));
+        entity_clean_up_old_reference(e, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x14)));
     }
     wr::<u32>(this, 0, 0x85AB38);
 }

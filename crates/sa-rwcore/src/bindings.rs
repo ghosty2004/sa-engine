@@ -14,8 +14,33 @@ orig! {
 }
 
 orig! {
+    /// `_rwD3D9CheckValidTextureFormat` (0x4CBDE0)
+    pub fn check_valid_texture_format_call(f: u32) -> u32 = cdecl 0x4CBDE0 => crate::raster::d3d9_check_valid_texture_format;
+}
+
+orig! {
+    /// `thunk_FUN_004cbf8a` (0x4CBF80)
+    pub fn auto_mipmap(f: u32) -> u32 = cdecl 0x4CBF80 => crate::d3d9rast::check_auto_mipmap_texture_format;
+}
+
+orig! {
     /// `D3DResourceSystem::CreateTexture` (0x730510)
     pub fn d3d_resource_create_texture(w: u32, h: u32, levels: u32, f: u32, out: GPtr<u8>) -> i32 = cdecl 0x730510 => unported;
+}
+
+orig! {
+    /// `RpAtomicGetWorldBoundingSphere` (0x749330)
+    pub fn atomic_get_world_bounding_sphere(atomic: GPtr<u8>) -> GPtr<u8> = cdecl 0x749330 => crate::atomic::get_world_bounding_sphere;
+}
+
+orig! {
+    /// `RpClumpForAllCameras` (0x749BB0)
+    pub fn clump_for_all_cameras(c: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> = cdecl 0x749BB0 => crate::clump::for_all_cameras;
+}
+
+orig! {
+    /// `_rpClumpAtomicStreamRead` (0x74B060)
+    pub fn atomic_stream_read_call(s: GPtr<u8>, fl: GPtr<u8>, gl: GPtr<u8>) -> GPtr<u8> = cdecl 0x74B060 => crate::clumpstream::atomic_stream_read;
 }
 
 orig! {
@@ -26,11 +51,6 @@ orig! {
 orig! {
     /// `RpAtomicSetStreamRightsCallBack` (0x74BE50)
     pub fn atomic_set_stream_rights_cb(id: u32, cb: u32) -> i32 = cdecl 0x74BE50 => unported;
-}
-
-orig! {
-    /// `_rpMaterialListDeinitialize` (0x74E150)
-    pub fn material_list_deinitialize(l: GPtr<u8>) -> GPtr<u8> = cdecl 0x74E150 => crate::material::material_list_deinitialize;
 }
 
 orig! {
@@ -54,8 +74,33 @@ orig! {
 }
 
 orig! {
+    /// `RpAtomicGetWorld` (0x751050)
+    pub fn atomic_get_world(a: GPtr<u8>) -> GPtr<u8> = cdecl 0x751050 => crate::atomic::get_world;
+}
+
+orig! {
     /// `RpLightRegisterPlugin` (0x751D60)
     pub fn light_register_plugin(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x751D60 => crate::light::rp_light_register_plugin;
+}
+
+orig! {
+    /// `_rpD3D9VertexDeclarationInstV3d` (0x752AD0)
+    pub fn inst_v3d(ty: u32, dst: u32, src: u32, n: i32, stride: u32) -> u32 = cdecl 0x752AD0 => crate::d3d9inst::inst_v3d;
+}
+
+orig! {
+    /// `_rpD3D9VertexDeclarationInstV2d` (0x7544E0)
+    pub fn inst_v2d(ty: u32, dst: u32, src: u32, n: i32, stride: u32) -> u32 = cdecl 0x7544E0 => crate::d3d9inst::inst_v2d;
+}
+
+orig! {
+    /// `_rpD3D9VertexDeclarationInstColor` (0x754AE0)
+    pub fn inst_color(dst: u32, src: u32, n: i32, stride: u32) -> u32 = cdecl 0x754AE0 => crate::d3d9inst::inst_color;
+}
+
+orig! {
+    /// `_rpD3D9VertexDeclarationInstTangent` (0x754E20)
+    pub fn inst_tangent(ty: u32, dst: u32, pos: u32, uv: u32, hdr: u32, stride: u32) -> u32 = cdecl 0x754E20 => crate::d3d9inst::inst_tangent;
 }
 
 orig! {
@@ -74,13 +119,13 @@ orig! {
 }
 
 orig! {
-    /// `RxNodeDefinitionGetD3D9AtomicAllInOne` (0x7582E0)
-    pub fn node_def_atomic() -> GPtr<u8> = cdecl 0x7582E0 => unported;
+    /// `RpD3D9GeometryGetUsageFlags` (0x7588D0)
+    pub fn geometry_get_usage_flags(geo: GPtr<u8>) -> u32 = cdecl 0x7588D0 => crate::d3d9misc::geometry_get_usage_flags;
 }
 
 orig! {
-    /// `RpD3D9GeometryGetUsageFlags` (0x7588D0)
-    pub fn geometry_get_usage_flags(geo: GPtr<u8>) -> u32 = cdecl 0x7588D0 => crate::d3d9misc::geometry_get_usage_flags;
+    /// `_rpMeshHeaderCreate` (0x758920)
+    pub fn mesh_header_alloc(size: u32) -> GPtr<u8> = cdecl 0x758920 => crate::mesh::rp_mesh_header_create;
 }
 
 orig! {
@@ -109,6 +154,11 @@ orig! {
 }
 
 orig! {
+    /// `_rpMeshOptimise` (0x75D970)
+    pub fn mesh_optimise_call(bm: GPtr<u8>, flags: u32) -> GPtr<u8> = cdecl 0x75D970 => crate::worldcreate::rp_mesh_optimise;
+}
+
+orig! {
     /// `RpWorldSetDefaultSectorPipeline` (0x75E270)
     pub fn set_default_sector_pipeline(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x75E270 => unported;
 }
@@ -125,12 +175,27 @@ orig! {
 
 orig! {
     /// `RpWorldSectorRegisterPlugin` (0x761C90)
-    pub fn rp_world_sector_register_plugin(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x761C90 => unported;
+    pub fn rp_world_sector_register_plugin(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x761C90 => crate::worldplugin::rp_world_sector_register_plugin;
 }
 
 orig! {
     /// `RpWorldSectorRegisterPluginStream` (0x761CC0)
-    pub fn rp_world_sector_register_plugin_stream(id: u32, read: u32, write: u32, size: u32) -> i32 = cdecl 0x761CC0 => unported;
+    pub fn rp_world_sector_register_plugin_stream(id: u32, read: u32, write: u32, size: u32) -> i32 = cdecl 0x761CC0 => crate::worldplugin::rp_world_sector_register_plugin_stream;
+}
+
+orig! {
+    /// `RpHAnimHierarchyCreate` (0x7C4C30)
+    pub fn hanim_hierarchy_create(n: i32, node_flags: GPtr<u32>, node_ids: GPtr<i32>, flags: u32, key_size: i32) -> GPtr<u8> = cdecl 0x7C4C30 => crate::hanim_hierarchy::rp_hanim_hierarchy_create;
+}
+
+orig! {
+    /// `FUN_007c70c0` (0x7C70C0)
+    pub fn bones_used_call(skin: GPtr<u8>, idx: GPtr<u8>, w: GPtr<u8>, used: GPtr<u8>, count: GPtr<u32>, n: u32) = cdecl 0x7C70C0 => crate::skin_stream::rp_skin_get_bones_used;
+}
+
+orig! {
+    /// `_rpSkinInitialize` (0x7C8740)
+    pub fn skin_initialize(geom: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C8740 => crate::skin::rp_skin_initialize;
 }
 
 orig! {
@@ -139,13 +204,43 @@ orig! {
 }
 
 orig! {
+    /// `_rpSkinAtomicSetPipeline` (0x7C89B0)
+    pub fn atomic_set_pipeline(a: GPtr<u8>, ty: u32) -> GPtr<u8> = cdecl 0x7C89B0 => crate::skin::rp_skin_atomic_set_pipeline;
+}
+
+orig! {
+    /// `_rpSkinSplitDataDestroy` (0x7C8B10)
+    pub fn skin_split_data_destroy(skin: GPtr<u8>) -> u32 = cdecl 0x7C8B10 => crate::skin::rp_skin_split_data_destroy;
+}
+
+orig! {
+    /// `RtAnimAnimationDestroy` (0x7CCF10)
+    pub fn animation_destroy(a: GPtr<u8>) -> u32 = cdecl 0x7CCF10 => crate::hanim_stream::rt_anim_animation_destroy;
+}
+
+orig! {
+    /// `RtAnimInterpolatorCreate` (0x7CD520)
+    pub fn interpolator_create(n: i32, kfs: i32) -> GPtr<u8> = cdecl 0x7CD520 => crate::hanim_stream::rt_anim_interpolator_create;
+}
+
+orig! {
+    /// `RtAnimInterpolatorDestroy` (0x7CD590)
+    pub fn interpolator_destroy(i: GPtr<u8>) = cdecl 0x7CD590 => crate::hanim_stream::rt_anim_interpolator_destroy;
+}
+
+orig! {
+    /// `_rwStreamReadChunkHeader` (0x7ED0F0)
+    pub fn read_chunk_header_call(s: GPtr<u8>, ty: GPtr<u32>, len: GPtr<u32>, ver: GPtr<u32>, build: GPtr<u32>) -> u32 = cdecl 0x7ED0F0 => crate::stream::read_chunk_header;
+}
+
+orig! {
     /// `_rwStreamWriteVersionedChunkHeader` (0x7ED270)
     pub fn stream_write_chunk_header(s: GPtr<u8>, ty: u32, size: u32, version: u32, build: u32) -> GPtr<u8> = cdecl 0x7ED270 => unported;
 }
 
 orig! {
-    /// `RwStreamFindChunk` (0x7ED2D0)
-    pub fn rw_stream_find_chunk_call(s: GPtr<u8>, ty: u32, len: GPtr<u32>, ver: GPtr<u32>) -> u32 = cdecl 0x7ED2D0 => crate::stream::rw_stream_find_chunk;
+    /// `RwStreamWriteInt32` (0x7ED460)
+    pub fn rw_stream_write_int32(s: GPtr<u8>, ints: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x7ED460 => unported;
 }
 
 orig! {
@@ -164,8 +259,28 @@ orig! {
 }
 
 orig! {
+    /// `RwCameraRegisterPlugin` (0x7EE450)
+    pub fn camera_register_plugin(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x7EE450 => crate::camera::register_plugin;
+}
+
+orig! {
     /// `RwFrameDirty` (0x7F0340)
     pub fn frame_dirty(f: GPtr<u8>) -> u32 = cdecl 0x7F0340 => crate::frame::dirty;
+}
+
+orig! {
+    /// `RwFrameDestroyHierarchy` (0x7F08A0)
+    pub fn frame_destroy_hierarchy(f: GPtr<u8>) -> u32 = cdecl 0x7F08A0 => crate::frame::destroy_hierarchy;
+}
+
+orig! {
+    /// `_rwMatrixOrthogonalError` (0x7F14A0)
+    pub fn matrix_orthogonal_error(m: GPtr<u8>) -> f64 = cdecl 0x7F14A0 => crate::matrix::orthogonal_error_f64;
+}
+
+orig! {
+    /// `_rwMatrixNormalError` (0x7F1500)
+    pub fn matrix_normal_error(m: GPtr<u8>) -> f64 = cdecl 0x7F1500 => crate::matrix::normal_error_f64;
 }
 
 orig! {
@@ -174,18 +289,23 @@ orig! {
 }
 
 orig! {
+    /// `_rwDeviceSystemRequest` (0x7F2AB0)
+    pub fn device_system_request(dev: GPtr<u8>, req: i32, out: GPtr<u8>, inp: GPtr<u8>, num: i32) -> i32 = cdecl 0x7F2AB0 => crate::engine::device_system_request;
+}
+
+orig! {
     /// `RwEngineRegisterPlugin` (0x7F2BB0)
-    pub fn rw_engine_register_plugin(size: i32, id: u32, open: u32, close: u32) -> i32 = cdecl 0x7F2BB0 => unported;
+    pub fn rw_engine_register_plugin(size: i32, id: u32, open: u32, close: u32) -> i32 = cdecl 0x7F2BB0 => crate::plugin::engine_register_plugin;
 }
 
 orig! {
     /// `RwEngineGetPluginOffset` (0x7F2BE0)
-    pub fn engine_get_plugin_offset(id: u32) -> i32 = cdecl 0x7F2BE0 => unported;
+    pub fn engine_get_plugin_offset(id: u32) -> i32 = cdecl 0x7F2BE0 => crate::plugin::engine_get_plugin_offset;
 }
 
 orig! {
     /// `RwTextureSetMaskName` (0x7F3910)
-    pub fn rw_texture_set_mask_name(t: GPtr<u8>, name: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F3910 => unported;
+    pub fn rw_texture_set_mask_name(t: GPtr<u8>, name: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F3910 => crate::texture::rw_texture_set_mask_name;
 }
 
 orig! {
@@ -214,6 +334,16 @@ orig! {
 }
 
 orig! {
+    /// `_rwD3D9VertexBufferManagerClose` (0x7F5D20)
+    pub fn manager_close_call() = cdecl 0x7F5D20 => crate::d3d9vb::vertex_buffer_manager_close;
+}
+
+orig! {
+    /// `WindowedModeHooks::RenderWare::D3D9SetPresentParameters` (0x7F6CB0)
+    pub fn set_present_parameters(mode: u32, flags: u32, create_flags: u32) = cdecl 0x7F6CB0 => crate::d3d9sys::set_present_parameters;
+}
+
+orig! {
     /// `RwD3D9SetStreamSource` (0x7FA030)
     pub fn set_stream_source(stream: u32, vb: u32, offset: u32, stride: u32) = cdecl 0x7FA030 => crate::d3d9dev::set_stream_source;
 }
@@ -239,6 +369,21 @@ orig! {
 }
 
 orig! {
+    /// `RwRasterUnlockPalette` (0x7FAFF0)
+    pub fn rw_raster_unlock_palette(r: GPtr<u8>) -> GPtr<u8> = cdecl 0x7FAFF0 => crate::raster::rw_raster_unlock_palette;
+}
+
+orig! {
+    /// `RwRasterRegisterPlugin` (0x7FB0B0)
+    pub fn raster_register_plugin(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x7FB0B0 => crate::raster::rw_raster_register_plugin;
+}
+
+orig! {
+    /// `RwRasterLockPalette` (0x7FB0E0)
+    pub fn rw_raster_lock_palette(r: GPtr<u8>, mode: u32) -> u32 = cdecl 0x7FB0E0 => crate::raster::rw_raster_lock_palette;
+}
+
+orig! {
     /// `_rwD3D9Im2DRenderOpen` (0x7FB480)
     pub fn im2d_render_open() -> u32 = cdecl 0x7FB480 => unported;
 }
@@ -249,18 +394,18 @@ orig! {
 }
 
 orig! {
-    /// `RwD3D9SetRenderState` (0x7FC2D0)
-    pub fn set_render_state(state: u32, value: u32) -> u32 = cdecl 0x7FC2D0 => crate::d3d9state::set_render_state;
-}
-
-orig! {
-    /// `RwD3D9SetTextureStageState` (0x7FC340)
-    pub fn set_tss(stage: u32, ty: u32, value: u32) = cdecl 0x7FC340 => crate::d3d9state::set_texture_stage_state;
+    /// `FUN_007fdcd0` (0x7FDCD0)
+    pub fn set_texture_internal(r: GPtr<u8>, stage: u32) -> u32 = cdecl 0x7FDCD0 => crate::d3d9state::set_texture_internal;
 }
 
 orig! {
     /// `_rwD3D9GetCurrentTexture` (0x7FDE50)
     pub fn get_current_texture(stage: u32) -> u32 = cdecl 0x7FDE50 => crate::d3d9state::get_current_texture;
+}
+
+orig! {
+    /// `FUN_007fed70` (0x7FED70)
+    pub fn clamp_raster_size(w: GPtr<i32>, h: GPtr<i32>, flags: u32) = cdecl 0x7FED70 => crate::d3d9state::clamp_raster_size;
 }
 
 orig! {
@@ -270,7 +415,7 @@ orig! {
 
 orig! {
     /// `_rwFreeListCreate` (0x801980)
-    pub fn free_list_create(size: u32, per_block: u32, align: u32, hint: u32) -> GPtr<u8> = cdecl 0x801980 => unported;
+    pub fn free_list_create(size: u32, per_block: u32, align: u32, hint: u32) -> GPtr<u8> = cdecl 0x801980 => crate::memory::rw_freelist_create;
 }
 
 orig! {
@@ -280,7 +425,12 @@ orig! {
 
 orig! {
     /// `RwFreeListDestroy` (0x801B80)
-    pub fn free_list_destroy(fl: GPtr<u8>) -> u32 = cdecl 0x801B80 => unported;
+    pub fn free_list_destroy(fl: GPtr<u8>) -> u32 = cdecl 0x801B80 => crate::memory::rw_freelist_destroy;
+}
+
+orig! {
+    /// `RwFreeListPurge` (0x801E00)
+    pub fn free_list_purge(fl: GPtr<u8>) -> i32 = cdecl 0x801E00 => crate::memory::rw_freelist_purge;
 }
 
 orig! {
@@ -289,13 +439,13 @@ orig! {
 }
 
 orig! {
-    /// `RwImageDestroy` (0x802740)
-    pub fn image_destroy(img: GPtr<u8>) -> u32 = cdecl 0x802740 => crate::image::rw_image_destroy;
+    /// `RwImageRead` (0x802FD0)
+    pub fn rw_image_read(name: GPtr<u8>) -> GPtr<u8> = cdecl 0x802FD0 => crate::image2::rw_image_read;
 }
 
 orig! {
-    /// `RwImageAllocatePixels` (0x8027A0)
-    pub fn image_allocate_pixels(img: GPtr<u8>) -> GPtr<u8> = cdecl 0x8027A0 => crate::image::rw_image_allocate_pixels;
+    /// `RwImageSetGamma` (0x803FE0)
+    pub fn image_set_gamma(gamma: f32) -> i32 = cdecl 0x803FE0 => crate::imagemod::rw_image_set_gamma;
 }
 
 orig! {
@@ -309,38 +459,18 @@ orig! {
 }
 
 orig! {
+    /// `FUN_008050c0` (0x8050C0)
+    pub fn node_destroy_call(node: u32, pipe: u32) -> u32 = cdecl 0x8050C0 => crate::rxcompile::pipeline_node_destroy;
+}
+
+orig! {
     /// `RxPipelineExecute` (0x805710)
     pub fn rx_pipeline_execute(p: GPtr<u8>, data: GPtr<u8>, reset: i32) -> GPtr<u8> = cdecl 0x805710 => unported;
 }
 
 orig! {
-    /// `RxPipelineCreate` (0x8057B0)
-    pub fn rx_pipeline_create() -> GPtr<u8> = cdecl 0x8057B0 => unported;
-}
-
-orig! {
-    /// `_rxPipelineDestroy` (0x805820)
-    pub fn rx_pipeline_destroy(p: GPtr<u8>) = cdecl 0x805820 => unported;
-}
-
-orig! {
-    /// `RxLockedPipeUnlock` (0x805F40)
-    pub fn rx_locked_pipe_unlock(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x805F40 => unported;
-}
-
-orig! {
-    /// `RxPipelineLock` (0x806990)
-    pub fn rx_pipeline_lock(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x806990 => unported;
-}
-
-orig! {
-    /// `RxLockedPipeAddFragment` (0x806BE0)
-    pub fn rx_locked_pipe_add_fragment(p: GPtr<u8>, first: u32, node: GPtr<u8>, end: u32) -> GPtr<u8> = cdecl 0x806BE0 => unported;
-}
-
-orig! {
     /// `RwResourcesFreeResEntry` (0x807DE0)
-    pub fn resources_free_res_entry(e: GPtr<u8>) -> i32 = cdecl 0x807DE0 => unported;
+    pub fn resources_free_res_entry(e: GPtr<u8>) -> u32 = cdecl 0x807DE0 => crate::memory::rw_resources_free_res_entry;
 }
 
 orig! {
@@ -389,8 +519,78 @@ orig! {
 }
 
 orig! {
+    /// `_rwPluginRegistryInvokeRights` (0x808AB0)
+    pub fn plugin_invoke_rights(reg: GPtr<u8>, id: u32, obj: GPtr<u8>, data: u32) -> GPtr<u8> = cdecl 0x808AB0 => crate::plugin::registry_invoke_rights;
+}
+
+orig! {
+    /// `_rwPluginRegistryGetSize` (0x808B00)
+    pub fn plugin_get_size(reg: GPtr<u8>, obj: GPtr<u8>) -> u32 = cdecl 0x808B00 => unported;
+}
+
+orig! {
     /// `RwBBoxCalculate` (0x808F60)
     pub fn bbox_calculate(bx: GPtr<u8>, verts: GPtr<u8>, n: i32) -> GPtr<u8> = cdecl 0x808F60 => crate::matrix::rw_bbox_calculate;
+}
+
+orig! {
+    /// `FUN_008099f0` (0x8099F0)
+    pub fn heap_new_entry(heap: GPtr<u8>) -> GPtr<u8> = cdecl 0x8099F0 => crate::rxpipeline::rx_heap_new_entry;
+}
+
+orig! {
+    /// `FUN_00809bf0` (0x809BF0)
+    pub fn heap_add_block(block: GPtr<u8>, prev: GPtr<u8>, heap: GPtr<u8>) -> i32 = cdecl 0x809BF0 => crate::rxpipeline::rx_heap_add_block;
+}
+
+orig! {
+    /// `_rwIm3DDestroyTransformPipeline` (0x80A110)
+    pub fn destroy_transform_pipeline_call(p: GPtr<u8>) = cdecl 0x80A110 => crate::im3d::destroy_transform_pipeline;
+}
+
+orig! {
+    /// `_rwIm3DDestroyRenderPipelines` (0x80A140)
+    pub fn destroy_render_pipelines_call(p: GPtr<u8>) = cdecl 0x80A140 => crate::im3d::destroy_render_pipelines;
+}
+
+orig! {
+    /// `RwImageCreateResample` (0x80CD10)
+    pub fn rw_image_create_resample(img: GPtr<u8>, w: i32, h: i32) -> GPtr<u8> = cdecl 0x80CD10 => crate::image::rw_image_create_resample_port;
+}
+
+orig! {
+    /// `_rwD3D9Im3DRenderClose` (0x80DFB0)
+    pub fn d3d9_im3d_render_close_call() = cdecl 0x80DFB0 => crate::im3d::d3d9_im3d_render_close;
+}
+
+orig! {
+    /// `_rwD3D9Im3DRenderOpen` (0x80E020)
+    pub fn d3d9_im3d_render_open_call() -> u32 = cdecl 0x80E020 => crate::im3d::d3d9_im3d_render_open;
+}
+
+orig! {
+    /// `_rpMatFXMaterialDataDestroyEffects` (0x810CA0)
+    pub fn destroy_effects_call(d: GPtr<u8>) -> GPtr<u8> = cdecl 0x810CA0 => crate::matfx::rp_matfx_material_data_destroy_effects;
+}
+
+orig! {
+    /// `RpMatFXMaterialSetBumpMapTexture` (0x812160)
+    pub fn set_bump_map_texture(m: GPtr<u8>, t: GPtr<u8>) -> GPtr<u8> = cdecl 0x812160 => crate::matfx::rp_matfx_material_set_bump_map_texture;
+}
+
+orig! {
+    /// `_rpMatFXAtomicSetPipeline` (0x816260)
+    pub fn atomic_set_pipeline_call(a: GPtr<u8>) -> GPtr<u8> = cdecl 0x816260 => crate::matfx::rp_matfx_atomic_set_pipeline;
+}
+
+orig! {
+    /// `_rpMatFXWorldSectorSetPipeline` (0x816270)
+    pub fn matfx_world_sector_set_pipeline(s: GPtr<u8>) -> GPtr<u8> = cdecl 0x816270 => crate::matfx::rp_matfx_world_sector_set_pipeline;
+}
+
+orig! {
+    /// `FUN_00816280` (0x816280)
+    pub fn matfx_setup_dual_state(slot: GPtr<u8>, state: u32) -> u32 = cdecl 0x816280 => crate::matfx_stream::matfx_setup_dual_render_state;
 }
 
 orig! {

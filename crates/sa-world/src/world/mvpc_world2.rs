@@ -22,7 +22,7 @@ const ENTRY_EXIT_POOL: usize = 0x96A7D8;
 
 use crate::bindings::entry_exit_delete_one;
 use crate::bindings::get_clump_alpha;
-use crate::bindings::rw_matrix_scale;
+use sa_core::bindings::rw_matrix_scale;
 use crate::bindings::set_clump_alpha;
 use crate::bindings::simple_transform_update_rw_matrix;
 use crate::bindings::transform_from_object_space;
@@ -34,28 +34,24 @@ use sa_core::bindings::rp_atomic_set_frame;
 use sa_core::bindings::rw_frame_destroy;
 use sa_core::bindings::rw_frame_update_objects;
 use sa_stream::bindings::get_2d_effect;
-use sa_stream::bindings::load_line;
-use sa_stream::bindings::quad_ctor as quad_tree_ctor;
-use sa_stream::bindings::quad_operator_new as quad_tree_new;
+use sa_core::bindings::load_line;
+use sa_core::bindings::quad_ctor as quad_tree_ctor;
+use sa_core::bindings::quad_operator_new as quad_tree_new;
+use crate::bindings::find_nearest_entry_exit;
+use sa_core::bindings::entity_pre_render;
+use sa_core::bindings::entry_exit_pool_ctor;
+use sa_core::bindings::file_close;
+use sa_core::bindings::get_model_info as model_info_by_name;
+use sa_core::bindings::open_file as file_open;
 orig! {
     /// `CScriptsForBrains::MarkAttractorScriptBrainWithThisNameAsNoLongerNeeded(const char*)` (0x46AAE0, `ret 4`)
     fn mark_attractor_brain_not_needed(b: u32, name: GPtr<u8>) = thiscall 0x46AAE0 => unported;
     /// `Fx_c::DestroyEntityFx(CEntity*)` (0x4A1280, `ret 4`)
     fn fx_destroy_entity_fx(fx: u32, e: GPtr<u8>) = thiscall 0x4A1280 => unported;
-    /// `CEntryExitManager::FindNearestEntryExit(const CVector2D&, float range, int32 ignoreIndex)` (0x43F4B0)
-    fn find_nearest_entry_exit(pos: GPtr<u8>, range: u32, ignore: i32) -> i32 = cdecl 0x43F4B0 => unported;
     /// `CObject::GetLightingFromCollisionBelow()` (0x59FD00)
     fn get_lighting_from_collision_below(o: GPtr<u8>) = thiscall 0x59FD00 => unported;
     /// `CObject::DoBurnEffect()` (0x59FB50)
     fn do_burn_effect(o: GPtr<u8>) = thiscall 0x59FB50 => unported;
-    /// `CEntity::PreRender()` (0x535FA0)
-    fn entity_pre_render(e: GPtr<u8>) = thiscall 0x535FA0 => crate::world::entity_prerender::pre_render;
-    /// `CPool<CEntryExit>::CPool(int32 size, const char* name)` (0x43F720, a `.HOODLUM` stub, `ret 8`)
-    fn entry_exit_pool_ctor(p: GPtr<u8>, size: i32, name: u32) -> GPtr<u8> = thiscall 0x43F720 => unported;
-    /// `CFileMgr::OpenFile(const char*, const char*)` (0x538900)
-    fn file_open(path: u32, mode: u32) -> GPtr<u8> = cdecl 0x538900 => unported;
-    /// `CFileMgr::CloseFile(FILE*)` (0x5389D0)
-    fn file_close(f: GPtr<u8>) -> u32 = cdecl 0x5389D0 => unported;
     /// CRT `sscanf` (0x8220AD), one target
     fn sscanf1(s: GPtr<u8>, fmt: u32, a: GPtr<u8>) -> i32 = cdecl 0x8220AD => unported;
     /// CRT `sscanf` (0x8220AD), two targets
@@ -82,8 +78,6 @@ orig! {
     #[allow(clippy::too_many_arguments)]
     fn furniture_group_add_furniture(g: GPtr<u8>, sub: u32, model: u32, a: u32, b: u32, c: u32, d: u32) -> u8
         = thiscall 0x5C0230 => unported;
-    /// `CModelInfo::GetModelInfo(const char* name, int32* index)` (0x4C5940)
-    fn model_info_by_name(name: GPtr<u8>, idx: GPtr<u8>) -> GPtr<u8> = cdecl 0x4C5940 => unported;
 }
 
 /// `FurnitureManager_c::LoadFurniture()` (0x5C0280, thiscall): reads `data\furnitur.dat` line by line
@@ -103,7 +97,7 @@ pub fn furniture_load_furniture(this: GPtr<u8>) -> u32 {
     let base = local(&mut frame);
     // address S - k of the original frame
     let at = |k: isize| base.byte_add(0x1A0 - k);
-    let f = file_open(0x86AF80, 0x859C6C);
+    let f = file_open(GPtr::from_addr(0x86AF80), GPtr::from_addr(0x859C6C));
     let mut group: i32 = -1;
     let mut sub: u32 = 0xFFFF_FFFF;
     let mut line = load_line(f);
@@ -138,7 +132,7 @@ pub fn furniture_load_furniture(this: GPtr<u8>) -> u32 {
         }
         line = load_line(f);
     }
-    file_close(f)
+    file_close(f) as u32
 }
 
 /// `CEntity::DestroyEffects()` (0x533BF0, thiscall): for every 2d effect of the model info (count +0xD,
@@ -179,7 +173,7 @@ pub fn destroy_effects(this: GPtr<u8>) {
                 let mut wpos = [0u32; 3];
                 transform_from_object_space(this, local(&mut wpos), fx);
                 let mut p2 = [wpos[0], wpos[1]];
-                let idx = find_nearest_entry_exit(local(&mut p2), 0x3FC0_0000, -1);
+                let idx = find_nearest_entry_exit(GPtr::<u8>::cast::<u32>(local(&mut p2)), 0x3FC0_0000, -1);
                 if idx != -1 {
                     let pool = g::<GPtr<u8>>(ENTRY_EXIT_POOL).read();
                     let flags = rd::<GPtr<u8>>(pool, 4);

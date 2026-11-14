@@ -7,7 +7,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 use sa_world::world::common::{CAM_ENTITY, CAM_VECTOR};
 
@@ -42,11 +42,7 @@ const P075: u32 = 0x3F40_0000;
 const FOUR: u32 = 0x4080_0000;
 const TWENTY: u32 = 0x41A0_0000;
 
-orig! {
-    /// `CWorld::ProcessVerticalLine(const CVector&, float, CColPoint&, CEntity*&, bool buildings, bool
-    /// vehicles, bool peds, bool objects, bool dummies, bool seeThrough, CStoredCollPoly*)` (0x5674E0)
-    pub fn process_vertical_line(p: GPtr<f32>, z: f32, cp: GPtr<u8>, e: GPtr<GPtr<u8>>, b: u32, v: u32, pe: u32, o: u32, d: u32, st: u32, poly: u32) -> u8 = cdecl 0x5674E0 => unported;
-}
+pub use sa_world::bindings::world_process_vertical_line as process_vertical_line;
 
 fn light(i: i32) -> GPtr<u8> {
     GPtr::from_addr(LIGHTS_BASE).byte_add(i as isize * 0x30)
@@ -175,17 +171,17 @@ pub fn process_vertical_line_using_cache(px: f32, py: f32, pz: f32, out: GPtr<u3
     let mut cp = [0u32; 0x2C / 4];
     let mut ent = GPtr::<u8>::NULL;
     let hit = process_vertical_line(
-        GPtr::from_raw(p.as_mut_ptr()),
+        GPtr::<f32>::cast::<u8>(GPtr::from_raw(p.as_mut_ptr())),
         z,
         GPtr::from_raw(cp.as_mut_ptr().cast()),
-        GPtr::from_raw(&mut ent),
+        GPtr::<GPtr<u8>>::cast::<u8>(GPtr::from_raw(&mut ent)),
         1,
         0,
         0,
         0,
         1,
         0,
-        0,
+        GPtr::NULL,
     );
     if hit == 0 {
         return 0;

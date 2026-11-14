@@ -13,30 +13,24 @@ use sa_math::x87::X87;
 
 use crate::common::{at, f32_of, ftol32, g, jp, k, rd, wr, x, xi};
 
-use crate::bindings::init_sprite_buffer;
+use sa_world::bindings::init_sprite_buffer;
 use crate::bindings::render_buffered_one_xlu_sprite;
-use crate::bindings::rw_im3d_render_indexed_primitive;
-use crate::bindings::rw_im3d_transform;
+use sa_world::bindings::rw_im3d_render_indexed_primitive;
+use sa_world::bindings::rw_im3d_transform;
 use sa_stream::bindings::placeable_allocate_matrix;
 use sa_stream::bindings::simple_transform_update_matrix;
+use sa_core::bindings::calc_screen_coors;
+use sa_core::bindings::matrix_mul_vec;
+use sa_world::bindings::rw_im3d_end;
+use sa_world::bindings::sprite_flush_sprite_buffer as flush_sprite_buffer;
+use sa_world::bindings::world_process_vertical_line as process_vertical_line;
 orig! {
-    /// `CSprite::FlushSpriteBuffer()` (0x70CF20)
-    fn flush_sprite_buffer() = cdecl 0x70CF20 => crate::sprite::flush_sprite_buffer;
     /// `RwRenderStateSet(state, value)` (`RwGlobals` +0x20)
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `operator*(const CMatrix&, const CVector&)` (0x59C890, result through a hidden pointer)
-    fn matrix_mul_vec(out: GPtr<f32>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<f32> = cdecl 0x59C890 => unported;
-    /// `CWorld::ProcessVerticalLine(const CVector&, float, CColPoint&, CEntity*&, bool buildings, bool
-    /// vehicles, bool peds, bool objects, bool dummies, bool seeThrough, CStoredCollPoly*)` (0x5674E0)
-    fn process_vertical_line(p: GPtr<f32>, z: f32, cp: GPtr<u8>, e: GPtr<u32>, b: u32, v: u32, pe: u32, o: u32, d: u32, st: u32, poly: u32) -> u8 = cdecl 0x5674E0 => unported;
-    /// `CSprite::CalcScreenCoors(const RwV3d&, RwV3d* out, float* w, float* h, bool, bool)` (0x70CE30)
-    fn calc_screen_coors(inp: GPtr<f32>, out: GPtr<f32>, w: GPtr<f32>, h: GPtr<f32>, a: u32, b: u32) -> u8 = cdecl 0x70CE30 => unported;
     /// The sun-reflection fade of a point `(x, y, z, r)` (0x6FBA20, ST0)
     fn sun_reflection_fade(px: f32, py: f32, pz: f32, r: f32) -> f64 = cdecl 0x6FBA20 => unported;
     /// `CVector::Normalise()` (0x59C910)
     fn vector_normalise(v: GPtr<f32>) = thiscall 0x59C910 => unported;
-    /// `RwIm3DEnd()` (0x7EF520)
-    fn rw_im3d_end() -> u32 = cdecl 0x7EF520 => unported;
 }
 
 /// `TempBufferVerticesStored`, `TempBufferIndicesStored`, `aTempBufferIndices`, `TempBufferRenderVertices`.
@@ -134,17 +128,17 @@ pub fn render_reflections() {
         };
         let line = |pos: &mut [f32; 3], cp: &mut [u8; 0x2C], ent: &mut u32| {
             process_vertical_line(
-                GPtr::from_raw(pos.as_mut_ptr()),
+                GPtr::<f32>::cast::<u8>(GPtr::from_raw(pos.as_mut_ptr())),
                 -1000.0,
                 GPtr::from_raw(cp.as_mut_ptr()),
-                GPtr::from_raw(ent as *mut u32),
+                GPtr::<u32>::cast::<u8>(GPtr::from_raw(ent as *mut u32)),
                 1,
                 0,
                 0,
                 0,
                 1,
                 0,
-                0,
+                GPtr::NULL,
             ) != 0
         };
         let store = |pos: &[f32; 3], cp: &[u8; 0x2C]| {
@@ -383,8 +377,8 @@ pub fn render_sun_reflection() {
     rw_render_state_set(0xC, 1);
     let tex = g::<GPtr<u8>>(0xC3_E010).read();
     rw_render_state_set(1, rd::<u32>(tex, 0));
-    if !rw_im3d_transform(TEMP_RENDER_VERTICES, g::<u32>(TEMP_VERTICES_STORED).read(), 0, 1).is_null() {
-        rw_im3d_render_indexed_primitive(3, TEMP_BUFFER_INDICES, g::<u32>(TEMP_INDICES_STORED).read());
+    if !rw_im3d_transform(GPtr::from_addr(TEMP_RENDER_VERTICES as usize), g::<u32>(TEMP_VERTICES_STORED).read(), GPtr::NULL, 1).is_null() {
+        rw_im3d_render_indexed_primitive(3, GPtr::from_addr(TEMP_BUFFER_INDICES as usize), (g::<u32>(TEMP_INDICES_STORED).read()) as i32);
         rw_im3d_end();
     }
     rw_render_state_set(8, 1);
@@ -402,18 +396,14 @@ pub const HOOKS: &[HookReg] = &[HOOK_RENDER_REFLECTIONS, HOOK_RENDER_SUN_REFLECT
 
 // ---- WRITER-RENDER-BIG: CCoronas::Render ----
 
-use crate::bindings::calc_screen_coors as cr_calc_screen_coors;
-use crate::bindings::cr_render_one_xlu_sprite_rotate_aspect;
+use sa_core::bindings::calc_screen_coors as cr_calc_screen_coors;
+use sa_world::bindings::cr_render_one_xlu_sprite_rotate_aspect;
+use sa_stream::bindings::placeable_allocate_matrix as cr_allocate_matrix;
+use sa_stream::bindings::simple_transform_update_matrix as cr_update_matrix;
+use sa_world::bindings::process_line_of_sight as cr_process_line_of_sight;
 orig! {
-    /// `CPlaceable::AllocateMatrix()` (0x54F560)
-    fn cr_allocate_matrix(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x54F560 => sa_world::world::entity::allocate_matrix;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*) const` (0x54F1B0)
-    fn cr_update_matrix(this: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => crate::mvpd_unk::simple_transform_update_matrix;
     /// `CVector::Normalise()` (0x59C910)
     fn cr_normalise(v: GPtr<sa_math::vector::CVector>) = thiscall 0x59C910 => sa_world::collision::data::normalise_port;
-    /// `CWorld::ProcessLineOfSight(origin, target, colPoint, entity, buildings, vehicles, peds, objects,
-    /// dummies, seeThrough, cameraIgnore, shootThrough)` (0x56BA00)
-    fn cr_process_line_of_sight(o: GPtr<u8>, t: GPtr<u8>, cp: GPtr<u8>, out: GPtr<u8>, b: u8, v: u8, p: u8, ob: u8, d: u8, see: u8, cam: u8, shoot: u8) -> u8 = cdecl 0x56BA00 => sa_world::world::mvpc_world1::process_line_of_sight;
     /// `CSprite::RenderBufferedOneXLUSprite2D(x, y, w, h, const RwRGBA&, int16 intensity, uint8 alpha)` (0x70F440)
     fn cr_render_buffered_one_xlu_sprite_2d(px: f32, py: f32, w: f32, h: f32, colour: GPtr<u8>, intensity: u32, alpha: u32) = cdecl 0x70F440 => crate::mvpd_r3::render_buffered_one_xlu_sprite_2d;
 }
@@ -607,7 +597,7 @@ pub fn coronas_render() {
                 let size = rd::<f32>(c, 0x14);
                 let sh = x(scale).fmul_m(size).fmul_m(h).to_f32();
                 let sw = x(w).fmul_m(size).to_f32();
-                cr_render_one_xlu_sprite_rotate_aspect(f(out[0]), f(out[1]), f(out[2]), sw, sh, cr, cg, cb, intensity, rz20, 0.0, 0xFF);
+                cr_render_one_xlu_sprite_rotate_aspect(f(out[0]), f(out[1]), f(out[2]), sw, sh, cr, cg, cb, intensity, f32::from_bits(rz20), 0.0, 0xFF);
             }
         }
 

@@ -123,6 +123,20 @@ pub mod call {
     pub use crate::bindings::streaming_request_model as request_model;
     pub use crate::bindings::world_add;
     pub use crate::bindings::world_remove;
+    pub use crate::bindings::automobile_ctor;
+    pub use crate::bindings::bike_ctor;
+    pub use crate::bindings::bmx_ctor;
+    pub use crate::bindings::boat_ctor;
+    pub use crate::bindings::convert_to_dummy_object;
+    pub use crate::bindings::heli_ctor;
+    pub use crate::bindings::load_data_from_work_buffer as load_data;
+    pub use crate::bindings::monster_truck_ctor;
+    pub use crate::bindings::object_ctor_5a1d70 as object_ctor;
+    pub use crate::bindings::plane_ctor;
+    pub use crate::bindings::quad_bike_ctor;
+    pub use crate::bindings::save_data_to_work_buffer as save_data;
+    pub use crate::bindings::trailer_ctor;
+    pub use crate::bindings::train_ctor;
     orig! {
         /// `operator new[]` (0x821195: `jmp operator new`)
         pub fn operator_new_array(size: u32) -> GPtr<u8> = cdecl 0x821195 => unported;
@@ -165,14 +179,6 @@ pub mod call {
         pub fn get_ped_ref(p: GPtr<PedSlot>) -> i32 = cdecl 0x54FF60 => crate::pool::get_ped_ref;
         pub fn get_vehicle_ref(p: GPtr<VehicleSlot>) -> i32 = cdecl 0x54FFC0 => crate::pool::get_vehicle_ref;
         pub fn get_object_ref(p: GPtr<ObjectSlot>) -> i32 = cdecl 0x550020 => crate::pool::get_object_ref;
-        /// `CGenericGameStorage::SaveDataToWorkBuffer(void*, int32)`
-        pub fn save_data(p: GPtr<u8>, size: u32) = cdecl 0x5D1270 => unported;
-        /// `CGenericGameStorage::LoadDataFromWorkBuffer(void*, int32)`
-        pub fn load_data(p: GPtr<u8>, size: u32) = cdecl 0x5D1300 => unported;
-        /// `CPopulation::ConvertToDummyObject(CObject*)`
-        pub fn convert_to_dummy_object(obj: GPtr<u8>) = cdecl 0x614670 => unported;
-        /// `CObject::CObject(int32 modelIndex, bool create)` (the bool pushed as a dword)
-        pub fn object_ctor(this: GPtr<u8>, model: i32, create: u32) -> GPtr<u8> = thiscall 0x5A1D70 => unported;
         /// `CProjectileInfo::RemoveIfThisIsAProjectile(CObject*)` (bool in AL)
         pub fn remove_if_projectile(obj: GPtr<u8>) -> u8 = cdecl 0x739A40 => unported;
         /// virtual slot 0: the scalar deleting destructor (`this, flags`)
@@ -185,16 +191,6 @@ pub mod call {
         pub fn ped_load(p: GPtr<u8>) -> u32 = thiscall vslot 0x64 => unported;
         /// `CVehicle::operator new(size, poolRef)`
         pub fn vehicle_new_at(size: u32, pool_ref: i32) -> GPtr<u8> = cdecl 0x6E2D60 => unported;
-        pub fn boat_ctor(this: GPtr<u8>, model: i32, created_by: i32) -> GPtr<u8> = thiscall 0x6F2940 => unported;
-        pub fn train_ctor(this: GPtr<u8>, model: i32, created_by: i32) -> GPtr<u8> = thiscall 0x6F6030 => unported;
-        pub fn bike_ctor(this: GPtr<u8>, model: i32, created_by: i32) -> GPtr<u8> = thiscall 0x6BF430 => unported;
-        pub fn bmx_ctor(this: GPtr<u8>, model: i32, created_by: i32) -> GPtr<u8> = thiscall 0x6BF820 => unported;
-        pub fn monster_truck_ctor(this: GPtr<u8>, model: i32, created_by: i32) -> GPtr<u8> = thiscall 0x6C8D60 => unported;
-        pub fn quad_bike_ctor(this: GPtr<u8>, model: i32, created_by: i32) -> GPtr<u8> = thiscall 0x6CE370 => unported;
-        pub fn heli_ctor(this: GPtr<u8>, model: i32, created_by: i32) -> GPtr<u8> = thiscall 0x6C4190 => unported;
-        pub fn plane_ctor(this: GPtr<u8>, model: i32, created_by: i32) -> GPtr<u8> = thiscall 0x6C8E20 => unported;
-        pub fn trailer_ctor(this: GPtr<u8>, model: i32, created_by: i32) -> GPtr<u8> = thiscall 0x6D03A0 => unported;
-        pub fn automobile_ctor(this: GPtr<u8>, model: i32, created_by: i32, setup_suspension: i32) -> GPtr<u8> = thiscall 0x6B0A90 => unported;
         /// `CPed::operator new(size, poolRef)`
         pub fn ped_new_at(size: u32, pool_ref: i32) -> GPtr<u8> = cdecl 0x5E4730 => unported;
     }
@@ -983,7 +979,7 @@ pub fn load_vehicle_pool() -> u8 {
             .wrapping_index(model)
             .read();
         let ty = at::<u32>(mi, 0x3C).read().wrapping_sub(1);
-        type Ctor = fn(GPtr<u8>, i32, i32) -> GPtr<u8>;
+        type Ctor = fn(GPtr<u8>, i32, u32) -> GPtr<u8>;
         let make = |size: u32, ctor: Ctor| {
             let m = call::vehicle_new_at(size, r);
             if m.is_null() {

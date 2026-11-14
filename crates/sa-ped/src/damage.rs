@@ -5,6 +5,7 @@
 //! `m_weaponType`, +0x10 `m_bSpeak` (bool). `CPedDamageResponse` (0xC): +0 damage to health, +4 damage to
 //! armour, +8 flags.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::crt::rand;
 use sa_core::orig::at_site;
@@ -17,9 +18,8 @@ const _: () = assert!(sa_core::layouts::size::CPedDamageResponseCalculator == 0x
 pub use sa_world::bindings::are_friends;
 pub use sa_world::bindings::intel_get_task_fighting as get_task_fighting;
 pub use sa_world::bindings::ped_groups_are_in_same_group as are_in_same_group;
+pub use sa_stream::bindings::ped_is_player;
 orig! {
-    /// `CPed::IsPlayer` (0x5DF8F0)
-    pub fn ped_is_player(ped: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => crate::ped::is_player;
     /// `CLocalisation::KillPeds` (0x56D2C0)
     pub fn localisation_kill_peds() -> u8 = cdecl 0x56D2C0 => unported;
     /// `std::min<float>(a, b)` instance (0x404330): `b` unless `a < b`
@@ -197,9 +197,10 @@ pub fn account_for_ped_damage_stats(this: GPtr<u8>, ped: GPtr<u8>, _resp: GPtr<u
 
 use sa_world::bindings::event_damage_dtor;
 use sa_world::bindings::player_ped_annoy_player_ped as player_on_hit_60a040;
+use sa_world::bindings::event_damage_ctor;
+use sa_world::bindings::membership_is_member as group_notify_damaged;
+use sa_world::bindings::ped_say;
 orig! {
-    /// `CPed::Say(uint16 phrase, uint32 startTime, float volume, bool, bool, bool)` (0x5EFFE0)
-    fn ped_say(ped: GPtr<u8>, phrase: u32, start: u32, vol: f32, a: u32, b: u32, c: u32) -> u32 = thiscall 0x5EFFE0 => unported;
     /// `CPedDamageResponseCalculator::ComputeWillKillPed(CPed*, CPedDamageResponse&, bool)` (0x4B3210)
     fn compute_will_kill_ped_call(this: GPtr<u8>, ped: GPtr<u8>, r: GPtr<u8>, speak: u32) = thiscall 0x4B3210 => compute_will_kill_ped;
     /// `CPedDamageResponseCalculator::AccountForPedDamageStats` (0x4AD430)
@@ -208,12 +209,8 @@ orig! {
     fn account_for_ped_armour_call(this: GPtr<u8>, ped: GPtr<u8>, r: GPtr<u8>) = thiscall 0x4AD550 => account_for_ped_armour;
     /// `CPedDamageResponseCalculator::ComputeWillForceDeath` (0x4AD610)
     fn compute_will_force_death_call(this: GPtr<u8>, ped: GPtr<u8>, r: GPtr<u8>) -> u8 = thiscall 0x4AD610 => compute_will_force_death;
-    /// `CEventDamage::CEventDamage(CEntity*, uint32, eWeaponType, ePedPieceTypes, uint8, bool, bool)` (0x4AD830)
-    fn event_damage_ctor(e: GPtr<u8>, src: GPtr<u8>, t: u32, wt: u32, part: u32, dir: u32, a: u32, b: u32) = thiscall 0x4AD830 => unported;
     /// `CPlayerPed::MakeGroupRespondToPlayerTakingDamage(CEventDamage&)` (0x60A110)
     fn make_group_respond_to_player_taking_damage(p: GPtr<u8>, e: GPtr<u8>) = thiscall 0x60A110 => unported;
-    /// `CPedGroupMembership`-style notification of the damaging player's group (0x5F6A10, on group + 0x...)
-    fn group_notify_damaged(g: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x5F6A10 => unported;
 }
 
 fn say(ped: GPtr<u8>, phrase: u32) {
@@ -356,7 +353,7 @@ pub fn compute_damage_response(this: GPtr<u8>, ped: GPtr<u8>, r: GPtr<u8>, speak
         return;
     }
     wr::<GPtr<u8>>(ped, 0x764, src);
-    crate::ped::register_reference(src, ped.byte_add(0x764).cast());
+    crate::ped::register_reference(src, GPtr::<GPtr<u8>>::cast::<u8>(ped.byte_add(0x764).cast()));
     wr::<u32>(ped, 0x768, g::<u32>(0xB7CB84).read());
     let s = rd::<GPtr<u8>>(this, 0);
     if rd::<u8>(s, 0x36) & 7 == 3 && ped_is_player(s) != 0 {

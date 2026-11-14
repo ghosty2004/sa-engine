@@ -3,6 +3,7 @@
 //! bytes win). Unverified (docs/verify/HOWTO.md).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -11,7 +12,7 @@ use crate::common::*;
 use crate::bindings::bbox_planes as geometry_compute_entity_bbox_planes;
 use crate::bindings::compute_entity_bounding_box_corners as geometry_compute_entity_bbox_corners;
 use crate::bindings::evasive_step_ctor;
-use crate::bindings::hands_up_ctor;
+use sa_world::bindings::hands_up_ctor;
 use sa_core::bindings::general_get_radian_angle_between_points;
 use sa_core::bindings::general_limit_radian_angle;
 use sa_core::bindings::general_random_int_in_range;
@@ -26,12 +27,12 @@ use sa_world::bindings::player_ped_annoy_player_ped;
 use sa_world::bindings::sequence_add_task;
 use sa_world::bindings::sequence_ctor;
 use sa_world::bindings::shake_fist_ctor;
+use sa_world::bindings::dive_and_get_up_ctor as evasive_dive_and_get_up_ctor;
 orig! {
     /// `CEvent::GetEventType` (vtable +4)
     fn v_event_type(e: GPtr<u8>) -> i32 = thiscall vslot 0x4 => unported;
     /// `CPedGeometryAnalyser::ComputeMoveDirToAvoidEntity(const CPed&, CEntity&, CVector& out)` (0x5F3730)
     fn geometry_compute_move_dir_to_avoid_entity(ped: GPtr<u8>, e: GPtr<u8>, out: GPtr<u8>) = cdecl 0x5F3730 => unported;
-    fn evasive_dive_and_get_up_ctor(t: GPtr<u8>, veh: GPtr<u8>, time: i32, dir: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x6536B0 => unported;
 }
 
 /// `g_ikChainMan`
@@ -80,9 +81,9 @@ fn heading_to_vehicle(this: GPtr<u8>, veh: GPtr<u8>) -> f32 {
     let pp = pos_ptr(ped(this));
     let vp = pos_ptr(veh);
     let a = f32_of(X87::from_f64_exact(general_get_radian_angle_between_points(
-        rd::<u32>(vp, 0), rd::<u32>(vp, 4), rd::<u32>(pp, 0), rd::<u32>(pp, 4),
+        f32::from_bits(rd::<u32>(vp, 0)), f32::from_bits(rd::<u32>(vp, 4)), f32::from_bits(rd::<u32>(pp, 0)), f32::from_bits(rd::<u32>(pp, 4)),
     )));
-    f32_of(X87::from_f64_exact(general_limit_radian_angle(a.to_bits())))
+    f32_of(X87::from_f64_exact(general_limit_radian_angle(f32::from_bits(a.to_bits()))))
 }
 
 fn x87_abs(v: X87) -> X87 {
@@ -181,7 +182,7 @@ pub fn handler_compute_vehicle_potential_collision_response(this: GPtr<u8>, e: G
             return;
         }
         player_ped_annoy_player_ped(p, 0);
-        ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), S_PLAYER_LOOK, ped(this), veh, 1500, -1, 0, 1, 0x3E80_0000, 500, 3, 0);
+        ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), GPtr::from_addr(S_PLAYER_LOOK as usize), ped(this), veh, 1500, -1i32 as u32, GPtr::NULL, 1, 0x3E80_0000, 500, 3, 0);
         let pd = ped(this);
         let w = rd::<u32>(pd, 0x5A0 + 0x1C * isize::from(rd::<i8>(pd, 0x718)));
         if [0, 5, 0x16, 0x17, 0x1C].contains(&w) {
@@ -220,7 +221,7 @@ pub fn handler_compute_vehicle_potential_collision_response(this: GPtr<u8>, e: G
                 let h = heading_to_vehicle(this, veh);
                 wr::<f32>(ped(this), 0x55C, h);
                 wr::<f32>(ped(this), 0x558, h);
-                placeable_set_heading(ped(this), h.to_bits());
+                placeable_set_heading(ped(this), f32::from_bits(h.to_bits()));
                 set(this, new_task(0x34, |t| hands_up_ctor(t, 3000)));
             } else {
                 set(this, new_task(0x24, |t| evasive_dive_and_get_up_ctor(t, veh, 0, dirp, 1)));
@@ -262,18 +263,18 @@ pub fn handler_compute_vehicle_potential_collision_response(this: GPtr<u8>, e: G
         let seq = new_task(0x40, sequence_ctor);
         set(this, seq);
         let h = heading_to_vehicle(this, veh);
-        sequence_add_task(seq, new_task(0x18, |t| achieve_heading_ctor(t, h.to_bits(), gu(HEADING_A), gu(HEADING_B))));
+        sequence_add_task(seq, new_task(0x18, |t| achieve_heading_ctor(t, f32::from_bits(h.to_bits()), gu(HEADING_A), gu(HEADING_B))));
         sequence_add_task(seq, new_task(0x10, shake_fist_ctor));
         return;
     }
     if n < 200 {
         let h = heading_to_vehicle(this, veh);
-        set(this, new_task(0x18, |t| achieve_heading_ctor(t, h.to_bits(), gu(HEADING_A), gu(HEADING_B))));
-        ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), S_PED_LOOK, ped(this), veh, 1300, -1, 0, 1, 0x3E80_0000, 500, 3, 0);
+        set(this, new_task(0x18, |t| achieve_heading_ctor(t, f32::from_bits(h.to_bits()), gu(HEADING_A), gu(HEADING_B))));
+        ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), GPtr::from_addr(S_PED_LOOK as usize), ped(this), veh, 1300, -1i32 as u32, GPtr::NULL, 1, 0x3E80_0000, 500, 3, 0);
         return;
     }
     if n < 400 {
-        ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), S_PED_LOOK, ped(this), veh, 1300, -1, 0, 1, 0x3E80_0000, 500, 3, 0);
+        ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), GPtr::from_addr(S_PED_LOOK as usize), ped(this), veh, 1300, -1i32 as u32, GPtr::NULL, 1, 0x3E80_0000, 500, 3, 0);
     }
 }
 

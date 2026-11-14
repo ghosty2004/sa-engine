@@ -66,18 +66,16 @@ fn atan_xy(x: f32, y: f32) -> X87 {
     X87::from_f64_exact(crate::common::get_atan_of_xy(x, y))
 }
 
+use sa_world::bindings::process_line_of_sight;
 orig! {
     /// `CVector::Normalise()` (0x59C910, thiscall)
     fn vector_normalise(v: GPtr<f32>) = thiscall 0x59C910 => unported;
-    /// `CWorld::ProcessLineOfSight(const CVector&, const CVector&, CColPoint&, CEntity*&, buildings,
-    /// vehicles, peds, objects, dummies, seeThrough, ignoreCamera, shootThrough)` (0x56BA00)
-    fn process_line_of_sight(s: GPtr<f32>, e: GPtr<f32>, cp: GPtr<u8>, ent: GPtr<u8>, b: u32, v: u32, p: u32, o: u32, d: u32, st: u32, ci: u32, sh: u32) -> u8 = cdecl 0x56BA00 => unported;
 }
 
 /// `ProcessLineOfSight(from, to, cp, ent, 1, 0, 0, 0, 0, 0, 0, 1)` (buildings only, shoot-through), as
 /// every call of FlyAIHeliInCertainDirection makes it.
 fn los_buildings(from: GPtr<f32>, to: GPtr<f32>, cp: GPtr<u8>, ent: GPtr<u8>) -> bool {
-    process_line_of_sight(from, to, cp, ent, 1, 0, 0, 0, 0, 0, 0, 1) != 0
+    process_line_of_sight(from.cast::<u8>(), to.cast::<u8>(), cp, ent, 1, 0, 0, 0, 0, 0, 0, 1) != 0
 }
 
 #[inline]
@@ -579,16 +577,15 @@ pub fn fly_ai_heli_to_target_fixed_orientation(heli: GPtr<u8>, orientation: f32,
 // ---------------------------------------------------------------------------------------------------------
 // Parking
 
-use crate::bindings::get_position;
+use sa_world::bindings::get_position;
 use sa_core::bindings::task_new;
 use sa_world::bindings::task_complex_ctor;
 use sa_world::bindings::tm_set_task as task_manager_set_task;
+use sa_world::bindings::leave_any_car_ctor as task_leave_any_car_ctor;
 orig! {
     /// `CCarCtrl::SteerAICarWithPhysicsHeadingForTarget(CVehicle*, CPhysical*, float x, float y, float*, float*, float*, bool*)` (0x433280)
     #[allow(clippy::too_many_arguments)]
     fn steer_heading_for_target(v: GPtr<u8>, target: GPtr<u8>, x: f32, y: f32, steer: GPtr<f32>, gas: GPtr<f32>, brake: GPtr<f32>, hb: GPtr<u8>) = cdecl 0x433280 => crate::carctrl3::steer_ai_car_with_physics_heading_for_target;
-    /// `CTaskComplexLeaveAnyCar::CTaskComplexLeaveAnyCar(int32 delay, bool sensible, bool forceGetOut)` (stub 0x421150, thiscall, returns `this`)
-    fn task_leave_any_car_ctor(t: GPtr<u8>, delay: i32, sensible: u32, force: u32) -> GPtr<u8> = thiscall 0x421150 => unported;
     /// `CCollision::DistToMathematicalLine(const CVector*, const CVector*, const CVector*)` (0x412970, ST0)
     fn dist_to_mathematical_line(a: GPtr<f32>, b: GPtr<f32>, p: GPtr<f32>) -> f64 = cdecl 0x412970 => dist_to_mathematical_line_abi;
 }
@@ -804,13 +801,12 @@ pub fn steer_ai_car_park_perpendicular(
 // ---------------------------------------------------------------------------------------------------------
 // Steering along a vehicle recording
 
+use crate::bindings::stop_playback_with_index;
 orig! {
     /// `CCarCtrl::FindAngleToWeaveThroughTraffic(CVehicle*, CPhysical*, float, float, float)` (0x4325C0, ST0)
     fn find_angle_to_weave_call(veh: GPtr<u8>, ignore: GPtr<u8>, heading: f32, target: f32, range: f32) -> f64 = cdecl 0x4325C0 => find_angle_to_weave_abi;
     /// `CCarCtrl::FindMaxSteerAngle(CVehicle*)` (0x427FE0, ST0)
     fn find_max_steer_angle(v: GPtr<u8>) -> f64 = cdecl 0x427FE0 => find_max_steer_angle_abi;
-    /// `CVehicleRecording::StopPlaybackWithIndex(int32)` (0x459440)
-    fn stop_playback_with_index(i: i32) = cdecl 0x459440 => unported;
 }
 
 #[cfg_attr(sa_phase_a, allow(dead_code))]
@@ -965,14 +961,11 @@ pub fn steer_ai_car_with_physics_follow_pre_recorded_path(
 // ---------------------------------------------------------------------------------------------------------
 // Cars on rails dragged to a point
 
+use sa_world::bindings::process_line_sphere;
+use sa_world::bindings::world_process_vertical_line as process_vertical_line;
 orig! {
-    /// `CCollision::ProcessLineSphere(const CColLine&, const CColSphere&, CColPoint&, float& depth)` (0x412AA0)
-    fn process_line_sphere(line: GPtr<u8>, sphere: GPtr<u8>, cp: GPtr<u8>, depth: GPtr<f32>) -> u8 = cdecl 0x412AA0 => unported;
     /// `CCollision::IsStoredPolyStillValidVerticalLine(const CVector&, float zEnd, CColPoint&, CStoredCollPoly*)` (0x414D70)
     fn is_stored_poly_still_valid_vertical_line(p: GPtr<f32>, z: f32, cp: GPtr<u8>, poly: GPtr<u8>) -> u8 = cdecl 0x414D70 => unported;
-    /// `CWorld::ProcessVerticalLine(const CVector&, float zEnd, CColPoint&, CEntity*&, buildings, vehicles, peds,
-    /// objects, dummies, seeThrough, CStoredCollPoly*)` (0x5674E0)
-    fn process_vertical_line(p: GPtr<f32>, z: f32, cp: GPtr<u8>, ent: GPtr<u8>, b: u32, v: u32, pe: u32, o: u32, d: u32, st: u32, poly: GPtr<u8>) -> u8 = cdecl 0x5674E0 => unported;
     /// `CVector::CrossProduct(CVector* out, const CVector* a, const CVector* b)` (0x59C730, `a x b`, returns `out`)
     fn cross_product(out: GPtr<f32>, a: GPtr<f32>, b: GPtr<f32>) -> GPtr<f32> = cdecl 0x59C730 => unported;
     /// `CVehicle` vtable slot 0xD4 `GetHeightAboveRoad()` (ST0)
@@ -1010,10 +1003,10 @@ fn drag_ground_probe(
     }
     v[2] = x_(z0).fadd_m(k(0x3FC0_0000)).to_f32();
     let z_end = x_(z0).fsub_m(2.0).to_f32();
-    let mut hit = process_vertical_line(vp(&mut v), z_end, cpp, entp, 1, 0, 0, 0, 0, 0, poly) != 0;
+    let mut hit = process_vertical_line(GPtr::<f32>::cast::<u8>(vp(&mut v)), z_end, cpp, entp, 1, 0, 0, 0, 0, 0, poly) != 0;
     if !hit {
         v[2] = z_high;
-        hit = process_vertical_line(vp(&mut v), z_low, cpp, entp, 1, 0, 0, 0, 0, 0, poly) != 0;
+        hit = process_vertical_line(GPtr::<f32>::cast::<u8>(vp(&mut v)), z_low, cpp, entp, 1, 0, 0, 0, 0, 0, poly) != 0;
     }
     if !hit {
         return None;
@@ -1077,9 +1070,9 @@ pub fn drag_car_to_point(veh: GPtr<u8>, target: GPtr<f32>) {
     let mut cp = [0u32; 11]; // [T+0xF0]
     let mut depth = 1.0f32; // [T+0x68]
     if process_line_sphere(
-        GPtr::from_raw(line.as_mut_ptr()).cast(),
-        GPtr::from_raw(sphere.as_mut_ptr()).cast(),
-        GPtr::from_raw(cp.as_mut_ptr()).cast(),
+        GPtr::<u8>::cast::<f32>(GPtr::from_raw(line.as_mut_ptr()).cast()),
+        GPtr::<u8>::cast::<f32>(GPtr::from_raw(sphere.as_mut_ptr()).cast()),
+        GPtr::<u8>::cast::<f32>(GPtr::from_raw(cp.as_mut_ptr()).cast()),
         GPtr::from_raw(&mut depth as *mut f32),
     ) != 0
     {
@@ -1686,7 +1679,7 @@ pub fn deal_with_bend_racing(
 }
 
 use crate::bindings::car_has_reason_to_stop;
-use crate::bindings::node_eq;
+use sa_world::bindings::node_eq;
 use crate::bindings::node_lt;
 use crate::bindings::remove_one_path_node;
 use crate::bindings::should_car_stop_for_bridge;
@@ -1835,7 +1828,7 @@ pub fn steer_ai_car_with_physics_follow_path_racing(
             );
             if count.read() > 0 {
                 remove_one_path_node(veh.byte_add(0x390));
-                if count.read() > 0 && node_eq(veh.byte_add(0x394).cast(), nodes_p.cast()) != 0 {
+                if count.read() > 0 && node_eq(GPtr::<u16>::cast::<u8>(veh.byte_add(0x394).cast()), GPtr::<u16>::cast::<u8>(nodes_p.cast())) as u32 != 0 {
                     remove_one_path_node(veh.byte_add(0x390));
                 }
             }

@@ -32,6 +32,8 @@ const DEFAULT_SIZE: usize = 0x8E2414;
 
 pub use crate::bindings::free_list_create;
 pub use crate::bindings::free_list_destroy;
+pub use crate::bindings::dynamic_vertex_buffer_create as dyn_create_call;
+pub use crate::bindings::manager_close_call;
 orig! {
     /// `IDirect3DDevice9::CreateVertexBuffer` (+0x68)
     pub fn dev_create_vertex_buffer(dev: GPtr<u8>, len: u32, usage: u32, fvf: u32, pool: u32, out: GPtr<u32>, shared: u32) -> i32 = stdcall vslot 0x68 => unported;
@@ -43,12 +45,8 @@ orig! {
     pub fn com_release(obj: GPtr<u8>) -> u32 = stdcall vslot 0x8 => unported;
     /// `D3DResourceSystem::CreateIndexBuffer(numIndices, format, out)` (0x7306A0)
     pub fn resource_create_index_buffer(num: u32, fmt: u32, out: u32) -> i32 = cdecl 0x7306A0 => unported;
-    /// `RwD3D9DynamicVertexBufferCreate(size, out)` (0x7F5A00)
-    pub fn dyn_create_call(size: u32, out: GPtr<u32>) -> u32 = cdecl 0x7F5A00 => dynamic_vertex_buffer_create;
     /// `_rwD3D9DynamicVertexBufferManagerCreate()` (0x7F5940)
     pub fn dyn_manager_create_call() -> u32 = cdecl 0x7F5940 => dynamic_vertex_buffer_manager_create;
-    /// `_rwD3D9VertexBufferManagerClose()` (0x7F5D20)
-    pub fn manager_close_call() = cdecl 0x7F5D20 => vertex_buffer_manager_close;
 }
 
 use sa_core::field::gr32 as gu;

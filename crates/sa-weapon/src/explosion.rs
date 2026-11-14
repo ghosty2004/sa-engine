@@ -6,6 +6,7 @@
 //! +0x28 active (counter), +0x29 active counter, +0x2A makes sound, +0x2C created time, +0x30 ...,
 //! +0x34 ..., +0x38 visibility / damage, +0x3C ... (the fields written below are as the bytes do).
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -24,6 +25,12 @@ sa_core::globals! {
 pub use sa_core::bindings::vector_normalise as normalise;
 pub use sa_world::bindings::vec_mul_assign;
 pub use sa_world::bindings::vector_add_assign as vec_add_assign;
+pub use crate::bindings::try_to_start_fire_at_coors;
+pub use sa_world::bindings::add_explosion as add_explosion_call;
+pub use sa_world::bindings::fx_create_system as create_fx_system;
+pub use sa_world::bindings::set_cars_on_fire;
+pub use sa_world::bindings::set_world_on_fire;
+pub use sa_world::bindings::world_process_vertical_line as process_vertical_line;
 orig! {
     /// `CWorld::TriggerExplosion(const CVector&, float radius, float visibleDistance, CEntity* victim,
     /// CEntity* creator, bool processVehicleBombTimer, float damage)` (0x56B790); raw words as pushed
@@ -32,20 +39,8 @@ orig! {
     /// bool shadows, CEntity*)` (0x7000E0)
     #[allow(clippy::too_many_arguments)]
     pub fn add_light(ty: u32, px: f32, py: f32, pz: f32, dx: u32, dy: u32, dz: u32, radius: f32, r: f32, g: f32, b: f32, fog: u32, shadows: u32, e: GPtr<u8>) = cdecl 0x7000E0 => unported;
-    /// `CCreepingFire::TryToStartFireAtCoors(CVector, int8, bool, bool, float)` (0x53A450)
-    pub fn try_to_start_fire_at_coors(x: f32, y: f32, z: f32, gens: i8, a: u8, script: u8, zdist: f32) -> u8 = cdecl 0x53A450 => crate::fire::try_to_start_fire_at_coors;
-    /// `CExplosion::AddExplosion(...)` (0x736A50)
-    pub fn add_explosion_call(victim: GPtr<u8>, creator: GPtr<u8>, ty: i32, x: f32, y: f32, z: f32, life: u32, sound: u8, shake: f32, invisible: u8) -> u8 = cdecl 0x736A50 => add_explosion;
     /// `CWorld::SetPedsOnFire(float x, y, z, float radius, CEntity*)` (0x565610)
     pub fn set_peds_on_fire(x: u32, y: u32, z: u32, r: f32, e: GPtr<u8>) = cdecl 0x565610 => unported;
-    /// `CWorld::SetCarsOnFire(...)` (0x5659F0)
-    pub fn set_cars_on_fire(x: u32, y: u32, z: u32, r: f32, e: GPtr<u8>) = cdecl 0x5659F0 => unported;
-    /// `CWorld::SetWorldOnFire(...)` (0x56B910)
-    pub fn set_world_on_fire(x: u32, y: u32, z: u32, r: f32, e: GPtr<u8>) = cdecl 0x56B910 => unported;
-    /// `CWorld::ProcessVerticalLine(...)` (0x5674E0)
-    pub fn process_vertical_line(p: GPtr<u8>, z: f32, cp: GPtr<u8>, ent: GPtr<GPtr<u8>>, b: u8, v: u8, pd: u8, o: u8, d: u8, s: u8, poly: GPtr<u8>) -> u8 = cdecl 0x5674E0 => unported;
-    /// `FxManager_c::CreateFxSystem(const char*, CVector*, RwMatrix*, bool)` (0x4A9BE0, thiscall)
-    pub fn create_fx_system(man: GPtr<u8>, name: GPtr<u8>, pos: GPtr<u8>, m: GPtr<u8>, flag: u8) -> GPtr<u8> = thiscall 0x4A9BE0 => unported;
     /// `CExplosion::ClearAllExplosions()` (0x736840)
     pub fn clear_all_explosions_call() = cdecl 0x736840 => clear_all_explosions;
 }
@@ -275,14 +270,14 @@ pub fn update() {
             1 => {
                 let p = rv_bits(e, 4);
                 set_peds_on_fire(p[0], p[1], p[2], 6.0, rp(e, 0x18));
-                set_cars_on_fire(p[0], p[1], p[2], 6.0, rp(e, 0x18));
-                set_world_on_fire(p[0], p[1], p[2], f32::from_bits(0x3DCC_CCCD), rp(e, 0x18));
+                set_cars_on_fire(f32::from_bits(p[0]), f32::from_bits(p[1]), f32::from_bits(p[2]), 6.0, rp(e, 0x18));
+                set_world_on_fire(f32::from_bits(p[0]), f32::from_bits(p[1]), f32::from_bits(p[2]), f32::from_bits(0x3DCC_CCCD), rp(e, 0x18));
                 if rb(e, 0x28) == 1 {
                     let p = rv(e, 4);
                     let mut v = [p[0], p[1], x(p[2]).fadd_m(5.0).to_f32()];
                     let mut cp = [0u8; 0x2C];
                     let mut ent = GPtr::NULL;
-                    if process_vertical_line(lp(&mut v).cast(), -1000.0, lp(&mut cp).cast(), lp(&mut ent), 1, 0, 0, 0, 1, 0, GPtr::NULL) != 0 {
+                    if process_vertical_line(lp(&mut v).cast(), -1000.0, lp(&mut cp).cast(), GPtr::<GPtr<u8>>::cast::<u8>(lp(&mut ent)), 1, 0, 0, 0, 1, 0, GPtr::NULL) != 0 {
                         wu(e, 0x38, u32::from_le_bytes([cp[8], cp[9], cp[10], cp[11]]));
                     } else {
                         wu(e, 0x38, ru(e, 0xC));
@@ -337,16 +332,14 @@ pub use sa_world::bindings::cam_shake;
 pub use sa_world::bindings::find_ground_z_for_3d_coord;
 pub use sa_world::bindings::is_coop_game_going_on;
 pub use sa_world::bindings::report_crime;
-pub use sa_world::bindings::vector_sub;
+pub use sa_core::bindings::vector_sub;
+pub use sa_world::bindings::get_water_level_no_waves;
+pub use sa_world::bindings::interesting_events_add;
 orig! {
     /// `FindPlayerPed(int32)` (0x56E210)
     pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
-    /// `CWaterLevel::GetWaterLevelNoWaves(float x, float y, float z, float* level, float*, float*)` (0x6E8580)
-    pub fn get_water_level_no_waves(x: f32, y: f32, z: f32, level: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> u8 = cdecl 0x6E8580 => unported;
     /// `CAEExplosionAudioEntity::AddAudioEvent(int32 event, CVector& pos, float volume)` (0x4DCBE0, thiscall)
     pub fn explosion_audio_add_event(ae: GPtr<u8>, ev: i32, pos: GPtr<u8>, vol: f32) = thiscall 0x4DCBE0 => unported;
-    /// `CInterestingEvents::Add(EType, CEntity*)` (0x602590, thiscall)
-    pub fn interesting_events_add(this: GPtr<u8>, ty: i32, e: GPtr<u8>) = thiscall 0x602590 => unported;
     /// `CShadows::AddPermanentShadow(uint8 type, RwTexture*, const CVector*, float frontX, float frontY,
     /// float sideX, float sideY, int16 intensity, uint8 r, g, b, float drawDistance, uint32 time,
     /// float upDistance)` (0x706F60); small integers as pushed words
@@ -472,7 +465,7 @@ pub fn add_explosion(victim: GPtr<u8>, creator: GPtr<u8>, ty: i32, px: f32, py: 
     for (off, ent) in [(0x18isize, creator), (0x1C, victim)] {
         let old = rp(e, off);
         if !old.is_null() {
-            clean_up_old_reference(old, e.byte_add(off));
+            clean_up_old_reference(old, GPtr::<u8>::cast::<GPtr<u8>>(e.byte_add(off)));
         }
         wp(e, off, ent);
         if !ent.is_null() {
@@ -538,7 +531,7 @@ pub fn add_explosion(victim: GPtr<u8>, creator: GPtr<u8>, ty: i32, px: f32, py: 
                 pos[2] = gz.to_f32();
             }
             let mut level = [0f32; 1];
-            if get_water_level_no_waves(pos[0], pos[1], pos[2], lp(&mut level).cast(), GPtr::NULL, GPtr::NULL) != 0 && {
+            if get_water_level_no_waves(pos[0], pos[1], pos[2], lp(&mut level).cast(), GPtr::<u8>::cast::<f32>(GPtr::NULL), GPtr::<u8>::cast::<f32>(GPtr::NULL)) != 0 && {
                 let mut f = Fpu::new();
                 f.fld(pos[2]);
                 f.fcomp_m(level[0]);
@@ -662,7 +655,7 @@ pub fn add_explosion(victim: GPtr<u8>, creator: GPtr<u8>, ty: i32, px: f32, py: 
             }
             let s = rand_unit(0x73738B).fmul_m(cf(0x3ECC_CCCE)).fmul_m(7000.0).fadd_m(5600.0);
             let time = ftol32(s) as u32;
-            crate::fire::start_fire_no_target_call(g(0xB71F80), t[0], t[1], t[2], cf(0x3F4C_CCCD), u8::from(i != 0), rp(e, 0x18), time, 3, 1);
+            crate::fire::start_fire_no_target_call(g(0xB71F80), t[0], t[1], t[2], cf(0x3F4C_CCCD), u8::from(i != 0) as u32, rp(e, 0x18), time, 3, 1);
         }
         if !creator.is_null() && etype(creator) == 3 && ru(creator, 0x598) == 0 {
             stats_increment_stat(0xD8, 1.0);
@@ -685,16 +678,16 @@ pub fn add_explosion(victim: GPtr<u8>, creator: GPtr<u8>, ty: i32, px: f32, py: 
         if !f.jp(0x44) {
             shake = cf(0x3E4C_CCCD);
         }
-        cam_shake(g(THE_CAMERA), shake, p[0], p[1], p[2]);
+        cam_shake(g(THE_CAMERA), shake, f32::from_bits(p[0]), f32::from_bits(p[1]), f32::from_bits(p[2]));
         return 1;
     }
     if !f.jp(0x44) {
         shake = cf(0x3F19_999A);
     }
-    cam_shake(g(THE_CAMERA), shake, p[0], p[1], p[2]);
-    pad_start_shake_distance(pad_get_pad(0), 0x12C, 0x80, p[0], p[1], p[2]);
+    cam_shake(g(THE_CAMERA), shake, f32::from_bits(p[0]), f32::from_bits(p[1]), f32::from_bits(p[2]));
+    pad_start_shake_distance(pad_get_pad(0), 0x12C, 0x80, f32::from_bits(p[0]), f32::from_bits(p[1]), f32::from_bits(p[2]));
     if is_coop_game_going_on() != 0 {
-        pad_start_shake_distance(pad_get_pad(1), 0x12C, 0x80, p[0], p[1], p[2]);
+        pad_start_shake_distance(pad_get_pad(1), 0x12C, 0x80, f32::from_bits(p[0]), f32::from_bits(p[1]), f32::from_bits(p[2]));
     }
     1
 }

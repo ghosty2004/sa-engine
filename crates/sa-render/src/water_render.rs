@@ -9,21 +9,19 @@ use sa_math::x87::X87;
 
 use crate::common::{ftol32, g, jne, jp, k, rd, x, xi};
 
-use crate::bindings::rw_im3d_render_indexed_primitive;
-use crate::bindings::rw_im3d_transform;
+use sa_world::bindings::rw_im3d_render_indexed_primitive;
+use sa_world::bindings::rw_im3d_transform;
 use sa_world::bindings::entity_get_col_model as get_col_model;
+use sa_core::bindings::little_test;
+use sa_world::bindings::rw_im3d_end;
 orig! {
     /// `CBoat::FillBoatList()` (0x6F2710)
     fn fill_boat_list() = cdecl 0x6F2710 => unported;
     /// `CWaterLevel::RenderWakeSegment(CVector2D& a, b, c, d, float& sizeA, float& sizeB, float& alphaA,
     /// float& alphaB, float& wakeZ)` (0x6EA260)
     fn render_wake_segment(a: GPtr<f32>, b: GPtr<f32>, c: GPtr<f32>, d: GPtr<f32>, s0: GPtr<f32>, s1: GPtr<f32>, a0: GPtr<f32>, a1: GPtr<f32>, z: GPtr<f32>) = cdecl 0x6EA260 => unported;
-    /// `Common::LittleTest()` (0x541330)
-    fn little_test() = cdecl 0x541330 => sa_core::common::little_test;
     /// `RwRenderStateSet(state, value)` (`RwGlobals` +0x20)
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `RwIm3DEnd()` (0x7EF520)
-    fn rw_im3d_end() -> u32 = cdecl 0x7EF520 => unported;
 }
 
 /// `CBoat::apFrameWakeGeneratingBoats[4]`.
@@ -173,8 +171,8 @@ pub fn render_boat_wakes() {
     if g::<u32>(TEMP_VERTICES_STORED).read() != 0 {
         little_test();
         let n = g::<u32>(TEMP_VERTICES_STORED).read();
-        if !rw_im3d_transform(TEMP_RENDER_VERTICES, n, 0, 1).is_null() {
-            rw_im3d_render_indexed_primitive(3, TEMP_BUFFER_INDICES, g::<u32>(TEMP_INDICES_STORED).read());
+        if !rw_im3d_transform(GPtr::from_addr(TEMP_RENDER_VERTICES as usize), n, GPtr::NULL, 1).is_null() {
+            rw_im3d_render_indexed_primitive(3, GPtr::from_addr(TEMP_BUFFER_INDICES as usize), (g::<u32>(TEMP_INDICES_STORED).read()) as i32);
             rw_im3d_end();
         }
     }
@@ -188,13 +186,11 @@ pub const HOOKS: &[HookReg] = &[HOOK_RENDER_BOAT_WAKES, HOOK_RENDER_WATER];
 // ---- WRITER-RENDER-BIG: CWaterLevel::RenderWater ----
 
 use crate::bindings::o_render_water_rectangle as rw_rectangle;
+use sa_core::bindings::can_see_water_from_curr_area as rw_can_see_water;
+use sa_core::bindings::defined_state as rw_defined_state;
 orig! {
-    /// `CGame::CanSeeWaterFromCurrArea()` (0x53C4B0, bool in AL)
-    fn rw_can_see_water() -> u32 = cdecl 0x53C4B0 => sa_core::game::can_see_water_from_curr_area;
     /// `CWaterLevel::SetCameraRange()` (0x6E9C80)
     fn rw_set_camera_range() = cdecl 0x6E9C80 => crate::waterlevel::set_camera_range;
-    /// `App::DefinedState()` (0x734650)
-    fn rw_defined_state() = cdecl 0x734650 => sa_core::input::defined_state;
     /// The detailed sea-bed segment of a block (0x6E6A10)
     fn rw_detailed_segment(bx: i32, by: i32, fx0: f32, fx1: f32, fy0: f32, fy1: f32) = cdecl 0x6E6A10 => crate::waterlevel::render_detailed_sea_bed_segment;
     /// The sea-bed segment of a block (0x6E6870)
@@ -268,17 +264,14 @@ fn rw_wrap(a: usize) {
 fn rw_flush() {
     if g::<u32>(TEMP_VERTICES_STORED).read() != 0 {
         little_test_rw();
-        if !rw_im3d_transform(TEMP_RENDER_VERTICES, g::<u32>(TEMP_VERTICES_STORED).read(), 0, 1).is_null() {
-            rw_im3d_render_indexed_primitive(3, TEMP_BUFFER_INDICES, g::<u32>(TEMP_INDICES_STORED).read());
+        if !rw_im3d_transform(GPtr::from_addr(TEMP_RENDER_VERTICES as usize), g::<u32>(TEMP_VERTICES_STORED).read(), GPtr::NULL, 1).is_null() {
+            rw_im3d_render_indexed_primitive(3, GPtr::from_addr(TEMP_BUFFER_INDICES as usize), (g::<u32>(TEMP_INDICES_STORED).read()) as i32);
             rw_im3d_end();
         }
     }
 }
 
-orig! {
-    /// `Common::LittleTest()` (0x541330)
-    fn little_test_rw() = cdecl 0x541330 => sa_core::common::little_test;
-}
+use sa_core::bindings::little_test as little_test_rw;
 
 /// `CWaterLevel::RenderWater()` (0x6EF650). Nothing unless `CGame::CanSeeWaterFromCurrArea`.
 /// `SetCameraRange`, `App::DefinedState`; the protection chunk at 0x407EE4 loads the raster from

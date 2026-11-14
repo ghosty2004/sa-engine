@@ -219,10 +219,7 @@ pub fn ped_is_acceptable_in_current_zone(model: i32) -> u8 {
     }
 }
 
-sa_core::orig! {
-    /// `CCheat::IsZoneStreamingAllowed()` (0x407410)
-    pub fn is_zone_streaming_allowed() -> u8 = cdecl 0x407410 => sa_world::world::cheat::is_zone_streaming_allowed;
-}
+pub use sa_stream::bindings::cheat_is_zone_streaming_allowed as is_zone_streaming_allowed;
 
 /// `CPopCycle::PickPedMIToStreamInForCurrentZone()` (0x60FFD0): see `docs/re/specs/POP/CPopCycle.md`.
 /// The group pick stops at `r < p[g]` (not `PickARandomGroupOfOtherPeds`' `p[g] >= r`).
@@ -283,10 +280,9 @@ pub fn pick_ped_mi_to_stream_in_for_current_zone() -> i32 {
     -1
 }
 
-pub use sa_world::bindings::get_zone_info;
+pub use sa_stream::bindings::get_zone_info;
+pub use sa_world::bindings::find_player_centre_of_world;
 sa_core::orig! {
-    /// `CWorld::FindPlayerCentreOfWorld(int32)` (0x56E250)
-    pub fn find_player_centre_of_world(id: i32) -> GPtr<u8> = cdecl 0x56E250 => sa_world::world::cworld::find_player_centre_of_world;
     /// `CPopCycle::UpdatePercentages()` (0x610770)
     pub fn update_percentages_call() = cdecl 0x610770 => crate::population2::update_percentages;
     /// `CPopCycle::UpdateDealerStrengths()` (0x6104B0)
@@ -322,7 +318,7 @@ pub fn update() {
     ];
     let high = jp5(X87::from_f32(f32::from_bits(p[2])), X87::from_f32(950.0));
     if !high || CURR_ZONE_INFO.get().is_null() {
-        let zi = get_zone_info(GPtr::from_raw(p.as_mut_ptr()).cast(), CURR_ZONE.ptr());
+        let zi = get_zone_info(GPtr::from_raw(p.as_mut_ptr()).cast(), GPtr::<GPtr<u8>>::cast::<u8>(CURR_ZONE.ptr()));
         CURR_ZONE_INFO.set(zi);
         CURRENT_ZONE_TYPE.set(i32::from(rd::<u8>(zi, 0xF)) & 0x1F);
     }

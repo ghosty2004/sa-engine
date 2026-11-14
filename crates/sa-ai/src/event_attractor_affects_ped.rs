@@ -3,6 +3,7 @@
 //! Ported from the 1.0 US bytes (gta-reversed as a reading aid; where it differs, the bytes are followed). Unverified
 //! (docs/verify/HOWTO.md).
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -18,6 +19,7 @@ use sa_world::bindings::ik_is_looking;
 use sa_world::bindings::intel_find_task_by_type;
 use sa_world::bindings::ped_mi_can_be_created_at_this_attractor;
 use sa_world::bindings::placeable_get_matrix;
+use sa_world::bindings::ik_look_at;
 orig! {
     /// `CEvent::GetEventType()` (vtable slot 4)
     fn event_get_type(e: GPtr<u8>) -> u32 = thiscall vslot 0x4 => unported;
@@ -25,8 +27,6 @@ orig! {
     fn task_get_type(t: GPtr<u8>) -> u32 = thiscall vslot 0x10 => unported;
     /// `CWeather::IsRainy()` (0x4ABF50)
     fn weather_is_rainy() -> u8 = cdecl 0x4ABF50 => unported;
-    /// `CIKChainManager_c::LookAt(const char*, CPed*, CEntity*, int32, ePedBones, CVector*, bool, float, int32, int32, bool)` (0x618970)
-    fn ik_look_at(m: GPtr<u8>, name: u32, ped: GPtr<u8>, target: u32, time: i32, bone: i32, pos: GPtr<u8>, b: u32, speed: u32, blend: i32, prio: i32, b2: u32) = thiscall 0x618970 => unported;
 }
 
 /// `g_ikChainMan`
@@ -93,8 +93,8 @@ pub fn event_attractor_affects_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     let m = placeable_get_matrix(rd::<GPtr<u8>>(this, 0x18));
     let mut point = [0f32; 3];
     let pp: GPtr<u8> = GPtr::from_raw(point.as_mut_ptr()).cast();
-    matrix_mul_vector(pp, m, fx);
-    ik_look_at(ik, 0x85B1FC, ped, 0, time, -1, pp, 0, 0x3E80_0000, 500, 3, 0);
+    matrix_mul_vector(pp.cast::<f32>(), m, fx);
+    ik_look_at(ik, GPtr::from_addr(0x85B1FC), ped, GPtr::NULL, time as u32, -1i32 as u32, pp, 0, 0x3E80_0000, 500, 3, 0);
     0
 }
 

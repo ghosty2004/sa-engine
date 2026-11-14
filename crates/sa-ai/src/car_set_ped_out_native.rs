@@ -2,18 +2,16 @@
 //! (0x647950), reached when a rider is knocked off a bike on the native walk, and a phase-B registration of
 //! PORT-AI-3's `ProcessPed` (0x647D10) body.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
 use sa_core::bindings::entity_clean_up_old_reference;
 use sa_core::bindings::entity_register_reference;
 use sa_world::bindings::task_simple_dtor;
-orig! {
-    /// `CTaskSimple::CTaskSimple()` (0x61A390)
-    fn task_simple_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A390 => crate::mvpa_ai1::task_simple_ctor;
-}
+use sa_world::bindings::task_simple_ctor;
 
 /// `CTaskSimpleCarSetPedOut` vtable
 const VTABLE: u32 = 0x86_EEB8;
@@ -50,7 +48,7 @@ pub fn car_set_ped_out_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, VTABLE);
     let v = rd::<GPtr<u8>>(this, 8);
     if !v.is_null() {
-        entity_clean_up_old_reference(v, this.byte_add(8));
+        entity_clean_up_old_reference(v, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(8)));
     }
     task_simple_dtor(this);
 }

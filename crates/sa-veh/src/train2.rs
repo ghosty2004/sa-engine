@@ -39,9 +39,8 @@ pub use sa_world::bindings::audio_terminate;
 pub use sa_world::bindings::crt_floor as floor;
 pub use sa_world::bindings::physical_add_to_moving_list as add_to_moving_list;
 pub use sa_world::bindings::world_process_vertical_line;
+pub use crate::bindings::do_vehicle_lights;
 orig! {
-    /// `CVehicle::DoVehicleLights(CMatrix&, uint32)` (0x6E1A60)
-    pub fn do_vehicle_lights(v: GPtr<u8>, m: GPtr<u8>, flags: u32) = thiscall 0x6E1A60 => unported;
     /// `CEntity` virtual slot 0x10 (`SetIsStatic(bool)`)
     pub fn entity_set_is_static(e: GPtr<u8>, v: u32) = thiscall vslot 0x10 => unported;
     /// `CTrain::ReadAndInterpretTrackFile(const char*, CTrainNode**, int32*, float*, int32)` (0x6F55D0)
@@ -157,7 +156,7 @@ pub fn get_lighting_from_collision(n: Ptr) -> u8 {
     let mut ent = 0u32;
     let hit = world_process_vertical_line(
         GPtr::from_raw(&raw mut origin).cast(),
-        0xC47A_0000,
+        f32::from_bits(0xC47A_0000),
         GPtr::from_raw(&raw mut cp).cast(),
         GPtr::from_raw(&raw mut ent).cast(),
         1,
@@ -166,7 +165,7 @@ pub fn get_lighting_from_collision(n: Ptr) -> u8 {
         0,
         0,
         0,
-        0,
+        GPtr::NULL,
     );
     if hit == 0 {
         return 0x48;

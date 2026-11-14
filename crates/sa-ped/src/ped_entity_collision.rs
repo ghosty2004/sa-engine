@@ -19,6 +19,11 @@ use sa_world::collision::fpu::Fpu;
 use sa_world::physical::attach::{allocate_matrix, process_col_models, simple_transform_update_matrix};
 use sa_world::physical::shared::*;
 
+use sa_world::bindings::damage_calc_compute_damage_response as calc_compute;
+use sa_world::bindings::damage_calc_ctor as calc_ctor;
+use sa_world::bindings::entity_get_is_type_physical as get_is_type_physical;
+use sa_world::bindings::get_local_direction;
+use sa_world::bindings::placeable_set_heading as set_heading;
 orig! {
     /// `CPhysical::AddCollisionRecord(CEntity*)` (0x543490)
     fn add_collision_record(e: Ent, other: Ent) = thiscall 0x543490 => sa_world::physical::base::add_collision_record;
@@ -30,20 +35,14 @@ orig! {
     fn get_task_use_gun(intel: Ent) -> Ent = thiscall 0x600f70 => unported;
     /// `CPlaceable::GetHeading()` (0x441DB0, ST0)
     fn get_heading(e: Ent) -> f64 = thiscall 0x441db0 => unported;
-    /// `CPlaceable::SetHeading(float)` (0x43E0C0)
-    fn set_heading(e: GPtr<u8>, h: f32) = thiscall 0x43e0c0 => sa_world::world::entity::set_heading;
     /// `CMatrix::SetRotateZOnly(float)` (0x59B020)
     fn matrix_set_rotate_z_only(m: Ent, h: f32) = thiscall 0x59b020 => unported;
     /// `SurfaceInfos_c::IsSteepSlope(uint32)` (0x55E770)
     fn is_steep_slope(si: Ent, id: u32) -> u32 = thiscall 0x55e770 => is_steep_slope_port;
     /// `SurfaceInfos_c::IsSoftLanding(uint32)` (0x55E690)
     fn is_soft_landing(si: Ent, id: u32) -> u32 = thiscall 0x55e690 => is_soft_landing_port;
-    /// `CEntity::GetIsTypePhysical()` (0x4DA030)
-    fn get_is_type_physical(e: GPtr<u8>) -> u32 = thiscall 0x4da030 => sa_world::world::entity::get_is_type_physical;
     /// `RpAnimBlendClumpGetAssociation(RpClump*, uint32 animId)` (0x4D68B0)
     fn clump_get_association(clump: Ent, id: u32) -> Ent = cdecl 0x4d68b0 => unported;
-    /// `CPed::GetLocalDirection(const CVector2D&)` (0x5DEF60)
-    fn get_local_direction(p: GPtr<u8>, v: GPtr<f32>) -> i32 = thiscall 0x5def60 => crate::ped::get_local_direction;
     /// `CEventDamage::CEventDamage(CEntity*, uint32 time, eWeaponType, ePedPieceTypes, uint8 dir, bool, bool)`
     /// (0x4AD830)
     fn event_damage_ctor(ev: Ent, src: Ent, time: u32, weapon: u32, piece: u32, dir: u32, a: u32, b: u32) -> Ent
@@ -52,12 +51,6 @@ orig! {
     fn event_damage_affects_ped(ev: Ent, ped: Ent) -> u8 = thiscall 0x4b35a0 => unported;
     /// `CEventDamage::~CEventDamage()` (0x4AD960)
     fn event_damage_dtor(ev: Ent) = thiscall 0x4ad960 => unported;
-    /// `CPedDamageResponseCalculator::CPedDamageResponseCalculator(CEntity*, float, eWeaponType,
-    /// ePedPieceTypes, bool)` (0x4AD3F0)
-    fn calc_ctor(c: GPtr<u8>, damager: u32, damage: u32, weapon: u32, piece: u32, speak: u32) -> GPtr<u8>
-        = thiscall 0x4ad3f0 => crate::damage::constructor;
-    /// `CPedDamageResponseCalculator::ComputeDamageResponse(CPed*, CPedDamageResponse&, bool)` (0x4B5AC0)
-    fn calc_compute(c: GPtr<u8>, ped: GPtr<u8>, r: GPtr<u8>, speak: u32) = thiscall 0x4b5ac0 => crate::damage::compute_damage_response;
     /// `CPedDamageResponseCalculator::~CPedDamageResponseCalculator()` (0x4AD420)
     fn calc_dtor(c: Ent) = thiscall 0x4ad420 => unported;
     /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420)
@@ -121,7 +114,7 @@ fn fall_damage_event(this: Ent, e: Ent, dir: u32, damage: u32) {
     if event_damage_affects_ped(evp, this) != 0 {
         let mut calc = [0u32; 5];
         let cp = lp(&mut calc).cast::<u8>();
-        calc_ctor(cp, e.addr() as u32, damage, 0x36, 3, 0);
+        calc_ctor(cp, GPtr::from_addr((e.addr() as u32) as usize), f32::from_bits(damage), 0x36, 3, 0);
         calc_compute(cp, this, evp.byte_add(0x38), 1);
         event_group_add(rp(this, 0x47C).byte_add(0x68), evp, 0);
         calc_dtor(cp);
@@ -363,7 +356,7 @@ pub fn ped_process_entity_collision(this: Ent, e: Ent, cps: Ent) -> i32 {
                         let mut v2 = [0f32; 2];
                         v2[0] = g.fstp();
                         v2[1] = g.fstp();
-                        let d = get_local_direction(this, lp(&mut v2).cast());
+                        let d = get_local_direction(this, GPtr::<f32>::cast::<u8>(lp(&mut v2).cast()));
                         dir = 0x3E80_0000 | (d as u32 & 0xFF);
                     }
                     fall_damage_event(this, e, dir, damage.to_bits());

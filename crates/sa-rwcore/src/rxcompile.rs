@@ -37,6 +37,7 @@ sa_core::globals! {
     pub static SCRATCH_BOTTOM @ 0xC9A6B8: u32 = 0;
 }
 
+use crate::bindings::node_destroy_call;
 orig! {
     /// `_rwerror(code, a, b)` (0x8088D0, varargs; three arguments)
     fn rw_error3(code: u32, a: u32, b: u32) -> u32 = cdecl 0x8088D0 => unported;
@@ -50,9 +51,6 @@ orig! {
     fn call_node_cb(f: u32, node: u32) -> i32 = cdecl dyn => unported;
     /// `pipelineNodeConfig(node, pipeline)` through its stored pointer
     fn call_config_cb(f: u32, node: u32, pipe: u32) -> i32 = cdecl dyn => unported;
-
-    /// `_rxPipelineNodeDestroy(node, pipeline)` (0x8050C0)
-    fn node_destroy_call(node: u32, pipe: u32) -> u32 = cdecl 0x8050C0 => pipeline_node_destroy;
     /// Scratch allocation from the top (0x805890)
     fn scratch_top_call(size: u32) -> u32 = cdecl 0x805890 => scratch_alloc_top;
     /// Scratch allocation from the bottom (0x8058F0)

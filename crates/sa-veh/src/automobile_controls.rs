@@ -71,12 +71,12 @@ pub fn automobile_process_control_inputs(this: GPtr<u8>, ped_type: u32) {
             || !find_active_task_by_type(tm(d()), 0x337).is_null()
             || !find_active_task_by_type(tm(d()), 0x339).is_null()
             || !find_active_task_by_type(tm(d()), 0x329).is_null()
-            || pad_get_exit_vehicle(pad_get_pad(id)) != 0;
+            || pad_get_exit_vehicle(pad_get_pad(id as u32)) != 0;
     }
     if leaving {
         wr::<u8>(this, 0x428, rd::<u8>(this, 0x428) | 0x20);
     } else {
-        let hb = pad_get_hand_brake(pad_get_pad(id)) != 0;
+        let hb = pad_get_hand_brake(pad_get_pad(id as u32)) != 0;
         let f = rd::<u8>(this, 0x428);
         wr::<u8>(this, 0x428, (f & !0x20) | if hb { 0x20 } else { 0 });
     }
@@ -90,16 +90,16 @@ pub fn automobile_process_control_inputs(this: GPtr<u8>, ped_type: u32) {
         s
     };
     wr::<f32>(this, 0x58C, clamped);
-    let acc = i32::from(pad_get_accelerate(pad_get_pad(id)));
-    let brk = i32::from(pad_get_brake(pad_get_pad(id)));
+    let acc = i32::from(pad_get_accelerate(pad_get_pad(id as u32)) as i16);
+    let brk = i32::from(pad_get_brake(pad_get_pad(id as u32)) as i16);
     let mut pedal = f32_of(xi(acc - brk).fmul_m(f32::from_bits(0x3B80_8081)));
     if x(pedal).fcom(x(0.0)) == Cmp::Equal {
         let d = rd::<GPtr<u8>>(this, 0x460);
         if !d.is_null() && !get_simplest_active_task(tm(d)).is_null() {
             let t = get_simplest_active_task(tm(rd::<GPtr<u8>>(this, 0x460)));
             if v_task_get_type(t) == 0x3FE && g::<u16>(0xB6_F1A8).read() == 0x37 {
-                let a = rd::<i16>(pad_get_pad(id), 0xE);
-                let b = rd::<i16>(pad_get_pad(id), 0xA);
+                let a = rd::<i16>(pad_get_pad(id as u32), 0xE);
+                let b = rd::<i16>(pad_get_pad(id as u32), 0xA);
                 pedal = f32_of(xi(i32::from(a) - i32::from(b)).fmul_m(f32::from_bits(0x3B80_8081)));
             }
         }
@@ -115,7 +115,7 @@ pub fn automobile_process_control_inputs(this: GPtr<u8>, ped_type: u32) {
     if !jne_mask(x(gas()), x(0.0), 0x41) && !rd::<GPtr<u8>>(this, 0x460).is_null() {
         let f = rd::<GPtr<u8>>(this, 0x14).byte_add(0x10);
         let d = rd::<GPtr<u8>>(this, 0x460);
-        if is_player_allowed_direction(d, rd::<u32>(f, 0), rd::<u32>(f, 4), rd::<u32>(f, 8), 0) == 0 {
+        if is_player_allowed_direction(d, f32::from_bits(rd::<u32>(f, 0)), f32::from_bits(rd::<u32>(f, 4)), f32::from_bits(rd::<u32>(f, 8)), f32::from_bits(0)) == 0 {
             wr::<u32>(this, 0x49C, 0);
         }
     }
@@ -124,7 +124,7 @@ pub fn automobile_process_control_inputs(this: GPtr<u8>, ped_type: u32) {
         let f = rd::<GPtr<u8>>(this, 0x14).byte_add(0x10);
         let n = |o: isize| f32_of(x(rd::<f32>(f, o)).fmul_m(-1.0)).to_bits();
         let (nx, ny, nz) = (n(0), n(4), n(8));
-        if is_player_allowed_direction(d, nx, ny, nz, 0) == 0 {
+        if is_player_allowed_direction(d, f32::from_bits(nx), f32::from_bits(ny), f32::from_bits(nz), f32::from_bits(0)) == 0 {
             wr::<u32>(this, 0x49C, 0);
         }
     }
@@ -209,30 +209,30 @@ fn steering(this: GPtr<u8>, id: i32) {
     let target = |lr: i16| xi(-i32::from(lr)).fmul_m(f32::from_bits(0x3C00_0000));
     if g::<u8>(0xB6_EC2E).read() == 0 || g::<u8>(0xC1_CC02).read() == 0 {
         let t = ts();
-        let lr = pad_get_steering_left_right(pad_get_pad(id));
+        let lr = pad_get_steering_left_right(pad_get_pad(id as u32));
         let v = target(lr).fsub_m(steer()).fmul_m(f32::from_bits(0x3E4C_CCCD)).fmul_m(t).fadd_m(steer());
         wr::<f32>(this, 0x58C, f32_of(v));
         state.write(0);
         return;
     }
-    pad_get_pad(id);
+    pad_get_pad(id as u32);
     let mut mouse = x(g::<f32>(0xB7_3424).read()).fcom(x(0.0)).test_parity(0x44);
     if !mouse
         && !jne_mask(x(steer()).fabs(), x(0.0), 0x41)
         && state.read() == 2
-        && pad_get_steering_left_right(pad_get_pad(id)) == 0
+        && pad_get_steering_left_right(pad_get_pad(id as u32)) == 0
     {
         mouse = true;
     }
     if mouse {
-        if rd::<u16>(pad_get_pad(id), 0x2C) == 0 {
-            pad_get_pad(id);
+        if rd::<u16>(pad_get_pad(id as u32), 0x2C) == 0 {
+            pad_get_pad(id as u32);
             let v = x(g::<f32>(0xB7_3424).read()).fmul_m(f32::from_bits(0xBB65_6042)).fadd_m(steer());
             wr::<f32>(this, 0x58C, f32_of(v));
         }
         state.write(2);
         if x(steer()).fabs().fcom(x(f32::from_bits(0x3F33_3333))) == Cmp::Less
-            || rd::<u16>(pad_get_pad(id), 0x2C) != 0
+            || rd::<u16>(pad_get_pad(id as u32), 0x2C) != 0
         {
             let p = X87::from_f64_exact(sa_core::orig::x87_binary(
                 0x822130,
@@ -243,11 +243,11 @@ fn steering(this: GPtr<u8>, id: i32) {
         }
         return;
     }
-    if pad_get_steering_left_right(pad_get_pad(id)) == 0 && state.read() == 2 {
+    if pad_get_steering_left_right(pad_get_pad(id as u32)) == 0 && state.read() == 2 {
         return;
     }
     let t = ts();
-    let lr = pad_get_steering_left_right(pad_get_pad(id));
+    let lr = pad_get_steering_left_right(pad_get_pad(id as u32));
     let v = target(lr).fsub_m(steer()).fmul_m(t).fmul_m(f32::from_bits(0x3E4C_CCCD)).fadd_m(steer());
     wr::<f32>(this, 0x58C, f32_of(v));
     state.write(0);
@@ -266,10 +266,10 @@ fn pedals(this: GPtr<u8>, id: i32, fwd: f32, pedal: f32, leaving: bool) {
     }
     if a.fcom(x(f32::from_bits(0x3C23_D70A))) == Cmp::Less {
         let over = |v: i16| !jne_mask(xi(i32::from(v)), x(150.0), 0x41);
-        if over(pad_get_accelerate(pad_get_pad(id))) && over(pad_get_brake(pad_get_pad(id))) {
-            let g1 = i32::from(pad_get_accelerate(pad_get_pad(id)));
+        if over(pad_get_accelerate(pad_get_pad(id as u32)) as i16) && over(pad_get_brake(pad_get_pad(id as u32)) as i16) {
+            let g1 = i32::from(pad_get_accelerate(pad_get_pad(id as u32)) as i16);
             wr::<f32>(this, 0x49C, f32_of(xi(g1).fmul_m(f32::from_bits(0x3B80_8081))));
-            let b1 = i32::from(pad_get_brake(pad_get_pad(id)));
+            let b1 = i32::from(pad_get_brake(pad_get_pad(id as u32)) as i16);
             wr::<u16>(this, 0x86A, 1);
             wr::<f32>(this, 0x4A0, f32_of(xi(b1).fmul_m(f32::from_bits(0x3B80_8081))));
             return;

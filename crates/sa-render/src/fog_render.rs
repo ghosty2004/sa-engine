@@ -12,15 +12,13 @@ use sa_math::x87::X87;
 
 use crate::common::{ftol32, g, jne, jp, k, rd, x, xi};
 
-use crate::bindings::calc_screen_coors;
-use crate::bindings::init_sprite_buffer;
+use sa_core::bindings::calc_screen_coors;
+use sa_world::bindings::init_sprite_buffer;
+use sa_world::bindings::sprite_flush_sprite_buffer as flush_sprite_buffer;
+use sa_world::bindings::world_process_vertical_line as process_vertical_line;
 orig! {
     /// `RwRenderStateSet(state, value)` (`RwGlobals` +0x20)
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xc97b24 0x20 => unported;
-    /// `CSprite::FlushSpriteBuffer()` (0x70cf20; the original's tail jump)
-    fn flush_sprite_buffer() = cdecl 0x70cf20 => crate::sprite::flush_sprite_buffer;
-    /// `CWorld::ProcessVerticalLine(const CVector&, float, CColPoint&, CEntity*&, bool x6, CStoredCollPoly*)` (0x5674e0)
-    fn process_vertical_line(origin: GPtr<u8>, distance: f32, cp: GPtr<u8>, out: GPtr<u8>, b: u8, v: u8, p: u8, o: u8, d: u8, see: u8, poly: GPtr<u8>) -> u8 = cdecl 0x5674e0 => sa_world::world::mvpc_world1::process_vertical_line;
     /// `CPointLights::ProcessVerticalLineUsingCache(CVector, float*)` (0x6ffff0)
     fn process_vertical_line_using_cache(px: f32, py: f32, pz: f32, out: GPtr<u32>) -> u8 = cdecl 0x6ffff0 => crate::pointlights::process_vertical_line_using_cache;
     /// `CSprite::RenderBufferedOneXLUSprite_Rotate_Aspect(x, y, z, w, h, r, g, b, intensity, recipZ,

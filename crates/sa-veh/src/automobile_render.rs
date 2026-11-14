@@ -17,9 +17,9 @@ use crate::bindings::add_exhaust_particles;
 use crate::bindings::add_single_wheel_particles;
 use crate::bindings::do_vehicle_lights;
 use crate::bindings::door_process;
-use crate::bindings::get_wheel_status;
+use sa_world::bindings::get_wheel_status;
 use crate::bindings::process_wheel_rotation;
-use crate::bindings::register_corona;
+use sa_world::bindings::register_corona;
 use crate::bindings::store_shadow_for_vehicle;
 use sa_core::bindings::matrix_attach;
 use sa_core::bindings::matrix_dtor;
@@ -30,39 +30,29 @@ use sa_stream::bindings::get_wheel_posn;
 use sa_world::bindings::add_light;
 use sa_world::bindings::cam_no_rain;
 use sa_world::bindings::player_no_rain;
+use crate::bindings::set_component_rotation;
+use crate::bindings::update_wheel_matrix;
+use crate::bindings::vehicle_pre_render;
+use sa_core::bindings::matrix_mul_vec as matrix_mul_vector;
+use sa_core::bindings::matrix_set_translate_only;
+use sa_stream::bindings::get_frame_from_id;
+use sa_world::bindings::entity_get_col_model as get_col_model;
+use sa_world::bindings::get_vehicle_appearance;
+use sa_world::bindings::multiply3x3;
+use sa_world::bindings::placeable_get_top_direction as get_top_direction;
 orig! {
-    /// `CVehicle::PreRender()` (0x6D6480)
-    fn vehicle_pre_render(v: GPtr<u8>) = thiscall 0x6D6480 => crate::vehicle2::pre_render;
-    /// `CEntity::GetColModel()` (0x535300)
-    fn get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => sa_world::world::entity::get_col_model;
-    /// `operator*(const CMatrix&, const CVector&)` (0x59C890, cdecl, hidden return pointer)
-    fn matrix_mul_vector(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => crate::vehicle_lights::matrix_mul_vector_native;
     /// `CVehicle::AddWaterSplashParticles()` (0x6DDF60)
     fn add_water_splash_particles(v: GPtr<u8>) = thiscall 0x6DDF60 => unported;
-    /// `CPlaceable::GetTopDirection`-style accessor (0x41CCB0)
-    fn get_top_direction(e: GPtr<u8>, out: GPtr<f32>) -> GPtr<f32> = thiscall 0x41CCB0 => sa_world::world::entity::get_top_direction;
-    /// `CVehicle::GetVehicleAppearance()` (0x6D1080)
-    fn get_vehicle_appearance(v: GPtr<u8>) -> u32 = thiscall 0x6D1080 => crate::vehicle2::get_vehicle_appearance;
     /// `CCamera::GetLookingForwardFirstPerson()` (0x50AED0) on `TheCamera`
     fn get_looking_forward_first_person(cam: GPtr<u8>) -> u8 = thiscall 0x50AED0 => unported;
-    /// `CVehicle::SetComponentRotation(RwFrame*, eRotationAxis, float, bool)` (0x6DBA30)
-    fn set_component_rotation(v: GPtr<u8>, frame: GPtr<u8>, axis: u32, angle: f32, reset: u32) = thiscall 0x6DBA30 => crate::vehicle2::set_component_rotation;
-    /// `Multiply3x3(CVector*, const CMatrix*, const CVector*)` (0x59C790)
-    fn multiply3x3(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C790 => sa_world::world::mvpa_math::multiply3x3;
     /// `CPhysical::GetSpeed(CVector)` (0x542CE0)
     fn get_speed(e: GPtr<u8>, out: GPtr<CVector>, point: CVector) -> GPtr<CVector> = thiscall 0x542CE0 => sa_world::physical::forces::get_speed;
-    /// `CAutomobile::UpdateWheelMatrix(int32 node, int32 flags)` (0x6AA290)
-    fn update_wheel_matrix(v: GPtr<u8>, node: i32, flags: u32) = thiscall 0x6AA290 => crate::mvpd_v4::automobile_update_wheel_matrix;
     /// `CAutomobile::ProcessSwingingDoor(int32 node, eDoors)` (0x6A9D70)
     fn process_swinging_door(v: GPtr<u8>, node: i32, door: i32) = thiscall 0x6A9D70 => crate::mvpb_a5::process_swinging_door;
     /// `CBouncingPanel::ProcessPanel(CVehicle*, RwFrame*, CVector, CVector, float, float)` (0x6F49A0), floats as bits
     fn process_panel(p: GPtr<u8>, v: GPtr<u8>, frame: GPtr<u8>, mx: u32, my: u32, mz: u32, tx: u32, ty: u32, tz: u32, ret: u32, damp: u32) = thiscall 0x6F49A0 => unported;
     /// `CVehicle::SetTransmissionRotation(RwFrame*, float, float, CVector, bool)` (0x6DBBB0)
     fn set_transmission_rotation(v: GPtr<u8>, frame: GPtr<u8>, l: f32, r: f32, wx: f32, wy: f32, wz: f32, front: u32) = thiscall 0x6DBBB0 => unported;
-    /// `CClumpModelInfo::GetFrameFromId(RpClump*, int32)` (0x4C53C0)
-    fn get_frame_from_id(clump: GPtr<u8>, id: i32) -> GPtr<u8> = cdecl 0x4C53C0 => unported;
-    /// `CMatrix::SetTranslateOnly(float, float, float)` (0x59AF80)
-    fn matrix_set_translate_only(m: GPtr<u8>, px: f32, py: f32, pz: f32) = thiscall 0x59AF80 => unported;
     /// `CAutomobile::DoHoverSuspensionRatios()` (vtable +0x114)
     fn v_do_hover_suspension_ratios(v: GPtr<u8>) = thiscall vslot 0x114 => unported;
     /// `CAutomobile::DoBurstAndSoftGroundRatios()` (vtable +0xD0)
@@ -324,11 +314,11 @@ fn simple_wheel_contacts(this: GPtr<u8>) {
             ld(this, comp).fmul_m(1.5).to_f32(),
         );
         let mut o = CVector::default();
-        let r = matrix_mul_vector(
-            GPtr::from_raw(&mut o).cast(),
+        let r = GPtr::<f32>::cast::<u8>(matrix_mul_vector(
+            GPtr::<u8>::cast::<f32>(GPtr::from_raw(&mut o).cast()),
             rd::<GPtr<u8>>(this, 0x14),
             GPtr::from_raw(&mut local).cast(),
-        );
+        ));
         let v = rv(r, 0);
         wr::<f32>(this, out, v.x);
         wr::<f32>(this, out + 4, v.y);
@@ -352,7 +342,7 @@ fn wheel_particles(this: GPtr<u8>, speed: f32) {
         }
         let side = if i == 0 || i == 1 { 0xBF80_0000u32 } else { F1 };
         let cp = this.byte_add(0x724 + 0x2C * ii);
-        let status = get_wheel_status(this.byte_add(0x5A0), i);
+        let status = get_wheel_status(this.byte_add(0x5A0), i as u32);
         add_single_wheel_particles(
             this,
             rd::<u32>(this, 0x968 + 4 * ii),
@@ -392,7 +382,7 @@ fn middle_wheel_particles(this: GPtr<u8>, speed: f32) {
             x(fy).fadd_m(rd::<f32>(cp, 4)).to_f32(),
             fz.fadd_m(rd::<f32>(cp, 8)).to_f32(),
         );
-        let status = get_wheel_status(this.byte_add(0x5A0), wheel);
+        let status = get_wheel_status(this.byte_add(0x5A0), wheel as u32);
         add_single_wheel_particles(
             this,
             rd::<u32>(this, state),
@@ -435,7 +425,7 @@ fn model_lights(this: GPtr<u8>, model: u16) {
             let mut local = CVector::new(0.0, f32::from_bits(ly), f32::from_bits(lz));
             let lp = GPtr::from_raw(&mut local).cast::<u8>();
             let mut w = CVector::default();
-            let wp = matrix_mul_vector(GPtr::from_raw(&mut w).cast(), rd::<GPtr<u8>>(this, 0x14), lp);
+            let wp = GPtr::<f32>::cast::<u8>(matrix_mul_vector(GPtr::<u8>::cast::<f32>(GPtr::from_raw(&mut w).cast()), rd::<GPtr<u8>>(this, 0x14), lp));
             let world = rv(wp, 0);
             let b = ftol32(x(g::<f32>(0xB7_C4E4).read()).fmul_m(10.0)) as u32;
             register_corona(
@@ -446,36 +436,36 @@ fn model_lights(this: GPtr<u8>, model: u16) {
                 0,
                 0xFF,
                 lp,
-                0x3F4C_CCCD,
-                corona_range(),
+                f32::from_bits(0x3F4C_CCCD),
+                f32::from_bits(corona_range()),
                 1,
                 0,
                 1,
                 0,
                 0,
+                f32::from_bits(0),
                 0,
+                f32::from_bits(0x3FC0_0000),
                 0,
-                0x3FC0_0000,
-                0,
-                0x4170_0000,
+                f32::from_bits(0x4170_0000),
                 0,
                 1,
             );
             add_light(
                 0,
-                world.x.to_bits(),
-                world.y.to_bits(),
-                world.z.to_bits(),
-                0,
-                0,
-                0,
-                0x4120_0000,
-                0x3DCC_CCCD,
-                0x3DCC_CCCD,
-                0x3D4C_CCCD,
+                f32::from_bits(world.x.to_bits()),
+                f32::from_bits(world.y.to_bits()),
+                f32::from_bits(world.z.to_bits()),
+                f32::from_bits(0),
+                f32::from_bits(0),
+                f32::from_bits(0),
+                f32::from_bits(0x4120_0000),
+                f32::from_bits(0x3DCC_CCCD),
+                f32::from_bits(0x3DCC_CCCD),
+                f32::from_bits(0x3D4C_CCCD),
                 0,
                 1,
-                0,
+                GPtr::NULL,
             );
         }
         0x1EA => {
@@ -505,18 +495,18 @@ fn model_lights(this: GPtr<u8>, model: u16) {
                 0xFF,
                 0xFF,
                 GPtr::from_raw(&mut local).cast(),
-                0x3ECC_CCCD,
-                corona_range(),
+                f32::from_bits(0x3ECC_CCCD),
+                f32::from_bits(corona_range()),
                 0,
                 0,
                 0,
                 0,
                 0,
+                f32::from_bits(0),
                 0,
+                f32::from_bits(0x3FC0_0000),
                 0,
-                0x3FC0_0000,
-                0,
-                0x4170_0000,
+                f32::from_bits(0x4170_0000),
                 0,
                 1,
             );
@@ -605,19 +595,19 @@ fn light_bar(this: GPtr<u8>, model: u16) {
     let k005 = f32::from_bits(0x3BA3_D70A);
     add_light(
         0,
-        lx.to_bits(),
-        ly.to_bits(),
-        lz.to_bits(),
-        0,
-        0,
-        0,
-        0x4120_0000,
-        xi(i32::from(bl)).fmul_m(k005).to_f32().to_bits(),
-        xi(i32::from(c181)).fmul_m(k005).to_f32().to_bits(),
-        xi(i32::from(c175)).fmul_m(k005).to_f32().to_bits(),
+        f32::from_bits(lx.to_bits()),
+        f32::from_bits(ly.to_bits()),
+        f32::from_bits(lz.to_bits()),
+        f32::from_bits(0),
+        f32::from_bits(0),
+        f32::from_bits(0),
+        f32::from_bits(0x4120_0000),
+        f32::from_bits(xi(i32::from(bl)).fmul_m(k005).to_f32().to_bits()),
+        f32::from_bits(xi(i32::from(c181)).fmul_m(k005).to_f32().to_bits()),
+        f32::from_bits(xi(i32::from(c175)).fmul_m(k005).to_f32().to_bits()),
         0,
         1,
-        0,
+        GPtr::NULL,
     );
     let gb = g::<f32>(0xB7_C4E4).read();
     let br = |v: u8| ftol32(xi(i32::from(v)).fmul_m(gb).fmul_m(f32::from_bits(0x3DCC_CCCD))) as u8;
@@ -659,18 +649,18 @@ fn light_bar(this: GPtr<u8>, model: u16) {
             u32::from(b),
             0xFF,
             GPtr::from_raw(&mut lp).cast(),
-            0x3ECC_CCCD,
-            corona_range(),
+            f32::from_bits(0x3ECC_CCCD),
+            f32::from_bits(corona_range()),
             0,
             0,
             0,
             0,
             0,
+            f32::from_bits(0),
             0,
+            f32::from_bits(0x3FC0_0000),
             0,
-            0x3FC0_0000,
-            0,
-            0x4170_0000,
+            f32::from_bits(0x4170_0000),
             0,
             1,
         );

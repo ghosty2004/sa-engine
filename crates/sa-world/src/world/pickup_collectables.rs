@@ -3,7 +3,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 
 use super::common::{ftol32, g, x};
@@ -11,16 +11,13 @@ use super::common::{ftol32, g, x};
 use crate::bindings::garages_trigger_message as trigger_message;
 use crate::bindings::get_stat_value;
 use sa_core::bindings::stats_increment_stat as increment_stat;
-orig! {
-    /// `CAudioEngine::ReportFrontendAudioEvent(eAudioEvents, float volume, float speed)` (0x506EA0) on `AudioEngine` (0xB6BC90)
-    fn report_frontend_audio_event(ae: GPtr<u8>, event: u32, volume: f32, speed: f32) = thiscall 0x506EA0 => unported;
-}
+use sa_core::bindings::audio_report_frontend_event as report_frontend_audio_event;
 
 /// `CWorld::Players[0].m_nMoney` (0xB7CE50).
 const MONEY: usize = 0xB7_CE50;
 
 fn stat(id: u32) -> X87 {
-    X87::from_f64_exact(get_stat_value(id))
+    X87::from_f64_exact(get_stat_value(id as u16))
 }
 
 /// The common tail: money + 100; with every one collected (`stat(done) == f32(stat(have))`) the

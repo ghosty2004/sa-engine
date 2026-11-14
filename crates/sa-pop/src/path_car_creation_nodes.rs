@@ -5,12 +5,11 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
+use sa_world::bindings::path_find_these_2_nodes_are_adjacent as these_2_nodes_are_adjacent;
 orig! {
     /// `CPathFind::FindNodeClosestToCoors(CVector, type, count, CNodeAddress* out, maxDist, lowTraffic, unused,
     /// boats, ignoreInterior)` (0x44FA30, `ret 0x2C`)
     fn record_nodes_closest_to_coors(this: GPtr<u8>, px: f32, py: f32, pz: f32, node_type: u32, count: i32, out: GPtr<u32>, max_dist: f32, a: u32, b: u32, c: u32, d: u32) = thiscall 0x44FA30 => crate::pathfind::record_nodes_closest_to_coors;
-    /// `CPathFind::These2NodesAreAdjacent(CNodeAddress, CNodeAddress)` (0x44D230, `ret 8`, AL)
-    fn these_2_nodes_are_adjacent(this: GPtr<u8>, a: u32, b: u32) -> u8 = thiscall 0x44D230 => crate::pathfind::these_2_nodes_are_adjacent;
 }
 
 /// `ThePaths` (0x96F050)

@@ -71,34 +71,20 @@ use sa_world::bindings::get_task_climb as intel_get_task_climb;
 use sa_world::bindings::get_task_swim as intel_get_task_swim;
 use sa_world::bindings::hud_help_message_displayed;
 use sa_world::bindings::ped_groups_get_peds_group as get_peds_group;
+use crate::bindings::give_ped_scripted_task;
+use crate::bindings::is_ped_dead;
+use crate::bindings::set_up_conversation_node as conversations_set_up_conversation_node;
+use sa_core::bindings::get_string_length_call as messages_get_string_length;
+use sa_core::bindings::messages_string_copy;
+use sa_world::bindings::follow_node_route_ctor;
+use sa_world::bindings::messages_string_compare;
+use sa_world::bindings::msg_insert_player_control_keys as messages_insert_player_control_keys;
+use sa_world::bindings::set_up_skip as game_logic_set_up_skip;
 orig! {
-    /// `CMessages::StringCopy(char16* dst, const char16* src, uint16 size)` (0x69DB70)
-    fn messages_string_copy(dst: GPtr<u8>, src: GPtr<u8>, size: u32) = cdecl 0x69DB70 => unported;
-    /// `CMessages::InsertPlayerControlKeysInString(char16*)` (0x69E160)
-    fn messages_insert_player_control_keys(s: GPtr<u8>) = cdecl 0x69E160 => unported;
-    /// `CMessages::GetStringLength(const char16*)` (0x69DB50)
-    fn messages_get_string_length(s: GPtr<u8>) -> u32 = cdecl 0x69DB50 => unported;
-    /// `CMessages::StringCompare(const char16*, const char16*, uint16)` (0x69DBD0), AL
-    fn messages_string_compare(a: GPtr<u8>, b: GPtr<u8>, len: u32) -> u8 = cdecl 0x69DBD0 => unported;
-    /// `CTaskComplexFollowNodeRoute::CTaskComplexFollowNodeRoute(int32 moveState, const CVector& target, float radius,
-    /// float slowDownDist, float heightChange, bool keepNodesHeadingAway, int32 time, bool useBlending)` (0x66EA30,
-    /// `ret 0x20`)
-    fn follow_node_route_ctor(t: GPtr<u8>, move_state: u32, target: GPtr<u8>, radius: u32, slow_down: u32,
-        height_change: u32, keep_heading: u32, time: i32, blending: u32) -> GPtr<u8> = thiscall 0x66EA30 => unported;
-    /// `CRunningScript::GivePedScriptedTask(int32 pedHandle, CTask*, int32 opcode)` (0x465C20)
-    fn give_ped_scripted_task(s: Scr, ped: i32, task: GPtr<u8>, command: u32) = thiscall 0x465C20 => crate::script_tasks::give_ped_scripted_task;
     /// `CVehicle::Fix()` (vtable +0xC8)
     fn v_vehicle_fix(v: GPtr<u8>) = thiscall vslot 0xC8 => unported;
-    /// `CGameLogic::SetUpSkip(CVector coors, float angle, bool afterMission, CEntity* vehicle, bool finishedByScript)`
-    /// (0x4423C0, the vector by value)
-    fn game_logic_set_up_skip(x: u32, y: u32, z: u32, angle: u32, after_mission: u32, veh: GPtr<u8>, by_script: u32) = cdecl 0x4423C0 => unported;
     /// `CGameLogic::IsSkipWaitingForScriptToFadeIn()` (0x4416C0), AL
     fn game_logic_is_skip_waiting_for_script_to_fade_in() -> u8 = cdecl 0x4416C0 => unported;
-    /// `CConversations::SetUpConversationNode(const char* name, int32 yes, int32 no, int32 speech, int32 yesSpeech,
-    /// int32 noSpeech)` (0x43A870)
-    fn conversations_set_up_conversation_node(name: GPtr<u8>, a: i32, b: i32, c: i32, d: i32, e: i32) = cdecl 0x43A870 => unported;
-    /// `CRunningScript::IsPedDead(CPed*)` (0x464D70), AL
-    fn is_ped_dead(s: Scr, p: GPtr<u8>) -> u8 = thiscall 0x464D70 => unported;
     /// `C3dMarkers::User3dMarkerSet(float x, float y, float z, int32 colour)` (0x720FD0)
     fn user_3d_marker_set(x: u32, y: u32, z: u32, colour: u32) -> i32 = cdecl 0x720FD0 => unported;
     /// `C3dMarkers::User3dMarkerDelete(int32)` (0x721090)
@@ -229,7 +215,7 @@ pub fn process_commands_2600_to_2699(s: Scr, command: u32) -> i8 {
                 GPtr::NULL
             } else {
                 follow_node_route_ctor(t, move_state, GPtr::from_raw(target.as_mut_ptr()).cast(), radius,
-                                       g32(ROUTE_SLOW_DOWN).read(), g32(ROUTE_HEIGHT_CHANGE).read(), 1, time, 1)
+                                       g32(ROUTE_SLOW_DOWN).read(), g32(ROUTE_HEIGHT_CHANGE).read(), 1, time as u32, 1)
             };
             give_ped_scripted_task(s, spi(0), task, command);
         }
@@ -263,7 +249,7 @@ pub fn process_commands_2600_to_2699(s: Scr, command: u32) -> i8 {
             collect(s, 1);
             let ped = ped_at_ref(pool(PED_POOL), spi(0));
             let e = GPtr::<u8>::from_addr(rd_u32(ped, 0xFC) as usize);
-            let h = if !e.is_null() && rd_u8(e, 0x36) & 7 == 2 { vehicle_get_ref(pool(VEHICLE_POOL), e) } else { -1 };
+            let h = if !e.is_null() && rd_u8(e, 0x36) & 7 == 2 { vehicle_get_ref(pool(VEHICLE_POOL), e) as i32 } else { -1 };
             set_sp(0, h as u32);
             store(s, 1);
         }
@@ -310,7 +296,7 @@ pub fn process_commands_2600_to_2699(s: Scr, command: u32) -> i8 {
             let mut label = [0u8; 8];
             read_text_label(s, GPtr::from_raw(label.as_mut_ptr()), 8);
             collect(s, 1);
-            conversations_set_up_conversation_node(GPtr::from_raw(label.as_mut_ptr()), 0, 0, spi(0).wrapping_neg(), 0, 0);
+            conversations_set_up_conversation_node(GPtr::from_raw(label.as_mut_ptr()), GPtr::NULL, GPtr::NULL, (spi(0).wrapping_neg()) as u32, 0, 0);
         }
         // 0A3D ACTIVATE_PIMP_CHEAT: cheat 0x5A, or the pimp flag cleared
         0x0A3D => {

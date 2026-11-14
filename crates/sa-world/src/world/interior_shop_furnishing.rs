@@ -21,17 +21,15 @@ use crate::bindings::get_furniture;
 use crate::bindings::get_num_empty_tiles;
 use crate::bindings::place_furniture;
 use crate::bindings::set_tiles_status;
+use crate::bindings::add_goto_pt;
+use crate::bindings::get_tile_status;
 orig! {
     /// `Interior_c::Shop_Place3PieceUnit(int32, int32, int32, int32, int32)` (0x599BB0)
     fn shop_place_3_piece_unit_call(this: GPtr<u8>, ty: i32, x: i32, y: i32, dir: i32, len: i32) -> u8 = thiscall 0x599BB0 => shop_place_3_piece_unit;
     /// `Interior_c::Shop_PlaceEdgeUnits(int32, int32, int32, int32)` (0x599DC0)
     fn shop_place_edge_units_call(this: GPtr<u8>, ty: i32, x: i32, y: i32, dir: i32) -> i32 = thiscall 0x599DC0 => shop_place_edge_units;
-    /// `Interior_c::AddGotoPt(int32 x, int32 y, float dx, float dy)` (0x591D20)
-    fn add_goto_pt(this: GPtr<u8>, tx: i32, ty: i32, dx: f32, dy: f32) = thiscall 0x591D20 => super::interior_info::interior_add_goto_pt;
     /// `Interior_c::Shop_AddShelfInfo(int32 x, int32 y, int32 dir)` (0x59A140)
     fn shop_add_shelf_info(this: GPtr<u8>, tx: i32, ty: i32, dir: u32) = thiscall 0x59A140 => super::interior_group_update::interior_shop_add_shelf_info;
-    /// `Interior_c::GetTileStatus(int32 x, int32 y)` (0x5918E0)
-    fn get_tile_status(this: GPtr<u8>, tx: i32, ty: i32) -> u32 = thiscall 0x5918E0 => super::misc2::interior_get_tile_status;
 }
 
 /// The shelf-info spacing counter (0x8D0948) shared with `Shop_AddShelfInfo`.

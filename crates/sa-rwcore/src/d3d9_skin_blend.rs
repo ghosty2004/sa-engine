@@ -25,15 +25,11 @@ const CACHE_ATOMIC_FRAME: usize = 0xC978DC;
 const ONE_BITS: usize = 0x882DE4;
 const ZERO: usize = 0x882DE8;
 
+use sa_core::bindings::frame_get_ltm;
+use sa_core::bindings::rp_skin_get_skin_to_bone_matrices as skin_to_bone;
+use sa_core::bindings::rw_matrix_invert as matrix_invert;
+use sa_core::bindings::rw_matrix_multiply as matrix_multiply;
 orig! {
-    /// `RpSkinGetSkinToBoneMatrices(skin)` (0x7C7810)
-    fn skin_to_bone(skin: GPtr<u8>) -> u32 = cdecl 0x7C7810 => crate::skin::rp_skin_get_skin_to_bone_matrices;
-    /// `RwFrameGetLTM(frame)` (0x7F0990)
-    fn frame_get_ltm(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0990 => crate::frame::get_ltm;
-    /// `RwMatrixMultiply(dst, a, b)` (0x7F18B0)
-    fn matrix_multiply(dst: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F18B0 => crate::matrix::rw_matrix_multiply;
-    /// `RwMatrixInvert(dst, src)` (0x7F2070)
-    fn matrix_invert(dst: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F2070 => crate::matrix::rw_matrix_invert;
     /// The bone matrices (0x7CB390)
     fn prepare_internal_call(atomic: GPtr<u8>, skin: GPtr<u8>, hierarchy: GPtr<u8>) -> GPtr<u8> = cdecl 0x7CB390 => skin_prepare_matrices_internal;
 }
@@ -59,7 +55,7 @@ pub fn skin_prepare_matrices_internal(atomic: GPtr<u8>, skin: GPtr<u8>, hierarch
         return GPtr::NULL;
     }
     let buf = p8(g::<u32>(MATRIX_BUFFER).read());
-    let mut bone = p8(skin_to_bone(skin));
+    let mut bone = p8(GPtr::<u8>::addr(skin_to_bone(skin)) as u32);
     let mut out = buf;
     let (mut inv, mut tmp) = (Mat([0; 16]), Mat([0; 16]));
     let flags = rd::<u32>(hierarchy, 0);

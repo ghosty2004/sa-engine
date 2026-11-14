@@ -3,14 +3,11 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use super::common::{rd, x};
 
-orig! {
-    /// `Interior_c::IsPtInside(const CVector&, float, float, float)` (0x5913E0)
-    fn is_pt_inside(it: GPtr<u8>, pt: GPtr<f32>, mx: f32, my: f32, mz: f32) -> u8 = thiscall 0x5913E0 => super::misc2::interior_is_pt_inside;
-}
+use crate::bindings::is_pt_inside;
 
 /// `InteriorGroup_c::FindClosestInteriorInfo(int32 type, CVector pos, float maxDist,
 /// InteriorInfo_t** outInfo, Interior_c** outInterior, float* outDistSq)` (0x594A50): among the

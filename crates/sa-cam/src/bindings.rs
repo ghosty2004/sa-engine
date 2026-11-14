@@ -10,7 +10,7 @@ use sa_core::orig;
 
 orig! {
     /// `CCam::WellBufferMe` (0x509AE0)
-    pub fn cc_well_buffer_me(target: u32, value: GPtr<u8>, speed: GPtr<u8>, top: u32, step: u32, angle: u32) = cdecl 0x509AE0 => unported;
+    pub fn cc_well_buffer_me(target: f32, value: GPtr<f32>, speed: GPtr<f32>, top: f32, step: f32, angle: u8) = cdecl 0x509AE0 => crate::cam::well_buffer_me;
 }
 
 orig! {
@@ -24,6 +24,11 @@ orig! {
 }
 
 orig! {
+    /// `CCam::KeepTrackOfTheSpeed` (0x509DF0)
+    pub fn keep_track_of_the_speed(cam: GPtr<u8>, s: GPtr<u8>, t: GPtr<u8>, u: GPtr<u8>, a: GPtr<f32>, b: GPtr<f32>, f: GPtr<f32>) = thiscall 0x509DF0 => crate::cam::keep_track_of_the_speed;
+}
+
+orig! {
     /// `FUN_0050a0a0` (0x50A0A0)
     pub fn round_decimals(v: u32, n: i32) -> f64 = cdecl 0x50A0A0 => unported;
 }
@@ -34,18 +39,63 @@ orig! {
 }
 
 orig! {
+    /// `CIdleCam::SetTarget` (0x50A280)
+    pub fn idle_set_target(this: GPtr<u8>, e: GPtr<u8>) = thiscall 0x50A280 => crate::camproc::idle_cam_set_target;
+}
+
+orig! {
+    /// `CCamera::GetArrPosForVehicleType` (0x50AF00)
+    pub fn cc_get_arr_pos(this: GPtr<u8>, kind: i32, out: GPtr<i32>) -> u8 = thiscall 0x50AF00 => crate::camctl::get_arr_pos_for_vehicle_type;
+}
+
+orig! {
+    /// `CCamera::CopyCameraMatrixToRWCam` (0x50AFA0)
+    pub fn copy_camera_matrix_to_rw_cam(this: GPtr<u8>, update: u8) = thiscall 0x50AFA0 => crate::camctl::copy_camera_matrix_to_rw_cam_port;
+}
+
+orig! {
     /// `CCamera::HandleCameraMotionForDucking` (0x50CFA0)
     pub fn handle_camera_motion_for_ducking(cam: GPtr<u8>, ped: GPtr<u8>, src: GPtr<u8>, targ: GPtr<u8>, instant: u32) = thiscall 0x50CFA0 => crate::camfx::handle_camera_motion_for_ducking;
 }
 
 orig! {
+    /// `CHandShaker::Reset` (0x50D860)
+    pub fn hand_shaker_reset(hs: GPtr<u8>) = thiscall 0x50D860 => crate::handshaker::hand_shaker_reset;
+}
+
+orig! {
     /// `CHandShaker::Process` (0x50D930)
-    pub fn hand_shaker_process(hs: GPtr<u8>, intensity: u32) = thiscall 0x50D930 => unported;
+    pub fn hand_shaker_process(hs: GPtr<u8>, intensity: f32) = thiscall 0x50D930 => unported;
+}
+
+orig! {
+    /// `CCam::Init` (0x50E490)
+    pub fn cam_init(this: GPtr<u8>) = thiscall 0x50E490 => crate::cam::cam_init;
+}
+
+orig! {
+    /// `CIdleCam::Init` (0x50E6D0)
+    pub fn idle_cam_init_call(this: GPtr<u8>) = thiscall 0x50E6D0 => crate::idlecam::idle_cam_init;
 }
 
 orig! {
     /// `CIdleCam::GetLookAtPositionOnTarget` (0x50EAE0)
     pub fn get_look_at_position_on_target(this: GPtr<u8>, e: GPtr<u8>, out: GPtr<u8>) = thiscall 0x50EAE0 => crate::idlecam::get_look_at_position_on_target;
+}
+
+orig! {
+    /// `CCam::Process_WheelCam` (0x512110)
+    pub fn cam_process_wheel_cam(c: GPtr<u8>, t: GPtr<u8>, o: u32, sv: u32, svw: u32) -> u8 = thiscall 0x512110 => unported;
+}
+
+orig! {
+    /// `CCamera::CalculateDerivedValues` (0x5150E0)
+    pub fn calculate_derived_values(this: GPtr<u8>, a: u8, b: u8) = thiscall 0x5150E0 => crate::camctl::calculate_derived_values_port;
+}
+
+orig! {
+    /// `CCamera::StartTransition` (0x515200)
+    pub fn cc_start_transition(this: GPtr<u8>, mode: u32) = thiscall 0x515200 => unported;
 }
 
 orig! {
@@ -64,8 +114,23 @@ orig! {
 }
 
 orig! {
+    /// `CCamera::ProcessShake-float` (0x516560)
+    pub fn process_shake(this: GPtr<u8>, ratio: f32) -> GPtr<u8> = thiscall 0x516560 => unported;
+}
+
+orig! {
+    /// `CCamera::GetRoughDistanceToGround` (0x516B00)
+    pub fn get_rough_distance_to_ground(this: GPtr<u8>) -> f64 = thiscall 0x516B00 => crate::camcol::get_rough_distance_to_ground_st0;
+}
+
+orig! {
     /// `CCamera::ImproveNearClip` (0x516B20)
     pub fn improve_near_clip(cam: GPtr<u8>, veh: GPtr<u8>, ped: GPtr<u8>, source: GPtr<u8>, target: GPtr<u8>) = thiscall 0x516B20 => crate::camcol::improve_near_clip;
+}
+
+orig! {
+    /// `CCamera::ConeCastCollisionResolve` (0x51A5D0)
+    pub fn cone_cast_collision_resolve(this: GPtr<u8>, source: GPtr<u8>, target: GPtr<u8>, out: GPtr<u8>, radius: u32, angle: u32, dist: GPtr<u8>) -> u8 = thiscall 0x51A5D0 => crate::camcol::cone_cast_collision_resolve_bits;
 }
 
 orig! {
@@ -84,11 +149,6 @@ orig! {
 }
 
 orig! {
-    /// `CPad::AimWeaponLeftRight` (0x541040)
-    pub fn aim_weapon_left_right(pad: GPtr<u8>, ped: GPtr<u8>) -> i16 = thiscall 0x541040 => unported;
-}
-
-orig! {
-    /// `CPad::AimWeaponUpDown` (0x5410C0)
-    pub fn aim_weapon_up_down(pad: GPtr<u8>, ped: GPtr<u8>) -> i16 = thiscall 0x5410C0 => unported;
+    /// `FUN_00540f80` (0x540F80)
+    pub fn pad_540f80(pad: GPtr<u8>) -> i16 = thiscall 0x540F80 => unported;
 }

@@ -28,15 +28,12 @@ pub fn group(i: i32) -> GPtr<u8> {
 }
 
 pub use sa_core::bindings::uncompress_animation;
+pub use sa_core::bindings::anim_door_offsets as call_compute_anim_door_offsets;
+pub use sa_core::bindings::anim_get_anim_association as get_anim_association;
+pub use sa_core::bindings::vehicle_anim_group_get_group as call_get_group;
 orig! {
-    /// `CVehicleAnimGroup::GetGroup(animId)` (0x6E3B00)
-    pub fn call_get_group(this: GPtr<u8>, anim: i32) -> i32 = thiscall 0x6E3B00 => get_group;
-    /// `CVehicleAnimGroup::ComputeAnimDoorOffsets(CVector* ret, door)` (0x6E3D10)
-    pub fn call_compute_anim_door_offsets(this: GPtr<u8>, ret: GPtr<u8>, door: i32) -> GPtr<u8> = thiscall 0x6E3D10 => compute_anim_door_offsets;
     /// CRT `pow(double, double)` (0x8220F0): the computation `_CIpow` (0x822130) shares
     pub fn crt_pow(a: f64, b: f64) -> f64 = cdecl 0x8220F0 => crt_pow_host;
-    /// `CAnimManager::GetAnimAssociation(groupId, animId)` (0x4D3A60)
-    pub fn get_anim_association(group: i32, anim: i32) -> GPtr<u8> = cdecl 0x4D3A60 => unported;
 }
 
 /// Phase B/C path of [`crt_pow`]: only `pow(2.0, integer)` is used here, which is exact
@@ -228,7 +225,7 @@ pub fn uses_kart_driving_anims(index: i32) -> u32 {
 // Not hooked (INF-20): protection code at 0x1473D70/0x1473D9C uses 0x645602, inside the patched entry, as an
 // immediate (`adc eax, 0x645602`). The port stays a plain function.
 pub fn get_anim_door_offset(out: GPtr<u8>, index: i32, door: i32) -> GPtr<u8> {
-    call_compute_anim_door_offsets(group(index), out, door);
+    call_compute_anim_door_offsets(group(index), out, door as u32);
     out
 }
 

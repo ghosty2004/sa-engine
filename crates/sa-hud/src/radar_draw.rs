@@ -55,20 +55,12 @@ pub use sa_stream::bindings::placeable_allocate_matrix;
 pub use sa_stream::bindings::simple_transform_update_matrix;
 pub use sa_stream::bindings::sprite2d_delete;
 pub use sa_world::bindings::camera_get_look_direction;
-orig! {
-    /// `CRadar::CalculateCachedSinCos()` (0x583670)
-    pub fn calculate_cached_sin_cos_call() = cdecl 0x583670 => calculate_cached_sin_cos;
-    /// `CRadar::GetRadarTraceColour(eBlipColour, bool, bool)` (0x584770)
-    pub fn get_radar_trace_colour_call(colour: u32, bright: u32, friendly: u32) -> u32 = cdecl 0x584770 => get_radar_trace_colour;
-    /// `CStreaming::RequestModel(int32, int32)` (0x4087E0)
-    pub fn request_model(id: i32, flags: i32) = cdecl 0x4087E0 => sa_stream::streaming::request_model;
-    /// `CStreaming::RemoveModel(int32)` (0x4089A0)
-    pub fn remove_model(id: i32) = cdecl 0x4089A0 => sa_stream::streaming::remove_model;
-    /// `CStreaming::RemoveTxdModel(int32)` (0x40C180)
-    pub fn remove_txd_model(slot: i32) = cdecl 0x40C180 => unported;
-    /// `CRadar::RemoveRadarSections()` (0x584BF0)
-    pub fn remove_radar_sections_call() = cdecl 0x584BF0 => remove_radar_sections;
-}
+pub use crate::bindings::calculate_cached_sin_cos_call;
+pub use crate::bindings::get_radar_trace_colour_call;
+pub use sa_core::bindings::radar_remove_radar_sections as remove_radar_sections_call;
+pub use sa_core::bindings::streaming_remove_model as remove_model;
+pub use sa_core::bindings::streaming_request_model as request_model;
+pub use sa_stream::bindings::call_remove_txd_model as remove_txd_model;
 
 fn trace(i: i32) -> GPtr<u8> {
     RADAR_TRACE.ptr().cast::<u8>().byte_add(i.wrapping_mul(0x28) as isize)
@@ -511,15 +503,10 @@ pub fn clip_radar_poly_with(out: GPtr<u8>, inp: GPtr<u8>, quirk: impl Fn(u32, GP
 }
 
 pub use sa_core::bindings::sprite2d_set_texture;
-pub use sa_stream::bindings::find_txd_slot;
-orig! {
-    /// `CTxdStore::PushCurrentTxd()` (0x7316A0)
-    pub fn push_current_txd() = cdecl 0x7316A0 => sa_stream::txdstore::push_current_txd;
-    /// `CTxdStore::SetCurrentTxd(int32)` (0x7319C0)
-    pub fn set_current_txd(slot: i32) = cdecl 0x7319C0 => sa_stream::txdstore::set_current_txd;
-    /// `CTxdStore::PopCurrentTxd()` (0x7316B0)
-    pub fn pop_current_txd() = cdecl 0x7316B0 => sa_stream::txdstore::pop_current_txd;
-}
+pub use sa_core::bindings::find_txd_slot;
+pub use sa_core::bindings::pop_current_txd;
+pub use sa_core::bindings::push_current_txd;
+pub use sa_core::bindings::set_current_txd;
 
 /// `"hud"` (.rdata)
 const HUD_TXD_NAME: usize = 0x86696C;
@@ -628,13 +615,11 @@ pub fn transform_radar_point_to_real_world_space_with(out: GPtr<f32>, inp: GPtr<
 }
 
 pub use sa_world::bindings::sprite2d_draw_quad;
+pub use crate::bindings::limit_to_map_call;
+pub use sa_core::bindings::sprite_draw_rect as sprite2d_draw_rect;
 orig! {
-    /// `CRadar::LimitToMap(float*, float*)` (0x583350)
-    pub fn limit_to_map_call(px: GPtr<f32>, py: GPtr<f32>) = cdecl 0x583350 => limit_to_map;
     /// `RwRenderStateSet(state, value)` (`RwEngineInstance` table slot 0x20)
     pub fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `CSprite2d::DrawRect(const CRect&, const CRGBA&)` (0x727B60)
-    pub fn sprite2d_draw_rect(rect: GPtr<f32>, colour: GPtr<u8>) = cdecl 0x727B60 => unported;
 }
 
 /// 2^32 (.rdata 0x858C54): `fild` of an unsigned argument adds it when the sign bit is set.
@@ -724,14 +709,10 @@ pub fn draw_rotating_radar_sprite(sprite: GPtr<u8>, px: f32, py: f32, angle: f32
     );
 }
 
-pub use crate::bindings::clear_blip_call;
+pub use sa_world::bindings::clear_blip_call;
 pub use sa_core::bindings::find_player_vehicle;
-orig! {
-    /// `CRadar::ClearActualBlip(int32)` (0x587C10)
-    pub fn clear_actual_blip_call(i: i32) = cdecl 0x587C10 => crate::radar::clear_actual_blip;
-    /// `CRadar::SetCoordBlip(eBlipType, CVector, eBlipColour, eBlipDisplay, const char*)` (0x583820)
-    pub fn set_coord_blip_call(t: i32, px: f32, py: f32, pz: f32, colour: i32, display: i32, name: GPtr<u8>) -> i32 = cdecl 0x583820 => crate::radar::set_coord_blip;
-}
+pub use crate::bindings::clear_actual_blip_call;
+pub use sa_world::bindings::set_coord_blip as set_coord_blip_call;
 
 /// `airstrip_table[4]` (0x8D06E0, 0x10 each: x, y, direction, ...)
 const AIRSTRIP_TABLE: usize = 0x8D06E0;
@@ -823,16 +804,14 @@ pub fn setup_airstrip_blips() {
 
 pub use crate::bindings::transform_real_world_point_to_radar_space_call;
 pub use sa_world::bindings::find_player_heading_st0;
+pub use crate::bindings::init_front_end_map_call;
+pub use sa_world::bindings::find_player_centre_of_world_for_map;
 orig! {
     /// `CRadar::DrawRotatingRadarSprite(...)` (0x584850)
     #[allow(clippy::too_many_arguments)]
     pub fn draw_rotating_radar_sprite_call(sprite: GPtr<u8>, px: f32, py: f32, angle: f32, width: u32, height: u32, colour: u32) = cdecl 0x584850 => draw_rotating_radar_sprite;
     /// `FindPlayerPed(int32)` (0x56E210)
     pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
-    /// `CRadar::InitFrontEndMap()` (0x585960)
-    pub fn init_front_end_map_call() = cdecl 0x585960 => init_front_end_map;
-    /// `FindPlayerCentreOfWorldForMap(int32)` (0x56E400, `CVector` through a hidden return pointer)
-    pub fn find_player_centre_of_world_for_map(out: GPtr<f32>, id: i32) -> GPtr<f32> = cdecl 0x56E400 => unported;
     /// `CRadar::LimitRadarPoint(CVector2D&)` (0x5832F0, ST0)
     pub fn limit_radar_point_call_st0(p: GPtr<f32>) -> f64 = cdecl 0x5832F0 => limit_radar_point_call_st0_rust;
 }
@@ -927,14 +906,9 @@ pub fn set_map_centre_to_player_coords() {
     g::<f32>(MENU_MAP_ORIGIN_Y).write(oy.to_f32());
 }
 
-orig! {
-    /// `CRadar::Initialise()` (0x587FB0)
-    pub fn radar_initialise_call() = cdecl 0x587FB0 => crate::radar::initialise;
-    /// `CGenericGameStorage::LoadDataFromWorkBuffer(void*, int32)` (0x5D1300)
-    pub fn load_data_from_work_buffer(p: GPtr<u8>, size: i32) = cdecl 0x5D1300 => unported;
-    /// `CGenericGameStorage::SaveDataToWorkBuffer(void*, int32)` (0x5D1270)
-    pub fn save_data_to_work_buffer(p: GPtr<u8>, size: i32) = cdecl 0x5D1270 => unported;
-}
+pub use sa_core::bindings::load_data_from_work_buffer;
+pub use sa_core::bindings::radar_initialise as radar_initialise_call;
+pub use sa_core::bindings::save_data_to_work_buffer;
 
 /// `CEntryExitManager::mp_poolEntryExits` (`CPool<CEntryExit>`, 0x3C per object)
 const ENTRY_EXIT_POOL: usize = 0x96A7D8;

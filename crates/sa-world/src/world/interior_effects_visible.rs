@@ -12,9 +12,8 @@ use sa_core::bindings::matrix_mul_vec;
 use sa_stream::bindings::get_2d_effect;
 use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
 use sa_stream::bindings::simple_transform_update_matrix as update_matrix;
+use crate::bindings::find_objects_in_range;
 orig! {
-    /// `CWorld::FindObjectsInRange(const CVector&, float, bool, int16*, int16, CEntity**, bool x5)` (0x564A20)
-    fn find_objects_in_range(pos: GPtr<u8>, radius: f32, b2d: u32, count: GPtr<u8>, max: u32, out: GPtr<u8>, b: u32, v: u32, p: u32, o: u32, d: u32) = cdecl 0x564A20 => unported;
     /// `InteriorManager_c::IsInteriorEffectVisible(C2dEffect*, CEntity*)` (0x598690)
     fn is_interior_effect_visible_call(this: GPtr<u8>, fx: GPtr<u8>, e: GPtr<u8>) -> u32 = thiscall 0x598690 => is_interior_effect_visible;
     /// `InteriorManager_c::AddSameGroupEffectInfos(intVisibleEffect_t*, int32)` (0x598430)
@@ -78,7 +77,7 @@ pub fn is_interior_effect_visible(_this: GPtr<u8>, _effect: GPtr<u8>, e: GPtr<u8
             update_matrix(e.byte_add(4), rd::<GPtr<u8>>(e, 0x14));
         }
         let mut out = [0f32; 3];
-        let r = matrix_mul_vec(p(&mut out), rd::<GPtr<u8>>(e, 0x14), p(c));
+        let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(p(&mut out)), rd::<GPtr<u8>>(e, 0x14), p(c)));
         *c = read3(r);
         for k in 0..3 {
             if !x(c[k]).fcom(x(mn[k])).test_parity(0x05) {

@@ -36,6 +36,10 @@ const CAM_COL_VARS: u32 = 0x8CC8E0;
 const AUDIO_ENGINE: usize = 0xB6BC90;
 
 pub use sa_world::bindings::engine_is_loading_tune_active as audio_is_loading_tune_active;
+pub use crate::bindings::process_shake as process_shake_float;
+pub use sa_core::bindings::rw_camera_set_near_clip_plane;
+pub use sa_world::bindings::audio_set_effects_fader_scaling_factor;
+pub use sa_world::bindings::intel_get_task_duck as get_task_duck;
 orig! {
     /// `CCamera::SetCamCollisionVarDataSet(int)` (0x50CB60)
     pub fn set_cam_collision_var_data_set_call(idx: i32) = cdecl 0x50CB60 => set_cam_collision_var_data_set;
@@ -47,16 +51,8 @@ orig! {
     pub fn process_vector_move_linear_call(this: GPtr<u8>, ratio: f32) = thiscall 0x50D430 => process_vector_move_linear_ratio;
     /// `CCamera::ProcessFOVLerp(float)` (0x50D510)
     pub fn process_fov_lerp_call(this: GPtr<u8>, ratio: f32) = thiscall 0x50D510 => process_fov_lerp_ratio;
-    /// `CCamera::ProcessShake(float)` (0x516560)
-    pub fn process_shake_float(this: GPtr<u8>, ratio: f32) -> GPtr<u8> = thiscall 0x516560 => unported;
-    /// `CPedIntelligence::GetTaskDuck(bool)` (0x6010A0)
-    pub fn get_task_duck(intel: GPtr<u8>, ignore_check: u8) -> GPtr<u8> = thiscall 0x6010A0 => unported;
-    /// `RwCameraSetNearClipPlane(RwCamera*, RwReal)` (0x7EE1D0)
-    pub fn rw_camera_set_near_clip_plane(cam: GPtr<u8>, near: f32) -> GPtr<u8> = cdecl 0x7EE1D0 => unported;
     /// `CAudioEngine::SetMusicFaderScalingFactor(float)` (0x506E40)
     pub fn audio_set_music_fader_scaling_factor(ae: GPtr<u8>, v: u32) = thiscall 0x506E40 => unported;
-    /// `CAudioEngine::SetEffectsFaderScalingFactor(float)` (0x506E50)
-    pub fn audio_set_effects_fader_scaling_factor(ae: GPtr<u8>, v: u32) = thiscall 0x506E50 => unported;
 }
 
 /// `fild CTimer::m_snTimeInMilliseconds` with the unsigned fix-up (+2^32 [0x858C54]).

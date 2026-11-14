@@ -7,7 +7,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use super::common::{ftol32, g, rd, x, xi};
 use super::cworld::{PLAYERS, PLAYER_INFO_SIZE, PLAYER_IN_FOCUS};
@@ -53,16 +53,10 @@ use sa_core::bindings::file_close as close_file;
 use sa_core::bindings::open_file;
 use sa_core::bindings::strncmp;
 use sa_core::bindings::strtok;
-orig! {
-    /// `CFileLoader::LoadLine(FILESTREAM)` (0x536F80)
-    fn load_line(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x536F80 => sa_stream::fileloader::load_line_file;
-    /// `CKeyGen::GetUppercaseKey(const char*)` (0x53CF30)
-    fn get_uppercase_key(s: GPtr<u8>) -> u32 = cdecl 0x53CF30 => sa_core::keygen::get_uppercase_key;
-    /// `CWeaponInfo::FindWeaponType(const char*)` (0x743D10)
-    fn find_weapon_type(name: GPtr<u8>) -> u32 = cdecl 0x743D10 => unported;
-    /// `CModelInfo::GetModelInfo(const char*, int* index)` (0x4C5940)
-    fn get_model_info(name: GPtr<u8>, idx: GPtr<u32>) -> GPtr<u8> = cdecl 0x4C5940 => unported;
-}
+use crate::bindings::find_weapon_type;
+use sa_core::bindings::get_model_info;
+use sa_core::bindings::get_uppercase_key;
+use sa_core::bindings::load_line;
 
 /// `line` starts with `"end"`.
 fn is_end(line: GPtr<u8>) -> bool {
@@ -317,7 +311,7 @@ pub fn load_stats() {
                     2 => {}
                     _ => {
                         key = u32::MAX;
-                        get_model_info(tok, GPtr::from_raw(&raw mut key));
+                        get_model_info(tok, GPtr::<u32>::cast::<u8>(GPtr::from_raw(&raw mut key)));
                     }
                 }
                 let n = NUM_BUYABLE_ITEMS.get();

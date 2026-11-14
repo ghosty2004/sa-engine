@@ -51,45 +51,31 @@ pub use crate::bindings::registry_get_plugin_offset;
 pub use crate::bindings::resources_free_res_entry;
 pub use sa_core::bindings::light_destroy;
 pub use sa_core::bindings::rw_camera_destroy as camera_destroy;
+pub use crate::bindings::camera_register_plugin;
+pub use crate::bindings::clump_for_all_cameras as for_all_cameras_call;
+pub use crate::bindings::frame_destroy_hierarchy;
+pub use crate::bindings::free_list_create_prealloc as free_list_create_and_preallocate_space;
+pub use crate::bindings::light_register_plugin;
+pub use sa_core::bindings::frame_clone_and_link_clones;
+pub use sa_core::bindings::frame_get_ltm;
+pub use sa_core::bindings::object_has_frame_set_frame as object_set_frame;
+pub use sa_core::bindings::rp_atomic_clone as atomic_clone;
+pub use sa_core::bindings::rp_atomic_destroy as atomic_destroy;
+pub use sa_core::bindings::rp_atomic_set_geometry as atomic_set_geometry;
+pub use sa_core::bindings::rp_clump_add_atomic as add_atomic_call;
+pub use sa_core::bindings::rp_clump_create as create_call;
 orig! {
-    /// `RwFreeListCreateAndPreallocateSpace` (0x801B70)
-    pub fn free_list_create_and_preallocate_space(size: i32, per_block: i32, align: i32, blocks: i32, space: GPtr<u8>, hint: u32) -> GPtr<u8> = cdecl 0x801B70 => unported;
-    /// `RwCameraRegisterPlugin(size, id, ctor, dtor, copy)` (0x7EE450)
-    pub fn camera_register_plugin(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x7EE450 => unported;
-    /// `RpLightRegisterPlugin(size, id, ctor, dtor, copy)` (0x751D60)
-    pub fn light_register_plugin(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x751D60 => unported;
     /// `atomic->renderCallBack(atomic)` (the frame pushed for `RwFrameGetLTM` is still on the stack as a
     /// second argument)
     pub fn call_render_cb(f: u32, a: GPtr<u8>, frame: GPtr<u8>) -> GPtr<u8> = cdecl dyn => unported;
     /// `cb(object, data)` of the ForAll* iterators
     pub fn call_obj_cb(f: u32, obj: GPtr<u8>, data: u32) -> GPtr<u8> = cdecl dyn => unported;
-
-    /// `RwFrameGetLTM` (0x7F0990)
-    pub fn frame_get_ltm(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0990 => crate::frame::get_ltm;
-    /// `RwFrameDestroyHierarchy` (0x7F08A0)
-    pub fn frame_destroy_hierarchy(f: GPtr<u8>) -> u32 = cdecl 0x7F08A0 => crate::frame::destroy_hierarchy;
-    /// `_rwFrameCloneAndLinkClones` (0x7EFFB0)
-    pub fn frame_clone_and_link_clones(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EFFB0 => crate::frame::clone_and_link_clones;
     /// `_rwFramePurgeClone` (0x7F01A0)
     pub fn frame_purge_clone(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F01A0 => crate::frame::purge_clone;
-    /// `_rwObjectHasFrameSetFrame` (0x804EF0)
-    pub fn object_set_frame(obj: GPtr<u8>, f: GPtr<u8>) = cdecl 0x804EF0 => crate::frame::object_has_frame_set_frame;
-    /// `RpAtomicClone` (0x749E60)
-    pub fn atomic_clone(a: GPtr<u8>) -> GPtr<u8> = cdecl 0x749E60 => crate::atomic::clone;
-    /// `RpAtomicDestroy` (0x749DC0)
-    pub fn atomic_destroy(a: GPtr<u8>) -> u32 = cdecl 0x749DC0 => crate::atomic::destroy;
-    /// `RpAtomicSetGeometry` (0x749D40)
-    pub fn atomic_set_geometry(a: GPtr<u8>, geom: GPtr<u8>, flags: u32) -> GPtr<u8> = cdecl 0x749D40 => crate::atomic::set_geometry;
-    /// `RpClumpCreate` (0x74A290)
-    pub fn create_call() -> GPtr<u8> = cdecl 0x74A290 => create;
-    /// `RpClumpAddAtomic` (0x74A490)
-    pub fn add_atomic_call(c: GPtr<u8>, a: GPtr<u8>) -> GPtr<u8> = cdecl 0x74A490 => add_atomic;
     /// `RpClumpRemoveLight` (0x74A520)
     pub fn remove_light_call(c: GPtr<u8>, l: GPtr<u8>) -> GPtr<u8> = cdecl 0x74A520 => remove_light;
     /// `_rpClumpRemoveAndDestroyLight` (0x74A1C0)
     pub fn remove_and_destroy_light_call(l: GPtr<u8>, data: u32) -> GPtr<u8> = cdecl 0x74A1C0 => remove_and_destroy_light;
-    /// `RpClumpForAllCameras` (0x749BB0)
-    pub fn for_all_cameras_call(c: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> = cdecl 0x749BB0 => for_all_cameras;
 }
 
 use sa_core::field::addr32 as a32;
@@ -120,10 +106,10 @@ pub fn module_open(instance: GPtr<u8>, offset: i32, _size: i32) -> GPtr<u8> {
     let p = FREELIST_PARAMS.get();
     CLUMP_MODULE_OFFSET.set(offset as u32);
     let afl = free_list_create_and_preallocate_space(
-        rd::<i32>(atomic_registry(), 0),
-        p[0],
+        rd::<i32>(atomic_registry(), 0) as u32,
+        (p[0]) as u32,
         4,
-        p[1],
+        (p[1]) as u32,
         ATOMIC_FREELIST_SPACE.ptr().cast(),
         0x40010,
     );
@@ -133,10 +119,10 @@ pub fn module_open(instance: GPtr<u8>, offset: i32, _size: i32) -> GPtr<u8> {
     }
     let p = FREELIST_PARAMS.get();
     let cfl = free_list_create_and_preallocate_space(
-        rd::<i32>(clump_registry(), 0),
-        p[2],
+        rd::<i32>(clump_registry(), 0) as u32,
+        (p[2]) as u32,
         4,
-        p[3],
+        (p[3]) as u32,
         CLUMP_FREELIST_SPACE.ptr().cast(),
         0x40014,
     );

@@ -5,16 +5,13 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 
 use super::common::{g, rd, wr, x};
 
 use sa_core::bindings::rw_frame_update_objects;
-orig! {
-    /// `CWindModifiers::FindWindModifier(CVector pos, float* x, float* y)` (0x72C950; pos by value)
-    fn wind_modifiers_find(px: u32, py: u32, pz: u32, ox: GPtr<f32>, oy: GPtr<f32>) -> u8 = cdecl 0x72C950 => unported;
-}
+use crate::bindings::wind_find_wind_modifier as wind_modifiers_find;
 
 /// `CTimer::m_UserPause` (0xB7CB49), `m_CodePause` (0xB7CB48), `m_snTimeInMilliseconds` (0xB7CB84)
 const TIMER_USER_PAUSE: usize = 0xB7CB49;
@@ -89,7 +86,7 @@ pub fn entity_modify_matrix_for_tree_in_wind(this: GPtr<u8>) {
     wr::<f32>(at, 4, x(k(WEATHER_WIND_DIR_Y)).fmul_m(rd::<f32>(at, 4)).to_f32());
     let mat = rd::<GPtr<u8>>(this, 0x14);
     let pos = if mat.is_null() { this.byte_add(4) } else { mat.byte_add(0x30) };
-    wind_modifiers_find(rd::<u32>(pos, 0), rd::<u32>(pos, 4), rd::<u32>(pos, 8), at.cast(), at.byte_add(4).cast());
+    wind_modifiers_find(rd::<u32>(pos, 0), rd::<u32>(pos, 4), rd::<u32>(pos, 8), GPtr::<f32>::cast::<u8>(at.cast()), GPtr::<f32>::cast::<u8>(at.byte_add(4).cast()));
     let rw = rd::<GPtr<u8>>(this, 0x18);
     if !rw.is_null() {
         rw_frame_update_objects(rd::<GPtr<u8>>(rw, 4));

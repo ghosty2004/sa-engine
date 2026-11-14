@@ -4,7 +4,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::{f32_of, g, jne_mask, rd, wr, x};
 
@@ -17,10 +17,7 @@ use sa_core::bindings::matrix_set_rotate_y;
 use sa_core::bindings::matrix_set_rotate_z;
 use sa_core::bindings::matrix_update_rw;
 use sa_stream::bindings::ped_is_player;
-orig! {
-    /// `CMatrix::RotateZ(float)` (0x59B390)
-    fn matrix_rotate_z(m: GPtr<u8>, a: f32) = thiscall 0x59B390 => unported;
-}
+use sa_core::bindings::matrix_rotate_z;
 
 /// `CBoat::PruneWakeTrail()` (0x6F0E20): the wake points' remaining times (+0x748, 32 floats) count
 /// down by the time step; the first non-positive one, or one that would run out (set to 0 then), ends

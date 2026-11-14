@@ -8,11 +8,10 @@ use sa_core::{hook, orig};
 
 use crate::common::{g, rd};
 
+use crate::bindings::get_extra_vert_colour_ptr as get_extra_vert_colour_ptr_call;
 orig! {
     /// `PipelinePlugin::GetPipelineID(atomic)` (0x72FC40)
     fn get_pipeline_id_call(atomic: GPtr<u8>) -> u32 = cdecl 0x72FC40 => get_pipeline_id;
-    /// `CCustomBuildingDNPipeline::GetExtraVertColourPtr(geometry)` (0x5D6E90)
-    fn get_extra_vert_colour_ptr_call(geom: GPtr<u8>) -> u32 = cdecl 0x5D6E90 => get_extra_vert_colour_ptr;
 }
 
 /// `PipelinePlugin` offset in RpAtomic (`[0x8D6080]`) and the DN pipeline's extra vertex colour

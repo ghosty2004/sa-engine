@@ -6,7 +6,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::camcol::{allocate_matrix, simple_transform_update_matrix, vector_sub};
 use crate::camctl::set_motion_blur_call;
@@ -17,13 +17,9 @@ use crate::followped::{copy3, d, entity_pos, vector_add_assign};
 
 pub use sa_world::bindings::bike_calculate_lean_matrix;
 pub use sa_world::bindings::vehicle_is_upside_down;
-pub use sa_world::bindings::world_get_is_line_of_sight_clear as get_is_line_of_sight_clear;
-orig! {
-    /// `CCam::Process_WheelCam(const CVector&, float, float, float)` (0x512110, AL); the floats as dwords
-    pub fn cam_process_wheel_cam(c: GPtr<u8>, t: GPtr<u8>, o: u32, sv: u32, svw: u32) -> u8 = thiscall 0x512110 => unported;
-    /// `CVector::operator*=(float)` (0x40FEF0); the float as a dword
-    pub fn vector_scale_assign(v: GPtr<u8>, s: u32) -> GPtr<u8> = thiscall 0x40FEF0 => unported;
-}
+pub use sa_core::bindings::world_get_is_line_of_sight_clear as get_is_line_of_sight_clear;
+pub use crate::bindings::cam_process_wheel_cam;
+pub use sa_world::bindings::vec_mul_assign as vector_scale_assign;
 
 /// `CCam::m_bFirstPersonRunThisFrame`-ish byte (0xB6EC20), the upside-down rise (0xB7004C), the
 /// wheel-cam timer (0xB6F18C), the last wheel-cam time (0x8CCD14) and its 3000 ms interval (0x8CCD10).
@@ -258,9 +254,9 @@ fn main_part(this: GPtr<u8>, b: GPtr<u8>, f: &mut Fpu) {
     // 0x518404: under water
     wr::<u32>(b, 0x10, 0);
     let wl = get_water_level(
-        rd::<u32>(src, 0),
-        rd::<u32>(src, 4),
-        rd::<u32>(src, 8),
+        f32::from_bits(rd::<u32>(src, 0)),
+        f32::from_bits(rd::<u32>(src, 4)),
+        f32::from_bits(rd::<u32>(src, 8)),
         b.byte_add(0x10),
         1,
         GPtr::NULL,
@@ -287,13 +283,13 @@ fn bike_driver_eye(this: GPtr<u8>, b: GPtr<u8>, veh: GPtr<u8>, f: &mut Fpu) {
     ped_get_bone_position(rd::<GPtr<u8>>(veh, 0x460), b.byte_add(0x20), 4, 1);
     let ts = g::<u32>(TIME_STEP).read();
     let mv = rd::<GPtr<u8>>(this, 0x21C).byte_add(0x44);
-    let r = vec_mul_s(b.byte_add(0x58), mv, ts);
+    let r = vec_mul_s(b.byte_add(0x58), mv, f32::from_bits(ts));
     vector_add_assign(b.byte_add(0x20), r);
     f.fld(rd(b, 0x28));
     f.fadd_m(d(0x8CC7B4));
     wr::<f32>(this, 0x1A4, f.fstp());
     cross_product(b.byte_add(0x38), this.byte_add(0x190), this.byte_add(0x1B4));
-    vector_scale_assign(b.byte_add(0x38), g::<u32>(0x8CCD0C).read());
+    vector_scale_assign(b.byte_add(0x38), f32::from_bits(g::<u32>(0x8CCD0C).read()));
     vec_add(b.byte_add(0x50), src, b.byte_add(0x38));
     vector_sub(b.byte_add(0x44), src, b.byte_add(0x38));
     if get_is_line_of_sight_clear(b.byte_add(0x50), b.byte_add(0x44), 1, 0, 0, 0, 0, 0, 0) != 0 {
@@ -341,7 +337,7 @@ fn under_water_blur(f: &mut Fpu) {
         f.fld(d(WATER_R));
         ri = ftol32(f.pop());
     }
-    set_motion_blur_call(GPtr::from_addr(THE_CAMERA), ri, gi, bi, alpha, 2);
+    set_motion_blur_call(GPtr::from_addr(THE_CAMERA), ri as u32, gi as u32, bi as u32, alpha as u32, 2);
 }
 
 /// Registrations of this module.

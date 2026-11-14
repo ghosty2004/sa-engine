@@ -5,7 +5,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 
 use crate::common::{g, rd};
@@ -14,10 +14,7 @@ use crate::bindings::alpha_list_insert_sorted;
 use crate::bindings::atomic_default_render;
 use crate::bindings::render_atomic_with_alpha;
 use sa_core::bindings::frame_get_ltm;
-orig! {
-    /// `CVisibilityPlugins::GetDotProductWithCameraVector(ltm, carLtm, atomicId)` (0x7326D0)
-    fn dot_with_camera_call(m: GPtr<u8>, car: GPtr<u8>, id: u32) -> f64 = cdecl 0x7326D0 => dot_with_camera_f64;
-}
+use crate::bindings::dot_with_camera as dot_with_camera_call;
 
 /// `ms_pCameraPosn`, `gVehicleAngleToCamera`, `gVehicleDistanceFromCamera`, `ms_bigVehicleLod0Dist`,
 /// `ms_vehicleLod0Dist`, `ms_vehicleLod1Dist`, the alpha-atomic list, the atomic / clump plugin offsets.
@@ -94,7 +91,7 @@ pub fn dot_with_camera(m: GPtr<u8>, car: GPtr<u8>, id: u32) -> X87 {
 }
 
 #[cfg_attr(sa_phase_a, allow(dead_code))]
-fn dot_with_camera_f64(m: GPtr<u8>, car: GPtr<u8>, id: u32) -> f64 {
+pub(crate) fn dot_with_camera_f64(m: GPtr<u8>, car: GPtr<u8>, id: u32) -> f64 {
     dot_with_camera(m, car, id).to_f64()
 }
 

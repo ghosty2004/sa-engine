@@ -7,6 +7,7 @@
 //! function goes through `orig!` at the original address.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -20,6 +21,31 @@ use sa_core::bindings::eh_vector_dtor;
 use sa_core::bindings::ped_is_alive;
 use sa_core::bindings::tm_get_active_task;
 use sa_core::bindings::tm_get_simplest_active_task;
+use crate::bindings::compute_knock_off_bike_response as r_knock_off_bike;
+use crate::bindings::editable_compute_response_task_of_type;
+use crate::bindings::handler_is_temporary_event as is_temporary_event;
+use crate::bindings::history_get_current_event;
+use crate::bindings::in_air_and_land_ctor;
+use crate::bindings::intel_is_ped_going_for_car_door;
+use crate::bindings::run_anim_ctor2;
+use crate::bindings::simple_anim_dtor;
+use crate::bindings::task_is_go_to_task;
+use crate::bindings::walk_round_car_ctor;
+use sa_core::bindings::base_model_info_ctor;
+use sa_core::bindings::entity_register_reference;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::rp_atomic_destroy;
+use sa_core::bindings::rw_frame_destroy;
+use sa_core::bindings::task_new as task_new_o;
+use sa_core::bindings::tm_get_task_secondary;
+use sa_core::bindings::tm_set_task_secondary;
+use sa_stream::bindings::anim_remove_block_ref as remove_anim_block_ref;
+use sa_world::bindings::compute_response_task_type_group as editable_compute_response_task_type_group;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::facial_set_request;
+use sa_world::bindings::membership_is_member;
+use sa_world::bindings::ped_groups_get_peds_group as get_peds_group;
+use sa_world::bindings::tm_set_task;
 orig! {
     /// `CEventHandler::ComputeVehicleCollisionResponse(CEvent*, CTask* active, CTask* simplest)` (0x4BD6A0, `ret 0xC`)
     fn r_vehicle_collision(h: GPtr<u8>, ev: GPtr<u8>, active: GPtr<u8>, simplest: GPtr<u8>) = thiscall 0x4BD6A0 => unported;
@@ -67,8 +93,6 @@ orig! {
     fn r_ped_entered_vehicle(h: GPtr<u8>, ev: GPtr<u8>, active: GPtr<u8>, simplest: GPtr<u8>) = thiscall 0x4C1590 => unported;
     /// `CEventHandler::ComputeVehicleToStealResponse(CEvent*, CTask* active, CTask* simplest)` (0x4B9F80, `ret 0xC`)
     fn r_vehicle_to_steal(h: GPtr<u8>, ev: GPtr<u8>, active: GPtr<u8>, simplest: GPtr<u8>) = thiscall 0x4B9F80 => unported;
-    /// `CEventHandler::ComputeKnockOffBikeResponse(CEvent*, CTask* active, CTask* simplest)` (0x4B9FF0, `ret 0xC`)
-    fn r_knock_off_bike(h: GPtr<u8>, ev: GPtr<u8>, active: GPtr<u8>, simplest: GPtr<u8>) = thiscall 0x4B9FF0 => crate::handler::event_handler_compute_knock_off_bike_response;
     /// `CEventHandler::ComputeGunAimedAtResponse(CEvent*, CTask* active, CTask* simplest)` (0x4C2840, `ret 0xC`)
     fn r_gun_aimed_at(h: GPtr<u8>, ev: GPtr<u8>, active: GPtr<u8>, simplest: GPtr<u8>) = thiscall 0x4C2840 => unported;
     /// `CEventHandler::ComputeScriptCommandResponse(CEvent*, CTask* active, CTask* simplest)` (0x4BA7C0, `ret 0xC`)
@@ -139,12 +163,6 @@ orig! {
     fn r_danger(h: GPtr<u8>, ev: GPtr<u8>, active: GPtr<u8>, simplest: GPtr<u8>) = thiscall 0x4BC230 => unported;
     /// `CEventHandler::ComputeDontJoinGroupResponse(CEvent*, CTask* active, CTask* simplest)` (0x4BC1D0, `ret 0xC`)
     fn r_dont_join_group(h: GPtr<u8>, ev: GPtr<u8>, active: GPtr<u8>, simplest: GPtr<u8>) = thiscall 0x4BC1D0 => unported;
-    /// `CTaskManager::GetTaskSecondary(int32)` (0x681810, `ret 4`)
-    fn tm_get_task_secondary(tm: GPtr<u8>, slot: i32) -> GPtr<u8> = thiscall 0x681810 => crate::tasks::task_manager_get_task_secondary;
-    /// `CTaskManager::SetTaskSecondary(CTask*, int32)` (0x681B60, `ret 8`)
-    fn tm_set_task_secondary(tm: GPtr<u8>, t: GPtr<u8>, slot: i32) = thiscall 0x681B60 => crate::taskmgr::task_manager_set_task_secondary;
-    /// `CTaskManager::SetTask(CTask*, int32, bool)` (0x681AF0, `ret 0xC`)
-    fn tm_set_task(tm: GPtr<u8>, t: GPtr<u8>, slot: i32, unused: u8) = thiscall 0x681AF0 => crate::taskmgr::task_manager_set_task;
     /// `CTaskManager::ClearTaskEventResponse` (0x681BD0)
     fn tm_clear_task_event_response(tm: GPtr<u8>) = thiscall 0x681BD0 => crate::taskmgr::task_manager_clear_task_event_response;
     /// `CEvent::GetEventType` (vtable +4)
@@ -155,68 +173,24 @@ orig! {
     fn v_clone_script_task(e: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x40 => unported;
     /// `CTask::MakeAbortable(CPed*, int32 priority, const CEvent*)` (vtable +0x18, `ret 0xC`, AL)
     fn v_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, prio: i32, ev: GPtr<u8>) -> u8 = thiscall vslot 0x18 => unported;
-    /// `CTask::operator new(uint32)` (0x61A5A0)
-    fn task_new_o(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => crate::mvpa_ai1::task_operator_new;
-    /// `CTaskComplexInAirAndLand::CTaskComplexInAirAndLand(bool, bool)` (0x678C80, `ret 8`)
-    fn in_air_and_land_ctor(t: GPtr<u8>, glide: u8, vault: u8) -> GPtr<u8> = thiscall 0x678C80 => crate::fall::in_air_and_land_ctor;
     /// `CTaskComplexStuckInAir::CTaskComplexStuckInAir` (0x67BA40)
     fn stuck_in_air_ctor(t: u32) -> u32 = thiscall 0x67BA40 => crate::gen_ctors::g_ctask_complex_stuck_in_air_67ba40;
     /// `CPedIntelligence::AddTaskEventResponseTemp(CTask*, bool)` (0x600DE0, `ret 8`)
     fn intel_add_task_event_response_temp(i: GPtr<u8>, t: GPtr<u8>, b: u32) = thiscall 0x600DE0 => crate::intel::intel_add_task_event_response_temp;
     /// `CPedIntelligence::AddTaskEventResponseNonTemp(CTask*, bool)` (0x600E00, `ret 8`)
     fn intel_add_task_event_response_non_temp(i: GPtr<u8>, t: GPtr<u8>, b: u32) = thiscall 0x600E00 => crate::intel::intel_add_task_event_response_non_temp;
-    /// `CEventHandler::IsTemporaryEvent(const CEvent&)` (0x4BC370, cdecl, AL)
-    fn is_temporary_event(e: GPtr<u8>) -> u32 = cdecl 0x4BC370 => crate::handler::handler_is_temporary_event_port;
-    /// `CTaskComplexFacial::SetRequest(eFacialExpression, int32 duration, int32, int32)` (0x691230, `ret 0x10`)
-    fn facial_set_request(t: u32, a0: u32, a1: u32, a2: u32, a3: u32) -> u32 = thiscall 0x691230 => crate::gen_leaves::g_task_complex_facial_set_request_691230;
-    /// `CTask::IsGoToTask(CTask*)` (0x61A360, cdecl, AL)
-    fn task_is_go_to_task(t: GPtr<u8>) -> u8 = cdecl 0x61A360 => crate::tasks::task_is_go_to_task;
-    /// `CPedGroups::GetPedsGroup(const CPed*)` (0x5F7E80, cdecl)
-    fn get_peds_group(ped: u32) -> u32 = cdecl 0x5F7E80 => crate::misc::ped_groups_get_peds_group_5f7e80;
-    /// `CPedIntelligence::IsPedGoingForCarDoor` (0x602350, AL)
-    fn intel_is_ped_going_for_car_door(i: GPtr<u8>) -> u8 = thiscall 0x602350 => crate::intelrest::intel_is_ped_going_for_car_door;
-    /// `CTaskComplexWalkRoundCar::CTaskComplexWalkRoundCar(int32 moveState, const CVector&, CVehicle*, bool, bool)`
-    /// (0x6541B0, `ret 0x14`)
-    fn walk_round_car_ctor(t: GPtr<u8>, ms: i32, target: GPtr<u8>, veh: GPtr<u8>, door: u32, b: u32) -> GPtr<u8> = thiscall 0x6541B0 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, `ret 8`)
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, valid: u8) -> GPtr<u8> = thiscall 0x4AB420 => crate::group::event_group_add;
     /// `CPedScriptedTaskRecord::GetRecordAssociatedWithEvent(CEvent*)` (0x608580, cdecl)
     fn record_associated_with_event(e: u32) -> GPtr<u8> = cdecl 0x608580 => crate::small::scripted_task_record_get_record_associated_with_event;
     /// `CPedScriptedTaskRecordData::AssociateWithEvent(CEvent*)` (0x608500, `ret 4`)
     fn record_associate_with_event(r: u32, e: u32) -> u32 = thiscall 0x608500 => crate::gen_leaves::g_cped_scripted_task_record_data_associate_with_event_608500;
     /// `CPedScriptedTaskRecordData::AssociateWithTask(CTask*)` (0x608520, `ret 4`)
     fn record_associate_with_task(r: GPtr<u8>, t: u32) = thiscall 0x608520 => crate::small::record_data_associate_with_task;
-    /// `CEventEditableResponse::ComputeResponseTaskType(CPedGroup*)` (0x4B57A0, `ret 4`)
-    fn editable_compute_response_task_type_group(e: GPtr<u8>, g: GPtr<u8>) = thiscall 0x4B57A0 => crate::events2::event_editable_response_compute_response_task_type_group_4b57a0;
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped;
-    /// `CPedGroupMembership::IsMember(const CPed*)` (0x5F6A10, `ret 4`, AL)
-    fn membership_is_member(m: GPtr<u8>, ped: GPtr<u8>) -> u32 = thiscall 0x5F6A10 => crate::small::membership_is_member;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70, `ret 4`)
-    fn entity_register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => sa_world::world::entity::register_reference;
     /// `CAnimBlendAssociation::~CAnimBlendAssociation` (0x4CECF0)
     fn anim_assoc_dtor(a: GPtr<u8>) = thiscall 0x4CECF0 => crate::mvpc_ai1::anim_blend_association_dtor;
     /// `CMemoryMgr::FreeAlign(void*)` (0x72F4F0, cdecl)
     fn free_align(p: GPtr<u8>) = cdecl 0x72F4F0 => sa_core::memory::free_align;
-    /// `CAnimManager::RemoveAnimBlockRef(int32)` (0x4D3FD0, cdecl)
-    fn remove_anim_block_ref(idx: u32) = cdecl 0x4D3FD0 => unported;
-    /// `CTaskSimpleRunAnim::CTaskSimpleRunAnim(AssocGroupId, AnimationId, float, eTaskType, const char*, bool)`
-    /// (0x61A900, `ret 0x18`)
-    fn run_anim_ctor2(t: GPtr<u8>, group: u32, anim: u32, delta: u32, ty: u32, name: u32, hold: u8) -> GPtr<u8> = thiscall 0x61A900 => crate::mvpa_ai2::run_anim_ctor2;
-    /// `CTaskSimpleAnim::~CTaskSimpleAnim` (0x61A6F0)
-    fn simple_anim_dtor(t: GPtr<u8>) = thiscall 0x61A6F0 => crate::tasks::simple_anim_dtor;
-    /// `CBaseModelInfo::CBaseModelInfo` (0x4C4A60)
-    fn base_model_info_ctor(m: GPtr<u8>) -> GPtr<u8> = thiscall 0x4C4A60 => unported;
-    /// `RpAtomicDestroy(RpAtomic*)` (0x749DC0, cdecl)
-    fn rp_atomic_destroy(a: GPtr<u8>) -> u32 = cdecl 0x749DC0 => unported;
-    /// `RwFrameDestroy(RwFrame*)` (0x7F05A0, cdecl)
-    fn rw_frame_destroy(f: GPtr<u8>) -> u32 = cdecl 0x7F05A0 => unported;
     /// `CPedScriptedTaskRecord::GetStatus(const CPed*)` (0x608750, cdecl)
     fn scripted_task_get_status(p: GPtr<u8>) -> i32 = cdecl 0x608750 => unported;
-    /// `CEventHandlerHistory::GetCurrentEvent` (0x4B8CA0)
-    fn history_get_current_event(h: GPtr<u8>) -> GPtr<u8> = thiscall 0x4B8CA0 => crate::handler::history_get_current_event;
-    /// `CEventEditableResponse::ComputeResponseTaskOfType(const CPed*, int32)` (0x4B5730, `ret 8`, AL)
-    fn editable_compute_response_task_of_type(e: GPtr<u8>, ped: GPtr<u8>, ty: i32) -> u8 = thiscall 0x4B5730 => crate::events2::event_editable_response_compute_response_task_of_type_4b5730;
     /// `CPedIntelligence::FindRespectedFriendInInformRange` (0x600CF0, AL)
     fn intel_find_respected_friend_in_inform_range(i: GPtr<u8>) -> u8 = thiscall 0x600CF0 => unported;
     /// `FUN_00603a30` (0x603A30, `ret 4`, AL): may the acquaintance scanner scan this ped
@@ -374,7 +348,7 @@ pub fn event_handler_set_event_response_task(this: GPtr<u8>, ev: GPtr<u8>) {
             if expr != -1 {
                 let tm = rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0), 0x47C).byte_add(4);
                 let facial = tm_get_task_secondary(tm, 3);
-                facial_set_request(facial.addr() as u32, expr as u32, 10000, 0xFFFF_FFFF, 0);
+                facial_set_request(GPtr::from_addr((facial.addr() as u32) as usize), expr as u32, 10000, 0xFFFF_FFFF, 0);
             }
         }
     }
@@ -402,7 +376,7 @@ pub fn event_handler_compute_vehicle_potential_passive_collision_response(this: 
     if ms == 1 {
         return;
     }
-    if get_peds_group(rd::<u32>(this, 0)) != 0 {
+    if GPtr::<u8>::addr(get_peds_group(GPtr::from_addr(rd::<u32>(this, 0) as usize))) as u32 != 0 {
         ms = 6;
     }
     let door = intel_is_ped_going_for_car_door(rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0), 0x47C));
@@ -437,7 +411,7 @@ pub fn event_handler_compute_script_command_response(this: GPtr<u8>, ev: GPtr<u8
     }
     let task = v_clone_script_task(ev);
     tm_clear_task_event_response(rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0), 0x47C).byte_add(4));
-    tm_set_task(rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0), 0x47C).byte_add(4), task, slot, 1);
+    tm_set_task(rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0), 0x47C).byte_add(4), task, slot as u32, 1);
     let rec = record_associated_with_event(ev.addr() as u32);
     if !rec.is_null() {
         record_associate_with_task(rec, task.addr() as u32);
@@ -475,7 +449,7 @@ pub fn inform_group_event_queue_add(ent: GPtr<u8>, group: GPtr<u8>, ev: GPtr<u8>
         editable_compute_response_task_type_group(ev, group);
         let gid = rd::<i32>(rd::<GPtr<u8>>(find_player_ped(-1), 0x480), 0x38);
         let m = g::<u8>((0xC09928 + gid * 0x2D4) as u32 as usize);
-        delay = if membership_is_member(m, ent) as u8 == 0
+        delay = if (membership_is_member(m, ent) as u32) as u8 == 0
             && rd::<u8>(ent, 0x484) != 2
             && rd::<u32>(rd::<GPtr<u8>>(ev, 0x14), 0x46C) & 0x100 != 0
             && rd::<u16>(ev, 0xE) != 0xC8
@@ -529,7 +503,7 @@ pub fn conversations_enable_conversation(ped: GPtr<u8>, enable: u8) {
 #[hook(addr = 0x5F3650, conv = cdecl, name = "CPedGeometryAnalyser::ComputeEntityBoundingBoxCorners", expect = "E9 4B E9 FF FF 90 90 90",
        unverified = "mvpc-ai-1", route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn compute_entity_bounding_box_corners(z: u32, e: GPtr<u8>, corners: GPtr<u8>) {
-    bbox_corners_uncached(z, e, corners);
+    bbox_corners_uncached(f32::from_bits(z), e, corners);
 }
 
 /// `CAnimBlendAssociation::~CAnimBlendAssociation` (0x4CECF0): vtable 0x85C6D0; frees the aligned node array (+0x10)

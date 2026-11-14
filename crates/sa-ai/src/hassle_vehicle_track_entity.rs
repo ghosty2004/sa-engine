@@ -2,6 +2,7 @@
 //! peds that hassle the intro's police car). Ported from the 1.0 US bytes; gta-reversed as a reading aid.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, native, orig};
 
@@ -11,9 +12,8 @@ use crate::bindings::task_complex_dtor;
 use crate::bindings::vehicle_set_hassle_pos_id;
 use sa_core::bindings::entity_clean_up_old_reference;
 use sa_stream::bindings::anim_remove_block_ref;
+use sa_stream::bindings::get_animation_block_index as anim_get_block_index;
 orig! {
-    /// `CAnimManager::GetAnimationBlockIndex(const char*)` (0x4D3990)
-    fn anim_get_block_index(name: u32) -> i32 = cdecl 0x4D3990 => unported;
     /// `CTaskComplex::CreateNextSubTask`-slot +0x20 of the task's vtable (the tail jump of 0x65F700)
     fn v_slot_20(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x20 => unported;
 }
@@ -38,15 +38,15 @@ pub fn gang_hassle_vehicle_dtor(this: GPtr<u8>) {
         }
         let veh = rd::<GPtr<u8>>(this, 0x10);
         if !veh.is_null() {
-            entity_clean_up_old_reference(veh, this.byte_add(0x10));
+            entity_clean_up_old_reference(veh, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x10)));
         }
     }
     let e = rd::<GPtr<u8>>(this, 0x34);
     if !e.is_null() {
-        entity_clean_up_old_reference(e, this.byte_add(0x34));
+        entity_clean_up_old_reference(e, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x34)));
     }
     if rd::<u8>(this, 0x30) != 0 {
-        anim_remove_block_ref(anim_get_block_index(0x86F92C));
+        anim_remove_block_ref(anim_get_block_index(GPtr::from_addr(0x86F92C)) as u32);
         wr::<u8>(this, 0x30, 0);
     }
     task_complex_dtor(this);

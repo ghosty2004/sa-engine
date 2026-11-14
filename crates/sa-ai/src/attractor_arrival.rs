@@ -9,8 +9,9 @@ use sa_core::{hook, orig};
 use crate::common::*;
 
 use crate::bindings::go_to_attractor_ctor;
-use crate::bindings::is_ped_registered_with_effect;
+use sa_world::bindings::is_ped_registered_with_effect;
 use crate::bindings::peds_push_back;
+use crate::bindings::set_task_for_ped;
 orig! {
     /// `CPedAttractor::GetType()` (vtable slot 0)
     fn attractor_get_type(a: GPtr<u8>) -> u32 = thiscall vslot 0x0 => unported;
@@ -28,8 +29,6 @@ orig! {
     fn use_attractor_ctor(t: GPtr<u8>, a: GPtr<u8>) -> GPtr<u8> = thiscall 0x6326F0 => unported;
     /// `CTaskComplexWaitAtAttractor(CPedAttractor*, int slot)` (0x6325F0, `ret 8`)
     fn wait_at_attractor_ctor(t: GPtr<u8>, a: GPtr<u8>, slot: i32) -> GPtr<u8> = thiscall 0x6325F0 => unported;
-    /// `CPedAttractor::SetTaskForPed` (0x5EECA0, `ret 8`)
-    fn set_task_for_ped(a: GPtr<u8>, ped: GPtr<u8>, task: GPtr<u8>) = thiscall 0x5EECA0 => crate::ped_attractor_base::set_task_for_ped;
     fn get_queue_slot_o(a: GPtr<u8>, ped: GPtr<u8>) -> i32 = thiscall 0x5EB550 => get_queue_slot;
     fn broadcast_arrival_o(a: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x5EEF80 => broadcast_arrival;
     fn broadcast_arrival_t_o(m: GPtr<u8>, ped: GPtr<u8>, a: GPtr<u8>, arr: GPtr<u8>) -> u8 = thiscall 0x5EF920 => broadcast_arrival_t;

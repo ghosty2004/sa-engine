@@ -1,6 +1,7 @@
 //! The `CEventPedToFlee` destructor (INTRO-2: peds flee the Ballas drive-by after the intro cutscene). Ported from
 //! the 1.0 US bytes.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::hook;
 
@@ -18,7 +19,7 @@ pub fn event_ped_to_flee_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x0085_B178);
     let p = rd::<GPtr<u8>>(this, 0xC);
     if !p.is_null() {
-        entity_clean_up_old_reference(p, this.byte_add(0xC));
+        entity_clean_up_old_reference(p, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0xC)));
     }
     wr::<u32>(this, 0, 0x0085_AB38);
 }

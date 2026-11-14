@@ -28,6 +28,16 @@ use sa_core::bindings::timer_resume;
 use sa_core::bindings::timer_suspend;
 use sa_core::bindings::timer_update;
 use sa_core::bindings::world_add;
+use crate::bindings::cutscene_update_object_bounding_box;
+use sa_core::bindings::clump_get_first_association;
+use sa_core::bindings::clump_get_frame_from_name as clump_mi_get_frame_from_name;
+use sa_core::bindings::create_fx_system_mat as fx_manager_create_fx_system;
+use sa_core::bindings::frame_get_ltm as rw_frame_get_ltm;
+use sa_core::bindings::get_anim_hierarchy_from_skin_clump;
+use sa_core::bindings::get_first_atomic;
+use sa_core::bindings::rp_hanim_hierarchy_get_matrix_array as hanim_hierarchy_get_matrix_array;
+use sa_core::bindings::rp_hanim_id_get_index as hanim_id_get_index;
+use sa_core::bindings::rp_skin_geometry_get_skin;
 orig! {
     /// `CCutsceneMgr::LoadCutsceneData_loading()` (0x5B11C0)
     fn call_load_cutscene_data_loading() = cdecl 0x5B11C0 => crate::cutscene_update::cutscene_load_cutscene_data_loading;
@@ -35,22 +45,6 @@ orig! {
     fn cutscene_create_cutscene_object(model: i32) -> u32 = cdecl 0x5B02A0 => unported;
     /// `CCutsceneMgr::SetCutsceneAnim(const char* name, CObject*)` (0x5B0390)
     fn cutscene_set_cutscene_anim(name: GPtr<u8>, obj: u32) = cdecl 0x5B0390 => unported;
-    /// `GetFirstAtomic(RpClump*)` (0x734820)
-    fn get_first_atomic(c: u32) -> GPtr<u8> = cdecl 0x734820 => unported;
-    /// `RpSkinGeometryGetSkin(RpGeometry*)` (0x7C7550)
-    fn rp_skin_geometry_get_skin(g: u32) -> u32 = cdecl 0x7C7550 => unported;
-    /// `GetAnimHierarchyFromSkinClump(RpClump*)` (0x734A40)
-    fn get_anim_hierarchy_from_skin_clump(c: u32) -> u32 = cdecl 0x734A40 => unported;
-    /// `RpHAnimIDGetIndex(RpHAnimHierarchy*, int32)` (0x7C51A0)
-    fn hanim_id_get_index(h: u32, id: i32) -> i32 = cdecl 0x7C51A0 => unported;
-    /// `RpHAnimHierarchyGetMatrixArray(RpHAnimHierarchy*)` (0x7C5120)
-    fn hanim_hierarchy_get_matrix_array(h: u32) -> u32 = cdecl 0x7C5120 => unported;
-    /// `CClumpModelInfo::GetFrameFromName(RpClump*, const char*)` (0x4C5400)
-    fn clump_mi_get_frame_from_name(c: u32, name: GPtr<u8>) -> u32 = cdecl 0x4C5400 => unported;
-    /// `RwFrameGetLTM(RwFrame*)` (0x7F0990)
-    fn rw_frame_get_ltm(f: u32) -> u32 = cdecl 0x7F0990 => unported;
-    /// `FxManager_c::CreateFxSystem(const char* name, RwMatrix* m, RwMatrix* attach, bool)` (0x4A9BB0, `ret 0x10`)
-    fn fx_manager_create_fx_system(m: GPtr<u8>, name: GPtr<u8>, mat: GPtr<u8>, attach: u32, b: u32) -> u32 = thiscall 0x4A9BB0 => unported;
     /// `CCutsceneMgr::SetupCutsceneToStart()` (0x5B14D0)
     fn call_setup_cutscene_to_start() = cdecl 0x5B14D0 => crate::cutscene_update::cutscene_setup_cutscene_to_start;
     /// `CCutsceneMgr::HideRequestedObjects()` (0x5AFAD0)
@@ -59,10 +53,6 @@ orig! {
     fn audio_disable_effects_loading(e: GPtr<u8>) = thiscall 0x506E80 => unported;
     /// `CAudioEngine::PlayPreloadedCutsceneTrack()` (0x507070)
     fn audio_play_preloaded_cutscene_track(e: GPtr<u8>) = thiscall 0x507070 => unported;
-    /// `CCutsceneMgr::UpdateCutsceneObjectBoundingBox(RpClump*, int32 model)` (0x5B01E0)
-    fn cutscene_update_object_bounding_box(clump: u32, model: i32) = cdecl 0x5B01E0 => unported;
-    /// `RpAnimBlendClumpGetFirstAssociation(RpClump*)` (0x4D15E0)
-    fn clump_get_first_association(c: u32) -> GPtr<u8> = cdecl 0x4D15E0 => unported;
 }
 
 /// 1/1024 (0x85C6D4): the compressed key frame translation scale
@@ -204,7 +194,7 @@ pub fn cutscene_update_overlay() {
         let o = GPtr::<u8>::from_addr(obj as usize);
         let model = i32::from(o.byte_add(0x22).cast::<i16>().read());
         if (0x12C..=0x13F).contains(&model) {
-            cutscene_update_object_bounding_box(o.byte_add(0x18).cast::<u32>().read(), model);
+            cutscene_update_object_bounding_box(GPtr::from_addr((o.byte_add(0x18).cast::<u32>().read()) as usize), model);
         }
         k += 1;
     }
@@ -256,7 +246,7 @@ pub fn cutscene_setup_cutscene_to_start() {
     while i != 0 {
         let first = GPtr::<u8>::from_addr(gu32((OBJS + (i - 1) * 4) as usize).read() as usize);
         i -= 1;
-        let assoc = clump_get_first_association(first.byte_add(0x18).cast::<u32>().read());
+        let assoc = clump_get_first_association(GPtr::from_addr((first.byte_add(0x18).cast::<u32>().read()) as usize));
         let obj = GPtr::<u8>::from_addr(gu32((OBJS + i * 4) as usize).read() as usize);
         if !assoc.is_null() {
             let flags = assoc.byte_add(0x2E);
@@ -395,21 +385,21 @@ pub fn cutscene_load_cutscene_data_loading() {
         if idx > 0 && idx < gu32(OBJ_COUNT).read() as i32 + 1 {
             let obj = gu32((OBJS as i32 + (idx - 1) * 4) as usize).read();
             let clump = GPtr::<u32>::from_addr(obj as usize + 0x18).read();
-            let atomic = get_first_atomic(clump);
-            let skinned = !atomic.is_null() && rp_skin_geometry_get_skin(atomic.byte_add(0x18).cast::<u32>().read()) != 0;
+            let atomic = get_first_atomic(GPtr::from_addr(clump as usize));
+            let skinned = !atomic.is_null() && GPtr::<u8>::addr(rp_skin_geometry_get_skin(GPtr::from_addr((atomic.byte_add(0x18).cast::<u32>().read()) as usize))) as u32 != 0;
             if skinned {
                 let bone = crt_atol(e.byte_add(0x30));
-                let h = get_anim_hierarchy_from_skin_clump(clump);
-                let bi = hanim_id_get_index(h, bone);
-                attach = hanim_hierarchy_get_matrix_array(h).wrapping_add((bi as u32) << 6);
+                let h = GPtr::<u8>::addr(get_anim_hierarchy_from_skin_clump(GPtr::from_addr(clump as usize))) as u32;
+                let bi = hanim_id_get_index(GPtr::from_addr(h as usize), bone as u32);
+                attach = (GPtr::<u8>::addr(hanim_hierarchy_get_matrix_array(GPtr::from_addr(h as usize))) as u32).wrapping_add((bi as u32) << 6);
             } else {
-                let f = clump_mi_get_frame_from_name(clump, e.byte_add(0x30));
+                let f = GPtr::<u8>::addr(clump_mi_get_frame_from_name(GPtr::from_addr(clump as usize), e.byte_add(0x30))) as u32;
                 if f != 0 {
-                    attach = rw_frame_get_ltm(f);
+                    attach = GPtr::<u8>::addr(rw_frame_get_ltm(GPtr::from_addr(f as usize))) as u32;
                 }
             }
         }
-        let sys = fx_manager_create_fx_system(GPtr::from_addr(G_FX_MAN), e, mp, attach, 1);
+        let sys = GPtr::<u8>::addr(fx_manager_create_fx_system(GPtr::from_addr(G_FX_MAN), e, mp, GPtr::from_addr(attach as usize), 1)) as u32;
         e.byte_add(0x20).cast::<u32>().write(sys);
         k += 1;
     }
@@ -419,8 +409,8 @@ pub fn cutscene_load_cutscene_data_loading() {
         let parent = gu32((OBJS + en.read() * 4) as usize).read();
         let child = gu32((OBJS + en.byte_add(4).read() * 4) as usize).read();
         let bone = en.byte_add(8).read() as i32;
-        let h = get_anim_hierarchy_from_skin_clump(GPtr::<u32>::from_addr(parent as usize + 0x18).read());
-        let bi = hanim_id_get_index(h, bone);
+        let h = GPtr::<u8>::addr(get_anim_hierarchy_from_skin_clump(GPtr::from_addr((GPtr::<u32>::from_addr(parent as usize + 0x18).read()) as usize))) as u32;
+        let bi = hanim_id_get_index(GPtr::from_addr(h as usize), bone as u32);
         GPtr::<u32>::from_addr(child as usize + 0x180).write(parent);
         GPtr::<i32>::from_addr(child as usize + 0x17C).write(bi);
         a += 1;

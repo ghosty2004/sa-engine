@@ -2,6 +2,7 @@
 //! `std12-ai-1`): reached by the ambient peds' route planning. Ported from the 1.0 US bytes (gta-reversed as a reading
 //! aid). Unverified (docs/verify/HOWTO.md).
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::hook;
 

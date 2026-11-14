@@ -55,9 +55,9 @@ pub use sa_core::bindings::crt_free_8214bd as crt_free;
 pub use sa_core::bindings::memory_malloc as mem_malloc;
 pub use sa_stream::bindings::col_load_collision as col_store_load_collision;
 pub use sa_stream::bindings::crt_new as operator_new_links;
+pub use sa_core::bindings::load_all_requested_models;
+pub use sa_core::bindings::memory_free as mem_free;
 orig! {
-    /// `CMemoryMgr::Free` (0x72F430)
-    pub fn mem_free(p: GPtr<u8>) = cdecl 0x72F430 => sa_core::memory::mgr_free;
     /// CRT `operator new` (0x82119A)
     pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
     /// `CColModelPool::New` (0x40FB80)
@@ -89,8 +89,6 @@ orig! {
     pub fn col_store_initialise() = cdecl 0x4113F0 => sa_stream::colstore::initialise;
     /// `CColStore::Shutdown` (0x4114D0)
     pub fn col_store_shutdown() = cdecl 0x4114D0 => sa_stream::colstore::shutdown;
-    /// `CStreaming::LoadAllRequestedModels(bool)` (0x40EA10)
-    pub fn load_all_requested_models(only_priority: u8) = cdecl 0x40EA10 => sa_stream::streaming::load_all_requested_models;
     /// `CVector::CrossProduct(CVector* out, const CVector* a, const CVector* b)` (0x59C730)
     pub fn cross_product(out: GPtr<CVector>, a: GPtr<CVector>, b: GPtr<CVector>) -> GPtr<CVector>
         = cdecl 0x59C730 => cross_product_port;

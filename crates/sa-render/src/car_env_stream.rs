@@ -3,17 +3,13 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::{g, wr};
 
 use sa_core::bindings::stream_read;
-orig! {
-    /// `RwTextureRead(name, mask)` (0x7F3AC0)
-    fn texture_read(name: GPtr<u8>, mask: u32) -> u32 = cdecl 0x7F3AC0 => unported;
-    /// The specular-material pool's `New` (0x5D93B0, thiscall)
-    fn spec_pool_new(pool: GPtr<u8>) -> GPtr<u8> = thiscall 0x5D93B0 => crate::mvpa_render2::spec_map_material_pool_new;
-}
+use crate::bindings::spec_mat_pool_new as spec_pool_new;
+use sa_core::bindings::rw_texture_read as texture_read;
 
 /// `CCustomCarEnvMapPipeline::ms_specularMapPluginOffset` and the specular-material pool pointer.
 const SPEC_OFFSET: usize = 0x8D12CC;
@@ -36,7 +32,7 @@ pub fn spec_mat_stream_read(s: GPtr<u8>, len: u32, material: GPtr<u8>, _offset: 
     if spec == 0.0 {
         return s;
     }
-    let tex = texture_read(GPtr::from_raw(rec[4..].as_mut_ptr()), 0);
+    let tex = GPtr::<u8>::addr(texture_read(GPtr::from_raw(rec[4..].as_mut_ptr()), GPtr::NULL)) as u32;
     if tex == 0 {
         return s;
     }

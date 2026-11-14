@@ -16,11 +16,9 @@ const EXEC_PIPELINE: usize = 0xC9BC40;
 const EXEC_PARAMS: usize = 0xC9BC50;
 const EXEC_PARAMS_HEAP: usize = 0xC9BC54;
 
+use crate::bindings::heap_add_block;
+use crate::bindings::heap_new_entry;
 orig! {
-    /// `_rxHeapAddBlock(block, prevBlock, heap)` (0x809BF0)
-    fn heap_add_block(block: GPtr<u8>, prev: GPtr<u8>, heap: GPtr<u8>) -> i32 = cdecl 0x809BF0 => crate::rxpipeline::rx_heap_add_block;
-    /// `_rxHeapGetEntry(heap)` (0x8099F0)
-    fn heap_new_entry(heap: GPtr<u8>) -> GPtr<u8> = cdecl 0x8099F0 => crate::rxpipeline::rx_heap_new_entry;
     /// `_rxHeapReset(heap)` (0x809EC0)
     fn heap_reset_call(heap: GPtr<u8>) -> i32 = cdecl 0x809EC0 => rx_heap_reset;
     /// `RxHeapFree(heap, block)` (0x8098B0)

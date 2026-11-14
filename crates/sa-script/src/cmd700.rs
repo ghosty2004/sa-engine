@@ -72,17 +72,17 @@ const SURFACE_INFOS: usize = 0xB79538;
 use crate::bindings::add_message_jump_q_with_number;
 use crate::bindings::add_message_with_number;
 use crate::bindings::draw_debug_square;
-use crate::bindings::find_node_coors_for_script;
+use sa_world::bindings::find_node_coors_for_script;
 use crate::bindings::highlight_important_area;
 use crate::bindings::start_script_fire;
-use crate::bindings::vehicle_41bdd0;
+use sa_world::bindings::vehicle_41bdd0;
 use sa_core::bindings::camera_restore_with_jump_cut as restore_with_jump_cut;
 use sa_core::bindings::text_get;
 use sa_core::bindings::vector_magnitude;
 use sa_world::bindings::cutscene_delete_cutscene_data as delete_cutscene_data;
 use sa_world::bindings::find_ground_z_for_coord;
 use sa_world::bindings::find_zone;
-use sa_world::bindings::generate_new_one;
+use sa_stream::bindings::generate_new_one;
 use sa_world::bindings::get_actual_pickup_index;
 use sa_world::bindings::get_actual_script_thing_index;
 use sa_world::bindings::get_distance_from_centre_of_mass_to_base_of_model;
@@ -93,6 +93,20 @@ use sa_world::bindings::ped_groups_get_peds_group as get_peds_group;
 use sa_world::bindings::set_char_created_by;
 use sa_world::bindings::set_stat_value;
 use sa_world::bindings::weapon_is_type_melee;
+use crate::bindings::is_ped_dead;
+use crate::bindings::read_label;
+use crate::bindings::this_is_a_valid_random_ped;
+use sa_core::bindings::find_player_coors;
+use sa_core::bindings::stats_increment_stat as increment_stat;
+use sa_world::bindings::camera_is_sphere_visible as is_sphere_visible;
+use sa_world::bindings::check_damaged_weapon_type;
+use sa_world::bindings::entity_get_bound_centre as get_bound_centre;
+use sa_world::bindings::find_ground_z_for_3d_coord;
+use sa_world::bindings::find_node_closest_to_coors;
+use sa_world::bindings::get_garage_number_by_name;
+use sa_world::bindings::get_position as path_node_get_position;
+use sa_world::bindings::get_water_level;
+use sa_world::bindings::join_car_with_road_system_goto_coors;
 orig! {
     /// `CFireManager::IsScriptFireExtinguished(int16)` (0x5396E0), AL
     fn is_script_fire_extinguished(fm: GPtr<u8>, i: i32) -> u8 = thiscall 0x5396E0 => unported;
@@ -106,33 +120,6 @@ orig! {
     fn get_cutscene_time_in_milleseconds() -> u32 = cdecl 0x5B0550 => unported;
     /// `CCutsceneMgr::HasCutsceneFinished()` (0x5B0570), AL
     fn has_cutscene_finished() -> u8 = cdecl 0x5B0570 => unported;
-    /// `CStats::IncrementStat(uint16 stat, float value)` (0x55C180); the float as its raw dword
-    fn increment_stat(stat: u32, value: u32) = cdecl 0x55C180 => unported;
-    /// `CWorld::FindGroundZFor3DCoord(float x, float y, float z, bool* outResult, CEntity** outEntity)`
-    /// (0x5696C0), floats as raw dwords, ST0 (read as f64: exact)
-    fn find_ground_z_for_3d_coord(x: u32, y: u32, z: u32, out: GPtr<u8>, ent: GPtr<u8>) -> f64 = cdecl 0x5696C0 => unported;
-    /// `CPathFind::FindNodeClosestToCoors(CVector, uint8 nodeType, float maxDist, uint16, uint16,
-    /// uint16, bool, bool)` (0x44F460), the `CNodeAddress` returned through the hidden pointer (EAX)
-    fn find_node_closest_to_coors(paths: GPtr<u8>, out: GPtr<u32>, x: u32, y: u32, z: u32, ty: u32, max: u32, a: u32, b: u32, c: u32, d: u32, e: u32) -> GPtr<u32> = thiscall 0x44F460 => unported;
-    /// `CPathNode::GetPosition()` (0x420A10), the vector returned through the hidden pointer
-    fn path_node_get_position(node: GPtr<u8>, out: GPtr<u32>) -> GPtr<u32> = thiscall 0x420A10 => unported;
-    /// `CCarCtrl::JoinCarWithRoadSystemGotoCoors(CVehicle*, const CVector&, bool, bool)` (0x42F870), AL
-    fn join_car_with_road_system_goto_coors(v: GPtr<u8>, pos: GPtr<u32>, a: u32, b: u32) -> u8 = cdecl 0x42F870 => unported;
-    /// `CEntity::GetBoundCentre()` (0x534250), the vector returned through the hidden pointer
-    fn get_bound_centre(e: GPtr<u8>, out: GPtr<u32>) -> GPtr<u32> = thiscall 0x534250 => unported;
-    /// `CCamera::IsSphereVisible(const CVector&, float)` (0x420D40), the float as its raw dword, AL
-    fn is_sphere_visible(cam: GPtr<u8>, c: GPtr<u32>, r: u32) -> u8 = thiscall 0x420D40 => unported;
-    /// `CWaterLevel::GetWaterLevel(float x, float y, float z, float* level, bool touching, CVector*)`
-    /// (0x6EB690), AL (discarded)
-    fn get_water_level(x: u32, y: u32, z: u32, level: GPtr<u32>, touching: u32, normal: u32) -> u8 = cdecl 0x6EB690 => unported;
-    /// `CRunningScript::ReadTextLabelFromScript(char*, uint8)` (0x463D50)
-    fn read_label(s: Scr, buf: GPtr<u8>, len: u32) = thiscall 0x463D50 => unported;
-    /// `CWorld::FindPlayerCoors(int32)` (0x56E010), the vector returned through the hidden pointer
-    fn find_player_coors(out: GPtr<u32>, player: i32) -> GPtr<u32> = cdecl 0x56E010 => unported;
-    /// `CRunningScript::IsPedDead(CPed*)` (0x464D70), AL
-    fn is_ped_dead(s: Scr, p: GPtr<u8>) -> u8 = thiscall 0x464D70 => unported;
-    /// `CRunningScript::ThisIsAValidRandomPed(ePedType, bool civilian, bool gang, bool criminal)` (0x489490), AL
-    fn this_is_a_valid_random_ped(s: Scr, ty: u32, a: u32, b: u32, c: u32) -> u8 = thiscall 0x489490 => unported;
     /// `CWorld::FindRoofZFor3DCoord(float, float, float, bool*)` (0x569750), ST0 (discarded)
     fn find_roof_z_for_3d_coord(x: u32, y: u32, z: u32, found: GPtr<u8>) -> f64 = cdecl 0x569750 => unported;
     /// `CCutsceneMgr::LoadCutsceneData(const char*)` (0x4D5E80)
@@ -142,12 +129,8 @@ orig! {
     fn is_projectile_in_range(x1: u32, x2: u32, y1: u32, y2: u32, z1: u32, z2: u32, destroy: u32) -> u8 = cdecl 0x739860 => unported;
     /// Unnamed debug cube draw (0x486AE0; `CTheScripts::DrawDebugCube(x1, y1, z1, x2, y2, z2)`)
     fn draw_debug_cube(x1: u32, y1: u32, z1: u32, x2: u32, y2: u32, z2: u32) = cdecl 0x486AE0 => unported;
-    /// `CGarages::GetGarageNumberByName(const char*)` (0x447680), AX (EAX taken whole)
-    fn get_garage_number_by_name(name: GPtr<u8>) -> u32 = cdecl 0x447680 => unported;
     /// `CGarages::ChangeGarageType(int16, uint8, uint32)` (0x4476D0)
     fn change_garage_type(id: u32, ty: u32, model: u32) = cdecl 0x4476D0 => unported;
-    /// `CDarkel::CheckDamagedWeaponType(int32 damageWeaponId, int32 expectedDamageWeaponId)` (0x43D9E0), AL
-    fn check_damaged_weapon_type(got: i32, want: i32) -> u8 = cdecl 0x43D9E0 => unported;
 }
 
 /// The "-100 ground rule" of this switch (`fld z; fcom [-100.0]; test ah,0x41; jp keep`, else `fstp
@@ -157,7 +140,7 @@ fn ground_rule(x: u32, y: u32, z: u32) -> u32 {
     let st = if st.fcom(X87::constant(K_MINUS_100)).test_parity(0x41) {
         st
     } else {
-        X87::from_f64_exact(find_ground_z_for_coord(x, y))
+        X87::from_f64_exact(find_ground_z_for_coord(f32::from_bits(x), f32::from_bits(y)))
     };
     st.to_f32().to_bits()
 }
@@ -228,8 +211,8 @@ fn on_screen(s: Scr, e: GPtr<u8>) {
     let mi = GPtr::<GPtr<u8>>::from_addr(MODEL_INFO_PTRS.wrapping_add((m as u32).wrapping_mul(4) as usize)).read();
     let r = mi.byte_add(0x14).cast::<GPtr<u8>>().read().byte_add(0x24).cast::<u32>().read();
     let mut out = [0u32; 3];
-    let c = get_bound_centre(e, GPtr::from_raw(out.as_mut_ptr()));
-    let b = is_sphere_visible(GPtr::from_addr(THE_CAMERA), c, r) != 0;
+    let c = GPtr::<u8>::cast::<u32>(get_bound_centre(e, GPtr::<u32>::cast::<u8>(GPtr::from_raw(out.as_mut_ptr()))));
+    let b = is_sphere_visible(GPtr::from_addr(THE_CAMERA), c.cast::<u8>(), f32::from_bits(r)) != 0;
     set_flag(s, b);
 }
 
@@ -249,7 +232,7 @@ fn get_random_char_in_zone(s: Scr) {
     collect(s, 3);
     let size = pool(PED_POOL).byte_add(8).cast::<u32>().read();
     let mut tmp = [0u32; 3];
-    let pz = find_player_coors(GPtr::from_raw(tmp.as_mut_ptr()), -1).wrapping_index(2).read();
+    let pz = GPtr::<f32>::cast::<u32>(find_player_coors(GPtr::<u32>::cast::<f32>(GPtr::from_raw(tmp.as_mut_ptr())), -1)).wrapping_index(2).read();
     let mut h: i32 = -1;
     let mut i = size;
     while i != 0 {
@@ -265,7 +248,7 @@ fn get_random_char_in_zone(s: Scr) {
         let base = p.cast::<u32>().read();
         let ped = GPtr::<u8>::from_addr(base.wrapping_add(i.wrapping_mul(0x7C4)) as usize);
         if ped.is_null()
-            || ped_get_ref(p, ped) == GPtr::<i32>::from_addr(LAST_RANDOM_PED_ID).read()
+            || ped_get_ref(p, ped) == (GPtr::<i32>::from_addr(LAST_RANDOM_PED_ID).read()) as u32
             || ped.byte_add(0x484).read() != 1
             || ped.byte_add(0x1C).cast::<u32>().read() & 0x800 != 0
             || ped.byte_add(0x470).read() & 8 != 0
@@ -292,7 +275,7 @@ fn get_random_char_in_zone(s: Scr) {
         if found[0] != 0 {
             continue;
         }
-        h = ped_get_ref(pool(PED_POOL), ped);
+        h = ped_get_ref(pool(PED_POOL), ped) as i32;
         GPtr::<i32>::from_addr(LAST_RANDOM_PED_ID).write(h);
         set_char_created_by(ped, 2);
         let n = GPtr::<u32>::from_addr(TOTAL_MISSION_PEDS);
@@ -347,9 +330,9 @@ pub fn process_commands_700_to_799(s: Scr, command: u32) -> i8 {
             collect(s, 3);
             let mut found = [0u8; 1];
             let r = find_ground_z_for_3d_coord(
-                sp(0),
-                sp(1),
-                sp(2),
+                f32::from_bits(sp(0)),
+                f32::from_bits(sp(1)),
+                f32::from_bits(sp(2)),
                 GPtr::from_raw(found.as_mut_ptr()),
                 GPtr::NULL,
             );
@@ -360,7 +343,7 @@ pub fn process_commands_700_to_799(s: Scr, command: u32) -> i8 {
         // `0 <= i < 60 && gFireManager.IsScriptFireExtinguished(i) != 0` (compare tail 0x47FAC2).
         0x02D0 => {
             collect(s, 1);
-            let i = get_actual_script_thing_index(spi(0), 5);
+            let i = get_actual_script_thing_index(spi(0) as u32, 5);
             let b =
                 (0..0x3C).contains(&i) && is_script_fire_extinguished(GPtr::from_addr(FIRE_MANAGER), i) != 0;
             set_flag(s, b);
@@ -368,7 +351,7 @@ pub fn process_commands_700_to_799(s: Scr, command: u32) -> i8 {
         // 02D1 REMOVE_SCRIPT_FIRE (0x47FFC3): i as above; gFireManager.RemoveScriptFire(i) when 0 <= i < 60.
         0x02D1 => {
             collect(s, 1);
-            let i = get_actual_script_thing_index(spi(0), 5);
+            let i = get_actual_script_thing_index(spi(0) as u32, 5);
             if (0..0x3C).contains(&i) {
                 remove_script_fire(GPtr::from_addr(FIRE_MANAGER), i);
             }
@@ -397,7 +380,7 @@ pub fn process_commands_700_to_799(s: Scr, command: u32) -> i8 {
         0x02E3 => {
             collect(s, 1);
             let veh = vehicle_at_ref(pool(VEHICLE_POOL), spi(0));
-            let m = X87::from_f64_exact(vector_magnitude(veh.byte_add(0x44)));
+            let m = X87::from_f64_exact(vector_magnitude(GPtr::<u8>::cast::<u32>(veh.byte_add(0x44))));
             set_sp(0, m.fmul_m(f(K_50)).to_f32().to_bits());
             store(s, 1);
         }
@@ -436,15 +419,15 @@ pub fn process_commands_700_to_799(s: Scr, command: u32) -> i8 {
         // 030C PLAYER_MADE_PROGRESS (0x480CFC): CStats::IncrementStat(0, (float)P0) (`fild; fstp` f32).
         0x030C => {
             collect(s, 1);
-            increment_stat(0, X87::from_i32(spi(0)).to_f32().to_bits());
+            increment_stat(0, f32::from_bits(X87::from_i32(spi(0)).to_f32().to_bits()));
         }
         // 030D SET_PROGRESS_TOTAL (0x480D28): CStats::SetStatValue(1, (float)P0).
         0x030D => {
             collect(s, 1);
-            set_stat_value(1, X87::from_i32(spi(0)).to_f32().to_bits());
+            set_stat_value(1, f32::from_bits(X87::from_i32(spi(0)).to_f32().to_bits()));
         }
         // 0317 REGISTER_MISSION_GIVEN (0x480D54): CStats::IncrementStat(0x92, 1.0f).
-        0x0317 => increment_stat(0x92, 0x3F80_0000),
+        0x0317 => increment_stat(0x92, f32::from_bits(0x3F80_0000)),
         // 031A REMOVE_ALL_SCRIPT_FIRES (0x480DFB)
         0x031A => remove_all_script_fires(GPtr::from_addr(FIRE_MANAGER)),
         // 02C0 GET_CLOSEST_CHAR_NODE (0x47FAE6) / 02C1 GET_CLOSEST_CAR_NODE (0x47FBDE, gr: unregistered):
@@ -463,19 +446,19 @@ pub fn process_commands_700_to_799(s: Scr, command: u32) -> i8 {
             let mut out = [0u32; 3];
             let op = GPtr::from_raw(out.as_mut_ptr());
             let found = if command == 0x02C0 {
-                let a = find_node_closest_to_coors(paths, rp, x, y, z, 1, K_999999, 1, 0, 0, 0, 0).read();
+                let a = find_node_closest_to_coors(paths, rp, f32::from_bits(x), f32::from_bits(y), f32::from_bits(z), 1, f32::from_bits(K_999999), 1, 0, 0, 0, 0).read();
                 if a & 0xFFFF == 0xFFFF {
                     false
                 } else {
                     let base = GPtr::<u32>::from_addr(PATH_NODES.wrapping_add(((a & 0xFFFF) * 4) as usize)).read();
                     let node = GPtr::<u8>::from_addr(base.wrapping_add((a >> 16).wrapping_mul(0x1C)) as usize);
-                    path_node_get_position(node, op);
+                    path_node_get_position(node, op.cast::<f32>());
                     true
                 }
             } else {
-                let a = find_node_closest_to_coors(paths, rp, x, y, z, 0, K_999999, 0, 1, 0, 0, 0).read();
+                let a = find_node_closest_to_coors(paths, rp, f32::from_bits(x), f32::from_bits(y), f32::from_bits(z), 0, f32::from_bits(K_999999), 0, 1, 0, 0, 0).read();
                 let mut f = [0u8; 1];
-                find_node_coors_for_script(paths, op, a, GPtr::from_raw(f.as_mut_ptr()));
+                find_node_coors_for_script(paths, op.cast::<u8>(), a, GPtr::from_raw(f.as_mut_ptr()));
                 f[0] != 0
             };
             if found {
@@ -542,7 +525,7 @@ pub fn process_commands_700_to_799(s: Scr, command: u32) -> i8 {
             let (x, y, z) = (sp(1), sp(2), sp(3));
             let mut level = [0u32; 1];
             if !X87::from_f32(f(z)).fcom(X87::constant(K_MINUS_100)).test_parity(0x41) {
-                get_water_level(x, y, fld_fst(f(z)).to_bits(), GPtr::from_raw(level.as_mut_ptr()), 1, 0);
+                get_water_level(f32::from_bits(x), f32::from_bits(y), f32::from_bits(fld_fst(f(z)).to_bits()), GPtr::<u32>::cast::<u8>(GPtr::from_raw(level.as_mut_ptr())), 1, GPtr::NULL);
             }
             set_car_mission(boat, 0xE);
             boat.byte_add(0x3F4).cast::<u32>().write(fld_fst(f(level[0])).to_bits());
@@ -608,7 +591,7 @@ pub fn process_commands_700_to_799(s: Scr, command: u32) -> i8 {
             get_actual_pickup_index(collect_next_parameter_without_increasing_pc(s));
             let ty = if sp(4) != 0 { 0x13 } else { 8 };
             let model = u32::from(GPtr::<u16>::from_addr(MI_MONEY).read());
-            let h = generate_new_one(x, y, z, model, ty, sp(3), 0, 0, 0);
+            let h = generate_new_one(f32::from_bits(x), f32::from_bits(y), f32::from_bits(z), model, ty, sp(3), 0, 0, GPtr::NULL);
             set_sp(0, h as u32);
             store(s, 1);
         }
@@ -716,10 +699,10 @@ pub fn process_commands_700_to_799(s: Scr, command: u32) -> i8 {
             let l = label8(s, &mut buf);
             text_get(GPtr::from_addr(THE_TEXT), l);
             crate::vm::strncpy(GPtr::from_addr(LAST_MISSION_PASSED_NAME), l, 8);
-            increment_stat(0x93, 0x3F80_0000);
+            increment_stat(0x93, f32::from_bits(0x3F80_0000));
             let v = X87::from_f64_exact(get_stat_value(0xB0)).to_f32().to_bits();
-            increment_stat(0xB1, v);
-            set_stat_value(0xB0, 0);
+            increment_stat(0xB1, f32::from_bits(v));
+            set_stat_value(0xB0, f32::from_bits(0));
             GPtr::<u32>::from_addr(LAST_MISSION_PASSED_TIME).write(sa_core::timer::TIME_MS.get());
         }
         // 031D HAS_CHAR_BEEN_DAMAGED_BY_WEAPON (0x480E14) / 031E HAS_CAR_BEEN_DAMAGED_BY_WEAPON (0x480E8A,

@@ -16,9 +16,8 @@ sa_core::globals! {
 pub use sa_core::bindings::entity_destructor;
 pub use sa_core::bindings::entity_update_rp_hanim;
 pub use sa_core::bindings::entity_update_rw_frame;
+pub use sa_core::bindings::entity_pre_render;
 orig! {
-    /// `CEntity::PreRender()` (0x535FA0, called directly, not through the vtable)
-    pub fn entity_pre_render(e: GPtr<u8>) = thiscall 0x535FA0 => unported;
     /// `CBuilding::operator delete` (0x4040A0)
     pub fn building_delete(p: GPtr<u8>) = cdecl 0x4040A0 => unported;
     /// `CAnimatedBuilding::~CAnimatedBuilding()` (0x537A70)

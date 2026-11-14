@@ -8,13 +8,12 @@ use sa_core::{hook, orig};
 use crate::common::*;
 
 use sa_world::bindings::task_complex_ctor;
+use crate::bindings::road_rage_create_sub_task;
 orig! {
     /// `CTask::MakeAbortable(CPed*, int32 priority, const CEvent*)` (vtable slot 0x18)
     fn task_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, prio: i32, ev: GPtr<u8>) -> u8 = thiscall vslot 0x18 => unported;
     /// `CTask::GetTaskType()` (vtable slot 0x10)
     fn task_get_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CTaskComplexRoadRage::CreateSubTask(int32, CPed*)` (0x629080)
-    fn road_rage_create_sub_task(t: GPtr<u8>, ty: i32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x629080 => crate::road_rage_sub_tasks::road_rage_create_sub_task;
 }
 
 use sa_world::world::common::entity_pos as pos;

@@ -6,6 +6,7 @@
 //! association, +0x3C animation time.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -24,27 +25,24 @@ use sa_world::bindings::multiply3x3 as multiply_3x3;
 use sa_world::bindings::placeable_get_matrix;
 use sa_world::bindings::placeable_set_posn;
 use sa_world::bindings::simple_transform_update_rw_matrix;
+use sa_core::bindings::get_anim_hierarchy_from_skin_clump;
+use sa_core::bindings::rp_hanim_hierarchy_get_matrix_array as hanim_hierarchy_get_matrix_array;
+use sa_core::bindings::rp_hanim_id_get_index as hanim_id_get_index;
 orig! {
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_task_type_he(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
     /// `CTask::MakeAbortable(CPed*, int32, const CEvent*)` (vtable +0x18, `ret 0xC`)
     fn v_task_make_abortable_he(t: GPtr<u8>, p: GPtr<u8>, prio: u32, e: u32) -> u8 = thiscall vslot 0x18 => unported;
-    /// `GetAnimHierarchyFromSkinClump(RpClump*)` (0x734A40)
-    fn get_anim_hierarchy_from_skin_clump(c: u32) -> u32 = cdecl 0x734A40 => unported;
-    /// `RpHAnimIDGetIndex(RpHAnimHierarchy*, int32)` (0x7C51A0)
-    fn hanim_id_get_index(h: u32, id: u32) -> i32 = cdecl 0x7C51A0 => unported;
-    /// `RpHAnimHierarchyGetMatrixArray(RpHAnimHierarchy*)` (0x7C5120)
-    fn hanim_hierarchy_get_matrix_array(h: u32) -> GPtr<u8> = cdecl 0x7C5120 => unported;
 }
 
 use sa_core::field::ptr_of as vp;
 
 /// The matrix of the ped's bone frame `this+0x18` (`RpHAnimHierarchyGetMatrixArray` + index * 0x40).
 fn bone_matrix(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
-    let h = get_anim_hierarchy_from_skin_clump(rd::<u32>(ped, 0x18));
+    let h = GPtr::<u8>::addr(get_anim_hierarchy_from_skin_clump(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize))) as u32;
     let frame = rd::<GPtr<u8>>(ped, 0x488 + isize::from(rd::<u8>(this, 0x18)) * 4);
-    let idx = hanim_id_get_index(h, rd::<u32>(frame, 0x14));
-    hanim_hierarchy_get_matrix_array(h).byte_add(idx as isize * 0x40)
+    let idx = hanim_id_get_index(GPtr::from_addr(h as usize), rd::<u32>(frame, 0x14));
+    hanim_hierarchy_get_matrix_array(GPtr::from_addr(h as usize)).byte_add(idx as isize * 0x40)
 }
 
 /// `CTaskSimpleHoldEntity::SetPedPosition(CPed*)` (0x6940A0, thiscall, `ret 4`). Pick-up task (type 0x134):
@@ -87,13 +85,13 @@ pub fn hold_entity_set_ped_position(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     if rd::<u32>(ped, 0x474) & 0x400 == 0 {
         let m = rd::<GPtr<u8>>(ped, 0x14);
         let p = if m.is_null() { ped.byte_add(4) } else { m.byte_add(0x30) };
-        placeable_set_posn(rd::<GPtr<u8>>(this, 8), p);
+        placeable_set_posn(rd::<GPtr<u8>>(this, 8), p.cast::<f32>());
     } else if rd::<u8>(this, 0x19) & 0x10 != 0 {
         let mut v = [rd::<f32>(this, 0xC), rd::<f32>(this, 0x10), rd::<f32>(this, 0x14)];
         let bm = bone_matrix(this, ped);
-        rw_v3d_transform_points(vp(&mut v), vp(&mut v), 1, bm);
+        rw_v3d_transform_points(GPtr::<u8>::cast::<f32>(vp(&mut v)), GPtr::<u8>::cast::<f32>(vp(&mut v)), 1, bm);
         matrix_update_matrix(placeable_get_matrix(rd::<GPtr<u8>>(this, 8)), bm);
-        placeable_set_posn(rd::<GPtr<u8>>(this, 8), vp(&mut v));
+        placeable_set_posn(rd::<GPtr<u8>>(this, 8), GPtr::<u8>::cast::<f32>(vp(&mut v)));
     } else {
         let mut off = [rd::<f32>(this, 0xC), rd::<f32>(this, 0x10), rd::<f32>(this, 0x14)];
         let mut tmp = [0f32; 3];
@@ -107,9 +105,9 @@ pub fn hold_entity_set_ped_position(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         let mut mat = [0u32; 0x48 / 4];
         let mp: GPtr<u8> = GPtr::from_raw(mat.as_mut_ptr()).cast();
         matrix_copy_ctor(mp, pm);
-        matrix_rotate_z(mp, rd::<u32>(this, 0x1C));
+        matrix_rotate_z(mp, f32::from_bits(rd::<u32>(this, 0x1C)));
         matrix_assign(placeable_get_matrix(rd::<GPtr<u8>>(this, 8)), mp);
-        placeable_set_posn(rd::<GPtr<u8>>(this, 8), vp(&mut rv));
+        placeable_set_posn(rd::<GPtr<u8>>(this, 8), GPtr::<u8>::cast::<f32>(vp(&mut rv)));
         matrix_dtor(mp);
     }
     let e = rd::<GPtr<u8>>(this, 8);

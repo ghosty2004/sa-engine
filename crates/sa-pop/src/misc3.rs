@@ -18,25 +18,20 @@ use sa_stream::bindings::find_player_wanted;
 use sa_world::bindings::find_objects_kinda_colliding;
 use sa_world::bindings::is_player_on_a_mission;
 use sa_world::bindings::set_char_created_by as ped_set_char_created_by;
+use sa_core::bindings::audio_report_frontend_event as report_frontend_audio_event;
+use sa_core::bindings::end_gang_war;
+use sa_world::bindings::check_damaged_weapon_type;
+use sa_world::bindings::decrement_stat;
+use sa_world::bindings::membership_is_member;
 orig! {
-    /// `CGangWars::EndGangWar(bool)` (0x4464C0; ported unhookable in misc2)
-    fn end_gang_war(b: u32) = cdecl 0x4464C0 => crate::misc2::end_gang_war;
     /// `CGangWars::UpdateTerritoryUnderControlPercentage()` (0x443DE0)
     fn update_territory_under_control_percentage() = cdecl 0x443DE0 => crate::misc2::update_territory_under_control_percentage;
     /// `CWorld::FindPlayerVehicle(int32, bool)` (0x56E0D0)
     fn find_player_vehicle(id: i32, remote: u8) -> GPtr<u8> = cdecl 0x56E0D0 => sa_world::world::cworld::find_player_vehicle_port;
-    /// `CStats::DecrementStat(uint16, float)` (0x559FA0; float as raw bits)
-    fn decrement_stat(id: u16, v: u32) = cdecl 0x559FA0 => sa_world::world::stats::decrement_stat;
     /// `CWorld::FindPlayerPed(int32)` (0x56E210)
     fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
-    /// `CPedGroupMembership::IsMember(CPed*)` (0x5F6A10)
-    fn membership_is_member(this: GPtr<u8>, ped: GPtr<u8>) -> u32 = thiscall 0x5F6A10 => unported;
-    /// `CDarkel::CheckDamagedWeaponType(int32, int32)` (0x43D9E0)
-    fn check_damaged_weapon_type(weapon: i32, ty: i32) -> u8 = cdecl 0x43D9E0 => crate::misc2::check_damaged_weapon_type;
     /// `CDarkel::ThisPedShouldBeKilledForFrenzy(const CPed&)` (0x43D2F0)
     fn this_ped_should_be_killed_for_frenzy(ped: GPtr<u8>) -> u8 = cdecl 0x43D2F0 => crate::misc2::this_ped_should_be_killed_for_frenzy;
-    /// `CAudioEngine::ReportFrontendAudioEvent(eAudioEvents, float, float)` (0x506EA0, `ret 0xC`)
-    fn report_frontend_audio_event(this: GPtr<u8>, event: u32, volume: f32, speed: f32) = thiscall 0x506EA0 => unported;
     /// `CGangWars::AddKillToProvocation(ePedType)` (0x443950)
     fn add_kill_to_provocation(pt: i32) = cdecl 0x443950 => crate::misc2::add_kill_to_provocation;
     /// `CPopCycle::PlayerKilledADealer()` (0x610490)
@@ -133,7 +128,7 @@ pub fn check_for_blockage(this: GPtr<u8>, model: i32) -> u8 {
         1,
         GPtr::from_raw(count.as_mut_ptr()),
         8,
-        GPtr::from_raw(out.as_mut_ptr()),
+        GPtr::<u32>::cast::<u8>(GPtr::from_raw(out.as_mut_ptr())),
         0,
         1,
         1,
@@ -173,19 +168,13 @@ use sa_core::bindings::font_set_font_style;
 use sa_core::bindings::font_set_orientation;
 use sa_core::bindings::font_set_proportional;
 use sa_core::bindings::text_get;
+use sa_core::bindings::font_set_drop_color;
+use sa_core::bindings::font_set_right_justify_wrap;
+use sa_core::bindings::font_set_scale;
+use sa_core::bindings::font_set_wrapx;
+use sa_core::bindings::rgba_ctor;
+use sa_stream::bindings::hud_colours_get_rgb;
 orig! {
-    /// `CFont::SetScale(float, float)` (0x719380)
-    fn font_set_scale(w: f32, h: f32) = cdecl 0x719380 => unported;
-    /// `CFont::SetRightJustifyWrap(float)` (0x7194F0)
-    fn font_set_right_justify_wrap(v: u32) = cdecl 0x7194F0 => unported;
-    /// `CFont::SetWrapx(float)` (0x7194D0)
-    fn font_set_wrapx(v: f32) = cdecl 0x7194D0 => unported;
-    /// `CRGBA::CRGBA(uint8, uint8, uint8, uint8)` (0x7170C0)
-    fn rgba_ctor(this: GPtr<u32>, r: u32, gg: u32, b: u32, a: u32) -> GPtr<u32> = thiscall 0x7170C0 => unported;
-    /// `CFont::SetDropColor(CRGBA)` (0x719510)
-    fn font_set_drop_color(c: u32) = cdecl 0x719510 => unported;
-    /// `CHudColours::GetRGB(CRGBA* out, uint8)` (0x58FEA0, on `HudColour` 0xBAB22C)
-    fn hud_colours_get_rgb(this: GPtr<u8>, out: GPtr<u32>, colour: u32) -> GPtr<u32> = thiscall 0x58FEA0 => unported;
     /// `CHud::GetYPosBasedOnHealth(uint8, float, int8)` (0x588B60, ST0)
     fn get_y_pos_based_on_health(player: u32, y: f32, offset: u32) -> f64 = cdecl 0x588B60 => unported;
     /// CRT `sprintf` (0x821BB5) with two int arguments
@@ -260,15 +249,15 @@ pub fn darkel_draw_messages() {
         h().to_f32(),
     );
     font_set_orientation(2);
-    font_set_right_justify_wrap(0);
+    font_set_right_justify_wrap(f32::from_bits(0));
     font_set_font_style(2);
     font_set_wrapx(w().fmul_m(f32::from_bits(0x3ACC_CCCD)).fmul_m(640.0).to_f32());
     font_set_edge(2);
     let mut rgba = [0u32; 2];
-    let c = rgba_ctor(GPtr::from_raw(rgba.as_mut_ptr()), 0, 0, 0, 0xFF);
+    let c = GPtr::<u8>::cast::<u32>(rgba_ctor(GPtr::<u32>::cast::<u8>(GPtr::from_raw(rgba.as_mut_ptr())), 0, 0, 0, 0xFF));
     font_set_drop_color(c.read());
     let mut col = [0u32; 2];
-    let c = hud_colours_get_rgb(g::<u8>(0xBAB22C), GPtr::from_raw(col.as_mut_ptr()), 4);
+    let c = GPtr::<u8>::cast::<u32>(hud_colours_get_rgb(g::<u8>(0xBAB22C), GPtr::<u32>::cast::<u8>(GPtr::from_raw(col.as_mut_ptr())), 4));
     font_set_color(c.read());
     let mut y0 = darkel_y(h().fmul_m(148.0).to_f32());
     let hh = h();
@@ -318,7 +307,7 @@ pub fn register_kill_by_player(ped: GPtr<u8>, weapon: i32, head_shot: u8, player
             increment_stat(0xF0, 1.0);
             let grp = rd::<i32>(rd::<GPtr<u8>>(find_player_ped(-1), 0x480), 0x38);
             let membership = g::<u8>((0xC09928 + grp * 0x2D4) as usize);
-            if membership_is_member(membership, ped) & 0xFF != 0 {
+            if membership_is_member(membership, ped) as u32 & 0xFF != 0 {
                 increment_stat(0xA3, 1.0);
                 display_script_stat_update_message(0, 0x150, 1.0);
             }
@@ -372,48 +361,43 @@ pub fn register_kill_by_player(ped: GPtr<u8>, weapon: i32, head_shot: u8, player
     }
 }
 
-use crate::bindings::boat_ctor;
-use crate::bindings::find_node_closest_to_coors;
+use sa_core::bindings::boat_ctor;
+use sa_world::bindings::find_node_closest_to_coors;
 use crate::bindings::set_up_driver_and_passengers_for_vehicle;
-use crate::bindings::train_ctor;
+use sa_core::bindings::train_ctor;
 use sa_core::bindings::general_random_int_in_range as random_int_in_range;
 use sa_core::bindings::world_add;
 use sa_stream::bindings::is_boat_model;
 use sa_stream::bindings::pick_random_car;
 use sa_stream::bindings::set_custom_car_plate_text;
-use sa_world::bindings::automobile_ctor;
-use sa_world::bindings::bike_ctor;
-use sa_world::bindings::bmx_ctor;
+use sa_core::bindings::automobile_ctor;
+use sa_core::bindings::bike_ctor;
+use sa_core::bindings::bmx_ctor;
 use sa_world::bindings::get_distance_from_centre_of_mass_to_base_of_model;
-use sa_world::bindings::get_zone_info;
-use sa_world::bindings::heli_ctor;
-use sa_world::bindings::monster_truck_ctor;
-use sa_world::bindings::plane_ctor;
-use sa_world::bindings::quad_bike_ctor;
+use sa_stream::bindings::get_zone_info;
+use sa_core::bindings::heli_ctor;
+use sa_core::bindings::monster_truck_ctor;
+use sa_core::bindings::plane_ctor;
+use sa_core::bindings::quad_bike_ctor;
 use sa_world::bindings::set_clump_alpha;
 use sa_world::bindings::set_posn as placeable_set_posn;
-use sa_world::bindings::trailer_ctor;
+use sa_core::bindings::trailer_ctor;
 use sa_world::bindings::vehicle_new;
 use sa_world::bindings::vehicle_set_created_by;
+use sa_core::bindings::find_player_coors as find_player_coors_out;
+use sa_core::bindings::streaming_request_model as request_model;
+use sa_world::bindings::find_ground_z_for_coord;
+use sa_world::bindings::set_orientation as placeable_set_orientation;
+use sa_world::bindings::world_process_vertical_line as process_vertical_line;
 orig! {
-    /// `CWorld::FindPlayerCoors(CVector* out, int32)` (0x56E010)
-    fn find_player_coors_out(out: GPtr<f32>, id: i32) -> GPtr<f32> = cdecl 0x56E010 => unported;
     /// `CCarGenerator::CheckForBlockage(int32)` (0x6F32E0)
     fn check_for_blockage_call(this: GPtr<u8>, model: i32) -> u8 = thiscall 0x6F32E0 => check_for_blockage;
-    /// `CStreaming::RequestModel(int32, int32)` (0x4087E0)
-    fn request_model(m: i32, flags: i32) = cdecl 0x4087E0 => sa_stream::streaming::request_model;
-    /// `CWorld::ProcessVerticalLine(const CVector&, float, CColPoint&, CEntity*&, bool x6, CStoredCollPoly*)` (0x5674E0)
-    fn process_vertical_line(o: GPtr<f32>, z: f32, cp: GPtr<u8>, ent: GPtr<u32>, b: u32, v: u32, p: u32, ob: u32, d: u32, see: u32, poly: u32) -> u8 = cdecl 0x5674E0 => unported;
     /// `CSpecialPlateHandler::Find(int32 index, char* out)` (0x6F2D30, `ret 8`)
     fn special_plate_find(this: GPtr<u8>, index: u32, out: GPtr<u8>) -> i32 = thiscall 0x6F2D30 => unported;
     /// `CVehicle::SetCollisionLighting(tColLighting)` (0x6D0CA0, `ret 4`)
     fn vehicle_set_collision_lighting(v: GPtr<u8>, l: u32) = thiscall 0x6D0CA0 => unported;
-    /// `CWorld::FindGroundZForCoord(float, float)` (0x569660, ST0)
-    fn find_ground_z_for_coord(x: f32, y: f32) -> f64 = cdecl 0x569660 => unported;
     /// `CEntity` vtable slot 0x10 with one argument (0)
     fn entity_vslot_10(e: GPtr<u8>, a: u32) = thiscall vslot 0x10 => unported;
-    /// `CPlaceable::SetOrientation(float, float, float)` (0x439A80, `ret 0xC`)
-    fn placeable_set_orientation(e: GPtr<u8>, xr: f32, yr: f32, zr: f32) = thiscall 0x439A80 => unported;
 }
 
 /// `CStreaming::ms_aInfoForModel[mi].m_nLoadState == LOADSTATE_LOADED` (0x8E4CC0 + 0x10, stride 0x14).
@@ -462,7 +446,7 @@ pub fn do_internal_processing(this: GPtr<u8>) {
             let mut pc = [0f32; 3];
             let pcp = GPtr::from_raw(pc.as_mut_ptr());
             find_player_coors_out(pcp, -1);
-            get_zone_info(pcp, GPtr::NULL);
+            get_zone_info(pcp, GPtr::<GPtr<u8>>::cast::<u8>(GPtr::NULL));
             model = pick_random_car(g(0xC0E9F8), 1, 1);
             if model < 0 {
                 return;
@@ -536,17 +520,17 @@ pub fn do_internal_processing(this: GPtr<u8>) {
         let mut ent = [0u32; 1];
         let cpp = GPtr::<u8>::from_raw(cp.as_mut_ptr().cast());
         if process_vertical_line(
-            GPtr::from_raw(pos.as_mut_ptr()),
+            GPtr::<f32>::cast::<u8>(GPtr::from_raw(pos.as_mut_ptr())),
             -1000.0,
             cpp,
-            GPtr::from_raw(ent.as_mut_ptr()),
+            GPtr::<u32>::cast::<u8>(GPtr::from_raw(ent.as_mut_ptr())),
             1,
             0,
             0,
             0,
             0,
             0,
-            0,
+            GPtr::NULL,
         ) == 0
         {
             return;

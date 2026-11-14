@@ -5,13 +5,14 @@
 //! 1.0 US bytes (gta-reversed as a reading aid; the bytes win). Unverified (docs/verify/HOWTO.md).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 use sa_math::x87::Cmp;
 
 use crate::common::*;
 
-use crate::bindings::leave_car_and_flee_ctor;
+use sa_world::bindings::leave_car_and_flee_ctor;
 use crate::bindings::vehicle_is_driver;
 use crate::bindings::vehicle_is_passenger;
 use sa_core::bindings::entity_clean_up_old_reference;
@@ -24,6 +25,10 @@ use sa_world::bindings::ped_get_weapon_skill;
 use sa_world::bindings::task_complex_ctor;
 use sa_world::bindings::wander_get_wander_task_by_ped_type;
 use sa_world::bindings::weapon_is_type_melee;
+use crate::bindings::create_sub_task_o_63e040 as enter_car_create_sub_task;
+use sa_world::bindings::ped_set_current_weapon_slot;
+use sa_world::bindings::simple_car_drive_ctor as car_drive_ctor;
+use sa_world::bindings::tm_set_task as task_manager_set_task;
 orig! {
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_get_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
@@ -33,16 +38,8 @@ orig! {
     fn v_create_first_sub_task(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x24 => unported;
     /// `CTaskComplexDestroyCar::CreateSubTask(int32, CPed*)` (0x6287A0, `ret 8`)
     fn destroy_car_create_sub_task(t: GPtr<u8>, ty: u32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x6287A0 => unported;
-    /// `CPed::SetCurrentWeapon(int32 slot)` (0x5E61F0, `ret 4`)
-    fn ped_set_current_weapon_slot(p: GPtr<u8>, slot: u32) = thiscall 0x5E61F0 => unported;
     /// `CTaskComplexEnterCar::CreateFirstSubTask(CPed*)` (0x643A60, `ret 4`)
     fn enter_car_create_first_sub_task(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x643A60 => unported;
-    /// `CTaskComplexEnterCar::CreateSubTask(int32, CPed*)` (0x63E040, `ret 8`)
-    fn enter_car_create_sub_task(t: GPtr<u8>, ty: u32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x63E040 => unported;
-    /// `CTaskSimpleCarDrive::CTaskSimpleCarDrive(veh, a, b)` (0x63C340, `ret 0xC`)
-    fn car_drive_ctor(t: GPtr<u8>, veh: u32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x63C340 => unported;
-    /// `CTaskManager::SetTask(CTask*, int32 slot, bool)` (0x681AF0, `ret 0xC`)
-    fn task_manager_set_task(tm: GPtr<u8>, t: GPtr<u8>, slot: u32, b: u32) = thiscall 0x681AF0 => unported;
 }
 
 /// 0.0
@@ -117,7 +114,7 @@ pub fn drag_ped_from_car_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) ->
     let slot = this.byte_add(0xC);
     let old = rd::<GPtr<u8>>(this, 0xC);
     if !old.is_null() {
-        entity_clean_up_old_reference(old, slot);
+        entity_clean_up_old_reference(old, slot.cast::<GPtr<u8>>());
     }
     let v = rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0x50), 0x58C);
     wr::<GPtr<u8>>(this, 0xC, v);
@@ -135,7 +132,7 @@ pub fn drag_ped_from_car_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) ->
     if rd::<u32>(rd::<GPtr<u8>>(car, 0x384), 0xCC) & 0x200 != 0 || rd::<u32>(pv, 0x590) == 9 || rd::<u32>(pv, 0x594) == 2 {
         wr::<u32>(this, 0x1C, 0);
     } else {
-        let door = compute_target_door_to_exit(car, p);
+        let door = compute_target_door_to_exit(car, p) as u32;
         wr::<u32>(this, 0x1C, door);
     }
     enter_car_create_first_sub_task(this, ped)
@@ -207,7 +204,7 @@ pub fn scream_in_car_then_leave_create_sub_task(this: GPtr<u8>, ty: u32, ped: GP
             wr::<u32>(this, 0x18, 5000);
             wr::<u8>(this, 0x1C, 1);
             let t = task_new(0x60);
-            if t.is_null() { t } else { car_drive_ctor(t, rd::<u32>(this, 0xC), 0, 0) }
+            if t.is_null() { t } else { car_drive_ctor(t, GPtr::from_addr(rd::<u32>(this, 0xC) as usize), GPtr::NULL, 0) }
         }
         0x516 => {
             let intel = rd::<GPtr<u8>>(ped, 0x47C);
@@ -249,7 +246,7 @@ pub fn destroy_car_armed_calculate_search_position_and_ranges(this: GPtr<u8>, pe
     let slot = isize::from(rd::<i8>(ped, 0x718));
     let ty = rd::<u32>(ped, 0x5A0 + slot * 0x1C);
     let skill = ped_get_weapon_skill(ped);
-    let info = weapon_info_get(ty, skill);
+    let info = weapon_info_get(ty as i32, (skill as i32) as u8);
     let r = x(rd::<f32>(info, 8)).fmul_m(g::<f32>(0x858B8C).read());
     wr::<f32>(this, 0x38, f32_of(r));
     let v = r.fmul_m(g::<f32>(0x858C20).read());

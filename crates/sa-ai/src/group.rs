@@ -8,6 +8,7 @@
 //! `IsValid(ped)`. `CEventScriptCommand` (type 0x20) holds its task at +0x10.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -15,6 +16,8 @@ use crate::common::*;
 
 use sa_world::bindings::event_will_respond as er_will_respond;
 use sa_world::bindings::intel_record_event_for_script;
+use crate::bindings::editable_compute_response_task_of_type as er_compute_response_task_of_type;
+use crate::bindings::editable_compute_response_task_type as er_compute_response_task_type;
 orig! {
     fn v_delete(e: GPtr<u8>, flags: u32) -> GPtr<u8> = thiscall vslot 0x0 => unported;
     fn v_event_type(e: GPtr<u8>) -> i32 = thiscall vslot 0x4 => unported;
@@ -26,10 +29,6 @@ orig! {
     fn v_is_valid(e: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall vslot 0x38 => unported;
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CEventEditableResponse::ComputeResponseTaskOfType(CPed*, int32)` (0x4B5730, `ret 8`)
-    fn er_compute_response_task_of_type(e: GPtr<u8>, ped: GPtr<u8>, ty: i32) -> u8 = thiscall 0x4B5730 => unported;
-    /// `CEventEditableResponse::ComputeResponseTaskType(CPed*, bool)` (0x4B56C0, `ret 8`)
-    fn er_compute_response_task_type(e: GPtr<u8>, ped: GPtr<u8>, b: u32) = thiscall 0x4B56C0 => unported;
     /// `CEventEditableResponse::InformGroup(CPed*)` (0x4B7DF0, `ret 4`)
     fn er_inform_group(e: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x4B7DF0 => unported;
     /// `CEventEditableResponse::InformRespectedFriends(CPed*)` (0x4B2B00, `ret 4`)

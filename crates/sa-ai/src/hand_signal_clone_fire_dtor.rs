@@ -3,6 +3,7 @@
 //! bytes. Unverified (docs/verify/HOWTO.md).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::hook;
 
@@ -35,7 +36,7 @@ pub fn event_vehicle_on_fire_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x85B440);
     let v = rd::<GPtr<u8>>(this, 0x14);
     if !v.is_null() {
-        entity_clean_up_old_reference(v, this.byte_add(0x14));
+        entity_clean_up_old_reference(v, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x14)));
     }
     wr::<u32>(this, 0, 0x85AB38);
 }

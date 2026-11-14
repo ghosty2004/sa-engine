@@ -38,34 +38,25 @@ use sa_world::bindings::get_skidmark_type;
 use sa_world::bindings::get_wet_multiplier;
 use sa_world::bindings::pad_start_shake as start_shake;
 use sa_world::bindings::physical_process_control;
-use sa_world::bindings::vector_magnitude_sqr;
+use sa_core::bindings::vector_magnitude_sqr;
+use crate::bindings::area_check_stub;
+use crate::bindings::process_delayed_explosion;
+use sa_core::bindings::clump_get_association as get_association;
+use sa_world::bindings::entity_get_col_model as get_col_model;
+use sa_world::bindings::multiply3x3;
+use sa_world::bindings::multiply3x3_vm as multiply3x3_transposed;
+use sa_world::bindings::skip_physics;
+use sa_world::bindings::stats_get_fat_and_muscle_modifier as get_fat_and_muscle_modifier;
+use sa_world::bindings::vector_add;
+use sa_world::bindings::vector_div as vector_div_scalar;
+use sa_world::bindings::vector_scale as scalar_mul_vector;
 orig! {
-    /// `CEntity::GetColModel()` (0x535300)
-    fn get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => sa_world::world::entity::get_col_model;
     /// `CVehicle::ActivateBombWhenEntered()` (0x6D2570)
     fn activate_bomb_when_entered(v: GPtr<u8>) = thiscall 0x6D2570 => crate::vehicle2::activate_bomb_when_entered;
-    /// `Multiply3x3(CVector*, const CVector&, const CMatrix&)` (0x59C810): the transposed product
-    fn multiply3x3_transposed(out: GPtr<u8>, v: GPtr<u8>, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C810 => sa_world::world::mvpa_math::multiply3x3_transposed;
-    /// `CStats::GetFatAndMuscleModifier(eStatModAbilities)` (0x559AF0), ST0
-    fn get_fat_and_muscle_modifier(ability: u32) -> f64 = cdecl 0x559AF0 => unported;
-    /// `Multiply3x3(CVector*, const CMatrix*, const CVector*)` (0x59C790)
-    fn multiply3x3(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C790 => sa_world::world::mvpa_math::multiply3x3;
     /// `CPhysical::ApplyTurnForce(CVector, CVector)` (0x542A50)
     fn apply_turn_force(e: GPtr<u8>, force: CVector, point: CVector) = thiscall 0x542A50 => sa_world::physical::forces::apply_turn_force;
-    /// `VectorAdd(CVector*, const CVector*, const CVector*)` (0x40FE30)
-    fn vector_add(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE30 => sa_world::world::mvpa_math::vector_add;
-    /// `operator/(const CVector&, float)` (0x4119D0, hidden return pointer)
-    fn vector_div_scalar(out: GPtr<u8>, v: GPtr<u8>, s: f32) -> GPtr<u8> = cdecl 0x4119D0 => sa_world::world::mvpa_math::vector_div_scalar;
-    /// `FUN_00424100(float x, float y)` (0x424100): `xor al, al; ret`
-    fn area_check_stub(px: u32, py: u32) -> u8 = cdecl 0x424100 => crate::train_control::area_check_stub_native;
-    /// `CPhysical::SkipPhysics()` (0x5433B0)
-    fn skip_physics(v: GPtr<u8>) = thiscall 0x5433B0 => sa_world::physical::base::skip_physics;
-    /// `RpAnimBlendClumpGetAssociation(RpClump*, AnimationId)` (0x4D68B0)
-    fn get_association(clump: GPtr<u8>, id: u32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
     /// `DotProduct(const RwV3d*, const RwV3d*)` (0x40FDB0), ST0
     fn dot_product(a: GPtr<u8>, b: GPtr<u8>) -> f64 = cdecl 0x40FDB0 => crate::automobile_ai::dot_native;
-    /// `operator*(float, const CVector&)` (0x40FE90, cdecl, hidden return pointer)
-    fn scalar_mul_vector(out: GPtr<u8>, s: f32, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE90 => sa_world::world::mvpa_math::scalar_mul_vector;
     /// `CPhysical::ApplyMoveForce(CVector)` (0x5429F0)
     fn apply_move_force(e: GPtr<u8>, force: CVector) = thiscall 0x5429F0 => sa_world::physical::forces::apply_move_force;
     /// `CBike::ProcessBuoyancy()` (0x6B5FB0)
@@ -78,8 +69,6 @@ orig! {
     fn cross_product(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C730 => crate::train_control::cross_native;
     /// `CVehicle::ProcessBikeWheel(...)` (0x6D73B0)
     fn process_bike_wheel(v: GPtr<u8>, fwd: GPtr<u8>, right: GPtr<u8>, speed: GPtr<u8>, point: GPtr<u8>, wheels: i32, thrust: f32, brake: f32, adhesion: f32, destab: f32, wheel: u32, wheel_speed: GPtr<u8>, state: GPtr<i32>, special: u32, status: u32) = thiscall 0x6D73B0 => crate::mvpd_v1::vehicle_process_bike_wheel;
-    /// `CVehicle::ProcessDelayedExplosion()` (0x6D1340)
-    fn process_delayed_explosion(v: GPtr<u8>) = thiscall 0x6D1340 => crate::vehicle2::process_delayed_explosion;
     /// `CBike::ProcessAI(uint32&)` (vtable +0x108)
     fn v_process_ai(v: GPtr<u8>, flags: GPtr<u32>) -> u8 = thiscall vslot 0x108 => unported;
     /// `CBike::VehicleDamage(...)` (vtable +0xE0)
@@ -463,13 +452,13 @@ fn fake_physics(this: GPtr<u8>, st: u8, f: &mut Frame) {
     let fl = x(f32::from_bits(fl)).fmul_m(ts()).to_f32();
     let rest = !x(fl)
         .fmul_m(fl)
-        .fcom(st0(vector_magnitude_sqr(this.byte_add(0x74))))
+        .fcom(st0(vector_magnitude_sqr(GPtr::<u8>::cast::<f32>(this.byte_add(0x74)))))
         .test_any(1)
         && {
             let tl = x(f32::from_bits(tl)).fmul_m(ts()).to_f32();
             !x(tl)
                 .fmul_m(tl)
-                .fcom(st0(vector_magnitude_sqr(this.byte_add(0x80))))
+                .fcom(st0(vector_magnitude_sqr(GPtr::<u8>::cast::<f32>(this.byte_add(0x80)))))
                 .test_any(1)
                 && !ge(ld(this, 0xD4), x(f32::from_bits(sl)))
         };
@@ -1444,7 +1433,7 @@ fn after_physics(this: GPtr<u8>, f: &mut Frame) {
             if rd::<u32>(this, 0x57C) == 0 && !frame.is_null() {
                 let vs = rd::<GPtr<u8>>(crate::common::model_info(i32::from(rd::<i16>(this, 0x22))), 0x5C);
                 let mut off = rv(vs, 0x54);
-                let fx = create_fx_system(GPtr::from_addr(0xA9_AE80), 0x85_AA5C, gp(&mut off), frame, 0);
+                let fx = create_fx_system(GPtr::from_addr(0xA9_AE80), GPtr::from_addr(0x85_AA5C), gp(&mut off), frame, 0);
                 wr::<GPtr<u8>>(this, 0x57C, fx);
                 if !fx.is_null() {
                     fx_play(fx);

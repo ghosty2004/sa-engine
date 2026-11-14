@@ -4,15 +4,12 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 
 use crate::common::{g, x};
 
-orig! {
-    /// `CCamera::IsSphereVisible(const CVector& center, float radius)` (0x420D40, thiscall)
-    fn camera_is_sphere_visible(cam: GPtr<u8>, center: GPtr<u8>, radius: f32) -> u8 = thiscall 0x420D40 => unported;
-}
+use sa_world::bindings::camera_is_sphere_visible;
 
 /// `CSkidmarks::m_aSkidmarks` (32 x 0x158 at 0xC79AA8): 16 positions +0, side x [16] +0xC0, side y [16]
 /// +0x100, id +0x140, last update +0x144, fade start +0x148, fade end +0x14C, type +0x150, parts u16 +0x154,

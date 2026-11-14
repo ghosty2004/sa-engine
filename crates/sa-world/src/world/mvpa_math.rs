@@ -13,17 +13,15 @@ use crate::bindings::single_node_delete;
 use sa_core::bindings::crt_free_8214bd as crt_free;
 use sa_core::bindings::memory_free as memory_mgr_free;
 use sa_core::bindings::rw_matrix_destroy;
+use sa_core::bindings::eh_vector_ctor as eh_vector_constructor_iterator;
+use sa_core::bindings::rw_matrix_update;
 orig! {
-    /// `RwMatrixUpdate(RwMatrix*)` (0x7F18A0)
-    fn rw_matrix_update(m: GPtr<u8>) -> u32 = cdecl 0x7F18A0 => unported;
     /// `CCollision::RemoveTrianglePlanes(CCollisionData*)` (0x416400)
     fn remove_triangle_planes(d: GPtr<u8>) = cdecl 0x416400 => unported;
     /// `CCollisionData::RemoveCollisionVolumes()` (0x40F070)
     fn remove_collision_volumes(d: GPtr<u8>) = thiscall 0x40F070 => unported;
     /// CRT `operator new` (0x82119A)
     fn operator_new(n: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
-    /// CRT `eh vector constructor iterator(void*, size, count, ctor, dtor)` (0x821D30, stdcall)
-    fn eh_vector_constructor_iterator(p: GPtr<u8>, size: u32, count: i32, ctor: u32, dtor: u32) = stdcall 0x821D30 => unported;
 }
 
 use sa_core::field::rd3f as v3;
@@ -406,7 +404,7 @@ pub fn simple_transform_update_rw_matrix(this: GPtr<u8>, m: GPtr<u8>) -> u32 {
     wr::<u32>(m, 0x30, rd::<u32>(this, 0));
     wr::<u32>(m, 0x34, rd::<u32>(this, 4));
     wr::<u32>(m, 0x38, rd::<u32>(this, 8));
-    rw_matrix_update(m)
+    GPtr::<u8>::addr(rw_matrix_update(m)) as u32
 }
 
 /// `CColModel::~CColModel()` (0x40F700, thiscall): when it owns collision data (bit 2 of +0x29) and the
@@ -448,7 +446,7 @@ pub fn matrix_link_list_init(this: GPtr<u8>, count: i32) {
     if !mem.is_null() {
         arr = mem.byte_add(4);
         wr::<i32>(mem, 0, count);
-        eh_vector_constructor_iterator(arr, 0x54, count, 0x54F0C0, 0x54E8E0);
+        eh_vector_constructor_iterator(arr, 0x54, count as u32, 0x54F0C0, 0x54E8E0);
     }
     wr::<GPtr<u8>>(this, 0x50, this.byte_add(0x54));
     wr::<GPtr<u8>>(this, 0x1A0, this.byte_add(0x1A4));

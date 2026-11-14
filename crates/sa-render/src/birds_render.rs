@@ -11,7 +11,7 @@ use sa_math::x87::X87;
 use crate::common::{ftol32, g, jne, k, rd, wr, x, xi};
 
 use crate::bindings::bright_lights_render_out_geometry_buffer;
-use crate::bindings::calc_screen_coors;
+use sa_core::bindings::calc_screen_coors;
 use sa_core::bindings::matrix_dtor;
 use sa_core::bindings::matrix_mul_vec;
 use sa_core::bindings::matrix_set_translate;
@@ -94,7 +94,7 @@ pub fn birds_render() {
             continue;
         }
         let mut m = [0u32; 18];
-        matrix_set_translate(GPtr::<u32>::from_raw(m.as_mut_ptr()).cast(), rd::<u32>(bird, 0), rd::<u32>(bird, 4), rd::<u32>(bird, 8));
+        matrix_set_translate(GPtr::<u32>::from_raw(m.as_mut_ptr()).cast(), f32::from_bits(rd::<u32>(bird, 0)), f32::from_bits(rd::<u32>(bird, 4)), f32::from_bits(rd::<u32>(bird, 8)));
         let mode = rd::<u8>(bird, 0x38);
         let period = rd::<u32>(bird, 0x2C);
         let ms = g::<u32>(TIME_MS).read();
@@ -194,7 +194,7 @@ fn render_bird(bird: GPtr<u8>, m: &mut [u32; 18], offset: u32, period: u32, size
         let y = x(g::<f32>(BIRD_Y + 4 * kk).read()).to_f32();
         let mut v = [xo.to_bits(), y.to_bits(), zo.to_bits()];
         let mut res = [0u32; 3];
-        let r1 = matrix_mul_vec(GPtr::<u32>::from_raw(res.as_mut_ptr()).cast(), GPtr::<u32>::from_raw(m.as_mut_ptr()).cast(), GPtr::<u32>::from_raw(v.as_mut_ptr()).cast());
+        let r1 = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::<u32>::from_raw(res.as_mut_ptr()).cast()), GPtr::<u32>::from_raw(m.as_mut_ptr()).cast(), GPtr::<u32>::from_raw(v.as_mut_ptr()).cast()));
         let p1 = [rd::<u32>(r1, 0), rd::<u32>(r1, 4), rd::<u32>(r1, 8)];
         v[0] = x(xo).fchs().to_f32().to_bits();
         let vtx = GPtr::<u8>::from_addr(TEMP_RENDER_VERTICES + 0x24 * (g::<u32>(TEMP_VERTICES_STORED).read() as usize + kk));
@@ -208,7 +208,7 @@ fn render_bird(bird: GPtr<u8>, m: &mut [u32; 18], offset: u32, period: u32, size
         wr::<u32>(vtx, 0x1C, u);
         wr::<u32>(vtx, 0x20, vv);
         let mut res2 = [0u32; 3];
-        let r2 = matrix_mul_vec(GPtr::<u32>::from_raw(res2.as_mut_ptr()).cast(), GPtr::<u32>::from_raw(m.as_mut_ptr()).cast(), GPtr::<u32>::from_raw(v.as_mut_ptr()).cast());
+        let r2 = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::<u32>::from_raw(res2.as_mut_ptr()).cast()), GPtr::<u32>::from_raw(m.as_mut_ptr()).cast(), GPtr::<u32>::from_raw(v.as_mut_ptr()).cast()));
         let p2 = [rd::<u32>(r2, 0), rd::<u32>(r2, 4), rd::<u32>(r2, 8)];
         // 0.8 (0x858C98)
         let s = |c: u8| ftol32(xi(i32::from(c)).fmul_m(k(0x3F4C_CCCD))) as u8;

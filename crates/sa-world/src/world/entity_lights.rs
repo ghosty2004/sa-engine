@@ -74,12 +74,13 @@ use sa_math::fpu::fbits as cf;
 
 use crate::bindings::la_riots_active_here;
 use sa_stream::bindings::get_2d_effect;
+use crate::bindings::add_light;
+use crate::bindings::store_static_shadow;
+use crate::bindings::transform_from_object_space as transform_ref;
+use crate::bindings::update_corona_coors;
 orig! {
     /// `Light::GetDayNightBalance()` (0x6FAB30, ST0)
     fn get_day_night_balance() -> f64 = cdecl 0x6fab30 => unported;
-    /// `CEntity::TransformFromObjectSpace(CVector& out, const CVector& offset)` (0x5334F0)
-    fn transform_ref(e: GPtr<u8>, out: GPtr<u8>, off: GPtr<u8>) -> GPtr<u8>
-        = thiscall 0x5334f0 => super::entity::transform_from_object_space_ref;
     /// `CCoronas::RegisterCorona(uint32 id, CEntity*, r, g, b, a, const CVector& pos, float size,
     /// float farClip, RwTexture*, flare, reflection, LOS check, trail, float normalAngle, bool
     /// longDistance, float nearClip, uint8, float fadeSpeed, bool onlyFromBelow, bool
@@ -87,19 +88,6 @@ orig! {
     fn register_corona(id: u32, attach: GPtr<u8>, r: u32, gr: u32, b: u32, a: u32, pos: GPtr<u8>, size: f32,
         far_clip: f32, tex: u32, flare: u32, refl: u32, los: u32, trail: u32, normal_angle: f32, long_distance: u32,
         near_clip: f32, unk: u32, fade_speed: f32, from_below: u32, update_height: u32) = cdecl 0x6fc180 => unported;
-    /// `CCoronas::UpdateCoronaCoors(uint32 id, const CVector& pos, float farClip, float angle)` (0x6FC4D0)
-    fn update_corona_coors(id: u32, pos: GPtr<u8>, far_clip: f32, angle: f32) = cdecl 0x6fc4d0 => unported;
-    /// `CPointLights::AddLight(uint8 type, CVector pos, CVector dir, float radius, float r, float g,
-    /// float b, uint8 fogType, bool extraShadows, CEntity*)` (0x7000E0, cdecl, vectors by value)
-    fn add_light(ty: u32, px: f32, py: f32, pz: f32, dx: f32, dy: f32, dz: f32, radius: f32, r: f32, gr: f32,
-        b: f32, fog: u32, shadows: u32, attached: u32) = cdecl 0x7000e0 => unported;
-    /// `CShadows::StoreStaticShadow(uint32 id, uint8 type, RwTexture*, const CVector* pos, float
-    /// frontX, float frontY, float sideX, float sideY, int16 intensity, uint8 r, uint8 g, uint8 b,
-    /// float zDistance, float scale, float drawDistance, bool temporary, float upDistance)`
-    /// (0x70BA00, cdecl)
-    fn store_static_shadow(id: u32, ty: u32, tex: u32, pos: GPtr<u8>, fx: f32, fy: f32, sx: f32, sy: f32,
-        intensity: u32, r: u32, gr: u32, b: u32, zd: f32, scale: f32, draw: f32, temporary: u32, up: f32)
-        = cdecl 0x70ba00 => unported;
     /// `CBridge::ShouldLightsBeFlashing()` (0x41BC90, AL)
     fn bridge_should_lights_be_flashing() -> u8 = cdecl 0x41bc90 => unported;
 }
@@ -562,17 +550,17 @@ fn light(this: GPtr<u8>, eff: GPtr<u8>, c: i32, seed: u32, dnb: f32) {
             let b = ch(cb);
             let gg = ch(cg);
             let r = ch(cr);
-            add_light(0, ep.x, ep.y, ep.z, 0.0, 0.0, 0.0, range, r, gg, b, (flags >> 1) & 3, 1, 0);
+            add_light(0, ep.x, ep.y, ep.z, 0.0, 0.0, 0.0, range, r, gg, b, (flags >> 1) & 3, 1, GPtr::NULL);
             fog = false;
         } else {
-            add_light(2, ep.x, ep.y, ep.z, 0.0, 0.0, 0.0, range, 0.0, 0.0, 0.0, 0, 1, 0);
+            add_light(2, ep.x, ep.y, ep.z, 0.0, 0.0, 0.0, range, 0.0, 0.0, 0.0, 0, 1, GPtr::NULL);
         }
     }
     if fog {
         if flags & 4 != 0 {
-            add_light(3, ep.x, ep.y, ep.z, 0.0, 0.0, 0.0, 0.0, by256(cr), by256(cg), by256(cb), 2, 1, 0);
+            add_light(3, ep.x, ep.y, ep.z, 0.0, 0.0, 0.0, 0.0, by256(cr), by256(cg), by256(cb), 2, 1, GPtr::NULL);
         } else if flags & 2 != 0 && apply && range_zero() {
-            add_light(4, ep.x, ep.y, ep.z, 0.0, 0.0, 0.0, 0.0, by256(cr), by256(cg), by256(cb), 1, 1, 0);
+            add_light(4, ep.x, ep.y, ep.z, 0.0, 0.0, 0.0, 0.0, by256(cr), by256(cg), by256(cb), 1, 1, GPtr::NULL);
         }
     }
 

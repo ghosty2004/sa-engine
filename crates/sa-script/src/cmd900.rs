@@ -65,27 +65,23 @@ use sa_world::bindings::audio_get_mission_audio_loading_status as get_mission_au
 use sa_world::bindings::audio_is_mission_audio_sample_finished as is_mission_audio_sample_finished;
 use sa_world::bindings::audio_play_loaded_mission_audio as play_loaded_mission_audio;
 use sa_world::bindings::is_female_ped_type as ped_type_query_43a6a0;
+use crate::bindings::add_car_to_check as stuck_add_car_to_check;
+use crate::bindings::read_label as read_text_label;
+use sa_core::bindings::hud_set_help_message as set_help_message;
+use sa_core::bindings::streaming_load_scene as load_scene;
 orig! {
     /// CRT `strncpy` (0x821F40)
     fn strncpy(dst: GPtr<u8>, src: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x821F40 => crate::vm::strncpy_port;
-    /// `CRunningScript::ReadTextLabelFromScript(char*, uint8)` (0x463D50)
-    fn read_text_label(s: Scr, buf: GPtr<u8>, len: u32) = thiscall 0x463D50 => crate::vm::read_text_label_from_script;
     /// `CTheScripts::RemoveScriptSphere(int32)` (0x483BA0)
     fn remove_script_sphere(h: i32) = cdecl 0x483BA0 => unported;
     /// `CCamera::SetCameraDirectlyInFrontForFollowPed_CamOnAString()` (0x50BD70)
     fn set_camera_directly_in_front(cam: GPtr<u8>) = thiscall 0x50BD70 => unported;
-    /// `CStreaming::LoadScene(const CVector&)` (0x40EB70)
-    fn load_scene(v: GPtr<u32>) = cdecl 0x40EB70 => unported;
-    /// `CStuckCarCheck::AddCarToCheck(int32, float, uint32, bool, bool, bool, bool, int8)` (0x465970)
-    fn stuck_add_car_to_check(c: GPtr<u8>, h: i32, radius: u32, time: u32, a: u32, b: u32, c2: u32, d: u32, e: u32) = thiscall 0x465970 => unported;
     /// `CStuckCarCheck::RemoveCarFromCheck(int32)` (0x463B80)
     fn stuck_remove_car_from_check(c: GPtr<u8>, h: i32) = thiscall 0x463B80 => unported;
     /// `CStuckCarCheck::HasCarBeenStuckForAWhile(int32)` (0x463C00), AL
     fn stuck_has_car_been_stuck(c: GPtr<u8>, h: i32) -> u8 = thiscall 0x463C00 => unported;
     /// `CAudioEngine::PreloadMissionAudio(uint8 slot, int32 id)` (0x507290)
     fn preload_mission_audio(a: GPtr<u8>, slot: u32, id: i32) = thiscall 0x507290 => unported;
-    /// `CHud::SetHelpMessage(const char*, bool quick, bool permanent, bool addToBrief)` (0x588BE0)
-    fn set_help_message(text: GPtr<u8>, quick: u32, permanent: u32, brief: u32) = cdecl 0x588BE0 => unported;
 }
 
 /// `byte [base + idx * stride + off] = v != 0` for the text/sprite setters (index re-read as compiled).
@@ -113,11 +109,11 @@ use sa_math::x87::X87;
 
 use crate::bindings::add_clock;
 use crate::bindings::add_counter;
-use crate::bindings::clump_get_association;
-use crate::bindings::find_node_coors_for_script;
-use crate::bindings::find_node_orientation_for_car_placement;
+use sa_world::bindings::clump_get_association;
+use sa_world::bindings::find_node_coors_for_script;
+use sa_world::bindings::find_node_orientation_for_car_placement;
 use crate::bindings::physical_45afb0;
-use crate::bindings::set_entity_blip;
+use sa_world::bindings::set_entity_blip;
 use sa_core::bindings::find_player_ped;
 use sa_core::bindings::pop_current_txd;
 use sa_core::bindings::push_current_txd;
@@ -134,27 +130,25 @@ use sa_world::bindings::remove_from_moving_list;
 use sa_world::bindings::set_velocity as physical_set_velocity;
 use sa_world::bindings::stop_all_law_enforcers_in_their_tracks;
 use sa_world::bindings::switch_vehicle_to_real_physics;
+use crate::bindings::global_index as get_index_of_global_variable;
+use crate::bindings::vehicle_get_ref;
+use sa_core::bindings::add_txd_slot;
+use sa_core::bindings::clear_exciting_stuff_from_area;
+use sa_core::bindings::find_txd_slot;
+use sa_core::bindings::get_atan_of_xy;
+use sa_core::bindings::load_txd;
+use sa_world::bindings::add_to_previous_brief_array;
+use sa_world::bindings::change_blip_scale;
+use sa_world::bindings::clear_this_big_print;
+use sa_world::bindings::find_node_closest_to_coors;
+use sa_world::bindings::get_garage_number_by_name;
+use sa_world::bindings::place_marker_set;
 orig! {
     /// `CMessages::AddMessageJumpQWithString(const char*, uint32 time, uint16 flag, const char* str, bool
     /// previousBrief)` (0x69E950)
     fn add_message_jump_q_with_string(text: GPtr<u8>, time: u32, flag: u32, s: GPtr<u8>, brief: u32) = cdecl 0x69E950 => unported;
-    /// `CTxdStore::FindTxdSlot(const char*)` (0x731850)
-    fn find_txd_slot(name: GPtr<u8>) -> i32 = cdecl 0x731850 => unported;
-    /// `CTxdStore::AddTxdSlot(const char*)` (0x731C80)
-    fn add_txd_slot(name: GPtr<u8>) -> i32 = cdecl 0x731C80 => unported;
-    /// `CTxdStore::LoadTxd(int32, const char*)` (0x7320B0)
-    fn load_txd(slot: i32, name: GPtr<u8>) -> u8 = cdecl 0x7320B0 => unported;
     /// `CEntity::SetIsStatic(bool)` (vtable slot 0x10)
     fn set_is_static(e: GPtr<u8>, b: u32) = thiscall vslot 0x10 => unported;
-    /// `CWorld::ClearExcitingStuffFromArea(const CVector&, float radius, uint8)` (0x56A0D0)
-    fn clear_exciting_stuff_from_area(v: GPtr<u32>, radius: u32, b: u32) = cdecl 0x56A0D0 => unported;
-    /// `CGeneral::GetATanOfXY(float, float)` (0x53CC70), ST0 (read as f64)
-    fn get_atan_of_xy(x: u32, y: u32) -> f64 = cdecl 0x53CC70 => unported;
-    /// `C3dMarkers::PlaceMarkerSet(uint32 id, uint16 type, CVector&, float size, uint8 r, uint8 g, uint8 b,
-    /// uint8 a, uint16 pulsePeriod, float pulseFraction, int16 rotateRate)` (0x725BA0); floats raw
-    fn place_marker_set(id: u32, ty: u32, pos: GPtr<u32>, size: u32, r: u32, g: u32, b: u32, a: u32, period: u32, fraction: u32, rot: u32) = cdecl 0x725BA0 => unported;
-    /// `CGarages::GetGarageNumberByName(const char*)` (0x447680); the caller tests AX
-    fn get_garage_number_by_name(name: GPtr<u8>) -> u32 = cdecl 0x447680 => unported;
     /// `CGarages::IsGarageOpen(int16)` (0x447D00), AL
     fn is_garage_open(g: u32) -> u8 = cdecl 0x447D00 => unported;
     /// `CGarages::IsGarageClosed(int16)` (0x447D30), AL
@@ -163,24 +157,10 @@ orig! {
     fn clear_cars_from_area(x1: u32, y1: u32, z1: u32, x2: u32, y2: u32, z2: u32) = cdecl 0x566610 => unported;
     /// `CTheScripts::AddScriptSphere(uint32 id, CVector, float radius)` (0x483B30); vector and float raw
     fn add_script_sphere(id: u32, x: u32, y: u32, z: u32, radius: u32) -> u32 = cdecl 0x483B30 => unported;
-    /// `CPool<CVehicle>::GetRef(CVehicle*)` (0x424160), ECX = the vehicle pool
-    fn vehicle_get_ref(pool: GPtr<u8>, v: GPtr<u8>) -> u32 = thiscall 0x424160 => unported;
-    /// `CRunningScript::GetIndexOfGlobalVariable()` (0x464700); AX used
-    fn get_index_of_global_variable(s: Scr) -> u16 = thiscall 0x464700 => crate::vm::get_index_of_global_variable;
-    /// `CPathFind::FindNodeClosestToCoors(CVector, uint8 type, float maxDist, uint16, uint16, uint16, bool,
-    /// bool)` (0x44F460): `CNodeAddress` through the hidden pointer (first argument), returned in EAX;
-    /// vector and float raw
-    fn find_node_closest_to_coors(paths: GPtr<u8>, ret: GPtr<u32>, x: u32, y: u32, z: u32, ty: u32, dist: u32, a: u32, b: u32, c: u32, d: u32, e: u32) -> GPtr<u32> = thiscall 0x44F460 => unported;
     /// `CMessages::ClearThisPrint(const char*)` (0x69EA30)
     fn clear_this_print(text: GPtr<u8>) = cdecl 0x69EA30 => unported;
-    /// `CMessages::ClearThisBigPrint(const char*)` (0x69EBE0)
-    fn clear_this_big_print(text: GPtr<u8>) = cdecl 0x69EBE0 => unported;
     /// `CAudioEngine::SetMissionAudioPosition(uint8 slot, CVector&)` (0x507300)
     fn set_mission_audio_position(a: GPtr<u8>, slot: u32, v: GPtr<u32>) = thiscall 0x507300 => unported;
-    /// `CRadar::ChangeBlipScale(int32, int32)` (0x583CC0)
-    fn change_blip_scale(h: u32, scale: u32) = cdecl 0x583CC0 => unported;
-    /// `CMessages::AddToPreviousBriefArray(const char*, int32 x6, const char*)` (0x69DD50)
-    fn add_to_previous_brief_array(text: GPtr<u8>, a: i32, b: i32, c: i32, d: i32, e: i32, f6: i32, s: u32) = cdecl 0x69DD50 => unported;
 }
 
 /// `TheText` 0xC1B340.
@@ -208,7 +188,7 @@ const K_HALF_PI: u32 = 0x3FC9_0FDB;
 /// `.rdata` 0x858CBC: 2pi
 const K_TWO_PI: u32 = 0x40C9_0FDB;
 
-use crate::bindings::rgba_set_463370;
+use sa_world::bindings::rgba_set_463370;
 use sa_core::bindings::rgba_ctor;
 
 /// `CTheScripts::IntroRectangles[0]` (`tScriptRectangle`, 0x3C bytes) 0xA92D68.
@@ -256,13 +236,12 @@ fn script_rect(ty: u32, sprite: u16, x: u32, y: u32, w: u32, h: u32, c: [u32; 4]
 }
 
 use sa_world::bindings::building_replace_with_new_model as replace_with_new_model;
-use sa_world::bindings::find_objects_of_type_in_range;
+use sa_core::bindings::find_objects_of_type_in_range;
+use sa_core::bindings::vector_magnitude;
 orig! {
     /// `CWorld::FindMissionEntitiesIntersectingCube(const CVector& min, const CVector& max, int16* count,
     /// int16 max, CEntity** out, bool vehicles, bool peds, bool objects)` (0x569240)
     fn find_mission_entities_intersecting_cube(min: GPtr<u32>, max: GPtr<u32>, count: GPtr<u16>, max_count: u32, out: u32, v: u32, p: u32, o: u32) = cdecl 0x569240 => unported;
-    /// `CVector::Magnitude()` (0x4082C0), ST0 (an `fsqrt` result under PC=24: exact as f64)
-    fn vector_magnitude(v: GPtr<u32>) -> f64 = thiscall 0x4082C0 => unported;
     /// `CTheScripts::AddToBuildingSwapArray(CBuilding*, int32 old, int32 new)` (0x481140)
     fn add_to_building_swap_array(b: GPtr<u8>, old: u32, new: u32) = cdecl 0x481140 => unported;
 }
@@ -278,24 +257,23 @@ fn model_operand(v: u32) -> u32 {
     }
 }
 
-use crate::bindings::clear_space_for_mission_entity;
+use sa_world::bindings::clear_space_for_mission_entity;
 use sa_stream::bindings::pick_random_car;
-use sa_world::bindings::automobile_ctor;
-use sa_world::bindings::bike_ctor;
-use sa_world::bindings::bmx_ctor;
-use sa_world::bindings::heli_ctor;
+use sa_core::bindings::automobile_ctor;
+use sa_core::bindings::bike_ctor;
+use sa_core::bindings::bmx_ctor;
+use sa_core::bindings::heli_ctor;
 use sa_world::bindings::join_car_with_road_system;
-use sa_world::bindings::monster_truck_ctor;
-use sa_world::bindings::plane_ctor;
-use sa_world::bindings::quad_bike_ctor;
-use sa_world::bindings::trailer_ctor;
+use sa_core::bindings::monster_truck_ctor;
+use sa_core::bindings::plane_ctor;
+use sa_core::bindings::quad_bike_ctor;
+use sa_core::bindings::trailer_ctor;
 use sa_world::bindings::vehicle_new;
+use sa_world::bindings::placeable_set_posn as set_posn_v;
 orig! {
     /// `CEntity::GetDistanceFromCentreOfMassToBaseOfModel()` (vtable slot 0xD4), ST0 (a float function's
     /// result: exact as f64)
     fn distance_to_base(e: GPtr<u8>) -> f64 = thiscall vslot 0xD4 => unported;
-    /// `CPlaceable::SetPosn(const CVector&)` (0x4241C0)
-    fn set_posn_v(e: GPtr<u8>, pos: GPtr<u32>) = thiscall 0x4241C0 => unported;
 }
 
 /// `CCarCtrl::NumMissionCars`... the int 0x969094 CREATE_RANDOM_CAR_FOR_CAR_PARK compares with 45.
@@ -328,7 +306,7 @@ fn text(b: GPtr<u8>) -> GPtr<u8> {
 /// `z <= -100`, ordered), else FindGroundZForCoord(P0, P1) `fstp`ed.
 fn xyz_ground() -> [u32; 3] {
     let z = if spf(2) <= f(K_MINUS_100) {
-        X87::from_f64_exact(ground_z(sp(0), sp(1))).to_f32().to_bits()
+        X87::from_f64_exact(ground_z(f32::from_bits(sp(0)), f32::from_bits(sp(1)))).to_f32().to_bits()
     } else {
         fld_fst(spf(2)).to_bits()
     };
@@ -482,7 +460,7 @@ pub fn process_commands_900_to_999(s: Scr, command: u32) -> i8 {
         // 03CC ADD_STUCK_CAR_CHECK (0x485107): StuckCars.AddCarToCheck(P0, P1, P2, 0, 0, 0, 0, 0).
         0x03CC => {
             collect(s, 3);
-            stuck_add_car_to_check(GPtr::from_addr(STUCK_CARS), spi(0), sp(1), sp(2), 0, 0, 0, 0, 0);
+            stuck_add_car_to_check(GPtr::from_addr(STUCK_CARS), spi(0) as u32, sp(1), sp(2), 0, 0, 0, 0, 0);
         }
         // 03CD REMOVE_STUCK_CAR_CHECK (0x48513F)
         0x03CD => {
@@ -712,7 +690,7 @@ pub fn process_commands_900_to_999(s: Scr, command: u32) -> i8 {
         0x0395 => {
             collect(s, 5);
             let v = xyz_ground();
-            clear_exciting_stuff_from_area(GPtr::from_raw(v.as_ptr().cast_mut()), sp(3), sp(4) & 0xFF);
+            clear_exciting_stuff_from_area(GPtr::<u32>::cast::<u8>(GPtr::from_raw(v.as_ptr().cast_mut())), f32::from_bits(sp(3)), sp(4) & 0xFF);
         }
         // 039C SET_CAR_WATERTIGHT (0x4843DA): vehicle not null-checked; `m_nVehicleSubType` (+0x590) 0
         // (automobile): byte +0x868 bit 2 = P1 != 0; 9 (bike): byte +0x614 bit 2; otherwise nothing.
@@ -741,12 +719,12 @@ pub fn process_commands_900_to_999(s: Scr, command: u32) -> i8 {
             let (px, py) = (pos.read(), pos.wrapping_index(1).read());
             let dx = X87::from_f32(f(px)).fsub_m(spf(1)).to_f32().to_bits();
             let dy = X87::from_f32(f(py)).fsub(X87::from_f32(spf(2))).to_f32().to_bits();
-            let h = X87::from_f64_exact(get_atan_of_xy(dx, dy)).fadd_m(f(K_HALF_PI));
+            let h = X87::from_f64_exact(get_atan_of_xy(f32::from_bits(dx), f32::from_bits(dy))).fadd_m(f(K_HALF_PI));
             let mut local = h.to_f32();
             if !h.fcom(X87::constant(K_TWO_PI)).test_any(0x41) {
                 local = X87::from_f32(local).fsub_m(f(K_TWO_PI)).to_f32();
             }
-            set_heading(veh, local.to_bits());
+            set_heading(veh, f32::from_bits(local.to_bits()));
         }
         // 03A1 DRAW_SPHERE (0x484562): PlaceMarkerSet(m_pCurrentIP (+0x14) + this, 1, &(x, y, z), P3, 255, 0,
         // 0, 228, 2048, 0.1f, 0) (z: ground when `<= -100`). gr: unregistered.
@@ -754,7 +732,7 @@ pub fn process_commands_900_to_999(s: Scr, command: u32) -> i8 {
             collect(s, 4);
             let v = xyz_ground();
             let id = s.byte_add(crate::vm::IP).cast::<u32>().read().wrapping_add(s.addr() as u32);
-            place_marker_set(id, 1, GPtr::from_raw(v.as_ptr().cast_mut()), sp(3), 0xFF, 0, 0, 0xE4, 0x800, 0x3DCC_CCCD, 0);
+            place_marker_set(id, 1, GPtr::<u32>::cast::<u8>(GPtr::from_raw(v.as_ptr().cast_mut())), sp(3), 0xFF, 0, 0, 0xE4, 0x800, 0x3DCC_CCCD, 0);
         }
         // 03A2 SET_CAR_STATUS (0x484607): vehicle not null-checked; when the status (+0x36 bits 3..7) is 2
         // (`and 0xF8; cmp 0x10`) and P1 != 2: SwitchVehicleToRealPhysics(veh); then byte +0x36 = `(u8)(P1 << 3)
@@ -798,7 +776,7 @@ pub fn process_commands_900_to_999(s: Scr, command: u32) -> i8 {
             collect(s, 6);
             let (x, y) = (sp(0), sp(1));
             let z = if spf(2) <= f(K_MINUS_100) {
-                X87::from_f64_exact(ground_z(x, y)).to_f32().to_bits()
+                X87::from_f64_exact(ground_z(f32::from_bits(x), f32::from_bits(y))).to_f32().to_bits()
             } else {
                 sp(2)
             };
@@ -811,7 +789,7 @@ pub fn process_commands_900_to_999(s: Scr, command: u32) -> i8 {
             let np = GPtr::from_raw(n.as_mut_ptr());
             let mut list = [0u32; 16];
             let lp = GPtr::from_raw(list.as_mut_ptr());
-            find_objects_of_type_in_range(m1, GPtr::from_raw(centre.as_ptr().cast_mut()), r, 1, np, 16, lp, 1, 0, 0, 0, 0);
+            find_objects_of_type_in_range(m1, GPtr::from_raw(centre.as_ptr().cast_mut()), f32::from_bits(r), 1, np.cast::<i16>(), 16, lp, 1, 0, 0, 0, 0);
             let count = i32::from(np.read() as i16);
             if count <= 0 {
                 return 0;
@@ -840,7 +818,7 @@ pub fn process_commands_900_to_999(s: Scr, command: u32) -> i8 {
             if found.is_null() {
                 return 0;
             }
-            replace_with_new_model(found, m2);
+            replace_with_new_model(found, m2 as u16);
             add_to_building_swap_array(found, m1, m2);
         }
         // 03BA CLEAR_AREA_OF_CARS (0x4849EB): each pair (P0,P3), (P1,P4), (P2,P5) ordered by `fld a; fcomp b;
@@ -861,7 +839,7 @@ pub fn process_commands_900_to_999(s: Scr, command: u32) -> i8 {
             collect(s, 4);
             let v = xyz_ground();
             let r = sp(3);
-            get_actual_script_thing_index(collect_next_parameter_without_increasing_pc(s), 0);
+            get_actual_script_thing_index(collect_next_parameter_without_increasing_pc(s) as u32, 0);
             let id = s.byte_add(crate::vm::IP).cast::<u32>().read().wrapping_add(s.addr() as u32);
             let h = add_script_sphere(id, v[0], v[1], v[2], r);
             set_sp(0, h);
@@ -963,9 +941,9 @@ pub fn process_commands_900_to_999(s: Scr, command: u32) -> i8 {
             let z = X87::from_f64_exact(distance_to_base(veh)).fadd_m(spf(2)).to_f32().to_bits();
             let pos = [x, y, z];
             let pp = GPtr::from_raw(pos.as_ptr().cast_mut());
-            set_posn_v(veh, pp);
-            set_heading(veh, X87::from_f32(spf(3)).fmul_m(f(K_DEG_TO_RAD)).to_f32().to_bits());
-            clear_space_for_mission_entity(pp, veh);
+            set_posn_v(veh, pp.cast::<f32>());
+            set_heading(veh, f32::from_bits(X87::from_f32(spf(3)).fmul_m(f(K_DEG_TO_RAD)).to_f32().to_bits()));
+            clear_space_for_mission_entity(pp.cast::<u8>(), veh);
             let st = veh.byte_add(0x36);
             let f428 = veh.byte_add(0x428);
             let f42b = veh.byte_add(0x42B);
@@ -1000,12 +978,12 @@ pub fn process_commands_900_to_999(s: Scr, command: u32) -> i8 {
             let v = xyz_ground();
             let paths = GPtr::from_addr(THE_PATHS);
             let mut ret = [0u32; 1];
-            let n = find_node_closest_to_coors(paths, GPtr::from_raw(ret.as_mut_ptr()), v[0], v[1], v[2], 0, 0x4974_23FE, 0, 1, 0, 0, 0);
+            let n = find_node_closest_to_coors(paths, GPtr::from_raw(ret.as_mut_ptr()), f32::from_bits(v[0]), f32::from_bits(v[1]), f32::from_bits(v[2]), 0, f32::from_bits(0x4974_23FE), 0, 1, 0, 0, 0);
             let node = n.read();
             let mut found = [0u8; 4];
             let mut c = [0u32; 3];
             let fb = GPtr::from_raw(found.as_mut_ptr());
-            find_node_coors_for_script(paths, GPtr::from_raw(c.as_mut_ptr()), node, fb);
+            find_node_coors_for_script(paths, GPtr::<u32>::cast::<u8>(GPtr::from_raw(c.as_mut_ptr())), node, fb);
             let ok = fb.read() != 0;
             if ok {
                 set_sp(2, c[2]);
@@ -1059,7 +1037,7 @@ pub fn process_commands_900_to_999(s: Scr, command: u32) -> i8 {
             collect(s, 1);
             get_actual_pickup_index(spi(0));
             get_actual_blip_array_index(collect_next_parameter_without_increasing_pc(s));
-            let h = set_entity_blip(7, sp(0), 6, 3, s.byte_add(8));
+            let h = set_entity_blip(7, sp(0), 6, 3, s.byte_add(8)) as u32;
             change_blip_scale(h, 3);
             set_sp(0, h);
             store(s, 1);
@@ -1078,7 +1056,7 @@ pub fn process_commands_900_to_999(s: Scr, command: u32) -> i8 {
             {
                 set_help_message(t, 0, 0, 0);
                 if GPtr::<u8>::from_addr(ADD_NEXT_TO_PREVIOUS_BRIEFS).read() != 0 {
-                    add_to_previous_brief_array(t, -1, -1, -1, -1, -1, -1, 0);
+                    add_to_previous_brief_array(t, -1, -1, -1, -1, -1, -1, GPtr::NULL);
                 }
             }
             GPtr::<u8>::from_addr(ADD_NEXT_TO_PREVIOUS_BRIEFS).write(1);

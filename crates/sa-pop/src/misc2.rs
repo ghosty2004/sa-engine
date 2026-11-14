@@ -24,13 +24,12 @@ use sa_core::bindings::zones_fill_zones_with_gang_colours as fill_zones_with_gan
 use sa_world::bindings::is_player_on_a_mission;
 use sa_world::bindings::set_gang_wars_active as set_gang_wars_active_o;
 use sa_world::bindings::vehicle_set_created_by;
+use crate::bindings::release_cars_in_attack_wave_o;
 orig! {
     /// `CGangWars::ReleasePedsInAttackWave(bool, bool)` (0x445C30)
     fn release_peds_in_attack_wave(a: u32, b: u32) -> i32 = cdecl 0x445C30 => unported;
     /// `CGangWars::MakeEnemyGainInfluenceInZone(int32 gang, int32 amount)` (0x445FD0)
     fn make_enemy_gain_influence_in_zone_o(gang: i32, amount: i32) = cdecl 0x445FD0 => unported;
-    /// `CGangWars::ReleaseCarsInAttackWave()` (0x445E20)
-    fn release_cars_in_attack_wave_o() = cdecl 0x445E20 => unported;
 }
 
 /// `CGangWars::TimeTillNextAttack` (0x96AB48)
@@ -388,20 +387,16 @@ use crate::bindings::tell_gang_members_to;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::get_stat_value;
 use sa_world::bindings::tm_find_active_task_by_type as find_active_task_by_type;
+use crate::bindings::release_cars_in_attack_wave_o as release_cars_in_attack_wave_o2;
+use sa_core::bindings::text_get;
+use sa_world::bindings::add_message_q;
+use sa_world::bindings::set_stat_value;
 orig! {
-    /// `CStats::SetStatValue(uint16, float)` (0x55A070)
-    fn set_stat_value(stat: u32, v: f32) = cdecl 0x55A070 => unported;
-    /// `CText::Get(const char*)` (0x6A0050)
-    fn text_get(this: GPtr<u8>, key: u32) -> u32 = thiscall 0x6A0050 => unported;
-    /// `CMessages::AddMessageQ(const char*, uint32, uint16, bool)` (0x69F0B0)
-    fn add_message_q(text: u32, time: u32, flag: u32, b: u32) = cdecl 0x69F0B0 => unported;
     /// `CMessages::AddToPreviousBriefArray(const char*, int32 x6, const char*)` (0x69DD50)
     #[allow(clippy::too_many_arguments)]
     fn add_to_previous_brief_array(text: u32, a: i32, b: i32, c: i32, d: i32, e: i32, f: i32, s: u32) = cdecl 0x69DD50 => unported;
     /// `CGangWars::CheerVictory()` (0x444040)
     fn cheer_victory() = cdecl 0x444040 => unported;
-    /// `CGangWars::ReleaseCarsInAttackWave()` (0x445E20)
-    fn release_cars_in_attack_wave_o2() = cdecl 0x445E20 => unported;
 }
 
 /// `CGangWars::UpdateTerritoryUnderControlPercentage()` (0x443DE0): counts the navigation zones the player's
@@ -509,9 +504,9 @@ pub fn do_stuff_when_player_victorious() {
     release_cars_in_attack_wave_o2();
     cheer_victory();
     g::<i32>(STATE).write(0);
-    let t = text_get(g(0xC1B340), 0x85992C);
-    add_message_q(t, 0x1194, 1, 1);
-    let t = text_get(g(0xC1B340), 0x85992C);
+    let t = GPtr::<u8>::addr(text_get(g(0xC1B340), GPtr::from_addr(0x85992C))) as u32;
+    add_message_q(GPtr::from_addr(t as usize), 0x1194, 1, 1);
+    let t = GPtr::<u8>::addr(text_get(g(0xC1B340), GPtr::from_addr(0x85992C))) as u32;
     add_to_previous_brief_array(t, -1, -1, -1, -1, -1, -1, 0);
     PROVOCATION.set(0.0);
     tell_gang_members_to(1);
@@ -536,9 +531,8 @@ use sa_world::bindings::decrement_stat;
 use sa_world::bindings::get_vehicle_appearance;
 use sa_world::bindings::is_law_enforcement_vehicle;
 use sa_world::bindings::membership_is_member as group_is_member;
+use sa_core::bindings::audio_report_frontend_event as report_frontend_audio_event;
 orig! {
-    /// `CAudioEngine::ReportFrontendAudioEvent(int32, float, float)` (0x506EA0)
-    fn report_frontend_audio_event(this: GPtr<u8>, ev: i32, vol: f32, speed: f32) = thiscall 0x506EA0 => unported;
     /// `CDarkel::ThisVehicleShouldBeKilledForFrenzy(CVehicle*)` (0x43D350)
     fn this_vehicle_should_be_killed_for_frenzy(veh: GPtr<u8>) -> u8 = cdecl 0x43D350 => unported;
 }
@@ -607,7 +601,7 @@ pub fn fail_kill_frenzy() {
         g::<u8>(0x96A8B0).write(3);
         g::<u32>(0x96A8AC).write(now);
     }
-    set_help_message(0, 1, 0, 0);
+    set_help_message(GPtr::NULL, 1, 0, 0);
     let st = d_status();
     if st == 1 || st == 4 {
         let now = g::<u32>(TIME_MS).read();
@@ -665,7 +659,7 @@ pub fn register_kill_not_by_player(ped: GPtr<u8>) {
         let grp = rd::<i32>(rd::<GPtr<u8>>(p, 0x480), 0x38);
         let m = g::<u8>((grp.wrapping_mul(0x2D4) as u32).wrapping_add(0xC09928) as usize);
         if group_is_member(m, ped) != 0 {
-            decrement_stat(0x44, 2.0);
+            decrement_stat(0x44, 2.0f32.to_bits());
             increment_stat(0xA3, 1.0);
             display_script_stat_update_message(0, 0x150, 1.0);
         }
@@ -688,7 +682,7 @@ pub fn register_car_blown_up_by_player(veh: GPtr<u8>, player: i32) {
     let model = i32::from(rd::<i16>(veh, 0x22));
     let c = kills_cell(player, model as u32);
     c.write(c.read().wrapping_add(1));
-    match get_vehicle_appearance(veh).wrapping_sub(1) {
+    match (get_vehicle_appearance(veh) as i32).wrapping_sub(1) {
         0 | 1 => increment_stat(0x7A, 1.0),
         2 | 4 => increment_stat(0x7C, 1.0),
         3 => increment_stat(0x7B, 1.0),
@@ -964,11 +958,12 @@ pub fn render_tag_for_pc(atomic: GPtr<u8>) {
 // ---- CTrafficLights, CAccidentManager, car generators, road blocks ----------------------------------
 
 use sa_world::bindings::find_player_train;
+use crate::bindings::find_orientation_call as find_orientation_for_traffic_light_type;
+use crate::bindings::find_traffic_light_type_from_orientation;
+use sa_core::bindings::file_close;
+use sa_core::bindings::file_read;
+use sa_core::bindings::open_file as file_open;
 orig! {
-    /// `CTrafficLights::FindOrientationForTrafficLightType(CEntity*)` (0x49D520)
-    fn find_orientation_for_traffic_light_type(e: GPtr<u8>) -> f64 = cdecl 0x49D520 => unported;
-    /// `CTrafficLights::FindTrafficLightTypeFromOrientation(float)` (0x49D4D0)
-    fn find_traffic_light_type_from_orientation(a: f32) -> i32 = cdecl 0x49D4D0 => unported;
     /// CRT `operator new` (0x82119A)
     fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
     /// `CAccidentManager::CAccidentManager()` (0x56CE30)
@@ -981,12 +976,6 @@ orig! {
     fn cargen_do_internal_processing(this: GPtr<u8>) = thiscall 0x6F34D0 => unported;
     /// `CCarGenerator::Process()` (0x6F3E90)
     fn cargen_process_o(this: GPtr<u8>) = thiscall 0x6F3E90 => unported;
-    /// `CFileMgr::OpenFile(const char*, const char*)` (0x538900)
-    fn file_open(path: u32, mode: u32) -> i32 = cdecl 0x538900 => unported;
-    /// `CFileMgr::Read(FILESTREAM, void*, int32)` (0x538950)
-    fn file_read(f: i32, buf: GPtr<u8>, n: i32) -> i32 = cdecl 0x538950 => unported;
-    /// `CFileMgr::CloseFile(FILESTREAM)` (0x5389D0)
-    fn file_close(f: i32) -> i32 = cdecl 0x5389D0 => unported;
 }
 
 /// `CTrafficLights::FindTrafficLightType(CEntity*)` (0x49D580).
@@ -1022,7 +1011,7 @@ fn navi_flags(addr: u16) -> u8 {
 /// one not.
 #[hook(addr = 0x49D420, conv = cdecl, name = "CTrafficLights::ShouldCarStopForBridge", expect = "53 56 8B 74 24 0C")]
 pub fn should_car_stop_for_bridge(veh: GPtr<u8>) -> u8 {
-    if get_vehicle_appearance(veh) == 3 || get_vehicle_appearance(veh) == 5 {
+    if get_vehicle_appearance(veh) as i32 == 3 || get_vehicle_appearance(veh) as i32 == 5 {
         return 0;
     }
     let cur = rd::<u16>(veh, 0x3A6);
@@ -1039,11 +1028,9 @@ pub fn should_car_stop_for_bridge(veh: GPtr<u8>) -> u8 {
     u8::from(navi_flags(next) & 4 == 0)
 }
 
+use crate::bindings::node_address_ne;
+use sa_world::bindings::node_eq as node_address_eq;
 orig! {
-    /// `CNodeAddress::operator==` (0x420920, thiscall, `ret 4`)
-    fn node_address_eq(a: GPtr<u8>, b: GPtr<u8>) -> u8 = thiscall 0x420920 => unported;
-    /// `CNodeAddress::operator!=` (0x420950, thiscall, `ret 4`)
-    fn node_address_ne(a: GPtr<u8>, b: GPtr<u8>) -> u8 = thiscall 0x420950 => unported;
     /// `CTrafficLights::LightForCars1()` (0x49D2D0)
     fn light_for_cars1() -> u8 = cdecl 0x49D2D0 => unported;
     /// `CTrafficLights::LightForCars2()` (0x49D310)
@@ -1075,7 +1062,7 @@ fn stop_for_light_link(veh: GPtr<u8>, ignore_lights: u8, link_off: isize, node_o
     if bl != 0 && node_address_eq(navi.byte_add(4), node) == 0 {
         return skip;
     }
-    if bl == 0 && node_address_ne(navi.byte_add(4), node) == 0 {
+    if bl == 0 && node_address_ne(GPtr::<u8>::cast::<u16>(navi.byte_add(4)), node.cast::<u16>()) as u8 == 0 {
         return skip;
     }
     if ignore_lights == 0
@@ -1116,7 +1103,7 @@ fn stop_for_light_link(veh: GPtr<u8>, ignore_lights: u8, link_off: isize, node_o
 /// false at once, as the bytes do.
 #[hook(addr = 0x49D610, conv = cdecl, name = "CTrafficLights::ShouldCarStopForLight", expect = "83 EC 08 53 56")]
 pub fn should_car_stop_for_light(veh: GPtr<u8>, ignore_lights: u8) -> u8 {
-    if get_vehicle_appearance(veh) == 3 || get_vehicle_appearance(veh) == 5 {
+    if get_vehicle_appearance(veh) as i32 == 3 || get_vehicle_appearance(veh) as i32 == 5 {
         return 0;
     }
     if let Some(r) = stop_for_light_link(veh, ignore_lights, 0x3A4, 0x390, 0x3B5, 12.0, -12.0, false) {
@@ -1128,8 +1115,8 @@ pub fn should_car_stop_for_light(veh: GPtr<u8>, ignore_lights: u8) -> u8 {
     stop_for_light_link(veh, ignore_lights, 0x3A8, 0x398, 0x3B4, 6.0, -6.0, true).unwrap_or(0)
 }
 
-use sa_stream::bindings::load_data_from_work_buffer;
-use sa_stream::bindings::save_data_to_work_buffer;
+use sa_core::bindings::load_data_from_work_buffer;
+use sa_core::bindings::save_data_to_work_buffer;
 orig! {
     /// `CGangWarsSaveStructure::Construct()` (0x5D2620)
     fn gang_wars_save_construct(s: GPtr<u8>) = thiscall 0x5D2620 => gang_wars_save_structure_construct;
@@ -1412,13 +1399,12 @@ pub fn cargen_process(this: GPtr<u8>) {
     }
 }
 
-use crate::bindings::camera_is_sphere_visible;
+use sa_world::bindings::camera_is_sphere_visible;
 use sa_world::bindings::find_player_centre_of_world;
+use sa_world::bindings::find_player_speed;
 orig! {
     /// `COcclusion::IsPositionOccluded(CVector, float)` (0x7200B0; the vector by value)
     fn is_position_occluded(x: f32, y: f32, z: f32, r: f32) -> u8 = cdecl 0x7200B0 => unported;
-    /// `CWorld::FindPlayerSpeed(int32)` (0x56E090)
-    fn find_player_speed(id: i32) -> GPtr<f32> = cdecl 0x56E090 => unported;
 }
 
 /// `CCarGenerator::CheckIfWithinRangeOfAnyPlayers()` (0x6F2F40): within 50 vertically; boat-type models
@@ -1429,7 +1415,7 @@ orig! {
 /// (`speed · (player - gen) <= 0`); beyond the limit +0xD bit 0 is cleared.
 #[hook(addr = 0x6F2F40, conv = thiscall, name = "CCarGenerator::CheckIfWithinRangeOfAnyPlayers", expect = "83 EC 24 0F B6 05 74 CD B7 00", this = "CCarGenerator")]
 pub fn cargen_check_if_within_range_of_any_players(this: GPtr<u8>) -> u8 {
-    let pc = find_player_centre_of_world(i32::from(g::<u8>(0xB7CD74).read()));
+    let pc = GPtr::<u8>::cast::<f32>(find_player_centre_of_world(i32::from(g::<u8>(0xB7CD74).read())));
     let gc = |off: isize| xi(i32::from(rd::<i16>(this, off))).fmul_m(0.125).to_f32();
     let gx = gc(4);
     let dxf = x(pc.read()).fsub_m(gx).to_f32();
@@ -1449,7 +1435,7 @@ pub fn cargen_check_if_within_range_of_any_players(this: GPtr<u8>) -> u8 {
         && !jne_mask(x(lod.read()).fmul_m(240.0), x(d), 0x41)
     {
         let mut c = [gx, gy, gz];
-        if camera_is_sphere_visible(g(0xB6F028), GPtr::from_raw(c.as_mut_ptr()), 0.0) != 0
+        if camera_is_sphere_visible(g(0xB6F028), GPtr::<f32>::cast::<u8>(GPtr::from_raw(c.as_mut_ptr())), 0.0) != 0
             && is_position_occluded(gc(4), gc(6), gc(8), 0.0) == 0
         {
             seen = true;
@@ -1482,7 +1468,7 @@ pub fn cargen_check_if_within_range_of_any_players(this: GPtr<u8>) -> u8 {
     if !jne_mask(x(lim).fsub_m(20.0), x(d), 0x41) && dl & 2 == 0 {
         return 0;
     }
-    let sp = find_player_speed(-1);
+    let sp = GPtr::<u8>::cast::<f32>(find_player_speed(-1));
     let v = x(dyf).fmul_m(sp.wrapping_index(1).read()).fadd(x(dxf).fmul_m(sp.read()));
     if !jne_mask(v, x(0.0), 0x41) {
         return 0;
@@ -1534,10 +1520,10 @@ pub fn road_blocks_init() {
         g::<u8>(0xA43438 + k).write(1);
     }
     g::<u8>(0xA43584).write(0);
-    let f = file_open(0x859CBC, 0x859C6C);
-    file_read(f, g(0xA43580), 4);
-    file_read(f, g(0xA435A0), 0x514);
-    file_close(f);
+    let f = GPtr::<u8>::addr(file_open(GPtr::from_addr(0x859CBC), GPtr::from_addr(0x859C6C))) as i32;
+    file_read(GPtr::from_addr(f as usize), g(0xA43580), 4);
+    file_read(GPtr::from_addr(f as usize), g(0xA435A0), 0x514);
+    file_close(GPtr::from_addr(f as usize));
     for k in 0..16 {
         g::<u8>(0xA43AD0 + k * 0x1C).write(0);
     }

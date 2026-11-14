@@ -7,6 +7,7 @@
 //! reference).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -37,8 +38,10 @@ use sa_world::bindings::ctor_48df30 as task_1a5_ctor;
 use sa_world::bindings::cull_zones_no_police;
 use sa_world::bindings::event_group_add;
 use sa_world::bindings::stand_still_ctor;
-use sa_world::bindings::vector_magnitude_sqr;
+use sa_core::bindings::vector_magnitude_sqr;
 use sa_world::bindings::wanted_remove_cop as wanted_remove_pursuit_cop;
+use crate::bindings::wanted_is_in_pursuit;
+use sa_world::bindings::ped_set_current_weapon;
 orig! {
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
@@ -46,14 +49,10 @@ orig! {
     fn v_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, prio: i32, ev: u32) -> u8 = thiscall vslot 0x18 => unported;
     /// `CWanted::RemoveExcessPursuitCops` (0x562C40)
     fn wanted_remove_excess_pursuit_cops(w: GPtr<u8>) = thiscall 0x562C40 => unported;
-    /// `CWanted::IsInPursuit(CCopPed*)` (0x562330, `ret 4`; AL)
-    fn wanted_is_in_pursuit(w: GPtr<u8>, cop: GPtr<u8>) -> u32 = thiscall 0x562330 => unported;
     /// `CWanted::SetPursuitCop(CCopPed*)` (0x563060, `ret 4`; AL)
     fn wanted_set_pursuit_cop(w: GPtr<u8>, cop: GPtr<u8>) -> u8 = thiscall 0x563060 => unported;
     /// `CPed::DoWeHaveWeaponAvailable(eWeaponType)` (0x5DF300, `ret 4`)
     fn ped_do_we_have_weapon_available(p: GPtr<u8>, w: u32) -> u8 = thiscall 0x5DF300 => unported;
-    /// `CPed::SetCurrentWeapon(eWeaponType)` (0x5E6280, `ret 4`)
-    fn ped_set_current_weapon(p: GPtr<u8>, w: u32) = thiscall 0x5E6280 => unported;
     /// `CTaskComplexSeekEntity<CEntitySeekPosCalculatorStandard>::CTaskComplexSeekEntity(CEntity*, int32 time,
     /// int32 scanInterval, float radius, float moveStateRadius, float, bool, bool)` (0x46AC10, `ret 0x20`)
     #[allow(clippy::too_many_arguments)]
@@ -129,7 +128,7 @@ pub fn police_pursuit_set_pursuit(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     let slot = this.byte_add(0x14);
     let old = rd::<GPtr<u8>>(slot, 0);
     if !old.is_null() {
-        entity_clean_up_old_reference(old, slot);
+        entity_clean_up_old_reference(old, slot.cast::<GPtr<u8>>());
     }
     let wanted = find_player_wanted(-1);
     if !chosen.is_null() && wanted_set_pursuit_cop(wanted, ped) != 0 {
@@ -197,7 +196,7 @@ pub fn police_pursuit_persist_pursuit(this: GPtr<u8>, cop: GPtr<u8>) -> u32 {
         }
     }
     wanted_remove_excess_pursuit_cops(wanted);
-    wanted_is_in_pursuit(wanted, cop)
+    wanted_is_in_pursuit(wanted, cop) as u32
 }
 
 /// `CTaskComplexPolicePursuit::SetWeapon(CPed*)` (0x68BAD0, `ret 4`; `this` unused): wanted level above 1 keeps an
@@ -224,11 +223,11 @@ pub fn police_pursuit_set_weapon(_this: GPtr<u8>, ped: GPtr<u8>) {
             true
         } else {
             let p = find_player_ped(-1);
-            if rd::<u32>(weapon_info_get(current_weapon_type(p), 1), 0) == 1 {
+            if rd::<u32>(weapon_info_get(current_weapon_type(p) as i32, 1), 0) == 1 {
                 true
             } else {
                 let p = find_player_ped(-1);
-                rd::<u32>(weapon_info_get(current_weapon_type(p), 1), 0) == 2
+                rd::<u32>(weapon_info_get(current_weapon_type(p) as i32, 1), 0) == 2
             }
         }
     };
@@ -256,7 +255,7 @@ pub fn police_pursuit_create_sub_task(this: GPtr<u8>, ty: i32, ped: GPtr<u8>) ->
         }
         0xCB => {
             let t = task_new(0x20);
-            if t.is_null() { t } else { stand_still_ctor(t, 0, 0, 0, 0x4100_0000) }
+            if t.is_null() { t } else { stand_still_ctor(t, 0, 0, 0, f32::from_bits(0x4100_0000)) }
         }
         0x38B => {
             let t = task_new(0x4C);
@@ -330,7 +329,7 @@ pub fn police_pursuit_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8
                     let mut v = [0f32; 3];
                     let vp: GPtr<u8> = GPtr::from_raw(v.as_mut_ptr()).cast();
                     vector_difference(vp, entity_pos(veh), entity_pos(ped));
-                    let m = X87::from_f64_exact(vector_magnitude_sqr(vp));
+                    let m = X87::from_f64_exact(vector_magnitude_sqr(vp.cast::<f32>()));
                     if m.fcom(x(g::<f32>(0x858FE8).read())).test_parity(0x05) { 0xCB } else { 0x38B }
                 }
             };

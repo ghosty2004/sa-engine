@@ -156,6 +156,22 @@ def split_args(a):
     return [x.strip() for x in out if x.strip()]
 
 
+def row_args(a):
+    """The `name:type` items of a CSV `args` cell (`;`-separated outside brackets: `[u8;4]` stays whole)."""
+    out, d, cur = [], 0, ''
+    for c in a:
+        d += c in '<[('
+        d -= c in '>])'
+        if c == ';' and d == 0:
+            out.append(cur)
+            cur = ''
+        else:
+            cur += c
+    if cur:
+        out.append(cur)
+    return out
+
+
 def crate_mod(crate):
     return crate.replace('-', '_')
 
@@ -480,7 +496,7 @@ def render(crate, rows):
     """One `orig!` invocation per binding (a single large block would exceed the macro recursion limit)."""
     s = HEADER
     for r in sorted(rows, key=lambda r: int(r['address'], 16)):
-        args = ', '.join(a.replace(':', ': ', 1) for a in r['args'].split(';') if a)
+        args = ', '.join(a.replace(':', ': ', 1) for a in row_args(r['args']) if a)
         ret = f' -> {r["ret"]}' if r['ret'] else ''
         form = f'reg({r["spec"]}) {r["address"]}' if r['conv'] == 'reg' else f'{r["conv"]} {r["address"]}'
         cn = r['catalogue_name'] or 'FUN_%08x' % int(r['address'], 16)
@@ -537,7 +553,7 @@ def check_redeclared(rows):
                 continue
             r = bound[d.addr]
             same = (d.conv == r['conv'] and d.spec == r['spec'] and
-                    ';'.join(d.args) == ';'.join(a.split(':', 1)[1] for a in r['args'].split(';') if a) and
+                    ';'.join(d.args) == ';'.join(a.split(':', 1)[1] for a in row_args(r['args']) if a) and
                     d.ret == r['ret'] and resolve_target(d, deps) == r['target'] and not d.attrs
                     and not d.block_attrs and d.name not in hosts)
             (exact if same else other).append(f'{d.rel}: {d.name} = 0x{d.addr:X}')
@@ -546,6 +562,14 @@ def check_redeclared(rows):
 
 def main():
     rep = sys.argv[sys.argv.index('--report') + 1] if '--report' in sys.argv else None
+    if '--resolve' in sys.argv:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import bindings_migrate
+        stats = bindings_migrate.resolve('--dry' in sys.argv, rep)
+        for k, v in sorted(stats.items()):
+            print(f'{k}: {v}')
+        if '--dry' in sys.argv:
+            return 0
     if '--migrate' in sys.argv:
         rows, report, stats = migrate('--dry' in sys.argv)
         for k, v in sorted(stats.items()):

@@ -2,6 +2,7 @@
 //! `CreateSubTask` (0x629080), reached when a driver gets out to fight after a car collision on the native
 //! walk. Ported from the 1.0 US bytes; gta-reversed (`TaskComplexRoadRage.cpp`) as a reading aid.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -14,18 +15,14 @@ use sa_world::bindings::give_delayed_weapon as ped_give_delayed_weapon;
 use sa_world::bindings::interesting_events_add;
 use sa_world::bindings::shake_fist_ctor;
 use sa_world::bindings::turn_to_face_entity_ctor;
+use crate::bindings::road_rage_create_sub_task as road_rage_create_sub_task_c;
+use sa_core::bindings::task_new as task_new_c;
+use sa_world::bindings::leave_car_ctor;
+use sa_world::bindings::ped_set_current_weapon;
 orig! {
-    /// `CPed::SetCurrentWeapon(eWeaponType)` (0x5E6280)
-    fn ped_set_current_weapon(p: GPtr<u8>, weapon: u32) = thiscall 0x5E6280 => unported;
-    /// `CTaskComplexRoadRage::CreateSubTask(int32, CPed*)` (0x629080)
-    fn road_rage_create_sub_task_c(t: GPtr<u8>, ty: i32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x629080 => road_rage_create_sub_task;
-    /// `CTask::operator new(uint32)` (0x61A5A0)
-    fn task_new_c(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => crate::mvpa_ai1::task_operator_new;
     /// `CTaskComplexKillPedOnFoot(CPed*, int32 time, uint32 flags, int32 delay, int32 chance, int8 level)` (0x620E30)
     #[allow(clippy::too_many_arguments)]
     fn kill_ped_on_foot_ctor(t: GPtr<u8>, target: GPtr<u8>, time: i32, flags: u32, delay: i32, chance: i32, level: u32) -> GPtr<u8> = thiscall 0x620E30 => unported;
-    /// `CTaskComplexLeaveCar(CVehicle*, int32 door, int32 delay, bool sensible, bool forceGetOut)` (0x63B8C0)
-    fn leave_car_ctor(t: GPtr<u8>, veh: GPtr<u8>, door: i32, delay: i32, sensible: u32, force: u32) -> GPtr<u8> = thiscall 0x63B8C0 => unported;
     /// `CTaskComplexSeekEntity<CEntitySeekPosCalculatorStandard>(CEntity*, int32, int32, float, float, float, bool,
     /// bool)` (0x46AC10)
     #[allow(clippy::too_many_arguments)]
@@ -66,7 +63,7 @@ pub fn road_rage_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8
         } else {
             2
         };
-        ped_give_delayed_weapon(ped, w, 1);
+        ped_give_delayed_weapon(ped, w as i32, 1);
         ped_set_current_weapon(ped, w);
     }
     interesting_events_add(GPtr::from_addr(0xC0_B058), 0x12, ped);

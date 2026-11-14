@@ -42,22 +42,15 @@ pub use sa_world::bindings::cop_ped_ctor;
 pub use sa_world::bindings::emergency_ped_ctor;
 pub use sa_world::bindings::ped_new;
 pub use sa_world::bindings::set_game_clock;
+pub use crate::bindings::get_correct_ped_model_index;
+pub use sa_core::bindings::messages_clear_messages as clear_messages;
+pub use sa_world::bindings::create_car_for_script;
+pub use sa_world::bindings::placeable_set_posn as set_posn_v;
+pub use sa_world::bindings::set_orientation;
+pub use sa_world::bindings::stand_still_ctor as task_simple_stand_still_ctor;
 orig! {
-    /// `CRunningScript::GetCorrectPedModelIndexForEmergencyServiceType(ePedType, int32*)` (0x464F50)
-    pub fn get_correct_ped_model_index(s: Scr, ped_type: i32, model: GPtr<u32>) = thiscall 0x464F50 => unported;
-    /// `CTaskSimpleStandStill::CTaskSimpleStandStill(int32 time, bool looped, bool hold, float blend)` (0x62F310)
-    pub fn task_simple_stand_still_ctor(t: GPtr<u8>, time: i32, looped: i32, hold: i32, blend: f32) -> GPtr<u8> = thiscall 0x62F310 => unported;
-    /// `CPlaceable::SetPosn(const CVector&)` (0x4241C0)
-    pub fn set_posn_v(e: GPtr<u8>, pos: GPtr<f32>) = thiscall 0x4241C0 => unported;
-    /// `CPlaceable::SetOrientation(float, float, float)` (0x439A80)
-    pub fn set_orientation(e: GPtr<u8>, x: f32, y: f32, z: f32) = thiscall 0x439A80 => unported;
-    /// `CCarCtrl::CreateCarForScript(int32 model, CVector pos, bool mission)` (0x431F80): the vector
-    /// is passed by value (three stack words)
-    pub fn create_car_for_script(model: u32, x: u32, y: u32, z: u32, mission: u32) -> GPtr<u8> = cdecl 0x431F80 => unported;
     /// `CVehicle` virtual slot 0 (scalar deleting destructor, flag 1)
     pub fn vehicle_delete(v: GPtr<u8>, flags: i32) = thiscall vslot 0x00 => unported;
-    /// `CMessages::ClearMessages(bool)` (0x69DCD0)
-    pub fn clear_messages(flag: i32) = cdecl 0x69DCD0 => unported;
 }
 
 /// `CTimer::ms_fTimeStep` 0xB7CB5C.
@@ -65,14 +58,11 @@ const TIME_STEP: usize = 0xB7CB5C;
 /// `.rdata` 0x859D5C: 1/65536 (0x37800000)
 const K_INV_65536: u32 = 0x3780_0000;
 
-orig! {
-    /// CRT `rand()` (0x821B1E)
-    fn crt_rand() -> u32 = cdecl 0x821B1E => unported;
-}
+use sa_stream::bindings::rand as crt_rand;
 
 use crate::bindings::highlight_important_area;
 use crate::bindings::set_coords_of_script_car;
-use crate::bindings::vehicle_41bdd0;
+use sa_world::bindings::vehicle_41bdd0;
 use sa_core::bindings::add_big_message;
 use sa_core::bindings::add_message_jump;
 use sa_core::bindings::text_get;
@@ -82,21 +72,17 @@ use sa_world::bindings::find_ground_z_for_coord as ground_z;
 use sa_world::bindings::get_distance_from_centre_of_mass_to_base_of_model as distance_to_base;
 use sa_world::bindings::is_within_area as is_within_area_2d;
 use sa_world::bindings::join_car_with_road_system;
+use crate::bindings::set_char_coordinates;
+use sa_world::bindings::camera_is_sphere_visible as is_sphere_visible;
+use sa_world::bindings::join_car_with_road_system_goto_coors;
 orig! {
-    /// `CRunningScript::SetCharCoordinates(CPed*, float x, float y, float z, bool, bool)` (0x464DC0);
-    /// floats raw
-    fn set_char_coordinates(s: Scr, p: GPtr<u8>, x: u32, y: u32, z: u32, a: u32, b: u32) = thiscall 0x464DC0 => unported;
     /// `CPlaceable::IsWithinArea(float x1, float y1, float z1, float x2, float y2, float z2)` (0x54F2B0), AL
     fn is_within_area_3d(e: GPtr<u8>, x1: u32, y1: u32, z1: u32, x2: u32, y2: u32, z2: u32) -> u8 = thiscall 0x54F2B0 => unported;
-    /// `CCarCtrl::JoinCarWithRoadSystemGotoCoors(CVehicle*, const CVector&, bool, bool)` (0x42F870), AL
-    fn join_car_with_road_system_goto_coors(v: GPtr<u8>, pos: GPtr<u32>, a: u32, b: u32) -> u8 = cdecl 0x42F870 => unported;
     /// Unnamed thiscall at 0x463490 (a `.HOODLUM` stub) on the vehicle's `CAutoPilot` (+0x390) taking
     /// the mission byte (presumably `CAutoPilot::SetCarMission`)
     fn autopilot_463490(ap: GPtr<u8>, mission: u32) = thiscall 0x463490 => unported;
     /// `CClock::GetGameClockMinutesUntil(uint8 h, uint8 m)` (0x52CEB0)
     fn get_game_clock_minutes_until(h: u32, m: u32) -> u32 = cdecl 0x52CEB0 => unported;
-    /// `CCamera::IsSphereVisible(const CVector&, float)` (0x420D40), AL; the float raw
-    fn is_sphere_visible(cam: GPtr<u8>, c: GPtr<u32>, r: u32) -> u8 = thiscall 0x420D40 => unported;
 }
 
 /// `CTimer::m_snTimeInMilliseconds` 0xB7CB84.
@@ -230,7 +216,7 @@ pub fn process_commands_100_to_199(s: Scr, command: u32) -> i8 {
             collect(s, 4);
             let mission = u32::from(s.byte_add(crate::vm::USES_MISSION_CLEANUP).read());
             let v = create_car_for_script(sp(0), sp(1), sp(2), sp(3), mission);
-            let h = vehicle_get_ref(pool(VEHICLE_POOL), v);
+            let h = vehicle_get_ref(pool(VEHICLE_POOL), v) as i32;
             set_sp(0, h as u32);
             store(s, 1);
             0
@@ -396,7 +382,7 @@ pub fn process_commands_100_to_199(s: Scr, command: u32) -> i8 {
         // 0099 GENERATE_RANDOM_INT (0x467528): `*var(2) = rand()`.
         0x0099 => {
             let a = var_ptr(s, 2);
-            a.write(sa_core::orig::at_site(0x467538, crt_rand));
+            a.write(sa_core::orig::at_site(0x467538, crt_rand) as u32);
             0
         }
         // 009B DELETE_CHAR (0x467789): RemoveThisPed(PedPool.GetAtRef(P0)); with mission cleanup
@@ -452,7 +438,7 @@ pub fn process_commands_100_to_199(s: Scr, command: u32) -> i8 {
             collect(s, 4);
             let v = vehicle_at_ref(pool(VEHICLE_POOL), spi(0));
             let z = if spf(3) <= f(K_MINUS_100) {
-                X87::from_f64_exact(ground_z(sp(1), sp(2))).to_f32()
+                X87::from_f64_exact(ground_z(f32::from_bits(sp(1)), f32::from_bits(sp(2)))).to_f32()
             } else {
                 fld_fst(spf(3))
             };
@@ -597,12 +583,12 @@ pub fn process_commands_100_to_199(s: Scr, command: u32) -> i8 {
         0x00C2 => {
             collect(s, 4);
             let z = if spf(2) <= f(K_MINUS_100) {
-                X87::from_f64_exact(ground_z(sp(0), sp(1))).to_f32().to_bits()
+                X87::from_f64_exact(ground_z(f32::from_bits(sp(0)), f32::from_bits(sp(1)))).to_f32().to_bits()
             } else {
                 fld_fst(spf(2)).to_bits()
             };
             let v = [sp(0), sp(1), z];
-            let b = is_sphere_visible(GPtr::from_addr(THE_CAMERA), GPtr::from_raw(v.as_ptr().cast_mut()), sp(3)) != 0;
+            let b = is_sphere_visible(GPtr::from_addr(THE_CAMERA), GPtr::<u32>::cast::<u8>(GPtr::from_raw(v.as_ptr().cast_mut())), f32::from_bits(sp(3))) != 0;
             set_flag(s, b);
             0
         }
@@ -674,7 +660,7 @@ fn create_char(s: Scr) {
     let pos_p = GPtr::from_raw(pos.as_ptr().cast_mut());
     set_posn_v(ped, pos_p);
     set_orientation(ped, 0.0, 0.0, 0.0);
-    crate::cmd0::clear_space_for_mission_entity(pos_p, ped);
+    crate::cmd0::clear_space_for_mission_entity(pos_p.cast::<u8>(), ped);
     if uses_mission_cleanup(s) {
         let fl = ped.byte_add(0x1C).cast::<u32>();
         fl.write(fl.read() | 0x40000);

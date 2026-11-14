@@ -47,28 +47,18 @@ pub use crate::bindings::resources_free_res_entry;
 pub use crate::bindings::rx_pipeline_execute;
 pub use sa_core::bindings::geometry_add_ref;
 pub use sa_core::bindings::rw_v3d_transform_point as v3d_transform_point;
+pub use crate::bindings::atomic_get_world as get_world_call;
+pub use crate::bindings::read_int32 as stream_read_int32;
+pub use crate::bindings::rw_sqrt;
+pub use sa_core::bindings::frame_get_ltm;
+pub use sa_core::bindings::object_has_frame_set_frame as object_set_frame;
+pub use sa_core::bindings::rp_atomic_create as create_call;
+pub use sa_core::bindings::rp_atomic_resync_interpolated_sphere as resync_interpolated_sphere_call;
+pub use sa_core::bindings::rp_geometry_destroy as geometry_destroy;
+pub use sa_core::bindings::rw_frame_update_objects as frame_update_objects;
 orig! {
-    /// `RwStreamReadInt32(stream, dst, numBytes)` (0x7ED540)
-    pub fn stream_read_int32(s: GPtr<u8>, dst: GPtr<u32>, n: u32) -> GPtr<u8> = cdecl 0x7ED540 => unported;
-    /// `RpGeometryDestroy(geometry)` (0x74CCC0)
-    pub fn geometry_destroy(g: GPtr<u8>) -> i32 = cdecl 0x74CCC0 => unported;
-    /// `_rwSqrt(x)` (0x7EDB30; the f32 argument passed as its dword, result in ST0)
-    pub fn rw_sqrt(v: u32) -> f64 = cdecl 0x7EDB30 => unported;
-    /// `RwFrameGetLTM` (0x7F0990)
-    pub fn frame_get_ltm(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0990 => crate::frame::get_ltm;
-    /// `RwFrameUpdateObjects` (0x7F0910)
-    pub fn frame_update_objects(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0910 => crate::frame::update_objects;
-    /// `_rwObjectHasFrameSetFrame` (0x804EF0)
-    pub fn object_set_frame(obj: GPtr<u8>, f: GPtr<u8>) = cdecl 0x804EF0 => crate::frame::object_has_frame_set_frame;
     /// `_rwPluginRegistryAddPlgnStrmRightsCB` (0x808950)
     pub fn registry_add_rights_cb(reg: GPtr<u8>, id: u32, cb: u32) -> i32 = cdecl 0x808950 => crate::plugin::registry_add_plugin_stream_rights_cb;
-
-    /// `_rpAtomicResyncInterpolatedSphere` (0x7491F0)
-    pub fn resync_interpolated_sphere_call(a: GPtr<u8>) -> GPtr<u8> = cdecl 0x7491F0 => resync_interpolated_sphere;
-    /// `RpAtomicCreate` (0x749C50)
-    pub fn create_call() -> GPtr<u8> = cdecl 0x749C50 => create;
-    /// `RpAtomicGetWorld` (0x751050)
-    pub fn get_world_call(a: GPtr<u8>) -> GPtr<u8> = cdecl 0x751050 => get_world;
 }
 
 use sa_core::field::addr32 as a32;
@@ -98,12 +88,12 @@ fn morph_target(geom: GPtr<u8>, i: i32) -> GPtr<u8> {
 /// chunk is exactly 8 bytes. Returns stream or NULL.
 #[hook(addr = 0x749120, conv = cdecl, name = "cb_RIGHTTORENDER_RpAtomic_StreamRead", expect = "56 8B 74 24 08")]
 pub fn rights_stream_read(s: GPtr<u8>, len: i32, _obj: GPtr<u8>, _offset: i32, _size: i32) -> GPtr<u8> {
-    let r = stream_read_int32(s, RIGHTS_PLUGIN_ID.ptr(), 4);
+    let r = stream_read_int32(s, GPtr::<u32>::cast::<u8>(RIGHTS_PLUGIN_ID.ptr()), 4);
     if r.is_null() {
         return r;
     }
     if len == 8 {
-        let r = stream_read_int32(s, RIGHTS_EXTRA_DATA.ptr(), 4);
+        let r = stream_read_int32(s, GPtr::<u32>::cast::<u8>(RIGHTS_EXTRA_DATA.ptr()), 4);
         if r.is_null() {
             return r;
         }
@@ -220,7 +210,7 @@ pub fn get_world_bounding_sphere(a: GPtr<u8>) -> GPtr<u8> {
     } else {
         u2.to_bits()
     };
-    let r = X87::from_f64_exact(rw_sqrt(v)).fmul_m(rd::<f32>(a, 0x28));
+    let r = X87::from_f64_exact(rw_sqrt(f32::from_bits(v))).fmul_m(rd::<f32>(a, 0x28));
     wr::<u8>(a, 3, rd::<u8>(a, 3) & 0xFE);
     wr::<f32>(a, 0x38, f32_of(r));
     ws

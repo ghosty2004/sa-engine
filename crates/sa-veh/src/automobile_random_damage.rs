@@ -84,9 +84,9 @@ pub fn set_random_damage(car: GPtr<u8>, remove_stuff: u32) {
         let r = rand_frac(rand_at(0x6A2655)).fmul(xi(6 - i));
         let n = ftol32(r);
         let door = if i == 0 { n } else { nth_unpicked(&doors, 6, n) };
-        let node = node_from_door_call(door as u32);
+        let node = node_from_door_call(door as u32) as i32;
         if dm_get_door_status(dm, door) == 0 && damageable(car, node) {
-            dm_set_door_status(dm, door, 2);
+            dm_set_door_status(dm, door as u32, 2);
             set_component_visibility(car, rd::<GPtr<u8>>(car, 0x648 + 4 * node as isize), 2);
         }
         i += 1;
@@ -97,7 +97,7 @@ pub fn set_random_damage(car: GPtr<u8>, remove_stuff: u32) {
     while left > 0 {
         let r = rand_frac(rand_at(0x6A2735)).fmul(xi(mult));
         let panel = nth_unpicked(&panels, 7, ftol32(r));
-        let node = node_from_panel_call(panel as u32);
+        let node = node_from_panel_call(panel as u32) as i32;
         if dm_get_panel_status(dm, panel as u32) == 0 && damageable(car, node) {
             dm_set_panel_status(dm, panel as u32, 1);
             set_component_visibility(car, rd::<GPtr<u8>>(car, 0x648 + 4 * node as isize), 2);

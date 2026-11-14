@@ -7,6 +7,7 @@
 //! 1 stuck, 2 pushed out).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -30,9 +31,9 @@ use sa_world::bindings::physical_apply_move_force_5429f0 as physical_apply_move_
 use sa_world::bindings::placeable_set_posn;
 use sa_world::bindings::set_orientation as placeable_set_orientation;
 use sa_world::bindings::vector_add;
-use sa_world::bindings::vector_magnitude_sqr as vector_squared_magnitude;
-use sa_world::bindings::vector_sub;
-use sa_world::bindings::world_get_is_line_of_sight_clear;
+use sa_core::bindings::vector_magnitude_sqr as vector_squared_magnitude;
+use sa_core::bindings::vector_sub;
+use sa_core::bindings::world_get_is_line_of_sight_clear;
 use sa_world::bindings::world_process_vertical_line;
 orig! {
     /// `CEventStuckInAir::CEventStuckInAir(CPed*)` (0x4B1490, `ret 4`)
@@ -114,7 +115,7 @@ fn stuck(this: GPtr<u8>, ped: GPtr<u8>) -> Next {
     let z = f32_of(x(rd::<f32>(p, 8)).fsub_m(one()));
     let mut cp1 = [0u32; 11];
     let mut ent = [0u32; 1];
-    if world_process_vertical_line(local(&mut v), z.to_bits(), local(&mut cp1), local(&mut ent), 1, 1, 0, 1, 0, 0, 0) == 0 {
+    if world_process_vertical_line(local(&mut v), f32::from_bits(z.to_bits()), local(&mut cp1), local(&mut ent), 1, 1, 0, 1, 0, 0, GPtr::NULL) == 0 {
         return Next::Tail;
     }
     let ground_z = fv(&cp1, 2);
@@ -122,7 +123,7 @@ fn stuck(this: GPtr<u8>, ped: GPtr<u8>) -> Next {
         && x(ground_z).fadd_m(one()).fcom(x(rd::<f32>(pos(ped), 8))).test_parity(5);
     if !keep && !hit_by_ped_upwards(ped) {
         v[2] = f32_of(x(ground_z).fadd_m(one())).to_bits();
-        placeable_set_posn(ped, local(&mut v));
+        placeable_set_posn(ped, GPtr::<u8>::cast::<f32>(local(&mut v)));
         let f = rd::<u32>(ped, 0x470);
         if f & 0x20_0000 != 0 {
             wr::<u32>(ped, 0x470, f & 0xFFDF_FFFF);
@@ -138,7 +139,7 @@ fn probe(ped: GPtr<u8>, v: &mut [u32; 3], cp: &mut [u32; 11], ent: &mut [u32; 1]
     let side = |out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>| if add { vector_add(out, a, b) } else { vector_sub(out, a, b) };
     let mut tmp = [0u32; 3];
     let s = side(local(&mut tmp), pos(ped), local(v));
-    if world_process_vertical_line(s, 0xC1A0_0000, local(cp), local(ent), 1, 0, 0, 0, 0, 0, 0) == 0 {
+    if world_process_vertical_line(s, f32::from_bits(0xC1A0_0000), local(cp), local(ent), 1, 0, 0, 0, 0, 0, GPtr::NULL) == 0 {
         return miss;
     }
     let p = pos(ped);
@@ -177,7 +178,7 @@ fn push_out(this: GPtr<u8>, ped: GPtr<u8>, cnt: f32, d: &[u32; 3]) -> Next {
         0
     };
     if (choice == 1 || choice == 2) && rd::<u32>(ped, 0x470) & 0x20_0000 == 0 && !hit_by_ped_upwards(ped) {
-        placeable_set_posn(ped, if choice == 2 { local(&mut cp2) } else { local(&mut cp1) });
+        placeable_set_posn(ped, GPtr::<u8>::cast::<f32>(if choice == 2 { local(&mut cp2) } else { local(&mut cp1) }));
         let p = pos(ped);
         wr::<f32>(p, 8, f32_of(x(rd::<f32>(p, 8)).fadd_m(one())));
     }
@@ -191,7 +192,7 @@ fn push_out(this: GPtr<u8>, ped: GPtr<u8>, cnt: f32, d: &[u32; 3]) -> Next {
     let fy = f32_of(x(fv(&v, 1)).fmul_m(four));
     let fx = f32_of(x(fv(&v, 0)).fmul_m(four));
     v[2] = 0x3F80_0000;
-    physical_apply_move_force(ped, fx.to_bits(), fy.to_bits(), 0x4080_0000);
+    physical_apply_move_force(ped, f32::from_bits(fx.to_bits()), f32::from_bits(fy.to_bits()), f32::from_bits(0x4080_0000));
     if choice > -1 {
         let q = g::<f32>(0x858C84).read();
         let mut off = [0u32; 3];
@@ -200,13 +201,13 @@ fn push_out(this: GPtr<u8>, ped: GPtr<u8>, cnt: f32, d: &[u32; 3]) -> Next {
         }
         let mut tmp = [0u32; 3];
         let np = vector_add(local(&mut tmp), pos(ped), local(&mut off));
-        placeable_set_posn(ped, np);
-        let h = f32_of(X87::from_f64_exact(general_get_radian_angle_between_points(v[0], v[1], 0, 0)));
+        placeable_set_posn(ped, np.cast::<f32>());
+        let h = f32_of(X87::from_f64_exact(general_get_radian_angle_between_points(f32::from_bits(v[0]), f32::from_bits(v[1]), f32::from_bits(0), f32::from_bits(0))));
         wr::<f32>(ped, 0x558, h);
-        let h = f32_of(X87::from_f64_exact(general_limit_radian_angle(h.to_bits())));
+        let h = f32_of(X87::from_f64_exact(general_limit_radian_angle(f32::from_bits(h.to_bits()))));
         wr::<f32>(ped, 0x558, h);
         wr::<f32>(ped, 0x55C, h);
-        placeable_set_orientation(ped, 0, 0, h.to_bits());
+        placeable_set_orientation(ped, f32::from_bits(0), f32::from_bits(0), f32::from_bits(h.to_bits()));
     }
     wr::<u16>(this, 0xE, 2);
     Next::Tail
@@ -246,7 +247,7 @@ fn body(this: GPtr<u8>, ped: GPtr<u8>) -> Next {
     let cnt = rd::<u16>(this, 0xC) as f32; // fild; fstp dword (exact)
     let q = cf(0x858B90).fmul(t).fdivr_m(g::<f32>(0x858B40).read());
     if !x(cnt).fcom(q).test_any(0x41) {
-        let m = X87::from_f64_exact(vector_squared_magnitude(local(&mut d)));
+        let m = X87::from_f64_exact(vector_squared_magnitude(GPtr::<u8>::cast::<f32>(local(&mut d))));
         if !x(cnt).fmul_m(g::<f32>(0x858C58).read()).fcom(m).test_any(0x41) {
             return stuck(this, ped);
         }

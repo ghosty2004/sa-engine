@@ -4,18 +4,22 @@
 //! Ported from the 1.0 US bytes. Unverified (docs/verify/HOWTO.md).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::orig::at_site;
 use sa_core::{hook, orig};
 
 use crate::common::*;
 
-use crate::bindings::is_ped_registered_with_effect;
+use sa_world::bindings::is_ped_registered_with_effect;
 use sa_core::bindings::general_random_int_in_range as random_int;
 use sa_world::bindings::get_ped_attractor_manager;
 use sa_world::bindings::interesting_events_add;
 use sa_world::bindings::task_complex_ctor;
 use sa_world::bindings::task_use_atm_ctor as use_atm_ctor;
+use sa_world::bindings::sit_ctor_o;
+use sa_world::bindings::stand_still_ctor;
+use sa_world::bindings::sunbathe_ctor;
 orig! {
     /// `CPedAttractor::GetType()` (vtable slot 0)
     fn attractor_get_type(a: GPtr<u8>) -> u32 = thiscall vslot 0x0 => unported;
@@ -29,8 +33,6 @@ orig! {
     fn wait_for_bus_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x632900 => unported;
     /// `CTaskComplexWaitForDryWeather()` (0x632800)
     fn wait_for_dry_weather_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x632800 => unported;
-    /// `CTaskSimpleStandStill(int ms, bool, bool, float)` (0x62F310, `ret 0x10`)
-    fn stand_still_ctor(t: GPtr<u8>, ms: i32, looped: u32, idle: u32, blend: u32) -> GPtr<u8> = thiscall 0x62F310 => unported;
     /// `CScriptsForBrains::HasAttractorScriptBrainWithThisNameLoaded(const char*)` (0x46AB20, on 0xA90CF0)
     fn brain_loaded(s: GPtr<u8>, name: GPtr<u8>) -> u8 = thiscall 0x46AB20 => unported;
     /// `CScriptsForBrains::StartAttractorScriptBrainWithThisName(const char*, CPed*, bool)` (0x46B390, `ret 0xC`)
@@ -41,9 +43,6 @@ orig! {
     fn use_scripted_brain_ctor(t: GPtr<u8>, name: GPtr<u8>) -> GPtr<u8> = thiscall 0x6358B0 => unported;
     /// `CTaskComplexUseScriptedAttractor(CPedAttractor*)` (0x633330, `ret 4`)
     fn use_scripted_attractor_ctor(t: GPtr<u8>, a: GPtr<u8>) -> GPtr<u8> = thiscall 0x633330 => unported;
-    /// `CTaskComplexSunbathe(CObject* towel, bool)` (0x631F80, `ret 8`)
-    fn sunbathe_ctor(t: GPtr<u8>, towel: u32, b: u32) -> GPtr<u8> = thiscall 0x631F80 => unported;
-    fn sit_ctor_o(t: GPtr<u8>, ms: i32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x631460 => sit_down_then_idle_then_stand_up_ctor;
     fn broadcast_departure_t_o(m: GPtr<u8>, ped: GPtr<u8>, a: GPtr<u8>, arr: GPtr<u8>) -> u8 = thiscall 0x5EC660 => broadcast_departure_t;
     fn manager_broadcast_departure_o(m: GPtr<u8>, ped: GPtr<u8>, a: GPtr<u8>) -> u8 = thiscall 0x5EC980 => manager_broadcast_departure;
 }
@@ -173,22 +172,22 @@ pub fn use_attractor_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPt
                 GPtr::NULL
             } else {
                 let step = u32::from(attractor_get_type(rd::<GPtr<u8>>(this, 0xC)) == 9);
-                sit_ctor_o(t, ms, step, flag21)
+                sit_ctor_o(t, ms as u32, step, flag21)
             }
         }
         2 => new(0x10, &|t| wait_for_bus_ctor(t)),
         3 => {
             let ms = random_int(6000, 12000);
-            new(0x20, &|t| stand_still_ctor(t, ms, 0, 0, 0x4100_0000))
+            new(0x20, &|t| stand_still_ctor(t, ms, 0, 0, f32::from_bits(0x4100_0000)))
         }
         4 => new(0xC, &|t| wait_for_dry_weather_ctor(t)),
         5 => use_scripted_brain(this, ped),
         6 => {
             let ms = random_int(3000, 6000);
-            new(0x20, &|t| stand_still_ctor(t, ms, 0, 0, 0x4100_0000))
+            new(0x20, &|t| stand_still_ctor(t, ms, 0, 0, f32::from_bits(0x4100_0000)))
         }
         7 => new(0x10, &|t| use_scripted_attractor_ctor(t, rd::<GPtr<u8>>(this, 0xC))),
-        8 => new(0x38, &|t| sunbathe_ctor(t, 0, 1)),
+        8 => new(0x38, &|t| sunbathe_ctor(t, GPtr::NULL, 1)),
         _ => GPtr::NULL,
     };
     if task.is_null() {

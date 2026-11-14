@@ -16,19 +16,15 @@ use sa_core::bindings::font_set_orientation;
 use sa_core::bindings::font_set_proportional;
 use sa_core::bindings::rgba_ctor;
 use sa_core::bindings::rw_im2d_render_primitive as im2d_render_primitive;
+use sa_core::bindings::ascii_to_gxt_char;
+use sa_core::bindings::font_set_scale;
+use sa_core::bindings::sprite_draw_rect as draw_rect;
+use sa_world::bindings::sprite2d_draw_2d_polygon as draw_2d_polygon_call;
 orig! {
     /// `RwRenderStateSet(state, value)` (`RwGlobals` +0x20)
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xc97b24 0x20 => unported;
-    /// `CSprite2d::Draw2DPolygon(x1, y1, .. y4, const CRGBA&)` (0x7285b0; floats as raw dwords)
-    fn draw_2d_polygon_call(x1: u32, y1: u32, x2: u32, y2: u32, x3: u32, y3: u32, x4: u32, y4: u32, c: GPtr<u8>) = cdecl 0x7285b0 => self::draw_2d_polygon;
-    /// `CSprite2d::DrawRect(const CRect&, const CRGBA&)` (0x727b60)
-    fn draw_rect(r: GPtr<u8>, c: GPtr<u8>) = cdecl 0x727b60 => crate::sprite2d::draw_rect;
-    /// `CFont::SetScale(float, float)` (0x719380)
-    fn font_set_scale(w: f32, h: f32) = cdecl 0x719380 => unported;
     /// CRT `sprintf(buf, fmt, int)` (0x821bb5)
     fn sprintf1(buf: GPtr<u8>, fmt: GPtr<u8>, v: u32) -> i32 = cdecl 0x821bb5 => unported;
-    /// `AsciiToGxtChar(const char*, GxtChar*)` (0x718600)
-    fn ascii_to_gxt_char(src: GPtr<u8>, dst: GPtr<u8>) = cdecl 0x718600 => sa_core::common::ascii_to_gxt_char;
 }
 
 /// `CSprite2d::maVertices` (4 x `RwIm2DVertex`).
@@ -92,13 +88,13 @@ fn scan_lines(bright: (u32, u32, u32, u32)) {
         let mut c = rgba(bright.0, bright.1, bright.2, bright.3);
         let w = fi(g::<i32>(RS_WIDTH).read());
         let (a, b) = (fi(y - 3), fi(y - 2));
-        draw_2d_polygon_call(0, a, w, a, 0, b, w, b, GPtr::from_raw(c.as_mut_ptr()));
+        draw_2d_polygon_call(f32::from_bits(0), f32::from_bits(a), f32::from_bits(w), f32::from_bits(a), f32::from_bits(0), f32::from_bits(b), f32::from_bits(w), f32::from_bits(b), GPtr::from_raw(c.as_mut_ptr()));
         rw_render_state_set(10, 5);
         rw_render_state_set(11, 6);
         let mut c = rgba(0, 0, 0, 0x96);
         let w = fi(g::<i32>(RS_WIDTH).read());
         let (a, b) = (fi(y - 1), fi(y));
-        draw_2d_polygon_call(0, a, w, a, 0, b, w, b, GPtr::from_raw(c.as_mut_ptr()));
+        draw_2d_polygon_call(f32::from_bits(0), f32::from_bits(a), f32::from_bits(w), f32::from_bits(a), f32::from_bits(0), f32::from_bits(b), f32::from_bits(w), f32::from_bits(b), GPtr::from_raw(c.as_mut_ptr()));
         y += 4;
         if y - 3 >= g::<i32>(RS_HEIGHT).read() {
             break;
@@ -121,7 +117,7 @@ fn band(c: (u32, u32, u32, u32)) {
     let yb = a.fadd_m(seventy).to_f32().to_bits();
     let mut col = rgba(c.0, c.1, c.2, c.3);
     let w = fi(g::<i32>(RS_WIDTH).read());
-    draw_2d_polygon_call(0, ya, w, ya, 0, yb, w, yb, GPtr::from_raw(col.as_mut_ptr()));
+    draw_2d_polygon_call(f32::from_bits(0), f32::from_bits(ya), f32::from_bits(w), f32::from_bits(ya), f32::from_bits(0), f32::from_bits(yb), f32::from_bits(w), f32::from_bits(yb), GPtr::from_raw(col.as_mut_ptr()));
 }
 
 /// `SetScale(W / 640 * 1.5, H / 448 * 1.5)`.
@@ -177,7 +173,7 @@ pub fn render_2d_fxs() {
             let ry = sa_core::orig::at_site(0x72_1b97, sa_core::crt::rand).wrapping_rem(g::<i32>(RS_HEIGHT).read());
             let mut c = rgba(0xff, 0xff, 0xff, 0x40);
             let mut rect = [fi(rx), fi(ry.wrapping_add(2)), fi(rx.wrapping_add(0x14)), fi(ry)];
-            draw_rect(GPtr::<u32>::from_raw(rect.as_mut_ptr()).cast(), GPtr::from_raw(c.as_mut_ptr()));
+            draw_rect(GPtr::<u8>::cast::<f32>(GPtr::<u32>::from_raw(rect.as_mut_ptr()).cast()), GPtr::from_raw(c.as_mut_ptr()));
         }
     }
     if g::<u8>(SNAPSHOT_ACTIVE).read() == 0 {
@@ -210,7 +206,7 @@ pub fn render_2d_fxs() {
     let h = fi(g::<i32>(RS_HEIGHT).read());
     let w = fi(g::<i32>(RS_WIDTH).read());
     let mut c = rgba(s, s, s, s);
-    draw_2d_polygon_call(0, 0, w, 0, 0, h, w, h, GPtr::from_raw(c.as_mut_ptr()));
+    draw_2d_polygon_call(f32::from_bits(0), f32::from_bits(0), f32::from_bits(w), f32::from_bits(0), f32::from_bits(0), f32::from_bits(h), f32::from_bits(w), f32::from_bits(h), GPtr::from_raw(c.as_mut_ptr()));
     rw_render_state_set(10, 5);
     rw_render_state_set(11, 6);
 }

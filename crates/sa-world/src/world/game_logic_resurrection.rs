@@ -42,6 +42,7 @@ use sa_core::bindings::time_cycle_stop_extra_colour;
 use sa_core::bindings::world_add;
 use sa_core::bindings::world_remove;
 use sa_stream::bindings::remove_buildings_not_in_area;
+use crate::bindings::clear_space_for_mission_entity;
 orig! {
     /// `CStats::UpdateStatsOnRespawn()` (0x55CFC0)
     fn stats_update_stats_on_respawn() = cdecl 0x55CFC0 => unported;
@@ -51,8 +52,6 @@ orig! {
     fn wanted_reset(w: GPtr<u8>) = thiscall 0x562400 => unported;
     /// virtual `CEntity::Teleport(CVector, bool)` (vtable +0x38)
     fn v_teleport(e: GPtr<u8>, px: u32, py: u32, pz: u32, reset_rot: u32) = thiscall vslot 0x38 => unported;
-    /// `CTheScripts::ClearSpaceForMissionEntity(const CVector&, CEntity*)` (0x486B00)
-    fn clear_space_for_mission_entity(pos: GPtr<u8>, e: GPtr<u8>) = cdecl 0x486B00 => unported;
     /// `CGarages::PlayerArrestedOrDied()` (0x449E60)
     fn garages_player_arrested_or_died() = cdecl 0x449E60 => unported;
     /// `CHud::ResetWastedText()` (0x589070)
@@ -117,7 +116,7 @@ pub fn restore_player_stuff_during_resurrection(player: GPtr<u8>, px: u32, py: u
     let vref = player.byte_add(0x58C);
     let v = rd::<GPtr<u8>>(player, 0x58C);
     if !v.is_null() {
-        clean_up_old_reference(v, vref);
+        clean_up_old_reference(v, vref.cast::<GPtr<u8>>());
     }
     wr::<u32>(player, 0x58C, 0);
     let pd = rd::<GPtr<u8>>(player, 0x480);
@@ -145,7 +144,7 @@ pub fn restore_player_stuff_during_resurrection(player: GPtr<u8>, px: u32, py: u
     if m.is_null() {
         wr::<f32>(player, 0x10, h);
     } else {
-        matrix_set_rotate_z_only(m, h.to_bits());
+        matrix_set_rotate_z_only(m, f32::from_bits(h.to_bits()));
     }
     let mut pos = [px, py, pz];
     let pp: GPtr<u8> = GPtr::from_raw(&mut pos as *mut [u32; 3]).cast();
@@ -162,7 +161,7 @@ pub fn restore_player_stuff_during_resurrection(player: GPtr<u8>, px: u32, py: u
     camera_restore_with_jump_cut(cam);
     references_remove_references_to_player();
     garages_player_arrested_or_died();
-    set_stat_value(0xB0, 0);
+    set_stat_value(0xB0, f32::from_bits(0));
     shopping_remove_loaded_shop();
     world_remove(player);
     world_add(player);

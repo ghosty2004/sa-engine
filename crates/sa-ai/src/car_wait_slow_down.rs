@@ -2,6 +2,7 @@
 //! destructor body 0x46F690 of the `CTaskSimpleCarDrive`-derived task with vtable 0x859E50, reached by the
 //! road-rage / leave-car sequences on the native walk. Ported from the 1.0 US bytes.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -12,11 +13,9 @@ use sa_core::bindings::entity_clean_up_old_reference;
 use sa_core::bindings::entity_register_reference;
 use sa_world::bindings::ped_set_ped_position_in_car;
 use sa_world::bindings::task_simple_dtor;
+use sa_core::bindings::task_new as task_new_c;
+use sa_world::bindings::task_simple_ctor;
 orig! {
-    /// `CTaskSimple::CTaskSimple()` (0x61A390)
-    fn task_simple_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A390 => crate::mvpa_ai1::task_simple_ctor;
-    /// `CTask::operator new(uint32)` (0x61A5A0)
-    fn task_new_c(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => crate::mvpa_ai1::task_operator_new;
     /// `CEvent::GetEventType()` (vtable slot 4)
     fn event_get_type(e: GPtr<u8>) -> i32 = thiscall vslot 0x4 => unported;
 }
@@ -68,7 +67,7 @@ pub fn car_wait_to_slow_down_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x86_ED98);
     let v = rd::<GPtr<u8>>(this, 8);
     if !v.is_null() {
-        entity_clean_up_old_reference(v, this.byte_add(8));
+        entity_clean_up_old_reference(v, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(8)));
     }
     task_simple_dtor(this);
 }

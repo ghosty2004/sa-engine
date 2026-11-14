@@ -6,13 +6,11 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
-
+use sa_world::bindings::vector_add;
 orig! {
     /// `CCollision::Test2DLineAgainst2DLine(x1, y1, dx1, dy1, x2, y2, dx2, dy2)` (0x4138D0, AL)
     #[allow(clippy::too_many_arguments)]
     fn test_2d_line_against_2d_line(x1: f32, y1: f32, dx1: f32, dy1: f32, x2: f32, y2: f32, dx2: f32, dy2: f32) -> u8 = cdecl 0x4138D0 => unported;
-    /// `VectorAdd(CVector* out, const CVector* a, const CVector* b)` (0x40FE30, returns `out`)
-    fn vector_add(out: GPtr<f32>, a: GPtr<f32>, b: GPtr<f32>) -> GPtr<f32> = cdecl 0x40FE30 => unported;
 }
 
 use sa_math::fpu::x;
@@ -97,7 +95,7 @@ pub fn weave_heading_blocked(
     // second quad: c = VectorAdd(p, d)
     let b = rd2(q2.0);
     let mut sum = [0f32; 3];
-    vector_add(GPtr::from_raw(sum.as_mut_ptr()), q2.0, q2.1);
+    vector_add(GPtr::<f32>::cast::<u8>(GPtr::from_raw(sum.as_mut_ptr())), q2.0.cast::<u8>(), q2.1.cast::<u8>());
     let c = [sum[0], sum[1]];
     let corners2 = [b, c, [add(ax, b[0]), add(ay, b[1])], [add(ax, c[0]), add(ay, c[1])]];
     u8::from(quad_hit(l1.0, l1.1, &corners2) || quad_hit(l2.0, l2.1, &corners2))

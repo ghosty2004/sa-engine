@@ -66,17 +66,19 @@ use sa_core::bindings::rp_geometry_for_all_materials;
 use sa_core::bindings::rw_frame_update_objects;
 use sa_core::bindings::vector_magnitude;
 use sa_stream::bindings::is_object_glass;
+use crate::bindings::dn_pre_render_update as dn_pre_render_update_atomic;
+use crate::bindings::entity_process_lights_for_entity as process_lights_for_entity;
+use crate::bindings::vector_add;
+use crate::bindings::vector_mul_scalar as vector_mul;
+use sa_core::bindings::entity_update_rw_frame as update_rw_frame;
+use sa_core::bindings::vector_sub;
 orig! {
     /// `CBaseModelInfo::AsAtomicModelInfoPtr()` (vtable slot 4)
     fn mi_as_atomic(mi: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x4 => unported;
     /// `CBaseModelInfo::GetModelType()` (vtable slot 0x10, AL)
     fn mi_get_model_type(mi: GPtr<u8>) -> u8 = thiscall vslot 0x10 => unported;
-    /// `CEntity::ProcessLightsForEntity()` (0x6fc7a0)
-    fn process_lights_for_entity(e: GPtr<u8>) = thiscall 0x6fc7a0 => super::entity_lights::process_lights_for_entity;
     /// `RpMatFXAtomicQueryEffects(RpAtomic*)` (0x811c30)
     fn rp_matfx_atomic_query_effects(a: GPtr<u8>) -> u32 = cdecl 0x811c30 => unported;
-    /// `CCustomBuildingDNPipeline::PreRenderUpdate(RpAtomic*, bool)` (0x5d7200)
-    fn dn_pre_render_update_atomic(a: GPtr<u8>, b: u32) -> GPtr<u8> = cdecl 0x5d7200 => unported;
     /// `CCustomBuildingDNPipeline::PreRenderUpdate(RpClump*, bool)` (0x5d72c0)
     fn dn_pre_render_update_clump(c: GPtr<u8>, b: u32) = cdecl 0x5d72c0 => unported;
     /// `CEntity::ModifyMatrixForTreeInWind()` (0x534e90)
@@ -91,8 +93,6 @@ orig! {
     fn do_mine_effects(e: GPtr<u8>) = cdecl 0x4560e0 => unported;
     /// `CPickups::DoPickUpEffects(CEntity*)` (0x455720)
     fn do_pick_up_effects(e: GPtr<u8>) = cdecl 0x455720 => unported;
-    /// `CEntity::UpdateRwFrame()` (0x532b00)
-    fn update_rw_frame(e: GPtr<u8>) = thiscall 0x532b00 => super::entity::update_rw_frame;
     /// `CEntity::PreRenderForGlassWindow()` (0x533240)
     fn pre_render_for_glass_window(e: GPtr<u8>) = thiscall 0x533240 => super::entity::pre_render_for_glass_window;
     /// `CEntity::BuildWindSockMatrix()` (0x532db0)
@@ -126,12 +126,6 @@ orig! {
     #[allow(clippy::too_many_arguments)]
     fn register_streak(id: GPtr<u8>, r: u32, gr: u32, b: u32, a: u32, lx: u32, ly: u32, lz: u32, rx: u32, ry: u32,
         rz: u32) = cdecl 0x721dc0 => unported;
-    /// `operator*(const CVector&, float)` (0x40fec0)
-    fn vector_mul(out: GPtr<u8>, v: GPtr<u8>, s: f32) -> GPtr<u8> = cdecl 0x40fec0 => super::mvpa_math::vector_mul_scalar;
-    /// `VectorSub` (0x40fe60)
-    fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40fe60 => super::mvpa_math::vector_sub;
-    /// `operator+(const CVector&, const CVector&)` (0x40fe30)
-    fn vector_add(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40fe30 => super::mvpa_math::vector_add;
     /// `max(float, float)` (0x420800, ST0)
     fn max_f(a: f32, b: f32) -> f64 = cdecl 0x420800 => max_f_port;
 }
@@ -192,7 +186,7 @@ pub fn pre_render(this: GPtr<u8>) {
             if !atomic.is_null() && rp_matfx_atomic_query_effects(atomic) != 0 {
                 let geo = rd::<GPtr<u8>>(atomic, 0x18);
                 if !geo.is_null() {
-                    rp_geometry_for_all_materials(geo, 0x532D70, 0);
+                    rp_geometry_for_all_materials(geo, 0x532D70, GPtr::NULL);
                 }
             }
         }
@@ -294,7 +288,7 @@ fn object_effects(this: GPtr<u8>) {
         let mut d = [0u32; 3];
         let r = vector_sub(local(&mut d), cam(), pos_ptr(this));
         // `jp` past unless `|d| < 50`
-        if X87::from_f64_exact(vector_magnitude(r)).fcom(x(f32::from_bits(K_50))).test_parity(5) {
+        if X87::from_f64_exact(vector_magnitude(r.cast::<u32>())).fcom(x(f32::from_bits(K_50))).test_parity(5) {
             return;
         }
         let mut pos = v3(pos_ptr(this));
@@ -309,7 +303,7 @@ fn object_effects(this: GPtr<u8>) {
     if is_mi(m, 0x8CD6E0) || is_mi(m, 0x8CD71C) || is_mi(m, 0x8CD700) || is_mi(m, 0x8CD740) || is_mi(m, 0x8CD6FC) {
         let mut d = [0u32; 3];
         let r = vector_sub(local(&mut d), cam(), pos_ptr(this));
-        if X87::from_f64_exact(vector_magnitude(r)).fcom(x(f32::from_bits(K_110))).test_parity(5) {
+        if X87::from_f64_exact(vector_magnitude(r.cast::<u32>())).fcom(x(f32::from_bits(K_110))).test_parity(5) {
             return;
         }
         let mut pos = v3(pos_ptr(this));
@@ -390,7 +384,7 @@ fn streak(this: GPtr<u8>, wet: bool) {
     let p = pos_ptr(this);
     let mut level = [0u32; 1];
     let lv = local(&mut level);
-    if get_water_level_no_waves(rd::<u32>(p, 0), rd::<u32>(p, 4), rd::<u32>(p, 8), lv, 0, 0) != 0
+    if get_water_level_no_waves(f32::from_bits(rd::<u32>(p, 0)), f32::from_bits(rd::<u32>(p, 4)), f32::from_bits(rd::<u32>(p, 8)), lv, GPtr::NULL, GPtr::NULL) != 0
         && !x(rd::<f32>(pos_ptr(this), 8)).fcom(x(rd::<f32>(lv, 0))).test_parity(0x41)
     {
         return;

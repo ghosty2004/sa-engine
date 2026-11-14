@@ -12,10 +12,12 @@ use sa_math::x87::X87;
 
 use crate::common::{g, jp, k, rd, wr, x};
 
-use crate::bindings::camera_is_sphere_visible_m;
+use sa_world::bindings::camera_is_sphere_visible_m;
 use sa_core::bindings::defined_state;
 use sa_core::bindings::rp_geometry_for_all_materials;
 use sa_world::bindings::rw_im3d_end;
+use sa_world::bindings::rw_im3d_render_indexed_primitive;
+use sa_world::bindings::rw_im3d_transform;
 orig! {
     /// `RwRenderStateSet` (`RwEngineInstance` slot 0x20)
     fn rs(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
@@ -33,10 +35,6 @@ orig! {
     fn fx_manager_render_o(this: GPtr<u8>, cam: u32, haze: u32) = thiscall 0x4A92A0 => crate::mvpd_r3::fx_manager_render;
     /// `CPlaneTrail::Render(float)` (0x717180)
     fn plane_trail_render_o(this: GPtr<u8>, intensity: u32) = thiscall 0x717180 => crate::mvpd_r3::plane_trail_render;
-    /// `RwIm3DTransform(verts, n, ltm, flags)` (0x7EF450)
-    fn rw_im3d_transform(verts: GPtr<u8>, n: u32, ltm: u32, flags: u32) -> GPtr<u8> = cdecl 0x7EF450 => unported;
-    /// `RwIm3DRenderIndexedPrimitive(type, indices, n)` (0x7EF550)
-    fn rw_im3d_render_indexed_primitive(ty: u32, idx: GPtr<u8>, n: u32) -> i32 = cdecl 0x7EF550 => unported;
     /// `RpAtomic::renderCallBack` (the atomic's +0x48 function pointer, cdecl)
     fn atomic_render_cb(cb: u32, atomic: GPtr<u8>) -> GPtr<u8> = cdecl dyn => unported;
 }
@@ -90,8 +88,8 @@ pub fn ropes_render() {
        recs = "grove-walk", note = "FSQRT distance; writes the Im3D temp vertex buffer")]
 pub fn rope_render(this: GPtr<u8>) {
     let sph = this.byte_add(0xC0);
-    if camera_is_sphere_visible_m(g(THE_CAMERA), sph, 0x41A0_0000, 0xB6FA74) == 0
-        && (g::<u8>(0xB6F998).read() == 0 || camera_is_sphere_visible_m(g(THE_CAMERA), sph, 0x41A0_0000, 0xB6FABC) == 0)
+    if camera_is_sphere_visible_m(g(THE_CAMERA), sph, f32::from_bits(0x41A0_0000), GPtr::from_addr(0xB6FA74)) == 0
+        && (g::<u8>(0xB6F998).read() == 0 || camera_is_sphere_visible_m(g(THE_CAMERA), sph, f32::from_bits(0x41A0_0000), GPtr::from_addr(0xB6FABC)) == 0)
     {
         return;
     }
@@ -117,7 +115,7 @@ pub fn rope_render(this: GPtr<u8>) {
     rs(0xB, 6);
     rs(9, 2);
     rs(1, 0);
-    if !rw_im3d_transform(g(TEMP_VERTS), 0x20, 0, 0).is_null() {
+    if !rw_im3d_transform(g(TEMP_VERTS), 0x20, GPtr::NULL, 0).is_null() {
         rw_im3d_render_indexed_primitive(1, g(0x8CD818), 0x3E);
         rw_im3d_end();
     }
@@ -132,7 +130,7 @@ pub fn rope_render(this: GPtr<u8>) {
     g::<u32>(0xC4D97C).write(0x4431_547B);
     g::<u32>(0xC4D980).write(0x4465_0CCD);
     g::<u32>(0xC4D984).write(0x4254_0000);
-    if !rw_im3d_transform(g(TEMP_VERTS), 2, 0, 0).is_null() {
+    if !rw_im3d_transform(g(TEMP_VERTS), 2, GPtr::NULL, 0).is_null() {
         rw_im3d_render_indexed_primitive(1, g(0x8CD818), 2);
         rw_im3d_end();
     }
@@ -289,8 +287,8 @@ pub fn plane_trail_render(this: GPtr<u8>, intensity: u32) {
     rs(0xA, 5);
     rs(0xB, 6);
     rs(1, 0);
-    if !rw_im3d_transform(g(TEMP_VERTS), n, 0, 0x18).is_null() {
-        rw_im3d_render_indexed_primitive(1, g(0x8D5B98), n * 2 - 2);
+    if !rw_im3d_transform(g(TEMP_VERTS), n, GPtr::NULL, 0x18).is_null() {
+        rw_im3d_render_indexed_primitive(1, g(0x8D5B98), (n * 2 - 2) as i32);
         rw_im3d_end();
     }
 }
@@ -318,7 +316,7 @@ pub fn render_roadsign_atomic(atomic: GPtr<u8>, cam: GPtr<u8>) -> GPtr<u8> {
     } else {
         u32::from(x(k(0x4874_2400)).fsub_m(d2).fmul_m(k(0x3687_150F)).fmul_m(k(0x437E_0000)).ftol() as u8)
     };
-    rp_geometry_for_all_materials(rd::<GPtr<u8>>(atomic, 0x18), 0x6FE220, alpha);
+    rp_geometry_for_all_materials(rd::<GPtr<u8>>(atomic, 0x18), 0x6FE220, GPtr::from_addr(alpha as usize));
     atomic_render_cb(rd::<u32>(atomic, 0x48), atomic);
     atomic
 }
@@ -452,6 +450,7 @@ pub fn render_buffered_one_xlu_sprite(px: f32, py: f32, pz: f32, w: f32, h: f32,
 }
 
 use sa_core::bindings::find_player_coors;
+use sa_world::bindings::get_water_level_no_waves as water_level_no_waves;
 orig! {
     /// `CGrassRenderer::DrawTriPlants(PPTriPlant*, int32 count, RpAtomic** models, RwMatrix*)` (0x5DAD00)
     fn grass_draw_tri_plants(plants: GPtr<u8>, n: i32, models: u32, m: u32) = cdecl 0x5DAD00 => unported;
@@ -459,8 +458,6 @@ orig! {
     fn tri_plant_buffer_flush_o(this: GPtr<u8>) = thiscall 0x5DB0C0 => crate::mvpd_r3::tri_plant_buffer_flush;
     /// `RwIm2DRenderIndexedPrimitive` (`RwEngineInstance` slot 0x34)
     fn im2d_render_indexed(prim: u32, verts: GPtr<u8>, nv: i32, idx: GPtr<u8>, ni: i32) -> i32 = cdecl table 0xC97B24 0x34 => unported;
-    /// `CWaterLevel::GetWaterLevelNoWaves(x, y, z, float* level, float* bigWaves, float* smallWaves)` (0x6E8580)
-    fn water_level_no_waves(px: u32, py: u32, pz: u32, out: GPtr<u8>, big: GPtr<u8>, small: GPtr<u8>) -> u8 = cdecl 0x6E8580 => unported;
 }
 
 /// `CPPTriPlantBuffer::Flush()` (0x5DB0C0, thiscall): with plants stored (+0), the model table by pipe
@@ -559,11 +556,11 @@ pub fn set_up_water_fog(x0: i32, y0: i32, x1: i32, y1: i32) {
         return;
     }
     let mut p = [0f32; 3];
-    find_player_coors(lp(&mut p), -1);
+    find_player_coors(GPtr::<u8>::cast::<f32>(lp(&mut p)), -1);
     let y0f = X87::from_i32(y0).to_f32();
     let x0f = X87::from_i32(x0).to_f32();
     let (mut level, mut big, mut small) = (0f32, 0f32, 0f32);
-    let found = water_level_no_waves(x0f.to_bits(), y0f.to_bits(), 0, lp(&mut level), lp(&mut big), lp(&mut small));
+    let found = water_level_no_waves(f32::from_bits(x0f.to_bits()), f32::from_bits(y0f.to_bits()), f32::from_bits(0), lp(&mut level), GPtr::<u8>::cast::<f32>(lp(&mut big)), GPtr::<u8>::cast::<f32>(lp(&mut small)));
     let h = if found == 0 {
         X87::zero()
     } else if jp(x(big), X87::zero(), 0x44) || jp(x(small), X87::zero(), 0x44) {
@@ -682,8 +679,8 @@ pub fn shiny_texts_render() {
         }
         if idx != 0 {
             little_test();
-            if !rw_im3d_transform(g(TEMP_VERTS), tbv.read(), 0, 1).is_null() {
-                rw_im3d_render_indexed_primitive(3, g(0xC4B958), tbi.read());
+            if !rw_im3d_transform(g(TEMP_VERTS), tbv.read(), GPtr::NULL, 1).is_null() {
+                rw_im3d_render_indexed_primitive(3, g(0xC4B958), tbi.read() as i32);
                 rw_im3d_end();
             }
             tbv.write(0);
@@ -805,8 +802,8 @@ pub fn skidmarks_render() {
             wr::<f32>(v1, 0x20, t);
         }
         little_test();
-        if !rw_im3d_transform(g(TEMP_VERTS), (n * 2 + 2) as u32, 0, 1).is_null() {
-            rw_im3d_render_indexed_primitive(3, g(0xC799C8), (n * 6) as u32);
+        if !rw_im3d_transform(g(TEMP_VERTS), (n * 2 + 2) as u32, GPtr::NULL, 1).is_null() {
+            rw_im3d_render_indexed_primitive(3, g(0xC799C8), ((n * 6) as u32) as i32);
             rw_im3d_end();
         }
     }
@@ -818,20 +815,17 @@ pub fn skidmarks_render() {
 use sa_core::bindings::fx_play as fx_system_play;
 use sa_core::bindings::fx_stop as fx_system_stop;
 use sa_core::bindings::rw_matrix_multiply;
-use sa_world::bindings::rw_v3d_length;
+use sa_core::bindings::rw_v3d_length;
+use crate::bindings::fx_rw_matrix_create;
+use crate::bindings::fx_rw_matrix_destroy;
+use sa_core::bindings::get_uppercase_key as key_gen_get_uppercase_key;
 orig! {
-    /// `FxManager_c::FxRwMatrixCreate()` (0x4A9440)
-    fn fx_rw_matrix_create(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4A9440 => unported;
-    /// `FxManager_c::FxRwMatrixDestroy(RwMatrix*)` (0x4A9460)
-    fn fx_rw_matrix_destroy(this: GPtr<u8>, m: GPtr<u8>) = thiscall 0x4A9460 => unported;
     /// `FxSystem_c::IsVisible()` (0x4AAF30, bool in AL)
     fn fx_system_is_visible(this: GPtr<u8>) -> u8 = thiscall 0x4AAF30 => unported;
     /// `FxSystem_c::DoFxAudio(CVector)` (0x4AAC90; by value)
     fn fx_system_do_fx_audio_o(this: GPtr<u8>, px: u32, py: u32, pz: u32) = thiscall 0x4AAC90 => crate::mvpd_r3::fx_system_do_fx_audio;
     /// `FxPrimBP_c::Update(float time, float dt)` (vtable slot 8)
     fn v_prim_update(this: GPtr<u8>, time: u32, dt: u32) = thiscall vslot 0x8 => unported;
-    /// `CKeyGen::GetUppercaseKey(const char*)` (0x53CF30)
-    fn key_gen_get_uppercase_key(s: u32) -> u32 = cdecl 0x53CF30 => unported;
     /// `CAEFireAudioEntity::AddAudioEvent(eAudioEvents, const CVector&)` (0x4DD3C0)
     fn fire_audio_add_audio_event(this: GPtr<u8>, ev: u32, pos: GPtr<u8>) = thiscall 0x4DD3C0 => unported;
 }
@@ -847,7 +841,7 @@ pub fn fx_system_do_fx_audio(this: GPtr<u8>, px: u32, py: u32, pz: u32) {
     let names: [u32; 13] = [
         0x85AA8C, 0x85AA80, 0x85AA74, 0x85AA68, 0x85AA5C, 0x85AA54, 0x85AA44, 0x85A70C, 0x85AA34, 0x85AA24, 0x85AA18, 0x85AA10, 0x85AA04,
     ];
-    let keys = names.map(key_gen_get_uppercase_key);
+    let keys = names.map(|n| key_gen_get_uppercase_key(GPtr::from_addr(n as usize)));
     let events: [u32; 13] = [0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x89, 0x89, 0x8A, 0x8B, 0x8C];
     let mut pos: [u32; 3] = [px, py, pz];
     for i in 0..13 {
@@ -883,7 +877,7 @@ pub fn fx_system_update(this: GPtr<u8>, cam: GPtr<u8>, time_delta: f32) -> u8 {
         return 0;
     }
     let fxman = g::<u8>(0xA9AE80);
-    let mat = fx_rw_matrix_create(fxman);
+    let mat = GPtr::from_addr(fx_rw_matrix_create(fxman) as usize);
     let parent = rd::<GPtr<u8>>(this, 0xC);
     if parent.is_null() {
         for i in 0..16isize {
@@ -894,7 +888,7 @@ pub fn fx_system_update(this: GPtr<u8>, cam: GPtr<u8>, time_delta: f32) -> u8 {
     }
     let prev = rd::<f32>(this, 0x58);
     let cp = rd::<GPtr<u8>>(cam, 4).byte_add(0x40);
-    fx_rw_matrix_destroy(fxman, mat);
+    fx_rw_matrix_destroy(fxman, mat.addr() as u32);
     let mp = mat.byte_add(0x30);
     let mut d: [f32; 3] = [
         x(rd::<f32>(cp, 0)).fsub_m(rd::<f32>(mp, 0)).to_f32(),

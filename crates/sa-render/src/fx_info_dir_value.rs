@@ -10,7 +10,7 @@ use sa_math::x87::X87;
 use crate::common::{rd, wr};
 
 use crate::bindings::interp_float_get_val;
-use sa_world::bindings::rw_v3d_length;
+use sa_core::bindings::rw_v3d_length;
 
 /// `FxInfoDir_c::GetValue(float currTime, float mult, float timeStep, float totalTime, bool useConst, void* out)`
 /// (0x4A64D0, thiscall, `ret 0x18`; vtable 0x85A914 slot 2): the key time is `mult` when byte +6 is set, else

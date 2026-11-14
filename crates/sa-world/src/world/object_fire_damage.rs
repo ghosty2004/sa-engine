@@ -12,9 +12,8 @@ use crate::bindings::audio_report_object_destruction;
 use crate::bindings::remove_from_moving_list;
 use sa_core::bindings::find_player_ped;
 use sa_core::bindings::find_player_vehicle;
+use crate::bindings::break_manager_add;
 orig! {
-    /// `BreakManager_c::Add(CObject*, RwV3d*, float, bool)` (0x59E9B0) on `g_breakMan` (0xBB4240)
-    fn break_manager_add(m: GPtr<u8>, o: GPtr<u8>, v: GPtr<u8>, f: u32, b: u32) = thiscall 0x59E9B0 => unported;
     /// virtual slot +0x20 (`CEntity::DeleteRwObject`)
     fn v_delete_rw_object(e: GPtr<u8>) = thiscall vslot 0x20 => unported;
 }

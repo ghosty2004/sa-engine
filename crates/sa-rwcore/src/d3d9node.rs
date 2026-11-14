@@ -32,9 +32,13 @@ use crate::bindings::d3d9_instance;
 use crate::bindings::delete_vertex_shader;
 use crate::bindings::flush_cache;
 use crate::bindings::geometry_get_usage_flags;
-use crate::bindings::set_render_state;
+use sa_core::bindings::set_render_state;
 use crate::bindings::set_transform_world;
-use crate::bindings::set_tss;
+use sa_core::bindings::set_tss;
+use crate::bindings::resources_free_res_entry as res_free;
+use sa_core::bindings::frame_get_ltm;
+use sa_core::bindings::get_render_state;
+use sa_core::bindings::set_texture;
 orig! {
     /// `IDirect3DDevice9::SetPixelShader` (+0x1AC)
     fn dev_set_pixel_shader(dev: GPtr<u8>, ps: u32) -> i32 = stdcall vslot 0x1AC => unported;
@@ -44,15 +48,6 @@ orig! {
     fn dev_draw_primitive(dev: GPtr<u8>, prim: u32, start: u32, count: u32) -> i32 = stdcall vslot 0x144 => unported;
     /// `IDirect3DDevice9::DrawIndexedPrimitive` (+0x148)
     fn dev_draw_indexed_primitive(dev: GPtr<u8>, prim: u32, base: u32, min: u32, num: u32, start: u32, count: u32) -> i32 = stdcall vslot 0x148 => unported;
-
-    /// `RwResourcesFreeResEntry(entry)` (0x807DE0)
-    fn res_free(e: GPtr<u8>) -> u32 = cdecl 0x807DE0 => crate::memory::rw_resources_free_res_entry;
-    /// `RwD3D9GetRenderState(state, out)` (0x7FC320)
-    fn get_render_state(state: u32, out: GPtr<u32>) = cdecl 0x7FC320 => crate::d3d9state::get_render_state;
-    /// `RwD3D9SetTexture(texture, stage)` (0x7FDE70)
-    fn set_texture(t: GPtr<u8>, stage: u32) -> u32 = cdecl 0x7FDE70 => crate::d3d9state::set_texture;
-    /// `RwFrameGetLTM(frame)` (0x7F0990)
-    fn frame_get_ltm(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0990 => crate::frame::get_ltm;
     /// `_rpD3D9VertexShaderGenerate(desc, out)` (0x75F0B0): returns the shader, fills two dwords
     fn create_vertex_shader(desc: GPtr<u32>, out: GPtr<u32>) -> u32 = cdecl 0x75F0B0 => crate::d3d9vsgen::vertex_shader_generate;
     /// CRT `memmove(dst, src, n)` (0x822A20)

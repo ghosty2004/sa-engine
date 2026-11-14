@@ -7,6 +7,7 @@
 //! `CTaskComplexSequence`: +0x10 tasks[8], +0x38 can-be-emptied flag, +0x3C reference count.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -23,7 +24,7 @@ const GROUP_SIZE: u32 = 0x2D4;
 /// 0.0f
 const K_ZERO: usize = 0x858B50;
 
-use crate::bindings::assoc_set_finish_callback;
+use sa_core::bindings::assoc_set_finish_callback;
 use sa_world::bindings::sequence_flush;
 orig! {
     /// Virtual slot +0 (scalar deleting destructor, `ret 4`).
@@ -78,13 +79,13 @@ pub fn duck_set_control_type(this: GPtr<u8>, ty: u32) -> u8 {
 pub fn duck_abort_because_of_other_duck(this: GPtr<u8>, _ped: GPtr<u8>) {
     let down = rd::<GPtr<u8>>(this, 0x10);
     if !down.is_null() {
-        assoc_set_finish_callback(down, DEFAULT_ANIM_CB, 0);
+        assoc_set_finish_callback(down, DEFAULT_ANIM_CB, GPtr::NULL);
         wr::<u32>(this, 0x10, 0);
     }
     let up = rd::<GPtr<u8>>(this, 0x14);
     if !up.is_null() {
         wr::<f32>(up, 0x1C, -8.0);
-        assoc_set_finish_callback(rd::<GPtr<u8>>(this, 0x14), DEFAULT_ANIM_CB, 0);
+        assoc_set_finish_callback(rd::<GPtr<u8>>(this, 0x14), DEFAULT_ANIM_CB, GPtr::NULL);
         wr::<u32>(this, 0x14, 0);
     }
     wr::<u8>(this, 0x1A, 1);

@@ -57,7 +57,7 @@ pub use crate::bindings::get_task_jet_pack;
 pub use crate::bindings::intel_find_task_by_type as find_task_by_type;
 pub use crate::bindings::is_coop_game_going_on;
 pub use crate::bindings::is_player_on_a_mission;
-pub use crate::bindings::object_ctor;
+pub use sa_core::bindings::object_ctor_5a1d70 as object_ctor;
 pub use crate::bindings::pad_get_target;
 pub use crate::bindings::set_orientation as placeable_set_orientation;
 pub use crate::bindings::simple_transform_update_rw_matrix;
@@ -69,37 +69,26 @@ pub use sa_core::bindings::object_new_at;
 pub use sa_core::bindings::stricmp;
 pub use sa_core::bindings::world_add;
 pub use sa_core::bindings::world_remove;
+pub use crate::bindings::can_be_used_for_2_player;
+pub use crate::bindings::find_text_index_for_string as find_text_index_for_string_call;
+pub use crate::bindings::give_us_a_pick_up_object;
+pub use crate::bindings::is_visible as is_visible_call;
+pub use crate::bindings::object_create;
+pub use crate::bindings::pick_up_should_be_invisible as pick_up_should_be_invisible_call;
+pub use crate::bindings::pickup_get_posn as get_posn_call;
+pub use crate::bindings::pickup_remove as remove_call;
+pub use crate::bindings::weapon_for_model as weapon_for_model_call;
+pub use sa_core::bindings::entity_register_reference;
+pub use sa_core::bindings::get_weapon_info;
 orig! {
     /// `CEntity` scalar deleting destructor (vtable slot 0, `delete` with flag 1)
     pub fn entity_vdelete(e: GPtr<u8>, flag: i32) = thiscall vslot 0x0 => unported;
-    /// `CWeaponInfo::GetWeaponInfo(eWeaponType, eWeaponSkill)` (0x743C60)
-    pub fn get_weapon_info(ty: i32, skill: i32) -> GPtr<u8> = cdecl 0x743C60 => unported;
     /// `CBaseModelInfo::GetModelType` (vtable slot 0x10)
     pub fn model_info_get_type(mi: GPtr<u8>) -> u8 = thiscall vslot 0x10 => unported;
     /// `CLocalisation::KillFrenzy` (0x56D2A0)
     pub fn localisation_kill_frenzy() -> u8 = cdecl 0x56D2A0 => unported;
-    /// `CWeapon::CanBeUsedFor2Player(eWeaponType)` (0x73B240)
-    pub fn can_be_used_for_2_player(w: i32) -> u8 = cdecl 0x73B240 => unported;
-    /// `CPickup::GetPosn(CVector* out)` (0x4549A0, thiscall)
-    pub fn get_posn_call(this: GPtr<u8>, out: GPtr<f32>) -> GPtr<f32> = thiscall 0x4549A0 => get_posn;
-    /// `CPickup::IsVisible` (0x454C70)
-    pub fn is_visible_call(this: GPtr<u8>) -> u32 = thiscall 0x454C70 => is_visible;
-    /// `CPickups::WeaponForModel(int32)` (0x454AE0)
-    pub fn weapon_for_model_call(model: i32) -> i32 = cdecl 0x454AE0 => weapon_for_model;
-    /// `CPickup::Remove` (0x4556C0, thiscall)
-    pub fn remove_call(this: GPtr<u8>) = thiscall 0x4556C0 => remove;
     /// `CPickup::Update(CPlayerPed*, CVehicle*, int32 playerId)` (0x457410)
     pub fn pickup_update(this: GPtr<u8>, ped: GPtr<u8>, veh: GPtr<u8>, id: i32) -> u8 = thiscall 0x457410 => crate::world::mvpd_w5::pickup_update;
-    /// `CPickup::GiveUsAPickUpObject(CObject**, int32 slot)` (0x4567E0)
-    pub fn give_us_a_pick_up_object(this: GPtr<u8>, out: GPtr<GPtr<u8>>, slot: i32) = thiscall 0x4567E0 => give_us_a_pick_up_object_port;
-    /// `CObject::Create(int32 model, bool)` (0x5A1F60)
-    pub fn object_create(model: u32, b: u32) -> GPtr<u8> = cdecl 0x5A1F60 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    pub fn entity_register_reference(e: GPtr<u8>, r: GPtr<GPtr<u8>>) = thiscall 0x571B70 => unported;
-    /// `CPickup::PickUpShouldBeInvisible()` (0x454D20, AL)
-    pub fn pick_up_should_be_invisible_call(this: GPtr<u8>) -> u8 = thiscall 0x454D20 => pick_up_should_be_invisible;
-    /// `CPickup::FindTextIndexForString(const char*)` (0x455500, AL used)
-    pub fn find_text_index_for_string_call(s: GPtr<u8>) -> i32 = cdecl 0x455500 => find_text_index_for_string;
     /// `CPad::CollectPickupJustDown` (0x540A70)
     pub fn pad_collect_pickup_just_down(pad: GPtr<u8>) -> u8 = thiscall 0x540A70 => unported;
     /// `CPickups::AddToCollectedPickupsArray(int32)` (0x455240)
@@ -753,7 +742,7 @@ pub fn give_us_a_pick_up_object_port(this: GPtr<u8>, obj: GPtr<GPtr<u8>>, slot: 
             cur
         } else {
             let mem = object_new_at(0x17C, slot << 8);
-            let o = if mem.is_null() { GPtr::NULL } else { object_ctor(mem, u32::from(rd::<u16>(this, 0x18)), 0) };
+            let o = if mem.is_null() { GPtr::NULL } else { object_ctor(mem, u32::from(rd::<u16>(this, 0x18)) as i32, 0) };
             obj.write(o);
             o
         }
@@ -787,7 +776,7 @@ pub fn give_us_a_pick_up_object_port(this: GPtr<u8>, obj: GPtr<GPtr<u8>>, slot: 
     if i32::from(rd::<i16>(o, 0x22)) == i32::from(g::<u16>(MI_8CD750).read()) {
         wr::<u32>(o, 0x1C, rd::<u32>(o, 0x1C) | 0x10_0000);
     }
-    placeable_set_orientation(obj.read(), 0, 0, 0xBFC9_0FDB);
+    placeable_set_orientation(obj.read(), f32::from_bits(0), f32::from_bits(0), f32::from_bits(0xBFC9_0FDB));
     let o = obj.read();
     let rw = rd::<GPtr<u8>>(o, 0x18);
     if !rw.is_null() {
@@ -814,7 +803,7 @@ pub fn give_us_a_pick_up_object_port(this: GPtr<u8>, obj: GPtr<GPtr<u8>>, slot: 
     let inv = u32::from(pick_up_should_be_invisible_call(this));
     upd(0x140, &|v| v ^ (((inv << 25) ^ v) & 0x200_0000));
     upd(0x1C, &|v| v | 0x8000_0000);
-    entity_register_reference(obj.read(), obj);
+    entity_register_reference(obj.read(), obj.cast::<u8>());
     let m = rd::<u16>(this, 0x18);
     if m == g::<u16>(MI_8CD5CC).read() || m == g::<u16>(MI_8CD5F0).read() {
         wr::<u8>(obj.read(), 0x13D, rd::<u8>(this, 8));

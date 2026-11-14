@@ -51,9 +51,9 @@ pub use crate::bindings::plugin_add as registry_add_plugin;
 pub use crate::bindings::plugin_deinit_object as registry_deinit_object;
 pub use crate::bindings::plugin_init_object as registry_init_object;
 pub use crate::bindings::registry_get_plugin_offset;
+pub use crate::bindings::free_list_create_prealloc as free_list_create_and_preallocate_space;
+pub use sa_core::bindings::rw_frame_update_objects as frame_update_objects;
 orig! {
-    /// `RwFreeListCreateAndPreallocateSpace` (0x801B70)
-    pub fn free_list_create_and_preallocate_space(size: i32, per_block: i32, align: i32, blocks: i32, space: GPtr<u8>, hint: u32) -> GPtr<u8> = cdecl 0x801B70 => unported;
     /// `RwMatrixOptimize(m, tolerance)` (0x7F17E0)
     pub fn matrix_optimize(m: GPtr<u8>, tol: GPtr<f32>) -> GPtr<u8> = cdecl 0x7F17E0 => crate::matrix::rw_matrix_optimize;
     /// `_rwCameraBuildPerspClipPlanes(camera)` (0x7EE740)
@@ -66,8 +66,6 @@ orig! {
     pub fn call_std_func(f: u32, out: u32, inp: GPtr<u8>, n: i32) -> i32 = cdecl dyn => unported;
     /// `_rwFrameSyncDirty()` (0x809550)
     pub fn frame_sync_dirty() -> u32 = cdecl 0x809550 => crate::frame::sync_dirty;
-    /// `RwFrameUpdateObjects` (0x7F0910)
-    pub fn frame_update_objects(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0910 => crate::frame::update_objects;
 
     /// `_rwCameraUpdateZShiftScale` (0x7EE200)
     pub fn update_z_shift_scale_call(c: GPtr<u8>) = cdecl 0x7EE200 => update_z_shift_scale;
@@ -102,10 +100,10 @@ pub fn module_open(instance: GPtr<u8>, offset: i32, _size: i32) -> GPtr<u8> {
     let p = CAMERA_FREELIST_PARAMS.get();
     CAMERA_MODULE_OFFSET.set(offset as u32);
     let fl = free_list_create_and_preallocate_space(
-        rd::<i32>(camera_registry(), 0),
-        p[0],
+        rd::<i32>(camera_registry(), 0) as u32,
+        (p[0]) as u32,
         4,
-        p[1],
+        (p[1]) as u32,
         CAMERA_FREELIST_SPACE.ptr().cast(),
         0x40005,
     );

@@ -11,9 +11,8 @@ use crate::common::{model_info, rd, wr, x};
 use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
 use sa_core::bindings::matrix_mul_vec;
 use sa_world::bindings::audio_add_event;
+use sa_core::bindings::automobile_ctor;
 orig! {
-    /// `CAutomobile::CAutomobile(int32, eVehicleCreatedBy, bool)` (0x6B0A90)
-    fn automobile_ctor(v: GPtr<u8>, mi: u32, created_by: u32, setup_susp: u8) -> GPtr<u8> = thiscall 0x6B0A90 => crate::mvpd_v7::automobile_constructor;
     /// `CMonsterTruck::SetupSuspensionLines()` (0x6C7FB0)
     fn monster_truck_setup_suspension_lines(v: GPtr<u8>) = thiscall 0x6C7FB0 => unported;
     /// `CTrailer::SetupSuspensionLines()` (0x6CF1A0)
@@ -27,7 +26,7 @@ fn hitch(this: GPtr<u8>, out: GPtr<u8>, y: f32) {
     wr::<f32>(out, 4, y);
     wr::<f32>(out, 8, x(0.5).fsub_m(rd::<f32>(this, 0x898)).to_f32());
     let mut tmp = [0u32; 3];
-    let r = matrix_mul_vec(GPtr::from_raw(&mut tmp as *mut [u32; 3]).cast(), rd::<GPtr<u8>>(this, 0x14), out);
+    let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::from_raw(&mut tmp as *mut [u32; 3]).cast()), rd::<GPtr<u8>>(this, 0x14), out));
     for k in 0..3 {
         wr::<u32>(out, 4 * k, rd::<u32>(r, 4 * k));
     }
@@ -84,10 +83,10 @@ pub fn trailer_break_tow_link(this: GPtr<u8>) -> u8 {
     if !tractor.is_null() {
         let t = rd::<GPtr<u8>>(tractor, 0x4C8);
         if !t.is_null() {
-            clean_up_old_reference(t, tractor.byte_add(0x4C8));
+            clean_up_old_reference(t, GPtr::<u8>::cast::<GPtr<u8>>(tractor.byte_add(0x4C8)));
             wr::<u32>(rd::<GPtr<u8>>(this, 0x4C4), 0x4C8, 0);
         }
-        clean_up_old_reference(rd::<GPtr<u8>>(this, 0x4C4), this.byte_add(0x4C4));
+        clean_up_old_reference(rd::<GPtr<u8>>(this, 0x4C4), GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x4C4)));
         wr::<u32>(this, 0x4C4, 0);
     }
     let s = rd::<u8>(this, 0x36);
@@ -109,7 +108,7 @@ pub fn trailer_break_tow_link(this: GPtr<u8>) -> u8 {
        unverified = "veh4-1", route = "L2", hazards = "entry-protection-read,heap-writes",
        note = "constructs into pool memory; the SEH frame and the entry's protection detour are not reproduced")]
 pub fn monster_truck_constructor(this: GPtr<u8>, mi: u32, created_by: u32) -> GPtr<u8> {
-    automobile_ctor(this, mi, created_by, 0);
+    automobile_ctor(this, mi as i32, created_by, 0);
     wr::<u32>(this, 0, 0x0087_17D8);
     for k in 0..4 {
         wr::<u32>(this, 0x988 + 4 * k, 0x3F80_0000);
@@ -128,7 +127,7 @@ pub fn monster_truck_constructor(this: GPtr<u8>, mi: u32, created_by: u32) -> GP
        unverified = "veh3-1", route = "L2", hazards = "heap-writes",
        note = "constructs into pool memory; the SEH frame and the entry's protection detour are not reproduced")]
 pub fn trailer_constructor(this: GPtr<u8>, mi: u32, created_by: u32) -> GPtr<u8> {
-    automobile_ctor(this, mi, created_by, 0);
+    automobile_ctor(this, mi as i32, created_by, 0);
     for o in [0x9E0, 0x9E4, 0x9EC, 0x9F0] {
         wr::<u32>(this, o, 0x3F80_0000);
     }

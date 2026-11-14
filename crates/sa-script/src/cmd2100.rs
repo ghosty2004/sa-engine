@@ -41,12 +41,12 @@ const EMPTY_STR: usize = 0x858B54;
 const INTERIOR_MAN: usize = 0xBAF670;
 
 use crate::bindings::add_brain_for_code_use;
-use crate::bindings::clump_get_association;
-use crate::bindings::clump_is_initialized;
+use sa_world::bindings::clump_get_association;
+use sa_core::bindings::clump_is_initialized;
 use crate::bindings::get_proper_index_from_index_used_by_script as get_proper_index;
-use crate::bindings::object_get_ref_;
+use sa_world::bindings::object_get_ref_;
 use crate::bindings::set_coords_of_script_car;
-use crate::bindings::set_entity_blip;
+use sa_world::bindings::set_entity_blip;
 use crate::bindings::start_playback_recorded_car;
 use sa_core::bindings::crt_strncpy as strncpy_;
 use sa_core::bindings::get_uppercase_key;
@@ -70,24 +70,27 @@ use sa_world::bindings::set_orientation;
 use sa_world::bindings::set_velocity as set_ped_velocity;
 use sa_world::bindings::shopping_remove_loaded_shop as remove_loaded_shop;
 use sa_world::bindings::task_walk_alongside_ctor;
+use crate::bindings::give_ped_scripted_task;
+use crate::bindings::global_index;
+use crate::bindings::play_anim_script_command;
+use crate::bindings::read_label;
+use sa_core::bindings::assoc_set_current_time as set_current_time;
+use sa_core::bindings::get_pad;
+use sa_core::bindings::ped_get_bone_position as get_bone_position;
+use sa_core::bindings::time_cycle_stop_extra_colour as stop_extra_colour;
+use sa_core::bindings::vector_magnitude;
+use sa_world::bindings::change_blip_scale;
+use sa_world::bindings::fx_attach_to_bone;
+use sa_world::bindings::get_actual_script_thing_index;
+use sa_world::bindings::set_texture_and_model as set_texture_and_model_names;
 orig! {
-    /// `CTimeCycle::StopExtraColour(bool)` (0x55FF20)
-    fn stop_extra_colour(a: i32) = cdecl 0x55FF20 => unported;
     /// `CVehicle::SetTowLink(CVehicle*, bool)` through the vtable slot +0xF4, read at run time; AL discarded
     fn vcall_set_tow_link(f: u32, this: GPtr<u8>, c: GPtr<u8>, b: u32) = thiscall dyn => unported;
-    /// `CRunningScript::ReadTextLabelFromScript(char*, uint8)` (0x463D50)
-    fn read_label(s: Scr, buf: GPtr<u8>, len: u32) = thiscall 0x463D50 => crate::vm::read_text_label_from_script;
-    /// `CRunningScript::GetIndexOfGlobalVariable()` (0x464700), AX
-    fn global_index(s: Scr) -> u16 = thiscall 0x464700 => crate::vm::get_index_of_global_variable;
     /// `CCam::DoCamBump(float, float)` (0x50CB30); raw
     fn do_cam_bump(cam: GPtr<u8>, a: u32, b: u32) = thiscall 0x50CB30 => unported;
-    /// `CAnimBlendAssociation::SetCurrentTime(float)` (0x4CEA80); raw
-    fn set_current_time(a: GPtr<u8>, t: u32) = thiscall 0x4CEA80 => unported;
     /// `InteriorManager_c::ActivatePeds(bool)` (0x598080) / `IsGroupActive(int32)` (0x598280, AL)
     fn interior_activate_peds(m: GPtr<u8>, b: u32) = thiscall 0x598080 => unported;
     fn interior_is_group_active(m: GPtr<u8>, g: u32) -> u8 = thiscall 0x598280 => unported;
-    /// `CRunningScript::GivePedScriptedTask(int32 pedHandle, CTask*, int32 opcode)` (0x465C20)
-    fn give_ped_scripted_task(s: Scr, ped: u32, task: GPtr<u8>, command: u32) = thiscall 0x465C20 => unported;
     /// `CTaskComplexFollowPedFootsteps::CTaskComplexFollowPedFootsteps(CPed*)` (0x694E20)
     fn task_follow_footsteps_ctor(t: GPtr<u8>, p: GPtr<u8>) -> GPtr<u8> = thiscall 0x694E20 => unported;
     /// `CTaskComplexDie::CTaskComplexDie(...)` (0x630040), 9 dwords; floats raw
@@ -109,8 +112,6 @@ orig! {
     /// (0x564C70)
     #[allow(clippy::too_many_arguments)]
     fn find_objects_of_type_in_range(model: u32, pos: GPtr<u32>, r: u32, two_d: u32, count: GPtr<u16>, max: u32, out: GPtr<u32>, b: u32, v: u32, p: u32, o: u32, d: u32) = cdecl 0x564C70 => unported;
-    /// `CVector::Magnitude()` (0x4082C0), ST0 (an `fsqrt` result under PC=24: exact as f64)
-    fn vector_magnitude(v: GPtr<u32>) -> f64 = thiscall 0x4082C0 => unported;
     /// `CTheScripts::AddToSwitchJumpTable(int32 value, int32 address)` (0x470390)
     fn add_to_switch_jump_table(v: u32, a: u32) = cdecl 0x470390 => unported;
     /// `CTheScripts::UseSwitchJumpTable(int32* out)` (0x4703C0; writes 0 first, then the target when found)
@@ -121,22 +122,8 @@ orig! {
     #[allow(clippy::too_many_arguments)]
     fn create_number_of_birds(ax: u32, ay: u32, az: u32, bx: u32, by: u32, bz: u32, n: u32, ty: u32, c: u32) = cdecl 0x711EF0 => unported;
     fn gang_war_going_on() -> u8 = cdecl 0x443AA0 => unported;
-    /// `CPedClothesDesc::SetTextureAndModel(const char* tex, const char* model, int32)` (0x5A8080)
-    fn set_texture_and_model_names(d: GPtr<u8>, tex: GPtr<u8>, model: GPtr<u8>, ty: u32) = thiscall 0x5A8080 => unported;
     /// `CShopping::SetPlayerHasBought(uint32)` (0x49B610) / `RemoveLoadedShop()` (0x49AE30)
     fn set_player_has_bought(k: u32) = cdecl 0x49B610 => unported;
-    /// `CTheScripts::GetActualScriptThingIndex(int32 ref, uint8 type)` (0x4839A0)
-    fn get_actual_script_thing_index(r: u32, ty: u32) -> i32 = cdecl 0x4839A0 => unported;
-    /// 0x53FB70 (cdecl `(int32)`: `CPad::GetPad`)
-    fn get_pad(i: u32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `FxSystem_c::AttachToBone(CEntity*, int32)` (0x4AA400)
-    fn fx_attach_to_bone(fx: GPtr<u8>, e: GPtr<u8>, bone: u32) = thiscall 0x4AA400 => unported;
-    /// `CRadar::ChangeBlipScale(int32, int32)` (0x583CC0)
-    fn change_blip_scale(b: u32, s: u32) = cdecl 0x583CC0 => unported;
-    /// `CPed::GetBonePosition(RwV3d&, uint32 bone, bool)` (0x5E4280)
-    fn get_bone_position(p: GPtr<u8>, out: GPtr<u32>, bone: u32, b: u32) = thiscall 0x5E4280 => unported;
-    /// `CRunningScript::PlayAnimScriptCommand(int32 command)` (0x470150; reads its own parameters)
-    fn play_anim_script_command(s: Scr, command: u32) = thiscall 0x470150 => unported;
     /// `CClock::OffsetClockByADay(uint32)` (0x52D0B0)
     fn offset_clock_by_a_day(n: u32) = cdecl 0x52D0B0 => unported;
     /// `COnscreenTimer::SetClockBeepCountdownSecs(uint32 varId, uint32 secs)` (0x44CEE0)
@@ -281,7 +268,7 @@ pub fn process_commands_2100_to_2199(s: Scr, command: u32) -> i8 {
             if !a.is_null() {
                 let h = a.byte_add(0x14).cast::<GPtr<f32>>().read();
                 let t = X87::from_f32(h.byte_add(0x10).read()).fmul_m(spf(0)).to_f32();
-                set_current_time(a, t.to_bits());
+                set_current_time(a, f32::from_bits(t.to_bits()));
             }
         }
         // 083C SET_CHAR_VELOCITY (0x470CF4): `0x441130(PED(P0), P1 * 0.02f, P2 * 0.02f, P3 * 0.02f)`.
@@ -311,7 +298,7 @@ pub fn process_commands_2100_to_2199(s: Scr, command: u32) -> i8 {
             world_remove_(p);
             let k = |i: i32| X87::from_f32(spf(i)).fmul_m(f(K_DEG2RAD)).to_f32().to_bits();
             let (z, y, x) = (k(3), k(2), k(1));
-            set_orientation(p, x, y, z);
+            set_orientation(p, f32::from_bits(x), f32::from_bits(y), f32::from_bits(z));
             world_add_(p);
         }
         // 083F GET_CAR_UPRIGHT_VALUE (0x470E15): P0 = `VEH(P0)->m_matrix->up.z` (+0x28, raw); store 1.
@@ -344,7 +331,7 @@ pub fn process_commands_2100_to_2199(s: Scr, command: u32) -> i8 {
         0x0843 => {
             collect(s, 3);
             let mut p = [sp(0), sp(1), sp(2)];
-            let z = find_smallest_zone_for_position(GPtr::from_raw(p.as_mut_ptr()), 1);
+            let z = find_smallest_zone_for_position(GPtr::<u32>::cast::<f32>(GPtr::from_raw(p.as_mut_ptr())), 1);
             let d = var_ptr(s, 2);
             strncpy_(d.cast(), z.byte_add(8), 8);
         }
@@ -372,7 +359,7 @@ pub fn process_commands_2100_to_2199(s: Scr, command: u32) -> i8 {
             collect(s, 2);
             let target = ped(sp(1));
             let t = new_task(0x20, |t| task_follow_footsteps_ctor(t, target));
-            give_ped_scripted_task(s, sp(0), t, command);
+            give_ped_scripted_task(s, sp(0) as i32, t, command);
         }
         // 0851 DAMAGE_CHAR (0x47105C)
         0x0851 => damage_char(s),
@@ -421,7 +408,7 @@ pub fn process_commands_2100_to_2199(s: Scr, command: u32) -> i8 {
             collect(s, 2);
             let target = ped(sp(1));
             let t = new_task(0x20, |t| task_walk_alongside_ctor(t, target, 0x4120_0000));
-            give_ped_scripted_task(s, sp(0), t, command);
+            give_ped_scripted_task(s, sp(0) as i32, t, command);
         }
         // 085A CREATE_EMERGENCY_SERVICES_CAR (0x47134B): flag = `ScriptGenerateOneEmergencyServicesCar(P0, (P1, P2,
         // P3)) != 0`.
@@ -655,7 +642,7 @@ pub fn process_commands_2100_to_2199(s: Scr, command: u32) -> i8 {
         0x0888 => {
             collect(s, 1);
             get_actual_blip_array_index(collect_next_parameter_without_increasing_pc(s));
-            let b = set_entity_blip(2, sp(0), 1, 3, s.byte_add(8));
+            let b = set_entity_blip(2, sp(0), 1, 3, s.byte_add(8)) as u32;
             change_blip_scale(b, 3);
             set_sp(0, b);
             store(s, 1);
@@ -671,7 +658,7 @@ pub fn process_commands_2100_to_2199(s: Scr, command: u32) -> i8 {
                 let q = ent_pos(v.read());
                 out = [q.read(), q.byte_add(4).read(), q.byte_add(8).read()];
             } else {
-                get_bone_position(p, GPtr::from_raw(out.as_mut_ptr()), 1, 0);
+                get_bone_position(p, GPtr::<u32>::cast::<u8>(GPtr::from_raw(out.as_mut_ptr())), 1, 0);
             }
             set_sp(0, out[0]);
             set_sp(1, out[1]);
@@ -782,7 +769,7 @@ fn damage_char(s: Scr) {
     event_script_command_ctor(e, 3, t, 0);
     let intel = p.byte_add(0x47C).cast::<GPtr<u8>>().read();
     event_group_add(intel.byte_add(0x68), e, 0);
-    event_script_command_dtor(e);
+    event_script_command_dtor(e.cast::<u32>());
 }
 
 /// 0866 GET_CLOSEST_STEALABLE_OBJECT (0x4715B8): `CollectParameters(4)`: x P0, y P1 (`fld/fst`), z P2 (raw),
@@ -832,7 +819,7 @@ fn closest_stealable_object(s: Scr) {
     let v = if chosen.is_null() {
         u32::MAX
     } else {
-        object_get_ref_(pool(OBJECT_POOL), chosen)
+        object_get_ref_(pool(OBJECT_POOL), chosen) as u32
     };
     set_sp(0, v);
     store(s, 1);
@@ -897,7 +884,7 @@ fn uses_collision_of_closest_object(s: Scr) {
         .fcom(X87::from_f32(f(K_MINUS_100)))
         .test_parity(0x41)
     {
-        z = X87::from_f64_exact(find_ground_z(x, y)).to_f32().to_bits();
+        z = X87::from_f64_exact(find_ground_z(f32::from_bits(x), f32::from_bits(y))).to_f32().to_bits();
     }
     let r = sp(3);
     let mut best = X87::from_f32(f(r)).fadd(X87::from_f32(f(r))).to_f32();

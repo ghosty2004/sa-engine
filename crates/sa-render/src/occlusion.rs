@@ -184,23 +184,19 @@ pub fn is_point_behind_occluder(this: GPtr<u8>, px: f32, py: f32, pz: f32, radiu
 /// `TheCamera.m_mViewMatrix` (CMatrix).
 const VIEW_MATRIX: usize = 0xB6FA2C;
 
+pub use sa_core::bindings::calc_screen_coors_71da00 as calc_screen_coors;
+pub use sa_core::bindings::matrix_mul_vec;
+pub use sa_world::bindings::call_is_point_behind_occluder;
+pub use sa_world::bindings::call_is_point_within_occlusion_area;
 orig! {
-    /// `CalcScreenCoors(const CVector& in, CVector* out, float* w, float* h)` (0x71DA00)
-    pub fn calc_screen_coors(v: GPtr<f32>, out: GPtr<f32>, w: GPtr<f32>, h: GPtr<f32>) -> u8 = cdecl 0x71DA00 => unported;
     /// `DoesInfiniteLineTouchScreen(float x, float y, float dx, float dy)` (0x71DB80); raw dwords
     pub fn does_infinite_line_touch_screen(x: u32, y: u32, dx: u32, dy: u32) -> u8 = cdecl 0x71DB80 => unported;
-    /// `operator*(CVector* out, const CMatrix&, const CVector&)` (0x59C890)
-    pub fn matrix_mul_vec(out: GPtr<f32>, m: GPtr<u8>, v: GPtr<f32>) -> GPtr<f32> = cdecl 0x59C890 => unported;
     /// `COccluder::ProcessOneOccluder(CActiveOccluder*)` (0x71E5D0)
     pub fn process_one_occluder(this: GPtr<u8>, out: GPtr<u8>) -> u8 = thiscall 0x71E5D0 => unported;
     /// `COccluder::NearCamera()` (0x71F960)
     pub fn call_near_camera(this: GPtr<u8>) -> i32 = thiscall 0x71F960 => near_camera;
     /// `COcclusion::OccluderHidesBehind(CActiveOccluder*, CActiveOccluder*)` (0x71E080)
     pub fn call_occluder_hides_behind(a: GPtr<u8>, b: GPtr<u8>) -> u8 = cdecl 0x71E080 => occluder_hides_behind;
-    /// `CActiveOccluder::IsPointWithinOcclusionArea(float, float, float)` (0x71E580); raw dwords
-    pub fn call_is_point_within_occlusion_area(this: GPtr<u8>, px: u32, py: u32, r: u32) -> u8 = thiscall 0x71E580 => unported;
-    /// `CActiveOccluder::IsPointBehindOccluder(CVector, float)` (0x71FA40); raw dwords
-    pub fn call_is_point_behind_occluder(this: GPtr<u8>, px: u32, py: u32, pz: u32, r: u32) -> u8 = thiscall 0x71FA40 => unported;
 }
 
 /// `COcclusion::IsPositionOccluded(CVector pos, float radius)` (0x7200B0): with active occluders, the
@@ -216,12 +212,12 @@ pub fn is_position_occluded(px: u32, py: u32, pz: u32, radius: u32) -> u8 {
     let mut out = [0f32; 3];
     let mut wh = [0f32; 2];
     let wp = GPtr::from_raw(wh.as_mut_ptr());
-    if calc_screen_coors(
-        GPtr::from_raw(v.as_mut_ptr()),
-        GPtr::from_raw(out.as_mut_ptr()),
+    if u8::from(calc_screen_coors(
+        GPtr::<f32>::cast::<[f32;3]>(GPtr::from_raw(v.as_mut_ptr())),
+        GPtr::<f32>::cast::<[f32;3]>(GPtr::from_raw(out.as_mut_ptr())),
         wp,
         wp.wrapping_index(1),
-    ) == 0
+    )) == 0
     {
         return 0;
     }
@@ -238,8 +234,8 @@ pub fn is_position_occluded(px: u32, py: u32, pz: u32, radius: u32) -> u8 {
         let o = active(i);
         // `fild depth` + `fcomp zr` + `test ah, 5` + `jp`: skipped unless depth < zr.
         if !jp(xi(i32::from(rd::<i16>(o, 0x78))), x(zr), 5)
-            && call_is_point_within_occlusion_area(o, out[0].to_bits(), out[1].to_bits(), r.to_bits()) != 0
-            && call_is_point_behind_occluder(o, px, py, pz, radius) != 0
+            && call_is_point_within_occlusion_area(o, f32::from_bits(out[0].to_bits()), f32::from_bits(out[1].to_bits()), f32::from_bits(r.to_bits())) != 0
+            && call_is_point_behind_occluder(o, f32::from_bits(px), f32::from_bits(py), f32::from_bits(pz), f32::from_bits(radius)) != 0
         {
             return 1;
         }
@@ -403,9 +399,9 @@ fn near_plane_crossing(a: i32, b: i32, out: GPtr<f32>) -> u8 {
     let vb = CORNER_VECS.ptr().cast::<f32>().wrapping_index(b * 3);
     let mut tmp = [0f32; 3];
     let tp = GPtr::from_raw(tmp.as_mut_ptr());
-    let r = matrix_mul_vec(tp, g(VIEW_MATRIX), va);
+    let r = matrix_mul_vec(tp, g(VIEW_MATRIX), va.cast::<u8>());
     let za = x(r.wrapping_index(2).read()).fsub_m(k(0x3F8C_CCCD)).to_f32();
-    let r = matrix_mul_vec(tp, g(VIEW_MATRIX), vb);
+    let r = matrix_mul_vec(tp, g(VIEW_MATRIX), vb.cast::<u8>());
     let zb = X87::from_f64_exact(
         x(r.wrapping_index(2).read())
             .fsub_m(k(0x3F8C_CCCD))
@@ -429,7 +425,7 @@ fn near_plane_crossing(a: i32, b: i32, out: GPtr<f32>) -> u8 {
     ];
     let mut wh = [0f32; 2];
     let wp = GPtr::from_raw(wh.as_mut_ptr());
-    calc_screen_coors(GPtr::from_raw(p.as_mut_ptr()), out, wp, wp.wrapping_index(1))
+    u8::from(calc_screen_coors(GPtr::<f32>::cast::<[f32;3]>(GPtr::from_raw(p.as_mut_ptr())), out.cast::<[f32;3]>(), wp, wp.wrapping_index(1)))
 }
 
 /// min (`test ah, 5` + `jp` / `jnp` pair) or max (`test ah, 0x41` + `jne` / `je` pair) of a bound and

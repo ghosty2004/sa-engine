@@ -140,13 +140,11 @@ pub fn add_trace_wrapper(start: GPtr<f32>, end: GPtr<f32>, _weapon: u32, from: G
 }
 
 pub use sa_world::bindings::rw_im3d_end;
+pub use sa_world::bindings::rw_im3d_render_indexed_primitive;
+pub use sa_world::bindings::rw_im3d_transform;
 orig! {
     /// `RwRenderStateSet` (`RwEngineInstance` slot 0x20)
     pub fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `RwIm3DTransform(RxObjSpace3DVertex*, uint32 count, RwMatrix* ltm, uint32 flags)` (0x7EF450)
-    pub fn rw_im3d_transform(verts: GPtr<u8>, count: u32, ltm: GPtr<u8>, flags: u32) -> GPtr<u8> = cdecl 0x7EF450 => unported;
-    /// `RwIm3DRenderIndexedPrimitive(RwPrimitiveType, RwImVertexIndex*, int32)` (0x7EF550)
-    pub fn rw_im3d_render_indexed_primitive(ty: u32, indices: GPtr<u16>, count: i32) -> i32 = cdecl 0x7EF550 => unported;
     /// `CVector::CrossProduct(CVector* out, const CVector*, const CVector*)` (0x59C730)
     pub fn cross_product(out: GPtr<f32>, a: GPtr<f32>, b: GPtr<f32>) -> GPtr<f32> = cdecl 0x59C730 => unported;
 }
@@ -294,7 +292,7 @@ pub fn render() {
         )
         .is_null()
         {
-            rw_im3d_render_indexed_primitive(3, GPtr::from_raw(idx.as_mut_ptr()), 0xC);
+            rw_im3d_render_indexed_primitive(3, GPtr::<u16>::cast::<u8>(GPtr::from_raw(idx.as_mut_ptr())), 0xC);
             rw_im3d_end();
         }
     }

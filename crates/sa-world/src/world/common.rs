@@ -100,6 +100,8 @@ pub fn cam_pos() -> GPtr<f32> {
     if e.is_null() { CAM_VECTOR.ptr().cast() } else { e.byte_add(0x30).cast() }
 }
 
+pub use sa_core::bindings::load_data_from_work_buffer;
+pub use sa_core::bindings::save_data_to_work_buffer;
 orig! {
     /// `FindPlayerCoors(CVector* out, int32 playerId)` (0x56E010); returns `out`
     pub fn find_player_coors(out: GPtr<f32>, id: i32) -> GPtr<f32> = cdecl 0x56E010 => crate::world::cworld::find_player_coors_port;
@@ -107,8 +109,4 @@ orig! {
     pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => crate::world::cworld::find_player_ped_port;
     /// `FindPlayerVehicle(int32 playerId, bool bIncludeRemote)` (0x56E0D0)
     pub fn find_player_vehicle(id: i32, remote: u8) -> GPtr<u8> = cdecl 0x56E0D0 => crate::world::cworld::find_player_vehicle_port;
-    /// `CGenericGameStorage::SaveDataToWorkBuffer(void* data, int32 size)` (0x5D1270)
-    pub fn save_data_to_work_buffer(data: GPtr<u8>, size: i32) = cdecl 0x5D1270 => unported;
-    /// `CGenericGameStorage::LoadDataFromWorkBuffer(void* data, int32 size)` (0x5D1300)
-    pub fn load_data_from_work_buffer(data: GPtr<u8>, size: i32) = cdecl 0x5D1300 => unported;
 }

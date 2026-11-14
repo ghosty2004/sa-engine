@@ -4,6 +4,7 @@
 //! `CTaskComplexUseEffect::CreateNextSubTask` (0x632420). Ported from the
 //! 1.0 US bytes; unverified (docs/verify/HOWTO.md).
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -12,12 +13,13 @@ use crate::common::*;
 use crate::bindings::attractor_manager_deregister_ped as deregister_ped;
 use crate::bindings::eh_handle_events;
 use crate::bindings::scripted_2d_effects_get_index;
-use crate::bindings::wanted_can_cop_join_pursuit;
+use sa_world::bindings::wanted_can_cop_join_pursuit;
 use sa_core::bindings::entity_clean_up_old_reference;
 use sa_core::bindings::entity_register_reference;
 use sa_stream::bindings::find_player_wanted;
 use sa_world::bindings::get_ped_attractor_manager;
 use sa_world::bindings::task_simple_ctor;
+use crate::bindings::task_complex_dtor;
 orig! {
     /// `CPedAttractorManager::RegisterPedWithAttractor(CPed*, C2dEffectPedAttractor*, CEntity*, int32)` (0x5EFCA0)
     fn register_ped_with_attractor(m: GPtr<u8>, ped: GPtr<u8>, fx: GPtr<u8>, entity: GPtr<u8>, move_state: u32) -> GPtr<u8> = thiscall 0x5EFCA0 => unported;
@@ -30,8 +32,6 @@ orig! {
     /// `CPedAttractorManager::IsPedRegisteredWithEffect`-style lookup (0x5EBF50): the attractor `ped` is registered
     /// with for (fx, entity)
     fn find_attractor_for_ped(m: GPtr<u8>, ped: GPtr<u8>, fx: GPtr<u8>, entity: GPtr<u8>) -> GPtr<u8> = thiscall 0x5EBF50 => unported;
-    /// `CTaskComplex` base destructor (0x61A3D0)
-    fn task_complex_dtor(t: GPtr<u8>) = thiscall 0x61A3D0 => crate::mvpb_ai::task_complex_dtor_61a3d0;
 }
 
 /// `CPedIntelligence::ProcessEventHandler()` (0x601BB0, thiscall): `m_eventHandler.HandleEvents()` (this + 0x34, tail
@@ -50,7 +50,7 @@ pub fn event_attractor_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x85B1B8);
     let e = rd::<GPtr<u8>>(this, 0x18);
     if !e.is_null() {
-        entity_clean_up_old_reference(e, this.byte_add(0x18));
+        entity_clean_up_old_reference(e, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x18)));
     }
     wr::<u32>(this, 0, 0x85AB38);
 }
@@ -66,7 +66,7 @@ pub fn task_complex_use_effect_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u
     let slot = this.byte_add(0x18);
     let old = rd::<GPtr<u8>>(this, 0x18);
     if !old.is_null() {
-        entity_clean_up_old_reference(old, slot);
+        entity_clean_up_old_reference(old, slot.cast::<GPtr<u8>>());
     }
     wr::<GPtr<u8>>(this, 0x18, ped);
     if !ped.is_null() {
@@ -109,7 +109,7 @@ pub fn task_complex_use_effect_dtor(this: GPtr<u8>) {
     }
     let e = rd::<GPtr<u8>>(this, 0x10);
     if !e.is_null() {
-        entity_clean_up_old_reference(e, this.byte_add(0x10));
+        entity_clean_up_old_reference(e, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x10)));
     }
     task_complex_dtor(this);
 }

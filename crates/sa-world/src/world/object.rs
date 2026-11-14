@@ -78,39 +78,34 @@ pub use sa_stream::bindings::model_info_add_ref;
 pub use sa_stream::bindings::model_info_remove_ref;
 pub use sa_stream::bindings::model_info_sways_in_wind;
 pub use sa_stream::bindings::txd_store_remove_ref;
+pub use crate::bindings::garages_is_model_index_a_door;
+pub use crate::bindings::object_set_centre_of_mass;
+pub use crate::bindings::physical_dtor as physical_destructor;
+pub use crate::bindings::renderer_setup_lighting_for_entity as setup_lighting_for_entity;
+pub use crate::bindings::world_process_vertical_line;
+pub use sa_core::bindings::matrix_assign;
+pub use sa_core::bindings::world_replace_normal_lights_with_scorched;
+pub use sa_stream::bindings::include_entity_call as ipl_store_include_entity;
+pub use sa_stream::bindings::is_cbpc_pipeline_attached;
 orig! {
     /// `CColStore::RemoveRef(int32)` (0x4107D0)
     pub fn col_store_remove_ref(i: i32) = cdecl 0x4107D0 => unported;
     /// `CObject::RemoveFromControlCodeList()` (0x59F450)
     pub fn remove_from_control_code_list_call(o: GPtr<u8>) = thiscall 0x59F450 => remove_from_control_code_list;
-    /// `CPhysical::~CPhysical()` (0x542450): EAX of `CEntity::~CEntity`
-    pub fn physical_destructor(p: GPtr<u8>) -> u32 = thiscall 0x542450 => crate::physical::base::destructor;
     /// `CColStore::AddRef(int32)` (0x4107A0)
     pub fn col_store_add_ref(i: i32) = cdecl 0x4107A0 => unported;
-    /// `CGarages::IsModelIndexADoor(int32)` (0x448AF0)
-    pub fn garages_is_model_index_a_door(m: i32) -> u8 = cdecl 0x448AF0 => unported;
-    /// `CCustomBuildingRenderer::IsCBPCPipelineAttached(RpAtomic*)` (0x5D7F40)
-    pub fn is_cbpc_pipeline_attached(a: GPtr<u8>) -> u32 = cdecl 0x5D7F40 => unported;
-    /// `CMatrix::operator=(const CMatrix&)` (0x59BBC0)
-    pub fn matrix_assign(m: GPtr<u8>, o: GPtr<u8>) = thiscall 0x59BBC0 => unported;
     /// `CObject::CObject(CDummyObject*)` (0x5A1DF0)
     pub fn object_ctor_dummy(o: GPtr<u8>, d: GPtr<u8>) -> GPtr<u8> = thiscall 0x5A1DF0 => unported;
     /// `WaterCreatureManager_c::TryToFreeUpWaterCreatures(int32)` (0x6E40E0)
     pub fn water_creatures_try_to_free_up(m: GPtr<u8>, n: i32) = thiscall 0x6E40E0 => unported;
     /// `CRopes::FindPickupHeight(CEntity*)` (0x556760, ST0)
     pub fn ropes_find_pickup_height(e: GPtr<u8>) -> f64 = cdecl 0x556760 => unported;
-    /// `CIplStore::IncludeEntity(int32, CEntity*)` (0x404C90)
-    pub fn ipl_store_include_entity(i: i32, e: GPtr<u8>) = cdecl 0x404C90 => unported;
     /// scalar deleting destructor (vtable slot 0)
     pub fn entity_vdelete(e: GPtr<u8>, flag: i32) = thiscall vslot 0x0 => unported;
     /// `CEntity::SetIsStatic(bool)` (vtable slot 0x10)
     pub fn entity_vset_is_static(e: GPtr<u8>, v: u8) = thiscall vslot 0x10 => unported;
-    /// `CWorld::ProcessVerticalLine(const CVector&, float, CColPoint&, CEntity*&, bool x7)` (0x5674E0)
-    pub fn world_process_vertical_line(p: GPtr<u8>, z: f32, cp: GPtr<u8>, e: GPtr<u8>, a: u32, b: u32, c: u32, d: u32, f: u32, h: u32, i: u32) -> u8 = cdecl 0x5674E0 => unported;
     /// `CObject::Init()` (0x59F840)
     pub fn object_init(o: GPtr<u8>) = thiscall 0x59F840 => unported;
-    /// `0x5A2CB0` (unnamed, thiscall, `ret 0xC`): `SetObjectData`'s centre-of-mass setter `(0, 0, z)`
-    pub fn object_set_centre_of_mass(o: GPtr<u8>, cx: u32, cy: u32, cz: f32) = thiscall 0x5A2CB0 => unported;
     /// `CObject::Explode()` (0x5A1340)
     pub fn object_explode(o: GPtr<u8>) = thiscall 0x5A1340 => unported;
     /// `CObject::~CObject` (0x59F660)
@@ -125,10 +120,6 @@ orig! {
     pub fn entity_create_rw_object(e: GPtr<u8>) = thiscall 0x533D30 => unported;
     /// `CObjectPool::New` (0x5A1C20, thiscall on the pool)
     pub fn object_pool_new(pool: GPtr<u8>) -> GPtr<u8> = thiscall 0x5A1C20 => unported;
-    /// `Light::WorldReplaceNormalLightsWithScorched(RpWorld*, float)` (0x7357E0)
-    pub fn world_replace_normal_lights_with_scorched(w: GPtr<u8>, l: f32) = cdecl 0x7357E0 => unported;
-    /// `CRenderer::SetupLightingForEntity(CEntity*)` (0x553E40)
-    pub fn setup_lighting_for_entity(e: GPtr<u8>) -> u8 = cdecl 0x553E40 => unported;
 }
 
 /// `CObject::operator new(uint32)` (0x5A1EE0): `ms_pObjectPool->New()` (tail jump, size ignored).
@@ -178,7 +169,7 @@ pub fn setup_lighting(this: GPtr<u8>) -> u8 {
     }
     if rd::<u32>(this, 0x1C) & 0x1000_0000 != 0 {
         activate_directional();
-        return setup_lighting_for_entity(this);
+        return setup_lighting_for_entity(this) as u8;
     }
     0
 }
@@ -188,7 +179,7 @@ pub fn setup_lighting(this: GPtr<u8>) -> u8 {
 #[hook(addr = 0x553F40, conv = thiscall, name = "CCutsceneObject::SetupLighting", expect = "56 8B F1 E8 38 1D 1E 00", this = "CCutsceneObject")]
 pub fn cutscene_setup_lighting(this: GPtr<u8>) -> u8 {
     activate_directional();
-    setup_lighting_for_entity(this)
+    setup_lighting_for_entity(this) as u8
 }
 
 /// `CObject::RefModelInfo(int32)` (0x59F330, `ret 4`): stores the index (int16) and adds a reference
@@ -400,7 +391,7 @@ pub fn dummy_object_scalar_dtor(this: GPtr<u8>, flags: u32) -> GPtr<u8> {
 
 /// The `CRopes::ms_aRopes` slot of `FindRope(this)` (no -1 test, original).
 fn rope_of(this: GPtr<u8>) -> GPtr<u8> {
-    let i = find_rope(this.addr() as u32);
+    let i = find_rope(GPtr::from_addr((this.addr() as u32) as usize));
     g::<u8>(ROPES.wrapping_add(i.wrapping_mul(0x328) as u32 as usize))
 }
 
@@ -626,7 +617,7 @@ pub fn get_lighting_from_collision_below(this: GPtr<u8>) {
     let mut ent = [0u32; 1];
     let cpp = GPtr::from_raw(cp.as_mut_ptr()).cast::<u8>();
     let entp = GPtr::from_raw(ent.as_mut_ptr()).cast::<u8>();
-    if world_process_vertical_line(super::entity::pos_ptr(this), FM1000, cpp, entp, 1, 0, 0, 0, 1, 0, 0) != 0 {
+    if world_process_vertical_line(super::entity::pos_ptr(this), FM1000, cpp, entp, 1, 0, 0, 0, 1, 0, GPtr::NULL) != 0 {
         wr::<u8>(this, 0x149, rd::<u8>(cpp, 0x25));
     }
 }
@@ -691,7 +682,7 @@ pub fn set_object_data(model: i32, obj: GPtr<u8>) {
             wr::<u32>(obj, 0x40, rd::<u32>(obj, 0x40) | 0x40);
             let col = rd::<GPtr<u8>>(g::<GPtr<u8>>(MODEL_INFO_PTRS).wrapping_index(model).read(), 0x14);
             let z = x(rd(col, 8)).fmul_m(F0_8).to_f32();
-            object_set_centre_of_mass(obj, 0, 0, z);
+            object_set_centre_of_mass(obj, f32::from_bits(0), f32::from_bits(0), z);
         }
         9 => {
             wr::<u32>(obj, 0x40, (rd::<u32>(obj, 0x40) & !2) | 0x80);
@@ -837,11 +828,11 @@ pub fn grab_object_to_carry_with_rope(this: GPtr<u8>, obj: GPtr<u8>) {
     let h = X87::from_f64_exact(ropes_find_pickup_height(obj)).to_f32();
     let mut v = [0u32, 0, h.to_bits()];
     let mut r = [0u32; 3];
-    let res = super::entity::matrix_mul_vec(
-        GPtr::from_raw(r.as_mut_ptr()).cast(),
+    let res = GPtr::<f32>::cast::<u8>(super::entity::matrix_mul_vec(
+        GPtr::<u8>::cast::<f32>(GPtr::from_raw(r.as_mut_ptr()).cast()),
         rd(rd::<GPtr<u8>>(rope, 0x318), 0x14),
         GPtr::from_raw(v.as_mut_ptr()).cast(),
-    );
+    ));
     let z = x(rd(res, 8));
     let y = x(rd(res, 4));
     let xx = x(rd(res, 0));
@@ -890,7 +881,7 @@ pub fn setup_car_pipe_atomics_for_clump(model: u32, clump: GPtr<u8>) {
     let key = rd::<u32>(g::<GPtr<u8>>(MODEL_INFO_PTRS).wrapping_index(model as i32).read(), 4);
     for i in 0..6usize {
         if g::<u32>(0xBC4040 + i * 4).read() == key {
-            super::entity::rp_clump_for_all_atomics(clump, 0x5B1A90, 0);
+            super::entity::rp_clump_for_all_atomics(clump, 0x5B1A90, GPtr::NULL);
             return;
         }
     }

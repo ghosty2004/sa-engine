@@ -3,21 +3,21 @@
 //! Ported from the 1.0 US bytes. Unverified (docs/verify/HOWTO.md).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
 use crate::common::*;
 
-use crate::bindings::ped_type_police_dont_care as police_dont_care;
+use sa_world::bindings::ped_type_police_dont_care as police_dont_care;
 use crate::bindings::vehicle_is_passenger;
 use sa_core::bindings::entity_clean_up_old_reference;
 use sa_core::bindings::find_player_ped;
 use sa_core::bindings::ped_is_alive;
 use sa_stream::bindings::find_player_wanted;
 use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::wanted_register_crime;
 orig! {
-    /// `CWanted::RegisterCrime(eCrimeType, const CVector&, uint32 ped, bool)` (0x562410, `ret 0x10`)
-    fn wanted_register_crime(w: GPtr<u8>, crime: u32, pos: GPtr<u8>, ped: u32, flag: u32) = thiscall 0x562410 => unported;
     /// `CEvent::IsCriminalEvent()` (vtable slot 0x1C)
     fn is_criminal_event_v(e: GPtr<u8>) -> u8 = thiscall vslot 0x1C => unported;
 }
@@ -30,11 +30,11 @@ pub fn event_vehicle_damage_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x85B588);
     let v = rd::<GPtr<u8>>(this, 0x14);
     if !v.is_null() {
-        entity_clean_up_old_reference(v, this.byte_add(0x14));
+        entity_clean_up_old_reference(v, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x14)));
     }
     let a = rd::<GPtr<u8>>(this, 0x18);
     if !a.is_null() {
-        entity_clean_up_old_reference(a, this.byte_add(0x18));
+        entity_clean_up_old_reference(a, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x18)));
     }
     wr::<u32>(this, 0, 0x85AB38);
 }
@@ -95,7 +95,7 @@ pub fn event_vehicle_damage_report_criminal_event(this: GPtr<u8>, ped: GPtr<u8>)
     let m = rd::<GPtr<u8>>(a, 0x14);
     let pos = if m.is_null() { a.byte_add(4) } else { m.byte_add(0x30) };
     let slot = (ped.addr() as u32 & 0xFFFF_FF00) | flag as u32;
-    wanted_register_crime(find_player_wanted(-1), 8, pos, ped.addr() as u32, slot);
+    wanted_register_crime(find_player_wanted(-1), 8, pos, GPtr::from_addr((ped.addr() as u32) as usize), slot);
 }
 
 /// Every `#[hook]` of this module.

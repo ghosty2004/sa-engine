@@ -24,8 +24,8 @@ sa_core::globals! {
 pub use crate::bindings::automobile_destructor;
 pub use crate::bindings::automobile_process_control;
 pub use crate::bindings::bouncing_panel_set_panel;
-pub use crate::bindings::dm_set_door_status as set_door_status;
-pub use crate::bindings::dm_set_wheel_status as set_wheel_status;
+pub use sa_world::bindings::dm_set_door_status as set_door_status;
+pub use sa_pop::bindings::dm_set_wheel_status as set_wheel_status;
 pub use crate::bindings::vehicle_delete;
 pub use crate::bindings::vehicle_render;
 pub use sa_core::bindings::crt_free as free;
@@ -39,19 +39,23 @@ pub use sa_core::bindings::matrix_set_translate;
 pub use sa_core::bindings::matrix_update_rw;
 pub use sa_core::bindings::world_remove;
 pub use sa_stream::bindings::find_player_wanted;
-pub use sa_stream::bindings::frame_for_all_objects as rw_frame_for_all_objects;
+pub use sa_core::bindings::frame_for_all_objects as rw_frame_for_all_objects;
 pub use sa_stream::bindings::get_first_object;
 pub use sa_stream::bindings::get_wheel_posn;
 pub use sa_stream::bindings::num_of_helis_required;
 pub use sa_stream::bindings::vmi_set_vehicle_colour as set_vehicle_colour;
 pub use sa_world::bindings::audio_terminate;
-pub use sa_world::bindings::automobile_ctor;
+pub use sa_core::bindings::automobile_ctor;
 pub use sa_world::bindings::entity_render;
 pub use sa_world::bindings::fx_add_particle;
 pub use sa_world::bindings::fx_kill;
 pub use sa_world::bindings::heli_search_light_cone as search_light_cone;
-pub use sa_world::bindings::matrix_ctor_rw;
+pub use sa_core::bindings::matrix_ctor_rw;
 pub use sa_world::bindings::player_no_rain;
+pub use crate::bindings::get_plane_num_guns;
+pub use sa_stream::bindings::set_component_atomic_alpha;
+pub use sa_world::bindings::fx_get_composite_matrix;
+pub use sa_world::bindings::fx_prt_mult_ctor;
 orig! {
     /// `CHeli::GenerateHeli(CPed*, bool)` (0x6C6520)
     pub fn generate_heli(ped: GPtr<u8>, police: u32) -> GPtr<u8> = cdecl 0x6C6520 => unported;
@@ -59,16 +63,8 @@ orig! {
     pub fn entity_vdelete(e: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
     /// `CAutomobile::OpenDoor(CPed*, int32, eDoors, float, bool)` (0x6A6AE0)
     pub fn automobile_open_door(v: GPtr<u8>, ped: GPtr<u8>, comp: i32, door: i32, ratio: f32, sound: u32) = thiscall 0x6A6AE0 => unported;
-    /// `CVehicle::GetPlaneNumGuns()` (0x6D3F30)
-    pub fn get_plane_num_guns(v: GPtr<u8>) -> i32 = thiscall 0x6D3F30 => unported;
-    /// `CVehicle::SetComponentAtomicAlpha(RpAtomic*, int32)` (0x6D2960)
-    pub fn set_component_atomic_alpha(a: GPtr<u8>, alpha: u32) = cdecl 0x6D2960 => crate::vehicle::set_component_atomic_alpha;
     /// `CVehicle::ProcessWeapons()` (0x6E3950)
     pub fn process_weapons(v: GPtr<u8>) = thiscall 0x6E3950 => unported;
-    /// `FxSystem_c::GetCompositeMatrix(RwMatrix*)` (0x4AA8C0)
-    pub fn fx_get_composite_matrix(fx: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall 0x4AA8C0 => unported;
-    /// `FxPrtMult_c::FxPrtMult_c(float r, g, b, a, size, unk, life)` (0x4AB290)
-    pub fn fx_prt_mult_ctor(p: GPtr<u8>, r: u32, g: u32, b: u32, a: u32, size: u32, unk: u32, life: u32) -> GPtr<u8> = thiscall 0x4AB290 => unported;
 }
 
 /// `GetCurrentAtomicObjectCB` (0x6A0750), passed to `RwFrameForAllObjects` by address.
@@ -90,7 +86,7 @@ fn kill_gun_fx(v: Ptr, off: isize) {
         return;
     }
     let mut i = 0i32;
-    if get_plane_num_guns(v) > 0 {
+    if get_plane_num_guns(v) as i32 > 0 {
         loop {
             let fx = rd::<GPtr<u8>>(rd::<GPtr<u8>>(v, off), 4 * i as isize);
             if !fx.is_null() {
@@ -99,7 +95,7 @@ fn kill_gun_fx(v: Ptr, off: isize) {
                 fx_destroy(GPtr::from_addr(FX_MAN), fx);
             }
             i += 1;
-            if i >= get_plane_num_guns(v) {
+            if i >= get_plane_num_guns(v) as i32 {
                 break;
             }
         }
@@ -230,7 +226,7 @@ pub fn plane_open_door(p: Ptr, ped: GPtr<u8>, comp: i32, door: i32, ratio: f32, 
         .fsub_m(rd::<f32>(p, d + 0x10))
         .fadd_m(rd::<f32>(mp, 0x34))
         .to_f32();
-    matrix_set_translate(mp, rd::<u32>(mp, 0x30), y.to_bits(), rd::<u32>(mp, 0x38));
+    matrix_set_translate(mp, f32::from_bits(rd::<u32>(mp, 0x30)), f32::from_bits(y.to_bits()), f32::from_bits(rd::<u32>(mp, 0x38)));
     matrix_update_rw(mp);
     matrix_dtor(mp);
 }
@@ -419,7 +415,7 @@ pub fn plane_process_control(p: Ptr) {
     if rd::<u8>(p, 0x36) & 0xF8 == 0 && matches!(rd::<u16>(p, 0x22), 0x200 | 0x201) {
         let drv = rd::<GPtr<u8>>(p, 0x460);
         let n = i32::from(!drv.is_null() && rd::<u32>(drv, 0x598) == 1);
-        let pad = get_pad(n);
+        let pad = get_pad(n as u32);
         if rd::<u16>(pad, 0x26) != 0 && rd::<u16>(pad, 0x56) == 0 {
             wr::<u8>(p, 0xA00, u8::from(rd::<u8>(p, 0xA00) == 0));
         }
@@ -469,17 +465,17 @@ pub fn plane_process_control(p: Ptr) {
     let vp = GPtr::from_raw(&raw mut vel).cast::<u8>();
     let mut mult = [0u32; 8];
     let mlt = GPtr::from_raw(&raw mut mult).cast::<u8>();
-    fx_prt_mult_ctor(mlt, 0, 0, 0, 0x3E4C_CCCD, 0x3F80_0000, 0x3F80_0000, 0x3DCC_CCCD);
+    fx_prt_mult_ctor(mlt, f32::from_bits(0), f32::from_bits(0), f32::from_bits(0), f32::from_bits(0x3E4C_CCCD), f32::from_bits(0x3F80_0000), f32::from_bits(0x3F80_0000), f32::from_bits(0x3DCC_CCCD));
     for time in [0, 0x3D4C_CCCD] {
         fx_add_particle(
             g::<GPtr<u8>>(0xA9AE20).read(),
             mp.byte_add(0x30),
             vp,
-            time,
+            f32::from_bits(time),
             mlt,
-            0xBF80_0000,
-            0x3F99_999A,
-            0x3F19_999A,
+            f32::from_bits(0xBF80_0000),
+            f32::from_bits(0x3F99_999A),
+            f32::from_bits(0x3F19_999A),
             0,
         );
     }
@@ -583,7 +579,7 @@ pub fn update_helis() {
             m.byte_add(0x30)
         };
         let mut pc = [0f32; 3];
-        let pp = find_player_coors(GPtr::from_raw(&raw mut pc).cast(), -1);
+        let pp = GPtr::<f32>::cast::<u8>(find_player_coors(GPtr::<u8>::cast::<f32>(GPtr::from_raw(&raw mut pc).cast()), -1));
         let dx = x(rd::<f32>(pp, 0)).fsub_m(rd::<f32>(hp, 0));
         let dy = x(rd::<f32>(pp, 4)).fsub_m(rd::<f32>(hp, 4));
         let dz = x(rd::<f32>(pp, 8)).fsub_m(rd::<f32>(hp, 8));

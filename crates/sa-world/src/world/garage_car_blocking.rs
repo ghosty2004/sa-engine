@@ -4,7 +4,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use super::common::{g, rd, x};
 
@@ -12,10 +12,7 @@ use crate::bindings::entity_get_col_model;
 use crate::bindings::garage_is_point_inside_r;
 use crate::bindings::placeable_get_matrix;
 use sa_core::bindings::matrix_mul_vec;
-orig! {
-    /// `CGarage::IsEntityTouching3D(CEntity*)` (0x448EE0, `ret 4`)
-    fn garage_is_entity_touching_3d(g: GPtr<u8>, e: GPtr<u8>) -> u8 = thiscall 0x448EE0 => garage_is_entity_touching_3d_port;
-}
+use crate::bindings::garage_is_entity_touching_3d;
 
 /// `CPools::ms_pVehiclePool` (0xB74494): slots +0, flags +4, size +8; 0xA18-byte vehicles.
 const VEHICLE_POOL: usize = 0xB7_4494;
@@ -48,9 +45,9 @@ pub fn garage_is_any_car_blocking_door(this: GPtr<u8>) -> u8 {
         while j < i32::from(rd::<i16>(col, 0)) {
             let sphere = rd::<GPtr<u8>>(col, 8).byte_add(j as isize * 0x14);
             let mut out = [0u32; 3];
-            let r = matrix_mul_vec(GPtr::from_raw(out.as_mut_ptr()).cast(), rd::<GPtr<u8>>(v, 0x14), sphere);
+            let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::from_raw(out.as_mut_ptr()).cast()), rd::<GPtr<u8>>(v, 0x14), sphere));
             let radius = rd::<u32>(rd::<GPtr<u8>>(col, 8), j as isize * 0x14 + 0xC);
-            if garage_is_point_inside_r(this, rd::<u32>(r, 0), rd::<u32>(r, 4), rd::<u32>(r, 8), radius) != 0 {
+            if garage_is_point_inside_r(this, f32::from_bits(rd::<u32>(r, 0)), f32::from_bits(rd::<u32>(r, 4)), f32::from_bits(rd::<u32>(r, 8)), f32::from_bits(radius)) != 0 {
                 return 1;
             }
             j += 1;
@@ -89,9 +86,9 @@ pub fn garage_is_entity_touching_3d_port(this: GPtr<u8>, e: GPtr<u8>) -> u8 {
         let sphere = rd::<GPtr<u8>>(col, 8).byte_add(j as isize * 0x14);
         let m = placeable_get_matrix(e);
         let mut out = [0u32; 3];
-        let c = matrix_mul_vec(GPtr::from_raw(out.as_mut_ptr()).cast(), m, sphere);
+        let c = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::from_raw(out.as_mut_ptr()).cast()), m, sphere));
         let radius = rd::<u32>(rd::<GPtr<u8>>(col, 8), j as isize * 0x14 + 0xC);
-        if garage_is_point_inside_r(this, rd::<u32>(c, 0), rd::<u32>(c, 4), rd::<u32>(c, 8), radius) != 0 {
+        if garage_is_point_inside_r(this, f32::from_bits(rd::<u32>(c, 0)), f32::from_bits(rd::<u32>(c, 4)), f32::from_bits(rd::<u32>(c, 8)), f32::from_bits(radius)) != 0 {
             return 1;
         }
         j += 1;

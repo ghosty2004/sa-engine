@@ -6,7 +6,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 
 use crate::common::{g, rd};
@@ -15,10 +15,7 @@ use crate::bindings::alpha_list_insert_sorted;
 use crate::bindings::atomic_default_render;
 use crate::bindings::dot_with_camera;
 use sa_core::bindings::frame_get_ltm;
-orig! {
-    /// `CVisibilityPlugins::RenderAlphaAtomic(RpAtomic*, int32 alpha)` (0x732480)
-    fn render_alpha_atomic(a: GPtr<u8>, alpha: u32) -> GPtr<u8> = cdecl 0x732480 => unported;
-}
+use crate::bindings::render_atomic_with_alpha as render_alpha_atomic;
 
 /// `CVisibilityPlugins` globals: angle to camera 0xC88020, distance from camera 0xC88024, the big-vehicle near
 /// distance 0xC88028, `ms_bigVehicleLod0Dist` 0xC88038, the boat LOD distance 0xC88040, `ms_vehicleLod1Dist`
@@ -137,7 +134,7 @@ pub fn render_vehicle_lo_detail_cb_boat(atomic: GPtr<u8>) -> GPtr<u8> {
     if alpha == 0xFF {
         atomic_default_render(atomic);
     } else {
-        render_alpha_atomic(atomic, alpha);
+        render_alpha_atomic(atomic, alpha as i32);
     }
     atomic
 }

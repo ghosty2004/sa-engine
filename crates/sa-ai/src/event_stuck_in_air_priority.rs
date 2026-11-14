@@ -3,14 +3,11 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
-orig! {
-    /// `CEventHandler::GetCurrentEventType()` (0x4B8CC0, thiscall)
-    fn get_current_event_type(h: GPtr<u8>) -> i32 = thiscall 0x4B8CC0 => crate::mvpa_ai2::event_handler_get_current_event_type;
-}
+use crate::bindings::event_handler_current_type as get_current_event_type;
 
 /// `CEventStuckInAir::GetEventPriority()` (0x4B1600, thiscall): 75 when the ped (+0xC) is set, its event handler
 /// (intelligence +0x47C, +0x34) is not responding to event type 0x5D and the intelligence's +0x70 is above 1 (signed);

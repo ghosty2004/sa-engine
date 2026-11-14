@@ -10,25 +10,19 @@ use crate::common::{g, p8, rd, rw_free, rw_malloc, rw_memory_alloc, rw_memory_fr
 use crate::bindings::read_int32;
 use crate::bindings::read_real;
 use crate::bindings::skin_deinitialize;
+use crate::bindings::atomic_set_pipeline;
+use crate::bindings::bones_used_call;
+use crate::bindings::engine_get_plugin_offset;
+use crate::bindings::skin_initialize;
+use sa_core::bindings::rw_stream_skip as stream_skip;
+use sa_core::bindings::stream_read;
 orig! {
-    /// `RwStreamRead(stream, buf, len)` (0x7EC9D0)
-    fn stream_read(s: GPtr<u8>, buf: GPtr<u8>, len: u32) -> u32 = cdecl 0x7EC9D0 => crate::stream::rw_stream_read;
-    /// `RwStreamSkip(stream, offset)` (0x7ECD00)
-    fn stream_skip(s: GPtr<u8>, offset: u32) -> GPtr<u8> = cdecl 0x7ECD00 => crate::stream::rw_stream_skip;
     /// `_rpSkinGeometryNativeRead(stream, geometry)` (0x7C88B0)
     fn geometry_native_read(s: GPtr<u8>, geom: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C88B0 => unported;
-    /// `_rpSkinInitialize(geometry)` (0x7C8740)
-    fn skin_initialize(geom: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C8740 => crate::skin::rp_skin_initialize;
-    /// `_rpSkinGetBonesUsed(skin, indices, weights, list, count, numVertices)` (0x7C70C0)
-    fn bones_used_call(skin: GPtr<u8>, idx: GPtr<u8>, w: GPtr<u8>, list: GPtr<u8>, count: GPtr<u32>, nv: u32) = cdecl 0x7C70C0 => rp_skin_get_bones_used;
     /// `_rpSkinCreateData(skin, numBones, numUsed, numVertices, list, weights, indices, matrices)` (0x7C7190)
     fn create_data_call(skin: GPtr<u8>, nb: u32, nu: u32, nv: u32, list: GPtr<u8>, w: GPtr<u8>, idx: GPtr<u8>, m: GPtr<u8>) -> u32 = cdecl 0x7C7190 => rp_skin_create_data;
     /// `_rpSkinSplitDataStreamRead(stream, skin)` (0x7C8BE0)
     fn split_read_call(s: GPtr<u8>, skin: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C8BE0 => rp_skin_split_data_stream_read;
-    /// `RwEngineGetPluginOffset(id)` (0x7F2BE0)
-    fn engine_get_plugin_offset(id: u32) -> i32 = cdecl 0x7F2BE0 => crate::plugin::engine_get_plugin_offset;
-    /// `_rpSkinAtomicSetPipeline(atomic, type)` (0x7C89B0)
-    fn atomic_set_pipeline(a: GPtr<u8>, ty: u32) -> GPtr<u8> = cdecl 0x7C89B0 => crate::skin::rp_skin_atomic_set_pipeline;
 }
 
 /// Geometry plugin offset (the `RpSkin*`) and the skin freelist.

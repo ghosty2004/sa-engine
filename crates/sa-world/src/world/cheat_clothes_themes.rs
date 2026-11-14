@@ -5,7 +5,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use super::common::{g, rd};
 
@@ -16,12 +16,8 @@ use sa_core::bindings::clothes_rebuild_player as rebuild_player;
 use sa_core::bindings::find_player_ped;
 use sa_stream::bindings::reclassify_loaded_cars;
 use sa_stream::bindings::stream_peds_into_random_slots;
-orig! {
-    /// `CCheat::BeachPartyCheat()` (0x439230)
-    fn beach_party_cheat_call() = cdecl 0x439230 => beach_party_cheat;
-    /// `CCheat::FunhouseCheat()` (0x439720)
-    fn funhouse_cheat_call() = cdecl 0x439720 => funhouse_cheat;
-}
+use crate::bindings::beach_party_cheat as beach_party_cheat_call;
+use crate::bindings::funhouse_cheat as funhouse_cheat_call;
 
 /// `CCheat::m_aCheatsActive[...]`: beach party (0x969159), funhouse (0x969176), countryside
 /// invasion (0x96917B), and the two flags the countryside cheat clears (0x96915E, 0x96915F).
@@ -70,10 +66,10 @@ pub fn beach_party_cheat() {
         return;
     }
     stream_peds([0x12, 0x2D, 0x8A, 0x8B, 0x8C, -2, -2, -2]);
-    set_texture_and_model(clothes(), 0x85_90CC, 0, 0);
-    set_texture_and_model(clothes(), 0x85_90B8, 0x85_90C4, 2);
-    set_texture_and_model(clothes(), 0x85_90AC, 0x85_90AC, 3);
-    set_texture_and_model(clothes(), 0x85_9090, 0x85_90A0, 0xF);
+    set_texture_and_model(clothes(), GPtr::from_addr(0x85_90CC), GPtr::NULL, 0);
+    set_texture_and_model(clothes(), GPtr::from_addr(0x85_90B8), GPtr::from_addr(0x85_90C4), 2);
+    set_texture_and_model(clothes(), GPtr::from_addr(0x85_90AC), GPtr::from_addr(0x85_90AC), 3);
+    set_texture_and_model(clothes(), GPtr::from_addr(0x85_9090), GPtr::from_addr(0x85_90A0), 0xF);
     rebuild_unless_driving();
     force_weather_now(0);
     handle_special_cheats(0x29);
@@ -95,11 +91,11 @@ pub fn funhouse_cheat() {
         return;
     }
     stream_peds([0xA7, 0xCD, 0x108, -2, -2, -2, -2, -2]);
-    set_texture_and_model(clothes(), 0x85_90CC, 0x85_90CC, 0);
-    set_texture_and_model(clothes(), 0x85_9118, 0x85_9124, 2);
-    set_texture_and_model(clothes(), 0x85_9104, 0x85_9110, 3);
-    set_texture_and_model(clothes(), 0x85_90F0, 0x85_90F8, 0xF);
-    set_texture_and_model(clothes(), 0x85_90DC, 0x85_90E8, 1);
+    set_texture_and_model(clothes(), GPtr::from_addr(0x85_90CC), GPtr::from_addr(0x85_90CC), 0);
+    set_texture_and_model(clothes(), GPtr::from_addr(0x85_9118), GPtr::from_addr(0x85_9124), 2);
+    set_texture_and_model(clothes(), GPtr::from_addr(0x85_9104), GPtr::from_addr(0x85_9110), 3);
+    set_texture_and_model(clothes(), GPtr::from_addr(0x85_90F0), GPtr::from_addr(0x85_90F8), 0xF);
+    set_texture_and_model(clothes(), GPtr::from_addr(0x85_90DC), GPtr::from_addr(0x85_90E8), 1);
     rebuild_unless_driving();
     handle_special_cheats(0x46);
     reclassify_loaded_cars();
@@ -121,9 +117,9 @@ pub fn countryside_invasion_cheat() {
         return;
     }
     stream_peds([0xC4, 0xC5, 0xC6, 0x9D, 0x9E, 0x9F, 0xA0, 0xA1]);
-    set_texture_and_model(clothes(), 0x85_9144, 0x85_9110, 3);
-    set_texture_and_model(clothes(), 0x85_9138, 0x85_9138, 0x10);
-    set_texture_and_model(clothes(), 0x85_912C, 0x85_912C, 0x11);
+    set_texture_and_model(clothes(), GPtr::from_addr(0x85_9144), GPtr::from_addr(0x85_9110), 3);
+    set_texture_and_model(clothes(), GPtr::from_addr(0x85_9138), GPtr::from_addr(0x85_9138), 0x10);
+    set_texture_and_model(clothes(), GPtr::from_addr(0x85_912C), GPtr::from_addr(0x85_912C), 0x11);
     rebuild_unless_driving();
     if g::<u8>(BEACH_PARTY_ON).read() != 0 {
         beach_party_cheat_call();

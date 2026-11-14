@@ -8,7 +8,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use super::common::{rd, wr, x};
 
@@ -27,18 +27,10 @@ sa_core::globals! {
 
 pub use crate::bindings::get_entry_exit_index;
 pub use sa_stream::bindings::strnicmp;
-orig! {
-    /// `CWorld::TestSphereAgainstWorld(CVector, float, CEntity*, bool x5, bool)` (0x569E20)
-    pub fn test_sphere_against_world(px: u32, py: u32, pz: u32, r: u32, ignore: GPtr<u8>, b0: i32, b1: i32, b2: i32, b3: i32, b4: i32, b5: i32) -> GPtr<u8>
-        = cdecl 0x569E20 => unported;
-    /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, bool x7)` (0x56A490)
-    pub fn get_is_line_of_sight_clear(a: GPtr<u8>, b: GPtr<u8>, b0: i32, b1: i32, b2: i32, b3: i32, b4: i32, b5: i32, b6: i32) -> u8
-        = cdecl 0x56A490 => unported;
-    /// `CEntryExit::GetPositionRelativeToOutsideWorld(CVector&)` (0x43EA00, thiscall)
-    pub fn ee_get_position_relative_to_outside_world_call(this: GPtr<u8>, pos: GPtr<f32>) = thiscall 0x43EA00 => get_position_relative_to_outside_world;
-    /// `CEntryExitManager::SetEntryExitFlag(const char*, uint16, bool)` (0x43EF20)
-    pub fn set_entry_exit_flag_call(name: GPtr<u8>, flag: u32, set: u32) = cdecl 0x43EF20 => set_entry_exit_flag;
-}
+pub use crate::bindings::ee_get_position_relative_to_outside_world as ee_get_position_relative_to_outside_world_call;
+pub use crate::bindings::set_entry_exit_flag as set_entry_exit_flag_call;
+pub use crate::bindings::world_test_sphere_against_world as test_sphere_against_world;
+pub use sa_core::bindings::world_get_is_line_of_sight_clear as get_is_line_of_sight_clear;
 
 /// 0x858B8C: 0.5
 const F0_5: f32 = 0.5;
@@ -92,7 +84,7 @@ pub fn get_position_relative_to_outside_world(this: GPtr<u8>, pos: GPtr<f32>) {
 #[hook(addr = 0x43EA90, conv = cdecl, name = "IsTeleportPointValid", expect = "56 8B 74 24 0C")]
 pub fn is_teleport_point_valid(from: GPtr<u8>, to: GPtr<u8>) -> u8 {
     let (a, b, c) = (rd::<u32>(to, 0), rd::<u32>(to, 4), rd::<u32>(to, 8));
-    if !test_sphere_against_world(a, b, c, 0x3EB3_3333, GPtr::NULL, 0, 1, 1, 1, 1, 1).is_null() {
+    if !test_sphere_against_world(f32::from_bits(a), f32::from_bits(b), f32::from_bits(c), f32::from_bits(0x3EB3_3333), GPtr::NULL, 0, 1, 1, 1, 1, 1).is_null() {
         return 0;
     }
     (get_is_line_of_sight_clear(from, to, 1, 1, 0, 1, 1, 0, 0) != 0) as u8

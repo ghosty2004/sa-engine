@@ -9,11 +9,10 @@ use super::common::{g, rd, wr};
 
 use crate::bindings::garage_is_point_inside;
 use sa_core::bindings::world_remove;
+use crate::bindings::stored_car_store;
 orig! {
     /// `CGarage::EntityHasASphereWayOutsideGarage(CEntity*, float)` (0x449050)
     fn garage_entity_has_sphere_way_outside(g: GPtr<u8>, e: GPtr<u8>, margin: f32) -> u8 = thiscall 0x449050 => unported;
-    /// `CStoredCar::StoreCar(CVehicle*)` (0x449760)
-    fn stored_car_store(s: GPtr<u8>, v: GPtr<u8>) = thiscall 0x449760 => unported;
     /// `CPlayerInfo::CancelPlayerEnteringCars(CVehicle*)` (0x56E860)
     fn player_info_cancel_entering_cars(p: GPtr<u8>, v: GPtr<u8>) = thiscall 0x56E860 => unported;
     /// the vehicle's scalar deleting destructor (vtable +0x00)

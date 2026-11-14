@@ -15,9 +15,8 @@ use crate::common::{p8, rd, rw_free, rw_malloc, rw_memory_alloc, wr};
 use crate::bindings::read_int32;
 use sa_core::bindings::rw_error1;
 use sa_core::bindings::rw_error_set;
+use crate::bindings::interpolator_create as interpolator_create_call;
 orig! {
-    /// `RtAnimInterpolatorCreate(numNodes, keyFrameSize)` (0x7CD520)
-    fn interpolator_create_call(n: i32, kfs: i32) -> GPtr<u8> = cdecl 0x7CD520 => rt_anim_interpolator_create;
     /// A key-frame interpolate callback `cb(out, in1, in2, time, customData)`
     fn call_interpolate_cb(f: u32, out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, t: f32, custom: u32) = cdecl dyn => unported;
 }

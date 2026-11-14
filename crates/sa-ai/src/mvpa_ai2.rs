@@ -6,14 +6,15 @@
 //! function goes through `orig!` at the original address.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
 use crate::common::*;
 
-use crate::bindings::anim_blend_animation as blend_animation;
+use sa_world::bindings::anim_blend_animation as blend_animation;
 use crate::bindings::bbox_corners_uncached;
-use crate::bindings::clump_get_association;
+use sa_core::bindings::clump_get_association;
 use crate::bindings::hit_wall_ctor;
 use crate::bindings::line_up_dtor;
 use crate::bindings::line_up_ped_with_car_ctor as line_up_ctor;
@@ -31,23 +32,21 @@ use sa_world::bindings::stand_still_ctor;
 use sa_world::bindings::task_simple_ctor;
 use sa_world::bindings::task_simple_dtor;
 use sa_world::bindings::tm_find_active_task_by_type as task_manager_find_active_task_by_type;
-use sa_world::bindings::vector_magnitude_sqr as vector_magnitude;
-use sa_world::bindings::vector_sub;
+use sa_core::bindings::vector_magnitude_sqr as vector_magnitude;
+use sa_core::bindings::vector_sub;
+use crate::bindings::bbox_planes_uncached;
+use crate::bindings::go_to_point_ctor;
+use sa_core::bindings::anim_set_delete_callback as assoc_set_delete_callback;
+use sa_core::bindings::assoc_set_finish_callback;
+use sa_core::bindings::general_get_radian_angle_between_points as radian_angle_between_points;
+use sa_core::bindings::general_limit_radian_angle as limit_radian_angle;
+use sa_stream::bindings::get_animation_block_index as anim_block_index_by_name;
+use sa_world::bindings::achieve_heading_ctor;
 orig! {
-    /// `CTaskSimpleGoToPoint::CTaskSimpleGoToPoint(int32 moveState, const CVector&, float radius, bool, bool)`
-    /// (0x667CD0, `ret 0x14`)
-    fn go_to_point_ctor(t: GPtr<u8>, ms: i32, target: GPtr<u8>, radius: u32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x667CD0 => unported;
     /// `CTaskComplexFollowPointRoute::CTaskComplexFollowPointRoute(int32 moveState, const CPointRoute&, int32 mode,
     /// float targetRadius, float slowDownDistance, bool, bool, bool)` (0x671510, `ret 0x20`)
     #[allow(clippy::too_many_arguments)]
     fn follow_point_route_ctor(t: GPtr<u8>, ms: i32, route: u32, mode: u32, r: u32, s: u32, a: u32, b: u32, c: u32) -> GPtr<u8> = thiscall 0x671510 => unported;
-    /// `CTaskSimpleAchieveHeading::CTaskSimpleAchieveHeading(float heading, float changeRate, float tolerance)`
-    /// (0x667E20, `ret 0xC`)
-    fn achieve_heading_ctor(t: GPtr<u8>, h: f32, rate: u32, tol: u32) -> GPtr<u8> = thiscall 0x667E20 => unported;
-    /// `CGeneral::GetRadianAngleBetweenPoints(float x1, float y1, float x2, float y2)` (0x53CBE0, ST0)
-    fn radian_angle_between_points(x1: f32, y1: f32, x2: f32, y2: f32) -> f64 = cdecl 0x53CBE0 => unported;
-    /// `CGeneral::LimitRadianAngle(float)` (0x53CB50, ST0)
-    fn limit_radian_angle(a: f32) -> f64 = cdecl 0x53CB50 => unported;
     /// `CEvent::GetEventType` (vtable +4)
     fn v_get_event_type(e: GPtr<u8>) -> i32 = thiscall vslot 0x4 => unported;
     /// `CPedGeometryAnalyser::ComputeClearTarget(const CPed&, const CVector&, CVector&)` (0x5F5D80, cdecl)
@@ -58,15 +57,6 @@ orig! {
     fn process_head_bopping(t: GPtr<u8>, ped: GPtr<u8>, b: u32, dist: u32) = thiscall 0x6428C0 => unported;
     /// `CTaskSimpleCarDrive::ProcessArmBopping(CPed*, bool, float)` (0x642AE0, `ret 0xC`)
     fn process_arm_bopping(t: GPtr<u8>, ped: GPtr<u8>, b: u32, dist: u32) = thiscall 0x642AE0 => unported;
-    /// `CAnimBlendAssociation::SetFinishCallback(void (*)(CAnimBlendAssociation*, void*), void*)` (0x4CEBE0, `ret 8`)
-    fn assoc_set_finish_callback(a: GPtr<u8>, cb: u32, data: GPtr<u8>) = thiscall 0x4CEBE0 => unported;
-    /// `CAnimBlendAssociation::SetDeleteCallback(void (*)(CAnimBlendAssociation*, void*), void*)` (0x4CEBC0, `ret 8`)
-    fn assoc_set_delete_callback(a: GPtr<u8>, cb: u32, data: GPtr<u8>) = thiscall 0x4CEBC0 => unported;
-    /// `CPedGeometryAnalyser::ComputeEntityBoundingBoxPlanesUncached(float z, const CVector*, CVector*, float*)`
-    /// (0x5F1670, cdecl)
-    fn bbox_planes_uncached(z: u32, corners: GPtr<u8>, normals: GPtr<u8>, d: GPtr<u8>) = cdecl 0x5F1670 => crate::mvpa_ai1::compute_entity_bounding_box_planes_uncached;
-    /// `CAnimManager::GetAnimationBlockIndex(const char*)` (0x4D3990, cdecl)
-    fn anim_block_index_by_name(name: GPtr<u8>) -> u32 = cdecl 0x4D3990 => unported;
     /// CRT `operator new` (0x82119A, cdecl)
     fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
     /// `CTask::GetTaskType` (vtable +0x10)
@@ -149,7 +139,7 @@ pub fn walk_round_building_attempt_create_sub_task(this: GPtr<u8>, ty: i32, ped:
             if t.is_null() {
                 return GPtr::NULL;
             }
-            stand_still_ctor(t, 1000, 0, 0, 0x4100_0000)
+            stand_still_ctor(t, 1000, 0, 0, f32::from_bits(0x4100_0000))
         }
         411 => {
             let t = task_new_o(0x20);
@@ -177,7 +167,7 @@ pub fn walk_round_building_attempt_create_sub_task(this: GPtr<u8>, ty: i32, ped:
             if t.is_null() {
                 return GPtr::NULL;
             }
-            go_to_point_ctor(t, ms, this.byte_add(0x14), g::<u32>(0x86FC78).read(), 0, 0)
+            go_to_point_ctor(t, ms as u32, this.byte_add(0x14), g::<u32>(0x86FC78).read(), 0, 0)
         }
         902 => {
             let p = pos(ped);
@@ -344,7 +334,7 @@ pub fn car_drive_process_bopping(this: GPtr<u8>, ped: GPtr<u8>, flag: u32) {
     let mut v = [0u32; 3];
     let vp = local(&mut v);
     vector_sub(vp, pos(ped), cam);
-    let dist = st0_f32(vector_magnitude(vp)).to_bits();
+    let dist = st0_f32(vector_magnitude(vp.cast::<f32>())).to_bits();
     process_head_bopping(this, ped, flag, dist);
     process_arm_bopping(this, ped, flag, dist);
     if rd::<i32>(this, 0x20) != -1 && rd::<u8>(this, 0x5C) & 3 == 0 {
@@ -416,7 +406,7 @@ pub fn run_timed_anim_ctor2(this: GPtr<u8>, group: u32, anim: u32, delta: u32, o
 #[hook(addr = 0x61A950, conv = thiscall, name = "CTaskSimpleRunAnim::StartAnim", expect = "56 8B F1 8B 46 18",
        unverified = "mvpa-ai-2", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn run_anim_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
-    let a = blend_animation(rd::<u32>(ped, 0x18), rd::<u32>(this, 0x10), rd::<u32>(this, 0x14), rd::<u32>(this, 0x18));
+    let a = blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), rd::<u32>(this, 0x10), rd::<u32>(this, 0x14), f32::from_bits(rd::<u32>(this, 0x18)));
     wr(this, 8, a);
     assoc_set_finish_callback(a, FINISH_RUN_ANIM_CB, this);
 }
@@ -426,7 +416,7 @@ pub fn run_anim_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
 #[hook(addr = 0x61AC50, conv = thiscall, name = "CTaskSimpleRunTimedAnim::StartAnim", expect = "56 8B F1 8B 46 18",
        unverified = "mvpa-ai-2", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn run_timed_anim_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
-    let a = blend_animation(rd::<u32>(ped, 0x18), rd::<u32>(this, 0x10), rd::<u32>(this, 0x14), rd::<u32>(this, 0x18));
+    let a = blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), rd::<u32>(this, 0x10), rd::<u32>(this, 0x14), f32::from_bits(rd::<u32>(this, 0x18)));
     wr(this, 8, a);
     assoc_set_delete_callback(a, FINISH_RUN_ANIM_CB, this);
 }
@@ -437,7 +427,7 @@ fn event_dtor_with_ref(this: GPtr<u8>, vt: u32, off: isize) {
     wr::<u32>(this, 0, vt);
     let e = rd::<GPtr<u8>>(this, off);
     if !e.is_null() {
-        entity_clean_up_old_reference(e, this.byte_add(off));
+        entity_clean_up_old_reference(e, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(off)));
     }
     wr::<u32>(this, 0, 0x85AB38);
 }
@@ -514,7 +504,7 @@ pub fn point_route_assign(this: GPtr<u8>, src: GPtr<u8>) -> u32 {
 pub fn compute_entity_bounding_box_planes(z: u32, e: GPtr<u8>, normals: GPtr<u8>, d: GPtr<u8>) {
     let mut c = [0u32; 12];
     let cp = local(&mut c);
-    bbox_corners_uncached(z, e, cp);
+    bbox_corners_uncached(f32::from_bits(z), e, cp);
     bbox_planes_uncached(z, cp, normals, d);
 }
 
@@ -533,7 +523,7 @@ pub fn complex_car_drive_dtor(this: GPtr<u8>) {
         }
         let v = rd::<GPtr<u8>>(this, 0xC);
         if !v.is_null() {
-            entity_clean_up_old_reference(v, this.byte_add(0xC));
+            entity_clean_up_old_reference(v, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0xC)));
         }
     }
     task_complex_dtor(this);
@@ -549,7 +539,7 @@ pub fn simple_car_drive_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x86E904);
     let v = rd::<GPtr<u8>>(this, 8);
     if !v.is_null() {
-        entity_clean_up_old_reference(v, this.byte_add(8));
+        entity_clean_up_old_reference(v, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(8)));
     }
     let u = rd::<GPtr<u8>>(this, 0x10);
     if !u.is_null() {
@@ -575,7 +565,7 @@ pub fn simple_car_drive_dtor(this: GPtr<u8>) {
 pub fn player_on_foot_ctor(this: GPtr<u8>) -> GPtr<u8> {
     task_simple_ctor(this);
     wr::<u32>(this, 0, 0x8708EC);
-    let b = anim_block_index_by_name(g::<u8>(0x86D1EC));
+    let b = anim_block_index_by_name(g::<u8>(0x86D1EC)) as u32;
     wr::<u32>(this, 8, b);
     wr::<u32>(this, 0x14, 0);
     wr::<u32>(this, 0x10, 0);
@@ -670,7 +660,7 @@ fn finish_abortable(this: GPtr<u8>, ped: GPtr<u8>, prio: i32, delta: u32, specia
                 wr::<u32>(a, 0x1C, delta);
             } else {
                 let neg = f32_of(x(f32::from_bits(delta)).fchs());
-                blend_animation(rd::<u32>(ped, 0x18), rd::<u32>(ped, 0x4D4), 3, neg.to_bits());
+                blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), rd::<u32>(ped, 0x4D4), 3, f32::from_bits(neg.to_bits()));
             }
         }
     }
@@ -707,7 +697,7 @@ pub fn run_timed_anim_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
             v_make_abortable(this, ped, 0, 0);
         }
     }
-    if rd::<u32>(this, 8) == 0 && clump_get_association(rd::<u32>(ped, 0x18), rd::<u32>(this, 0x14)).is_null() {
+    if rd::<u32>(this, 8) == 0 && clump_get_association(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), rd::<u32>(this, 0x14)).is_null() {
         let dur = rd::<u32>(this, 0x20);
         wr::<u32>(this, 0x24, g::<u32>(TIME_MS).read());
         wr::<u32>(this, 0x28, dur);

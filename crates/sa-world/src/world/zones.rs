@@ -66,21 +66,16 @@ fn f_inv600() -> f32 {
 }
 
 pub use crate::bindings::can_player_start_a_gang_war_here;
+pub use crate::bindings::find_smallest_zone_for_position as find_smallest_zone_for_position_call;
+pub use crate::bindings::init_zones_population_settings as init_zones_population_settings_call;
+pub use crate::bindings::zone_locked_or_unlocked as get_current_zone_locked_or_unlocked_call;
+pub use sa_core::bindings::the_zones_init as init_call;
+pub use sa_stream::bindings::get_level_from_position as get_level_from_position_call;
 orig! {
     /// `CTheZones::PointLiesWithinZone(const CVector*, CZone*)` (0x572270)
     pub fn point_lies_within_zone_call(p: GPtr<f32>, z: GPtr<u8>) -> u8 = cdecl 0x572270 => point_lies_within_zone;
-    /// `CTheZones::GetLevelFromPosition(const CVector&)` (0x572300)
-    pub fn get_level_from_position_call(p: GPtr<f32>) -> i32 = cdecl 0x572300 => get_level_from_position;
-    /// `CTheZones::GetCurrentZoneLockedOrUnlocked(CVector2D)` (0x572130)
-    pub fn get_current_zone_locked_or_unlocked_call(x: f32, y: f32) -> u8 = cdecl 0x572130 => get_current_zone_locked_or_unlocked;
-    /// `CTheZones::FindSmallestZoneForPosition(const CVector&, bool)` (0x572360)
-    pub fn find_smallest_zone_for_position_call(p: GPtr<f32>, navi: u8) -> GPtr<u8> = cdecl 0x572360 => find_smallest_zone_for_position;
-    /// `CTheZones::InitZonesPopulationSettings` (0x5720D0)
-    pub fn init_zones_population_settings_call() = cdecl 0x5720D0 => init_zones_population_settings;
     /// `CTheZones::SetCurrentZoneAsUnlocked` (0x572800)
     pub fn set_current_zone_as_unlocked_call() = cdecl 0x572800 => set_current_zone_as_unlocked;
-    /// `CTheZones::Init` (0x572670)
-    pub fn init_call() = cdecl 0x572670 => init;
 }
 
 fn nav_zone(i: u32) -> GPtr<u8> {

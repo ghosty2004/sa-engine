@@ -14,15 +14,13 @@ use sa_math::x87::X87;
 use crate::common::{ftol32, g, jp, k, rd, x, xi};
 
 use crate::bindings::bright_lights_render_out_geometry_buffer as render_out_geometry_buffer;
-use crate::bindings::rw_im3d_render_indexed_primitive;
-use crate::bindings::rw_im3d_transform;
+use sa_world::bindings::rw_im3d_render_indexed_primitive;
+use sa_world::bindings::rw_im3d_transform;
+use sa_core::bindings::little_test;
+use sa_world::bindings::rw_im3d_end;
 orig! {
     /// `RwRenderStateSet(state, value)` (`RwGlobals` +0x20)
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `Common::LittleTest()` (0x541330)
-    fn little_test() = cdecl 0x541330 => sa_core::common::little_test;
-    /// `RwIm3DEnd()` (0x7EF520)
-    fn rw_im3d_end() -> u32 = cdecl 0x7EF520 => unported;
 }
 
 /// `CBrightLights::NumBrightLights` and the array.
@@ -171,8 +169,8 @@ pub fn render() {
         }
         if g::<u32>(TEMP_INDICES_STORED).read() != 0 {
             little_test();
-            if !rw_im3d_transform(TEMP_RENDER_VERTICES, g::<u32>(TEMP_VERTICES_STORED).read(), 0, 1).is_null() {
-                rw_im3d_render_indexed_primitive(3, TEMP_BUFFER_INDICES, g::<u32>(TEMP_INDICES_STORED).read());
+            if !rw_im3d_transform(GPtr::from_addr(TEMP_RENDER_VERTICES as usize), g::<u32>(TEMP_VERTICES_STORED).read(), GPtr::NULL, 1).is_null() {
+                rw_im3d_render_indexed_primitive(3, GPtr::from_addr(TEMP_BUFFER_INDICES as usize), (g::<u32>(TEMP_INDICES_STORED).read()) as i32);
                 rw_im3d_end();
             }
             g::<u32>(TEMP_VERTICES_STORED).write(0);

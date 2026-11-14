@@ -29,13 +29,13 @@ pub use crate::bindings::delete_vertex_shader;
 pub use crate::bindings::free_list_create;
 pub use crate::bindings::light_local_enable;
 pub use crate::bindings::lights_enable;
-pub use crate::bindings::node_def_atomic;
+pub use sa_core::bindings::node_def_atomic;
 pub use crate::bindings::node_def_d3d9_sector_all_in_one as node_def_world_sector;
-pub use crate::bindings::rx_locked_pipe_add_fragment;
-pub use crate::bindings::rx_locked_pipe_unlock;
-pub use crate::bindings::rx_pipeline_create;
-pub use crate::bindings::rx_pipeline_destroy;
-pub use crate::bindings::rx_pipeline_lock;
+pub use sa_core::bindings::rx_locked_pipe_add_fragment;
+pub use sa_core::bindings::rx_locked_pipe_unlock;
+pub use sa_core::bindings::rx_pipeline_create;
+pub use sa_core::bindings::rx_pipeline_destroy;
+pub use sa_core::bindings::rx_pipeline_lock;
 pub use crate::bindings::set_default_sector_pipeline;
 orig! {
     /// The saved device restore callback, through its pointer

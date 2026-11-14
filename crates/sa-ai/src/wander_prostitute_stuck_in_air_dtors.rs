@@ -2,16 +2,14 @@
 //! complete-object destructor of `CTaskComplexWanderProstitute` (0x6726F0). Ported from the 1.0 US bytes; unverified
 //! (docs/verify/HOWTO.md).
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
 use sa_core::bindings::entity_clean_up_old_reference;
-orig! {
-    /// `CTaskComplex` base destructor (0x61A3D0, thiscall)
-    fn task_complex_dtor(t: GPtr<u8>) = thiscall 0x61A3D0 => crate::mvpb_ai::task_complex_dtor_61a3d0;
-}
+use crate::bindings::task_complex_dtor;
 
 /// `CEventStuckInAir::~CEventStuckInAir` (0x4B1520, thiscall): vtable 0x85B508; with the ped (+0xC) set,
 /// `ped->CleanUpOldReference(&this->ped)`; then the `CEvent` vtable 0x85AB38. The SEH frame of the original has no
@@ -22,7 +20,7 @@ pub fn event_stuck_in_air_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x85B508);
     let ped = rd::<GPtr<u8>>(this, 0xC);
     if !ped.is_null() {
-        entity_clean_up_old_reference(ped, this.byte_add(0xC));
+        entity_clean_up_old_reference(ped, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0xC)));
     }
     wr::<u32>(this, 0, 0x85AB38);
 }

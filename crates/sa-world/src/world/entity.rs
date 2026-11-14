@@ -60,7 +60,7 @@ const FM1: f32 = -1.0;
 const F_1_32768: f32 = 3.051_757_8e-5;
 
 pub use crate::bindings::attractor_manager_has_empty_slot as attractor_has_empty_slot;
-pub use crate::bindings::clump_get_first_association as rp_anim_blend_clump_get_first_association;
+pub use sa_core::bindings::clump_get_first_association as rp_anim_blend_clump_get_first_association;
 pub use crate::bindings::double_node_add_to_list;
 pub use crate::bindings::double_node_delete;
 pub use crate::bindings::double_node_new;
@@ -70,7 +70,7 @@ pub use crate::bindings::flush_single as single_link_flush;
 pub use crate::bindings::get_ped_attractor_manager;
 pub use crate::bindings::is_ped_pointer_valid;
 pub use crate::bindings::physical_add_to_moving_list;
-pub use crate::bindings::ptr_list_double_link_flush as double_link_flush;
+pub use sa_core::bindings::ptr_list_double_link_flush as double_link_flush;
 pub use crate::bindings::remove_lights_affecting_object;
 pub use crate::bindings::vehicle_is_pointer_valid as is_vehicle_pointer_valid;
 pub use sa_core::bindings::activate_directional;
@@ -98,13 +98,16 @@ pub use sa_stream::bindings::model_info_add_ref;
 pub use sa_stream::bindings::model_info_remove_ref;
 pub use sa_stream::bindings::simple_transform_update_matrix;
 pub use sa_stream::bindings::streaming_add_entity;
+pub use crate::bindings::camera_is_sphere_visible_m as camera_is_sphere_visible;
+pub use crate::bindings::generate_lights_affecting_object;
+pub use sa_core::bindings::eh_vector_dtor as eh_vector_destructor_iterator;
+pub use sa_core::bindings::matrix_ctor_rw as matrix_ctor_attach;
+pub use sa_core::bindings::matrix_set_rotate_z_only;
+pub use sa_core::bindings::rp_atomic_destroy;
+pub use sa_core::bindings::rp_clump_destroy;
+pub use sa_core::bindings::rw_frame_destroy;
+pub use sa_core::bindings::set_light_colours_for_peds_cars_and_objects;
 orig! {
-    /// `RpAtomicDestroy(RpAtomic*)` (0x749DC0)
-    pub fn rp_atomic_destroy(a: GPtr<u8>) -> u32 = cdecl 0x749DC0 => unported;
-    /// `RwFrameDestroy(RwFrame*)` (0x7F05A0)
-    pub fn rw_frame_destroy(f: GPtr<u8>) -> u32 = cdecl 0x7F05A0 => unported;
-    /// `RpClumpDestroy(RpClump*)` (0x74A310)
-    pub fn rp_clump_destroy(c: GPtr<u8>) -> u32 = cdecl 0x74A310 => unported;
     /// `RpAnimBlendClumpUpdateAnimations(RpClump*, float, bool)` (0x4D34F0)
     pub fn rp_anim_blend_clump_update_animations(c: GPtr<u8>, step: f32, visible: u32) = cdecl 0x4D34F0 => unported;
     /// `CEntity::SetIsStatic(bool)` (vtable slot 0x10)
@@ -125,10 +128,6 @@ orig! {
     pub fn rp_material_uv_anim_apply_update(m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7CC110 => unported;
     /// `RpHAnimHierarchyUpdateMatrices(RpHAnimHierarchy*)` (0x7C51D0)
     pub fn rp_h_anim_hierarchy_update_matrices(h: GPtr<u8>) -> u32 = cdecl 0x7C51D0 => unported;
-    /// `CMatrix::CMatrix(RwMatrix*, bool owner)` (0x59C050)
-    pub fn matrix_ctor_attach(m: GPtr<u8>, rw: GPtr<u8>, owner: u32) = thiscall 0x59C050 => unported;
-    /// `CCamera::IsSphereVisible(const CVector&, float, const RwMatrix*)` (0x420C40)
-    pub fn camera_is_sphere_visible(cam: GPtr<u8>, c: GPtr<u8>, r: f32, m: GPtr<u8>) -> u8 = thiscall 0x420C40 => unported;
     /// `CRect::StretchToPoint(float, float)` (0x5327F0)
     pub fn rect_stretch_to_point(r: GPtr<u8>, px: f32, py: f32) = thiscall 0x5327F0 => unported;
     /// `CEntity::SetModelIndexNoCreate` (vtable slot 0x18)
@@ -141,8 +140,6 @@ orig! {
     pub fn model_info_as_atomic(mi: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x4 => unported;
     /// `CTagManager::AddTag(CEntity*)` (0x49CC90)
     pub fn tag_manager_add_tag(e: GPtr<u8>) = cdecl 0x49CC90 => unported;
-    /// `eh vector destructor iterator(void*, uint32 size, int32 count, void (__thiscall*)(void*))` (0x821E02, stdcall)
-    pub fn eh_vector_destructor_iterator(p: GPtr<u8>, size: u32, count: i32, dtor: u32) = stdcall 0x821E02 => unported;
     /// `CEntity::GetBoundRect()` (vtable slot 0x24, hidden return pointer)
     pub fn entity_get_bound_rect(e: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x24 => unported;
     /// `CEntity::Add(const CRect&)` (vtable slot 4)
@@ -151,16 +148,10 @@ orig! {
     pub fn matrix_link_list_init(l: GPtr<u8>, n: i32) = thiscall 0x54F0D0 => unported;
     /// `CMatrixLinkList::AddToList1()` (0x54E9D0)
     pub fn matrix_link_list_add_to_list1(l: GPtr<u8>) -> GPtr<u8> = thiscall 0x54E9D0 => crate::world::entity::matrix_link_list_add_to_list1_port;
-    /// `CPointLights::GenerateLightsAffectingObject(const CVector*, float*, CEntity*)` (0x6FFBB0, ST0)
-    pub fn generate_lights_affecting_object(pos: GPtr<u8>, out: GPtr<u8>, e: GPtr<u8>) -> f64 = cdecl 0x6FFBB0 => unported;
-    /// `Light::SetLightColoursForPedsCarsAndObjects(float)` (0x735D90)
-    pub fn set_light_colours_for_peds_cars_and_objects(l: f32) = cdecl 0x735D90 => unported;
     /// `CGlass::AskForObjectToBeRenderedInGlass(CEntity*)` (0x71ACD0)
     pub fn ask_for_object_to_be_rendered_in_glass(e: GPtr<u8>) = cdecl 0x71ACD0 => unported;
     /// `CEntity::DeleteRwObject` (vtable slot 0x20)
     pub fn entity_delete_rw_object(e: GPtr<u8>) = thiscall vslot 0x20 => unported;
-    /// `CMatrix::SetRotateZOnly(float)` (0x59B020)
-    pub fn matrix_set_rotate_z_only(m: GPtr<u8>, h: f32) = thiscall 0x59B020 => unported;
     /// `CBuildingPool::New` (0x403FA0, thiscall on the pool)
     pub fn building_pool_new(pool: GPtr<u8>) -> GPtr<u8> = thiscall 0x403FA0 => unported;
 }
@@ -995,7 +986,7 @@ pub fn transform_from_object_space_ref(this: GPtr<u8>, out: GPtr<u8>, off: GPtr<
     }
     let mut tmp = [rd::<u32>(off, 0), rd::<u32>(off, 4), rd::<u32>(off, 8)];
     let mut res = [0u32; 3];
-    let r = matrix_mul_vec(GPtr::from_raw(res.as_mut_ptr()).cast(), m, GPtr::from_raw(tmp.as_mut_ptr()).cast());
+    let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::from_raw(res.as_mut_ptr()).cast()), m, GPtr::from_raw(tmp.as_mut_ptr()).cast()));
     wr::<u32>(out, 0, rd::<u32>(r, 0));
     wr::<u32>(out, 4, rd::<u32>(r, 4));
     let z = rd::<u32>(r, 8);
@@ -1015,7 +1006,7 @@ pub fn transform_from_object_space_ptr(this: GPtr<u8>, out: GPtr<u8>, off: GPtr<
     } else {
         let mut tmp = [rd::<u32>(off, 0), rd::<u32>(off, 4), rd::<u32>(off, 8)];
         let mut res = [0u32; 3];
-        let r = matrix_mul_vec(GPtr::from_raw(res.as_mut_ptr()).cast(), m, GPtr::from_raw(tmp.as_mut_ptr()).cast());
+        let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::from_raw(res.as_mut_ptr()).cast()), m, GPtr::from_raw(tmp.as_mut_ptr()).cast()));
         for k in [0, 4, 8] {
             wr::<u32>(vp, k, rd::<u32>(r, k));
         }
@@ -1152,7 +1143,7 @@ pub fn is_visible(this: GPtr<u8>) -> u8 {
 pub fn set_atomic_alpha(atomic: GPtr<u8>, alpha: u32) -> GPtr<u8> {
     let geo = rd::<GPtr<u8>>(atomic, 0x18);
     wr::<u32>(geo, 8, rd::<u32>(geo, 8) | 0x40);
-    rp_geometry_for_all_materials(geo, 0x533280, alpha);
+    rp_geometry_for_all_materials(geo, 0x533280, GPtr::from_addr(alpha as usize));
     atomic
 }
 
@@ -1266,7 +1257,7 @@ pub fn shutdown_matrix_array() {
     let p = g::<GPtr<u8>>(0xB74480);
     let a = p.read();
     if !a.is_null() {
-        eh_vector_destructor_iterator(a, 0x54, rd(a, -4), 0x54E8E0);
+        eh_vector_destructor_iterator(a, 0x54, rd::<i32>(a, -4) as u32, 0x54E8E0);
         crt_free(a.byte_add(-4));
     }
     p.write(GPtr::NULL);
@@ -1284,10 +1275,10 @@ pub fn set_rw_object_alpha(this: GPtr<u8>, alpha: u32) {
         1 => {
             let geo = rd::<GPtr<u8>>(o, 0x18);
             wr::<u32>(geo, 8, rd::<u32>(geo, 8) | 0x40);
-            rp_geometry_for_all_materials(geo, 0x533280, alpha);
+            rp_geometry_for_all_materials(geo, 0x533280, GPtr::from_addr(alpha as usize));
         }
         2 => {
-            rp_clump_for_all_atomics(o, 0x533290, alpha);
+            rp_clump_for_all_atomics(o, 0x533290, GPtr::from_addr(alpha as usize));
         }
         _ => {}
     }
@@ -1531,7 +1522,7 @@ pub fn find_trigger_point_coors(this: GPtr<u8>, out: GPtr<u8>, index: i32) -> GP
         let e = model_info_get_2d_effect(mi, i);
         if rd::<u8>(e, 0xC) == 8 && rd::<i32>(e, 0x10) == index {
             let m = get_matrix(this);
-            matrix_mul_vec(out, m, e);
+            matrix_mul_vec(out.cast::<f32>(), m, e);
             return out;
         }
         i += 1;
@@ -1699,7 +1690,7 @@ pub fn delete_rw_object(this: GPtr<u8>) {
         2 => {
             let a = rw_get_first_atomic(rw);
             if !a.is_null() && !rp_skin_geometry_get_skin(rd(a, 0x18)).is_null() {
-                rp_clump_for_all_atomics(rw, 0x734B90, 0);
+                rp_clump_for_all_atomics(rw, 0x734B90, GPtr::NULL);
             }
             rp_clump_destroy(rw);
         }

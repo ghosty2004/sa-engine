@@ -94,29 +94,21 @@ const IMM_77: f32 = f32::from_bits(0x429A_0000);
 const IMM_250: f32 = f32::from_bits(0x437A_0000);
 const IMM_100: f32 = f32::from_bits(0x42C8_0000);
 
-use crate::bindings::clear_blip_call;
+use sa_world::bindings::clear_blip_call;
 use crate::bindings::transform_radar_point_to_screen_space_call;
 use crate::bindings::transform_real_world_point_to_radar_space_call;
+use sa_world::bindings::check_for_accept as check_for_accept_call;
+use sa_world::bindings::check_for_selected as check_for_selected_call;
+use sa_world::bindings::create_new_menu as create_new_menu_call;
+use sa_world::bindings::insert_menu as insert_menu_call;
+use sa_world::bindings::set_active_menu_item as set_active_menu_item_call;
+use sa_world::bindings::set_blip_sprite as set_blip_sprite_call;
+use sa_world::bindings::switch_off_menu_call;
 orig! {
     /// `CPad::IsMouseRButtonPressed()` (0x572E70; called with ECX = the pad, which it does not read)
     fn is_mouse_rbutton_pressed_call() -> u8 = cdecl 0x572E70 => crate::menu_mgr::is_mouse_rbutton_pressed;
-    /// `CRadar::SetBlipSprite(int32, eRadarSprite)` (0x583D70)
-    fn set_blip_sprite_call(h: i32, sprite: i32) = cdecl 0x583D70 => crate::radar::set_blip_sprite;
     /// `CRadar::LimitRadarPoint(CVector2D&)` (0x5832F0, ST0; discarded here)
     fn limit_radar_point_call_st0(p: GPtr<f32>) -> f64 = cdecl 0x5832F0 => limit_radar_point_st0_rust;
-    /// `CMenuSystem::CreateNewMenu(type, title, x, y, width, columns, interactive, background, alignment)`
-    /// (0x582300; AL)
-    fn create_new_menu_call(kind: u32, title: GPtr<u8>, px: f32, py: f32, width: f32, columns: u32, interactive: u32, background: u32, alignment: u32) -> u8 = cdecl 0x582300 => create_new_menu_rust;
-    /// `CMenuSystem::InsertMenu(menu, column, header, rows[12])` (0x581E00)
-    fn insert_menu_call(menu: u32, column: u32, header: GPtr<u8>, r0: GPtr<u8>, r1: GPtr<u8>, r2: GPtr<u8>, r3: GPtr<u8>, r4: GPtr<u8>, r5: GPtr<u8>, r6: GPtr<u8>, r7: GPtr<u8>, r8: GPtr<u8>, r9: GPtr<u8>, r10: GPtr<u8>, r11: GPtr<u8>) = cdecl 0x581E00 => crate::menu2::insert_menu;
-    /// `CMenuSystem::CheckForAccept(uint8)` (0x5807C0; AL)
-    fn check_for_accept_call(menu: u32) -> u8 = cdecl 0x5807C0 => crate::menu2::check_for_accept;
-    /// `CMenuSystem::CheckForSelected(uint8)` (0x5807E0; AL)
-    fn check_for_selected_call(menu: u8) -> u8 = cdecl 0x5807E0 => crate::menu::check_for_selected;
-    /// `CMenuSystem::SetActiveMenuItem(uint8 menu, uint8 row)` (0x5820C0)
-    fn set_active_menu_item_call(menu: u32, row: u32) = cdecl 0x5820C0 => crate::menu2::set_active_menu_item;
-    /// `CMenuSystem::SwitchOffMenu(uint8)` (0x580750)
-    fn switch_off_menu_call(menu: u8) = cdecl 0x580750 => crate::menu::switch_off_menu;
     /// `CMenuManager::SaveStatsToFile()` (0x57DDE0, thiscall)
     fn save_stats_to_file_call(this: GPtr<u8>) = thiscall 0x57DDE0 => crate::menu_stats_file::save_stats_to_file;
 }
@@ -192,7 +184,7 @@ fn nudge(this: GPtr<u8>, off: isize, v: X87) -> [f32; 2] {
 
 /// `ReportFrontendAudioEvent(AudioEngine, id, 0, 1.0)`
 fn event(id: u32) {
-    audio_report_frontend_event(g(AUDIO_ENGINE), id, 0, K_1.to_bits());
+    audio_report_frontend_event(g(AUDIO_ENGINE), id, f32::from_bits(0), f32::from_bits(K_1.to_bits()));
 }
 
 /// The five ON / OFF buffers of the legend options menu (10 bytes apart in the original frame; the
@@ -754,22 +746,22 @@ fn legend_menu(this: GPtr<u8>) {
     if (b8(this, 0x30) as i8) < 0 {
         return;
     }
-    let item = check_for_accept_call(u32::from(b8(this, 0x30)));
+    let item = check_for_accept_call(u32::from(b8(this, 0x30))) as u8;
     if (item as i8) >= 0 {
         let off = 0x45 + isize::from(item as i8);
         wr::<u8>(this, off, u8::from(b8(this, off) == 0));
         insert_blip_prefs(this, &mut bufs);
         let menu = b8(this, 0x30);
-        if check_for_selected_call(menu) == 4 {
+        if check_for_selected_call(menu) as u8 == 4 {
             set_active_menu_item_call(u32::from(b8(this, 0x30)), 0);
         } else {
-            let row = check_for_selected_call(b8(this, 0x30)).wrapping_add(1);
+            let row = (check_for_selected_call(b8(this, 0x30)) as u8).wrapping_add(1);
             set_active_menu_item_call(u32::from(b8(this, 0x30)), u32::from(row));
         }
     }
     if !space_new() && !space_old() {
         event(2);
-        switch_off_menu_call(b8(this, 0x30));
+        switch_off_menu_call(b8(this, 0x30) as u32);
         wr::<u8>(this, 0x30, 0x9D);
     }
 }

@@ -5,6 +5,7 @@
 //! originals (fs:0 links) has no observable effect and is not modelled.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -32,23 +33,16 @@ use sa_world::bindings::event_will_respond as will_respond;
 use sa_world::bindings::membership_is_member as group_membership_is_member;
 use sa_world::bindings::task_complex_ctor;
 use sa_world::bindings::task_simple_ctor;
+use crate::bindings::task_complex_dtor;
+use sa_core::bindings::find_player_coors;
+use sa_core::bindings::matrix_mul_vec;
+use sa_world::bindings::eg_flush as event_group_flush;
+use sa_world::bindings::entity_get_bound_centre;
+use sa_world::bindings::multiply3x3;
+use sa_world::bindings::task_simple_dtor;
 orig! {
-    /// `CWorld::FindPlayerCoors(CVector* out, int32 id)` (0x56E010, cdecl)
-    fn find_player_coors(out: GPtr<f32>, id: i32) -> GPtr<f32> = cdecl 0x56E010 => unported;
-    /// `CEntity::GetBoundCentre(CVector* out)` (0x534250, `ret 4`)
-    fn entity_get_bound_centre(e: GPtr<u8>, out: GPtr<f32>) -> GPtr<f32> = thiscall 0x534250 => unported;
-    /// `Multiply3x3(CVector* out, const CMatrix*, const CVector*)` (0x59C790, cdecl)
-    fn multiply3x3(out: GPtr<f32>, m: GPtr<u8>, v: GPtr<f32>) -> GPtr<f32> = cdecl 0x59C790 => unported;
-    /// `operator*(CVector* out, const CMatrix*, const CVector*)` (0x59C890, cdecl)
-    fn matrix_mul_vec(out: GPtr<f32>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<f32> = cdecl 0x59C890 => unported;
     /// `CCover::AddCoverPoint(int32, CEntity*, CVector*, char, uint8)` (0x698F30, cdecl)
     fn add_cover_point(ty: u32, e: GPtr<u8>, pos: GPtr<f32>, a: u32, b: u32) = cdecl 0x698F30 => unported;
-    /// `FUN_0061a3a0` (0x61A3A0): `CTaskSimple` base destructor
-    fn task_simple_dtor(t: GPtr<u8>) = thiscall 0x61A3A0 => crate::mvpb_ai::task_simple_dtor_61a3a0;
-    /// `FUN_0061a3d0` (0x61A3D0): `CTaskComplex` base destructor
-    fn task_complex_dtor(t: GPtr<u8>) = thiscall 0x61A3D0 => crate::mvpb_ai::task_complex_dtor_61a3d0;
-    /// `CEventGroup::Flush(bool)` (0x4AB370, `ret 4`)
-    fn event_group_flush(g: GPtr<u8>, avoid: u32) -> u32 = thiscall 0x4AB370 => unported;
     /// `CEvent::GetEventType` (vtable +0x4)
     fn v_get_event_type(e: GPtr<u8>) -> u32 = thiscall vslot 0x4 => unported;
     /// `CEvent::Clone` (vtable +0x10)
@@ -81,7 +75,7 @@ pub fn cover_should_building_have_cover_points(b: GPtr<u8>) -> u8 {
     let mut ploc = [0.0f32; 3];
     let mut cloc = [0.0f32; 3];
     let pp = find_player_coors(GPtr::from_raw(ploc.as_mut_ptr()), -1);
-    let c = entity_get_bound_centre(b, GPtr::from_raw(cloc.as_mut_ptr()));
+    let c = GPtr::<u8>::cast::<f32>(entity_get_bound_centre(b, GPtr::<f32>::cast::<u8>(GPtr::from_raw(cloc.as_mut_ptr()))));
     let dx = x(c.read()).fsub_m(pp.read());
     let dy = x(c.wrapping_index(1).read()).fsub_m(pp.wrapping_index(1).read());
     let dz = x(c.wrapping_index(2).read()).fsub_m(pp.wrapping_index(2).read());
@@ -107,7 +101,7 @@ pub fn cover_remove_points_for_entity(e: GPtr<u8>) {
             continue;
         }
         if !ent.is_null() {
-            clean_up_old_reference(ent, pt.byte_add(0x10));
+            clean_up_old_reference(ent, GPtr::<u8>::cast::<GPtr<u8>>(pt.byte_add(0x10)));
         }
         let n = rd::<i32>(GPtr::from_addr(COVER_NUM_POINTS), 0);
         wr::<u8>(pt, 0, 0);
@@ -141,7 +135,7 @@ pub fn cover_find_points_for_building(b: GPtr<u8>) {
             simple_transform_update_matrix(b.byte_add(4), rd::<GPtr<u8>>(b, 0x14));
         }
         let mut out = [0.0f32; 3];
-        let r = multiply3x3(GPtr::from_raw(out.as_mut_ptr()), rd::<GPtr<u8>>(b, 0x14), GPtr::from_raw(v.as_mut_ptr()));
+        let r = GPtr::<u8>::cast::<f32>(multiply3x3(GPtr::<f32>::cast::<u8>(GPtr::from_raw(out.as_mut_ptr())), rd::<GPtr<u8>>(b, 0x14), GPtr::<f32>::cast::<u8>(GPtr::from_raw(v.as_mut_ptr()))));
         v[0] = r.read();
         v[1] = r.wrapping_index(1).read();
         v[2] = r.wrapping_index(2).read();
@@ -180,7 +174,7 @@ fn ref_dtor(this: GPtr<u8>, vt: u32, off: isize, last: u32) {
     wr::<u32>(this, 0, vt);
     let e = rd::<GPtr<u8>>(this, off);
     if !e.is_null() {
-        clean_up_old_reference(e, this.byte_add(off));
+        clean_up_old_reference(e, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(off)));
     }
     if last != 0 {
         wr::<u32>(this, 0, last);
@@ -487,13 +481,13 @@ pub fn entity_scanner_clear(this: GPtr<u8>) {
         let off = 0xC + 4 * i;
         let e = rd::<GPtr<u8>>(this, off);
         if !e.is_null() {
-            clean_up_old_reference(e, this.byte_add(off));
+            clean_up_old_reference(e, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(off)));
             wr::<u32>(this, off, 0);
         }
     }
     let e = rd::<GPtr<u8>>(this, 0x4C);
     if !e.is_null() {
-        clean_up_old_reference(e, this.byte_add(0x4C));
+        clean_up_old_reference(e, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x4C)));
         wr::<u32>(this, 0x4C, 0);
     }
 }

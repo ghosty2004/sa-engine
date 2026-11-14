@@ -9,13 +9,23 @@ use sa_core::mem::{GBool, GPtr};
 use sa_core::orig;
 
 orig! {
+    /// `CControllerConfigManager::GetJoyButtonJustDown` (0x52D1E0)
+    pub fn ccm_get_joy_button_just_down(this: GPtr<u8>) -> u32 = thiscall 0x52D1E0 => unported;
+}
+
+orig! {
+    /// `CControllerConfigManager::LoadSettings` (0x530530)
+    pub fn ccm_load_settings(this: GPtr<u8>, file: GPtr<u8>) -> u8 = thiscall 0x530530 => unported;
+}
+
+orig! {
     /// `CPad::GetAnaloguePadUp` (0x540950)
-    pub fn analogue_pad_up(pad: GPtr<u8>) -> u8 = thiscall 0x540950 => unported;
+    pub fn analogue_pad_up() -> u8 = cdecl 0x540950 => unported;
 }
 
 orig! {
     /// `CPad::GetAnaloguePadDown` (0x540980)
-    pub fn analogue_pad_down(pad: GPtr<u8>) -> u8 = thiscall 0x540980 => unported;
+    pub fn analogue_pad_down() -> u8 = cdecl 0x540980 => unported;
 }
 
 orig! {
@@ -29,18 +39,28 @@ orig! {
 }
 
 orig! {
-    /// `CMenuManager::DrawWindow` (0x573EE0)
-    pub fn draw_window_call(this: GPtr<u8>, rect: GPtr<u8>, key: GPtr<u8>, colour: u32, back: u32, unused: u32, bg: u32) = thiscall 0x573EE0 => crate::menu_mgr::draw_window;
-}
-
-orig! {
     /// `CMenuManager::SmallMessageScreen` (0x574010)
     pub fn small_message_screen_call(this: GPtr<u8>, key: GPtr<u8>) = thiscall 0x574010 => crate::menu_mgr::small_message_screen;
 }
 
 orig! {
+    /// `CMenuManager::ResetHelperText` (0x57CD30)
+    pub fn reset_helper_text_call(this: GPtr<u8>) = thiscall 0x57CD30 => crate::menu_mgr::reset_helper_text;
+}
+
+orig! {
     /// `CMenuManager::DisplayHelperText` (0x57E240)
     pub fn display_helper_text_call(this: GPtr<u8>, key: GPtr<u8>) = thiscall 0x57E240 => crate::menu_mgr::display_helper_text;
+}
+
+orig! {
+    /// `CMenuSystem::Process` (0x582630)
+    pub fn menu_system_process(menu: u32) = cdecl 0x582630 => crate::menu2::process;
+}
+
+orig! {
+    /// `CRadar::LimitToMap` (0x583350)
+    pub fn limit_to_map_call(px: GPtr<f32>, py: GPtr<f32>) = cdecl 0x583350 => crate::radar_draw::limit_to_map;
 }
 
 orig! {
@@ -54,8 +74,23 @@ orig! {
 }
 
 orig! {
+    /// `CRadar::CalculateCachedSinCos` (0x583670)
+    pub fn calculate_cached_sin_cos_call() = cdecl 0x583670 => crate::radar_draw::calculate_cached_sin_cos;
+}
+
+orig! {
     /// `CRadar::HasThisBlipBeenRevealed` (0x583AF0)
     pub fn has_this_blip_been_revealed_call(i: i32) -> u8 = cdecl 0x583AF0 => crate::radar::has_this_blip_been_revealed;
+}
+
+orig! {
+    /// `CRadar::ShowRadarTraceWithHeight` (0x584070)
+    pub fn show_radar_trace_with_height_call(px: f32, py: f32, size: u32, r: u32, gg: u32, bb: u32, a: u32, mode: u32) = cdecl 0x584070 => crate::radar_draw2::show_radar_trace_with_height;
+}
+
+orig! {
+    /// `CRadar::ShowRadarMarker` (0x584480)
+    pub fn show_radar_marker_call(px: u32, py: u32, pz: u32, colour: u32, radius: u32) = cdecl 0x584480 => crate::radar_draw2::show_radar_marker;
 }
 
 orig! {
@@ -69,13 +104,33 @@ orig! {
 }
 
 orig! {
+    /// `CRadar::StreamRadarSections-xy` (0x584C50)
+    pub fn stream_radar_sections_xy_call(x: i32, y: i32) = cdecl 0x584C50 => crate::radar::stream_radar_sections_xy;
+}
+
+orig! {
+    /// `CRadar::InitFrontEndMap` (0x585960)
+    pub fn init_front_end_map_call() = cdecl 0x585960 => crate::radar_draw::init_front_end_map;
+}
+
+orig! {
     /// `CRadar::AddBlipToLegendList` (0x5859F0)
     pub fn add_blip_to_legend_list_call(no_sprite: u32, index: i32) = cdecl 0x5859F0 => crate::radar_draw::add_blip_to_legend_list;
 }
 
 orig! {
-    /// `CRadar::ClearBlip` (0x587CE0)
-    pub fn clear_blip_call(h: i32) = cdecl 0x587CE0 => crate::radar::clear_blip;
+    /// `CRadar::DrawRadarSprite` (0x585FF0)
+    pub fn draw_radar_sprite_call(sprite: u32, px: f32, py: f32, alpha: u32) = cdecl 0x585FF0 => crate::radar_draw2::draw_radar_sprite;
+}
+
+orig! {
+    /// `CRadar::DrawRadarGangOverlay` (0x586650)
+    pub fn draw_radar_gang_overlay_call(in_menu: u32) = cdecl 0x586650 => crate::radar_draw2::draw_radar_gang_overlay;
+}
+
+orig! {
+    /// `CRadar::ClearActualBlip-OG` (0x587C10)
+    pub fn clear_actual_blip_call(i: i32) = cdecl 0x587C10 => crate::radar::clear_actual_blip;
 }
 
 orig! {
@@ -89,28 +144,18 @@ orig! {
 }
 
 orig! {
-    /// `CHudColours::GetRGB` (0x58FEA0)
-    pub fn hud_colours_get_rgb(this: GPtr<u8>, out: GPtr<u8>, colour: u32) -> GPtr<u8> = thiscall 0x58FEA0 => crate::hud::get_rgb;
-}
-
-orig! {
     /// `CHudColours::GetRGBA` (0x58FEE0)
     pub fn hud_colours_get_rgba(this: GPtr<u8>, out: GPtr<u8>, colour: u32, alpha: u32) -> GPtr<u8> = thiscall 0x58FEE0 => crate::hud::get_rgba;
 }
 
 orig! {
-    /// `CMessages::GetStringLength` (0x69DB50)
-    pub fn get_string_length_call(s: GPtr<u8>) -> u32 = cdecl 0x69DB50 => crate::messages::get_string_length;
+    /// `CMessages::InsertStringInString` (0x69E040)
+    pub fn insert_string_in_string_call(target: GPtr<u8>, repl: GPtr<u8>) = cdecl 0x69E040 => crate::messages::insert_string_in_string;
 }
 
 orig! {
-    /// `CMessages::InsertPlayerControlKeysInString` (0x69E160)
-    pub fn msg_insert_player_control_keys(s: GPtr<u8>) = cdecl 0x69E160 => crate::messages::insert_player_control_keys_in_string;
-}
-
-orig! {
-    /// `CFont::SetScale` (0x719380)
-    pub fn font_set_scale(sx: u32, sy: u32) = cdecl 0x719380 => crate::font::set_scale;
+    /// `CFont::FindSubFontCharacter` (0x7192C0)
+    pub fn find_sub_font_character_call(c: u32, style: u32) -> u8 = cdecl 0x7192C0 => crate::font::find_sub_font_character_abi;
 }
 
 orig! {
@@ -124,43 +169,13 @@ orig! {
 }
 
 orig! {
-    /// `CFont::SetWrapx` (0x7194D0)
-    pub fn font_set_wrapx(v: u32) = cdecl 0x7194D0 => crate::font::set_wrapx;
+    /// `CFont::RenderFontBuffer` (0x719840)
+    pub fn font_render_font_buffer() = cdecl 0x719840 => crate::font_print::render_font_buffer;
 }
 
 orig! {
-    /// `CFont::SetCentreSize` (0x7194E0)
-    pub fn font_set_centre_size(v: u32) = cdecl 0x7194E0 => crate::font::set_centre_size;
-}
-
-orig! {
-    /// `CFont::SetRightJustifyWrap` (0x7194F0)
-    pub fn font_set_right_justify_wrap(v: u32) = cdecl 0x7194F0 => crate::font::set_right_justify_wrap;
-}
-
-orig! {
-    /// `CFont::SetAlphaFade` (0x719500)
-    pub fn font_set_alpha_fade(v: u32) = cdecl 0x719500 => crate::font::set_alpha_fade;
-}
-
-orig! {
-    /// `CFont::SetDropColor` (0x719510)
-    pub fn font_set_drop_color(c: u32) = cdecl 0x719510 => crate::font::set_drop_color;
-}
-
-orig! {
-    /// `CFont::SetDropShadowPosition` (0x719570)
-    pub fn font_set_drop_shadow_position(v: u32) = cdecl 0x719570 => crate::font::set_drop_shadow_position;
-}
-
-orig! {
-    /// `CFont::SetBackgroundColor` (0x7195E0)
-    pub fn font_set_background_color(c: u32) = cdecl 0x7195E0 => crate::font::set_background_color;
-}
-
-orig! {
-    /// `CFont::SetJustify` (0x719600)
-    pub fn font_set_justify(v: u32) = cdecl 0x719600 => crate::font::set_justify;
+    /// `CFont::ProcessCurrentString` (0x71A220)
+    pub fn process_current_string(print: u32, x: f32, y: f32, text: GPtr<u8>) -> u16 = cdecl 0x71A220 => crate::font_print::process_current_string_ax;
 }
 
 orig! {
@@ -169,16 +184,16 @@ orig! {
 }
 
 orig! {
+    /// `CFont::GetTextRect` (0x71A620)
+    pub fn font_get_text_rect(rect: GPtr<f32>, px: f32, py: f32, text: GPtr<u8>) = cdecl 0x71A620 => crate::font_print::get_text_rect;
+}
+
+orig! {
+    /// `CFont::PrintStringFromBottom` (0x71A820)
+    pub fn font_print_string_from_bottom(px: f32, py: f32, text: GPtr<u8>) = cdecl 0x71A820 => crate::font_print::print_string_from_bottom;
+}
+
+orig! {
     /// `CSprite2d::SetTexture-mask` (0x7272B0)
     pub fn sprite2d_set_texture(this: GPtr<u8>, name: GPtr<u8>, mask: GPtr<u8>) = thiscall 0x7272B0 => unported;
-}
-
-orig! {
-    /// `CSprite2d::Draw2DPolygon` (0x7285B0)
-    pub fn sprite2d_draw_2d_polygon(x1: f32, y1: f32, x2: f32, y2: f32, x3: f32, y3: f32, x4: f32, y4: f32, colour: GPtr<u8>) = cdecl 0x7285B0 => unported;
-}
-
-orig! {
-    /// `RwTexDictionaryFindHashNamedTexture` (0x734E50)
-    pub fn rw_tex_dictionary_find_hash_named_texture(dict: GPtr<u8>, hash: u32) -> GPtr<u8> = cdecl 0x734E50 => unported;
 }

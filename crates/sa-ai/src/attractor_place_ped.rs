@@ -4,11 +4,11 @@
 #![allow(clippy::unreadable_literal)]
 
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
-use crate::bindings::ped_placement_find_z_coor_for_ped as find_z_coor_for_ped;
+use sa_world::bindings::ped_placement_find_z_coor_for_ped as find_z_coor_for_ped;
 use sa_core::bindings::general_get_radian_angle_between_points as radian_angle_between_points;
 use sa_core::bindings::general_limit_radian_angle as limit_radian_angle;
 use sa_core::bindings::matrix_dtor;
@@ -17,19 +17,15 @@ use sa_core::bindings::matrix_set_unity;
 use sa_stream::bindings::placeable_allocate_matrix;
 use sa_stream::bindings::simple_transform_update_matrix;
 use sa_world::bindings::multiply3x3;
-orig! {
-    /// `CMatrix::operator=(const CMatrix&)` (0x59BBC0, `ret 4`)
-    fn matrix_assign(dst: GPtr<u8>, src: GPtr<u8>) = thiscall 0x59BBC0 => unported;
-    /// `CVector::FromMultiply(const CMatrix&, const CVector&)` (0x59C670, `ret 8`): `this = m * v` (with position)
-    fn vector_from_multiply(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) = thiscall 0x59C670 => unported;
-}
+use sa_core::bindings::matrix_assign;
+use sa_core::bindings::vector_from_multiply;
 
 use sa_core::field::ptr_of as pa;
 
 /// `LimitRadianAngle(f32(GetRadianAngleBetweenPoints(x, y, 0, 0)))` stored as f32.
 fn use_angle(dx: u32, dy: u32) -> f32 {
-    let a = f32_of(X87::from_f64_exact(radian_angle_between_points(dx, dy, 0, 0)));
-    f32_of(X87::from_f64_exact(limit_radian_angle(a.to_bits())))
+    let a = f32_of(X87::from_f64_exact(radian_angle_between_points(f32::from_bits(dx), f32::from_bits(dy), f32::from_bits(0), f32::from_bits(0))));
+    f32_of(X87::from_f64_exact(limit_radian_angle(f32::from_bits(a.to_bits()))))
 }
 
 /// `CPedAttractorPedPlacer::PlacePedAtEffect(const C2dEffectPedAttractor& fx, CEntity* entity, CPed* ped, float
@@ -93,7 +89,7 @@ pub fn place_ped_at_effect(fx: GPtr<u8>, entity: GPtr<u8>, ped: GPtr<u8>, forwar
     if m.is_null() {
         wr::<f32>(ped, 0x10, a);
     } else {
-        matrix_set_rotate_z_only(m, a.to_bits());
+        matrix_set_rotate_z_only(m, f32::from_bits(a.to_bits()));
     }
     let a = use_angle(use_dir[0], use_dir[1]);
     wr::<f32>(ped, 0x55C, a);

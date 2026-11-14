@@ -58,33 +58,22 @@ const BUILDING_RENDER_CB: u32 = 0x5D77D0;
 const DN_REINSTANCE_CB: u32 = 0x5D63E0;
 const DN_RENDER_CB: u32 = 0x5D6480;
 
+use sa_core::bindings::all_in_one_get_instance_cb;
+use sa_core::bindings::all_in_one_set_instance_cb;
+use sa_core::bindings::all_in_one_set_render_cb;
+use sa_core::bindings::node_def_atomic as node_def_atomic_all_in_one;
+use sa_core::bindings::rw_d3d9_get_caps;
+use sa_core::bindings::rx_locked_pipe_add_fragment;
+use sa_core::bindings::rx_locked_pipe_unlock;
+use sa_core::bindings::rx_pipeline_create;
+use sa_core::bindings::rx_pipeline_destroy;
+use sa_core::bindings::rx_pipeline_find_node_by_name;
+use sa_core::bindings::rx_pipeline_lock;
 orig! {
-    /// `RxPipelineCreate()` (0x8057B0)
-    fn rx_pipeline_create() -> u32 = cdecl 0x8057B0 => unported;
-    /// `RxPipelineLock(pipe)` (0x806990)
-    fn rx_pipeline_lock(p: u32) -> u32 = cdecl 0x806990 => unported;
-    /// `RxLockedPipeAddFragment(pipe, firstIndex, nodeDef, NULL)` (0x806BE0, varargs; as called here)
-    fn rx_locked_pipe_add_fragment(p: u32, first: u32, def: u32, end: u32) -> u32 = cdecl 0x806BE0 => unported;
-    /// `RxLockedPipeUnlock(pipe)` (0x805F40)
-    fn rx_locked_pipe_unlock(p: u32) -> u32 = cdecl 0x805F40 => unported;
-    /// `_rxPipelineDestroy(pipe)` (0x805820)
-    fn rx_pipeline_destroy(p: u32) = cdecl 0x805820 => unported;
-    /// `RxPipelineFindNodeByName(pipe, name, start, index)` (0x806B30)
-    fn rx_pipeline_find_node_by_name(p: u32, name: u32, start: u32, index: u32) -> u32 = cdecl 0x806B30 => unported;
-    /// `RxNodeDefinitionGetD3D9AtomicAllInOne()` (0x7582E0)
-    fn node_def_atomic_all_in_one() -> u32 = cdecl 0x7582E0 => unported;
-    /// `RxD3D9AllInOneGetInstanceCallBack(node)` (0x757390)
-    fn all_in_one_get_instance_cb(node: u32) -> u32 = cdecl 0x757390 => unported;
-    /// `RxD3D9AllInOneSetInstanceCallBack(node, cb)` (0x757380)
-    fn all_in_one_set_instance_cb(node: u32, cb: u32) = cdecl 0x757380 => unported;
     /// `RxD3D9AllInOneGetReinstanceCallBack(node)` (0x7573B0)
     fn all_in_one_get_reinstance_cb(node: u32) -> u32 = cdecl 0x7573B0 => unported;
     /// `RxD3D9AllInOneSetReinstanceCallBack(node, cb)` (0x7573A0)
     fn all_in_one_set_reinstance_cb(node: u32, cb: u32) = cdecl 0x7573A0 => unported;
-    /// `RxD3D9AllInOneSetRenderCallBack(node, cb)` (0x7573E0)
-    fn all_in_one_set_render_cb(node: u32, cb: u32) = cdecl 0x7573E0 => unported;
-    /// `RwD3D9GetCaps()` (0x7FAD20): the `D3DCAPS9` of the device
-    fn rw_d3d9_get_caps() -> u32 = cdecl 0x7FAD20 => unported;
     /// CRT `operator new` (0x82119A)
     fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
 
@@ -112,7 +101,7 @@ orig! {
 
 /// The all-in-one node of a pipeline built from definition `def` (found by its name).
 fn find_all_in_one(pipe: u32, def: u32) -> u32 {
-    rx_pipeline_find_node_by_name(pipe, rd::<u32>(GPtr::from_addr(def as usize), 0), 0, 0)
+    GPtr::<u8>::addr(rx_pipeline_find_node_by_name(GPtr::from_addr(pipe as usize), rd::<u32>(GPtr::from_addr(def as usize), 0), 0, 0)) as u32
 }
 
 /// Tags a pipeline with its plugin id (+0x2C pluginId, +0x30 pluginData).
@@ -131,24 +120,24 @@ fn tag(pipe: u32, id: u32) {
 #[hook(addr = 0x5D9F80, conv = cdecl, name = "CCustomCarEnvMapPipeline::CreateCustomObjPipe", expect = "53 56 57 E8 28 B8 22 00",
        route = "L2", hazards = "heap-writes")]
 pub fn car_env_map_create_custom_obj_pipe() -> u32 {
-    let pipe = rx_pipeline_create();
+    let pipe = GPtr::<u8>::addr(rx_pipeline_create()) as u32;
     if pipe == 0 {
         return 0;
     }
-    let lock = rx_pipeline_lock(pipe);
+    let lock = GPtr::<u8>::addr(rx_pipeline_lock(GPtr::from_addr(pipe as usize))) as u32;
     if lock != 0 {
-        let def = node_def_atomic_all_in_one();
-        let f = rx_locked_pipe_add_fragment(lock, 0, def, 0);
-        if rx_locked_pipe_unlock(f) != 0 {
+        let def = GPtr::<u8>::addr(node_def_atomic_all_in_one()) as u32;
+        let f = GPtr::<u8>::addr(rx_locked_pipe_add_fragment(GPtr::from_addr(lock as usize), 0, GPtr::from_addr(def as usize), 0)) as u32;
+        if GPtr::<u8>::addr(rx_locked_pipe_unlock(GPtr::from_addr(f as usize))) as u32 != 0 {
             let node = find_all_in_one(pipe, def);
-            all_in_one_set_instance_cb(node, all_in_one_get_instance_cb(node));
+            all_in_one_set_instance_cb(GPtr::from_addr(node as usize), all_in_one_get_instance_cb(GPtr::from_addr(node as usize)));
             all_in_one_set_reinstance_cb(node, CAR_INSTANCE_CB);
-            all_in_one_set_render_cb(node, CAR_RENDER_CB);
+            all_in_one_set_render_cb(GPtr::from_addr(node as usize), CAR_RENDER_CB);
             tag(pipe, ID_CAR_ENV_MAP);
             return pipe;
         }
     }
-    rx_pipeline_destroy(pipe);
+    rx_pipeline_destroy(GPtr::from_addr(pipe as usize));
     0
 }
 
@@ -158,7 +147,7 @@ pub fn car_env_map_create_custom_obj_pipe() -> u32 {
 ///
 /// Not registered: 0x5D8980 is hooked by sa-render mvpa_render1.rs (verified) (duplicate port left unregistered when STD-5 merged both).
 pub fn is_environment_mapping_supported() -> u32 {
-    let caps = rw_d3d9_get_caps() as usize;
+    let caps = (GPtr::<u8>::addr(rw_d3d9_get_caps()) as u32) as usize;
     if g::<i32>(caps + 0x94).read() <= 1 {
         return 0;
     }
@@ -237,21 +226,21 @@ pub fn car_fx_renderer_initialise() -> u32 {
 #[hook(addr = 0x5D7AA0, conv = cdecl, name = "CCustomBuildingPipeline::CreateCustomObjPipe", expect = "53 56 57 E8 08 DD 22 00",
        route = "L2", hazards = "heap-writes")]
 pub fn building_create_custom_obj_pipe() -> u32 {
-    let pipe = rx_pipeline_create();
-    let def = node_def_atomic_all_in_one();
+    let pipe = GPtr::<u8>::addr(rx_pipeline_create()) as u32;
+    let def = GPtr::<u8>::addr(node_def_atomic_all_in_one()) as u32;
     if pipe == 0 {
         return 0;
     }
-    let lock = rx_pipeline_lock(pipe);
-    if lock != 0 && rx_locked_pipe_add_fragment(lock, 0, def, 0) != 0 && rx_locked_pipe_unlock(lock) != 0 {
+    let lock = GPtr::<u8>::addr(rx_pipeline_lock(GPtr::from_addr(pipe as usize))) as u32;
+    if lock != 0 && GPtr::<u8>::addr(rx_locked_pipe_add_fragment(GPtr::from_addr(lock as usize), 0, GPtr::from_addr(def as usize), 0)) as u32 != 0 && GPtr::<u8>::addr(rx_locked_pipe_unlock(GPtr::from_addr(lock as usize))) as u32 != 0 {
         let node = find_all_in_one(pipe, def);
-        all_in_one_set_instance_cb(node, all_in_one_get_instance_cb(node));
+        all_in_one_set_instance_cb(GPtr::from_addr(node as usize), all_in_one_get_instance_cb(GPtr::from_addr(node as usize)));
         all_in_one_set_reinstance_cb(node, BUILDING_REINSTANCE_CB);
-        all_in_one_set_render_cb(node, BUILDING_RENDER_CB);
+        all_in_one_set_render_cb(GPtr::from_addr(node as usize), BUILDING_RENDER_CB);
         tag(pipe, ID_BUILDING);
         return pipe;
     }
-    rx_pipeline_destroy(pipe);
+    rx_pipeline_destroy(GPtr::from_addr(pipe as usize));
     0
 }
 
@@ -262,26 +251,26 @@ pub fn building_create_custom_obj_pipe() -> u32 {
 #[hook(addr = 0x5D6750, conv = cdecl, name = "CCustomBuildingDNPipeline::CreateCustomObjPipe", expect = "53 56 57 E8 58 F0 22 00",
        route = "L2", hazards = "heap-writes")]
 pub fn building_dn_create_custom_obj_pipe() -> u32 {
-    let pipe = rx_pipeline_create();
-    let def = node_def_atomic_all_in_one();
+    let pipe = GPtr::<u8>::addr(rx_pipeline_create()) as u32;
+    let def = GPtr::<u8>::addr(node_def_atomic_all_in_one()) as u32;
     if pipe == 0 {
         return 0;
     }
-    let lock = rx_pipeline_lock(pipe);
-    if lock != 0 && rx_locked_pipe_add_fragment(lock, 0, def, 0) != 0 && rx_locked_pipe_unlock(lock) != 0 {
+    let lock = GPtr::<u8>::addr(rx_pipeline_lock(GPtr::from_addr(pipe as usize))) as u32;
+    if lock != 0 && GPtr::<u8>::addr(rx_locked_pipe_add_fragment(GPtr::from_addr(lock as usize), 0, GPtr::from_addr(def as usize), 0)) as u32 != 0 && GPtr::<u8>::addr(rx_locked_pipe_unlock(GPtr::from_addr(lock as usize))) as u32 != 0 {
         let node = find_all_in_one(pipe, def);
         if BUILDING_DN_FLAG.get() != 0 {
-            all_in_one_set_instance_cb(node, all_in_one_get_instance_cb(node));
+            all_in_one_set_instance_cb(GPtr::from_addr(node as usize), all_in_one_get_instance_cb(GPtr::from_addr(node as usize)));
             all_in_one_set_reinstance_cb(node, DN_REINSTANCE_CB);
         } else {
-            all_in_one_set_instance_cb(node, all_in_one_get_instance_cb(node));
+            all_in_one_set_instance_cb(GPtr::from_addr(node as usize), all_in_one_get_instance_cb(GPtr::from_addr(node as usize)));
             all_in_one_set_reinstance_cb(node, all_in_one_get_reinstance_cb(node));
         }
-        all_in_one_set_render_cb(node, DN_RENDER_CB);
+        all_in_one_set_render_cb(GPtr::from_addr(node as usize), DN_RENDER_CB);
         tag(pipe, ID_BUILDING_DN);
         return pipe;
     }
-    rx_pipeline_destroy(pipe);
+    rx_pipeline_destroy(GPtr::from_addr(pipe as usize));
     0
 }
 

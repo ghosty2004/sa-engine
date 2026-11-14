@@ -26,17 +26,23 @@ use crate::bindings::set_remap;
 use sa_core::bindings::get_pad;
 use sa_core::bindings::hud_set_help_message as set_help_message;
 use sa_core::bindings::random_float_in_range;
+use crate::bindings::find_doors_with_garage as find_doors;
+use crate::bindings::find_safe_house_index_for_garage_type as find_safe_house_index;
+use crate::bindings::fx_add_particle;
+use crate::bindings::garage_is_entity_entirely_outside as is_entity_entirely_outside;
+use crate::bindings::get_stat_value;
+use crate::bindings::set_stat_value;
+use crate::bindings::store_and_remove_cars;
+use sa_core::bindings::audio_report_frontend_event as report_frontend_audio_event;
+use sa_core::bindings::find_player_coors;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::find_player_vehicle;
+use sa_core::bindings::stats_increment_stat as increment_stat;
+use sa_core::bindings::streaming_request_model as request_model;
+use sa_core::bindings::text_get;
+use sa_stream::bindings::choose_vehicle_colour;
+use sa_stream::bindings::find_player_wanted;
 orig! {
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => crate::world::cworld::find_player_ped;
-    /// `CWorld::FindPlayerVehicle(int32, bool)` (0x56E0D0)
-    fn find_player_vehicle(id: i32, remote: u8) -> GPtr<u8> = cdecl 0x56E0D0 => crate::world::cworld::find_player_vehicle;
-    /// `CWorld::FindPlayerCoors(CVector*, int32)` (0x56E010)
-    fn find_player_coors(out: GPtr<f32>, id: i32) -> GPtr<f32> = cdecl 0x56E010 => crate::world::cworld::find_player_coors;
-    /// `CWorld::FindPlayerWanted(int32)` (0x56E230)
-    fn find_player_wanted(id: i32) -> GPtr<u8> = cdecl 0x56E230 => crate::world::cworld::find_player_wanted;
-    /// `CGarage::IsEntityEntirelyOutside(CEntity*, float)` (0x448D30)
-    fn is_entity_entirely_outside(gp: GPtr<u8>, e: GPtr<u8>, margin: f32) -> u8 = thiscall 0x448D30 => crate::world::mvpb_world2::garage_is_entity_entirely_outside;
     /// `CGarage::IsStaticPlayerCarEntirelyInside()` (0x44A830)
     fn is_static_player_car_entirely_inside(gp: GPtr<u8>) -> u8 = thiscall 0x44A830 => crate::world::mvpb_world3::garage_is_static_player_car_entirely_inside;
     /// `thunk_FUN_01569180(float margin)` (0x448E50): the player (vehicle) entirely outside
@@ -59,8 +65,6 @@ orig! {
     fn is_any_other_ped_touching(gp: GPtr<u8>, ped: u32) -> u8 = thiscall 0x449100 => unported;
     /// `thunk_FUN_01565260(CVehicle*)` (0x447720): the vehicle suits a tuning garage
     fn vehicle_suits_garage(gp: GPtr<u8>, veh: GPtr<u8>) -> u8 = thiscall 0x447720 => crate::world::garages::vehicle_suits_garage;
-    /// `FUN_00449ff0(CObject**, CObject**)` (0x449FF0): the garage's door objects
-    fn find_doors(gp: GPtr<u8>, a: GPtr<u32>, b: GPtr<u32>) = thiscall 0x449FF0 => unported;
     /// `FUN_00449a50(CStoredCar*, int32)` (0x449A50)
     fn hideout_store_cars(gp: GPtr<u8>, stored: GPtr<u8>, max: i32) = thiscall 0x449A50 => unported;
     /// `FUN_00448330(CStoredCar*)` (0x448330)
@@ -69,38 +73,18 @@ orig! {
     fn hideout_restore(gp: GPtr<u8>, stored: GPtr<u8>) -> u8 = thiscall 0x4485C0 => unported;
     /// `thunk_FUN_0156d8d0(CStoredCar*)` (0x448550)
     fn hideout_restore_cars(gp: GPtr<u8>, stored: GPtr<u8>) -> u8 = thiscall 0x448550 => unported;
-    /// `CGarage::StoreAndRemoveCarsForThisHideOut(CStoredCar*, int32)` (0x449900)
-    fn store_and_remove_cars(gp: GPtr<u8>, stored: GPtr<u8>, max: i32) = thiscall 0x449900 => super::garage_store_cars::store_and_remove_cars_for_this_hide_out;
-    /// `CGarages::FindSafeHouseIndexForGarageType(eGarageType)` (0x4489F0)
-    fn find_safe_house_index(ty: i32) -> i32 = cdecl 0x4489F0 => crate::world::misc2::find_safe_house_index_for_garage_type;
     /// `CGarages::CountCarsInHideoutGarage(eGarageType)` (0x44A210)
     fn count_cars_in_hideout(ty: u8) -> i32 = cdecl 0x44A210 => crate::world::misc2::count_cars_in_hideout_garage;
     /// `CGarages::GivePlayerDetonator()` (0x448660)
     fn give_player_detonator() = cdecl 0x448660 => unported;
     /// `CGarages::IsCarSprayable(CVehicle*)` (0x4479A0)
     fn is_car_sprayable(veh: GPtr<u8>) -> u8 = cdecl 0x4479A0 => crate::world::misc2::is_car_sprayable;
-    /// `CAudioEngine::ReportFrontendAudioEvent(eAudioEvents, float, float)` (0x506EA0) on `AudioEngine`
-    fn report_frontend_audio_event(ae: GPtr<u8>, ev: u32, vol: f32, speed: f32) = thiscall 0x506EA0 => unported;
-    /// `CStats::GetStatValue(eStats)` (0x558E40), ST0
-    fn get_stat_value(stat: u16) -> f64 = cdecl 0x558E40 => crate::world::restart::stat_value_port;
-    /// `CStats::IncrementStat(eStats, float)` (0x55C180)
-    fn increment_stat(stat: u32, v: f32) = cdecl 0x55C180 => crate::world::mvpb_stats::increment_stat;
-    /// `CStats::SetStatValue(eStats, float)` (0x55A070)
-    fn set_stat_value(stat: u16, v: f32) = cdecl 0x55A070 => crate::world::stats::set_stat_value;
     /// `std::max<float>` (0x420800), ST0
     fn max_f(a: f32, b: f32) -> f64 = cdecl 0x420800 => crate::world::entity_prerender::max_f_port;
-    /// `CVehicleModelInfo::ChooseVehicleColour(uint8&, uint8&, uint8&, uint8&, int32)` (0x4C8500)
-    fn choose_vehicle_colour(mi: GPtr<u8>, c1: GPtr<u8>, c2: GPtr<u8>, c3: GPtr<u8>, c4: GPtr<u8>, shift: i32) = thiscall 0x4C8500 => sa_stream::modelinfo::vehicle::choose_vehicle_colour;
-    /// `FxSystem_c::AddParticle(RwV3d*, RwV3d*, float, FxPrtMult_c*, float, float, float, uint8)` (0x4AA440)
-    fn fx_add_particle(fx: GPtr<u8>, pos: GPtr<f32>, vel: GPtr<f32>, time: f32, mult: GPtr<u8>, brightness: f32, zf: f32, camf: f32, local: u32) = thiscall 0x4AA440 => unported;
     /// `CVehicle::DestroyVehicleAndDriverAndPassengers(CVehicle*)` (0x6D2250)
     fn destroy_vehicle_and_occupants(veh: GPtr<u8>) = cdecl 0x6D2250 => unported;
     /// `CWorld::CallOffChaseForArea(float, float, float, float)` (0x566A60)
     fn call_off_chase_for_area(x1: f32, y1: f32, x2: f32, y2: f32) = cdecl 0x566A60 => unported;
-    /// `CText::Get(const char*)` (0x6A0050) on `TheText`
-    fn text_get(t: GPtr<u8>, key: u32) -> u32 = thiscall 0x6A0050 => unported;
-    /// `CStreaming::RequestModel(int32, int32)` (0x4087E0)
-    fn request_model(id: i32, flags: i32) = cdecl 0x4087E0 => sa_stream::streaming::request_model;
     /// `CVehicle::Fix()` (vtable +0xC8)
     fn v_fix(veh: GPtr<u8>) = thiscall vslot 0xC8 => unported;
 }
@@ -177,8 +161,8 @@ fn message(msg: u32) {
 }
 
 fn help(key: u32) {
-    let t = text_get(GPtr::from_addr(THE_TEXT), key);
-    set_help_message(t, 0, 0, 1);
+    let t = GPtr::<u8>::addr(text_get(GPtr::from_addr(THE_TEXT), GPtr::from_addr(key as usize))) as u32;
+    set_help_message(GPtr::from_addr(t as usize), 0, 0, 1);
 }
 
 /// `GetPad(0)->DisablePlayerControls` bit 2 (+0x10E).
@@ -690,7 +674,7 @@ fn spray_closed(gp: GPtr<u8>) {
 /// 0x44B0D7..0x44B2BA: new colours for a vehicle without a fixed paint job or remap; true when
 /// they differ (then ten paint particles in the new primary colour).
 fn repaint(veh: GPtr<u8>) -> bool {
-    if rd::<u8>(veh, 0x868) & 2 != 0 || get_remap_index(veh) >= 0 {
+    if rd::<u8>(veh, 0x868) & 2 != 0 || get_remap_index(veh) as i32 >= 0 {
         return false;
     }
     let mut col = [0u8; 4];
@@ -735,8 +719,8 @@ fn repaint(veh: GPtr<u8>) -> bool {
         vel[2] = X87::from_f64_exact(random_float_in_range(0.0, f32::from_bits(0x3D4C_CCCD))).to_f32();
         fx_add_particle(
             g::<GPtr<u8>>(0xA9_AE20).read(),
-            GPtr::from_raw(pos.as_mut_ptr()),
-            GPtr::from_raw(vel.as_mut_ptr()),
+            GPtr::<f32>::cast::<u8>(GPtr::from_raw(pos.as_mut_ptr())),
+            GPtr::<f32>::cast::<u8>(GPtr::from_raw(vel.as_mut_ptr())),
             0.0,
             mp,
             -1.0,
@@ -1016,7 +1000,7 @@ fn hideout_closed(gp: GPtr<u8>) {
 fn full_hideout_help(gp: GPtr<u8>) {
     let mut a = 0u32;
     let mut b = 0u32;
-    find_doors(gp, GPtr::from_raw(&mut a), GPtr::from_raw(&mut b));
+    find_doors(gp, GPtr::<u32>::cast::<u8>(GPtr::from_raw(&mut a)), GPtr::<u32>::cast::<u8>(GPtr::from_raw(&mut b)));
     let near = |d: u32| d != 0 && !ge(door_dist(GPtr::from_addr(d as usize)), c(0x41C8_0000));
     if !near(a) && !near(b) {
         return;
@@ -1024,8 +1008,8 @@ fn full_hideout_help(gp: GPtr<u8>) {
     if now().wrapping_sub(g::<u32>(LAST_HELP_TIME).read()) <= 18000 {
         return;
     }
-    let ap = get_vehicle_appearance(player_vehicle());
-    if ap == 3 || get_vehicle_appearance(player_vehicle()) == 5 {
+    let ap = get_vehicle_appearance(player_vehicle()) as i32;
+    if ap == 3 || get_vehicle_appearance(player_vehicle()) as i32 == 5 {
         return;
     }
     help(0x85_99C0);

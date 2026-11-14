@@ -11,33 +11,27 @@ use sa_core::{hook, orig};
 
 use crate::common::{f32_of, ftol32, g, rd, xi};
 
-use crate::bindings::set_indices;
-use crate::bindings::set_texture;
-use crate::bindings::set_vertex_declaration;
+use sa_core::bindings::set_indices;
+use sa_core::bindings::set_texture;
+use sa_core::bindings::set_vertex_declaration;
 use sa_core::bindings::enable_clipping_if_needed;
 use sa_core::bindings::get_render_state;
 use sa_core::bindings::set_streams;
 use sa_core::bindings::vertex_alpha_enable;
+use crate::bindings::instance_data_render as instance_data_render_call;
+use crate::bindings::instance_data_render_lighting as instance_data_render_lighting_call;
+use sa_core::bindings::set_pixel_shader;
+use sa_core::bindings::set_render_state;
+use sa_core::bindings::set_surface_properties;
+use sa_core::bindings::set_tss;
+use sa_core::bindings::set_vertex_shader;
 orig! {
-    /// `RwD3D9SetRenderState(state, value)` (0x7FC2D0)
-    fn set_render_state(state: u32, value: u32) -> u32 = cdecl 0x7FC2D0 => unported;
-    /// `RwD3D9SetTextureStageState(stage, type, value)` (0x7FC340)
-    fn set_tss(stage: u32, ty: u32, value: u32) = cdecl 0x7FC340 => unported;
     /// `G->dOpenDevice.fpRenderStateSet(state, value)` (`[G] + 0x20`)
     fn rw_render_state_set(state: u32, value: u32) -> u32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `RwD3D9SetSurfaceProperties(surfaceProps, color, flags)` (0x7FC4D0)
-    fn set_surface_properties(surf: GPtr<u8>, color: GPtr<u8>, flags: u32) -> u32 = cdecl 0x7FC4D0 => unported;
-    /// `_rwD3D9SetPixelShader(shader)` (0x7F9FF0) / `_rwD3D9SetVertexShader(shader)` (0x7F9FB0)
-    fn set_pixel_shader(s: u32) = cdecl 0x7F9FF0 => unported;
-    fn set_vertex_shader(s: u32) = cdecl 0x7F9FB0 => unported;
     /// `_rwD3D9DrawIndexedPrimitive(type, baseIndex, minIndex, numVertices, startIndex, primCount)` (0x7FA320)
     fn draw_indexed_primitive(ty: u32, base: u32, min: u32, nv: u32, start: u32, count: u32) = cdecl 0x7FA320 => unported;
     /// `_rwD3D9DrawPrimitive(type, startVertex, primCount)` (0x7FA360)
     fn draw_primitive(ty: u32, start: u32, count: u32) = cdecl 0x7FA360 => unported;
-    /// `RxD3D9InstanceDataRender(header, inst)` (0x5DA640)
-    fn instance_data_render_call(h: GPtr<u8>, inst: GPtr<u8>) = cdecl 0x5DA640 => instance_data_render;
-    /// `RxD3D9InstanceDataRenderLighting(header, inst, flags, texture)` (0x5DA6A0)
-    fn instance_data_render_lighting_call(h: GPtr<u8>, inst: GPtr<u8>, flags: u32, tex: u32) = cdecl 0x5DA6A0 => instance_data_render_lighting;
 }
 
 /// The DN material plugin offset (`[0x8D12C4]`) and the texture-transform matrix cells it fills.
@@ -76,12 +70,12 @@ pub fn instance_data_render(h: GPtr<u8>, inst: GPtr<u8>) {
        route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn instance_data_render_lighting(h: GPtr<u8>, inst: GPtr<u8>, flags: u32, tex: u32) {
     if flags & 0x84 != 0 {
-        set_texture(tex, 0);
+        set_texture(GPtr::from_addr(tex as usize), 0);
         for (t, v) in [(1, 4), (2, 2), (3, 0), (4, 4), (5, 2), (6, 0)] {
             set_tss(0, t, v);
         }
     } else {
-        set_texture(0, 0);
+        set_texture(GPtr::NULL, 0);
         for (t, v) in [(1, 3), (3, 0), (4, 3), (6, 0)] {
             set_tss(0, t, v);
         }
@@ -106,7 +100,7 @@ pub fn building_dn_render_cb(entry: GPtr<u8>, object: GPtr<u8>, ty: u32, flags: 
     get_render_state(0x89, GPtr::from_raw(&raw mut lighting));
     let unlit = lighting == 0 && flags & 8 == 0;
     if unlit {
-        set_texture(0, 0);
+        set_texture(GPtr::NULL, 0);
         set_render_state(0x3C, 0xFF00_0000);
         for t in [1, 3, 4, 6] {
             set_tss(0, t, 3);
@@ -134,7 +128,7 @@ pub fn building_dn_render_cb(entry: GPtr<u8>, object: GPtr<u8>, ty: u32, flags: 
             g::<u32>(UV_MATRIX_ONE_A).write(0x3F80_0000);
             g::<u32>(UV_MATRIX_ONE_B).write(0x3F80_0000);
             g::<f32>(UV_MATRIX_V).write(f32_of(xi(i32::from(rd::<i8>(plug, 1))).fmul_m(k)));
-            set_texture(rd::<u32>(plug, 8), 1);
+            set_texture(GPtr::from_addr(rd::<u32>(plug, 8) as usize), 1);
             let a = xi(i32::from(rd::<u8>(plug, 4))).fmul_m(g::<f32>(0x859A3C).read()).fmul_m(g::<f32>(0x86BE90).read());
             let mut v = ftol32(a);
             if v > 0xFF {

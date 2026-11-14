@@ -22,9 +22,8 @@ const C_HALF_RAD: usize = 0x8631D4;
 const QUAT_PLUGIN: i32 = 0x195;
 
 use crate::bindings::rw_sqrt;
+use sa_core::bindings::rw_v3d_normalize;
 orig! {
-    /// `RwV3dNormalize(out, in)` (0x7ED9B0): ST0 length (discarded here)
-    fn rw_v3d_normalize(out: GPtr<u8>, inp: GPtr<u8>) -> f64 = cdecl 0x7ED9B0 => normalize_f64;
     /// `_rtQuatFromMatrixX/Y/Z(RtQuat*, const RwMatrix*)` (called through a register in the original)
     fn from_matrix_x(q: GPtr<u8>, m: GPtr<u8>) = cdecl 0x7EB6A0 => rt_quat_from_matrix_x;
     fn from_matrix_y(q: GPtr<u8>, m: GPtr<u8>) = cdecl 0x7EB700 => rt_quat_from_matrix_y;

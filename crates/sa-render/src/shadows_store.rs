@@ -10,21 +10,14 @@ use sa_math::x87::X87;
 
 use crate::common::{ftol32, g, jne, jp, k, rd, x, xi};
 
+use crate::bindings::stencil_graphics_high_quality as graphics_high_quality;
+use sa_core::bindings::find_player_vehicle;
+use sa_pop::bindings::store_shadow_to_be_rendered as store_shadow_to_be_rendered_tex;
+use sa_world::bindings::entity_get_col_model as get_col_model;
+use sa_world::bindings::store_static_shadow;
 orig! {
-    /// `CStencilShadows::GraphicsHighQuality()` (0x70f9b0)
-    fn graphics_high_quality() -> u8 = cdecl 0x70f9b0 => crate::stencilshadows::graphics_high_quality;
-    /// `CEntity::GetColModel()` (0x535300)
-    fn get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => sa_world::world::entity::get_col_model;
-    /// `FindPlayerVehicle(int, bool)` (0x56e0d0)
-    fn find_player_vehicle(id: i32, include_remote: u8) -> GPtr<u8> = cdecl 0x56e0d0 => sa_world::world::cworld::find_player_vehicle;
     /// `CVector::CrossProduct(CVector* out, const CVector* a, const CVector* b)` (0x59c730)
     fn cross_product(out: GPtr<CVector>, a: GPtr<CVector>, b: GPtr<CVector>) -> GPtr<CVector> = cdecl 0x59c730 => sa_world::collision::data::cross_product_port;
-    /// `CShadows::StoreShadowToBeRendered(type, RwTexture*, CVector*, fx, fy, sx, sy, intensity, r, g, b,
-    /// zDistance, drawOnWater, scale, CRealTimeShadow*, drawOnBuildings)` (0x707390; dwords as pushed)
-    fn store_shadow_to_be_rendered_tex(ty: u32, tex: GPtr<u8>, pos: GPtr<u8>, fx: u32, fy: u32, sx: u32, sy: u32, intensity: u32, r: u32, gg: u32, b: u32, zd: u32, water: u32, scale: u32, rts: GPtr<u8>, bld: u32) = cdecl 0x707390 => crate::mvpd_r1::store_shadow_to_be_rendered_tex;
-    /// `CShadows::StoreStaticShadow(id, type, RwTexture*, CVector*, fx, fy, sx, sy, intensity, r, g, b,
-    /// zDistance, scale, drawDistance, temporary, upDistance)` (0x70ba00; dwords as pushed)
-    fn store_static_shadow(id: u32, ty: u32, tex: u32, pos: GPtr<u8>, fx: u32, fy: u32, sx: u32, sy: u32, intensity: u32, r: u32, gg: u32, b: u32, zd: u32, scale: u32, dd: u32, temp: u32, up: u32) -> u8 = cdecl 0x70ba00 => crate::mvpd_r1::store_static_shadow;
 }
 
 /// `gpShadowCarTex`, `gpShadowBikeTex`, `gpShadowHeliTex`, `gpShadowBaronTex` / plane shadow texture.
@@ -262,7 +255,7 @@ pub fn store_shadow_for_vehicle(veh: GPtr<u8>, ty: u32) {
     let s = strength;
     if !fast && flag == 0 {
         let id = veh.addr().wrapping_add(1) as u32;
-        store_static_shadow(id, 1, tex, p, fx, fy, sx, sy, s, s, s, s, 0x4090_0000, 0x3f80_0000, 0, 0, 0x3dcc_cccd);
+        store_static_shadow(id, 1, tex, p, f32::from_bits(fx), f32::from_bits(fy), f32::from_bits(sx), f32::from_bits(sy), s, s, s, s, f32::from_bits(0x4090_0000), f32::from_bits(0x3f80_0000), f32::from_bits(0), 0, f32::from_bits(0x3dcc_cccd));
     } else {
         store_shadow_to_be_rendered_tex(1, GPtr::from_addr(tex as usize), p, fx, fy, sx, sy, s, s, s, s, zdist, flag_dword, 0x3f80_0000, GPtr::from_addr(0), flag_dword);
     }

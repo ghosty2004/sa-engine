@@ -9,6 +9,7 @@
 //! +0x39 arm IK in use, +0x3A look IK in use, +0x3B "aim immediately" flag.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -29,19 +30,19 @@ const MINUS_FOUR: u32 = 0xC080_0000;
 /// 8.0f
 const EIGHT: u32 = 0x4100_0000;
 
-use crate::bindings::anim_blend_animation as ug_blend_animation;
-use crate::bindings::anim_set_delete_callback as ug_set_delete_callback;
-use crate::bindings::assoc_set_finish_callback as ug_set_finish_callback;
-use crate::bindings::assoc_start as ug_assoc_start;
-use crate::bindings::clump_get_association as ug_clump_get_association;
+use sa_world::bindings::anim_blend_animation as ug_blend_animation;
+use sa_core::bindings::anim_set_delete_callback as ug_set_delete_callback;
+use sa_core::bindings::assoc_set_finish_callback as ug_set_finish_callback;
+use sa_core::bindings::assoc_start as ug_assoc_start;
+use sa_core::bindings::clump_get_association as ug_clump_get_association;
 use crate::bindings::duck_is_task_in_use_by_other_tasks as ug_duck_in_use_by_other_tasks;
 use crate::bindings::fight_6240b0 as ug_fight_6240b0;
 use crate::bindings::fight_ctor as ug_fight_ctor;
 use crate::bindings::fight_dtor_orig as ug_fight_dtor;
-use crate::bindings::ik_abort_look_at as ug_ik_abort_look_at;
+use sa_core::bindings::ik_abort_look_at as ug_ik_abort_look_at;
 use crate::bindings::ik_abort_point_arm as ug_ik_abort_point_arm;
 use crate::bindings::ik_is_arm_pointing as ug_ik_is_arm_pointing;
-use crate::bindings::ped_set_move_state as ug_ped_set_move_state;
+use sa_world::bindings::ped_set_move_state as ug_ped_set_move_state;
 use crate::bindings::ug_abort_ik_orig;
 use sa_core::bindings::entity_clean_up_old_reference as ug_clean_up_old_reference;
 use sa_core::bindings::entity_register_reference as ug_register_reference;
@@ -58,17 +59,21 @@ use sa_world::bindings::ik_is_looking as ug_ik_is_looking;
 use sa_world::bindings::intel_get_task_duck as ug_get_task_duck;
 use sa_world::bindings::pad_get_ped_walk_left_right as ug_pad_walk_left_right;
 use sa_world::bindings::pad_get_ped_walk_up_down as ug_pad_walk_up_down;
-use sa_world::bindings::ped_get_bone_position as ug_ped_get_bone_position;
+use sa_core::bindings::ped_get_bone_position as ug_ped_get_bone_position;
 use sa_world::bindings::ped_get_transformed_bone_position as ug_ped_get_transformed_bone_position;
 use sa_world::bindings::ped_get_weapon_skill as ug_ped_get_weapon_skill;
 use sa_world::bindings::task_simple_ctor as ug_task_simple_ctor;
 use sa_world::bindings::task_simple_dtor as ug_task_simple_dtor;
 use sa_world::bindings::vector_add as ug_vector_add;
-use sa_world::bindings::vector_sub as ug_vector_sub;
+use sa_core::bindings::vector_sub as ug_vector_sub;
 use sa_world::bindings::vector_sub_assign as ug_vector_sub_assign;
+use crate::bindings::weapon_fire as ug_weapon_fire;
+use sa_core::bindings::assoc_set_current_time as ug_set_current_time;
+use sa_world::bindings::add_animation as ug_add_animation;
+use sa_world::bindings::get_at_direction as ug_get_at_direction;
+use sa_world::bindings::ped_do_gun_flash as ug_ped_do_gun_flash;
+use sa_world::bindings::ped_say as ug_ped_say;
 orig! {
-    /// `CAnimBlendAssociation::SetCurrentTime(float)` (0x4CEA80)
-    fn ug_set_current_time(a: GPtr<u8>, t: u32) = thiscall 0x4CEA80 => unported;
     /// `IKChainManager_c::IsFacingTarget(ped, slot)` (0x618330)
     fn ug_ik_is_facing_target(m: GPtr<u8>, ped: GPtr<u8>, slot: i32) -> u8 = thiscall 0x618330 => unported;
     /// `IKChainManager_c::LookAt(name, ped, target, time, bone, pos, useTorso, speed, blend, priority, b)` (0x618970)
@@ -81,22 +86,12 @@ orig! {
     fn ug_v_get_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
     /// `CTask::MakeAbortable(ped, priority, event)` (vtable +0x18)
     fn ug_v_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, priority: i32, event: GPtr<u8>) -> u8 = thiscall vslot 0x18 => unported;
-    /// `CPed::Say(id, ...)` (0x5EFFE0)
-    fn ug_ped_say(p: GPtr<u8>, id: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32) = thiscall 0x5EFFE0 => unported;
-    /// `CPed::DoGunFlash(lifetime, leftHand)` (0x5DF340)
-    fn ug_ped_do_gun_flash(p: GPtr<u8>, life: u32, left: u32) -> u32 = thiscall 0x5DF340 => unported;
-    /// `CPlacebale::GetAtDirection` style getter with a hidden out vector (0x50E420)
-    fn ug_get_at_direction(p: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall 0x50E420 => unported;
-    /// `CWeapon::Fire(owner, src, src2, target, targetPos, altPos)` (0x742300)
-    fn ug_weapon_fire(w: GPtr<u8>, owner: GPtr<u8>, src: GPtr<u8>, src2: GPtr<u8>, target: GPtr<u8>, tpos: GPtr<u8>, alt: GPtr<u8>) -> u32 = thiscall 0x742300 => unported;
     /// `CWeaponInfo::GetAnimLoopStart(bool duck)` (0x608F00, result in ST0)
     fn ug_wi_loop_start(wi: GPtr<u8>, duck: u32) -> f64 = thiscall 0x608F00 => unported;
     /// `CWeaponInfo::GetAnimLoopEnd(bool duck)` (0x608F20, result in ST0)
     fn ug_wi_loop_end(wi: GPtr<u8>, duck: u32) -> f64 = thiscall 0x608F20 => unported;
     /// `CWeaponInfo::GetAnimLoopFire(bool duck)` (0x61C150, result in ST0)
     fn ug_wi_loop_fire(wi: GPtr<u8>, duck: u32) -> f64 = thiscall 0x61C150 => unported;
-    /// `CAnimManager::AddAnimation(clump, group, id)` (0x4D3AA0)
-    fn ug_add_animation(clump: u32, group: u32, id: u32) -> GPtr<u8> = cdecl 0x4D3AA0 => unported;
     /// `CTaskSimpleDuck::ForceStopMove()` (0x6924B0)
     fn ug_duck_force_stop_move(d: GPtr<u8>) = thiscall 0x6924B0 => unported;
     /// `CTaskSimpleDuck::StopFireGun()` (0x61C420)
@@ -211,11 +206,11 @@ pub fn use_gun_destructor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x86D724);
     let t = rd::<GPtr<u8>>(this, 0x1C);
     if !t.is_null() {
-        ug_clean_up_old_reference(t, this.byte_add(0x1C));
+        ug_clean_up_old_reference(t, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x1C)));
     }
     let a = rd::<GPtr<u8>>(this, 0x2C);
     if !a.is_null() {
-        ug_set_delete_callback(a, DEFAULT_ANIM_CB, 0);
+        ug_set_delete_callback(a, DEFAULT_ANIM_CB, GPtr::NULL);
     }
     ug_task_simple_dtor(this);
 }
@@ -252,7 +247,7 @@ pub fn use_gun_control_gun(this: GPtr<u8>, ped: GPtr<u8>, target: GPtr<u8>, cmd:
     wr::<u8>(this, 9, 1);
     if target != old {
         if !old.is_null() {
-            ug_clean_up_old_reference(old, this.byte_add(0x1C));
+            ug_clean_up_old_reference(old, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x1C)));
         }
         wr::<GPtr<u8>>(this, 0x1C, target);
         if !target.is_null() {
@@ -411,11 +406,11 @@ pub fn use_gun_require_pistol_whip(ped: GPtr<u8>, target: GPtr<u8>) -> u8 {
 /// in the caller's ped argument slot (the original reuses it as a local).
 #[hook(addr = 0x61E3F0, conv = thiscall, name = "CTaskSimpleUseGun::SetMoveAnim", expect = "83 EC 14 53 55")]
 pub fn use_gun_set_move_anim(this: GPtr<u8>, ped: GPtr<u8>) {
-    let a31 = ug_clump_get_association(rd::<u32>(ped, 0x18), 0x31);
-    let mut a32 = ug_clump_get_association(rd::<u32>(ped, 0x18), 0x32);
-    let mut a33 = ug_clump_get_association(rd::<u32>(ped, 0x18), 0x33);
-    let mut a34 = ug_clump_get_association(rd::<u32>(ped, 0x18), 0x34);
-    let mut a35 = ug_clump_get_association(rd::<u32>(ped, 0x18), 0x35);
+    let a31 = ug_clump_get_association(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0x31);
+    let mut a32 = ug_clump_get_association(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0x32);
+    let mut a33 = ug_clump_get_association(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0x33);
+    let mut a34 = ug_clump_get_association(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0x34);
+    let mut a35 = ug_clump_get_association(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0x35);
     if rd::<u32>(ped, 0x46C) & 0x400_0000 != 0 {
         let duck = ug_get_task_duck(rd::<GPtr<u8>>(ped, 0x47C), 1);
         if !duck.is_null() {
@@ -447,12 +442,12 @@ pub fn use_gun_set_move_anim(this: GPtr<u8>, ped: GPtr<u8>) {
             ug_ped_set_move_state(ped, 1);
             let t = rd::<i32>(ped, 0x598);
             if (7..=0xF).contains(&t) || t == 6 {
-                ug_blend_animation(rd::<u32>(ped, 0x18), 0, 0xBE, 0x4080_0000)
+                ug_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0, 0xBE, f32::from_bits(0x4080_0000))
             } else {
-                ug_blend_animation(rd::<u32>(ped, 0x18), rd::<u32>(ped, 0x4D4), 3, EIGHT)
+                ug_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), rd::<u32>(ped, 0x4D4), 3, f32::from_bits(EIGHT))
             }
         } else {
-            ug_blend_animation(rd::<u32>(ped, 0x18), 0, 0x31, EIGHT)
+            ug_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0, 0x31, f32::from_bits(EIGHT))
         };
         for a in [a32, a33, a34, a35] {
             if !a.is_null() {
@@ -462,7 +457,7 @@ pub fn use_gun_set_move_anim(this: GPtr<u8>, ped: GPtr<u8>) {
         if !anim.is_null() && !x(rd::<f32>(anim, 0x18)).fcom(cf(0x858EF0)).test_any(0x41) {
             for a in [a32, a33, a34, a35] {
                 if !a.is_null() {
-                    ug_set_current_time(a, 0);
+                    ug_set_current_time(a, f32::from_bits(0));
                 }
             }
         }
@@ -481,7 +476,7 @@ pub fn use_gun_set_move_anim(this: GPtr<u8>, ped: GPtr<u8>) {
         } else {
             0x32
         };
-        let a = ug_blend_animation(rd::<u32>(ped, 0x18), 0, id, EIGHT);
+        let a = ug_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0, id, f32::from_bits(EIGHT));
         wr::<u8>(a, 0x2E, rd::<u8>(a, 0x2E) | 1);
         ug_ped_set_move_state(ped, 0);
         return;
@@ -522,7 +517,7 @@ pub fn use_gun_set_move_anim(this: GPtr<u8>, ped: GPtr<u8>) {
             wr::<u32>(a33, 0x1C, 0);
         }
         if a35.is_null() {
-            a35 = ug_add_animation(rd::<u32>(ped, 0x18), 0, 0x35);
+            a35 = ug_add_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0, 0x35);
         }
         wr::<f32>(a35, 0x18, sx);
         wr::<u32>(a35, 0x1C, 0);
@@ -534,7 +529,7 @@ pub fn use_gun_set_move_anim(this: GPtr<u8>, ped: GPtr<u8>) {
             wr::<u32>(a35, 0x1C, 0);
         }
         if a33.is_null() {
-            a33 = ug_add_animation(rd::<u32>(ped, 0x18), 0, 0x33);
+            a33 = ug_add_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0, 0x33);
         }
         wr::<u32>(a33, 0x1C, 0);
         wr::<f32>(a33, 0x18, f32_of(x(sx).fchs()));
@@ -547,7 +542,7 @@ pub fn use_gun_set_move_anim(this: GPtr<u8>, ped: GPtr<u8>) {
             wr::<u32>(a34, 0x1C, 0);
         }
         if a32.is_null() {
-            a32 = ug_add_animation(rd::<u32>(ped, 0x18), 0, 0x32);
+            a32 = ug_add_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0, 0x32);
         }
         wr::<f32>(a32, 0x18, f32_of(x(sy).fchs()));
         wr::<u32>(a32, 0x1C, 0);
@@ -559,7 +554,7 @@ pub fn use_gun_set_move_anim(this: GPtr<u8>, ped: GPtr<u8>) {
             wr::<u32>(a32, 0x1C, 0);
         }
         if a34.is_null() {
-            a34 = ug_add_animation(rd::<u32>(ped, 0x18), 0, 0x34);
+            a34 = ug_add_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0, 0x34);
         }
         wr::<f32>(a34, 0x18, sy);
         wr::<u32>(a34, 0x1C, 0);
@@ -601,14 +596,14 @@ pub fn use_gun_remove_stance_anims(this: GPtr<u8>, ped: GPtr<u8>, _delta: u32) {
                 .fcom(x(rd::<f32>(a, 0x20)))
                 .test_parity(0x44)
         {
-            ug_set_current_time(a, rd::<u32>(wi, 0x44));
+            ug_set_current_time(a, f32::from_bits(rd::<u32>(wi, 0x44)));
         }
         let a = rd::<GPtr<u8>>(this, 0x2C);
         wr::<u8>(a, 0x2E, rd::<u8>(a, 0x2E) | 1);
     }
     let mut any = false;
     for id in 0x31..=0x35 {
-        let s = ug_clump_get_association(rd::<u32>(ped, 0x18), id);
+        let s = ug_clump_get_association(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), id);
         if !s.is_null() {
             wr::<u16>(s, 0x2E, rd::<u16>(s, 0x2E) | 4);
             any = true;
@@ -635,7 +630,7 @@ pub fn use_gun_remove_stance_anims(this: GPtr<u8>, ped: GPtr<u8>, _delta: u32) {
                     .fcom(cf(0x859B60))
                     .test_parity(5);
             if walk {
-                let w = ug_blend_animation(rd::<u32>(ped, 0x18), rd::<u32>(ped, 0x4D4), 0, EIGHT);
+                let w = ug_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), rd::<u32>(ped, 0x4D4), 0, f32::from_bits(EIGHT));
                 wr::<u8>(w, 0x2E, rd::<u8>(w, 0x2E) | 1);
                 ug_ped_set_move_state(ped, 4);
                 wr::<u32>(ped, 0x538, 4);
@@ -647,12 +642,12 @@ pub fn use_gun_remove_stance_anims(this: GPtr<u8>, ped: GPtr<u8>, _delta: u32) {
             }
         }
     }
-    let i = ug_blend_animation(rd::<u32>(ped, 0x18), rd::<u32>(ped, 0x4D4), 3, EIGHT);
+    let i = ug_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), rd::<u32>(ped, 0x4D4), 3, f32::from_bits(EIGHT));
     wr::<u8>(i, 0x2E, rd::<u8>(i, 0x2E) | 1);
     if rd::<u8>(this, 0xF) == 6 {
         let grp = rd::<u32>(ped, 0x4D4);
         if grp != 0x39 && grp != 0x3A && grp != 0x3B {
-            ug_blend_animation(rd::<u32>(ped, 0x18), 0, 0x36, EIGHT);
+            ug_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0, 0x36, f32::from_bits(EIGHT));
         }
     }
 }
@@ -687,7 +682,7 @@ pub fn use_gun_fire_gun(this: GPtr<u8>, ped: GPtr<u8>, left: u32) -> u32 {
         }
     } else {
         let (bone, slot) = if left as u8 != 0 { (0x22, 2) } else { (0x18, 1) };
-        ug_ped_get_bone_position(ped, p1, bone, 0);
+        ug_ped_get_bone_position(ped, p1, bone as i32, 0);
         let z = cf(0x86D628).fadd_m(rd::<f32>(p2, 8)).fadd_m(rd::<f32>(p1, 8));
         wr::<f32>(p1, 8, f32_of(z));
         ug_ped_get_transformed_bone_position(ped, p2, bone, 0);
@@ -777,7 +772,7 @@ pub fn use_gun_aim_gun(this: GPtr<u8>, ped: GPtr<u8>) {
             wr::<u32>(pp, 8, rd::<u32>(pos, 8));
         }
         if ug_ped_is_player(ped) == 0 {
-            ug_ped_say(ped, 0xDC, 0, 0x3F80_0000, 0, 0, 0);
+            ug_ped_say(ped, 0xDC, 0, f32::from_bits(0x3F80_0000), 0, 0, 0);
         }
         if rd::<u32>(ped, 0x528) & 4 != 0 {
             if !(rd::<u8>(this, 0x39) != 0 && rd::<u8>(this, 0x3A) != 0) {
@@ -1041,14 +1036,14 @@ pub fn use_gun_make_abortable(this: GPtr<u8>, ped: GPtr<u8>, priority: i32, _eve
     }
     ug_remove_stance_anims_orig(this, ped, MINUS_FOUR);
     if priority == 2 {
-        ug_blend_animation(rd::<u32>(ped, 0x18), rd::<u32>(ped, 0x4D4), 3, 0x447A_0000);
+        ug_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), rd::<u32>(ped, 0x4D4), 3, f32::from_bits(0x447A_0000));
     }
     let a = rd::<GPtr<u8>>(this, 0x2C);
     if !a.is_null() {
         if priority == 2 {
             wr::<u32>(a, 0x1C, 0xC47A_0000);
         }
-        ug_set_delete_callback(rd::<GPtr<u8>>(this, 0x2C), DEFAULT_ANIM_CB, 0);
+        ug_set_delete_callback(rd::<GPtr<u8>>(this, 0x2C), DEFAULT_ANIM_CB, GPtr::NULL);
         wr::<u32>(this, 0x2C, 0);
     }
     wr::<u8>(this, 8, 1);
@@ -1066,7 +1061,7 @@ pub fn use_gun_make_abortable(this: GPtr<u8>, ped: GPtr<u8>, priority: i32, _eve
 pub fn use_gun_set_ped_position(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     let ty = rd::<u32>(active_weapon(ped), 0);
     let skill = ug_ped_get_weapon_skill(ped);
-    let wi = ug_get_weapon_info(ty, skill);
+    let wi = ug_get_weapon_info(ty as i32, (skill as i32) as u8);
     if rd::<GPtr<u8>>(this, 0x30) == wi {
         if rd::<u8>(this, 0xD) & 1 != 0 {
             ug_fire_gun_orig(this, ped, 0);
@@ -1105,7 +1100,7 @@ pub fn use_gun_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
         {
             wr::<u32>(a, 0x1C, 0xC100_0000);
         }
-        ug_set_delete_callback(rd::<GPtr<u8>>(this, 0x2C), DEFAULT_ANIM_CB, 0);
+        ug_set_delete_callback(rd::<GPtr<u8>>(this, 0x2C), DEFAULT_ANIM_CB, GPtr::NULL);
         wr::<u32>(this, 0x2C, 0);
     }
     let finish = |this: GPtr<u8>| {
@@ -1147,18 +1142,18 @@ pub fn use_gun_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
             } else {
                 0xE0
             };
-            let a = ug_blend_animation(rd::<u32>(ped, 0x18), rd::<u32>(wi, 0x1C), anim_id, EIGHT);
+            let a = ug_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), rd::<u32>(wi, 0x1C), anim_id, f32::from_bits(EIGHT));
             wr::<GPtr<u8>>(this, 0x2C, a);
             if rd::<u8>(this, 0x10) == 4 && wi_flags(this) & 0x4000 != 0 {
                 let t = ug_wi_loop_start(rd::<GPtr<u8>>(this, 0x30), ducking(ped));
                 ug_set_current_time(
                     rd::<GPtr<u8>>(this, 0x2C),
-                    f32_of(X87::from_f64_exact(t)).to_bits(),
+                    f32::from_bits(f32_of(X87::from_f64_exact(t)).to_bits()),
                 );
                 let a = rd::<GPtr<u8>>(this, 0x2C);
                 wr::<u8>(a, 0x2E, rd::<u8>(a, 0x2E) & 0xFE);
             }
-            ug_set_finish_callback(rd::<GPtr<u8>>(this, 0x2C), FINISH_GUN_ANIM_CB, data);
+            ug_set_finish_callback(rd::<GPtr<u8>>(this, 0x2C), FINISH_GUN_ANIM_CB, GPtr::from_addr(data as usize));
             finish(this);
         }
         4 => {
@@ -1176,10 +1171,10 @@ pub fn use_gun_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
                 } else {
                     0xE2
                 };
-                let a = ug_blend_animation(rd::<u32>(ped, 0x18), rd::<u32>(wi, 0x1C), anim_id, EIGHT);
+                let a = ug_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), rd::<u32>(wi, 0x1C), anim_id, f32::from_bits(EIGHT));
                 wr::<GPtr<u8>>(this, 0x2C, a);
-                ug_assoc_start(a, 0);
-                ug_set_finish_callback(rd::<GPtr<u8>>(this, 0x2C), FINISH_GUN_ANIM_CB, data);
+                ug_assoc_start(a, f32::from_bits(0));
+                ug_set_finish_callback(rd::<GPtr<u8>>(this, 0x2C), FINISH_GUN_ANIM_CB, GPtr::from_addr(data as usize));
                 let n = rd::<u8>(this, 0xF);
                 wr::<u16>(this, 0x36, rd::<u16>(this, 0x36).wrapping_sub(1));
                 wr::<u8>(this, 0x10, n);
@@ -1194,13 +1189,13 @@ pub fn use_gun_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
                 return;
             }
             let a = ug_blend_animation(
-                rd::<u32>(ped, 0x18),
+                GPtr::from_addr(rd::<u32>(ped, 0x18) as usize),
                 g::<u32>(0xC17730).read(),
                 0xD6 | ducking(ped),
-                EIGHT,
+                f32::from_bits(EIGHT),
             );
             wr::<GPtr<u8>>(this, 0x2C, a);
-            ug_set_finish_callback(a, FINISH_GUN_ANIM_CB, data);
+            ug_set_finish_callback(a, FINISH_GUN_ANIM_CB, GPtr::from_addr(data as usize));
             finish(this);
         }
         _ => finish(this),
@@ -1277,7 +1272,7 @@ fn pp_firing(this: GPtr<u8>, ped: GPtr<u8>, anim: GPtr<u8>) {
             && !x(step(anim)).fsubr_m(cur(anim)).fcom(x(s)).test_parity(5)
         {
             wr::<u8>(anim, 0x2E, rd::<u8>(anim, 0x2E) & 0xFE);
-            ug_set_current_time(anim_of(this), s.to_bits());
+            ug_set_current_time(anim_of(this), f32::from_bits(s.to_bits()));
         }
     }
     // 9c (0x62A8D9)
@@ -1360,7 +1355,7 @@ fn pp_firing(this: GPtr<u8>, ped: GPtr<u8>, anim: GPtr<u8>) {
                     wr::<u8>(a, 0x2E, rd::<u8>(a, 0x2E) | 1);
                     let a = anim_of(this);
                     if !x(cur(a)).fcom(x(s)).test_parity(0x41) {
-                        ug_set_current_time(a, e.to_bits());
+                        ug_set_current_time(a, f32::from_bits(e.to_bits()));
                     }
                 }
             } else if !x(rd::<f32>(a, 0x18)).fcom(cf(0x858B50)).test_any(0x41)
@@ -1392,7 +1387,7 @@ fn pp_firing(this: GPtr<u8>, ped: GPtr<u8>, anim: GPtr<u8>) {
             };
         if stop {
             wr::<u8>(a, 0x2E, rd::<u8>(a, 0x2E) & 0xFE);
-            ug_set_current_time(anim_of(this), s.to_bits());
+            ug_set_current_time(anim_of(this), f32::from_bits(s.to_bits()));
         }
     }
     // 9e (0x62AB80)
@@ -1401,7 +1396,7 @@ fn pp_firing(this: GPtr<u8>, ped: GPtr<u8>, anim: GPtr<u8>) {
         let n = rd::<i8>(this, 0xF);
         let refire = is_fire_cmd(n) || (rd::<u8>(this, 0x10) == 3 && rd::<i16>(this, 0x36) > 0 && n != 4);
         if refire {
-            ug_set_current_time(a, s.to_bits());
+            ug_set_current_time(a, f32::from_bits(s.to_bits()));
             let rl = reloading(ped);
             let a = anim_of(this);
             if rl {
@@ -1420,7 +1415,7 @@ fn pp_firing(this: GPtr<u8>, ped: GPtr<u8>, anim: GPtr<u8>) {
                 wr::<u8>(this, 0xF, 0);
             }
         } else if n == 1 {
-            ug_set_current_time(a, s.to_bits());
+            ug_set_current_time(a, f32::from_bits(s.to_bits()));
             let a = anim_of(this);
             wr::<u8>(a, 0x2E, rd::<u8>(a, 0x2E) & 0xFE);
             wr::<u8>(this, 0x10, 1);
@@ -1480,7 +1475,7 @@ pub fn use_gun_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         }
         let ty = rd::<u32>(active_weapon(ped), 0);
         let skill = ug_ped_get_weapon_skill(ped);
-        let wi = ug_get_weapon_info(ty, skill);
+        let wi = ug_get_weapon_info(ty as i32, (skill as i32) as u8);
         wr::<GPtr<u8>>(this, 0x30, wi);
         if rd::<u32>(wi, 0) != 0 && rd::<u32>(wi, 0x18) & 0x100 == 0 {
             wr::<u32>(this, 0x14, 0);
@@ -1493,7 +1488,7 @@ pub fn use_gun_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     } else {
         let ty = rd::<u32>(active_weapon(ped), 0);
         let skill = ug_ped_get_weapon_skill(ped);
-        let wi = ug_get_weapon_info(ty, skill);
+        let wi = ug_get_weapon_info(ty as i32, (skill as i32) as u8);
         if rd::<GPtr<u8>>(this, 0x30) != wi {
             ug_v_make_abortable(this, ped, 1, GPtr::NULL);
         }
@@ -1572,7 +1567,7 @@ pub fn use_gun_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         if rd::<u8>(this, 0xF) == 5 && rd::<i8>(this, 0x10) <= 3 {
             let a = anim_of(this);
             if !a.is_null() {
-                ug_set_delete_callback(a, DEFAULT_ANIM_CB, 0);
+                ug_set_delete_callback(a, DEFAULT_ANIM_CB, GPtr::NULL);
             }
             wr::<u32>(this, 0x2C, 0);
             ug_abort_ik_orig(this, ped);
@@ -1606,7 +1601,7 @@ pub fn use_gun_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
                     let mut v = [0u32; 3];
                     let vp: GPtr<u8> = GPtr::from_raw(&mut v as *mut [u32; 3]).cast();
                     ug_matrix_mul_vector(
-                        vp,
+                        vp.cast::<f32>(),
                         rd::<GPtr<u8>>(ped, 0x14),
                         GPtr::from_addr(0xC177D0 + 12 * idx),
                     );
@@ -1708,7 +1703,7 @@ pub fn use_gun_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
                     }
                     let mut at = [0u32; 3];
                     let atp: GPtr<u8> = GPtr::from_raw(&mut at as *mut [u32; 3]).cast();
-                    let r = ug_get_at_direction(ped, atp);
+                    let r = GPtr::<f32>::cast::<u8>(ug_get_at_direction(ped, atp.cast::<f32>()));
                     if dead {
                         let d = x(rd::<f32>(pp, 4))
                             .fmul_m(rd::<f32>(r, 4))

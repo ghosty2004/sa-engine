@@ -5,19 +5,20 @@
 //! eight 12-byte points), +0x1C the move state (i16), +0x1E flags (bit 0: line of sight to the followed ped).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
 use crate::common::*;
 
 use crate::bindings::go_to_point_update_point;
-use crate::bindings::point_route_add;
+use sa_world::bindings::point_route_add;
 use crate::bindings::task_is_go_to_task;
 use sa_core::bindings::ped_is_alive;
 use sa_core::bindings::tm_get_simplest_active_task as task_manager_get_simplest_active_task;
 use sa_core::bindings::vector_normalise;
-use sa_world::bindings::vector_magnitude_sqr as vector_magnitude;
-use sa_world::bindings::vector_sub;
+use sa_core::bindings::vector_magnitude_sqr as vector_magnitude;
+use sa_core::bindings::vector_sub;
 orig! {
     /// `CTask::GetTaskType()` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
@@ -97,7 +98,7 @@ pub fn follow_ped_footsteps_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> G
     let mut tmp = [0u32; 3];
     let r = vector_sub(GPtr::from_raw(tmp.as_mut_ptr()).cast(), tptr, entity_pos(ped));
     let mut d = [rd::<f32>(r, 0), rd::<f32>(r, 4), rd::<f32>(r, 8)];
-    let d3 = X87::from_f64_exact(vector_magnitude(GPtr::from_raw(d.as_mut_ptr()).cast())).to_f32();
+    let d3 = X87::from_f64_exact(vector_magnitude(GPtr::<u8>::cast::<f32>(GPtr::from_raw(d.as_mut_ptr()).cast()))).to_f32();
     let d2 = x(d[1]).fmul_m(d[1]).fadd(x(d[0]).fmul_m(d[0])).fsqrt().to_f32();
     let los = || rd::<u16>(this, 0x1E) & 1 != 0;
     let route = || rd::<GPtr<u8>>(this, 0x18);
@@ -122,7 +123,7 @@ pub fn follow_ped_footsteps_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> G
         if task_is_go_to_task(task_manager_get_simplest_active_task(tm)) != 0 {
             let fp = entity_pos(rd::<GPtr<u8>>(this, 0xC));
             let task = task_manager_get_simplest_active_task(rd::<GPtr<u8>>(ped, 0x47C).byte_add(4));
-            go_to_point_update_point(task, fp, g::<u32>(0x86FC78).read(), 0);
+            go_to_point_update_point(task, fp, f32::from_bits(g::<u32>(0x86FC78).read()), 0);
         }
     }
     let now = g::<u32>(TIME_MS).read();
@@ -145,7 +146,7 @@ pub fn follow_ped_footsteps_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> G
             *item = x(f32::from_bits(t[k])).fsub_m(last[k]).to_f32();
         }
         let vp = GPtr::from_raw(v.as_mut_ptr()).cast::<u8>();
-        let m = X87::from_f64_exact(vector_magnitude(vp));
+        let m = X87::from_f64_exact(vector_magnitude(vp.cast::<f32>()));
         if !sq_cmp(kf(0x870C24), m).test_parity(0x05) {
             if n >= 2 {
                 let prev = [rd::<f32>(pt(n - 2), 0), rd::<f32>(pt(n - 2), 4), rd::<f32>(pt(n - 2), 8)];
@@ -174,12 +175,12 @@ pub fn follow_ped_footsteps_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> G
         for (k, item) in v.iter_mut().enumerate() {
             *item = x(rd::<f32>(p, 4 * k as isize)).fsub_m(p0[k]).to_f32();
         }
-        total = X87::from_f64_exact(vector_magnitude(GPtr::from_raw(v.as_mut_ptr()).cast())).fadd_m(total).to_f32();
+        total = X87::from_f64_exact(vector_magnitude(GPtr::<u8>::cast::<f32>(GPtr::from_raw(v.as_mut_ptr()).cast()))).fadd_m(total).to_f32();
         i += 1;
     }
     let mut tmp = [0u32; 3];
     let r = vector_sub(GPtr::from_raw(tmp.as_mut_ptr()).cast(), entity_pos(ped), entity_pos(rd::<GPtr<u8>>(this, 0xC)));
-    let len = X87::from_f64_exact(vector_magnitude(r)).fadd_m(total);
+    let len = X87::from_f64_exact(vector_magnitude(r.cast::<f32>())).fadd_m(total);
     let state: u16 = if sq_cmp(kf(0x870C2C), len).test_parity(0x05) { 4 } else { 6 };
     wr::<u16>(this, 0x1C, state);
     let s = rd::<GPtr<u8>>(this, 8);

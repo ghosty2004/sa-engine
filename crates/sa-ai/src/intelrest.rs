@@ -12,6 +12,7 @@
 //! +0x288..+0x290 the three interesting-entity slots.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 use sa_math::x87::Cmp;
@@ -27,7 +28,7 @@ use crate::bindings::attractor_scanner_clear;
 use crate::bindings::eh_handle_events;
 use crate::bindings::entity_scanner_clear;
 use crate::bindings::entity_scanner_scan;
-use crate::bindings::ped_set_move_state;
+use sa_world::bindings::ped_set_move_state;
 use crate::bindings::task_is_go_to_task;
 use crate::bindings::use_gun_clear_anim;
 use sa_core::bindings::entity_clean_up_old_reference;
@@ -61,9 +62,15 @@ use sa_world::bindings::simple_transform_update_rw_matrix;
 use sa_world::bindings::stand_still_ctor;
 use sa_world::bindings::tm_set_task;
 use sa_world::bindings::wander_get_wander_task_by_ped_type as wander_task_by_ped_type;
+use crate::bindings::car_drive_timed_ctor;
+use sa_core::bindings::get_anim_hierarchy_from_skin_clump;
+use sa_core::bindings::intel_pool_new;
+use sa_core::bindings::rp_hanim_hierarchy_get_matrix_array as hanim_get_matrix_array;
+use sa_core::bindings::rp_hanim_id_get_index as hanim_id_get_index;
+use sa_core::bindings::rw_v3d_transform_point;
+use sa_world::bindings::duck_ctor;
+use sa_world::bindings::group_intel_get_task_script_command as pgi_get_task_script_command;
 orig! {
-    /// `CPedIntelligencePool::New` (0x605EC0, thiscall on the pool)
-    fn intel_pool_new(pool: u32) -> GPtr<u8> = thiscall 0x605EC0 => unported;
     /// `CTaskManager::CTaskManager(CPed*)` (0x6816A0, `ret 4`)
     fn tm_ctor(tm: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x6816A0 => unported;
     /// `CTaskManager::~CTaskManager` (0x6816D0)
@@ -118,16 +125,6 @@ orig! {
     fn intel_is_interesting_entity(i: GPtr<u8>, e: GPtr<u8>) -> u8 = thiscall 0x6020A0 => unported;
     /// `CPedGroupIntelligence::ComputeDefaultTasks(CPed*)` (0x5F88D0, `ret 4`)
     fn pgi_compute_default_tasks(i: GPtr<u8>, p: GPtr<u8>) = thiscall 0x5F88D0 => unported;
-    /// `CTaskSimpleCarDriveTimed::CTaskSimpleCarDriveTimed(CVehicle*, int32)` (0x5FF940, `ret 8`)
-    fn car_drive_timed_ctor(t: GPtr<u8>, veh: GPtr<u8>, ms: u32) -> GPtr<u8> = thiscall 0x5FF940 => unported;
-    /// `GetAnimHierarchyFromSkinClump(RpClump*)` (0x734A40, cdecl)
-    fn get_anim_hierarchy_from_skin_clump(c: u32) -> u32 = cdecl 0x734A40 => unported;
-    /// `RpHAnimIDGetIndex(RpHAnimHierarchy*, int32)` (0x7C51A0, cdecl)
-    fn hanim_id_get_index(h: u32, id: u32) -> i32 = cdecl 0x7C51A0 => unported;
-    /// `RpHAnimHierarchyGetMatrixArray(RpHAnimHierarchy*)` (0x7C5120, cdecl)
-    fn hanim_get_matrix_array(h: u32) -> u32 = cdecl 0x7C5120 => unported;
-    /// `RwV3dTransformPoint(RwV3d* out, const RwV3d* in, const RwMatrix*)` (0x7EDD60, cdecl)
-    fn rw_v3d_transform_point(out: GPtr<u8>, inp: GPtr<u8>, m: u32) -> GPtr<u8> = cdecl 0x7EDD60 => unported;
     /// `CBike::FixHandsToBars(CPed*)` (0x6B7F90, `ret 4`)
     fn bike_fix_hands_to_bars(b: GPtr<u8>, p: GPtr<u8>) = thiscall 0x6B7F90 => unported;
     /// `CIKChainManager_c::LookAt(char*, CPed*, CEntity*, int32, int32, RwV3d*, bool, float, int32, int32, bool)`
@@ -156,16 +153,12 @@ orig! {
     fn v_delete(t: GPtr<u8>, flags: u32) -> GPtr<u8> = thiscall vslot 0x0 => unported;
     /// `CEventHandlerHistory::IsRespondingToEvent(int32)` (0x4B8B90, `ret 4`)
     fn ehh_is_responding_to_event(h: GPtr<u8>, ty: i32) -> u8 = thiscall 0x4B8B90 => unported;
-    /// `CTaskSimpleDuck::CTaskSimpleDuck(eDuckControlType, uint16, int16)` (0x691FC0, `ret 0xC`)
-    fn duck_ctor(t: GPtr<u8>, control: u32, len: u32, shots: u32) -> GPtr<u8> = thiscall 0x691FC0 => unported;
     /// `CEventGroup::HasEvent(CEvent*)` (0x4AB6A0, `ret 4`)
     fn eg_has_event(eg: GPtr<u8>, e: GPtr<u8>) -> u8 = thiscall 0x4AB6A0 => unported;
     /// `CScriptedBrainTaskStore::GetTask(const CPed*)` (0x6357C0, cdecl)
     fn brain_task_store_get_task(p: GPtr<u8>) -> u32 = cdecl 0x6357C0 => unported;
     /// `CPedScriptedTaskRecordData::Flush` (0x608350)
     fn task_record_data_flush(r: GPtr<u8>) = thiscall 0x608350 => unported;
-    /// `CPedGroupIntelligence::GetTaskScriptCommand(CPed*)` (0x5F8690, `ret 4`)
-    fn pgi_get_task_script_command(i: GPtr<u8>, p: GPtr<u8>) -> u32 = thiscall 0x5F8690 => unported;
 }
 
 fn ped(this: GPtr<u8>) -> GPtr<u8> {
@@ -186,7 +179,7 @@ use sa_world::world::common::entity_pos;
 /// (0xB744C0; tail jump, the size is not used).
 // Hooked by sa-ped (ped_life.rs, PED-2); kept here as a plain function for callers in this crate.
 pub fn intel_operator_new(_size: u32) -> GPtr<u8> {
-    intel_pool_new(g::<u32>(0xB744C0).read())
+    intel_pool_new(GPtr::from_addr((g::<u32>(0xB744C0).read()) as usize))
 }
 
 /// `CPedIntelligence::CPedIntelligence(CPed*)` (0x607140, `ret 4`): the task manager, event handler and event
@@ -335,7 +328,7 @@ fn add_script_command(this: GPtr<u8>, task: GPtr<u8>) {
     let e: GPtr<u8> = GPtr::from_raw(&mut ev as *mut [u32; 6]).cast();
     script_command_ctor(e, 3, task, 0);
     eg_add(this.byte_add(0x68), e, 0);
-    script_command_dtor(e);
+    script_command_dtor(e.cast::<u32>());
 }
 
 /// `CPedIntelligence::ClearTasks(bool primary, bool secondary)` (0x601420, `ret 8`). Primary: a ped in a vehicle
@@ -366,7 +359,7 @@ pub fn intel_clear_tasks(this: GPtr<u8>, primary: u8, secondary: u8) {
                     if t.is_null() {
                         GPtr::NULL
                     } else {
-                        car_drive_ctor(t, rd::<GPtr<u8>>(ped(this), 0x58C), 0, 0)
+                        car_drive_ctor(t, rd::<GPtr<u8>>(ped(this), 0x58C), GPtr::NULL, 0)
                     }
                 };
                 add_script_command(this, task);
@@ -375,7 +368,7 @@ pub fn intel_clear_tasks(this: GPtr<u8>, primary: u8, secondary: u8) {
             queued = eg_has_script_command_of_task_type(eg, 0xCB) != 0;
             if !queued {
                 let t = task_new(0x20);
-                let task = if t.is_null() { GPtr::NULL } else { stand_still_ctor(t, 0, 0, 0, 0x41000000) };
+                let task = if t.is_null() { GPtr::NULL } else { stand_still_ctor(t, 0, 0, 0, f32::from_bits(0x41000000)) };
                 add_script_command(this, task);
             }
         }
@@ -388,12 +381,12 @@ pub fn intel_clear_tasks(this: GPtr<u8>, primary: u8, secondary: u8) {
             if i == 3 {
                 continue;
             }
-            let t = tm_get_task_secondary(tm(this), i);
+            let t = tm_get_task_secondary(tm(this), i as u32);
             if t.is_null() {
                 continue;
             }
             if v_make_abortable(t, ped(this), 1, 0) != 0 {
-                tm_set_task_secondary(tm(this), GPtr::NULL, i);
+                tm_set_task_secondary(tm(this), GPtr::NULL, i as u32);
             } else {
                 v_make_abortable(t, ped(this), 0, 0);
             }
@@ -473,7 +466,7 @@ pub fn intel_flush_immediately(this: GPtr<u8>, set_default: u8) {
             if t.is_null() { GPtr::NULL } else { player_on_foot_ctor(t) }
         } else if rd::<u8>(ped(this), 0x484) == 2 {
             let t = task_new(0x20);
-            if t.is_null() { GPtr::NULL } else { stand_still_ctor(t, 0, 1, 0, 0x41000000) }
+            if t.is_null() { GPtr::NULL } else { stand_still_ctor(t, 0, 1, 0, f32::from_bits(0x41000000)) }
         } else {
             wander_task_by_ped_type(ped(this))
         };
@@ -553,13 +546,13 @@ pub fn intel_process_after_pre_render(this: GPtr<u8>) {
         let mut f = [0u32; 22];
         let fp: GPtr<u8> = GPtr::from_raw(&mut f as *mut [u32; 22]).cast();
         let at_f = |off: isize| fp.byte_add(off - 0x10);
-        let h = get_anim_hierarchy_from_skin_clump(rd::<u32>(p, 0x18));
-        let idx = hanim_id_get_index(h, 0x18);
-        let mats = hanim_get_matrix_array(h);
+        let h = GPtr::<u8>::addr(get_anim_hierarchy_from_skin_clump(GPtr::from_addr(rd::<u32>(p, 0x18) as usize))) as u32;
+        let idx = hanim_id_get_index(GPtr::from_addr(h as usize), 0x18);
+        let mats = GPtr::<u8>::addr(hanim_get_matrix_array(GPtr::from_addr(h as usize))) as u32;
         wr::<u32>(at_f(0x10), 0, 0x3D4CCCCD);
         wr::<u32>(at_f(0x14), 0, 0x3D4CCCCD);
         wr::<u32>(at_f(0x18), 0, 0x3E0F5C29);
-        rw_v3d_transform_point(at_f(0x1C), at_f(0x10), mats.wrapping_add((idx as u32) << 6));
+        rw_v3d_transform_point(at_f(0x1C), at_f(0x10), GPtr::from_addr(mats.wrapping_add((idx as u32) << 6) as usize));
         let rw = rd::<GPtr<u8>>(ped(this), 0x18);
         let src = if rw.is_null() { GPtr::<u8>::NULL } else { rd::<GPtr<u8>>(rw, 4).byte_add(0x10) };
         for i in 0..16 {
@@ -883,8 +876,8 @@ pub fn intel_can_see_entity_with_lights(this: GPtr<u8>, e: GPtr<u8>, _b: u32) ->
 /// The inlined "secondary task `slot` if it has type `ty`" selection with every `GetTaskSecondary` call of the
 /// original (null test, type, result).
 fn secondary_if(tmp: GPtr<u8>, slot: i32, ty: i32) -> GPtr<u8> {
-    if !tm_get_task_secondary(tmp, slot).is_null() && v_task_type(tm_get_task_secondary(tmp, slot)) == ty {
-        tm_get_task_secondary(tmp, slot)
+    if !tm_get_task_secondary(tmp, slot as u32).is_null() && v_task_type(tm_get_task_secondary(tmp, slot as u32)) == ty {
+        tm_get_task_secondary(tmp, slot as u32)
     } else {
         GPtr::NULL
     }
@@ -982,7 +975,7 @@ pub fn scripted_task_record_process_port() {
             }
             let q = rd::<GPtr<u8>>(r, 0xC);
             if !q.is_null() {
-                entity_clean_up_old_reference(q, r.byte_add(0xC));
+                entity_clean_up_old_reference(q, GPtr::<u8>::cast::<GPtr<u8>>(r.byte_add(0xC)));
             }
             clear(r);
             continue;
@@ -999,7 +992,7 @@ pub fn scripted_task_record_process_port() {
                 if grp.is_null() {
                     None
                 } else {
-                    Some(pgi_get_task_script_command(grp.byte_add(0x30), rd::<GPtr<u8>>(r, 0xC)))
+                    Some(GPtr::<u8>::addr(pgi_get_task_script_command(grp.byte_add(0x30), rd::<GPtr<u8>>(r, 0xC))) as u32)
                 }
             };
             if cur != Some(rd::<u32>(r, 8)) {

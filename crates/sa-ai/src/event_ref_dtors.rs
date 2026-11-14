@@ -4,16 +4,14 @@
 //! Ported from the 1.0 US bytes. The SEH frame each destructor sets up has no other effect. Unverified
 //! (docs/verify/HOWTO.md).
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
 use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
-orig! {
-    /// `CEventGunShot::~CEventGunShot` (0x4AC720), the tail of `CEventGunShotWhizzedBy`'s destructor
-    fn event_gun_shot_dtor(this: GPtr<u8>) = thiscall 0x4AC720 => event_gun_shot_dtor_4ac720;
-}
+use sa_world::bindings::event_gun_shot_dtor;
 
 /// `CEvent`'s vtable, stored last by every event destructor.
 const CEVENT_VTABLE: u32 = 0x85_AB38;
@@ -22,7 +20,7 @@ const CEVENT_VTABLE: u32 = 0x85_AB38;
 fn release_ref(this: GPtr<u8>, off: isize) {
     let e = rd::<GPtr<u8>>(this, off);
     if !e.is_null() {
-        clean_up_old_reference(e, this.byte_add(off));
+        clean_up_old_reference(e, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(off)));
     }
 }
 

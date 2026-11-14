@@ -3,6 +3,7 @@
 //! vtables they store and their callers (`docs/samp/native-unported-names.csv`). Ported from the 1.0 US bytes; the
 //! SEH frames have no other effect. Unverified (docs/verify/HOWTO.md).
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::hook;
 
@@ -36,7 +37,7 @@ fn car_task_dtor(this: GPtr<u8>, vt: u32) {
     wr::<u32>(this, 0, vt);
     let veh = rd::<GPtr<u8>>(this, 8);
     if !veh.is_null() {
-        clean_up_old_reference(veh, this.byte_add(8));
+        clean_up_old_reference(veh, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(8)));
     }
     task_simple_dtor(this);
 }

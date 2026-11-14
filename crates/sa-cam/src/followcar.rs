@@ -148,8 +148,8 @@ const K_50: u32 = 0x4248_0000;
 const CI_POW: usize = 0x822130;
 const CI_ASIN: usize = 0x821E70;
 
-pub use crate::bindings::aim_weapon_left_right;
-pub use crate::bindings::aim_weapon_up_down;
+pub use sa_world::bindings::aim_weapon_left_right;
+pub use sa_world::bindings::aim_weapon_up_down;
 pub use crate::bindings::camera_col_det_and_react;
 pub use crate::bindings::clip_beta;
 pub use crate::bindings::get_vectors_ready_for_rw;
@@ -164,19 +164,17 @@ pub use sa_world::bindings::entity_get_col_model as get_col_model;
 pub use sa_world::bindings::get_vehicle_appearance;
 pub use sa_world::bindings::pad_get_steering_up_down as get_steering_up_down;
 pub use sa_world::bindings::placeable_get_heading as get_heading;
+pub use crate::bindings::cc_get_arr_pos as get_arr_pos_for_vehicle_type;
+pub use sa_core::bindings::get_atan_of_xy;
 orig! {
     /// `CCamera::ApplyVehicleCameraTweaks(CVehicle*)` (0x50A480)
     pub fn apply_vehicle_camera_tweaks(cam: GPtr<u8>, veh: GPtr<u8>) = thiscall 0x50A480 => crate::camfx::apply_vehicle_camera_tweaks;
-    /// `CCamera::GetArrPosForVehicleType(int32 appearance, int32* out)` (0x50AF00)
-    pub fn get_arr_pos_for_vehicle_type(cam: GPtr<u8>, kind: i32, out: GPtr<i32>) -> u8 = thiscall 0x50AF00 => crate::camctl::get_arr_pos_for_vehicle_type;
     /// `CVehicle::GetHeightAboveRoad()` (vtable slot +0xD4, ST0)
     pub fn v_get_height_above_road(veh: GPtr<u8>) -> f64 = thiscall vslot 0xD4 => unported;
     /// `a > b ? a : b` (0x420800, cdecl floats as dwords, ST0)
     pub fn max_f(a: u32, b: u32) -> f64 = cdecl 0x420800 => unported;
     /// `CTask::GetTaskType()` (vtable slot +0x10)
     pub fn v_get_task_type(task: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CGeneral::GetATanOfXY(float, float)` (0x53CC70, ST0); the floats as dwords
-    pub fn get_atan_of_xy(xb: u32, yb: u32) -> f64 = cdecl 0x53CC70 => unported;
     /// `CCamera::SetColVarsVehicle(int32 type, int32 zoom)` (0x50CCA0)
     pub fn set_col_vars_vehicle(ty: i32, zoom: i32) = cdecl 0x50CCA0 => crate::camfx::set_col_vars_vehicle;
     /// `CCamera::CameraVehicleModeSpecialCases(CVehicle*)` (0x50CDE0)
@@ -291,7 +289,7 @@ pub fn process_follow_car_sa(
     };
     let mut lz = f32_of(x(d(CAR_ZOOM_SMOOTHED)).fadd_m(c(vt, 1)));
     let mut arr: i32 = 0;
-    let app = get_vehicle_appearance(v);
+    let app = get_vehicle_appearance(v) as i32;
     get_arr_pos_for_vehicle_type(the_camera(), app, GPtr::from_raw(&mut arr));
     let zoom_height = |table: usize| d((table as u32).wrapping_add((arr as u32).wrapping_mul(4)) as usize);
     let mut lh: f32 = 0.0;
@@ -387,7 +385,7 @@ pub fn process_follow_car_sa(
 
     // height of the target point
     let tz: X87;
-    if get_vehicle_appearance(v) == 3 && rd::<u8>(v, 0x36) & 0xF8 != 0x40 {
+    if get_vehicle_appearance(v) as i32 == 3 && rd::<u8>(v, 0x36) & 0xF8 != 0x40 {
         let m = rd::<GPtr<u8>>(v, 0x14);
         let ux = x(d(K_HELI_UP)).fmul_m(rd::<f32>(m, 0x20));
         let uy = x(d(K_HELI_UP)).fmul_m(rd::<f32>(m, 0x24));
@@ -787,7 +785,7 @@ pub fn process_follow_car_sa(
     };
     wr::<f32>(this, 0xBC, f32_of(inc.fadd_m(beta())));
     if g::<u8>(JUST_CAME_OUT_OF_GARAGE).read() != 0 {
-        let a = X87::from_f64_exact(get_atan_of_xy(rd::<u32>(front, 0), rd::<u32>(front, 4)));
+        let a = X87::from_f64_exact(get_atan_of_xy(f32::from_bits(rd::<u32>(front, 0)), f32::from_bits(rd::<u32>(front, 4))));
         wr::<f32>(this, 0xBC, f32_of(a.fadd_m(k(K_PI))));
     }
     clip_beta(this);
@@ -992,11 +990,7 @@ pub use sa_pop::bindings::pad_get_look_left as get_look_left;
 pub use sa_pop::bindings::pad_get_look_right as get_look_right;
 pub use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
 pub use sa_stream::bindings::simple_transform_update_matrix;
-orig! {
-    /// `CCam::WellBufferMe(float target, float* value, float* speed, float topSpeed, float step, bool isAngle)`
-    /// (0x509AE0)
-    pub fn well_buffer_me(target: f32, value: GPtr<f32>, speed: GPtr<f32>, top_speed: f32, step: f32, is_angle: u8) = cdecl 0x509AE0 => crate::cam::well_buffer_me;
-}
+pub use crate::bindings::cc_well_buffer_me as well_buffer_me;
 
 /// `TheCamera.m_bTransitionState` (+0x58) and `m_bUseTransitionBeta` (+0x37).
 const TRANSITION_STATE: usize = 0xB6F080;
@@ -1124,23 +1118,19 @@ pub use crate::bindings::handle_camera_motion_for_ducking;
 pub use sa_core::bindings::entity_update_rp_hanim as update_rp_hanim;
 pub use sa_core::bindings::entity_update_rw_frame as update_rw_frame;
 pub use sa_world::bindings::get_task_swim;
-pub use sa_world::bindings::ped_get_bone_position;
+pub use sa_core::bindings::ped_get_bone_position;
 pub use sa_world::bindings::ped_set_ped_position_in_car;
 pub use sa_world::bindings::placeable_get_matrix as get_matrix;
 pub use sa_world::bindings::update_rw_matrix;
+pub use sa_core::bindings::rw_camera_set_near_clip_plane;
+pub use sa_world::bindings::intel_get_task_hold as get_task_hold;
+pub use sa_world::bindings::vector_add_assign;
+pub use sa_world::bindings::vector_scale as vec_s_mul;
 orig! {
-    /// `RwCameraSetNearClipPlane(RwCamera*, RwReal)` (0x7EE1D0)
-    pub fn rw_camera_set_near_clip_plane(cam: GPtr<u8>, near: f32) -> GPtr<u8> = cdecl 0x7EE1D0 => unported;
-    /// `CPedIntelligence::GetTaskHold(bool)` (0x600FF0)
-    pub fn get_task_hold(intel: GPtr<u8>, ignore_check: u8) -> GPtr<u8> = thiscall 0x600FF0 => unported;
     /// `FUN_00509ca0(float* out)` (0x509CA0, AL): the boat look left/right/behind height
     pub fn boat_look_height(cam: GPtr<u8>, out: GPtr<u8>) -> u8 = thiscall 0x509CA0 => crate::camproc::get_boat_look_lr_behind_cam_height;
     /// `CCullZones::Cam1stPersonForPlayer()` (0x72DD40, AL)
     pub fn cam_1st_person_for_player() -> u8 = cdecl 0x72DD40 => unported;
-    /// `operator*(CVector* out, float s, const CVector& v)` (0x40FE90), returns `out`
-    pub fn vec_s_mul(out: GPtr<u8>, s: u32, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE90 => unported;
-    /// `CVector::operator+=(const CVector&)` (0x411A00)
-    pub fn vector_add_assign(v: GPtr<u8>, o: GPtr<u8>) -> GPtr<u8> = thiscall 0x411A00 => unported;
 }
 
 /// `Scene.m_pRwCamera`
@@ -1270,11 +1260,11 @@ pub fn look_behind(this: GPtr<u8>) -> u8 {
         if rd::<i32>(e, 0x590) == 5 {
             wr::<f32>(source, 8, f32_of(x(rd::<f32>(source, 8)).fsub_m(k(K_HALF))));
         }
-        if get_vehicle_appearance(e) == 2 {
+        if get_vehicle_appearance(e) as i32 == 2 {
             add_scaled(source, front, k(0x4013_3333));
             negate3(front);
             get_vectors_ready_for_rw(this);
-        } else if get_vehicle_appearance(tgt()) == 3 {
+        } else if get_vehicle_appearance(tgt()) as i32 == 3 {
             let e = tgt();
             ensure_matrix(e);
             let up = rd::<GPtr<u8>>(e, 0x14).byte_add(0x20);
@@ -1425,7 +1415,7 @@ pub fn look_right(this: GPtr<u8>, right: u32) -> u8 {
         let mut fw: [f32; 3] = [0.0; 3];
         copy3(vp(&mut fw), rd::<GPtr<u8>>(e, 0x14).byte_add(0x10));
         vector_normalise(vp(&mut fw));
-        let at = X87::from_f64_exact(get_atan_of_xy(fw[0].to_bits(), fw[1].to_bits()));
+        let at = X87::from_f64_exact(get_atan_of_xy(f32::from_bits(fw[0].to_bits()), f32::from_bits(fw[1].to_bits())));
         let a = at.fadd(x(dir).fmul_m(k(K_HPI)));
         wr::<f32>(source, 0, f32_of(a.fcos().fmul_m(dist).fadd_m(p[0])));
         wr::<f32>(source, 4, f32_of(a.fsin().fmul_m(dist).fadd_m(p[1])));
@@ -1497,7 +1487,7 @@ pub fn look_right(this: GPtr<u8>, right: u32) -> u8 {
                     g::<u32>(0x8CC49C).read()
                 };
                 let mut tmp: [f32; 3] = [0.0; 3];
-                let r = vec_s_mul(vp(&mut tmp), s, m);
+                let r = vec_s_mul(vp(&mut tmp), f32::from_bits(s), m);
                 vector_add_assign(vp(&mut bp), r);
                 let m2 = get_matrix(tgt());
                 let ux = x(d(0x8CC494)).fmul_m(rd::<f32>(m2, 0x20));
@@ -1535,7 +1525,7 @@ pub fn look_right(this: GPtr<u8>, right: u32) -> u8 {
         };
         copy3(front, r);
         vector_normalise(front);
-        if get_vehicle_appearance(tgt()) == 2 {
+        if get_vehicle_appearance(tgt()) as i32 == 2 {
             sub_scaled(source, front, k(0x3FB9_999A));
         }
         return 1;

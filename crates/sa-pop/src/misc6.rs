@@ -14,28 +14,19 @@ pub const GLOBALS: &[GlobalDesc] = &[];
 
 use sa_stream::bindings::get_2d_effect;
 use sa_world::bindings::add_light as point_lights_add_light;
+use crate::bindings::find_orientation_call;
+use crate::bindings::find_traffic_light_type_from_orientation as find_type_from_orientation_call;
+use sa_core::bindings::matrix_mul_vec;
+use sa_world::bindings::register_corona;
+use sa_world::bindings::store_static_shadow;
 orig! {
-    /// `CTrafficLights::FindOrientationForTrafficLightType(CEntity*)` (0x49D520, ST0)
-    fn find_orientation_call(e: GPtr<u8>) -> f64 = cdecl 0x49D520 => find_orientation_abi;
-    /// `CTrafficLights::FindTrafficLightTypeFromOrientation(float)` (0x49D4D0)
-    fn find_type_from_orientation_call(a: f32) -> i32 = cdecl 0x49D4D0 => crate::misc::find_traffic_light_type_from_orientation;
     /// `CTrafficLights::LightForCars1_Visual()` (0x49D350)
     fn light_for_cars1_visual_call() -> u8 = cdecl 0x49D350 => crate::misc::light_for_cars1_visual;
     /// `CTrafficLights::LightForCars2_Visual()` (0x49D3A0)
     fn light_for_cars2_visual_call() -> u8 = cdecl 0x49D3A0 => crate::misc::light_for_cars2_visual;
-    /// `operator*(const CMatrix&, const CVector&)` (0x59C890, hidden result pointer first)
-    fn matrix_mul_vec(out: GPtr<f32>, m: GPtr<u8>, v: GPtr<f32>) -> GPtr<f32> = cdecl 0x59C890 => unported;
-    /// `CCoronas::RegisterCorona(uint32 id, CEntity*, uint8 r, g, b, a, const CVector&, float radius, float
-    /// farClip, RwTexture*, flare, refl, los, trail, float normalAngle, bool neonFade, float pull, bool
-    /// fullBrightAtStart, float fadeSpeed, bool onlyFromBelow, bool reflectionDelay)` (0x6FC580); floats as bits
-    fn register_corona(id: u32, ent: u32, r: u32, gr: u32, b: u32, a: u32, pos: GPtr<f32>, radius: u32, far: u32, tex: u32, flare: u32, refl: u32, los: u32, trail: u32, normal_angle: u32, neon: u32, pull: u32, full_bright: u32, fade: u32, below: u32, refl_delay: u32) = cdecl 0x6FC580 => unported;
     /// `CBrightLights::RegisterOne(CVector pos, CVector up, CVector right, CVector fwd, uint8 color, uint8,
     /// uint8, uint8)` (0x724770, vectors by value as bits)
     fn bright_lights_register_one(p0: u32, p1: u32, p2: u32, u0: u32, u1: u32, u2: u32, r0: u32, r1: u32, r2: u32, f0: u32, f1: u32, f2: u32, color: u32, a: u32, b: u32, c: u32) = cdecl 0x724770 => unported;
-    /// `CShadows::StoreStaticShadow(uint32 id, uint8 type, RwTexture*, const CVector* pos, float frontX, float
-    /// frontY, float sideX, float sideY, int16 intensity, uint8 r, uint8 g, uint8 b, float zDistance, float
-    /// scale, float drawDistance, bool temporary, float upDistance)` (0x70BA00, floats as bits)
-    fn store_static_shadow(id: u32, ty: u32, tex: u32, pos: GPtr<f32>, fx: u32, fy: u32, sx: u32, sy: u32, intensity: u32, r: u32, gr: u32, b: u32, zd: u32, scale: u32, draw: u32, temp: u32, up: u32) = cdecl 0x70BA00 => unported;
     /// `CShinyTexts::RegisterOne(CVector p0, p1, p2, p3, float u0, v0, u1, v1, u2, v2, u3, v3, uint8 type,
     /// uint8 r, g, b, float maxDistance)` (0x724B60, by value, floats as bits)
     fn shiny_texts_register_one(p0: u32, p1: u32, p2: u32, q0: u32, q1: u32, q2: u32, s0: u32, s1: u32, s2: u32, t0: u32, t1: u32, t2: u32, u0: u32, v0: u32, u1: u32, v1: u32, u2: u32, v2: u32, u3: u32, v3: u32, ty: u32, r: u32, gr: u32, b: u32, max_dist: u32) = cdecl 0x724B60 => unported;
@@ -43,7 +34,7 @@ orig! {
 
 /// The `orig!` routing target of 0x49D520 (an ST0 result crosses `orig!` as an f64).
 #[cfg_attr(sa_phase_a, allow(dead_code))]
-fn find_orientation_abi(e: GPtr<u8>) -> f64 {
+pub(crate) fn find_orientation_abi(e: GPtr<u8>) -> f64 {
     crate::misc::find_orientation_for_traffic_light_type(e).to_f64()
 }
 
@@ -63,7 +54,7 @@ fn transform(m: GPtr<u8>, v: [f32; 3]) -> [u32; 3] {
     matrix_mul_vec(
         GPtr::from_raw(out.as_mut_ptr()),
         m,
-        GPtr::from_raw(vin.as_mut_ptr()),
+        GPtr::<f32>::cast::<u8>(GPtr::from_raw(vin.as_mut_ptr())),
     );
     [out[0].to_bits(), out[1].to_bits(), out[2].to_bits()]
 }
@@ -158,7 +149,7 @@ pub fn display_actual_light(e: GPtr<u8>) {
         }
         let m = matrix(e);
         let mut lp = [0f32; 3];
-        matrix_mul_vec(GPtr::from_raw(lp.as_mut_ptr()), m, eff.cast());
+        matrix_mul_vec(GPtr::from_raw(lp.as_mut_ptr()), m, GPtr::<f32>::cast::<u8>(eff.cast()));
         for k in 0..3 {
             centre[k] = x(centre[k]).fadd_m(lp[k]).to_f32();
         }
@@ -181,24 +172,24 @@ pub fn display_actual_light(e: GPtr<u8>) {
         let cr = ftol32(xi(tr(cs)).fmul(bright)) as u32;
         register_corona(
             e.addr() as u32 + i as u32,
-            0,
+            GPtr::NULL,
             cr,
             cg,
             cb,
             0xFF,
-            GPtr::from_raw(lp.as_mut_ptr()),
-            radius.to_bits(),
-            50f32.to_bits(),
+            GPtr::<f32>::cast::<u8>(GPtr::from_raw(lp.as_mut_ptr())),
+            f32::from_bits(radius.to_bits()),
+            f32::from_bits(50f32.to_bits()),
             0,
             0,
             1,
             0,
             0,
+            f32::from_bits(0),
             0,
+            f32::from_bits(1.5f32.to_bits()),
             0,
-            1.5f32.to_bits(),
-            0,
-            15f32.to_bits(),
+            f32::from_bits(15f32.to_bits()),
             0,
             0,
         );
@@ -239,19 +230,19 @@ pub fn display_actual_light(e: GPtr<u8>) {
                 let r = tr(state).max(50);
                 point_lights_add_light(
                     0,
-                    centre[0].to_bits(),
-                    centre[1].to_bits(),
-                    centre[2].to_bits(),
-                    0,
-                    0,
-                    0,
-                    14f32.to_bits(),
-                    xi(r).fmul_m(mult).to_f32().to_bits(),
-                    xi(gg).fmul_m(mult).to_f32().to_bits(),
-                    xi(b).fmul_m(mult).to_f32().to_bits(),
+                    f32::from_bits(centre[0].to_bits()),
+                    f32::from_bits(centre[1].to_bits()),
+                    f32::from_bits(centre[2].to_bits()),
+                    f32::from_bits(0),
+                    f32::from_bits(0),
+                    f32::from_bits(0),
+                    f32::from_bits(14f32.to_bits()),
+                    f32::from_bits(xi(r).fmul_m(mult).to_f32().to_bits()),
+                    f32::from_bits(xi(gg).fmul_m(mult).to_f32().to_bits()),
+                    f32::from_bits(xi(b).fmul_m(mult).to_f32().to_bits()),
                     1,
                     1,
-                    0,
+                    GPtr::NULL,
                 );
             }
             if !jne_mask(tlb(), x(f32::from_bits(0x3D4C_CCCD)), 0x41) {
@@ -270,20 +261,20 @@ pub fn display_actual_light(e: GPtr<u8>) {
                     e.addr() as u32,
                     2,
                     g::<u32>(0xC403F4).read(),
-                    GPtr::from_raw(centre.as_mut_ptr()),
-                    8f32.to_bits(),
-                    0,
-                    0,
-                    (-8f32).to_bits(),
+                    GPtr::<f32>::cast::<u8>(GPtr::from_raw(centre.as_mut_ptr())),
+                    f32::from_bits(8f32.to_bits()),
+                    f32::from_bits(0),
+                    f32::from_bits(0),
+                    f32::from_bits((-8f32).to_bits()),
                     0x80,
                     r,
                     gg,
                     b,
-                    12f32.to_bits(),
-                    1f32.to_bits(),
-                    40f32.to_bits(),
+                    f32::from_bits(12f32.to_bits()),
+                    f32::from_bits(1f32.to_bits()),
+                    f32::from_bits(40f32.to_bits()),
                     0,
-                    0,
+                    f32::from_bits(0),
                 );
             }
         }

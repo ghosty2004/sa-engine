@@ -713,10 +713,7 @@ pub fn test_line_box(line: GPtr<f32>, bx: GPtr<f32>) -> u8 {
     test_line_box_dw_call(line, bx)
 }
 
-sa_core::orig! {
-    /// `CCollision::TestLineBox_DW` (0x412C70)
-    pub fn test_line_box_dw_call(line: GPtr<f32>, bx: GPtr<f32>) -> u8 = cdecl 0x412C70 => test_line_box_dw;
-}
+pub use crate::bindings::test_line_box_dw as test_line_box_dw_call;
 
 /// `CCollision::TestLineSphere(const CColLine&, const CColSphere&)` (0x417470, AL). `len = |e - s|`
 /// (stored). Lines shorter than 1e-6 (`len < K`, NaN not) test the start point: true unless `r*r <
@@ -1490,11 +1487,7 @@ fn rv(p: GPtr<f32>) -> [f32; 3] {
     [w(p, 0), w(p, 1), w(p, 2)]
 }
 
-sa_core::orig! {
-    /// `CCollision::CalculateColPointInsideBox` (0x411EC0)
-    pub fn calculate_col_point_inside_box_call(bx: GPtr<f32>, p: GPtr<f32>, cp: GPtr<f32>)
-        = cdecl 0x411EC0 => calculate_col_point_inside_box;
-}
+pub use crate::bindings::calculate_col_point_inside_box as calculate_col_point_inside_box_call;
 
 /// `CCollision::ProcessSphereBox(const CColSphere&, const CColBox&, CColPoint& cp, float& minDistSq)`
 /// (0x412130, AL). Per axis: reject when `c + r < min` or `c - r > max` (NaN passes); the point is
@@ -1612,12 +1605,8 @@ fn col_line_local(start: GPtr<f32>, end: GPtr<f32>) -> [u32; 8] {
     l
 }
 
-sa_core::orig! {
-    /// `CCollision::TestSphereSphere` (0x411E70)
-    pub fn test_sphere_sphere_call(a: GPtr<f32>, b: GPtr<f32>) -> u32 = cdecl 0x411E70 => test_sphere_sphere;
-    /// `CCollision::TestLineSphere` (0x417470)
-    pub fn test_line_sphere_call(line: GPtr<f32>, sp: GPtr<f32>) -> u8 = cdecl 0x417470 => test_line_sphere;
-}
+pub use crate::bindings::test_line_sphere as test_line_sphere_call;
+pub use crate::bindings::test_sphere_sphere as test_sphere_sphere_call;
 
 /// `CCollision::SphereCastVsBBox(const CColSphere& a, const CColSphere& b, const CColBox& box)`
 /// (0x415590, AL 0/1): the box grown by **a's** radius (min - r, max + r stored on a local copy) tested

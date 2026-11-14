@@ -5,6 +5,7 @@
 //! `CPlayerCrossHair` (CPlayerInfo +0x158): +0 u8 active, +4 x, +8 y (both in [-0.9, 0.9]).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -14,14 +15,11 @@ use sa_world::bindings::cam_shake_no_pos as camera_cam_shake_no_pos;
 use sa_world::bindings::pad_get_car_gun_fired;
 use sa_world::bindings::pad_get_steering_left_right;
 use sa_world::bindings::pad_get_steering_up_down;
+use sa_world::bindings::fire_instant_hit as weapon_fire_instant_hit;
+use sa_world::bindings::weapon_ctor;
 orig! {
     /// `CCamera::FindCamFOV()` (0x50AD20, ST0)
     fn camera_find_cam_fov(cam: GPtr<u8>) -> f64 = thiscall 0x50AD20 => unported;
-    /// `CWeapon::CWeapon(eWeaponType, int32 ammo)` (0x73B430, `ret 8`)
-    fn weapon_ctor(w: GPtr<u8>, ty: i32, ammo: i32) -> GPtr<u8> = thiscall 0x73B430 => unported;
-    /// `CWeapon::FireInstantHit(CEntity* firedBy, CVector* origin, CVector* muzzle, CEntity* target, CVector* targetPos,
-    /// CVector* originForDriveBy, bool, bool muzzleFlash)` (0x73FB10, `ret 0x20`)
-    fn weapon_fire_instant_hit(w: GPtr<u8>, by: GPtr<u8>, origin: GPtr<u8>, muzzle: GPtr<u8>, target: u32, pos: GPtr<u8>, drive_by: u32, a: u32, b: u32) -> u8 = thiscall 0x73FB10 => unported;
 }
 
 /// `CTimer::ms_fTimeStep` (0xB7CB5C)
@@ -136,7 +134,7 @@ pub fn player_cross_hair_process(this: GPtr<u8>, player: i32, pad: GPtr<u8>) {
     wr::<u32>(ped, 0x470, old & 0xFDFF_FFFF);
     let o: GPtr<u8> = GPtr::from_raw(origin.as_mut_ptr()).cast();
     let tp: GPtr<u8> = GPtr::from_raw(target.as_mut_ptr()).cast();
-    weapon_fire_instant_hit(w, ped, o, o, 0, tp, 0, 1, 1);
+    weapon_fire_instant_hit(w, ped, o, o, GPtr::NULL, tp, GPtr::NULL, 1, 1);
     let ped = g::<GPtr<u8>>(slot).read();
     let f = rd::<u32>(ped, 0x470);
     let bit = ((old >> 25) & 1) << 25;

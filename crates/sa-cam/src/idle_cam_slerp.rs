@@ -15,9 +15,8 @@ use sa_core::bindings::cross_product;
 use sa_core::bindings::get_atan_of_xy as general_get_atan_of_xy;
 use sa_core::bindings::vector_normalise;
 use sa_world::bindings::multiply3x3_vm;
+use crate::bindings::hand_shaker_process;
 orig! {
-    /// `CHandShaker::Process(float)` (0x50D930) on `gHandShaker[0]` (0xB6ECA0)
-    fn hand_shaker_process(h: GPtr<u8>, f: f32) = thiscall 0x50D930 => unported;
     /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, bool x7)` (0x56A490)
     #[allow(clippy::too_many_arguments)]
     fn world_get_is_line_of_sight_clear(a: GPtr<u8>, b: GPtr<u8>, bu: u32, ve: u32, pe: u32, ob: u32, du: u32, st: u32, ig: u32) -> u8 = cdecl 0x56A490 => unported;

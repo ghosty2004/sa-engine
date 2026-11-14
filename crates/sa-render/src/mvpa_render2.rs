@@ -26,7 +26,14 @@ pub use sa_core::bindings::rw_raster_create;
 pub use sa_core::bindings::rw_raster_destroy;
 pub use sa_core::bindings::rw_texture_create;
 pub use sa_stream::bindings::fx_get_fx_quality;
-pub use sa_stream::bindings::rw_texture_destroy;
+pub use sa_core::bindings::rw_texture_destroy;
+pub use crate::bindings::custom_pipe_atomic_setup;
+pub use crate::bindings::real_time_shadow_destroy as real_time_shadow_destroy_call;
+pub use crate::bindings::shadow_camera_create as shadow_camera_create_call;
+pub use crate::bindings::shadow_camera_destroy as shadow_camera_destroy_call;
+pub use crate::bindings::shadow_camera_set_light as shadow_camera_set_light_call;
+pub use sa_core::bindings::object_has_frame_set_frame as rw_object_has_frame_set_frame;
+pub use sa_core::bindings::rp_light_create;
 orig! {
     /// `Light::RemoveExtraDirectionalLights(RpWorld*)` (0x7359E0)
     pub fn remove_extra_directional_lights(world: GPtr<u8>) = cdecl 0x7359E0 => unported;
@@ -36,26 +43,12 @@ orig! {
     pub fn fx_emitter_destructor_call(this: GPtr<u8>) = thiscall 0x4A2BB0 => fx_emitter_destructor;
     /// `FxEmitter_c::CreateParticles(float currTime, float timeStep)` (0x4A41E0)
     pub fn fx_emitter_create_particles(this: GPtr<u8>, a: u32, b: u32) = thiscall 0x4A41E0 => unported;
-    /// `CCustomCarEnvMapPipeline::CustomPipeAtomicSetup(RpAtomic*)` (0x5DA610)
-    pub fn custom_pipe_atomic_setup(atomic: GPtr<u8>) -> GPtr<u8> = cdecl 0x5DA610 => unported;
-    /// `_rwObjectHasFrameSetFrame(void* object, RwFrame*)` (0x804EF0)
-    pub fn rw_object_has_frame_set_frame(obj: GPtr<u8>, frame: GPtr<u8>) = cdecl 0x804EF0 => unported;
     /// `RwCameraSetProjection(RwCamera*, RwCameraProjection)` (0x7EE3A0)
     pub fn rw_camera_set_projection(c: GPtr<u8>, p: u32) -> GPtr<u8> = cdecl 0x7EE3A0 => unported;
     /// `RwCameraSetViewWindow(RwCamera*, const RwV2d*)` (0x7EE410)
     pub fn rw_camera_set_view_window(c: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EE410 => unported;
-    /// `RpLightCreate(RwInt32 type)` (0x752110)
-    pub fn rp_light_create(ty: i32) -> GPtr<u8> = cdecl 0x752110 => unported;
     /// `RpLightSetColor(RpLight*, const RwRGBAReal*)` (0x751A90)
     pub fn rp_light_set_color(l: GPtr<u8>, c: GPtr<u8>) -> GPtr<u8> = cdecl 0x751A90 => unported;
-    /// `CShadowCamera::Destroy()` (0x705400)
-    pub fn shadow_camera_destroy_call(this: GPtr<u8>) = thiscall 0x705400 => shadow_camera_destroy;
-    /// `CShadowCamera::Create(int rasterSizePower)` (0x705B60)
-    pub fn shadow_camera_create_call(this: GPtr<u8>, n: u32) -> GPtr<u8> = thiscall 0x705B60 => shadow_camera_create;
-    /// `CShadowCamera::SetLight(RpLight*)` (0x705520)
-    pub fn shadow_camera_set_light_call(this: GPtr<u8>, l: GPtr<u8>) -> GPtr<u8> = thiscall 0x705520 => shadow_camera_set_light;
-    /// `CRealTimeShadow::Destroy()` (0x705990)
-    pub fn real_time_shadow_destroy_call(this: GPtr<u8>) = thiscall 0x705990 => real_time_shadow_destroy;
     /// `CRealTimeShadowManager::GetRealTimeShadow(CPhysical*)` (0x706970)
     pub fn get_real_time_shadow(this: GPtr<u8>, e: GPtr<u8>) = thiscall 0x706970 => unported;
     /// `FxSystem_c::Exit()` (0x4AA840)
@@ -302,11 +295,11 @@ pub fn shadow_camera_set_frustum(this: GPtr<u8>, size: u32) -> GPtr<u8> {
     f.fld(s);
     f.fadd_st(0);
     let far = f.fstp();
-    rw_camera_set_far_clip_plane(rd::<GPtr<u8>>(this, 0), far.to_bits());
+    rw_camera_set_far_clip_plane(rd::<GPtr<u8>>(this, 0), f32::from_bits(far.to_bits()));
     f.fld(s);
     f.fmul_m(k(0x3A83_126F));
     let near = f.fstp();
-    rw_camera_set_near_clip_plane(rd::<GPtr<u8>>(this, 0), near.to_bits());
+    rw_camera_set_near_clip_plane(rd::<GPtr<u8>>(this, 0), f32::from_bits(near.to_bits()));
     let mut v = [size, size];
     rw_camera_set_view_window(rd::<GPtr<u8>>(this, 0), GPtr::from_raw(v.as_mut_ptr()).cast());
     rd::<GPtr<u8>>(this, 0)
@@ -322,7 +315,7 @@ pub fn shadow_camera_set_frustum(this: GPtr<u8>, size: u32) -> GPtr<u8> {
 pub fn real_time_shadow_manager_do_shadow_this_frame(this: GPtr<u8>, e: GPtr<u8>) {
     let ped = rd::<u8>(e, 0x36) & 7 == 3 && rd::<u32>(e, 0x598) == 0;
     let fx = GPtr::<u8>::from_addr(0xA9AE00);
-    if fx_get_fx_quality(fx) != 3 && (fx_get_fx_quality(fx) != 2 || !ped) {
+    if fx_get_fx_quality(fx) as i32 != 3 && (fx_get_fx_quality(fx) as i32 != 2 || !ped) {
         return;
     }
     let shadow = rd::<GPtr<u8>>(e, 0x134);

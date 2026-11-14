@@ -29,17 +29,13 @@ use sa_core::bindings::streaming_load_scene_collision;
 use sa_core::bindings::text_get;
 use sa_core::bindings::timer_resume;
 use sa_core::bindings::timer_suspend;
+use crate::bindings::clear_space_for_mission_entity;
+use crate::bindings::find_ground_z_for_coord;
+use crate::bindings::placeable_set_heading;
+use crate::bindings::skip_can_be_activated as skip_can_be_activated_o;
 orig! {
-    /// `CGameLogic::SkipCanBeActivated()` (0x4415C0, cdecl)
-    fn skip_can_be_activated_o() -> u8 = cdecl 0x4415C0 => crate::world::mvpd_w2::game_logic_skip_can_be_activated;
-    /// `CTheScripts::ClearSpaceForMissionEntity(const CVector&, CEntity*)` (0x486B00, cdecl)
-    fn clear_space_for_mission_entity(p: GPtr<u8>, e: GPtr<u8>) = cdecl 0x486B00 => unported;
     /// entity virtual +0x38 (`Teleport(CVector, bool)`)
     fn v_teleport(e: GPtr<u8>, x: f32, y: f32, z: f32, b: u32) = thiscall vslot 0x38 => unported;
-    /// `CPlaceable::SetHeading(float)` (0x43E0C0, `ret 4`)
-    fn placeable_set_heading(e: GPtr<u8>, h: f32) = thiscall 0x43E0C0 => unported;
-    /// `CWorld::FindGroundZForCoord(float, float)` (0x569660, cdecl, float in ST0)
-    fn find_ground_z_for_coord(x: f32, y: f32) -> f64 = cdecl 0x569660 => unported;
 }
 
 /// `CGameLogic::SkipState` (0x96A8A0): 0 none, 1 available, 2 fading out, 3 fading in, 4 available (swim), 5
@@ -122,7 +118,7 @@ pub fn game_logic_update_skip() {
     let mut st = state.read();
     let mut cancel = false;
     if st == 1 {
-        let p = find_player_coors(tp, -1);
+        let p = GPtr::<f32>::cast::<u8>(find_player_coors(tp.cast::<f32>(), -1));
         if !dist2d(p).fcom(x(g::<f32>(0x858FE8).read())).test_parity(5) {
             cancel = true;
         } else {
@@ -166,8 +162,8 @@ pub fn game_logic_update_skip() {
             timer_suspend();
             let pos = GPtr::<u8>::from_addr(SKIP_POSITION);
             streaming_load_scene_collision(pos);
-            streaming_load_scene(pos);
-            let p = find_player_coors(tp, -1);
+            streaming_load_scene(pos.cast::<u32>());
+            let p = GPtr::<f32>::cast::<u8>(find_player_coors(tp.cast::<f32>(), -1));
             let dist = dist2d_rev(p).to_f32();
             let (px, py, pz) = (g::<f32>(SKIP_POSITION).read(), g::<f32>(SKIP_POSITION + 4).read(), g::<f32>(SKIP_POSITION + 8).read());
             if !find_player_vehicle(-1, 0).is_null() {
@@ -245,6 +241,9 @@ use crate::bindings::stats_find_max_number_of_group_members;
 use sa_core::bindings::entity_update_rw_frame;
 use sa_core::bindings::matrix_mul_vec;
 use sa_core::bindings::matrix_update_rw_matrix;
+use crate::bindings::garages_is_model_index_a_door;
+use crate::bindings::ropes_find_rope;
+use crate::bindings::ropes_register_rope;
 orig! {
     /// `CSetPiece::Update()` (0x499A80)
     fn set_piece_update(p: GPtr<u8>) = thiscall 0x499A80 => unported;
@@ -252,13 +251,6 @@ orig! {
     fn object_process_sam_site_behaviour(o: GPtr<u8>) = thiscall 0x5A07D0 => unported;
     /// `CObject::ProcessTrainCrossingBehaviour()` (0x5A0B50)
     fn object_process_train_crossing_behaviour(o: GPtr<u8>) = thiscall 0x5A0B50 => unported;
-    /// `CRopes::FindRope(uint32 id)` (0x556000, cdecl)
-    fn ropes_find_rope(id: GPtr<u8>) -> i32 = cdecl 0x556000 => unported;
-    /// `CRopes::RegisterRope(CEntity* id, uint32 type, CVector pos, bool expires, uint8 segments, uint8 flags,
-    /// CPhysical* holder, uint32 expireTime)` (0x556B40, cdecl)
-    fn ropes_register_rope(id: GPtr<u8>, ty: u32, x: f32, y: f32, z: f32, expires: u32, segs: u32, flags: u32, holder: GPtr<u8>, t: u32) -> u8 = cdecl 0x556B40 => unported;
-    /// `CGarages::IsModelIndexADoor(int32)` (0x448AF0, cdecl)
-    fn garages_is_model_index_a_door(m: i32) -> u8 = cdecl 0x448AF0 => crate::world::garages::is_model_index_a_door;
     /// `CObject::ProcessGarageDoorBehaviour()` (0x44A4D0)
     fn object_process_garage_door_behaviour_o(o: GPtr<u8>) = thiscall 0x44A4D0 => crate::world::mvpd_w2::object_process_garage_door_behaviour;
     /// `CGarages::FindGarageForObject(CObject*)` (0x44A240, cdecl)
@@ -328,7 +320,7 @@ pub fn object_process_control_logic(this: GPtr<u8>) {
             6
         };
         let mut out = [0f32; 3];
-        let o = matrix_mul_vec(GPtr::from_raw(&mut out).cast(), rd::<GPtr<u8>>(this, 0x14), GPtr::from_raw(&mut off).cast());
+        let o = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::from_raw(&mut out).cast()), rd::<GPtr<u8>>(this, 0x14), GPtr::from_raw(&mut off).cast()));
         let (px, py) = (rd::<f32>(o, 0), rd::<f32>(o, 4));
         let pz = x(rd::<f32>(o, 8)).fadd_m(slack).to_f32();
         ropes_register_rope(this, ty, px, py, pz, 0, segs, 1, this, 0x4E20);
@@ -419,7 +411,7 @@ pub fn stats_display_script_stat_update_message(state: u32, stat: u32, change: f
         return;
     }
     if stats_is_stat_capped(stat) != 0
-        && !X87::from_f64_exact(stats_get_stat_value(stat)).fcom(x(g::<f32>(0x858C4C).read())).test_any(1)
+        && !X87::from_f64_exact(stats_get_stat_value(stat as u16)).fcom(x(g::<f32>(0x858C4C).read())).test_any(1)
     {
         return;
     }
@@ -442,8 +434,8 @@ pub fn stats_display_script_stat_update_message(state: u32, stat: u32, change: f
             }
             let ped = find_player_ped(-1);
             let n = rd::<u8>(rd::<GPtr<u8>>(ped, 0x480), 0x43) as i32;
-            if stats_find_max_number_of_group_members() < n {
-                X87::from_i32(stats_find_max_number_of_group_members()).to_f32()
+            if (stats_find_max_number_of_group_members() as i32) < n {
+                X87::from_i32(stats_find_max_number_of_group_members() as i32).to_f32()
             } else {
                 let ped = find_player_ped(-1);
                 X87::from_i32(rd::<u8>(rd::<GPtr<u8>>(ped, 0x480), 0x43) as i32).to_f32()

@@ -97,6 +97,9 @@ const T_FOG: u32 = 0x8848FC;
 /// Filter pairs `(min/mag, mip)`.
 const T_FILTER: u32 = 0x884950;
 
+pub use crate::bindings::set_texture_internal as set_texture_internal_call;
+pub use sa_core::bindings::set_render_state as set_render_state_call;
+pub use sa_core::bindings::vertex_alpha_enable as rs_vertex_alpha_call;
 orig! {
     /// `IDirect3DDevice9::SetRenderState` (vtable +0xE4)
     pub fn dev_set_render_state(dev: GPtr<u8>, state: u32, value: u32) -> i32 = stdcall vslot 0xE4 => unported;
@@ -112,11 +115,6 @@ orig! {
     pub fn dev_set_texture(dev: GPtr<u8>, stage: u32, tex: u32) -> i32 = stdcall vslot 0x104 => unported;
     /// `IDirect3DDevice9::SetCurrentTexturePalette` (+0x124)
     pub fn dev_set_current_texture_palette(dev: GPtr<u8>, index: u32) -> i32 = stdcall vslot 0x124 => unported;
-
-    /// `RwD3D9SetRenderState(state, value)` (0x7FC2D0)
-    pub fn set_render_state_call(state: u32, value: u32) -> u32 = cdecl 0x7FC2D0 => set_render_state;
-    /// `_rwD3D9SetTextureInternal(raster, stage)` (0x7FDCD0)
-    pub fn set_texture_internal_call(raster: GPtr<u8>, stage: u32) -> u32 = cdecl 0x7FDCD0 => set_texture_internal;
     /// `_rwD3D9RenderStateTextureFilter(filter)` (0x7FDB80)
     pub fn rs_texture_filter_call(f: u32) -> u32 = cdecl 0x7FDB80 => rs_texture_filter;
     /// `_rwD3D9RenderStateZTestEnable` (0x7FEA70, really ZWRITEENABLE)
@@ -125,8 +123,6 @@ orig! {
     pub fn rs_ztest_call(v: u32) -> u32 = cdecl 0x7FEB70 => rs_ztest_enable;
     /// `_rwD3D9RenderStateShadeMode` (0x7FEC70)
     pub fn rs_shade_call(v: u32) -> u32 = cdecl 0x7FEC70 => rs_shade_mode;
-    /// `_rwD3D9RenderStateVertexAlphaEnable` (0x7FE0A0)
-    pub fn rs_vertex_alpha_call(v: u32) -> u32 = cdecl 0x7FE0A0 => rs_vertex_alpha_enable;
     /// `_rwD3D9RenderStateTextureBorderColor` (0x7FECC0)
     pub fn rs_border_call(v: u32) -> u32 = cdecl 0x7FECC0 => rs_texture_border_color;
     /// `_rwD3D9RenderStateCullMode` (0x7FED00)
@@ -446,13 +442,11 @@ pub fn set_surface_properties(sp: GPtr<u8>, color: GPtr<u8>, flags: u32) -> u32 
     (dev_set_material(device(), p8(MATERIAL_STAGING as u32)) >= 0) as u32
 }
 
+pub use crate::bindings::flush_cache as flush_cache_call;
+pub use sa_core::bindings::set_tss as set_tss_call;
 orig! {
-    /// `RwD3D9SetTextureStageState(stage, type, value)` (0x7FC340)
-    pub fn set_tss_call(stage: u32, ty: u32, value: u32) = cdecl 0x7FC340 => set_texture_stage_state;
     /// `RwD3D9SetSamplerState(stage, type, value)` (0x7FC3C0)
     pub fn set_sampler_call(stage: u32, ty: u32, value: u32) = cdecl 0x7FC3C0 => set_sampler_state;
-    /// `_rwD3D9RenderStateFlushCache()` (0x7FC200, reached by a tail jump)
-    pub fn flush_cache_call() = cdecl 0x7FC200 => flush_cache;
 }
 
 /// The cache wipe shared by `_rwD3D9RenderStateOpen` and `_rwD3D9RenderStateReset`: last-sent render

@@ -10,6 +10,7 @@
 //! allocators, +0x298 / +0x29C), +0x2C8 dword, +0x2D0 bool (mission group).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -32,15 +33,13 @@ use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::is_player_on_a_mission as scripts_is_player_on_a_mission;
 use sa_world::bindings::ped_give_object_to_hold as ped_give_object_to_ped_to_hold;
 use sa_world::bindings::set_ped_decision_maker_type as intel_set_ped_decision_maker_type;
+use crate::bindings::group_intel_set_default_task_allocator as pgi_set_default_task_allocator;
+use crate::bindings::membership_add_member;
 orig! {
     /// `CPedGroupIntelligence::CPedGroupIntelligence` (0x5F7250)
     fn pgi_ctor(i: GPtr<u8>) -> GPtr<u8> = thiscall 0x5F7250 => unported;
-    /// `CPedGroupIntelligence::SetDefaultTaskAllocator(const CPedGroupDefaultTaskAllocator&)` (0x5FB280, `ret 4`)
-    fn pgi_set_default_task_allocator(i: GPtr<u8>, a: GPtr<u8>) = thiscall 0x5FB280 => unported;
     /// `CPedGroupDefaultTaskAllocators::Get(int32)` (0x5F7200, cdecl)
     fn default_task_allocators_get(ty: i32) -> GPtr<u8> = cdecl 0x5F7200 => unported;
-    /// `CPedGroupMembership::AddMember(CPed*, int32)` (0x5F6AE0, `ret 8`)
-    fn membership_add_member(m: GPtr<u8>, ped: GPtr<u8>, i: i32) = thiscall 0x5F6AE0 => unported;
     /// `CPedGroupMembership::GetObjectForPedToHold` (0x5F6950, cdecl)
     fn membership_get_object_for_ped_to_hold() -> i32 = cdecl 0x5F6950 => unported;
     /// `CPedGroup::Flush` (0x5FB790)
@@ -505,7 +504,7 @@ pub fn group_teleport(this: GPtr<u8>, pos: GPtr<f32>) {
                 continue;
             }
             let veh = rd::<GPtr<u8>>(f, 0x58C);
-            let door = car_enter_exit_compute_target_door_to_exit(veh, f);
+            let door = car_enter_exit_compute_target_door_to_exit(veh, f) as u32;
             let mut obj = [0u32; 6];
             let t: GPtr<u8> = GPtr::from_raw(obj.as_mut_ptr()).cast();
             car_set_ped_out_ctor_tp(t, rd::<GPtr<u8>>(f, 0x58C), door, 0);

@@ -503,9 +503,8 @@ use sa_core::bindings::find_player_vehicle;
 use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
 use sa_stream::bindings::simple_transform_update_matrix as update_matrix;
 use sa_world::bindings::placeable_get_matrix as get_matrix;
+use sa_world::bindings::switch_vehicle_to_real_physics;
 orig! {
-    /// `CCarCtrl::SwitchVehicleToRealPhysics(CVehicle*)` (0x423FC0)
-    fn switch_vehicle_to_real_physics(v: GPtr<u8>) = cdecl 0x423FC0 => crate::carctrl::switch_vehicle_to_real_physics;
     /// `CCarCtrl::TestCollisionBetween2MovingRects_OnlyFrontBumper` (0x425F70, ST0)
     fn test_collision_front_bumper_call(a: GPtr<u8>, b: GPtr<u8>, mvx: f32, mvy: f32, fb: GPtr<f32>, fa: GPtr<f32>) -> f64 = cdecl 0x425F70 => test_collision_front_bumper_abi;
     /// `CCarCtrl::TestCollisionBetween2MovingRects` (0x425B30, ST0)
@@ -670,14 +669,11 @@ pub fn slow_car_down_for_other_car(other: GPtr<u8>, veh: GPtr<u8>, max_speed: GP
     wr::<u32>(veh, 0x3BC, time_ms().wrapping_add(1000));
 }
 
+use sa_world::bindings::entity_get_bound_centre as get_bound_centre;
+use sa_world::bindings::placeable_get_top_direction as get_forward;
 orig! {
-    /// `CEntity::GetBoundCentre(CVector& out)` (0x534250, thiscall, `ret 4`)
-    fn get_bound_centre(e: GPtr<u8>, out: GPtr<f32>) = thiscall 0x534250 => unported;
     /// `CCollision::DistAlongLine2D(x, y, dx, dy, px, py)` (0x412A80, ST0)
     fn dist_along_line_2d(x: f32, y: f32, dx: f32, dy: f32, px: f32, py: f32) -> f64 = cdecl 0x412A80 => dist_along_line_2d_abi;
-    /// `CPlaceable::GetForward(CVector* out)` (0x41CCB0, thiscall, `ret 4`; returns the matrix's +0x10
-    /// row, or `out` filled from the heading without a matrix)
-    fn get_forward(e: GPtr<u8>, out: GPtr<f32>) -> GPtr<f32> = thiscall 0x41CCB0 => unported;
     /// `CCarCtrl::SlowCarDownForOtherCar` (0x42D0E0)
     fn slow_car_down_for_other_car_call(other: GPtr<u8>, veh: GPtr<u8>, ms: GPtr<f32>, speed: f32) = cdecl 0x42D0E0 => slow_car_down_for_other_car;
     /// `CCarCtrl::SlowCarDownForObject` (0x426220)
@@ -709,7 +705,7 @@ fn sector_list_candidate(
     fabs_z: bool,
 ) -> bool {
     let mut c = [0f32; 3]; // [esp+0x10]
-    get_bound_centre(e, GPtr::from_raw(c.as_mut_ptr()));
+    get_bound_centre(e, GPtr::<f32>::cast::<u8>(GPtr::from_raw(c.as_mut_ptr())));
     if le41(x_(c[0]), x_(min_x))
         || ge5(x_(c[0]), x_(max_x))
         || le41(x_(c[1]), x_(min_y))
@@ -985,8 +981,10 @@ pub fn find_maximum_speed_for_this_car_in_traffic(veh: GPtr<u8>) -> X87 {
 // ---------------------------------------------------------------------------------------------------------
 // SteerAICarWithPhysics
 
-use crate::bindings::are_nodes_loaded_for_area;
+use sa_world::bindings::are_nodes_loaded_for_area;
 use crate::bindings::join_car_with_road_according_to_mission;
+use sa_world::bindings::vector_add;
+use sa_world::bindings::vector_mul_scalar as vector_mul;
 orig! {
     /// `CCarCtrl::SwitchBetweenPhysicsAndGhost(CVehicle*)` (0x4222A0)
     fn switch_between_physics_and_ghost(v: GPtr<u8>) = cdecl 0x4222A0 => crate::carctrl2::switch_between_physics_and_ghost;
@@ -996,10 +994,6 @@ orig! {
     fn find_max_steer_angle(v: GPtr<u8>) -> f64 = cdecl 0x427FE0 => find_max_steer_angle_abi;
     /// `DotProduct(const CVector&, const CVector&)` (0x40FDB0, ST0)
     fn dot_product(a: GPtr<f32>, b: GPtr<f32>) -> f64 = cdecl 0x40FDB0 => unported;
-    /// `operator*(const CVector&, float)` (0x40FEC0, hidden result pointer first)
-    fn vector_mul(out: GPtr<f32>, v: GPtr<f32>, f: f32) -> GPtr<f32> = cdecl 0x40FEC0 => unported;
-    /// `operator+(const CVector&, const CVector&)` (0x40FE30, hidden result pointer first)
-    fn vector_add(out: GPtr<f32>, a: GPtr<f32>, b: GPtr<f32>) -> GPtr<f32> = cdecl 0x40FE30 => unported;
 }
 
 #[cfg_attr(sa_phase_a, allow(dead_code))]
@@ -1226,8 +1220,8 @@ pub fn steer_ai_car_with_physics(veh: GPtr<u8>) {
                 let mut scaled = [0f32; 3]; // [esp+0x28]
                 let mut sum = [0f32; 3]; // [esp+0x30]
                 let fp = get_forward(veh, GPtr::from_raw(fwd.as_mut_ptr()));
-                let sp = vector_mul(GPtr::from_raw(scaled.as_mut_ptr()), fp, f);
-                let r = vector_add(GPtr::from_raw(sum.as_mut_ptr()), ms, sp);
+                let sp = GPtr::<u8>::cast::<f32>(vector_mul(GPtr::<f32>::cast::<u8>(GPtr::from_raw(scaled.as_mut_ptr())), fp.cast::<u8>(), f));
+                let r = GPtr::<u8>::cast::<f32>(vector_add(GPtr::<f32>::cast::<u8>(GPtr::from_raw(sum.as_mut_ptr())), ms.cast::<u8>(), sp.cast::<u8>()));
                 for i in 0..3 {
                     ms.wrapping_index(i).write(r.wrapping_index(i).read());
                 }
@@ -1442,7 +1436,7 @@ pub fn weave_through_cars_sector_list(
         }
         wr::<u16>(e, 0x2C, sc);
         let mut c = [0f32; 3];
-        get_bound_centre(e, GPtr::from_raw(c.as_mut_ptr()));
+        get_bound_centre(e, GPtr::<f32>::cast::<u8>(GPtr::from_raw(c.as_mut_ptr())));
         if outside_box(c[0], c[1], min_x, min_y, max_x, max_y) || z_too_far(e, veh, 8.0) || e == veh {
             continue;
         }
@@ -1938,7 +1932,7 @@ pub fn steer_ai_car_with_physics_trying_to_block_target(
     wr::<u8>(veh, 0x3BA, if m == 0x12 { 0x13 } else { 6 });
 }
 
-use crate::bindings::get_position as path_node_get_position;
+use sa_world::bindings::get_position as path_node_get_position;
 
 /// `ThePaths.m_pPathNodes[area] + node * 0x1C` of a `CNodeAddress` dword (area low word, node high word).
 fn path_node(a: u32) -> GPtr<u8> {
@@ -2093,21 +2087,14 @@ use crate::bindings::car_has_reason_to_stop;
 use crate::bindings::should_car_stop_for_bridge;
 use crate::bindings::should_car_stop_for_light;
 use crate::bindings::stop_car_if_nodes_are_invalid;
-orig! {
-    /// `CCarCtrl::PickNextNodeAccordingStrategy(CVehicle*)` (0x432B10)
-    fn pick_next_node_according_strategy(v: GPtr<u8>) -> u8 = cdecl 0x432B10 => crate::carctrl4::pick_next_node_according_strategy;
-    /// `CWorld::FindPlayerCoors(CVector* out, int32)` (0x56E010)
-    fn find_player_coors(out: GPtr<f32>, id: i32) -> GPtr<f32> = cdecl 0x56E010 => unported;
-    /// `CCarCtrl::FindMaximumSpeedForThisCarInTraffic(CVehicle*)` (0x434400, ST0)
-    fn find_maximum_speed_call(v: GPtr<u8>) -> f64 = cdecl 0x434400 => find_maximum_speed_abi;
-    /// `operator-(const CVector&, const CVector&)` (0x40FE60, hidden result pointer first)
-    fn vector_sub(out: GPtr<f32>, a: GPtr<f32>, b: GPtr<f32>) -> GPtr<f32> = cdecl 0x40FE60 => unported;
-    /// `CVector::Magnitude()` (0x4082C0, ST0)
-    fn vector_magnitude(v: GPtr<f32>) -> f64 = thiscall 0x4082C0 => unported;
-}
+use crate::bindings::find_maximum_speed_call;
+use crate::bindings::pick_next_node_according_strategy;
+use sa_core::bindings::find_player_coors;
+use sa_core::bindings::vector_magnitude;
+use sa_core::bindings::vector_sub;
 
 #[cfg_attr(sa_phase_a, allow(dead_code))]
-fn find_maximum_speed_abi(v: GPtr<u8>) -> f64 {
+pub(crate) fn find_maximum_speed_abi(v: GPtr<u8>) -> f64 {
     find_maximum_speed_for_this_car_in_traffic(v).to_f64()
 }
 
@@ -2383,12 +2370,12 @@ pub fn steer_ai_car_with_physics_follow_path(
     }
     let m = rd::<GPtr<u8>>(veh, 0x14);
     let mut d = [0f32; 3]; // [E-0xc]
-    let dv = vector_sub(
-        GPtr::from_raw(d.as_mut_ptr()),
-        entity_pos(veh),
-        veh.byte_add(0x3EC).cast(),
-    );
-    let dmx = X87::from_f64_exact(vector_magnitude(dv));
+    let dv = GPtr::<u8>::cast::<f32>(vector_sub(
+        GPtr::<f32>::cast::<u8>(GPtr::from_raw(d.as_mut_ptr())),
+        GPtr::<f32>::cast::<u8>(entity_pos(veh)),
+        GPtr::<f32>::cast::<u8>(veh.byte_add(0x3EC).cast()),
+    ));
+    let dmx = X87::from_f64_exact(vector_magnitude(dv.cast::<u32>()));
     let dm = dmx.to_f32();
     if ge5(dmx, x_(8.0)) {
         return;
@@ -2641,10 +2628,7 @@ pub fn steer_ai_boat_with_physics_circling_player(
 }
 
 use crate::bindings::fire_fixed_machine_guns;
-orig! {
-    /// `CWorld::FindPlayerSpeed(int32)` (0x56E090, returns `CVector*`)
-    fn find_player_speed(id: i32) -> GPtr<f32> = cdecl 0x56E090 => unported;
-}
+use sa_world::bindings::find_player_speed;
 
 /// `CCarCtrl::SteerAIBoatWithPhysicsAttackingPlayer(CVehicle* veh, float* steer, float* gas, float* brake,
 /// bool* handbrake)` (0x428DE0): aims at the player's position plus the player's speed × 60 × `min(dist
@@ -2669,10 +2653,10 @@ pub fn steer_ai_boat_with_physics_attacking_player(
     let t = distx.fmul_m(k(0x3D4C_CCCD));
     let mut lead = if ge5(t, x_(2.0)) { 2.0 } else { t.to_f32() };
     let (fxn, fyn) = forward_2d_normalised(rd::<GPtr<u8>>(veh, 0x14));
-    let sp = find_player_speed(-1);
+    let sp = GPtr::<u8>::cast::<f32>(find_player_speed(-1));
     let pp = find_player_coors(GPtr::from_raw(out.as_mut_ptr()), -1);
     let tx = x_(lead).fmul_m(vx(sp, 0)).fmul_m(60.0).fadd_m(vx(pp, 0)).to_f32();
-    let sp = find_player_speed(-1);
+    let sp = GPtr::<u8>::cast::<f32>(find_player_speed(-1));
     lead = x_(lead).fmul_m(vx(sp, 1)).fmul_m(60.0).to_f32();
     let pp = find_player_coors(GPtr::from_raw(out.as_mut_ptr()), -1);
     let ty = x_(lead).fadd_m(vx(pp, 1));
@@ -2772,7 +2756,7 @@ pub fn test_whether_to_fire_plane_guns(veh: GPtr<u8>, target: GPtr<u8>) {
 /// the player's vehicle.
 #[hook(addr = 0x429780, conv = cdecl, name = "CCarCtrl::GetAIPlaneToAttackPlayer", expect = "83 EC 18 56 6A FF")]
 pub fn get_ai_plane_to_attack_player(veh: GPtr<u8>) {
-    let s = find_player_speed(-1);
+    let s = GPtr::<u8>::cast::<f32>(find_player_speed(-1));
     let ox = x_(vx(s, 0)).fmul_m(50.0).to_f32();
     let oy = x_(vx(s, 1)).fmul_m(50.0).to_f32();
     let oz = x_(vx(s, 2)).fmul_m(50.0).to_f32();
@@ -2787,7 +2771,7 @@ pub fn get_ai_plane_to_attack_player(veh: GPtr<u8>) {
     wr::<f32>(veh, 0x9B4, atan_xy(dx, dy).to_f32());
     wr::<f32>(veh, 0x9A8, tz);
     fly_ai_plane_in_certain_direction(veh);
-    if !find_player_vehicle(-1, 0).is_null() && get_vehicle_appearance(find_player_vehicle(-1, 0)) == 5 {
+    if !find_player_vehicle(-1, 0).is_null() && get_vehicle_appearance(find_player_vehicle(-1, 0)) as i32 == 5 {
         trigger_dog_fight_moves_call(veh, find_player_vehicle(-1, 0));
     }
     test_whether_to_fire_plane_guns_call(veh, find_player_vehicle(-1, 0));
@@ -2993,10 +2977,10 @@ pub fn possibly_fire_hs_missile(veh: GPtr<u8>, target: GPtr<u8>) {
     let mut fwd4 = [0f32; 3];
     let mut sum = [0f32; 3];
     let mut res = [0f32; 3];
-    let a = vector_mul(GPtr::from_raw(up3.as_mut_ptr()), m.byte_add(0x20).cast(), 3.0);
-    let b = vector_mul(GPtr::from_raw(fwd4.as_mut_ptr()), m.byte_add(0x10).cast(), 4.0);
-    let c = vector_add(GPtr::from_raw(sum.as_mut_ptr()), pos, b);
-    let r = vector_sub(GPtr::from_raw(res.as_mut_ptr()), c, a);
+    let a = GPtr::<u8>::cast::<f32>(vector_mul(GPtr::<f32>::cast::<u8>(GPtr::from_raw(up3.as_mut_ptr())), GPtr::<f32>::cast::<u8>(m.byte_add(0x20).cast()), 3.0));
+    let b = GPtr::<u8>::cast::<f32>(vector_mul(GPtr::<f32>::cast::<u8>(GPtr::from_raw(fwd4.as_mut_ptr())), GPtr::<f32>::cast::<u8>(m.byte_add(0x10).cast()), 4.0));
+    let c = GPtr::<u8>::cast::<f32>(vector_add(GPtr::<f32>::cast::<u8>(GPtr::from_raw(sum.as_mut_ptr())), pos.cast::<u8>(), b.cast::<u8>()));
+    let r = GPtr::<u8>::cast::<f32>(vector_sub(GPtr::<f32>::cast::<u8>(GPtr::from_raw(res.as_mut_ptr())), c.cast::<u8>(), a.cast::<u8>()));
     add_projectile(
         veh,
         0x14,
@@ -3200,7 +3184,7 @@ pub fn steer_ai_car_blocking_player_forward_and_back(
 ) {
     steer.write(0.0);
     hb.write(0);
-    let s = find_player_speed(-1);
+    let s = GPtr::<u8>::cast::<f32>(find_player_speed(-1));
     let (sx, sy) = (vx(s, 0), vx(s, 1));
     let pe = find_player_entity(-1);
     if rd::<GPtr<u8>>(pe, 0x14).is_null() {
@@ -3283,9 +3267,8 @@ use sa_core::bindings::find_player_ped;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::event_group_add;
 use sa_world::bindings::mental_state_increment_anger as increment_anger;
+use sa_core::bindings::vector_magnitude_sqr;
 orig! {
-    /// `CVector::MagnitudeSqr()` (0x406DA0, ST0)
-    fn vector_magnitude_sqr(v: GPtr<f32>) -> f64 = thiscall 0x406DA0 => unported;
     /// The vehicle event constructor of 0x4AE1A0 (`(CVehicle*)`, `ret 4`; 0x18 bytes, vtable 0x85AE88, a
     /// registered reference to the vehicle at +0x14)
     fn event_vehicle_ctor(ev: GPtr<u8>, veh: GPtr<u8>) -> GPtr<u8> = thiscall 0x4AE1A0 => unported;
@@ -3460,7 +3443,7 @@ pub fn slow_car_down_for_peds_sector_list(
         }
         if veh == find_player_vehicle(-1, 0) && rd::<u32>(veh, 0x514) != 0 {
             let mut dv = [0f32; 3]; // [E-0x18]
-            let r = vector_sub(GPtr::from_raw(dv.as_mut_ptr()), entity_pos(e), entity_pos(veh));
+            let r = GPtr::<u8>::cast::<f32>(vector_sub(GPtr::<f32>::cast::<u8>(GPtr::from_raw(dv.as_mut_ptr())), GPtr::<f32>::cast::<u8>(entity_pos(e)), GPtr::<f32>::cast::<u8>(entity_pos(veh))));
             if !ge5(X87::from_f64_exact(vector_magnitude_sqr(r)), x_(49.0)) {
                 add_vehicle_event(e, veh, || {});
             }
@@ -3500,11 +3483,9 @@ pub fn slow_car_down_for_peds_sector_list(
     }
 }
 
+use sa_core::bindings::matrix_mul_vec;
+use sa_world::bindings::multiply3x3 as multiply_3x3;
 orig! {
-    /// `CMatrix * CVector` (0x59C890, `(CVector* out, const CMatrix*, const CVector*)`, returns `out`)
-    fn matrix_mul_vec(out: GPtr<f32>, m: GPtr<u8>, v: GPtr<f32>) -> GPtr<f32> = cdecl 0x59C890 => unported;
-    /// `Multiply3x3(CVector* out, const CMatrix*, const CVector*)` (0x59C790, returns `out`)
-    fn multiply_3x3(out: GPtr<f32>, m: GPtr<u8>, v: GPtr<f32>) -> GPtr<f32> = cdecl 0x59C790 => unported;
     /// The unnamed heading test of the weave loops (0x421A50): `(float angle, CVector* p1, CVector* d1,
     /// CVector* p2, CVector* d2, CVector* p3, CVector* d3, CVector* p4, CVector* d4, float vx, float vy, float
     /// speed, bool)`; true when the heading is blocked
@@ -3582,12 +3563,12 @@ pub fn weave_for_other_car(other: GPtr<u8>, veh: GPtr<u8>, a: GPtr<f32>, b: GPtr
     let tp = GPtr::from_raw(tmp.as_mut_ptr());
     let corner = |m: GPtr<u8>, x: f32, y: f32| -> [f32; 3] {
         let mut v = [x, y, 0.0];
-        let r = matrix_mul_vec(tp, m, GPtr::from_raw(v.as_mut_ptr()));
+        let r = matrix_mul_vec(tp, m, GPtr::<f32>::cast::<u8>(GPtr::from_raw(v.as_mut_ptr())));
         [vx(r, 0), vx(r, 1), vx(r, 2)]
     };
     let edge = |m: GPtr<u8>, x: f32, y: f32| -> [f32; 3] {
         let mut v = [x, y, 0.0];
-        let r = multiply_3x3(tp, m, GPtr::from_raw(v.as_mut_ptr()));
+        let r = GPtr::<u8>::cast::<f32>(multiply_3x3(tp.cast::<u8>(), m, GPtr::<f32>::cast::<u8>(GPtr::from_raw(v.as_mut_ptr()))));
         [vx(r, 0), vx(r, 1), vx(r, 2)]
     };
     let ext = |lo: f32, hi: f32| x_(hi).fadd_m(g).fsub_m(lo).fsub_m(g).to_f32();
@@ -3920,7 +3901,7 @@ pub fn steer_ai_car_towards_point_in_escort(
     let w = matrix_mul_vec(
         GPtr::from_raw(out.as_mut_ptr()),
         rd::<GPtr<u8>>(leader, 0x14),
-        GPtr::from_raw(off.as_mut_ptr()),
+        GPtr::<f32>::cast::<u8>(GPtr::from_raw(off.as_mut_ptr())),
     );
     let (wx, wy) = (vx(w, 0), vx(w, 1));
     let px = x_(rd::<f32>(leader, 0x44)).fadd_m(wx).to_f32();

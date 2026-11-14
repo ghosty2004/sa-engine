@@ -2,12 +2,13 @@
 //! installed by 0x642700 for anim 0x182). Ported from the 1.0 US bytes. Unverified (docs/verify/HOWTO.md).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
 use crate::common::*;
 
-use crate::bindings::vehicle_anim_group_get_group;
+use sa_core::bindings::vehicle_anim_group_get_group;
 use crate::bindings::vehicle_clear_getting_out_flags;
 orig! {
     /// `CVehicle::ProcessOpenDoor(CPed*, uint32 door, uint32 group, uint32 anim, float time)` (vtable +0x70)
@@ -32,7 +33,7 @@ pub fn car_drive_close_door_finish_cb(_assoc: GPtr<u8>, task: GPtr<u8>) {
         return;
     }
     let grp = GPtr::from_addr(0xC1CDC0 + usize::from(rd::<u8>(rd::<GPtr<u8>>(v, 0x384), 0xDE)) * 0x94);
-    let group = vehicle_anim_group_get_group(grp, 0x182);
+    let group = vehicle_anim_group_get_group(grp, 0x182) as u32;
     let v = rd::<GPtr<u8>>(task, 8);
     v_vehicle_process_open_door(v, rd::<GPtr<u8>>(v, 0x460), 10, group, 0x182, 0x3F80_0000);
 }

@@ -9,25 +9,19 @@ use sa_core::bindings::pop_current_txd as txd_pop_current;
 use sa_core::bindings::push_current_txd as txd_push_current;
 use sa_core::bindings::rw_texture_create as texture_create;
 use sa_core::bindings::rw_texture_set_name as texture_set_name;
+use sa_core::bindings::image_destroy;
+use sa_core::bindings::raster_set_from_image;
+use sa_core::bindings::rw_raster_create as raster_create;
+use sa_core::bindings::rw_tex_dictionary_add_texture as tex_dictionary_add_texture;
+use sa_core::bindings::rw_texture_read as texture_read;
+use sa_core::bindings::set_current_txd as txd_set_current;
 orig! {
-    /// `CTxdStore::SetCurrentTxd(int32)` (0x7319C0)
-    fn txd_set_current(slot: u32) = cdecl 0x7319C0 => unported;
-    /// `RwTextureRead(name, mask)` (0x7F3AC0)
-    fn texture_read(name: GPtr<u8>, mask: u32) -> GPtr<u8> = cdecl 0x7F3AC0 => unported;
     /// CRT `sprintf(buf, fmt, s)` (0x821BB5)
     fn sprintf1(buf: u32, fmt: u32, s: GPtr<u8>) -> i32 = cdecl 0x821BB5 => unported;
     /// `RtBMPImageRead(path)` (0x7CDF60)
     fn bmp_image_read(path: u32) -> GPtr<u8> = cdecl 0x7CDF60 => unported;
     /// `RwImageFindRasterFormat(image, type, &w, &h, &depth, &format)` (0x8042C0)
     fn image_find_raster_format(img: GPtr<u8>, ty: u32, w: GPtr<u8>, h: GPtr<u8>, d: GPtr<u8>, f: GPtr<u8>) -> GPtr<u8> = cdecl 0x8042C0 => unported;
-    /// `RwRasterCreate(w, h, depth, flags)` (0x7FB230)
-    fn raster_create(w: u32, h: u32, d: u32, f: u32) -> GPtr<u8> = cdecl 0x7FB230 => unported;
-    /// `RwRasterSetFromImage(raster, image)` (0x804290)
-    fn raster_set_from_image(r: GPtr<u8>, img: GPtr<u8>) -> GPtr<u8> = cdecl 0x804290 => unported;
-    /// `RwTexDictionaryAddTexture(dict, texture)` (0x7F3980)
-    fn tex_dictionary_add_texture(d: u32, t: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F3980 => unported;
-    /// `RwImageDestroy(image)` (0x802740)
-    fn image_destroy(img: GPtr<u8>) -> u32 = cdecl 0x802740 => unported;
 }
 
 /// The player TXD slot (0xC3F03C), the TXD pool (0xC8800C), the path buffer (0xB71670).
@@ -43,8 +37,8 @@ const PATH: u32 = 0xB71670;
        unverified = "std5-ped-1", route = "L2", hazards = "heap-writes", recs = "new-game")]
 pub fn get_skin_texture(name: GPtr<u8>) -> GPtr<u8> {
     txd_push_current();
-    txd_set_current(GPtr::<u32>::from_addr(PLAYER_TXD).read());
-    let tex = texture_read(name, 0);
+    txd_set_current((GPtr::<u32>::from_addr(PLAYER_TXD).read()) as i32);
+    let tex = texture_read(name, GPtr::NULL);
     txd_pop_current();
     if !tex.is_null() {
         return tex;
@@ -60,7 +54,7 @@ pub fn get_skin_texture(name: GPtr<u8>) -> GPtr<u8> {
     let base = l.as_mut_ptr() as usize;
     let p = |i: usize| -> GPtr<u8> { GPtr::from_addr(base + 4 * i) };
     image_find_raster_format(img, 4, p(3), p(2), p(1), p(0));
-    let r = raster_create(l[3], l[2], l[1], l[0]);
+    let r = raster_create((l[3]) as i32, (l[2]) as i32, (l[1]) as i32, l[0]);
     raster_set_from_image(r, img);
     let t = texture_create(r);
     texture_set_name(t, name);
@@ -73,7 +67,7 @@ pub fn get_skin_texture(name: GPtr<u8>) -> GPtr<u8> {
     } else {
         GPtr::from_addr((pool.cast::<u32>().read() as usize).wrapping_add(12 * idx as usize))
     };
-    tex_dictionary_add_texture(slot.cast::<u32>().read(), t);
+    tex_dictionary_add_texture(GPtr::from_addr((slot.cast::<u32>().read()) as usize), t);
     image_destroy(img);
     t
 }

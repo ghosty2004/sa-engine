@@ -9,6 +9,16 @@ use sa_core::mem::{GBool, GPtr};
 use sa_core::orig;
 
 orig! {
+    /// `FUN_00424100` (0x424100)
+    pub fn area_check_stub(px: u32, py: u32) -> u8 = cdecl 0x424100 => crate::train_control::area_check_stub_native;
+}
+
+orig! {
+    /// `CVehicleRecording::SetRecordingToPointClosestToCoors` (0x45A1E0)
+    pub fn set_recording_to_point_closest_to_coors(i: i32, x: f32, y: f32, z: f32) = cdecl 0x45A1E0 => crate::checks2::set_recording_to_point_closest_to_coors;
+}
+
+orig! {
     /// `FxSystem_c::SetVelAdd` (0x4AA730)
     pub fn fx_set_vel_add(fx: GPtr<u8>, v: GPtr<u8>) = thiscall 0x4AA730 => unported;
 }
@@ -84,18 +94,33 @@ orig! {
 }
 
 orig! {
+    /// `CAutomobile::ResetSuspension` (0x6A2AE0)
+    pub fn automobile_reset_suspension(car: GPtr<u8>) = thiscall 0x6A2AE0 => crate::automobile::reset_suspension;
+}
+
+orig! {
     /// `CAutomobile::IsInAir` (0x6A6140)
     pub fn automobile_is_in_air(v: GPtr<u8>) -> u8 = thiscall 0x6A6140 => unported;
 }
 
 orig! {
     /// `CAutomobile::Destructor` (0x6A61E0)
-    pub fn automobile_destructor(v: GPtr<u8>) = thiscall 0x6A61E0 => unported;
+    pub fn automobile_destructor(v: GPtr<u8>) = thiscall 0x6A61E0 => crate::automobile2::destructor;
+}
+
+orig! {
+    /// `CAutomobile::dmgDrawCarCollidingParticles` (0x6A6DC0)
+    pub fn dmg_draw_car_colliding_particles(v: GPtr<u8>, coors: GPtr<u8>, intensity: f32, weapon: u32) = thiscall 0x6A6DC0 => unported;
 }
 
 orig! {
     /// `CAutomobile::SpawnFlyingComponent` (0x6A8580)
-    pub fn spawn_flying_component(car: GPtr<u8>, node: i32, kind: u32) -> GPtr<u8> = thiscall 0x6A8580 => unported;
+    pub fn spawn_flying_component(car: GPtr<u8>, node: i32, kind: u32) -> GPtr<u8> = thiscall 0x6A8580 => crate::automobile_flying_component::automobile_spawn_flying_component;
+}
+
+orig! {
+    /// `CAutomobile::UpdateWheelMatrix` (0x6AA290)
+    pub fn update_wheel_matrix(v: GPtr<u8>, node: i32, flags: u32) = thiscall 0x6AA290 => crate::mvpd_v4::automobile_update_wheel_matrix;
 }
 
 orig! {
@@ -106,6 +131,11 @@ orig! {
 orig! {
     /// `CAutomobile::ProcessControl` (0x6B1880)
     pub fn automobile_process_control(a: GPtr<u8>) = thiscall 0x6B1880 => unported;
+}
+
+orig! {
+    /// `CBike::DamageKnockOffRider` (0x6B5A10)
+    pub fn damage_knock_off_rider(v: GPtr<u8>, dmg: u32, comp: u32, e: GPtr<u8>, coors: GPtr<u8>, dir: GPtr<u8>) -> u8 = cdecl 0x6B5A10 => unported;
 }
 
 orig! {
@@ -129,23 +159,8 @@ orig! {
 }
 
 orig! {
-    /// `CDamageManager::GetPanelStatus` (0x6C2180)
-    pub fn dm_get_panel_status(dm: GPtr<u8>, panel: u32) -> u32 = thiscall 0x6C2180 => crate::damage::get_panel_status;
-}
-
-orig! {
-    /// `CDamageManager::SetWheelStatus` (0x6C21A0)
-    pub fn dm_set_wheel_status(dm: GPtr<u8>, wheel: i32, status: u32) = thiscall 0x6C21A0 => crate::damage::set_wheel_status;
-}
-
-orig! {
-    /// `CDamageManager::GetWheelStatus` (0x6C21B0)
-    pub fn get_wheel_status(dm: GPtr<u8>, wheel: i32) -> u32 = thiscall 0x6C21B0 => crate::damage::get_wheel_status;
-}
-
-orig! {
-    /// `CDamageManager::SetDoorStatus-` (0x6C21C0)
-    pub fn dm_set_door_status(dm: GPtr<u8>, door: i32, status: u32) = thiscall 0x6C21C0 => crate::damage::set_door_status;
+    /// `CMonsterTruck::ExtendSuspension` (0x6C7D80)
+    pub fn call_extend_suspension(a: GPtr<u8>) = thiscall 0x6C7D80 => crate::vehicle_suspension_nodes::monster_truck_extend_suspension_port;
 }
 
 orig! {
@@ -169,8 +184,28 @@ orig! {
 }
 
 orig! {
+    /// `CVehicle::CanVehicleBeDamaged` (0x6D1280)
+    pub fn can_vehicle_be_damaged(v: GPtr<u8>, e: GPtr<u8>, weapon: u32, out: GPtr<u8>) -> u8 = thiscall 0x6D1280 => unported;
+}
+
+orig! {
+    /// `CVehicle::ProcessDelayedExplosion` (0x6D1340)
+    pub fn process_delayed_explosion(v: GPtr<u8>) = thiscall 0x6D1340 => crate::vehicle2::process_delayed_explosion;
+}
+
+orig! {
+    /// `CVehicle::CanDoorsBeDamaged` (0x6D1E60)
+    pub fn can_doors_be_damaged(v: GPtr<u8>) -> u8 = thiscall 0x6D1E60 => crate::vehicle::can_doors_be_damaged;
+}
+
+orig! {
     /// `CVehicle::ProcessCarAlarm` (0x6D21F0)
     pub fn process_car_alarm(v: GPtr<u8>) = thiscall 0x6D21F0 => crate::vehicle2::process_car_alarm;
+}
+
+orig! {
+    /// `CVehicle::ActivateBomb` (0x6D24F0)
+    pub fn activate_bomb(v: GPtr<u8>) = thiscall 0x6D24F0 => crate::vehicle2::activate_bomb;
 }
 
 orig! {
@@ -189,18 +224,28 @@ orig! {
 }
 
 orig! {
+    /// `CVehicle::GetPlaneNumGuns` (0x6D3F30)
+    pub fn get_plane_num_guns(v: GPtr<u8>) -> u32 = thiscall 0x6D3F30 => crate::vehicle2::get_plane_num_guns;
+}
+
+orig! {
     /// `CVehicle::Constructor` (0x6D5F10)
     pub fn vehicle_ctor(v: GPtr<u8>, created_by: u32) -> GPtr<u8> = thiscall 0x6D5F10 => unported;
 }
 
 orig! {
     /// `CVehicle::PreRender` (0x6D6480)
-    pub fn vehicle_pre_render(v: GPtr<u8>) = thiscall 0x6D6480 => unported;
+    pub fn vehicle_pre_render(v: GPtr<u8>) = thiscall 0x6D6480 => crate::vehicle2::pre_render;
 }
 
 orig! {
     /// `CVehicle::SetModelIndex` (0x6D6A40)
     pub fn vehicle_set_model_index(v: GPtr<u8>, mi: u32) = thiscall 0x6D6A40 => unported;
+}
+
+orig! {
+    /// `CVehicle::SetComponentRotation` (0x6DBA30)
+    pub fn set_component_rotation(v: GPtr<u8>, frame: GPtr<u8>, axis: u32, angle: f32, reset: u32) = thiscall 0x6DBA30 => crate::vehicle2::set_component_rotation;
 }
 
 orig! {
@@ -219,13 +264,18 @@ orig! {
 }
 
 orig! {
+    /// `CVehicle::DoHeadLightBeam` (0x6E0E20)
+    pub fn do_head_light_beam(v: GPtr<u8>, kind: u32, m: GPtr<u8>, right: u32) = thiscall 0x6E0E20 => unported;
+}
+
+orig! {
     /// `CVehicle::DoVehicleLights` (0x6E1A60)
     pub fn do_vehicle_lights(v: GPtr<u8>, m: GPtr<u8>, flags: u32) = thiscall 0x6E1A60 => crate::vehicle_lights::vehicle_do_vehicle_lights;
 }
 
 orig! {
     /// `CVehicle::Destructor` (0x6E2B40)
-    pub fn vehicle_destructor(v: GPtr<u8>) = thiscall 0x6E2B40 => unported;
+    pub fn vehicle_destructor(v: GPtr<u8>) = thiscall 0x6E2B40 => crate::vehicle2::destructor;
 }
 
 orig! {
@@ -239,11 +289,6 @@ orig! {
 }
 
 orig! {
-    /// `CDoor::Open` (0x6F4790)
-    pub fn door_open(d: GPtr<u8>, ratio: f32) = thiscall 0x6F4790 => crate::door::open;
-}
-
-orig! {
     /// `CBouncingPanel::SetPanel` (0x6F4920)
     pub fn bouncing_panel_set_panel(p: GPtr<u8>, frame: u32, axis: u32, limit: u32) = thiscall 0x6F4920 => crate::door::set_panel;
 }
@@ -254,13 +299,13 @@ orig! {
 }
 
 orig! {
-    /// `cHandlingDataMgr::GetBoatPointer` (0x6F5300)
-    pub fn get_boat_pointer(mgr: GPtr<u8>, id: u32) -> GPtr<u8> = thiscall 0x6F5300 => crate::handling::get_boat_pointer;
+    /// `CTrain::FindMaximumSpeedToStopAtStations` (0x6F5BA0)
+    pub fn find_maximum_speed_to_stop_at_stations(t: GPtr<u8>, out: GPtr<f32>) -> u8 = thiscall 0x6F5BA0 => crate::mvpb_a1::find_maximum_speed_to_stop_at_stations;
 }
 
 orig! {
-    /// `CTrain::FindMaximumSpeedToStopAtStations` (0x6F5BA0)
-    pub fn find_maximum_speed_to_stop_at_stations(t: GPtr<u8>, out: GPtr<f32>) -> u8 = thiscall 0x6F5BA0 => crate::mvpb_a1::find_maximum_speed_to_stop_at_stations;
+    /// `CTrainNode::GetLightingFromCollision` (0x6F5F80)
+    pub fn get_lighting_from_collision(n: GPtr<u8>) -> u8 = thiscall 0x6F5F80 => crate::train2::get_lighting_from_collision;
 }
 
 orig! {
@@ -271,11 +316,6 @@ orig! {
 orig! {
     /// `CTrain::FindPositionOnTrackFromCoors` (0x6F6CC0)
     pub fn train_find_position_on_track_from_coors(t: GPtr<u8>) = thiscall 0x6F6CC0 => unported;
-}
-
-orig! {
-    /// `CCoronas::RegisterCorona-texture` (0x6FC580)
-    pub fn register_corona(id: u32, attach: GPtr<u8>, r: u32, gg: u32, b: u32, a: u32, pos: GPtr<u8>, size: u32, range: u32, kind: u32, flare: u32, refl: u32, los: u32, trail: u32, angle: u32, neon: u32, pull: u32, bright: u32, fade: u32, below: u32, delay: u32) = cdecl 0x6FC580 => unported;
 }
 
 orig! {

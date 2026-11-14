@@ -63,6 +63,9 @@ use crate::bindings::free_list_create as freelist_create;
 use crate::bindings::free_list_destroy as freelist_destroy;
 use crate::bindings::im2d_render_open;
 use sa_core::bindings::direct3d_create9;
+use crate::bindings::free_list_purge as freelist_purge;
+use crate::bindings::manager_close_call as vertex_buffer_manager_close;
+use crate::bindings::set_present_parameters as set_present_parameters_call;
 orig! {
     /// `IUnknown::Release()` (+8)
     fn release(o: GPtr<u8>) -> u32 = stdcall vslot 0x8 => unported;
@@ -121,8 +124,6 @@ orig! {
     fn matrix_set_mult_fn(f: u32) -> u32 = cdecl 0x7F12C0 => crate::matrix::rw_matrix_set_mult_fn;
     /// `_rwVectorSetMultFn(point, points, vector, vectors)` (0x7ED5F0)
     fn vector_set_mult_fn(p: u32, ps: u32, v: u32, vs: u32) -> u32 = cdecl 0x7ED5F0 => unported;
-    /// `RwFreeListPurge(fl)` (0x801E00)
-    fn freelist_purge(fl: GPtr<u8>) -> i32 = cdecl 0x801E00 => unported;
     /// `_rxD3D9VideoMemoryRasterListCreate()` (0x4CC150)
     fn video_memory_raster_list_create() -> u32 = cdecl 0x4CC150 => unported;
     /// `_rwD3D9RasterClose()` (0x4CC170)
@@ -133,15 +134,11 @@ orig! {
     fn render_state_open() -> u32 = cdecl 0x7FCAC0 => unported;
     /// `_rwD3D9VertexBufferManagerOpen()` (0x7F5CB0)
     fn vertex_buffer_manager_open() -> u32 = cdecl 0x7F5CB0 => unported;
-    /// `_rwD3D9VertexBufferManagerClose()` (0x7F5D20)
-    fn vertex_buffer_manager_close() -> u32 = cdecl 0x7F5D20 => unported;
 
     /// `FUN_007f7540()`: the mode list
     fn build_mode_list_call() = cdecl 0x7F7540 => build_mode_list;
     /// `_rwD3D9SetStandardFunctions(table, -, count)` (0x7F72E0)
     fn set_standard_functions_call(out: GPtr<u32>, inout: u32, n: i32) -> u32 = cdecl 0x7F72E0 => set_standard_functions;
-    /// `D3D9SetPresentParameters(mode, flags, adapterFormat)` (0x7F6CB0)
-    fn set_present_parameters_call(mode: u32, flags: u32, format: u32) = cdecl 0x7F6CB0 => set_present_parameters;
     /// `FUN_007f6bf0()`: the multisample probe
     fn multisample_probe_call() = cdecl 0x7F6BF0 => multisample_probe;
     /// `FUN_007f6b00()`: the declaration / FVF / shader caches invalidated
@@ -567,13 +564,12 @@ pub fn device_stop() -> u32 {
     1
 }
 
+use crate::bindings::d3d9_im3d_render_close_call as im3d_render_close;
 orig! {
     /// `IDirect3DDevice9::SetRenderTarget(index, surface)` (+0x94)
     fn dev_set_render_target(d: GPtr<u8>, index: u32, s: u32) -> i32 = stdcall vslot 0x94 => unported;
     /// `IDirect3DDevice9::SetDepthStencilSurface(surface)` (+0x9C)
     fn dev_set_depth_stencil_surface(d: GPtr<u8>, s: u32) -> i32 = stdcall vslot 0x9C => unported;
-    /// `_rwD3D9Im3DRenderClose()` (0x80DFB0)
-    fn im3d_render_close() -> u32 = cdecl 0x80DFB0 => unported;
     /// `_rwD3D9DynamicVertexBufferRelease()` (0x7F5840)
     fn dynamic_vertex_buffer_release() = cdecl 0x7F5840 => unported;
     /// `_rxD3D9VideoMemoryRasterListRelease()` (0x4CB640)

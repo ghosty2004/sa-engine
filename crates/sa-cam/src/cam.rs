@@ -65,11 +65,10 @@ const TEN: u32 = 0x4120_0000;
 pub use crate::bindings::idle_cam_reset_call;
 pub use sa_core::bindings::cross_product;
 pub use sa_core::bindings::vector_normalise;
+pub use crate::bindings::cam_init as cam_init_call;
 orig! {
     /// `CCam::WrapAngle(float&)` (0x509BE0)
     pub fn wrap_angle_call(a: GPtr<f32>) = cdecl 0x509BE0 => wrap_angle;
-    /// `CCam::Init()` (0x50E490)
-    pub fn cam_init_call(this: GPtr<u8>) = thiscall 0x50E490 => cam_init;
 }
 
 use sa_core::field::copy3;

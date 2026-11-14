@@ -6,21 +6,16 @@
 #![allow(clippy::unreadable_literal)]
 
 use sa_core::mem::GPtr;
-use sa_core::{native, orig};
+use sa_core::native;
 use sa_math::x87::X87;
 
 use super::mvpe_coll1::entity_bound_sphere;
 use super::mvpc_coll1::local;
 use crate::world::common::{g, rd, wr};
 
-orig! {
-    /// `CCollision::IsThisVehicleSittingOnMe(CVehicle*, CVehicle*)` (0x4152C0, AL)
-    fn is_this_vehicle_sitting_on_me(veh: GPtr<u8>, on_me: GPtr<u8>) -> u8 = cdecl 0x4152C0 => super::prim::is_this_vehicle_sitting_on_me;
-    /// `CCollision::TestSphereSphere(const CColSphere&, const CColSphere&)` (0x411E70, AL)
-    fn test_sphere_sphere(a: GPtr<f32>, b: GPtr<f32>) -> u32 = cdecl 0x411E70 => super::prim::test_sphere_sphere;
-    /// `CCollision::SphereCastVsEntity(const CColSphere&, const CColSphere&, CEntity*)` (0x419F00, AL)
-    fn sphere_cast_vs_entity(a: GPtr<u8>, b: GPtr<u8>, e: GPtr<u8>) -> u8 = cdecl 0x419F00 => super::sphere_cast::sphere_cast_vs_entity;
-}
+use crate::bindings::is_this_vehicle_sitting_on_me;
+use crate::bindings::sphere_cast_vs_entity;
+use crate::bindings::test_sphere_sphere;
 
 /// `CWorld::ms_aRepeatSectors` vehicle lists (0xB992B8, 12 bytes per sector)
 const REPEAT_SECTOR_VEHICLES: usize = 0xB992B8;

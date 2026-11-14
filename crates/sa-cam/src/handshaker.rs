@@ -24,11 +24,10 @@ const RAND_SCALE: u32 = 0x3800_0100;
 
 pub use sa_core::bindings::matrix_dtor;
 pub use sa_core::bindings::matrix_set_rotate;
+pub use crate::bindings::hand_shaker_reset as reset_call;
 orig! {
     /// `CHandShaker::SetDefaults()` (0x517330)
     pub fn set_defaults_call(this: GPtr<u8>) = thiscall 0x517330 => hand_shaker_set_defaults;
-    /// `CHandShaker::Reset()` (0x50D860)
-    pub fn reset_call(this: GPtr<u8>) = thiscall 0x50D860 => hand_shaker_reset;
 }
 
 /// `CHandShaker::~CHandShaker()` (0x509810): `add ecx, 0x3C; jmp CMatrix::~CMatrix` (the matrix member).

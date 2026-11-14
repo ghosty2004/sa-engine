@@ -27,25 +27,22 @@ const SFX_VOLUME: usize = 0xBA6797;
 const RADIO_VOLUME: usize = 0xBA6798;
 
 use crate::bindings::audio_retune_radio;
-use crate::bindings::audio_set_effects_master_volume;
-use crate::bindings::audio_set_music_master_volume;
-use crate::bindings::get_level_from_position;
+use sa_core::bindings::audio_set_effects_master_volume;
+use sa_core::bindings::audio_set_music_master_volume;
+use sa_stream::bindings::get_level_from_position;
 use crate::bindings::mark_everything_as_new;
 use sa_core::bindings::camera_process_fade;
 use sa_core::bindings::camera_set_fade_colour;
 use sa_core::bindings::collision_sort_out_collision_after_load as sort_out_collision_after_load;
 use sa_core::bindings::replay_init;
+use crate::bindings::turn_on_radio_for_vehicle;
+use sa_core::bindings::camera_fade;
+use sa_core::bindings::streaming_load_scene as load_scene;
 orig! {
     /// `CReplay::RestoreStuffFromMem()` (0x45ECD0)
     fn restore_stuff_from_mem() = cdecl 0x45ECD0 => unported;
-    /// `CStreaming::LoadScene(const CVector&)` (0x40EB70)
-    fn load_scene(p: GPtr<u32>) = cdecl 0x40EB70 => unported;
-    /// `CCamera::Fade(float, int16)` (0x50AC20)
-    fn camera_fade(cam: GPtr<u8>, t: u32, dir: u32) = thiscall 0x50AC20 => unported;
     /// `CFireManager::CreateAllFxSystems()` (0x539D50)
     fn fire_manager_create_all_fx_systems(m: GPtr<u8>) = thiscall 0x539D50 => unported;
-    /// `CAEVehicleAudioEntity::TurnOnRadioForVehicle()` (0x4F5B20)
-    fn turn_on_radio_for_vehicle(a: GPtr<u8>) = thiscall 0x4F5B20 => unported;
 }
 
 /// `CReplay::FinishPlayback()` (0x45F050, cdecl): only in playback mode (1). `RestoreStuffFromMem()`,
@@ -68,7 +65,7 @@ pub fn finish_playback() {
     if load != 0 {
         let mut v = [g::<u32>(0x97FAC8).read(), g::<u32>(0x97FAC4).read(), g::<u32>(0x97FAC0).read()];
         let p = GPtr::from_raw(v.as_mut_ptr());
-        g::<u32>(CURR_LEVEL).write(get_level_from_position(p));
+        g::<u32>(CURR_LEVEL).write(get_level_from_position(p.cast::<f32>()) as u32);
         sort_out_collision_after_load();
         load_scene(p);
     }
@@ -80,9 +77,9 @@ pub fn finish_playback() {
     }
     let cam = GPtr::from_addr(THE_CAMERA);
     camera_set_fade_colour(cam, 0, 0, 0);
-    camera_fade(cam, 0, 0);
+    camera_fade(cam, f32::from_bits(0), 0);
     camera_process_fade(cam);
-    camera_fade(cam, 0x3F80_0000, 1);
+    camera_fade(cam, f32::from_bits(0x3F80_0000), 1);
     fire_manager_create_all_fx_systems(GPtr::from_addr(FIRE_MANAGER));
     let ae = GPtr::from_addr(AUDIO_ENGINE);
     audio_set_effects_master_volume(ae, u32::from(g::<u8>(SFX_VOLUME).read()));

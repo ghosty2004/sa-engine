@@ -18,6 +18,11 @@ use crate::common::*;
 
 use sa_core::bindings::crt_free_8214bd as crt_free;
 use sa_core::bindings::crt_new as crt_operator_new;
+use crate::bindings::data_stream_ctor;
+use crate::bindings::data_stream_destructor_call;
+use crate::bindings::data_stream_fill_buffer as data_stream_fill_buffer_call;
+use crate::bindings::data_stream_initialise as data_stream_initialise_call;
+use sa_core::bindings::file_set_dir as file_mgr_set_dir;
 orig! {
     /// KERNEL32 `CreateFileA` (IAT 0x8580A0)
     fn create_file_a(name: GPtr<u8>, access: u32, share: u32, sec: u32, disp: u32, flags: u32, tmpl: u32) -> u32 = stdcall cell 0x8580A0 => unported;
@@ -37,14 +42,10 @@ orig! {
     fn v_get_stream_length_ms(d: GPtr<u8>) -> i32 = thiscall vslot 0x8 => unported;
     /// `CAEStreamTransformer::TransformBuffer(void*, uint32, uint32)` (0x4F17D0, `ret 0xC`)
     fn transform_buffer_call(t: GPtr<u8>, buf: GPtr<u8>, size: u32, pos: u32) = thiscall 0x4F17D0 => stream_transformer_transform_buffer;
-    /// `CAEDataStream::FillBuffer(void*, uint32)` (0x4DC1C0, `ret 8`)
-    fn data_stream_fill_buffer_call(s: GPtr<u8>, dest: GPtr<u8>, size: u32) -> u32 = thiscall 0x4DC1C0 => data_stream_fill_buffer;
     /// `CAEDataStream::GetCurrentPosition()` (0x4DC230)
     fn data_stream_get_current_position_call(s: GPtr<u8>) -> u32 = thiscall 0x4DC230 => data_stream_get_current_position;
     /// `CAEDataStream::Seek(int32, int32)` (0x4DC250, `ret 8`)
     fn data_stream_seek_call(s: GPtr<u8>, offset: u32, whence: u32) -> u32 = thiscall 0x4DC250 => data_stream_seek;
-    /// `CAEDataStream::~CAEDataStream()` (0x4DC490)
-    fn data_stream_destructor_call(s: GPtr<u8>) = thiscall 0x4DC490 => data_stream_destructor;
     /// `CAEStreamingDecoder::~CAEStreamingDecoder()` (0x4F2830)
     fn streaming_decoder_destructor_call(d: GPtr<u8>) = thiscall 0x4F2830 => streaming_decoder_destructor;
     /// `CAEVorbisDecoder::~CAEVorbisDecoder()` (0x5023F0)
@@ -55,19 +56,12 @@ orig! {
     fn lstrcpy_a(d: GPtr<u8>, s: GPtr<u8>) -> GPtr<u8> = stdcall cell 0x8580D4 => unported;
     /// KERNEL32 `lstrcatA` (IAT 0x8580D8, by its use here)
     fn lstrcat_a(d: GPtr<u8>, s: GPtr<u8>) -> GPtr<u8> = stdcall cell 0x8580D8 => unported;
-    /// `CAEDataStream::CAEDataStream(int32 track, char* name, uint32 start, uint32 length, bool encrypted)` (0x4DC620,
-    /// `ret 0x14`)
-    fn data_stream_ctor(s: GPtr<u8>, track: i32, name: GPtr<u8>, start: u32, length: u32, encrypted: u32) -> GPtr<u8> = thiscall 0x4DC620 => data_stream_constructor;
     /// KERNEL32 `InterlockedIncrement` (IAT 0x8580CC)
     fn interlocked_increment(p: GPtr<u32>) -> u32 = stdcall cell 0x8580CC => unported;
     /// KERNEL32 `InterlockedDecrement` (IAT 0x8580D0)
     fn interlocked_decrement(p: GPtr<u32>) -> u32 = stdcall cell 0x8580D0 => unported;
     /// `IUnknown::AddRef` through the object's vtable (slot +4)
     fn v_add_ref(this: GPtr<u8>) -> u32 = stdcall vslot 0x4 => unported;
-    /// `CFileMgr::SetDir(const char*)` (0x5387D0)
-    fn file_mgr_set_dir(dir: GPtr<u8>) -> i32 = cdecl 0x5387D0 => unported;
-    /// `CAEDataStream::Initialise()` (0x4DC2B0), AL
-    fn data_stream_initialise_call(s: GPtr<u8>) -> u8 = thiscall 0x4DC2B0 => data_stream_initialise;
     /// `ov_clear(OggVorbis_File*)` (VORBISFILE.DLL thunk 0x818062)
     fn ov_clear(vf: GPtr<u8>) -> i32 = cdecl 0x818062 => unported;
     /// `ov_read(vf, buffer, length, bigendian, word, signed, int* bitstream)` (thunk 0x818068)

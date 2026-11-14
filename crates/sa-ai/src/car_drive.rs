@@ -6,6 +6,7 @@
 //! vtables and come from the original task pool (`common::task_new`).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -19,6 +20,10 @@ use sa_world::bindings::leave_any_car_ctor;
 use sa_world::bindings::task_complex_ctor;
 use sa_world::bindings::upside_down_car_check_is_car_upside_down;
 use sa_world::bindings::wander_get_wander_task_by_ped_type;
+use sa_world::bindings::car_ai_get_car_to_go_to_coors;
+use sa_world::bindings::enter_car_as_driver_ctor;
+use sa_world::bindings::enter_car_as_passenger_ctor;
+use sa_world::bindings::simple_car_drive_ctor as car_drive_simple_ctor;
 orig! {
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_get_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
@@ -30,18 +35,10 @@ orig! {
     fn v_create_sub_task_cannot_get_in_car(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x30 => unported;
     /// `CTaskComplexCarDrive::Drive(CPed*)` (vtable +0x34)
     fn v_drive(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x34 => unported;
-    /// `CTaskSimpleCarDrive::Constructor(veh, a1, a2)` (0x63C340, `ret 0xC`)
-    fn car_drive_simple_ctor(t: GPtr<u8>, veh: u32, a1: u32, a2: u32) -> GPtr<u8> = thiscall 0x63C340 => unported;
-    /// `CTaskComplexEnterCarAsDriver::CTaskComplexEnterCarAsDriver(CVehicle*)` (0x6402F0, `ret 4`)
-    fn enter_car_as_driver_ctor(t: GPtr<u8>, veh: u32) -> GPtr<u8> = thiscall 0x6402F0 => unported;
-    /// `CTaskComplexEnterCarAsPassenger::CTaskComplexEnterCarAsPassenger(CVehicle*, int32, bool)` (0x640340, `ret 0xC`)
-    fn enter_car_as_passenger_ctor(t: GPtr<u8>, veh: u32, a1: u32, a2: u32) -> GPtr<u8> = thiscall 0x640340 => unported;
     /// `CTaskSimpleCreateCarAndGetIn::CTaskSimpleCreateCarAndGetIn(const CVector*, int32 model)` (0x6493E0, `ret 8`)
     fn create_car_and_get_in_ctor(t: GPtr<u8>, pos: GPtr<u8>, model: u32) -> GPtr<u8> = thiscall 0x6493E0 => unported;
     /// `CTaskComplexDriveToPoint::IsTargetBlocked(CPed*)` (0x6452C0, `ret 4`)
     fn drive_to_point_is_target_blocked_orig(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x6452C0 => unported;
-    /// `CCarAI::GetCarToGoToCoors(CVehicle*, const CVector*, int32 style, bool)` (0x41CE30; ST0 result, popped)
-    fn car_ai_get_car_to_go_to_coors(v: GPtr<u8>, p: GPtr<u8>, style: u32, b: u32) -> f64 = cdecl 0x41CE30 => unported;
     /// `CCarAI::GetCarToGoToCoorsAccurate` (0x41D0E0; ST0 result, popped)
     fn car_ai_get_car_to_go_to_coors_accurate(v: GPtr<u8>, p: GPtr<u8>, style: u32, b: u32) -> f64 = cdecl 0x41D0E0 => unported;
     /// `CCarAI::GetCarToGoToCoorsStraightLine` (0x41CFB0; ST0 result, popped)
@@ -171,7 +168,7 @@ pub fn car_drive_create_sub_task(this: GPtr<u8>, ty: i32, ped: GPtr<u8>) -> GPtr
             if t.is_null() {
                 GPtr::NULL
             } else {
-                enter_car_as_passenger_ctor(t, veh(), 0, 0)
+                enter_car_as_passenger_ctor(t, GPtr::from_addr(veh() as usize), 0, 0)
             }
         }
         0x2BD => {
@@ -179,7 +176,7 @@ pub fn car_drive_create_sub_task(this: GPtr<u8>, ty: i32, ped: GPtr<u8>) -> GPtr
             if t.is_null() {
                 GPtr::NULL
             } else {
-                enter_car_as_driver_ctor(t, veh())
+                enter_car_as_driver_ctor(t, GPtr::from_addr(veh() as usize))
             }
         }
         0x2C5 => {
@@ -188,7 +185,7 @@ pub fn car_drive_create_sub_task(this: GPtr<u8>, ty: i32, ped: GPtr<u8>) -> GPtr
             if t.is_null() {
                 GPtr::NULL
             } else {
-                car_drive_simple_ctor(t, veh(), 0, 0)
+                car_drive_simple_ctor(t, GPtr::from_addr(veh() as usize), GPtr::NULL, 0)
             }
         }
         0x2CA => {
@@ -262,7 +259,7 @@ pub fn car_drive_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8>
                 let r = this.byte_add(0xC);
                 let old = rd::<GPtr<u8>>(this, 0xC);
                 if !old.is_null() {
-                    entity_clean_up_old_reference(old, r);
+                    entity_clean_up_old_reference(old, r.cast::<GPtr<u8>>());
                 }
                 let v = rd::<GPtr<u8>>(ped, 0x58C);
                 wr::<GPtr<u8>>(this, 0xC, v);

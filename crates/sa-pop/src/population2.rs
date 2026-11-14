@@ -103,11 +103,19 @@ pub use sa_world::bindings::entity_get_col_model;
 pub use sa_world::bindings::get_clump_alpha;
 pub use sa_world::bindings::ped_can_be_deleted;
 pub use sa_world::bindings::physical_add_to_moving_list;
+pub use crate::bindings::generate_peds_at_attractors as generate_peds_at_attractors_call;
+pub use sa_core::bindings::convert_to_dummy_object as convert_to_dummy_object_call;
+pub use sa_world::bindings::crt_floor;
+pub use sa_world::bindings::entity_get_bound_centre as entity_get_bound_centre_vec;
+pub use sa_world::bindings::entity_get_bound_centre_534290 as entity_get_bound_centre_ref;
+pub use sa_world::bindings::find_objects_kinda_colliding as world_find_objects_kinda_colliding;
+pub use sa_world::bindings::gang_war_fighting_going_on as gang_war_fighting_going_on_call;
+pub use sa_world::bindings::intel_get_task_hold;
+pub use sa_world::bindings::population_remove_ped as remove_ped_call;
+pub use sa_world::bindings::process_col_models;
 orig! {
     /// `CPopulation::ConvertToRealObject(CDummyObject*)` (0x614580)
     pub fn convert_to_real_object_call(d: GPtr<u8>) = cdecl 0x614580 => convert_to_real_object;
-    /// `CPopulation::ConvertToDummyObject(CObject*)` (0x614670)
-    pub fn convert_to_dummy_object_call(o: GPtr<u8>) = cdecl 0x614670 => convert_to_dummy_object;
     /// `CPopulation::TestSafeForRealObject(CDummyObject*)` (0x6123A0)
     pub fn test_safe_for_real_object_call(d: GPtr<u8>) -> u8 = cdecl 0x6123A0 => test_safe_for_real_object;
     /// `CPopulation::TestRoomForDummyObject(CObject*)` (0x612320)
@@ -124,16 +132,12 @@ orig! {
     pub fn remove_peds_if_the_pool_gets_full_call() = cdecl 0x616300 => remove_peds_if_the_pool_gets_full;
     /// `CPopulation::GeneratePedsAtStartOfGame()` (0x615C90)
     pub fn generate_peds_at_start_of_game_call() = cdecl 0x615C90 => generate_peds_at_start_of_game;
-    /// `CPopulation::RemovePed(CPed*)` (0x610F20)
-    pub fn remove_ped_call(p: GPtr<u8>) = cdecl 0x610F20 => crate::population::remove_ped;
     /// `CPopulation::PedCreationDistMultiplier()` (0x6116C0), ST0 as f32 (exact: a value in [1, 1.5])
     pub fn ped_creation_dist_multiplier_call() -> f32 = cdecl 0x6116C0 => pcdm_f32;
     /// `CPopulation::FindDummyDistForModel(int32)` (0x610ED0), ST0 as f32 (exact: 80 or 750)
     pub fn find_dummy_dist_for_model_call(m: i32) -> f32 = cdecl 0x610ED0 => fddfm_f32;
     /// `CPopulation::AddToPopulation(float, float, float, float)` (0x614720)
     pub fn add_to_population_call(a: f32, b: f32, c: f32, d: f32) -> u8 = cdecl 0x614720 => unported;
-    /// `CPopulation::GeneratePedsAtAttractors(CVector, float, float, float, float, int32, int32)` (0x615970)
-    pub fn generate_peds_at_attractors_call(px: f32, py: f32, pz: f32, a: f32, b: f32, c: f32, d: f32, dm: i32, n: i32) -> i32 = cdecl 0x615970 => generate_peds_at_attractors;
     /// `CDummyObject::CreateObject()` (0x59EAC0)
     pub fn dummy_create_object(d: GPtr<u8>) -> GPtr<u8> = thiscall 0x59EAC0 => unported;
     /// `CDummyObject::UpdateFromObject(CObject*)` (0x59EB70)
@@ -144,26 +148,12 @@ orig! {
     pub fn entity_set_is_static(e: GPtr<u8>, v: u8) = thiscall vslot 0x10 => unported;
     /// virtual slot 4 of a `CBaseModelInfo`: `AsAtomicModelInfoPtr()`
     pub fn mi_as_atomic(mi: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x04 => unported;
-    /// `CEntity::GetBoundCentre(CVector* out)` (0x534250), returns `out`
-    pub fn entity_get_bound_centre_vec(e: GPtr<u8>, out: GPtr<f32>) -> GPtr<f32> = thiscall 0x534250 => unported;
-    /// `CEntity::GetBoundCentre(CVector& out)` (0x534290)
-    pub fn entity_get_bound_centre_ref(e: GPtr<u8>, out: GPtr<f32>) = thiscall 0x534290 => unported;
-    /// `CWorld::FindObjectsKindaColliding(const CVector&, float, bool, int16*, int16, CEntity**, bool, bool, bool, bool, bool)` (0x568B80)
-    pub fn world_find_objects_kinda_colliding(pos: GPtr<f32>, r: f32, b2d: u8, cnt: GPtr<i16>, max: i32, out: GPtr<u8>, bld: u8, veh: u8, ped: u8, obj: u8, dum: u8) = cdecl 0x568B80 => unported;
-    /// `CGangWars::GangWarFightingGoingOn()` (0x443AC0)
-    pub fn gang_war_fighting_going_on_call() -> u8 = cdecl 0x443AC0 => crate::gangs::gang_war_fighting_going_on;
-    /// `CPedIntelligence::GetTaskHold(bool)` (0x600FF0)
-    pub fn intel_get_task_hold(intel: GPtr<u8>, b: u8) -> GPtr<u8> = thiscall 0x600FF0 => unported;
     /// virtual slot 0x10 of a `CTask`: `GetTaskType()`
     pub fn task_get_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
     /// `CEntity::GetIsTouching(const CVector&, float)` (0x5344B0)
     pub fn entity_get_is_touching(e: GPtr<u8>, c: GPtr<f32>, r: f32) -> u8 = thiscall 0x5344B0 => unported;
-    /// `CCollision::ProcessColModels(...)` (0x4185C0), 8 cdecl arguments
-    pub fn process_col_models(ma: GPtr<u8>, ca: GPtr<u8>, mb: GPtr<u8>, cb: GPtr<u8>, pts: GPtr<u8>, lpts: GPtr<u8>, ld: GPtr<u8>, b: u8) -> i32 = cdecl 0x4185C0 => unported;
     /// `CStreaming::GetDefaultCabDriverModel()` (0x407D50)
     pub fn get_default_cab_driver_model() -> i32 = cdecl 0x407D50 => unported;
-    /// CRT `floor(double)` (0x8219F0)
-    pub fn crt_floor(v: f64) -> f64 = cdecl 0x8219F0 => sa_world::physical::base::floor_f64;
 }
 
 /// `PedCreationDistMultiplier` as the f32 the `orig!` declaration returns.
@@ -210,7 +200,7 @@ pub fn manage_dummy(d: GPtr<u8>, centre: GPtr<u8>) {
 #[hook(addr = 0x612320, conv = cdecl, name = "CPopulation::TestRoomForDummyObject", expect = "83 EC 18 56 8B 74 24 20")]
 pub fn test_room_for_dummy_object(obj: GPtr<u8>) -> u8 {
     let mut out = [0f32; 3];
-    let r = entity_get_bound_centre_vec(rd(obj, 0x170), GPtr::from_raw(out.as_mut_ptr()));
+    let r = GPtr::<u8>::cast::<f32>(entity_get_bound_centre_vec(rd(obj, 0x170), GPtr::<f32>::cast::<u8>(GPtr::from_raw(out.as_mut_ptr()))));
     let mut pos = [r.read(), r.wrapping_index(1).read(), r.wrapping_index(2).read()];
     let col: GPtr<u8> = rd(model_info(i32::from(rd::<i16>(obj, 0x22))), 0x14);
     let radius = rd::<f32>(col, 0x24);
@@ -258,7 +248,7 @@ pub fn test_safe_for_real_object(d: GPtr<u8>) -> u8 {
     let radius =
         rd::<f32>(rd::<GPtr<u8>>(model_info(i32::from(rd::<i16>(d, 0x22))), 0x14), 0x24);
     let mut centre = [0f32; 3];
-    entity_get_bound_centre_ref(d, GPtr::from_raw(centre.as_mut_ptr()));
+    entity_get_bound_centre_ref(d, GPtr::<f32>::cast::<u8>(GPtr::from_raw(centre.as_mut_ptr())));
     // the static-local guard of the CColPoint array at 0xC0FD00
     let guard = g::<u32>(0xC10280);
     if guard.cast::<u8>().read() & 1 == 0 {
@@ -747,19 +737,19 @@ pub fn update(generate: u8) {
 #[hook(addr = 0x6117F0, conv = cdecl, name = "CPopulation::LoadSpecificDriverModelsForCar", expect = "8B 44 24 04 05 67 FE FF FF")]
 pub fn load_specific_driver_models_for_car(car: i32) {
     match car {
-        409 => request_model(0xFF, 10),
+        409 => { request_model(0xFF, 10); },
         420 | 438 => {
             let m = get_default_cab_driver_model();
             request_model(m, 10);
         }
-        423 => request_model(0x108, 10),
-        428 => request_model(0x47, 10),
-        448 => request_model(0x9B, 10),
+        423 => { request_model(0x108, 10); },
+        428 => { request_model(0x47, 10); },
+        448 => { request_model(0x9B, 10); },
         463 => {
             request_model(0xF7, 10);
             request_model(0xF8, 10);
         }
-        481 => request_model(0x17, 10),
+        481 => { request_model(0x17, 10); },
         _ => {}
     }
 }
@@ -768,11 +758,10 @@ use sa_core::field::pa as s;
 
 pub use sa_core::bindings::file_set_dir as set_dir;
 pub use sa_core::bindings::get_model_info;
-pub use sa_stream::bindings::load_line;
+pub use sa_core::bindings::load_line;
 pub use sa_world::bindings::la_riots_active_here;
+pub use sa_core::bindings::change_dir;
 orig! {
-    /// `CFileMgr::ChangeDir(const char*)` (0x538730)
-    pub fn change_dir(p: GPtr<u8>) -> i32 = cdecl 0x538730 => sa_core::filemgr::change_dir;
     /// CRT `sscanf` (0x8220AD) with the 24 int outputs of `CPopCycle::Initialise`
     pub fn sscanf24(
         l: GPtr<u8>, fmt: GPtr<u8>,
@@ -846,7 +835,7 @@ fn load_groups(file: usize, mut counts: GPtr<u16>, groups: GPtr<u16>, slots: i32
             let len = e - pos;
             strncpy(GPtr::from_raw(name.as_mut_ptr()), lp.byte_add(pos as isize), len as u32);
             name[len] = 0;
-            if !get_model_info(GPtr::from_raw(name.as_mut_ptr()), GPtr::from_raw(&mut idx)).is_null() {
+            if !get_model_info(GPtr::from_raw(name.as_mut_ptr()), GPtr::<i32>::cast::<u8>(GPtr::from_raw(&mut idx))).is_null() {
                 groups.wrapping_index(row + count).write(idx as u16);
                 count += 1;
             }
@@ -1134,18 +1123,15 @@ pub fn update_percentages() {
     }
 }
 
-pub use crate::bindings::camera_is_sphere_visible;
+pub use sa_world::bindings::camera_is_sphere_visible;
 pub use sa_core::bindings::general_random_int_in_range as get_random_number_in_range_i;
 pub use sa_world::bindings::ped_mi_can_be_created_at_this_attractor;
+pub use sa_core::bindings::matrix_mul_vec;
+pub use sa_stream::bindings::get_default_cop_model;
+pub use sa_world::bindings::find_objects_in_range as world_find_objects_in_range;
 orig! {
-    /// `CWorld::FindObjectsInRange(const CVector&, float, bool, int16*, int16, CEntity**, bool, bool, bool, bool, bool)` (0x564A20)
-    pub fn world_find_objects_in_range(pos: GPtr<f32>, r: f32, b2d: u8, cnt: GPtr<i16>, max: i32, out: GPtr<GPtr<u8>>, bld: u8, veh: u8, ped: u8, obj: u8, dum: u8) = cdecl 0x564A20 => unported;
     /// `CEntity::GetRandom2dEffect(int32 type, bool mustBeFree)` (0x533410)
     pub fn entity_get_random_2d_effect(e: GPtr<u8>, ty: i32, free: u8) -> GPtr<u8> = thiscall 0x533410 => unported;
-    /// `operator*(const CMatrix&, const CVector&)` (0x59C890), result through the hidden out pointer
-    pub fn matrix_mul_vec(out: GPtr<f32>, m: GPtr<u8>, v: GPtr<f32>) -> GPtr<f32> = cdecl 0x59C890 => unported;
-    /// `CStreaming::GetDefaultCopModel()` (0x407C00)
-    pub fn get_default_cop_model() -> i32 = cdecl 0x407C00 => unported;
     /// `CPopulation::ChooseCivilianOccupation(bool, bool, int32, int32, int32, bool, bool, bool, const char*)` (0x612F90)
     pub fn choose_civilian_occupation_call(male: u8, female: u8, race: i32, exclude: i32, stat: i32, a: u8, b: u8, c: u8, name: GPtr<u8>) -> i32 = cdecl 0x612F90 => choose_civilian_occupation;
     /// `CPopulation::AddPedAtAttractor(int32, C2dEffect*, CVector, CEntity*, int32)` (0x614210)
@@ -1182,12 +1168,12 @@ pub fn generate_peds_at_attractors(
     let mut ents = [GPtr::<u8>::NULL; 0x200];
     let mut cnt: [i16; 2] = [-1, -1];
     world_find_objects_in_range(
-        GPtr::from_raw(pos.as_mut_ptr()),
+        GPtr::<f32>::cast::<u8>(GPtr::from_raw(pos.as_mut_ptr())),
         max_r,
         0,
-        GPtr::from_raw(cnt.as_mut_ptr()),
+        GPtr::<i16>::cast::<u8>(GPtr::from_raw(cnt.as_mut_ptr())),
         0x200,
-        GPtr::from_raw(ents.as_mut_ptr()),
+        GPtr::<GPtr<u8>>::cast::<u8>(GPtr::from_raw(ents.as_mut_ptr())),
         1,
         0,
         0,
@@ -1234,14 +1220,14 @@ pub fn generate_peds_at_attractors(
                 }
                 let mut out = [0f32; 3];
                 let lp: GPtr<f32> = GPtr::from_raw(local.as_mut_ptr()).cast();
-                let w = matrix_mul_vec(GPtr::from_raw(out.as_mut_ptr()), rd(e, 0x14), lp);
+                let w = matrix_mul_vec(GPtr::from_raw(out.as_mut_ptr()), rd(e, 0x14), lp.cast::<u8>());
                 let wp = [w.cast::<u32>().read(), w.cast::<u32>().wrapping_index(1).read(), w.cast::<u32>().wrapping_index(2).read()];
                 local = wp;
                 let dx = x(px).fsub_m(f32::from_bits(local[0]));
                 let dy = x(py).fsub_m(f32::from_bits(local[1]));
                 let dz = x(pz).fsub_m(f32::from_bits(local[2]));
                 let dist = dz.fmul(dz).fadd(dy.fmul(dy)).fadd(dx.fmul(dx)).fsqrt().to_f32();
-                let (lo, hi) = if camera_is_sphere_visible(GPtr::from_addr(0xB6F028), lp, 2.0) != 0 {
+                let (lo, hi) = if camera_is_sphere_visible(GPtr::from_addr(0xB6F028), lp.cast::<u8>(), 2.0) != 0 {
                     (min_r, max_r)
                 } else {
                     (min_r_close, max_r_close)
@@ -1257,9 +1243,9 @@ pub fn generate_peds_at_attractors(
                 let name = eff.byte_add(0x38);
                 let mut mi = None;
                 if POLICE_STATION.read() != 0 && get_random_number_in_range_i(0, 100) <= 70 {
-                    let cop = get_default_cop_model();
+                    let cop = get_default_cop_model() as i32;
                     if ped_mi_can_be_created_at_this_attractor(cop, name) != 0 {
-                        mi = Some(get_default_cop_model());
+                        mi = Some(get_default_cop_model() as i32);
                         dm = 1;
                     }
                 }
@@ -1450,7 +1436,7 @@ pub fn are_ped_stats_compatible(a: i32, b: i32) -> u8 {
     1
 }
 
-pub use crate::bindings::is_sunbather as is_sunbather_call;
+pub use sa_world::bindings::is_sunbather as is_sunbather_call;
 orig! {
     /// `CPopCycle::PedIsAcceptableInCurrentZone(int32)` (0x610720)
     pub fn ped_is_acceptable_in_current_zone_call(m: i32) -> u8 = cdecl 0x610720 => crate::popcycle::ped_is_acceptable_in_current_zone;
@@ -1592,23 +1578,20 @@ pub fn choose_civilian_occupation_for_vehicle(male: u8, veh: GPtr<u8>) -> i32 {
 }
 
 pub use sa_world::bindings::compute_target_door_to_enter_as_passenger;
+pub use crate::bindings::choose_gang_ped_model as choose_gang_ped_model_call;
+pub use sa_world::bindings::add_ped as add_ped_call;
+pub use sa_world::bindings::population_update_ped_count as update_ped_count_call;
 orig! {
     /// `CPopulation::FindSpecificDriverModelForCar_ToUse(int32)` (0x611900)
     pub fn find_specific_driver_model_for_car_to_use_call(car: i32) -> i32 = cdecl 0x611900 => find_specific_driver_model_for_car_to_use;
     /// `CPopulation::ChooseCivilianOccupationForVehicle(bool, CVehicle*)` (0x613260)
     pub fn choose_civilian_occupation_for_vehicle_call(male: u8, veh: GPtr<u8>) -> i32 = cdecl 0x613260 => choose_civilian_occupation_for_vehicle;
-    /// `CGangs::ChooseGangPedModel(int16)` (0x5DE5A0)
-    pub fn choose_gang_ped_model_call(gang: i16) -> i32 = cdecl 0x5DE5A0 => crate::gangs::choose_gang_ped_model;
     /// `CStreaming::GetDefaultMedicModel()` (0x407D20)
     pub fn get_default_medic_model() -> i32 = cdecl 0x407D20 => unported;
     /// `CStreaming::GetDefaultFiremanModel()` (0x407D40)
     pub fn get_default_fireman_model() -> i32 = cdecl 0x407D40 => unported;
-    /// `CPopulation::AddPed(ePedType, int32, const CVector&, bool)` (0x612710)
-    pub fn add_ped_call(ty: i32, mi: i32, pos: GPtr<f32>, wander: u8) -> GPtr<u8> = cdecl 0x612710 => unported;
     /// `CCarEnterExit::SetPedInCarDirect(CPed*, CVehicle*, int32, bool)` (0x650280)
     pub fn set_ped_in_car_direct(ped: GPtr<u8>, veh: GPtr<u8>, door: i32, driver: u8) = cdecl 0x650280 => unported;
-    /// `CPopulation::UpdatePedCount(CPed*, uint8)` (0x611570)
-    pub fn update_ped_count_call(ped: GPtr<u8>, ty: u8) = cdecl 0x611570 => crate::population::update_ped_count;
 }
 
 /// `m_nPedType` (+0x28) of a ped model.
@@ -1671,8 +1654,8 @@ pub fn add_ped_in_car(veh: GPtr<u8>, driver: u8, gang: i32, seat: i32, male: u8,
         }
         (ty, m)
     };
-    let ped = add_ped_call(ty, m, GPtr::from_raw(pos.as_mut_ptr()).cast(), 0);
-    let door = if seat >= 0 { compute_target_door_to_enter_as_passenger(veh, seat) } else { 0 };
+    let ped = add_ped_call(ty as u32, m as u32, GPtr::from_raw(pos.as_mut_ptr()).cast(), 0);
+    let door = if seat >= 0 { compute_target_door_to_enter_as_passenger(veh, seat as u32) as i32 } else { 0 };
     set_ped_in_car_direct(ped, veh, door, driver);
     if criminal != 0 {
         update_ped_count_call(ped, 1);
@@ -1988,9 +1971,8 @@ pub fn is_correct_time_of_day_for_effect(eff: GPtr<u8>) -> u8 {
     1
 }
 
+pub use sa_world::bindings::world_process_vertical_line;
 orig! {
-    /// `CWorld::ProcessVerticalLine(const CVector&, float, CColPoint&, CEntity*&, bool x6, CStoredCollPoly*)` (0x5674E0)
-    pub fn world_process_vertical_line(o: GPtr<f32>, z: f32, cp: GPtr<u8>, ent: GPtr<GPtr<u8>>, b: u8, v: u8, p: u8, ob: u8, d: u8, see: u8, poly: GPtr<u8>) -> u8 = cdecl 0x5674E0 => unported;
     /// `SurfaceInfos_c::IsSkateable(uint32)` (0x55E7D0)
     pub fn surface_is_skateable(si: GPtr<u8>, surface: u32) -> u8 = thiscall 0x55E7D0 => unported;
 }
@@ -2008,10 +1990,10 @@ pub fn is_skateable(pos: GPtr<f32>) -> u8 {
     let mut cp = [0u8; 0x2C];
     let mut ent = GPtr::<u8>::NULL;
     world_process_vertical_line(
-        GPtr::from_raw(start.as_mut_ptr()),
+        GPtr::<f32>::cast::<u8>(GPtr::from_raw(start.as_mut_ptr())),
         z_end,
         GPtr::from_raw(cp.as_mut_ptr()),
-        GPtr::from_raw(&mut ent),
+        GPtr::<GPtr<u8>>::cast::<u8>(GPtr::from_raw(&mut ent)),
         1,
         0,
         0,
@@ -2128,10 +2110,7 @@ pub fn is_ped_appropriate_for_current_zone(m: i32) -> u8 {
     0
 }
 
-orig! {
-    /// `CStreaming::GetDefaultCopCarModel(int32)` (0x407C50)
-    pub fn get_default_cop_car_model(ignore_lvpd: i32) -> i32 = cdecl 0x407C50 => unported;
-}
+pub use sa_stream::bindings::get_default_cop_car_model;
 
 /// The `i16` model at byte offset `off` of the loaded car group at `addr` (0xC0E9F8 appropriate, 0xC0E9C8
 /// inappropriate).

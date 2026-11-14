@@ -44,8 +44,8 @@ const K_DEG2RAD: u32 = 0x3C8E_FA35;
 const NUM_TEXT_LINES: usize = 0xA44B68;
 
 use crate::bindings::add_brain_for_code_use;
-use crate::bindings::clear_space_for_mission_entity;
-use crate::bindings::get_new_unique_script_thing_index;
+use sa_world::bindings::clear_space_for_mission_entity;
+use sa_world::bindings::get_new_unique_script_thing_index;
 use crate::bindings::get_proper_index_from_index_used_by_script as get_proper_index;
 use crate::bindings::physical_45afb0 as set_turn_speed;
 use crate::bindings::remove_vehicle_upgrade;
@@ -58,7 +58,7 @@ use sa_core::bindings::tm_get_simplest_active_task as get_simplest_active_task;
 use sa_world::bindings::apply_force;
 use sa_world::bindings::decision_maker_types_get_instance as dm_types_instance;
 use sa_world::bindings::find_ground_z_for_coord as find_ground_z;
-use sa_world::bindings::get_level_from_position;
+use sa_stream::bindings::get_level_from_position;
 use sa_world::bindings::get_ped_flag;
 use sa_world::bindings::get_special_col_model;
 use sa_world::bindings::get_task_swim;
@@ -68,64 +68,54 @@ use sa_world::bindings::mark_surrounding_entities;
 use sa_world::bindings::physical_add_to_moving_list as add_to_moving_list;
 use sa_world::bindings::sequence_add_task as task_sequence_add;
 use sa_world::bindings::sequence_ctor as task_sequence_ctor;
+use crate::bindings::collect_next as collect_next_no_pc;
+use crate::bindings::copy_decision_maker_6070f0 as dm_copy;
+use crate::bindings::give_ped_scripted_task;
+use crate::bindings::play_anim_script_command;
+use crate::bindings::read_label;
+use crate::bindings::vehicle_get_ref;
+use sa_core::bindings::get_pad;
+use sa_core::bindings::script_connect_lods;
+use sa_core::bindings::vector_magnitude;
+use sa_core::bindings::vector_magnitude_sqr as vec_squared_magnitude;
+use sa_core::bindings::vector_sub as vec_sub;
+use sa_stream::bindings::is_boat_model;
+use sa_stream::bindings::stunt_jump_add_one;
+use sa_world::bindings::add_vehicle_upgrade;
+use sa_world::bindings::count_members_excluding_leader;
+use sa_world::bindings::find_ground_z_for_3d_coord as find_ground_z_3d;
+use sa_world::bindings::get_actual_script_thing_index;
+use sa_world::bindings::go_to_point_and_stand_still_ctor as task_go_to_point_ctor;
+use sa_world::bindings::membership_get_leader as group_get_leader;
+use sa_world::bindings::multiply3x3;
+use sa_world::bindings::partner_greet_ctor as task_partner_greet_ctor;
+use sa_world::bindings::radar_set_blip_friendly as set_blip_friendly;
+use sa_world::bindings::swim_ctor as task_swim_ctor;
+use sa_world::bindings::tm_find_active_task_by_type as find_active_task_by_type;
+use sa_world::bindings::vec_mul_assign;
+use sa_world::bindings::vector_add_assign as vec_add_assign;
+use sa_world::bindings::vector_div as vec_div;
 orig! {
-    /// `CVehicle::AddVehicleUpgrade(int32 modelId)` (0x6E3290)
-    fn add_vehicle_upgrade(v: GPtr<u8>, m: i32) -> i32 = thiscall 0x6E3290 => unported;
-    /// `CRunningScript::PlayAnimScriptCommand(int32 command)` (0x470150; reads its own parameters)
-    fn play_anim_script_command(s: Scr, command: u32) = thiscall 0x470150 => unported;
-    /// `CRunningScript::ReadTextLabelFromScript(char*, uint8)` (0x463D50)
-    fn read_label(s: Scr, buf: GPtr<u8>, len: u32) = thiscall 0x463D50 => crate::vm::read_text_label_from_script;
-    /// `Multiply3x3(CVector* out, const CMatrix*, const CVector*)` (0x59C790), returns out
-    fn multiply3x3(out: GPtr<u32>, m: GPtr<u8>, v: GPtr<u32>) -> GPtr<u32> = cdecl 0x59C790 => unported;
-    /// 0x411A00 (thiscall on a `CVector`, `const CVector*`: `operator+=`)
-    fn vec_add_assign(v: GPtr<u32>, o: GPtr<u32>) = thiscall 0x411A00 => unported;
     /// `CVector::Normalise()` (0x59C910)
     fn vec_normalise(v: GPtr<u32>) = thiscall 0x59C910 => unported;
-    /// 0x40FE60 (cdecl `(CVector* out, const CVector* a, const CVector* b)`: out = a - b), returns out
-    fn vec_sub(out: GPtr<u32>, a: GPtr<u32>, b: GPtr<u32>) -> GPtr<u32> = cdecl 0x40FE60 => unported;
     /// `CrossProduct(CVector* out, const CVector* a, const CVector* b)` (0x59C730), returns out
     fn cross_product(out: GPtr<u32>, a: GPtr<u32>, b: GPtr<u32>) -> GPtr<u32> = cdecl 0x59C730 => unported;
-    /// 0x406DA0 (thiscall on a `CVector`: `SquaredMagnitude()`), ST0 (read as f64)
-    fn vec_squared_magnitude(v: GPtr<u32>) -> f64 = thiscall 0x406DA0 => unported;
-    /// 0x40FEF0 (thiscall on a `CVector`, float: `operator*=`); raw
-    fn vec_mul_assign(v: GPtr<u32>, k: u32) = thiscall 0x40FEF0 => unported;
     /// `CEntity` virtual slot 0x10 (`SetIsStatic(bool)`)
     fn set_is_static(e: GPtr<u8>, b: u32) = thiscall vslot 0x10 => unported;
     /// 0x407800 (cdecl `(int32 model)`, AL: `CStreaming::IsObjectInCdImage`)
     fn is_object_in_cd_image(m: u32) -> u8 = cdecl 0x407800 => unported;
     /// `CShadows::RemoveOilInArea(float x1, float x2, float y1, float y2)` (0x7074F0); raw
     fn remove_oil_in_area(x1: u32, x2: u32, y1: u32, y2: u32) = cdecl 0x7074F0 => unported;
-    /// `CRadar::SetBlipFriendly(int32, uint8)` (0x583EB0)
-    fn set_blip_friendly(h: u32, b: u32) = cdecl 0x583EB0 => unported;
-    /// `CRunningScript::GivePedScriptedTask(int32 pedHandle, CTask*, int32 opcode)` (0x465C20)
-    fn give_ped_scripted_task(s: Scr, ped: u32, task: GPtr<u8>, command: u32) = thiscall 0x465C20 => unported;
-    /// `CTaskSimpleSwim::CTaskSimpleSwim(const CVector*, CPed*)` (0x688930)
-    fn task_swim_ctor(t: GPtr<u8>, pos: GPtr<u32>, p: u32) -> GPtr<u8> = thiscall 0x688930 => unported;
-    /// `CTheScripts::GetActualScriptThingIndex(int32 ref, uint8 type)` (0x4839A0)
-    fn get_actual_script_thing_index(r: u32, ty: u32) -> i32 = cdecl 0x4839A0 => unported;
-    /// `CRunningScript::CollectNextParameterWithoutIncreasingPC()` (0x464250)
-    fn collect_next_no_pc(s: Scr) -> u32 = thiscall 0x464250 => unported;
-    /// 0x6070F0 (thiscall on `CDecisionMakerTypes`, `(int32 src, int32 type, bool mission)`: copies a decision
-    /// maker, returns the new index)
-    fn dm_copy(t: GPtr<u8>, src: i32, ty: u32, mission: u32) -> u32 = thiscall 0x6070F0 => unported;
     /// `CPedType::GetPedTypeAcquaintances(int32, ePedType)` (0x6089D0)
     fn get_ped_type_acquaintances(a: u32, t: u32) -> u32 = cdecl 0x6089D0 => unported;
     /// `CObjectPool::GetAt(int32 slot)` (0x404870), ECX = the object pool
     fn object_pool_get_at(pool: GPtr<u8>, i: u32) -> GPtr<u8> = thiscall 0x404870 => unported;
-    /// `CVector::Magnitude()` (0x4082C0), ST0 (an `fsqrt` result under PC=24: exact as f64)
-    fn vector_magnitude(v: GPtr<u32>) -> f64 = thiscall 0x4082C0 => unported;
     /// `CCheckpoints::UpdatePos(uint32 id, const CVector*)` (0x722900)
     fn checkpoints_update_pos(id: u32, p: GPtr<u32>) = cdecl 0x722900 => unported;
-    /// `CPedGroupMembership::GetLeader()` (0x5F69A0) / `CountMembersExcludingLeader()` (0x5F6AA0)
-    fn group_get_leader(m: GPtr<u8>) -> u32 = thiscall 0x5F69A0 => unported;
-    fn count_members_excluding_leader(m: GPtr<u8>) -> u32 = thiscall 0x5F6AA0 => unported;
     /// `CCarAI::TellCarToFollowOtherCar(CVehicle*, CVehicle*, float)` (0x41C960); raw
     fn tell_car_to_follow_other_car(a: GPtr<u8>, b: GPtr<u8>, r: u32) = cdecl 0x41C960 => unported;
     /// 0x43F9B0 (cdecl `(const char*, bool)`: `CEntryExitManager::SetEnabledByName`)
     fn set_entry_exit_enabled_by_name(name: GPtr<u8>, on: u32) = cdecl 0x43F9B0 => unported;
-    /// `CTaskComplexGoToPointAndStandStill::CTaskComplexGoToPointAndStandStill(int32, const CVector&, float,
-    /// float, bool, bool)` (0x668120); floats raw
-    fn task_go_to_point_ctor(t: GPtr<u8>, ms: u32, pos: GPtr<u32>, r: u32, r2: u32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x668120 => unported;
     /// `CTaskSimpleSlideToCoord::CTaskSimpleSlideToCoord(const CVector&, float heading, float speed, const char*
     /// anim, const char* block, uint32 flags, float delta, bool, uint32 time)` (0x66C450); floats raw
     #[allow(clippy::too_many_arguments)]
@@ -136,16 +126,8 @@ orig! {
     fn find_trigger_point_coors(e: GPtr<u8>, out: GPtr<u32>, i: u32) -> GPtr<u32> = thiscall 0x533380 => unported;
     /// `CPathFind::FindParkingNodeInArea(CVector* out, float x6)` (0x4513F0), ECX = ThePaths 0x96F050, returns out
     fn find_parking_node_in_area(m: GPtr<u8>, out: GPtr<u32>, a: u32, b: u32, c: u32, d: u32, e: u32, f: u32) -> GPtr<u32> = thiscall 0x4513F0 => unported;
-    /// `CTaskManager::FindActiveTaskByType(int32)` (0x681740)
-    fn find_active_task_by_type(tm: GPtr<u8>, ty: u32) -> GPtr<u8> = thiscall 0x681740 => unported;
-    /// `CPool<CVehicle>::GetRef(CVehicle*)` (0x424160)
-    fn vehicle_get_ref(pool: GPtr<u8>, v: GPtr<u8>) -> u32 = thiscall 0x424160 => unported;
     /// 0x470100 (thiscall on a `CBoundingBox`, two `CVector`s by value: `SetMinMax(min, max)`); raw
     fn bbox_set_min_max(b: GPtr<u8>, x0: u32, y0: u32, z0: u32, x1: u32, y1: u32, z1: u32) = thiscall 0x470100 => unported;
-    /// `CStuntJumpManager::AddOne(const CBoundingBox&, const CBoundingBox&, const CVector&, int32)` (0x49CB40)
-    fn stunt_jump_add_one(a: GPtr<u8>, b: GPtr<u8>, cam: GPtr<u32>, reward: u32) = cdecl 0x49CB40 => unported;
-    /// 0x4119D0 (cdecl `(CVector* out, const CVector*, float)`: `operator/`), returns out; raw
-    fn vec_div(out: GPtr<u32>, v: GPtr<u32>, k: u32) -> GPtr<u32> = cdecl 0x4119D0 => unported;
     /// `CEntity` virtual slot 0x38 (`Teleport(CVector, bool)`); raw
     fn teleport(e: GPtr<u8>, x: u32, y: u32, z: u32, b: u32) = thiscall vslot 0x38 => unported;
     /// 0x470070 (thiscall on the ped, bool: `SetKindaStayInSamePlace`)
@@ -155,23 +137,12 @@ orig! {
     fn task_follow_patrol_route_ctor(t: GPtr<u8>, ms: u32, route: u32, mode: u32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x674930 => unported;
     /// `CTask` virtual slot 0x10 (`GetTaskType()`)
     fn task_get_type(t: GPtr<u8>) -> u32 = thiscall vslot 0x10 => unported;
-    /// `CWorld::FindGroundZFor3DCoord(float, float, float, bool*, CEntity**)` (0x5696C0), ST0 (read as f64)
-    fn find_ground_z_3d(x: u32, y: u32, z: u32, a: u32, b: u32) -> f64 = cdecl 0x5696C0 => unported;
-    /// `CModelInfo::IsBoatModel` (0x4C5A70) / `IsPlaneModel` (0x4C5B30) / `IsHeliModel` (0x4C5B00), AL
-    fn is_boat_model(m: u32) -> u8 = cdecl 0x4C5A70 => unported;
     fn is_plane_model(m: u32) -> u8 = cdecl 0x4C5B30 => unported;
     fn is_heli_model(m: u32) -> u8 = cdecl 0x4C5B00 => unported;
-    /// `CTaskComplexPartnerGreet::CTaskComplexPartnerGreet(const char*, CPed*, bool, float, int32, CVector)`
-    /// (0x684210); float and vector raw
-    fn task_partner_greet_ctor(t: GPtr<u8>, name: u32, p: GPtr<u8>, lead: u32, d: u32, ty: u32, x: u32, y: u32, z: u32) -> GPtr<u8> = thiscall 0x684210 => unported;
-    /// `CTheScripts::ScriptConnectLodsFunction(int32, int32)` (0x470A20)
-    fn script_connect_lods(a: u32, b: u32) = cdecl 0x470A20 => unported;
     /// `CTheScripts::AddToListOfConnectedLodObjects(CObject*, CObject*)` (0x470980)
     fn add_connected_lod_objects(a: GPtr<u8>, b: GPtr<u8>) = cdecl 0x470980 => unported;
     /// `CTaskSimpleDie::CTaskSimpleDie(const char*, const char*, eAnimationFlags, float, float)` (0x62FA60); raw
     fn task_die_named_ctor(t: GPtr<u8>, anim: GPtr<u8>, block: GPtr<u8>, flags: u32, delta: u32, speed: u32) -> GPtr<u8> = thiscall 0x62FA60 => unported;
-    /// 0x53FB70 (cdecl `(int32)`: `CPad::GetPad`)
-    fn get_pad(i: u32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
 }
 
 /// `VEH(h)` / `PED(h)` / `OBJ(h)` (GetAtRef; no null check by the callers unless stated).
@@ -319,7 +290,7 @@ pub fn process_commands_2000_to_2099(s: Scr, command: u32) -> i8 {
             }
             let tp = GPtr::from_raw(target.as_mut_ptr());
             let t = new_task(0x64, |t| task_swim_ctor(t, tp, 0));
-            give_ped_scripted_task(s, p0, t, command);
+            give_ped_scripted_task(s, p0 as i32, t, command);
         }
         // 07E4 GET_MODEL_DIMENSIONS (0x472932): `cm = ms_modelInfoPtrs[model]->m_pColModel (+0x14)` (no checks); P0..P2
         // = the bounding box min, P3..P5 = max; store 6.
@@ -344,12 +315,12 @@ pub fn process_commands_2000_to_2099(s: Scr, command: u32) -> i8 {
             } else {
                 get_actual_script_thing_index(sp(0), 7)
             };
-            let n = collect_next_no_pc(s);
+            let n = collect_next_no_pc(s) as u32;
             get_actual_script_thing_index(n, 7);
             let mission = u32::from(s.byte_add(crate::vm::USES_MISSION_CLEANUP).read());
             let ty = u32::from(command == 0x07E6);
-            let dm = dm_copy(dm_types_instance(), src, ty, mission);
-            set_sp(0, get_new_unique_script_thing_index(dm, 7));
+            let dm = dm_copy(dm_types_instance(), src as u32, ty, mission);
+            set_sp(0, get_new_unique_script_thing_index(dm as i32, 7) as u32);
             store(s, 1);
             if uses_mission_cleanup(s) {
                 mission_cleanup_add(GPtr::from_addr(MISSION_CLEANUP), spi(0), 9);
@@ -373,14 +344,14 @@ pub fn process_commands_2000_to_2099(s: Scr, command: u32) -> i8 {
             let t = new_task(0x2C, |t| {
                 task_drive_point_route_ctor(t, v, 0xC18D50, p2, p3, model, K_MINUS_ONE, p5)
             });
-            give_ped_scripted_task(s, p0, t, command);
+            give_ped_scripted_task(s, p0 as i32, t, command);
         }
         // 07E8 IS_RELATIONSHIP_SET (0x472B88): flag = `(GetPedTypeAcquaintances(P0, P1) & GetPedFlag(P2)) != 0`.
         0x07E8 => {
             collect(s, 3);
             let p2 = sp(2);
             let a = get_ped_type_acquaintances(sp(0), sp(1));
-            let fl = get_ped_flag(p2);
+            let fl = get_ped_flag(p2 as i32);
             set_flag(s, a & fl != 0);
         }
         // 07EE SET_CAR_ALWAYS_CREATE_SKIDS (0x472BD0): byte `VEH(P0)+0x42D` bit 0 = P1 != 0.
@@ -394,7 +365,7 @@ pub fn process_commands_2000_to_2099(s: Scr, command: u32) -> i8 {
         0x07EF => {
             collect(s, 3);
             let mut p = [sp(0), sp(1), sp(2)];
-            let v = get_level_from_position(GPtr::from_raw(p.as_mut_ptr()));
+            let v = get_level_from_position(GPtr::<u32>::cast::<f32>(GPtr::from_raw(p.as_mut_ptr()))) as u32;
             set_sp(0, v);
             store(s, 1);
         }
@@ -409,7 +380,7 @@ pub fn process_commands_2000_to_2099(s: Scr, command: u32) -> i8 {
             let p = info.cast::<GPtr<u8>>().read();
             let mut r = false;
             if p.byte_add(0x46C).cast::<u32>().read() & 0x100 != 0
-                && get_vehicle_appearance(p.byte_add(0x58C).cast::<GPtr<u8>>().read()) == 2
+                && get_vehicle_appearance(p.byte_add(0x58C).cast::<GPtr<u8>>().read()) as i32 == 2
             {
                 let off = if command == 0x07F1 { 0x104 } else { 0x10C };
                 r = info.byte_add(off).cast::<u32>().read() != 0;
@@ -457,7 +428,7 @@ pub fn process_commands_2000_to_2099(s: Scr, command: u32) -> i8 {
             let g = get_actual_script_thing_index(sp(0), 8);
             if (0..8).contains(&g) {
                 let m = GPtr::from_addr(0xC09928 + g as usize * 0x2D4);
-                let l = u32::from(group_get_leader(m) != 0);
+                let l = u32::from(GPtr::<u8>::addr(group_get_leader(m)) as u32 != 0);
                 let n = count_members_excluding_leader(m);
                 set_sp(0, l);
                 set_sp(1, n);
@@ -675,7 +646,7 @@ pub fn process_commands_2000_to_2099(s: Scr, command: u32) -> i8 {
                 let b = GPtr::<u32>::from_addr(0x86FD0C).read();
                 task_follow_patrol_route_ctor(t, p1, 0xC18DB8, p2, a, b)
             });
-            give_ped_scripted_task(s, p0, t, command);
+            give_ped_scripted_task(s, p0 as i32, t, command);
         }
         // 0818 IS_CHAR_IN_AIR (0x473CB3): `p = PED(P0)`; +0x46C bit 9 -> 1; bit 0 -> 0; `+0x470` bit 4 or bit 31 ->
         // flag = `GetSimplestActiveTask()` non-null and its type == 0xCF (called twice); else 0.
@@ -708,7 +679,7 @@ pub fn process_commands_2000_to_2099(s: Scr, command: u32) -> i8 {
             collect(s, 1);
             let p = ent_pos(ped(sp(0)));
             let (x, y, z) = (p.read(), p.byte_add(4).read(), p.byte_add(8).read());
-            let g = X87::from_f64_exact(find_ground_z_3d(x, y, z, 0, 0));
+            let g = X87::from_f64_exact(find_ground_z_3d(f32::from_bits(x), f32::from_bits(y), f32::from_bits(z), GPtr::NULL, GPtr::NULL));
             set_sp(0, X87::from_f32(f(z)).fsub(g).to_f32().to_bits());
             store(s, 1);
         }
@@ -761,7 +732,7 @@ pub fn process_commands_2000_to_2099(s: Scr, command: u32) -> i8 {
             collect(s, 1);
             let m = sp(0);
             let r = if command == 0x081E {
-                is_boat_model(m)
+                u8::from(is_boat_model(m as i32))
             } else if command == 0x081F {
                 is_plane_model(m)
             } else {
@@ -829,7 +800,7 @@ pub fn process_commands_2000_to_2099(s: Scr, command: u32) -> i8 {
             let delta = sp(0);
             let flags = if sp(1) != 0 { 0xD0 } else { 0x10 };
             let t = new_task(0x28, |t| task_die_named_ctor(t, ap, bp, flags, delta, K_ONE));
-            give_ped_scripted_task(s, p, t, command);
+            give_ped_scripted_task(s, p as i32, t, command);
         }
         // 082A SET_PLAYER_DUCK_BUTTON (0x474261): byte `CPad::GetPad(P0)+0x11A` = P1 != 0 ? 0 : 1.
         0x082A => {
@@ -887,18 +858,18 @@ fn apply_force_to_car(s: Scr) {
     let com = v.byte_add(0xA4).cast::<u32>();
     let m = |v: GPtr<u8>| v.byte_add(0x14).cast::<GPtr<u8>>().read();
     let mut t1 = [0u32; 3];
-    let a = multiply3x3(GPtr::from_raw(t1.as_mut_ptr()), m(v), com);
-    vec_add_assign(pp, a);
+    let a = GPtr::<u8>::cast::<u32>(multiply3x3(GPtr::<u32>::cast::<u8>(GPtr::from_raw(t1.as_mut_ptr())), m(v), com.cast::<u8>()));
+    vec_add_assign(pp.cast::<u8>(), a.cast::<u8>());
     let mut n = fv;
     let np = GPtr::from_raw(n.as_mut_ptr());
     vec_normalise(np);
     let mut t2 = [0u32; 3];
-    let b = multiply3x3(GPtr::from_raw(t2.as_mut_ptr()), m(v), com);
+    let b = GPtr::<u8>::cast::<u32>(multiply3x3(GPtr::<u32>::cast::<u8>(GPtr::from_raw(t2.as_mut_ptr())), m(v), com.cast::<u8>()));
     let mut t3 = [0u32; 3];
-    let r = vec_sub(GPtr::from_raw(t3.as_mut_ptr()), pp, b);
+    let r = GPtr::<u8>::cast::<u32>(vec_sub(GPtr::<u32>::cast::<u8>(GPtr::from_raw(t3.as_mut_ptr())), pp.cast::<u8>(), b.cast::<u8>()));
     let mut t4 = [0u32; 3];
     let c = cross_product(GPtr::from_raw(t4.as_mut_ptr()), r, np);
-    let sq = X87::from_f64_exact(vec_squared_magnitude(c));
+    let sq = X87::from_f64_exact(vec_squared_magnitude(c.cast::<f32>()));
     let tm = v.byte_add(0x90).cast::<f32>().read();
     let mass = v.byte_add(0x8C).cast::<f32>().read();
     let k = sq
@@ -906,7 +877,7 @@ fn apply_force_to_car(s: Scr) {
         .fadd(X87::from_f32(f(K_ONE)).fdiv_m(mass))
         .fdivr_m(f(K_ONE))
         .to_f32();
-    vec_mul_assign(fp, k.to_bits());
+    vec_mul_assign(fp.cast::<u8>(), f32::from_bits(k.to_bits()));
     apply_force(v, fv[0], fv[1], fv[2], p[0], p[1], p[2], 1);
 }
 
@@ -932,11 +903,11 @@ fn car_rotation_velocity(s: Scr, add: bool) {
     let cur = [ws.read(), ws.byte_add(4).read(), ws.byte_add(8).read()];
     let mut w = [x, comp(2), comp(3)];
     let mut out = [0u32; 3];
-    let d = multiply3x3(
-        GPtr::from_raw(out.as_mut_ptr()),
+    let d = GPtr::<u8>::cast::<u32>(multiply3x3(
+        GPtr::<u32>::cast::<u8>(GPtr::from_raw(out.as_mut_ptr())),
         v.byte_add(0x14).cast::<GPtr<u8>>().read(),
-        GPtr::from_raw(w.as_mut_ptr()),
-    );
+        GPtr::<u32>::cast::<u8>(GPtr::from_raw(w.as_mut_ptr())),
+    ));
     let d = [d.read(), d.byte_add(4).read(), d.byte_add(8).read()];
     let new: [u32; 3] = core::array::from_fn(|i| X87::from_f32(f(d[i])).fadd_m(f(cur[i])).to_f32().to_bits());
     if v.byte_add(0x1C).read() & 4 != 0 {
@@ -967,7 +938,7 @@ fn object_of_type_smashed(s: Scr) {
     {
         fld_fst(spf(2))
     } else {
-        X87::from_f64_exact(find_ground_z(x, y)).to_f32()
+        X87::from_f64_exact(find_ground_z(f32::from_bits(x), f32::from_bits(y))).to_f32()
     };
     let mut centre = [x, y, z.to_bits()];
     let radius = spf(3);
@@ -988,11 +959,11 @@ fn object_of_type_smashed(s: Scr) {
             continue;
         }
         let mut out = [0u32; 3];
-        let d = vec_sub(
-            GPtr::from_raw(out.as_mut_ptr()),
-            GPtr::from_raw(centre.as_mut_ptr()),
-            ent_pos(o),
-        );
+        let d = GPtr::<u8>::cast::<u32>(vec_sub(
+            GPtr::<u32>::cast::<u8>(GPtr::from_raw(out.as_mut_ptr())),
+            GPtr::<u32>::cast::<u8>(GPtr::from_raw(centre.as_mut_ptr())),
+            GPtr::<u32>::cast::<u8>(ent_pos(o)),
+        ));
         let mut dd = [d.read(), d.byte_add(4).read(), d.byte_add(8).read()];
         let mag = X87::from_f64_exact(vector_magnitude(GPtr::from_raw(dd.as_mut_ptr())));
         if !mag.fcom(X87::from_f32(radius)).test_parity(0x41) {
@@ -1070,7 +1041,7 @@ fn task_char_slide_to_coord_and_play_anim(s: Scr, command: u32) {
     let t1 = new_task(0x28, |t| {
         let a = GPtr::<u32>::from_addr(0x86FC84).read();
         let c = GPtr::<u32>::from_addr(0x86FC88).read();
-        task_go_to_point_ctor(t, 4, vp, a, c, 0, 0)
+        task_go_to_point_ctor(t, 4, vp, f32::from_bits(a), f32::from_bits(c), 0, 0)
     });
     task_sequence_add(seq, t1);
     let tm = if time > 0 { time as u32 } else { u32::MAX };
@@ -1078,7 +1049,7 @@ fn task_char_slide_to_coord_and_play_anim(s: Scr, command: u32) {
         task_slide_anim_ctor(t, vp, h, speed, ap, bp, flags, delta, b, tm)
     });
     task_sequence_add(seq, t2);
-    give_ped_scripted_task(s, p0, seq, command);
+    give_ped_scripted_task(s, p0 as i32, seq, command);
 }
 
 /// 0814 ADD_STUNT_JUMP (0x473840): `CollectParameters(16)`. Box 1: max = (P3 + P0, P4 + P1, P5 + P2), min = (P0 -
@@ -1101,7 +1072,7 @@ fn add_stunt_jump(s: Scr) {
     stunt_jump_add_one(
         GPtr::from_raw(b1.as_mut_ptr()).cast(),
         GPtr::from_raw(b2.as_mut_ptr()).cast(),
-        GPtr::from_raw(cam.as_mut_ptr()),
+        GPtr::<u32>::cast::<u8>(GPtr::from_raw(cam.as_mut_ptr())),
         sp(15),
     );
 }
@@ -1120,19 +1091,19 @@ fn set_object_coordinates_and_velocity(s: Scr) {
         .fcom(X87::from_f32(f(K_MINUS_100)))
         .test_parity(0x41)
     {
-        z = X87::from_f64_exact(find_ground_z(x, y)).to_f32().to_bits();
+        z = X87::from_f64_exact(find_ground_z(f32::from_bits(x), f32::from_bits(y))).to_f32().to_bits();
     }
     let pos = ent_pos(o);
     let ts = GPtr::<u32>::from_addr(TIME_STEP).read();
     let mut t = [x, y, z];
     let mut d = [0u32; 3];
-    let dp = vec_sub(
-        GPtr::from_raw(d.as_mut_ptr()),
-        GPtr::from_raw(t.as_mut_ptr()),
-        pos,
-    );
+    let dp = GPtr::<u8>::cast::<u32>(vec_sub(
+        GPtr::<u32>::cast::<u8>(GPtr::from_raw(d.as_mut_ptr())),
+        GPtr::<u32>::cast::<u8>(GPtr::from_raw(t.as_mut_ptr())),
+        pos.cast::<u8>(),
+    ));
     let mut q = [0u32; 3];
-    let vel = vec_div(GPtr::from_raw(q.as_mut_ptr()), dp, ts);
+    let vel = GPtr::<u8>::cast::<u32>(vec_div(GPtr::<u32>::cast::<u8>(GPtr::from_raw(q.as_mut_ptr())), dp.cast::<u8>(), f32::from_bits(ts)));
     let ms = o.byte_add(0x44).cast::<u32>();
     let (vx, vy, vz) = (vel.read(), vel.byte_add(4).read(), vel.byte_add(8).read());
     ms.write(vx);
@@ -1147,10 +1118,10 @@ fn set_object_coordinates_and_velocity(s: Scr) {
             c.write(K_ONE);
         }
     }
-    mark_surrounding_entities(x, y, z, 0x41C8_0000, o, 0);
+    mark_surrounding_entities(f32::from_bits(x), f32::from_bits(y), f32::from_bits(z), f32::from_bits(0x41C8_0000), o, 0);
     teleport(o, x, y, z, 0);
     let mut tt = [x, y, z];
-    clear_space_for_mission_entity(GPtr::from_raw(tt.as_mut_ptr()), o);
+    clear_space_for_mission_entity(GPtr::<u32>::cast::<u8>(GPtr::from_raw(tt.as_mut_ptr())), o);
 }
 
 /// 0823 TASK_GREET_PARTNER (0x473F8A): `a = PED(P0)`, `b = PED(P1)`; task (0x78) `CTaskComplexPartnerGreet(
@@ -1162,13 +1133,13 @@ fn task_greet_partner(s: Scr, command: u32) {
     let b = ped(sp(1));
     let p2 = sp(2);
     let t1 = new_task(0x78, |t| {
-        task_partner_greet_ctor(t, 0x859E8C, b, 1, p2, sp(3), 0, 0, 0)
+        task_partner_greet_ctor(t, GPtr::from_addr(0x859E8C), b, 1, p2, sp(3), 0, 0, 0)
     });
-    give_ped_scripted_task(s, sp(0), t1, command);
+    give_ped_scripted_task(s, sp(0) as i32, t1, command);
     let t2 = new_task(0x78, |t| {
-        task_partner_greet_ctor(t, 0x859E8C, a, 0, p2, sp(3), 0, 0, 0)
+        task_partner_greet_ctor(t, GPtr::from_addr(0x859E8C), a, 0, p2, sp(3), 0, 0, 0)
     });
-    give_ped_scripted_task(s, sp(1), t2, command);
+    give_ped_scripted_task(s, sp(1) as i32, t2, command);
 }
 
 pub const HOOKS: &[HookReg] = &[HOOK_PROCESS_COMMANDS_2000_TO_2099];

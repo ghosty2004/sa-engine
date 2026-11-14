@@ -3,13 +3,10 @@
 
 use crate::abi::{HookReg, NativeReg};
 use crate::mem::GPtr;
-use crate::{hook, orig};
+use crate::hook;
 
 use crate::bindings::rw_matrix_update;
-orig! {
-    /// `CMatrix::UpdateRwMatrix(RwMatrix*)` (0x59AD70)
-    fn update_rw_matrix_call(this: GPtr<u8>, rw: GPtr<u8>) -> GPtr<u8> = thiscall 0x59AD70 => update_rw_matrix;
-}
+use crate::bindings::matrix_update_rw_matrix as update_rw_matrix_call;
 
 use crate::field::wr32 as w;
 use crate::field::rd32 as r;

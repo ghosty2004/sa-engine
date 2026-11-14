@@ -12,9 +12,10 @@ use crate::entities::{are_sounds_of_this_event_playing_for_this_entity, hw_is_so
 /// The per-event volume table pointer (`[0xBD00F8]`, one int8 per event).
 const EVENT_VOLUMES: usize = 0xBD00F8;
 
-use crate::bindings::ae_random_int;
+use sa_world::bindings::ae_random_int;
 use crate::bindings::sm_request_new_sound;
 use sa_world::bindings::sound_dtor;
+use crate::bindings::sound_initialise;
 orig! {
     /// `CAEPedAudioEntity::HandleFootstepEvent(event, volume, speed, surface)` (0x4E13A0)
     fn handle_footstep_event(this: GPtr<u8>, event: u32, vol: f32, speed: u32, surface: u32) = thiscall 0x4E13A0 => crate::port2_b::ped_handle_footstep_event;
@@ -32,10 +33,6 @@ orig! {
     fn handle_swim_splash(this: GPtr<u8>, event: u32) = thiscall 0x4E26A0 => crate::port2_b::ped_handle_swim_splash;
     /// `CAEPedAudioEntity::HandleSwimWake(event)` (0x4E2790)
     fn handle_swim_wake(this: GPtr<u8>, event: u32) = thiscall 0x4E2790 => crate::port2_b::ped_handle_swim_wake;
-    /// `CAESound::Initialise(int16 bankSlot, int16 sfx, CAEAudioEntity*, CVector pos, float volume, float
-    /// maxDistance, float speed, float doppler, uint8 frameDelay, uint32 flags, float freqVariance, int16
-    /// playTime)` (0x4EFE50, `ret 0x38`)
-    fn sound_initialise(sound: GPtr<u8>, slot: u32, sfx: u32, entity: GPtr<u8>, px: u32, py: u32, pz: u32, vol: u32, max_dist: u32, speed: u32, doppler: u32, delay: u32, flags: u32, freq_var: u32, play_time: u32) = thiscall 0x4EFE50 => unported;
 }
 
 use sa_world::world::common::entity_pos_u as entity_pos;
@@ -45,12 +42,12 @@ use sa_world::world::common::entity_pos_u as entity_pos;
 fn play(sound: GPtr<u8>, this: GPtr<u8>, physical: GPtr<u8>, sfx: u32, vol: u32, speed: u32, event: u32) {
     let p = entity_pos(physical);
     let (px, py, pz) = (p.read(), p.wrapping_index(1).read(), p.wrapping_index(2).read());
-    sound_initialise(sound, 2, sfx, this, px, py, pz, vol, 0x3F80_0000, 0x3F80_0000, 0x3F80_0000, 0, 0, 0, 0);
+    sound_initialise(sound, 2, sfx, this.addr() as u32, px, py, pz, vol, 0x3F80_0000, 0x3F80_0000, 0x3F80_0000, 0, 0, 0, 0);
     wr::<u32>(sound, 0x1C, speed);
     wr::<u32>(sound, 0x20, 0x3D75_C290);
     wr::<u32>(sound, 0x18, 0x3FC0_0000);
     wr::<u32>(sound, 0xC, event);
-    sm_request_new_sound(sound_manager(), sound);
+    sm_request_new_sound(GPtr::<u8>::addr(sound_manager()) as u32, sound.addr() as u32);
 }
 
 /// `CAEPedAudioEntity::AddAudioEvent(event, float volume, float speed, CPhysical*, uint8 surface, int32
@@ -98,10 +95,10 @@ pub fn ped_add_audio_event(
                 let table = g::<GPtr<u8>>(EVENT_VOLUMES).read();
                 let v = xi(i32::from(rd::<i8>(table, 0x77))).fadd_m(f32::from_bits(vol)).to_f32().to_bits();
                 if hw_is_sound_bank_loaded(audio_hardware(), 0x27, 2) != 0
-                    && are_sounds_of_this_event_playing_for_this_entity(sound_manager(), 0x77, this) as u16 == 0
+                    && (are_sounds_of_this_event_playing_for_this_entity(sound_manager(), 0x77, this) as u32) as u16 == 0
                 {
                     play(sound, this, physical, 0x1D, v, speed, 0x77);
-                    if are_sounds_of_this_event_playing_for_this_entity(sound_manager(), 0x79, this) as u16 == 0 {
+                    if (are_sounds_of_this_event_playing_for_this_entity(sound_manager(), 0x79, this) as u32) as u16 == 0 {
                         let sfx = ae_random_int(0x2F, 0x31);
                         play(sound, this, physical, sfx as u32, v, speed, 0x79);
                     }

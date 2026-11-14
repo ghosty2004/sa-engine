@@ -74,54 +74,38 @@ pub use sa_pop::bindings::rw_frame_ortho_normalize;
 pub use sa_world::bindings::get_vehicle_appearance;
 pub use sa_world::bindings::placeable_set_matrix;
 pub use sa_world::bindings::vector_ne;
+pub use crate::bindings::calculate_derived_values;
+pub use crate::bindings::cam_init;
+pub use crate::bindings::cc_get_arr_pos as get_arr_pos_for_vehicle_type_call;
+pub use crate::bindings::copy_camera_matrix_to_rw_cam;
+pub use sa_core::bindings::col_sphere_set;
+pub use sa_core::bindings::matrix_attach;
+pub use sa_core::bindings::matrix_set_scale;
+pub use sa_core::bindings::rw_v3d_transform_points;
+pub use sa_stream::bindings::calculate_ground_height;
+pub use sa_world::bindings::camera_clear_player_weapon_mode as clear_player_weapon_mode;
+pub use sa_world::bindings::camera_initialise_scriptable_components as initialise_scriptable_components;
+pub use sa_world::bindings::camera_is_sphere_visible_m as is_sphere_visible_m;
+pub use sa_world::bindings::camera_set_motion_blur as set_motion_blur_call;
+pub use sa_world::bindings::set_zoom_value_follow_ped_script as set_zoom_value_follow_ped_script_call;
+pub use sa_world::bindings::world_process_vertical_line as process_vertical_line;
 orig! {
-    /// `CCamera::IsSphereVisible(const CVector&, float, RwMatrix*)` (0x420C40)
-    pub fn is_sphere_visible_m(this: GPtr<u8>, c: GPtr<u8>, r: f32, m: GPtr<u8>) -> u8 = thiscall 0x420C40 => is_sphere_visible_with_matrix;
-    /// `RwV3dTransformPoints(RwV3d* out, const RwV3d* in, int32 n, const RwMatrix* m)` (0x7EDD90)
-    pub fn rw_v3d_transform_points(out: GPtr<f32>, inp: GPtr<f32>, n: i32, m: GPtr<u8>) -> GPtr<f32> = cdecl 0x7EDD90 => unported;
     /// `CCamera::SetPercentAlongCutScene(float)` (0x50C070)
     pub fn set_percent_along_cut_scene_call(this: GPtr<u8>, pct: f32) = thiscall 0x50C070 => set_percent_along_cut_scene;
-    /// `CCamera::CalculateGroundHeight(eGroundHeightType)` (0x514B80); returns `fld dword` of a global
-    pub fn calculate_ground_height(this: GPtr<u8>, kind: i32) -> f64 = thiscall 0x514B80 => calculate_ground_height_st0;
-    /// `CWorld::ProcessVerticalLine(const CVector&, float, CColPoint&, CEntity*&, bool buildings, bool vehicles,
-    /// bool peds, bool objects, bool dummies, bool seeThrough, CStoredCollPoly*)` (0x5674E0)
-    pub fn process_vertical_line(p: GPtr<u8>, dist: f32, cp: GPtr<u8>, e: GPtr<u8>, b: u8, v: u8, pe: u8, o: u8, d: u8, st: u8, poly: GPtr<u8>) -> u8 = cdecl 0x5674E0 => unported;
-    /// `CMatrix::Attach(RwMatrix*, bool)` (0x59BD10)
-    pub fn matrix_attach(m: GPtr<u8>, rw: GPtr<u8>, owns: u8) = thiscall 0x59BD10 => unported;
     /// `CMBlur::MotionBlurOpen(RwCamera*)` (0x71D710)
     pub fn motion_blur_open_call(cam: GPtr<u8>) -> i32 = cdecl 0x71D710 => motion_blur_open;
     /// `CMBlur::MotionBlurRender(RwCamera*, uint32 r, g, b, a, int32 type, uint32 alpha)` (0x71D700, a lone `ret`)
     pub fn motion_blur_render(cam: GPtr<u8>, r: u32, gr: u32, b: u32, a: u32, kind: u32, alpha: u32) = cdecl 0x71D700 => unported;
-    /// `CCamera::CopyCameraMatrixToRWCam(bool)` (0x50AFA0)
-    pub fn copy_camera_matrix_to_rw_cam(this: GPtr<u8>, update: u8) = thiscall 0x50AFA0 => copy_camera_matrix_to_rw_cam_port;
-    /// `CCamera::CalculateDerivedValues(bool, bool)` (0x5150E0)
-    pub fn calculate_derived_values(this: GPtr<u8>, a: u8, b: u8) = thiscall 0x5150E0 => calculate_derived_values_port;
     /// `CPlaceable::CPlaceable()` (0x54F1E0)
     pub fn placeable_ctor(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x54F1E0 => unported;
-    /// `CCamera::InitialiseScriptableComponents()` (0x50D2D0)
-    pub fn initialise_scriptable_components(this: GPtr<u8>) = thiscall 0x50D2D0 => crate::camfx::initialise_scriptable_components;
-    /// `CCam::Init()` (0x50E490)
-    pub fn cam_init(cam: GPtr<u8>) = thiscall 0x50E490 => crate::cam::cam_init;
-    /// `CCamera::ClearPlayerWeaponMode()` (0x50AB10)
-    pub fn clear_player_weapon_mode(this: GPtr<u8>) = thiscall 0x50AB10 => crate::camera::clear_player_weapon_mode;
-    /// `CMatrix::SetScale(float)` (0x59AED0)
-    pub fn matrix_set_scale(m: GPtr<u8>, s: f32) = thiscall 0x59AED0 => unported;
-    /// `CCamera::SetMotionBlur(int32 r, int32 g, int32 b, int32 a, int32 type)` (0x50BF40)
-    pub fn set_motion_blur_call(this: GPtr<u8>, r: i32, gr: i32, b: i32, a: i32, kind: i32) = thiscall 0x50BF40 => crate::camera::set_motion_blur;
     /// `CCamera::CalculateMirroredMatrix(CVector n, float d, CMatrix* in, CMatrix* out)` (0x50B380)
     pub fn calculate_mirrored_matrix_call(this: GPtr<u8>, nx: u32, ny: u32, nz: u32, d: u32, inp: GPtr<u8>, out: GPtr<u8>) = thiscall 0x50B380 => calculate_mirrored_matrix_bits;
     /// `CCamera::CalculateFrustumPlanes(bool)` (0x514D60)
     pub fn calculate_frustum_planes(this: GPtr<u8>, for_mirror: u8) = thiscall 0x514D60 => calculate_frustum_planes_port;
-    /// `CColSphere::Set(float radius, const CVector& centre, uint8 material, uint8 flags, uint8 lighting)` (0x40FD10)
-    pub fn col_sphere_set(sph: GPtr<u8>, r: f32, c: GPtr<u8>, material: u8, flags: u8, lighting: u8) = thiscall 0x40FD10 => unported;
     /// `CCollision::CameraConeCastVsWorldCollision(CColSphere&, CColSphere&, float& dist, float angle)` (0x41B000)
     pub fn camera_cone_cast_vs_world_collision(s1: GPtr<u8>, s2: GPtr<u8>, dist: GPtr<u8>, angle: f32) -> u8 = cdecl 0x41B000 => unported;
     /// `TransformVectors(RwV3d* out, int32 n, const CMatrix& m, const RwV3d* in)` (0x54EEA0)
     pub fn transform_vectors(out: GPtr<u8>, n: i32, m: GPtr<u8>, inp: GPtr<u8>) = cdecl 0x54EEA0 => unported;
-    /// `CCamera::SetZoomValueFollowPedScript(int16)` (0x50C160)
-    pub fn set_zoom_value_follow_ped_script_call(this: GPtr<u8>, zoom: u16) = thiscall 0x50C160 => crate::camera::set_zoom_value_follow_ped_script;
-    /// `CCamera::GetArrPosForVehicleType(eVehicleType, int32&)` (0x50AF00)
-    pub fn get_arr_pos_for_vehicle_type_call(this: GPtr<u8>, kind: i32, out: GPtr<i32>) -> u8 = thiscall 0x50AF00 => get_arr_pos_for_vehicle_type;
 }
 
 /// The three-dword CVector copy (`mov edi,[esi]; mov [eax],edi; ...`).
@@ -184,7 +168,7 @@ fn for_a_ped(this: GPtr<u8>, ped: GPtr<u8>, flag: isize) {
     wr::<GPtr<u8>>(tc, 0x958, ped);
     let old = slot.cast::<GPtr<u8>>().read();
     if !old.is_null() {
-        clean_up_old_reference(old, slot);
+        clean_up_old_reference(old, slot.cast::<GPtr<u8>>());
     }
     active_cam(tc).byte_add(0x21C).cast::<GPtr<u8>>().write(ped);
     let slot = active_cam(tc).byte_add(0x21C);
@@ -514,7 +498,7 @@ pub fn set_zoom_value_cam_string_script(this: GPtr<u8>, zoom: u16) {
     }
     let mut pos = [0i32; 1];
     let pp = GPtr::from_raw(pos.as_mut_ptr());
-    let app = get_vehicle_appearance(e);
+    let app = get_vehicle_appearance(e) as i32;
     get_arr_pos_for_vehicle_type_call(this, app, pp);
     let table = match zoom {
         0 => Some(0x8CC3E0),
@@ -563,7 +547,7 @@ pub fn take_control(this: GPtr<u8>, target: GPtr<u8>, mode: u16, switch_type: u1
     let old = rd::<GPtr<u8>>(this, 0x958);
     wr::<u8>(this, 0x2C, 0);
     if !old.is_null() {
-        clean_up_old_reference(old, slot);
+        clean_up_old_reference(old, slot.cast::<GPtr<u8>>());
     }
     wr::<GPtr<u8>>(this, 0x958, target);
     register_reference(target, slot);
@@ -912,7 +896,7 @@ fn restore_target(this: GPtr<u8>) {
     let target = if veh.is_null() {
         wr::<u16>(this, 0xC38, 4);
         if !old.is_null() {
-            clean_up_old_reference(old, slot);
+            clean_up_old_reference(old, slot.cast::<GPtr<u8>>());
         }
         let p = focus_ped();
         wr::<GPtr<u8>>(this, 0x958, p);
@@ -920,7 +904,7 @@ fn restore_target(this: GPtr<u8>) {
     } else {
         wr::<u16>(this, 0xC38, 0x12);
         if !old.is_null() {
-            clean_up_old_reference(old, slot);
+            clean_up_old_reference(old, slot.cast::<GPtr<u8>>());
         }
         let v = find_player_vehicle(-1, 0);
         wr::<GPtr<u8>>(this, 0x958, v);
@@ -938,7 +922,7 @@ fn restore_target(this: GPtr<u8>) {
         let old = rd::<GPtr<u8>>(this, 0x958);
         wr::<u16>(this, 0xC38, 4);
         if !old.is_null() {
-            clean_up_old_reference(old, slot);
+            clean_up_old_reference(old, slot.cast::<GPtr<u8>>());
         }
         let p = focus_ped();
         wr::<GPtr<u8>>(this, 0x958, p);
@@ -965,7 +949,7 @@ pub fn restore(this: GPtr<u8>) {
     let sslot = this.byte_add(0x95C);
     let st = rd::<GPtr<u8>>(this, 0x95C);
     if !st.is_null() {
-        clean_up_old_reference(st, sslot);
+        clean_up_old_reference(st, sslot.cast::<GPtr<u8>>());
         wr::<GPtr<u8>>(this, 0x95C, GPtr::NULL);
     }
     wr::<u8>(this, 0x41, 0);
@@ -1003,7 +987,7 @@ pub fn restore_with_jump_cut(this: GPtr<u8>) {
     if rd::<u8>(this, 0x43) != 0 && !p0().is_null() && !p1().is_null() {
         let old = rd::<GPtr<u8>>(this, 0x958);
         if !old.is_null() {
-            clean_up_old_reference(old, slot);
+            clean_up_old_reference(old, slot.cast::<GPtr<u8>>());
         }
         let (a, b) = (p0(), p1());
         let (va, vb) = (rd::<GPtr<u8>>(a, 0x58C), rd::<GPtr<u8>>(b, 0x58C));
@@ -1484,7 +1468,7 @@ pub fn take_control_attach_to_entity(
         let slot = this.byte_add(0x958);
         let old = rd::<GPtr<u8>>(this, 0x958);
         if !old.is_null() {
-            clean_up_old_reference(old, slot);
+            clean_up_old_reference(old, slot.cast::<GPtr<u8>>());
         }
         wr::<GPtr<u8>>(this, 0x958, target);
         register_reference(target, slot);
@@ -1512,7 +1496,7 @@ pub fn take_control_attach_to_entity(
     let slot = this.byte_add(0x95C);
     let old = rd::<GPtr<u8>>(this, 0x95C);
     if !old.is_null() {
-        clean_up_old_reference(old, slot);
+        clean_up_old_reference(old, slot.cast::<GPtr<u8>>());
     }
     wr::<GPtr<u8>>(this, 0x95C, attached);
     register_reference(attached, slot);

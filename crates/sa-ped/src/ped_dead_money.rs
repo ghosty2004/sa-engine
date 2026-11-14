@@ -5,11 +5,10 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
+use sa_world::bindings::create_some_money as pickups_create_some_money;
 orig! {
     /// `CLocalisation::StealFromDeadPed()` (0x56D2B0)
     fn localisation_steal_from_dead_ped() -> u8 = cdecl 0x56D2B0 => unported;
-    /// `CPickups::CreateSomeMoney(CVector, int32)` (0x458970)
-    fn pickups_create_some_money(px: u32, py: u32, pz: u32, amount: u32) = cdecl 0x458970 => unported;
 }
 
 use sa_core::field::rd;
@@ -42,7 +41,7 @@ pub fn ped_create_dead_ped_money(ped: GPtr<u8>) {
     }
     let m = rd::<GPtr<u8>>(ped, 0x14);
     let p = if m.is_null() { ped.byte_add(4) } else { m.byte_add(0x30) };
-    pickups_create_some_money(rd::<u32>(p, 0), rd::<u32>(p, 4), rd::<u32>(p, 8), u32::from(money));
+    pickups_create_some_money(f32::from_bits(rd::<u32>(p, 0)), f32::from_bits(rd::<u32>(p, 4)), f32::from_bits(rd::<u32>(p, 8)), u32::from(money));
     ped.byte_add(0x756).cast::<u16>().write(0);
 }
 

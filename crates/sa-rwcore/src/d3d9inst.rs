@@ -49,6 +49,7 @@ const F_INV_65535: u32 = 0x3780_0080;
 /// `[0x874F44]` = 1e-12 (tangent determinant threshold).
 const F_TANGENT_EPS: u32 = 0x2B8C_BCCC;
 
+pub use crate::bindings::inst_v3d as inst_v3d_call;
 orig! {
     /// `IDirect3DIndexBuffer9::Lock(this, offset, size, &data, flags)` (vtbl +0x2C)
     pub fn ib_lock(ib: GPtr<u8>, offset: u32, size: u32, data: GPtr<u32>, flags: u32) -> i32 = stdcall vslot 0x2C => unported;
@@ -56,8 +57,6 @@ orig! {
     pub fn ib_unlock(ib: GPtr<u8>) -> i32 = stdcall vslot 0x30 => unported;
     /// `_rwInvSqrt(x)` (0x7EDB90), result in ST0
     pub fn rw_inv_sqrt(v: f32) -> f64 = cdecl 0x7EDB90 => inv_sqrt_f64;
-    /// `_rpD3D9VertexDeclarationInstV3d(type, dst, src, n, stride)` (0x752AD0)
-    pub fn inst_v3d_call(ty: u32, dst: u32, src: u32, n: i32, stride: u32) -> u32 = cdecl 0x752AD0 => inst_v3d;
     /// `_rpD3D9GetMinMaxValuesV3d(v, n, min, max)` (0x755830)
     pub fn min_max_v3d_call(v: GPtr<u8>, n: i32, min: GPtr<u8>, max: GPtr<u8>) = cdecl 0x755830 => get_min_max_values_v3d;
     /// `_rpD3D9GetMinMaxValuesV2d(uv, n, min, max)` (0x7558F0)
@@ -1057,6 +1056,9 @@ pub use crate::bindings::destroy_vertex_buffer as destroy_vertex_buffer_call;
 pub use crate::bindings::dynamic_vertex_buffer_create as dynamic_vertex_buffer_create_call;
 pub use crate::bindings::dynamic_vertex_buffer_destroy as dynamic_vertex_buffer_destroy_call;
 pub use crate::bindings::geometry_get_usage_flags as geometry_get_usage_flags_call;
+pub use crate::bindings::inst_color as inst_color_call;
+pub use crate::bindings::inst_tangent as inst_tangent_call;
+pub use crate::bindings::inst_v2d as inst_v2d_call;
 orig! {
     /// `IDirect3DVertexDeclaration9::GetDeclaration(this, elements, &n)` (vtbl +0x10)
     pub fn decl_get_declaration(d: GPtr<u8>, e: GPtr<u8>, n: GPtr<u32>) -> i32 = stdcall vslot 0x10 => unported;
@@ -1066,12 +1068,6 @@ orig! {
     pub fn vb_unlock(vb: GPtr<u8>) -> i32 = stdcall vslot 0x30 => unported;
     /// `_rpD3D9VertexDeclarationInstV3dMorph` (0x753B60)
     pub fn inst_v3d_morph_call(ty: u32, dst: u32, a: u32, b: u32, t: f32, n: i32, stride: u32) -> u32 = cdecl 0x753B60 => inst_v3d_morph;
-    /// `_rpD3D9VertexDeclarationInstV2d` (0x7544E0)
-    pub fn inst_v2d_call(ty: u32, dst: u32, src: u32, n: i32, stride: u32) -> u32 = cdecl 0x7544E0 => inst_v2d;
-    /// `_rpD3D9VertexDeclarationInstColor` (0x754AE0)
-    pub fn inst_color_call(dst: u32, src: u32, n: i32, stride: u32) -> u32 = cdecl 0x754AE0 => inst_color;
-    /// `_rpD3D9VertexDeclarationInstTangent` (0x754E20)
-    pub fn inst_tangent_call(ty: u32, dst: u32, pos: u32, uv: u32, hdr: u32, stride: u32) -> u32 = cdecl 0x754E20 => inst_tangent;
     /// `_rxD3D9DefaultInstanceCallback(object, header, reinstance)` (0x7578C0)
     pub fn default_instance_callback_call(object: u32, hdr: u32, reinstance: u32) -> u32 = cdecl 0x7578C0 => default_instance_callback;
     /// The pipeline's instance callback, through its stored pointer

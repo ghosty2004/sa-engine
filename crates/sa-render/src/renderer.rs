@@ -72,15 +72,23 @@ pub use sa_core::bindings::streaming_request_model as request_model;
 pub use sa_core::bindings::vector_magnitude;
 pub use sa_core::bindings::world_clear_scan_codes as clear_scan_codes;
 pub use sa_stream::bindings::entity_is_visible;
-pub use sa_world::bindings::calculate_ground_height;
+pub use sa_stream::bindings::calculate_ground_height;
 pub use sa_world::bindings::camera_get_look_direction as get_look_direction;
-pub use sa_world::bindings::clock_get_is_time_in_range as get_is_time_in_range;
+pub use sa_stream::bindings::clock_get_is_time_in_range as get_is_time_in_range;
 pub use sa_world::bindings::get_clump_alpha as vp_get_clump_alpha;
 pub use sa_world::bindings::get_lighting_from_col;
 pub use sa_world::bindings::is_vision_fx_active;
 pub use sa_world::bindings::night_vision_set_lights;
 pub use sa_world::bindings::remove_lights_affecting_object;
-pub use sa_world::bindings::vector_sub;
+pub use sa_core::bindings::vector_sub;
+pub use crate::bindings::render_one_non_road as render_one_non_road_call;
+pub use crate::bindings::world_scan;
+pub use sa_core::bindings::rw_v3d_transform_points;
+pub use sa_core::bindings::set_light_colours_for_peds_cars_and_objects;
+pub use sa_core::bindings::world_replace_normal_lights_with_scorched;
+pub use sa_pop::bindings::find_tunnel_attributes_for_coors;
+pub use sa_stream::bindings::call_should_model_be_streamed;
+pub use sa_world::bindings::generate_lights_affecting_object;
 orig! {
     /// `RwRenderStateSet` through `RwEngineInstance->dOpenDevice.fpRenderStateSet` (+0x20)
     pub fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
@@ -124,20 +132,12 @@ orig! {
     pub fn call_add_entity_to_render_list(e: GPtr<u8>, dist: u32) = cdecl 0x5534B0 => unported;
     /// `CRenderer::SetupScanLists(int32, int32)` (0x553540)
     pub fn call_setup_scan_lists(x: i32, y: i32) = cdecl 0x553540 => setup_scan_lists;
-    /// `CRenderer::RenderOneNonRoad(CEntity*)` (0x553260)
-    pub fn render_one_non_road_call(e: GPtr<u8>) = cdecl 0x553260 => render_one_non_road;
     /// `CHeli::SpecialHeliPreRender()` (0x6C4750)
     pub fn special_heli_pre_render() = cdecl 0x6C4750 => unported;
     /// `CShadows::RenderExtraPlayerShadows()` (0x707FA0)
     pub fn render_extra_player_shadows() = cdecl 0x707FA0 => unported;
     /// `CCarFXRenderer::SetFxEnvMapLightMult(float)` (0x5D5BA0); the float as its dword
     pub fn set_fx_env_map_light_mult(m: u32) = cdecl 0x5D5BA0 => unported;
-    /// `WorldReplaceNormalLightsWithScorched(RpWorld*, float)` (0x7357E0); the float as its dword
-    pub fn world_replace_normal_lights_with_scorched(world: GPtr<u8>, l: u32) = cdecl 0x7357E0 => unported;
-    /// `CPointLights::GenerateLightsAffectingObject(const CVector*, float*, CEntity*)` (0x6FFBB0, ST0)
-    pub fn generate_lights_affecting_object(pos: GPtr<f32>, bright: GPtr<f32>, e: GPtr<u8>) -> f64 = cdecl 0x6FFBB0 => unported;
-    /// `SetLightColoursForPedsCarsAndObjects(float)` (0x735D90); the float as its dword
-    pub fn set_light_colours_for_peds_cars_and_objects(m: u32) = cdecl 0x735D90 => unported;
     /// `CRenderer::AddToLodRenderList(CEntity*, float)` (0x553710); the float as its dword
     pub fn add_to_lod_render_list_call(e: GPtr<u8>, dist: u32) = cdecl 0x553710 => unported;
     /// `CEntity::CreateRwObject()` (vtable +0x1C)
@@ -160,12 +160,8 @@ orig! {
     pub fn call_setup_entity_visibility(e: GPtr<u8>, out: GPtr<f32>) -> i32 = cdecl 0x554230 => setup_entity_visibility;
     /// `CRenderer::SetupBigBuildingVisibility(CEntity*, float&)` (0x554650)
     pub fn call_setup_big_building_visibility(e: GPtr<u8>, out: GPtr<f32>) -> i32 = cdecl 0x554650 => setup_big_building_visibility;
-    /// `CRenderer::ShouldModelBeStreamed(CEntity*, const CVector&, float)` (0x554EB0); the float as its dword
-    pub fn call_should_model_be_streamed(e: GPtr<u8>, p: GPtr<f32>, far: u32) -> u8 = cdecl 0x554EB0 => should_model_be_streamed_b;
     /// `CRenderer::ScanPtrList_RequestModels<...>(CPtrList&)` (0x555680)
     pub fn call_scan_ptr_list_request_models(list: GPtr<u8>) = cdecl 0x555680 => scan_ptr_list_request_models;
-    /// `CCullZones::FindTunnelAttributesForCoors(CVector)` (0x72D9F0; the vector by value = 3 dwords)
-    pub fn find_tunnel_attributes_for_coors(x: u32, y: u32, z: u32) -> u32 = cdecl 0x72D9F0 => unported;
     /// `CMirrors::BeforeConstructRenderList()` (0x726DF0)
     pub fn mirrors_before_construct_render_list() = cdecl 0x726DF0 => unported;
     /// `COcclusion::ProcessBeforeRendering()` (0x7201C0)
@@ -174,10 +170,6 @@ orig! {
     pub fn scan_world() = cdecl 0x554FE0 => scan_world_port;
     /// `CVisibilityPlugins::InitAlphaEntityList()` (0x734540)
     pub fn vp_init_alpha_entity_list() = cdecl 0x734540 => unported;
-    /// `RwV3dTransformPoints(RwV3d* out, const RwV3d* in, int32 n, const RwMatrix*)` (0x7EDD90)
-    pub fn rw_v3d_transform_points(out: GPtr<f32>, inp: GPtr<f32>, n: i32, m: GPtr<u8>) -> GPtr<f32> = cdecl 0x7EDD90 => unported;
-    /// `CWorldScan::ScanWorld(CVector2D*, int32, void (*)(int32, int32))` (0x72CAE0); the callback address
-    pub fn world_scan(points: GPtr<f32>, n: i32, f: u32) = cdecl 0x72CAE0 => unported;
     /// `CRenderer::ProcessLodRenderLists()` (0x553770)
     pub fn call_process_lod_render_lists() = cdecl 0x553770 => process_lod_render_lists;
     /// `CStreaming::StartRenderEntities()` (0x4096C0)
@@ -720,7 +712,7 @@ use sa_math::fpu::st0;
 pub fn setup_lighting_for_entity(e: GPtr<u8>) -> u8 {
     set_fx_env_map_light_mult(0x3F80_0000);
     if rd::<u32>(e, 0x40) & 0x2000_0000 != 0 {
-        world_replace_normal_lights_with_scorched(rd::<GPtr<u8>>(g(0xC17038), 0), 0x3E38_51EC);
+        world_replace_normal_lights_with_scorched(rd::<GPtr<u8>>(g(0xC17038), 0), f32::from_bits(0x3E38_51EC));
         return 0;
     }
     let pos = entity_pos(e);
@@ -728,8 +720,8 @@ pub fn setup_lighting_for_entity(e: GPtr<u8>) -> u8 {
     let bright = e.byte_add(0x130);
     wr::<u32>(bright, 0, 0);
     let l = st0(generate_lights_affecting_object(
-        GPtr::from_raw(v.as_mut_ptr()).cast(),
-        bright.cast(),
+        GPtr::<f32>::cast::<u8>(GPtr::from_raw(v.as_mut_ptr()).cast()),
+        GPtr::<f32>::cast::<u8>(bright.cast()),
         e,
     ))
     .to_f32();
@@ -738,7 +730,7 @@ pub fn setup_lighting_for_entity(e: GPtr<u8>) -> u8 {
     let c = st0(get_lighting_from_col(e, 1));
     let mult = c.fmul_m(d).fadd_m(k(0x3D4C_CCCD)).fmul_m(l).to_f32().to_bits();
     set_fx_env_map_light_mult(mult);
-    set_light_colours_for_peds_cars_and_objects(mult);
+    set_light_colours_for_peds_cars_and_objects(f32::from_bits(mult));
     1
 }
 
@@ -876,7 +868,7 @@ pub fn setup_map_entity_visibility(e: GPtr<u8>, mi: GPtr<u8>, dist: f32, time_in
 fn distance_to_camera_call(pos: GPtr<u8>) -> f32 {
     let mut tmp = [0u32; 3];
     let t = vector_sub(GPtr::from_raw(tmp.as_mut_ptr()).cast(), pos, g(CAMERA_POSITION));
-    st0(vector_magnitude(t)).to_f32()
+    st0(vector_magnitude(t.cast::<u32>())).to_f32()
 }
 
 /// `CRenderer::SetupEntityVisibility(CEntity*, float& outDistance)` (0x554230).
@@ -1094,7 +1086,7 @@ pub fn setup_big_building_visibility(e: GPtr<u8>, out: GPtr<f32>) -> i32 {
 /// model, the difference rounded at PC=24 and stored as f32), made absolute (`fabs`).
 fn heading_offset(dx: X87, dy: X87) -> X87 {
     let a = dx.fchs().fpatan(dy).fsub_m(rd::<f32>(g(0xB7684C), 0)).to_f32();
-    let l = limit_radian_angle(a.to_bits());
+    let l = limit_radian_angle(f32::from_bits(a.to_bits()));
     X87::from_f64_exact(l.abs())
 }
 
@@ -1308,7 +1300,7 @@ pub fn scan_ptr_list_request_models(list: GPtr<u8>) {
             continue;
         }
         wr::<u16>(e, 0x2C, code);
-        if call_should_model_be_streamed(e, g(CAMERA_POSITION), rd::<u32>(g(0xB76848), 0)) != 0 {
+        if call_should_model_be_streamed(e, g(CAMERA_POSITION), f32::from_bits(rd::<u32>(g(0xB76848), 0))) != 0 {
             request_model(i32::from(rd::<i16>(e, 0x22)), rd::<i32>(g(0xB745C4), 0));
         }
     }
@@ -1344,7 +1336,7 @@ fn the_camera_pos() -> GPtr<u8> {
 #[hook(addr = 0x5556E0, conv = cdecl, name = "CRenderer::ConstructRenderList", expect = "51 A1 3C F0 B6 00")]
 pub fn construct_render_list() {
     let cp = the_camera_pos();
-    let attr = find_tunnel_attributes_for_coors(rd::<u32>(cp, 0), rd::<u32>(cp, 4), rd::<u32>(cp, 8));
+    let attr = find_tunnel_attributes_for_coors(f32::from_bits(rd::<u32>(cp, 0)), f32::from_bits(rd::<u32>(cp, 4)), f32::from_bits(rd::<u32>(cp, 8)));
     wr::<u8>(g(0xB745C0), 0, u8::from(attr & 0x880 != 0));
     let c1 = attr & 0x80 != 0 || attr & 0x800 == 0;
     wr::<u8>(g(0xB745C1), 0, u8::from(c1));
@@ -1518,14 +1510,14 @@ pub fn scan_world_port() {
         pts[2 * i + 1] = to_sector(v[3 * idx + 1]);
     }
     wr::<u8>(g(0xB76850), 0, 0);
-    world_scan(GPtr::from_raw(pts.as_mut_ptr()), 5, 0x554840);
+    world_scan(GPtr::<f32>::cast::<u8>(GPtr::from_raw(pts.as_mut_ptr())), 5, 0x554840);
     // LOD polygon (30x30 grid of 200 units): apex and the four far corners.
     let to_lod = |c: f32| x(c).fmul_m(k(0x3BA3_D70A)).fadd_m(k(0x4170_0000)).to_f32();
     for i in 0..5 {
         pts[2 * i] = to_lod(v[3 * i]);
         pts[2 * i + 1] = to_lod(v[3 * i + 1]);
     }
-    world_scan(GPtr::from_raw(pts.as_mut_ptr()), 5, 0x554B10);
+    world_scan(GPtr::<f32>::cast::<u8>(GPtr::from_raw(pts.as_mut_ptr())), 5, 0x554B10);
 }
 
 /// `CRenderer::GetObjectsInFrustum(CEntity** out, float farPlane, RwMatrix* transform)` (0x554C60): the
@@ -1578,7 +1570,7 @@ pub fn get_objects_in_frustum(out: GPtr<u8>, far_plane: f32, transform: GPtr<u8>
     }
     OUT_ENTITIES.set(out.addr() as u32);
     let f = if transform.is_null() { 0x553650 } else { 0x5535D0 };
-    world_scan(GPtr::from_raw(pts.as_mut_ptr()), 3, f);
+    world_scan(GPtr::<f32>::cast::<u8>(GPtr::from_raw(pts.as_mut_ptr())), 3, f);
     (OUT_ENTITIES.get().wrapping_sub(out.addr() as u32) as i32) >> 2
 }
 
@@ -1644,18 +1636,12 @@ pub fn request_objects_in_frustum(transform: GPtr<u8>, flags: i32) {
         pts[2 * i] = to_sector(v[3 * idx]);
         pts[2 * i + 1] = to_sector(v[3 * idx + 1]);
     }
-    world_scan(GPtr::from_raw(pts.as_mut_ptr()), 3, 0x555900);
+    world_scan(GPtr::<f32>::cast::<u8>(GPtr::from_raw(pts.as_mut_ptr())), 3, 0x555900);
 }
 
-orig! {
-    /// `RwMatrixRotate(RwMatrix*, const RwV3d* axis, float angle, RwOpCombineType)` (0x7F1FD0); the
-    /// angle as a raw dword
-    pub fn rw_matrix_rotate(m: GPtr<f32>, axis: GPtr<f32>, angle: u32, combine: u32) -> GPtr<f32> = cdecl 0x7F1FD0 => unported;
-    /// `RwMatrixTranslate(RwMatrix*, const RwV3d*, RwOpCombineType)` (0x7F2450)
-    pub fn rw_matrix_translate(m: GPtr<f32>, v: GPtr<u8>, combine: u32) -> GPtr<f32> = cdecl 0x7F2450 => unported;
-    /// `CRenderer::RequestObjectsInFrustum(RwMatrix*, int32)` (0x555960)
-    pub fn call_request_objects_in_frustum(m: GPtr<f32>, flags: i32) = cdecl 0x555960 => request_objects_in_frustum_f32;
-}
+pub use sa_core::bindings::rw_matrix_rotate;
+pub use sa_core::bindings::rw_matrix_translate;
+pub use sa_world::bindings::call_request_objects_in_frustum;
 
 /// `request_objects_in_frustum` with an `f32` matrix pointer (the phase B/C path of the `orig!` call).
 pub fn request_objects_in_frustum_f32(m: GPtr<f32>, flags: i32) {
@@ -1693,10 +1679,10 @@ pub fn request_objects_in_direction(posn: GPtr<u8>, angle: f32) {
     ];
     let mp = GPtr::<f32>::from_raw(m.as_mut_ptr());
     let ap = GPtr::<f32>::from_raw(axes.as_mut_ptr());
-    rw_matrix_rotate(mp, ap, 0x42B4_0000, 0);
+    rw_matrix_rotate(mp.cast::<u8>(), ap.cast::<u8>(), f32::from_bits(0x42B4_0000), 0);
     let deg = x(angle).fmul_m(k(0x4265_2EE0)).fadd_m(k(0x4334_0000)).to_f32();
-    rw_matrix_rotate(mp, ap.wrapping_index(3), deg.to_bits(), 2);
-    rw_matrix_translate(mp, posn, 2);
+    rw_matrix_rotate(mp.cast::<u8>(), GPtr::<f32>::cast::<u8>(ap.wrapping_index(3)), f32::from_bits(deg.to_bits()), 2);
+    rw_matrix_translate(mp.cast::<u8>(), posn, 2);
     call_request_objects_in_frustum(mp, 0x20);
 }
 

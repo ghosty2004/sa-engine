@@ -12,9 +12,8 @@ use crate::glass::{mi_as_atomic_model_info_ptr, report_glass_collision_event};
 use sa_core::bindings::matrix_mul_vec;
 use sa_world::bindings::calculate_triangle_planes;
 use sa_world::bindings::test_sphere_triangle;
+use sa_world::bindings::uncompress_vector;
 orig! {
-    /// `UncompressVector(CVector* out, const CompressedVector*)` (0x411590)
-    fn uncompress_vector(out: GPtr<u8>, inp: GPtr<u8>) = cdecl 0x411590 => unported;
     /// `CGlass::GeneratePanesForWindow(ePaneType, CVector point, CVector fwd, CVector right, CVector velocity,
     /// CVector center, float dragCoeff, bool shatter, bool max1, int32 sections, bool)` (0x71B620)
     #[allow(clippy::too_many_arguments)]
@@ -148,10 +147,10 @@ pub fn break_glass_physically(px: f32, py: f32, pz: f32, radius: f32) {
         }
         let mut a0 = [v[0][0], v[0][1], min_z];
         let mut p0 = [0f32; 3];
-        matrix_mul_vec(GPtr::from_raw(p0.as_mut_ptr()).cast(), rd(o, 0x14), GPtr::from_raw(a0.as_mut_ptr()).cast());
+        matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::from_raw(p0.as_mut_ptr()).cast()), rd(o, 0x14), GPtr::from_raw(a0.as_mut_ptr()).cast());
         let mut a1 = [v[far][0], v[far][1], min_z];
         let mut p1 = [0f32; 3];
-        matrix_mul_vec(GPtr::from_raw(p1.as_mut_ptr()).cast(), rd(o, 0x14), GPtr::from_raw(a1.as_mut_ptr()).cast());
+        matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::from_raw(p1.as_mut_ptr()).cast()), rd(o, 0x14), GPtr::from_raw(a1.as_mut_ptr()).cast());
         report_glass_collision_event(g(0xB6_BC90), 0x7E, pos(o).cast());
         let shatter = (rd::<u32>(o, 0x140) >> 4) & 0xFFFF_FF01;
         let rx = x(p1[0]).fsub_m(p0[0]).to_f32();

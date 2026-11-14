@@ -34,11 +34,11 @@ const SCRIPT_RESOURCE_MANAGER: usize = 0xA485A8;
 pub use sa_core::bindings::streaming_request_model as request_model;
 pub use sa_stream::bindings::get_animation_block_index;
 pub use sa_stream::bindings::remove_buildings_not_in_area;
-pub use sa_world::bindings::get_animation_block;
+pub use sa_core::bindings::get_animation_block;
 use crate::bindings::add_counter;
 use crate::bindings::clear_script_road_blocks;
-use crate::bindings::find_node_coors_for_script;
-use crate::bindings::find_nth_node_closest_to_coors;
+use sa_world::bindings::find_node_coors_for_script;
+use sa_world::bindings::find_nth_node_closest_to_coors;
 use sa_core::bindings::get_uppercase_key;
 use sa_core::bindings::start_extra_colour;
 use sa_core::bindings::text_get;
@@ -46,56 +46,43 @@ use sa_core::bindings::time_cycle_stop_extra_colour as stop_extra_colour;
 use sa_world::bindings::attach_ped_to_entity;
 use sa_world::bindings::find_ground_z_for_coord;
 use sa_world::bindings::get_vehicle_appearance;
+pub use crate::bindings::add_to_resource_manager;
+use crate::bindings::give_ped_scripted_task;
+use crate::bindings::global_index;
+use crate::bindings::remove_from_resource_manager;
+use sa_core::bindings::hud_set_help_message as set_help_message;
+use sa_core::bindings::vector_magnitude;
+use sa_world::bindings::add_to_previous_brief_array;
+use sa_world::bindings::multiply3x3 as multiply_3x3;
+use sa_world::bindings::register_corona;
+use sa_world::bindings::speech_set_cj_mood as set_cj_mood;
+use sa_world::bindings::vector_add_assign;
+use sa_world::bindings::vector_mul_scalar as vector_mul_float;
 orig! {
     /// `CColStore::RequestCollision(const CVector&, int32 area)` (0x410C00)
     pub fn request_collision(pos: GPtr<f32>, area: i32) = cdecl 0x410C00 => unported;
-    /// `CScriptResourceManager::AddToResourceManager(int32, uint32 type, CRunningScript*)` (0x4704B0)
-    pub fn add_to_resource_manager(m: GPtr<u8>, id: i32, ty: u32, s: Scr) = thiscall 0x4704B0 => unported;
-    /// `CScriptResourceManager::RemoveFromResourceManager(int32, uint32 type, CRunningScript*)` (0x470510), AL
-    fn remove_from_resource_manager(m: GPtr<u8>, id: i32, ty: u32, s: Scr) -> u8 = thiscall 0x470510 => unported;
     /// Unnamed cdecl taking the animation block index (0x48B570; REMOVE_ANIMATION's removal)
     fn remove_anim_48b570(idx: i32) = cdecl 0x48B570 => unported;
     /// `CPickups::ModelForWeapon(eWeaponType)` (0x454AC0)
     fn model_for_weapon(ty: u32) -> i32 = cdecl 0x454AC0 => unported;
     /// `CRoadBlocks::RegisterScriptRoadBlock(CVector, CVector, bool)` (0x460DF0), vectors as raw dwords
     fn register_script_road_block(a: u32, b: u32, c: u32, d: u32, e: u32, g: u32, flag: u32) = cdecl 0x460DF0 => unported;
-    /// Unnamed `CVector operator*(const CVector&, float)` (0x40FEC0; hidden-pointer result), the float raw
-    fn vector_mul_float(out: GPtr<u32>, v: GPtr<u8>, k: u32) -> GPtr<u32> = cdecl 0x40FEC0 => unported;
     /// `CAutomobile::CloseAllDoors()` (0x6A4520)
     fn close_all_doors(v: GPtr<u8>) = thiscall 0x6A4520 => unported;
-    /// `CVector::Magnitude()` (0x4082C0), ST0 (an FSQRT result under PC=24: exact as f64)
-    fn vector_magnitude(v: GPtr<u32>) -> f64 = thiscall 0x4082C0 => unported;
-    /// `CHud::SetHelpMessage(const char*, bool quick, bool permanent, bool addToBrief)` (0x588BE0)
-    fn set_help_message(t: GPtr<u8>, a: u32, b: u32, c: u32) = cdecl 0x588BE0 => unported;
-    /// `CMessages::AddToPreviousBriefArray(const char*, int32 n1..n6, const char*)` (0x69DD50)
-    fn add_to_previous_brief_array(t: GPtr<u8>, n1: u32, n2: u32, n3: u32, n4: u32, n5: u32, n6: u32, s: u32) = cdecl 0x69DD50 => unported;
     /// `CHud::SetHelpMessageWithNumber(const char*, int32, bool, bool)` (0x588E30)
     fn set_help_message_with_number(t: GPtr<u8>, n: u32, a: u32, b: u32) = cdecl 0x588E30 => unported;
-    /// `CRunningScript::GetIndexOfGlobalVariable()` (0x464700), AX
-    fn global_index(s: Scr) -> u16 = thiscall 0x464700 => crate::vm::get_index_of_global_variable;
     /// `CTaskSimpleDuckToggle::CTaskSimpleDuckToggle(int32)` (0x62F690)
     fn duck_toggle_ctor(t: GPtr<u8>, on: u32) -> GPtr<u8> = thiscall 0x62F690 => unported;
-    /// `CRunningScript::GivePedScriptedTask(int32 ped, CTask*, int32 opcode)` (0x465C20)
-    fn give_ped_scripted_task(s: Scr, ped: i32, task: GPtr<u8>, op: u32) = thiscall 0x465C20 => unported;
     /// `CSetPieces::AddOne(uint8 type, CVector2D, CVector2D, CVector2D, CVector2D, CVector2D, CVector2D)`
     /// (0x499500); the 2D vectors as twelve raw dwords
     fn set_pieces_add_one(ty: u32, a: u32, b: u32, c: u32, d: u32, e: u32, g: u32, h: u32, i: u32, j: u32, k: u32, l: u32, m: u32) = cdecl 0x499500 => unported;
     /// `CVehicle` virtual slot +0xB0 (`BurstTyre(uint8 tyre, bool applyEffects)`)
     fn vehicle_burst_tyre(v: GPtr<u8>, tyre: u32, fx: u32) = thiscall vslot 0xB0 => unported;
-    /// `Multiply3x3(const CMatrix&, const CVector&)` (0x59C790; hidden-pointer result)
-    fn multiply_3x3(out: GPtr<u32>, m: GPtr<u8>, v: GPtr<u32>) -> GPtr<u32> = cdecl 0x59C790 => unported;
-    /// Unnamed `CVector::operator+=(const CVector&)` (0x411A00)
-    fn vector_add_assign(v: GPtr<u32>, o: GPtr<u8>) = thiscall 0x411A00 => unported;
     /// `CAutomobile::SetHeliOrientation(float)` (0x6A2450), the float as its raw dword
     fn set_heli_orientation(v: GPtr<u8>, a: u32) = thiscall 0x6A2450 => unported;
     /// `CPathFind::FindNodePairClosestToCoors(CVector, uint8 type, CNodeAddress* n1, CNodeAddress* n2, float*
     /// orientation, float minDist, float maxDist, bool, bool, bool)` (0x44FEE0, `ret 0x30`), raw dwords
     fn find_node_pair_closest_to_coors(paths: GPtr<u8>, x: u32, y: u32, z: u32, ty: u32, n1: GPtr<u32>, n2: GPtr<u32>, orient: GPtr<u32>, min: u32, max: u32, a: u32, b: u32, c: u32) = thiscall 0x44FEE0 => unported;
-    /// `CCoronas::RegisterCorona(uint32 id, CEntity*, uint8 r, g, b, a, const CVector*, float radius,
-    /// float farClip, uint8 type, uint8 flare, bool reflection, bool obstacles, int32, float angle, bool
-    /// longDistance, float nearClip, uint8 fadeState, float fadeSpeed, bool onlyFromBelow, bool)`
-    /// (0x6FC580); floats as raw dwords
-    fn register_corona(id: u32, e: u32, r: u32, g: u32, b: u32, a: u32, pos: GPtr<u32>, radius: u32, far: u32, ty: u32, flare: u32, refl: u32, obst: u32, unused: u32, angle: u32, long: u32, near: u32, fade: u32, speed: u32, below: u32, delay: u32) = cdecl 0x6FC580 => unported;
     /// `CAutomobile::ClearHeliOrientation()` (0x6A2460)
     fn clear_heli_orientation(v: GPtr<u8>) = thiscall 0x6A2460 => unported;
     /// `CAutomobile::TellPlaneToGoToCoors(float x, float y, float z, float, float)` (0x6A2470), raw dwords
@@ -104,8 +91,6 @@ orig! {
     fn blow_up_rc_buggy(p: GPtr<u8>, explode: u32) = thiscall 0x56EA30 => unported;
     /// `CAutomobile::PopBoot()` (0x6AF910)
     fn pop_boot(v: GPtr<u8>) = thiscall 0x6AF910 => unported;
-    /// `CAEPedSpeechAudioEntity::SetCJMood(int16, uint32, int16, int16, int16)` (0x4E3ED0)
-    fn set_cj_mood(a: u32, b: u32, c: u32, d: u32, e: u32) = cdecl 0x4E3ED0 => unported;
     /// `CRunningScript::LocateObjectCommand(int32 command)` (0x487D10)
     fn locate_object_command(s: Scr, command: u32) = thiscall 0x487D10 => unported;
     /// `CRunningScript::ObjectInAreaCheckCommand(int32 command)` (0x489150)
@@ -143,7 +128,7 @@ fn ground_rule(x: u32, y: u32, z: u32) -> u32 {
     let st = if st.fcom(X87::constant(K_MINUS_100)).test_parity(0x41) {
         st
     } else {
-        X87::from_f64_exact(find_ground_z_for_coord(x, y))
+        X87::from_f64_exact(find_ground_z_for_coord(f32::from_bits(x), f32::from_bits(y)))
     };
     st.to_f32().to_bits()
 }
@@ -306,18 +291,18 @@ pub fn process_commands_1200_to_1299(s: Scr, command: u32) -> i8 {
             let mut ok = false;
             if n1[0] & 0xFFFF != 0xFFFF {
                 let mut c1 = [0u32; 3];
-                find_node_coors_for_script(paths, GPtr::from_raw(c1.as_mut_ptr()), n1[0], GPtr::NULL);
+                find_node_coors_for_script(paths, GPtr::<u32>::cast::<u8>(GPtr::from_raw(c1.as_mut_ptr())), n1[0], GPtr::NULL);
                 set_sp(0, c1[0]);
                 set_sp(1, c1[1]);
                 set_sp(2, c1[2]);
                 let mut c2 = [0u32; 3];
                 let mut found = [0u8; 1];
-                let r = find_node_coors_for_script(
+                let r = GPtr::<u8>::cast::<u32>(find_node_coors_for_script(
                     paths,
-                    GPtr::from_raw(c2.as_mut_ptr()),
+                    GPtr::<u32>::cast::<u8>(GPtr::from_raw(c2.as_mut_ptr())),
                     n2[0],
                     GPtr::from_raw(found.as_mut_ptr()),
-                );
+                ));
                 let c2 = [r.read(), r.wrapping_index(1).read(), r.wrapping_index(2).read()];
                 if found[0] != 0 {
                     set_sp(3, c2[0]);
@@ -347,7 +332,7 @@ pub fn process_commands_1200_to_1299(s: Scr, command: u32) -> i8 {
             let k = X87::from_f32(spf(1)).fmul_m(f(K_ONE_SIXTIETH)).to_f32().to_bits();
             let fwd = v.byte_add(0x14).cast::<GPtr<u8>>().read().byte_add(0x10);
             let mut out = [0u32; 3];
-            let r = vector_mul_float(GPtr::from_raw(out.as_mut_ptr()), fwd, k);
+            let r = GPtr::<u8>::cast::<u32>(vector_mul_float(GPtr::<u32>::cast::<u8>(GPtr::from_raw(out.as_mut_ptr())), fwd, f32::from_bits(k)));
             let ms = v.byte_add(0x44).cast::<u32>();
             for i in 0..3 {
                 ms.wrapping_index(i).write(r.wrapping_index(i).read());
@@ -373,15 +358,15 @@ pub fn process_commands_1200_to_1299(s: Scr, command: u32) -> i8 {
             let ped = ped_at_ref(pool(PED_POOL), spi(0));
             let off = [sp(1), sp(2), sp(3)];
             let mut out = [0u32; 3];
-            let r = multiply_3x3(
-                GPtr::from_raw(out.as_mut_ptr()),
+            let r = GPtr::<u8>::cast::<u32>(multiply_3x3(
+                GPtr::<u32>::cast::<u8>(GPtr::from_raw(out.as_mut_ptr())),
                 ped.byte_add(0x14).cast::<GPtr<u8>>().read(),
-                GPtr::from_raw(off.as_ptr().cast_mut()),
-            );
+                GPtr::<u32>::cast::<u8>(GPtr::from_raw(off.as_ptr().cast_mut())),
+            ));
             let mut v = [r.read(), r.wrapping_index(1).read(), r.wrapping_index(2).read()];
             let m = ped.byte_add(0x14).cast::<GPtr<u8>>().read();
             let pos = if m.is_null() { ped.byte_add(4) } else { m.byte_add(0x30) };
-            vector_add_assign(GPtr::from_raw(v.as_mut_ptr()), pos);
+            vector_add_assign(GPtr::<u32>::cast::<u8>(GPtr::from_raw(v.as_mut_ptr())), pos);
             set_sp(0, v[0]);
             set_sp(1, v[1]);
             set_sp(2, v[2]);
@@ -427,22 +412,22 @@ pub fn process_commands_1200_to_1299(s: Scr, command: u32) -> i8 {
             let a = find_nth_node_closest_to_coors(
                 paths,
                 GPtr::from_raw(ret.as_mut_ptr()),
-                x,
-                y,
-                z,
+                f32::from_bits(x),
+                f32::from_bits(y),
+                f32::from_bits(z),
                 0,
-                K_999999,
+                f32::from_bits(K_999999),
                 0,
                 1,
                 sp(3).wrapping_sub(1),
                 0,
                 0,
-                0,
+                GPtr::NULL,
             )
             .read();
             let mut out = [0u32; 3];
             let mut found = [0u8; 1];
-            find_node_coors_for_script(paths, GPtr::from_raw(out.as_mut_ptr()), a, GPtr::from_raw(found.as_mut_ptr()));
+            find_node_coors_for_script(paths, GPtr::<u32>::cast::<u8>(GPtr::from_raw(out.as_mut_ptr())), a, GPtr::from_raw(found.as_mut_ptr()));
             let b = found[0] != 0;
             let v = if b { out } else { [0; 3] };
             set_sp(0, v[0]);
@@ -462,24 +447,24 @@ pub fn process_commands_1200_to_1299(s: Scr, command: u32) -> i8 {
             let id = s.byte_add(crate::vm::IP).cast::<u32>().read().wrapping_add(s.addr() as u32);
             register_corona(
                 id,
-                0,
+                GPtr::NULL,
                 sp(6) & 0xFF,
                 sp(7) & 0xFF,
                 sp(8) & 0xFF,
                 0xFF,
-                GPtr::from_raw(pos.as_ptr().cast_mut()),
-                sp(3),
-                0x4316_0000,
+                GPtr::<u32>::cast::<u8>(GPtr::from_raw(pos.as_ptr().cast_mut())),
+                f32::from_bits(sp(3)),
+                f32::from_bits(0x4316_0000),
                 sp(4) & 0xFF,
                 sp(5) & 0xFF,
                 1,
                 0,
                 0,
+                f32::from_bits(0),
                 0,
+                f32::from_bits(0x3E4C_CCCD),
                 0,
-                0x3E4C_CCCD,
-                0,
-                0x4170_0000,
+                f32::from_bits(0x4170_0000),
                 0,
                 0,
             );
@@ -501,7 +486,7 @@ pub fn process_commands_1200_to_1299(s: Scr, command: u32) -> i8 {
             let a = X87::from_f32(spf(6)).fmul_m(f(K_DEG2RAD)).to_f32().to_bits();
             let obj = object_at_ref(pool(OBJECT_POOL), spi(1));
             let ped = ped_at_ref(pool(PED_POOL), spi(0));
-            attach_ped_to_entity(ped, obj, sp(2), sp(3), sp(4), sp(5) & 0xFFFF, a, sp(7));
+            attach_ped_to_entity(ped, obj, f32::from_bits(sp(2)), f32::from_bits(sp(3)), f32::from_bits(sp(4)), sp(5) & 0xFFFF, f32::from_bits(a), sp(7));
             0
         }
         // 04F7 DISPLAY_NTH_ONSCREEN_COUNTER_WITH_STRING (0x48C52F, gr: unregistered): idx =
@@ -643,8 +628,8 @@ pub fn process_commands_1200_to_1299(s: Scr, command: u32) -> i8 {
                 if show {
                     set_help_message(t, 0, 1, 0);
                     if prev.read() != 0 {
-                        let m = 0xFFFF_FFFF;
-                        add_to_previous_brief_array(t, m, m, m, m, m, m, 0);
+                        let m = 0xFFFF_FFFFu32;
+                        add_to_previous_brief_array(t, m as i32, m as i32, m as i32, m as i32, m as i32, m as i32, GPtr::NULL);
                     }
                 }
                 prev.write(1);
@@ -682,7 +667,7 @@ pub fn process_commands_1200_to_1299(s: Scr, command: u32) -> i8 {
             let mut b = false;
             if ped.byte_add(0x46C).cast::<u32>().read() & 0x100 != 0 {
                 let v = || ped.byte_add(0x58C).cast::<GPtr<u8>>().read();
-                b = get_vehicle_appearance(v()) == 5 || get_vehicle_appearance(v()) == 3;
+                b = get_vehicle_appearance(v()) as i32 == 5 || get_vehicle_appearance(v()) as i32 == 3;
             }
             set_flag(s, b);
             0
@@ -759,7 +744,7 @@ pub fn process_commands_1200_to_1299(s: Scr, command: u32) -> i8 {
         // CAEPedSpeechAudioEntity::SetCJMood((u16)P1, P2, -1, -1, -1).
         0x04E3 => {
             collect(s, 3);
-            set_cj_mood(sp(1) & 0xFFFF, sp(2), 0xFFFF_FFFF, 0xFFFF_FFFF, 0xFFFF_FFFF);
+            set_cj_mood((sp(1) & 0xFFFF) as u16, sp(2), 0xFFFF_FFFF, 0xFFFF_FFFF, 0xFFFF_FFFF);
             0
         }
         // 04E5/04E6 LOCATE_OBJECT_2D/3D (0x48C28F): LocateObjectCommand(command); 04E9/04EA
@@ -815,7 +800,7 @@ pub fn process_commands_1200_to_1299(s: Scr, command: u32) -> i8 {
         }
         0x04FA => {
             collect(s, 1);
-            stop_extra_colour(u32::from(sp(0) != 0));
+            stop_extra_colour(u32::from(sp(0) != 0) as u8);
             0
         }
         // 04FC GET_WHEELIE_STATS (0x48C6D1, gr: unregistered): P0..P5 = the six dwords at Players[P0]

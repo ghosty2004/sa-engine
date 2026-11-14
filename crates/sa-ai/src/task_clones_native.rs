@@ -3,18 +3,13 @@
 //! as a reading aid.
 
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
-orig! {
-    /// `CTask::operator new(uint32)` (0x61A5A0)
-    fn task_new_c(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => crate::mvpa_ai1::task_operator_new;
-    /// `CTaskSimpleGoToPoint::CTaskSimpleGoToPoint(moveState, const CVector&, radius, mustOverShoot, stopExactly)` (0x667CD0)
-    fn goto_point_ctor(t: GPtr<u8>, state: u32, target: GPtr<u8>, radius: u32, over: u8, exact: u8) -> GPtr<u8> = thiscall 0x667CD0 => crate::walk::goto_point_ctor;
-    /// `CTaskComplexChat::CTaskComplexChat(bool, CPed*, int32, int16)` (0x682CB0)
-    fn chat_ctor(t: GPtr<u8>, is_chatter: u8, partner: GPtr<u8>, stage: i32, context: i16) -> GPtr<u8> = thiscall 0x682CB0 => crate::chat_task_ctor::task_complex_chat_ctor;
-}
+use crate::bindings::chat_ctor;
+use crate::bindings::go_to_point_ctor as goto_point_ctor;
+use sa_core::bindings::task_new as task_new_c;
 
 /// `CTaskSimpleGoToPoint::Clone()` (0x66CC60, SEH frame): `operator new(0x30)`, then the constructor with
 /// +8 (move state), &+0xC (target), +0x18 (radius), +0x20 bit 0 (must overshoot) and bit 3 (stop exactly).

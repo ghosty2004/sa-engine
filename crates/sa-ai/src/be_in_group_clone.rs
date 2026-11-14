@@ -3,15 +3,12 @@
 //! `gen_clones.rs`. Reached on the native walk (STD-13 19.8).
 
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
 use sa_world::bindings::task_complex_ctor;
-orig! {
-    /// `CTask::operator new(uint32)` (0x61A5A0)
-    fn task_new_c(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => crate::mvpa_ai1::task_operator_new;
-}
+use sa_core::bindings::task_new as task_new_c;
 
 /// `CTaskComplexBeInGroup::Clone` (0x636BE0, SEH frame): `operator new(0x28)`, the inlined constructor
 /// (`CTaskComplex` base, +0x10 = this +0x10 byte, +0xC = this +0xC, +0x14 / +0x18 / +0x20 = 0, vtable

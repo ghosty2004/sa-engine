@@ -12,6 +12,7 @@
 //! structure's 13 `CWeapon`s in the original; the constructor's bytes are all overwritten by the copy / the
 //! read, and `CWeapon::~CWeapon` (0x4411A0) is a lone `ret`, so the ports skip them.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::{HookReg, footprint_entry_esp, footprint_residue_u8};
 use sa_core::{hook, orig};
 
@@ -23,23 +24,21 @@ const ENTRY_EXIT_POOL: usize = 0x96A7D8;
 /// `CPedType::ms_apPedTypes` (pointer to 32 `CAcquaintance` of 5 dwords)
 const PED_TYPES: usize = 0xC0BBE8;
 
-use crate::bindings::clothes_desc_ctor;
+use sa_world::bindings::clothes_desc_ctor;
 use sa_core::bindings::get_weapon_info;
 use sa_core::bindings::load_all_requested_models;
 use sa_core::bindings::ped_give_weapon as give_weapon;
 use sa_world::bindings::ped_set_current_weapon_slot as set_current_weapon;
 use sa_world::bindings::set_char_created_by;
+use sa_core::bindings::load_data_from_work_buffer as load_data;
+use sa_core::bindings::save_data_to_work_buffer as save_data;
+use sa_core::bindings::streaming_request_model as request_model;
+use sa_world::bindings::acquaintance_get as get_acquaintances;
 orig! {
-    /// `CGenericGameStorage::SaveDataToWorkBuffer(void*, int32)` (0x5D1270)
-    fn save_data(p: GPtr<u8>, n: i32) -> u8 = cdecl 0x5D1270 => sa_core::save::save_data_to_work_buffer;
-    /// `CGenericGameStorage::LoadDataFromWorkBuffer(void*, int32)` (0x5D1300)
-    fn load_data(p: GPtr<u8>, n: i32) -> u8 = cdecl 0x5D1300 => sa_core::save::load_data_from_work_buffer;
     /// `CPlayerInfoSaveStructure::Construct(CPlayerInfo*)` (0x5D24B0)
     fn player_info_save_construct(s: GPtr<u8>, info: GPtr<u8>) = thiscall 0x5D24B0 => player_info_save_structure_construct;
     /// `CPlayerInfoSaveStructure::Extract(CPlayerInfo*)` (0x5D2560)
     fn player_info_save_extract(s: GPtr<u8>, info: GPtr<u8>) = thiscall 0x5D2560 => player_info_save_structure_extract;
-    /// `CAcquaintance::GetAcquaintances(int32)` (0x608970)
-    fn get_acquaintances(a: GPtr<u8>, i: u32) -> u32 = thiscall 0x608970 => unported;
     /// `CAcquaintance::SetAcquaintances(int32, uint32)` (0x608960)
     fn set_acquaintances(a: GPtr<u8>, i: u32, v: u32) -> u32 = thiscall 0x608960 => unported;
     /// `CPedSaveStructure::Construct(CPed*)` (0x5D43D0)
@@ -50,8 +49,6 @@ orig! {
     fn ped_save_call(ped: GPtr<u8>) -> u8 = thiscall 0x5D5730 => ped_save;
     /// `CPed::Load()` (0x5D4640)
     fn ped_load_call(ped: GPtr<u8>) -> u8 = thiscall 0x5D4640 => ped_load;
-    /// `CStreaming::RequestModel(int32, int32)` (0x4087E0)
-    fn request_model(model: i32, flags: u32) = cdecl 0x4087E0 => unported;
 }
 
 /// A residue-filled local: byte k of the returned array is the original's stack byte at entry ESP + `base`
@@ -290,7 +287,7 @@ pub fn ped_save_structure_extract(this: GPtr<u8>, ped: GPtr<u8>) {
     wr::<u32>(ped, 0x540, rd::<u32>(this, 0xC));
     wr::<u32>(ped, 0x548, rd::<u32>(this, 0x10));
     wr::<u8>(ped, 0x718, rd::<u8>(this, 0x181));
-    set_char_created_by(ped, u32::from(rd::<u8>(this, 0x180)));
+    set_char_created_by(ped, u32::from(rd::<u8>(this, 0x180)) as u8);
     wr::<u8>(ped, 0x72D, rd::<u8>(this, 0x188));
     wr::<u8>(ped, 0x72E, rd::<u8>(this, 0x189));
     for k in 0..13isize {
@@ -300,16 +297,16 @@ pub fn ped_save_structure_extract(this: GPtr<u8>, ped: GPtr<u8>) {
             continue;
         }
         for field in [0xCisize, 0x10] {
-            let model = rd::<i32>(get_weapon_info(rd::<u32>(w, 0), 1), field);
+            let model = rd::<i32>(get_weapon_info(rd::<u32>(w, 0) as i32, 1), field);
             if model != -1 {
                 request_model(model, 8);
                 load_all_requested_models(0);
             }
         }
-        give_weapon(ped, rd::<u32>(w, 0), rd::<u32>(w, 0xC), 0);
+        give_weapon(ped, rd::<u32>(w, 0) as i32, rd::<u32>(w, 0xC), 0);
         wr::<u32>(ped, 0x5A8 + 0x1C * k, rd::<u32>(w, 8));
     }
-    set_current_weapon(ped, i32::from(rd::<u8>(this, 0x181) as i8));
+    set_current_weapon(ped, i32::from(rd::<u8>(this, 0x181) as i8) as u32);
     wr::<u8>(ped, 0x2F, rd::<u8>(this, 0x182));
     let idx = rd::<i32>(this, 0x184);
     let ee = if idx == -1 {

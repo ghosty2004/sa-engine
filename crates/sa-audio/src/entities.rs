@@ -42,23 +42,17 @@ pub use crate::bindings::sm_are_sounds_playing_in_bank_slot as are_sounds_playin
 pub use crate::bindings::sound_set_position;
 pub use crate::bindings::sound_stop_and_forget;
 pub use sa_world::bindings::engine_is_loading_tune_active;
+pub use crate::bindings::hw_load_sound_bank as load_sound_bank;
+pub use crate::bindings::ps_finished_playing_call as ps_finished_playing_scanner_dialogue;
+pub use crate::bindings::script_process_mission_audio_event;
+pub use crate::bindings::twin_loop_stop_sound_and_forget as twin_loop_stop_sound_and_forget_call;
+pub use crate::bindings::weapon_terminate as weapon_terminate_call;
+pub use sa_world::bindings::sound_dtor as sound_destructor;
 orig! {
-    /// `CAEAudioHardware::LoadSoundBank(uint16 bankId, int16 slot)` (0x4D88A0)
-    pub fn load_sound_bank(hw: GPtr<u8>, bank: u32, slot: u32) -> u32 = thiscall 0x4D88A0 => unported;
     /// `CAESoundManager::CancelSoundsOwnedByAudioEntity(CAEAudioEntity*, bool)` (0x4EFCD0)
     pub fn cancel_sounds_owned_by_audio_entity(sm: GPtr<u8>, entity: GPtr<u8>, stop: u32) = thiscall 0x4EFCD0 => unported;
-    /// `CAEPoliceScannerAudioEntity::FinishedPlayingScannerDialogue()` (0x4E6C30, static)
-    pub fn ps_finished_playing_scanner_dialogue() = cdecl 0x4E6C30 => unported;
-    /// `CAEWeaponAudioEntity::Terminate()` (0x503480)
-    pub fn weapon_terminate_call(this: GPtr<u8>) = thiscall 0x503480 => weapon_terminate;
-    /// `CAETwinLoopSoundEntity::StopSoundAndForget()` (0x4F2960)
-    pub fn twin_loop_stop_sound_and_forget_call(this: GPtr<u8>) = thiscall 0x4F2960 => twin_loop_stop_sound_and_forget;
     /// `CAETwinLoopSoundEntity::SwapSounds()` (0x4F2C10)
     pub fn twin_loop_swap_sounds_call(this: GPtr<u8>) = thiscall 0x4F2C10 => twin_loop_swap_sounds;
-    /// `CAEScriptAudioEntity::ProcessMissionAudioEvent(event, CVector&, CPhysical*, float, float)` (0x4ECCF0)
-    pub fn script_process_mission_audio_event(this: GPtr<u8>, event: u32, posn: u32, physical: u32, a4: u32, volume: u32) = thiscall 0x4ECCF0 => unported;
-    /// `CAESound::~CAESound()` (0x4EF660)
-    pub fn sound_destructor(sound: GPtr<u8>) -> u32 = thiscall 0x4EF660 => unported;
     /// `CAEWeaponAudioEntity::WeaponFire(eWeaponType, CPhysical*, int32 event)` (0x504F80)
     pub fn weapon_weapon_fire(this: GPtr<u8>, ty: u32, physical: u32, event: u32) = thiscall 0x504F80 => unported;
     /// `CAEWeaponAudioEntity::WeaponReload(eWeaponType, CPhysical*, int32 event)` (0x503690)
@@ -339,7 +333,7 @@ pub fn door_add_audio_event_1(this: GPtr<u8>, event: u32, physical: GPtr<u8>) {
     if event != 0xA3 {
         return;
     }
-    if are_sounds_of_this_event_playing_for_this_entity(sound_manager(), 0xA3, this) as u16 != 0 {
+    if (are_sounds_of_this_event_playing_for_this_entity(sound_manager(), 0xA3, this) as u32) as u16 != 0 {
         return;
     }
     if now <= rd::<u32>(this, 0x80).wrapping_add(4000) {
@@ -373,7 +367,7 @@ pub fn door_update_parameters(this: GPtr<u8>, sound: GPtr<u8>, pos: u32) {
         _ => return,
     };
     let playing =
-        |ev: u32| are_sounds_of_this_event_playing_for_this_entity(sound_manager(), ev, this) as u16 != 0;
+        |ev: u32| (are_sounds_of_this_event_playing_for_this_entity(sound_manager(), ev, this) as u32) as u16 != 0;
     if now <= rd::<u32>(this, 0x7C).wrapping_add(10000) {
         if playing(end_event) {
             sound_stop_and_forget(sound);
@@ -499,7 +493,7 @@ pub fn script_is_mission_audio_sample_finished(this: GPtr<u8>, slot: u32) -> u8 
         return 1;
     }
     if s >= 2 {
-        let r = are_sounds_playing_in_bank_slot(g(AE_SOUND_MANAGER), s as u32 + 0x1A);
+        let r = are_sounds_playing_in_bank_slot(g(AE_SOUND_MANAGER), s as u32 + 0x1A) as u32;
         return (r as u16 == 0) as u8;
     }
     (rd::<u32>(this, (s as isize + 5) << 5) == 0) as u8
@@ -553,7 +547,7 @@ pub fn script_constructor(this: GPtr<u8>) -> GPtr<u8> {
 /// `ProcessMissionAudioEvent(event, physical, 0, 0, 1.0)`.
 #[hook(addr = 0x4EE940, conv = thiscall, name = "CAEScriptAudioEntity::ReportMissionAudioEvent-2", expect = "8B 44 24 08 8B 54 24 04")]
 pub fn script_report_mission_audio_event_2(this: GPtr<u8>, event: u32, a2: u32) {
-    script_process_mission_audio_event(this, event, a2, 0, 0, 0x3F80_0000);
+    script_process_mission_audio_event(this, event, GPtr::from_addr(a2 as usize), 0, 0, 0x3F80_0000);
 }
 
 // ---- CAEFrontendAudioEntity -----------------------------------------------------------------------
@@ -562,7 +556,7 @@ pub fn script_report_mission_audio_event_2(this: GPtr<u8>, event: u32, a2: u32) 
 /// (the sound manager's EAX is returned unchanged).
 #[hook(addr = 0x4DD470, conv = thiscall, name = "CAEFrontendAudioEntity::IsLoadingTuneActive", expect = "51 6A 32 B9 B0 2C B6 00")]
 pub fn frontend_is_loading_tune_active(this: GPtr<u8>) -> u32 {
-    are_sounds_of_this_event_playing_for_this_entity(sound_manager(), 0x32, this)
+    are_sounds_of_this_event_playing_for_this_entity(sound_manager(), 0x32, this) as u32
 }
 
 // ---- CAEPoliceScannerAudioEntity ------------------------------------------------------------------
@@ -707,7 +701,7 @@ pub fn twin_loop_destructor(this: GPtr<u8>) {
 pub fn twin_loop_update_twin_loop_sound(this: GPtr<u8>, px: u32, py: u32, pz: u32, volume: u32, speed: u32) {
     let s1 = rd::<u32>(this, 0xA0);
     if s1 != 0 {
-        sound_set_position(g(s1 as usize), px, py, pz);
+        sound_set_position(GPtr::<u8>::addr(g(s1 as usize)) as u32, px, py, pz);
         if rd::<u8>(this, 0x98) != 0 {
             wr::<u32>(g::<u8>(rd::<u32>(this, 0xA0) as usize), 0x14, volume);
         }
@@ -715,7 +709,7 @@ pub fn twin_loop_update_twin_loop_sound(this: GPtr<u8>, px: u32, py: u32, pz: u3
     }
     let s2 = rd::<u32>(this, 0xA4);
     if s2 != 0 {
-        sound_set_position(g(s2 as usize), px, py, pz);
+        sound_set_position(GPtr::<u8>::addr(g(s2 as usize)) as u32, px, py, pz);
         if rd::<u8>(this, 0x98) == 0 {
             wr::<u32>(g::<u8>(rd::<u32>(this, 0xA4) as usize), 0x14, volume);
         }

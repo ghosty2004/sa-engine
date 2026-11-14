@@ -4,15 +4,12 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 
 use crate::common::{ftol32, g, k, x, xi};
 
-orig! {
-    /// `CAudioEngine::ReportFrontendAudioEvent(eAudioEvents, float volume, float speed)` (0x506EA0, thiscall)
-    fn audio_report_frontend_event(ae: GPtr<u8>, event: u32, volume: f32, speed: f32) = thiscall 0x506EA0 => unported;
-}
+use sa_core::bindings::audio_report_frontend_event;
 
 /// `CBulletTraces::aTraces` (16 x 0x2C at 0xC7C748): start +0, end +0xC, exists +0x18, creation time +0x1C,
 /// lifetime +0x20, radius +0x24, alpha +0x28.

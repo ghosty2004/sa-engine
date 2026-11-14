@@ -3,6 +3,7 @@
 //! (docs/verify/HOWTO.md).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -17,8 +18,9 @@ use sa_world::bindings::event_group_add;
 use sa_world::bindings::event_group_get_event_of_type;
 use sa_world::bindings::intel_find_task_by_type;
 use sa_world::bindings::la_riots_active_here;
-use sa_world::bindings::vector_magnitude_sqr;
-use sa_world::bindings::world_get_is_line_of_sight_clear;
+use sa_core::bindings::vector_magnitude_sqr;
+use sa_core::bindings::world_get_is_line_of_sight_clear;
+use crate::bindings::ctor_4aecd0 as event_chat_partner_ctor;
 orig! {
     /// `SurfaceInfos_c::IsPavement(uint32 surface)` (0x55E7F0, `ret 4`)
     fn surface_is_pavement(si: GPtr<u8>, surface: u32) -> u8 = thiscall 0x55E7F0 => unported;
@@ -26,8 +28,6 @@ orig! {
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
     /// `CTaskComplexWanderStandard::WillChat(const CPed&, const CPed&)` (0x66AED0, `ret 8`)
     fn wander_will_chat(t: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> u8 = thiscall 0x66AED0 => unported;
-    /// `CEventChatPartner::CEventChatPartner(bool leader, CPed* partner)` (`FUN_004aecd0`, `ret 8`)
-    fn event_chat_partner_ctor(e: GPtr<u8>, leader: u32, partner: GPtr<u8>) -> GPtr<u8> = thiscall 0x4AECD0 => unported;
 }
 
 /// `g_surfaceInfos` (0xB79538)
@@ -83,7 +83,7 @@ pub fn wander_look_for_chat_partners(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
             return 0;
         }
     }
-    if streaming_is_very_busy() != 0 || la_riots_active_here() != 0 {
+    if streaming_is_very_busy() as u8 != 0 || la_riots_active_here() != 0 {
         return 0;
     }
     let ped_pos = entity_pos(ped);
@@ -121,7 +121,7 @@ pub fn wander_look_for_chat_partners(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         let om = rd::<GPtr<u8>>(other, 0x14);
         let opos = entity_pos(other);
         vector_difference(d_p, opos, ped_pos);
-        let m2 = X87::from_f64_exact(vector_magnitude_sqr(d_p));
+        let m2 = X87::from_f64_exact(vector_magnitude_sqr(d_p.cast::<f32>()));
         let r = k(K_CHAT_RANGE);
         if x(r).fmul_m(r).fcom(m2).test_any(0x41) {
             continue;

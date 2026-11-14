@@ -3,7 +3,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::{g, rd, wr};
 
@@ -13,10 +13,7 @@ use sa_world::bindings::event_script_command_dtor;
 use sa_world::bindings::get_ped_type_acquaintances as ped_type_acquaintances;
 use sa_world::bindings::set_char_created_by as ped_set_char_created_by;
 use sa_world::bindings::wander_get_wander_task_by_ped_type as wander_task_by_ped_type;
-orig! {
-    /// `CRadar::ClearBlipForEntity(eBlipType, int32 handle)` (0x587C60)
-    fn radar_clear_blip_for_entity(ty: u32, handle: u32) = cdecl 0x587C60 => unported;
-}
+use sa_world::bindings::clear_blip_for_entity as radar_clear_blip_for_entity;
 
 /// `CPools::ms_pPedPool` (0xB74490)
 const PED_POOL: usize = 0xB74490;
@@ -64,7 +61,7 @@ pub fn release_peds_in_attack_wave(is_end_of_war: u32, restore: u32) -> u32 {
             wr::<u32>(ped, 0x474, rd::<u32>(ped, 0x474) & !0x1000);
             ped_set_char_created_by(ped, 1);
             count += 1;
-            radar_clear_blip_for_entity(2, ped_handle(g::<GPtr<u8>>(PED_POOL).read(), ped));
+            radar_clear_blip_for_entity(2, ped_handle(g::<GPtr<u8>>(PED_POOL).read(), ped) as i32);
             wr::<u32>(ped, 0x474, rd::<u32>(ped, 0x474) & CLEAR_BLIP_ON_DEATH_OFF);
             if restore as u8 != 0 {
                 let task = wander_task_by_ped_type(ped);
@@ -76,11 +73,11 @@ pub fn release_peds_in_attack_wave(is_end_of_war: u32, restore: u32) -> u32 {
                 for o in [0, 4, 8, 0xC, 0x10] {
                     wr::<u32>(ped, 0x4E0 + o, rd::<u32>(acq, o));
                 }
-                event_script_command_dtor(e);
+                event_script_command_dtor(e.cast::<u32>());
             }
         }
         if is_end_of_war as u8 != 0 && !ped.is_null() && rd::<u32>(ped, 0x474) & 0x2000 != 0 {
-            radar_clear_blip_for_entity(2, ped_handle(g::<GPtr<u8>>(PED_POOL).read(), ped));
+            radar_clear_blip_for_entity(2, ped_handle(g::<GPtr<u8>>(PED_POOL).read(), ped) as i32);
             wr::<u32>(ped, 0x474, rd::<u32>(ped, 0x474) & CLEAR_BLIP_ON_DEATH_OFF);
         }
     }

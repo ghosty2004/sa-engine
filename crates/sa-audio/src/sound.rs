@@ -25,6 +25,7 @@ pub use crate::bindings::position_relative_to_camera_vec;
 pub use sa_core::bindings::eh_vector_ctor;
 pub use sa_core::bindings::entity_clean_up_old_reference as cleanup_old_reference;
 pub use sa_core::bindings::entity_register_reference as register_reference;
+pub use crate::bindings::env_distance_attenuation_st0 as distance_attenuation;
 orig! {
     /// `CAEAudioHardware::GetSoundHeadroom(uint16 soundId, int16 bankSlot)` (0x4D8E30, ST0)
     pub fn hw_get_sound_headroom(hw: GPtr<u8>, sound: u32, slot: u32) -> f32 = thiscall 0x4D8E30 => unported;
@@ -32,8 +33,6 @@ orig! {
     pub fn sound_set_position(this: GPtr<u8>, px: u32, py: u32, pz: u32) = thiscall 0x4EF880 => set_position;
     /// `CAEAudioEntity::UpdateParameters(CAESound*, int16 curPlayPos)` (virtual, vtable slot 0)
     pub fn entity_update_parameters(entity: GPtr<u8>, sound: GPtr<u8>, cur: u32) = thiscall vslot 0x00 => unported;
-    /// `CAEAudioEnvironment::GetDistanceAttenuation(float)` (0x4D7F20, ST0)
-    pub fn distance_attenuation(dist: f32) -> f32 = cdecl 0x4D7F20 => crate::utility::distance_attenuation_f32;
     /// `CAEAudioEnvironment::GetDirectionalMikeAttenuation(const CVector&)` (0x4D7F60, ST0)
     pub fn directional_mike_attenuation(dir: GPtr<u8>) -> f32 = cdecl 0x4D7F60 => crate::utility::directional_mike_attenuation_f32;
 }
@@ -47,7 +46,7 @@ fn release_physical(s: GPtr<u8>) {
     let r = s.byte_add(8);
     let e = rd::<GPtr<u8>>(s, 8);
     if !e.is_null() {
-        cleanup_old_reference(e, r);
+        cleanup_old_reference(e, r.cast::<GPtr<u8>>());
         wr::<u32>(s, 8, 0);
     }
 }

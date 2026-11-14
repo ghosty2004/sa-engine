@@ -48,39 +48,34 @@ use sa_world::bindings::find_ground_z_for_coord as find_ground_z_raw;
 use sa_world::bindings::fx_kill;
 use sa_world::bindings::get_actual_script_thing_index;
 use sa_world::bindings::get_modelling_matrix;
+use sa_core::bindings::create_fx_system_mat;
+use sa_core::bindings::fx_create_mat_from_vec as create_mat_from_vec;
+use sa_world::bindings::attach_entity_to_entity;
 orig! {
-    /// `Fx_c::CreateMatFromVec(RwMatrix* out, CVector* pos, CVector* dir)` (0x49E950)
-    fn create_mat_from_vec(fx: GPtr<u8>, out: GPtr<u8>, pos: GPtr<u32>, dir: GPtr<u32>) = thiscall 0x49E950 => unported;
     /// `CEntity` virtual slot 7 (+0x1C, `CreateRwObject`)
     fn entity_create_rw_object(e: GPtr<u8>) = thiscall vslot 0x1C => unported;
-    /// `FxManager_c::CreateFxSystem(const char*, RwMatrix*, RwMatrix* parent, bool)` (0x4A9BB0)
-    fn create_fx_system_mat(m: GPtr<u8>, name: GPtr<u8>, mat: GPtr<u8>, parent: GPtr<u8>, local: u32) -> GPtr<u8> = thiscall 0x4A9BB0 => unported;
     /// `CTheScripts::AddScriptEffectSystem(FxSystem_c*)` (0x492F90)
     fn add_script_effect_system(fx: GPtr<u8>) -> i32 = cdecl 0x492F90 => unported;
-    /// `CPhysical::AttachEntityToEntity(CPhysical*, CVector offset, CVector rotation)` (0x54D570; both vectors by value)
-    fn attach_entity_to_entity(e: GPtr<u8>, target: GPtr<u8>, ox: u32, oy: u32, oz: u32, rx: f32, ry: f32, rz: f32) = thiscall 0x54D570 => unported;
     /// `CPhysical::DettachEntityFromEntity(float x, float y, float z, bool useCollision)` (0x5442F0)
     fn dettach_entity_from_entity(e: GPtr<u8>, x: f32, y: f32, z: u32, use_collision: u32) = thiscall 0x5442F0 => unported;
 }
 
-use crate::bindings::get_car_node_index_from_door as node_from_door;
+use sa_world::bindings::get_car_node_index_from_door as node_from_door;
 use sa_core::bindings::fx_stop;
 use sa_world::bindings::get_stat_value;
 use sa_world::bindings::intel_clear_tasks as clear_tasks;
+use crate::bindings::global_index as get_index_of_global_variable;
+use sa_world::bindings::node_from_panel;
 orig! {
     /// `CAutomobile::FixTyre(eWheels)` (0x6A3580)
     fn fix_tyre(v: GPtr<u8>, w: u32) = thiscall 0x6A3580 => unported;
     /// `CAutomobile::FixDoor(int32 node, eDoors)` (0x6A35A0)
     fn fix_door(v: GPtr<u8>, node: u32, d: u32) = thiscall 0x6A35A0 => unported;
-    /// `CDamageManager::GetCarNodeIndexFromPanel(ePanels)` (0x6C26A0)
-    fn node_from_panel(p: u32) -> u32 = cdecl 0x6C26A0 => unported;
     /// `CAutomobile::FixPanel(int32 node, ePanels)` (0x6A3670)
     fn fix_panel(v: GPtr<u8>, node: u32, p: u32) = thiscall 0x6A3670 => unported;
     /// Unnamed thiscall at 0x492CB0 (a `.HOODLUM` stub) on `CTheScripts::ScriptAttractors`... the 36-byte
     /// entry at 0xC3A200 + i * 36, taking the ped type (ADD_PEDTYPE_AS_ATTRACTOR_USER)
     fn attractor_492cb0(e: GPtr<u8>, ped_type: u32) = thiscall 0x492CB0 => unported;
-    /// `CRunningScript::GetIndexOfGlobalVariable()` (0x464700); result unused here
-    fn get_index_of_global_variable(s: Scr) -> u16 = thiscall 0x464700 => crate::vm::get_index_of_global_variable;
 }
 
 use crate::bindings::scripted_task_status;
@@ -102,18 +97,14 @@ orig! {
 use crate::bindings::decision_maker_unload as unload_decision_maker;
 use sa_core::bindings::task_new;
 use sa_stream::bindings::set_custom_car_plate_text;
+use crate::bindings::give_ped_scripted_task;
+use crate::bindings::remove_from_resource_manager;
+use sa_world::bindings::dive_and_get_up_ctor;
 orig! {
     /// `CVector::Normalise()` (0x59C910)
     fn vector_normalise(v: GPtr<u32>) = thiscall 0x59C910 => unported;
-    /// `CTaskComplexEvasiveDiveAndGetUp::CTaskComplexEvasiveDiveAndGetUp(CVehicle*, int32 time, const CVector*,
-    /// bool)` (0x6536B0)
-    fn dive_and_get_up_ctor(t: GPtr<u8>, veh: u32, time: u32, dir: GPtr<u32>, b: u32) -> GPtr<u8> = thiscall 0x6536B0 => unported;
     /// `CTaskComplexShuffleSeats::CTaskComplexShuffleSeats(CVehicle*)` (0x63D130)
     fn shuffle_seats_ctor(t: GPtr<u8>, veh: GPtr<u8>) -> GPtr<u8> = thiscall 0x63D130 => unported;
-    /// `CRunningScript::GivePedScriptedTask(int32 pedHandle, CTask*, int32 opcode)` (0x465C20)
-    fn give_ped_scripted_task(s: Scr, ped: u32, task: GPtr<u8>, command: u32) = thiscall 0x465C20 => unported;
-    /// `CScriptResourceManager::RemoveFromResourceManager(int32, uint32 type, CRunningScript*)` (0x470510), AL
-    fn remove_from_resource_manager(m: GPtr<u8>, h: i32, ty: u32, s: Scr) -> u8 = thiscall 0x470510 => unported;
     /// `CBaseModelInfo::GetModelType()` (vtable slot 0x10), AL
     fn model_type(mi: GPtr<u8>) -> u8 = thiscall vslot 0x10 => unported;
 }
@@ -126,31 +117,23 @@ use sa_world::bindings::destroy_car_ctor;
 use sa_world::bindings::get_ped_attractor_manager;
 use sa_world::bindings::ik_is_looking;
 use sa_world::bindings::sequence_add_task;
+use sa_core::bindings::ik_abort_look_at;
+use sa_world::bindings::attach_entity_to_entity_quat;
+use sa_world::bindings::attractor_manager_get_ped_using_effect as get_ped_using_effect;
+use sa_world::bindings::fx_create_system as create_fx_system_vec;
+use sa_world::bindings::task_gun_control_ctor as gun_control_ctor;
 orig! {
-    /// `IKChainManager_c::AbortLookAt(CPed*, int32 blendOutTime)` (0x618280)
-    fn ik_abort_look_at(m: GPtr<u8>, ped: GPtr<u8>, t: u32) = thiscall 0x618280 => unported;
     /// `CTaskSimpleClearLookAt::CTaskSimpleClearLookAt()` (0x634670)
     fn clear_look_at_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x634670 => unported;
     /// `CCamera::TakeControlAttached(CEntity* target, CEntity* attached, CVector* offset, CVector* lookAt,
     /// float tilt, int16 switchType, int32 whoIsInControl)` (0x50C910); the float raw
     fn take_control_attached(cam: GPtr<u8>, target: GPtr<u8>, attached: GPtr<u8>, offset: GPtr<u32>, look: GPtr<u32>, tilt: u32, sw: u32, who: u32) = thiscall 0x50C910 => unported;
-    /// `CPhysical::AttachEntityToEntity(CPhysical*, RwV3d* offset, RtQuat* rot)` (0x54D690)
-    fn attach_entity_to_entity_quat(e: GPtr<u8>, target: GPtr<u8>, off: u32, rot: u32) = thiscall 0x54D690 => unported;
-    /// `CPedAttractorManager::GetPedUsingEffect(const C2dEffect*, const CEntity*)` (0x5EBE50)
-    fn get_ped_using_effect(m: GPtr<u8>, fx: GPtr<u8>, e: u32) -> GPtr<u8> = thiscall 0x5EBE50 => unported;
-    /// `CTaskSimpleGunControl::CTaskSimpleGunControl(CEntity*, const CVector*, const CVector*, int16, int16,
-    /// int32)` (0x61F3F0)
-    fn gun_control_ctor(t: GPtr<u8>, e: u32, target: GPtr<u32>, mv: u32, a: u32, b: u32, c: u32) -> GPtr<u8> = thiscall 0x61F3F0 => unported;
-    /// `FxManager_c::CreateFxSystem(const char*, CVector* pos, RwMatrix* parent, bool)` (0x4A9BE0)
-    fn create_fx_system_vec(m: GPtr<u8>, name: GPtr<u8>, pos: GPtr<u32>, parent: GPtr<u8>, local: u32) -> GPtr<u8> = thiscall 0x4A9BE0 => unported;
 }
 
 use crate::bindings::task_trigger_look_at_ctor as trigger_look_at_ctor;
 use sa_core::bindings::get_weapon_info;
+use sa_world::bindings::ik_look_at;
 orig! {
-    /// `IKChainManager_c::LookAt(const char* purpose, CPed*, CEntity* target, int32 time, int32 bone, CVector*
-    /// pos, bool, float speed, int32 blendTime, int32 priority, bool)` (0x618970); the float raw
-    fn ik_look_at(m: GPtr<u8>, purpose: GPtr<u8>, ped: GPtr<u8>, target: GPtr<u8>, time: u32, bone: u32, pos: u32, a: u32, speed: u32, blend: u32, prio: u32, b: u32) = thiscall 0x618970 => unported;
     /// `CTaskSimpleThrowControl::CTaskSimpleThrowControl(CEntity*, const CVector*)` (0x61F8B0)
     fn throw_control_ctor(t: GPtr<u8>, e: u32, pos: GPtr<u32>) -> GPtr<u8> = thiscall 0x61F8B0 => unported;
 }
@@ -158,10 +141,8 @@ orig! {
 use sa_core::bindings::general_random_int_in_range as random_int_in_range;
 use sa_world::bindings::leave_any_car_ctor;
 use sa_world::bindings::task_simple_dtor as task_base_dtor;
+use sa_world::bindings::partner_chat_ctor;
 orig! {
-    /// `CTaskComplexPartnerChat::CTaskComplexPartnerChat(const char*, CPed*, bool lead, float, int32, bool, bool,
-    /// CVector)` (0x684290); the float and the by-value vector raw
-    fn partner_chat_ctor(t: GPtr<u8>, name: GPtr<u8>, partner: GPtr<u8>, lead: u32, f: u32, n: i32, a: u32, b: u32, x: u32, y: u32, z: u32) -> GPtr<u8> = thiscall 0x684290 => unported;
     /// `CTaskSimpleTogglePedThreatScanner::CTaskSimpleTogglePedThreatScanner(bool, bool, bool)` (0x492D10)
     fn threat_scanner_ctor(t: GPtr<u8>, a: u32, b: u32, c: u32) -> GPtr<u8> = thiscall 0x492D10 => unported;
     /// `CTaskSimpleTogglePedThreatScanner::ProcessPed(CPed*)` (0x6337A0)
@@ -217,14 +198,14 @@ fn fx_on_entity(s: Scr, lookup: fn(i32) -> GPtr<u8>, dir: bool) {
     let np = GPtr::from_raw(name.as_mut_ptr());
     read_text_label(s, np, 32);
     collect(s, if dir { 8 } else { 5 });
-    get_actual_script_thing_index(collect_next_parameter_without_increasing_pc(s), 1);
+    get_actual_script_thing_index(collect_next_parameter_without_increasing_pc(s) as u32, 1);
     let e = lookup(spi(0));
     let (x, y) = (sp(1), sp(2));
     let st = X87::from_f32(spf(3));
     let z = if st.fcom(X87::constant(K_MINUS_100)).test_parity(0x41) {
         st
     } else {
-        X87::from_f64_exact(find_ground_z_raw(x, y))
+        X87::from_f64_exact(find_ground_z_raw(f32::from_bits(x), f32::from_bits(y)))
     }
     .to_f32()
     .to_bits();
@@ -234,7 +215,7 @@ fn fx_on_entity(s: Scr, lookup: fn(i32) -> GPtr<u8>, dir: bool) {
     let mp = GPtr::from_raw(mat.as_mut_ptr()).cast::<u8>();
     if dir {
         let mut d = [sp(4), sp(5), sp(6)];
-        create_mat_from_vec(GPtr::from_addr(G_FX), mp, pp, GPtr::from_raw(d.as_mut_ptr()));
+        create_mat_from_vec(GPtr::from_addr(G_FX), mp, pp.cast::<u8>(), GPtr::<u32>::cast::<u8>(GPtr::from_raw(d.as_mut_ptr())));
     }
     if e.byte_add(0x18).cast::<u32>().read() == 0 {
         entity_create_rw_object(e);
@@ -245,7 +226,7 @@ fn fx_on_entity(s: Scr, lookup: fn(i32) -> GPtr<u8>, dir: bool) {
     } else if dir {
         create_fx_system_mat(GPtr::from_addr(G_FX_MAN), np, mp, parent, u32::from(sp(7) != 0))
     } else {
-        create_fx_system_vec(GPtr::from_addr(G_FX_MAN), np, pp, parent, u32::from(sp(4) != 0))
+        create_fx_system_vec(GPtr::from_addr(G_FX_MAN), np, pp.cast::<u8>(), parent, u32::from(sp(4) != 0))
     };
     if fx.is_null() {
         set_sp(0, u32::MAX);
@@ -310,7 +291,7 @@ fn deg2rad(v: f32) -> f32 {
 /// index or a null `FxSystem_c*` (both go to the `xor al,al` tail 0x495DDD).
 #[inline]
 fn fx_slot(h: i32) -> Option<GPtr<u8>> {
-    let i = get_actual_script_thing_index(h, 1);
+    let i = get_actual_script_thing_index(h as u32, 1);
     if i < 0 {
         return None;
     }
@@ -347,7 +328,7 @@ pub fn process_commands_1600_to_1699(s: Scr, command: u32) -> i8 {
             let h = spi(0);
             if let Some(fx) = fx_slot(h) {
                 fx_kill(fx);
-                remove_script_effect_system(h);
+                remove_script_effect_system(h as u32);
                 if uses_mission_cleanup(s) {
                     mission_cleanup_remove(GPtr::from_addr(MISSION_CLEANUP), h, 4);
                 }
@@ -457,7 +438,7 @@ pub fn process_commands_1600_to_1699(s: Scr, command: u32) -> i8 {
         // 0653 GET_FLOAT_STAT (0x494470): P0 = `fstp GetStatValue((u16)P0)`. StoreParameters(1).
         0x0652 | 0x0653 => {
             collect(s, 1);
-            let v = X87::from_f64_exact(get_stat_value(sp(0) & 0xFFFF));
+            let v = X87::from_f64_exact(get_stat_value((sp(0) & 0xFFFF) as u16));
             set_sp(0, if command == 0x0652 { v.ftol() as u32 } else { v.to_f32().to_bits() });
             store(s, 1);
         }
@@ -481,7 +462,7 @@ pub fn process_commands_1600_to_1699(s: Scr, command: u32) -> i8 {
         // < 64; then the dword at `0xC17920 + ms_iActiveSequence * 0x40` (not `i`, as the exe) = P1.
         0x0643 => {
             collect(s, 2);
-            let i = get_actual_script_thing_index(spi(0), 4);
+            let i = get_actual_script_thing_index(spi(0) as u32, 4);
             if (0..0x40).contains(&i) {
                 let a = GPtr::<u32>::from_addr(ACTIVE_SEQUENCE).read();
                 GPtr::<u32>::from_addr(SEQ_REPEAT.wrapping_add(a << 6) as usize).write(sp(1));
@@ -514,7 +495,7 @@ pub fn process_commands_1600_to_1699(s: Scr, command: u32) -> i8 {
         // 0x492CB0(&attractors[i] (0xC3A200 + i * 36), P1). gr: unregistered.
         0x0680 => {
             collect(s, 2);
-            let i = get_actual_script_thing_index(spi(0), 6);
+            let i = get_actual_script_thing_index(spi(0) as u32, 6);
             if (0..0x40).contains(&i) {
                 attractor_492cb0(GPtr::from_addr(SCRIPT_ATTRACTORS.wrapping_add(i as u32 * 36) as usize), sp(1));
             }
@@ -550,7 +531,7 @@ pub fn process_commands_1600_to_1699(s: Scr, command: u32) -> i8 {
             let h = spi(0);
             if let Some(fx) = fx_slot(h) {
                 fx_play_and_kill(fx);
-                remove_script_effect_system(h);
+                remove_script_effect_system(h as u32);
                 if uses_mission_cleanup(s) {
                     mission_cleanup_remove(GPtr::from_addr(MISSION_CLEANUP), h, 4);
                 }
@@ -594,10 +575,10 @@ pub fn process_commands_1600_to_1699(s: Scr, command: u32) -> i8 {
                 [0, 0, 0xC2C8_0000]
             } else {
                 let mut tmp = [0u32; 3];
-                let r = pickup_get_posn(
+                let r = GPtr::<f32>::cast::<u32>(pickup_get_posn(
                     GPtr::from_addr(PICKUPS.wrapping_add((i as u32) << 5) as usize),
-                    GPtr::from_raw(tmp.as_mut_ptr()),
-                );
+                    GPtr::<u32>::cast::<f32>(GPtr::from_raw(tmp.as_mut_ptr())),
+                ));
                 [r.read(), r.wrapping_index(1).read(), r.wrapping_index(2).read()]
             };
             set_sp(0, v[0]);
@@ -625,8 +606,8 @@ pub fn process_commands_1600_to_1699(s: Scr, command: u32) -> i8 {
             let dp = GPtr::from_raw(dir.as_ptr().cast_mut());
             vector_normalise(dp);
             let mem = task_new(0x24);
-            let t = if mem.is_null() { GPtr::NULL } else { dive_and_get_up_ctor(mem, 0, sp(3), dp, 1) };
-            give_ped_scripted_task(s, sp(0), t, command);
+            let t = if mem.is_null() { GPtr::NULL } else { dive_and_get_up_ctor(mem, GPtr::NULL, sp(3), dp.cast::<u8>(), 1) };
+            give_ped_scripted_task(s, sp(0) as i32, t, command);
         }
         // 0676 TASK_SHUFFLE_TO_NEXT_CAR_SEAT (0x494F1D): vehicle P1 looked up first; `new(0x2C)` (null on
         // failure) `CTaskComplexShuffleSeats(veh)`; GivePedScriptedTask(P0, task, command). gr: unregistered.
@@ -635,7 +616,7 @@ pub fn process_commands_1600_to_1699(s: Scr, command: u32) -> i8 {
             let v = vehicle_at_ref(pool(VEHICLE_POOL), spi(1));
             let mem = task_new(0x2C);
             let t = if mem.is_null() { GPtr::NULL } else { shuffle_seats_ctor(mem, v) };
-            give_ped_scripted_task(s, sp(0), t, command);
+            give_ped_scripted_task(s, sp(0) as i32, t, command);
         }
         // 065C REMOVE_DECISION_MAKER (0x494767): `i = GetActualScriptThingIndex(P0, 7)`; for 0 <= i < 20 and
         // `ScriptResourceManager.RemoveFromResourceManager(P0, 3, this)`: UnloadDecisionMaker(i); with mission
@@ -643,7 +624,7 @@ pub fn process_commands_1600_to_1699(s: Scr, command: u32) -> i8 {
         0x065C => {
             collect(s, 1);
             let h = spi(0);
-            let i = get_actual_script_thing_index(h, 7);
+            let i = get_actual_script_thing_index(h as u32, 7);
             if (0..0x14).contains(&i)
                 && remove_from_resource_manager(GPtr::from_addr(SCRIPT_RESOURCE_MANAGER), h, 3, s) != 0
             {
@@ -678,7 +659,7 @@ pub fn process_commands_1600_to_1699(s: Scr, command: u32) -> i8 {
         0x0642 => {
             collect(s, 2);
             let h = sp(0);
-            let i = get_actual_script_thing_index(spi(1), 6);
+            let i = get_actual_script_thing_index(spi(1) as u32, 6);
             let mut b = false;
             if (0..0x40).contains(&i) {
                 let m = get_ped_attractor_manager();
@@ -742,9 +723,9 @@ pub fn process_commands_1600_to_1699(s: Scr, command: u32) -> i8 {
             let t = if mem.is_null() {
                 GPtr::NULL
             } else {
-                gun_control_ctor(mem, 0, GPtr::from_raw(v.as_ptr().cast_mut()), 0, 0, 0x1F4, sp(4))
+                gun_control_ctor(mem, GPtr::NULL, GPtr::from_raw(v.as_ptr().cast_mut()), 0, 0, 0x1F4, sp(4))
             };
-            give_ped_scripted_task(s, sp(0), t, command);
+            give_ped_scripted_task(s, sp(0) as i32, t, command);
         }
         // 0669 / 066B / 066D / 066C / 066E CREATE_FX_SYSTEM_ON_* (see `fx_on_entity`). gr: unregistered.
         0x0669 => fx_on_entity(s, ped_lookup, false),
@@ -760,7 +741,7 @@ pub fn process_commands_1600_to_1699(s: Scr, command: u32) -> i8 {
             let v = vehicle_at_ref(pool(VEHICLE_POOL), spi(1));
             let mem = task_new(0x20);
             let t = if mem.is_null() { GPtr::NULL } else { destroy_car_ctor(mem, v, 0, 0, 0) };
-            give_ped_scripted_task(s, h, t, command);
+            give_ped_scripted_task(s, h as i32, t, command);
         }
         // 0679 ATTACH_CAMERA_TO_VEHICLE (0x495066) / 067C ATTACH_CAMERA_TO_CHAR (0x49520C): `CollectParameters(9)`;
         // TakeControlAttached(nullptr, e(P0), &(P1..P3), &(P4..P6), P7, (u16)P8, 1).
@@ -791,7 +772,7 @@ pub fn process_commands_1600_to_1699(s: Scr, command: u32) -> i8 {
             let x = st.to_f32().to_bits();
             let (rx, ry, rz) = (deg2rad(spf(5)), deg2rad(spf(6)), deg2rad(spf(7)));
             if !st.fcom(X87::constant(K_MINUS_999_9)).test_parity(0x41) {
-                attach_entity_to_entity_quat(e, t, 0, 0);
+                attach_entity_to_entity_quat(e, t, GPtr::NULL, GPtr::NULL);
             } else {
                 attach_entity_to_entity(e, t, x, sp(3), sp(4), rx, ry, rz);
             }
@@ -820,13 +801,13 @@ pub fn process_commands_1600_to_1699(s: Scr, command: u32) -> i8 {
             let np = GPtr::from_raw(name.as_mut_ptr());
             read_text_label(s, np, 32);
             collect(s, 4);
-            get_actual_script_thing_index(collect_next_parameter_without_increasing_pc(s), 1);
+            get_actual_script_thing_index(collect_next_parameter_without_increasing_pc(s) as u32, 1);
             let (x, y) = (sp(0), sp(1));
             let st = X87::from_f32(spf(2));
             let z = if st.fcom(X87::constant(K_MINUS_100)).test_parity(0x41) {
                 st
             } else {
-                X87::from_f64_exact(find_ground_z_raw(x, y))
+                X87::from_f64_exact(find_ground_z_raw(f32::from_bits(x), f32::from_bits(y)))
             }
             .to_f32()
             .to_bits();
@@ -834,7 +815,7 @@ pub fn process_commands_1600_to_1699(s: Scr, command: u32) -> i8 {
             let fx = create_fx_system_vec(
                 GPtr::from_addr(G_FX_MAN),
                 np,
-                GPtr::from_raw(pos.as_mut_ptr()),
+                GPtr::<u32>::cast::<u8>(GPtr::from_raw(pos.as_mut_ptr())),
                 GPtr::NULL,
                 u32::from(sp(3) != 0),
             );
@@ -874,7 +855,7 @@ pub fn process_commands_1600_to_1699(s: Scr, command: u32) -> i8 {
                     obj,
                     time,
                     u32::MAX,
-                    0,
+                    GPtr::NULL,
                     0,
                     0x3E80_0000,
                     0x1F4,
@@ -906,19 +887,19 @@ pub fn process_commands_1600_to_1699(s: Scr, command: u32) -> i8 {
                 let ped = ped_lookup(h as i32);
                 let slot = i32::from(ped.byte_add(0x718).read() as i8);
                 let ty = ped.byte_add(0x5A0 + slot as isize * 0x1C).cast::<u32>().read();
-                let info = get_weapon_info(ty, 1);
+                let info = get_weapon_info(ty as i32, 1);
                 if (info.byte_add(0x18).cast::<u32>().read() >> 8) & 1 != 0 {
                     let mem = task_new(0x1C);
                     let t = if mem.is_null() { GPtr::NULL } else { throw_control_ctor(mem, 0, vp) };
                     if !t.is_null() {
-                        give_ped_scripted_task(s, h, t, command);
+                        give_ped_scripted_task(s, h as i32, t, command);
                         return 0;
                     }
                 }
             }
             let mem = task_new(0x3C);
-            let t = if mem.is_null() { GPtr::NULL } else { gun_control_ctor(mem, 0, vp, 0, 3, 5, sp(4)) };
-            give_ped_scripted_task(s, h, t, command);
+            let t = if mem.is_null() { GPtr::NULL } else { gun_control_ctor(mem, GPtr::NULL, vp, 0, 3, 5, sp(4)) };
+            give_ped_scripted_task(s, h as i32, t, command);
         }
         // 0677 TASK_CHAT_WITH_CHAR (0x494F85): `partner = PED(P1)`; `new(0x78)` (null on failure)
         // `CTaskComplexPartnerChat("COMMAND_TASK_CHAT_WITH_CHAR", partner, P2 != 0, 0.5f, P3 != 0 ? -1 : 4, true,
@@ -936,7 +917,7 @@ pub fn process_commands_1600_to_1699(s: Scr, command: u32) -> i8 {
             } else {
                 partner_chat_ctor(mem, GPtr::from_addr(S_TASK_CHAT_WITH_CHAR), partner, lead, 0x3F00_0000, n, 1, 1, 0, 0, 0)
             };
-            give_ped_scripted_task(s, h, t, command);
+            give_ped_scripted_task(s, h as i32, t, command);
         }
         // 0688 TASK_TOGGLE_PED_THREAT_SCANNER (0x49578F): P0 != -1: a stack (0xC bytes)
         // `CTaskSimpleTogglePedThreatScanner(P1 != 0, P2 != 0, P3 != 0)` run with `ProcessPed(PED(P0))`, then its
@@ -975,7 +956,7 @@ pub fn process_commands_1600_to_1699(s: Scr, command: u32) -> i8 {
                 let t = if mem.is_null() { GPtr::NULL } else { leave_any_car_ctor(mem, 0, 1, 0) };
                 let d = v.byte_add(0x460).cast::<GPtr<u8>>().read();
                 let r = ped_get_ref(pool(PED_POOL), d);
-                give_ped_scripted_task(s, r as u32, t, command);
+                give_ped_scripted_task(s, (r as u32) as i32, t, command);
             }
             let mut i: i32 = 0;
             while i < i32::from(v.byte_add(0x488).read()) {
@@ -983,9 +964,9 @@ pub fn process_commands_1600_to_1699(s: Scr, command: u32) -> i8 {
                 if !p.read().is_null() {
                     let delay = random_int_in_range(-250, 250).wrapping_add(i * 500).wrapping_add(500);
                     let mem = task_new(0x14);
-                    let t = if mem.is_null() { GPtr::NULL } else { leave_any_car_ctor(mem, delay as u32, 1, 0) };
+                    let t = if mem.is_null() { GPtr::NULL } else { leave_any_car_ctor(mem, (delay as u32) as i32, 1, 0) };
                     let r = ped_get_ref(pool(PED_POOL), p.read());
-                    give_ped_scripted_task(s, r as u32, t, command);
+                    give_ped_scripted_task(s, (r as u32) as i32, t, command);
                 }
                 i += 1;
             }
@@ -1027,14 +1008,14 @@ fn create_fx_system_on_char_with_direction(s: Scr) {
     let np = GPtr::from_raw(name.as_mut_ptr());
     read_text_label(s, np, 32);
     collect(s, 8);
-    get_actual_script_thing_index(collect_next_parameter_without_increasing_pc(s), 1);
+    get_actual_script_thing_index(collect_next_parameter_without_increasing_pc(s) as u32, 1);
     let ped = ped_at_ref(pool(PED_POOL), spi(0));
     let (x, y) = (sp(1), sp(2));
     let st = X87::from_f32(spf(3));
     let z = if st.fcom(X87::constant(K_MINUS_100)).test_parity(0x41) {
         st
     } else {
-        X87::from_f64_exact(find_ground_z_raw(x, y))
+        X87::from_f64_exact(find_ground_z_raw(f32::from_bits(x), f32::from_bits(y)))
     }
     .to_f32()
     .to_bits();
@@ -1045,8 +1026,8 @@ fn create_fx_system_on_char_with_direction(s: Scr) {
     create_mat_from_vec(
         GPtr::from_addr(G_FX),
         mp,
-        GPtr::from_raw(off.as_mut_ptr()),
-        GPtr::from_raw(dir.as_mut_ptr()),
+        GPtr::<u32>::cast::<u8>(GPtr::from_raw(off.as_mut_ptr())),
+        GPtr::<u32>::cast::<u8>(GPtr::from_raw(dir.as_mut_ptr())),
     );
     if ped.byte_add(0x18).cast::<u32>().read() == 0 {
         entity_create_rw_object(ped);

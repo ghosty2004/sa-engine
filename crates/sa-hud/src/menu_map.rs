@@ -159,12 +159,12 @@ fn local<T, const N: usize>(buf: &mut [T; N]) -> GPtr<T> {
 
 use crate::bindings::display_helper_text_call;
 use crate::bindings::draw_blips_call;
-use crate::bindings::draw_window_call;
-use crate::bindings::font_set_drop_color;
-use crate::bindings::font_set_drop_shadow_position;
-use crate::bindings::font_set_right_justify_wrap;
-use crate::bindings::font_set_scale;
-use crate::bindings::font_set_wrapx;
+use sa_world::bindings::draw_window_call;
+use sa_core::bindings::font_set_drop_color;
+use sa_core::bindings::font_set_drop_shadow_position;
+use sa_core::bindings::font_set_right_justify_wrap;
+use sa_core::bindings::font_set_scale;
+use sa_core::bindings::font_set_wrapx;
 use crate::bindings::small_message_screen_call;
 use crate::bindings::transform_radar_point_to_screen_space_call;
 use crate::bindings::transform_real_world_point_to_radar_space_call;
@@ -172,39 +172,28 @@ use sa_core::bindings::font_print_string;
 use sa_core::bindings::get_pad;
 use sa_core::bindings::rgba_ctor;
 use sa_world::bindings::switch_off_menu_call;
+use crate::bindings::draw_radar_gang_overlay_call;
+use crate::bindings::init_front_end_map_call;
+use crate::bindings::menu_system_process;
+use sa_core::bindings::font_set_color;
+use sa_core::bindings::font_set_edge;
+use sa_core::bindings::font_set_font_style;
+use sa_core::bindings::font_set_orientation;
+use sa_core::bindings::sprite2d_draw as sprite2d_draw_rect;
+use sa_core::bindings::sprite_draw_rect as sprite2d_draw_rect_static;
+use sa_world::bindings::zone_locked_or_unlocked;
 orig! {
-    /// `CRadar::InitFrontEndMap()` (0x585960)
-    fn init_front_end_map_call() = cdecl 0x585960 => crate::radar_draw::init_front_end_map;
     /// `FindPlayerCentreOfWorld_NoSniperShift(int32)` (0x56E320; returns a `CVector*`)
     fn find_player_centre_of_world_no_sniper_shift(id: i32) -> GPtr<u8> = cdecl 0x56E320 => sa_world::world::cworld::find_player_centre_of_world_no_sniper_shift;
     /// `CRadar::LimitRadarPoint(CVector2D&)` (0x5832F0, ST0; discarded here)
     fn limit_radar_point_call_st0(p: GPtr<f32>) -> f64 = cdecl 0x5832F0 => limit_radar_point_st0_rust;
-    /// `CSprite2d::DrawRect(const CRect&, const CRGBA&)` (0x727B60)
-    fn sprite2d_draw_rect_static(rect: GPtr<f32>, colour: GPtr<u8>) = cdecl 0x727B60 => unported;
-    /// `CSprite2d::Draw(const CRect&, const CRGBA&)` (0x728350)
-    fn sprite2d_draw_rect(this: GPtr<u8>, rect: GPtr<f32>, colour: GPtr<u8>) = thiscall 0x728350 => unported;
     /// `CRadar::DrawRadarSectionMap(int32 x, int32 y, CRect rect)` (0x586520; the rect by value)
     fn draw_radar_section_map_call(tx: i32, ty: i32, left: f32, bottom: f32, right: f32, top: f32) = cdecl 0x586520 => crate::radar_draw2::draw_radar_section_map;
-    /// `CRadar::DrawRadarGangOverlay(bool inMenu)` (0x586650)
-    fn draw_radar_gang_overlay_call(in_menu: u32) = cdecl 0x586650 => crate::radar_draw2::draw_radar_gang_overlay;
     /// `CPlaceName::GetForMap(float x, float y)` (0x571D90, `ret 8`; the original loads ECX = 0xBA18F4, which the
     /// callee does not read)
     fn place_name_get_for_map(px: u32, py: u32) -> GPtr<u8> = stdcall 0x571D90 => crate::place::get_for_map;
-    /// `CTheZones::GetCurrentZoneLockedOrUnlocked(float x, float y)` (0x572130)
-    fn zone_locked_or_unlocked(px: u32, py: u32) -> u8 = cdecl 0x572130 => unported;
     /// `CRadar::DrawLegend(int32 x, int32 y, eRadarSprite)` (0x5828A0)
     fn draw_legend_call(px: i32, py: i32, sprite: i32) = cdecl 0x5828A0 => crate::radar_draw3::draw_legend;
-    /// `CMenuSystem::Process(uint8 menu)` (0x582630)
-    fn menu_system_process(menu: u32) = cdecl 0x582630 => crate::menu2::process;
-
-    /// `CFont::SetFontStyle(eFontStyle)` (0x719490)
-    fn font_set_font_style(v: u32) = cdecl 0x719490 => crate::font::set_font_style;
-    /// `CFont::SetColor(CRGBA)` (0x719430)
-    fn font_set_color(c: u32) = cdecl 0x719430 => crate::font::set_color;
-    /// `CFont::SetEdge(int8)` (0x719590)
-    fn font_set_edge(v: u32) = cdecl 0x719590 => crate::font::set_edge;
-    /// `CFont::SetOrientation(eFontAlignment)` (0x719610)
-    fn font_set_orientation(v: u32) = cdecl 0x719610 => crate::font::set_orientation;
 }
 
 /// The Rust path of [`limit_radar_point_call_st0`] (phases B/C).
@@ -274,9 +263,9 @@ fn str_yf_x(v: X87) -> X87 {
 #[hook(addr = 0x575130, conv = thiscall, name = "CMenuManager::PrintMap", expect = "83 EC 54 53 55")]
 pub fn print_map(this: GPtr<u8>) {
     let player = i32::from(rd::<u8>(this, 0xEA));
-    get_pad(player);
+    get_pad(player as u32);
     let z = g::<u16>(KEY_Z_UPPER).read() != 0 || {
-        get_pad(i32::from(rd::<u8>(this, 0xEA)));
+        get_pad(i32::from(rd::<u8>(this, 0xEA)) as u32);
         g::<u16>(KEY_Z_LOWER).read() != 0
     };
     if z {
@@ -421,8 +410,8 @@ pub fn print_map(this: GPtr<u8>) {
         }
     }
     wr::<u8>(this, 0x59, 0);
-    font_set_wrapx(f32_of(xi(w().wrapping_sub(10))).to_bits());
-    font_set_right_justify_wrap(IMM_10);
+    font_set_wrapx(f32::from_bits(f32_of(xi(w().wrapping_sub(10))).to_bits()));
+    font_set_right_justify_wrap(f32::from_bits(IMM_10));
     if rd::<u8>(this, 0x78) != 0 {
         let key = if (rd::<u8>(this, 0x30) as i8) < 0 { STR_FEH_MPH } else { STR_FEH_MPB };
         display_helper_text_call(this, g(key));
@@ -508,18 +497,18 @@ fn print_map_loaded(this: GPtr<u8>, area: [i32; 4]) -> bool {
         return true;
     }
     let show_name = g::<u32>(ZONES_REVEALED).read() >= 0x50
-        || (zone_locked_or_unlocked(rd::<u32>(this, 0x70), rd::<u32>(this, 0x74)) != 0 && {
+        || (zone_locked_or_unlocked(f32::from_bits(rd::<u32>(this, 0x70)), f32::from_bits(rd::<u32>(this, 0x74))) != 0 && {
             let lmb = b(MOUSE_LMB);
-            get_pad(i32::from(rd::<u8>(this, 0xEA)));
+            get_pad(i32::from(rd::<u8>(this, 0xEA)) as u32);
             lmb == 0
         });
     if show_name {
         font_set_font_style(3);
-        font_set_wrapx(IMM_640);
+        font_set_wrapx(f32::from_bits(IMM_640));
         font_set_drop_color(rgba(0, 0, 0, 0xFF));
         let sh = if h() == 0x1C0 { IMM_0_8 } else { f32_of(xi(h()).fmul_m(k(K_0_8_448))).to_bits() };
         let sw = if w() == 0x280 { IMM_0_8 } else { f32_of(xi(w()).fmul_m(k(K_0_8_640))).to_bits() };
-        font_set_scale(sw, sh);
+        font_set_scale(f32::from_bits(sw), f32::from_bits(sh));
         font_set_color(rgba(0xE1, 0xE1, 0xE1, 0xFF));
         font_set_edge(2);
         font_set_orientation(2);
@@ -548,15 +537,15 @@ fn print_map_loaded(this: GPtr<u8>, area: [i32; 4]) -> bool {
     let back = rgba(0, 0, 0, 0xBE);
     let mut rect = [f32_of(x95), f32_of(xi(y)), f32_of(x555), f32_of(y100)];
     draw_window_call(this, local(&mut rect).cast(), g(STR_FE_MLG), 0, back, 3, 1);
-    font_set_wrapx(f32_of(xi(w().wrapping_add(-40))).to_bits());
-    font_set_right_justify_wrap(IMM_84);
+    font_set_wrapx(f32::from_bits(f32_of(xi(w().wrapping_add(-40))).to_bits()));
+    font_set_right_justify_wrap(f32::from_bits(IMM_84));
     font_set_drop_shadow_position(1);
     font_set_drop_color(rgba(0, 0, 0, 0xFF));
     font_set_orientation(1);
     font_set_font_style(2);
     let sh = if h() == 0x1C0 { IMM_0_55 } else { f32_of(xi(h()).fmul_m(k(K_0_55_448))).to_bits() };
     let sw = if w() == 0x280 { IMM_0_3 } else { f32_of(xi(w()).fmul_m(k(K_0_3_640))).to_bits() };
-    font_set_scale(sw, sh);
+    font_set_scale(f32::from_bits(sw), f32::from_bits(sh));
     font_set_color(rgba(0xAC, 0xCB, 0xF1, 0xFF));
     let mut cy = ftol32(str_y(K_127, K_127_448));
     let mut cx = ftol32(str_x(K_160, K_160_640));

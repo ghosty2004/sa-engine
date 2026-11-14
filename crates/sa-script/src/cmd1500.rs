@@ -75,14 +75,14 @@ const NUM_INTRO_TEXT_LINES: usize = 0xA44B68;
 /// The per-sequence byte array cleared by CLEAR_SEQUENCE_TASK (0xA43F68, 4-byte stride).
 const SEQUENCE_ID_BYTES: u32 = 0xA43F68;
 
-use crate::bindings::clear_space_for_mission_entity;
-use crate::bindings::clump_get_association as rp_anim_blend_clump_get_association;
-use crate::bindings::get_new_unique_script_thing_index;
+use sa_world::bindings::clear_space_for_mission_entity;
+use sa_world::bindings::clump_get_association as rp_anim_blend_clump_get_association;
+use sa_world::bindings::get_new_unique_script_thing_index;
 use crate::bindings::path_find_release_requested_nodes as release_requested_nodes;
 use crate::bindings::record_set_event as scripted_task_record_set;
 use crate::bindings::start_playback_recorded_car;
-use crate::bindings::stop_playback_recorded_car;
-use crate::bindings::task_gun_control_ctor;
+use sa_world::bindings::stop_playback_recorded_car;
+use sa_world::bindings::task_gun_control_ctor;
 use sa_core::bindings::assoc_set_current_time as set_current_time;
 use sa_core::bindings::entity_register_reference as register_reference;
 use sa_core::bindings::membership_set_leader;
@@ -127,78 +127,52 @@ use sa_world::bindings::stand_still_ctor as task_stand_still_ctor;
 use sa_world::bindings::task_wander_criminal_ctor;
 use sa_world::bindings::turn_to_face_entity_ctor as task_turn_to_face_entity_ctor;
 use sa_world::bindings::wander_standard_ctor as task_wander_standard_ctor;
+use crate::bindings::get_correct_ped_model_index;
+use crate::bindings::get_vacant_slot as scripted_task_record_get_vacant_slot;
+use crate::bindings::give_ped_scripted_task;
+use crate::bindings::play_anim_script_command;
+use crate::bindings::remove_n_followers;
+use crate::bindings::scripted_task_status as scripted_task_record_get_status;
+use sa_core::bindings::display_script_stat_update_message;
+use sa_core::bindings::general_random_int_in_range as random_int_in_range;
+use sa_core::bindings::get_atan_of_xy;
+use sa_core::bindings::stats_increment_stat as increment_stat;
+use sa_world::bindings::be_in_group_ctor as task_be_in_group_ctor;
+use sa_world::bindings::decrement_stat;
+use sa_world::bindings::follow_node_route_ctor as task_follow_node_route_ctor;
+use sa_world::bindings::get_actual_script_thing_index;
+use sa_world::bindings::group_intel_set_default_task_allocator_type as set_default_task_allocator_type;
+use sa_world::bindings::group_intelligence_add_event as group_intel_add_event;
+use sa_world::bindings::intel_find_task_by_type;
+use sa_world::bindings::kill_ped_on_foot_ctor as task_kill_ped_on_foot_ctor;
+use sa_world::bindings::ped_groups_add_group;
+use sa_world::bindings::place_ped_at_effect;
+use sa_world::bindings::smart_flee_point_ctor as task_smart_flee_point_ctor;
+use sa_world::bindings::task_use_effect_ctor;
+use sa_world::bindings::tm_set_task as task_manager_set_task;
+use sa_world::bindings::use_sequence_ctor as task_use_sequence_ctor;
 orig! {
-    /// `CRunningScript::GivePedScriptedTask(int32 ped, CTask*, int32 command)` (0x465C20)
-    fn give_ped_scripted_task(s: Scr, ped: u32, task: GPtr<u8>, command: u32) = thiscall 0x465C20 => unported;
-    /// `CTaskComplexSmartFleePoint::CTaskComplexSmartFleePoint(const CVector&, bool, float, int32)` (0x65BD20)
-    fn task_smart_flee_point_ctor(t: GPtr<u8>, pos: GPtr<u32>, b: u32, range: u32, time: u32) -> GPtr<u8> = thiscall 0x65BD20 => unported;
-    /// `CGeneral::GetRandomNumberInRange(int32, int32)` (0x407180)
-    fn random_int_in_range(lo: i32, hi: i32) -> u32 = cdecl 0x407180 => unported;
-    /// `CTaskComplexKillPedOnFoot::CTaskComplexKillPedOnFoot(CPed*, int32, uint32, uint32, uint32, uint8)` (0x620E30)
-    fn task_kill_ped_on_foot_ctor(t: GPtr<u8>, p: GPtr<u8>, a: u32, b: u32, c: u32, d: u32, e: u32) -> GPtr<u8> = thiscall 0x620E30 => unported;
     fn pause_playback_recorded_car(v: GPtr<u8>) = cdecl 0x459740 => unported;
     fn unpause_playback_recorded_car(v: GPtr<u8>) = cdecl 0x459850 => unported;
     /// `CVehicleRecording::IsPlaybackGoingOnForCar(CVehicle*)` (0x4594C0), AL
     fn is_playback_going_on_for_car(v: GPtr<u8>) -> u8 = cdecl 0x4594C0 => unported;
-    /// `CTaskComplexFollowNodeRoute::CTaskComplexFollowNodeRoute(int32 mode, const CVector&, float, float, float,
-    /// bool, int32 time, bool)` (0x66EA30); floats raw
-    fn task_follow_node_route_ctor(
-        t: GPtr<u8>, mode: u32, pos: GPtr<u32>, a: u32, b: u32, c: u32, d: u32, time: u32, e: u32
-    ) -> GPtr<u8> = thiscall 0x66EA30 => unported;
     /// `CRunningScript::CharInAngledAreaCheckCommand(int32 command)` (0x487F60)
     fn char_in_angled_area_check_command(s: Scr, command: u32) = thiscall 0x487F60 => unported;
     /// `CTaskComplexGoToPointAnyMeans::CTaskComplexGoToPointAnyMeans(int32, const CVector&, CVehicle*, float, int32)`
     /// (0x66B790); the float raw
     fn task_go_to_point_any_means_ctor(t: GPtr<u8>, mode: u32, pos: GPtr<u32>, v: GPtr<u8>, r: u32, m: u32) -> GPtr<u8> = thiscall 0x66B790 => unported;
-    /// `CGeneral::GetATanOfXY(float, float)` (0x53CC70), ST0 (read as f64)
-    fn get_atan_of_xy(x: u32, y: u32) -> f64 = cdecl 0x53CC70 => unported;
-    /// `CRunningScript::PlayAnimScriptCommand(int32 command)` (0x470150; reads its own parameters)
-    fn play_anim_script_command(s: Scr, command: u32) = thiscall 0x470150 => unported;
     /// `CPathFind::MakeRequestForNodesToBeLoaded(float, float, float, float)` (0x450D70); raw floats
     fn make_request_for_nodes_to_be_loaded(p: GPtr<u8>, x1: u32, x2: u32, y1: u32, y2: u32) = thiscall 0x450D70 => unported;
     /// `CDecisionMakerTypesFileLoader::GetPedDMName(int32, char*)` (0x600860)
     fn get_ped_dm_name(i: u32, out: GPtr<u8>) = cdecl 0x600860 => unported;
-    /// `CTheScripts::GetActualScriptThingIndex(int32 ref, uint8 type)` (0x4839A0)
-    fn get_actual_script_thing_index(r: u32, ty: u32) -> i32 = cdecl 0x4839A0 => unported;
     /// `CTaskSequences::GetAvailableSlot(bool)` (0x632E00)
     fn get_available_sequence_slot(b: u32) -> i32 = cdecl 0x632E00 => unported;
-    /// `CTaskComplexUseSequence::CTaskComplexUseSequence(int32)` (0x635450)
-    fn task_use_sequence_ctor(t: GPtr<u8>, i: u32) -> GPtr<u8> = thiscall 0x635450 => unported;
     /// `CScripted2dEffects::AddScripted2DEffect(float)` (0x6FA7C0); the float raw
     fn add_scripted_2d_effect(r: u32) -> i32 = cdecl 0x6FA7C0 => unported;
     /// `CVector::Normalise()` (0x59C910)
     fn vector_normalise(v: GPtr<u32>) = thiscall 0x59C910 => unported;
-    /// `CRunningScript::GetCorrectPedModelIndexForEmergencyServiceType(ePedType, int32*)` (0x464F50)
-    fn get_correct_ped_model_index(s: Scr, ped_type: u32, model: GPtr<u32>) = thiscall 0x464F50 => unported;
-    /// `CPedAttractorPedPlacer::PlacePedAtEffect(const C2dEffect&, CEntity*, CPed*, float)` (0x5EA390); the float raw
-    fn place_ped_at_effect(fx: GPtr<u8>, e: u32, p: GPtr<u8>, d: u32) = cdecl 0x5EA390 => unported;
-    /// `CTaskManager::SetTask(CTask*, int32 slot, bool)` (0x681AF0)
-    fn task_manager_set_task(tm: GPtr<u8>, t: GPtr<u8>, slot: u32, b: u32) = thiscall 0x681AF0 => unported;
-    /// `CTaskComplexUseEffect::CTaskComplexUseEffect(C2dEffect*, CEntity*)` (0x6321F0)
-    fn task_use_effect_ctor(t: GPtr<u8>, effect: GPtr<u8>, e: u32) -> GPtr<u8> = thiscall 0x6321F0 => unported;
-    /// `CPedScriptedTaskRecord::GetVacantSlot()` (0x608540)
-    fn scripted_task_record_get_vacant_slot() -> u32 = cdecl 0x608540 => unported;
-    /// `CStats::IncrementStat(uint16, float)` (0x55C180) / `DecrementStat` (0x559FA0) / `SetNewRecordStat` (0x55C410)
-    /// / `SetStatValue` (0x55A070); the float raw
-    fn increment_stat(stat: u32, v: u32) = cdecl 0x55C180 => unported;
-    fn decrement_stat(stat: u32, v: u32) = cdecl 0x559FA0 => unported;
-    /// `CStats::DisplayScriptStatUpdateMessage(uint8 state, uint32 stat, float value)` (0x55B980); the float raw
-    fn display_script_stat_update_message(state: u32, stat: u32, v: u32) = cdecl 0x55B980 => unported;
-    /// `CPedScriptedTaskRecord::GetStatus(const CPed*, int32 opcode)` (0x608710)
-    fn scripted_task_record_get_status(p: GPtr<u8>, command: u32) -> i32 = cdecl 0x608710 => unported;
-    /// `CPedGroups::AddGroup()` (0x5FB800)
-    fn ped_groups_add_group() -> u32 = cdecl 0x5FB800 => unported;
-    /// `CPedGroupIntelligence::SetDefaultTaskAllocatorType(int32)` (0x5FBB70)
-    fn set_default_task_allocator_type(gi: GPtr<u8>, ty: u32) = thiscall 0x5FBB70 => unported;
-    /// `CTaskComplexBeInGroup::CTaskComplexBeInGroup(int32 group, bool isLeader)` (0x632E50)
-    fn task_be_in_group_ctor(t: GPtr<u8>, g: u32, leader: u32) -> GPtr<u8> = thiscall 0x632E50 => unported;
-    fn remove_n_followers(m: GPtr<u8>, n: u32) = thiscall 0x5FB1D0 => unported;
-    /// `CPedIntelligence::FindTaskByType(int32)` (0x600EE0)
-    fn intel_find_task_by_type(i: GPtr<u8>, ty: u32) -> GPtr<u8> = thiscall 0x600EE0 => unported;
     /// The `CEventLeaderEnteredCarAsDriver` destructor at 0x48E220 (unnamed in the catalogue)
     fn event_leader_entered_car_dtor_48e220(e: GPtr<u8>) = thiscall 0x48E220 => unported;
-    /// `CPedGroupIntelligence::AddEvent(CEvent*)` (0x5F7470), AL (discarded)
-    fn group_intel_add_event(gi: GPtr<u8>, e: GPtr<u8>) -> u8 = thiscall 0x5F7470 => unported;
     /// The `CTaskComplexEnterCarAsPassenger` destructor at 0x640380 (unnamed in the catalogue)
     fn task_enter_car_as_passenger_dtor_640380(t: GPtr<u8>) = thiscall 0x640380 => unported;
     fn group_intel_set_default_task(gi: GPtr<u8>, p: GPtr<u8>, t: GPtr<u8>) = thiscall 0x5F8580 => unported;
@@ -287,7 +261,7 @@ fn set_car_escort(s: Scr, mission: u8) {
 /// 0`, then `fstp`. SP0 = h; `StoreParameters(1)`.
 fn get_heading_from_vector_2d(s: Scr) {
     collect(s, 2);
-    let a = get_atan_of_xy(sp(0), sp(1));
+    let a = get_atan_of_xy(f32::from_bits(sp(0)), f32::from_bits(sp(1)));
     let mut h = X87::from_f64_exact(a).fmul_m(f(K_RAD_TO_DEG)).fsub_m(f(K_90));
     let mut out = h.to_f32();
     if h.fcom(X87::constant(K_ZERO)) == Cmp::Less {
@@ -315,7 +289,7 @@ fn load_char_decision_maker(s: Scr) {
     get_actual_script_thing_index(collect_next_parameter_without_increasing_pc(s) as u32, 7);
     let cleanup = u32::from(s.byte_add(crate::vm::USES_MISSION_CLEANUP).read());
     let dm = load_decision_maker(np, 0, cleanup);
-    set_sp(0, get_new_unique_script_thing_index(dm, 7));
+    set_sp(0, get_new_unique_script_thing_index(dm as i32, 7) as u32);
     store(s, 1);
     if uses_mission_cleanup(s) {
         mission_cleanup_add(GPtr::from_addr(MISSION_CLEANUP), spi(0), 9);
@@ -373,7 +347,7 @@ fn open_sequence_task(s: Scr) {
         GPtr::<u8>::from_addr(SEQUENCE_OPENED.wrapping_add(i as u32) as usize).write(1);
         sequence_flush(GPtr::from_addr(TASK_SEQUENCES.wrapping_add((i as u32) << 6) as usize));
         GPtr::<u32>::from_addr(ACTIVE_SEQUENCE).write(i as u32);
-        let h = get_new_unique_script_thing_index(i as u32, 4);
+        let h = get_new_unique_script_thing_index((i as u32) as i32, 4) as u32;
         set_sp(0, h);
         if uses_mission_cleanup(s) {
             mission_cleanup_add(GPtr::from_addr(MISSION_CLEANUP), h as i32, 8);
@@ -453,7 +427,7 @@ fn add_attractor(s: Scr) {
     w(0x24, d1[2]);
     w(0x30, d2[2]);
     e.cast::<u8>().byte_add(0x34).write(7);
-    let h = get_new_unique_script_thing_index(i as u32, 6);
+    let h = get_new_unique_script_thing_index((i as u32) as i32, 6) as u32;
     set_sp(0, h);
     if uses_mission_cleanup(s) {
         mission_cleanup_add(GPtr::from_addr(MISSION_CLEANUP), h as i32, 7);
@@ -480,7 +454,7 @@ fn create_char_at_attractor(s: Scr, command: u32) {
         store(s, 1);
         return;
     }
-    get_correct_ped_model_index(s, sp(0), param(1));
+    get_correct_ped_model_index(s, sp(0) as i32, param(1));
     let ty = sp(0);
     let p = if ty == 6 {
         let m = ped_new(0x7C4);
@@ -499,10 +473,10 @@ fn create_char_at_attractor(s: Scr, command: u32) {
     let fl = p.byte_add(0x46C).cast::<u32>();
     fl.write(fl.read() & 0x7FFF_FFFF);
     let effect = GPtr::<u8>::from_addr(SCRIPTED_EFFECTS.wrapping_add((a as u32) << 6) as usize);
-    place_ped_at_effect(effect, 0, p, 0x3C23_D70A);
+    place_ped_at_effect(effect, GPtr::NULL, p, f32::from_bits(0x3C23_D70A));
     let q = entity_pos(p).cast::<u32>();
     let mut pos = [q.read(), q.byte_add(4).read(), q.byte_add(8).read()];
-    clear_space_for_mission_entity(GPtr::from_raw(pos.as_mut_ptr()), p);
+    clear_space_for_mission_entity(GPtr::<u32>::cast::<u8>(GPtr::from_raw(pos.as_mut_ptr())), p);
     if uses_mission_cleanup(s) {
         let e = p.byte_add(0x1C).cast::<u32>();
         e.write(e.read() | 0x4_0000);
@@ -519,15 +493,15 @@ fn create_char_at_attractor(s: Scr, command: u32) {
     };
     if sel != 2 {
         let t = if sel == 0 {
-            new_task(0x20, |t| task_stand_still_ctor(t, 0, 1, 0, 0x4100_0000))
+            new_task(0x20, |t| task_stand_still_ctor(t, 0, 1, 0, f32::from_bits(0x4100_0000)))
         } else if sel == 3 {
-            new_task(0x38, |t| task_wander_criminal_ctor(t, 4, random_int_in_range(0, 8), 1))
+            new_task(0x38, |t| task_wander_criminal_ctor(t, 4, random_int_in_range(0, 8) as u32, 1))
         } else {
-            new_task(0x38, |t| task_wander_standard_ctor(t, 4, random_int_in_range(0, 8), 1))
+            new_task(0x38, |t| task_wander_standard_ctor(t, 4, random_int_in_range(0, 8) as u32, 1))
         };
         task_manager_set_task(intel(p).byte_add(4), t, 4, 0);
     }
-    let t = new_task(0x24, |t| task_use_effect_ctor(t, effect, 0));
+    let t = new_task(0x24, |t| task_use_effect_ctor(t, effect, GPtr::NULL));
     let mut ev = [0u32; 8];
     let e = GPtr::from_raw(ev.as_mut_ptr()).cast::<u8>();
     event_script_command_ctor(e, 3, t, 0);
@@ -540,9 +514,9 @@ fn create_char_at_attractor(s: Scr, command: u32) {
     let h = ped_get_ref(pool(PED_POOL), p);
     set_sp(0, h as u32);
     if uses_mission_cleanup(s) {
-        mission_cleanup_add(GPtr::from_addr(MISSION_CLEANUP), h, 2);
+        mission_cleanup_add(GPtr::from_addr(MISSION_CLEANUP), h as i32, 2);
     }
-    event_script_command_dtor(e);
+    event_script_command_dtor(e.cast::<u32>());
     store(s, 1);
 }
 
@@ -554,7 +528,7 @@ fn stat_case(s: Scr, op: fn(u32, u32), int: bool, state: u32) {
     let v = if int { X87::from_i32(spi(1)).to_f32().to_bits() } else { sp(1) };
     op(sp(0) & 0xFFFF, v);
     let v = if int { X87::from_i32(spi(1)).to_f32().to_bits() } else { sp(1) };
-    display_script_stat_update_message(state, sp(0), v);
+    display_script_stat_update_message(state, sp(0), f32::from_bits(v));
 }
 
 /// A stack `CEventScriptCommand(3, new CTaskComplexBeInGroup(g, leader), false)` added to `p`'s event group
@@ -586,7 +560,7 @@ fn set_group_leader(s: Scr) {
         let mut ev = [0u32; 8];
         let e = GPtr::from_raw(ev.as_mut_ptr()).cast::<u8>();
         give_be_in_group_event(e, p, g, 1);
-        event_script_command_dtor(e);
+        event_script_command_dtor(e.cast::<u32>());
     }
     membership_set_leader(group(g, 8), p);
     ped_group_process(group(g, 0));
@@ -614,7 +588,7 @@ fn set_group_member(s: Scr) {
     let e1 = GPtr::from_raw(ev1.as_mut_ptr()).cast::<u8>();
     give_be_in_group_event(e1, p, g, 0);
     let m = group(g, 8);
-    if count_members_excluding_leader(m) >= 7
+    if count_members_excluding_leader(m) as i32 >= 7
         && !membership_get_leader(m).is_null()
         && ped_is_player(membership_get_leader(m)) != 0
     {
@@ -642,7 +616,7 @@ fn set_group_member(s: Scr) {
             }
         }
     }
-    event_script_command_dtor(e1);
+    event_script_command_dtor(e1.cast::<u32>());
 }
 
 /// The leader-in-car part of 0631 (0x492522..0x4926C9).
@@ -665,7 +639,7 @@ fn leader_entered_car_response(g: u32, p: GPtr<u8>, leader: GPtr<u8>, v: GPtr<u8
             let mut seq = [0u32; 16];
             let sq = GPtr::from_raw(seq.as_mut_ptr()).cast::<u8>();
             sequence_ctor(sq);
-            let drive = new_task(0x60, |d| task_car_drive_ctor(d, v, 0, 1));
+            let drive = new_task(0x60, |d| task_car_drive_ctor(d, v, GPtr::NULL, 1));
             sequence_add_task(sq, drive);
             let dt = group_intel_get_task_default(gi, p);
             if !dt.is_null() {
@@ -745,8 +719,8 @@ pub fn process_commands_1500_to_1599(s: Scr, command: u32) -> i8 {
             collect(s, 6);
             let mut pos = [sp(1), sp(2), sp(3)];
             let pp = GPtr::from_raw(pos.as_mut_ptr());
-            let t = new_task(0x44, |t| task_smart_flee_point_ctor(t, pp, 1, sp(4), sp(5)));
-            give_ped_scripted_task(s, sp(0), t, command);
+            let t = new_task(0x44, |t| task_smart_flee_point_ctor(t, pp.cast::<u8>(), 1, sp(4), sp(5)));
+            give_ped_scripted_task(s, sp(0) as i32, t, command);
         }
         // 05DD TASK_SMART_FLEE_CHAR (0x490E63): `new CTaskComplexSmartFleeEntity(PED(SP1), true, (float)SP2 (fild),
         // SP3, [0x86F678], [0xC18CF0])` (0x40 bytes); `GivePedScriptedTask(SP0, task, command)`
@@ -755,24 +729,24 @@ pub fn process_commands_1500_to_1599(s: Scr, command: u32) -> i8 {
             let range = X87::from_i32(spi(2)).to_f32().to_bits();
             let target = ped(sp(1));
             let t = new_task(0x40, |t| {
-                task_smart_flee_entity_ctor(t, target, 1, range, sp(3), dword(0x86F678), dword(0xC18CF0))
+                task_smart_flee_entity_ctor(t, target, 1, f32::from_bits(range), sp(3), dword(0x86F678), dword(0xC18CF0))
             });
-            give_ped_scripted_task(s, sp(0), t, command);
+            give_ped_scripted_task(s, sp(0) as i32, t, command);
         }
         // 05DE TASK_WANDER_STANDARD (0x490EF7): `new CTaskComplexWanderStandard(4, GetRandomNumberInRange(0, 8))` (0x38
         // bytes; the random call only when `new` succeeds)
         0x05DE => {
             collect(s, 1);
             let h = sp(0);
-            let t = new_task(0x38, |t| task_wander_standard_ctor(t, 4, random_int_in_range(0, 8), 1));
-            give_ped_scripted_task(s, h, t, command);
+            let t = new_task(0x38, |t| task_wander_standard_ctor(t, 4, random_int_in_range(0, 8) as u32, 1));
+            give_ped_scripted_task(s, h as i32, t, command);
         }
         // 05E2 TASK_KILL_CHAR_ON_FOOT (0x490F46): `new CTaskComplexKillPedOnFoot(PED(SP1), -1, 0, 0, 0, 1)` (0x38 bytes)
         0x05E2 => {
             collect(s, 2);
             let target = ped(sp(1));
-            let t = new_task(0x38, |t| task_kill_ped_on_foot_ctor(t, target, u32::MAX, 0, 0, 0, 1));
-            give_ped_scripted_task(s, sp(0), t, command);
+            let t = new_task(0x38, |t| task_kill_ped_on_foot_ctor(t, target, u32::MAX as i32, 0, 0, 0, 1));
+            give_ped_scripted_task(s, sp(0) as i32, t, command);
         }
         // 05E9 START_RECORDING_CAR (0x490FA0) / 0636 TASK_SIDE_STEP_AND_SHOOT (0x49289D): operands read only
         0x05E9 => collect(s, 2),
@@ -819,9 +793,9 @@ pub fn process_commands_1500_to_1599(s: Scr, command: u32) -> i8 {
             let mut pos = [sp(1), sp(2), sp(3)];
             let pp = GPtr::from_raw(pos.as_mut_ptr());
             let t = new_task(0x60, |t| {
-                task_follow_node_route_ctor(t, sp(4), pp, dword(0x86FCA0), dword(0x86FCA4), dword(0x86FCA8), 1, time, 1)
+                task_follow_node_route_ctor(t, sp(4), pp.cast::<u8>(), dword(0x86FCA0), dword(0x86FCA4), dword(0x86FCA8), 1, time, 1)
             });
-            give_ped_scripted_task(s, sp(0), t, command);
+            give_ped_scripted_task(s, sp(0) as i32, t, command);
         }
         // 05F6..0601 IS_CHAR_(STOPPED_)IN_ANGLED_AREA_* (0x491289): `CharInAngledAreaCheckCommand(command)`. gr: 05F7
         // 05F9 05FA 05FF 0600 `unimplemented` (-1 without reading the operands).
@@ -849,7 +823,7 @@ pub fn process_commands_1500_to_1599(s: Scr, command: u32) -> i8 {
             let mut pos = [sp(1), sp(2), sp(3)];
             let pp = GPtr::from_raw(pos.as_mut_ptr());
             let t = new_task(0x34, |t| task_go_to_point_any_means_ctor(t, sp(4), pp, v, dword(0xC18DB4), u32::MAX));
-            give_ped_scripted_task(s, sp(0), t, command);
+            give_ped_scripted_task(s, sp(0) as i32, t, command);
         }
         // 0604 GET_HEADING_FROM_VECTOR_2D (0x49137C)
         0x0604 => get_heading_from_vector_2d(s),
@@ -941,8 +915,8 @@ pub fn process_commands_1500_to_1599(s: Scr, command: u32) -> i8 {
             let h = sp(0);
             let i = get_actual_script_thing_index(sp(1), 4);
             if (0..0x40).contains(&i) {
-                let t = new_task(0x1C, |t| task_use_sequence_ctor(t, i as u32));
-                give_ped_scripted_task(s, h, t, command);
+                let t = new_task(0x1C, |t| task_use_sequence_ctor(t, (i as u32) as i32));
+                give_ped_scripted_task(s, h as i32, t, command);
             }
         }
         // 0619 SET_CHAR_COLLISION (0x4919AC): `PED(SP0)` dword +0x1C bit 0 = SP1 != 0
@@ -988,23 +962,23 @@ pub fn process_commands_1500_to_1599(s: Scr, command: u32) -> i8 {
             collect(s, 2);
             let v = veh(sp(1));
             let t = new_task(0x34, |t| task_leave_car_ctor(t, v, 0, 0, 0, 0));
-            give_ped_scripted_task(s, sp(0), t, command);
+            give_ped_scripted_task(s, sp(0) as i32, t, command);
         }
         // 0623 INCREMENT_INT_STAT / 0624 INCREMENT_FLOAT_STAT / 0625 DECREMENT_INT_STAT / 0626 DECREMENT_FLOAT_STAT /
         // 0627 REGISTER_INT_STAT / 0628 REGISTER_FLOAT_STAT / 0629 SET_INT_STAT / 062A SET_FLOAT_STAT
-        0x0623 => stat_case(s, increment_stat, true, 1),
-        0x0624 => stat_case(s, increment_stat, false, 1),
-        0x0625 => stat_case(s, decrement_stat, true, 0),
-        0x0626 => stat_case(s, decrement_stat, false, 0),
-        0x0627 => stat_case(s, set_new_record_stat, true, 1),
-        0x0628 => stat_case(s, set_new_record_stat, false, 1),
-        0x0629 => stat_case(s, set_stat_value, true, 1),
-        0x062A => stat_case(s, set_stat_value, false, 1),
+        0x0623 => stat_case(s, |a, b| increment_stat(a, f32::from_bits(b)), true, 1),
+        0x0624 => stat_case(s, |a, b| increment_stat(a, f32::from_bits(b)), false, 1),
+        0x0625 => stat_case(s, |a, b| decrement_stat(a as u16, b), true, 0),
+        0x0626 => stat_case(s, |a, b| decrement_stat(a as u16, b), false, 0),
+        0x0627 => stat_case(s, |a, b| set_new_record_stat(a, f32::from_bits(b)), true, 1),
+        0x0628 => stat_case(s, |a, b| set_new_record_stat(a, f32::from_bits(b)), false, 1),
+        0x0629 => stat_case(s, |a, b| set_stat_value(a as u16, f32::from_bits(b)), true, 1),
+        0x062A => stat_case(s, |a, b| set_stat_value(a as u16, f32::from_bits(b)), false, 1),
         // 062E GET_SCRIPT_TASK_STATUS (0x49220A): `SP0 = CPedScriptedTaskRecord::GetStatus(PED(SP0), SP1)`, -1 → 7
         0x062E => {
             collect(s, 2);
             let p = ped(sp(0));
-            let r = scripted_task_record_get_status(p, sp(1));
+            let r = scripted_task_record_get_status(p, sp(1)) as i32;
             set_sp(0, if r == -1 { 7 } else { r as u32 });
             store(s, 1);
         }
@@ -1019,7 +993,7 @@ pub fn process_commands_1500_to_1599(s: Scr, command: u32) -> i8 {
             let g = ped_groups_add_group();
             set_default_task_allocator_type(group(g, 0x30), ty);
             group(g, 0x2D0).write(1);
-            set_sp(0, get_new_unique_script_thing_index(g, 8));
+            set_sp(0, get_new_unique_script_thing_index(g as i32, 8) as u32);
             store(s, 1);
             if uses_mission_cleanup(s) {
                 mission_cleanup_add(GPtr::from_addr(MISSION_CLEANUP), spi(0), 5);
@@ -1034,23 +1008,23 @@ pub fn process_commands_1500_to_1599(s: Scr, command: u32) -> i8 {
             collect(s, 1);
             let h = sp(0);
             let t = new_task(0x14, |t| task_leave_any_car_ctor(t, 0, 1, 0));
-            give_ped_scripted_task(s, h, t, command);
+            give_ped_scripted_task(s, h as i32, t, command);
         }
         // 0634 TASK_KILL_CHAR_ON_FOOT_WHILE_DUCKING (0x4927D3): `new CTaskComplexKillPedOnFoot(PED(SP1), -1, SP2, SP3,
         // SP4, 1)` (0x38 bytes)
         0x0634 => {
             collect(s, 5);
             let target = ped(sp(1));
-            let t = new_task(0x38, |t| task_kill_ped_on_foot_ctor(t, target, u32::MAX, sp(2), sp(3), sp(4), 1));
-            give_ped_scripted_task(s, sp(0), t, command);
+            let t = new_task(0x38, |t| task_kill_ped_on_foot_ctor(t, target, u32::MAX as i32, sp(2), sp(3), sp(4), 1));
+            give_ped_scripted_task(s, sp(0) as i32, t, command);
         }
         // 0635 TASK_AIM_GUN_AT_CHAR (0x49283D): `new CTaskSimpleGunControl(PED(SP1), null, null, 1, 0... )` with the
         // exe's arguments `(target, 0, 0, 0, 1, SP2)` (0x3C bytes)
         0x0635 => {
             collect(s, 3);
             let target = ped(sp(1));
-            let t = new_task(0x3C, |t| task_gun_control_ctor(t, target, 0, 0, 0, 1, sp(2)));
-            give_ped_scripted_task(s, sp(0), t, command);
+            let t = new_task(0x3C, |t| task_gun_control_ctor(t, target, GPtr::NULL, 0, 0, 1, sp(2)));
+            give_ped_scripted_task(s, sp(0) as i32, t, command);
         }
         // 0637 TASK_GO_TO_COORD_WHILE_SHOOTING (0x4928AD): `new CTaskComplexGoToPointShooting(SP4, &(SP1, SP2, SP3),
         // PED(SP7), CVector(0, 0, 0), SP5, SP6)` (0x38 bytes)
@@ -1060,7 +1034,7 @@ pub fn process_commands_1500_to_1599(s: Scr, command: u32) -> i8 {
             let mut pos = [sp(1), sp(2), sp(3)];
             let pp = GPtr::from_raw(pos.as_mut_ptr());
             let t = new_task(0x38, |t| task_go_to_point_shooting_ctor(t, sp(4), pp, target, 0, 0, 0, sp(5), sp(6)));
-            give_ped_scripted_task(s, sp(0), t, command);
+            give_ped_scripted_task(s, sp(0) as i32, t, command);
         }
         // 0638 TASK_STAY_IN_SAME_PLACE (0x492975)
         0x0638 => task_stay_in_same_place(s),
@@ -1070,7 +1044,7 @@ pub fn process_commands_1500_to_1599(s: Scr, command: u32) -> i8 {
             collect(s, 2);
             let target = ped(sp(1));
             let t = new_task(0x28, |t| task_turn_to_face_entity_ctor(t, target, dword(0x86FC7C), dword(0x86FC80)));
-            give_ped_scripted_task(s, sp(0), t, command);
+            give_ped_scripted_task(s, sp(0) as i32, t, command);
         }
         _ => return -1,
     }

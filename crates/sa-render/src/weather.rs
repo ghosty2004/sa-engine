@@ -7,7 +7,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_world::world::common::{CAM_ENTITY, CAM_VECTOR, find_player_coors};
 
 use crate::common::{k, x};
@@ -68,10 +68,7 @@ const B250: u32 = 0x437A_0000;
 const B3000: u32 = 0x453B_8000;
 const BM3000: u32 = 0xC53B_8000;
 
-orig! {
-    /// `CWeather::UpdateWeatherRegion(CVector*)` (0x72A640)
-    pub fn update_weather_region_call(pos: GPtr<f32>) = cdecl 0x72A640 => update_weather_region;
-}
+pub use crate::bindings::update_weather_region as update_weather_region_call;
 
 /// `CWeather::IsRainy()` (0x4ABF50): `!(Rain < 0.2f)` (EAX 0 / 1; NaN gives 0).
 #[hook(addr = 0x4ABF50, conv = cdecl, name = "CWeather::IsRainy", expect = "D9 05 24 13 C8 00")]

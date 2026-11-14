@@ -35,9 +35,8 @@ use crate::bindings::plugin_add;
 use crate::bindings::plugin_deinit_object;
 use crate::bindings::plugin_init_object;
 use crate::bindings::registry_get_plugin_offset as plugin_get_offset;
+use crate::bindings::free_list_create_prealloc as freelist_create_prealloc;
 orig! {
-    /// `RwFreeListCreateAndPreallocateSpace(entrySize, entriesPerBlock, alignment, numBlocks, space, hint)` (0x801B70)
-    fn freelist_create_prealloc(size: u32, per_block: u32, align: u32, n: u32, space: GPtr<u8>, hint: u32) -> GPtr<u8> = cdecl 0x801B70 => unported;
     /// `_rwResourcesPurge()` (0x807E50)
     fn rw_resources_purge() -> u32 = cdecl 0x807E50 => unported;
 
@@ -419,6 +418,7 @@ const D3D_DEPTH_FORMAT: usize = 0xC9C068;
 const D3D_CAPS2: usize = 0xC9BF0C;
 
 use crate::bindings::free_list_create as rw_free_list_create;
+use crate::bindings::raster_register_plugin as rw_raster_register_plugin_call;
 orig! {
     /// `RwTextureRasterGenerateMipmaps(raster, image)` (0x7F3CD0)
     fn rw_texture_raster_generate_mipmaps(r: GPtr<u8>, image: u32) -> u32 = cdecl 0x7F3CD0 => rw_texture_raster_generate_mipmaps_port;
@@ -426,8 +426,6 @@ orig! {
     fn vm_raster_list_destroy_call() = cdecl 0x4CB5E0 => vm_raster_list_destroy;
     /// `G->rwfree(p)` (+0x138) as `_rwD3D9RasterClose` calls it
     fn rw_free_call(p: u32) = cdecl table 0xC97B24 0x138 => unported;
-    /// `RwRasterRegisterPlugin(size, id, ctor, dtor, copy)` (0x7FB0B0)
-    fn rw_raster_register_plugin_call(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x7FB0B0 => rw_raster_register_plugin;
 
     /// `IUnknown::Release` (vtable +8)
     pub fn com_release(obj: GPtr<u8>) -> u32 = stdcall vslot 0x8 => unported;
@@ -1164,37 +1162,28 @@ const TEXTURE_REGISTRY: u32 = 0x8E23CC;
 /// The anisotropy plugin offset in RwTexture (`RpAnisotGetTextureOffset`'s global).
 const ANISOT_TEXTURE_OFFSET: usize = 0xC92478;
 
-use crate::bindings::rw_stream_find_chunk_call as rw_stream_find_chunk;
+use sa_core::bindings::rw_stream_find_chunk_call as rw_stream_find_chunk;
 use crate::bindings::stream_write_chunk_header as write_chunk_header;
 use sa_core::bindings::rw_stream_skip;
 use sa_core::bindings::rw_stream_write;
+use crate::bindings::plugin_get_size;
+use crate::bindings::read_int32 as rw_stream_read_int32;
+use crate::bindings::registry_add_always_cb as plugin_add_stream_always_cb;
+use crate::bindings::rw_raster_lock_palette as rw_raster_lock_palette_call;
+use crate::bindings::rw_raster_unlock_palette as rw_raster_unlock_palette_call;
+use crate::bindings::rw_stream_write_int32;
+use sa_core::bindings::rw_raster_lock as rw_raster_lock_call;
+use sa_core::bindings::rw_raster_unlock as rw_raster_unlock_call;
+use sa_core::bindings::stream_read as rw_stream_read;
 orig! {
     /// The mipmap generate callback `M+0x2C (raster, image)` (stored pointer)
     fn call_mipmap_generate_cb(f: u32, r: GPtr<u8>, image: u32) -> u32 = cdecl dyn => unported;
-    /// `RwStreamReadInt32(stream, buf, len)` (0x7ED540)
-    fn rw_stream_read_int32(s: GPtr<u8>, buf: GPtr<u32>, len: u32) -> GPtr<u8> = cdecl 0x7ED540 => unported;
-    /// `RwStreamWriteInt32(stream, buf, len)` (0x7ED460)
-    fn rw_stream_write_int32(s: GPtr<u8>, buf: GPtr<u32>, len: u32) -> GPtr<u8> = cdecl 0x7ED460 => unported;
-    /// `RwStreamRead(stream, buf, len)` (0x7EC9D0)
-    fn rw_stream_read(s: GPtr<u8>, buf: GPtr<u8>, len: u32) -> u32 = cdecl 0x7EC9D0 => crate::stream::rw_stream_read;
     /// `_rwStringStreamGetSize(string)` (0x80A470)
     fn string_stream_get_size(s: GPtr<u8>) -> u32 = cdecl 0x80A470 => unported;
     /// `_rwStringStreamWrite(string, stream)` (0x80A4A0)
     fn string_stream_write(string: GPtr<u8>, s: GPtr<u8>) -> GPtr<u8> = cdecl 0x80A4A0 => unported;
-    /// `_rwPluginRegistryGetSize(reg, obj)` (0x808B00)
-    fn plugin_get_size(reg: GPtr<u8>, obj: GPtr<u8>) -> u32 = cdecl 0x808B00 => unported;
     /// `_rwPluginRegistryWriteDataChunks(reg, stream, obj)` (0x808B40)
     fn plugin_write_data_chunks(reg: GPtr<u8>, s: GPtr<u8>, obj: GPtr<u8>) -> GPtr<u8> = cdecl 0x808B40 => unported;
-    /// `_rwPluginRegistryAddPlgnStrmlwysCB(reg, id, cb)` (0x808920)
-    fn plugin_add_stream_always_cb(reg: GPtr<u8>, id: u32, cb: u32) -> i32 = cdecl 0x808920 => unported;
-    /// `RwRasterLock(raster, level, mode)` (0x7FB2D0)
-    fn rw_raster_lock_call(r: GPtr<u8>, level: u32, mode: u32) -> u32 = cdecl 0x7FB2D0 => rw_raster_lock;
-    /// `RwRasterUnlock(raster)` (0x7FAEC0)
-    fn rw_raster_unlock_call(r: GPtr<u8>) -> GPtr<u8> = cdecl 0x7FAEC0 => rw_raster_unlock;
-    /// `RwRasterLockPalette(raster, mode)` (0x7FB0E0)
-    fn rw_raster_lock_palette_call(r: GPtr<u8>, mode: u32) -> u32 = cdecl 0x7FB0E0 => rw_raster_lock_palette;
-    /// `RwRasterUnlockPalette(raster)` (0x7FAFF0)
-    fn rw_raster_unlock_palette_call(r: GPtr<u8>) -> GPtr<u8> = cdecl 0x7FAFF0 => rw_raster_unlock_palette;
     /// `RwRasterGetNumLevels(raster)` (0x7FB160)
     fn rw_raster_get_num_levels_call(r: GPtr<u8>) -> i32 = cdecl 0x7FB160 => rw_raster_get_num_levels;
     /// `_rwD3D9NativeTextureGetSize(&size, texture, 0)` (0x4CD360)
@@ -1314,7 +1303,7 @@ pub fn rw_texture_stream_write(t: GPtr<u8>, s: GPtr<u8>) -> GPtr<u8> {
 #[hook(addr = 0x804E60, conv = cdecl, name = "_rwTextureChunkInfoRead", expect = "51 56 8B 74 24 0C")]
 pub fn rw_texture_chunk_info_read(s: GPtr<u8>, info: GPtr<u8>, size: GPtr<u32>) -> GPtr<u8> {
     let mut len: u32 = 0;
-    if rw_stream_find_chunk(s, 1, GPtr::from_raw(&mut len), GPtr::NULL) == 0 {
+    if rw_stream_find_chunk(s, 1, GPtr::from_raw(&mut len), GPtr::NULL) as u32 == 0 {
         return GPtr::NULL;
     }
     let mut v: u32 = 0;
@@ -1365,7 +1354,7 @@ pub fn anisot_stream_read(s: GPtr<u8>, len: u32, t: GPtr<u8>, _offset: i32, _siz
         return GPtr::NULL;
     }
     let mut v = len;
-    if rw_stream_read_int32(s, GPtr::from_raw(&mut v), 4).is_null() {
+    if rw_stream_read_int32(s, GPtr::<u32>::cast::<u8>(GPtr::from_raw(&mut v)), 4).is_null() {
         return GPtr::NULL;
     }
     anisot(t).write(v as u8);
@@ -1381,7 +1370,7 @@ pub fn anisot_stream_write(s: GPtr<u8>, _len: u32, t: GPtr<u8>, _offset: i32, _s
         return GPtr::NULL;
     }
     let mut v = anisot(t).read() as u32;
-    if rw_stream_write_int32(s, GPtr::from_raw(&mut v), 4).is_null() {
+    if rw_stream_write_int32(s, GPtr::<u32>::cast::<u8>(GPtr::from_raw(&mut v)), 4).is_null() {
         return GPtr::NULL;
     }
     s
@@ -1582,7 +1571,7 @@ pub fn d3d9_native_texture_write(s: GPtr<u8>, t: GPtr<u8>, _flags: u32) -> u32 {
         let mut level: i32 = 0;
         if levels != 0 {
             loop {
-                let mut pixels = rw_raster_lock_call(r, level as u32, 2);
+                let mut pixels = GPtr::<u8>::addr(rw_raster_lock_call(r, level as u32, 2)) as u32;
                 if pixels == 0 {
                     return 0;
                 }
@@ -1642,20 +1631,16 @@ use crate::bindings::d3d_resource_create_texture;
 use crate::bindings::rw_texture_set_mask_name;
 use sa_core::bindings::rw_texture_create;
 use sa_core::bindings::rw_texture_set_name;
+use crate::bindings::auto_mipmap as check_auto_mipmap_texture_4cbf80;
+use crate::bindings::check_valid_texture_format_call;
+use sa_core::bindings::rw_raster_destroy as rw_raster_destroy_call;
 orig! {
-    /// `_rwD3D9CheckValidTextureFormat(fmt)` (0x4CBDE0)
-    fn check_valid_texture_format_call(fmt: u32) -> u32 = cdecl 0x4CBDE0 => d3d9_check_valid_texture_format;
     /// `_rwD3D9CheckAutoMipmapGenCubeTextureFormat(fmt)` (0x4CC020)
     fn check_auto_mipmap_cube_call(fmt: u32) -> u32 = cdecl 0x4CC020 => d3d9_check_auto_mipmap_gen_cube_texture_format;
-    /// `FUN_004cbf80(fmt)`: the AUTOGENMIPMAP texture-format check (0x4CBF80, entered through 5 nops
-    /// and a protection stub)
-    fn check_auto_mipmap_texture_4cbf80(fmt: u32) -> u32 = cdecl 0x4CBF80 => unported;
     /// `_rwD3D9RasterCreateFromDDSFormat(w, h, d3dFormat, flags)` (0x4CD050)
     fn raster_create_from_dds_format(w: u32, h: u32, fmt: u32, flags: u32) -> GPtr<u8> = cdecl 0x4CD050 => unported;
     /// `RwRasterCreate(w, h, depth, flags)` (0x7FB230)
     fn rw_raster_create_call(w: u32, h: u32, depth: u32, flags: u32) -> GPtr<u8> = cdecl 0x7FB230 => rw_raster_create_u;
-    /// `RwRasterDestroy(raster)` (0x7FB020)
-    fn rw_raster_destroy_call(r: GPtr<u8>) -> u32 = cdecl 0x7FB020 => rw_raster_destroy;
     /// `IDirect3DDevice9::CreateCubeTexture(edge, levels, usage, fmt, pool, out, shared)` (+0x64)
     fn dev_create_cube_texture(dev: GPtr<u8>, edge: u32, levels: u32, usage: u32, fmt: u32, pool: u32, out: GPtr<u8>, shared: u32) -> i32 = stdcall vslot 0x64 => unported;
 }
@@ -1694,7 +1679,7 @@ fn native_read_cube(r: GPtr<u8>, e: GPtr<u8>, levels: u32, format: u32, fmt: u32
 pub fn d3d9_native_texture_read(s: GPtr<u8>, out: GPtr<u32>, _size: u32) -> u32 {
     let mut ver: u32 = 0;
     let mut len: u32 = 0;
-    if rw_stream_find_chunk(s, 1, GPtr::from_raw(&mut len), GPtr::from_raw(&mut ver)) == 0 {
+    if rw_stream_find_chunk(s, 1, GPtr::from_raw(&mut len), GPtr::from_raw(&mut ver)) as u32 == 0 {
         return 0;
     }
     if !(0x34000..=0x36003).contains(&ver) {
@@ -1819,7 +1804,7 @@ pub fn d3d9_native_texture_read(s: GPtr<u8>, out: GPtr<u32>, _size: u32) -> u32 
     loop {
         let mut level: u32 = 0;
         while level < levels {
-            let pixels = rw_raster_lock_call(r, level, 1);
+            let pixels = GPtr::<u8>::addr(rw_raster_lock_call(r, level, 1)) as u32;
             let mut size: u32 = 0;
             if rw_stream_read(s, GPtr::from_raw(&mut size).cast(), 4) != 4 {
                 rw_raster_unlock_call(r);

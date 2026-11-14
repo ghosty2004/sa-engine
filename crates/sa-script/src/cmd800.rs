@@ -82,8 +82,8 @@ const INTRO_TEXT_LINES: u32 = 0xA913E8;
 /// `.rdata` 0x859014: -100.0f
 const K_MINUS_100: u32 = 0xC2C8_0000;
 
-use crate::bindings::add_big_message_with_number;
-use crate::bindings::clear_space_for_mission_entity;
+use sa_world::bindings::add_big_message_with_number;
+use sa_world::bindings::clear_space_for_mission_entity;
 use crate::bindings::object_has_been_damaged;
 use crate::bindings::our_ped_can_see_this_entity;
 use crate::bindings::start_script_fire;
@@ -108,7 +108,7 @@ use sa_world::bindings::event_group_add;
 use sa_world::bindings::find_ground_z_for_coord;
 use sa_world::bindings::find_player_slot_with_ped_pointer;
 use sa_world::bindings::flush_immediately;
-use sa_world::bindings::generate_new_one as generate_new_pickup;
+use sa_stream::bindings::generate_new_one as generate_new_pickup;
 use sa_world::bindings::get_actual_pickup_index;
 use sa_world::bindings::get_distance_from_centre_of_mass_to_base_of_model;
 use sa_world::bindings::get_garage_number_by_name;
@@ -130,26 +130,23 @@ use sa_world::bindings::set_velocity;
 use sa_world::bindings::tm_set_task as task_manager_set_task;
 use sa_world::bindings::update_rw_matrix;
 use sa_world::bindings::vehicle_can_be_deleted;
+use sa_core::bindings::find_objects_of_type_in_range;
+use sa_core::bindings::matrix_mul_vec;
+use sa_core::bindings::matrix_set_rotate_z;
+use sa_world::bindings::damage_calc_ctor;
+use sa_world::bindings::event_damage_ctor;
+use sa_world::bindings::find_objects_intersecting_cube;
+use sa_world::bindings::placeable_set_posn as set_posn_v;
+use sa_world::bindings::set_zoom_value_follow_ped_script;
+use sa_world::bindings::stand_still_ctor as task_simple_stand_still_ctor;
+use sa_world::bindings::vehicle_set_created_by as set_vehicle_created_by;
 orig! {
     /// `CPed::SetStayInSamePlace(bool)` (0x481090)
     fn set_stay_in_same_place(p: GPtr<u8>, stay: u32) = thiscall 0x481090 => unported;
     /// `CEntity::Teleport(CVector, bool)` (vtable slot 0x38); the by-value vector as three raw dwords
     fn teleport(e: GPtr<u8>, x: u32, y: u32, z: u32, reset_rotation: u32) = thiscall vslot 0x38 => unported;
-    /// `CPedDamageResponseCalculator::CPedDamageResponseCalculator(CEntity*, float, eWeaponType, ePedPieceTypes, bool)` (0x4AD3F0)
-    fn damage_calc_ctor(c: GPtr<u8>, source: u32, damage: u32, weapon: u32, piece: u32, speak: u32) -> GPtr<u8> = thiscall 0x4AD3F0 => unported;
-    /// `CEventDamage::CEventDamage(CEntity*, uint32 time, eWeaponType, ePedPieceTypes, uint8 direction,
-    /// bool, bool pedInVehicle)` (0x4AD830)
-    fn event_damage_ctor(e: GPtr<u8>, source: u32, time: u32, weapon: u32, piece: u32, dir: u32, a: u32, in_vehicle: u32) -> GPtr<u8> = thiscall 0x4AD830 => unported;
-    /// `CVehicle::SetVehicleCreatedBy(int32)` (0x6D5D70)
-    fn set_vehicle_created_by(v: GPtr<u8>, by: u32) = thiscall 0x6D5D70 => unported;
-    /// `CCamera::SetZoomValueFollowPedScript(int16)` (0x50C160)
-    fn set_zoom_value_follow_ped_script(cam: GPtr<u8>, z: u32) = thiscall 0x50C160 => unported;
     /// `CCamera::SetZoomValueCamStringScript(int16)` (0x50C1B0)
     fn set_zoom_value_cam_string_script(cam: GPtr<u8>, z: u32) = thiscall 0x50C1B0 => unported;
-    /// `CWorld::FindObjectsIntersectingCube(const CVector&, const CVector&, int16*, int16, CEntity**, bool x5)` (0x568DD0)
-    fn find_objects_intersecting_cube(
-        a: GPtr<u32>, b: GPtr<u32>, count: GPtr<i16>, max: u32, out: GPtr<u8>, bb: u32, bv: u32, bp: u32, bo: u32, bd: u32
-    ) = cdecl 0x568DD0 => unported;
     /// `CExplosion::TestForExplosionInArea(eExplosionType, float x1, x2, y1, y2, z1, z2)` (0x736950), AL; raw dwords
     fn test_for_explosion_in_area(ty: u32, x1: u32, x2: u32, y1: u32, y2: u32, z1: u32, z2: u32) -> u8 = cdecl 0x736950 => unported;
     /// `CPhysical::PlacePhysicalRelativeToOtherPhysical(CPhysical*, CPhysical*, CVector)` (0x546DB0)
@@ -160,12 +157,6 @@ orig! {
     fn open_this_garage(g: GPtr<u8>) = thiscall 0x447D50 => unported;
     /// `CGarage::CloseThisGarage()` (0x447D70)
     fn close_this_garage(g: GPtr<u8>) = thiscall 0x447D70 => unported;
-    /// `CWorld::FindObjectsOfTypeInRange(uint32 model, const CVector&, float, bool, int16*, int16, CEntity**,
-    /// bool x5)` (0x564C70); radius as a raw dword
-    fn find_objects_of_type_in_range(
-        model: u32, pos: GPtr<u32>, radius: u32, d2: u32, count: GPtr<i16>, max: u32, out: GPtr<u32>,
-        bb: u32, bv: u32, bp: u32, bo: u32, bd: u32
-    ) = cdecl 0x564C70 => unported;
     /// `CWorld::FindLodOfTypeInRange(uint32 model, const CVector&, float, bool, int16*, int16, CEntity**)` (0x564ED0)
     fn find_lod_of_type_in_range(
         model: u32, pos: GPtr<u32>, radius: u32, d2: u32, count: GPtr<i16>, max: u32, out: GPtr<u32>
@@ -174,14 +165,6 @@ orig! {
     fn add_to_invisibility_swap_array(e: GPtr<u8>, visible: u32) = cdecl 0x481200 => unported;
     /// `CPopulation::ChooseCivilianOccupation(bool, bool, int32, int32, int32, bool, bool, bool, char*)` (0x612F90)
     fn choose_civilian_occupation(a: u32, b: u32, c: i32, d: i32, e: i32, f: u32, g: u32, h: u32, i: u32) -> i32 = cdecl 0x612F90 => unported;
-    /// `CTaskSimpleStandStill::CTaskSimpleStandStill(int32 time, bool looped, bool hold, float blend)` (0x62F310)
-    fn task_simple_stand_still_ctor(t: GPtr<u8>, time: i32, looped: u32, hold: u32, blend: u32) -> GPtr<u8> = thiscall 0x62F310 => unported;
-    /// `CPlaceable::SetPosn(const CVector&)` (0x4241C0)
-    fn set_posn_v(e: GPtr<u8>, pos: GPtr<u32>) = thiscall 0x4241C0 => unported;
-    /// `CMatrix::SetRotateZ(float)` (0x59B0E0)
-    fn matrix_set_rotate_z(m: GPtr<u8>, a: u32) = thiscall 0x59B0E0 => unported;
-    /// `operator*(const CMatrix&, const CVector&)` (0x59C890): the result through the hidden pointer
-    fn matrix_mul_vec(out: GPtr<u32>, m: GPtr<u8>, v: GPtr<u32>) -> GPtr<u32> = cdecl 0x59C890 => unported;
     /// `CWorld::FindObjectsIntersectingAngledCollisionBox(const CBox&, const CMatrix&, const CVector&, float
     /// minX, minY, maxX, maxY, int16*, int16, CEntity**, bool x5)` (0x568FF0); floats as raw dwords
     fn find_objects_intersecting_angled_collision_box(
@@ -225,7 +208,7 @@ fn angled_box_occupied(obj: GPtr<u8>, local: GPtr<u8>, pos: GPtr<u32>) -> bool {
     for (i, c) in corners.iter().enumerate() {
         let mut v = *c;
         let mut out = [0u32; 3];
-        let r = matrix_mul_vec(GPtr::from_raw(out.as_mut_ptr()), local, GPtr::from_raw(v.as_mut_ptr()));
+        let r = GPtr::<f32>::cast::<u32>(matrix_mul_vec(GPtr::<u32>::cast::<f32>(GPtr::from_raw(out.as_mut_ptr())), local, GPtr::<u32>::cast::<u8>(GPtr::from_raw(v.as_mut_ptr()))));
         t[i] = [r.read(), r.byte_add(4).read(), r.byte_add(8).read()];
     }
     let (a, bb, c, d) = (t[0], t[1], t[2], t[3]);
@@ -297,7 +280,7 @@ fn rotate_object(s: Scr) {
         let mut pos = [p.read(), p.byte_add(4).read(), p.byte_add(8).read()];
         let mut m = [0u32; 0x12];
         let local = GPtr::from_raw(m.as_mut_ptr()).cast::<u8>();
-        matrix_set_rotate_z(local, X87::from_f32(f(new)).fmul_m(f(K_DEG_TO_RAD)).to_f32().to_bits());
+        matrix_set_rotate_z(local, f32::from_bits(X87::from_f32(f(new)).fmul_m(f(K_DEG_TO_RAD)).to_f32().to_bits()));
         for i in 0..3 {
             let c = local.byte_add(0x30 + 4 * i).cast::<f32>();
             c.write(X87::from_f32(c.read()).fadd_m(f(pos[i as usize])).to_f32());
@@ -307,7 +290,7 @@ fn rotate_object(s: Scr) {
             return;
         }
     }
-    set_heading(obj, X87::from_f32(f(new)).fmul_m(f(K_DEG_TO_RAD)).to_f32().to_bits());
+    set_heading(obj, f32::from_bits(X87::from_f32(f(new)).fmul_m(f(K_DEG_TO_RAD)).to_f32().to_bits()));
     update_rw_matrix(obj);
     update_rw_frame(obj);
     let eq = !X87::from_f32(f(new)).fcom(X87::from_f32(f(target))).test_parity(0x44);
@@ -391,12 +374,12 @@ fn explode_char_head(s: Scr) {
     let ped = ped_at_ref(pool(PED_POOL), spi(0));
     let mut calc = [0u32; 0x10];
     let c = GPtr::from_raw(calc.as_mut_ptr()).cast::<u8>();
-    damage_calc_ctor(c, 0, K_1000, 0x22, 9, 0);
+    damage_calc_ctor(c, GPtr::NULL, f32::from_bits(K_1000), 0x22, 9, 0);
     let in_vehicle = (ped.byte_add(0x46C).cast::<u32>().read() >> 8) & 0xFFFF_FF01;
     let time = GPtr::<u32>::from_addr(TIME_IN_MILLISECONDS).read();
     let mut event = [0u32; 0x20];
     let e = GPtr::from_raw(event.as_mut_ptr()).cast::<u8>();
-    event_damage_ctor(e, 0, time, 0x22, 9, 0, 0, in_vehicle);
+    event_damage_ctor(e, GPtr::NULL, time, 0x22, 9, 0, 0, in_vehicle);
     if event_damage_affects_ped(e, ped) != 0 {
         compute_damage_response(c, ped, e.byte_add(0x38), 1);
     } else {
@@ -430,7 +413,7 @@ fn get_random_car_of_type_in_area(s: Scr) {
             if flags.byte_add(n as isize).read() >= 0 {
                 let v = p.cast::<GPtr<u8>>().read().byte_add(off as isize);
                 if !v.is_null() {
-                    let app_ok = get_vehicle_appearance(v) == 1 || get_vehicle_appearance(v) == 2;
+                    let app_ok = get_vehicle_appearance(v) as i32 == 1 || get_vehicle_appearance(v) as i32 == 2;
                     if app_ok && v.byte_add(0x428).read() & 1 == 0 {
                         let model = i32::from(v.byte_add(0x22).cast::<i16>().read());
                         let want = spi(4);
@@ -438,7 +421,7 @@ fn get_random_car_of_type_in_area(s: Scr) {
                             && vehicle_can_be_deleted(v) != 0
                             && is_within_area(v, sp(0), sp(1), sp(2), sp(3)) != 0
                         {
-                            h = vehicle_get_ref(pool(VEHICLE_POOL), v);
+                            h = vehicle_get_ref(pool(VEHICLE_POOL), v) as i32;
                             set_vehicle_created_by(v, 2);
                             if uses_mission_cleanup(s) {
                                 mission_cleanup_add(GPtr::from_addr(MISSION_CLEANUP), h, 1);
@@ -473,13 +456,13 @@ fn create_pickup_with_ammo(s: Scr) {
     let (x, y) = (sp(3), sp(4));
     let mut z = st.to_f32().to_bits();
     if !st.fcom(X87::constant(K_MINUS_100)).test_parity(0x41) {
-        z = X87::from_f64_exact(find_ground_z_for_coord(x, y))
+        z = X87::from_f64_exact(find_ground_z_for_coord(f32::from_bits(x), f32::from_bits(y)))
             .fadd_m(f(K_0_5))
             .to_f32()
             .to_bits();
     }
     get_actual_pickup_index(collect_next_parameter_without_increasing_pc(s));
-    let h = generate_new_pickup(x, y, z, model as u32, sp(1) & 0xFF, sp(2), 0, 0, 0);
+    let h = generate_new_pickup(f32::from_bits(x), f32::from_bits(y), f32::from_bits(z), model as u32, sp(1) & 0xFF, sp(2), 0, 0, GPtr::NULL);
     set_sp(0, h as u32);
     store(s, 1);
 }
@@ -506,9 +489,9 @@ fn is_area_occupied(s: Scr) {
     let mut count: i16 = 0;
     let nz = |i: i32| u32::from(sp(i) != 0);
     find_objects_intersecting_cube(
-        GPtr::from_raw(lo.as_mut_ptr()),
-        GPtr::from_raw(hi.as_mut_ptr()),
-        GPtr::from_raw(&mut count),
+        GPtr::<u32>::cast::<u8>(GPtr::from_raw(lo.as_mut_ptr())),
+        GPtr::<u32>::cast::<u8>(GPtr::from_raw(hi.as_mut_ptr())),
+        GPtr::<i16>::cast::<u8>(GPtr::from_raw(&mut count)),
         2,
         GPtr::NULL,
         nz(6),
@@ -571,7 +554,7 @@ fn make_object_targettable(s: Scr) {
     let t = r.cast::<GPtr<u8>>().read();
     if obj.addr() == t.addr() {
         if !t.is_null() {
-            clean_up_old_reference(t, r);
+            clean_up_old_reference(t, r.cast::<GPtr<u8>>());
         }
         r.cast::<u32>().write(0);
     }
@@ -587,7 +570,7 @@ fn add_armour_to_char(s: Scr) {
     let a = ped.byte_add(0x548).cast::<f32>();
     a.write(X87::from_i32(spi(1)).fadd_m(a.read()).to_f32());
     let v = if ped_is_player(ped) != 0 {
-        let slot = find_player_slot_with_ped_pointer(ped);
+        let slot = find_player_slot_with_ped_pointer(ped) as i32;
         let max = i32::from(player_info(slot as u32).byte_add(0x150).read());
         let mx = X87::from_i32(max);
         if mx.fcom(X87::from_f32(a.read())).test_any(0x41) { mx } else { X87::from_f32(a.read()) }
@@ -611,7 +594,7 @@ fn open_close_garage(s: Scr, open: bool) {
     let mut buf = [0u8; 16];
     let b = GPtr::from_raw(buf.as_mut_ptr());
     read_text_label(s, b, 8);
-    let n = get_garage_number_by_name(b) as i16;
+    let n = (get_garage_number_by_name(b) as u16) as i16;
     if n >= 0 {
         let g = GPtr::from_addr(GARAGES.wrapping_add((i32::from(n) * 0xD8) as usize));
         if open { open_this_garage(g) } else { close_this_garage(g) }
@@ -629,7 +612,7 @@ fn set_visibility_of_closest_object_of_type(s: Scr) {
     let (x, y) = (sp(0), sp(1));
     let mut z = sp(2);
     if !X87::from_f32(f(z)).fcom(X87::constant(K_MINUS_100)).test_parity(0x41) {
-        z = X87::from_f64_exact(find_ground_z_for_coord(x, y)).to_f32().to_bits();
+        z = X87::from_f64_exact(find_ground_z_for_coord(f32::from_bits(x), f32::from_bits(y))).to_f32().to_bits();
     }
     let radius = sp(3);
     let mut best = X87::from_f32(f(radius)).fdouble().to_f32();
@@ -646,7 +629,7 @@ fn set_visibility_of_closest_object_of_type(s: Scr) {
     find_objects_of_type_in_range(
         model as u32,
         GPtr::from_raw(pos.as_mut_ptr()),
-        radius,
+        f32::from_bits(radius),
         1,
         GPtr::from_raw(&mut count),
         16,
@@ -745,7 +728,7 @@ fn create_random_char(s: Scr) {
     let t = if t.is_null() {
         GPtr::NULL
     } else {
-        task_simple_stand_still_ctor(t, 999_999, 1, 0, 0x4100_0000)
+        task_simple_stand_still_ctor(t, 999_999, 1, 0, f32::from_bits(0x4100_0000))
     };
     let intel = ped.byte_add(0x47C).cast::<GPtr<u8>>().read();
     task_manager_set_task(intel.byte_add(4), t, 4, 0);
@@ -757,14 +740,14 @@ fn create_random_char(s: Scr) {
     let st = if st.fcom(X87::constant(K_MINUS_100)).test_parity(0x41) {
         st
     } else {
-        X87::from_f64_exact(find_ground_z_for_coord(x, y))
+        X87::from_f64_exact(find_ground_z_for_coord(f32::from_bits(x), f32::from_bits(y)))
     };
     let z = st.fadd_m(f(K_ONE)).to_f32().to_bits();
     let mut pos = [x, y, z];
     let pp = GPtr::from_raw(pos.as_mut_ptr());
-    set_posn_v(ped, pp);
-    set_orientation(ped, 0, 0, 0);
-    clear_space_for_mission_entity(pp, ped);
+    set_posn_v(ped, pp.cast::<f32>());
+    set_orientation(ped, f32::from_bits(0), f32::from_bits(0), f32::from_bits(0));
+    clear_space_for_mission_entity(pp.cast::<u8>(), ped);
     if uses_mission_cleanup(s) {
         let f1 = ped.byte_add(0x1C).cast::<u32>();
         f1.write(f1.read() | 0x40000);
@@ -772,7 +755,7 @@ fn create_random_char(s: Scr) {
     world_add(ped);
     let n = GPtr::<u32>::from_addr(TOTAL_MISSION_PEDS);
     n.write(n.read().wrapping_add(1));
-    let h = ped_get_ref_(pool(PED_POOL), ped);
+    let h = ped_get_ref_(pool(PED_POOL), ped) as i32;
     set_sp(0, h as u32);
     store(s, 1);
     if uses_mission_cleanup(s) {
@@ -904,7 +887,7 @@ pub fn process_commands_800_to_899(s: Scr, command: u32) -> i8 {
             let (x, y) = (sp(1), sp(2));
             let mut z = st.to_f32().to_bits();
             if !st.fcom(X87::constant(K_MINUS_100)).test_parity(0x41) {
-                z = X87::from_f64_exact(find_ground_z_for_coord(x, y))
+                z = X87::from_f64_exact(find_ground_z_for_coord(f32::from_bits(x), f32::from_bits(y)))
                     .to_f32()
                     .to_bits();
             }
@@ -913,7 +896,7 @@ pub fn process_commands_800_to_899(s: Scr, command: u32) -> i8 {
             let z = d.fadd_m(f(z)).to_f32().to_bits();
             teleport(ped, x, y, z, 0);
             let pos = [x, y, z];
-            clear_space_for_mission_entity(GPtr::from_raw(pos.as_ptr().cast_mut()), ped);
+            clear_space_for_mission_entity(GPtr::<u32>::cast::<u8>(GPtr::from_raw(pos.as_ptr().cast_mut())), ped);
         }
         // 036A WARP_CHAR_INTO_CAR (0x483239): no null checks. `m_pIntelligence->FlushImmediately(false)`;
         // a stack `CTaskSimpleCarSetPedInAsDriver(veh, nullptr)` (0x1C bytes) with
@@ -956,7 +939,7 @@ pub fn process_commands_800_to_899(s: Scr, command: u32) -> i8 {
             let cam = u32::from(GPtr::<u8>::from_addr(ACTIVE_CAM).read());
             let mode = GPtr::<u16>::from_addr(CAM_MODES.wrapping_add(cam.wrapping_mul(0x238) as usize)).read();
             if mode == 4 {
-                set_zoom_value_follow_ped_script(GPtr::from_addr(THE_CAMERA), sp(0) & 0xFFFF);
+                set_zoom_value_follow_ped_script(GPtr::from_addr(THE_CAMERA), (sp(0) & 0xFFFF) as u16);
             } else if mode == 0x12 {
                 set_zoom_value_cam_string_script(GPtr::from_addr(THE_CAMERA), sp(0) & 0xFFFF);
             }

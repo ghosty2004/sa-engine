@@ -48,6 +48,10 @@ use crate::bindings::vehicle_inflict_damage;
 use sa_core::bindings::col_box_set;
 use sa_core::bindings::find_player_ped;
 use sa_stream::bindings::is_object_glass;
+use crate::bindings::damage_calc_ctor;
+use crate::bindings::generate_damage_event;
+use crate::bindings::process_sphere_box;
+use sa_core::bindings::col_sphere_set;
 orig! {
     /// `CGlass::WindowRespondsToExplosion(CEntity*, CVector point)` (0x71C1A0)
     fn window_responds_to_explosion(e: GPtr<u8>, point: CVector) = cdecl 0x71C1A0 => unported;
@@ -55,12 +59,6 @@ orig! {
     fn v_set_is_static(e: GPtr<u8>, s: u32) = thiscall vslot 0x10 => unported;
     /// `Fx_c::TriggerWaterHydrant(CVector&)` (0x4A0D70) on `g_fx` (0xA9AE00)
     fn trigger_water_hydrant(fx: GPtr<u8>, pos: GPtr<u8>) = thiscall 0x4A0D70 => unported;
-    /// `CWeapon::GenerateDamageEvent(CPed*, CEntity*, eWeaponType, int32, ePedPieceTypes, int32)` (0x73A530)
-    fn generate_damage_event(victim: GPtr<u8>, creator: GPtr<u8>, ty: i32, damage: i32, piece: i32, dir: u32) -> u8 = cdecl 0x73A530 => unported;
-    /// `CColSphere::Set(float radius, const CVector& centre, uint8 material, uint8 flags, uint8 lighting)` (0x40FD10)
-    fn col_sphere_set(s: GPtr<u8>, radius: f32, center: GPtr<u8>, mat: u32, flags: u32, light: u32) = thiscall 0x40FD10 => unported;
-    /// `CCollision::ProcessSphereBox(const CColSphere&, const CColBox&, CColPoint&, float& maxTouchDist)` (0x412130)
-    fn process_sphere_box(sp: GPtr<u8>, bx: GPtr<u8>, cp: GPtr<u8>, max_dist: GPtr<u8>) -> u8 = cdecl 0x412130 => unported;
     /// `CPhysical::GetSpeed(CVector point)` (0x542CE0): the result through the hidden pointer
     fn get_speed(e: GPtr<u8>, out: GPtr<CVector>, point: CVector) -> GPtr<CVector> = thiscall 0x542CE0 => crate::physical::forces::get_speed;
     /// `CPhysical::ApplyForce(CVector force, CVector point, bool updateTurnSpeed)` (0x542B50)
@@ -71,8 +69,6 @@ orig! {
     fn apply_turn_force(e: GPtr<u8>, force: CVector, point: CVector) = thiscall 0x542A50 => crate::physical::forces::apply_turn_force;
     /// `CVehicle::VehicleDamage(float, eVehicleCollisionComponent, CEntity*, CVector*, CVector*, eWeaponType)` (vtable +0xE0)
     fn v_vehicle_damage(v: GPtr<u8>, dmg: u32, comp: u32, e: GPtr<u8>, p: GPtr<u8>, d: GPtr<u8>, weapon: u32) = thiscall vslot 0xE0 => unported;
-    /// `CPedDamageResponseCalculator::CPedDamageResponseCalculator(CEntity*, float, eWeaponType, ePedPieceTypes, bool)` (0x4AD3F0)
-    fn damage_calc_ctor(c: GPtr<u8>, e: GPtr<u8>, dmg: f32, wt: u32, piece: u32, speak: u32) -> GPtr<u8> = thiscall 0x4AD3F0 => unported;
 }
 
 /// `MI_FENCE` / `MI_FENCE2` (0x8CD600 / 0x8CD604), `MI_FIRE_HYDRANT` (0x8CD594), `MI_ATM` (0x8CD710).
@@ -262,7 +258,7 @@ pub fn trigger_explosion_sector_list(list: GPtr<u8>, point: GPtr<u8>, radius: f3
             2 => {
                 if rd::<u32>(e, 0x594) == 10 && !rd::<GPtr<u8>>(e, 0x460).is_null() {
                     let mut ev = [0u32; 0x20];
-                    kob_ctor(p(&mut ev), e, e.byte_add(0x44), p(&mut imp), 0, 0, 0x33, 0, 0, 0, 1, 0);
+                    kob_ctor(p(&mut ev), e, e.byte_add(0x44), p(&mut imp), 0, 0, 0x33, 0, 0, GPtr::NULL, 1, 0);
                     let drv = rd::<GPtr<u8>>(e, 0x460);
                     event_group_add(rd::<GPtr<u8>>(drv, 0x47C).byte_add(0x68), p(&mut ev), 0);
                     let mut v2 = [imp[0], imp[1]];
@@ -292,7 +288,7 @@ pub fn trigger_explosion_sector_list(list: GPtr<u8>, point: GPtr<u8>, radius: f3
                 col_box_set(p(&mut bx), col_min, col_max.byte_add(0xC), 0, 0, 0xFF);
                 let mut max_dist: f32 = 100_000.0;
                 let mut cpos = [0f32; 3]; // [esp+0x1C]
-                if process_sphere_box(p(&mut sphere), p(&mut bx), p(&mut cp), p(&mut max_dist)) != 0 {
+                if process_sphere_box(GPtr::<u8>::cast::<f32>(p(&mut sphere)), GPtr::<u8>::cast::<f32>(p(&mut bx)), GPtr::<u8>::cast::<f32>(p(&mut cp)), GPtr::<u8>::cast::<f32>(p(&mut max_dist))) != 0 {
                     let mut out = [0f32; 3];
                     multiply3x3_mv(p(&mut out), rd::<GPtr<u8>>(e, 0x14), p(&mut cp));
                     cpos = out;

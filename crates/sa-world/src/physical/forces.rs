@@ -485,7 +485,7 @@ pub fn set_damaged_piece_record(this: Ent, intensity: u32, entity: Ent, cp: Ent,
             clean_up_old_reference(old, slot);
         }
         slot.write(entity);
-        register_reference(entity, slot);
+        register_reference(entity, slot.cast());
         wv_bits(this, LAST_IMPACT_POS, rv_bits(cp, 0));
         let mut v = [0f32; 3];
         for (i, v) in v.iter_mut().enumerate() {

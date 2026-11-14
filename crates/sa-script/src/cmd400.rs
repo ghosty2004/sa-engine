@@ -46,14 +46,14 @@ const CAR_DENSITY_MULTIPLIER: usize = 0x8A5B20;
 /// The immediate 01B4 pushes as the radius: 10.0f (`push 0x41200000`).
 const K_10: u32 = 0x4120_0000;
 
-use crate::bindings::add_big_message_with_number;
+use sa_world::bindings::add_big_message_with_number;
 use crate::bindings::add_message_jump_q_with_number;
 use crate::bindings::add_message_with_number;
 use crate::bindings::clean_up_this_object;
 use crate::bindings::clean_up_this_ped;
 use crate::bindings::clean_up_this_vehicle;
-use crate::bindings::clear_space_for_mission_entity;
-use crate::bindings::switch_roads_off_in_area;
+use sa_world::bindings::clear_space_for_mission_entity;
+use sa_world::bindings::switch_roads_off_in_area;
 use sa_core::bindings::get_weapon_info;
 use sa_core::bindings::ped_give_weapon as give_weapon;
 use sa_core::bindings::player_info_make_player_safe as make_player_safe;
@@ -74,6 +74,8 @@ use sa_world::bindings::set_ped_in_as_passenger_ctor;
 use sa_world::bindings::set_ped_in_as_passenger_dtor;
 use sa_world::bindings::set_ped_in_as_passenger_process_ped;
 use sa_world::bindings::weather_release_weather as release_weather;
+use crate::bindings::get_correct_ped_model_index;
+use sa_world::bindings::set_maximum_wanted_level;
 orig! {
     /// `CUpsideDownCarCheck::AddCarToCheck(int32)` (0x4638D0)
     fn add_car_to_check(c: GPtr<u8>, h: i32) = thiscall 0x4638D0 => unported;
@@ -87,14 +89,10 @@ orig! {
     fn locate_car_command(s: Scr, command: u32) = thiscall 0x487A20 => unported;
     /// `CWeather::ForceWeather(int16)` (0x72A4E0)
     fn force_weather(w: u32) = cdecl 0x72A4E0 => unported;
-    /// `CWanted::SetMaximumWantedLevel(int32)` (0x561E70)
-    fn set_maximum_wanted_level(l: i32) = cdecl 0x561E70 => unported;
     /// `CEntity` virtual slot 14 (+0x38, `Teleport(CVector, bool)`): the vector by value (three words)
     fn entity_teleport(e: GPtr<u8>, x: u32, y: u32, z: u32, clear_orientation: u32) = thiscall vslot 0x38 => unported;
     /// `CTheScripts::IsVehicleStopped(CVehicle*)` (0x4861F0), AL
     fn is_vehicle_stopped(v: GPtr<u8>) -> u8 = cdecl 0x4861F0 => unported;
-    /// `CRunningScript::GetCorrectPedModelIndexForEmergencyServiceType(ePedType, int32*)` (0x464F50)
-    fn get_correct_ped_model_index(s: Scr, ped_type: i32, model: GPtr<u32>) = thiscall 0x464F50 => unported;
 }
 
 /// The 8-byte key of 01E3..01E5: `ReadTextLabelFromScript(buf, 8)`, `TheText.Get(buf)` (zeroed buffer,
@@ -131,19 +129,19 @@ fn print_with_number(s: Scr, now: bool) {
 fn give_weapon_to_char(s: Scr) {
     collect(s, 3);
     let ped = ped_at_ref(pool(PED_POOL), spi(0));
-    let slot = give_weapon(ped, sp(1), sp(2), 1);
+    let slot = give_weapon(ped, sp(1) as i32, sp(2), 1) as u32;
     if ped_is_player(ped) != 0 {
         ped.byte_add(0x480).cast::<GPtr<u8>>().read().byte_add(0x20).write(slot as u8);
         return;
     }
-    set_current_weapon_slot(ped, slot as i32);
+    set_current_weapon_slot(ped, (slot as i32) as u32);
     if ped.byte_add(0x46C).cast::<u32>().read() & 0x100 != 0
         && !ped.byte_add(0x58C).cast::<GPtr<u8>>().read().is_null()
     {
         let i = i32::from(ped.byte_add(0x718).cast::<i8>().read());
         let ty = ped.byte_add(0x5A0 + i.wrapping_mul(0x1C) as isize).cast::<u32>().read();
-        let model = get_weapon_info(ty, 1).byte_add(0xC).cast::<u32>().read();
-        remove_weapon_model(ped, model);
+        let model = get_weapon_info(ty as i32, 1).byte_add(0xC).cast::<u32>().read();
+        remove_weapon_model(ped, model as i32);
     }
 }
 
@@ -156,11 +154,11 @@ fn set_object_coordinates(s: Scr) {
     let (x, y) = (sp(1), sp(2));
     let mut z = sp(3);
     if !X87::from_f32(f(z)).fcom(X87::constant(K_MINUS_100)).test_parity(0x41) {
-        z = X87::from_f64_exact(find_ground_z_raw(x, y)).to_f32().to_bits();
+        z = X87::from_f64_exact(find_ground_z_raw(f32::from_bits(x), f32::from_bits(y))).to_f32().to_bits();
     }
     entity_teleport(obj, x, y, z, 0);
     let mut pos = [x, y, z];
-    clear_space_for_mission_entity(GPtr::from_raw(pos.as_mut_ptr()), obj);
+    clear_space_for_mission_entity(GPtr::<u32>::cast::<u8>(GPtr::from_raw(pos.as_mut_ptr())), obj);
 }
 
 /// 01C8 CREATE_CHAR_AS_PASSENGER (0x47D845): P0 vehicle (no null check), P1 ped type, P2 model (fixed up
@@ -198,13 +196,13 @@ fn create_char_as_passenger(s: Scr) {
     }
     let seat = spi(3);
     let door = if seat >= 0 {
-        compute_target_door_to_enter_as_passenger(veh, seat)
+        compute_target_door_to_enter_as_passenger(veh, seat as u32) as i32
     } else {
         0
     };
     let mut task = [0u32; 8];
     let t = GPtr::from_raw(task.as_mut_ptr()).cast::<u8>();
-    set_ped_in_as_passenger_ctor(t, veh, door, GPtr::NULL);
+    set_ped_in_as_passenger_ctor(t, veh, door as u32, GPtr::NULL);
     t.byte_add(0x1C).write(1);
     set_ped_in_as_passenger_process_ped(t, ped);
     set_ped_in_as_passenger_dtor(t);
@@ -282,7 +280,7 @@ fn switch_roads(s: Scr, off: u32) {
     let (x1, x2) = order(sp(0), sp(3));
     let (y1, y2) = order(sp(1), sp(4));
     let (z1, z2) = order(sp(2), sp(5));
-    switch_roads_off_in_area(GPtr::from_addr(THE_PATHS), x1, x2, y1, y2, z1, z2, off, 1, 0);
+    switch_roads_off_in_area(GPtr::from_addr(THE_PATHS), f32::from_bits(x1), f32::from_bits(x2), f32::from_bits(y1), f32::from_bits(y2), f32::from_bits(z1), f32::from_bits(z2), off, 1, 0);
 }
 
 /// `CRunningScript::ProcessCommands400To499(int32 command)` (0x47D210, thiscall, `ret 4`): AL = 0 continue, 1 wait, -1 unknown.
@@ -337,7 +335,7 @@ pub fn process_commands_400_to_499(s: Scr, command: u32) -> i8 {
                         .byte_add(0x20)
                         .write(slot as u8);
                 } else {
-                    set_current_weapon_slot(ped, slot as i32);
+                    set_current_weapon_slot(ped, (slot as i32) as u32);
                 }
             };
             if sp(1) == 0 {

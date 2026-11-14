@@ -11,25 +11,18 @@ use crate::common::{THE_CAMERA, ftol32, g, jne, jp, k, rd, wr, x, xi};
 
 use crate::bindings::rs_restore;
 use crate::bindings::rs_set_immediate;
-use crate::bindings::rw_im3d_transform;
+use sa_world::bindings::rw_im3d_transform;
 use sa_core::bindings::find_player_ped;
+use crate::bindings::im_render_states_store as rs_store;
+use crate::bindings::rw_im3d_render_primitive;
+use sa_world::bindings::cam_no_rain;
+use sa_world::bindings::get_at_direction;
+use sa_world::bindings::get_right_direction;
+use sa_world::bindings::player_no_rain;
+use sa_world::bindings::rw_im3d_end;
 orig! {
-    /// `CCullZones::CamNoRain()` (0x72DDB0, bool in AL)
-    fn cam_no_rain() -> u8 = cdecl 0x72DDB0 => crate::cullzones::cam_no_rain;
-    /// `CCullZones::PlayerNoRain()` (0x72DDC0, bool in AL)
-    fn player_no_rain() -> u8 = cdecl 0x72DDC0 => crate::cullzones::player_no_rain;
-    /// `CPlaceable::GetAtDirection()` (0x50E420, CVector by hidden pointer)
-    fn get_at_direction(this: GPtr<u8>, out: GPtr<f32>) -> GPtr<f32> = thiscall 0x50E420 => sa_world::world::entity::get_at_direction;
-    /// `CPlaceable::GetRightDirection()` (0x41CC70, CVector by hidden pointer)
-    fn get_right_direction(this: GPtr<u8>, out: GPtr<f32>) -> GPtr<f32> = thiscall 0x41CC70 => sa_world::world::entity::get_right_direction;
-    /// `CPostEffects::ImmediateModeRenderStatesStore()` (0x700CC0)
-    fn rs_store() = cdecl 0x700CC0 => crate::mvpd_r3::immediate_mode_render_states_store;
     /// `RwRenderStateSet(state, value)` (`RwGlobals` +0x20)
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `RwIm3DRenderPrimitive(primType)` (0x7EF6B0)
-    fn rw_im3d_render_primitive(prim: u32) -> u32 = cdecl 0x7EF6B0 => unported;
-    /// `RwIm3DEnd()` (0x7EF520)
-    fn rw_im3d_end() -> u32 = cdecl 0x7EF520 => unported;
     /// `CClouds::MovingFog_Update()` (0x716B10)
     fn moving_fog_update() = cdecl 0x716B10 => unported;
 }
@@ -192,7 +185,7 @@ pub fn moving_fog_render() {
             wr::<f32>(v, 0x20, cv);
             n += 1;
             if n == 0x7FE {
-                if !rw_im3d_transform(TEMP_RENDER_VERTICES, n, 0, 9).is_null() {
+                if !rw_im3d_transform(GPtr::from_addr(TEMP_RENDER_VERTICES as usize), n, GPtr::NULL, 9).is_null() {
                     rw_im3d_render_primitive(3);
                     rw_im3d_end();
                 }
@@ -200,7 +193,7 @@ pub fn moving_fog_render() {
             }
         }
     }
-    if n as i32 > 0 && !rw_im3d_transform(TEMP_RENDER_VERTICES, n, 0, 9).is_null() {
+    if n as i32 > 0 && !rw_im3d_transform(GPtr::from_addr(TEMP_RENDER_VERTICES as usize), n, GPtr::NULL, 9).is_null() {
         rw_im3d_render_primitive(3);
         rw_im3d_end();
     }
@@ -213,18 +206,14 @@ pub const HOOKS: &[HookReg] = &[HOOK_MOVING_FOG_RENDER, HOOK_CLOUDS_RENDER, HOOK
 
 // ---- WRITER-RENDER-BIG: CClouds::Render, RenderSkyPolys, RenderBottomFromHeight, VolumetricCloudsRender ----
 
-use crate::bindings::calc_screen_coors;
-use crate::bindings::init_sprite_buffer;
+use sa_core::bindings::calc_screen_coors;
+use sa_world::bindings::init_sprite_buffer;
 use crate::bindings::render_buffered_one_xlu_sprite;
-use crate::bindings::rw_im3d_render_indexed_primitive;
+use sa_world::bindings::rw_im3d_render_indexed_primitive;
+use sa_core::bindings::can_see_outside_from_curr_area;
+use sa_world::bindings::sprite_flush_sprite_buffer as flush_sprite_buffer;
+use sa_world::bindings::sprite_render_one_xlu_sprite as render_one_xlu_sprite;
 orig! {
-    /// `CGame::CanSeeOutSideFromCurrArea()` (0x53C4A0, bool in AL)
-    fn can_see_outside_from_curr_area() -> u32 = cdecl 0x53C4A0 => sa_core::game::can_see_outside_from_curr_area;
-    /// `CSprite::FlushSpriteBuffer()` (0x70CF20)
-    fn flush_sprite_buffer() = cdecl 0x70CF20 => crate::sprite::flush_sprite_buffer;
-    /// `CSprite::RenderOneXLUSprite(x, y, z, halfW, halfH, r, g, b, intensity, rhw, a, uDir, vDir)`
-    /// (0x70D000); every argument as the raw dword the original pushes
-    fn render_one_xlu_sprite(px: u32, py: u32, pz: u32, hw: u32, hh: u32, r: u32, gg: u32, b: u32, intensity: u32, rhw: u32, a: u32, u_dir: u32, v_dir: u32) = cdecl 0x70D000 => unported;
     /// `CSprite::RenderBufferedOneXLUSprite_Rotate_Dimension(x, y, z, w, h, r, g, b, intensity, recipNearZ,
     /// angle, alpha)` (0x70EAB0)
     fn render_buffered_one_xlu_sprite_rotate_dimension(px: f32, py: f32, pz: f32, w: f32, h: f32, r: u32, gg: u32, b: u32, intensity: u32, recip_z: u32, angle: f32, alpha: u32) = cdecl 0x70EAB0 => crate::mvpd_r5::render_buffered_one_xlu_sprite_rotate_dimension;
@@ -411,7 +400,7 @@ pub fn clouds_render() {
                 rs(11, 2);
                 let ms = moon_size();
                 let rhw = bits(one().fdiv_m(f(far())));
-                render_one_xlu_sprite(out[0], out[1], far(), bits(ms.fmul_m(w)), bits(x(h).fmul(ms)), 0, 0, 0, 0xFF, rhw, 0xFF, 0, 0);
+                render_one_xlu_sprite(f32::from_bits(out[0]), f32::from_bits(out[1]), far(), f32::from_bits(bits(ms.fmul_m(w))), f32::from_bits(bits(x(h).fmul(ms))), 0, 0, 0, 0xFF, rhw, 0xFF, 0, 0);
 
                 rs(1, raster_of(MOON_MASK_TEX));
                 rs(10, 5);
@@ -425,7 +414,7 @@ pub fn clouds_render() {
                 let mask_w = bits(x(wms).fmul_m(k(0x3FD9_999A)));
                 let my = bits(hms.fmul_m(k(0x3F33_3334)).fadd_m(f(out[1])));
                 let mx = bits(x(wms).fmul_m(k(0x40AC_CCCD)).fmul(x(days).fsub_m(0.5)).fadd_m(f(out[0])));
-                render_one_xlu_sprite(mx, my, far(), mask_w, mask_h, 0, 0, 0, 0, rhw, 0xFF, 0, 0);
+                render_one_xlu_sprite(f32::from_bits(mx), f32::from_bits(my), far(), f32::from_bits(mask_w), f32::from_bits(mask_h), 0, 0, 0, 0, rhw, 0xFF, 0, 0);
 
                 rs(10, 7);
                 rs(11, 2);
@@ -437,7 +426,7 @@ pub fn clouds_render() {
                 let blue = ftol32(xi(c).fmul_m(k(0x3F59_999A))) as u32;
                 let hh = bits(x(h).fmul(ms));
                 let hw = bits(ms.fmul_m(w));
-                render_one_xlu_sprite(out[0], out[1], far(), hw, hh, c as u32, c as u32, blue, 0xFF, rhw, 0xFF, 0, 0);
+                render_one_xlu_sprite(f32::from_bits(out[0]), f32::from_bits(out[1]), far(), f32::from_bits(hw), f32::from_bits(hh), c as u32, c as u32, blue, 0xFF, rhw, 0xFF, 0, 0);
                 rs(10, 2);
                 rs(11, 2);
             }
@@ -486,7 +475,7 @@ pub fn clouds_render() {
             let sc = ftol32(xi(r).fmul_m(k(0x3ACC_CCCD)).fadd_m(0.5).fmul(xi(lc))) as u32;
             if calc(&mut inp, &mut out, &mut w, &mut h) {
                 let rhw = bits(one().fdiv_m(f(out[2])));
-                render_one_xlu_sprite(out[0], out[1], out[2], bits(x(w).fmul_m(5.0)), bits(x(h).fmul_m(5.0)), sc, sc, sc, 0xFF, rhw, 0xFF, 0, 0);
+                render_one_xlu_sprite(f32::from_bits(out[0]), f32::from_bits(out[1]), out[2], f32::from_bits(bits(x(w).fmul_m(5.0))), f32::from_bits(bits(x(h).fmul_m(5.0))), sc, sc, sc, 0xFF, rhw, 0xFF, 0, 0);
             }
             flush_sprite_buffer();
         }
@@ -603,10 +592,10 @@ pub fn clouds_render() {
     g::<f32>(0xC4_D958).write(v0x.to_f32());
     g::<f32>(0xC4_D984).write(v1z);
     g::<f32>(0xC4_D95C).write(v0y.to_f32());
-    if rw_im3d_transform(TEMP_RENDER_VERTICES, 2, 0, 0x18).is_null() {
+    if rw_im3d_transform(GPtr::from_addr(TEMP_RENDER_VERTICES as usize), 2, GPtr::NULL, 0x18).is_null() {
         return;
     }
-    rw_im3d_render_indexed_primitive(2, STREAK_INDICES, 2);
+    rw_im3d_render_indexed_primitive(2, GPtr::from_addr(STREAK_INDICES as usize), 2);
     rw_im3d_end();
 }
 
@@ -1052,8 +1041,8 @@ pub fn render_bottom_from_height() {
             g::<u32>(TEMP_INDICES_STORED).write(ni);
             g::<u32>(TEMP_VERTICES_STORED).write(nv);
         }
-        if ni != 0 && !rw_im3d_transform(TEMP_RENDER_VERTICES, nv, 0, 0x19).is_null() {
-            rw_im3d_render_indexed_primitive(3, TEMP_BUFFER_INDICES, g::<u32>(TEMP_INDICES_STORED).read());
+        if ni != 0 && !rw_im3d_transform(GPtr::from_addr(TEMP_RENDER_VERTICES as usize), nv, GPtr::NULL, 0x19).is_null() {
+            rw_im3d_render_indexed_primitive(3, GPtr::from_addr(TEMP_BUFFER_INDICES as usize), (g::<u32>(TEMP_INDICES_STORED).read()) as i32);
             rw_im3d_end();
         }
         g::<u32>(TEMP_INDICES_STORED).write(0);
@@ -1119,9 +1108,12 @@ pub fn render_bottom_from_height() {
     rs(6, 1);
 }
 
+use crate::bindings::rw_im3d_render_primitive as rw_im3d_render_primitive_v;
+use sa_stream::bindings::fx_get_fx_quality as get_fx_quality;
+use sa_world::bindings::vector_add_assign;
+use sa_world::bindings::vector_mul_scalar as vector_mul;
+use sa_world::bindings::vector_ne;
 orig! {
-    /// `Fx_c::GetFxQuality()` (0x49EA50, thiscall on `g_fx`)
-    fn get_fx_quality(this: GPtr<u8>) -> u32 = thiscall 0x49EA50 => crate::fx::fx_get_fx_quality;
     /// `CClouds::VolumetricCloudsGetMaxDistance()` (0x713630, ST0)
     fn volumetric_clouds_get_max_distance() -> f64 = cdecl 0x713630 => self::max_distance_port;
     /// `CClouds::VolumetricClouds_Delete(int32)` (0x7135F0)
@@ -1132,16 +1124,8 @@ orig! {
     fn find_player_vehicle(id: i32, remote: u8) -> GPtr<u8> = cdecl 0x56E0D0 => sa_world::world::cworld::find_player_vehicle_port;
     /// `FindPlayerCoors(CVector* out, int32)` (0x56E010)
     fn find_player_coors(out: GPtr<f32>, id: i32) -> GPtr<f32> = cdecl 0x56E010 => sa_world::world::cworld::find_player_coors_port;
-    /// `operator!=(const CVector&, const CVector&)` (0x509760, bool in AL)
-    fn vector_ne(a: GPtr<f32>, b: GPtr<f32>) -> u8 = cdecl 0x509760 => unported;
-    /// `operator*(CVector* out, const CVector&, float)` (0x40FEC0); the float as its raw dword
-    fn vector_mul(out: GPtr<f32>, v: GPtr<f32>, s: u32) -> GPtr<f32> = cdecl 0x40FEC0 => unported;
-    /// `CVector::operator+=(const CVector&)` (0x411A00)
-    fn vector_add_assign(v: GPtr<f32>, o: GPtr<f32>) = thiscall 0x411A00 => unported;
     /// `CGeneral::GetRandomNumberInRange<float>(min, max)` (0x41BD90, ST0)
     fn random_float(min: f32, max: f32) -> f64 = cdecl 0x41BD90 => self::random_float_port;
-    /// `RwIm3DRenderPrimitive(primType)` (0x7EF6B0)
-    fn rw_im3d_render_primitive_v(prim: u32) -> u32 = cdecl 0x7EF6B0 => unported;
 }
 
 #[cfg_attr(sa_phase_a, allow(dead_code))]
@@ -1286,8 +1270,8 @@ pub fn volumetric_clouds_render() {
     }
     let pcam = GPtr::<u32>::from_raw(cam.as_mut_ptr()).cast::<f32>();
     let pplayer = GPtr::<u32>::from_raw(player.as_mut_ptr()).cast::<f32>();
-    let mut moved = vector_ne(pcam, GPtr::from_addr(VC_OLD_CAM)) != 0;
-    if vector_ne(pplayer, GPtr::from_addr(VC_OLD_PLAYER)) != 0 {
+    let mut moved = vector_ne(pcam.cast::<u8>(), GPtr::<f32>::cast::<u8>(GPtr::from_addr(VC_OLD_CAM))) != 0;
+    if vector_ne(pplayer.cast::<u8>(), GPtr::<f32>::cast::<u8>(GPtr::from_addr(VC_OLD_PLAYER))) != 0 {
         moved = true;
     }
     g::<u32>(VC_OLD_CAM + 8).write(cam[2]);
@@ -1303,7 +1287,7 @@ pub fn volumetric_clouds_render() {
         let mut tmp = [0u32; 3];
         let ptmp = GPtr::<u32>::from_raw(tmp.as_mut_ptr()).cast::<f32>();
         if veh.is_null() {
-            let r = vector_mul(ptmp, GPtr::from_addr(CAM_FRONT as usize), dist);
+            let r = GPtr::<u8>::cast::<f32>(vector_mul(ptmp.cast::<u8>(), GPtr::<f32>::cast::<u8>(GPtr::from_addr(CAM_FRONT as usize)), f32::from_bits(dist)));
             let r = [rd::<u32>(r.cast(), 0), rd::<u32>(r.cast(), 4), rd::<u32>(r.cast(), 8)];
             v[0] = bits(x(f(cam[0])).fadd_m(f(r[0])));
             v[1] = bits(x(f(cam[1])).fadd_m(f(r[1])));
@@ -1311,10 +1295,10 @@ pub fn volumetric_clouds_render() {
         } else {
             let m = rd::<GPtr<u8>>(veh, 0x14);
             let fwd = if m.is_null() { GPtr::<u8>::from_addr(0x10) } else { m.byte_add(0x10) };
-            let r = vector_mul(ptmp, fwd.cast(), dist);
+            let r = GPtr::<u8>::cast::<f32>(vector_mul(ptmp.cast::<u8>(), GPtr::<f32>::cast::<u8>(fwd.cast()), f32::from_bits(dist)));
             v = [rd::<u32>(r.cast(), 0), rd::<u32>(r.cast(), 4), rd::<u32>(r.cast(), 8)];
             let pos = if m.is_null() { veh.byte_add(4) } else { m.byte_add(0x30) };
-            vector_add_assign(GPtr::<u32>::from_raw(v.as_mut_ptr()).cast(), pos.cast());
+            vector_add_assign(GPtr::<f32>::cast::<u8>(GPtr::<u32>::from_raw(v.as_mut_ptr()).cast()), GPtr::<f32>::cast::<u8>(pos.cast()));
         }
         v[0] = bits(X87::from_f64_exact(random_float(-200.0, 200.0)).fadd_m(f(v[0])));
         v[1] = bits(X87::from_f64_exact(random_float(-200.0, 200.0)).fadd_m(f(v[1])));
@@ -1411,7 +1395,7 @@ pub fn volumetric_clouds_render() {
             wr::<f32>(vtx, 0x1C, x(m(3)).to_f32());
             wr::<f32>(vtx, 0x20, x(m(4)).to_f32());
             if nv == 0x7F2 {
-                if !rw_im3d_transform(TEMP_RENDER_VERTICES, nv, 0, 9).is_null() {
+                if !rw_im3d_transform(GPtr::from_addr(TEMP_RENDER_VERTICES as usize), nv, GPtr::NULL, 9).is_null() {
                     rw_im3d_render_primitive_v(3);
                     rw_im3d_end();
                 }
@@ -1419,7 +1403,7 @@ pub fn volumetric_clouds_render() {
             }
         }
     }
-    if nv as i32 > 0 && !rw_im3d_transform(TEMP_RENDER_VERTICES, nv, 0, 9).is_null() {
+    if nv as i32 > 0 && !rw_im3d_transform(GPtr::from_addr(TEMP_RENDER_VERTICES as usize), nv, GPtr::NULL, 9).is_null() {
         rw_im3d_render_primitive_v(3);
         rw_im3d_end();
     }

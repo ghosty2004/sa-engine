@@ -55,8 +55,16 @@ use crate::bindings::dynamic_vertex_buffer_destroy;
 use crate::bindings::dynamic_vertex_buffer_lock;
 use crate::bindings::geometry_get_usage_flags;
 use crate::bindings::index_buffer_create;
-use crate::bindings::set_render_state;
+use sa_core::bindings::set_render_state;
 use crate::bindings::set_transform_world;
+use crate::bindings::inst_color;
+use crate::bindings::inst_tangent;
+use crate::bindings::inst_v2d;
+use crate::bindings::inst_v3d;
+use crate::bindings::resources_free_res_entry as free_res_entry;
+use sa_core::bindings::frame_get_ltm;
+use sa_core::bindings::get_render_state;
+use sa_core::bindings::rw_d3d9_get_caps as get_caps;
 orig! {
     /// `IDirect3DVertexBuffer9::Lock` / `Unlock`
     fn vb_lock(vb: GPtr<u8>, offset: u32, size: u32, data: GPtr<u32>, flags: u32) -> i32 = stdcall vslot 0x2C => unported;
@@ -66,15 +74,10 @@ orig! {
     fn ib_unlock(ib: GPtr<u8>) -> i32 = stdcall vslot 0x30 => unported;
     /// `IDirect3DVertexDeclaration9::GetDeclaration(elements, count)` (+0x10)
     fn decl_get_declaration(decl: GPtr<u8>, elements: GPtr<u8>, count: GPtr<u32>) -> i32 = stdcall vslot 0x10 => unported;
-    /// `RwResourcesFreeResEntry(entry)` (0x807DE0)
-    fn free_res_entry(e: GPtr<u8>) -> u32 = cdecl 0x807DE0 => crate::memory::rw_resources_free_res_entry;
     /// `_rpD3D9IndexRangeMinMax(indices, count, &numVertices, &minVertex)` (0x756710)
     fn index_range_call(indices: GPtr<u8>, n: u32, num_out: GPtr<u32>, min_out: GPtr<u32>) = cdecl 0x756710 => index_range;
     /// `_rpD3D9SortTriangles(indices, count)` (0x756770)
     fn sort_triangles_call(indices: GPtr<u8>, n: u32) = cdecl 0x756770 => sort_triangles;
-
-    /// `RwD3D9GetCaps()` (0x7FAD20)
-    fn get_caps() -> u32 = cdecl 0x7FAD20 => crate::d3d9dev::get_caps;
     /// `_rpD3D9VertexDeclarationGetSize(type)` (0x7522E0)
     fn decl_get_size(ty: u32) -> u32 = cdecl 0x7522E0 => crate::d3d9misc::vertex_declaration_get_size;
     /// `_rpD3D9FindFormatV2d(texCoords, numVertices)` (0x755AA0)
@@ -83,19 +86,8 @@ orig! {
     fn skin_use_software(atomic: u32) -> u32 = cdecl 0x7C89C0 => crate::generated::generated_leaf_logic::g_fun_007c89c0_7c89c0;
     /// `_rpD3D9SkinUseHardware(atomic)`-like predicate (0x7C8A00; vertex shaders with few enough bones)
     fn skin_use_hardware(atomic: u32) -> u32 = cdecl 0x7C8A00 => crate::generated::generated_leaf_logic::g_fun_007c8a00_7c8a00;
-
-    /// The `_rpD3D9VertexDeclarationInst*` writers
-    fn inst_v3d(ty: u32, dst: u32, src: u32, n: i32, stride: u32) -> u32 = cdecl 0x752AD0 => crate::d3d9inst::inst_v3d;
-    fn inst_v2d(ty: u32, dst: u32, src: u32, n: i32, stride: u32) -> u32 = cdecl 0x7544E0 => crate::d3d9inst::inst_v2d;
-    fn inst_color(dst: u32, src: u32, n: i32, stride: u32) -> u32 = cdecl 0x754AE0 => crate::d3d9inst::inst_color;
     fn inst_weights(ty: u32, dst: u32, src: u32, n: i32, stride: u32) -> u32 = cdecl 0x752320 => crate::d3d9inst::inst_weights;
     fn inst_indices_remap(ty: u32, dst: u32, src: u32, remap: u32, n: i32, stride: u32) -> u32 = cdecl 0x754C80 => crate::d3d9inst::inst_indices_remap;
-    fn inst_tangent(ty: u32, dst: u32, pos: u32, uv: u32, hdr: u32, stride: u32) -> u32 = cdecl 0x754E20 => crate::d3d9inst::inst_tangent;
-
-    /// `RwFrameGetLTM(frame)` (0x7F0990)
-    fn frame_get_ltm(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0990 => crate::frame::get_ltm;
-    /// `RwD3D9GetRenderState(state, out)` (0x7FC320)
-    fn get_render_state(state: u32, out: GPtr<u32>) = cdecl 0x7FC320 => crate::d3d9state::get_render_state;
 
     /// The skin mesh instancing (0x7C8D60)
     fn instance_meshes_call(atomic: GPtr<u8>, owner: GPtr<u8>, entry_ref: GPtr<u32>, mesh: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C8D60 => skin_instance_meshes;
@@ -342,7 +334,7 @@ fn stream_for(usage: u32, bit: u32, last: u32) -> u32 {
 #[hook(addr = 0x7C9680, conv = cdecl, name = "FUN_007c9680", expect = "81 EC AC 00 00 00 53 55 56 57",
        unverified = "std10-skin-1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn skin_geometry_instance(atomic: GPtr<u8>, header: GPtr<u8>, has_hierarchy: u32) -> u32 {
-    let caps = p8(get_caps());
+    let caps = p8(GPtr::<u8>::addr(get_caps()) as u32);
     let geo = p8(rd::<u32>(atomic, 0x18));
     let skin = p8(rd::<u32>(geo, g::<i32>(SKIN_GEOMETRY_OFFSET).read() as isize));
     let gflags = rd::<u32>(geo, 8);

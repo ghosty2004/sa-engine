@@ -28,19 +28,20 @@ use crate::common::{f32_of, rd, wr, x};
 /// No globals of its own (`AEAudioHardware` is reached by address).
 pub const GLOBALS: &[GlobalDesc] = &[];
 
+pub use crate::bindings::bank_is_sound_bank_loaded;
+pub use crate::bindings::bank_is_sound_loaded;
+pub use crate::bindings::hw_rescale_channel_volumes as rescale_channel_volumes;
+pub use crate::bindings::stream_get_active_track_id;
+pub use crate::bindings::stream_get_track_play_time;
 orig! {
     /// `CAEMP3BankLoader::LoadSoundBank(uint16 bank, int16 slot)` (0x4E0670)
     pub fn bank_load_sound_bank(this: GPtr<u8>, bank: u32, slot: u32) = thiscall 0x4E0670 => unported;
-    /// `CAEMP3BankLoader::IsSoundBankLoaded(uint16 bank, int16 slot)` (0x4E0220)
-    pub fn bank_is_sound_bank_loaded(this: GPtr<u8>, bank: u32, slot: u32) -> u8 = thiscall 0x4E0220 => unported;
     /// `CAEMP3BankLoader::GetSoundBankLoadingStatus(uint16 bank, int16 slot)` (0x4E0250)
     pub fn bank_get_sound_bank_loading_status(this: GPtr<u8>, bank: u32, slot: u32) -> u8 = thiscall 0x4E0250 => unported;
     /// `CAEMP3BankLoader::GetSoundHeadroom(uint16 sound, int16 slot)` (0x4E01E0)
     pub fn bank_get_sound_headroom(this: GPtr<u8>, sound: u32, slot: u32) -> u32 = thiscall 0x4E01E0 => unported;
     /// `CAEMP3BankLoader::LoadSound(uint16 bank, uint16 sound, int16 slot)` (0x4E07A0)
     pub fn bank_load_sound(this: GPtr<u8>, bank: u32, sound: u32, slot: u32) = thiscall 0x4E07A0 => unported;
-    /// `CAEMP3BankLoader::IsSoundLoaded(uint16 bank, uint16 sound, int16 slot)` (0x4E03B0)
-    pub fn bank_is_sound_loaded(this: GPtr<u8>, bank: u32, sound: u32, slot: u32) -> u8 = thiscall 0x4E03B0 => unported;
     /// `CAEMP3BankLoader::GetSoundLoadingStatus(uint16 bank, uint16 sound, int16 slot)` (0x4E0400)
     pub fn bank_get_sound_loading_status(this: GPtr<u8>, bank: u32, sound: u32, slot: u32) -> u8 = thiscall 0x4E0400 => unported;
     /// `CAEMP3TrackLoader::IsCurrentAudioStreamAvailable()` (0x4E0BD0)
@@ -49,20 +50,14 @@ orig! {
     pub fn stream_play_track(this: GPtr<u8>, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32) = thiscall 0x4F1230 => unported;
     /// `CAEStreamThread::StopTrack()` (0x4F1580)
     pub fn stream_stop_track(this: GPtr<u8>) = thiscall 0x4F1580 => unported;
-    /// `CAEStreamThread::GetTrackPlayTime()` (0x4F1530)
-    pub fn stream_get_track_play_time(this: GPtr<u8>) -> u32 = thiscall 0x4F1530 => unported;
     /// `CAEStreamThread::GetTrackLengthMs()` (0x4F1550)
     pub fn stream_get_track_length_ms(this: GPtr<u8>) -> u32 = thiscall 0x4F1550 => unported;
-    /// `CAEStreamThread::GetActiveTrackID()` (0x4F1560)
-    pub fn stream_get_active_track_id(this: GPtr<u8>) -> u32 = thiscall 0x4F1560 => unported;
     /// `CAEStreamThread::GetPlayingTrackID()` (0x4F1570)
     pub fn stream_get_playing_track_id(this: GPtr<u8>) -> u32 = thiscall 0x4F1570 => unported;
     /// `CAEStreamingChannel::SetBassEQ(uint8 setting, float gain)` (0x4F1F30)
     pub fn streaming_set_bass_eq(this: GPtr<u8>, setting: u32, gain: u32) = thiscall 0x4F1F30 => unported;
     /// `CAEAudioChannel::SetPosition(const CVector*)` (0x4D7950)
     pub fn channel_set_position(this: GPtr<u8>, pos: u32) -> u32 = thiscall 0x4D7950 => unported;
-    /// `CAEAudioHardware::RescaleChannelVolumes()` (0x4D8990)
-    pub fn rescale_channel_volumes(this: GPtr<u8>) -> u32 = thiscall 0x4D8990 => unported;
     /// `CAEAudioChannel` vtable +0x0C (`GetPlayTime`; AX)
     pub fn channel_v_get_play_time(this: GPtr<u8>) -> u32 = thiscall vslot 0x0C => unported;
     /// `CAEAudioChannel` vtable +0x1C (`Stop`)

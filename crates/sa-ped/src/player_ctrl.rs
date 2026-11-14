@@ -6,6 +6,7 @@
 //! +0x1C = its sprint energy), +0xB0 remote vehicle, +0xB4 special collectable, +0x144 hours without
 //! eating (i16), +0x188 parachute requested, +0x18C parachute timer. `CPlayerPed`: +0x480 player data.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -39,12 +40,12 @@ pub use sa_core::bindings::streaming_request_model as request_model;
 pub use sa_core::bindings::task_new as task_operator_new;
 pub use sa_core::bindings::tm_set_task_secondary as task_manager_set_task_secondary;
 pub use sa_core::bindings::world_add;
-pub use sa_stream::bindings::anim_add_block_ref as add_anim_block_ref;
+pub use sa_core::bindings::anim_add_block_ref as add_anim_block_ref;
 pub use sa_stream::bindings::anim_remove_block_ref as remove_anim_block_ref;
 pub use sa_stream::bindings::pad_stop_pads_shaking as stop_pads_shaking;
 pub use sa_world::bindings::add_animation;
-pub use sa_world::bindings::anim_blend_clump_remove_all_associations as clump_remove_all_associations;
-pub use sa_world::bindings::anim_get_anim_association as get_anim_association;
+pub use sa_core::bindings::anim_blend_clump_remove_all_associations as clump_remove_all_associations;
+pub use sa_core::bindings::anim_get_anim_association as get_anim_association;
 pub use sa_world::bindings::camera_clear_player_weapon_mode;
 pub use sa_world::bindings::camera_set_new_player_weapon_mode;
 pub use sa_world::bindings::clear_drunk_blur;
@@ -61,7 +62,7 @@ pub use sa_world::bindings::fire_extinguish;
 pub use sa_world::bindings::fire_extinguish_point;
 pub use sa_world::bindings::frenzy_on_going;
 pub use sa_world::bindings::generate_damage_event;
-pub use sa_world::bindings::get_animation_block;
+pub use sa_core::bindings::get_animation_block;
 pub use sa_world::bindings::get_stat_value;
 pub use sa_world::bindings::get_task_jet_pack;
 pub use sa_world::bindings::group_intel_set_default_task_allocator_type;
@@ -79,67 +80,48 @@ pub use sa_world::bindings::set_all_cars_can_be_damaged;
 pub use sa_world::bindings::stats_get_fat_and_muscle_modifier as get_fat_and_muscle_modifier;
 pub use sa_world::bindings::stop_all_law_enforcers_in_their_tracks;
 pub use sa_world::bindings::tm_set_task as task_manager_set_task;
+pub use crate::bindings::clear_aim_flag as ped_clear_aim_flag;
+pub use crate::bindings::ped_clear_look_flag;
+pub use crate::bindings::ped_data_set_initial_state;
+pub use sa_core::bindings::clump_get_association;
+pub use sa_core::bindings::get_weapon_info;
+pub use sa_core::bindings::text_get;
+pub use sa_world::bindings::anim_get_anim_block_name as get_anim_block_name;
+pub use sa_world::bindings::get_pad_from_player;
+pub use sa_world::bindings::group_intelligence_add_event as group_intel_add_event;
+pub use sa_world::bindings::handle_sprint_energy;
+pub use sa_world::bindings::make_changes_for_new_weapon as make_changes_for_new_weapon_call;
+pub use sa_world::bindings::ped_get_weapon_skill as ped_get_weapon_skill_current;
+pub use sa_world::bindings::ped_say;
+pub use sa_world::bindings::ped_set_move_state;
+pub use sa_world::bindings::ped_set_ped_state;
+pub use sa_world::bindings::player_clear_weapon_target as clear_weapon_target;
+pub use sa_world::bindings::player_info_get_pos;
+pub use sa_world::bindings::player_ped_clear_adrenaline as clear_adrenaline;
+pub use sa_world::bindings::set_orientation;
 orig! {
-    /// `CPlayerPed::GetPadFromPlayer` (0x609560)
-    pub fn get_pad_from_player(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x609560 => crate::player_ped::get_pad_from_player;
-    /// `CPlayerPed::ClearAdrenaline` (0x60A070)
-    pub fn clear_adrenaline(p: GPtr<u8>) = thiscall 0x60A070 => crate::player_ped::clear_adrenaline;
-    /// `CPlayerPed::ClearWeaponTarget` (0x609C80)
-    pub fn clear_weapon_target(p: GPtr<u8>) = thiscall 0x609C80 => crate::player_ped::clear_weapon_target;
-    /// `CPlayerInfo::GetPos_Hook(CVector*)` (0x56DFB0)
-    pub fn player_info_get_pos(pi: GPtr<u8>, out: GPtr<u32>) -> GPtr<u32> = thiscall 0x56DFB0 => crate::player_info::get_pos;
     /// `CReplay::DisableReplays` (0x45B150)
     pub fn disable_replays() = cdecl 0x45B150 => unported;
     /// `CReplay::EnableReplays` (0x45B160)
     pub fn enable_replays() = cdecl 0x45B160 => unported;
-    /// `CPed::Say(uint16, uint32, float, uint8, uint8, uint8)` (0x5EFFE0, `ret 0x18`)
-    pub fn ped_say(p: GPtr<u8>, id: u32, delay: u32, prob: f32, a: u32, b: u32, c: u32) -> u32 = thiscall 0x5EFFE0 => unported;
-    /// `CText::Get(const char*)` (0x6A0050)
-    pub fn text_get(t: GPtr<u8>, key: u32) -> u32 = thiscall 0x6A0050 => unported;
-    /// `RpAnimBlendClumpGetAssociation(RpClump*, uint32 animId)` (0x4D68B0)
-    pub fn clump_get_association(clump: GPtr<u8>, id: u32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
-    /// `CPlaceable::SetOrientation(float, float, float)` (0x439A80)
-    pub fn set_orientation(e: GPtr<u8>, x: f32, y: f32, z: f32) = thiscall 0x439A80 => unported;
     /// `CWeapon::StopWeaponEffect` (0x73B360)
     pub fn weapon_stop_weapon_effect(w: GPtr<u8>) = thiscall 0x73B360 => unported;
-    /// `CPed::GetWeaponSkill()` (0x5E6580)
-    pub fn ped_get_weapon_skill_current(p: GPtr<u8>) -> u8 = thiscall 0x5E6580 => crate::ped::get_weapon_skill_current;
-    /// `CWeaponInfo::GetWeaponInfo(eWeaponType, eWeaponSkill)` (0x743C60)
-    pub fn get_weapon_info(ty: i32, skill: i32) -> GPtr<u8> = cdecl 0x743C60 => unported;
     /// `CPad::SprintJustDown` (0x5407F0)
     pub fn pad_sprint_just_down(pad: GPtr<u8>) -> u8 = thiscall 0x5407F0 => unported;
-    /// `CPlayerPed::HandleSprintEnergy(bool, float)` (0x60A550)
-    pub fn handle_sprint_energy(p: GPtr<u8>, sprint: u32, rate: f32) -> u8 = thiscall 0x60A550 => crate::player_ped::handle_sprint_energy;
     /// `CPed::CanStrafeOrMouseControl` (0x5DF090)
     pub fn ped_can_strafe_or_mouse_control(p: GPtr<u8>) -> u8 = thiscall 0x5DF090 => unported;
     /// `CBaseModelInfo::GetModelType` (vtable slot 0x10, AL)
     pub fn model_info_get_model_type(mi: GPtr<u8>) -> u8 = thiscall vslot 0x10 => unported;
     /// `CPlayerPed::ReApplyMoveAnims` (0x609650)
     pub fn re_apply_move_anims_call(p: GPtr<u8>) = thiscall 0x609650 => re_apply_move_anims;
-    /// `CAnimManager::GetAnimBlockName(AssocGroupId)` (0x4D3A30)
-    pub fn get_anim_block_name(group: i32) -> GPtr<u8> = cdecl 0x4D3A30 => unported;
     /// `CPad::CycleWeaponRightJustDown` (0x540640)
     pub fn pad_cycle_weapon_right_just_down(pad: GPtr<u8>) -> u8 = thiscall 0x540640 => unported;
     /// `CPad::CycleWeaponLeftJustDown` (0x540610)
     pub fn pad_cycle_weapon_left_just_down(pad: GPtr<u8>) -> u8 = thiscall 0x540610 => unported;
     /// `CWeapon::HasWeaponAmmoToBeUsed` (0x73B2A0)
     pub fn weapon_has_ammo_to_be_used(w: GPtr<u8>) -> u8 = thiscall 0x73B2A0 => unported;
-    /// `CPlayerPed::MakeChangesForNewWeapon(eWeaponType)` (0x60B460)
-    pub fn make_changes_for_new_weapon_call(p: GPtr<u8>, ty: i32) = thiscall 0x60B460 => make_changes_for_new_weapon;
-    /// `CPed::ClearAimFlag` (0x5DEF20)
-    pub fn ped_clear_aim_flag(p: GPtr<u8>) = thiscall 0x5DEF20 => unported;
-    /// `CPed::ClearLookFlag` (0x5E1950)
-    pub fn ped_clear_look_flag(p: GPtr<u8>) = thiscall 0x5E1950 => crate::ped::clear_look_flag;
-    /// `CPed::SetPedState(ePedState)` (0x5E4500)
-    pub fn ped_set_ped_state(p: GPtr<u8>, s: i32) = thiscall 0x5E4500 => unported;
-    /// `CPed::SetMoveState(eMoveState)` (0x5DEC00)
-    pub fn ped_set_move_state(p: GPtr<u8>, s: i32) = thiscall 0x5DEC00 => unported;
     /// `CPedIntelligence::FlushIntelligence` (0x601DA0)
     pub fn intel_flush_intelligence(intel: GPtr<u8>) = thiscall 0x601DA0 => unported;
-    /// `CPedGroupIntelligence::AddEvent(CEvent*)` (0x5F7470)
-    pub fn group_intel_add_event(gi: GPtr<u8>, e: GPtr<u8>) -> GPtr<u8> = thiscall 0x5F7470 => unported;
-    /// `CPlayerPedData::SetInitialState` (0x56F210)
-    pub fn ped_data_set_initial_state(d: GPtr<u8>) = thiscall 0x56F210 => crate::player_info::set_initial_state;
 }
 
 /// The vector `GetPos_Hook` stores into a 12-byte stack buffer, read back through the returned pointer.
@@ -310,12 +292,12 @@ pub fn work_out_energy_from_hunger(this: GPtr<u8>) {
         ped_say(ped, 0x151, 0, 1.0, 0, 0, 0);
         pad_start_shake(get_pad(0), 0x190, 0x6E, 0);
         if shown.read() == 0 {
-            hud_set_help_message(text_get(g::<u8>(THE_TEXT), 0x865028), 1, 0, 1);
+            hud_set_help_message(GPtr::from_addr((GPtr::<u8>::addr(text_get(g::<u8>(THE_TEXT), GPtr::from_addr(0x865028))) as u32) as usize), 1, 0, 1);
             shown.write(1);
         } else {
             let mut dec = false;
             if !X87::from_f64_exact(get_stat_value(0x15)).fcom(x(0.0)).test_any(0x41) {
-                decrement_stat(0x15, 25.0);
+                decrement_stat(0x15, 25.0f32.to_bits());
                 display_script_stat_update_message(0, 0x15, 25.0);
                 dec = true;
                 if hungry.read() == 0 {
@@ -325,7 +307,7 @@ pub fn work_out_energy_from_hunger(this: GPtr<u8>) {
             let muscle = !X87::from_f64_exact(get_stat_value(0x17)).fcom(x(0.0)).test_any(0x41);
             let h = hungry.read();
             if muscle && (rd::<i16>(this, 0x144) > i16::from(h) || h == 0) {
-                decrement_stat(0x17, 25.0);
+                decrement_stat(0x17, 25.0f32.to_bits());
                 display_script_stat_update_message(0, 0x17, 25.0);
             } else if !dec {
                 let p = rd::<GPtr<u8>>(this, 0);
@@ -378,7 +360,7 @@ pub fn re_apply_move_anims(this: GPtr<u8>) {
         if a.is_null() {
             continue;
         }
-        let s = get_anim_association(rd::<u32>(this, 0x4D4), id);
+        let s = get_anim_association(rd::<u32>(this, 0x4D4) as i32, id as i32);
         let sh = rd::<GPtr<u8>>(s, 0x10);
         if rd::<u32>(rd::<GPtr<u8>>(a, 0x14), 0) == rd::<u32>(sh, 0) {
             continue;
@@ -433,12 +415,12 @@ pub fn make_changes_for_new_weapon(this: GPtr<u8>, ty: i32) {
     if rd::<i32>(this, 0x530) == 0xC {
         camera_clear_player_weapon_mode(g::<u8>(THE_CAMERA));
     }
-    ped_set_current_weapon(this, ty);
+    ped_set_current_weapon(this, ty as u32);
     wr::<i8>(pdata(this), 0x20, rd::<i8>(this, 0x718));
     wr::<u32>(pdata(this), 0x2C, 0);
     let wt = rd::<i32>(this, active_weapon_off(this));
-    let sk = ped_get_weapon_skill_current(this);
-    let info = get_weapon_info(wt, i32::from(sk));
+    let sk = ped_get_weapon_skill_current(this) as u8;
+    let info = get_weapon_info(wt, i32::from(sk) as u8);
     let off = active_weapon_off(this);
     let clip = i32::from(rd::<i16>(info, 0x20));
     let total = rd::<i32>(this, off + 0xC);
@@ -618,7 +600,7 @@ fn stream_anim_slot(this: GPtr<u8>, off: isize, blk: i32, release: &mut bool) {
     }
     let mut b = group_anim_block(blk);
     if b.is_null() {
-        b = get_animation_block(get_anim_block_name(blk));
+        b = get_animation_block(get_anim_block_name(blk as u32));
     }
     let idx = block_index(b);
     if rd::<u8>(b, 0x10) != 1 {
@@ -632,7 +614,7 @@ fn stream_anim_slot(this: GPtr<u8>, off: isize, blk: i32, release: &mut bool) {
 fn release_anim_slot(this: GPtr<u8>, off: isize) {
     let v = rd::<i32>(pdata(this), off);
     if v != 0 {
-        remove_anim_block_ref(block_index(group_anim_block(v)));
+        remove_anim_block_ref(block_index(group_anim_block(v)) as u32);
         wr::<i32>(pdata(this), off, 0);
     }
 }
@@ -712,8 +694,8 @@ pub fn process_anim_groups(this: GPtr<u8>) {
         re_apply_move_anims_call(this);
     }
     let wt = rd::<i32>(this, active_weapon_off(this));
-    let sk = ped_get_weapon_skill_current(this);
-    let info = get_weapon_info(wt, i32::from(sk));
+    let sk = ped_get_weapon_skill_current(this) as u8;
+    let info = get_weapon_info(wt, i32::from(sk) as u8);
     let mut r1 = false;
     let mut r2 = false;
     if rd::<u32>(info, 0) != 0 || rd::<u32>(this, 0x46C) & 0x100 != 0 {
@@ -867,7 +849,7 @@ pub fn process_weapon_switch(this: GPtr<u8>, pad: GPtr<u8>) {
             return;
         }
     }
-    ped_remove_weapon_anims(this, i32::from(active()), -1000.0);
+    ped_remove_weapon_anims(this, i32::from(active()) as u32, -1000.0);
     let s = rd::<i8>(pdata(this), 0x20);
     if s != -1 {
         make_changes_for_new_weapon_call(this, rd::<i32>(weapon_slot(this, s), 0));

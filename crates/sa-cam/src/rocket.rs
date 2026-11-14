@@ -18,7 +18,8 @@ pub use sa_core::bindings::entity_update_rp_hanim as entity_update_rp_h_anim;
 pub use sa_core::bindings::entity_update_rw_frame;
 pub use sa_core::bindings::matrix_update_rw_matrix;
 pub use sa_world::bindings::simple_transform_update_rw_matrix;
-pub use sa_world::bindings::world_get_is_line_of_sight_clear as get_is_line_of_sight_clear;
+pub use sa_core::bindings::world_get_is_line_of_sight_clear as get_is_line_of_sight_clear;
+pub use sa_world::bindings::weapon_effects_mark_target;
 orig! {
     /// `CPad::LookAroundLeftRight(CPed*)` / `LookAroundUpDown(CPed*)` (0x540BD0 / 0x540CC0, AX)
     pub fn pad_look_around_left_right(pad: GPtr<u8>, ped: GPtr<u8>) -> i16 = thiscall 0x540BD0 => unported;
@@ -26,9 +27,6 @@ orig! {
     /// `CWeapon::PickTargetForHeatSeekingMissile(CVector origin, CVector dir, float distMul, CEntity* ignore,
     /// bool fromVehicle, CEntity* last)` (0x73F910, cdecl); the vectors and the float as dwords
     pub fn pick_target_for_heat_seeking_missile(ox: u32, oy: u32, oz: u32, dx: u32, dy: u32, dz: u32, mul: u32, ignore: GPtr<u8>, from_veh: u32, last: GPtr<u8>) -> GPtr<u8> = cdecl 0x73F910 => unported;
-    /// `CWeaponEffects::MarkTarget(int32, CVector pos, uint8 r, uint8 g, uint8 b, uint8 a, float size,
-    /// uint8)` (0x742BF0, cdecl); the vector and the float as dwords
-    pub fn weapon_effects_mark_target(i: i32, px: u32, py: u32, pz: u32, r: u32, gr: u32, b: u32, a: u32, size: u32, flag: u32) = cdecl 0x742BF0 => unported;
 }
 
 /// Statics reset with the camera (u8 0xB70000, f32 0xB6FFFC / 0xB6FFF8).
@@ -91,7 +89,7 @@ pub fn process_rocket(this: GPtr<u8>, _target: GPtr<u8>, _o: u32, _sv: u32, _svw
     let f = &mut fpu;
     let t = rd::<GPtr<u8>>(this, 0x21C);
     if rd::<u8>(t, 0x36) & 7 != 3 {
-        set_near_clip_raw(SCENE_CAMERA.get(), g::<u32>(ROCKET_NEAR_CLIP).read());
+        set_near_clip_raw(SCENE_CAMERA.get(), f32::from_bits(g::<u32>(ROCKET_NEAR_CLIP).read()));
         return;
     }
     wr::<u32>(this, 0xB4, 0x428C_0000);
@@ -240,7 +238,7 @@ pub fn process_rocket(this: GPtr<u8>, _target: GPtr<u8>, _o: u32, _sv: u32, _svw
     get_vectors_ready_for_rw(this);
     push_st0(
         f,
-        get_atan_of_xy_bits(rd::<u32>(front, 0), rd::<u32>(this, 0x194)),
+        get_atan_of_xy_bits(f32::from_bits(rd::<u32>(front, 0)), f32::from_bits(rd::<u32>(this, 0x194))),
     );
     f.fsub_m(k(K_HALF_PI));
     let te = g::<GPtr<u8>>(CAMERA_TARGET).read();
@@ -252,7 +250,7 @@ pub fn process_rocket(this: GPtr<u8>, _target: GPtr<u8>, _o: u32, _sv: u32, _svw
     if hs != 0 {
         heat_seeking_lock(b, front);
     }
-    set_near_clip_raw(SCENE_CAMERA.get(), g::<u32>(ROCKET_NEAR_CLIP).read());
+    set_near_clip_raw(SCENE_CAMERA.get(), f32::from_bits(g::<u32>(ROCKET_NEAR_CLIP).read()));
 }
 
 /// 0x511EC8: the heat-seeking target, its lock bit and the cross-hair.

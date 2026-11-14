@@ -179,15 +179,15 @@ fn local<T, const N: usize>(buf: &mut [T; N]) -> GPtr<T> {
     GPtr::from_raw(buf.as_mut_ptr())
 }
 
-use crate::bindings::draw_window_call;
-use crate::bindings::font_set_drop_color;
-use crate::bindings::font_set_drop_shadow_position;
-use crate::bindings::font_set_right_justify_wrap;
-use crate::bindings::font_set_scale;
-use crate::bindings::font_set_wrapx;
-use crate::bindings::hud_colours_get_rgb;
+use sa_world::bindings::draw_window_call;
+use sa_core::bindings::font_set_drop_color;
+use sa_core::bindings::font_set_drop_shadow_position;
+use sa_core::bindings::font_set_right_justify_wrap;
+use sa_core::bindings::font_set_scale;
+use sa_core::bindings::font_set_wrapx;
+use sa_stream::bindings::hud_colours_get_rgb;
 use crate::bindings::hud_colours_get_rgba;
-use crate::bindings::rw_tex_dictionary_find_hash_named_texture;
+use sa_world::bindings::rw_tex_dictionary_find_hash_named_texture;
 use sa_core::bindings::append_string_to_key;
 use sa_core::bindings::ascii_to_gxt_char;
 use sa_core::bindings::font_print_string;
@@ -201,26 +201,23 @@ use sa_world::bindings::get_stat_value as stats_get_stat_value_st0;
 use sa_world::bindings::get_task_swim as intelligence_get_task_swim;
 use sa_world::bindings::get_weapon_radius_on_screen as player_ped_get_weapon_radius_on_screen_st0;
 use sa_world::bindings::weapon_is_type_melee;
+use sa_core::bindings::font_set_background;
+use sa_core::bindings::font_set_color;
+use sa_core::bindings::font_set_edge;
+use sa_core::bindings::font_set_font_style;
+use sa_core::bindings::font_set_orientation;
+use sa_core::bindings::font_set_proportional;
+use sa_core::bindings::sprite2d_draw as sprite2d_draw_rect;
+use sa_core::bindings::sprite_draw_rect as sprite2d_draw_rect_static;
+use sa_core::bindings::text_get;
+use sa_world::bindings::get_skill_stat_index as weapon_info_get_skill_stat_index;
+use sa_world::bindings::sprite_render_one_xlu_sprite;
+use sa_world::bindings::stats_get_fat_and_muscle_modifier as stats_get_fat_and_muscle_modifier_st0;
 orig! {
     /// `RwRenderStateSet` through `RwEngineInstance` (`mov r, [0xC97B24]; call [r+0x20]`)
     fn rw_render_state_set(state: u32, value: u32) -> u32 = cdecl table 0xC97B24 0x20 => unported;
     /// CRT `sprintf(buf, fmt, a, b)` (0x821BB5)
     fn sprintf2(buf: GPtr<u8>, fmt: GPtr<u8>, a: i32, bb: i32) -> i32 = cdecl 0x821BB5 => unported;
-    /// `CText::Get(const char*)` (0x6A0050)
-    fn text_get(this: GPtr<u8>, key: GPtr<u8>) -> GPtr<u8> = thiscall 0x6A0050 => crate::text::text_get;
-
-    /// `CFont::SetBackground(bool, bool)` (0x7195C0)
-    fn font_set_background(on: u32, outline: u32) = cdecl 0x7195C0 => crate::font::set_background;
-    /// `CFont::SetProportional(bool)` (0x7195B0)
-    fn font_set_proportional(v: u32) = cdecl 0x7195B0 => crate::font::set_proportional;
-    /// `CFont::SetFontStyle(eFontStyle)` (0x719490)
-    fn font_set_font_style(v: u32) = cdecl 0x719490 => crate::font::set_font_style;
-    /// `CFont::SetOrientation(eFontAlignment)` (0x719610; not hookable, see hud-port.md)
-    fn font_set_orientation(v: u32) = cdecl 0x719610 => crate::font::set_orientation;
-    /// `CFont::SetEdge(int8)` (0x719590)
-    fn font_set_edge(v: u32) = cdecl 0x719590 => crate::font::set_edge;
-    /// `CFont::SetColor(CRGBA)` (0x719430)
-    fn font_set_color(c: u32) = cdecl 0x719430 => crate::font::set_color;
 
     /// `CHud::GetYPosBasedOnHealth(uint8, float, int8)` (0x588B60, ST0)
     fn get_y_pos_based_on_health_st0(player: u8, y: f32, offset: i8) -> f64 = cdecl 0x588B60 => get_y_pos_st0_rust;
@@ -234,21 +231,11 @@ orig! {
     fn draw_weapon_icon_call(ped: GPtr<u8>, px: i32, py: i32, alpha: f32) = cdecl 0x58D7D0 => crate::hud_draw::draw_weapon_icon;
     /// `CHud::DrawAmmo(CPed*, int32 x, int32 y, float alpha)` (0x5893B0)
     fn draw_ammo_call(ped: GPtr<u8>, px: i32, py: i32, alpha: f32) = cdecl 0x5893B0 => crate::hud_draw::draw_ammo;
-    /// `CStats::GetFatAndMuscleModifier(eStatModAbilities)` (0x559AF0, ST0)
-    fn stats_get_fat_and_muscle_modifier_st0(stat: u32) -> f64 = cdecl 0x559AF0 => unported;
-    /// `CWeaponInfo::GetSkillStatIndex(eWeaponType)` (0x743CD0)
-    fn weapon_info_get_skill_stat_index(ty: u32) -> i32 = cdecl 0x743CD0 => unported;
 
     /// `FindPlayerVehicle(int32, bool)` (0x56E0D0)
     fn find_player_vehicle(id: i32, remote: u8) -> GPtr<u8> = cdecl 0x56E0D0 => sa_world::world::cworld::find_player_vehicle_port;
     /// `FindPlayerPed(int32)` (0x56E210)
     fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
-    /// `CSprite2d::DrawRect(const CRect&, const CRGBA&)` (0x727B60)
-    fn sprite2d_draw_rect_static(rect: GPtr<f32>, colour: GPtr<u8>) = cdecl 0x727B60 => unported;
-    /// `CSprite2d::Draw(const CRect&, const CRGBA&)` (0x728350)
-    fn sprite2d_draw_rect(this: GPtr<u8>, rect: GPtr<f32>, colour: GPtr<u8>) = thiscall 0x728350 => unported;
-    /// `CSprite::RenderOneXLUSprite(x, y, z, halfW, halfH, r, g, b, intensity, rhw, a, uDir, vDir)` (0x70D000)
-    fn sprite_render_one_xlu_sprite(px: f32, py: f32, pz: u32, hw: u32, hh: u32, r: u32, gg: u32, bb: u32, intensity: u32, rhw: u32, a: u32, u_dir: u32, v_dir: u32) = cdecl 0x70D000 => unported;
 }
 
 /// The Rust path of the ST0 declaration above (phases B/C).
@@ -269,7 +256,7 @@ fn fat_and_muscle_modifier(stat: u32) -> X87 {
 
 /// `CStats::GetStatValue` as an x87 value (ST0).
 fn stat_value(stat: u32) -> X87 {
-    X87::from_f64_exact(stats_get_stat_value_st0(stat))
+    X87::from_f64_exact(stats_get_stat_value_st0(stat as u16))
 }
 
 /// `CRGBA(r, g, b, a)` on a stack temporary; returns the dword the original passes on.
@@ -438,11 +425,11 @@ pub fn draw_player_info() {
         font_set_background(0, 0);
         let h = f32_of(max_h().fmul_m(k(K_1_448)).fmul_m(k(K_1_1)));
         let w = f32_of(max_w().fmul_m(k(K_1_640)).fmul_m(k(K_0_55)));
-        font_set_scale(w.to_bits(), h.to_bits());
+        font_set_scale(f32::from_bits(w.to_bits()), f32::from_bits(h.to_bits()));
         font_set_proportional(0);
         font_set_font_style(3);
         font_set_orientation(2);
-        font_set_right_justify_wrap(0);
+        font_set_right_justify_wrap(f32::from_bits(0));
         font_set_edge(2);
         font_set_drop_color(rgba(0, 0, 0, 0xFF));
         let minutes = i32::from(b(CLOCK_MINUTES));
@@ -542,9 +529,9 @@ pub fn draw_player_info() {
         font_set_background(0, 0);
         let h = f32_of(max_h().fmul_m(k(K_1_448)).fmul_m(k(K_1_1)));
         let w = f32_of(max_w().fmul_m(k(K_1_640)).fmul_m(k(K_0_55)));
-        font_set_scale(w.to_bits(), h.to_bits());
+        font_set_scale(f32::from_bits(w.to_bits()), f32::from_bits(h.to_bits()));
         font_set_orientation(2);
-        font_set_right_justify_wrap(0);
+        font_set_right_justify_wrap(f32::from_bits(0));
         font_set_font_style(3);
         font_set_drop_shadow_position(0);
         font_set_edge(2);
@@ -774,7 +761,7 @@ pub fn draw_cross_hairs() {
             }
             oy = 0.0;
             ox = 0.0;
-            let info = get_weapon_info(weapon_type(ped), 1);
+            let info = get_weapon_info(weapon_type(ped) as i32, 1);
             let model = rd::<i32>(info, 0xC);
             if model <= 0 {
                 draw_cross_hairs_end();
@@ -828,8 +815,8 @@ pub fn draw_cross_hairs() {
                 px,
                 py,
                 ONE_BITS,
-                hhx.to_bits(),
-                hhy.to_bits(),
+                f32::from_bits(hhx.to_bits()),
+                f32::from_bits(hhy.to_bits()),
                 0xFF,
                 0xFF,
                 0xFF,
@@ -903,8 +890,8 @@ pub fn draw_vital_stats() {
     }
     font_set_background(0, 0);
     font_set_color(rgba(0xE1, 0xE1, 0xE1, 0xFF));
-    font_set_wrapx(f32_of(max_w().fmul_m(k(K_1_640)).fmul_m(k(K_640))).to_bits());
-    font_set_right_justify_wrap(0);
+    font_set_wrapx(f32::from_bits(f32_of(max_w().fmul_m(k(K_1_640)).fmul_m(k(K_640))).to_bits()));
+    font_set_right_justify_wrap(f32::from_bits(0));
     font_set_proportional(1);
     let s = max_w().fmul_m(k(K_1_640));
     let xl = ftol32(x(k(K_10)).fmul(s).fadd_m(k(K_40)));
@@ -933,7 +920,7 @@ pub fn draw_vital_stats() {
     font_set_orientation(1);
     let sh = f32_of(max_h().fmul_m(k(K_1_448)).fmul_m(k(K_0_9)));
     let sw = f32_of(max_w().fmul_m(k(K_1_640)).fmul_m(k(K_0_35)));
-    font_set_scale(sw.to_bits(), sh.to_bits());
+    font_set_scale(f32::from_bits(sw.to_bits()), f32::from_bits(sh.to_bits()));
     font_set_color(rgba(0xE1, 0xE1, 0xE1, 0xFF));
     font_set_edge(0);
     let xbf = f32_of(xi(i32::from(xb as i16)));
@@ -985,7 +972,7 @@ pub fn draw_vital_stats() {
     font_set_orientation(2);
     let sh = f32_of(max_h().fmul_m(k(K_1_448)).fmul_m(k(K_0_7)));
     let sw = f32_of(max_w().fmul_m(k(K_1_640)).fmul_m(k(K_0_7)));
-    font_set_scale(sw.to_bits(), sh.to_bits());
+    font_set_scale(f32::from_bits(sw.to_bits()), f32::from_bits(sh.to_bits()));
     font_set_edge(1);
     font_set_color(rgba(0xC8, 0xC8, 0xC8, 0xFF));
     font_set_drop_color(rgba(0, 0, 0, 0xFF));

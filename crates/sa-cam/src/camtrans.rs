@@ -57,7 +57,7 @@ fn change_cam_target_reference(this: GPtr<u8>) {
     let slot = active_cam(this).byte_add(0x21C);
     let old = slot.cast::<GPtr<u8>>().read();
     if !old.is_null() {
-        clean_up_old_reference(old, slot);
+        clean_up_old_reference(old, slot.cast::<GPtr<u8>>());
     }
     active_cam(this)
         .byte_add(0x21C)
@@ -394,7 +394,7 @@ pub fn process_shake_float(this: GPtr<u8>, _unused: u32) {
         .ptr()
         .cast::<u8>()
         .byte_add(ty.wrapping_mul(0x94) as isize);
-    hand_shaker_process(hs, rd::<u32>(this, 0xC90));
+    hand_shaker_process(hs, f32::from_bits(rd::<u32>(this, 0xC90)));
     let roll = x(rd::<f32>(hs, 8)).fmul_m(rd::<f32>(this, 0xC90)).to_f32();
 
     let front = cam.byte_add(0x190);

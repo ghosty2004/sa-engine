@@ -61,9 +61,8 @@ mod k {
 pub use sa_core::bindings::file_close;
 pub use sa_core::bindings::file_set_dir;
 pub use sa_core::bindings::open_file as file_open;
+pub use sa_core::bindings::load_line;
 orig! {
-    /// `CFileLoader::LoadLine(FILE*)` (0x536F80)
-    pub fn load_line(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x536F80 => sa_stream::fileloader::load_line_file;
     /// `SurfaceInfos_c::GetSurfaceIdFromName` (0x55D220)
     pub fn get_surface_id_from_name_call(this: SiPtr, name: GPtr<u8>) -> u32
         = thiscall 0x55D220 => get_surface_id_from_name;

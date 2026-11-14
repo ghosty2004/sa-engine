@@ -2,13 +2,14 @@
 //! reached when the player jumps (LShift). Ported from the 1.0 US bytes; gta-reversed (`TaskSimpleJump.cpp`) as a
 //! reading aid (the bytes win). x87 compares follow the original's instruction order.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
 use crate::common::*;
 
 use crate::bindings::climb_test_for_climb;
-use crate::bindings::clump_get_association;
+use sa_core::bindings::clump_get_association;
 use crate::bindings::event_handler_current_type;
 use sa_core::bindings::matrix_mul_vec;
 use sa_stream::bindings::ped_is_player;
@@ -18,13 +19,15 @@ use sa_world::bindings::get_event_global_group;
 use sa_world::bindings::is_steep_slope as surface_is_steep_slope;
 use sa_world::bindings::physical_apply_move_force_5429f0 as physical_apply_move_force;
 use sa_world::bindings::stats_get_fat_and_muscle_modifier;
+use sa_core::bindings::assoc_set_finish_callback;
+use sa_core::bindings::get_anim_hierarchy_from_skin_clump as anim_hierarchy_from_skin_clump;
+use sa_core::bindings::rp_hanim_hierarchy_get_matrix_array as hanim_get_matrix_array;
+use sa_core::bindings::rp_hanim_id_get_index as hanim_id_get_index;
+use sa_core::bindings::rw_v3d_transform_points;
+use sa_world::bindings::anim_blend_animation;
+use sa_world::bindings::game_logic_allowed_direction as game_logic_player_allowed_direction;
+use sa_world::bindings::localisation_blood;
 orig! {
-    /// `CGameLogic::IsPlayerAllowedToGoInThisDirection(CPed*, CVector dir, float)` (0x441E10)
-    fn game_logic_player_allowed_direction(ped: GPtr<u8>, x: u32, y: u32, z: u32, dist: f32) -> u8 = cdecl 0x441E10 => unported;
-    /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float)` (0x4D4610)
-    fn anim_blend_animation(clump: u32, group: u32, id: u32, delta: f32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
-    /// `CAnimBlendAssociation::SetFinishCallback(void (*)(CAnimBlendAssociation*, void*), void*)` (0x4CEBE0)
-    fn assoc_set_finish_callback(a: GPtr<u8>, cb: u32, data: GPtr<u8>) = thiscall 0x4CEBE0 => unported;
     /// `CTaskSimpleJump::StartLaunchAnim(CPed*)` (0x67D7A0)
     fn start_launch_anim_c(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x67D7A0 => start_launch_anim;
     /// `CTaskSimpleJump::CheckIfJumpBlocked(CPed*)` (0x67D590)
@@ -36,16 +39,6 @@ orig! {
     fn entity_test_collision(e: GPtr<u8>, b: u32) -> u8 = thiscall vslot 0x34 => unported;
     /// `CTaskSimpleJump::Launch(CPed*)` (0x679B80)
     fn launch(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x679B80 => launch_port;
-    /// `CLocalisation::Blood()` (0x56D230)
-    fn localisation_blood() -> u8 = cdecl 0x56D230 => crate::fight_ground_target::localisation_blood_native;
-    /// `GetAnimHierarchyFromSkinClump(RpClump*)` (0x734A40)
-    fn anim_hierarchy_from_skin_clump(clump: u32) -> u32 = cdecl 0x734A40 => unported;
-    /// `RpHAnimIDGetIndex(RpHAnimHierarchy*, int32)` (0x7C51A0)
-    fn hanim_id_get_index(h: u32, id: u32) -> i32 = cdecl 0x7C51A0 => unported;
-    /// `RpHAnimHierarchyGetMatrixArray(RpHAnimHierarchy*)` (0x7C5120)
-    fn hanim_get_matrix_array(h: u32) -> u32 = cdecl 0x7C5120 => unported;
-    /// `RwV3dTransformPoints(RwV3d* out, const RwV3d* in, int32 n, const RwMatrix*)` (0x7EDD90)
-    fn rw_v3d_transform_points(out: GPtr<u8>, inp: GPtr<u8>, n: i32, m: u32) -> GPtr<u8> = cdecl 0x7EDD90 => unported;
     /// `CShadows::AddPermanentShadow(type, RwTexture*, CVector*, frontX, frontY, sideX, sideY, r, g, b, a, z, lifetime,
     /// scale)` (0x706F60)
     #[allow(clippy::too_many_arguments)]
@@ -72,12 +65,12 @@ const JUMP_ANIM_FINISH_CB: u32 = 0x67_A020;
        unverified = "native-27", route = "L2", hazards = "heap-writes,ax-al-return", recs = "grove-walk")]
 pub fn start_launch_anim(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     let clump = rd::<u32>(ped, 0x18);
-    let a = clump_get_association(clump, 0x74);
+    let a = clump_get_association(GPtr::from_addr(clump as usize), 0x74);
     wr::<GPtr<u8>>(this, 0x28, a);
     if !a.is_null() {
         return 0;
     }
-    let a = clump_get_association(rd::<u32>(ped, 0x18), 0x75);
+    let a = clump_get_association(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0x75);
     wr::<GPtr<u8>>(this, 0x28, a);
     if !a.is_null() {
         return 0;
@@ -91,7 +84,7 @@ pub fn start_launch_anim(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         !d.fcom(x(0.0)).test_parity(0x05)
     } else if ped_is_player(ped) != 0 {
         let m = rd::<GPtr<u8>>(ped, 0x14);
-        game_logic_player_allowed_direction(ped, rd::<u32>(m, 0x10), rd::<u32>(m, 0x14), rd::<u32>(m, 0x18), 5.0) == 0
+        game_logic_player_allowed_direction(ped, f32::from_bits(rd::<u32>(m, 0x10)), f32::from_bits(rd::<u32>(m, 0x14)), f32::from_bits(rd::<u32>(m, 0x18)), 5.0) == 0
     } else {
         false
     };
@@ -101,12 +94,12 @@ pub fn start_launch_anim(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     }
     let min = f32::from_bits(0x3E99_999A);
     let strong = |a: GPtr<u8>| !a.is_null() && x(rd::<f32>(a, 0x18)).fcom(x(min)).test_parity(0x05);
-    let mut mv = clump_get_association(rd::<u32>(ped, 0x18), 2);
+    let mut mv = clump_get_association(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 2);
     if !strong(mv) {
-        mv = clump_get_association(rd::<u32>(ped, 0x18), 1);
+        mv = clump_get_association(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 1);
     }
     if !strong(mv) {
-        mv = clump_get_association(rd::<u32>(ped, 0x18), 0);
+        mv = clump_get_association(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0);
     }
     let mut phase = x(0.0);
     if !mv.is_null() && !x(rd::<f32>(mv, 0x18)).fcom(x(min)).test_any(0x41) {
@@ -118,7 +111,7 @@ pub fn start_launch_anim(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         }
     }
     let id = if phase.fcom(x(0.5)).test_parity(0x05) { 0x75 } else { 0x74 };
-    let anim = anim_blend_animation(rd::<u32>(ped, 0x18), 0, id, 8.0);
+    let anim = anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0, id, 8.0);
     wr::<GPtr<u8>>(this, 0x28, anim);
     if rd::<u32>(ped, 0x480) != 0 {
         let s = X87::from_f64_exact(stats_get_fat_and_muscle_modifier(2)).to_f32();
@@ -221,7 +214,7 @@ pub fn check_if_jump_blocked_port(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     let mut v = [0f32, 0.0, 0.75];
     let mut out = [0u32; 3];
     let outp: GPtr<u8> = GPtr::from_raw(out.as_mut_ptr()).cast();
-    matrix_mul_vec(outp, rd::<GPtr<u8>>(ped, 0x14), GPtr::from_raw(v.as_mut_ptr()).cast());
+    matrix_mul_vec(outp.cast::<f32>(), rd::<GPtr<u8>>(ped, 0x14), GPtr::from_raw(v.as_mut_ptr()).cast());
     let set_pos = |v: [u32; 3]| {
         let m = rd::<GPtr<u8>>(ped, 0x14);
         let d = if m.is_null() { ped.byte_add(4) } else { m.byte_add(0x30) };
@@ -246,11 +239,11 @@ fn footprint(ped: GPtr<u8>, bone_slot: isize, off_xy: [X87; 2], off_z: f32, fron
     let clump = rd::<u32>(ped, 0x18);
     let mut v = [0f32; 3];
     let vp: GPtr<u8> = GPtr::from_raw(v.as_mut_ptr()).cast();
-    let h = anim_hierarchy_from_skin_clump(clump);
+    let h = GPtr::<u8>::addr(anim_hierarchy_from_skin_clump(GPtr::from_addr(clump as usize))) as u32;
     let tag = rd::<u32>(rd::<GPtr<u8>>(ped, bone_slot), 0x14);
-    let idx = hanim_id_get_index(h, tag);
-    let mats = hanim_get_matrix_array(h);
-    rw_v3d_transform_points(vp, vp, 1, mats.wrapping_add((idx as u32).wrapping_shl(6)));
+    let idx = hanim_id_get_index(GPtr::from_addr(h as usize), tag);
+    let mats = GPtr::<u8>::addr(hanim_get_matrix_array(GPtr::from_addr(h as usize))) as u32;
+    rw_v3d_transform_points(vp.cast::<f32>(), vp.cast::<f32>(), 1, GPtr::from_addr(mats.wrapping_add((idx as u32).wrapping_shl(6)) as usize));
     let z = x(rd::<f32>(vp, 8)).fsub_m(f32::from_bits(0x3DCC_CCCD));
     wr::<f32>(vp, 0, off_xy[0].fadd_m(rd::<f32>(vp, 0)).to_f32());
     wr::<f32>(vp, 4, off_xy[1].fadd_m(rd::<f32>(vp, 4)).to_f32());
@@ -279,11 +272,11 @@ fn footprint(ped: GPtr<u8>, bone_slot: isize, off_xy: [X87; 2], off_z: f32, fron
 pub fn launch_port(this: GPtr<u8>, ped: GPtr<u8>) {
     let c = |a: u32| g::<f32>(a as usize).read();
     let mut hs = c(0x87_03B0);
-    let sprint = clump_get_association(rd::<u32>(ped, 0x18), 2);
+    let sprint = clump_get_association(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 2);
     if !sprint.is_null() {
         hs = x(c(0x87_03B8)).fsub_m(c(0x87_03B4)).fmul_m(rd::<f32>(sprint, 0x18)).fadd_m(c(0x87_03B4)).to_f32();
     } else {
-        let run = clump_get_association(rd::<u32>(ped, 0x18), 1);
+        let run = clump_get_association(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 1);
         if !run.is_null() {
             hs = x(c(0x87_03B4)).fsub_m(c(0x87_03B0)).fmul_m(rd::<f32>(run, 0x18)).fadd_m(c(0x87_03B0)).to_f32();
         }
@@ -299,7 +292,7 @@ pub fn launch_port(this: GPtr<u8>, ped: GPtr<u8>) {
     if g::<u8>(0x96_916C).read() != 0 && ped_is_player(ped) != 0 {
         force = x(force).fmul_m(10.0).to_f32();
     }
-    physical_apply_move_force(ped, 0, 0, force.to_bits());
+    physical_apply_move_force(ped, f32::from_bits(0), f32::from_bits(0), f32::from_bits(force.to_bits()));
     if rd::<u8>(this, 0x22) != 0 {
         wr::<u32>(ped, 0x44, 0);
         wr::<u32>(ped, 0x48, 0);
@@ -323,10 +316,10 @@ pub fn launch_port(this: GPtr<u8>, ped: GPtr<u8>) {
     wr::<u32>(ped, 0x46C, (rd::<u32>(ped, 0x46C) & !1) | 0x200);
     if rd::<u32>(this, 0x1C) == 0 {
         if rd::<u8>(this, 0x22) != 0 {
-            let a = anim_blend_animation(rd::<u32>(ped, 0x18), 0, 0x80, 8.0);
+            let a = anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0, 0x80, 8.0);
             wr::<u8>(a, 0x2E, rd::<u8>(a, 0x2E) | 8);
         } else {
-            anim_blend_animation(rd::<u32>(ped, 0x18), 0, 0x76, 8.0);
+            anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0, 0x76, 8.0);
         }
     }
     if rd::<u32>(ped, 0x46C) & 0x1000_0000 == 0 || localisation_blood() == 0 {

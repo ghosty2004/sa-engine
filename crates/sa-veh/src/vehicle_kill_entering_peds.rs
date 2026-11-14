@@ -49,7 +49,7 @@ pub fn vehicle_kill_peds_getting_in_vehicle(this: GPtr<u8>) {
         }
         let mut calc = [0u32; 5];
         let cp: GPtr<u8> = GPtr::from_raw(&mut calc as *mut [u32; 5]).cast();
-        damage_calc_ctor(cp, ped, 0x447A_0000, 0x33, 3, 0);
+        damage_calc_ctor(cp, ped, f32::from_bits(0x447A_0000), 0x33, 3, 0);
         let mut ev = [0u32; 0x11];
         let ep: GPtr<u8> = GPtr::from_raw(&mut ev as *mut [u32; 0x11]).cast();
         let flag = (rd::<u32>(ped, 0x46C) >> 8) & 0xFFFF_FF01;

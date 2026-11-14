@@ -5,18 +5,15 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use super::common::{g, x};
 
-pub use crate::bindings::ptr_list_double_link_flush;
+pub use sa_core::bindings::ptr_list_double_link_flush;
 pub use sa_core::bindings::atexit;
 pub use sa_core::bindings::eh_vector_ctor;
 pub use sa_core::bindings::eh_vector_dtor;
-orig! {
-    /// `CPedClothesDesc::CPedClothesDesc` (0x5A8020)
-    pub fn ped_clothes_desc_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x5A8020 => unported;
-}
+pub use crate::bindings::clothes_desc_ctor as ped_clothes_desc_ctor;
 
 /// `__init_g_96a718` (0x849B20): `[0x96A718] = [0x96A714] * 10.0` (f32).
 #[hook(addr = 0x849B20, conv = cdecl, name = "__init_g_96a718", expect = "D9 05 14 A7 96 00")]

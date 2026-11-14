@@ -174,10 +174,35 @@ pub mod call {
     pub use crate::bindings::timer_update;
     pub use crate::bindings::vehicle_recording_init_at_start_of_game;
     pub use crate::bindings::visibility_plugins_set_render_ware_camera;
+    pub use crate::bindings::audio_engine_initialise;
+    pub use crate::bindings::audio_engine_restart;
+    pub use crate::bindings::bone_node_manager_init;
+    pub use crate::bindings::break_manager_init;
+    pub use crate::bindings::camera_init;
+    pub use crate::bindings::camera_set_rw_camera;
+    pub use crate::bindings::do_rw_stuff_end_of_frame;
+    pub use crate::bindings::do_rw_stuff_start_of_frame;
+    pub use crate::bindings::file_close as file_mgr_close_file;
+    pub use crate::bindings::file_mgr_initialise;
+    pub use crate::bindings::file_read as file_mgr_read;
+    pub use crate::bindings::ik_chain_manager_init;
+    pub use crate::bindings::loading_screen;
+    pub use crate::bindings::loading_screen_set_loading_bar_msg;
+    pub use crate::bindings::menu_message_screen;
+    pub use crate::bindings::open_file as file_mgr_open_file;
+    pub use crate::bindings::rs_rw_initialize;
+    pub use crate::bindings::rs_rw_terminate;
+    pub use crate::bindings::rw_camera_set_far_clip_plane;
+    pub use crate::bindings::rw_camera_set_near_clip_plane;
+    pub use crate::bindings::rw_d3d9_get_current_d3d_device;
+    pub use crate::bindings::sprite_draw_rect as sprite2d_draw_rect;
+    pub use crate::bindings::surface_infos_init;
+    pub use crate::bindings::tidy_up_d3d_index_buffers;
+    pub use crate::bindings::tidy_up_d3d_textures;
+    pub use crate::bindings::timer_initialise;
     orig! {
         pub fn memory_mgr_init() = cdecl 0x72F3B0 => unported;
         pub fn localisation_initialise() = cdecl 0x56D180 => unported;
-        pub fn file_mgr_initialise() = cdecl 0x5386F0 => unported;
         pub fn cd_stream_init(n: i32) = cdecl 0x406B70 => unported;
         pub fn pad_initialise() = cdecl 0x541D90 => unported;
         pub fn path_find_shutdown(this: GPtr<u8>) = thiscall 0x450950 => unported;
@@ -185,46 +210,21 @@ pub mod call {
         pub fn txd_store_shutdown() = cdecl 0x732000 => unported;
         pub fn ped_stats_shutdown() = cdecl 0x608850 => unported;
         pub fn cd_stream_shutdown() = cdecl 0x406370 => unported;
-        pub fn tidy_up_d3d_textures(n: u32) = cdecl 0x7305E0 => super::tidy_up_d3d_textures;
-        pub fn tidy_up_d3d_index_buffers(n: u32) = cdecl 0x730740 => super::tidy_up_d3d_index_buffers;
         /// `IUnknown::Release()` (COM slot 8)
         pub fn com_release(obj: GPtr<u8>) -> u32 = stdcall vslot 0x8 => unported;
         pub fn game_shutdown_render_ware() = cdecl 0x53BB80 => unported;
-        pub fn rw_d3d9_get_current_d3d_device() -> GPtr<u32> = cdecl 0x7F9D50 => unported;
         /// `IDirect3DDevice9::SetGammaRamp(swapchain, flags, ramp)` (COM slot 0x54)
         pub fn d3d_device_set_gamma_ramp(dev: GPtr<u32>, swapchain: u32, flags: u32, ramp: GPtr<u8>) = stdcall vslot 0x54 => unported;
-        pub fn rs_rw_terminate() = cdecl 0x6195E0 => unported;
         /// CRT `printf` (one argument at its only call site here)
         pub fn printf(fmt: GPtr<u8>) -> i32 = cdecl 0x821982 => unported;
-        pub fn timer_initialise() = cdecl 0x5617E0 => crate::timer::initialise;
         pub fn game_initialise(dat_file: GPtr<u8>) -> u8 = cdecl 0x53BC80 => unported;
-        pub fn loading_screen_set_loading_bar_msg(msg: GPtr<u8>, msg2: GPtr<u8>) = cdecl 0x590240 => unported;
-        pub fn audio_engine_restart(this: GPtr<u8>) = thiscall 0x506DB0 => unported;
-        /// `CSprite2d::DrawRect(const CRect&, const CRGBA&)`
-        pub fn sprite2d_draw_rect(rect: GPtr<[f32; 4]>, colour: GPtr<[u8; 4]>) = cdecl 0x727B60 => unported;
-        pub fn file_mgr_open_file(path: GPtr<u8>, mode: GPtr<u8>) -> u32 = cdecl 0x538900 => unported;
-        pub fn file_mgr_read(file: u32, buf: GPtr<u8>, size: i32) -> i32 = cdecl 0x538950 => unported;
-        pub fn file_mgr_close_file(file: u32) -> i32 = cdecl 0x5389D0 => unported;
-        /// `CLoadingScreen::LoadingScreen(msg1, msg2, splash)` (address 0x53DED0)
-        pub fn loading_screen(msg1: GPtr<u8>, msg2: GPtr<u8>, splash: GPtr<u8>) = cdecl 0x53DED0 => unported;
-        /// `DoRWStuffStartOfFrame(int16 TopRed, TopGreen, TopBlue, BottomRed, BottomGreen, BottomBlue, int16 Alpha)`
-        /// (seven dword pushes)
-        pub fn do_rw_stuff_start_of_frame(a: u32, b: u32, c: u32, d: u32, e: u32, f: u32, g: u32) -> bool = cdecl 0x53D690 => crate::platform::do_rw_stuff_start_of_frame;
-        /// `CMenuManager::MessageScreen(const char* key, bool blackBg, bool cameraUpdateStarted)`
-        pub fn menu_message_screen(this: GPtr<u8>, key: GPtr<u8>, black_bg: u32, camera_update_started: u32) = thiscall 0x579330 => unported;
-        pub fn do_rw_stuff_end_of_frame() = cdecl 0x53D840 => unported;
         pub fn car_fx_renderer_initialise() -> i32 = cdecl 0x5D5AC0 => unported;
         pub fn grass_renderer_initialise() -> u8 = cdecl 0x5DD6B0 => unported;
         pub fn custom_building_renderer_initialise() -> i32 = cdecl 0x5D7EC0 => unported;
-        pub fn rs_rw_initialize(param: GPtr<u8>) -> i32 = cdecl 0x619C90 => unported;
         pub fn game_initialise_render_ware() -> bool = cdecl 0x5BD600 => super::initialise_render_ware;
         pub fn d3d_resource_system_init() = cdecl 0x730830 => super::d3d_resource_system_init;
         pub fn txd_store_initialise() = cdecl 0x731F20 => unported;
         pub fn visibility_plugins_initialise() = cdecl 0x733A20 => unported;
-        pub fn camera_init(this: GPtr<u8>) = thiscall 0x5BC520 => unported;
-        pub fn camera_set_rw_camera(this: GPtr<u8>, cam: GPtr<u8>) = thiscall 0x50C100 => unported;
-        pub fn rw_camera_set_far_clip_plane(cam: GPtr<u8>, v: f32) -> GPtr<u8> = cdecl 0x7EE2A0 => unported;
-        pub fn rw_camera_set_near_clip_plane(cam: GPtr<u8>, v: f32) -> GPtr<u8> = cdecl 0x7EE1D0 => unported;
         pub fn rp_world_create(bbox: GPtr<u8>) -> GPtr<u8> = cdecl 0x74F760 => unported;
         pub fn rp_world_add_camera(world: GPtr<u8>, cam: GPtr<u8>) -> GPtr<u8> = cdecl 0x750F20 => unported;
         pub fn lights_create(world: GPtr<u8>) -> GPtr<u8> = cdecl 0x5BA520 => unported;
@@ -237,11 +237,6 @@ pub mod call {
         pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
         /// the chained restore callback stored at 0xBD0114
         pub fn prev_d3d_restore_callback() = cdecl cell 0xBD0114 => unported;
-        pub fn surface_infos_init(this: GPtr<u8>) = thiscall 0x55F420 => unported;
-        pub fn audio_engine_initialise(this: GPtr<u8>) -> u8 = thiscall 0x5B9C60 => unported;
-        pub fn break_manager_init(this: GPtr<u8>) -> u8 = thiscall 0x59E650 => unported;
-        pub fn bone_node_manager_init(this: GPtr<u8>) -> u8 = thiscall 0x6173F0 => unported;
-        pub fn ik_chain_manager_init(this: GPtr<u8>) -> u8 = thiscall 0x6180A0 => unported;
     }
 }
 
@@ -594,28 +589,28 @@ pub fn decode_version_byte(b: u8) -> u8 {
 #[hook(addr = 0x5BA060, conv = cdecl, name = "CGame::ValidateVersion", expect = "81 EC 80 00 00 00")]
 pub fn validate_version() {
     let mut buf = [0u8; 128];
-    let file = call::file_mgr_open_file(STR_PEDS_COL.ptr().cast(), STR_RB.ptr().cast());
+    let file = GPtr::<u8>::addr(call::file_mgr_open_file(STR_PEDS_COL.ptr().cast(), STR_RB.ptr().cast())) as u32;
     if file != u32::MAX {
-        call::file_mgr_seek(file, 100, 0);
+        call::file_mgr_seek(GPtr::from_addr(file as usize), 100, 0);
         let base: GPtr<u8> = GPtr::from_raw(buf.as_mut_ptr());
         let mut i = 0i32;
         loop {
             let p = base.wrapping_index(i);
-            call::file_mgr_read(file, p, 1);
+            call::file_mgr_read(GPtr::from_addr(file as usize), p, 1);
             let v = decode_version_byte(p.read());
             p.write(v);
             if v == 0 {
                 break;
             }
             i += 1;
-            call::file_mgr_seek(file, 99, 1);
+            call::file_mgr_seek(GPtr::from_addr(file as usize), 99, 1);
             if i >= 0x80 {
                 break;
             }
         }
         if call::strncmp(base, STR_GTA3.ptr().cast(), 15) == 0 {
             call::strncpy(VERSION_NAME.ptr().cast(), base.wrapping_index(15), 0x40);
-            call::file_mgr_close_file(file);
+            call::file_mgr_close_file(GPtr::from_addr(file as usize));
             return;
         }
     }
@@ -1166,7 +1161,7 @@ pub fn do_fade() {
     }
     let mut colour = fade_colour(rgbv, CAMERA_FADE_TARGET_IS_SPLASH.get().get());
     let mut rect = fade_rect(RS_MAXIMUM_WIDTH.get(), RS_MAXIMUM_HEIGHT.get());
-    call::sprite2d_draw_rect(GPtr::from_raw(&raw mut rect), GPtr::from_raw(&raw mut colour));
+    call::sprite2d_draw_rect(GPtr::<[f32;4]>::cast::<f32>(GPtr::from_raw(&raw mut rect)), GPtr::<[u8;4]>::cast::<u8>(GPtr::from_raw(&raw mut colour)));
 }
 
 /// `TestModelIndices` (0x53ED30, cdecl): empty in 1.0 US (`ret`, nop padding).

@@ -3,6 +3,7 @@
 //! keep their original vtables and come from the original task pool (`common::task_new`).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -19,14 +20,14 @@ const TIME_STEP: usize = 0xB7CB5C;
 /// The `0.0f` constant the comparisons read.
 const F_ZERO: usize = 0x858B50;
 
-use crate::bindings::anim_blend_animation;
-use crate::bindings::anim_set_delete_callback;
-use crate::bindings::assoc_set_finish_callback as anim_set_finish_callback;
-use crate::bindings::clump_get_association as clump_get_association_id;
+use sa_world::bindings::anim_blend_animation;
+use sa_core::bindings::anim_set_delete_callback;
+use sa_core::bindings::assoc_set_finish_callback as anim_set_finish_callback;
+use sa_core::bindings::clump_get_association as clump_get_association_id;
 use crate::bindings::fight_61c9b0;
 use crate::bindings::fight_6240b0;
 use crate::bindings::fight_dtor_orig;
-use crate::bindings::ped_set_move_state;
+use sa_world::bindings::ped_set_move_state;
 use crate::bindings::use_gun_clear_anim;
 use sa_core::bindings::entity_clean_up_old_reference;
 use sa_core::bindings::entity_register_reference;
@@ -36,11 +37,11 @@ use sa_core::bindings::matrix_mul_vec;
 use sa_core::bindings::streaming_request_model;
 use sa_core::bindings::tm_get_simplest_active_task as task_manager_get_simplest_active_task;
 use sa_core::bindings::tm_get_task_secondary as task_manager_get_task_secondary;
-use sa_stream::bindings::anim_add_block_ref;
+use sa_core::bindings::anim_add_block_ref;
 use sa_stream::bindings::anim_remove_block_ref;
 use sa_stream::bindings::get_anim_group_name as anim_get_anim_group_name;
 use sa_stream::bindings::ped_is_player;
-use sa_world::bindings::get_animation_block as anim_get_animation_block;
+use sa_core::bindings::get_animation_block as anim_get_animation_block;
 use sa_world::bindings::get_pad_from_player as player_get_pad_from_player;
 use sa_world::bindings::pad_get_target;
 use sa_world::bindings::ped_audio_add_audio_event;
@@ -48,6 +49,14 @@ use sa_world::bindings::ped_get_weapon_skill;
 use sa_world::bindings::ped_weapon_audio_add_audio_event;
 use sa_world::bindings::task_simple_ctor;
 use sa_world::bindings::task_simple_dtor;
+use sa_core::bindings::assoc_set_current_time as anim_set_current_time;
+use sa_core::bindings::file_close as file_mgr_close_file;
+use sa_core::bindings::load_line as file_loader_load_line;
+use sa_core::bindings::open_file as file_mgr_open_file;
+use sa_core::bindings::strncmp as crt_strncmp;
+use sa_world::bindings::anim_get_anim_block_name;
+use sa_world::bindings::vector_add_assign;
+use sa_world::bindings::vector_mul_scalar as vector_mul_float;
 orig! {
     // ---- virtual slots ----
     /// `CTask::GetTaskType` (vtable +0x10)
@@ -68,14 +77,6 @@ orig! {
     // ---- other catalogued functions ----
     /// `CTaskSimpleDuck::AbortBecauseOfOtherDuck(CPed*)` (0x692340, `ret 4`)
     fn duck_abort_because_of_other_duck(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x692340 => unported;
-    /// `CAnimManager::GetAnimBlockName(AssocGroupId)` (0x4D3A30)
-    fn anim_get_anim_block_name(group: u32) -> GPtr<u8> = cdecl 0x4D3A30 => unported;
-    /// `CAnimBlendAssociation::SetCurrentTime(float)` (0x4CEA80, `ret 4`; the float passed as its bits)
-    fn anim_set_current_time(a: GPtr<u8>, t: u32) = thiscall 0x4CEA80 => unported;
-    /// `operator*(const CVector&, float)` (0x40FEC0, cdecl, hidden result pointer first)
-    fn vector_mul_float(out: GPtr<u8>, v: GPtr<u8>, f: u32) -> GPtr<u8> = cdecl 0x40FEC0 => unported;
-    /// `CVector::operator+=(const CVector&)` (0x411A00, `ret 4`)
-    fn vector_add_assign(v: GPtr<u8>, o: GPtr<u8>) -> GPtr<u8> = thiscall 0x411A00 => unported;
     /// `FUN_0061c7f0(CPed*, int8 command)` (0x61C7F0, `ret 8`; a `CTaskSimpleFight` method choosing the
     /// next combo move; reads only the low byte of `command`)
     fn fight_61c7f0(t: GPtr<u8>, ped: GPtr<u8>, command: u32) -> u8 = thiscall 0x61C7F0 => unported;
@@ -85,16 +86,6 @@ orig! {
     fn fight_624a40(t: GPtr<u8>, ped: GPtr<u8>) -> u32 = thiscall 0x624A40 => unported;
     /// `FUN_00623b10(CPed*, int32)` (0x623B10, `ret 8`)
     fn fight_623b10(t: GPtr<u8>, ped: GPtr<u8>, a: i32) = thiscall 0x623B10 => unported;
-
-    // ---- LoadMeleeData ----
-    /// `CFileMgr::OpenFile(const char* name, const char* mode)` (0x538900)
-    fn file_mgr_open_file(name: u32, mode: u32) -> u32 = cdecl 0x538900 => unported;
-    /// `CFileMgr::CloseFile(FILE*)` (0x5389D0)
-    fn file_mgr_close_file(f: u32) -> i32 = cdecl 0x5389D0 => unported;
-    /// `CFileLoader::LoadLine(FILE*)` (0x536F80)
-    fn file_loader_load_line(f: u32) -> GPtr<u8> = cdecl 0x536F80 => unported;
-    /// CRT `_strncmp` (0x8214D0)
-    fn crt_strncmp(a: GPtr<u8>, b: u32, n: u32) -> i32 = cdecl 0x8214D0 => unported;
     /// CRT `_sscanf` (0x8220AD) with two outputs
     fn crt_sscanf2(s: GPtr<u8>, fmt: u32, a0: GPtr<u8>, a1: GPtr<u8>) -> i32 = cdecl 0x8220AD => unported;
     /// CRT `_sscanf` (0x8220AD) with three outputs
@@ -169,11 +160,11 @@ fn duck_dtor_blend_out(a: GPtr<u8>, need_flag: bool) {
 pub fn duck_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x870BC4);
     if !rd::<GPtr<u8>>(this, 0x10).is_null() {
-        anim_set_finish_callback(rd::<GPtr<u8>>(this, 0x10), DEFAULT_ANIM_CB, 0);
+        anim_set_finish_callback(rd::<GPtr<u8>>(this, 0x10), DEFAULT_ANIM_CB, GPtr::NULL);
         duck_dtor_blend_out(rd::<GPtr<u8>>(this, 0x10), true);
     }
     if !rd::<GPtr<u8>>(this, 0x14).is_null() {
-        anim_set_finish_callback(rd::<GPtr<u8>>(this, 0x14), DEFAULT_ANIM_CB, 0);
+        anim_set_finish_callback(rd::<GPtr<u8>>(this, 0x14), DEFAULT_ANIM_CB, GPtr::NULL);
         duck_dtor_blend_out(rd::<GPtr<u8>>(this, 0x14), false);
     }
     task_simple_dtor(this);
@@ -218,15 +209,15 @@ pub fn duck_make_abortable(this: GPtr<u8>, ped: GPtr<u8>, priority: i32, event: 
             if (rd::<u8>(a, 0x2E) >> 4) & 1 != 0 {
                 wr::<u32>(a, 0x1C, 0xC47A_0000);
             } else {
-                anim_blend_animation(rd::<u32>(ped, 0x18), rd::<u32>(ped, 0x4D4), 3, 0x447A_0000);
+                anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), rd::<u32>(ped, 0x4D4), 3, f32::from_bits(0x447A_0000));
             }
-            anim_set_finish_callback(rd::<GPtr<u8>>(this, 0x10), DEFAULT_ANIM_CB, 0);
+            anim_set_finish_callback(rd::<GPtr<u8>>(this, 0x10), DEFAULT_ANIM_CB, GPtr::NULL);
             wr::<u32>(this, 0x10, 0);
         }
         let m = rd::<GPtr<u8>>(this, 0x14);
         if !m.is_null() {
             wr::<u32>(m, 0x1C, 0xC47A_0000);
-            anim_set_finish_callback(rd::<GPtr<u8>>(this, 0x14), DEFAULT_ANIM_CB, 0);
+            anim_set_finish_callback(rd::<GPtr<u8>>(this, 0x14), DEFAULT_ANIM_CB, GPtr::NULL);
             wr::<u32>(this, 0x14, 0);
         }
         return duck_abort_done(this, ped);
@@ -256,11 +247,11 @@ pub fn duck_make_abortable(this: GPtr<u8>, ped: GPtr<u8>, priority: i32, event: 
             }
             // fld delta; fchs; fstp: an exact sign flip.
             let neg = f32_of(x(f32::from_bits(delta)).fchs()).to_bits();
-            anim_blend_animation(rd::<u32>(ped, 0x18), rd::<u32>(ped, 0x4D4), 3, neg);
+            anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), rd::<u32>(ped, 0x4D4), 3, f32::from_bits(neg));
             wr::<u32>(ped, 0x538, 1);
         }
         if priority == 1 {
-            anim_set_finish_callback(rd::<GPtr<u8>>(this, 0x10), DEFAULT_ANIM_CB, 0);
+            anim_set_finish_callback(rd::<GPtr<u8>>(this, 0x10), DEFAULT_ANIM_CB, GPtr::NULL);
             wr::<u32>(this, 0x10, 0);
         }
     }
@@ -275,7 +266,7 @@ pub fn duck_make_abortable(this: GPtr<u8>, ped: GPtr<u8>, priority: i32, event: 
             }
         }
         if priority == 1 {
-            anim_set_finish_callback(rd::<GPtr<u8>>(this, 0x14), DEFAULT_ANIM_CB, 0);
+            anim_set_finish_callback(rd::<GPtr<u8>>(this, 0x14), DEFAULT_ANIM_CB, GPtr::NULL);
             wr::<u32>(this, 0x14, 0);
         }
     }
@@ -377,7 +368,7 @@ pub fn duck_can_ped_duck(ped: GPtr<u8>) -> u8 {
     let slot = |p: GPtr<u8>| (i32::from(rd::<i8>(p, 0x718)) * 0x1C) as isize;
     let ty = rd::<u32>(ped, 0x5A0 + slot(ped));
     let skill = ped_get_weapon_skill(ped);
-    let info = weapon_info_get(ty, skill);
+    let info = weapon_info_get(ty as i32, (skill as i32) as u8);
     let fire = rd::<u32>(info, 0);
     if fire == 0
         || fire == 5
@@ -410,16 +401,16 @@ pub fn duck_set_move_anim(this: GPtr<u8>, ped: GPtr<u8>) {
             if id != 0x38 && id != 0x3A {
                 return;
             }
-            anim_set_finish_callback(m, DEFAULT_ANIM_CB, 0);
+            anim_set_finish_callback(m, DEFAULT_ANIM_CB, GPtr::NULL);
         }
         let anim = if cmp_zero(rd::<f32>(this, 0x1C), 0x41) {
             0x39
         } else {
             0x3B
         };
-        let r = anim_blend_animation(rd::<u32>(ped, 0x18), 0, anim, 0x4100_0000);
+        let r = anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0, anim, f32::from_bits(0x4100_0000));
         wr::<GPtr<u8>>(this, 0x14, r);
-        anim_set_finish_callback(r, DELETE_DUCK_ANIM_CB, this.addr() as u32);
+        anim_set_finish_callback(r, DELETE_DUCK_ANIM_CB, GPtr::from_addr((this.addr() as u32) as usize));
         return;
     }
     let speed = if !cmp_zero(rd::<f32>(this, 0x20), 0x41) {
@@ -429,13 +420,13 @@ pub fn duck_set_move_anim(this: GPtr<u8>, ped: GPtr<u8>) {
         } else if rd::<u16>(m, 0x2C) != 0x38 {
             false
         } else {
-            anim_set_finish_callback(m, DEFAULT_ANIM_CB, 0);
+            anim_set_finish_callback(m, DEFAULT_ANIM_CB, GPtr::NULL);
             true
         };
         if blend {
-            let r = anim_blend_animation(rd::<u32>(ped, 0x18), 0, 0x3A, 0x4100_0000);
+            let r = anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0, 0x3A, f32::from_bits(0x4100_0000));
             wr::<GPtr<u8>>(this, 0x14, r);
-            anim_set_delete_callback(r, DELETE_DUCK_ANIM_CB, this.addr() as u32);
+            anim_set_delete_callback(r, DELETE_DUCK_ANIM_CB, GPtr::from_addr((this.addr() as u32) as usize));
         }
         x(rd::<f32>(this, 0x20))
     } else if !x(rd::<f32>(this, 0x20))
@@ -448,13 +439,13 @@ pub fn duck_set_move_anim(this: GPtr<u8>, ped: GPtr<u8>) {
         } else if rd::<u16>(m, 0x2C) != 0x3A {
             false
         } else {
-            anim_set_finish_callback(m, DEFAULT_ANIM_CB, 0);
+            anim_set_finish_callback(m, DEFAULT_ANIM_CB, GPtr::NULL);
             true
         };
         if blend {
-            let r = anim_blend_animation(rd::<u32>(ped, 0x18), 0, 0x38, 0x4100_0000);
+            let r = anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0, 0x38, f32::from_bits(0x4100_0000));
             wr::<GPtr<u8>>(this, 0x14, r);
-            anim_set_delete_callback(r, DELETE_DUCK_ANIM_CB, this.addr() as u32);
+            anim_set_delete_callback(r, DELETE_DUCK_ANIM_CB, GPtr::from_addr((this.addr() as u32) as usize));
         }
         x(rd::<f32>(this, 0x20)).fchs()
     } else {
@@ -548,7 +539,7 @@ pub fn duck_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     }
     let a = rd::<GPtr<u8>>(this, 0x10);
     if a.is_null() {
-        let w = clump_get_association_id(rd::<u32>(ped, 0x18), 0xA);
+        let w = clump_get_association_id(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0xA);
         if !w.is_null() {
             wr::<u32>(w, 0x1C, 0xC000_0000);
         }
@@ -557,15 +548,15 @@ pub fn duck_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         } else {
             (0x8D, 0x37)
         };
-        let r = anim_blend_animation(rd::<u32>(ped, 0x18), 0, anim, 0x4080_0000);
+        let r = anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0, anim, f32::from_bits(0x4080_0000));
         wr::<GPtr<u8>>(this, 0x10, r);
-        anim_set_delete_callback(r, DELETE_DUCK_ANIM_CB, this.addr() as u32);
-        let o = clump_get_association_id(rd::<u32>(ped, 0x18), other);
+        anim_set_delete_callback(r, DELETE_DUCK_ANIM_CB, GPtr::from_addr((this.addr() as u32) as usize));
+        let o = clump_get_association_id(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), other);
         if !o.is_null() && !cmp_zero(rd::<f32>(o, 0x18), 0x41) && !cmp_zero(rd::<f32>(o, 0x1C), 0x01) {
             if (rd::<u8>(o, 0x2E) >> 4) & 1 != 0 {
                 wr::<u32>(o, 0x1C, 0xC080_0000);
             } else {
-                anim_blend_animation(rd::<u32>(ped, 0x18), 0, 3, 0x4080_0000);
+                anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0, 3, f32::from_bits(0x4080_0000));
             }
         }
     } else if !x(rd::<f32>(a, 0x18))
@@ -632,20 +623,20 @@ pub fn fight_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x86D684);
     let t = rd::<GPtr<u8>>(this, 0x18);
     if !t.is_null() {
-        entity_clean_up_old_reference(t, this.byte_add(0x18));
+        entity_clean_up_old_reference(t, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x18)));
     }
     if !rd::<GPtr<u8>>(this, 0x1C).is_null() {
-        anim_set_delete_callback(rd::<GPtr<u8>>(this, 0x1C), DEFAULT_ANIM_CB, 0);
+        anim_set_delete_callback(rd::<GPtr<u8>>(this, 0x1C), DEFAULT_ANIM_CB, GPtr::NULL);
     }
     if !rd::<GPtr<u8>>(this, 0x20).is_null() {
-        anim_set_delete_callback(rd::<GPtr<u8>>(this, 0x20), DEFAULT_ANIM_CB, 0);
+        anim_set_delete_callback(rd::<GPtr<u8>>(this, 0x20), DEFAULT_ANIM_CB, GPtr::NULL);
     }
     if rd::<u8>(this, 0xA) != 0 {
         let grp = rd::<u32>(this, 0xC);
         if grp != 0x21 {
             let groups = g::<GPtr<u8>>(0xB4EA34).read();
             let block = rd::<u32>(groups, grp.wrapping_mul(0x14) as i32 as isize);
-            anim_remove_block_ref((block.wrapping_sub(0xB5D4A0) as i32) >> 5);
+            anim_remove_block_ref(((block.wrapping_sub(0xB5D4A0) as i32) >> 5) as u32);
             wr::<u8>(this, 0xA, 0);
         }
     }
@@ -672,7 +663,7 @@ pub fn fight_control_fight(this: GPtr<u8>, target: GPtr<u8>, command: u32) -> u8
     wr::<u8>(this, 9, 1);
     if target != old {
         if !old.is_null() {
-            entity_clean_up_old_reference(old, this.byte_add(0x18));
+            entity_clean_up_old_reference(old, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x18)));
         }
         wr::<GPtr<u8>>(this, 0x18, target);
         if !target.is_null() {
@@ -712,10 +703,10 @@ pub fn fight_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     // ---- finished: blend the idle anim (+0x20) out, back to the ped's move anims ----
     if rd::<u8>(this, 8) != 0 {
         if !rd::<GPtr<u8>>(this, 0x20).is_null() {
-            anim_set_delete_callback(rd::<GPtr<u8>>(this, 0x20), DEFAULT_ANIM_CB, 0);
+            anim_set_delete_callback(rd::<GPtr<u8>>(this, 0x20), DEFAULT_ANIM_CB, GPtr::NULL);
             let a = rd::<GPtr<u8>>(this, 0x20);
             if !cmp_zero(rd::<f32>(a, 0x18), 0x41) && !cmp_zero(rd::<f32>(a, 0x1C), 0x01) {
-                anim_blend_animation(rd::<u32>(ped, 0x18), rd::<u32>(ped, 0x4D4), 3, 0x4100_0000);
+                anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), rd::<u32>(ped, 0x4D4), 3, f32::from_bits(0x4100_0000));
             }
             wr::<u32>(this, 0x20, 0);
         }
@@ -823,7 +814,7 @@ pub fn fight_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
 /// then blends the idle anim 0xDF of that set (delta 4, delete callback 0x61DAE0), sets move state 1 and
 /// +0x538 = 1; +0x24 (written with the combo first) and +0x27 end as 0.
 fn fight_start_idle(this: GPtr<u8>, ped: GPtr<u8>) {
-    let info = weapon_info_get(ped_weapon_type(ped), 1);
+    let info = weapon_info_get(ped_weapon_type(ped) as i32, 1);
     let mut set = rd::<u8>(info, 0x6E);
     if set == 4 {
         set = rd::<u8>(ped, 0x72D);
@@ -841,7 +832,7 @@ fn fight_start_idle(this: GPtr<u8>, ped: GPtr<u8>) {
                     g::<GPtr<u8>>(ANIM_ASSOC_GROUPS).read(),
                     grp.wrapping_mul(0x14) as i32 as isize,
                 );
-                anim_remove_block_ref((block.wrapping_sub(ANIM_BLOCKS) as i32) >> 5);
+                anim_remove_block_ref(((block.wrapping_sub(ANIM_BLOCKS) as i32) >> 5) as u32);
                 wr::<u8>(this, 0xA, 0);
             }
             wr::<u32>(this, 0xC, rd::<u32>(m, 0));
@@ -877,9 +868,9 @@ fn fight_start_idle(this: GPtr<u8>, ped: GPtr<u8>) {
     };
     let m = melee_info(combo);
     wr::<u8>(this, 0x24, combo);
-    let r = anim_blend_animation(rd::<u32>(ped, 0x18), rd::<u32>(m, 0), 0xDF, 0x4080_0000);
+    let r = anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), rd::<u32>(m, 0), 0xDF, f32::from_bits(0x4080_0000));
     wr::<GPtr<u8>>(this, 0x20, r);
-    anim_set_delete_callback(r, 0x61DAE0, this.addr() as u32);
+    anim_set_delete_callback(r, 0x61DAE0, GPtr::from_addr((this.addr() as u32) as usize));
     ped_set_move_state(ped, 1);
     wr::<u32>(ped, 0x538, 1);
     wr::<u8>(this, 0x24, 0);
@@ -937,7 +928,7 @@ fn fight_attack(this: GPtr<u8>, ped: GPtr<u8>) {
                 };
                 if cross(rd::<f32>(m, 0x48)) || cross(rd::<f32>(m, 0x4C)) {
                     wr::<u8>(a, 0x2E, rd::<u8>(a, 0x2E) & 0xFE);
-                    anim_set_current_time(rd::<GPtr<u8>>(this, 0x1C), rd::<u32>(m, 0x48));
+                    anim_set_current_time(rd::<GPtr<u8>>(this, 0x1C), f32::from_bits(rd::<u32>(m, 0x48)));
                 }
             }
         } else {
@@ -949,7 +940,7 @@ fn fight_attack(this: GPtr<u8>, ped: GPtr<u8>) {
                 wr::<u32>(a, 0x1C, 0xC080_0000);
             }
             if rd::<i8>(this, 0x26) >= 0xB {
-                anim_set_delete_callback(rd::<GPtr<u8>>(this, 0x1C), DEFAULT_ANIM_CB, 0);
+                anim_set_delete_callback(rd::<GPtr<u8>>(this, 0x1C), DEFAULT_ANIM_CB, GPtr::NULL);
                 wr::<u32>(this, 0x1C, 0);
             }
         }
@@ -976,13 +967,13 @@ fn fight_attack(this: GPtr<u8>, ped: GPtr<u8>) {
             .test_parity(0x05)
     {
         let audio = ped.byte_add(0x138);
-        ped_audio_add_audio_event(audio, 0x3C, 0, 0x3F80_0000, 0, 0, rd::<u32>(m, 0x5C + i * 4), 0);
+        ped_audio_add_audio_event(audio, 0x3C, f32::from_bits(0), f32::from_bits(0x3F80_0000), GPtr::NULL, 0, rd::<u32>(m, 0x5C + i * 4), 0);
         if rd::<u8>(this, 0x24) == 5 {
             let j = rd::<i8>(this, 0x25);
             if (0..=2).contains(&j) {
                 let j = isize::from(j);
                 let p = g::<u32>((0x8D2E3C + j * 4) as usize).read();
-                ped_audio_add_audio_event(audio, 0x3C, 0, 0x3F80_0000, 0, 0, rd::<u32>(m, 0x5C + j * 4), p);
+                ped_audio_add_audio_event(audio, 0x3C, f32::from_bits(0), f32::from_bits(0x3F80_0000), GPtr::NULL, 0, rd::<u32>(m, 0x5C + j * 4), p);
             }
         }
         let c = rd::<i8>(this, 0x26);
@@ -997,11 +988,11 @@ fn fight_attack(this: GPtr<u8>, ped: GPtr<u8>) {
         let mut pos = [0u32; 3];
         let pp: GPtr<u8> = GPtr::from_raw(&mut pos as *mut [u32; 3]).cast();
         let off = GPtr::from_addr(MELEE_HIT_OFFSETS.wrapping_add(u32::from(lvl) * 0xC) as usize);
-        matrix_mul_vec(pp, rd::<GPtr<u8>>(ped, 0x14), off);
+        matrix_mul_vec(pp.cast::<f32>(), rd::<GPtr<u8>>(ped, 0x14), off);
         if rd::<u8>(this, 0x25) == 4 {
             let mut tmp = [0u32; 3];
             let tp: GPtr<u8> = GPtr::from_raw(&mut tmp as *mut [u32; 3]).cast();
-            let r = vector_mul_float(tp, ped.byte_add(0x44), g::<u32>(TIME_STEP).read());
+            let r = vector_mul_float(tp, ped.byte_add(0x44), f32::from_bits(g::<u32>(TIME_STEP).read()));
             vector_add_assign(pp, r);
         }
         fight_6240b0(this, ped, pp);
@@ -1031,7 +1022,7 @@ fn fight_attack(this: GPtr<u8>, ped: GPtr<u8>) {
         if rd::<u8>(this, 0x24) == 0xC && ped_is_player(ped) != 0 {
             let j = isize::from(rd::<i8>(this, 0x25));
             let t = x(rd::<f32>(m, 8 + j * 4)).fsub_m(g::<f32>(0x858C58).read());
-            anim_set_current_time(rd::<GPtr<u8>>(this, 0x1C), f32_of(t).to_bits());
+            anim_set_current_time(rd::<GPtr<u8>>(this, 0x1C), f32::from_bits(f32_of(t).to_bits()));
         } else {
             let r = fight_61c7f0(this, ped, u32::from(rd::<u8>(this, 0x26)));
             fight_chain(this, ped, r);
@@ -1113,28 +1104,28 @@ pub fn fight_load_melee_data() {
     wr::<u32>(fr, 0x48, 0x3F40_0000);
     wr::<u32>(fr, 0x4C, 0);
 
-    let file = file_mgr_open_file(0x86AAB4, 0x859C6C);
+    let file = GPtr::<u8>::addr(file_mgr_open_file(GPtr::from_addr(0x86AAB4), GPtr::from_addr(0x859C6C))) as u32;
     let mut level_or_line: u32 = 0; // EBX
     let mut ofs: u32 = 0; // EBP: byte offset of the current combo
     wr::<u32>(fr, 0x40, file);
     wr::<u32>(fr, 0x14, 0);
     wr::<u8>(fr, 0x12, 0);
     wr::<u8>(fr, 0x13, 0);
-    let mut line = file_loader_load_line(file);
+    let mut line = file_loader_load_line(GPtr::from_addr(file as usize));
     if !line.is_null() {
         wr::<u32>(fr, 0x18, 0);
         while !line.is_null() {
             let c0 = rd::<u8>(line, 0);
             if c0 != b'#' && c0 != 0 {
-                if crt_strncmp(line, 0x86AAA4, 0xE) == 0 {
+                if crt_strncmp(line, GPtr::from_addr(0x86AAA4), 0xE) == 0 {
                     break;
                 }
                 load_melee_line(line, fr, &mut level_or_line, &mut ofs, slot);
             }
-            line = file_loader_load_line(rd::<u32>(fr, 0x40));
+            line = file_loader_load_line(GPtr::from_addr(rd::<u32>(fr, 0x40) as usize));
         }
     }
-    file_mgr_close_file(rd::<u32>(fr, 0x40));
+    file_mgr_close_file(GPtr::from_addr(rd::<u32>(fr, 0x40) as usize));
 }
 
 /// One non-comment line of `LoadMeleeData` (0x5BEFAA..0x5BF2C3).
@@ -1146,14 +1137,14 @@ fn load_melee_line(
     slot: impl Fn(isize) -> GPtr<u8>,
 ) {
     if rd::<u8>(fr, 0x12) == 0 && rd::<u8>(fr, 0x13) == 0 {
-        if crt_strncmp(line, 0x86AA98, 0xB) == 0 {
+        if crt_strncmp(line, GPtr::from_addr(0x86AA98), 0xB) == 0 {
             wr::<u8>(fr, 0x12, 1);
-        } else if crt_strncmp(line, 0x86AA88, 0xC) == 0 {
+        } else if crt_strncmp(line, GPtr::from_addr(0x86AA88), 0xC) == 0 {
             wr::<u8>(fr, 0x13, 1);
         }
         return;
     }
-    if crt_strncmp(line, 0x86AA7C, 9) == 0 {
+    if crt_strncmp(line, GPtr::from_addr(0x86AA7C), 9) == 0 {
         if rd::<u8>(fr, 0x12) != 0 {
             wr::<u32>(fr, 0x18, rd::<u32>(fr, 0x18).wrapping_add(0x22));
             *ofs = ofs.wrapping_add(0x88);
@@ -1181,7 +1172,7 @@ fn load_melee_line(
             crt_sscanf2(line, 0x869860, slot(0x50), slot(0x70));
             let mut grp: i32 = 0;
             while grp < g::<i32>(0xB4EA28).read() {
-                let name = anim_get_anim_group_name(grp);
+                let name = anim_get_anim_group_name(grp as u32);
                 // Inlined strcmp(esp+0x70, name) == 0.
                 let mut i = 0isize;
                 let equal = loop {

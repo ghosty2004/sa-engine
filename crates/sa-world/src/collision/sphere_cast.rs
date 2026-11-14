@@ -44,6 +44,15 @@ use crate::bindings::is_extra_entity_to_ignore;
 use sa_core::bindings::matrix_invert;
 use sa_core::bindings::matrix_mul_vec;
 use sa_stream::bindings::simple_transform_update_matrix;
+use crate::bindings::col_line_ctor;
+use crate::bindings::entity_get_col_model as get_col_model;
+use crate::bindings::sphere_cast_versus_vs_poly as sphere_cast_versus_vs_poly_call;
+use crate::bindings::sphere_cast_vs_bbox;
+use crate::bindings::sphere_cast_vs_sphere;
+use sa_core::bindings::col_box_set;
+use sa_core::bindings::col_sphere_set;
+use sa_core::bindings::matrix_dtor;
+use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
 orig! {
     /// `CColBox::operator=(const CColBox&)` (0x40EEC0, thiscall, `ret 4`): copies min, max (6 dwords),
     /// the surface/piece word and the light byte (0x1B bytes).
@@ -55,29 +64,8 @@ orig! {
     /// `CCollision::ClosestSquaredDistanceBetweenFiniteLines(p0, q0, q1, u, uu)` (0x415A40, ST0)
     fn closest_sq_dist(p0: GPtr<f32>, q0: GPtr<f32>, q1: GPtr<f32>, u: GPtr<f32>, uu: f32) -> f64
         = cdecl 0x415a40 => closest_sq_dist_st0;
-    /// `CPlaceable::AllocateMatrix` (0x54F560, thiscall)
-    fn allocate_matrix(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x54f560 => crate::world::entity::allocate_matrix;
-    /// `CMatrix::~CMatrix()` (0x59ACD0)
-    fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59acd0 => crate::world::mvpa_math::matrix_dtor;
-    /// `CColLine::CColLine(const CVector& start, const CVector& end)` (0x40EF50, `ret 8`)
-    fn col_line_ctor(l: GPtr<u8>, start: GPtr<u8>, end: GPtr<u8>) -> GPtr<u8> = thiscall 0x40ef50 => crate::world::mvpa_math::col_line_ctor;
-    /// `CColSphere::Set(float radius, const CVector& centre, uint8 material, uint8 piece, uint8 light)`
-    /// (0x40FD10, thiscall, `ret 0x14`)
-    fn col_sphere_set(sp: GPtr<u8>, radius: f32, centre: GPtr<u8>, material: u8, piece: u8, light: u8) = thiscall 0x40fd10 => unported;
-    /// `CColBox::Set(const CVector& min, const CVector& max, uint8 material, uint8 piece, uint8 light)`
-    /// (0x40EE70, thiscall, `ret 0x14`)
-    fn col_box_set(bx: GPtr<u8>, min: GPtr<u8>, max: GPtr<u8>, material: u8, piece: u8, light: u8) = thiscall 0x40ee70 => unported;
-    /// `CEntity::GetColModel` (0x535300, thiscall)
-    fn get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => crate::world::entity::get_col_model;
-    /// `CCollision::SphereCastVsBBox(CColSphere*, CColSphere*, CColBox*)` (0x415590, AL)
-    fn sphere_cast_vs_bbox(a: GPtr<f32>, b: GPtr<f32>, bx: GPtr<f32>) -> u8 = cdecl 0x415590 => super::prim::sphere_cast_vs_bbox;
-    /// `CCollision::SphereCastVsSphere(CColSphere*, CColSphere*, CColSphere*)` (0x417F20, AL)
-    fn sphere_cast_vs_sphere(a: GPtr<f32>, b: GPtr<f32>, s: GPtr<f32>) -> u8 = cdecl 0x417f20 => super::prim::sphere_cast_vs_sphere;
     /// `CCollision::CalculateTrianglePlanes(CCollisionData*)` (0x416330)
     fn calculate_triangle_planes(cd: super::data::CdPtr) = cdecl 0x416330 => super::data::calculate_triangle_planes_col_data;
-    /// `CCollision::SphereCastVersusVsPoly` (0x415CF0, AL)
-    fn sphere_cast_versus_vs_poly_call(a: GPtr<u8>, b: GPtr<u8>, tri: GPtr<u8>, plane: GPtr<u8>, verts: GPtr<u8>) -> u8
-        = cdecl 0x415cf0 => sphere_cast_versus_vs_poly;
 }
 
 /// Copies `n` dwords from `src + off` to `dst + off` (`rep movsd`).
@@ -605,10 +593,10 @@ pub fn sphere_cast_vs_entity(a: GPtr<u8>, b: GPtr<u8>, e: GPtr<u8>) -> u8 {
     col_line_ctor(l0, a, b);
     let mut o1b = [0u32; 3];
     let o1 = local(&mut o1b);
-    matrix_mul_vec(o1, m, l0.byte_add(0x10));
+    matrix_mul_vec(o1.cast::<f32>(), m, l0.byte_add(0x10));
     let mut o2b = [0u32; 3];
     let o2 = local(&mut o2b);
-    matrix_mul_vec(o2, m, l0);
+    matrix_mul_vec(o2.cast::<f32>(), m, l0);
     let mut l1b = [0u32; 8];
     let l1 = local(&mut l1b);
     col_line_ctor(l1, o2, o1);
@@ -719,11 +707,9 @@ use crate::bindings::camera_to_ignore_this_object;
 use crate::bindings::col_point_assign;
 use sa_core::bindings::ped_is_alive;
 use sa_stream::bindings::col_model_ctor;
+use sa_stream::bindings::col_model_dtor;
+use sa_stream::bindings::collision_data_ctor;
 orig! {
-    /// `CCollisionData::CCollisionData()` (0x40F030, thiscall)
-    fn collision_data_ctor(cd: GPtr<u8>) -> GPtr<u8> = thiscall 0x40f030 => crate::world::mvpa_math::collision_data_ctor;
-    /// `CColModel::~CColModel()` (0x40F700, thiscall)
-    fn col_model_dtor(cm: GPtr<u8>) = thiscall 0x40f700 => crate::world::mvpa_math::col_model_dtor;
     /// `CPedModelInfo::AnimatePedColModelSkinned(RpClump*)` (0x4C6F70, thiscall, returns the col model)
     fn animate_ped_col_model_skinned(mi: sa_stream::modelinfo::base::MiPtr, clump: GPtr<u8>) -> GPtr<u8>
         = thiscall 0x4c6f70 => sa_stream::modelinfo::ped::animate_ped_col_model_skinned;

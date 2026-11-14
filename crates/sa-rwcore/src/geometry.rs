@@ -44,7 +44,7 @@ use crate::bindings::bbox_calculate as rw_bbox_calculate;
 use crate::bindings::build_mesh_add_triangle as rp_build_mesh_add_triangle;
 use crate::bindings::build_mesh_create as rp_build_mesh_create;
 use crate::bindings::build_mesh_destroy as rp_build_mesh_destroy;
-use crate::bindings::material_list_deinitialize as material_list_deinitialize_call;
+use sa_core::bindings::material_list_deinitialize as material_list_deinitialize_call;
 use crate::bindings::material_list_find_call;
 use crate::bindings::material_list_get_material_call;
 use crate::bindings::material_list_initialize as material_list_initialize_call;
@@ -54,13 +54,10 @@ use crate::bindings::plugin_add_stream;
 use crate::bindings::plugin_deinit_object;
 use crate::bindings::plugin_init_object;
 use crate::bindings::rw_sqrt;
+use crate::bindings::mesh_optimise_call as rp_mesh_optimise;
+use crate::bindings::resources_free_res_entry as rw_resources_free_res_entry;
+use sa_core::bindings::material_list_append_call;
 orig! {
-    /// `RwResourcesFreeResEntry(entry)` (0x807DE0)
-    fn rw_resources_free_res_entry(e: GPtr<u8>) -> u32 = cdecl 0x807DE0 => unported;
-    /// `_rpMeshOptimise(bm, flags)` (0x75D970)
-    fn rp_mesh_optimise(bm: GPtr<u8>, flags: u32) -> GPtr<u8> = cdecl 0x75D970 => unported;
-    /// `_rpMaterialListAppendMaterial(list, material)` (0x74E350)
-    fn material_list_append_call(l: GPtr<u8>, m: GPtr<u8>) -> i32 = cdecl 0x74E350 => crate::material::material_list_append_material;
     /// `RpGeometryAddMorphTargets(geometry, n)` (0x74C310)
     fn add_morph_targets_call(gm: GPtr<u8>, n: i32) -> i32 = cdecl 0x74C310 => rp_geometry_add_morph_targets;
     /// A material callback `cb(material, data)` (`RpGeometryForAllMaterials`)
@@ -586,16 +583,12 @@ pub fn rp_geometry_register_plugin_stream(id: u32, read: u32, write: u32, get_si
 
 use crate::bindings::plugin_read_data_chunks;
 use crate::bindings::read_real as rw_stream_read_real_call;
-use crate::bindings::rw_stream_find_chunk_call;
+use sa_core::bindings::rw_stream_find_chunk_call;
+use sa_core::bindings::rp_geometry_create as rp_geometry_create_call;
+use sa_core::bindings::rp_geometry_lock as rp_geometry_lock_call;
+use sa_core::bindings::rp_geometry_unlock as rp_geometry_unlock_call;
+use sa_core::bindings::stream_read as rw_stream_read_call;
 orig! {
-    /// `RwStreamRead(stream, buf, len)` (0x7EC9D0)
-    fn rw_stream_read_call(s: GPtr<u8>, buf: GPtr<u8>, len: u32) -> u32 = cdecl 0x7EC9D0 => crate::stream::rw_stream_read;
-    /// `RpGeometryCreate(numVerts, numTriangles, format)` (0x74CA90)
-    fn rp_geometry_create_call(nv: i32, nt: i32, format: u32) -> GPtr<u8> = cdecl 0x74CA90 => rp_geometry_create;
-    /// `RpGeometryLock(geometry, mode)` (0x74C7D0)
-    fn rp_geometry_lock_call(gm: GPtr<u8>, mode: u32) -> GPtr<u8> = cdecl 0x74C7D0 => rp_geometry_lock;
-    /// `RpGeometryUnlock(geometry)` (0x74C800)
-    fn rp_geometry_unlock_call(gm: GPtr<u8>) -> GPtr<u8> = cdecl 0x74C800 => rp_geometry_unlock;
     /// `_rpMaterialSetDefaultSurfaceProperties(props)` (0x74D870)
     fn set_default_surface_properties(p: GPtr<u8>) -> u32 = cdecl 0x74D870 => unported;
     /// `_rpMaterialListStreamRead(stream, list)` (0x74E600)
@@ -667,7 +660,7 @@ pub fn rp_geometry_stream_read(s: GPtr<u8>) -> GPtr<u8> {
     let hp: GPtr<u8> = GPtr::from_raw(hdr.as_mut_ptr()).cast();
     let mut surf = [0u32; 3];
     let sp: GPtr<u8> = GPtr::from_raw(surf.as_mut_ptr()).cast();
-    if rw_stream_find_chunk_call(s, 1, GPtr::NULL, vp) == 0 {
+    if rw_stream_find_chunk_call(s, 1, GPtr::NULL, vp) as u32 == 0 {
         return GPtr::NULL;
     }
     let v = vp.read();
@@ -769,7 +762,7 @@ pub fn rp_geometry_stream_read(s: GPtr<u8>) -> GPtr<u8> {
         }
         i += 1;
     }
-    if rw_stream_find_chunk_call(s, 8, GPtr::NULL, vp) == 0 {
+    if rw_stream_find_chunk_call(s, 8, GPtr::NULL, vp) as u32 == 0 {
         return GPtr::NULL;
     }
     let v = vp.read();

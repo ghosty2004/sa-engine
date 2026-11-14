@@ -42,25 +42,19 @@ pub use crate::bindings::handle_special_cheats;
 pub use crate::bindings::set_stat_value as stats_set_stat_value;
 pub use crate::bindings::weather_release_weather;
 pub use sa_stream::bindings::reclassify_loaded_cars as streaming_reclassify_loaded_cars;
+pub use sa_core::bindings::clothes_rebuild_player;
+pub use sa_core::bindings::get_key as key_gen_get_key;
+pub use sa_core::bindings::hud_set_help_message;
+pub use sa_core::bindings::stats_increment_stat;
+pub use sa_core::bindings::text_get;
+pub use sa_stream::bindings::stream_peds_into_random_slots as streaming_stream_peds_into_random_slots;
 orig! {
     /// a cheat function from `m_aCheatFunctions` (cdecl, no arguments)
     pub fn call_cheat_fn(f: u32) = cdecl dyn => unported;
-    /// `CKeyGen::GetKey(const char*)` (0x53CF00), null-terminated form
-    pub fn key_gen_get_key(s: GPtr<u8>) -> u32 = cdecl 0x53CF00 => unported;
-    /// `CText::Get(const char*)` (0x6A0050)
-    pub fn text_get(text: GPtr<u8>, key: GPtr<u8>) -> GPtr<u16> = thiscall 0x6A0050 => unported;
-    /// `CHud::SetHelpMessage(const char*, bool quick, bool permanent, bool addToBrief)` (0x588BE0)
-    pub fn hud_set_help_message(t: GPtr<u16>, quick: i32, permanent: i32, brief: i32) = cdecl 0x588BE0 => unported;
-    /// `CStats::IncrementStat(uint16, float)` (0x55C180)
-    pub fn stats_increment_stat(stat: u32, v: u32) = cdecl 0x55C180 => unported;
     /// `CCheat::AddToCheatString(char)` (0x438480)
     pub fn add_to_cheat_string_call(c: u32) = cdecl 0x438480 => add_to_cheat_string_port;
     /// `CPlayerPed::CheatWantedLevel(int32)` (0x609F50)
     pub fn player_cheat_wanted_level(ped: GPtr<u8>, level: i32) = thiscall 0x609F50 => unported;
-    /// `CClothes::RebuildPlayer(CPlayerPed*, bool)` (0x5A82C0)
-    pub fn clothes_rebuild_player(ped: GPtr<u8>, b: i32) = cdecl 0x5A82C0 => unported;
-    /// `CStreaming::StreamPedsIntoRandomSlots(const int32* models)` (0x40BDA0)
-    pub fn streaming_stream_peds_into_random_slots(m: GPtr<i32>) = cdecl 0x40BDA0 => unported;
     /// `CCheat::VehicleCheat(eModelID)` (0x43A0B0)
     pub fn vehicle_cheat(model: i32) -> GPtr<u8> = cdecl 0x43A0B0 => unported;
 }
@@ -152,9 +146,9 @@ pub fn add_to_cheat_string(c: u8) {
         if let Some(i) = (0..NUM_CHEATS as i32).find(|&i| g::<u32>(CHEAT_HASH_KEYS).wrapping_index(i).read() == key) {
             let active = CHEATS_ACTIVE.ptr().cast::<u8>().byte_add(i as isize);
             let label = if active.read() == 0 { 0x859080 } else { 0x859088 };
-            let t = text_get(g(THE_TEXT), g(label));
-            hud_set_help_message(t, 1, 0, 0);
-            stats_increment_stat(0x89, 0x3F80_0000);
+            let t = GPtr::<u8>::cast::<u16>(text_get(g(THE_TEXT), g(label)));
+            hud_set_help_message(t.cast::<u8>(), 1, 0, 0);
+            stats_increment_stat(0x89, f32::from_bits(0x3F80_0000));
             let f = g::<u32>(CHEAT_FUNCTIONS).wrapping_index(i).read();
             HAS_PLAYER_CHEATED.set(1);
             if f != 0 {
@@ -336,14 +330,14 @@ pub fn riot_cheat() {
 /// `CCheat::StaminaCheat` (0x439930): stat 0x16 = 1000.
 #[hook(addr = 0x439930, conv = cdecl, name = "CCheat::StaminaCheat", expect = "68 00 00 7A 44")]
 pub fn stamina_cheat() {
-    stats_set_stat_value(0x16, 0x447A_0000);
+    stats_set_stat_value(0x16, f32::from_bits(0x447A_0000));
 }
 
 /// `CCheat::WeaponSkillsCheat` (0x439940): stats 0x45..0x4F = 1000.
 #[hook(addr = 0x439940, conv = cdecl, name = "CCheat::WeaponSkillsCheat", expect = "68 00 00 7A 44")]
 pub fn weapon_skills_cheat() {
     for s in 0x45..=0x4F {
-        stats_set_stat_value(s, 0x447A_0000);
+        stats_set_stat_value(s as u16, f32::from_bits(0x447A_0000));
     }
 }
 
@@ -351,7 +345,7 @@ pub fn weapon_skills_cheat() {
 #[hook(addr = 0x4399D0, conv = cdecl, name = "CCheat::VehicleSkillsCheat", expect = "68 00 00 7A 44")]
 pub fn vehicle_skills_cheat() {
     for s in [0xA0, 0xDF, 0xE5, 0xE6] {
-        stats_set_stat_value(s, 0x447A_0000);
+        stats_set_stat_value(s as u16, f32::from_bits(0x447A_0000));
     }
 }
 
@@ -461,22 +455,22 @@ fn rebuild_player_unless_dead() {
 /// `CCheat::FatCheat` (0x439110): stat 0x15 = 1000, rebuild the player.
 #[hook(addr = 0x439110, conv = cdecl, name = "CCheat::FatCheat", expect = "68 00 00 7A 44")]
 pub fn fat_cheat() {
-    stats_set_stat_value(0x15, 0x447A_0000);
+    stats_set_stat_value(0x15, f32::from_bits(0x447A_0000));
     rebuild_player_unless_dead();
 }
 
 /// `CCheat::MuscleCheat` (0x439150): stat 0x17 = 1000, rebuild the player.
 #[hook(addr = 0x439150, conv = cdecl, name = "CCheat::MuscleCheat", expect = "68 00 00 7A 44")]
 pub fn muscle_cheat() {
-    stats_set_stat_value(0x17, 0x447A_0000);
+    stats_set_stat_value(0x17, f32::from_bits(0x447A_0000));
     rebuild_player_unless_dead();
 }
 
 /// `CCheat::SkinnyCheat` (0x439190): stats 0x15, 0x17 = 0, rebuild the player.
 #[hook(addr = 0x439190, conv = cdecl, name = "CCheat::SkinnyCheat", expect = "6A 00 6A 15 E8 D7 0E 12 00")]
 pub fn skinny_cheat() {
-    stats_set_stat_value(0x15, 0);
-    stats_set_stat_value(0x17, 0);
+    stats_set_stat_value(0x15, f32::from_bits(0));
+    stats_set_stat_value(0x17, f32::from_bits(0));
     rebuild_player_unless_dead();
 }
 
@@ -506,7 +500,7 @@ pub fn all_cars_are_great_cheat() {
 pub fn gangs_cheat() {
     if toggle(0x96915A) != 0 {
         let mut m: [i32; 8] = [0x66, 0x67, 0x68, 0x69, 0x6A, 0x6C, 0x6D, 0x6E];
-        streaming_stream_peds_into_random_slots(GPtr::from_raw(m.as_mut_ptr()));
+        streaming_stream_peds_into_random_slots(GPtr::<i32>::cast::<u8>(GPtr::from_raw(m.as_mut_ptr())));
     }
 }
 

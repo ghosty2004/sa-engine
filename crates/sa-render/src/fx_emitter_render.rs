@@ -48,29 +48,22 @@ const INFO_SIZE: usize = 0xA4;
 use crate::bindings::fx_rw_matrix_create as matrix_create;
 use crate::bindings::fx_rw_matrix_destroy as matrix_destroy;
 use sa_core::bindings::rw_v3d_transform_points as transform_points;
-use sa_world::bindings::rw_v3d_length as length;
-use sa_world::bindings::rw_v3d_normalize as normalize;
+use sa_core::bindings::rw_v3d_length as length;
+use sa_core::bindings::rw_v3d_normalize as normalize;
+use crate::bindings::fx_prt_mult_default_ctor as prt_mult_ctor;
+use sa_core::bindings::list_get_num_items;
+use sa_world::bindings::fx_add_particle as add_particle;
+use sa_world::bindings::fx_get_composite_matrix as get_composite_matrix;
+use sa_world::bindings::fx_render_add_tri as render_add_tri;
+use sa_world::bindings::fx_render_begin as render_begin;
+use sa_world::bindings::fx_render_end as render_end;
 orig! {
     /// `RwRenderStateSet(state, value)` (`RwEngineInstance` +0x20)
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `List_c::GetNumItems()` (0x4A8EC0, `mov eax, [ecx+8]`)
-    fn list_get_num_items(this: GPtr<u8>) -> u32 = thiscall 0x4A8EC0 => sa_core::mvpb_app::list_get_num_items;
     /// `FxEmitterBP_c::RenderHeatHaze(RwCamera*, uint32 txdHash, float brightness)` (0x4A1940)
     fn render_heat_haze_call(this: GPtr<u8>, camera: u32, txd: u32, brightness: u32) = thiscall 0x4A1940 => fx_emitter_bp_render_heat_haze;
-    /// `Fx_c::RenderBegin(RwRaster*, RwMatrix*, uint32 flags)` (0x4A13B0)
-    fn render_begin(raster: u32, ltm: u32, flags: u32) = cdecl 0x4A13B0 => crate::fx::fx_render_begin;
-    /// `Fx_c::RenderEnd()` (0x4A1600)
-    fn render_end() = cdecl 0x4A1600 => crate::mvpa_render3::fx_render_end;
-    /// `Fx_c::RenderAddTri_` (0x4A1410): three positions, three UVs, three RGBA colours (int dwords)
-    fn render_add_tri(x0: u32, y0: u32, z0: u32, x1: u32, y1: u32, z1: u32, x2: u32, y2: u32, z2: u32, u0: u32, v0: u32, u1: u32, v1: u32, u2: u32, v2: u32, r0: u32, g0: u32, b0: u32, a0: u32, r1: u32, g1: u32, b1: u32, a1: u32, r2: u32, g2: u32, b2: u32, a2: u32) = cdecl 0x4A1410 => crate::mvpc_fx2::fx_render_add_tri;
-    /// `FxSystem_c::GetCompositeMatrix(RwMatrix*)` (0x4AA8C0)
-    fn get_composite_matrix(this: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall 0x4AA8C0 => crate::fx::fx_system_get_composite_matrix;
     /// `FxInfoManager_c::ProcessRenderInfo(currTime, lifeRatio, timeStep, totalTime, useConst, out)` (0x4A4A80)
     fn process_render_info(this: GPtr<u8>, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, out: GPtr<u8>) = thiscall 0x4A4A80 => crate::mvpc_fx1::info_manager_process_render_info;
-    /// `FxPrtMult_c::FxPrtMult_c()` (0x4AB270)
-    fn prt_mult_ctor(this: u32) -> u32 = thiscall 0x4AB270 => crate::generated::generated_setters::g_fx_prt_mult_c_4ab270;
-    /// `FxSystem_c::AddParticle(RwV3d* pos, RwV3d* vel, float time, FxPrtMult_c*, float zRot, float lightMult, float limit, uint8 local)` (0x4AA440)
-    fn add_particle(this: GPtr<u8>, pos: GPtr<u8>, vel: GPtr<u8>, time: u32, mult: GPtr<u8>, zrot: u32, light_mult: f32, limit: f32, local: u32) = thiscall 0x4AA440 => crate::mvpb_r1::fx_system_add_particle;
     /// `Fx_c::RotateVecAboutVec(out, in, axis, angle)` (0x4A1780)
     fn rotate_vec_about_vec(out: GPtr<u8>, inp: GPtr<u8>, axis: GPtr<u8>, angle: u32) = cdecl 0x4A1780 => crate::mvpc_fx1::fx_rotate_vec_about_vec;
 }
@@ -189,7 +182,7 @@ pub fn fx_emitter_bp_render(this: GPtr<u8>, camera: u32, txd: u32, brightness: u
         rw_render_state_set(0xA, blend(1));
         rw_render_state_set(0xB, blend(0));
     }
-    render_begin(cur_raster, 0, 1);
+    render_begin(GPtr::from_addr(cur_raster as usize), GPtr::NULL, 1);
     let cam_m: GPtr<u8> = g(rd::<u32>(g::<u8>(camera as usize), 4) as usize + 0x10);
     let mut prt = rd::<u32>(list, 0);
     let mut st = Frame { bright: f32::from_bits(brightness), raster: 0, info: [0; INFO_SIZE / 4], mult: [0; 7] };
@@ -222,7 +215,7 @@ pub fn fx_emitter_bp_render_heat_haze(this: GPtr<u8>, camera: u32, _txd: u32, br
     rw_render_state_set(0xC, 1);
     rw_render_state_set(0xA, 5);
     rw_render_state_set(0xB, 2);
-    render_begin(cur_raster, 0, 1);
+    render_begin(GPtr::from_addr(cur_raster as usize), GPtr::NULL, 1);
     let cam_m: GPtr<u8> = g(rd::<u32>(g::<u8>(camera as usize), 4) as usize + 0x10);
     let mut prt = rd::<u32>(list, 0);
     let mut st = Frame { bright: f32::from_bits(brightness), raster: 0, info: [0; INFO_SIZE / 4], mult: [0; 7] };
@@ -254,7 +247,7 @@ fn render_particle(this: GPtr<u8>, prt: GPtr<u8>, cam_m: GPtr<u8>, cur_raster: &
     if rd::<u8>(prt, 0x37) != 0 {
         let m = matrix_create(fxm);
         get_composite_matrix(sys, g(m as usize));
-        transform_points(ptr(&mut pos), prt.byte_add(0x10), 1, g(m as usize));
+        transform_points(GPtr::<u8>::cast::<f32>(ptr(&mut pos)), GPtr::<u8>::cast::<f32>(prt.byte_add(0x10)), 1, g(m as usize));
         matrix_destroy(fxm, m);
     }
     let info = GPtr::from_raw(st.info.as_mut_ptr().cast::<u8>());
@@ -512,7 +505,7 @@ fn texture(this: GPtr<u8>, info: GPtr<u8>, cur_raster: &mut u32, st: &mut Frame)
     if *cur_raster != st.raster {
         render_end();
         *cur_raster = st.raster;
-        render_begin(st.raster, 0, 1);
+        render_begin(GPtr::from_addr(st.raster as usize), GPtr::NULL, 1);
     }
 }
 
@@ -591,9 +584,9 @@ fn smoke(prt: GPtr<u8>, info: GPtr<u8>, st: &mut Frame) {
         g(g::<u32>(FX_SMOKE_SYSTEM).read() as usize),
         ptr(&mut pos),
         ptr(&mut vel),
-        0,
+        f32::from_bits(0),
         mult,
-        0xBF80_0000,
+        f32::from_bits(0xBF80_0000),
         f32::from_bits(0x3F99_999A),
         f32::from_bits(0x3F19_999A),
         0,

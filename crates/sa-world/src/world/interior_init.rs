@@ -15,15 +15,13 @@ use crate::bindings::matrix_copy_ctor;
 use sa_core::bindings::matrix_dtor;
 use sa_stream::bindings::placeable_allocate_matrix;
 use sa_stream::bindings::simple_transform_update_matrix;
+use crate::bindings::furnish_office as interior_furnish_office;
+use crate::bindings::furnish_shop as interior_furnish_shop;
 orig! {
     /// `Interior_c::CalcMatrix(const CVector*)` (0x5914D0)
     fn interior_calc_matrix(i: GPtr<u8>, pos: GPtr<u8>) = thiscall 0x5914D0 => super::interior_info::interior_calc_matrix;
     /// `Interior_c::ResetTiles()` (0x593910)
     fn interior_reset_tiles(i: GPtr<u8>) = thiscall 0x593910 => unported;
-    /// `Interior_c::FurnishShop(int32)` (0x59A790)
-    fn interior_furnish_shop(i: GPtr<u8>, kind: u32) = thiscall 0x59A790 => unported;
-    /// `Interior_c::FurnishOffice()` (0x599AF0)
-    fn interior_furnish_office(i: GPtr<u8>) = thiscall 0x599AF0 => unported;
     /// `Interior_c::CalcExitPts()` (0x5924A0)
     fn interior_calc_exit_pts(i: GPtr<u8>) = thiscall 0x5924A0 => unported;
     /// `InteriorManager_c::HasInteriorHadStealDataSetup(Interior_c*)` (0x5982B0) on `g_interiorMan` (0xBAF670)

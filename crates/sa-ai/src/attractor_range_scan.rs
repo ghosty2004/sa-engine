@@ -3,6 +3,7 @@
 //! closest attractor found. Ported from the 1.0 US bytes. Unverified (docs/verify/HOWTO.md).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -12,18 +13,16 @@ use sa_core::bindings::tm_get_active_task;
 use sa_world::bindings::event_attractor_ctor;
 use sa_world::bindings::event_attractor_dtor;
 use sa_world::bindings::event_group_add;
+use crate::bindings::add_effect;
+use crate::bindings::attractor_scanner_clear;
 orig! {
     /// `CTask::GetTaskType()` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CAttractorScanner::Clear()` (0x5FFF90)
-    fn attractor_scanner_clear(s: GPtr<u8>) = thiscall 0x5FFF90 => crate::attractor_scanner::attractor_scanner_clear;
     /// `FUN_006034b0(CPtrList& list, CPed* ped)` (0x6034B0, `ret 8`): the attractor effects of one sector list's
     /// entities
     fn scan_entity_list(s: GPtr<u8>, list: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x6034B0 => unported;
     /// `FUN_005fe960(int32)` (0x5FE960, `ret 4`) on a scripted effect's user list, with the ped's +0x598
     fn scripted_user_list_check(list: GPtr<u8>, v: u32) -> u8 = thiscall 0x5FE960 => unported;
-    /// `FUN_005fffd0(C2dEffect*, CEntity*, CPed*)` (0x5FFFD0, `ret 0xC`): offers one attractor effect
-    fn add_effect(s: GPtr<u8>, effect: GPtr<u8>, entity: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x5FFFD0 => attractor_scanner_add_effect;
     /// `FUN_00600180(C2dEffect** effect, CEntity** entity)` (0x600180, `ret 8`): the chosen attractor
     fn get_closest_attractor(s: GPtr<u8>, effect: GPtr<u8>, entity: GPtr<u8>) = thiscall 0x600180 => unported;
     /// `FUN_00603570(C2dEffect*)` (0x603570): the ped a scripted attractor (type 7) is meant for
@@ -262,7 +261,7 @@ pub fn attractor_scanner_add_effect(this: GPtr<u8>, effect: GPtr<u8>, entity: GP
     if !entity.is_null() {
         matrix_assign(m_p, placeable_get_matrix(entity));
     } else {
-        matrix_set_scale(m_p, 0x3F80_0000);
+        matrix_set_scale(m_p, f32::from_bits(0x3F80_0000));
     }
     if attractor_manager_is_approachable(effect, m_p, 0, ped) != 0 {
         wr::<GPtr<u8>>(this, 0x18 + 4 * t, entity);

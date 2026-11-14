@@ -37,10 +37,11 @@ const NO_CLIP: u32 = 4;
 use crate::bindings::dynamic_vertex_buffer_lock;
 use crate::bindings::flush_cache;
 use crate::bindings::get_current_texture;
-use crate::bindings::set_render_state;
+use sa_core::bindings::set_render_state;
 use crate::bindings::set_stream_source;
 use crate::bindings::set_transform_world;
-use crate::bindings::set_tss;
+use sa_core::bindings::set_tss;
+use sa_core::bindings::vertex_alpha_enable;
 orig! {
     fn dev_set_vertex_declaration(dev: GPtr<u8>, decl: u32) -> i32 = stdcall vslot 0x15C => unported;
     fn dev_set_vertex_shader(dev: GPtr<u8>, vs: u32) -> i32 = stdcall vslot 0x170 => unported;
@@ -52,9 +53,6 @@ orig! {
     fn dev_draw_indexed_primitive_up(dev: GPtr<u8>, prim: u32, min: u32, num: u32, count: u32, indices: u32, fmt: u32, data: u32, stride: u32) -> i32 = stdcall vslot 0x150 => unported;
     fn ib_lock(ib: GPtr<u8>, offset: u32, size: u32, data: GPtr<u32>, flags: u32) -> i32 = stdcall vslot 0x2C => unported;
     fn ib_unlock(ib: GPtr<u8>) -> i32 = stdcall vslot 0x30 => unported;
-
-    /// `_rwD3D9RenderStateVertexAlphaEnable(enable)` (0x7FE0A0)
-    fn vertex_alpha_enable(v: u32) -> u32 = cdecl 0x7FE0A0 => crate::d3d9state::rs_vertex_alpha_enable;
     /// `RwD3D9DynamicVertexBufferUnlock(vb)` (0x7F5C90)
     fn dynamic_vertex_buffer_unlock(vb: GPtr<u8>) -> u32 = cdecl 0x7F5C90 => crate::d3d9vb::dynamic_vertex_buffer_unlock;
 }

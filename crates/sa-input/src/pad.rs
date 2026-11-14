@@ -132,11 +132,11 @@ pub use sa_core::bindings::intel_get_task_use_gun as get_task_use_gun;
 pub use sa_core::bindings::is_foreground_app;
 pub use sa_core::bindings::is_video_mode_exclusive;
 pub use sa_core::bindings::tm_get_simplest_active_task as get_simplest_active_task;
+pub use crate::bindings::call_controller_state_check_for_input;
+pub use sa_core::bindings::pad_clear as call_pad_clear;
 orig! {
     /// `CControllerState::Clear` (0x53EF80)
     pub fn call_controller_state_clear(s: GPtr<u8>) = thiscall 0x53EF80 => controller_state_clear;
-    /// `CControllerState::CheckForInput` (0x53EFF0, AL)
-    pub fn call_controller_state_check_for_input(s: GPtr<u8>) -> u8 = thiscall 0x53EFF0 => controller_state_check_for_input;
     /// `CKeyboardState::Clear` (0x53F090)
     pub fn call_keyboard_state_clear(s: GPtr<u8>) = thiscall 0x53F090 => keyboard_state_clear;
     /// `CMouseControllerState::CheckForInput` (0x53F270, AL)
@@ -153,8 +153,6 @@ orig! {
     pub fn call_is_cross_pressed(p: GPtr<u8>) -> u32 = thiscall 0x4D59E0 => is_cross_pressed;
     /// `CPad::ReconcileTwoControllersInput` (0x53F530)
     pub fn call_reconcile(p: GPtr<u8>, out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = thiscall 0x53F530 => reconcile_two_controllers_input;
-    /// `CPad::Clear(bool enablePlayerControls, bool resetPhase)` (0x541A70)
-    pub fn call_pad_clear(p: GPtr<u8>, enable: u32, phase: u32) = thiscall 0x541A70 => clear;
     /// `CPad::Update(int16 padNumber)` (0x541C40)
     pub fn call_pad_update(p: GPtr<u8>, n: u32) = thiscall 0x541C40 => update;
     /// `CPad::UpdateMouse` (0x53F3C0)

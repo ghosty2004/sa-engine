@@ -5,6 +5,7 @@
 //! gta-reversed). Every call to another catalogued function goes through `orig!` at the original address.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -18,13 +19,15 @@ use sa_core::bindings::tm_get_task_secondary as task_manager_get_task_secondary;
 use sa_core::bindings::vector_normalise;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::event_acquaintance_ped_dtor;
-use sa_world::bindings::ptr_list_double_link_flush;
+use sa_core::bindings::ptr_list_double_link_flush;
 use sa_world::bindings::task_simple_dtor;
+use crate::bindings::bbox_segment_planes_uncached;
+use crate::bindings::compute_entity_hit_side as entity_hit_side_3;
+use crate::bindings::entity_hit_side_2;
+use crate::bindings::geom_compute_route_round_entity_bbox as route_round_entity_bbox_2;
+use sa_world::bindings::clear_blip_for_entity as radar_clear_blip_for_entity;
+use sa_world::bindings::sequence_flush;
 orig! {
-    /// `CTaskComplexSequence::Flush` (0x632C10)
-    fn sequence_flush(s: GPtr<u8>) = thiscall 0x632C10 => crate::small::sequence_flush;
-    /// `CRadar::ClearBlipForEntity(eBlipType, int32 handle)` (0x587C60, cdecl)
-    fn radar_clear_blip_for_entity(ty: u32, handle: i32) = cdecl 0x587C60 => unported;
     /// `CPedIntelligence::RestorePedDecisionMakerType` (0x600BC0)
     fn intel_restore_ped_decision_maker_type(i: GPtr<u8>) -> u32 = thiscall 0x600BC0 => crate::intelrest::intel_restore_ped_decision_maker_type;
     /// `CPedTaskPair::Flush` (0x5E95B0)
@@ -41,17 +44,6 @@ orig! {
     /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, bool x7)` (0x56A490, cdecl; AL, full EAX)
     #[allow(clippy::too_many_arguments)]
     fn world_get_is_line_of_sight_clear(a: GPtr<u8>, b: GPtr<u8>, bld: u32, veh: u32, peds: u32, obj: u32, dum: u32, see: u32, cam: u32) -> u32 = cdecl 0x56A490 => unported;
-    /// `CPedGeometryAnalyser::ComputeRouteRoundEntityBoundingBox(const CPed&, const CVector&, CEntity&,
-    /// const CVector&, CPointRoute&, int32)` (0x5F3DD0, cdecl)
-    fn route_round_entity_bbox_2(ped: GPtr<u8>, pos: GPtr<u8>, e: GPtr<u8>, target: u32, route: u32, flag: u32) -> u32 = cdecl 0x5F3DD0 => unported;
-    /// `CPedGeometryAnalyser::ComputeEntityHitSide(const CVector&, CEntity&)` (0x5F3AC0, cdecl)
-    fn entity_hit_side_3(pos: GPtr<u8>, e: GPtr<u8>) -> u32 = cdecl 0x5F3AC0 => crate::mvpa_ai1::compute_entity_hit_side_3;
-    /// `CPedGeometryAnalyser::ComputeEntityBoundingBoxSegmentPlanesUncached(const CVector* corners, const CVector&
-    /// centre, CVector* normals, float* distances)` (0x5F1750, cdecl)
-    fn bbox_segment_planes_uncached(corners: GPtr<u8>, centre: GPtr<u8>, normals: GPtr<u8>, d: GPtr<u8>) = cdecl 0x5F1750 => crate::mvpa_ai1::compute_entity_bounding_box_segment_planes_uncached;
-    /// `CPedGeometryAnalyser::ComputeEntityHitSide(const CVector&, const CVector* normals, const float* distances)`
-    /// (0x5F1450, cdecl)
-    fn entity_hit_side_2(pos: GPtr<u8>, normals: GPtr<u8>, d: GPtr<u8>) -> u32 = cdecl 0x5F1450 => unported;
 }
 
 /// `CPools::ms_pPedPool`
@@ -172,7 +164,7 @@ pub fn membership_remove_member(this: GPtr<u8>, idx: i32) {
     let slot = this.byte_add(4 + 4 * idx as isize);
     let p = rd::<GPtr<u8>>(slot, 0);
     if !p.is_null() {
-        entity_clean_up_old_reference(p, slot);
+        entity_clean_up_old_reference(p, slot.cast::<GPtr<u8>>());
     }
     if ped_is_player(rd::<GPtr<u8>>(slot, 0)) == 0 {
         let ped = rd::<GPtr<u8>>(slot, 0);
@@ -263,7 +255,7 @@ pub fn inform_friends_event_queue_flush() {
         let e = g::<u8>(0xA9AFB8 + 0xC * i);
         let p = rd::<GPtr<u8>>(e, 0);
         if !p.is_null() {
-            entity_clean_up_old_reference(p, e);
+            entity_clean_up_old_reference(p, e.cast::<GPtr<u8>>());
             wr::<u32>(e, 0, 0);
         }
         let ev = rd::<GPtr<u8>>(e, 4);
@@ -360,7 +352,7 @@ pub fn event_script_command_dtor(this: GPtr<u8>) {
        unverified = "mvpa-ai-1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn event_acq_ped_respect_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x86CA38);
-    event_acquaintance_ped_dtor(this);
+    event_acquaintance_ped_dtor(this.cast::<u32>());
 }
 
 /// `CEventAcquaintancePedLike::~CEventAcquaintancePedLike` (0x5FF0F0): vtable 0x86CA80, then
@@ -369,7 +361,7 @@ pub fn event_acq_ped_respect_dtor(this: GPtr<u8>) {
        route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn event_acq_ped_like_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x86CA80);
-    event_acquaintance_ped_dtor(this);
+    event_acquaintance_ped_dtor(this.cast::<u32>());
 }
 
 /// `CEventSeenCop::~CEventSeenCop` (0x5FF3A0): vtable 0x86CB58, then `CEventAcquaintancePed::~CEventAcquaintancePed`
@@ -378,7 +370,7 @@ pub fn event_acq_ped_like_dtor(this: GPtr<u8>) {
        unverified = "mvpa-ai-1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn event_seen_cop_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x86CB58);
-    event_acquaintance_ped_dtor(this);
+    event_acquaintance_ped_dtor(this.cast::<u32>());
 }
 
 /// `CEventAcquaintancePedDislike::~CEventAcquaintancePedDislike` (0x5FF1B0): vtable 0x86CAC8, then
@@ -387,7 +379,7 @@ pub fn event_seen_cop_dtor(this: GPtr<u8>) {
        unverified = "mvpa-ai-1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn event_acq_ped_dislike_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x86CAC8);
-    event_acquaintance_ped_dtor(this);
+    event_acquaintance_ped_dtor(this.cast::<u32>());
 }
 
 /// `CEventInAir::~CEventInAir` (0x4B0D00): only the `CEvent` vtable 0x85AB38.
@@ -577,7 +569,7 @@ pub fn compute_entity_hit_side_3(p: GPtr<u8>, e: GPtr<u8>) -> u32 {
     let mut frame = [0u32; 0x20];
     let f = local(&mut frame);
     // +4 centre, +0x10 distances, +0x20 corners, +0x50 normals (the original frame layout)
-    bbox_corners_uncached(z, e, f.byte_add(0x20));
+    bbox_corners_uncached(f32::from_bits(z), e, f.byte_add(0x20));
     bbox_centre_uncached(z, f.byte_add(0x20), f.byte_add(4));
     bbox_segment_planes_uncached(f.byte_add(0x20), f.byte_add(4), f.byte_add(0x50), f.byte_add(0x10));
     entity_hit_side_2(p, f.byte_add(0x50), f.byte_add(0x10))
@@ -597,7 +589,7 @@ pub fn compute_entity_hit_side_1(ped: GPtr<u8>, e: GPtr<u8>) -> u32 {
 #[hook(addr = 0x5F6110, conv = cdecl, name = "CPedGeometryAnalyser::ComputeRouteRoundEntityBoundingBox-Entity", expect = "8B 4C 24 04 8B 41 14",
        unverified = "mvpa-ai-1", route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn compute_route_round_entity_bounding_box_entity(ped: GPtr<u8>, e: GPtr<u8>, target: u32, route: u32, flag: u32) -> u32 {
-    route_round_entity_bbox_2(ped, pos(ped), e, target, route, flag)
+    route_round_entity_bbox_2(ped, pos(ped), e, GPtr::from_addr(target as usize), GPtr::from_addr(route as usize), flag)
 }
 
 /// `CPedGeometryAnalyser::CanPedTargetPed(const CPed& ped, const CPed& target, bool checkDirection)` (0x5F1C40,

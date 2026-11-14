@@ -8,6 +8,7 @@
 //! height for the anim, +0xE height for the position, +0x14 handhold heading, +0x18 handhold position, +0x24
 //! climb entity, +0x28 get-to-position counter (word), +0x2C anim.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -32,7 +33,8 @@ use sa_world::bindings::vec_mul_assign as vector_scale_assign;
 use sa_world::bindings::vector_add_assign;
 use sa_world::bindings::vector_div as vector_div_scalar;
 use sa_world::bindings::vector_scale as scalar_mul_vector;
-use sa_world::bindings::vector_sub;
+use sa_core::bindings::vector_sub;
+use sa_world::bindings::set_orientation as placeable_set_orientation;
 orig! {
     /// `CTask::MakeAbortable(CPed*, eAbortPriority, const CEvent*)` (vtable slot 0x18)
     fn task_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, prio: u32, ev: u32) -> u8 = thiscall vslot 0x18 => unported;
@@ -46,8 +48,6 @@ orig! {
     fn climb_test_for_stand_up_c(t: GPtr<u8>, ped: GPtr<u8>, p: GPtr<u8>, a: f32) -> u8 = thiscall 0x680570 => crate::climb_scan::climb_test_for_stand_up;
     /// `CPad::GetJump()` (0x540750), `JumpJustDown()` (0x540770), `GetExitVehicle()` (0x5400D0)
     fn pad_get_jump(pad: GPtr<u8>) -> u8 = thiscall 0x540750 => unported;
-    /// `CPlaceable::SetOrientation(float, float, float)` (0x439A80)
-    fn placeable_set_orientation(e: GPtr<u8>, x: f32, y: f32, z: f32) = thiscall 0x439A80 => unported;
 }
 
 /// `CTimer::ms_fTimeStep` (0xB7CB5C)
@@ -145,7 +145,7 @@ pub fn climb_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
             simple_transform_update_matrix(e.byte_add(4), rd::<GPtr<u8>>(e, 0x14));
         }
         let mut out = [0u32; 3];
-        let r = matrix_mul_vec(buf(&mut out), rd::<GPtr<u8>>(e, 0x14), buf(&mut hand));
+        let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(buf(&mut out)), rd::<GPtr<u8>>(e, 0x14), buf(&mut hand)));
         hand = [rd::<u32>(r, 0), rd::<u32>(r, 4), rd::<u32>(r, 8)];
         let e = rd::<GPtr<u8>>(this, 0x24);
         let m = rd::<GPtr<u8>>(e, 0x14);
@@ -198,12 +198,12 @@ pub fn climb_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
             let r = vector_sub(buf(&mut rel), target_p, ep);
             let (rx, ry, rz) = (rd::<u32>(r, 0), rd::<u32>(r, 4), rd::<u32>(r, 8));
             let mut out = [0u32; 3];
-            let s = physical_get_speed(e, buf(&mut out), rx, ry, rz);
+            let s = physical_get_speed(e, buf(&mut out), f32::from_bits(rx), f32::from_bits(ry), f32::from_bits(rz));
             speed = [rd::<u32>(s, 0), rd::<u32>(s, 4), rd::<u32>(s, 8)];
         }
         let move_speed = ped.byte_add(0x44);
         if new_height {
-            placeable_set_posn(ped, target_p);
+            placeable_set_posn(ped, target_p.cast::<f32>());
             copy3(move_speed, buf(&mut speed));
         } else if !x(sq).fcom(x(c(0x85_8B1C))).test_parity(0x05) {
             // close: settle at the target
@@ -234,7 +234,7 @@ pub fn climb_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
             let mut out = [0u32; 3];
             let r = vector_div_scalar(buf(&mut out), buf(&mut dq), c(TIME_STEP));
             copy3(move_speed, r);
-            let mag = X87::from_f64_exact(vector_magnitude(move_speed));
+            let mag = X87::from_f64_exact(vector_magnitude(move_speed.cast::<u32>()));
             let cap = c(0x85_8CC4);
             if !mag.fcom(x(cap)).test_any(0x41) {
                 vector_scale_assign(move_speed, x(cap).fdiv(mag).to_f32());
@@ -253,7 +253,7 @@ pub fn climb_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
                     let f = x(rd::<f32>(ped, 0x8C)).fmul_m(c(0x85_8EF4)).to_f32();
                     let mut out = [0u32; 3];
                     let r = scalar_mul_vector(buf(&mut out), f, rd::<GPtr<u8>>(ped, 0x14).byte_add(0x10));
-                    physical_apply_move_force(ped, rd::<u32>(r, 0), rd::<u32>(r, 4), rd::<u32>(r, 8));
+                    physical_apply_move_force(ped, f32::from_bits(rd::<u32>(r, 0)), f32::from_bits(rd::<u32>(r, 4)), f32::from_bits(rd::<u32>(r, 8)));
                 }
             }
         }

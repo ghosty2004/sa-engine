@@ -24,9 +24,8 @@ sa_core::globals! {
 
 pub use crate::bindings::strstr;
 pub use sa_core::bindings::crt_strncpy as strncpy;
+pub use sa_core::bindings::get_uppercase_key;
 orig! {
-    /// `CKeyGen::GetUppercaseKey` (0x53CF30)
-    pub fn get_uppercase_key(s: GPtr<u8>) -> u32 = cdecl 0x53CF30 => sa_core::keygen::get_uppercase_key;
     /// `CTimeModelInfo::~CTimeModelInfo` (0x4C5680)
     pub fn time_destructor_call(this: MiPtr) = thiscall 0x4C5680 => time_destructor;
     /// `CLodTimeModelInfo::~CLodTimeModelInfo` (0x4C56E0)

@@ -2,7 +2,7 @@
 //! gta-reversed. Ported from the 1.0 US bytes; x87 arithmetic follows the original's instruction order.
 
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
@@ -10,10 +10,7 @@ use sa_core::bindings::find_player_ped;
 use sa_core::bindings::vector_normalise_and_mag;
 use sa_core::bindings::world_clear_scan_codes;
 use sa_world::bindings::crt_floor as floor;
-orig! {
-    /// `CInterestingEvents::Add(EType, CEntity*)` (0x602590)
-    fn interesting_events_add(ie: GPtr<u8>, ty: i32, e: GPtr<u8>) = thiscall 0x602590 => crate::interesting_events_add::interesting_events_add;
-}
+use sa_world::bindings::interesting_events_add;
 
 /// `CWorld::ms_aRepeatSectors` (0xB992B8, 16 x 16 x 3 lists)
 const REPEAT_SECTORS: usize = 0xB9_92B8;

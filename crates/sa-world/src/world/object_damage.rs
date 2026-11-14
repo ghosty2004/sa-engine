@@ -25,17 +25,14 @@ use sa_core::bindings::find_player_ped;
 use sa_core::bindings::find_player_vehicle;
 use sa_core::bindings::fx_create_mat_from_vec as create_mat_from_vec;
 use sa_core::bindings::matrix_dtor;
+use crate::bindings::break_manager_add;
+use crate::bindings::create_fx_system_bp as create_fx_system_pos;
+use crate::bindings::vector_add_assign as vec_add_assign;
 orig! {
-    /// `BreakManager_c::Add(CObject*, RwV3d* velocity, float velocityRand, bool justFaces)` (0x59E9B0) on `g_breakMan` (0xBB4240)
-    fn break_manager_add(man: GPtr<u8>, o: GPtr<u8>, vel: GPtr<u8>, rand: u32, just_faces: u32) -> u8 = thiscall 0x59E9B0 => unported;
     /// `CEntity::DeleteRwObject()` (vtable +0x20)
     fn v_delete_rw_object(e: GPtr<u8>) = thiscall vslot 0x20 => unported;
     /// `FxManager_c::CreateFxSystem(FxSystemBP_c*, RwMatrix*, RwMatrix*, bool)` (0x4A95C0) on `g_fxMan` (0xA9AE80)
     fn create_fx_system_mat(man: GPtr<u8>, bp: GPtr<u8>, m: GPtr<u8>, parent: u32, local: u32) -> GPtr<u8> = thiscall 0x4A95C0 => unported;
-    /// `FxManager_c::CreateFxSystem(FxSystemBP_c*, CVector*, RwMatrix*, bool)` (0x4A96B0) on `g_fxMan`
-    fn create_fx_system_pos(man: GPtr<u8>, bp: GPtr<u8>, pos: GPtr<u8>, parent: u32, local: u32) -> GPtr<u8> = thiscall 0x4A96B0 => unported;
-    /// `CVector::operator+=(const CVector&)` (0x411A00)
-    fn vec_add_assign(v: GPtr<u8>, o: GPtr<u8>) -> GPtr<u8> = thiscall 0x411A00 => unported;
 }
 
 /// `MI_IMY_SHASH_WALL` (0x8CD748).
@@ -95,7 +92,7 @@ pub fn object_damage(this: GPtr<u8>, damage: f32, origin: GPtr<u8>, dir: GPtr<u8
     if weapon == 0x37 && !damager.is_null() && rd::<u8>(damager, 0x36) & 7 == 2 {
         weapon = 0x32;
     }
-    if can_physical_be_damaged(this, weapon, 0) == 0 {
+    if can_physical_be_damaged(this, weapon, GPtr::NULL) == 0 {
         return;
     }
     let info = rd::<GPtr<u8>>(this, 0x160);
@@ -214,7 +211,7 @@ pub fn object_damage(this: GPtr<u8>, damage: f32, origin: GPtr<u8>, dir: GPtr<u8
         // the rotated offset (stored back into `off` by the original) is not used
         let mut v = [0f32; 3]; // uninitialised in the original
         vec_add_assign(p(&mut v), ent_pos(this));
-        let s = create_fx_system_pos(g(0xA9_AE80), rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0x160), 0x30), p(&mut v), 0, 0);
+        let s = create_fx_system_pos(g(0xA9_AE80), rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0x160), 0x30), p(&mut v), GPtr::NULL, 0);
         matrix_dtor(p(&mut m));
         s
     };

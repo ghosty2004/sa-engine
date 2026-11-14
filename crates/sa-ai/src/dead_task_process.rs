@@ -7,6 +7,7 @@
 //! blood pool done).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -25,7 +26,7 @@ const CI_ASIN: usize = 0x821E70;
 /// `gpBloodPoolTex`
 const BLOOD_POOL_TEX: usize = 0xC40400;
 
-use crate::bindings::anim_blend_animation;
+use sa_world::bindings::anim_blend_animation;
 use crate::bindings::event_dead_ped_ctor;
 use crate::bindings::event_dead_ped_dtor;
 use sa_core::bindings::find_player_ped;
@@ -38,11 +39,9 @@ use sa_world::bindings::get_water_level_no_waves as water_get_water_level_no_wav
 use sa_world::bindings::localisation_blood;
 use sa_world::bindings::ped_remove_weapon_model;
 use sa_world::bindings::ped_set_ped_state;
+use sa_core::bindings::ped_remove_weapon_anims;
+use sa_world::bindings::compute_target_door_to_exit as car_enter_exit_compute_target_door_to_exit;
 orig! {
-    /// `CCarEnterExit::ComputeTargetDoorToExit(const CVehicle*, const CPed*)` (0x64F110, cdecl)
-    fn car_enter_exit_compute_target_door_to_exit(v: u32, ped: GPtr<u8>) -> i32 = cdecl 0x64F110 => unported;
-    /// `CPed::RemoveWeaponAnims(int32, float delta)` (0x5F0250, `ret 8`)
-    fn ped_remove_weapon_anims(p: GPtr<u8>, a: u32, delta: u32) = thiscall 0x5F0250 => unported;
     /// `CPed::CreateDeadPedWeaponPickups` (0x4591D0)
     fn ped_create_dead_ped_weapon_pickups(p: GPtr<u8>) = thiscall 0x4591D0 => unported;
     /// `CPed::CreateDeadPedMoney` (0x4590F0)
@@ -125,9 +124,9 @@ pub fn dead_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     let mut targeted = false;
     if rd::<u8>(this, 0xC) & 1 != 0 {
         if rd::<u32>(ped, 0x46C) & 0x100 != 0 {
-            let door = car_enter_exit_compute_target_door_to_exit(rd::<u32>(ped, 0x58C), ped);
+            let door = car_enter_exit_compute_target_door_to_exit(GPtr::from_addr(rd::<u32>(ped, 0x58C) as usize), ped);
             let anim = if door == 10 || door == 11 { 0xBB } else { 0xBC };
-            anim_blend_animation(rd::<u32>(ped, 0x18), 0, anim, 0x4080_0000);
+            anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0, anim, f32::from_bits(0x4080_0000));
         }
         ped_set_ped_state(ped, 0x37);
         wr::<u8>(this, 0xC, rd::<u8>(this, 0xC) & 0xFE);
@@ -141,11 +140,11 @@ pub fn dead_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         }
         let slot = i32::from(rd::<i8>(ped, 0x718)) as isize * 0x1C;
         wr::<u32>(ped, 0x540, 0);
-        let info = weapon_info_get(rd::<u32>(ped, slot + 0x5A0), 1);
-        ped_remove_weapon_model(ped, rd::<u32>(info, 0xC));
+        let info = weapon_info_get(rd::<u32>(ped, slot + 0x5A0) as i32, 1);
+        ped_remove_weapon_model(ped, rd::<u32>(info, 0xC) as i32);
         wr::<u8>(ped, 0x718, 0);
         if ped_is_player(ped) == 0 {
-            ped_remove_weapon_anims(ped, 0, 0xC47A_0000);
+            ped_remove_weapon_anims(ped, 0, f32::from_bits(0xC47A_0000));
             ped_create_dead_ped_weapon_pickups(ped);
             ped_create_dead_ped_money(ped);
         }
@@ -160,7 +159,7 @@ pub fn dead_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     let lean = if fl & 1 == 0 && fl & 2 != 0 && rd::<u8>(ped, 0x46C) & 1 != 0 {
         wr::<u32>(ped, 0x1C, rd::<u32>(ped, 0x1C) & 0xFFFF_FFFE);
         wr::<u8>(this, 0xC, rd::<u8>(this, 0xC) & 0xFD);
-        let a = anim_blend_animation(rd::<u32>(ped, 0x18), 0, 0x27, 0x4100_0000);
+        let a = anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0, 0x27, f32::from_bits(0x4100_0000));
         wr::<u8>(a, 0x2E, rd::<u8>(a, 0x2E) & 0xF7);
         true
     } else if rd::<u8>(ped, 0x1C) & 1 != 0
@@ -237,7 +236,7 @@ fn blood_pool(this: GPtr<u8>, ped: GPtr<u8>) {
     if t2 <= g::<u32>(TIME_MS).read().wrapping_sub(g::<u32>(PREV_TIME_MS).read()) {
         let mut level = [0u32; 1];
         let p = pos_of(ped);
-        if water_get_water_level_no_waves(rd::<u32>(p, 0), rd::<u32>(p, 4), rd::<u32>(p, 8), local(&mut level), 0, 0) != 0
+        if water_get_water_level_no_waves(f32::from_bits(rd::<u32>(p, 0)), f32::from_bits(rd::<u32>(p, 4)), f32::from_bits(rd::<u32>(p, 8)), local(&mut level), GPtr::NULL, GPtr::NULL) != 0
             && !x(rd::<f32>(pos_of(ped), 8)).fcom(x(f32::from_bits(level[0]))).test_parity(0x41)
         {
             wr::<u8>(this, 0xC, rd::<u8>(this, 0xC) | 4);

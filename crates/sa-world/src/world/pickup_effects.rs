@@ -14,21 +14,13 @@ use crate::bindings::pick_up_should_be_invisible;
 use sa_core::bindings::text_get;
 use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
 use sa_stream::bindings::simple_transform_update_matrix;
+use crate::bindings::find_string_for_text_index;
+use crate::bindings::register_corona;
+use crate::bindings::weapon_for_model;
+use sa_core::bindings::calc_screen_coors;
 orig! {
     /// `CPickups::FindPickUpForThisObject(CObject*)` (0x4551C0)
     fn find_pick_up_for_this_object(o: GPtr<u8>) -> GPtr<u8> = cdecl 0x4551C0 => unported;
-    /// `CCoronas::RegisterCorona(id, attachTo, r, g, b, a, pos, size, farClip, texture, flare, reflection,
-    /// checkObstacles, unused, angle, longDistance, nearClip, fadeState, fadeSpeed, onlyFromBelow, reflectionDelay)`
-    /// (0x6FC580, the texture-index overload; floats as bits)
-    fn register_corona(id: u32, attach: u32, r: u32, gr: u32, b: u32, a: u32, pos: GPtr<u8>, size: u32, far: u32,
-        tex: u32, flare: u32, refl: u32, obst: u32, unused: u32, angle: u32, long: u32, near: u32, fade: u32,
-        fade_speed: u32, below: u32, delay: u32) = cdecl 0x6FC580 => unported;
-    /// `CPickups::WeaponForModel(int32)` (0x454AE0)
-    fn weapon_for_model(mi: i32) -> u32 = cdecl 0x454AE0 => unported;
-    /// `CSprite::CalcScreenCoors(const RwV3d&, RwV3d*, float* w, float* h, bool, bool)` (0x70CE30), AL
-    fn calc_screen_coors(p: GPtr<u8>, out: GPtr<u8>, w: GPtr<u8>, h: GPtr<u8>, max: u32, min: u32) -> u8 = cdecl 0x70CE30 => unported;
-    /// `CPickup::FindStringForTextIndex(int32)` (0x455540)
-    fn find_string_for_text_index(i: u32) -> GPtr<u8> = cdecl 0x455540 => unported;
 }
 
 /// `MI_PICKUP_CAMERA` .. the pickup model index words (`.data`).
@@ -95,8 +87,8 @@ pub fn do_pick_up_effects(e: GPtr<u8>) {
                 let pos = pos_of(e);
                 let gb = ftol32(xi(red).fmul_m(k(0x858CB0))) as u32;
                 let id = (slot.as_ptr() as u32).wrapping_sub(3);
-                register_corona(id, 0, red as u32, gb, gb, 0xFF, pos, size.to_bits(), 0x42C8_0000, 1, 0, 0, 0, 0, 0, 0,
-                    0x3FC0_0000, 0, 0x4170_0000, 0, 0);
+                register_corona(id, GPtr::NULL, red as u32, gb, gb, 0xFF, pos, f32::from_bits(size.to_bits()), f32::from_bits(0x42C8_0000), 1, 0, 0, 0, 0, f32::from_bits(0), 0,
+                    f32::from_bits(0x3FC0_0000), 0, f32::from_bits(0x4170_0000), 0, 0);
             }
         }
     } else {
@@ -124,7 +116,7 @@ pub fn do_pick_up_effects(e: GPtr<u8>) {
     } else if model == mi(0x8CD5F0) {
         ty = 0x2F;
     } else {
-        ty = weapon_for_model(model);
+        ty = weapon_for_model(model) as u32;
     }
 
     let flags = rd::<u32>(e, 0x140);
@@ -156,10 +148,10 @@ fn message(e: GPtr<u8>, model: i32, ty: u32) {
     let mut w = [0f32; 1];
     let mut h = [0f32; 1];
     let ok = calc_screen_coors(
-        GPtr::from_raw(inp.as_mut_ptr()).cast(),
-        GPtr::from_raw(out.as_mut_ptr()).cast(),
-        GPtr::from_raw(w.as_mut_ptr()).cast(),
-        GPtr::from_raw(h.as_mut_ptr()).cast(),
+        GPtr::<u8>::cast::<f32>(GPtr::from_raw(inp.as_mut_ptr()).cast()),
+        GPtr::<u8>::cast::<f32>(GPtr::from_raw(out.as_mut_ptr()).cast()),
+        GPtr::<u8>::cast::<f32>(GPtr::from_raw(w.as_mut_ptr()).cast()),
+        GPtr::<u8>::cast::<f32>(GPtr::from_raw(h.as_mut_ptr()).cast()),
         1,
         1,
     );
@@ -172,7 +164,7 @@ fn message(e: GPtr<u8>, model: i32, ty: u32) {
     wr::<f32>(m, 0xC, w[0]);
     wr::<f32>(m, 0x10, h[0]);
     let m = GPtr::<u8>::from_addr(0x978680 + usize::from(n.read()) * 0x24);
-    wr::<u32>(m, 8, weapon_for_model(model));
+    wr::<u32>(m, 8, weapon_for_model(model) as u32);
     let col = GPtr::<u8>::from_addr((0x8A5FB0u32.wrapping_add((i32::from(ty as i16) << 3) as u32)) as usize);
     wr::<u8>(m, 0x14, rd::<u8>(col, 0));
     wr::<u8>(m, 0x15, rd::<u8>(col, 1));
@@ -185,7 +177,7 @@ fn message(e: GPtr<u8>, model: i32, ty: u32) {
     wr::<u32>(m, 0x1C, u32::from(rd::<u16>(e, 0x13E)) * 5);
     let property = |m: GPtr<u8>| {
         let pk = find_pick_up_for_this_object(e);
-        let key = find_string_for_text_index(u32::from((rd::<u8>(pk, 0x1D) >> 4) & 7));
+        let key = find_string_for_text_index(u32::from((rd::<u8>(pk, 0x1D) >> 4) & 7) as i32);
         wr::<u32>(m, 0x20, text_get(GPtr::from_addr(0xC1B340), key).addr() as u32);
     };
     let bit1 = if model == mi(0x8CD5E8) {

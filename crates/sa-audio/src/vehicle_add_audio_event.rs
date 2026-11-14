@@ -29,7 +29,7 @@ const ONE_HALF: u32 = 0x3FC0_0000;
 const VAR_006: u32 = 0x3D75_C290;
 const VAR_005: u32 = 0x3D4C_CCCD;
 
-use crate::bindings::ae_random_int;
+use sa_world::bindings::ae_random_int;
 use crate::bindings::are_sounds_of_this_event_playing_for_this_entity as are_sounds_playing;
 use crate::bindings::hw_is_sound_bank_loaded as is_sound_bank_loaded;
 use crate::bindings::sm_request_new_sound;
@@ -80,7 +80,7 @@ fn ped_sound_tail(snd: GPtr<u8>, speed: u32, flags: u16, play_time: u16, event: 
     wr::<u16>(snd, 0x56, flags);
     wr::<u16>(snd, 0x5C, play_time);
     wr::<u32>(snd, 0xC, event);
-    sm_request_new_sound(g(SM), snd);
+    sm_request_new_sound(GPtr::<u8>::addr(g(SM)) as u32, snd.addr() as u32);
 }
 
 /// The suspension sounds (events 0x6B..0x6F): volume `f32(event volume + [extra])`; nothing while a
@@ -88,7 +88,7 @@ fn ped_sound_tail(snd: GPtr<u8>, speed: u32, flags: u16, play_time: u16, event: 
 /// `start_pct`) flags word +0x56 = 0x20 with play time +0x5C = 0, event +0xC, requested.
 fn suspension(snd: GPtr<u8>, this: GPtr<u8>, event: u32, extra: usize, sfx: u32, start_pct: bool) {
     let vol = x(event_volume(event)).fadd_m(gf(extra)).to_f32();
-    if are_sounds_playing(g(SM), event, this) as u16 != 0 {
+    if (are_sounds_playing(g(SM), event, this) as u32) as u16 != 0 {
         return;
     }
     init(snd, this, 0x13, sfx, vol);
@@ -99,7 +99,7 @@ fn suspension(snd: GPtr<u8>, this: GPtr<u8>, event: u32, extra: usize, sfx: u32,
     wr::<u32>(snd, 0x20, VAR_005);
     wr::<u32>(snd, 0x18, TWO);
     wr::<u32>(snd, 0xC, event);
-    sm_request_new_sound(g(SM), snd);
+    sm_request_new_sound(GPtr::<u8>::addr(g(SM)) as u32, snd.addr() as u32);
 }
 
 /// The sounds registered with the vehicle (nitro, trailer, harvester): +0x1C `speed` (`None` = left at
@@ -114,7 +114,7 @@ fn registered(snd: GPtr<u8>, this: GPtr<u8>, speed: Option<u32>, var: u32, event
     wr::<u16>(snd, 0x56, 0x80);
     sound_register_with_physical_entity(snd, g(rd::<u32>(this, 4) as usize));
     wr::<u32>(snd, 0xC, event);
-    sm_request_new_sound(g(SM), snd);
+    sm_request_new_sound(GPtr::<u8>::addr(g(SM)) as u32, snd.addr() as u32);
 }
 
 /// A stack `CAESound` (0x74 bytes at entry ESP - 0x80) whose words start as the original's stack
@@ -194,7 +194,7 @@ fn dispatch(snd: GPtr<u8>, this: GPtr<u8>, event: u32, p1: u32) {
             };
             init(snd, this, 0x13, sfx, event_volume(0x4E));
             wr::<u32>(snd, 0x20, 0x3CA3_D70A);
-            sm_request_new_sound(g(SM), snd);
+            sm_request_new_sound(GPtr::<u8>::addr(g(SM)) as u32, snd.addr() as u32);
         }
         0x54..=0x59 => {
             let sfx = match rd::<i8>(this, 0x98) {
@@ -206,7 +206,7 @@ fn dispatch(snd: GPtr<u8>, this: GPtr<u8>, event: u32, p1: u32) {
             };
             init(snd, this, 0x13, sfx, event_volume(0x54));
             wr::<u32>(snd, 0x20, 0x3CA3_D70A);
-            sm_request_new_sound(g(SM), snd);
+            sm_request_new_sound(GPtr::<u8>::addr(g(SM)) as u32, snd.addr() as u32);
         }
         0x5A..=0x5C => {
             let (slot, sfx) = match event {
@@ -215,7 +215,7 @@ fn dispatch(snd: GPtr<u8>, this: GPtr<u8>, event: u32, p1: u32) {
                 _ => (2, 0x35),
             };
             init(snd, this, slot, sfx, event_volume(event));
-            sm_request_new_sound(g(SM), snd);
+            sm_request_new_sound(GPtr::<u8>::addr(g(SM)) as u32, snd.addr() as u32);
         }
         0x63 => boat_hit_wave(snd, this, f32::from_bits(p1)),
         0x64 => {
@@ -234,14 +234,14 @@ fn dispatch(snd: GPtr<u8>, this: GPtr<u8>, event: u32, p1: u32) {
             wr::<u32>(snd, 0x1C, ONE);
             wr::<u32>(snd, 0x20, 0x3DCC_CCCD);
             wr::<u32>(snd, 0x18, TWO);
-            sm_request_new_sound(g(SM), snd);
+            sm_request_new_sound(GPtr::<u8>::addr(g(SM)) as u32, snd.addr() as u32);
         }
         0x66 => {
             if is_sound_bank_loaded(g(HW), 0x8F, 5) == 0 {
                 return;
             }
             let vol = event_volume(0x66);
-            if are_sounds_playing(g(SM), 0x66, this) as u16 != 0 {
+            if (are_sounds_playing(g(SM), 0x66, this) as u32) as u16 != 0 {
                 return;
             }
             init(snd, this, 5, 0x53, vol);
@@ -252,7 +252,7 @@ fn dispatch(snd: GPtr<u8>, this: GPtr<u8>, event: u32, p1: u32) {
             wr::<u32>(snd, 0x20, VAR_005);
             wr::<u32>(snd, 0x18, TWO);
             wr::<u32>(snd, 0xC, 0x67);
-            sm_request_new_sound(g(SM), snd);
+            sm_request_new_sound(GPtr::<u8>::addr(g(SM)) as u32, snd.addr() as u32);
         }
         0x6B => suspension(snd, this, 0x6B, 0x8CC1B8, 0x26, false),
         0x6C => suspension(snd, this, 0x6C, 0x8CC1BC, 0x1F, false),
@@ -261,8 +261,8 @@ fn dispatch(snd: GPtr<u8>, this: GPtr<u8>, event: u32, p1: u32) {
         0x6F => suspension(snd, this, 0x6F, 0x8CC1B4, 0x26, false),
         0x71 | 0x72 => {
             let vol = event_volume(event);
-            if are_sounds_playing(g(SM), 0x71, this) as u16 != 0
-                || are_sounds_playing(g(SM), 0x72, this) as u16 != 0
+            if (are_sounds_playing(g(SM), 0x71, this) as u32) as u16 != 0
+                || (are_sounds_playing(g(SM), 0x72, this) as u32) as u16 != 0
                 || is_sound_bank_loaded(g(HW), 0x8F, 5) == 0
             {
                 return;
@@ -273,7 +273,7 @@ fn dispatch(snd: GPtr<u8>, this: GPtr<u8>, event: u32, p1: u32) {
         }
         0x73 => {
             let vol = event_volume(0x73);
-            if are_sounds_playing(g(SM), 0x73, this) as u16 != 0 || is_sound_bank_loaded(g(HW), 0x45, 0x28) == 0 {
+            if (are_sounds_playing(g(SM), 0x73, this) as u32) as u16 != 0 || is_sound_bank_loaded(g(HW), 0x45, 0x28) == 0 {
                 return;
             }
             init(snd, this, 0x28, 4, vol);
@@ -284,7 +284,7 @@ fn dispatch(snd: GPtr<u8>, this: GPtr<u8>, event: u32, p1: u32) {
             if is_sound_bank_loaded(g(HW), 0x27, 2) == 0 {
                 return;
             }
-            let (play_time, speed) = if are_sounds_playing(g(SM), 0x77, this) as u16 != 0 {
+            let (play_time, speed) = if (are_sounds_playing(g(SM), 0x77, this) as u32) as u16 != 0 {
                 (0x28, 0x3F4C_CCCD)
             } else {
                 (0, 0x3F70_A3D7)
@@ -349,7 +349,7 @@ fn boat_hit_wave(snd: GPtr<u8>, this: GPtr<u8>, p1: f32) {
         .fadd_m(vol)
         .to_f32();
     init(snd, this, 2, 0x42, v);
-    sm_request_new_sound(g(SM), snd);
+    sm_request_new_sound(GPtr::<u8>::addr(g(SM)) as u32, snd.addr() as u32);
     wr::<u32>(this, 0xCC, g::<u32>(TIME_MS).read());
 }
 

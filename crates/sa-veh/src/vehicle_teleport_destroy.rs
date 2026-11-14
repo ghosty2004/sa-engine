@@ -38,7 +38,7 @@ fn teleport(this: GPtr<u8>, px: u32, py: u32, pz: u32, reset: u32, extra: impl F
         wr::<u32>(rd::<GPtr<u8>>(this, 0x14), 0x38, pz);
     }
     if reset as u8 != 0 {
-        placeable_set_orientation(this, 0, 0, 0);
+        placeable_set_orientation(this, f32::from_bits(0), f32::from_bits(0), f32::from_bits(0));
     }
     for o in [0x44isize, 0x48, 0x4C, 0x50, 0x54, 0x58] {
         wr::<u32>(this, o, 0);

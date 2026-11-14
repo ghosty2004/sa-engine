@@ -17,11 +17,10 @@ use sa_stream::bindings::remove_txd as txd_remove;
 use sa_stream::bindings::sprite2d_delete;
 use sa_world::bindings::enter_car_dtor;
 use sa_world::bindings::task_simple_ctor as task_ctor;
+use sa_core::bindings::find_txd_slot as txd_find_slot;
 orig! {
     /// CRT `sprintf(char*, const char*, ...)` (0x821BB5), called with the format only
     fn crt_sprintf(out: GPtr<u8>, fmt: u32) -> i32 = cdecl 0x821BB5 => unported;
-    /// `CTxdStore::FindTxdSlot(const char*)` (0x731850)
-    fn txd_find_slot(name: u32) -> i32 = cdecl 0x731850 => unported;
 }
 
 /// `CTaskSimpleTriggerLookAt` vtable (0x86E3CC)
@@ -118,7 +117,7 @@ pub fn task_enter_car_as_passenger_dtor(this: GPtr<u8>) {
        note = "AX only; the original's upper EAX half is the pad pointer's")]
 pub fn running_script_get_pad_state(this: Scr, pad: u32, button: u32) -> u16 {
     let _ = this;
-    let p = get_pad(i32::from(pad as u16));
+    let p = get_pad(i32::from(pad as u16) as u32);
     let b = button as u16;
     if b > 0x13 {
         return 0;
@@ -182,7 +181,7 @@ pub fn the_scripts_remove_script_texture_dictionary() {
     for i in 0..0x80 {
         sprite2d_delete(GPtr::from_addr(SCRIPT_SPRITES + 4 * i));
     }
-    let slot = txd_find_slot(S_SCRIPT);
+    let slot = txd_find_slot(GPtr::from_addr(S_SCRIPT as usize));
     if slot == -1 {
         return;
     }
@@ -280,11 +279,7 @@ pub fn dont_suppress_vehicle_model(model: i32) {
 }
 
 use sa_world::bindings::task_simple_dtor as task_dtor;
-orig! {
-    /// `CTaskComplexGoToPointAiming::CTaskComplexGoToPointAiming(int32 moveState, CEntity* target, CVector*
-    /// offset, CVector point, float radius, float moveStateRadius)` (0x668790, `ret 0x20`)
-    fn go_to_point_aiming_ctor(t: GPtr<u8>, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, a8: u32) -> GPtr<u8> = thiscall 0x668790 => unported;
-}
+use crate::bindings::go_to_point_aiming_ctor;
 
 /// The mission byte setter at stub 0x463490 (→ 0x1565620, thiscall on a `CAutoPilot`, `ret 4`; unnamed in the
 /// catalogue, reached by 00AF SET_CAR_MISSION): byte +0x2A takes the argument's low byte unless it is 0x39 or 0x3A.
@@ -340,16 +335,15 @@ pub fn task_62f5d0_dtor(this: GPtr<u8>) {
        unverified = "script5-6", route = "L2", hazards = "none", recs = "grove-walk")]
 #[allow(clippy::too_many_arguments)]
 pub fn go_to_point_shooting_ctor(this: GPtr<u8>, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, a8: u32) -> GPtr<u8> {
-    go_to_point_aiming_ctor(this, a1, a2, a3, a4, a5, a6, a7, a8);
+    go_to_point_aiming_ctor(this, a1, GPtr::from_addr(a2 as usize), GPtr::from_addr(a3 as usize), a4, a5, a6, a7, a8);
     this.cast::<u32>().write(0x86FE2C);
     this
 }
 
+use sa_world::bindings::get_new_unique_script_thing_index;
 orig! {
     /// `CDecision::Add(int32 taskId, float* chances, int32* flags)` (0x600600, `ret 0xC`)
     fn decision_add(d: GPtr<u8>, task: u32, chances: u32, flags: u32) = thiscall 0x600600 => unported;
-    /// `CTheScripts::GetNewUniqueScriptThingIndex(int32 index, int32 type)` (0x483720)
-    fn get_new_unique_script_thing_index(index: u32, ty: u32) -> i32 = cdecl 0x483720 => unported;
 }
 
 /// `CDecisionMakerTypes::AddEventResponse(int32 dm, int32 eventType, int32 taskId, float* chances, int32* flags)`
@@ -388,14 +382,11 @@ pub fn the_scripts_add_script_effect_system(fx: u32) -> i32 {
     }
     used(i).write(1);
     GPtr::<u32>::from_addr(SCRIPT_FX + 8 * i as usize + 4).write(fx);
-    get_new_unique_script_thing_index(i, 1)
+    get_new_unique_script_thing_index(i as i32, 1)
 }
 
 use sa_world::bindings::find_safe_house_index_for_garage_type;
-orig! {
-    /// `CStoredCar::StoreCar(CVehicle*)` (0x449760, `ret 4`)
-    fn stored_car_store(slot: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = thiscall 0x449760 => unported;
-}
+use sa_world::bindings::stored_car_store;
 
 /// `CGarages::NumGarages` (0x96C024, uint32)
 const NUM_GARAGES: usize = 0x96C024;
@@ -441,7 +432,7 @@ pub fn garages_store_car_in_nearest_impounding_garage(v: GPtr<u8>) {
         return;
     }
     let t = GPtr::<u8>::from_addr(GARAGES + 0xD8 * best as usize + 0x4C).read();
-    let idx = find_safe_house_index_for_garage_type(u32::from(t));
+    let idx = find_safe_house_index_for_garage_type(u32::from(t) as i32);
     let cars = GPtr::<u8>::from_addr(CARS_IN_SAFE_HOUSE).byte_add((idx << 8) as isize);
     let used = |k: isize| u32::from(cars.byte_add(0x40 * k + 0x12).cast::<u16>().read() > 0);
     let mut slot = used(0) + used(1) + used(2);
@@ -531,7 +522,7 @@ const NUM_SEARCH_LIGHTS: usize = 0xA90830;
 #[hook(addr = 0x493160, conv = cdecl, name = "CTheScripts::RemoveScriptSearchLight", expect = "8B 44 24 04 6A 02 50",
        unverified = "script5-8", route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn the_scripts_remove_script_search_light(handle: i32) {
-    let idx = get_actual_script_thing_index(handle, 2);
+    let idx = get_actual_script_thing_index(handle as u32, 2);
     if idx == -1 {
         return;
     }
@@ -549,7 +540,7 @@ pub fn the_scripts_remove_script_search_light(handle: i32) {
         let slot = l.byte_add(off);
         let e = slot.cast::<GPtr<u8>>().read();
         if !e.is_null() {
-            entity_clean_up_old_reference(e, slot);
+            entity_clean_up_old_reference(e, slot.cast::<GPtr<u8>>());
         }
         slot.cast::<u32>().write(0);
     }

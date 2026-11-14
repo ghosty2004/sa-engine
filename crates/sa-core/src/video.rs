@@ -51,9 +51,10 @@ pub mod call {
     pub use crate::bindings::memory_calloc;
     pub use crate::bindings::rw_engine_get_num_video_modes;
     pub use crate::bindings::setup_back_buffer_vertex;
+    pub use crate::bindings::release;
+    pub use crate::bindings::rw_engine_get_current_sub_system;
+    pub use crate::bindings::update_window;
     orig! {
-        /// `RwEngineGetCurrentSubSystem` (0x7F2C60)
-        pub fn rw_engine_get_current_sub_system() -> u32 = cdecl 0x7F2C60 => unported;
         /// `RwEngineGetVideoModeInfo` (0x7F2CF0)
         pub fn rw_engine_get_video_mode_info(info: GPtr<RwVideoMode>, mode: i32) -> GPtr<RwVideoMode> = cdecl 0x7F2CF0 => unported;
         /// `RwD3D9ChangeVideoMode` (0x7F8640)
@@ -62,10 +63,6 @@ pub mod call {
         pub fn rw_sprintf3(buf: GPtr<u8>, fmt: GPtr<u8>, a: u32, b: u32, c: u32) -> i32 = cdecl table 0xC97B24 0xF0 => unported;
         /// `VideoMode::FreeVideoModeList` (0x745A80)
         pub fn free_video_mode_list() -> i32 = cdecl 0x745A80 => super::free_video_mode_list;
-        /// `VideoPlayer::Release` (0x746740)
-        pub fn release() = cdecl 0x746740 => super::release;
-        /// `VideoPlayer::UpdateWindow` (0x7466D0)
-        pub fn update_window() -> i32 = cdecl 0x7466D0 => super::update_window;
         /// `IDirect3D9::GetAdapterModeCount` (+0x18)
         pub fn d3d_get_adapter_mode_count(d3d: GPtr<u32>, adapter: u32, fmt: u32) -> i32 = stdcall vslot 0x18 => unported;
         /// `IDirect3D9::EnumAdapterModes` (+0x1C)

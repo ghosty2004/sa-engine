@@ -44,6 +44,8 @@ use sa_core::bindings::stricmp as crt_stricmp;
 use sa_core::bindings::strncmp as crt_strncmp;
 use sa_core::bindings::strtok as crt_strtok;
 use sa_core::bindings::time_cycle_stop_extra_colour;
+use sa_core::bindings::request_special_model as streaming_request_special_model;
+use sa_core::bindings::streaming_request_model;
 orig! {
     /// `FindCutsceneAudioTrackId(const char*)` (0x5AFA50), AX (the caller pushes all of EAX)
     fn find_cutscene_audio_track_id(name: GPtr<u8>) -> u32 = cdecl 0x5AFA50 => crate::cutscene::find_cutscene_audio_track_id;
@@ -59,10 +61,6 @@ orig! {
     fn sscanf4(s: GPtr<u8>, fmt: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, c: GPtr<u8>, d: GPtr<u8>) -> i32 = cdecl 0x8220AD => unported;
     /// `CCutsceneMgr::LoadAnimationUncompressed(const char*)` (0x4D5AB0)
     fn load_animation_uncompressed(name: GPtr<u8>) = cdecl 0x4D5AB0 => crate::cutscene::load_animation_uncompressed;
-    /// `CStreaming::RequestModel(int32, int32)` (0x4087E0)
-    fn streaming_request_model(id: i32, flags: u32) = cdecl 0x4087E0 => unported;
-    /// `CStreaming::RequestSpecialModel(int32, const char*, int32)` (0x409D10)
-    fn streaming_request_special_model(id: i32, name: GPtr<u8>, flags: u32) = cdecl 0x409D10 => unported;
 }
 
 /// `CCutsceneMgr` state: name (0xBC3F0C), load status (0xB5F84C), offset (CVector, 0xBC4034); the finale's name
@@ -272,7 +270,7 @@ pub fn cutscene_load_cutscene_data_preload() {
     let stream = rw_stream_open(2, 1, gp(S_CUTS_IMG));
     rw_stream_skip(stream, offset);
     rw_stream_read(stream, buf, size);
-    rw_stream_close(stream, 0);
+    rw_stream_close(stream, GPtr::NULL);
     let extra_set = parse(buf);
     crt_free(buf);
     if !extra_set {
@@ -309,7 +307,7 @@ pub fn cutscene_load_cutscene_data_preload() {
                 m.write(1);
             } else if m.read() == 2 {
                 let mut idx = 0i32;
-                if !model_info_get_model_info(name, GPtr::from_raw(&mut idx)).is_null() {
+                if !model_info_get_model_info(name, GPtr::<i32>::cast::<u8>(GPtr::from_raw(&mut idx))).is_null() {
                     m.write(idx as u32);
                     streaming_request_model(idx, 0x1C);
                 } else {
@@ -445,7 +443,7 @@ fn section_info(line: GPtr<u8>) {
     ipl_store_add_ipls_needed_at_posn(gp(OFFSET));
     streaming_set_load_vehicles_in_load_scene(0);
     let mut at = [x, y, z];
-    streaming_load_scene(lp(&mut at));
+    streaming_load_scene(GPtr::<u8>::cast::<u32>(lp(&mut at)));
     streaming_set_load_vehicles_in_load_scene(1);
 }
 

@@ -29,7 +29,14 @@ use sa_core::bindings::vector_normalise as normalise;
 use sa_pop::bindings::cam_stairs_for_player;
 use sa_world::bindings::process_line_of_sight;
 use sa_world::bindings::vector_add;
-use sa_world::bindings::vector_sub;
+use sa_core::bindings::vector_sub;
+use crate::bindings::calculate_derived_values;
+use crate::bindings::copy_camera_matrix_to_rw_cam;
+use crate::bindings::keep_track_of_the_speed;
+use crate::bindings::process_shake;
+use sa_core::bindings::get_atan_of_xy;
+use sa_world::bindings::get_water_level;
+use sa_world::bindings::vector_mul_scalar as vector_scale;
 orig! {
     /// `CCollision::ResetMadeInvisibleObjects()` (0x415540)
     fn reset_made_invisible_objects() = cdecl 0x415540 => unported;
@@ -39,26 +46,12 @@ orig! {
     fn cam_control(this: GPtr<u8>) = thiscall 0x527FA0 => unported;
     /// `CCamera::ProcessWideScreenOn()` (0x50B890)
     fn process_wide_screen_on(this: GPtr<u8>) = thiscall 0x50B890 => unported;
-    /// `CGeneral::GetATanOfXY(float, float)` (0x53CC70, ST0); the floats as their bits
-    fn get_atan_of_xy(xb: u32, yb: u32) -> f64 = cdecl 0x53CC70 => unported;
     /// `CCam::Process()` (0x526FC0)
     fn cam_process(cam: GPtr<u8>) = thiscall 0x526FC0 => unported;
-    /// `CCamera::ProcessShake(float)` (0x516560)
-    fn process_shake(this: GPtr<u8>, ratio: u32) = thiscall 0x516560 => unported;
     /// `CCamera::StoreValuesDuringInterPol(CVector&, CVector&, CVector&, float&)` (0x50C290)
     fn store_values_during_inter_pol(this: GPtr<u8>, s: GPtr<u8>, t: GPtr<u8>, u: GPtr<u8>, f: GPtr<u8>) = thiscall 0x50C290 => unported;
-    /// `operator*(CVector*, const CVector&, float)` (0x40FEC0), returns `out`; the float as its bits
-    fn vector_scale(out: GPtr<u8>, v: GPtr<u8>, s: u32) -> GPtr<u8> = cdecl 0x40FEC0 => unported;
-    /// `CCam::KeepTrackOfTheSpeed(...)` (0x509DF0)
-    fn keep_track_of_the_speed(cam: GPtr<u8>, s: GPtr<u8>, t: GPtr<u8>, u: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, f: GPtr<u8>) = thiscall 0x509DF0 => unported;
-    /// `CCamera::CalculateDerivedValues(bool, bool)` (0x5150E0)
-    fn calculate_derived_values(this: GPtr<u8>, a: u32, b: u32) = thiscall 0x5150E0 => unported;
-    /// `CCamera::CopyCameraMatrixToRWCam(bool)` (0x50AFA0)
-    fn copy_camera_matrix_to_rw_cam(this: GPtr<u8>, update: u32) = thiscall 0x50AFA0 => unported;
     /// `CCamera::UpdateSoundDistances()` (0x515BD0)
     fn update_sound_distances(this: GPtr<u8>) = thiscall 0x515BD0 => unported;
-    /// `CWaterLevel::GetWaterLevel(float, float, float, float*, bool, CVector*)` (0x6EB690, AL)
-    fn get_water_level(xb: u32, yb: u32, zb: u32, level: GPtr<u8>, waves: u32, normal: GPtr<u8>) -> u8 = cdecl 0x6EB690 => unported;
 }
 
 /// 0.0 (0x858B50)
@@ -133,7 +126,7 @@ fn front_beta(cam: GPtr<u8>) -> f32 {
     let (fx, fy) = (rd::<f32>(cam, 0x190), rd::<f32>(cam, 0x194));
     let z = x(k(K_0));
     if x(fx).fcom(z).test_parity(0x44) || x(fy).fcom(z).test_parity(0x44) {
-        X87::from_f64_exact(get_atan_of_xy(fx.to_bits(), fy.to_bits())).to_f32()
+        X87::from_f64_exact(get_atan_of_xy(f32::from_bits(fx.to_bits()), f32::from_bits(fy.to_bits()))).to_f32()
     } else {
         0.0
     }
@@ -208,7 +201,7 @@ pub fn camera_process(this: GPtr<u8>) {
         process_wide_screen_on(this);
     }
     // 5.
-    rw_camera_set_near_clip_plane(scene_cam(), 0x3E99_999A);
+    rw_camera_set_near_clip_plane(scene_cam(), f32::from_bits(0x3E99_999A));
     // 6.
     setf(0x1C, front_beta(active_cam(this)));
     cam_process(active_cam(this));
@@ -221,7 +214,7 @@ pub fn camera_process(this: GPtr<u8>) {
     }
     // 8.
     if rd::<u8>(this, 0x31) != 0 {
-        rw_camera_set_near_clip_plane(scene_cam(), rd::<u32>(this, 0x138));
+        rw_camera_set_near_clip_plane(scene_cam(), f32::from_bits(rd::<u32>(this, 0x138)));
     }
     // 9.
     let mut d = x(f(0x20)).fsub_m(f(0x1C));
@@ -247,7 +240,7 @@ pub fn camera_process(this: GPtr<u8>) {
     if !t.fcom(x(rd::<f32>(this, 0xC98))).test_parity(0x41) {
         let num = t.fsub_m(rd(this, 0xC94));
         let den = x(rd(this, 0xC98)).fsub_m(rd(this, 0xC94));
-        process_shake(this, num.fdiv(den).to_f32().to_bits());
+        process_shake(this, f32::from_bits(num.fdiv(den).to_f32().to_bits()));
     }
     // 12.
     if rd::<u8>(this, 0x58) != 0 && !vehicle_target {
@@ -288,7 +281,7 @@ pub fn camera_process(this: GPtr<u8>) {
         let pos = pos_of(rd(this, 0x958));
         if process_line_of_sight(pos, p(0x30), p(0x84), p(0x20), 1, 0, 0, 1, 0, 1, 1, 0) != 0 {
             copy3(p(0x30), p(0x84));
-            rw_camera_set_near_clip_plane(scene_cam(), 0x3D4C_CCCD);
+            rw_camera_set_near_clip_plane(scene_cam(), f32::from_bits(0x3D4C_CCCD));
         }
     }
     // 14.
@@ -368,7 +361,7 @@ pub fn camera_process(this: GPtr<u8>) {
         flag.write(0);
     }
     // 18.
-    draw_set_fov(rd::<u32>(b, 0x58));
+    draw_set_fov(f32::from_bits(rd::<u32>(b, 0x58)));
     calculate_derived_values(this, 0, 1);
     copy_camera_matrix_to_rw_cam(this, 0);
     copy3(this.byte_add(0x908), this.byte_add(0x9A4));
@@ -384,7 +377,7 @@ pub fn camera_process(this: GPtr<u8>) {
     // 20.
     let sc = scene_cam();
     let far = X87::from_i32(ftol32(x(rd(sc, 0x84)).fmul_m(k(K_100)))).fmul_m(k(K_001));
-    rw_camera_set_far_clip_plane(sc, far.to_f32().to_bits());
+    rw_camera_set_far_clip_plane(sc, f32::from_bits(far.to_f32().to_bits()));
     let rw: GPtr<u8> = rd(this, 0x954);
     g::<f32>(0xC3EFA0).write(rd(rw, 0x80));
     let rw: GPtr<u8> = rd(this, 0x954);
@@ -456,7 +449,7 @@ pub fn camera_process(this: GPtr<u8>) {
     set(0x18, x(f(0x74)).fadd_m(rd(pos, 8)));
     let qz = f(0x18);
     let under = g::<f32>(0xC8132C);
-    if get_water_level(rd(b, 0x10), rd(b, 0x14), rd(b, 0x18), p(0x68), 1, GPtr::NULL) == 0
+    if get_water_level(f32::from_bits(rd(b, 0x10)), f32::from_bits(rd(b, 0x14)), f32::from_bits(rd(b, 0x18)), p(0x68), 1, GPtr::NULL) == 0
         || !x(qz).fsub_m(k(K_06)).fcom(x(f(0x68))).test_any(0x41)
     {
         under.write(0.0);
@@ -592,7 +585,7 @@ fn transition(this: GPtr<u8>, b: GPtr<u8>) {
         let swi = this.byte_add(0x8D8);
         let cam = active_cam(this);
         vector_sub(p(0x6C), cam.byte_add(0x19C), swi);
-        vector_scale(p(0x10), p(0x6C), w);
+        vector_scale(p(0x10), p(0x6C), f32::from_bits(w));
         vector_add(p(0x70), swi, p(0x10));
         copy3(p(0x30), p(0x70));
         if looking_at_player() != 0 {
@@ -603,7 +596,7 @@ fn transition(this: GPtr<u8>, b: GPtr<u8>) {
         setf(0x58, x(rd(cam, 0xB4)).fsub_m(fovwi).fmul_m(f(0x1C)).fadd_m(fovwi).to_f32());
         let uwi = this.byte_add(0x8F0);
         vector_sub(p(0x74), cam.byte_add(0x1B4), uwi);
-        vector_scale(p(0x6C), p(0x74), w);
+        vector_scale(p(0x6C), p(0x74), f32::from_bits(w));
         vector_add(p(0x10), uwi, p(0x6C));
         let fxv = x(f(0x4C)).fsub_m(f(0x30));
         copy3(p(0x24), p(0x10));
@@ -625,11 +618,11 @@ fn transition(this: GPtr<u8>, b: GPtr<u8>) {
         set(0x10 + i * 4, x(f(0x30 + i * 4)).fsub_m(f(0x4C + i * 4)));
     }
     let h = x(f(0x14)).fmul_m(f(0x14)).fadd(x(f(0x10)).fmul_m(f(0x10))).fsqrt().to_f32();
-    let alpha = X87::from_f64_exact(get_atan_of_xy(h.to_bits(), rd(b, 0x18))).to_f32();
-    let beta = X87::from_f64_exact(get_atan_of_xy(rd(b, 0x10), rd(b, 0x14))).to_f32();
+    let alpha = X87::from_f64_exact(get_atan_of_xy(f32::from_bits(h.to_bits()), f32::from_bits(rd(b, 0x18)))).to_f32();
+    let beta = X87::from_f64_exact(get_atan_of_xy(f32::from_bits(rd(b, 0x10)), f32::from_bits(rd(b, 0x14)))).to_f32();
     setf(0x1C, alpha);
     setf(0x20, beta);
-    keep_track_of_the_speed(active_cam(this), p(0x30), p(0x4C), p(0x24), p(0x1C), p(0x20), p(0x58));
+    keep_track_of_the_speed(active_cam(this), p(0x30), p(0x4C), p(0x24), GPtr::<u8>::cast::<f32>(p(0x1C)), GPtr::<u8>::cast::<f32>(p(0x20)), GPtr::<u8>::cast::<f32>(p(0x58)));
 }
 
 /// The 1.3 push-out of a source `s` (x, y) from the target (`B+0x4C`) while interpolating: `dx`, `dy` as
@@ -646,7 +639,7 @@ fn push_out(b: GPtr<u8>, s: GPtr<u8>, dy_first: bool) {
     if sum.fsqrt().fcom(x(k(K_MIN_DIST))).test_parity(0x05) {
         return;
     }
-    let a = X87::from_f64_exact(get_atan_of_xy(rd(b, 0x10), rd(b, 0x14)));
+    let a = X87::from_f64_exact(get_atan_of_xy(f32::from_bits(rd(b, 0x10)), f32::from_bits(rd(b, 0x14))));
     wr::<f32>(s, 0, a.fcos().fmul_m(k(K_MIN_DIST)).fadd_m(f(0x4C)).to_f32());
     wr::<f32>(s, 4, a.fsin().fmul_m(k(K_MIN_DIST)).fadd_m(f(0x50)).to_f32());
 }

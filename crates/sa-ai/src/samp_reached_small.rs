@@ -20,13 +20,12 @@ use sa_core::bindings::entity_register_reference;
 use sa_world::bindings::event_base_dtor;
 use sa_world::bindings::localisation_blood;
 use sa_world::bindings::task_simple_ctor;
+use sa_world::bindings::ped_say;
 orig! {
     /// `CEvent::GetEventType` (vtable +4)
     fn v_event_type(e: GPtr<u8>) -> i32 = thiscall vslot 0x4 => unported;
     /// `CEvent::GetEventPriority` (vtable +8)
     fn v_event_priority(e: GPtr<u8>) -> i32 = thiscall vslot 0x8 => unported;
-    /// `CPed::Say(uint16 id, uint32 offset, float volume, bool, bool, bool)` (0x5EFFE0, `ret 0x18`)
-    fn ped_say(p: GPtr<u8>, id: u32, off: u32, vol: u32, a: u32, b: u32, c: u32) = thiscall 0x5EFFE0 => unported;
     /// `CAEPedAudioEntity::AddAudioEvent(int32 event, float volume, float speed, CPhysical*, uint8, int32, uint32)`
     /// (0x4E2BB0, `ret 0x1C`)
     #[allow(clippy::too_many_arguments)]
@@ -145,7 +144,7 @@ pub fn throw_projectile_control_throw(this: GPtr<u8>, release: u32, target: GPtr
         let old = rd::<GPtr<u8>>(slot, 0);
         if target != old {
             if !old.is_null() {
-                entity_clean_up_old_reference(old, slot);
+                entity_clean_up_old_reference(old, slot.cast::<GPtr<u8>>());
             }
             wr::<GPtr<u8>>(slot, 0, target);
             entity_register_reference(target, slot);
@@ -182,7 +181,9 @@ pub fn ik_chain_blend_out(this: GPtr<u8>, time: i32) {
 #[hook(addr = 0x630100, conv = thiscall, name = "CTaskComplexDie::SayDeathSample", expect = "8B 49 0C 8D 41 CF",
        unverified = "ai7-10", route = "L2", hazards = "heap-writes")]
 pub fn die_say_death_sample(this: GPtr<u8>, ped: GPtr<u8>) {
-    let say = |id: u32| ped_say(ped, id, 0, 0x3F80_0000, 0, 0, 0);
+    let say = |id: u32| {
+        ped_say(ped, id, 0, f32::from_bits(0x3F80_0000), 0, 0, 0);
+    };
     match rd::<u32>(this, 0xC).wrapping_sub(0x31) {
         0 | 1 => say(0x156),
         2 => {}

@@ -5,7 +5,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::{GBool, GPtr};
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 use sa_world::collision::misc::CAM_COLLIDE_WITH_PEDS;
 
@@ -23,12 +23,8 @@ sa_core::globals! {
     pub static CAM_COLLIDE_WITH_OBJECTS @ 0x8A5B15: GBool = GBool::TRUE;
 }
 
-orig! {
-    /// `CCamera::StartTransition(eCamMode)` (0x515200)
-    pub fn start_transition(this: GPtr<u8>, mode: u16) = thiscall 0x515200 => unported;
-    /// `CPedIntelligence::GetTaskHold(bool)` (0x600FF0)
-    pub fn get_task_hold(intel: GPtr<u8>, ignore_check: u8) -> GPtr<u8> = thiscall 0x600FF0 => unported;
-}
+pub use crate::bindings::cc_start_transition as start_transition;
+pub use sa_world::bindings::intel_get_task_hold as get_task_hold;
 
 /// `CCam::m_nMode` (int16, cam +0xC).
 const CAM_MODE: isize = 0xC;
@@ -84,7 +80,7 @@ pub fn set_wide_screen_off(this: GPtr<u8>) {
 #[hook(addr = 0x515BC0, conv = thiscall, name = "CCamera::StartTransitionWhenNotFinishedInter", expect = "C6 41 4F 01 E9 37 F6 FF FF", this = "CCamera")]
 pub fn start_transition_when_not_finished_inter(this: GPtr<u8>, mode: u16) {
     wr::<u8>(this, 0x4F, 1);
-    start_transition(this, mode);
+    start_transition(this, mode as u32);
 }
 
 /// `CCamera::AllowShootingWith2PlayersInCar(bool)` (0x50C280).

@@ -5,23 +5,21 @@
 //! queue slot, +0x28 the move state.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
 use crate::common::*;
 
-use crate::bindings::ped_placement_find_z_coor_for_ped as find_z_coor_for_ped;
+use sa_world::bindings::ped_placement_find_z_coor_for_ped as find_z_coor_for_ped;
 use sa_world::bindings::go_to_point_and_stand_still_ctor;
 use sa_world::bindings::sequence_add_task;
 use sa_world::bindings::sequence_ctor;
+use sa_world::bindings::heading_task_ctor;
+use sa_world::bindings::stand_still_ctor;
 orig! {
     /// `CPedAttractor::GetType()` (vtable slot 0)
     fn attractor_get_type(a: GPtr<u8>) -> u32 = thiscall vslot 0x0 => unported;
-    /// `CTaskSimpleStandStill(int ms, bool looped, bool useAnimIdle, float blend)` (0x62F310, `ret 0x10`)
-    fn stand_still_ctor(t: GPtr<u8>, ms: i32, looped: u32, idle: u32, blend: u32) -> GPtr<u8> = thiscall 0x62F310 => unported;
-    /// `CTaskComplexTurnToFaceEntityOrCoord`-like heading task ctor (0x66C3E0: `(const CVector&, float heading, float)`,
-    /// `ret 0xC`)
-    fn heading_task_ctor(t: GPtr<u8>, pos: GPtr<u8>, heading: u32, f: u32) -> GPtr<u8> = thiscall 0x66C3E0 => unported;
 }
 
 /// `0.5f` and `2.0f` (0x86FC84 / 0x86FC88)
@@ -59,7 +57,7 @@ pub fn create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
         wr::<u32>(ped, 0x55C, rd::<u32>(this, 0x1C));
         wr::<u32>(ped, 0x558, rd::<u32>(this, 0x1C));
         let t = task_new(0x20);
-        return if t.is_null() { GPtr::NULL } else { stand_still_ctor(t, 0, 0, 0, 0x4100_0000) };
+        return if t.is_null() { GPtr::NULL } else { stand_still_ctor(t, 0, 0, 0, f32::from_bits(0x4100_0000)) };
     }
     let t = task_new(0x40);
     let seq = if t.is_null() { GPtr::NULL } else { sequence_ctor(t) };
@@ -70,9 +68,9 @@ pub fn create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
         go_to_point_and_stand_still_ctor(
             t,
             ms,
-            this.byte_add(0x10),
-            g::<u32>(RADIUS).read(),
-            g::<u32>(MS_RADIUS).read(),
+            GPtr::<u8>::cast::<u32>(this.byte_add(0x10)),
+            f32::from_bits(g::<u32>(RADIUS).read()),
+            f32::from_bits(g::<u32>(MS_RADIUS).read()),
             0,
             0,
         )

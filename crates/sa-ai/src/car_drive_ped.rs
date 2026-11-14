@@ -3,19 +3,21 @@
 //! Unverified (docs/verify/HOWTO.md).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
 use crate::common::*;
 
-use crate::bindings::anim_blend_animation;
+use sa_world::bindings::anim_blend_animation;
 use crate::bindings::car_enter_exit_car_has_door_to_close;
-use crate::bindings::clump_get_association;
+use sa_core::bindings::clump_get_association;
 use crate::bindings::damage_get_door_status_component;
-use crate::bindings::rt_quat_rotate;
+use sa_core::bindings::rt_quat_rotate;
 use sa_core::bindings::general_random_int_in_range;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::compute_target_door_to_exit as car_enter_exit_compute_target_door_to_exit;
+use crate::bindings::car_drive_start_bopping;
 orig! {
     /// `CVehicle::ClearWindowOpenFlag(uint8)` (0x6D30B0, `ret 4`)
     fn vehicle_clear_window_open_flag(v: GPtr<u8>, door: u32) = thiscall 0x6D30B0 => unported;
@@ -23,8 +25,6 @@ orig! {
     fn vehicle_set_window_open_flag(v: GPtr<u8>, door: u32) = thiscall 0x6D3080 => unported;
     /// `CVehicle::CanPedLeanOut(CPed*)` (0x6D5CF0, `ret 4`)
     fn vehicle_can_ped_lean_out(v: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x6D5CF0 => unported;
-    /// `CTaskSimpleCarDrive::StartBopping(CPed*)` (0x642760, `ret 4`)
-    fn car_drive_start_bopping(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x642760 => unported;
 }
 
 /// The bopping switch value (0xC81324, float): above 0 every window closes and nothing bops
@@ -102,7 +102,7 @@ pub fn car_drive_process_arm_bopping(this: GPtr<u8>, ped: GPtr<u8>, enable: u8, 
     }
     let veh = rd::<GPtr<u8>>(ped, 0x58C);
     let anim = if rd::<GPtr<u8>>(veh, 0x464) == ped || rd::<GPtr<u8>>(veh, 0x46C) == ped { 0xA3 } else { 0xA2 };
-    let assoc = clump_get_association(rd::<u32>(ped, 0x18), anim);
+    let assoc = clump_get_association(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), anim);
     if enable == 0 {
         if !assoc.is_null() {
             wr::<u32>(assoc, 0x1C, 0xC080_0000);
@@ -124,7 +124,7 @@ pub fn car_drive_process_arm_bopping(this: GPtr<u8>, ped: GPtr<u8>, enable: u8, 
                 x(beat).fsub_m(min).fmul_m(g::<f32>(K_BOP_ANGLE_SCALE).read())
             };
             let frame = rd::<GPtr<u8>>(ped, if anim == 0xA2 { 0x49C } else { 0x4A0 });
-            rt_quat_rotate(rd::<GPtr<u8>>(frame, 0x10), BOP_AXIS, angle.fchs().to_f32(), 1);
+            rt_quat_rotate(rd::<GPtr<u8>>(frame, 0x10), GPtr::from_addr(BOP_AXIS as usize), angle.fchs().to_f32(), 1);
             wr::<u32>(ped, 0x470, rd::<u32>(ped, 0x470) | 0x4000);
         }
         if g::<u32>(TIMER_TIME_MS).read().wrapping_sub(rd::<u32>(this, 0x48)) > 5000
@@ -140,7 +140,7 @@ pub fn car_drive_process_arm_bopping(this: GPtr<u8>, ped: GPtr<u8>, enable: u8, 
     }
     let v = rd::<GPtr<u8>>(this, 8);
     if rd::<u32>(v, 0x594) == 0 {
-        let door = car_enter_exit_compute_target_door_to_exit(v, ped);
+        let door = car_enter_exit_compute_target_door_to_exit(v, ped) as u32;
         let can = damage_get_door_status_component(rd::<GPtr<u8>>(this, 8).byte_add(0x5A0), door) == 0
             && car_enter_exit_car_has_door_to_close(rd::<GPtr<u8>>(this, 8), door) == 0
             && vehicle_can_ped_lean_out(rd::<GPtr<u8>>(this, 8), ped) != 0;
@@ -166,7 +166,7 @@ pub fn car_drive_process_arm_bopping(this: GPtr<u8>, ped: GPtr<u8>, enable: u8, 
             return;
         }
     }
-    anim_blend_animation(rd::<u32>(ped, 0x18), 0, anim, 0x4080_0000);
+    anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0, anim, f32::from_bits(0x4080_0000));
     if rd::<i32>(this, 0x20) == -1 {
         car_drive_start_bopping(this, ped);
         wr::<u32>(this, 0x48, rd::<u32>(this, 0x20));
@@ -178,8 +178,8 @@ pub fn car_drive_process_arm_bopping(this: GPtr<u8>, ped: GPtr<u8>, enable: u8, 
 
 use crate::bindings::event_cop_car_being_stolen_ctor;
 use crate::bindings::event_cop_car_being_stolen_dtor;
-use crate::bindings::gang_drive_by_ctor;
-use crate::bindings::ik_abort_look_at;
+use sa_world::bindings::gang_drive_by_ctor;
+use sa_core::bindings::ik_abort_look_at;
 use crate::bindings::task_timer_is_out_of_time;
 use crate::bindings::vehicle_is_passenger;
 use crate::bindings::vehicle_set_getting_out_flags;
@@ -206,6 +206,10 @@ use sa_world::bindings::sequence_add_task;
 use sa_world::bindings::sequence_ctor;
 use sa_world::bindings::tm_find_active_task_by_type;
 use sa_world::bindings::upside_down_car_check_is_car_upside_down as upside_down_is_car_upside_down;
+use crate::bindings::hold_entity_play_anim;
+use sa_world::bindings::pad_get_accelerate;
+use sa_world::bindings::pad_get_brake;
+use sa_world::bindings::pad_get_steering_left_right;
 orig! {
     /// `CAudioEngine::HasRadioRetuneJustStarted()` (0x506FE0)
     fn audio_has_radio_retune_just_started(ae: GPtr<u8>) -> u8 = thiscall 0x506FE0 => unported;
@@ -213,12 +217,6 @@ orig! {
     fn event_car_upside_down_ctor(e: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = thiscall 0x4B1CC0 => unported;
     /// `CEventCarUpsideDown::~CEventCarUpsideDown()` (0x4B1D50)
     fn event_car_upside_down_dtor(e: GPtr<u8>) = thiscall 0x4B1D50 => unported;
-    /// `CPad::GetAccelerate()` (0x5403F0; int16 in AX)
-    fn pad_get_accelerate(pad: GPtr<u8>) -> u32 = thiscall 0x5403F0 => unported;
-    /// `CPad::GetSteeringLeftRight()` (0x53FB80; int16 in AX)
-    fn pad_get_steering_left_right(pad: GPtr<u8>) -> u32 = thiscall 0x53FB80 => unported;
-    /// `CPad::GetBrake()` (0x540080; int16 in AX)
-    fn pad_get_brake(pad: GPtr<u8>) -> u32 = thiscall 0x540080 => unported;
     /// `CVehicleAnimGroupData::GetGroupForAnim(int32 group, int32 anim)` (0x639FC0)
     fn vehicle_anim_group_for_anim(group: u32, anim: u32) -> u32 = cdecl 0x639FC0 => unported;
     /// `CVehicle::ProcessOpenDoor(CPed*, uint32 door, uint32 group, uint32 anim, float time)` (vtable +0x70)
@@ -233,8 +231,6 @@ orig! {
     fn car_drive_642700(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x642700 => unported;
     /// `CTaskSimpleCarDrive::ProcessBopping(CPed*, bool)` (0x642E70, `ret 8`)
     fn car_drive_process_bopping(t: GPtr<u8>, ped: GPtr<u8>, b: u32) = thiscall 0x642E70 => unported;
-    /// `CTaskSimpleHoldEntity::PlayAnim(AnimationId, AssocGroupId)` (0x691720, `ret 8`)
-    fn hold_entity_play_anim(t: GPtr<u8>, anim: u32, group: u32) = thiscall 0x691720 => unported;
     /// `CTaskSimpleCarDrive::TriggerIK(CPed*)` (0x63C500, `ret 4`)
     fn car_drive_trigger_ik(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x63C500 => unported;
 }
@@ -318,7 +314,7 @@ pub fn car_drive_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         if !pv.is_null() && pv != rd::<GPtr<u8>>(this, 8) {
             let slot = this.byte_add(8);
             if !rd::<GPtr<u8>>(this, 8).is_null() {
-                entity_clean_up_old_reference(rd::<GPtr<u8>>(this, 8), slot);
+                entity_clean_up_old_reference(rd::<GPtr<u8>>(this, 8), slot.cast::<GPtr<u8>>());
             }
             let v = rd::<GPtr<u8>>(ped, 0x58C);
             wr::<GPtr<u8>>(this, 8, v);
@@ -343,7 +339,7 @@ pub fn car_drive_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
             && in_vehicle(world_find_player_ped(-1))
             && rd::<GPtr<u8>>(world_find_player_ped(-1), 0x58C) == rd::<GPtr<u8>>(this, 8)
         {
-            ped_say(ped, 0x22, 0, 0x3F80_0000, 0, 0, 0);
+            ped_say(ped, 0x22, 0, f32::from_bits(0x3F80_0000), 0, 0, 0);
         }
         if grp.is_null() || membership_is_leader(grp.byte_add(8), ped) != 0 {
             let add = x(g::<f32>(TIMER_TIME_STEP).read()).fmul_m(g::<f32>(K_MS_A).read()).fmul_m(g::<f32>(K_MS_B).read()).ftol() as u32;
@@ -374,12 +370,12 @@ pub fn car_drive_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     }
     let drive_by = |rhs: u32| {
         let t = task_new(0x44);
-        let t = if t.is_null() { t } else { gang_drive_by_ctor(t, GPtr::NULL, 0, 0x42C8_0000, 100, 8, rhs) };
+        let t = if t.is_null() { t } else { gang_drive_by_ctor(t, GPtr::NULL, GPtr::NULL, 0x42C8_0000, 100, 8, rhs) };
         let mut e = [0u32; 0x10];
         let e_p: GPtr<u8> = GPtr::from_raw(e.as_mut_ptr()).cast();
         event_script_command_ctor(e_p, 3, t, 0);
         event_group_add(rd::<GPtr<u8>>(ped, 0x47C).byte_add(0x68), e_p, 0);
-        event_script_command_dtor(e_p);
+        event_script_command_dtor(e_p.cast::<u32>());
     };
     let can_drive_by = || {
         rd::<u32>(ped, 0x610) != 0 && rd::<i32>(ped, 0x61C) > 0 && vehicle_can_ped_lean_out(rd::<GPtr<u8>>(this, 8), ped) != 0
@@ -395,7 +391,7 @@ pub fn car_drive_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         }
         let any_input = |pad: GPtr<u8>| {
             !pad.is_null()
-                && (axis_nonzero(pad_get_accelerate(pad)) || axis_nonzero(pad_get_steering_left_right(pad)) || axis_nonzero(pad_get_brake(pad)))
+                && (axis_nonzero(pad_get_accelerate(pad)) || axis_nonzero(pad_get_steering_left_right(pad) as u32) || axis_nonzero(pad_get_brake(pad)))
         };
         let pv = rd::<GPtr<u8>>(ped, 0x58C);
         if rd::<u16>(pv, 0x22) != 0x23A && rd::<u32>(pv, 0x590) == 6 && door_is_closed(pv.byte_add(0x608)) == 0 {
@@ -407,7 +403,7 @@ pub fn car_drive_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         } else if rd::<u32>(pv, 0x590) != 0 || damage_get_door_status(pv.byte_add(0x5A0), 2) != 1 {
             driver_anims(ped);
         } else if v_vehicle_is_door_missing(rd::<GPtr<u8>>(ped, 0x58C), 2) == 0 {
-            let assoc = clump_get_association(rd::<u32>(ped, 0x18), 0x182);
+            let assoc = clump_get_association(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0x182);
             let pv = rd::<GPtr<u8>>(ped, 0x58C);
             let held = rd::<u8>(pv, 0x487) & 1 != 0 || rd::<u8>(pv, 0x486) & 1 != 0;
             if !held && assoc.is_null() && !any_input(pad) {
@@ -431,7 +427,7 @@ pub fn car_drive_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
             let data = v_vehicle_get_ride_anim_data(rd::<GPtr<u8>>(this, 8));
             if !data.is_null() {
                 let d = v_vehicle_get_ride_anim_data(rd::<GPtr<u8>>(this, 8));
-                anim_blend_animation(rd::<u32>(ped, 0x18), rd::<u32>(d, 0), 0xCD, 0x4100_0000);
+                anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), rd::<u32>(d, 0), 0xCD, f32::from_bits(0x4100_0000));
             }
             wr::<u8>(this, 0x5C, rd::<u8>(this, 0x5C) | 0x10);
         }
@@ -457,7 +453,7 @@ pub fn car_drive_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
             hold_entity_play_anim(t, anim, 0);
         }
     }
-    if !clump_get_association(rd::<u32>(ped, 0x18), 0xA9).is_null() {
+    if !clump_get_association(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0xA9).is_null() {
         if ik_is_looking(ik, ped) != 0 {
             ik_abort_look_at(ik, ped, 250);
         }
@@ -482,13 +478,13 @@ pub fn car_drive_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
                 let t = if t.is_null() { t } else { leave_car_ctor(t, rd::<GPtr<u8>>(this, 8), 0, 0, 1, 0) };
                 sequence_add_task(seq, t);
                 let w = task_new(0x24);
-                let w = if w.is_null() { w } else { car_drive_wander_ctor(w, rd::<GPtr<u8>>(this, 8), 0, 0x4120_0000) };
+                let w = if w.is_null() { w } else { car_drive_wander_ctor(w, rd::<GPtr<u8>>(this, 8), 0, f32::from_bits(0x4120_0000)) };
                 sequence_add_task(seq, w);
                 let mut e = [0u32; 0x10];
                 let e_p: GPtr<u8> = GPtr::from_raw(e.as_mut_ptr()).cast();
                 event_script_command_ctor(e_p, 3, seq, 0);
                 event_group_add(rd::<GPtr<u8>>(ped, 0x47C).byte_add(0x68), e_p, 0);
-                event_script_command_dtor(e_p);
+                event_script_command_dtor(e_p.cast::<u32>());
             }
         } else {
             wr::<u8>(this, 0x1C, 0);
@@ -498,12 +494,12 @@ pub fn car_drive_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         let driver = rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 8), 0x460);
         if !driver.is_null() && driver != ped && ped_is_player(driver) != 0 {
             if !move_speed_2d(rd::<GPtr<u8>>(this, 8)).fcom(x(g::<f32>(K_FAST).read())).test_any(0x41) {
-                ped_say(ped, 0x20, 0, 0x3F80_0000, 0, 0, 0);
+                ped_say(ped, 0x20, 0, f32::from_bits(0x3F80_0000), 0, 0, 0);
             }
             if !move_speed_2d(rd::<GPtr<u8>>(this, 8)).fcom(x(g::<f32>(K_SLOW).read())).test_parity(5) {
-                ped_say(ped, 0x27, 0, 0x3F80_0000, 0, 0, 0);
+                ped_say(ped, 0x27, 0, f32::from_bits(0x3F80_0000), 0, 0, 0);
             }
-            ped_say(ped, 0x29, 0, 0x3F80_0000, 0, 0, 0);
+            ped_say(ped, 0x29, 0, f32::from_bits(0x3F80_0000), 0, 0, 0);
         }
     }
     0

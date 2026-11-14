@@ -62,45 +62,47 @@ use sa_core::bindings::get_pad;
 use sa_core::bindings::pad_update_pads as update_pads;
 use sa_core::bindings::rs_event_handler;
 use sa_core::bindings::rw_d3d9_get_caps;
+use sa_core::bindings::file_close as close_file;
+use sa_core::bindings::file_set_dir as set_dir;
+use sa_core::bindings::file_set_dir_my_documents as set_dir_my_documents;
+use sa_core::bindings::get_current_time_in_cycles;
+use sa_core::bindings::get_cycles_per_millisecond;
+use sa_core::bindings::open_file;
+use sa_core::bindings::release as video_player_release;
+use sa_core::bindings::rs_mouse_set_pos;
+use sa_hud::bindings::ccm_get_joy_button_just_down as get_joy_button_just_down;
+use sa_hud::bindings::ccm_load_settings as load_settings;
+use sa_input::bindings::call_controller_state_check_for_input as check_for_input;
+use sa_input::bindings::call_init_default as init_default_control_configuration;
+use sa_input::bindings::call_init_mouse as init_default_control_config_mouse;
+use sa_input::bindings::call_make_blank as make_controller_actions_blank;
+use sa_input::bindings::reinit_controls;
+use sa_stream::bindings::load_splashes;
 sa_core::orig! {
     fn system_parameters_info_a(action: u32, p1: u32, p2: GPtr<u8>, win_ini: u32) -> i32 = stdcall cell 0x85826C => unported;
     fn is_already_running() -> i32 = cdecl 0x7468E0 => unported;
     fn win32_init_application(instance: u32) -> u32 = cdecl 0x7486A0 => unported;
     fn get_command_line_a() -> GPtr<u8> = stdcall cell 0x858148 => unported;
     fn win32_init_instance(instance: u32) -> u32 = cdecl 0x745560 => unported;
-    fn make_controller_actions_blank(this: GPtr<u8>) = thiscall 0x530500 => unported;
-    fn init_default_control_configuration(this: GPtr<u8>) = thiscall 0x530640 => unported;
     fn get_module_handle_a(name: GPtr<u8>) -> u32 = stdcall cell 0x858068 => unported;
     fn direct_input8_create(inst: u32, version: u32, iid: GPtr<u8>, out: GPtr<u32>, outer: u32) -> i32 = stdcall 0x817523 => unported;
     fn di_pad_init() = cdecl 0x7485C0 => unported;
-    fn init_default_control_config_mouse(this: GPtr<u8>, set_up: GPtr<u8>, controls: u32) = thiscall 0x52F6F0 => unported;
     fn destroy_window(hwnd: u32) -> i32 = stdcall cell 0x858270 => unported;
     fn set_window_long_a(hwnd: u32, index: i32, value: u32) -> i32 = stdcall cell 0x858274 => unported;
     fn set_window_pos(hwnd: u32, after: u32, x: i32, y: i32, cx: i32, cy: i32, flags: u32) -> i32 = stdcall cell 0x8582E0 => unported;
     fn show_window(hwnd: u32, cmd: i32) -> i32 = stdcall cell 0x858278 => unported;
     fn update_window(hwnd: u32) -> i32 = stdcall cell 0x8582AC => unported;
-    fn set_dir_my_documents() -> i32 = cdecl 0x538860 => unported;
-    fn open_file(name: GPtr<u8>, mode: GPtr<u8>) -> i32 = cdecl 0x538900 => unported;
-    fn load_settings(this: GPtr<u8>, file: i32) -> u8 = thiscall 0x530530 => unported;
-    fn reinit_controls() = cdecl 0x531F20 => unported;
-    fn close_file(file: i32) -> i32 = cdecl 0x5389D0 => unported;
-    fn set_dir(dir: GPtr<u8>) -> i32 = cdecl 0x5387D0 => unported;
     fn set_error_mode(mode: u32) -> u32 = stdcall cell 0x85813C => unported;
-    fn rs_mouse_set_pos(pos: GPtr<f32>) = cdecl 0x6194A0 => unported;
     fn gamma_init(this: GPtr<u8>) = thiscall 0x747180 => unported;
     fn peek_message_a(msg: GPtr<u8>, hwnd: u32, min: u32, max: u32, remove: u32) -> i32 = stdcall cell 0x8582BC => unported;
     fn translate_message(msg: GPtr<u8>) -> i32 = stdcall cell 0x8582C4 => unported;
     fn dispatch_message_a(msg: GPtr<u8>) -> i32 = stdcall cell 0x8582C0 => unported;
     fn sleep(ms: u32) = stdcall cell 0x8580C4 => unported;
-    fn load_splashes(starting: u8, logo: u8) = cdecl 0x5900B0 => unported;
     fn loading_screen_init(unk1: u8, unk2: u8) = cdecl 0x5902B0 => unported;
     fn do_pc_title_fade_in() = cdecl 0x590860 => unported;
     fn do_pc_title_fade_out() = cdecl 0x590990 => unported;
     fn loading_screen_shutdown(unk: u8) = cdecl 0x58FF10 => unported;
     fn video_player_play(cmd_show: i32, file: GPtr<u8>) = cdecl 0x747660 => unported;
-    fn video_player_release() = cdecl 0x746740 => unported;
-    fn get_joy_button_just_down(this: GPtr<u8>) -> i32 = thiscall 0x52D1E0 => unported;
-    fn check_for_input(state: GPtr<u8>) -> u8 = thiscall 0x53EFF0 => unported;
     fn is_enter_just_pressed(pad: GPtr<u8>) -> u8 = thiscall 0x4D5980 => unported;
     fn is_standard_key_just_pressed(pad: GPtr<u8>, key: u32) -> u8 = thiscall 0x4D59B0 => unported;
     fn is_menu_key_just_pressed(pad: GPtr<u8>) -> u8 = thiscall 0x744D50 => unported;
@@ -112,16 +114,14 @@ sa_core::orig! {
     fn start_loading_tune(this: GPtr<u8>) = thiscall 0x507410 => unported;
     fn initialise_game() = cdecl 0x53E580 => unported;
     fn initialise_post_loading(this: GPtr<u8>) = thiscall 0x5078F0 => unported;
-    fn get_current_time_in_cycles() -> u32 = cdecl 0x561A80 => unported;
-    fn get_cycles_per_millisecond() -> u32 = cdecl 0x561A40 => unported;
     fn is_beat_info_present(this: GPtr<u8>) -> u8 = thiscall 0x5071D0 => unported;
 }
 use sa_core::bindings::cheat_reset_cheats as reset_cheats;
 use sa_core::bindings::timer_stop;
 use sa_stream::bindings::pad_stop_pads_shaking as stop_pads_shaking;
+use sa_core::bindings::game_shut_down_for_restart as shut_down_for_restart;
+use sa_core::bindings::menu_unload_textures;
 sa_core::orig! {
-    fn menu_unload_textures(this: GPtr<u8>) = thiscall 0x574630 => unported;
-    fn shut_down_for_restart() = cdecl 0x53C550 => unported;
     fn initialise_when_restarting() = cdecl 0x53C680 => unported;
 }
 
@@ -255,14 +255,14 @@ fn b12_show_window() -> String {
 }
 fn b13_settings() -> String {
     set_dir_my_documents();
-    let f = open_file(rdata(0x865674), rdata(0x859C6C));
+    let f = GPtr::<u8>::addr(open_file(rdata(0x865674), rdata(0x859C6C))) as i32;
     let mut detail = String::from("gta_sa.set ");
     if f != 0 {
-        let ok = load_settings(GPtr::from_addr(CONTROLS_MANAGER), f);
+        let ok = load_settings(GPtr::from_addr(CONTROLS_MANAGER), GPtr::from_addr(f as usize));
         if ok == 0 {
             reinit_controls();
         }
-        close_file(f);
+        close_file(GPtr::from_addr(f as usize));
         detail += &format!("loaded (LoadSettings = {ok})");
     } else {
         detail += "not found";
@@ -277,7 +277,7 @@ fn b14_before_loop() -> String {
         (rd::<i32>(RS_MAX_WIDTH) as f32) * 0.5,
         (rd::<i32>(RS_MAX_HEIGHT) as f32) * 0.5,
     ];
-    rs_mouse_set_pos(GPtr::from_raw(pos.as_mut_ptr()));
+    rs_mouse_set_pos(GPtr::<f32>::cast::<u8>(GPtr::from_raw(pos.as_mut_ptr())));
     gamma_init(GPtr::from_addr(GAMMA));
     "SetErrorMode(1), RwInitialized = 1, RsMouseSetPos(centre), gamma.Init".into()
 }
@@ -385,7 +385,7 @@ fn process_game_logic() -> String {
             (rd::<i32>(RS_MAX_WIDTH) as f32) * 0.5,
             (rd::<i32>(RS_MAX_HEIGHT) as f32) * 0.5,
         ];
-        rs_mouse_set_pos(GPtr::from_raw(pos.as_mut_ptr()));
+        rs_mouse_set_pos(GPtr::<f32>::cast::<u8>(GPtr::from_raw(pos.as_mut_ptr())));
         gamma_init(GPtr::from_addr(GAMMA));
         return format!(
             "m_bStartGameLoading (0x748DED): {what}; gGameState {}",
@@ -431,7 +431,7 @@ fn process_game_logic() -> String {
         2 | 4 => {
             update_pads();
             let skip = rd::<u32>(WINDOWED) != 0
-                || get_joy_button_just_down(GPtr::from_addr(CONTROLS_MANAGER)) != 0
+                || get_joy_button_just_down(GPtr::from_addr(CONTROLS_MANAGER)) as i32 != 0
                 || check_for_input(get_pad(0)) != 0
                 || {
                     let _ = get_pad(0);

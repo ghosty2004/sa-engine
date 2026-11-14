@@ -18,7 +18,7 @@ use crate::bindings::area_codes_ctor as event_area_codes_ctor;
 use crate::bindings::camera_get_fading;
 use crate::bindings::camera_set_cam_position_for_fixed_mode as set_cam_position_for_fixed_mode;
 use crate::bindings::can_player_start_mission;
-use crate::bindings::clock_get_is_time_in_range;
+use sa_stream::bindings::clock_get_is_time_in_range;
 use crate::bindings::entry_exit_delete_one as entry_exit_manager_delete_one;
 use crate::bindings::event_group_add;
 use crate::bindings::event_group_event_ctor;
@@ -39,7 +39,7 @@ use crate::bindings::shopping_remove_loaded_shop;
 use crate::bindings::task_facial_stop_all;
 use crate::bindings::vector_add as vec_add;
 use crate::bindings::vector_mul_scalar as vec_mul_scalar;
-use crate::bindings::vector_sub as vec_sub;
+use sa_core::bindings::vector_sub as vec_sub;
 use crate::bindings::water_find_nearest_water_and_flow;
 use sa_core::bindings::audio_zones_update;
 use sa_core::bindings::camera_fade;
@@ -62,6 +62,15 @@ use sa_core::bindings::timer_suspend;
 use sa_core::bindings::vector_magnitude;
 use sa_core::bindings::vector_normalise;
 use sa_stream::bindings::manage_all_population as population_manage_all;
+use crate::bindings::clear_space_for_mission_entity;
+use crate::bindings::take_control_no_entity;
+use sa_core::bindings::interior_man_update as interior_manager_update;
+use sa_core::bindings::matrix_set_rotate_z_only;
+use sa_core::bindings::rw_camera_set_far_clip_plane;
+use sa_core::bindings::start_extra_colour as time_cycle_start_extra_colour;
+use sa_core::bindings::tm_get_task_secondary as task_manager_get_task_secondary;
+use sa_stream::bindings::call_add_models_to_request_list as streaming_add_models_to_request_list;
+use sa_stream::bindings::col_add_collision_needed_at_posn as col_store_add_collision_needed;
 orig! {
     /// `CEntryExitManager::FindNearestDoor(const CEntryExit&, float)` (0x43F630)
     fn find_nearest_door(enex: GPtr<u8>, range: f32) -> GPtr<u8> = cdecl 0x43F630 => unported;
@@ -71,12 +80,6 @@ orig! {
     fn task_goto_door_ctor_points(t: GPtr<u8>, start: GPtr<u8>, end: GPtr<u8>) -> GPtr<u8> = thiscall 0x66BBA0 => unported;
     /// `CTaskSimpleUninterruptable::CTaskSimpleUninterruptable()` (0x43E2E0)
     fn task_uninterruptable_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x43E2E0 => unported;
-    /// `CCamera::TakeControlNoEntity(const CVector&, eSwitchType, int32)` (0x50C8B0) on `TheCamera`
-    fn take_control_no_entity(cam: GPtr<u8>, pos: GPtr<u8>, switch: u32, who: i32) = thiscall 0x50C8B0 => unported;
-    /// `CColStore::AddCollisionNeededAtPosn(const CVector&)` (0x4103A0)
-    fn col_store_add_collision_needed(p: GPtr<u8>) = cdecl 0x4103A0 => unported;
-    /// `CStreaming::AddModelsToRequestList(const CVector&, int32 flags)` (0x40D3F0)
-    fn streaming_add_models_to_request_list(p: GPtr<u8>, flags: u32) = cdecl 0x40D3F0 => unported;
     /// `CEntryExit::RequestObjectsInFrustum()` (0x43E690)
     fn entry_exit_request_objects_in_frustum(e: GPtr<u8>) = thiscall 0x43E690 => unported;
     /// `CPathFind::SetPathsNeededAtPosition(const CVector&)` (0x44DCD0) on `ThePaths`
@@ -87,36 +90,24 @@ orig! {
     fn event_leader_entry_exit_ctor(e: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x43E1C0 => unported;
     /// `InteriorManager_c::SetEntryExitPtr(CEntryExit*)` (0x598180) on `g_interiorMan` (0xBAF670)
     fn interior_manager_set_entry_exit_ptr(m: GPtr<u8>, e: GPtr<u8>) = thiscall 0x598180 => unported;
-    /// `InteriorManager_c::Update()` (0x598F50, AL)
-    fn interior_manager_update(m: GPtr<u8>) -> u8 = thiscall 0x598F50 => unported;
     /// `CEntryExit::RequestAmbientPeds()` (0x43E6D0)
     fn entry_exit_request_ambient_peds(e: GPtr<u8>) = thiscall 0x43E6D0 => unported;
-    /// `RwCameraSetFarClipPlane(RwCamera*, float)` (0x7EE2A0)
-    fn rw_camera_set_far_clip_plane(cam: GPtr<u8>, far: f32) -> GPtr<u8> = cdecl 0x7EE2A0 => unported;
     /// `CEntryExit::GenerateAmbientPeds(const CVector&)` (0x43E8B0)
     fn entry_exit_generate_ambient_peds(e: GPtr<u8>, p: GPtr<u8>) = thiscall 0x43E8B0 => unported;
     /// `CStreaming::ClearFlagForAll(uint32)` (0x407A40)
     fn streaming_clear_flag_for_all(f: u32) = cdecl 0x407A40 => unported;
-    /// `CTimeCycle::StartExtraColour(int32, bool)` (0x55FEC0)
-    fn time_cycle_start_extra_colour(c: i32, b: u32) = cdecl 0x55FEC0 => unported;
     /// virtual `CEntity::GetHeightAboveRoad()` (vtable +0xD4): ST0
     fn v_get_height_above_road(v: GPtr<u8>) -> f64 = thiscall vslot 0xD4 => unported;
     /// virtual `CPlaceable::Teleport(CVector, bool)` (vtable +0x38)
     fn v_teleport(e: GPtr<u8>, x: u32, y: u32, z: u32, clear: u32) = thiscall vslot 0x38 => unported;
     /// virtual `CTask::GetTaskType()` (vtable +0x10)
     fn v_task_get_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CMatrix::SetRotateZOnly(float)` (0x59B020)
-    fn matrix_set_rotate_z_only(m: GPtr<u8>, angle: f32) = thiscall 0x59B020 => unported;
     /// `CEntryExit::FindValidTeleportPoint(CVector*)` (0x43EAF0)
     fn entry_exit_find_valid_teleport_point(e: GPtr<u8>, p: GPtr<u8>) = thiscall 0x43EAF0 => unported;
-    /// `CTheScripts::ClearSpaceForMissionEntity(const CVector&, CEntity*)` (0x486B00)
-    fn clear_space_for_mission_entity(p: GPtr<u8>, e: GPtr<u8>) = cdecl 0x486B00 => unported;
     /// `CEntryExit::WarpGangWithPlayer(CPed*)` (0x43F1F0)
     fn entry_exit_warp_gang_with_player(e: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x43F1F0 => unported;
     /// `CEntryExit::ProcessStealableObjects(CPed*)` (0x43E990)
     fn entry_exit_process_stealable_objects(e: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x43E990 => unported;
-    /// `CTaskManager::GetTaskSecondary(int32)` (0x681810)
-    fn task_manager_get_task_secondary(tm: GPtr<u8>, slot: u32) -> GPtr<u8> = thiscall 0x681810 => unported;
     /// `CEntryExit::GetEntryExitToDisplayNameOf()` (0x43E650)
     fn entry_exit_get_display_name_of(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x43E650 => unported;
 }
@@ -140,7 +131,7 @@ fn add_script_command(ped: GPtr<u8>, task: GPtr<u8>) {
     let ep = buf(&mut ev);
     event_script_command_ctor(ep, 3, task, 0);
     event_group_add(rd::<GPtr<u8>>(ped, 0x47C).byte_add(0x68), ep, 0);
-    event_script_command_dtor(ep);
+    event_script_command_dtor(ep.cast::<u32>());
 }
 
 /// `CEntryExit::TransitionStarted(CPed* ped)` (0x43FFD0).
@@ -214,12 +205,12 @@ pub fn entry_exit_transition_started(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     wr::<u32>(ped, 0x474, rd::<u32>(ped, 0x474) & 0xFBFF_FFFF);
     let ten = x(10.0);
     if rd::<u16>(this, 0x30) & 0x202 != 0 || in_vehicle() {
-        let m = X87::from_f64_exact(vector_magnitude(buf(&mut d)));
+        let m = X87::from_f64_exact(vector_magnitude(GPtr::<u8>::cast::<u32>(buf(&mut d))));
         if !m.fcom(ten).test_any(0x41) {
             warping().write(1);
         }
     } else {
-        let m = X87::from_f64_exact(vector_magnitude(buf(&mut d)));
+        let m = X87::from_f64_exact(vector_magnitude(GPtr::<u8>::cast::<u32>(buf(&mut d))));
         warping().write(1);
         if m.fcom(ten).test_any(0x41) {
             warping().write(0);
@@ -295,7 +286,7 @@ fn add_script_command_keep(ped: GPtr<u8>, task: GPtr<u8>, between: impl FnOnce(G
     event_script_command_ctor(ep, 3, task, 0);
     event_group_add(rd::<GPtr<u8>>(ped, 0x47C).byte_add(0x68), ep, 0);
     let ep = between(ep);
-    event_script_command_dtor(ep);
+    event_script_command_dtor(ep.cast::<u32>());
 }
 
 /// `CEntryExitManager::ms_exitEnterState` (0x96A7CC).
@@ -397,11 +388,11 @@ pub fn entry_exit_transition_finished(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
             }
         }
     } else {
-        col_store_add_collision_needed(buf(&mut pos));
+        col_store_add_collision_needed(GPtr::<u8>::cast::<f32>(buf(&mut pos)));
         ipl_store_add_ipls_needed(buf(&mut pos));
         if warping().read() != 0 {
             g::<u8>(0xB7_6850).write(0);
-            streaming_add_models_to_request_list(buf(&mut pos), 0x20);
+            streaming_add_models_to_request_list(GPtr::<u8>::cast::<f32>(buf(&mut pos)), 0x20);
             entry_exit_request_objects_in_frustum(spawn_point().read());
             paths_set_needed_at_position(GPtr::from_addr(0x96_F050), buf(&mut pos));
         }
@@ -486,19 +477,19 @@ fn transition_finish(this: GPtr<u8>, ped: GPtr<u8>, pos: &mut [u32; 3]) -> u8 {
         rw_camera_set_far_clip_plane(g::<GPtr<u8>>(0xB6_F97C).read(), far);
     }
     entry_exit_request_objects_in_frustum(spawn_point().read());
-    streaming_load_scene(buf(pos));
+    streaming_load_scene(GPtr::<u8>::cast::<u32>(buf(pos)));
     streaming_load_all_requested_models(0);
     entry_exit_generate_ambient_peds(this, buf(pos));
     if interior_manager_update(interiors) != 0 {
         streaming_set_flag_407a30(0);
-        streaming_load_scene(buf(pos));
+        streaming_load_scene(GPtr::<u8>::cast::<u32>(buf(pos)));
         streaming_set_flag_407a30(1);
     }
     timer_resume();
     streaming_clear_flag_for_all(0x20);
     let extra = rd::<u8>(spawn_point().read(), 0x33);
     if extra != 0 {
-        time_cycle_start_extra_colour(i32::from(extra) - 1, 0);
+        time_cycle_start_extra_colour((i32::from(extra) - 1) as u32, 0);
     } else {
         time_cycle_stop_extra_colour(0);
     }

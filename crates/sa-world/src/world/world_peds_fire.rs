@@ -13,11 +13,9 @@ use crate::bindings::start_fire_on;
 use sa_core::bindings::ped_is_alive;
 use sa_core::bindings::tm_get_active_task as get_active_task;
 use sa_stream::bindings::ped_is_player;
+use crate::bindings::generate_damage_event;
+use sa_core::bindings::vector_sub;
 orig! {
-    /// `VectorSub(CVector* out, const CVector* a, const CVector* b)` (0x40FE60): `a - b`
-    fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => super::mvpa_math::vector_sub;
-    /// `CWeapon::GenerateDamageEvent(CPed*, CEntity*, eWeaponType, int32, ePedPieceTypes, int32)` (0x73A530)
-    fn generate_damage_event(victim: GPtr<u8>, creator: GPtr<u8>, ty: i32, damage: i32, piece: i32, dir: u32) -> u8 = cdecl 0x73A530 => unported;
     /// `CTask::GetTaskType()` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
 }

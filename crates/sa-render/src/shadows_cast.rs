@@ -17,23 +17,19 @@ use sa_world::collision::data::{CdPtr, CmPtr};
 
 use crate::common::{ftol32, g, jne, jp, k, rd, wr, x, xi};
 
-use crate::bindings::rw_im3d_render_indexed_primitive;
-use crate::bindings::rw_im3d_transform;
+use sa_world::bindings::rw_im3d_render_indexed_primitive;
+use sa_world::bindings::rw_im3d_transform;
+use crate::bindings::render_buffer_stop_storing as stop_storing;
+use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
+use sa_stream::bindings::simple_transform_update_matrix;
+use sa_world::bindings::rw_im3d_end;
 orig! {
     /// `CCollision::CalculateTrianglePlanes(CColModel*)` (0x418580)
     fn calculate_triangle_planes(cm: CmPtr) = cdecl 0x418580 => sa_world::collision::data::calculate_triangle_planes_col_model;
-    /// `CPlaceable::AllocateMatrix()` (0x54f560)
-    fn allocate_matrix(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x54f560 => sa_world::world::entity::allocate_matrix;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*) const` (0x54f1b0)
-    fn simple_transform_update_matrix(this: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54f1b0 => crate::mvpd_unk::simple_transform_update_matrix;
     /// `CCollisionData::GetTrianglePoint(CVector&, int)` (0x40f5e0)
     fn get_triangle_point(cd: CdPtr, out: GPtr<CVector>, idx: i32) = thiscall 0x40f5e0 => sa_world::collision::data::get_triangle_point;
     /// `CShadows::AffectColourWithLighting(type, lighting, r, g, b, uint8* outR, outG, outB)` (0x707850)
     fn affect_colour_with_lighting(kind: u32, lighting: u32, r: u32, gg: u32, b: u32, out_r: GPtr<u8>, out_g: GPtr<u8>, out_b: GPtr<u8>) = cdecl 0x707850 => crate::mvpb_r1::affect_colour_with_lighting;
-    /// `RwIm3DEnd()` (0x7ef520)
-    fn rw_im3d_end() -> u32 = cdecl 0x7ef520 => unported;
-    /// `RenderBuffer::StopStoring()` (0x7077a0)
-    fn stop_storing() = cdecl 0x7077a0 => crate::shadows_render::render_buffer_stop_storing;
 }
 
 /// The three function-local statics' guard bits (trivially initialised).
@@ -338,8 +334,8 @@ fn one_triangle(
     let nidx = 3 * n as i32 - 6;
     let flush = || {
         let nv = g::<u32>(TEMP_VERTICES_STORED).read();
-        if nv != 0 && !rw_im3d_transform(TEMP_RENDER_VERTICES as u32, nv, 0, 1).is_null() {
-            rw_im3d_render_indexed_primitive(3, TEMP_BUFFER_INDICES as u32, g::<u32>(TEMP_INDICES_STORED).read());
+        if nv != 0 && !rw_im3d_transform(GPtr::from_addr((TEMP_RENDER_VERTICES as u32) as usize), nv, GPtr::NULL, 1).is_null() {
+            rw_im3d_render_indexed_primitive(3, GPtr::from_addr((TEMP_BUFFER_INDICES as u32) as usize), (g::<u32>(TEMP_INDICES_STORED).read()) as i32);
             rw_im3d_end();
         }
         g::<u32>(TEMP_INDICES_STORED).write(0);

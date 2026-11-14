@@ -7,16 +7,18 @@
 //!
 //! Layout: +0 allocator, +4 first, +8 last, +0xC end.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::fill_n_t_o;
+use crate::bindings::insert_n_t_o;
+use sa_core::bindings::crt_free_8214bd as operator_delete;
 orig! {
     /// `operator new(size_t)` (0x82119A)
     fn operator_new(n: u32) -> u32 = cdecl 0x82119A => unported;
-    /// `operator delete(void*)` (0x8214BD)
-    fn operator_delete(p: u32) = cdecl 0x8214BD => unported;
     /// `vector<CPedAttractor*>::_Xlen()` (0x5ECCB0, throws `length_error`)
     fn xlen_a(v: GPtr<u8>) = thiscall 0x5ECCB0 => unported;
     /// `vector<CPed*>::_Xlen()` (0x5ECAB0, throws `length_error`)
@@ -53,9 +55,7 @@ orig! {
     fn copy_backward_t(out: GPtr<u8>, first: u32, last: u32, dest_last: u32) -> GPtr<u8> = cdecl 0x5EB1B0 => unported;
     /// `std::fill` for `CTask**` (0x5EAAF0)
     fn fill_t(first: u32, last: u32, val: GPtr<u8>) = cdecl 0x5EAAF0 => unported;
-    fn fill_n_t_o(dest: u32, n: u32, val: GPtr<u8>) -> u32 = cdecl 0x5EB310 => fill_n_t;
     fn copy_t_o(first: u32, last: u32, dest: u32) -> u32 = cdecl 0x5EAE70 => copy_t;
-    fn insert_n_t_o(v: GPtr<u8>, at: u32, n: u32, val: GPtr<u8>) = thiscall 0x5ED4B0 => insert_n_t;
 }
 
 /// One instantiation's callees.
@@ -189,7 +189,7 @@ fn insert_n(i: &Inst, v: GPtr<u8>, at: u32, n: u32, valp: GPtr<u8>) {
         let new_size = n.wrapping_add(span(v, 8));
         let old = rd::<u32>(v, 4);
         if old != 0 {
-            operator_delete(old);
+            operator_delete(GPtr::from_addr(old as usize));
         }
         wr::<u32>(v, 0xC, buf.wrapping_add(bytes));
         wr::<u32>(v, 8, buf.wrapping_add(new_size * 4));

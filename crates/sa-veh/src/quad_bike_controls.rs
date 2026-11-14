@@ -47,27 +47,27 @@ pub fn quad_bike_process_control_inputs(this: GPtr<u8>, ped_type: u32) {
     let cur = || rd::<f32>(this, 0x99C);
     'clamp: {
         let stick = if g::<u8>(0xB6_EC2E).read() != 0 && g::<u8>(0xC1_CC02).read() != 0 {
-            pad_get_pad(id);
+            pad_get_pad(id as u32);
             let mut mouse = x(g::<f32>(0xB7_3424).read()).fcom(x(0.0)).test_parity(0x44);
             if !mouse {
-                pad_get_pad(id);
+                pad_get_pad(id as u32);
                 mouse = x(g::<f32>(0xB7_3428).read()).fcom(x(0.0)).test_parity(0x44);
             }
             if !mouse
                 && !jne_mask(x(rd::<f32>(this, 0x58C)).fabs(), x(0.0), 0x41)
                 && mouse_state().read() == 2
-                && pad_get_steering_left_right(pad_get_pad(id)) == 0
-                && pad_get_steering_up_down(pad_get_pad(id)) == 0
+                && pad_get_steering_left_right(pad_get_pad(id as u32)) == 0
+                && pad_get_steering_up_down(pad_get_pad(id as u32)) == 0
             {
                 mouse = true;
             }
             if mouse {
                 mouse_state().write(2);
-                if rd::<u16>(pad_get_pad(id), 0x2C) == 0 {
-                    pad_get_pad(id);
+                if rd::<u16>(pad_get_pad(id as u32), 0x2C) == 0 {
+                    pad_get_pad(id as u32);
                     lean(f32_of(x(g::<f32>(0xB7_3428).read()).fmul_m(f32::from_bits(0xBB65_6042)).fadd_m(cur())));
                 }
-                if !jp5(x(cur()).fabs(), x(f32::from_bits(0x3EB3_3333))) || rd::<u16>(pad_get_pad(id), 0x2C) != 0 {
+                if !jp5(x(cur()).fabs(), x(f32::from_bits(0x3EB3_3333))) || rd::<u16>(pad_get_pad(id as u32), 0x2C) != 0 {
                     let p = X87::from_f64_exact(sa_core::orig::x87_binary(
                         0x822130,
                         x(f32::from_bits(0x3F7A_E148)).to_f64(),
@@ -77,15 +77,15 @@ pub fn quad_bike_process_control_inputs(this: GPtr<u8>, ped_type: u32) {
                 }
                 break 'clamp;
             }
-            if pad_get_steering_up_down(pad_get_pad(id)) == 0 && mouse_state().read() == 2 {
+            if pad_get_steering_up_down(pad_get_pad(id as u32)) == 0 && mouse_state().read() == 2 {
                 break 'clamp;
             }
             let ts = time_step();
             mouse_state().write(0);
-            (ts, pad_get_steering_up_down(pad_get_pad(id)))
+            (ts, pad_get_steering_up_down(pad_get_pad(id as u32)))
         } else {
             let ts = time_step();
-            (ts, pad_get_steering_up_down(pad_get_pad(id)))
+            (ts, pad_get_steering_up_down(pad_get_pad(id as u32)))
         };
         let (ts, ud) = stick;
         let v = xi(-i32::from(ud))
@@ -105,7 +105,7 @@ pub fn quad_bike_process_control_inputs(this: GPtr<u8>, ped_type: u32) {
         v
     };
     lean(out);
-    if rd::<u16>(pad_get_pad(id), 0x10E) != 0 {
+    if rd::<u16>(pad_get_pad(id as u32), 0x10E) != 0 {
         wr::<u32>(this, 0x99C, 0);
     }
 }

@@ -6,6 +6,7 @@
 //! original constructors/destructors (`orig!`), in the original order. The SEH frames (`fs:[0]`, the
 //! state byte) are not reproduced (stack-only).
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::mem::GlobalDesc;
 use sa_core::{hook, orig};
@@ -30,7 +31,7 @@ const CALC_SIZE: usize = 0x14;
 const EVENT_DAMAGE_SIZE: usize = 0x44;
 
 pub use crate::bindings::audio_report_bullet_hit;
-pub use crate::bindings::col_lighting_get_current as get_current_lighting;
+pub use sa_world::bindings::col_lighting_get_current as get_current_lighting;
 pub use crate::bindings::fx_add_tyre_burst;
 pub use crate::bindings::pad_start_shake_distance;
 pub use sa_core::bindings::assoc_set_current_time;
@@ -57,35 +58,30 @@ pub use sa_world::bindings::ped_groups_are_in_same_group as are_in_same_group;
 pub use sa_world::bindings::physical_add_to_moving_list;
 pub use sa_world::bindings::report_crime;
 pub use sa_world::bindings::vector_scale;
-pub use sa_world::bindings::vector_sub;
+pub use sa_core::bindings::vector_sub;
+pub use crate::bindings::fx_add_bullet_impact;
+pub use crate::bindings::glass_was_hit_by_bullet;
+pub use sa_core::bindings::clump_get_association;
+pub use sa_world::bindings::anim_blend_animation as blend_animation;
+pub use sa_world::bindings::apply_force as physical_apply_force;
+pub use sa_world::bindings::camera_is_sphere_visible;
+pub use sa_world::bindings::damage_calc_compute_damage_response as calc_compute_damage_response;
+pub use sa_world::bindings::damage_calc_ctor as calc_ctor;
+pub use sa_world::bindings::damage_compute_damage_anim as event_damage_compute_damage_anim;
+pub use sa_world::bindings::damage_compute_death_anim as event_damage_compute_death_anim;
+pub use sa_world::bindings::event_damage_ctor;
+pub use sa_world::bindings::event_group_add;
+pub use sa_world::bindings::fx_add_blood;
+pub use sa_world::bindings::generate_damage_event as generate_damage_event_call;
+pub use sa_world::bindings::get_local_direction as ped_get_local_direction;
+pub use sa_world::bindings::object_damage;
+pub use sa_world::bindings::ped_get_weapon_skill as ped_get_weapon_skill_current;
+pub use sa_world::bindings::vehicle_inflict_damage;
 orig! {
-    /// `CPedDamageResponseCalculator::CPedDamageResponseCalculator(CEntity*, float, eWeaponType, ePedPieceTypes, bool)` (0x4AD3F0, thiscall)
-    pub fn calc_ctor(this: GPtr<u8>, creator: GPtr<u8>, damage: f32, ty: i32, piece: i32, b: u8) -> GPtr<u8> = thiscall 0x4AD3F0 => unported;
-    /// `CPedDamageResponseCalculator::ComputeDamageResponse(CPed*, CPedDamageResponse&, bool speak)` (0x4B5AC0, thiscall)
-    pub fn calc_compute_damage_response(this: GPtr<u8>, ped: GPtr<u8>, resp: GPtr<u8>, speak: u8) = thiscall 0x4B5AC0 => unported;
-    /// `CEventDamage::CEventDamage(CEntity* source, uint32 time, eWeaponType, ePedPieceTypes, uint8 dir, bool, bool inVehicle)`
-    /// (0x4AD830, thiscall); the last word is pushed as `(flags >> 8) & 0xFFFFFF01`
-    pub fn event_damage_ctor(this: GPtr<u8>, source: GPtr<u8>, time: u32, ty: i32, piece: i32, dir: u32, a: u32, in_veh: u32) -> GPtr<u8> = thiscall 0x4AD830 => unported;
-    /// `CEventDamage::ComputeDeathAnim(CPed*, bool)` (0x4B3A60, thiscall)
-    pub fn event_damage_compute_death_anim(this: GPtr<u8>, ped: GPtr<u8>, b: u8) = thiscall 0x4B3A60 => unported;
-    /// `CEventDamage::ComputeDamageAnim(CPed*, bool)` (0x4B3FC0, thiscall)
-    pub fn event_damage_compute_damage_anim(this: GPtr<u8>, ped: GPtr<u8>, b: u8) = thiscall 0x4B3FC0 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, thiscall)
-    pub fn event_group_add(this: GPtr<u8>, ev: GPtr<u8>, b: u8) -> GPtr<u8> = thiscall 0x4AB420 => unported;
     /// `CTask::GetTaskType()` (vtable slot 0x10, thiscall)
     pub fn task_get_type(task: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `RpAnimBlendClumpGetAssociation(RpClump*, uint32 animId)` (0x4D68B0)
-    pub fn clump_get_association(clump: GPtr<u8>, id: u32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
-    /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float delta)` (0x4D4610)
-    pub fn blend_animation(clump: GPtr<u8>, group: u32, id: u32, delta: u32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
     /// `FindPlayerPed(int32)` (0x56E210)
     pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
-    /// `CWeapon::GenerateDamageEvent(...)` (0x73A530)
-    pub fn generate_damage_event_call(victim: GPtr<u8>, creator: GPtr<u8>, ty: i32, damage: i32, piece: i32, dir: u32) -> u8 = cdecl 0x73A530 => generate_damage_event;
-    /// `CPed::GetWeaponSkill()` (current weapon, 0x5E6580, thiscall)
-    pub fn ped_get_weapon_skill_current(ped: GPtr<u8>) -> u8 = thiscall 0x5E6580 => unported;
-    /// `CPed::GetLocalDirection(const CVector2D&)` (0x5DEF60, thiscall)
-    pub fn ped_get_local_direction(ped: GPtr<u8>, v: GPtr<u8>) -> u32 = thiscall 0x5DEF60 => unported;
     /// `CBulletTraces::AddTrace(const CVector* from, const CVector* to, eWeaponType, CEntity*)` (0x726AF0)
     pub fn bullet_traces_add_trace(from: GPtr<u8>, to: GPtr<u8>, ty: i32, e: GPtr<u8>) = cdecl 0x726AF0 => unported;
     /// `CStats::UpdateStatsWhenWeaponHit(eWeaponType)` (0x55CEB0)
@@ -95,20 +91,6 @@ orig! {
     pub fn vehicle_burst_tyre(veh: GPtr<u8>, component: u32, b: u8) -> u8 = thiscall vslot 0xB0 => unported;
     /// `CEntity::SetIsStatic(bool)` (vtable slot 0x10, thiscall)
     pub fn entity_set_is_static(e: GPtr<u8>, b: u8) = thiscall vslot 0x10 => unported;
-    /// `Fx_c::AddBlood(CVector&, CVector&, int32, float lighting)` (0x49EB00, thiscall); lighting pushed as the raw word
-    pub fn fx_add_blood(fx: GPtr<u8>, pos: GPtr<u8>, dir: GPtr<u8>, amount: u32, lighting: u32) = thiscall 0x49EB00 => unported;
-    /// `Fx_c::AddBulletImpact(CVector&, CVector&, int32 surface, int32 amount, float lighting)` (0x49F3D0, thiscall)
-    pub fn fx_add_bullet_impact(fx: GPtr<u8>, pos: GPtr<u8>, dir: GPtr<u8>, surface: u32, amount: u32, lighting: f32) = thiscall 0x49F3D0 => unported;
-    /// `CCamera::IsSphereVisible(const CVector&, float)` (0x420D40, thiscall)
-    pub fn camera_is_sphere_visible(cam: GPtr<u8>, c: GPtr<u8>, r: f32) -> u8 = thiscall 0x420D40 => unported;
-    /// `CGlass::WasGlassHitByBullet(CEntity*, CVector)` (0x71C0D0)
-    pub fn glass_was_hit_by_bullet(e: GPtr<u8>, x: u32, y: u32, z: u32) = cdecl 0x71C0D0 => unported;
-    /// `CObject::ObjectDamage(float, const CVector*, const CVector*, CEntity*, eWeaponType)` (0x5A0D90, thiscall)
-    pub fn object_damage(obj: GPtr<u8>, dmg: f32, pos: GPtr<u8>, dir: GPtr<u8>, damager: GPtr<u8>, ty: i32) = thiscall 0x5A0D90 => unported;
-    /// `CPhysical::ApplyForce(CVector force, CVector point, bool)` (0x542B50, thiscall); raw words
-    pub fn physical_apply_force(e: GPtr<u8>, fx: u32, fy: u32, fz: u32, px: u32, py: u32, pz: u32, b: u8) = thiscall 0x542B50 => unported;
-    /// `CVehicle::InflictDamage(CEntity*, eWeaponType, float, CVector)` (0x6D7C90, thiscall); raw position words
-    pub fn vehicle_inflict_damage(veh: GPtr<u8>, e: GPtr<u8>, ty: i32, dmg: f32, x: u32, y: u32, z: u32) = thiscall 0x6D7C90 => unported;
     /// `CEventVehicleDamageWeapon::CEventVehicleDamageWeapon(CVehicle*, CEntity*, eWeaponType)` (0x61C2E0, thiscall)
     pub fn event_vehicle_damage_weapon_ctor(ev: GPtr<u8>, veh: GPtr<u8>, e: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x61C2E0 => unported;
 }
@@ -167,9 +149,9 @@ pub fn generate_damage_event(victim: GPtr<u8>, creator: GPtr<u8>, ty: i32, damag
     let mut ev = [0u32; EVENT_DAMAGE_SIZE / 4];
     let calc_p: GPtr<u8> = lp(&mut calc).cast();
     let ev_p: GPtr<u8> = lp(&mut ev).cast();
-    calc_ctor(calc_p, creator, xi(damage).to_f32(), ty, piece, 0);
+    calc_ctor(calc_p, creator, xi(damage).to_f32(), ty as u32, piece as u32, 0);
     let in_veh = (ru(victim, PED_FLAGS) >> 8) & 0xFFFF_FF01;
-    event_damage_ctor(ev_p, creator, time_ms(), ty, piece, dir, 0, in_veh);
+    event_damage_ctor(ev_p, creator, time_ms(), ty as u32, piece as u32, dir, 0, in_veh);
 
     let tm = |ped: GPtr<u8>| rp(ped, PED_INTEL).byte_add(4);
     'body: {
@@ -180,7 +162,7 @@ pub fn generate_damage_event(victim: GPtr<u8>, creator: GPtr<u8>, ty: i32, damag
             && task_get_type(task_manager_get_simplest_active_task(tm(victim))) == 0xDA
         {
             let id = if clump_get_first_association_flags(rp(victim, CLUMP), 0x800).is_null() { 0x24 } else { 0x27 };
-            let a = blend_animation(rp(victim, CLUMP), 0, id, 0x4100_0000);
+            let a = blend_animation(rp(victim, CLUMP), 0, id, f32::from_bits(0x4100_0000));
             if !a.is_null() {
                 assoc_set_current_time(a, 0.0);
                 wh(a, 0x2E, (rh(a, 0x2E) & 0xFFF7) | 1);
@@ -222,7 +204,7 @@ pub fn generate_damage_event(victim: GPtr<u8>, creator: GPtr<u8>, ty: i32, damag
             } else if id == 0xC0 {
                 result = 0;
             } else {
-                let a = blend_animation(rp(victim, CLUMP), ru(ev_p, 0x28), id, ru(ev_p, 0x30));
+                let a = blend_animation(rp(victim, CLUMP), ru(ev_p, 0x28), id, f32::from_bits(ru(ev_p, 0x30)));
                 wu(a, 0x24, ru(ev_p, 0x34));
                 wb(ev_p, 0x25, rb(ev_p, 0x25) | 4);
             }
@@ -278,7 +260,7 @@ fn bullet_impact_fx(cp: GPtr<u8>, amount: u8) {
     if camera_is_sphere_visible(g(THE_CAMERA), cp, 1.0) == 0 {
         return;
     }
-    let l = st0(get_current_lighting(u32::from(rb(cp, 0x25)), 0.5)).to_f32();
+    let l = st0(get_current_lighting(u32::from(rb(cp, 0x25)) as u8, 0.5)).to_f32();
     fx_add_bullet_impact(g(G_FX), cp, cp.byte_add(0x10), u32::from(rb(cp, 0x23)), u32::from(amount), l);
 }
 
@@ -368,7 +350,7 @@ pub fn do_bullet_impact(this: GPtr<u8>, fired_by: GPtr<u8>, victim: GPtr<u8>, st
     let ty = || ru(this, 0) as i32;
     let mut wi = get_weapon_info(ty(), 1);
     if !fired_by.is_null() && etype(fired_by) == 3 {
-        let skill = ped_get_weapon_skill_current(fired_by);
+        let skill = ped_get_weapon_skill_current(fired_by) as u8;
         wi = get_weapon_info(ty(), skill);
     }
     let mut fired_by_player = GPtr::<u8>::NULL;
@@ -481,7 +463,7 @@ pub fn do_bullet_impact(this: GPtr<u8>, fired_by: GPtr<u8>, victim: GPtr<u8>, st
                 report_hit_angle(victim, cp, start, end);
                 let p = rv(pos_ptr(victim), 0);
                 let mut v2 = [x(rf(start, 0)).fsub_m(p[0]).to_f32(), x(rf(start, 4)).fsub_m(p[1]).to_f32()];
-                let dir = ped_get_local_direction(victim, lp(&mut v2).cast());
+                let dir = ped_get_local_direction(victim, lp(&mut v2).cast()) as u32;
                 let mut dmg = i32::from(rh(wi, 0x22) as i16);
                 if inc_hit < 0 {
                     dmg = dmg.wrapping_mul(inc_hit).wrapping_neg();
@@ -490,7 +472,7 @@ pub fn do_bullet_impact(this: GPtr<u8>, fired_by: GPtr<u8>, victim: GPtr<u8>, st
                     let mut d = [0f32; 3];
                     let dp = vector_sub(lp(&mut d).cast(), pos_ptr(victim), start);
                     let mut f = Fpu::new();
-                    f.push(st0(magnitude(dp)));
+                    f.push(st0(magnitude(dp.cast::<u32>())));
                     f.fcomp_m(1.0);
                     if !f.jp(5) && ru(victim, 0x470) & 0x1000 == 0 && ty() != 0x19 && ty() != 0x1B {
                         dmg = 0x96;
@@ -513,13 +495,13 @@ pub fn do_bullet_impact(this: GPtr<u8>, fired_by: GPtr<u8>, victim: GPtr<u8>, st
                         amount = 0x20;
                     }
                 }
-                fx_add_blood(g(G_FX), cp, cp.byte_add(0x10), u32::from(amount), ru(victim, 0x12C));
+                fx_add_blood(g(G_FX), cp, cp.byte_add(0x10), u32::from(amount) as i32, f32::from_bits(ru(victim, 0x12C)));
             }
             break 'shake;
         }
 
         let c = rv_bits(cp, 0);
-        glass_was_hit_by_bullet(victim, c[0], c[1], c[2]);
+        glass_was_hit_by_bullet(victim, f32::from_bits(c[0]), f32::from_bits(c[1]), f32::from_bits(c[2]));
         set_low(&mut s4, if inc_hit != 0 { 2 } else { 8 });
         match etype(victim) {
             4 => {
@@ -531,7 +513,7 @@ pub fn do_bullet_impact(this: GPtr<u8>, fired_by: GPtr<u8>, victim: GPtr<u8>, st
                         2 => x(rf(oi, 0x34)).fmul_m(151.0).to_f32(),
                         _ => 50.0,
                     };
-                    object_damage(victim, dmg, cp, cp.byte_add(0x10), fired_by, ty());
+                    object_damage(victim, dmg, cp, cp.byte_add(0x10), fired_by, ty() as u32);
                 } else {
                     'force: {
                         if rb(victim, 0x40) & 4 != 0 {
@@ -562,7 +544,7 @@ pub fn do_bullet_impact(this: GPtr<u8>, fired_by: GPtr<u8>, victim: GPtr<u8>, st
                         }
                         push_at_hit(victim, cp, f32::from_bits(s4));
                     }
-                    object_damage(victim, 50.0, cp, cp.byte_add(0x10), fired_by, ty());
+                    object_damage(victim, 50.0, cp, cp.byte_add(0x10), fired_by, ty() as u32);
                 }
             }
             2 => {
@@ -601,7 +583,7 @@ pub fn do_bullet_impact(this: GPtr<u8>, fired_by: GPtr<u8>, victim: GPtr<u8>, st
                             s8 = d.fadd(d).to_f32().to_bits();
                         }
                     }
-                    vehicle_inflict_damage(victim, fired_by, ty(), f32::from_bits(s8), c[0], c[1], c[2]);
+                    vehicle_inflict_damage(victim, fired_by, ty(), f32::from_bits(s8), f32::from_bits(c[0]), f32::from_bits(c[1]), f32::from_bits(c[2]));
                     bullet_impact_fx(cp, s4 as u8);
                     // jump table 0x73C1D0 / 0x73C1DC over type - 0x18
                     s4 = match ty() {
@@ -640,8 +622,8 @@ pub fn do_bullet_impact(this: GPtr<u8>, fired_by: GPtr<u8>, victim: GPtr<u8>, st
     let p2 = pos_ptr(find_player_ped(-1));
     let p3 = pos_ptr(find_player_ped(-1));
     let (z, y, xx) = (ru(p1, 8), ru(p2, 4), ru(p3, 0));
-    let pad = pad_get_pad(pt as i32);
-    pad_start_shake_distance(pad, 0xF0, 0x80, xx, y, z);
+    let pad = pad_get_pad((pt as i32) as u32);
+    pad_start_shake_distance(pad, 0xF0, 0x80, f32::from_bits(xx), f32::from_bits(y), f32::from_bits(z));
 }
 
 pub const HOOKS: &[HookReg] = &[HOOK_GENERATE_DAMAGE_EVENT, HOOK_DO_BULLET_IMPACT];

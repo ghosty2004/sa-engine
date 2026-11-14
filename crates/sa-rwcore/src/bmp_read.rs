@@ -10,20 +10,15 @@ use sa_core::{hook, orig};
 
 use crate::common::{RwError, p8, rd, rw_error_set, rw_free, rw_malloc};
 
-use crate::bindings::image_allocate_pixels;
-use crate::bindings::image_destroy;
+use sa_core::bindings::image_allocate_pixels;
+use sa_core::bindings::image_destroy;
 use sa_core::bindings::rw_error1;
+use sa_core::bindings::rw_image_create as image_create;
+use sa_core::bindings::rw_stream_close as stream_close;
+use sa_core::bindings::rw_stream_open as stream_open;
+use sa_core::bindings::rw_stream_skip as stream_skip;
+use sa_core::bindings::stream_read;
 orig! {
-    /// `RwStreamOpen(type, access, data)` (0x7ECEF0)
-    fn stream_open(ty: u32, access: u32, data: GPtr<u8>) -> GPtr<u8> = cdecl 0x7ECEF0 => crate::stream::rw_stream_open;
-    /// `RwStreamRead(stream, buf, len)` (0x7EC9D0)
-    fn stream_read(s: GPtr<u8>, buf: GPtr<u8>, len: u32) -> u32 = cdecl 0x7EC9D0 => crate::stream::rw_stream_read;
-    /// `RwStreamClose(stream, data)` (0x7ECE20)
-    fn stream_close(s: GPtr<u8>, data: GPtr<u8>) -> u32 = cdecl 0x7ECE20 => crate::stream::rw_stream_close;
-    /// `RwStreamSkip(stream, offset)` (0x7ECD00)
-    fn stream_skip(s: GPtr<u8>, offset: u32) -> GPtr<u8> = cdecl 0x7ECD00 => crate::stream::rw_stream_skip;
-    /// `RwImageCreate(w, h, depth)` (0x8026E0)
-    fn image_create(w: i32, h: i32, depth: i32) -> GPtr<u8> = cdecl 0x8026E0 => crate::image::rw_image_create;
     /// `_rwerror(code, a)` (0x8088D0, two arguments)
     fn rw_error2(code: u32, a: u32) -> u32 = cdecl 0x8088D0 => unported;
     /// `_rtBMPDecodeRow(image, y, src, bpp, rle)` (0x7CE5D0)

@@ -22,6 +22,7 @@ use sa_core::bindings::get_first_atomic;
 use sa_core::bindings::rp_skin_geometry_get_skin;
 use sa_core::bindings::rw_frame_update_objects;
 use sa_core::bindings::uncompress_animation;
+use crate::bindings::clump_data_for_all_frames as for_all_frames;
 orig! {
     /// `CAnimBlendAssociation::UpdateBlend(float timeStep)` (0x4D1490), AL
     fn assoc_update_blend(a: GPtr<u8>, step: f32) -> u8 = thiscall 0x4D1490 => unported;
@@ -29,8 +30,6 @@ orig! {
     fn assoc_get_node(a: GPtr<u8>, i: i32) -> u32 = thiscall 0x4CEB60 => unported;
     /// `CAnimBlendAssociation::UpdateTime(float timeStep, float timeMult)` (0x4D13D0)
     fn assoc_update_time(a: GPtr<u8>, step: f32, mult: f32) = thiscall 0x4D13D0 => unported;
-    /// `CAnimBlendClumpData::ForAllFrames(cb, data)` (0x4CF190)
-    fn for_all_frames(d: GPtr<u8>, cb: u32, data: GPtr<u8>) = thiscall 0x4CF190 => unported;
     /// `RpAnimBlendNodeUpdateKeyFrames(frames, n)` (0x4D1570, the update data in EAX)
     fn update_key_frames(data: GPtr<u8>, frames: GPtr<u8>, n: i32) = reg("args = eax stack stack") 0x4D1570 => update_key_frames_b;
 }
@@ -126,17 +125,17 @@ pub fn rp_anim_blend_clump_update_animations(clump: GPtr<u8>, step: f32, on_scre
     let keyframes = (fl >> 5) & 1 != 0;
     if fl & 0x40 != 0 {
         let cb = if is_skinned(clump) { CB_COMPRESSED_SKINNED } else { CB_COMPRESSED_NON_SKINNED };
-        for_all_frames(data, cb, up);
+        for_all_frames(data, cb, up.addr() as u32);
     } else if on_screen != 0 {
         if keyframes {
             update_key_frames(up, frames, count);
         }
         let cb = if is_skinned(clump) { CB_SKINNED } else { CB_NON_SKINNED };
-        for_all_frames(data, cb, up);
+        for_all_frames(data, cb, up.addr() as u32);
         let f = rd::<GPtr<u8>>(data, 0x10);
         wr::<u8>(f, 0, rd::<u8>(f, 0) & 0xDF);
     } else {
-        for_all_frames(data, CB_OFFSCREEN, up);
+        for_all_frames(data, CB_OFFSCREEN, up.addr() as u32);
         let f = rd::<GPtr<u8>>(data, 0x10);
         wr::<u8>(f, 0, rd::<u8>(f, 0) | 0x20);
     }

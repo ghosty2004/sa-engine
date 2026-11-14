@@ -62,30 +62,21 @@ pub use sa_core::bindings::set_current_txd;
 pub use sa_core::bindings::strtok;
 pub use sa_pop::bindings::create_plate_texture as create_plate_texture_call;
 pub use sa_stream::bindings::remove_txd;
-pub use sa_stream::bindings::rp_material_set_texture;
-pub use sa_stream::bindings::rw_texture_destroy;
-pub use sa_world::bindings::rw_raster_unlock;
+pub use sa_core::bindings::rp_material_set_texture;
+pub use sa_core::bindings::rw_texture_destroy;
+pub use sa_core::bindings::rw_raster_unlock;
+pub use sa_core::bindings::file_close as file_mgr_close_file;
+pub use sa_core::bindings::file_set_dir as file_mgr_set_dir;
+pub use sa_core::bindings::find_txd_slot;
+pub use sa_core::bindings::load_line;
+pub use sa_core::bindings::open_file as file_mgr_open_file;
+pub use sa_core::bindings::rw_raster_lock;
+pub use sa_core::bindings::rw_texture_read;
+pub use sa_core::bindings::rw_texture_set_name;
+pub use sa_core::bindings::stricmp;
 orig! {
     /// `CCustomCarPlateMgr::GetCharacterPositionInCharSet(char c (AL), uint32& col, uint32& row)` (0x6FD7C0)
     fn char_position(c: u8, col: GPtr<u32>, row: GPtr<u32>) = reg("args = al stack stack") 0x6FD7C0 => get_character_position_in_char_set;
-    /// `CFileMgr::SetDir(const char*)` (0x5387D0)
-    pub fn file_mgr_set_dir(d: u32) = cdecl 0x5387D0 => unported;
-    /// `CFileMgr::OpenFile(const char* name, const char* mode)` (0x538900)
-    pub fn file_mgr_open_file(name: u32, mode: u32) -> u32 = cdecl 0x538900 => unported;
-    /// `CFileMgr::CloseFile(FILE*)` (0x5389D0)
-    pub fn file_mgr_close_file(f: u32) -> i32 = cdecl 0x5389D0 => unported;
-    /// `CFileLoader::LoadLine(FILE*)` (0x536F80)
-    pub fn load_line(f: u32) -> GPtr<u8> = cdecl 0x536F80 => unported;
-    /// `CTxdStore::FindTxdSlot(const char*)` (0x731850)
-    pub fn find_txd_slot(name: u32) -> i32 = cdecl 0x731850 => unported;
-    /// `RwTextureRead(const char* name, const char* mask)` (0x7F3AC0)
-    pub fn rw_texture_read(name: u32, mask: u32) -> GPtr<u8> = cdecl 0x7F3AC0 => unported;
-    /// `RwTextureSetName(RwTexture*, const char*)` (0x7F38A0)
-    pub fn rw_texture_set_name(t: GPtr<u8>, name: u32) -> GPtr<u8> = cdecl 0x7F38A0 => unported;
-    /// `RwRasterLock(RwRaster*, uint8 level, int32 mode)` (0x7FB2D0)
-    pub fn rw_raster_lock(r: GPtr<u8>, level: u32, mode: i32) -> GPtr<u8> = cdecl 0x7FB2D0 => unported;
-    /// CRT `_stricmp` (0x8229B6)
-    pub fn stricmp(a: u32, b: GPtr<u8>) -> i32 = cdecl 0x8229B6 => unported;
     /// `RpGeometryReplaceOldMaterialWithNewMaterial(RpGeometry*, RpMaterial* old, RpMaterial* new)` (0x734DE0)
     pub fn rp_geometry_replace_material(g: GPtr<u8>, old: GPtr<u8>, new: u32) = cdecl 0x734DE0 => unported;
     /// `CCustomCarPlateMgr::RenderLicenseplateTextToRaster(text, charset, palette, raster)` (0x6FDD70)
@@ -111,15 +102,15 @@ fn region_design() -> u8 {
 /// raster locked (level 0, read mode 2); returns `locked != null`.
 #[hook(addr = 0x6FD500, conv = cdecl, name = "CCustomCarPlateMgr::Initialise", expect = "53 56 68 2C 98 86 00")]
 pub fn initialise() -> u8 {
-    let slot = find_txd_slot(S_VEHICLE);
+    let slot = find_txd_slot(GPtr::from_addr(S_VEHICLE as usize));
     push_current_txd();
     set_current_txd(slot);
-    let t = rw_texture_read(S_PLATECHARSET, 0);
+    let t = rw_texture_read(GPtr::from_addr(S_PLATECHARSET as usize), GPtr::NULL);
     wr::<u8>(t, 0x50, 1);
     wr::<u8>(t, 0x51, 0x33);
     CHARSET_TEX.set(t.addr() as u32);
     for (i, s) in S_PLATEBACK.into_iter().enumerate() {
-        let t = rw_texture_read(s, 0);
+        let t = rw_texture_read(GPtr::from_addr(s as usize), GPtr::NULL);
         wr::<u8>(t, 0x50, 2);
         wr::<u8>(t, 0x51, 0x33);
         g::<u32>(0xC3EF60 + i * 4).write(t.addr() as u32);
@@ -149,7 +140,7 @@ pub fn shutdown() {
             e.write(0);
         }
     }
-    let slot = find_txd_slot(S_VEHICLE);
+    let slot = find_txd_slot(GPtr::from_addr(S_VEHICLE as usize));
     if slot != -1 {
         remove_txd(slot);
     }
@@ -304,7 +295,7 @@ pub fn create_plate_texture(text: GPtr<u8>, design: u32) -> GPtr<u8> {
     if t.is_null() {
         return GPtr::NULL;
     }
-    rw_texture_set_name(t, text.addr() as u32);
+    rw_texture_set_name(t, GPtr::from_addr((text.addr() as u32) as usize));
     wr::<u8>(t, 0x50, 1);
     t
 }
@@ -343,10 +334,10 @@ fn tex_name(m: GPtr<u8>) -> Option<GPtr<u8>> {
 #[hook(addr = 0x6FE060, conv = cdecl, name = "CCustomCarPlateMgr::MaterialSetCarplateTextureCB", expect = "56 8B 74 24 08")]
 pub fn material_set_carplate_texture_cb(m: GPtr<u8>, text: GPtr<u8>) -> GPtr<u8> {
     if let Some(n) = tex_name(m) {
-        if stricmp(S_CARPLATE, n) == 0 {
+        if stricmp(GPtr::from_addr(S_CARPLATE as usize), n) == 0 {
             PLATE_MATERIAL.set(m.addr() as u32);
             setup_material_plate_texture_call(m, text, u32::from(CURRENT_PLATE_TYPE.get()));
-        } else if stricmp(S_CARPBACK, n) == 0 {
+        } else if stricmp(GPtr::from_addr(S_CARPBACK as usize), n) == 0 {
             setup_material_plateback_texture_call(m, u32::from(CURRENT_PLATE_TYPE.get()));
         }
     }
@@ -357,7 +348,7 @@ pub fn material_set_carplate_texture_cb(m: GPtr<u8>, text: GPtr<u8>) -> GPtr<u8>
 /// of the atomic's geometry through `MaterialSetCarplateTextureCB`; returns the atomic.
 #[hook(addr = 0x6FE0D0, conv = cdecl, name = "CCustomCarPlateMgr::AtomicSetCarplateTextureCB", expect = "8B 44 24 08 56")]
 pub fn atomic_set_carplate_texture_cb(a: GPtr<u8>, text: u32) -> GPtr<u8> {
-    rp_geometry_for_all_materials(rd::<GPtr<u8>>(a, 0x18), MATERIAL_SET_CB, text);
+    rp_geometry_for_all_materials(rd::<GPtr<u8>>(a, 0x18), MATERIAL_SET_CB, GPtr::from_addr(text as usize));
     a
 }
 
@@ -368,7 +359,7 @@ pub fn atomic_set_carplate_texture_cb(a: GPtr<u8>, text: u32) -> GPtr<u8> {
 pub fn setup_clump(c: GPtr<u8>, text: u32, design: u32) -> u32 {
     CURRENT_PLATE_TYPE.set(design as u8);
     PLATE_MATERIAL.set(0);
-    rp_clump_for_all_atomics(c, ATOMIC_SET_CB, text);
+    rp_clump_for_all_atomics(c, ATOMIC_SET_CB, GPtr::from_addr(text as usize));
     PLATE_MATERIAL.get()
 }
 
@@ -378,9 +369,9 @@ pub fn setup_clump(c: GPtr<u8>, text: u32, design: u32) -> u32 {
 #[hook(addr = 0x6FDF50, conv = cdecl, name = "CCustomCarPlateMgr::MaterialUpgradeSetCarplateTextureCB", expect = "56 57 8B 7C 24 0C")]
 pub fn material_upgrade_set_carplate_texture_cb(m: GPtr<u8>, geom: GPtr<u8>) -> GPtr<u8> {
     if let Some(n) = tex_name(m) {
-        if stricmp(S_CARPLATE, n) == 0 {
+        if stricmp(GPtr::from_addr(S_CARPLATE as usize), n) == 0 {
             rp_geometry_replace_material(geom, m, PLATE_MATERIAL.get());
-        } else if stricmp(S_CARPBACK, n) == 0 {
+        } else if stricmp(GPtr::from_addr(S_CARPBACK as usize), n) == 0 {
             setup_material_plateback_texture_call(m, u32::from(CURRENT_PLATE_TYPE.get()));
         }
     }
@@ -393,7 +384,7 @@ pub fn material_upgrade_set_carplate_texture_cb(m: GPtr<u8>, geom: GPtr<u8>) -> 
 #[hook(addr = 0x6FDFC0, conv = cdecl, name = "CCustomCarPlateMgr::AtomicUpgradeSetCarplateTextureCB", expect = "56 8B 74 24 08")]
 pub fn atomic_upgrade_set_carplate_texture_cb(a: GPtr<u8>, _data: u32) -> GPtr<u8> {
     let geom = rd::<GPtr<u8>>(a, 0x18);
-    rp_geometry_for_all_materials(geom, MATERIAL_UPGRADE_CB, geom.addr() as u32);
+    rp_geometry_for_all_materials(geom, MATERIAL_UPGRADE_CB, GPtr::from_addr((geom.addr() as u32) as usize));
     a
 }
 
@@ -407,7 +398,7 @@ pub fn setup_clump_after_vehicle_upgrade(c: GPtr<u8>, plate: u32, design: u32) -
     }
     CURRENT_PLATE_TYPE.set(design as u8);
     PLATE_MATERIAL.set(plate);
-    rp_clump_for_all_atomics(c, ATOMIC_UPGRADE_CB, 0);
+    rp_clump_for_all_atomics(c, ATOMIC_UPGRADE_CB, GPtr::NULL);
     1
 }
 
@@ -422,14 +413,14 @@ pub fn setup_clump_after_vehicle_upgrade(c: GPtr<u8>, plate: u32, design: u32) -
 /// slot (stack only).
 #[hook(addr = 0x6FDC00, conv = cdecl, name = "CCustomCarPlateMgr::LoadPlatecharsetDat", expect = "83 EC 08 53 55")]
 pub fn load_platecharset_dat(file: u32, out: GPtr<u32>) -> u8 {
-    file_mgr_set_dir(S_DATA);
-    let f = file_mgr_open_file(file, S_MODE_R);
-    file_mgr_set_dir(S_EMPTY);
+    file_mgr_set_dir(GPtr::from_addr(S_DATA as usize));
+    let f = GPtr::<u8>::addr(file_mgr_open_file(GPtr::from_addr(file as usize), GPtr::from_addr(S_MODE_R as usize))) as u32;
+    file_mgr_set_dir(GPtr::from_addr(S_EMPTY as usize));
     let mut out = out;
     let mut rgb = [0u8; 3];
     let mut delims = [b' ', b'\t', 0u8, 0u8];
     let dp = GPtr::<u8>::from_raw(delims.as_mut_ptr());
-    let mut line = load_line(f);
+    let mut line = load_line(GPtr::from_addr(f as usize));
     while !line.is_null() {
         let end = (0..9).all(|i| line.wrapping_index(i).read() == g::<u8>(S_THE_END as usize + i as usize).read());
         if end {
@@ -455,9 +446,9 @@ pub fn load_platecharset_dat(file: u32, out: GPtr<u32>) -> u8 {
             out.write(0x8000_0000 | u32::from(rgb[2]) << 16 | u32::from(rgb[1]) << 8 | u32::from(rgb[0]));
             out = out.wrapping_index(1);
         }
-        line = load_line(f);
+        line = load_line(GPtr::from_addr(f as usize));
     }
-    file_mgr_close_file(f);
+    file_mgr_close_file(GPtr::from_addr(f as usize));
     1
 }
 

@@ -78,33 +78,24 @@ use crate::bindings::plugin_add;
 use crate::bindings::plugin_add_stream;
 use sa_core::bindings::d3d9_device_get_restore_callback;
 use sa_core::bindings::d3d9_device_set_restore_callback;
+use crate::bindings::camera_register_plugin;
+use crate::bindings::free_list_destroy;
+use crate::bindings::rp_world_sector_register_plugin as sector_register_plugin_call;
+use crate::bindings::rp_world_sector_register_plugin_stream as sector_register_plugin_stream_call;
+use crate::bindings::rw_engine_register_plugin as engine_register_plugin;
+use sa_core::bindings::clump_register_plugin;
+use sa_core::bindings::rp_atomic_register_plugin as atomic_register_plugin;
+use sa_core::bindings::rp_atomic_register_plugin_stream as atomic_register_plugin_stream;
+use sa_core::bindings::rp_geometry_register_plugin as geometry_register_plugin;
+use sa_core::bindings::rp_geometry_register_plugin_stream as geometry_register_plugin_stream;
+use sa_core::bindings::rp_material_register_plugin as material_register_plugin;
+use sa_core::bindings::rp_material_register_plugin_stream as material_register_plugin_stream;
+use sa_core::bindings::rw_frame_update_objects as frame_update_objects;
 orig! {
-    /// `RwEngineRegisterPlugin(size, id, open, close)` (0x7F2BB0)
-    fn engine_register_plugin(size: i32, id: u32, open: u32, close: u32) -> i32 = cdecl 0x7F2BB0 => crate::plugin::engine_register_plugin;
-    /// `RwCameraRegisterPlugin` (0x7EE450)
-    fn camera_register_plugin(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x7EE450 => crate::camera::register_plugin;
-    /// `RpAtomicRegisterPlugin` (0x74BDA0)
-    fn atomic_register_plugin(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x74BDA0 => crate::atomic::register_plugin;
-    /// `RpAtomicRegisterPluginStream` (0x74BE00)
-    fn atomic_register_plugin_stream(id: u32, read: u32, write: u32, get_size: u32) -> i32 = cdecl 0x74BE00 => crate::atomic::register_plugin_stream;
-    /// `RpClumpRegisterPlugin` (0x74BDD0)
-    fn clump_register_plugin(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x74BDD0 => crate::clump::register_plugin;
-    /// `RpGeometryRegisterPlugin` (0x74CD70)
-    fn geometry_register_plugin(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x74CD70 => crate::geometry::rp_geometry_register_plugin;
-    /// `RpGeometryRegisterPluginStream` (0x74CDA0)
-    fn geometry_register_plugin_stream(id: u32, read: u32, write: u32, get_size: u32) -> i32 = cdecl 0x74CDA0 => crate::geometry::rp_geometry_register_plugin_stream;
-    /// `RpMaterialRegisterPlugin` (0x74DBF0)
-    fn material_register_plugin(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x74DBF0 => crate::material::rp_material_register_plugin;
-    /// `RpMaterialRegisterPluginStream` (0x74DC20)
-    fn material_register_plugin_stream(id: u32, read: u32, write: u32, get_size: u32) -> i32 = cdecl 0x74DC20 => crate::material::rp_material_register_plugin_stream;
     /// `RpWorldRegisterPlugin` (0x74FCD0)
     fn world_register_plugin_call(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x74FCD0 => rp_world_register_plugin;
     /// `RpWorldRegisterPluginStream` (0x74FD00)
     fn world_register_plugin_stream_call(id: u32, read: u32, write: u32, get_size: u32) -> i32 = cdecl 0x74FD00 => rp_world_register_plugin_stream;
-    /// `RpWorldSectorRegisterPlugin` (0x761C90)
-    fn sector_register_plugin_call(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x761C90 => rp_world_sector_register_plugin;
-    /// `RpWorldSectorRegisterPluginStream` (0x761CC0)
-    fn sector_register_plugin_stream_call(id: u32, read: u32, write: u32, get_size: u32) -> i32 = cdecl 0x761CC0 => rp_world_sector_register_plugin_stream;
 
     /// `_rpWorldObjRegisterPlugins()` (0x750050)
     fn world_obj_register_plugins_call() -> i32 = cdecl 0x750050 => rp_world_obj_register_plugins;
@@ -135,10 +126,6 @@ orig! {
     fn destroy_d3d9_sector_pipe() = cdecl 0x74EB40 => unported;
     /// `_rpD3D9GeometryListDestroy()` (0x74EC00, D3D9; its EAX is `_rpWorldPipeClose`'s)
     fn d3d9_geometry_list_destroy() -> u32 = cdecl 0x74EC00 => unported;
-    /// `RwFreeListDestroy(fl)` (0x801B80)
-    fn free_list_destroy(fl: GPtr<u8>) -> u32 = cdecl 0x801B80 => crate::memory::rw_freelist_destroy;
-    /// `RwFrameUpdateObjects(frame)` (0x7F0910)
-    fn frame_update_objects(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0910 => crate::frame::update_objects;
     /// `RpWorldAddClump(world, clump)` (0x751300)
     fn world_add_clump(w: GPtr<u8>, c: GPtr<u8>) -> GPtr<u8> = cdecl 0x751300 => unported;
 }
@@ -694,11 +681,10 @@ orig! {
     fn call_camera_update(f: u32, camera: GPtr<u8>) -> GPtr<u8> = cdecl dyn => unported;
 }
 
+use sa_core::bindings::frame_get_ltm;
 orig! {
     /// The camera's previous frame-sync callback (world extension +0x18)
     fn call_camera_sync(f: u32, camera: GPtr<u8>) -> GPtr<u8> = cdecl dyn => unported;
-    /// `RwFrameGetLTM(frame)` (0x7F0990)
-    fn frame_get_ltm(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0990 => crate::frame::get_ltm;
     /// A standard function `(out, inout, n)` called through its stored pointer
     fn call_std(f: u32, out: u32, inout: u32, n: i32) -> i32 = cdecl dyn => unported;
     /// `G->rwmalloc` (+0x134) / `rwrealloc` (+0x13C)

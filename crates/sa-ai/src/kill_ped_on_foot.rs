@@ -8,6 +8,7 @@
 //! task's arguments, +0x24 start time, +0x28 time limit, +0x2C a `CTaskTimer` (start, interval, started).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 use sa_math::x87::Cmp;
@@ -18,7 +19,7 @@ use crate::bindings::area_codes_dtor;
 use crate::bindings::car_drive_timed_ctor;
 use crate::bindings::is_vehicle_healthy;
 use crate::bindings::leave_group_ctor;
-use crate::bindings::ped_set_move_state;
+use sa_world::bindings::ped_set_move_state;
 use crate::bindings::stand_still_dtor;
 use crate::bindings::stand_still_process_ped;
 use crate::bindings::task_complex_dtor;
@@ -41,6 +42,16 @@ use sa_world::bindings::ped_groups_get_peds_group as peds_group;
 use sa_world::bindings::ped_say;
 use sa_world::bindings::stand_still_ctor;
 use sa_world::bindings::weapon_is_type_melee;
+use crate::bindings::drag_ped_from_car_ctor;
+use crate::bindings::is_gang_ped_type;
+use sa_world::bindings::car_enter_exit_is_room_for_ped_to_leave_car as is_room_for_ped_to_leave_car;
+use sa_world::bindings::destroy_car_ctor;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::leave_car_ctor;
+use sa_world::bindings::pause_ctor;
+use sa_world::bindings::ped_set_current_weapon as ped_set_current_weapon_type;
+use sa_world::bindings::ped_set_current_weapon_slot;
+use sa_world::bindings::signal_at_ped_ctor;
 orig! {
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_get_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
@@ -52,30 +63,10 @@ orig! {
     fn create_sub_task_o(t: GPtr<u8>, ty: u32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x625E70 => kill_ped_on_foot_create_sub_task;
     /// `FUN_0065e9a0(CPed*, CPed*)` (cdecl)
     fn taunt_o(ped: GPtr<u8>, target: GPtr<u8>) = cdecl 0x65E9A0 => kill_ped_on_foot_taunt;
-    /// `CTaskSimplePause::CTaskSimplePause(int32 time)` (0x48E750, `ret 4`)
-    fn pause_ctor(t: GPtr<u8>, time: u32) -> GPtr<u8> = thiscall 0x48E750 => unported;
-    /// `CTaskComplexLeaveCar::CTaskComplexLeaveCar(veh, door, delay, sensible, forceGetOut)` (0x63B8C0, `ret 0x14`)
-    fn leave_car_ctor(t: GPtr<u8>, veh: u32, door: u32, delay: u32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x63B8C0 => unported;
-    /// `CTaskComplexDragPedFromCar::CTaskComplexDragPedFromCar(CPed*, int32)` (0x640430, `ret 8`)
-    fn drag_ped_from_car_ctor(t: GPtr<u8>, ped: u32, a: u32) -> GPtr<u8> = thiscall 0x640430 => unported;
     /// `CTaskComplexKillPedOnFootMelee::CTaskComplexKillPedOnFootMelee(CPed*)` (0x621000, `ret 4`)
     fn kill_melee_ctor(t: GPtr<u8>, target: u32) -> GPtr<u8> = thiscall 0x621000 => unported;
     /// `CTaskComplexKillPedOnFootArmed::CTaskComplexKillPedOnFootArmed(...)` (0x621190, `ret 0x14`)
     fn kill_armed_ctor(t: GPtr<u8>, target: u32, a: u32, b: u32, c: u32, d: u32) -> GPtr<u8> = thiscall 0x621190 => unported;
-    /// `CTaskComplexDestroyCar::CTaskComplexDestroyCar(veh, a, b, c)` (0x621C00, `ret 0x10`)
-    fn destroy_car_ctor(t: GPtr<u8>, veh: u32, a: u32, b: u32, c: u32) -> GPtr<u8> = thiscall 0x621C00 => unported;
-    /// `CTaskComplexSignalAtPed::CTaskComplexSignalAtPed(CPed*, int32 time, bool)` (0x660A30, `ret 0xC`)
-    fn signal_at_ped_ctor(t: GPtr<u8>, ped: u32, time: u32, b: u32) -> GPtr<u8> = thiscall 0x660A30 => unported;
-    /// `CPed::SetCurrentWeapon(eWeaponType)` (0x5E6280, `ret 4`)
-    fn ped_set_current_weapon_type(p: GPtr<u8>, ty: u32) = thiscall 0x5E6280 => unported;
-    /// `CPed::SetCurrentWeapon(int32 slot)` (0x5E61F0, `ret 4`)
-    fn ped_set_current_weapon_slot(p: GPtr<u8>, slot: u32) = thiscall 0x5E61F0 => unported;
-    /// `FUN_005fe9c0(int32 pedType)` (cdecl; a gang ped type test)
-    fn is_gang_ped_type(t: u32) -> u8 = cdecl 0x5FE9C0 => unported;
-    /// `CCarEnterExit::IsRoomForPedToLeaveCar(CVehicle*, int32 door, CVector*)` (0x6504C0, cdecl)
-    fn is_room_for_ped_to_leave_car(v: GPtr<u8>, door: u32, offset: u32) -> u8 = cdecl 0x6504C0 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, `ret 8`)
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, b: u32) -> u32 = thiscall 0x4AB420 => unported;
 }
 
 /// `CTimer::m_snTimeInMilliseconds`
@@ -133,8 +124,8 @@ fn create(this: GPtr<u8>, ty: u32, ped: GPtr<u8>) -> GPtr<u8> {
 /// `IsRoomForPedToLeaveCar(veh, door, NULL)`; returns the bit.
 fn update_room_flag(this: GPtr<u8>) -> bool {
     let t = target(this);
-    let door = compute_target_door_to_exit(rd::<GPtr<u8>>(t, 0x58C), t);
-    let room = is_room_for_ped_to_leave_car(rd::<GPtr<u8>>(target(this), 0x58C), door, 0);
+    let door = compute_target_door_to_exit(rd::<GPtr<u8>>(t, 0x58C), t) as u32;
+    let room = is_room_for_ped_to_leave_car(rd::<GPtr<u8>>(target(this), 0x58C), door, GPtr::NULL);
     let fl = rd::<u8>(this, 0xC);
     let fl = fl ^ (((room << 2) ^ fl) & 4);
     wr::<u8>(this, 0xC, fl);
@@ -191,7 +182,7 @@ pub fn kill_ped_on_foot_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x86D894);
     let t = target(this);
     if !t.is_null() {
-        entity_clean_up_old_reference(t, this.byte_add(0x10));
+        entity_clean_up_old_reference(t, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x10)));
     }
     task_complex_dtor(this);
 }
@@ -220,7 +211,7 @@ pub fn kill_ped_on_foot_create_sub_task(this: GPtr<u8>, ty: u32, ped: GPtr<u8>) 
         0xCA => {
             let mut local = [0u32; 8];
             let l = buf(&mut local);
-            stand_still_ctor(l, 0, 0, 0, 0x4100_0000);
+            stand_still_ctor(l, 0, 0, 0, f32::from_bits(0x4100_0000));
             stand_still_process_ped(l, ped);
             let fl = rd::<u8>(this, 0xC);
             let time = if fl & 0x20 != 0 && fl & 0x40 != 0 { 10_000 } else { 2000 };
@@ -228,14 +219,14 @@ pub fn kill_ped_on_foot_create_sub_task(this: GPtr<u8>, ty: u32, ped: GPtr<u8>) 
             stand_still_dtor(l);
             r
         }
-        0xCB => alloc(0x20, &|t| stand_still_ctor(t, 0, 0, 0, 0x4100_0000)),
+        0xCB => alloc(0x20, &|t| stand_still_ctor(t, 0, 0, 0, f32::from_bits(0x4100_0000))),
         0x2BF => {
-            let r = alloc(0x54, &|t| drag_ped_from_car_ctor(t, rd::<u32>(this, 0x10), 0));
+            let r = alloc(0x54, &|t| drag_ped_from_car_ctor(t, GPtr::from_addr(rd::<u32>(this, 0x10) as usize), 0));
             restart_timer(this);
             r
         }
-        0x2C0 => alloc(0x34, &|t| leave_car_ctor(t, rd::<u32>(ped, 0x58C), 0, 0, 1, 1)),
-        0x2CF => alloc(0x70, &|t| car_drive_timed_ctor(t, rd::<u32>(ped, 0x58C), 2000)),
+        0x2C0 => alloc(0x34, &|t| leave_car_ctor(t, GPtr::from_addr(rd::<u32>(ped, 0x58C) as usize), 0, 0, 1, 1)),
+        0x2CF => alloc(0x70, &|t| car_drive_timed_ctor(t, GPtr::from_addr(rd::<u32>(ped, 0x58C) as usize), 2000)),
         0x3E9 => {
             let r = alloc(0x38, &|t| kill_melee_ctor(t, rd::<u32>(this, 0x10)));
             restart_timer(this);
@@ -257,11 +248,11 @@ pub fn kill_ped_on_foot_create_sub_task(this: GPtr<u8>, ty: u32, ped: GPtr<u8>) 
             restart_timer(this);
             r
         }
-        0x3EB => alloc(0x20, &|t| destroy_car_ctor(t, rd::<u32>(target(this), 0x58C), 0, 0, 0)),
+        0x3EB => alloc(0x20, &|t| destroy_car_ctor(t, GPtr::from_addr(rd::<u32>(target(this), 0x58C) as usize), 0, 0, 0)),
         0x4BA => {
             let t = target(this);
             if t == find_player_ped(0) {
-                ped_say(ped, 0x103, 0, 0x3F80_0000, 0, 0, 0);
+                ped_say(ped, 0x103, 0, f32::from_bits(0x3F80_0000), 0, 0, 0);
             } else {
                 let grp = peds_group(t);
                 let leader_is_player = !grp.is_null() && {
@@ -269,11 +260,11 @@ pub fn kill_ped_on_foot_create_sub_task(this: GPtr<u8>, ty: u32, ped: GPtr<u8>) 
                     leader == find_player_ped(0)
                 };
                 if !leader_is_player {
-                    ped_say(ped, 0x102, 0, 0x3F80_0000, 0, 0, 0);
+                    ped_say(ped, 0x102, 0, f32::from_bits(0x3F80_0000), 0, 0, 0);
                 }
             }
             let time = random_in_range(0, 1500) as u32;
-            alloc(0x18, &|t| signal_at_ped_ctor(t, rd::<u32>(this, 0x10), time, 1))
+            alloc(0x18, &|t| signal_at_ped_ctor(t, GPtr::from_addr(rd::<u32>(this, 0x10) as usize), time, 1))
         }
         0x516 => {
             wr::<u32>(ped, 0x474, rd::<u32>(ped, 0x474) & 0xFFBF_FFFF);
@@ -327,7 +318,7 @@ pub fn kill_ped_on_foot_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<
                 break 'decide;
             }
             let t = task_new(0x20);
-            return if t.is_null() { t } else { stand_still_ctor(t, 0, 0, 0, 0x4100_0000) };
+            return if t.is_null() { t } else { stand_still_ctor(t, 0, 0, 0, f32::from_bits(0x4100_0000)) };
         }
         let fl = rd::<u8>(this, 0xC);
         if fl & 2 != 0 {
@@ -350,7 +341,7 @@ pub fn kill_ped_on_foot_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<
                     return sub(this);
                 }
                 if rd::<u32>(ped, 0x598) == 6 && ped_is_player(target(this)) == 0 {
-                    ped_say(ped, 0xE, 0, 0x3F80_0000, 0, 0, 0);
+                    ped_say(ped, 0xE, 0, f32::from_bits(0x3F80_0000), 0, 0, 0);
                 }
                 if rd::<u32>(ped, 0x478) & 0x1000 != 0 {
                     return create(this, 0x4BA, ped);
@@ -680,7 +671,7 @@ pub fn kill_ped_on_foot_taunt(ped: GPtr<u8>, target: GPtr<u8>) {
         0xE => 0x13,
         _ => return,
     };
-    ped_say(ped, id, 0, 0x3F80_0000, 0, 0, 0);
+    ped_say(ped, id, 0, f32::from_bits(0x3F80_0000), 0, 0, 0);
 }
 
 /// Every hook of this module.

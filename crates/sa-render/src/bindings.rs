@@ -9,8 +9,13 @@ use sa_core::mem::{GBool, GPtr};
 use sa_core::orig;
 
 orig! {
-    /// `CCamera::IsSphereVisible-` (0x420C40)
-    pub fn camera_is_sphere_visible_m(cam: GPtr<u8>, c: GPtr<u8>, r: u32, m: u32) -> u8 = thiscall 0x420C40 => unported;
+    /// `Fx_c::Render` (0x49E650)
+    pub fn fx_render(cam: u32, haze: u32) = stdcall 0x49E650 => unported;
+}
+
+orig! {
+    /// `Fx_c::InitStaticSystems` (0x49E660)
+    pub fn init_static_systems(this: GPtr<u8>) = thiscall 0x49E660 => crate::mvpc_fx1::fx_init_static_systems;
 }
 
 orig! {
@@ -19,13 +24,23 @@ orig! {
 }
 
 orig! {
+    /// `FxEmitter_c::CreateParticle` (0x4A2580)
+    pub fn create_particle(this: GPtr<u8>, ei: GPtr<u8>, m: GPtr<u8>, a2: GPtr<u8>, a3: u32, a4: GPtr<u8>, a6: u32, a7: u32) -> GPtr<u8> = thiscall 0x4A2580 => crate::mvpc_fx2::emitter_create_particle;
+}
+
+orig! {
     /// `FxInterpInfoFloat_c::GetVal` (0x4A8470)
-    pub fn interp_float_get_val(this: GPtr<u8>, out: GPtr<u8>, t: u32) = thiscall 0x4A8470 => unported;
+    pub fn interp_float_get_val(this: GPtr<u8>, out: GPtr<u8>, t: u32) = thiscall 0x4A8470 => crate::mvpa_fx1::interp_float_get_val;
 }
 
 orig! {
     /// `FxInterpInfoU255_c::GetVal` (0x4A8800)
-    pub fn interp_u255_get_val(this: GPtr<u8>, out: GPtr<u8>, t: u32) = thiscall 0x4A8800 => unported;
+    pub fn interp_u255_get_val(this: GPtr<u8>, out: GPtr<u8>, t: u32) = thiscall 0x4A8800 => crate::mvpc_fx1::interp_u255_get_val;
+}
+
+orig! {
+    /// `FxInterpInfo32_c::GetVal` (0x4A89C0)
+    pub fn interp_32_get_val(this: GPtr<u8>, out: GPtr<u8>, t: u32) = thiscall 0x4A89C0 => crate::mvpc_fx1::interp_32_get_val;
 }
 
 orig! {
@@ -49,8 +64,13 @@ orig! {
 }
 
 orig! {
+    /// `FxFrustumInfo_c::IsCollision` (0x4AA030)
+    pub fn frustum_is_collision(this: GPtr<u8>, s: GPtr<u8>) -> u32 = thiscall 0x4AA030 => crate::mvpa_render3::fx_frustum_is_collision;
+}
+
+orig! {
     /// `FxPrtMult_c` (0x4AB270)
-    pub fn fx_prt_mult_default_ctor(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x4AB270 => unported;
+    pub fn fx_prt_mult_default_ctor(p: u32) -> u32 = thiscall 0x4AB270 => crate::generated::generated_setters::g_fx_prt_mult_c_4ab270;
 }
 
 orig! {
@@ -59,13 +79,48 @@ orig! {
 }
 
 orig! {
+    /// `CRenderer::RenderOneNonRoad` (0x553260)
+    pub fn render_one_non_road(e: GPtr<u8>) = cdecl 0x553260 => crate::renderer::render_one_non_road;
+}
+
+orig! {
     /// `ProcObjectMan_c::ProcessTriangleAdded` (0x5A3F20)
     pub fn proc_object_process_triangle_added(this: GPtr<u8>, t: GPtr<u8>) -> u8 = thiscall 0x5A3F20 => unported;
 }
 
 orig! {
+    /// `CCustomBuildingDNPipeline::GetExtraVertColourPtr` (0x5D6E90)
+    pub fn get_extra_vert_colour_ptr(g: GPtr<u8>) -> u32 = cdecl 0x5D6E90 => crate::pipe_ids::get_extra_vert_colour_ptr;
+}
+
+orig! {
     /// `FUN_005d9260` (0x5D9260)
     pub fn env_atm_pool_new(pool: GPtr<u8>) -> GPtr<u8> = thiscall 0x5D9260 => unported;
+}
+
+orig! {
+    /// `FUN_005d93b0` (0x5D93B0)
+    pub fn spec_mat_pool_new(pool: GPtr<u8>) -> GPtr<u8> = thiscall 0x5D93B0 => crate::mvpa_render2::spec_map_material_pool_new;
+}
+
+orig! {
+    /// `CCustomCarEnvMapPipeline::CustomPipeAtomicSetup` (0x5DA610)
+    pub fn custom_pipe_atomic_setup(a: GPtr<u8>) -> GPtr<u8> = cdecl 0x5DA610 => crate::car_pipe_setup::custom_pipe_atomic_setup;
+}
+
+orig! {
+    /// `RxD3D9InstanceDataRender` (0x5DA640)
+    pub fn instance_data_render(h: GPtr<u8>, inst: GPtr<u8>) = cdecl 0x5DA640 => crate::building_dn_render::instance_data_render;
+}
+
+orig! {
+    /// `RxD3D9InstanceDataRenderLighting` (0x5DA6A0)
+    pub fn instance_data_render_lighting(h: GPtr<u8>, inst: GPtr<u8>, flags: u32, tex: u32) = cdecl 0x5DA6A0 => crate::building_dn_render::instance_data_render_lighting;
+}
+
+orig! {
+    /// `CGrassRenderer::SetCurrentScanCode` (0x5DABB0)
+    pub fn grass_set_current_scan_code(code: u32) = cdecl 0x5DABB0 => crate::mvpb_r1::grass_set_current_scan_code;
 }
 
 orig! {
@@ -76,6 +131,16 @@ orig! {
 orig! {
     /// `CGrassRenderer::SetGlobalWindBending` (0x5DAC00)
     pub fn grass_set_global_wind_bending(v: u32) = cdecl 0x5DAC00 => unported;
+}
+
+orig! {
+    /// `CPlantMgr::UpdateAmbientColor` (0x5DB310)
+    pub fn plant_update_ambient_color() = cdecl 0x5DB310 => crate::mvpb_r1::plant_update_ambient_color;
+}
+
+orig! {
+    /// `CPlantMgr::CalculateWindBending` (0x5DB3D0)
+    pub fn plant_calculate_wind_bending() -> f32 = cdecl 0x5DB3D0 => crate::mvpb_r1::plant_calculate_wind_bending_f32;
 }
 
 orig! {
@@ -99,13 +164,8 @@ orig! {
 }
 
 orig! {
-    /// `CPlantSurfPropMgr::GetSurfProperties` (0x6F9DE0)
-    pub fn get_surf_properties(surface: u32) -> GPtr<u8> = cdecl 0x6F9DE0 => unported;
-}
-
-orig! {
     /// `CPostEffects::ImmediateModeRenderStatesStore` (0x700CC0)
-    pub fn im_render_states_store() = cdecl 0x700CC0 => unported;
+    pub fn im_render_states_store() = cdecl 0x700CC0 => crate::mvpd_r3::immediate_mode_render_states_store;
 }
 
 orig! {
@@ -124,23 +184,43 @@ orig! {
 }
 
 orig! {
+    /// `CPostEffects::HeatHazeFXInit` (0x701450)
+    pub fn heat_haze_fx_init() = cdecl 0x701450 => crate::posteffects::heat_haze_fx_init;
+}
+
+orig! {
+    /// `CShadowCamera::Destroy` (0x705400)
+    pub fn shadow_camera_destroy(this: GPtr<u8>) = thiscall 0x705400 => crate::mvpa_render2::shadow_camera_destroy;
+}
+
+orig! {
+    /// `CShadowCamera::SetLight` (0x705520)
+    pub fn shadow_camera_set_light(this: GPtr<u8>, l: GPtr<u8>) -> GPtr<u8> = thiscall 0x705520 => crate::mvpa_render2::shadow_camera_set_light;
+}
+
+orig! {
+    /// `CShadowCamera::SetCenter` (0x705590)
+    pub fn set_center_o(this: GPtr<u8>, c: GPtr<u8>) -> GPtr<u8> = thiscall 0x705590 => crate::mvpd_r1::set_center;
+}
+
+orig! {
+    /// `CRealTimeShadow::Destroy` (0x705990)
+    pub fn real_time_shadow_destroy(this: GPtr<u8>) = thiscall 0x705990 => crate::mvpa_render2::real_time_shadow_destroy;
+}
+
+orig! {
+    /// `CShadowCamera::Create` (0x705B60)
+    pub fn shadow_camera_create(this: GPtr<u8>, n: u32) -> GPtr<u8> = thiscall 0x705B60 => crate::mvpa_render2::shadow_camera_create;
+}
+
+orig! {
+    /// `CShadows::SetRenderModeForShadowType` (0x707460)
+    pub fn set_render_mode_for_shadow_type(ty: u32) = cdecl 0x707460 => crate::shadows::set_render_mode_for_shadow_type;
+}
+
+orig! {
     /// `RenderBuffer::StopStoring` (0x7077A0)
-    pub fn render_buffer_stop_storing() = cdecl 0x7077A0 => unported;
-}
-
-orig! {
-    /// `CSprite::CalcScreenCoors` (0x70CE30)
-    pub fn calc_screen_coors(inp: GPtr<f32>, out: GPtr<f32>, w: GPtr<f32>, h: GPtr<f32>, max_vis: u8, min_vis: u8) -> u8 = cdecl 0x70CE30 => crate::sprite::calc_screen_coors;
-}
-
-orig! {
-    /// `CSprite::InitSpriteBuffer` (0x70CFB0)
-    pub fn init_sprite_buffer() = cdecl 0x70CFB0 => crate::sprite::init_sprite_buffer;
-}
-
-orig! {
-    /// `CSprite::RenderOneXLUSprite_Rotate_Aspect` (0x70D490)
-    pub fn cr_render_one_xlu_sprite_rotate_aspect(px: f32, py: f32, pz: f32, w: f32, h: f32, r: u32, gg: u32, b: u32, intensity: u32, recip_z: u32, angle: f32, alpha: u32) = cdecl 0x70D490 => crate::mvpd_r5::render_one_xlu_sprite_rotate_aspect;
+    pub fn render_buffer_stop_storing() = cdecl 0x7077A0 => crate::shadows_render::render_buffer_stop_storing;
 }
 
 orig! {
@@ -150,12 +230,32 @@ orig! {
 
 orig! {
     /// `CStencilShadows::GraphicsHighQuality` (0x70F9B0)
-    pub fn stencil_graphics_high_quality() -> u8 = cdecl 0x70F9B0 => unported;
+    pub fn stencil_graphics_high_quality() -> u8 = cdecl 0x70F9B0 => crate::stencilshadows::graphics_high_quality;
+}
+
+orig! {
+    /// `CStencilShadowObject::Destroy` (0x711310)
+    pub fn call_destroy(o: GPtr<u8>) = thiscall 0x711310 => crate::stencilshadows::destroy;
 }
 
 orig! {
     /// `CBrightLights::RenderOutGeometryBuffer` (0x722150)
     pub fn bright_lights_render_out_geometry_buffer() = cdecl 0x722150 => unported;
+}
+
+orig! {
+    /// `CSprite2d::SetVertices-RwD3D9Vertex` (0x727A00)
+    pub fn set_vertices_d3d9(v: GPtr<u8>, r: GPtr<u8>, c1: GPtr<u8>, c2: GPtr<u8>, c3: GPtr<u8>, c4: GPtr<u8>, u1: u32, v1: u32, u2: u32, v2: u32, u3: u32, v3: u32, u4: u32, v4: u32) = cdecl 0x727A00 => crate::sprite2d::set_vertices_d3d9;
+}
+
+orig! {
+    /// `CWeather::UpdateWeatherRegion` (0x72A640)
+    pub fn update_weather_region(pos: GPtr<f32>) = cdecl 0x72A640 => crate::weather::update_weather_region;
+}
+
+orig! {
+    /// `CWorldScan::ScanWorld` (0x72CAE0)
+    pub fn world_scan(points: GPtr<u8>, n: i32, f: u32) = cdecl 0x72CAE0 => unported;
 }
 
 orig! {
@@ -165,7 +265,7 @@ orig! {
 
 orig! {
     /// `CVisibilityPlugins::GetDotProductWithCameraVector` (0x7326D0)
-    pub fn dot_with_camera(m: GPtr<u8>, car: GPtr<u8>, id: u32) -> f64 = cdecl 0x7326D0 => unported;
+    pub fn dot_with_camera(m: GPtr<u8>, car: GPtr<u8>, id: u32) -> f64 = cdecl 0x7326D0 => crate::visibility_vehicle::dot_with_camera_f64;
 }
 
 orig! {
@@ -175,7 +275,7 @@ orig! {
 
 orig! {
     /// `thunk_FUN_00403927` (0x734EA0)
-    pub fn rw_im2d_render_indexed_primitive(ty: u32, verts: GPtr<u8>, nv: i32, idx: GPtr<u16>, ni: i32) -> i32 = cdecl 0x734EA0 => unported;
+    pub fn rw_im2d_render_indexed_primitive(ty: u32, verts: GPtr<u8>, nv: u32, idx: GPtr<u8>, ni: u32) -> i32 = cdecl 0x734EA0 => unported;
 }
 
 orig! {
@@ -184,33 +284,13 @@ orig! {
 }
 
 orig! {
-    /// `RwIm3DTransform` (0x7EF450)
-    pub fn rw_im3d_transform(verts: u32, count: u32, ltm: u32, flags: u32) -> GPtr<u8> = cdecl 0x7EF450 => unported;
-}
-
-orig! {
-    /// `RwIm3DRenderIndexedPrimitive` (0x7EF550)
-    pub fn rw_im3d_render_indexed_primitive(prim: u32, indices: u32, n: u32) -> u32 = cdecl 0x7EF550 => unported;
-}
-
-orig! {
     /// `RwIm3DRenderPrimitive` (0x7EF6B0)
-    pub fn rw_im3d_render_primitive(ty: u32) -> i32 = cdecl 0x7EF6B0 => unported;
+    pub fn rw_im3d_render_primitive(ty: u32) -> u32 = cdecl 0x7EF6B0 => unported;
 }
 
 orig! {
     /// `RwTextureSetRaster` (0x7F35D0)
     pub fn rw_texture_set_raster(t: GPtr<u8>, r: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F35D0 => unported;
-}
-
-orig! {
-    /// `_rwD3D9SetVertexDeclaration` (0x7F9F70)
-    pub fn set_vertex_declaration(decl: u32) = cdecl 0x7F9F70 => unported;
-}
-
-orig! {
-    /// `_rwD3D9SetIndices` (0x7FA1C0)
-    pub fn set_indices(ib: u32) = cdecl 0x7FA1C0 => unported;
 }
 
 orig! {
@@ -224,6 +304,6 @@ orig! {
 }
 
 orig! {
-    /// `RwD3D9SetTexture` (0x7FDE70)
-    pub fn set_texture(t: u32, stage: u32) -> u32 = cdecl 0x7FDE70 => unported;
+    /// `RwRasterPopContext` (0x7FB110)
+    pub fn rw_raster_pop_context() -> GPtr<u8> = cdecl 0x7FB110 => unported;
 }

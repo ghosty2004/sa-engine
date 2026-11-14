@@ -30,6 +30,9 @@ pub mod call {
     pub use crate::bindings::list_add_item_5335e0 as list_add_item;
     pub use crate::bindings::list_delete_item;
     pub use crate::bindings::ptr_node_single_new;
+    pub use crate::bindings::add_item;
+    pub use crate::bindings::quad_tree_delete_item as delete_item;
+    pub use crate::bindings::quad_tree_get_all_matching_rect as get_all_matching_rect;
     orig! {
         /// The quad-tree node pool's `New` (0x552B50, slot 0x28)
         pub fn quad_tree_pool_new(pool: GPtr<u8>) -> GPtr<u8> = thiscall 0x552B50 => unported;
@@ -40,11 +43,8 @@ pub mod call {
         pub fn find_sector_vec(node: GPtr<u8>, v: GPtr<u8>) -> i32 = thiscall 0x552640 => super::find_sector_vec;
         pub fn in_sector(node: GPtr<u8>, r: GPtr<u8>, sector: i32) -> bool = thiscall 0x5526A0 => super::in_sector;
         pub fn get_all(node: GPtr<u8>, list: GPtr<u8>) = thiscall 0x552870 => super::get_all;
-        pub fn get_all_matching_rect(node: GPtr<u8>, r: GPtr<u8>, list: GPtr<u8>) = thiscall 0x5528C0 => super::get_all_matching_rect;
         pub fn for_all_matching_rect(node: GPtr<u8>, r: GPtr<u8>, cb: u32) = thiscall 0x552980 => super::for_all_matching_rect;
-        pub fn delete_item(node: GPtr<u8>, item: GPtr<u8>) = thiscall 0x552A40 => super::delete_item;
         pub fn delete_item_rect(node: GPtr<u8>, item: GPtr<u8>, r: GPtr<u8>) = thiscall 0x552A90 => super::delete_item_rect;
-        pub fn add_item(node: GPtr<u8>, item: GPtr<u8>, r: GPtr<u8>) = thiscall 0x552CD0 => super::add_item;
         /// a `void (*)(const CRect&/CVector2D&, T)` callback (cdecl)
         pub fn callback(f: u32, at: GPtr<u8>, item: GPtr<u8>) = cdecl dyn => unported;
     }

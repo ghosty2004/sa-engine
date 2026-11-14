@@ -440,10 +440,7 @@ pub fn speech_get_voice_for_mood(_this: GPtr<u8>, mood: u32) -> u32 {
 
 use crate::bindings::request_bank_slot as vehicle_request_bank_slot;
 use sa_stream::bindings::ped_model_info_increment_voice;
-orig! {
-    /// `CAEPedSpeechAudioEntity::GetVoiceAndTypeForSpecialPed(uint32 modelNameHash)` (0x4E4170)
-    fn speech_get_voice_and_type_for_special_ped_call(this: GPtr<u8>, hash: u32) -> u8 = thiscall 0x4E4170 => speech_get_voice_and_type_for_special_ped;
-}
+use crate::bindings::speech_get_voice_and_type_for_special_ped as speech_get_voice_and_type_for_special_ped_call;
 
 /// `CModelInfo::ms_modelInfoPtrs` (0xA9B0C8)
 const MODEL_INFO_PTRS: usize = 0xA9B0C8;
@@ -557,12 +554,8 @@ pub fn speech_set_cj_mood(mood: u32, time: u32, gang: u32, fat: u32, dressed: u3
 
 // ---- batch 5 -------------------------------------------------------------------------------------
 
-orig! {
-    /// `CKeyGen::GetUppercaseKey(const char*)` (0x53CF30)
-    fn keygen_get_uppercase_key(s: GPtr<u8>) -> u32 = cdecl 0x53CF30 => sa_core::keygen::get_uppercase_key;
-    /// `CAEAudioUtility::GetBankAndSoundFromScriptSlotAudioEvent(int32* event, int32* bank, int32* sound, int32 slot)` (0x4D9CC0)
-    fn get_bank_and_sound_from_script_slot_audio_event(event: GPtr<u8>, bank: GPtr<u8>, sound: GPtr<u8>, slot: i32) -> u8 = cdecl 0x4D9CC0 => unported;
-}
+use crate::bindings::get_bank_and_sound_from_script_slot_audio_event;
+use sa_core::bindings::get_uppercase_key as keygen_get_uppercase_key;
 
 /// Special-ped names: 45 rows of 20 chars (0x8C65C0).
 const SPECIAL_PED_NAMES: usize = 0x8C65C0;
@@ -613,7 +606,7 @@ pub fn speech_get_sound_and_bank_ids_for_scripted_speech(this: GPtr<u8>, event: 
         GPtr::from_raw(ev.as_mut_ptr()).cast(),
         GPtr::from_raw(bank.as_mut_ptr()).cast(),
         GPtr::from_raw(sound.as_mut_ptr()).cast(),
-        -1,
+        -1i32 as u32,
     );
     if (bank[0] as i32) < 0 || (sound[0] as i32) < 0 {
         return 0;
@@ -653,9 +646,8 @@ pub fn speech_reserve_ped_conversation_speech_slots() -> u8 {
 // ---- batch 6 -------------------------------------------------------------------------------------
 
 use sa_world::bindings::ped_get_ped_talking;
+use sa_core::bindings::find_player_ped;
 orig! {
-    /// `FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> u32 = cdecl 0x56E210 => unported;
     /// `CAEPedSpeechAudioEntity::ReservePlayerConversationSpeechSlot()` (0x4E3870)
     fn speech_reserve_player_conversation_speech_slot_call() -> u8 = cdecl 0x4E3870 => speech_reserve_player_conversation_speech_slot;
 }
@@ -734,13 +726,13 @@ pub fn speech_request_player_conversation(ped: u32) -> u8 {
     if rd::<u8>(p, 0x32E) != 0 || rd::<u8>(p, 0x32D) != 0 {
         return 0;
     }
-    if find_player_ped(-1) == 0 {
+    if GPtr::<u8>::addr(find_player_ped(-1)) as u32 == 0 {
         return 0;
     }
-    if rd::<u8>(g(find_player_ped(-1) as usize), 0x32D) != 0 {
+    if rd::<u8>(g((GPtr::<u8>::addr(find_player_ped(-1)) as u32) as usize), 0x32D) != 0 {
         return 0;
     }
-    if rd::<u8>(g(find_player_ped(-1) as usize), 0x32E) != 0 {
+    if rd::<u8>(g((GPtr::<u8>::addr(find_player_ped(-1)) as u32) as usize), 0x32E) != 0 {
         return 0;
     }
     if g::<u8>(0xB613FD).read() != 0 || g::<u8>(0xB613FC).read() != 0 {
@@ -845,10 +837,7 @@ pub fn speech_release_ped_conversation() {
 
 use crate::bindings::twin_destructor as twin_loop_destructor;
 use sa_world::bindings::audio_terminate as vehicle_terminate;
-orig! {
-    /// `CAESound::~CAESound()` (0x4EF660)
-    fn sound_destructor(sound: GPtr<u8>) -> u32 = thiscall 0x4EF660 => unported;
-}
+use sa_world::bindings::sound_dtor as sound_destructor;
 
 /// `CAEVehicleAudioEntity::~CAEVehicleAudioEntity()` (0x6D0A10): vtable 0x862CEC; `Terminate` when
 /// initialised (+0xA4); the twin-loop member (+0x184) destroyed; vtable 0x859988 (`CAEAudioEntity`) and
@@ -869,10 +858,7 @@ pub fn vehicle_destructor(this: GPtr<u8>) {
 
 use crate::bindings::sound_set_position;
 use sa_world::bindings::fx_get_play_status;
-orig! {
-    /// `FxSystem_c::GetCompositeMatrix(RwMatrix* out)` (0x4AA8C0)
-    fn fx_get_composite_matrix(fx: GPtr<u8>, out: GPtr<u8>) -> u32 = thiscall 0x4AA8C0 => unported;
-}
+use sa_world::bindings::fx_get_composite_matrix;
 
 /// `CAEFireAudioEntity::UpdateParameters(CAESound*, int16 curPlayPos)` (0x4DCF60). Play position > 0:
 /// with an fx system (+0x84) the sound follows its composite matrix position (a 64-byte local, pos at
@@ -899,7 +885,7 @@ pub fn fire_update_parameters(this: GPtr<u8>, sound: u32, pos: u32) {
     if fx != 0 {
         let mut m = [0u32; 16];
         fx_get_composite_matrix(g(fx as usize), GPtr::from_raw(m.as_mut_ptr()).cast());
-        sound_set_position(s, m[12], m[13], m[14]);
+        sound_set_position(s.addr() as u32, m[12], m[13], m[14]);
     }
     match rd::<u32>(s, 0xC) {
         1 => {
@@ -951,12 +937,8 @@ use crate::bindings::sm_request_new_sound;
 use crate::bindings::sound_initialise;
 use crate::bindings::sound_register_with_physical_entity;
 use sa_world::bindings::engine_is_loading_tune_active;
-orig! {
-    /// `CAESoundManager::AreSoundsOfThisEventPlayingForThisEntityAndPhysical(int16, CAEAudioEntity*, CPhysical*)` (0x4EF5D0)
-    fn sm_are_sounds_of_event_playing_for_entity_and_physical(sm: GPtr<u8>, event: u32, entity: u32, physical: u32) -> u16 = thiscall 0x4EF5D0 => crate::sound::are_sounds_of_this_event_playing_for_this_entity_and_physical;
-    /// `CAEAudioHardware::LoadSoundBank(uint16 bankId, int16 slot)` (0x4D88A0)
-    fn hw_load_sound_bank(hw: GPtr<u8>, bank: u32, slot: u32) -> u32 = thiscall 0x4D88A0 => unported;
-}
+use crate::bindings::hw_load_sound_bank;
+use crate::bindings::sm_are_sounds_of_event_playing_for_entity_and_physical;
 
 const FLT_ONE_BITS: u32 = 0x3F80_0000;
 
@@ -1019,7 +1001,7 @@ pub fn ped_handle_swim_wake(this: GPtr<u8>, event: u32) {
         wr::<u16>(this, 0x5E, 0x84);
         wr::<u32>(this, 0x14, event);
         sound_register_with_physical_entity(snd, g(rd::<u32>(this, 0x94) as usize));
-        sm_request_new_sound(g(0xB62CB0), snd);
+        sm_request_new_sound(GPtr::<u8>::addr(g(0xB62CB0)) as u32, snd.addr() as u32);
     }
     wr::<u32>(this, 0x80, sa_core::timer::TIME_MS.get());
 }
@@ -1027,10 +1009,7 @@ pub fn ped_handle_swim_wake(this: GPtr<u8>, event: u32) {
 // ---- pass 2, batch 11 ----------------------------------------------------------------------------
 
 use crate::bindings::sound_set_flags;
-orig! {
-    /// `SurfaceInfos_c::IsAudioWater(uint32 surface)` (0x55EAD0, `g_surfaceInfos` 0xB79538)
-    fn surface_is_audio_water(infos: GPtr<u8>, surface: u32) -> u32 = thiscall 0x55EAD0 => unported;
-}
+use sa_world::bindings::surface_55ead0 as surface_is_audio_water;
 
 /// `CAEPedAudioEntity::HandleSwimSplash(eAudioEvents)` (0x4E26A0): bank 0x80 not in slot 0x20 -> loaded
 /// there, return. Otherwise the splash counter word +0x7E steps (past 4 -> 0) and is the sfx: the temp
@@ -1075,7 +1054,7 @@ pub fn ped_handle_swim_splash(this: GPtr<u8>, event: u32) {
     wr::<u32>(this, 0x28, 0x3D70_D845);
     sound_set_flags(snd, 0x80, 1);
     sound_register_with_physical_entity(snd, g(rd::<u32>(this, 0x94) as usize));
-    sm_request_new_sound(g(0xB62CB0), snd);
+    sm_request_new_sound(GPtr::<u8>::addr(g(0xB62CB0)) as u32, snd.addr() as u32);
 }
 
 /// `CAEPedAudioEntity::HandleLandingEvent(eAudioEvents)` (0x4E18E0): nothing when the ped's flags dword
@@ -1091,7 +1070,7 @@ pub fn ped_handle_landing_event(this: GPtr<u8>, event: u32) {
         return;
     }
     let mut vol = event_volume(event);
-    let (slot, sfx, play_pos) = if surface_is_audio_water(g(0xB79538), rd::<u8>(ped, 0xBA) as u32) as u8 != 0
+    let (slot, sfx, play_pos) = if (surface_is_audio_water(g(0xB79538), rd::<u8>(ped, 0xBA) as u32) as u32) as u8 != 0
     {
         if hw_is_sound_bank_loaded(g(0xB5F8B8), 0x80, 0x20) == 0 {
             hw_load_sound_bank(g(0xB5F8B8), 0x80, 0x20);
@@ -1129,7 +1108,7 @@ pub fn ped_handle_landing_event(this: GPtr<u8>, event: u32) {
         play_pos,
     );
     sound_register_with_physical_entity(snd, g(rd::<u32>(this, 0x94) as usize));
-    sm_request_new_sound(g(0xB62CB0), snd);
+    sm_request_new_sound(GPtr::<u8>::addr(g(0xB62CB0)) as u32, snd.addr() as u32);
 }
 
 /// `CAEPedAudioEntity::HandleSkateEvent(eAudioEvents, float volumeOffset, float speed)` (0x4E17E0):
@@ -1172,7 +1151,7 @@ pub fn ped_handle_skate_event(this: GPtr<u8>, event: u32, vol_offset: f32, speed
         0,
     );
     sound_register_with_physical_entity(snd, g(rd::<u32>(this, 0x94) as usize));
-    sm_request_new_sound(g(0xB62CB0), snd);
+    sm_request_new_sound(GPtr::<u8>::addr(g(0xB62CB0)) as u32, snd.addr() as u32);
 }
 
 /// `CAEFireAudioEntity::PlayWaterSounds(eAudioEvents, CVector& posn)` (0x4DD270): a `CAESound` local (only
@@ -1209,7 +1188,7 @@ pub fn fire_play_water_sounds(this: GPtr<u8>, event: u32, posn: u32) {
     );
     wr::<u32>(snd, 0xC, 3);
     wr::<u32>(snd, 0x20, 0x3D75_C290);
-    let r = sm_request_new_sound(g(0xB62CB0), snd);
+    let r = sm_request_new_sound(GPtr::<u8>::addr(g(0xB62CB0)) as u32, snd.addr() as u32);
     let vol2 = vol + g::<f32>(0x858BA4).read();
     wr::<u32>(this, 0x7C, r);
     sound_initialise(
@@ -1231,7 +1210,7 @@ pub fn fire_play_water_sounds(this: GPtr<u8>, event: u32, posn: u32) {
     );
     wr::<u32>(snd, 0x20, 0x3D75_C290);
     wr::<u32>(snd, 0xC, 4);
-    let r = sm_request_new_sound(g(0xB62CB0), snd);
+    let r = sm_request_new_sound(GPtr::<u8>::addr(g(0xB62CB0)) as u32, snd.addr() as u32);
     wr::<u32>(this, 0x80, r);
     sound_destructor(snd);
 }
@@ -1271,12 +1250,8 @@ pub fn collision_get_collision_sound_status(
 // ---- pass 3: vehicle -----------------------------------------------------------------------------
 
 use crate::bindings::play_train_brake_sound as vehicle_play_train_brake_sound;
-orig! {
-    /// `CAEVehicleAudioEntity::PlaySkidSound(int16 sfx, float speed, float volume)` (0x4F8360)
-    fn vehicle_play_skid_sound(this: GPtr<u8>, sfx: u32, speed: u32, volume: u32) = thiscall 0x4F8360 => unported;
-    /// `CAudioEngine::StopRadio(tVehicleAudioSettings*, bool)` (0x506F70)
-    fn engine_stop_radio(engine: GPtr<u8>, settings: u32, duck: u32) = thiscall 0x506F70 => crate::engine::stop_radio;
-}
+use crate::bindings::play_skid_sound_call as vehicle_play_skid_sound;
+use sa_world::bindings::audio_stop_radio as engine_stop_radio;
 
 /// `SetFlags(4, 0)` + `StopSound` on the sound at `this + off` (when set), which is then cleared.
 fn vehicle_stop_engine_sound(this: GPtr<u8>, off: isize) -> bool {
@@ -1329,7 +1304,7 @@ pub fn vehicle_terminate_port(this: GPtr<u8>) {
     if rd::<u8>(this, 0xA5) != 0 {
         let rt = rd::<u8>(this, 0x9B) as i8;
         if rt == 0 || rt == 2 || rt == 3 {
-            engine_stop_radio(g(0xB6BC90), this.addr() as u32 + 0x80, 0);
+            engine_stop_radio(g(0xB6BC90), GPtr::from_addr((this.addr() as u32 + 0x80) as usize), 0);
         }
     }
     let slot = rd::<u16>(this, 0xE0);
@@ -1374,7 +1349,7 @@ pub fn vehicle_just_wrecked_vehicle(this: GPtr<u8>) {
     if rd::<u8>(this, 0xA5) != 0 {
         let rt = rd::<u8>(this, 0x9B) as i8;
         if rt == 0 || rt == 2 || rt == 3 {
-            engine_stop_radio(g(0xB6BC90), this.addr() as u32 + 0x80, 0);
+            engine_stop_radio(g(0xB6BC90), GPtr::from_addr((this.addr() as u32 + 0x80) as usize), 0);
         }
         g::<u32>(0xB6B98C).write(0);
         g::<u32>(0xB6B99C).write(0);
@@ -1494,7 +1469,7 @@ pub fn collision_report_object_destruction(this: GPtr<u8>, entity: u32) {
             0,
             0,
         );
-        sm_request_new_sound(g(0xB62CB0), snd);
+        sm_request_new_sound(GPtr::<u8>::addr(g(0xB62CB0)) as u32, snd.addr() as u32);
         let p = entity_pos(ent);
         let r = crate::common::ae_random_int(0xF, 0x12) as u32;
         let vol = event_volume(0x80);
@@ -1520,7 +1495,7 @@ pub fn collision_report_object_destruction(this: GPtr<u8>, entity: u32) {
         wr::<f32>(this, 0x18, t as f32);
         wr::<u32>(this, 0x14, 0x80);
         wr::<u16>(this, 0x5E, 4);
-        sm_request_new_sound(g(0xB62CB0), snd);
+        sm_request_new_sound(GPtr::<u8>::addr(g(0xB62CB0)) as u32, snd.addr() as u32);
         return;
     } else {
         let mi = g::<u32>(
@@ -1577,7 +1552,7 @@ pub fn collision_report_object_destruction(this: GPtr<u8>, entity: u32) {
         0x3D70_D845,
         0,
     );
-    sm_request_new_sound(g(0xB62CB0), snd);
+    sm_request_new_sound(GPtr::<u8>::addr(g(0xB62CB0)) as u32, snd.addr() as u32);
 }
 
 // ---- pass 3: ped (2) -----------------------------------------------------------------------------
@@ -1665,7 +1640,7 @@ pub fn ped_handle_ped_swing(this: GPtr<u8>, event: u32, anim_sfx: u32, delay: u3
         wr::<u32>(this, 0x14, event);
         sound_set_flags(snd, 4, 1);
     }
-    sm_request_new_sound(g(0xB62CB0), snd);
+    sm_request_new_sound(GPtr::<u8>::addr(g(0xB62CB0)) as u32, snd.addr() as u32);
 }
 
 /// `CAEPedAudioEntity::UpdateParameters(CAESound*, int16 curPlayPos)` (0x4E1180): for the sounds +0xA0,
@@ -1688,7 +1663,7 @@ pub fn ped_update_parameters(this: GPtr<u8>, sound: u32, pos: u32) {
             let ped = rd::<u32>(this, 0x94);
             if ped != 0 {
                 let p = entity_pos(g(ped as usize));
-                sound_set_position(s, p[0], p[1], p[2]);
+                sound_set_position(s.addr() as u32, p[0], p[1], p[2]);
             }
             return;
         }
@@ -1783,7 +1758,7 @@ pub fn global_weapon_projectile_fire(this: GPtr<u8>, ty: u32, physical: u32, eve
         0,
     );
     sound_register_with_physical_entity(snd, phys);
-    sm_request_new_sound(g(0xB62CB0), snd);
+    sm_request_new_sound(GPtr::<u8>::addr(g(0xB62CB0)) as u32, snd.addr() as u32);
     if hw_is_sound_bank_loaded(g(0xB5F8B8), 0x8A, 0x13) == 0 {
         hw_load_sound_bank(g(0xB5F8B8), 0x8A, 0x13);
         return;
@@ -1808,7 +1783,7 @@ pub fn global_weapon_projectile_fire(this: GPtr<u8>, ty: u32, physical: u32, eve
         0,
     );
     sound_register_with_physical_entity(snd, phys);
-    sm_request_new_sound(g(0xB62CB0), snd);
+    sm_request_new_sound(GPtr::<u8>::addr(g(0xB62CB0)) as u32, snd.addr() as u32);
 }
 
 // ---- pass 3: water cannon ------------------------------------------------------------------------
@@ -1993,15 +1968,12 @@ fn speech_free_slot_for_context(this: GPtr<u8>, c: i16) -> u16 {
     s as u16
 }
 
-orig! {
-    /// `CStats::GetStatValue(uint16)` (0x558E40, ST0)
-    fn stats_get_stat_value(stat: u32) -> f32 = cdecl 0x558E40 => unported;
-}
+use sa_world::bindings::get_stat_value as stats_get_stat_value;
 
 /// `(stat 0x15 - stat 0x17) * [0x858CDC]` as the bytes compute it (two `GetStatValue` calls).
 fn speech_stat_mood() -> f32 {
-    let a = stats_get_stat_value(0x15);
-    let b = stats_get_stat_value(0x17);
+    let a = stats_get_stat_value(0x15) as f32;
+    let b = stats_get_stat_value(0x17) as f32;
     (a - b) * g::<f32>(0x858CDC).read()
 }
 
@@ -2246,16 +2218,14 @@ pub fn speech_get_sound_and_bank_ids(this: GPtr<u8>, ctx: u32, out: GPtr<u8>) ->
 use crate::bindings::ae_find_vehicle_of_player;
 use sa_core::bindings::ped_is_alive;
 use sa_stream::bindings::streaming_is_very_busy;
-use sa_world::bindings::vector_magnitude_sqr as vector_magnitude_sqr_st0;
+use sa_core::bindings::vector_magnitude_sqr as vector_magnitude_sqr_st0;
+use crate::bindings::ae_resolve_probability as ae_resolve_probability_bits;
+use sa_core::bindings::vector_sub;
 orig! {
-    /// `CAEAudioUtility::ResolveProbability(float)` (0x4D9C80; the argument word passed through)
-    fn ae_resolve_probability_bits(p: u32) -> u8 = cdecl 0x4D9C80 => unported;
     /// `CAEPedSpeechAudioEntity::IsGlobalContextImportantForStreaming(int16)` (0x4E4510)
     fn speech_is_important_for_streaming(this: GPtr<u8>, ctx: u32) -> u8 = thiscall 0x4E4510 => unported;
     /// `CAEPedSpeechAudioEntity::IsGlobalContextImportantForWidescreen(int16)` (0x4E46B0)
     fn speech_is_important_for_widescreen_call(this: GPtr<u8>, ctx: u32) -> u8 = thiscall 0x4E46B0 => speech_is_global_context_important_for_widescreen;
-    /// `VectorSub(CVector* out, const CVector* a, const CVector* b)` (0x40FE60)
-    fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> u32 = cdecl 0x40FE60 => unported;
     /// `CAEPedSpeechAudioEntity::GetNextPlayTime(int16)` (0x4E49E0)
     fn speech_get_next_play_time(this: GPtr<u8>, ctx: u32) -> u32 = thiscall 0x4E49E0 => unported;
     /// `CAEPedSpeechAudioEntity::SetNextPlayTime(int16)` (0x4E4A20)
@@ -2323,7 +2293,7 @@ pub fn speech_add_say_event(
     } else if c == 0x165 && g::<f32>(0xC8132C).read() < g::<f32>(0x858B8C).read() {
         return NONE;
     }
-    if ae_resolve_probability_bits(prob) == 0 || event != 0x34 {
+    if ae_resolve_probability_bits(f32::from_bits(prob)) == 0 || event != 0x34 {
         return NONE;
     }
     if rd::<u8>(this, 0x99) != 0 && override_silence as u8 == 0 {
@@ -2350,17 +2320,17 @@ pub fn speech_add_say_event(
         if g::<i32>(0x8E4CB8).read() > 0xF && g::<u32>(0xB6B98C).read() != 0 {
             return NONE;
         }
-    } else if streaming_is_very_busy() != 0 {
+    } else if streaming_is_very_busy() as u8 != 0 {
         return NONE;
     }
     if rd::<u16>(this, 0x92) == 2 {
         if g::<u8>(0xB613E5).read() != 0
             && rd::<u8>(this, 0x98) == 0
-            && rd::<u32>(this, 4) == find_player_ped(0)
+            && rd::<u32>(this, 4) == GPtr::<u8>::addr(find_player_ped(0)) as u32
         {
             return NONE;
         }
-        if rd::<u32>(this, 4) != find_player_ped(0) {
+        if rd::<u32>(this, 4) != GPtr::<u8>::addr(find_player_ped(0)) as u32 {
             return NONE;
         }
     }
@@ -2432,10 +2402,7 @@ pub fn speech_add_say_event(
 
 use sa_core::bindings::matrix_dtor as matrix_destructor;
 use sa_world::bindings::task_facial_stop_all;
-orig! {
-    /// `CTaskManager::GetTaskSecondary(int32)` (0x681810)
-    fn task_manager_get_task_secondary(tm: GPtr<u8>, slot: u32) -> u32 = thiscall 0x681810 => unported;
-}
+use sa_core::bindings::tm_get_task_secondary as task_manager_get_task_secondary;
 
 /// `CAEPedSpeechAudioEntity::UpdateParameters(CAESound*, int16 curPlayPos)` (0x4E3520). Position -1 (the
 /// speech ended): +0x98 = 0 (CJ: `s_bAPlayerSpeaking` = 0), its speech slot (+0xA8) cleared, +0xA0 = 0,
@@ -2475,9 +2442,9 @@ pub fn speech_update_parameters(this: GPtr<u8>, sound: u32, pos: u32) {
         wr::<u16>(this, 0xA8, 0xFFFF);
         wr::<u8>(this, 0x9C, 0);
         let intel = rd::<u32>(ped, 0x47C);
-        if intel != 0 && task_manager_get_task_secondary(g(intel as usize + 4), 3) != 0 {
+        if intel != 0 && GPtr::<u8>::addr(task_manager_get_task_secondary(g(intel as usize + 4), 3)) as u32 != 0 {
             let intel = rd::<u32>(g(rd::<u32>(this, 4) as usize), 0x47C);
-            let t = task_manager_get_task_secondary(g(intel as usize + 4), 3);
+            let t = GPtr::<u8>::addr(task_manager_get_task_secondary(g(intel as usize + 4), 3)) as u32;
             task_facial_stop_all(g(t as usize));
         }
     } else {
@@ -2488,19 +2455,14 @@ pub fn speech_update_parameters(this: GPtr<u8>, sound: u32, pos: u32) {
             sound_stop_sound(g(sound as usize));
         } else if rd::<u8>(this, 0x9B) == 0 && ped != 0 {
             let v = entity_pos(p);
-            sound_set_position(g(sound as usize), v[0], v[1], v[2]);
+            sound_set_position(GPtr::<u8>::addr(g(sound as usize)) as u32, v[0], v[1], v[2]);
         }
     }
     matrix_destructor(GPtr::from_raw(mat.as_mut_ptr()).cast());
 }
 
-orig! {
-    /// `CAEVehicleAudioEntity::AddAudioEvent(eAudioEvents, float)` (0x4F6420)
-    fn vehicle_add_audio_event(this: GPtr<u8>, event: u32, volume: u32) = thiscall 0x4F6420 => unported;
-    /// `CAEVehicleAudioEntity::UpdateGenericVehicleSound(int16 id, int16 slot, int16 bank, int16 sfx,
-    /// float speed, float volume, float distance)` (0x4FAD40; protection code inside, not ported)
-    fn vehicle_update_generic_vehicle_sound(this: GPtr<u8>, id: u32, slot: u32, bank: u32, sfx: u32, speed: u32, volume: u32, distance: u32) = thiscall 0x4FAD40 => unported;
-}
+use crate::bindings::update_generic_vehicle_sound_call as vehicle_update_generic_vehicle_sound;
+use sa_world::bindings::audio_add_event as vehicle_add_audio_event;
 
 /// `CAEVehicleAudioEntity::ProcessNitro(cVehicleParams&)` (0x4FB070). Active when the vehicle (+0x10)
 /// has flag 0x80000 at +0x38C, its nitro value +0x8A4 < 0, bit 0x10 of byte +0x428 and not bit 0x40 of
@@ -2530,7 +2492,7 @@ pub fn vehicle_process_nitro(this: GPtr<u8>, params: GPtr<u8>) {
         return;
     }
     if rd::<u8>(this, 0x244) == 0 {
-        vehicle_add_audio_event(this, 0x66, 0);
+        vehicle_add_audio_event(this, 0x66, f32::from_bits(0));
     }
     let mut v = (rd::<i16>(params, 0x20) as i32 as f32) * g::<f32>(0x859A3C).read();
     if rd::<f32>(this, 0x248) < zero {
@@ -2569,17 +2531,14 @@ pub fn vehicle_process_nitro(this: GPtr<u8>, params: GPtr<u8>) {
 
 use crate::bindings::sm_are_sounds_playing_in_bank_slot;
 use crate::bindings::sm_cancel_sounds_in_bank_slot;
-orig! {
-    /// `SurfaceInfos_c::IsAudio*(uint32 surface)` (thiscall on `g_surfaceInfos` 0xB79538, EAX)
-    fn surface_is_audio_concrete(infos: GPtr<u8>, s: u32) -> u32 = thiscall 0x55EA30 => unported;
-    fn surface_is_audio_grass(infos: GPtr<u8>, s: u32) -> u32 = thiscall 0x55EA50 => unported;
-    fn surface_is_audio_long_grass(infos: GPtr<u8>, s: u32) -> u32 = thiscall 0x55EB10 => unported;
-    fn surface_is_audio_sand(infos: GPtr<u8>, s: u32) -> u32 = thiscall 0x55EA70 => unported;
-    fn surface_is_audio_gravel(infos: GPtr<u8>, s: u32) -> u32 = thiscall 0x55EA90 => unported;
-    fn surface_is_audio_wood(infos: GPtr<u8>, s: u32) -> u32 = thiscall 0x55EAB0 => unported;
-    fn surface_is_audio_tile(infos: GPtr<u8>, s: u32) -> u32 = thiscall 0x55EB30 => unported;
-    fn surface_is_audio_metal(infos: GPtr<u8>, s: u32) -> u32 = thiscall 0x55EAF0 => unported;
-}
+use sa_world::bindings::surface_55ea50 as surface_is_audio_grass;
+use sa_world::bindings::surface_55ea70 as surface_is_audio_sand;
+use sa_world::bindings::surface_55ea90 as surface_is_audio_gravel;
+use sa_world::bindings::surface_55eb10 as surface_is_audio_long_grass;
+use sa_world::bindings::surface_is_audio_concrete;
+use sa_world::bindings::surface_is_audio_metal;
+use sa_world::bindings::surface_is_audio_tile;
+use sa_world::bindings::surface_is_audio_wood;
 
 /// Footstep bank `bank` in slot 0x1E: true when loaded; otherwise sounds playing in the slot (1 or 2)
 /// are cancelled, the bank is loaded and false is returned.
@@ -2587,7 +2546,7 @@ fn footstep_bank_ready(bank: u32) -> bool {
     if hw_is_sound_bank_loaded(g(0xB5F8B8), bank, 0x1E) != 0 {
         return true;
     }
-    let n = sm_are_sounds_playing_in_bank_slot(g(0xB62CB0), 0x1E) as u16 as i16;
+    let n = (sm_are_sounds_playing_in_bank_slot(g(0xB62CB0), 0x1E) as u32) as u16 as i16;
     if n == 1 || n == 2 {
         sm_cancel_sounds_in_bank_slot(g(0xB62CB0), 0x1E, 0);
     }
@@ -2620,9 +2579,9 @@ pub fn ped_handle_footstep_event(this: GPtr<u8>, event: u32, vol_offset: f32, sp
     let mut play_pos = 0u32;
     // (slot, sfx) or None for the generic step
     let mut chosen: Option<(u32, u32)> = None;
-    if find_player_ped(-1) == rd::<u32>(this, 0x94) {
-        if surface_is_audio_water(si(), surface as u8 as u32) as u8 != 0
-            || surface_is_audio_water(si(), ped_surface()) as u8 != 0
+    if GPtr::<u8>::addr(find_player_ped(-1)) as u32 == rd::<u32>(this, 0x94) {
+        if (surface_is_audio_water(si(), surface as u8 as u32) as u32) as u8 != 0
+            || (surface_is_audio_water(si(), ped_surface()) as u32) as u8 != 0
         {
             if hw_is_sound_bank_loaded(g(0xB5F8B8), 0x80, 0x20) != 0 {
                 let s = crate::common::ae_random_int(0, 4) as u32;
@@ -2631,21 +2590,21 @@ pub fn ped_handle_footstep_event(this: GPtr<u8>, event: u32, vol_offset: f32, sp
             } else {
                 hw_load_sound_bank(g(0xB5F8B8), 0x80, 0x20);
             }
-        } else if surface_is_audio_concrete(si(), ped_surface()) as u8 != 0 {
+        } else if (surface_is_audio_concrete(si(), ped_surface()) as u32) as u8 != 0 {
         } else {
-            let bank: Option<(u32, i32)> = if surface_is_audio_grass(si(), ped_surface()) as u8 != 0
-                || surface_is_audio_long_grass(si(), ped_surface()) as u8 != 0
+            let bank: Option<(u32, i32)> = if (surface_is_audio_grass(si(), ped_surface()) as u32) as u8 != 0
+                || (surface_is_audio_long_grass(si(), ped_surface()) as u32) as u8 != 0
             {
                 Some((1, 4))
-            } else if surface_is_audio_sand(si(), ped_surface()) as u8 != 0 {
+            } else if (surface_is_audio_sand(si(), ped_surface()) as u32) as u8 != 0 {
                 Some((4, 3))
-            } else if surface_is_audio_gravel(si(), ped_surface()) as u8 != 0 {
+            } else if (surface_is_audio_gravel(si(), ped_surface()) as u32) as u8 != 0 {
                 Some((2, 4))
-            } else if surface_is_audio_wood(si(), ped_surface()) as u8 != 0 {
+            } else if (surface_is_audio_wood(si(), ped_surface()) as u32) as u8 != 0 {
                 Some((6, 4))
-            } else if surface_is_audio_tile(si(), ped_surface()) as u8 != 0 {
+            } else if (surface_is_audio_tile(si(), ped_surface()) as u32) as u8 != 0 {
                 Some((5, 4))
-            } else if surface_is_audio_metal(si(), ped_surface()) as u8 != 0 {
+            } else if (surface_is_audio_metal(si(), ped_surface()) as u32) as u8 != 0 {
                 Some((3, 4))
             } else {
                 None
@@ -2695,7 +2654,7 @@ pub fn ped_handle_footstep_event(this: GPtr<u8>, event: u32, vol_offset: f32, sp
         play_pos,
     );
     sound_register_with_physical_entity(snd, g(rd::<u32>(this, 0x94) as usize));
-    sm_request_new_sound(g(0xB62CB0), snd);
+    sm_request_new_sound(GPtr::<u8>::addr(g(0xB62CB0)) as u32, snd.addr() as u32);
 }
 
 /// `CAEVehicleAudioEntity::ProcessEngineDamage(cVehicleParams&)` (0x4FAE20). From the vehicle's
@@ -2925,7 +2884,7 @@ pub fn vehicle_update_train_sound(
     wr::<f32>(this, 0x1C, vol);
     wr::<u32>(this, 0x24, speed);
     wr::<u16>(this, 0x5E, 4);
-    let r = sm_request_new_sound(g(0xB62CB0), snd);
+    let r = sm_request_new_sound(GPtr::<u8>::addr(g(0xB62CB0)) as u32, snd.addr() as u32);
     wr::<u32>(this, field, r);
 }
 
@@ -3140,7 +3099,7 @@ pub fn door_play_door_sound(this: GPtr<u8>, sfx: u32, event: u32, posn: u32, vol
         );
         sound_set_flags(snd, 1, front_end);
         wr::<u32>(snd, 0xC, event);
-        sm_request_new_sound(g(0xB62CB0), snd);
+        sm_request_new_sound(GPtr::<u8>::addr(g(0xB62CB0)) as u32, snd.addr() as u32);
     }
     sound_destructor(snd);
 }
@@ -3181,7 +3140,7 @@ pub fn fire_play_fire_sounds(this: GPtr<u8>, event: u32, posn: u32) {
         0,
         0,
     );
-    let r = sm_request_new_sound(g(0xB62CB0), snd);
+    let r = sm_request_new_sound(GPtr::<u8>::addr(g(0xB62CB0)) as u32, snd.addr() as u32);
     wr::<u32>(this, 0x7C, r);
     if hw_is_sound_bank_loaded(g(0xB5F8B8), 0x8A, 0x13) != 0 {
         let speed2 = g::<f32>(speed_at).read() * g::<f32>(0x858CC8).read();
@@ -3205,7 +3164,7 @@ pub fn fire_play_fire_sounds(this: GPtr<u8>, event: u32, posn: u32) {
         );
         wr::<f32>(snd, 0x10, vol + g::<f32>(0x858B3C).read());
         wr::<u32>(snd, 0xC, 1);
-        sm_request_new_sound(g(0xB62CB0), snd);
+        sm_request_new_sound(GPtr::<u8>::addr(g(0xB62CB0)) as u32, snd.addr() as u32);
     } else {
         hw_load_sound_bank(g(0xB5F8B8), 0x8A, 0x13);
     }
@@ -3358,7 +3317,7 @@ pub fn pedless_update_parameters(this: GPtr<u8>, sound: u32, pos: u32) {
             let ent = rd::<u32>(this, 0x114);
             if ent != 0 {
                 let p = entity_pos(g(ent as usize));
-                sound_set_position(s, p[0], p[1], p[2]);
+                sound_set_position(s.addr() as u32, p[0], p[1], p[2]);
             }
         }
     }
@@ -3400,7 +3359,7 @@ pub fn speech_add_script_say_event(
     if rd::<u8>(this, 0x99) != 0 && override_silence as u8 == 0 {
         return;
     }
-    if rd::<u8>(this, 0x98) != 0 || streaming_is_very_busy() != 0 {
+    if rd::<u8>(this, 0x98) != 0 || streaming_is_very_busy() as u8 != 0 {
         return;
     }
     let slot: u16 = if rd::<u16>(this, 0x92) == 2 {
@@ -3512,7 +3471,7 @@ pub fn speech_play_loaded_sound(this: GPtr<u8>) {
         if rd::<u8>(this, 0x9C) != 0 {
             wr::<u32>(snd, 0x14, g::<u32>(0x8C80EC).read());
         }
-        let r = sm_request_new_sound(g(0xB62CB0), snd);
+        let r = sm_request_new_sound(GPtr::<u8>::addr(g(0xB62CB0)) as u32, snd.addr() as u32);
         wr::<u32>(this, 0xA0, r);
         if r != 0 {
             wr::<u32>(speech_slot(rd::<i16>(this, 0xA8)), 8, r);
@@ -3520,7 +3479,7 @@ pub fn speech_play_loaded_sound(this: GPtr<u8>) {
             let c = rd::<u16>(this, 0xB0);
             if c != 0x152 && c != 0x151 {
                 let intel = rd::<u32>(g(rd::<u32>(this, 4) as usize), 0x47C);
-                let t = task_manager_get_task_secondary(g(intel as usize + 4), 3);
+                let t = GPtr::<u8>::addr(task_manager_get_task_secondary(g(intel as usize + 4), 3)) as u32;
                 task_facial_set_request(g(t as usize), 7, 0xAF0, 0xFFFF_FFFF, 0);
             }
         } else {
@@ -3557,7 +3516,7 @@ pub fn vehicle_just_got_in_vehicle_as_driver(this: GPtr<u8>) {
     g::<u32>(0xB6B990).write(rd::<u32>(g(rd::<u32>(e, 4) as usize), 0x460));
     let store_volume = || wr::<f32>(e, 0xD8, event_volume(0x4D));
     let cancel_slot = || {
-        if sm_are_sounds_playing_in_bank_slot(g(0xB62CB0), 0x28) as u16 != 0 {
+        if (sm_are_sounds_playing_in_bank_slot(g(0xB62CB0), 0x28) as u32) as u16 != 0 {
             sm_cancel_sounds_in_bank_slot(g(0xB62CB0), 0x28, 0);
         }
     };
@@ -3708,7 +3667,7 @@ pub fn collision_report_glass_collision_event(this: GPtr<u8>, event: u32, posn: 
         wr::<u32>(this, 0x14, event);
         wr::<u16>(this, 0x5E, 4);
     }
-    sm_request_new_sound(g(0xB62CB0), snd);
+    sm_request_new_sound(GPtr::<u8>::addr(g(0xB62CB0)) as u32, snd.addr() as u32);
 }
 
 /// `CAECollisionAudioEntity::ReportWaterSplash(CVector posn, float volumeOffset)` (0x4DA190, the vector
@@ -3745,7 +3704,7 @@ pub fn collision_report_water_splash_at_position(this: GPtr<u8>, px: u32, py: u3
         0,
     );
     wr::<u32>(this, 0x14, 1);
-    sm_request_new_sound(g(0xB62CB0), snd);
+    sm_request_new_sound(GPtr::<u8>::addr(g(0xB62CB0)) as u32, snd.addr() as u32);
     sound_initialise(
         snd,
         2,
@@ -3766,7 +3725,7 @@ pub fn collision_report_water_splash_at_position(this: GPtr<u8>, px: u32, py: u3
     wr::<u32>(this, 0x14, 2);
     let t = sa_core::timer::TIME_MS.get().wrapping_add(0xA6);
     wr::<f32>(this, 0x18, t as f32);
-    sm_request_new_sound(g(0xB62CB0), snd);
+    sm_request_new_sound(GPtr::<u8>::addr(g(0xB62CB0)) as u32, snd.addr() as u32);
 }
 
 // ---- pass 3: weapon (2) --------------------------------------------------------------------------
@@ -3801,7 +3760,7 @@ pub fn weapon_play_flame_thrower_idle_gas_loop(this: GPtr<u8>, physical: u32) {
         0,
     );
     sound_register_with_physical_entity(snd, phys);
-    let r = sm_request_new_sound(g(0xB62CB0), snd);
+    let r = sm_request_new_sound(GPtr::<u8>::addr(g(0xB62CB0)) as u32, snd.addr() as u32);
     wr::<u32>(this, 0x9C, r);
 }
 
@@ -3839,7 +3798,7 @@ pub fn weapon_play_chainsaw_stop_sound_port(this: GPtr<u8>, physical: u32) {
         );
         sound_register_with_physical_entity(snd, phys);
         wr::<u32>(this, 0x14, 0xC);
-        sm_request_new_sound(g(0xB62CB0), snd);
+        sm_request_new_sound(GPtr::<u8>::addr(g(0xB62CB0)) as u32, snd.addr() as u32);
     }
     wr::<u8>(this, 0x80, 3);
 }
@@ -3892,7 +3851,7 @@ pub fn weapon_play_mini_gun_stop_sound_port(this: GPtr<u8>, physical: u32) {
         );
         sound_register_with_physical_entity(snd, phys);
         wr::<u32>(this, 0x14, 8);
-        sm_request_new_sound(g(0xB62CB0), snd);
+        sm_request_new_sound(GPtr::<u8>::addr(g(0xB62CB0)) as u32, snd.addr() as u32);
     }
     wr::<u8>(this, 0x7F, 2);
 }
@@ -3942,7 +3901,7 @@ pub fn weapon_play_weapon_loop_sound(
     );
     sound_register_with_physical_entity(snd, phys);
     wr::<u32>(this, 0x14, sound_event);
-    sm_request_new_sound(g(0xB62CB0), snd);
+    sm_request_new_sound(GPtr::<u8>::addr(g(0xB62CB0)) as u32, snd.addr() as u32);
 }
 
 /// `CAEWeaponAudioEntity::PlayCameraSound(CPhysical*, eAudioEvents, float volumeOffset)` (0x5046F0,
@@ -3979,7 +3938,7 @@ pub fn weapon_play_camera_sound(this: GPtr<u8>, physical: u32, event: u32, vol_o
         0,
     );
     sound_register_with_physical_entity(snd, phys);
-    sm_request_new_sound(g(0xB62CB0), snd);
+    sm_request_new_sound(GPtr::<u8>::addr(g(0xB62CB0)) as u32, snd.addr() as u32);
 }
 
 /// `CAEWeaponAudioEntity::WeaponReload(eWeaponType, CPhysical*, eAudioEvents)` (0x503690, `ret 0xC`):
@@ -4059,7 +4018,7 @@ pub fn weapon_weapon_reload(this: GPtr<u8>, ty: u32, physical: u32, event: u32) 
         0,
     );
     sound_register_with_physical_entity(snd, phys);
-    sm_request_new_sound(g(0xB62CB0), snd);
+    sm_request_new_sound(GPtr::<u8>::addr(g(0xB62CB0)) as u32, snd.addr() as u32);
 }
 
 /// `CAEWeaponAudioEntity::PlayFlameThrowerSounds(CPhysical*, int16 sfx1, int16 sfx2, eAudioEvents, float
@@ -4110,7 +4069,7 @@ pub fn weapon_play_flame_thrower_sounds(
             0,
         );
         sound_register_with_physical_entity(snd, phys);
-        sm_request_new_sound(g(0xB62CB0), snd);
+        sm_request_new_sound(GPtr::<u8>::addr(g(0xB62CB0)) as u32, snd.addr() as u32);
     }
     if hw_is_sound_bank_loaded(g(0xB5F8B8), 0x8A, 0x13) == 0 {
         hw_load_sound_bank(g(0xB5F8B8), 0x8A, 0x13);
@@ -4141,7 +4100,7 @@ pub fn weapon_play_flame_thrower_sounds(
     );
     sound_register_with_physical_entity(snd, phys);
     wr::<u32>(this, 0x14, 2);
-    sm_request_new_sound(g(0xB62CB0), snd);
+    sm_request_new_sound(GPtr::<u8>::addr(g(0xB62CB0)) as u32, snd.addr() as u32);
 }
 
 orig! {
@@ -4210,7 +4169,7 @@ pub fn weapon_play_mini_gun_fire_sounds(this: GPtr<u8>, physical: u32, event: u3
                 );
                 sound_register_with_physical_entity(snd, phys);
                 wr::<u32>(this, 0x14, 5);
-                sm_request_new_sound(g(0xB62CB0), snd);
+                sm_request_new_sound(GPtr::<u8>::addr(g(0xB62CB0)) as u32, snd.addr() as u32);
                 wr::<u8>(this, 0x7C, 1);
             }
             wr::<u8>(this, 0x7F, 0);
@@ -4234,7 +4193,7 @@ pub fn weapon_play_goggle_sound(this: GPtr<u8>, sfx: u32, event: u32) {
         }
         return;
     }
-    let (s1, s2) = if ae_resolve_probability_bits(0x3F00_0000) != 0 {
+    let (s1, s2) = if ae_resolve_probability_bits(f32::from_bits(0x3F00_0000)) != 0 {
         (0x3F98_3809u32, FLT_ONE_BITS)
     } else {
         (FLT_ONE_BITS, 0x3F98_3809u32)
@@ -4260,7 +4219,7 @@ pub fn weapon_play_goggle_sound(this: GPtr<u8>, sfx: u32, event: u32) {
         0,
     );
     wr::<u16>(this, 0x5E, 0x1001);
-    sm_request_new_sound(g(0xB62CB0), snd);
+    sm_request_new_sound(GPtr::<u8>::addr(g(0xB62CB0)) as u32, snd.addr() as u32);
     sound_initialise(
         snd,
         5,
@@ -4279,12 +4238,12 @@ pub fn weapon_play_goggle_sound(this: GPtr<u8>, sfx: u32, event: u32) {
         0,
     );
     wr::<u16>(this, 0x5E, 0x1001);
-    sm_request_new_sound(g(0xB62CB0), snd);
+    sm_request_new_sound(GPtr::<u8>::addr(g(0xB62CB0)) as u32, snd.addr() as u32);
 }
 
 /// `vector_magnitude_sqr_st0` with its ST0 result as `X87` (orig! returns stay register-sized).
 fn vector_magnitude_sqr(v: GPtr<u8>) -> crate::common::X87 {
-    crate::common::X87::from_f64_exact(vector_magnitude_sqr_st0(v))
+    crate::common::X87::from_f64_exact(vector_magnitude_sqr_st0(v.cast::<f32>()))
 }
 
 /// `speech_get_speech_context_volume_offset_call_st0` with its ST0 result as `X87`.

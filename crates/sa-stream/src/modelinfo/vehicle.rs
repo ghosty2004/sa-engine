@@ -227,18 +227,18 @@ pub mod lit {
 /// Calls into other (possibly original) functions.
 pub mod call {
     use super::*;
-    pub use crate::bindings::find_txd_slot;
-    pub use crate::bindings::frame_for_all_objects as rw_frame_for_all_objects;
+    pub use sa_core::bindings::find_txd_slot;
+    pub use sa_core::bindings::frame_for_all_objects as rw_frame_for_all_objects;
     pub use crate::bindings::get_animation_block_index;
     pub use crate::bindings::get_atomic_id;
     pub use crate::bindings::get_first_object;
     pub use crate::bindings::get_model_info_min_max;
-    pub use crate::bindings::rp_clump_add_atomic;
+    pub use sa_core::bindings::rp_clump_add_atomic;
     pub use crate::bindings::rp_clump_remove_atomic;
-    pub use crate::bindings::rp_material_set_texture;
-    pub use crate::bindings::rw_frame_add_child;
-    pub use crate::bindings::rw_texture_destroy;
-    pub use crate::bindings::rw_texture_read;
+    pub use sa_core::bindings::rp_material_set_texture;
+    pub use sa_core::bindings::rw_frame_add_child;
+    pub use sa_core::bindings::rw_texture_destroy;
+    pub use sa_core::bindings::rw_texture_read;
     pub use crate::bindings::set_atomic_render_callback;
     pub use crate::bindings::strstr;
     pub use sa_core::bindings::crt_free_8214bd as free;
@@ -263,63 +263,51 @@ pub mod call {
     pub use sa_core::bindings::stricmp;
     pub use sa_core::bindings::strncmp;
     pub use sa_core::bindings::strtok;
+    pub use crate::bindings::get_frame_from_id;
+    pub use crate::bindings::lock_scratch_pad;
+    pub use crate::bindings::matfx_get_effects as rp_mat_fx_material_get_effects;
+    pub use crate::bindings::release_scratch_pad;
+    pub use crate::bindings::rw_texture_set_find_call_back;
+    pub use sa_core::bindings::find_player_vehicle;
+    pub use sa_core::bindings::frame_for_all_children as rw_frame_for_all_children;
+    pub use sa_core::bindings::general_random_int_in_range as get_random_number_in_range;
+    pub use sa_core::bindings::load_line;
+    pub use sa_core::bindings::material_list_append_call as rp_material_list_append_material;
+    pub use sa_core::bindings::material_list_deinitialize as rp_material_list_deinitialize;
+    pub use sa_core::bindings::pop_current_txd;
+    pub use sa_core::bindings::push_current_txd;
+    pub use sa_core::bindings::quaternion_set;
+    pub use sa_core::bindings::rp_clump_for_all_atomics;
+    pub use sa_core::bindings::rp_geometry_for_all_materials;
+    pub use sa_core::bindings::rp_mat_fx_material_set_effects;
+    pub use sa_core::bindings::rw_matrix_rotate;
+    pub use sa_core::bindings::rw_matrix_transform;
+    pub use sa_core::bindings::set_current_txd;
     orig! {
         /// RwTextureGetFindCallBack (0x7F34F0)
         pub fn rw_texture_get_find_call_back() -> u32 = cdecl 0x7F34F0 => unported;
-        /// RwTextureSetFindCallBack (0x7F34D0)
-        pub fn rw_texture_set_find_call_back(cb: u32) -> u32 = cdecl 0x7F34D0 => unported;
-        /// RpClumpForAllAtomics (0x749B70)
-        pub fn rp_clump_for_all_atomics(clump: GPtr<u8>, cb: u32, data: GPtr<u8>) -> GPtr<u8> = cdecl 0x749B70 => unported;
-        /// RwFrameForAllChildren (0x7F0DC0)
-        pub fn rw_frame_for_all_children(frame: GPtr<u8>, cb: u32, data: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0DC0 => unported;
-        /// RpGeometryForAllMaterials (0x74C790)
-        pub fn rp_geometry_for_all_materials(geo: GPtr<u8>, cb: u32, data: GPtr<u8>) -> GPtr<u8> = cdecl 0x74C790 => unported;
-        /// RwMatrixRotate (0x7F1FD0)
-        pub fn rw_matrix_rotate(m: GPtr<u8>, axis: GPtr<u8>, angle: f32, op: u32) -> GPtr<u8> = cdecl 0x7F1FD0 => unported;
         /// RwFrameRemoveChild (0x7F0CD0)
         pub fn rw_frame_remove_child(frame: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0CD0 => unported;
-        /// RwMatrixTransform (0x7F25A0)
-        pub fn rw_matrix_transform(m: GPtr<u8>, t: GPtr<u8>, op: u32) -> GPtr<u8> = cdecl 0x7F25A0 => unported;
-        /// RpMatFXMaterialGetEffects (0x812140)
-        pub fn rp_mat_fx_material_get_effects(mat: GPtr<u8>) -> i32 = cdecl 0x812140 => unported;
-        /// RpMatFXMaterialSetEffects (0x811C80)
-        pub fn rp_mat_fx_material_set_effects(mat: GPtr<u8>, fx: i32) -> GPtr<u8> = cdecl 0x811C80 => unported;
         /// RpMatFXMaterialSetEnvMapFrame (0x8125B0)
         pub fn rp_mat_fx_material_set_env_map_frame(mat: GPtr<u8>, frame: GPtr<u8>) -> GPtr<u8> = cdecl 0x8125B0 => unported;
         /// RpMatFXMaterialSetEnvMapCoefficient (0x812680)
         pub fn rp_mat_fx_material_set_env_map_coefficient(mat: GPtr<u8>, coef: f32) -> GPtr<u8> = cdecl 0x812680 => unported;
-        /// _rpMaterialListAppendMaterial (0x74E350)
-        pub fn rp_material_list_append_material(list: GPtr<u8>, mat: GPtr<u8>) -> i32 = cdecl 0x74E350 => unported;
-        /// _rpMaterialListDeinitialize (0x74E150)
-        pub fn rp_material_list_deinitialize(list: GPtr<u8>) -> GPtr<u8> = cdecl 0x74E150 => unported;
         /// CVisibilityPlugins::SetAtomicFlag (0x7322B0)
         pub fn set_atomic_flag(atomic: GPtr<u8>, flag: u32) = cdecl 0x7322B0 => unported;
         /// CVisibilityPlugins::ClearAtomicFlag (0x732310)
         pub fn clear_atomic_flag(atomic: GPtr<u8>, flag: u32) = cdecl 0x732310 => unported;
         /// CVisibilityPlugins::ClearClumpForAllAtomicsFlag (0x732350)
         pub fn clear_clump_for_all_atomics_flag(clump: GPtr<u8>, flag: u32) = cdecl 0x732350 => unported;
-        /// CTxdStore::PushCurrentTxd (0x7316A0)
-        pub fn push_current_txd() = cdecl 0x7316A0 => crate::txdstore::push_current_txd;
-        /// CTxdStore::PopCurrentTxd (0x7316B0)
-        pub fn pop_current_txd() = cdecl 0x7316B0 => crate::txdstore::pop_current_txd;
-        /// CTxdStore::SetCurrentTxd (0x7319C0)
-        pub fn set_current_txd(slot: i32) = cdecl 0x7319C0 => crate::txdstore::set_current_txd;
         /// CClumpModelInfo::Init (0x4C4E40)
         pub fn clump_init(mi: GPtr<u8>) = thiscall 0x4C4E40 => unported;
         /// CClumpModelInfo::SetClump (0x4C4F70)
         pub fn clump_set_clump(mi: GPtr<u8>, clump: GPtr<u8>) = thiscall 0x4C4F70 => unported;
         /// CClumpModelInfo::SetFrameIds (0x4C5460)
         pub fn clump_set_frame_ids(mi: GPtr<u8>, ids: u32) = thiscall 0x4C5460 => unported;
-        /// CClumpModelInfo::GetFrameFromId (0x4C53C0)
-        pub fn get_frame_from_id(clump: GPtr<u8>, id: i32) -> GPtr<u8> = cdecl 0x4C53C0 => crate::modelinfo::clump::get_frame_from_id;
         /// CClumpModelInfo::CreateInstance (0x4C5140)
         pub fn clump_create_instance(mi: GPtr<u8>) -> GPtr<u8> = thiscall 0x4C5140 => unported;
         /// CClumpModelInfo::DeleteRwObject (0x4C4E70)
         pub fn clump_delete_rw_object(mi: GPtr<u8>) = thiscall 0x4C4E70 => unported;
-        /// CWorld::FindPlayerVehicle(playerId, bIncludeRemote) (0x56E0D0)
-        pub fn find_player_vehicle(player: i32, remote: u8) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
-        /// CGeneral::GetRandomNumberInRange<int> (0x407180)
-        pub fn get_random_number_in_range(min: i32, max: i32) -> i32 = cdecl 0x407180 => sa_core::general::get_random_number_in_range_i32;
         /// CCustomCarPlateMgr::GeneratePlateText (0x6FD5B0)
         pub fn generate_plate_text(buf: GPtr<u8>, len: i32) -> u8 = cdecl 0x6FD5B0 => unported;
         /// CCustomCarPlateMgr::SetupClump (0x6FE0F0)
@@ -328,14 +316,8 @@ pub mod call {
         pub fn custom_car_pipe_clump_setup(clump: GPtr<u8>) -> u8 = cdecl 0x5D5B40 => unported;
         /// CMemoryMgr::Malloc (0x72F420)
         pub fn malloc(size: u32, hint: u32) -> GPtr<u8> = cdecl 0x72F420 => unported;
-        /// CMemoryMgr::LockScratchPad (0x72F4A0)
-        pub fn lock_scratch_pad() = cdecl 0x72F4A0 => unported;
         /// CMemoryMgr::InitScratchPad (0x72F480)
         pub fn init_scratch_pad() = cdecl 0x72F480 => unported;
-        /// CMemoryMgr::ReleaseScratchPad (0x72F4B0)
-        pub fn release_scratch_pad() = cdecl 0x72F4B0 => unported;
-        /// CQuaternion::Set(const RwMatrix&) (0x59C3E0)
-        pub fn quaternion_set(q: GPtr<u8>, m: GPtr<u8>) = thiscall 0x59C3E0 => unported;
         /// CPool<CVehicleStructure>::New via CVehicleStructure::operator new (0x4C9570)
         pub fn vehicle_structure_new(size: u32) -> GPtr<u8> = cdecl 0x4C9570 => unported;
         /// CVehicleStructure::CVehicleStructure (0x4C8D60)
@@ -350,8 +332,6 @@ pub mod call {
         pub fn fopen(name: GPtr<u8>, mode: GPtr<u8>) -> GPtr<u8> = cdecl 0x8232D8 => unported;
         /// CRT `fclose` (0x82318B)
         pub fn fclose(f: GPtr<u8>) -> i32 = cdecl 0x82318B => unported;
-        /// CFileLoader::LoadLine(FILE*) (0x536F80)
-        pub fn load_line(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x536F80 => crate::fileloader::load_line_file;
     }
 }
 use call::*;
@@ -1125,8 +1105,8 @@ pub fn choose_vehicle_colour(mi: GPtr<u8>, prim: GPtr<u8>, sec: GPtr<u8>, tert: 
 /// `CVehicleModelInfo::GetMatFXEffectMaterialCB` (0x4C8810).
 #[hook(addr = 0x4C8810, conv = cdecl, name = "CVehicleModelInfo::GetMatFXEffectMaterialCB", expect = "56 8B 74 24 08")]
 pub fn get_mat_fx_effect_material_cb(mat: GPtr<u8>, data: GPtr<i32>) -> GPtr<u8> {
-    if rp_mat_fx_material_get_effects(mat) != 0 {
-        data.write(rp_mat_fx_material_get_effects(mat));
+    if rp_mat_fx_material_get_effects(mat) as i32 != 0 {
+        data.write(rp_mat_fx_material_get_effects(mat) as i32);
         return GPtr::NULL;
     }
     mat
@@ -1145,7 +1125,7 @@ pub fn env_map_coeff_from_data(data: i32) -> f32 {
 /// `CVehicleModelInfo::SetEnvMapCoeffCB` (0x4C88B0).
 #[hook(addr = 0x4C88B0, conv = cdecl, name = "CVehicleModelInfo::SetEnvMapCoeffCB", expect = "56 8B 74 24 08")]
 pub fn set_env_map_coeff_cb(mat: GPtr<u8>, data: i32) -> GPtr<u8> {
-    if rp_mat_fx_material_get_effects(mat) == 2 {
+    if rp_mat_fx_material_get_effects(mat) as i32 == 2 {
         rp_mat_fx_material_set_env_map_coefficient(mat, env_map_coeff_from_data(data));
     }
     mat
@@ -1225,7 +1205,6 @@ pub fn init(mi: GPtr<u8>) {
 
 /// CRT `operator delete` (0x8213AE).
 mod del {
-    
     pub use sa_core::bindings::crt_free as operator_delete;
 }
 
@@ -1636,7 +1615,7 @@ pub fn set_environment_map_cb(mat: GPtr<u8>, data: u32) -> GPtr<u8> {
         rp_mat_fx_material_set_effects(mat, 0);
         return mat;
     }
-    if rp_mat_fx_material_get_effects(mat) == 2 {
+    if rp_mat_fx_material_get_effects(mat) as i32 == 2 {
         rp_mat_fx_material_set_env_map_frame(mat, CAR_FRAME.get());
         if rdp(mat, 0).is_null() {
             rp_material_set_texture(mat, WHITE_TEXTURE.get());
@@ -1743,7 +1722,7 @@ pub fn preprocess_hierarchy(mi: GPtr<u8>) {
                         while !p.is_null() && !rdp(p, 4).is_null() {
                             let id = desc(table(), k).1;
                             let d = rdp(mi, vmi::VEHICLE_STRUCT).byte_add(12 * id as isize);
-                            rw_v3d_transform_points(d, d, 1, p.byte_add(0x10));
+                            rw_v3d_transform_points(d.cast::<f32>(), d.cast::<f32>(), 1, p.byte_add(0x10));
                             p = rdp(p, 4);
                         }
                         rw_frame_destroy(frame);
@@ -1965,14 +1944,12 @@ use sa_core::bindings::file_close as close_file;
 use sa_core::bindings::loading_screen_new_chunk_loaded as new_chunk_loaded;
 use sa_core::bindings::open_file;
 use sa_core::bindings::txd_add_ref;
+use sa_core::bindings::add_txd_slot;
+use sa_core::bindings::load_txd;
 orig! {
     fn load_vehicle_colours_call() = cdecl 0x5B6890 => load_vehicle_colours;
     fn load_vehicle_upgrades_call() = cdecl 0x5B65A0 => load_vehicle_upgrades;
     fn load_environment_maps_call() = cdecl 0x4C8780 => load_environment_maps;
-    /// CTxdStore::AddTxdSlot (0x731C80)
-    fn add_txd_slot(name: GPtr<u8>) -> i32 = cdecl 0x731C80 => unported;
-    /// CTxdStore::LoadTxd(slot, filename) (0x7320B0)
-    fn load_txd(slot: i32, name: GPtr<u8>) -> u8 = cdecl 0x7320B0 => unported;
     /// CPool<CVehicleStructure>::CPool(size, name) (0x5B8340)
     fn vehicle_structure_pool_ctor(pool: GPtr<u8>, size: i32, name: GPtr<u8>) -> GPtr<u8> = thiscall 0x5B8340 => unported;
     /// CCarFXRenderer::InitialiseDirtTexture (0x5D5BC0)
@@ -2085,7 +2062,7 @@ pub fn load_vehicle_upgrades() {
                         strtok(line, dp);
                         let mut tok = strtok(GPtr::NULL, dp);
                         while !tok.is_null() {
-                            let m = get_model_info_full(tok, idp);
+                            let m = get_model_info_full(tok, idp.cast::<u8>());
                             setup_vehicle_upgrade_flags(m, tok);
                             add_wheel_upgrade_call(wheel_set, id);
                             tok = strtok(GPtr::NULL, dp);
@@ -2095,20 +2072,20 @@ pub fn load_vehicle_upgrades() {
                         let tok = strtok(line, dp);
                         if !tok.is_null() {
                             id = -1;
-                            let veh = get_model_info_full(tok, idp);
+                            let veh = get_model_info_full(tok, idp.cast::<u8>());
                             let mut n = 0isize;
                             let mut tok = strtok(GPtr::NULL, dp);
                             while !tok.is_null() {
-                                let m = get_model_info_full(tok, idp);
+                                let m = get_model_info_full(tok, idp.cast::<u8>());
                                 setup_vehicle_upgrade_flags(m, tok);
                                 wr16(veh, vmi::UPGRADES + 2 * n, id as i16);
                                 n += 1;
                                 tok = strtok(GPtr::NULL, dp);
                             }
-                            let m = get_model_info_full(s(0x85BB28), idp);
+                            let m = get_model_info_full(s(0x85BB28), idp.cast::<u8>());
                             setup_vehicle_upgrade_flags(m, s(0x85BB28));
                             wr16(veh, vmi::UPGRADES + 2 * n, id as i16);
-                            let m = get_model_info_full(s(0x85BB20), idp);
+                            let m = get_model_info_full(s(0x85BB20), idp.cast::<u8>());
                             setup_vehicle_upgrade_flags(m, s(0x85BB20));
                             wr16(veh, vmi::UPGRADES + 2 + 2 * n, id as i16);
                         }
@@ -2118,10 +2095,10 @@ pub fn load_vehicle_upgrades() {
                         id = -1;
                         let tok = strtok(line, dp);
                         if !tok.is_null() {
-                            let m = get_model_info_full(tok, id1p);
+                            let m = get_model_info_full(tok, id1p.cast::<u8>());
                             setup_vehicle_upgrade_flags(m, tok);
                             let tok2 = strtok(GPtr::NULL, dp);
-                            let m = get_model_info_full(tok2, idp);
+                            let m = get_model_info_full(tok2, idp.cast::<u8>());
                             setup_vehicle_upgrade_flags(m, tok2);
                             add_upgrade_link_call(LINKED_UPGRADES.ptr().cast(), id1, id);
                         }
@@ -2230,7 +2207,7 @@ pub fn load_vehicle_colours() {
                 }
                 let fmt = if per == 2 { 0x8696E4 } else { 0x869680 };
                 let n = sscanf_n(line, s(fmt), &t);
-                let mi = get_model_info_full(GPtr::from_raw(name.as_mut_ptr()), GPtr::NULL);
+                let mi = get_model_info_full(GPtr::from_raw(name.as_mut_ptr()), GPtr::<i32>::cast::<u8>(GPtr::NULL));
                 // (n - 1) / per, signed toward zero, stored as a byte
                 let nv = ((n - 1) / per) as u8;
                 wr8(mi, vmi::NUM_COLOR_VARIATIONS, nv);

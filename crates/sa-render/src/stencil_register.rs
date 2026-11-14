@@ -13,9 +13,9 @@ use crate::common::{ftol32, g, k, rd, wr, x};
 use crate::stencilshadows::{ACTIVE_OBJECTS, FREE_OBJECTS};
 
 use sa_world::bindings::entity_get_col_model as get_col_model;
+use crate::bindings::call_destroy as destroy;
+use sa_core::bindings::world_clear_scan_codes as clear_scan_codes;
 orig! {
-    /// `CStencilShadowObject::Destroy()` (0x711310)
-    fn destroy(o: GPtr<u8>) = thiscall 0x711310 => crate::stencilshadows::destroy;
     /// `CStencilShadowObject::CreateFor(CEntity*, uint8 type)` (0x711280, `ret 8`)
     fn create_for(o: GPtr<u8>, e: GPtr<u8>, ty: u32) -> u8 = thiscall 0x711280 => unported;
     /// `CStencilShadows::FindActiveFor(CEntity*)` (0x710BA0)
@@ -24,8 +24,6 @@ orig! {
     fn sq_dist_object(e: GPtr<u8>, p: GPtr<u8>) -> X87 = reg("args = ebx esi") 0x711160 => crate::harness5::signed_sq_dist_object;
     /// The vehicle shadow distance 0x7111F0: EBX = entity, ESI = point, ST0 result
     fn sq_dist_vehicle(e: GPtr<u8>, p: GPtr<u8>) -> X87 = reg("args = ebx esi") 0x7111F0 => crate::harness5::signed_sq_dist_vehicle;
-    /// `CWorld::ClearScanCodes()` (0x563470; the port is unhookable)
-    fn clear_scan_codes() = cdecl 0x563470 => sa_world::world::cworld::clear_scan_codes;
     /// `CBaseModelInfo::GetModelType()` (vtable +0x10)
     fn mi_get_model_type(mi: GPtr<u8>) -> u8 = thiscall vslot 0x10 => unported;
 }

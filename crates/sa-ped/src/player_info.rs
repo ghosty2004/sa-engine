@@ -18,26 +18,22 @@ const THE_CAMERA: usize = 0xB6F028;
 /// `MODEL_GUN_PARA` (0x173)
 const MI_PARACHUTE: i32 = 0x173;
 
-pub use crate::bindings::clothes_desc_ctor;
+pub use sa_world::bindings::clothes_desc_ctor;
 pub use sa_core::bindings::crt_strncpy;
 pub use sa_core::bindings::get_atan_of_xy;
-pub use sa_stream::bindings::rw_texture_destroy;
-pub use sa_world::bindings::calculate_ground_height as camera_calculate_ground_height;
+pub use sa_core::bindings::rw_texture_destroy;
+pub use sa_stream::bindings::calculate_ground_height as camera_calculate_ground_height;
 pub use sa_world::bindings::is_coop_game_going_on;
 pub use sa_world::bindings::stats_get_fat_and_muscle_modifier as get_fat_and_muscle_modifier;
+pub use crate::bindings::initialise_call as wanted_initialise;
+pub use crate::bindings::ped_data_set_initial_state;
+pub use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+pub use sa_core::bindings::entity_register_reference as register_reference;
 orig! {
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
-    pub fn clean_up_old_reference(e: GPtr<u8>, r: GPtr<GPtr<u8>>) = thiscall 0x571A00 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    pub fn register_reference(e: GPtr<u8>, r: GPtr<GPtr<u8>>) = thiscall 0x571B70 => unported;
-    /// `CPlayerPedData::SetInitialState` (0x56F210)
-    pub fn ped_data_set_initial_state(d: GPtr<u8>) = thiscall 0x56F210 => set_initial_state;
     /// `CPlayerSkin::GetSkinTexture(const char*)` (0x6FFA10)
     pub fn get_skin_texture(name: GPtr<u8>) -> GPtr<u8> = cdecl 0x6FFA10 => unported;
     /// `operator new` (0x82119A)
     pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
-    /// `CWanted::Initialise` (0x562390)
-    pub fn wanted_initialise(w: GPtr<u8>) = thiscall 0x562390 => crate::wanted::initialise;
     /// `CPedClothesDesc::Initialise` (0x5A78F0)
     pub fn clothes_desc_initialise(d: GPtr<u8>) = thiscall 0x5A78F0 => crate::clothes::desc_initialise;
 }
@@ -177,7 +173,7 @@ pub fn set_last_target_vehicle(this: GPtr<u8>, v: GPtr<u8>) {
     }
     r.write(v);
     if !v.is_null() {
-        register_reference(v, r);
+        register_reference(v, r.cast::<u8>());
     }
 }
 

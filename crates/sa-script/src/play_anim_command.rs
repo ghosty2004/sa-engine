@@ -14,7 +14,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::cmdlib::{collect, read_text_label, sp};
 use crate::vm::Scr;
@@ -26,14 +26,8 @@ const TIMED_HOLD_WORD: u32 = 0xBCC7FC20;
 
 use crate::bindings::affect_secondary_behaviour_ctor;
 use sa_core::bindings::task_new;
-orig! {
-    /// `CTaskSimpleRunNamedAnim::CTaskSimpleRunNamedAnim(const char* anim, const char* group, int32 flags, float blend,
-    /// int32 endTime, bool dontInterrupt, bool runInSequence, bool offsetPed, bool holdLastFrame)` (0x61A990, `ret 0x24`)
-    fn run_named_anim_ctor(t: GPtr<u8>, anim: GPtr<u8>, group: GPtr<u8>, flags: u32, blend: u32, end_time: i32,
-        dont_interrupt: u32, run_in_sequence: u32, offset_ped: u32, hold_last_frame: u32) -> GPtr<u8> = thiscall 0x61A990 => unported;
-    /// `CRunningScript::GivePedScriptedTask(int32 pedHandle, CTask*, int32 opcode)` (0x465C20)
-    fn give_ped_scripted_task(s: Scr, ped: i32, task: GPtr<u8>, command: u32) = thiscall 0x465C20 => crate::script_tasks::give_ped_scripted_task;
-}
+use crate::bindings::give_ped_scripted_task;
+use sa_world::bindings::run_named_anim_ctor;
 
 /// `CRunningScript::PlayAnimScriptCommand(int32 command)` (0x470150, thiscall, `ret 4`; body at 0x1569460).
 ///
@@ -97,10 +91,10 @@ pub fn play_anim_script_command(s: Scr, command: u32) {
     let mut task = if t.is_null() {
         GPtr::NULL
     } else if time > 0 {
-        run_named_anim_ctor(t, anim_p, group_p, flags, blend, time, (!interruptable) as u32, in_sequence,
+        run_named_anim_ctor(t, anim_p, group_p, flags, blend, time as u32, (!interruptable) as u32, in_sequence,
                             offset_ped as u32, TIMED_HOLD_WORD)
     } else {
-        run_named_anim_ctor(t, anim_p, group_p, flags, blend, -1, (!interruptable) as u32, in_sequence,
+        run_named_anim_ctor(t, anim_p, group_p, flags, blend, -1i32 as u32, (!interruptable) as u32, in_sequence,
                             offset_ped as u32, 0)
     };
     if command == 0xA1A {

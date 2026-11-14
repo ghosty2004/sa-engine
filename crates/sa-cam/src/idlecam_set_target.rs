@@ -39,12 +39,12 @@ pub fn idle_cam_set_target(this: GPtr<u8>, target: GPtr<u8>) {
     }
     if !target.is_null() {
         if !old.is_null() {
-            entity_clean_up_old_reference(old, this);
+            entity_clean_up_old_reference(old, this.cast::<GPtr<u8>>());
         }
         wr::<GPtr<u8>>(this, 0, target);
         entity_register_reference(target, this);
     } else if !old.is_null() {
-        entity_clean_up_old_reference(old, this);
+        entity_clean_up_old_reference(old, this.cast::<GPtr<u8>>());
         wr::<u32>(this, 0, 0);
     }
     wr::<f32>(this, 0x10, now);

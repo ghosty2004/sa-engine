@@ -25,6 +25,7 @@ const GET_MISSION_FLAG: usize = 0xB72910;
 
 pub use sa_core::bindings::crt_free as crt_delete;
 pub use sa_core::bindings::get_uppercase_key;
+pub use sa_core::bindings::messages_clear_all_displayed_by_game as clear_all_messages_displayed_by_game_call;
 orig! {
     /// CRT `sprintf(buf, fmt)` (0x821BB5)
     pub fn sprintf0(buf: GPtr<u8>, fmt: GPtr<u8>) -> i32 = cdecl 0x821BB5 => unported;
@@ -32,8 +33,6 @@ orig! {
     pub fn binary_search_call(this: GPtr<u8>, key: u32, entries: GPtr<u8>, low: i32, high: i32) -> GPtr<u8> = thiscall 0x69F570 => binary_search;
     /// `CKeyArray::Search(const char* key, bool* found)` (0x6A0000)
     pub fn key_array_search_call(this: GPtr<u8>, key: GPtr<u8>, found: GPtr<u8>) -> GPtr<u8> = thiscall 0x6A0000 => key_array_search;
-    /// `CMessages::ClearAllMessagesDisplayedByGame(bool)` (0x69EDC0)
-    pub fn clear_all_messages_displayed_by_game_call(flag: u32) = cdecl 0x69EDC0 => crate::messages::clear_all_messages_displayed_by_game;
 }
 
 /// Frees `[p + off]` when set and nulls it, then zeroes the size at `p + off + 4` (`CKeyArray::Unload` /

@@ -26,9 +26,11 @@ use crate::bindings::dynamic_vertex_buffer_create;
 use crate::bindings::index_buffer_create;
 use crate::bindings::material_list_find_call as material_list_find_index;
 use crate::bindings::material_list_get_material_call as material_list_get;
-use crate::bindings::rw_stream_find_chunk_call as stream_find_chunk;
+use sa_core::bindings::rw_stream_find_chunk_call as stream_find_chunk;
 use crate::bindings::stream_write_chunk_header;
 use sa_core::bindings::rw_error1 as rw_error;
+use sa_core::bindings::rw_stream_write as stream_write;
+use sa_core::bindings::stream_read;
 orig! {
     /// `IDirect3DVertexDeclaration9::GetDeclaration(elements, count)` (+0x10)
     fn decl_get_declaration(decl: GPtr<u8>, elements: GPtr<u8>, count: GPtr<u32>) -> i32 = stdcall vslot 0x10 => unported;
@@ -36,10 +38,6 @@ orig! {
     fn buffer_lock(b: GPtr<u8>, offset: u32, size: u32, data: GPtr<u32>, flags: u32) -> i32 = stdcall vslot 0x2C => unported;
     /// `IDirect3DIndexBuffer9 / IDirect3DVertexBuffer9::Unlock()` (+0x30)
     fn buffer_unlock(b: GPtr<u8>) -> i32 = stdcall vslot 0x30 => unported;
-    /// `RwStreamRead(stream, buffer, length)` (0x7EC9D0)
-    fn stream_read(s: GPtr<u8>, buf: GPtr<u8>, len: u32) -> u32 = cdecl 0x7EC9D0 => crate::stream::rw_stream_read;
-    /// `RwStreamWrite(stream, buffer, length)` (0x7ECB30)
-    fn stream_write(s: GPtr<u8>, buf: GPtr<u8>, len: u32) -> GPtr<u8> = cdecl 0x7ECB30 => crate::stream::rw_stream_write;
     /// The resource entry destroy notify `(entry)` (0x4C9990)
     fn entry_destroy(e: GPtr<u8>) = cdecl 0x4C9990 => unported;
     /// `RpWorldSectorGetWorld(sector)` (0x74F4E0)
@@ -229,7 +227,7 @@ pub fn native_data_geometry_stream_write(stream: GPtr<u8>, geometry: GPtr<u8>) -
 pub fn native_data_geometry_stream_read(stream: GPtr<u8>, geometry: GPtr<u8>) -> GPtr<u8> {
     let mut len: u32 = 0;
     let mut version: u32 = 0;
-    if stream_find_chunk(stream, 1, GPtr::from_raw(&mut len), GPtr::from_raw(&mut version)) == 0 {
+    if stream_find_chunk(stream, 1, GPtr::from_raw(&mut len), GPtr::from_raw(&mut version)) as u32 == 0 {
         return GPtr::NULL;
     }
     if !(0x34000..=0x36003).contains(&version) {

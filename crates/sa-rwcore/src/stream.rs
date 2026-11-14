@@ -50,9 +50,11 @@ const E_RW_READ: u32 = 0x8000_001A;
 const E_RW_WRITE: u32 = 0x8000_001C;
 
 pub use crate::bindings::free_list_destroy as rw_free_list_destroy;
+pub use crate::bindings::free_list_create_prealloc as rw_free_list_create_and_preallocate;
+pub use crate::bindings::read_chunk_header_call;
+pub use sa_core::bindings::rw_stream_skip as rw_stream_skip_call;
+pub use sa_core::bindings::stream_read as rw_stream_read_call;
 orig! {
-    /// `RwFreeListCreateAndPreallocateSpace(entrySize, entriesPerBlock, alignment, numBlocks, fl, hint)` (0x801B70)
-    pub fn rw_free_list_create_and_preallocate(size: u32, per_block: u32, align: u32, blocks: u32, fl: GPtr<u8>, hint: u32) -> GPtr<u8> = cdecl 0x801B70 => unported;
     /// `G->fileFuncs.rwfopen(name, mode)` (G+0xC8)
     pub fn rw_fopen(name: GPtr<u8>, mode: GPtr<u8>) -> u32 = cdecl table 0xC97B24 0xC8 => unported;
     /// `G->fileFuncs.rwfclose(fp)` (G+0xCC)
@@ -75,13 +77,6 @@ orig! {
     pub fn call_sfnwrite(f: u32, data: u32, buf: GPtr<u8>, len: u32) -> u32 = cdecl dyn => unported;
     /// Custom stream `sfnskip(data, offset)` (stored pointer +0x18)
     pub fn call_sfnskip(f: u32, data: u32, offset: u32) -> u32 = cdecl dyn => unported;
-
-    /// `RwStreamRead(stream, buf, len)` (0x7EC9D0)
-    pub fn rw_stream_read_call(s: GPtr<u8>, buf: GPtr<u8>, len: u32) -> u32 = cdecl 0x7EC9D0 => rw_stream_read;
-    /// `RwStreamSkip(stream, offset)` (0x7ECD00)
-    pub fn rw_stream_skip_call(s: GPtr<u8>, offset: u32) -> GPtr<u8> = cdecl 0x7ECD00 => rw_stream_skip;
-    /// `_rwStreamReadChunkHeader(stream, type, length, version, build)` (0x7ED0F0)
-    pub fn read_chunk_header_call(s: GPtr<u8>, ty: GPtr<u32>, len: GPtr<u32>, ver: GPtr<u32>, build: GPtr<u32>) -> u32 = cdecl 0x7ED0F0 => read_chunk_header;
     /// `_rwChunkIsComplex(info)` (0x7ED1E0)
     pub fn chunk_is_complex_call(info: GPtr<u8>) -> u32 = cdecl 0x7ED1E0 => chunk_is_complex;
 }

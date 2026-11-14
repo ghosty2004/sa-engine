@@ -146,15 +146,14 @@ pub const TEMP_COL_MODELS: u32 = 0x968E50;
 /// First of the eight temp atomic models `Initialise` creates.
 pub const FIRST_TEMP_MODEL: i32 = 374;
 
-pub use crate::bindings::rw_texture_destroy;
+pub use sa_core::bindings::rw_texture_destroy;
 pub use sa_core::bindings::atexit;
 pub use sa_core::bindings::memory_free as memory_mgr_free;
 pub use sa_core::bindings::rp_atomic_destroy;
 pub use sa_core::bindings::rp_atomic_set_frame;
 pub use sa_core::bindings::rw_frame_destroy;
+pub use sa_core::bindings::get_uppercase_key;
 orig! {
-    /// `CKeyGen::GetUppercaseKey` (0x53CF30)
-    pub fn get_uppercase_key(s: GPtr<u8>) -> u32 = cdecl 0x53CF30 => sa_core::keygen::get_uppercase_key;
     /// `CModelInfo::GetModelInfo(const char*, int32*)` (0x4C5940)
     pub fn get_model_info_call(name: GPtr<u8>, idx: GPtr<i32>) -> MiPtr = cdecl 0x4C5940 => get_model_info_full;
     /// `CBaseModelInfo::SetColModel` (0x4C4BC0)

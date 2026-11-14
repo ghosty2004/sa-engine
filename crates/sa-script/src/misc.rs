@@ -20,7 +20,7 @@ const SEARCH_LIGHTS: u32 = 0xA94D68;
 
 /// The light of a script handle (`GetActualScriptThingIndex(h, 2)`), or `None` for a negative index.
 fn light(h: i32) -> Option<GPtr<u8>> {
-    let i = get_actual_script_thing_index(h, 2);
+    let i = get_actual_script_thing_index(h as u32, 2);
     (i >= 0).then(|| GPtr::from_addr(SEARCH_LIGHTS.wrapping_add((i as u32).wrapping_mul(0x7C)) as usize))
 }
 
@@ -34,7 +34,7 @@ fn clean_up_entity(l: GPtr<u8>) {
     let slot = l.byte_add(0x48);
     let e = slot.cast::<GPtr<u8>>().read();
     if !e.is_null() {
-        clean_up_old_reference(e, slot);
+        clean_up_old_reference(e, slot.cast::<GPtr<u8>>());
     }
 }
 

@@ -14,13 +14,12 @@ use crate::common::{g, rd, wr};
 
 use sa_core::bindings::frame_get_ltm;
 use sa_core::bindings::rp_clump_for_all_atomics as clump_for_all_atomics;
+use sa_core::bindings::rw_v3d_transform_points as v3d_transform_points;
 orig! {
     /// `CBaseModelInfo::GetModelType` (vtable slot 0x10)
     fn mi_get_model_type(mi: GPtr<u8>) -> u8 = thiscall vslot 0x10 => unported;
     /// A clump visibility callback `cb(clump)`
     fn call_visibility_cb(f: u32, clump: GPtr<u8>) -> u32 = cdecl dyn => unported;
-    /// `RwV3dTransformPoints(out, in, n, matrix)` (0x7EDD90)
-    fn v3d_transform_points(out: GPtr<f32>, inp: GPtr<f32>, n: i32, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EDD90 => unported;
     /// `RwCameraFrustumTestSphere(camera, sphere)` (0x7EE2D0)
     fn camera_frustum_test_sphere(cam: GPtr<u8>, sphere: GPtr<f32>) -> u32 = cdecl 0x7EE2D0 => unported;
 }
@@ -102,7 +101,7 @@ pub fn set_clump_for_all_atomics_flag_cb(atomic: GPtr<u8>, data: u32) -> GPtr<u8
 #[hook(addr = 0x7322F0, conv = cdecl, name = "CVisibilityPlugins::SetClumpForAllAtomicsFlag", expect = "8B 44 24 08 8B 4C 24 04 50 68 D0 22 73 00",
        unverified = "std6-render-1", route = "L2", hazards = "none")]
 pub fn set_clump_for_all_atomics_flag(clump: GPtr<u8>, flag: u32) {
-    clump_for_all_atomics(clump, 0x7322D0, flag);
+    clump_for_all_atomics(clump, 0x7322D0, GPtr::from_addr(flag as usize));
 }
 
 /// `CVisibilityPlugins::ClearAtomicFlag(atomic, flag)` (0x732310): +2 &= ~flag.
@@ -126,7 +125,7 @@ pub fn clear_clump_for_all_atomics_flag_cb(atomic: GPtr<u8>, data: u32) -> GPtr<
 #[hook(addr = 0x732350, conv = cdecl, name = "CVisibilityPlugins::ClearClumpForAllAtomicsFlag", expect = "8B 44 24 08 8B 4C 24 04 50 68 30 23 73 00",
        route = "L2", hazards = "none")]
 pub fn clear_clump_for_all_atomics_flag(clump: GPtr<u8>, flag: u32) {
-    clump_for_all_atomics(clump, 0x732330, flag);
+    clump_for_all_atomics(clump, 0x732330, GPtr::from_addr(flag as usize));
 }
 
 /// `CVisibilityPlugins::GetAtomicId(atomic)` (0x732370): the u16 at +2, zero-extended.

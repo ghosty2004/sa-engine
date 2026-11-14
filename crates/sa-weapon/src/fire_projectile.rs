@@ -3,6 +3,7 @@
 //! has not been locked for 1.5 s, and checks `projType == ROCKET && target && targetPos` for the aimed
 //! rocket; the bytes differ on all three). Unverified (docs/verify/HOWTO.md).
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 

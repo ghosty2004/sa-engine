@@ -53,13 +53,11 @@ const RAND_RET_FLOAT: u32 = 0x4D9C56;
 const RAND_RET_PROB: u32 = 0x4D9C97;
 
 pub use sa_core::bindings::find_player_ped;
+pub use crate::bindings::convert_from_bytes_to_ms_call;
+pub use sa_core::bindings::find_player_vehicle;
 orig! {
     /// `CAEAudioUtility::AudioLog10(float)` (0x4D9E50) as callers reach it (80-bit ST0 result)
     pub fn call_audio_log10(v: f32) -> X87 = reg("args = stack") 0x4D9E50 => audio_log10;
-    /// `FindPlayerVehicle(int32 playerId, bool bIncludeRemote)` (0x56E0D0)
-    pub fn find_player_vehicle(id: i32, remote: u8) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
-    /// `CAEAudioUtility::ConvertFromBytesToMS(uint32, uint32, uint16)` (0x4D9EF0)
-    pub fn convert_from_bytes_to_ms_call(bytes: u32, freq: u32, channels: u16) -> u32 = cdecl 0x4D9EF0 => convert_from_bytes_to_ms;
     /// `CAEAudioUtility::ConvertFromMSToBytes(uint32, uint32, uint16)` (0x4D9F40)
     pub fn convert_from_ms_to_bytes_call(ms: u32, freq: u32, channels: u16) -> u32 = cdecl 0x4D9F40 => convert_from_ms_to_bytes;
 }

@@ -9,6 +9,7 @@
 //! group, +0x2C anim id, +0x30 blend delta, +0x34 anim speed, +0x41 jumped-out flag.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -27,11 +28,14 @@ use sa_core::bindings::tm_get_simplest_active_task;
 use sa_core::bindings::vector2d_normalise;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::intel_get_task_fighting;
-use sa_world::bindings::ped_get_bone_position;
+use sa_core::bindings::ped_get_bone_position;
 use sa_world::bindings::ped_set_ped_position_in_car;
 use sa_world::bindings::physical_apply_move_force;
 use sa_world::bindings::physical_apply_move_force_5429f0 as physical_apply_move_force_v;
 use sa_world::bindings::placeable_set_posn;
+use crate::bindings::ped_position_ped_out_of_collision;
+use sa_world::bindings::clump_get_first_association_4d6a70 as clump_get_first_association;
+use sa_world::bindings::stats_get_fat_and_muscle_modifier;
 orig! {
     /// `CGeneral::GetRandomNumberInRange(float min, float max)` (0x41BD90, cdecl, ST0)
     fn general_random_float_in_range(lo: u32, hi: u32) -> f64 = cdecl 0x41BD90 => unported;
@@ -39,22 +43,16 @@ orig! {
     fn v_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, prio: i32, ev: GPtr<u8>) -> u8 = thiscall vslot 0x18 => unported;
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `RpAnimBlendClumpGetFirstAssociation(RpClump*, uint32 flags)` (0x4D6A70, cdecl)
-    fn clump_get_first_association(clump: u32, flags: u32) -> GPtr<u8> = cdecl 0x4D6A70 => unported;
     /// `CTaskSimpleFight::IsComboSet` (0x4ABDC0)
     fn fight_is_combo_set(t: GPtr<u8>) -> u8 = thiscall 0x4ABDC0 => unported;
     /// `CTaskSimpleFight::GetComboAnimGroupID` (0x4ABDA0)
     fn fight_get_combo_anim_group_id(t: GPtr<u8>) -> u32 = thiscall 0x4ABDA0 => unported;
-    /// `CStats::GetFatAndMuscleModifier(eStatModAbilities)` (0x559AF0, cdecl, ST0)
-    fn stats_get_fat_and_muscle_modifier(i: u32) -> f64 = cdecl 0x559AF0 => unported;
     /// `CPhysical::TestCollision(bool applySpeed)` (vtable +0x34, `ret 4`)
     fn v_test_collision(p: GPtr<u8>, b: u32) -> u8 = thiscall vslot 0x34 => unported;
     /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, bool buildings, bool vehicles, bool peds,
     /// bool objects, bool dummies, bool seeThrough, bool ignoreSomeObjects)` (0x56A490, cdecl)
     #[allow(clippy::too_many_arguments)]
     fn world_los_clear(a: GPtr<u8>, b: GPtr<u8>, bu: u32, ve: u32, pe: u32, ob: u32, du: u32, st: u32, ig: u32) -> u8 = cdecl 0x56A490 => unported;
-    /// `CPed::PositionPedOutOfCollision(int32 door, CVehicle*, bool)` (0x5E0820, `ret 0xC`)
-    fn ped_position_ped_out_of_collision(p: GPtr<u8>, door: i32, veh: GPtr<u8>, b: u32) -> u8 = thiscall 0x5E0820 => unported;
 }
 
 use sa_core::field::ptr_of as local;
@@ -84,7 +82,7 @@ fn apply_bike_force(ped: GPtr<u8>, m: GPtr<u8>, su: f32, voff: isize, sv: f32) {
     let fx = f32_of(vx.fadd(ux)).to_bits();
     let fy = f32_of(x(vy).fadd(uy)).to_bits();
     let fz = f32_of(x(vz).fadd_m(uz)).to_bits();
-    physical_apply_move_force_v(ped, fx, fy, fz);
+    physical_apply_move_force_v(ped, f32::from_bits(fx), f32::from_bits(fy), f32::from_bits(fz));
 }
 
 /// The ped's move speed (+0x44) as the vehicle's times `s`, each through an f32 slot.
@@ -132,7 +130,7 @@ pub fn knock_off_bike_calc_forces_and_anims(this: GPtr<u8>, ped: GPtr<u8>) -> u3
             copy3(ped.byte_add(0x44), this.byte_add(0xC));
             let z = f32_of(X87::from_f64_exact(general_random_float_in_range(g::<u32>(0x85AB14).read(), g::<u32>(0x85AB18).read())));
             let (fx, fy) = impulse(x(k(0x85AB10)));
-            physical_apply_move_force(ped, fx, fy, z.to_bits());
+            physical_apply_move_force(ped, f32::from_bits(fx), f32::from_bits(fy), f32::from_bits(z.to_bits()));
             wr::<GPtr<u8>>(ped, 0x128, rd::<GPtr<u8>>(this, 0x38));
             let anim = match dir {
                 0 => 0x1A,
@@ -151,7 +149,7 @@ pub fn knock_off_bike_calc_forces_and_anims(this: GPtr<u8>, ped: GPtr<u8>) -> u3
             let class10 = rd::<u32>(rd::<GPtr<u8>>(this, 0x38), 0x594) == 10;
             let kk = if class10 { x(k(0x85AB28)) } else { x(k(0x85AB1C)) };
             let (fx, fy) = impulse(kk);
-            physical_apply_move_force(ped, fx, fy, 0);
+            physical_apply_move_force(ped, f32::from_bits(fx), f32::from_bits(fy), f32::from_bits(0));
             let class10 = rd::<u32>(rd::<GPtr<u8>>(this, 0x38), 0x594) == 10;
             let lo = g::<u32>(if class10 { 0x85AB2C } else { 0x85AB20 }).read();
             let hi = g::<u32>(if class10 { 0x85AB30 } else { 0x85AB24 }).read();
@@ -267,7 +265,7 @@ pub fn damage_compute_death_anim(this: GPtr<u8>, ped: GPtr<u8>, make_abortable: 
         let t1 = v_task_type(tm_get_simplest_active_task(tm()));
         if t1 == 0xCF || v_task_type(tm_get_simplest_active_task(tm())) == 0xCD {
             wr::<u8>(this, 0x25, rd::<u8>(this, 0x25) | 2);
-            let a = clump_get_first_association(rd::<u32>(ped, 0x18), 0x800);
+            let a = clump_get_first_association(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0x800);
             wr::<u32>(this, 0x2C, if a.is_null() { 0x24 } else { 0x27 });
             return;
         }
@@ -372,7 +370,7 @@ pub fn damage_compute_death_anim(this: GPtr<u8>, ped: GPtr<u8>, make_abortable: 
     wr::<u32>(ped, 0x46C, rd::<u32>(ped, 0x46C) & 0xFFFF_FFFC);
     let fx = f32_of(x(f32::from_bits(d[0])).fmul(f)).to_bits();
     let fy = f32_of(f.fmul_m(f32::from_bits(d[1]))).to_bits();
-    physical_apply_move_force_v(ped, fx, fy, 0x40A0_0000);
+    physical_apply_move_force_v(ped, f32::from_bits(fx), f32::from_bits(fy), f32::from_bits(0x40A0_0000));
 }
 
 /// `CEventKnockOffBike::SetPedSafePosition(CPed*)` (0x4B4AC0, `ret 4`; AL). A bike's rider fields (+0x648,
@@ -402,7 +400,7 @@ pub fn knock_off_bike_set_ped_safe_position(this: GPtr<u8>, ped: GPtr<u8>) -> u8
     };
     let h = if !x(rd::<f32>(m, 0x28)).fcom(x(k(K_ZERO))).test_parity(0x05) {
         let a = heading(m).fadd_m(k(K_PI));
-        X87::from_f64_exact(general_limit_radian_angle(f32_of(a).to_bits()))
+        X87::from_f64_exact(general_limit_radian_angle(f32::from_bits(f32_of(a).to_bits())))
     } else {
         heading(m)
     };
@@ -413,7 +411,7 @@ pub fn knock_off_bike_set_ped_safe_position(this: GPtr<u8>, ped: GPtr<u8>) -> u8
     if pm.is_null() {
         wr::<f32>(ped, 0x10, r);
     } else {
-        matrix_set_rotate_z_only(pm, r.to_bits());
+        matrix_set_rotate_z_only(pm, f32::from_bits(r.to_bits()));
     }
     if rd::<u32>(veh(), 0x590) == 9 && rd::<u8>(this, 0x35) & 1 == 0 {
         let pm = rd::<GPtr<u8>>(ped, 0x14);
@@ -457,7 +455,7 @@ pub fn knock_off_bike_set_ped_safe_position(this: GPtr<u8>, ped: GPtr<u8>) -> u8
         if rd::<i8>(this, 0x36) == 0x31 {
             raise(k(0x858B8C));
             if v_test_collision(ped, 0) != 0 || !clear() {
-                placeable_set_posn(ped, local(&mut saved));
+                placeable_set_posn(ped, GPtr::<u8>::cast::<f32>(local(&mut saved)));
             }
         }
     } else {
@@ -473,7 +471,7 @@ pub fn knock_off_bike_set_ped_safe_position(this: GPtr<u8>, ped: GPtr<u8>) -> u8
             wr::<f32>(m, 0x38, f32_of(x(rd::<f32>(m, 0x38)).fsub_m(k(0x858CC8))));
             ok = v_test_collision(ped, 0) == 0 && clear();
             if !ok {
-                result = ped_position_ped_out_of_collision(ped, i32::from(rd::<i8>(this, 0x37)), veh(), flag);
+                result = ped_position_ped_out_of_collision(ped, i32::from(rd::<i8>(this, 0x37)) as u32, veh(), flag);
                 if result == 0 {
                     g::<u32>(0xB7CD68).write(0);
                     return result;
@@ -486,7 +484,7 @@ pub fn knock_off_bike_set_ped_safe_position(this: GPtr<u8>, ped: GPtr<u8>) -> u8
     let slot = ped.byte_add(0x568);
     let e = rd::<GPtr<u8>>(slot, 0);
     if !e.is_null() {
-        entity_clean_up_old_reference(e, slot);
+        entity_clean_up_old_reference(e, slot.cast::<GPtr<u8>>());
         wr::<u32>(slot, 0, 0);
     }
     wr::<u32>(ped, 0x46C, rd::<u32>(ped, 0x46C) & 0xFFFF_FFFC);

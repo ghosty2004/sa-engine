@@ -3,6 +3,7 @@
 //! Unverified (docs/verify/HOWTO.md).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 use sa_math::x87::Cmp;
@@ -12,9 +13,8 @@ use crate::common::*;
 use sa_core::bindings::find_player_ped;
 use sa_world::bindings::get_stat_value;
 use sa_world::bindings::membership_get_member;
+use sa_world::bindings::count_members_excluding_leader as membership_count_excluding_leader;
 orig! {
-    /// `CPedGroupMembership::CountMembersExcludingLeader` (0x5F6AA0): a 16-bit result
-    fn membership_count_excluding_leader(m: GPtr<u8>) -> u32 = thiscall 0x5F6AA0 => unported;
     /// `CAEPedSpeechAudioEntity::IsCJDressedInForGangSpeech()` (0x4E4270, static)
     fn is_cj_dressed_in_for_gang_speech() -> u8 = cdecl 0x4E4270 => unported;
 }
@@ -39,7 +39,7 @@ const OVERRIDE_FAT: usize = 0xB613D4;
 const OVERRIDE_DRESSED: usize = 0xB613D0;
 
 fn stat(id: u32) -> X87 {
-    X87::from_f64_exact(get_stat_value(id))
+    X87::from_f64_exact(get_stat_value(id as u16))
 }
 
 /// The player group's membership (`FindPlayerPed(-1)` → player data +0x480 → group index +0x38).

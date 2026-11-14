@@ -8,16 +8,13 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::{k, rd, wr};
 
 use sa_core::bindings::vector_normalise;
 use sa_world::bindings::find_player_centre_of_world;
-orig! {
-    /// `CWorld::FindPlayerCoors(CVector* out, int32)` (0x56E010): returns `out`
-    fn find_player_coors(out: GPtr<f32>, id: i32) -> GPtr<f32> = cdecl 0x56E010 => unported;
-}
+use sa_core::bindings::find_player_coors;
 
 const CHECKPOINTS: usize = 0xC7_F158;
 const SIZE: usize = 0x38;
@@ -42,7 +39,7 @@ use sa_math::fpu::x as xf;
        note = "FSQRT; the original keeps dist and the changed type in its own argument slots")]
 pub fn checkpoints_place_marker(id: u32, ty: u32, pos: GPtr<f32>, dir: GPtr<f32>, size: u32, r: u32, g: u32, b: u32,
     a: u32, period: u32, fraction: u32, rotate: u32) -> GPtr<u8> {
-    let p = find_player_centre_of_world(0);
+    let p = GPtr::<u8>::cast::<f32>(find_player_centre_of_world(0));
     let (px, py) = (p.read(), p.wrapping_index(1).read());
     let dy = xf(pos.wrapping_index(1).read()).fsub_m(py);
     let dx = xf(pos.read()).fsub_m(px);

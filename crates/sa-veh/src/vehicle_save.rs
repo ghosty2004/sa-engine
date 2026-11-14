@@ -9,15 +9,13 @@ use crate::common::rd;
 
 use sa_core::bindings::matrix_assign;
 use sa_world::bindings::placeable_set_matrix;
+use sa_core::bindings::load_data_from_work_buffer as load_data;
+use sa_core::bindings::save_data_to_work_buffer as save_data;
 orig! {
     /// `CVehicle::Save()` (0x5D4760)
     fn vehicle_save(v: GPtr<u8>) -> u8 = thiscall 0x5D4760 => crate::vehicle2::save;
     /// `CVehicle::Load()` (0x5D2900)
     fn vehicle_load(v: GPtr<u8>) -> u8 = thiscall 0x5D2900 => crate::vehicle2::load;
-    /// `CGenericGameStorage::SaveDataToWorkBuffer(void*, int32)` (0x5D1270)
-    fn save_data(p: GPtr<u8>, n: i32) -> u8 = cdecl 0x5D1270 => sa_core::save::save_data_to_work_buffer;
-    /// `CGenericGameStorage::LoadDataFromWorkBuffer(void*, int32)` (0x5D1300)
-    fn load_data(p: GPtr<u8>, n: i32) -> u8 = cdecl 0x5D1300 => sa_core::save::load_data_from_work_buffer;
 }
 
 /// `CAutomobile::Save()` (0x5D47E0, thiscall): `CVehicle::Save()`, then the damage manager (0x18 bytes at

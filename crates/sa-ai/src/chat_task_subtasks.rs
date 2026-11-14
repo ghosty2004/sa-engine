@@ -5,6 +5,7 @@
 //! (docs/verify/HOWTO.md).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -17,9 +18,8 @@ use sa_world::bindings::interesting_events_add;
 use sa_world::bindings::ped_get_ped_talking as ped_get_talking;
 use sa_world::bindings::ped_say;
 use sa_world::bindings::run_anim_ctor;
+use sa_world::bindings::stand_still_ctor;
 orig! {
-    /// `CTaskSimpleStandStill(int ms, bool looped, bool useAnimIdle, float blend)` (0x62F310, `ret 0x10`)
-    fn stand_still_ctor(t: GPtr<u8>, ms: i32, looped: u32, idle: u32, blend: u32) -> GPtr<u8> = thiscall 0x62F310 => unported;
     /// `CTask::MakeAbortable(CPed*, int priority, const CEvent*)` (vtable slot 0x18, `ret 0xC`)
     fn task_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, prio: i32, ev: u32) -> u8 = thiscall vslot 0x18 => unported;
 }
@@ -42,11 +42,11 @@ pub fn chat_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     }
     if rd::<u8>(this, 0xC) == 0 {
         let t = task_new(0x20);
-        return if t.is_null() { GPtr::NULL } else { stand_still_ctor(t, 999_999, 0, 0, 0x4100_0000) };
+        return if t.is_null() { GPtr::NULL } else { stand_still_ctor(t, 999_999, 0, 0, f32::from_bits(0x4100_0000)) };
     }
     let ctx = rd::<u16>(this, 0x18);
     if ctx as i16 > -1 {
-        ped_say(ped, (partner & 0xFFFF_0000) | ctx as u32, 0, 0x3F80_0000, 0, 0, 0);
+        ped_say(ped, (partner & 0xFFFF_0000) | ctx as u32, 0, f32::from_bits(0x3F80_0000), 0, 0, 0);
     }
     interesting_events_add(GPtr::from_addr(INTERESTING_EVENTS), 1, ped);
     let c = rd::<i16>(this, 0x18) as i32;
@@ -54,7 +54,7 @@ pub fn chat_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
         let n = random_int(0, 3);
         if (0..3).contains(&n) {
             let t = task_new(0x20);
-            return if t.is_null() { GPtr::NULL } else { run_anim_ctor(t, 0, 0xA6 + n as u32, 0x4080_0000, 0) };
+            return if t.is_null() { GPtr::NULL } else { run_anim_ctor(t, 0, 0xA6 + n as u32, f32::from_bits(0x4080_0000), 0) };
         }
         let t = task_new(0x34);
         return if t.is_null() { GPtr::NULL } else { simple_chat_ctor(t, 4000) };

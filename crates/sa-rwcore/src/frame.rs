@@ -53,23 +53,20 @@ pub use crate::bindings::registry_copy_object;
 pub use sa_core::bindings::rw_matrix_multiply as matrix_multiply;
 pub use sa_core::bindings::rw_matrix_transform as matrix_transform;
 pub use sa_core::bindings::stream_read;
+pub use crate::bindings::frame_destroy_hierarchy as destroy_hierarchy_call;
+pub use crate::bindings::free_list_create_prealloc as free_list_create_and_preallocate_space;
+pub use crate::bindings::matrix_normal_error;
+pub use crate::bindings::matrix_orthogonal_error;
+pub use sa_core::bindings::rw_frame_add_child as add_child_call;
+pub use sa_core::bindings::rw_frame_create as create_call;
+pub use sa_core::bindings::rw_frame_update_objects as update_objects_call;
+pub use sa_core::bindings::rw_matrix_rotate as matrix_rotate;
+pub use sa_core::bindings::rw_matrix_scale as matrix_scale;
+pub use sa_core::bindings::rw_matrix_translate as matrix_translate;
+pub use sa_core::bindings::rw_stream_find_chunk_call as stream_find_chunk;
 orig! {
-    /// `RwFreeListCreateAndPreallocateSpace(entrySize, entriesPerBlock, alignment, numBlocks, space, hint)` (0x801B70)
-    pub fn free_list_create_and_preallocate_space(size: i32, per_block: i32, align: i32, blocks: i32, space: GPtr<u8>, hint: u32) -> GPtr<u8> = cdecl 0x801B70 => unported;
-    /// `RwMatrixRotate(m, axis, angle, op)` (0x7F1FD0; the angle is passed as its raw dword)
-    pub fn matrix_rotate(m: GPtr<u8>, axis: GPtr<u8>, angle: u32, op: i32) -> GPtr<u8> = cdecl 0x7F1FD0 => unported;
-    /// `RwMatrixScale(m, v, op)` (0x7F22C0)
-    pub fn matrix_scale(m: GPtr<u8>, v: GPtr<u8>, op: i32) -> GPtr<u8> = cdecl 0x7F22C0 => unported;
-    /// `RwMatrixTranslate(m, v, op)` (0x7F2450)
-    pub fn matrix_translate(m: GPtr<u8>, v: GPtr<u8>, op: i32) -> GPtr<u8> = cdecl 0x7F2450 => unported;
-    /// `_rwMatrixNormalError(m)` (0x7F1500, ST0 result)
-    pub fn matrix_normal_error(m: GPtr<u8>) -> f64 = cdecl 0x7F1500 => unported;
-    /// `_rwMatrixOrthogonalError(m)` (0x7F14A0, ST0 result)
-    pub fn matrix_orthogonal_error(m: GPtr<u8>) -> f64 = cdecl 0x7F14A0 => unported;
     /// `_rwMatrixDeterminant(m)` (0x7F1450, ST0 result)
     pub fn matrix_determinant(m: GPtr<u8>) -> f64 = cdecl 0x7F1450 => unported;
-    /// `RwStreamFindChunk(stream, type, lengthOut, versionOut)` (0x7ED2D0)
-    pub fn stream_find_chunk(s: GPtr<u8>, ty: u32, len: GPtr<u32>, ver: GPtr<u32>) -> i32 = cdecl 0x7ED2D0 => unported;
     /// `RwObjectHasFrame` sync callback `obj->sync(obj)` (stored at obj + 0x10)
     pub fn call_object_sync(f: u32, obj: GPtr<u8>) -> GPtr<u8> = cdecl dyn => unported;
     /// `RwFrameForAllChildren` callback `cb(frame, data)`
@@ -83,18 +80,10 @@ orig! {
     pub fn set_hierarchy_root_call(f: GPtr<u8>, root: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0210 => set_hierarchy_root;
     /// `_rwFrameInternalInit` (0x7F0360)
     pub fn internal_init_call(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0360 => internal_init;
-    /// `RwFrameCreate` (0x7F0410)
-    pub fn create_call() -> GPtr<u8> = cdecl 0x7F0410 => create;
     /// `_rwFrameDestroyRecurse` (0x7F0830)
     pub fn destroy_recurse_call(f: GPtr<u8>) = cdecl 0x7F0830 => destroy_recurse;
-    /// `RwFrameDestroyHierarchy` (0x7F08A0)
-    pub fn destroy_hierarchy_call(f: GPtr<u8>) -> u32 = cdecl 0x7F08A0 => destroy_hierarchy;
-    /// `RwFrameUpdateObjects` (0x7F0910)
-    pub fn update_objects_call(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0910 => update_objects;
     /// `RwFrameAddChildNoUpdate` (0x7F09C0)
     pub fn add_child_no_update_call(parent: GPtr<u8>, child: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F09C0 => add_child_no_update;
-    /// `RwFrameAddChild` (0x7F0B00)
-    pub fn add_child_call(parent: GPtr<u8>, child: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0B00 => add_child;
     /// `RwFrameCount` (0x7F0E00)
     pub fn count_call(f: GPtr<u8>) -> i32 = cdecl 0x7F0E00 => count;
     /// `_rwFrameSyncDirtyLTM` (0x809700)
@@ -223,10 +212,10 @@ pub fn module_open(instance: GPtr<u8>, offset: i32, _size: i32) -> GPtr<u8> {
     FRAME_MODULE_OFFSET.set(offset as u32);
     let size = rd::<i32>(frame_registry(), 0);
     let fl = free_list_create_and_preallocate_space(
-        size,
-        per_block,
+        size as u32,
+        per_block as u32,
         4,
-        prealloc,
+        prealloc as u32,
         FRAME_FREELIST_SPACE.ptr().cast(),
         0x4000E,
     );
@@ -618,7 +607,7 @@ pub fn count(f: GPtr<u8>) -> i32 {
 /// `RwFrameTranslate` (0x7F0E30).
 #[hook(addr = 0x7F0E30, conv = cdecl, name = "RwFrameTranslate", expect = "8B 44 24 0C 8B 4C 24 08")]
 pub fn translate(f: GPtr<u8>, v: GPtr<u8>, op: i32) -> GPtr<u8> {
-    matrix_translate(f.byte_add(0x10), v, op);
+    matrix_translate(f.byte_add(0x10), v, op as u32);
     mark_dirty(f);
     f
 }
@@ -634,7 +623,7 @@ pub fn scale(f: GPtr<u8>, v: GPtr<u8>, op: i32) -> GPtr<u8> {
 /// `RwFrameTransform` (0x7F0F70).
 #[hook(addr = 0x7F0F70, conv = cdecl, name = "RwFrameTransform", expect = "8B 44 24 0C 8B 4C 24 08")]
 pub fn transform(f: GPtr<u8>, m: GPtr<u8>, op: i32) -> GPtr<u8> {
-    matrix_transform(f.byte_add(0x10), m, op);
+    matrix_transform(f.byte_add(0x10), m, op as u32);
     mark_dirty(f);
     f
 }
@@ -642,7 +631,7 @@ pub fn transform(f: GPtr<u8>, m: GPtr<u8>, op: i32) -> GPtr<u8> {
 /// `RwFrameRotate` (0x7F1010): the angle is forwarded as its raw dword.
 #[hook(addr = 0x7F1010, conv = cdecl, name = "RwFrameRotate", expect = "8B 44 24 10 8B 4C 24 0C")]
 pub fn rotate(f: GPtr<u8>, axis: GPtr<u8>, angle: u32, op: i32) -> GPtr<u8> {
-    matrix_rotate(f.byte_add(0x10), axis, angle, op);
+    matrix_rotate(f.byte_add(0x10), axis, f32::from_bits(angle), op as u32);
     mark_dirty(f);
     f
 }

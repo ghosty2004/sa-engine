@@ -10,7 +10,7 @@ use sa_core::orig;
 
 orig! {
     /// `CPointRoute::operator new` (0x41B7C0)
-    pub fn point_route_new(size: u32) -> GPtr<u8> = cdecl 0x41B7C0 => unported;
+    pub fn point_route_new(size: u32) -> GPtr<u8> = cdecl 0x41B7C0 => sa_world::world::mvpa2::point_route_new;
 }
 
 orig! {
@@ -20,12 +20,17 @@ orig! {
 
 orig! {
     /// `CEventAcquaintancePedHate::Constructor2` (0x420E70)
-    pub fn acquaintance_ped_hate_ctor(e: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x420E70 => unported;
+    pub fn acquaintance_ped_hate_ctor(e: u32, ped: u32) -> u32 = thiscall 0x420E70 => crate::gen_ctors::g_event_acquaintance_ped_hate_constructor2_420e70;
 }
 
 orig! {
     /// `CConversationNode::ClearRecursively` (0x43A710)
-    pub fn conversation_node_clear_recursively(n: GPtr<u8>) = thiscall 0x43A710 => crate::mvpb_ai::conversation_node_clear_recursively;
+    pub fn conversation_node_clear_recursively(n: GPtr<u8>) = thiscall 0x43A710 => crate::attractor_scanner::conversation_node_clear_recursively;
+}
+
+orig! {
+    /// `CConversationForPed::IsPlayerInPositionForConversation` (0x43AC40)
+    pub fn conv_is_player_in_position(c: GPtr<u8>, random: u32) -> u8 = thiscall 0x43AC40 => unported;
 }
 
 orig! {
@@ -41,26 +46,6 @@ orig! {
 orig! {
     /// `CPedIntelligence::GetPedEntities` (0x4893E0)
     pub fn intel_get_ped_entities(i: GPtr<u8>) -> GPtr<u8> = thiscall 0x4893E0 => unported;
-}
-
-orig! {
-    /// `thunk_FUN_01569990` (0x48E180)
-    pub fn point_route_add(r: GPtr<u8>, p: GPtr<u8>) = thiscall 0x48E180 => unported;
-}
-
-orig! {
-    /// `CTaskSimpleSay::Constructor` (0x48E360)
-    pub fn say_ctor(t: GPtr<u8>, ctx: i32, time: i32) -> GPtr<u8> = thiscall 0x48E360 => unported;
-}
-
-orig! {
-    /// `CTaskSimplePause::Constructor` (0x48E750)
-    pub fn pause_ctor(t: GPtr<u8>, time: i32) -> GPtr<u8> = thiscall 0x48E750 => unported;
-}
-
-orig! {
-    /// `CTaskSimpleHandsUp::Constructor` (0x48E970)
-    pub fn hands_up_ctor(t: GPtr<u8>, time: i32) -> GPtr<u8> = thiscall 0x48E970 => unported;
 }
 
 orig! {
@@ -104,8 +89,18 @@ orig! {
 }
 
 orig! {
+    /// `CEventPedCollisionWithPed::Constructor` (0x4AC990)
+    pub fn ped_collision_ctor(e: GPtr<u8>, piece: u32, dmg: u32, ped: GPtr<u8>, vel: GPtr<u8>, pos: GPtr<u8>, ms: u16, oms: u16) -> GPtr<u8> = thiscall 0x4AC990 => unported;
+}
+
+orig! {
     /// `FUN_004aca70` (0x4ACA70)
     pub fn dtor_4aca70(e: GPtr<u8>) = thiscall 0x4ACA70 => unported;
+}
+
+orig! {
+    /// `CEventObjectCollision::Constructor` (0x4ACCF0)
+    pub fn object_collision_ctor(e: GPtr<u8>, piece: u32, dmg: u32, obj: GPtr<u8>, vel: GPtr<u8>, pos: GPtr<u8>, ms: u16) -> GPtr<u8> = thiscall 0x4ACCF0 => unported;
 }
 
 orig! {
@@ -114,8 +109,18 @@ orig! {
 }
 
 orig! {
+    /// `CEventBuildingCollision::Constructor` (0x4ACF00)
+    pub fn building_collision_ctor(e: GPtr<u8>, piece: u32, dmg: u32, b: GPtr<u8>, vel: GPtr<u8>, pos: GPtr<u8>, ms: u16) -> GPtr<u8> = thiscall 0x4ACF00 => unported;
+}
+
+orig! {
     /// `FUN_004acff0` (0x4ACFF0)
     pub fn building_collision_dtor(e: GPtr<u8>) = thiscall 0x4ACFF0 => unported;
+}
+
+orig! {
+    /// `CEventDraggedOutCar::CEventDraggedOutCar` (0x4AD250)
+    pub fn dragged_out_car_ctor(e: GPtr<u8>, veh: GPtr<u8>, ped: GPtr<u8>, driver: u32) -> GPtr<u8> = thiscall 0x4AD250 => unported;
 }
 
 orig! {
@@ -144,8 +149,18 @@ orig! {
 }
 
 orig! {
+    /// `CEventPotentialWalkIntoVehicle::Constructor` (0x4AE320)
+    pub fn event_walk_into_vehicle_ctor(this: GPtr<u8>, a: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4AE320 => unported;
+}
+
+orig! {
     /// `FUN_004ae3c0` (0x4AE3C0)
     pub fn dtor_4ae3c0(this: GPtr<u8>) = thiscall 0x4AE3C0 => unported;
+}
+
+orig! {
+    /// `CEventPotentialWalkIntoPed::Constructor` (0x4AE6E0)
+    pub fn walk_into_ped_ctor(this: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, c: u32) -> GPtr<u8> = thiscall 0x4AE6E0 => unported;
 }
 
 orig! {
@@ -154,13 +169,18 @@ orig! {
 }
 
 orig! {
+    /// `FUN_004aecd0` (0x4AECD0)
+    pub fn ctor_4aecd0(this: GPtr<u8>, a: u32, b: GPtr<u8>) -> GPtr<u8> = thiscall 0x4AECD0 => unported;
+}
+
+orig! {
     /// `FUN_004aed60` (0x4AED60)
     pub fn dtor_4aed60(this: GPtr<u8>) = thiscall 0x4AED60 => unported;
 }
 
 orig! {
-    /// `FUN_004aeea0` (0x4AEEA0)
-    pub fn dtor_4aeea0(this: GPtr<u8>) = thiscall 0x4AEEA0 => unported;
+    /// `FUN_004af010` (0x4AF010)
+    pub fn ctor_4af010(this: GPtr<u8>, a: GPtr<u8>) -> GPtr<u8> = thiscall 0x4AF010 => unported;
 }
 
 orig! {
@@ -179,11 +199,6 @@ orig! {
 }
 
 orig! {
-    /// `CEventAcquaintancePed::Constructor` (0x4AF820)
-    pub fn acquaintance_ped_ctor(e: GPtr<u8>, p: GPtr<u8>) -> GPtr<u8> = thiscall 0x4AF820 => unported;
-}
-
-orig! {
     /// `FUN_004b0d00` (0x4B0D00)
     pub fn dtor_4b0d00(this: GPtr<u8>) = thiscall 0x4B0D00 => unported;
 }
@@ -199,13 +214,33 @@ orig! {
 }
 
 orig! {
+    /// `CEventPotentialWalkIntoFire::Destructor` (0x4B1F00)
+    pub fn dtor_4b1f00(this: GPtr<u8>) = thiscall 0x4B1F00 => crate::events::event_base_dtor_4b1f00;
+}
+
+orig! {
     /// `FUN_004b2210` (0x4B2210)
     pub fn area_codes_dtor(e: GPtr<u8>) = thiscall 0x4B2210 => unported;
 }
 
 orig! {
+    /// `CEvent::GetSoundLevel` (0x4B2850)
+    pub fn event_get_sound_level(ev: GPtr<u8>, ent: GPtr<u8>, pos: GPtr<u8>) -> f64 = thiscall 0x4B2850 => unported;
+}
+
+orig! {
     /// `CEventPool::New` (0x4B5570)
     pub fn event_pool_new(pool: GPtr<u8>) -> GPtr<u8> = thiscall 0x4B5570 => unported;
+}
+
+orig! {
+    /// `CEventEditableResponse::ComputeResponseTaskType-ped` (0x4B56C0)
+    pub fn editable_compute_response_task_type(e: GPtr<u8>, ped: GPtr<u8>, b: u32) = thiscall 0x4B56C0 => unported;
+}
+
+orig! {
+    /// `CEventEditableResponse::ComputeResponseTaskOfType` (0x4B5730)
+    pub fn editable_compute_response_task_of_type(e: GPtr<u8>, ped: GPtr<u8>, ty: i32) -> u8 = thiscall 0x4B5730 => crate::events2::event_editable_response_compute_response_task_of_type_4b5730;
 }
 
 orig! {
@@ -229,13 +264,23 @@ orig! {
 }
 
 orig! {
+    /// `CEventHandlerHistory::GetCurrentEvent` (0x4B8CA0)
+    pub fn history_get_current_event(h: GPtr<u8>) -> GPtr<u8> = thiscall 0x4B8CA0 => crate::handler::history_get_current_event;
+}
+
+orig! {
     /// `CEventHandler::GetCurrentEventType` (0x4B8CC0)
-    pub fn event_handler_current_type(h: GPtr<u8>) -> i32 = thiscall 0x4B8CC0 => unported;
+    pub fn event_handler_current_type(h: GPtr<u8>) -> i32 = thiscall 0x4B8CC0 => crate::mvpa_ai2::event_handler_get_current_event_type;
 }
 
 orig! {
     /// `CEventHandler::ComputeKnockOffBikeResponse` (0x4B9FF0)
-    pub fn compute_knock_off_bike_response(h: GPtr<u8>, e: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) = thiscall 0x4B9FF0 => unported;
+    pub fn compute_knock_off_bike_response(h: GPtr<u8>, e: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) = thiscall 0x4B9FF0 => crate::handler::event_handler_compute_knock_off_bike_response;
+}
+
+orig! {
+    /// `CEventHandler::IsTemporaryEvent` (0x4BC370)
+    pub fn handler_is_temporary_event(e: GPtr<u8>) -> u32 = cdecl 0x4BC370 => crate::handler::handler_is_temporary_event_port;
 }
 
 orig! {
@@ -259,43 +304,8 @@ orig! {
 }
 
 orig! {
-    /// `CAnimBlendAssocGroup::GetAnimation-AnimationId` (0x4CE090)
-    pub fn assoc_group_get_animation(g: GPtr<u8>, id: u32) -> GPtr<u8> = thiscall 0x4CE090 => unported;
-}
-
-orig! {
-    /// `CAnimBlendAssociation::Start` (0x4CEB70)
-    pub fn assoc_start(a: GPtr<u8>, t: u32) = thiscall 0x4CEB70 => unported;
-}
-
-orig! {
-    /// `CAnimBlendAssociation::SetDeleteCallback` (0x4CEBC0)
-    pub fn anim_set_delete_callback(a: GPtr<u8>, cb: u32, data: u32) = thiscall 0x4CEBC0 => unported;
-}
-
-orig! {
-    /// `CAnimBlendAssociation::SetFinishCallback` (0x4CEBE0)
-    pub fn assoc_set_finish_callback(a: GPtr<u8>, cb: u32, data: u32) = thiscall 0x4CEBE0 => unported;
-}
-
-orig! {
-    /// `CAnimManager::GetAnimBlockName` (0x4D3A30)
-    pub fn anim_get_anim_block_name(grp: u32) -> u32 = cdecl 0x4D3A30 => unported;
-}
-
-orig! {
-    /// `CAnimManager::BlendAnimation-hier` (0x4D4410)
-    pub fn anim_blend_animation_hier(clump: u32, hier: u32, flags: u32, delta: u32) -> GPtr<u8> = cdecl 0x4D4410 => unported;
-}
-
-orig! {
-    /// `CAnimManager::BlendAnimation-id` (0x4D4610)
-    pub fn anim_blend_animation(clump: u32, group: u32, anim: u32, delta: u32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
-}
-
-orig! {
-    /// `RpAnimBlend::RpAnimBlendClumpGetAssociation-AnimId` (0x4D68B0)
-    pub fn clump_get_association(clump: u32, anim: u32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
+    /// `approxEqual` (0x4EEA80)
+    pub fn approx_equal(a: f32, b: f32, eps: f32) -> u8 = cdecl 0x4EEA80 => unported;
 }
 
 orig! {
@@ -314,18 +324,8 @@ orig! {
 }
 
 orig! {
-    /// `CWanted::CanCopJoinPursuit-method` (0x562FB0)
-    pub fn wanted_can_cop_join_pursuit(w: GPtr<u8>, cop: GPtr<u8>) -> u8 = thiscall 0x562FB0 => unported;
-}
-
-orig! {
-    /// `CPed::SetMoveState` (0x5DEC00)
-    pub fn ped_set_move_state(p: GPtr<u8>, s: u32) = thiscall 0x5DEC00 => unported;
-}
-
-orig! {
-    /// `CPed::SetMoveAnimSpeed` (0x5DEC10)
-    pub fn ped_set_move_anim_speed(p: GPtr<u8>, a: GPtr<u8>) = thiscall 0x5DEC10 => unported;
+    /// `CWanted::IsInPursuit` (0x562330)
+    pub fn wanted_is_in_pursuit(w: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x562330 => unported;
 }
 
 orig! {
@@ -359,13 +359,18 @@ orig! {
 }
 
 orig! {
-    /// `CPedAttractor::GetHeadOfQueue` (0x5EB590)
-    pub fn attractor_get_head_of_queue(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x5EB590 => unported;
+    /// `FUN_005eb310` (0x5EB310)
+    pub fn fill_n_t_o(dest: u32, n: u32, val: GPtr<u8>) -> u32 = cdecl 0x5EB310 => crate::attractor_ptr_vectors::fill_n_t;
 }
 
 orig! {
-    /// `CPedAttractorManager::IsPedRegisteredWithEffect-Ped` (0x5EBCB0)
-    pub fn is_ped_registered_with_effect(m: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x5EBCB0 => crate::attractor_registry::is_ped_registered_with_effect_ped;
+    /// `CPedAttractor::IsRegisteredWithPed` (0x5EB4C0)
+    pub fn attractor_is_registered_with_ped_o(a: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x5EB4C0 => crate::attractor_registry::attractor_is_registered_with_ped;
+}
+
+orig! {
+    /// `CPedAttractor::GetHeadOfQueue` (0x5EB590)
+    pub fn attractor_get_head_of_queue(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x5EB590 => unported;
 }
 
 orig! {
@@ -374,8 +379,23 @@ orig! {
 }
 
 orig! {
+    /// `FUN_005ed4b0` (0x5ED4B0)
+    pub fn insert_n_t_o(v: GPtr<u8>, at: u32, n: u32, val: GPtr<u8>) = thiscall 0x5ED4B0 => crate::attractor_ptr_vectors::insert_n_t;
+}
+
+orig! {
     /// `FUN_005ee200` (0x5EE200)
     pub fn peds_push_back(v: GPtr<u8>, val: GPtr<u8>) = thiscall 0x5EE200 => crate::attractor_ptr_vectors::push_back_p;
+}
+
+orig! {
+    /// `CPedAttractor::SetTaskForPed` (0x5EECA0)
+    pub fn set_task_for_ped(a: GPtr<u8>, ped: GPtr<u8>, task: GPtr<u8>) = thiscall 0x5EECA0 => crate::ped_attractor_base::set_task_for_ped;
+}
+
+orig! {
+    /// `CPedGeometryAnalyser::ComputeEntityHitSide-2` (0x5F1450)
+    pub fn entity_hit_side_2(pos: GPtr<u8>, normals: GPtr<u8>, d: GPtr<u8>) -> u32 = cdecl 0x5F1450 => unported;
 }
 
 orig! {
@@ -385,12 +405,22 @@ orig! {
 
 orig! {
     /// `CPedGeometryAnalyser::ComputeEntityBoundingBoxPlanesUncached` (0x5F1670)
-    pub fn bbox_planes_uncached(z: u32, corners: GPtr<u8>, normals: GPtr<u8>, ds: GPtr<u8>) = cdecl 0x5F1670 => unported;
+    pub fn bbox_planes_uncached(z: u32, corners: GPtr<u8>, normals: GPtr<u8>, ds: GPtr<u8>) = cdecl 0x5F1670 => crate::mvpa_ai1::compute_entity_bounding_box_planes_uncached;
+}
+
+orig! {
+    /// `CPedGeometryAnalyser::ComputeEntityBoundingBoxSegmentPlanesUncached` (0x5F1750)
+    pub fn bbox_segment_planes_uncached(corners: GPtr<u8>, centre: GPtr<u8>, normals: GPtr<u8>, d: GPtr<u8>) = cdecl 0x5F1750 => crate::mvpa_ai1::compute_entity_bounding_box_segment_planes_uncached;
 }
 
 orig! {
     /// `CPedGeometryAnalyser::ComputeEntityBoundingBoxCornersUncached` (0x5F1FA0)
-    pub fn bbox_corners_uncached(z: u32, e: GPtr<u8>, corners: GPtr<u8>) = cdecl 0x5F1FA0 => unported;
+    pub fn bbox_corners_uncached(z: f32, e: GPtr<u8>, corners: GPtr<u8>) -> u8 = cdecl 0x5F1FA0 => unported;
+}
+
+orig! {
+    /// `CPedGeometryAnalyser::IsWanderPathClear` (0x5F2F70)
+    pub fn is_wander_path_clear(a: GPtr<u8>, b: GPtr<u8>, max_height_diff: f32, max_steps: i32) -> u32 = cdecl 0x5F2F70 => unported;
 }
 
 orig! {
@@ -405,7 +435,7 @@ orig! {
 
 orig! {
     /// `CPedGeometryAnalyser::ComputeEntityHitSide-3` (0x5F3AC0)
-    pub fn compute_entity_hit_side(pos: GPtr<u8>, e: GPtr<u8>) -> i32 = cdecl 0x5F3AC0 => unported;
+    pub fn compute_entity_hit_side(pos: GPtr<u8>, e: GPtr<u8>) -> u32 = cdecl 0x5F3AC0 => crate::mvpa_ai1::compute_entity_hit_side_3;
 }
 
 orig! {
@@ -424,13 +454,23 @@ orig! {
 }
 
 orig! {
+    /// `CPedGeometryAnalyser::ComputeRouteRoundEntityBoundingBox-2` (0x5F3DD0)
+    pub fn geom_compute_route_round_entity_bbox(ped: GPtr<u8>, start: GPtr<u8>, e: GPtr<u8>, target: GPtr<u8>, route: GPtr<u8>, n: u32) -> u32 = cdecl 0x5F3DD0 => unported;
+}
+
+orig! {
     /// `CPedGeometryAnalyser::GetIsLineOfSightClear-ped` (0x5F5A30)
     pub fn geometry_line_of_sight_clear(ped: GPtr<u8>, target: GPtr<u8>, e: GPtr<u8>, dist: GPtr<u8>) -> u8 = cdecl 0x5F5A30 => unported;
 }
 
 orig! {
     /// `CPedGeometryAnalyser::ComputeRouteRoundEntityBoundingBox-Entity` (0x5F6110)
-    pub fn geometry_compute_route_round_entity_bbox(ped: GPtr<u8>, e: GPtr<u8>, target: GPtr<u8>, route: GPtr<u8>, n: i32) -> u8 = cdecl 0x5F6110 => unported;
+    pub fn geometry_compute_route_round_entity_bbox(ped: GPtr<u8>, e: GPtr<u8>, target: GPtr<u8>, route: GPtr<u8>, n: i32) -> u32 = cdecl 0x5F6110 => unported;
+}
+
+orig! {
+    /// `FUN_005f6190` (0x5F6190)
+    pub fn create_partner_event_ctor(this: GPtr<u8>, a: i32, b: GPtr<u8>, c: u32, d: u32) -> GPtr<u8> = thiscall 0x5F6190 => unported;
 }
 
 orig! {
@@ -449,8 +489,18 @@ orig! {
 }
 
 orig! {
+    /// `CPedGroupMembership::AddMember` (0x5F6AE0)
+    pub fn membership_add_member(m: GPtr<u8>, ped: GPtr<u8>, i: i32) -> u32 = thiscall 0x5F6AE0 => unported;
+}
+
+orig! {
     /// `CPedGroupIntelligence::Flush` (0x5F7350)
     pub fn pgi_flush(i: GPtr<u8>) = thiscall 0x5F7350 => unported;
+}
+
+orig! {
+    /// `CPedGroupIntelligence::SetTask` (0x5F7540)
+    pub fn pgi_set_task(i: GPtr<u8>, ped: GPtr<u8>, task: GPtr<u8>, pairs: GPtr<u8>, slot: i32, flag: u32) = thiscall 0x5F7540 => unported;
 }
 
 orig! {
@@ -460,7 +510,12 @@ orig! {
 
 orig! {
     /// `CPedGroupMembership::RemoveMember-ByMemIdx` (0x5F80D0)
-    pub fn membership_remove_member(m: GPtr<u8>, idx: i32) = thiscall 0x5F80D0 => unported;
+    pub fn membership_remove_member(m: GPtr<u8>, idx: i32) -> u32 = thiscall 0x5F80D0 => unported;
+}
+
+orig! {
+    /// `CPedGroupIntelligence::SetDefaultTaskAllocator` (0x5FB280)
+    pub fn group_intel_set_default_task_allocator(i: GPtr<u8>, a: GPtr<u8>) = thiscall 0x5FB280 => unported;
 }
 
 orig! {
@@ -474,8 +529,13 @@ orig! {
 }
 
 orig! {
+    /// `FUN_005fe9c0` (0x5FE9C0)
+    pub fn is_gang_ped_type(t: u32) -> u8 = cdecl 0x5FE9C0 => unported;
+}
+
+orig! {
     /// `CTaskSimpleCarDriveTimed::CTaskSimpleCarDriveTimed` (0x5FF940)
-    pub fn car_drive_timed_ctor(t: GPtr<u8>, veh: u32, time: u32) -> GPtr<u8> = thiscall 0x5FF940 => unported;
+    pub fn car_drive_timed_ctor(t: GPtr<u8>, veh: GPtr<u8>, time: u32) -> GPtr<u8> = thiscall 0x5FF940 => unported;
 }
 
 orig! {
@@ -500,17 +560,17 @@ orig! {
 
 orig! {
     /// `CAttractorScanner::Clear` (0x5FFF90)
-    pub fn attractor_scanner_clear(s: GPtr<u8>) = thiscall 0x5FFF90 => unported;
+    pub fn attractor_scanner_clear(s: GPtr<u8>) = thiscall 0x5FFF90 => crate::attractor_scanner::attractor_scanner_clear;
+}
+
+orig! {
+    /// `FUN_005fffd0` (0x5FFFD0)
+    pub fn add_effect(s: GPtr<u8>, effect: GPtr<u8>, entity: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x5FFFD0 => crate::attractor_range_scan::attractor_scanner_add_effect;
 }
 
 orig! {
     /// `CDecision::From` (0x6006B0)
     pub fn decision_from(d: GPtr<u8>, src: GPtr<u8>) = thiscall 0x6006B0 => unported;
-}
-
-orig! {
-    /// `CPedIntelligence::IsInSeeingRange` (0x600C60)
-    pub fn intel_is_in_seeing_range(intel: GPtr<u8>, pos: GPtr<u8>) -> u8 = thiscall 0x600C60 => unported;
 }
 
 orig! {
@@ -525,7 +585,17 @@ orig! {
 
 orig! {
     /// `CPedIntelligence::GetMoveStateFromGoToTask` (0x601D70)
-    pub fn intel_get_move_state_from_go_to_task(i: GPtr<u8>) -> u32 = thiscall 0x601D70 => unported;
+    pub fn intel_get_move_state_from_go_to_task(i: GPtr<u8>) -> i32 = thiscall 0x601D70 => unported;
+}
+
+orig! {
+    /// `CPedIntelligence::IsPedGoingForCarDoor` (0x602350)
+    pub fn intel_is_ped_going_for_car_door(i: GPtr<u8>) -> u8 = thiscall 0x602350 => crate::intelrest::intel_is_ped_going_for_car_door;
+}
+
+orig! {
+    /// `CVehiclePotentialCollisionScanner::ScanForVehiclePotentialCollisionEvents` (0x603720)
+    pub fn scan_vehicle_potential_collision(s: GPtr<u8>, ped: GPtr<u8>, ents: GPtr<u8>, n: u32) = thiscall 0x603720 => unported;
 }
 
 orig! {
@@ -536,26 +606,6 @@ orig! {
 orig! {
     /// `CPedIntelligence::CanSeeEntityWithLights` (0x605550)
     pub fn intel_can_see_entity_with_lights(i: GPtr<u8>, e: GPtr<u8>, b: u32) -> f64 = thiscall 0x605550 => unported;
-}
-
-orig! {
-    /// `CAcquaintance::GetAcquaintances` (0x608970)
-    pub fn acquaintance_get(a: GPtr<u8>, i: i32) -> u32 = thiscall 0x608970 => unported;
-}
-
-orig! {
-    /// `CPedType::PoliceDontCareAboutCrimesAgainstPedType` (0x608A40)
-    pub fn ped_type_police_dont_care(ty: u32) -> u8 = cdecl 0x608A40 => unported;
-}
-
-orig! {
-    /// `CPlayerPed::ControlButtonSprint` (0x60A610)
-    pub fn player_control_button_sprint(p: GPtr<u8>, ty: u32) -> f64 = thiscall 0x60A610 => unported;
-}
-
-orig! {
-    /// `CPedPlacement::FindZCoorForPed` (0x616920)
-    pub fn ped_placement_find_z_coor_for_ped(v: GPtr<u8>) -> u8 = cdecl 0x616920 => unported;
 }
 
 orig! {
@@ -570,12 +620,7 @@ orig! {
 
 orig! {
     /// `IKChainManager_c::GetLookAtEntity` (0x6181D0)
-    pub fn ik_get_look_at_entity(this: GPtr<u8>, ped: GPtr<u8>) -> u32 = thiscall 0x6181D0 => unported;
-}
-
-orig! {
-    /// `IKChainManager_c::AbortLookAt` (0x618280)
-    pub fn ik_abort_look_at(m: GPtr<u8>, ped: GPtr<u8>, blend: i32) = thiscall 0x618280 => unported;
+    pub fn ik_get_look_at_entity(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x6181D0 => unported;
 }
 
 orig! {
@@ -590,12 +635,22 @@ orig! {
 
 orig! {
     /// `CTask::IsGoToTask` (0x61A360)
-    pub fn task_is_go_to_task(t: GPtr<u8>) -> u8 = cdecl 0x61A360 => unported;
+    pub fn task_is_go_to_task(t: GPtr<u8>) -> u8 = cdecl 0x61A360 => crate::tasks::task_is_go_to_task;
 }
 
 orig! {
     /// `FUN_0061a3d0` (0x61A3D0)
-    pub fn task_complex_dtor(t: GPtr<u8>) = thiscall 0x61A3D0 => unported;
+    pub fn task_complex_dtor(t: GPtr<u8>) = thiscall 0x61A3D0 => crate::mvpb_ai::task_complex_dtor_61a3d0;
+}
+
+orig! {
+    /// `CTaskSimpleAnim::~CTaskSimpleAnim` (0x61A6F0)
+    pub fn simple_anim_dtor(this: GPtr<u8>) = thiscall 0x61A6F0 => crate::tasks::simple_anim_dtor;
+}
+
+orig! {
+    /// `CTaskSimpleRunAnim::Constructor2` (0x61A900)
+    pub fn run_anim_ctor2(t: GPtr<u8>, group: u32, anim: u32, delta: u32, ty: u32, name: u32, hold: u8) -> GPtr<u8> = thiscall 0x61A900 => crate::mvpa_ai2::run_anim_ctor2;
 }
 
 orig! {
@@ -610,7 +665,12 @@ orig! {
 
 orig! {
     /// `CTaskComplexPlayHandSignalAnim::Constructor` (0x61B2B0)
-    pub fn play_hand_signal_anim_ctor_61b2b0(t: GPtr<u8>, anim: i32, delta: u32) -> GPtr<u8> = thiscall 0x61B2B0 => unported;
+    pub fn play_hand_signal_anim_ctor_61b2b0(t: GPtr<u8>, anim: u32, delta: f32) -> GPtr<u8> = thiscall 0x61B2B0 => unported;
+}
+
+orig! {
+    /// `CTaskComplexPlayHandSignalAnim::CreateSubTask` (0x61B2F0)
+    pub fn create_sub_task_o(t: GPtr<u8>, ty: u32) -> GPtr<u8> = thiscall 0x61B2F0 => crate::hand_signal_anim_tasks::hand_signal_create_sub_task;
 }
 
 orig! {
@@ -626,6 +686,11 @@ orig! {
 orig! {
     /// `CTaskSimpleFight::~CTaskSimpleFight` (0x61C530)
     pub fn fight_dtor_orig(t: GPtr<u8>) = thiscall 0x61C530 => unported;
+}
+
+orig! {
+    /// `FUN_0061c740` (0x61C740)
+    pub fn fight_strike_damage_c(t: GPtr<u8>, ped: GPtr<u8>) -> f64 = thiscall 0x61C740 => unported;
 }
 
 orig! {
@@ -649,11 +714,6 @@ orig! {
 }
 
 orig! {
-    /// `CTaskSimpleGangDriveBy` (0x6217D0)
-    pub fn gang_drive_by_ctor(t: GPtr<u8>, target: GPtr<u8>, pos: u32, range: u32, freq: u32, style: u32, rhs: u32) -> GPtr<u8> = thiscall 0x6217D0 => unported;
-}
-
-orig! {
     /// `CTaskSimpleStealthKill::Constructor` (0x6225F0)
     pub fn stealth_kill_ctor(t: GPtr<u8>, b: u32, src: GPtr<u8>, g: u32) -> GPtr<u8> = thiscall 0x6225F0 => unported;
 }
@@ -661,6 +721,11 @@ orig! {
 orig! {
     /// `FUN_006240b0` (0x6240B0)
     pub fn fight_6240b0(t: GPtr<u8>, ped: GPtr<u8>, pos: GPtr<u8>) = thiscall 0x6240B0 => unported;
+}
+
+orig! {
+    /// `CTaskComplexRoadRage::CreateSubTask` (0x629080)
+    pub fn road_rage_create_sub_task(t: GPtr<u8>, ty: i32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x629080 => crate::road_rage_sub_tasks::road_rage_create_sub_task;
 }
 
 orig! {
@@ -689,6 +754,11 @@ orig! {
 }
 
 orig! {
+    /// `CTaskSimpleWaitUntilAreaCodesMatch::Constructor` (0x635540)
+    pub fn wait_area_ctor(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x635540 => unported;
+}
+
+orig! {
     /// `FUN_0063a040` (0x63A040)
     pub fn point_route_assign(r: GPtr<u8>, src: GPtr<u8>) = thiscall 0x63A040 => unported;
 }
@@ -696,6 +766,11 @@ orig! {
 orig! {
     /// `CTaskComplexStealCar::Constructor` (0x63B7D0)
     pub fn steal_car_ctor(t: GPtr<u8>, veh: GPtr<u8>) -> GPtr<u8> = thiscall 0x63B7D0 => unported;
+}
+
+orig! {
+    /// `CTaskComplexLeaveCar::~CTaskComplexLeaveCar` (0x63B970)
+    pub fn dtor_63b970(this: GPtr<u8>) = thiscall 0x63B970 => unported;
 }
 
 orig! {
@@ -709,11 +784,6 @@ orig! {
 }
 
 orig! {
-    /// `CTaskComplexLeaveCarAndFlee::Constructor` (0x63BF90)
-    pub fn leave_car_and_flee_ctor(t: GPtr<u8>, veh: GPtr<u8>, pos: GPtr<u8>, a: u32, b: u32, c: u32) -> GPtr<u8> = thiscall 0x63BF90 => unported;
-}
-
-orig! {
     /// `CTaskSimpleCarDrive::Destructor` (0x63C460)
     pub fn car_drive_dtor(t: GPtr<u8>) = thiscall 0x63C460 => unported;
 }
@@ -724,8 +794,23 @@ orig! {
 }
 
 orig! {
+    /// `CTaskComplexEnterCar::CreateSubTask` (0x63E040)
+    pub fn create_sub_task_o_63e040(t: GPtr<u8>, ty: u32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x63E040 => crate::enter_car_sub_tasks::create_sub_task;
+}
+
+orig! {
+    /// `CTaskComplexDragPedFromCar::CTaskComplexDragPedFromCar` (0x640430)
+    pub fn drag_ped_from_car_ctor(t: GPtr<u8>, ped: GPtr<u8>, a: u32) -> GPtr<u8> = thiscall 0x640430 => unported;
+}
+
+orig! {
     /// `CTaskComplexLeaveCar::CreateSubTask` (0x641530)
     pub fn leave_car_create_sub_task(t: GPtr<u8>, ty: i32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x641530 => unported;
+}
+
+orig! {
+    /// `CTaskSimpleCarDrive::StartBopping` (0x642760)
+    pub fn car_drive_start_bopping(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x642760 => crate::mvpc_ai3::car_drive_start_bopping;
 }
 
 orig! {
@@ -735,7 +820,7 @@ orig! {
 
 orig! {
     /// `CTaskSimpleGoToPoint::UpdatePoint` (0x645700)
-    pub fn go_to_point_update_point(t: GPtr<u8>, p: GPtr<u8>, radius: u32, b: u32) = thiscall 0x645700 => unported;
+    pub fn go_to_point_update_point(t: GPtr<u8>, p: GPtr<u8>, radius: f32, b: u32) = thiscall 0x645700 => unported;
 }
 
 orig! {
@@ -754,6 +839,11 @@ orig! {
 }
 
 orig! {
+    /// `CTaskSimpleCarCloseDoorFromOutside::Constructor` (0x6464F0)
+    pub fn close_door_from_outside_ctor(t: GPtr<u8>, veh: GPtr<u8>, door: u32, line_up: u32) -> GPtr<u8> = thiscall 0x6464F0 => unported;
+}
+
+orig! {
     /// `CTaskSimpleCarCloseDoorFromOutside::Destructor` (0x646570)
     pub fn close_door_from_outside_dtor(t: GPtr<u8>) = thiscall 0x646570 => unported;
 }
@@ -765,7 +855,17 @@ orig! {
 
 orig! {
     /// `CTaskSimpleCarWaitForDoorNotToBeInUse::Constructor` (0x646B70)
-    pub fn car_wait_for_door_ctor(t: GPtr<u8>, veh: u32, door: u32, other: u32) -> GPtr<u8> = thiscall 0x646B70 => unported;
+    pub fn car_wait_for_door_ctor(t: GPtr<u8>, veh: GPtr<u8>, door: u32, other: u32) -> GPtr<u8> = thiscall 0x646B70 => unported;
+}
+
+orig! {
+    /// `CTaskSimpleCarSetPedOut::PositionPedOutOfCollision` (0x6479B0)
+    pub fn car_set_ped_out_position_ped_out_of_collision(ped: GPtr<u8>, veh: GPtr<u8>, door: u32) = cdecl 0x6479B0 => unported;
+}
+
+orig! {
+    /// `CTaskSimpleCarSlowDragPedOut::ComputeAnimID_Wrapper` (0x648100)
+    pub fn slow_drag_ped_out_compute_anim_id(t: GPtr<u8>, group: GPtr<u8>, anim: GPtr<u8>) = thiscall 0x648100 => crate::car_slow_drag_out::slow_drag_ped_out_compute_anim_id;
 }
 
 orig! {
@@ -779,6 +879,11 @@ orig! {
 }
 
 orig! {
+    /// `SayJacking` (0x6497F0)
+    pub fn say_jacking_o(jacker: GPtr<u8>, jacked: GPtr<u8>, v: GPtr<u8>, offset: u32) -> u8 = cdecl 0x6497F0 => crate::car_slow_drag_out::say_jacking;
+}
+
+orig! {
     /// `CTaskComplexGoToCarDoorAndStandStill::CreateSubTask` (0x64A5F0)
     pub fn car_door_create_sub_task(t: GPtr<u8>, ty: u32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x64A5F0 => unported;
 }
@@ -786,11 +891,6 @@ orig! {
 orig! {
     /// `CCarEnterExit::ComputeDoorFlag` (0x64E550)
     pub fn car_enter_exit_compute_door_flag(veh: GPtr<u8>, door: u32, b: u32) -> u32 = cdecl 0x64E550 => unported;
-}
-
-orig! {
-    /// `CCarEnterExit::GetPositionToOpenCarDoor` (0x64E740)
-    pub fn car_enter_exit_get_position_to_open_car_door(out: GPtr<u8>, veh: GPtr<u8>, door: u32) -> GPtr<u8> = cdecl 0x64E740 => unported;
 }
 
 orig! {
@@ -804,13 +904,13 @@ orig! {
 }
 
 orig! {
-    /// `CCarEnterExit::IsVehicleHealthy` (0x64EEC0)
-    pub fn is_vehicle_healthy(v: GPtr<u8>) -> u8 = cdecl 0x64EEC0 => unported;
+    /// `CCarEnterExit::CarHasOpenableDoor` (0x64EE50)
+    pub fn car_enter_exit_car_has_openable_door(veh: GPtr<u8>, door: u32, ped: GPtr<u8>) -> u8 = cdecl 0x64EE50 => unported;
 }
 
 orig! {
-    /// `CCarEnterExit::ComputePassengerIndexFromCarDoor` (0x64F1E0)
-    pub fn car_enter_exit_compute_passenger_index_from_car_door(veh: GPtr<u8>, door: u32) -> i32 = cdecl 0x64F1E0 => unported;
+    /// `CCarEnterExit::IsVehicleHealthy` (0x64EEC0)
+    pub fn is_vehicle_healthy(v: GPtr<u8>) -> u8 = cdecl 0x64EEC0 => unported;
 }
 
 orig! {
@@ -834,8 +934,8 @@ orig! {
 }
 
 orig! {
-    /// `CCarEnterExit::IsRoomForPedToLeaveCar` (0x6504C0)
-    pub fn car_enter_exit_is_room_for_ped_to_leave_car(v: GPtr<u8>, door: u32, pos: GPtr<u8>) -> u8 = cdecl 0x6504C0 => unported;
+    /// `CCarEnterExit::GetNearestCarPassengerDoor` (0x650BB0)
+    pub fn get_nearest_car_passenger_door(ped: GPtr<u8>, v: GPtr<u8>, out: GPtr<u8>, door: GPtr<u8>, a: u32, b: u32, c: u32) -> u8 = cdecl 0x650BB0 => unported;
 }
 
 orig! {
@@ -864,6 +964,11 @@ orig! {
 }
 
 orig! {
+    /// `CTaskComplexWalkRoundCar::Constructor` (0x6541B0)
+    pub fn walk_round_car_ctor(t: GPtr<u8>, ms: i32, target: GPtr<u8>, veh: GPtr<u8>, door: u32, n: u32) -> GPtr<u8> = thiscall 0x6541B0 => unported;
+}
+
+orig! {
     /// `CTaskComplexWalkRoundCar::SetNewVehicle` (0x654290)
     pub fn walk_round_car_set_new_vehicle(t: GPtr<u8>, v: GPtr<u8>, f: i32) = thiscall 0x654290 => unported;
 }
@@ -874,18 +979,28 @@ orig! {
 }
 
 orig! {
-    /// `CTaskComplexFleePoint::Constructor` (0x65B390)
-    pub fn flee_point_ctor(t: GPtr<u8>, pos: GPtr<u8>, b: u32, a: u32, c: u32) -> GPtr<u8> = thiscall 0x65B390 => unported;
+    /// `CTaskComplexWalkRoundObject::CreateRouteTask` (0x655140)
+    pub fn create_route_task(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x655140 => crate::walkround::object_create_route_task;
 }
 
 orig! {
-    /// `CTaskComplexSmartFleePoint::Constructor` (0x65BD20)
-    pub fn smart_flee_point_ctor(t: GPtr<u8>, pos: GPtr<u8>, b: u32, a: u32, c: u32) -> GPtr<u8> = thiscall 0x65BD20 => unported;
+    /// `CTaskComplexSmartFleeEntity::Destructor` (0x65C4D0)
+    pub fn dtor_65c4d0(this: GPtr<u8>) = thiscall 0x65C4D0 => unported;
+}
+
+orig! {
+    /// `CTaskComplexSmartFleeEntity::CreateSubTask` (0x65C530)
+    pub fn flee_entity_create_sub_task(t: GPtr<u8>, ty: u32) -> GPtr<u8> = thiscall 0x65C530 => unported;
 }
 
 orig! {
     /// `CTaskComplexFleeAnyMeans::Constructor` (0x65CC60)
     pub fn flee_any_means_ctor(t: GPtr<u8>, e: GPtr<u8>, b: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, a8: u32) -> GPtr<u8> = thiscall 0x65CC60 => unported;
+}
+
+orig! {
+    /// `CEventLeanOnVehicle::Constructor` (0x65DAF0)
+    pub fn event_lean_on_vehicle_ctor(this: GPtr<u8>, a: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x65DAF0 => unported;
 }
 
 orig! {
@@ -909,13 +1024,58 @@ orig! {
 }
 
 orig! {
+    /// `CTaskGangHasslePed::Constructor` (0x65FED0)
+    pub fn gang_hassle_ped_ctor(this: GPtr<u8>, ped: GPtr<u8>, a: u32, b: u32, c: u32) -> GPtr<u8> = thiscall 0x65FED0 => unported;
+}
+
+orig! {
+    /// `CTaskGangHasslePed::Destructor` (0x65FF60)
+    pub fn dtor_65ff60(this: GPtr<u8>) = thiscall 0x65FF60 => unported;
+}
+
+orig! {
+    /// `CTaskComplexStareAtPed::Constructor` (0x660270)
+    pub fn stare_at_ped_ctor(t: GPtr<u8>, pg: GPtr<u8>, ped: GPtr<u8>, time: u32) -> GPtr<u8> = thiscall 0x660270 => unported;
+}
+
+orig! {
+    /// `CTaskComplexSignalAtPed::Destructor` (0x660AB0)
+    pub fn dtor_660ab0(this: GPtr<u8>) = thiscall 0x660AB0 => unported;
+}
+
+orig! {
+    /// `CTaskGoToVehicleAndLean::Constructor` (0x660E60)
+    pub fn go_to_vehicle_and_lean_ctor(t: GPtr<u8>, veh: GPtr<u8>, dur: u32) -> GPtr<u8> = thiscall 0x660E60 => unported;
+}
+
+orig! {
+    /// `CTaskGoToVehicleAndLean::Destructor` (0x660EE0)
+    pub fn dtor_660ee0(this: GPtr<u8>) = thiscall 0x660EE0 => unported;
+}
+
+orig! {
     /// `CTaskGoToVehicleAndLean::DoTidyUp` (0x660F60)
     pub fn go_to_vehicle_and_lean_do_tidy_up(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x660F60 => unported;
 }
 
 orig! {
+    /// `CTaskComplexPassObject::Constructor` (0x6611B0)
+    pub fn pass_object_ctor(t: GPtr<u8>, e: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x6611B0 => unported;
+}
+
+orig! {
+    /// `CTaskComplexGangJoinRespond::Constructor` (0x6616F0)
+    pub fn gang_join_respond_ctor(t: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x6616F0 => unported;
+}
+
+orig! {
+    /// `CTaskComplexProstituteSolicit::IsTaskValid` (0x661BB0)
+    pub fn is_task_valid(a: GPtr<u8>, b: GPtr<u8>) -> u8 = cdecl 0x661BB0 => crate::prostitute_solicit::prostitute_solicit_is_task_valid;
+}
+
+orig! {
     /// `CTaskComplexSeekEntity<CEntitySeekPosCalculatorXYOffset>::Constructor` (0x661DC0)
-    pub fn seek_entity_xy_offset_ctor(t: GPtr<u8>, e: GPtr<u8>, a: i32, b: i32, r: u32, d1: u32, d2: u32, c1: u32, c2: u32) -> GPtr<u8> = thiscall 0x661DC0 => unported;
+    pub fn seek_entity_xy_offset_ctor(t: GPtr<u8>, e: GPtr<u8>, a: u32, b: u32, r: u32, d1: u32, d2: u32, c1: u32, c2: u32) -> GPtr<u8> = thiscall 0x661DC0 => unported;
 }
 
 orig! {
@@ -935,7 +1095,7 @@ orig! {
 
 orig! {
     /// `CTaskSimpleGoToPoint::Constructor` (0x667CD0)
-    pub fn go_to_point_ctor(t: GPtr<u8>, ms: u32, pos: GPtr<u8>, radius: u32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x667CD0 => unported;
+    pub fn go_to_point_ctor(t: GPtr<u8>, ms: u32, pos: GPtr<u8>, radius: u32, a: u8, b: u8) -> GPtr<u8> = thiscall 0x667CD0 => crate::walk::goto_point_ctor;
 }
 
 orig! {
@@ -946,6 +1106,11 @@ orig! {
 orig! {
     /// `thunk_FUN_0040387c` (0x669D20)
     pub fn dtor_669d20(this: GPtr<u8>) = thiscall 0x669D20 => unported;
+}
+
+orig! {
+    /// `CTaskComplexAvoidOtherPedWhileWandering::Constructor` (0x66A100)
+    pub fn avoid_other_ped_ctor(t: GPtr<u8>, ped: GPtr<u8>, target: GPtr<u8>, ms: u32) -> GPtr<u8> = thiscall 0x66A100 => unported;
 }
 
 orig! {
@@ -961,11 +1126,6 @@ orig! {
 orig! {
     /// `CTaskComplexWanderGang::CTaskComplexWanderGang` (0x66F5C0)
     pub fn wander_gang_ctor(t: GPtr<u8>, ms: i32, dir: i32, time: i32, b: u32, f: u32) -> GPtr<u8> = thiscall 0x66F5C0 => unported;
-}
-
-orig! {
-    /// `CTaskComplexFollowPointRoute::Constructor` (0x671510)
-    pub fn follow_point_route_ctor(t: GPtr<u8>, ms: i32, route: GPtr<u8>, mode: i32, radius: u32, slow: u32, a: u32, b: u32, c: u32) -> GPtr<u8> = thiscall 0x671510 => unported;
 }
 
 orig! {
@@ -985,17 +1145,17 @@ orig! {
 
 orig! {
     /// `CTaskComplexFallAndGetUp::Constructor` (0x6786C0)
-    pub fn fall_and_get_up_ctor(t: GPtr<u8>, anim: u32, group: u32, time: i32) -> GPtr<u8> = thiscall 0x6786C0 => unported;
-}
-
-orig! {
-    /// `CTaskComplexFallAndGetUp::Constructor2` (0x678700)
-    pub fn fall_and_get_up_ctor2(t: GPtr<u8>, dir: i32, time: i32) -> GPtr<u8> = thiscall 0x678700 => unported;
+    pub fn fall_and_get_up_ctor(t: GPtr<u8>, anim: u32, group: u32, time: u32) -> GPtr<u8> = thiscall 0x6786C0 => unported;
 }
 
 orig! {
     /// `CTaskComplexInAirAndLand::Constructor` (0x678C80)
-    pub fn in_air_and_land_ctor(t: GPtr<u8>, a: u32, b: u32) -> GPtr<u8> = thiscall 0x678C80 => unported;
+    pub fn in_air_and_land_ctor(t: GPtr<u8>, a: u8, b: u8) -> GPtr<u8> = thiscall 0x678C80 => crate::fall::in_air_and_land_ctor;
+}
+
+orig! {
+    /// `CTaskSimpleClimb::Constructor` (0x67A110)
+    pub fn climb_ctor(t: GPtr<u8>, e: GPtr<u8>, pos: GPtr<u8>, heading: u32, surf: u32, height: u32, force: u32) -> GPtr<u8> = thiscall 0x67A110 => unported;
 }
 
 orig! {
@@ -1009,6 +1169,16 @@ orig! {
 }
 
 orig! {
+    /// `CTaskComplexChat::Constructor` (0x682CB0)
+    pub fn chat_ctor(t: GPtr<u8>, a: u8, partner: GPtr<u8>, b: i32, c: i16) -> GPtr<u8> = thiscall 0x682CB0 => crate::chat_task_ctor::task_complex_chat_ctor;
+}
+
+orig! {
+    /// `CTaskComplexWalkAlongsidePed::Destructor` (0x6832C0)
+    pub fn dtor_6832c0(this: GPtr<u8>) = thiscall 0x6832C0 => unported;
+}
+
+orig! {
     /// `CTaskComplexBeInCouple::AbortArmIK` (0x6837F0)
     pub fn be_in_couple_abort_arm_ik(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x6837F0 => unported;
 }
@@ -1016,6 +1186,21 @@ orig! {
 orig! {
     /// `CTaskComplexPartner::~CTaskComplexPartner` (0x683A40)
     pub fn partner_dtor(t: GPtr<u8>) = thiscall 0x683A40 => unported;
+}
+
+orig! {
+    /// `CTaskComplexPartnerDeal::Constructor` (0x684190)
+    pub fn partner_deal_ctor(t: GPtr<u8>, tag: GPtr<u8>, partner: GPtr<u8>, lead: u32, dist: u32, vx: u32, vy: u32, vz: u32) -> GPtr<u8> = thiscall 0x684190 => unported;
+}
+
+orig! {
+    /// `FUN_00684200` (0x684200)
+    pub fn dtor_684200(this: GPtr<u8>) = thiscall 0x684200 => unported;
+}
+
+orig! {
+    /// `CTaskComplexPartnerShove::Constructor` (0x6846F0)
+    pub fn partner_shove_ctor(t: GPtr<u8>, name: GPtr<u8>, partner: GPtr<u8>, lead: u32, dist: u32, upd: u32, vx: u32, vy: u32, vz: u32) -> GPtr<u8> = thiscall 0x6846F0 => unported;
 }
 
 orig! {
@@ -1034,8 +1219,13 @@ orig! {
 }
 
 orig! {
-    /// `CTaskSimpleDuck::Constructor` (0x691FC0)
-    pub fn duck_ctor(t: GPtr<u8>, ty: u32, time: u32, counter: i32) -> GPtr<u8> = thiscall 0x691FC0 => unported;
+    /// `CTaskSimpleFacial::GetAnimId` (0x690CC0)
+    pub fn facial_get_anim_id(ty: i32) -> i32 = cdecl 0x690CC0 => crate::mvpb_ai2::task_simple_facial_get_anim_id;
+}
+
+orig! {
+    /// `CTaskSimpleHoldEntity::PlayAnim` (0x691720)
+    pub fn hold_entity_play_anim(t: GPtr<u8>, anim: u32, group: u32) = thiscall 0x691720 => unported;
 }
 
 orig! {
@@ -1079,21 +1269,26 @@ orig! {
 }
 
 orig! {
+    /// `CVehicle::GetSpareHasslePosId` (0x6D3AE0)
+    pub fn veh_spare_hassle_pos(v: GPtr<u8>) -> i32 = thiscall 0x6D3AE0 => unported;
+}
+
+orig! {
     /// `CVehicle::SetHasslePosId` (0x6D3B30)
     pub fn vehicle_set_hassle_pos_id(v: GPtr<u8>, id: i32, b: u32) = thiscall 0x6D3B30 => unported;
 }
 
 orig! {
-    /// `CVehicleAnimGroup::GetGroup` (0x6E3B00)
-    pub fn vehicle_anim_group_get_group(g: GPtr<u8>, anim: u32) -> u32 = thiscall 0x6E3B00 => unported;
+    /// `CVehicleAnimGroup::ComputeCriticalBlendTime` (0x6E3C80)
+    pub fn veh_anim_group_compute_critical_blend_time(g: GPtr<u8>, anim: u32) -> f64 = thiscall 0x6E3C80 => unported;
 }
 
 orig! {
     /// `CScripted2dEffects::GetIndex` (0x6F9F60)
-    pub fn scripted_2d_effects_get_index(effect: GPtr<u8>) -> i32 = cdecl 0x6F9F60 => unported;
+    pub fn scripted_2d_effects_get_index(effect: GPtr<u8>) -> i32 = cdecl 0x6F9F60 => crate::attractor_registry::scripted_2d_effects_get_index;
 }
 
 orig! {
-    /// `RtQuatRotate` (0x7EB7C0)
-    pub fn rt_quat_rotate(q: GPtr<u8>, axis: u32, angle: f32, op: u32) -> GPtr<u8> = cdecl 0x7EB7C0 => unported;
+    /// `CWeapon::Fire` (0x742300)
+    pub fn weapon_fire(w: GPtr<u8>, owner: GPtr<u8>, origin: GPtr<u8>, muzzle: GPtr<u8>, target: GPtr<u8>, tpos: GPtr<u8>, alt: GPtr<u8>) -> u32 = thiscall 0x742300 => unported;
 }

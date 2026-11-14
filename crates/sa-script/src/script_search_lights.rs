@@ -9,7 +9,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 /// `CTheScripts::ScriptSearchLightArray` (0xA94D68, 8 of 0x7C)
 const SEARCH_LIGHTS: usize = 0xA94D68;
@@ -19,10 +19,7 @@ use sa_core::bindings::matrix_rotate_z;
 use sa_core::bindings::matrix_update_rw_matrix;
 use sa_core::bindings::vector_normalise;
 use sa_world::bindings::simple_transform_update_rw_matrix;
-orig! {
-    /// `CMatrix::SetRotateX(float)` (0x59B060, `ret 4`)
-    fn matrix_set_rotate_x(m: GPtr<u8>, a: u32) = thiscall 0x59B060 => unported;
-}
+use sa_core::bindings::matrix_set_rotate_x;
 
 use sa_core::field::rd;
 use sa_core::field::wr;
@@ -59,8 +56,8 @@ fn search_light_move(sl: GPtr<u8>, t: GPtr<u8>) -> bool {
 /// (when it has an RW object: `CMatrix::UpdateRwMatrix` or, without a matrix, `CSimpleTransform::UpdateRwMatrix`)
 /// and `UpdateRwFrame`. The matrix (+0x14) is used without a NULL check (original).
 fn search_light_orient(obj: GPtr<u8>, pitch: u32, heading: u32, base: [f32; 3]) {
-    matrix_set_rotate_x(rd::<GPtr<u8>>(obj, 0x14), pitch);
-    matrix_rotate_z(rd::<GPtr<u8>>(obj, 0x14), heading);
+    matrix_set_rotate_x(rd::<GPtr<u8>>(obj, 0x14), f32::from_bits(pitch));
+    matrix_rotate_z(rd::<GPtr<u8>>(obj, 0x14), f32::from_bits(heading));
     let m = rd::<GPtr<u8>>(obj, 0x14);
     for (i, b) in base.iter().enumerate() {
         let o = 0x30 + 4 * i as isize;

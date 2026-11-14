@@ -67,11 +67,14 @@ use sa_world::bindings::set_ped_in_as_driver_ctor;
 use sa_world::bindings::set_ped_in_as_driver_dtor;
 use sa_world::bindings::set_ped_in_as_driver_process_ped;
 use sa_world::bindings::vehicle_set_created_by as set_vehicle_created_by;
+pub use sa_world::bindings::set_orientation;
+use crate::bindings::is_ped_dead;
+use sa_core::bindings::set_wanted_level;
+use sa_stream::bindings::find_player_wanted;
+use sa_world::bindings::player_set_wanted_level_no_drop as set_wanted_level_no_drop;
 orig! {
     /// `CRunningScript::LocateCharCharCommand(int32 command)` (0x4870F0)
     pub fn locate_char_char_command(s: Scr, command: u32) = thiscall 0x4870F0 => unported;
-    /// `CPlaceable::SetOrientation(float, float, float)` (0x439A80)
-    pub fn set_orientation(e: GPtr<u8>, x: f32, y: f32, z: f32) = thiscall 0x439A80 => unported;
     /// `CBaseModelInfo` virtual slot 3 (+0x0C, `AsLodAtomicModelInfoPtr`)
     pub fn model_info_vslot_0c(mi: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x0C => unported;
     /// `CObject` virtual slot 0 (scalar deleting destructor, `delete` flag 1)
@@ -80,14 +83,6 @@ orig! {
     fn mission_cleanup_process(m: GPtr<u8>) = thiscall 0x468560 => unported;
     /// `CRunningScript::GetPadState(uint16 pad, uint16 button)` (0x485B10), AX
     fn get_pad_state(s: Scr, pad: u32, button: u32) -> u16 = thiscall 0x485B10 => unported;
-    /// `CPlayerPed::SetWantedLevel(int32)` (0x609F10)
-    fn set_wanted_level(p: GPtr<u8>, level: u32) = thiscall 0x609F10 => unported;
-    /// `CPlayerPed::SetWantedLevelNoDrop(int32)` (0x609F30)
-    fn set_wanted_level_no_drop(p: GPtr<u8>, level: u32) = thiscall 0x609F30 => unported;
-    /// `CWorld::FindPlayerWanted(int32)` (0x56E230)
-    fn find_player_wanted(i: u32) -> GPtr<u8> = cdecl 0x56E230 => unported;
-    /// `CRunningScript::IsPedDead(CPed*)` (0x464D70), AL
-    fn is_ped_dead(s: Scr, p: GPtr<u8>) -> u8 = thiscall 0x464D70 => unported;
 }
 
 /// `CPed::m_pVehicle` when `m_nPedFlags` bit 8 (in vehicle) is set, else null (`test ch,1`, then the
@@ -238,7 +233,7 @@ pub fn process_commands_200_to_299(s: Scr, command: u32) -> i8 {
             if command == 0x010D {
                 set_wanted_level(ped, sp(1));
             } else {
-                set_wanted_level_no_drop(ped, sp(1));
+                set_wanted_level_no_drop(ped, sp(1) as i32);
             }
             0
         }
@@ -246,7 +241,7 @@ pub fn process_commands_200_to_299(s: Scr, command: u32) -> i8 {
         // (+0x2C) > SP1 (`setg`).
         0x010F => {
             collect(s, 2);
-            let w = find_player_wanted(sp(0)).byte_add(0x2C).cast::<u32>().read() as i32;
+            let w = find_player_wanted(sp(0) as i32).byte_add(0x2C).cast::<u32>().read() as i32;
             set_flag(s, w > spi(1));
             0
         }
@@ -309,7 +304,7 @@ pub fn process_commands_200_to_299(s: Scr, command: u32) -> i8 {
             collect(s, 1);
             let ped = player_info(sp(0)).cast::<GPtr<u8>>().read();
             let b = if ped.byte_add(0x530).cast::<u32>().read() == 0x32 {
-                get_horn(get_pad(spi(0))) != 0
+                get_horn(get_pad(spi(0) as u32)) != 0
             } else {
                 false
             };
@@ -343,7 +338,7 @@ fn create_object(s: Scr) {
         GPtr::<GPtr<u8>>::from_addr(MODEL_INFO_PTRS.wrapping_add((model as u32).wrapping_mul(4) as usize))
             .read();
     mi.byte_add(0x0C).write(0xFF);
-    let obj = object_create(model, 0);
+    let obj = object_create(model as u32, 0);
     let ty = if s.byte_add(IS_EXTERNAL).read() == 0 && s.byte_add(EXTERNAL_TYPE).read() == 0xFF {
         2
     } else {
@@ -369,7 +364,7 @@ fn create_object(s: Scr) {
         setup_big_building(obj);
     }
     let pos = [x, y, z];
-    crate::cmd0::clear_space_for_mission_entity(GPtr::from_raw(pos.as_ptr().cast_mut()), obj);
+    crate::cmd0::clear_space_for_mission_entity(GPtr::<f32>::cast::<u8>(GPtr::from_raw(pos.as_ptr().cast_mut())), obj);
     world_add(obj);
     let h = object_get_ref(pool(OBJECT_POOL), obj);
     set_sp(0, h as u32);
@@ -409,7 +404,7 @@ fn store_car_char_is_in(s: Scr) {
     let ped = ped_at_ref(pool(PED_POOL), spi(0));
     let veh = vehicle_if_in_one(ped);
     let vp = pool(VEHICLE_POOL);
-    let h = vehicle_get_ref(vp, veh);
+    let h = vehicle_get_ref(vp, veh) as i32;
     let idx = GPtr::<i32>::from_addr(STORE_VEHICLE_INDEX);
     let random = GPtr::<u8>::from_addr(STORE_VEHICLE_WAS_RANDOM);
     let cleanup = GPtr::from_addr(MISSION_CLEANUP);

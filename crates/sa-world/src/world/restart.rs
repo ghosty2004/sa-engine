@@ -3,7 +3,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 
 use super::common::{x, xi};
@@ -57,11 +57,7 @@ sa_core::globals! {
     pub static OVERRIDE_RESPAWN_POINT @ 0xA4342C: [u32; 3] = [0; 3];
 }
 
-orig! {
-    /// `CStats::GetStatValue(uint16)` (0x558E40), result in ST0 (read as f64: exact for `fld dword`
-    /// and `fild dword`)
-    pub fn get_stat_value_st0(stat: u16) -> f64 = cdecl 0x558E40 => stat_value_port;
-}
+pub use crate::bindings::get_stat_value as get_stat_value_st0;
 
 pub fn stat_value_port(stat: u16) -> f64 {
     super::stats::get_stat_value(stat).to_f64()

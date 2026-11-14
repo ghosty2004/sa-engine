@@ -3,17 +3,14 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 
 use crate::common::{g, rd, wr};
 
 use crate::bindings::atomic_default_render;
 use sa_core::bindings::frame_get_ltm;
-orig! {
-    /// `CVisibilityPlugins::RenderAtomicWithAlpha(atomic, alpha)` (0x732480)
-    fn render_atomic_with_alpha_call(a: GPtr<u8>, alpha: i32) = cdecl 0x732480 => render_atomic_with_alpha;
-}
+use crate::bindings::render_atomic_with_alpha as render_atomic_with_alpha_call;
 
 /// `CVisibilityPlugins::ms_pCameraPosn` (0xC88050), `ms_pedLodDist` (squared, 0xC88034), the clump plugin offset
 /// (0x8D6094; the alpha at +4)

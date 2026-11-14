@@ -16,10 +16,8 @@ use sa_core::bindings::matrix_mul_vec;
 use sa_core::bindings::world_remove;
 use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
 use sa_stream::bindings::simple_transform_update_matrix as update_matrix;
+use crate::bindings::find_objects_intersecting_cube;
 orig! {
-    /// `CWorld::FindObjectsIntersectingCube(const CVector& min, const CVector& max, int16* count,
-    /// int16 maxCount, CEntity** out, bool x5)` (0x568DD0)
-    fn find_objects_intersecting_cube(mn: GPtr<u8>, mx: GPtr<u8>, count: GPtr<u8>, max: u32, out: GPtr<u8>, b: u32, v: u32, p: u32, o: u32, d: u32) = cdecl 0x568DD0 => unported;
     /// `CGarage::IsPointInsideGarage(CVector, float margin)` (0x4487D0)
     fn is_point_inside(gr: GPtr<u8>, p: CVector, margin: f32) -> u8 = thiscall 0x4487D0 => unported;
     /// `CGarage::IsPointInsideGarage(CVector)` (0x448740)
@@ -75,7 +73,7 @@ pub fn entity_has_a_sphere_way_outside_garage(this: GPtr<u8>, e: GPtr<u8>, margi
         }
         let sphere = rd::<GPtr<u8>>(data, 8).byte_add(i as isize * 0x14);
         let mut out = [0f32; 3];
-        let r = matrix_mul_vec(GPtr::from_raw(&mut out as *mut [f32; 3]).cast(), rd::<GPtr<u8>>(e, 0x14), sphere);
+        let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::from_raw(&mut out as *mut [f32; 3]).cast()), rd::<GPtr<u8>>(e, 0x14), sphere));
         let m = x(margin).fadd_m(rd::<f32>(rd::<GPtr<u8>>(data, 8).byte_add(i as isize * 0x14), 0xC)).to_f32();
         let p = CVector::new(rd::<f32>(r, 0), rd::<f32>(r, 4), rd::<f32>(r, 8));
         if is_point_inside(this, p, m) == 0 {

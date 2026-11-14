@@ -39,6 +39,10 @@ use sa_core::bindings::time_cycle_stop_extra_colour;
 use sa_core::bindings::timer_resume;
 use sa_core::bindings::timer_suspend;
 use sa_core::bindings::world_remove;
+use crate::bindings::assoc_group_destroy_associations;
+use sa_core::bindings::audio_stop_cutscene_track;
+use sa_core::bindings::camera_delete_cut_scene_cam_data_memory;
+use sa_core::bindings::streaming_request_model;
 orig! {
     /// `CEntity::DeleteRwObject()` (vtable +0x20)
     fn v_delete_rw_object(e: GPtr<u8>) = thiscall vslot 0x20 => unported;
@@ -46,18 +50,10 @@ orig! {
     fn v_scalar_deleting_dtor(e: GPtr<u8>, flags: u32) -> GPtr<u8> = thiscall vslot 0x0 => unported;
     /// `CAnimManager::RemoveLastAnimFile()` (0x4D3ED0)
     fn anim_manager_remove_last_anim_file() = cdecl 0x4D3ED0 => unported;
-    /// `CAnimBlendAssocGroup::DestroyAssociations()` (0x4CDFF0)
-    fn assoc_group_destroy_associations(g: GPtr<u8>) = thiscall 0x4CDFF0 => unported;
-    /// `CCamera::DeleteCutSceneCamDataMemory()` (0x5B24A0)
-    fn camera_delete_cut_scene_cam_data_memory(c: GPtr<u8>) = thiscall 0x5B24A0 => unported;
     /// `CIplStore::ClearIplsNeededAtPosn()` (0x4045E0)
     fn ipl_store_clear_ipls_needed_at_posn() = cdecl 0x4045E0 => unported;
-    /// `CAudioEngine::StopCutsceneTrack(bool)` (0x507080, `ret 4`)
-    fn audio_stop_cutscene_track(e: GPtr<u8>, b: u32) = thiscall 0x507080 => unported;
     /// `CAudioEngine::EnableEffectsLoading()` (0x506E90)
     fn audio_enable_effects_loading(e: GPtr<u8>) = thiscall 0x506E90 => unported;
-    /// `CStreaming::RequestModel(int32, int32)` (0x4087E0)
-    fn streaming_request_model(id: i32, flags: u32) = cdecl 0x4087E0 => unported;
     /// `CScriptResourceManager::HasResourceBeenRequested(int32, int32)` (0x470620, `ret 8`), AL
     fn script_resource_has_been_requested(m: GPtr<u8>, id: i32, ty: u32) -> u8 = thiscall 0x470620 => unported;
     /// `CStreaming::ForceLayerToRead(int32)` (0x407A10)
@@ -165,7 +161,7 @@ pub fn cutscene_delete_cutscene_data_overlay() {
         let slot = p(HIDDEN + 4 * i);
         let e = rd::<GPtr<u8>>(slot, 0);
         if !e.is_null() {
-            entity_clean_up_old_reference(e, slot);
+            entity_clean_up_old_reference(e, slot.cast::<GPtr<u8>>());
             let e = rd::<GPtr<u8>>(slot, 0);
             wr::<u32>(e, 0x1C, rd::<u32>(e, 0x1C) | 0x80);
         }
@@ -241,7 +237,7 @@ pub fn cutscene_delete_cutscene_data_overlay() {
     gu8(DISABLE_STREAMING).write(0);
     gu8(PROCESS_CUTSCENE_ONLY).write(0);
     if gu8(DATA_FILE_LOADED).read() != 0 {
-        game_drastic_tidy_up_memory((camera_get_screen_fade_status(cam) == 2) as u32);
+        game_drastic_tidy_up_memory((camera_get_screen_fade_status(cam) as i32 == 2) as u32);
     }
     pad_clear(pad_get_pad(0), 0, 0);
     if gu8(RESTORE_EVERYTHING).read() != 0 {
@@ -253,19 +249,19 @@ pub fn cutscene_delete_cutscene_data_overlay() {
         let mut i = 0usize;
         while (i as i32) < gu32(WEAPON_COUNT).read() as i32 {
             let ty = gu32(WEAPON_TYPES + 4 * i).read();
-            let model = rd::<i32>(weapon_info_get(ty, 1), 0xC);
+            let model = rd::<i32>(weapon_info_get(ty as i32, 1), 0xC);
             let flags = gu8(MODEL_INFO_FLAGS + 0x14 * model as usize).read();
             streaming_request_model(model, 2);
             streaming_load_all_requested_models(0);
-            if rd::<i32>(weapon_info_get(gu32(WEAPON_TYPES + 4 * i).read(), 1), 0x10) != -1 {
-                let m2 = rd::<i32>(weapon_info_get(gu32(WEAPON_TYPES + 4 * i).read(), 1), 0x10);
+            if rd::<i32>(weapon_info_get((gu32(WEAPON_TYPES + 4 * i).read()) as i32, 1), 0x10) != -1 {
+                let m2 = rd::<i32>(weapon_info_get((gu32(WEAPON_TYPES + 4 * i).read()) as i32, 1), 0x10);
                 streaming_request_model(m2, 0);
                 streaming_load_all_requested_models(0);
             }
             if flags & 2 == 0 {
                 streaming_set_model_is_deletable(model);
             }
-            ped_give_weapon(ped, gu32(WEAPON_TYPES + 4 * i).read(), gu32(WEAPON_AMMO + 4 * i).read(), 1);
+            ped_give_weapon(ped, (gu32(WEAPON_TYPES + 4 * i).read()) as i32, gu32(WEAPON_AMMO + 4 * i).read(), 1);
             i += 1;
         }
         gu32(WEAPON_COUNT).write(0);
@@ -280,7 +276,7 @@ pub fn cutscene_delete_cutscene_data_overlay() {
     }
     streaming_set_mission_doesnt_require_model(1);
     let mut pos = [0u32; 3];
-    let at = find_player_coors(GPtr::from_raw(pos.as_mut_ptr()).cast(), -1);
+    let at = GPtr::<f32>::cast::<u8>(find_player_coors(GPtr::<u8>::cast::<f32>(GPtr::from_raw(pos.as_mut_ptr()).cast()), -1));
     streaming_stream_zone_models(at);
     timer_resume();
     streaming_force_layer_to_read(1);

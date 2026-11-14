@@ -1179,13 +1179,12 @@ pub fn ps_can_we_play_new_scanner_dialogue() -> u8 {
 
 use crate::bindings::sm_cancel_sounds_in_bank_slot;
 use sa_core::bindings::entity_clean_up_old_reference;
+use crate::bindings::script_clear_mission_audio_call;
 orig! {
     /// `CAEAudioHardware::GetSoundLoadingStatus(uint16 bank, uint16 sound, int16 slot)` (0x4D8F00)
     fn hw_get_sound_loading_status(hw: GPtr<u8>, bank: u32, sound: u32, slot: u32) -> u8 = thiscall 0x4D8F00 => unported;
     /// `CAEAudioHardware::GetSoundBankLoadingStatus(uint16 bank, int16 slot)` (0x4D88D0)
     fn hw_get_sound_bank_loading_status(hw: GPtr<u8>, bank: u32, slot: u32) -> u8 = thiscall 0x4D88D0 => unported;
-    /// `CAEScriptAudioEntity::ClearMissionAudio(uint8 slot)` (0x4EC040)
-    fn script_clear_mission_audio_call(this: GPtr<u8>, slot: u32) = thiscall 0x4EC040 => script_clear_mission_audio;
 }
 
 /// `CAEScriptAudioEntity::GetMissionAudioLoadingStatus(uint8 slot)` (0x4EBF60): 1 for slots >= 4 or a
@@ -1256,7 +1255,7 @@ pub fn sound_manager_reset(this: GPtr<u8>) {
             wr::<u16>(s, 0x60, 1);
             let e = rd::<GPtr<u8>>(s, 0);
             if !e.is_null() {
-                entity_clean_up_old_reference(e, s);
+                entity_clean_up_old_reference(e, s.cast::<GPtr<u8>>());
                 wr::<u32>(s, 0, 0);
             }
         }
@@ -1485,12 +1484,11 @@ const PS_LIST_B: usize = 0xB61D20; // 5 dwords
 
 use crate::bindings::sound_set_flags;
 use crate::bindings::sound_stop_and_forget as sound_stop_sound_and_forget;
-use sa_world::bindings::audio_report_frontend_event as engine_report_frontend_audio_event;
+use sa_core::bindings::audio_report_frontend_event as engine_report_frontend_audio_event;
+use crate::bindings::ps_finished_playing_call;
 orig! {
     /// `CAEPoliceScannerAudioEntity::PlayLoadedDialogue()` (0x4E6F60)
     fn ps_play_loaded_dialogue(this: GPtr<u8>) = thiscall 0x4E6F60 => unported;
-    /// `CAEPoliceScannerAudioEntity::FinishedPlayingScannerDialogue()` (0x4E6C30)
-    fn ps_finished_playing_call() = cdecl 0x4E6C30 => ps_finished_playing_scanner_dialogue;
     /// `CAEPoliceScannerAudioEntity::PopulateScannerDialogueLists(const int16* banks, const int16* sounds)` (0x4E6B60)
     fn ps_populate_lists_call(a: u32, b: u32) = cdecl 0x4E6B60 => ps_populate_scanner_dialogue_lists;
     /// `CAEPoliceScannerAudioEntity::PrepSlots()` (0x4E6BC0)
@@ -1518,7 +1516,7 @@ pub fn ps_prep_slots() {
 /// (0xB61D20, 0xB61D34; 5 int16 pairs each) = -1, in the bytes' store order.
 #[hook(addr = 0x4E6C30, conv = cdecl, name = "CAEPoliceScannerAudioEntity::FinishedPlayingScannerDialogue", expect = "53 68 00 00 80 3F")]
 pub fn ps_finished_playing_scanner_dialogue() {
-    engine_report_frontend_audio_event(g(crate::common::AUDIO_ENGINE), 0x30, 0, 0x3F80_0000);
+    engine_report_frontend_audio_event(g(crate::common::AUDIO_ENGINE), 0x30, f32::from_bits(0), f32::from_bits(0x3F80_0000));
     let delay = g::<u32>(0x8C8140).read();
     let now = g::<u32>(TIMER_MS).read();
     g::<u32>(PS_SLOTS).write(0x10001);
@@ -1641,12 +1639,8 @@ pub fn ps_update_parameters(this: GPtr<u8>, sound: GPtr<u8>, pos: u32) {
 
 use crate::bindings::ae_random_float;
 use sa_world::bindings::audio_stop_radio as engine_stop_radio;
-orig! {
-    /// `CAEAudioEnvironment::GetPositionRelativeToCamera(CVector* out, const CVector* pos)` (0x4D80B0)
-    fn env_get_position_relative_to_camera(out: u32, pos: GPtr<u8>) = cdecl 0x4D80B0 => unported;
-    /// `CAERadioTrackManager::StartRadio(eRadioID, eBassSetting, float bassGain, uint8)` (0x4EB3C0)
-    fn radio_start_radio_manual(this: GPtr<u8>, station: u32, bass: u32, gain_bits: u32, b: u32) = thiscall 0x4EB3C0 => crate::radio::start_radio_manual_port;
-}
+use crate::bindings::position_relative_to_camera_vec as env_get_position_relative_to_camera;
+use crate::bindings::radio_start_radio_manual;
 
 /// `CAESound::UnregisterWithPhysicalEntity()` (0x4EF1A0): releases the reference at +8
 /// (`CleanUpOldReference(&m_pPhysicalEntity)`) and clears it.
@@ -1655,7 +1649,7 @@ pub fn sound_unregister_with_physical_entity(this: GPtr<u8>) {
     let r = this.byte_add(8);
     let e = rd::<GPtr<u8>>(r, 0);
     if !e.is_null() {
-        entity_clean_up_old_reference(e, r);
+        entity_clean_up_old_reference(e, r.cast::<GPtr<u8>>());
         wr::<u32>(r, 0, 0);
     }
 }
@@ -1729,7 +1723,7 @@ pub fn sound_update_frequency(this: GPtr<u8>) {
 pub fn sound_get_relative_position(this: GPtr<u8>, out: u32) {
     let pos = this.byte_add(0x24);
     if rd::<u8>(this, 0x56) & 1 == 0 {
-        env_get_position_relative_to_camera(out, pos);
+        env_get_position_relative_to_camera(GPtr::from_addr(out as usize), pos);
         return;
     }
     let o = g::<u8>(out as usize);
@@ -1774,8 +1768,8 @@ pub fn radio_check_for_station_retune_during_pause(this: GPtr<u8>) {
     }
     let pending = rd::<i32>(this, 0x78);
     if pending == 13 {
-        engine_report_frontend_audio_event(engine, 0x26, 0, 0x3F80_0000);
-        engine_report_frontend_audio_event(engine, 0x23, 0, 0x3F80_0000);
+        engine_report_frontend_audio_event(engine, 0x26, f32::from_bits(0), f32::from_bits(0x3F80_0000));
+        engine_report_frontend_audio_event(engine, 0x23, f32::from_bits(0), f32::from_bits(0x3F80_0000));
         let gain = rd::<u32>(this, 0xEC);
         let bass = u32::from(rd::<u8>(this, 0xEA));
         radio_start_radio_manual(this, 13, bass, gain, 0);
@@ -1786,12 +1780,12 @@ pub fn radio_check_for_station_retune_during_pause(this: GPtr<u8>) {
         return;
     }
     if cur == 13 {
-        engine_report_frontend_audio_event(engine, 0x25, 0, 0x3F80_0000);
+        engine_report_frontend_audio_event(engine, 0x25, f32::from_bits(0), f32::from_bits(0x3F80_0000));
         wr::<u8>(this, 0xE9, 0xFF);
     } else {
-        engine_stop_radio(engine, 0, 1);
+        engine_stop_radio(engine, GPtr::NULL, 1);
     }
-    engine_report_frontend_audio_event(engine, 0x22, 0, 0x3F80_0000);
+    engine_report_frontend_audio_event(engine, 0x22, f32::from_bits(0), f32::from_bits(0x3F80_0000));
     let due = rd::<u32>(this, 0x5C).wrapping_add(700);
     if g::<u32>(TIMER_MS_PAUSE_MODE).read() > due {
         let gain = rd::<u32>(this, 0xEC);
@@ -1982,7 +1976,7 @@ pub fn radio_stop_radio(this: GPtr<u8>, settings: GPtr<u8>, flag: u32) {
     wr::<i32>(this, 0x7C, -1);
     wr::<u8>(this, 1, 0);
     wr::<u8>(this, 6, 0);
-    engine_report_frontend_audio_event(g(crate::common::AUDIO_ENGINE), 0x23, 0, 0x3F80_0000);
+    engine_report_frontend_audio_event(g(crate::common::AUDIO_ENGINE), 0x23, f32::from_bits(0), f32::from_bits(0x3F80_0000));
     if rd::<u8>(this, 0xE9) == 0xFF {
         wr::<u8>(this, 0xE9, 13);
     }
@@ -2119,10 +2113,7 @@ pub fn radio_choose_dj_banter_index(this: GPtr<u8>, station: u32) -> u32 {
 
 use crate::bindings::hw_is_sound_loaded;
 use sa_stream::bindings::streaming_is_very_busy;
-orig! {
-    /// `CAEAudioHardware::LoadSound(uint16 bank, uint16 sound, int16 slot)` (0x4D8ED0)
-    fn hw_load_sound(hw: GPtr<u8>, bank: u32, sound: u32, slot: u32) = thiscall 0x4D8ED0 => unported;
-}
+use crate::bindings::hw_load_sound;
 
 /// `CAEPoliceScannerAudioEntity::LoadSlots()` (0x4E6CD0): for each of the 5 slots (state words 0xB61D14,
 /// bank slots 33..37) of the current list (0xB61D10, (bank, sound) int16 pairs): state 2 (loading)
@@ -2158,7 +2149,7 @@ pub fn ps_load_slots() {
                 if rd::<i16>(p, 0) < 0 || rd::<i16>(p, 2) < 0 {
                     st.write(1);
                 } else {
-                    if streaming_is_very_busy() == 0 {
+                    if streaming_is_very_busy() as u8 == 0 {
                         let p = pair(g::<u32>(PS_SLOT_LIST).read());
                         hw_load_sound(hw, u32::from(rd::<u16>(p, 0)), u32::from(rd::<u16>(p, 2)), slot);
                         st.write(2);
@@ -2221,11 +2212,11 @@ pub fn ps_service() {
             let v = x(g::<f32>(0xB61D54).read())
                 .fadd_m(g::<f32>(PS_CF8).read())
                 .to_f32();
-            engine_report_frontend_audio_event(engine, 0x31, v.to_bits(), 0x3F80_0000);
+            engine_report_frontend_audio_event(engine, 0x31, f32::from_bits(v.to_bits()), f32::from_bits(0x3F80_0000));
             let v = x(g::<f32>(0x8C8158).read())
                 .fadd_m(g::<f32>(PS_CF8).read())
                 .to_f32();
-            engine_report_frontend_audio_event(engine, 0x2F, v.to_bits(), 0x3F80_0000);
+            engine_report_frontend_audio_event(engine, 0x2F, f32::from_bits(v.to_bits()), f32::from_bits(0x3F80_0000));
             let t = g::<u32>(TIMER_MS).read().wrapping_add(g::<u32>(0x8C8154).read());
             g::<u32>(PS_D0C).write(t);
             g::<u16>(PS_PLAYBACK_STATE).write(5);
@@ -2249,10 +2240,7 @@ pub fn ps_service() {
     }
 }
 
-orig! {
-    /// `CStats::GetStatValue(uint16 stat)` (0x558E40, ST0)
-    fn stats_get_stat_value(stat: u32) -> f32 = cdecl 0x558E40 => unported;
-}
+use sa_world::bindings::get_stat_value as stats_get_stat_value;
 
 /// The mission-progress stats `CheckForMissionStatsChanges` watches, in the bytes' order: stat id, the
 /// last-seen byte (0xB62C71 down to 0xB62C5B) and the special banter index stored on a change to 1
@@ -2320,12 +2308,12 @@ pub fn radio_check_for_mission_stats_changes(_this: GPtr<u8>) {
     };
     // Returns the new last-seen byte when the stat moved past it.
     let changed = |stat: u32, byte: usize| -> Option<u8> {
-        let v = stats_get_stat_value(stat);
+        let v = stats_get_stat_value(stat as u16) as f32;
         let seen = crate::common::xi(i32::from(g::<i8>(byte).read()));
         if seen.fcom(x(v)).test_parity(0x05) {
             return None;
         }
-        let n = crate::common::ftol32(x(stats_get_stat_value(stat))) as u8;
+        let n = crate::common::ftol32(x(stats_get_stat_value(stat as u16) as f32)) as u8;
         g::<u8>(byte).write(n);
         Some(n)
     };
@@ -2344,12 +2332,8 @@ pub fn radio_check_for_mission_stats_changes(_this: GPtr<u8>) {
 }
 
 use crate::bindings::queue_up_tracks_for_station as radio_queue_up_tracks_for_station;
-orig! {
-    /// `CAERadioTrackManager::AddMusicTrackIndexToHistory(eRadioID, int8)` (0x4E96C0)
-    fn radio_add_music_track_index_to_history(this: GPtr<u8>, station: u32, index: u32) = thiscall 0x4E96C0 => crate::radio::add_music_track_index_to_history;
-    /// `CAEUserRadioTrackManager::SelectUserTrackIndex()` (0x4F3250)
-    fn user_select_user_track_index_call(this: GPtr<u8>) -> u32 = thiscall 0x4F3250 => user_select_user_track_index;
-}
+use crate::bindings::add_music_track_index_to_history_call as radio_add_music_track_index_to_history;
+use crate::bindings::user_select_user_track_index as user_select_user_track_index_call;
 
 /// Days since the stamp `day0` with the previous month's length (0x8CCF24) when the day number wrapped,
 /// as `CheckForMissionStatsChanges` / `TrackRadioStation` compute it.
@@ -2522,7 +2506,7 @@ pub fn radio_track_radio_station(this: GPtr<u8>, station: u32, flag: u32) -> u8 
 
 /// `CStats::GetStatValue(stat)` compared with the f32 constant at `c` (`fcomp m32`).
 fn stat_cmp(stat: u32, c: usize) -> sa_math::x87::Cmp {
-    x(stats_get_stat_value(stat)).fcom(x(g::<f32>(c).read()))
+    x(stats_get_stat_value(stat as u16) as f32).fcom(x(g::<f32>(c).read()))
 }
 
 /// `CAERadioTrackManager::ChooseTalkRadioShow()` (0x4E8E40): builds a candidate list (stack array of 31
@@ -3084,11 +3068,9 @@ pub fn radio_choose_talk_radio_show(_this: GPtr<u8>) -> u32 {
 
 use crate::bindings::hw_load_sound_bank;
 use crate::bindings::script_is_mission_audio_sample_finished;
+use crate::bindings::are_sounds_of_this_event_playing_for_this_entity as sm_are_sounds_of_this_event_playing_for_this_entity;
+use crate::bindings::get_bank_and_sound_from_script_slot_audio_event as util_get_bank_and_sound_from_script_slot_audio_event;
 orig! {
-    /// `CAEAudioUtility::GetBankAndSoundFromScriptSlotAudioEvent(const int32*, int32* bank, int32* sound, int32 slot)` (0x4D9CC0)
-    fn util_get_bank_and_sound_from_script_slot_audio_event(event: GPtr<u8>, bank: GPtr<u8>, sound: GPtr<u8>, slot: u32) -> u8 = cdecl 0x4D9CC0 => unported;
-    /// `CAESoundManager::AreSoundsOfThisEventPlayingForThisEntity(int16 event, CAEAudioEntity*)` (0x4EF570; AX)
-    fn sm_are_sounds_of_this_event_playing_for_this_entity(sm: GPtr<u8>, event: u32, entity: GPtr<u8>) -> u16 = thiscall 0x4EF570 => unported;
     /// `CAEScriptAudioEntity::PlayResidentSoundEvent(int16 bank, int16 slot, int16 sfx, int32 event, CVector& pos, CPhysical*, float vol, float speed, int16 playTime, float maxDistance)` (0x4EC550)
     fn script_play_resident_sound_event(this: GPtr<u8>, bank: u32, slot: u32, sfx: u32, event: u32, pos: GPtr<u8>, physical: u32, vol_bits: u32, speed_bits: u32, play_time: u32, max_dist_bits: u32) = thiscall 0x4EC550 => unported;
 }
@@ -3209,7 +3191,7 @@ pub fn script_update_parameters(this: GPtr<u8>, sound: GPtr<u8>, pos: u32) {
                 } else {
                     e.byte_add(4)
                 };
-                sound_set_position(sound, rd::<u32>(p, 0), rd::<u32>(p, 4), rd::<u32>(p, 8));
+                sound_set_position(sound.addr() as u32, rd::<u32>(p, 0), rd::<u32>(p, 4), rd::<u32>(p, 8));
             }
             continue;
         }
@@ -3328,7 +3310,7 @@ pub fn frontend_update_parameters(this: GPtr<u8>, sound: GPtr<u8>, pos: u32) {
             } else {
                 v.fsubr_m(c)
             };
-            sound_set_position(sound, xb, 0, z.to_f32().to_bits());
+            sound_set_position(sound.addr() as u32, xb, 0, z.to_f32().to_bits());
         }
         0x10 | 0x21 if p > 0 => {
             let (off, ms) = if ev == 0x10 { (0x90, 0x76C) } else { (0x94, 0x64) };
@@ -3357,6 +3339,10 @@ use crate::bindings::ped_speech_reset;
 use crate::bindings::player_vehicle_audio_settings_for_radio;
 use crate::bindings::sm_pause_manually;
 use crate::bindings::sm_service;
+use crate::bindings::radio_get_current_radio_station_id_call;
+use crate::bindings::radio_is_radio_on;
+use crate::bindings::radio_service;
+use crate::bindings::radio_stop_radio_call;
 orig! {
     /// `CAECollisionAudioEntity::Reset()` (0x4DA320)
     fn collision_reset(this: GPtr<u8>) = thiscall 0x4DA320 => unported;
@@ -3370,14 +3356,6 @@ orig! {
     fn sm_reset_call(sm: GPtr<u8>) = thiscall 0x4EF4D0 => sound_manager_reset;
     /// `CAEAudioHardware::GetEffectsFaderScalingFactor()` (0x4D9590, ST0 = the f32 at +0x41C)
     fn hw_get_effects_fader_scaling_factor(hw: GPtr<u8>) -> f32 = thiscall 0x4D9590 => unported;
-    /// `CAERadioTrackManager::IsRadioOn()` (0x4E8350)
-    fn radio_is_radio_on(this: GPtr<u8>) -> u8 = thiscall 0x4E8350 => crate::radio::is_radio_on;
-    /// `CAERadioTrackManager::GetCurrentRadioStationID()` (0x4E83F0)
-    fn radio_get_current_radio_station_id_call(this: GPtr<u8>) -> u8 = thiscall 0x4E83F0 => radio_get_current_radio_station_id;
-    /// `CAERadioTrackManager::StopRadio(tRadioSettings*, bool)` (0x4E9820)
-    fn radio_stop_radio_call(this: GPtr<u8>, settings: GPtr<u8>, b: u32) = thiscall 0x4E9820 => radio_stop_radio;
-    /// `CAERadioTrackManager::Service(int32 playTime)` (0x4EB9A0)
-    fn radio_service(this: GPtr<u8>, t: u32) = thiscall 0x4EB9A0 => unported;
     /// `CAECutsceneTrackManager::PreloadCutsceneTrack(int16 track, bool wait)` (0x4DC0E0)
     fn cutscene_preload_cutscene_track(this: GPtr<u8>, track: u32, wait: u32) = thiscall 0x4DC0E0 => unported;
     /// `CAECutsceneTrackManager` 0x4DC130 (beat-track preload, `(int16 track, bool)`)
@@ -3390,17 +3368,17 @@ orig! {
 #[hook(addr = 0x507C30, conv = thiscall, name = "CAudioEngine::ResetSoundEffects", expect = "56 8B F1 57 B9 B0 2C B6 00")]
 pub fn engine_reset_sound_effects(this: GPtr<u8>) {
     let sm = g::<u8>(crate::common::AE_SOUND_MANAGER);
-    sm_service(sm);
+    sm_service(sm.addr() as u32);
     collision_reset(this.byte_add(0x4BC));
     let fe = this.byte_add(0xB4);
-    frontend_add_audio_event(fe, 0x24, 0, 0x3F80_0000);
-    frontend_add_audio_event(fe, 0x23, 0, 0x3F80_0000);
+    frontend_add_audio_event(fe.addr() as u32, 0x24, 0, 0x3F80_0000);
+    frontend_add_audio_event(fe.addr() as u32, 0x23, 0, 0x3F80_0000);
     frontend_reset(fe);
     script_reset_call(this.byte_add(0x2A0));
     weather_static_reset();
     ped_speech_reset();
     sm_reset_call(sm);
-    sm_service(sm);
+    sm_service(sm.addr() as u32);
     sm_pause_manually(sm, 1);
 }
 
@@ -3420,7 +3398,7 @@ pub fn engine_service_loading_tune(_this: GPtr<u8>, volume: u32) {
         }
     }
     hw_set_effects_fader_scaling_factor(hw, out);
-    sm_service(g(crate::common::AE_SOUND_MANAGER));
+    sm_service(GPtr::<u8>::addr(g(crate::common::AE_SOUND_MANAGER)) as u32);
 }
 
 /// `CAudioEngine::PreloadCutsceneTrack(int16 track, bool wait)` (0x507E30): stops whatever plays on the
@@ -3442,13 +3420,13 @@ fn stop_music_stream_for_preload(this: GPtr<u8>) {
     if radio_is_radio_on(radio) != 0 {
         let id = radio_get_current_radio_station_id_call(radio);
         wr::<u8>(this, 2, id);
-        let settings = player_vehicle_audio_settings_for_radio();
+        let settings = GPtr::from_addr(player_vehicle_audio_settings_for_radio() as usize);
         radio_stop_radio_call(radio, settings, 1);
-        frontend_add_audio_event(this.byte_add(0xB4), 0x23, 0, 0x3F80_0000);
+        frontend_add_audio_event(GPtr::<u8>::addr(this.byte_add(0xB4)) as u32, 0x23, 0, 0x3F80_0000);
         while radio_is_radio_on(radio) != 0 {
             let t = hw_get_track_play_time(hw);
             radio_service(radio, t);
-            hw_service(hw);
+            hw_service(hw.addr() as u32);
             sa_core::orig::busy_wait();
         }
     } else if ambience_is_ambience_track_active(g(crate::common::AE_AMBIENCE_TRACK_MANAGER)) != 0 {
@@ -3460,7 +3438,7 @@ fn stop_music_stream_for_preload(this: GPtr<u8>) {
         while cutscene_is_cutscene_track_active(cut) != 0 {
             let t = hw_get_track_play_time(hw);
             cutscene_service(cut, t);
-            hw_service(hw);
+            hw_service(hw.addr() as u32);
             sa_core::orig::busy_wait();
         }
     }
@@ -3501,13 +3479,13 @@ pub fn engine_reset(this: GPtr<u8>) {
     let hw = g::<u8>(AE_AUDIO_HARDWARE);
     let cut = g::<u8>(crate::common::AE_CUTSCENE_TRACK_MANAGER);
     let amb = g::<u8>(crate::common::AE_AMBIENCE_TRACK_MANAGER);
-    sm_service(sm);
+    sm_service(sm.addr() as u32);
     if radio_is_radio_on(radio) != 0 {
         radio_stop_radio_call(radio, GPtr::from_addr(0), 1);
         while radio_is_radio_on(radio) != 0 {
             let t = hw_get_track_play_time(hw);
             radio_service(radio, t);
-            hw_service(hw);
+            hw_service(hw.addr() as u32);
             sa_core::orig::busy_wait();
         }
     } else if ambience_is_ambience_track_active(amb) != 0 {
@@ -3518,7 +3496,7 @@ pub fn engine_reset(this: GPtr<u8>) {
         while cutscene_is_cutscene_track_active(cut) != 0 {
             let t = hw_get_track_play_time(hw);
             cutscene_service(cut, t);
-            hw_service(hw);
+            hw_service(hw.addr() as u32);
             sa_core::orig::busy_wait();
         }
     }
@@ -3526,8 +3504,8 @@ pub fn engine_reset(this: GPtr<u8>) {
     radio_reset(radio);
     ambience_reset_call(amb);
     let fe = this.byte_add(0xB4);
-    frontend_add_audio_event(fe, 0x24, 0, 0x3F80_0000);
-    frontend_add_audio_event(fe, 0x23, 0, 0x3F80_0000);
+    frontend_add_audio_event(fe.addr() as u32, 0x24, 0, 0x3F80_0000);
+    frontend_add_audio_event(fe.addr() as u32, 0x23, 0, 0x3F80_0000);
     frontend_reset(fe);
     script_reset_call(this.byte_add(0x2A0));
     let weapon = rd::<GPtr<u8>>(this, 0x1E34);
@@ -3538,17 +3516,14 @@ pub fn engine_reset(this: GPtr<u8>) {
     ped_speech_reset();
     ps_reset_call();
     sm_reset_call(sm);
-    sm_service(sm);
+    sm_service(sm.addr() as u32);
     sm_pause_manually(sm, 1);
     wr::<u8>(this, 2, 0xFF);
     wr::<u8>(this, 0, 0);
     wr::<u8>(this, 1, 0);
 }
 
-orig! {
-    /// CRT `_stricmp` (0x8229B6)
-    fn crt_stricmp(a: u32, b: u32) -> i32 = cdecl 0x8229B6 => unported;
-}
+use sa_core::bindings::stricmp as crt_stricmp;
 
 /// `CAudioZones::SwitchAudioZone(const char* name, bool enable)` (0x508320): sets bit 0 of the flags word
 /// (+0xA) of every audio box (0xB6EBA8, 0x1C bytes, count 0xB6DCC8) and then every audio sphere (0xB6DCD0,
@@ -3564,7 +3539,7 @@ pub fn audio_zones_switch_audio_zone(name: u32, enable: u32) {
         let mut i = 0usize;
         while (i as i32) < g::<i32>(count).read() {
             let zone = base + i * stride;
-            if crt_stricmp(name, zone as u32) == 0 {
+            if crt_stricmp(GPtr::from_addr(name as usize), GPtr::from_addr((zone as u32) as usize)) == 0 {
                 let f = g::<u16>(zone + 0xA);
                 f.write((f.read() & 0xFFFE) | bit);
             }
@@ -3619,7 +3594,7 @@ pub fn cutscene_preload_cutscene_track_port(this: GPtr<u8>, track: u32, wait: u3
     loop {
         let t = hw_get_track_play_time(hw);
         cutscene_service(this, t);
-        hw_service(hw);
+        hw_service(hw.addr() as u32);
         if rd::<u32>(this, 8) == 2 {
             break;
         }
@@ -3628,12 +3603,8 @@ pub fn cutscene_preload_cutscene_track_port(this: GPtr<u8>, track: u32, wait: u3
     }
 }
 
-orig! {
-    /// `CAEScriptAudioEntity::ProcessMissionAudioEvent(eAudioEvents, CVector& pos, CPhysical*, float, float)` (0x4ECCF0)
-    fn script_process_mission_audio_event(this: GPtr<u8>, event: u32, pos: GPtr<u8>, physical: u32, a: u32, b: u32) = thiscall 0x4ECCF0 => unported;
-    /// `CAEAudioEnvironment::GetDopplerRelativeFrequency(float, float, uint32, uint32, float)` (0x4D7E40, ST0)
-    fn env_get_doppler_relative_frequency(a: u32, b: u32, c: u32, d: u32, e: u32) -> f32 = cdecl 0x4D7E40 => unported;
-}
+use crate::bindings::env_get_doppler as env_get_doppler_relative_frequency;
+use crate::bindings::script_process_mission_audio_event;
 
 /// `CAEScriptAudioEntity::ReportMissionAudioEvent(eAudioEvents, CPhysical*, float, float)` (0x4EE960,
 /// catalogue `-1`): `ProcessMissionAudioEvent(event, (-1000, -1000, -1000), physical, a, b)` with a local
@@ -3660,22 +3631,17 @@ pub fn sound_get_relative_playback_frequency_with_doppler(this: GPtr<u8>) -> f32
         rd::<u32>(this, 0x44),
         rd::<u32>(this, 0x40),
         fb(0x50),
-    );
+    ) as f32;
     x(d).fmul_m(rd::<f32>(this, 0x64)).to_f32()
 }
 
 use sa_world::bindings::get_remap_index as vehicle_get_remap_index;
+use sa_core::bindings::find_player_ped as world_find_player_ped;
+use sa_stream::bindings::find_player_wanted as world_find_player_wanted;
+use sa_world::bindings::find_smallest_zone_for_position as zones_find_smallest_zone_for_position;
+use sa_world::bindings::get_task_jet_pack as ped_intelligence_get_task_jet_pack;
+use sa_world::bindings::get_task_swim as ped_intelligence_get_task_swim;
 orig! {
-    /// `CTheZones::FindSmallestZoneForPosition(const CVector&, bool)` (0x572360)
-    fn zones_find_smallest_zone_for_position(pos: u32, b: u32) -> u32 = cdecl 0x572360 => unported;
-    /// `CWorld::FindPlayerWanted(int32)` (0x56E230)
-    fn world_find_player_wanted(id: i32) -> u32 = cdecl 0x56E230 => unported;
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210)
-    fn world_find_player_ped(id: i32) -> u32 = cdecl 0x56E210 => unported;
-    /// `CPedIntelligence::GetTaskSwim()` (0x601070)
-    fn ped_intelligence_get_task_swim(intel: u32) -> u32 = thiscall 0x601070 => unported;
-    /// `CPedIntelligence::GetTaskJetPack()` (0x601110)
-    fn ped_intelligence_get_task_jet_pack(intel: u32) -> u32 = thiscall 0x601110 => unported;
     /// `CAEPoliceScannerAudioEntity::PlayPoliceScannerDialogue(int16* a, int16* b)` (0x4E6ED0)
     fn ps_play_police_scanner_dialogue_call(this: GPtr<u8>, a: u32, b: u32) = thiscall 0x4E6ED0 => ps_play_police_scanner_dialogue;
 }
@@ -3710,7 +3676,7 @@ pub fn ps_add_audio_event(this: GPtr<u8>, event: u32, crime: u32, pos: GPtr<u8>)
     a[1] = intro;
     a[2] = 0x97;
     a[3] = crime_word;
-    let zone = zones_find_smallest_zone_for_position(pos.addr() as u32, 1);
+    let zone = GPtr::<u8>::addr(zones_find_smallest_zone_for_position(GPtr::from_addr((pos.addr() as u32) as usize), 1)) as u32;
     if zone == 0 {
         return;
     }
@@ -3763,8 +3729,8 @@ pub fn ps_add_audio_event(this: GPtr<u8>, event: u32, crime: u32, pos: GPtr<u8>)
     a[9] = g::<u16>(0x8C87A8 + idx * 2).read();
     let mut ped = 0u32;
     for i in 0..2 {
-        if world_find_player_wanted(i).wrapping_add(0x21C) == this.addr() as u32 {
-            ped = world_find_player_ped(i);
+        if (GPtr::<u8>::addr(world_find_player_wanted(i)) as u32).wrapping_add(0x21C) == this.addr() as u32 {
+            ped = GPtr::<u8>::addr(world_find_player_ped(i)) as u32;
         }
     }
     if ped != 0 {
@@ -3784,7 +3750,7 @@ pub fn ps_add_audio_event(this: GPtr<u8>, event: u32, crime: u32, pos: GPtr<u8>)
                         1
                     };
                     if g::<u8>(0x8C8A54 + c).read() != 0 {
-                        if vehicle_get_remap_index(veh) != -1 {
+                        if vehicle_get_remap_index(veh) as i32 != -1 {
                             b[7] = 4;
                             b[6] = 0x94;
                         } else {
@@ -3804,9 +3770,9 @@ pub fn ps_add_audio_event(this: GPtr<u8>, event: u32, crime: u32, pos: GPtr<u8>)
             }
         } else {
             let intel = rd::<u32>(p, 0x47C);
-            let foot = if ped_intelligence_get_task_swim(intel) != 0 {
+            let foot = if GPtr::<u8>::addr(ped_intelligence_get_task_swim(GPtr::from_addr(intel as usize))) as u32 != 0 {
                 Some(2)
-            } else if ped_intelligence_get_task_jet_pack(intel) == 0 {
+            } else if GPtr::<u8>::addr(ped_intelligence_get_task_jet_pack(GPtr::from_addr(intel as usize))) as u32 == 0 {
                 Some(4)
             } else {
                 None
@@ -3826,12 +3792,7 @@ pub fn ps_add_audio_event(this: GPtr<u8>, event: u32, crime: u32, pos: GPtr<u8>)
 
 use crate::bindings::sm_request_new_sound;
 use sa_world::bindings::sound_dtor;
-orig! {
-    /// `CAESound::Initialise(int16 bankSlot, int16 sfx, CAEAudioEntity*, CVector pos, float volume, float
-    /// maxDistance, float speed, float doppler, uint8 frameDelay, uint32 flags, float freqVariance, int16
-    /// playTime)` (0x4EFE50, `ret 0x38`)
-    fn sound_initialise(sound: GPtr<u8>, slot: u32, sfx: u32, entity: GPtr<u8>, px: u32, py: u32, pz: u32, vol: u32, max_dist: u32, speed: u32, doppler: u32, delay: u32, flags: u32, freq_var: u32, play_time: u32) = thiscall 0x4EFE50 => unported;
-}
+use crate::bindings::sound_initialise;
 
 /// `CAEPoliceScannerAudioEntity::PlayLoadedDialogue()` (0x4E6F60): picks the first loaded slot (state 3)
 /// at or after the first playing one (state 5; from slot 0 when none) and plays it: a stack `CAESound`
@@ -3864,7 +3825,7 @@ pub fn ps_play_loaded_dialogue_port(this: GPtr<u8>) {
             sound,
             i as u32 + 0x21,
             sfx,
-            this,
+            this.addr() as u32,
             0,
             0x3F80_0000,
             0,
@@ -3880,7 +3841,7 @@ pub fn ps_play_loaded_dialogue_port(this: GPtr<u8>) {
         wr::<f32>(sound, 0x10, crate::common::xi(i as i32).to_f32());
         wr::<u16>(sound, 0x56, 0x107);
         wr::<u32>(sound, 0xC, 0xA4);
-        let got = sm_request_new_sound(g(crate::common::AE_SOUND_MANAGER), sound);
+        let got = sm_request_new_sound(GPtr::<u8>::addr(g(crate::common::AE_SOUND_MANAGER)) as u32, sound.addr() as u32);
         g::<u32>(PS_SOUND).write(got);
         if got != 0 {
             g::<u16>(PS_SLOTS + i * 2).write(5);
@@ -3891,8 +3852,8 @@ pub fn ps_play_loaded_dialogue_port(this: GPtr<u8>) {
         let v = x(g::<f32>(0xB61D54).read())
             .fadd_m(g::<f32>(PS_CF8).read())
             .to_f32();
-        engine_report_frontend_audio_event(engine, 0x31, v.to_bits(), 0x3F80_0000);
-        engine_report_frontend_audio_event(engine, 0x30, 0, 0x3F80_0000);
+        engine_report_frontend_audio_event(engine, 0x31, f32::from_bits(v.to_bits()), f32::from_bits(0x3F80_0000));
+        engine_report_frontend_audio_event(engine, 0x30, f32::from_bits(0), f32::from_bits(0x3F80_0000));
         if g::<u16>(PS_D04).read() != 0 {
             ps_finished_playing_call();
         } else {
@@ -3913,12 +3874,8 @@ pub fn ps_play_loaded_dialogue_port(this: GPtr<u8>) {
 }
 
 use crate::bindings::hw_is_sound_bank_loaded;
-orig! {
-    /// `FUN_004dc670` (0x4DC670, `CVector ==`)
-    fn vector_equal_call(a: GPtr<u8>, b: GPtr<u8>) -> u32 = cdecl 0x4DC670 => vector_equal;
-    /// `CAESound::RegisterWithPhysicalEntity(CEntity*)` (0x4EF820)
-    fn sound_register_with_physical_entity(sound: GPtr<u8>, entity: u32) = thiscall 0x4EF820 => unported;
-}
+use crate::bindings::sound_register_with_physical_entity;
+use crate::bindings::vector_equal as vector_equal_call;
 
 /// `CAEScriptAudioEntity::PlayResidentSoundEvent(int16 slot, int16 bank, int16 sfx, int32 event, CVector*
 /// pos, CPhysical*, float volumeDelta, float speed, int16 playTime, float maxDistance)` (0x4EC550): when
@@ -3980,7 +3937,7 @@ pub fn script_play_resident_sound_event_port(
         sound,
         slot,
         sfx,
-        this,
+        this.addr() as u32,
         px,
         py,
         pz,
@@ -3998,10 +3955,10 @@ pub fn script_play_resident_sound_event_port(
     sound_set_flags(sound, 1, relative);
     if physical != 0 {
         sound_set_flags(sound, 0x80, 1);
-        sound_register_with_physical_entity(sound, physical);
+        sound_register_with_physical_entity(sound, GPtr::from_addr(physical as usize));
     }
     wr::<u32>(this, 0x14, u32::from(ev));
-    sm_request_new_sound(g(crate::common::AE_SOUND_MANAGER), sound);
+    sm_request_new_sound(GPtr::<u8>::addr(g(crate::common::AE_SOUND_MANAGER)) as u32, sound.addr() as u32);
 }
 
 /// `CAEScriptAudioEntity::PlayMissionBankSound(int32 event, CVector* pos, CPhysical*, int16 sfx, uint8
@@ -4084,7 +4041,7 @@ pub fn script_play_mission_bank_sound_port(
         sound,
         bank_slot,
         sfx,
-        this,
+        this.addr() as u32,
         px,
         py,
         pz,
@@ -4101,10 +4058,10 @@ pub fn script_play_mission_bank_sound_port(
     sound_set_flags(sound, 1, relative);
     if physical != 0 {
         sound_set_flags(sound, 0x80, 1);
-        sound_register_with_physical_entity(sound, physical);
+        sound_register_with_physical_entity(sound, GPtr::from_addr(physical as usize));
     }
     wr::<u32>(this, 0x14, u32::from(ev));
-    sm_request_new_sound(g(crate::common::AE_SOUND_MANAGER), sound);
+    sm_request_new_sound(GPtr::<u8>::addr(g(crate::common::AE_SOUND_MANAGER)) as u32, sound.addr() as u32);
 }
 
 use sa_world::bindings::stats_get_full_favorite_radio_station_list;
@@ -4203,11 +4160,14 @@ use crate::bindings::hw_get_track_length_ms;
 use crate::bindings::hw_stop_track;
 use crate::bindings::radio_is_vehicle_radio_active;
 use sa_core::bindings::get_pad as pad_get_pad;
+use crate::bindings::get_user_track_play_mode_call as user_get_user_track_play_mode;
+use crate::bindings::hw_play_track;
+use crate::bindings::hw_set_bass_setting;
+use crate::bindings::radio_choose_advert_index as radio_choose_advert_index_call;
+use crate::bindings::radio_service as radio_service_call;
+use crate::bindings::radio_start_radio_manual as radio_start_radio_call;
+use crate::bindings::radio_update_radio_volumes;
 orig! {
-    /// `CAEAudioHardware::SetBassSetting(int8, float)` (0x4D94A0)
-    fn hw_set_bass_setting(hw: GPtr<u8>, setting: u32, gain_bits: u32) = thiscall 0x4D94A0 => unported;
-    /// `CAEAudioHardware::PlayTrack(uint32, int32, uint32, uint8, bool, bool)` (0x4D8F10)
-    fn hw_play_track(hw: GPtr<u8>, id: u32, next: u32, offset: u32, flags: u32, user: u32, user_next: u32) = thiscall 0x4D8F10 => unported;
     /// `CAERadioTrackManager::CheckForMissionStatsChanges()` (0x4E8410)
     fn radio_check_for_mission_stats_changes_call(this: GPtr<u8>) = thiscall 0x4E8410 => radio_check_for_mission_stats_changes;
     /// `CAERadioTrackManager::CheckForStationRetune()` (0x4EB660)
@@ -4216,26 +4176,16 @@ orig! {
     fn radio_check_for_station_retune_during_pause_call(this: GPtr<u8>) = thiscall 0x4EB890 => radio_check_for_station_retune_during_pause;
     /// `CAERadioTrackManager::StartTrackPlayback()` (0x4EA640)
     fn radio_start_track_playback(this: GPtr<u8>) = thiscall 0x4EA640 => unported;
-    /// `CAERadioTrackManager::ChooseAdvertIndex(eRadioID)` (0x4E9570)
-    fn radio_choose_advert_index_call(this: GPtr<u8>, station: u32) -> u32 = thiscall 0x4E9570 => radio_choose_advert_index;
     /// `CAERadioTrackManager::AddIdentIndexToHistory(eRadioID, int32)` (0x4E9720)
     fn radio_add_ident_call(this: GPtr<u8>, station: u32, index: u32) = thiscall 0x4E9720 => radio_add_ident_index_to_history;
     /// `CAERadioTrackManager::AddAdvertIndexToHistory(eRadioID, int32)` (0x4E9760)
     fn radio_add_advert_call(this: GPtr<u8>, station: u32, index: u32) = thiscall 0x4E9760 => radio_add_advert_index_to_history;
     /// `CAERadioTrackManager::AddDJBanterIndexToHistory(eRadioID, int32)` (0x4E97B0)
     fn radio_add_dj_banter_call(this: GPtr<u8>, station: u32, index: u32) = thiscall 0x4E97B0 => radio_add_dj_banter_index_to_history;
-    /// `CAEUserRadioTrackManager::GetUserTrackPlayMode()` (0x4F3330)
-    fn user_get_user_track_play_mode(this: GPtr<u8>) -> u8 = thiscall 0x4F3330 => unported;
     /// `FUN_004e7f20` (0x4E7F20, a `CPad` query used for the user-track skip)
     fn pad_query_4e7f20(pad: GPtr<u8>) -> u8 = thiscall 0x4E7F20 => unported;
-    /// `CAERadioTrackManager::Service(int32 playTime)` (0x4EB9A0; the bytes' recursion)
-    fn radio_service_call(this: GPtr<u8>, t: u32) = thiscall 0x4EB9A0 => radio_service_port;
-    /// `CAERadioTrackManager::StartRadio(eRadioID, eBassSetting, float, uint8)` (0x4EB3C0)
-    fn radio_start_radio_call(this: GPtr<u8>, station: u32, bass: u32, gain_bits: u32, b: u32) = thiscall 0x4EB3C0 => crate::radio::start_radio_manual_port;
     /// `CAERadioTrackManager::CheckForPause()` (0x4EA590)
     fn radio_check_for_pause(this: GPtr<u8>) = thiscall 0x4EA590 => unported;
-    /// `CAERadioTrackManager::UpdateRadioVolumes()` (0x4EA010)
-    fn radio_update_radio_volumes(this: GPtr<u8>) = thiscall 0x4EA010 => unported;
     /// `CAERadioTrackManager::CheckForTrackConcatenation()` (0x4EA930)
     fn radio_check_for_track_concatenation(this: GPtr<u8>) = thiscall 0x4EA930 => unported;
 }
@@ -4274,7 +4224,7 @@ pub fn radio_service_port(this: GPtr<u8>, play_time: u32) {
     if rd::<u8>(this, 0) != 0 && rd::<u32>(this, 0x68) == 7 {
         if rd::<u8>(this, 0xAD) == 13 {
             copy_settings();
-            let s = player_vehicle_audio_settings_for_radio();
+            let s = GPtr::from_addr(player_vehicle_audio_settings_for_radio() as usize);
             if !s.is_null() {
                 let t = rd::<u8>(s, 0x1B);
                 if t == 0 || t == 3 || t == 2 {
@@ -4285,7 +4235,7 @@ pub fn radio_service_port(this: GPtr<u8>, play_time: u32) {
         } else if engine_is_ambience_track_active(engine) == 0 {
             copy_settings();
             wr::<u32>(this, 0x68, 0);
-            if radio_is_vehicle_radio_active(this) != 0 {
+            if radio_is_vehicle_radio_active() != 0 {
                 wr::<u8>(this, 1, 1);
             }
             wr::<u8>(this, 0, 0);
@@ -4302,7 +4252,7 @@ pub fn radio_service_port(this: GPtr<u8>, play_time: u32) {
             } else {
                 0
             };
-            hw_set_bass_setting(hw, bass, rd::<u32>(this, 0xEC));
+            hw_set_bass_setting(hw, bass, f32::from_bits(rd::<u32>(this, 0xEC)));
             let user_next = u32::from(rd::<u8>(this, 0xF1) == 7);
             let user = u32::from(rd::<u8>(this, 0xF0) == 7);
             let flags = u32::from(rd::<u8>(this, 0xE8));
@@ -4320,7 +4270,7 @@ pub fn radio_service_port(this: GPtr<u8>, play_time: u32) {
         1 => {
             let e0 = rd::<i32>(this, 0xE0);
             if e0 == -2 {
-                engine_report_frontend_audio_event(engine, 0x23, 0, one);
+                engine_report_frontend_audio_event(engine, 0x23, f32::from_bits(0), f32::from_bits(one));
                 radio_start_track_playback(this);
                 let idx = isize::from(rd::<i8>(this, 0xE9));
                 wr::<u32>(this, 0x60, g::<u32>(TIMER_MS).read());
@@ -4393,7 +4343,7 @@ pub fn radio_service_port(this: GPtr<u8>, play_time: u32) {
                 {
                     let t = hw_get_track_play_time(hw);
                     radio_service_call(this, t);
-                    hw_service(hw);
+                    hw_service(hw.addr() as u32);
                     sa_core::orig::busy_wait();
                 }
                 let gain = rd::<u32>(this, 0xEC);
@@ -4403,7 +4353,7 @@ pub fn radio_service_port(this: GPtr<u8>, play_time: u32) {
             radio_check_for_pause(this);
             radio_update_radio_volumes(this);
             radio_check_for_track_concatenation(this);
-            engine_report_frontend_audio_event(engine, 0x23, 0, one);
+            engine_report_frontend_audio_event(engine, 0x23, f32::from_bits(0), f32::from_bits(one));
         }
         3 | 5 => {
             hw_stop_track(hw);
@@ -4419,10 +4369,7 @@ pub fn radio_service_port(this: GPtr<u8>, play_time: u32) {
     }
 }
 
-orig! {
-    /// `CAEScriptAudioEntity::GetMissionAudioLoadingStatus(uint8 slot)` (0x4EBF60)
-    fn script_get_mission_audio_loading_status_call(this: GPtr<u8>, slot: u8) -> u8 = thiscall 0x4EBF60 => script_get_mission_audio_loading_status;
-}
+use crate::bindings::script_get_mission_audio_loading_status_call;
 
 /// `CAEScriptAudioEntity::PlayLoadedMissionAudio(uint8 slot)` (0x4EC270): for a slot < 4 with a bank
 /// (+0xA8) and sound (+0xAC) that report loaded (status 1): a stack `CAESound` (entity pointer +8
@@ -4501,7 +4448,7 @@ pub fn script_play_loaded_mission_audio(this: GPtr<u8>, slot: u32) {
             sound,
             u32::from(sl) + 0x1A,
             sfx,
-            this,
+            this.addr() as u32,
             px,
             py,
             pz,
@@ -4519,7 +4466,7 @@ pub fn script_play_loaded_mission_audio(this: GPtr<u8>, slot: u32) {
         sound_set_flags(sound, 0x100, frontend);
         sound_set_flags(sound, 0x200, frontend);
         sound_set_flags(sound, 0x800, frontend);
-        let got = sm_request_new_sound(g(crate::common::AE_SOUND_MANAGER), sound);
+        let got = sm_request_new_sound(GPtr::<u8>::addr(g(crate::common::AE_SOUND_MANAGER)) as u32, sound.addr() as u32);
         wr::<u32>(rec, 0xA0, got);
     }
     sound_dtor(sound);
@@ -4533,11 +4480,9 @@ pub fn hw_get_num_available_channels(this: GPtr<u8>) -> u16 {
     rd::<u16>(this, 0x8C)
 }
 
+use crate::bindings::bank_is_sound_bank_loaded as mp3_is_sound_bank_loaded_call;
+use crate::bindings::bank_is_sound_loaded as mp3_is_sound_loaded_call;
 orig! {
-    /// `CAEMP3BankLoader::IsSoundBankLoaded(uint16 bank, int16 slot)` (0x4E0220)
-    fn mp3_is_sound_bank_loaded_call(this: GPtr<u8>, bank: u32, slot: u32) -> u8 = thiscall 0x4E0220 => mp3_is_sound_bank_loaded;
-    /// `CAEMP3BankLoader::IsSoundLoaded(uint16 bank, uint16 sound, int16 slot)` (0x4E03B0)
-    fn mp3_is_sound_loaded_call(this: GPtr<u8>, bank: u32, sound: u32, slot: u32) -> u8 = thiscall 0x4E03B0 => mp3_is_sound_loaded;
     /// `CAEBankLoader::GetBankLookup(uint16 bank)` (0x4E01B0)
     fn bank_get_bank_lookup_call(this: GPtr<u8>, bank: u32) -> u32 = thiscall 0x4E01B0 => bank_get_bank_lookup;
 }
@@ -4684,10 +4629,7 @@ pub fn mp3_get_sound_buffer(this: GPtr<u8>, sound: u32, slot: u32, size: GPtr<u3
         .wrapping_add(rd::<u32>(this, 0x1C))
 }
 
-orig! {
-    /// `CAEAudioUtility::ConvertFromBytesToMS(uint32 bytes, uint32 freq, uint16 channels)` (0x4D9EF0)
-    fn util_convert_from_bytes_to_ms(bytes: u32, freq: u32, channels: u16) -> u32 = cdecl 0x4D9EF0 => crate::utility::convert_from_bytes_to_ms;
-}
+use crate::bindings::convert_from_bytes_to_ms_call as util_convert_from_bytes_to_ms;
 
 /// `CAEMP3BankLoader::UpdateVirtualChannels(tVirtualChannelSettings* settings, int16* lengths, int16*
 /// loopTimes)` (0x4E0450): for the 300 virtual channels (bank slot words at `settings`, sound ids 600
@@ -4793,7 +4735,7 @@ pub fn sm_cancel_sounds_of_this_event_playing_for_this_entity_and_physical(
             wr::<u16>(s, 0x60, 1);
             wr::<u32>(s, -4, 0);
             if !p.is_null() {
-                entity_clean_up_old_reference(p, s);
+                entity_clean_up_old_reference(p, s.cast::<GPtr<u8>>());
                 wr::<u32>(s, 0, 0);
             }
         }
@@ -4867,10 +4809,7 @@ pub fn hw_allocate_channels(this: GPtr<u8>, num: u32) -> u16 {
     }
 }
 
-orig! {
-    /// CRT `eh vector destructor iterator(void* arr, uint32 size, int32 count, void (*dtor)(void*))` (0x821E02, stdcall)
-    fn eh_vector_dtor(arr: u32, size: u32, count: u32, dtor: u32) = stdcall 0x821E02 => unported;
-}
+use sa_core::bindings::eh_vector_dtor;
 
 /// `CAESoundManager::Terminate()` (0x4EFAA0): destroys the virtual-channel array (+0x87F4: `eh vector
 /// destructor iterator(arr, 2, count at arr - 4, 0x4EF070)`, then frees the block at arr - 4), frees +0x87F8
@@ -4881,7 +4820,7 @@ pub fn sm_terminate(this: GPtr<u8>) {
     if arr != 0 {
         let block = arr.wrapping_sub(4);
         let count = g::<u32>(block as usize).read();
-        eh_vector_dtor(arr, 2, count, 0x4EF070);
+        eh_vector_dtor(GPtr::from_addr(arr as usize), 2, count, 0x4EF070);
         crt_free(GPtr::from_addr(block as usize));
     }
     crt_free(rd::<GPtr<u8>>(this, 0x87F8));
@@ -4991,15 +4930,13 @@ pub fn engine_constructor(this: GPtr<u8>) -> u32 {
 }
 
 use sa_core::bindings::audio_engine_service as engine_service;
+use sa_core::bindings::crt_new as crt_operator_new;
+use sa_world::bindings::weapon_audio_initialise as weapon_initialise;
 orig! {
     /// `CAECollisionAudioEntity::InitialisePostLoading()` (0x4DA050)
     fn collision_initialise_post_loading(this: GPtr<u8>) = thiscall 0x4DA050 => unported;
-    /// CRT `operator new(uint32)` (0x82119A)
-    fn crt_operator_new(size: u32) -> u32 = cdecl 0x82119A => unported;
     /// `CAEGlobalWeaponAudioEntity::Constructor` (0x5075B0; returns `this`)
     fn global_weapon_ctor(this: u32) -> u32 = thiscall 0x5075B0 => unported;
-    /// `CAEWeaponAudioEntity::Initialise()` (0x503450; called with the possibly null entity)
-    fn weapon_initialise(this: u32) = thiscall 0x503450 => unported;
     /// `FUN_00506b20` (0x506B20, `CAEFrontendAudioEntity` destructor)
     fn frontend_dtor(this: GPtr<u8>) = thiscall 0x506B20 => unported;
     /// `FUN_00506ba0` (0x506BA0, `CAEScriptAudioEntity` destructor)
@@ -5029,19 +4966,19 @@ const POST_LOADING_BANKS: [(u32, u32); 12] = [
 /// (re-checked from the first after every service). The original's SEH unwind state is not modelled.
 #[hook(addr = 0x5078F0, conv = thiscall, name = "CAudioEngine::InitialisePostLoading", expect = "6A FF 68 7B C6 83 00")]
 pub fn engine_initialise_post_loading(this: GPtr<u8>) {
-    frontend_add_audio_event(this.byte_add(0xB4), 0x33, 0, 0x3F80_0000);
+    frontend_add_audio_event(GPtr::<u8>::addr(this.byte_add(0xB4)) as u32, 0x33, 0, 0x3F80_0000);
     engine_service(g(crate::common::AUDIO_ENGINE));
     collision_initialise_post_loading(this.byte_add(0x4BC));
-    let mem = crt_operator_new(0xA8);
+    let mem = GPtr::<u8>::addr(crt_operator_new(0xA8)) as u32;
     let weapon = if mem != 0 { global_weapon_ctor(mem) } else { 0 };
     wr::<u32>(this, 0x1E34, weapon);
-    weapon_initialise(weapon);
+    weapon_initialise(GPtr::from_addr(weapon as usize));
     let hw = g::<u8>(AE_AUDIO_HARDWARE);
     while !POST_LOADING_BANKS
         .iter()
         .all(|&(bank, slot)| hw_is_sound_bank_loaded(hw, bank, slot) != 0)
     {
-        hw_service(hw);
+        hw_service(hw.addr() as u32);
         sa_core::orig::busy_wait();
     }
 }

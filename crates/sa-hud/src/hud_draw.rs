@@ -433,22 +433,22 @@ fn max_h() -> X87 {
 
 use crate::bindings::draw_blips_call as radar_draw_blips;
 use crate::bindings::font_get_number_lines;
-use crate::bindings::font_set_alpha_fade;
-use crate::bindings::font_set_background_color;
-use crate::bindings::font_set_centre_size;
-use crate::bindings::font_set_drop_color;
-use crate::bindings::font_set_drop_shadow_position;
-use crate::bindings::font_set_justify;
-use crate::bindings::font_set_right_justify_wrap;
-use crate::bindings::font_set_scale;
+use sa_core::bindings::font_set_alpha_fade;
+use sa_core::bindings::font_set_background_color;
+use sa_core::bindings::font_set_centre_size;
+use sa_core::bindings::font_set_drop_color;
+use sa_core::bindings::font_set_drop_shadow_position;
+use sa_core::bindings::font_set_justify;
+use sa_core::bindings::font_set_right_justify_wrap;
+use sa_core::bindings::font_set_scale;
 use crate::bindings::font_set_scale_for_current_language;
 use crate::bindings::font_set_slant;
-use crate::bindings::font_set_wrapx;
-use crate::bindings::get_string_length_call as msg_get_string_length;
-use crate::bindings::hud_colours_get_rgb;
+use sa_core::bindings::font_set_wrapx;
+use sa_core::bindings::get_string_length_call as msg_get_string_length;
+use sa_stream::bindings::hud_colours_get_rgb;
 use crate::bindings::hud_colours_get_rgba;
-use crate::bindings::msg_insert_player_control_keys;
-use crate::bindings::rw_tex_dictionary_find_hash_named_texture;
+use sa_world::bindings::msg_insert_player_control_keys;
+use sa_world::bindings::rw_tex_dictionary_find_hash_named_texture;
 use crate::bindings::sprite2d_set_texture;
 use sa_core::bindings::append_string_to_key;
 use sa_core::bindings::ascii_to_gxt_char;
@@ -461,13 +461,13 @@ use sa_core::bindings::rgba_ctor;
 use sa_core::bindings::sprintf1;
 use sa_core::bindings::sprite2d_draw as sprite2d_draw_rect;
 use sa_core::bindings::sprite_draw_rect as sprite2d_draw_rect_static;
-use sa_stream::bindings::add_txd_slot;
-use sa_stream::bindings::find_txd_slot;
-use sa_stream::bindings::load_txd;
+use sa_core::bindings::add_txd_slot;
+use sa_core::bindings::find_txd_slot;
+use sa_core::bindings::load_txd;
 use sa_stream::bindings::remove_txd_slot;
 use sa_stream::bindings::sprite2d_delete;
 use sa_stream::bindings::sprite2d_draw_bar_chart;
-use sa_world::bindings::audio_report_frontend_event;
+use sa_core::bindings::audio_report_frontend_event;
 use sa_world::bindings::camera_get_fading;
 use sa_world::bindings::count_members_excluding_leader as group_count_members_excluding_leader;
 use sa_world::bindings::font_get_string_width_st0;
@@ -478,6 +478,31 @@ use sa_world::bindings::max_f as max_f_st0;
 use sa_world::bindings::min_f as min_f_st0;
 use sa_world::bindings::ped_get_weapon_skill;
 use sa_world::bindings::sprite2d_draw_quad;
+use crate::bindings::font_print_string_from_bottom;
+use crate::bindings::menu_system_process;
+use sa_core::bindings::camera_get_screen_fade_status;
+use sa_core::bindings::font_set_background;
+use sa_core::bindings::font_set_color;
+use sa_core::bindings::font_set_edge;
+use sa_core::bindings::font_set_font_style;
+use sa_core::bindings::font_set_orientation;
+use sa_core::bindings::font_set_proportional;
+use sa_core::bindings::hud_re_initialise as re_initialise_call;
+use sa_core::bindings::hud_set_help_message as set_help_message_call;
+use sa_core::bindings::insert_number_in_string as msg_insert_number_in_string;
+use sa_core::bindings::messages_string_copy as msg_string_copy;
+use sa_core::bindings::pop_current_txd;
+use sa_core::bindings::push_current_txd;
+use sa_core::bindings::set_current_txd;
+use sa_core::bindings::text_get;
+use sa_core::bindings::txd_add_ref;
+use sa_stream::bindings::find_player_wanted;
+use sa_world::bindings::add_to_previous_brief_array as msg_add_to_previous_brief_array;
+use sa_world::bindings::messages_string_compare as msg_string_compare;
+use sa_world::bindings::skip_can_be_activated;
+use sa_world::bindings::sprite_render_one_xlu_sprite;
+use sa_world::bindings::stats_get_fat_and_muscle_modifier as stats_get_fat_and_muscle_modifier_st0;
+use sa_world::bindings::vector_ctor_iterator;
 orig! {
     /// `RwRenderStateSet` through `RwEngineInstance` (`mov r, [0xC97B24]; call [r+0x20]`)
     fn rw_render_state_set(state: u32, value: u32) -> u32 = cdecl table 0xC97B24 0x20 => unported;
@@ -498,8 +523,6 @@ orig! {
     fn draw_radar_call() = cdecl 0x58A330 => draw_radar;
     /// `CHud::DrawTripSkip()` (0x58A160)
     fn draw_trip_skip_call() = cdecl 0x58A160 => draw_trip_skip;
-    /// `CHud::SetHelpMessage(const GxtChar*, bool quick, bool permanent, bool addToBrief)` (0x588BE0)
-    fn set_help_message_call(text: GPtr<u8>, quick: u8, permanent: u8, brief: u8) = cdecl 0x588BE0 => set_help_message;
     /// `CHud::DrawScriptText(bool beforeFade)` (0x58C080)
     fn draw_script_text_call(before_fade: u32) = cdecl 0x58C080 => draw_script_text;
     /// `CHud::DrawSubtitles()` (0x58C250)
@@ -519,69 +542,17 @@ orig! {
 
     /// `CRadar::DrawMap()` (0x586B00)
     fn radar_draw_map() = cdecl 0x586B00 => unported;
-    /// `eh vector constructor iterator(ptr, size, count, ctor)` (0x403D60, stdcall)
-    fn vector_ctor_iterator(p: GPtr<u8>, size: u32, count: u32, ctor: u32) = stdcall 0x403D60 => unported;
-
-    /// `FindPlayerWanted(int32)` (0x56E230)
-    fn find_player_wanted(id: i32) -> GPtr<u8> = cdecl 0x56E230 => sa_world::world::cworld::find_player_wanted;
     /// `CHud::GetYPosBasedOnHealth(uint8, float, int8)` (0x588B60, ST0)
     fn get_y_pos_based_on_health_st0(player: u8, y: f32, offset: i8) -> f64 = cdecl 0x588B60 => get_y_pos_based_on_health_st0_rust;
 
-    /// `CStats::GetFatAndMuscleModifier(eStatModAbilities)` (0x559AF0, ST0)
-    fn stats_get_fat_and_muscle_modifier_st0(stat: u32) -> f64 = cdecl 0x559AF0 => unported;
-
-    /// `CMessages::StringCopy(GxtChar* dst, const GxtChar* src, uint16 len)` (0x69DB70)
-    fn msg_string_copy(dst: GPtr<u8>, src: GPtr<u8>, len: u32) = cdecl 0x69DB70 => crate::messages::string_copy;
-    /// `CMessages::StringCompare(const GxtChar*, const GxtChar*, uint16)` (0x69DBD0)
-    fn msg_string_compare(a: GPtr<u8>, bb: GPtr<u8>, len: u32) -> u8 = cdecl 0x69DBD0 => crate::messages::string_compare;
-    /// `CMessages::AddToPreviousBriefArray(text, n1..n6, string)` (0x69DD50)
-    fn msg_add_to_previous_brief_array(text: GPtr<u8>, n1: i32, n2: i32, n3: i32, n4: i32, n5: i32, n6: i32, st: GPtr<u8>) = cdecl 0x69DD50 => crate::messages::add_to_previous_brief_array;
-    /// `CMessages::InsertNumberInString(text, n1..n6, out)` (0x69DE90)
-    fn msg_insert_number_in_string(text: GPtr<u8>, n1: i32, n2: i32, n3: i32, n4: i32, n5: i32, n6: i32, out: GPtr<u8>) = cdecl 0x69DE90 => crate::messages::insert_number_in_string;
-
     /// `CTheScripts::DrawScriptSpritesAndRectangles(bool)` (0x464980)
     fn draw_script_sprites_and_rectangles(before_fade: u32) = cdecl 0x464980 => unported;
-    /// `CFont::PrintStringFromBottom(float x, float y, const GxtChar*)` (0x71A820)
-    fn font_print_string_from_bottom(px: f32, py: f32, text: GPtr<u8>) = cdecl 0x71A820 => unported;
-    /// `CCamera::GetScreenFadeStatus()` (0x50AE20)
-    fn camera_get_screen_fade_status(this: GPtr<u8>) -> u32 = thiscall 0x50AE20 => unported;
-    /// `CTxdStore::AddRef(int32)` (0x731A00)
-    fn txd_add_ref(slot: i32) = cdecl 0x731A00 => sa_stream::txdstore::add_ref;
-    /// `CTxdStore::PushCurrentTxd()` (0x7316A0)
-    fn push_current_txd() = cdecl 0x7316A0 => sa_stream::txdstore::push_current_txd;
-    /// `CTxdStore::SetCurrentTxd(int32)` (0x7319C0)
-    fn set_current_txd(slot: i32) = cdecl 0x7319C0 => sa_stream::txdstore::set_current_txd;
-    /// `CTxdStore::PopCurrentTxd()` (0x7316B0)
-    fn pop_current_txd() = cdecl 0x7316B0 => sa_stream::txdstore::pop_current_txd;
-    /// `CHud::ReInitialise()` (0x588880)
-    fn re_initialise_call() = cdecl 0x588880 => re_initialise;
     /// `CPad::GetDisplayVitalStats(CPed*)` (0x5408B0; the caller tests AX)
     fn pad_get_display_vital_stats(pad: GPtr<u8>, ped: GPtr<u8>) -> u32 = thiscall 0x5408B0 => unported;
-    /// `CGameLogic::SkipCanBeActivated()` (0x4415C0)
-    fn skip_can_be_activated() -> u8 = cdecl 0x4415C0 => unported;
-    /// `CText::Get(const char*)` (0x6A0050)
-    fn text_get(this: GPtr<u8>, key: GPtr<u8>) -> GPtr<u8> = thiscall 0x6A0050 => crate::text::text_get;
     /// `CRadar::Draw3dMarkers()` (0x585BF0)
     fn radar_draw_3d_markers() = cdecl 0x585BF0 => crate::radar_draw2::draw_3d_markers;
-    /// `CMenuSystem::Process(uint8 menu)` (0x582630)
-    fn menu_system_process(menu: i32) = cdecl 0x582630 => unported;
-    /// `CSprite::RenderOneXLUSprite(x, y, z, halfW, halfH, r, g, b, intensity, rhw, a, uDir, vDir)` (0x70D000)
-    fn sprite_render_one_xlu_sprite(px: f32, py: f32, pz: u32, hw: f32, hh: f32, r: u32, gg: u32, bb: u32, intensity: u32, rhw: u32, a: u32, u_dir: u32, v_dir: u32) = cdecl 0x70D000 => unported;
     /// CRT `sprintf(buf, fmt, a, b)` (0x821BB5)
     fn sprintf2(buf: GPtr<u8>, fmt: GPtr<u8>, a: i32, bb: i32) -> i32 = cdecl 0x821BB5 => unported;
-
-    /// `CFont::SetBackground(bool, bool)` (0x7195C0)
-    fn font_set_background(on: u32, outline: u32) = cdecl 0x7195C0 => crate::font::set_background;
-    /// `CFont::SetOrientation(eFontAlignment)` (0x719610)
-    fn font_set_orientation(v: u32) = cdecl 0x719610 => crate::font::set_orientation;
-    /// `CFont::SetProportional(bool)` (0x7195B0)
-    fn font_set_proportional(v: u32) = cdecl 0x7195B0 => crate::font::set_proportional;
-    /// `CFont::SetEdge(int8)` (0x719590)
-    fn font_set_edge(v: u32) = cdecl 0x719590 => crate::font::set_edge;
-    /// `CFont::SetFontStyle(eFontStyle)` (0x719490)
-    fn font_set_font_style(v: u32) = cdecl 0x719490 => crate::font::set_font_style;
-    /// `CFont::SetColor(CRGBA)` (0x719430)
-    fn font_set_color(c: u32) = cdecl 0x719430 => crate::font::set_color;
 }
 
 /// A local buffer as a game pointer (the original's stack temporaries).
@@ -677,7 +648,7 @@ pub fn draw() {
     }
     if b(BIG_MESSAGE_0) == 0 {
         if b(NUM_MENUS_IN_USE) != 0 {
-            menu_system_process(-99);
+            menu_system_process(-99i32 as u32);
         }
         draw_script_text_call(1);
     }
@@ -728,7 +699,7 @@ pub fn draw_after_fade() {
 pub fn draw_weapon_icon(ped: GPtr<u8>, px: i32, py: i32, alpha: f32) {
     rw_render_state_set(9, 2);
     let ty = rd::<u32>(active_weapon(ped), 0);
-    let model = rd::<i32>(get_weapon_info(ty, 1), 0xC);
+    let model = rd::<i32>(get_weapon_info(ty as i32, 1), 0xC);
     if model <= 0 {
         // Fist: CRect {left, bottom, right, top}
         let x0 = xi(px);
@@ -743,7 +714,7 @@ pub fn draw_weapon_icon(ped: GPtr<u8>, px: i32, py: i32, alpha: f32) {
         let a = ftol32(x(alpha)) as u32;
         let mut rgba = [0u8; 4];
         let c = rgba_ctor(local(&mut rgba), 0xFF, 0xFF, 0xFF, a);
-        sprite2d_draw_rect(g(SPRITES), local(&mut rect), c);
+        sprite2d_draw_rect(g(SPRITES), GPtr::<u8>::cast::<f32>(local(&mut rect)), c);
         return;
     }
     let mi = g::<GPtr<u8>>(MODEL_INFO_PTRS + model as usize * 4).read();
@@ -785,7 +756,7 @@ pub fn draw_ammo(ped: GPtr<u8>, px: i32, py: i32, alpha: f32) {
     let total = rd::<i32>(w, 0xC);
     let ty = rd::<u32>(w, 0);
     let skill = ped_get_weapon_skill(ped);
-    let clip_size = i32::from(rd::<i16>(get_weapon_info(ty, skill), 0x20));
+    let clip_size = i32::from(rd::<i16>(get_weapon_info(ty as i32, (skill as i32) as u8), 0x20));
     if clip_size <= 1 || clip_size >= 1000 {
         sprintf1(g(G_STRING), g(STR_FMT_D), total);
     } else {
@@ -803,9 +774,9 @@ pub fn draw_ammo(ped: GPtr<u8>, px: i32, py: i32, alpha: f32) {
     font_set_background(0, 0);
     let h = f32_of(max_h().fmul_m(k(K_1_448)).fmul_m(k(K_0_7)));
     let wd = f32_of(max_w().fmul_m(k(K_1_640)).fmul_m(k(K_0_3)));
-    font_set_scale(wd.to_bits(), h.to_bits());
+    font_set_scale(f32::from_bits(wd.to_bits()), f32::from_bits(h.to_bits()));
     font_set_orientation(0);
-    font_set_centre_size(f32_of(max_w().fmul_m(k(K_1_640)).fmul_m(k(K_640))).to_bits());
+    font_set_centre_size(f32::from_bits(f32_of(max_w().fmul_m(k(K_1_640)).fmul_m(k(K_640))).to_bits()));
     font_set_proportional(1);
     font_set_edge(1);
     let mut rgba = [0u8; 4];
@@ -830,12 +801,12 @@ pub fn draw_ammo(ped: GPtr<u8>, px: i32, py: i32, alpha: f32) {
         font_set_edge(0);
         return;
     }
-    if rd::<u32>(get_weapon_info(ty, 1), 0) == 5 {
+    if rd::<u32>(get_weapon_info(ty as i32, 1), 0) == 5 {
         font_set_edge(0);
         return;
     }
     let ty = rd::<u32>(active_weapon(ped), 0);
-    if rd::<i32>(get_weapon_info(ty, 1), 0x14) <= 1 {
+    if rd::<i32>(get_weapon_info(ty as i32, 1), 0x14) <= 1 {
         font_set_edge(0);
         return;
     }
@@ -853,14 +824,14 @@ pub fn draw_ammo(ped: GPtr<u8>, px: i32, py: i32, alpha: f32) {
 fn draw_sprite_rect(sprite: usize, mut rect: [u8; 16], c: [u32; 4]) {
     let mut rgba = [0u8; 4];
     let cp = rgba_ctor(local(&mut rgba), c[0], c[1], c[2], c[3]);
-    sprite2d_draw_rect(g(sprite), local(&mut rect), cp);
+    sprite2d_draw_rect(g(sprite), GPtr::<u8>::cast::<f32>(local(&mut rect)), cp);
 }
 
 /// `CSprite2d::DrawRect(rect, CRGBA(r, g, b, a))` with stack temporaries.
 fn draw_rect(mut rect: [u8; 16], c: [u32; 4]) {
     let mut rgba = [0u8; 4];
     let cp = rgba_ctor(local(&mut rgba), c[0], c[1], c[2], c[3]);
-    sprite2d_draw_rect_static(local(&mut rect), cp);
+    sprite2d_draw_rect_static(GPtr::<u8>::cast::<f32>(local(&mut rect)), cp);
 }
 
 /// `CHud::DrawRadar()` (0x58A330). Byte findings: the plane ring angle is `-atan2(-right.z, up.z) - pi/4`
@@ -1114,7 +1085,7 @@ pub fn draw_wanted() {
     font_set_background(0, 0);
     let h = f32_of(max_h().fmul_m(k(K_1_448)).fmul_m(k(K_1_21)));
     let w = f32_of(max_w().fmul_m(k(K_1_640)).fmul_m(k(K_0_605)));
-    font_set_scale(w.to_bits(), h.to_bits());
+    font_set_scale(f32::from_bits(w.to_bits()), f32::from_bits(h.to_bits()));
     font_set_orientation(2);
     font_set_proportional(1);
     font_set_font_style(0);
@@ -1135,7 +1106,7 @@ pub fn draw_wanted() {
         font_set_drop_color(rd::<u32>(c, 0));
         let h = f32_of(max_h().fmul_m(k(K_1_448)).fmul_m(k(K_1_21)));
         let w = f32_of(max_w().fmul_m(k(K_1_640)).fmul_m(k(K_0_605)));
-        font_set_scale(w.to_bits(), h.to_bits());
+        font_set_scale(f32::from_bits(w.to_bits()), f32::from_bits(h.to_bits()));
         let mut lit = false;
         if level > i {
             let t = g::<u32>(TIME_MS).read();
@@ -1177,7 +1148,7 @@ pub fn draw_wanted() {
             font_set_color(rd::<u32>(c, 0));
             let h = f32_of(max_h().fmul_m(k(K_1_448)).fmul_m(k(K_1_21)).fmul_m(k(K_1_2)));
             let w = f32_of(max_w().fmul_m(k(K_1_640)).fmul_m(k(K_0_605)).fmul_m(k(K_1_2)));
-            font_set_scale(w.to_bits(), h.to_bits());
+            font_set_scale(f32::from_bits(w.to_bits()), f32::from_bits(h.to_bits()));
             let focus = b(PLAYER_IN_FOCUS);
             let syf = f32_of(max_h().fmul_m(k(K_1_448)));
             let y = f32_of(x(syf).fmul_m(k(K_114)));
@@ -1519,7 +1490,7 @@ pub fn draw_script_text(before_fade: u32) {
         }
         let h = f32_of(max_h().fmul_m(k(K_1_448)).fmul_m(rd::<f32>(e, 0)).fmul_m(k(K_HALF)));
         let w = f32_of(max_w().fmul_m(k(K_1_640)).fmul_m(rd::<f32>(e, -4)));
-        font_set_scale(w.to_bits(), h.to_bits());
+        font_set_scale(f32::from_bits(w.to_bits()), f32::from_bits(h.to_bits()));
         font_set_color(rd::<u32>(e, 4));
         font_set_justify(u32::from(rd::<u8>(e, 8)));
         let orient = if rd::<u8>(e, 0x20) != 0 {
@@ -1530,8 +1501,8 @@ pub fn draw_script_text(before_fade: u32) {
             1
         };
         font_set_orientation(orient);
-        font_set_wrapx(f32_of(max_w().fmul_m(k(K_1_640)).fmul_m(rd::<f32>(e, 0xC))).to_bits());
-        font_set_centre_size(f32_of(max_w().fmul_m(k(K_1_640)).fmul_m(rd::<f32>(e, 0x10))).to_bits());
+        font_set_wrapx(f32::from_bits(f32_of(max_w().fmul_m(k(K_1_640)).fmul_m(rd::<f32>(e, 0xC))).to_bits()));
+        font_set_centre_size(f32::from_bits(f32_of(max_w().fmul_m(k(K_1_640)).fmul_m(rd::<f32>(e, 0x10))).to_bits()));
         font_set_background(u32::from(rd::<u8>(e, 0xA)), 0);
         font_set_background_color(rd::<u32>(e, 0x14));
         font_set_proportional(u32::from(rd::<u8>(e, 0x18)));
@@ -1576,12 +1547,12 @@ pub fn draw_mission_title() {
     }
     font_set_background(0, 0);
     font_set_proportional(1);
-    font_set_right_justify_wrap(0);
+    font_set_right_justify_wrap(f32::from_bits(0));
     font_set_orientation(2);
     font_set_font_style(3);
     let h = f32_of(max_h().fmul_m(k(K_1_448)).fmul_m(k(K_1_3)));
     let w = f32_of(max_w().fmul_m(k(K_1_640)));
-    font_set_scale(w.to_bits(), h.to_bits());
+    font_set_scale(f32::from_bits(w.to_bits()), f32::from_bits(h.to_bits()));
     let lim = g::<i32>(RS_MAX_WIDTH).read().wrapping_add(-20);
     let ts = x(g::<f32>(TIME_STEP).read());
     if !xi(lim).fcom(x(g::<f32>(BIG_MESSAGE_IN_USE_1).read())).test_any(0x41) {
@@ -1660,7 +1631,7 @@ pub fn draw_busted_wasted_message() {
     font_set_background(0, 0);
     let h = f32_of(max_h().fmul_m(k(K_1_448)).fmul_m(k(K_2_1)));
     let w = f32_of(max_w().fmul_m(k(K_1_640)).fmul_m(k(K_2_1)));
-    font_set_scale(w.to_bits(), h.to_bits());
+    font_set_scale(f32::from_bits(w.to_bits()), f32::from_bits(h.to_bits()));
     font_set_proportional(1);
     font_set_justify(0);
     font_set_orientation(0);
@@ -1734,11 +1705,11 @@ pub fn draw_success_failed_message() {
     font_set_background(0, 0);
     let h = f32_of(max_h().fmul_m(k(K_1_448)).fmul(dq(D_1_8)));
     let w = f32_of(max_w().fmul_m(k(K_1_640)).fmul(dq(D_1_3)));
-    font_set_scale(w.to_bits(), h.to_bits());
+    font_set_scale(f32::from_bits(w.to_bits()), f32::from_bits(h.to_bits()));
     font_set_proportional(1);
     font_set_justify(0);
     font_set_orientation(0);
-    font_set_centre_size(f32_of(max_w().fmul_m(k(K_1_640)).fmul_m(k(K_590))).to_bits());
+    font_set_centre_size(f32::from_bits(f32_of(max_w().fmul_m(k(K_1_640)).fmul_m(k(K_590))).to_bits()));
     font_set_font_style(3);
     font_set_edge(2);
     let al = ftol32(x(g::<f32>(BIG_MESSAGE_ALPHA_0).read())) as u32;
@@ -1795,9 +1766,9 @@ pub fn draw_trip_skip() {
     font_set_background(0, 0);
     let h = f32_of(max_h().fmul_m(k(K_1_448)).fmul_m(k(K_0_7)));
     let w = f32_of(max_w().fmul_m(k(K_1_640)).fmul_m(k(K_0_3)));
-    font_set_scale(w.to_bits(), h.to_bits());
+    font_set_scale(f32::from_bits(w.to_bits()), f32::from_bits(h.to_bits()));
     font_set_orientation(0);
-    font_set_centre_size(f32_of(max_w()).to_bits());
+    font_set_centre_size(f32::from_bits(f32_of(max_w()).to_bits()));
     font_set_proportional(1);
     font_set_edge(1);
     let mut tmp = [0u8; 4];
@@ -1896,10 +1867,10 @@ pub fn draw_subtitles() {
             return;
         }
         let mw = max_w();
-        font_set_centre_size(f32_of(x(k(K_1_640)).fmul(mw).fmul_m(k(K_60)).fsubr(mw)).to_bits());
+        font_set_centre_size(f32::from_bits(f32_of(x(k(K_1_640)).fmul(mw).fmul_m(k(K_60)).fsubr(mw)).to_bits()));
         let h = f32_of(max_h().fmul_m(k(K_1_448)).fmul_m(k(K_1_2)));
         let w = f32_of(max_w().fmul_m(k(K_1_640)).fmul_m(k(K_0_58)));
-        font_set_scale(w.to_bits(), h.to_bits());
+        font_set_scale(f32::from_bits(w.to_bits()), f32::from_bits(h.to_bits()));
         let mh = max_h();
         py = f32_of(x(k(K_1_448)).fmul(mh).fmul_m(k(K_80)).fsubr(mh));
         px = f32_of(xi(g::<i32>(RS_MAX_WIDTH).read() / 2));
@@ -1913,7 +1884,7 @@ pub fn draw_subtitles() {
         font_set_scale_for_current_language(w, h);
         if b(SCRIPTS_USE_MESSAGE_FORMATTING) != 0 {
             let width = i32::from(g::<u16>(SCRIPTS_MESSAGE_WIDTH).read());
-            font_set_centre_size(f32_of(max_w().fmul_m(k(K_1_640)).fmul(xi(width))).to_bits());
+            font_set_centre_size(f32::from_bits(f32_of(max_w().fmul_m(k(K_1_640)).fmul(xi(width))).to_bits()));
             let centre = i32::from(g::<u16>(SCRIPTS_MESSAGE_CENTRE).read());
             py = subtitle_y();
             px = f32_of(max_w().fmul_m(k(K_1_640)).fmul(xi(centre)));
@@ -1921,7 +1892,7 @@ pub fn draw_subtitles() {
             let h = f32_of(max_h().fmul_m(k(K_1_448)).fmul_m(k(K_1_22))).to_bits();
             let w = f32_of(max_w().fmul_m(k(K_1_640)).fmul_m(k(K_0_58)).fmul_m(k(K_0_8)));
             font_set_scale_for_current_language(w, h);
-            font_set_centre_size(f32_of(subtitle_centre_size().fmul_m(k(K_0_8))).to_bits());
+            font_set_centre_size(f32::from_bits(f32_of(subtitle_centre_size().fmul_m(k(K_0_8))).to_bits()));
             let (mwf, sxf, pf, rf) = subtitle_x_parts();
             py = subtitle_y();
             px = f32_of(
@@ -1935,7 +1906,7 @@ pub fn draw_subtitles() {
                     .fadd(x(sxf).fmul_m(k(K_40))),
             );
         } else {
-            font_set_centre_size(f32_of(subtitle_centre_size()).to_bits());
+            font_set_centre_size(f32::from_bits(f32_of(subtitle_centre_size()).to_bits()));
             let (mwf, sxf, pf, rf) = subtitle_x_parts();
             py = subtitle_y();
             px = f32_of(x(sxf).fmul_m(k(K_20)).fsubr_m(mwf).fsub_m(pf).fsub_m(rf).fmul_m(k(K_HALF)).fadd_m(rf));
@@ -2038,7 +2009,7 @@ pub fn draw_vehicle_name() {
     let w = f32_of(max_w().fmul_m(k(K_1_640)));
     font_set_scale_for_current_language(w, h);
     font_set_orientation(2);
-    font_set_right_justify_wrap(0);
+    font_set_right_justify_wrap(f32::from_bits(0));
     font_set_font_style(2);
     font_set_edge(2);
     let a = u32::from(ftol32(x(alpha)) as u8);
@@ -2170,7 +2141,7 @@ pub fn draw_area_name() {
     font_set_scale_for_current_language(w, h);
     font_set_edge(2);
     font_set_orientation(2);
-    font_set_right_justify_wrap(f32_of(max_w().fmul_m(k(K_1_640)).fmul_m(k(K_180))).to_bits());
+    font_set_right_justify_wrap(f32::from_bits(f32_of(max_w().fmul_m(k(K_1_640)).fmul_m(k(K_180))).to_bits()));
     let a = u32::from(ftol32(x(alpha)) as u8);
     let mut tmp = [0u8; 4];
     let c = rgba_ctor(local(&mut tmp), 0, 0, 0, a);
@@ -2299,7 +2270,7 @@ fn odd_job_font(justify: bool, sw: Option<u32>, sh: u32, cs: u32, style: u32, co
     font_set_scale_for_current_language(w, h);
     font_set_orientation(0);
     font_set_proportional(1);
-    font_set_centre_size(f32_of(max_w().fmul_m(k(K_1_640)).fmul_m(k(cs))).to_bits());
+    font_set_centre_size(f32::from_bits(f32_of(max_w().fmul_m(k(K_1_640)).fmul_m(k(cs))).to_bits()));
     font_set_font_style(style);
     font_set_edge(2);
     let mut tmp = [0u8; 4];
@@ -2457,11 +2428,11 @@ pub fn draw_mission_timers() {
     font_set_background(0, 0);
     let h = f32_of(max_h().fmul_m(k(K_1_448)));
     let w = f32_of(max_w().fmul_m(k(K_1_640)).fmul_m(k(K_HALF)));
-    font_set_scale(w.to_bits(), h.to_bits());
+    font_set_scale(f32::from_bits(w.to_bits()), f32::from_bits(h.to_bits()));
     font_set_orientation(2);
-    font_set_right_justify_wrap(0);
+    font_set_right_justify_wrap(f32::from_bits(0));
     font_set_font_style(2);
-    font_set_wrapx(f32_of(max_w().fmul_m(k(K_1_640)).fmul_m(k(K_640))).to_bits());
+    font_set_wrapx(f32::from_bits(f32_of(max_w().fmul_m(k(K_1_640)).fmul_m(k(K_640))).to_bits()));
     font_set_edge(2);
     let mut tmp = [0u8; 4];
     let c = rgba_ctor(local(&mut tmp), 0, 0, 0, 0xFF);
@@ -2626,7 +2597,7 @@ pub fn draw_help_text() {
                 font_set_justify(0);
                 let sx = max_w().fmul_m(k(K_1_640));
                 let wx = x(k(K_34)).fmul(sx).fadd(sx.fmul_m(k(K_200))).fsub(sx.fmul_m(k(K_4)));
-                font_set_wrapx(f32_of(wx).to_bits());
+                font_set_wrapx(f32::from_bits(f32_of(wx).to_bits()));
                 font_set_font_style(1);
                 font_set_background(1, 1);
                 font_set_drop_shadow_position(0);
@@ -2635,8 +2606,8 @@ pub fn draw_help_text() {
                 let lines = font_get_number_lines(lx, ly, help_buf(&HELP_MESSAGE_TO_PRINT));
                 let secs = i32::from(lines as i16).wrapping_add(3);
                 HELP_MESSAGE_TIME.set(f32_of(xi(secs)).to_bits());
-                font_set_wrapx(f32_of(max_w()).to_bits());
-                audio_report_frontend_event(g(AUDIO_ENGINE), 0x20, 0, 0x3F80_0000);
+                font_set_wrapx(f32::from_bits(f32_of(max_w()).to_bits()));
+                audio_report_frontend_event(g(AUDIO_ENGINE), 0x20, f32::from_bits(0), f32::from_bits(0x3F80_0000));
             }
             1..=4 => {
                 HELP_MESSAGE_STATE.set(4);
@@ -2706,7 +2677,7 @@ pub fn draw_help_text() {
         return;
     }
     HELP_MESSAGE_TIMER.set(HELP_MESSAGE_TIMER.get().wrapping_add(wanted_step(K_1000) as u32));
-    font_set_alpha_fade(alpha.to_bits());
+    font_set_alpha_fade(f32::from_bits(alpha.to_bits()));
     font_set_proportional(1);
     let h = f32_of(max_h().fmul_m(k(K_1_448)).fmul_m(k(K_1_1))).to_bits();
     let w = f32_of(max_w().fmul_m(k(K_1_640)).fmul_m(k(K_0_52)));
@@ -2715,7 +2686,7 @@ pub fn draw_help_text() {
     let mut tmp = [0u8; 4];
     if stat == 0 {
         if b(BIG_MESSAGE_0) != 0 || b(BIG_MESSAGE_4) != 0 || b(GARAGES_MESSAGE_ID) != 0 {
-            font_set_alpha_fade(0x437F_0000);
+            font_set_alpha_fade(f32::from_bits(0x437F_0000));
             return;
         }
         font_set_orientation(1);
@@ -2728,7 +2699,7 @@ pub fn draw_help_text() {
         } else {
             sx.fmul_m(k(K_34)).fadd(s200).fsub(sx.fmul_m(k(K_4)))
         };
-        font_set_wrapx(f32_of(wx).to_bits());
+        font_set_wrapx(f32::from_bits(f32_of(wx).to_bits()));
         font_set_font_style(1);
         font_set_background(1, 1);
         font_set_drop_shadow_position(0);
@@ -2752,12 +2723,12 @@ pub fn draw_help_text() {
         );
         let px = f32_of(max_w().fmul_m(k(K_1_640)).fmul_m(k(K_34)));
         font_print_string(px, py, help_buf(&HELP_MESSAGE_TO_PRINT));
-        font_set_wrapx(f32_of(max_w()).to_bits());
-        font_set_alpha_fade(0x437F_0000);
+        font_set_wrapx(f32::from_bits(f32_of(max_w()).to_bits()));
+        font_set_alpha_fade(f32::from_bits(0x437F_0000));
         return;
     }
     if b(WIDE_SCREEN_ON) != 0 {
-        font_set_alpha_fade(0x437F_0000);
+        font_set_alpha_fade(f32::from_bits(0x437F_0000));
         return;
     }
     let fmt = if stat < 10 {
@@ -2770,7 +2741,7 @@ pub fn draw_help_text() {
     sprintf1(g(G_STRING), g(fmt), i32::from(stat));
     font_set_orientation(1);
     font_set_justify(0);
-    font_set_wrapx(f32_of(max_w()).to_bits());
+    font_set_wrapx(f32::from_bits(f32_of(max_w()).to_bits()));
     font_set_font_style(1);
     font_set_background(1, 1);
     font_set_drop_shadow_position(0);
@@ -2783,7 +2754,7 @@ pub fn draw_help_text() {
     let name = text_get(g(THE_TEXT), g(G_STRING));
     let sw = font_get_string_width(name, 1, 0);
     let x1 = f32_of(sw.fadd(x(sxf).fmul_m(k(K_34))).fadd(x(sxf).fmul_m(k(K_10))));
-    font_set_wrapx(f32_of(x(sxf).fmul_m(k(K_75)).fadd_m(x1)).to_bits());
+    font_set_wrapx(f32::from_bits(f32_of(x(sxf).fmul_m(k(K_75)).fadd_m(x1)).to_bits()));
     let syf = f32_of(max_h().fmul_m(k(K_1_448)));
     let name = text_get(g(THE_TEXT), g(G_STRING));
     let py = f32_of(
@@ -2799,7 +2770,7 @@ pub fn draw_help_text() {
     let value = if HELP_MESSAGE_STAT_ID.get() == 0x150 {
         let ped = sa_world::world::common::find_player_ped(-1);
         let group = rd::<i32>(rd::<GPtr<u8>>(ped, 0x480), 0x38);
-        let n = group_count_members_excluding_leader(g(PED_GROUP_MEMBERSHIP.wrapping_add(group.wrapping_mul(0x2D4) as usize)));
+        let n = group_count_members_excluding_leader(g(PED_GROUP_MEMBERSHIP.wrapping_add(group.wrapping_mul(0x2D4) as usize))) as i32;
         xi(n)
     } else {
         stats_get_stat_value(u32::from(HELP_MESSAGE_STAT_ID.get()))
@@ -2833,8 +2804,8 @@ pub fn draw_help_text() {
     );
     let px = f32_of(max_w().fmul_m(k(K_1_640)).fmul_m(k(K_65)).fadd_m(x1));
     font_print_string(px, py, help_buf(&HELP_MESSAGE_TO_PRINT));
-    font_set_wrapx(f32_of(max_w()).to_bits());
-    font_set_alpha_fade(0x437F_0000);
+    font_set_wrapx(f32::from_bits(f32_of(max_w()).to_bits()));
+    font_set_alpha_fade(f32::from_bits(0x437F_0000));
 }
 
 /// This module's registrations.
@@ -2896,7 +2867,7 @@ fn font_get_string_width(text: GPtr<u8>, full: u32, script: u32) -> X87 {
 /// [`stats_get_stat_value_st0`] as an x87 value (ST0, returned through the f64 ABI).
 #[allow(dead_code)]
 fn stats_get_stat_value(stat: u32) -> X87 {
-    X87::from_f64_exact(stats_get_stat_value_st0(stat))
+    X87::from_f64_exact(stats_get_stat_value_st0(stat as u16))
 }
 
 /// [`max_f_st0`] as an x87 value (ST0, returned through the f64 ABI).

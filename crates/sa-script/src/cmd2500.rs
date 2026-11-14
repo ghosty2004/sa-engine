@@ -108,93 +108,63 @@ use sa_world::bindings::nitrous_control;
 use sa_world::bindings::pickup_get_posn;
 use sa_world::bindings::task_use_goggles_ctor;
 use sa_world::bindings::use_detonator;
+use crate::bindings::give_ped_scripted_task;
+use crate::bindings::play_anim_script_command;
+use sa_core::bindings::get_pad;
+use sa_core::bindings::insert_number_in_string;
+use sa_core::bindings::stats_increment_stat as increment_stat;
+use sa_core::bindings::streaming_load_scene as load_scene;
+use sa_core::bindings::vector_magnitude;
+use sa_core::bindings::vector_sub;
+use sa_stream::bindings::create_car_generator;
+use sa_stream::bindings::is_car_model;
+use sa_world::bindings::add_light;
+use sa_world::bindings::find_most_favorite_radio_station;
+use sa_world::bindings::get_actual_pickup_index;
+use sa_world::bindings::get_actual_script_thing_index;
+use sa_world::bindings::is_ped_registered_with_effect;
+use sa_world::bindings::ped_say;
+use sa_world::bindings::placeable_set_posn as set_posn_v;
+use sa_world::bindings::request_objects_in_direction;
+use sa_world::bindings::set_up_skip;
+use sa_world::bindings::signal_at_ped_ctor as task_signal_at_ped_ctor;
+use sa_world::bindings::tm_find_active_task_by_type as find_active_task_by_type;
+use sa_world::bindings::tm_set_task as task_manager_set_task;
 orig! {
     /// `CMenuSystem::SetColumnWidth(uint8 menu, uint8 column, uint16 width)` (0x582050)
     fn set_column_width(menu: u32, column: u32, width: u32) = cdecl 0x582050 => unported;
-    /// `CPedAttractorManager::IsPedRegisteredWithEffect(CPed*)` (0x5EBCB0), AL
-    fn is_ped_registered_with_effect(m: GPtr<u8>, p: GPtr<u8>) -> u8 = thiscall 0x5EBCB0 => unported;
     /// `CEntity` virtual slot 8 (+0x20, `DeleteRwObject()`) / slot 5 (+0x14, `SetModelIndex(uint32)`)
     fn entity_delete_rw_object(e: GPtr<u8>) = thiscall vslot 0x20 => unported;
     fn entity_set_model_index(e: GPtr<u8>, m: u32) = thiscall vslot 0x14 => unported;
-    /// `CPlaceable::SetPosn(const CVector&)` (0x4241C0)
-    fn set_posn_v(e: GPtr<u8>, pos: GPtr<u32>) = thiscall 0x4241C0 => unported;
-    /// `CPickups::GetActualPickupIndex(int32)` (0x4552A0)
-    fn get_actual_pickup_index(h: u32) -> i32 = cdecl 0x4552A0 => unported;
-    /// `CPed::Say(uint16, uint32, float, uint8, uint8, uint8)` (0x5EFFE0), AX; the float raw
-    fn ped_say(p: GPtr<u8>, id: u32, a: u32, vol: u32, b: u32, c: u32, d: u32) -> u16 = thiscall 0x5EFFE0 => unported;
     /// `CPed::SayScript(int32, uint8, uint8, uint8)` (0x5EFFB0)
     fn ped_say_script(p: GPtr<u8>, id: u32, a: u32, b: u32, c: u32) = thiscall 0x5EFFB0 => unported;
-    /// `operator-(const CVector&, const CVector&)` (0x40FE60, `VectorSub`), the result through the hidden pointer
-    fn vector_sub(out: GPtr<u32>, a: GPtr<u32>, b: GPtr<u32>) -> GPtr<u32> = cdecl 0x40FE60 => unported;
-    /// `CVector::Magnitude()` (0x4082C0), ST0 (an `fsqrt` result under PC=24: exact as f64)
-    fn vector_magnitude(v: GPtr<u32>) -> f64 = thiscall 0x4082C0 => unported;
-    /// `CTaskManager::FindActiveTaskByType(int32)` (0x681740)
-    fn find_active_task_by_type(tm: GPtr<u8>, ty: u32) -> GPtr<u8> = thiscall 0x681740 => unported;
-    /// `CGameLogic::SetUpSkip(CVector, float, bool, CVehicle*, bool)` (0x4423C0); the vector by value, raw
-    fn set_up_skip(x: u32, y: u32, z: u32, heading: u32, a: u32, v: GPtr<u8>, c: u32) = cdecl 0x4423C0 => unported;
-    /// `CTheCarGenerators::CreateCarGenerator(CVector, float angle, int32 model, int16 c1, int16 c2, uint8 force,
-    /// uint8 alarm, uint8 lock, uint16 minDelay, uint16 maxDelay, uint8 iplId, bool owned)` (0x6F31A0); raw dwords
-    fn create_car_generator(
-        x: u32, y: u32, z: u32, angle: u32, model: u32, c1: u32, c2: u32, force: u32, alarm: u32, lock: u32,
-        min_delay: u32, max_delay: u32, ipl: u32, owned: u32
-    ) -> u32 = cdecl 0x6F31A0 => unported;
     /// `CSpecialPlateHandler::Add(int32 generator, const char* plate)` (0x6F2D90)
     fn special_plate_add(h: GPtr<u8>, generator: u32, plate: GPtr<u8>) = thiscall 0x6F2D90 => unported;
-    /// `CPointLights::AddLight(uint8 type, CVector pos, CVector dir, float radius, float r, float g, float b, uint8
-    /// fog, bool shadows, CEntity*)` (0x7000E0); vectors by value, raw floats
-    fn add_light(
-        ty: u32, x: u32, y: u32, z: u32, dx: u32, dy: u32, dz: u32, radius: u32, r: f32, g: f32, b: f32, fog: u32,
-        shadows: u32, e: u32
-    ) = cdecl 0x7000E0 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    fn get_pad(n: u32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CTaskManager::SetTask(CTask*, int32 slot, bool)` (0x681AF0)
-    fn task_manager_set_task(tm: GPtr<u8>, t: GPtr<u8>, slot: u32, b: u32) = thiscall 0x681AF0 => unported;
     /// `CPed::TakeOffGoggles()` (0x5E6010)
     fn take_off_goggles(p: GPtr<u8>) = thiscall 0x5E6010 => unported;
     /// `CAudioEngine::ReportMissionAudioEvent(uint16, CPed*)` (0x507370) / `(uint16, CVehicle*)` (0x507390)
     fn report_mission_audio_event_ped(a: GPtr<u8>, ev: u32, p: GPtr<u8>) = thiscall 0x507370 => unported;
     fn report_mission_audio_event_veh(a: GPtr<u8>, ev: u32, v: GPtr<u8>) = thiscall 0x507390 => unported;
-    /// `CTheScripts::GetActualScriptThingIndex(int32 ref, uint8 type)` (0x4839A0)
-    fn get_actual_script_thing_index(r: u32, ty: u32) -> i32 = cdecl 0x4839A0 => unported;
     /// `CEntity` virtual slot 13 (+0x34, `TestCollision(bool)`), AL
     fn entity_test_collision(e: GPtr<u8>, b: u32) -> u8 = thiscall vslot 0x34 => unported;
     /// `CRestart::SetRespawnPointForDurationOfMission(CVector)` (0x460810); the vector by value
     fn set_respawn_point_for_duration_of_mission(x: u32, y: u32, z: u32) = cdecl 0x460810 => unported;
-    /// `CModelInfo::IsCarModel(int32)` (0x4C5AA0), AL
-    fn is_car_model(m: u32) -> u8 = cdecl 0x4C5AA0 => unported;
     /// `CTrain::IsNextStationAllowed(CTrain*)` (0x6F7260), AL / `SkipToNextAllowedStation(CTrain*)` (0x6F72F0)
     fn is_next_station_allowed(v: GPtr<u8>) -> u8 = cdecl 0x6F7260 => unported;
     fn skip_to_next_allowed_station(v: GPtr<u8>) = cdecl 0x6F72F0 => unported;
-    /// `CMessages::InsertNumberInString(const char*, int32 x6, char* out)` (0x69DE90)
-    fn insert_number_in_string(s: GPtr<u8>, n1: u32, n2: u32, n3: u32, n4: u32, n5: u32, n6: u32, out: GPtr<u8>) = cdecl 0x69DE90 => unported;
     /// `CPed::DisablePedSpeechForScriptSpeech(bool)` (0x5EFF80) / `EnablePedSpeechForScriptSpeech()` (0x5EFF90)
     fn disable_ped_speech_for_script_speech(p: GPtr<u8>, b: u32) = thiscall 0x5EFF80 => unported;
-    /// `CRenderer::RequestObjectsInDirection(const CVector&, float, int32)` (0x555CB0); the float raw
-    fn request_objects_in_direction(pos: GPtr<u32>, angle: u32, flags: u32) = cdecl 0x555CB0 => unported;
-    /// `CStreaming::LoadScene(const CVector&)` (0x40EB70)
-    fn load_scene(pos: GPtr<u32>) = cdecl 0x40EB70 => unported;
     /// `CMenuManager::HasLanguageChanged()` (0x573CD0), AL
     fn has_language_changed(m: GPtr<u8>) -> u8 = thiscall 0x573CD0 => unported;
-    /// `CStats::IncrementStat(uint16, float)` (0x55C180); the float raw
-    fn increment_stat(stat: u32, v: u32) = cdecl 0x55C180 => unported;
     /// `CAudioEngine::AttachMissionAudioToPhysical(uint8 slot, CPhysical*)` (0x507330)
     fn attach_mission_audio_to_physical(a: GPtr<u8>, slot: u32, p: GPtr<u8>) = thiscall 0x507330 => unported;
-    /// `CRunningScript::PlayAnimScriptCommand(int32 command)` (0x470150; reads its own parameters)
-    fn play_anim_script_command(s: Scr, command: u32) = thiscall 0x470150 => unported;
     /// `CAEVehicleAudioEntity::EnableHelicoptor()` (0x4F5C00) / `DisableHelicoptor()` (0x4F5BF0)
     fn enable_helicoptor(a: GPtr<u8>) = thiscall 0x4F5C00 => unported;
     fn disable_helicoptor(a: GPtr<u8>) = thiscall 0x4F5BF0 => unported;
-    /// `CTaskComplexSignalAtPed::CTaskComplexSignalAtPed(CPed*, int32, bool)` (0x660A30)
-    fn task_signal_at_ped_ctor(t: GPtr<u8>, p: GPtr<u8>, a: u32, b: u32) -> GPtr<u8> = thiscall 0x660A30 => unported;
-    /// `CRunningScript::GivePedScriptedTask(int32 ped, CTask*, int32 command)` (0x465C20)
-    fn give_ped_scripted_task(s: Scr, ped: u32, task: GPtr<u8>, command: u32) = thiscall 0x465C20 => unported;
     /// `CMenuSystem::GetCarColourFromGrid(uint8, uint8)` (0x5822B0), AL
     fn get_car_colour_from_grid(menu: u32, item: u32) -> u8 = cdecl 0x5822B0 => unported;
     /// `CMenuSystem::HighlightOneItem(uint8, uint8, bool)` (0x581C10)
     fn highlight_one_item(menu: u32, item: u32, b: u32) = cdecl 0x581C10 => unported;
-    /// `CStats::FindMostFavoriteRadioStation()` (0x558FA0)
-    fn find_most_favorite_radio_station() -> u32 = cdecl 0x558FA0 => unported;
 }
 
 /// `PED(h)` / `VEH(h)` / `OBJ(h)`.
@@ -257,12 +227,12 @@ fn remove_char_from_car_maintain_position(s: Scr) {
     let v = veh(sp(1));
     let q = entity_pos(p).cast::<u32>();
     let mut pos = [q.read(), q.byte_add(4).read(), q.byte_add(8).read()];
-    let door = compute_target_door_to_exit(v, p);
+    let door = compute_target_door_to_exit(v, p) as u32;
     let mut task = [0u32; 16];
     let t = GPtr::from_raw(task.as_mut_ptr()).cast::<u8>();
     task_car_set_ped_out_ctor(t, v, door, 0);
     task_car_set_ped_out_process_ped(t, p);
-    set_posn_v(p, GPtr::from_raw(pos.as_mut_ptr()));
+    set_posn_v(p, GPtr::<u32>::cast::<f32>(GPtr::from_raw(pos.as_mut_ptr())));
     task_car_set_ped_out_dtor_647950(t);
 }
 
@@ -308,9 +278,9 @@ fn is_money_pickup_at_coords(s: Scr) {
             continue;
         }
         let mut posn = [0u32; 3];
-        let pp = pickup_get_posn(pk, GPtr::from_raw(posn.as_mut_ptr()));
+        let pp = GPtr::<f32>::cast::<u32>(pickup_get_posn(pk, GPtr::<u32>::cast::<f32>(GPtr::from_raw(posn.as_mut_ptr()))));
         let mut diff = [0u32; 3];
-        let r = vector_sub(GPtr::from_raw(diff.as_mut_ptr()), pp, GPtr::from_raw(pos.as_mut_ptr()));
+        let r = GPtr::<u8>::cast::<u32>(vector_sub(GPtr::<u32>::cast::<u8>(GPtr::from_raw(diff.as_mut_ptr())), pp.cast::<u8>(), GPtr::<u32>::cast::<u8>(GPtr::from_raw(pos.as_mut_ptr()))));
         let mut d = [r.read(), r.byte_add(4).read(), r.byte_add(8).read()];
         let m = X87::from_f64_exact(vector_magnitude(GPtr::from_raw(d.as_mut_ptr())));
         if m.fcom(X87::constant(K_HALF)) == Cmp::Less {
@@ -328,11 +298,11 @@ fn make_room_in_player_gang(s: Scr) {
     let g = find_player_ped(-1).byte_add(0x480).cast::<GPtr<u8>>().read().byte_add(0x38).cast::<u32>().read();
     let pd = find_player_ped(-1).byte_add(0x480).cast::<GPtr<u8>>().read();
     let m = GPtr::<u8>::from_addr(GROUP_MEMBERSHIP.wrapping_add(g.wrapping_mul(0x2D4)) as usize);
-    let n = count_members_excluding_leader(m)
+    let n = (count_members_excluding_leader(m) as i32)
         .wrapping_sub(i32::from(pd.byte_add(0x43).read()))
         .wrapping_sub(spi(0));
     if n > 0 {
-        remove_n_followers(m, n);
+        remove_n_followers(m, n as u32);
     }
 }
 
@@ -347,10 +317,10 @@ fn create_car_generator_with_plate(s: Scr) {
         z = X87::from_f32(f(z)).fadd_m(f(K_0_015)).to_f32().to_bits();
     }
     let generator = create_car_generator(
-        sp(0),
-        sp(1),
-        z,
-        sp(3),
+        f32::from_bits(sp(0)),
+        f32::from_bits(sp(1)),
+        f32::from_bits(z),
+        f32::from_bits(sp(3)),
         sp(4),
         sp(5) & 0xFFFF,
         sp(6) & 0xFFFF,
@@ -361,7 +331,7 @@ fn create_car_generator_with_plate(s: Scr) {
         sp(11) & 0xFFFF,
         0,
         1,
-    );
+    ) as u32;
     let mut plate = [0u8; 16];
     let pp = GPtr::from_raw(plate.as_mut_ptr());
     read_text_label(s, pp, 9);
@@ -385,7 +355,7 @@ fn draw_light_with_range(s: Scr) {
     let b = c(5);
     let g = c(4);
     let r = c(3);
-    add_light(0, sp(0), sp(1), sp(2), 0, 0, 0, sp(6), r, g, b, 0, 1, 0);
+    add_light(0, f32::from_bits(sp(0)), f32::from_bits(sp(1)), f32::from_bits(sp(2)), f32::from_bits(0), f32::from_bits(0), f32::from_bits(0), f32::from_bits(sp(6)), r, g, b, 0, 1, GPtr::NULL);
 }
 
 /// 09EB PLAYER_TAKE_OFF_GOGGLES (0x47B1A4): `p = Players[SP0].m_pPed`; SP1 == 0: `p->TakeOffGoggles()`; otherwise,
@@ -426,7 +396,7 @@ fn get_string_width_with_number(s: Scr) {
     let mut buf = [0u16; 0x100];
     let bp = GPtr::from_raw(buf.as_mut_ptr()).cast::<u8>();
     let m = u32::MAX;
-    insert_number_in_string(t, sp(0), m, m, m, m, m, bp);
+    insert_number_in_string(t, sp(0) as i32, m as i32, m as i32, m as i32, m as i32, m as i32, bp);
     let w = get_string_width(bp, 1, 1);
     set_sp(0, X87::from_f64_exact(w).ftol() as u32);
     store(s, 1);
@@ -442,7 +412,7 @@ fn load_scene_in_direction(s: Scr) {
     timer_stop();
     let a = X87::from_f32(f(heading)).fmul_m(f(K_DEG_TO_RAD)).to_f32().to_bits();
     let pp = GPtr::from_raw(pos.as_mut_ptr());
-    request_objects_in_direction(pp, a, 0x20);
+    request_objects_in_direction(pp.cast::<u8>(), a, 0x20);
     load_scene(pp);
     timer_update();
 }
@@ -487,7 +457,7 @@ fn task_hand_gesture(s: Scr, command: u32) {
     let h = sp(0);
     let t = task_new(0x18);
     let t = if t.is_null() { GPtr::NULL } else { task_signal_at_ped_ctor(t, target, u32::MAX, 0) };
-    give_ped_scripted_task(s, h, t, command);
+    give_ped_scripted_task(s, h as i32, t, command);
 }
 
 /// The active camera `TheCamera.Cams[(u8)ActiveCam]` (the index is re-read at every use, as the original does).
@@ -584,7 +554,7 @@ pub fn process_commands_2500_to_2599(s: Scr, command: u32) -> i8 {
         // 09D1 DOES_PICKUP_EXIST (0x47AAEB): flag = `CPickups::GetActualPickupIndex(SP0) != -1`
         0x09D1 => {
             collect(s, 1);
-            set_flag(s, get_actual_pickup_index(sp(0)) != -1);
+            set_flag(s, get_actual_pickup_index(sp(0) as i32) != -1);
         }
         // 09D2 ENABLE_AMBIENT_CRIME (0x47AB20): byte [0xB72994] = SP0 != 0
         0x09D2 => {
@@ -598,7 +568,7 @@ pub fn process_commands_2500_to_2599(s: Scr, command: u32) -> i8 {
         0x09D5 => {
             collect(s, 5);
             let p = ped(sp(0));
-            let r = ped_say(p, sp(1) & 0xFFFF, 0, 0x3F80_0000, sp(2) & 0xFF, sp(3) & 0xFF, sp(4) & 0xFF);
+            let r = ped_say(p, sp(1) & 0xFFFF, 0, f32::from_bits(0x3F80_0000), sp(2) & 0xFF, sp(3) & 0xFF, sp(4) & 0xFF) as u16;
             set_sp(0, i32::from(r as i16) as u32);
             store(s, 1);
         }
@@ -887,7 +857,7 @@ pub fn process_commands_2500_to_2599(s: Scr, command: u32) -> i8 {
         0x0A10 => {
             collect(s, 2);
             let v = X87::from_i32(spi(1)).to_f32().to_bits();
-            increment_stat(sp(0) & 0xFFFF, v);
+            increment_stat(sp(0) & 0xFFFF, f32::from_bits(v));
         }
         // 0A11 SET_EXTRA_CAR_COLOURS (0x47B8FA): `VEH(SP0)` bytes +0x436 = (u8)SP1, +0x437 = (u8)SP2
         0x0A11 => {
@@ -981,7 +951,7 @@ pub fn process_commands_2500_to_2599(s: Scr, command: u32) -> i8 {
         // 0A1F INCREMENT_FLOAT_STAT_NO_MESSAGE (0x47BC8F): `IncrementStat((u16)SP0, SP1)` (raw float)
         0x0A1F => {
             collect(s, 2);
-            increment_stat(sp(0) & 0xFFFF, sp(1));
+            increment_stat(sp(0) & 0xFFFF, f32::from_bits(sp(1)));
         }
         // 0A20 SET_PLAYER_GROUP_TO_FOLLOW_ALWAYS (0x47BCB7): `FindPlayerPed(SP0)->ForceGroupToAlwaysFollow(SP1 != 0)`
         0x0A20 => {

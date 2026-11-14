@@ -9,6 +9,7 @@
 //! `CPedGroupIntelligence`, +0x2D0 bool.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -19,7 +20,7 @@ const GROUPS: usize = 0xC09920;
 /// `sizeof(CPedGroup)`
 const GROUP_SIZE: usize = 0x2D4;
 
-use crate::bindings::acquaintance_get;
+use sa_world::bindings::acquaintance_get;
 use crate::bindings::membership_remove_member;
 use crate::bindings::pgi_flush;
 use sa_core::bindings::entity_clean_up_old_reference;
@@ -32,18 +33,17 @@ use sa_world::bindings::intel_find_task_by_type;
 use sa_world::bindings::ped_groups_get_peds_group as groups_get_peds_group;
 use sa_world::bindings::tm_find_active_task_by_type;
 use sa_world::bindings::tm_set_task;
+use sa_world::bindings::event_script_command_ctor;
 orig! {
     /// Virtual slot +0 (scalar deleting destructor, `ret 4`).
     fn v_delete(o: GPtr<u8>, flags: u32) -> u32 = thiscall vslot 0x0 => unported;
-    /// `CEventScriptCommand::CEventScriptCommand(int32 primaryTaskIndex, CTask*, bool)` (0x4B0A00, `ret 0xC`)
-    fn event_script_command_ctor(e: GPtr<u8>, idx: i32, t: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4B0A00 => unported;
 }
 
 /// Drops the registered entity reference in `slot` (if any) and clears it.
 fn release_reference(slot: GPtr<u8>) {
     let e = rd::<GPtr<u8>>(slot, 0);
     if !e.is_null() {
-        entity_clean_up_old_reference(e, slot);
+        entity_clean_up_old_reference(e, slot.cast::<GPtr<u8>>());
         wr::<u32>(slot, 0, 0);
     }
 }
@@ -63,7 +63,7 @@ pub fn intel_add_task_phys_response(this: GPtr<u8>, task: GPtr<u8>, b: u32) {
        unverified = "ai7-8", route = "L2", hazards = "none")]
 pub fn intel_respects(this: GPtr<u8>, other: GPtr<u8>) -> u32 {
     let acq = acquaintance_get(rd::<GPtr<u8>>(this, 0).byte_add(0x4E0), 0);
-    let flag = ped_type_get_ped_flag(rd::<u32>(other, 0x598));
+    let flag = ped_type_get_ped_flag(rd::<u32>(other, 0x598) as i32);
     (flag & 0xFFFF_FF00) | u32::from(acq & flag != 0)
 }
 
@@ -101,7 +101,7 @@ pub fn intel_remove_all_interesting_entities(this: GPtr<u8>) {
         let slot = this.byte_add(0x288 + k * 4);
         let e = rd::<GPtr<u8>>(slot, 0);
         if !e.is_null() {
-            entity_clean_up_old_reference(e, slot);
+            entity_clean_up_old_reference(e, slot.cast::<GPtr<u8>>());
         }
         wr::<u32>(slot, 0, 0);
     }
@@ -123,9 +123,9 @@ pub fn intel_add_task_primary_maybe_in_group(this: GPtr<u8>, task: GPtr<u8>, b: 
     }
     let mut ev = [0u32; 8];
     let e: GPtr<u8> = GPtr::from_raw(ev.as_mut_ptr()).cast();
-    event_script_command_ctor(e, 3, task, b);
+    event_script_command_ctor(e, 3, task, b as u8);
     event_group_add(this.byte_add(0x68), e, 0);
-    event_script_command_dtor(e);
+    event_script_command_dtor(e.cast::<u32>());
 }
 
 // ---- CPedGroup / CPedGroups --------------------------------------------------------------------------------------

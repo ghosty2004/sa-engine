@@ -14,6 +14,11 @@ orig! {
 }
 
 orig! {
+    /// `Fx_c::AddBulletImpact` (0x49F3D0)
+    pub fn fx_add_bullet_impact(fx: GPtr<u8>, pos: GPtr<u8>, dir: GPtr<u8>, surface: u32, n: u32, b: f32) = thiscall 0x49F3D0 => unported;
+}
+
+orig! {
     /// `CAudioEngine::ReportBulletHit` (0x506EC0)
     pub fn audio_report_bullet_hit(ae: GPtr<u8>, e: GPtr<u8>, surface: u32, pos: GPtr<u8>, angle: f32) = thiscall 0x506EC0 => unported;
 }
@@ -24,13 +29,23 @@ orig! {
 }
 
 orig! {
-    /// `CPad::StartShake_Distance` (0x53F9A0)
-    pub fn pad_start_shake_distance(pad: GPtr<u8>, time: u32, freq: u32, x: u32, y: u32, z: u32) = thiscall 0x53F9A0 => unported;
+    /// `CCreepingFire::TryToStartFireAtCoors` (0x53A450)
+    pub fn try_to_start_fire_at_coors(x: f32, y: f32, z: f32, gens: i8, a: u8, script: u8, zdist: f32) -> u8 = cdecl 0x53A450 => crate::fire::try_to_start_fire_at_coors;
 }
 
 orig! {
-    /// `tColLighting::GetCurrentLighting` (0x59F0C0)
-    pub fn col_lighting_get_current(l: u32, scale: f32) -> f64 = cdecl 0x59F0C0 => unported;
+    /// `CPad::StartShake_Distance` (0x53F9A0)
+    pub fn pad_start_shake_distance(pad: GPtr<u8>, time: u32, freq: u32, x: f32, y: f32, z: f32) = thiscall 0x53F9A0 => unported;
+}
+
+orig! {
+    /// `CGlass::WasGlassHitByBullet` (0x71C0D0)
+    pub fn glass_was_hit_by_bullet(e: GPtr<u8>, x: f32, y: f32, z: f32) = cdecl 0x71C0D0 => unported;
+}
+
+orig! {
+    /// `CWeapon::CheckForShootingVehicleOccupant` (0x73F480)
+    pub fn check_for_shooting_vehicle_occupant(e: GPtr<u8>, cp: GPtr<u8>, ty: i32, a: GPtr<u8>, b: GPtr<u8>) -> u8 = cdecl 0x73F480 => crate::weapon_fire::check_for_shooting_vehicle_occupant;
 }
 
 orig! {

@@ -41,25 +41,19 @@ const SCENE_CAMERA: usize = 0xC1703C;
 pub use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
 pub use sa_core::bindings::little_test;
 pub use sa_world::bindings::rw_im3d_end;
+pub use crate::bindings::call_destroy;
+pub use sa_core::bindings::memory_free;
+pub use sa_core::bindings::memory_malloc;
+pub use sa_stream::bindings::fx_get_fx_quality as get_fx_quality;
+pub use sa_world::bindings::rw_im3d_render_indexed_primitive;
+pub use sa_world::bindings::rw_im3d_transform;
 orig! {
     /// `RwRenderStateSet` (`RwEngineInstance` slot 0x20)
     pub fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `RwIm3DTransform(RxObjSpace3DVertex*, uint32 count, RwMatrix* ltm, uint32 flags)` (0x7EF450)
-    pub fn rw_im3d_transform(verts: GPtr<u8>, count: u32, ltm: GPtr<u8>, flags: u32) -> GPtr<u8> = cdecl 0x7EF450 => unported;
-    /// `RwIm3DRenderIndexedPrimitive(RwPrimitiveType, RwImVertexIndex*, int32)` (0x7EF550)
-    pub fn rw_im3d_render_indexed_primitive(ty: u32, indices: GPtr<u8>, count: i32) -> i32 = cdecl 0x7EF550 => unported;
     /// `RwD3D9SetStencilClear(uint32)` (0x7F9D30)
     pub fn rw_d3d9_set_stencil_clear(v: u32) -> i32 = cdecl 0x7F9D30 => unported;
-    /// `Fx_c::GetFxQuality()` (0x49EA50)
-    pub fn get_fx_quality(this: GPtr<u8>) -> u32 = thiscall 0x49EA50 => crate::fx::fx_get_fx_quality;
     /// `CVector::Normalise()` (0x59C910)
     pub fn vector_normalise(this: GPtr<f32>) = thiscall 0x59C910 => unported;
-    /// `CMemoryMgr::Malloc(uint32 size, uint32 hint)` (0x72F420)
-    pub fn memory_malloc(size: u32, hint: u32) -> u32 = cdecl 0x72F420 => unported;
-    /// `CMemoryMgr::Free(void*)` (0x72F430)
-    pub fn memory_free(p: u32) = cdecl 0x72F430 => unported;
-    /// `CStencilShadowObject::Destroy()` (0x711310)
-    pub fn call_destroy(this: GPtr<u8>) = thiscall 0x711310 => destroy;
     /// `CStencilShadows::RegisterStencilShadows(CVector* camPos, bool)` (0x711760)
     pub fn register_stencil_shadows(cam: GPtr<u8>, flag: u32) = cdecl 0x711760 => unported;
     /// `CStencilShadows::RenderForVehicle(CStencilShadowObject*, CVector*)` (0x70FAE0)
@@ -160,7 +154,7 @@ pub fn sun_set_position_from_entity(p: GPtr<u8>) -> u8 {
 pub fn destroy(this: GPtr<u8>) {
     let owner = rd::<GPtr<u8>>(this, 0);
     if !owner.is_null() {
-        clean_up_old_reference(owner, this);
+        clean_up_old_reference(owner, this.cast::<GPtr<u8>>());
     }
     let buf = rd::<u32>(this, 0x10);
     wr::<u32>(this, 0, 0);
@@ -168,7 +162,7 @@ pub fn destroy(this: GPtr<u8>) {
     wr::<u32>(this, 0xC, 0);
     wr::<u32>(this, 8, 0);
     if buf != 0 {
-        memory_free(buf);
+        memory_free(GPtr::from_addr(buf as usize));
         wr::<u32>(this, 0x10, 0);
     }
     let prev = rd::<GPtr<u8>>(this, 0x18);
@@ -280,7 +274,7 @@ pub fn process(cam: GPtr<u8>) -> u8 {
     register_stencil_shadows(cam, u32::from(n & 7 != 0));
     let w = WORK_BUFFERS.ptr().cast::<u32>();
     for i in 0..3 {
-        w.wrapping_index(i).write(memory_malloc(0x6000, 0));
+        w.wrapping_index(i).write(GPtr::<u8>::addr(memory_malloc(0x6000, 0)) as u32);
     }
     let mut idx: u32 = 0;
     let mut o = GPtr::<u8>::from_addr(ACTIVE_OBJECTS.get() as usize);
@@ -300,7 +294,7 @@ pub fn process(cam: GPtr<u8>) -> u8 {
     }
     c.write(c.read().wrapping_add(1) & 3);
     for i in 0..3 {
-        memory_free(w.wrapping_index(i).read());
+        memory_free(GPtr::from_addr((w.wrapping_index(i).read()) as usize));
         w.wrapping_index(i).write(0);
     }
     1
@@ -308,11 +302,10 @@ pub fn process(cam: GPtr<u8>) -> u8 {
 
 pub use sa_core::bindings::rgba_ctor;
 pub use sa_core::bindings::sprite2d_init_per_frame;
+pub use sa_core::bindings::sprite_draw_rect as sprite2d_draw_rect;
 orig! {
     /// `CStencilShadows::Render(CRGBA*)` (0x710D50)
     pub fn stencil_render(rgba: GPtr<u8>) = cdecl 0x710D50 => unported;
-    /// `CSprite2d::DrawRect(const CRect&, const CRGBA&)` (0x727B60)
-    pub fn sprite2d_draw_rect(rect: GPtr<f32>, rgba: GPtr<u8>) = cdecl 0x727B60 => unported;
 }
 
 /// `CTimeCycle::m_CurrentColours.m_nShadowStrength` as the dword this code reads.

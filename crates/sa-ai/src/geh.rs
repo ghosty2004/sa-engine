@@ -18,6 +18,7 @@
 //! reproduced: no caller reads those slots after the call.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::orig::at_site;
 use sa_core::{hook, orig};
@@ -27,6 +28,57 @@ use crate::common::*;
 type P = GPtr<u8>;
 
 use sa_core::bindings::general_random_int_in_range as random_in_range;
+use crate::bindings::create_partner_event_ctor;
+use crate::bindings::dtor_5f6200 as create_partner_event_dtor;
+use crate::bindings::dtor_63b970 as leave_car_dtor;
+use crate::bindings::dtor_65c4d0 as flee_entity_dtor;
+use crate::bindings::dtor_65ff60 as hassle_ped_dtor;
+use crate::bindings::dtor_660ab0 as signal_dtor;
+use crate::bindings::dtor_660ee0 as lean_dtor;
+use crate::bindings::dtor_6832c0 as walk_alongside_dtor;
+use crate::bindings::dtor_684200 as partner_deal_dtor;
+use crate::bindings::editable_compute_response_task_type;
+use crate::bindings::gang_hassle_ped_ctor as hassle_ped_ctor;
+use crate::bindings::gang_join_respond_ctor;
+use crate::bindings::get_group_id as groups_get_group_id;
+use crate::bindings::go_to_point_ctor;
+use crate::bindings::go_to_vehicle_and_lean_ctor as lean_ctor;
+use crate::bindings::partner_deal_ctor;
+use crate::bindings::pgi_set_task;
+use crate::bindings::stare_at_ped_ctor as stare_ctor;
+use crate::bindings::task_complex_dtor;
+use crate::bindings::veh_spare_hassle_pos;
+use crate::bindings::wait_area_ctor;
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::ped_is_alive;
+use sa_core::bindings::vector_sub;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::dtor_6389f0 as seq_dtor;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::fx_get_play_status;
+use sa_world::bindings::ik_look_at;
+use sa_world::bindings::intel_find_task_by_type as intel_find_task;
+use sa_world::bindings::intel_is_friendly_with;
+use sa_world::bindings::kill_ped_on_foot_ctor as kill_on_foot_ctor;
+use sa_world::bindings::leave_car_ctor;
+use sa_world::bindings::membership_is_member;
+use sa_world::bindings::partner_chat_ctor;
+use sa_world::bindings::partner_greet_ctor;
+use sa_world::bindings::ped_groups_get_peds_group as groups_get_peds_group;
+use sa_world::bindings::seek_entity_standard_ctor as seek_entity_ctor;
+use sa_world::bindings::sequence_add_task as seq_add;
+use sa_world::bindings::sequence_ctor as seq_ctor;
+use sa_world::bindings::signal_at_ped_ctor as signal_ctor;
+use sa_world::bindings::simple_car_drive_ctor as car_drive_ctor;
+use sa_world::bindings::smart_flee_entity_ctor as flee_entity_ctor;
+use sa_world::bindings::task_complex_ctor;
+use sa_world::bindings::task_simple_ctor;
+use sa_world::bindings::task_simple_dtor;
+use sa_world::bindings::task_walk_alongside_ctor as walk_alongside_ctor;
+use sa_world::bindings::tm_find_active_task_by_type as task_manager_find_active;
+use sa_world::bindings::use_sequence_ctor;
+use sa_world::bindings::weapon_is_type_melee as weapon_is_melee;
 orig! {
     /// `CTask::operator delete`-style virtual destructor (vtable +0, `ret 4`)
     fn v_delete(o: P, flags: u32) -> P = thiscall vslot 0x0 => unported;
@@ -42,23 +94,6 @@ orig! {
     fn v_event_source(e: P) -> P = thiscall vslot 0x28 => unported;
     /// `CEvent::GetEventType` (vtable +4)
     fn v_event_type(e: P) -> i32 = thiscall vslot 0x4 => unported;
-
-    /// `CPedGroupIntelligence::SetTask(CPed*, const CTask&, CPedTaskPair*, int32 slot, bool)` (0x5F7540, `ret 0x14`)
-    fn pgi_set_task(i: P, ped: P, task: P, pairs: P, slot: i32, flag: u32) = thiscall 0x5F7540 => unported;
-    /// `CTaskSimple::CTaskSimple` (0x61A390)
-    fn task_simple_ctor(t: P) -> P = thiscall 0x61A390 => unported;
-    /// `CTaskSimple::~CTaskSimple` (0x61A3A0)
-    fn task_simple_dtor(t: P) = thiscall 0x61A3A0 => unported;
-    /// `CTaskComplex::CTaskComplex` (0x61A3B0)
-    fn task_complex_ctor(t: P) -> P = thiscall 0x61A3B0 => unported;
-    /// `CTaskComplex::~CTaskComplex` (0x61A3D0)
-    fn task_complex_dtor(t: P) = thiscall 0x61A3D0 => unported;
-    /// `CTaskComplexSequence::CTaskComplexSequence` (0x632BD0)
-    fn seq_ctor(t: P) -> P = thiscall 0x632BD0 => unported;
-    /// `CTaskComplexSequence::AddTask(CTask*)` (0x632D10)
-    fn seq_add(t: P, task: P) = thiscall 0x632D10 => unported;
-    /// `CTaskComplexSequence::~CTaskComplexSequence` (0x6389F0)
-    fn seq_dtor(t: P) = thiscall 0x6389F0 => unported;
     /// `CTaskAllocator::operator new(uint32)` (0x69D980)
     fn alloc_new(size: u32) -> P = cdecl 0x69D980 => unported;
     /// `CTaskAllocatorKillThreatsDriveby::CTaskAllocatorKillThreatsDriveby(CPed*)` (0x69CAF0)
@@ -67,122 +102,30 @@ orig! {
     fn alloc_kill_basic_ctor(a: P, threat: P) -> P = thiscall 0x69C710 => unported;
     /// `CTaskAllocatorPlayerCommandAttack::CTaskAllocatorPlayerCommandAttack(CPed*, int32 groupId, int32)` (0x69C480)
     fn alloc_cmd_attack_ctor(a: P, target: P, group_id: i32, x: u32) -> P = thiscall 0x69C480 => unported;
-    /// `CWeapon::IsTypeMelee` (0x73B1C0)
-    fn weapon_is_melee(w: P) -> u8 = thiscall 0x73B1C0 => unported;
-    /// `CPed::IsPlayer` (0x5DF8F0)
-    fn ped_is_player(p: P) -> u8 = thiscall 0x5DF8F0 => unported;
-    /// `CPed::IsAlive` (0x5E0170)
-    fn ped_is_alive(p: P) -> u8 = thiscall 0x5E0170 => unported;
-    /// `CPedIntelligence::FindTaskByType(int32)` (0x600EE0)
-    fn intel_find_task(i: P, ty: i32) -> P = thiscall 0x600EE0 => unported;
-    /// `CPedIntelligence::IsFriendlyWith(const CPed&)` (0x601BC0)
-    fn intel_is_friendly_with(i: P, p: P) -> u8 = thiscall 0x601BC0 => unported;
     /// `CPedIntelligence::Respects(CPed*)` (0x601C90)
     fn intel_respects(i: P, p: P) -> u8 = thiscall 0x601C90 => unported;
-    /// `CPedGroupMembership::IsMember(const CPed*)` (0x5F6A10)
-    fn membership_is_member(m: P, p: P) -> u8 = thiscall 0x5F6A10 => unported;
-    /// `CPedGroups::GetPedsGroup(const CPed*)` (0x5F7E80)
-    fn groups_get_peds_group(p: P) -> P = cdecl 0x5F7E80 => unported;
-    /// `CPedGroups::GetGroupId(CPedGroup*)` (0x5F7EE0)
-    fn groups_get_group_id(g: P) -> i32 = cdecl 0x5F7EE0 => unported;
-    /// `FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> P = cdecl 0x56E210 => unported;
-    /// `CVehicle::GetSpareHasslePosId` (0x6D3AE0)
-    fn veh_spare_hassle_pos(v: P) -> i32 = thiscall 0x6D3AE0 => unported;
-    /// `FxSystem_c::GetPlayStatus` (0x4AA900)
-    fn fx_get_play_status(f: P) -> i32 = thiscall 0x4AA900 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
-    fn entity_clean_up_old_reference(e: P, slot: P) = thiscall 0x571A00 => unported;
-    /// `CEventEditableResponse::ComputeResponseTaskType(CPed*, bool)` (0x4B56C0, `ret 8`)
-    fn editable_compute_response_task_type(e: P, ped: P, b: u32) = thiscall 0x4B56C0 => unported;
     /// `CEventHandler::ComputeEventResponseTask(CPed*, CEvent*)` (0x4C4220)
     fn handler_compute_event_response_task(ped: P, e: P) -> P = cdecl 0x4C4220 => unported;
-
-    // Task constructors / destructors (stack objects and pool tasks).
-    /// `CTaskComplexLeaveCar::CTaskComplexLeaveCar(CVehicle*, int32 door, int32 delay, bool, bool)` (0x63B8C0)
-    fn leave_car_ctor(t: P, veh: P, door: i32, delay: i32, a: u32, b: u32) -> P = thiscall 0x63B8C0 => unported;
-    /// `CTaskComplexLeaveCar::~CTaskComplexLeaveCar` (0x63B970)
-    fn leave_car_dtor(t: P) = thiscall 0x63B970 => unported;
     /// `CTaskComplexLeaveCarAsPassengerWait::CTaskComplexLeaveCarAsPassengerWait(CVehicle*)` (0x63B430)
     fn leave_car_pw_ctor(t: P, veh: P) -> P = thiscall 0x63B430 => unported;
     /// `CTaskComplexLeaveCarAsPassengerWait::~...` (0x63B4A0)
     fn leave_car_pw_dtor(t: P) = thiscall 0x63B4A0 => unported;
-    /// `CTaskComplexSmartFleeEntity::CTaskComplexSmartFleeEntity(CEntity*, bool, float, int32, int32, float)` (0x65C430)
-    fn flee_entity_ctor(t: P, e: P, b: u32, safe: u32, time: u32, a: u32, c: u32) -> P = thiscall 0x65C430 => unported;
-    /// `CTaskComplexSmartFleeEntity::~...` (0x65C4D0)
-    fn flee_entity_dtor(t: P) = thiscall 0x65C4D0 => unported;
     /// `CTaskComplexEnterCarAsPassengerWait::CTaskComplexEnterCarAsPassengerWait(CVehicle*, CPed*, bool, int32)` (0x63B320)
     fn enter_car_pw_ctor(t: P, veh: P, wait_for: P, front: u32, x: i32) -> P = thiscall 0x63B320 => unported;
     /// `CTaskComplexEnterCarAsPassengerWait::~...` (0x63B3C0)
     fn enter_car_pw_dtor(t: P) = thiscall 0x63B3C0 => unported;
-    /// `CTaskComplexUseSequence::CTaskComplexUseSequence(int32)` (0x635450)
-    fn use_sequence_ctor(t: P, id: i32) -> P = thiscall 0x635450 => unported;
-    /// `CTaskSimpleCarDrive::CTaskSimpleCarDrive(CVehicle*, CTaskUtilityLineUpPedWithCar*, bool)` (0x63C340)
-    fn car_drive_ctor(t: P, veh: P, line_up: P, b: u32) -> P = thiscall 0x63C340 => unported;
-    /// `CTaskSimpleWaitUntilAreaCodesMatch::CTaskSimpleWaitUntilAreaCodesMatch(CPed*)` (0x635540)
-    fn wait_area_ctor(t: P, ped: P) -> P = thiscall 0x635540 => unported;
     /// `CTaskSimpleWaitUntilLeaderAreaCodesMatch::ProcessPed(CPed*)` (0x6356C0)
     fn wait_leader_area_process(t: P, ped: P) -> u8 = thiscall 0x6356C0 => unported;
     /// `CTaskSimpleWaitUntilAreaCodesMatch::~...` (0x6355E0)
     fn wait_area_dtor(t: P) = thiscall 0x6355E0 => unported;
-    /// `CTaskComplexGangJoinRespond::CTaskComplexGangJoinRespond(bool)` (0x6616F0)
-    fn gang_join_respond_ctor(t: P, b: u32) -> P = thiscall 0x6616F0 => unported;
-    /// `CTaskSimpleGoToPoint::CTaskSimpleGoToPoint(int32 moveState, const CVector&, float, bool, bool)` (0x667CD0)
-    fn go_to_point_ctor(t: P, ms: i32, pos: P, r: u32, a: u32, b: u32) -> P = thiscall 0x667CD0 => unported;
-    /// `CTaskComplexSeekEntity<CEntitySeekPosCalculatorStandard>::CTaskComplexSeekEntity(...)` (0x46AC10)
-    fn seek_entity_ctor(t: P, e: P, time: i32, scan: i32, r: u32, a: u32, b: u32, c: u32, d: u32) -> P = thiscall 0x46AC10 => unported;
-    /// `CTaskGoToVehicleAndLean::CTaskGoToVehicleAndLean(CVehicle*, int32)` (0x660E60)
-    fn lean_ctor(t: P, veh: P, dur: u32) -> P = thiscall 0x660E60 => unported;
-    /// `CTaskGoToVehicleAndLean::~...` (0x660EE0)
-    fn lean_dtor(t: P) = thiscall 0x660EE0 => unported;
     /// `CTaskGangHassleVehicle::CTaskGangHassleVehicle(CVehicle*, int32, uint8, float, float)` (0x65FAC0)
     fn hassle_veh_ctor(t: P, veh: P, a: i32, b: u32, c: u32, d: u32) -> P = thiscall 0x65FAC0 => unported;
     /// `CTaskGangHassleVehicle::~...` (0x65FB60)
     fn hassle_veh_dtor(t: P) = thiscall 0x65FB60 => unported;
-    /// `CTaskGangHasslePed::CTaskGangHasslePed(CPed*, int32, int32, int32)` (0x65FED0)
-    fn hassle_ped_ctor(t: P, ped: P, a: i32, b: i32, c: i32) -> P = thiscall 0x65FED0 => unported;
-    /// `CTaskGangHasslePed::~...` (0x65FF60)
-    fn hassle_ped_dtor(t: P) = thiscall 0x65FF60 => unported;
-    /// `CTaskComplexSignalAtPed::CTaskComplexSignalAtPed(CPed*, int32, bool)` (0x660A30)
-    fn signal_ctor(t: P, ped: P, a: i32, b: u32) -> P = thiscall 0x660A30 => unported;
-    /// `CTaskComplexSignalAtPed::~...` (0x660AB0)
-    fn signal_dtor(t: P) = thiscall 0x660AB0 => unported;
-    /// `CTaskComplexWalkAlongsidePed::CTaskComplexWalkAlongsidePed(CPed*, float)` (0x683240)
-    fn walk_alongside_ctor(t: P, ped: P, r: u32) -> P = thiscall 0x683240 => unported;
-    /// `CTaskComplexWalkAlongsidePed::~...` (0x6832C0)
-    fn walk_alongside_dtor(t: P) = thiscall 0x6832C0 => unported;
-    /// `CTaskComplexKillPedOnFoot::CTaskComplexKillPedOnFoot(CPed*, int32, uint32, uint32, uint32, int8)` (0x620E30)
-    fn kill_on_foot_ctor(t: P, ped: P, a: i32, b: u32, c: u32, d: u32, e: u32) -> P = thiscall 0x620E30 => unported;
     /// `CTaskComplexKillPedOnFoot::~...` (0x620EF0)
     fn kill_on_foot_dtor(t: P) = thiscall 0x620EF0 => unported;
-
-    /// `CTaskComplexPartnerChat::CTaskComplexPartnerChat(const char*, CPed*, bool, float, int32, bool, int32,
-    /// CVector)` (0x684290, `ret 0x28`)
-    fn partner_chat_ctor(t: P, tag: u32, partner: P, lead: u32, dist: u32, a: i32, b: u32, c: i32, vx: u32, vy: u32, vz: u32) -> P = thiscall 0x684290 => unported;
-    /// `CTaskComplexPartnerDeal::CTaskComplexPartnerDeal(const char*, CPed*, bool, float, CVector)` (0x684190)
-    fn partner_deal_ctor(t: P, tag: u32, partner: P, lead: u32, dist: u32, vx: u32, vy: u32, vz: u32) -> P = thiscall 0x684190 => unported;
-    /// `CTaskComplexPartnerGreet::CTaskComplexPartnerGreet(const char*, CPed*, bool, float, int32, CVector)` (0x684210)
-    fn partner_greet_ctor(t: P, tag: u32, partner: P, lead: u32, dist: u32, kind: i32, vx: u32, vy: u32, vz: u32) -> P = thiscall 0x684210 => unported;
-
-    /// `CTaskManager::FindActiveTaskByType(int32)` (0x681740)
-    fn task_manager_find_active(tm: P, ty: i32) -> P = thiscall 0x681740 => unported;
-    /// `VectorSub(CVector* out, const CVector*, const CVector*)` (0x40FE60)
-    fn vector_sub(out: P, a: P, b: P) -> P = cdecl 0x40FE60 => unported;
-    /// `CEventCreatePartnerTask::CEventCreatePartnerTask(int32, CPed*, bool, float)` (0x5F6190)
-    fn create_partner_event_ctor(e: P, ty: i32, partner: P, lead: u32, dist: u32) -> P = thiscall 0x5F6190 => unported;
-    /// `CEventCreatePartnerTask::~CEventCreatePartnerTask` (0x5F6200)
-    fn create_partner_event_dtor(e: P) = thiscall 0x5F6200 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, `ret 8`)
-    fn event_group_add(g: P, e: P, b: u32) -> P = thiscall 0x4AB420 => unported;
-    /// `IKChainManager_c::LookAt(const char*, CPed*, CEntity*, int32, int32 bone, RwV3d*, bool, float, int32, int32,
-    /// bool)` (0x618970)
-    fn ik_look_at(m: P, tag: u32, ped: P, target: P, time: i32, bone: i32, pos: u32, b: u32, speed: u32, blend: i32, prio: i32, c: u32) = thiscall 0x618970 => unported;
-    /// `CTaskComplexPartnerDeal::~CTaskComplexPartnerDeal` (0x684200)
-    fn partner_deal_dtor(t: P) = thiscall 0x684200 => unported;
     /// `CTaskComplexPartnerGreet::~CTaskComplexPartnerGreet` (0x684280)
     fn partner_greet_dtor(t: P) = thiscall 0x684280 => unported;
-    /// `CTaskComplexStareAtPed::CTaskComplexStareAtPed(CPedGroup*, CPed*, int32)` (0x660270)
-    fn stare_ctor(t: P, pg: P, ped: P, time: i32) -> P = thiscall 0x660270 => unported;
     /// `CTaskComplexStareAtPed::~CTaskComplexStareAtPed` (0x660310)
     fn stare_dtor(t: P) = thiscall 0x660310 => unported;
 
@@ -557,7 +500,7 @@ fn new_flee_vehicle(veh: P) -> P {
         let a = g::<u32>(0xC18CF0).read();
         let b = g::<u32>(0x86F678).read();
         let c = g::<u32>(0x86F674).read();
-        flee_entity_ctor(t, veh, 0, 0x4170_0000, c, b, a)
+        flee_entity_ctor(t, veh, 0, f32::from_bits(0x4170_0000), c, b, a)
     })
 }
 
@@ -588,7 +531,7 @@ pub fn geh_compute_response_leader_exited_car(_e: P, pg: P, _orig: P) -> P {
         let group = rd::<u8>(p(veh, 0x384), 0xDE) as i32 + 0x58;
         let fire = || {
             let f = p(veh, 0x57C);
-            !f.is_null() && fx_get_play_status(f) == 0
+            !f.is_null() && fx_get_play_status(f) as i32 == 0
         };
         if group == 0x67 || group == 0x68 {
             if fire() {
@@ -758,7 +701,7 @@ pub fn geh_compute_response_gather(_e: P, pg: P, orig: P) -> P {
         wr::<u32>(t, 0, 0x859DF8);
         let ent = p(t, 0xC);
         if !ent.is_null() {
-            entity_clean_up_old_reference(ent, t.byte_add(0xC));
+            entity_clean_up_old_reference(ent, GPtr::<u8>::cast::<GPtr<u8>>(t.byte_add(0xC)));
         }
         wr::<u32>(t, 0x40, 0x859DC4);
         task_complex_dtor(t);
@@ -809,7 +752,7 @@ pub fn geh_compute_stare_response(pg: P, stare_at: P, _orig: P, timeout: i32, bi
         let time = ftol32(span.fmul(scaled)).wrapping_add(neg).wrapping_add(timeout);
         let mut lt = Local::new();
         let t = lt.ptr();
-        stare_ctor(t, pg, stare_at, time);
+        stare_ctor(t, pg, stare_at, time as u32);
         set_response(intel, m, t);
         stare_dtor(t);
     }
@@ -872,7 +815,7 @@ fn partner_finish(pg: P, ped: P, closest: P, ty: i32, tag: u32, ev: P) {
             continue;
         }
         let time = random_in_range(3000, 6000);
-        ik_look_at(GPtr::from_addr(0xC15448), tag, m, closest, time, 5, 0, 1, 0x3E80_0000, 500, 3, 0);
+        ik_look_at(GPtr::from_addr(0xC15448), GPtr::from_addr(tag as usize), m, closest, time as u32, 5, GPtr::NULL, 1, 0x3E80_0000, 500, 3, 0);
     }
     wr::<P>(pg, 0, ped);
     create_partner_event_dtor(ev);
@@ -893,7 +836,7 @@ pub fn geh_compute_do_deal_response(pg: P, deal_with: P, _orig: P) -> P {
     }
     let mut lt = Local::new();
     let t = lt.ptr();
-    partner_deal_ctor(t, 0x86C828, deal_with, 1, 0, 0, 0, 0);
+    partner_deal_ctor(t, GPtr::from_addr(0x86C828), deal_with, 1, 0, 0, 0, 0);
     set_response(intel, closest, t);
     let mut le = Local::new();
     partner_finish(pg, deal_with, closest, 0, 0x86C828, le.ptr());
@@ -917,7 +860,7 @@ pub fn geh_compute_greet_response(pg: P, to_greet: P, _orig: P) -> P {
     let r = random_in_range(0, 6);
     let mut lt = Local::new();
     let t = lt.ptr();
-    partner_greet_ctor(t, 0x86C838, to_greet, 1, 0, r, 0, 0, 0);
+    partner_greet_ctor(t, GPtr::from_addr(0x86C838), to_greet, 1, 0, r as u32, 0, 0, 0);
     set_response(intel, closest, t);
     let mut le = Local::new();
     partner_finish(pg, to_greet, closest, r.wrapping_add(1), 0x86C838, le.ptr());
@@ -997,7 +940,7 @@ pub fn geh_compute_hassle_threat_response(pg: P, threat: P, _orig: P, flag: u32)
             }
             let mut lt = Local::new();
             let t = lt.ptr();
-            hassle_ped_ctor(t, threat, if flag != 0 { 2 } else { 1 }, 12000, 20000);
+            hassle_ped_ctor(t, threat, (if flag != 0 { 2 } else { 1 }) as u32, 12000, 20000);
             set_response(intel, m, t);
             hassle_ped_dtor(t);
         }
@@ -1059,7 +1002,7 @@ pub fn geh_compute_flee_ped_response(pg: P, threat: P, _orig: P, _flag: u32) -> 
         let b = g::<u32>(0x86F678).read();
         let mut lt = Local::new();
         let t = lt.ptr();
-        flee_entity_ctor(t, threat, 0, 0x4270_0000, 10000, b, a);
+        flee_entity_ctor(t, threat, 0, f32::from_bits(0x4270_0000), 10000, b, a);
         set_response(intel, m, t);
         flee_entity_dtor(t);
     }
@@ -1081,7 +1024,7 @@ pub fn geh_compute_hand_signal_response(pg: P, ped: P, _orig: P) -> P {
         }
         let mut lt = Local::new();
         let t = lt.ptr();
-        signal_ctor(t, ped, -1, 0);
+        signal_ctor(t, ped, -1i32 as u32, 0);
         set_response(intel, m, t);
         signal_dtor(t);
     }
@@ -1475,7 +1418,7 @@ pub fn event_handler_compute_chat_partner_response(this: P, e: P, _a: P, _b: P) 
         return;
     }
     random_in_range(3, 7);
-    let t = new_task(0x78, |t| partner_chat_ctor(t, 0x85B9F8, partner, lead, 0x3F00_0000, 4, 1, 0, 0, 0, 0));
+    let t = new_task(0x78, |t| partner_chat_ctor(t, GPtr::from_addr(0x85B9F8), partner, lead, 0x3F00_0000, 4, 1, 0, 0, 0, 0));
     wr::<P>(this, 0x24, t);
 }
 
@@ -1483,7 +1426,7 @@ pub fn event_handler_compute_chat_partner_response(this: P, e: P, _a: P, _b: P) 
 /// CTaskComplexSignalAtPed(event+0xC, event+0x10, (bool)event+0x14)` (null when the allocation fails).
 #[hook(addr = 0x4BB050, conv = thiscall, name = "CEventHandler::ComputeSignalAtPedResponse", expect = "6A FF 68 0B AD 83 00")]
 pub fn event_handler_compute_signal_at_ped_response(this: P, e: P, _a: P, _b: P) {
-    let t = new_task(0x18, |t| signal_ctor(t, p(e, 0xC), rd::<i32>(e, 0x10), rd::<u8>(e, 0x14) as u32));
+    let t = new_task(0x18, |t| signal_ctor(t, p(e, 0xC), rd::<i32>(e, 0x10) as u32, rd::<u8>(e, 0x14) as u32));
     wr::<P>(this, 0x24, t);
 }
 
@@ -1501,13 +1444,13 @@ pub fn event_handler_compute_create_partner_task_response(this: P, e: P, _a: P, 
     let ty = rd::<i32>(e, 0xC);
     if ty == 0 {
         let t = new_task(0x74, |t| {
-            partner_deal_ctor(t, 0x85BA28, p(e, 0x10), rd::<u8>(e, 0x14) as u32, rd::<u32>(e, 0x18), 0, 0, 0)
+            partner_deal_ctor(t, GPtr::from_addr(0x85BA28), p(e, 0x10), rd::<u8>(e, 0x14) as u32, rd::<u32>(e, 0x18), 0, 0, 0)
         });
         wr::<P>(this, 0x24, t);
     } else if (1..=6).contains(&ty) {
         let t = new_task(0x78, |t| {
             let kind = rd::<i32>(e, 0xC) - 1;
-            partner_greet_ctor(t, 0x85BA28, p(e, 0x10), rd::<u8>(e, 0x14) as u32, rd::<u32>(e, 0x18), kind, 0, 0, 0)
+            partner_greet_ctor(t, GPtr::from_addr(0x85BA28), p(e, 0x10), rd::<u8>(e, 0x14) as u32, rd::<u32>(e, 0x18), kind as u32, 0, 0, 0)
         });
         wr::<P>(this, 0x24, t);
     }

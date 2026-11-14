@@ -56,17 +56,15 @@ pub use sa_core::bindings::file_close;
 pub use sa_core::bindings::file_write;
 pub use sa_core::bindings::open_file_for_writing;
 pub use sa_stream::bindings::col_model_ctor;
+pub use sa_stream::bindings::col_model_new;
+pub use sa_stream::bindings::col_store_include_model_index as include_model_index;
 orig! {
     /// CRT `operator new` (0x821195)
     pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x821195 => unported;
-    /// `CColModel::operator new` (0x40FC30)
-    pub fn col_model_new(size: u32) -> GPtr<u8> = cdecl 0x40FC30 => col_model_new_port;
     /// `CBaseModelInfo::SetColModel(CColModel*, bool)` (0x4C4BC0)
     pub fn set_col_model(mi: MiPtr, col: GPtr<u8>, owns: u32) = thiscall 0x4C4BC0 => sa_stream::modelinfo::base::set_col_model;
     /// `CBaseModelInfo::DeleteCollisionModel` (0x4C4C40)
     pub fn delete_collision_model(mi: MiPtr) = thiscall 0x4C4C40 => unported;
-    /// `CColStore::IncludeModelIndex(int32 slot, int32 model)` (0x410820)
-    pub fn include_model_index(slot: i32, model: i32) = cdecl 0x410820 => sa_stream::colstore::include_model_index;
 }
 
 pub fn col_model_new_port(size: u32) -> GPtr<u8> {

@@ -4,6 +4,7 @@
 //! hooks sit on the stubs. Ported from the 1.0 US bytes; gta-reversed (`TaskSimpleClimb.cpp`) as a reading aid.
 //! x87 arithmetic follows the original's instruction order.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -23,7 +24,8 @@ use sa_world::bindings::entity_get_col_model;
 use sa_world::bindings::get_task_swim as intel_get_task_swim;
 use sa_world::bindings::placeable_get_matrix;
 use sa_world::bindings::stats_get_fat_and_muscle_modifier;
-use sa_world::bindings::vector_sub;
+use sa_core::bindings::vector_sub;
+use sa_core::bindings::matrix_assign;
 orig! {
     /// `CTaskSimpleClimb::CreateColModel()` (0x67A890)
     fn climb_create_col_model() -> u8 = cdecl 0x67A890 => unported;
@@ -35,8 +37,6 @@ orig! {
     /// CColPoint*, float*, bool)` (0x4185C0)
     #[allow(clippy::too_many_arguments)]
     fn collision_process_col_models(m1: GPtr<u8>, c1: GPtr<u8>, m2: GPtr<u8>, c2: GPtr<u8>, cps: GPtr<u8>, lcps: u32, dists: u32, b: u32) -> i32 = cdecl 0x4185C0 => unported;
-    /// `CMatrix::operator=(const CMatrix&)` (0x59BBC0)
-    fn matrix_assign(m: GPtr<u8>, o: GPtr<u8>) = thiscall 0x59BBC0 => unported;
     /// `SurfaceInfos_c::CanClimb(surface)` (0x55EA10) on `g_surfaceInfos` (0xB79538)
     fn surface_can_climb(s: GPtr<u8>, surface: u32) -> u8 = thiscall 0x55EA10 => unported;
 }
@@ -166,7 +166,7 @@ pub fn climb_scan_to_grab_sector_list(list: GPtr<u8>, ped: GPtr<u8>, pos: GPtr<u
     let model_p: GPtr<u8> = GPtr::from_addr(model);
     let mut centre = [0u32; 3];
     let centre_p = buf(&mut centre);
-    let r = matrix_mul_vec(centre_p, rd::<GPtr<u8>>(ped, 0x14), model_p.byte_add(0x18));
+    let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(centre_p.cast::<f32>(), rd::<GPtr<u8>>(ped, 0x14), model_p.byte_add(0x18)));
     copy3(centre_p, r);
     let radius = rd::<f32>(model_p, 0x24);
     let cpts: GPtr<u8> = GPtr::from_addr(COL_PTS);
@@ -193,7 +193,7 @@ pub fn climb_scan_to_grab_sector_list(list: GPtr<u8>, ped: GPtr<u8>, pos: GPtr<u
             if stand_up || vault || (swimming && rd::<u32>(e, 0x594) == 5) {
                 take = true;
             } else if rd::<u32>(e, 0x594) == 6 {
-                let mag = X87::from_f64_exact(vector_magnitude(e.byte_add(0x44)));
+                let mag = X87::from_f64_exact(vector_magnitude(GPtr::<u8>::cast::<u32>(e.byte_add(0x44))));
                 take = !mag.fcom(x(c(0x85_8B1C))).test_parity(0x05);
             }
         }
@@ -277,7 +277,7 @@ pub fn climb_scan_to_grab_sector_list(list: GPtr<u8>, ped: GPtr<u8>, pos: GPtr<u
             // the find-edge model at the hit point
             let edge: GPtr<u8> = GPtr::from_addr(EDGE_MATRIX);
             matrix_assign(edge, rd::<GPtr<u8>>(ped, 0x14));
-            matrix_set_translate_only(edge, rd::<u32>(cpts, 0), rd::<u32>(cpts, 4), rd::<u32>(cpts, 8));
+            matrix_set_translate_only(edge, f32::from_bits(rd::<u32>(cpts, 0)), f32::from_bits(rd::<u32>(cpts, 4)), f32::from_bits(rd::<u32>(cpts, 8)));
             let ecol = entity_get_col_model(e);
             let emat = placeable_get_matrix(e);
             if collision_process_col_models(edge, GPtr::from_addr(FIND_EDGE_COL), emat, ecol, cpts, 0, 0, 0) > 0 {
@@ -349,7 +349,7 @@ pub fn climb_scan_to_grab(ped: GPtr<u8>, pos: GPtr<u8>, angle: GPtr<u8>, surface
         wr::<f32>(pos, 4 * k, v);
     }
     let mut pt = [0u32; 3];
-    matrix_mul_vec(buf(&mut pt), rd::<GPtr<u8>>(ped, 0x14), GPtr::from_addr(CLIMB_COL + 0x18));
+    matrix_mul_vec(GPtr::<u8>::cast::<f32>(buf(&mut pt)), rd::<GPtr<u8>>(ped, 0x14), GPtr::from_addr(CLIMB_COL + 0x18));
     let (px, py) = (f32::from_bits(pt[0]), f32::from_bits(pt[1]));
     let r = c(CLIMB_COL + 0x24);
     let start_x = sector_of(x(px).fsub_m(r));
@@ -410,7 +410,7 @@ pub fn climb_scan_to_grab(ped: GPtr<u8>, pos: GPtr<u8>, angle: GPtr<u8>, surface
             let invp = buf(&mut inv);
             let im = matrix_invert(invp, rd::<GPtr<u8>>(collided, 0x14));
             let mut out = [0u32; 3];
-            let o = matrix_mul_vec(buf(&mut out), im, pos);
+            let o = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(buf(&mut out)), im, pos));
             copy3(pos, o);
             matrix_dtor(invp);
             let cm = rd::<GPtr<u8>>(collided, 0x14);

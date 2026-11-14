@@ -373,7 +373,7 @@ pub fn process(menu: u32) {
 pub use crate::bindings::analogue_pad_down as pad_analogue_down;
 pub use crate::bindings::analogue_pad_up as pad_analogue_up;
 pub use sa_core::bindings::get_pad;
-pub use sa_world::bindings::audio_report_frontend_event as report_frontend_audio_event;
+pub use sa_core::bindings::audio_report_frontend_event as report_frontend_audio_event;
 
 /// `AudioEngine`
 const AUDIO_ENGINE: usize = 0xB6BC90;
@@ -387,7 +387,7 @@ pub(crate) fn flags_set() -> bool {
 }
 
 fn sound(event: u32) {
-    report_frontend_audio_event(g(AUDIO_ENGINE), event, 0, 0x3F80_0000);
+    report_frontend_audio_event(g(AUDIO_ENGINE), event, f32::from_bits(0), f32::from_bits(0x3F80_0000));
 }
 
 /// A pad button "just pressed": word `new` of `GetPad(0)` set and word `old` clear.
@@ -488,7 +488,7 @@ pub fn input_standard_menu_port(menu: u32) {
         return;
     }
     let dpad = |n: isize, o: isize| rd::<u8>(panel(menu), 0x3F9) != 0 && just(n, o);
-    if pad_analogue_up(get_pad(0)) != 0 || dpad(0x10, 0x40) || alt(0xB733B6, 0xB73146) {
+    if pad_analogue_up() != 0 || dpad(0x10, 0x40) || alt(0xB733B6, 0xB73146) {
         sound(3);
         let mut c = rd::<u8>(panel(menu), 0x415);
         loop {
@@ -500,7 +500,7 @@ pub fn input_standard_menu_port(menu: u32) {
             }
         }
     }
-    if pad_analogue_down(get_pad(0)) != 0 || dpad(0x12, 0x42) || alt(0xB733B8, 0xB73148) {
+    if pad_analogue_down() != 0 || dpad(0x12, 0x42) || alt(0xB733B8, 0xB73148) {
         sound(3);
         let p = panel(menu);
         wr::<u8>(p, 0x415, rd::<u8>(p, 0x415).wrapping_add(1));

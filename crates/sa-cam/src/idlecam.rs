@@ -24,11 +24,10 @@ const LOOK_AT_PED_LOW_Z: usize = 0x8CCC8C;
 
 pub use sa_core::bindings::find_player_ped;
 pub use sa_core::bindings::get_pad;
+pub use crate::bindings::idle_cam_init_call as init_call;
+pub use crate::bindings::idle_cam_reset_call as reset_call;
+pub use crate::bindings::idle_set_target as set_target;
 orig! {
-    /// `CIdleCam::SetTarget(CEntity*)` (0x50A280)
-    pub fn set_target(this: GPtr<u8>, e: GPtr<u8>) = thiscall 0x50A280 => unported;
-    /// `CIdleCam::Init()` (0x50E6D0)
-    pub fn init_call(this: GPtr<u8>) = thiscall 0x50E6D0 => idle_cam_init;
     /// `CIdleCam::IsTargetValid(CEntity*)` (0x517770, AL)
     pub fn is_target_valid_call(this: GPtr<u8>, e: GPtr<u8>) -> u8 = thiscall 0x517770 => crate::camproc::idle_cam_is_target_valid;
     /// `CIdleCam::SetTargetPlayer()` (0x50EB50)
@@ -39,8 +38,6 @@ orig! {
     pub fn get_interesting_event(ie: GPtr<u8>) -> GPtr<u8> = thiscall 0x6028A0 => unported;
     /// `CInterestingEvents::InvalidateEvent(const TInterestingEvent*)` (0x602960)
     pub fn invalidate_event(ie: GPtr<u8>, ev: GPtr<u8>) = thiscall 0x602960 => unported;
-    /// `CIdleCam::Reset(bool)` (0x50A160)
-    pub fn reset_call(this: GPtr<u8>, reset_controls: u8) = thiscall 0x50A160 => reset;
 }
 
 /// `CIdleCam::CIdleCam()` (0x517760): `Init()`, returns `this`.

@@ -22,6 +22,8 @@ use sa_core::bindings::entity_update_rw_frame;
 use sa_core::bindings::load_monitor_end as load_monitor_end_timer;
 use sa_core::bindings::load_monitor_start as load_monitor_start_timer;
 use sa_core::bindings::matrix_update_rw_matrix;
+use crate::bindings::ped_position_attached_ped;
+use crate::bindings::remove_from_moving_list;
 orig! {
     /// `CEventGlobalGroup::AddEventsToPed(CPed*)` (0x4AB9C0, `ret 4`)
     fn add_events_to_ped(grp: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x4AB9C0 => unported;
@@ -43,8 +45,6 @@ orig! {
     fn v_process_collision(e: GPtr<u8>) = thiscall vslot 0x2C => unported;
     /// entity virtual +0x30 (`ProcessShift`)
     fn v_process_shift(e: GPtr<u8>) = thiscall vslot 0x30 => unported;
-    /// `CPhysical::RemoveFromMovingList()` (0x542860)
-    fn remove_from_moving_list(e: GPtr<u8>) = thiscall 0x542860 => crate::physical::base::remove_from_moving_list;
     /// `CWorld::FindPlayerPed(int32)` (0x56E210, cdecl)
     fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => crate::world::cworld::find_player_ped_port;
     /// `CObject::ProcessControlLogic()` (0x5A29A0)
@@ -57,8 +57,6 @@ orig! {
     fn world_process_attached_entities() = cdecl 0x5647F0 => unported;
     /// `CPedIntelligence::ProcessAfterProcCol()` (0x6018F0)
     fn ped_intelligence_process_after_proc_col(i: GPtr<u8>) = thiscall 0x6018F0 => unported;
-    /// `CPed::PositionAttachedPed()` (0x5DFDF0)
-    fn ped_position_attached_ped(p: GPtr<u8>) = thiscall 0x5DFDF0 => unported;
     /// `CMessages::Process()` (0x69EE60, cdecl)
     fn messages_process() = cdecl 0x69EE60 => unported;
     /// `CPlayerInfo::Process(int32)` (0x56F8D0, `ret 4`)
@@ -333,6 +331,8 @@ use sa_core::bindings::replay_init;
 use sa_core::bindings::rgba_ctor;
 use sa_core::bindings::text_get;
 use sa_stream::bindings::ped_is_player;
+use sa_core::bindings::font_set_centre_size;
+use sa_core::bindings::font_set_scale;
 orig! {
     /// `CReplay::PlayBackThisFrame()` (0x4604A0, cdecl)
     fn replay_play_back_this_frame() = cdecl 0x4604A0 => unported;
@@ -346,10 +346,6 @@ orig! {
     fn replay_save_replay_to_hd() = cdecl 0x45C340 => unported;
     /// `CReplay::PlayReplayFromHD()` (0x460390, cdecl)
     fn replay_play_replay_from_hd() = cdecl 0x460390 => unported;
-    /// `CFont::SetScale(float, float)` (0x719380, cdecl)
-    fn font_set_scale(w: f32, h: f32) = cdecl 0x719380 => unported;
-    /// `CFont::SetCentreSize(float)` (0x7194E0, cdecl)
-    fn font_set_centre_size(v: f32) = cdecl 0x7194E0 => unported;
     /// `CMatrix::CopyOnlyMatrix(const CMatrix&)` (0x59ADD0, `ret 4`)
     fn matrix_copy_only_matrix(m: GPtr<u8>, src: GPtr<u8>) = thiscall 0x59ADD0 => unported;
     /// `tReplayBmxBlock::MakeBmxUpdateData(CBmx*, int32)` (0x45BF90, `ret 8`)
@@ -575,9 +571,9 @@ pub fn replay_record_this_frame() {
     matrix_copy_only_matrix(b.byte_add(4), GPtr::from_addr(0xB6F99C));
     let mut tmp = [0f32; 3];
     let t = GPtr::from_raw(&mut tmp).cast::<u8>();
-    wr::<u32>(b, 0x4C, rd::<u32>(find_player_coors(t, -1), 0));
-    wr::<u32>(b, 0x50, rd::<u32>(find_player_coors(t, -1), 4));
-    wr::<u32>(b, 0x54, rd::<u32>(find_player_coors(t, -1), 8));
+    wr::<u32>(b, 0x4C, rd::<u32>(GPtr::<f32>::cast::<u8>(find_player_coors(t.cast::<f32>(), -1)), 0));
+    wr::<u32>(b, 0x50, rd::<u32>(GPtr::<f32>::cast::<u8>(find_player_coors(t.cast::<f32>(), -1)), 4));
+    wr::<u32>(b, 0x54, rd::<u32>(GPtr::<f32>::cast::<u8>(find_player_coors(t.cast::<f32>(), -1)), 8));
     let cur_player = g::<u8>(0xB7CD74).read() as usize;
     wr::<u8>(b, 1, (g::<u32>(0xB7CE48 + 0x190 * cur_player).read() != 0) as u8);
     rec_advance(0x58);
@@ -788,11 +784,9 @@ use sa_core::bindings::font_set_edge;
 use sa_core::bindings::insert_number_in_string;
 use sa_core::bindings::list_add_item_5335e0 as single_add_item;
 use sa_core::bindings::list_delete_item as single_delete_item;
+use sa_core::bindings::font_set_drop_color;
+use sa_stream::bindings::hud_colours_get_rgb;
 orig! {
-    /// `CHudColours::GetRGB(eHudColours)` (0x58FEA0, `ret 8`: hidden result pointer, colour); returns the pointer
-    fn hud_colours_get_rgb(h: GPtr<u8>, out: GPtr<u8>, c: u32) -> GPtr<u8> = thiscall 0x58FEA0 => unported;
-    /// `CFont::SetDropColor(CRGBA)` (0x719510, cdecl)
-    fn font_set_drop_color(c: u32) = cdecl 0x719510 => unported;
     /// `CPtrListDoubleLink::AddItem(void*)` (0x533670, `ret 4`)
     fn double_add_item(l: GPtr<u8>, item: GPtr<u8>) -> GPtr<u8> = thiscall 0x533670 => unported;
     /// entity virtual +0x24 (`GetBoundRect`, hidden result pointer); returns the pointer

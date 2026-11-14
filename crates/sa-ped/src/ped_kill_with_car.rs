@@ -7,6 +7,7 @@
 //! The vector helpers (0x40FE30 / 0x40FE60 / 0x40FE90 / 0x40FEC0 / 0x406D70 / 0x411A00) are called as the
 //! original calls them; the inline x87 sums keep their order.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::crt::rand;
 use sa_core::orig::at_site;
@@ -47,28 +48,23 @@ use sa_world::bindings::report_crime;
 use sa_world::bindings::tm_find_active_task_by_type;
 use sa_world::bindings::vector_add;
 use sa_world::bindings::vector_add_assign;
-use sa_world::bindings::vector_magnitude_sqr;
+use sa_core::bindings::vector_magnitude_sqr;
 use sa_world::bindings::vector_mul_scalar;
 use sa_world::bindings::vector_scale as scalar_mul_vector;
-use sa_world::bindings::vector_sub;
+use sa_core::bindings::vector_sub;
 use sa_world::bindings::vector_sub_assign;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::anim_blend_animation as blend_animation;
+use sa_world::bindings::audio_add_event as add_audio_event;
+use sa_world::bindings::get_local_direction as ped_get_local_direction;
+use sa_world::bindings::ped_say;
 orig! {
     /// `CTask::GetTaskType` (vtable slot 0x10)
     fn task_get_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CPed::IsPlayer()` (0x5DF8F0)
-    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => crate::ped::is_player;
-    /// `CPed::GetLocalDirection(const CVector2D&)` (0x5DEF60)
-    fn ped_get_local_direction(p: GPtr<u8>, v: GPtr<f32>) -> i32 = thiscall 0x5DEF60 => crate::ped::get_local_direction;
     /// `CAutomobile::RemoveBonnetInPedCollision()` (0x6AA200)
     fn remove_bonnet_in_ped_collision(car: GPtr<u8>) -> GPtr<u8> = thiscall 0x6AA200 => unported;
     /// `CLocalisation::KnockDownPeds()` (0x56D290)
     fn knock_down_peds() -> u8 = cdecl 0x56D290 => unported;
-    /// `CAEVehicleAudioEntity::AddAudioEvent(eAudioEvents, float)` (0x4F6420)
-    fn add_audio_event(a: GPtr<u8>, ev: u32, vol: u32) = thiscall 0x4F6420 => unported;
-    /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float)` (0x4D4610)
-    fn blend_animation(c: GPtr<u8>, group: i32, id: i32, delta: u32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
-    /// `CPed::Say(uint16, uint32, float, bool, bool, bool)` (0x5EFFE0)
-    fn ped_say(p: GPtr<u8>, id: u32, offset: u32, vol: u32, a: u32, b: u32, c: u32) = thiscall 0x5EFFE0 => unported;
 }
 
 /// A local `CVector` the original passes by address.
@@ -86,7 +82,7 @@ fn dot_in(a: V3, b: GPtr<u8>, order: [usize; 3]) -> X87 {
 
 /// `ST0 = |car.moveSpeed|` (0x4082C0).
 fn speed(car: GPtr<u8>) -> X87 {
-    X87::from_f64_exact(vector_magnitude(car.byte_add(0x44)))
+    X87::from_f64_exact(vector_magnitude(GPtr::<u8>::cast::<u32>(car.byte_add(0x44))))
 }
 
 /// Where the strong path goes after its impact geometry (block 4 of the spec).
@@ -142,7 +138,7 @@ pub fn ped_kill_ped_with_car(this: GPtr<u8>, car: GPtr<u8>, intensity: f32, play
     let t = tm_find_active_task_by_type(intel().byte_add(4), 0x3EC);
     if !t.is_null() && rd::<GPtr<u8>>(t, 0x10) == car {
         let mut mv: V3 = vec3(car.byte_add(0x44).cast());
-        let s = X87::from_f64_exact(vector_magnitude_sqr(vp(&mut mv)));
+        let s = X87::from_f64_exact(vector_magnitude_sqr(GPtr::<u8>::cast::<f32>(vp(&mut mv))));
         if !s.fcom(x(0.0225)).test_parity(5) {
             return;
         }
@@ -179,7 +175,7 @@ pub fn ped_kill_ped_with_car(this: GPtr<u8>, car: GPtr<u8>, intensity: f32, play
         }
         wr::<u32>(this, 0x46C, rd::<u32>(this, 0x46C) & !1);
         let mut back = [f32_of(x(rd::<f32>(car, 0x44)).fchs()), f32_of(x(rd::<f32>(car, 0x48)).fchs())];
-        let mut dir = ped_get_local_direction(this, lp(&mut back).cast());
+        let mut dir = ped_get_local_direction(this, GPtr::<f32>::cast::<u8>(lp(&mut back).cast()));
         // block 4
         let cm = entity_get_col_model(car);
         let m = rd::<GPtr<u8>>(car, 0x14);
@@ -299,7 +295,7 @@ pub fn ped_kill_ped_with_car(this: GPtr<u8>, car: GPtr<u8>, intensity: f32, play
                 }
                 vector_sub(vp(&mut d), ent_pos(this).cast(), ent_pos(car).cast());
                 if knock_down_peds() != 0 {
-                    add_audio_event(car.byte_add(0x138), 0x7A, 0);
+                    add_audio_event(car.byte_add(0x138), 0x7A, f32::from_bits(0));
                 }
             }
             Hit::RunOver { zone2 } => {
@@ -317,12 +313,12 @@ pub fn ped_kill_ped_with_car(this: GPtr<u8>, car: GPtr<u8>, intensity: f32, play
                     dir = 2;
                 }
                 if knock_down_peds() != 0 {
-                    add_audio_event(car.byte_add(0x138), 0x77, 0);
+                    add_audio_event(car.byte_add(0x138), 0x77, f32::from_bits(0));
                 }
             }
             Hit::Plain => {
                 if knock_down_peds() != 0 {
-                    add_audio_event(car.byte_add(0x138), 0x77, 0);
+                    add_audio_event(car.byte_add(0x138), 0x77, f32::from_bits(0));
                 }
             }
         }
@@ -331,7 +327,7 @@ pub fn ped_kill_ped_with_car(this: GPtr<u8>, car: GPtr<u8>, intensity: f32, play
         if !driver.is_null() {
             report_crime(if rd::<i32>(this, 0x598) == 6 { 11 } else { 10 }, this, driver);
         }
-        damage_calc_ctor(calc_p, car, 1000.0f32.to_bits(), weapon, 3, 0);
+        damage_calc_ctor(calc_p, car, f32::from_bits(1000.0f32.to_bits()), weapon, 3, 0);
         let in_vehicle = (rd::<u32>(this, 0x46C) >> 8) & 0xFFFF_FF01;
         event_damage_ctor(ev_p, car, g::<u32>(TIME_MS).read(), weapon, 3, dir as u32, 0, in_vehicle);
         let rnd2 = at_site(0x5F0C4B, rand) & 3;
@@ -362,7 +358,7 @@ pub fn ped_kill_ped_with_car(this: GPtr<u8>, car: GPtr<u8>, intensity: f32, play
             wr::<f32>(ev_p, 0x30, blend);
             wr::<f32>(ev_p, 0x34, anim_speed);
             if play_dead_anim as u8 != 0 {
-                let a = blend_animation(rd::<GPtr<u8>>(this, 0x18), 0, anim, blend.to_bits());
+                let a = blend_animation(rd::<GPtr<u8>>(this, 0x18), 0, anim as u32, f32::from_bits(blend.to_bits()));
                 wr::<f32>(a, 0x24, anim_speed);
                 wr::<u8>(ev_p, 0x25, rd::<u8>(ev_p, 0x25) | 4);
             }
@@ -376,7 +372,7 @@ pub fn ped_kill_ped_with_car(this: GPtr<u8>, car: GPtr<u8>, intensity: f32, play
         } else {
             wr::<u32>(this, 0x470, rd::<u32>(this, 0x470) & !0x10);
         }
-        ped_say(this, 0x156, 0, 1.0f32.to_bits(), 0, 0, 0);
+        ped_say(this, 0x156, 0, f32::from_bits(1.0f32.to_bits()), 0, 0, 0);
     } else {
         // block 6: the weak path
         let low = !x(rd::<f32>(this, 0xE8)).fcom(x(-0.8)).test_parity(5) && !x(intensity).fcom(x(3.0)).test_any(0x41);
@@ -390,12 +386,12 @@ pub fn ped_kill_ped_with_car(this: GPtr<u8>, car: GPtr<u8>, intensity: f32, play
         }
         wr::<u32>(this, 0x46C, rd::<u32>(this, 0x46C) & !1);
         let mut back = [f32_of(x(rd::<f32>(car, 0x44)).fchs()), f32_of(x(rd::<f32>(car, 0x48)).fchs())];
-        let dir = ped_get_local_direction(this, lp(&mut back).cast());
+        let dir = ped_get_local_direction(this, GPtr::<f32>::cast::<u8>(lp(&mut back).cast()));
         let mut dmg = 30.0f32;
         if ped_is_player(this) != 0 && rd::<i32>(car, 0x594) == 6 {
             dmg = 150.0;
         }
-        damage_calc_ctor(calc_p, car, dmg.to_bits(), RAMMED, 3, 0);
+        damage_calc_ctor(calc_p, car, f32::from_bits(dmg.to_bits()), RAMMED, 3, 0);
         let in_vehicle = (rd::<u32>(this, 0x46C) >> 8) & 0xFFFF_FF01;
         event_damage_ctor(ev_p, car, g::<u32>(TIME_MS).read(), RAMMED, 3, dir as u32, 0, in_vehicle);
         let anim = dir.wrapping_add(24);
@@ -406,7 +402,7 @@ pub fn ped_kill_ped_with_car(this: GPtr<u8>, car: GPtr<u8>, intensity: f32, play
             wr::<f32>(ev_p, 0x30, 8.0);
             wr::<f32>(ev_p, 0x34, 1.0);
             if play_dead_anim as u8 != 0 {
-                let a = blend_animation(rd::<GPtr<u8>>(this, 0x18), 0, anim, 8.0f32.to_bits());
+                let a = blend_animation(rd::<GPtr<u8>>(this, 0x18), 0, anim as u32, f32::from_bits(8.0f32.to_bits()));
                 wr::<f32>(a, 0x24, 1.0);
                 wr::<u8>(ev_p, 0x25, rd::<u8>(ev_p, 0x25) | 4);
             }
@@ -447,9 +443,9 @@ pub fn ped_kill_ped_with_car(this: GPtr<u8>, car: GPtr<u8>, intensity: f32, play
         }
         wr::<f32>(this, 0x4C, 0.0);
         if knock_down_peds() != 0 {
-            add_audio_event(car.byte_add(0x138), 0x79, 0);
+            add_audio_event(car.byte_add(0x138), 0x79, f32::from_bits(0));
         }
-        ped_say(this, 0x159, 0, 1.0f32.to_bits(), 0, 0, 0);
+        ped_say(this, 0x159, 0, f32::from_bits(1.0f32.to_bits()), 0, 0, 0);
     }
     event_damage_dtor(ev_p);
     damage_calc_dtor(calc_p);

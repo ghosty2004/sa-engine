@@ -2,6 +2,7 @@
 //! Ported from the 1.0 US bytes (gta-reversed only calls the original). Unverified (docs/verify/HOWTO.md).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::orig::at_site;
 use sa_core::{hook, orig};
@@ -20,23 +21,16 @@ use sa_world::bindings::membership_add_follower;
 use sa_world::bindings::ped_groups_add_group;
 use sa_world::bindings::population_remove_ped;
 use sa_world::bindings::tm_set_task;
-use sa_world::bindings::world_get_is_line_of_sight_clear;
+use sa_core::bindings::world_get_is_line_of_sight_clear;
+use crate::bindings::group_intel_set_default_task_allocator;
+use sa_core::bindings::general_get_radian_angle_between_points;
+use sa_world::bindings::camera_is_sphere_visible;
+use sa_world::bindings::find_ground_z_for_3d_coord as world_find_ground_z_for_3d_coord;
+use sa_world::bindings::is_position_clear_for_ped as ped_placement_is_position_clear;
+use sa_world::bindings::set_clump_alpha as visibility_set_clump_alpha;
 orig! {
-    /// `CCamera::IsSphereVisible(const CVector&, float)` (0x420D40, `ret 8`), AL
-    fn camera_is_sphere_visible(cam: GPtr<u8>, c: GPtr<u8>, r: f32) -> u8 = thiscall 0x420D40 => unported;
     /// `CPopulation::PedCreationDistMultiplier()` (0x6116C0, ST0)
     fn population_ped_creation_dist_multiplier() -> f64 = cdecl 0x6116C0 => unported;
-    /// `CPedPlacement::IsPositionClearForPed(const CVector&, float radius, int32 maxObjs, CEntity** objs, bool vehicles,
-    /// bool peds, bool objects)` (0x616860), AL
-    fn ped_placement_is_position_clear(p: GPtr<u8>, r: f32, max: i32, objs: GPtr<u8>, v: u32, pe: u32, o: u32) -> u8 = cdecl 0x616860 => unported;
-    /// `CWorld::FindGroundZFor3DCoord(float x, float y, float z, bool* found, CEntity** hit)` (0x5696C0, ST0)
-    fn world_find_ground_z_for_3d_coord(x: f32, y: f32, z: f32, found: GPtr<u8>, hit: u32) -> f64 = cdecl 0x5696C0 => unported;
-    /// `CGeneral::GetRadianAngleBetweenPoints(x1, y1, x2, y2)` (0x53CBE0, ST0)
-    fn general_get_radian_angle_between_points(x1: f32, y1: f32, x2: f32, y2: f32) -> f64 = cdecl 0x53CBE0 => unported;
-    /// `CVisibilityPlugins::SetClumpAlpha(RpClump*, int32)` (0x732B00)
-    fn visibility_set_clump_alpha(c: u32, a: i32) = cdecl 0x732B00 => unported;
-    /// `CPedGroupIntelligence::SetDefaultTaskAllocator(const CPedGroupDefaultTaskAllocator&)` (0x5FB280, `ret 4`)
-    fn group_intel_set_default_task_allocator(i: GPtr<u8>, a: u32) = thiscall 0x5FB280 => unported;
 }
 
 /// 2*pi (0x858CBC), 1.0 (0x858624), 0.5 (0x858B8C), 1/32767 (0x858C7C)
@@ -89,7 +83,7 @@ pub fn place_random_group(_this: GPtr<u8>, ped_type: u32, n: i32, origin: GPtr<u
     if n < 2 {
         return 0;
     }
-    let group = ped_groups_add_group();
+    let group = ped_groups_add_group() as i32;
     if group < 0 {
         return 0;
     }
@@ -129,7 +123,7 @@ pub fn place_random_group(_this: GPtr<u8>, ped_type: u32, n: i32, origin: GPtr<u
         let gz_arg = x(oz).fadd_m(kf(K_ONE)).to_f32();
         let gy = x(dy).fadd_m(oy).to_f32();
         let gx = x(dx).fadd_m(ox).to_f32();
-        let gz = world_find_ground_z_for_3d_coord(gx, gy, gz_arg, GPtr::from_raw(found.as_mut_ptr()), 0);
+        let gz = world_find_ground_z_for_3d_coord(gx, gy, gz_arg, GPtr::from_raw(found.as_mut_ptr()), GPtr::NULL);
         let mut z = X87::from_f64_exact(gz).fadd_m(kf(K_ONE));
         if found[0] == 0 {
             continue;
@@ -160,7 +154,7 @@ pub fn place_random_group(_this: GPtr<u8>, ped_type: u32, n: i32, origin: GPtr<u
         if blocked || los == 0 || !near {
             continue;
         }
-        let ped = population_add_ped(ped_type, model, vp(&mut p), 0);
+        let ped = population_add_ped(ped_type, model as u32, GPtr::<u8>::cast::<f32>(vp(&mut p)), 0);
         if ped.is_null() {
             population_remove_ped(GPtr::NULL);
             continue;
@@ -170,14 +164,14 @@ pub fn place_random_group(_this: GPtr<u8>, ped_type: u32, n: i32, origin: GPtr<u
         let a = X87::from_f64_exact(general_get_radian_angle_between_points(ox, oy, p[0], p[1])).to_f32();
         wr::<f32>(ped, 0x558, a);
         wr::<f32>(ped, 0x55C, a);
-        visibility_set_clump_alpha(rd::<u32>(ped, 0x18), 0);
+        visibility_set_clump_alpha(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0);
     }
     if count < 1 {
         return 0;
     }
     let grp = GPtr::<u8>::from_addr((GROUPS + (group as u32) * 0x2D4) as usize);
     let intel = grp.byte_add(0x30);
-    group_intel_set_default_task_allocator(intel, RANDOM_ALLOCATOR);
+    group_intel_set_default_task_allocator(intel, GPtr::from_addr(RANDOM_ALLOCATOR as usize));
     let members = grp.byte_add(8);
     for (k, &ped) in placed[..count].iter().enumerate() {
         if k == 0 {
@@ -197,7 +191,7 @@ pub fn place_random_group(_this: GPtr<u8>, ped_type: u32, n: i32, origin: GPtr<u
         };
         tm_set_task(rd::<GPtr<u8>>(ped, 0x47C).byte_add(4), task, 4, 0);
         let mem = task_new(0x28);
-        let task = if mem.is_null() { GPtr::NULL } else { be_in_group_ctor(mem, group, 0) };
+        let task = if mem.is_null() { GPtr::NULL } else { be_in_group_ctor(mem, group as u32, 0) };
         tm_set_task(rd::<GPtr<u8>>(ped, 0x47C).byte_add(4), task, 3, 0);
     }
     1

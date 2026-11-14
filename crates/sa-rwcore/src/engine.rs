@@ -71,6 +71,9 @@ use crate::bindings::free_list_create_prealloc as freelist_create_prealloc;
 use crate::bindings::plugin_add as registry_add_plugin;
 use crate::bindings::plugin_deinit_object as registry_deinit_object;
 use crate::bindings::plugin_init_object as registry_init_object;
+use crate::bindings::device_system_request as system_request;
+use crate::bindings::free_list_destroy as freelist_destroy;
+use crate::bindings::image_set_gamma;
 orig! {
     /// `RwDevice::fpSystem(request, pOut, pInOut, nIn)` (stored pointer)
     fn device_system(f: u32, request: i32, out: GPtr<u8>, inout: GPtr<u8>, n: i32) -> i32 = cdecl dyn => unported;
@@ -86,10 +89,6 @@ orig! {
     fn rw_error1(code: u32) -> u32 = cdecl 0x8088D0 => rw_error;
     /// `RwErrorSet(const RwError*)` (0x808820)
     fn error_set(e: GPtr<RwError>) -> GPtr<RwError> = cdecl 0x808820 => rw_error_set;
-    /// `_rwDeviceSystemRequest` (0x7F2AB0)
-    fn system_request(dev: GPtr<u8>, request: i32, out: GPtr<u8>, inout: GPtr<u8>, n: i32) -> i32 = cdecl 0x7F2AB0 => device_system_request;
-    /// `RwImageSetGamma(RwReal)` (0x803FE0)
-    fn image_set_gamma(gamma: f32) -> i32 = cdecl 0x803FE0 => unported;
     /// `_rwDeviceGetHandle()` (0x7F9C20, D3D9 driver)
     fn device_get_handle() -> GPtr<u8> = cdecl 0x7F9C20 => unported;
     /// `_rwFreeListSetFlags(flag)` (0x801970)
@@ -120,8 +119,6 @@ orig! {
     fn rx_pipeline_open() -> i32 = cdecl 0x804FE0 => unported;
     /// `_rxPipelineClose()` (0x804F60)
     fn rx_pipeline_close() -> i32 = cdecl 0x804F60 => unported;
-    /// `RwFreeListDestroy(fl)` (0x801B80)
-    fn freelist_destroy(fl: GPtr<u8>) -> u32 = cdecl 0x801B80 => crate::memory::rw_freelist_destroy;
 }
 
 fn status() -> i32 {

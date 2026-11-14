@@ -14,13 +14,12 @@ use crate::waterlevel::{
 use sa_core::bindings::pop_current_txd;
 use sa_core::bindings::push_current_txd;
 use sa_core::bindings::set_current_txd;
+use sa_core::bindings::file_close as close_file;
+use sa_core::bindings::find_txd_slot;
+use sa_core::bindings::load_line;
+use sa_core::bindings::open_file;
+use sa_core::bindings::rw_texture_read;
 orig! {
-    /// `CFileMgr::OpenFile(name, mode)` (0x538900)
-    fn open_file(name: GPtr<u8>, mode: GPtr<u8>) -> i32 = cdecl 0x538900 => unported;
-    /// `CFileMgr::CloseFile(FILE*)` (0x5389D0)
-    fn close_file(f: i32) -> i32 = cdecl 0x5389D0 => unported;
-    /// `CFileLoader::LoadLine(FILE*)` (0x536F80)
-    fn load_line(f: i32) -> GPtr<u8> = cdecl 0x536F80 => unported;
     /// CRT `sscanf(line, fmt, 29 pointers)` (0x8220AD)
     fn sscanf29(s: GPtr<u8>, fmt: GPtr<u8>, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, a8: u32, a9: u32, a10: u32, a11: u32, a12: u32, a13: u32, a14: u32, a15: u32, a16: u32, a17: u32, a18: u32, a19: u32, a20: u32, a21: u32, a22: u32, a23: u32, a24: u32, a25: u32, a26: u32, a27: u32, a28: u32) -> i32 = cdecl 0x8220AD => unported;
     /// `CWaterLevel::AddWaterLevelQuad` (0x6E7EF0)
@@ -29,10 +28,6 @@ orig! {
     fn add_triangle(x1: i32, y1: i32, a0: u32, a1: u32, a2: u32, a3: u32, x2: i32, y2: i32, b0: u32, b1: u32, b2: u32, b3: u32, x3: i32, y3: i32, c0: u32, c1: u32, c2: u32, c3: u32, flags: u32) = cdecl 0x6E7D40 => crate::waterlevel::add_water_level_triangle;
     /// `CWaterLevel::FillQuadsAndTrianglesList` (0x6E7B30)
     fn fill_lists() = cdecl 0x6E7B30 => crate::waterlevel::fill_quads_and_triangles_list;
-    /// `CTxdStore::FindTxdSlot(name)` (0x731850)
-    fn find_txd_slot(name: GPtr<u8>) -> i32 = cdecl 0x731850 => unported;
-    /// `RwTextureRead(name, mask)` (0x7F3AC0)
-    fn rw_texture_read(name: GPtr<u8>, mask: u32) -> u32 = cdecl 0x7F3AC0 => unported;
 }
 
 /// One vertex of a water.dat line: x, y, z, flow x, flow y, big waves, small waves.
@@ -72,7 +67,7 @@ pub fn water_level_initialise() {
     };
     name[..src.len()].copy_from_slice(src);
     let f = loop {
-        let f = open_file(GPtr::from_raw(name.as_mut_ptr()), GPtr::from_addr(0x859C6C));
+        let f = GPtr::<u8>::addr(open_file(GPtr::from_raw(name.as_mut_ptr()), GPtr::from_addr(0x859C6C))) as i32;
         if f >= 0 {
             break f;
         }
@@ -87,7 +82,7 @@ pub fn water_level_initialise() {
     let vbase = GPtr::from_raw(store.as_mut_ptr());
     let fptr = GPtr::from_raw(&mut flags_cell as *mut i32);
     let vtx = |k: usize| -> Vtx { core::array::from_fn(|i| vbase.byte_add(((k * 7 + i) * 4) as isize).read()) };
-    let mut line = load_line(f);
+    let mut line = load_line(GPtr::from_addr(f as usize));
     while !line.is_null() {
         let c = line.read();
         if c != b';' && c != 0 && c != b'*' && c != b'p' {
@@ -121,9 +116,9 @@ pub fn water_level_initialise() {
                 );
             }
         }
-        line = load_line(f);
+        line = load_line(GPtr::from_addr(f as usize));
     }
-    close_file(f);
+    close_file(GPtr::from_addr(f as usize));
     fill_lists();
     push_current_txd();
     set_current_txd(find_txd_slot(GPtr::from_addr(0x85C648)));
@@ -133,7 +128,7 @@ pub fn water_level_initialise() {
         (&TEX_WATERWAKE, &WATERWAKE_RASTER, 0x87202C),
     ] {
         if tex.get() == 0 {
-            tex.set(rw_texture_read(GPtr::from_addr(n), 0));
+            tex.set(GPtr::<u8>::addr(rw_texture_read(GPtr::from_addr(n), GPtr::NULL)) as u32);
         }
         raster.set(g::<u32>(tex.get() as usize).read());
     }

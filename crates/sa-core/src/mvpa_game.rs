@@ -6,7 +6,7 @@
 //! (docs/verify/HOWTO.md).
 
 use crate::mem::GPtr;
-use crate::{hook, orig};
+use crate::hook;
 
 /// `CGame::aDatFile` (char[32], 0xB728EC)
 const DAT_FILE: usize = 0xB728EC;
@@ -29,24 +29,14 @@ use crate::bindings::scripts_start_test_script;
 use crate::bindings::stencil_shadows_init;
 use crate::bindings::txd_add_ref;
 use crate::bindings::txd_create;
-orig! {
-    /// `CGame::Init1(const char*)` (0x5BF840)
-    fn game_init1(dat: GPtr<u8>) -> u8 = cdecl 0x5BF840 => init1;
-    /// `CFileLoader::LoadLevel(const char*)` (0x5B9030)
-    fn file_loader_load_level(f: u32) = cdecl 0x5B9030 => unported;
-    /// `CGame::Init2(const char*)` (0x5BA1A0)
-    fn game_init2(dat: GPtr<u8>) -> u8 = cdecl 0x5BA1A0 => init2;
-    /// `CCamera::Process()` (0x52B730)
-    fn camera_process(c: u32) = thiscall 0x52B730 => unported;
-    /// `CGame::Init3(const char*)` (0x5BA400)
-    fn game_init3(dat: GPtr<u8>) -> u8 = cdecl 0x5BA400 => init3;
-    /// `CMaths::InitMathsTables()` (0x59AC90)
-    fn maths_init_maths_tables() = cdecl 0x59AC90 => unported;
-    /// `CTxdStore::AddTxdSlot(const char*)` (0x731C80)
-    fn txd_add_txd_slot(name: u32) -> i32 = cdecl 0x731C80 => unported;
-    /// `CTxdStore::LoadTxd(int32, const char*)` (0x7320B0)
-    fn txd_load_txd(i: i32, f: u32) = cdecl 0x7320B0 => unported;
-}
+use crate::bindings::add_txd_slot as txd_add_txd_slot;
+use crate::bindings::camera_process;
+use crate::bindings::file_loader_load_level;
+use crate::bindings::game_init1;
+use crate::bindings::game_init2;
+use crate::bindings::game_init3;
+use crate::bindings::init_maths_tables_call as maths_init_maths_tables;
+use crate::bindings::load_txd as txd_load_txd;
 
 use crate::bindings::collision_init;
 use crate::bindings::conversations_clear;
@@ -64,16 +54,10 @@ use crate::bindings::set_pieces_init;
 use crate::bindings::stunt_jump_manager_init;
 use crate::bindings::tag_manager_init;
 use crate::bindings::weather_init;
-orig! {
-    /// `CPlantMgr::Initialise()` (0x5DD910, AL)
-    fn plant_mgr_initialise() -> u8 = cdecl 0x5DD910 => unported;
-    /// `CCustomRoadsignMgr::Initialise()` (0x6FE120, AL)
-    fn roadsign_mgr_initialise() -> u8 = cdecl 0x6FE120 => unported;
-    /// `CBirds::Init()` (0x711EC0)
-    fn birds_init() = cdecl 0x711EC0 => unported;
-    /// `CEntryExitManager::Init()` (0x43F880)
-    fn entry_exit_manager_init() = cdecl 0x43F880 => unported;
-}
+use crate::bindings::birds_init;
+use crate::bindings::custom_roadsign_mgr_initialise_call as roadsign_mgr_initialise;
+use crate::bindings::entry_exit_manager_init;
+use crate::bindings::plant_mgr_initialise;
 
 use crate::bindings::anim_manager_initialise;
 use crate::bindings::audio_zones_init;
@@ -93,12 +77,8 @@ use crate::bindings::the_zones_init as zones_init;
 use crate::bindings::user_display_init;
 use crate::bindings::vehicle_recording_init;
 use crate::bindings::world_initialise;
-orig! {
-    /// `CPathFind::Init()` (0x44D080)
-    fn path_find_init(p: u32) = thiscall 0x44D080 => unported;
-    /// 0x44D2B0 (`CPathFind` method, a bare `ret` in 1.0 US)
-    fn path_find_fun_0044d2b0(p: u32) = thiscall 0x44D2B0 => unported;
-}
+use crate::bindings::path_find_allocate_info_mem as path_find_fun_0044d2b0;
+use crate::bindings::path_find_init;
 
 use crate::bindings::anim_manager_load_anim_files;
 use crate::bindings::car_plate_mgr_initialise;
@@ -117,14 +97,9 @@ use crate::bindings::streaming_load_initial_weapons;
 use crate::bindings::test_model_indices;
 use crate::bindings::the_zones_post_zone_creation as zones_post_zone_creation;
 use crate::bindings::water_level_initialise;
-orig! {
-    /// `Fx_c::Init()` (0x49EA90)
-    fn fx_init(fx: u32) = thiscall 0x49EA90 => unported;
-    /// 0x44D0E0 (`CPathFind` method, no catalogue name; `ThePaths.PreparePathData`)
-    fn path_find_fun_0044d0e0(p: u32) = thiscall 0x44D0E0 => unported;
-    /// `CPlayerInfo::LoadPlayerSkin()` (0x56F7D0)
-    fn player_info_load_player_skin(p: u32) = thiscall 0x56F7D0 => unported;
-}
+use crate::bindings::fx_init;
+use crate::bindings::path_find_fun_0044d0e0;
+use crate::bindings::player_info_load_player_skin;
 
 use crate::bindings::clock_initialise;
 use crate::bindings::coronas_init;
@@ -163,30 +138,18 @@ use crate::bindings::special_fx_init;
 use crate::bindings::temp_col_models_initialise;
 use crate::bindings::water_cannons_init;
 use crate::bindings::water_creature_manager_init;
-orig! {
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    fn pad_get_pad(n: i32) -> u32 = cdecl 0x53FB70 => unported;
-    /// `CPad::Clear(bool enablePlayerControls, bool resetPhase)` (0x541A70, `ret 8`)
-    fn pad_clear(p: u32, a: u32, b: u32) = thiscall 0x541A70 => unported;
-    /// `cHandlingDataMgr::LoadHandlingData()` (0x5BD830)
-    fn handling_load_handling_data(m: u32) = thiscall 0x5BD830 => unported;
-    /// `SurfaceInfos_c::Init()` (0x55F420)
-    fn surface_infos_init(s: u32) = thiscall 0x55F420 => unported;
-}
+use crate::bindings::get_pad as pad_get_pad;
+use crate::bindings::handling_load_handling_data;
+use crate::bindings::pad_clear;
+use crate::bindings::surface_infos_init;
 
 use crate::bindings::pop_cycle_initialise;
 use crate::bindings::time_cycle_initialise;
 use crate::bindings::vehicle_recording_init_at_start_of_game;
-orig! {
-    /// `CAudioEngine::Initialise()` (0x5B9C60, AL)
-    fn audio_engine_initialise(e: u32) -> u8 = thiscall 0x5B9C60 => unported;
-    /// `BreakManager_c::Init()` (0x59E650, AL)
-    fn break_manager_init(m: u32) -> u8 = thiscall 0x59E650 => unported;
-    /// `BoneNodeManager_c::Init()` (0x6173F0, AL)
-    fn bone_node_manager_init(m: u32) -> u8 = thiscall 0x6173F0 => unported;
-    /// `IKChainManager_c::Init()` (0x6180A0, AL)
-    fn ik_chain_manager_init(m: u32) -> u8 = thiscall 0x6180A0 => unported;
-}
+use crate::bindings::audio_engine_initialise;
+use crate::bindings::bone_node_manager_init;
+use crate::bindings::break_manager_init;
+use crate::bindings::ik_chain_manager_init;
 
 /// `CGame::Initialise(const char* datFile)` (0x53BC80, cdecl): `Init1(datFile)`, `CColAccel::startCache`,
 /// `LoadLevel("DATA\DEFAULT.DAT")` (0x863A90) and `LoadLevel(datFile)`, `endCache`, `Init2(datFile)`,
@@ -199,15 +162,15 @@ orig! {
 pub fn initialise(dat: GPtr<u8>) -> u8 {
     game_init1(dat);
     col_accel_start_cache();
-    file_loader_load_level(0x863A90);
-    file_loader_load_level(dat.addr() as u32);
+    file_loader_load_level(GPtr::from_addr(0x863A90));
+    file_loader_load_level(GPtr::from_addr((dat.addr() as u32) as usize));
     col_accel_end_cache();
     game_init2(dat);
     stencil_shadows_init();
-    loading_screen(LS_TITLE, 0x863A80, 0);
+    loading_screen(GPtr::from_addr(LS_TITLE as usize), GPtr::from_addr(0x863A80), GPtr::NULL);
     scripts_start_test_script();
     scripts_process();
-    camera_process(THE_CAMERA);
+    camera_process(GPtr::from_addr(THE_CAMERA as usize));
     game_init3(dat);
     1
 }
@@ -238,12 +201,12 @@ pub fn init1(dat: GPtr<u8>) -> u8 {
     d3d_set_use_resource_buffering(0);
     GPtr::<u32>::from_addr(0xB7290C).write(0);
     GPtr::<u32>::from_addr(0xB72914).write(0);
-    let slot = txd_add_txd_slot(0x858A34);
+    let slot = txd_add_txd_slot(GPtr::from_addr(0x858A34));
     GPtr::<i32>::from_addr(0xB728E8).write(slot);
     txd_create(slot);
     txd_add_ref(GPtr::<i32>::from_addr(0xB728E8).read());
-    let particle = txd_add_txd_slot(0x85C648);
-    txd_load_txd(particle, 0x86AB6C);
+    let particle = txd_add_txd_slot(GPtr::from_addr(0x85C648));
+    txd_load_txd(particle, GPtr::from_addr(0x86AB6C));
     txd_add_ref(particle);
     txd_set_current_txd(GPtr::<i32>::from_addr(0xB728E8).read());
     game_logic_init_at_start_of_game();
@@ -284,11 +247,11 @@ pub fn init1(dat: GPtr<u8>) -> u8 {
     audio_zones_init();
     streaming_init_image_list();
     streaming_read_ini_file();
-    path_find_init(THE_PATHS);
-    path_find_fun_0044d2b0(THE_PATHS);
+    path_find_init(GPtr::from_addr(THE_PATHS as usize));
+    path_find_fun_0044d2b0(GPtr::from_addr(THE_PATHS as usize));
     fight_load_melee_data();
     cheat_reset_cheats();
-    fx_init(0xA9AE00);
+    fx_init(GPtr::from_addr(0xA9AE00));
     1
 }
 
@@ -301,82 +264,82 @@ pub fn init1(dat: GPtr<u8>) -> u8 {
        unverified = "mvpa-core-1", route = "L3-only", hazards = "ax-al-return", recs = "grove-walk",
        note = "one call per load; the datFile argument is unused")]
 pub fn init2(_dat: GPtr<u8>) -> u8 {
-    loading_screen(LS_TITLE, 0x86A5A0, 0);
+    loading_screen(GPtr::from_addr(LS_TITLE as usize), GPtr::from_addr(0x86A5A0), GPtr::NULL);
     zones_post_zone_creation();
     entry_exit_post_creation();
-    loading_screen(LS_TITLE, 0x86A594, 0);
-    path_find_fun_0044d0e0(THE_PATHS);
+    loading_screen(GPtr::from_addr(LS_TITLE as usize), GPtr::from_addr(0x86A594), GPtr::NULL);
+    path_find_fun_0044d0e0(GPtr::from_addr(THE_PATHS as usize));
     let mut p = 0xB7CD98u32;
     while p < 0xB7D0B8 {
-        player_info_clear(p);
+        player_info_clear(GPtr::from_addr(p as usize));
         p += 0x190;
     }
-    player_info_load_player_skin(0xB7CD98);
+    player_info_load_player_skin(GPtr::from_addr(0xB7CD98));
     test_model_indices();
-    loading_screen(LS_TITLE, 0x86A588, 0);
+    loading_screen(GPtr::from_addr(LS_TITLE as usize), GPtr::from_addr(0x86A588), GPtr::NULL);
     clothes_init();
     water_level_initialise();
-    draw_set_fov(0x42F0_0000);
+    draw_set_fov(f32::from_bits(0x42F0_0000));
     GPtr::<u32>::from_addr(0xC3EF98).write(0x43FA_0000);
     if car_plate_mgr_initialise() == 0 {
         return 0;
     }
-    loading_screen(LS_TITLE, 0x86A578, 0);
+    loading_screen(GPtr::from_addr(LS_TITLE as usize), GPtr::from_addr(0x86A578), GPtr::NULL);
     streaming_load_initial_vehicles();
     streaming_load_initial_peds();
     streaming_load_all_requested_models(0);
-    loading_screen(LS_TITLE, 0x86A568, 0);
+    loading_screen(GPtr::from_addr(LS_TITLE as usize), GPtr::from_addr(0x86A568), GPtr::NULL);
     anim_manager_load_anim_files();
-    loading_screen(LS_TITLE, 0x86A578, 0);
+    loading_screen(GPtr::from_addr(LS_TITLE as usize), GPtr::from_addr(0x86A578), GPtr::NULL);
     streaming_load_initial_weapons();
     streaming_load_all_requested_models(0);
-    loading_screen(LS_TITLE, 0x86A55C, 0);
+    loading_screen(GPtr::from_addr(LS_TITLE as usize), GPtr::from_addr(0x86A55C), GPtr::NULL);
     ped_initialise();
     renderer_init();
-    loading_screen(LS_TITLE, 0x86A544, 0);
+    loading_screen(GPtr::from_addr(LS_TITLE as usize), GPtr::from_addr(0x86A544), GPtr::NULL);
     radar_initialise();
     radar_load_textures();
-    loading_screen(0, 0, 0);
+    loading_screen(GPtr::NULL, GPtr::NULL, GPtr::NULL);
     weapon_initialise_weapons();
     road_blocks_init();
-    loading_screen(0, 0, 0);
+    loading_screen(GPtr::NULL, GPtr::NULL, GPtr::NULL);
     population_initialise();
-    loading_screen(0, 0, 0);
+    loading_screen(GPtr::NULL, GPtr::NULL, GPtr::NULL);
     GPtr::<u8>::from_addr(0xB7CD74).write(0);
     coronas_init();
     shadows_init();
-    loading_screen(0, 0, 0);
+    loading_screen(GPtr::NULL, GPtr::NULL, GPtr::NULL);
     weapon_effects_init();
     skidmarks_init();
     glass_init();
     garages_init_after_restart();
-    loading_screen(LS_TITLE, 0x86A534, 0);
+    loading_screen(GPtr::from_addr(LS_TITLE as usize), GPtr::from_addr(0x86A534), GPtr::NULL);
     scripts_init();
     gangs_initialise();
-    loading_screen(LS_TITLE, 0x86A544, 0);
+    loading_screen(GPtr::from_addr(LS_TITLE as usize), GPtr::from_addr(0x86A544), GPtr::NULL);
     clock_initialise(1000);
     heli_init_helis();
     cranes_init_cranes();
-    loading_screen(0, 0, 0);
+    loading_screen(GPtr::NULL, GPtr::NULL, GPtr::NULL);
     moving_things_init();
     darkel_init();
-    loading_screen(0, 0, 0);
+    loading_screen(GPtr::NULL, GPtr::NULL, GPtr::NULL);
     grid_ref_init();
     stats_init();
     clouds_init();
     special_fx_init();
-    loading_screen(0, 0, 0);
+    loading_screen(GPtr::NULL, GPtr::NULL, GPtr::NULL);
     ropes_init();
     water_cannons_init();
     bridge_init();
     ped_groups_init();
     inform_friends_event_queue_init();
     inform_group_event_queue_init();
-    loading_screen(0, 0, 0);
+    loading_screen(GPtr::NULL, GPtr::NULL, GPtr::NULL);
     GPtr::<u8>::from_addr(0xC6E97C).write(0);
     replay_init();
     shopping_init();
-    loading_screen(0, 0, 0);
+    loading_screen(GPtr::NULL, GPtr::NULL, GPtr::NULL);
     1
 }
 
@@ -387,15 +350,15 @@ pub fn init2(_dat: GPtr<u8>) -> u8 {
        unverified = "mvpa-core-1", route = "L3-only", hazards = "ax-al-return", recs = "grove-walk",
        note = "one call per load; the datFile argument is unused")]
 pub fn init3(_dat: GPtr<u8>) -> u8 {
-    loading_screen(LS_TITLE, 0x86A5C8, 0);
-    pad_clear(pad_get_pad(0), 1, 1);
-    pad_clear(pad_get_pad(1), 1, 1);
+    loading_screen(GPtr::from_addr(LS_TITLE as usize), GPtr::from_addr(0x86A5C8), GPtr::NULL);
+    pad_clear(GPtr::from_addr((GPtr::<u8>::addr(pad_get_pad(0)) as u32) as usize), 1, 1);
+    pad_clear(GPtr::from_addr((GPtr::<u8>::addr(pad_get_pad(1)) as u32) as usize), 1, 1);
     d3d_set_use_resource_buffering(1);
-    loading_screen(LS_TITLE, 0x86A5B0, 0);
-    interior_manager_init(0xBAF670);
-    proc_object_man_init(0xBB7CB0);
-    water_creature_manager_init(0xC1DF30);
-    real_time_shadow_manager_init(0xC40350);
+    loading_screen(GPtr::from_addr(LS_TITLE as usize), GPtr::from_addr(0x86A5B0), GPtr::NULL);
+    interior_manager_init(GPtr::from_addr(0xBAF670));
+    proc_object_man_init(GPtr::from_addr(0xBB7CB0));
+    water_creature_manager_init(GPtr::from_addr(0xC1DF30));
+    real_time_shadow_manager_init(GPtr::from_addr(0xC40350));
     1
 }
 
@@ -410,19 +373,19 @@ pub fn init3(_dat: GPtr<u8>) -> u8 {
        note = "one call per boot")]
 pub fn initialise_core_data_after_rw() -> u8 {
     temp_col_models_initialise();
-    handling_load_handling_data(0xC2B9C8);
+    handling_load_handling_data(GPtr::from_addr(0xC2B9C8));
     for (a, v) in [(0xC2B9C8usize, 0x3DCC_CCCDu32), (0xC2B9CC, 0x3F66_6666), (0xC2B9D0, 0x3F80_0000), (0xC2B9D4, 0x3F4C_CCCD), (0xC2B9D8, 0x3F7A_E148)] {
         GPtr::<u32>::from_addr(a).write(v);
     }
-    surface_infos_init(0xB79538);
+    surface_infos_init(GPtr::from_addr(0xB79538));
     ped_stats_initialise();
     time_cycle_initialise(0);
     pop_cycle_initialise();
     vehicle_recording_init_at_start_of_game();
-    if audio_engine_initialise(0xB6BC90) == 0 || break_manager_init(0xBB4240) == 0 || bone_node_manager_init(0xC10820) == 0 {
+    if audio_engine_initialise(GPtr::from_addr(0xB6BC90)) == 0 || break_manager_init(GPtr::from_addr(0xBB4240)) == 0 || bone_node_manager_init(GPtr::from_addr(0xC10820)) == 0 {
         return 0;
     }
-    (ik_chain_manager_init(0xC15448) == 0) as u8
+    (ik_chain_manager_init(GPtr::from_addr(0xC15448)) == 0) as u8
 }
 
 /// Every registration of this module.

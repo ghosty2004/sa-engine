@@ -4,6 +4,7 @@
 //! Unverified (docs/verify/HOWTO.md).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::hook;
 
@@ -43,7 +44,7 @@ pub fn event_ped_entered_my_vehicle_dtor(this: GPtr<u8>) {
     for off in [0x14, 0x18] {
         let e = rd::<GPtr<u8>>(this, off);
         if !e.is_null() {
-            entity_clean_up_old_reference(e, this.byte_add(off));
+            entity_clean_up_old_reference(e, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(off)));
         }
     }
     wr::<u32>(this, 0, 0x85AB38);
@@ -55,7 +56,7 @@ fn one_ref_event_dtor(this: GPtr<u8>, vt: u32) {
     wr::<u32>(this, 0, vt);
     let e = rd::<GPtr<u8>>(this, 0x14);
     if !e.is_null() {
-        entity_clean_up_old_reference(e, this.byte_add(0x14));
+        entity_clean_up_old_reference(e, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x14)));
     }
     wr::<u32>(this, 0, 0x85AB38);
 }

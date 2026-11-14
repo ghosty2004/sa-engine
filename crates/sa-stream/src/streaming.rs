@@ -314,8 +314,8 @@ use sa_core::field::g;
 use sa_math::fpu::fbits as k;
 use sa_math::fpu::x;
 
-pub use crate::bindings::add_txd_slot as txd_add_txd_slot;
-pub use crate::bindings::anim_add_block_ref as anim_add_anim_block_ref;
+pub use sa_core::bindings::add_txd_slot as txd_add_txd_slot;
+pub use sa_core::bindings::anim_add_block_ref as anim_add_anim_block_ref;
 pub use crate::bindings::are_army_required as wanted_are_army_required;
 pub use crate::bindings::are_fbi_required as wanted_are_fbi_required;
 pub use crate::bindings::are_swat_required as wanted_are_swat_required;
@@ -326,8 +326,8 @@ pub use crate::bindings::crt_new as operator_new_alias;
 pub use crate::bindings::entity_is_visible;
 pub use crate::bindings::find_other_upgrade as linked_upgrades_find_other_upgrade;
 pub use crate::bindings::find_player_wanted;
-pub use crate::bindings::find_txd_slot as txd_find_txd_slot;
-pub use crate::bindings::load_data_from_work_buffer as generic_game_storage_load_data;
+pub use sa_core::bindings::find_txd_slot as txd_find_txd_slot;
+pub use sa_core::bindings::load_data_from_work_buffer as generic_game_storage_load_data;
 pub use crate::bindings::manage_all_population as population_manage_all_population;
 pub use crate::bindings::mi_set_tex_dictionary;
 pub use crate::bindings::model_info_remove_ref as mi_remove_ref;
@@ -337,7 +337,7 @@ pub use crate::bindings::pad_stop_pads_shaking;
 pub use crate::bindings::ped_is_player;
 pub use crate::bindings::rand;
 pub use crate::bindings::remove_this_ped as the_scripts_remove_this_ped;
-pub use crate::bindings::save_data_to_work_buffer as generic_game_storage_save_data;
+pub use sa_core::bindings::save_data_to_work_buffer as generic_game_storage_save_data;
 pub use crate::bindings::strchr;
 pub use crate::bindings::strnicmp;
 pub use crate::bindings::world_remove_references_to_deleted_object;
@@ -355,14 +355,57 @@ pub use sa_core::bindings::stricmp;
 pub use sa_core::bindings::strtok;
 pub use sa_core::bindings::world_clear_scan_codes;
 pub use sa_core::bindings::world_remove;
+pub use crate::bindings::add_ipl_slot_call as ipl_add_ipl_slot;
+pub use crate::bindings::calculate_ground_height as camera_calculate_ground_height;
+pub use crate::bindings::call_add_models_to_request_list;
+pub use crate::bindings::call_flush_request_list;
+pub use crate::bindings::call_load_requested_models;
+pub use crate::bindings::call_remove_txd_model;
+pub use crate::bindings::call_should_model_be_streamed as renderer_should_model_be_streamed;
+pub use crate::bindings::cd_stream_open;
+pub use crate::bindings::cd_stream_read;
+pub use crate::bindings::cd_stream_sync;
+pub use crate::bindings::cheat_is_zone_streaming_allowed;
+pub use crate::bindings::clock_get_is_time_in_range;
+pub use crate::bindings::col_add_collision_needed_at_posn;
+pub use crate::bindings::find_ipl_slot as ipl_find_ipl_slot;
+pub use crate::bindings::get_level_from_position as zones_get_level_from_position;
+pub use crate::bindings::get_zone_info as zones_get_zone_info;
+pub use crate::bindings::ipl_remove_ipl;
+pub use crate::bindings::load_path_find_data_from_stream_call as path_find_load_path_find_data;
+pub use crate::bindings::load_txd_stream_call as txd_load_txd_stream;
+pub use crate::bindings::loading_screen_continue;
+pub use crate::bindings::loading_screen_pause;
+pub use crate::bindings::reclassify_loaded_cars as call_reclassify_loaded_cars;
+pub use crate::bindings::remove_txd as txd_remove_txd;
+pub use crate::bindings::streaming_is_very_busy as call_is_very_busy;
+pub use sa_core::bindings::anim_create_anim_assoc_groups;
+pub use sa_core::bindings::anim_register_anim_block;
+pub use sa_core::bindings::call_delete_all_rw_objects;
+pub use sa_core::bindings::call_remove_loaded_vehicle;
+pub use sa_core::bindings::find_player_coors;
+pub use sa_core::bindings::find_player_vehicle;
+pub use sa_core::bindings::general_random_int_in_range as call_get_random_number_in_range_i32;
+pub use sa_core::bindings::get_uppercase_key;
+pub use sa_core::bindings::ipl_store_add_ipls_needed_at_posn as ipl_add_ipls_needed_at_posn;
+pub use sa_core::bindings::load_all_requested_models as call_load_all_requested_models;
+pub use sa_core::bindings::load_anim_file as anim_load_anim_file;
+pub use sa_core::bindings::load_line as file_loader_load_line;
+pub use sa_core::bindings::request_special_model as call_request_special_model;
+pub use sa_core::bindings::rw_stream_close;
+pub use sa_core::bindings::set_current_txd as txd_set_current_txd;
+pub use sa_core::bindings::set_mission_doesnt_require_model as call_set_mission_doesnt_require_model;
+pub use sa_core::bindings::set_model_is_deletable as call_set_model_is_deletable;
+pub use sa_core::bindings::stream_zone_models as call_stream_zone_models;
+pub use sa_core::bindings::streaming_init_image_list as call_init_image_list;
+pub use sa_core::bindings::streaming_make_space_for as call_make_space_for;
+pub use sa_core::bindings::streaming_remove_current_zones_models as call_remove_current_zones_models;
+pub use sa_core::bindings::streaming_remove_model as call_remove_model;
+pub use sa_core::bindings::streaming_request_model as call_request_model;
+pub use sa_core::bindings::timer_resume;
+pub use sa_core::bindings::timer_suspend;
+pub use sa_core::bindings::txd_add_ref;
 orig! {
-    // --- CdStream (owner M)
-    /// `CdStreamOpen(const char*, bool locked)` (0x4067B0)
-    pub fn cd_stream_open(path: GPtr<u8>, locked: u8) -> u32 = cdecl 0x4067B0 => unported;
-    /// `CdStreamRead(channel, buffer, offset, sectors)` (0x406A20)
-    pub fn cd_stream_read(ch: i32, buf: GPtr<u8>, pos: u32, sectors: i32) -> i32 = cdecl 0x406A20 => unported;
-    /// `CdStreamSync(channel)` (0x406460)
-    pub fn cd_stream_sync(ch: i32) -> i32 = cdecl 0x406460 => unported;
     /// `CdStreamGetLastPosn()` (0x406450)
     pub fn cd_stream_get_last_posn() -> u32 = cdecl 0x406450 => unported;
     /// `GetGTA3ImgSize()` (0x406360)
@@ -387,39 +430,22 @@ orig! {
     pub fn txd_get_txd(slot: i32) -> GPtr<u8> = cdecl 0x408340 => crate::txdstore::get_txd;
     /// `CTxdStore::GetParentTxdSlot(slot)` (0x408370)
     pub fn txd_get_parent_txd_slot(slot: i32) -> i32 = cdecl 0x408370 => crate::txdstore::get_parent_txd_slot;
-    /// `CTxdStore::SetCurrentTxd(slot)` (0x7319C0)
-    pub fn txd_set_current_txd(slot: i32) = cdecl 0x7319C0 => crate::txdstore::set_current_txd;
-    /// `CTxdStore::AddRef(slot)` (0x731A00)
-    pub fn txd_add_ref(slot: i32) = cdecl 0x731A00 => crate::txdstore::add_ref;
     /// `CTxdStore::RemoveRefWithoutDelete(slot)` (0x731A70)
     pub fn txd_remove_ref_without_delete(slot: i32) = cdecl 0x731A70 => crate::txdstore::remove_ref_without_delete;
     /// `CTxdStore::GetNumRefs(slot)` (0x731AA0)
     pub fn txd_get_num_refs(slot: i32) -> i32 = cdecl 0x731AA0 => crate::txdstore::get_num_refs;
-    /// `CTxdStore::RemoveTxd(slot)` (0x731E90)
-    pub fn txd_remove_txd(slot: i32) = cdecl 0x731E90 => crate::txdstore::remove_txd;
     /// `CTxdStore::StartLoadTxd(slot, RwStream*)` (0x731930)
     pub fn txd_start_load_txd(slot: i32, stream: GPtr<u8>) -> u8 = cdecl 0x731930 => unported;
-    /// `CTxdStore::LoadTxd(slot, RwStream*)` (0x731DD0)
-    pub fn txd_load_txd_stream(slot: i32, stream: GPtr<u8>) -> u8 = cdecl 0x731DD0 => crate::txdstore::load_txd_stream;
     /// `CTxdStore::FinishLoadTxd(slot, RwStream*)` (0x731E40)
     pub fn txd_finish_load_txd(slot: i32, stream: GPtr<u8>) -> u8 = cdecl 0x731E40 => crate::txdstore::finish_load_txd;
     /// `CVehicleModelInfo::AssignRemapTxd(const char*, int16 slot)` (0x4C9360)
     pub fn vehicle_assign_remap_txd(name: GPtr<u8>, slot: i32) = cdecl 0x4C9360 => unported;
-    // --- CIplStore (owner M)
-    /// `CIplStore::FindIplSlot(const char*)` (0x404AC0)
-    pub fn ipl_find_ipl_slot(name: GPtr<u8>) -> i32 = cdecl 0x404AC0 => crate::iplstore::find_ipl_slot;
-    /// `CIplStore::AddIplSlot(const char*)` (0x405AC0)
-    pub fn ipl_add_ipl_slot(name: GPtr<u8>) -> i32 = cdecl 0x405AC0 => crate::iplstore::add_ipl_slot;
-    /// `CIplStore::RemoveIpl(slot)` (0x404B20)
-    pub fn ipl_remove_ipl(slot: i32) = cdecl 0x404B20 => crate::iplstore::remove_ipl;
     /// `CIplStore::LoadIpl(slot, data, size)` (0x406080)
     pub fn ipl_load_ipl(slot: i32, data: GPtr<u8>, size: i32) -> u8 = cdecl 0x406080 => crate::iplstore::load_ipl;
     /// `CIplStore::LoadIpls(CVector, bool)` (0x405170)
     pub fn ipl_load_ipls(px: f32, py: f32, pz: f32, avoid_loading_in_player_vehicle: u8) = cdecl 0x405170 => crate::iplstore::load_ipls;
     /// `CIplStore::EnsureIplsAreInMemory(const CVector&)` (0x4053F0)
     pub fn ipl_ensure_ipls_are_in_memory(pos: GPtr<f32>) = cdecl 0x4053F0 => crate::iplstore::ensure_ipls_are_in_memory;
-    /// `CIplStore::AddIplsNeededAtPosn(const CVector&)` (0x4045B0)
-    pub fn ipl_add_ipls_needed_at_posn(pos: GPtr<f32>) = cdecl 0x4045B0 => unported;
     // --- CColStore (owner A, this crate)
     /// `CColStore::AddColSlot(const char*)` (0x411140)
     pub fn col_add_col_slot(name: GPtr<u8>) -> i32 = cdecl 0x411140 => crate::colstore::add_col_slot;
@@ -431,8 +457,6 @@ orig! {
     pub fn col_load_col(slot: i32, data: GPtr<u8>, size: i32) -> bool = cdecl 0x4106D0 => crate::colstore::load_col_buffer;
     /// `CColStore::EnsureCollisionIsInMemory(const CVector&)` (0x410AD0)
     pub fn col_ensure_collision_is_in_memory(pos: GPtr<f32>) = cdecl 0x410AD0 => crate::colstore::ensure_collision_is_in_memory;
-    /// `CColStore::AddCollisionNeededAtPosn(const CVector&)` (0x4103A0)
-    pub fn col_add_collision_needed_at_posn(pos: GPtr<f32>) = cdecl 0x4103A0 => crate::colstore::add_collision_needed_at_posn;
     /// `CBaseModelInfo::ClearTexDictionary()` (0x4C4B70)
     pub fn mi_clear_tex_dictionary(mi: GPtr<u8>) = thiscall 0x4C4B70 => unported;
     // --- CFileLoader (owner C)
@@ -445,8 +469,6 @@ orig! {
     // --- RenderWare (not ported)
     /// `_rwStreamInitialize(RwStream*, rwOwned, type, access, data)` (0x7EC810)
     pub fn rw_stream_initialize(s: GPtr<u8>, owned: i32, kind: i32, access: i32, data: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EC810 => unported;
-    /// `RwStreamClose(RwStream*, void* data)` (0x7ECE20)
-    pub fn rw_stream_close(s: GPtr<u8>, data: GPtr<u8>) -> i32 = cdecl 0x7ECE20 => unported;
     /// `RwStreamReadChunkHeaderInfo(RwStream*, RwChunkHeaderInfo*)` (0x7ED590)
     pub fn rw_stream_read_chunk_header_info(s: GPtr<u8>, info: GPtr<u8>) -> i32 = cdecl 0x7ED590 => unported;
     /// `RtDictSchemaStreamReadDict(schema, stream)` (0x7CF240)
@@ -461,9 +483,6 @@ orig! {
     pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
     /// `CFileMgr::CloseFile(FILE*)` (0x5389D0)
     pub fn fclose(f: GPtr<u8>) -> i32 = cdecl 0x5389D0 => sa_core::filemgr::close_file;
-    // --- core / misc
-    /// `CFileLoader::LoadLine(FILE*)` (0x536F80)
-    pub fn file_loader_load_line(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x536F80 => crate::fileloader::load_line_file;
     /// `CDirectory::AddItem(const DirectoryInfo&)` (0x532310)
     pub fn directory_add_item(dir: GPtr<sa_core::directory::CDirectory>, info: GPtr<sa_core::directory::DirectoryInfo>) = thiscall 0x532310 => sa_core::directory::add_item;
     /// `CDirectory::FindItem(name, pos&, size&)` (0x5324A0)
@@ -472,30 +491,10 @@ orig! {
     pub fn directory_ctor(dir: GPtr<sa_core::directory::CDirectory>, capacity: u32) -> GPtr<sa_core::directory::CDirectory> = thiscall 0x5322A0 => sa_core::directory::constructor_capacity;
     /// `CDirectory::~CDirectory()` (0x5322D0)
     pub fn directory_dtor(dir: GPtr<sa_core::directory::CDirectory>) = thiscall 0x5322D0 => sa_core::directory::destructor;
-    /// `CKeyGen::GetUppercaseKey(const char*)` (0x53CF30)
-    pub fn get_uppercase_key(s: GPtr<u8>) -> u32 = cdecl 0x53CF30 => sa_core::keygen::get_uppercase_key;
-    /// `CClock::GetIsTimeInRange(uint8 from, uint8 to)` (0x52CEE0)
-    pub fn clock_get_is_time_in_range(from: u8, to: u8) -> u8 = cdecl 0x52CEE0 => unported;
-    /// `FindPlayerVehicle(int32, bool)` (0x56E0D0)
-    pub fn find_player_vehicle(id: i32, include_remote: u8) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
-    /// `FindPlayerCoors(CVector* out, int32 id)` (0x56E010)
-    pub fn find_player_coors(out: GPtr<f32>, id: i32) -> GPtr<f32> = cdecl 0x56E010 => unported;
-    /// `CLoadingScreen::Pause()` / `Continue()` (0x590310 / 0x590320)
-    pub fn loading_screen_pause() = cdecl 0x590310 => unported;
-    pub fn loading_screen_continue() = cdecl 0x590320 => crate::loading_screen::continue_;
     /// `CPopulation::DoesCarGroupHaveModelId(group, model)` (0x406F50)
     pub fn population_does_car_group_have_model_id(group: i32, model: i32) -> u8 = cdecl 0x406F50 => unported;
-    /// `CTheZones::GetLevelFromPosition(const CVector&)` (0x572300)
-    pub fn zones_get_level_from_position(pos: GPtr<f32>) -> i32 = cdecl 0x572300 => unported;
-    /// `CPopCycle::Update`-free: `CTheZones::GetZoneInfo(const CVector&, CZone**)` (0x572400)
-    pub fn zones_get_zone_info(pos: GPtr<f32>, zone: GPtr<u8>) -> GPtr<u8> = cdecl 0x572400 => unported;
-    /// `CTimer::Suspend()` / `Resume()`
-    pub fn timer_suspend() = cdecl 0x5619D0 => sa_core::timer::suspend;
-    pub fn timer_resume() = cdecl 0x561A00 => sa_core::timer::resume;
     /// `CEntity::LivesInThisNonOverlapSector(int32, int32)` (0x533050, thiscall)
     pub fn entity_lives_in_this_non_overlap_sector(e: GPtr<u8>, sx: i32, sy: i32) -> u8 = thiscall 0x533050 => unported;
-    /// `CRenderer::ShouldModelBeStreamed(CEntity*, const CVector&, float)` (0x554EB0)
-    pub fn renderer_should_model_be_streamed(e: GPtr<u8>, pos: GPtr<f32>, far: f32) -> u8 = cdecl 0x554EB0 => unported;
     // --- virtual calls
     /// `CEntity::CreateRwObject()` (vtable +0x1C)
     pub fn entity_create_rw_object(e: GPtr<u8>) = thiscall vslot 0x1C => unported;
@@ -513,17 +512,8 @@ orig! {
     pub fn mi_get_rw_model_type(mi: GPtr<u8>) -> i32 = thiscall vslot 0x24 => unported;
     /// `CBaseModelInfo::GetAnimFileIndex()` (vtable +0x38)
     pub fn mi_get_anim_file_index(mi: GPtr<u8>) -> i32 = thiscall vslot 0x38 => unported;
-    // --- this module (called, not inlined, by the original)
-    /// `CStreaming::RequestModel(id, flags)` (0x4087E0)
-    pub fn call_request_model(id: i32, flags: i32) = cdecl 0x4087E0 => request_model;
-    /// `CStreaming::RemoveModel(id)` (0x4089A0)
-    pub fn call_remove_model(id: i32) = cdecl 0x4089A0 => remove_model;
     /// `CStreaming::RequestTxdModel(slot, flags)` (0x407100)
     pub fn call_request_txd_model(slot: i32, flags: i32) = cdecl 0x407100 => request_txd_model;
-    /// `CStreaming::SetModelIsDeletable(id)` (0x409C10)
-    pub fn call_set_model_is_deletable(id: i32) = cdecl 0x409C10 => set_model_is_deletable;
-    /// `CStreaming::SetMissionDoesntRequireModel(id)` (0x409C90)
-    pub fn call_set_mission_doesnt_require_model(id: i32) = cdecl 0x409C90 => set_mission_doesnt_require_model;
     /// `CStreaming::GetNextFileOnCd(pos, notPriority)` (0x408E20)
     pub fn call_get_next_file_on_cd(pos: u32, priority: u8) -> i32 = cdecl 0x408E20 => get_next_file_on_cd;
     /// `CStreaming::RequestModelStream(channel)` (0x40CBA0)
@@ -532,14 +522,10 @@ orig! {
     pub fn call_process_loading_channel(ch: i32) -> bool = cdecl 0x40E170 => process_loading_channel;
     /// `CStreaming::FlushChannels()` (0x40E460)
     pub fn call_flush_channels() = cdecl 0x40E460 => flush_channels;
-    /// `CStreaming::LoadAllRequestedModels(bool)` (0x40EA10)
-    pub fn call_load_all_requested_models(only_priority: u8) = cdecl 0x40EA10 => load_all_requested_models;
     /// `CStreaming::RemoveLeastUsedModel(flags)` (0x40CFD0)
     pub fn call_remove_least_used_model(flags: u32) -> bool = cdecl 0x40CFD0 => remove_least_used_model;
     /// `CStreaming::DeleteRwObjectsBehindCamera(memory)` (0x40D7C0, deferred: always the original)
     pub fn call_delete_rw_objects_behind_camera(memory: i32) = cdecl 0x40D7C0 => unported;
-    /// `CStreaming::RemoveLoadedVehicle()` (0x40C020)
-    pub fn call_remove_loaded_vehicle() -> bool = cdecl 0x40C020 => remove_loaded_vehicle;
     /// `CStreaming::RemoveLoadedZoneModel()` (0x40B340)
     pub fn call_remove_loaded_zone_model() -> bool = cdecl 0x40B340 => remove_loaded_zone_model;
     /// `CStreaming::DeleteLeastUsedEntityRwObject(bool notOnScreen, uint32 flags)` (0x409760)
@@ -556,12 +542,8 @@ orig! {
     pub fn call_finish_loading_large_file(buf: GPtr<u8>, id: i32) -> bool = cdecl 0x408CB0 => finish_loading_large_file;
     /// `CStreaming::ConvertBufferToObject(buf, id, channel)` (0x40C6B0)
     pub fn call_convert_buffer_to_object(buf: GPtr<u8>, id: i32) -> bool = cdecl 0x40C6B0 => convert_buffer_to_object;
-    /// `CStreaming::MakeSpaceFor(size)` (0x40E120)
-    pub fn call_make_space_for(size: i32) = cdecl 0x40E120 => make_space_for;
     /// `CStreaming::RetryLoadFile(channel)` (0x4076C0)
     pub fn call_retry_load_file(ch: i32) = cdecl 0x4076C0 => retry_load_file;
-    /// `CStreaming::RemoveTxdModel(slot)` (0x40C180)
-    pub fn call_remove_txd_model(slot: i32) = cdecl 0x40C180 => remove_txd_model;
     /// `CStreaming::RequestModelStream`-sibling `StreamOneNewCar()` (0x40B4F0)
     pub fn call_stream_one_new_car() = cdecl 0x40B4F0 => stream_one_new_car;
     /// `CStreaming::StreamCopModels(level)` (0x40A150)
@@ -570,42 +552,24 @@ orig! {
     pub fn call_clear_slots(n: i32) = cdecl 0x40BAA0 => clear_slots;
     /// `CStreaming::StreamZoneModels_Gangs(const CVector&)` (0x40AA10)
     pub fn call_stream_zone_models_gangs(pos: GPtr<f32>) = cdecl 0x40AA10 => stream_zone_models_gangs;
-    /// `CStreaming::ReclassifyLoadedCars()` (0x40AFA0)
-    pub fn call_reclassify_loaded_cars() = cdecl 0x40AFA0 => reclassify_loaded_cars;
     /// `CStreaming::StreamVehiclesAndPeds_Always(const CVector&)` (0x40B650)
     pub fn call_stream_vehicles_and_peds_always(pos: GPtr<f32>) = cdecl 0x40B650 => stream_vehicles_and_peds_always;
     /// `CStreaming::StreamVehiclesAndPeds()` (0x40B700)
     pub fn call_stream_vehicles_and_peds() = cdecl 0x40B700 => stream_vehicles_and_peds;
-    /// `CStreaming::StreamZoneModels(const CVector&)` (0x40A560, deferred)
-    pub fn call_stream_zone_models(pos: GPtr<f32>) = cdecl 0x40A560 => unported;
-    /// `CStreaming::IsVeryBusy()` (0x4076A0)
-    pub fn call_is_very_busy() -> u32 = cdecl 0x4076A0 => is_very_busy;
-    /// `CStreaming::LoadLoadRequestedModels` (0x40E3A0)
-    pub fn call_load_requested_models() = cdecl 0x40E3A0 => load_requested_models;
     /// `CStreaming::AddLodsToRequestList(const CVector&, flags)` (0x40C520)
     pub fn call_add_lods_to_request_list(pos: GPtr<f32>, flags: i32) = cdecl 0x40C520 => add_lods_to_request_list;
-    /// `CStreaming::AddModelsToRequestList(const CVector&, flags)` (0x40D3F0, deferred)
-    pub fn call_add_models_to_request_list(pos: GPtr<f32>, flags: i32) = cdecl 0x40D3F0 => add_models_to_request_list;
-    /// `CStreaming::DeleteAllRwObjects()` (0x4090A0)
-    pub fn call_delete_all_rw_objects() = cdecl 0x4090A0 => delete_all_rw_objects;
     /// `CStreaming::RequestBigBuildings(const CVector&)` (0x409430)
     pub fn call_request_big_buildings(pos: GPtr<f32>) = cdecl 0x409430 => request_big_buildings;
     /// `CStreaming::InstanceLoadedModels(const CVector&)` (0x4084F0)
     pub fn call_instance_loaded_models(pos: GPtr<f32>) = cdecl 0x4084F0 => instance_loaded_models;
     /// `CStreaming::RemoveAllUnusedModels()` (0x40CF80)
     pub fn call_remove_all_unused_models() = cdecl 0x40CF80 => remove_all_unused_models;
-    /// `CStreaming::FlushRequestList()` (0x40E4E0)
-    pub fn call_flush_request_list() = cdecl 0x40E4E0 => flush_request_list;
     /// `CStreaming::RemoveCarModel(model)` (0x4080F0)
     pub fn call_remove_car_model(model: i32) = cdecl 0x4080F0 => remove_car_model;
     /// `CStreaming::LoadCdDirectory(const char*, int32)` (0x5B6170)
     pub fn call_load_cd_directory_file(path: GPtr<u8>, img: i32) = cdecl 0x5B6170 => load_cd_directory_file;
     /// `CStreaming::LoadCdDirectory()` (0x5B82C0)
     pub fn call_load_cd_directory() = cdecl 0x5B82C0 => load_cd_directory;
-    /// `CStreaming::InitImageList()` (0x4083C0)
-    pub fn call_init_image_list() = cdecl 0x4083C0 => init_image_list;
-    /// `CStreaming::RemoveCurrentZonesModels()` (0x40B080)
-    pub fn call_remove_current_zones_models() = cdecl 0x40B080 => remove_current_zones_models;
     /// `CStreaming::ProcessEntitiesInSectorList(list, flags)` (0x40C450)
     pub fn call_process_entities_in_sector_list(list: GPtr<u8>, flags: i32) = cdecl 0x40C450 => process_entities_in_sector_list;
     /// `CStreaming::ProcessEntitiesInSectorList(list, x, y, minX, minY, maxX, maxY, radius, flags)` (0x40C270)
@@ -629,33 +593,20 @@ orig! {
     pub fn car_ctrl_choose_car_model_to_load(group: i32) -> i32 = cdecl 0x421900 => unported;
     /// `CPathFind::IsWaterNodeNearby(CVector, float)` (0x450DE0, thiscall on `ThePaths`)
     pub fn path_find_is_water_node_nearby(paths: GPtr<u8>, x: f32, y: f32, z: f32, radius: f32) -> u8 = thiscall 0x450DE0 => unported;
-    /// `CCamera::CalculateGroundHeight(eGroundHeightType)` (0x514B80, thiscall, ST0)
-    pub fn camera_calculate_ground_height(cam: GPtr<u8>, kind: i32) -> f32 = thiscall 0x514B80 => unported;
     /// `CRadar::StreamRadarSections(const CVector&)` (0x5858D0)
     pub fn radar_stream_radar_sections(pos: GPtr<f32>) = cdecl 0x5858D0 => unported;
     /// `CPathFind::LoadSceneForPathNodes(CVector)` (0x44DE00, thiscall on `ThePaths`)
     pub fn path_find_load_scene_for_path_nodes(paths: GPtr<u8>, x: f32, y: f32, z: f32) = thiscall 0x44DE00 => unported;
-    /// `CGeneral::GetRandomNumberInRange(int32, int32)` (0x407180)
-    pub fn call_get_random_number_in_range_i32(min: i32, max: i32) -> i32 = cdecl 0x407180 => sa_core::general::get_random_number_in_range_i32;
     /// `CPopulation::LoadSpecificDriverModelsForCar(model)` (0x6117F0)
     pub fn population_load_specific_driver_models_for_car(model: i32) = cdecl 0x6117F0 => unported;
-    /// `CCheat::IsZoneStreamingAllowed()` (0x407410, AL)
-    pub fn cheat_is_zone_streaming_allowed() -> u8 = cdecl 0x407410 => unported;
     /// `CGangWars::TellStreamingWhichGangsAreNeeded(uint32* mask)` (0x443D50)
     pub fn gang_wars_tell_streaming_which_gangs_are_needed(mask: GPtr<i32>) = cdecl 0x443D50 => unported;
-    /// `CStreaming::RequestSpecialModel(id, name, flags)` (0x409D10)
-    pub fn call_request_special_model(id: i32, name: GPtr<u8>, flags: i32) = cdecl 0x409D10 => request_special_model;
     pub fn ped_can_be_deleted_even_in_vehicle(p: GPtr<u8>) -> u8 = thiscall 0x5DF150 => unported;
     /// the entity's scalar deleting destructor (vtable +0x00)
     pub fn entity_scalar_deleting_destructor(e: GPtr<u8>, flags: i32) -> GPtr<u8> = thiscall vslot 0x00 => unported;
     pub fn anim_remove_anim_block_ref_without_delete(i: i32) = cdecl 0x4D3FF0 => unported;
     pub fn anim_remove_anim_block(i: i32) = cdecl 0x4D3F40 => unported;
     pub fn anim_get_num_refs_to_anim_block(i: i32) -> i32 = cdecl 0x4D4010 => unported;
-    pub fn anim_load_anim_file(stream: GPtr<u8>, compress: u8, uncompressed: GPtr<u8>) = cdecl 0x4D47F0 => unported;
-    pub fn anim_create_anim_assoc_groups() = cdecl 0x4D3CC0 => unported;
-    pub fn anim_register_anim_block(name: GPtr<u8>) -> i32 = cdecl 0x4D3E50 => unported;
-    /// `CPathFind::LoadPathFindData(RwStream*, int32)` / `UnloadPathFindData(int32)` (thiscall `ThePaths`)
-    pub fn path_find_load_path_find_data(paths: GPtr<u8>, stream: GPtr<u8>, i: i32) = thiscall 0x4529F0 => unported;
     pub fn path_find_unload_path_find_data(paths: GPtr<u8>, i: i32) = thiscall 0x44D0F0 => unported;
     /// `CVehicleRecording::Load(RwStream*, int32, int32)` (0x45A8F0), `RegisterRecordingFile` (0x459F80)
     pub fn vehicle_recording_load(stream: GPtr<u8>, i: i32, size: i32) = cdecl 0x45A8F0 => unported;
@@ -841,7 +792,7 @@ fn set_model_is_deletable_inl(id: i32) {
 /// tail-jumps into `RequestModel`.
 #[hook(addr = 0x407100, conv = cdecl, name = "CStreaming::RequestTxdModel", expect = "8B 4C 24 04 81 C1 20 4E 00 00")]
 pub fn request_txd_model(slot: i32, flags: i32) {
-    call_request_model(slot.wrapping_add(RESOURCE_ID_TXD), flags)
+    call_request_model(slot.wrapping_add(RESOURCE_ID_TXD), flags);
 }
 
 /// `CStreaming::AddImageToList(const char* name, bool notPlayerImg)` (0x407610 → 0x1567B90): first
@@ -2641,7 +2592,7 @@ fn sector_entity_wanted(e: GPtr<u8>) -> Option<GPtr<u8>> {
     }
     let m = mi(e_model(e));
     let ti = mi_get_time_info(m);
-    if !ti.is_null() && clock_get_is_time_in_range(ti.read(), ti.byte_add(1).read()) == 0 {
+    if !ti.is_null() && clock_get_is_time_in_range(ti.read() as u32, (ti.byte_add(1).read()) as u32) == 0 {
         return None;
     }
     Some(m)
@@ -2939,7 +2890,7 @@ pub fn remove_model(id: i32) {
 #[hook(addr = 0x408C70, conv = cdecl, name = "CStreaming::RequestVehicleUpgrade", expect = "E9 FB 3C 16 01")]
 pub fn request_vehicle_upgrade(model: i32, flags_arg: i32) {
     call_request_model(model, flags_arg);
-    let other = linked_upgrades_find_other_upgrade(g(LINKED_UPGRADES), model);
+    let other = linked_upgrades_find_other_upgrade(g(LINKED_UPGRADES), model as i16) as i16;
     if other != -1 {
         call_request_model(other as i32, flags_arg);
     }
@@ -2953,7 +2904,7 @@ const LINKED_UPGRADES: usize = 0xB4E6D8;
 pub fn has_vehicle_upgrade_loaded(model: i32) -> bool {
     let st = load_state(model);
     if st == 1 {
-        let other = linked_upgrades_find_other_upgrade(g(LINKED_UPGRADES), model);
+        let other = linked_upgrades_find_other_upgrade(g(LINKED_UPGRADES), model as i16) as i16;
         if other != -1 {
             return load_state(other as i32) == 1;
         }
@@ -3421,7 +3372,7 @@ pub fn request_model_stream(ch: i32) {
         ch_id(ch, i).write(-1);
     }
     let buf = STREAMING_BUFFER.ptr().cast::<GPtr<u8>>().wrapping_index(ch).read();
-    cd_stream_read(ch, buf, pos, total);
+    cd_stream_read(ch, buf, pos, total as u32);
     ch_field::<i32>(ch, CH_STATUS).write(1);
     ch_field::<i32>(ch, CH_LEVEL).write(0);
     ch_field::<i32>(ch, CH_SECTORS).write(total);
@@ -3492,15 +3443,15 @@ pub fn remove_least_used_model(flags_arg: u32) -> bool {
         p = prev_of(p);
     }
     let cam_z = camera_pos().wrapping_index(2).read();
-    let ground = camera_calculate_ground_height(g(CAMERA), 0);
+    let ground = camera_calculate_ground_height(g(CAMERA), 0) as f32;
     let high = !x(cam_z).fsub_m(ground).fcom(x(k(F_50))).test_any(0x41);
     let peds_zone = || NUM_PEDS_LOADED.get() > 4 && call_remove_loaded_zone_model();
     let vehicles = |lim_world: i32| {
         let c = vehicles_loaded_count();
         let over = !(c < lim_world && (curr_area() == 0 || vehicles_loaded_count() < 5));
-        over && call_remove_loaded_vehicle()
+        over && call_remove_loaded_vehicle() != 0
     };
-    if high && (peds_zone() || (vehicles_loaded_count() > 4 && call_remove_loaded_vehicle())) {
+    if high && (peds_zone() || (vehicles_loaded_count() > 4 && call_remove_loaded_vehicle() != 0)) {
         return true;
     }
     if !LOADING_SCENE.get().get()
@@ -3595,7 +3546,7 @@ pub fn process_loading_channel(ch: i32) -> bool {
                 let drop = id < 20000
                     && mi_get_model_type(mi(id)) == 6
                     && DESIRED_NUM_VEHICLES_LOADED.get() <= vehicles_loaded_count()
-                    && !call_remove_loaded_vehicle()
+                    && !(call_remove_loaded_vehicle() != 0)
                     && flags(id) & 6 == 0;
                 if drop {
                     let t = mi_txd(mi(id));
@@ -3609,7 +3560,7 @@ pub fn process_loading_channel(ch: i32) -> bool {
                     }
                 } else {
                     if !(RESOURCE_ID_IPL..RESOURCE_ID_DAT).contains(&id) {
-                        call_make_space_for((size << 11) as i32);
+                        call_make_space_for(((size << 11) as i32) as u32);
                     }
                     let off = ch_offset(ch, i).read();
                     call_convert_buffer_to_object(buf.byte_add((off.wrapping_mul(0x800)) as isize), id);
@@ -3870,7 +3821,7 @@ pub fn update() {
     if g::<u8>(TIMER_USER_PAUSE).read() != 0 || g::<u8>(TIMER_CODE_PAUSE).read() != 0 {
         return;
     }
-    let ground = camera_calculate_ground_height(g(CAMERA), 0);
+    let ground = camera_calculate_ground_height(g(CAMERA), 0) as f32;
     let h = x(camera_pos().wrapping_index(2).read()).fsub_m(ground).to_f32();
     if !DISABLE_STREAMING.get().get() && g::<u8>(RENDERER_LOADING_PRIORITY).read() == 0 {
         if x(h).fcom(x(k(F_50))).test_parity(0x05) {
@@ -3908,7 +3859,7 @@ pub fn update() {
             call_stream_vehicles_and_peds();
             let mut tmp2 = [0f32; 3];
             let p2 = find_player_coors(GPtr::from_raw(tmp2.as_mut_ptr()), -1);
-            call_stream_zone_models(p2);
+            call_stream_zone_models(p2.cast::<u8>());
         }
     }
     call_load_requested_models();
@@ -3926,7 +3877,7 @@ pub fn update() {
         let p = e_pos(focus);
         col_load_collision(p.read(), p.wrapping_index(1).read(), p.wrapping_index(2).read(), 0);
         col_ensure_collision_is_in_memory(e_pos(g::<GPtr<u8>>(UPDATE_FOCUS_ENTITY).read()));
-        ipl_add_ipls_needed_at_posn(vp);
+        ipl_add_ipls_needed_at_posn(vp.cast::<u8>());
         let p = e_pos(g::<GPtr<u8>>(UPDATE_FOCUS_ENTITY).read());
         ipl_load_ipls(p.read(), p.wrapping_index(1).read(), p.wrapping_index(2).read(), 0);
         ipl_ensure_ipls_are_in_memory(e_pos(g::<GPtr<u8>>(UPDATE_FOCUS_ENTITY).read()));
@@ -3984,7 +3935,7 @@ pub fn retry_load_file(ch: i32) {
                 ch,
                 buf,
                 ch_field::<u32>(ch, CH_POS).read(),
-                ch_field::<i32>(ch, CH_SECTORS).read(),
+                (ch_field::<i32>(ch, CH_SECTORS).read()) as u32,
             );
             ch_field::<i32>(ch, CH_STATUS).write(1);
             ch_field::<i32>(ch, CH_LEVEL).write(-600);
@@ -4268,7 +4219,7 @@ pub fn load_cd_directory_file(path: GPtr<u8>, img: i32) {
         dot.write(0);
         let is = |s: u32| strnicmp(ext, GPtr::from_addr(s as usize), 3) == 0;
         if is(0x86964C) {
-            if mi_get_model_info_by_name(name, GPtr::from_raw(&raw mut id)).is_null() {
+            if mi_get_model_info_by_name(name, GPtr::<i32>::cast::<u8>(GPtr::from_raw(&raw mut id))).is_null() {
                 let mut e2 = ep.read();
                 e2.pos |= (img as u32) << 24;
                 ep.write(e2);

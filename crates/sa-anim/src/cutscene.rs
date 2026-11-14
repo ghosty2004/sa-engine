@@ -61,7 +61,7 @@ const CUTOBJ_COLMODELS: usize = 0x968A30;
 const ANIM_CLUMP_OFFSET: usize = 0xB5F878; // the RpAnimBlendClumpData plugin offset
 
 pub use crate::bindings::cutscene_finish_cutscene as finish_cutscene;
-pub use crate::bindings::streaming_remove_current_zones_models;
+pub use sa_core::bindings::streaming_remove_current_zones_models;
 pub use sa_core::bindings::assoc_set_current_time;
 pub use sa_core::bindings::camera_set_wide_screen_on;
 pub use sa_core::bindings::clothes_rebuild_player_if_needed;
@@ -83,6 +83,9 @@ pub use sa_core::bindings::streaming_request_model;
 pub use sa_core::bindings::stricmp as crt_stricmp;
 pub use sa_core::bindings::timer_resume;
 pub use sa_core::bindings::timer_suspend;
+pub use crate::bindings::assoc_group_get_animation;
+pub use sa_core::bindings::rp_clump_for_all_atomics;
+pub use sa_core::bindings::rw_v3d_transform_points;
 orig! {
     /// `CDirectory::CDirectory(capacity)` (0x5322A0)
     pub fn directory_ctor(d: GPtr<u8>, capacity: i32) -> GPtr<u8> = thiscall 0x5322A0 => unported;
@@ -102,16 +105,10 @@ orig! {
     pub fn delete_cutscene_data_overlay() = cdecl 0x5AFD60 => unported;
     /// `CCutsceneMgr::LoadEverythingBecauseCutsceneDeletedAllOfIt()` (0x4D5C10)
     pub fn load_everything_because_cutscene_deleted_all_of_it() = cdecl 0x4D5C10 => unported;
-    /// `CAnimBlendAssocGroup::GetAnimation(name)` (0x4CE040)
-    pub fn assoc_group_get_animation(gr: GPtr<u8>, name: GPtr<u8>) -> GPtr<u8> = thiscall 0x4CE040 => unported;
     /// `CAnimBlendAssocGroup::CopyAnimation(name)` (0x4CE0B0)
     pub fn assoc_group_copy_animation(gr: GPtr<u8>, name: GPtr<u8>) -> GPtr<u8> = thiscall 0x4CE0B0 => unported;
     /// `RpAnimBlendClumpFindFrame(clump, name)` (0x4D62A0)
     pub fn rp_anim_blend_clump_find_frame(clump: GPtr<u8>, name: GPtr<u8>) -> GPtr<u8> = cdecl 0x4D62A0 => unported;
-    /// `RwV3dTransformPoints(out, in, n, matrix)` (0x7EDD90)
-    pub fn rw_v3d_transform_points(out: GPtr<f32>, inp: GPtr<f32>, n: i32, m: GPtr<u8>) -> GPtr<f32> = cdecl 0x7EDD90 => unported;
-    /// `RpClumpForAllAtomics(clump, callback, data)` (0x749B70)
-    pub fn rp_clump_for_all_atomics(clump: GPtr<u8>, cb: u32, data: GPtr<u8>) -> GPtr<u8> = cdecl 0x749B70 => unported;
     /// `CCamera::GetPositionAlongSpline()` (0x50AF80): ST0
     pub fn camera_get_position_along_spline(cam: GPtr<u8>) -> f64 = thiscall 0x50AF80 => unported;
     /// `CCamera::SetCamCutSceneOffSet(const CVector&)` (0x50BD20)
@@ -314,7 +311,7 @@ pub fn calculate_bounding_sphere_radius_cb(atomic: GPtr<u8>, data: GPtr<f32>) ->
         rw_v3d_transform_points(cp, cp, 1, f.byte_add(0x10));
         f = rd::<GPtr<u8>>(f, 4);
     }
-    let v = X87::from_f64_exact(rw_v3d_length(GPtr::from_raw(c.as_mut_ptr()))).fadd_m(radius);
+    let v = X87::from_f64_exact(rw_v3d_length(GPtr::<f32>::cast::<u8>(GPtr::from_raw(c.as_mut_ptr())))).fadd_m(radius);
     if v.fcom(x(data.read())) == Cmp::Greater {
         data.write(v.to_f32());
     }
@@ -408,7 +405,7 @@ pub fn set_cutscene_anim_to_loop(name: GPtr<u8>) {
 #[hook(addr = 0x5B0450, conv = cdecl, name = "CCutsceneMgr::AttachObjectToBone", expect = "56 8B 74 24 0C")]
 pub fn attach_object_to_bone(attachment: GPtr<u8>, object: GPtr<u8>, bone: i32) {
     let h = get_anim_hierarchy_from_skin_clump(rd::<GPtr<u8>>(object, 0x18));
-    let i = rp_hanim_id_get_index(h, bone);
+    let i = rp_hanim_id_get_index(h, bone as u32);
     wr::<u32>(attachment, 0x180, object.addr() as u32);
     wr::<i32>(attachment, 0x17C, i);
 }
@@ -487,7 +484,7 @@ pub fn start_cutscene() {
     camera_set_cam_cut_scene_offset(g(CAMERA), g(CUT_OFFSET));
     camera_take_control_with_spline(g(CAMERA), 2);
     camera_set_wide_screen_on(g(CAMERA));
-    hud_set_help_message(0, 1, 0, 0);
+    hud_set_help_message(GPtr::NULL, 1, 0, 0);
     let m = g::<GPtr<u8>>(CAM_MATRIX).read();
     let pos = if m.is_null() { g(CAM_PLACEMENT_POS) } else { m.byte_add(0x30) };
     plant_mgr_pre_update_once_for_new_camera_pos(pos);

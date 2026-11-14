@@ -77,55 +77,55 @@ pub fn bike_process_control_inputs(this: GPtr<u8>, ped_type: u32) {
             .fadd(x(rd::<f32>(this, 0x48)).fmul_m(rd::<f32>(m, 0x14)))
             .fadd(x(rd::<f32>(this, 0x44)).fmul_m(rd::<f32>(m, 0x10))),
     );
-    if pad_get_exit_vehicle(pad_get_pad(id)) != 0 {
+    if pad_get_exit_vehicle(pad_get_pad(id as u32)) != 0 {
         wr::<u8>(this, 0x428, rd::<u8>(this, 0x428) | 0x20);
     } else {
-        let hb = pad_get_hand_brake(pad_get_pad(id)) != 0;
+        let hb = pad_get_hand_brake(pad_get_pad(id as u32)) != 0;
         let f = rd::<u8>(this, 0x428);
         wr::<u8>(this, 0x428, (f & !0x20) | if hb { 0x20 } else { 0 });
     }
     let k02 = f32::from_bits(0x3E4C_CCCD);
     let stick = |this: GPtr<u8>| {
         let t = ts();
-        let lr = pad_get_steering_left_right(pad_get_pad(id));
+        let lr = pad_get_steering_left_right(pad_get_pad(id as u32));
         ease(this, 0x58C, lr, t, g::<f32>(0x87_1300).read());
         let t = ts();
-        let ud = pad_get_steering_up_down(pad_get_pad(id));
+        let ud = pad_get_steering_up_down(pad_get_pad(id as u32));
         ease(this, 0x650, ud, t, k02);
     };
     let state = g::<i32>(0xC1_CC04);
     if g::<u8>(0xB6_EC2E).read() != 0 && g::<u8>(0xC1_CC02).read() != 0 {
-        pad_get_pad(id);
+        pad_get_pad(id as u32);
         let mut mouse = x(g::<f32>(0xB7_3424).read()).fcom(x(0.0)).test_parity(0x44);
         if !mouse {
-            pad_get_pad(id);
+            pad_get_pad(id as u32);
             mouse = x(g::<f32>(0xB7_3428).read()).fcom(x(0.0)).test_parity(0x44);
         }
         if !mouse
             && !jne_mask(x(rd::<f32>(this, 0x58C)).fabs(), x(0.0), 0x41)
             && state.read() == 2
-            && pad_get_steering_left_right(pad_get_pad(id)) == 0
-            && pad_get_steering_up_down(pad_get_pad(id)) == 0
+            && pad_get_steering_left_right(pad_get_pad(id as u32)) == 0
+            && pad_get_steering_up_down(pad_get_pad(id as u32)) == 0
         {
             mouse = true;
         }
         if mouse {
             state.write(2);
-            if rd::<u16>(pad_get_pad(id), 0x2C) == 0 {
-                pad_get_pad(id);
+            if rd::<u16>(pad_get_pad(id as u32), 0x2C) == 0 {
+                pad_get_pad(id as u32);
                 let k = g::<f32>(0x87_1304).read();
                 wr::<f32>(this, 0x58C, f32_of(x(g::<f32>(0xB7_3424).read()).fmul_m(k).fadd_m(rd::<f32>(this, 0x58C))));
-                pad_get_pad(id);
+                pad_get_pad(id as u32);
                 wr::<f32>(this, 0x650, f32_of(x(g::<f32>(0xB7_3428).read()).fmul_m(k).fadd_m(rd::<f32>(this, 0x650))));
             }
             let lim = x(g::<f32>(0x87_1308).read());
             for o in [0x58Cisize, 0x650] {
-                if x(rd::<f32>(this, o)).fabs().fcom(lim) == Cmp::Less || rd::<u16>(pad_get_pad(id), 0x2C) != 0 {
+                if x(rd::<f32>(this, o)).fabs().fcom(lim) == Cmp::Less || rd::<u16>(pad_get_pad(id as u32), 0x2C) != 0 {
                     wr::<f32>(this, o, f32_of(decay().fmul_m(rd::<f32>(this, o))));
                 }
             }
-        } else if pad_get_steering_left_right(pad_get_pad(id)) != 0
-            || pad_get_steering_up_down(pad_get_pad(id)) != 0
+        } else if pad_get_steering_left_right(pad_get_pad(id as u32)) != 0
+            || pad_get_steering_up_down(pad_get_pad(id as u32)) != 0
             || state.read() != 2
         {
             state.write(0);
@@ -136,8 +136,8 @@ pub fn bike_process_control_inputs(this: GPtr<u8>, ped_type: u32) {
     }
     wr::<f32>(this, 0x58C, clamp1(rd::<f32>(this, 0x58C)));
     wr::<f32>(this, 0x650, clamp1(rd::<f32>(this, 0x650)));
-    let acc = i32::from(pad_get_accelerate(pad_get_pad(id)));
-    let brk = i32::from(pad_get_brake(pad_get_pad(id)));
+    let acc = i32::from(pad_get_accelerate(pad_get_pad(id as u32)) as i16);
+    let brk = i32::from(pad_get_brake(pad_get_pad(id as u32)) as i16);
     let pedal = xi(acc - brk).fmul_m(f32::from_bits(0x3B80_8081));
     let pedal_f = f32_of(pedal);
     let mut a = x(fwd);
@@ -146,13 +146,13 @@ pub fn bike_process_control_inputs(this: GPtr<u8>, ped_type: u32) {
     }
     if a.fcom(x(f32::from_bits(0x3C23_D70A))) == Cmp::Less {
         let over = |v: i16| !jne_mask(xi(i32::from(v)), x(150.0), 0x41);
-        if over(pad_get_accelerate(pad_get_pad(id)))
-            && over(pad_get_brake(pad_get_pad(id)))
+        if over(pad_get_accelerate(pad_get_pad(id as u32)) as i16)
+            && over(pad_get_brake(pad_get_pad(id as u32)) as i16)
             && rd::<u32>(this, 0x594) != 10
         {
-            let g1 = i32::from(pad_get_accelerate(pad_get_pad(id)));
+            let g1 = i32::from(pad_get_accelerate(pad_get_pad(id as u32)) as i16);
             wr::<f32>(this, 0x49C, f32_of(xi(g1).fmul_m(f32::from_bits(0x3B80_8081))));
-            let b1 = i32::from(pad_get_brake(pad_get_pad(id)));
+            let b1 = i32::from(pad_get_brake(pad_get_pad(id as u32)) as i16);
             wr::<u16>(this, 0x7A8, 1);
             wr::<f32>(this, 0x4A0, f32_of(xi(b1).fmul_m(f32::from_bits(0x3B80_8081))));
         } else {

@@ -37,7 +37,7 @@ const RAD_TO_DEG: f32 = f32::from_bits(0x4265_2EE0);
 pub use crate::bindings::event_player_command_to_group_ctor;
 pub use crate::bindings::event_player_command_to_group_dtor;
 pub use crate::bindings::get_default_player_motion_group;
-pub use crate::bindings::get_weapon_skill_type_call as ped_get_weapon_skill_type;
+pub use sa_world::bindings::get_weapon_skill_type_call as ped_get_weapon_skill_type;
 pub use sa_core::bindings::assoc_set_current_time;
 pub use sa_core::bindings::display_script_stat_update_message;
 pub use sa_core::bindings::entity_clean_up_old_reference;
@@ -94,15 +94,44 @@ pub use sa_world::bindings::stats_find_max_number_of_group_members;
 pub use sa_world::bindings::tag_manager_is_tag as tag_is_tag;
 pub use sa_world::bindings::tm_find_active_task_by_type as task_mgr_find_active_task_by_type;
 pub use sa_world::bindings::world_reset_line_test_options;
+pub use crate::bindings::tell_group_to_start_following_player as tell_group_to_start_following_player_call;
+pub use sa_core::bindings::anim_set_delete_callback as assoc_set_delete_callback;
+pub use sa_core::bindings::clump_get_association;
+pub use sa_core::bindings::find_player_coors;
+pub use sa_core::bindings::general_get_radian_angle_between_points as get_radian_angle_between_points;
+pub use sa_core::bindings::general_limit_radian_angle as limit_radian_angle;
+pub use sa_core::bindings::ped_get_bone_position;
+pub use sa_core::bindings::vector_magnitude;
+pub use sa_core::bindings::vector_sub;
+pub use sa_world::bindings::acq_clear_as_acquaintance;
+pub use sa_world::bindings::aim_weapon_left_right as pad_aim_weapon_left_right;
+pub use sa_world::bindings::anim_blend_animation as blend_animation;
+pub use sa_world::bindings::does_target_have_to_be_broken_call;
+pub use sa_world::bindings::entity_get_bound_centre;
+pub use sa_world::bindings::event_script_command_ctor;
+pub use sa_world::bindings::find_objects_in_range as world_find_objects_in_range;
+pub use sa_world::bindings::get_nearest_car_door;
+pub use sa_world::bindings::get_pad_from_player;
+pub use sa_world::bindings::get_ped_flag as ped_type_get_ped_flag;
+pub use sa_world::bindings::group_intelligence_add_event as group_intel_add_event;
+pub use sa_world::bindings::intel_is_in_seeing_range;
+pub use sa_world::bindings::ped_get_weapon_skill as ped_get_weapon_skill_current;
+pub use sa_world::bindings::ped_say;
+pub use sa_world::bindings::process_line_of_sight as world_process_line_of_sight;
+pub use sa_world::bindings::radar_set_blip_friendly;
+pub use sa_world::bindings::rw_im3d_render_indexed_primitive;
+pub use sa_world::bindings::rw_im3d_transform;
+pub use sa_world::bindings::set_as_acquaintance as acq_set_as_acquaintance;
+pub use sa_world::bindings::set_entity_blip as radar_set_entity_blip;
+pub use sa_world::bindings::smart_flee_entity_ctor as task_smart_flee_entity_ctor;
+pub use sa_world::bindings::target_weapon_range_multiplier;
+pub use sa_world::bindings::vector_mul_scalar;
+pub use sa_world::bindings::world_test_sphere_against_world;
 orig! {
     /// `CPedGroupMembership::RemoveAllFollowers(bool)` (0x5FB190)
     pub fn membership_remove_all_followers(m: GPtr<u8>, b: u32) = thiscall 0x5FB190 => unported;
-    /// `CPed::Say(uint16, uint32, float, uint8, uint8, uint8)` (0x5EFFE0, `ret 0x18`)
-    pub fn ped_say(p: GPtr<u8>, id: u32, delay: u32, prob: f32, a: u32, b: u32, c: u32) -> u32 = thiscall 0x5EFFE0 => unported;
     /// `CEvent::Clone` (vtable slot 0x10)
     pub fn v_event_clone(e: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x10 => unported;
-    /// `CPedGroupIntelligence::AddEvent(CEvent*)` (0x5F7470, `ret 4`)
-    pub fn group_intel_add_event(gi: GPtr<u8>, e: GPtr<u8>) -> u8 = thiscall 0x5F7470 => unported;
     /// `CPedGroupIntelligence::ReportAllBarScriptTasksFinished` (0x5F8780)
     pub fn group_intel_report_all_bar_script_tasks_finished(gi: GPtr<u8>) = thiscall 0x5F8780 => unported;
     /// `CPedGroup::PlayerGaveCommand_Attack(CPed* player, CPed* target)` (0x5F7CC0, `ret 8`)
@@ -113,23 +142,12 @@ orig! {
     pub fn object_can_be_targetted(o: GPtr<u8>) -> u8 = thiscall 0x59F320 => unported;
     /// `CPlayerPed::FindPedToAttack` (0x60C5F0)
     pub fn find_ped_to_attack_call(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x60C5F0 => find_ped_to_attack;
-    /// `CPed::GetBonePosition(RwV3d& out, boneTag, bool updateSkin)` (0x5E4280, `ret 0xC`)
-    pub fn ped_get_bone_position(ped: GPtr<u8>, out: GPtr<f32>, bone: i32, update: u32) = thiscall 0x5E4280 => unported;
-    /// `CWorld::ProcessLineOfSight(origin, target, CColPoint&, CEntity*&, buildings, vehicles, peds, objects,
-    /// dummies, seeThrough, cameraIgnore, shootThrough)` (0x56BA00)
-    pub fn world_process_line_of_sight(a: GPtr<f32>, b: GPtr<f32>, cp: GPtr<u8>, e: GPtr<GPtr<u8>>, bd: u32, vh: u32, pd: u32, ob: u32, du: u32, st: u32, cam: u32, sh: u32) -> u8 = cdecl 0x56BA00 => unported;
-    /// `CWeapon::TargetWeaponRangeMultiplier(CEntity* victim, CEntity* owner)` (0x73B380, ST0)
-    pub fn target_weapon_range_multiplier(victim: GPtr<u8>, owner: GPtr<u8>) -> f64 = cdecl 0x73B380 => unported;
     /// `CPlayerPed::CanIKReachThisTarget(CVector, CWeapon*, bool)` (0x609F80, `ret 0x14`)
     pub fn can_ik_reach_this_target(p: GPtr<u8>, tx: f32, ty: f32, tz: f32, w: GPtr<u8>, b: u32) -> u8 = thiscall 0x609F80 => crate::player_ped::can_ik_reach_this_target;
-    /// `CPlayerPed::DoesTargetHaveToBeBroken(CEntity*, CWeapon*)` (0x60C0C0, `ret 8`)
-    pub fn does_target_have_to_be_broken_call(p: GPtr<u8>, t: GPtr<u8>, w: GPtr<u8>) -> u8 = thiscall 0x60C0C0 => does_target_have_to_be_broken;
     /// `CPlayerPed::FindTargetPriority(CEntity*)` (0x609DE0, `ret 4`, ST0)
     pub fn find_target_priority(p: GPtr<u8>, t: GPtr<u8>) -> f64 = thiscall 0x609DE0 => unported;
     /// `CPlayerPed::LOSBlockedBetweenPeds(CEntity*, CEntity*)` (0x60B550, cdecl)
     pub fn los_blocked_between_peds_call(a: GPtr<u8>, b: GPtr<u8>) -> u8 = cdecl 0x60B550 => los_blocked_between_peds;
-    /// `CWorld::FindPlayerCoors(CVector* out, int32 id)` (0x56E010)
-    pub fn find_player_coors(out: GPtr<f32>, id: i32) -> GPtr<f32> = cdecl 0x56E010 => unported;
     /// `sub_609380` (unnamed: any of the recruit cheats 76/77/78 active; cdecl, AL)
     pub fn recruit_cheats_active() -> u8 = cdecl 0x609380 => unported;
     /// `CPad::GetGroupControlForward` (0x541190)
@@ -140,92 +158,40 @@ orig! {
     pub fn disband_player_group_call(p: GPtr<u8>) = thiscall 0x60A0A0 => disband_player_group;
     /// `CPlayerPed::MakeThisPedJoinOurGroup(CPed*)` (0x60C840, `ret 4`)
     pub fn make_this_ped_join_our_group_call(p: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x60C840 => make_this_ped_join_our_group;
-    /// `CPlayerPed::TellGroupToStartFollowingPlayer(bool, bool, bool)` (0x60A1D0, `ret 0xC`)
-    pub fn tell_group_to_start_following_player_call(p: GPtr<u8>, a: u32, b: u32, c: u32) = thiscall 0x60A1D0 => tell_group_to_start_following_player;
-    /// `CPedType::GetPedFlag(ePedType)` (0x608830)
-    pub fn ped_type_get_ped_flag(ty: i32) -> u32 = cdecl 0x608830 => unported;
-    /// `CAcquaintance::SetAsAcquaintance(int32, uint32)` (0x608DA0, `ret 8`)
-    pub fn acq_set_as_acquaintance(a: GPtr<u8>, ty: i32, flags: u32) = thiscall 0x608DA0 => unported;
-    /// `CAcquaintance::ClearAsAcquaintance(int32, uint32)` (0x608980, `ret 8`)
-    pub fn acq_clear_as_acquaintance(a: GPtr<u8>, ty: i32, flags: u32) = thiscall 0x608980 => unported;
     /// `CPedGroup::FindDistanceToFurthestMember` (0x5FB010, ST0)
     pub fn group_find_distance_to_furthest_member(g: GPtr<u8>) -> f64 = thiscall 0x5FB010 => unported;
     /// `CTask::GetTaskType` (vtable slot 0x10)
     pub fn v_task_get_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CTaskComplexSmartFleeEntity::CTaskComplexSmartFleeEntity(CEntity*, bool, float, int32, int32, float)` (0x65C430, `ret 0x18`)
-    pub fn task_smart_flee_entity_ctor(t: GPtr<u8>, e: GPtr<u8>, b: u32, dist: f32, time: i32, a: u32, c: u32) -> GPtr<u8> = thiscall 0x65C430 => unported;
-    /// `CEventScriptCommand::CEventScriptCommand(int32, CTask*, bool)` (0x4B0A00, `ret 0xC`)
-    pub fn event_script_command_ctor(e: GPtr<u8>, index: i32, task: GPtr<u8>, dead: u32) -> GPtr<u8> = thiscall 0x4B0A00 => unported;
     /// `CEntity::FlagToDestroyWhenNextProcessed` (vtable slot 0x54)
     pub fn v_flag_to_destroy_when_next_processed(e: GPtr<u8>) = thiscall vslot 0x54 => unported;
-    /// `CWorld::FindObjectsInRange(const CVector&, float, bool, int16*, int16, CEntity**, bool, bool, bool, bool, bool)` (0x564A20)
-    pub fn world_find_objects_in_range(p: GPtr<f32>, r: f32, b2d: u32, n: GPtr<i16>, max: u32, list: GPtr<GPtr<u8>>, bd: u32, vh: u32, pd: u32, ob: u32, du: u32) = cdecl 0x564A20 => unported;
     /// `CPed::GiveWeaponWhenJoiningGang` (0x5E8BE0)
     pub fn ped_give_weapon_when_joining_gang(p: GPtr<u8>) = thiscall 0x5E8BE0 => unported;
     /// `CEventNewGangMember::CEventNewGangMember(CPed*)` (0x608F70, `ret 4`)
     pub fn event_new_gang_member_ctor(e: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x608F70 => unported;
-    /// `CRadar::SetEntityBlip(eBlipType, int32, uint32, eBlipDisplay, const char*)` (0x5839A0)
-    pub fn radar_set_entity_blip(ty: i32, h: i32, colour: u32, display: i32, name: u32) -> i32 = cdecl 0x5839A0 => unported;
-    /// `CRadar::SetBlipFriendly(int32, bool)` (0x583EB0)
-    pub fn radar_set_blip_friendly(b: i32, f: u32) = cdecl 0x583EB0 => unported;
     /// `CEventDontJoinPlayerGroup::CEventDontJoinPlayerGroup(CPed*)` (0x6090E0, `ret 4`)
     pub fn event_dont_join_player_group_ctor(e: GPtr<u8>, player: GPtr<u8>) -> GPtr<u8> = thiscall 0x6090E0 => unported;
     /// `CEventDontJoinPlayerGroup` destructor (0x609140, unnamed in the catalogue)
     pub fn event_dont_join_player_group_dtor(e: GPtr<u8>) = thiscall 0x609140 => unported;
-    /// `CEntity::GetBoundCentre(CVector&)` (0x534250)
-    pub fn entity_get_bound_centre(e: GPtr<u8>, out: GPtr<f32>) = thiscall 0x534250 => unported;
     /// `CEntity::GetHeightAboveRoad` (vtable slot 0xD4, ST0)
     pub fn v_get_height_above_road(e: GPtr<u8>) -> f64 = thiscall vslot 0xD4 => unported;
-    /// `CCarEnterExit::GetNearestCarDoor(const CPed*, const CVehicle*, CVector&, int32&)` (0x6528F0)
-    pub fn get_nearest_car_door(ped: GPtr<u8>, veh: GPtr<u8>, pos: GPtr<f32>, door: GPtr<i32>) -> u8 = cdecl 0x6528F0 => unported;
-    /// `CVector::Magnitude` (0x4082C0, ST0)
-    pub fn vector_magnitude(v: GPtr<f32>) -> f64 = thiscall 0x4082C0 => unported;
     /// `CPedGeometryAnalyser::LiesInsideBoundingBox(const CPed&, const CVector&, CEntity&)` (0x5F3880)
     pub fn lies_inside_bounding_box(ped: GPtr<u8>, pos: GPtr<f32>, e: GPtr<u8>) -> u8 = cdecl 0x5F3880 => unported;
     /// `CCranes::IsThisCarBeingCarriedByAnyCrane(CVehicle*)` (0x6F3FF0)
     pub fn cranes_is_this_car_being_carried(v: GPtr<u8>) -> u8 = cdecl 0x6F3FF0 => unported;
     /// `CPlayerInfo::EvaluateCarPosition(CEntity*, CPed*, float, float*, CVehicle**)` (0x56DAD0, `ret 0x14`)
     pub fn evaluate_car_position(pi: GPtr<u8>, e: GPtr<u8>, ped: GPtr<u8>, d: f32, out_d: GPtr<f32>, out_v: GPtr<GPtr<u8>>) = thiscall 0x56DAD0 => crate::player_info::evaluate_car_position;
-    /// `CPed::GetWeaponSkill()` (0x5E6580, AL)
-    pub fn ped_get_weapon_skill_current(p: GPtr<u8>) -> u8 = thiscall 0x5E6580 => crate::ped::get_weapon_skill_current;
     /// `CCamera::Find3rdPersonCamTargetVector(float range, CVector source, CVector& cam, CVector& point)` (0x514970, `ret 0x18`)
     pub fn camera_find_3rd_person_cam_target_vector(cam: GPtr<u8>, range: f32, sx: f32, sy: f32, sz: f32, out_cam: GPtr<f32>, out_point: GPtr<f32>) = thiscall 0x514970 => unported;
-    /// `CPedIntelligence::IsInSeeingRange(const CVector&)` (0x600C60)
-    pub fn intel_is_in_seeing_range(intel: GPtr<u8>, p: GPtr<f32>) -> u8 = thiscall 0x600C60 => unported;
     /// `CPlayerPed::EvaluateNeighbouringTarget` (0x60D1C0, `ret 0x18`)
     pub fn evaluate_neighbouring_target_call(p: GPtr<u8>, t: GPtr<u8>, out_t: GPtr<GPtr<u8>>, out_s: GPtr<f32>, max_dist: f32, heading: f32, left: u32) = thiscall 0x60D1C0 => evaluate_neighbouring_target;
     /// `CPlayerPed::EvaluateTarget` (0x60D020, `ret 0x18`)
     pub fn evaluate_target_call(p: GPtr<u8>, t: GPtr<u8>, out_t: GPtr<GPtr<u8>>, out_s: GPtr<f32>, max_dist: f32, heading: f32, b: u32) = thiscall 0x60D020 => evaluate_target;
-    /// `CGeneral::GetRadianAngleBetweenPoints(float, float, float, float)` (0x53CBE0, ST0)
-    pub fn get_radian_angle_between_points(x1: f32, y1: f32, x2: f32, y2: f32) -> f64 = cdecl 0x53CBE0 => unported;
-    /// `CGeneral::LimitRadianAngle(float)` (0x53CB50, ST0)
-    pub fn limit_radian_angle(a: f32) -> f64 = cdecl 0x53CB50 => unported;
     /// `CVector::Normalise` (0x59C910)
     pub fn vector_normalise(v: GPtr<f32>) = thiscall 0x59C910 => unported;
-    /// `operator*(const CVector&, float)` (0x40FEC0, result through the hidden pointer; unnamed in the catalogue)
-    pub fn vector_mul_scalar(out: GPtr<f32>, v: GPtr<f32>, s: f32) -> GPtr<f32> = cdecl 0x40FEC0 => unported;
-    /// `operator-(const CVector&, const CVector&)` (0x40FE60, result through the hidden pointer; unnamed in the catalogue)
-    pub fn vector_sub(out: GPtr<f32>, a: GPtr<f32>, b: GPtr<f32>) -> GPtr<f32> = cdecl 0x40FE60 => unported;
     /// `RwEngineInstance->dOpenDevice.fpRenderStateSet(state, value)` (table slot 0x20)
     pub fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `RwIm3DTransform(RxObjSpace3DVertex*, uint32, RwMatrix*, uint32)` (0x7EF450)
-    pub fn rw_im3d_transform(v: u32, n: u32, m: u32, flags: u32) -> u32 = cdecl 0x7EF450 => unported;
-    /// `RwIm3DRenderIndexedPrimitive(RwPrimitiveType, RwImVertexIndex*, int32)` (0x7EF550)
-    pub fn rw_im3d_render_indexed_primitive(ty: u32, idx: u32, n: i32) -> i32 = cdecl 0x7EF550 => unported;
-    /// `RpAnimBlendClumpGetAssociation(RpClump*, uint32 animId)` (0x4D68B0)
-    pub fn clump_get_association(clump: GPtr<u8>, id: u32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
     /// `CAnimBlendAssociation` deleting destructor (vtable slot 0)
     pub fn v_assoc_delete(a: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
-    /// `CAnimBlendAssociation::SetDeleteCallback(void(*)(CAnimBlendAssociation*, void*), void*)` (0x4CEBC0)
-    pub fn assoc_set_delete_callback(a: GPtr<u8>, cb: u32, data: GPtr<u8>) = thiscall 0x4CEBC0 => unported;
-    /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float)` (0x4D4610)
-    pub fn blend_animation(clump: GPtr<u8>, group: u32, id: u32, delta: f32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
-    /// `CPlayerPed::GetPadFromPlayer` (0x609560)
-    pub fn get_pad_from_player(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x609560 => crate::player_ped::get_pad_from_player;
-    /// `CPad::AimWeaponLeftRight(CPed*)` (0x541040, AX)
-    pub fn pad_aim_weapon_left_right(pad: GPtr<u8>, ped: u32) -> i16 = thiscall 0x541040 => unported;
-    /// `CWorld::TestSphereAgainstWorld(CVector, float, CEntity*, bool, bool, bool, bool, bool, bool)` (0x569E20)
-    pub fn world_test_sphere_against_world(cx: f32, cy: f32, cz: f32, r: f32, ignore: u32, b: u32, v: u32, p: u32, o: u32, d: u32, cam: u32) -> GPtr<u8> = cdecl 0x569E20 => unported;
     /// `CStats::UpdateStatsWhenSprinting` (0x55C660)
     pub fn stats_update_when_sprinting() = cdecl 0x55C660 => unported;
     /// `CStats::UpdateStatsWhenRunning` (0x55C6F0)
@@ -272,7 +238,7 @@ fn wrap_pi(mut a: X87) -> X87 {
 /// then `RemoveAllFollowers(true)` on the group membership.
 #[hook(addr = 0x60A0A0, conv = thiscall, name = "CPlayerPed::DisbandPlayerGroup", expect = "56 8B F1 8B 86 80 04 00 00", this = "CPlayerPed")]
 pub fn disband_player_group(this: GPtr<u8>) {
-    let n = membership_count_excluding_leader(player_group(this).byte_add(8));
+    let n = membership_count_excluding_leader(player_group(this).byte_add(8)) as i32;
     if n > 0 {
         ped_say(this, if n > 1 { 0x95 } else { 0x96 }, 0, 1.0, 0, 0, 0);
     }
@@ -287,7 +253,7 @@ pub fn make_group_respond_to_player_taking_damage(this: GPtr<u8>, ev: GPtr<u8>) 
     if rd::<u32>(ev, 0x14) == 0 {
         return;
     }
-    if membership_count_excluding_leader(player_group(this).byte_add(8)) < 1 {
+    if (membership_count_excluding_leader(player_group(this).byte_add(8)) as i32) < 1 {
         return;
     }
     let grp = player_group(this);
@@ -308,7 +274,7 @@ pub fn make_group_respond_to_player_taking_damage(this: GPtr<u8>, ev: GPtr<u8>) 
 /// function, anything else (or none) asks `FindPedToAttack`.
 #[hook(addr = 0x60CC50, conv = thiscall, name = "CPlayerPed::PlayerWantsToAttack", expect = "57 8B F9 8B 87 80 04 00 00", this = "CPlayerPed")]
 pub fn player_wants_to_attack(this: GPtr<u8>) {
-    if membership_count_excluding_leader(player_group(this).byte_add(8)) < 1 {
+    if (membership_count_excluding_leader(player_group(this).byte_add(8)) as i32) < 1 {
         return;
     }
     let grp = player_group(this);
@@ -347,7 +313,7 @@ pub fn player_wants_to_attack(this: GPtr<u8>) {
 /// else the position (copied).
 fn los_point(e: GPtr<u8>, out: &mut [f32; 3]) {
     if ent_type(e) == 3 {
-        ped_get_bone_position(e, lp(out).cast(), 4, 0);
+        ped_get_bone_position(e, GPtr::<f32>::cast::<u8>(lp(out).cast()), 4, 0);
     } else {
         *out = vec3(ent_pos(e));
     }
@@ -367,7 +333,7 @@ pub fn los_blocked_between_peds(a: GPtr<u8>, b: GPtr<u8>) -> u8 {
     los_point(b, &mut pb);
     let mut cp = [0u32; 0xB];
     let mut hit = a;
-    let r = world_process_line_of_sight(lp(&mut pa).cast(), lp(&mut pb).cast(), lp(&mut cp).cast(), lp(&mut hit), 1, 0, 0, 1, 0, 0, 0, 1);
+    let r = world_process_line_of_sight(GPtr::<f32>::cast::<u8>(lp(&mut pa).cast()), GPtr::<f32>::cast::<u8>(lp(&mut pb).cast()), lp(&mut cp).cast(), GPtr::<GPtr<u8>>::cast::<u8>(lp(&mut hit)), 1, 0, 0, 1, 0, 0, 0, 1);
     if r == 0 {
         return 0;
     }
@@ -391,8 +357,8 @@ pub fn does_target_have_to_be_broken(this: GPtr<u8>, target: GPtr<u8>, weapon: G
     let ty = rd::<i32>(weapon, 0);
     let dy = x(t.wrapping_index(1).read()).fsub_m(s.wrapping_index(1).read()).to_f32();
     let dz = x(t.wrapping_index(2).read()).fsub_m(s.wrapping_index(2).read()).to_f32();
-    let skill = ped_get_weapon_skill_type(this, ty);
-    let info = get_weapon_info(ty, i32::from(skill));
+    let skill = ped_get_weapon_skill_type(this, ty) as u8;
+    let info = get_weapon_info(ty, i32::from(skill) as u8);
     let d = x(dz).fmul_m(dz).fadd(x(dy).fmul_m(dy)).fadd(x(dx).fmul_m(dx)).fsqrt();
     let r = x(rd::<f32>(info, 4)).fmul_m(mult);
     if !r.fcom(d).test_parity(5) {
@@ -522,7 +488,7 @@ pub fn find_ped_to_attack(this: GPtr<u8>) -> GPtr<u8> {
         }
         let mut p = vec3(ent_pos(ped));
         p[2] = 0.0;
-        let dl = X87::from_f64_exact(dist_to_line(lp(&mut o).cast(), lp(&mut e).cast(), lp(&mut p).cast()));
+        let dl = X87::from_f64_exact(dist_to_line(GPtr::<f32>::cast::<u8>(lp(&mut o).cast()), GPtr::<f32>::cast::<u8>(lp(&mut e).cast()), GPtr::<f32>::cast::<u8>(lp(&mut p).cast())));
         let dx = x(p[0]).fsub_m(o[0]);
         let dy = x(p[1]).fsub_m(o[1]);
         let pd = dy.fmul(dy).fadd(dx.fmul(dx)).fsqrt();
@@ -654,7 +620,7 @@ pub fn tell_group_to_start_following_player(this: GPtr<u8>, follow: u32, say: u3
     if rd::<u32>(pd, 0x34) & 0x400 != 0 && follow != 0 {
         return;
     }
-    if force as u8 == 0 && membership_count_excluding_leader(player_group(this).byte_add(8)) == 0 {
+    if force as u8 == 0 && membership_count_excluding_leader(player_group(this).byte_add(8)) as i32 == 0 {
         return;
     }
     wr::<u8>(player_group(this), 4, follow);
@@ -684,7 +650,7 @@ pub fn tell_group_to_start_following_player(this: GPtr<u8>, follow: u32, say: u3
     if say as u8 == 0 {
         return;
     }
-    let n = membership_count_excluding_leader(player_group(this).byte_add(8));
+    let n = membership_count_excluding_leader(player_group(this).byte_add(8)) as i32;
     if n <= 0 {
         return;
     }
@@ -752,7 +718,7 @@ pub fn keep_area_around_player_clear(this: GPtr<u8>) {
             wr::<u32>(t, 0x30, 4);
             event_script_command_ctor(evp, 3, t, 0);
             event_group_add(rd::<GPtr<u8>>(ped, 0x47C).byte_add(0x68), evp, 0);
-            event_script_command_dtor(evp);
+            event_script_command_dtor(evp.cast::<u32>());
         } else {
             v_flag_to_destroy_when_next_processed(ped);
         }
@@ -763,7 +729,7 @@ pub fn keep_area_around_player_clear(this: GPtr<u8>) {
     let mut c = vec3(ent_pos(this));
     let mut n: i16 = 0;
     let mut list = [GPtr::<u8>::NULL; 6];
-    world_find_objects_in_range(lp(&mut c).cast(), 15.0, 1, lp(&mut n), 6, lp(&mut list).cast(), 0, 1, 0, 0, 0);
+    world_find_objects_in_range(GPtr::<f32>::cast::<u8>(lp(&mut c).cast()), 15.0, 1, GPtr::<i16>::cast::<u8>(lp(&mut n)), 6, GPtr::<GPtr<u8>>::cast::<u8>(lp(&mut list).cast()), 0, 1, 0, 0, 0);
     let mut k = 0i32;
     while k < i32::from(n) {
         let v = list[k as usize];
@@ -816,9 +782,9 @@ pub fn make_this_ped_join_our_group(this: GPtr<u8>, ped: GPtr<u8>) {
     if membership_is_member(player_group(this).byte_add(8), ped) != 0 {
         return;
     }
-    speech_set_cj_mood(-1, 10000, 1, -1, -1);
+    speech_set_cj_mood(-1i32 as u16, 10000, 1, -1i32 as u32, -1i32 as u32);
     ped_say(this, 0x7F, 0, 1.0, 1, 0, 0);
-    let mut max = stats_find_max_number_of_group_members();
+    let mut max = stats_find_max_number_of_group_members() as i32;
     let lim = i32::from(rd::<u8>(pdata(this), 0x43));
     if max >= lim {
         max = lim;
@@ -828,7 +794,7 @@ pub fn make_this_ped_join_our_group(this: GPtr<u8>, ped: GPtr<u8>) {
     {
         max = 0;
     }
-    let count = || membership_count_excluding_leader(player_group(this).byte_add(8));
+    let count = || membership_count_excluding_leader(player_group(this).byte_add(8)) as i32;
     let join = (recruit_cheats_active() != 0 && count() < 7) || (count() < max && count() < max);
     if !join {
         ped_say(ped, 0x7D, 2500, 1.0, 1, 0, 0);
@@ -846,7 +812,7 @@ pub fn make_this_ped_join_our_group(this: GPtr<u8>, ped: GPtr<u8>) {
     let mut task = task_operator_new(0x28);
     if !task.is_null() {
         let id = rd::<i32>(rd::<GPtr<u8>>(find_player_ped(-1), 0x480), 0x38);
-        task = task_be_in_group_ctor(task, id, 0);
+        task = task_be_in_group_ctor(task, id as u32, 0);
     }
     let mut ev = [0u32; 6];
     let evp: GPtr<u8> = lp(&mut ev).cast();
@@ -870,17 +836,17 @@ pub fn make_this_ped_join_our_group(this: GPtr<u8>, ped: GPtr<u8>) {
         | u32::from(g::<u8>(0x8D135D).read()))
         << 8)
         | 0xFF;
-    let h = ped_pool_get_ref(g::<GPtr<u8>>(PED_POOL).read(), ped);
-    let blip = radar_set_entity_blip(2, h, colour, 2, 0x86D1E0);
-    radar_change_blip_scale(blip, 2);
+    let h = ped_pool_get_ref(g::<GPtr<u8>>(PED_POOL).read(), ped) as i32;
+    let blip = radar_set_entity_blip(2, h as u32, colour, 2, GPtr::from_addr(0x86D1E0));
+    radar_change_blip_scale(blip as u32, 2);
     radar_change_blip_colour(blip, colour);
-    radar_set_blip_friendly(blip, 1);
+    radar_set_blip_friendly(blip as u32, 1);
     wr::<u32>(ped, 0x474, rd::<u32>(ped, 0x474) | 0x2000);
     let sep = g::<u32>(0x86C6C0).read();
     wr::<u32>(player_group(this).byte_add(8), 0x24, sep);
     ped_say(ped, 0x7E, 2500, 1.0, 1, 0, 0);
     event_group_event_dtor(gp);
-    event_script_command_dtor(evp);
+    event_script_command_dtor(evp.cast::<u32>());
 }
 
 /// `CPlayerInfo::FindClosestCarSectorList(CPtrListDoubleLink&, CPed*, float, float, float, float, float*
@@ -912,7 +878,7 @@ pub fn find_closest_car_sector_list(this: GPtr<u8>, list: GPtr<u8>, ped: GPtr<u8
             continue;
         }
         let mut c = [0f32; 3];
-        entity_get_bound_centre(e, lp(&mut c).cast());
+        entity_get_bound_centre(e, GPtr::<f32>::cast::<u8>(lp(&mut c).cast()));
         c = vec3(ent_pos(e));
         let h = X87::from_f64_exact(v_get_height_above_road(e));
         c[2] = h.fsubr_m(c[2]).fadd_m(1.0).to_f32();
@@ -925,7 +891,7 @@ pub fn find_closest_car_sector_list(this: GPtr<u8>, list: GPtr<u8>, ped: GPtr<u8
         if rd::<i16>(e, 0x22) == 0x241 {
             let mut door = [0f32; 3];
             let mut id = 0i32;
-            if get_nearest_car_door(ped, e, lp(&mut door).cast(), lp(&mut id)) != 0 {
+            if get_nearest_car_door(ped, e, GPtr::<f32>::cast::<u8>(lp(&mut door).cast()), GPtr::<i32>::cast::<u8>(lp(&mut id))) != 0 {
                 let v = x(ent_pos(ped).wrapping_index(2).read()).fsub_m(door[2]);
                 let v = if v.to_f64().is_sign_negative() { v.fchs() } else { v };
                 zd = v.to_f32();
@@ -955,7 +921,7 @@ pub fn find_closest_car_sector_list(this: GPtr<u8>, list: GPtr<u8>, ped: GPtr<u8
         }
         let mut door = [0f32; 3];
         let mut id = 0i32;
-        if get_nearest_car_door(ped, e, lp(&mut door).cast(), lp(&mut id)) == 0 {
+        if get_nearest_car_door(ped, e, GPtr::<f32>::cast::<u8>(lp(&mut door).cast()), GPtr::<i32>::cast::<u8>(lp(&mut id))) == 0 {
             continue;
         }
         let ep = ent_pos(e);
@@ -963,7 +929,7 @@ pub fn find_closest_car_sector_list(this: GPtr<u8>, list: GPtr<u8>, ped: GPtr<u8
         let mut v = [0f32; 3];
         v[0] = x(pp.read()).fsub_m(ep.read()).to_f32();
         v[1] = x(pp.wrapping_index(1).read()).fsub_m(ep.wrapping_index(1).read()).to_f32();
-        let mag = X87::from_f64_exact(vector_magnitude(lp(&mut v).cast()));
+        let mag = X87::from_f64_exact(vector_magnitude(GPtr::<f32>::cast::<u32>(lp(&mut v).cast())));
         let mut d = mag.to_f32();
         let mut take = false;
         if !mag.fcom(x(10.0)).test_any(0x41) && lies_inside_bounding_box(ped, ent_pos(ped), e) != 0 {
@@ -1105,7 +1071,7 @@ fn set_reference(this: GPtr<u8>, off: isize, e: GPtr<u8>) {
     let slot = this.byte_add(off);
     let old = rd::<GPtr<u8>>(this, off);
     if !old.is_null() {
-        entity_clean_up_old_reference(old, slot);
+        entity_clean_up_old_reference(old, slot.cast::<GPtr<u8>>());
     }
     wr::<GPtr<u8>>(this, off, e);
     entity_register_reference(e, slot);
@@ -1119,8 +1085,8 @@ pub fn compute_3rd_person_mouse_target(this: GPtr<u8>, use_cam: u32) {
     let mut tgt = GPtr::<u8>::NULL;
     if g::<u8>(USE_MOUSE_3RD_PERSON).read() != 0 {
         let ty = rd::<i32>(active_weapon(this), 0);
-        let skill = ped_get_weapon_skill_current(this);
-        let range = rd::<f32>(get_weapon_info(ty, i32::from(skill)), 4);
+        let skill = ped_get_weapon_skill_current(this) as u8;
+        let range = rd::<f32>(get_weapon_info(ty, i32::from(skill) as u8), 4);
         let pp = ent_pos(this);
         let p = vec3(pp);
         let mut s = [0f32; 3];
@@ -1155,7 +1121,7 @@ pub fn compute_3rd_person_mouse_target(this: GPtr<u8>, use_cam: u32) {
         let mut cp = [0u32; 0xB];
         g::<GPtr<u8>>(0xB7CD68).write(this);
         g::<u8>(0xB7CD6F).write(1);
-        let r = world_process_line_of_sight(lp(&mut s).cast(), lp(&mut t).cast(), lp(&mut cp).cast(), lp(&mut hit), 0, 0, 1, 0, 0, 0, 0, 0);
+        let r = world_process_line_of_sight(GPtr::<f32>::cast::<u8>(lp(&mut s).cast()), GPtr::<f32>::cast::<u8>(lp(&mut t).cast()), lp(&mut cp).cast(), GPtr::<GPtr<u8>>::cast::<u8>(lp(&mut hit)), 0, 0, 1, 0, 0, 0, 0, 0);
         if r != 0 && hit != this && ped_is_alive(hit) as u8 != 0 {
             tgt = hit;
         }
@@ -1176,12 +1142,12 @@ pub fn compute_3rd_person_mouse_target(this: GPtr<u8>, use_cam: u32) {
         return;
     }
     let ty = rd::<i32>(active_weapon(this), 0);
-    let skill = ped_get_weapon_skill_current(this);
-    if rd::<u8>(get_weapon_info(ty, i32::from(skill)), 0x18) & 1 == 0 {
+    let skill = ped_get_weapon_skill_current(this) as u8;
+    if rd::<u8>(get_weapon_info(ty, i32::from(skill) as u8), 0x18) & 1 == 0 {
         return;
     }
     let intel = rd::<GPtr<u8>>(tgt, 0x47C);
-    if intel_is_in_seeing_range(intel, ent_pos(this)) == 0 {
+    if intel_is_in_seeing_range(intel, GPtr::<f32>::cast::<u8>(ent_pos(this))) == 0 {
         return;
     }
     let intel = rd::<GPtr<u8>>(tgt, 0x47C);
@@ -1242,8 +1208,8 @@ fn ped_lock_on_excluded(this: GPtr<u8>, p: GPtr<u8>) -> bool {
 // keycells and patch_refs tests reject the hook).
 pub fn find_next_weapon_lock_on_target(this: GPtr<u8>, cur: GPtr<u8>, left: u32) -> u8 {
     let ty = rd::<i32>(active_weapon(this), 0);
-    let skill = ped_get_weapon_skill_current(this);
-    let range = rd::<f32>(get_weapon_info(ty, i32::from(skill)), 4);
+    let skill = ped_get_weapon_skill_current(this) as u8;
+    let range = rd::<f32>(get_weapon_info(ty, i32::from(skill) as u8), 4);
     let mut best = GPtr::<u8>::NULL;
     let mut best_score: f32 = -10000.0;
     let m = rd::<GPtr<u8>>(this, 0x14);
@@ -1341,8 +1307,8 @@ fn abs_lt(a: X87) -> X87 {
 #[hook(addr = 0x60DC50, conv = thiscall, name = "CPlayerPed::FindWeaponLockOnTarget", expect = "81 EC 94 00 00 00", this = "CPlayerPed")]
 pub fn find_weapon_lock_on_target(this: GPtr<u8>) -> u8 {
     let ty = rd::<i32>(active_weapon(this), 0);
-    let skill = ped_get_weapon_skill_current(this);
-    let info = get_weapon_info(ty, i32::from(skill));
+    let skill = ped_get_weapon_skill_current(this) as u8;
+    let info = get_weapon_info(ty, i32::from(skill) as u8);
     let range = rd::<f32>(info, 4);
     let t = rd::<GPtr<u8>>(this, 0x71C);
     if !t.is_null() {
@@ -1357,7 +1323,7 @@ pub fn find_weapon_lock_on_target(this: GPtr<u8>) -> u8 {
         }
         let old = rd::<GPtr<u8>>(this, 0x71C);
         if !old.is_null() {
-            entity_clean_up_old_reference(old, this.byte_add(0x71C));
+            entity_clean_up_old_reference(old, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x71C)));
         }
         wr::<u32>(this, 0x71C, 0);
         return 0;
@@ -1396,7 +1362,7 @@ pub fn find_weapon_lock_on_target(this: GPtr<u8>) -> u8 {
         let mut p = [px.to_f32(), py.to_f32(), pz.to_f32()];
         let mut n: i16 = 0;
         let mut list = [GPtr::<u8>::NULL; 15];
-        world_find_objects_in_range(lp(&mut p).cast(), 8.0, 0, lp(&mut n), 15, lp(&mut list).cast(), 1, 0, 0, 0, 0);
+        world_find_objects_in_range(GPtr::<f32>::cast::<u8>(lp(&mut p).cast()), 8.0, 0, GPtr::<i16>::cast::<u8>(lp(&mut n)), 15, GPtr::<GPtr<u8>>::cast::<u8>(lp(&mut list).cast()), 1, 0, 0, 0, 0);
         let mut tag = GPtr::<u8>::NULL;
         let mut k = 0i32;
         while k < i32::from(n) {
@@ -1458,8 +1424,8 @@ pub fn find_weapon_lock_on_target(this: GPtr<u8>) -> u8 {
         vector_normalise(lp(&mut nf).cast());
         let mut tmp = [0f32; 3];
         let mut q = [0f32; 3];
-        let r = vector_mul_scalar(lp(&mut tmp).cast(), lp(&mut nf).cast(), g::<f32>(0x8D2440).read());
-        vector_sub(lp(&mut q).cast(), ent_pos(this), r);
+        let r = GPtr::<u8>::cast::<f32>(vector_mul_scalar(GPtr::<f32>::cast::<u8>(lp(&mut tmp).cast()), GPtr::<f32>::cast::<u8>(lp(&mut nf).cast()), g::<f32>(0x8D2440).read()));
+        vector_sub(GPtr::<f32>::cast::<u8>(lp(&mut q).cast()), GPtr::<f32>::cast::<u8>(ent_pos(this)), r.cast::<u8>());
         let pp = ent_pos(p);
         let ay = x(pp.wrapping_index(1).read()).fsub_m(q[1]).to_f32();
         let ax = x(pp.read()).fsub_m(q[0]).to_f32();
@@ -1467,8 +1433,8 @@ pub fn find_weapon_lock_on_target(this: GPtr<u8>) -> u8 {
             continue;
         }
         let mut dv = [0f32; 3];
-        let dvp = vector_sub(lp(&mut dv).cast(), ent_pos(p), ent_pos(this));
-        let d = X87::from_f64_exact(vector_magnitude(dvp)).to_f32();
+        let dvp = GPtr::<u8>::cast::<f32>(vector_sub(GPtr::<f32>::cast::<u8>(lp(&mut dv).cast()), GPtr::<f32>::cast::<u8>(ent_pos(p)), GPtr::<f32>::cast::<u8>(ent_pos(this))));
+        let d = X87::from_f64_exact(vector_magnitude(dvp.cast::<u32>())).to_f32();
         let r = rd::<f32>(info, 4);
         let md = X87::from_f64_exact(target_weapon_range_multiplier(p, this)).fmul_m(r).to_f32();
         if !x(d).fcom(x(md)).test_parity(5) {
@@ -1613,8 +1579,8 @@ pub fn draw_triangle_for_mouse_recruit_ped(this: GPtr<u8>) {
     for k in 0..3 {
         ib.wrapping_index(k).write(k as u16);
     }
-    if rw_im3d_transform(TEMP_VERTEX_BUFFER as u32, 3, 0, 0x18) != 0 {
-        rw_im3d_render_indexed_primitive(3, TEMP_BUFFER_INDICES as u32, 3);
+    if GPtr::<u8>::addr(rw_im3d_transform(GPtr::from_addr((TEMP_VERTEX_BUFFER as u32) as usize), 3, GPtr::NULL, 0x18)) as u32 != 0 {
+        rw_im3d_render_indexed_primitive(3, GPtr::from_addr((TEMP_BUFFER_INDICES as u32) as usize), 3);
         rw_im3d_end();
     }
     for (s, v) in [(1, 0), (8, 1), (6, 1), (10, 5), (11, 6), (12, 0), (29, 5)] {
@@ -1696,10 +1662,10 @@ pub fn set_real_move_anim(this: GPtr<u8>) {
         if ratio().fcom(x(0.0)) == sa_math::x87::Cmp::Equal && sprint.is_null() {
             let cam_mode = || rd::<u16>(g::<u8>(0xB6F1A8 + usize::from(g::<u8>(0xB6F081).read()) * 0x238), 0);
             if pad_get_force_camera_behind_player(get_pad_from_player(this)) != 0
-                && pad_aim_weapon_left_right(get_pad_from_player(this), 0) != 0
+                && pad_aim_weapon_left_right(get_pad_from_player(this), GPtr::NULL) != 0
                 && cam_mode() == 4
             {
-                let v = pad_aim_weapon_left_right(get_pad_from_player(this), 0);
+                let v = pad_aim_weapon_left_right(get_pad_from_player(this), GPtr::NULL);
                 let (cur, id) = if !xi(i32::from(v)).fcom(X87::from_f64_exact(0.0)).test_parity(5) { (turn_l, 0x89) } else { (turn_r, 0x8A) };
                 let mut t = cur;
                 let reblend = t.is_null()
@@ -1708,7 +1674,7 @@ pub fn set_real_move_anim(this: GPtr<u8>) {
                 if reblend {
                     t = blend_animation(clump(), 0, id, 16.0);
                 }
-                let v = pad_aim_weapon_left_right(get_pad_from_player(this), 0);
+                let v = pad_aim_weapon_left_right(get_pad_from_player(this), GPtr::NULL);
                 let s = abs_lt(xi(i32::from(v))).fmul_m(g::<f32>(0x8D24EC).read()).fmul_m(0.0078125);
                 wr::<f32>(t, 0x24, s.to_f32());
                 if !idle.is_null() && !amt(idle).fcom(x(f32::from_bits(0x3C23_D70A))).test_parity(0x41) {
@@ -1726,7 +1692,7 @@ pub fn set_real_move_anim(this: GPtr<u8>) {
                 && intel_get_task_jet_pack(intel()).is_null()
                 && {
                     let p = vec3(ent_pos(this));
-                    world_test_sphere_against_world(p[0], p[1], p[2], 0.5, 0, 1, 0, 0, 0, 0, 0).is_null()
+                    world_test_sphere_against_world(p[0], p[1], p[2], 0.5, GPtr::NULL, 1, 0, 0, 0, 0, 0).is_null()
                 };
             if tired {
                 if idle_tired.is_null() {

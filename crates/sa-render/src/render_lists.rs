@@ -81,10 +81,7 @@ pub fn pool12_delete(this: GPtr<u8>, ptr: u32) -> u32 {
 
 pub const HOOKS: &[HookReg] = &[HOOK_SORTED_LIST_CLEAR, HOOK_SORTED_LIST_INSERT, HOOK_POOL12_DELETE, HOOK_INSERT_ENTITY_INTO_SORTED_LIST];
 
-sa_core::orig! {
-    /// 0x733910 (the sorted-list insert above, thiscall)
-    fn call_sorted_list_insert(this: GPtr<u8>, data: GPtr<u8>) -> GPtr<u8> = thiscall 0x733910 => sorted_list_insert;
-}
+use crate::bindings::alpha_list_insert_sorted as call_sorted_list_insert;
 
 /// `CVisibilityPlugins::m_alphaReallyDrawLastList` (0xC881D0), `m_alphaUnderwaterEntityList` (0xC88178),
 /// `m_alphaEntityList` (0xC88120)

@@ -32,7 +32,7 @@ sa_core::globals! {
     pub static LOD_DIST_MULTIPLIER @ 0xB6F118: f32 = 0.0;
 }
 
-pub use crate::bindings::anim_add_block_ref as add_anim_block_ref;
+pub use sa_core::bindings::anim_add_block_ref as add_anim_block_ref;
 pub use crate::bindings::anim_remove_block_ref as remove_anim_block_ref;
 pub use sa_core::bindings::rp_atomic_clone;
 pub use sa_core::bindings::rp_atomic_destroy;
@@ -40,6 +40,7 @@ pub use sa_core::bindings::rp_atomic_set_frame;
 pub use sa_core::bindings::rw_frame_create;
 pub use sa_core::bindings::rw_frame_destroy;
 pub use sa_core::bindings::strncmp;
+pub use crate::bindings::is_cbpc_pipeline_attached;
 orig! {
     /// `CBaseModelInfo::Init` (0x4C4B10)
     pub fn base_init(this: MiPtr) = thiscall 0x4C4B10 => super::base::init;
@@ -65,8 +66,6 @@ orig! {
     pub fn damage_atomic_destructor(this: MiPtr) = thiscall 0x4C55D0 => damage_destructor;
     /// `CLodAtomicModelInfo::~CLodAtomicModelInfo` (0x4C5620)
     pub fn lod_atomic_destructor(this: MiPtr) = thiscall 0x4C5620 => lod_destructor;
-    /// `CCustomBuildingRenderer::IsCBPCPipelineAttached` (0x5D7F40)
-    pub fn is_cbpc_pipeline_attached(atomic: GPtr<u8>) -> i32 = cdecl 0x5D7F40 => unported;
     /// `CCustomBuildingRenderer::AtomicSetup` (0x5D7F00)
     pub fn custom_building_atomic_setup(atomic: GPtr<u8>) -> i32 = cdecl 0x5D7F00 => unported;
     /// `CCarFXRenderer::IsCCPCPipelineAttached` (0x5D5B80)
@@ -168,7 +167,7 @@ pub fn setup_vehicle_upgrade_flags_with(this: MiPtr, mut matches: impl FnMut(u32
 /// The renderer setup `SetAtomic`/`SetDamagedAtomic` share: building pipeline → `AtomicSetup`,
 /// else car pipeline → `SetCustomFXAtomicRenderPipelinesVMICB(atomic, 0)`.
 fn setup_pipeline(atomic: GPtr<u8>) {
-    if is_cbpc_pipeline_attached(atomic) != 0 {
+    if is_cbpc_pipeline_attached(atomic) as i32 != 0 {
         custom_building_atomic_setup(atomic);
     } else if is_ccpc_pipeline_attached(atomic) != 0 {
         set_custom_fx_atomic_render_pipelines_vmicb(atomic, 0);
@@ -217,7 +216,7 @@ pub fn delete_rw_object(this: MiPtr) {
     f::<u32>(this, mi::RW_OBJECT).write(0);
     remove_tex_dictionary_ref(this);
     if vcall_get_anim_file_index(this) != -1 {
-        remove_anim_block_ref(vcall_get_anim_file_index(this));
+        remove_anim_block_ref(vcall_get_anim_file_index(this) as u32);
     }
 }
 

@@ -17,14 +17,11 @@ use crate::common::{k, rd, wr};
 
 use crate::bindings::interp_float_get_val;
 use sa_core::bindings::rw_matrix_update;
-use sa_world::bindings::rw_v3d_length;
-use sa_world::bindings::rw_v3d_normalize;
+use sa_core::bindings::rw_v3d_length;
+use sa_core::bindings::rw_v3d_normalize;
 use sa_world::bindings::world_process_vertical_line;
+use crate::bindings::interp_32_get_val;
 orig! {
-    /// `FxInterpInfo32_c::GetVal(float* out, float t)` (0x4A89C0)
-    fn interp_32_get_val(this: GPtr<u8>, out: GPtr<u8>, t: u32) = thiscall 0x4A89C0 => crate::mvpc_fx1::interp_32_get_val;
-    /// `FxInterpInfoU255_c::GetVal(float* out, float t)` (0x4A8800)
-    fn interp_u255_get_val(this: GPtr<u8>, out: GPtr<u8>, t: u32) = thiscall 0x4A8800 => crate::mvpc_fx1::interp_u255_get_val;
     /// `FxInterpInfo255_c::GetVal(float* out, float t)` (0x4A8B80)
     fn interp_255_get_val_call(this: GPtr<u8>, out: GPtr<u8>, t: u32) = thiscall 0x4A8B80 => interp_255_get_val;
 }
@@ -135,10 +132,10 @@ pub fn fx_info_ground_collide_get_value(this: GPtr<u8>, curr: u32, mult: u32, st
     let mut ent = 0u32;
     let hit = world_process_vertical_line(
         GPtr::from_raw(origin.as_mut_ptr()).cast(),
-        dist.to_bits(),
+        f32::from_bits(dist.to_bits()),
         GPtr::from_raw(cp.as_mut_ptr()).cast(),
         GPtr::from_raw(&raw mut ent).cast(),
-        1, 0, 0, 0, 0, 0, 0,
+        1, 0, 0, 0, 0, 0, GPtr::NULL,
     );
     if hit == 0 {
         return;

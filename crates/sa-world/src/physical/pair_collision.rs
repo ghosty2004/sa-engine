@@ -49,6 +49,7 @@ const STAT_PROPERTY_DAMAGED: u32 = 0x7D;
 const D_85A308: u64 = 0x3F84_7AE1_47AE_147B;
 
 pub use sa_core::bindings::stats_increment_stat as increment_stat;
+pub use crate::bindings::create_some_money;
 orig! {
     /// `CGlass::IsObjectGlass(CEntity*)` (0x46A760, cdecl, AL)
     pub fn is_object_glass(e: Ent) -> u8 = cdecl 0x46a760 => unported;
@@ -61,8 +62,6 @@ orig! {
     /// `CObject::ObjectDamage(float, const CVector*, const CVector*, CEntity*, eWeaponType)` (0x5A0D90)
     pub fn object_damage(o: Ent, damage: f32, point: Ent, normal: Ent, damager: Ent, weapon: u32)
         = thiscall 0x5a0d90 => unported;
-    /// `CPickups::CreateSomeMoney(CVector, int32)` (0x458970, cdecl, the vector by value)
-    pub fn create_some_money(x: f32, y: f32, z: f32, amount: i32) = cdecl 0x458970 => unported;
     /// `Fx_c::TriggerWaterHydrant(CVector&)` (0x4A0D70, thiscall on `g_fx`)
     pub fn trigger_water_hydrant(fx: Ent, pos: Ent) = thiscall 0x4a0d70 => unported;
     /// `CWorld::FindPlayerVehicle(int32, bool)` (0x56E0D0, cdecl)
@@ -1000,7 +999,7 @@ fn object_hit(this: Ent, ent: Ent, cp: Ent, d1: GPtr<f32>, d2: GPtr<f32>, r: [f3
         let p = pos();
         let amount = sa_core::orig::at_site(0x548FB8, sa_core::crt::rand) % 100;
         let v = rv(p, 0);
-        create_some_money(v[0], v[1], v[2], amount);
+        create_some_money(v[0], v[1], v[2], amount as u32);
         set_exploded = true;
     } else if etype(ent) == ty::OBJECT && rb(info, 0x1F) == 0 {
         set_exploded = true;
@@ -1600,7 +1599,7 @@ fn soft_object_hit(this: Ent, ent: Ent, cp: Ent, d1: GPtr<f32>, d2: GPtr<f32>, r
         let p = pos();
         let amount = sa_core::orig::at_site(0x54A95E, sa_core::crt::rand) % 100;
         let v = rv(p, 0);
-        create_some_money(v[0], v[1], v[2], amount);
+        create_some_money(v[0], v[1], v[2], amount as u32);
         true
     } else if etype(ent) == ty::OBJECT {
         let info_ptr = GPtr::<Ent>::from_addr(MODEL_INFO_PTRS + 4 * mi as usize).read();

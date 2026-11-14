@@ -23,33 +23,25 @@ sa_core::globals! {
 }
 
 pub use sa_core::bindings::eh_vector_dtor;
+pub use crate::bindings::call_calc_total_time;
+pub use crate::bindings::call_calc_total_time_compressed;
+pub use crate::bindings::call_remove_quaternion_flips;
+pub use crate::bindings::call_remove_uncompressed_data;
+pub use crate::bindings::call_set_name;
+pub use crate::bindings::call_shutdown;
+pub use crate::bindings::call_uncompress;
+pub use sa_core::bindings::uncompress_animation;
 orig! {
     /// `CAnimManager::RemoveFromUncompressedCache(CAnimBlendHierarchy*)` (0x4D42A0)
     pub fn remove_from_uncompressed_cache(h: GPtr<u8>) = cdecl 0x4D42A0 => crate::manager::remove_from_uncompressed_cache;
-    /// `CAnimManager::UncompressAnimation(CAnimBlendHierarchy*)` (0x4D41C0)
-    pub fn uncompress_animation(h: GPtr<u8>) = cdecl 0x4D41C0 => crate::manager::uncompress_animation;
     /// `CAnimBlendHierarchy::AllocSequenceBlock(bool)` (0x4CF510)
     pub fn call_alloc_sequence_block(this: GPtr<u8>, compressed: u8) -> GPtr<u8> = thiscall 0x4CF510 => alloc_sequence_block;
-    /// `CAnimBlendHierarchy::CalcTotalTime()` (0x4CF2F0)
-    pub fn call_calc_total_time(this: GPtr<u8>) = thiscall 0x4CF2F0 => calc_total_time;
-    /// `CAnimBlendHierarchy::CalcTotalTimeCompressed()` (0x4CF3E0)
-    pub fn call_calc_total_time_compressed(this: GPtr<u8>) = thiscall 0x4CF3E0 => calc_total_time_compressed;
     /// `CAnimBlendHierarchy::RemoveAnimSequences()` (0x4CF8E0)
     pub fn call_remove_anim_sequences(this: GPtr<u8>) = thiscall 0x4CF8E0 => remove_anim_sequences;
-    /// `CAnimBlendHierarchy::Uncompress()` (0x4CF5F0)
-    pub fn call_uncompress(this: GPtr<u8>) = thiscall 0x4CF5F0 => uncompress;
-    /// `CAnimBlendHierarchy::RemoveUncompressedData()` (0x4CF760)
-    pub fn call_remove_uncompressed_data(this: GPtr<u8>) = thiscall 0x4CF760 => remove_uncompressed_data;
-    /// `CAnimBlendHierarchy::RemoveQuaternionFlips()` (0x4CF4E0)
-    pub fn call_remove_quaternion_flips(this: GPtr<u8>) = thiscall 0x4CF4E0 => remove_quaternion_flips;
     /// `CAnimBlendHierarchy::FindSequence(const char*)` (0x4CF290)
     pub fn call_find_sequence(this: GPtr<u8>, name: GPtr<u8>) -> GPtr<u8> = thiscall 0x4CF290 => find_sequence;
-    /// `CAnimBlendHierarchy::SetName(const char*)` (0x4CF2D0)
-    pub fn call_set_name(this: GPtr<u8>, name: GPtr<u8>) = thiscall 0x4CF2D0 => set_name;
     /// `CAnimBlendHierarchy::CAnimBlendHierarchy()` (0x4CF270)
     pub fn call_constructor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4CF270 => constructor;
-    /// `CAnimBlendHierarchy::Shutdown()` (0x4CF980)
-    pub fn call_shutdown(this: GPtr<u8>) = thiscall 0x4CF980 => shutdown;
     /// `CAnimBlendSequence::Print()` (0x4D1180)
     pub fn sequence_print(this: GPtr<u8>) = thiscall 0x4D1180 => sequence::print;
     /// `CAnimBlendSequence::RemoveUncompressedData(void*)` (0x4D12A0)

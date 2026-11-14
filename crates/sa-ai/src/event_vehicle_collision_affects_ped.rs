@@ -68,7 +68,7 @@ pub fn event_vehicle_collision_affects_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 
     if !simplest.is_null() && task_is_go_to_task(simplest) != 0 {
         let target = simplest.byte_add(0xC);
         let side = compute_entity_hit_side_ped(ped, rd::<GPtr<u8>>(this, 0x14));
-        if side == compute_entity_hit_side_pos(target, rd::<GPtr<u8>>(this, 0x14)) {
+        if side == compute_entity_hit_side_pos(target, rd::<GPtr<u8>>(this, 0x14)) as i32 {
             let v = rd::<GPtr<u8>>(this, 0x14);
             if rd::<u32>(v, 0x4C4) == 0 && rd::<u32>(v, 0x4C8) == 0 {
                 return 0;

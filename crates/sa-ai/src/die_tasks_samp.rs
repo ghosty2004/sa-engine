@@ -6,6 +6,7 @@
 //! delta, +0x1C anim speed, +0x20 flags (bit 0 finished, bit 1 death event sent), +0x24 the association.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -16,9 +17,9 @@ const TIME_MS: usize = 0xB7CB84;
 /// `CTaskSimpleDie::FinishAnimDieCB`
 const DIE_CB: u32 = 0x62FC10;
 
-use crate::bindings::anim_blend_animation;
-use crate::bindings::anim_blend_animation_hier;
-use crate::bindings::assoc_set_finish_callback;
+use sa_world::bindings::anim_blend_animation;
+use sa_stream::bindings::anim_blend_animation_hier;
+use sa_core::bindings::assoc_set_finish_callback;
 use crate::bindings::death_dtor as event_death_dtor;
 use crate::bindings::simple_die_ctor;
 use sa_stream::bindings::ped_is_player;
@@ -28,6 +29,7 @@ use sa_world::bindings::leave_car_ctor;
 use sa_world::bindings::ped_set_ped_state;
 use sa_world::bindings::ped_stop_non_partial_anims;
 use sa_world::bindings::task_complex_ctor;
+use sa_world::bindings::vector_mul_scalar as vector_mul;
 orig! {
     /// `CTask::GetSubTask` (vtable +8)
     fn v_sub_task(t: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x8 => unported;
@@ -43,8 +45,6 @@ orig! {
     fn o_say_death_sample(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x630100 => unported;
     /// `CTaskSimpleDrown::CTaskSimpleDrown` (0x62FEC0)
     fn drown_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x62FEC0 => unported;
-    /// `operator*(const CVector&, float)` (`FUN_0040fec0`, cdecl, result through the hidden pointer)
-    fn vector_mul(out: GPtr<u8>, v: GPtr<u8>, f: u32) -> GPtr<u8> = cdecl 0x40FEC0 => unported;
     /// `CTaskComplexFallToDeath::CTaskComplexFallToDeath(int32 dir, const CVector&, bool, bool)` (0x679040,
     /// `ret 0x10`)
     fn fall_to_death_ctor(t: GPtr<u8>, dir: u32, v: GPtr<u8>, a: u32, b: u32) -> GPtr<u8> = thiscall 0x679040 => unported;
@@ -61,12 +61,12 @@ pub fn die_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
     let delta = rd::<u32>(this, 0x18);
     let clump = rd::<u32>(ped, 0x18);
     let a = if hier != 0 {
-        anim_blend_animation_hier(clump, hier, rd::<u32>(this, 0x14), delta)
+        anim_blend_animation_hier(GPtr::from_addr(clump as usize), GPtr::from_addr(hier as usize), rd::<u32>(this, 0x14), f32::from_bits(delta))
     } else {
-        anim_blend_animation(clump, rd::<u32>(this, 8), rd::<u32>(this, 0xC), delta)
+        anim_blend_animation(GPtr::from_addr(clump as usize), rd::<u32>(this, 8), rd::<u32>(this, 0xC), f32::from_bits(delta))
     };
     wr::<GPtr<u8>>(this, 0x24, a);
-    assoc_set_finish_callback(a, DIE_CB, this.addr() as u32);
+    assoc_set_finish_callback(a, DIE_CB, GPtr::from_addr((this.addr() as u32) as usize));
     let a = rd::<GPtr<u8>>(this, 0x24);
     wr::<u8>(a, 0x2E, rd::<u8>(a, 0x2E) & 0xF7);
     if !x(rd::<f32>(this, 0x1C)).fcom(x(g::<f32>(0x858B50).read())).test_any(0x41) {
@@ -191,7 +191,7 @@ pub fn die_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
                 let mut tmp = [0u32; 3];
                 let tp: GPtr<u8> = GPtr::from_raw(tmp.as_mut_ptr()).cast();
                 let src = if rd::<u32>(this, 0x24) == 1 { m } else { m.byte_add(0x10) };
-                let r = vector_mul(tp, src, 0xBF80_0000);
+                let r = vector_mul(tp, src, f32::from_bits(0xBF80_0000));
                 copy(r, &mut v);
             }
             3 => copy(m, &mut v),

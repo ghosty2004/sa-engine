@@ -42,8 +42,22 @@ pub use sa_world::bindings::placeable_get_matrix as cc_get_matrix;
 pub use sa_world::bindings::process_line_of_sight as cc_process_los;
 pub use sa_world::bindings::tm_find_active_task_by_type as cc_find_active_task_by_type;
 pub use sa_world::bindings::vector_add as cc_vec_add;
-pub use sa_world::bindings::vector_sub as cc_vec_sub;
-pub use sa_world::bindings::world_get_is_line_of_sight_clear as cc_los;
+pub use sa_core::bindings::vector_sub as cc_vec_sub;
+pub use sa_core::bindings::world_get_is_line_of_sight_clear as cc_los;
+pub use crate::bindings::cc_get_arr_pos;
+pub use crate::bindings::cc_start_transition;
+pub use crate::bindings::pad_540f80;
+pub use sa_core::bindings::audio_report_frontend_event as cc_report_frontend_audio;
+pub use sa_core::bindings::camera_restore_with_jump_cut as cc_restore_with_jump_cut;
+pub use sa_core::bindings::get_atan_of_xy as cc_atan_xy;
+pub use sa_pop::bindings::cull_zones_find_zone_with_stairs_for_player as find_zone_with_stairs_for_player;
+pub use sa_world::bindings::camera_clear_player_weapon_mode as cc_clear_weapon_mode;
+pub use sa_world::bindings::camera_restore as cc_restore;
+pub use sa_world::bindings::camera_set_directly_behind as cc_set_behind;
+pub use sa_world::bindings::find_ground_z_for_3d_coord as cc_find_ground_z;
+pub use sa_world::bindings::intel_get_task_hold as cc_task_hold;
+pub use sa_world::bindings::vector_mul_scalar as cc_vec_mul_s;
+pub use sa_world::bindings::vector_scale as cc_vec_s_mul;
 orig! {
     /// `CPad` 0x5404A0 (cycle-camera "just down", AL)
     pub fn pad_cycle_camera_down(pad: GPtr<u8>) -> u8 = thiscall 0x5404A0 => unported;
@@ -51,26 +65,10 @@ orig! {
     pub fn pad_5404f0(pad: GPtr<u8>) -> u8 = thiscall 0x5404F0 => unported;
     /// `CPad::sub_540530` (AL)
     pub fn pad_540530(pad: GPtr<u8>) -> u8 = thiscall 0x540530 => unported;
-    /// `CPad` 0x540F80 (result unused)
-    pub fn pad_540f80(pad: GPtr<u8>) -> u8 = thiscall 0x540F80 => unported;
     /// `CCullZones::CamCloseInForPlayer()` (0x72DD20, AL)
     pub fn cam_close_in_for_player() -> u8 = cdecl 0x72DD20 => unported;
-    /// `CCullZones::FindZoneWithStairsAttributeForPlayer()` (0x72DAD0)
-    pub fn find_zone_with_stairs_for_player() -> GPtr<u8> = cdecl 0x72DAD0 => unported;
     /// the cull zone's centre (0x72D6D0, thiscall, `ret 4`, returns `out`)
     pub fn zone_centre(zone: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall 0x72D6D0 => crate::camproc::cull_zone_centre;
-    /// `CCamera::Restore()` (0x50B930)
-    pub fn cc_restore(this: GPtr<u8>) = thiscall 0x50B930 => crate::camctl::restore;
-    /// `CCamera::RestoreWithJumpCut()` (0x50BAB0)
-    pub fn cc_restore_with_jump_cut(this: GPtr<u8>) = thiscall 0x50BAB0 => crate::camctl::restore_with_jump_cut;
-    /// `CCamera::SetCameraDirectlyBehindForFollowPed_CamOnAString()` (0x50BD40)
-    pub fn cc_set_behind(this: GPtr<u8>) = thiscall 0x50BD40 => crate::camctl::set_camera_directly_behind_for_follow_ped_cam_on_a_string;
-    /// `CCamera::ClearPlayerWeaponMode()` (0x50AB10)
-    pub fn cc_clear_weapon_mode(this: GPtr<u8>) = thiscall 0x50AB10 => crate::camera::clear_player_weapon_mode;
-    /// `CCamera::GetArrPosForVehicleType(int32, int32&)` (0x50AF00, AL)
-    pub fn cc_get_arr_pos(this: GPtr<u8>, kind: i32, out: GPtr<u8>) -> u8 = thiscall 0x50AF00 => unported;
-    /// `CCamera::StartTransition(int16)` (0x515200; the original pushes the full register)
-    pub fn cc_start_transition(this: GPtr<u8>, mode: u32) = thiscall 0x515200 => unported;
     /// `CCamera::ProcessObbeCinemaCamera{Car,Train,Heli,Plane,Boat}()`
     pub fn obbe_car(this: GPtr<u8>) = thiscall 0x5267C0 => crate::obbe::obbe_car;
     pub fn obbe_train(this: GPtr<u8>) = thiscall 0x526950 => crate::obbe::obbe_train;
@@ -81,20 +79,8 @@ orig! {
     pub fn is_point_in_garage_camera_zone(px: u32, py: u32, pz: u32) -> u8 = cdecl 0x449BA0 => unported;
     /// `CGarages::CameraShouldBeOutside()` (0x448650, AL)
     pub fn camera_should_be_outside() -> u8 = cdecl 0x448650 => unported;
-    /// `CGeneral::GetATanOfXY(float, float)` (0x53CC70, ST0)
-    pub fn cc_atan_xy(xb: u32, yb: u32) -> f64 = cdecl 0x53CC70 => unported;
-    /// `out = s * v` (0x40FE90)
-    pub fn cc_vec_s_mul(out: GPtr<u8>, s: u32, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE90 => unported;
-    /// `out = v * s` (0x40FEC0)
-    pub fn cc_vec_mul_s(out: GPtr<u8>, v: GPtr<u8>, s: u32) -> GPtr<u8> = cdecl 0x40FEC0 => unported;
-    /// `CWorld::FindGroundZFor3DCoord(float, float, float, bool*, CEntity**)` (0x5696C0, ST0)
-    pub fn cc_find_ground_z(px: u32, py: u32, pz: u32, found: GPtr<u8>, ent: u32) -> f64 = cdecl 0x5696C0 => unported;
-    /// `CPedIntelligence::GetTaskHold(bool)` (0x600FF0)
-    pub fn cc_task_hold(intel: GPtr<u8>, ignore: u8) -> GPtr<u8> = thiscall 0x600FF0 => unported;
     /// `CPed::CanWeRunAndFireWithWeapon()` (0x5E88E0, AL)
     pub fn cc_can_run_and_fire(ped: GPtr<u8>) -> u8 = thiscall 0x5E88E0 => unported;
-    /// `CAudioEngine::ReportFrontendAudioEvent(eAudioEvents, float, float)` (0x506EA0)
-    pub fn cc_report_frontend_audio(ae: GPtr<u8>, id: i32, vol: u32, speed: u32) = thiscall 0x506EA0 => unported;
 }
 
 /// The static int16 mode request (`REQ`, persists across frames).
@@ -267,7 +253,7 @@ fn stairs_push_out(
     let n = zone_extent(zone);
     let kk = xi(n).fadd(xi(n)).to_f32().to_bits();
     let t = tgt(this);
-    cc_vec_s_mul(tmp64, kk, dir);
+    cc_vec_s_mul(tmp64, f32::from_bits(kk), dir);
     cc_vec_add(w, pos(t), tmp64);
     if los9(pos(t), w) {
         copy3(out, w);
@@ -275,7 +261,7 @@ fn stairs_push_out(
     }
     let t = tgt(this);
     let p = pos(t);
-    cc_vec_s_mul(tmp64, kk, dir);
+    cc_vec_s_mul(tmp64, f32::from_bits(kk), dir);
     let mut l88 = [0u32; 3];
     cc_vec_sub(vbuf(&mut l88), p, tmp64);
     copy3(w, vbuf(&mut l88));
@@ -343,7 +329,7 @@ fn doors_fixed_cam(
     let mut base = base;
     let mut off = [0u32; 3];
     let mut c = [0u32; 3];
-    cc_vec_mul_s(vbuf(&mut off), vbuf(&mut right), g::<u32>(back).read());
+    cc_vec_mul_s(vbuf(&mut off), vbuf(&mut right), f32::from_bits(g::<u32>(back).read()));
     cc_vec_add(vbuf(&mut c), vbuf(&mut base), vbuf(&mut off));
     c[2] = x(f32::from_bits(c[2])).fadd_m(kd(up)).to_f32().to_bits();
     let mut zero = [0u32; 3];
@@ -358,7 +344,7 @@ fn jump_cut_copies(this: GPtr<u8>, looking_at_vector: Option<u8>) {
     let slot = cam(this).byte_add(0x21C);
     let old = rd::<GPtr<u8>>(slot, 0);
     if !old.is_null() {
-        clean_up_old_reference(old, slot);
+        clean_up_old_reference(old, slot.cast::<GPtr<u8>>());
     }
     wr::<GPtr<u8>>(cam(this), 0x21C, tgt(this));
     let slot = cam(this).byte_add(0x21C);
@@ -636,7 +622,7 @@ pub fn cam_control_in(this: GPtr<u8>, l90: i32) {
             let sub = rd::<i32>(t, 0x594);
             if sub == 4 {
                 obbe_plane(this);
-            } else if cc_vehicle_appearance(t) == 3 {
+            } else if cc_vehicle_appearance(t) as i32 == 3 {
                 obbe_heli(this);
             } else if sub == 5 {
                 obbe_boat(this);
@@ -833,7 +819,7 @@ fn vehicle_target(this: GPtr<u8>, l11: &mut bool, l20: &mut u32) -> u16 {
             let mut found = [0u8; 4];
             let t = tgt(this);
             let pt = read3(pos(t));
-            let _ = cc_find_ground_z(pt[0], pt[1], pt[2], GPtr::from_raw(found.as_mut_ptr()), 0);
+            let _ = cc_find_ground_z(f32::from_bits(pt[0]), f32::from_bits(pt[1]), f32::from_bits(pt[2]), GPtr::from_raw(found.as_mut_ptr()), GPtr::NULL);
             let l88 = pt;
             let mut d = [0u32; 3];
             let src = if sel == 1 { l30 } else { l40 };
@@ -865,8 +851,8 @@ fn vehicle_target(this: GPtr<u8>, l11: &mut bool, l20: &mut u32) -> u16 {
     }
     // e. car zoom
     let mut l5c = [0u32; 1];
-    let app = cc_vehicle_appearance(tgt(this));
-    cc_get_arr_pos(this, app, vbuf(&mut l5c));
+    let app = cc_vehicle_appearance(tgt(this)) as i32;
+    cc_get_arr_pos(this, app, GPtr::<u8>::cast::<i32>(vbuf(&mut l5c)));
     let z = rd::<i32>(this, 0xB4);
     let di: u16;
     if z == 0 && rd::<u8>(this, 0x26) == 0 {
@@ -905,11 +891,11 @@ fn vehicle_target(this: GPtr<u8>, l11: &mut bool, l20: &mut u32) -> u16 {
     }
     let c = cam(this);
     cc_well_buffer_me(
-        *l20,
-        c.byte_add(0x64),
-        c.byte_add(0x68),
-        0x3DCC_CCCD,
-        0x3E80_0000,
+        f32::from_bits(*l20),
+        GPtr::<u8>::cast::<f32>(c.byte_add(0x64)),
+        GPtr::<u8>::cast::<f32>(c.byte_add(0x68)),
+        f32::from_bits(0x3DCC_CCCD),
+        f32::from_bits(0x3E80_0000),
         0,
     );
     di
@@ -1028,11 +1014,11 @@ fn ped_target(this: GPtr<u8>, l11: &mut bool, l3c: &mut u32, l12: &mut bool) -> 
         }
     }
     cc_well_buffer_me(
-        *l3c,
-        c.byte_add(0x5C),
-        c.byte_add(0x60),
-        0x3DCC_CCCD,
-        0x3CCC_CCCD,
+        f32::from_bits(*l3c),
+        GPtr::<u8>::cast::<f32>(c.byte_add(0x5C)),
+        GPtr::<u8>::cast::<f32>(c.byte_add(0x60)),
+        f32::from_bits(0x3DCC_CCCD),
+        f32::from_bits(0x3CCC_CCCD),
         0,
     );
     // d. garage / stairs
@@ -1139,8 +1125,8 @@ fn ped_target(this: GPtr<u8>, l11: &mut bool, l3c: &mut u32, l12: &mut bool) -> 
         .fadd(x(f(l14[0])).fmul_m(f(l14[0])))
         .fsqrt()
         .to_f32();
-    let l3c_angle = cc_atan_xy(l40[0], l40[1]) as f32;
-    let _ = cc_atan_xy(l14[0], l14[1]);
+    let l3c_angle = cc_atan_xy(f32::from_bits(l40[0]), f32::from_bits(l40[1])) as f32;
+    let _ = cc_atan_xy(f32::from_bits(l14[0]), f32::from_bits(l14[1]));
     let mut di = rd::<u16>(this, 0x830);
     set_req(di);
     let mut l74: u32 = 0;
@@ -1189,20 +1175,7 @@ fn ped_target(this: GPtr<u8>, l11: &mut bool, l3c: &mut u32, l12: &mut bool) -> 
     let cz = x(f(pt[2])).fadd_m(kd(0x863264)).to_f32();
     let mut cpos = [cx.to_bits(), cy.to_bits(), cz.to_bits()];
     let mut cp = [0u32; 0x2C / 4];
-    let hit = cc_process_los(
-        pos(t),
-        vbuf(&mut cpos),
-        vbuf(&mut cp),
-        vbuf(&mut l20e),
-        1,
-        0,
-        0,
-        1,
-        0,
-        1,
-        1,
-        0,
-    );
+    let hit = cc_process_los(pos(t), vbuf(&mut cpos), vbuf(&mut cp), vbuf(&mut l20e), 1, 0, 0, 1, 0, 1, 1, 0);
     let mut zero = [0u32; 3];
     if hit != 0 {
         cc_set_fixed(this, vbuf(&mut cp), vbuf(&mut zero));
@@ -1291,7 +1264,7 @@ fn ped_fixed_from_stairs_or_garage(this: GPtr<u8>, stairs: GPtr<u8>, l11: bool) 
     let t = tgt(this);
     let pt = read3(pos(t));
     let mut found = [0u8; 4];
-    let gz = cc_find_ground_z(pt[0], pt[1], pt[2], GPtr::from_raw(found.as_mut_ptr()), 0);
+    let gz = cc_find_ground_z(f32::from_bits(pt[0]), f32::from_bits(pt[1]), f32::from_bits(pt[2]), GPtr::from_raw(found.as_mut_ptr()), GPtr::NULL);
     let mut l3c = (gz as f32).to_bits();
     if found[0] == 0 {
         l3c = x(f(pt[2])).fsub_m(kd(0x858CC4)).to_f32().to_bits();
@@ -1305,26 +1278,26 @@ fn ped_fixed_from_stairs_or_garage(this: GPtr<u8>, stairs: GPtr<u8>, l11: bool) 
             if !stairs.is_null() {
                 let n = zone_extent(stairs);
                 let k2 = xi(n).fmul_m(kd(0x858CB0)).fadd_m(kd(0x86326C)).to_f32().to_bits();
-                cc_vec_s_mul(vbuf(&mut l24), k2, dvp);
+                cc_vec_s_mul(vbuf(&mut l24), f32::from_bits(k2), dvp);
                 let mut r = [0u32; 3];
                 cc_vec_add(vbuf(&mut r), vbuf(&mut l50), vbuf(&mut l24));
                 l30 = r;
             } else {
-                cc_vec_s_mul(vbuf(&mut l24), 0x4070_0000, dvp);
+                cc_vec_s_mul(vbuf(&mut l24), f32::from_bits(0x4070_0000), dvp);
                 let mut r = [0u32; 3];
                 cc_vec_add(vbuf(&mut r), vbuf(&mut l30), vbuf(&mut l24));
                 l30 = r;
             }
         } else {
             cc_normalise(dvp);
-            cc_vec_s_mul(vbuf(&mut l24), 0x4150_0000, dvp);
+            cc_vec_s_mul(vbuf(&mut l24), f32::from_bits(0x4150_0000), dvp);
             let mut r = [0u32; 3];
             cc_vec_add(vbuf(&mut r), vbuf(&mut l30), vbuf(&mut l24));
             l30 = r;
         }
     } else {
         cc_normalise(dvp);
-        cc_vec_s_mul(vbuf(&mut l24), 0x4150_0000, dvp);
+        cc_vec_s_mul(vbuf(&mut l24), f32::from_bits(0x4150_0000), dvp);
         let mut r = [0u32; 3];
         cc_vec_add(vbuf(&mut r), vbuf(&mut l40), vbuf(&mut l24));
         l30 = r;
@@ -1392,7 +1365,7 @@ fn dead_player_mode(this: GPtr<u8>) -> u16 {
             }
             let mut d = [0u32; 3];
             let r = cc_vec_sub(vbuf(&mut d), pos(e), pos(t));
-            let m = st0(cc_magnitude(r));
+            let m = st0(cc_magnitude(r.cast::<u32>()));
             if tjnp(m, x(kd(0x858B90)), 0x05) {
                 wr::<u8>(cam(this), 0xA, 1);
                 return 0x20;
@@ -1448,7 +1421,7 @@ fn looking_at_player(this: GPtr<u8>, dx_in: u16, l10_in: bool, l11: bool, l13: b
                     } else {
                         let mut d = [0u32; 3];
                         let r = cc_vec_sub(vbuf(&mut d), pos(t), this.byte_add(0x9A4));
-                        let m = st0(cc_magnitude(r));
+                        let m = st0(cc_magnitude(r.cast::<u32>()));
                         let q = x(kd(PED_ZOOM_SMOOTHED_GLOBAL))
                             .fadd_m(kd(0x858CA0))
                             .fmul_m(kd(0x858CE8));
@@ -1546,7 +1519,7 @@ fn looking_at_player(this: GPtr<u8>, dx_in: u16, l10_in: bool, l11: bool, l13: b
             ]
             .contains(&m)
             {
-                let b = st0(cc_atan_xy(rd::<u32>(c, 0x190), rd::<u32>(c, 0x194))).fsub_m(k(K_HALF_PI));
+                let b = st0(cc_atan_xy(f32::from_bits(rd::<u32>(c, 0x190)), f32::from_bits(rd::<u32>(c, 0x194)))).fsub_m(k(K_HALF_PI));
                 wr::<f32>(tgt(this), 0x558, b.to_f32());
                 wr::<f32>(tgt(this), 0x55C, b.to_f32());
             }
@@ -1558,9 +1531,9 @@ fn looking_at_player(this: GPtr<u8>, dx_in: u16, l10_in: bool, l11: bool, l13: b
                 cc_vec_sub(vbuf(&mut l14), cam(this).byte_add(0x19C), pos(ped0()));
                 l14[2] = 0;
                 cc_normalise(vbuf(&mut l14));
-                cc_atan_xy(0x3A83_126F, 0x3F80_0000) as f32
+                cc_atan_xy(f32::from_bits(0x3A83_126F), f32::from_bits(0x3F80_0000)) as f32
             } else {
-                st0(cc_atan_xy(rd::<u32>(c, 0x190), rd::<u32>(c, 0x194)))
+                st0(cc_atan_xy(f32::from_bits(rd::<u32>(c, 0x190)), f32::from_bits(rd::<u32>(c, 0x194))))
                     .fadd_m(k(K_PI))
                     .to_f32()
             };
@@ -1633,7 +1606,7 @@ fn looking_at_player(this: GPtr<u8>, dx_in: u16, l10_in: bool, l11: bool, l13: b
             let mut d = [f(0, 0x9A4), f(4, 0x9A8), f(8, 0x9AC)];
             let t = tgt(this);
             let far = !t.is_null() && etype(t) == 3 && {
-                let m = st0(cc_magnitude(vbuf(&mut d)));
+                let m = st0(cc_magnitude(GPtr::<u8>::cast::<u32>(vbuf(&mut d))));
                 !tjne(m, x(kd(0x863260)), 0x41)
             };
             dxe = u32::from(req());
@@ -1781,7 +1754,7 @@ fn tail(this: GPtr<u8>, l12: bool, l90: i32) {
         let p = ped0();
         if !p.is_null() {
             let m = rd::<GPtr<u8>>(p, 0x14);
-            let a = cc_atan_xy(rd::<u32>(m, 0x10), rd::<u32>(m, 0x14));
+            let a = cc_atan_xy(f32::from_bits(rd::<u32>(m, 0x10)), f32::from_bits(rd::<u32>(m, 0x14)));
             wr::<f32>(this, 0x120, a as f32);
         }
     }
@@ -1793,7 +1766,7 @@ fn tail(this: GPtr<u8>, l12: bool, l90: i32) {
         && rd::<u8>(this, 0x3D) == 0
         && (rd::<i32>(this, 0xB0) != 2 || (g::<u8>(BYTE_B6EC34).read() == 1 && rd::<u16>(pad(), 0x10E) == 0))
     {
-        cc_report_frontend_audio(GPtr::from_addr(AUDIO_ENGINE), 0x20, 0, K_ONE);
+        cc_report_frontend_audio(GPtr::from_addr(AUDIO_ENGINE), 0x20, f32::from_bits(0), f32::from_bits(K_ONE));
     }
 }
 

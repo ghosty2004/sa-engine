@@ -7,6 +7,7 @@
 //! `CTaskUtilityLineUpPedWithCar*`.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -25,13 +26,13 @@ const SHUFFLE_CB: u32 = 0x646970;
 /// `CTaskSimpleCarFallOut::FinishAnimFallOutCB`
 const FALL_OUT_CB: u32 = 0x648EE0;
 
-use crate::bindings::anim_blend_animation;
-use crate::bindings::assoc_set_finish_callback;
+use sa_world::bindings::anim_blend_animation;
+use sa_core::bindings::assoc_set_finish_callback;
 use crate::bindings::car_enter_exit_remove_car_sit_anim;
 use crate::bindings::damage_get_door_status_component as damage_get_door_status;
 use crate::bindings::damage_manager_set_door_status as damage_set_door_status;
 use crate::bindings::line_up_ped_with_car_process_ped as line_up_process_ped;
-use crate::bindings::vehicle_anim_group_get_group as veh_anim_group_get_group;
+use sa_core::bindings::vehicle_anim_group_get_group as veh_anim_group_get_group;
 use sa_world::bindings::ped_set_ped_position_in_car;
 orig! {
     /// `CVehicle` virtual +0x70 (`ProcessOpenDoor(CPed*, uint32 door, uint32 animGroup, uint32 animId, float time)`,
@@ -107,10 +108,10 @@ pub fn car_shuffle_set_ped_position(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
 #[hook(addr = 0x64B3E0, conv = thiscall, name = "CTaskSimpleCarShuffle::StartAnim", expect = "56 8B F1 8B 46 10",
        unverified = "ai7-9", route = "L2", hazards = "heap-writes", recs = "car-ai")]
 pub fn car_shuffle_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
-    let group = veh_anim_group_get_group(veh_anim_group(rd::<GPtr<u8>>(this, 0x10)), 0x174);
-    let a = anim_blend_animation(rd::<u32>(ped, 0x18), group, 0x174, K_1000);
+    let group = veh_anim_group_get_group(veh_anim_group(rd::<GPtr<u8>>(this, 0x10)), 0x174) as u32;
+    let a = anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), group, 0x174, f32::from_bits(K_1000));
     wr::<GPtr<u8>>(this, 0xC, a);
-    assoc_set_finish_callback(a, SHUFFLE_CB, this.addr() as u32);
+    assoc_set_finish_callback(a, SHUFFLE_CB, GPtr::from_addr((this.addr() as u32) as usize));
 }
 
 // ---- CTaskSimpleCarFallOut ---------------------------------------------------------------------------------------
@@ -122,7 +123,7 @@ pub fn car_shuffle_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
 pub fn car_fall_out_compute_anim_id(this: GPtr<u8>, group: GPtr<u32>, anim: GPtr<u32>) {
     anim.write(fall_out_anim(rd::<u32>(this, 0x14)));
     let ag = veh_anim_group(rd::<GPtr<u8>>(this, 0x10));
-    group.write(veh_anim_group_get_group(ag, anim.read()));
+    group.write(veh_anim_group_get_group(ag, anim.read() as i32) as u32);
 }
 
 /// `CTaskSimpleCarFallOut::FinishAnimFallOutCB(CAnimBlendAssociation*, void* task)` (0x648EE0, cdecl): finishes the
@@ -180,7 +181,7 @@ pub fn car_fall_out_make_abortable(this: GPtr<u8>, ped: GPtr<u8>, priority: i32,
     let a = rd::<GPtr<u8>>(this, 0xC);
     if !a.is_null() {
         wr::<f32>(a, 0x1C, K_MINUS_1000);
-        assoc_set_finish_callback(rd::<GPtr<u8>>(this, 0xC), DEFAULT_ANIM_CB, 0);
+        assoc_set_finish_callback(rd::<GPtr<u8>>(this, 0xC), DEFAULT_ANIM_CB, GPtr::NULL);
         wr::<u32>(this, 0xC, 0);
     }
     if rd::<u32>(this, 0x10) != 0 {
@@ -227,10 +228,10 @@ pub fn car_fall_out_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
 pub fn car_fall_out_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
     car_enter_exit_remove_car_sit_anim(ped);
     let anim = fall_out_anim(rd::<u32>(this, 0x14));
-    let group = veh_anim_group_get_group(veh_anim_group(rd::<GPtr<u8>>(this, 0x10)), anim);
-    let a = anim_blend_animation(rd::<u32>(ped, 0x18), group, anim, K_1000);
+    let group = veh_anim_group_get_group(veh_anim_group(rd::<GPtr<u8>>(this, 0x10)), anim as i32) as u32;
+    let a = anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), group, anim, f32::from_bits(K_1000));
     wr::<GPtr<u8>>(this, 0xC, a);
-    assoc_set_finish_callback(a, FALL_OUT_CB, this.addr() as u32);
+    assoc_set_finish_callback(a, FALL_OUT_CB, GPtr::from_addr((this.addr() as u32) as usize));
 }
 
 /// Every hook of this module.

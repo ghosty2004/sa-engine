@@ -11,6 +11,9 @@ use crate::common::{f32_of, ftol32, g, model_info, rd, wr, x};
 
 use sa_core::bindings::matrix_mul_vec;
 use sa_core::bindings::vector_normalise_and_mag as normalise_and_mag;
+use sa_world::bindings::rw_im3d_end;
+use sa_world::bindings::rw_im3d_render_indexed_primitive;
+use sa_world::bindings::rw_im3d_transform;
 orig! {
     /// `CVector::Normalise()` (0x59C910)
     fn normalise(v: GPtr<CVector>) = thiscall 0x59C910 => sa_world::collision::data::normalise_port;
@@ -19,12 +22,6 @@ orig! {
         = cdecl 0x59C730 => sa_world::collision::data::cross_product_port;
     /// `RwRenderStateSet` (RwEngineInstance +0x20)
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `RwIm3DTransform(RxObjSpace3DVertex*, uint32, RwMatrix*, uint32)` (0x7EF450)
-    fn rw_im3d_transform(verts: GPtr<u8>, num: u32, m: u32, flags: u32) -> u32 = cdecl 0x7EF450 => unported;
-    /// `RwIm3DRenderIndexedPrimitive(RwPrimitiveType, RwImVertexIndex*, int32)` (0x7EF550)
-    fn rw_im3d_render_indexed_primitive(prim: u32, indices: GPtr<u8>, num: i32) -> u32 = cdecl 0x7EF550 => unported;
-    /// `RwIm3DEnd()` (0x7EF520)
-    fn rw_im3d_end() -> u32 = cdecl 0x7EF520 => unported;
 }
 
 /// `TempBufferVertices` (0xC4D958, `RxObjSpace3DVertex` stride 0x24) and its counters.
@@ -73,7 +70,7 @@ pub fn vehicle_do_head_light_beam(this: GPtr<u8>, light_id: u32, mat: GPtr<u8>, 
         return;
     }
     let mut p = [0f32; 3];
-    matrix_mul_vec(GPtr::from_raw(p.as_mut_ptr()).cast(), mat, GPtr::from_raw(dummy.as_mut_ptr()).cast());
+    matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::from_raw(p.as_mut_ptr()).cast()), mat, GPtr::from_raw(dummy.as_mut_ptr()).cast());
     if is_right as u8 == 0 {
         let k = x(f32::from_bits(dummy[0])).fdouble();
         let a = k.fmul_m(vf(mat, 0));
@@ -169,7 +166,7 @@ pub fn vehicle_do_head_light_beam(this: GPtr<u8>, light_id: u32, mat: GPtr<u8>, 
     put(vb + 0x90 + 8, v4[2].to_bits());
     put(vb + 0x90 + 0x18, colour);
     put(TEMP_NUM_VERTS, 5);
-    if rw_im3d_transform(GPtr::from_addr(vb), 5, 0, 0x18) != 0 {
+    if GPtr::<u8>::addr(rw_im3d_transform(GPtr::from_addr(vb), 5, GPtr::NULL, 0x18)) as u32 != 0 {
         rw_im3d_render_indexed_primitive(3, GPtr::from_addr(TEMP_INDICES), g::<i32>(TEMP_NUM_INDICES).read());
         rw_im3d_end();
     }
@@ -177,7 +174,7 @@ pub fn vehicle_do_head_light_beam(this: GPtr<u8>, light_id: u32, mat: GPtr<u8>, 
         rw_render_state_set(s, v);
     }
 }
-use crate::bindings::get_wheel_status as dm_get_wheel_status;
+use sa_world::bindings::get_wheel_status as dm_get_wheel_status;
 use sa_core::bindings::matrix_attach;
 use sa_core::bindings::matrix_dtor;
 use sa_core::bindings::matrix_rotate_y;
@@ -187,6 +184,7 @@ use sa_world::bindings::surface_is_sand;
 use sa_world::bindings::surface_is_water;
 use sa_world::bindings::vector_add;
 use sa_world::bindings::vector_scale;
+use sa_world::bindings::fx_prt_mult_ctor;
 orig! {
     /// `CMatrix::SetScale(float, float, float)` (0x59AF00)
     fn matrix_set_scale(m: GPtr<u8>, sx: f32, sy: f32, sz: f32) = thiscall 0x59AF00 => unported;
@@ -194,8 +192,6 @@ orig! {
     fn matrix_rotate(m: GPtr<u8>, rx: f32, ry: f32, rz: f32) = thiscall 0x59B460 => unported;
     /// `CVehicleModelInfo::GetWheelSize(bool front)` (0x6A06F0, ST0)
     fn get_wheel_size(mi: GPtr<u8>, front: u32) -> f64 = thiscall 0x6A06F0 => unported;
-    /// `FxPrtMult_c::FxPrtMult_c(float x7)` (0x4AB290), the floats as bits
-    fn fx_prt_mult_ctor(p: GPtr<u8>, r: u32, g: u32, b: u32, a: u32, size: u32, unk: u32, life: u32) -> GPtr<u8> = thiscall 0x4AB290 => unported;
 }
 
 /// CRT `_CIasin` (0x821E70) of ST0.
@@ -375,7 +371,7 @@ pub fn automobile_update_wheel_matrix(this: GPtr<u8>, node: i32, flags: u32) {
     if rd::<u32>(this, 0x594) == 3 {
         matrix_rotate(mat, 0.0, 0.0, a);
     } else {
-        let st = dm_get_wheel_status(this.byte_add(0x5A0), wheel as i32);
+        let st = dm_get_wheel_status(this.byte_add(0x5A0), (wheel as i32) as u32);
         let r = x(side).fmul_m(rd::<f32>(this, 0x828 + 4 * wheel));
         if st == 1 {
             let rm = f32_of(r);
@@ -443,7 +439,7 @@ fn lt_one(v: f32) -> bool {
 fn water_particles(this: GPtr<u8>, wheel: isize, side: f32) {
     let mut mult = [0u32; 8];
     let mp = GPtr::from_raw(mult.as_mut_ptr()).cast::<u8>();
-    fx_prt_mult_ctor(mp, 0x3F80_0000, 0x3F80_0000, 0x3F80_0000, 0x3E4C_CCCD, 0x3F00_0000, 0, 0x3D4C_CCCD);
+    fx_prt_mult_ctor(mp, f32::from_bits(0x3F80_0000), f32::from_bits(0x3F80_0000), f32::from_bits(0x3F80_0000), f32::from_bits(0x3E4C_CCCD), f32::from_bits(0x3F00_0000), f32::from_bits(0), f32::from_bits(0x3D4C_CCCD));
     let cp = this.byte_add(0x724 + 0x2C * wheel);
     let mut pos = [rd::<u32>(cp, 0), rd::<u32>(cp, 4), rd::<u32>(cp, 8)];
     let mut t1 = [0u32; 3];
@@ -464,12 +460,12 @@ fn water_particles(this: GPtr<u8>, wheel: isize, side: f32) {
         } else {
             g::<GPtr<u8>>(0xA9_AE20).read()
         };
-        fx_add_particle(fx, pp, vp, 0, mp, 0xBF80_0000, 0x3F99_999A, 0x3F19_999A, 0);
+        fx_add_particle(fx, pp, vp, f32::from_bits(0), mp, f32::from_bits(0xBF80_0000), f32::from_bits(0x3F99_999A), f32::from_bits(0x3F19_999A), 0);
     } else if surface_is_sand(infos, surf) != 0 {
         let mut m2 = [0u32; 8];
         let m2p = GPtr::from_raw(m2.as_mut_ptr()).cast::<u8>();
-        fx_prt_mult_ctor(m2p, 0x3F4F_5C29, 0x3F2B_851F, 0x3F11_EB85, 0x3EB3_3333, 0x3F00_0000, 0, 0x3D4C_CCCD);
-        fx_add_particle(g::<GPtr<u8>>(0xA9_AE18).read(), pp, vp, 0, m2p, 0xBF80_0000, 0x3F99_999A, 0x3F19_999A, 0);
+        fx_prt_mult_ctor(m2p, f32::from_bits(0x3F4F_5C29), f32::from_bits(0x3F2B_851F), f32::from_bits(0x3F11_EB85), f32::from_bits(0x3EB3_3333), f32::from_bits(0x3F00_0000), f32::from_bits(0), f32::from_bits(0x3D4C_CCCD));
+        fx_add_particle(g::<GPtr<u8>>(0xA9_AE18).read(), pp, vp, f32::from_bits(0), m2p, f32::from_bits(0xBF80_0000), f32::from_bits(0x3F99_999A), f32::from_bits(0x3F19_999A), 0);
     }
 }
 

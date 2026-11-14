@@ -68,15 +68,13 @@ pub use sa_core::bindings::atof;
 pub use sa_core::bindings::cross_product;
 pub use sa_core::bindings::strtok;
 pub use sa_core::bindings::vector_normalise;
+pub use sa_core::bindings::camera_delete_cut_scene_cam_data_memory as delete_cut_scene_cam_data_memory_call;
+pub use sa_core::bindings::load_line;
 orig! {
     /// `FUN_005b2090` (vector spline evaluator)
     pub fn spline_vector_call(out: GPtr<u8>, spline: GPtr<u8>, time: f32, index: GPtr<i32>) = cdecl 0x5B2090 => spline_vector;
     /// `FUN_005b2330` (scalar spline evaluator)
     pub fn spline_scalar_call(out: GPtr<f32>, spline: GPtr<u8>, time: f32, index: GPtr<i32>) = cdecl 0x5B2330 => spline_scalar;
-    /// `CCamera::DeleteCutSceneCamDataMemory()` (0x5B24A0)
-    pub fn delete_cut_scene_cam_data_memory_call(this: GPtr<u8>) = thiscall 0x5B24A0 => crate::camctl::delete_cut_scene_cam_data_memory;
-    /// `CFileLoader::LoadLine(FILESTREAM)` (0x536F80)
-    pub fn load_line(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x536F80 => sa_stream::fileloader::load_line_file;
     /// CRT `sscanf(s, "%d", int*)` (0x8220AD)
     pub fn sscanf_int(s: GPtr<u8>, fmt: GPtr<u8>, out: GPtr<i32>) -> i32 = cdecl 0x8220AD => unported;
     /// CRT `operator new` (0x82119A)

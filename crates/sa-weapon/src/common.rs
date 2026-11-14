@@ -46,13 +46,11 @@ pub use sa_core::bindings::stricmp;
 pub use sa_stream::bindings::rand;
 pub use sa_world::bindings::fx_kill;
 pub use sa_world::bindings::fx_play_and_kill;
+pub use sa_core::bindings::general_random_int_in_range as random_int;
+pub use sa_core::bindings::get_weapon_info;
 orig! {
-    /// `CGeneral::GetRandomNumberInRange<int32>(min, max)` (0x407180)
-    pub fn random_int(min: i32, max: i32) -> i32 = cdecl 0x407180 => sa_core::general::get_random_number_in_range_i32;
     /// `CGeneral::GetRandomNumberInRange<float>(min, max)` (0x41BD90, ST0)
     pub fn random_float(min: f32, max: f32) -> f64 = cdecl 0x41BD90 => random_float_port;
-    /// `CWeaponInfo::GetWeaponInfo(eWeaponType, eWeaponSkill)` (0x743C60)
-    pub fn get_weapon_info(ty: i32, skill: u8) -> GPtr<u8> = cdecl 0x743C60 => crate::weapon_info::get_weapon_info;
 }
 
 /// Phases B/C path of `GetRandomNumberInRange<float>`: the full ST0 as an f64.

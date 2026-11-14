@@ -2,6 +2,7 @@
 //! `CEventScriptCommand` pieces, `CTaskComplexSequence` constructor/flush. Ported from the 1.0 US bytes.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -270,7 +271,7 @@ pub fn record_data_ctor(this: GPtr<u8>) -> GPtr<u8> {
 pub fn record_data_flush(this: GPtr<u8>) {
     let p = rd::<GPtr<u8>>(this, 0xC);
     if !p.is_null() {
-        entity_clean_up_old_reference(p, this.byte_add(0xC));
+        entity_clean_up_old_reference(p, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0xC)));
     }
     wr::<u32>(this, 0xC, 0);
     wr::<u32>(this, 4, 0);
@@ -286,7 +287,7 @@ pub fn record_data_flush(this: GPtr<u8>) {
 pub fn record_data_set_event(this: GPtr<u8>, ped: GPtr<u8>, opcode: i32, ev: u32) {
     let p = rd::<GPtr<u8>>(this, 0xC);
     if !p.is_null() {
-        entity_clean_up_old_reference(p, this.byte_add(0xC));
+        entity_clean_up_old_reference(p, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0xC)));
     }
     wr::<u32>(this, 4, 0);
     wr::<u32>(this, 8, 0);

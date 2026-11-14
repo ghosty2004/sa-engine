@@ -114,7 +114,7 @@ fn mouse_moved(this: GPtr<u8>) -> bool {
 }
 
 fn event(id: u32) {
-    audio_report_frontend_event(g(AUDIO_ENGINE), id, 0, F1_BITS);
+    audio_report_frontend_event(g(AUDIO_ENGINE), id, f32::from_bits(0), f32::from_bits(F1_BITS));
 }
 
 /// Byte table 0x580708 of `UserInput` (action - 2, 0..0x3C), copied from the exe: 1 = the slider

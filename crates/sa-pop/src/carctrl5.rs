@@ -10,35 +10,33 @@ use crate::common::{ftol32, g, jne_mask, jp5, model_info, rand_at, rand_frac, rd
 /// Globals owned by this module: none.
 pub const GLOBALS: &[GlobalDesc] = &[];
 
-use crate::bindings::boat_ctor;
-use crate::bindings::camera_is_sphere_visible;
+use sa_core::bindings::boat_ctor;
+use sa_world::bindings::camera_is_sphere_visible;
 use crate::bindings::choose_police_car_model;
-use crate::bindings::find_node_closest_to_coors;
-use crate::bindings::get_position;
+use sa_world::bindings::find_node_closest_to_coors;
+use sa_world::bindings::get_position;
 use crate::bindings::pick_gang_car;
-use crate::bindings::train_ctor;
+use sa_core::bindings::train_ctor;
 use sa_core::bindings::general_random_int_in_range as random_int_in_range;
 use sa_stream::bindings::pick_random_car;
-use sa_world::bindings::automobile_ctor;
-use sa_world::bindings::bike_ctor;
-use sa_world::bindings::bmx_ctor;
-use sa_world::bindings::heli_ctor;
-use sa_world::bindings::monster_truck_ctor;
-use sa_world::bindings::plane_ctor;
-use sa_world::bindings::quad_bike_ctor;
-use sa_world::bindings::trailer_ctor;
+use sa_core::bindings::automobile_ctor;
+use sa_core::bindings::bike_ctor;
+use sa_core::bindings::bmx_ctor;
+use sa_core::bindings::heli_ctor;
+use sa_core::bindings::monster_truck_ctor;
+use sa_core::bindings::plane_ctor;
+use sa_core::bindings::quad_bike_ctor;
+use sa_core::bindings::trailer_ctor;
 use sa_world::bindings::vehicle_new;
+use sa_world::bindings::gang_war_fighting_going_on;
+use sa_world::bindings::vector_ctor_iterator as eh_vector_ctor_iter;
 orig! {
-    /// `CGangWars::GangWarFightingGoingOn()` (0x443AC0)
-    fn gang_war_fighting_going_on() -> u8 = cdecl 0x443AC0 => crate::gangs::gang_war_fighting_going_on;
     /// `CPathFind::Find2NodesForCarCreation(CVector, CNodeAddress*, CNodeAddress*, bool)` (0x452090, `ret 0x18`)
     fn find_2_nodes_for_car_creation(this: GPtr<u8>, px: f32, py: f32, pz: f32, a: GPtr<u32>, b: GPtr<u32>, flag: u32) = thiscall 0x452090 => unported;
     /// `CompressedVector2D` → `CVector` (0x420A60, `ret 4`)
     fn uncompress(v: GPtr<i16>, out: GPtr<f32>) -> GPtr<f32> = thiscall 0x420A60 => crate::pathfind::compressed_vector2d_uncompress;
     /// `CPathFind::ThisNodeWillLeadIntoADeadEnd(CPathNode*, CPathNode*)` (0x44D310, `ret 8`)
     fn this_node_will_lead_into_a_dead_end(this: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> u8 = thiscall 0x44D310 => crate::pathfind::this_node_will_lead_into_a_dead_end;
-    /// `eh vector constructor iterator(void*, uint32 size, int32 n, ctor)` (0x403D60, stdcall)
-    fn eh_vector_ctor_iter(arr: GPtr<u8>, size: u32, n: u32, ctor: u32) = stdcall 0x403D60 => unported;
     /// CRT `sprintf` (0x821BB5) with four int arguments
     fn sprintf4(buf: GPtr<u8>, fmt: GPtr<u8>, a: u32, b: u32, c: u32, d: u32) -> i32 = cdecl 0x821BB5 => unported;
 }
@@ -436,7 +434,7 @@ pub fn generate_car_creation_coors2(
                 outp(0).write(x(sx).fmul(w).to_f32());
                 outp(1).write(x(sy).fmul(w).to_f32());
                 outp(2).write(sz.fmul(w).to_f32());
-                if camera_is_sphere_visible(cam, out, 5.0) != 0 {
+                if camera_is_sphere_visible(cam, out.cast::<u8>(), 5.0) != 0 {
                     out_frac.write(x(wf).fmul_m(bf).to_f32());
                     try_b = false;
                     found = true;
@@ -467,7 +465,7 @@ pub fn generate_car_creation_coors2(
                     outp(0).write(x(sx).fmul(w).to_f32());
                     outp(1).write(sy.fmul(w).to_f32());
                     outp(2).write(sz.fmul(w).to_f32());
-                    if camera_is_sphere_visible(cam, out, 5.0) == 0 {
+                    if camera_is_sphere_visible(cam, out.cast::<u8>(), 5.0) == 0 {
                         out_frac.write(x(wf).fmul_m(bf).to_f32());
                         found = true;
                     }
@@ -555,17 +553,12 @@ use sa_world::bindings::get_clump_alpha;
 use sa_world::bindings::is_this_car_being_targetted_by_any_crane;
 use sa_world::bindings::max_f as float_max;
 use sa_world::bindings::vehicle_can_be_deleted;
+use sa_core::bindings::vector_magnitude_sqr as vector_squared_magnitude;
+use sa_core::bindings::vector_sub;
+use sa_world::bindings::car_ctrl_is_this_vehicle_interesting as is_this_vehicle_interesting;
+use sa_world::bindings::find_player_centre_of_world;
+use sa_world::bindings::garages_is_point_within_hide_out_garage as is_point_within_hide_out_garage;
 orig! {
-    /// `CWorld::FindPlayerCentreOfWorld(int32)` (0x56E250)
-    fn find_player_centre_of_world(id: i32) -> GPtr<u8> = cdecl 0x56E250 => sa_world::world::cworld::find_player_centre_of_world;
-    /// `CGarages::IsPointWithinHideOutGarage(const CVector&)` (0x448900)
-    fn is_point_within_hide_out_garage(p: GPtr<f32>) -> u8 = cdecl 0x448900 => unported;
-    /// `CCarCtrl::IsThisVehicleInteresting(CVehicle*)` (0x423EA0)
-    fn is_this_vehicle_interesting(v: GPtr<u8>) -> u8 = cdecl 0x423EA0 => crate::carctrl::is_this_vehicle_interesting;
-    /// `VectorSub(CVector* out, const CVector* a, const CVector* b)` (0x40FE60)
-    fn vector_sub(out: GPtr<f32>, a: GPtr<f32>, b: GPtr<f32>) -> GPtr<f32> = cdecl 0x40FE60 => unported;
-    /// `CVector::SquaredMagnitude()` (0x406DA0, ST0)
-    fn vector_squared_magnitude(v: GPtr<f32>) -> f64 = thiscall 0x406DA0 => unported;
     /// `CEntity` scalar deleting destructor (vtable slot 0, `delete`)
     fn entity_vdelete(e: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
 }
@@ -582,7 +575,7 @@ fn kill(veh: GPtr<u8>) {
 fn in_hideout(veh: GPtr<u8>) -> bool {
     let p = entity_pos(veh);
     let mut c = [p.read(), p.wrapping_index(1).read(), p.wrapping_index(2).read()];
-    is_point_within_hide_out_garage(GPtr::from_raw(c.as_mut_ptr())) != 0
+    is_point_within_hide_out_garage(GPtr::<f32>::cast::<u8>(GPtr::from_raw(c.as_mut_ptr()))) != 0
 }
 
 /// `CCarCtrl::PossiblyRemoveVehicle(CVehicle*)` (0x424F80; spec CCarCtrl.md, checked against the bytes): removal
@@ -685,7 +678,7 @@ pub fn possibly_remove_vehicle(veh: GPtr<u8>) {
                 && entity_get_is_on_screen(veh) == 0
                 && {
                     let mut d = [0f32; 3];
-                    let dp = vector_sub(GPtr::from_raw(d.as_mut_ptr()), entity_pos(veh), cenp);
+                    let dp = GPtr::<u8>::cast::<f32>(vector_sub(GPtr::<f32>::cast::<u8>(GPtr::from_raw(d.as_mut_ptr())), GPtr::<f32>::cast::<u8>(entity_pos(veh)), cenp.cast::<u8>()));
                     let dy = x(dp.wrapping_index(1).read());
                     let dx = x(dp.read());
                     let l = dx.fmul(dx).fadd(dy.fmul(dy)).fsqrt();
@@ -716,7 +709,7 @@ pub fn possibly_remove_vehicle(veh: GPtr<u8>) {
         return;
     }
     let mut d = [0f32; 3];
-    let dp = vector_sub(GPtr::from_raw(d.as_mut_ptr()), entity_pos(veh), cenp);
+    let dp = GPtr::<u8>::cast::<f32>(vector_sub(GPtr::<f32>::cast::<u8>(GPtr::from_raw(d.as_mut_ptr())), GPtr::<f32>::cast::<u8>(entity_pos(veh)), cenp.cast::<u8>()));
     let sq = X87::from_f64_exact(vector_squared_magnitude(dp));
     if jne_mask(sq, x(42.25), 0x41) || in_hideout(veh) {
         return;
@@ -724,12 +717,12 @@ pub fn possibly_remove_vehicle(veh: GPtr<u8>) {
     kill(veh);
 }
 
-use crate::bindings::add_police_car_occupants;
-use crate::bindings::add_vehicle_upgrade as vehicle_add_upgrade;
+use sa_world::bindings::add_police_car_occupants;
+use sa_world::bindings::add_vehicle_upgrade as vehicle_add_upgrade;
 use crate::bindings::calc_curve_point;
 use crate::bindings::calc_speed_scale_factor;
 use crate::bindings::find_speed_multiplier_with_speed_from_nodes;
-use crate::bindings::node_eq;
+use sa_world::bindings::node_eq;
 use crate::bindings::node_lt;
 use crate::bindings::one_way_lane_offset;
 use crate::bindings::set_up_driver_and_passengers_for_vehicle;
@@ -740,14 +733,26 @@ use sa_stream::bindings::choose_vehicle_colour;
 use sa_stream::bindings::find_player_wanted;
 use sa_stream::bindings::is_boat_model;
 use sa_world::bindings::get_vehicle_appearance;
-use sa_world::bindings::get_zone_info;
+use sa_stream::bindings::get_zone_info;
 use sa_world::bindings::la_riots_active_here;
 use sa_world::bindings::player_get_wanted_level;
 use sa_world::bindings::set_clump_alpha;
 use sa_world::bindings::vehicle_change_law_enforcer_state as change_law_enforcer_state;
+use crate::bindings::get_new_vehicle_call;
+use crate::bindings::node_address_ne as node_ne;
+use crate::bindings::pick_next_node_randomly;
+use sa_core::bindings::streaming_request_model as request_model;
+use sa_core::bindings::vector_magnitude;
+use sa_world::bindings::find_objects_kinda_colliding;
+use sa_world::bindings::find_player_speed;
+use sa_world::bindings::get_water_level;
+use sa_world::bindings::placeable_get_top_direction;
+use sa_world::bindings::placeable_set_posn as placeable_set_posn_v;
+use sa_world::bindings::vector_add;
+use sa_world::bindings::vector_div;
+use sa_world::bindings::vector_mul_scalar as vector_scale;
+use sa_world::bindings::world_process_vertical_line as process_vertical_line_g;
 orig! {
-    /// `CWorld::FindPlayerSpeed(int32)` (0x56E090)
-    fn find_player_speed(id: i32) -> GPtr<f32> = cdecl 0x56E090 => unported;
     /// `CCullZones::FewerCars()` (0x72DD80)
     fn cull_zones_fewer_cars() -> u8 = cdecl 0x72DD80 => unported;
     /// `CPopulation::FindCarMultiplierMotorway()` (0x611B60, ST0)
@@ -758,14 +763,6 @@ orig! {
     fn find_player_vehicle(id: i32, remote: u8) -> GPtr<u8> = cdecl 0x56E0D0 => sa_world::world::cworld::find_player_vehicle_port;
     /// `CCarCtrl::GenerateCarCreationCoors2(...)` (0x424210)
     fn generate_car_creation_coors2_call(px: f32, py: f32, pz: f32, dir_x: f32, dir_y: f32, dot_limit: f32, want_ahead: u32, range1: f32, range2: f32, out: GPtr<f32>, out_n1: GPtr<u32>, out_n2: GPtr<u32>, out_frac: GPtr<f32>, restrict: u32, no_random_start: u32) -> u8 = cdecl 0x424210 => unported;
-    /// `CStreaming::RequestModel(int32, int32)` (0x4087E0)
-    fn request_model(m: i32, flags: i32) = cdecl 0x4087E0 => sa_stream::streaming::request_model;
-    /// `CWorld::FindObjectsKindaColliding(...)` (0x568B80)
-    fn find_objects_kinda_colliding(pos: GPtr<f32>, r: f32, b2d: u32, cnt: GPtr<i16>, max: i32, out: u32, bld: u32, veh: u32, ped: u32, obj: u32, dum: u32) = cdecl 0x568B80 => unported;
-    /// `CNodeAddress::operator!=` (0x420950)
-    fn node_ne(a: GPtr<u16>, b: GPtr<u16>) -> u32 = thiscall 0x420950 => crate::pathfind::node_address_ne;
-    /// `CCarCtrl::GetNewVehicleDependingOnCarModel(int32, uint8)` (0x421440)
-    fn get_new_vehicle_call(mi: i32, created_by: u32) -> GPtr<u8> = cdecl 0x421440 => get_new_vehicle_depending_on_car_model;
     /// `CCarAI::FindPoliceBoatMissionForWantedLevel()` (0x41CA50)
     fn find_police_boat_mission() -> u8 = cdecl 0x41CA50 => crate::carctrl2::find_police_boat_mission_for_wanted_level;
     /// `CCarAI::FindPoliceCarSpeedForWantedLevel(CVehicle*)` (0x41CAA0; ported unhookable in carctrl2)
@@ -776,36 +773,18 @@ orig! {
     fn find_police_car_mission() -> u8 = cdecl 0x41C9D0 => unported;
     /// `CVector::Normalise()` (0x59C910)
     fn vector_normalise(v: GPtr<f32>) = thiscall 0x59C910 => unported;
-    /// `CCarCtrl::PickNextNodeRandomly(CVehicle*)` (0x42DE80)
-    fn pick_next_node_randomly(veh: GPtr<u8>) = cdecl 0x42DE80 => crate::carctrl4::pick_next_node_randomly;
-    /// `CVector::Magnitude()` (0x4082C0, ST0)
-    fn vector_magnitude(v: GPtr<f32>) -> f64 = thiscall 0x4082C0 => unported;
-    /// `out = v * s` (0x40FEC0)
-    fn vector_scale(out: GPtr<f32>, v: GPtr<f32>, s: f32) -> GPtr<f32> = cdecl 0x40FEC0 => unported;
-    /// `out = a + b` (0x40FE30)
-    fn vector_add(out: GPtr<f32>, a: GPtr<f32>, b: GPtr<f32>) -> GPtr<f32> = cdecl 0x40FE30 => unported;
-    /// `out = v * (1 / d)` (0x4119D0)
-    fn vector_div(out: GPtr<f32>, v: GPtr<f32>, d: f32) -> GPtr<f32> = cdecl 0x4119D0 => unported;
-    /// `CWaterLevel::GetWaterLevel(float, float, float, float*, bool, CVector*)` (0x6EB690)
-    fn get_water_level(x: f32, y: f32, z: f32, out: GPtr<f32>, waves: u32, normal: u32) -> u8 = cdecl 0x6EB690 => unported;
     /// `CVehicle` vtable slot 0xD4 `GetHeightAboveRoad()` (ST0)
     fn vehicle_get_height_above_road(v: GPtr<u8>) -> f64 = thiscall vslot 0xD4 => unported;
-    /// `CPlaceable::SetPosn(const CVector&)` (0x4241C0, `ret 4`)
-    fn placeable_set_posn_v(e: GPtr<u8>, p: GPtr<f32>) = thiscall 0x4241C0 => unported;
     /// `CAutomobile::SetRandomDamage(bool)` (0x6A2530, `ret 4`)
     fn automobile_set_random_damage(v: GPtr<u8>, b: u32) = thiscall 0x6A2530 => unported;
     /// `CCarCtrl::CreatePoliceChase(CVehicle*, int32, CNodeAddress)` (0x42C2B0)
     fn create_police_chase(v: GPtr<u8>, ty: i32, node: u32) -> u8 = cdecl 0x42C2B0 => unported;
     /// `CCarCtrl::CreateConvoy(CVehicle*, int32)` (0x42C740)
     fn create_convoy(v: GPtr<u8>, ty: i32) -> u8 = cdecl 0x42C740 => unported;
-    /// `CPlaceable::GetTopDirection(CVector*)` (0x41CCB0, `ret 4`)
-    fn placeable_get_top_direction(e: GPtr<u8>, out: GPtr<f32>) -> GPtr<f32> = thiscall 0x41CCB0 => unported;
     /// `CStreaming::PossiblyStreamCarOutAfterCreation(int32)` (0x40BA70)
     fn possibly_stream_car_out_after_creation(model: i32) = cdecl 0x40BA70 => sa_stream::streaming::possibly_stream_car_out_after_creation;
     /// model-info use counter (0x421120, thiscall)
     fn model_info_use_counter(mi: GPtr<u8>) = thiscall 0x421120 => crate::carctrl2::auto_pilot_speed_step;
-    /// `CWorld::ProcessVerticalLine(...)` (0x5674E0)
-    fn process_vertical_line_g(o: GPtr<f32>, z: f32, cp: GPtr<u8>, ent: GPtr<u32>, b: u32, v: u32, p: u32, ob: u32, d: u32, see: u32, poly: u32) -> u8 = cdecl 0x5674E0 => unported;
     /// `CWorld::FindPlayerPed(int32)` (0x56E210)
     fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
 }
@@ -838,7 +817,7 @@ fn navi_link(l: u32) -> GPtr<u8> {
 /// faddp; fsqrt` compute it: `x*x + y*y`.
 fn len2d_sub(a: GPtr<f32>, b: GPtr<f32>) -> X87 {
     let mut o = [0f32; 3];
-    let v = vector_sub(GPtr::from_raw(o.as_mut_ptr()), a, b);
+    let v = GPtr::<u8>::cast::<f32>(vector_sub(GPtr::<f32>::cast::<u8>(GPtr::from_raw(o.as_mut_ptr())), a.cast::<u8>(), b.cast::<u8>()));
     let vy = x(v.wrapping_index(1).read());
     let vx = x(v.read());
     vx.fmul(vx).fadd(vy.fmul(vy)).fsqrt()
@@ -863,7 +842,7 @@ pub fn generate_one_random_car() {
     // Block A: budget
     let c = find_player_centre_of_world(i32::from(g::<u8>(0xB7CD74).read())).cast::<f32>();
     let mut cen = [c.read(), c.wrapping_index(1).read(), c.wrapping_index(2).read()];
-    let s = find_player_speed(-1);
+    let s = GPtr::<u8>::cast::<f32>(find_player_speed(-1));
     let spd = [s.read(), s.wrapping_index(1).read(), s.wrapping_index(2).read()];
     let gi = |a: usize| g::<i32>(a).read();
     let total = gi(0x9690AC)
@@ -1057,7 +1036,7 @@ pub fn generate_one_random_car() {
         1,
         GPtr::from_raw(cnt.as_mut_ptr()),
         2,
-        0,
+        GPtr::NULL,
         0,
         1,
         1,
@@ -1087,7 +1066,7 @@ pub fn generate_one_random_car() {
     let navi_links = g::<GPtr<u16>>((0x96FDF4 + (n1 & 0xFFFF) * 4) as usize).read();
     let nav = navi_links.wrapping_index(base + i32::from(i)).read();
     let lnk = navi_link(u32::from(nav));
-    let lanes: i16 = if node_eq(lnk.byte_add(4).cast(), n2p.cast()) & 0xFF != 0 {
+    let lanes: i16 = if node_eq(GPtr::<u16>::cast::<u8>(lnk.byte_add(4).cast()), GPtr::<u16>::cast::<u8>(n2p.cast())) as u32 & 0xFF != 0 {
         i16::from(rd::<u8>(lnk, 0xB) & 7)
     } else {
         i16::from((rd::<u8>(lnk, 0xB) >> 3) & 7)
@@ -1104,7 +1083,7 @@ pub fn generate_one_random_car() {
     }
     let mut gang_zone = false;
     if !g::<GPtr<u8>>(0xC0BC64).read().is_null() {
-        let zi = get_zone_info(cp, GPtr::NULL);
+        let zi = get_zone_info(cp, GPtr::<GPtr<u8>>::cast::<u8>(GPtr::NULL));
         let z = i32::from(rd::<u8>(zi, 0xF) & 0x1F);
         if (0x11..=0x13).contains(&z) {
             if z != g::<i32>(0xC0BC6C).read() {
@@ -1128,7 +1107,7 @@ pub fn generate_one_random_car() {
             wr::<u8>(veh, 0x3BA, 1);
         } else {
             wr::<u8>(veh, 0x3D0, find_police_car_speed(veh) as u8);
-            let m = if get_vehicle_appearance(veh) == 2 {
+            let m = if get_vehicle_appearance(veh) as i32 == 2 {
                 find_police_bike_mission()
             } else {
                 find_police_car_mission()
@@ -1179,7 +1158,7 @@ pub fn generate_one_random_car() {
     let n = if la_riots_active_here() != 0 {
         0x50
     } else {
-        match get_vehicle_appearance(veh) {
+        match get_vehicle_appearance(veh) as i32 {
             2 => 0x32,
             4 => 0xA,
             _ => 0xC8,
@@ -1277,7 +1256,7 @@ pub fn generate_one_random_car() {
     let mut b2 = [0f32; 3];
     let pp2 = get_position(node2, GPtr::from_raw(b2.as_mut_ptr()));
     let mut dd = [0f32; 3];
-    let d = vector_sub(GPtr::from_raw(dd.as_mut_ptr()), pp2, pp1);
+    let d = GPtr::<u8>::cast::<f32>(vector_sub(GPtr::<f32>::cast::<u8>(GPtr::from_raw(dd.as_mut_ptr())), pp2.cast::<u8>(), pp1.cast::<u8>()));
     let mut d3 = [d.read(), d.wrapping_index(1).read(), d.wrapping_index(2).read()];
     let (ddx, ddy) = (d.read(), d.wrapping_index(1).read());
     let l = x(ddy).fmul_m(ddy).fadd(x(ddx).fmul_m(ddx)).fsqrt();
@@ -1335,7 +1314,7 @@ pub fn generate_one_random_car() {
         let pc = npos(nc, &mut q5);
         let lnc = lp(ln2, &mut q6);
         let mut vb = [0f32; 3];
-        let v = vector_sub(GPtr::from_raw(vb.as_mut_ptr()), lnc, pc);
+        let v = GPtr::<u8>::cast::<f32>(vector_sub(GPtr::<f32>::cast::<u8>(GPtr::from_raw(vb.as_mut_ptr())), lnc.cast::<u8>(), pc.cast::<u8>()));
         lc = u32::from(rd::<u16>(veh, 0x3A4));
         let (mut q7, mut q8) = ([0f32; 3], [0f32; 3]);
         let pc2 = npos(nc, &mut q7);
@@ -1441,18 +1420,18 @@ pub fn generate_one_random_car() {
     let (mut r1, mut r2, mut r3) = ([0f32; 3], [0f32; 3], [0f32; 3]);
     let pn2 = get_position(node2, GPtr::from_raw(r1.as_mut_ptr()));
     let pn1 = get_position(node1, GPtr::from_raw(r2.as_mut_ptr()));
-    let dv = vector_sub(GPtr::from_raw(r3.as_mut_ptr()), pn1, pn2);
+    let dv = GPtr::<u8>::cast::<f32>(vector_sub(GPtr::<f32>::cast::<u8>(GPtr::from_raw(r3.as_mut_ptr())), pn1.cast::<u8>(), pn2.cast::<u8>()));
     let mut dir = [
         dv.read(),
         dv.wrapping_index(1).read(),
         dv.wrapping_index(2).read(),
     ];
     let dirp = GPtr::from_raw(dir.as_mut_ptr());
-    let mag = X87::from_f64_exact(vector_magnitude(dirp));
+    let mag = X87::from_f64_exact(vector_magnitude(dirp.cast::<u32>()));
     let sc = x(2.0).fdiv(mag).to_f32();
     let (mut r4, mut r5) = ([0f32; 3], [0f32; 3]);
-    let scaled = vector_scale(GPtr::from_raw(r4.as_mut_ptr()), dirp, sc);
-    let pv = vector_add(GPtr::from_raw(r5.as_mut_ptr()), cp, scaled);
+    let scaled = GPtr::<u8>::cast::<f32>(vector_scale(GPtr::<f32>::cast::<u8>(GPtr::from_raw(r4.as_mut_ptr())), dirp.cast::<u8>(), sc));
+    let pv = GPtr::<u8>::cast::<f32>(vector_add(GPtr::<f32>::cast::<u8>(GPtr::from_raw(r5.as_mut_ptr())), cp.cast::<u8>(), scaled.cast::<u8>()));
     let mut pp = [
         pv.read(),
         pv.wrapping_index(1).read(),
@@ -1464,7 +1443,7 @@ pub fn generate_one_random_car() {
     let ppp = GPtr::from_raw(pp.as_mut_ptr());
     if is_boat {
         let mut wlv = [0f32; 1];
-        if get_water_level(pp[0], pp[1], pp[2], GPtr::from_raw(wlv.as_mut_ptr()), 1, 0) == 0 {
+        if get_water_level(pp[0], pp[1], pp[2], GPtr::<f32>::cast::<u8>(GPtr::from_raw(wlv.as_mut_ptr())), 1, GPtr::NULL) == 0 {
             gorc_delete(veh);
             return;
         }
@@ -1474,10 +1453,10 @@ pub fn generate_one_random_car() {
         let mut ent = [0u32; 1];
         let cpp = GPtr::<u8>::from_raw(cpt.as_mut_ptr().cast());
         let entp = GPtr::from_raw(ent.as_mut_ptr());
-        if process_vertical_line_g(ppp, 1000.0, cpp, entp, 1, 0, 0, 0, 1, 0, 0) != 0 {
+        if process_vertical_line_g(ppp.cast::<u8>(), 1000.0, cpp, entp.cast::<u8>(), 1, 0, 0, 0, 1, 0, GPtr::NULL) != 0 {
             gz = rd::<f32>(cpp, 8);
         }
-        if process_vertical_line_g(ppp, -1000.0, cpp, entp, 1, 0, 0, 0, 1, 0, 0) != 0 {
+        if process_vertical_line_g(ppp.cast::<u8>(), -1000.0, cpp, entp.cast::<u8>(), 1, 0, 0, 0, 1, 0, GPtr::NULL) != 0 {
             let a = abs_fchs(x(rd::<f32>(cpp, 8)).fsub_m(pp[2]));
             let b = abs_fchs(x(gz).fsub_m(pp[2]));
             if !jp5(a, b) {
@@ -1509,16 +1488,16 @@ pub fn generate_one_random_car() {
     wr::<f32>(veh, 0x4C, 0.0);
     let mut spd_l = spd;
     let (mut r6, mut r7) = ([0f32; 3], [0f32; 3]);
-    let sdiv = vector_div(
-        GPtr::from_raw(r6.as_mut_ptr()),
-        GPtr::from_raw(speed_out.as_mut_ptr()),
+    let sdiv = GPtr::<u8>::cast::<f32>(vector_div(
+        GPtr::<f32>::cast::<u8>(GPtr::from_raw(r6.as_mut_ptr())),
+        GPtr::<f32>::cast::<u8>(GPtr::from_raw(speed_out.as_mut_ptr())),
         60.0,
-    );
-    let rel = vector_sub(
-        GPtr::from_raw(r7.as_mut_ptr()),
-        sdiv,
-        GPtr::from_raw(spd_l.as_mut_ptr()),
-    );
+    ));
+    let rel = GPtr::<u8>::cast::<f32>(vector_sub(
+        GPtr::<f32>::cast::<u8>(GPtr::from_raw(r7.as_mut_ptr())),
+        sdiv.cast::<u8>(),
+        GPtr::<f32>::cast::<u8>(GPtr::from_raw(spd_l.as_mut_ptr())),
+    ));
     let cp2x = x(coors[0]).fsub_m(cen[0]).to_f32();
     let (relx, rely) = (rel.read(), rel.wrapping_index(1).read());
     let cp2y = x(coors[1]).fsub_m(cen[1]).to_f32();
@@ -1581,7 +1560,7 @@ pub fn generate_one_random_car() {
         1,
         GPtr::from_raw(cnt.as_mut_ptr()),
         2,
-        0,
+        GPtr::NULL,
         0,
         1,
         1,
@@ -1665,8 +1644,8 @@ pub fn generate_one_random_car() {
             let crf = xi(i32::from(cr)).to_f32();
             let (mut r8, mut r9, mut r10) = ([0f32; 3], [0f32; 3], [0f32; 3]);
             let top = placeable_get_top_direction(veh, GPtr::from_raw(r8.as_mut_ptr()));
-            let a1 = vector_scale(GPtr::from_raw(r9.as_mut_ptr()), top, crf);
-            let a2 = vector_scale(GPtr::from_raw(r10.as_mut_ptr()), a1, f32::from_bits(0x3CA3_D70A));
+            let a1 = GPtr::<u8>::cast::<f32>(vector_scale(GPtr::<f32>::cast::<u8>(GPtr::from_raw(r9.as_mut_ptr())), top.cast::<u8>(), crf));
+            let a2 = GPtr::<u8>::cast::<f32>(vector_scale(GPtr::<f32>::cast::<u8>(GPtr::from_raw(r10.as_mut_ptr())), a1.cast::<u8>(), f32::from_bits(0x3CA3_D70A)));
             wr::<f32>(veh, 0x44, a2.read());
             wr::<f32>(veh, 0x48, a2.wrapping_index(1).read());
             wr::<f32>(veh, 0x4C, a2.wrapping_index(2).read());
@@ -1692,11 +1671,8 @@ pub fn generate_one_random_car() {
     model_info_use_counter(model_info(i32::from(rd::<i16>(veh, 0x22))));
 }
 
-use crate::bindings::join_car_with_road_system_goto_coors;
-orig! {
-    /// `CCarCtrl::GenerateOneEmergencyServicesCar(uint32, CVector)` (0x42B7D0)
-    fn generate_one_emergency_services_car(model: u32, x: f32, y: f32, z: f32) -> GPtr<u8> = cdecl 0x42B7D0 => unported;
-}
+use sa_world::bindings::join_car_with_road_system_goto_coors;
+use crate::bindings::generate_one_emergency_services_car;
 
 /// `CCarCtrl::ScriptGenerateOneEmergencyServicesCar(uint32 model, CVector target)` (stub 0x42FBC0 -> 0x1570100,
 /// AL): false unless the model is loaded; `GenerateOneEmergencyServicesCar(model, target)` (false on null);
@@ -1709,7 +1685,7 @@ pub fn script_generate_one_emergency_services_car(model: u32, tx: f32, ty: f32, 
     if !model_loaded(model) {
         return 0;
     }
-    let veh = generate_one_emergency_services_car(model, tx, ty, tz);
+    let veh = generate_one_emergency_services_car(model as i32, tx, ty, tz);
     if veh.is_null() {
         return 0;
     }
@@ -1717,7 +1693,7 @@ pub fn script_generate_one_emergency_services_car(model: u32, tx: f32, ty: f32, 
     wr::<f32>(veh, 0x3F0, ty);
     wr::<f32>(veh, 0x3F4, tz);
     let mut t = [tx, ty, tz];
-    let r = join_car_with_road_system_goto_coors(veh, GPtr::from_raw(t.as_mut_ptr()), 0, 0);
+    let r = join_car_with_road_system_goto_coors(veh, GPtr::<f32>::cast::<u32>(GPtr::from_raw(t.as_mut_ptr())), 0, 0);
     wr::<u8>(veh, 0x3BA, if r != 0 { 9 } else { 8 });
     1
 }
@@ -1726,14 +1702,9 @@ use sa_world::bindings::automobile_place_on_road_properly;
 use sa_world::bindings::bike_place_on_road_properly;
 use sa_world::bindings::get_distance_from_centre_of_mass_to_base_of_model;
 use sa_world::bindings::join_car_with_road_system;
-orig! {
-    /// `CWorld::FindGroundZForCoord(float, float)` (0x569660, ST0)
-    fn find_ground_z_for_coord(x: f32, y: f32) -> f64 = cdecl 0x569660 => unported;
-    /// `CTheScripts::ClearSpaceForMissionEntity(const CVector&, CEntity*)` (0x486B00)
-    fn clear_space_for_mission_entity(p: GPtr<f32>, e: GPtr<u8>) = cdecl 0x486B00 => unported;
-    /// `CMissionCleanup::AddEntityToList(int32 handle, uint8 type)` (0x4637E0, `ret 8`)
-    fn mission_cleanup_add_entity_to_list(this: GPtr<u8>, handle: i32, ty: u32) = thiscall 0x4637E0 => unported;
-}
+use sa_world::bindings::clear_space_for_mission_entity;
+use sa_world::bindings::find_ground_z_for_coord;
+use sa_world::bindings::mission_cleanup_add as mission_cleanup_add_entity_to_list;
 
 /// The vehicle pool handle `(index << 8) | flags[index]` (index = (veh - objects) / 0xA18).
 fn vehicle_handle(veh: GPtr<u8>) -> i32 {
@@ -1789,7 +1760,7 @@ pub fn create_car_for_script(model: i32, px: f32, py: f32, pz: f32, mission_clea
         wr::<u8>(veh, 0x5B9, rd::<u8>(veh, 0x5B9) | 1);
     }
     let mut pos = [px, py, z];
-    clear_space_for_mission_entity(GPtr::from_raw(pos.as_mut_ptr()), veh);
+    clear_space_for_mission_entity(GPtr::<f32>::cast::<u8>(GPtr::from_raw(pos.as_mut_ptr())), veh);
     wr::<u8>(veh, 0x36, (rd::<u8>(veh, 0x36) & 7) | 0x20);
     if boat {
         wr::<u8>(veh, 0x428, (rd::<u8>(veh, 0x428) & 0xEF) | 8);
@@ -1866,14 +1837,14 @@ pub fn set_coords_of_script_car(veh: GPtr<u8>, px: f32, py: f32, pz: f32, reset_
     entity_teleport(veh, px, py, z, reset_rotation);
     let mut pos = [px, py, z];
     if train {
-        clear_space_for_mission_entity(GPtr::from_raw(pos.as_mut_ptr()), veh);
+        clear_space_for_mission_entity(GPtr::<f32>::cast::<u8>(GPtr::from_raw(pos.as_mut_ptr())), veh);
     } else {
         match rd::<u32>(veh, 0x590) {
             0 | 11 => automobile_place_on_road_properly(veh),
             9 => bike_place_on_road_properly(veh),
             _ => {}
         }
-        clear_space_for_mission_entity(GPtr::from_raw(pos.as_mut_ptr()), veh);
+        clear_space_for_mission_entity(GPtr::<f32>::cast::<u8>(GPtr::from_raw(pos.as_mut_ptr())), veh);
         join_car_with_road_according_to_mission(veh);
     }
     wr::<u8>(veh, 0x3BB, 0);
@@ -1934,7 +1905,7 @@ pub fn generate_one_emergency_services_car_port(model: u32, tx: f32, ty: f32, _t
             && rd::<u8>(node_of(n1[0]), 0x18) & 0x80 == 0
         {
             let mut cnt = [0i16; 2];
-            find_objects_kinda_colliding(cp, 10.0, 1, GPtr::from_raw(cnt.as_mut_ptr()), 2, 0, 0, 1, 1, 0, 0);
+            find_objects_kinda_colliding(cp, 10.0, 1, GPtr::from_raw(cnt.as_mut_ptr()), 2, GPtr::NULL, 0, 1, 1, 0, 0);
             found = cnt[0] == 0;
         }
         i += 1;
@@ -1989,10 +1960,10 @@ pub fn generate_one_emergency_services_car_port(model: u32, tx: f32, ty: f32, _t
     let cpp = GPtr::<u8>::from_raw(cpt.as_mut_ptr().cast());
     let entp = GPtr::from_raw(ent.as_mut_ptr());
     let cp = GPtr::<f32>::from_raw(coors.as_mut_ptr());
-    if process_vertical_line_g(cp, 1000.0, cpp, entp, 1, 0, 0, 0, 1, 0, 0) != 0 {
+    if process_vertical_line_g(cp.cast::<u8>(), 1000.0, cpp, entp.cast::<u8>(), 1, 0, 0, 0, 1, 0, GPtr::NULL) != 0 {
         gz = rd::<f32>(cpp, 8);
     }
-    if process_vertical_line_g(cp, -1000.0, cpp, entp, 1, 0, 0, 0, 1, 0, 0) != 0 {
+    if process_vertical_line_g(cp.cast::<u8>(), -1000.0, cpp, entp.cast::<u8>(), 1, 0, 0, 0, 1, 0, GPtr::NULL) != 0 {
         let cz = cp.wrapping_index(2).read();
         let a = abs_fchs(x(rd::<f32>(cpp, 8)).fsub_m(cz));
         let b = abs_fchs(x(gz).fsub_m(cz));

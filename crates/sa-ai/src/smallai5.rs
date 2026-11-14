@@ -5,6 +5,7 @@
 //! through `orig!` at the original address.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -165,7 +166,7 @@ pub fn inform_group_event_queue_flush() {
         let e: GPtr<u8> = GPtr::from_addr(INFORM_GROUP_QUEUE + 0x10 * i);
         let p = rd::<GPtr<u8>>(e, 0);
         if !p.is_null() {
-            entity_clean_up_old_reference(p, e);
+            entity_clean_up_old_reference(p, e.cast::<GPtr<u8>>());
             wr::<u32>(e, 0, 0);
         }
         let ev = rd::<GPtr<u8>>(e, 8);

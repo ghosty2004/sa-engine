@@ -5,8 +5,9 @@
 //! The spec's "uninitialised `bike` local" is initialised: the prologue stores EBX (0) to `[esp+0xC]` before
 //! `push esi; push edi`, which is the `[esp+0x14]` the body reads as `bike`.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
@@ -20,12 +21,8 @@ use sa_core::bindings::matrix_mul_vec;
 use sa_world::bindings::localisation_blood;
 use sa_world::bindings::pad_start_shake;
 use sa_world::bindings::physical_apply_move_force;
-orig! {
-    /// `CAEVehicleAudioEntity::AddAudioEvent(eAudioEvents, float)` (0x4F6420)
-    fn add_audio_event(a: GPtr<u8>, ev: u32, vol: u32) = thiscall 0x4F6420 => unported;
-    /// `FUN_0065da70(CVector force, CVector point)` (0x65DA70): re-pushes its vectors to `ApplyTurnForce` (raw float words)
-    fn apply_turn_force_65da70(p: GPtr<u8>, fx: u32, fy: u32, fz: u32, px: u32, py: u32, pz: u32) = thiscall 0x65DA70 => unported;
-}
+use sa_world::bindings::apply_turn_force_6 as apply_turn_force_65da70;
+use sa_world::bindings::audio_add_event as add_audio_event;
 
 /// `|a - b| < lim` as the original tests it: the difference negated when below 0 (`test ah, 5; jp`), then
 /// `jp` past the body unless strictly less (NaN fails).
@@ -49,7 +46,7 @@ fn col_model(v: GPtr<u8>) -> GPtr<u8> {
 /// The shared wheel test: `W = matrix * o`; `|W.z - ped.z| < 2` and `(W.y - ped.y)² + (W.x - ped.x)² < 1`.
 fn wheel_on_ped(ped: GPtr<u8>, v: GPtr<u8>, o: &mut [f32; 3]) -> Option<[f32; 3]> {
     let mut w = [0f32; 3];
-    matrix_mul_vec(lp(&mut w).cast(), rd::<GPtr<u8>>(v, 0x14), lp(o).cast());
+    matrix_mul_vec(GPtr::<u8>::cast::<f32>(lp(&mut w).cast()), rd::<GPtr<u8>>(v, 0x14), lp(o).cast());
     let pp = vec3(ent_pos(ped));
     if !within(w[2], pp[2], 2.0) {
         return None;
@@ -65,11 +62,11 @@ fn wheel_on_ped(ped: GPtr<u8>, v: GPtr<u8>, o: &mut [f32; 3]) -> Option<[f32; 3]
 /// The push on the vehicle at the wheel: `ApplyMoveForce((0, 0, up))`, then 0x65DA70 with `(0, 0, turn)` at
 /// `W - vehicle position`, and the pad shake (300, 70) when it is the player's vehicle.
 fn push_vehicle(v: GPtr<u8>, w: [f32; 3], up: f32, turn: impl FnOnce() -> f32) {
-    physical_apply_move_force(v, 0, 0, up.to_bits());
+    physical_apply_move_force(v, f32::from_bits(0), f32::from_bits(0), f32::from_bits(up.to_bits()));
     let t = turn();
     let p = vec3(ent_pos(v));
     let d = [f32_of(x(w[0]).fsub_m(p[0])), f32_of(x(w[1]).fsub_m(p[1])), f32_of(x(w[2]).fsub_m(p[2]))];
-    apply_turn_force_65da70(v, 0, 0, t.to_bits(), d[0].to_bits(), d[1].to_bits(), d[2].to_bits());
+    apply_turn_force_65da70(v, f32::from_bits(0), f32::from_bits(0), f32::from_bits(t.to_bits()), f32::from_bits(d[0].to_bits()), f32::from_bits(d[1].to_bits()), f32::from_bits(d[2].to_bits()));
     if v == find_player_vehicle(-1, 0) {
         pad_start_shake(get_pad(0), 300, 70, 0);
     }
@@ -126,7 +123,7 @@ pub fn ped_make_tyres_muddy_sector_list(this: GPtr<u8>, list: GPtr<u8>) {
                 let Some(wp) = wheel_on_ped(this, car, &mut o) else { continue };
                 if localisation_blood() != 0 {
                     wr::<u8>(car, 0x820 + w, 1);
-                    add_audio_event(car.byte_add(0x138), 0x78, 0);
+                    add_audio_event(car.byte_add(0x138), 0x78, f32::from_bits(0));
                 }
                 if x(rd::<f32>(car, 0x8C)).fcom(x(500.0)).test_any(0x41) {
                     continue;
@@ -145,7 +142,7 @@ pub fn ped_make_tyres_muddy_sector_list(this: GPtr<u8>, list: GPtr<u8>) {
                 let Some(wp) = wheel_on_ped(this, bike, &mut o) else { continue };
                 if localisation_blood() != 0 {
                     wr::<u8>(bike, 0x74C + w, 1);
-                    add_audio_event(bike.byte_add(0x138), 0x78, 0);
+                    add_audio_event(bike.byte_add(0x138), 0x78, f32::from_bits(0));
                 }
                 if x(rd::<f32>(bike, 0x8C)).fcom(x(100.0)).test_any(0x41) {
                     continue;

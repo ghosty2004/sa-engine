@@ -38,7 +38,7 @@ const K_360: u32 = 0x43B4_0000;
 const K_ZERO: u32 = 0;
 const K_DEG2RAD: u32 = 0x3C8E_FA35;
 
-use crate::bindings::object_get_ref_;
+use sa_world::bindings::object_get_ref_;
 use crate::bindings::scripted_task_status;
 use sa_core::bindings::crt_strncpy as strncpy_;
 use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
@@ -52,7 +52,7 @@ use sa_world::bindings::find_zone_by_label;
 use sa_world::bindings::flush_immediately;
 use sa_world::bindings::get_modelling_matrix;
 use sa_world::bindings::get_ped_flag;
-use sa_world::bindings::matrix_ctor_rw as matrix_from_rw;
+use sa_core::bindings::matrix_ctor_rw as matrix_from_rw;
 use sa_world::bindings::placeable_set_matrix;
 use sa_world::bindings::seek_entity_aiming_ctor as task_seek_entity_aiming_ctor;
 use sa_world::bindings::sequence_add_task as task_sequence_add;
@@ -62,6 +62,23 @@ use sa_world::bindings::set_ped_decision_maker_type;
 use sa_world::bindings::task_go_pick_up_entity_ctor as task_pickup_object_ctor;
 use sa_world::bindings::task_jetpack_ctor;
 use sa_world::bindings::use_sequence_ctor as task_use_sequence_ctor;
+use crate::bindings::give_ped_scripted_task;
+use crate::bindings::read_label;
+use crate::bindings::vehicle_get_ref;
+use sa_core::bindings::get_pad;
+use sa_core::bindings::quat_get as quaternion_get;
+use sa_core::bindings::quaternion_set;
+use sa_stream::bindings::find_ipl_slot;
+use sa_stream::bindings::remove_ipl_and_ignore;
+use sa_stream::bindings::request_ipl_and_ignore;
+use sa_world::bindings::acq_clear_as_acquaintance as clear_as_acquaintance;
+use sa_world::bindings::get_actual_script_thing_index;
+use sa_world::bindings::go_to_point_and_stand_still_ctor as task_go_to_point_ctor;
+use sa_world::bindings::group_intel_set_default_task_allocator_type as set_default_task_allocator_type;
+use sa_world::bindings::heading_task_ctor as task_slide_to_coord_ctor;
+use sa_world::bindings::kill_ped_on_foot_ctor as task_kill_ped_on_foot_ctor;
+use sa_world::bindings::ped_get_ref as ped_get_ref_;
+use sa_world::bindings::placeable_set_posn;
 orig! {
     /// A virtual `CVehicle` method without arguments (thiscall through the vtable slot read at run time)
     fn vcall0(f: u32, this: GPtr<u8>) = thiscall dyn => unported;
@@ -71,24 +88,13 @@ orig! {
     fn set_new_train_position(t: GPtr<u8>, x: u32, y: u32, z: u32) = cdecl 0x6F7140 => unported;
     /// `CTrain::ReleaseOneMissionTrain(CTrain*)` (0x6F5DF0)
     fn release_one_mission_train(t: GPtr<u8>) = cdecl 0x6F5DF0 => unported;
-    /// `CRunningScript::ReadTextLabelFromScript(char*, uint8)` (0x463D50)
-    fn read_label(s: Scr, buf: GPtr<u8>, len: u32) = thiscall 0x463D50 => crate::vm::read_text_label_from_script;
     /// `CBaseModelInfo` virtual slot 0x10 (`GetModelType()`), AL
     fn model_info_type(mi: GPtr<u8>) -> u8 = thiscall vslot 0x10 => unported;
-    /// `CRunningScript::GivePedScriptedTask(int32 pedHandle, CTask*, int32 opcode)` (0x465C20)
-    fn give_ped_scripted_task(s: Scr, ped: u32, task: GPtr<u8>, command: u32) = thiscall 0x465C20 => unported;
     /// `CTaskComplexSeekEntity<CEntitySeekPosCalculatorStandard>::CTaskComplexSeekEntity(CEntity*, int32 time,
     /// int32 scanInterval, float, float, float, bool, bool)` (0x46AC10); floats raw
     #[allow(clippy::too_many_arguments)]
     fn task_seek_entity_ctor(t: GPtr<u8>, e: GPtr<u8>, time: u32, scan: u32, a: u32, b: u32, c: u32, d: u32, e2: u32) -> GPtr<u8> = thiscall 0x46AC10 => unported;
-    /// `CIplStore::FindIplSlot(const char*)` (0x404AC0)
-    fn find_ipl_slot(name: GPtr<u8>) -> u32 = cdecl 0x404AC0 => unported;
-    /// `CIplStore::RequestIplAndIgnore` (0x405850) / `RemoveIplAndIgnore` (0x405890) / `RemoveIplWhenFarAway`
-    /// (0x4058D0), `(int32 slot)`
-    fn request_ipl_and_ignore(slot: u32) = cdecl 0x405850 => unported;
-    fn remove_ipl_and_ignore(slot: u32) = cdecl 0x405890 => unported;
     fn remove_ipl_when_far_away(slot: u32) = cdecl 0x4058D0 => unported;
-    fn clear_as_acquaintance(a: GPtr<u8>, ty: u32, fl: u32) = thiscall 0x608980 => unported;
     /// `CAcquaintance::ClearAcquaintances(int32)` (0x6089A0)
     fn clear_acquaintances(a: GPtr<u8>, ty: u32) = thiscall 0x6089A0 => unported;
     /// `CAutomobile::GetCarPitch()` (0x6A6050), ST0 (an FPATAN-based result read as f64, the MATH-2 model)
@@ -103,8 +109,6 @@ orig! {
     fn release_picked_up_entity_with_winch(v: GPtr<u8>) = thiscall 0x6D3CB0 => unported;
     /// `CTrain::FindCarriage(CTrain*, uint8)` (0x6F5EB0)
     fn find_carriage(t: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x6F5EB0 => unported;
-    /// `CPool<CVehicle>::GetRef(CVehicle*)` (0x424160)
-    fn vehicle_get_ref(pool: GPtr<u8>, v: GPtr<u8>) -> u32 = thiscall 0x424160 => unported;
     /// `CVehicle::QueryPickedUpEntityWithWinch()` (0x6D3CF0)
     fn query_picked_up_entity_with_winch(v: GPtr<u8>) -> GPtr<u8> = thiscall 0x6D3CF0 => unported;
     /// `CObject::GetObjectCarriedWithRope()` (0x59F3C0)
@@ -124,16 +128,10 @@ orig! {
     fn set_rope_height(o: GPtr<u8>, h: u32) = thiscall 0x59F3A0 => unported;
     /// `CObject::ReleaseObjectCarriedWithRope()` (0x59F3E0)
     fn release_object_carried_with_rope(o: GPtr<u8>) = thiscall 0x59F3E0 => unported;
-    /// `CPool<CPed>::GetRef(CPed*)` / `CPool<CObject>::GetRef(CObject*)` with the raw result (0x4442D0 / 0x465070)
-    fn ped_get_ref_(pool: GPtr<u8>, p: GPtr<u8>) -> u32 = thiscall 0x4442D0 => unported;
-    /// `CTheScripts::GetActualScriptThingIndex(int32 ref, uint8 type)` (0x4839A0)
-    fn get_actual_script_thing_index(r: u32, ty: u32) -> i32 = cdecl 0x4839A0 => unported;
     /// `CTask` virtual slot 8 (`GetSubTask()`)
     fn task_get_sub_task(t: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x08 => unported;
     /// `CTask` virtual slot 0x10 (`GetTaskType()`)
     fn task_get_type(t: GPtr<u8>) -> u32 = thiscall vslot 0x10 => unported;
-    /// `CTaskComplexKillPedOnFoot::CTaskComplexKillPedOnFoot(CPed*, int32, uint32, uint32, int32, int8)` (0x620E30)
-    fn task_kill_ped_on_foot_ctor(t: GPtr<u8>, target: GPtr<u8>, time: u32, a: u32, b: u32, c: u32, d: u32) -> GPtr<u8> = thiscall 0x620E30 => unported;
     /// `CTagManager::GetNearestTag(const CVector&)` (0x49D160)
     fn get_nearest_tag(pos: GPtr<u32>) -> GPtr<u8> = cdecl 0x49D160 => unported;
     /// 0x493960 (cdecl `(CPed*, int32* out)`, AL: the searchlight query; writes `*out` when it returns true)
@@ -142,8 +140,6 @@ orig! {
     fn get_unique_script_thing_index(i: u32, ty: u32) -> u32 = cdecl 0x4810C0 => unported;
     /// `CAudioEngine::GetBeatInfo()` (0x5071B0), ECX = AudioEngine 0xB6BC90
     fn get_beat_info(a: GPtr<u8>) -> GPtr<u8> = thiscall 0x5071B0 => unported;
-    /// `CPedGroupIntelligence::SetDefaultTaskAllocatorType(int32)` (0x5FBB70)
-    fn set_default_task_allocator_type(g: GPtr<u8>, t: u32) = thiscall 0x5FBB70 => unported;
     /// `CTaskSimpleSetCharDecisionMaker::CTaskSimpleSetCharDecisionMaker(int32)` (0x46A470)
     fn task_set_char_dm_ctor(t: GPtr<u8>, dm: i32) -> GPtr<u8> = thiscall 0x46A470 => unported;
     /// `CRadar::SetBlipAlwaysDisplayInZoom(int32, uint8)` (0x583DB0)
@@ -152,19 +148,6 @@ orig! {
     /// (0x45A060, AL)
     fn request_recording_file(i: u32) = cdecl 0x45A020 => unported;
     fn has_recording_file_been_loaded(i: u32) -> u8 = cdecl 0x45A060 => unported;
-    /// 0x59C3E0 (thiscall on a `CQuaternion`, `RwMatrix*`; gr `CQuaternion::Set(const RwMatrix&)`)
-    fn quaternion_set(q: GPtr<u32>, m: GPtr<u8>) = thiscall 0x59C3E0 => unported;
-    /// `CQuaternion::Get(RwMatrix*)` (0x59C080)
-    fn quaternion_get(q: GPtr<u32>, m: GPtr<u8>) = thiscall 0x59C080 => unported;
-    /// `CPlaceable::SetPosn(const CVector&)` (0x4241C0)
-    fn placeable_set_posn(e: GPtr<u8>, p: GPtr<u32>) = thiscall 0x4241C0 => unported;
-    /// 0x53FB70 (cdecl `(int32)`: `CPad::GetPad`)
-    fn get_pad(i: u32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CTaskComplexGoToPointAndStandStill::CTaskComplexGoToPointAndStandStill(int32, const CVector&, float,
-    /// float, bool, bool)` (0x668120); floats raw
-    fn task_go_to_point_ctor(t: GPtr<u8>, ms: u32, pos: GPtr<u32>, r: u32, r2: u32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x668120 => unported;
-    /// `CTaskSimpleSlideToCoord::CTaskSimpleSlideToCoord(const CVector&, float, float)` (0x66C3E0); raw
-    fn task_slide_to_coord_ctor(t: GPtr<u8>, pos: GPtr<u32>, h: u32, speed: u32) -> GPtr<u8> = thiscall 0x66C3E0 => unported;
 }
 
 /// `this->vtable[0xF8 / 4]()` (`CVehicle::BreakTowLink`)
@@ -285,7 +268,7 @@ pub fn process_commands_1900_to_1999(s: Scr, command: u32) -> i8 {
                 let b = GPtr::<u32>::from_addr(0x859E30).read();
                 task_seek_entity_ctor(k, v, t, 1000, p3, b, a, 1, 1)
             });
-            give_ped_scripted_task(s, p0, task, command);
+            give_ped_scripted_task(s, p0 as i32, task, command);
         }
         // 0776 REQUEST_IPL (0x46B6D4) / 0777 REMOVE_IPL (0x46B6FC) / 0778 REMOVE_IPL_DISCREETLY (0x46B724): 18-byte
         // label (zeroed 19-byte buffer); `CIplStore::RequestIplAndIgnore / RemoveIplAndIgnore /
@@ -294,11 +277,11 @@ pub fn process_commands_1900_to_1999(s: Scr, command: u32) -> i8 {
             let mut label = [0u8; 19];
             let lp = GPtr::from_raw(label.as_mut_ptr());
             read_label(s, lp, 0x12);
-            let slot = find_ipl_slot(lp);
+            let slot = find_ipl_slot(lp) as u32;
             if command == 0x0776 {
-                request_ipl_and_ignore(slot);
+                request_ipl_and_ignore(slot as i32);
             } else if command == 0x0777 {
-                remove_ipl_and_ignore(slot);
+                remove_ipl_and_ignore(slot as i32);
             } else {
                 remove_ipl_when_far_away(slot);
             }
@@ -309,9 +292,9 @@ pub fn process_commands_1900_to_1999(s: Scr, command: u32) -> i8 {
             collect(s, 3);
             let (a, t) = (sp(1), sp(2));
             let p = ped(sp(0));
-            let fl = get_ped_flag(t);
+            let fl = get_ped_flag(t as i32);
             if command == 0x077A {
-                set_as_acquaintance(p.byte_add(0x4E0), a, fl);
+                set_as_acquaintance(p.byte_add(0x4E0), a as i32, fl);
             } else {
                 clear_as_acquaintance(p.byte_add(0x4E0), a, fl);
             }
@@ -348,7 +331,7 @@ pub fn process_commands_1900_to_1999(s: Scr, command: u32) -> i8 {
         // 1)` +0xC / +0x14; store 1.
         0x0781 | 0x0782 => {
             collect(s, 1);
-            let wi = get_weapon_info(sp(0), 1);
+            let wi = get_weapon_info(sp(0) as i32, 1);
             let off = if command == 0x0781 { 0xC } else { 0x14 };
             set_sp(0, wi.byte_add(off).cast::<u32>().read());
             store(s, 1);
@@ -427,7 +410,7 @@ pub fn process_commands_1900_to_1999(s: Scr, command: u32) -> i8 {
             let p0 = sp(0);
             let t = new_task(0x14, task_climb_ctor);
             t.byte_add(0x10).write(b);
-            give_ped_scripted_task(s, p0, t, command);
+            give_ped_scripted_task(s, p0 as i32, t, command);
         }
         // 0790 BUY_ITEM (0x46BCC6): `CShopping::Buy(P0, 0)`.
         0x0790 => {
@@ -486,7 +469,7 @@ pub fn process_commands_1900_to_1999(s: Scr, command: u32) -> i8 {
                 let t = new_task(0x1C, |t| task_use_sequence_ctor(t, i));
                 t.byte_add(0x14).cast::<u32>().write(p3);
                 t.byte_add(0x10).cast::<u32>().write(p2);
-                give_ped_scripted_task(s, p0, t, command);
+                give_ped_scripted_task(s, p0 as i32, t, command);
             }
         }
         // 07A1 SET_NEXT_DESIRED_MOVE_STATE (0x46BF39): dword 0x8D237C = P0.
@@ -501,7 +484,7 @@ pub fn process_commands_1900_to_1999(s: Scr, command: u32) -> i8 {
             let (p0, p2, p3) = (sp(0), sp(2), sp(3));
             let target = ped(sp(1));
             let t = new_task(0x18, |t| task_seek_entity_aiming_ctor(t, target, p2, p3));
-            give_ped_scripted_task(s, p0, t, command);
+            give_ped_scripted_task(s, p0 as i32, t, command);
         }
         // 07A4 GET_SEQUENCE_PROGRESS_RECURSIVE (0x46BFD8): `p = PED(P0)`; `a = b = -1`; if
         // `CPedScriptedTaskRecord::GetStatus(p, 0x618)`: `t = p->m_pIntelligence+0x10` (not null-checked), `a =
@@ -535,8 +518,8 @@ pub fn process_commands_1900_to_1999(s: Scr, command: u32) -> i8 {
             collect(s, 3);
             let (p0, p2) = (sp(0), sp(2));
             let target = ped(sp(1));
-            let t = new_task(0x38, |t| task_kill_ped_on_foot_ctor(t, target, p2, 0, 0, 0, 1));
-            give_ped_scripted_task(s, p0, t, command);
+            let t = new_task(0x38, |t| task_kill_ped_on_foot_ctor(t, target, p2 as i32, 0, 0, 0, 1));
+            give_ped_scripted_task(s, p0 as i32, t, command);
         }
         // 07A6 GET_NEAREST_TAG_POSITION (0x46C0AF): `t = CTagManager::GetNearestTag(&(P0, P1, P2))`; P0..P2 = t's
         // position, or -4000.0f (0xC57A0000) each; store 3.
@@ -563,7 +546,7 @@ pub fn process_commands_1900_to_1999(s: Scr, command: u32) -> i8 {
             collect(s, 1);
             let p0 = sp(0);
             let t = new_task(0x70, |t| task_jetpack_ctor(t, 0, 0x4120_0000, 0, 0));
-            give_ped_scripted_task(s, p0, t, command);
+            give_ped_scripted_task(s, p0 as i32, t, command);
         }
         // 07A8 SET_AREA51_SAM_SITE (0x46C1A7): `CObject::bArea51SamSiteDisabled` (0xBB4A72) = P0 == 0.
         0x07A8 => {
@@ -688,7 +671,7 @@ pub fn process_commands_1900_to_1999(s: Scr, command: u32) -> i8 {
                 set_ped_decision_maker_type(intel, dm);
             } else {
                 let t = new_task(0xC, |t| task_set_char_dm_ctor(t, dm));
-                give_ped_scripted_task(s, u32::MAX, t, command);
+                give_ped_scripted_task(s, u32::MAX as i32, t, command);
             }
         }
         // 07BD DELETE_MISSION_TRAIN (0x46C615)
@@ -728,7 +711,7 @@ pub fn process_commands_1900_to_1999(s: Scr, command: u32) -> i8 {
             let e = if command == 0x07C3 { obj(sp(0)) } else { veh(sp(0)) };
             let m = get_modelling_matrix(e);
             let mut q = [0u32; 4];
-            quaternion_set(GPtr::from_raw(q.as_mut_ptr()), m);
+            quaternion_set(GPtr::<u32>::cast::<u8>(GPtr::from_raw(q.as_mut_ptr())), m);
             for (i, v) in q.iter().enumerate() {
                 set_sp(i as i32, *v);
             }
@@ -749,7 +732,7 @@ pub fn process_commands_1900_to_1999(s: Scr, command: u32) -> i8 {
             collect(s, 2);
             let o = obj(sp(1));
             let t = new_task(0x34, |t| task_pickup_object_ctor(t, o, 0x51));
-            give_ped_scripted_task(s, sp(0), t, command);
+            give_ped_scripted_task(s, sp(0) as i32, t, command);
         }
         // 07CB LISTEN_TO_PLAYER_GROUP_COMMANDS (0x46C9F2): `PED(P0)` +0x474 bit 5 = P1 == 0.
         0x07CB => {
@@ -794,7 +777,7 @@ fn heli_keep_entity_in_view(s: Scr) {
     let field = h.byte_add(0x41C);
     let old = field.cast::<GPtr<u8>>().read();
     if !old.is_null() {
-        clean_up_old_reference(old, field);
+        clean_up_old_reference(old, field.cast::<GPtr<u8>>());
     }
     field.cast::<GPtr<u8>>().write(e);
     register_reference(e, field);
@@ -837,7 +820,7 @@ fn grabbed_entity_tail(s: Scr, e: GPtr<u8>) {
         match e.byte_add(0x36).read() & 7 {
             2 => set_sp(0, vehicle_get_ref(pool(VEHICLE_POOL), e)),
             3 => set_sp(1, ped_get_ref_(pool(PED_POOL), e)),
-            4 => set_sp(2, object_get_ref_(pool(OBJECT_POOL), e)),
+            4 => set_sp(2, object_get_ref_(pool(OBJECT_POOL), e) as u32),
             _ => {}
         }
     }
@@ -919,7 +902,7 @@ fn set_quaternion(s: Scr, object: bool) {
     let mut q = [sp(1), sp(2), sp(3), sp(4)];
     let mut rwm = [0u32; 16];
     let rp = GPtr::from_raw(rwm.as_mut_ptr()).cast::<u8>();
-    quaternion_get(GPtr::from_raw(q.as_mut_ptr()), rp);
+    quaternion_get(GPtr::<u32>::cast::<u8>(GPtr::from_raw(q.as_mut_ptr())), rp);
     let p = ent_pos(e);
     let mut pos = [p.read(), p.byte_add(4).read(), p.byte_add(8).read()];
     let mut tmp = [0u32; 18];
@@ -927,7 +910,7 @@ fn set_quaternion(s: Scr, object: bool) {
     matrix_from_rw(tp, rp, 0);
     placeable_set_matrix(e, tp);
     matrix_dtor(tp);
-    placeable_set_posn(e, GPtr::from_raw(pos.as_mut_ptr()));
+    placeable_set_posn(e, GPtr::<u32>::cast::<f32>(GPtr::from_raw(pos.as_mut_ptr())));
 }
 
 /// 07CD TASK_CHAR_SLIDE_TO_COORD (0x46CA88): `CollectParameters(6)`: ped P0, x P1, y P2, z P3, heading P4 (deg),
@@ -952,12 +935,12 @@ fn task_char_slide_to_coord(s: Scr, command: u32) {
     let t1 = new_task(0x28, |t| {
         let a = GPtr::<u32>::from_addr(0x86FC84).read();
         let b = GPtr::<u32>::from_addr(0x86FC88).read();
-        task_go_to_point_ctor(t, 4, vp, a, b, 0, 0)
+        task_go_to_point_ctor(t, 4, vp, f32::from_bits(a), f32::from_bits(b), 0, 0)
     });
     task_sequence_add(seq, t1);
-    let t2 = new_task(0x80, |t| task_slide_to_coord_ctor(t, vp, h.to_bits(), speed));
+    let t2 = new_task(0x80, |t| task_slide_to_coord_ctor(t, vp.cast::<u8>(), h.to_bits(), speed));
     task_sequence_add(seq, t2);
-    give_ped_scripted_task(s, p0, seq, command);
+    give_ped_scripted_task(s, p0 as i32, seq, command);
 }
 
 pub const HOOKS: &[HookReg] = &[HOOK_PROCESS_COMMANDS_1900_TO_1999];

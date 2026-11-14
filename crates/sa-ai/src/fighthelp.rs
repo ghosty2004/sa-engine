@@ -12,6 +12,7 @@
 //! +0x84 u8 flags (low byte), +0x85 u8 flags (high byte) (the `CMeleeInfo` layout of PORT-AI-2).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::orig::at_site;
 use sa_core::{hook, orig};
@@ -69,20 +70,20 @@ use sa_world::world::common::entity_pos as ent_pos;
 
 use sa_core::field::ptr_of as buf;
 
-use crate::bindings::anim_blend_animation;
-use crate::bindings::anim_get_anim_block_name;
-use crate::bindings::anim_set_delete_callback;
-use crate::bindings::assoc_set_finish_callback as anim_set_finish_callback;
-use crate::bindings::clump_get_association as clump_get_association_id;
+use sa_world::bindings::anim_blend_animation;
+use sa_world::bindings::anim_get_anim_block_name;
+use sa_core::bindings::anim_set_delete_callback;
+use sa_core::bindings::assoc_set_finish_callback as anim_set_finish_callback;
+use sa_core::bindings::clump_get_association as clump_get_association_id;
 use crate::bindings::fight_61c9b0;
-use crate::bindings::ped_set_move_state;
+use sa_world::bindings::ped_set_move_state;
 use sa_core::bindings::find_player_ped as world_find_player_ped;
 use sa_core::bindings::get_weapon_info as weapon_info_get;
 use sa_core::bindings::matrix_dtor;
 use sa_core::bindings::matrix_set_translate_only;
 use sa_core::bindings::ped_is_alive;
 use sa_core::bindings::streaming_request_model;
-use sa_stream::bindings::anim_add_block_ref;
+use sa_core::bindings::anim_add_block_ref;
 use sa_stream::bindings::anim_remove_block_ref;
 use sa_stream::bindings::ped_is_player;
 use sa_stream::bindings::placeable_allocate_matrix;
@@ -96,6 +97,12 @@ use sa_world::bindings::intel_get_task_duck;
 use sa_world::bindings::matrix_copy_ctor;
 use sa_world::bindings::player_get_wanted_level;
 use sa_world::bindings::stats_get_fat_and_muscle_modifier;
+use sa_core::bindings::assoc_set_current_time as anim_set_current_time;
+use sa_core::bindings::get_animation_block as anim_get_animation_block;
+use sa_stream::bindings::animate_ped_col_model_skinned_world as ped_mi_animate_col_model_skinned_world;
+use sa_world::bindings::entity_get_col_model;
+use sa_world::bindings::event_sound_quiet_ctor;
+use sa_world::bindings::process_col_models as collision_process_col_models;
 orig! {
     // ---- CTaskSimpleFight (unnamed) ----
     /// `FUN_0061d6f0(CPed*)` (0x61D6F0, `ret 4`; target on the ground test)
@@ -108,21 +115,8 @@ orig! {
     fn fight_hit_car(t: GPtr<u8>, ped: GPtr<u8>, v: GPtr<u8>, pos: u32, normal: u32, a: u32, b: u32) = thiscall 0x61D0B0 => unported;
     /// `FUN_0061d400(CPed*, CObject*, CVector* pos, CVector* normal, int16, uint8)` (0x61D400, `ret 0x18`; hit an object)
     fn fight_hit_obj(t: GPtr<u8>, ped: GPtr<u8>, o: GPtr<u8>, pos: u32, normal: u32, a: u32, b: u32) = thiscall 0x61D400 => unported;
-    /// `CAnimBlendAssociation::SetCurrentTime(float)` (0x4CEA80, `ret 4`; the float passed as its bits)
-    fn anim_set_current_time(a: GPtr<u8>, t: u32) = thiscall 0x4CEA80 => unported;
-    /// `CAnimManager::GetAnimationBlock(const char*)` (0x4D3940)
-    fn anim_get_animation_block(name: u32) -> GPtr<u8> = cdecl 0x4D3940 => unported;
     /// `CGlass::BreakGlassPhysically(CVector pos (by value), float radius)` (0x71CF50)
     fn glass_break_glass_physically(x: u32, y: u32, z: u32, r: u32) = cdecl 0x71CF50 => unported;
-    /// `CEntity::GetColModel()` (0x535300)
-    fn entity_get_col_model(e: GPtr<u8>) -> u32 = thiscall 0x535300 => unported;
-    /// `CCollision::ProcessColModels(const CMatrix&, CColModel&, const CMatrix&, CColModel&, CColPoint*,
-    /// CColPoint*, float*, bool)` (0x4185C0)
-    fn collision_process_col_models(m1: GPtr<u8>, c1: u32, m2: GPtr<u8>, c2: u32, cps: u32, lcps: u32, dists: u32, b: u32) -> i32 = cdecl 0x4185C0 => unported;
-    /// `CPedModelInfo::AnimatePedColModelSkinnedWorld(RpClump*)` (0x4C7170, `ret 4`)
-    fn ped_mi_animate_col_model_skinned_world(mi: GPtr<u8>, clump: u32) -> GPtr<u8> = thiscall 0x4C7170 => unported;
-    /// `CEventSoundQuiet::Constructor(CEntity*, float volume, uint32 time, const CVector&)` (0x5E05B0, `ret 0x10`)
-    fn event_sound_quiet_ctor(e: GPtr<u8>, ent: GPtr<u8>, vol: u32, time: i32, pos: GPtr<u8>) -> GPtr<u8> = thiscall 0x5E05B0 => unported;
 }
 
 /// Common tail of 0x623B10: the last command (+0x27) becomes the next one (+0x26), which is cleared.
@@ -144,7 +138,7 @@ pub fn fight_start_anim(this: GPtr<u8>, ped: GPtr<u8>, mv: i32) {
     }
     let a = rd::<GPtr<u8>>(this, 0x1C);
     if !a.is_null() {
-        anim_set_delete_callback(a, DEFAULT_ANIM_CB, 0);
+        anim_set_delete_callback(a, DEFAULT_ANIM_CB, GPtr::NULL);
         wr::<u32>(this, 0x1C, 0);
     }
     let cmd = rd::<i8>(this, 0x26);
@@ -163,9 +157,9 @@ pub fn fight_start_anim(this: GPtr<u8>, ped: GPtr<u8>, mv: i32) {
             if flags_hi & 2 == 0 {
                 wr::<u8>(this, 0x24, 4);
             }
-            let a = anim_blend_animation(clump(), combo_group(rd::<i8>(this, 0x24)), 0xDE, 0x4100_0000);
+            let a = anim_blend_animation(GPtr::from_addr(clump() as usize), combo_group(rd::<i8>(this, 0x24)), 0xDE, f32::from_bits(0x4100_0000));
             wr::<GPtr<u8>>(this, 0x1C, a);
-            anim_set_finish_callback(a, FIGHT_ANIM_CB, this.addr() as u32);
+            anim_set_finish_callback(a, FIGHT_ANIM_CB, GPtr::from_addr((this.addr() as u32) as usize));
             start_anim_end(this);
         }
         3..=10 => {
@@ -197,10 +191,10 @@ pub fn fight_start_anim(this: GPtr<u8>, ped: GPtr<u8>, mv: i32) {
                     (i32::from(rd::<i8>(this, 0x25)) + 0x29) as u32
                 }
             };
-            let a = anim_blend_animation(clump(), 0, id, 0x4100_0000);
+            let a = anim_blend_animation(GPtr::from_addr(clump() as usize), 0, id, f32::from_bits(0x4100_0000));
             wr::<GPtr<u8>>(this, 0x1C, a);
             if rd::<u8>(this, 0x26) == 3 {
-                anim_set_delete_callback(rd::<GPtr<u8>>(this, 0x1C), FIGHT_ANIM_CB, this.addr() as u32);
+                anim_set_delete_callback(rd::<GPtr<u8>>(this, 0x1C), FIGHT_ANIM_CB, GPtr::from_addr((this.addr() as u32) as usize));
                 let a = rd::<GPtr<u8>>(this, 0x1C);
                 wr::<u8>(a, 0x2E, rd::<u8>(a, 0x2E) | 4);
             } else {
@@ -210,7 +204,7 @@ pub fn fight_start_anim(this: GPtr<u8>, ped: GPtr<u8>, mv: i32) {
                 wr::<u8>(a, 0x2E, rd::<u8>(a, 0x2E) & 0xDF);
                 let a = rd::<GPtr<u8>>(this, 0x1C);
                 wr::<u8>(a, 0x2E, rd::<u8>(a, 0x2E) | 8);
-                anim_set_finish_callback(rd::<GPtr<u8>>(this, 0x1C), FIGHT_ANIM_CB, this.addr() as u32);
+                anim_set_finish_callback(rd::<GPtr<u8>>(this, 0x1C), FIGHT_ANIM_CB, GPtr::from_addr((this.addr() as u32) as usize));
             }
             start_anim_end(this);
         }
@@ -221,15 +215,15 @@ pub fn fight_start_anim(this: GPtr<u8>, ped: GPtr<u8>, mv: i32) {
             wr::<u8>(this, 0x25, m);
             wr::<u8>(this, 0x14, 1);
             let id = (i32::from(m as i8) + 0xD6) as u32;
-            let a = anim_blend_animation(clump(), group, id, 0x4100_0000);
+            let a = anim_blend_animation(GPtr::from_addr(clump() as usize), group, id, f32::from_bits(0x4100_0000));
             wr::<GPtr<u8>>(this, 0x1C, a);
-            anim_set_finish_callback(a, FIGHT_ANIM_CB, this.addr() as u32);
+            anim_set_finish_callback(a, FIGHT_ANIM_CB, GPtr::from_addr((this.addr() as u32) as usize));
             if rd::<u8>(this, 0x25) == 3 {
                 let a = rd::<GPtr<u8>>(this, 0x1C);
                 // fcomp [0.0]; test ah, 0x44; jnp: skipped only when the time equals 0
                 if x(rd::<f32>(a, 0x20)).fcom(x(c(0x858B50))).test_parity(0x44) {
                     let t = g::<u32>(combo(rd::<i8>(this, 0x24), 0x44)).read();
-                    anim_set_current_time(a, t);
+                    anim_set_current_time(a, f32::from_bits(t));
                 }
             }
             if rd::<u32>(ped, 0x480) != 0 {
@@ -259,7 +253,7 @@ fn start_anim_idle(this: GPtr<u8>, ped: GPtr<u8>) {
     }
     let slot = i32::from(rd::<i8>(ped, 0x718)).wrapping_mul(0x1C);
     let ty = rd::<u32>(ped, (slot + 0x5A0) as isize);
-    let mut k = rd::<i8>(weapon_info_get(ty, 1), 0x6E);
+    let mut k = rd::<i8>(weapon_info_get(ty as i32, 1), 0x6E);
     if k == 4 {
         k = rd::<i8>(ped, 0x72D);
     }
@@ -276,7 +270,7 @@ fn start_anim_idle(this: GPtr<u8>, ped: GPtr<u8>) {
                 if rd::<u8>(this, 0xA) != 0 {
                     let groups = g::<u32>(ANIM_ASSOC_GROUPS).read();
                     let blk = g::<u32>(groups.wrapping_add(cur.wrapping_mul(0x14)) as usize).read();
-                    anim_remove_block_ref((blk.wrapping_sub(ANIM_BLOCKS) as i32) >> 5);
+                    anim_remove_block_ref(((blk.wrapping_sub(ANIM_BLOCKS) as i32) >> 5) as u32);
                     wr::<u8>(this, 0xA, 0);
                 }
                 wr::<u32>(this, 0xC, combo_group(k));
@@ -291,7 +285,7 @@ fn start_anim_idle(this: GPtr<u8>, ped: GPtr<u8>) {
             let groups = g::<u32>(ANIM_ASSOC_GROUPS).read();
             let mut b = g::<GPtr<u8>>(groups.wrapping_add(grp.wrapping_mul(0x14)) as usize).read();
             if b.is_null() {
-                b = anim_get_animation_block(anim_get_anim_block_name(grp));
+                b = anim_get_animation_block(GPtr::from_addr((GPtr::<u8>::addr(anim_get_anim_block_name(grp)) as u32) as usize));
             }
             let loaded = rd::<u8>(b, 0x10);
             let idx = ((b.addr() as u32).wrapping_sub(ANIM_BLOCKS) as i32) >> 5;
@@ -316,15 +310,15 @@ fn start_anim_idle(this: GPtr<u8>, ped: GPtr<u8>) {
     wr::<i8>(this, 0x24, set);
     if idle.is_null() {
         let clump = rd::<u32>(ped, 0x18);
-        let a = anim_blend_animation(clump, combo_group(set), 0xDF, 0x4100_0000);
+        let a = anim_blend_animation(GPtr::from_addr(clump as usize), combo_group(set), 0xDF, f32::from_bits(0x4100_0000));
         wr::<GPtr<u8>>(this, 0x20, a);
-        anim_set_delete_callback(a, FIGHT_ANIM_CB, this.addr() as u32);
+        anim_set_delete_callback(a, FIGHT_ANIM_CB, GPtr::from_addr((this.addr() as u32) as usize));
     } else if !x(rd::<f32>(idle, 0x18)).fcom(x(c(0x858624))).test_parity(5)
         && !x(rd::<f32>(idle, 0x1C)).fcom(x(c(0x858B50))).test_parity(0x41)
     {
         // blend amount < 1.0 and blend delta <= 0.0 (each `jp` leaves on NaN)
         let clump = rd::<u32>(ped, 0x18);
-        let a = anim_blend_animation(clump, combo_group(set), 0xDF, 0x4100_0000);
+        let a = anim_blend_animation(GPtr::from_addr(clump as usize), combo_group(set), 0xDF, f32::from_bits(0x4100_0000));
         wr::<GPtr<u8>>(this, 0x20, a);
     }
     if ped_is_player(ped) != 0 {
@@ -365,23 +359,23 @@ fn start_anim_move(this: GPtr<u8>, ped: GPtr<u8>, cmd: u8) {
     match cmd {
         0x11 => {
             let g_ = group();
-            anim_blend_animation(clump(), g_, 1, 0x4100_0000);
+            anim_blend_animation(GPtr::from_addr(clump() as usize), g_, 1, f32::from_bits(0x4100_0000));
         }
         0x10 => {
             let g_ = group();
-            anim_blend_animation(clump(), g_, 0, 0x4100_0000);
+            anim_blend_animation(GPtr::from_addr(clump() as usize), g_, 0, f32::from_bits(0x4100_0000));
         }
         0x0F => {
-            anim_blend_animation(clump(), group(), 3, 0x4080_0000);
+            anim_blend_animation(GPtr::from_addr(clump() as usize), group(), 3, f32::from_bits(0x4080_0000));
         }
         _ => {
             if cmd == 0x12
                 && rd::<u32>(ped, 0x46C) & 0x0400_0000 != 0
                 && !intel_get_task_duck(rd::<GPtr<u8>>(ped, 0x47C), 1).is_null()
             {
-                anim_blend_animation(clump(), 0, 0x37, 0x4080_0000);
+                anim_blend_animation(GPtr::from_addr(clump() as usize), 0, 0x37, f32::from_bits(0x4080_0000));
             } else {
-                anim_blend_animation(clump(), group(), 3, 0x4000_0000);
+                anim_blend_animation(GPtr::from_addr(clump() as usize), group(), 3, f32::from_bits(0x4000_0000));
             }
         }
     }
@@ -411,7 +405,7 @@ fn start_anim_move(this: GPtr<u8>, ped: GPtr<u8>, cmd: u8) {
 #[hook(addr = 0x6240B0, conv = thiscall, name = "FUN_006240b0", expect = "6A FF 68 11 FD 83 00")]
 pub fn fight_strike(this: GPtr<u8>, ped: GPtr<u8>, pos: GPtr<u8>) -> u8 {
     let slot_off = || (i32::from(rd::<i8>(ped, 0x718)).wrapping_mul(0x1C) + 0x5A0) as isize;
-    weapon_info_get(rd::<u32>(ped, slot_off()), 1);
+    weapon_info_get(rd::<u32>(ped, slot_off()) as i32, 1);
     let set = rd::<i8>(this, 0x24);
     let cd = combo(set, 0);
     let radius_addr = || cd.wrapping_add((i32::from(rd::<i8>(this, 0x25)) * 4 + 0x30) as usize);
@@ -429,7 +423,7 @@ pub fn fight_strike(this: GPtr<u8>, ped: GPtr<u8>, pos: GPtr<u8>) -> u8 {
     if ped_is_player(ped) != 0 {
         world_find_objects_in_range(
             pos,
-            0x40A0_0000,
+            f32::from_bits(0x40A0_0000),
             1,
             buf(&mut n_obj),
             0x10,
@@ -446,9 +440,9 @@ pub fn fight_strike(this: GPtr<u8>, ped: GPtr<u8>, pos: GPtr<u8>) -> u8 {
     matrix_copy_ctor(buf(&mut m), rd::<GPtr<u8>>(ped, 0x14));
     matrix_set_translate_only(
         buf(&mut m),
-        rd::<u32>(pos, 0),
-        rd::<u32>(pos, 4),
-        rd::<u32>(pos, 8),
+        f32::from_bits(rd::<u32>(pos, 0)),
+        f32::from_bits(rd::<u32>(pos, 4)),
+        f32::from_bits(rd::<u32>(pos, 8)),
     );
     let mut d = [0u32; 3];
     let count = |n: &[u32; 1]| i32::from(n[0] as u16 as i16) + 0x20;
@@ -500,7 +494,7 @@ pub fn fight_strike(this: GPtr<u8>, ped: GPtr<u8>, pos: GPtr<u8>) -> u8 {
     if missed && ped_is_player(ped) != 0 {
         d = [0; 3];
         let mut ev = [0u32; 16];
-        event_sound_quiet_ctor(buf(&mut ev), ped, 0x4220_0000, -1, buf(&mut d));
+        event_sound_quiet_ctor(buf(&mut ev), ped, f32::from_bits(0x4220_0000), -1i32 as u32, buf(&mut d));
         let grp = get_event_global_group();
         event_group_add(grp, buf(&mut ev), 0);
         event_sound_quiet_dtor(buf(&mut ev));
@@ -508,7 +502,7 @@ pub fn fight_strike(this: GPtr<u8>, ped: GPtr<u8>, pos: GPtr<u8>) -> u8 {
     if rd::<u8>(this, 0x24) == 7
         && rd::<u8>(this, 0x25) == 1
         && !rd::<GPtr<u8>>(this, 0x1C).is_null()
-        && (hit_ped.is_null() || clump_get_association_id(rd::<u32>(hit_ped, 0x18), 0xDC).is_null())
+        && (hit_ped.is_null() || clump_get_association_id(GPtr::from_addr(rd::<u32>(hit_ped, 0x18) as usize), 0xDC).is_null())
     {
         wr::<u32>(rd::<GPtr<u8>>(this, 0x1C), 0x1C, 0xC080_0000);
         let a = rd::<GPtr<u8>>(this, 0x1C);
@@ -591,7 +585,7 @@ fn strike_entity(
         let mi = model_info(p);
         let clump = rd::<u32>(p, 0x18);
         let mut tries = 0i32;
-        let cdata = rd::<GPtr<u8>>(ped_mi_animate_col_model_skinned_world(mi, clump), 0x2C);
+        let cdata = rd::<GPtr<u8>>(ped_mi_animate_col_model_skinned_world(mi, GPtr::from_addr(clump as usize)), 0x2C);
         loop {
             let n = i32::from(rd::<i16>(cdata, 0));
             if n > 0 {
@@ -648,8 +642,8 @@ fn strike_entity(
         simple_transform_update_matrix(e.byte_add(4), rd::<GPtr<u8>>(e, 0x14));
     }
     let em = rd::<GPtr<u8>>(e, 0x14);
-    let ecol = entity_get_col_model(e);
-    let n = collision_process_col_models(buf(m), FIGHT_COL_MODEL, em, ecol, TEMP_COL_PTS, 0, 0, 0);
+    let ecol = GPtr::<u8>::addr(entity_get_col_model(e)) as u32;
+    let n = collision_process_col_models(buf(m), GPtr::from_addr(FIGHT_COL_MODEL as usize), em, GPtr::from_addr(ecol as usize), GPtr::from_addr(TEMP_COL_PTS as usize), GPtr::NULL, GPtr::NULL, 0);
     if n <= 0 {
         return;
     }

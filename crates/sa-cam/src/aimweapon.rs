@@ -33,12 +33,10 @@ pub use sa_core::bindings::entity_update_rp_hanim as update_rp_h_anim;
 pub use sa_world::bindings::pad_get_enter_targeting;
 pub use sa_world::bindings::pad_get_weapon;
 pub use sa_world::bindings::weapon_is_type_melee;
-pub use sa_world::bindings::world_get_is_line_of_sight_clear as get_is_line_of_sight_clear;
+pub use sa_core::bindings::world_get_is_line_of_sight_clear as get_is_line_of_sight_clear;
+pub use sa_world::bindings::clothes_has_visible_new_hair_cut as has_visible_new_hair_cut;
+pub use sa_world::bindings::vec_mul_assign as vector_scale_assign;
 orig! {
-    /// `CVector::operator*=(float)` (0x40FEF0, `ret 4`); the float as a dword
-    pub fn vector_scale_assign(v: GPtr<u8>, s: u32) -> GPtr<u8> = thiscall 0x40FEF0 => unported;
-    /// `CPedClothesDesc::HasVisibleNewHairCut(int32)` (0x5A7970, AL)
-    pub fn has_visible_new_hair_cut(c: GPtr<u8>, n: i32) -> u8 = thiscall 0x5A7970 => unported;
     /// `CCamera::HandleCameraMotionForDuckingDuringAim(CPed*, CVector*, CVector*, bool)` (0x50D090)
     pub fn handle_camera_motion_for_ducking_during_aim(cam: GPtr<u8>, ped: GPtr<u8>, src: GPtr<u8>, targ: GPtr<u8>, instant: u32) = thiscall 0x50D090 => crate::camfx::handle_camera_motion_for_ducking_during_aim;
     /// `CCamera::SetColVarsAimWeapon(int32)` (0x50CBF0, cdecl)
@@ -238,7 +236,7 @@ pub fn process_aim_weapon(
     let wi = if !get_task_use_gun(intel()).is_null() {
         rd::<GPtr<u8>>(get_task_use_gun(intel()), 0x30)
     } else {
-        get_weapon_info(rd::<u32>(active_weapon(ped), 0), 1)
+        get_weapon_info(rd::<u32>(active_weapon(ped), 0) as i32, 1)
     };
     wr(b, 0x1C, wi);
     wr::<i32>(b, 0x18, 0);
@@ -510,11 +508,11 @@ fn los_test(b: GPtr<u8>, ped: GPtr<u8>, o: GPtr<u8>) -> bool {
     let po = entity_pos(o);
     let s = vector_sub(b.byte_add(0x5C), po, pped);
     cross_product(b.byte_add(0x2C), s, b.byte_add(0x50));
-    push_st0(&mut f, vector_magnitude(b.byte_add(0x2C)));
+    push_st0(&mut f, vector_magnitude(GPtr::<u8>::cast::<u32>(b.byte_add(0x2C))));
     let mag = f.fstp().to_bits();
     push_st0(&mut f, max_f(K_0_7, mag));
     f.fdivr_m(k(K_2));
-    vector_scale_assign(b.byte_add(0x2C), f.fstp().to_bits());
+    vector_scale_assign(b.byte_add(0x2C), f32::from_bits(f.fstp().to_bits()));
     for i in 0..3 {
         f.fld(rd(b, 0x2C + 4 * i));
         f.fadd_m(rd(b, 0x44 + 4 * i));
@@ -709,9 +707,9 @@ fn lock_on_point(this: GPtr<u8>, b: GPtr<u8>, ped: GPtr<u8>, wi: GPtr<u8>, f: &m
         f.fld(k(K_1));
         f.fsub_m(rd(b, 0x6C));
         let q = f.fstp().to_bits();
-        let r1 = vec_s_mul(b.byte_add(0x5C), q, b.byte_add(0x2C));
+        let r1 = vec_s_mul(b.byte_add(0x5C), f32::from_bits(q), b.byte_add(0x2C));
         let p = rd::<u32>(b, 0x6C);
-        let r2 = vec_s_mul(b.byte_add(0x50), p, g::<u8>(S_LOCK));
+        let r2 = vec_s_mul(b.byte_add(0x50), f32::from_bits(p), g::<u8>(S_LOCK));
         let r = vec_add(b.byte_add(0x44), r2, r1);
         copy3(g::<u8>(S_LOCK), r);
     } else {
@@ -781,7 +779,7 @@ fn lock_on_orientation(this: GPtr<u8>, b: GPtr<u8>, wi: GPtr<u8>, at: usize, f: 
         if !f.jp(0x5) {
             push_st0(
                 f,
-                vector_magnitude(vector_sub(b.byte_add(0x5C), b.byte_add(0x38), src)),
+                vector_magnitude(GPtr::<u8>::cast::<u32>(vector_sub(b.byte_add(0x5C), b.byte_add(0x38), src))),
             );
         } else {
             f.fld(d(at));
@@ -1095,7 +1093,7 @@ fn auto_aim(this: GPtr<u8>, b: GPtr<u8>, ped: GPtr<u8>, wi: GPtr<u8>, at: usize,
         let hb = rd::<u32>(b, 0x2C);
         wr::<f32>(ped, 0x55C, f.fst());
         wr::<f32>(ped, 0x558, f.fstp());
-        placeable_set_heading(ped, hb);
+        placeable_set_heading(ped, f32::from_bits(hb));
         update_rw_matrix(ped);
     }
     f.fld(rd(b, 0x6C));
@@ -1372,7 +1370,7 @@ fn clip_and_output(this: GPtr<u8>, b: GPtr<u8>, ped: GPtr<u8>, wi: GPtr<u8>, at:
             f.fadd_m(k(K_M0_05));
             wr::<f32>(ped, 0x558, f.fst());
             wr::<f32>(ped, 0x55C, f.fstp());
-            placeable_set_heading(ped, hb);
+            placeable_set_heading(ped, f32::from_bits(hb));
             update_rw_matrix(ped);
         }
     }
@@ -1394,10 +1392,7 @@ pub const HOOKS: &[HookReg] = &[
 /// Globals of this module (none: the statics are accessed by address).
 pub const GLOBALS: &[sa_core::mem::GlobalDesc] = &[];
 
-orig! {
-    /// `CCam::Get_TwoPlayer_AimVector(CVector&)` (0x513E40)
-    pub fn cam_get_two_player_aim_vector(cam: GPtr<u8>, out: GPtr<u8>) = thiscall 0x513E40 => unported;
-}
+pub use sa_world::bindings::cam_get_two_player_aim_vector;
 
 /// The active cam's `tan(FOV * 0.5 * 0.017453292)` (FPTAN, the pushed 1.0 popped): `fld [cam+0xB4];
 /// fmul 0.5; fmul deg2rad; fptan; fstp st(0)`.

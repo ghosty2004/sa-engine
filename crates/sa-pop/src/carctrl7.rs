@@ -14,10 +14,10 @@ pub const GLOBALS: &[GlobalDesc] = &[];
 /// `TheCamera` (0xB6F028).
 const THE_CAMERA: usize = 0xB6F028;
 
-use crate::bindings::add_police_car_occupants;
-use crate::bindings::camera_is_sphere_visible;
+use sa_world::bindings::add_police_car_occupants;
+use sa_world::bindings::camera_is_sphere_visible;
 use crate::bindings::choose_police_car_model;
-use crate::bindings::get_position as node_get_position;
+use sa_world::bindings::get_position as node_get_position;
 use crate::bindings::set_up_driver_and_passengers_for_vehicle;
 use sa_core::bindings::entity_register_reference as register_reference;
 use sa_core::bindings::task_new;
@@ -25,37 +25,24 @@ use sa_core::bindings::world_add;
 use sa_world::bindings::automobile_place_on_road_properly;
 use sa_world::bindings::bike_place_on_road_properly;
 use sa_world::bindings::find_objects_kinda_colliding;
+use crate::bindings::get_new_vehicle_call as get_new_vehicle_depending_on_car_model;
+use sa_core::bindings::entity_get_is_on_screen;
+use sa_core::bindings::matrix_assign;
+use sa_world::bindings::acquaintance_ped_ctor as event_acquaintance_ped_ctor;
+use sa_world::bindings::car_drive_wander_ctor as drive_wander_ctor;
+use sa_world::bindings::event_acquaintance_ped_dtor;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::placeable_get_top_direction as get_top_direction;
+use sa_world::bindings::placeable_set_posn as set_posn_v;
+use sa_world::bindings::tm_set_task as set_task;
+use sa_world::bindings::vector_mul_scalar as vec_mul;
+use sa_world::bindings::vehicle_change_law_enforcer_state as change_law_enforcer_state;
+use sa_world::bindings::world_process_vertical_line as process_vertical_line;
 orig! {
-    /// `CCarCtrl::GetNewVehicleDependingOnCarModel(int32, uint8)` (0x421440)
-    fn get_new_vehicle_depending_on_car_model(mi: i32, by: u32) -> GPtr<u8> = cdecl 0x421440 => crate::carctrl5::get_new_vehicle_depending_on_car_model;
-    /// `CWorld::ProcessVerticalLine(const CVector&, float, CColPoint&, CEntity*&, bool x6, CStoredCollPoly*)` (0x5674E0)
-    fn process_vertical_line(o: GPtr<f32>, z: f32, cp: GPtr<f32>, ent: GPtr<u32>, b: u32, v: u32, p: u32, ob: u32, d: u32, see: u32, poly: u32) -> u8 = cdecl 0x5674E0 => unported;
     /// virtual slot 0 of a `CEntity`: the deleting destructor
     fn entity_delete(e: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
     /// virtual slot 0xD4 of a `CVehicle`: `GetDistanceFromCentreOfMassToBaseOfModel()` (ST0)
     fn vehicle_base_distance(v: GPtr<u8>) -> f64 = thiscall vslot 0xD4 => unported;
-    /// `CEntity::GetIsOnScreen()` (0x534540)
-    fn entity_get_is_on_screen(e: GPtr<u8>) -> u8 = thiscall 0x534540 => sa_world::world::entity::get_is_on_screen_port;
-    /// `CPlaceable::GetTopDirection()` (0x41CCB0, thiscall, hidden return)
-    fn get_top_direction(e: GPtr<u8>, out: GPtr<f32>) -> GPtr<f32> = thiscall 0x41CCB0 => unported;
-    /// `FUN_0040FEC0(CVector* out, const CVector*, float)` (0x40FEC0): `*out = v * f`
-    fn vec_mul(out: GPtr<f32>, v: GPtr<f32>, f: f32) -> GPtr<f32> = cdecl 0x40FEC0 => unported;
-    /// `CMatrix::operator=(const CMatrix&)` (0x59BBC0)
-    fn matrix_assign(this: GPtr<u8>, o: GPtr<u8>) = thiscall 0x59BBC0 => unported;
-    /// `CPlaceable::SetPosn(const CVector&)` (0x4241C0)
-    fn set_posn_v(e: GPtr<u8>, p: GPtr<f32>) = thiscall 0x4241C0 => unported;
-    /// `CVehicle::ChangeLawEnforcerState(bool)` (0x6D2330)
-    fn change_law_enforcer_state(v: GPtr<u8>, b: u8) = thiscall 0x6D2330 => unported;
-    /// `CTaskComplexCarDriveWander::CTaskComplexCarDriveWander(CVehicle*, eCarDrivingStyle, float)` (0x63CB10)
-    fn drive_wander_ctor(this: GPtr<u8>, v: GPtr<u8>, style: u32, speed: f32) -> GPtr<u8> = thiscall 0x63CB10 => unported;
-    /// `CTaskManager::SetTask(CTask*, int32, bool)` (0x681AF0)
-    fn set_task(mgr: GPtr<u8>, task: GPtr<u8>, slot: i32, b: u8) = thiscall 0x681AF0 => unported;
-    /// `CEventAcquaintancePed::CEventAcquaintancePed(CPed*)` (0x4AF820)
-    fn event_acquaintance_ped_ctor(this: GPtr<u32>, ped: GPtr<u8>) -> GPtr<u32> = thiscall 0x4AF820 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420)
-    fn event_group_add(this: GPtr<u8>, ev: GPtr<u32>, b: u8) -> GPtr<u8> = thiscall 0x4AB420 => unported;
-    /// `CEventAcquaintancePed::~CEventAcquaintancePed()` (0x4AF890)
-    fn event_acquaintance_ped_dtor(this: GPtr<u32>) = thiscall 0x4AF890 => unported;
 }
 
 /// `fld; fcom 0.0; test ah, 5; jp skip; fchs`: the absolute value as the bytes take it (NaN unchanged).
@@ -76,10 +63,10 @@ fn ground_z(pos: GPtr<f32>) -> f32 {
     let mut ent = [0u32];
     let cpp = GPtr::from_raw(cp.as_mut_ptr());
     let ep = GPtr::from_raw(ent.as_mut_ptr());
-    if process_vertical_line(pos, 1000.0, cpp, ep, 1, 0, 0, 0, 1, 0, 0) != 0 {
+    if process_vertical_line(pos.cast::<u8>(), 1000.0, cpp.cast::<u8>(), ep.cast::<u8>(), 1, 0, 0, 0, 1, 0, GPtr::NULL) != 0 {
         best = cp[2];
     }
-    if process_vertical_line(pos, -1000.0, cpp, ep, 1, 0, 0, 0, 1, 0, 0) != 0 {
+    if process_vertical_line(pos.cast::<u8>(), -1000.0, cpp.cast::<u8>(), ep.cast::<u8>(), 1, 0, 0, 0, 1, 0, GPtr::NULL) != 0 {
         let pz = pos.wrapping_index(2).read();
         let a = abs_jp(x(cp[2]).fsub_m(pz));
         let b = abs_jp(x(best).fsub_m(pz));
@@ -99,7 +86,7 @@ fn colliding(pos: GPtr<f32>, r: f32) -> i16 {
         1,
         GPtr::from_raw(n.as_mut_ptr()),
         2,
-        GPtr::NULL,
+        GPtr::<u32>::cast::<u8>(GPtr::NULL),
         0,
         1,
         1,
@@ -184,7 +171,7 @@ pub fn create_police_chase(target: GPtr<u8>, ped_type: i32, node: u32) -> u8 {
         rd::<GPtr<u8>>(model_info(i32::from(rd::<i16>(v, 0x22))), 0x14),
         0x24,
     );
-    if entity_get_is_on_screen(target) == 0 && camera_is_sphere_visible(g::<u8>(THE_CAMERA), pp, radius) != 0
+    if entity_get_is_on_screen(target) == 0 && camera_is_sphere_visible(g::<u8>(THE_CAMERA), pp.cast::<u8>(), radius) != 0
     {
         entity_delete(v, 1);
         return 0;
@@ -202,9 +189,9 @@ pub fn create_police_chase(target: GPtr<u8>, ped_type: i32, node: u32) -> u8 {
     let mut top = [0f32; 3];
     let t = get_top_direction(target, GPtr::from_raw(top.as_mut_ptr()));
     let mut a = [0f32; 3];
-    let a = vec_mul(GPtr::from_raw(a.as_mut_ptr()), t, xi(i32::from(ns)).to_f32());
+    let a = GPtr::<u8>::cast::<f32>(vec_mul(GPtr::<f32>::cast::<u8>(GPtr::from_raw(a.as_mut_ptr())), t.cast::<u8>(), xi(i32::from(ns)).to_f32()));
     let mut b = [0f32; 3];
-    let b = vec_mul(GPtr::from_raw(b.as_mut_ptr()), a, f32::from_bits(0x3CA3_D70A));
+    let b = GPtr::<u8>::cast::<f32>(vec_mul(GPtr::<f32>::cast::<u8>(GPtr::from_raw(b.as_mut_ptr())), a.cast::<u8>(), f32::from_bits(0x3CA3_D70A)));
     for k in 0..3 {
         target
             .byte_add(0x44)
@@ -238,11 +225,11 @@ pub fn create_police_chase(target: GPtr<u8>, ped_type: i32, node: u32) -> u8 {
     drive_wander(v);
     let mut ev = [0u32; 8];
     let evp = GPtr::from_raw(ev.as_mut_ptr());
-    event_acquaintance_ped_ctor(evp, rd(target, 0x460));
+    event_acquaintance_ped_ctor(evp.cast::<u8>(), rd(target, 0x460));
     evp.write(0x0085_8E68);
     wr::<u16>(evp.cast(), 0xE, 0x451);
     let intel = rd::<GPtr<u8>>(rd::<GPtr<u8>>(v, 0x460), 0x47C);
-    event_group_add(intel.byte_add(0x68), evp, 0);
+    event_group_add(intel.byte_add(0x68), evp.cast::<u8>(), 0);
     wr::<u16>(v, 0x4A6, 0xFF);
     wr::<u8>(v, 0x42C, rd::<u8>(v, 0x42C) | 0x40);
     evp.write(0x0085_8E68);

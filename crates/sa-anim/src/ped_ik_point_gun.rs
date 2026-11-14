@@ -12,17 +12,15 @@ use sa_core::bindings::get_anim_hierarchy_from_skin_clump;
 use sa_core::bindings::rp_hanim_hierarchy_get_matrix_array;
 use sa_core::bindings::rp_hanim_id_get_index;
 use sa_core::bindings::rw_matrix_create;
+use sa_core::bindings::general_limit_radian_angle as limit_radian_angle;
+use sa_core::bindings::rt_quat_rotate;
+use sa_core::bindings::rw_matrix_destroy;
 orig! {
-    /// `CGeneral::LimitRadianAngle(float)` (0x53CB50, ST0)
-    fn limit_radian_angle(a: f32) -> f64 = cdecl 0x53CB50 => unported;
-    fn rw_matrix_destroy(m: GPtr<u8>) -> u32 = cdecl 0x7F2A20 => unported;
     /// `CPedIK::MoveLimb(LimbOrientation&, float yaw, float pitch, LimbMovementInfo&)` (0x5FDA60, thiscall, `ret 0x10`)
     fn move_limb(ik: GPtr<u8>, limb: GPtr<u8>, yaw: u32, pitch: u32, info: u32) -> i32 = thiscall 0x5FDA60 => unported;
     /// `CPedIK::MoveLimb(LimbOrientation&, float yaw, float pitch, LimbMovementInfo&, float normalize)` (0x5FDB60,
     /// thiscall, `ret 0x14`)
     fn move_limb_normalized(ik: GPtr<u8>, limb: GPtr<u8>, yaw: u32, pitch: u32, info: u32, n: u32) -> i32 = thiscall 0x5FDB60 => unported;
-    /// `RtQuatRotate(RtQuat*, const RwV3d* axis, float angle, RwOpCombineType)` (0x7EB7C0)
-    fn rt_quat_rotate(q: GPtr<u8>, axis: GPtr<u8>, angle: f32, op: i32) -> GPtr<u8> = cdecl 0x7EB7C0 => unported;
 }
 
 /// `CPedIK::ms_torsoInfo` (0x8D22E4), `XaxisIK` (0x8D232C), the radians-to-degrees factor 0x859878 (57.2958f).
@@ -50,7 +48,7 @@ pub fn ped_ik_point_gun_in_direction(this: GPtr<u8>, z_angle: f32, distance: u32
     let angle = X87::from_f64_exact(limit_radian_angle(a)).to_f32();
     wr::<u32>(this, 0x1C, (rd::<u32>(this, 0x1C) & !1) | 2);
     let hier = get_anim_hierarchy_from_skin_clump(rd::<GPtr<u8>>(ped, 0x18));
-    let index = rp_hanim_id_get_index(hier, rd::<i32>(rd::<GPtr<u8>>(ped, 0x4C8), 0x14));
+    let index = rp_hanim_id_get_index(hier, rd::<i32>(rd::<GPtr<u8>>(ped, 0x4C8), 0x14) as u32);
     let m = rw_matrix_create();
     let src = rp_hanim_hierarchy_get_matrix_array(hier).byte_add((index << 6) as isize);
     for i in 0..16isize {

@@ -1,18 +1,15 @@
 //! WRITER-NATIVE (batch `native-30`): `CTaskComplexWander::ComputeTargetHeading` (0x66F530), seen once per long
 //! walk (ambient wander). Ported from the 1.0 US bytes.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
 use crate::bindings::path_take_width_for_wandering;
-orig! {
-    /// `CGeneral::GetRadianAngleBetweenPoints(x1, y1, x2, y2)` (0x53CBE0, ST0)
-    fn general_radian_angle_between_points(x1: f32, y1: f32, x2: f32, y2: f32) -> f64 = cdecl 0x53CBE0 => unported;
-    /// `CGeneral::LimitRadianAngle(float)` (0x53CB50, ST0)
-    fn general_limit_radian_angle(a: f32) -> f64 = cdecl 0x53CB50 => unported;
-}
+use sa_core::bindings::general_get_radian_angle_between_points as general_radian_angle_between_points;
+use sa_core::bindings::general_limit_radian_angle;
 
 /// `float CTaskComplexWander::ComputeTargetHeading(CPed* ped)` (0x66F530, `ret 4`, ST0): the wander target
 /// (`ThePaths.TakeWidthIntoAccountForWandering(next node +0x1C, ped seed +0x20)`) minus the ped position (f32 x / y),

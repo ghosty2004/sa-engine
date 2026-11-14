@@ -4,7 +4,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 
 use crate::common::{model_info, rd, wr, x};
@@ -19,12 +19,8 @@ use sa_core::bindings::rp_hanim_id_get_index;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::multiply3x3 as multiply3x3_mv;
 use sa_world::bindings::multiply3x3_vm;
-orig! {
-    /// `CMatrix::operator=(const CMatrix&)` (0x59BBC0)
-    fn matrix_assign(m: GPtr<u8>, src: GPtr<u8>) = thiscall 0x59BBC0 => unported;
-    /// `CMatrix::CMatrix(RwMatrix*, bool temporary)` (0x59C050)
-    fn matrix_ctor_rw(m: GPtr<u8>, rw: GPtr<u8>, temp: u32) = thiscall 0x59C050 => unported;
-}
+use sa_core::bindings::matrix_assign;
+use sa_core::bindings::matrix_ctor_rw;
 
 use sa_core::field::gf as k;
 
@@ -45,7 +41,7 @@ use sa_core::field::ptr_of as vp;
 
 /// The bone's matrix position (`&RpHAnimHierarchyGetMatrixArray(h)[RpHAnimIDGetIndex(h, id)].pos`).
 fn bone_pos(h: GPtr<u8>, id: i32) -> GPtr<u8> {
-    let i = rp_hanim_id_get_index(h, id);
+    let i = rp_hanim_id_get_index(h, id as u32);
     rp_hanim_hierarchy_get_matrix_array(h).byte_add((i << 6) as isize + 0x30)
 }
 
@@ -67,7 +63,7 @@ fn shift(p: GPtr<u8>, dx: f32, dy: f32, dz: X87) {
 #[allow(clippy::too_many_arguments)]
 fn hand(bars: GPtr<u8>, p: &mut [f32; 3], hier: GPtr<u8>, ped: GPtr<u8>, ids: [i32; 6], k1: f32, k2: f32) {
     let mut out = [0f32; 3];
-    let w = matrix_mul_vec(vp(&mut out), bars, vp(p));
+    let w = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(vp(&mut out)), bars, vp(p)));
     let w = [rd::<f32>(w, 0), rd::<f32>(w, 4), rd::<f32>(w, 8)];
     let b = bone_pos(hier, ids[0]);
     let (bx, by, bz) = (rd::<f32>(b, 0), rd::<f32>(b, 4), rd::<f32>(b, 8));

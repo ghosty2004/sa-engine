@@ -6,7 +6,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 
 use crate::vm::{collect_parameters_call, update_compare_flag_call, Scr};
@@ -368,10 +368,7 @@ pub fn the_scripts_is_vehicle_stopped(v: GPtr<u8>) -> u8 {
 }
 
 use sa_stream::bindings::ped_is_player;
-orig! {
-    /// `RpAnimBlendClumpGetAssociation(RpClump*, uint32 animId)` (0x4D68B0)
-    fn clump_get_association(clump: GPtr<u8>, id: u32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
-}
+use sa_core::bindings::clump_get_association;
 
 /// `CTheScripts::IsPedStopped(CPed*)` (0x486110, cdecl). The flags load (`mov eax, [esi+0x46C]`) sits behind a `jmp`
 /// to 0x409A95 and back.

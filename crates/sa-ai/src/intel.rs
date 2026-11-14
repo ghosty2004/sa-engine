@@ -3,12 +3,13 @@
 //! address. `CPedIntelligence`: +0 the ped, +4 the `CTaskManager`, +0xBC hearing range, +0xC0 seeing range.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
 use crate::common::*;
 
-use crate::bindings::acquaintance_get;
+use sa_world::bindings::acquaintance_get;
 use crate::bindings::task_is_go_to_task;
 use sa_core::bindings::tm_get_simplest_active_task;
 use sa_core::bindings::tm_get_task_secondary;
@@ -17,13 +18,11 @@ use sa_world::bindings::anim_get_next_association;
 use sa_world::bindings::get_ped_flag as ped_type_get_ped_flag;
 use sa_world::bindings::tm_find_task_by_type;
 use sa_world::bindings::tm_set_task;
+use sa_core::bindings::stricmp as crt_stricmp;
+use sa_world::bindings::clump_get_first_association_4d6a70 as clump_get_first_association_flags;
 orig! {
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `RpAnimBlendClumpGetFirstAssociation(RpClump*, uint32 flags)` (0x4D6A70)
-    fn clump_get_first_association_flags(clump: u32, flags: u32) -> GPtr<u8> = cdecl 0x4D6A70 => unported;
-    /// CRT `_stricmp` (0x8229B6)
-    fn crt_stricmp(a: u32, b: u32) -> i32 = cdecl 0x8229B6 => unported;
 }
 
 fn tm(this: GPtr<u8>) -> GPtr<u8> {
@@ -33,13 +32,13 @@ fn tm(this: GPtr<u8>) -> GPtr<u8> {
 /// The inlined "secondary task `slot` if it has type `ty`" pattern: `GetTaskSecondary` called once for the null
 /// test, once for the type and once more for the result.
 fn secondary_of_type(this: GPtr<u8>, slot: i32, ty: i32) -> GPtr<u8> {
-    if tm_get_task_secondary(tm(this), slot).is_null() {
+    if tm_get_task_secondary(tm(this), slot as u32).is_null() {
         return GPtr::NULL;
     }
-    if v_task_type(tm_get_task_secondary(tm(this), slot)) != ty {
+    if v_task_type(tm_get_task_secondary(tm(this), slot as u32)) != ty {
         return GPtr::NULL;
     }
-    tm_get_task_secondary(tm(this), slot)
+    tm_get_task_secondary(tm(this), slot as u32)
 }
 
 /// The simplest active task if its type is `ty` (one `GetTaskType` call), else null.
@@ -69,12 +68,12 @@ pub fn intel_add_task_event_response_non_temp(this: GPtr<u8>, task: GPtr<u8>, b:
 #[hook(addr = 0x600EE0, conv = thiscall, name = "CPedIntelligence::FindTaskByType", expect = "56 57 8B 7C 24 0C")]
 pub fn intel_find_task_by_type(this: GPtr<u8>, ty: i32) -> GPtr<u8> {
     for slot in [4, 3, 1] {
-        let t = tm_find_task_by_type(tm(this), slot, ty);
+        let t = tm_find_task_by_type(tm(this), slot as u32, ty as u32);
         if !t.is_null() {
             return t;
         }
     }
-    tm_find_task_by_type(tm(this), 2, ty)
+    tm_find_task_by_type(tm(this), 2, ty as u32)
 }
 
 /// `CPedIntelligence::GetTaskFighting` (0x600F30): secondary slot 0 when it is a 0x3F8 (`TASK_SIMPLE_FIGHT`); the
@@ -163,10 +162,10 @@ pub fn intel_get_using_parachute(this: GPtr<u8>) -> u8 {
     if rd::<u8>(ped, 0x46C) & 1 != 0 || rd::<u32>(ped, 0x40) & 0x100 != 0 {
         return 0;
     }
-    let mut a = clump_get_first_association_flags(rd::<u32>(ped, 0x18), 0x10);
+    let mut a = clump_get_first_association_flags(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0x10);
     while !a.is_null() {
         let block = rd::<u32>(rd::<GPtr<u8>>(a, 0x14), 0xC);
-        if crt_stricmp((block << 5).wrapping_add(0xB5D4A0), 0x86CD54) == 0 {
+        if crt_stricmp(GPtr::from_addr(((block << 5).wrapping_add(0xB5D4A0)) as usize), GPtr::from_addr(0x86CD54)) == 0 {
             return 1;
         }
         a = anim_get_next_association(a);
@@ -181,7 +180,7 @@ pub fn intel_get_using_parachute(this: GPtr<u8>) -> u8 {
 pub fn intel_is_friendly_with(this: GPtr<u8>, other: GPtr<u8>) -> u32 {
     let a0 = acquaintance_get(rd::<GPtr<u8>>(this, 0).byte_add(0x4E0), 0);
     let a1 = acquaintance_get(rd::<GPtr<u8>>(this, 0).byte_add(0x4E0), 1);
-    let f = ped_type_get_ped_flag(rd::<u32>(other, 0x598));
+    let f = ped_type_get_ped_flag(rd::<u32>(other, 0x598) as i32);
     if rd::<u32>(rd::<GPtr<u8>>(this, 0), 0x598) == rd::<u32>(other, 0x598) || a0 & f != 0 || a1 & f != 0 {
         1
     } else {
@@ -195,7 +194,7 @@ pub fn intel_is_friendly_with(this: GPtr<u8>, other: GPtr<u8>) -> u32 {
 pub fn intel_is_threatened_by(this: GPtr<u8>, other: GPtr<u8>) -> u32 {
     let a3 = acquaintance_get(rd::<GPtr<u8>>(this, 0).byte_add(0x4E0), 3);
     let a4 = acquaintance_get(rd::<GPtr<u8>>(this, 0).byte_add(0x4E0), 4);
-    let f = ped_type_get_ped_flag(rd::<u32>(other, 0x598));
+    let f = ped_type_get_ped_flag(rd::<u32>(other, 0x598) as i32);
     (a3 & f != 0 || a4 & f != 0) as u32
 }
 

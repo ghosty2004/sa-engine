@@ -10,6 +10,7 @@
 //! active weapon slot, +0x72C weapon skill, +0x738 look-at entity, +0x73C look heading, +0x748 look timer,
 //! +0x754 body part to remove, +0x788 cover point.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::crt::rand;
 use sa_core::orig::at_site;
@@ -35,7 +36,7 @@ pub use sa_stream::bindings::get_first_object;
 pub use sa_stream::bindings::set_component_atomic_alpha;
 pub use sa_world::bindings::anim_get_next_association as get_next_association;
 pub use sa_world::bindings::clear_blip_for_entity;
-pub use sa_world::bindings::clump_get_first_association;
+pub use sa_core::bindings::clump_get_first_association;
 pub use sa_world::bindings::crt_printf as debug_printf;
 pub use sa_world::bindings::intel_find_task_by_type as find_task_by_type;
 pub use sa_world::bindings::membership_is_follower as group_is_follower;
@@ -47,21 +48,16 @@ pub use sa_world::bindings::set_orientation;
 pub use sa_world::bindings::set_ped_decision_maker_type;
 pub use sa_world::bindings::set_seeing_range;
 pub use sa_world::bindings::tm_find_active_task_by_type as find_active_task_by_type;
+pub use crate::bindings::ped_clear_look_flag as clear_look_flag_call;
+pub use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+pub use sa_core::bindings::entity_register_reference as register_reference;
+pub use sa_world::bindings::get_skill_stat_index;
+pub use sa_world::bindings::get_weapon_skill_type_call;
 orig! {
-    /// `CEntity::CleanUpOldReference(CEntity** ref)` (0x571A00, thiscall on the referenced entity)
-    pub fn clean_up_old_reference(e: GPtr<u8>, r: GPtr<GPtr<u8>>) = thiscall 0x571A00 => unported;
-    /// `CEntity::RegisterReference(CEntity** ref)` (0x571B70)
-    pub fn register_reference(e: GPtr<u8>, r: GPtr<GPtr<u8>>) = thiscall 0x571B70 => unported;
     /// `CTaskSimpleHoldEntity::CanThrowEntity` (0x691700)
     pub fn can_throw_entity(t: GPtr<u8>) -> u8 = thiscall 0x691700 => unported;
     /// `CTask::MakeAbortable(CPed*, eAbortPriority, const CEvent*)` (vtable slot 0x18)
     pub fn task_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, prio: i32, ev: u32) -> u8 = thiscall vslot 0x18 => unported;
-    /// `CWeaponInfo::GetSkillStatIndex(eWeaponType)` (0x743CD0)
-    pub fn get_skill_stat_index(ty: i32) -> i32 = cdecl 0x743CD0 => unported;
-    /// `CPed::GetWeaponSkill(eWeaponType)` (0x5E3B60)
-    pub fn get_weapon_skill_type_call(ped: GPtr<u8>, ty: i32) -> u8 = thiscall 0x5E3B60 => get_weapon_skill_type;
-    /// `CPed::ClearLookFlag` (0x5E1950)
-    pub fn clear_look_flag_call(ped: GPtr<u8>) = thiscall 0x5E1950 => clear_look_flag;
     /// `CPed::TurnBody` (0x5E4000)
     pub fn turn_body_call(ped: GPtr<u8>) -> u8 = thiscall 0x5E4000 => turn_body;
     /// `CAEPedSpeechAudioEntity::GetPedTalking` (0x4E3F50)
@@ -411,7 +407,7 @@ pub fn set_look_flag_entity(this: GPtr<u8>, ent: GPtr<u8>, _b: u32, over: u32) {
         clean_up_old_reference(e, look_ref(this));
     }
     look_ref(this).write(ent);
-    register_reference(ent, look_ref(this));
+    register_reference(ent, GPtr::<GPtr<u8>>::cast::<u8>(look_ref(this)));
     wr::<u32>(this, 0x73C, 0x4974_23F0);
     wr::<u32>(this, 0x748, 0);
     look_tail(this);
@@ -426,7 +422,7 @@ pub fn set_aim_flag_entity(this: GPtr<u8>, ent: GPtr<u8>) {
         clean_up_old_reference(e, look_ref(this));
     }
     look_ref(this).write(ent);
-    register_reference(ent, look_ref(this));
+    register_reference(ent, GPtr::<GPtr<u8>>::cast::<u8>(look_ref(this)));
     wr::<u32>(this, 0x748, 0);
 }
 
@@ -604,12 +600,12 @@ pub fn work_out_heading_for_moving_first_person(this: GPtr<u8>, heading: f32) ->
         }
     } else {
         let pd = rd::<GPtr<u8>>(this, 0x480);
-        let a = get_radian_angle_between_points(0, 0, x(lr).fchs().to_f32().to_bits(), ud.to_bits());
+        let a = get_radian_angle_between_points(f32::from_bits(0), f32::from_bits(0), f32::from_bits(x(lr).fchs().to_f32().to_bits()), f32::from_bits(ud.to_bits()));
         wr::<f32>(pd, 0x50, X87::from_f64_exact(a).to_f32());
     }
     let pd = rd::<GPtr<u8>>(this, 0x480);
     let s = x(heading).fadd_m(rd::<f32>(pd, 0x50)).to_f32();
-    X87::from_f64_exact(limit_radian_angle(s.to_bits()))
+    X87::from_f64_exact(limit_radian_angle(f32::from_bits(s.to_bits())))
 }
 
 /// `CPed::GetWeaponSkill(eWeaponType)` (0x5E3B60, `ret 4`, AL): types outside 0x16..0x20 → 1 (std);
@@ -623,14 +619,14 @@ pub fn get_weapon_skill_type(this: GPtr<u8>, ty: i32) -> u8 {
     }
     let pt = rd::<i32>(this, 0x598);
     if pt == 0 || pt == 1 {
-        let idx = get_skill_stat_index(ty);
+        let idx = get_skill_stat_index(ty as u32);
         let req = rd::<i32>(get_weapon_info(ty, 2), 0x34);
-        let stat = X87::from_f64_exact(get_stat_value(idx as u32));
+        let stat = X87::from_f64_exact(get_stat_value((idx as u32) as u16));
         if !xi(req).fcom(stat).test_parity(0x41) {
             return 2;
         }
         let req = rd::<i32>(get_weapon_info(ty, 1), 0x34);
-        let stat = X87::from_f64_exact(get_stat_value(idx as u32));
+        let stat = X87::from_f64_exact(get_stat_value((idx as u32) as u16));
         return if !xi(req).fcom(stat).test_parity(0x41) { 1 } else { 0 };
     }
     if ty == 0x16 && pt == 6 {
@@ -656,11 +652,11 @@ pub fn turn_body(this: GPtr<u8>) -> u8 {
     if !e.is_null() {
         let s = ent_pos(this).cast::<u32>();
         let t = ent_pos(e).cast::<u32>();
-        let a = get_radian_angle_between_points(t.read(), t.wrapping_index(1).read(), s.read(), s.wrapping_index(1).read());
+        let a = get_radian_angle_between_points(f32::from_bits(t.read()), f32::from_bits(t.wrapping_index(1).read()), f32::from_bits(s.read()), f32::from_bits(s.wrapping_index(1).read()));
         wr::<f32>(this, 0x73C, X87::from_f64_exact(a).to_f32());
     }
     let mut f = Fpu::new();
-    f.push(X87::from_f64_exact(limit_radian_angle(rd::<u32>(this, 0x73C))));
+    f.push(X87::from_f64_exact(limit_radian_angle(f32::from_bits(rd::<u32>(this, 0x73C)))));
     f.fld(rd::<f32>(this, 0x558));
     f.fld(PI);
     f.fadd_st(1);
@@ -773,7 +769,7 @@ pub fn set_look_entity(this: GPtr<u8>, ent: GPtr<u8>) {
         clean_up_old_reference(e, look_ref(this));
     }
     look_ref(this).write(ent);
-    register_reference(ent, look_ref(this));
+    register_reference(ent, GPtr::<GPtr<u8>>::cast::<u8>(look_ref(this)));
     wr::<u32>(this, 0x73C, 0x4974_23F0);
     wr::<u32>(this, 0x748, 0);
     look_tail(this);
@@ -910,14 +906,14 @@ pub fn calculate_new_orientation(this: GPtr<u8>) {
     if g::<u8>(0xA43088).read() == 1 || !can_look(this) {
         return;
     }
-    set_orientation(this, 0, 0, rd::<u32>(this, 0x558));
+    set_orientation(this, f32::from_bits(0), f32::from_bits(0), f32::from_bits(rd::<u32>(this, 0x558)));
 }
 
 /// `CPed::GetWeaponSkill()` (0x5E6580, AL): of the active slot's weapon type.
 #[hook(addr = 0x5E6580, conv = thiscall, name = "CPed::GetWeaponSkill-Current", expect = "0F BE 81 18 07 00 00", this = "CPed")]
 pub fn get_weapon_skill_current(this: GPtr<u8>) -> u8 {
     let slot = i32::from(rd::<i8>(this, 0x718));
-    get_weapon_skill_type_call(this, rd::<i32>(weapon(this, slot), 0))
+    get_weapon_skill_type_call(this, rd::<i32>(weapon(this, slot), 0)) as u8
 }
 
 /// `CPed::CanSeeEntity(CEntity*, float threshold)` (0x5E0730, `ret 8`, AL): the angle to the entity
@@ -928,7 +924,7 @@ pub fn can_see_entity(this: GPtr<u8>, ent: GPtr<u8>, thr: f32) -> u8 {
     const TWO_PI: f32 = f32::from_bits(0x40C9_0FDB);
     let s = ent_pos(this).cast::<u32>();
     let t = ent_pos(ent).cast::<u32>();
-    let a = get_angle_between_points(t.read(), t.wrapping_index(1).read(), s.read(), s.wrapping_index(1).read());
+    let a = get_angle_between_points(f32::from_bits(t.read()), f32::from_bits(t.wrapping_index(1).read()), f32::from_bits(s.read()), f32::from_bits(s.wrapping_index(1).read()));
     let mut a = X87::from_f64_exact(a).fmul_m(f32::from_bits(0x3C8E_FA35));
     if !a.fcom(x(TWO_PI)).test_any(0x41) {
         a = a.fsub_m(TWO_PI);

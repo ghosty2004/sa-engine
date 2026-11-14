@@ -72,22 +72,19 @@ const K_ZERO: u32 = 0;
 
 pub use sa_core::bindings::rw_raster_create;
 pub use sa_core::bindings::rw_raster_destroy;
-pub use sa_world::bindings::rw_raster_unlock;
+pub use sa_core::bindings::rw_raster_unlock;
+pub use crate::bindings::heat_haze_fx_init as heat_haze_fx_init_call;
+pub use sa_core::bindings::rw_raster_lock;
+pub use sa_core::bindings::setup_back_buffer_vertex as setup_back_buffer_vertex_call;
 orig! {
-    /// `CPostEffects::SetupBackBufferVertex()` (0x7043D0)
-    pub fn setup_back_buffer_vertex_call() = cdecl 0x7043D0 => setup_back_buffer_vertex;
     /// `CPostEffects::ImmediateModeFilterStuffInitialize()` (0x703CC0)
     pub fn immediate_mode_filter_stuff_initialize_call() = cdecl 0x703CC0 => immediate_mode_filter_stuff_initialize;
-    /// `CPostEffects::HeatHazeFXInit()` (0x701450)
-    pub fn heat_haze_fx_init_call() = cdecl 0x701450 => heat_haze_fx_init;
     /// CRT `printf` (one argument here)
     pub fn printf(fmt: GPtr<u8>) -> i32 = cdecl 0x821982 => unported;
     /// CRT `pow(double, double)` (0x8220F0)
     pub fn crt_pow(a: f64, b: f64) -> f64 = cdecl 0x8220F0 => crt_pow_host;
     /// `RwRenderStateSet` (`RwEngineInstance` slot 0x20)
     pub fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `RwRasterLock(RwRaster*, uint8 level, int32 mode)` (0x7FB2D0)
-    pub fn rw_raster_lock(r: GPtr<u8>, level: u32, mode: i32) -> GPtr<u8> = cdecl 0x7FB2D0 => unported;
 }
 
 /// `CPostEffects::ScriptResetForEffects()` (0x7010F0): night / infrared vision, heat haze, darkness

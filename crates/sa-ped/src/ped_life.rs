@@ -10,6 +10,7 @@
 //! `CEventAcquaintancePedHate` the constructor builds on its stack lives in a Rust stack buffer of the same
 //! size and is built and destroyed by the original constructor/destructor.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::crt::rand;
 use sa_core::orig::at_site;
@@ -47,7 +48,7 @@ const ANIM_BLOCKS: u32 = 0xB5D4A0;
 const VT_AUDIO_ENTITY: u32 = 0x859988;
 
 use crate::bindings::ped_speech_initialise as speech_init;
-use crate::bindings::population_update_ped_count;
+use sa_world::bindings::population_update_ped_count;
 use crate::bindings::task_complex_facial_ctor as task_primary_ctor;
 use sa_core::bindings::eh_vector_ctor;
 use sa_core::bindings::eh_vector_dtor;
@@ -72,11 +73,20 @@ use sa_world::bindings::remove_from_waiting_for_script_brain_array as script_rel
 use sa_world::bindings::set_as_acquaintance;
 use sa_world::bindings::sound_dtor as audio_entity_member_dtor;
 use sa_world::bindings::wanted_remove_cop;
+use crate::bindings::ped_ctor as ped_ctor_call;
+use crate::bindings::ped_set_model_index as ped_set_model_index_call;
+use sa_core::bindings::intel_pool_new;
+use sa_core::bindings::ped_give_weapon as give_weapon;
+use sa_core::bindings::tm_set_task_secondary as task_manager_set_task;
+use sa_stream::bindings::get_default_cop_model;
+use sa_world::bindings::acquaintance_ped_ctor as event_hate_ctor;
+use sa_world::bindings::get_ped_type_acquaintances;
+use sa_world::bindings::ped_set_current_weapon as set_current_weapon;
+use sa_world::bindings::physical_ctor;
+use sa_world::bindings::speech_constructor as speech_ctor;
+use sa_world::bindings::stand_still_ctor as task_secondary_ctor;
+use sa_world::bindings::tm_set_task as task_manager_set_task_secondary;
 orig! {
-    /// `CPhysical::CPhysical()` (0x542260)
-    fn physical_ctor(e: GPtr<u8>) = thiscall 0x542260 => unported;
-    /// `CAEPedSpeechAudioEntity::CAEPedSpeechAudioEntity()` (0x4E4F10)
-    fn speech_ctor(e: GPtr<u8>) = thiscall 0x4E4F10 => unported;
     /// `CPedIK::CPedIK(CPed*)` (0x5FD8C0)
     fn ped_ik_ctor(ik: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x5FD8C0 => unported;
     /// `CAEPedWeaponAudioEntity::Initialise(CPed*)` (0x4E6AA0)
@@ -91,12 +101,6 @@ orig! {
     fn ped_audio_dtor(e: GPtr<u8>) = thiscall 0x5DE920 => unported;
     /// speech entity vtable slot 2 (`Terminate`)
     fn speech_terminate(e: GPtr<u8>) = thiscall vslot 0x08 => unported;
-    /// `CPedType::GetPedTypeAcquaintances(ePedType)` (0x6089B0)
-    fn get_ped_type_acquaintances(ty: u32) -> GPtr<u32> = cdecl 0x6089B0 => unported;
-    /// `CPed::GiveWeapon(eWeaponType, uint32, bool)` (0x5E6080)
-    fn give_weapon(p: GPtr<u8>, ty: u32, ammo: u32, b: u32) -> i32 = thiscall 0x5E6080 => unported;
-    /// `CPed::SetCurrentWeapon(eWeaponType)` (0x5E6280)
-    fn set_current_weapon(p: GPtr<u8>, ty: i32) = thiscall 0x5E6280 => crate::ped_weapon::set_current_weapon_type;
     /// `CPedIntelligence::operator new(uint32)` (0x6074A0)
     fn intel_new(size: u32) -> GPtr<u8> = cdecl 0x6074A0 => ped_intelligence_new;
     /// `CPedIntelligence::operator delete(void*)` (0x6074E0)
@@ -105,26 +109,12 @@ orig! {
     fn intel_ctor(i: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x607140 => unported;
     /// `CPedIntelligence::~CPedIntelligence()` (0x607300)
     fn intel_dtor(i: GPtr<u8>) = thiscall 0x607300 => unported;
-    /// `CPool<CPedIntelligence>::New()` (0x605EC0)
-    fn intel_pool_new(pool: GPtr<u8>) -> GPtr<u8> = thiscall 0x605EC0 => unported;
-    /// default secondary task constructor (0x62F310, `(0, 1, 0, 8.0f)`)
-    fn task_secondary_ctor(t: GPtr<u8>, a: u32, b: u32, c: u32, d: f32) -> GPtr<u8> = thiscall 0x62F310 => unported;
-    /// `CTaskManager::SetTask(CTask*, int32)` (0x681B60)
-    fn task_manager_set_task(tm: GPtr<u8>, t: GPtr<u8>, slot: u32) = thiscall 0x681B60 => unported;
-    /// `CTaskManager::SetTaskSecondary(CTask*, int32)` (0x681AF0)
-    fn task_manager_set_task_secondary(tm: GPtr<u8>, t: GPtr<u8>, slot: u32, z: u32) = thiscall 0x681AF0 => unported;
-    /// `CEventAcquaintancePedHate::CEventAcquaintancePedHate(CPed*)` (0x4AF820)
-    fn event_hate_ctor(e: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x4AF820 => unported;
     /// `CReplay::RecordPedDeleted`-style hook the destructor calls first (0x45EC20)
     fn dtor_notify_replay(ped: GPtr<u8>) = cdecl 0x45EC20 => unported;
     /// `CPed::operator delete(void*)` (0x5E4760)
     fn ped_delete(p: GPtr<u8>) = cdecl 0x5E4760 => unported;
     /// `CPed::~CPed()` (0x5E8620)
     fn ped_dtor_call(p: GPtr<u8>) = thiscall 0x5E8620 => ped_destructor;
-    /// `CPed::CPed(ePedType)` (0x5E8030)
-    fn ped_ctor_call(p: GPtr<u8>, ty: u32) -> GPtr<u8> = thiscall 0x5E8030 => ped_constructor;
-    /// `CPed::SetModelIndex(uint32)` (0x5E4880)
-    fn ped_set_model_index_call(p: GPtr<u8>, m: u32) = thiscall 0x5E4880 => ped_set_model_index;
     /// `CCivilianPed::~CCivilianPed()` (0x5DDBE0)
     fn civilian_dtor_call(p: GPtr<u8>) = thiscall 0x5DDBE0 => civilian_ped_dtor;
     /// `CCopPed::~CCopPed()` (0x5DE0D0)
@@ -135,8 +125,6 @@ orig! {
     fn player_dtor_call(p: GPtr<u8>) = thiscall 0x6093B0 => player_ped_dtor;
     /// `CCopPed` member cleanup (0x5DE070)
     fn cop_clear_criminals(cop: GPtr<u8>) = thiscall 0x5DE070 => unported;
-    /// `CStreaming::GetDefaultCopModel()` (0x407C00)
-    fn get_default_cop_model() -> u32 = cdecl 0x407C00 => unported;
     /// `RpAnimBlendClumpFillFrameArray(RpClump*, AnimBlendFrameData**)` (0x4D64A0)
     fn anim_blend_clump_fill_frame_array(c: GPtr<u8>, out: GPtr<u8>) = cdecl 0x4D64A0 => unported;
     /// `CPopulation::IsMale`-style model test `(int32 model, int32 k)` (0x610210)
@@ -291,7 +279,7 @@ pub fn ped_constructor(this: GPtr<u8>, ped_type: u32) -> GPtr<u8> {
     wr::<u32>(p, 0x478, (f478 & 0xFFC2_1020) | 0x21000);
     weapon_audio_init(w, p);
     ped_audio_init(a, p);
-    let acq = get_ped_type_acquaintances(rd::<u32>(p, 0x598));
+    let acq = GPtr::<u8>::cast::<u32>(get_ped_type_acquaintances(rd::<u32>(p, 0x598)));
     for k in 0..5 {
         wr::<u32>(p, 0x4E0 + 4 * k as isize, acq.wrapping_index(k).read());
     }
@@ -361,7 +349,7 @@ pub fn ped_constructor(this: GPtr<u8>, ped_type: u32) -> GPtr<u8> {
             wr::<u16>(e, 0xE, 1000);
             event_group_add(rd::<GPtr<u8>>(p, 0x47C).byte_add(0x68), e, 0);
             wr::<u32>(e, 0, 0x858E68);
-            event_hate_dtor(e);
+            event_hate_dtor(e.cast::<u32>());
         }
     }
     p
@@ -515,7 +503,7 @@ fn release_player_anim_block(this: GPtr<u8>, off: isize) {
     if k != 0 {
         let groups = g::<GPtr<u8>>(ANIM_ASSOC_GROUPS).read();
         let blk = rd::<u32>(groups, (k.wrapping_mul(20)) as isize);
-        remove_anim_block_ref((blk.wrapping_sub(ANIM_BLOCKS) as i32) >> 5);
+        remove_anim_block_ref(((blk.wrapping_sub(ANIM_BLOCKS) as i32) >> 5) as u32);
         wr::<u32>(rd::<GPtr<u8>>(this, 0x480), off, 0);
     }
 }
@@ -565,8 +553,8 @@ pub fn cop_ped_ctor(this: GPtr<u8>, cop_type: u32) -> GPtr<u8> {
     wr::<u32>(p, 0x7A0, cop_type);
     let special = |model: u32, weapon: u32, armour: u32, acc: u8, b: u8| {
         ped_set_model_index_call(p, model);
-        give_delayed_weapon(p, weapon, 1000);
-        set_current_weapon(p, weapon as i32);
+        give_delayed_weapon(p, weapon as i32, 1000);
+        set_current_weapon(p, (weapon as i32) as u32);
         wr::<u32>(p, 0x548, armour);
         wr::<u8>(p, 0x719, acc);
         wr::<u8>(p, 0x71A, b);

@@ -2,6 +2,7 @@
 //! cutscene). Ported from the 1.0 US bytes (gta-reversed `TaskComplexUseEffect.cpp` as a reading aid; the bytes win:
 //! the 0x393 test is on the sub-task's type). Unverified (docs/verify/HOWTO.md).
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -9,7 +10,8 @@ use crate::common::*;
 
 use crate::bindings::attractor_manager_deregister_ped;
 use sa_world::bindings::get_ped_attractor_manager;
-use sa_world::bindings::vector_magnitude_sqr as vector_magnitude;
+use sa_core::bindings::vector_magnitude_sqr as vector_magnitude;
+use sa_core::bindings::vector_difference as vector_sub;
 orig! {
     /// `CTask::MakeAbortable(CPed*, eAbortPriority, const CEvent*)` (vtable +0x18), AL
     fn v_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, prio: u32, event: GPtr<u8>) -> u8 = thiscall vslot 0x18 => unported;
@@ -17,8 +19,6 @@ orig! {
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
     /// `CEvent::GetEventType()` (vtable +4)
     fn v_event_type(e: GPtr<u8>) -> i32 = thiscall vslot 0x4 => unported;
-    /// `CVector::operator-` into `out` (0x40FE00, thiscall `out`, `ret 8`)
-    fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = thiscall 0x40FE00 => unported;
 }
 
 /// `CTaskComplexCarDrive::~CTaskComplexCarDrive` (0x63CA40, the base destructor)
@@ -84,7 +84,7 @@ pub fn use_effect_make_abortable(this: GPtr<u8>, ped: GPtr<u8>, prio: u32, event
     let vp = GPtr::from_raw(v.as_mut_ptr()).cast::<u8>();
     vector_sub(vp, entity_pos(victim), target);
     wr::<f32>(vp, 8, 0.0);
-    let m = sa_math::x87::X87::from_f64_exact(vector_magnitude(vp));
+    let m = sa_math::x87::X87::from_f64_exact(vector_magnitude(vp.cast::<f32>()));
     if !m.fcom(x(k)).test_parity(5) && rd::<u32>(victim, 0x534) == 1 {
         wr::<u8>(this, 0x20, 1);
     }

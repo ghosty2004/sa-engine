@@ -84,25 +84,19 @@ pub fn vehicle_get_vehicle_type_for_audio_ax(this: GPtr<u8>) -> Ax {
 
 use crate::bindings::env_distance_attenuation_st0;
 use sa_core::bindings::vector_magnitude as vector_magnitude_st0;
-use sa_world::bindings::audio_report_frontend_event as engine_report_frontend_audio_event;
+use sa_core::bindings::audio_report_frontend_event as engine_report_frontend_audio_event;
 use sa_world::bindings::audio_start_radio as engine_start_radio;
 use sa_world::bindings::cam_no_rain as cull_cam_no_rain;
 use sa_world::bindings::la_riots_active_here;
 use sa_world::bindings::player_no_rain as cull_player_no_rain;
+use crate::bindings::amb_stop as amb_stop_ambience_track;
+use crate::bindings::position_relative_to_camera_vec as env_position_relative_to_camera;
+use sa_world::bindings::audio_get_current_radio_station_id as engine_get_current_radio_station_id;
+use sa_world::bindings::audio_stop_radio as engine_stop_radio;
+use sa_world::bindings::find_most_favorite_radio_station as stats_find_most_favorite_radio_station;
 orig! {
-    /// `CStats::FindMostFavoriteRadioStation()` (0x558FA0, AL)
-    fn stats_find_most_favorite_radio_station() -> u8 = cdecl 0x558FA0 => unported;
-    /// `CAEAudioEnvironment::GetPositionRelativeToCamera(CVector* out, const CVector* pos)` (0x4D80B0)
-    fn env_position_relative_to_camera(out: GPtr<u8>, pos: GPtr<u8>) = cdecl 0x4D80B0 => unported;
-    /// `CAEAmbienceTrackManager::StopAmbienceTrack()` (0x4D6CC0)
-    fn amb_stop_ambience_track(this: GPtr<u8>) = thiscall 0x4D6CC0 => crate::radio::stop_ambience_track;
-    /// `CAudioEngine::StopRadio(tVehicleAudioSettings*, bool)` (0x506F70)
-    fn engine_stop_radio(e: GPtr<u8>, settings: u32, during_pause: u32) = thiscall 0x506F70 => crate::engine::stop_radio;
     /// `CAudioEngine::IsRadioOn()` (0x506FD0, AL)
     fn engine_is_radio_on(e: GPtr<u8>) -> u8 = thiscall 0x506FD0 => unported;
-    /// `CAudioEngine::GetCurrentRadioStationID()` (0x507040): AL is the station; the whole EAX is what a
-    /// caller pushing it passes on
-    fn engine_get_current_radio_station_id(e: GPtr<u8>) -> u32 = thiscall 0x507040 => unported;
     /// `CAudioEngine::IsVehicleRadioActive()` (0x507050, AL)
     fn engine_is_vehicle_radio_active(e: GPtr<u8>) -> u8 = thiscall 0x507050 => unported;
 }
@@ -128,10 +122,10 @@ fn amb_zone_distance_volume(pos: [u32; 3]) -> f32 {
     let mut rel = [0u32; 3];
     let relp: GPtr<u8> = GPtr::from_raw(rel.as_mut_ptr()).cast();
     env_position_relative_to_camera(relp, GPtr::from_raw(pos.as_mut_ptr()).cast());
-    let m = X87::from_f64_exact(vector_magnitude_st0(relp))
+    let m = X87::from_f64_exact(vector_magnitude_st0(relp.cast::<u32>()))
         .fmul_m(0.2)
         .to_f32();
-    X87::from_f64_exact(env_distance_attenuation_st0(m))
+    X87::from_f64_exact(f64::from(env_distance_attenuation_st0(m)))
         .fsub_m(6.0)
         .to_f32()
 }
@@ -291,7 +285,7 @@ pub fn amb_update_ambience_track_and_volume(this: GPtr<u8>) {
             66 => 0xAA,
             67 => 0xAB,
             30 => {
-                wr::<u8>(this, 3, stats_find_most_favorite_radio_station());
+                wr::<u8>(this, 3, stats_find_most_favorite_radio_station() as u8);
                 -1
             }
             52..=62 => {
@@ -308,20 +302,20 @@ pub fn amb_update_ambience_track_and_volume(this: GPtr<u8>) {
         if engine_is_radio_on(eng) == 0 {
             engine_start_radio(eng, u32::from(st as u8), 2);
         } else if engine_get_current_radio_station_id(eng) as u8 != st as u8 {
-            engine_stop_radio(eng, 0, 0);
+            engine_stop_radio(eng, GPtr::NULL, 0);
         }
         return;
     }
     if prev_station >= 0 {
         if engine_is_radio_on(eng) != 0 {
-            engine_stop_radio(eng, 0, 0);
+            engine_stop_radio(eng, GPtr::NULL, 0);
         }
         return;
     }
     if engine_is_radio_on(eng) != 0 {
         if rd::<u8>(this, 0) != 0 {
-            engine_stop_radio(eng, 0, 0);
-            engine_report_frontend_audio_event(eng, 0x23, 0, 0x3F80_0000);
+            engine_stop_radio(eng, GPtr::NULL, 0);
+            engine_report_frontend_audio_event(eng, 0x23, f32::from_bits(0), f32::from_bits(0x3F80_0000));
         }
         wr::<u8>(this, 1, rd::<u8>(this, 0));
         return;
@@ -371,7 +365,7 @@ pub fn amb_update_ambience_track_and_volume(this: GPtr<u8>) {
             .fsqrt()
             .fmul_m(f32::from_bits(0x3F12_4925))
             .to_f32();
-        volume = X87::from_f64_exact(env_distance_attenuation_st0(r))
+        volume = X87::from_f64_exact(f64::from(env_distance_attenuation_st0(r)))
             .fsub_m(12.0)
             .to_f32();
         freq_target = 1.0;
@@ -447,6 +441,7 @@ pub fn amb_update_ambience_track_and_volume(this: GPtr<u8>) {
 
 // ---- CAEAudioHardware::RescaleChannelVolumes (AudioLog10 + _CIpow) --------------------------------------
 
+use crate::bindings::channel_set_volume;
 orig! {
     /// `CAEAudioChannel` virtual slot 0xC (`GetPlayTime()`: the play position in ms, -1 when not playing)
     fn channel_get_play_time(ch: GPtr<u8>) -> i32 = thiscall vslot 0xC => unported;
@@ -454,8 +449,6 @@ orig! {
     fn channel_get_length(ch: GPtr<u8>) -> u32 = thiscall vslot 0x10 => unported;
     /// `CAEAudioChannel` virtual slot 0x20 (`SetFrequencyScalingFactor(float)`)
     fn channel_set_frequency_scaling_factor(ch: GPtr<u8>, f: u32) = thiscall vslot 0x20 => unported;
-    /// `CAEAudioChannel::SetVolume(float)` (0x4D7C60)
-    fn channel_set_volume(ch: GPtr<u8>, v: u32) = thiscall 0x4D7C60 => unported;
 }
 
 /// CRT `_CIpow` (0x822130): `st1 ^ st0` (computed by the CRT at 53 bits; the double result is exact in an f64).
@@ -704,7 +697,7 @@ pub fn radio_update_radio_volumes(this: GPtr<u8>) {
                     let mut rel = [0u32; 3];
                     let relp: GPtr<u8> = GPtr::from_raw(rel.as_mut_ptr()).cast();
                     env_position_relative_to_camera(relp, pos);
-                    let c = X87::from_f64_exact(vector_magnitude_st0(relp)).fcom(x(15.0));
+                    let c = X87::from_f64_exact(vector_magnitude_st0(relp.cast::<u32>())).fcom(x(15.0));
                     if c == Cmp::Less || c == Cmp::Equal {
                         duck = true;
                         break;
@@ -738,17 +731,14 @@ pub fn radio_update_radio_volumes(this: GPtr<u8>) {
             _ => {}
         }
     }
-    hw_set_channel_volume(hw, u32::from(rd::<u16>(this, 0x64)), 0, volume.to_bits(), 0);
+    hw_set_channel_volume(hw.addr() as u32, u32::from(rd::<u16>(this, 0x64)), 0, volume.to_bits(), 0);
 }
 
 // ---- CAEAudioEnvironment::GetPositionRelativeToCamera(CVector*, const CVector*) -------------------------
 
 use sa_core::bindings::find_player_ped;
 use sa_core::bindings::matrix_dtor;
-orig! {
-    /// `CMatrix::CMatrix(const CMatrix&)` (0x59BBC0)
-    fn matrix_copy_ctor(m: GPtr<u8>, src: GPtr<u8>) = thiscall 0x59BBC0 => unported;
-}
+use sa_core::bindings::matrix_assign as matrix_copy_ctor;
 
 /// `CAEAudioEnvironment::GetPositionRelativeToCamera(CVector* out, const CVector* pos)` (0x4D80B0, cdecl), from
 /// the bytes: `out` = `pos` relative to a listener point in the camera frame (`TheCamera`'s camera matrix
@@ -851,17 +841,15 @@ pub fn env_get_position_relative_to_camera(out: GPtr<u8>, pos: GPtr<u8>) {
 
 // ---- CAERadioTrackManager::QueueUpTracksForStation ----------------------------------------------------
 
+use crate::bindings::radio_choose_advert_index;
+use crate::bindings::user_select_user_track_index;
 orig! {
     /// `CAERadioTrackManager::ChooseMusicTrackIndex(eRadioID)` (0x4E94C0)
     fn radio_choose_music_track_index(this: GPtr<u8>, station: u32) -> u32 = thiscall 0x4E94C0 => unported;
-    /// `CAERadioTrackManager::ChooseAdvertIndex(eRadioID)` (0x4E9570)
-    fn radio_choose_advert_index(this: GPtr<u8>, station: u32) -> u32 = thiscall 0x4E9570 => crate::port2_a::radio_choose_advert_index;
     /// `CAERadioTrackManager::ChooseDJBanterIndex(eRadioID)` (0x4EA2D0)
     fn radio_choose_dj_banter_index(this: GPtr<u8>, station: u32) -> u32 = thiscall 0x4EA2D0 => unported;
     /// `CAERadioTrackManager::ChooseIdentIndex(eRadioID)` (0x4EA270): AL
     fn radio_choose_ident_index(this: GPtr<u8>, station: u32) -> u8 = thiscall 0x4EA270 => unported;
-    /// `CAEUserRadioTrackManager::SelectUserTrackIndex()` (0x4F3250)
-    fn user_select_user_track_index(this: GPtr<u8>) -> u32 = thiscall 0x4F3250 => crate::port2_a::user_select_user_track_index;
 }
 
 /// `CAERadioTrackManager::QueueUpTracksForStation(eRadioID station, int8* count, int8 type, tRadioSettings&)`
@@ -970,11 +958,10 @@ pub fn radio_queue_up_tracks_for_station(
 // ---- CAERadioTrackManager::CheckForTrackConcatenation -------------------------------------------------
 
 use crate::bindings::hw_get_active_track_id;
+use crate::bindings::queue_up_tracks_for_station as radio_queue_up;
 orig! {
     /// `CAEUserRadioTrackManager::SetUserTrackIndex(int32)` (0x4F3340)
     fn user_set_user_track_index(this: GPtr<u8>, i: u32) = thiscall 0x4F3340 => unported;
-    /// `CAERadioTrackManager::QueueUpTracksForStation` (0x4EA670), AL
-    fn radio_queue_up(this: GPtr<u8>, station: u32, count: GPtr<u8>, ty: u32, s: GPtr<u8>) -> u8 = thiscall 0x4EA670 => radio_queue_up_tracks_for_station;
 }
 
 /// `CAERadioTrackManager::CheckForTrackConcatenation()` (0x4EA930), from the bytes. Settings at `+0xC4`
@@ -1000,7 +987,7 @@ pub fn radio_check_for_track_concatenation(this: GPtr<u8>) {
         crate::radio::hw_play_track(
             hw,
             rd::<u32>(this, 0xC4),
-            rd::<i32>(this, 0xC8),
+            rd::<i32>(this, 0xC8) as u32,
             0,
             u32::from(rd::<u8>(this, 0xE8)),
             u32::from(rd::<u8>(this, 0xF0) == 7),
@@ -1093,12 +1080,8 @@ pub fn radio_check_for_track_concatenation(this: GPtr<u8>) {
 
 // ---- CAERadioTrackManager::Save / Load ----------------------------------------------------------------
 
-orig! {
-    /// `CGenericGameStorage::SaveDataToWorkBuffer(void*, int32)` (0x5D1270)
-    fn save_data_to_work_buffer(p: u32, size: u32) -> u8 = cdecl 0x5D1270 => unported;
-    /// `CGenericGameStorage::LoadDataFromWorkBuffer(void*, int32)` (0x5D1300)
-    fn load_data_from_work_buffer(p: u32, size: u32) -> u8 = cdecl 0x5D1300 => unported;
-}
+use sa_core::bindings::load_data_from_work_buffer;
+use sa_core::bindings::save_data_to_work_buffer;
 
 /// The radio save block in the bytes' order (shared by `Save` and `Load`): per station (14, 0x14 bytes each from
 /// 0xB62B40) its 20 history bytes, then the next 8 dwords from 0xB62980, 40 from 0xB620C0 and 15 from 0xB61D78
@@ -1134,14 +1117,14 @@ fn radio_save_block(io: fn(u32, u32) -> u8) {
 /// `CAERadioTrackManager::Save()` (0x5D3EE0, static): [`radio_save_block`] through `SaveDataToWorkBuffer`; AL = 1.
 #[hook(addr = 0x5D3EE0, conv = cdecl, name = "CAERadioTrackManager::Save", expect = "51 53 55 56 57 C7 44 24")]
 pub fn radio_save() -> u8 {
-    radio_save_block(save_data_to_work_buffer);
+    radio_save_block(|p, n| save_data_to_work_buffer(GPtr::from_addr(p as usize), n as i32));
     1
 }
 
 /// `CAERadioTrackManager::Load()` (0x5D40E0, static): [`radio_save_block`] through `LoadDataFromWorkBuffer`; AL = 1.
 #[hook(addr = 0x5D40E0, conv = cdecl, name = "CAERadioTrackManager::Load", expect = "51 53 55 56 57 C7 44 24")]
 pub fn radio_load() -> u8 {
-    radio_save_block(load_data_from_work_buffer);
+    radio_save_block(|p, n| load_data_from_work_buffer(GPtr::from_addr(p as usize), n as i32));
     1
 }
 
@@ -1223,13 +1206,10 @@ pub fn utility_get_bank_and_sound_from_script_slot_audio_event(
 // ---- destructors and forwarders --------------------------------------------------------------------
 
 use sa_core::bindings::entity_clean_up_old_reference;
+use sa_core::bindings::crt_free_8214bd as crt_delete;
+use sa_core::bindings::eh_vector_dtor as eh_vector_destructor_iterator;
+use sa_core::bindings::memory_free as file_close;
 orig! {
-    /// CRT `operator delete` (0x8214BD)
-    fn crt_delete(p: u32) = cdecl 0x8214BD => unported;
-    /// `CFileMgr::CloseFile` (0x72F430, `jmp` to the CRT `fclose`)
-    fn file_close(f: u32) -> i32 = cdecl 0x72F430 => unported;
-    /// `eh vector destructor iterator(void*, size, count, dtor)` (0x821E02, `ret 0x10`)
-    fn eh_vector_destructor_iterator(p: u32, size: u32, count: u32, dtor: u32) = stdcall 0x821E02 => unported;
     /// `CAESoundManager::~CAESoundManager()` (0x4EFD60)
     fn sound_manager_dtor(sm: GPtr<u8>) = thiscall 0x4EFD60 => unported;
     /// `CAEStreamThread::~CAEStreamThread()` (0x4F11E0)
@@ -1242,7 +1222,7 @@ orig! {
 pub fn sound_destructor(this: GPtr<u8>) {
     let e = rd::<GPtr<u8>>(this, 8);
     if !e.is_null() {
-        entity_clean_up_old_reference(e, this.byte_add(8));
+        entity_clean_up_old_reference(e, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(8)));
         wr::<u32>(this, 8, 0);
     }
 }
@@ -1251,7 +1231,7 @@ pub fn sound_destructor(this: GPtr<u8>) {
 /// destroyed with their destructor 0x4E3340.
 #[hook(addr = 0x856330, conv = cdecl, name = "__dtor_CAEPedSpeechAudioEntity__s_PedSpeechSlots", expect = "68 40 33 4E 00 6A 06 6A")]
 pub fn dtor_ped_speech_slots() {
-    eh_vector_destructor_iterator(0xB6_1C38, 0x1C, 6, 0x4E_3340);
+    eh_vector_destructor_iterator(GPtr::from_addr(0xB6_1C38), 0x1C, 6, 0x4E_3340);
 }
 
 /// `__dtor_AESoundManager` (0x856360): `~CAESoundManager` on `AESoundManager`.
@@ -1271,10 +1251,10 @@ pub fn hw_destructor(this: GPtr<u8>) {
 #[hook(addr = 0x4DFB20, conv = thiscall, name = "CAEBankLoader::Deconstructor", expect = "56 8B F1 8A 46 14 84 C0")]
 pub fn bank_loader_destructor(this: GPtr<u8>) {
     if rd::<u8>(this, 0x14) != 0 {
-        crt_delete(rd::<u32>(this, 0));
-        file_close(rd::<u32>(this, 0x1C));
-        crt_delete(rd::<u32>(this, 4));
-        crt_delete(rd::<u32>(this, 0x20));
+        crt_delete(GPtr::from_addr(rd::<u32>(this, 0) as usize));
+        file_close(GPtr::from_addr(rd::<u32>(this, 0x1C) as usize));
+        crt_delete(GPtr::from_addr(rd::<u32>(this, 4) as usize));
+        crt_delete(GPtr::from_addr(rd::<u32>(this, 0x20) as usize));
     }
 }
 
@@ -1283,12 +1263,12 @@ pub fn bank_loader_destructor(this: GPtr<u8>) {
 #[hook(addr = 0x4E0940, conv = thiscall, name = "CAEMP3TrackLoader::Deconstructor", expect = "56 8B F1 80 3E 00 74 15")]
 pub fn mp3_track_loader_destructor(this: GPtr<u8>) {
     if rd::<u8>(this, 0) != 0 {
-        file_close(rd::<u32>(this, 0xC));
-        file_close(rd::<u32>(this, 0x10));
+        file_close(GPtr::from_addr(rd::<u32>(this, 0xC) as usize));
+        file_close(GPtr::from_addr(rd::<u32>(this, 0x10) as usize));
     }
     let p = rd::<u32>(this, 0x18);
     if p != 0 {
-        crt_delete(p);
+        crt_delete(GPtr::from_addr(p as usize));
     }
 }
 

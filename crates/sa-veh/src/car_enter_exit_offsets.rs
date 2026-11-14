@@ -4,19 +4,15 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use sa_core::bindings::load_all_requested_models;
 use sa_core::bindings::uncompress_animation;
-use sa_stream::bindings::anim_add_block_ref as add_anim_block_ref;
+use sa_core::bindings::anim_add_block_ref as add_anim_block_ref;
 use sa_stream::bindings::anim_remove_block_ref as remove_anim_block_ref;
 use sa_stream::bindings::get_animation_block_index;
-orig! {
-    /// `CStreaming::RequestModel(id, flags)` (0x4087E0)
-    fn request_model(id: i32, flags: u32) = cdecl 0x4087E0 => unported;
-    /// `CAnimManager::GetAnimAssociation(group, anim)` (0x4D3A60)
-    fn get_anim_association(group: i32, anim: i32) -> GPtr<u8> = cdecl 0x4D3A60 => unported;
-}
+use sa_core::bindings::anim_get_anim_association as get_anim_association;
+use sa_core::bindings::streaming_request_model as request_model;
 
 /// `CCarEnterExit::ms_bPedOffsetsCalculated` and the offset vectors: get-up, quick dragged out, bed L,
 /// bed R, desk, chair.
@@ -83,8 +79,8 @@ pub fn set_anim_offset_for_enter_or_exit_vehicle() {
             }
         }
     }
-    remove_anim_block_ref(house);
-    remove_anim_block_ref(office);
+    remove_anim_block_ref(house as u32);
+    remove_anim_block_ref(office as u32);
     g::<u8>(CALCULATED).write(1);
 }
 

@@ -75,9 +75,8 @@ pub mod call {
     pub use crate::bindings::init_user_directories;
     pub use crate::bindings::text_get;
     pub use crate::bindings::text_unload;
+    pub use crate::bindings::file_mgr_initialise;
     orig! {
-        /// `CFileMgr::Initialise` (0x5386F0)
-        pub fn file_mgr_initialise() = cdecl 0x5386F0 => crate::filemgr::initialise;
         /// `C_PcSave::SetSaveDirectory(const char*)` (0x619040)
         pub fn set_save_directory(path: GPtr<u8>) = cdecl 0x619040 => super::set_save_directory;
         /// `Ps::InitialiseLanguage` (0x7465B0)
@@ -97,16 +96,15 @@ pub mod call {
     pub use crate::bindings::file_mgr_seek;
     pub use crate::bindings::insert_number_in_string;
     pub use crate::bindings::strncmp;
+    pub use crate::bindings::check_data_not_corrupt;
+    pub use crate::bindings::file_close as file_mgr_close_file;
+    pub use crate::bindings::file_read as file_mgr_read;
+    pub use crate::bindings::open_file as file_mgr_open_file;
     orig! {
         /// CRT `sprintf(buf, fmt, char*, int, char*)`
         pub fn sprintf_sis(buf: GPtr<u8>, fmt: GPtr<u8>, a: GPtr<u8>, n: i32, b: GPtr<u8>) -> i32 = cdecl 0x821BB5 => unported;
         /// CRT `sprintf(buf, fmt, day, month text, year, hour, minute, second)`
         pub fn sprintf_date(buf: GPtr<u8>, fmt: GPtr<u8>, d: u32, m: u32, y: u32, h: u32, mi: u32, s: u32) -> i32 = cdecl 0x821BB5 => unported;
-        pub fn file_mgr_open_file(path: GPtr<u8>, mode: GPtr<u8>) -> u32 = cdecl 0x538900 => unported;
-        pub fn file_mgr_read(file: u32, buf: GPtr<u8>, size: i32) -> i32 = cdecl 0x538950 => unported;
-        pub fn file_mgr_close_file(file: u32) -> i32 = cdecl 0x5389D0 => unported;
-        /// `CGenericGameStorage::CheckDataNotCorrupt(slot, path)` (bool in AL)
-        pub fn check_data_not_corrupt(slot: i32, path: GPtr<u8>) -> u8 = cdecl 0x5D1170 => unported;
         // Win32 (import name, call site)
         /// KERNEL32 `GetVersionExA` at 0x7474D3
         pub fn get_version_ex_a(info: GPtr<OsVersionInfoA>) -> i32 = stdcall site 0x7474D3 => unported;
@@ -296,11 +294,11 @@ pub fn populate_slot_info() {
         let date: GPtr<u8> = GPtr::from_addr(0xC16138 + 0x46 * i);
         let pp: GPtr<u8> = GPtr::from_raw(path.as_mut_ptr());
         call::sprintf_sis(pp, rdata(0x86BAD4), GPtr::from_addr(0xC16F18), i as i32 + 1, rdata(0x86BADC));
-        let f = call::file_mgr_open_file(pp, rdata(0x859C6C));
+        let f = GPtr::<u8>::addr(call::file_mgr_open_file(pp, rdata(0x859C6C))) as u32;
         let bp: GPtr<u8> = GPtr::from_raw(block.as_mut_ptr());
         if f != 0 {
-            call::file_mgr_seek(f, 5, 0);
-            call::file_mgr_read(f, bp, 0x138);
+            call::file_mgr_seek(GPtr::from_addr(f as usize), 5, 0);
+            call::file_mgr_read(GPtr::from_addr(f as usize), bp, 0x138);
             if call::strncmp(bp.byte_add(4), rdata(0x8D2BE4), 0x1A) != 0 {
                 for k in 0..48 {
                     name.byte_add(k).write(bp.byte_add(4 + k).read());
@@ -308,7 +306,7 @@ pub fn populate_slot_info() {
                 g32(0xC16EBC + 4 * i).write(0);
                 name.byte_add(0x18).write(0);
             }
-            call::file_mgr_close_file(f);
+            call::file_mgr_close_file(GPtr::from_addr(f as usize));
         }
         if g32(0xC16EBC + 4 * i).read() != 0 {
             continue;

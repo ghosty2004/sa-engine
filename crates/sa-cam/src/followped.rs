@@ -40,15 +40,11 @@ pub use sa_world::bindings::pad_get_force_camera_behind_player;
 pub use sa_world::bindings::pad_get_ped_walk_left_right;
 pub use sa_world::bindings::pad_get_ped_walk_up_down;
 pub use sa_world::bindings::placeable_get_top_direction;
-pub use sa_world::bindings::vector_magnitude_sqr as magnitude_sqr;
+pub use sa_core::bindings::vector_magnitude_sqr as magnitude_sqr;
+pub use sa_world::bindings::camera_reset_ducking_system as reset_ducking_system;
+pub use sa_world::bindings::ik_look_at;
+pub use sa_world::bindings::vector_add_assign;
 orig! {
-    /// `CVector::operator+=(const CVector&)` (0x411A00), returns `this`
-    pub fn vector_add_assign(v: GPtr<u8>, o: GPtr<u8>) -> GPtr<u8> = thiscall 0x411A00 => unported;
-    /// `CCamera::ResetDuckingSystem(CPed*)` (0x50CEF0)
-    pub fn reset_ducking_system(cam: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x50CEF0 => crate::camfx::reset_ducking_system;
-    /// `IKChainManager_c::LookAt(const char*, CPed*, CEntity*, int32 time, ePedBones, CVector* pos,
-    /// bool torso, float speed, int32 blend, int32 priority, bool force)` (0x618970); the float as a dword
-    pub fn ik_look_at(m: GPtr<u8>, name: u32, ped: GPtr<u8>, target: GPtr<u8>, time: i32, bone: i32, pos: GPtr<u8>, torso: u32, speed: u32, blend: i32, prio: i32, force: u32) -> u8 = thiscall 0x618970 => unported;
     /// `CTaskSimpleClimb::GetCameraStickModifier(CEntity*, float& alpha, float& beta, float& stickAlpha,
     /// float& stickBeta)` (0x67A5D0)
     pub fn climb_get_camera_stick_modifier(t: GPtr<u8>, ped: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, sa: GPtr<u8>, sb: GPtr<u8>) = thiscall 0x67A5D0 => unported;
@@ -441,7 +437,7 @@ fn train_follow(this: GPtr<u8>, b: GPtr<u8>, ped: GPtr<u8>, f: &mut Fpu) {
         }
     }
     let mv = e.byte_add(0x44);
-    push_st0(f, vector_magnitude(mv));
+    push_st0(f, vector_magnitude(mv.cast::<u32>()));
     wr::<f32>(b, 0x3C, f.fst());
     f.fsub_m(d(0x8CCEA0));
     let a = f.fstp().to_bits();
@@ -452,13 +448,13 @@ fn train_follow(this: GPtr<u8>, b: GPtr<u8>, ped: GPtr<u8>, f: &mut Fpu) {
     let tsb = g::<u32>(TIME_STEP).read();
     wr::<f32>(b, 0x3C, f.fstp());
     let kk = rd::<u32>(b, 0x3C);
-    let o = vec_s_mul(b.byte_add(0x74), kk, mv);
-    let o = vec_mul_s(b.byte_add(0x68), o, tsb);
+    let o = vec_s_mul(b.byte_add(0x74), f32::from_bits(kk), mv);
+    let o = vec_mul_s(b.byte_add(0x68), o, f32::from_bits(tsb));
     vector_add_assign(this.byte_add(0x1D8), o);
     let tsb = g::<u32>(TIME_STEP).read();
     let mv = rd::<GPtr<u8>>(ped, 0x568).byte_add(0x44);
-    let o = vec_s_mul(b.byte_add(0x74), kk, mv);
-    let o = vec_mul_s(b.byte_add(0x80), o, tsb);
+    let o = vec_s_mul(b.byte_add(0x74), f32::from_bits(kk), mv);
+    let o = vec_mul_s(b.byte_add(0x80), o, f32::from_bits(tsb));
     vector_add_assign(this.byte_add(0x1E4), o);
 }
 
@@ -728,9 +724,9 @@ fn main_block(this: GPtr<u8>, b: GPtr<u8>, ped: GPtr<u8>, f: &mut Fpu) {
             let e = rd::<GPtr<u8>>(ped, 0x568);
             let mag = |out: isize| -> f64 {
                 if e.is_null() {
-                    vector_magnitude(ped.byte_add(0x44))
+                    vector_magnitude(GPtr::<u8>::cast::<u32>(ped.byte_add(0x44)))
                 } else {
-                    vector_magnitude(vector_sub(b.byte_add(out), ped.byte_add(0x44), e.byte_add(0x44)))
+                    vector_magnitude(GPtr::<u8>::cast::<u32>(vector_sub(b.byte_add(out), ped.byte_add(0x44), e.byte_add(0x44))))
                 }
             };
             push_st0(f, mag(0x80));
@@ -1330,7 +1326,7 @@ fn main_block(this: GPtr<u8>, b: GPtr<u8>, ped: GPtr<u8>, f: &mut Fpu) {
         && g::<u8>(VEC_MOVE_LINEAR_PROCESSED).read() == 0
         && g::<u8>(VEC_TRACK_LINEAR_PROCESSED).read() == 0
         && {
-            push_st0(f, magnitude_sqr(ped.byte_add(0x44)));
+            push_st0(f, magnitude_sqr(GPtr::<u8>::cast::<f32>(ped.byte_add(0x44))));
             f.fcomp_m(k(K_0_0001));
             !f.jp(0x41)
         };
@@ -1371,7 +1367,7 @@ fn look_at_camera_top(b: GPtr<u8>, f: &mut Fpu) {
     let p0 = find_player_ped(0);
     wr(b, 0x44, p0);
     copy3(b.byte_add(0x74), rd::<GPtr<u8>>(p0, 0x14).byte_add(0x10));
-    placeable_get_top_direction(the_camera(), b.byte_add(0x68));
+    placeable_get_top_direction(the_camera(), GPtr::<u8>::cast::<f32>(b.byte_add(0x68)));
     f.fld(rd(b, 0x68));
     f.fmul_m(rd(b, 0x74));
     f.fld(rd(b, 0x70));
@@ -1394,11 +1390,11 @@ fn look_at_camera_top(b: GPtr<u8>, f: &mut Fpu) {
     let p = rd::<GPtr<u8>>(b, 0x44);
     ik_look_at(
         g::<u8>(IK_CHAIN_MAN),
-        IK_PURPOSE,
+        GPtr::from_addr(IK_PURPOSE as usize),
         p,
         GPtr::NULL,
         0x5DC,
-        -1,
+        -1i32 as u32,
         b.byte_add(0x68),
         0,
         0x3E80_0000,

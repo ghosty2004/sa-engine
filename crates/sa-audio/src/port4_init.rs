@@ -26,6 +26,25 @@ const SMOOTH_FADE: u32 = 0xB608D0;
 
 use crate::bindings::track_ctor;
 use sa_world::bindings::crt_printf;
+use crate::bindings::channel_set_volume;
+use crate::bindings::current_time_ms;
+use crate::bindings::hw_load_sound;
+use crate::bindings::hw_load_sound_bank;
+use crate::bindings::track_initialise;
+use sa_core::bindings::crt_free as crt_free_array;
+use sa_core::bindings::crt_free_8214bd as crt_free;
+use sa_core::bindings::file_close;
+use sa_core::bindings::file_get_total_size as file_total_size;
+use sa_core::bindings::file_read;
+use sa_core::bindings::memory_malloc;
+use sa_core::bindings::open_file as file_open;
+use sa_stream::bindings::cd_stream_open;
+use sa_stream::bindings::loading_screen_continue;
+use sa_stream::bindings::loading_screen_pause;
+use sa_world::bindings::ae_random_int;
+use sa_world::bindings::audio_set_effects_fader_scaling_factor as engine_set_effects_fader_scaling_factor;
+use sa_world::bindings::user_radio_initialise;
+use sa_world::bindings::user_radio_scan;
 orig! {
     // Win32 / CRT
     fn co_initialize(r: u32) -> i32 = stdcall cell 0x858350 => unported;
@@ -48,20 +67,6 @@ orig! {
     fn get_last_error() -> u32 = stdcall cell 0x858094 => unported;
     /// `operator new[]` (0x821195)
     fn operator_new_array(n: u32) -> u32 = cdecl 0x821195 => unported;
-    /// CRT `free` (0x8214BD, `operator delete`)
-    fn crt_free(p: u32) = cdecl 0x8214BD => unported;
-    /// CRT `free` (0x8213AE, `operator delete[]`)
-    fn crt_free_array(p: u32) = cdecl 0x8213AE => unported;
-
-    // game functions
-    fn loading_screen_pause() = cdecl 0x590310 => loading_screen_pause_native;
-    fn loading_screen_continue() = cdecl 0x590320 => unported;
-    fn file_open(name: u32, mode: u32) -> u32 = cdecl 0x538900 => unported;
-    fn file_read(f: u32, buf: u32, n: u32) -> u32 = cdecl 0x538950 => unported;
-    fn file_close(f: u32) -> i32 = cdecl 0x5389D0 => unported;
-    fn file_total_size(f: u32) -> u32 = cdecl 0x5389E0 => unported;
-    fn memory_malloc(n: u32, hint: u32) -> u32 = cdecl 0x72F420 => unported;
-    fn cd_stream_open(name: u32, a: u32) -> u32 = cdecl 0x4067B0 => unported;
     fn bank_calculate_offsets(this: u32) = thiscall 0x4DFBA0 => unported;
     fn bank_reset_requests(this: u32) = thiscall 0x4DFB60 => bank_loader_reset_requests;
     fn bank_ctor(this: u32) -> u32 = thiscall 0x4DFB10 => unported;
@@ -69,7 +74,6 @@ orig! {
     fn bank_load_slot_file(this: u32) -> bool = thiscall 0x4E0590 => bank_loader_load_bank_slot_file;
     fn bank_load_lookup_file(this: u32) -> bool = thiscall 0x4DFBD0 => bank_loader_load_bank_lookup_file;
     fn bank_load_sfx_pak_lookup_file(this: u32) -> bool = thiscall 0x4DFC70 => bank_loader_load_sfx_pak_lookup_file;
-    fn track_initialise(this: u32) -> bool = thiscall 0x4E0C50 => mp3_track_loader_initialise;
     fn track_load_stream_pack_table(this: u32) -> bool = thiscall 0x4E0970 => mp3_track_loader_load_stream_pack_table;
     fn track_load_lookup_table(this: u32) -> bool = thiscall 0x4E09F0 => mp3_track_loader_load_track_lookup_table;
     fn get_dvd_game_path() -> u32 = cdecl 0x747300 => get_dvd_game_path_port;
@@ -78,14 +82,9 @@ orig! {
     fn hw_query_3d_sound_effects(this: u32) = thiscall 0x4D8490 => audio_hardware_query_3d_sound_effects;
     fn hw_get_num_available_channels(this: u32) -> u32 = thiscall 0x4D8810 => unported;
     fn hw_allocate_channels(this: u32, n: u32) -> u32 = thiscall 0x5B9340 => unported;
-    fn hw_load_sound_bank(this: u32, bank: u32, slot: u32) = thiscall 0x4D88A0 => unported;
-    fn hw_load_sound(this: u32, bank: u32, sound: u32, slot: u32) = thiscall 0x4D8ED0 => unported;
     fn streaming_ctor(this: u32, ds: u32, id: u32) -> u32 = thiscall 0x4F1800 => crate::port4_hw::streaming_ctor;
     fn streaming_initialise(this: u32) -> u8 = thiscall 0x4F22F0 => unported;
     fn static_channel_ctor(this: u32, ds: u32, id: u32, is3d: u32, rate: u32, bits: u32) -> u32 = thiscall 0x4F0B10 => unported;
-    fn channel_set_volume(this: u32, v: u32) = thiscall 0x4D7C60 => unported;
-    fn user_radio_scan(this: u32) -> bool = thiscall 0x4F4BA0 => user_radio_scan_user_tracks;
-    fn user_radio_initialise(this: u32) -> u8 = thiscall 0x4F35B0 => unported;
     fn smooth_fade_initialise(this: u32) -> u8 = thiscall 0x4EEEC0 => unported;
     fn smooth_fade_start(this: u32) = thiscall 0x4EEA10 => unported;
     fn stream_thread_initialise(this: u32, ch: u32) -> u8 = thiscall 0x4F1680 => unported;
@@ -93,7 +92,6 @@ orig! {
     fn radio_initialise(this: u32, slot: u32) -> u8 = thiscall 0x5B9390 => unported;
     fn sound_manager_initialise(this: u32) -> bool = thiscall 0x5B9690 => sound_manager_initialise_port;
     fn frontend_initialise(this: u32) = thiscall 0x5B9AB0 => frontend_audio_entity_initialise;
-    fn engine_set_effects_fader_scaling_factor(this: u32, f: u32) = thiscall 0x506E50 => unported;
     fn utility_static_initialise() = cdecl 0x5B97F0 => audio_utility_static_initialise;
     fn ped_static_initialise() = cdecl 0x5B98A0 => unported;
     fn ped_speech_static_initialise() = cdecl 0x5B98C0 => unported;
@@ -106,8 +104,6 @@ orig! {
     fn script_entity_initialise(this: u32) = thiscall 0x5B9B60 => unported;
     fn pedless_speech_initialise(this: u32) = thiscall 0x4E4E10 => unported;
     fn collision_entity_initialise(this: u32) = thiscall 0x5B9BD0 => unported;
-    fn ae_random_int(a: i32, b: i32) -> i32 = cdecl 0x4D9C10 => unported;
-    fn current_time_ms() -> u64 = cdecl 0x4D9E80 => crate::port4_hw::get_current_time_in_ms;
 }
 
 fn local(p: &mut u32) -> u32 {
@@ -179,17 +175,17 @@ pub fn audio_engine_initialise(this: u32) -> bool {
     }
     let ev = operator_new_array(0xB159);
     w32(0xBD00F8, ev);
-    let f = file_open(0x86A440, 0x85A53C);
+    let f = GPtr::<u8>::addr(file_open(GPtr::from_addr(0x86A440), GPtr::from_addr(0x85A53C))) as u32;
     if f == 0 {
         return false;
     }
-    if file_read(f, r32(0xBD00F8), 0xB159) != 0xB159 {
-        file_close(f);
+    if file_read(GPtr::from_addr(f as usize), GPtr::from_addr(r32(0xBD00F8) as usize), 0xB159) != 0xB159 {
+        file_close(GPtr::from_addr(f as usize));
         return false;
     }
-    file_close(f);
+    file_close(GPtr::from_addr(f as usize));
     frontend_initialise(this + 0xB4);
-    engine_set_effects_fader_scaling_factor(this, 0);
+    engine_set_effects_fader_scaling_factor(GPtr::from_addr(this as usize), 0);
     utility_static_initialise();
     ped_static_initialise();
     ped_speech_static_initialise();
@@ -277,10 +273,10 @@ pub fn audio_hardware_initialise(this: u32) -> bool {
         i += 1;
     }
     w32(this + 0xE64, r32(this + 0xE10));
-    channel_set_volume(r32(this + 0xE10), 0xC2C8_0000);
+    channel_set_volume(GPtr::from_addr(r32(this + 0xE10) as usize), 0xC2C8_0000);
     w16(this + 6, 0x37);
     if r8(0xBA680D) != 0 {
-        user_radio_scan(USER_RADIO);
+        user_radio_scan(GPtr::from_addr(USER_RADIO as usize));
         loop {
             let s = r32(0xB6B988);
             if (2..=3).contains(&(s as i32)) {
@@ -292,7 +288,7 @@ pub fn audio_hardware_initialise(this: u32) -> bool {
             sleep(100);
         }
     }
-    user_radio_initialise(USER_RADIO);
+    user_radio_initialise(GPtr::from_addr(USER_RADIO as usize));
     smooth_fade_initialise(SMOOTH_FADE);
     smooth_fade_start(SMOOTH_FADE);
     stream_thread_initialise(this + 0xE14, r32(this + 0xE10));
@@ -468,37 +464,37 @@ pub fn mp3_bank_loader_initialise(this: u32) -> bool {
 #[hook(addr = 0x4E0590, conv = thiscall, name = "CAEBankLoader::LoadBankSlotFile", expect = "56 57 68 6C 9C 85 00 68 5C F1 85 00",
        unverified = "std4-audio-2", route = "L3-only", hazards = "heap-writes", note = "file loading")]
 pub fn bank_loader_load_bank_slot_file(this: u32) -> bool {
-    let f = file_open(0x85F15C, 0x859C6C);
+    let f = GPtr::<u8>::addr(file_open(GPtr::from_addr(0x85F15C), GPtr::from_addr(0x859C6C))) as u32;
     if (f as i32) <= 0 {
         return false;
     }
-    let size = file_total_size(f);
+    let size = file_total_size(GPtr::from_addr(f as usize)) as u32;
     if size <= 2 {
-        file_close(f);
+        file_close(GPtr::from_addr(f as usize));
         return false;
     }
-    file_read(f, this + 0xC, 2);
+    file_read(GPtr::from_addr(f as usize), GPtr::from_addr((this + 0xC) as usize), 2);
     let n = r16(this + 0xC) as i16 as i32;
     let m = operator_new((n as u32).wrapping_mul(0x12D4));
     w32(this, m);
     if m == 0 {
-        file_close(f);
+        file_close(GPtr::from_addr(f as usize));
         return false;
     }
-    let got = file_read(f, m, size - 2);
+    let got = file_read(GPtr::from_addr(f as usize), GPtr::from_addr(m as usize), size - 2);
     if size - 2 != got {
-        file_close(f);
-        crt_free(r32(this));
+        file_close(GPtr::from_addr(f as usize));
+        crt_free(GPtr::from_addr(r32(this) as usize));
         w32(this, 0);
         return false;
     }
-    file_close(f);
+    file_close(GPtr::from_addr(f as usize));
     bank_calculate_offsets(this);
     let n = r16(this + 0xC) as i16 as i32;
     let last = r32(this).wrapping_add((n as u32).wrapping_mul(0x12D4)).wrapping_sub(0x12D4);
     let total = r32(last + 4).wrapping_add(r32(last));
     w32(this + 0x18, total);
-    w32(this + 0x1C, memory_malloc(total, 0));
+    w32(this + 0x1C, GPtr::<u8>::addr(memory_malloc(total, 0)) as u32);
     true
 }
 
@@ -507,26 +503,26 @@ pub fn bank_loader_load_bank_slot_file(this: u32) -> bool {
 #[hook(addr = 0x4DFBD0, conv = thiscall, name = "CAEBankLoader::LoadBankLookupFile", expect = "53 57 68 6C 9C 85 00 68 18 F1 85 00",
        unverified = "std4-audio-2", route = "L3-only", hazards = "heap-writes", note = "file loading")]
 pub fn bank_loader_load_bank_lookup_file(this: u32) -> bool {
-    let f = file_open(0x85F118, 0x859C6C);
+    let f = GPtr::<u8>::addr(file_open(GPtr::from_addr(0x85F118), GPtr::from_addr(0x859C6C))) as u32;
     if (f as i32) <= 0 {
         return false;
     }
-    let size = file_total_size(f);
+    let size = file_total_size(GPtr::from_addr(f as usize)) as u32;
     if size == 0 {
-        file_close(f);
+        file_close(GPtr::from_addr(f as usize));
         return false;
     }
     let n = (size / 12) as u16;
     w16(this + 0xE, n);
     let m = operator_new((n as i16 as i32 as u32).wrapping_mul(12));
     w32(this + 4, m);
-    if file_read(f, m, size) != size {
-        crt_free(r32(this + 4));
+    if file_read(GPtr::from_addr(f as usize), GPtr::from_addr(m as usize), size) != size {
+        crt_free(GPtr::from_addr(r32(this + 4) as usize));
         w32(this + 4, 0);
-        file_close(f);
+        file_close(GPtr::from_addr(f as usize));
         return false;
     }
-    file_close(f);
+    file_close(GPtr::from_addr(f as usize));
     true
 }
 
@@ -537,23 +533,23 @@ pub fn bank_loader_load_bank_lookup_file(this: u32) -> bool {
 #[hook(addr = 0x4DFC70, conv = thiscall, name = "CAEBankLoader::LoadSFXPakLookupFile", expect = "81 EC 84 00 00 00 55 57",
        unverified = "std4-audio-2", route = "L3-only", hazards = "heap-writes", note = "file loading")]
 pub fn bank_loader_load_sfx_pak_lookup_file(this: u32) -> bool {
-    let f = file_open(0x85F140, 0x859C6C);
+    let f = GPtr::<u8>::addr(file_open(GPtr::from_addr(0x85F140), GPtr::from_addr(0x859C6C))) as u32;
     if (f as i32) <= 0 {
         return false;
     }
-    let size = file_total_size(f);
+    let size = file_total_size(GPtr::from_addr(f as usize)) as u32;
     if size == 0 {
-        file_close(f);
+        file_close(GPtr::from_addr(f as usize));
         return false;
     }
     let n = (size / 52) as u16;
     w16(this + 0x10, n);
     let m = operator_new((n as i16 as i32 as u32).wrapping_mul(0x34));
     w32(this + 8, m);
-    let got = file_read(f, m, size);
-    file_close(f);
+    let got = file_read(GPtr::from_addr(f as usize), GPtr::from_addr(m as usize), size);
+    file_close(GPtr::from_addr(f as usize));
     if size != got {
-        crt_free(r32(this + 8));
+        crt_free(GPtr::from_addr(r32(this + 8) as usize));
         w32(this + 8, 0);
         return false;
     }
@@ -579,12 +575,12 @@ pub fn bank_loader_load_sfx_pak_lookup_file(this: u32) -> bool {
             }
         }
         let pp = GPtr::<u8>::from_raw(path.as_mut_ptr()).addr() as u32;
-        let s = cd_stream_open(pp, 0);
+        let s = cd_stream_open(GPtr::from_addr(pp as usize), 0);
         w32(r32(this + 0x20) + 4 * i as u32, s);
         off = off.wrapping_add(0x34);
         i += 1;
     }
-    crt_free(r32(this + 8));
+    crt_free(GPtr::from_addr(r32(this + 8) as usize));
     w32(this + 8, 0);
     true
 }
@@ -605,28 +601,28 @@ pub fn mp3_track_loader_initialise(this: u32) -> bool {
     let buf = operator_new((n as u32).wrapping_add(0x2F));
     lstrcpy_a(buf, 0x85F1BC);
     lstrcat_a(buf, r32(this + 0x10));
-    let mut f = file_open(buf, 0x85A53C);
+    let mut f = GPtr::<u8>::addr(file_open(GPtr::from_addr(buf as usize), GPtr::from_addr(0x85A53C))) as u32;
     if (f as i32) > 0 {
         w8(this + 0x14, 0);
     } else {
         let dvd = get_dvd_game_path();
         w32(this + 0x18, dvd);
         if dvd == 0 {
-            crt_free(buf);
+            crt_free(GPtr::from_addr(buf as usize));
             return false;
         }
         lstrcpy_a(buf, dvd);
         lstrcat_a(buf, 0x85F1BC);
         lstrcat_a(buf, r32(this + 0x10));
-        f = file_open(buf, 0x85A53C);
+        f = GPtr::<u8>::addr(file_open(GPtr::from_addr(buf as usize), GPtr::from_addr(0x85A53C))) as u32;
         if (f as i32) <= 0 {
-            crt_free(buf);
+            crt_free(GPtr::from_addr(buf as usize));
             return false;
         }
         w8(this + 0x14, 1);
     }
-    file_close(f);
-    crt_free(buf);
+    file_close(GPtr::from_addr(f as usize));
+    crt_free(GPtr::from_addr(buf as usize));
     w8(this, 1);
     true
 }
@@ -642,7 +638,7 @@ pub fn mp3_track_loader_load_stream_pack_table(this: u32) -> bool {
         return false;
     }
     let size = get_file_size(h, 0);
-    let m = memory_malloc(size, 0);
+    let m = GPtr::<u8>::addr(memory_malloc(size, 0)) as u32;
     w32(this + 0x10, m);
     let mut read: u32 = 0;
     read_file(h, m, size, local(&mut read), 0);
@@ -661,7 +657,7 @@ pub fn mp3_track_loader_load_track_lookup_table(this: u32) -> bool {
         return false;
     }
     let size = get_file_size(h, 0);
-    let m = memory_malloc(size, 0);
+    let m = GPtr::<u8>::addr(memory_malloc(size, 0)) as u32;
     w32(this + 0xC, m);
     let mut read: u32 = 0;
     read_file(h, m, size, local(&mut read), 0);
@@ -709,7 +705,7 @@ pub fn get_dvd_game_path_port() -> u32 {
         }
         i += 1;
     }
-    crt_free_array(list);
+    crt_free_array(GPtr::from_addr(list as usize));
     result
 }
 
@@ -785,15 +781,15 @@ pub fn frontend_audio_entity_initialise(this: u32) {
     w32(this + 0x94, 0);
     w8(this + 0x7C, 0);
     w32(this + 0x98, 0);
-    hw_load_sound_bank(HW, 0x3C, 1);
-    hw_load_sound_bank(HW, 0x3B, 0);
-    hw_load_sound_bank(HW, 0x1C, 0x2A);
+    hw_load_sound_bank(GPtr::from_addr(HW as usize), 0x3C, 1);
+    hw_load_sound_bank(GPtr::from_addr(HW as usize), 0x3B, 0);
+    hw_load_sound_bank(GPtr::from_addr(HW as usize), 0x1C, 0x2A);
     let r = ae_random_int(0, 3);
     w8(this + 0x7D, r as u8);
     let s0 = ((r as u8 as i8 as i16 as u16 as u32) << 1) | (r as u32 & 0xFFFF_0000);
-    hw_load_sound(HW, 0x52, s0, 2);
+    hw_load_sound(GPtr::from_addr(HW as usize), 0x52, s0, 2);
     let v = r8(this + 0x7D) as i8 as i16 as u16 as u32;
-    hw_load_sound(HW, 0x52, (v * 2 + 1) & 0xFFFF, 5);
+    hw_load_sound(GPtr::from_addr(HW as usize), 0x52, (v * 2 + 1) & 0xFFFF, 5);
 }
 
 /// `CAEAudioUtility::StaticInitialise()` (0x5B97F0): `[0xB61100]` = 0, `[0xB61104]` = -100.0,

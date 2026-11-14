@@ -9,11 +9,9 @@ use sa_math::x87::X87;
 
 use crate::bindings::im_render_states_store;
 use sa_core::bindings::rw_im2d_render_primitive;
+use crate::bindings::rs_restore as im_render_states_restore;
+use crate::bindings::rs_set_immediate as im_render_states_set;
 orig! {
-    /// `CPostEffects::ImmediateModeRenderStatesSet()` (0x700D70)
-    fn im_render_states_set() = cdecl 0x700D70 => unported;
-    /// `CPostEffects::ImmediateModeRenderStatesReStore()` (0x700E00)
-    fn im_render_states_restore() = cdecl 0x700E00 => unported;
     /// `RwRenderStateSet(state, value)` (RwEngineInstance +0x20)
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
 }

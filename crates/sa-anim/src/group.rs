@@ -25,19 +25,16 @@ sa_core::globals! {
 }
 
 pub use sa_core::bindings::get_model_info as get_model_info_by_name;
+pub use crate::bindings::assoc_group_destroy_associations as call_destroy_associations;
+pub use crate::bindings::assoc_group_get_animation as call_get_animation_name;
+pub use sa_core::bindings::anim_get_animation as manager_get_animation_name;
 orig! {
     /// the static association's vector deleting destructor (vtable slot 0)
     pub fn static_vdelete(this: GPtr<u8>, fl: u32) -> GPtr<u8> = thiscall vslot 0x0 => unported;
-    /// `CAnimBlendAssocGroup::GetAnimation(const char*)` (0x4CE040)
-    pub fn call_get_animation_name(this: GPtr<u8>, name: GPtr<u8>) -> GPtr<u8> = thiscall 0x4CE040 => get_animation_name;
     /// `CAnimBlendAssocGroup::CreateAssociations(const char*)` (0x4CE220)
     pub fn call_create_associations_1(this: GPtr<u8>, block: GPtr<u8>) = thiscall 0x4CE220 => create_associations_1;
-    /// `CAnimBlendAssocGroup::DestroyAssociations()` (0x4CDFF0)
-    pub fn call_destroy_associations(this: GPtr<u8>) = thiscall 0x4CDFF0 => destroy_associations;
     /// `CAnimBlendAssociation::CAnimBlendAssociation(CAnimBlendStaticAssociation&)` (0x4CF080)
     pub fn assoc_constructor3(this: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = thiscall 0x4CF080 => crate::assoc::constructor3;
-    /// `CAnimManager::GetAnimation(const char*, const CAnimBlock*)` (0x4D42F0)
-    pub fn manager_get_animation_name(name: GPtr<u8>, block: GPtr<u8>) -> GPtr<u8> = cdecl 0x4D42F0 => crate::manager::get_animation_name;
     /// `CModelInfo::GetModelInfoFromHashKey(uint32, int32*)` (0x4C59B0)
     pub fn get_model_info_from_hash_key(key: u32, idx: GPtr<i32>) -> GPtr<u8> = cdecl 0x4C59B0 => unported;
 }
@@ -260,7 +257,7 @@ pub fn create_associations_3(this: GPtr<u8>, block_name: GPtr<u8>, anim_names: G
         if found != -1 {
             g::<u32>(0xAAE948).write(0);
             let obj = obj_names.byte_add((found as u32).wrapping_mul(stride) as i32 as isize);
-            let mi = get_model_info_by_name(obj, GPtr::NULL);
+            let mi = get_model_info_by_name(obj, GPtr::<i32>::cast::<u8>(GPtr::NULL));
             if !mi.is_null() {
                 let clump = model_create_instance(mi);
                 rp_anim_blend_clump_init(clump);

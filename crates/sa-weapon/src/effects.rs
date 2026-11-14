@@ -4,8 +4,9 @@
 //! `gCrossHair[2]` (0x2C) at 0xC8A838: +0 active, +4 clear time, +8 position, +0x14..+0x17 colour,
 //! +0x18 size, +0x1C ..., +0x24 rotation / lock (f32), +0x28 byte. Textures at 0xC8A810..0xC8A818.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
@@ -24,12 +25,9 @@ sa_core::globals! {
 pub use sa_core::bindings::pop_current_txd as txd_pop_current;
 pub use sa_core::bindings::push_current_txd as txd_push_current;
 pub use sa_core::bindings::set_current_txd as txd_set_current;
-pub use sa_stream::bindings::rw_texture_destroy;
-pub use sa_stream::bindings::rw_texture_read;
-orig! {
-    /// `CTxdStore::FindTxdSlot(const char*)` (0x731850)
-    pub fn txd_find_slot(name: GPtr<u8>) -> i32 = cdecl 0x731850 => unported;
-}
+pub use sa_core::bindings::rw_texture_destroy;
+pub use sa_core::bindings::rw_texture_read;
+pub use sa_core::bindings::find_txd_slot as txd_find_slot;
 
 pub fn cross_hair(i: i32) -> GPtr<u8> {
     CROSS_HAIRS.ptr().cast::<u8>().byte_add((i as isize).wrapping_mul(CROSS_HAIR_SIZE as isize))

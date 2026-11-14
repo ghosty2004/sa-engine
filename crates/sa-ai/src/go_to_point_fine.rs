@@ -136,8 +136,8 @@ pub fn go_to_point_fine_set_blended_move_anim(this: GPtr<u8>, ped: GPtr<u8>) {
         return;
     };
     ped_set_move_state(ped, state);
-    wr::<u32>(ped, 0x538, state);
-    wr::<u32>(this, 8, state);
+    wr::<u32>(ped, 0x538, state as u32);
+    wr::<u32>(this, 8, state as u32);
 }
 
 /// `CTaskSimpleGoToPointFine::ProcessPed(CPed*)` (0x663540, `ret 4`). `d = target - position` (x, y stored as f32);
@@ -162,7 +162,7 @@ pub fn go_to_point_fine_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         goto_quit_ik(this, ped);
         ped_set_move_state(ped, 1);
         ped_set_move_anim(ped);
-        ped_set_move_state(ped, rd::<u32>(this, 8));
+        ped_set_move_state(ped, rd::<u32>(this, 8) as i32);
         ped_set_move_anim(ped);
         return 1;
     }

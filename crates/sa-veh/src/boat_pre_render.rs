@@ -17,7 +17,7 @@ use sa_core::bindings::matrix_dtor;
 use sa_core::bindings::matrix_set_rotate;
 use sa_core::bindings::matrix_update_rw;
 use sa_core::bindings::rw_matrix_update;
-use sa_stream::bindings::frame_for_all_objects;
+use sa_core::bindings::frame_for_all_objects;
 use sa_stream::bindings::get_first_object;
 use sa_stream::bindings::set_component_atomic_alpha;
 use sa_world::bindings::fx_copy_parent_matrix;
@@ -27,9 +27,8 @@ use sa_world::bindings::fx_set_const_time;
 use sa_world::bindings::fx_set_local_particles;
 use sa_world::bindings::fx_system_set_matrix as fx_set_matrix;
 use sa_world::bindings::multiply3x3 as multiply_3x3;
+use crate::bindings::set_component_rotation;
 orig! {
-    /// `CVehicle::SetComponentRotation(RwFrame*, eRotationAxis, float, bool)` (0x6DBA30)
-    fn set_component_rotation(v: GPtr<u8>, frame: GPtr<u8>, axis: u32, angle: f32, set: u32) = thiscall 0x6DBA30 => unported;
     /// An atomic's render callback (`RpAtomic` +0x48), called with the atomic
     fn call_render_cb(f: u32, atomic: GPtr<u8>) -> GPtr<u8> = cdecl dyn => unported;
     /// `CVehicle::DoBoatSplashes(float)` (0x6DD130)
@@ -102,7 +101,7 @@ pub fn boat_pre_render(this: GPtr<u8>) {
             set_component_rotation(this, fr, 1, ang, 1);
             let at = frame_atomic(rd::<GPtr<u8>>(this, fast));
             if !at.is_null() {
-                set_component_atomic_alpha(at, alpha);
+                set_component_atomic_alpha(at, alpha as u32);
             }
         }
         let fr = rd::<GPtr<u8>>(this, slow);
@@ -112,7 +111,7 @@ pub fn boat_pre_render(this: GPtr<u8>) {
             let at = frame_atomic(rd::<GPtr<u8>>(this, slow));
             if !at.is_null() {
                 let a2 = 0x96i32.wrapping_sub(alpha);
-                set_component_atomic_alpha(at, if a2 < 0 { 0 } else { a2 });
+                set_component_atomic_alpha(at, (if a2 < 0 { 0 } else { a2 }) as u32);
             }
         }
     }
@@ -171,7 +170,7 @@ pub fn boat_pre_render(this: GPtr<u8>) {
                     wr::<u32>(rwm, o, rd::<u32>(ltm, o));
                 }
                 rw_matrix_update(rwm);
-                let fx = create_fx_system(GPtr::from_addr(0xA9_AE80), 0x87_22CC, buf(&mut off), rwm, 0);
+                let fx = create_fx_system(GPtr::from_addr(0xA9_AE80), GPtr::from_addr(0x87_22CC), buf(&mut off), rwm, 0);
                 wr::<GPtr<u8>>(this, slot, fx);
                 if !fx.is_null() {
                     fx_play(fx);

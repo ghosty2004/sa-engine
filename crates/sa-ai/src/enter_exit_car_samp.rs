@@ -7,6 +7,7 @@
 //! only push the (decoded) SEH handler and jump back; the SEH frame has no Rust counterpart.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -17,10 +18,10 @@ const VEH_ANIM_GROUPS: u32 = 0xC1CDC0;
 /// `CDefaultAnimCallback::DefaultAnimCB`
 const DEFAULT_ANIM_CB: u32 = 0x4D1390;
 
-use crate::bindings::assoc_set_finish_callback;
+use sa_core::bindings::assoc_set_finish_callback;
 use crate::bindings::line_up_dtor;
 use crate::bindings::task_complex_dtor;
-use crate::bindings::vehicle_anim_group_get_group as veh_anim_group_get_group;
+use sa_core::bindings::vehicle_anim_group_get_group as veh_anim_group_get_group;
 use crate::bindings::vehicle_clear_getting_in_flags;
 use sa_core::bindings::car_set_ped_out_ctor;
 use sa_core::bindings::crt_free_8214bd as crt_free;
@@ -30,11 +31,10 @@ use sa_core::bindings::find_player_ped;
 use sa_world::bindings::task_complex_ctor;
 use sa_world::bindings::task_simple_ctor;
 use sa_world::bindings::task_simple_dtor;
+use crate::bindings::veh_anim_group_compute_critical_blend_time;
 orig! {
     /// `CTask::MakeAbortable(CPed*, int32 priority, const CEvent*)` (vtable +0x18, `ret 0xC`)
     fn v_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, prio: i32, ev: u32) -> u8 = thiscall vslot 0x18 => unported;
-    /// `CVehicleAnimGroup::ComputeCriticalBlendTime(int32 animId)` (0x6E3C80, `ret 4`, ST0)
-    fn veh_anim_group_compute_critical_blend_time(g: GPtr<u8>, anim: u32) -> f64 = thiscall 0x6E3C80 => unported;
 }
 
 /// Registers `slot`'s entity (if any) as a reference to `slot`.
@@ -86,7 +86,7 @@ pub fn enter_car_dtor(this: GPtr<u8>) {
     let slot = this.byte_add(0xC);
     let v = rd::<GPtr<u8>>(slot, 0);
     if !v.is_null() {
-        entity_clean_up_old_reference(v, slot);
+        entity_clean_up_old_reference(v, slot.cast::<GPtr<u8>>());
     }
     let lu = rd::<GPtr<u8>>(this, 0x38);
     if !lu.is_null() {
@@ -168,11 +168,11 @@ pub fn car_open_door_from_outside_dtor(this: GPtr<u8>) {
     let slot = this.byte_add(0x10);
     let v = rd::<GPtr<u8>>(slot, 0);
     if !v.is_null() {
-        entity_clean_up_old_reference(v, slot);
+        entity_clean_up_old_reference(v, slot.cast::<GPtr<u8>>());
     }
     let a = rd::<GPtr<u8>>(this, 0xC);
     if !a.is_null() {
-        assoc_set_finish_callback(a, DEFAULT_ANIM_CB, 0);
+        assoc_set_finish_callback(a, DEFAULT_ANIM_CB, GPtr::NULL);
     }
     if rd::<u8>(this, 0x19) != 0 {
         wr::<u8>(this, 0x19, 0);
@@ -208,7 +208,7 @@ pub fn car_close_door_from_outside_ctor(this: GPtr<u8>, veh: GPtr<u8>, door: u32
        route = "L2", hazards = "none", recs = "car-ai")]
 pub fn veh_anim_critical_blend_time(group: u32, anim: u32) -> X87 {
     let g: GPtr<u8> = GPtr::from_addr(group.wrapping_mul(0x94).wrapping_add(VEH_ANIM_GROUPS) as usize);
-    veh_anim_group_get_group(g, anim);
+    veh_anim_group_get_group(g, anim as i32);
     X87::from_f64_exact(veh_anim_group_compute_critical_blend_time(g, anim))
 }
 

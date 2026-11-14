@@ -250,7 +250,7 @@ pub fn automobile_hydraulic_control(this: GPtr<u8>) {
         }
     } else if !player.is_null() && get_hydraulic_jump(get_pad_from_player(player)) == 0 {
         let lr = f32_of(X87::from_i32(i32::from(get_car_gun_left_right(get_pad_from_player(player)) as u16 as i16)));
-        let ud = X87::from_i32(i32::from(get_car_gun_up_down(get_pad_from_player(player)) as u16 as i16));
+        let ud = X87::from_i32(i32::from((get_car_gun_up_down(get_pad_from_player(player)) as u32) as u16 as i16));
         let mag = ud.fmul(ud).fadd(x(lr).fmul_m(lr)).fsqrt().fmul_m(1.5).fmul_m(0.007_812_5);
         let ang = x(lr).fpatan(ud).fadd_m(g::<f32>(0x8D_31BC).read());
         let cosv = f32_of(ang.fcos().fmul(mag));

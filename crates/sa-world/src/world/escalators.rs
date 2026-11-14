@@ -42,9 +42,8 @@ sa_core::globals! {
 
 pub use crate::bindings::stunt_jump_pool_new;
 pub use sa_core::bindings::matrix_dtor;
+pub use crate::bindings::escalator_switch_off as switch_off_call;
 orig! {
-    /// `CEscalator::SwitchOff` (0x717860)
-    pub fn switch_off_call(e: GPtr<u8>) = thiscall 0x717860 => switch_off;
     /// `CEscalator::AddThisOne(...)` (0x717970)
     pub fn add_this_one(e: GPtr<u8>, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32) = thiscall 0x717970 => unported;
     /// `CEscalator::Update` (0x717D30)

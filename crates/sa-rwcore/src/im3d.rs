@@ -40,12 +40,18 @@ const DECL_UV: isize = 0x18;
 const DECL_COLOR: isize = 0x1C;
 const IB_OFFSET: isize = 0xC;
 
-pub use crate::bindings::rx_locked_pipe_add_fragment;
-pub use crate::bindings::rx_locked_pipe_unlock;
-pub use crate::bindings::rx_pipeline_create;
-pub use crate::bindings::rx_pipeline_destroy;
+pub use sa_core::bindings::rx_locked_pipe_add_fragment;
+pub use sa_core::bindings::rx_locked_pipe_unlock;
+pub use sa_core::bindings::rx_pipeline_create;
+pub use sa_core::bindings::rx_pipeline_destroy;
 pub use crate::bindings::rx_pipeline_execute;
-pub use crate::bindings::rx_pipeline_lock;
+pub use sa_core::bindings::rx_pipeline_lock;
+pub use crate::bindings::create_vertex_declaration as d3d9_create_vertex_declaration;
+pub use crate::bindings::d3d9_im3d_render_close_call;
+pub use crate::bindings::d3d9_im3d_render_open_call;
+pub use crate::bindings::delete_vertex_declaration as d3d9_delete_vertex_declaration;
+pub use crate::bindings::destroy_render_pipelines_call;
+pub use crate::bindings::destroy_transform_pipeline_call;
 orig! {
     /// `RxHeapGetGlobalHeap()` (0x8052F0)
     pub fn rx_heap_get_global_heap() -> GPtr<u8> = cdecl 0x8052F0 => unported;
@@ -53,10 +59,6 @@ orig! {
     pub fn node_def_d3d9_imm_instance() -> GPtr<u8> = cdecl 0x80E990 => unported;
     /// `RxNodeDefinitionGetD3D9SubmitNoLight()` (0x80E9A0)
     pub fn node_def_d3d9_submit_no_light() -> GPtr<u8> = cdecl 0x80E9A0 => unported;
-    /// `RwD3D9CreateVertexDeclaration(elements, out)` (0x7FAA30)
-    pub fn d3d9_create_vertex_declaration(elements: GPtr<u8>, out: GPtr<u32>) -> i32 = cdecl 0x7FAA30 => unported;
-    /// `RwD3D9DeleteVertexDeclaration(decl)` (0x7FAC10)
-    pub fn d3d9_delete_vertex_declaration(decl: u32) = cdecl 0x7FAC10 => unported;
     /// `IDirect3DDevice9::CreateIndexBuffer` (vtable +0x6C)
     pub fn device_create_index_buffer(dev: GPtr<u8>, len: u32, usage: u32, fmt: u32, pool: u32, out: GPtr<u32>, shared: u32) -> i32 = stdcall vslot 0x6C => unported;
     /// `IUnknown::Release` (vtable +8)
@@ -68,16 +70,8 @@ orig! {
     pub fn set_render_pipeline_call(p: GPtr<u8>, prim: i32) -> GPtr<u8> = cdecl 0x7EFB10 => set_render_pipeline;
     /// `_rwIm3DCreateTransformPipeline` (0x80A0A0)
     pub fn create_transform_pipeline_call(out: GPtr<u8>) -> u32 = cdecl 0x80A0A0 => create_transform_pipeline;
-    /// `_rwIm3DDestroyTransformPipeline` (0x80A110)
-    pub fn destroy_transform_pipeline_call(out: GPtr<u8>) = cdecl 0x80A110 => destroy_transform_pipeline;
     /// `_rwIm3DCreateRenderPipelines` (0x80A1A0)
     pub fn create_render_pipelines_call(defaults: GPtr<u8>) -> u32 = cdecl 0x80A1A0 => create_render_pipelines;
-    /// `_rwIm3DDestroyRenderPipelines` (0x80A140)
-    pub fn destroy_render_pipelines_call(defaults: GPtr<u8>) = cdecl 0x80A140 => destroy_render_pipelines;
-    /// `_rwD3D9Im3DRenderOpen` (0x80E020)
-    pub fn d3d9_im3d_render_open_call() -> u32 = cdecl 0x80E020 => d3d9_im3d_render_open;
-    /// `_rwD3D9Im3DRenderClose` (0x80DFB0)
-    pub fn d3d9_im3d_render_close_call() = cdecl 0x80DFB0 => d3d9_im3d_render_close;
 }
 
 use sa_core::field::addr32 as a32;

@@ -17,23 +17,17 @@ pub use crate::bindings::rw_im3d_render_primitive;
 pub use sa_core::bindings::rp_atomic_resync_interpolated_sphere;
 pub use sa_core::bindings::rw_v3d_transform_points;
 pub use sa_world::bindings::rw_im3d_end;
+pub use crate::bindings::grass_set_current_scan_code;
+pub use crate::bindings::plant_calculate_wind_bending;
+pub use crate::bindings::plant_update_ambient_color;
+pub use crate::bindings::real_time_shadow_destroy;
+pub use crate::bindings::set_center_o as shadow_camera_set_center;
+pub use sa_world::bindings::rw_im3d_transform;
 orig! {
-    /// `CGrassRenderer::SetCurrentScanCode(uint16)` (0x5DABB0)
-    pub fn grass_set_current_scan_code(code: u32) = cdecl 0x5DABB0 => unported;
-    /// `CPlantMgr::UpdateAmbientColor()` (0x5DB310)
-    pub fn plant_update_ambient_color() = cdecl 0x5DB310 => unported;
-    /// `CPlantMgr::CalculateWindBending()` (0x5DB3D0): result in ST0
-    pub fn plant_calculate_wind_bending() -> f64 = cdecl 0x5DB3D0 => unported;
-    /// `RwIm3DTransform(RwIm3DVertex*, RwUInt32 n, RwMatrix*, RwUInt32 flags)` (0x7EF450)
-    pub fn rw_im3d_transform(v: GPtr<u8>, n: u32, m: u32, flags: u32) -> GPtr<u8> = cdecl 0x7EF450 => unported;
     /// `RpClumpGetBoundingSphere(RpClump*, RwSphere*, bool useLTM)` (0x734FC0)
     pub fn rp_clump_get_bounding_sphere(c: GPtr<u8>, s: GPtr<u8>, ltm: u32) -> GPtr<u8> = cdecl 0x734FC0 => unported;
     /// `CShadowCamera::SetFrustum(float)` (0x7054C0)
     pub fn shadow_camera_set_frustum(this: GPtr<u8>, size: u32) -> GPtr<u8> = thiscall 0x7054C0 => crate::mvpa_render2::shadow_camera_set_frustum;
-    /// `CShadowCamera::SetCenter(RwV3d*)` (0x705590)
-    pub fn shadow_camera_set_center(this: GPtr<u8>, c: GPtr<u8>) -> GPtr<u8> = thiscall 0x705590 => unported;
-    /// `CRealTimeShadow::Destroy()` (0x705990)
-    pub fn real_time_shadow_destroy(this: GPtr<u8>) = thiscall 0x705990 => crate::mvpa_render2::real_time_shadow_destroy;
 }
 
 /// `FxFrustumInfo_c::IsCollision(FxSphere_c* s)` (0x4AA030, thiscall, `ret 4`): this = the frustum
@@ -109,7 +103,7 @@ pub fn plant_mgr_pre_update_once_for_new_camera_pos(cam: GPtr<u8>) -> u8 {
     grass_set_current_scan_code(u32::from(code));
     grass_set_global_camera_pos(cam);
     plant_update_ambient_color();
-    let wind = X87::from_f64_exact(plant_calculate_wind_bending()).to_f32();
+    let wind = X87::from_f64_exact(f64::from(plant_calculate_wind_bending())).to_f32();
     grass_set_global_wind_bending(wind.to_bits());
     plant_col_entity_cache_update(cam, 0);
     let mut e = g::<GPtr<u8>>(0xC0399C).read();
@@ -152,7 +146,7 @@ pub fn fx_render_end() {
     }
     let flags = g::<u32>(0xA9AE60).read();
     let m = g::<u32>(0xA9AE68).read();
-    if !rw_im3d_transform(GPtr::from_addr(0xC4D958), n.wrapping_mul(3), m, flags).is_null() {
+    if !rw_im3d_transform(GPtr::from_addr(0xC4D958), n.wrapping_mul(3), GPtr::from_addr(m as usize), flags).is_null() {
         rw_im3d_render_primitive(3);
         rw_im3d_end();
     }
@@ -196,7 +190,7 @@ pub fn real_time_shadow_setup_for_this_entity(this: GPtr<u8>, e: GPtr<u8>) -> u8
     }
     wr::<u32>(this, 0x48, rd::<u32>(this, 0x38));
     let m = rd::<GPtr<u8>>(rw, 4).byte_add(0x10);
-    rw_v3d_transform_points(this.byte_add(0x3C), sphere, 1, m);
+    rw_v3d_transform_points(GPtr::<u8>::cast::<f32>(this.byte_add(0x3C)), sphere.cast::<f32>(), 1, m);
     let size = X87::from_f32(rd::<f32>(this, 0x38)).fmul_m(k(0x3F8C_CCCD)).to_f32();
     shadow_camera_set_frustum(this.byte_add(8), size.to_bits());
     shadow_camera_set_center(this.byte_add(8), this.byte_add(0x3C));

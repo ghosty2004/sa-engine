@@ -5,6 +5,7 @@
 //! +0 wanted, +0x18 sprint energy, +0x1C button sprint time, +0x20 chosen weapon slot, +0x2C, +0x34 flags,
 //! +0x38 player group, +0x3C adrenaline end time, +0x44 breath, +0x50 move direction, +0x54, +0x70.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -31,7 +32,7 @@ sa_core::globals! {
 /// `CCamera TheCamera`
 const THE_CAMERA: usize = 0xB6F028;
 
-pub use crate::bindings::get_weapon_skill_type_call as ped_get_weapon_skill;
+pub use sa_world::bindings::get_weapon_skill_type_call as ped_get_weapon_skill;
 pub use sa_core::bindings::get_pad;
 pub use sa_core::bindings::tm_get_task_secondary as get_task_secondary;
 pub use sa_core::bindings::world_add;
@@ -46,33 +47,26 @@ pub use sa_world::bindings::ped_groups_are_in_same_group as are_in_same_group;
 pub use sa_world::bindings::physical_get_lighting_total as get_lighting_total;
 pub use sa_world::bindings::stats_get_fat_and_muscle_modifier as get_fat_and_muscle_modifier;
 pub use sa_world::bindings::tm_find_active_task_by_type as find_active_task_by_type;
+pub use crate::bindings::tell_group_to_start_following_player;
+pub use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+pub use sa_world::bindings::clear_cross_hair;
+pub use sa_world::bindings::ped_get_weapon_skill as ped_get_weapon_skill_current;
+pub use sa_world::bindings::ped_is_ped_in_control as ped_is_in_control;
+pub use sa_world::bindings::wanted_set_wanted_level;
+pub use sa_world::bindings::wanted_set_wanted_level_no_drop;
 orig! {
-    /// `CWanted::SetWantedLevel` (0x562470)
-    pub fn wanted_set_wanted_level(w: GPtr<u8>, l: i32) = thiscall 0x562470 => crate::wanted::set_wanted_level;
-    /// `CWanted::SetWantedLevelNoDrop` (0x562570)
-    pub fn wanted_set_wanted_level_no_drop(w: GPtr<u8>, l: i32) = thiscall 0x562570 => crate::wanted::set_wanted_level_no_drop;
     /// `CWanted::CheatWantedLevel` (0x562540)
     pub fn wanted_cheat_wanted_level(w: GPtr<u8>, l: i32) = thiscall 0x562540 => crate::wanted::cheat_wanted_level;
-    /// `CWeaponEffects::ClearCrossHair(int32)` (0x742C60)
-    pub fn clear_cross_hair(id: i32) = cdecl 0x742C60 => unported;
     /// `CWeapon::CanBeUsedFor2Player()` (0x73DEF0)
     pub fn weapon_can_be_used_for_2_player(w: GPtr<u8>) -> u8 = thiscall 0x73DEF0 => unported;
     /// `std::max<float>`-like instance (0x420800): `a` when `a > b` (ordered), else `b`
     pub fn max_f(a: f32, b: f32) -> f64 = cdecl 0x420800 => max_f_port;
     /// scalar deleting destructor (vtable slot 0)
     pub fn entity_vdelete(e: GPtr<u8>, flag: i32) = thiscall vslot 0x0 => unported;
-    /// `CPlayerPed::TellGroupToStartFollowingPlayer(bool, bool, bool)` (0x60A1D0)
-    pub fn tell_group_to_start_following_player(p: GPtr<u8>, a: u32, b: u32, c: u32) = thiscall 0x60A1D0 => unported;
     /// `CPlayerPed::PlayerWantsToAttack` (0x60CC50)
     pub fn player_wants_to_attack(p: GPtr<u8>) = thiscall 0x60CC50 => unported;
-    /// `CPed::IsPedInControl` (0x5E3960)
-    pub fn ped_is_in_control(p: GPtr<u8>) -> u8 = thiscall 0x5E3960 => crate::ped::is_ped_in_control;
     /// `CTask::GetTaskType` (vtable slot 0x10)
     pub fn task_get_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CPed::GetWeaponSkill()` (0x5E6580)
-    pub fn ped_get_weapon_skill_current(p: GPtr<u8>) -> u8 = thiscall 0x5E6580 => crate::ped::get_weapon_skill_current;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
-    pub fn clean_up_old_reference(e: GPtr<u8>, r: GPtr<GPtr<u8>>) = thiscall 0x571A00 => unported;
 }
 
 pub fn max_f_port(a: f32, b: f32) -> f64 {
@@ -224,7 +218,7 @@ pub fn can_player_start_mission(this: GPtr<u8>) -> u8 {
     if !get_task_secondary(rd::<GPtr<u8>>(this, 0x47C).byte_add(4), 0).is_null() {
         return 0;
     }
-    if crate::common::ped_is_alive(this) as u8 == 0 {
+    if (crate::common::ped_is_alive(this) as u32) as u8 == 0 {
         return 0;
     }
     get_event_of_type(rd::<GPtr<u8>>(this, 0x47C).byte_add(0x68), 0x20).is_null() as u8
@@ -244,7 +238,7 @@ pub fn clear_weapon_target(this: GPtr<u8>) {
     }
     r.write(GPtr::NULL);
     camera_clear_player_weapon_mode(g::<u8>(THE_CAMERA));
-    clear_cross_hair(rd::<i32>(this, 0x598));
+    clear_cross_hair(rd::<i32>(this, 0x598) as u32);
 }
 
 /// `CPlayerPed::Clear3rdPersonMouseTarget` (0x609ED0)
@@ -330,8 +324,8 @@ pub fn does_player_want_new_weapon(this: GPtr<u8>, ty: i32, in_vehicle: u32) -> 
     let active = || i32::from(rd::<i8>(this, 0x718));
     if !get_task_jet_pack(rd::<GPtr<u8>>(this, 0x47C)).is_null() && active() == slot {
         let flag = || {
-            let sk = ped_get_weapon_skill(this, cur);
-            (rd::<u32>(get_weapon_info(cur, i32::from(sk)), 0x18) >> 1) & 1
+            let sk = ped_get_weapon_skill(this, cur) as u8;
+            (rd::<u32>(get_weapon_info(cur, i32::from(sk) as u8), 0x18) >> 1) & 1
         };
         if flag() != 0 && flag() == 0 {
             return 0;
@@ -395,8 +389,8 @@ pub fn find_target_priority(this: GPtr<u8>, e: GPtr<u8>) -> X87 {
 #[hook(addr = 0x609F80, conv = thiscall, name = "CPlayerPed::CanIKReachThisTarget", expect = "8B 44 24 10 56", this = "CPlayerPed")]
 pub fn can_ik_reach_this_target(this: GPtr<u8>, tx: f32, ty: f32, tz: f32, w: GPtr<u8>, _b: u32) -> u8 {
     let t = rd::<i32>(w, 0);
-    let sk = ped_get_weapon_skill(this, t);
-    if (rd::<u32>(get_weapon_info(t, i32::from(sk)), 0x18) >> 1) & 1 != 0 {
+    let sk = ped_get_weapon_skill(this, t) as u8;
+    if (rd::<u32>(get_weapon_info(t, i32::from(sk) as u8), 0x18) >> 1) & 1 != 0 {
         return 1;
     }
     let m = rd::<GPtr<u8>>(this, 0x14);
@@ -514,8 +508,8 @@ pub fn is_hidden(this: GPtr<u8>) -> u32 {
 #[hook(addr = 0x609CD0, conv = thiscall, name = "CPlayerPed::GetWeaponRadiusOnScreen", expect = "56 8B F1 0F BE 86 18 07 00 00", this = "CPlayerPed")]
 pub fn get_weapon_radius_on_screen(this: GPtr<u8>) -> X87 {
     let w = rd::<i32>(this, 0x5A0 + isize::from(rd::<i8>(this, 0x718)) * 0x1C);
-    let sk = ped_get_weapon_skill_current(this);
-    let info = get_weapon_info(w, i32::from(sk));
+    let sk = ped_get_weapon_skill_current(this) as u8;
+    let info = get_weapon_info(w, i32::from(sk) as u8);
     let a = x(0.5).fdiv(x(rd::<f32>(info, 0x38)));
     if rd::<u32>(info, 0) == 0 {
         return x(0.0);
@@ -588,19 +582,14 @@ use sa_core::bindings::ped_group_process;
 use sa_world::bindings::ped_groups_add_group;
 use sa_world::bindings::ped_set_ped_state;
 use sa_world::bindings::player_ped_set_initial_state;
+use crate::bindings::ped_ctor;
+use crate::bindings::ped_set_model_index;
+use sa_stream::bindings::get_animation_block_index;
+use sa_world::bindings::group_intel_set_default_task_allocator_type;
+use sa_world::bindings::stats_get_fat_and_muscle_modifier;
 orig! {
-    /// `CPed::CPed(ePedType)` (0x5E8030)
-    fn ped_ctor(p: GPtr<u8>, ty: u32) -> GPtr<u8> = thiscall 0x5E8030 => unported;
     /// `CPlayerPedData::AllocateData()` (0x571880)
     fn player_ped_data_allocate_data(d: GPtr<u8>) = thiscall 0x571880 => unported;
-    /// `CPed::SetModelIndex(uint32)` (0x5E4880)
-    fn ped_set_model_index(p: GPtr<u8>, m: u32) = thiscall 0x5E4880 => unported;
-    /// `CAnimManager::GetAnimationBlockIndex(const char*)` (0x4D3990)
-    fn get_animation_block_index(name: u32) -> i32 = cdecl 0x4D3990 => unported;
-    /// `CPedGroupIntelligence::SetDefaultTaskAllocatorType(int32)` (0x5FBB70)
-    fn group_intel_set_default_task_allocator_type(gi: GPtr<u8>, t: u32) = thiscall 0x5FBB70 => unported;
-    /// `CStats::GetFatAndMuscleModifier(eStatModAbilities)` (0x559AF0, ST0)
-    fn stats_get_fat_and_muscle_modifier(m: u32) -> f64 = cdecl 0x559AF0 => unported;
 }
 
 /// `CPlayerPed` vtable (0x86D168).
@@ -636,14 +625,14 @@ pub fn player_ped_ctor(this: GPtr<u8>, player_id: i32, group_created: u32) -> GP
     player_ped_set_initial_state(this, group_created);
     let r = rd::<GPtr<u8>>(this, 0x71C);
     if !r.is_null() {
-        entity_clean_up_old_reference(r, this.byte_add(0x71C));
+        entity_clean_up_old_reference(r, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x71C)));
     }
     wr::<u32>(this, 0x71C, 0);
     ped_set_ped_state(this, 1);
-    g::<i32>(PLAYIDLES_BLOCK).write(get_animation_block_index(PLAYIDLES_NAME));
+    g::<i32>(PLAYIDLES_BLOCK).write(get_animation_block_index(GPtr::from_addr(PLAYIDLES_NAME as usize)));
     if group_created as u8 == 0 {
         let d = rd::<GPtr<u8>>(this, 0x480);
-        wr::<i32>(d, 0x38, ped_groups_add_group());
+        wr::<i32>(d, 0x38, ped_groups_add_group() as i32);
         let grp = |p: GPtr<u8>| -> u32 {
             PED_GROUPS.wrapping_add(rd::<u32>(rd::<GPtr<u8>>(p, 0x480), 0x38).wrapping_mul(0x2D4))
         };

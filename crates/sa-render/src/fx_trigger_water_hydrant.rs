@@ -33,7 +33,7 @@ pub fn fx_trigger_water_hydrant(_this: GPtr<u8>, pos: GPtr<u8>) {
     if !sq.fcom(X87::from_f32(625.0)).test_any(0x41) {
         return;
     }
-    let s = fx_create_system(g::<u8>(FX_MAN), WATER_HYDRANT, pos, GPtr::NULL, 0);
+    let s = fx_create_system(g::<u8>(FX_MAN), GPtr::from_addr(WATER_HYDRANT as usize), pos, GPtr::NULL, 0);
     if !s.is_null() {
         fx_system_play_and_kill(s);
     }

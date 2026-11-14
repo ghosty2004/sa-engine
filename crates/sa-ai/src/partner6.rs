@@ -8,6 +8,7 @@
 //! goes through `orig!` at its original address; tasks come from the original pool and keep the original vtables.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::orig::at_site;
 use sa_core::{hook, orig};
@@ -25,7 +26,7 @@ const F8: u32 = 0x4100_0000;
 /// `4.0f` (run-anim blend delta, pushed as an immediate)
 const F4: u32 = 0x4080_0000;
 
-use crate::bindings::acquaintance_ped_ctor as event_acquaintance_ped_ctor;
+use sa_world::bindings::acquaintance_ped_ctor as event_acquaintance_ped_ctor;
 use crate::bindings::be_in_couple_abort_arm_ik;
 use crate::bindings::car_enter_exit_is_vehicle_stealable;
 use crate::bindings::event_vehicle_to_steal_ctor;
@@ -44,7 +45,7 @@ use sa_core::bindings::general_random_int_in_range;
 use sa_core::bindings::ped_is_alive;
 use sa_core::bindings::streaming_request_model;
 use sa_core::bindings::vector2d_normalise;
-use sa_stream::bindings::anim_add_block_ref;
+use sa_core::bindings::anim_add_block_ref;
 use sa_stream::bindings::anim_remove_block_ref;
 use sa_stream::bindings::get_animation_block_index as anim_get_block_index;
 use sa_world::bindings::attractor_manager_get_ped_using_effect;
@@ -65,6 +66,14 @@ use sa_world::bindings::tm_set_task;
 use sa_world::bindings::turn_to_face_entity_ctor;
 use sa_world::bindings::vector_add;
 use sa_world::bindings::wander_standard_ctor;
+use crate::bindings::avoid_other_ped_ctor as avoid_other_ped_while_wandering_ctor;
+use crate::bindings::chat_ctor as complex_chat_ctor;
+use crate::bindings::is_task_valid as prostitute_solicit_is_task_valid;
+use crate::bindings::partner_shove_ctor as partner_shove_ctor_orig;
+use sa_world::bindings::get_position as path_node_get_position;
+use sa_world::bindings::partner_chat_ctor as partner_chat_ctor_orig;
+use sa_world::bindings::partner_greet_ctor as partner_greet_ctor_orig;
+use sa_world::bindings::stand_still_ctor;
 orig! {
     // ---- virtual slots ----
     /// `CTask::GetTaskType` (vtable +0x10)
@@ -79,30 +88,18 @@ orig! {
     fn partner_get_partner_state(t: GPtr<u8>) -> i32 = thiscall 0x6822B0 => unported;
     /// `CTaskComplexPartner::ComputeMeetingPositions(CPed*, CVector*, CVector*)` (0x681FE0, `ret 0xC`)
     fn partner_compute_meeting_positions(t: GPtr<u8>, ped: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) = thiscall 0x681FE0 => unported;
-    /// `CTaskComplexPartnerGreet::Constructor` (0x684210, `ret 0x20`)
-    fn partner_greet_ctor_orig(t: GPtr<u8>, name: GPtr<u8>, partner: GPtr<u8>, lead: u32, dist: u32, kind: u32, vx: u32, vy: u32, vz: u32) -> GPtr<u8> = thiscall 0x684210 => unported;
-    /// `CTaskComplexPartnerShove::Constructor` (0x6846F0, `ret 0x20`)
-    fn partner_shove_ctor_orig(t: GPtr<u8>, name: GPtr<u8>, partner: GPtr<u8>, lead: u32, dist: u32, upd: u32, vx: u32, vy: u32, vz: u32) -> GPtr<u8> = thiscall 0x6846F0 => unported;
-    /// `CTaskComplexPartnerChat::Constructor` (0x684290, `ret 0x28`)
-    fn partner_chat_ctor_orig(t: GPtr<u8>, name: GPtr<u8>, partner: GPtr<u8>, lead: u32, dist: u32, upd: u32, a5: u32, a6: u32, vx: u32, vy: u32, vz: u32) -> GPtr<u8> = thiscall 0x684290 => unported;
     /// `CTaskComplexBeInCouple::GetSideOfPartner(CPed*)` (0x683840, `ret 4`; catalogue `FUN_00683840`): 1 or 2.
     fn be_in_couple_get_side(t: GPtr<u8>, ped: GPtr<u8>) -> i32 = thiscall 0x683840 => unported;
     /// `CTaskComplexUsePairedAttractor::SetPartnership(CPed*, bool, pair*)` (0x6331F0, `ret 0xC`)
     fn paired_set_partnership(t: GPtr<u8>, partner: GPtr<u8>, lead: u32, pair: GPtr<u8>) = thiscall 0x6331F0 => unported;
     /// `CTaskComplexWanderCriminal::LookForCarsToSteal(CPed*)` (0x66B4F0, `ret 4`)
     fn wander_criminal_look_for_cars_to_steal(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x66B4F0 => unported;
-    /// `CTaskSimpleStandStill::Constructor(int32 time, bool, bool, float)` (0x62F310, `ret 0x10`)
-    fn stand_still_ctor(t: GPtr<u8>, time: i32, a: u32, b: u32, f: u32) -> GPtr<u8> = thiscall 0x62F310 => unported;
-    /// `CTaskComplexChat::Constructor(bool, CPed*, int32, int16)` (0x682CB0, `ret 0x10`; entry `push -1; jmp island`)
-    fn complex_chat_ctor(t: GPtr<u8>, a: u32, partner: GPtr<u8>, b: i32, c: u32) -> GPtr<u8> = thiscall 0x682CB0 => unported;
     /// `CTaskSimpleDoHandSignal::Constructor()` (0x660880)
     fn do_hand_signal_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x660880 => unported;
     /// `CTaskComplexWander` next-scan-time setter (0x66B150, `ret 4`): `+0x34 = a0`.
     fn wander_set_next_scan_time(t: GPtr<u8>, time: u32) = thiscall 0x66B150 => unported;
     /// `FUN_00683340` (0x683340, `ret 0x10`): the `CTaskComplexWaitForPed` constructor `(CPed*, float, int32, bool)`
     fn wait_for_ped_ctor(t: GPtr<u8>, ped: GPtr<u8>, f: u32, time: u32, b: u32) -> GPtr<u8> = thiscall 0x683340 => wait_for_ped_ctor_port;
-    /// `CTaskComplexAvoidOtherPedWhileWandering::Constructor(CPed*, const CVector&, int32)` (0x66A100, `ret 0xC`)
-    fn avoid_other_ped_while_wandering_ctor(t: GPtr<u8>, ped: GPtr<u8>, target: GPtr<u8>, ms: u32) -> GPtr<u8> = thiscall 0x66A100 => unported;
 
     // ---- other catalogued functions ----
     /// `CAEPedSpeechAudioEntity::RequestPedConversation(CPed*, CPed*)` (0x4E50E0, cdecl)
@@ -111,12 +108,8 @@ orig! {
     fn ik_point_arm(m: GPtr<u8>, name: u32, arm: i32, ped: GPtr<u8>, target: GPtr<u8>, bone: i32, pos: GPtr<u8>, speed: u32, blend: u32, limit: u32) = thiscall 0x618B60 => unported;
     /// `CScripted2dEffects::GetEffectPairs(const C2dEffect*)` (0x6FA840, cdecl)
     fn scripted_2d_effects_get_effect_pairs(effect: GPtr<u8>) -> GPtr<u8> = cdecl 0x6FA840 => unported;
-    /// `CPathNode::GetPosition()` (0x420A10, `ret 4`, CVector by hidden pointer)
-    fn path_node_get_position(n: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall 0x420A10 => unported;
     /// `CTaskComplexWanderStandard::ScanForStuff(CPed*)` (0x672600, `ret 4`)
     fn wander_standard_scan_for_stuff(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x672600 => unported;
-    /// `CTaskComplexProstituteSolicit::IsTaskValid(CPed*, CPed*)` (0x661BB0, cdecl)
-    fn prostitute_solicit_is_task_valid(a: GPtr<u8>, b: GPtr<u8>) -> u8 = cdecl 0x661BB0 => unported;
 }
 
 use sa_core::field::gf as c;
@@ -159,7 +152,7 @@ fn stand_still_50() -> GPtr<u8> {
     if p.is_null() {
         return GPtr::NULL;
     }
-    stand_still_ctor(p, 0x32, 0, 0, F8)
+    stand_still_ctor(p, 0x32, 0, 0, f32::from_bits(F8))
 }
 
 /// `p ? CTaskSimpleStandStill(p, time, false, false, 8.0f) : null` for an already allocated slot.
@@ -167,7 +160,7 @@ fn stand_still_in(p: GPtr<u8>, time: i32) -> GPtr<u8> {
     if p.is_null() {
         GPtr::NULL
     } else {
-        stand_still_ctor(p, time, 0, 0, F8)
+        stand_still_ctor(p, time, 0, 0, f32::from_bits(F8))
     }
 }
 
@@ -182,7 +175,7 @@ fn new_run_anim(group: u32, anim: u32) -> GPtr<u8> {
     if p.is_null() {
         return GPtr::NULL;
     }
-    run_anim_ctor(p, group, anim, F4, 0)
+    run_anim_ctor(p, group, anim, f32::from_bits(F4), 0)
 }
 
 /// A new `CTaskComplexTurnToFaceEntityOrCoord(partner (+0x38), [0x86FC7C], k)` or null.
@@ -314,12 +307,12 @@ pub fn partner_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     if partner.is_null() {
         return GPtr::NULL;
     }
-    let t = tm_find_active_task_by_type(task_mgr(partner), rd::<i32>(this, 0x34));
+    let t = tm_find_active_task_by_type(task_mgr(partner), rd::<i32>(this, 0x34) as u32);
     if t.is_null() || rd::<GPtr<u8>>(t, 0x38) != ped {
         return GPtr::NULL;
     }
     let find_partner_task =
-        || tm_find_active_task_by_type(task_mgr(rd::<GPtr<u8>>(this, 0x38)), rd::<i32>(this, 0x34));
+        || tm_find_active_task_by_type(task_mgr(rd::<GPtr<u8>>(this, 0x38)), rd::<i32>(this, 0x34) as u32);
     match rd::<u8>(this, 0x59) {
         6 => {
             if rd::<u8>(this, 0x6E) == 0 {
@@ -339,11 +332,11 @@ pub fn partner_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
                     if !w.is_null() && v_task_type(w) == 0x390 && v_wander_type(w) == 0 {
                         let mut a = [0u32; 3];
                         let mut b = [0u32; 3];
-                        let pa = placeable_get_top_direction(ped, slot(&mut a));
-                        let pb = placeable_get_top_direction(ped, slot(&mut b));
+                        let pa = GPtr::<f32>::cast::<u8>(placeable_get_top_direction(ped, GPtr::<u8>::cast::<f32>(slot(&mut a))));
+                        let pb = GPtr::<f32>::cast::<u8>(placeable_get_top_direction(ped, GPtr::<u8>::cast::<f32>(slot(&mut b))));
                         let hy = f32_of(x(rd::<f32>(pb, 4)).fchs());
                         let hx = f32_of(x(rd::<f32>(pa, 0)).fchs());
-                        let dir = general_get_node_heading_from_vector(hx.to_bits(), hy.to_bits()) & 0xFFFF;
+                        let dir = general_get_node_heading_from_vector(f32::from_bits(hx.to_bits()), f32::from_bits(hy.to_bits())) as u32 & 0xFFFF;
                         let p = task_new(0x38);
                         let wt = if p.is_null() { GPtr::NULL } else { wander_standard_ctor(p, 4, dir, 1) };
                         wander_set_next_scan_time(wt, now().wrapping_add(d(0x86FCDC)));
@@ -413,7 +406,7 @@ pub fn partner_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
             if p.is_null() {
                 return GPtr::NULL;
             }
-            go_to_point_and_stand_still_ctor(p, 4, this.byte_add(0x40), 0x3DCC_CCCD, 0, 0, 1)
+            go_to_point_and_stand_still_ctor(p, 4, GPtr::<u8>::cast::<u32>(this.byte_add(0x40)), f32::from_bits(0x3DCC_CCCD), f32::from_bits(0), 0, 1)
         }
         1 => {
             if v_task_type(rd::<GPtr<u8>>(this, 8)) != 0xCB {
@@ -441,7 +434,7 @@ pub fn partner_remove_streamed_anims(this: GPtr<u8>) {
     }
     if rd::<u8>(this, 0x5E) != g::<u8>(0x858B54).read() {
         let i = anim_get_block_index(this.byte_add(0x5E));
-        anim_remove_block_ref(i);
+        anim_remove_block_ref(i as u32);
     }
     wr::<u8>(this, 0x6E, 0);
 }
@@ -554,11 +547,11 @@ pub fn be_in_couple_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> 
     if rd::<u8>(this, 0x16) != 0 {
         if ik_is_looking(ik_man(), ped) == 0 && general_random_int_in_range(0, 100) > 0x50 {
             let time = general_random_int_in_range(2000, 4000);
-            ik_look_at(ik_man(), 0x870838, ped, partner(), time, 5, 0, 0, 0x3E80_0000, 0x1F4, 3, 0);
+            ik_look_at(ik_man(), GPtr::from_addr(0x870838), ped, partner(), time as u32, 5, GPtr::NULL, 0, 0x3E80_0000, 0x1F4, 3, 0);
         }
         if ik_is_looking(ik_man(), partner()) == 0 && general_random_int_in_range(0, 100) > 0x50 {
             let time = general_random_int_in_range(2000, 4000);
-            ik_look_at(ik_man(), 0x870838, partner(), ped, time, 5, 0, 0, 0x3E80_0000, 0x1F4, 3, 0);
+            ik_look_at(ik_man(), GPtr::from_addr(0x870838), partner(), ped, time as u32, 5, GPtr::NULL, 0, 0x3E80_0000, 0x1F4, 3, 0);
         }
     }
     rd::<GPtr<u8>>(this, 8)
@@ -678,7 +671,7 @@ pub fn partner_chat_clone(this: GPtr<u8>) -> GPtr<u8> {
         rd::<GPtr<u8>>(this, 0x38),
         u32::from(rd::<u8>(this, 0x58)),
         rd::<u32>(this, 0x3C),
-        i32::from(rd::<i8>(this, 0x5B)) as u32,
+        (i32::from(rd::<i8>(this, 0x5B)) as u32) as i32,
         u32::from(rd::<u8>(this, 0x74)),
         u32::from(rd::<u8>(this, 0x75)),
         rd::<u32>(this, 0x40),
@@ -731,7 +724,7 @@ pub fn partner_greet_stream_required_anims(this: GPtr<u8>) {
             return;
         }
         let i = anim_get_block_index(this.byte_add(0x5E));
-        anim_remove_block_ref(i);
+        anim_remove_block_ref(i as u32);
         wr::<u8>(this, 0x6E, 0);
     }
 }
@@ -835,7 +828,7 @@ pub fn partner_chat_get_partner_sequence(this: GPtr<u8>) -> GPtr<u8> {
             if p.is_null() {
                 return GPtr::NULL;
             }
-            complex_chat_ctor(p, a, rd::<GPtr<u8>>(this, 0x38), i32::from(rd::<i8>(this, 0x5B)), time)
+            complex_chat_ctor(p, a as u8, rd::<GPtr<u8>>(this, 0x38), i32::from(rd::<i8>(this, 0x5B)), time as i16)
         };
         if rd::<u8>(this, 0x58) != 0 {
             sequence_add_task(seq, new_chat(1, t2));
@@ -885,7 +878,7 @@ pub fn paired_attractor_set_partnership(this: GPtr<u8>, partner: GPtr<u8>, lead:
 pub fn paired_attractor_clear_partnership(this: GPtr<u8>) {
     let partner = rd::<GPtr<u8>>(this, 0x10);
     if !partner.is_null() {
-        entity_clean_up_old_reference(partner, this.byte_add(0x10));
+        entity_clean_up_old_reference(partner, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x10)));
         wr::<u32>(this, 0x10, 0);
     }
     wr::<u8>(this, 0x14, 0);
@@ -914,7 +907,7 @@ pub fn paired_attractor_seek_partnership(this: GPtr<u8>, ped: GPtr<u8>) {
             continue;
         }
         let effect = ((id as u32) << 6).wrapping_add(0xC3AB00);
-        let other = attractor_manager_get_ped_using_effect(get_ped_attractor_manager(), effect, 0);
+        let other = attractor_manager_get_ped_using_effect(get_ped_attractor_manager(), GPtr::from_addr(effect as usize), 0);
         if other.is_null() {
             continue;
         }
@@ -1018,7 +1011,7 @@ fn node_dist_sq(this: GPtr<u8>, off: isize, ped: GPtr<u8>) -> Option<X87> {
     let pp = ent_pos(ped);
     let node = u32::from(rd::<u16>(this, off + 2)).wrapping_mul(0x1C).wrapping_add(nodes);
     let mut out = [0u32; 3];
-    let np = path_node_get_position(GPtr::from_addr(node as usize), slot(&mut out));
+    let np = GPtr::<f32>::cast::<u8>(path_node_get_position(GPtr::from_addr(node as usize), GPtr::<u8>::cast::<f32>(slot(&mut out))));
     let dx = x(rd::<f32>(np, 0)).fsub_m(rd::<f32>(pp, 0));
     let dy = x(rd::<f32>(np, 4)).fsub_m(rd::<f32>(pp, 4));
     let dz = x(rd::<f32>(np, 8)).fsub_m(rd::<f32>(pp, 8));
@@ -1186,7 +1179,7 @@ pub fn wander_prostitute_scan_for_stuff(this: GPtr<u8>, ped: GPtr<u8>) {
         wr::<u16>(ep, 0xE, 0x51D);
         event_group_add(intel.byte_add(0x68), ep, 0);
         wr::<u32>(ep, 0, 0x86CA38);
-        event_acquaintance_ped_dtor(ep);
+        event_acquaintance_ped_dtor(ep.cast::<u32>());
     }
 }
 

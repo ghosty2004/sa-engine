@@ -10,22 +10,18 @@ use sa_math::x87::X87;
 
 use crate::common::{ftol32, g, k, x, xi};
 
-use crate::bindings::rw_im3d_render_indexed_primitive;
-use crate::bindings::rw_im3d_transform;
+use sa_world::bindings::rw_im3d_render_indexed_primitive;
+use sa_world::bindings::rw_im3d_transform;
 use sa_core::bindings::general_random_int_in_range as random_in_range;
+use sa_core::bindings::vector_magnitude;
+use sa_world::bindings::cam_no_rain;
+use sa_world::bindings::player_no_rain;
+use sa_world::bindings::rw_im3d_end;
 orig! {
-    /// `CCullZones::CamNoRain()` (0x72DDB0, bool in AL)
-    fn cam_no_rain() -> u8 = cdecl 0x72DDB0 => crate::cullzones::cam_no_rain;
-    /// `CCullZones::PlayerNoRain()` (0x72DDC0, bool in AL)
-    fn player_no_rain() -> u8 = cdecl 0x72DDC0 => crate::cullzones::player_no_rain;
     /// `operator new(size)` (0x821195)
     fn operator_new(size: u32) -> u32 = cdecl 0x821195 => unported;
-    /// `CVector::Magnitude()` (0x4082C0, ST0)
-    fn vector_magnitude(v: GPtr<f32>) -> f64 = thiscall 0x4082C0 => unported;
     /// `RwRenderStateSet(state, value)` (`RwGlobals` +0x20)
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `RwIm3DEnd()` (0x7EF520)
-    fn rw_im3d_end() -> u32 = cdecl 0x7EF520 => unported;
 }
 
 /// The pause byte checked first, the integer the target count scales with (64 - it), `CWeather::Rain`,
@@ -154,7 +150,7 @@ pub fn render_rain_streaks() {
         v[2] = zi.fsub_m(p.wrapping_index(2).read()).to_f32();
         let keep = alpha_at(i).read() > 0
             && zi.fcom(x(0.0)).test_parity(0x41)
-            && X87::from_f64_exact(vector_magnitude(GPtr::from_raw(v.as_mut_ptr()))).fcom(x(8.0)).test_any(0x41);
+            && X87::from_f64_exact(vector_magnitude(GPtr::<f32>::cast::<u32>(GPtr::from_raw(v.as_mut_ptr())))).fcom(x(8.0)).test_any(0x41);
         if !keep {
             arr(STREAK_X, i).write(respawn_axis(0x72_B1AB, CAM_FRONT, 0));
             arr(STREAK_Y, i).write(respawn_axis(0x72_B1F9, CAM_FRONT + 4, 1));
@@ -211,8 +207,8 @@ pub fn render_rain_streaks() {
         rw_render_state_set(0xB, 6);
         rw_render_state_set(0xC, 1);
         rw_render_state_set(1, 0);
-        if !rw_im3d_transform(TEMP_RENDER_VERTICES, g::<u32>(TEMP_VERTICES_STORED).read(), 0, 8).is_null() {
-            rw_im3d_render_indexed_primitive(1, TEMP_BUFFER_INDICES, g::<u32>(TEMP_INDICES_STORED).read());
+        if !rw_im3d_transform(GPtr::from_addr(TEMP_RENDER_VERTICES as usize), g::<u32>(TEMP_VERTICES_STORED).read(), GPtr::NULL, 8).is_null() {
+            rw_im3d_render_indexed_primitive(1, GPtr::from_addr(TEMP_BUFFER_INDICES as usize), (g::<u32>(TEMP_INDICES_STORED).read()) as i32);
             rw_im3d_end();
         }
         rw_render_state_set(8, 1);

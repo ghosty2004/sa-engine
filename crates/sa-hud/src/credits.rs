@@ -65,33 +65,23 @@ fn fild_u32(v: u32) -> X87 {
     if (v as i32) < 0 { r.fadd_m(k(K_2_32)) } else { r }
 }
 
-use crate::bindings::font_set_centre_size;
-use crate::bindings::font_set_drop_color;
-use crate::bindings::font_set_scale;
+use sa_core::bindings::font_set_centre_size;
+use sa_core::bindings::font_set_drop_color;
+use sa_core::bindings::font_set_scale;
 use sa_core::bindings::camera_draw_borders_for_wide_screen;
 use sa_core::bindings::defined_state_2d;
 use sa_core::bindings::rgba_ctor;
+use sa_core::bindings::credits_render_credits as render_credits_call;
+use sa_core::bindings::font_draw_fonts;
+use sa_core::bindings::font_print_string;
+use sa_core::bindings::font_set_background;
+use sa_core::bindings::font_set_color;
+use sa_core::bindings::font_set_edge;
+use sa_core::bindings::font_set_font_style;
+use sa_core::bindings::font_set_orientation;
+use sa_core::bindings::font_set_proportional;
+use sa_core::bindings::text_get;
 orig! {
-    /// `CFont::SetBackground(bool, bool)` (0x7195C0)
-    fn font_set_background(on: u32, outline: u32) = cdecl 0x7195C0 => crate::font::set_background;
-    /// `CFont::SetOrientation(eFontAlignment)` (0x719610)
-    fn font_set_orientation(v: u32) = cdecl 0x719610 => crate::font::set_orientation;
-    /// `CFont::SetProportional(bool)` (0x7195B0)
-    fn font_set_proportional(v: u32) = cdecl 0x7195B0 => crate::font::set_proportional;
-    /// `CFont::SetFontStyle(eFontStyle)` (0x719490)
-    fn font_set_font_style(v: u32) = cdecl 0x719490 => crate::font::set_font_style;
-    /// `CFont::SetEdge(int8)` (0x719590)
-    fn font_set_edge(v: u32) = cdecl 0x719590 => crate::font::set_edge;
-    /// `CFont::SetColor(CRGBA)` (0x719430)
-    fn font_set_color(c: u32) = cdecl 0x719430 => crate::font::set_color;
-    /// `CFont::PrintString(float x, float y, const GxtChar*)` (0x71A700)
-    fn font_print_string(px: f32, py: f32, text: GPtr<u8>) = cdecl 0x71A700 => crate::font_print::print_string;
-    /// `CFont::DrawFonts()` (0x71A210)
-    fn font_draw_fonts() = cdecl 0x71A210 => crate::font_print::draw_fonts;
-    /// `CText::Get(const char*)` (0x6A0050)
-    fn text_get(this: GPtr<u8>, key: GPtr<u8>) -> GPtr<u8> = thiscall 0x6A0050 => crate::text::text_get;
-    /// `CCredits::RenderCredits()` (0x5A87F0)
-    fn render_credits_call() = cdecl 0x5A87F0 => render_credits;
     /// `CCredits::PrintCreditText(float, float, const GxtChar*, uint32&, float, bool)` (0x5A8660)
     fn print_credit_text_call(sx: f32, sy: f32, text: GPtr<u8>, offset: GPtr<u32>, scroll: f32, hi: u32) = cdecl 0x5A8660 => print_credit_text;
 }
@@ -128,7 +118,7 @@ pub fn print_credit_text(sx: f32, sy: f32, text: GPtr<u8>, offset: GPtr<u32>, sc
     // `fcomp 20; test ah, 0x41; jne skip`, then `fld 20; fsubr st, st(1)` (height - 20), `fld pos;
     // fcompp; test ah, 5; jp skip`
     if !p.fcom(x(k(K_20))).test_any(0x41) && !x(pos).fcom(h.fsub_m(k(K_20))).test_parity(0x05) {
-        font_set_scale(sx.to_bits(), sy.to_bits());
+        font_set_scale(f32::from_bits(sx.to_bits()), f32::from_bits(sy.to_bits()));
         font_set_color(rgba(0, 0, 0, 0xFF));
         let half = g::<i32>(RS_MAX_WIDTH).read() / 2;
         font_print_string(f32_of(xi(half)), pos, text);
@@ -162,7 +152,7 @@ pub fn render_credits() {
     let mut offset = [0u32; 1];
     let op = GPtr::from_raw(offset.as_mut_ptr());
     font_set_background(0, 0);
-    font_set_centre_size(f32_of(xi(g::<i32>(RS_MAX_WIDTH).read()).fmul_m(k(K_CENTRE))).to_bits());
+    font_set_centre_size(f32::from_bits(f32_of(xi(g::<i32>(RS_MAX_WIDTH).read()).fmul_m(k(K_CENTRE))).to_bits()));
     font_set_orientation(0);
     font_set_proportional(1);
     font_set_font_style(1);

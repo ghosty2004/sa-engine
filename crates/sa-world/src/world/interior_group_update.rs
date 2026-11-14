@@ -16,7 +16,8 @@ use sa_core::bindings::atexit;
 use sa_core::bindings::crt_free_8214bd as crt_free;
 use sa_core::bindings::eh_vector_ctor;
 use sa_core::bindings::ped_is_alive;
-use sa_stream::bindings::rw_texture_destroy;
+use sa_core::bindings::rw_texture_destroy;
+use crate::bindings::add_interior_info as interior_add_interior_info;
 orig! {
     /// `InteriorGroup_c::CalcIsVisible()` (0x595200)
     fn ig_calc_is_visible(ig: GPtr<u8>) = thiscall 0x595200 => unported;
@@ -40,8 +41,6 @@ orig! {
     fn interior_exit(i: GPtr<u8>) = thiscall 0x592230 => unported;
     /// `CPathFind::RemoveInterior(uint32)` (0x44E1A0)
     fn path_find_remove_interior(pf: GPtr<u8>, id: i32) = thiscall 0x44E1A0 => unported;
-    /// `Interior_c::AddInteriorInfo(int32, float, float, int32, CEntity*)` (0x591E40)
-    fn interior_add_interior_info(i: GPtr<u8>, kind: i32, x: f32, y: f32, dir: u32, ent: u32) = thiscall 0x591E40 => unported;
     /// `CPlayerInfo::CPlayerInfo()` (0x571920)
     fn player_info_ctor(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x571920 => unported;
     /// `0x54F440`: the `CMatrixLinkList` constructor

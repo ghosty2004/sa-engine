@@ -4,7 +4,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 use sa_world::physical::base::floor_f64;
 
@@ -12,12 +12,8 @@ use crate::common::{ftol32, g, k, x, xi};
 
 use sa_core::bindings::little_test;
 use sa_world::bindings::rw_im3d_end;
-orig! {
-    /// `RwIm3DTransform(RwIm3DVertex*, uint32, RwMatrix*, uint32)` (0x7EF450)
-    fn rw_im3d_transform(verts: GPtr<u8>, n: u32, ltm: GPtr<u8>, flags: u32) -> GPtr<u8> = cdecl 0x7EF450 => unported;
-    /// `RwIm3DRenderIndexedPrimitive(RwPrimitiveType, RwImVertexIndex*, int32)` (0x7EF550)
-    fn rw_im3d_render_indexed_primitive(ty: u32, idx: GPtr<u8>, n: i32) -> i32 = cdecl 0x7EF550 => unported;
-}
+use sa_world::bindings::rw_im3d_render_indexed_primitive;
+use sa_world::bindings::rw_im3d_transform;
 
 /// The water render buffer: `TempBufferVertices` 3D (0xC4D958, `RwIm3DVertex` 0x24: pos +0, colour +0x18, u
 /// +0x1C, v +0x20), indices (0xC4B958, u16), counts (0xC4B950 vertices, 0xC4B954 indices).

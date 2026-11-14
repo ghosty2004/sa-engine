@@ -2,6 +2,7 @@
 //! Ported from the 1.0 US bytes; gta-reversed `Conversations.cpp` as a reading aid.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::hook;
 

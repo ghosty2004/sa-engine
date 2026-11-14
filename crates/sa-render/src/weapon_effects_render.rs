@@ -13,8 +13,8 @@ use sa_math::x87::X87;
 
 use crate::common::{g, jne, jp, k, rd, x, xi};
 
-use crate::bindings::calc_screen_coors;
-use crate::bindings::cr_render_one_xlu_sprite_rotate_aspect as rotate_aspect;
+use sa_core::bindings::calc_screen_coors;
+use sa_world::bindings::cr_render_one_xlu_sprite_rotate_aspect as rotate_aspect;
 use sa_core::bindings::get_weapon_info;
 use sa_world::bindings::get_weapon_radius_on_screen;
 use sa_world::bindings::is_coop_game_going_on;
@@ -183,12 +183,12 @@ fn target_sprite(ch: GPtr<u8>) {
     for sc in scales {
         let hh = x(cap_at(h, c20)).fmul_m(sc).fmul_m(k18).to_f32();
         let ww = x(cap_at(w, c28)).fmul_m(sc).fmul_m(k18).to_f32();
-        rotate_aspect(out[0], out[1], out[2], ww, hh, 0, 0, 0, 0xff, 0x3c23_d70a, 0.0, 0xff);
+        rotate_aspect(out[0], out[1], out[2], ww, hh, 0, 0, 0, 0xff, f32::from_bits(0x3c23_d70a), 0.0, 0xff);
     }
     let hh = x(cap_at(h, c20)).fmul_m(k18).to_f32();
     let ww = x(cap_at(w, c28)).fmul_m(k18).to_f32();
     let c = |o: isize| u32::from(rd::<u8>(ch, o));
-    rotate_aspect(out[0], out[1], out[2], ww, hh, c(0x14), c(0x15), c(0x16), 0xff, 0x3c23_d70a, 0.0, c(0x17));
+    rotate_aspect(out[0], out[1], out[2], ww, hh, c(0x14), c(0x15), c(0x16), 0xff, f32::from_bits(0x3c23_d70a), 0.0, c(0x17));
     rs(1, rd::<u32>(g::<GPtr<u8>>(TEX_RING).read(), 0));
     let ang = spin_angle();
     let angf = ang.to_f32();
@@ -210,13 +210,13 @@ fn target_sprite(ch: GPtr<u8>) {
         let ww = x(cap_at(w, c28)).fmul_m(sc).fmul_m(k08).to_f32();
         let py = x(out[1]).fsub_m(gf(0xc8_a898)).to_f32();
         let px = x(out[0]).fsub_m(gf(0xc8_a89c)).to_f32();
-        rotate_aspect(px, py, out[2], ww, hh, 0, 0, 0, 0xff, 0x3c23_d70a, angf, 0xff);
+        rotate_aspect(px, py, out[2], ww, hh, 0, 0, 0, 0xff, f32::from_bits(0x3c23_d70a), angf, 0xff);
     }
     let hh = x(cap_at(h, c20)).fmul_m(k08).to_f32();
     let ww = x(cap_at(w, c28)).fmul_m(k08).to_f32();
     let py = x(out[1]).fsub_m(gf(0xc8_a898)).to_f32();
     let px = x(out[0]).fsub_m(gf(0xc8_a89c)).to_f32();
-    rotate_aspect(px, py, out[2], ww, hh, c(0x14), c(0x15), c(0x16), c(0x17), 0x3c23_d70a, angf, 0xff);
+    rotate_aspect(px, py, out[2], ww, hh, c(0x14), c(0x15), c(0x16), c(0x17), f32::from_bits(0x3c23_d70a), angf, 0xff);
     rs(8, 1);
     rs(6, 1);
 }
@@ -393,7 +393,7 @@ fn sniper(cam: usize) {
     let sy = x(cy).fadd_m(1.0).fmul(xi(g::<i32>(RS_HEIGHT).read())).fmul_m(0.5).to_f32();
     let sx = x(cx).fadd_m(1.0).fmul(xi(g::<i32>(RS_WIDTH).read())).fmul_m(0.5).to_f32();
     // 100, 10, 10
-    rotate_aspect(sx, sy, k(0x42c8_0000), k(0x4120_0000), k(0x4120_0000), 0xff, 0x80, 0, 0x80, 0x3c23_d70a, ang, 0xff);
+    rotate_aspect(sx, sy, k(0x42c8_0000), k(0x4120_0000), k(0x4120_0000), 0xff, 0x80, 0, 0x80, f32::from_bits(0x3c23_d70a), ang, 0xff);
     let p0 = g::<GPtr<u8>>(PLAYERS).read();
     let veh = rd::<GPtr<u8>>(p0, 0x58c);
     let mut ped = g::<GPtr<u8>>(PLAYERS + 0x190).read();
@@ -404,7 +404,7 @@ fn sniper(cam: usize) {
         let slot = i32::from(rd::<u8>(ped, 0x718) as i8);
         let ty = rd::<u32>(ped, (0x5a0 + 0x1c * slot) as isize);
         let skill = get_weapon_skill(ped);
-        let info = get_weapon_info(ty, skill);
+        let info = get_weapon_info(ty as i32, (skill as i32) as u8);
         let m = rd::<GPtr<u8>>(ped, 0x14);
         let pp = if m.is_null() { ped.byte_add(4) } else { m.byte_add(0x30) };
         let range = x(rd::<f32>(info, 8));
@@ -440,7 +440,7 @@ fn sniper(cam: usize) {
                 let ang = spin_angle().to_f32();
                 let hh = x(h).fmul(s).to_f32();
                 let ww = s.fmul_m(w).to_f32();
-                rotate_aspect(out[0], out[1], out[2], ww, hh, a, 0, 0, a, 0x3c23_d70a, ang, 0xff);
+                rotate_aspect(out[0], out[1], out[2], ww, hh, a, 0, 0, a, f32::from_bits(0x3c23_d70a), ang, 0xff);
             }
         }
     }

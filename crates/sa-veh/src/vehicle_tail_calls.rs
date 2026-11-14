@@ -9,9 +9,8 @@ use sa_core::{hook, native, orig};
 use crate::common::wr;
 
 use crate::bindings::automobile_destructor as automobile_dtor;
+use crate::bindings::automobile_reset_suspension;
 orig! {
-    /// `CAutomobile::ResetSuspension()` (0x6A2AE0)
-    fn automobile_reset_suspension(v: GPtr<u8>) = thiscall 0x6A2AE0 => unported;
     /// `CAutomobile::ProcessSuspension()` (0x6AFB10)
     fn automobile_process_suspension(v: GPtr<u8>) = thiscall 0x6AFB10 => unported;
 }

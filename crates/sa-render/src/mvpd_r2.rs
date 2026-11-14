@@ -241,7 +241,7 @@ pub fn birds_update() {
         let px = angle.fsin().fmul_m(df).fadd_m(c[0]).to_f32().to_bits();
         let py = angle.fcos().fmul_m(df).fadd_m(c[1]).to_f32().to_bits();
         let mut wl = 0f32;
-        if water_level_no_waves(px, py, height.to_bits(), lp(&mut wl), 0, 0) != 0 && jp(x(wl).fadd_m(k(0x4080_0000)), x(height), 5) {
+        if water_level_no_waves(f32::from_bits(px), f32::from_bits(py), f32::from_bits(height.to_bits()), lp(&mut wl), GPtr::NULL, GPtr::NULL) != 0 && jp(x(wl).fadd_m(k(0x4080_0000)), x(height), 5) {
             break 'spawn;
         }
         let mut f: [u32; 3] = [g::<u32>(0xB6F9AC).read(), g::<u32>(0xB6F9B0).read(), 0];
@@ -302,7 +302,7 @@ pub fn birds_update() {
     }
 }
 
-use crate::bindings::camera_is_sphere_visible_m;
+use sa_world::bindings::camera_is_sphere_visible_m;
 use crate::bindings::stencil_graphics_high_quality;
 use sa_core::bindings::defined_state;
 use sa_core::bindings::find_player_vehicle;
@@ -311,6 +311,9 @@ use sa_core::bindings::render_weapon_peds_for_pc;
 use sa_core::bindings::rs_camera_begin_update;
 use sa_core::bindings::rw_camera_end_update;
 use sa_core::bindings::rw_raster_destroy;
+use sa_core::bindings::link_list_clear as fun_53e8d0;
+use sa_core::bindings::render_scene;
+use sa_core::bindings::rw_camera_clear;
 orig! {
     /// `CCullZones::FindMirrorAttributesForCoors(CVector)` (0x72DA70; by value)
     fn find_mirror_attributes(px: u32, py: u32, pz: u32) -> GPtr<u8> = cdecl 0x72DA70 => unported;
@@ -325,12 +328,6 @@ orig! {
     fn camera_set_up_for_mirror(this: GPtr<u8>) = thiscall 0x51A560 => unported;
     /// `CCamera::RestoreCameraAfterMirror()` (0x51A5A0)
     fn camera_restore_after_mirror(this: GPtr<u8>) = thiscall 0x51A5A0 => unported;
-    /// `RwCameraClear(RwCamera*, RwRGBA*, mode)` (0x7EE340)
-    fn rw_camera_clear(cam: GPtr<u8>, colour: GPtr<u8>, mode: u32) -> GPtr<u8> = cdecl 0x7EE340 => unported;
-    /// `RenderScene()` (0x53DF40)
-    fn render_scene() = cdecl 0x53DF40 => unported;
-    /// 0x53E8D0 (thiscall on 0xC88224)
-    fn fun_53e8d0(this: GPtr<u8>) = thiscall 0x53E8D0 => unported;
 }
 
 /// `CMirrors::pBuffer`, `pZBuffer`, `TypeOfMirror`, `MirrorFlags`, `MirrorV`, `MirrorNormal`.
@@ -404,8 +401,8 @@ pub fn mirrors_before_construct_render_list() {
                 let y = x(f(-0x1C)).fadd_m(f(-0x10)).fadd_m(f(8)).fadd_m(f(-4)).fmul_m(q);
                 let xx = x(f(-0x20)).fadd_m(f(-0x14)).fadd_m(f(-8)).fadd_m(f(4)).fmul_m(q);
                 let mut c: [f32; 3] = [xx.to_f32(), y.to_f32(), z.to_f32()];
-                if camera_is_sphere_visible_m(g(THE_CAMERA), lp(&mut c), 0x4100_0000, 0xB6FA74) != 0
-                    || (g::<u8>(0xB6F998).read() != 0 && camera_is_sphere_visible_m(g(THE_CAMERA), lp(&mut c), 0x4100_0000, 0xB6FABC) != 0)
+                if camera_is_sphere_visible_m(g(THE_CAMERA), lp(&mut c), f32::from_bits(0x4100_0000), GPtr::from_addr(0xB6FA74)) != 0
+                    || (g::<u8>(0xB6F998).read() != 0 && camera_is_sphere_visible_m(g(THE_CAMERA), lp(&mut c), f32::from_bits(0x4100_0000), GPtr::from_addr(0xB6FABC)) != 0)
                 {
                     active = 1;
                 }

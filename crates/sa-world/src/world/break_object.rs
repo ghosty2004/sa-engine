@@ -21,26 +21,23 @@ use super::common::{ftol32, f32_of, g, rd, wr, x, xi};
 
 use crate::bindings::fx_add_particle;
 use crate::bindings::is_vision_fx_active;
-use crate::bindings::rw_v3d_length;
-use crate::bindings::rw_v3d_normalize;
-use crate::bindings::rw_v3d_transform_vector;
+use sa_core::bindings::rw_v3d_length;
+use sa_core::bindings::rw_v3d_normalize;
+use sa_core::bindings::rw_v3d_transform_vector;
 use sa_core::bindings::crt_acos;
 use sa_core::bindings::crt_new;
 use sa_core::bindings::frame_get_ltm;
 use sa_core::bindings::matrix_mul_vec;
 use sa_core::bindings::rw_v3d_transform_points;
+use crate::bindings::break_object_exit;
+use crate::bindings::fx_add_sparks;
+use crate::bindings::fx_prt_mult_ctor;
+use crate::bindings::fx_render_add_tri;
+use crate::bindings::fx_render_begin;
+use crate::bindings::fx_render_end;
+use crate::bindings::world_process_vertical_line as process_vertical_line;
+use sa_core::bindings::rw_matrix_rotate;
 orig! {
-    /// `CWorld::ProcessVerticalLine(const CVector&, float, CColPoint&, CEntity*&, bool buildings,
-    /// bool vehicles, bool peds, bool objects, bool dummies, bool seeThrough, CStoredCollPoly*)` (0x5674E0, AL)
-    fn process_vertical_line(p: GPtr<u8>, z: f32, cp: GPtr<u8>, ent: GPtr<u8>, b0: u32, b1: u32, b2: u32, b3: u32, b4: u32, b5: u32, poly: u32) -> u8 = cdecl 0x5674E0 => unported;
-    /// `RwMatrixRotate(m, axis, angle, combine)` (0x7F1FD0)
-    fn rw_matrix_rotate(m: GPtr<u8>, axis: GPtr<u8>, angle: f32, op: u32) -> GPtr<u8> = cdecl 0x7F1FD0 => unported;
-    /// `FxPrtMult_c::FxPrtMult_c(float r, g, b, a, size, unk, life)` (0x4AB290), the floats as bits
-    fn fx_prt_mult_ctor(p: GPtr<u8>, r: u32, g: u32, b: u32, a: u32, size: u32, unk: u32, life: u32) -> GPtr<u8> = thiscall 0x4AB290 => unported;
-    /// `Fx_c::AddSparks(CVector&, CVector&, float, int32, CVector, eSparkType, float, float)` (0x49F040) on `g_fx` (0xA9AE00)
-    fn fx_add_sparks(fx: GPtr<u8>, origin: GPtr<u8>, dir: GPtr<u8>, force: f32, amount: i32, across: CVector, kind: u32, spread: f32, life: f32) = thiscall 0x49F040 => unported;
-    /// `BreakObject_c::Exit()` (0x59DDD0)
-    fn break_object_exit(b: GPtr<u8>) = thiscall 0x59DDD0 => super::interior_group_update::break_object_exit;
     /// `BreakObject_c::CalcGroupCenter(BreakGroup_t*)` (0x59D190)
     fn calc_group_center(b: GPtr<u8>, grp: GPtr<u8>) = thiscall 0x59D190 => break_object_calc_group_center;
     /// `BreakObject_c::SetGroupData(const RwMatrix*, const CVector*, float)` (0x59D570)
@@ -49,13 +46,6 @@ orig! {
     fn set_break_info(b: GPtr<u8>, info: GPtr<u8>, just_faces: i32) = thiscall 0x59D7F0 => break_object_set_break_info;
     /// `BreakObject_c::DoCollisionResponse(BreakGroup_t*, float, const CVector*, float)` (0x59DE40)
     fn do_collision_response(b: GPtr<u8>, grp: GPtr<u8>, ts: f32, normal: GPtr<u8>, ground_z: f32) = thiscall 0x59DE40 => break_object_do_collision_response;
-    /// `Fx_c::RenderBegin(RwRaster*, RwMatrix*, uint32 flags)` (0x4A13B0)
-    fn fx_render_begin(raster: GPtr<u8>, m: GPtr<u8>, flags: u32) = cdecl 0x4A13B0 => unported;
-    /// `Fx_c::RenderEnd()` (0x4A1600)
-    fn fx_render_end() = cdecl 0x4A1600 => unported;
-    /// `Fx_c::RenderAddTri(x1, y1, z1, x2, y2, z2, x3, y3, z3, u1, v1, u2, v2, u3, v3, r1, g1, b1, a1,
-    /// r2, g2, b2, a2, r3, g3, b3, a3)` (0x4A1410, cdecl; floats as bits, colour channels as ints)
-    fn fx_render_add_tri(x1: u32, y1: u32, z1: u32, x2: u32, y2: u32, z2: u32, x3: u32, y3: u32, z3: u32, u1: u32, v1: u32, u2: u32, v2: u32, u3: u32, v3: u32, r1: u32, g1: u32, b1: u32, a1: u32, r2: u32, g2: u32, b2: u32, a2: u32, r3: u32, g3: u32, b3: u32, a3: u32) = cdecl 0x4A1410 => unported;
 }
 
 use sa_core::crt::rand_at;
@@ -361,7 +351,7 @@ pub fn break_object_do_collision_response(this: GPtr<u8>, grp: GPtr<u8>, ts: f32
     }
     let mut mult = [0u32; 8];
     let mp = buf(&mut mult);
-    fx_prt_mult_ctor(mp, 0x3F80_0000, 0x3F80_0000, 0x3F80_0000, 0x3DCC_CCCD, 0x3E99_999A, 0, 0x3E19_999A);
+    fx_prt_mult_ctor(mp, f32::from_bits(0x3F80_0000), f32::from_bits(0x3F80_0000), f32::from_bits(0x3F80_0000), f32::from_bits(0x3DCC_CCCD), f32::from_bits(0x3E99_999A), f32::from_bits(0), f32::from_bits(0x3E19_999A));
     let pos = grp.byte_add(0x30);
     for sites in [[0x59_E07Fu32, 0x59_E0A0, 0x59_E0C1, 0x59_E0E4]; 4] {
         let mut p = [rd::<u32>(pos, 0), rd::<u32>(pos, 4), rd::<u32>(pos, 8)];
@@ -371,7 +361,7 @@ pub fn break_object_do_collision_response(this: GPtr<u8>, grp: GPtr<u8>, ts: f32
         v[0] = f32_of(rand_unit(sites[2]).fmul_m(f32::from_bits(0x3E99_999A)).fsub_m(f32::from_bits(0x3E19_999A))).to_bits();
         v[1] = f32_of(rand_unit(sites[3]).fmul_m(f32::from_bits(0x3E99_999A)).fsub_m(f32::from_bits(0x3E19_999A))).to_bits();
         let sys = g::<GPtr<u8>>(0xA9_AE24).read();
-        fx_add_particle(sys, buf(&mut p), buf(&mut v), 0, mp, 0xBF80_0000, 0x3F99_999A, 0x3F19_999A, 0);
+        fx_add_particle(sys, buf(&mut p), buf(&mut v), f32::from_bits(0), mp, f32::from_bits(0xBF80_0000), f32::from_bits(0x3F99_999A), f32::from_bits(0x3F19_999A), 0);
     }
     if rd::<u8>(this, 2) != 0 {
         let len = X87::from_f64_exact(rw_v3d_length(grp.byte_add(0x40)));
@@ -531,7 +521,7 @@ pub fn break_object_render(this: GPtr<u8>, draw_last: u8) {
         for t in 0..n as isize {
             let mut verts = [0u32; 9];
             let ri = rd::<GPtr<u8>>(group(this, i), 0x50).byte_add(t * 0x48);
-            rw_v3d_transform_points(buf(&mut verts), ri, 3, grp);
+            rw_v3d_transform_points(GPtr::<u8>::cast::<f32>(buf(&mut verts)), ri.cast::<f32>(), 3, grp);
             let frames = rd::<i32>(group(this, i), 0x70);
             let a = if rd::<u8>(this, 0) != 0 { frames.wrapping_shl(3) } else { frames.wrapping_shl(1) };
             let alpha = u32::from(if a > 0xFF { 0xFF } else { a as u8 });
@@ -606,14 +596,14 @@ pub fn break_object_init(this: GPtr<u8>, obj: GPtr<u8>, vel: GPtr<u8>, vel_rand:
             centre[k] = f32_of(v).to_bits();
         }
         let mut out = [0u32; 3];
-        let r = matrix_mul_vec(buf(&mut out), rd::<GPtr<u8>>(obj, 0x14), buf(&mut centre));
+        let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(buf(&mut out)), rd::<GPtr<u8>>(obj, 0x14), buf(&mut centre)));
         for (k, o) in [(0usize, 0isize), (1, 4), (2, 8)] {
             origin[k] = rd::<u32>(r, o);
         }
     }
     let mut cp = [0u32; 11];
     let mut ent = [0u32; 1];
-    let hit = process_vertical_line(buf(&mut origin), -1000.0, buf(&mut cp), buf(&mut ent), 1, 0, 0, 0, 0, 0, 0);
+    let hit = process_vertical_line(buf(&mut origin), -1000.0, buf(&mut cp), buf(&mut ent), 1, 0, 0, 0, 0, 0, GPtr::NULL);
     if hit == 0 {
         wr::<u32>(this, 0x10, 0xC47A_0000);
         wr::<u32>(this, 0x14, 0);

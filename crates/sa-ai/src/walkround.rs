@@ -4,6 +4,7 @@
 //! task objects keep their original vtables and come from the original task pool (`common::task_new`).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 use sa_math::x87::Cmp;
@@ -13,13 +14,16 @@ use crate::common::*;
 use crate::bindings::compute_closest_surface_point_ped;
 use crate::bindings::compute_entity_hit_side;
 use crate::bindings::is_player_to_quit_car_enter;
-use crate::bindings::point_route_add as point_route_add_48e180;
+use sa_world::bindings::point_route_add as point_route_add_48e180;
 use crate::bindings::task_timer_is_out_of_time;
 use sa_core::bindings::vector_normalise;
 use sa_stream::bindings::ped_is_player;
 use sa_stream::bindings::placeable_allocate_matrix;
 use sa_stream::bindings::simple_transform_update_matrix;
 use sa_world::bindings::go_to_point_and_stand_still_ctor;
+use crate::bindings::create_route_task as object_create_route_task_orig;
+use sa_core::bindings::vector_from_multiply;
+use sa_world::bindings::follow_point_route_ctor;
 orig! {
     // ---- virtual slots ----
     /// `CTask::GetTaskType` (vtable +0x10)
@@ -28,23 +32,12 @@ orig! {
     fn v_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, priority: i32, event: GPtr<u8>) -> u8 = thiscall vslot 0x18 => unported;
     /// `CTaskComplex::CreateFirstSubTask(CPed*)` (vtable +0x24)
     fn v_create_first_sub_task(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x24 => unported;
-
-    // ---- walk-round tasks ----
-    /// `CTaskComplexWalkRoundObject::CreateRouteTask(CPed*)` (0x655140, `ret 4`)
-    fn object_create_route_task_orig(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x655140 => unported;
     /// `CTaskComplexWalkRoundBuildingAttempt::CreateSubTask(eTaskType, CPed*)` (0x654C80, `ret 8`)
     fn building_create_sub_task(t: GPtr<u8>, ty: u32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x654C80 => unported;
-
-    // ---- other tasks ----
-    /// `CTaskComplexFollowPointRoute::Constructor(ms, route, mode, radius, slowDown, overshoot, blending,
-    /// standStill)` (0x671510, `ret 0x20`)
-    fn follow_point_route_ctor(t: GPtr<u8>, ms: u32, route: GPtr<u8>, mode: u32, radius: u32, slow: u32, a5: u32, a6: u32, a7: u32) -> GPtr<u8> = thiscall 0x671510 => unported;
     /// `CPedGeometryAnalyser::ComputeClosestSurfacePoint-pos(const CVector*, CEntity*, CVector*)` (0x5F36F0, cdecl)
     fn compute_closest_surface_point_pos(pos: GPtr<u8>, e: GPtr<u8>, out: GPtr<u8>) = cdecl 0x5F36F0 => unported;
     /// `CTaskComplexWalkRoundBuildingAttempt::ComputeRoute(CPed*)` (0x657BA0, `ret 4`)
     fn building_compute_route(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x657BA0 => unported;
-    /// `CVector::FromMultiply(const CMatrix&, const CVector&)` (0x59C670, `ret 8`)
-    fn vector_from_multiply(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) = thiscall 0x59C670 => unported;
 }
 
 use sa_core::field::ptr_of as buf;
@@ -230,9 +223,9 @@ pub fn object_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
             let mut l = [0u32; 3];
             let lp = buf(&mut l);
             compute_closest_surface_point_ped(ped, rd::<GPtr<u8>>(this, 0x1C), lp);
-            let s1 = compute_entity_hit_side(lp, rd::<GPtr<u8>>(this, 0x1C));
+            let s1 = compute_entity_hit_side(lp, rd::<GPtr<u8>>(this, 0x1C)) as i32;
             let target = this.byte_add(0x10);
-            let s2 = compute_entity_hit_side(target, rd::<GPtr<u8>>(this, 0x1C));
+            let s2 = compute_entity_hit_side(target, rd::<GPtr<u8>>(this, 0x1C)) as i32;
             if s1 == s2 {
                 point_route_add_48e180(rd::<GPtr<u8>>(this, 0x20), lp);
                 compute_closest_surface_point_pos(target, rd::<GPtr<u8>>(this, 0x1C), lp);
@@ -243,7 +236,7 @@ pub fn object_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
             if t.is_null() {
                 return t;
             }
-            go_to_point_and_stand_still_ctor(t, 4, lp, g::<u32>(0x86FC84).read(), g::<u32>(0x86FC88).read(), 0, 0)
+            go_to_point_and_stand_still_ctor(t, 4, lp.cast::<u32>(), f32::from_bits(g::<u32>(0x86FC84).read()), f32::from_bits(g::<u32>(0x86FC88).read()), 0, 0)
         }
         _ => GPtr::NULL,
     }
@@ -311,11 +304,7 @@ pub fn building_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
 use crate::bindings::bbox_planes as compute_entity_bounding_box_planes;
 use crate::bindings::compute_entity_bounding_box_corners;
 use crate::bindings::compute_entity_hit_side_ped;
-orig! {
-    /// `CPedGeometryAnalyser::ComputeRouteRoundEntityBoundingBox(const CPed&, CEntity&, const CVector&, CPointRoute&,
-    /// int32)` (0x5F6110)
-    fn compute_route_round_entity_bounding_box(ped: GPtr<u8>, e: GPtr<u8>, target: GPtr<u8>, route: u32, dir: i32) -> u32 = cdecl 0x5F6110 => unported;
-}
+use crate::bindings::geometry_compute_route_round_entity_bbox as compute_route_round_entity_bounding_box;
 
 /// `CTaskComplexWalkRoundCar::ComputeRouteRoundSmallCar(CPed*)` (0x6544F0, thiscall, `ret 4`; float in ST0).
 /// x87. Vehicle V = +0x1C, target T = +0x10. Box corners and planes of V at the ped's z (cached versions); the
@@ -370,7 +359,7 @@ pub fn car_compute_route_round_small_car(this: GPtr<u8>, ped: GPtr<u8>) -> X87 {
             k += 1;
         }
         if k == 4 {
-            let side2 = compute_entity_hit_side(t, rd::<GPtr<u8>>(this, 0x1C));
+            let side2 = compute_entity_hit_side(t, rd::<GPtr<u8>>(this, 0x1C)) as i32;
             if side2 != -1 {
                 let s2 = side2 as usize;
                 let s = x(dd[s2]).fchs().fadd_m(0.05);
@@ -384,7 +373,7 @@ pub fn car_compute_route_round_small_car(this: GPtr<u8>, ped: GPtr<u8>) -> X87 {
         }
     }
     let nib = i32::from((rd::<u8>(this, 0xE) << 4) as i8) >> 4;
-    let r = compute_route_round_entity_bounding_box(ped, rd::<GPtr<u8>>(this, 0x1C), this.byte_add(0x10), rd::<u32>(this, 0x20), nib);
+    let r = compute_route_round_entity_bounding_box(ped, rd::<GPtr<u8>>(this, 0x1C), this.byte_add(0x10), GPtr::from_addr(rd::<u32>(this, 0x20) as usize), nib);
     let b = rd::<u8>(this, 0xD);
     wr::<u8>(this, 0xD, b ^ (((r as u8) << 2 ^ b) & 0x3C));
     x(dist)
@@ -508,17 +497,14 @@ use crate::bindings::stand_still_process_ped;
 use sa_core::bindings::vector_normalise_and_mag;
 use sa_world::bindings::achieve_heading_ctor;
 use sa_world::bindings::tm_find_task_by_type;
+use sa_core::bindings::general_get_radian_angle_between_points;
+use sa_core::bindings::general_limit_radian_angle;
+use sa_world::bindings::stand_still_ctor;
 orig! {
     /// `CTaskComplexWalkRoundCar::ComputeRouteRoundBigCar(CPed*)` (0x656BB0, `ret 4`, ST0)
     fn car_compute_route_round_big_car(t: GPtr<u8>, ped: GPtr<u8>) -> f64 = thiscall 0x656BB0 => unported;
     /// `CTaskComplexWalkRoundCar::ComputeRouteRoundSmallCar(CPed*)` (0x6544F0, `ret 4`, ST0)
     fn car_compute_route_round_small_car_st0(t: GPtr<u8>, ped: GPtr<u8>) -> f64 = thiscall 0x6544F0 => unported;
-    /// `CTaskSimpleStandStill::CTaskSimpleStandStill(int32, bool, bool, float)` (0x62F310, `ret 0x10`)
-    fn stand_still_ctor(t: GPtr<u8>, time: i32, looped: u32, b: u32, delta: u32) -> GPtr<u8> = thiscall 0x62F310 => unported;
-    /// `CGeneral::GetRadianAngleBetweenPoints(float, float, float, float)` (0x53CBE0, ST0)
-    fn general_get_radian_angle_between_points(x1: f32, y1: f32, x2: f32, y2: f32) -> f64 = cdecl 0x53CBE0 => unported;
-    /// `CGeneral::LimitRadianAngle(float)` (0x53CB50, ST0)
-    fn general_limit_radian_angle(a: f32) -> f64 = cdecl 0x53CB50 => unported;
 }
 
 /// `CTaskComplexWalkRoundCar::CreateFirstSubTask(CPed*)` (0x658200, thiscall, `ret 4`). x87. Route (+0x20) count =
@@ -604,7 +590,7 @@ pub fn car_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     }
     let mut ss = [0u32; 8];
     let sp = buf(&mut ss);
-    stand_still_ctor(sp, 0, 0, 0, 8f32.to_bits());
+    stand_still_ctor(sp, 0, 0, 0, f32::from_bits(8f32.to_bits()));
     stand_still_process_ped(sp, ped);
     let pp = ent_pos(ped);
     let r = rd::<GPtr<u8>>(this, 0x20).byte_add(4);
@@ -616,7 +602,7 @@ pub fn car_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     let res = if tk.is_null() {
         GPtr::NULL
     } else {
-        achieve_heading_ctor(tk, h.to_bits(), 0x3F80_0000, 0x3DCC_CCCD)
+        achieve_heading_ctor(tk, f32::from_bits(h.to_bits()), 0x3F80_0000, 0x3DCC_CCCD)
     };
     stand_still_dtor(sp);
     res
@@ -707,7 +693,7 @@ pub fn object_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     if tk.is_null() {
         return GPtr::NULL;
     }
-    achieve_heading_ctor(tk, h.to_bits(), 0x3F80_0000, 0x3E4C_CCCD)
+    achieve_heading_ctor(tk, f32::from_bits(h.to_bits()), 0x3F80_0000, 0x3E4C_CCCD)
 }
 
 use sa_core::bindings::cross_product as vector_cross_product;
@@ -805,7 +791,7 @@ pub fn building_attempt_compute_crap_route(this: GPtr<u8>, ped: GPtr<u8>) {
 }
 
 use crate::bindings::point_route_assign;
-use sa_world::bindings::world_get_is_line_of_sight_clear;
+use sa_core::bindings::world_get_is_line_of_sight_clear;
 orig! {
     /// `CTaskComplexWalkRoundBuildingAttempt::ComputeMoveDir(CPed*, CVector* out)` (0x654B80, `ret 8`)
     fn building_compute_move_dir_orig(t: GPtr<u8>, ped: GPtr<u8>, out: GPtr<u8>) = thiscall 0x654B80 => unported;

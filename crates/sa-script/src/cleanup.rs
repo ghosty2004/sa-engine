@@ -84,8 +84,8 @@ pub fn remove_entity_from_list(m: GPtr<u8>, handle: i32, ty: u32) {
 }
 
 use crate::bindings::audio_engine_clear_mission_audio;
-use crate::bindings::camera_initialise_scriptable_components;
-use crate::bindings::camera_restore;
+use sa_world::bindings::camera_initialise_scriptable_components;
+use sa_world::bindings::camera_restore;
 use crate::bindings::clean_up_this_object as scripts_clean_up_this_object;
 use crate::bindings::clean_up_this_ped as scripts_clean_up_this_ped;
 use crate::bindings::clean_up_this_vehicle as scripts_clean_up_this_vehicle;
@@ -132,29 +132,23 @@ use sa_world::bindings::group_intel_set_default_task_allocator_type;
 use sa_world::bindings::sequence_flush;
 use sa_world::bindings::tm_find_task_by_type as task_manager_find_task_by_type;
 use sa_world::bindings::weather_release_weather;
+use crate::bindings::cleanup_remove_entity_from_list;
+use crate::bindings::clear_ped_type_as_acquaintance as ped_type_clear_ped_type_as_acquaintance;
+use crate::bindings::remove_script_search_light as scripts_remove_script_search_light;
+use sa_world::bindings::camera_reset_ducking_system;
+use sa_world::bindings::get_ped_flag as ped_type_get_ped_flag;
+use sa_world::bindings::ped_groups_remove_group;
 orig! {
-    /// `CMissionCleanup::RemoveEntityFromList(int32, MissionCleanUpEntityType)` (0x4654B0, `ret 8`)
-    fn cleanup_remove_entity_from_list(m: GPtr<u8>, handle: i32, ty: u32) = thiscall 0x4654B0 => crate::cleanup::remove_entity_from_list;
     /// `CPickups::RemoveMissionPickUps()` (0x456DE0)
     fn pickups_remove_mission_pickups() = cdecl 0x456DE0 => unported;
     /// `CPathFind::TidyUpNodeSwitchesAfterMission()` (0x44D3B0)
     fn path_find_tidy_up_node_switches_after_mission(pf: GPtr<u8>) = thiscall 0x44D3B0 => unported;
     /// `CVehicleRecording::RemoveAllRecordingsThatArentUsed()` (0x45A160)
     fn vehicle_recording_remove_unused() = cdecl 0x45A160 => unported;
-    /// `CCamera::ResetDuckingSystem(CPed*)` (0x50CEF0, `ret 4`)
-    fn camera_reset_ducking_system(cam: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x50CEF0 => unported;
     /// `CTask::GetTaskType()` (vtable +0x10)
     fn v_task_get_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
     /// `CRestart::ClearRespawnPointForDurationOfMission()` (0x460840)
     fn restart_clear_respawn_point_for_mission() = cdecl 0x460840 => unported;
-    /// `CPedGroups::RemoveGroup(int32)` (0x5FB870)
-    fn ped_groups_remove_group(g: i32) = cdecl 0x5FB870 => unported;
-    /// `CTheScripts::RemoveScriptSearchLight(int32)` (0x493160)
-    fn scripts_remove_script_search_light(h: i32) = cdecl 0x493160 => unported;
-    /// `CPedType::GetPedFlag(ePedType)` (0x608830)
-    fn ped_type_get_ped_flag(ty: i32) -> u32 = cdecl 0x608830 => unported;
-    /// `CPedType::ClearPedTypeAsAcquaintance(int32 acquaintance, ePedType, int32 flag)` (0x6089F0)
-    fn ped_type_clear_ped_type_as_acquaintance(id: i32, ty: i32, flag: u32) = cdecl 0x6089F0 => unported;
     /// `CPedType::ClearPedTypeAcquaintances(int32 acquaintance, ePedType)` (0x608A20)
     fn ped_type_clear_ped_type_acquaintances(id: i32, ty: i32) = cdecl 0x608A20 => unported;
 }
@@ -414,7 +408,7 @@ pub fn mission_cleanup_process(this: GPtr<u8>) {
             b.write(b.read() & mask);
         }
         player_info_make_player_safe(GPtr::from_addr(PLAYERS), 0, 10000.0);
-        hud_set_help_message(0, 1, 0, 0);
+        hud_set_help_message(GPtr::NULL, 1, 0, 0);
     }
     for i in 0..ENTRIES as isize {
         let e = this.byte_add(8 * i);
@@ -440,29 +434,29 @@ pub fn mission_cleanup_process(this: GPtr<u8>) {
                 }
             }
             4 => {
-                let k = scripts_get_actual_script_thing_index(h(), 1);
+                let k = scripts_get_actual_script_thing_index(h() as u32, 1);
                 if k >= 0 {
                     let fx = GPtr::<GPtr<u8>>::from_addr(SCRIPT_EFFECT_SYSTEMS + 4 + 8 * k as usize).read();
                     if !fx.is_null() {
                         fx_system_kill(fx);
-                        scripts_remove_script_effect_system(h());
+                        scripts_remove_script_effect_system(h() as u32);
                     }
                 }
             }
             5 => {
-                let k = scripts_get_actual_script_thing_index(h(), 7);
+                let k = scripts_get_actual_script_thing_index(h() as u32, 7);
                 if k >= 0 {
                     decision_maker_unload(k);
                 }
             }
             7 => {
-                let k = scripts_get_actual_script_thing_index(h(), 8);
+                let k = scripts_get_actual_script_thing_index(h() as u32, 8);
                 if k >= 0 {
-                    ped_groups_remove_group(k);
+                    ped_groups_remove_group(k as u32);
                 }
             }
             8 => {
-                let k = scripts_get_actual_script_thing_index(h(), 4);
+                let k = scripts_get_actual_script_thing_index(h() as u32, 4);
                 if k >= 0 {
                     let seq = GPtr::<u8>::from_addr(TASK_SEQUENCES + 0x40 * k as usize);
                     if seq.byte_add(0x3C).cast::<i32>().read() == 0 {
@@ -476,18 +470,18 @@ pub fn mission_cleanup_process(this: GPtr<u8>) {
                 }
             }
             9 => {
-                let k = scripts_get_actual_script_thing_index(h(), 6);
+                let k = scripts_get_actual_script_thing_index(h() as u32, 6);
                 if k >= 0 {
                     w8(SCRIPT_THING_6_USED + k as usize, 0);
                 }
             }
             11 => {
-                if scripts_get_actual_script_thing_index(h(), 2) >= 0 {
-                    scripts_remove_script_search_light(h());
+                if scripts_get_actual_script_thing_index(h() as u32, 2) >= 0 {
+                    scripts_remove_script_search_light(h() as u32);
                 }
             }
             12 => {
-                if scripts_get_actual_script_thing_index(h(), 3) >= 0 {
+                if scripts_get_actual_script_thing_index(h() as u32, 3) >= 0 {
                     scripts_remove_script_checkpoint(h());
                 }
             }
@@ -500,7 +494,7 @@ pub fn mission_cleanup_process(this: GPtr<u8>) {
         for f in 24..32 {
             for a in 0..5 {
                 let flag = ped_type_get_ped_flag(f);
-                ped_type_clear_ped_type_as_acquaintance(a, t, flag);
+                ped_type_clear_ped_type_as_acquaintance(a as u32, t as u32, flag);
             }
         }
     }

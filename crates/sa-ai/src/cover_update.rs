@@ -2,6 +2,7 @@
 //! object and building cover points. Ported from the 1.0 US bytes; unverified (docs/verify/HOWTO.md).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -31,9 +32,9 @@ use sa_stream::bindings::simple_transform_update_matrix;
 use sa_world::bindings::crt_floor as floor;
 use sa_world::bindings::double_node_delete as list_node_delete;
 use sa_world::bindings::double_node_new as list_node_new;
+use sa_core::bindings::find_player_coors;
+use sa_core::bindings::find_player_vehicle;
 orig! {
-    fn find_player_coors(out: GPtr<f32>, id: i32) -> GPtr<f32> = cdecl 0x56E010 => unported;
-    fn find_player_vehicle(id: i32, include_remote: u8) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
     /// `CObject::CanBeUsedToTakeCoverBehind()` (0x5A1B60)
     fn object_can_be_used_to_take_cover_behind(o: GPtr<u8>) -> u8 = thiscall 0x5A1B60 => unported;
     /// `CCover::ShouldThisBuildingHaveItsCoverPointsCreated(CBuilding*)` (0x699230)

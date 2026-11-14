@@ -3,6 +3,7 @@
 //! (LShift) on the native build. Ported from the 1.0 US bytes; gta-reversed (`TaskComplexJump.cpp`) as a reading
 //! aid.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -14,11 +15,9 @@ use crate::bindings::task_complex_dtor;
 use sa_core::bindings::entity_register_reference;
 use sa_world::bindings::groups_is_in_players_group;
 use sa_world::bindings::task_complex_ctor;
+use sa_core::bindings::task_new as task_new_c;
+use sa_world::bindings::task_simple_ctor;
 orig! {
-    /// `CTask::operator new(uint32)` (0x61A5A0)
-    fn task_new_c(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => crate::mvpa_ai1::task_operator_new;
-    /// `CTaskSimple::CTaskSimple()` (0x61A390)
-    fn task_simple_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A390 => crate::mvpa_ai1::task_simple_ctor;
     /// `CTask::GetTaskType()` (vtable slot 0x10)
     fn task_get_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
     /// `CTaskSimpleJump(bool canClimb)` (0x679AA0)

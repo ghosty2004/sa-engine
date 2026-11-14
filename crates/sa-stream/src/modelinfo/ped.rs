@@ -65,6 +65,7 @@ pub use crate::bindings::col_model_new as col_model_operator_new;
 pub use crate::bindings::get_anim_hierarchy_from_clump;
 pub use sa_core::bindings::get_anim_hierarchy_from_skin_clump;
 pub use sa_core::bindings::rp_hanim_id_get_index;
+pub use crate::bindings::col_model_allocate_data;
 orig! {
     /// `CClumpModelInfo::SetClump` (0x4C4F70)
     pub fn clump_set_clump(this: MiPtr, clump: GPtr<u8>) = thiscall 0x4C4F70 => super::clump::set_clump;
@@ -78,8 +79,6 @@ orig! {
     pub fn create_hit_col_model_skinned_call(this: MiPtr, clump: GPtr<u8>) = thiscall 0x4C6D90 => create_hit_col_model_skinned;
     /// `CPedModelInfo::~CPedModelInfo` (0x4C62F0)
     pub fn ped_destructor_call(this: MiPtr) = thiscall 0x4C62F0 => destructor;
-    /// `CColModel::AllocateData(int, int, int, int, int, bool)` (0x40F870)
-    pub fn col_model_allocate_data(col: GPtr<u8>, spheres: i32, boxes: i32, lines: i32, verts: i32, tris: i32, disks: u32) = thiscall 0x40F870 => unported;
     /// `CSphere::Set(float, const CVector&)` (0x40FCF0)
     pub fn sphere_set(sphere: GPtr<u8>, radius: f32, centre: GPtr<RwV3d>) = thiscall 0x40FCF0 => unported;
     /// `CBox::Set(const CVector&, const CVector&)` (0x40EDE0)
@@ -112,7 +111,7 @@ fn node(k: usize) -> (i32, u8, RwV3d, u32) {
 
 /// `&hier.matrices[RpHAnimIDGetIndex(hier, id)]` (the original's `shl 6; add`).
 fn bone_matrix(hier: GPtr<u8>, id: i32) -> GPtr<RwMatrix> {
-    let idx = rp_hanim_id_get_index(hier, id);
+    let idx = rp_hanim_id_get_index(hier, id as u32);
     let mats = rp_hanim_hierarchy_get_matrix_array(hier);
     mats.cast::<u8>().byte_add(((idx as u32) << 6) as i32 as isize).cast()
 }
@@ -212,7 +211,7 @@ pub fn set_clump(this: MiPtr, clump: GPtr<u8>) {
         create_hit_col_model_skinned_call(this, clump);
     }
     let rw = f::<GPtr<u8>>(this, mi::RW_OBJECT).read();
-    rp_clump_for_all_atomics(rw, SET_ATOMIC_RENDERER_CB, RENDER_PED_CB);
+    rp_clump_for_all_atomics(rw, SET_ATOMIC_RENDERER_CB, GPtr::from_addr(RENDER_PED_CB as usize));
     get_anim_hierarchy_from_clump(clump);
 }
 
@@ -223,7 +222,7 @@ pub fn create_hit_col_model_skinned(this: MiPtr, clump: GPtr<u8>) {
     let hier = get_anim_hierarchy_from_skin_clump(clump);
     let mem = col_model_operator_new(0x30);
     let cm = if mem.is_null() { GPtr::NULL } else { col_model_constructor(mem) };
-    col_model_allocate_data(cm, NUM_COL_NODES as i32, 0, 0, 0, 0, 0);
+    col_model_allocate_data(cm, (NUM_COL_NODES as i32) as u32, 0, 0, 0, 0, 0);
     rw_matrix_invert(WORKING_MATRIX_1.get().cast(), clump_frame_matrix(clump));
     let mut sphere = cm.byte_add(0x2C).cast::<GPtr<u8>>().read().byte_add(8).cast::<GPtr<u8>>().read();
     for k in 0..NUM_COL_NODES {

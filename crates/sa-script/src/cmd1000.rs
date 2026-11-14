@@ -70,42 +70,28 @@ use sa_core::bindings::timer_suspend;
 use sa_core::bindings::tm_get_simplest_active_task as get_simplest_active_task;
 use sa_world::bindings::check_mission_pack_valid_menu;
 use sa_world::bindings::set_all_cars_can_be_damaged;
+use crate::bindings::start_new_script;
+use sa_core::bindings::change_dir as file_change_dir;
+use sa_core::bindings::file_close;
+use sa_core::bindings::file_mgr_seek as file_seek;
+use sa_core::bindings::file_read;
+use sa_core::bindings::file_set_dir;
+use sa_core::bindings::find_player_coors;
+use sa_core::bindings::open_file as file_open;
+use sa_world::bindings::extinguish_all_car_fires_in_area;
+use sa_world::bindings::multiply3x3 as multiply_3x3;
+use sa_world::bindings::tm_find_active_task_by_type as find_active_task_by_type;
+use sa_world::bindings::vector_add_assign;
 orig! {
-    /// `CWorld::FindPlayerCoors(int32 player)` (0x56E010): the CVector returned through the hidden
-    /// pointer (first argument), which is also returned in EAX
-    fn find_player_coors(out: GPtr<u32>, player: i32) -> GPtr<u32> = cdecl 0x56E010 => unported;
-    /// `CWorld::ExtinguishAllCarFiresInArea(CVector, float)` (0x566950): vector and float as raw dwords
-    fn extinguish_all_car_fires_in_area(x: u32, y: u32, z: u32, radius: u32) = cdecl 0x566950 => unported;
-    /// `Multiply3x3(const CMatrix&, const CVector&)` (0x59C790): the CVector returned through the hidden
-    /// pointer (first argument), also returned in EAX
-    fn multiply_3x3(out: GPtr<u32>, m: GPtr<u8>, v: GPtr<u32>) -> GPtr<u32> = cdecl 0x59C790 => unported;
-    /// `CVector::operator+=(const CVector&)` (0x411A00)
-    fn vector_add_assign(v: GPtr<u32>, o: GPtr<u8>) = thiscall 0x411A00 => unported;
     /// `CWorld::ClearPedsFromArea(float x1, float y1, float z1, float x2, float y2, float z2)` (0x5667F0);
     /// floats as raw dwords
     fn clear_peds_from_area(x1: u32, y1: u32, z1: u32, x2: u32, y2: u32, z2: u32) = cdecl 0x5667F0 => unported;
-    /// `CTaskManager::FindActiveTaskByType(int32)` (0x681740)
-    fn find_active_task_by_type(tm: GPtr<u8>, ty: u32) -> GPtr<u8> = thiscall 0x681740 => unported;
     /// `CTask::GetTaskType()` (vtable slot 0x10)
     fn task_get_type(t: GPtr<u8>) -> u32 = thiscall vslot 0x10 => unported;
-    /// `CFileMgr::ChangeDir(const char*)` (0x538730)
-    fn file_change_dir(d: GPtr<u8>) = cdecl 0x538730 => unported;
-    /// `CFileMgr::SetDir(const char*)` (0x5387D0)
-    fn file_set_dir(d: GPtr<u8>) = cdecl 0x5387D0 => unported;
     /// CRT `sprintf` (0x821BB5), called with one `%d` argument
     fn sprintf1(buf: GPtr<u8>, fmt: GPtr<u8>, a: u32) -> i32 = cdecl 0x821BB5 => unported;
-    /// `CFileMgr::OpenFile(const char*, const char* mode)` (0x538900)
-    fn file_open(name: GPtr<u8>, mode: GPtr<u8>) -> i32 = cdecl 0x538900 => unported;
-    /// `CFileMgr::Seek(FILESTREAM, int32 offset, int32 origin)` (0x538990)
-    fn file_seek(fd: i32, off: u32, origin: u32) -> i32 = cdecl 0x538990 => unported;
-    /// `CFileMgr::Read(FILESTREAM, void*, int32)` (0x538950)
-    fn file_read(fd: i32, buf: GPtr<u8>, n: u32) -> i32 = cdecl 0x538950 => unported;
-    /// `CFileMgr::CloseFile(FILESTREAM)` (0x5389D0)
-    fn file_close(fd: i32) -> i32 = cdecl 0x5389D0 => unported;
     /// `CTheScripts::WipeLocalVariableMemoryForMissionScript()` (0x464BB0)
     fn wipe_local_variable_memory_for_mission_script() = cdecl 0x464BB0 => unported;
-    /// `CTheScripts::StartNewScript(uint8* ip)` (0x464C20)
-    fn start_new_script(ip: GPtr<u8>) -> GPtr<u8> = cdecl 0x464C20 => crate::script_brains::start_new_script;
 }
 
 /// `CTheScripts::NumberOfExclusiveMissionScripts` (int16) 0xA444B8.
@@ -133,9 +119,9 @@ const S_EMPTY: usize = 0x858B54;
 /// The tail both loaders of 0417 share: `Seek(fd, offset, 0)`, `Read(fd, MissionBlock, 0x10D88)`,
 /// `CloseFile(fd)`; returns the read count.
 fn read_mission(fd: i32, offset: u32) -> i32 {
-    file_seek(fd, offset, 0);
-    let n = file_read(fd, GPtr::from_addr(MISSION_BLOCK), 0x10D88);
-    file_close(fd);
+    file_seek(GPtr::from_addr(fd as usize), offset as i32, 0);
+    let n = file_read(GPtr::from_addr(fd as usize), GPtr::from_addr(MISSION_BLOCK), 0x10D88) as i32;
+    file_close(GPtr::from_addr(fd as usize));
     n
 }
 
@@ -169,11 +155,11 @@ fn offset_in_world(s: Scr, e: GPtr<u8>) {
     let v = [sp(1), sp(2), sp(3)];
     let mut tmp = [0u32; 3];
     let m = e.byte_add(0x14).cast::<GPtr<u8>>().read();
-    let r = multiply_3x3(GPtr::from_raw(tmp.as_mut_ptr()), m, GPtr::from_raw(v.as_ptr().cast_mut()));
+    let r = GPtr::<u8>::cast::<u32>(multiply_3x3(GPtr::<u32>::cast::<u8>(GPtr::from_raw(tmp.as_mut_ptr())), m, GPtr::<u32>::cast::<u8>(GPtr::from_raw(v.as_ptr().cast_mut()))));
     let mut out = [r.read(), r.wrapping_index(1).read(), r.wrapping_index(2).read()];
     let m = e.byte_add(0x14).cast::<GPtr<u8>>().read();
     let pos = if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) };
-    vector_add_assign(GPtr::from_raw(out.as_mut_ptr()), pos);
+    vector_add_assign(GPtr::<u32>::cast::<u8>(GPtr::from_raw(out.as_mut_ptr())), pos);
     set_sp(0, out[0]);
     set_sp(1, out[1]);
     set_sp(2, out[2]);
@@ -211,7 +197,7 @@ pub fn process_commands_1000_to_1099(s: Scr, command: u32) -> i8 {
         0x03EF => {
             collect(s, 1);
             let info = player_info(sp(0));
-            let pad = get_pad(spi(0));
+            let pad = get_pad(spi(0) as u32);
             let p = pad.byte_add(0x10E);
             p.write(p.read() | 0x80);
             make_player_safe(info, 1, f(K_10000));
@@ -240,9 +226,9 @@ pub fn process_commands_1000_to_1099(s: Scr, command: u32) -> i8 {
             } else {
                 set_all_cars_can_be_damaged(0);
                 let mut tmp = [0u32; 3];
-                let p = find_player_coors(GPtr::from_raw(tmp.as_mut_ptr()), -1);
+                let p = GPtr::<f32>::cast::<u32>(find_player_coors(GPtr::<u32>::cast::<f32>(GPtr::from_raw(tmp.as_mut_ptr())), -1));
                 let (x, y, z) = (p.read(), p.wrapping_index(1).read(), p.wrapping_index(2).read());
-                extinguish_all_car_fires_in_area(x, y, z, 0x457A_0000);
+                extinguish_all_car_fires_in_area(f32::from_bits(x), f32::from_bits(y), f32::from_bits(z), f32::from_bits(0x457A_0000));
             }
         }
         // 03F5 SET_CAR_CAN_BE_DAMAGED (0x4896E8): no null check; P1 != 0: byte +0x42A |= 0x20; otherwise
@@ -261,7 +247,7 @@ pub fn process_commands_1000_to_1099(s: Scr, command: u32) -> i8 {
         // 03FD SET_DRUNK_INPUT_DELAY (0x489731): CPad::GetPad(P0)->SetDrunkInputDelay(P1).
         0x03FD => {
             collect(s, 2);
-            let pad = get_pad(spi(0));
+            let pad = get_pad(spi(0) as u32);
             set_drunk_input_delay(pad, spi(1));
         }
         // 03FE SET_CHAR_MONEY (0x48975D): no null check. Reads `m_nPedFlags` dword +0x470, writes
@@ -329,7 +315,7 @@ pub fn process_commands_1000_to_1099(s: Scr, command: u32) -> i8 {
                 while check_mission_pack_valid_menu(GPtr::from_addr(FRONT_END_MENU_MANAGER)) != 0 {
                     file_set_dir_my_documents();
                     sprintf1(GPtr::from_addr(MISSION_PACK_PATH), GPtr::from_addr(S_MPACK_FMT), u32::from(pack.read()));
-                    let fd = file_open(GPtr::from_addr(MISSION_PACK_PATH), GPtr::from_addr(S_RB));
+                    let fd = GPtr::<u8>::addr(file_open(GPtr::from_addr(MISSION_PACK_PATH), GPtr::from_addr(S_RB))) as i32;
                     if fd > 0 {
                         n = read_mission(fd, offset);
                         if n < 1 {
@@ -344,7 +330,7 @@ pub fn process_commands_1000_to_1099(s: Scr, command: u32) -> i8 {
             }
             file_set_dir(GPtr::from_addr(S_EMPTY));
             if pack.read() == 0 {
-                let fd = file_open(GPtr::from_addr(S_MAIN_SCM), GPtr::from_addr(S_RB));
+                let fd = GPtr::<u8>::addr(file_open(GPtr::from_addr(S_MAIN_SCM), GPtr::from_addr(S_RB))) as i32;
                 read_mission(fd, offset);
                 start_mission_script();
             }
@@ -439,7 +425,7 @@ pub fn process_commands_1000_to_1099(s: Scr, command: u32) -> i8 {
         // 042C SET_TOTAL_NUMBER_OF_MISSIONS (0x489D5B): CStats::SetStatValue(0x94, (float)P0).
         0x042C => {
             collect(s, 1);
-            set_stat_value(0x94, X87::from_i32(spi(0)).to_f32().to_bits());
+            set_stat_value(0x94, f32::from_bits(X87::from_i32(spi(0)).to_f32().to_bits()));
         }
         // 042D CONVERT_METRES_TO_FEET_INT (0x489D82): P0 = `_ftol2(fild P0 * 3.3333333)`; StoreParameters(1).
         0x042D => {
@@ -463,14 +449,14 @@ pub fn process_commands_1000_to_1099(s: Scr, command: u32) -> i8 {
             let veh = vehicle_at_ref(pool(VEHICLE_POOL), spi(1));
             let seat = spi(2);
             let door = if seat >= 0 {
-                compute_target_door_to_enter_as_passenger(veh, seat)
+                compute_target_door_to_enter_as_passenger(veh, seat as u32) as i32
             } else {
                 0
             };
             flush_immediately(ped.byte_add(0x47C).cast::<GPtr<u8>>().read(), 0);
             let mut task = [0u32; 8];
             let t = GPtr::from_raw(task.as_mut_ptr()).cast::<u8>();
-            set_ped_in_as_passenger_ctor(t, veh, door, GPtr::NULL);
+            set_ped_in_as_passenger_ctor(t, veh, door as u32, GPtr::NULL);
             t.byte_add(0x1C).write(1);
             set_ped_in_as_passenger_process_ped(t, ped);
             set_ped_in_as_passenger_dtor(t);

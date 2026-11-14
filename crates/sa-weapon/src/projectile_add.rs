@@ -1,6 +1,7 @@
 //! `CProjectileInfo::AddProjectile` (0x737C80, batch `samp2-weapon-1`): thrown weapons, rockets, bombs and
 //! flares. Unreversed in gta-reversed; ported from the 1.0 US bytes. Unverified (docs/verify/HOWTO.md).
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -23,26 +24,19 @@ use sa_world::bindings::get_modelling_matrix as entity_get_modelling_matrix;
 use sa_world::bindings::multiply3x3;
 use sa_world::bindings::placeable_get_matrix;
 use sa_world::bindings::placeable_set_matrix;
+use sa_core::bindings::col_sphere_set;
+use sa_core::bindings::general_limit_radian_angle as limit_radian_angle;
+use sa_core::bindings::matrix_rotate_z;
+use sa_core::bindings::matrix_set_translate;
+use sa_world::bindings::report_weapon_event as audio_report_weapon_event;
+use sa_world::bindings::set_entity_blip as radar_set_entity_blip;
 orig! {
-    /// `CMatrix::SetTranslate(float, float, float)` (0x59AF40, thiscall)
-    fn matrix_set_translate(m: GPtr<u8>, x: f32, y: f32, z: f32) = thiscall 0x59AF40 => unported;
-    /// `CMatrix::RotateZ(float)` (0x59B390, thiscall)
-    fn matrix_rotate_z(m: GPtr<u8>, a: f32) = thiscall 0x59B390 => unported;
-    /// `CGeneral::LimitRadianAngle(float)` (0x53CB50, ST0)
-    fn limit_radian_angle(a: f32) -> f64 = cdecl 0x53CB50 => unported;
     /// `CProjectile::CProjectile(int32 model)` (0x5A4030, thiscall)
     fn projectile_ctor(p: GPtr<u8>, model: i32) -> GPtr<u8> = thiscall 0x5A4030 => unported;
     /// `CColModel::AllocateData(int32 spheres, int32 boxes, int32 lines, int32 vertices, int32 triangles,
     /// bool disk)` (0x40F870, thiscall)
     #[allow(clippy::too_many_arguments)]
     fn col_model_allocate_data(cm: GPtr<u8>, s: i32, b: i32, l: i32, v: i32, t: i32, d: u32) = thiscall 0x40F870 => unported;
-    /// `CColSphere::Set(float radius, const CVector& center, uint8 material, uint8 flags, uint8 lighting)`
-    /// (0x40FD10, thiscall)
-    fn col_sphere_set(s: GPtr<u8>, radius: f32, center: GPtr<u8>, material: u32, flags: u32, light: u32) = thiscall 0x40FD10 => unported;
-    /// `CRadar::SetEntityBlip(eBlipType, int32 handle, uint32 colour, eBlipDisplay, const char*)` (0x5839A0)
-    fn radar_set_entity_blip(ty: u32, handle: i32, colour: u32, display: u32, name: u32) -> i32 = cdecl 0x5839A0 => unported;
-    /// `CAudioEngine::ReportWeaponEvent(int32 event, eWeaponType, CPhysical*)` (0x506F40, thiscall)
-    fn audio_report_weapon_event(ae: GPtr<u8>, ev: i32, ty: u32, e: GPtr<u8>) = thiscall 0x506F40 => unported;
 }
 
 /// `CProjectileInfo::gaProjectileInfo` (32 x 0x24 at 0xC891A8: type +0, creator +4, target +8, destroy
@@ -190,7 +184,7 @@ pub fn add_projectile(creator: GPtr<u8>, ty: u32, ox: f32, oy: f32, oz: f32, for
                 wf(mp, 0x30, ox);
                 wf(mp, 0x34, oy);
                 wf(mp, 0x38, oz);
-                sp = st0(vector_magnitude(creator.byte_add(0x44))).fadd_m(sp).to_f32();
+                sp = st0(vector_magnitude(GPtr::<u8>::cast::<u32>(creator.byte_add(0x44)))).fadd_m(sp).to_f32();
             } else if t == 3 && ped_is_player(creator) != 0 {
                 let off = usize::from(g::<u8>(0xB6_F081).read()) * 0x238;
                 let front: [f32; 3] = g::<[f32; 3]>(0xB6_F32C + off).read();
@@ -333,7 +327,7 @@ pub fn add_projectile(creator: GPtr<u8>, ty: u32, ox: f32, oy: f32, oz: f32, for
         let mut pt = [0f32; 3];
         let mm = entity_get_modelling_matrix(o);
         if !mm.is_null() {
-            let fx = fx_create_system(g(0xA9_AE80), 0x87_2BF0, lp(&mut pt).cast(), mm, 0);
+            let fx = fx_create_system(g(0xA9_AE80), GPtr::from_addr(0x87_2BF0), lp(&mut pt).cast(), mm, 0);
             wp(info, 0x20, fx);
             if !fx.is_null() {
                 fx_play(fx);
@@ -350,8 +344,8 @@ pub fn add_projectile(creator: GPtr<u8>, ty: u32, ox: f32, oy: f32, oz: f32, for
         let pool = g::<GPtr<u8>>(0xB7_449C).read();
         let idx = ((slot.read().addr() as i64 - rp(pool, 0).addr() as i64) / 0x19C) as i32;
         let handle = (idx << 8) + i32::from(rb(rp(pool, 4), idx as isize));
-        let blip = radar_set_entity_blip(3, handle, 0xFF00_00FF, 2, 0x87_2BE8);
-        radar_change_blip_scale(blip, 1);
+        let blip = radar_set_entity_blip(3, handle as u32, 0xFF00_00FF, 2, GPtr::from_addr(0x87_2BE8));
+        radar_change_blip_scale(blip as u32, 1);
         let own = creator == find_player_ped(-1) || creator == find_player_vehicle(-1, 0);
         radar_change_blip_colour(blip, if own { 0xFFFF_FFFF } else { 0xFF00_00FF });
     }

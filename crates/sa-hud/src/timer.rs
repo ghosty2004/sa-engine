@@ -33,9 +33,8 @@ const FMT_CLOCK: usize = 0x859A6C;
 const FMT_D_OF_D: usize = 0x859A78;
 
 pub use sa_core::bindings::crt_strncpy as strncpy;
+pub use sa_core::bindings::audio_report_frontend_event as report_frontend_audio_event;
 orig! {
-    /// `CAudioEngine::ReportFrontendAudioEvent(eAudioEvents, float volumeChange, float speed)` (0x506EA0)
-    pub fn report_frontend_audio_event(engine: GPtr<u8>, event: i32, volume: f32, speed: f32) = thiscall 0x506EA0 => unported;
     /// `COnscreenTimerEntry::Process()` (0x44CB10)
     pub fn timer_entry_process_call(this: GPtr<u8>) = thiscall 0x44CB10 => timer_entry_process;
 }

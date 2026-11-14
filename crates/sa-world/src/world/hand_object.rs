@@ -6,12 +6,12 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use super::common::{g, rd, wr};
 
 use crate::bindings::entity_set_model_index;
-use crate::bindings::matrix_ctor_rw as matrix_ctor_attach;
+use sa_core::bindings::matrix_ctor_rw as matrix_ctor_attach;
 use crate::bindings::object_render;
 use sa_core::bindings::entity_update_rp_hanim as entity_update_rp_h_anim;
 use sa_core::bindings::entity_update_rw_frame;
@@ -20,26 +20,15 @@ use sa_core::bindings::object_ctor;
 use sa_core::bindings::object_set_is_static;
 use sa_core::bindings::rp_hanim_hierarchy_get_matrix_array as rp_h_anim_hierarchy_get_matrix_array;
 use sa_core::bindings::rp_hanim_id_get_index as rp_h_anim_id_get_index;
-orig! {
-    /// `GetAnimHierarchyFromSkinClump(RpClump*)` (0x734A40)
-    fn anim_hierarchy_from_skin_clump(clump: u32) -> GPtr<u8> = cdecl 0x734A40 => unported;
-    /// `RpAnimBlendClumpInit(RpClump*)` (0x4D6720)
-    fn rp_anim_blend_clump_init(clump: u32) = cdecl 0x4D6720 => unported;
-    /// `RwTexDictionaryFindHashNamedTexture(RwTexDictionary*, uint32)` (0x734E50)
-    fn tex_dict_find_hash_named_texture(dict: u32, hash: u32) -> u32 = cdecl 0x734E50 => unported;
-    /// `GetFirstTexture(RwTexDictionary*)` (0x734940)
-    fn get_first_texture(dict: u32) -> u32 = cdecl 0x734940 => unported;
-    /// `CMatrix::operator=(const CMatrix&)` (0x59BBC0, `ret 4`)
-    fn matrix_assign(dst: GPtr<u8>, src: GPtr<u8>) = thiscall 0x59BBC0 => unported;
-    /// `CMatrix::UpdateRwMatrix(RwMatrix*)` (0x59AD70, `ret 4`)
-    fn matrix_update_rw_matrix(m: GPtr<u8>, rw: u32) = thiscall 0x59AD70 => unported;
-    /// `CSimpleTransform::UpdateRwMatrix(RwMatrix*)` (0x54EF40, `ret 4`)
-    fn simple_transform_update_rw_matrix(t: GPtr<u8>, rw: u32) = thiscall 0x54EF40 => unported;
-    /// `GetFirstAtomic(RpClump*)` (0x734820)
-    fn get_first_atomic(clump: u32) -> GPtr<u8> = cdecl 0x734820 => unported;
-    /// `RpMaterialSetTexture(RpMaterial*, RwTexture*)` (0x74DBC0)
-    fn rp_material_set_texture(mat: u32, tex: u32) -> u32 = cdecl 0x74DBC0 => unported;
-}
+use crate::bindings::get_first_texture;
+use crate::bindings::rw_tex_dictionary_find_hash_named_texture as tex_dict_find_hash_named_texture;
+use crate::bindings::simple_transform_update_rw_matrix;
+use sa_core::bindings::get_anim_hierarchy_from_skin_clump as anim_hierarchy_from_skin_clump;
+use sa_core::bindings::get_first_atomic;
+use sa_core::bindings::matrix_assign;
+use sa_core::bindings::matrix_update_rw_matrix;
+use sa_core::bindings::rp_anim_blend_clump_init;
+use sa_core::bindings::rp_material_set_texture;
 
 /// `CModelInfo::ms_modelInfoPtrs`
 const MODEL_INFO_PTRS: usize = 0xA9B0C8;
@@ -63,13 +52,13 @@ fn model_info(mi: i32) -> GPtr<u8> {
 pub fn hand_object_ctor(this: GPtr<u8>, model: u32, ped: GPtr<u8>, left: u32) -> GPtr<u8> {
     object_ctor(this);
     wr::<u32>(this, 0, 0x866EE0);
-    let h = anim_hierarchy_from_skin_clump(rd::<u32>(ped, 0x18));
+    let h = anim_hierarchy_from_skin_clump(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize));
     wr::<GPtr<u8>>(this, 0x17C, ped);
     entity_update_rp_h_anim(ped);
-    let bone = rp_h_anim_id_get_index(h, if left as u8 != 0 { 0x21 } else { 0x17 });
+    let bone = rp_h_anim_id_get_index(h, (if left as u8 != 0 { 0x21 } else { 0x17 }) as u32);
     wr::<i32>(this, 0x180, bone);
     entity_set_model_index(this, model);
-    rp_anim_blend_clump_init(rd::<u32>(this, 0x18));
+    rp_anim_blend_clump_init(GPtr::from_addr(rd::<u32>(this, 0x18) as usize));
     let mi = model_info(rd::<i16>(ped, 0x22) as i32);
     let txd = rd::<i16>(mi, 0xA) as i32;
     let pool = g::<GPtr<u8>>(TXD_POOL).read();
@@ -80,10 +69,10 @@ pub fn hand_object_ctor(this: GPtr<u8>, model: u32, ped: GPtr<u8>, left: u32) ->
         rd::<GPtr<u8>>(pool, 0).byte_add((txd as isize).wrapping_mul(12))
     };
     let dict = rd::<u32>(slot, 0);
-    let mut tex = tex_dict_find_hash_named_texture(dict, rd::<u32>(mi, 4));
+    let mut tex = GPtr::<u8>::addr(tex_dict_find_hash_named_texture(GPtr::from_addr(dict as usize), rd::<u32>(mi, 4))) as u32;
     wr::<u32>(this, 0x184, tex);
     if tex == 0 {
-        tex = get_first_texture(dict);
+        tex = GPtr::<u8>::addr(get_first_texture(GPtr::from_addr(dict as usize))) as u32;
         wr::<u32>(this, 0x184, tex);
     }
     wr::<u32>(this, 0x1C, (rd::<u32>(this, 0x1C) & !1) | 0x1000_0400);
@@ -105,7 +94,7 @@ pub fn hand_object_ctor(this: GPtr<u8>, model: u32, ped: GPtr<u8>, left: u32) ->
 #[hook(addr = 0x59ECD0, conv = thiscall, name = "CHandObject::PreRender", expect = "6A FF 68 E8 D1 83 00",
        unverified = "attr-8", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn hand_object_pre_render(this: GPtr<u8>) {
-    let h = anim_hierarchy_from_skin_clump(rd::<u32>(rd::<GPtr<u8>>(this, 0x17C), 0x18));
+    let h = anim_hierarchy_from_skin_clump(GPtr::from_addr(rd::<u32>(rd::<GPtr<u8>>(this, 0x17C), 0x18) as usize));
     entity_update_rp_h_anim(rd::<GPtr<u8>>(this, 0x17C));
     let ped = rd::<GPtr<u8>>(this, 0x17C);
     wr::<u32>(ped, 0x1C, rd::<u32>(ped, 0x1C) | 0x80_0000);
@@ -148,9 +137,9 @@ pub fn hand_object_pre_render(this: GPtr<u8>) {
         let rwm = rd::<u32>(rw, 4).wrapping_add(0x10);
         let mx = rd::<GPtr<u8>>(this, 0x14);
         if mx.is_null() {
-            simple_transform_update_rw_matrix(this.byte_add(4), rwm);
+            simple_transform_update_rw_matrix(this.byte_add(4), GPtr::from_addr(rwm as usize));
         } else {
-            matrix_update_rw_matrix(mx, rwm);
+            matrix_update_rw_matrix(mx, GPtr::from_addr(rwm as usize));
         }
     }
     entity_update_rw_frame(this);
@@ -162,10 +151,10 @@ pub fn hand_object_pre_render(this: GPtr<u8>) {
 #[hook(addr = 0x59EE80, conv = thiscall, name = "CHandObject::Render", expect = "56 8B F1 8B 46 18 50 E8",
        unverified = "attr-8", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn hand_object_render(this: GPtr<u8>) {
-    let a = get_first_atomic(rd::<u32>(this, 0x18));
+    let a = get_first_atomic(GPtr::from_addr(rd::<u32>(this, 0x18) as usize));
     let geo = rd::<GPtr<u8>>(a, 0x18);
     let mat = rd::<u32>(rd::<GPtr<u8>>(geo, 0x20), 0);
-    rp_material_set_texture(mat, rd::<u32>(this, 0x184));
+    rp_material_set_texture(GPtr::from_addr(mat as usize), GPtr::from_addr(rd::<u32>(this, 0x184) as usize));
     object_render(this);
 }
 

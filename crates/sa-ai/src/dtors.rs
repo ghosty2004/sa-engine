@@ -17,6 +17,13 @@ pub use crate::bindings::task_complex_dtor as dtor_61a3d0;
 pub use sa_core::bindings::car_set_ped_out_dtor as dtor_647950;
 pub use sa_world::bindings::dtor_6389f0;
 pub use sa_world::bindings::task_simple_dtor as dtor_61a3a0;
+pub use crate::bindings::dtor_63b970;
+pub use crate::bindings::dtor_65c4d0;
+pub use crate::bindings::dtor_65ff60;
+pub use crate::bindings::dtor_660ab0;
+pub use crate::bindings::dtor_660ee0;
+pub use crate::bindings::dtor_6832c0;
+pub use crate::bindings::dtor_684200;
 orig! {
     /// `CTaskComplexWanderCop::CTaskComplexWanderCop` (0x460D80), called with `this` only (thiscall)
     pub fn dtor_460d80(this: GPtr<u8>) = thiscall 0x460D80 => unported;
@@ -68,8 +75,6 @@ orig! {
     pub fn dtor_633ef0(this: GPtr<u8>) = thiscall 0x633EF0 => unported;
     /// `CTaskSimpleIKPointArm::Destructor` (0x634240), called with `this` only (thiscall)
     pub fn dtor_634240(this: GPtr<u8>) = thiscall 0x634240 => unported;
-    /// `CTaskComplexLeaveCar::~CTaskComplexLeaveCar` (0x63B970), called with `this` only (thiscall)
-    pub fn dtor_63b970(this: GPtr<u8>) = thiscall 0x63B970 => unported;
     /// `FUN_0063cb50` (0x63CB50), called with `this` only (thiscall)
     pub fn dtor_63cb50(this: GPtr<u8>) = thiscall 0x63CB50 => unported;
     /// `FUN_0063d100` (0x63D100), called with `this` only (thiscall)
@@ -96,20 +101,12 @@ orig! {
     pub fn dtor_65b370(this: GPtr<u8>) = thiscall 0x65B370 => unported;
     /// `CTaskComplexSmartFleePoint::Destructor` (0x65BDB0), called with `this` only (thiscall)
     pub fn dtor_65bdb0(this: GPtr<u8>) = thiscall 0x65BDB0 => unported;
-    /// `CTaskComplexSmartFleeEntity::Destructor` (0x65C4D0), called with `this` only (thiscall)
-    pub fn dtor_65c4d0(this: GPtr<u8>) = thiscall 0x65C4D0 => unported;
     /// `CTaskComplexGangLeader::Destructor` (0x65DF30), called with `this` only (thiscall)
     pub fn dtor_65df30(this: GPtr<u8>) = thiscall 0x65DF30 => unported;
     /// `CTaskComplexGangFollower::Destructor` (0x65EBB0), called with `this` only (thiscall)
     pub fn dtor_65ebb0(this: GPtr<u8>) = thiscall 0x65EBB0 => unported;
-    /// `CTaskGangHasslePed::Destructor` (0x65FF60), called with `this` only (thiscall)
-    pub fn dtor_65ff60(this: GPtr<u8>) = thiscall 0x65FF60 => unported;
     /// `CTaskSimpleDoHandSignal::Destructor` (0x6608B0), called with `this` only (thiscall)
     pub fn dtor_6608b0(this: GPtr<u8>) = thiscall 0x6608B0 => unported;
-    /// `CTaskComplexSignalAtPed::Destructor` (0x660AB0), called with `this` only (thiscall)
-    pub fn dtor_660ab0(this: GPtr<u8>) = thiscall 0x660AB0 => unported;
-    /// `CTaskGoToVehicleAndLean::Destructor` (0x660EE0), called with `this` only (thiscall)
-    pub fn dtor_660ee0(this: GPtr<u8>) = thiscall 0x660EE0 => unported;
     /// `CTaskComplexSeekEntity<CEntitySeekPosCalculatorXYOffset>::Destructor` (0x661F30), called with `this` only (thiscall)
     pub fn dtor_661f30(this: GPtr<u8>) = thiscall 0x661F30 => unported;
     /// `FUN_00667d50` (0x667D50), called with `this` only (thiscall)
@@ -138,12 +135,8 @@ orig! {
     pub fn dtor_678ee0(this: GPtr<u8>) = thiscall 0x678EE0 => unported;
     /// `CTaskComplexChat::Destructor` (0x682D40), called with `this` only (thiscall)
     pub fn dtor_682d40(this: GPtr<u8>) = thiscall 0x682D40 => unported;
-    /// `CTaskComplexWalkAlongsidePed::Destructor` (0x6832C0), called with `this` only (thiscall)
-    pub fn dtor_6832c0(this: GPtr<u8>) = thiscall 0x6832C0 => unported;
     /// `CTaskComplexBeInCouple::~CTaskComplexBeInCouple` (0x683780), called with `this` only (thiscall)
     pub fn dtor_683780(this: GPtr<u8>) = thiscall 0x683780 => unported;
-    /// `FUN_00684200` (0x684200), called with `this` only (thiscall)
-    pub fn dtor_684200(this: GPtr<u8>) = thiscall 0x684200 => unported;
     /// `CTaskComplexPartnerChat::~CTaskComplexPartnerChat` (0x684320), called with `this` only (thiscall)
     pub fn dtor_684320(this: GPtr<u8>) = thiscall 0x684320 => unported;
     /// `CTaskSimplePlayerOnFoot::Destructor` (0x6857D0), called with `this` only (thiscall)

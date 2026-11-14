@@ -5,7 +5,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::{rd, wr, x};
 
@@ -15,11 +15,8 @@ use sa_core::bindings::matrix_invert;
 use sa_core::bindings::matrix_mul_vec;
 use sa_world::bindings::entity_get_col_model;
 use sa_world::bindings::entity_get_is_static;
-use sa_world::bindings::vector_sub;
-orig! {
-    /// `CEntity::DoesNotCollideWithFlyers()` (0x532D40)
-    fn entity_does_not_collide_with_flyers(e: GPtr<u8>) -> u8 = thiscall 0x532D40 => unported;
-}
+use sa_core::bindings::vector_sub;
+use sa_world::bindings::does_not_collide_with_flyers as entity_does_not_collide_with_flyers;
 
 use sa_core::field::gf as k;
 use sa_world::world::common::entity_type as ty;
@@ -174,7 +171,7 @@ fn object_case(this: GPtr<u8>, other: GPtr<u8>, rec: bool, disabled: GPtr<u8>, i
     let d_p: GPtr<u8> = GPtr::from_raw(d.as_mut_ptr()).cast();
     vector_sub(d_p, col.byte_add(0xC), col);
     let mut out = [0u32; 3];
-    let r = matrix_mul_vec(GPtr::from_raw(out.as_mut_ptr()).cast(), rd::<GPtr<u8>>(other, 0x14), d_p);
+    let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::from_raw(out.as_mut_ptr()).cast()), rd::<GPtr<u8>>(other, 0x14), d_p));
     let mut p = [rd::<u32>(r, 0), rd::<u32>(r, 4), rd::<u32>(r, 8)];
     let p_p: GPtr<u8> = GPtr::from_raw(p.as_mut_ptr()).cast();
     let tm = rd::<GPtr<u8>>(this, 0x14);
@@ -183,7 +180,7 @@ fn object_case(this: GPtr<u8>, other: GPtr<u8>, rec: bool, disabled: GPtr<u8>, i
         let inv = matrix_invert(tm, cm_p);
         matrix_assign(cm_p, inv);
         let mut o2 = [0u32; 3];
-        let r2 = matrix_mul_vec(GPtr::from_raw(o2.as_mut_ptr()).cast(), cm_p, p_p);
+        let r2 = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::from_raw(o2.as_mut_ptr()).cast()), cm_p, p_p));
         !x(rd::<f32>(r2, 8)).fcom(x(k(0x858B50))).test_parity(5)
     };
     if hit {

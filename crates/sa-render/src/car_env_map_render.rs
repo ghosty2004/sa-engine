@@ -23,9 +23,9 @@ use sa_math::x87::X87;
 use crate::common::{ftol32, g, rd, wr, x, xi};
 
 use crate::bindings::env_atm_pool_new;
-use crate::bindings::set_indices;
-use crate::bindings::set_texture;
-use crate::bindings::set_vertex_declaration;
+use sa_core::bindings::set_indices;
+use sa_core::bindings::set_texture;
+use sa_core::bindings::set_vertex_declaration;
 use sa_core::bindings::enable_clipping_if_needed;
 use sa_core::bindings::frame_get_ltm;
 use sa_core::bindings::get_render_state;
@@ -34,25 +34,18 @@ use sa_core::bindings::vector_normalise;
 use sa_core::bindings::vertex_alpha_enable;
 use sa_stream::bindings::fx_get_fx_quality as get_fx_quality;
 use sa_stream::bindings::get_atomic_id;
+use crate::bindings::instance_data_render;
+use crate::bindings::instance_data_render_lighting;
+use sa_core::bindings::enable_light;
+use sa_core::bindings::rw_d3d9_set_light as set_light;
+use sa_core::bindings::set_render_state;
+use sa_core::bindings::set_transform;
+use sa_core::bindings::set_tss;
 orig! {
-    /// `RwD3D9SetRenderState(state, value)` (0x7FC2D0)
-    fn set_render_state(state: u32, value: u32) -> u32 = cdecl 0x7FC2D0 => unported;
-    /// `RwD3D9SetTextureStageState(stage, type, value)` (0x7FC340)
-    fn set_tss(stage: u32, ty: u32, value: u32) = cdecl 0x7FC340 => unported;
     /// `G->dOpenDevice.fpRenderStateSet(state, value)` (`[G] + 0x20`)
     fn rw_render_state_set(state: u32, value: u32) -> u32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `RwD3D9SetLight(index, const void* light)` (0x7FA660)
-    fn set_light(index: u32, light: GPtr<u8>) -> u32 = cdecl 0x7FA660 => unported;
-    /// `RwD3D9EnableLight(index, enable)` (0x7FA860)
-    fn enable_light(index: u32, enable: u32) -> u32 = cdecl 0x7FA860 => unported;
-    /// `RwD3D9SetTransform(state, const void* matrix)` (0x7FA390)
-    fn set_transform(state: u32, matrix: GPtr<u8>) -> u32 = cdecl 0x7FA390 => unported;
     /// `RwD3D9SetMaterial(const void* material)` (0x7FC430)
     fn set_material(m: GPtr<u8>) -> u32 = cdecl 0x7FC430 => unported;
-    /// `RxD3D9InstanceDataRender(header, inst)` (0x5DA640)
-    fn instance_data_render(h: GPtr<u8>, inst: GPtr<u8>) = cdecl 0x5DA640 => unported;
-    /// `RxD3D9InstanceDataRenderLighting(header, inst, flags, texture)` (0x5DA6A0)
-    fn instance_data_render_lighting(h: GPtr<u8>, inst: GPtr<u8>, flags: u32, tex: u32) = cdecl 0x5DA6A0 => unported;
     /// The pipeline's stage reset after the meshes (0x5DAAC0, catalogue `FUN_005daac0`)
     fn render_cb_end() = cdecl 0x5DAAC0 => unported;
     /// The environment-camera UV helper (0x5D84C0), register arguments
@@ -365,7 +358,7 @@ pub fn car_env_map_render_cb(entry: GPtr<u8>, object: GPtr<u8>, ty: u32, flags: 
     get_render_state(0x89, GPtr::from_raw(&raw mut lighting));
     let unlit = lighting == 0 && flags & 8 == 0;
     if unlit {
-        set_texture(0, 0);
+        set_texture(GPtr::NULL, 0);
         set_render_state(0x3C, 0xFF00_0000);
         for t in [1, 3, 4, 6] {
             set_tss(0, t, 3);
@@ -386,7 +379,7 @@ pub fn car_env_map_render_cb(entry: GPtr<u8>, object: GPtr<u8>, ty: u32, flags: 
         let env = rd::<GPtr<u8>>(mat, g::<i32>(ENV_MAT_OFFSET).read() as isize);
         let env_cam = mflags & 1 != 0 && !no_reflections;
         let env_wave = mflags & 2 != 0 && !no_reflections && (geo_flags >> 7) & 1 != 0;
-        let use_spec = if get_fx_quality(g::<u8>(G_FX)) >= 2 { (mflags >> 2) & 1 != 0 } else { mflags & 4 != 0 && !no_reflections };
+        let use_spec = if get_fx_quality(g::<u8>(G_FX)) as i32 >= 2 { (mflags >> 2) & 1 != 0 } else { mflags & 4 != 0 && !no_reflections };
         let (spec, power) = if use_spec && lighting != 0 {
             let sp = rd::<GPtr<u8>>(mat, g::<i32>(SPEC_MAT_OFFSET).read() as isize);
             set_light(1, g::<u8>(SPEC_LIGHT));
@@ -416,7 +409,7 @@ pub fn car_env_map_render_cb(entry: GPtr<u8>, object: GPtr<u8>, ty: u32, flags: 
             g::<u32>(CAM_MATRIX + 0x20).write(uv[0]);
             g::<u32>(CAM_MATRIX + 0x24).write(uv[1]);
             set_transform(0x11, g::<u8>(CAM_MATRIX));
-            set_texture(rd::<u32>(env, 8), 1);
+            set_texture(GPtr::from_addr(rd::<u32>(env, 8) as usize), 1);
             let shine = xi(i32::from(rd::<u8>(env, 4))).fmul_m(k(K_INV255)).fmul_m(spec_intensity).fmul_m(k(K_254));
             let c = clamp_byte(shine);
             set_render_state(0x3C, 0xFF00_0000 | c << 16 | c << 8 | c);
@@ -449,7 +442,7 @@ pub fn car_env_map_render_cb(entry: GPtr<u8>, object: GPtr<u8>, ty: u32, flags: 
             g::<u32>(WAVE_MATRIX + 0x20).write(uv[0]);
             g::<u32>(WAVE_MATRIX + 0x24).write(uv[1]);
             set_transform(0x11, g::<u8>(WAVE_MATRIX));
-            set_texture(rd::<u32>(env, 8), 1);
+            set_texture(GPtr::from_addr(rd::<u32>(env, 8) as usize), 1);
             let c = clamp_byte(x(spec_intensity).fmul_m(k(K_24)));
             set_render_state(0x3C, c << 24 | 0x00FF_FFFF);
             for (t, v) in [(1, 0xE), (2, 2), (3, 1), (4, 3), (5, 2), (6, 1), (0xB, 1), (0x18, 2)] {

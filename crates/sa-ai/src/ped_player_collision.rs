@@ -2,16 +2,17 @@
 //! Not reversed in gta-reversed; ported from the 1.0 US bytes. Unverified (docs/verify/HOWTO.md).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
 use crate::common::*;
 
 use crate::bindings::evasive_step_ctor;
-use crate::bindings::follow_point_route_ctor;
+use sa_world::bindings::follow_point_route_ctor;
 use crate::bindings::geometry_compute_route_round_entity_bbox;
 use crate::bindings::membership_count_members;
-use crate::bindings::say_ctor;
+use sa_world::bindings::say_ctor;
 use crate::bindings::seek_set_move_state_radius;
 use crate::bindings::task_is_go_to_task;
 use sa_core::bindings::random_float_in_range as general_random_float_in_range;
@@ -23,7 +24,7 @@ use sa_world::bindings::ik_look_at;
 use sa_world::bindings::intel_find_task_by_type;
 use sa_world::bindings::ped_say;
 use sa_world::bindings::tm_find_active_task_by_type;
-use sa_world::bindings::vector_sub;
+use sa_core::bindings::vector_sub;
 orig! {
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
@@ -63,11 +64,11 @@ fn new_task(size: u32, ctor: impl FnOnce(GPtr<u8>) -> GPtr<u8>) -> GPtr<u8> {
 }
 
 fn say(this: GPtr<u8>) {
-    wr::<GPtr<u8>>(this, 0x2C, new_task(0x1C, |t| say_ctor(t, 0x1C, -1)));
+    wr::<GPtr<u8>>(this, 0x2C, new_task(0x1C, |t| say_ctor(t, 0x1C, -1i32 as u32)));
 }
 
 fn look_at(this: GPtr<u8>, player: GPtr<u8>) {
-    ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), S_COMP_PED_COLL_PLAYER_RESP, ped(this), player, 2000, 5, 0, 1, 0x3E80_0000, 500, 3, 0);
+    ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), GPtr::from_addr(S_COMP_PED_COLL_PLAYER_RESP as usize), ped(this), player, 2000, 5, GPtr::NULL, 1, 0x3E80_0000, 500, 3, 0);
 }
 
 /// `CTaskComplexEvasiveStep(player, &dir)` with `dir = (-forward.y, forward.x, 0)` of the player's matrix, normalised.
@@ -113,7 +114,7 @@ fn follow(this: GPtr<u8>, t: &Tasks) -> Follow {
     let vp: GPtr<u8> = GPtr::from_raw(v.as_mut_ptr()).cast();
     vector_sub(vp, pos_ptr(ped(this)), pos_ptr(lead));
     wr::<u32>(vp, 8, 0);
-    let dist = f32_of(X87::from_f64_exact(vector_magnitude(vp)));
+    let dist = f32_of(X87::from_f64_exact(vector_magnitude(vp.cast::<u32>())));
     if !t.avoid.is_null() {
         wr::<u8>(t.avoid, 0x5C, rd::<u8>(t.avoid, 0x5C) | 2);
     } else if !t.t384.is_null() {
@@ -191,7 +192,7 @@ pub fn handler_compute_ped_collision_with_player_response(this: GPtr<u8>, e: GPt
         }
         big_group = true;
     }
-    ped_say(ped(this), 0x1C, 0, 0x3F80_0000, 0, 0, 0);
+    ped_say(ped(this), 0x1C, 0, f32::from_bits(0x3F80_0000), 0, 0, 0);
     let mut result = GPtr::<u8>::NULL;
     // `true` = continue with (B), `false` = the tail (C); evade / direct writes return.
     let to_b: bool = 'body: {

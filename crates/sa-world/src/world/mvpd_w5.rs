@@ -17,6 +17,11 @@ use crate::bindings::find_player_speed;
 use crate::bindings::go_to_point_and_stand_still_ctor;
 use crate::bindings::player_get_wanted_level as player_ped_get_wanted_level;
 use sa_core::bindings::task_new;
+use crate::bindings::add_police_car_occupants as car_ai_add_police_car_occupants;
+use crate::bindings::find_ground_z_for_coord as world_find_ground_z_for_coord;
+use crate::bindings::tm_set_task as task_manager_set_task;
+use crate::bindings::vector_mul_scalar as vec_mul_scalar;
+use sa_core::bindings::world_remove;
 orig! {
     /// `CSetPiece::GetSpawnCoord1(CVector2D* out)` (0x4997A0, `ret 4`); returns `out`
     fn set_piece_get_spawn_coord1(sp: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall 0x4997A0 => unported;
@@ -31,18 +36,8 @@ orig! {
     fn set_piece_try_to_generate_cop_car(sp: GPtr<u8>, sx: u32, sy: u32, tx: u32, ty: u32) -> GPtr<u8> = thiscall 0x4998A0 => unported;
     /// `CSetPiece::TryToGenerateCopPed(CVector2D spawn)` (0x499690, `ret 8`)
     fn set_piece_try_to_generate_cop_ped(sp: GPtr<u8>, sx: u32, sy: u32) -> GPtr<u8> = thiscall 0x499690 => unported;
-    /// `CCarAI::AddPoliceCarOccupants(CVehicle*, bool)` (0x41C070, cdecl)
-    fn car_ai_add_police_car_occupants(v: GPtr<u8>, b: u32) = cdecl 0x41C070 => unported;
-    /// `operator*(CVector* out, const CVector&, float)` (0x40FEC0, cdecl); returns `out`
-    fn vec_mul_scalar(out: GPtr<u8>, v: GPtr<u8>, s: u32) -> GPtr<u8> = cdecl 0x40FEC0 => unported;
-    /// `CWorld::FindGroundZForCoord(float x, float y)` (0x569660, cdecl, float in ST0)
-    fn world_find_ground_z_for_coord(x: f32, y: f32) -> f64 = cdecl 0x569660 => unported;
     /// `CTaskComplexBeCop::CTaskComplexBeCop(int32 moveState, bool, CTask*)` (0x4993D0, `ret 0xC`)
     fn task_complex_be_cop_ctor(t: GPtr<u8>, ms: u32, b: u32, sub: GPtr<u8>) -> GPtr<u8> = thiscall 0x4993D0 => unported;
-    /// `CTaskManager::SetTask(CTask*, int32 slot, bool)` (0x681AF0, `ret 0xC`)
-    fn task_manager_set_task(tm: GPtr<u8>, t: GPtr<u8>, slot: u32, b: u32) = thiscall 0x681AF0 => unported;
-    /// `CWorld::Remove(CEntity*)` (0x563280, cdecl)
-    fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => crate::world::cworld2::remove;
     /// `CEntity` scalar deleting destructor (vtable slot 0, flag 1)
     fn entity_vdelete(e: GPtr<u8>, flag: u32) = thiscall vslot 0x0 => unported;
 }
@@ -118,7 +113,7 @@ fn setup_quick_car(car: GPtr<u8>, style: u8, mission: u8) {
     wr::<u32>(car, 0x4D0, now().wrapping_add(10000));
     let m = rd::<GPtr<u8>>(car, 0x14);
     let mut out = [0f32; 3];
-    let r = vec_mul_scalar(GPtr::from_raw(&mut out).cast(), m.byte_add(0x10), 0x3F2AAAAB);
+    let r = vec_mul_scalar(GPtr::from_raw(&mut out).cast(), m.byte_add(0x10), f32::from_bits(0x3F2AAAAB));
     wr::<u32>(car, 0x44, rd::<u32>(r, 0));
     wr::<u32>(car, 0x48, rd::<u32>(r, 4));
     wr::<u32>(car, 0x4C, rd::<u32>(r, 8));
@@ -166,7 +161,7 @@ fn setup_cop(sp: GPtr<u8>, cop: GPtr<u8>, z_off: isize, xy_off: isize) {
         let y = coord(sp, xy_off + 2);
         let xx = coord(sp, xy_off);
         let mut v = [xx, y, z];
-        go_to_point_and_stand_still_ctor(t, 6, GPtr::from_raw(&mut v).cast(), g::<u32>(0x86FC84).read(), g::<u32>(0x86FC88).read(), 0, 0)
+        go_to_point_and_stand_still_ctor(t, 6, GPtr::<u8>::cast::<u32>(GPtr::from_raw(&mut v).cast()), f32::from_bits(g::<u32>(0x86FC84).read()), f32::from_bits(g::<u32>(0x86FC88).read()), 0, 0)
     };
     let t = task_new(0x50);
     let task = if t.is_null() { GPtr::NULL } else { task_complex_be_cop_ctor(t, 4, 0, inner) };
@@ -286,7 +281,7 @@ pub fn set_piece_update(this: GPtr<u8>) {
 // CPickup::Update
 // ---------------------------------------------------------------------------------------------------------
 
-use crate::bindings::audio_report_frontend_event as audio_report_frontend_audio_event;
+use sa_core::bindings::audio_report_frontend_event as audio_report_frontend_audio_event;
 use crate::bindings::can_player_start_mission as player_ped_can_player_start_mission;
 use crate::bindings::get_pad_from_player as player_ped_get_pad_from_player;
 use crate::bindings::give_player_goodies as pickups_give_player_goodies_with_pick_up_mi;
@@ -302,42 +297,30 @@ use crate::bindings::weapon_reload;
 use sa_core::bindings::entity_update_rw_frame;
 use sa_core::bindings::ped_is_alive;
 use sa_core::bindings::text_get;
+use crate::bindings::add_explosion as explosion_add_explosion;
+use crate::bindings::does_player_want_new_weapon as player_ped_does_player_want_new_weapon;
+use crate::bindings::find_string_for_text_index;
+use crate::bindings::get_water_level as water_level_get_water_level;
+use crate::bindings::give_delayed_weapon as ped_give_delayed_weapon;
+use crate::bindings::pad_get_touched_time_delta;
+use crate::bindings::pickup_remove;
+use crate::bindings::weapon_for_model;
+use sa_core::bindings::hud_set_help_message;
+use sa_core::bindings::insert_number_in_string as messages_insert_number_in_string;
 orig! {
     /// `CVehicle::IsSphereTouchingVehicle(float x, float y, float z, float radius)` (0x6D84D0, `ret 0x10`); the
     /// floats are the dwords the original pushes
     fn vehicle_is_sphere_touching_vehicle(v: GPtr<u8>, x: u32, y: u32, z: u32, r: u32) -> u8 = thiscall 0x6D84D0 => unported;
-    /// `CPickups::WeaponForModel(int32)` (0x454AE0, cdecl)
-    fn weapon_for_model(model: i32) -> i32 = cdecl 0x454AE0 => crate::world::pickups::weapon_for_model;
     /// `thunk_FUN_0156f730` (0x454920, cdecl): true for weapon slots 3, 4, 5
     fn is_slot_3_4_5(slot: i32) -> u32 = cdecl 0x454920 => crate::world::pickups::is_type_3_4_5;
     /// `CPickup::ExtractAmmoFromPickup(CPlayerPed*)` (0x454BE0, `ret 4`)
     fn pickup_extract_ammo_from_pickup(pk: GPtr<u8>, p: GPtr<u8>) = thiscall 0x454BE0 => unported;
     /// `CPickups::PlayerCanPickUpThisWeaponTypeAtThisMoment(eWeaponType)` (0x4554C0, cdecl)
     fn player_can_pick_up_this_weapon_type_at_this_moment(w: i32) -> u8 = cdecl 0x4554C0 => crate::world::pickups::player_can_pick_up_this_weapon_type_at_this_moment;
-    /// `CHud::SetHelpMessage(const char*, bool quick, bool permanent, bool addToBrief)` (0x588BE0, cdecl)
-    fn hud_set_help_message(s: GPtr<u8>, a: u32, b: u32, c: u32) = cdecl 0x588BE0 => unported;
-    /// `CPad::GetTouchedTimeDelta()` (0x53F210)
-    fn pad_get_touched_time_delta(pad: GPtr<u8>) -> u32 = thiscall 0x53F210 => unported;
-    /// `CPlayerPed::DoesPlayerWantNewWeapon(eWeaponType, bool)` (0x609710, `ret 8`)
-    fn player_ped_does_player_want_new_weapon(p: GPtr<u8>, w: i32, b: u32) -> u8 = thiscall 0x609710 => unported;
-    /// `CPed::GiveDelayedWeapon(eWeaponType, uint32 ammo)` (0x5E89B0, `ret 8`)
-    fn ped_give_delayed_weapon(p: GPtr<u8>, w: i32, ammo: u32) = thiscall 0x5E89B0 => unported;
-    /// `CPickup::FindStringForTextIndex(int32)` (0x455540, cdecl)
-    fn find_string_for_text_index(i: i32) -> GPtr<u8> = cdecl 0x455540 => crate::world::pickups::find_string_for_text_index;
     /// `CPickups::ModifyStringLabelForControlSetting(char*)` (0x454B70, cdecl)
     fn pickups_modify_string_label_for_control_setting(s: GPtr<u8>) = cdecl 0x454B70 => unported;
-    /// `CMessages::InsertNumberInString(const char*, int32 n1..n6, char* out)` (0x69DE90, cdecl)
-    fn messages_insert_number_in_string(s: GPtr<u8>, n1: u32, n2: u32, n3: u32, n4: u32, n5: u32, n6: u32, out: GPtr<u8>) = cdecl 0x69DE90 => unported;
-    /// `CPickup::Remove()` (0x4556C0)
-    fn pickup_remove(pk: GPtr<u8>) = thiscall 0x4556C0 => crate::world::pickups::remove;
     /// `CPickup::GetRidOfObjects()` (0x454CF0)
     fn pickup_get_rid_of_objects(pk: GPtr<u8>) = thiscall 0x454CF0 => crate::world::pickups::get_rid_of_objects;
-    /// `CWaterLevel::GetWaterLevel(float x, float y, float z, float* level, bool touchy, CVector* normal)`
-    /// (0x6EB690, cdecl); x, y as the pushed dwords
-    fn water_level_get_water_level(x: u32, y: u32, z: f32, level: GPtr<u8>, touchy: u32, normal: u32) -> u8 = cdecl 0x6EB690 => unported;
-    /// `CExplosion::AddExplosion(CEntity* victim, CEntity* creator, eExplosionType, CVector pos, uint32 time,
-    /// bool makeSound, float camShake, bool invisible)` (0x736A50, cdecl); all as pushed dwords
-    fn explosion_add_explosion(v: u32, c: u32, ty: u32, x: u32, y: u32, z: u32, time: u32, snd: u32, shake: u32, inv: u32) -> u8 = cdecl 0x736A50 => unported;
 }
 
 /// `TheText` (0xC1B340)
@@ -378,12 +361,12 @@ fn sphere_touch(veh: GPtr<u8>, obj: GPtr<u8>, r: u32) -> bool {
 
 /// `AudioEngine.ReportFrontendAudioEvent(ev, 0.0, 1.0)`.
 fn frontend_audio(ev: u32) {
-    audio_report_frontend_audio_event(GPtr::from_addr(AUDIO_ENGINE), ev, 0, F1);
+    audio_report_frontend_audio_event(GPtr::from_addr(AUDIO_ENGINE), ev, f32::from_bits(0), f32::from_bits(F1));
 }
 
 /// `CHud::SetHelpMessage(TheText.Get(key), a, b, c)`.
 fn help_text(key: usize, a: u32, b: u32, c: u32) {
-    hud_set_help_message(text_get(GPtr::from_addr(THE_TEXT), GPtr::from_addr(key)), a, b, c);
+    hud_set_help_message(text_get(GPtr::from_addr(THE_TEXT), GPtr::from_addr(key)), a, b as u8, c);
 }
 
 /// The on-foot pick-up distance test: `|player.z - obj.z|` (`fchs` unless `test ah, 5; jp` against
@@ -417,7 +400,7 @@ fn give_weapon(pk: GPtr<u8>, player: GPtr<u8>, w: i32) {
     let s0 = ped_get_weapon_slot(player, 0);
     if i32::from(rd::<i8>(pd, 0x20)) == s0 {
         let pd = rd::<GPtr<u8>>(player, 0x480);
-        let s = ped_get_weapon_slot(player, w);
+        let s = ped_get_weapon_slot(player, w as u32);
         wr::<u8>(pd, 0x20, s as u8);
     }
 }
@@ -428,7 +411,7 @@ fn water_level_at(obj: GPtr<u8>) -> Option<f32> {
     let m = rd::<GPtr<u8>>(obj, 0x14);
     let z = x(rd::<f32>(m, 0x38)).fadd_m(g::<f32>(0x858C80).read()).to_f32();
     let mut level = 0u32;
-    let ok = water_level_get_water_level(rd(m, 0x30), rd(m, 0x34), z, GPtr::from_raw(&mut level).cast(), 1, 0);
+    let ok = water_level_get_water_level(f32::from_bits(rd(m, 0x30)), f32::from_bits(rd(m, 0x34)), z, GPtr::from_raw(&mut level).cast(), 1, GPtr::NULL);
     (ok != 0).then(|| f32::from_bits(level))
 }
 
@@ -489,7 +472,7 @@ fn update_mines(pk: GPtr<u8>, vehicle: GPtr<u8>, removed: &mut u8) {
                 return;
             }
             let p = ent_pos(obj());
-            explosion_add_explosion(0, 0, 8, rd(p, 0), rd(p, 4), rd(p, 8), 0, 1, FM1, 0);
+            explosion_add_explosion(GPtr::NULL, GPtr::NULL, 8, f32::from_bits(rd(p, 0)), f32::from_bits(rd(p, 4)), f32::from_bits(rd(p, 8)), 0, 1, f32::from_bits(FM1), 0);
             // the original removes without setting its result flag
             pickup_remove(pk);
         }
@@ -511,9 +494,9 @@ fn update_mines(pk: GPtr<u8>, vehicle: GPtr<u8>, removed: &mut u8) {
             let pos = ent_pos(o);
             let mut t1 = [0f32; 3];
             let mut t2 = [0f32; 3];
-            let a = vec_mul_scalar(GPtr::from_raw(&mut t1).cast(), o.byte_add(0x44), g::<u32>(0xB7CB5C).read());
+            let a = vec_mul_scalar(GPtr::from_raw(&mut t1).cast(), o.byte_add(0x44), f32::from_bits(g::<u32>(0xB7CB5C).read()));
             let b = vec_add(GPtr::from_raw(&mut t2).cast(), pos, a);
-            placeable_set_posn(o, b);
+            placeable_set_posn(o, b.cast::<f32>());
             entity_update_rw_matrix(obj());
             entity_update_rw_frame(obj());
             let Some(l) = water_level_at(obj()) else { return };
@@ -651,7 +634,7 @@ fn collect(pk: GPtr<u8>, player: GPtr<u8>, vehicle: GPtr<u8>, id: i32, removed: 
     match rd::<u8>(pk, 0x1C) {
         2 | 15 => {
             if !goodies() {
-                if player_ped_does_player_want_new_weapon(player, w, 0) == 0 {
+                if player_ped_does_player_want_new_weapon(player, w as u32, 0) == 0 {
                     return;
                 }
                 if w != 0 {
@@ -683,7 +666,7 @@ fn collect(pk: GPtr<u8>, player: GPtr<u8>, vehicle: GPtr<u8>, id: i32, removed: 
         }
         3 | 4 | 5 | 22 => {
             if !goodies() {
-                if player_ped_does_player_want_new_weapon(player, w, 0) == 0 {
+                if player_ped_does_player_want_new_weapon(player, w as u32, 0) == 0 {
                     pickup_extract_ammo_from_pickup(pk, player);
                     return;
                 }
@@ -704,7 +687,7 @@ fn collect(pk: GPtr<u8>, player: GPtr<u8>, vehicle: GPtr<u8>, id: i32, removed: 
             *removed = 1;
             pickup_remove(pk);
             frontend_audio(7);
-            ped_say(player, 0xAC, 0, F1, 0, 0, 0);
+            ped_say(player, 0xAC, 0, f32::from_bits(F1), 0, 0, 0);
         }
         16 => {
             let m = g::<i32>(PLAYER_MONEY.wrapping_add((id as u32).wrapping_mul(0x190)) as usize);
@@ -736,7 +719,7 @@ fn collect(pk: GPtr<u8>, player: GPtr<u8>, vehicle: GPtr<u8>, id: i32, removed: 
             pickups_modify_string_label_for_control_setting(bp);
             let gxt = GPtr::<u8>::from_addr(0xC1B100);
             let t = text_get(GPtr::from_addr(THE_TEXT), bp);
-            messages_insert_number_in_string(t, rd::<u32>(pk, 8), 0, 0, 0, 0, 0, gxt);
+            messages_insert_number_in_string(t, rd::<u32>(pk, 8) as i32, 0, 0, 0, 0, 0, gxt);
             if hud_help_message_displayed() == 0 {
                 hud_set_help_message(gxt, 0, 0, 0);
             }
@@ -956,15 +939,12 @@ use sa_core::bindings::font_set_font_style;
 use sa_core::bindings::font_set_orientation;
 use sa_core::bindings::font_set_proportional;
 use sa_core::bindings::rgba_ctor;
+use sa_core::bindings::font_print_string;
+use sa_core::bindings::font_set_centre_size;
+use sa_core::bindings::font_set_scale;
 orig! {
     /// CRT `sprintf(buf, fmt, int)` (0x821BB5, cdecl)
     fn sprintf_int(buf: GPtr<u8>, fmt: GPtr<u8>, v: u32) -> i32 = cdecl 0x821BB5 => unported;
-    /// `CFont::SetScale(float w, float h)` (0x719380, cdecl); the floats as pushed dwords
-    fn font_set_scale(w: u32, h: u32) = cdecl 0x719380 => unported;
-    /// `CFont::SetCentreSize(float)` (0x7194E0, cdecl)
-    fn font_set_centre_size(s: f32) = cdecl 0x7194E0 => unported;
-    /// `CFont::PrintString(float x, float y, const GxtChar*)` (0x71A700, cdecl); x, y as pushed dwords
-    fn font_print_string(x: u32, y: u32, s: GPtr<u8>) = cdecl 0x71A700 => unported;
 }
 
 /// `CPickups::aMessages` (0x978680, 0x24 bytes each: x, y, +8, width/height scale +0xC/+0x10, RGBA +0x14,
@@ -1014,7 +994,7 @@ pub fn render_pick_up_text() {
                 Some(t)
             } else {
                 let gxt = GPtr::from_addr(GXT_STRING);
-                messages_insert_number_in_string(t, price, 0, 0, 0, 0, 0, gxt);
+                messages_insert_number_in_string(t, price as i32, 0, 0, 0, 0, 0, gxt);
                 Some(gxt)
             }
         };
@@ -1024,7 +1004,7 @@ pub fn render_pick_up_text() {
             let q = xi(g::<i32>(0xC17044).read() / 640).to_f32();
             let h = text_scale(q, rd::<f32>(e, 0x10));
             let w = text_scale(q, rd::<f32>(e, 0xC));
-            font_set_scale(w, h);
+            font_set_scale(f32::from_bits(w), f32::from_bits(h));
             font_set_orientation(0);
             font_set_centre_size(xi(g::<i32>(0xC17044).read()).to_f32());
             let mut c = [0u8; 4];
@@ -1037,7 +1017,7 @@ pub fn render_pick_up_text() {
             );
             font_set_color(rd::<u32>(cp, 0));
             font_set_font_style(3);
-            font_print_string(rd::<u32>(e, 0), rd::<u32>(e, 4), s);
+            font_print_string(f32::from_bits(rd::<u32>(e, 0)), f32::from_bits(rd::<u32>(e, 4)), s);
             n = num.read();
         }
         i = i.wrapping_add(1);

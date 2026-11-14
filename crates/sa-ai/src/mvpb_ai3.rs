@@ -4,6 +4,7 @@
 //! (the exe wins over gta-reversed). SEH frames are not modelled.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 use sa_math::x87::Cmp;
@@ -15,16 +16,19 @@ use crate::bindings::go_to_vehicle_and_lean_do_tidy_up as go_to_vehicle_and_lean
 use crate::bindings::should_load_gang_anims;
 use crate::bindings::walk_alongside_create_sub_task as walk_alongside_create_sub_task_o;
 use sa_core::bindings::entity_get_is_on_screen;
-use sa_stream::bindings::anim_add_block_ref as add_anim_block_ref;
+use sa_core::bindings::anim_add_block_ref as add_anim_block_ref;
 use sa_stream::bindings::anim_remove_block_ref as remove_anim_block_ref;
 use sa_world::bindings::leave_car_ctor;
+use crate::bindings::play_hand_signal_anim_ctor_61b2b0 as play_hand_signal_anim_ctor;
+use crate::bindings::seek_entity_xy_offset_ctor;
+use sa_core::bindings::streaming_request_model as request_model;
+use sa_core::bindings::tm_get_task_secondary as task_manager_get_task_secondary;
+use sa_core::bindings::tm_set_task_secondary as task_manager_set_task_secondary;
+use sa_stream::bindings::get_animation_block_index;
+use sa_world::bindings::go_to_point_and_stand_still_ctor;
+use sa_world::bindings::physical_get_speed;
+use sa_world::bindings::stand_still_ctor;
 orig! {
-    /// `CTaskManager::GetTaskSecondary(int32)` (0x681810, `ret 4`)
-    fn task_manager_get_task_secondary(tm: GPtr<u8>, i: u32) -> GPtr<u8> = thiscall 0x681810 => unported;
-    /// `CTaskManager::SetTaskSecondary(CTask*, int32)` (0x681B60, `ret 8`)
-    fn task_manager_set_task_secondary(tm: GPtr<u8>, t: GPtr<u8>, i: u32) = thiscall 0x681B60 => unported;
-    /// `CTaskComplexPlayHandSignalAnim::CTaskComplexPlayHandSignalAnim(AnimationId, float)` (0x61B2B0, `ret 8`)
-    fn play_hand_signal_anim_ctor(t: GPtr<u8>, anim: u32, blend: f32) -> GPtr<u8> = thiscall 0x61B2B0 => unported;
     /// `CPedGroupIntelligence::ReportFinishedTask` implementation over one list (0x5F76C0, `ret 0xC`)
     fn pgi_report_finished_task_impl(g: GPtr<u8>, ped: GPtr<u8>, t: GPtr<u8>, list: GPtr<u8>) -> u8 = thiscall 0x5F76C0 => unported;
     /// `CPedGroupIntelligence::ReportFinishedTask` (0x5F86F0, `ret 8`)
@@ -35,20 +39,8 @@ orig! {
     fn pgi_get_task_secondary(g: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x5F8620 => unported;
     /// `CPedGroupIntelligence::GetTaskSecondarySlot(const CPed*)` (0x5F8650, `ret 4`)
     fn pgi_get_task_secondary_slot(g: GPtr<u8>, ped: GPtr<u8>) -> u32 = thiscall 0x5F8650 => unported;
-    /// `CTaskComplexSeekEntity<CEntitySeekPosCalculatorXYOffset>::CTaskComplexSeekEntity(...)` (0x661DC0, `ret 0x20`)
-    fn seek_entity_xy_offset_ctor(t: GPtr<u8>, e: GPtr<u8>, a: u32, b: u32, c: u32, d: u32, f: u32, g: u32, h: u32) -> GPtr<u8> = thiscall 0x661DC0 => unported;
-    /// `CTaskSimpleStandStill::CTaskSimpleStandStill(int32, bool, bool, float)` (0x62F310, `ret 0x10`)
-    fn stand_still_ctor(t: GPtr<u8>, ms: u32, a: u32, b: u32, f: f32) -> GPtr<u8> = thiscall 0x62F310 => unported;
     /// `FUN_00664770(CVector* out, CPed*)` (0x664770, `ret 8`): the lean target position
     fn go_to_vehicle_and_lean_target(t: GPtr<u8>, out: GPtr<f32>, ped: GPtr<u8>) -> GPtr<f32> = thiscall 0x664770 => unported;
-    /// `CTaskComplexGoToPointAndStandStill::CTaskComplexGoToPointAndStandStill(int32, const CVector&, float, float, bool, bool)` (0x668120, `ret 0x18`)
-    fn go_to_point_and_stand_still_ctor(t: GPtr<u8>, ms: u32, p: GPtr<u8>, r: f32, s: f32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x668120 => unported;
-    /// `CPhysical::GetSpeed(CVector point)` (0x542CE0, `ret 0x10`, returns the out pointer)
-    fn physical_get_speed(e: GPtr<u8>, out: GPtr<f32>, x: f32, y: f32, z: f32) -> GPtr<f32> = thiscall 0x542CE0 => unported;
-    /// `CAnimManager::GetAnimationBlockIndex(const char*)` (0x4D3990, cdecl)
-    fn get_animation_block_index(n: u32) -> i32 = cdecl 0x4D3990 => unported;
-    /// `CStreaming::RequestModel(int32, int32)` (0x4087E0, cdecl)
-    fn request_model(id: i32, flags: u32) = cdecl 0x4087E0 => unported;
     /// `CTask::Clone` (vtable +0x4)
     fn v_task_clone(t: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x4 => unported;
     /// `CTask::GetTaskType` (vtable +0x10)
@@ -387,7 +379,7 @@ pub fn go_to_vehicle_and_lean_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8
             if t.is_null() {
                 return GPtr::NULL;
             }
-            return go_to_point_and_stand_still_ctor(t, 4, this.byte_add(0x18), 0.05, 2.0, 0, 1);
+            return go_to_point_and_stand_still_ctor(t, 4, GPtr::<u8>::cast::<u32>(this.byte_add(0x18)), 0.05, 2.0, 0, 1);
         }
     }
     let sub = rd::<GPtr<u8>>(this, 8);
@@ -427,7 +419,7 @@ pub fn go_to_vehicle_and_lean_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) ->
     let oy = f32_of(x(rd::<f32>(pp, 4)).fsub_m(rd::<f32>(vp, 4)));
     let oz = f32_of(x(rd::<f32>(pp, 8)).fsub_m(rd::<f32>(vp, 8)));
     let mut out = [0.0f32; 3];
-    let sp = physical_get_speed(veh, GPtr::from_raw(out.as_mut_ptr()), ox, oy, oz);
+    let sp = GPtr::<u8>::cast::<f32>(physical_get_speed(veh, GPtr::<f32>::cast::<u8>(GPtr::from_raw(out.as_mut_ptr())), ox, oy, oz));
     let moving = if rd::<u32>(rd::<GPtr<u8>>(this, 0xC), 0x460) != 0 {
         true
     } else {
@@ -453,7 +445,7 @@ pub fn go_to_vehicle_and_lean_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) ->
         if should_load_gang_anims() == 0 {
             return rd::<GPtr<u8>>(this, 8);
         }
-        let i = get_animation_block_index(0x86F92C);
+        let i = get_animation_block_index(GPtr::from_addr(0x86F92C));
         if rd::<u8>(g::<u8>(0xB5D4B0), (i.wrapping_mul(32)) as isize) != 1 {
             request_model(i.wrapping_add(0x63E7), 8);
             return rd::<GPtr<u8>>(this, 8);
@@ -463,8 +455,8 @@ pub fn go_to_vehicle_and_lean_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) ->
         return rd::<GPtr<u8>>(this, 8);
     }
     if should_load_gang_anims() == 0 {
-        let i = get_animation_block_index(0x86F92C);
-        remove_anim_block_ref(i);
+        let i = get_animation_block_index(GPtr::from_addr(0x86F92C));
+        remove_anim_block_ref(i as u32);
         wr::<u8>(this, 0x14, 0);
     }
     rd::<GPtr<u8>>(this, 8)

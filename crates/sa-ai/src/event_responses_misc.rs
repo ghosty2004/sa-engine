@@ -2,16 +2,17 @@
 //! 1.0 US bytes (gta-reversed `EventHandler.cpp` as a reading aid; the bytes win). Unverified (docs/verify/HOWTO.md).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
 use crate::bindings::car_drive_mission_flee_scene_ctor;
 use crate::bindings::compute_knock_off_bike_response;
-use crate::bindings::leave_car_and_flee_ctor;
+use sa_world::bindings::leave_car_and_flee_ctor;
 use crate::bindings::leave_car_and_wander_ctor;
-use crate::bindings::smart_flee_point_ctor;
+use sa_world::bindings::smart_flee_point_ctor;
 use crate::bindings::use_attractor_ctor;
 use crate::bindings::use_attractor_run_ctor;
 use crate::bindings::use_attractor_sprint_ctor;
@@ -24,10 +25,8 @@ use sa_world::bindings::kill_ped_on_foot_ctor;
 use sa_world::bindings::sequence_add_task;
 use sa_world::bindings::sequence_ctor;
 use sa_world::bindings::smart_flee_entity_ctor;
-orig! {
-    fn leave_any_car_ctor(t: GPtr<u8>, delay: i32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x421150 => unported;
-    fn leave_car_ctor(t: GPtr<u8>, veh: GPtr<u8>, a: i32, b: i32, c: u32, d: u32) -> GPtr<u8> = thiscall 0x63B8C0 => unported;
-}
+use sa_world::bindings::leave_any_car_ctor;
+use sa_world::bindings::leave_car_ctor;
 
 /// 0.0
 const K_ZERO: usize = 0x858B50;
@@ -80,7 +79,7 @@ pub fn handler_compute_vehicle_on_fire_response(this: GPtr<u8>, e: GPtr<u8>, act
             if rd::<i32>(veh, 0x590) == 9 || rd::<i32>(veh, 0x594) == 2 {
                 compute_knock_off_bike_response(this, e, active, simplest);
             } else {
-                set(this, new_task(0x28, |t| die_ctor(t, 0, 0, 0xF, 0x4080_0000, 0, 0, 0, 0, 0)));
+                set(this, new_task(0x28, |t| die_ctor(t, 0, 0, 0xF, f32::from_bits(0x4080_0000), f32::from_bits(0), 0, 0, 0, 0)));
             }
             return;
         }
@@ -97,13 +96,13 @@ pub fn handler_compute_vehicle_on_fire_response(this: GPtr<u8>, e: GPtr<u8>, act
                 return;
             }
             let flee = new_task(0x40, |t| {
-                smart_flee_entity_ctor(t, veh, 0, 0x4170_0000, gu(FLEE_TIME), gu(FLEE_PERIOD), gu(FLEE_SHIFT))
+                smart_flee_entity_ctor(t, veh, 0, f32::from_bits(0x4170_0000), gu(FLEE_TIME), gu(FLEE_PERIOD), gu(FLEE_SHIFT))
             });
             sequence_add_task(seq, flee);
             set(this, seq);
         }
         0x38F => set(this, new_task(0x40, |t| {
-            smart_flee_entity_ctor(t, veh, 0, 0x4170_0000, gu(FLEE_TIME), gu(FLEE_PERIOD), gu(FLEE_SHIFT))
+            smart_flee_entity_ctor(t, veh, 0, f32::from_bits(0x4170_0000), gu(FLEE_TIME), gu(FLEE_PERIOD), gu(FLEE_SHIFT))
         })),
         0x38D => set(this, new_task(0x3C, |t| {
             flee_entity_ctor(t, veh, 0, 0x4170_0000, gu(FLEE_ENT_A), gu(FLEE_ENT_B), gu(FLEE_ENT_C))
@@ -116,7 +115,7 @@ pub fn handler_compute_vehicle_on_fire_response(this: GPtr<u8>, e: GPtr<u8>, act
             } else {
                 set(this, new_task(0x40, |t| {
                     let own = rd::<GPtr<u8>>(ped(this), 0x58C);
-                    smart_flee_entity_ctor(t, own, 0, gu(FLEE_SAFE_DIST), gu(FLEE_TIME), gu(FLEE_PERIOD), gu(FLEE_SHIFT))
+                    smart_flee_entity_ctor(t, own, 0, f32::from_bits(gu(FLEE_SAFE_DIST)), gu(FLEE_TIME), gu(FLEE_PERIOD), gu(FLEE_SHIFT))
                 }));
             }
         }
@@ -169,7 +168,7 @@ pub fn handler_compute_special_response(this: GPtr<u8>, e: GPtr<u8>, _active: GP
         0x38E => set(this, new_task(0x44, |t| smart_flee_point_ctor(t, player_pos(), 0, 0x447A_0000, 100_000))),
         0x38F => set(this, new_task(0x40, |t| {
             let player = find_player_ped(-1);
-            smart_flee_entity_ctor(t, player, 0, gu(FLEE_SAFE_DIST), gu(FLEE_TIME), gu(FLEE_PERIOD), gu(FLEE_SHIFT))
+            smart_flee_entity_ctor(t, player, 0, f32::from_bits(gu(FLEE_SAFE_DIST)), gu(FLEE_TIME), gu(FLEE_PERIOD), gu(FLEE_SHIFT))
         })),
         0x3E8 => set(this, new_task(0x38, |t| kill_ped_on_foot_ctor(t, find_player_ped(-1), -1, 0, 0, 0, 1))),
         0x44D => set(this, new_task(0x24, |t| arrest_ped_ctor(t, find_player_ped(-1)))),

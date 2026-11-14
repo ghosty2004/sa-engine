@@ -50,33 +50,26 @@ use crate::bindings::atomic_set_stream_rights_cb as rp_atomic_set_stream_rights_
 use crate::bindings::crt_qsort as qsort;
 use crate::bindings::engine_get_plugin_offset as rw_engine_get_plugin_offset;
 use crate::bindings::rw_engine_register_plugin;
-use crate::bindings::rx_locked_pipe_add_fragment;
-use crate::bindings::rx_locked_pipe_unlock;
-use crate::bindings::rx_pipeline_create;
-use crate::bindings::rx_pipeline_destroy;
-use crate::bindings::rx_pipeline_lock;
+use sa_core::bindings::rx_locked_pipe_add_fragment;
+use sa_core::bindings::rx_locked_pipe_unlock;
+use sa_core::bindings::rx_pipeline_create;
+use sa_core::bindings::rx_pipeline_destroy;
+use sa_core::bindings::rx_pipeline_lock;
 use sa_core::bindings::frame_get_ltm as rw_frame_get_ltm;
 use sa_core::bindings::rp_atomic_register_plugin;
 use sa_core::bindings::rp_atomic_register_plugin_stream;
 use sa_core::bindings::rp_geometry_register_plugin;
 use sa_core::bindings::rp_geometry_register_plugin_stream;
 use sa_core::bindings::rw_d3d9_get_caps;
+use crate::bindings::atomic_set_pipeline as atomic_set_pipeline_call;
+use crate::bindings::bones_used_call as skin_find_used_bones;
+use crate::bindings::skin_deinitialize as skin_deinitialize_call;
+use crate::bindings::skin_initialize as skin_initialize_call;
+use crate::bindings::skin_split_data_destroy as split_data_destroy_call;
+use sa_core::bindings::rw_matrix_multiply;
 orig! {
-    /// Bone-usage scan of `RpSkinCreate` (0x7C70C0): (skin, indices, weights, usedList, &usedCount, numVertices)
-    fn skin_find_used_bones(skin: GPtr<u8>, idx: GPtr<u8>, w: GPtr<u8>, used: GPtr<u8>, count: GPtr<u32>, n: u32) = cdecl 0x7C70C0 => unported;
-
-    /// `_rpSkinDeinitialize(geometry)` (0x7C8820)
-    fn skin_deinitialize_call(geom: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C8820 => rp_skin_deinitialize;
-    /// `_rpSkinInitialize(geometry)` (0x7C8740)
-    fn skin_initialize_call(geom: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C8740 => rp_skin_initialize;
-    /// `_rpSkinSplitDataDestroy(skin)` (0x7C8B10)
-    fn split_data_destroy_call(skin: GPtr<u8>) -> u32 = cdecl 0x7C8B10 => rp_skin_split_data_destroy;
-    /// `_rpSkinAtomicSetPipeline(atomic, type)` (0x7C89B0)
-    fn atomic_set_pipeline_call(atomic: GPtr<u8>, ty: u32) -> GPtr<u8> = cdecl 0x7C89B0 => rp_skin_atomic_set_pipeline;
     /// `RpSkinGetSkinToBoneMatrices(skin)` (0x7C7810)
     fn get_skin_to_bone_matrices_call(skin: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C7810 => skin_to_bone_ptr;
-    /// `RwMatrixMultiply(dst, a, b)` (0x7F18B0)
-    fn rw_matrix_multiply(dst: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F18B0 => crate::matrix::rw_matrix_multiply;
     /// `_rwD3D9VSGetInverseWorldMatrix(out)` (0x7647B0)
     fn vs_get_inverse_world_matrix(out: GPtr<u8>) = cdecl 0x7647B0 => crate::d3d9vsmat::vs_get_inverse_world_matrix;
     /// `_rpD3D9SkinPipelineCreate()` (0x7CB2B0)
@@ -617,9 +610,8 @@ pub fn rp_d3d9_skin_pipeline_create() -> GPtr<u8> {
 }
 
 use crate::bindings::free_list_create_prealloc as freelist_create_prealloc;
+use crate::bindings::free_list_destroy as freelist_destroy;
 orig! {
-    /// `RwFreeListDestroy(fl)` (0x801B80)
-    fn freelist_destroy(fl: GPtr<u8>) -> u32 = cdecl 0x801B80 => crate::memory::rw_freelist_destroy;
     /// `_rpSkinPipelinesCreate(flags)` (0x7C8980)
     fn skin_pipelines_create_call(flags: u32) -> u32 = cdecl 0x7C8980 => rp_skin_pipelines_create;
     /// `_rpSkinPipelinesDestroy()` (0x7C86F0)

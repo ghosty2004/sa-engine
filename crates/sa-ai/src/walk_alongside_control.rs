@@ -7,36 +7,32 @@
 //! +0x20 minimum 2D entity distance, +0x44 the position calculator's offset.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
 use crate::common::*;
 
-use crate::bindings::clump_get_association;
-use crate::bindings::ped_set_move_anim_speed;
+use sa_core::bindings::clump_get_association;
+use sa_world::bindings::ped_set_move_anim_speed;
 use crate::bindings::walk_alongside_create_sub_task;
 use sa_core::bindings::matrix_mul_vec;
 use sa_core::bindings::vector_dot_product;
 use sa_world::bindings::max_f;
 use sa_world::bindings::min_f;
-use sa_world::bindings::vector_magnitude_sqr;
+use sa_core::bindings::vector_magnitude_sqr;
 use sa_world::bindings::vector_mul_scalar as vector_scale;
-use sa_world::bindings::vector_sub;
+use sa_core::bindings::vector_sub;
+use crate::bindings::approx_equal;
+use crate::bindings::go_to_point_update_point;
+use crate::bindings::intel_get_move_state_from_go_to_task;
+use sa_world::bindings::tm_find_active_task_by_type;
+use sa_world::bindings::vector_add_assign;
 orig! {
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
     /// `CTask::MakeAbortable(CPed*, int32, const CEvent*)` (vtable +0x18, `ret 0xC`)
     fn v_task_make_abortable(t: GPtr<u8>, p: GPtr<u8>, prio: u32, e: u32) -> u8 = thiscall vslot 0x18 => unported;
-    /// `CPedIntelligence::GetMoveStateFromGoToTask()` (0x601D70)
-    fn intel_get_move_state_from_go_to_task(intel: GPtr<u8>) -> i32 = thiscall 0x601D70 => unported;
-    /// `CTaskManager::FindActiveTaskByType(int32)` (0x681740, `ret 4`)
-    fn tm_find_active_task_by_type(tm: GPtr<u8>, ty: u32) -> GPtr<u8> = thiscall 0x681740 => unported;
-    /// `CVector::operator+=(const CVector&)` (0x411A00, `ret 4`; component by component)
-    fn vector_add_assign(this: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = thiscall 0x411A00 => unported;
-    /// `approxEqual(float a, float b, float eps)` (0x4EEA80): `|a - b| < eps`
-    fn approx_equal(a: f32, b: f32, eps: f32) -> u32 = cdecl 0x4EEA80 => unported;
-    /// `CTaskSimpleGoToPoint::UpdatePoint(const CVector&, float radius, bool)` (0x645700, `ret 0xC`)
-    fn go_to_point_update_point(t: GPtr<u8>, p: GPtr<u8>, radius: f32, b: u32) = thiscall 0x645700 => unported;
 }
 
 /// 0.0f (0x858B50), 2.0f (0x858CA0), 0.0625f (0x858620), 0.0125f (0x85A5C4), 4.0f (0x858B90)
@@ -73,7 +69,7 @@ fn settle_speed(ped: GPtr<u8>, anim: GPtr<u8>) {
     let old = rd::<f32>(anim, 0x24);
     ped_set_move_anim_speed(ped, anim);
     let new = rd::<f32>(anim, 0x24);
-    let v = if approx_equal(old, new, SPEED_EPS) as u8 != 0 {
+    let v = if (approx_equal(old, new, SPEED_EPS) as u32) as u8 != 0 {
         old
     } else if !X87::from_f32(old).fcom(X87::from_f32(new)).test_any(0x41) {
         step(old, false)
@@ -110,8 +106,8 @@ pub fn walk_alongside_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8
         let sub = rd::<GPtr<u8>>(this, 8);
         return if v_task_make_abortable(sub, ped, 1, 0) != 0 { GPtr::NULL } else { rd::<GPtr<u8>>(this, 8) };
     }
-    let ped_walk = clump_get_association(rd::<u32>(ped, 0x18), 0);
-    let target_walk = clump_get_association(rd::<u32>(rd::<GPtr<u8>>(this, 0xC), 0x18), 0);
+    let ped_walk = clump_get_association(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0);
+    let target_walk = clump_get_association(GPtr::from_addr(rd::<u32>(rd::<GPtr<u8>>(this, 0xC), 0x18) as usize), 0);
     let ms = intel_get_move_state_from_go_to_task(rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0xC), 0x47C));
     let moving = matches!(ms, 4 | 6 | 7);
     let pp = entity_pos(ped);
@@ -144,7 +140,7 @@ pub fn walk_alongside_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8
             let base: GPtr<u8> = GPtr::from_raw(buf.as_mut_ptr()).cast();
             let point = base;
             let diff = base.byte_add(0xC);
-            matrix_mul_vec(point, rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0xC), 0x14), this.byte_add(0x14));
+            matrix_mul_vec(point.cast::<f32>(), rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0xC), 0x14), this.byte_add(0x14));
             let ped_pos = entity_pos(ped);
             vector_sub(diff, point, ped_pos);
             wr::<f32>(diff, 8, 0.0);
@@ -160,7 +156,7 @@ pub fn walk_alongside_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8
                     .to_f32();
                 let v = X87::from_f64_exact(vector_dot_product(ped_pos, fwd)).fadd_m(neg);
                 if !v.fcom(X87::from_f32(kf(K_ZERO))).test_parity(5) {
-                    let m2 = X87::from_f64_exact(vector_magnitude_sqr(diff)).to_f32();
+                    let m2 = X87::from_f64_exact(vector_magnitude_sqr(diff.cast::<f32>())).to_f32();
                     if !ped_walk.is_null() {
                         if !X87::from_f32(m2).fcom(X87::from_f32(kf(K_TWO))).test_parity(5) {
                             let tmp = base.byte_add(8);

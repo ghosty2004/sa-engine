@@ -28,6 +28,8 @@ use sa_core::bindings::find_player_vehicle;
 use sa_core::bindings::matrix_update_rw_matrix;
 use sa_core::bindings::world_clear_scan_codes;
 use sa_stream::bindings::get_2d_effect;
+use crate::bindings::garage_is_entity_entirely_outside;
+use sa_core::bindings::entity_resolve_references;
 orig! {
     /// `CCustomRoadsignMgr::RenderRoadsignAtomic(RpAtomic*, const CVector&)` (0x6FF350, cdecl)
     fn render_roadsign_atomic(a: GPtr<u8>, cam: GPtr<u8>) = cdecl 0x6FF350 => unported;
@@ -43,14 +45,10 @@ orig! {
     fn streaming_render_entity(l: GPtr<u8>) = cdecl 0x4096D0 => unported;
     /// `CEntity::RenderEffects` (0x5342B0)
     fn entity_render_effects_o(e: GPtr<u8>) = thiscall 0x5342B0 => crate::world::mvpb_world::entity_render_effects;
-    /// `CEntity::ResolveReferences` (0x571A40)
-    fn entity_resolve_references(e: GPtr<u8>) = thiscall 0x571A40 => crate::world::entity::resolve_references;
     /// `CReplay::GoToNextBlock` (0x45E2A0)
     fn replay_go_to_next_block() = cdecl 0x45E2A0 => unported;
     /// vehicle virtual +0xBC (returns a vector pointer: the steering/lean data the replay stores)
     fn v_vehicle_bc(v: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0xBC => unported;
-    /// `CGarage::IsEntityEntirelyOutside(CEntity*, float)` (0x448D30, `ret 8`)
-    fn garage_is_entity_entirely_outside(g: GPtr<u8>, e: GPtr<u8>, m: f32) -> u32 = thiscall 0x448D30 => unported;
     /// `CWorld::FindObjectsInRangeSectorList` (0x563500, cdecl)
     fn find_in_range_list(list: GPtr<u8>, p: GPtr<u8>, r: f32, two_d: u8, n: GPtr<i16>, max: i16, out: GPtr<GPtr<u8>>) = cdecl 0x563500 => crate::world::cworld2::find_objects_in_range_sector_list;
     /// `CWorld::FindObjectsOfTypeInRangeSectorList` (0x5635C0, cdecl)
@@ -233,10 +231,10 @@ pub fn replay_store_clothes_desc(desc: GPtr<u8>, out: GPtr<u8>) {
 pub fn garage_is_player_entirely_outside(this: GPtr<u8>, margin: f32) -> u32 {
     if !find_player_vehicle(-1, 0).is_null() {
         let v = find_player_vehicle(-1, 0);
-        garage_is_entity_entirely_outside(this, v, margin)
+        garage_is_entity_entirely_outside(this, v, margin) as u32
     } else {
         let p = find_player_ped(-1);
-        garage_is_entity_entirely_outside(this, p, margin)
+        garage_is_entity_entirely_outside(this, p, margin) as u32
     }
 }
 

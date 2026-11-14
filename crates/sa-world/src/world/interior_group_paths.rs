@@ -3,18 +3,14 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use super::common::{g, rd, wr};
 
 use sa_core::bindings::matrix_mul_vec;
 use sa_stream::bindings::placeable_allocate_matrix;
 use sa_stream::bindings::simple_transform_update_matrix;
-orig! {
-    /// `CPathFind::AreNodesLoadedForArea(float minX, float maxX, float minY, float maxY)` (0x44DD10) on
-    /// `ThePaths` (0x96F050); EAX as it leaves it
-    fn are_nodes_loaded_for_area(paths: GPtr<u8>, min_x: f32, max_x: f32, min_y: f32, max_y: f32) -> u32 = thiscall 0x44DD10 => unported;
-}
+use crate::bindings::are_nodes_loaded_for_area;
 
 /// `InteriorGroup_c::ArePathsLoaded()` (0x595380): the eight corners of the group entity's (+8)
 /// col-model box (corner order: (x0, y0, z0), (x0, y1, z0), (x1, y1, z0), (x1, y0, z0), then the same
@@ -52,7 +48,7 @@ pub fn interior_group_are_paths_loaded(this: GPtr<u8>) -> u32 {
         }
         let mut out = [0u32; 3];
         let cp: GPtr<u8> = GPtr::from_raw(c as *mut [u32; 3]).cast();
-        let r = matrix_mul_vec(GPtr::from_raw(&mut out as *mut [u32; 3]).cast(), rd::<GPtr<u8>>(e, 0x14), cp);
+        let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::from_raw(&mut out as *mut [u32; 3]).cast()), rd::<GPtr<u8>>(e, 0x14), cp));
         for k in 0..3isize {
             wr::<u32>(cp, 4 * k, rd::<u32>(r, 4 * k));
         }
@@ -69,7 +65,7 @@ pub fn interior_group_are_paths_loaded(this: GPtr<u8>) -> u32 {
             }
         }
     }
-    are_nodes_loaded_for_area(GPtr::from_addr(0x96_F050), mn[0], mx[0], mn[1], mx[1])
+    are_nodes_loaded_for_area(GPtr::from_addr(0x96_F050), mn[0], mx[0], mn[1], mx[1]) as u32
 }
 
 /// This module's registrations.

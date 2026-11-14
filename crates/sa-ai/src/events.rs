@@ -3,6 +3,7 @@
 //! (`docs/re/specs/AI/CEvent*.md`, `_unattributed-I1.md`); the exe wins over gta-reversed.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::orig::at_site;
 use sa_core::{hook, orig};
@@ -265,7 +266,7 @@ use crate::bindings::dtor_4acdd0;
 use crate::bindings::dtor_4ae3c0;
 use crate::bindings::dtor_4ae7a0;
 use crate::bindings::dtor_4aed60;
-use crate::bindings::dtor_4aeea0;
+use sa_world::bindings::dtor_4aeea0;
 use crate::bindings::dtor_4af0a0;
 use crate::bindings::dtor_4b0d00;
 use sa_world::bindings::event_attractor_dtor as dtor_4af400;
@@ -335,7 +336,9 @@ pub fn event_attractor_sdd_4b6260(this: GPtr<u8>, flags: u32) -> GPtr<u8> {
 /// `CEventScriptCommand::~CEventScriptCommand` (0x4B6440): `FUN_004b0a50`, inlined pool delete.
 #[hook(addr = 0x4B6440, conv = thiscall, name = "CEventScriptCommand::~CEventScriptCommand", expect = "56 57 8B F9 E8 07 A6 FF FF")]
 pub fn event_script_command_sdd_4b6440(this: GPtr<u8>, flags: u32) -> GPtr<u8> {
-    sdd_inline(this, flags, dtor_4b0a50)
+    sdd_inline(this, flags, |t| {
+        dtor_4b0a50(t.cast());
+    })
 }
 
 /// `CEventInAir::~CEventInAir` (0x4B64D0): `FUN_004b0d00` (`vtbl = 0x85AB38`), inlined pool delete.
@@ -349,29 +352,21 @@ pub fn event_in_air_sdd_4b64d0(this: GPtr<u8>, flags: u32) -> GPtr<u8> {
 
 use crate::bindings::event_base_dtor;
 use sa_core::bindings::entity_clean_up_old_reference;
+use crate::bindings::building_collision_ctor;
+use crate::bindings::create_partner_event_ctor as ctor_5f6190;
+use crate::bindings::ctor_4aecd0;
+use crate::bindings::ctor_4af010;
+use crate::bindings::event_lean_on_vehicle_ctor as lean_on_vehicle_ctor;
+use crate::bindings::event_walk_into_vehicle_ctor as walk_into_vehicle_ctor;
+use crate::bindings::object_collision_ctor;
+use crate::bindings::ped_collision_ctor;
+use crate::bindings::walk_into_ped_ctor;
+use sa_world::bindings::acquaintance_ped_ctor;
+use sa_world::bindings::ctor_4aedf0;
+use sa_world::bindings::event_group_event_ctor as group_event_ctor;
 orig! {
-    fn ctor_4aedf0(this: GPtr<u8>, a: u32) -> GPtr<u8> = thiscall 0x4AEDF0 => unported;
-    fn ctor_4af010(this: GPtr<u8>, a: u32) -> GPtr<u8> = thiscall 0x4AF010 => unported;
-    /// `CEventAcquaintancePed::Constructor(CPed*)` (0x4AF820)
-    fn acquaintance_ped_ctor(this: GPtr<u8>, ped: u32) -> GPtr<u8> = thiscall 0x4AF820 => unported;
-    /// `CEventGroupEvent::CEventGroupEvent(CPed*, CEvent*)` (0x4ADFD0)
-    fn group_event_ctor(this: GPtr<u8>, ped: u32, ev: GPtr<u8>) -> GPtr<u8> = thiscall 0x4ADFD0 => unported;
     /// `CEvent::Clone` (vtable +0x10)
     fn ev_clone(ev: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x10 => unported;
-    /// `CEventPotentialWalkIntoVehicle::Constructor` (0x4AE320)
-    fn walk_into_vehicle_ctor(this: GPtr<u8>, a: u32, b: u32) -> GPtr<u8> = thiscall 0x4AE320 => unported;
-    fn ctor_4aecd0(this: GPtr<u8>, a: u32, b: u32) -> GPtr<u8> = thiscall 0x4AECD0 => unported;
-    /// `CEventLeanOnVehicle::Constructor` (0x65DAF0)
-    fn lean_on_vehicle_ctor(this: GPtr<u8>, a: u32, b: u32) -> GPtr<u8> = thiscall 0x65DAF0 => unported;
-    /// `CEventPotentialWalkIntoPed::Constructor` (0x4AE6E0)
-    fn walk_into_ped_ctor(this: GPtr<u8>, a: u32, b: GPtr<u8>, c: u32) -> GPtr<u8> = thiscall 0x4AE6E0 => unported;
-    fn ctor_5f6190(this: GPtr<u8>, a: u32, b: u32, c: u32, d: u32) -> GPtr<u8> = thiscall 0x5F6190 => unported;
-    /// `CEventObjectCollision::Constructor` (0x4ACCF0)
-    fn object_collision_ctor(this: GPtr<u8>, a: u32, b: u32, c: u32, d: GPtr<u8>, e: GPtr<u8>, f: i32) -> GPtr<u8> = thiscall 0x4ACCF0 => unported;
-    /// `CEventBuildingCollision::Constructor` (0x4ACF00)
-    fn building_collision_ctor(this: GPtr<u8>, a: u32, b: u32, c: u32, d: GPtr<u8>, e: GPtr<u8>, f: i32) -> GPtr<u8> = thiscall 0x4ACF00 => unported;
-    /// `CEventPedCollisionWithPed::Constructor` (0x4AC990)
-    fn ped_collision_ctor(this: GPtr<u8>, a: u32, b: u32, c: u32, d: GPtr<u8>, e: GPtr<u8>, f: i32, h: i32) -> GPtr<u8> = thiscall 0x4AC990 => unported;
 }
 
 /// `vt_85b0b0::CloneEditable` (0x4B7280): inlined `operator new`, `FUN_004aedf0(e, this[+0x14])`.
@@ -381,7 +376,7 @@ pub fn vt_85b0b0_clone_editable_4b7280(this: GPtr<u8>) -> GPtr<u8> {
     if e.is_null() {
         GPtr::NULL
     } else {
-        ctor_4aedf0(e, rd::<u32>(this, 0x14))
+        ctor_4aedf0(e, GPtr::from_addr(rd::<u32>(this, 0x14) as usize))
     }
 }
 
@@ -392,7 +387,7 @@ pub fn vt_85b0f8_clone_4b72f0(this: GPtr<u8>) -> GPtr<u8> {
     if e.is_null() {
         GPtr::NULL
     } else {
-        ctor_4af010(e, rd::<u32>(this, 0xC))
+        ctor_4af010(e, GPtr::from_addr(rd::<u32>(this, 0xC) as usize))
     }
 }
 
@@ -403,7 +398,7 @@ fn acquaintance_clone(this: GPtr<u8>, vtbl: u32) -> GPtr<u8> {
     if e.is_null() {
         return GPtr::NULL;
     }
-    acquaintance_ped_ctor(e, rd::<u32>(this, 0x14));
+    acquaintance_ped_ctor(e, GPtr::from_addr(rd::<u32>(this, 0x14) as usize));
     wr::<u32>(e, 0, vtbl);
     e
 }
@@ -447,7 +442,7 @@ pub fn event_group_event_clone_4b6ee0(this: GPtr<u8>) -> GPtr<u8> {
         return GPtr::NULL;
     }
     let c = ev_clone(rd::<GPtr<u8>>(this, 0x10));
-    group_event_ctor(e, rd::<u32>(this, 0xC), c)
+    group_event_ctor(e, GPtr::from_addr(rd::<u32>(this, 0xC) as usize), c)
 }
 
 /// `CEventPotentialWalkIntoVehicle::CloneEditable` (0x4B6FB0): inlined `operator new`; ctor(+0x14, +0x18).
@@ -457,7 +452,7 @@ pub fn event_potential_walk_into_vehicle_clone_editable_4b6fb0(this: GPtr<u8>) -
     if e.is_null() {
         GPtr::NULL
     } else {
-        walk_into_vehicle_ctor(e, rd::<u32>(this, 0x14), rd::<u32>(this, 0x18))
+        walk_into_vehicle_ctor(e, GPtr::from_addr(rd::<u32>(this, 0x14) as usize), rd::<u32>(this, 0x18))
     }
 }
 
@@ -468,7 +463,7 @@ pub fn vt_85b070_clone_4b7210(this: GPtr<u8>) -> GPtr<u8> {
     if e.is_null() {
         return GPtr::NULL;
     }
-    ctor_4aecd0(e, u32::from(rd::<u8>(this, 0xC)), rd::<u32>(this, 0x10))
+    ctor_4aecd0(e, u32::from(rd::<u8>(this, 0xC)), GPtr::from_addr(rd::<u32>(this, 0x10) as usize))
 }
 
 /// `CEventLeanOnVehicle::Clone` (0x65DB70): `operator new(0x14)`; ctor(+0xC, +0x10).
@@ -478,7 +473,7 @@ pub fn event_lean_on_vehicle_clone_65db70(this: GPtr<u8>) -> GPtr<u8> {
     if e.is_null() {
         GPtr::NULL
     } else {
-        lean_on_vehicle_ctor(e, rd::<u32>(this, 0xC), rd::<u32>(this, 0x10))
+        lean_on_vehicle_ctor(e, GPtr::from_addr(rd::<u32>(this, 0xC) as usize), rd::<u32>(this, 0x10))
     }
 }
 
@@ -491,7 +486,7 @@ pub fn event_potential_walk_into_ped_clone_editable_4b7090(this: GPtr<u8>) -> GP
     }
     walk_into_ped_ctor(
         e,
-        rd::<u32>(this, 0x20),
+        GPtr::from_addr(rd::<u32>(this, 0x20) as usize),
         this.byte_add(0x14),
         rd::<u32>(this, 0x24),
     )
@@ -506,8 +501,8 @@ pub fn vt_86c6d0_clone_5f6280(this: GPtr<u8>) -> GPtr<u8> {
     }
     ctor_5f6190(
         e,
-        rd::<u32>(this, 0xC),
-        rd::<u32>(this, 0x10),
+        rd::<u32>(this, 0xC) as i32,
+        GPtr::from_addr(rd::<u32>(this, 0x10) as usize),
         u32::from(rd::<u8>(this, 0x14)),
         rd::<u32>(this, 0x18),
     )
@@ -525,10 +520,10 @@ pub fn event_object_collision_clone_4b6cc0(this: GPtr<u8>) -> GPtr<u8> {
         e,
         u32::from(rd::<u16>(this, 0xC)),
         rd::<u32>(this, 0x10),
-        rd::<u32>(this, 0x14),
+        GPtr::from_addr(rd::<u32>(this, 0x14) as usize),
         this.byte_add(0x18),
         this.byte_add(0x24),
-        i32::from(rd::<i16>(this, 0xE)),
+        i32::from(rd::<i16>(this, 0xE)) as u16,
     )
 }
 
@@ -544,10 +539,10 @@ pub fn event_building_collision_clone_4b6d40(this: GPtr<u8>) -> GPtr<u8> {
         e,
         u32::from(rd::<u16>(this, 0xC)),
         rd::<u32>(this, 0x10),
-        rd::<u32>(this, 0x14),
+        GPtr::from_addr(rd::<u32>(this, 0x14) as usize),
         this.byte_add(0x18),
         this.byte_add(0x24),
-        i32::from(rd::<i16>(this, 0xE)),
+        i32::from(rd::<i16>(this, 0xE)) as u16,
     )
 }
 
@@ -563,11 +558,11 @@ pub fn event_ped_collision_with_ped_clone_4b6c40(this: GPtr<u8>) -> GPtr<u8> {
         e,
         u32::from(rd::<u16>(this, 0xC)),
         rd::<u32>(this, 0x10),
-        rd::<u32>(this, 0x14),
+        GPtr::from_addr(rd::<u32>(this, 0x14) as usize),
         this.byte_add(0x18),
         this.byte_add(0x24),
-        i32::from(rd::<i16>(this, 0x30)),
-        i32::from(rd::<i16>(this, 0x32)),
+        i32::from(rd::<i16>(this, 0x30)) as u16,
+        i32::from(rd::<i16>(this, 0x32)) as u16,
     )
 }
 
@@ -585,11 +580,11 @@ pub fn event_ped_collision_with_player_clone_5feda0(this: GPtr<u8>) -> GPtr<u8> 
         e,
         u32::from(rd::<u16>(this, 0xC)),
         f,
-        rd::<u32>(this, 0x14),
+        GPtr::from_addr(rd::<u32>(this, 0x14) as usize),
         this.byte_add(0x18),
         this.byte_add(0x24),
-        i32::from(rd::<i16>(this, 0x30)),
-        i32::from(rd::<i16>(this, 0x32)),
+        i32::from(rd::<i16>(this, 0x30)) as u16,
+        i32::from(rd::<i16>(this, 0x32)) as u16,
     );
     wr::<u32>(e, 0, 0x86C970);
     e
@@ -602,7 +597,7 @@ pub fn event_lean_on_vehicle_dtor_65dc10(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x86F878);
     let v = rd::<GPtr<u8>>(this, 0xC);
     if !v.is_null() {
-        entity_clean_up_old_reference(v, this.byte_add(0xC));
+        entity_clean_up_old_reference(v, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0xC)));
     }
     event_base_dtor(this);
 }
@@ -637,7 +632,7 @@ pub fn event_group_event_dtor_4ae070(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x85AE48);
     let p = rd::<GPtr<u8>>(this, 0xC);
     if !p.is_null() {
-        entity_clean_up_old_reference(p, this.byte_add(0xC));
+        entity_clean_up_old_reference(p, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0xC)));
     }
     let e = rd::<GPtr<u8>>(this, 0x10);
     if !e.is_null() {
@@ -706,9 +701,8 @@ pub fn event_group_event_base_takes_priority_4ae100(this: GPtr<u8>, other: GPtr<
 use crate::bindings::ik_get_look_at_entity;
 use sa_world::bindings::ik_is_looking;
 use sa_world::bindings::tm_find_active_task_by_type;
+use crate::bindings::gang_hassle_ped_ctor;
 orig! {
-    /// `CTaskGangHasslePed::Constructor(CPed*, int, int, int)` (0x65FED0)
-    fn gang_hassle_ped_ctor(this: GPtr<u8>, ped: GPtr<u8>, a: u32, b: u32, c: u32) -> GPtr<u8> = thiscall 0x65FED0 => unported;
     /// `CTask::GetTaskType` (vtable +0x10)
     fn task_get_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
 }
@@ -785,7 +779,7 @@ use sa_core::bindings::entity_register_reference as entity_register_reference_ev
 fn find_chat_task(ped: GPtr<u8>) -> GPtr<u8> {
     for t in [0x4B2, 0x4BF, 0x4B3] {
         let intel = rd::<GPtr<u8>>(ped, 0x47C);
-        let r = tm_find_active_task_by_type(intel.byte_add(4), t);
+        let r = tm_find_active_task_by_type(intel.byte_add(4), t as u32);
         if !r.is_null() {
             return r;
         }
@@ -795,10 +789,7 @@ fn find_chat_task(ped: GPtr<u8>) -> GPtr<u8> {
 
 // ---- FRONTIER-1 (batch frontier-1-1): the walk-into-fire events and the player-ped collision event --------------
 
-orig! {
-    /// `CEvent::~CEvent` as inlined by the fire events (0x4B1F00)
-    fn dtor_4b1f00(this: GPtr<u8>) = thiscall 0x4B1F00 => event_base_dtor_4b1f00;
-}
+use crate::bindings::dtor_4b1f00;
 
 /// `CEventPotentialWalkIntoFire::Destructor` (0x4B1F00, folded: the CEvent part only): `vtbl = 0x85AB38` (CEvent), nothing else.
 #[hook(addr = 0x4B1F00, conv = thiscall, name = "CEventPotentialWalkIntoFire::Destructor", expect = "C7 01 38 AB 85 00 C3", preserve = "ecx",
@@ -839,7 +830,7 @@ pub fn vt_85b0b0_affects_ped_4aef00(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         return 0;
     }
     let ik = g::<u8>(0xC15448);
-    if ik_is_looking(ik, ped) != 0 && ik_get_look_at_entity(ik, ped) == src.addr() as u32 {
+    if ik_is_looking(ik, ped) != 0 && GPtr::<u8>::addr(ik_get_look_at_entity(ik, ped)) as u32 == src.addr() as u32 {
         return 0;
     }
     let mine = find_chat_task(ped);

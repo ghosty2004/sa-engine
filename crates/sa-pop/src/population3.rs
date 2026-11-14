@@ -28,29 +28,23 @@ use sa_world::bindings::set_char_created_by as ped_set_char_created_by;
 use sa_world::bindings::set_ped_decision_maker_type as intel_set_ped_decision_maker_type;
 use sa_world::bindings::task_wander_cop_ctor;
 use sa_world::bindings::wander_get_wander_task_by_ped_type as get_wander_task_by_ped_type;
+use sa_world::bindings::add_ped as add_ped_call;
+use sa_world::bindings::ped_set_current_weapon_slot;
+use sa_world::bindings::place_ped_at_effect;
+use sa_world::bindings::set_orientation as placeable_set_orientation;
+use sa_world::bindings::stand_still_ctor as task_stand_still_ctor;
+use sa_world::bindings::tm_set_task as task_manager_set_task;
 orig! {
-    /// `CPed::SetCurrentWeapon(int32 slot)` (0x5E61F0, `ret 4`)
-    fn ped_set_current_weapon_slot(ped: GPtr<u8>, slot: u32) = thiscall 0x5E61F0 => unported;
-    /// `CPlaceable::SetOrientation(float, float, float)` (0x439A80, `ret 0xC`)
-    fn placeable_set_orientation(e: GPtr<u8>, xr: f32, yr: f32, zr: f32) = thiscall 0x439A80 => unported;
-    /// `CTaskSimpleStandStill::CTaskSimpleStandStill(int32, bool, bool, float)` (0x62F310, `ret 0x10`)
-    fn task_stand_still_ctor(this: GPtr<u8>, time: u32, looped: u32, b: u32, f: f32) -> GPtr<u8> = thiscall 0x62F310 => unported;
-    /// `CTaskManager::SetTask(CTask*, int32 slot, bool)` (0x681AF0, `ret 0xC`)
-    fn task_manager_set_task(tm: GPtr<u8>, task: GPtr<u8>, slot: u32, b: u32) = thiscall 0x681AF0 => unported;
     /// `CPedAttractorManager::HasQueueTailArrivedAtSlot(const C2dEffect*, const CEntity*)` (0x5EBBA0, `ret 8`)
     fn has_queue_tail_arrived_at_slot(mgr: GPtr<u8>, fx: GPtr<u8>, ent: GPtr<u8>) -> u8 = thiscall 0x5EBBA0 => unported;
-    /// `CPopulation::AddPed(ePedType, uint32, const CVector&, bool)` (0x612710)
-    fn add_ped_call(ty: u32, model: u32, pos: GPtr<f32>, make_wander: u8) -> GPtr<u8> = cdecl 0x612710 => add_ped;
-    /// `CPedAttractorPedPlacer::PlacePedAtEffect(const C2dEffect&, CEntity*, CPed*, float)` (0x5EA390)
-    fn place_ped_at_effect(fx: GPtr<u8>, ent: GPtr<u8>, ped: GPtr<u8>, f: f32) = cdecl 0x5EA390 => unported;
     /// `CPedIntelligence::ProcessEventHandler()` (0x601BB0)
     fn intel_process_event_handler(intel: GPtr<u8>) = thiscall 0x601BB0 => unported;
 }
 
 /// `GiveDelayedWeapon(w, 25001)` + `SetCurrentWeapon(GetWeaponInfo(w, 1)->m_nSlot)` (AddPed's weapon tail).
 fn give_weapon(ped: GPtr<u8>, w: u32) {
-    ped_give_delayed_weapon(ped, w, 0x61A9);
-    let slot = rd::<u32>(get_weapon_info(w, 1), 0x14);
+    ped_give_delayed_weapon(ped, w as i32, 0x61A9);
+    let slot = rd::<u32>(get_weapon_info(w as i32, 1), 0x14);
     ped_set_current_weapon_slot(ped, slot);
 }
 
@@ -190,13 +184,13 @@ pub fn add_ped(ty: u32, model: u32, pos: GPtr<f32>, make_wander: u8) -> GPtr<u8>
         // 0x612AFA: an event about the player (type word 0x4BC) and a weapon 10..13 with no ammo
         let mut ev = [0u32; 16];
         let evp = GPtr::from_raw(ev.as_mut_ptr());
-        event_player_ctor(evp, find_player_ped(-1));
+        event_player_ctor(evp.cast::<u8>(), find_player_ped(-1));
         wr::<u16>(evp.cast(), 0xE, 0x4BC);
         event_group_add(rd::<GPtr<u8>>(ped, 0x47C).byte_add(0x68), evp.cast(), 0);
         let w = random_int_in_range(0xA, 0xE) as u32;
-        ped_give_delayed_weapon(ped, w, 0);
+        ped_give_delayed_weapon(ped, w as i32, 0);
         ped_set_current_weapon_type(ped, w);
-        event_player_dtor(evp);
+        event_player_dtor(evp.cast::<u8>());
     }
     if cheat(0x96913E) {
         // 0x612B6B: the nearest other ped of the pool (descending slots, squared 3D distance, `jp` keeps the
@@ -230,7 +224,7 @@ pub fn add_ped(ty: u32, model: u32, pos: GPtr<f32>, make_wander: u8) -> GPtr<u8>
         if !best.is_null() {
             let mut ev = [0u32; 8];
             let evp = GPtr::from_raw(ev.as_mut_ptr());
-            event_acquaintance_ped_ctor(evp, best);
+            event_acquaintance_ped_ctor(evp.cast::<u8>(), best);
             evp.write(0x0085_8E68);
             wr::<u16>(evp.cast(), 0xE, 0x3E8);
             event_group_add(rd::<GPtr<u8>>(ped, 0x47C).byte_add(0x68), evp.cast(), 0);
@@ -243,19 +237,14 @@ pub fn add_ped(ty: u32, model: u32, pos: GPtr<f32>, make_wander: u8) -> GPtr<u8>
 
 use sa_world::world::common::entity_pos_f as ped_pos;
 
+use sa_world::bindings::acquaintance_ped_ctor as event_acquaintance_ped_ctor;
+use sa_world::bindings::ctor_4aedf0 as event_player_ctor;
+use sa_world::bindings::dtor_4aeea0 as event_player_dtor;
+use sa_world::bindings::event_acquaintance_ped_dtor;
+use sa_world::bindings::ped_set_current_weapon as ped_set_current_weapon_type;
 orig! {
     /// `rand()` call sites go through `crate::common::rand_at`; `CWorld::FindPlayerPed(int32)` (0x56E210)
     fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
-    /// The event constructor at 0x4AEDF0 (thiscall, `(CPed*)`), used by AddPed's ped-riot cheat path
-    fn event_player_ctor(this: GPtr<u32>, ped: GPtr<u8>) -> GPtr<u32> = thiscall 0x4AEDF0 => unported;
-    /// Its destructor (0x4AEEA0)
-    fn event_player_dtor(this: GPtr<u32>) = thiscall 0x4AEEA0 => unported;
-    /// `CPed::SetCurrentWeapon(eWeaponType)` (0x5E6280)
-    fn ped_set_current_weapon_type(ped: GPtr<u8>, w: u32) = thiscall 0x5E6280 => unported;
-    /// `CEventAcquaintancePed::CEventAcquaintancePed(CPed*)` (0x4AF820)
-    fn event_acquaintance_ped_ctor(this: GPtr<u32>, ped: GPtr<u8>) -> GPtr<u32> = thiscall 0x4AF820 => unported;
-    /// `CEventAcquaintancePed::~CEventAcquaintancePed()` (0x4AF890)
-    fn event_acquaintance_ped_dtor(this: GPtr<u32>) = thiscall 0x4AF890 => unported;
 }
 
 /// `_stricmp(name, s) == 0` against a string of the exe.
@@ -364,12 +353,7 @@ pub fn add_ped_at_attractor(
         return 0;
     }
     let mut pos = [px, py, pz];
-    let ped = add_ped_call(
-        rd::<u32>(model_info(mi), 0x28),
-        mi as u32,
-        GPtr::from_raw(pos.as_mut_ptr()),
-        0,
-    );
+    let ped = add_ped_call(rd::<u32>(model_info(mi), 0x28), mi as u32, GPtr::from_raw(pos.as_mut_ptr()), 0);
     if ped.is_null() {
         return 0;
     }

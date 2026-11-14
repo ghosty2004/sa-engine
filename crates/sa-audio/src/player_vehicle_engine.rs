@@ -19,23 +19,18 @@ use crate::common::{g, rd, wr, x, GPtr, X87};
 use crate::bindings::hw_is_sound_bank_loaded;
 use crate::bindings::sound_set_flags;
 use sa_world::bindings::do_extra_air_resistance_for_player;
+use crate::bindings::cancel_vehicle_engine_sound;
+use crate::bindings::get_accel_and_brake;
+use crate::bindings::sound_stop_sound as sound_stop;
+use crate::bindings::update_vehicle_engine_sound;
+use sa_world::bindings::audio_add_event as add_audio_event;
 orig! {
-    /// `CAEVehicleAudioEntity::GetAccelAndBrake(cVehicleParams&)` (0x4F5080)
-    fn get_accel_and_brake(this: GPtr<u8>, p: GPtr<u8>) = thiscall 0x4F5080 => unported;
     /// `CAEVehicleAudioEntity::IsAccInhibited(cVehicleParams&)` (0x4F4F70)
     fn is_acc_inhibited(this: GPtr<u8>, p: GPtr<u8>) -> u8 = thiscall 0x4F4F70 => unported;
     /// `CAEVehicleAudioEntity::JustFinishedAccelerationLoop()` (0x4F5E50)
     fn just_finished_acceleration_loop(this: GPtr<u8>) -> u8 = thiscall 0x4F5E50 => unported;
-    /// `CAEVehicleAudioEntity::CancelVehicleEngineSound(int16)` (0x4F55C0)
-    fn cancel_vehicle_engine_sound(this: GPtr<u8>, ty: u32) = thiscall 0x4F55C0 => unported;
-    /// `CAEVehicleAudioEntity::UpdateVehicleEngineSound(int16, float speed, float volume)` (0x4F56D0)
-    fn update_vehicle_engine_sound(this: GPtr<u8>, ty: u32, speed: u32, vol: u32) -> u32 = thiscall 0x4F56D0 => unported;
     /// `CAEVehicleAudioEntity::RequestNewPlayerCarEngineSound(int16, float speed, float volume)` (0x4F7A50)
     fn request_new_player_car_engine_sound(this: GPtr<u8>, ty: u32, speed: u32, vol: u32) -> u32 = thiscall 0x4F7A50 => unported;
-    /// `CAEVehicleAudioEntity::AddAudioEvent(eAudioEvents, float)` (0x4F6420)
-    fn add_audio_event(this: GPtr<u8>, ev: u32, vol: u32) = thiscall 0x4F6420 => unported;
-    /// `CAESound::StopSound()` (0x4EF1C0)
-    fn sound_stop(s: GPtr<u8>) = thiscall 0x4EF1C0 => unported;
 }
 
 const AE_AUDIO_HARDWARE: usize = 0xB5F8B8;
@@ -266,7 +261,7 @@ pub fn process_player_vehicle_engine(this: GPtr<u8>, p: GPtr<u8>) {
                 c.engine_off(true);
                 return;
             }
-            add_audio_event(this, 0x67, 0);
+            add_audio_event(this, 0x67, f32::from_bits(0));
             let wheel_spin_path = if reversing {
                 true
             } else {

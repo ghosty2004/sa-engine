@@ -27,12 +27,12 @@ use sa_core::bindings::world_remove;
 use sa_stream::bindings::ped_is_player;
 use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
 use sa_stream::bindings::simple_transform_update_matrix;
+use crate::bindings::find_node_closest_to_coors;
+use crate::bindings::garage_is_point_inside_r;
+use sa_core::bindings::matrix_mul_vec;
 orig! {
     /// `CPhysical::PositionAttachedEntity` (0x546FF0)
     fn position_attached_entity(e: GPtr<u8>) = thiscall 0x546FF0 => unported;
-    /// `CPathFind::FindNodeClosestToCoors(CVector, uint8, float, bool, bool, bool, bool, bool)` (0x44F460, `ret 0x2C`,
-    /// hidden return pointer first)
-    fn find_node_closest_to_coors(pf: GPtr<u8>, out: GPtr<u32>, x: u32, y: u32, z: u32, ty: u32, d: f32, a: u32, b: u32, c: u32, e: u32, f: u32) -> GPtr<u32> = thiscall 0x44F460 => unported;
     /// `CEntity::Add` (vtable +0x8)
     fn v_add(e: GPtr<u8>) = thiscall vslot 0x8 => unported;
     /// `CEntity::Remove` (vtable +0xC)
@@ -41,12 +41,8 @@ orig! {
     fn v_teleport(e: GPtr<u8>, x: f32, y: f32, z: f32, b: u32) = thiscall vslot 0x38 => unported;
     /// scalar deleting destructor (vtable +0)
     fn v_delete(e: GPtr<u8>, flags: u32) -> GPtr<u8> = thiscall vslot 0x0 => unported;
-    /// `CGarage::IsPointInsideGarage(CVector, float)` (0x4487D0, `ret 0x10`)
-    fn garage_is_point_inside_r(g: GPtr<u8>, x: f32, y: f32, z: f32, r: f32) -> u8 = thiscall 0x4487D0 => unported;
     /// `CReplay::StorePedAnimation(CPed*, CStoredAnimationState&)` (0x45B170, cdecl)
     fn replay_store_ped_animation(p: GPtr<u8>, s: GPtr<u8>) = cdecl 0x45B170 => unported;
-    /// `operator*(CVector* out, const CMatrix*, const CVector*)` (0x59C890, cdecl)
-    fn matrix_mul_vec(out: GPtr<f32>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<f32> = cdecl 0x59C890 => unported;
 }
 
 /// The inline `UpdateRwMatrix` + `UpdateRwFrame` pair.
@@ -138,9 +134,9 @@ fn closest_node(e: GPtr<u8>, ty: u32) -> (u16, u16) {
     find_node_closest_to_coors(
         GPtr::from_addr(THE_PATHS),
         GPtr::from_raw(&mut out),
-        rd::<u32>(p, 0),
-        rd::<u32>(p, 4),
-        rd::<u32>(p, 8),
+        f32::from_bits(rd::<u32>(p, 0)),
+        f32::from_bits(rd::<u32>(p, 4)),
+        f32::from_bits(rd::<u32>(p, 8)),
         ty,
         999_999.9,
         0,

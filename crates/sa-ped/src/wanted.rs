@@ -8,6 +8,7 @@
 //! level before parole, +0x34 crimes being queued (16 x 0x1C: type +0, ped +4, time +8, coors +0xC, reported
 //! +0x18, police don't care +0x19), +0x1F4 pursuit cops [10], +0x21C police scanner audio entity, +0x298.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -56,11 +57,13 @@ pub fn clear_crimes_being_qd(first: GPtr<u8>, count: u32) {
 }
 
 pub use sa_world::bindings::gang_war_fighting_going_on;
+pub use crate::bindings::initialise_call;
+pub use sa_world::bindings::wanted_can_cop_join_pursuit as can_cop_join_pursuit_method_call;
+pub use sa_world::bindings::wanted_set_wanted_level as set_wanted_level_call;
+pub use sa_world::bindings::wanted_set_wanted_level_no_drop as set_wanted_level_no_drop_call;
 orig! {
     /// `CWanted::AddCrimeToQ` (0x562000)
     pub fn add_crime_to_q_call(this: GPtr<u8>, ty: i32, ped: GPtr<u8>, coors: GPtr<f32>, reported: u8, dont_care: u8) -> u8 = thiscall 0x562000 => add_crime_to_q;
-    /// `CWanted::Initialise` (0x562390)
-    pub fn initialise_call(this: GPtr<u8>) = thiscall 0x562390 => initialise;
     /// `CWanted::UpdateWantedLevel` (0x561C90)
     pub fn update_wanted_level_call(this: GPtr<u8>) = thiscall 0x561C90 => update_wanted_level;
     /// `CWanted::ReportCrimeNow` (0x562120)
@@ -71,12 +74,6 @@ orig! {
     pub fn remove_pursuit_cop_func_call(cop: GPtr<u8>, cops: GPtr<GPtr<u8>>, n: GPtr<u8>) = cdecl 0x562300 => remove_pursuit_cop_func;
     /// `CWanted::CanCopJoinPursuit(CCopPed*, uint8, CCopPed**, uint8&)` (0x562F60)
     pub fn can_cop_join_pursuit_func_call(cop: GPtr<u8>, max: u32, cops: GPtr<GPtr<u8>>, n: GPtr<u8>) -> u8 = cdecl 0x562F60 => can_cop_join_pursuit_func;
-    /// `CWanted::CanCopJoinPursuit(CCopPed*)` (0x562FB0)
-    pub fn can_cop_join_pursuit_method_call(this: GPtr<u8>, cop: GPtr<u8>) -> u8 = thiscall 0x562FB0 => can_cop_join_pursuit_method;
-    /// `CWanted::SetWantedLevel(int32)` (0x562470)
-    pub fn set_wanted_level_call(this: GPtr<u8>, level: i32) = thiscall 0x562470 => set_wanted_level;
-    /// `CWanted::SetWantedLevelNoDrop` (0x562570)
-    pub fn set_wanted_level_no_drop_call(this: GPtr<u8>, level: i32) = thiscall 0x562570 => set_wanted_level_no_drop;
     /// `CAEPoliceScannerAudioEntity::AddAudioEvent(int32 event, eCrimeType, const CVector&)` (0x4E71E0)
     pub fn police_scanner_add_audio_event(this: GPtr<u8>, ev: i32, ty: i32, coors: GPtr<f32>) = thiscall 0x4E71E0 => unported;
 }
@@ -683,35 +680,26 @@ pub use sa_world::bindings::german_game;
 pub use sa_world::bindings::is_law_enforcement_vehicle;
 pub use sa_world::bindings::is_ped_pointer_valid;
 pub use sa_world::bindings::set_player_wanted_level_for_forbidden_territories;
+pub use sa_core::bindings::add_big_message;
+pub use sa_core::bindings::text_get;
+pub use sa_world::bindings::ped_type_police_dont_care as police_dont_care_about_crimes_against_ped_type;
+pub use sa_world::bindings::player_get_wanted_level;
+pub use sa_world::bindings::player_set_wanted_level_no_drop;
+pub use sa_world::bindings::set_maximum_wanted_level as set_maximum_wanted_level_call;
+pub use sa_world::bindings::set_new_record_stat;
+pub use sa_world::bindings::set_stat_value;
+pub use sa_world::bindings::wanted_register_crime as register_crime_call;
 orig! {
-    /// `CWanted::SetMaximumWantedLevel` (0x561E70)
-    pub fn set_maximum_wanted_level_call(level: i32) = cdecl 0x561E70 => set_maximum_wanted_level;
     /// `CWanted::UpdateCrimesQ` (0x562760)
     pub fn update_crimes_q_call(this: GPtr<u8>) = thiscall 0x562760 => update_crimes_q;
     /// `CWanted::WorkOutPolicePresence(CVector, float)` (0x5625F0)
     pub fn work_out_police_presence_call(px: f32, py: f32, pz: f32, radius: f32) -> i32 = cdecl 0x5625F0 => work_out_police_presence;
-    /// `CWanted::RegisterCrime` (0x562410)
-    pub fn register_crime_call(this: GPtr<u8>, ty: i32, coors: GPtr<f32>, ped: GPtr<u8>, dont_care: u32) = thiscall 0x562410 => register_crime_u32;
     /// `CWanted::RegisterCrime_Immediately` (0x562430)
     pub fn register_crime_immediately_call(this: GPtr<u8>, ty: i32, coors: GPtr<f32>, ped: GPtr<u8>, dont_care: u32) = thiscall 0x562430 => register_crime_immediately_u32;
-    /// `CStats::SetNewRecordStat(uint16, float)` (0x55C410)
-    pub fn set_new_record_stat(stat: u32, v: f32) = cdecl 0x55C410 => unported;
-    /// `CStats::SetStatValue(uint16, float)` (0x55A070)
-    pub fn set_stat_value(stat: u32, v: f32) = cdecl 0x55A070 => unported;
     /// `FindPlayerCoors(CVector* out, int32)` (0x56E010)
     pub fn find_player_coors(out: GPtr<f32>, id: i32) -> GPtr<f32> = cdecl 0x56E010 => sa_world::world::cworld::find_player_coors_port;
-    /// `CPedType::PoliceDontCareAboutCrimesAgainstPedType(ePedType)` (0x608A40)
-    pub fn police_dont_care_about_crimes_against_ped_type(ty: i32) -> u8 = cdecl 0x608A40 => crate::ped_type::police_dont_care_about_crimes_against_ped_type;
-    /// `CPlayerPed::GetWantedLevel` (0x41BE60)
-    pub fn player_get_wanted_level(ped: GPtr<u8>) -> i32 = thiscall 0x41BE60 => crate::player_ped::get_wanted_level;
-    /// `CText::Get(const char*)` (0x6A0050) on `TheText` (0xC1B340)
-    pub fn text_get(text: u32, key: u32) -> u32 = thiscall 0x6A0050 => unported;
-    /// `CMessages::AddBigMessage(const char* text, uint32 time, eMessageStyle)` (0x69F2B0)
-    pub fn add_big_message(text: u32, time: u32, style: u32) = cdecl 0x69F2B0 => unported;
     /// `CCrime::FindImmediateDetectionRange` (0x531FC0)
     pub fn find_immediate_detection_range_call(ty: i32) -> f64 = cdecl 0x531FC0 => find_immediate_detection_range_f64;
-    /// `CPlayerPed::SetWantedLevelNoDrop(int32)` (0x609F30)
-    pub fn player_set_wanted_level_no_drop(ped: GPtr<u8>, level: i32) = thiscall 0x609F30 => crate::player_ped::set_wanted_level_no_drop;
 }
 
 pub fn register_crime_u32(this: GPtr<u8>, ty: i32, coors: GPtr<f32>, ped: GPtr<u8>, dont_care: u32) {
@@ -921,7 +909,7 @@ pub fn report_crime(ty: i32, victim: GPtr<u8>, offender: GPtr<u8>) {
     }
     let mut dont_care: u8 = 0;
     if !victim.is_null() && rd::<u8>(victim, 0x36) & 7 == 3 {
-        dont_care = police_dont_care_about_crimes_against_ped_type(rd::<i32>(victim, 0x598));
+        dont_care = police_dont_care_about_crimes_against_ped_type(rd::<i32>(victim, 0x598) as u32);
     }
     if ty == 2 {
         if rd::<u8>(victim, 0x36) & 7 == 3
@@ -933,7 +921,7 @@ pub fn report_crime(ty: i32, victim: GPtr<u8>, offender: GPtr<u8>) {
             if st == 0x36 || st == 0x37 {
                 return;
             }
-            add_big_message(text_get(0xC1B340, 0x86386C), 0x1388, 0);
+            add_big_message(GPtr::from_addr((GPtr::<u8>::addr(text_get(GPtr::from_addr(0xC1B340), GPtr::from_addr(0x86386C))) as u32) as usize), 0x1388, 0);
             let focus = usize::from(g::<u8>(PLAYER_IN_FOCUS).read());
             let money = g::<i32>(0xB7CE50 + focus * PLAYER_INFO_SIZE);
             money.write(money.read().wrapping_add(0x32));
@@ -951,7 +939,7 @@ pub fn report_crime(ty: i32, victim: GPtr<u8>, offender: GPtr<u8>) {
         let presence = work_out_police_presence_call(p[0], p[1], p[2], range);
         let immediate = presence != 0 || (matches!(ty, 4 | 5 | 0xD | 0xE) && german_game() != 0);
         if !immediate {
-            register_crime_call(wanted_of(), ty, lp(&mut pos).cast(), victim, u32::from(dont_care));
+            register_crime_call(wanted_of(), ty as u32, GPtr::<f32>::cast::<u8>(lp(&mut pos).cast()), victim, u32::from(dont_care));
         } else {
             register_crime_immediately_call(wanted_of(), ty, lp(&mut pos).cast(), victim, u32::from(dont_care));
             set_wanted_level_no_drop_call(wanted_of(), 1);

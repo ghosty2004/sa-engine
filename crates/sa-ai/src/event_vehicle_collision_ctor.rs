@@ -1,6 +1,7 @@
 //! WRITER-NATIVE (batch `native-25`): the `CEventVehicleCollision` constructor (0x4AC840), raised when CJ runs
 //! into a car (collision scan). Ported from the 1.0 US bytes.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::hook;
 
@@ -60,7 +61,7 @@ pub fn event_vehicle_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x85_AE88);
     let v = rd::<GPtr<u8>>(this, 0x14);
     if !v.is_null() {
-        entity_clean_up_old_reference(v, this.byte_add(0x14));
+        entity_clean_up_old_reference(v, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x14)));
     }
     wr::<u32>(this, 0, 0x85_AB38);
 }

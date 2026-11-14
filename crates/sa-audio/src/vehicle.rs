@@ -157,36 +157,27 @@ pub use sa_core::bindings::ped_is_alive;
 pub use sa_stream::bindings::ped_is_player;
 pub use sa_world::bindings::get_pad_from_player as player_get_pad_from_player;
 pub use sa_world::bindings::vehicle_audio_player_about_to_exit_as_driver as player_about_to_exit_vehicle_as_driver;
+pub use crate::bindings::cancel_vehicle_engine_sound as cancel_vehicle_engine_sound_call;
+pub use crate::bindings::get_piecewise_linear;
+pub use crate::bindings::sound_stop_sound;
+pub use crate::bindings::update_boat_sound;
+pub use sa_world::bindings::audio_stop_radio as engine_stop_radio;
+pub use sa_world::bindings::pad_get_accelerate;
+pub use sa_world::bindings::pad_get_brake;
+pub use sa_world::bindings::turn_on_radio_for_vehicle as turn_on_radio_for_vehicle_call;
 orig! {
     /// `CAudioEngine::StartRadio(tVehicleAudioSettings*)` (0x507DF0)
     pub fn engine_start_radio(engine: GPtr<u8>, settings: GPtr<u8>) = thiscall 0x507DF0 => unported;
-    /// `CAudioEngine::StopRadio(tVehicleAudioSettings*, bool)` (0x506F70)
-    /// `CAEAudioUtility::GetPiecewiseLinear(float, int16, const float (*)[2])` (0x4D9D90)
-    pub fn get_piecewise_linear(v: u32, n: u32, table: GPtr<u8>) -> f32 = cdecl 0x4D9D90 => unported;
-    /// `CAESound::StopSound()` (0x4EF1C0)
-    pub fn sound_stop_sound(sound: GPtr<u8>) = thiscall 0x4EF1C0 => unported;
-    /// `CPad::GetAccelerate()` (0x5403F0)
-    pub fn pad_get_accelerate(pad: GPtr<u8>) -> u32 = thiscall 0x5403F0 => unported;
-    /// `CPad::GetBrake()` (0x540080)
-    pub fn pad_get_brake(pad: GPtr<u8>) -> u32 = thiscall 0x540080 => unported;
-    /// `CAEVehicleAudioEntity::UpdateBoatSound(int16 engineState, int16 bankSlot, int16 sfx, float speed,
-    /// float volume)` (0x4F9E90)
-    pub fn update_boat_sound(this: GPtr<u8>, state: u32, slot: u32, sfx: u32, speed: u32, volume: u32) = thiscall 0x4F9E90 => unported;
     /// `CAEVehicleAudioEntity::PlayReverseSound(int16 sfx, float speed, float volume)` (0x4F87D0)
     pub fn play_reverse_sound(this: GPtr<u8>, sfx: u32, speed: u32, volume: u32) = thiscall 0x4F87D0 => unported;
-    /// `CAEVehicleAudioEntity::CancelVehicleEngineSound(int16)` (0x4F55C0)
-    pub fn cancel_vehicle_engine_sound_call(this: GPtr<u8>, ty: u32) = thiscall 0x4F55C0 => cancel_vehicle_engine_sound;
     /// `CAEVehicleAudioEntity::JustGotInVehicleAsDriver()` (0x4F5700)
     pub fn just_got_in_vehicle_as_driver(this: GPtr<u8>) = thiscall 0x4F5700 => unported;
     /// `CAEVehicleAudioEntity::JustGotOutOfVehicleAsDriver()` (0x4FCF40)
     pub fn just_got_out_of_vehicle_as_driver_call(this: GPtr<u8>) = thiscall 0x4FCF40 => just_got_out_of_vehicle_as_driver;
-    /// `CAEVehicleAudioEntity::TurnOnRadioForVehicle()` (0x4F5B20)
-    pub fn turn_on_radio_for_vehicle_call(this: GPtr<u8>) = thiscall 0x4F5B20 => turn_on_radio_for_vehicle;
     /// `CAEVehicleAudioEntity::TurnOffRadioForVehicle()` (0x4F5B60)
     pub fn turn_off_radio_for_vehicle_call(this: GPtr<u8>) = thiscall 0x4F5B60 => turn_off_radio_for_vehicle;
     /// `CAEVehicleAudioEntity::ProcessVehicle(CPhysical*)` (0x501E10)
     pub fn process_vehicle(this: GPtr<u8>, veh: u32) = thiscall 0x501E10 => unported;
-    pub fn engine_stop_radio(engine: GPtr<u8>, settings: GPtr<u8>, duck: u32) = thiscall 0x506F70 => unported;
 }
 
 /// Radio types 0, 2, 3 (`+0x9B`, signed) have a radio the player hears.
@@ -583,7 +574,7 @@ pub fn get_frequency_for_dummy_idle(this: GPtr<u8>, ratio: f32, fwd: u32) -> X87
         .fadd_m(g::<f32>(DUMMY_IDLE_FREQ_BASE).read())
         .to_f32();
     let st0 = if rd::<u8>(this, 0xA9) == 2 {
-        x(get_piecewise_linear(fwd, 5, g(DUMMY_IDLE_FWD_CURVE)))
+        x(get_piecewise_linear(fwd, 5, g(DUMMY_IDLE_FWD_CURVE)) as f32)
     } else {
         x(g::<f32>(FLT_1).read())
     };
@@ -605,7 +596,7 @@ pub fn get_frequency_for_dummy_rev(this: GPtr<u8>, ratio: f32, fwd: f32) -> X87 
         .to_f32();
     let d = X87::from_f64_exact(f64::from_bits(g::<u64>(DBL_0_99).read()));
     let st0 = if rd::<u8>(this, 0xA9) == 2 && x(fwd).fcom(d).test_any(0x41) {
-        x(get_piecewise_linear(fwd.to_bits(), 5, g(DUMMY_REV_FWD_CURVE)))
+        x(get_piecewise_linear(fwd.to_bits(), 5, g(DUMMY_REV_FWD_CURVE)) as f32)
     } else {
         x(g::<f32>(FLT_1).read())
     };
@@ -628,7 +619,7 @@ fn dummy_vol_tail(this: GPtr<u8>, st0: X87, vol: f32) -> X87 {
 
 /// `AudioLog10(f32(GetPiecewiseLinear(fwd, 5, curve))) * [0x858BA4]`
 fn dummy_curve_db(fwd: u32, curve: usize) -> X87 {
-    let pl = get_piecewise_linear(fwd, 5, g(curve));
+    let pl = get_piecewise_linear(fwd, 5, g(curve)) as f32;
     call_audio_log10(pl).fmul_m(g::<f32>(FLT_8BA4).read())
 }
 

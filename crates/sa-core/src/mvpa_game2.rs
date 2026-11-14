@@ -22,6 +22,8 @@ use crate::bindings::radar_remove_radar_sections;
 use crate::bindings::replay_finish_playback;
 use crate::bindings::ropes_shutdown;
 use crate::bindings::set_pieces_init;
+use crate::bindings::find_player_ped as world_find_player_ped;
+use crate::bindings::menu_unload_textures;
 orig! {
     /// `CVehicleRecording::ShutDown()` (0x459400)
     fn vehicle_recording_shut_down() = cdecl 0x459400 => unported;
@@ -45,8 +47,6 @@ orig! {
     fn timer_shutdown() = cdecl 0x5618C0 => unported;
     /// `CStreaming::ReInit()` (0x40E560)
     fn streaming_re_init() = cdecl 0x40E560 => unported;
-    /// `CMenuManager::UnloadTextures()` (0x574630)
-    fn menu_unload_textures(m: u32) = thiscall 0x574630 => unported;
     /// `CPedType::Shutdown()` (0x608B00)
     fn ped_type_shutdown() = cdecl 0x608B00 => unported;
     /// `CSpecialFX::Shutdown()` (0x723390)
@@ -73,8 +73,6 @@ orig! {
     fn tag_manager_shutdown_for_restart() = cdecl 0x49CC60 => unported;
     /// `CStuntJumpManager::ShutdownForRestart()` (0x49CB10)
     fn stunt_jump_manager_shutdown_for_restart() = cdecl 0x49CB10 => unported;
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210)
-    fn world_find_player_ped(n: i32) -> u32 = cdecl 0x56E210 => unported;
 }
 
 use crate::bindings::collision_sort_out_collision_after_load;
@@ -84,11 +82,16 @@ use crate::bindings::rgba_ctor;
 use crate::bindings::timer_stop;
 use crate::bindings::timer_update;
 use crate::bindings::weapon_effects_init;
+use crate::bindings::audio_engine_restart as audio_restart;
+use crate::bindings::audio_set_bass_enhance as audio_set_bass_enhance_on_off;
+use crate::bindings::audio_set_effects_master_volume;
+use crate::bindings::audio_set_music_master_volume;
+use crate::bindings::audio_set_radio_auto_retune as audio_set_radio_auto_retune_on_off;
+use crate::bindings::camera_set_fade_colour;
+use crate::bindings::game_shut_down_for_restart;
+use crate::bindings::menu_message_screen;
+use crate::bindings::timer_initialise;
 orig! {
-    /// `CTimer::Initialise()` (0x5617E0)
-    fn timer_initialise() = cdecl 0x5617E0 => unported;
-    /// `CMenuManager::MessageScreen(const char*, bool, bool)` (0x579330, `ret 0xC`)
-    fn menu_message_screen(m: u32, key: u32, a: u32, b: u32) = thiscall 0x579330 => unported;
     /// `CGenericGameStorage::RestoreForStartLoad()` (0x619000)
     fn storage_restore_for_start_load() = cdecl 0x619000 => unported;
     /// `CStreaming::RemoveBigBuildings()` (0x4093B0)
@@ -103,22 +106,8 @@ orig! {
     fn storage_init_radio_station_position_list() = cdecl 0x618E70 => unported;
     /// `CGenericGameStorage::GenericLoad(bool& outFailed)` (0x5D17B0, AL)
     fn storage_generic_load(out: GPtr<u8>) -> u8 = cdecl 0x5D17B0 => unported;
-    /// `CCamera::SetFadeColour(uint8, uint8, uint8)` (0x50BF00)
-    fn camera_set_fade_colour(c: u32, r: u32, g: u32, b: u32) = thiscall 0x50BF00 => unported;
-    /// `CGame::ShutDownForRestart()` (0x53C550)
-    fn game_shut_down_for_restart() = cdecl 0x53C550 => shut_down_for_restart;
     /// `CAudioEngine::ResetSoundEffects()` (0x507C30)
     fn audio_reset_sound_effects(a: u32) = thiscall 0x507C30 => unported;
-    /// `CAudioEngine::Restart()` (0x506DB0)
-    fn audio_restart(a: u32) = thiscall 0x506DB0 => unported;
-    /// `CAudioEngine::SetMusicMasterVolume(int8)` (0x506DE0)
-    fn audio_set_music_master_volume(a: u32, v: u32) = thiscall 0x506DE0 => unported;
-    /// `CAudioEngine::SetEffectsMasterVolume(int8)` (0x506E10)
-    fn audio_set_effects_master_volume(a: u32, v: u32) = thiscall 0x506E10 => unported;
-    /// `CAudioEngine::SetBassEnhanceOnOff(bool)` (0x506F90)
-    fn audio_set_bass_enhance_on_off(a: u32, v: u32) = thiscall 0x506F90 => unported;
-    /// `CAudioEngine::SetRadioAutoRetuneOnOff(bool)` (0x506F80)
-    fn audio_set_radio_auto_retune_on_off(a: u32, v: u32) = thiscall 0x506F80 => unported;
     /// `CAudioEngine::InitialiseRadioStationID(int8)` (0x506FC0)
     fn audio_initialise_radio_station_id(a: u32, v: u32) = thiscall 0x506FC0 => unported;
 }
@@ -149,17 +138,14 @@ use crate::bindings::time_cycle_initialise;
 use crate::bindings::user_display_init;
 use crate::bindings::weapon_initialise_weapons;
 use crate::bindings::weather_init;
+use crate::bindings::camera_init;
+use crate::bindings::camera_set_rw_camera;
+use crate::bindings::hud_re_initialise;
 orig! {
-    /// `CCamera::Init()` (0x5BC520)
-    fn camera_init(c: u32) = thiscall 0x5BC520 => unported;
     /// `CWanted::InitialiseStaticVariables()` (0x561C70)
     fn wanted_initialise_static_variables() = cdecl 0x561C70 => unported;
-    /// `CCamera::SetRwCamera(RwCamera*)` (0x50C100)
-    fn camera_set_rw_camera(c: u32, rw: u32) = thiscall 0x50C100 => unported;
     /// `CSkidmarks::Clear()` (0x720590)
     fn skidmarks_clear() = cdecl 0x720590 => unported;
-    /// `CHud::ReInitialise()` (0x588880)
-    fn hud_re_initialise() = cdecl 0x588880 => unported;
     /// `CCarCtrl::ReInit()` (0x4213B0)
     fn car_ctrl_re_init() = cdecl 0x4213B0 => unported;
     /// `CPathFind::ReInit()` (0x44E4E0)
@@ -181,19 +167,15 @@ use crate::bindings::streaming_remove_inappropriate_ped_models;
 use crate::bindings::vehicle_recording_init;
 use crate::bindings::water_cannons_init;
 use crate::bindings::water_creature_manager_init;
+use crate::bindings::camera_process;
+use crate::bindings::fire_manager_init;
+use crate::bindings::get_pad as pad_get_pad;
+use crate::bindings::pad_clear;
 orig! {
     /// `CDecisionMakerTypesFileLoader::ReStart()` (0x607D00)
     fn decision_makers_restart() = cdecl 0x607D00 => unported;
-    /// `CFireManager::Init()` (0x538BC0)
-    fn fire_manager_init(m: u32) = thiscall 0x538BC0 => unported;
     /// `CAudioEngine::ResetStatistics()` (0x506DA0)
     fn audio_reset_statistics(a: u32) = thiscall 0x506DA0 => unported;
-    /// `CCamera::Process()` (0x52B730)
-    fn camera_process(c: u32) = thiscall 0x52B730 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    fn pad_get_pad(n: i32) -> u32 = cdecl 0x53FB70 => unported;
-    /// `CPad::Clear(bool, bool)` (0x541A70, `ret 8`)
-    fn pad_clear(p: u32, a: u32, b: u32) = thiscall 0x541A70 => unported;
 }
 
 /// `CGame::ShutDownForRestart()` (0x53C550, cdecl): resource buffering off, vehicle recordings, replay,
@@ -212,8 +194,8 @@ pub fn shut_down_for_restart() {
     replay_finish_playback();
     replay_empty_replay_buffer();
     moving_things_shutdown();
-    player_info_clear(0xB7CD98);
-    player_info_clear(0xB7CD98 + 0x190);
+    player_info_clear(GPtr::from_addr(0xB7CD98));
+    player_info_clear(GPtr::from_addr((0xB7CD98 + 0x190) as usize));
     for i in 0..0x19usize {
         GPtr::<u32>::from_addr(0xBA3730 + 4 * i).write(0);
     }
@@ -228,7 +210,7 @@ pub fn shut_down_for_restart() {
     timer_shutdown();
     streaming_re_init();
     radar_remove_radar_sections();
-    menu_unload_textures(MENU);
+    menu_unload_textures(GPtr::from_addr(MENU as usize));
     set_pieces_init();
     conversations_clear();
     p2p_conversations_clear();
@@ -271,7 +253,7 @@ pub fn initialise_when_restarting() {
     let loading = GPtr::<u8>::from_addr(MENU_LOADING_DATA);
     GPtr::<u32>::from_addr(0xC0B038).write(0);
     if loading.read() != 0 {
-        menu_message_screen(MENU, 0x863AB4, 1, 0);
+        menu_message_screen(GPtr::from_addr(MENU as usize), GPtr::from_addr(0x863AB4), 1, 0);
         if loading.read() != 0 {
             storage_restore_for_start_load();
             streaming_remove_big_buildings();
@@ -290,9 +272,9 @@ pub fn initialise_when_restarting() {
             for _ in 0..50 {
                 win_message_loop();
                 let key = if fp.byte_add(3).read() != 0 { 0x863AAC } else { 0x863AA4 };
-                menu_message_screen(MENU, key, 1, 0);
+                menu_message_screen(GPtr::from_addr(MENU as usize), GPtr::from_addr(key as usize), 1, 0);
             }
-            camera_set_fade_colour(THE_CAMERA, 0, 0, 0);
+            camera_set_fade_colour(GPtr::from_addr(THE_CAMERA as usize), 0, 0, 0);
             game_shut_down_for_restart();
             timer_stop();
             timer_initialise();
@@ -305,12 +287,12 @@ pub fn initialise_when_restarting() {
     }
     timer_update();
     audio_reset_sound_effects(AUDIO_ENGINE);
-    audio_restart(AUDIO_ENGINE);
+    audio_restart(GPtr::from_addr(AUDIO_ENGINE as usize));
     let b = |a: usize| u32::from(GPtr::<u8>::from_addr(a).read());
-    audio_set_music_master_volume(AUDIO_ENGINE, b(0xBA6798));
-    audio_set_effects_master_volume(AUDIO_ENGINE, b(0xBA6797));
-    audio_set_bass_enhance_on_off(AUDIO_ENGINE, b(0xBA6799));
-    audio_set_radio_auto_retune_on_off(AUDIO_ENGINE, b(0xBA6795));
+    audio_set_music_master_volume(GPtr::from_addr(AUDIO_ENGINE as usize), b(0xBA6798));
+    audio_set_effects_master_volume(GPtr::from_addr(AUDIO_ENGINE as usize), b(0xBA6797));
+    audio_set_bass_enhance_on_off(GPtr::from_addr(AUDIO_ENGINE as usize), b(0xBA6799));
+    audio_set_radio_auto_retune_on_off(GPtr::from_addr(AUDIO_ENGINE as usize), b(0xBA6795));
     audio_initialise_radio_station_id(AUDIO_ENGINE, b(0xBA679A));
     d3d_set_use_resource_buffering(1);
 }
@@ -329,12 +311,12 @@ pub fn initialise_when_restarting() {
        unverified = "mvpa-core-2", route = "L3-only", hazards = "none", recs = "grove-walk",
        note = "new-game / load restart path")]
 pub fn re_init_game_object_variables() {
-    camera_init(THE_CAMERA);
+    camera_init(GPtr::from_addr(THE_CAMERA as usize));
     game_logic_init_at_start_of_game();
     gang_wars_init_at_start_of_game();
     wanted_initialise_static_variables();
-    camera_init(THE_CAMERA);
-    camera_set_rw_camera(THE_CAMERA, GPtr::<u32>::from_addr(0xC1703C).read());
+    camera_init(GPtr::from_addr(THE_CAMERA as usize));
+    camera_set_rw_camera(GPtr::from_addr(THE_CAMERA as usize), GPtr::from_addr((GPtr::<u32>::from_addr(0xC1703C).read()) as usize));
     skidmarks_clear();
     weather_init();
     cover_init();
@@ -349,14 +331,14 @@ pub fn re_init_game_object_variables() {
     path_find_re_init(THE_PATHS);
     time_cycle_initialise(0);
     pop_cycle_initialise();
-    draw_set_fov(0x42F0_0000);
+    draw_set_fov(f32::from_bits(0x42F0_0000));
     GPtr::<u32>::from_addr(0xC3EF98).write(0x43FA_0000);
     GPtr::<u32>::from_addr(0xB72914).write(0);
     ped_initialise();
     weapon_initialise_weapons();
     population_initialise();
-    player_info_clear(0xB7CD98);
-    player_info_clear(0xB7CD98 + 0x190);
+    player_info_clear(GPtr::from_addr(0xB7CD98));
+    player_info_clear(GPtr::from_addr((0xB7CD98 + 0x190) as usize));
     GPtr::<u8>::from_addr(0xB7CD74).write(0);
     glass_init();
     GPtr::<u8>::from_addr(0xB72959).write(0);
@@ -379,22 +361,22 @@ pub fn re_init_game_object_variables() {
     water_cannons_init();
     decision_makers_restart();
     vehicle_recording_init();
-    fire_manager_init(0xB71F80);
-    interior_manager_init(0xBAF670);
-    proc_object_man_init(0xBB7CB0);
-    water_creature_manager_init(0xC1DF30);
-    real_time_shadow_manager_init(0xC40350);
+    fire_manager_init(GPtr::from_addr(0xB71F80));
+    interior_manager_init(GPtr::from_addr(0xBAF670));
+    proc_object_man_init(GPtr::from_addr(0xBB7CB0));
+    water_creature_manager_init(GPtr::from_addr(0xC1DF30));
+    real_time_shadow_manager_init(GPtr::from_addr(0xC40350));
     streaming_remove_inappropriate_ped_models();
     audio_reset_statistics(AUDIO_ENGINE);
     if GPtr::<u8>::from_addr(MENU_LOADING_DATA).read() == 0 {
         cranes_init_cranes();
         scripts_start_test_script();
         scripts_process();
-        camera_process(THE_CAMERA);
+        camera_process(GPtr::from_addr(THE_CAMERA as usize));
         train_init_trains();
     }
-    pad_clear(pad_get_pad(0), 1, 1);
-    pad_clear(pad_get_pad(1), 1, 1);
+    pad_clear(GPtr::from_addr((GPtr::<u8>::addr(pad_get_pad(0)) as u32) as usize), 1, 1);
+    pad_clear(GPtr::from_addr((GPtr::<u8>::addr(pad_get_pad(1)) as u32) as usize), 1, 1);
 }
 
 /// Every registration of this module.

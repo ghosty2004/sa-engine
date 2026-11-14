@@ -4,6 +4,7 @@
 //! set-up/tear-down (including the no-CD chunks some prologues jump through) is not modelled.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -13,20 +14,20 @@ use crate::common::*;
 const TIME_MS: usize = 0xB7CB84;
 
 use crate::bindings::get_group_id;
-use crate::bindings::pause_ctor as task_simple_pause_ctor;
+use sa_world::bindings::pause_ctor as task_simple_pause_ctor;
 use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
 use sa_core::bindings::entity_register_reference as register_reference;
 use sa_core::bindings::entity_update_rw_frame;
 use sa_core::bindings::matrix_update_rw_matrix;
 use sa_core::bindings::ped_is_alive;
-use sa_stream::bindings::anim_add_block_ref as add_anim_block_ref;
+use sa_core::bindings::anim_add_block_ref as add_anim_block_ref;
 use sa_stream::bindings::anim_remove_block_ref as remove_anim_block_ref;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::entity_get_col_model;
 use sa_world::bindings::event_group_add;
 use sa_world::bindings::event_group_event_ctor;
 use sa_world::bindings::event_group_event_dtor;
-use sa_world::bindings::get_animation_block;
+use sa_core::bindings::get_animation_block;
 use sa_world::bindings::get_event_global_group;
 use sa_world::bindings::membership_is_member as group_membership_is_member;
 use sa_world::bindings::ped_groups_get_peds_group as get_peds_group;
@@ -34,39 +35,25 @@ use sa_world::bindings::physical_add_to_moving_list as add_to_moving_list;
 use sa_world::bindings::remove_from_moving_list;
 use sa_world::bindings::simple_transform_update_rw_matrix;
 use sa_world::bindings::task_simple_ctor;
+use crate::bindings::facial_get_anim_id;
+use crate::bindings::task_complex_dtor;
+use sa_core::bindings::anim_set_delete_callback as assoc_set_delete_callback;
+use sa_core::bindings::assoc_set_finish_callback;
+use sa_core::bindings::clump_get_association;
+use sa_core::bindings::streaming_request_model as request_model;
+use sa_stream::bindings::anim_blend_animation_hier as blend_animation_hier;
+use sa_stream::bindings::get_animation_block_index;
+use sa_world::bindings::anim_blend_animation as blend_animation;
+use sa_world::bindings::anim_get_anim_block_name as get_anim_block_name;
+use sa_world::bindings::event_sound_quiet_ctor;
+use sa_world::bindings::event_sound_quiet_dtor;
+use sa_world::bindings::group_intelligence_add_event as pgi_add_event;
+use sa_world::bindings::placeable_set_posn;
 orig! {
     /// `CTaskSimpleFacial::CTaskSimpleFacial(int32 type, int32 duration)` (0x690C70, `ret 8`)
     fn task_simple_facial_ctor(t: GPtr<u8>, ty: i32, ms: i32) -> GPtr<u8> = thiscall 0x690C70 => unported;
-    /// `CTaskSimpleFacial::GetAnimId(int32)` (0x690CC0, cdecl)
-    fn facial_get_anim_id(ty: i32) -> i32 = cdecl 0x690CC0 => crate::mvpb_ai2::task_simple_facial_get_anim_id;
-    /// `RpAnimBlendClumpGetAssociation(RpClump*, uint32 animId)` (0x4D68B0, cdecl)
-    fn clump_get_association(c: GPtr<u8>, id: u32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
-    /// `CAnimManager::BlendAnimation(RpClump*, CAnimBlendHierarchy*, int32 flags, float)` (0x4D4410, cdecl)
-    fn blend_animation_hier(c: GPtr<u8>, h: GPtr<u8>, flags: u32, d: f32) -> GPtr<u8> = cdecl 0x4D4410 => unported;
-    /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float)` (0x4D4610, cdecl)
-    fn blend_animation(c: GPtr<u8>, g: u32, a: u32, d: f32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
-    /// `CAnimManager::GetAnimBlockName(AssocGroupId)` (0x4D3A30, cdecl)
-    fn get_anim_block_name(g: u32) -> GPtr<u8> = cdecl 0x4D3A30 => unported;
-    /// `CAnimManager::GetAnimationBlockIndex(const char*)` (0x4D3990, cdecl)
-    fn get_animation_block_index(n: u32) -> i32 = cdecl 0x4D3990 => unported;
-    /// `CStreaming::RequestModel(int32, int32)` (0x4087E0, cdecl)
-    fn request_model(id: i32, flags: u32) = cdecl 0x4087E0 => unported;
-    /// `CAnimBlendAssociation::SetFinishCallback(cb, data)` (0x4CEBE0, `ret 8`)
-    fn assoc_set_finish_callback(a: GPtr<u8>, cb: u32, d: GPtr<u8>) = thiscall 0x4CEBE0 => unported;
-    /// `CAnimBlendAssociation::SetDeleteCallback(cb, data)` (0x4CEBC0, `ret 8`)
-    fn assoc_set_delete_callback(a: GPtr<u8>, cb: u32, d: GPtr<u8>) = thiscall 0x4CEBC0 => unported;
-    /// `CEventSoundQuiet::CEventSoundQuiet(CEntity*, float, uint32, const CVector&)` (0x5E05B0, `ret 0x10`)
-    fn event_sound_quiet_ctor(e: GPtr<u8>, ent: GPtr<u8>, vol: f32, t: u32, pos: GPtr<f32>) -> GPtr<u8> = thiscall 0x5E05B0 => unported;
-    /// `FUN_005dea00` (0x5DEA00): `CEventSoundQuiet` destructor body
-    fn event_sound_quiet_dtor(e: GPtr<u8>) = thiscall 0x5DEA00 => crate::mvpb_ai::event_dtor_5dea00;
-    /// `CPlaceable::SetPosn(const CVector&)` (0x4241C0, `ret 4`)
-    fn placeable_set_posn(e: GPtr<u8>, v: GPtr<f32>) = thiscall 0x4241C0 => unported;
     /// `CGroupEventHandler::ComputeEventResponseTasks(const CPedGroupEvent*... )` (0x5FC200, cdecl, 2 args)
     fn group_event_handler_compute(a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x5FC200 => unported;
-    /// `CPedGroupIntelligence::AddEvent(CEvent*)` (0x5F7470, `ret 4`)
-    fn pgi_add_event(g: GPtr<u8>, e: GPtr<u8>) -> u8 = thiscall 0x5F7470 => crate::mvpb_ai::pgi_add_event;
-    /// `FUN_0061a3d0` (0x61A3D0): `CTaskComplex` base destructor
-    fn task_complex_dtor(t: GPtr<u8>) = thiscall 0x61A3D0 => crate::mvpb_ai::task_complex_dtor_61a3d0;
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_get_task_type(t: GPtr<u8>) -> u32 = thiscall vslot 0x10 => unported;
     /// `CTask::MakeAbortable(CPed*, int32, const CEvent*)` (vtable +0x18)
@@ -396,7 +383,7 @@ pub fn hold_entity_drop_entity(this: GPtr<u8>, ped: GPtr<u8>, add_event: u8) {
             let mut v = [0.0f32; 3];
             let mut ev = [0u32; 16];
             let evp: GPtr<u8> = GPtr::from_raw(ev.as_mut_ptr().cast());
-            event_sound_quiet_ctor(evp, ped, 60.0, 0xFFFF_FFFF, GPtr::from_raw(v.as_mut_ptr()));
+            event_sound_quiet_ctor(evp, ped, 60.0, 0xFFFF_FFFF, GPtr::<f32>::cast::<u8>(GPtr::from_raw(v.as_mut_ptr())));
             let g = get_event_global_group();
             event_group_add(g, evp, 0);
             event_sound_quiet_dtor(evp);
@@ -426,7 +413,7 @@ pub fn hold_entity_drop_entity(this: GPtr<u8>, ped: GPtr<u8>, add_event: u8) {
             entity_update_rw_frame(ent);
         }
     }
-    clean_up_old_reference(rd::<GPtr<u8>>(this, 8), slot);
+    clean_up_old_reference(rd::<GPtr<u8>>(this, 8), slot.cast::<GPtr<u8>>());
     wr::<u32>(this, 8, 0);
 }
 
@@ -493,7 +480,7 @@ pub fn hold_entity_finish_anim_cb(assoc: GPtr<u8>, t: GPtr<u8>) {
     if v_get_task_type(t) == 0x134 && x(rd::<f32>(assoc, 0x18)).fcom(X87::zero()) == sa_math::x87::Cmp::Greater {
         let e = rd::<GPtr<u8>>(t, 8);
         if !e.is_null() {
-            clean_up_old_reference(e, t.byte_add(8));
+            clean_up_old_reference(e, GPtr::<u8>::cast::<GPtr<u8>>(t.byte_add(8)));
             wr::<u32>(t, 8, 0);
         }
     }
@@ -570,13 +557,13 @@ pub fn pgi_compute_event_response_tasks(this: GPtr<u8>) -> GPtr<u8> {
 pub fn go_to_vehicle_and_lean_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x86FAC8);
     if rd::<u8>(this, 0x14) != 0 {
-        let i = get_animation_block_index(0x86F92C);
-        remove_anim_block_ref(i);
+        let i = get_animation_block_index(GPtr::from_addr(0x86F92C));
+        remove_anim_block_ref(i as u32);
         wr::<u8>(this, 0x14, 0);
     }
     let e = rd::<GPtr<u8>>(this, 0xC);
     if !e.is_null() {
-        clean_up_old_reference(e, this.byte_add(0xC));
+        clean_up_old_reference(e, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0xC)));
     }
     task_complex_dtor(this);
 }
@@ -616,7 +603,7 @@ pub fn inform_friends_event_queue_process() {
             event_group_add(g, rd::<GPtr<u8>>(e, 4), 0);
             let p = rd::<GPtr<u8>>(e, 0);
             if !p.is_null() {
-                clean_up_old_reference(p, e);
+                clean_up_old_reference(p, e.cast::<GPtr<u8>>());
                 wr::<u32>(e, 0, 0);
             }
         }
@@ -663,7 +650,7 @@ pub fn inform_group_event_process(this: GPtr<u8>) {
     }
     let p = rd::<GPtr<u8>>(this, 0);
     if !p.is_null() {
-        clean_up_old_reference(p, this);
+        clean_up_old_reference(p, this.cast::<GPtr<u8>>());
         wr::<u32>(this, 0, 0);
     }
     let ev = rd::<GPtr<u8>>(this, 8);

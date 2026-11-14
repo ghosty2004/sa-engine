@@ -7,6 +7,7 @@
 //! +0x10 / +0x11 ped health byte (current, last), +0x12 / +0x13 vehicle health byte (current, last).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -167,15 +168,11 @@ pub fn mental_state_process(this: GPtr<u8>, ped: GPtr<u8>) {
 
 use crate::bindings::decision_from as dm_decision_from;
 use sa_world::bindings::dm_load_enum;
+use sa_core::bindings::file_close as dm_close_file;
+use sa_core::bindings::file_set_dir as dm_set_dir;
+use sa_core::bindings::open_file as dm_open_file;
+use sa_core::bindings::read_line as dm_read_line;
 orig! {
-    /// `CFileMgr::SetDir(dir)` (0x5387D0)
-    fn dm_set_dir(dir: GPtr<u8>) = cdecl 0x5387D0 => unported;
-    /// `CFileMgr::OpenFile(path, mode)` (0x538900)
-    fn dm_open_file(path: u32, mode: GPtr<u8>) -> i32 = cdecl 0x538900 => unported;
-    /// `CFileMgr::ReadLine(file, buf, size)` (0x5389B0, bool in AL)
-    fn dm_read_line(file: i32, buf: GPtr<u8>, size: u32) -> u8 = cdecl 0x5389B0 => unported;
-    /// `CFileMgr::CloseFile(file)` (0x5389D0)
-    fn dm_close_file(file: i32) -> i32 = cdecl 0x5389D0 => unported;
     /// CRT `sscanf(line, [0x86CDA0], 80 pointers)` (0x8220AD)
     fn dm_sscanf(line: GPtr<u8>, fmt: GPtr<u8>, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, a8: u32, a9: u32, a10: u32, a11: u32, a12: u32, a13: u32, a14: u32, a15: u32, a16: u32, a17: u32, a18: u32, a19: u32, a20: u32, a21: u32, a22: u32, a23: u32, a24: u32, a25: u32, a26: u32, a27: u32, a28: u32, a29: u32, a30: u32, a31: u32, a32: u32, a33: u32, a34: u32, a35: u32, a36: u32, a37: u32, a38: u32, a39: u32, a40: u32, a41: u32, a42: u32, a43: u32, a44: u32, a45: u32, a46: u32, a47: u32, a48: u32, a49: u32, a50: u32, a51: u32, a52: u32, a53: u32, a54: u32, a55: u32, a56: u32, a57: u32, a58: u32, a59: u32, a60: u32, a61: u32, a62: u32, a63: u32, a64: u32, a65: u32, a66: u32, a67: u32, a68: u32, a69: u32, a70: u32, a71: u32, a72: u32, a73: u32, a74: u32, a75: u32, a76: u32, a77: u32, a78: u32, a79: u32) -> i32 = cdecl 0x8220AD => unported;
     /// `CDecision::Set(types, probs, bools, facial)` (0x600570)
@@ -218,13 +215,13 @@ pub fn file_loader_load_decision_maker_ptr_port(name: u32, dm: GPtr<u8>) -> bool
     let fp = |o: usize| base.wrapping_add(o) as usize as u32;
     let fg = |o: usize| GPtr::<u8>::from_raw(base.wrapping_add(o));
     dm_set_dir(g::<u8>(0x86CEE4));
-    let file = dm_open_file(name, g::<u8>(0x85A53C));
+    let file = GPtr::<u8>::addr(dm_open_file(GPtr::from_addr(name as usize), g::<u8>(0x85A53C))) as i32;
     dm_set_dir(g::<u8>(0x858B54));
     if file <= 0 {
         return false;
     }
-    dm_read_line(file, fg(0x18C), 0x200);
-    if dm_read_line(file, fg(0x18C), 0x200) != 0 {
+    dm_read_line(GPtr::from_addr(file as usize), fg(0x18C), 0x200);
+    if u8::from(dm_read_line(GPtr::from_addr(file as usize), fg(0x18C), 0x200)) != 0 {
         loop {
             dm_sscanf(fg(0x18C), g::<u8>(0x86CDA0), fp(0x10), fp(0x14c), fp(0x14), fp(0x64), fp(0x68), fp(0x60), fp(0x5c), fp(0x30), fp(0x2c), fp(0xbc), fp(0xc0), fp(0xc4), fp(0xc8), fp(0xcc), fp(0xd0), fp(0x18), fp(0x74), fp(0x78), fp(0x70), fp(0x6c), fp(0x38), fp(0x34), fp(0xd4), fp(0xd8), fp(0xdc), fp(0xe0), fp(0xe4), fp(0xe8), fp(0x1c), fp(0x84), fp(0x88), fp(0x80), fp(0x7c), fp(0x40), fp(0x3c), fp(0xec), fp(0xf0), fp(0xf4), fp(0xf8), fp(0xfc), fp(0x100), fp(0x20), fp(0x94), fp(0x98), fp(0x90), fp(0x8c), fp(0x48), fp(0x44), fp(0x104), fp(0x108), fp(0x10c), fp(0x110), fp(0x114), fp(0x118), fp(0x24), fp(0xa4), fp(0xa8), fp(0xa0), fp(0x9c), fp(0x50), fp(0x4c), fp(0x11c), fp(0x120), fp(0x124), fp(0x128), fp(0x12c), fp(0x130), fp(0x28), fp(0xb4), fp(0xb8), fp(0xb0), fp(0xac), fp(0x58), fp(0x54), fp(0x134), fp(0x138), fp(0x13c), fp(0x140), fp(0x144), fp(0x148));
             for i in 0..6usize {
@@ -237,12 +234,12 @@ pub fn file_loader_load_decision_maker_ptr_port(name: u32, dm: GPtr<u8>) -> bool
             let t = decision_maker_types_get_instance();
             let idx = rd::<u32>(t, (event * 4 + 0xC034) as isize);
             dm_decision_from(dm.byte_add(idx.wrapping_mul(0x3C) as i32 as isize), fg(0x150));
-            if dm_read_line(file, fg(0x18C), 0x200) == 0 {
+            if u8::from(dm_read_line(GPtr::from_addr(file as usize), fg(0x18C), 0x200)) == 0 {
                 break;
             }
         }
     }
-    dm_close_file(file);
+    dm_close_file(GPtr::from_addr(file as usize));
     true
 }
 
@@ -343,14 +340,14 @@ pub fn load_event_index_file(indices: GPtr<u8>, file: u32) {
     }
     dm_set_dir(g::<u8>(0x858B54));
     dm_set_dir(g::<u8>(0x86A6B4));
-    let f = dm_open_file(file, g::<u8>(0x85A53C));
+    let f = GPtr::<u8>::addr(dm_open_file(GPtr::from_addr(file as usize), g::<u8>(0x85A53C))) as i32;
     dm_set_dir(g::<u8>(0x858B54));
     let mut buf = [0u8; 0x100];
     let mut name = [0u8; 0x100];
     let mut event = 0u32;
     let mut n = 0u32;
     let bp = GPtr::<u8>::from_raw(buf.as_mut_ptr());
-    while dm_read_line(f, bp, 0x100) != 0 {
+    while u8::from(dm_read_line(GPtr::from_addr(f as usize), bp, 0x100)) != 0 {
         let c = bp.read();
         if c == 0 || c == b'\n' {
             continue;
@@ -359,7 +356,7 @@ pub fn load_event_index_file(indices: GPtr<u8>, file: u32) {
         wr::<u32>(indices, 4 * event as i32 as isize, n);
         n += 1;
     }
-    dm_close_file(f);
+    dm_close_file(GPtr::from_addr(f as usize));
 }
 
 /// Every registration of this module.

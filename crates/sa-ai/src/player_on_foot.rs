@@ -9,6 +9,7 @@
 //! +0x14 move blend ratio, +0x34 flags, +0x84 "can't sprint" byte.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -51,12 +52,12 @@ const K_STICK_SCALE: usize = 0x859044;
 /// 0.07 (0x858CA8): the move blend ratio step per time step
 const K_BLEND_STEP: usize = 0x858CA8;
 
-use crate::bindings::anim_blend_animation;
-use crate::bindings::assoc_group_get_animation;
-use crate::bindings::clump_get_association;
+use sa_world::bindings::anim_blend_animation;
+use sa_core::bindings::assoc_group_get_animation;
+use sa_core::bindings::clump_get_association;
 use crate::bindings::pad_jump_just_down;
-use crate::bindings::ped_set_move_state;
-use crate::bindings::player_control_button_sprint;
+use sa_world::bindings::ped_set_move_state;
+use sa_world::bindings::player_control_button_sprint;
 use sa_core::bindings::entity_clean_up_old_reference;
 use sa_core::bindings::general_random_int_in_range;
 use sa_core::bindings::get_weapon_info as weapon_info_get;
@@ -78,6 +79,16 @@ use sa_world::bindings::ped_say;
 use sa_world::bindings::player_clear_weapon_target;
 use sa_world::bindings::player_set_real_move_anim;
 use sa_world::bindings::surface_cant_sprint_on;
+use sa_core::bindings::clump_get_first_association;
+use sa_core::bindings::general_get_radian_angle_between_points;
+use sa_core::bindings::general_limit_radian_angle;
+use sa_core::bindings::tm_get_task_secondary;
+use sa_world::bindings::clear_cross_hair as weapon_effects_clear_cross_hair;
+use sa_world::bindings::game_logic_allowed_direction as game_logic_is_player_allowed_to_go_in_this_direction;
+use sa_world::bindings::pad_get_ped_walk_left_right;
+use sa_world::bindings::pad_get_ped_walk_up_down;
+use sa_world::bindings::pad_get_touched_time_delta;
+use sa_world::bindings::tm_set_task;
 orig! {
     /// `CPedIntelligence::SetTaskDuckSecondary(uint16)` (0x601230, `ret 4`)
     fn intel_set_task_duck_secondary(i: GPtr<u8>, t: u32) = thiscall 0x601230 => unported;
@@ -89,10 +100,6 @@ orig! {
     fn on_foot_player_control_zelda_weapon(t: GPtr<u8>, p: GPtr<u8>) = thiscall 0x687C20 => unported;
     /// `CTaskSimplePlayerOnFoot::ProcessPlayerWeapon(CPlayerPed*)` (0x6859A0, `ret 4`)
     fn on_foot_process_player_weapon(t: GPtr<u8>, p: GPtr<u8>) = thiscall 0x6859A0 => unported;
-    /// `CTaskManager::GetTaskSecondary(int32)` (0x681810, `ret 4`)
-    fn tm_get_task_secondary(tm: GPtr<u8>, i: u32) -> GPtr<u8> = thiscall 0x681810 => unported;
-    /// `CTaskManager::SetTask(CTask*, int32 slot, bool)` (0x681AF0, `ret 0xC`)
-    fn tm_set_task(tm: GPtr<u8>, t: GPtr<u8>, slot: u32, b: u32) = thiscall 0x681AF0 => unported;
     /// `CEvent::GetEventType` (vtable +4)
     fn v_event_type(e: GPtr<u8>) -> i32 = thiscall vslot 0x4 => unported;
     /// `CEvent::GetEventPriority` (vtable +8)
@@ -101,26 +108,10 @@ orig! {
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
     /// `CTask::MakeAbortable(CPed*, int32, const CEvent*)` (vtable +0x18, `ret 0xC`)
     fn v_task_make_abortable(t: GPtr<u8>, p: GPtr<u8>, prio: u32, e: GPtr<u8>) -> u8 = thiscall vslot 0x18 => unported;
-    /// `CWeaponEffects::ClearCrossHair(int32 player)` (0x742C60)
-    fn weapon_effects_clear_cross_hair(n: u32) = cdecl 0x742C60 => unported;
-    /// `CPad::GetPedWalkLeftRight()` (0x53FC90; int16 in AX)
-    fn pad_get_ped_walk_left_right(pad: GPtr<u8>) -> u32 = thiscall 0x53FC90 => unported;
-    /// `CPad::GetPedWalkUpDown()` (0x53FD30; int16 in AX)
-    fn pad_get_ped_walk_up_down(pad: GPtr<u8>) -> u32 = thiscall 0x53FD30 => unported;
     /// `CPad::DuckJustDown(CPed*)` (0x540720; the argument is not pushed here)
     fn pad_duck_just_down(pad: GPtr<u8>) -> u8 = thiscall 0x540720 => unported;
     /// `CPad::SetTouched()` (0x53F200)
     fn pad_set_touched(pad: GPtr<u8>) = thiscall 0x53F200 => unported;
-    /// `CPad::GetTouchedTimeDelta()` (0x53F210)
-    fn pad_get_touched_time_delta(pad: GPtr<u8>) -> i32 = thiscall 0x53F210 => unported;
-    /// `CGeneral::GetRadianAngleBetweenPoints(float x1, float y1, float x2, float y2)` (0x53CBE0, ST0)
-    fn general_get_radian_angle_between_points(x1: f32, y1: f32, x2: f32, y2: f32) -> f64 = cdecl 0x53CBE0 => unported;
-    /// `CGeneral::LimitRadianAngle(float)` (0x53CB50, ST0)
-    fn general_limit_radian_angle(a: f32) -> f64 = cdecl 0x53CB50 => unported;
-    /// `CGameLogic::IsPlayerAllowedToGoInThisDirection(CPed*, CVector dir, float limit)` (0x441E10)
-    fn game_logic_is_player_allowed_to_go_in_this_direction(p: GPtr<u8>, dx: f32, dy: f32, dz: f32, limit: f32) -> u8 = cdecl 0x441E10 => unported;
-    /// `RpAnimBlendClumpGetFirstAssociation(RpClump*)` (0x4D15E0)
-    fn clump_get_first_association(clump: u32) -> GPtr<u8> = cdecl 0x4D15E0 => unported;
     /// `CTaskSimpleDuck::CanPedDuck(CPed*)` (0x692610)
     fn duck_can_ped_duck(p: GPtr<u8>) -> u8 = cdecl 0x692610 => unported;
 }
@@ -136,7 +127,7 @@ fn task_manager(ped: GPtr<u8>) -> GPtr<u8> {
 /// The current weapon's `CWeaponInfo` (skill 1).
 fn current_weapon_info(ped: GPtr<u8>) -> GPtr<u8> {
     let slot = i32::from(rd::<i8>(ped, 0x718));
-    weapon_info_get(rd::<u32>(ped, 0x5A0 + slot as isize * 0x1C), 1)
+    weapon_info_get(rd::<u32>(ped, 0x5A0 + slot as isize * 0x1C) as i32, 1)
 }
 
 /// `CTaskSimplePlayerOnFoot::ProcessPed(CPed*)` (0x688810, thiscall, `ret 4`). No pad
@@ -201,7 +192,7 @@ pub fn on_foot_make_abortable(_this: GPtr<u8>, ped: GPtr<u8>, prio: i32, ev: GPt
     let r: u8;
     if prio == 2 {
         wr::<u32>(rd::<GPtr<u8>>(ped, 0x480), 0x14, 0);
-        anim_blend_animation(rd::<u32>(ped, 0x18), rd::<u32>(ped, 0x4D4), 3, 1000f32.to_bits());
+        anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), rd::<u32>(ped, 0x4D4), 3, f32::from_bits(1000f32.to_bits()));
         r = 1;
     } else if prio == 1 {
         let tm = task_manager(ped);
@@ -257,7 +248,7 @@ pub fn on_foot_make_abortable(_this: GPtr<u8>, ped: GPtr<u8>, prio: i32, ev: GPt
     weapon_effects_clear_cross_hair(rd::<u32>(ped, 0x598));
     let t = rd::<GPtr<u8>>(target, 0);
     if !t.is_null() {
-        entity_clean_up_old_reference(t, target);
+        entity_clean_up_old_reference(t, target.cast::<GPtr<u8>>());
     }
     wr::<u32>(target, 0, 0);
     r
@@ -290,8 +281,8 @@ pub fn on_foot_player_control_zelda(this: GPtr<u8>, ped: GPtr<u8>, no_jump_duck:
     wr::<u32>(pd, 0xC, 0);
     wr::<u32>(pd, 0x10, 0);
     let pad = player_get_pad(ped);
-    let lr = f32::from(pad_get_ped_walk_left_right(pad) as i16);
-    let ud = f32::from(pad_get_ped_walk_up_down(pad) as i16);
+    let lr = f32::from((pad_get_ped_walk_left_right(pad) as u32) as i16);
+    let ud = f32::from((pad_get_ped_walk_up_down(pad) as u32) as i16);
     let mut r = x(ud).fmul_m(ud).fadd(x(lr).fmul_m(lr)).fsqrt().fmul_m(g::<f32>(K_STICK_SCALE).read()).to_f32();
     if rd::<u32>(ped, 0xFC) != 0 {
         r = 0.0;
@@ -353,8 +344,8 @@ pub fn on_foot_player_control_zelda(this: GPtr<u8>, ped: GPtr<u8>, no_jump_duck:
         }
     }
     player_set_real_move_anim(ped);
-    clump_get_association(rd::<u32>(ped, 0x18), 0xB);
-    clump_get_association(rd::<u32>(ped, 0x18), 0xC);
+    clump_get_association(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0xB);
+    clump_get_association(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0xC);
     let ducked = pad_duck_just_down(pad) != 0 && duck_can_ped_duck(ped) != 0;
     if ducked && no_jump_duck == 0 {
         intel_set_task_duck_secondary(intel(ped), 0);
@@ -421,14 +412,14 @@ pub fn on_foot_play_idle_animations(this: GPtr<u8>, ped: GPtr<u8>) {
     let table: [(u32, u32); 4] = [(0x105, 0x31), (0x106, 0x31), (0x107, 0x31), (0x108, 0x31)];
     let block_idx = rd::<i32>(this, 8);
     let block = g::<u8>(ANIM_BLOCKS).byte_add(block_idx as isize * 0x20);
-    let dt = pad_get_touched_time_delta(pad);
+    let dt = pad_get_touched_time_delta(pad) as i32;
     let clump = rd::<u32>(ped, 0x18);
     if dt > 10000 {
         streaming_request_model(block_idx + 0x63E7, 2);
         if rd::<u8>(block, 0x10) == 0 {
             return;
         }
-        let mut a = clump_get_first_association(clump);
+        let mut a = clump_get_first_association(GPtr::from_addr(clump as usize));
         while !a.is_null() {
             let idx = (rd::<GPtr<u8>>(a, 0x14).addr().wrapping_sub(g::<u8>(ANIMATIONS).addr()) as i32) / 0x18;
             let first = rd::<i32>(block, 0x14);
@@ -451,20 +442,20 @@ pub fn on_foot_play_idle_animations(this: GPtr<u8>, ped: GPtr<u8>) {
             }
         }
         let (anim, group) = table[r as usize];
-        let assoc = anim_blend_animation(clump, group, anim, 8f32.to_bits());
+        let assoc = anim_blend_animation(GPtr::from_addr(clump as usize), group, anim, f32::from_bits(8f32.to_bits()));
         wr::<u8>(assoc, 0x2F, rd::<u8>(assoc, 0x2F) | 2);
         g::<i32>(LAST_TOUCH_TIME_DELTA).write(dt);
         g::<i32>(LAST_IDLE_ANIM).write(r);
         if X87::from_f64_exact(stats_get_stat_value(0x12F)).fcom(X87::zero()).test_parity(0x44)
             && g::<u32>(TIMER_TIME_MS).read() > 0x124F80
         {
-            ped_say(ped, 0x150, 0, 0.2f32.to_bits(), 0, 0, 0);
+            ped_say(ped, 0x150, 0, f32::from_bits(0.2f32.to_bits()), 0, 0, 0);
         }
         return;
     }
     if rd::<u8>(block, 0x10) != 0 {
         streaming_set_model_is_deletable(block_idx + 0x63E7);
-        let mut a = clump_get_first_association(clump);
+        let mut a = clump_get_first_association(GPtr::from_addr(clump as usize));
         while !a.is_null() {
             if (u32::from(rd::<u16>(a, 0x2E)) >> 9) & 1 != 0 {
                 wr::<u32>(a, 0x1C, 0xC100_0000);
@@ -478,7 +469,7 @@ pub fn on_foot_play_idle_animations(this: GPtr<u8>, ped: GPtr<u8>) {
 use crate::bindings::duck_control_duck_move;
 use sa_world::bindings::game_logic_is_player_use_2player_controls;
 use sa_world::bindings::pad_exit_vehicle_just_down;
-use sa_world::bindings::vector_sub;
+use sa_core::bindings::vector_sub;
 use sa_world::bindings::weapon_is_type_melee;
 orig! {
     /// `CPedIntelligence::ClearTaskDuckSecondary()` (0x601390)
@@ -533,8 +524,8 @@ pub fn on_foot_player_control_ducked_port(_this: GPtr<u8>, ped: GPtr<u8>) {
         return;
     }
     let pad = player_get_pad(ped);
-    let ud = f32::from(pad_get_ped_walk_up_down(pad) as i16);
-    let lr = f32::from(pad_get_ped_walk_left_right(pad) as i16);
+    let ud = f32::from((pad_get_ped_walk_up_down(pad) as u32) as i16);
+    let lr = f32::from((pad_get_ped_walk_left_right(pad) as u32) as i16);
     let k = g::<f32>(K_DUCK_STICK_SCALE).read();
     let mut sx = x(lr).fmul_m(k).to_f32();
     let mut sy = x(ud).fmul_m(k).to_f32();
@@ -559,7 +550,7 @@ pub fn on_foot_player_control_ducked_port(_this: GPtr<u8>, ped: GPtr<u8>) {
             && (rd::<u32>(rd::<GPtr<u8>>(intel_get_task_use_gun(intel(ped)), 0x30), 0x18) >> 1) & 1 == 0
         {
             if !x(r).fcom(x(half)).test_any(0x41) {
-                let a = anim_blend_animation(rd::<u32>(ped, 0x18), 0, 0x32, blend_delta());
+                let a = anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0, 0x32, f32::from_bits(blend_delta()));
                 wr::<u8>(a, 0x2E, rd::<u8>(a, 0x2E) | 1);
                 wr::<u32>(rd::<GPtr<u8>>(ped, 0x480), 0x14, 0x3F80_0000);
                 let mut mv = [1.0f32, 0.0];
@@ -571,7 +562,7 @@ pub fn on_foot_player_control_ducked_port(_this: GPtr<u8>, ped: GPtr<u8>) {
         if x(r).fcom(x(half)).test_any(0x41) {
             return;
         }
-        let a = anim_blend_animation(rd::<u32>(ped, 0x18), rd::<u32>(ped, 0x4D4), u32::from(sprint), blend_delta());
+        let a = anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), rd::<u32>(ped, 0x4D4), u32::from(sprint), f32::from_bits(blend_delta()));
         wr::<u8>(a, 0x2E, rd::<u8>(a, 0x2E) | 1);
         wr::<u32>(rd::<GPtr<u8>>(ped, 0x480), 0x14, 0x3FC0_0000);
         let st = if sprint { 6 } else { 4 };
@@ -673,8 +664,8 @@ pub fn on_foot_player_control_zelda_weapon_port(_this: GPtr<u8>, ped: GPtr<u8>) 
             lr = 0.0;
         }
     } else {
-        ud = f32::from(pad_get_ped_walk_up_down(pad) as i16);
-        lr = f32::from(pad_get_ped_walk_left_right(pad) as i16);
+        ud = f32::from((pad_get_ped_walk_up_down(pad) as u32) as i16);
+        lr = f32::from((pad_get_ped_walk_left_right(pad) as u32) as i16);
     }
     let k = g::<f32>(K_DUCK_STICK_SCALE).read();
     let mut mx = x(lr).fmul_m(k).to_f32();
@@ -800,8 +791,8 @@ pub fn on_foot_player_control_fighter_port(this: GPtr<u8>, ped: GPtr<u8>) {
     }
     let fire = rd::<u32>(current_weapon_info(ped), 0) != 0;
     let pad = player_get_pad(ped);
-    let lr = f32::from(pad_get_ped_walk_left_right(pad) as i16);
-    let ud = f32::from(pad_get_ped_walk_up_down(pad) as i16);
+    let lr = f32::from((pad_get_ped_walk_left_right(pad) as u32) as i16);
+    let ud = f32::from((pad_get_ped_walk_up_down(pad) as u32) as i16);
     let k = g::<f32>(K_DUCK_STICK_SCALE).read();
     let z = g::<f32>(K_ZERO_F32).read();
     let mut mx = x(lr).fmul_m(k).to_f32();
@@ -944,8 +935,8 @@ fn fighter_idle_direction(fight: GPtr<u8>, pd: GPtr<u8>) {
 
 use crate::bindings::duck_is_task_in_use_by_other_tasks;
 use crate::bindings::fight_ctor;
-use crate::bindings::ik_abort_look_at;
-use crate::bindings::intel_is_in_seeing_range;
+use sa_core::bindings::ik_abort_look_at;
+use sa_world::bindings::intel_is_in_seeing_range;
 use crate::bindings::stealth_kill_ctor;
 use crate::bindings::ug_abort_ik_orig as use_gun_abort_ik;
 use sa_core::bindings::matrix_mul_vec;
@@ -978,9 +969,17 @@ use sa_world::bindings::ped_weapon_audio_add_audio_event;
 use sa_world::bindings::placeable_get_top_direction;
 use sa_world::bindings::report_crime as crime_report_crime;
 use sa_world::bindings::task_use_goggles_ctor as use_goggles_ctor;
+use crate::bindings::ik_get_look_at_entity;
+use crate::bindings::weapon_fire;
+use sa_core::bindings::tm_set_task_secondary;
+use sa_world::bindings::aim_weapon_left_right as pad_aim_weapon_left_right;
+use sa_world::bindings::aim_weapon_up_down as pad_aim_weapon_up_down;
+use sa_world::bindings::does_target_have_to_be_broken_call as player_does_target_have_to_be_broken;
+use sa_world::bindings::get_crouch_reload_animation_id_call as weapon_info_get_crouch_reload_anim_id;
+use sa_world::bindings::group_intelligence_add_event as group_intel_add_event;
+use sa_world::bindings::pad_weapon_just_down;
+use sa_world::bindings::vector_add_assign;
 orig! {
-    /// `CPad::WeaponJustDown(CPed*)` (0x540250, `ret 4`; AL, EAX passed on whole once)
-    fn pad_weapon_just_down(pad: GPtr<u8>, ped: GPtr<u8>) -> u32 = thiscall 0x540250 => unported;
     /// `CPlayerPed::PlayerHasJustAttackedSomeone()` (0x60D5A0)
     fn player_has_just_attacked_someone(p: GPtr<u8>) = thiscall 0x60D5A0 => unported;
     /// `CTaskSimpleUseGun::PlayerPassiveControlGun()` (0x61E0A0)
@@ -989,8 +988,6 @@ orig! {
     fn pad_get_melee_attack(pad: GPtr<u8>, b: u32) -> u8 = thiscall 0x540340 => unported;
     /// `CPedIntelligence::TestForStealthKill(CPed*, bool)` (0x601E00, `ret 8`)
     fn intel_test_for_stealth_kill(i: GPtr<u8>, target: GPtr<u8>, full: u32) -> u8 = thiscall 0x601E00 => unported;
-    /// `CTaskManager::SetTaskSecondary(CTask*, int32)` (0x681B60, `ret 8`)
-    fn tm_set_task_secondary(tm: GPtr<u8>, t: GPtr<u8>, slot: u32) = thiscall 0x681B60 => unported;
     /// `CTaskSimpleUseGun::ControlGun(CPed*, CEntity*, int8 command)` (0x61E040, `ret 0xC`)
     fn use_gun_control_gun(t: GPtr<u8>, ped: GPtr<u8>, target: GPtr<u8>, cmd: u32) -> u8 = thiscall 0x61E040 => unported;
     /// `CTaskSimpleUseGun::RequirePistolWhip(CPed*, CEntity*)` (0x61E200)
@@ -998,23 +995,12 @@ orig! {
     /// `CTaskSimpleUseGun::CTaskSimpleUseGun(CEntity*, CVector, uint8 command, uint16 burst, bool aimImmediate)`
     /// (0x61DE60, `ret 0x1C`; the command goes as a whole dword)
     fn use_gun_ctor(t: GPtr<u8>, target: GPtr<u8>, x: u32, y: u32, z: u32, cmd: u32, burst: u32, aim: u32) -> GPtr<u8> = thiscall 0x61DE60 => unported;
-    /// `CWeapon::Fire(CEntity*, CVector* origin, CVector* muzzle, CEntity* target, CVector* targetPos, CVector*)`
-    /// (0x742300, `ret 0x18`)
-    fn weapon_fire(w: GPtr<u8>, owner: GPtr<u8>, origin: GPtr<u8>, muzzle: GPtr<u8>, target: GPtr<u8>, tpos: GPtr<u8>, alt: GPtr<u8>) -> u8 = thiscall 0x742300 => unported;
     /// `CTaskSimpleThrowProjectile::ControlThrow(bool, CEntity*, CVector*)` (0x61F810, `ret 0xC`)
     fn throw_control_throw(t: GPtr<u8>, b: u32, target: GPtr<u8>, pos: GPtr<u8>) -> u8 = thiscall 0x61F810 => unported;
     /// `CTaskSimpleThrowProjectile::CTaskSimpleThrowProjectile(CEntity*, CVector)` (0x61F660, `ret 0x10`)
     fn throw_projectile_ctor(t: GPtr<u8>, target: GPtr<u8>, x: u32, y: u32, z: u32) -> GPtr<u8> = thiscall 0x61F660 => unported;
-    /// `CWeaponInfo::GetCrouchReloadAnimationID()` (0x685700)
-    fn weapon_info_get_crouch_reload_anim_id(wi: GPtr<u8>) -> u32 = thiscall 0x685700 => unported;
-    /// `CPad::AimWeaponLeftRight(CPed*)` (0x541040, `ret 4`; int16 in AX)
-    fn pad_aim_weapon_left_right(pad: GPtr<u8>, ped: GPtr<u8>) -> u32 = thiscall 0x541040 => unported;
-    /// `CPad::AimWeaponUpDown(CPed*)` (0x5410C0, `ret 4`; int16 in AX)
-    fn pad_aim_weapon_up_down(pad: GPtr<u8>, ped: GPtr<u8>) -> u32 = thiscall 0x5410C0 => unported;
     /// `CPlayerPed::PedCanBeTargettedVehicleWise(CPed*)` (0x609D90)
     fn player_ped_can_be_targetted_vehicle_wise(p: GPtr<u8>) -> u8 = cdecl 0x609D90 => unported;
-    /// `CPlayerPed::DoesTargetHaveToBeBroken(CEntity*, CWeapon*)` (0x60C0C0, `ret 8`)
-    fn player_does_target_have_to_be_broken(p: GPtr<u8>, t: GPtr<u8>, w: GPtr<u8>) -> u8 = thiscall 0x60C0C0 => unported;
     /// `CPad::ShiftTargetLeftJustDown()` (0x540850; AL, EAX passed on whole once)
     fn pad_shift_target_left_just_down(pad: GPtr<u8>) -> u32 = thiscall 0x540850 => unported;
     /// `CPad::ShiftTargetRightJustDown()` (0x540880)
@@ -1025,18 +1011,12 @@ orig! {
     fn player_find_weapon_lock_on_target(p: GPtr<u8>) -> u8 = thiscall 0x60DC50 => unported;
     /// `CPedIntelligence::GetActivePrimaryTask()` (0x4B85B0)
     fn intel_get_active_primary_task(i: GPtr<u8>) -> GPtr<u8> = thiscall 0x4B85B0 => unported;
-    /// `CPedGroupIntelligence::AddEvent(CEvent*)` (0x5F7470, `ret 4`)
-    fn group_intel_add_event(gi: GPtr<u8>, e: GPtr<u8>) -> u8 = thiscall 0x5F7470 => unported;
     /// `CPlayerPed::Compute3rdPersonMouseTarget(bool)` (0x60B650, `ret 4`; the bool goes as a whole dword)
     fn player_compute_3rd_person_mouse_target(p: GPtr<u8>, melee: u32) = thiscall 0x60B650 => unported;
     /// `CCamera::UpdateAimingCoors(const CVector&)` (0x50CB10, `ret 4`)
     fn camera_update_aiming_coors(cam: GPtr<u8>, v: GPtr<u8>) = thiscall 0x50CB10 => unported;
-    /// `CVector::operator+=(const CVector&)` (0x411A00, `ret 4`)
-    fn vector_add_assign(v: GPtr<u8>, o: GPtr<u8>) -> GPtr<u8> = thiscall 0x411A00 => unported;
     /// `CPlayerPed::Clear3rdPersonMouseTarget()` (0x609ED0)
     fn player_clear_3rd_person_mouse_target(p: GPtr<u8>) = thiscall 0x609ED0 => unported;
-    /// `IKChainManager_c::GetLookAtEntity(CPed*)` (0x6181D0, `ret 4`)
-    fn ik_get_look_at_entity(m: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x6181D0 => unported;
 }
 
 /// `CCamera::m_bUseMouse3rdPerson` (0xB6EC2E)
@@ -1114,7 +1094,7 @@ fn ppw_melee(this: GPtr<u8>, ped: GPtr<u8>, pad: GPtr<u8>, wi: GPtr<u8>) {
             bl = 0xB;
             s20 = 0xB;
         }
-        let a = clump_get_association(clump(), 0x15B);
+        let a = clump_get_association(GPtr::from_addr(clump() as usize), 0x15B);
         if !a.is_null() {
             wr::<u32>(a, 0x18, 0xC000_0000);
         }
@@ -1148,10 +1128,10 @@ fn ppw_melee(this: GPtr<u8>, ped: GPtr<u8>, pad: GPtr<u8>, wi: GPtr<u8>) {
         }
         && intel_test_for_stealth_kill(intel(ped), victim, 0) != 0;
     let assoc = if stealth_ready {
-        let blend = || anim_blend_animation(clump(), rd::<u32>(wi, 0x1C), 0x15B, 0x4100_0000);
+        let blend = || anim_blend_animation(GPtr::from_addr(clump() as usize), rd::<u32>(wi, 0x1C), 0x15B, f32::from_bits(0x4100_0000));
         if rd::<u32>(ped, 0x46C) & 0x0400_0000 != 0 {
             if !intel_get_task_duck(intel(ped), 1).is_null() && duck_is_task_in_use_by_other_tasks(intel_get_task_duck(intel(ped), 1)) != 0 {
-                clump_get_first_association(clump())
+                clump_get_first_association(GPtr::from_addr(clump() as usize))
             } else {
                 blend()
             }
@@ -1159,7 +1139,7 @@ fn ppw_melee(this: GPtr<u8>, ped: GPtr<u8>, pad: GPtr<u8>, wi: GPtr<u8>) {
             blend()
         }
     } else {
-        let a = clump_get_association(clump(), 0x15B);
+        let a = clump_get_association(GPtr::from_addr(clump() as usize), 0x15B);
         if !a.is_null() {
             wr::<u32>(a, 0x18, 0xC000_0000);
         }
@@ -1188,7 +1168,7 @@ fn ppw_melee(this: GPtr<u8>, ped: GPtr<u8>, pad: GPtr<u8>, wi: GPtr<u8>) {
             let ty = rd::<u32>(weapon_slot(ped), 0);
             bl = 0xC;
             s20 = 0xC;
-            if (rd::<u32>(weapon_info_get(ty, 1), 0x18) >> 9) & 1 != 0 {
+            if (rd::<u32>(weapon_info_get(ty as i32, 1), 0x18) >> 9) & 1 != 0 {
                 bl = 0xB;
                 s20 = 0xB;
             }
@@ -1250,7 +1230,7 @@ fn ppw_stealth_kill(ped: GPtr<u8>, wi: GPtr<u8>, victim: GPtr<u8>) {
     let mut ev = [0u32; 0x11];
     let calc_p: GPtr<u8> = GPtr::from_raw(calc.as_mut_ptr()).cast();
     let ev_p: GPtr<u8> = GPtr::from_raw(ev.as_mut_ptr()).cast();
-    damage_calc_ctor(calc_p, ped, 0, rd::<u32>(weapon_slot(ped), 0), 3, 0);
+    damage_calc_ctor(calc_p, ped, f32::from_bits(0), rd::<u32>(weapon_slot(ped), 0), 3, 0);
     let flags = (rd::<u32>(victim, 0x46C) >> 8) & 0xFFFF_FF01;
     event_damage_ctor(ev_p, ped, g::<u32>(TIMER_TIME_MS).read(), rd::<u32>(weapon_slot(ped), 0), 3, 0, 0, flags);
     if event_damage_affects_ped(ev_p, victim) != 0 {
@@ -1331,7 +1311,7 @@ fn ppw_gun(ped: GPtr<u8>, pad: GPtr<u8>, wi: GPtr<u8>) {
             }
             let mut v = [0u32, 0, 0x3F19_999A];
             let mut out = [0u32; 3];
-            let r = matrix_mul_vec(GPtr::from_raw(out.as_mut_ptr()).cast(), rd::<GPtr<u8>>(ped, 0x14), GPtr::from_raw(v.as_mut_ptr()).cast());
+            let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::from_raw(out.as_mut_ptr()).cast()), rd::<GPtr<u8>>(ped, 0x14), GPtr::from_raw(v.as_mut_ptr()).cast()));
             let mut fp = [rd::<u32>(r, 0), rd::<u32>(r, 4), rd::<u32>(r, 8)];
             weapon_fire(weapon_slot(ped), ped, GPtr::from_raw(fp.as_mut_ptr()).cast(), GPtr::NULL, GPtr::NULL, GPtr::NULL, GPtr::NULL);
         }
@@ -1376,16 +1356,16 @@ fn ppw_reload(ped: GPtr<u8>, wi: GPtr<u8>) {
             && g::<u8>(CROUCH_RELOAD_ENABLED).read() != 0
             && !intel_get_task_duck(intel(ped), 1).is_null()
             && duck_is_task_in_use_by_other_tasks(intel_get_task_duck(intel(ped), 1)) == 0
-            && clump_get_association(rd::<u32>(ped, 0x18), weapon_info_get_crouch_reload_anim_id(wi)).is_null()
+            && clump_get_association(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), weapon_info_get_crouch_reload_anim_id(wi)).is_null()
         {
             let group = rd::<u32>(wi, 0x1C);
             let id = weapon_info_get_crouch_reload_anim_id(wi);
-            anim_blend_animation(rd::<u32>(ped, 0x18), group, id, 0x4080_0000);
+            anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), group, id, f32::from_bits(0x4080_0000));
         }
     } else {
         let id = |wi: GPtr<u8>| if (rd::<u32>(wi, 0x18) >> 0xC) & 1 != 0 { 0xE2 } else { 0 };
-        if clump_get_association(rd::<u32>(ped, 0x18), id(wi)).is_null() {
-            anim_blend_animation(rd::<u32>(ped, 0x18), rd::<u32>(wi, 0x1C), id(wi), 0x4080_0000);
+        if clump_get_association(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), id(wi)).is_null() {
+            anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), rd::<u32>(wi, 0x1C), id(wi), f32::from_bits(0x4080_0000));
         }
     }
 }
@@ -1421,7 +1401,7 @@ fn ppw_aim(this: GPtr<u8>, ped: GPtr<u8>, pad: GPtr<u8>, wi: GPtr<u8>) {
             }
         } else {
             let lim = g::<f32>(K_AIM_STICK_BREAK).read();
-            let moved = stick_above(pad_aim_weapon_left_right(pad, ped), lim) || stick_above(pad_aim_weapon_up_down(pad, ped), lim);
+            let moved = stick_above(pad_aim_weapon_left_right(pad, ped) as u32, lim) || stick_above(pad_aim_weapon_up_down(pad, ped) as u32, lim);
             let keep = (!moved || game_logic_is_coop_game_going_on() != 0)
                 && !target().is_null()
                 && g::<u8>(CAMERA_USE_MOUSE_3RD_PERSON).read() != 1
@@ -1431,7 +1411,7 @@ fn ppw_aim(this: GPtr<u8>, ped: GPtr<u8>, pad: GPtr<u8>, wi: GPtr<u8>) {
                 && player_does_target_have_to_be_broken(ped, target(), weapon_slot(ped)) == 0
                 && (rd::<u8>(ped, 0x46C) & 0x40 != 0 || {
                     let ty = rd::<u32>(weapon_slot(ped), 0);
-                    rd::<u8>(weapon_info_get(ty, ped_get_weapon_skill(ped)), 0x18) & 1 != 0
+                    rd::<u8>(weapon_info_get(ty as i32, (ped_get_weapon_skill(ped) as i32) as u8), 0x18) & 1 != 0
                 });
             if !keep {
                 player_clear_weapon_target(ped);
@@ -1447,7 +1427,7 @@ fn ppw_aim(this: GPtr<u8>, ped: GPtr<u8>, pad: GPtr<u8>, wi: GPtr<u8>) {
             }
             let ty = rd::<u32>(weapon_slot(ped), 0);
             let victim = target();
-            if rd::<u32>(weapon_info_get(ty, 1), 0) == 1
+            if rd::<u32>(weapon_info_get(ty as i32, 1), 0) == 1
                 && !victim.is_null()
                 && is_ped(victim)
                 && intel_is_in_seeing_range(intel(victim), entity_pos(ped)) != 0
@@ -1457,7 +1437,7 @@ fn ppw_aim(this: GPtr<u8>, ped: GPtr<u8>, pad: GPtr<u8>, wi: GPtr<u8>) {
                 }
             {
                 if rd::<u32>(weapon_slot(ped), 0) != 0x17 {
-                    ped_say(ped, 0xB0, 0, 0x3F80_0000, 0, 0, 0);
+                    ped_say(ped, 0xB0, 0, f32::from_bits(0x3F80_0000), 0, 0, 0);
                 }
                 let grp = ped_groups_get_peds_group(victim);
                 if !grp.is_null() {
@@ -1560,10 +1540,10 @@ fn ppw_not_aiming(ped: GPtr<u8>, pad: GPtr<u8>, wi: GPtr<u8>) {
             let neg = g::<f32>(K_WALK_STICK_NEG).read();
             let above = |v: u32| !X87::from_i32(i32::from(v as i16)).fcom(x(pos)).test_any(0x41);
             let below = |v: u32| !X87::from_i32(i32::from(v as i16)).fcom(x(neg)).test_parity(5);
-            above(pad_get_ped_walk_up_down(pad))
-                || below(pad_get_ped_walk_up_down(pad))
-                || above(pad_get_ped_walk_left_right(pad))
-                || below(pad_get_ped_walk_left_right(pad))
+            above(pad_get_ped_walk_up_down(pad) as u32)
+                || below(pad_get_ped_walk_up_down(pad) as u32)
+                || above(pad_get_ped_walk_left_right(pad) as u32)
+                || below(pad_get_ped_walk_left_right(pad) as u32)
         };
         if strafe {
             use_gun_control_gun(intel_get_task_use_gun(intel(ped)), ped, target(), 7);
@@ -1611,14 +1591,14 @@ fn ppw_look(this: GPtr<u8>, ped: GPtr<u8>, wi: GPtr<u8>) {
                 x(rd::<f32>(tp, 8)).fsub_m(rd::<f32>(pp, 8)).to_f32(),
             ];
             let mut top = [0u32; 3];
-            let up = placeable_get_top_direction(ped, GPtr::from_raw(top.as_mut_ptr()).cast());
+            let up = GPtr::<f32>::cast::<u8>(placeable_get_top_direction(ped, GPtr::<u8>::cast::<f32>(GPtr::from_raw(top.as_mut_ptr()).cast())));
             let dot = x(d[2]).fmul_m(rd::<f32>(up, 8)).fadd(x(d[1]).fmul_m(rd::<f32>(up, 4))).fadd(x(d[0]).fmul_m(rd::<f32>(up, 0)));
             if !dot.fcom(x(g::<f32>(K_ZERO_F32).read())).test_any(0x41) {
                 abort_check = false;
                 let ik = GPtr::from_addr(IK_CHAIN_MAN);
                 if ik_is_looking(ik, ped) == 0 || ik_get_look_at_entity(ik, ped) != t {
                     let bone = if is_ped(t) { 5 } else { -1 };
-                    ik_look_at(ik, S_PROC_PLYR_WEAPON, ped, t, 9_999_999, bone, 0, 0, 0x3E80_0000, 500, 3, 0);
+                    ik_look_at(ik, GPtr::from_addr(S_PROC_PLYR_WEAPON as usize), ped, t, 9_999_999, bone as u32, GPtr::NULL, 0, 0x3E80_0000, 500, 3, 0);
                 }
             }
         }
@@ -1661,7 +1641,7 @@ fn ppw_look(this: GPtr<u8>, ped: GPtr<u8>, wi: GPtr<u8>) {
 pub fn on_foot_process_player_weapon_port(this: GPtr<u8>, ped: GPtr<u8>) {
     let pad = player_get_pad(ped);
     let ty = rd::<u32>(weapon_slot(ped), 0);
-    let wi = weapon_info_get(ty, ped_get_weapon_skill(ped));
+    let wi = weapon_info_get(ty as i32, (ped_get_weapon_skill(ped) as i32) as u8);
     let pd = || player_data(ped);
     if rd::<u8>(pd(), 0x34) & 4 != 0 && rd::<u32>(ped, 0x71C) == 0 {
         camera_clear_player_weapon_mode(cam());

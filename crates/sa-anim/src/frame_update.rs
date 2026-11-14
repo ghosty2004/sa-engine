@@ -24,9 +24,8 @@ use crate::bindings::node_get_end_translation;
 use crate::bindings::node_get_end_translation_compressed;
 use crate::bindings::node_update;
 use crate::bindings::node_update_compressed;
+use crate::bindings::quat_normalise;
 orig! {
-    /// `CQuaternion::Normalise()` (0x4D1610)
-    fn quat_normalise(q: GPtr<u8>) = thiscall 0x4D1610 => quaternion_normalise;
     /// `FrameUpdateCallBackSkinnedWithVelocityExtraction(c, fd)` (0x4D1680, `c` in EAX) and the 3D variant (0x4D1A50)
     fn skinned_with_velocity(c: GPtr<u8>, fd: GPtr<u8>) = reg("args = eax stack") 0x4D1680 => frame_update_skinned_with_velocity;
     /// `FrameUpdateCallBackWithVelocityExtractionCompressedSkinned(c, fd)` (0x4D1DB0, `c` in EAX)

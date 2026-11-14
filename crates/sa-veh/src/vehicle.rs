@@ -21,7 +21,7 @@ type Veh = GPtr<u8>;
 pub use sa_core::bindings::rp_clump_for_all_atomics;
 pub use sa_core::bindings::rp_geometry_for_all_materials;
 pub use sa_stream::bindings::col_model_remove_collision_volumes;
-pub use sa_stream::bindings::rw_texture_destroy;
+pub use sa_core::bindings::rw_texture_destroy;
 pub use sa_world::bindings::rope_release_picked_up_object;
 pub use sa_world::bindings::ropes_find_rope;
 orig! {
@@ -225,7 +225,7 @@ pub fn set_comp_alpha_cb(atomic: GPtr<u8>, alpha: u32) -> GPtr<u8> {
 pub fn set_component_atomic_alpha(atomic: GPtr<u8>, alpha: u32) {
     let geo = rd::<GPtr<u8>>(atomic, 0x18);
     wr::<u32>(geo, 8, rd::<u32>(geo, 8) | 0x40);
-    rp_geometry_for_all_materials(geo, 0x6D2950, alpha);
+    rp_geometry_for_all_materials(geo, 0x6D2950, GPtr::from_addr(alpha as usize));
 }
 
 // --- driver / model checks --------------------------------------------------------------------
@@ -296,7 +296,7 @@ pub fn custom_car_plate_texture_destroy(v: Veh) {
 // --- winch (CRopes) ---------------------------------------------------------------------------
 
 fn rope_of(v: Veh) -> i32 {
-    ropes_find_rope((v.addr() as u32).wrapping_add(0x1D))
+    ropes_find_rope(GPtr::from_addr(((v.addr() as u32).wrapping_add(0x1D)) as usize))
 }
 
 /// `CVehicle::QueryPickedUpEntityWithWinch()` (0x6D3CF0): `CRopes::aRopes[FindRope(this + 0x1D)]`
@@ -345,7 +345,7 @@ pub fn pick_up_entity_with_winch(v: Veh, e: GPtr<u8>) {
 /// (0x6D3300), upgrade)`.
 #[hook(addr = 0x6D3630, conv = thiscall, name = "CVehicle::RemoveUpgrade", expect = "8B 44 24 04 8B 49 18", this = "CVehicle")]
 pub fn remove_upgrade(v: Veh, upgrade: u32) {
-    rp_clump_for_all_atomics(rd::<GPtr<u8>>(v, 0x18), 0x6D3300, upgrade);
+    rp_clump_for_all_atomics(rd::<GPtr<u8>>(v, 0x18), 0x6D3300, GPtr::from_addr(upgrade as usize));
 }
 
 /// `CVehicle::Shutdown()` (0x6D0B40, static): `m_aSpecialColModel[4]` (0xC1CC78, CColModel 0x30):

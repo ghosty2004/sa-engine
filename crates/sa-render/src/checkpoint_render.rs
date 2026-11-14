@@ -9,7 +9,8 @@ use sa_core::{hook, orig};
 use crate::common::{g, k, rd, wr, x, xi};
 use crate::markers::place_marker_call;
 
-use crate::bindings::calc_screen_coors;
+use sa_core::bindings::calc_screen_coors;
+use sa_world::bindings::get_water_level_no_waves;
 orig! {
     /// `C3dMarkers::DirectionArrowSet(CVector pos, float size, int r, int g, int b, int a, float dx, float
     /// dy, float dz)` (0x721140)
@@ -18,8 +19,6 @@ orig! {
     /// `CSprite::RenderOneXLUSprite(x, y, z, halfW, halfH, r, g, b, intensity, rhw, a, uDir, vDir)` (0x70D000)
     #[allow(clippy::too_many_arguments)]
     fn render_one_xlu_sprite(px: f32, py: f32, pz: f32, hw: f32, hh: f32, r: u32, gg: u32, b: u32, intensity: u32, rhw: f32, a: u32, u_dir: u32, v_dir: u32) = cdecl 0x70D000 => unported;
-    /// `CWaterLevel::GetWaterLevelNoWaves(x, y, z, float* level, float*, float*)` (0x6E8580), AL
-    fn get_water_level_no_waves(px: f32, py: f32, pz: f32, level: GPtr<f32>, big: GPtr<f32>, small: GPtr<f32>) -> u8 = cdecl 0x6E8580 => unported;
     /// `FindPlayerCoors(CVector* out, int32 player)` (0x56E010)
     fn find_player_coors(out: GPtr<f32>, id: i32) -> GPtr<f32> = cdecl 0x56E010 => sa_world::world::cworld::find_player_coors_port;
     /// `RwRenderStateSet` (`RwEngineInstance` 0xC97B24, slot 0x20)
@@ -71,7 +70,7 @@ pub fn checkpoint_render(this: GPtr<u8>) {
         0..=2 => {
             let mut level = 0f32;
             let mut flag = 1u32;
-            let ok = get_water_level_no_waves(rd(pos, 0), rd(pos, 4), rd(pos, 8), GPtr::from_raw(&mut level),
+            let ok = get_water_level_no_waves(rd(pos, 0), rd(pos, 4), rd(pos, 8), GPtr::<f32>::cast::<u8>(GPtr::from_raw(&mut level)),
                 GPtr::NULL, GPtr::NULL);
             if ok != 0 && !x(level).fcom(x(rd::<f32>(pos, 8))).test_any(1) {
                 wr::<f32>(pos, 8, level);

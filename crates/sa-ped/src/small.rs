@@ -7,8 +7,9 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
-pub use crate::bindings::get_weapon_skill_type_call;
+pub use sa_world::bindings::get_weapon_skill_type_call;
 pub use sa_world::bindings::entity_delete_rw_object;
+pub use sa_core::bindings::get_weapon_info as get_weapon_info_call;
 orig! {
     /// `CPedType::Initialise` (0x608E40)
     pub fn ped_type_initialise() = cdecl 0x608E40 => unported;
@@ -20,8 +21,6 @@ orig! {
     pub fn speech_disable_for_script(s: GPtr<u8>, b: i32) = thiscall 0x4E5700 => unported;
     /// `CAEPedSpeechAudioEntity::CanPedHoldConversation` (0x4E69E0)
     pub fn speech_can_hold_conversation(s: GPtr<u8>) -> u8 = thiscall 0x4E69E0 => unported;
-    /// `CWeaponInfo::GetWeaponInfo(eWeaponType, eWeaponSkill)` (0x743C60)
-    pub fn get_weapon_info_call(ty: i32, skill: i32) -> GPtr<u8> = cdecl 0x743C60 => unported;
 }
 
 /// `CPed::DeleteRwObject` (0x5DEBF0, inline `jmp CEntity::DeleteRwObject`).
@@ -86,8 +85,8 @@ pub fn ctor_85b4c8(this: GPtr<u8>, arg: u32) -> GPtr<u8> {
 pub fn can_we_run_and_fire_with_weapon(this: GPtr<u8>) -> u8 {
     let slot = i32::from(rd::<i8>(this, 0x718));
     let ty = rd::<i32>(this, (slot * 0x1C + 0x5A0) as isize);
-    let skill = get_weapon_skill_type_call(this, ty);
-    let wi = get_weapon_info_call(ty, i32::from(skill));
+    let skill = get_weapon_skill_type_call(this, ty) as u8;
+    let wi = get_weapon_info_call(ty, i32::from(skill) as u8);
     ((rd::<u32>(wi, 0x18) >> 1) & 1) as u8
 }
 

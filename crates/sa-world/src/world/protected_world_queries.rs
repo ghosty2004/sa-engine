@@ -27,11 +27,9 @@ use crate::bindings::test_sphere_box;
 use sa_core::bindings::matrix_mul_vec;
 use sa_core::bindings::vector_normalise as vec_normalise;
 use sa_core::bindings::world_add;
+use crate::bindings::find_objects_kinda_colliding;
+use crate::bindings::world_process_vertical_line as process_vertical_line;
 orig! {
-    /// `CWorld::ProcessVerticalLine(...)` (0x5674E0)
-    fn process_vertical_line(pos: GPtr<u8>, len: f32, cp: GPtr<u8>, ent: GPtr<u8>, b: u32, v: u32, p: u32, o: u32, d: u32, s: u32, poly: u32) -> u8 = cdecl 0x5674E0 => unported;
-    /// `CWorld::FindObjectsKindaColliding(const CVector&, float, bool, int16*, int16, CEntity**, bool x5)` (0x568B80)
-    fn find_objects_kinda_colliding(pos: GPtr<u8>, radius: f32, b2d: u32, count: GPtr<u8>, max: u32, out: u32, b: u32, v: u32, p: u32, o: u32, d: u32) = cdecl 0x568B80 => unported;
     /// `CGarage::IsPointInsideGarage(CVector, float margin)` (0x4487D0)
     fn garage_is_point_inside(gr: GPtr<u8>, p: CVector, margin: f32) -> u8 = thiscall 0x4487D0 => unported;
 }
@@ -82,7 +80,7 @@ pub fn find_objects_intersecting_angled_collision_box_sector_list(list: GPtr<u8>
         let mut c = [0u32; 3];
         multiply3x3_vm(p(&mut c), p(&mut d), transform);
         sphere[..3].copy_from_slice(&c);
-        if test_sphere_box(p(&mut sphere), bx) != 0 {
+        if test_sphere_box(GPtr::<u8>::cast::<f32>(p(&mut sphere)), bx.cast::<f32>()) != 0 {
             let n = count.read();
             if n < max {
                 if !out.is_null() {
@@ -107,11 +105,11 @@ pub fn try_to_generate_cop_ped(_this: GPtr<u8>, px: f32, py: f32) -> GPtr<u8> {
     let mut pos = [px, py, 1000.0];
     let mut cp = [0f32; 11];
     let mut ent: u32 = 0;
-    if process_vertical_line(p(&mut pos), f32::from_bits(0xC47A_0000), p(&mut cp), p(&mut ent), 1, 0, 0, 0, 1, 0, 0) != 0 {
+    if process_vertical_line(p(&mut pos), f32::from_bits(0xC47A_0000), p(&mut cp), p(&mut ent), 1, 0, 0, 0, 1, 0, GPtr::NULL) != 0 {
         pos[2] = x(cp[2]).fadd_m(f32::from_bits(0x3F66_6666)).to_f32();
     }
     let mut count: u32 = px.to_bits();
-    find_objects_kinda_colliding(p(&mut pos), f32::from_bits(0x3F19_999A), 0, p(&mut count), 0x10, 0, 0, 1, 1, 0, 0);
+    find_objects_kinda_colliding(GPtr::<u8>::cast::<f32>(p(&mut pos)), f32::from_bits(0x3F19_999A), 0, GPtr::<u8>::cast::<i16>(p(&mut count)), 0x10, GPtr::NULL, 0, 1, 1, 0, 0);
     if count as u16 != 0 {
         return GPtr::NULL;
     }
@@ -154,7 +152,7 @@ pub fn garage_push_vehicles_out(this: GPtr<u8>, except: GPtr<u8>) {
         while s < i32::from(rd::<i16>(data, 0)) {
             let centre = rd::<GPtr<u8>>(data, 8).byte_add(s as isize * 0x14);
             let mut out = [0f32; 3];
-            let r = matrix_mul_vec(p(&mut out), rd::<GPtr<u8>>(veh, 0x14), centre);
+            let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(p(&mut out)), rd::<GPtr<u8>>(veh, 0x14), centre));
             let pt = CVector::new(rd::<f32>(r, 0), rd::<f32>(r, 4), rd::<f32>(r, 8));
             if garage_is_point_inside(this, pt, 0.0) == 0 {
                 let pos = ent_pos(veh);

@@ -20,6 +20,7 @@ const PAIR: isize = 0x14;
 const PAIRS: isize = 8;
 
 use sa_world::bindings::sequence_flush;
+use crate::bindings::pgi_set_task;
 orig! {
     /// Virtual slot +0 (scalar deleting destructor, `ret 4`): `delete obj` with flags 1.
     fn v_delete(o: GPtr<u8>, flags: u32) -> u32 = thiscall vslot 0x0 => unported;
@@ -27,10 +28,6 @@ orig! {
     fn v_event_priority(e: GPtr<u8>) -> i32 = thiscall vslot 0x8 => unported;
     /// `CPedGroupDefaultTaskAllocator::AllocateDefaultTasks(CPedGroup*, CPed*)` (vtable +0, `ret 8`)
     fn v_allocate_default_tasks(a: GPtr<u8>, group: GPtr<u8>, ped: GPtr<u8>) = thiscall vslot 0x0 => unported;
-    /// `CPedGroupIntelligence::SetTask(CPed*, const CTask&, CPedTaskPair*, int32 slot, bool force)` (0x5F7540,
-    /// `ret 0x14`)
-    fn pgi_set_task(i: GPtr<u8>, ped: GPtr<u8>, task: GPtr<u8>, pairs: GPtr<u8>, slot: i32, force: u32)
-        = thiscall 0x5F7540 => unported;
     /// `CPedGroupIntelligence::ReportAllTasksFinished(CPedTaskPair*)` (0x5F7730, `ret 4`; ECX unused)
     fn o_report_pairs(i: GPtr<u8>, pairs: GPtr<u8>) = thiscall 0x5F7730 => unported;
     /// `CPedGroupIntelligence::FlushTasks(CPedTaskPair*, CPed*)` (0x5F79C0, `ret 8`; ECX unused)

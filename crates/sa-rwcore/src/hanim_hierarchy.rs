@@ -3,22 +3,15 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::{g, p8, rd, rw_free, rw_malloc, rw_memory_alloc, rw_memory_free, wr};
 
-orig! {
-    /// `RtAnimInterpolatorCreate(numNodes, keyFrameSize)` (0x7CD520)
-    fn interpolator_create(n: i32, kfs: i32) -> GPtr<u8> = cdecl 0x7CD520 => crate::hanim_stream::rt_anim_interpolator_create;
-    /// `RtAnimInterpolatorDestroy(interp)` (0x7CD590)
-    fn interpolator_destroy(i: GPtr<u8>) = cdecl 0x7CD590 => crate::hanim_stream::rt_anim_interpolator_destroy;
-    /// `RpHAnimHierarchyCreate` (0x7C4C30)
-    fn hierarchy_create_call(n: i32, flags_in: GPtr<u32>, ids: GPtr<i32>, flags: u32, kfs: i32) -> GPtr<u8> = cdecl 0x7C4C30 => rp_hanim_hierarchy_create;
-    /// `RwFrameUpdateObjects(frame)` (0x7F0910)
-    fn frame_update_objects(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0910 => crate::frame::update_objects;
-    /// `RwFrameForAllChildren(frame, cb, data)` (0x7F0DC0)
-    fn frame_for_all_children(f: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> = cdecl 0x7F0DC0 => crate::frame::for_all_children;
-}
+use crate::bindings::hanim_hierarchy_create as hierarchy_create_call;
+use crate::bindings::interpolator_create;
+use crate::bindings::interpolator_destroy;
+use sa_core::bindings::frame_for_all_children;
+use sa_core::bindings::rw_frame_update_objects as frame_update_objects;
 
 const HANIM_FREELIST: usize = 0xC9B8CC;
 const HANIM_FRAME_OFFSET: usize = 0xC9B8C8;
@@ -136,7 +129,7 @@ pub fn rp_hanim_hierarchy_attach(h: GPtr<u8>) -> GPtr<u8> {
     let parent = p8(rd::<u32>(h, 0x14));
     bind_frame(h, parent);
     frame_update_objects(parent);
-    frame_for_all_children(parent, 0x7C4F90, a32(h));
+    frame_for_all_children(parent, 0x7C4F90, GPtr::from_addr(a32(h) as usize));
     h
 }
 
@@ -147,7 +140,7 @@ pub fn rp_hanim_hierarchy_attach(h: GPtr<u8>) -> GPtr<u8> {
 pub fn rp_hanim_hierarchy_attach_frame_cb(frame: GPtr<u8>, h: GPtr<u8>) -> GPtr<u8> {
     bind_frame(h, frame);
     frame_update_objects(frame);
-    frame_for_all_children(frame, 0x7C4F90, a32(h));
+    frame_for_all_children(frame, 0x7C4F90, GPtr::from_addr(a32(h) as usize));
     frame
 }
 
@@ -189,7 +182,7 @@ pub fn rp_hanim_hierarchy_attach_frame_index(h: GPtr<u8>, index: i32) -> GPtr<u8
     bind_frame_index(h, parent, id);
     frame_update_objects(parent);
     let mut data = [a32(h), id];
-    frame_for_all_children(parent, 0x7C50A0, GPtr::from_raw(data.as_mut_ptr()).addr() as u32);
+    frame_for_all_children(parent, 0x7C50A0, GPtr::from_addr((GPtr::from_raw(data.as_mut_ptr()).addr() as u32) as usize));
     h
 }
 
@@ -201,7 +194,7 @@ pub fn rp_hanim_hierarchy_attach_frame_index_cb(frame: GPtr<u8>, data: GPtr<u32>
     let id = data.byte_add(4).read();
     bind_frame_index(h, frame, id);
     frame_update_objects(frame);
-    frame_for_all_children(frame, 0x7C50A0, data.addr() as u32);
+    frame_for_all_children(frame, 0x7C50A0, GPtr::from_addr((data.addr() as u32) as usize));
     frame
 }
 

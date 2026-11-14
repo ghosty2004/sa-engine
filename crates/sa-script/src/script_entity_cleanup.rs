@@ -10,7 +10,7 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
-use crate::bindings::stop_playback_recorded_car as vehicle_recording_stop_playback_recorded_car;
+use sa_world::bindings::stop_playback_recorded_car as vehicle_recording_stop_playback_recorded_car;
 use sa_core::bindings::entity_register_reference;
 use sa_core::bindings::task_new;
 use sa_stream::bindings::world_remove_references_to_deleted_object;
@@ -32,11 +32,10 @@ use sa_world::bindings::vehicle_remove_driver;
 use sa_world::bindings::vehicle_remove_passenger;
 use sa_world::bindings::vehicle_set_created_by as vehicle_set_vehicle_created_by;
 use sa_world::bindings::wander_get_wander_task_by_ped_type as get_wander_task_by_ped_type;
+use sa_world::bindings::event_group_get_event_of_type;
 orig! {
     /// Virtual slot 0 (the scalar deleting destructor, `ret 4`)
     fn vcall_delete(f: u32, this: GPtr<u8>, flags: u32) = thiscall dyn => unported;
-    /// `CEventGroup::GetEventOfType(int32)` (0x4AB650)
-    fn event_group_get_event_of_type(g: GPtr<u8>, ty: u32) -> GPtr<u8> = thiscall 0x4AB650 => unported;
     /// Virtual `CTask::GetTaskType()` (vtable +0x10)
     fn vcall_task_type(f: u32, t: GPtr<u8>) -> u32 = thiscall dyn => unported;
 }
@@ -71,7 +70,7 @@ fn give_script_command(ped: GPtr<u8>, task: GPtr<u8>) {
     let ep: GPtr<u8> = GPtr::from_raw(e.as_mut_ptr()).cast();
     event_script_command_ctor(ep, 3, task, 0);
     event_group_add(rdp(ped, 0x47C).byte_add(0x68), ep, 0);
-    event_script_command_dtor(ep);
+    event_script_command_dtor(ep.cast::<u32>());
 }
 
 /// `CTheScripts::CleanUpThisPed(CPed*)` (0x486300, cdecl).

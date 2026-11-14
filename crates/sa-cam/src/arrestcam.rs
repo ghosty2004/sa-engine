@@ -5,7 +5,7 @@
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::timer::TIME_MS;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 
 use crate::common::{Fpu, g, k, rd, wr, x};
@@ -50,11 +50,8 @@ pub use sa_core::bindings::get_anim_hierarchy_from_skin_clump;
 pub use sa_core::bindings::rp_hanim_hierarchy_get_matrix_array;
 pub use sa_core::bindings::rp_hanim_id_get_index;
 pub use sa_core::bindings::vector_normalise;
-pub use sa_world::bindings::world_get_is_line_of_sight_clear as get_is_line_of_sight_clear;
-orig! {
-    /// `CWorld::FindGroundZFor3DCoord(float x, float y, float z, bool* found, CEntity** ent)` (0x5696C0, ST0)
-    pub fn find_ground_z_for_3d_coord(px: u32, py: u32, pz: u32, found: GPtr<u8>, ent: u32) -> f64 = cdecl 0x5696C0 => unported;
-}
+pub use sa_core::bindings::world_get_is_line_of_sight_clear as get_is_line_of_sight_clear;
+pub use sa_world::bindings::find_ground_z_for_3d_coord;
 
 /// A frame of `n` dwords (the functions' locals keep the original offsets) and its pointer.
 struct Frame([u32; 0x20]);
@@ -457,11 +454,11 @@ pub fn arrest_cam_side_pos(
     let qz = f.fst();
     wr::<f32>(out, 8, f.fstp());
     let gz = find_ground_z_for_3d_coord(
-        qx.to_bits(),
-        qy.to_bits(),
-        qz.to_bits(),
+        f32::from_bits(qx.to_bits()),
+        f32::from_bits(qy.to_bits()),
+        f32::from_bits(qz.to_bits()),
         GPtr::<u32>::from_raw(found.as_mut_ptr()).cast::<u8>(),
-        0,
+        GPtr::NULL,
     );
     f.push(X87::from_f64_exact(gz));
     if found[0] as u8 != 0 {

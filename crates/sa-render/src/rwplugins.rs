@@ -92,29 +92,22 @@ pub use sa_core::bindings::rp_material_register_plugin_stream;
 pub use sa_core::bindings::rw_frame_destroy;
 pub use sa_core::bindings::rw_stream_write;
 pub use sa_core::bindings::stream_read as rw_stream_read;
-pub use sa_stream::bindings::rw_texture_destroy;
-pub use sa_world::bindings::anim_blend_clump_remove_all_associations;
+pub use sa_core::bindings::rw_texture_destroy;
+pub use sa_core::bindings::anim_blend_clump_remove_all_associations;
+pub use crate::bindings::spec_mat_pool_new;
+pub use sa_core::bindings::anim_blend_clump_data_dtor;
+pub use sa_core::bindings::clump_register_plugin as rp_clump_register_plugin;
+pub use sa_core::bindings::env_mat_pool_new;
+pub use sa_core::bindings::frame_register_plugin as rw_frame_register_plugin;
+pub use sa_core::bindings::frame_register_plugin_stream as rw_frame_register_plugin_stream;
+pub use sa_core::bindings::register_scheme_call as rt_anim_register_interpolation_scheme;
 orig! {
-    /// `RwFrameRegisterPlugin(size, id, ctor, dtor, copy)` (0x7F1260)
-    pub fn rw_frame_register_plugin(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x7F1260 => unported;
-    /// `RwFrameRegisterPluginStream(id, read, write, getSize)` (0x807580)
-    pub fn rw_frame_register_plugin_stream(id: u32, read: u32, write: u32, size: u32) -> i32 = cdecl 0x807580 => unported;
-    /// `RpClumpRegisterPlugin` (0x74BDD0)
-    pub fn rp_clump_register_plugin(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x74BDD0 => unported;
     /// `RpClumpRegisterPluginStream` (0x74BE70)
     pub fn rp_clump_register_plugin_stream(id: u32, read: u32, write: u32, size: u32) -> i32 = cdecl 0x74BE70 => unported;
-    /// `RtAnimRegisterInterpolationScheme(RtAnimInterpolatorInfo*)` (0x7CCD40)
-    pub fn rt_anim_register_interpolation_scheme(info: GPtr<u8>) -> i32 = cdecl 0x7CCD40 => unported;
     /// `rwstrlen` through `RwEngineInstance` +0x120
     pub fn rw_strlen(s: GPtr<u8>) -> i32 = cdecl table 0xC97B24 0x120 => unported;
     /// `operator new` (0x821195, the `new[]` jump)
     pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x821195 => unported;
-    /// `CAnimBlendClumpData::~CAnimBlendClumpData()` (0x4CF100)
-    pub fn anim_blend_clump_data_dtor(this: GPtr<u8>) = thiscall 0x4CF100 => unported;
-    /// `CPool<CustomEnvMapPipeMaterialDataStruct>::New()` (0x5D9110)
-    pub fn env_mat_pool_new(pool: GPtr<u8>) -> GPtr<u8> = thiscall 0x5D9110 => unported;
-    /// `CPool<CustomSpecMapPipeMaterialDataStruct>::New()` (0x5D93B0)
-    pub fn spec_mat_pool_new(pool: GPtr<u8>) -> GPtr<u8> = thiscall 0x5D93B0 => unported;
 }
 
 /// `obj + off` (the original's `[reg + reg]` addressing, 32-bit wrapping).

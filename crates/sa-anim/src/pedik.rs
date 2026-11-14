@@ -162,9 +162,9 @@ pub fn move_limb_normalized(limb: GPtr<u32>, yaw: f32, pitch: f32, info: GPtr<u3
 pub fn rotate_torso(this: GPtr<u8>, bone: GPtr<u8>, orient: GPtr<f32>, change_yaw: u8) {
     let q = rd::<GPtr<f32>>(bone, 0x10);
     let a = x(orient.read()).fmul_m(RAD2DEG).to_f32();
-    rt_quat_rotate(q, g(X_AXIS), a, i32::from(change_yaw != 0));
+    rt_quat_rotate(q.cast::<u8>(), GPtr::<f32>::cast::<u8>(g(X_AXIS)), a, i32::from(change_yaw != 0) as u32);
     let b = x(orient.wrapping_index(1).read()).fmul_m(RAD2DEG).to_f32();
-    rt_quat_rotate(q, g(Z_AXIS), b, 1);
+    rt_quat_rotate(q.cast::<u8>(), GPtr::<f32>::cast::<u8>(g(Z_AXIS)), b, 1);
     let ped = rd::<GPtr<u8>>(this, 0);
     wr::<u32>(ped, 0x470, rd::<u32>(ped, 0x470) | 0x4000);
 }
@@ -208,11 +208,11 @@ pub fn rotate_torso_for_arm(this: GPtr<u8>, target: GPtr<f32>) {
     if ROTATE_WITH_NECK.get() != 0 {
         let half = d.fmul_m(0.5).to_f32();
         let q = rd::<GPtr<f32>>(rd::<GPtr<u8>>(ped, 0x4CC), 0x10);
-        rt_quat_rotate(q, g(X_AXIS), x(half).fmul_m(RAD2DEG).to_f32(), 2);
+        rt_quat_rotate(q.cast::<u8>(), GPtr::<f32>::cast::<u8>(g(X_AXIS)), x(half).fmul_m(RAD2DEG).to_f32(), 2);
         d = x(half);
     }
     let q = rd::<GPtr<f32>>(rd::<GPtr<u8>>(ped, 0x48C), 0x10);
-    rt_quat_rotate(q, g(X_AXIS), d.fmul_m(RAD2DEG).to_f32(), 2);
+    rt_quat_rotate(q.cast::<u8>(), GPtr::<f32>::cast::<u8>(g(X_AXIS)), d.fmul_m(RAD2DEG).to_f32(), 2);
 }
 
 use sa_core::bindings::entity_update_rw_frame;
@@ -226,13 +226,11 @@ use sa_core::bindings::matrix_update_rw;
 use sa_core::bindings::rp_hanim_hierarchy_get_matrix_array;
 use sa_core::bindings::rp_hanim_id_get_index;
 use sa_core::bindings::tm_get_active_task;
+use sa_core::bindings::general_limit_radian_angle;
+use sa_core::bindings::matrix_ctor_rw as matrix_ctor_attach;
 orig! {
-    /// `CMatrix::CMatrix(RwMatrix*, bool ownsAttached)` (0x59C050, `ret 8`)
-    fn matrix_ctor_attach(m: GPtr<u8>, rw: GPtr<u8>, owns: u32) = thiscall 0x59C050 => unported;
     /// `CTask::GetTaskType()` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CGeneral::LimitRadianAngle(float)` (0x53CB50, ST0)
-    fn general_limit_radian_angle(a: f32) -> f64 = cdecl 0x53CB50 => unported;
 }
 
 /// The anim blend clump data plugin offset (0xB5F878)
@@ -257,7 +255,7 @@ fn clamp_sym(this: GPtr<u8>, off: isize, limit: f32) {
 }
 /// The keyframe quaternion of bone `id` (`clumpData->frames[RpHAnimIDGetIndex(h, id)].keyFrame`, 0x18 per frame).
 fn bone_quat(clump_data: GPtr<u8>, h: GPtr<u8>, id: i32) -> GPtr<f32> {
-    let idx = rp_hanim_id_get_index(h, id);
+    let idx = rp_hanim_id_get_index(h, id as u32);
     rd::<GPtr<f32>>(rd::<GPtr<u8>>(clump_data, 0x10), idx as isize * 0x18 + 0x10)
 }
 /// The ped's RW frame modelling matrix (clump +4 → frame +0x10), or NULL without an RW object.
@@ -270,7 +268,7 @@ fn ped_rw_matrix(ped: GPtr<u8>) -> GPtr<u8> {
 /// axis, angle, 2)` on `hip`, `knee`, `foot`: `f32(the 0xC0AFC0 switch ? |s| * pitch * 30 : 30 * pitch * s)`, `f32(max(-(s *
 /// pitch), 0) * -30)` and `f32(max(s, 0) * pitch * -30)` (the maxima keep NaN).
 fn pitch_leg(cd: GPtr<u8>, h: GPtr<u8>, pitch: f32, hip: i32, knee: i32, foot: i32) {
-    let idx = rp_hanim_id_get_index(h, hip);
+    let idx = rp_hanim_id_get_index(h, hip as u32);
     let m = rp_hanim_hierarchy_get_matrix_array(h).byte_add(idx as isize * 0x40);
     let s = X87::from_f64_exact(sa_core::orig::x87_unary(0x821E70, f64::from(rd::<f32>(m, 0x18)))).to_f32();
     let a1 = if g::<u8>(SLOPE_ABS_SWITCH).read() != 0 {
@@ -280,27 +278,27 @@ fn pitch_leg(cd: GPtr<u8>, h: GPtr<u8>, pitch: f32, hip: i32, knee: i32, foot: i
     }
     .to_f32();
     let z = GPtr::<f32>::from_addr(Z_AXIS);
-    rt_quat_rotate(bone_quat(cd, h, hip), z, a1, 2);
+    rt_quat_rotate(GPtr::<f32>::cast::<u8>(bone_quat(cd, h, hip)), z.cast::<u8>(), a1, 2);
     let t = x(s).fmul_m(pitch).fchs();
     let zero = x(kf(0x858B50));
     let t = if !zero.fcom(t).test_any(0x41) { zero } else { t };
     let a2 = t.fmul_m(kf(0x86C89C)).to_f32();
-    rt_quat_rotate(bone_quat(cd, h, knee), z, a2, 2);
+    rt_quat_rotate(GPtr::<f32>::cast::<u8>(bone_quat(cd, h, knee)), z.cast::<u8>(), a2, 2);
     let u = if !zero.fcom(x(s)).test_any(0x41) { zero } else { x(s) };
     let a3 = u.fmul_m(pitch).fmul_m(kf(0x86C8A4)).to_f32();
-    rt_quat_rotate(bone_quat(cd, h, foot), z, a3, 2);
+    rt_quat_rotate(GPtr::<f32>::cast::<u8>(bone_quat(cd, h, foot)), z.cast::<u8>(), a3, 2);
 }
 
 /// One bone of the roll part: `r = LimitRadianAngle(f32(fpatan(at.y, at.x) - ped heading +0x558))` of the bone matrix,
 /// `RtQuatRotate(quat, &(0, f32 cos r, f32 sin r), f32(roll * rad2deg), 1)` (register r).
 fn roll_bone(cd: GPtr<u8>, h: GPtr<u8>, ped: GPtr<u8>, id: i32, roll: f32) {
-    let idx = rp_hanim_id_get_index(h, id);
+    let idx = rp_hanim_id_get_index(h, id as u32);
     let q = rd::<GPtr<f32>>(rd::<GPtr<u8>>(cd, 0x10), idx as isize * 0x18 + 0x10);
     let m = rp_hanim_hierarchy_get_matrix_array(h).byte_add(idx as isize * 0x40);
     let a = x(rd::<f32>(m, 0x24)).fpatan(x(rd::<f32>(m, 0x20))).fsub_m(rd::<f32>(ped, 0x558)).to_f32();
     let r = X87::from_f64_exact(general_limit_radian_angle(a));
     let mut axis = [0f32, r.fcos().to_f32(), r.fsin().to_f32()];
-    rt_quat_rotate(q, GPtr::from_raw(axis.as_mut_ptr()), x(roll).fmul_m(RAD2DEG).to_f32(), 1);
+    rt_quat_rotate(q.cast::<u8>(), GPtr::<f32>::cast::<u8>(GPtr::from_raw(axis.as_mut_ptr())), x(roll).fmul_m(RAD2DEG).to_f32(), 1);
 }
 
 /// `CPedIK::PitchForSlope()` (0x5FE0E0, thiscall). x87 (FSIN, FCOS, FPATAN, `_CIacos`). `CPedIK` +0xC body pitch, +0x10
@@ -357,7 +355,7 @@ pub fn ped_ik_pitch_for_slope(this: GPtr<u8>) {
         matrix_ctor_attach(a_p, ped_rw_matrix(ped), 0);
         let mut b = [0u32; 0x12];
         let b_p: GPtr<u8> = GPtr::from_raw(b.as_mut_ptr()).cast();
-        matrix_set_translate(b_p, 0, 0, 0x3F80_0000);
+        matrix_set_translate(b_p, f32::from_bits(0), f32::from_bits(0), f32::from_bits(0x3F80_0000));
         matrix_rotate_x(b_p, x(rd::<f32>(this, 0xC)).fchs().to_f32());
         matrix_rotate_y(b_p, rd::<f32>(this, 0x14));
         matrix_mul_assign(a_p, b_p);
@@ -374,12 +372,12 @@ pub fn ped_ik_pitch_for_slope(this: GPtr<u8>) {
             let z = GPtr::<f32>::from_addr(Z_AXIS);
             let tm = rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0), 0x47C).byte_add(4);
             if !tm_get_active_task(tm).is_null() && v_task_type(tm_get_active_task(tm)) == 0x403 {
-                rt_quat_rotate(q, z, x(rd::<f32>(this, 0xC)).fmul_m(RAD2DEG).to_f32(), 1);
+                rt_quat_rotate(q.cast::<u8>(), z.cast::<u8>(), x(rd::<f32>(this, 0xC)).fmul_m(RAD2DEG).to_f32(), 1);
                 let p = rd::<GPtr<u8>>(this, 0);
                 wr::<u32>(p, 0x470, rd::<u32>(p, 0x470) | 0x4000);
             } else {
                 let a = x(rd::<f32>(this, 0xC)).fchs().fmul_m(RAD2DEG).fmul_m(kf(0x86C898)).to_f32();
-                rt_quat_rotate(q, z, a, 1);
+                rt_quat_rotate(q.cast::<u8>(), z.cast::<u8>(), a, 1);
                 let p = rd::<GPtr<u8>>(this, 0);
                 wr::<u32>(p, 0x470, rd::<u32>(p, 0x470) | 0x4000);
                 let pitch = rd::<f32>(this, 0xC);
@@ -390,7 +388,7 @@ pub fn ped_ik_pitch_for_slope(this: GPtr<u8>) {
                 matrix_ctor_attach(c_p, ped_rw_matrix(rd::<GPtr<u8>>(this, 0)), 0);
                 let mut d = [0u32; 0x12];
                 let d_p: GPtr<u8> = GPtr::from_raw(d.as_mut_ptr()).cast();
-                matrix_set_translate(d_p, 0, 0, 0);
+                matrix_set_translate(d_p, f32::from_bits(0), f32::from_bits(0), f32::from_bits(0));
                 matrix_rotate_x(d_p, x(kf(0x86C894)).fmul_m(rd::<f32>(this, 0xC)).fchs().to_f32());
                 matrix_mul_assign(c_p, d_p);
                 let s = x(rd::<f32>(this, 0xC)).fsin().fmul_m(kf(0x86C88C));

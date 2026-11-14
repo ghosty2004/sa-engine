@@ -24,8 +24,13 @@ orig! {
 }
 
 orig! {
-    /// `CPedClothesDesc::Constructor` (0x5A8020)
-    pub fn clothes_desc_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x5A8020 => crate::clothes::desc_constructor;
+    /// `CWanted::Initialise` (0x562390)
+    pub fn initialise_call(w: GPtr<u8>) = thiscall 0x562390 => crate::wanted::initialise;
+}
+
+orig! {
+    /// `CPlayerPedData::SetInitialState` (0x56F210)
+    pub fn ped_data_set_initial_state(d: GPtr<u8>) = thiscall 0x56F210 => crate::player_info::set_initial_state;
 }
 
 orig! {
@@ -34,13 +39,43 @@ orig! {
 }
 
 orig! {
-    /// `CPed::GetWeaponSkill-WeaponType` (0x5E3B60)
-    pub fn get_weapon_skill_type_call(p: GPtr<u8>, ty: i32) -> u8 = thiscall 0x5E3B60 => crate::ped::get_weapon_skill_type;
+    /// `CPed::ClearAimFlag` (0x5DEF20)
+    pub fn clear_aim_flag(ped: GPtr<u8>) = thiscall 0x5DEF20 => crate::ped::clear_aim_flag;
 }
 
 orig! {
-    /// `CPopulation::UpdatePedCount` (0x611570)
-    pub fn population_update_ped_count(p: GPtr<u8>, b: u32) = cdecl 0x611570 => unported;
+    /// `CPed::RemoveGogglesModel` (0x5DF170)
+    pub fn remove_goggles_model(p: GPtr<u8>) = thiscall 0x5DF170 => crate::ped_weapon::remove_goggles_model_port;
+}
+
+orig! {
+    /// `CPed::ClearLookFlag` (0x5E1950)
+    pub fn ped_clear_look_flag(ped: GPtr<u8>) = thiscall 0x5E1950 => crate::ped::clear_look_flag;
+}
+
+orig! {
+    /// `CPed::SetModelIndex` (0x5E4880)
+    pub fn ped_set_model_index(p: GPtr<u8>, m: u32) = thiscall 0x5E4880 => crate::ped_life::ped_set_model_index;
+}
+
+orig! {
+    /// `CPed::AddWeaponModel` (0x5E5ED0)
+    pub fn add_weapon_model(p: GPtr<u8>, model: i32) = thiscall 0x5E5ED0 => crate::ped_render::add_weapon_model;
+}
+
+orig! {
+    /// `CPed::Constructor` (0x5E8030)
+    pub fn ped_ctor(p: GPtr<u8>, ty: u32) -> GPtr<u8> = thiscall 0x5E8030 => crate::ped_life::ped_constructor;
+}
+
+orig! {
+    /// `CPed::RequestDelayedWeapon` (0x5E8910)
+    pub fn request_delayed_weapon(p: GPtr<u8>) = thiscall 0x5E8910 => crate::ped_render::request_delayed_weapon;
+}
+
+orig! {
+    /// `CPlayerPed::TellGroupToStartFollowingPlayer` (0x60A1D0)
+    pub fn tell_group_to_start_following_player(p: GPtr<u8>, a: u32, b: u32, c: u32) = thiscall 0x60A1D0 => crate::player_target::tell_group_to_start_following_player;
 }
 
 orig! {

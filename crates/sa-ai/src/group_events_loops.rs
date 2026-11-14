@@ -3,6 +3,7 @@
 //! another catalogued function goes through `orig!` at the original address.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -12,11 +13,10 @@ use sa_core::bindings::entity_clean_up_old_reference;
 use sa_world::bindings::membership_get_leader;
 use sa_world::bindings::membership_get_member;
 use sa_world::bindings::sequence_flush;
+use sa_world::bindings::intel_find_task_by_type;
 orig! {
     /// `CEventPlayerCommandToGroup::AffectsPedGroup(CPedGroup*)` (0x4B24D0, `ret 4`; AL)
     fn player_command_to_group_affects(e: GPtr<u8>, g: GPtr<u8>) -> u8 = thiscall 0x4B24D0 => unported;
-    /// `CPedIntelligence::FindTaskByType(int32)` (0x600EE0, `ret 4`)
-    fn intel_find_task_by_type(i: GPtr<u8>, ty: i32) -> u32 = thiscall 0x600EE0 => unported;
     /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, bool buildings, bool vehicles, bool peds,
     /// bool objects, bool dummies, bool seeThrough, bool ignoreSomeObjects)` (0x56A490, cdecl)
     #[allow(clippy::too_many_arguments)]
@@ -27,7 +27,7 @@ orig! {
 fn drop_ref(slot: GPtr<u8>) {
     let e = rd::<GPtr<u8>>(slot, 0);
     if !e.is_null() {
-        entity_clean_up_old_reference(e, slot);
+        entity_clean_up_old_reference(e, slot.cast::<GPtr<u8>>());
         wr::<u32>(slot, 0, 0);
     }
 }
@@ -90,8 +90,8 @@ pub fn leader_exited_car_as_driver_affects_ped_group(_this: GPtr<u8>, group: GPt
                 return 1;
             }
         }
-        if intel_find_task_by_type(rd::<GPtr<u8>>(p, 0x47C), 0x2BC) != 0
-            || intel_find_task_by_type(rd::<GPtr<u8>>(p, 0x47C), 0x2CE) != 0
+        if GPtr::<u8>::addr(intel_find_task_by_type(rd::<GPtr<u8>>(p, 0x47C), 0x2BC)) as u32 != 0
+            || GPtr::<u8>::addr(intel_find_task_by_type(rd::<GPtr<u8>>(p, 0x47C), 0x2CE)) as u32 != 0
         {
             return 1;
         }
@@ -140,7 +140,7 @@ pub fn interesting_events_invalidate_non_visible_events(this: GPtr<u8>) {
         wr::<u32>(slot, -4, 0);
         let e = rd::<GPtr<u8>>(slot, 0);
         if !e.is_null() {
-            entity_clean_up_old_reference(e, slot);
+            entity_clean_up_old_reference(e, slot.cast::<GPtr<u8>>());
         }
         wr::<u32>(slot, 0, 0);
         if i32::from(rd::<i8>(this, 0x154)) == i as i32 {

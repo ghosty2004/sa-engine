@@ -36,7 +36,7 @@ const MODEL0_LOAD_STATE: u32 = 0x8E4CD0;
 /// `CTheScripts::ScriptResourceManager` 0xA485A8.
 const SCRIPT_RESOURCE_MANAGER: usize = 0xA485A8;
 
-use crate::bindings::add_explosion;
+use sa_world::bindings::add_explosion;
 use crate::bindings::switch_ped_roads_off_in_area;
 use sa_core::bindings::general_random_int_in_range as random_int_in_range;
 use sa_core::bindings::set_mission_doesnt_require_model;
@@ -51,11 +51,19 @@ use sa_world::bindings::event_group_add;
 use sa_world::bindings::event_script_command_ctor;
 use sa_world::bindings::event_script_command_dtor;
 use sa_world::bindings::find_ground_z_for_coord;
-use sa_world::bindings::generate_new_one;
+use sa_stream::bindings::generate_new_one;
 use sa_world::bindings::get_actual_pickup_index;
 use sa_world::bindings::get_has_collided_with;
 use sa_world::bindings::is_player_in_remote_mode;
 use sa_world::bindings::stop_all_law_enforcers_in_their_tracks;
+use crate::bindings::add_to_resource_manager;
+use crate::bindings::collect_next;
+use crate::bindings::remove_from_resource_manager;
+use sa_core::bindings::get_pad;
+use sa_stream::bindings::get_anim_group_name;
+use sa_world::bindings::find_player_slot_with_ped_pointer;
+use sa_world::bindings::get_garage_number_by_name;
+use sa_world::bindings::register_corona;
 orig! {
     /// `CRestart::CancelOverrideRestart()` (0x460800)
     fn cancel_override_restart() = cdecl 0x460800 => unported;
@@ -77,40 +85,21 @@ orig! {
     fn store_clock() = cdecl 0x52D020 => unported;
     /// `CClock::RestoreClock()` (0x52D070)
     fn restore_clock() = cdecl 0x52D070 => unported;
-    /// `CRunningScript::CollectNextParameterWithoutIncreasingPC()` (0x464250)
-    fn collect_next(s: Scr) -> i32 = thiscall 0x464250 => crate::vm::collect_next_parameter_without_increasing_pc;
     /// `CPickups::IsPickUpPickedUp(int32)` (0x454B40), AL
     fn is_pick_up_picked_up(h: i32) -> u8 = cdecl 0x454B40 => unported;
     /// `CPickups::RemovePickUp(int32)` (0x4573D0)
     fn remove_pick_up(h: i32) = cdecl 0x4573D0 => unported;
-    /// `CScriptResourceManager::AddToResourceManager(int32, uint32 type, CRunningScript*)` (0x4704B0)
-    fn add_to_resource_manager(m: GPtr<u8>, model: i32, ty: u32, s: Scr) = thiscall 0x4704B0 => unported;
-    /// `CScriptResourceManager::RemoveFromResourceManager(int32, uint32 type, CRunningScript*)` (0x470510), AL
-    fn remove_from_resource_manager(m: GPtr<u8>, model: i32, ty: u32, s: Scr) -> u8 = thiscall 0x470510 => unported;
     /// `CDarkel::StartFrenzy(eWeaponType, int32 time, uint16 kills, int32 model, uint16* text, int32,
     /// int32, int32, bool standard, bool headshot)` (0x43D3B0)
     fn start_frenzy(w: u32, time: u32, kills: u32, m1: u32, text: GPtr<u8>, m2: u32, m3: u32, m4: u32, standard: u32, head: u32) = cdecl 0x43D3B0 => unported;
     /// `CAutomobile::SetTaxiLight(bool)` (0x6A3740)
     fn set_taxi_light(v: GPtr<u8>, on: u32) = thiscall 0x6A3740 => unported;
-    /// `CGarages::GetGarageNumberByName(const char*)` (0x447680); the caller tests the low word
-    fn get_garage_number_by_name(name: GPtr<u8>) -> u32 = cdecl 0x447680 => unported;
     /// `CGarages::SetTargetCarForMissionGarage(int16 garage, CVehicle*)` (0x447C40)
     fn set_target_car_for_mission_garage(garage: u32, veh: GPtr<u8>) = cdecl 0x447C40 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    fn get_pad(n: u32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CWorld::FindPlayerSlotWithPedPointer(void*)` (0x563FA0)
-    fn find_player_slot_with_ped_pointer(p: GPtr<u8>) -> u32 = cdecl 0x563FA0 => unported;
     /// `CStreaming::RequestSpecialChar(int32 slot, const char*, int32 flags)` (0x40B450)
     fn request_special_char(slot: u32, name: GPtr<u8>, flags: u32) = cdecl 0x40B450 => unported;
     /// `CStreaming::HasSpecialCharLoaded(int32 slot)` (0x407F00), AL
     fn has_special_char_loaded(slot: u32) -> u8 = cdecl 0x407F00 => unported;
-    /// `CAnimManager::GetAnimGroupName(AssocGroupId)` (0x4D3A20)
-    fn get_anim_group_name(i: u32) -> GPtr<u8> = cdecl 0x4D3A20 => unported;
-    /// `CCoronas::RegisterCorona(uint32 id, CEntity*, uint8 r, uint8 g, uint8 b, uint8 a, const CVector&,
-    /// float radius, float farClip, uint8 type, uint8 flare, bool reflection, bool obstacles, int32,
-    /// float angle, bool longDistance, float nearClip, uint8 fade, float fadeSpeed, bool onlyFromBelow,
-    /// bool reflectionDelay)` (0x6FC580); floats as raw dwords
-    fn register_corona(id: u32, attach: u32, r: u32, g: u32, b: u32, a: u32, pos: GPtr<u32>, radius: u32, far_clip: u32, ty: u32, flare: u32, refl: u32, obst: u32, unused: u32, angle: u32, long_dist: u32, near_clip: u32, fade: u32, fade_speed: u32, below: u32, refl_delay: u32) = cdecl 0x6FC580 => unported;
 }
 
 /// `TheText` 0xC1B340.
@@ -274,7 +263,7 @@ pub fn process_commands_500_to_599(s: Scr, command: u32) -> i8 {
         // gr: unregistered.
         0x020C => {
             collect(s, 4);
-            add_explosion(0, 0, sp(3), sp(0), sp(1), sp(2), 0, 1, 0xBF80_0000, 0);
+            add_explosion(GPtr::NULL, GPtr::NULL, sp(3), f32::from_bits(sp(0)), f32::from_bits(sp(1)), f32::from_bits(sp(2)), 0, 1, f32::from_bits(0xBF80_0000), 0);
         }
         // 020D IS_CAR_UPRIGHT (0x47E500): no null checks; flag = `m_matrix->up.z >= 0.0f` (`fcomp
         // [0x858B50]; test ah,1; je`, ordered). gr: unregistered.
@@ -294,13 +283,13 @@ pub fn process_commands_500_to_599(s: Scr, command: u32) -> i8 {
             let st = X87::from_f32(f(sp(4)));
             let mut z = st.to_f32().to_bits();
             if !st.fcom(X87::constant(K_MINUS_100)).test_parity(0x41) {
-                z = X87::from_f64_exact(find_ground_z_for_coord(x, y))
+                z = X87::from_f64_exact(find_ground_z_for_coord(f32::from_bits(x), f32::from_bits(y)))
                     .fadd_m(f(K_HALF))
                     .to_f32()
                     .to_bits();
             }
             get_actual_pickup_index(collect_next(s));
-            let h = generate_new_one(x, y, z, model, sp(1) & 0xFF, 0, 0, 0, 0);
+            let h = generate_new_one(f32::from_bits(x), f32::from_bits(y), f32::from_bits(z), model, sp(1) & 0xFF, 0, 0, 0, GPtr::NULL);
             set_sp(0, h as u32);
             store(s, 1);
         }
@@ -374,14 +363,14 @@ pub fn process_commands_500_to_599(s: Scr, command: u32) -> i8 {
                 let task = if mem.is_null() {
                     GPtr::NULL
                 } else {
-                    task_complex_die_ctor(mem, 0, 0, 0xF, 0x4080_0000, 0, 0, 0, 0, 0)
+                    task_complex_die_ctor(mem, 0, 0, 0xF, f32::from_bits(0x4080_0000), f32::from_bits(0), 0, 0, 0, 0)
                 };
                 let mut ev = [0u32; 6];
                 let e = GPtr::from_raw(ev.as_mut_ptr()).cast::<u8>();
                 event_script_command_ctor(e, 3, task, 0);
                 let intel = ped.byte_add(0x47C).cast::<GPtr<u8>>().read();
                 event_group_add(intel.byte_add(0x68), e, 0);
-                event_script_command_dtor(e);
+                event_script_command_dtor(e.cast::<u32>());
             } else if ped_is_player(ped) != 0 {
                 let slot = find_player_slot_with_ped_pointer(ped);
                 let max = i32::from(player_info(slot).byte_add(0x14F).read());
@@ -554,7 +543,7 @@ pub fn process_commands_500_to_599(s: Scr, command: u32) -> i8 {
             collect(s, 9);
             let (x, y) = (sp(0), sp(1));
             let z = if spf(2) <= f(K_MINUS_100) {
-                X87::from_f64_exact(find_ground_z_for_coord(x, y)).to_f32().to_bits()
+                X87::from_f64_exact(find_ground_z_for_coord(f32::from_bits(x), f32::from_bits(y))).to_f32().to_bits()
             } else {
                 fld_fst(spf(2)).to_bits()
             };
@@ -570,24 +559,24 @@ pub fn process_commands_500_to_599(s: Scr, command: u32) -> i8 {
             let pos = [x, y, z];
             register_corona(
                 id,
-                0,
+                GPtr::NULL,
                 sp(6) & 0xFF,
                 sp(7) & 0xFF,
                 sp(8) & 0xFF,
                 0xFF,
-                GPtr::from_raw(pos.as_ptr().cast_mut()),
-                sp(3),
-                0x43E1_0000,
+                GPtr::<u32>::cast::<u8>(GPtr::from_raw(pos.as_ptr().cast_mut())),
+                f32::from_bits(sp(3)),
+                f32::from_bits(0x43E1_0000),
                 sp(4) & 0xFF,
                 sp(5) & 0xFF,
                 1,
                 0,
                 0,
+                f32::from_bits(0),
                 0,
+                f32::from_bits(0x3FC0_0000),
                 0,
-                0x3FC0_0000,
-                0,
-                0x4170_0000,
+                f32::from_bits(0x4170_0000),
                 0,
                 0,
             );

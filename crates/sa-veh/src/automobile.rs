@@ -21,13 +21,13 @@ pub use sa_core::bindings::world_add;
 pub use sa_core::bindings::world_remove;
 pub use sa_world::bindings::damage_get_door_status as dm_get_door_status;
 pub use sa_world::bindings::door_is_closed;
+pub use sa_pop::bindings::dm_set_wheel_status;
+pub use sa_world::bindings::set_orientation;
 orig! {
     /// `CDoor::GetAngleOpenRatio()` (0x6F47E0), float in ST0
     pub fn door_get_angle_open_ratio(d: GPtr<u8>) -> f64 = thiscall 0x6F47E0 => unported;
     /// `CDoor::IsFullyOpen()` (0x6F4820)
     pub fn door_is_fully_open(d: GPtr<u8>) -> u8 = thiscall 0x6F4820 => unported;
-    /// `CDamageManager::SetWheelStatus(eCarWheel, eCarWheelStatus)` (0x6C21A0)
-    pub fn dm_set_wheel_status(dm: GPtr<u8>, wheel: u32, status: u32) = thiscall 0x6C21A0 => unported;
     /// virtual `CVehicle::IsDoorMissing(eDoors)` (vtable +0x98)
     pub fn v_is_door_missing(v: GPtr<u8>, d: u32) -> u8 = thiscall vslot 0x98 => unported;
     /// virtual `CVehicle::GetDooorAngleOpenRatio(eDoors)` (vtable +0x78), float in ST0
@@ -40,8 +40,6 @@ orig! {
     pub fn v_is_door_closed(v: GPtr<u8>, d: u32) -> u8 = thiscall vslot 0x90 => unported;
     /// virtual `CAutomobile::ResetSuspension()` (vtable +0x10C)
     pub fn v_reset_suspension(v: GPtr<u8>) = thiscall vslot 0x10C => unported;
-    /// `CPlaceable::SetOrientation(float, float, float)` (0x439A80)
-    pub fn set_orientation(e: GPtr<u8>, x: f32, y: f32, z: f32) = thiscall 0x439A80 => unported;
 }
 
 /// `CAutomobile::ClearHeliOrientation()` (0x6A2460): `m_fForcedOrientation` = -1.0.
@@ -154,7 +152,7 @@ pub fn is_door_closed(car: Car, d: u32) -> u8 {
 /// `CAutomobile::IsDoorMissing(eDoors)` (0x6A2330): damage manager door status == 4 (AL compare).
 #[hook(addr = 0x6A2330, conv = thiscall, name = "CAutomobile::IsDoorMissing", expect = "8B 44 24 04 50", this = "CAutomobile")]
 pub fn is_door_missing(car: Car, d: u32) -> u8 {
-    b(dm_get_door_status(car.byte_add(0x5A0), d) as u8 == 4)
+    b(dm_get_door_status(car.byte_add(0x5A0), d as i32) as u8 == 4)
 }
 
 /// `CAutomobile::IsDoorReady(eDoors)` (0x6A2290): closed, or (virtual) missing.
@@ -288,7 +286,7 @@ pub fn find_wheel_width(car: Car, rear: u32) -> X87 {
 /// `CAutomobile::FixTyre(eWheels)` (0x6A3580, middle part at 0x40A498): wheel status 0.
 #[hook(addr = 0x6A3580, conv = thiscall, name = "CAutomobile::FixTyre", expect = "8B 44 24 04 6A 00", this = "CAutomobile")]
 pub fn fix_tyre(car: Car, wheel: u32) {
-    dm_set_wheel_status(car.byte_add(0x5A0), wheel, 0);
+    dm_set_wheel_status(car.byte_add(0x5A0), wheel as i32, 0);
 }
 
 /// `CAutomobile::Teleport(CVector, bool resetRotation)` (0x6A9CA0): remove from the world, set the

@@ -6,6 +6,7 @@
 //! original task pool. Every `rand()` names its original return address.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::orig::at_site;
 use sa_core::{hook, orig};
@@ -33,7 +34,7 @@ fn rand_scaled(site: u32, k_addr: usize) -> i32 {
 
 use crate::bindings::be_in_couple_abort_arm_ik;
 use crate::bindings::do_gang_abuse_speech_orig;
-use crate::bindings::ik_abort_look_at;
+use sa_core::bindings::ik_abort_look_at;
 use crate::bindings::membership_count_members;
 use crate::bindings::partner_ctor_orig;
 use crate::bindings::ped_is_playing_hand_signal;
@@ -51,7 +52,7 @@ use sa_core::bindings::streaming_request_model;
 use sa_core::bindings::tm_get_task_secondary;
 use sa_core::bindings::tm_set_task_secondary;
 use sa_core::bindings::vector_from_multiply3x3 as vector_from_multiply_3x3;
-use sa_stream::bindings::anim_add_block_ref;
+use sa_core::bindings::anim_add_block_ref;
 use sa_stream::bindings::anim_remove_block_ref;
 use sa_stream::bindings::ped_is_player;
 use sa_stream::bindings::streaming_is_very_busy;
@@ -66,6 +67,13 @@ use sa_world::bindings::task_simple_ctor;
 use sa_world::bindings::task_walk_alongside_ctor as walk_alongside_ped_ctor;
 use sa_world::bindings::tm_find_active_task_by_type;
 use sa_world::bindings::turn_to_face_entity_ctor;
+use sa_stream::bindings::get_animation_block_index as anim_get_block_index;
+use sa_world::bindings::kill_ped_on_foot_ctor;
+use sa_world::bindings::leave_car_ctor;
+use sa_world::bindings::run_anim_ctor;
+use sa_world::bindings::seek_entity_standard_ctor;
+use sa_world::bindings::stand_still_ctor;
+use sa_world::bindings::wander_standard_ctor;
 orig! {
     // ---- virtual slots ----
     /// `CTask::GetTaskType` (vtable +0x10)
@@ -76,23 +84,8 @@ orig! {
     fn v_create_next_sub_task(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x20 => unported;
     /// `CTaskComplexPartner::StreamRequiredAnims()` (vtable +0x2C)
     fn v_partner_stream_required_anims(t: GPtr<u8>) = thiscall vslot 0x2C => unported;
-    /// `CTaskComplexSeekEntityStandard::Constructor(CEntity*, int32, int32, float, float, float, bool, bool)`
-    /// (0x46AC10, `ret 0x20`)
-    fn seek_entity_standard_ctor(t: GPtr<u8>, e: GPtr<u8>, a: i32, b: i32, r: u32, d1: u32, d2: u32, c1: u32, c2: u32) -> GPtr<u8> = thiscall 0x46AC10 => unported;
-    /// `CTaskSimpleStandStill::Constructor(int32 time, bool, bool, float)` (0x62F310, `ret 0x10`)
-    fn stand_still_ctor(t: GPtr<u8>, time: i32, a: u32, b: u32, f: u32) -> GPtr<u8> = thiscall 0x62F310 => unported;
-    /// `CTaskSimpleRunAnim::Constructor(AssocGroupId, AnimationId, float, bool)` (0x61A8B0, `ret 0x10`)
-    fn run_anim_ctor(t: GPtr<u8>, group: u32, anim: i32, delta: u32, b: u32) -> GPtr<u8> = thiscall 0x61A8B0 => unported;
-    /// `CTaskComplexWanderStandard` constructor `(int32 moveState, uint8 dir, bool)` (0x48E4F0, `ret 0xC`)
-    fn wander_standard_ctor(t: GPtr<u8>, ms: i32, dir: i32, b: u32) -> GPtr<u8> = thiscall 0x48E4F0 => unported;
-    /// `CTaskComplexLeaveCar` constructor `(CVehicle*, int32, int32, bool, bool)` (0x63B8C0, `ret 0x14`)
-    fn leave_car_ctor(t: GPtr<u8>, v: GPtr<u8>, a: i32, b: i32, c: u32, d: u32) -> GPtr<u8> = thiscall 0x63B8C0 => unported;
-    /// `CTaskComplexKillPedOnFoot::Constructor(CPed*, int32, uint32, uint32, int32, bool)` (0x620E30, `ret 0x18`)
-    fn kill_ped_on_foot_ctor(t: GPtr<u8>, p: GPtr<u8>, a: i32, b: u32, c: u32, d: i32, e: u32) -> GPtr<u8> = thiscall 0x620E30 => unported;
     /// `FUN_0065e710(CPed*)` (0x65E710, cdecl; a gang ambient anim id)
     fn gang_anim_65e710(ped: GPtr<u8>) -> i32 = cdecl 0x65E710 => unported;
-    /// `CAnimManager::GetAnimationBlockIndex(const char*)` (0x4D3990)
-    fn anim_get_block_index(name: u32) -> i32 = cdecl 0x4D3990 => unported;
 }
 
 /// `fstp dword` of an f64 an original callee returned in ST0.
@@ -144,7 +137,7 @@ pub fn gang_leader_create_next_sub_task(this: GPtr<u8>, _ped: GPtr<u8>) -> GPtr<
         if mem.is_null() {
             return GPtr::NULL;
         }
-        return stand_still_ctor(mem, 0x1388, 0, 0, 0x4100_0000);
+        return stand_still_ctor(mem, 0x1388, 0, 0, f32::from_bits(0x4100_0000));
     }
     let k = rand_scaled(0x65E13C, 0x86F934);
     let now = g::<u32>(TIME_MS).read();
@@ -204,7 +197,7 @@ pub fn gang_leader_should_load_gang_anims() -> u8 {
             return 0;
         }
     }
-    if streaming_is_very_busy() != 0 { 0 } else { 1 }
+    if streaming_is_very_busy() as u8 != 0 { 0 } else { 1 }
 }
 
 /// `CTaskComplexGangLeader::DoGangAbuseSpeech(CPed* talker, CPed* target)` (0x65E860, cdecl). Only for a gang
@@ -222,7 +215,7 @@ pub fn gang_leader_do_gang_abuse_speech(talker: GPtr<u8>, target: GPtr<u8>) {
         return;
     }
     let say = |id: u32| {
-        ped_say(talker, id, 0, 0x3F80_0000, 0, 0, 0);
+        ped_say(talker, id, 0, f32::from_bits(0x3F80_0000), 0, 0, 0);
     };
     let t = rd::<i32>(target, 0x598);
     if t == 7 {
@@ -337,14 +330,14 @@ pub fn gang_hassle_ped_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u
                 Some(GPtr::NULL)
             } else {
                 let i = rand_scaled(0x66019E, 0x859000);
-                Some(run_anim_ctor(mem, 0x34, i.wrapping_add(0x117), 0x4080_0000, 0))
+                Some(run_anim_ctor(mem, 0x34, i.wrapping_add(0x117) as u32, f32::from_bits(0x4080_0000), 0))
             }
         } else if r == 0x64 {
             let mem = task_new(0x18);
             if mem.is_null() {
                 Some(GPtr::NULL)
             } else {
-                Some(play_hand_signal_anim_ctor(mem, -1, 0x4080_0000))
+                Some(play_hand_signal_anim_ctor(mem, -1i32 as u32, f32::from_bits(0x4080_0000)))
             }
         } else {
             None
@@ -355,7 +348,7 @@ pub fn gang_hassle_ped_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u
     }
     match rd::<i32>(this, 0x10) {
         0 => {
-            ped_say(ped, 0x56, 0, 0x3F80_0000, 0, 0, 0);
+            ped_say(ped, 0x56, 0, f32::from_bits(0x3F80_0000), 0, 0, 0);
         }
         1 | 2 => do_gang_abuse_speech_orig(ped, rd::<GPtr<u8>>(this, 0xC)),
         _ => {}
@@ -385,7 +378,7 @@ pub fn signal_at_ped_create_next_sub_task(this: GPtr<u8>, _ped: GPtr<u8>) -> GPt
         if mem.is_null() {
             return GPtr::NULL;
         }
-        return stand_still_ctor(mem, time, 0, 0, 0x4100_0000);
+        return stand_still_ctor(mem, time, 0, 0, f32::from_bits(0x4100_0000));
     }
     if v_task_type(sub()) == 0xCB {
         let mem = task_new(0xC);
@@ -403,7 +396,7 @@ pub fn signal_at_ped_create_next_sub_task(this: GPtr<u8>, _ped: GPtr<u8>) -> GPt
             return GPtr::NULL;
         }
         let i = rand_scaled(0x660C5A, 0x85B320);
-        return run_anim_ctor(mem, 0x34, 0x117i32.wrapping_sub(i), 0x4080_0000, 0);
+        return run_anim_ctor(mem, 0x34, 0x117i32.wrapping_sub(i) as u32, f32::from_bits(0x4080_0000), 0);
     }
     GPtr::NULL
 }
@@ -420,12 +413,12 @@ pub fn signal_at_ped_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPt
     ped_stop_playing_hand_signal(ped);
     ik_look_at(
         g(IK_CHAIN_MAN),
-        0x86FAB8,
+        GPtr::from_addr(0x86FAB8),
         ped,
         rd::<GPtr<u8>>(this, 0xC),
         0x1388,
         5,
-        0,
+        GPtr::NULL,
         1,
         0x3E19_999A,
         0x1F4,
@@ -447,7 +440,7 @@ pub fn signal_at_ped_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPt
 fn gang_anims_stream(this: GPtr<u8>, off: isize) {
     if rd::<u8>(this, off) == 0 {
         if should_load_gang_anims() != 0 {
-            let idx = anim_get_block_index(STR_GANGS);
+            let idx = anim_get_block_index(GPtr::from_addr(STR_GANGS as usize));
             if g::<u8>((idx as u32).wrapping_shl(5).wrapping_add(ANIM_BLOCK_LOADED) as usize).read() == 1 {
                 anim_add_block_ref(idx);
                 wr::<u8>(this, off, 1);
@@ -456,7 +449,7 @@ fn gang_anims_stream(this: GPtr<u8>, off: isize) {
             }
         }
     } else if should_load_gang_anims() == 0 {
-        anim_remove_block_ref(anim_get_block_index(STR_GANGS));
+        anim_remove_block_ref(anim_get_block_index(GPtr::from_addr(STR_GANGS as usize)) as u32);
         wr::<u8>(this, off, 0);
     }
 }
@@ -475,12 +468,12 @@ pub fn signal_at_ped_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8>
         let dx = f32_of(x(rd::<f32>(tp, 0)).fsub_m(rd::<f32>(pp, 0)));
         let dy = f32_of(x(rd::<f32>(tp, 4)).fsub_m(rd::<f32>(pp, 4)));
         let a = st0_f32(general_radian_angle_between_points(
-            dx.to_bits(),
-            dy.to_bits(),
-            0,
-            0,
+            f32::from_bits(dx.to_bits()),
+            f32::from_bits(dy.to_bits()),
+            f32::from_bits(0),
+            f32::from_bits(0),
         ));
-        let l = st0_f32(general_limit_radian_angle(a.to_bits()));
+        let l = st0_f32(general_limit_radian_angle(f32::from_bits(a.to_bits())));
         wr::<f32>(ped, 0x55C, l);
     }
     rd::<GPtr<u8>>(this, 8)
@@ -615,7 +608,7 @@ pub fn gang_follower_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPt
             if mem.is_null() {
                 return GPtr::NULL;
             }
-            return simple_car_drive_ctor(mem, rd::<GPtr<u8>>(ped, 0x58C), 0, 0);
+            return simple_car_drive_ctor(mem, rd::<GPtr<u8>>(ped, 0x58C), GPtr::NULL, 0);
         }
         if !rd::<GPtr<u8>>(ped, 0x58C).is_null() {
             let mem = task_new(0x34);
@@ -663,7 +656,7 @@ pub fn gang_follower_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPt
     if mem.is_null() {
         return GPtr::NULL;
     }
-    stand_still_ctor(mem, 0x1F4, 0, 0, 0x4100_0000)
+    stand_still_ctor(mem, 0x1F4, 0, 0, f32::from_bits(0x4100_0000))
 }
 
 // ======================================================================================================
@@ -769,7 +762,7 @@ pub fn partner_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
             true
         } else {
             let tm = rd::<GPtr<u8>>(partner, 0x47C).byte_add(4);
-            let t = tm_find_active_task_by_type(tm, rd::<i32>(this, 0x34));
+            let t = tm_find_active_task_by_type(tm, rd::<i32>(this, 0x34) as u32);
             t.is_null() || rd::<GPtr<u8>>(t, 0x38) != ped || rd::<u8>(this, 0x5C) != 0
         }
     };
@@ -807,7 +800,7 @@ pub fn be_in_couple_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<
             return GPtr::NULL;
         }
         let dir = general_random_int_in_range(0, 8);
-        return wander_standard_ctor(mem, 4, dir, 1);
+        return wander_standard_ctor(mem, 4, dir as u32, 1);
     }
     be_in_couple_abort_arm_ik(this, ped);
     let mem = task_new(0x20);

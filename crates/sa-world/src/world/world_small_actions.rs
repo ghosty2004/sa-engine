@@ -18,13 +18,12 @@ use sa_core::bindings::entity_register_reference as register_reference;
 use sa_core::bindings::entity_update_rw_frame as update_rw_frame;
 use sa_core::bindings::find_player_ped;
 use sa_core::bindings::matrix_update_rw_matrix as matrix_update_rw;
+use crate::bindings::get_num_fires_in_range;
 orig! {
     /// `CProjectileInfo::RemoveDetonatorProjectiles()` (0x738860)
     fn remove_detonator_projectiles() = cdecl 0x738860 => unported;
     /// `CWorld::TestSphereAgainstWorld(CVector, float, CEntity*, bool x6)` (0x569E20)
     fn test_sphere_against_world(c: CVector, radius: f32, ignore: u32, b: u32, v: u32, p: u32, o: u32, d: u32, cam: u32) -> GPtr<u8> = cdecl 0x569E20 => unported;
-    /// `CFireManager::GetNumFiresInRange(const CVector*, float)` (0x5397F0) on `gFireManager` (0xB71F80)
-    fn get_num_fires_in_range(fm: GPtr<u8>, pos: GPtr<u8>, range: f32) -> u32 = thiscall 0x5397F0 => unported;
     /// `CFireManager::StartFire(CVector, float, uint8, CEntity*, uint32, int8, uint8)` (0x539F00)
     fn start_fire(fm: GPtr<u8>, pos: CVector, size: f32, a: u32, creator: u32, time: u32, gens: u32, b: u32) -> GPtr<u8> = thiscall 0x539F00 => unported;
     /// `CWorld::RepositionOneObject(CEntity*)` (0x569850)

@@ -8,7 +8,7 @@ use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
 use crate::bindings::clear_all_suppressed_car_models;
-use crate::bindings::effect_2d_init;
+use sa_world::bindings::effect_2d_init;
 use crate::bindings::stuck_car_check_init;
 use sa_core::bindings::file_set_dir_my_documents as set_dir_my_documents;
 use sa_core::bindings::inform_friends_event_queue_init;
@@ -20,14 +20,15 @@ use sa_core::bindings::text_load;
 use sa_stream::bindings::remove_txd;
 use sa_stream::bindings::sprite2d_delete as sprite_delete;
 use sa_world::bindings::check_mission_pack_valid_menu;
+use crate::bindings::running_script_init;
+use sa_core::bindings::file_close as close_file;
+use sa_core::bindings::file_read;
+use sa_core::bindings::file_set_dir as set_dir;
+use sa_core::bindings::find_txd_slot;
+use sa_core::bindings::open_file;
+use sa_world::bindings::decision_maker_types_get_instance;
 orig! {
-    /// `CRunningScript::Init()` (0x4648E0)
-    fn running_script_init(s: GPtr<u8>) = thiscall 0x4648E0 => unported;
     fn script_resource_manager_initialise(this: GPtr<u8>) = thiscall 0x470480 => unported;
-    fn set_dir(dir: GPtr<u8>) = cdecl 0x5387D0 => unported;
-    fn open_file(name: GPtr<u8>, mode: GPtr<u8>) -> i32 = cdecl 0x538900 => unported;
-    fn file_read(f: i32, buf: GPtr<u8>, size: u32) -> i32 = cdecl 0x538950 => unported;
-    fn close_file(f: i32) -> i32 = cdecl 0x5389D0 => unported;
     /// CRT `sprintf(buf, fmt, n)` (0x821BB5)
     fn crt_sprintf(buf: GPtr<u8>, fmt: GPtr<u8>, n: u32) -> i32 = cdecl 0x821BB5 => unported;
     /// `CTheScripts::ReadObjectNamesFromScript()` (0x486720), `UpdateObjectIndices()` (0x486780),
@@ -37,8 +38,6 @@ orig! {
     fn read_multi_script_file_offsets() = cdecl 0x4867C0 => unported;
     /// `CStreamedScripts::ReadStreamedScriptData()` (0x470750)
     fn read_streamed_script_data_call(this: GPtr<u8>) = thiscall 0x470750 => unported;
-    /// `CTxdStore::FindTxdSlot(name)` (0x731850), `RemoveTxd(slot)` (0x731E90)
-    fn find_txd_slot(name: GPtr<u8>) -> i32 = cdecl 0x731850 => unported;
     fn clear_all_vehicle_models_blocked_by_script() = cdecl 0x46A840 => unported;
     fn initialise_all_connect_lod_objects_call() = cdecl 0x470960 => unported;
     fn initialise_special_anim_groups_call() = cdecl 0x474730 => unported;
@@ -47,7 +46,6 @@ orig! {
     /// (0x4B2AD0), `CDecisionMakerTypes::GetInstance()` (0x4684F0)
     fn scripted_2d_effects_init_call() = cdecl 0x6FA6F0 => unported;
     fn task_sequences_init() = cdecl 0x632D90 => unported;
-    fn decision_maker_types_get_instance() -> u32 = cdecl 0x4684F0 => unported;
 }
 
 /// `CTheScripts::ScriptSpace` and `CGame::bMissionPackGame`.
@@ -138,11 +136,11 @@ pub fn the_scripts_init() {
             }
             set_dir_my_documents();
             crt_sprintf(g(0xB71670), g(0x859D78), g::<u8>(MISSION_PACK).read() as u32);
-            let f = open_file(g(0xB71670), g(0x859C6C));
+            let f = GPtr::<u8>::addr(open_file(g(0xB71670), g(0x859C6C))) as i32;
             let mut n = 0;
             if f > 0 {
-                n = file_read(f, g(SCRIPT_SPACE), 0x30D40);
-                close_file(f);
+                n = file_read(GPtr::from_addr(f as usize), g(SCRIPT_SPACE), 0x30D40) as i32;
+                close_file(GPtr::from_addr(f as usize));
             }
             if n >= 1 {
                 text_load(g(0xC1B340), 0);
@@ -153,9 +151,9 @@ pub fn the_scripts_init() {
     }
     if g::<u8>(MISSION_PACK).read() == 0 {
         set_dir(g(0x859D6C));
-        let f = open_file(g(0x859D60), g(0x859C6C));
-        file_read(f, g(SCRIPT_SPACE), 0x30D40);
-        close_file(f);
+        let f = GPtr::<u8>::addr(open_file(g(0x859D60), g(0x859C6C))) as i32;
+        file_read(GPtr::from_addr(f as usize), g(SCRIPT_SPACE), 0x30D40);
+        close_file(GPtr::from_addr(f as usize));
     }
     set_dir(empty);
     w32(0xA447EC, 0xFFFF_FFFF);
@@ -436,10 +434,7 @@ pub fn scripted_2d_effects_init() {
     }
 }
 
-orig! {
-    /// `CTheScripts::StartNewScript(ip)` (0x464C20)
-    fn start_new_script(ip: GPtr<u8>) -> GPtr<u8> = cdecl 0x464C20 => unported;
-}
+use crate::bindings::start_new_script;
 
 /// `CTheScripts::StartTestScript()` (stub 0x464D40, body 0x1565610): `StartNewScript(ScriptSpace)`.
 #[hook(addr = 0x464D40, conv = cdecl, name = "CTheScripts::StartTestScript", expect = "E9 CB 08 10 01",
@@ -523,11 +518,9 @@ use sa_world::bindings::process_col_models;
 use sa_world::bindings::remove_from_interesting_vehicle_list;
 use sa_world::bindings::vehicle_can_be_deleted;
 use sa_world::bindings::vehicle_remove_passenger;
+use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+use sa_world::bindings::find_objects_kinda_colliding;
 orig! {
-    /// `CWorld::FindObjectsKindaColliding(pos, radius, b2d, count, max, out, b, v, p, o, d)` (0x568B80)
-    fn find_objects_kinda_colliding(pos: GPtr<u8>, radius: u32, b2d: u32, count: GPtr<i16>, max: i32, out: GPtr<u32>, b: u32, v: u32, p: u32, o: u32, d: u32) = cdecl 0x568B80 => unported;
-    /// `CEntity::CleanUpOldReference(slot)` (0x571A00)
-    fn clean_up_old_reference(e: GPtr<u8>, slot: GPtr<u32>) = thiscall 0x571A00 => unported;
     /// The entity's virtual deleting destructor (vtable slot 0)
     fn entity_vdtor(e: GPtr<u8>, flags: u32) = thiscall vslot 0 => unported;
 }
@@ -557,7 +550,7 @@ pub fn clear_space_for_mission_entity(pos: GPtr<u8>, ours: GPtr<u8>) {
     let radius = g::<u32>(g::<u32>(mi + 0x14).read() as usize + 0x24).read();
     let mut ents = [0u32; 16];
     let mut count: i16 = 0;
-    find_objects_kinda_colliding(pos, radius, 0, GPtr::from_raw(&mut count as *mut i16), 0x10, GPtr::from_raw(ents.as_mut_ptr()), 0, 1, 1, 0, 0);
+    find_objects_kinda_colliding(pos.cast::<f32>(), f32::from_bits(radius), 0, GPtr::from_raw(&mut count as *mut i16), 0x10, GPtr::<u32>::cast::<u8>(GPtr::from_raw(ents.as_mut_ptr())), 0, 1, 1, 0, 0);
     if count <= 0 {
         return;
     }
@@ -585,7 +578,7 @@ pub fn clear_space_for_mission_entity(pos: GPtr<u8>, ours: GPtr<u8>) {
         }
         let em = ensure_matrix(e);
         let om = ensure_matrix(ours);
-        let hits = process_col_models(om, cm, em, entity_get_col_model(e), 0xA951F8, 0, 0, 0);
+        let hits = process_col_models(om, cm, em, entity_get_col_model(e), GPtr::from_addr(0xA951F8), GPtr::NULL, GPtr::NULL, 0);
         if saved > 0.0 {
             cd.byte_add(6).write(sa_math::x87::X87::from_f32(saved).ftol() as u8);
         }
@@ -603,7 +596,7 @@ pub fn clear_space_for_mission_entity(pos: GPtr<u8>, ours: GPtr<u8>) {
                     population_remove_ped(GPtr::from_addr(driver as usize));
                     let d = slot.read();
                     if d != 0 {
-                        clean_up_old_reference(GPtr::from_addr(d as usize), slot);
+                        clean_up_old_reference(GPtr::from_addr(d as usize), slot.cast::<GPtr<u8>>());
                     }
                     slot.write(0);
                 }

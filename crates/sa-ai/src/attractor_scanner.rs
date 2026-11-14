@@ -4,13 +4,10 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 
-orig! {
-    /// `CConversationNode::ClearRecursively()` (0x43A710)
-    fn clear_recursively_o(this: GPtr<u8>) = thiscall 0x43A710 => crate::attractor_scanner::conversation_node_clear_recursively;
-}
+use crate::bindings::conversation_node_clear_recursively as clear_recursively_o;
 
 /// `CAttractorScanner::Clear()` (0x5FFF90, thiscall): for each of the 10 attractor types the entity
 /// (+0x18) and attractor (+0x40) slots are cleared and the minimum distance (+0x68) set to `15 * 15`

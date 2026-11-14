@@ -25,15 +25,13 @@ pub use sa_core::bindings::rp_hanim_hierarchy_get_matrix_array;
 pub use sa_core::bindings::rp_hanim_id_get_index;
 pub use sa_core::bindings::rw_v3d_transform_points;
 pub use sa_world::bindings::placeable_get_heading;
+pub use crate::bindings::pad_540f80;
+pub use sa_core::bindings::convert_ped_node_2_bone_tag as convert_ped_node_2_bone_tag_call;
+pub use sa_core::bindings::rw_matrix_scale;
 orig! {
-    /// `ConvertPedNode2BoneTag(int32)` (0x4D58A0)
-    pub fn convert_ped_node_2_bone_tag_call(node: i32) -> i32 = cdecl 0x4D58A0 => crate::camproc::convert_ped_node_2_bone_tag;
-    /// `RwMatrixScale(RwMatrix*, const RwV3d*, RwOpCombineType)` (0x7F22C0)
-    pub fn rw_matrix_scale(m: GPtr<u8>, v: GPtr<u8>, op: i32) -> GPtr<u8> = cdecl 0x7F22C0 => unported;
     /// `CPad::SniperZoomOut()` (0x540B80, AL) / `SniperZoomIn()` (0x540B30, AL)
     pub fn pad_sniper_zoom_out(pad: GPtr<u8>) -> u8 = thiscall 0x540B80 => unported;
     pub fn pad_sniper_zoom_in(pad: GPtr<u8>) -> u8 = thiscall 0x540B30 => unported;
-    pub fn pad_540f80(pad: GPtr<u8>) -> i16 = thiscall 0x540F80 => unported;
 }
 
 /// The guard (0xB6FFE0), `TheCamera` +0x3E (0xB6F066) and +0x3F (0xB6F067, head offset lerp on), the
@@ -126,9 +124,9 @@ pub fn process_1rst_person_ped_on_pc(
     copy3(b.byte_add(0x24), g::<u8>(HEAD_OFFSET));
     let h = get_anim_hierarchy_from_skin_clump(rd::<GPtr<u8>>(t, 0x18));
     let tag = convert_ped_node_2_bone_tag_call(2);
-    let idx = rp_hanim_id_get_index(h, tag);
+    let idx = rp_hanim_id_get_index(h, tag as u32);
     let m = rp_hanim_hierarchy_get_matrix_array(h).byte_add((idx as isize) << 6);
-    rw_v3d_transform_points(b.byte_add(0x24), b.byte_add(0x24), 1, m);
+    rw_v3d_transform_points(GPtr::<u8>::cast::<f32>(b.byte_add(0x24)), GPtr::<u8>::cast::<f32>(b.byte_add(0x24)), 1, m);
     wr::<u32>(b, 0x3C, 0);
     wr::<u32>(b, 0x40, 0);
     wr::<u32>(b, 0x44, 0);
@@ -177,7 +175,7 @@ pub fn process_1rst_person_ped_on_pc(
             allocate_matrix(e);
             simple_transform_update_matrix(e.byte_add(4), rd::<GPtr<u8>>(e, 0x14));
         }
-        let r = matrix_mul_vec(b.byte_add(0x48), rd::<GPtr<u8>>(e, 0x14), eye);
+        let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(b.byte_add(0x48)), rd::<GPtr<u8>>(e, 0x14), eye));
         sx = rd::<u32>(r, 0);
         wr::<u32>(b, 0x24, sx);
         sy = rd::<u32>(r, 4);
@@ -462,7 +460,7 @@ fn output(this: GPtr<u8>, b: GPtr<u8>, f: &mut Fpu) {
     let te = g::<GPtr<u8>>(CAMERA_TARGET).read();
     let m = rd::<GPtr<u8>>(te, 0x14);
     if !m.is_null() {
-        matrix_set_rotate_z_only(m, rd::<u32>(b, 0x68));
+        matrix_set_rotate_z_only(m, f32::from_bits(rd::<u32>(b, 0x68)));
     } else {
         wr::<u32>(te, 0x10, rd::<u32>(b, 0x68));
     }
@@ -523,7 +521,7 @@ fn photo_zoom(this: GPtr<u8>, f: &mut Fpu) {
 /// 0x50F3BD: `m_bResetStatics = 0`, near clip 0.05.
 fn finish(this: GPtr<u8>) {
     wr::<u8>(this, 0xA, 0);
-    set_near_clip_raw(SCENE_CAMERA.get(), 0x3D4C_CCCD);
+    set_near_clip_raw(SCENE_CAMERA.get(), f32::from_bits(0x3D4C_CCCD));
 }
 
 /// Registrations of this module.

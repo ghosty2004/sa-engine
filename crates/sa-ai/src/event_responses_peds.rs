@@ -3,12 +3,13 @@
 //! (gta-reversed `EventHandler.cpp` as a reading aid; the bytes win). Unverified (docs/verify/HOWTO.md).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
 use crate::common::*;
 
-use crate::bindings::duck_ctor;
+use sa_world::bindings::duck_ctor;
 use crate::bindings::handler_compute_event_response_task;
 use crate::bindings::handler_is_kill_task_appropriate;
 use crate::bindings::kill_criminal_ctor;
@@ -65,7 +66,7 @@ fn set(this: GPtr<u8>, t: GPtr<u8>) {
 }
 
 fn smart_flee(other: GPtr<u8>, b: u32) -> GPtr<u8> {
-    new_task(0x40, |t| smart_flee_entity_ctor(t, other, b, gu(FLEE_SAFE_DIST), gu(FLEE_TIME), gu(FLEE_PERIOD), gu(FLEE_SHIFT)))
+    new_task(0x40, |t| smart_flee_entity_ctor(t, other, b, f32::from_bits(gu(FLEE_SAFE_DIST)), gu(FLEE_TIME), gu(FLEE_PERIOD), gu(FLEE_SHIFT)))
 }
 
 /// `CEventHandler::ComputeDeadPedResponse` (0x4B9470, thiscall, `ret 0xC`): with the dead ped (+0x14). `d2` = the
@@ -103,13 +104,13 @@ pub fn handler_compute_dead_ped_response(this: GPtr<u8>, e: GPtr<u8>, _active: G
         if [7u16, 0x2E, 8, 0x33, 0x22, 0x10, 0x2D].contains(&mode) || cam_get_weapon_first_person_on(cam) != 0 {
             return;
         }
-        ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), S_DEAD_PED, ped(this), dead, 500, 5, 0, 1, 0x3E80_0000, 500, 3, 0);
+        ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), GPtr::from_addr(S_DEAD_PED as usize), ped(this), dead, 500, 5, GPtr::NULL, 1, 0x3E80_0000, 500, 3, 0);
         return;
     }
     match i32::from(rd::<i16>(e, 0xE)) {
         200 => set(this, GPtr::NULL),
         0x258 => set(this, new_task(0x3C, |t| investigate_dead_ped_ctor(t, dead))),
-        0x1AB => set(this, new_task(0x28, |t| duck_ctor(t, 0, 0xE0FF, -1))),
+        0x1AB => set(this, new_task(0x28, |t| duck_ctor(t, 0, 0xE0FF, -1i32 as u32))),
         0x38F => set(this, smart_flee(dead, 1)),
         _ => {}
     }
@@ -179,9 +180,9 @@ pub fn handler_compute_seen_panicked_ped_response(this: GPtr<u8>, e: GPtr<u8>, _
         return;
     }
     match i32::from(rd::<i16>(e, 0xE)) {
-        0x1AB => set(this, new_task(0x28, |t| duck_ctor(t, 0, 0xE0FF, -1))),
+        0x1AB => set(this, new_task(0x28, |t| duck_ctor(t, 0, 0xE0FF, -1i32 as u32))),
         0x38D => set(this, new_task(0x3C, |t| flee_entity_ctor(t, threat, 1, 0x4234_0000, gu(FLEE_ENT_A), gu(FLEE_ENT_B), gu(FLEE_ENT_C)))),
-        0x38F => set(this, new_task(0x40, |t| smart_flee_entity_ctor(t, threat, 1, 0x4234_0000, gu(FLEE_TIME), gu(FLEE_PERIOD), gu(FLEE_SHIFT)))),
+        0x38F => set(this, new_task(0x40, |t| smart_flee_entity_ctor(t, threat, 1, f32::from_bits(0x4234_0000), gu(FLEE_TIME), gu(FLEE_PERIOD), gu(FLEE_SHIFT)))),
         _ => {}
     }
 }

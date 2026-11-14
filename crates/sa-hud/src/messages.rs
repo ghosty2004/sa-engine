@@ -35,21 +35,14 @@ const DISPLAY_BRIEF_FLAG: usize = 0xA44488;
 
 pub use sa_core::bindings::ascii_to_gxt_char;
 pub use sa_world::bindings::hud_set_message;
+pub use crate::bindings::insert_string_in_string_call;
+pub use sa_core::bindings::insert_number_in_string as insert_number_in_string_call;
+pub use sa_core::bindings::messages_clear_messages as clear_messages_call;
+pub use sa_core::bindings::messages_string_copy as string_copy_call;
+pub use sa_world::bindings::add_to_previous_brief_array as add_to_previous_brief_array_call;
+pub use sa_world::bindings::messages_string_compare as string_compare_call;
+pub use sa_world::bindings::msg_insert_player_control_keys as insert_player_control_keys_in_string_call;
 orig! {
-    /// `CMessages::StringCopy(GxtChar*, const GxtChar*, uint16)` (0x69DB70)
-    pub fn string_copy_call(dst: GPtr<u8>, src: GPtr<u8>, len: u32) = cdecl 0x69DB70 => string_copy;
-    /// `CMessages::StringCompare(const GxtChar*, const GxtChar*, uint16)` (0x69DBD0)
-    pub fn string_compare_call(a: GPtr<u8>, b: GPtr<u8>, len: u32) -> u8 = cdecl 0x69DBD0 => string_compare;
-    /// `CMessages::ClearMessages(bool)` (0x69DCD0)
-    pub fn clear_messages_call(flag: u32) = cdecl 0x69DCD0 => clear_messages;
-    /// `CMessages::AddToPreviousBriefArray(text, n1..n6, string)` (0x69DD50)
-    pub fn add_to_previous_brief_array_call(text: GPtr<u8>, n1: i32, n2: i32, n3: i32, n4: i32, n5: i32, n6: i32, s: GPtr<u8>) = cdecl 0x69DD50 => add_to_previous_brief_array;
-    /// `CMessages::InsertNumberInString(str, n1..n6, dst)` (0x69DE90)
-    pub fn insert_number_in_string_call(s: GPtr<u8>, n1: i32, n2: i32, n3: i32, n4: i32, n5: i32, n6: i32, dst: GPtr<u8>) = cdecl 0x69DE90 => insert_number_in_string;
-    /// `CMessages::InsertStringInString(target, repl)` (0x69E040)
-    pub fn insert_string_in_string_call(target: GPtr<u8>, repl: GPtr<u8>) = cdecl 0x69E040 => insert_string_in_string;
-    /// `CMessages::InsertPlayerControlKeysInString(str)` (0x69E160)
-    pub fn insert_player_control_keys_in_string_call(s: GPtr<u8>) = cdecl 0x69E160 => insert_player_control_keys_in_string;
     /// `CHud::GetRidOfAllHudMessages(bool)` (0x588A50)
     pub fn hud_get_rid_of_all_hud_messages(flag: u32) = cdecl 0x588A50 => unported;
     /// `CHud::SetBigMessage(const char*, eMessageStyle)` (0x588FC0)
@@ -910,10 +903,7 @@ pub fn clear_this_big_print(text: GPtr<u8>) {
 const HUD_BIG_MESSAGE_X: usize = 0xBAA3DC;
 const HUD_BIG_MESSAGE: usize = 0xBAACC0;
 
-orig! {
-    /// `CMessages::ClearThisBigPrint(const char*)` (0x69EBE0)
-    pub fn clear_this_big_print_call(text: GPtr<u8>) = cdecl 0x69EBE0 => clear_this_big_print;
-}
+pub use sa_world::bindings::clear_this_big_print as clear_this_big_print_call;
 
 /// `CMessages::ClearThisPrintBigNow(eMessageStyle)` (0x69ED80): clears the style's first text (if any)
 /// through `ClearThisBigPrint`, then `BigMessageX[style] = 0` and `m_BigMessage[style][0] = 0`.

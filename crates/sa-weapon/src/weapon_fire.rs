@@ -7,6 +7,7 @@
 //! [`sa_core::orig::at_site`], every callee through `orig!` with its original address. SEH frames
 //! (`fs:[0]`) of the originals are not reproduced (stack-only, invisible to callers).
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::mem::GlobalDesc;
 use sa_core::{hook, orig};
@@ -79,8 +80,24 @@ pub use sa_world::bindings::ped_set_current_weapon;
 pub use sa_world::bindings::process_line_sphere;
 pub use sa_world::bindings::report_crime;
 pub use sa_world::bindings::use_detonator as world_use_detonator;
-pub use sa_world::bindings::vector_sub;
+pub use sa_core::bindings::vector_sub;
 pub use sa_world::bindings::world_reset_line_test_options;
+pub use crate::bindings::check_for_shooting_vehicle_occupant as check_for_shooting_vehicle_occupant_call;
+pub use crate::bindings::pad_start_shake_distance;
+pub use sa_core::bindings::col_sphere_set;
+pub use sa_core::bindings::ped_give_weapon;
+pub use sa_world::bindings::add_light as point_lights_add_light;
+pub use sa_world::bindings::dm_get_panel_status as get_panel_status;
+pub use sa_world::bindings::event_gun_shot_ctor;
+pub use sa_world::bindings::event_gun_shot_dtor;
+pub use sa_world::bindings::fire_instant_hit as fire_instant_hit_call;
+pub use sa_world::bindings::get_weapon_skill_type_call as ped_get_weapon_skill;
+pub use sa_world::bindings::interesting_events_add;
+pub use sa_world::bindings::ped_say;
+pub use sa_world::bindings::ped_weapon_audio_add_audio_event as ped_weapon_audio_add_event;
+pub use sa_world::bindings::progress_panel_damage;
+pub use sa_world::bindings::target_weapon_range_multiplier as target_weapon_range_multiplier_call;
+pub use sa_world::bindings::test_line_triangle;
 orig! {
     /// `FindPlayerPed(int32)` (0x56E210)
     pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
@@ -88,18 +105,6 @@ orig! {
     pub fn task_get_type(task: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
     /// `CWeapon::TakePhotograph(CEntity* owner, CVector* point)` (0x73C1F0, thiscall)
     pub fn take_photograph(this: GPtr<u8>, owner: GPtr<u8>, point: GPtr<u8>) -> u8 = thiscall 0x73C1F0 => unported;
-    /// `CAEPedWeaponAudioEntity::AddAudioEvent(int32)` (0x4E69F0, thiscall)
-    pub fn ped_weapon_audio_add_event(ae: GPtr<u8>, ev: i32) = thiscall 0x4E69F0 => unported;
-    /// `CPed::Say(uint16 phrase, uint32 offset, float volume, bool, bool, bool)` (0x5EFFE0, thiscall)
-    pub fn ped_say(ped: GPtr<u8>, phrase: u32, offset: u32, vol: f32, a: u32, b: u32, c: u32) = thiscall 0x5EFFE0 => unported;
-    /// `CPed::GiveWeapon(eWeaponType, uint32 ammo, bool)` (0x5E6080, thiscall)
-    pub fn ped_give_weapon(ped: GPtr<u8>, ty: i32, ammo: u32, b: u32) -> i32 = thiscall 0x5E6080 => unported;
-    /// `CPed::GetWeaponSkill(eWeaponType)` (0x5E3B60, thiscall)
-    pub fn ped_get_weapon_skill(ped: GPtr<u8>, ty: i32) -> u8 = thiscall 0x5E3B60 => unported;
-
-    /// `CWeapon::FireInstantHit(CEntity*, CVector* origin, CVector* muzzle, CEntity* targetEnt, CVector* target,
-    /// CVector* originOverride, bool forceAim, bool doMuzzleFx)` (0x73FB10, thiscall)
-    pub fn fire_instant_hit_call(this: GPtr<u8>, firer: GPtr<u8>, origin: GPtr<u8>, muzzle: GPtr<u8>, target_ent: GPtr<u8>, target: GPtr<u8>, alt: GPtr<u8>, force_aim: u32, muzzle_fx: u32) -> u8 = thiscall 0x73FB10 => unported;
     /// `CWeapon::FireProjectile(CEntity*, CVector* origin, CEntity* targetEnt, CVector* target, float force)` (0x741360, thiscall)
     pub fn fire_projectile_call(this: GPtr<u8>, firer: GPtr<u8>, origin: GPtr<u8>, target_ent: GPtr<u8>, target: GPtr<u8>, force: f32) -> u8 = thiscall 0x741360 => unported;
     /// `CWeapon::FireSniper(CPed*, CEntity* targetEnt, CVector* target)` (0x73AAC0, thiscall)
@@ -108,38 +113,14 @@ orig! {
     pub fn fire_area_effect_call(this: GPtr<u8>, firer: GPtr<u8>, origin: GPtr<u8>, target_ent: GPtr<u8>, target: GPtr<u8>) -> u8 = thiscall 0x73E800 => unported;
     /// `CBulletInfo::AddBullet(CEntity* creator, eWeaponType, CVector pos, CVector velocity)` (0x736010)
     pub fn add_bullet_call(creator: GPtr<u8>, ty: i32, px: f32, py: f32, pz: f32, vx: f32, vy: f32, vz: f32) -> u8 = cdecl 0x736010 => crate::bullet_shot::add_bullet;
-    /// `CPad::StartShake_Distance(int16 time, uint8 freq, float x, float y, float z)` (0x53F9A0, thiscall)
-    pub fn pad_start_shake_distance(pad: GPtr<u8>, time: u32, freq: u32, x: f32, y: f32, z: f32) = thiscall 0x53F9A0 => unported;
-    /// `CEventGunShot::CEventGunShot(CEntity*, CVector start, CVector end, bool silenced)` (0x4AC610, thiscall `ret 0x20`)
-    pub fn event_gun_shot_ctor(ev: GPtr<u8>, e: GPtr<u8>, sx: f32, sy: f32, sz: f32, ex: f32, ey: f32, ez: f32, silenced: u32) -> GPtr<u8> = thiscall 0x4AC610 => unported;
     /// `CEventGunShotWhizzedBy::CEventGunShotWhizzedBy(CEntity*, const CVector&, const CVector&, bool)` (0x4B1FD0, thiscall)
     pub fn event_whizzed_by_ctor(ev: GPtr<u8>, e: GPtr<u8>, start: GPtr<u8>, end: GPtr<u8>, silenced: u32) -> GPtr<u8> = thiscall 0x4B1FD0 => unported;
-    /// `CInterestingEvents::Add(EType, CEntity*)` (0x602590, thiscall on `g_InterestingEvents` 0xC0B058)
-    pub fn interesting_events_add(ie: GPtr<u8>, ty: i32, e: GPtr<u8>) = thiscall 0x602590 => unported;
     /// `CEventGunShotWhizzedBy::~CEventGunShotWhizzedBy()` (0x4B2070, thiscall)
     pub fn event_whizzed_by_dtor(ev: GPtr<u8>) = thiscall 0x4B2070 => unported;
-    /// `CEventGunShot::~CEventGunShot()` (0x4AC720, thiscall)
-    pub fn event_gun_shot_dtor(ev: GPtr<u8>) = thiscall 0x4AC720 => unported;
-    /// `CWeapon::CheckForShootingVehicleOccupant(CEntity**, CColPoint*, eWeaponType, const CVector*, const CVector*)` (0x73F480)
-    pub fn check_for_shooting_vehicle_occupant_call(e: GPtr<u8>, cp: GPtr<u8>, ty: i32, origin: GPtr<u8>, target: GPtr<u8>) -> u8 = cdecl 0x73F480 => check_for_shooting_vehicle_occupant;
-    /// `CColSphere::Set(float radius, const CVector& center, uint8 material, uint8 piece, uint8 light)` (0x40FD10, thiscall)
-    pub fn col_sphere_set(this: GPtr<u8>, radius: f32, center: GPtr<u8>, material: u32, piece: u32, light: u32) = thiscall 0x40FD10 => unported;
     /// `SurfaceInfos_c::IsGlass(uint32)` (0x55E790, thiscall on `g_surfaceInfos` 0xB79538; the caller tests AL)
     pub fn surface_is_glass(si: GPtr<u8>, id: u32) -> u32 = thiscall 0x55E790 => unported;
-    /// `CCollision::TestLineTriangle(const CColLine&, const CompressedVector*, const CColTriangle&,
-    /// const CColTrianglePlane&)` (0x413AC0)
-    pub fn test_line_triangle(line: GPtr<u8>, verts: GPtr<u8>, tri: GPtr<u8>, plane: GPtr<u8>) -> u8 = cdecl 0x413AC0 => sa_world::collision::mvpd_coll::test_line_triangle;
-    /// `CDamageManager::ProgressPanelDamage(ePanels)` (0x6C23C0, thiscall)
-    pub fn progress_panel_damage(dm: GPtr<u8>, panel: u32) -> u8 = thiscall 0x6C23C0 => unported;
-    /// `CDamageManager::GetPanelStatus(ePanels)` (0x6C2180, thiscall)
-    pub fn get_panel_status(dm: GPtr<u8>, panel: u32) -> i32 = thiscall 0x6C2180 => unported;
     /// `CWeapon::DoBulletImpact(CEntity* owner, CEntity* victim, const CVector* start, const CVector* end, const CColPoint*, int32)` (0x73B550, thiscall)
     pub fn do_bullet_impact(this: GPtr<u8>, owner: GPtr<u8>, victim: GPtr<u8>, start: GPtr<u8>, end: GPtr<u8>, cp: GPtr<u8>, inc: i32) = thiscall 0x73B550 => crate::weapon_impact::do_bullet_impact;
-    /// `CWeapon::TargetWeaponRangeMultiplier(CEntity* victim, CEntity* owner)` (0x73B380, ST0)
-    pub fn target_weapon_range_multiplier_call(victim: GPtr<u8>, owner: GPtr<u8>) -> f64 = cdecl 0x73B380 => target_weapon_range_multiplier_st0;
-    /// `CPointLights::AddLight(uint8 type, CVector pos, CVector dir, float radius, float r, float g, float b,
-    /// uint8 fogType, bool extraShadows, CEntity* attachedTo)` (0x7000E0)
-    pub fn point_lights_add_light(ty: u32, px: f32, py: f32, pz: f32, dx: f32, dy: f32, dz: f32, radius: f32, r: f32, g: f32, b: f32, fog: u32, shadows: u32, attached: GPtr<u8>) = cdecl 0x7000E0 => unported;
     /// `CWeapon::FireM16_1stPerson(CPed*)` (0x741C00, thiscall)
     pub fn fire_m16_1st_person_call(this: GPtr<u8>, firer: GPtr<u8>) -> u8 = thiscall 0x741C00 => fire_m16_1st_person;
 }
@@ -174,13 +155,13 @@ pub fn fire(this: GPtr<u8>, fired_by: GPtr<u8>, start: GPtr<u8>, shot_origin: GP
     let mut ped_owner = GPtr::<u8>::NULL;
     if !fired_by.is_null() && rb(fired_by, 0x36) & 7 == 3 {
         ped_owner = fired_by;
-        let sk = ped_get_weapon_skill(fired_by, ru(this, 0) as i32);
+        let sk = ped_get_weapon_skill(fired_by, ru(this, 0) as i32) as u8;
         info = get_weapon_info(ru(this, 0) as i32, sk);
     }
     let (start, muzzle) = if start.is_null() {
         ensure_matrix(fired_by);
         let mut tmp = [0u32; 3];
-        let r = matrix_mul_vec(lp(&mut tmp).cast(), rp(fired_by, 0x14), lp(&mut local).cast());
+        let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(lp(&mut tmp).cast()), rp(fired_by, 0x14), lp(&mut local).cast()));
         local = [ru(r, 0), ru(r, 4), ru(r, 8)];
         let p: GPtr<u8> = lp(&mut local).cast();
         (p, p)
@@ -253,7 +234,7 @@ pub fn fire(this: GPtr<u8>, fired_by: GPtr<u8>, start: GPtr<u8>, shot_origin: GP
                 };
                 let mut d = [ru(r, 0), ru(r, 4), ru(r, 8)];
                 let mut f = Fpu::new();
-                f.push(st0(vector_magnitude(lp(&mut d).cast())));
+                f.push(st0(vector_magnitude(GPtr::<u8>::cast::<u32>(lp(&mut d).cast()))));
                 f.fcomp_m(8.0);
                 if f.jne(0x41) && ped_is_player(fired_by) == 0 {
                     return fire_result(this, 0);
@@ -266,7 +247,7 @@ pub fn fire(this: GPtr<u8>, fired_by: GPtr<u8>, start: GPtr<u8>, shot_origin: GP
                 let mut d = [0u32; 3];
                 vector_sub(lp(&mut d).cast(), target, ent_pos(fired_by));
                 let mut f = Fpu::new();
-                f.push(st0(vector_magnitude(lp(&mut d).cast())));
+                f.push(st0(vector_magnitude(GPtr::<u8>::cast::<u32>(lp(&mut d).cast()))));
                 f.fsub_m(10.0);
                 f.fmul_m(cf(0x3DCC_CCCD));
                 let mut force = f.fst();
@@ -483,7 +464,7 @@ pub fn fire_sniper(this: GPtr<u8>, shooter: GPtr<u8>, _victim: GPtr<u8>, _target
         let b = ent_pos(find_player_ped(-1));
         let c = ent_pos(find_player_ped(-1));
         let (pz, py, px) = (rf(a, 8), rf(b, 4), rf(c, 0));
-        pad_start_shake_distance(get_pad(ru(shooter, 0x598) as i32), 0xF0, 0x80, px, py, pz);
+        pad_start_shake_distance(get_pad((ru(shooter, 0x598) as i32) as u32), 0xF0, 0x80, px, py, pz);
         cam_shake_no_pos(g(0xB6F028), cf(0x3E4C_CCCD));
     }
     match etype(shooter) {
@@ -619,7 +600,7 @@ pub fn fire_m16_1st_person(this: GPtr<u8>, shooter: GPtr<u8>) -> u8 {
     let t = ftol32(x(time_step()).fmul_m(cf(0x469C_4000)).fdiv(X87::from_i32(i32::from(freq))));
     // The original stores AL into the low byte of [esp+0x14], which still holds v2, and pushes the dword.
     let freq_dword = (v2 as u32 & 0xFFFF_FF00) | u32::from(freq);
-    pad_start_shake(get_pad(ru(shooter, 0x598) as i32), t as u32, freq_dword, 0);
+    pad_start_shake(get_pad((ru(shooter, 0x598) as i32) as u32), t as u32, freq_dword, 0);
     1
 }
 
@@ -679,14 +660,14 @@ fn occupant_hit(ped: GPtr<u8>, line: GPtr<u8>, cp: GPtr<u8>, depth: GPtr<u8>) ->
     }
     let mut p = [0u32; 3];
     let h = get_anim_hierarchy_from_skin_clump(rp(ped, 0x18));
-    let idx = rp_hanim_id_get_index(h, ru(rp(ped, 0x490), 0x14) as i32);
+    let idx = rp_hanim_id_get_index(h, (ru(rp(ped, 0x490), 0x14) as i32) as u32);
     let m = rp_hanim_hierarchy_get_matrix_array(h).byte_add((idx << 6) as isize);
-    rw_v3d_transform_points(lp(&mut p).cast(), lp(&mut p).cast(), 1, m);
+    rw_v3d_transform_points(GPtr::<u8>::cast::<f32>(lp(&mut p).cast()), GPtr::<u8>::cast::<f32>(lp(&mut p).cast()), 1, m);
     let z = x(f32::from_bits(p[2])).fadd_m(cf(0x3DCC_CCCD)).to_f32().to_bits();
     let mut center = [p[0], p[1], z];
     let mut sphere = [0u32; COL_SPHERE_SIZE / 4];
     col_sphere_set(lp(&mut sphere).cast(), cf(0x3E4C_CCCD), lp(&mut center).cast(), 0, 9, 0xFF);
-    process_line_sphere(line, lp(&mut sphere).cast(), cp, depth) != 0
+    process_line_sphere(line.cast::<f32>(), GPtr::<u8>::cast::<f32>(lp(&mut sphere).cast()), cp.cast::<f32>(), depth.cast::<f32>()) != 0
 }
 
 /// `CWeapon::CheckForShootingVehicleOccupant(CEntity** pEntity, CColPoint* cp, eWeaponType (unused),
@@ -777,7 +758,7 @@ fn windscreen(veh: GPtr<u8>, origin: GPtr<u8>, target: GPtr<u8>, line: GPtr<u8>)
     let invp: GPtr<u8> = lp(&mut inv).cast();
     for off in [0isize, 0x10] {
         let mut out = [0u32; 3];
-        let r = matrix_mul_vec(lp(&mut out).cast(), invp, line.byte_add(off));
+        let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(lp(&mut out).cast()), invp, line.byte_add(off)));
         let v = [ru(r, 0), ru(r, 4), ru(r, 8)];
         for (i, w) in v.iter().enumerate() {
             wu(line, off + 4 * i as isize, *w);
@@ -794,7 +775,7 @@ fn windscreen(veh: GPtr<u8>, origin: GPtr<u8>, target: GPtr<u8>, line: GPtr<u8>)
             {
                 let dm = veh.byte_add(0x5A0);
                 if progress_panel_damage(dm, 4) != 0 {
-                    if get_panel_status(dm, 4) == 2 {
+                    if get_panel_status(dm, 4) as i32 == 2 {
                         progress_panel_damage(dm, 4);
                     }
                     automobile_set_panel_damage(veh, 4, 1);
@@ -833,10 +814,10 @@ fn add_move_step(veh: GPtr<u8>, s: &mut [f32; 3], y_reg: bool) {
 /// (the driver is not null-checked, as in the original's non-bike path).
 fn driver_bone_transform(veh: GPtr<u8>, s: &mut [f32; 3]) {
     let h = get_anim_hierarchy_from_skin_clump(rp(rp(veh, 0x460), 0x18));
-    let idx = rp_hanim_id_get_index(h, ru(rp(rp(veh, 0x460), 0x4A0), 0x14) as i32);
+    let idx = rp_hanim_id_get_index(h, (ru(rp(rp(veh, 0x460), 0x4A0), 0x14) as i32) as u32);
     let m = rp_hanim_hierarchy_get_matrix_array(h).byte_add((idx << 6) as isize);
     let p: GPtr<u8> = lp(s).cast();
-    rw_v3d_transform_points(p, p, 1, m);
+    rw_v3d_transform_points(p.cast::<f32>(), p.cast::<f32>(), 1, m);
 }
 
 /// The end point of the bone paths: `S - right*R` (left), else `S + v*R` with `v` = right or forward
@@ -861,7 +842,7 @@ fn bone_path_end(veh: GPtr<u8>, s: [f32; 3], range: f32, left: u8, right: u8) ->
 /// `M * l` (full transform with position, `operator*(CMatrix, CVector)` 0x59C890) of the vehicle matrix.
 fn veh_mul(veh: GPtr<u8>, mut l: [f32; 3]) -> [f32; 3] {
     let mut out = [0u32; 3];
-    let r = matrix_mul_vec(lp(&mut out).cast(), rp(veh, 0x14), lp(&mut l).cast());
+    let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(lp(&mut out).cast()), rp(veh, 0x14), lp(&mut l).cast()));
     [rf(r, 0), rf(r, 4), rf(r, 8)]
 }
 

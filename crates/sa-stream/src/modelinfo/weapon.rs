@@ -26,13 +26,12 @@ pub const RENDER_WEAPON_CB: u32 = 0x733670;
 pub use crate::bindings::get_first_object;
 pub use crate::bindings::set_component_atomic_alpha;
 pub use sa_core::bindings::rp_clump_for_all_atomics;
+pub use sa_core::bindings::clump_get_frame_from_name as get_frame_from_name;
 orig! {
     /// `CClumpModelInfo::Init` (0x4C4E40)
     pub fn clump_init(this: MiPtr) = thiscall 0x4C4E40 => super::clump::init;
     /// `CClumpModelInfo::SetClump` (0x4C4F70)
     pub fn clump_set_clump(this: MiPtr, clump: GPtr<u8>) = thiscall 0x4C4F70 => super::clump::set_clump;
-    /// `CClumpModelInfo::GetFrameFromName` (0x4C5400)
-    pub fn get_frame_from_name(clump: GPtr<u8>, name: GPtr<u8>) -> GPtr<u8> = cdecl 0x4C5400 => super::clump::get_frame_from_name;
     /// `CWeaponModelInfo::~CWeaponModelInfo` (0x4C5790)
     pub fn weapon_destructor_call(this: MiPtr) = thiscall 0x4C5790 => destructor;
 }
@@ -66,7 +65,7 @@ pub fn init(this: MiPtr) {
 #[hook(addr = 0x4C9910, conv = thiscall, name = "CWeaponModelInfo::SetClump", expect = "56 8B 74 24 08", this = "CWeaponModelInfo")]
 pub fn set_clump(this: MiPtr, clump: GPtr<u8>) {
     clump_set_clump(this, clump);
-    rp_clump_for_all_atomics(clump, SET_ATOMIC_RENDERER_CB, RENDER_WEAPON_CB);
+    rp_clump_for_all_atomics(clump, SET_ATOMIC_RENDERER_CB, GPtr::from_addr(RENDER_WEAPON_CB as usize));
     let frame = get_frame_from_name(clump, GPtr::from_addr(STR_GUNFLASH as usize));
     if frame.is_null() {
         return;

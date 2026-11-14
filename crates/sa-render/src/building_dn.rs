@@ -12,11 +12,10 @@ use sa_math::x87::{Cmp, X87};
 use sa_core::bindings::rp_clump_for_all_atomics as clump_for_all_atomics;
 use sa_core::bindings::rp_geometry_lock as geometry_lock;
 use sa_core::bindings::rp_geometry_unlock as geometry_unlock;
+use sa_world::bindings::dn_pre_render_update as pre_render_update_call;
 orig! {
     /// `CCustomBuildingDNPipeline::NVCPipelineProcess(atomic, balance)` (0x5D6850)
     fn nvc_pipeline_process_call(a: GPtr<u8>, balance: f32) = cdecl 0x5D6850 => nvc_pipeline_process;
-    /// `CCustomBuildingDNPipeline::PreRenderUpdate(atomic, force)` (0x5D7200)
-    fn pre_render_update_call(a: GPtr<u8>, force: u32) = cdecl 0x5D7200 => pre_render_update_atomic;
     /// `CCustomBuildingRenderer::UpdateDayNightBalanceParam()` (0x5D7F80), the frame-slot advance (0x5D6830)
     fn update_dn_balance_call() = cdecl 0x5D7F80 => update_day_night_balance_param;
     fn advance_slot_call(force_all: u32) = cdecl 0x5D6830 => advance_update_slot;
@@ -107,7 +106,7 @@ pub fn pre_render_update_atomic_cb(atomic: GPtr<u8>, data: GPtr<u32>) -> GPtr<u8
 #[hook(addr = 0x5D72C0, conv = cdecl, name = "CCustomBuildingDNPipeline::PreRenderUpdate-Clump", expect = "8B 4C 24 04 8D 44 24 08",
        unverified = "std6-render-1", route = "L2", hazards = "none")]
 pub fn pre_render_update_clump(clump: GPtr<u8>, mut force: u32) {
-    clump_for_all_atomics(clump, 0x5D72A0, GPtr::from_raw(&mut force as *mut u32).addr() as u32);
+    clump_for_all_atomics(clump, 0x5D72A0, GPtr::from_addr((GPtr::from_raw(&mut force as *mut u32).addr() as u32) as usize));
 }
 
 /// `CCustomBuildingRenderer::UpdateDayNightBalanceParam()` (0x5D7F80): from the game time in minutes

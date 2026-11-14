@@ -63,6 +63,7 @@ pub const NOT_FLAG: isize = 0xD2;
 pub const SCENE_SKIP_IP: isize = 0xD8;
 pub const IS_MISSION: isize = 0xDC;
 
+pub use sa_core::bindings::cutscene_is_skip_button_being_pressed as is_cutscene_skip_button_being_pressed;
 orig! {
     /// `CRunningScript::GetPointerToLocalVariable(int32)` (0x463CA0)
     pub fn get_pointer_to_local_variable_call(s: Scr, loc: i32) -> GPtr<u32> = thiscall 0x463CA0 => get_pointer_to_local_variable;
@@ -84,8 +85,6 @@ orig! {
     pub fn update_compare_flag_call(s: Scr, state: u32) = thiscall 0x4859D0 => update_compare_flag;
     /// CRT `strncpy` (0x821F40)
     pub fn strncpy(dst: GPtr<u8>, src: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x821F40 => strncpy_port;
-    /// `CCutsceneMgr::IsCutsceneSkipButtonBeingPressed` (0x4D5D10)
-    pub fn is_cutscene_skip_button_being_pressed() -> bool = cdecl 0x4D5D10 => unported;
     /// `CRunningScript::DoDeathArrestCheck` (0x485A50)
     pub fn do_death_arrest_check(s: Scr) = thiscall 0x485A50 => unported;
     /// `CTheScripts::ReinitialiseSwitchStatementData` (0x470370)
@@ -592,7 +591,7 @@ pub fn process_one_command(s: Scr) -> i8 {
 /// (`TimeInMilliseconds >= m_WakeTime`, unsigned). Returns 0.
 #[hook(addr = 0x469F00, conv = thiscall, name = "CRunningScript::Process", expect = "53 56 8B F1 8B 86 D8 00 00 00", this = "CRunningScript")]
 pub fn process(s: Scr) -> i8 {
-    if rd::<i32>(s, SCENE_SKIP_IP) != 0 && is_cutscene_skip_button_being_pressed() {
+    if rd::<i32>(s, SCENE_SKIP_IP) != 0 && is_cutscene_skip_button_being_pressed() != 0 {
         BIG_MESSAGE_1.set(0);
         let target = update_pc_target(s, rd::<i32>(s, SCENE_SKIP_IP));
         set_ip(s, target);

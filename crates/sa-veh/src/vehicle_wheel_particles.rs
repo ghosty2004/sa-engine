@@ -13,33 +13,25 @@ use crate::common::{ftol32, g, rand_at, rd, x, xi};
 use sa_core::bindings::vector_magnitude;
 use sa_world::bindings::fx_prt_mult_ctor;
 use sa_world::bindings::get_friction_effect;
+use sa_core::bindings::vector_sub;
+use sa_world::bindings::fx_add_particle;
+use sa_world::bindings::fx_add_sparks as add_sparks;
+use sa_world::bindings::get_water_level;
+use sa_world::bindings::surface_is_water as is_water;
+use sa_world::bindings::vector_add_assign;
+use sa_world::bindings::vector_mul_scalar;
+use sa_world::bindings::vector_sub_assign;
 orig! {
-    /// `SurfaceInfos_c::IsWater(uint32)` (0x55E710): bool in AL
-    fn is_water(si: GPtr<u8>, id: u32) -> u32 = thiscall 0x55E710 => unported;
-    /// `CWaterLevel::GetWaterLevel(float, float, float, float*, bool, CVector*)` (0x6EB690)
-    fn get_water_level(px: f32, py: f32, pz: f32, out: GPtr<f32>, waves: u32, normal: u32) -> u8 = cdecl 0x6EB690 => unported;
-    /// `operator*(const CVector&, float)` (0x40FEC0, cdecl, hidden return pointer)
-    fn vector_mul_scalar(out: GPtr<u8>, v: GPtr<u8>, s: f32) -> GPtr<u8> = cdecl 0x40FEC0 => sa_world::world::mvpa_math::vector_mul_scalar;
     /// `CVector::NormaliseAndMag()` (0x59C970), ST0
     fn normalise_and_mag(v: GPtr<u8>) -> f64 = thiscall 0x59C970 => normalise_and_mag_native;
-    /// `Fx_c::AddSparks(CVector&, CVector&, float, int32, CVector, eSparkType, float, float)` (0x49F040) on `g_fx` (0xA9AE00)
-    fn add_sparks(fx: GPtr<u8>, origin: GPtr<u8>, dir: GPtr<u8>, force: f32, amount: i32, across: CVector, kind: u32, spray: f32, life: f32) = thiscall 0x49F040 => unported;
     /// `CAudioEngine::ReportCollision(CEntity*, CEntity*, eSurfaceType, eSurfaceType, CVector&, CVector*, float, float, bool, bool)` (0x506EB0) on `AudioEngine` (0xB6BC90)
     fn report_collision(ae: GPtr<u8>, e1: GPtr<u8>, e2: GPtr<u8>, s1: u32, s2: u32, pos: GPtr<u8>, normal: u32, impulse: f32, volume: f32, bullet: u32, b2: u32) = thiscall 0x506EB0 => unported;
     /// `CVehicle::MakeDirty(CColPoint&)` (0x6D2BF0)
     fn make_dirty(v: GPtr<u8>, cp: GPtr<u8>) = thiscall 0x6D2BF0 => crate::vehicle2::make_dirty;
     /// `CVehicle::AddWheelDirtAndWater(CColPoint&, uint32, uint8, uint8)` (0x6D2D50)
     fn add_wheel_dirt_and_water(v: GPtr<u8>, cp: GPtr<u8>, below: u32, band: u32, in_water: u32) -> u32 = thiscall 0x6D2D50 => crate::vehicle2::add_wheel_dirt_and_water;
-    /// `CVector::operator+=(const CVector&)` (0x411A00)
-    fn vector_add_assign(v: GPtr<u8>, o: GPtr<u8>) -> GPtr<u8> = thiscall 0x411A00 => sa_world::world::mvpa_math::vector_add_assign;
-    /// `CVector::operator-=(const CVector&)` (0x406D70)
-    fn vector_sub_assign(v: GPtr<u8>, o: GPtr<u8>) -> GPtr<u8> = thiscall 0x406D70 => sa_world::world::mvpa_math::vector_sub_assign;
     /// `CGeneral::GetRandomNumberInRange(float, float)` (0x41BD90), ST0
     fn random_in_range(min: f32, max: f32) -> f64 = cdecl 0x41BD90 => random_in_range_native;
-    /// `VectorSub(CVector*, const CVector*, const CVector*)` (0x40FE60)
-    fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => sa_world::world::mvpa_math::vector_sub;
-    /// `FxSystem_c::AddParticle(RwV3d*, RwV3d*, float, FxPrtMult_c*, float, float, float, uint8)` (0x4AA440)
-    fn fx_add_particle(sys: GPtr<u8>, pos: GPtr<u8>, vel: GPtr<u8>, time: f32, mult: GPtr<u8>, rot: f32, bright: u32, z: f32, local: u32) = thiscall 0x4AA440 => unported;
     /// `CSkidmarks::RegisterOne(uint32, const CVector&, float, float, eSkidmarkType, bool*, float)` (0x720930)
     fn skidmarks_register_one(id: u32, pos: GPtr<u8>, dx: u32, dy: u32, kind: u32, blood: GPtr<u8>, length: f32) = cdecl 0x720930 => unported;
     /// `CVehicle::FindWheelWidth(bool rear)` (vtable +0xFC), ST0
@@ -154,16 +146,16 @@ pub fn vehicle_add_single_wheel_particles(
     }
     let si = GPtr::from_addr(SURFACE_INFOS);
     // Lb0: in water
-    let mut in_water = is_water(si, u32::from(rd::<u8>(cp, 0x23))) as u8 != 0;
+    let mut in_water = (is_water(si, u32::from(rd::<u8>(cp, 0x23))) as u32) as u8 != 0;
     if !in_water && rd::<u32>(this, 0x40) & 0x800_0000 != 0 {
         let mut level = 0f32;
         if get_water_level(
             rd::<f32>(from, 0),
             rd::<f32>(from, 4),
             rd::<f32>(from, 8),
-            GPtr::from_raw(&mut level),
+            GPtr::<f32>::cast::<u8>(GPtr::from_raw(&mut level)),
             1,
-            0,
+            GPtr::NULL,
         ) != 0
             && !x(level).fcom(x(rd::<f32>(from, 8))).test_any(1)
         {
@@ -300,7 +292,7 @@ fn spin_smoke(this: GPtr<u8>, from: GPtr<u8>) {
     let mp = GPtr::from_raw(m.as_mut_ptr()).cast::<u8>();
     let k9 = f32::from_bits(0x3F66_6666);
     fx_prt_mult_ctor(mp, k9, k9, 1.0, 0.5, 1.0, 1.0, 0.5);
-    if !le(st0(vector_magnitude(this.byte_add(0x44))), c(0x3E19_999A)) {
+    if !le(st0(vector_magnitude(GPtr::<u8>::cast::<u32>(this.byte_add(0x44)))), c(0x3E19_999A)) {
         set_pm(mp, 3, f32::from_bits(0x3E99_999A));
         set_pm(mp, 4, 0.5);
     }
@@ -335,7 +327,7 @@ fn spin_smoke(this: GPtr<u8>, from: GPtr<u8>) {
         0.0,
         mp,
         -1.0,
-        rd::<u32>(this, 0x12C),
+        f32::from_bits(rd::<u32>(this, 0x12C)),
         f32::from_bits(0x3F19_999A),
         0,
     );
@@ -381,7 +373,7 @@ fn skid_smoke(this: GPtr<u8>, from: GPtr<u8>, ts: f32) {
     let mut travel = CVector::default();
     let tp = GPtr::from_raw(&mut travel).cast::<u8>();
     vector_mul_scalar(tp, this.byte_add(0x44), ts);
-    let n = ftol32(st0(vector_magnitude(tp)).fmul_m(factor)).max(1);
+    let n = ftol32(st0(vector_magnitude(tp.cast::<u32>())).fmul_m(factor)).max(1);
     let nf = xi(n).to_f32();
     for i in 0..n {
         let b = st0(random_in_range(0.5, 1.0));
@@ -402,7 +394,7 @@ fn skid_smoke(this: GPtr<u8>, from: GPtr<u8>, ts: f32) {
             f32::from_bits(0x3E99_999A),
             mp,
             -1.0,
-            rd::<u32>(this, 0x12C),
+            f32::from_bits(rd::<u32>(this, 0x12C)),
             f32::from_bits(0x3F19_999A),
             0,
         );

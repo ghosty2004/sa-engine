@@ -19,13 +19,11 @@ use sa_core::bindings::crt_strncpy;
 use sa_core::bindings::matrix_dtor;
 use sa_core::bindings::matrix_mul_vec;
 use sa_core::bindings::matrix_set_rotate_z as set_rotate_z;
+use sa_core::bindings::add_item as quad_tree_add_item;
+use sa_stream::bindings::rand;
 orig! {
     /// `CPool<CEntryExit>::New()` (0x43F7D0)
     fn pool_new(pool: GPtr<u8>) -> GPtr<u8> = thiscall 0x43F7D0 => unported;
-    /// CRT `rand()` (0x821B1E)
-    fn rand() -> i32 = cdecl 0x821B1E => unported;
-    /// `CQuadTreeNode::AddItem(void*, const CRect&)` (0x552CD0)
-    fn quad_tree_add_item(node: GPtr<u8>, item: GPtr<u8>, r: GPtr<u8>) = thiscall 0x552CD0 => unported;
 }
 
 const POOL: usize = 0x96A7D8;
@@ -131,7 +129,7 @@ pub fn add_one(
     for i in 0..2 {
         let mut out = [0f32; 3];
         let vp: GPtr<u8> = GPtr::from_raw(v.as_mut_ptr().wrapping_add(3 * i)).cast();
-        let r = matrix_mul_vec(GPtr::from_raw(out.as_mut_ptr()).cast(), mp, vp);
+        let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::from_raw(out.as_mut_ptr()).cast()), mp, vp));
         for k in 0..3 {
             v[3 * i + k] = f(r, 4 * k as isize).read();
         }

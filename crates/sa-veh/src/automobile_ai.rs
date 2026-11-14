@@ -29,44 +29,33 @@ use sa_world::bindings::physical_process_control;
 use sa_world::bindings::process_line_of_sight;
 use sa_world::bindings::take_remote_controlled_car_from_player;
 use sa_world::bindings::tm_find_active_task_by_type as find_active_task_by_type;
-use sa_world::bindings::vector_magnitude_sqr;
+use sa_core::bindings::vector_magnitude_sqr;
+use crate::bindings::pad_get_hand_brake as get_hand_brake;
+use sa_core::bindings::prune_references;
+use sa_core::bindings::vector_sub;
+use sa_world::bindings::entity_get_col_model as get_col_model;
+use sa_world::bindings::pad_get_accelerate as get_accelerate;
+use sa_world::bindings::pad_get_steering_left_right as get_steering_left_right;
+use sa_world::bindings::pad_get_steering_up_down as get_steering_up_down;
+use sa_world::bindings::stats_get_fat_and_muscle_modifier as get_fat_and_muscle_modifier;
+use sa_world::bindings::vector_add;
+use sa_world::bindings::vector_mul_scalar;
+use sa_world::bindings::vector_scale as scalar_mul_vector;
 orig! {
-    /// `CEntity::GetColModel()` (0x535300)
-    fn get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => sa_world::world::entity::get_col_model;
-    /// `VectorSub(CVector*, const CVector*, const CVector*)` (0x40FE60)
-    fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => sa_world::world::mvpa_math::vector_sub;
     /// `CAutomobile::ScanForCrimes()` (0x6ADFF0)
     fn scan_for_crimes(v: GPtr<u8>) = thiscall 0x6ADFF0 => crate::mvpb_a2::scan_for_crimes;
-    /// `operator*(const CVector&, float)` (0x40FEC0, cdecl, hidden return pointer)
-    fn vector_mul_scalar(out: GPtr<u8>, v: GPtr<u8>, s: f32) -> GPtr<u8> = cdecl 0x40FEC0 => sa_world::world::mvpa_math::vector_mul_scalar;
-    /// `VectorAdd(CVector*, const CVector*, const CVector*)` (0x40FE30)
-    fn vector_add(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE30 => sa_world::world::mvpa_math::vector_add;
     /// `CCarAI::GetCarToParkAtCoors(CVehicle*, CVector*)` (0x41D350), ST0 (dropped)
     fn get_car_to_park_at_coors(v: GPtr<u8>, p: GPtr<u8>) -> f64 = cdecl 0x41D350 => unported;
     /// `CAutomobile::RcbanditCheckHitWheels()` (0x6B45E0): the caller tests AX
     fn rcbandit_check_hit_wheels(v: GPtr<u8>) -> u32 = thiscall 0x6B45E0 => unported;
-    /// `CEntity::PruneReferences()` (0x571A90)
-    fn prune_references(e: GPtr<u8>) = thiscall 0x571A90 => sa_world::world::entity::prune_references;
     /// `CWorld::FindPlayerSlotWithRemoteVehiclePointer(CEntity*)` (0x563FD0)
     fn find_player_slot_with_remote_vehicle_pointer(v: GPtr<u8>) -> i32 = cdecl 0x563FD0 => sa_world::world::cworld::find_player_slot_with_remote_vehicle_pointer;
-    /// `CPad::GetSteeringLeftRight()` (0x53FB80): int16 in AX
-    fn get_steering_left_right(pad: GPtr<u8>) -> u32 = thiscall 0x53FB80 => unported;
-    /// `CPad::GetSteeringUpDown()` (0x53FBD0): int16 in AX
-    fn get_steering_up_down(pad: GPtr<u8>) -> u32 = thiscall 0x53FBD0 => unported;
-    /// `CPad::GetHandBrake()` (0x540040): the caller tests AX
-    fn get_hand_brake(pad: GPtr<u8>) -> u32 = thiscall 0x540040 => unported;
-    /// `CPad::GetAccelerate()` (0x5403F0): the caller tests AX
-    fn get_accelerate(pad: GPtr<u8>) -> u32 = thiscall 0x5403F0 => unported;
-    /// `CStats::GetFatAndMuscleModifier(eStatModAbilities)` (0x559AF0), ST0
-    fn get_fat_and_muscle_modifier(ability: u32) -> f64 = cdecl 0x559AF0 => unported;
     /// `min(float, float)` (0x404330), ST0
     fn min_f(a: f32, b: f32) -> f64 = cdecl 0x404330 => min_native;
     /// `max(float, float)` (0x420800), ST0
     fn max_f(a: f32, b: f32) -> f64 = cdecl 0x420800 => max_native;
     /// `DotProduct(const RwV3d*, const RwV3d*)` (0x40FDB0), ST0
     fn dot_product(a: GPtr<u8>, b: GPtr<u8>) -> f64 = cdecl 0x40FDB0 => dot_native;
-    /// `operator*(float, const CVector&)` (0x40FE90, cdecl, hidden return pointer)
-    fn scalar_mul_vector(out: GPtr<u8>, s: f32, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE90 => sa_world::world::mvpa_math::scalar_mul_vector;
     /// `CPhysical::ApplyTurnForce(CVector, CVector)` (0x542A50)
     fn apply_turn_force(e: GPtr<u8>, force: CVector, point: CVector) = thiscall 0x542A50 => sa_world::physical::forces::apply_turn_force;
     /// `CPhysical::ApplyMoveForce(CVector)` (0x5429F0)
@@ -186,7 +175,7 @@ pub fn automobile_process_ai(this: GPtr<u8>, flags: GPtr<u32>) -> u8 {
     match dl >> 3 {
         0 => player(this, col, flags, false),
         8 => {
-            if car_gun_just_down(get_pad(0)) & 0xFFFF != 0 && g::<u8>(0xC1_CC00).read() == 0 {
+            if car_gun_just_down(get_pad(0)) as u32 & 0xFFFF != 0 && g::<u8>(0xC1_CC00).read() == 0 {
                 v_blow_up_car(this, find_player_ped(-1), 0);
                 take_remote_controlled_car_from_player(1);
             }
@@ -316,7 +305,7 @@ pub fn automobile_process_ai(this: GPtr<u8>, flags: GPtr<u32>) -> u8 {
             stop_inputs(this)
         }
         9 => {
-            let brake_on = if !ge(st0(vector_magnitude_sqr(this.byte_add(0x44))), c(0x3C23_D70A)) {
+            let brake_on = if !ge(st0(vector_magnitude_sqr(GPtr::<u8>::cast::<f32>(this.byte_add(0x44)))), c(0x3C23_D70A)) {
                 true
             } else {
                 let d = rd::<GPtr<u8>>(this, 0x460);
@@ -327,7 +316,7 @@ pub fn automobile_process_ai(this: GPtr<u8>, flags: GPtr<u32>) -> u8 {
                     rd::<u32>(d, 0x530) == 0x3F
                         || [0x337, 0x339, 0x329].iter().any(|&t| {
                             let tm = rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0x460), 0x47C).byte_add(4);
-                            !find_active_task_by_type(tm, t).is_null()
+                            !find_active_task_by_type(tm, t as u32).is_null()
                         })
                 }
             };
@@ -387,8 +376,8 @@ fn chase_flags(this: GPtr<u8>, flags: GPtr<u32>) {
         let sp = find_player_speed(-1);
         if !le(sq3(sp, 0).fsqrt(), c(0x3E99_999A)) {
             flags.write(flags.read() | 1);
-            let fast = !le(st0(vector_magnitude(find_player_speed(-1))), c(0x3ECC_CCCD))
-                && !ge(st0(vector_magnitude(this.byte_add(0x44))), c(0x3E99_999A));
+            let fast = !le(st0(vector_magnitude(GPtr::<u8>::cast::<u32>(find_player_speed(-1)))), c(0x3ECC_CCCD))
+                && !ge(st0(vector_magnitude(GPtr::<u8>::cast::<u32>(this.byte_add(0x44)))), c(0x3E99_999A));
             if fast {
                 flags.write(flags.read() | 2);
             } else {
@@ -396,7 +385,7 @@ fn chase_flags(this: GPtr<u8>, flags: GPtr<u32>) {
                 let p = find_player_coors(GPtr::from_raw(pc.as_mut_ptr()), -1);
                 let mut d = [0f32; 3];
                 let r = vector_sub(GPtr::from_raw(d.as_mut_ptr()).cast(), pos_ptr(this), p.cast());
-                if !le(st0(vector_magnitude(r)), c(0x4248_0000)) {
+                if !le(st0(vector_magnitude(r.cast::<u32>())), c(0x4248_0000)) {
                     flags.write(flags.read() | 2);
                 }
             }
@@ -548,7 +537,7 @@ fn player(this: GPtr<u8>, col: GPtr<u8>, flags: GPtr<u32>, remote: bool) -> u8 {
             if le(ld(m, 8), X87::zero()) {
                 lean = x(lean).fmul_m(-1.0).to_f32();
             }
-            let lr = get_steering_left_right(pad) as u16 as i16;
+            let lr = (get_steering_left_right(pad) as u32) as u16 as i16;
             let h = rd::<GPtr<u8>>(this, 0x384);
             let z = xi(i32::from(lr))
                 .fmul_m(f32::from_bits(0x3C00_0000))
@@ -592,9 +581,9 @@ fn air_control(this: GPtr<u8>, pad: GPtr<u8>, sub: u32) {
         .fmul_m(rd::<f32>(this, 0x90))
         .to_f32();
     // L9c: left/right, La4: up/down
-    let lr = get_steering_left_right(pad) as u16 as i16;
+    let lr = (get_steering_left_right(pad) as u32) as u16 as i16;
     let mut lr = xi(i32::from(lr)).fmul_m(f32::from_bits(0x3C00_0000)).to_f32();
-    let ud = get_steering_up_down(pad) as u16 as i16;
+    let ud = (get_steering_up_down(pad) as u32) as u16 as i16;
     let mut ud = xi(i32::from(ud)).fmul_m(f32::from_bits(0x3C00_0000)).to_f32();
     let small = c(0x3D4C_CCCD);
     if g::<u8>(0xB6_EC2E).read() != 0 && !ge(x(lr).fabs(), small) && !ge(x(ud).fabs(), small) {
@@ -636,7 +625,7 @@ fn air_control(this: GPtr<u8>, pad: GPtr<u8>, sub: u32) {
         );
         apply_turn_force(this, force, point);
     };
-    if get_hand_brake(pad) & 0xFFFF != 0 {
+    if get_hand_brake(pad) as u32 & 0xFFFF != 0 {
         let m = rd::<GPtr<u8>>(this, 0x14);
         let d = st0(dot_product(this.byte_add(0x50), m.byte_add(0x20)));
         if wants(d, lr) {

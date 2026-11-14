@@ -35,7 +35,7 @@ const KEY_STATION_12: usize = 0x85F3A8;
 /// Station key of radio id 13 (0x85F3B0, 8 bytes)
 const KEY_STATION_13: usize = 0x85F3B0;
 
-pub use crate::bindings::ae_random_int;
+pub use sa_world::bindings::ae_random_int;
 pub use crate::bindings::ae_resolve_probability as resolve_probability;
 pub use crate::bindings::engine_is_ambience_radio_active;
 pub use crate::bindings::engine_is_ambience_track_active;
@@ -62,41 +62,42 @@ pub use sa_core::bindings::sprintf1;
 pub use sa_core::bindings::text_get;
 pub use sa_world::bindings::audio_is_cutscene_track_active as engine_is_cutscene_track_active;
 pub use sa_world::bindings::stats_get_full_favorite_radio_station_list;
+pub use crate::bindings::add_music_track_index_to_history_call;
+pub use crate::bindings::get_radio_station_name_call;
+pub use crate::bindings::get_radio_station_name_key_call;
+pub use crate::bindings::get_user_track_play_mode_call;
+pub use crate::bindings::hw_play_track;
+pub use crate::bindings::hw_set_bass_setting;
+pub use crate::bindings::hw_stop_sound;
+pub use crate::bindings::radio_is_vehicle_radio_active as is_vehicle_radio_active_call;
+pub use crate::bindings::radio_start_radio_manual as start_radio_manual;
+pub use crate::bindings::radio_stop_radio_call as stop_radio;
+pub use crate::bindings::radio_update_radio_volumes as update_radio_volumes;
+pub use sa_core::bindings::audio_report_frontend_event as report_frontend_audio_event;
+pub use sa_core::bindings::file_close;
+pub use sa_core::bindings::file_get_total_size;
+pub use sa_core::bindings::file_read;
+pub use sa_core::bindings::file_set_dir;
+pub use sa_core::bindings::font_draw_fonts;
+pub use sa_core::bindings::font_print_string;
+pub use sa_core::bindings::font_set_drop_color;
+pub use sa_core::bindings::font_set_justify;
+pub use sa_core::bindings::font_set_right_justify_wrap;
+pub use sa_core::bindings::font_set_scale;
+pub use sa_core::bindings::open_file as file_open;
+pub use sa_stream::bindings::hud_colours_get_rgb;
+pub use sa_world::bindings::get_stat_value as stats_get_stat_value;
 orig! {
     /// `CAEAudioHardware::SetChannelFlags(int16 slot, int16 channel, int16 flags)` (0x4D9500)
     pub fn hw_set_channel_flags(hw: GPtr<u8>, a: u32, b: u32, flags: u32) = thiscall 0x4D9500 => unported;
     /// `CAEAudioHardware::StartTrackPlayback()` (0x4D8F30; EAX passed through by tail calls)
     pub fn hw_start_track_playback(hw: GPtr<u8>) -> u32 = thiscall 0x4D8F30 => unported;
-    /// `CAERadioTrackManager::UpdateRadioVolumes()` (0x4EA010; EAX passed through by tail calls)
-    pub fn update_radio_volumes(this: GPtr<u8>) -> u32 = thiscall 0x4EA010 => unported;
     /// `CAEAudioHardware::DisableBassEq()` (0x4D94D0)
     pub fn hw_disable_bass_eq(hw: GPtr<u8>) = thiscall 0x4D94D0 => unported;
-    /// `CAEAudioHardware::PlayTrack(uint32 id, int32 next, uint32 offsetMs, uint8 flags, bool, bool)` (0x4D8F10)
-    pub fn hw_play_track(hw: GPtr<u8>, id: u32, next: i32, offset: u32, flags: u32, user: u32, user_next: u32) = thiscall 0x4D8F10 => unported;
-    /// `CAEAudioHardware::StopSound(int16 channel, uint16 slot)` (0x4D88E0)
-    pub fn hw_stop_sound(hw: GPtr<u8>, channel: u32, slot: u32) = thiscall 0x4D88E0 => unported;
     /// `CAECutsceneTrackManager::StartTrackPlayback()` (0x4DBF10)
     pub fn cutscene_start_track_playback(this: GPtr<u8>) = thiscall 0x4DBF10 => unported;
     /// `CAECutsceneTrackManager::CheckForPause()` (0x4DBF60)
     pub fn cutscene_check_for_pause(this: GPtr<u8>) = thiscall 0x4DBF60 => unported;
-    /// `CAERadioTrackManager::IsVehicleRadioActive()` (0x4E9800; called with ECX = this)
-    pub fn is_vehicle_radio_active_call() -> u8 = cdecl 0x4E9800 => is_vehicle_radio_active;
-    /// `CAERadioTrackManager::GetRadioStationName(eRadioID)` (0x4E9E10)
-    pub fn get_radio_station_name_call(this: GPtr<u8>, id: u32) -> GPtr<u8> = thiscall 0x4E9E10 => get_radio_station_name;
-    /// `CFont::SetJustify(bool)` (0x719600)
-    pub fn font_set_justify(on: u32) = cdecl 0x719600 => unported;
-    /// `CFont::SetScale(float w, float h)` (0x719380)
-    pub fn font_set_scale(w_bits: u32, h_bits: u32) = cdecl 0x719380 => unported;
-    /// `CFont::SetRightJustifyWrap(float)` (0x7194F0)
-    pub fn font_set_right_justify_wrap(v_bits: u32) = cdecl 0x7194F0 => unported;
-    /// `CFont::SetDropColor(CRGBA)` (0x719510)
-    pub fn font_set_drop_color(c: u32) = cdecl 0x719510 => unported;
-    /// `CFont::PrintString(float x, float y, const GxtChar*)` (0x71A700)
-    pub fn font_print_string(x_bits: u32, y_bits: u32, text: GPtr<u8>) = cdecl 0x71A700 => unported;
-    /// `CFont::DrawFonts()` (0x71A210; EAX passed through by the tail jump)
-    pub fn font_draw_fonts() -> u32 = cdecl 0x71A210 => unported;
-    /// `CHudColours::GetRGB(eHudColours)` (0x58FEA0; CRGBA through the hidden pointer)
-    pub fn hud_colours_get_rgb(this: GPtr<u8>, out: GPtr<u8>, colour: u32) -> GPtr<u8> = thiscall 0x58FEA0 => unported;
     /// `CAEAmbienceTrackManager::UpdateAmbienceTrackAndVolume()` (0x4D6E60)
     pub fn ambience_update_track_and_volume(this: GPtr<u8>) = thiscall 0x4D6E60 => unported;
     /// `CAEAmbienceTrackManager::StartTrackPlayback()` (0x4D6DA0)
@@ -109,46 +110,20 @@ orig! {
     pub fn pad_next_station_just_up(pad: GPtr<u8>) -> u8 = thiscall 0x5405B0 => unported;
     /// `CPad::LastStationJustUp()` (0x5405E0)
     pub fn pad_last_station_just_up(pad: GPtr<u8>) -> u8 = thiscall 0x5405E0 => unported;
-    /// `CAERadioTrackManager::AddMusicTrackIndexToHistory(eRadioID, int8)` (0x4E96C0)
-    pub fn add_music_track_index_to_history_call(this: GPtr<u8>, id: u32, index: u32) = thiscall 0x4E96C0 => add_music_track_index_to_history;
-    /// `CAEUserRadioTrackManager::GetUserTrackPlayMode()` (0x4F3330)
-    pub fn get_user_track_play_mode_call(this: GPtr<u8>) -> u8 = thiscall 0x4F3330 => get_user_track_play_mode;
-    /// `CStats::GetStatValue(uint16 stat)` (0x558E40, ST0)
-    pub fn stats_get_stat_value(stat: u32) -> f32 = cdecl 0x558E40 => unported;
-    /// `CAERadioTrackManager::GetRadioStationNameKey(eRadioID, char*)` (0x4E8380)
-    /// `CAEAudioHardware::SetBassSetting(int8 setting, float gain)` (0x4D94A0)
-    pub fn hw_set_bass_setting(hw: GPtr<u8>, setting: u32, gain: f32) = thiscall 0x4D94A0 => unported;
     /// `CAEUserRadioTrackManager::ReadUserTracks()` (0x4F2FD0)
     pub fn read_user_tracks(this: GPtr<u8>) -> u8 = thiscall 0x4F2FD0 => read_user_tracks_port;
-    /// `CFileMgr::SetDir(const char*)` (0x5387D0)
-    pub fn file_set_dir(dir: GPtr<u8>) = cdecl 0x5387D0 => unported;
-    /// `CFileMgr::OpenFile(const char* name, const char* mode)` (0x538900)
-    pub fn file_open(name: GPtr<u8>, mode: GPtr<u8>) -> i32 = cdecl 0x538900 => unported;
-    /// `CFileMgr::GetTotalSize(int32 file)` (0x5389E0)
-    pub fn file_get_total_size(file: i32) -> u32 = cdecl 0x5389E0 => unported;
-    /// `CFileMgr::Read(int32 file, void* buf, int32 size)` (0x538950)
-    pub fn file_read(file: i32, buf: GPtr<u8>, size: u32) -> i32 = cdecl 0x538950 => unported;
-    /// `CFileMgr::CloseFile(int32 file)` (0x5389D0)
-    pub fn file_close(file: i32) -> i32 = cdecl 0x5389D0 => unported;
     /// `CAEWMADecoder::InitLibrary()` (0x502B80)
     pub fn wma_init_library() -> u8 = cdecl 0x502B80 => unported;
     /// `CAEMFDecoder::InitLibrary()` (0x4E7C70)
     pub fn mf_init_library() -> u8 = cdecl 0x4E7C70 => unported;
-    /// `CAERadioTrackManager::StopRadio(tRadioSettings*, bool)` (0x4E9820)
-    pub fn stop_radio(this: GPtr<u8>, settings: GPtr<u8>, b: u32) = thiscall 0x4E9820 => unported;
-    /// `CAudioEngine::ReportFrontendAudioEvent(eAudioEvents, float volumeChange, float speed)` (0x506EA0)
-    pub fn report_frontend_audio_event(engine: GPtr<u8>, event: i32, volume: f32, speed: f32) = thiscall 0x506EA0 => unported;
     /// `CAERadioTrackManager::ChooseTalkRadioShow()` (0x4E8E40)
     pub fn choose_talk_radio_show(this: GPtr<u8>) -> i32 = thiscall 0x4E8E40 => unported;
-    /// `CAERadioTrackManager::StartRadio(eRadioID, eBassSetting, float bassGain, uint8)` (0x4EB3C0)
-    pub fn start_radio_manual(this: GPtr<u8>, station: u32, bass: u32, gain_bits: u32, b: u32) = thiscall 0x4EB3C0 => start_radio_manual_port;
     /// `CAudioEngine::DoesAmbienceTrackOverrideRadio()` (0x507270)
     pub fn engine_does_ambience_track_override_radio(engine: GPtr<u8>) -> u8 = thiscall 0x507270 => unported;
     /// `CAERadioTrackManager::TrackRadioStation(eRadioID, uint8)` (0x4EAC30)
     pub fn track_radio_station(this: GPtr<u8>, station: u32, b: u32) -> u8 = thiscall 0x4EAC30 => unported;
     /// `CAERadioTrackManager::ChooseTracksForStation(eRadioID)` (0x4EB180)
     pub fn choose_tracks_for_station(this: GPtr<u8>, station: u32) = thiscall 0x4EB180 => choose_tracks_for_station_port;
-    pub fn get_radio_station_name_key_call(this: GPtr<u8>, id: u32, out: GPtr<u8>) = thiscall 0x4E8380 => get_radio_station_name_key;
 }
 
 fn local(buf: &mut [u8]) -> GPtr<u8> {
@@ -180,7 +155,7 @@ pub fn is_radio_on(this: GPtr<u8>) -> u8 {
 /// settings exist and their radio type (+0x1B) is 0, 2 or 3.
 #[hook(addr = 0x4E9800, conv = cdecl, name = "CAERadioTrackManager::IsVehicleRadioActive", expect = "E8 CB B6 00 00")]
 pub fn is_vehicle_radio_active() -> u8 {
-    let s = player_vehicle_audio_settings_for_radio();
+    let s = GPtr::from_addr(player_vehicle_audio_settings_for_radio() as usize);
     if s.is_null() {
         return 0;
     }
@@ -296,7 +271,7 @@ pub fn radio_check_for_pause(this: GPtr<u8>) {
         factor = if rd::<u8>(this, 3) != 0 { 1.0 } else { 0.0 };
         wr::<u8>(this, 5, 1);
     } else {
-        let s = player_vehicle_audio_settings_for_radio();
+        let s = GPtr::from_addr(player_vehicle_audio_settings_for_radio() as usize);
         let active = !s.is_null() && matches!(rd::<u8>(s, 0x1B), 0 | 2 | 3);
         if !active && engine_is_ambience_radio_active(g(crate::common::AUDIO_ENGINE)) == 0 {
             stop_radio(this, GPtr::from_addr(0), 0);
@@ -373,7 +348,7 @@ pub fn choose_ident_index(_this: GPtr<u8>, id: u32) -> i32 {
         // fcomp 0.0; test ah, 44h; jnp -> draw again (equal)
         if id == 6
             && r == 0x44C
-            && !crate::common::x(stats_get_stat_value(0x152))
+            && !crate::common::x(stats_get_stat_value(0x152) as f32)
                 .fcom(crate::common::x(0.0))
                 .test_parity(0x44)
         {
@@ -486,10 +461,10 @@ pub fn display_radio_station_name(this: GPtr<u8>) {
     font_set_background(0, 0);
     let sy = scaled(RS_MAXIMUM_HEIGHT, 0x859524, 0x858C20);
     let sx = scaled(RS_MAXIMUM_WIDTH, 0x859520, 0x858CC8);
-    font_set_scale(sx.to_bits(), sy.to_bits());
+    font_set_scale(f32::from_bits(sx.to_bits()), f32::from_bits(sy.to_bits()));
     font_set_proportional(1);
     font_set_orientation(0);
-    font_set_right_justify_wrap(0);
+    font_set_right_justify_wrap(f32::from_bits(0));
     font_set_edge(1);
     let mut rgba = [0u8; 4];
     let p = rgba_ctor(local(&mut rgba), 0, 0, 0, 0xFF);
@@ -504,7 +479,7 @@ pub fn display_radio_station_name(this: GPtr<u8>) {
     font_set_color(rd::<u32>(c, 0));
     let py = scaled(RS_MAXIMUM_HEIGHT, 0x859524, 0x858F8C);
     let px = crate::common::xi(g::<i32>(RS_MAXIMUM_WIDTH).read() / 2).to_f32();
-    font_print_string(px.to_bits(), py.to_bits(), text);
+    font_print_string(f32::from_bits(px.to_bits()), f32::from_bits(py.to_bits()), text);
     font_draw_fonts();
 }
 
@@ -540,11 +515,11 @@ pub fn check_for_station_retune(this: GPtr<u8>) {
         if !input || engine_get_cutscene_track_status(engine) != 0 {
             break 'input;
         }
-        let s = player_vehicle_audio_settings_for_radio();
+        let s = GPtr::from_addr(player_vehicle_audio_settings_for_radio() as usize);
         if s.is_null() || !matches!(rd::<u8>(s, 0x1B), 0 | 2 | 3) || g::<u8>(REPLAY_MODE).read() == 1 {
             break 'input;
         }
-        if rd::<u8>(player_vehicle_audio_settings_for_radio(), 0x1B) != 0 {
+        if rd::<u8>(GPtr::from_addr(player_vehicle_audio_settings_for_radio() as usize), 0x1B) != 0 {
             return;
         }
         let req = rd::<i32>(this, 0x7C);
@@ -975,7 +950,7 @@ pub fn ambience_check_for_pause(this: GPtr<u8>) {
 pub fn ambience_start_track_playback(this: GPtr<u8>) -> u32 {
     let hw = g::<u8>(AE_AUDIO_HARDWARE);
     hw_disable_bass_eq(hw);
-    hw_set_channel_volume(hw, u32::from(rd::<u16>(this, 4)), 0, rd::<u32>(this, 0x18), 0);
+    hw_set_channel_volume(hw.addr() as u32, u32::from(rd::<u16>(this, 4)), 0, rd::<u32>(this, 0x18), 0);
     hw_set_channel_flags(hw, u32::from(rd::<u16>(this, 4)), 0, 0x21);
     hw_start_track_playback(hw)
 }
@@ -1016,7 +991,7 @@ pub fn ambience_service(this: GPtr<u8>, play_time: i32) {
             hw_play_track(
                 hw,
                 rd(this, 0x20),
-                -1,
+                -1i32 as u32,
                 offset as u32,
                 u32::from(rd::<u8>(this, 0x28)),
                 0,
@@ -1035,7 +1010,7 @@ pub fn ambience_service(this: GPtr<u8>, play_time: i32) {
         }
         3 => {
             ambience_check_for_pause_call(this);
-            hw_set_channel_volume(hw, u32::from(rd::<u16>(this, 4)), 0, rd::<u32>(this, 0x18), 0);
+            hw_set_channel_volume(hw.addr() as u32, u32::from(rd::<u16>(this, 4)), 0, rd::<u32>(this, 0x18), 0);
         }
         4 => {
             if rd::<u32>(this, 0x20) == rd::<u32>(this, 0xC) {
@@ -1106,7 +1081,7 @@ pub fn cutscene_service(this: GPtr<u8>, play_time: i32) {
             hw_play_track(
                 hw,
                 rd(this, 0xC),
-                -1,
+                -1i32 as u32,
                 rd(this, 0x14),
                 u32::from(rd::<u8>(this, 0x1C)),
                 0,
@@ -1167,21 +1142,21 @@ const EMPTY_DIR: usize = 0x858B54;
 #[hook(addr = 0x4F2FD0, conv = thiscall, name = "CAEUserRadioTrackManager::ReadUserTracks", expect = "53 57 8B D9 E8 87 58 04 00")]
 pub fn read_user_tracks_port(this: GPtr<u8>) -> u8 {
     file_set_dir_my_documents();
-    let f = file_open(g(USER_TRACKS_FILE), g(USER_TRACKS_MODE));
+    let f = GPtr::<u8>::addr(file_open(g(USER_TRACKS_FILE), g(USER_TRACKS_MODE))) as i32;
     file_set_dir(g(EMPTY_DIR));
     if f <= 0 {
         return 0;
     }
-    let size = file_get_total_size(f);
+    let size = file_get_total_size(GPtr::from_addr(f as usize)) as u32;
     if size == 0 {
-        file_close(f);
+        file_close(GPtr::from_addr(f as usize));
         return 0;
     }
     wr::<u16>(this, 6, (size / 12) as u16);
     let buf = memory_malloc(size, 0);
     wr::<GPtr<u8>>(this, 0, buf);
-    file_read(f, buf, size);
-    file_close(f);
+    file_read(GPtr::from_addr(f as usize), buf, size);
+    file_close(GPtr::from_addr(f as usize));
     1
 }
 

@@ -9,19 +9,15 @@ use sa_core::{hook, orig};
 use sa_core::bindings::eh_vector_ctor as eh_vector_constructor_iterator;
 use sa_core::bindings::sscanf1;
 use sa_core::bindings::strtok;
+use sa_core::bindings::file_close;
+use sa_core::bindings::load_line;
+use sa_core::bindings::open_file as file_open;
+use sa_stream::bindings::find_ped_type;
 orig! {
     /// CRT `operator new` (0x821195)
     fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x821195 => unported;
     /// `CPedType::LoadPedData()` (0x608B30)
     fn load_ped_data_call() = cdecl 0x608b30 => load_ped_data;
-    /// `CFileMgr::OpenFile(const char*, const char*)` (0x538900)
-    fn file_open(name: GPtr<u8>, mode: GPtr<u8>) -> i32 = cdecl 0x538900 => unported;
-    /// `CFileMgr::CloseFile(FILE*)` (0x5389D0)
-    fn file_close(f: i32) -> i32 = cdecl 0x5389d0 => unported;
-    /// `CFileLoader::LoadLine(FILE*)` (0x536F80)
-    fn load_line(f: i32) -> GPtr<u8> = cdecl 0x536f80 => unported;
-    /// `CPedType::FindPedType(const char*)` (0x608790)
-    fn find_ped_type(name: GPtr<u8>) -> i32 = cdecl 0x608790 => crate::ped_type::find_ped_type;
 }
 
 /// `CPedType::ms_apPedTypes` (0xC0BBE8)
@@ -73,11 +69,11 @@ const KEYWORDS: [(usize, usize, isize); 4] = [(0x86D06C, 5, 0x10), (0x86D064, 8,
        note = "file I/O; a blank-but-whitespace line compares the previous (first: uninitialised) sscanf buffer")]
 pub fn load_ped_data() {
     let delim = GPtr::<u8>::from_addr(0x86A8C8);
-    let f = file_open(GPtr::from_addr(0x86D074), GPtr::from_addr(0x85A53C));
+    let f = GPtr::<u8>::addr(file_open(GPtr::from_addr(0x86D074), GPtr::from_addr(0x85A53C))) as i32;
     let mut cur: i32 = 0x20;
     let mut buf = [0u32; 8];
     let bp = GPtr::<u32>::from_raw(buf.as_mut_ptr()).cast::<u8>();
-    let mut line = load_line(f);
+    let mut line = load_line(GPtr::from_addr(f as usize));
     while !line.is_null() {
         let c = line.read();
         if c != b'#' && c != 0 {
@@ -98,9 +94,9 @@ pub fn load_ped_data() {
                 cur = find_ped_type(bp);
             }
         }
-        line = load_line(f);
+        line = load_line(GPtr::from_addr(f as usize));
     }
-    file_close(f);
+    file_close(GPtr::from_addr(f as usize));
 }
 
 pub const HOOKS: &[HookReg] = &[HOOK_PED_TYPE_INITIALISE, HOOK_LOAD_PED_DATA];

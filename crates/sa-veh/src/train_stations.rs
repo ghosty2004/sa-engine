@@ -16,17 +16,14 @@ use sa_core::bindings::world_add;
 use sa_core::bindings::world_remove;
 use sa_world::bindings::get_stat_value;
 use sa_world::bindings::set_orientation;
+use sa_core::bindings::game_logic_pass_time;
+use sa_stream::bindings::get_level_from_position;
+use sa_world::bindings::world_process_vertical_line as process_vertical_line;
 orig! {
     /// `CTrain::FindNextStationPositionInDirection(bool, float, float*, int32*)` (0x6F5F00)
     fn call_find_next_station(clockwise: u32, pos: f32, dist: GPtr<f32>, idx: GPtr<i32>) = cdecl 0x6F5F00 => find_next_station_position_in_direction;
-    /// `CTheZones::GetLevelFromPosition(const CVector&)` (0x572300)
-    fn get_level_from_position(p: GPtr<u8>) -> i32 = cdecl 0x572300 => unported;
-    /// `CGameLogic::PassTime(uint32)` (0x4414C0)
-    fn game_logic_pass_time(minutes: i32) = cdecl 0x4414C0 => unported;
     /// virtual slot 0: the scalar deleting destructor
     fn entity_vdelete(e: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
-    /// `CWorld::ProcessVerticalLine(const CVector&, float, CColPoint&, CEntity*&, bool x7, CStoredCollPoly*)` (0x5674E0)
-    fn process_vertical_line(p: GPtr<u8>, z: f32, cp: GPtr<u8>, ent: GPtr<u8>, b0: u32, b1: u32, b2: u32, b3: u32, b4: u32, b5: u32, poly: u32) -> u8 = cdecl 0x5674E0 => unported;
 }
 
 /// `CTrain::aStationCoors` (0x8D48F8): 6 `CVector`s.
@@ -131,7 +128,7 @@ fn direction(t: GPtr<u8>) -> u32 {
 
 /// `level(station idx) <= CStats::GetStatValue(181) + 1` (the cities unlocked).
 fn station_allowed(idx: i32) -> bool {
-    let level = xi(get_level_from_position(GPtr::from_addr(STATION_COORS + 12 * idx as usize))).to_f32();
+    let level = xi(get_level_from_position(GPtr::<u8>::cast::<f32>(GPtr::from_addr(STATION_COORS + 12 * idx as usize)))).to_f32();
     let s = sa_math::x87::X87::from_f64_exact(get_stat_value(0xB5)).fadd_m(1.0);
     !s.fcom(x(level)).test_any(0x01)
 }
@@ -181,13 +178,13 @@ pub fn skip_to_next_allowed_station(train: GPtr<u8>) {
     };
     wr::<f32>(t, 0x5A8, np.to_f32());
     let c: GPtr<u8> = GPtr::from_addr(STATION_COORS + 12 * idx as usize);
-    load_scene(c);
+    load_scene(c.cast::<u32>());
     load_all_requested_models(0);
     let p = pos_ptr(t);
     let dx = x(rd::<f32>(c, 0)).fsub_m(rd::<f32>(p, 0));
     let dy = x(rd::<f32>(c, 4)).fsub_m(rd::<f32>(p, 4));
     let d = dx.fmul(dx).fadd(dy.fmul(dy)).fsqrt();
-    game_logic_pass_time(ftol32(d.fmul_m(f32::from_bits(0x3D4C_CCCD)).fadd_m(23.0)));
+    game_logic_pass_time(ftol32(d.fmul_m(f32::from_bits(0x3D4C_CCCD)).fadd_m(23.0)) as u32);
 }
 
 /// `CTrain::RemoveMissionTrains()` (0x6F6A20): deletes every train (+0x590 == 6) with the mission
@@ -283,7 +280,7 @@ pub fn train_is_in_tunnel(this: GPtr<u8>) -> u8 {
         0,
         0,
         0,
-        0,
+        GPtr::NULL,
     );
     b(r != 0)
 }
@@ -301,7 +298,7 @@ pub fn train_teleport(this: GPtr<u8>, px: u32, py: u32, pz: u32, reset_rot: u8) 
     wr::<u32>(p, 4, py);
     wr::<u32>(p, 8, pz);
     if reset_rot != 0 {
-        set_orientation(this, 0, 0, 0);
+        set_orientation(this, f32::from_bits(0), f32::from_bits(0), f32::from_bits(0));
     }
     for o in [0x44, 0x48, 0x4C, 0x50, 0x54, 0x58] {
         wr::<u32>(this, o, 0);

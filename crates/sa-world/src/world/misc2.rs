@@ -49,40 +49,33 @@ pub use sa_core::bindings::quad_tree_delete_item;
 pub use sa_core::bindings::set_model_is_deletable;
 pub use sa_core::bindings::set_wanted_level;
 pub use sa_core::bindings::streaming_request_model as request_model;
-pub use sa_stream::bindings::anim_add_block_ref as add_anim_block_ref;
+pub use sa_core::bindings::anim_add_block_ref as add_anim_block_ref;
 pub use sa_stream::bindings::anim_remove_block_ref as remove_anim_block_ref;
 pub use sa_stream::bindings::get_2d_effect;
 pub use sa_stream::bindings::get_animation_block_index;
 pub use sa_stream::bindings::stream_peds_for_interior;
+pub use crate::bindings::request_objects_in_direction;
+pub use sa_core::bindings::display_script_stat_update_message;
+pub use sa_core::bindings::get_weapon_info;
+pub use sa_core::bindings::list_add_item;
+pub use sa_core::bindings::list_ctor;
+pub use sa_core::bindings::rw_v3d_transform_points;
+pub use sa_core::bindings::stats_increment_stat as increment_stat;
 orig! {
     /// `CAudioEngine::GetRadioStationListenTimes` (0x507020) on `AudioEngine` (0xB6BC90)
     pub fn get_radio_station_listen_times(ae: GPtr<u8>) -> GPtr<u32> = thiscall 0x507020 => unported;
     /// `CRenderer::GetObjectsInFrustum(CEntity** out, float farPlane, RwMatrix*)` (0x554C60)
     pub fn get_objects_in_frustum(out: GPtr<GPtr<u8>>, far: f32, m: GPtr<u8>) -> i32 = cdecl 0x554C60 => unported;
-    /// `CWeaponInfo::GetWeaponInfo(eWeaponType, eWeaponSkill)` (0x743C60)
-    pub fn get_weapon_info(w: i32, skill: i32) -> GPtr<u8> = cdecl 0x743C60 => unported;
-    /// `RwV3dTransformPoints(out, in, n, matrix)` (0x7EDD90)
-    pub fn rw_v3d_transform_points(out: GPtr<f32>, inp: GPtr<f32>, n: i32, m: GPtr<u8>) -> GPtr<f32> = cdecl 0x7EDD90 => unported;
-    /// `CStats::IncrementStat(uint16, float)` (0x55C180)
-    pub fn increment_stat(id: u32, v: u32) = cdecl 0x55C180 => unported;
-    /// `CStats::DisplayScriptStatUpdateMessage(uint8, uint32 stat, float)` (0x55B980)
-    pub fn display_script_stat_update_message(state: u32, id: u32, v: u32) = cdecl 0x55B980 => unported;
     /// `Interior_c::IsVisible` (0x5929F0)
     pub fn interior_is_visible(int: GPtr<u8>) -> u8 = thiscall 0x5929F0 => unported;
     /// `RwEngineInstance->dOpenDevice.fpRenderStateSet` (RwEngineInstance 0xC97B24, +0x20)
     pub fn rw_render_state_set(state: i32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
     /// `BreakObject_c::Render(bool)` (0x59E480)
     pub fn break_object_render(o: GPtr<u8>, flag: u32) = thiscall 0x59E480 => unported;
-    /// `CRenderer::RequestObjectsInDirection(const CVector&, float, int32)` (0x555CB0)
-    pub fn request_objects_in_direction(v: GPtr<f32>, angle: u32, flags: i32) = cdecl 0x555CB0 => unported;
     /// `FurnitureSubGroup_c::GetRandomId(uint8 rating)` (0x590FD0)
     pub fn sub_group_get_random_id(sg: GPtr<u8>, rating: u32) -> i32 = thiscall 0x590FD0 => unported;
     /// `FurnitureSubGroup_c::GetFurniture(int16 id, uint8 rating)` (0x590EE0)
     pub fn sub_group_get_furniture(sg: GPtr<u8>, id: u32, rating: u32) -> GPtr<u8> = thiscall 0x590EE0 => unported;
-    /// `List_c::List_c` (0x4A8DD0)
-    pub fn list_ctor(l: GPtr<u8>) = thiscall 0x4A8DD0 => unported;
-    /// `List_c::AddItem(ListItem_c*)` (0x4A8DF0); EAX passed through
-    pub fn list_add_item(l: GPtr<u8>, item: GPtr<u8>) -> u32 = thiscall 0x4A8DF0 => unported;
     /// `BreakObject_c::Update(float)` (0x59E220)
     pub fn break_object_update(o: GPtr<u8>, step: u32) = thiscall 0x59E220 => unported;
     /// `BreakObject_c::Init(CObject*, ...)` (0x59E750)
@@ -1174,7 +1167,7 @@ pub fn entry_exit_request_objects_in_frustum(this: GPtr<u8>) {
     v[0] = rd::<f32>(src, 0x20);
     v[1] = x(rd::<f32>(src, 0x24)).to_f32();
     v[2] = x(rd::<f32>(src, 0x28)).to_f32();
-    request_objects_in_direction(GPtr::from_raw(v.as_mut_ptr()), rd::<u32>(this, 0x2C), 0x20);
+    request_objects_in_direction(GPtr::<f32>::cast::<u8>(GPtr::from_raw(v.as_mut_ptr())), rd::<u32>(this, 0x2C), 0x20);
 }
 
 /// `FurnitureSubGroup_c::FurnitureSubGroup_c` (0x590E20, thiscall): `ListItem_c::ListItem_c`,
@@ -1216,8 +1209,8 @@ pub fn update_stats_on_respawn() {
         return;
     }
     if !x(g::<f32>(0xB793E0).read()).fcom(x(400.0)).test_any(0x41) {
-        increment_stat(0x18, g::<u32>(0xB78F74).read());
-        display_script_stat_update_message(0, 0x18, g::<u32>(0xB78F74).read());
+        increment_stat(0x18, f32::from_bits(g::<u32>(0xB78F74).read()));
+        display_script_stat_update_message(0, 0x18, f32::from_bits(g::<u32>(0xB78F74).read()));
     }
     g::<u32>(0xB79508).write(0);
 }
@@ -1601,7 +1594,7 @@ pub fn interior_group_dereference_anims(this: GPtr<u8>) {
         2 => get_animation_block_index(g(0x866D28)),
         _ => this.addr() as i32,
     };
-    remove_anim_block_ref(idx);
+    remove_anim_block_ref(idx as u32);
     wr::<u8>(this, 0xBA, 0);
 }
 

@@ -14,25 +14,16 @@ use sa_stream::bindings::has_vehicle_upgrade_loaded as streaming_has_vehicle_upg
 use sa_stream::bindings::request_vehicle_upgrade as streaming_request_vehicle_upgrade;
 use sa_world::bindings::set_remap as vehicle_set_remap;
 use sa_world::bindings::vehicle_new;
+use sa_core::bindings::automobile_ctor;
+use sa_core::bindings::bike_ctor;
+use sa_core::bindings::bmx_ctor;
+use sa_core::bindings::boat_ctor;
+use sa_core::bindings::heli_ctor;
+use sa_core::bindings::monster_truck_ctor;
+use sa_core::bindings::plane_ctor;
+use sa_core::bindings::quad_bike_ctor;
+use sa_core::bindings::trailer_ctor;
 orig! {
-    /// `CMonsterTruck(int32 modelIndex, eVehicleCreatedBy)` (0x6C8D60)
-    fn monster_truck_ctor(v: GPtr<u8>, mi: u32, by: u32) -> GPtr<u8> = thiscall 0x6C8D60 => unported;
-    /// `CQuadBike(int32, eVehicleCreatedBy)` (0x6CE370)
-    fn quad_bike_ctor(v: GPtr<u8>, mi: u32, by: u32) -> GPtr<u8> = thiscall 0x6CE370 => unported;
-    /// `CHeli(int32, eVehicleCreatedBy)` (0x6C4190)
-    fn heli_ctor(v: GPtr<u8>, mi: u32, by: u32) -> GPtr<u8> = thiscall 0x6C4190 => unported;
-    /// `CPlane(int32, eVehicleCreatedBy)` (0x6C8E20)
-    fn plane_ctor(v: GPtr<u8>, mi: u32, by: u32) -> GPtr<u8> = thiscall 0x6C8E20 => unported;
-    /// `CBike(int32, eVehicleCreatedBy)` (0x6BF430)
-    fn bike_ctor(v: GPtr<u8>, mi: u32, by: u32) -> GPtr<u8> = thiscall 0x6BF430 => unported;
-    /// `CBmx(int32, eVehicleCreatedBy)` (0x6BF820)
-    fn bmx_ctor(v: GPtr<u8>, mi: u32, by: u32) -> GPtr<u8> = thiscall 0x6BF820 => unported;
-    /// `CTrailer(int32, eVehicleCreatedBy)` (0x6D03A0)
-    fn trailer_ctor(v: GPtr<u8>, mi: u32, by: u32) -> GPtr<u8> = thiscall 0x6D03A0 => unported;
-    /// `CBoat(int32, eVehicleCreatedBy)` (0x6F2940)
-    fn boat_ctor(v: GPtr<u8>, mi: u32, by: u32) -> GPtr<u8> = thiscall 0x6F2940 => unported;
-    /// `CAutomobile(int32, eVehicleCreatedBy, bool)` (0x6B0A90)
-    fn automobile_ctor(v: GPtr<u8>, mi: u32, by: u32, b: u32) -> GPtr<u8> = thiscall 0x6B0A90 => unported;
     /// `CVehicle::SetupUpgradesAfterLoad()` (0x6E3400)
     fn vehicle_setup_upgrades_after_load(v: GPtr<u8>) = thiscall 0x6E3400 => unported;
     /// `CStoredCar::RestoreCar()` (0x447E40)
@@ -85,22 +76,22 @@ pub fn stored_car_restore(this: GPtr<u8>) -> GPtr<u8> {
     };
     let mi = u32::from(rd::<u16>(this, 0x12));
     let veh = match rd::<u32>(info, 0x3C).wrapping_sub(1) {
-        0 => make(0x99C, &|v| monster_truck_ctor(v, mi, 1)),
-        1 => make(0x9BC, &|v| quad_bike_ctor(v, mi, 1)),
-        2 => make(0xA18, &|v| heli_ctor(v, mi, 1)),
-        3 => make(0xA04, &|v| plane_ctor(v, mi, 1)),
-        4 => make(0x7E8, &|v| boat_ctor(v, mi, 1)),
+        0 => make(0x99C, &|v| monster_truck_ctor(v, mi as i32, 1)),
+        1 => make(0x9BC, &|v| quad_bike_ctor(v, mi as i32, 1)),
+        2 => make(0xA18, &|v| heli_ctor(v, mi as i32, 1)),
+        3 => make(0xA04, &|v| plane_ctor(v, mi as i32, 1)),
+        4 => make(0x7E8, &|v| boat_ctor(v, mi as i32, 1)),
         8 | 9 => {
             let v = if rd::<u32>(info, 0x3C) == 9 {
-                make(0x814, &|v| bike_ctor(v, mi, 1))
+                make(0x814, &|v| bike_ctor(v, mi as i32, 1))
             } else {
-                make(0x838, &|v| bmx_ctor(v, mi, 1))
+                make(0x838, &|v| bmx_ctor(v, mi as i32, 1))
             };
             wr::<u8>(v, 0x614, rd::<u8>(v, 0x614) | 0x10);
             v
         }
-        10 => make(0x9F4, &|v| trailer_ctor(v, mi, 1)),
-        _ => make(0x988, &|v| automobile_ctor(v, mi, 1, 1)),
+        10 => make(0x9F4, &|v| trailer_ctor(v, mi as i32, 1)),
+        _ => make(0x988, &|v| automobile_ctor(v, mi as i32, 1, 1)),
     };
     let m = rd::<GPtr<u8>>(veh, 0x14);
     if !m.is_null() {

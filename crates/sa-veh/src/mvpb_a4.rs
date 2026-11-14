@@ -4,7 +4,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 
 use crate::common::{f32_of, rd, wr, x, xi};
@@ -15,12 +15,8 @@ use sa_core::bindings::vector_dot_product;
 use sa_core::bindings::vector_magnitude;
 use sa_world::bindings::get_percentage_progress;
 use sa_world::bindings::player_set_wanted_level_no_drop;
-orig! {
-    /// `CBike::DamageKnockOffRider(CVehicle*, float, uint16, CEntity*, const CVector&, const CVector&)` (0x6B5A10)
-    fn damage_knock_off_rider(v: GPtr<u8>, intensity: u32, piece: u32, damager: GPtr<u8>, posn: GPtr<u8>, dir: GPtr<u8>) = cdecl 0x6B5A10 => unported;
-    /// `CPed::Say(uint16, uint32, float, bool, bool, bool)` (0x5EFFE0), the float as its bits
-    fn ped_say(p: GPtr<u8>, id: u32, delay: u32, prob: u32, a4: u32, a5: u32, a6: u32) = thiscall 0x5EFFE0 => unported;
-}
+use crate::bindings::damage_knock_off_rider;
+use sa_world::bindings::ped_say;
 
 use sa_math::fpu::st0;
 
@@ -98,9 +94,9 @@ pub fn bike_vehicle_damage(this: GPtr<u8>, intensity: f32, _component: u32, _dam
             && rd::<u8>(this, 0x36) & 0xF8 != 0x20
         {
             let pv = fpv();
-            let mine = f32_of(st0(vector_magnitude(this.byte_add(0x44))));
-            if !lt(st0(vector_magnitude(pv.byte_add(0x44))), x(mine))
-                && gt(st0(vector_magnitude(fpv().byte_add(0x44))), x(f32::from_bits(0x3DCC_CCCD)))
+            let mine = f32_of(st0(vector_magnitude(GPtr::<u8>::cast::<u32>(this.byte_add(0x44)))));
+            if !lt(st0(vector_magnitude(GPtr::<u8>::cast::<u32>(pv.byte_add(0x44)))), x(mine))
+                && gt(st0(vector_magnitude(GPtr::<u8>::cast::<u32>(fpv().byte_add(0x44)))), x(f32::from_bits(0x3DCC_CCCD)))
             {
                 player_set_wanted_level_no_drop(find_player_ped(-1), 1);
             }
@@ -115,7 +111,7 @@ pub fn bike_vehicle_damage(this: GPtr<u8>, intensity: f32, _component: u32, _dam
                     && !(fpv() == this && rd::<u8>(e, 0x4A4) == 2)
                     && !rd::<GPtr<u8>>(e, 0x460).is_null()
                 {
-                    ped_say(rd::<GPtr<u8>>(this, 0x460), 0x42, 0, 0x3F80_0000, 0, 0, 0);
+                    ped_say(rd::<GPtr<u8>>(this, 0x460), 0x42, 0, f32::from_bits(0x3F80_0000), 0, 0, 0);
                 }
             }
             let old = rd::<f32>(this, 0x4C0);

@@ -95,6 +95,7 @@ use sa_core::bindings::sphere_set;
 use sa_stream::bindings::placeable_allocate_matrix;
 use sa_world::bindings::entity_get_col_model as get_col_model;
 use sa_world::bindings::test_sphere_box;
+use sa_stream::bindings::simple_transform_update_matrix;
 orig! {
     /// `CPlantMgr::_ProcessEntryCollisionDataSections_RemoveLocTris(entry, center, iTriMax, first, last)`
     /// (0x5DBF20; bool in AL)
@@ -102,8 +103,6 @@ orig! {
     /// `CPlantMgr::_ProcessEntryCollisionDataSections_AddLocTris(entry, center, iTriMax, first, last)`
     /// (0x5DC8B0; bool in AL)
     fn plant_add_loc_tris(entry: GPtr<u8>, center: GPtr<u8>, max: u32, first: i32, last: i32) -> u8 = cdecl 0x5DC8B0 => unported;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*) const` (0x54F1B0)
-    fn simple_transform_update_matrix(this: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => crate::mvpd_unk::simple_transform_update_matrix;
     /// `CBox::Recalc()` (0x40EE20)
     fn box_recalc(b: GPtr<u8>) = thiscall 0x40EE20 => unported;
 }
@@ -150,7 +149,7 @@ pub fn plant_process_entry_collision_data_sections(entry: GPtr<u8>, center: GPtr
         box_recalc(lp(&mut bx));
         let mut sph = [0u32; 4];
         sphere_set(lp(&mut sph), 0x42C8_0000, center);
-        if test_sphere_box(lp(&mut sph), lp(&mut bx)) != 0 {
+        if test_sphere_box(GPtr::<u8>::cast::<f32>(lp(&mut sph)), GPtr::<u8>::cast::<f32>(lp(&mut bx))) != 0 {
             plant_add_loc_tris(entry, center, max, i32::from(rd::<i16>(sec, 0x18)), i32::from(rd::<i16>(sec, 0x1A)));
         }
         k += 1;
@@ -161,10 +160,7 @@ pub fn plant_process_entry_collision_data_sections(entry: GPtr<u8>, center: GPtr
 use sa_core::field::ptr_of as lp;
 
 use crate::bindings::proc_object_process_triangle_added;
-orig! {
-    /// `CPlantLocTri::Release()` (0x5DB6D0)
-    fn plant_loc_tri_release(this: GPtr<u8>) = thiscall 0x5DB6D0 => unported;
-}
+use crate::bindings::loc_tri_release as plant_loc_tri_release;
 
 /// `(z² + y²) + x²` of a difference vector, in the original's operand order.
 fn len2_zyx(v: [X87; 3]) -> X87 {

@@ -9,7 +9,7 @@ use sa_core::{hook, orig};
 
 use super::common::{rd, wr, x, xi};
 
-use crate::bindings::matrix_ctor_rw as m_ctor_rw;
+use sa_core::bindings::matrix_ctor_rw as m_ctor_rw;
 use crate::bindings::placeable_set_matrix as set_matrix;
 use crate::bindings::set_tiles_status;
 use sa_core::bindings::general_random_int_in_range as random_in_range;
@@ -24,11 +24,9 @@ use sa_core::bindings::matrix_set_unity as m_set_unity;
 use sa_core::bindings::world_add;
 use sa_stream::bindings::building_ctor;
 use sa_stream::bindings::building_new;
+use crate::bindings::check_tiles_empty;
+use sa_core::bindings::matrix_rotate_z as m_set_rotate_z;
 orig! {
-    /// `Interior_c::CheckTilesEmpty(int32 x, int32 y, int32 w, int32 d, bool)` (0x591680)
-    fn check_tiles_empty(this: GPtr<u8>, tx: i32, ty: i32, w: i32, d: i32, b: u32) -> u8 = thiscall 0x591680 => unported;
-    /// `CMatrix::SetRotateZ(float)` (0x59B390)
-    fn m_set_rotate_z(m: GPtr<u8>, a: f32) = thiscall 0x59B390 => unported;
     /// `CEntity::SetModelIndex(uint32)` (vtable +0x18)
     fn v_set_model_index(e: GPtr<u8>, mi: u32) = thiscall vslot 0x18 => unported;
 }
@@ -70,13 +68,13 @@ pub fn place_furniture(this: GPtr<u8>, f: GPtr<u8>, tx: i32, ty: i32, height: f3
         out_d.write(0);
         GPtr::NULL
     };
-    if list_num_items(GPtr::from_addr(FREE_ITEMS)) <= 0 {
+    if (list_num_items(GPtr::from_addr(FREE_ITEMS)) as i32) <= 0 {
         return fail();
     }
     let fc = i32::from(rd::<u8>(f, 0xC));
     let fd = i32::from(rd::<u8>(f, 0xD));
     let (w, d) = if rot == 1 || rot == 3 { (fd, fc) } else { (fc, fd) };
-    if mode == 1 && force == 0 && check_tiles_empty(this, tx, ty, w, d, u32::from(rd::<u8>(f, 0x10))) == 0 {
+    if mode == 1 && force == 0 && check_tiles_empty(this, tx, ty, w, d, u32::from(rd::<u8>(f, 0x10)) as u8) == 0 {
         return fail();
     }
     let mut m0: Mat = [0; 0x12]; // [esp+0x78]
@@ -86,7 +84,7 @@ pub fn place_furniture(this: GPtr<u8>, f: GPtr<u8>, tx: i32, ty: i32, height: f3
         let cx = xi(fc).fmul_m(F_0_5).fsubr_m(F_0_5).to_f32();
         let mut m1: Mat = [0; 0x12];
         m_set_unity(m(&mut m1));
-        m_set_translate(m(&mut m1), cx.to_bits(), cy.to_bits(), 0);
+        m_set_translate(m(&mut m1), f32::from_bits(cx.to_bits()), f32::from_bits(cy.to_bits()), f32::from_bits(0));
         let mut m2: Mat = [0; 0x12];
         m_set_unity(m(&mut m2));
         let r = random_in_range(-i32::from(n), i32::from(n));
@@ -95,7 +93,7 @@ pub fn place_furniture(this: GPtr<u8>, f: GPtr<u8>, tx: i32, ty: i32, height: f3
         m_set_unity(m(&mut m3));
         let ny = x(cy).fchs().to_f32();
         let nx = x(cx).fchs().to_f32();
-        m_set_translate(m(&mut m3), nx.to_bits(), ny.to_bits(), 0);
+        m_set_translate(m(&mut m3), f32::from_bits(nx.to_bits()), f32::from_bits(ny.to_bits()), f32::from_bits(0));
         let mut t1: Mat = [0; 0x12];
         let mut t2: Mat = [0; 0x12];
         let a = m_mul(m(&mut t1), m(&mut m3), m(&mut m2));

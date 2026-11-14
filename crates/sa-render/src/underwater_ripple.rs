@@ -14,9 +14,8 @@ use crate::bindings::rs_set_immediate;
 use sa_core::bindings::rs_camera_begin_update;
 use sa_core::bindings::rw_camera_end_update;
 use sa_core::bindings::rw_im2d_render_primitive;
+use crate::bindings::im_render_states_store as rs_store;
 orig! {
-    /// `CPostEffects::ImmediateModeRenderStatesStore()` (0x700CC0)
-    fn rs_store() = cdecl 0x700CC0 => crate::mvpd_r3::immediate_mode_render_states_store;
     /// `RwRenderStateSet` (`RwEngineInstance` 0xC97B24, slot 0x20)
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
 }

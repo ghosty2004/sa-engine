@@ -40,7 +40,7 @@ pub fn smart_flee_point_compute_flee_dir(this: GPtr<u8>, ped: GPtr<u8>) -> u32 {
     let p = if m.is_null() { ped.byte_add(4) } else { m.byte_add(0x30) };
     let dy = x(rd::<f32>(p, 4)).fsub_m(rd::<f32>(this, 0x1C)).to_f32();
     let dx = x(rd::<f32>(p, 0)).fsub_m(rd::<f32>(this, 0x18)).to_f32();
-    node_heading_from_vector(dx.to_bits(), dy.to_bits())
+    node_heading_from_vector(f32::from_bits(dx.to_bits()), f32::from_bits(dy.to_bits())) as u32
 }
 
 /// This module's hooks.

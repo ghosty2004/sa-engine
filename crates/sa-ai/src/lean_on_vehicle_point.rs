@@ -1,6 +1,7 @@
 //! WRITER-NATIVE (batch `native-13`): 0x664770, `CTaskGoToVehicleAndLean`'s lean-point helper (called by its
 //! `CreateFirstSubTask` 0x664D40 and `ControlSubTask` 0x664E60). Ported from the 1.0 US bytes.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::hook;
 
@@ -51,7 +52,7 @@ pub fn go_to_vehicle_and_lean_point(this: GPtr<u8>, out: GPtr<u8>, ped: GPtr<u8>
         x(max_x).fadd_m(0.5)
     };
     let mut local = [lx.to_f32(), 0.0f32, 0.0f32];
-    matrix_mul_vec(out, rd::<GPtr<u8>>(veh, 0x14), GPtr::from_raw(&mut local as *mut [f32; 3]).cast());
+    matrix_mul_vec(out.cast::<f32>(), rd::<GPtr<u8>>(veh, 0x14), GPtr::from_raw(&mut local as *mut [f32; 3]).cast());
     out
 }
 

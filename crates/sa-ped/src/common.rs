@@ -49,15 +49,12 @@ pub use sa_core::bindings::set_model_is_deletable;
 pub use sa_core::bindings::stats_increment_stat as increment_stat;
 pub use sa_core::bindings::streaming_request_model as request_model;
 pub use sa_world::bindings::get_stat_value;
+pub use sa_core::bindings::get_weapon_info;
+pub use sa_core::bindings::ped_is_alive;
+pub use sa_stream::bindings::find_player_wanted;
 orig! {
     /// `FindPlayerPed(int32 playerId)` (0x56E210)
     pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
     /// `FindPlayerVehicle(int32 playerId, bool bIncludeRemote)` (0x56E0D0)
     pub fn find_player_vehicle(id: i32, remote: u8) -> GPtr<u8> = cdecl 0x56E0D0 => sa_world::world::cworld::find_player_vehicle_port;
-    /// `FindPlayerWanted(int32 playerId)` (0x56E230)
-    pub fn find_player_wanted(id: i32) -> GPtr<u8> = cdecl 0x56E230 => sa_world::world::cworld::find_player_wanted;
-    /// `CPed::IsAlive` (0x5E0170)
-    pub fn ped_is_alive(ped: GPtr<u8>) -> u32 = thiscall 0x5E0170 => crate::ped::is_alive;
-    /// `CWeaponInfo::GetWeaponInfo(eWeaponType, eWeaponSkill)` (0x743C60)
-    pub fn get_weapon_info(ty: i32, skill: i32) -> GPtr<u8> = cdecl 0x743C60 => unported;
 }

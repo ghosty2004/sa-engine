@@ -193,8 +193,8 @@ use crate::bindings::draw_rotating_radar_sprite_call;
 use crate::bindings::get_int_colour_call;
 use crate::bindings::get_radar_trace_colour_call;
 use crate::bindings::has_this_blip_been_revealed_call;
-use crate::bindings::hud_colours_get_rgb;
-use crate::bindings::sprite2d_draw_2d_polygon;
+use sa_stream::bindings::hud_colours_get_rgb;
+use sa_world::bindings::sprite2d_draw_2d_polygon;
 use crate::bindings::transform_radar_point_to_screen_space_call;
 use crate::bindings::transform_real_world_point_to_radar_space_call;
 use sa_core::bindings::get_pad;
@@ -212,35 +212,33 @@ use sa_world::bindings::get_first_texture;
 use sa_world::bindings::is_coop_game_going_on;
 use sa_world::bindings::is_player_in_remote_mode as player_in_remote_mode;
 use sa_world::bindings::is_player_on_a_mission;
+use crate::bindings::calculate_cached_sin_cos_call;
+use crate::bindings::draw_radar_gang_overlay_call;
+use crate::bindings::draw_radar_sprite_call;
+use crate::bindings::limit_to_map_call;
+use crate::bindings::show_radar_marker_call;
+use crate::bindings::show_radar_trace_with_height_call;
+use crate::bindings::stream_radar_sections_xy_call;
+use sa_core::bindings::rw_im2d_render_primitive;
+use sa_core::bindings::sprite2d_draw as sprite2d_draw_rect;
+use sa_core::bindings::sprite_draw_rect as sprite2d_draw_rect_static;
+use sa_world::bindings::markers_place_marker_cone as place_marker_cone;
+use sa_world::bindings::pickup_get_posn;
+use sa_world::bindings::place_marker_set;
+use sa_world::bindings::set_vertices_rect as sprite2d_set_vertices;
 orig! {
-    /// `CRadar::LimitToMap(float* x, float* y)` (0x583350)
-    fn limit_to_map_call(px: GPtr<f32>, py: GPtr<f32>) = cdecl 0x583350 => crate::radar_draw::limit_to_map;
     /// `CRadar::DisplayThisBlip(eRadarSprite, int8 priority)` (0x583B40)
     fn display_this_blip_call(sprite: i32, prio: u8) -> u8 = cdecl 0x583B40 => crate::radar::display_this_blip;
-    /// `CSprite2d::Draw(const CRect&, const CRGBA&)` (0x728350)
-    fn sprite2d_draw_rect(this: GPtr<u8>, rect: GPtr<f32>, colour: GPtr<u8>) = thiscall 0x728350 => unported;
-    /// `CRadar::ShowRadarMarker(CVector pos, uint32 colour, float radius)` (0x584480)
-    fn show_radar_marker_call(px: u32, py: u32, pz: u32, colour: u32, radius: u32) = cdecl 0x584480 => show_radar_marker;
     /// `CTheScripts::ScriptDebugLine3D(x1, y1, z1, x2, y2, z2, uint32 colour1, uint32 colour2)` (0x485DE0)
     fn script_debug_line_3d(x1: f32, y1: f32, z1: f32, x2: f32, y2: f32, z2: f32, c1: u32, c2: u32) = cdecl 0x485DE0 => unported;
     /// `CRadar::LimitRadarPoint(CVector2D&)` (0x5832F0, ST0)
     fn limit_radar_point_call_st0(p: GPtr<f32>) -> f64 = cdecl 0x5832F0 => limit_radar_point_call_st0_rust;
     /// `CRadar::CalculateBlipAlpha(float)` (0x583420)
     fn calculate_blip_alpha_call(dist: f32) -> u8 = cdecl 0x583420 => crate::radar::calculate_blip_alpha;
-    /// `CRadar::DrawRadarSprite(uint16 sprite, float x, float y, uint8 alpha)` (0x585FF0)
-    fn draw_radar_sprite_call(sprite: u32, px: f32, py: f32, alpha: u32) = cdecl 0x585FF0 => draw_radar_sprite;
-    /// `CRadar::CalculateCachedSinCos()` (0x583670)
-    fn calculate_cached_sin_cos_call() = cdecl 0x583670 => crate::radar_draw::calculate_cached_sin_cos;
     /// `FindPlayerVehicle(int32, bool)` (0x56E0D0)
     fn find_player_vehicle(id: i32, remote: u8) -> GPtr<u8> = cdecl 0x56E0D0 => sa_world::world::cworld::find_player_vehicle_port;
     /// `FindPlayerPed(int32)` (0x56E210)
     fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
-    /// `C3dMarkers::PlaceMarkerSet(id, type, CVector& pos, size, r, g, b, a, pulsePeriod, pulseFraction, rotateRate)` (0x725BA0)
-    fn place_marker_set(id: u32, ty: u32, pos: GPtr<f32>, size: u32, r: u32, gg: u32, bb: u32, a: u32, period: u32, fraction: u32, rotate: u32) = cdecl 0x725BA0 => unported;
-    /// `C3dMarkers::PlaceMarkerCone(id, CVector& pos, size, r, g, b, a, pulsePeriod, pulseFraction, rotateRate, collision)` (0x726D40)
-    fn place_marker_cone(id: u32, pos: GPtr<f32>, size: u32, r: u32, gg: u32, bb: u32, a: u32, period: u32, fraction: u32, rotate: u32, collision: u32) = cdecl 0x726D40 => unported;
-    /// `CPickup::GetPosn(CVector* out)` (0x4549A0, thiscall, returns `out`)
-    fn pickup_get_posn(this: GPtr<u8>, out: GPtr<f32>) -> GPtr<f32> = thiscall 0x4549A0 => unported;
     /// `CRadar::SetupAirstripBlips()` (0x587D20)
     fn setup_airstrip_blips_call() = cdecl 0x587D20 => crate::radar_draw::setup_airstrip_blips;
     /// `CRadar::DrawEntityBlip(int32 index, uint8 isSprite)` (0x587000)
@@ -255,35 +253,22 @@ orig! {
     fn draw_radar_map_call() = cdecl 0x586880 => draw_radar_map;
     /// `CRadar::DrawRadarMask()` (0x585700)
     fn draw_radar_mask_call() = cdecl 0x585700 => draw_radar_mask;
-    /// `CSprite2d::SetVertices(const CRect&, const CRGBA&, const CRGBA&, const CRGBA&, const CRGBA&)` (0x727420)
-    fn sprite2d_set_vertices(rect: GPtr<f32>, c1: GPtr<u8>, c2: GPtr<u8>, c3: GPtr<u8>, c4: GPtr<u8>) = cdecl 0x727420 => unported;
-    /// `RwIm2DRenderPrimitive(RwPrimitiveType, RwIm2DVertex*, int32)` (0x734E90)
-    fn rw_im2d_render_primitive(prim: u32, verts: GPtr<u8>, n: i32) -> u32 = cdecl 0x734E90 => unported;
     /// `CSprite2d::SetMaskVertices(int32 n, float* verts, float z)` (0x7279B0)
     fn sprite2d_set_mask_vertices(n: i32, verts: GPtr<f32>, z: u32) = cdecl 0x7279B0 => unported;
     /// `CRadar::SetupRadarRect(int32, int32)` (0x584A80)
     fn setup_radar_rect_call(tx: i32, ty: i32) = cdecl 0x584A80 => crate::radar::setup_radar_rect;
-    /// `CRadar::StreamRadarSections(int32, int32)` (0x584C50)
-    fn stream_radar_sections_xy_call(tx: i32, ty: i32) = cdecl 0x584C50 => crate::radar::stream_radar_sections_xy;
     /// `RwRenderStateSet` through `RwEngineInstance` (`call [[0xC97B24]+0x20]`)
     fn rw_render_state_set(state: u32, value: u32) -> u32 = cdecl table 0xC97B24 0x20 => unported;
     /// `CRadar::DrawRadarSection(int32, int32)` (0x586110)
     fn draw_radar_section_call(px: i32, py: i32) = cdecl 0x586110 => draw_radar_section;
     /// `CRadar::GetTextureCorners(int32, int32, CVector2D*)` (0x584D90)
     fn get_texture_corners_call(tx: i32, ty: i32, out: GPtr<f32>) = cdecl 0x584D90 => crate::radar::get_texture_corners;
-    /// `CRadar::DrawRadarGangOverlay(bool inMenu)` (0x586650)
-    fn draw_radar_gang_overlay_call(in_menu: u32) = cdecl 0x586650 => draw_radar_gang_overlay;
     /// `CRadar::DrawAreaOnRadar(const CRect&, const CRGBA&, bool inMenu)` (0x5853D0)
     fn draw_area_on_radar_call(rect: GPtr<f32>, colour: GPtr<u8>, in_menu: u8) = cdecl 0x5853D0 => draw_area_on_radar;
     /// `CRadar::ClipRadarPoly(CVector2D* out, const CVector2D* in)` (0x585040)
     fn clip_radar_poly_call(out: GPtr<u8>, inp: GPtr<u8>) -> i32 = cdecl 0x585040 => crate::radar_draw::clip_radar_poly;
     /// `CSprite2d::SetVertices(int32 n, float* pos, float* uv, const CRGBA&)` (0x727890)
     fn sprite2d_set_vertices_n(n: i32, pos: GPtr<f32>, uv: GPtr<f32>, colour: GPtr<u8>) = cdecl 0x727890 => unported;
-    /// `CRadar::ShowRadarTraceWithHeight(float x, float y, uint32 size, uint8 r, uint8 g, uint8 b, uint8 a,
-    /// eRadarTraceHeight)` (0x584070)
-    fn show_radar_trace_with_height_call(px: f32, py: f32, size: u32, r: u32, gg: u32, bb: u32, a: u32, mode: u32) = cdecl 0x584070 => show_radar_trace_with_height;
-    /// `CSprite2d::DrawRect(const CRect&, const CRGBA&)` (0x727B60)
-    fn sprite2d_draw_rect_static(rect: GPtr<f32>, colour: GPtr<u8>) = cdecl 0x727B60 => unported;
 }
 
 /// `CRadar::DrawRadarSprite(uint16 sprite, float x, float y, uint8 alpha)` (0x585FF0): on the map the
@@ -584,7 +569,7 @@ pub fn draw_radar_section_map(tx: i32, ty: i32, left: f32, bottom: f32, right: f
         p[i] = rgba_ctor(local(cc), 0xFF, 0xFF, 0xFF, 0xFF);
     }
     let mut rect = [left, bottom, right, top];
-    sprite2d_set_vertices(local(&mut rect), p[3], p[2], p[1], p[0]);
+    sprite2d_set_vertices(GPtr::<f32>::cast::<u8>(local(&mut rect)), p[3], p[2], p[1], p[0]);
     rw_im2d_render_primitive(5, g(SPRITE2D_VERTICES), 4);
 }
 
@@ -949,7 +934,7 @@ pub fn draw_3d_markers() {
                 } else if inside {
                     continue;
                 }
-                place_marker_set(id, 1, t.byte_add(8).cast(), 0x4000_0000, 0xFF, 0, 0, 0xE4, 0x800, 0x3E4C_CCCD, 0);
+                place_marker_set(id, 1, GPtr::<f32>::cast::<u8>(t.byte_add(8).cast()), 0x4000_0000, 0xFF, 0, 0, 0xE4, 0x800, 0x3E4C_CCCD, 0);
             }
             1 => {
                 let veh = pool_at(VEHICLE_POOL, rd::<i32>(t, 4), 0xA18);
@@ -960,7 +945,7 @@ pub fn draw_3d_markers() {
                 let mut pos = ent_pos(veh);
                 let f = if rd::<u16>(veh, 0x22) == 0x229 { K_0_6 } else { K_1_2 };
                 pos[2] = f32_of(h.fmul_m(k(f)).fadd_m(pos[2]).fadd_m(k(K_2)));
-                place_marker_cone(id, local(&mut pos), 0x4000_0000, r, gg, bb, 0xFF, 0x400, 0x3E4C_CCCD, 5, 1);
+                place_marker_cone(GPtr::from_addr(id as usize), GPtr::<f32>::cast::<u8>(local(&mut pos)), f32::from_bits(0x4000_0000), r, gg, bb, 0xFF, 0x400, f32::from_bits(0x3E4C_CCCD), 5, 1);
             }
             2 => {
                 let ped = pool_at(PED_POOL, rd::<i32>(t, 4), 0x7C4);
@@ -970,7 +955,7 @@ pub fn draw_3d_markers() {
                 }
                 let mut pos = ent_pos(ent);
                 pos[2] = f32_of(x(pos[2]).fadd_m(k(K_2_7)));
-                place_marker_cone(id, local(&mut pos), 0x3F99_999A, r, gg, bb, 0xFF, 0x400, 0x3E4C_CCCD, 5, 1);
+                place_marker_cone(GPtr::from_addr(id as usize), GPtr::<f32>::cast::<u8>(local(&mut pos)), f32::from_bits(0x3F99_999A), r, gg, bb, 0xFF, 0x400, f32::from_bits(0x3E4C_CCCD), 5, 1);
             }
             3 | 7 => {
                 if !shown {
@@ -994,7 +979,7 @@ pub fn draw_3d_markers() {
                 }
                 let outside = g::<i32>(CURR_AREA).read() == 0 && rd::<u8>(find_player_ped(-1), 0x2F) == 0;
                 pos[2] = f32_of(x(pos[2]).fadd_m(height).fadd_m(k(if outside { K_1_8 } else { K_1_6 })));
-                place_marker_cone(id, local(&mut pos), 0x3F4C_CCCD, r, gg, bb, 0xFF, 0x400, 0x3E4C_CCCD, 5, 1);
+                place_marker_cone(GPtr::from_addr(id as usize), GPtr::<f32>::cast::<u8>(local(&mut pos)), f32::from_bits(0x3F4C_CCCD), r, gg, bb, 0xFF, 0x400, f32::from_bits(0x3E4C_CCCD), 5, 1);
             }
             _ => {}
         }

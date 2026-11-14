@@ -15,15 +15,12 @@ use sa_math::x87::X87;
 use crate::common::{ftol32, g, jne, jp, k, rd, wr, x, xi};
 
 use sa_core::bindings::rw_matrix_update;
+use sa_core::bindings::rp_geometry_for_all_materials;
+use sa_stream::bindings::fx_get_fx_quality as get_fx_quality;
+use sa_world::bindings::rw_frame_translate;
 orig! {
-    /// `Fx_c::GetFxQuality()` (0x49ea50)
-    fn get_fx_quality(this: GPtr<u8>) -> u32 = thiscall 0x49ea50 => crate::fx::fx_get_fx_quality;
-    /// `RpGeometryForAllMaterials(geometry, callback, data)` (0x74c790)
-    fn rp_geometry_for_all_materials(geo: GPtr<u8>, cb: u32, data: GPtr<u8>) -> GPtr<u8> = cdecl 0x74c790 => unported;
     /// `CGrassRenderer::GenPointInTriangle(CVector* out, v0, v1, v2, float r1, float r2)` (0x5dab00)
     fn gen_point_in_triangle(out: GPtr<f32>, v0: GPtr<f32>, v1: GPtr<f32>, v2: GPtr<f32>, r1: f32, r2: f32) = cdecl 0x5dab00 => crate::mvpb_r1::grass_gen_point_in_triangle;
-    /// `RwFrameTranslate(frame, const RwV3d*, combine)` (0x7f0e30)
-    fn rw_frame_translate(frame: GPtr<u8>, v: GPtr<f32>, combine: u32) -> GPtr<u8> = cdecl 0x7f0e30 => unported;
     /// `atomic->renderCallBack(atomic)` (the pointer at RpAtomic +0x48)
     fn atomic_render_callback(f: u32, a: GPtr<u8>) -> GPtr<u8> = cdecl dyn => unported;
 }
@@ -127,7 +124,7 @@ pub fn draw_tri_plants(plants: GPtr<u8>, count: i32, models: GPtr<u32>) -> u32 {
                 rand_at(0x5d_af9a);
                 continue;
             }
-            rw_frame_translate(frame, GPtr::from_raw(pos.as_mut_ptr()), 0);
+            rw_frame_translate(frame, GPtr::<f32>::cast::<u8>(GPtr::from_raw(pos.as_mut_ptr())), 0);
             let xy = rand_unit(0x5d_afb8).fmul_m(rd::<f32>(p, 0x4c)).fadd_m(rd::<f32>(p, 0x34));
             wr::<f32>(m, 0, xy.fmul_m(rd::<f32>(m, 0)).to_f32());
             wr::<f32>(m, 0x14, xy.fmul_m(rd::<f32>(m, 0x14)).to_f32());

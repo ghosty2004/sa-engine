@@ -11,12 +11,8 @@ use sa_math::x87::X87;
 use crate::common::wr;
 
 pub use sa_core::bindings::eh_vector_ctor;
-orig! {
-    /// `CPlantSurfPropMgr::Initialise()` (0x5DD6C0)
-    pub fn plant_surf_prop_initialise() -> u8 = cdecl 0x5DD6C0 => unported;
-    /// `FUN_006f9eb0` (0x6F9EB0): resets a `CScripted2dEffects` pair list
-    pub fn effect_pairs_reset_call(this: GPtr<u8>) -> u32 = thiscall 0x6F9EB0 => effect_pairs_reset;
-}
+pub use sa_core::bindings::plant_surf_prop_initialise;
+pub use sa_world::bindings::effect_2d_init as effect_pairs_reset_call;
 
 use sa_core::field::g;
 
@@ -148,15 +144,12 @@ pub fn plant_mgr_reload_config() -> u8 {
 }
 
 pub use sa_core::bindings::rw_raster_destroy;
-pub use sa_stream::bindings::find_txd_slot as txd_find_slot;
-pub use sa_stream::bindings::rw_texture_read;
+pub use sa_core::bindings::find_txd_slot as txd_find_slot;
+pub use sa_core::bindings::rw_texture_read;
+pub use sa_core::bindings::pop_current_txd as txd_pop_current;
+pub use sa_core::bindings::push_current_txd as txd_push_current;
+pub use sa_core::bindings::set_current_txd as txd_set_current;
 orig! {
-    /// `CTxdStore::PushCurrentTxd()` (0x7316A0)
-    pub fn txd_push_current() = cdecl 0x7316A0 => sa_stream::txdstore::push_current_txd;
-    /// `CTxdStore::PopCurrentTxd()` (0x7316B0)
-    pub fn txd_pop_current() = cdecl 0x7316B0 => sa_stream::txdstore::pop_current_txd;
-    /// `CTxdStore::SetCurrentTxd(int)` (0x7319C0)
-    pub fn txd_set_current(slot: i32) = cdecl 0x7319C0 => sa_stream::txdstore::set_current_txd;
     /// `C3dMarkers::Init()` (0x724E40)
     pub fn markers_init() = cdecl 0x724E40 => crate::markers::init;
     /// `CCheckpoints::Init()` (0x722880)
@@ -482,7 +475,7 @@ pub fn roadsign_create_texture(text: GPtr<u8>, n: i32) -> GPtr<u8> {
 
 pub use sa_core::bindings::file_close as cfm_close_file;
 pub use sa_core::bindings::open_file as cfm_open_file;
-pub use sa_stream::bindings::load_line as file_loader_load_line;
+pub use sa_core::bindings::load_line as file_loader_load_line;
 orig! {
     /// `ProcSurfaceInfo_c::Init(const char* surface, const char* model, float spacing, float minDist,
     /// int minRot, int maxRot, float minScl, maxScl, minSclZ, maxSclZ, zOffMin, zOffMax, int align,
@@ -532,13 +525,11 @@ pub fn proc_object_man_load_data_file(this: GPtr<u8>) {
 pub use sa_core::bindings::frame_get_ltm as rw_frame_get_ltm;
 pub use sa_core::bindings::rw_matrix_invert;
 pub use sa_core::bindings::rw_v3d_transform_points;
+pub use sa_core::bindings::rp_atomic_resync_interpolated_sphere;
+pub use sa_core::bindings::rp_clump_for_all_atomics;
 orig! {
-    /// `_rpAtomicResyncInterpolatedSphere(RpAtomic*)` (0x7491F0)
-    pub fn rp_atomic_resync_interpolated_sphere(a: GPtr<u8>) -> GPtr<u8> = cdecl 0x7491F0 => unported;
     /// `RpClumpGetNumAtomics(RpClump*)` (0x7498E0)
     pub fn rp_clump_get_num_atomics(c: GPtr<u8>) -> i32 = cdecl 0x7498E0 => unported;
-    /// `RpClumpForAllAtomics(RpClump*, cb, data)` (0x749B70)
-    pub fn rp_clump_for_all_atomics(c: GPtr<u8>, cb: u32, data: GPtr<u8>) -> GPtr<u8> = cdecl 0x749B70 => unported;
 }
 
 /// `RpClumpGetBoundingSphere`'s "use the LTM" flag (byte 0x8D60BC).
@@ -555,7 +546,7 @@ fn atomic_centre(atomic: GPtr<u8>, out: GPtr<u8>) {
     }
     let frame = crate::common::rd::<GPtr<u8>>(clump, 4);
     let m = if use_ltm { rw_frame_get_ltm(frame) } else { frame.byte_add(0x10) };
-    rw_v3d_transform_points(out, atomic.byte_add(0x1C), 1, m);
+    rw_v3d_transform_points(out.cast::<f32>(), GPtr::<u8>::cast::<f32>(atomic.byte_add(0x1C)), 1, m);
 }
 
 /// `(missed by ghidra: data-code-immediate)` (0x734970, cdecl): `RpClumpGetBoundingSphere`'s first
@@ -638,7 +629,7 @@ pub fn rp_clump_get_bounding_sphere(clump: GPtr<u8>, sphere: GPtr<u8>, use_ltm: 
     } else {
         rw_matrix_invert(mp, frame.byte_add(0x10));
     }
-    rw_v3d_transform_points(s2p, s2p, 1, mp);
+    rw_v3d_transform_points(s2p.cast::<f32>(), s2p.cast::<f32>(), 1, mp);
     wr::<f32>(sphere, 0xC, s2[3]);
     wr::<f32>(sphere, 0, s2[0]);
     wr::<f32>(sphere, 4, s2[1]);
@@ -648,11 +639,8 @@ pub fn rp_clump_get_bounding_sphere(clump: GPtr<u8>, sphere: GPtr<u8>, use_ltm: 
 
 pub use sa_core::bindings::find_player_ped;
 pub use sa_pop::bindings::store_shadow_to_be_rendered;
-pub use sa_world::bindings::ped_get_bone_position;
-orig! {
-    /// `CCamera::IsSphereVisible(const CVector*, float)` (0x420D40)
-    pub fn camera_is_sphere_visible(cam: GPtr<u8>, c: GPtr<u8>, r: u32) -> u8 = thiscall 0x420D40 => unported;
-}
+pub use sa_core::bindings::ped_get_bone_position;
+pub use sa_world::bindings::camera_is_sphere_visible;
 
 /// `CShadows::StoreShadowForPedObject(CEntity* ped, float dispX, float dispY, float frontX, float frontY,
 /// float sideX, float sideY)` (0x707B40, cdecl): `pos = ped->GetBonePosition(0, false)`; `d2 = (pos.y -
@@ -680,7 +668,7 @@ pub fn shadows_store_shadow_for_ped_object(ped: GPtr<u8>, disp_x: u32, disp_y: u
     if !is_player {
         let m = crate::common::rd::<GPtr<u8>>(ped, 0x14);
         let at = if m.is_null() { ped.byte_add(4) } else { m.byte_add(0x30) };
-        if camera_is_sphere_visible(g(0xB6F028), at, 0x4000_0000) == 0 {
+        if camera_is_sphere_visible(g(0xB6F028), at, f32::from_bits(0x4000_0000)) == 0 {
             return;
         }
     }
@@ -697,7 +685,7 @@ pub fn shadows_store_shadow_for_ped_object(ped: GPtr<u8>, disp_x: u32, disp_y: u
     let py = X87::from_f32(crate::common::rd::<f32>(pp, 4)).fadd_m(f32::from_bits(disp_y)).to_f32();
     wr::<f32>(pp, 4, py);
     let tex = g::<u32>(0xC403E4).read();
-    store_shadow_to_be_rendered(1, tex, pp, fx, fy, sx, sy, i, i, i, i, 0x4080_0000, 0, 0x3F80_0000, 0, u32::from(is_player));
+    store_shadow_to_be_rendered(1, GPtr::from_addr(tex as usize), pp, fx, fy, sx, sy, i, i, i, i, 0x4080_0000, 0, 0x3F80_0000, GPtr::NULL, u32::from(is_player));
 }
 
 orig! {

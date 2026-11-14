@@ -103,16 +103,15 @@ const F_10: f32 = f32::from_bits(0x4120_0000);
 const F_38: f32 = f32::from_bits(0x4218_0000);
 
 use crate::bindings::display_helper_text_call;
-use crate::bindings::hud_colours_get_rgb;
+use sa_stream::bindings::hud_colours_get_rgb;
+use crate::bindings::analogue_pad_down as pad_analogue_down;
+use crate::bindings::analogue_pad_up as pad_analogue_up;
 orig! {
     /// `CControllerConfigManager::GetControllerSettingTextWithOrderNumber(eControllerAction, eContSetOrder)`
     /// (0x531E20, thiscall)
     fn ccm_setting_text(this: GPtr<u8>, action: i32, order: u32) -> GPtr<u8> = thiscall 0x531E20 => unported;
     /// `CControllerConfigManager::GetButtonComboText(eControllerAction)` (0x52F560, thiscall)
     fn ccm_button_combo_text(this: GPtr<u8>, action: i32) -> GPtr<u8> = thiscall 0x52F560 => unported;
-    /// `CPad::GetAnaloguePadUp()` / `GetAnaloguePadDown()` (0x540950 / 0x540980; ECX = the pad, unread)
-    fn pad_analogue_up() -> u8 = cdecl 0x540950 => unported;
-    fn pad_analogue_down() -> u8 = cdecl 0x540980 => unported;
     /// `CFont::SetScale(float w, float h)` (0x719380)
     fn font_set_scale(w: f32, h: f32) = cdecl 0x719380 => font_set_scale_rust;
     /// `CMenuManager::DrawControllerBound(uint16 y, bool onlyCheck)` (0x57E6E0, thiscall)
@@ -164,7 +163,7 @@ fn set_scale(this: GPtr<u8>, sx: f32, sy: f32) {
 
 /// `SetWrapx(StretchX(100) + W)` (`fiadd`).
 fn set_wrap(this: GPtr<u8>) {
-    font_set_wrapx(f32_of(stretch_x_call(this, F_100).fadd(xi(w()))).to_bits());
+    font_set_wrapx(f32::from_bits(f32_of(stretch_x_call(this, F_100).fadd(xi(w()))).to_bits()));
 }
 
 /// A key word / mouse byte just pressed: new set, old clear.
@@ -350,7 +349,7 @@ pub fn draw_controller_bound(this: GPtr<u8>, y: u32, only_check: u32) {
             let mut rect = [left, bottom, right, top];
             let mut col = [0u8; 4];
             let cp = rgba_ctor(GPtr::from_raw(col.as_mut_ptr()), 0xAC, 0xCB, 0xF1, 0xFF);
-            sprite_draw_rect(GPtr::<f32>::from_raw(rect.as_mut_ptr()).cast(), cp);
+            sprite_draw_rect(GPtr::<u8>::cast::<f32>(GPtr::<f32>::from_raw(rect.as_mut_ptr()).cast()), cp);
             set_color(255, 255, 255, 255);
         }
         font_set_orientation(1);
@@ -589,7 +588,7 @@ pub fn redefine_screen_user_input(this: GPtr<u8>, accept: GPtr<u8>, back: GPtr<u
     }
     get_pad(0);
     if byte_just(MOUSE_LMB) && rd::<i32>(this, 0x1B00) == 4 {
-        audio_report_frontend_event(g(AUDIO_ENGINE), 1, 0, F_1.to_bits());
+        audio_report_frontend_event(g(AUDIO_ENGINE), 1, f32::from_bits(0), f32::from_bits(F_1.to_bits()));
         wr::<u32>(this, 0x1B00, 5);
     }
     if b8(back, 0) == 0 {
@@ -753,7 +752,7 @@ pub fn draw_controller_setup_screen(this: GPtr<u8>) {
     let mut rect = [left, bottom, right, top];
     let mut col = [0u8; 4];
     let colp = rgba_ctor(GPtr::from_raw(col.as_mut_ptr()), 0x31, 0x65, 0x94, 0x64);
-    sprite_draw_rect(GPtr::<f32>::from_raw(rect.as_mut_ptr()).cast(), colp);
+    sprite_draw_rect(GPtr::<u8>::cast::<f32>(GPtr::<f32>::from_raw(rect.as_mut_ptr()).cast()), colp);
 
     let rows = i32::from(row_count(this, 0));
     let mut row: u8 = 0;

@@ -12,7 +12,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 /// `CTheScripts::pIdleScripts` (0xA8B428)
 const IDLE_SCRIPTS: usize = 0xA8B428;
@@ -25,10 +25,7 @@ const BRAIN_RADIUS: usize = 0x859D9C;
 
 use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
 use sa_core::bindings::set_mission_doesnt_require_model;
-orig! {
-    /// `CRunningScript::Init()` (0x4648E0)
-    fn running_script_init(s: GPtr<u8>) = thiscall 0x4648e0 => crate::script_init::running_script_init;
-}
+use crate::bindings::running_script_init;
 
 use sa_core::field::at;
 
@@ -79,7 +76,7 @@ pub fn remove_from_waiting_for_script_brain_array(entity: GPtr<u8>, model_index:
         let ent = at::<GPtr<u8>>(e, 0).read();
         if ent == entity && at::<u16>(e, 4).read() == id {
             if !ent.is_null() {
-                clean_up_old_reference(ent, e);
+                clean_up_old_reference(ent, e.cast::<GPtr<u8>>());
             }
             at::<u32>(e, 0).write(0);
             at::<u16>(e, 4).write(0xFFFF);
@@ -175,10 +172,7 @@ pub fn start_new_streamed_script(this: GPtr<u8>, index: i32) -> GPtr<u8> {
     s
 }
 
-orig! {
-    /// `CTheScripts::StartNewScript(uint8*)` (0x464C20)
-    fn start_new_script_call(ip: GPtr<u8>) -> GPtr<u8> = cdecl 0x464c20 => start_new_script;
-}
+use crate::bindings::start_new_script as start_new_script_call;
 
 /// `CScriptResourceManager::AddToResourceManager(int32 id, uint32 type, CRunningScript* owner)` (stub
 /// 0x4704B0 → 0x156ACE0, `ret 0xC`): over the 0x4B entries (id +0, owner +4, u16 type +8): an entry

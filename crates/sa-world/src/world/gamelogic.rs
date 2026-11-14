@@ -57,16 +57,11 @@ pub use crate::bindings::camera_get_game_cam_position;
 pub use sa_core::bindings::camera_set_fade_colour;
 pub use sa_core::bindings::entity_get_is_on_screen;
 pub use sa_core::bindings::get_pad;
+pub use crate::bindings::ped_get_transformed_bone_position;
+pub use sa_core::bindings::camera_fade;
+pub use sa_core::bindings::entity_register_reference as register_reference;
+pub use sa_core::bindings::world_get_is_line_of_sight_clear as get_is_line_of_sight_clear;
 orig! {
-    /// `CPed::GetTransformedBonePosition(RwV3d& inOut, uint32 bone, bool updateSkin)` (0x5E01C0)
-    pub fn ped_get_transformed_bone_position(ped: GPtr<u8>, v: GPtr<f32>, bone: u32, update: u32) = thiscall 0x5E01C0 => unported;
-    /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, bool x7)` (0x56A490)
-    pub fn get_is_line_of_sight_clear(a: GPtr<u8>, b: GPtr<u8>, b0: i32, b1: i32, b2: i32, b3: i32, b4: i32, b5: i32, b6: i32) -> u8
-        = cdecl 0x56A490 => unported;
-    /// `CCamera::Fade(float, int16)` (0x50AC20)
-    pub fn camera_fade(cam: GPtr<u8>, t: u32, dir: u32) = thiscall 0x50AC20 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    pub fn register_reference(e: GPtr<u8>, r: GPtr<GPtr<u8>>) = thiscall 0x571B70 => unported;
     /// `CCollision::Test2DLineAgainst2DLine` (0x4138D0)
     pub fn test_2d_line_against_2d_line(x1: u32, y1: u32, dx1: u32, dy1: u32, x2: u32, y2: u32, dx2: f32, dy2: f32) -> u8
         = cdecl 0x4138D0 => test2d_port;
@@ -101,7 +96,7 @@ pub fn force_death_restart() {
     GAME_STATE.set(1);
     TIME_OF_LAST_EVENT.set(t.wrapping_add(0xFFFF_F447));
     camera_set_fade_colour(g(THE_CAMERA), 0, 0, 0);
-    camera_fade(g(THE_CAMERA), 0x4080_0000, 0);
+    camera_fade(g(THE_CAMERA), f32::from_bits(0x4080_0000), 0);
 }
 
 /// `CGameLogic::IsSkipWaitingForScriptToFadeIn` (stub 0x4416C0 → 0x1569C30): state 5 → 0 and true.
@@ -178,7 +173,7 @@ pub fn store_peds_weapons(ped: GPtr<u8>) {
 pub fn set_up_skip(px: u32, py: u32, pz: u32, heading: u32, after_mission: u32, veh: GPtr<u8>, by_script: u32) {
     if SKIP_STATE.get() == 2 {
         camera_set_fade_colour(g(THE_CAMERA), 0, 0, 0);
-        camera_fade(g(THE_CAMERA), 0x3F00_0000, 1);
+        camera_fade(g(THE_CAMERA), f32::from_bits(0x3F00_0000), 1);
     }
     SKIP_STATE.set(0);
     let pad = get_pad(0);
@@ -189,7 +184,7 @@ pub fn set_up_skip(px: u32, py: u32, pz: u32, heading: u32, after_mission: u32, 
     SKIP_TIMER.set(sa_core::timer::TIME_MS.get());
     SKIP_VEHICLE.set(veh);
     if !veh.is_null() {
-        register_reference(veh, SKIP_VEHICLE.ptr());
+        register_reference(veh, GPtr::<GPtr<u8>>::cast::<u8>(SKIP_VEHICLE.ptr()));
     }
     SKIP_TO_BE_FINISHED_BY_SCRIPT.set(by_script as u8);
 }
@@ -231,7 +226,7 @@ pub fn is_player_allowed_to_go_in_this_direction(ped: GPtr<u8>, dir_x: f32, dir_
         }
         let mut bone = [0f32, 0.0, f32::from_bits(0x3E4C_CCCD)];
         let bp = GPtr::from_raw(bone.as_mut_ptr());
-        ped_get_transformed_bone_position(ped, bp, 5, 0);
+        ped_get_transformed_bone_position(ped, bp.cast::<u8>(), 5, 0);
         if entity_get_is_on_screen(ped) == 0 {
             return 0;
         }

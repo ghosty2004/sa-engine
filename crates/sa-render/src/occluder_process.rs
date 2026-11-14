@@ -22,11 +22,9 @@ use sa_core::bindings::matrix_mul_vec;
 use sa_core::bindings::matrix_set_rotate_x;
 use sa_core::bindings::matrix_set_rotate_y;
 use sa_core::bindings::matrix_set_rotate_z;
+use sa_core::bindings::calc_screen_coors_71da00 as calc_screen_coors_scaled;
+use sa_core::bindings::matrix_dtor;
 orig! {
-    /// `Common::CalcScreenCoors(const CVector&, CVector*, float*, float*)` (0x71da00)
-    fn calc_screen_coors_scaled(input: GPtr<[f32; 3]>, out: GPtr<[f32; 3]>, sx: GPtr<f32>, sy: GPtr<f32>) -> bool = cdecl 0x71da00 => sa_core::common::calc_screen_coors_scaled;
-    /// `CMatrix::~CMatrix()` (0x59acd0)
-    fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59acd0 => sa_world::world::mvpa_math::matrix_dtor;
     /// `CVector::Normalise()` (0x59c910)
     fn normalise(v: GPtr<CVector>) = thiscall 0x59c910 => sa_world::collision::data::normalise_port;
     /// `CVector::CrossProduct(CVector* out, const CVector* a, const CVector* b)` (0x59c730)
@@ -68,11 +66,11 @@ fn mp(m: &mut [u32; 18]) -> GPtr<u8> {
 fn transform(d: &mut [u32; 18], v: V3) -> V3 {
     let mut vin = v;
     let mut out = [0f32; 3];
-    let r = matrix_mul_vec(
-        GPtr::<f32>::from_raw(out.as_mut_ptr()).cast(),
+    let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(
+        GPtr::<u8>::cast::<f32>(GPtr::<f32>::from_raw(out.as_mut_ptr()).cast()),
         mp(d),
         GPtr::<f32>::from_raw(vin.as_mut_ptr()).cast(),
-    );
+    ));
     [rd::<f32>(r, 0), rd::<f32>(r, 4), rd::<f32>(r, 8)]
 }
 

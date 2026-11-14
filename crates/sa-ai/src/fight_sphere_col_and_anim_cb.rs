@@ -3,16 +3,13 @@
 //! tests and the melee animation's finish callback. Names proposed in `docs/samp/native-unported-names.csv`. Ported
 //! from the 1.0 US bytes. Unverified (docs/verify/HOWTO.md).
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
-orig! {
-    /// `CColSphere::Set(float radius, const CVector& centre, uint8 material, uint8 pieceType, uint8 lighting)`
-    /// (0x40FD10, thiscall, `ret 0x14`)
-    fn col_sphere_set(s: GPtr<u8>, radius: u32, centre: GPtr<u32>, material: u32, piece: u32, light: u32) = thiscall 0x40FD10 => unported;
-}
+use sa_core::bindings::col_sphere_set;
 
 /// The static `CColModel` (0xC17824): bounding box min (+0) and max (+0xC), bounding sphere centre (+0x18) and
 /// radius (+0x24), collision data pointer (+0x2C, 0xC17850); its `CCollisionData` at 0xC17854 (sphere count word
@@ -40,8 +37,8 @@ pub fn set_up_sphere_col_model(_this: GPtr<u8>, radius: u32) {
     let mut centre = [0u32; 3];
     col_sphere_set(
         GPtr::from_addr(g::<u32>(COL_SPHERES_PTR).read() as usize),
-        radius,
-        GPtr::from_raw(centre.as_mut_ptr()),
+        f32::from_bits(radius),
+        GPtr::<u32>::cast::<u8>(GPtr::from_raw(centre.as_mut_ptr())),
         0,
         0,
         0xFF,

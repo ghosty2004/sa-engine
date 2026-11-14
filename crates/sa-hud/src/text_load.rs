@@ -54,6 +54,12 @@ pub use sa_core::bindings::strncmp as crt_strncmp;
 pub use sa_core::bindings::timer_resume;
 pub use sa_core::bindings::timer_suspend;
 pub use sa_world::bindings::check_mission_pack_valid_menu;
+pub use sa_core::bindings::file_mgr_seek as file_seek;
+pub use sa_core::bindings::file_set_dir_my_documents;
+pub use sa_core::bindings::messages_clear_all_displayed_by_game as clear_all_messages_displayed_by_game_call;
+pub use sa_core::bindings::text_get as text_get_call;
+pub use sa_core::bindings::text_unload as text_unload_call;
+pub use sa_world::bindings::gxt_char_to_ascii as gxt_char_to_ascii_call;
 orig! {
     /// CRT `operator new` (0x821195)
     pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x821195 => unported;
@@ -61,16 +67,6 @@ orig! {
     pub fn sprintf0(buf: GPtr<u8>, fmt: GPtr<u8>) -> i32 = cdecl 0x821BB5 => unported;
     /// CRT `sprintf(buf, fmt, a)` (0x821BB5)
     pub fn sprintf1(buf: GPtr<u8>, fmt: GPtr<u8>, a: u32) -> i32 = cdecl 0x821BB5 => unported;
-    /// `CFileMgr::Seek(file, offset, origin)` (0x538990)
-    pub fn file_seek(f: GPtr<u8>, offset: i32, origin: i32) -> bool = cdecl 0x538990 => sa_core::filemgr::seek;
-    /// `CFileMgr::SetDirMyDocuments()` (0x538860)
-    pub fn file_set_dir_my_documents() -> i32 = cdecl 0x538860 => sa_core::filemgr::set_dir_my_documents;
-    /// `CMessages::ClearAllMessagesDisplayedByGame(bool)` (0x69EDC0)
-    pub fn clear_all_messages_displayed_by_game_call(flag: u32) = cdecl 0x69EDC0 => crate::messages::clear_all_messages_displayed_by_game;
-    /// `CText::Unload(bool)` (0x69FF20, thiscall)
-    pub fn text_unload_call(this: GPtr<u8>, keep_mission: u32) = thiscall 0x69FF20 => crate::text::text_unload;
-    /// `CText::Get(const char*)` (0x6A0050, thiscall)
-    pub fn text_get_call(this: GPtr<u8>, key: GPtr<u8>) -> GPtr<u8> = thiscall 0x6A0050 => crate::text::text_get;
     /// `CKeyArray::Load(uint32 length, FILE*, uint32* offset, uint8 nSkip)` (0x69F490, thiscall)
     pub fn key_array_load_call(this: GPtr<u8>, length: u32, f: GPtr<u8>, offset: GPtr<u8>, skip: u32) -> u8 = thiscall 0x69F490 => key_array_load;
     /// `CData::Load(uint32 length, FILE*, uint32* offset, uint8 nSkip)` (0x69F5D0, thiscall)
@@ -81,8 +77,6 @@ orig! {
     pub fn read_chunk_header_call(this: GPtr<u8>, header: GPtr<u8>, f: GPtr<u8>, offset: GPtr<u8>, skip: u32) -> u8 = thiscall 0x69F940 => read_chunk_header;
     /// `CText::LoadMissionPackText()` (0x69F9A0, thiscall)
     pub fn load_mission_pack_text_call(this: GPtr<u8>) = thiscall 0x69F9A0 => load_mission_pack_text;
-    /// `GxtCharToAscii(const GxtChar*, uint8 start)` (0x69F7E0)
-    pub fn gxt_char_to_ascii_call(src: GPtr<u8>, start: u32) -> GPtr<u8> = cdecl 0x69F7E0 => gxt_char_to_ascii;
 }
 
 fn local<T>(v: &mut T) -> GPtr<u8> {

@@ -3,6 +3,7 @@
 //! Ported from the 1.0 US bytes (gta-reversed and `docs/re/specs/AI` as reading aids only).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -15,19 +16,19 @@ const TIME_STEP: usize = 0xB7CB5C;
 /// `g_ikChainMan` (`IKChainManager_c`)
 const IK_CHAIN_MAN: usize = 0xC15448;
 
-use crate::bindings::assoc_group_get_animation;
+use sa_core::bindings::assoc_group_get_animation;
 use crate::bindings::car_door_create_sub_task;
 use crate::bindings::car_door_is_vehicle_in_range;
 use crate::bindings::car_wait_for_door_ctor;
-use crate::bindings::clump_get_association;
+use sa_core::bindings::clump_get_association;
 use crate::bindings::duck_control_duck_move;
 use crate::bindings::go_to_point_ctor as goto_point_ctor_call;
 use crate::bindings::goto_has_circled_target;
 use crate::bindings::goto_quit_ik;
 use crate::bindings::goto_set_up_ik;
 use crate::bindings::ik_get_look_at_entity;
-use crate::bindings::ped_set_move_state;
-use crate::bindings::player_control_button_sprint;
+use sa_world::bindings::ped_set_move_state;
+use sa_world::bindings::player_control_button_sprint;
 use crate::bindings::stand_still_dtor;
 use crate::bindings::stand_still_process_ped;
 use sa_core::bindings::entity_get_is_on_screen;
@@ -48,22 +49,26 @@ use sa_world::bindings::stand_still_ctor;
 use sa_world::bindings::surface_cant_sprint_on;
 use sa_world::bindings::task_complex_ctor;
 use sa_world::bindings::task_simple_ctor;
-use sa_world::bindings::vector_magnitude_sqr;
+use sa_core::bindings::vector_magnitude_sqr;
 use sa_world::bindings::vector_ne;
-use sa_world::bindings::vector_sub;
+use sa_core::bindings::vector_sub;
+use crate::bindings::get_nearest_car_passenger_door;
+use sa_core::bindings::general_get_radian_angle_between_points;
+use sa_core::bindings::general_limit_radian_angle;
+use sa_core::bindings::ik_abort_look_at;
+use sa_core::bindings::tm_get_task_secondary;
+use sa_world::bindings::anim_blend_animation;
+use sa_world::bindings::car_enter_exit_compute_passenger_index_from_car_door as compute_passenger_index_from_car_door;
+use sa_world::bindings::car_enter_exit_get_position_to_open_car_door as get_position_to_open_car_door;
+use sa_world::bindings::follow_point_route_ctor;
+use sa_world::bindings::get_nearest_car_door;
+use sa_world::bindings::ik_look_at;
+use sa_world::bindings::leave_car_ctor;
+use sa_world::bindings::path_to_door_blocked;
+use sa_world::bindings::pause_ctor;
+use sa_world::bindings::task_turn_to_face_ctor as turn_ctor_coords;
+use sa_world::bindings::turn_to_face_entity_ctor as turn_ctor_entity;
 orig! {
-    /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float delta)` (0x4D4610)
-    fn anim_blend_animation(clump: u32, group: u32, id: u32, delta: f32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
-    /// `IKChainManager_c::AbortLookAt(CPed*, int32 blendOutTime)` (0x618280, `ret 8`)
-    fn ik_abort_look_at(this: GPtr<u8>, ped: GPtr<u8>, time: u32) = thiscall 0x618280 => unported;
-    /// `IKChainManager_c::LookAt(purpose, ped, target, time, bone, posn, useTorso, speed, blendTime, priority,
-    /// forceLooking)` (0x618970, `ret 0x2C`)
-    fn ik_look_at(
-        this: GPtr<u8>, purpose: u32, ped: GPtr<u8>, target: u32, time: u32, bone: u32, posn: GPtr<u8>,
-        torso: u32, speed: u32, blend: u32, prio: u32, force: u32
-    ) -> u32 = thiscall 0x618970 => unported;
-    /// `CTaskManager::GetTaskSecondary(int32)` (0x681810, `ret 4`)
-    fn tm_get_task_secondary(tm: GPtr<u8>, slot: u32) -> GPtr<u8> = thiscall 0x681810 => unported;
     /// `CTask::GetTaskType()` (vtable +0x10)
     fn v_get_task_type(t: GPtr<u8>) -> u32 = thiscall vslot 0x10 => unported;
     /// `CEventScanner::ScanForEventsNow(const CPed&, bool)` (0x6053D0, `ret 8`)
@@ -72,10 +77,6 @@ orig! {
     fn player_set_move_blend_ratio(p: GPtr<u8>, v: GPtr<u8>) = thiscall 0x60C520 => unported;
     /// `CPed` vtable +0x5C (`SetMoveAnim`, no stack arguments)
     fn v_ped_set_move_anim(p: GPtr<u8>) = thiscall vslot 0x5C => unported;
-    /// `CGeneral::GetRadianAngleBetweenPoints(float x1, float y1, float x2, float y2)` (0x53CBE0, ST0)
-    fn general_get_radian_angle_between_points(x1: f32, y1: f32, x2: f32, y2: f32) -> f64 = cdecl 0x53CBE0 => unported;
-    /// `CGeneral::LimitRadianAngle(float)` (0x53CB50, ST0)
-    fn general_limit_radian_angle(a: f32) -> f64 = cdecl 0x53CB50 => unported;
     /// `CTaskSimpleAchieveHeading::SetUpIK(CPed*)` (0x667F20, `ret 4`)
     fn achieve_heading_set_up_ik(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x667F20 => unported;
     /// `CTaskComplexGoToPointAndStandStill::CreateSubTask(int32 type, CPed*)` (0x6682D0, `ret 8`)
@@ -83,40 +84,16 @@ orig! {
     /// `CTaskComplexGoToPointAndStandStill::SelectMoveState(CTaskSimpleGoToPoint*, CPed*, float, float)` (0x668250,
     /// `ret 0x10`)
     fn gtpss_select_move_state(t: GPtr<u8>, task: GPtr<u8>, ped: GPtr<u8>, r: u32, c: u32) = thiscall 0x668250 => unported;
-    /// `CTaskSimplePause::CTaskSimplePause(int32)` (0x48E750, `ret 4`)
-    fn pause_ctor(t: GPtr<u8>, time: u32) -> GPtr<u8> = thiscall 0x48E750 => unported;
-    /// `CTaskComplexLeaveCar::CTaskComplexLeaveCar(CVehicle*, int32, int32, bool, bool)` (0x63B8C0, `ret 0x14`)
-    fn leave_car_ctor(t: GPtr<u8>, veh: u32, a1: u32, a2: u32, a3: u32, a4: u32) -> GPtr<u8> = thiscall 0x63B8C0 => unported;
     /// `CTask::MakeAbortable(CPed*, int32, const CEvent*)` (vtable +0x18)
     fn v_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, prio: u32, ev: u32) -> u8 = thiscall vslot 0x18 => unported;
     /// `CTaskComplex::CreateFirstSubTask(CPed*)` (vtable +0x24)
     fn v_create_first_sub_task(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x24 => unported;
     /// `CTaskComplexTurnToFaceEntityOrCoord::ComputeTargetHeading(CPed*)` (0x66B9D0, `ret 4`, ST0)
     fn turn_compute_target_heading(t: GPtr<u8>, ped: GPtr<u8>) -> f64 = thiscall 0x66B9D0 => unported;
-    /// `CTaskComplexTurnToFaceEntityOrCoord` (entity) constructor (0x66B890, `ret 0xC`)
-    fn turn_ctor_entity(t: GPtr<u8>, e: u32, rate: u32, tol: u32) -> GPtr<u8> = thiscall 0x66B890 => unported;
-    /// `CTaskComplexTurnToFaceEntityOrCoord` (coords) constructor (0x66B910, `ret 0xC`)
-    fn turn_ctor_coords(t: GPtr<u8>, pos: GPtr<u8>, rate: u32, tol: u32) -> GPtr<u8> = thiscall 0x66B910 => unported;
     /// `CTaskSimpleCarGoToPointNearDoorUntilDoorNotInUse` constructor (0x646D70, `ret 0x10`)
     fn car_go_near_door_ctor(t: GPtr<u8>, veh: u32, door: u32, pos: GPtr<u8>, ms: u32) -> GPtr<u8> = thiscall 0x646D70 => unported;
-    /// `CTaskComplexFollowPointRoute` constructor (0x671510, `ret 0x20`)
-    fn follow_point_route_ctor(
-        t: GPtr<u8>, ms: u32, route: u32, mode: u32, r1: u32, r2: u32, a6: u32, a7: u32, a8: u32
-    ) -> GPtr<u8> = thiscall 0x671510 => unported;
-    /// `CCarEnterExit::GetPositionToOpenCarDoor(CVector* out, CVehicle*, int32 door)` (0x64E740, returns `out`)
-    fn get_position_to_open_car_door(out: GPtr<u8>, veh: u32, door: u32) -> GPtr<u8> = cdecl 0x64E740 => unported;
     /// `CTaskComplexGoToCarDoorAndStandStill::ComputeRouteToDoor(const CPed&)` (0x645910, `ret 4`)
     fn car_door_compute_route_to_door(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x645910 => unported;
-    /// `CCarEnterExit::IsPathToDoorBlockedByVehicleCollisionModel(const CPed*, CVehicle*, const CVector&)` (0x651210)
-    fn path_to_door_blocked(ped: GPtr<u8>, veh: u32, pos: GPtr<u8>) -> u8 = cdecl 0x651210 => unported;
-    /// `CCarEnterExit::GetNearestCarDoor(const CPed*, const CVehicle*, CVector&, int32&)` (0x6528F0)
-    fn get_nearest_car_door(ped: GPtr<u8>, veh: u32, pos: GPtr<u8>, door: GPtr<u8>) -> u8 = cdecl 0x6528F0 => unported;
-    /// `CCarEnterExit::GetNearestCarPassengerDoor(ped, veh, CVector*, int32*, bool, bool, bool)` (0x650BB0)
-    fn get_nearest_car_passenger_door(
-        ped: GPtr<u8>, veh: u32, pos: GPtr<u8>, door: GPtr<u8>, a: u32, b: u32, c: u32
-    ) -> u8 = cdecl 0x650BB0 => unported;
-    /// `CCarEnterExit::ComputePassengerIndexFromCarDoor(const CVehicle*, int32)` (0x64F1E0)
-    fn compute_passenger_index_from_car_door(veh: u32, door: u32) -> i32 = cdecl 0x64F1E0 => unported;
 }
 
 use sa_core::field::ptr_of as buf;
@@ -204,7 +181,7 @@ pub fn stand_still_process_ped_port(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
                 }
             };
             if !ducked {
-                anim_blend_animation(rd::<u32>(ped, 0x18), rd::<u32>(ped, 0x4D4), 3, rd::<f32>(this, 0x1C));
+                anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), rd::<u32>(ped, 0x4D4), 3, rd::<f32>(this, 0x1C));
             }
             let pd = rd::<GPtr<u8>>(ped, 0x480);
             if !pd.is_null() {
@@ -216,7 +193,7 @@ pub fn stand_still_process_ped_port(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         ped_set_move_state(ped, 1);
     }
     if rd::<u8>(this, 0x19) != 0 {
-        let a = clump_get_association(rd::<u32>(ped, 0x18), 3);
+        let a = clump_get_association(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 3);
         if !a.is_null() && !x(rd::<f32>(a, 0x18)).fcom(gf(0x862CD0)).test_any(0x41) {
             return 1;
         }
@@ -275,7 +252,7 @@ pub fn goto_set_up_ik_port(this: GPtr<u8>, ped: GPtr<u8>) {
     if entity_get_is_on_screen(ped) == 0 || rd::<u8>(this, 0x1C) & 0x10 != 0 {
         return;
     }
-    if ik_get_look_at_entity(ik(), ped) != 0 {
+    if GPtr::<u8>::addr(ik_get_look_at_entity(ik(), ped)) as u32 != 0 {
         return;
     }
     if !tm_get_task_secondary(ped_intel(ped).byte_add(4), 5).is_null() {
@@ -296,7 +273,7 @@ pub fn goto_set_up_ik_port(this: GPtr<u8>, ped: GPtr<u8>) {
     let mut d = [0u32; 3];
     let dp = buf(&mut d);
     vector_sub(dp, this.byte_add(0xC), ent_pos(ped));
-    let m2 = X87::from_f64_exact(vector_magnitude_sqr(dp));
+    let m2 = X87::from_f64_exact(vector_magnitude_sqr(dp.cast::<f32>()));
     if m2.fcom(gf(0x85EED4)).test_any(0x41) {
         return;
     }
@@ -318,7 +295,7 @@ pub fn goto_set_up_ik_port(this: GPtr<u8>, ped: GPtr<u8>) {
     let ny = f32_of(x(ty).fadd(x(vy).fadd(x(vy))));
     let nz = f32_of(x(vz2).fadd(pz).fadd_m(g::<f32>(0x86FD40).read()));
     let mut posn = [nx.to_bits(), ny.to_bits(), nz.to_bits()];
-    ik_look_at(ik(), 0x86FD44, ped, 0, 0x1388, 0xFFFF_FFFF, buf(&mut posn), 0, 0x3E80_0000, 0x1F4, 3, 0);
+    ik_look_at(ik(), GPtr::from_addr(0x86FD44), ped, GPtr::NULL, 0x1388, 0xFFFF_FFFF, buf(&mut posn), 0, 0x3E80_0000, 0x1F4, 3, 0);
     wr::<u8>(this, 0x1C, rd::<u8>(this, 0x1C) | 0x10);
 }
 
@@ -381,7 +358,7 @@ pub fn goto_point_make_abortable(this: GPtr<u8>, ped: GPtr<u8>, prio: i32, _ev: 
         2 => {
             let mut s = [0u32; 8];
             let sp = buf(&mut s);
-            stand_still_ctor(sp, 0, 0, 0, 0x4100_0000);
+            stand_still_ctor(sp, 0, 0, 0, f32::from_bits(0x4100_0000));
             stand_still_process_ped(sp, ped);
             stand_still_dtor(sp);
             1
@@ -407,7 +384,7 @@ fn goto_point_player_move(this: GPtr<u8>, ped: GPtr<u8>) {
     }
     let slot = rd::<i8>(ped, 0x718) as i32;
     let wt = rd::<u32>(ped, (slot * 0x1C + 0x5A0) as isize);
-    let wi = weapon_info_get(wt, 1);
+    let wi = weapon_info_get(wt as i32, 1);
     let mut sprint = false;
     let mut check = (rd::<u32>(wi, 0x18) >> 9) & 1 == 0;
     if check && !intel_get_task_hold(ped_intel(ped), 0).is_null() {
@@ -506,7 +483,7 @@ pub fn goto_point_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         let d = intel_get_task_duck(ped_intel(ped), 0);
         duck_control_duck_move(d, 0.0, my);
     } else {
-        ped_set_move_state(ped, rd::<u32>(this, 8));
+        ped_set_move_state(ped, rd::<u32>(this, 8) as i32);
         if ped_is_player(ped) != 0 {
             goto_point_player_move(this, ped);
         } else {
@@ -592,7 +569,7 @@ pub fn achieve_heading_set_up_ik_port(this: GPtr<u8>, ped: GPtr<u8>) {
     if entity_get_is_on_screen(ped) == 0 || rd::<u8>(this, 0x14) & 1 != 0 {
         return;
     }
-    if ik_get_look_at_entity(ik(), ped) != 0 || !tm_get_task_secondary(ped_intel(ped).byte_add(4), 5).is_null() {
+    if GPtr::<u8>::addr(ik_get_look_at_entity(ik(), ped)) as u32 != 0 || !tm_get_task_secondary(ped_intel(ped).byte_add(4), 5).is_null() {
         return;
     }
     let parent = rd::<GPtr<u8>>(this, 4);
@@ -606,7 +583,7 @@ pub fn achieve_heading_set_up_ik_port(this: GPtr<u8>, ped: GPtr<u8>) {
     let py = f32_of(x(rd::<f32>(this, 8)).fcos().fdouble().fadd_m(rd::<f32>(pos, 4)));
     let pz = f32_of(x(rd::<f32>(pos, 8)).fadd_m(g::<f32>(0x86FD40).read()));
     let mut posn = [px.to_bits(), py.to_bits(), pz.to_bits()];
-    ik_look_at(ik(), 0x86FD98, ped, 0, 0x1388, 0xFFFF_FFFF, buf(&mut posn), 0, 0x3E80_0000, 0x1F4, 3, 0);
+    ik_look_at(ik(), GPtr::from_addr(0x86FD98), ped, GPtr::NULL, 0x1388, 0xFFFF_FFFF, buf(&mut posn), 0, 0x3E80_0000, 0x1F4, 3, 0);
     wr::<u8>(this, 0x14, rd::<u8>(this, 0x14) | 1);
 }
 
@@ -750,15 +727,15 @@ pub fn gtpss_create_sub_task_port(this: GPtr<u8>, ty: i32, ped: GPtr<u8>) -> GPt
                 if t.is_null() {
                     return GPtr::NULL;
                 }
-                stand_still_ctor(t, 0x7D0, 0, 1, delta.to_bits())
+                stand_still_ctor(t, 0x7D0, 0, 1, f32::from_bits(delta.to_bits()))
             } else {
                 let t = task_new(0x20);
-                if t.is_null() { GPtr::NULL } else { stand_still_ctor(t, 1, 0, 0, 0x4100_0000) }
+                if t.is_null() { GPtr::NULL } else { stand_still_ctor(t, 1, 0, 0, f32::from_bits(0x4100_0000)) }
             }
         }
         0x2C0 => {
             let t = task_new(0x34);
-            if t.is_null() { GPtr::NULL } else { leave_car_ctor(t, rd::<u32>(ped, 0x58C), 0, 0, 1, 0) }
+            if t.is_null() { GPtr::NULL } else { leave_car_ctor(t, GPtr::from_addr(rd::<u32>(ped, 0x58C) as usize), 0, 0, 1, 0) }
         }
         0x384 => {
             let t = task_new(0x30);
@@ -767,7 +744,7 @@ pub fn gtpss_create_sub_task_port(this: GPtr<u8>, ty: i32, ped: GPtr<u8>) -> GPt
             } else {
                 let r = rd::<u32>(this, 0x1C);
                 let b = (rd::<u8>(this, 0x24) & 1) as u32;
-                goto_point_ctor_call(t, rd::<u32>(this, 0xC), this.byte_add(0x10), r, 0, b)
+                goto_point_ctor_call(t, rd::<u32>(this, 0xC), this.byte_add(0x10), r, 0, b as u8)
             };
             if rd::<u8>(this, 0x24) & 8 != 0 {
                 wr::<u8>(t, 0x20, rd::<u8>(t, 0x20) | 0x10);
@@ -891,7 +868,7 @@ pub fn turn_clone(this: GPtr<u8>) -> GPtr<u8> {
         return GPtr::NULL;
     }
     if ent {
-        turn_ctor_entity(t, rd::<u32>(this, 0xC), rd::<u32>(this, 0x20), rd::<u32>(this, 0x24))
+        turn_ctor_entity(t, GPtr::from_addr(rd::<u32>(this, 0xC) as usize), rd::<u32>(this, 0x20), rd::<u32>(this, 0x24))
     } else {
         turn_ctor_coords(t, this.byte_add(0x14), rd::<u32>(this, 0x20), rd::<u32>(this, 0x24))
     }
@@ -969,11 +946,11 @@ pub fn car_door_create_sub_task_port(this: GPtr<u8>, ty: u32, ped: GPtr<u8>) -> 
         }
         0xCB => {
             let t = alloc(0x20);
-            if t.is_null() { GPtr::NULL } else { stand_still_ctor(t, 1, 0, 0, 0x4100_0000) }
+            if t.is_null() { GPtr::NULL } else { stand_still_ctor(t, 1, 0, 0, f32::from_bits(0x4100_0000)) }
         }
         0x32A => {
             let t = alloc(0x14);
-            if t.is_null() { GPtr::NULL } else { car_wait_for_door_ctor(t, rd::<u32>(this, 0xC), rd::<u32>(this, 0x34), 0) }
+            if t.is_null() { GPtr::NULL } else { car_wait_for_door_ctor(t, GPtr::from_addr(rd::<u32>(this, 0xC) as usize), rd::<u32>(this, 0x34), 0) }
         }
         0x33C => {
             wr::<u32>(ped, 0x474, rd::<u32>(ped, 0x474) | 8);
@@ -1000,7 +977,7 @@ pub fn car_door_create_sub_task_port(this: GPtr<u8>, ty: u32, ped: GPtr<u8>) -> 
             }
             let (k2, k1) = (g::<u32>(0x86FC9C).read(), g::<u32>(0x86FC98).read());
             let route = rd::<u32>(this, 0x4C);
-            follow_point_route_ctor(t, rd::<u32>(this, 0x10), route, 0, k1, k2, 0, 0, 0)
+            follow_point_route_ctor(t, rd::<u32>(this, 0x10), GPtr::from_addr(route as usize), 0, k1, k2, 0, 0, 0)
         }
         _ => GPtr::NULL,
     }
@@ -1042,7 +1019,7 @@ pub fn car_door_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> 
         }
         0x389 => {
             let mut o = [0u32; 3];
-            let r = get_position_to_open_car_door(buf(&mut o), rd::<u32>(this, 0xC), rd::<u32>(this, 0x34));
+            let r = get_position_to_open_car_door(buf(&mut o), GPtr::from_addr(rd::<u32>(this, 0xC) as usize), rd::<u32>(this, 0x34));
             wr::<u32>(this, 0x38, rd::<u32>(r, 0));
             wr::<u32>(this, 0x3C, rd::<u32>(r, 4));
             wr::<u32>(this, 0x40, rd::<u32>(r, 8));
@@ -1063,7 +1040,7 @@ fn car_door_start_timer(this: GPtr<u8>) {
 /// The target (+0x38) = `GetPositionToOpenCarDoor(vehicle, door)`.
 fn car_door_set_target(this: GPtr<u8>, veh: u32, door: u32) {
     let mut o = [0u32; 3];
-    let r = get_position_to_open_car_door(buf(&mut o), veh, door);
+    let r = get_position_to_open_car_door(buf(&mut o), GPtr::from_addr(veh as usize), door);
     wr::<u32>(this, 0x38, rd::<u32>(r, 0));
     wr::<u32>(this, 0x3C, rd::<u32>(r, 4));
     wr::<u32>(this, 0x40, rd::<u32>(r, 8));
@@ -1071,7 +1048,7 @@ fn car_door_set_target(this: GPtr<u8>, veh: u32, door: u32) {
 
 /// A blocked path to the target door computes a route (0x389), else `open` follows.
 fn car_door_route_or(this: GPtr<u8>, ped: GPtr<u8>, open: u32) -> GPtr<u8> {
-    if path_to_door_blocked(ped, rd::<u32>(this, 0xC), this.byte_add(0x38)) != 0 {
+    if path_to_door_blocked(ped, GPtr::from_addr(rd::<u32>(this, 0xC) as usize), this.byte_add(0x38)) != 0 {
         car_door_compute_route_to_door(this, ped);
         car_door_create_sub_task(this, 0x389, ped)
     } else {
@@ -1100,7 +1077,7 @@ pub fn car_door_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8>
             wr::<u32>(this, 0x34, door);
             car_door_set_target(this, rd::<u32>(this, 0xC), door);
         } else {
-            if get_nearest_car_door(ped, rd::<u32>(this, 0xC), this.byte_add(0x38), this.byte_add(0x34)) == 0 {
+            if get_nearest_car_door(ped, GPtr::from_addr(rd::<u32>(this, 0xC) as usize), this.byte_add(0x38), this.byte_add(0x34)) == 0 {
                 return car_door_create_sub_task(this, 0xCB, ped);
             }
             car_door_start_timer(this);
@@ -1109,16 +1086,16 @@ pub fn car_door_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8>
     }
     if door == 0 {
         let (pos, dp) = (this.byte_add(0x38), this.byte_add(0x34));
-        if get_nearest_car_passenger_door(ped, rd::<u32>(this, 0xC), pos, dp, 1, 1, 1) != 0 {
+        if get_nearest_car_passenger_door(ped, GPtr::from_addr(rd::<u32>(this, 0xC) as usize), pos, dp, 1, 1, 1) != 0 {
             car_door_start_timer(this);
             return car_door_route_or(this, ped, 0x384);
         }
-        if get_nearest_car_passenger_door(ped, rd::<u32>(this, 0xC), pos, dp, 1, 0, 1) == 0 {
+        if get_nearest_car_passenger_door(ped, GPtr::from_addr(rd::<u32>(this, 0xC) as usize), pos, dp, 1, 0, 1) == 0 {
             return car_door_create_sub_task(this, 0xCB, ped);
         }
         return car_door_route_or(this, ped, 0x33C);
     }
-    let idx = compute_passenger_index_from_car_door(rd::<u32>(this, 0xC), door);
+    let idx = compute_passenger_index_from_car_door(GPtr::from_addr(rd::<u32>(this, 0xC) as usize), door);
     let veh = rd::<GPtr<u8>>(this, 0xC);
     let occ = rd::<GPtr<u8>>(veh, (idx.wrapping_mul(4) + 0x464) as isize);
     if !occ.is_null() && rd::<u32>(occ, 0x46C) & 0x2000_0000 != 0 {

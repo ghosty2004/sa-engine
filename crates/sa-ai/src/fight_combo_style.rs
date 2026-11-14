@@ -3,20 +3,16 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::{g, rd, wr};
 
-use crate::bindings::anim_get_anim_block_name as anim_block_name;
+use sa_world::bindings::anim_get_anim_block_name as anim_block_name;
 use sa_core::bindings::get_weapon_info as weapon_info;
-use sa_stream::bindings::anim_add_block_ref as add_anim_block_ref;
+use sa_core::bindings::anim_add_block_ref as add_anim_block_ref;
 use sa_stream::bindings::anim_remove_block_ref as remove_anim_block_ref;
-orig! {
-    /// `CAnimManager::GetAnimationBlock(const char*)` (0x4D3940)
-    fn animation_block(name: u32) -> GPtr<u8> = cdecl 0x4D3940 => unported;
-    /// `CStreaming::RequestModel(int32, int32 flags)` (0x4087E0)
-    fn request_model(model: i32, flags: u32) = cdecl 0x4087E0 => unported;
-}
+use sa_core::bindings::get_animation_block as animation_block;
+use sa_core::bindings::streaming_request_model as request_model;
 
 /// `CAnimManager::ms_aAnimAssocGroups` (pointer at 0xB4EA34; 0x14 bytes per group, the block pointer at +0)
 const ASSOC_GROUPS: usize = 0xB4EA34;
@@ -29,7 +25,7 @@ const COMBO_DATA: u32 = 0xC170D0;
 fn group_block(grp: u32) -> GPtr<u8> {
     let b = rd::<GPtr<u8>>(g::<GPtr<u8>>(ASSOC_GROUPS).read(), grp as isize * 0x14);
     if b.is_null() {
-        animation_block(anim_block_name(grp))
+        animation_block(GPtr::from_addr((GPtr::<u8>::addr(anim_block_name(grp)) as u32) as usize))
     } else {
         b
     }
@@ -70,7 +66,7 @@ pub fn fight_choose_combo_style(this: GPtr<u8>, ped: GPtr<u8>, command: u32) -> 
         return 0;
     }
     let slot = i32::from(rd::<i8>(ped, 0x718));
-    let wi = weapon_info(rd::<u32>(ped, 0x5A0 + slot as isize * 0x1C), 1);
+    let wi = weapon_info(rd::<u32>(ped, 0x5A0 + slot as isize * 0x1C) as i32, 1);
     let mut style = rd::<u8>(wi, 0x6E);
     if cmd == 0xC || (style == 4 && (cmd == 2 || cmd == 0)) {
         style = rd::<u8>(ped, 0x72D);
@@ -88,7 +84,7 @@ pub fn fight_choose_combo_style(this: GPtr<u8>, ped: GPtr<u8>, command: u32) -> 
     if cg != cur {
         if rd::<u8>(this, 0xA) != 0 {
             let b = rd::<GPtr<u8>>(g::<GPtr<u8>>(ASSOC_GROUPS).read(), cur as isize * 0x14);
-            remove_anim_block_ref(block_index(b));
+            remove_anim_block_ref(block_index(b) as u32);
             wr::<u8>(this, 0xA, 0);
         }
         wr::<u32>(this, 0xC, rd::<u32>(combo, 0));

@@ -10,6 +10,7 @@ use sa_math::x87::X87;
 
 use crate::common::{ftol32, g, k, rd, wr, x};
 
+use sa_core::bindings::world_clear_scan_codes as clear_scan_codes;
 orig! {
     /// `CPlantMgr::_CalcDistanceSqrToEntity(CEntity*, const CVector*)` (0x5DBE40): EBX = entity, ESI =
     /// position, ST0 result
@@ -18,8 +19,6 @@ orig! {
     fn release_entry(e: GPtr<u8>) = thiscall 0x5DB8A0 => crate::mvpb_r1::plant_col_ent_entry_release_entry;
     /// `CPlantColEntEntry::AddEntry(CEntity*)` (0x5DB7D0)
     fn add_entry(e: GPtr<u8>, entity: GPtr<u8>) -> GPtr<u8> = thiscall 0x5DB7D0 => crate::mvpb_r1::plant_col_ent_entry_add_entry;
-    /// `CWorld::ClearScanCodes()` (0x563470; the port is unhookable)
-    fn clear_scan_codes() = cdecl 0x563470 => sa_world::world::cworld::clear_scan_codes;
     /// `CBaseModelInfo::GetModelType()` (vtable +0x10)
     fn mi_get_model_type(mi: GPtr<u8>) -> u8 = thiscall vslot 0x10 => unported;
 }

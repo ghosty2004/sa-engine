@@ -15,9 +15,11 @@ use sa_world::physical::attach::{
 };
 use sa_world::physical::shared::*;
 
-pub use crate::bindings::get_wheel_status;
+pub use sa_world::bindings::get_wheel_status;
 pub use sa_core::bindings::get_atan_of_xy;
 pub use sa_world::bindings::vector_ctor_iterator;
+pub use sa_world::bindings::get_stat_value;
+pub use sa_world::bindings::world_process_vertical_line as process_vertical_line;
 orig! {
     /// `CPhysical::AddCollisionRecord(CEntity*)` (0x543490)
     pub fn add_collision_record(e: Ent, other: Ent) = thiscall 0x543490 => sa_world::physical::base::add_collision_record;
@@ -31,14 +33,8 @@ orig! {
     pub fn clump_get_association(clump: Ent, id: u32) -> Ent = cdecl 0x4d68b0 => unported;
     /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float)` (0x4D4610)
     pub fn blend_animation(clump: Ent, group: u32, id: u32, delta: f32) -> Ent = cdecl 0x4d4610 => unported;
-    /// `CStats::GetStatValue(uint16)` (0x558E40, ST0)
-    pub fn get_stat_value(stat: u16) -> f64 = cdecl 0x558e40 => sa_world::world::restart::stat_value_port;
     /// `CVehicle::GetVehicleAppearance()` (0x6D1080)
     pub fn get_vehicle_appearance(v: Ent) -> u32 = thiscall 0x6d1080 => crate::vehicle2::get_vehicle_appearance;
-    /// `CWorld::ProcessVerticalLine(const CVector&, float, CColPoint&, CEntity*&, bool x6, CStoredCollPoly*)`
-    /// (0x5674E0, AL)
-    pub fn process_vertical_line(origin: GPtr<u8>, distance: f32, cp: GPtr<u8>, out: GPtr<u8>, b: u8, v: u8, p: u8,
-        o: u8, d: u8, see: u8, poly: GPtr<u8>) -> u8 = cdecl 0x5674e0 => sa_world::world::mvpc_world1::process_vertical_line;
     /// virtual `CVehicle::GetHeightAboveRoad()` (vtable +0xD4, ST0)
     pub fn get_height_above_road_v(v: Ent) -> f64 = thiscall vslot 0xD4 => unported;
     /// `CVector::Normalise()` (0x59C910)
@@ -967,7 +963,7 @@ pub fn automobile_process_entity_collision(this: Ent, e: Ent, cps: Ent) -> i32 {
         if f.jne(0x41) {
             continue;
         }
-        if get_wheel_status(this.byte_add(0x5A0), i as i32) != 0 {
+        if get_wheel_status(this.byte_add(0x5A0), (i as i32) as u32) != 0 {
             continue;
         }
         let wcp = this.byte_add(0x724 + 0x2C * i);

@@ -34,44 +34,25 @@ use sa_core::bindings::sprite2d_draw;
 use sa_core::bindings::sprite2d_set_texture;
 use sa_core::bindings::sprite_draw_rect as sprite2d_draw_rect;
 use sa_core::bindings::txd_add_ref;
+use sa_core::bindings::add_txd_slot as txd_add_slot;
+use sa_core::bindings::calc_screen_coors;
+use sa_core::bindings::file_close;
+use sa_core::bindings::find_txd_slot as txd_find_slot;
+use sa_core::bindings::font_set_background_color;
+use sa_core::bindings::font_set_centre_size;
+use sa_core::bindings::font_set_drop_color;
+use sa_core::bindings::font_set_drop_shadow_position;
+use sa_core::bindings::font_set_justify;
+use sa_core::bindings::font_set_scale;
+use sa_core::bindings::font_set_wrapx;
+use sa_core::bindings::load_txd as txd_load;
+use sa_core::bindings::open_file as file_open;
+use sa_core::bindings::rw_raster_create;
+use sa_core::bindings::rw_raster_unlock;
+use sa_core::bindings::world_get_is_line_of_sight_clear as line_of_sight_clear;
 orig! {
-    /// `CTxdStore::FindTxdSlot(const char*)` (0x731850)
-    fn txd_find_slot(name: GPtr<u8>) -> i32 = cdecl 0x731850 => unported;
-    /// `CTxdStore::AddTxdSlot(const char*)` (0x731C80)
-    fn txd_add_slot(name: GPtr<u8>) -> i32 = cdecl 0x731C80 => unported;
-    /// `CTxdStore::LoadTxd(int, const char* filename)` (0x7320B0)
-    fn txd_load(slot: i32, file: GPtr<u8>) -> u8 = cdecl 0x7320B0 => unported;
-    /// `CWorld::GetIsLineOfSightClear(a, b, buildings, vehicles, peds, objects, dummies, seeThrough, cameraIgnore)`
-    /// (0x56A490)
-    fn line_of_sight_clear(a: GPtr<f32>, b: GPtr<f32>, buildings: u32, vehicles: u32, peds: u32, objects: u32, dummies: u32, see_through: u32, camera_ignore: u32) -> u8 = cdecl 0x56A490 => unported;
-    /// `CFileMgr::OpenFile(path, mode)` (0x538900)
-    fn file_open(path: GPtr<u8>, mode: GPtr<u8>) -> GPtr<u8> = cdecl 0x538900 => unported;
-    /// `CFileMgr::CloseFile(file)` (0x5389D0)
-    fn file_close(f: GPtr<u8>) -> i32 = cdecl 0x5389D0 => unported;
-
     /// `RwRenderStateSet(state, value)` through `RwEngineInstance` +0x20
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `RwRasterCreate(width, height, depth, flags)` (0x7FB230)
-    fn rw_raster_create(w: i32, h: i32, depth: i32, flags: u32) -> GPtr<u8> = cdecl 0x7FB230 => unported;
-    /// `RwRasterUnlock(raster)` (0x7FAEC0)
-    fn rw_raster_unlock(r: GPtr<u8>) -> u32 = cdecl 0x7FAEC0 => unported;
-    /// `CSprite::CalcScreenCoors(const RwV3d&, RwV3d* out, float* w, float* h, bool, bool)` (0x70CE30)
-    fn calc_screen_coors(inp: GPtr<f32>, out: GPtr<f32>, w: GPtr<f32>, h: GPtr<f32>, a: u32, b: u32) -> u8 = cdecl 0x70CE30 => unported;
-
-    /// `CFont::SetScale(float, float)` (0x719380)
-    fn font_set_scale(w: f32, h: f32) = cdecl 0x719380 => unported;
-    /// `CFont::SetJustify(bool)` (0x719600)
-    fn font_set_justify(v: u32) = cdecl 0x719600 => unported;
-    /// `CFont::SetWrapx(float)` (0x7194D0)
-    fn font_set_wrapx(v: f32) = cdecl 0x7194D0 => unported;
-    /// `CFont::SetCentreSize(float)` (0x7194E0)
-    fn font_set_centre_size(v: f32) = cdecl 0x7194E0 => unported;
-    /// `CFont::SetBackgroundColor(CRGBA)` (0x7195E0)
-    fn font_set_background_color(c: u32) = cdecl 0x7195E0 => unported;
-    /// `CFont::SetDropColor(CRGBA)` (0x719510)
-    fn font_set_drop_color(c: u32) = cdecl 0x719510 => unported;
-    /// `CFont::SetDropShadowPosition(int8)` (0x719570)
-    fn font_set_drop_shadow_position(v: u32) = cdecl 0x719570 => unported;
 }
 
 /// RenderWare render states.
@@ -131,8 +112,8 @@ pub fn line_clear(a: Vec3, b: Vec3) -> bool {
     let mut pa = [a.x, a.y, a.z];
     let mut pb = [b.x, b.y, b.z];
     line_of_sight_clear(
-        GPtr::from_raw(pa.as_mut_ptr()),
-        GPtr::from_raw(pb.as_mut_ptr()),
+        GPtr::<f32>::cast::<u8>(GPtr::from_raw(pa.as_mut_ptr())),
+        GPtr::<f32>::cast::<u8>(GPtr::from_raw(pb.as_mut_ptr())),
         1,
         0,
         0,
@@ -170,7 +151,7 @@ pub fn upload_rgba(w: u32, h: u32, rgba: &[u8], mipmaps: bool) -> Option<u32> {
         vec![(w, h, rgba[..(w * h * 4) as usize].to_vec())]
     };
     for (level, (lw, lh, pixels)) in levels.iter().enumerate() {
-        let px = rw_raster_lock(r, level as u32, LOCK_WRITE);
+        let px = GPtr::<u8>::addr(rw_raster_lock(r, level as u32, LOCK_WRITE)) as u32;
         if px == 0 {
             return if level == 0 { None } else { Some(r.addr() as u32) };
         }
@@ -365,7 +346,7 @@ pub fn draw(
                 let mut r = [rect[0], rect[3], rect[2], rect[1]];
                 let mut c = crgba(*colour);
                 sprite2d_draw_rect(
-                    GPtr::from_raw(r.as_mut_ptr().cast::<u8>()),
+                    GPtr::<u8>::cast::<f32>(GPtr::from_raw(r.as_mut_ptr().cast::<u8>())),
                     GPtr::from_raw(&mut c).cast(),
                 );
             }
@@ -455,7 +436,7 @@ pub fn draw(
                     let mut c = *colour;
                     sprite2d_draw(
                         GPtr::from_raw(&mut sprite).cast(),
-                        GPtr::from_raw(r.as_mut_ptr().cast::<u8>()),
+                        GPtr::<u8>::cast::<f32>(GPtr::from_raw(r.as_mut_ptr().cast::<u8>())),
                         GPtr::from_raw(&mut c).cast(),
                     );
                 }

@@ -54,20 +54,17 @@ pub use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
 pub use sa_stream::bindings::simple_transform_update_matrix;
 pub use sa_world::bindings::entity_get_col_model as get_col_model;
 pub use sa_world::bindings::multiply3x3 as multiply_3x3;
-pub use sa_world::bindings::ped_get_bone_position;
+pub use sa_core::bindings::ped_get_bone_position;
 pub use sa_world::bindings::ped_get_weapon_skill;
 pub use sa_world::bindings::placeable_set_heading;
 pub use sa_world::bindings::update_rw_matrix;
-pub use sa_world::bindings::vector_sub;
+pub use sa_core::bindings::vector_sub;
 pub use sa_world::bindings::world_test_sphere_against_world as test_sphere_against_world;
+pub use sa_world::bindings::get_water_level;
+pub use sa_world::bindings::get_water_level_no_waves;
 orig! {
-    /// `CWaterLevel::GetWaterLevelNoWaves(float x, float y, float z, float* out, float*, float*)` (0x6E8580, AL)
-    pub fn get_water_level_no_waves(x: u32, y: u32, z: u32, out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> u8 = cdecl 0x6E8580 => unported;
     /// `CCamera::AvoidTheGeometry(const CVector* from, const CVector* target, CVector* out, float fov)` (0x514030)
     pub fn avoid_the_geometry(cam: GPtr<u8>, from: GPtr<u8>, target: GPtr<u8>, out: GPtr<u8>, fov: u32) = thiscall 0x514030 => unported;
-    /// `CWaterLevel::GetWaterLevel(float x, float y, float z, float* out, bool waves, CVector* normal)`
-    /// (0x6EB690, AL); the coordinates are pushed as dwords
-    pub fn get_water_level(x: u32, y: u32, z: u32, out: GPtr<u8>, waves: u32, normal: GPtr<u8>) -> u8 = cdecl 0x6EB690 => unported;
 }
 
 /// A local 3-dword vector and its game pointer.
@@ -162,7 +159,7 @@ pub fn process_peds_dead_baby(this: GPtr<u8>) {
         DEAD_BABY_B70050.set(0);
         let mut wl: u32 = 0;
         let wlp = GPtr::<u32>::from_raw(&mut wl).cast::<u8>();
-        if get_water_level_no_waves(sx, sy, sz, wlp, GPtr::NULL, GPtr::NULL) != 0 {
+        if get_water_level_no_waves(f32::from_bits(sx), f32::from_bits(sy), f32::from_bits(sz), wlp, GPtr::<u8>::cast::<f32>(GPtr::NULL), GPtr::<u8>::cast::<f32>(GPtr::NULL)) != 0 {
             let w = x(f32::from_bits(wlp.cast::<u32>().read())).fadd_m(k(K_1_5));
             if !w.fcom(x(f32::from_bits(sz))).test_any(0x41) {
                 sz = w.to_f32().to_bits();
@@ -186,7 +183,7 @@ pub fn process_peds_dead_baby(this: GPtr<u8>) {
         // centre: x raw, y through fld/fstp, z + 0.2 stored as f32
         let cy = x(f32::from_bits(sy)).to_f32().to_bits();
         let cz = x(f32::from_bits(sz)).fadd_m(k(K_0_2)).to_f32().to_bits();
-        if test_sphere_against_world(sx, cy, cz, SPHERE_RADIUS, target, 1, 1, 0, 1, 0, 1).is_null() {
+        if test_sphere_against_world(f32::from_bits(sx), f32::from_bits(cy), f32::from_bits(cz), f32::from_bits(SPHERE_RADIUS), target, 1, 1, 0, 1, 0, 1).is_null() {
             sz = x(TIME_STEP.get())
                 .fmul_m(DEAD_BABY_RISE.get())
                 .fadd_m(f32::from_bits(sz))
@@ -225,7 +222,7 @@ pub fn process_peds_dead_baby(this: GPtr<u8>) {
         let cx = dx2.fadd_m(f32::from_bits(sx)).to_f32().to_bits();
         let cy = dy2.fadd_m(f32::from_bits(sy)).to_f32().to_bits();
         let cz = x(dz2).fadd_m(f32::from_bits(sz)).to_f32().to_bits();
-        if test_sphere_against_world(cx, cy, cz, SPHERE_RADIUS, target, 1, 1, 0, 1, 0, 1).is_null() {
+        if test_sphere_against_world(f32::from_bits(cx), f32::from_bits(cy), f32::from_bits(cz), f32::from_bits(SPHERE_RADIUS), target, 1, 1, 0, 1, 0, 1).is_null() {
             sx = qx.to_bits();
             sy = qy.to_bits();
             sz = sz_copy;
@@ -335,7 +332,7 @@ pub fn process_special_fixed_for_syphon(this: GPtr<u8>, target: GPtr<u8>, _a: f3
     }
     let slot = isize::from(rd::<i8>(p, 0x718));
     let ty = rd::<u32>(p, slot * 0x1C + 0x5A0);
-    let wi = get_weapon_info(ty, ped_get_weapon_skill(p));
+    let wi = get_weapon_info(ty as i32, (ped_get_weapon_skill(p) as i32) as u8);
     if wi.is_null() {
         return;
     }
@@ -352,7 +349,7 @@ pub fn process_special_fixed_for_syphon(this: GPtr<u8>, target: GPtr<u8>, _a: f3
     let h = x(d.f(0)).fchs().fpatan(x(d.f(1))).to_f32();
     wr::<f32>(p, 0x55C, h);
     wr::<f32>(p, 0x558, h);
-    placeable_set_heading(p, h.to_bits());
+    placeable_set_heading(p, f32::from_bits(h.to_bits()));
     update_rw_matrix(p);
 }
 
@@ -448,7 +445,7 @@ pub fn process_attached_cam(this: GPtr<u8>) {
     let mut wl: u32 = 0;
     let wlp = GPtr::<u32>::from_raw(&mut wl).cast::<u8>();
     let (sx, sy, sz) = (rd::<u32>(src, 0), rd::<u32>(src, 4), rd::<u32>(src, 8));
-    if get_water_level(sx, sy, sz, wlp, 1, GPtr::NULL) != 0
+    if get_water_level(f32::from_bits(sx), f32::from_bits(sy), f32::from_bits(sz), wlp, 1, GPtr::NULL) != 0
         && !x(f32::from_bits(wlp.cast::<u32>().read()))
             .fsub_m(k(K_0_3))
             .fcom(x(rd::<f32>(src, 8)))

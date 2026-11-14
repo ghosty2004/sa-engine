@@ -20,17 +20,14 @@ use sa_core::bindings::streaming_load_scene_collision as load_scene_collision;
 use sa_core::bindings::timer_stop;
 use sa_core::bindings::timer_update;
 use sa_core::bindings::world_remove;
+use crate::bindings::request_objects_in_direction;
+use sa_core::bindings::rw_camera_set_far_clip_plane;
+use sa_stream::bindings::call_flush_request_list as flush_request_list;
 orig! {
     /// `CPickups::PassTime(uint32)` (0x455200)
     fn pickups_pass_time(ms: u32) = cdecl 0x455200 => unported;
-    /// `RwCameraSetFarClipPlane(RwCamera*, float)` (0x7EE2A0)
-    fn rw_camera_set_far_clip_plane(cam: GPtr<u8>, far: f32) -> GPtr<u8> = cdecl 0x7EE2A0 => unported;
-    /// `CStreaming::FlushRequestList()` (0x40E4E0)
-    fn flush_request_list() = cdecl 0x40E4E0 => unported;
     /// `CStreaming::DeleteRwObjectsAfterDeath(const CVector&)` (0x409210)
     fn delete_rw_objects_after_death(p: GPtr<u8>) = cdecl 0x409210 => unported;
-    /// `CRenderer::RequestObjectsInDirection(const CVector&, float, int32)` (0x555CB0)
-    fn request_objects_in_direction(p: GPtr<u8>, angle: u32, flags: u32) = cdecl 0x555CB0 => unported;
     /// virtual slot 0: the scalar deleting destructor
     fn entity_vdelete(e: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
 }
@@ -86,7 +83,7 @@ pub fn sort_out_streaming_and_memory(pos: GPtr<u8>, angle: u32) {
     drastic_tidy_up_memory(1);
     load_scene_collision(pos);
     request_objects_in_direction(pos, angle, 0x20);
-    load_scene(pos);
+    load_scene(pos.cast::<u32>());
     timer_update();
 }
 

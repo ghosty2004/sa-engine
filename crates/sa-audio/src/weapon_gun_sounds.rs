@@ -14,19 +14,16 @@ use crate::bindings::hw_load_sound_bank;
 use crate::bindings::sm_request_new_sound;
 use sa_core::bindings::vector_magnitude as vector_magnitude_st0;
 use sa_world::bindings::engine_is_loading_tune_active;
+use crate::bindings::ae_random_float as ae_random_float_st0;
+use crate::bindings::ae_resolve_probability;
+use crate::bindings::sound_register_with_physical_entity;
 orig! {
     /// `CAESound::Initialise(slot, sfx, CAEAudioEntity*, CVector pos, volume, maxDistance, speed, timeScale,
     /// ignoredServiceCycles, flags, speedVariance, playPos)` (0x4EFE50)
     #[allow(clippy::too_many_arguments)]
     fn sound_initialise(sound: GPtr<u8>, slot: u32, sfx: u32, entity: GPtr<u8>, px: u32, py: u32, pz: u32, vol: u32, max_dist: u32, speed: u32, time_scale: u32, ignored: u32, flags: u32, var: u32, play_pos: u32) = thiscall 0x4EFE50 => unported;
-    /// `CAESound::RegisterWithPhysicalEntity(CEntity*)` (0x4EF820)
-    fn sound_register_with_physical_entity(sound: GPtr<u8>, entity: GPtr<u8>) = thiscall 0x4EF820 => unported;
     /// `CAEAudioEnvironment::GetPositionRelativeToCamera(CVector* out, CPlaceable*)` (0x4D8340)
     fn env_position_relative_to_camera(out: GPtr<u8>, placeable: GPtr<u8>) -> u32 = cdecl 0x4D8340 => unported;
-    /// `CAEAudioUtility::GetRandomNumberInRange<float>(float, float)` (0x4D9C50, ST0)
-    fn ae_random_float_st0(min: f32, max: f32) -> f64 = cdecl 0x4D9C50 => unported;
-    /// `CAEAudioUtility::ResolveProbability(float)` (0x4D9C80)
-    fn ae_resolve_probability(p: f32) -> u8 = cdecl 0x4D9C80 => unported;
 }
 
 /// `CTimer::m_snTimeInMilliseconds` (0xB7CB84)
@@ -63,7 +60,7 @@ fn play(this: GPtr<u8>, sfx: u32, pos: [u32; 3], vol: u32, max_dist: u32, speed:
     if let Some(ev) = event {
         wr::<u32>(this, 0x14, ev);
     }
-    sm_request_new_sound(g::<u8>(AE_SOUND_MANAGER), sound);
+    sm_request_new_sound(GPtr::<u8>::addr(g::<u8>(AE_SOUND_MANAGER)) as u32, sound.addr() as u32);
 }
 
 /// `CAEWeaponAudioEntity::PlayGunSounds(CPhysical* entity, int16 dryFire, int16 sub, int16 mainLeft, int16
@@ -153,14 +150,14 @@ pub fn play_gun_sounds(
         let near = x(5.0).fmul(inv).to_f32();
         if !x(d).fcom(x(near)).test_parity(0x41) {
             let b = x(volume).fsub_m(3.0).to_f32();
-            let a = X87::from_f64_exact(env_distance_attenuation_st0(d));
+            let a = X87::from_f64_exact(f64::from(env_distance_attenuation_st0(d)));
             front_end = a.fadd_m(b).to_f32();
             base = b;
         } else {
             let far = inv.fmul_m(12.0);
             if x(d).fcom(far).test_any(0x01) {
                 let t = far.fsub(x(d)).fdiv(far.fsub_m(near)).to_f32();
-                let a = X87::from_f64_exact(env_distance_attenuation_st0(d));
+                let a = X87::from_f64_exact(f64::from(env_distance_attenuation_st0(d)));
                 let l = X87::lg2().fyl2x(x(t).fmul_m(f32::from_bits(0x3F35_0481)));
                 front_end = a.fadd(l.fmul_m(20.0)).fadd_m(volume).to_f32();
                 let r = x(1.0)
@@ -174,7 +171,7 @@ pub fn play_gun_sounds(
             }
         }
     }
-    let rnd = X87::from_f64_exact(ae_random_float_st0(f32::from_bits(0xBCA3_D70A), f32::from_bits(0x3CA3_D70A)));
+    let rnd = X87::from_f64_exact(f64::from(ae_random_float_st0(f32::from_bits(0xBCA3_D70A), f32::from_bits(0x3CA3_D70A))));
     speed = rnd.fadd_m(1.0).fmul_m(speed).to_f32();
     let main_roll = x(roll_off).fmul_m(1.25).to_f32();
     let left = [bits(-1.0), 0, 0];
@@ -201,9 +198,9 @@ pub fn play_gun_sounds(
     let relp: GPtr<u8> = GPtr::from_raw(&mut rel as *mut [u32; 3]).cast();
     env_position_relative_to_camera(relp, entity);
     let tail_roll = x(roll_off).fmul_m(3.5).to_f32();
-    let mag = X87::from_f64_exact(vector_magnitude_st0(relp));
+    let mag = X87::from_f64_exact(vector_magnitude_st0(relp.cast::<u32>()));
     let d = mag.fdiv_m(tail_roll).to_f32();
-    let a = X87::from_f64_exact(env_distance_attenuation_st0(d));
+    let a = X87::from_f64_exact(f64::from(env_distance_attenuation_st0(d)));
     let tv = a.fadd(x(volume).fsub_m(20.0));
     let tvol = tv.to_f32();
     let v1 = if tv.fcom(x(0.0)).test_parity(0x05) { 0.0 } else { tvol };

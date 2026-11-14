@@ -4,6 +4,7 @@
 //! `CEntityScanner`: +4 the frame counter, +8 its period, +0xC sixteen entity slots, +0x4C the closest entity.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::hook;
 

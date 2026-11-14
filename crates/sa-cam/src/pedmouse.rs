@@ -345,7 +345,7 @@ pub fn process_follow_ped_with_mouse(
     let te = g::<GPtr<u8>>(CAMERA_TARGET).read();
     let m = rd::<GPtr<u8>>(te, 0x14);
     if !m.is_null() {
-        matrix_set_rotate_z_only(m, rd::<u32>(b, 0x10));
+        matrix_set_rotate_z_only(m, f32::from_bits(rd::<u32>(b, 0x10)));
     } else {
         wr::<u32>(te, 0x10, rd::<u32>(b, 0x10));
     }
@@ -435,7 +435,7 @@ fn source_and_collision(this: GPtr<u8>, b: GPtr<u8>, f: &mut Fpu) {
                 f.fsub_m(rd(cp, 4 * i));
                 wr::<f32>(b, 0x34 + 4 * i, f.fstp());
             }
-            push_st0(f, vector_magnitude(b.byte_add(0x34)));
+            push_st0(f, vector_magnitude(GPtr::<u8>::cast::<u32>(b.byte_add(0x34))));
             f.fcom_m(k(K_0_6));
             copy3(src, cp);
             if f.jp(0x5) {
@@ -487,7 +487,7 @@ fn source_and_collision(this: GPtr<u8>, b: GPtr<u8>, f: &mut Fpu) {
         }
     }
     if let Some(n) = near {
-        set_near_clip_raw(SCENE_CAMERA.get(), n);
+        set_near_clip_raw(SCENE_CAMERA.get(), f32::from_bits(n));
     }
     g::<u32>(IGNORE_ENTITY).write(0);
 }
@@ -530,10 +530,10 @@ fn sphere_near_clip(this: GPtr<u8>, b: GPtr<u8>, f: &mut Fpu) {
     f.fmul_m(rd(b, 0x10));
     let r = f.fstp().to_bits();
     let mut hit = test_sphere_against_world(
-        rd::<u32>(b, 0x1C),
-        rd::<u32>(b, 0x20),
-        rd::<u32>(b, 0x24),
-        r,
+        f32::from_bits(rd::<u32>(b, 0x1C)),
+        f32::from_bits(rd::<u32>(b, 0x20)),
+        f32::from_bits(rd::<u32>(b, 0x24)),
+        f32::from_bits(r),
         GPtr::NULL,
         1,
         1,
@@ -617,7 +617,7 @@ fn sphere_near_clip(this: GPtr<u8>, b: GPtr<u8>, f: &mut Fpu) {
         f.fld(rd(b, 0x10));
         f.fcomp_m(rd(b, 0x14));
         if !f.jp(0x5) {
-            set_near_clip_raw(SCENE_CAMERA.get(), rd::<u32>(b, 0x10));
+            set_near_clip_raw(SCENE_CAMERA.get(), f32::from_bits(rd::<u32>(b, 0x10)));
         }
         f.fld(rd(b, 0x10));
         f.fcomp_m(k(K_0_1));
@@ -678,10 +678,10 @@ fn sphere_near_clip(this: GPtr<u8>, b: GPtr<u8>, f: &mut Fpu) {
         f.fadd_m(rd(src, 8));
         wr::<f32>(b, 0x3C, f.fstp());
         hit = test_sphere_against_world(
-            rd::<u32>(b, 0x34),
-            rd::<u32>(b, 0x38),
-            rd::<u32>(b, 0x3C),
-            r,
+            f32::from_bits(rd::<u32>(b, 0x34)),
+            f32::from_bits(rd::<u32>(b, 0x38)),
+            f32::from_bits(rd::<u32>(b, 0x3C)),
+            f32::from_bits(r),
             GPtr::NULL,
             1,
             1,
@@ -772,11 +772,11 @@ fn distance_smoothing(this: GPtr<u8>, b: GPtr<u8>, f: &mut Fpu) {
     f.fcom_m(k(K_0_1));
     if !f.jne(0x41) {
         wr::<f32>(b, 0x10, f.fstp());
-        set_near_clip_raw(cam, rd::<u32>(b, 0x10));
+        set_near_clip_raw(cam, f32::from_bits(rd::<u32>(b, 0x10)));
     } else {
         wr::<u32>(b, 0x10, K_0_1);
         f.fstp_st(0);
-        set_near_clip_raw(cam, K_0_1);
+        set_near_clip_raw(cam, f32::from_bits(K_0_1));
     }
 }
 

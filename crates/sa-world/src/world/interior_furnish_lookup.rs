@@ -20,11 +20,13 @@ use sa_core::bindings::find_player_ped;
 use sa_core::bindings::list_add_item;
 use sa_core::bindings::list_remove_item;
 use sa_core::bindings::world_remove;
+use crate::bindings::check_tiles_empty;
+use crate::bindings::furnish_office;
+use crate::bindings::furnish_shop;
+use crate::bindings::get_peds_interior_group;
+use crate::bindings::get_random_id;
+use crate::bindings::is_pt_inside;
 orig! {
-    /// `Interior_c::FurnishShop(int32)` (0x59A790)
-    fn furnish_shop(this: GPtr<u8>, a: i32) = thiscall 0x59A790 => unported;
-    /// `Interior_c::FurnishOffice()` (0x599AF0)
-    fn furnish_office(this: GPtr<u8>) = thiscall 0x599AF0 => furnish_office_port;
     /// `CEntity::~CEntity` deleting destructor (vtable +0)
     fn v_delete(e: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
     /// `CPickups::RemovePickUpsInArea(float, float, float, float, float, float)` (0x456D30)
@@ -35,12 +37,6 @@ orig! {
     fn get_furniture_entity(it: GPtr<u8>, e: GPtr<u8>) -> GPtr<u8> = thiscall 0x5913B0 => super::misc2::interior_get_furniture_entity;
     /// `Interior_c::GetBoundingBox(FurnitureEntity_c*, CVector*)` (0x593DB0)
     fn interior_get_bounding_box(it: GPtr<u8>, fe: GPtr<u8>, out: GPtr<u8>) -> u8 = thiscall 0x593DB0 => unported;
-    /// `Interior_c::IsPtInside(const CVector&, float, float, float)` (0x5913E0)
-    fn is_pt_inside(it: GPtr<u8>, pt: GPtr<f32>, mx: f32, my: f32, mz: f32) -> u8 = thiscall 0x5913E0 => super::misc2::interior_is_pt_inside;
-    /// `InteriorManager_c::GetPedsInteriorGroup(CPed*)` (0x598240)
-    fn get_peds_interior_group(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x598240 => super::misc2::interior_manager_get_peds_interior_group;
-    /// `FurnitureManager_c::GetRandomId(int32 group, int32 subGroup, uint8 wealth)` (0x591220) on `g_furnitureMan` (0xBAB380)
-    fn get_random_id(man: GPtr<u8>, group: i32, sub: u32, wealth: u32) -> i32 = thiscall 0x591220 => super::misc2::furniture_manager_get_random_id;
     /// `Interior_c::Office_FurnishEdges()` (0x599770)
     fn office_furnish_edges(this: GPtr<u8>) = thiscall 0x599770 => super::interior_room_items::office_furnish_edges;
     /// `Interior_c::Office_FurnishCenter()` (0x599A30)
@@ -49,8 +45,6 @@ orig! {
     fn office_place_desk_quad_call(this: GPtr<u8>, a0: i32, tx: i32, ty: i32, id: i32) -> i32 = thiscall 0x599960 => office_place_desk_quad;
     /// `Interior_c::Shop_FurnishCeiling()` (0x59A130)
     fn shop_furnish_ceiling(this: GPtr<u8>) = thiscall 0x59A130 => unported;
-    /// `Interior_c::CheckTilesEmpty(int32 x, int32 y, int32 w, int32 d, bool)` (0x591680)
-    fn check_tiles_empty(this: GPtr<u8>, tx: i32, ty: i32, w: i32, d: i32, b: u8) -> u8 = thiscall 0x591680 => super::misc2::interior_check_tiles_empty;
 }
 
 /// `ftol((rand() & 0xFFFF) * (1/32768) * n)` (`fimul`).

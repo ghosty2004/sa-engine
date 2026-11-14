@@ -13,11 +13,10 @@ use sa_world::bindings::get_pad_from_player;
 use sa_world::bindings::pad_get_ped_walk_left_right;
 use sa_world::bindings::pad_get_ped_walk_up_down;
 use sa_world::bindings::pad_melee_attack_just_down;
+use sa_core::bindings::general_get_radian_angle_between_points as get_radian_angle_between_points;
 orig! {
     /// virtual `CTask::GetTaskType()` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CGeneral::GetRadianAngleBetweenPoints(float, float, float, float)` (0x53CBE0), ST0
-    fn get_radian_angle_between_points(x1: f32, y1: f32, x2: f32, y2: f32) -> f64 = cdecl 0x53CBE0 => unported;
 }
 
 const PI: u32 = 0x4049_0FDB;

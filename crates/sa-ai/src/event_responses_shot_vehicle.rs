@@ -5,17 +5,18 @@
 //! (docs/verify/HOWTO.md).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
 use crate::common::*;
 
 use crate::bindings::car_drive_mission_flee_scene_ctor;
-use crate::bindings::duck_ctor;
+use sa_world::bindings::duck_ctor;
 use crate::bindings::evasive_step_ctor;
 use crate::bindings::flee_any_means_ctor;
 use crate::bindings::handler_is_kill_task_appropriate;
-use crate::bindings::hands_up_ctor;
+use sa_world::bindings::hands_up_ctor;
 use crate::bindings::kill_criminal_ctor;
 use crate::bindings::kill_ped_on_foot_stealth_ctor;
 use crate::bindings::task_is_go_to_task;
@@ -46,26 +47,23 @@ use sa_world::bindings::smart_flee_entity_ctor;
 use sa_world::bindings::turn_to_face_entity_ctor;
 use sa_world::bindings::use_sequence_ctor;
 use sa_world::bindings::weapon_is_type_melee;
+use crate::bindings::intel_is_ped_going_for_car_door;
+use crate::bindings::leave_car_and_wander_ctor;
+use crate::bindings::walk_round_car_ctor;
+use sa_world::bindings::complex_jump_ctor;
+use sa_world::bindings::leave_car_and_flee_ctor;
+use sa_world::bindings::leave_car_ctor;
+use sa_world::bindings::ped_get_weapon_slot;
+use sa_world::bindings::vector_scale;
 orig! {
-    fn leave_car_ctor(t: GPtr<u8>, veh: GPtr<u8>, a: i32, b: i32, c: u32, d: u32) -> GPtr<u8> = thiscall 0x63B8C0 => unported;
-    fn leave_car_and_flee_ctor(t: GPtr<u8>, veh: GPtr<u8>, pos: GPtr<u8>, a: i32, b: i32, c: u32) -> GPtr<u8> = thiscall 0x63BF90 => unported;
-    fn leave_car_and_wander_ctor(t: GPtr<u8>, veh: GPtr<u8>, a: i32, b: i32, c: u32) -> GPtr<u8> = thiscall 0x63BDD0 => unported;
     fn scream_in_car_then_leave_ctor(t: GPtr<u8>, veh: GPtr<u8>, a: i32) -> GPtr<u8> = thiscall 0x63C240 => unported;
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
     /// `CTaskComplexHitPedWithCar::ComputeEvasiveStepMoveDir(CVector* out, const CPed&, const CVehicle&)` (0x653B40)
     fn hit_ped_with_car_compute_evasive_step_move_dir(out: GPtr<u8>, ped: GPtr<u8>, veh: GPtr<u8>) -> GPtr<u8> = cdecl 0x653B40 => unported;
-    /// `operator*(CVector* out, float, const CVector&)` (0x40FE90, cdecl)
-    fn vector_scale(out: GPtr<u8>, f: u32, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE90 => unported;
     /// `CPedGeometryAnalyser::CanPedJumpObstacle(const CPed&, const CEntity&)` (0x5F1B00)
     fn geometry_can_ped_jump_obstacle_los(ped: GPtr<u8>, e: GPtr<u8>) -> u8 = cdecl 0x5F1B00 => unported;
-    /// `CPedIntelligence::IsPedGoingForCarDoor` (0x602350)
-    fn intel_is_ped_going_for_car_door(i: GPtr<u8>) -> u8 = thiscall 0x602350 => unported;
-    /// `CPed::GetWeaponSlot(eWeaponType)` (0x5DF200, `ret 4`)
-    fn ped_get_weapon_slot(p: GPtr<u8>, ty: u32) -> i32 = thiscall 0x5DF200 => unported;
     fn hit_ped_with_car_ctor(t: GPtr<u8>, veh: GPtr<u8>, impulse: u32) -> GPtr<u8> = thiscall 0x6539A0 => unported;
-    fn complex_jump_ctor(t: GPtr<u8>, a: i32) -> GPtr<u8> = thiscall 0x67A030 => unported;
-    fn walk_round_car_ctor(t: GPtr<u8>, ms: i32, target: GPtr<u8>, veh: GPtr<u8>, door: u32, n: i32) -> GPtr<u8> = thiscall 0x6541B0 => unported;
     /// `CEvent::GetSourceEntity` (vtable +0x28)
     fn v_event_source(e: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x28 => unported;
     fn car_drive_mission_kill_ped_ctor(t: GPtr<u8>, veh: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x4B8A00 => unported;
@@ -123,7 +121,7 @@ fn set(this: GPtr<u8>, t: GPtr<u8>) {
 }
 
 fn smart_flee(other: GPtr<u8>, b: u32) -> GPtr<u8> {
-    new_task(0x40, |t| smart_flee_entity_ctor(t, other, b, gu(FLEE_SAFE_DIST), gu(FLEE_TIME), gu(FLEE_PERIOD), gu(FLEE_SHIFT)))
+    new_task(0x40, |t| smart_flee_entity_ctor(t, other, b, f32::from_bits(gu(FLEE_SAFE_DIST)), gu(FLEE_TIME), gu(FLEE_PERIOD), gu(FLEE_SHIFT)))
 }
 
 fn in_vehicle(p: GPtr<u8>) -> bool {
@@ -139,7 +137,7 @@ fn flee_scene_or_own_vehicle(this: GPtr<u8>) -> GPtr<u8> {
     }
     new_task(0x40, |t| {
         let own = rd::<GPtr<u8>>(ped(this), 0x58C);
-        smart_flee_entity_ctor(t, own, 0, gu(FLEE_SAFE_DIST), gu(FLEE_TIME), gu(FLEE_PERIOD), gu(FLEE_SHIFT))
+        smart_flee_entity_ctor(t, own, 0, f32::from_bits(gu(FLEE_SAFE_DIST)), gu(FLEE_TIME), gu(FLEE_PERIOD), gu(FLEE_SHIFT))
     })
 }
 
@@ -169,9 +167,9 @@ pub fn handler_compute_shot_fired_response(this: GPtr<u8>, e: GPtr<u8>, _active:
             if !intel_get_task_duck(rd::<GPtr<u8>>(ped(this), 0x47C), 1).is_null() {
                 return;
             }
-            set(this, new_task(0x28, |t| duck_ctor(t, 0, 3000, -1)));
+            set(this, new_task(0x28, |t| duck_ctor(t, 0, 3000, -1i32 as u32)));
         }
-        0x1AB => set(this, new_task(0x28, |t| duck_ctor(t, 0, 0x967F, -1))),
+        0x1AB => set(this, new_task(0x28, |t| duck_ctor(t, 0, 0x967F, -1i32 as u32))),
         0x2D6 => set(this, flee_scene_or_own_vehicle(this)),
         0x38F => set(this, smart_flee(shooter, 1)),
         0x398 => set(this, new_task(0x28, |t| turn_to_face_entity_ctor(t, shooter, gu(TURN_A), gu(TURN_B)))),
@@ -293,9 +291,9 @@ pub fn handler_compute_gun_aimed_at_response(this: GPtr<u8>, e: GPtr<u8>, active
             if !intel_get_task_duck(rd::<GPtr<u8>>(ped(this), 0x47C), 1).is_null() {
                 return;
             }
-            set(this, new_task(0x28, |t| duck_ctor(t, 0, 5000, -1)));
+            set(this, new_task(0x28, |t| duck_ctor(t, 0, 5000, -1i32 as u32)));
         }
-        0x1AB => set(this, new_task(0x28, |t| duck_ctor(t, 0, 0x967F, -1))),
+        0x1AB => set(this, new_task(0x28, |t| duck_ctor(t, 0, 0x967F, -1i32 as u32))),
         0x102 => set(this, new_task(0x10, |t| use_attractor_ctor(t, 0))),
         0x105 => set(this, new_task(0x10, use_attractor_run_ctor)),
         0x106 => set(this, new_task(0x10, use_attractor_sprint_ctor)),
@@ -355,7 +353,7 @@ pub fn handler_compute_personality_response_to_damage(this: GPtr<u8>, e: GPtr<u8
     let cop = |p: GPtr<u8>| rd::<i32>(p, 0x598) == 6;
     let say_after = |this: GPtr<u8>, t: GPtr<u8>| {
         set(this, t);
-        ped_say(ped(this), 0xB2, 0, 0x3F80_0000, 0, 0, 0);
+        ped_say(ped(this), 0xB2, 0, f32::from_bits(0x3F80_0000), 0, 0, 0);
     };
     let driver_of_own = |this: GPtr<u8>| {
         let p = ped(this);
@@ -374,10 +372,10 @@ pub fn handler_compute_personality_response_to_damage(this: GPtr<u8>, e: GPtr<u8
             }
             set(this, new_task(0x28, |t| {
                 let time = general_random_int_in_range(2000, 5000);
-                duck_ctor(t, 0, time as u32, -1)
+                duck_ctor(t, 0, time as u32, -1i32 as u32)
             }));
         }
-        0x1AB => set(this, new_task(0x28, |t| duck_ctor(t, 0, 0xE0FF, -1))),
+        0x1AB => set(this, new_task(0x28, |t| duck_ctor(t, 0, 0xE0FF, -1i32 as u32))),
         0x201 => set(this, new_task(0x24, |t| dive_from_attached_ctor(t, 0))),
         0x2D6 => {
             if driver_of_own(this) {
@@ -462,7 +460,7 @@ pub fn handler_compute_ped_entered_vehicle_response(this: GPtr<u8>, e: GPtr<u8>,
     vehicle_is_driver(rd::<GPtr<u8>>(p, 0x58C), p);
     if rd::<u8>(rd::<GPtr<u8>>(veh, 0x384), 0xDE) == 0xF {
         set(this, new_task(0x40, |t| {
-            smart_flee_entity_ctor(t, intruder, 0, gu(FLEE_SAFE_DIST), gu(FLEE_TIME), gu(FLEE_PERIOD), gu(FLEE_SHIFT))
+            smart_flee_entity_ctor(t, intruder, 0, f32::from_bits(gu(FLEE_SAFE_DIST)), gu(FLEE_TIME), gu(FLEE_PERIOD), gu(FLEE_SHIFT))
         }));
         return;
     }
@@ -473,12 +471,12 @@ pub fn handler_compute_ped_entered_vehicle_response(this: GPtr<u8>, e: GPtr<u8>,
         let m = rd::<GPtr<u8>>(veh, 0x14);
         if m.is_null() { veh.byte_add(4) } else { m.byte_add(0x30) }
     };
-    let leave_and_flee = || new_task(0x28, |t| leave_car_and_flee_ctor(t, veh, veh_pos(), delay, r, 0));
+    let leave_and_flee = || new_task(0x28, |t| leave_car_and_flee_ctor(t, veh, veh_pos(), delay as u32, r as u32, 0));
     match i32::from(rd::<i16>(e, 0xE)) {
         200 => set(this, GPtr::NULL),
         0x2C0 => set(this, new_task(0x34, |t| leave_car_ctor(t, veh, delay, r, 0, 1))),
         0x2C2 => set(this, leave_and_flee()),
-        0x2C3 => set(this, new_task(0x1C, |t| leave_car_and_wander_ctor(t, veh, delay, r, 0))),
+        0x2C3 => set(this, new_task(0x1C, |t| leave_car_and_wander_ctor(t, veh, delay as u32, r as u32, 0))),
         0x2C4 => {
             if ped_is_player(intruder) != 0 && scripts_is_player_on_a_mission() != 0 {
                 set(this, leave_and_flee());
@@ -557,7 +555,7 @@ pub fn handler_compute_vehicle_collision_response(this: GPtr<u8>, e: GPtr<u8>, _
         if ped_is_player(p) != 0 && rd::<u8>(ped(this), 0x46C) & 1 != 0 {
             let p = ped(this);
             let mut tmp = [0u32; 3];
-            let scaled = vector_scale(GPtr::from_raw(tmp.as_mut_ptr()).cast(), rd::<u32>(p, 0x4DC), rd::<GPtr<u8>>(p, 0x14).byte_add(0x10));
+            let scaled = vector_scale(GPtr::from_raw(tmp.as_mut_ptr()).cast(), f32::from_bits(rd::<u32>(p, 0x4DC)), rd::<GPtr<u8>>(p, 0x14).byte_add(0x10));
             let d = X87::from_f64_exact(vector_dot(scaled, e.byte_add(0x18)));
             if !d.fcom(x(gf(K_ZERO))).test_parity(0x05) {
                 let v = d.fmul_m(rd::<f32>(p, 0x8C)).fadd_m(f32::from_bits(impulse));
@@ -607,7 +605,7 @@ pub fn handler_compute_vehicle_collision_response(this: GPtr<u8>, e: GPtr<u8>, _
         }
         let door = intel_is_ped_going_for_car_door(rd::<GPtr<u8>>(ped(this), 0x47C));
         let flag = (impulse & 0xFFFF_FF00) | u32::from(door);
-        set(this, new_task(0x58, |t| walk_round_car_ctor(t, ms, target, veh, flag, i32::from(rd::<i8>(e, 0x31)))));
+        set(this, new_task(0x58, |t| walk_round_car_ctor(t, ms, target, veh, flag, i32::from(rd::<i8>(e, 0x31)) as u32)));
         anger_check(this, veh);
         return;
     }
@@ -618,7 +616,7 @@ pub fn handler_compute_vehicle_collision_response(this: GPtr<u8>, e: GPtr<u8>, _
         let zero = !x(rd::<f32>(pd, 0x14)).fcom(x(gf(K_ZERO))).test_parity(0x44);
         if zero && !rd::<GPtr<u8>>(veh, 0x460).is_null() {
             player_ped_annoy_player_ped(p, 0);
-            ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), S_VEHICLE_COLLISION, ped(this), veh, 1300, -1, 0, 1, 0x3E80_0000, 500, 3, 0);
+            ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), GPtr::from_addr(S_VEHICLE_COLLISION as usize), ped(this), veh, 1300, -1i32 as u32, GPtr::NULL, 1, 0x3E80_0000, 500, 3, 0);
             let wtype = || rd::<u32>(p, 0x5A0 + 0x1C * isize::from(rd::<i8>(p, 0x718)));
             if wtype() == 0
                 || ped_get_weapon_slot(p, wtype()) == 2
@@ -628,7 +626,7 @@ pub fn handler_compute_vehicle_collision_response(this: GPtr<u8>, e: GPtr<u8>, _
                 wr::<GPtr<u8>>(this, 0x30, new_task(0x10, shake_fist_ctor));
             }
         } else {
-            ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), S_VEHICLE_COLLISION, p, veh, 800, -1, 0, 1, 0x3E80_0000, 500, 3, 0);
+            ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), GPtr::from_addr(S_VEHICLE_COLLISION as usize), p, veh, 800, -1i32 as u32, GPtr::NULL, 1, 0x3E80_0000, 500, 3, 0);
         }
         anger_check(this, veh);
         return;
@@ -680,7 +678,7 @@ pub fn handler_compute_vehicle_damage_response(this: GPtr<u8>, e: GPtr<u8>, _act
     let own_veh = || rd::<GPtr<u8>>(ped(this), 0x58C);
     let flee_scene = || new_task(0x2C, |t| car_drive_mission_flee_scene_ctor(t, own_veh()));
     let flee_own = || new_task(0x40, |t| {
-        smart_flee_entity_ctor(t, own_veh(), 0, gu(FLEE_SAFE_DIST), gu(FLEE_TIME), gu(FLEE_PERIOD), gu(FLEE_SHIFT))
+        smart_flee_entity_ctor(t, own_veh(), 0, f32::from_bits(gu(FLEE_SAFE_DIST)), gu(FLEE_TIME), gu(FLEE_PERIOD), gu(FLEE_SHIFT))
     });
     match i32::from(rd::<i16>(e, 0xE)) {
         0xF4 => {

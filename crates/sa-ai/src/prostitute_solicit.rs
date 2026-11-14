@@ -3,6 +3,7 @@
 //! the displaced fragment 0x40160B, which only loads `ped+0x46C`; `CreateSubTask` 0x666360 leaves through the
 //! fragment 0x401BAF, which only reloads the SEH link).
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -11,7 +12,7 @@ use sa_core::orig::at_site;
 use crate::common::*;
 use sa_world::world::common::entity_pos as pos;
 
-use crate::bindings::car_enter_exit_get_position_to_open_car_door as position_to_open_car_door;
+use sa_world::bindings::car_enter_exit_get_position_to_open_car_door as position_to_open_car_door;
 use crate::bindings::intel_get_ped_entities;
 use crate::bindings::pad_conversation_no_just_down;
 use crate::bindings::pad_conversation_yes_just_down;
@@ -43,16 +44,14 @@ use sa_world::bindings::turn_to_face_entity_ctor as turn_ctor_entity;
 use sa_world::bindings::vector_mul_scalar;
 use sa_world::bindings::vehicle_is_on_its_side;
 use sa_world::bindings::vehicle_is_upside_down;
+use crate::bindings::is_task_valid;
+use sa_world::bindings::wanted_set_wanted_level;
 orig! {
     /// `CTaskComplexSeekEntity<CEntitySeekPosCalculatorXYOffset>` constructor (0x661DC0, `ret 0x20`)
     #[allow(clippy::too_many_arguments)]
     fn seek_entity_xy_ctor(t: GPtr<u8>, e: GPtr<u8>, a: u32, b: u32, c: u32, d: u32, f: u32, b7: u32, b8: u32) -> GPtr<u8> = thiscall 0x661DC0 => unported;
-    /// `CTaskComplexProstituteSolicit::IsTaskValid(CPed*, CPed*)` (0x661BB0)
-    fn is_task_valid(prostitute: GPtr<u8>, client: GPtr<u8>) -> u8 = cdecl 0x661BB0 => prostitute_solicit_is_task_valid;
     /// `CTaskComplexProstituteSolicit::CreateSubTask(int32, CPed*)` (0x666360)
     fn create_sub_task(t: GPtr<u8>, ty: i32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x666360 => prostitute_solicit_create_sub_task;
-    /// `CWanted::SetWantedLevel(int32)` (0x562470)
-    fn wanted_set_wanted_level(w: GPtr<u8>, level: i32) = thiscall 0x562470 => unported;
 }
 
 /// `CTaskComplexProstituteSolicit::IsTaskValid(CPed* prostitute, CPed* client)` (0x661BB0, cdecl; AL): true only
@@ -81,7 +80,7 @@ pub fn prostitute_solicit_is_task_valid(prostitute: GPtr<u8>, client: GPtr<u8>) 
     if !target.is_null() && target != prostitute {
         return 0;
     }
-    if vehicle_get_appearance(veh) != 1
+    if vehicle_get_appearance(veh) as i32 != 1
         || vehicle_is_upside_down(rd::<GPtr<u8>>(client, 0x58C)) != 0
         || vehicle_is_on_its_side(rd::<GPtr<u8>>(client, 0x58C)) != 0
     {
@@ -164,7 +163,7 @@ pub fn prostitute_solicit_create_sub_task(this: GPtr<u8>, ty: i32, ped: GPtr<u8>
         }
         0xCB => {
             let t = alloc(0x20);
-            if t.is_null() { t } else { stand_still_ctor(t, 5000, 0, 0, 8.0f32.to_bits()) }
+            if t.is_null() { t } else { stand_still_ctor(t, 5000, 0, 0, f32::from_bits(8.0f32.to_bits())) }
         }
         0x2D5 => {
             wr::<u16>(this, 0x2C, (rd::<u16>(this, 0x2C) & 0xFFFD) | 1);
@@ -190,7 +189,7 @@ pub fn prostitute_solicit_create_sub_task(this: GPtr<u8>, ty: i32, ped: GPtr<u8>
             let s8 = dist_sq(pos(ped), &p8, false);
             let mut door = if !s8.fcom(s10).test_any(0x41) { p10 } else { p8 };
             let mut off = [0f32; 3];
-            matrix_mul_vec(GPtr::from_raw(off.as_mut_ptr()).cast(), mp, GPtr::from_raw(door.as_mut_ptr()).cast());
+            matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::from_raw(off.as_mut_ptr()).cast()), mp, GPtr::from_raw(door.as_mut_ptr()).cast());
             let mut t = alloc(0x58);
             if !t.is_null() {
                 t = seek_entity_xy_ctor(
@@ -291,7 +290,7 @@ pub fn prostitute_solicit_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPt
             if n as i16 > 0 {
                 return sub();
             }
-            speech_set_cj_mood(9, 120_000, -1, -1, -1);
+            speech_set_cj_mood(9, 120_000, -1i32 as u32, -1i32 as u32, -1i32 as u32);
             ped_say(client(), 0xB, 0, 1.0, 0, 0, 0);
             let r = sub();
             wr::<u16>(this, 0x2A, 0);
@@ -422,7 +421,7 @@ pub fn prostitute_solicit_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPt
         wr::<u16>(this, 0x2A, 15000);
         stats_increment_stat(0xBE, 1.0);
     }
-    let stop = pad_get_accelerate(pad) != 0 || pad_get_brake(pad) != 0;
+    let stop = pad_get_accelerate(pad) as i16 != 0 || pad_get_brake(pad) as i16 != 0;
     let mut r = at_site(0x66_6EA5, rand) as u32;
     let mut cop = false;
     if rd::<u8>(this, 0x2C) & 0x20 != 0 && !wanted.is_null() && rd::<i32>(wanted, 0x2C) < 1 {

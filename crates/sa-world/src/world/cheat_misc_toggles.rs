@@ -3,7 +3,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use super::common::{g, rd, wr};
 
@@ -20,20 +20,12 @@ use sa_core::bindings::load_all_requested_models;
 use sa_core::bindings::streaming_request_model as request_model;
 use sa_stream::bindings::reclassify_loaded_cars;
 use sa_stream::bindings::stream_peds_into_random_slots;
-orig! {
-    /// `CPedDamageResponseCalculator::CPedDamageResponseCalculator(CEntity*, float, eWeaponType, ePedPieceTypes, bool)` (0x4AD3F0)
-    fn damage_calc_ctor(c: GPtr<u8>, e: u32, dmg: f32, wt: u32, piece: u32, speak: u32) -> GPtr<u8> = thiscall 0x4AD3F0 => unported;
-    /// `CEventDamage::CEventDamage(CEntity*, uint32, eWeaponType, ePedPieceTypes, uint8, bool, bool)` (0x4AD830)
-    fn event_damage_ctor(e: GPtr<u8>, src: u32, time: u32, wt: u32, piece: u32, dir: u32, a6: u32, a7: u32) -> GPtr<u8> = thiscall 0x4AD830 => unported;
-    /// `CCheat::BeachPartyCheat()` (0x439230)
-    fn beach_party_cheat() = cdecl 0x439230 => super::cheat_clothes_themes::beach_party_cheat;
-    /// `CCheat::FunhouseCheat()` (0x439720)
-    fn funhouse_cheat() = cdecl 0x439720 => super::cheat_clothes_themes::funhouse_cheat;
-    /// `CCheat::CountrysideInvasionCheat()` (0x439F60)
-    fn countryside_invasion_cheat() = cdecl 0x439F60 => super::cheat_clothes_themes::countryside_invasion_cheat;
-    /// `CPed::GiveWeapon(eWeaponType, uint32 ammo, bool)` (0x5E6080)
-    fn give_weapon(ped: GPtr<u8>, ty: i32, ammo: u32, b: u32) -> i32 = thiscall 0x5E6080 => unported;
-}
+use crate::bindings::beach_party_cheat;
+use crate::bindings::countryside_invasion_cheat;
+use crate::bindings::damage_calc_ctor;
+use crate::bindings::event_damage_ctor;
+use crate::bindings::funhouse_cheat;
+use sa_core::bindings::ped_give_weapon as give_weapon;
 
 /// Toggles a cheat's state byte (`test dl, dl; sete al`), returning the new state.
 fn toggle(addr: usize) -> bool {
@@ -56,7 +48,7 @@ pub fn love_conquers_all_cheat() {
     let mut models: [i32; 8] = [0xF9, 0x3F, 0x40, 0x4B, 0xEE, 0x55, 0xCF, -2];
     stream_peds_into_random_slots(GPtr::from_raw(&mut models as *mut [i32; 8]).cast());
     let clothes = rd::<GPtr<u8>>(rd::<GPtr<u8>>(find_player_ped(-1), 0x480), 4);
-    set_texture_and_model(clothes, 0x85_90D4, 0x85_90D4, 0x11);
+    set_texture_and_model(clothes, GPtr::from_addr(0x85_90D4), GPtr::from_addr(0x85_90D4), 0x11);
     if rd::<u32>(find_player_ped(-1), 0x530) != 0x32 {
         rebuild_player(find_player_ped(-1), 0);
     }
@@ -73,8 +65,8 @@ pub fn suicide_cheat() {
     let mut ev = [0u32; 0x20];
     let c = GPtr::from_raw(&mut calc as *mut [u32; 8]).cast::<u8>();
     let e = GPtr::from_raw(&mut ev as *mut [u32; 0x20]).cast::<u8>();
-    damage_calc_ctor(c, 0, 1000.0, 0, 3, 0);
-    event_damage_ctor(e, 0, g::<u32>(0xB7_CB84).read(), 0, 3, 0, 0, 0);
+    damage_calc_ctor(c, GPtr::NULL, 1000.0, 0, 3, 0);
+    event_damage_ctor(e, GPtr::NULL, g::<u32>(0xB7_CB84).read(), 0, 3, 0, 0, 0);
     if event_damage_affects_ped(e, find_player_ped(-1)) != 0 {
         compute_damage_response(c, find_player_ped(-1), e.byte_add(0x38), 1);
     } else {

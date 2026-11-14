@@ -23,9 +23,14 @@ pub use sa_core::bindings::file_close as cfm_close_file;
 pub use sa_core::bindings::list_add_item;
 pub use sa_core::bindings::open_file as cfm_open_file;
 pub use sa_core::bindings::read_line as cfm_read_line;
-pub use sa_stream::bindings::add_txd_slot as txd_add_txd_slot;
-pub use sa_stream::bindings::load_txd as txd_load_txd;
-pub use sa_stream::bindings::rw_texture_read;
+pub use sa_core::bindings::add_txd_slot as txd_add_txd_slot;
+pub use sa_core::bindings::load_txd as txd_load_txd;
+pub use sa_core::bindings::rw_texture_read;
+pub use sa_core::bindings::get_uppercase_key;
+pub use sa_core::bindings::pop_current_txd as txd_pop_current;
+pub use sa_core::bindings::push_current_txd as txd_push_current;
+pub use sa_core::bindings::set_current_txd as txd_set_current;
+pub use sa_core::bindings::txd_add_ref;
 orig! {
     /// thunk 0x4AB240 → `CFileMgr::OpenFile`
     pub fn fx_open_file(path: GPtr<u8>, mode: GPtr<u8>) -> GPtr<u8> = cdecl 0x4AB240 => thunk_open_file;
@@ -33,14 +38,6 @@ orig! {
     pub fn fx_read_line(f: GPtr<u8>, buf: GPtr<u8>, n: i32) -> bool = cdecl 0x4AB250 => thunk_read_line;
     /// thunk 0x4AB260 → `CFileMgr::CloseFile`
     pub fn fx_close_file(f: GPtr<u8>) -> i32 = cdecl 0x4AB260 => thunk_close_file;
-    /// `CTxdStore::AddRef(int)` (0x731A00)
-    pub fn txd_add_ref(slot: i32) = cdecl 0x731A00 => sa_stream::txdstore::add_ref;
-    /// `CTxdStore::PushCurrentTxd()` (0x7316A0)
-    pub fn txd_push_current() = cdecl 0x7316A0 => sa_stream::txdstore::push_current_txd;
-    /// `CTxdStore::PopCurrentTxd()` (0x7316B0)
-    pub fn txd_pop_current() = cdecl 0x7316B0 => sa_stream::txdstore::pop_current_txd;
-    /// `CTxdStore::SetCurrentTxd(int)` (0x7319C0)
-    pub fn txd_set_current(slot: i32) = cdecl 0x7319C0 => sa_stream::txdstore::set_current_txd;
     /// `FxMemoryPool_c::Optimise()` (0x4A9CD0)
     pub fn pool_optimise(this: GPtr<u8>) = thiscall 0x4A9CD0 => crate::fx::fx_memory_pool_optimise;
     /// `FxManager_c::LoadFxSystemBP(const char* filename, FILESTREAM)` (0x5C1F50)
@@ -51,8 +48,6 @@ orig! {
     pub fn system_bp_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4AA0D0 => crate::fx::fx_system_bp_constructor;
     /// `FxSystemBP_c::Load(const char* filename, FILESTREAM, int version)` (0x5C05F0)
     pub fn system_bp_load_call(this: GPtr<u8>, name: GPtr<u8>, f: GPtr<u8>, version: i32) -> u8 = thiscall 0x5C05F0 => system_bp_load;
-    /// `CKeyGen::GetUppercaseKey(const char*)` (0x53CF30)
-    pub fn get_uppercase_key(s: GPtr<u8>) -> u32 = cdecl 0x53CF30 => sa_core::keygen::get_uppercase_key;
     /// `FxSystemBP_c::SetBoundingSphere(const CVector*, float)` (0x4AA200)
     pub fn system_bp_set_bounding_sphere(this: GPtr<u8>, c: GPtr<u8>, r: u32) = thiscall 0x4AA200 => crate::fx::fx_system_bp_set_bounding_sphere;
     /// `FxEmitterBP_c::operator new(size)` (0x4A1900): `g_fxMan` pool `GetMem(size, 4)`
@@ -711,9 +706,9 @@ pub use sa_core::bindings::memory_malloc;
 pub use sa_core::bindings::rw_matrix_update;
 pub use sa_stream::bindings::crt_new as operator_new_821195;
 pub use sa_stream::bindings::fx_get_fx_quality as get_fx_quality;
+pub use sa_core::bindings::fx_play as system_play;
+pub use sa_world::bindings::fx_create_system as create_fx_system_name;
 orig! {
-    /// `FxManager_c::CreateFxSystem(const char* name, const RwV3d* pos, RwMatrix* parent, bool ignoreBounds)` (0x4A9BE0)
-    pub fn create_fx_system_name(this: GPtr<u8>, name: GPtr<u8>, pos: GPtr<u8>, parent: GPtr<u8>, ignore: u32) -> GPtr<u8> = thiscall 0x4A9BE0 => crate::fx::fx_manager_create_fx_system_name;
     /// `FxManager_c::ShouldCreate(FxSystemBP_c*, RwMatrix*, RwMatrix* parent, bool ignoreBounds)` (0x4A9500)
     pub fn should_create(this: GPtr<u8>, bp: GPtr<u8>, m: GPtr<u8>, parent: GPtr<u8>, ignore: u32) -> u8 = thiscall 0x4A9500 => crate::mvpa_fx2::fx_manager_should_create;
     /// `operator new(size_t)` (0x82119A)
@@ -726,8 +721,6 @@ orig! {
     pub fn system_set_rate_mult(this: GPtr<u8>, mult: u32) = thiscall 0x4AA6F0 => crate::fx::fx_system_set_rate_mult;
     /// `ListItem_c::ListItem_c()` (0x4A8DB0)
     pub fn list_item_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4A8DB0 => crate::fx::list_item_ctor_port;
-    /// `FxSystem_c::Play()` (0x4AA2F0)
-    pub fn system_play(this: GPtr<u8>) = thiscall 0x4AA2F0 => crate::fx::fx_system_play;
     /// `FxPrimBP_c::CreateInstance()`: vtable slot +0xC
     pub fn prim_bp_vcreate_instance(this: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0xC => unported;
     /// `FxPrim_c::Init(FxPrimBP_c*, FxSystem_c*)`: vtable slot +4
@@ -802,11 +795,11 @@ pub fn create_fx_system_bp(this: GPtr<u8>, bp_: GPtr<u8>, pos: GPtr<u8>, parent:
     system_init_call(sys, bp_, m, parent);
     list_add_item(this.byte_add(0xC), sys);
     let fx = GPtr::from_addr(G_FX);
-    if get_fx_quality(fx) == 0 {
+    if get_fx_quality(fx) as i32 == 0 {
         system_set_rate_mult(sys, 0x3F00_0000);
-    } else if get_fx_quality(fx) == 1 {
+    } else if get_fx_quality(fx) as i32 == 1 {
         system_set_rate_mult(sys, 0x3F40_0000);
-    } else if get_fx_quality(fx) >= 2 {
+    } else if get_fx_quality(fx) as i32 >= 2 {
         system_set_rate_mult(sys, 0x3F80_0000);
     }
     idx_cell.write(idx_cell.read().wrapping_sub(1));
@@ -894,7 +887,7 @@ pub fn fx_create_entity_fx(this: GPtr<u8>, entity: GPtr<u8>, name: GPtr<u8>, pos
 
 pub use crate::bindings::fx_rw_matrix_create;
 pub use crate::bindings::fx_rw_matrix_destroy;
-pub use sa_world::bindings::rw_v3d_normalize;
+pub use sa_core::bindings::rw_v3d_normalize;
 pub use sa_world::bindings::rw_v3d_transform_vectors;
 
 use sa_math::fpu::x as xf;
@@ -1071,11 +1064,8 @@ pub fn interp_u255_get_val(this: GPtr<u8>, out: GPtr<u8>, t: u32) {
     interp_short_get_val(this, out, t, false, 0x3B80_0000);
 }
 
-pub use sa_world::bindings::rw_v3d_length;
-orig! {
-    /// `FxInterpInfo32_c::GetVal(float* out, float t)` (0x4A89C0)
-    pub fn interp_32_get_val_call(this: GPtr<u8>, out: GPtr<u8>, t: u32) = thiscall 0x4A89C0 => interp_32_get_val;
-}
+pub use sa_core::bindings::rw_v3d_length;
+pub use crate::bindings::interp_32_get_val as interp_32_get_val_call;
 
 /// The `FxInfo*_c::GetValue` key time: `mult` with byte +6 set, else `(float)(currTime / totalTime)`
 /// (the original stores it into its `mult` argument slot).

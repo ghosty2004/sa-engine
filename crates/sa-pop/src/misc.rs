@@ -42,11 +42,9 @@ pub use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
 pub use sa_stream::bindings::simple_transform_update_matrix as update_matrix;
 pub use sa_world::bindings::la_riots_active_here;
 pub use sa_world::bindings::set_user_value;
+pub use sa_core::bindings::hud_set_help_message;
+pub use sa_world::bindings::frenzy_on_going as frenzy_on_going_call;
 orig! {
-    /// `CHud::SetHelpMessage(const char*, bool, bool, bool)` (0x588BE0)
-    pub fn hud_set_help_message(text: GPtr<u8>, quick: u8, permanent: u8, add_to_brief: u8) = cdecl 0x588BE0 => unported;
-    /// `CDarkel::FrenzyOnGoing()` (0x43D1F0)
-    pub fn frenzy_on_going_call() -> u8 = cdecl 0x43D1F0 => frenzy_on_going;
     /// virtual slot 9 (`GetModelType`) of a `CBaseModelInfo`
     pub fn model_info_get_type(mi: GPtr<u8>) -> i32 = thiscall vslot 0x24 => unported;
     /// virtual slot 1 (`AsAtomicModelInfoPtr`) of a `CBaseModelInfo`

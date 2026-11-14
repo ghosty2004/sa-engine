@@ -38,6 +38,7 @@ const PED_POOL: usize = 0xB74490;
 
 use sa_core::bindings::loading_screen_new_chunk_loaded;
 use sa_world::bindings::intel_record_event_for_script;
+use sa_core::bindings::rgba_ctor;
 orig! {
     /// `CUpsideDownCarCheck::UpdateTimers()` (0x4655E0)
     fn upside_down_update_timers(c: GPtr<u8>) = thiscall 0x4655E0 => unported;
@@ -51,8 +52,6 @@ orig! {
     fn process_all_search_lights() = cdecl 0x4939F0 => unported;
     /// `CTheScripts::ProcessWaitingForScriptBrainArray()` (0x46CF00)
     fn process_waiting_for_script_brain_array() = cdecl 0x46CF00 => unported;
-    /// `CRGBA::CRGBA(r, g, b, a)` (0x7170C0, catalogue `FUN_007170c0`): returns `this`
-    fn rgba_ctor(c: GPtr<u8>, r: u32, g: u32, b: u32, a: u32) -> GPtr<u8> = thiscall 0x7170C0 => rgba_ctor_host;
     /// `CRunningScript::Process()` (0x469F00)
     fn running_script_process(s: GPtr<u8>) -> i8 = thiscall 0x469F00 => crate::vm::process;
 }

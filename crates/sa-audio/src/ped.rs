@@ -64,14 +64,11 @@ pub use crate::bindings::hw_is_sound_loaded;
 pub use crate::bindings::ped_speech_reset as speech_reset_call;
 pub use crate::bindings::speech_stop_current_speech;
 pub use crate::bindings::twin_loop_stop_sound_and_forget;
+pub use crate::bindings::weapon_terminate;
+pub use sa_world::bindings::speech_constructor;
 orig! {
     /// `CAEPedAudioEntity::StopJetPackSound()` (0x4E1120)
     pub fn ped_stop_jet_pack_sound_call(this: GPtr<u8>) = thiscall 0x4E1120 => ped_stop_jet_pack_sound;
-    /// `CAEWeaponAudioEntity::Terminate()` (0x503480)
-    pub fn weapon_terminate(this: GPtr<u8>) = thiscall 0x503480 => crate::entities::weapon_terminate;
-    /// `CAEPedSpeechAudioEntity::StopCurrentSpeech()` (0x4E3FB0)
-    /// `CAEPedSpeechAudioEntity::CAEPedSpeechAudioEntity()` (0x4E4F10)
-    pub fn speech_constructor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4E4F10 => unported;
     /// Virtual slot 0xC of the speech slot's owner (`CAEPedSpeechAudioEntity::PlayLoadedSound`)
     pub fn vcall_speech_play_loaded_sound(this: GPtr<u8>) = thiscall vslot 0x0C => unported;
 }

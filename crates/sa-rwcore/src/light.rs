@@ -12,7 +12,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::{GPtr, GlobalDesc};
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 
 use crate::common::{f32_of, g, llink, module, p8, rd, rw_error1, rw_error_set, rw_globals, rw_memory_alloc, rw_memory_free, wr, x, RwError};
@@ -49,17 +49,11 @@ use crate::bindings::plugin_deinit_object;
 use crate::bindings::plugin_init_object;
 use crate::bindings::plugin_read_data_chunks;
 use crate::bindings::rw_sqrt;
-use crate::bindings::rw_stream_find_chunk_call;
-orig! {
-    /// `RwFrameUpdateObjects(frame)` (0x7F0910)
-    fn rw_frame_update_objects(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0910 => crate::frame::update_objects;
-    /// `RwFreeListDestroy(fl)` (0x801B80)
-    fn rw_free_list_destroy(fl: GPtr<u8>) -> u32 = cdecl 0x801B80 => crate::memory::rw_freelist_destroy;
-    /// `RwStreamRead(stream, buf, len)` (0x7EC9D0)
-    fn rw_stream_read_call(s: GPtr<u8>, buf: GPtr<u8>, len: u32) -> u32 = cdecl 0x7EC9D0 => crate::stream::rw_stream_read;
-    /// `RpLightCreate(type)` (0x752110)
-    fn rp_light_create_call(ty: u32) -> GPtr<u8> = cdecl 0x752110 => rp_light_create;
-}
+use sa_core::bindings::rw_stream_find_chunk_call;
+use crate::bindings::free_list_destroy as rw_free_list_destroy;
+use sa_core::bindings::rp_light_create as rp_light_create_call;
+use sa_core::bindings::rw_frame_update_objects;
+use sa_core::bindings::stream_read as rw_stream_read_call;
 
 fn light_free_list() -> GPtr<u8> {
     p8(rd::<u32>(module(LIGHT_MODULE), 0))
@@ -152,7 +146,7 @@ pub fn rp_light_register_plugin(size: i32, id: u32, ctor: u32, dtor: u32, copy: 
 pub fn rp_light_stream_read(s: GPtr<u8>) -> GPtr<u8> {
     let (mut ver, mut len) = (0u32, 0u32);
     let (vp, lp) = (GPtr::from_raw(&mut ver), GPtr::from_raw(&mut len));
-    if rw_stream_find_chunk_call(s, 1, lp, vp) == 0 {
+    if rw_stream_find_chunk_call(s, 1, lp, vp) as u32 == 0 {
         return GPtr::NULL;
     }
     let v = vp.read();

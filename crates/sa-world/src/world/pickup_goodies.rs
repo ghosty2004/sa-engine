@@ -7,7 +7,7 @@ use sa_core::{hook, orig};
 
 use super::common::{ftol32, g, rd, wr, xi};
 
-use crate::bindings::audio_report_frontend_event as report_frontend_audio_event;
+use sa_core::bindings::audio_report_frontend_event as report_frontend_audio_event;
 use crate::bindings::event_group_add;
 use crate::bindings::event_script_command_ctor;
 use crate::bindings::event_script_command_dtor;
@@ -28,7 +28,7 @@ orig! {
 
 /// `AudioEngine.ReportFrontendAudioEvent(event, 0.0, 1.0)`.
 fn frontend(event: u32) {
-    report_frontend_audio_event(GPtr::from_addr(0xB6_BC90), event, 0, 0x3F80_0000);
+    report_frontend_audio_event(GPtr::from_addr(0xB6_BC90), event, f32::from_bits(0), f32::from_bits(0x3F80_0000));
 }
 
 /// The int16 model id in a `MI_PICKUP_*` cell.
@@ -89,7 +89,7 @@ pub fn give_player_goodies_with_pick_up_mi(model: u16, player: i32) -> u8 {
         } else {
             player_get_wanted_level(find_player_ped(-1)) - 1
         };
-        set_wanted_level(find_player_ped(0), w);
+        set_wanted_level(find_player_ped(0), w as u32);
         stats_increment_stat(0xB6, 1.0);
         frontend(11);
         return 1;
@@ -102,7 +102,7 @@ pub fn give_player_goodies_with_pick_up_mi(model: u16, player: i32) -> u8 {
         event_script_command_ctor(ep, 3, task, 0);
         event_group_add(rd::<GPtr<u8>>(ped, 0x47C).byte_add(0x68), ep, 0);
         frontend(11);
-        event_script_command_dtor(ep);
+        event_script_command_dtor(ep.cast::<u32>());
         return 1;
     }
     if model == mi(0x8C_D750) {

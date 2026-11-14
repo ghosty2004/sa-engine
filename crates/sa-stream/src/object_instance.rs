@@ -17,6 +17,9 @@ use crate::bindings::building_new;
 use crate::bindings::is_object_glass;
 use crate::bindings::placeable_allocate_matrix as allocate_matrix;
 use crate::bindings::simple_transform_update_matrix as update_matrix;
+use crate::bindings::set_matrix_for_train_crossing;
+use sa_core::bindings::matrix_set_rotate_z_only as set_rotate_z_only;
+use sa_core::bindings::rect_restrict;
 orig! {
     /// `CDummy::operator new(size)` (0x5326E0)
     fn dummy_new(size: u32) -> GPtr<u8> = cdecl 0x5326E0 => unported;
@@ -30,18 +33,12 @@ orig! {
     fn get_bound_rect(this: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x24 => unported;
     /// virtual `CBaseModelInfo::GetModelType()` (+0x10, AL)
     fn model_type(this: GPtr<u8>) -> u8 = thiscall vslot 0x10 => unported;
-    /// `CMatrix::SetRotateZOnly(float)` (0x59B020)
-    fn set_rotate_z_only(m: GPtr<u8>, angle: f32) = thiscall 0x59B020 => unported;
     /// `CPlaceable::AllocateStaticMatrix()` (0x54F4C0)
     fn allocate_static_matrix(this: GPtr<u8>) = thiscall 0x54F4C0 => unported;
     /// `CMatrix::SetRotate(const CQuaternion&)` (0x59BBF0)
     fn set_rotate_quat(m: GPtr<u8>, q: GPtr<u8>) = thiscall 0x59BBF0 => unported;
-    /// `CObject::SetMatrixForTrainCrossing(CMatrix*, float)` (0x59F200)
-    fn set_matrix_for_train_crossing(m: GPtr<u8>, angle: u32) = cdecl 0x59F200 => unported;
     /// `CColStore::GetBoundingBox(int32)` (0x410800)
     fn col_store_get_bounding_box(slot: u32) -> GPtr<u8> = cdecl 0x410800 => unported;
-    /// `CRect::Restrict(const CRect&)` (0x404200)
-    fn rect_restrict(this: GPtr<u8>, r: GPtr<u8>) -> GPtr<u8> = thiscall 0x404200 => unported;
 }
 
 /// `CModelInfo::ms_modelInfoPtrs`.
@@ -165,7 +162,7 @@ pub fn load_object_instance(inst: GPtr<u8>, _name: GPtr<u8>) -> GPtr<u8> {
         ensure_matrix(e);
         allocate_static_matrix(e);
         ensure_matrix(e);
-        set_matrix_for_train_crossing(matrix(e), 0x3FAC_E9CC);
+        set_matrix_for_train_crossing(matrix(e), f32::from_bits(0x3FAC_E9CC));
     }
     let cm = GPtr::<u8>::from_addr(rd32(model_info(e.byte_add(0x22).cast::<i16>().read() as i32 as u32), 0x14) as usize);
     if !cm.is_null() {

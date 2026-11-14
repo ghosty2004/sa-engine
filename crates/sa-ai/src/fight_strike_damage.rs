@@ -2,6 +2,7 @@
 //! lands; FRONTIER-1 (`frontier-1-2`): the hit itself (0x61CBA0) and the victim's block test (0x61C650). Ported
 //! from the 1.0 US bytes.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -51,6 +52,8 @@ use sa_world::bindings::fx_add_blood;
 use sa_world::bindings::get_event_global_group;
 use sa_world::bindings::intel_get_task_fighting;
 use sa_world::bindings::ped_weapon_audio_add_audio_event;
+use sa_world::bindings::event_sound_quiet_ctor;
+use sa_world::bindings::generate_damage_event as weapon_generate_damage_event;
 orig! {
     /// `FUN_0061c650` (0x61C650): the victim's fight task blocks the hit
     fn fight_block_hit_o(t: GPtr<u8>, victim: GPtr<u8>, attacker: GPtr<u8>, combo: u32, level: u32) -> u8 = thiscall 0x61C650 => fight_block_hit;
@@ -58,11 +61,6 @@ orig! {
     fn fight_strike_damage_o(t: GPtr<u8>, ped: GPtr<u8>) -> X87 = reg("args = ecx stack") 0x61C740 => unported;
     /// `CPedGeometryAnalyser::ComputePedShotSide(CPed&, const CVector&)` (0x5F13F0)
     fn compute_ped_shot_side(ped: GPtr<u8>, pos: GPtr<u8>) -> i32 = cdecl 0x5F13F0 => crate::ped_geometry::compute_ped_shot_side;
-    /// `CWeapon::GenerateDamageEvent(CPed* victim, CEntity* creator, eWeaponType, int32 damage, ePedPieceTypes,
-    /// uint8 direction)` (0x73A530, AL)
-    fn weapon_generate_damage_event(victim: GPtr<u8>, creator: GPtr<u8>, ty: u32, damage: i32, piece: i32, dir: i32) -> u8 = cdecl 0x73A530 => unported;
-    /// `CEventSoundQuiet::CEventSoundQuiet(CEntity*, float, uint32 time, const CVector&)` (0x5E05B0)
-    fn event_sound_quiet_ctor(e: GPtr<u8>, ent: GPtr<u8>, level: f32, time: i32, pos: GPtr<u8>) -> GPtr<u8> = thiscall 0x5E05B0 => unported;
 }
 
 /// The fight move table entry of the task's combo (+0x24): `0xC170D0 + (combo - 4) * 0x88`.
@@ -162,12 +160,12 @@ pub fn fight_hit_ped(this: GPtr<u8>, attacker: GPtr<u8>, victim: GPtr<u8>, pos: 
         }
     }
     let wslot = |p: GPtr<u8>| rd::<u32>(p, (0x5A0 + i32::from(rd::<i8>(p, 0x718)) * 0x1C) as isize);
-    weapon_info_get(wslot(attacker), 1);
+    weapon_info_get(wslot(attacker) as i32, 1);
     let damage = ftol32(fight_strike_damage_o(this, attacker));
     wr::<u8>(this, 0x14, 0xFF);
     let side = compute_ped_shot_side(victim, entity_pos(attacker));
     let piece16 = i32::from(piece as i16);
-    let generated = weapon_generate_damage_event(victim, attacker, wslot(attacker), damage, piece16, side) != 0;
+    let generated = weapon_generate_damage_event(victim, attacker, wslot(attacker) as i32, damage, piece16, side as u32) != 0;
     if wslot(attacker) == 9 {
         ped_weapon_audio_add_audio_event(attacker.byte_add(0x394), 0x9B);
     }
@@ -205,7 +203,7 @@ pub fn fight_hit_ped(this: GPtr<u8>, attacker: GPtr<u8>, victim: GPtr<u8>, pos: 
     let mut zero = [0u32; 3];
     let mut ev = [0u32; 12];
     let ep: GPtr<u8> = GPtr::from_raw(ev.as_mut_ptr()).cast();
-    event_sound_quiet_ctor(ep, attacker, 55.0, -1, GPtr::from_raw(zero.as_mut_ptr()).cast());
+    event_sound_quiet_ctor(ep, attacker, 55.0, -1i32 as u32, GPtr::from_raw(zero.as_mut_ptr()).cast());
     event_group_add(get_event_global_group(), ep, 0);
     let combo = rd::<u8>(this, 0x24);
     let kick = (8..=12).contains(&combo);

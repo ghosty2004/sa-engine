@@ -7,17 +7,14 @@ use sa_core::{hook, orig};
 
 use crate::common::{THE_CAMERA, g, jp, rd, x, xi};
 
-use crate::bindings::rw_im3d_render_indexed_primitive;
-use crate::bindings::rw_im3d_transform;
+use sa_world::bindings::rw_im3d_render_indexed_primitive;
+use sa_world::bindings::rw_im3d_transform;
 use sa_core::bindings::defined_state;
+use crate::bindings::rw_im2d_render_indexed_primitive;
+use sa_world::bindings::rw_im3d_end;
 orig! {
     /// `RwRenderStateSet(state, value)` (`RwGlobals` +0x20)
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `RwIm2DRenderIndexedPrimitive(prim, verts, numVerts, indices, numIndices)` through the thunk
-    /// 0x734EA0 (`RwEngineInstance` +0x34, protection-decoded)
-    fn rw_im2d_render_indexed_primitive(prim: u32, verts: u32, nv: u32, indices: u32, ni: u32) -> u32 = cdecl 0x734EA0 => unported;
-    /// `RwIm3DEnd()` (0x7EF520)
-    fn rw_im3d_end() -> u32 = cdecl 0x7EF520 => unported;
 }
 
 /// `CMirrors::pBuffer`, its raster dword, `CMirrors::TypeOfMirror`-style flags byte and the
@@ -57,8 +54,8 @@ fn draw_temp_quad() {
     }
     g::<u32>(TEMP_INDICES_STORED).write(6);
     g::<u32>(TEMP_VERTICES_STORED).write(4);
-    if !rw_im3d_transform(TEMP_RENDER_VERTICES, 4, 0, 1).is_null() {
-        rw_im3d_render_indexed_primitive(3, TEMP_BUFFER_INDICES, g::<u32>(TEMP_INDICES_STORED).read());
+    if !rw_im3d_transform(GPtr::from_addr(TEMP_RENDER_VERTICES as usize), 4, GPtr::NULL, 1).is_null() {
+        rw_im3d_render_indexed_primitive(3, GPtr::from_addr(TEMP_BUFFER_INDICES as usize), (g::<u32>(TEMP_INDICES_STORED).read()) as i32);
         rw_im3d_end();
     }
 }
@@ -108,7 +105,7 @@ pub fn render_mirror_buffer() {
             gw(b + 0x14, *u);
             gw(b + 0x18, *v);
         }
-        rw_im2d_render_indexed_primitive(3, SCREEN_VERTS, 4, QUAD_INDICES, 6);
+        rw_im2d_render_indexed_primitive(3, GPtr::from_addr(SCREEN_VERTS as usize), 4, GPtr::from_addr(QUAD_INDICES as usize), 6);
     } else {
         rw_render_state_set(8, 1);
         rw_render_state_set(6, 1);

@@ -4,7 +4,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::{rd, wr};
 
@@ -25,17 +25,12 @@ const TEX_NAMES: usize = 0x8D4950;
 const TEX_MASKS: usize = 0x8D4A58;
 const PARTICLE_TXD: usize = 0x85C648;
 
-pub use sa_stream::bindings::find_txd_slot;
-pub use sa_stream::bindings::rw_texture_destroy;
-pub use sa_stream::bindings::rw_texture_read;
-orig! {
-    /// `CTxdStore::PushCurrentTxd()` (0x7316A0)
-    pub fn push_current_txd() = cdecl 0x7316A0 => sa_stream::txdstore::push_current_txd;
-    /// `CTxdStore::PopCurrentTxd()` (0x7316B0)
-    pub fn pop_current_txd() = cdecl 0x7316B0 => sa_stream::txdstore::pop_current_txd;
-    /// `CTxdStore::SetCurrentTxd(int)` (0x7319C0)
-    pub fn set_current_txd(slot: i32) = cdecl 0x7319C0 => sa_stream::txdstore::set_current_txd;
-}
+pub use sa_core::bindings::find_txd_slot;
+pub use sa_core::bindings::rw_texture_destroy;
+pub use sa_core::bindings::rw_texture_read;
+pub use sa_core::bindings::pop_current_txd;
+pub use sa_core::bindings::push_current_txd;
+pub use sa_core::bindings::set_current_txd;
 
 /// `CCoronas::Init()` (0x6FAA70): with the "particle" TXD current, every corona texture not yet loaded
 /// whose name is non-empty is read (`RwTextureRead(name, mask)`); then every corona's identifier is 0

@@ -173,7 +173,7 @@ const MARK_Z: u32 = 0x446D_8000;
 const GROUND_PROBE: u32 = 0x41F0_0000;
 const NO_GROUND: u32 = 0xC2C8_0000;
 
-pub use crate::bindings::camera_is_sphere_visible_m as is_sphere_visible;
+pub use sa_world::bindings::camera_is_sphere_visible_m as is_sphere_visible;
 pub use crate::bindings::draw_quad as post_fx_draw_quad;
 pub use crate::bindings::im_render_states_store as post_fx_states_store;
 pub use crate::bindings::o_render_water_rectangle;
@@ -183,14 +183,15 @@ pub use crate::bindings::rw_im3d_render_primitive;
 pub use sa_core::bindings::cross_product;
 pub use sa_core::bindings::rw_v3d_transform_points;
 pub use sa_core::bindings::vector_normalise;
-pub use sa_stream::bindings::rw_texture_destroy;
+pub use sa_core::bindings::rw_texture_destroy;
 pub use sa_world::bindings::rw_im3d_end;
+pub use crate::bindings::world_scan as world_scan_scan_world;
+pub use sa_core::bindings::can_see_water_from_curr_area;
+pub use sa_world::bindings::get_water_level_no_waves as o_get_water_level_no_waves;
+pub use sa_world::bindings::rw_im3d_transform;
+pub use sa_world::bindings::water_find_nearest_water_and_flow as o_find_nearest_water_and_its_flow;
+pub use sa_world::bindings::world_process_vertical_line as process_vertical_line;
 orig! {
-    /// `CWorld::ProcessVerticalLine(const CVector&, float, CColPoint&, CEntity*&, bool buildings, bool
-    /// vehicles, bool peds, bool objects, bool dummies, bool seeThrough, CStoredCollPoly*)` (0x5674E0)
-    pub fn process_vertical_line(p: GPtr<f32>, z: u32, cp: GPtr<u8>, e: GPtr<GPtr<u8>>, b: u32, v: u32, pe: u32, o: u32, d: u32, st: u32, poly: u32) -> u8 = cdecl 0x5674E0 => unported;
-    /// `CWorldScan::ScanWorld(CVector2D* points, int32 n, void (*)(int32, int32))` (0x72CAE0)
-    pub fn world_scan_scan_world(points: GPtr<u8>, n: i32, cb: u32) = cdecl 0x72CAE0 => unported;
     /// `CWaterLevel::MarkQuadsAndPolysToBeRendered` (0x6E5810)
     pub fn o_mark_quads_and_polys(x: i32, y: i32, interior: u8) = cdecl 0x6E5810 => crate::waterlevel::mark_quads_and_polys_to_be_rendered;
     /// `CWaterLevel::AddWaterLevelVertex(int32 x, int32 y, CRenPar)` (0x6E5A40)
@@ -226,24 +227,16 @@ orig! {
     pub fn o_render_flat_water_triangle_one_layer(x1: i32, y1: i32, a0: u32, a1: u32, a2: u32, a3: u32, x2: i32, y2: i32, b0: u32, b1: u32, b2: u32, b3: u32, x3: i32, y3: i32, c0: u32, c1: u32, c2: u32, c3: u32, layer: i32) = cdecl 0x6E8ED0 => crate::waterlevel::render_flat_water_triangle_one_layer;
     /// `RwRenderStateSet` through `RwEngineInstance->dOpenDevice.fpRenderStateSet` (+0x20)
     pub fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `RwIm3DTransform(RxObjSpace3DVertex*, uint32 count, RwMatrix* ltm, uint32 flags)` (0x7EF450)
-    pub fn rw_im3d_transform(verts: GPtr<u8>, count: u32, ltm: GPtr<u8>, flags: u32) -> GPtr<u8> = cdecl 0x7EF450 => unported;
     /// `RenderBuffer::RenderIfDoesntFit()` (0x6E7680)
     pub fn render_buffer_render_if_doesnt_fit() = cdecl 0x6E7680 => unported;
     /// `FUN_006e5750`: add a quad / triangle to a block (0x6E5750)
     pub fn o_add_to_block(bx: i32, by: i32, idx: i32, kind: i32) = cdecl 0x6E5750 => crate::waterlevel::add_to_block;
-    /// `CGame::CanSeeWaterFromCurrArea()` (0x53C4B0)
-    pub fn can_see_water_from_curr_area() -> u8 = cdecl 0x53C4B0 => unported;
     /// `CWaterLevel::ScanThroughBlocks()` (0x6E6D10)
     pub fn o_scan_through_blocks() = cdecl 0x6E6D10 => crate::waterlevel::scan_through_blocks;
-    /// `CWaterLevel::FindNearestWaterAndItsFlow()` (0x6E9D70)
-    pub fn o_find_nearest_water_and_its_flow() = cdecl 0x6E9D70 => crate::waterlevel::find_nearest_water_and_its_flow;
     /// `FindPlayerPed(int32)` (0x56E210)
     pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
     /// `FUN_006ea8a0`: `CWaterLevel::GetGroundLevel` (0x6EA8A0)
     pub fn o_get_ground_level(p: GPtr<f32>, out: GPtr<f32>, col: GPtr<u8>, offset: u32) -> u8 = cdecl 0x6EA8A0 => crate::waterlevel::get_ground_level;
-    /// `CWaterLevel::GetWaterLevelNoWaves` (0x6E8580)
-    pub fn o_get_water_level_no_waves(x: u32, y: u32, z: u32, level: GPtr<f32>, big: GPtr<f32>, small: GPtr<f32>) -> u8 = cdecl 0x6E8580 => crate::waterlevel::get_water_level_no_waves;
     /// `CWaterLevel::AddWaveToResult` (0x6E81E0)
     pub fn o_add_wave_to_result(x: u32, y: u32, level: GPtr<f32>, big: u32, small: u32, normal: GPtr<u8>) = cdecl 0x6E81E0 => crate::waterlevel::add_wave_to_result;
     /// `CWaterLevel::CalculateWavesOnlyForCoordinate2` (0x6E7210)
@@ -746,7 +739,7 @@ pub fn get_water_level(px: u32, py: u32, pz: u32, level: GPtr<f32>, waves: u8, n
     let mut small = 0u32;
     let bp = GPtr::from_raw(&mut big as *mut u32).cast::<f32>();
     let sp = GPtr::from_raw(&mut small as *mut u32).cast::<f32>();
-    if o_get_water_level_no_waves(px, py, pz, level, bp, sp) == 0 {
+    if o_get_water_level_no_waves(f32::from_bits(px), f32::from_bits(py), f32::from_bits(pz), level.cast::<u8>(), bp, sp) == 0 {
         return 0;
     }
     if waves == 0 && !x(level.read()).fsub_m(f32::from_bits(pz)).fcom(x(k(THREE))).test_any(0x41) {
@@ -854,7 +847,7 @@ pub fn scan_through_blocks() {
         0.0,
     ];
     let pp = GPtr::from_raw(p.as_mut_ptr()).cast::<u8>();
-    rw_v3d_transform_points(pp, pp, 5, rd::<GPtr<u8>>(cam, 4).byte_add(0x10));
+    rw_v3d_transform_points(pp.cast::<f32>(), pp.cast::<f32>(), 5, rd::<GPtr<u8>>(cam, 4).byte_add(0x10));
     let mut a = [0f32; 10];
     for i in 0..5 {
         for j in 0..2 {
@@ -880,17 +873,17 @@ pub fn get_ground_level(p: GPtr<f32>, out: GPtr<f32>, col: GPtr<u8>, offset: u32
     let mut cp = [0u8; 0x2C];
     let mut ent = GPtr::<u8>::NULL;
     let hit = process_vertical_line(
-        GPtr::from_raw(pt.as_mut_ptr()).cast(),
-        f32_of(x(off).fchs()).to_bits(),
+        GPtr::<f32>::cast::<u8>(GPtr::from_raw(pt.as_mut_ptr()).cast()),
+        f32::from_bits(f32_of(x(off).fchs()).to_bits()),
         GPtr::from_raw(cp.as_mut_ptr()),
-        GPtr::from_raw(&mut ent),
+        GPtr::<GPtr<u8>>::cast::<u8>(GPtr::from_raw(&mut ent)),
         1,
         0,
         0,
         0,
         1,
         0,
-        0,
+        GPtr::NULL,
     );
     if hit == 0 {
         return 0;
@@ -912,10 +905,10 @@ pub fn get_water_depth(p: GPtr<f32>, depth: GPtr<f32>, water: GPtr<f32>, ground:
     let lp = GPtr::from_raw(&mut level as *mut u32).cast::<f32>();
     let pu = p.cast::<u32>();
     if o_get_water_level_no_waves(
-        pu.read(),
-        pu.wrapping_index(1).read(),
-        pu.wrapping_index(2).read(),
-        lp,
+        f32::from_bits(pu.read()),
+        f32::from_bits(pu.wrapping_index(1).read()),
+        f32::from_bits(pu.wrapping_index(2).read()),
+        lp.cast::<u8>(),
         GPtr::NULL,
         GPtr::NULL,
     ) == 0
@@ -1245,7 +1238,7 @@ fn flow_axis(i: i32, step: X87) {
 /// the player's position into a function-static CVector on the first call (guard bit 0 of 0xC278F0).
 #[hook(addr = 0x6EB710, conv = cdecl, name = "CWaterLevel::PreRenderWater", expect = "E8 9B 0D E5 FF")]
 pub fn pre_render_water() {
-    if can_see_water_from_curr_area() == 0 {
+    if can_see_water_from_curr_area() as u8 == 0 {
         return;
     }
     o_scan_through_blocks();
@@ -1394,10 +1387,10 @@ pub fn set_up_water_fog(x1: i32, y1: i32, x2: i32, y2: i32) {
     let y1f = f32_of(xi(y1));
     let (mut level, mut big, mut small) = (0f32, 0f32, 0f32);
     let ok = o_get_water_level_no_waves(
-        x1f.to_bits(),
-        y1f.to_bits(),
-        0,
-        GPtr::from_raw(&mut level),
+        f32::from_bits(x1f.to_bits()),
+        f32::from_bits(y1f.to_bits()),
+        f32::from_bits(0),
+        GPtr::<f32>::cast::<u8>(GPtr::from_raw(&mut level)),
         GPtr::from_raw(&mut big),
         GPtr::from_raw(&mut small),
     );
@@ -2049,8 +2042,8 @@ pub fn render_high_detail_water_triangle(
     let r = f32_of(xi(w).fmul_m(k(SPHERE_RADIUS_SCALE))).to_bits();
     let cam = GPtr::<u8>::from_addr(crate::common::THE_CAMERA);
     let c = GPtr::from_raw(centre.as_mut_ptr()).cast::<u8>();
-    if is_sphere_visible(cam, c, r, CAM_FRUSTUM) == 0
-        && (g::<u8>(CAM_MIRROR_FLAG).read() == 0 || is_sphere_visible(cam, c, r, CAM_FRUSTUM_MIRROR) == 0)
+    if is_sphere_visible(cam, c, f32::from_bits(r), GPtr::from_addr(CAM_FRUSTUM as usize)) == 0
+        && (g::<u8>(CAM_MIRROR_FLAG).read() == 0 || is_sphere_visible(cam, c, f32::from_bits(r), GPtr::from_addr(CAM_FRUSTUM_MIRROR as usize)) == 0)
     {
         return;
     }
@@ -2308,8 +2301,8 @@ pub fn render_high_detail_water_rectangle(
     let r = f32_of(b.fmul(b).fadd(a.fmul(a)).fsqrt()).to_bits();
     let cam = GPtr::<u8>::from_addr(crate::common::THE_CAMERA);
     let c = GPtr::from_raw(centre.as_mut_ptr()).cast::<u8>();
-    if is_sphere_visible(cam, c, r, CAM_FRUSTUM) == 0
-        && (g::<u8>(CAM_MIRROR_FLAG).read() == 0 || is_sphere_visible(cam, c, r, CAM_FRUSTUM_MIRROR) == 0)
+    if is_sphere_visible(cam, c, f32::from_bits(r), GPtr::from_addr(CAM_FRUSTUM as usize)) == 0
+        && (g::<u8>(CAM_MIRROR_FLAG).read() == 0 || is_sphere_visible(cam, c, f32::from_bits(r), GPtr::from_addr(CAM_FRUSTUM_MIRROR as usize)) == 0)
     {
         return;
     }

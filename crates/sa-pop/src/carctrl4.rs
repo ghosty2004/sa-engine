@@ -13,19 +13,18 @@ pub const GLOBALS: &[GlobalDesc] = &[];
 
 use crate::bindings::auto_pilot_modify_speed as modify_speed;
 use crate::bindings::calc_speed_scale_factor;
-use crate::bindings::get_position;
+use sa_world::bindings::get_position;
 use crate::bindings::init_sequence;
 use crate::bindings::one_way_lane_offset;
 use sa_world::bindings::is_law_enforcement_vehicle;
+use sa_core::bindings::vector_sub;
+use sa_world::bindings::find_objects_kinda_colliding;
+use sa_world::bindings::get_right_direction;
 orig! {
-    /// `VectorSub(CVector* out, const CVector* a, const CVector* b)` (0x40FE60): `out = a - b`
-    fn vector_sub(out: GPtr<f32>, a: GPtr<f32>, b: GPtr<f32>) -> GPtr<f32> = cdecl 0x40FE60 => unported;
     /// `CrossProduct(CVector* out, const CVector* a, const CVector* b)` (0x59C730)
     fn cross_product(out: GPtr<f32>, a: GPtr<f32>, b: GPtr<f32>) -> GPtr<f32> = cdecl 0x59C730 => unported;
     /// `DotProduct(const CVector* a, const CVector* b)` (0x40FDB0, ST0)
     fn dot_product(a: GPtr<f32>, b: GPtr<f32>) -> f64 = cdecl 0x40FDB0 => unported;
-    /// `CPlaceable::GetRightDirection(CVector* out)` (0x41CC70, thiscall, returns `out`)
-    fn get_right_direction(e: GPtr<u8>, out: GPtr<f32>) -> GPtr<f32> = thiscall 0x41CC70 => unported;
     /// `CCarCtrl::IsAnyoneParking()` (0x42C250)
     fn is_anyone_parking() -> u8 = cdecl 0x42C250 => crate::carctrl2::is_anyone_parking;
     /// `CWorld::FindObjectsKindaColliding(const CVector&, float, bool, int16*, int16, CEntity**, bool, bool, bool,
@@ -37,7 +36,6 @@ orig! {
     /// `CCarCtrl::IsThisAnAppropriateNode(CVehicle*, CNodeAddress, CNodeAddress, CNodeAddress, bool)` (0x42DAB0;
     /// the caller pushes a sixth dword the callee never reads)
     fn is_this_an_appropriate_node_call(v: GPtr<u8>, n1: u32, n2: u32, n3: u32, wrong: u32, other: u32) -> u8 = cdecl 0x42DAB0 => unported;
-    fn find_objects_kinda_colliding(p: GPtr<f32>, r: f32, b2d: u32, count: GPtr<i16>, max: u32, out: GPtr<u8>, buildings: u32, vehicles: u32, peds: u32, objects: u32, dummies: u32) = cdecl 0x568B80 => unported;
 }
 
 /// `ThePaths.m_pPathNodes[area]` (0x96F854).
@@ -227,10 +225,10 @@ pub fn is_this_an_appropriate_node(veh: GPtr<u8>, n1: u32, n2: u32, n3: u32, wro
                 let (mut t3, mut b, mut t2, mut t3b, mut a, mut c) =
                     ([0f32; 3], [0f32; 3], [0f32; 3], [0f32; 3], [0f32; 3], [0f32; 3]);
                 let p = get_position(node3, lp(&mut t3));
-                vector_sub(lp(&mut b), p, vp);
+                vector_sub(GPtr::<f32>::cast::<u8>(lp(&mut b)), p.cast::<u8>(), vp.cast::<u8>());
                 let q2 = get_position(node2, lp(&mut t2));
                 let q3 = get_position(node3, lp(&mut t3b));
-                vector_sub(lp(&mut a), q3, q2);
+                vector_sub(GPtr::<f32>::cast::<u8>(lp(&mut a)), q3.cast::<u8>(), q2.cast::<u8>());
                 cross_product(lp(&mut c), lp(&mut a), lp(&mut b));
                 // fcomp 0; test ah, 5; jnp: z < 0
                 if !x(c[2]).fcom(x(0.0)).test_parity(0x05) {
@@ -247,7 +245,7 @@ pub fn is_this_an_appropriate_node(veh: GPtr<u8>, n1: u32, n2: u32, n3: u32, wro
                 let vp = entity_pos(veh);
                 let (mut t3, mut d, mut r) = ([0f32; 3], [0f32; 3], [0f32; 3]);
                 let p = get_position(node3, lp(&mut t3));
-                vector_sub(lp(&mut d), p, vp);
+                vector_sub(GPtr::<f32>::cast::<u8>(lp(&mut d)), p.cast::<u8>(), vp.cast::<u8>());
                 let rp = get_right_direction(veh, lp(&mut r));
                 if !X87::from_f64_exact(dot_product(rp, lp(&mut d)))
                     .fcom(x(0.0))
@@ -670,15 +668,13 @@ fn curve_timing(veh: GPtr<u8>, cdx: f32, cdy: f32, ndx: f32, ndy: f32) {
     wr(veh, 0x3A0, if v > 10 { v } else { 10 });
 }
 
+use crate::bindings::pick_next_node_randomly as pick_next_node_randomly_call;
+use sa_core::bindings::find_player_vehicle;
 orig! {
     /// `CCarCtrl::PickNextNodeToChaseCar(CVehicle*, float x, float y, float z, CEntity*)` (0x426EF0; five dwords)
     fn pick_next_node_to_chase_car_call(v: GPtr<u8>, px: f32, py: f32, pz: f32, target: GPtr<u8>) -> u8 = cdecl 0x426EF0 => unported;
     /// `CCarCtrl::PickNextNodeToFollowPath(CVehicle*)` (0x427740)
     fn pick_next_node_to_follow_path_call(v: GPtr<u8>) -> u8 = cdecl 0x427740 => unported;
-    /// `CCarCtrl::PickNextNodeRandomly(CVehicle*)` (0x42DE80)
-    fn pick_next_node_randomly_call(v: GPtr<u8>) = cdecl 0x42DE80 => pick_next_node_randomly;
-    /// `CWorld::FindPlayerVehicle(int32, bool)` (0x56E0D0)
-    fn find_player_vehicle(id: i32, remote: u8) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
 }
 
 /// `CCarCtrl::PickNextNodeAccordingStrategy(CVehicle*)` (0x432B10): +0x3D1 = the next node's highway bits
@@ -730,10 +726,7 @@ pub fn pick_next_node_according_strategy(veh: GPtr<u8>) -> u8 {
 }
 
 use crate::bindings::stop_car_if_nodes_are_invalid;
-orig! {
-    /// `CPathFind::DoPathSearch(...)` (0x4515D0, thiscall on ThePaths, `ret 0x4C`)
-    fn do_path_search(this: GPtr<u8>, path_type: u32, ox: f32, oy: f32, oz: f32, origin_addr: u32, tx: f32, ty: f32, tz: f32, out_nodes: GPtr<u32>, out_count: GPtr<i16>, max_nodes: i32, out_distance: GPtr<f32>, max_search: f32, target_addr: GPtr<u32>, max_depth: f32, same_lane: u32, forbidden: u32, allow_water: u32, for_boats: u32) = thiscall 0x4515D0 => crate::pathfind::do_path_search;
-}
+use crate::bindings::do_path_search;
 
 /// `ThePaths` (0x96F050).
 fn the_paths() -> GPtr<u8> {
@@ -970,10 +963,7 @@ pub fn pick_next_node_to_chase_car(veh: GPtr<u8>, dx: f32, dy: f32, dz: f32, _ta
 }
 
 use crate::bindings::remove_one_path_node;
-orig! {
-    /// `CCarCtrl::SwitchVehicleToRealPhysics(CVehicle*)` (0x423FC0)
-    fn switch_vehicle_to_real_physics(v: GPtr<u8>) = cdecl 0x423FC0 => crate::carctrl::switch_vehicle_to_real_physics;
-}
+use sa_world::bindings::switch_vehicle_to_real_physics;
 
 /// `CCarCtrl::PickNextNodeToFollowPath(CVehicle*)` (0x427740): with no stored path nodes (+0x418 <= 0) an
 /// eight-node `DoPathSearch` from the vehicle to its destination (+0x3EC; same-lane-only from flag 0x40 of
@@ -1098,11 +1088,8 @@ pub fn pick_next_node_to_follow_path(veh: GPtr<u8>) -> u8 {
     0
 }
 
-use crate::bindings::join_car_with_road_system_goto_coors;
-orig! {
-    /// `CCarAI::GetCarToGoToCoors(CVehicle*, const CVector&, eCarDrivingStyle, bool)` (0x41CE30, ST0)
-    fn get_car_to_go_to_coors_call(v: GPtr<u8>, c: GPtr<f32>, style: u32, cruise: u32) -> f64 = cdecl 0x41CE30 => get_car_to_go_to_coors_abi;
-}
+use sa_world::bindings::join_car_with_road_system_goto_coors;
+use sa_world::bindings::car_ai_get_car_to_go_to_coors as get_car_to_go_to_coors_call;
 
 /// `sqrt((v.y - c.y)^2 + (v.x - c.x)^2)` of the vehicle position and `c` (the tail of the GetCarToGoTo*
 /// functions, y term first).
@@ -1147,11 +1134,6 @@ fn set_dest(veh: GPtr<u8>, c: GPtr<f32>) {
     }
 }
 
-#[cfg_attr(sa_phase_a, allow(dead_code))]
-fn get_car_to_go_to_coors_abi(v: GPtr<u8>, c: GPtr<f32>, style: u32, cruise: u32) -> f64 {
-    get_car_to_go_to_coors(v, c, style as u8, cruise as u8).to_f64()
-}
-
 /// `CCarAI::GetCarToGoToCoors(CVehicle*, const CVector&, eCarDrivingStyle, bool setCruiseSpeed)` (0x41CE30,
 /// ST0): the parking missions 0x2D, 0x2E, 0x31, 0x32 (byte table 0x41CFA0) keep their mission; missions 8 / 9
 /// keep it while the target is within 5 (x and y) of the stored destination (gta-reversed tests the vehicle
@@ -1167,7 +1149,7 @@ pub fn get_car_to_go_to_coors(veh: GPtr<u8>, c: GPtr<f32>, style: u8, cruise: u8
     };
     if !keep {
         start_goto(veh, style, cruise);
-        let j = join_car_with_road_system_goto_coors(veh, c, 0, 0);
+        let j = join_car_with_road_system_goto_coors(veh, c.cast::<u32>(), 0, 0);
         wr(veh, 0x3BA, u8::from(j != 0) + 8);
     }
     dist2d_to(veh, c)
@@ -1201,7 +1183,7 @@ pub fn get_car_to_go_to_coors_accurate(veh: GPtr<u8>, c: GPtr<f32>, style: u8, c
         }
     } else {
         start_goto(veh, style, cruise);
-        let j = join_car_with_road_system_goto_coors(veh, c, 0, 0);
+        let j = join_car_with_road_system_goto_coors(veh, c.cast::<u32>(), 0, 0);
         wr(veh, 0x3BA, u8::from(j != 0) + 0xC);
     }
     dist2d_to(veh, c)
@@ -1220,7 +1202,7 @@ pub fn get_car_to_go_to_coors_racing(veh: GPtr<u8>, c: GPtr<f32>, style: u8, cru
         start_goto(veh, style, cruise);
         set_dest(veh, c);
         wr::<u8>(veh, 0x3BA, 0x21);
-        join_car_with_road_system_goto_coors(veh, c, 0, 0);
+        join_car_with_road_system_goto_coors(veh, c.cast::<u32>(), 0, 0);
     }
     dist2d_to(veh, c)
 }
@@ -1229,7 +1211,7 @@ pub fn get_car_to_go_to_coors_racing(veh: GPtr<u8>, c: GPtr<f32>, style: u8, cru
 /// true)` (result dropped), +0x42C bit 2, cruise speed 10, the 2D distance.
 #[hook(addr = 0x41D350, conv = cdecl, name = "CCarAI::GetCarToParkAtCoors", expect = "53 56 8B 74 24 0C")]
 pub fn get_car_to_park_at_coors(veh: GPtr<u8>, c: GPtr<f32>) -> X87 {
-    get_car_to_go_to_coors_call(veh, c, 0, 1);
+    get_car_to_go_to_coors_call(veh, c.cast::<u8>(), 0, 1);
     wr(veh, 0x42C, rd::<u8>(veh, 0x42C) | 4);
     wr::<u8>(veh, 0x3D0, 0xA);
     dist2d_to(veh, c)
@@ -1237,11 +1219,10 @@ pub fn get_car_to_park_at_coors(veh: GPtr<u8>, c: GPtr<f32>) -> X87 {
 
 use sa_stream::bindings::find_player_wanted;
 use sa_world::bindings::cull_zones_no_police;
+use sa_world::bindings::join_car_with_road_system as join_car_with_road_system_call;
 orig! {
     /// `CVector::Normalise()` (0x59C910, thiscall)
     fn vector_normalise(v: GPtr<f32>) = thiscall 0x59C910 => unported;
-    /// `CCarCtrl::JoinCarWithRoadSystem(CVehicle*)` (0x42F5A0)
-    fn join_car_with_road_system_call(v: GPtr<u8>) = cdecl 0x42F5A0 => join_car_with_road_system;
 }
 
 /// The forward vector of an entity as the x87 sees it: the matrix's (+0x14 → +0x10..+0x18), or
@@ -1551,13 +1532,11 @@ use sa_world::bindings::give_delayed_weapon;
 use sa_world::bindings::intel_clear_tasks;
 use sa_world::bindings::player_get_wanted_level as ped_get_wanted_level;
 use sa_world::bindings::tm_set_task as task_manager_set_task;
+use sa_core::bindings::car_set_ped_out_ctor as task_car_set_ped_out_ctor;
+use sa_world::bindings::attach_ped_to_entity;
 orig! {
     /// `CTaskComplexCopInCar::CTaskComplexCopInCar(CVehicle*, CPed* partner, CPed* target, bool driver)` (0x68C7F0)
     fn task_cop_in_car_ctor(t: GPtr<u8>, v: GPtr<u8>, partner: GPtr<u8>, target: GPtr<u8>, driver: u32) -> GPtr<u8> = thiscall 0x68C7F0 => unported;
-    /// `CTaskSimpleCarSetPedOut::CTaskSimpleCarSetPedOut(CVehicle*, int32 door, bool)` (0x6478B0)
-    fn task_car_set_ped_out_ctor(t: GPtr<u8>, v: GPtr<u8>, door: i32, b: u32) -> GPtr<u8> = thiscall 0x6478B0 => unported;
-    /// `CPed::AttachPedToEntity(CEntity*, CVector offset, uint16 dir, float limit, eWeaponType)` (0x5E7CB0)
-    fn attach_ped_to_entity(p: GPtr<u8>, e: GPtr<u8>, ox: f32, oy: f32, oz: f32, dir: u32, lim: f32, w: u32) = thiscall 0x5E7CB0 => unported;
     /// `CTaskComplexKillPedFromBoat::CTaskComplexKillPedFromBoat(CPed*)` (0x6227C0)
     fn task_kill_ped_from_boat_ctor(t: GPtr<u8>, target: GPtr<u8>) -> GPtr<u8> = thiscall 0x6227C0 => unported;
 }
@@ -1827,7 +1806,7 @@ fn goto_coors_arrived(veh: GPtr<u8>, mission: u8) {
         wr::<u8>(veh, 0x3BA, 0);
     } else if !d.fcom(straight.fadd_m(kf(0x858C80))).test_any(0x41) && g::<u8>(0xB7CB4C).read() & 7 == 0 {
         wr::<u8>(veh, 0x3BB, 0);
-        let r = join_car_with_road_system_goto_coors(veh, veh.byte_add(0x3EC).cast(), 1, 0);
+        let r = join_car_with_road_system_goto_coors(veh, GPtr::<f32>::cast::<u32>(veh.byte_add(0x3EC).cast()), 1, 0);
         wr::<u8>(veh, 0x3BA, u8::from(r != 0) + 8);
     }
 }
@@ -1872,27 +1851,22 @@ fn police_gang_area_cruise_speed(veh: GPtr<u8>) {
         if ped.is_null() || !(7..=0x11).contains(&rd::<i32>(ped, 0x598)) {
             continue;
         }
-        let d = police_vector_sub(GPtr::from_raw(tmp.as_mut_ptr()), entity_pos(veh), entity_pos(ped));
-        if !X87::from_f64_exact(police_vector_magnitude(d)).fcom(x(kf(0x85862C))).test_parity(0x05) {
+        let d = GPtr::<u8>::cast::<f32>(police_vector_sub(GPtr::<f32>::cast::<u8>(GPtr::from_raw(tmp.as_mut_ptr())), GPtr::<f32>::cast::<u8>(entity_pos(veh)), GPtr::<f32>::cast::<u8>(entity_pos(ped))));
+        if !X87::from_f64_exact(police_vector_magnitude(d.cast::<u32>())).fcom(x(kf(0x85862C))).test_parity(0x05) {
             count += 1;
         }
     }
     wr::<u8>(veh, 0x3D0, (10 - count).max(1) as u8);
 }
 
-orig! {
-    /// `operator-(const CVector&, const CVector&)` (0x40FE60, hidden result pointer first)
-    fn police_vector_sub(out: GPtr<f32>, a: GPtr<f32>, b: GPtr<f32>) -> GPtr<f32> = cdecl 0x40FE60 => unported;
-    /// `CVector::Magnitude()` (0x4082C0, ST0)
-    fn police_vector_magnitude(v: GPtr<f32>) -> f64 = thiscall 0x4082C0 => unported;
-}
+use sa_core::bindings::vector_magnitude as police_vector_magnitude;
+use sa_core::bindings::vector_sub as police_vector_sub;
 
 use crate::bindings::calc_curve_point;
+use crate::bindings::pick_next_node_according_strategy as pick_next_node_according_strategy_call;
 orig! {
     /// `CCarCtrl::SlowCarOnRailsDownForTrafficAndLights(CVehicle*)` (0x434790)
     fn slow_car_on_rails_down_for_traffic_and_lights(v: GPtr<u8>) = cdecl 0x434790 => crate::carctrl2::slow_car_on_rails_down_for_traffic_and_lights;
-    /// `CCarCtrl::PickNextNodeAccordingStrategy(CVehicle*)` (0x432B10)
-    fn pick_next_node_according_strategy_call(v: GPtr<u8>) -> u8 = cdecl 0x432B10 => pick_next_node_according_strategy;
     /// `CCarCtrl::DragCarToPoint(CVehicle*, CVector*)` (0x42EC90)
     fn drag_car_to_point(v: GPtr<u8>, p: GPtr<f32>) = cdecl 0x42EC90 => unported;
 }
@@ -2170,7 +2144,7 @@ pub fn find_links_to_go_with_these_nodes(veh: GPtr<u8>) {
                 if l != rd::<u32>(veh, 0x394) && !path_nodes(area_of(l)).is_null() {
                     let mut a = node_pos(path_node(c));
                     let mut b = node_pos(path_node(l));
-                    let d = X87::from_f64_exact(dist_to_line(lp(&mut a), lp(&mut b), entity_pos(veh)));
+                    let d = X87::from_f64_exact(dist_to_line(GPtr::<f32>::cast::<u8>(lp(&mut a)), GPtr::<f32>::cast::<u8>(lp(&mut b)), GPtr::<f32>::cast::<u8>(entity_pos(veh))));
                     if lt_k(d, best_dist) {
                         best_dist = d.to_f32();
                         best = i;
@@ -2199,12 +2173,11 @@ pub fn find_links_to_go_with_these_nodes(veh: GPtr<u8>) {
     );
 }
 
+use crate::bindings::find_links_to_go_with_these_nodes as find_links_to_go_with_these_nodes_call;
 orig! {
     /// `CPathFind::FindNodeClosestToCoorsFavourDirection(CVector, uint8, float, float)` (0x44FCE0, thiscall,
     /// returns the out pointer)
     fn find_node_closest_to_coors_favour_direction(this: GPtr<u8>, out: GPtr<u32>, px: f32, py: f32, pz: f32, ty: u32, dx: f32, dy: f32) -> GPtr<u32> = thiscall 0x44FCE0 => crate::pathfind::find_node_closest_to_coors_favour_direction;
-    /// `CCarCtrl::FindLinksToGoWithTheseNodes(CVehicle*)` (0x42B470)
-    fn find_links_to_go_with_these_nodes_call(v: GPtr<u8>) = cdecl 0x42B470 => find_links_to_go_with_these_nodes;
 }
 
 /// `CCarCtrl::JoinCarWithRoadSystem(CVehicle*)` (0x42F5A0; entry detour `mov ebx, 0xFFFF` at 0x405881): clears
@@ -2305,15 +2278,15 @@ pub fn join_car_with_road_according_to_mission(veh: GPtr<u8>) {
         1 => {
             let mut p = [0f32; 3];
             let pp = crate::common::find_player_coors(lp(&mut p), -1);
-            join_car_with_road_system_goto_coors(veh, pp, 1, boat);
+            join_car_with_road_system_goto_coors(veh, pp.cast::<u32>(), 1, boat);
         }
         2 => {
-            join_car_with_road_system_goto_coors(veh, veh.byte_add(0x3EC).cast(), 1, boat);
+            join_car_with_road_system_goto_coors(veh, GPtr::<f32>::cast::<u32>(veh.byte_add(0x3EC).cast()), 1, boat);
         }
         3 => {
             let t = rd::<GPtr<u8>>(veh, 0x41C);
             if !t.is_null() {
-                join_car_with_road_system_goto_coors(veh, entity_pos(t), 1, boat);
+                join_car_with_road_system_goto_coors(veh, GPtr::<f32>::cast::<u32>(entity_pos(t)), 1, boat);
             }
         }
         _ => {}
@@ -2405,7 +2378,7 @@ pub fn find_nodes_this_car_is_nearest_to(veh: GPtr<u8>, out_node: GPtr<u32>, out
                         b[2] = x(b[2]).fmul_m(three).to_f32();
                         vp[2] = x(vp[2]).fmul_m(three).to_f32();
                         let dl =
-                            X87::from_f64_exact(dist_to_line(lp(&mut a), lp(&mut b), lp(&mut vp))).to_f32();
+                            X87::from_f64_exact(dist_to_line(GPtr::<f32>::cast::<u8>(lp(&mut a)), GPtr::<f32>::cast::<u8>(lp(&mut b)), GPtr::<f32>::cast::<u8>(lp(&mut vp)))).to_f32();
                         let mut dir = [
                             c8(ln, 8).fsub(c8(n, 8)).to_f32(),
                             c8(ln, 0xA).fsub(c8(n, 0xA)).to_f32(),

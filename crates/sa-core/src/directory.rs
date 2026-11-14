@@ -72,6 +72,7 @@ pub use crate::bindings::file_write as write;
 pub use crate::bindings::open_file;
 pub use crate::bindings::open_file_for_writing;
 pub use crate::bindings::stricmp;
+pub use crate::bindings::get_uppercase_key;
 orig! {
     /// CRT `operator new` (0x82119A)
     pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
@@ -79,8 +80,6 @@ orig! {
     pub fn printf(fmt: GPtr<u8>) -> i32 = cdecl 0x821982 => unported;
     /// `CDirectory::FindItem(name)` (0x532450)
     pub fn find_item_call(dir: GPtr<CDirectory>, name: GPtr<u8>) -> GPtr<DirectoryInfo> = thiscall 0x532450 => find_item;
-    /// `CKeyGen::GetUppercaseKey` (0x53CF30)
-    pub fn get_uppercase_key(s: GPtr<u8>) -> u32 = cdecl 0x53CF30 => crate::keygen::get_uppercase_key;
 }
 
 const ENTRIES: usize = core::mem::offset_of!(CDirectory, entries);

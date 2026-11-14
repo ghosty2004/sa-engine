@@ -7,16 +7,16 @@
 //!
 //! Layout: +0 allocator, +4 first, +8 last, +0xC end.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use sa_core::bindings::crt_free_8214bd as operator_delete;
 orig! {
     /// `operator new(size_t)` (0x82119A)
     fn operator_new(n: u32) -> u32 = cdecl 0x82119A => unported;
-    /// `operator delete(void*)` (0x8214BD)
-    fn operator_delete(p: u32) = cdecl 0x8214BD => unported;
     /// `vector<CPedTaskPair>::_Xlen()` (0x5ECB30, throws `length_error`)
     fn xlen(v: GPtr<u8>) = thiscall 0x5ECB30 => unported;
     /// `vector<CPedTaskPair>::_Ucopy(first, last, dest)` (0x5EB960, `ret 0xC`; in-place insertion only)
@@ -135,7 +135,7 @@ pub fn insert_n(v: GPtr<u8>, at: u32, n: u32, valp: GPtr<u8>) {
         let new_size = n.wrapping_add(span(v, 8));
         let old = rd::<u32>(v, 4);
         if old != 0 {
-            operator_delete(old);
+            operator_delete(GPtr::from_addr(old as usize));
         }
         wr::<u32>(v, 0xC, buf.wrapping_add(bytes));
         wr::<u32>(v, 8, buf.wrapping_add(new_size * E));

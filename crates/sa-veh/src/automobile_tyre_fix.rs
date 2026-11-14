@@ -10,9 +10,9 @@ use sa_math::x87::X87;
 use crate::common::{rd, wr};
 
 use crate::bindings::dm_reset_damage_status;
-use crate::bindings::dm_set_door_status;
-use crate::bindings::dm_set_wheel_status;
-use crate::bindings::get_wheel_status as dm_get_wheel_status;
+use sa_world::bindings::dm_set_door_status;
+use sa_pop::bindings::dm_set_wheel_status;
+use sa_world::bindings::get_wheel_status as dm_get_wheel_status;
 use sa_core::bindings::matrix_dtor;
 use sa_core::bindings::matrix_set_translate;
 use sa_core::bindings::matrix_update_rw;
@@ -20,11 +20,10 @@ use sa_core::bindings::random_float_in_range;
 use sa_core::bindings::rp_clump_for_all_atomics;
 use sa_core::bindings::stats_increment_stat;
 use sa_world::bindings::audio_add_event;
-use sa_world::bindings::matrix_ctor_rw;
+use sa_core::bindings::matrix_ctor_rw;
 use sa_world::bindings::switch_vehicle_to_real_physics;
+use sa_world::bindings::vector_scale as scalar_mul_vector;
 orig! {
-    /// `operator*(float, const CVector&)` (0x40FE90): hidden return pointer first
-    fn scalar_mul_vector(out: GPtr<u8>, s: f32, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE90 => sa_world::world::mvpa_math::scalar_mul_vector;
     /// `CPhysical::ApplyMoveForce(CVector)` (0x5429F0)
     fn apply_move_force(e: GPtr<u8>, force: CVector) = thiscall 0x5429F0 => sa_world::physical::forces::apply_move_force;
     /// `CPhysical::ApplyTurnForce(CVector, CVector)` (0x542A50)
@@ -62,7 +61,7 @@ pub fn automobile_burst_tyre(this: GPtr<u8>, comp: u8, apply_forces: u8) -> u8 {
         c => c,
     };
     let dm = this.byte_add(0x5A0);
-    if dm_get_wheel_status(dm, i32::from(w)) != 0 {
+    if dm_get_wheel_status(dm, i32::from(w) as u32) != 0 {
         return 0;
     }
     dm_set_wheel_status(dm, i32::from(w), 1);
@@ -96,11 +95,11 @@ pub fn automobile_fix(this: GPtr<u8>) {
     dm_reset_damage_status(dm);
     if rd::<u32>(rd::<GPtr<u8>>(this, 0x384), 0xCC) & 0x100 != 0 {
         for d in 2..6 {
-            dm_set_door_status(dm, d, 4);
+            dm_set_door_status(dm, d as u32, 4);
         }
     }
     wr::<u8>(this, 0x42A, rd::<u8>(this, 0x42A) & 0xFE);
-    rp_clump_for_all_atomics(rd::<GPtr<u8>>(this, 0x18), 0x004C_7790, 2);
+    rp_clump_for_all_atomics(rd::<GPtr<u8>>(this, 0x18), 0x004C_7790, GPtr::from_addr(2));
     for k in 0..0x11isize {
         let node = rd::<GPtr<u8>>(this, 0x668 + 4 * k);
         if node.is_null() {
@@ -109,7 +108,7 @@ pub fn automobile_fix(this: GPtr<u8>) {
         let mut buf = [0u32; 0x12];
         let m: GPtr<u8> = GPtr::from_raw(&mut buf as *mut [u32; 0x12]).cast();
         matrix_ctor_rw(m, node.byte_add(0x10), 0);
-        matrix_set_translate(m, rd::<u32>(m, 0x30), rd::<u32>(m, 0x34), rd::<u32>(m, 0x38));
+        matrix_set_translate(m, f32::from_bits(rd::<u32>(m, 0x30)), f32::from_bits(rd::<u32>(m, 0x34)), f32::from_bits(rd::<u32>(m, 0x38)));
         matrix_update_rw(m);
         matrix_dtor(m);
     }

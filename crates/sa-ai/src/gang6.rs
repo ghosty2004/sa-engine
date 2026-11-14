@@ -6,6 +6,7 @@
 //! Every `rand()` names its original return address.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::orig::at_site;
 use sa_core::{hook, orig};
@@ -66,12 +67,12 @@ use crate::bindings::dtor_5f6200 as event_create_partner_task_dtor;
 use crate::bindings::gang_follower_calculate_offset_position;
 use crate::bindings::get_group_id as ped_groups_get_group_id;
 use crate::bindings::go_to_point_update_point as goto_point_update_point;
-use crate::bindings::ik_abort_look_at;
+use sa_core::bindings::ik_abort_look_at;
 use crate::bindings::leave_car_and_wander_ctor as leave_car_and_wander_ctor_orig;
 use crate::bindings::membership_count_members;
-use crate::bindings::pause_ctor;
+use sa_world::bindings::pause_ctor;
 use crate::bindings::ped_is_playing_hand_signal;
-use crate::bindings::ped_set_move_anim_speed;
+use sa_world::bindings::ped_set_move_anim_speed;
 use crate::bindings::play_hand_signal_anim_ctor_61b2b0 as play_hand_signal_anim_ctor;
 use crate::bindings::seek_entity_xy_offset_ctor;
 use crate::bindings::should_load_gang_anims;
@@ -90,7 +91,7 @@ use sa_core::bindings::streaming_request_model;
 use sa_core::bindings::tm_get_task_secondary;
 use sa_core::bindings::tm_set_task_secondary;
 use sa_core::bindings::vector_dot_product;
-use sa_stream::bindings::anim_add_block_ref;
+use sa_core::bindings::anim_add_block_ref;
 use sa_stream::bindings::anim_remove_block_ref;
 use sa_stream::bindings::entity_is_visible;
 use sa_stream::bindings::ped_is_player;
@@ -122,8 +123,26 @@ use sa_world::bindings::tm_find_active_task_by_type;
 use sa_world::bindings::tm_set_task;
 use sa_world::bindings::turn_to_face_entity_ctor;
 use sa_world::bindings::vector_add_assign;
-use sa_world::bindings::vector_magnitude_sqr as vector_squared_magnitude;
+use sa_core::bindings::vector_magnitude_sqr as vector_squared_magnitude;
 use sa_world::bindings::wander_get_wander_task_by_ped_type as wander_task_by_ped_type;
+use crate::bindings::approx_equal;
+use crate::bindings::create_partner_event_ctor as event_create_partner_task_ctor;
+use crate::bindings::event_lean_on_vehicle_ctor;
+use crate::bindings::hold_entity_play_anim;
+use crate::bindings::intel_get_move_state_from_go_to_task as intel_get_move_state_from_goto_task;
+use crate::bindings::pass_object_ctor;
+use crate::bindings::veh_spare_hassle_pos as vehicle_get_spare_hassle_pos_id;
+use sa_core::bindings::clump_get_association;
+use sa_core::bindings::vector_sub;
+use sa_stream::bindings::get_animation_block_index as anim_get_block_index;
+use sa_world::bindings::event_script_command_ctor;
+use sa_world::bindings::fx_attach_to_bone;
+use sa_world::bindings::fx_create_system as fx_create_fx_system;
+use sa_world::bindings::run_anim_ctor;
+use sa_world::bindings::signal_at_ped_ctor as signal_at_ped_ctor_orig;
+use sa_world::bindings::stand_still_ctor;
+use sa_world::bindings::vector_add;
+use sa_world::bindings::vector_mul_scalar as vector_scale;
 orig! {
     // ---- virtual slots ----
     /// `CTask::GetTaskType` (vtable +0x10)
@@ -146,61 +165,23 @@ orig! {
     fn gang_hassle_vehicle_calc_target_offset_orig(t: GPtr<u8>) = thiscall 0x6641A0 => unported;
     /// `CTaskComplexLeaveCarAndWander::CreateSubTask(int32)` (0x63BEC0, `ret 4`)
     fn leave_car_and_wander_create_sub_task_orig(t: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x63BEC0 => unported;
-    /// `CTaskSimpleStandStill::Constructor(int32 time, bool, bool, float)` (0x62F310, `ret 0x10`)
-    fn stand_still_ctor(t: GPtr<u8>, time: i32, a: u32, b: u32, f: u32) -> GPtr<u8> = thiscall 0x62F310 => unported;
-    /// `CTaskSimpleRunAnim::Constructor(AssocGroupId, AnimationId, float, bool)` (0x61A8B0, `ret 0x10`)
-    fn run_anim_ctor(t: GPtr<u8>, group: u32, anim: i32, delta: u32, b: u32) -> GPtr<u8> = thiscall 0x61A8B0 => unported;
-    /// `CTaskComplexPassObject::Constructor(CPed*, bool)` (0x6611B0, `ret 8`)
-    fn pass_object_ctor(t: GPtr<u8>, ped: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x6611B0 => unported;
-    /// `CTaskComplexSignalAtPed::Constructor(CPed*, int32, bool)` (0x660A30, `ret 0xC`)
-    fn signal_at_ped_ctor_orig(t: GPtr<u8>, ped: GPtr<u8>, a: i32, b: u32) -> GPtr<u8> = thiscall 0x660A30 => unported;
     /// `CEntitySeekPosCalculatorXYOffset::CEntitySeekPosCalculatorXYOffset(const CVector&)` (0x65DE60, `ret 4`)
     fn seek_pos_calc_xy_offset_ctor(t: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = thiscall 0x65DE60 => unported;
     /// `CTaskComplexTrackEntity::Constructor(CEntity*, CVector (by value), bool, int32, float, float, bool)`
     /// (0x65F3B0, `ret 0x24`)
     fn track_entity_ctor(t: GPtr<u8>, e: GPtr<u8>, vx: u32, vy: u32, vz: u32, a: u32, b: i32, f1: u32, f2: u32, c: u32) -> GPtr<u8> = thiscall 0x65F3B0 => unported;
-
-    // ---- events ----
-    /// `CEventLeanOnVehicle::Constructor(CVehicle*, int32 time)` (0x65DAF0, `ret 8`)
-    fn event_lean_on_vehicle_ctor(e: GPtr<u8>, v: GPtr<u8>, time: i32) -> GPtr<u8> = thiscall 0x65DAF0 => unported;
-    /// `CEventScriptCommand::Constructor(int32 primaryTaskIndex, CTask*, bool)` (0x4B0A00, `ret 0xC`)
-    fn event_script_command_ctor(e: GPtr<u8>, idx: i32, t: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4B0A00 => unported;
-    /// `CEventCreatePartnerTask` constructor `(int32 type, CPed* partner, bool leader, float)` (0x5F6190, `ret 0x10`)
-    fn event_create_partner_task_ctor(e: GPtr<u8>, ty: i32, partner: GPtr<u8>, lead: u32, f: u32) -> GPtr<u8> = thiscall 0x5F6190 => unported;
     /// `CEventPassObject::Constructor(CPed* giver, bool)` (0x65DC70, `ret 8`)
     fn event_pass_object_ctor(e: GPtr<u8>, giver: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x65DC70 => unported;
     /// `CEventPassObject` complete destructor (0x65DCF0)
     fn event_pass_object_dtor(e: GPtr<u8>) = thiscall 0x65DCF0 => unported;
     /// `CPedGroup::GetClosestGroupPed(CPed*, float* outDistSq)` (0x5FACD0, `ret 8`)
     fn ped_group_get_closest_group_ped(g: GPtr<u8>, p: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall 0x5FACD0 => unported;
-    /// `CPedIntelligence::GetMoveStateFromGoToTask()` (0x601D70)
-    fn intel_get_move_state_from_goto_task(i: GPtr<u8>) -> i32 = thiscall 0x601D70 => unported;
     /// `CTaskComplexWander::GetDistSqOfClosestPathNodeToPed(CPed*)` (0x669FF0, `ret 4`, float in ST0)
     fn wander_dist_sq_of_closest_path_node(t: GPtr<u8>, p: GPtr<u8>) -> f64 = thiscall 0x669FF0 => unported;
     /// `CTaskComplexWanderGang::CanJoinGang()` (0x669FB0; catalogue `sub_669fb0`)
     fn wander_gang_can_join_gang(t: GPtr<u8>) -> u8 = thiscall 0x669FB0 => unported;
-    /// `CTaskSimpleHoldEntity::PlayAnim(AnimationId, AssocGroupId)` (0x691720, `ret 8`)
-    fn hold_entity_play_anim(t: GPtr<u8>, anim: i32, group: u32) = thiscall 0x691720 => unported;
-    /// `RpAnimBlendClumpGetAssociation(RpClump*, AnimationId)` (0x4D68B0, cdecl)
-    fn clump_get_association(clump: GPtr<u8>, anim: i32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
-    /// `CAnimManager::GetAnimationBlockIndex(const char*)` (0x4D3990)
-    fn anim_get_block_index(name: u32) -> i32 = cdecl 0x4D3990 => unported;
-    /// `FxManager_c::CreateFxSystem(const char*, RwV3d*, RwMatrix*, bool)` (0x4A9BE0, `ret 0x10`)
-    fn fx_create_fx_system(m: GPtr<u8>, name: u32, pos: GPtr<u8>, mat: u32, b: u32) -> GPtr<u8> = thiscall 0x4A9BE0 => unported;
-    /// `FxSystem_c::AttachToBone(CEntity*, int32)` (0x4AA400, `ret 8`)
-    fn fx_attach_to_bone(fx: GPtr<u8>, e: GPtr<u8>, bone: i32) = thiscall 0x4AA400 => unported;
-    /// `CVehicle::GetSpareHasslePosId()` (0x6D3AE0)
-    fn vehicle_get_spare_hassle_pos_id(v: GPtr<u8>) -> i32 = thiscall 0x6D3AE0 => unported;
-    /// `operator+(const CVector&, const CVector&)` (0x40FE30, cdecl, returns through `out`)
-    fn vector_add(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) = cdecl 0x40FE30 => unported;
-    /// `operator-(const CVector&, const CVector&)` (0x40FE60, cdecl, returns through `out`)
-    fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) = cdecl 0x40FE60 => unported;
-    /// `operator*(const CVector&, float)` (0x40FEC0, cdecl, returns through `out`)
-    fn vector_scale(out: GPtr<u8>, v: GPtr<u8>, f: u32) = cdecl 0x40FEC0 => unported;
     /// `std::max<float>(float, float)` (0x420800, cdecl; the loaded argument in ST0)
     fn float_max(a: u32, b: u32) -> f64 = cdecl 0x420800 => unported;
-    /// `approxEqual(float, float, float)` (0x4EEA80, cdecl, EAX)
-    fn approx_equal(a: u32, b: u32, eps: u32) -> u32 = cdecl 0x4EEA80 => unported;
 }
 
 /// The "gangs" anim block handling shared by the gang tasks (flag byte at `this + off`): without the flag, when
@@ -209,7 +190,7 @@ orig! {
 fn gang_anims_stream(this: GPtr<u8>, off: isize) {
     if rd::<u8>(this, off) == 0 {
         if should_load_gang_anims() != 0 {
-            let idx = anim_get_block_index(STR_GANGS);
+            let idx = anim_get_block_index(GPtr::from_addr(STR_GANGS as usize));
             if g::<u8>((idx as u32).wrapping_shl(5).wrapping_add(ANIM_BLOCK_LOADED) as usize).read() == 1 {
                 anim_add_block_ref(idx);
                 wr::<u8>(this, off, 1);
@@ -218,7 +199,7 @@ fn gang_anims_stream(this: GPtr<u8>, off: isize) {
             }
         }
     } else if should_load_gang_anims() == 0 {
-        anim_remove_block_ref(anim_get_block_index(STR_GANGS));
+        anim_remove_block_ref(anim_get_block_index(GPtr::from_addr(STR_GANGS as usize)) as u32);
         wr::<u8>(this, off, 0);
     }
 }
@@ -236,7 +217,7 @@ fn smoke_exhale(ped: GPtr<u8>) -> bool {
         return false;
     }
     let mut pos = [0u32, 0x3DCC_CCCD, 0];
-    let fx = fx_create_fx_system(g(FX_MAN), 0x86FBF0, slot(&mut pos), mat, 0);
+    let fx = fx_create_fx_system(g(FX_MAN), GPtr::from_addr(0x86FBF0), slot(&mut pos), GPtr::from_addr(mat as usize), 0);
     if !fx.is_null() {
         fx_attach_to_bone(fx, ped, 5);
         fx_play_and_kill(fx);
@@ -279,7 +260,7 @@ fn play_random_hold_anim(ped: GPtr<u8>, held: GPtr<u8>) {
         let h = tm_find_active_task_by_type(rd::<GPtr<u8>>(ped, 0x47C).byte_add(4), 0x133);
         if !h.is_null() {
             let anim = get_random_gang_ambient_anim(ped, held);
-            hold_entity_play_anim(h, anim, 0x34);
+            hold_entity_play_anim(h, anim as u32, 0x34);
         }
     }
 }
@@ -305,7 +286,7 @@ fn pass_object_to(ped: GPtr<u8>, to: GPtr<u8>) -> GPtr<u8> {
 /// 500, 3, false)` (the time goes through a float stack slot in the original).
 fn gang_look_at(name: u32, ped: GPtr<u8>, target: GPtr<u8>, time: i32) {
     let t = ftol32(x(f32_of(xi(time))));
-    ik_look_at(g(IK_CHAIN_MAN), name, ped, target, t, 5, 0, 1, 0x3E19_999A, 0x1F4, 3, 0);
+    ik_look_at(g(IK_CHAIN_MAN), GPtr::from_addr(name as usize), ped, target, t as u32, 5, GPtr::NULL, 1, 0x3E19_999A, 0x1F4, 3, 0);
 }
 
 // ======================================================================================================
@@ -318,7 +299,7 @@ fn gang_look_at(name: u32, ped: GPtr<u8>, target: GPtr<u8>, time: i32) {
 pub fn gang_leader_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x86F8FC);
     if rd::<u8>(this, 0x34) != 0 {
-        anim_remove_block_ref(anim_get_block_index(STR_GANGS));
+        anim_remove_block_ref(anim_get_block_index(GPtr::from_addr(STR_GANGS as usize)) as u32);
         wr::<u8>(this, 0x34, 0);
     }
     task_complex_dtor(this);
@@ -379,7 +360,7 @@ pub fn gang_leader_scan_for_stuff(this: GPtr<u8>, ped: GPtr<u8>) {
             let ev = if mem.is_null() {
                 GPtr::NULL
             } else {
-                event_lean_on_vehicle_ctor(mem, v, time)
+                event_lean_on_vehicle_ctor(mem, v, time as u32)
             };
             let mut ge = [0u32; 6];
             let gp = slot(&mut ge);
@@ -417,12 +398,12 @@ pub fn gang_leader_scan_for_stuff(this: GPtr<u8>, ped: GPtr<u8>) {
         }
         if sg.is_null() {
             let id = ped_groups_get_group_id(rd::<GPtr<u8>>(this, 0xC));
-            if membership_count_members_excluding_leader(rd::<GPtr<u8>>(this, 0xC).byte_add(8)) < 7 {
+            if (membership_count_members_excluding_leader(rd::<GPtr<u8>>(this, 0xC).byte_add(8)) as i32) < 7 {
                 let mem = task_new(0x28);
                 let t = if mem.is_null() {
                     GPtr::NULL
                 } else {
-                    be_in_group_ctor(mem, id, 0)
+                    be_in_group_ctor(mem, id as u32, 0)
                 };
                 let mut sc = [0u32; 6];
                 let scp = slot(&mut sc);
@@ -430,7 +411,7 @@ pub fn gang_leader_scan_for_stuff(this: GPtr<u8>, ped: GPtr<u8>) {
                 event_group_add(rd::<GPtr<u8>>(s, 0x47C).byte_add(0x68), scp, 0);
                 membership_add_follower(rd::<GPtr<u8>>(this, 0xC).byte_add(8), s);
                 ped_group_process(rd::<GPtr<u8>>(this, 0xC));
-                event_script_command_dtor(scp);
+                event_script_command_dtor(scp.cast::<u32>());
             }
         }
         let membership = rd::<GPtr<u8>>(this, 0xC).byte_add(8);
@@ -446,7 +427,7 @@ pub fn gang_leader_scan_for_stuff(this: GPtr<u8>, ped: GPtr<u8>) {
             let mut d = [0u32; 3];
             let dp = slot(&mut d);
             vector_sub(dp, sp, mp);
-            let sq = st0(vector_squared_magnitude(dp));
+            let sq = st0(vector_squared_magnitude(dp.cast::<f32>()));
             if !sq.fcom(x(best)).test_parity(5) {
                 best = f32_of(sq);
                 closest = m;
@@ -517,7 +498,7 @@ pub fn gang_leader_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
         if mem.is_null() {
             return GPtr::NULL;
         }
-        return stand_still_ctor(mem, 0x1F4, 0, 0, 0x4100_0000);
+        return stand_still_ctor(mem, 0x1F4, 0, 0, f32::from_bits(0x4100_0000));
     }
     if rd::<u8>(this, 0x30) != 0 && timer_due(this, 0x28) && smoke_exhale(ped) {
         wr::<u8>(this, 0x30, 0);
@@ -551,14 +532,14 @@ pub fn gang_leader_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
                 GPtr::NULL
             } else {
                 let i = rand_scaled(0x662956, 0x859000);
-                run_anim_ctor(mem, 0x34, i.wrapping_add(0x117), 0x4080_0000, 0)
+                run_anim_ctor(mem, 0x34, i.wrapping_add(0x117) as u32, f32::from_bits(0x4080_0000), 0)
             }
         } else if r == 0x64 {
             let mem = task_new(0x18);
             if mem.is_null() {
                 GPtr::NULL
             } else {
-                play_hand_signal_anim_ctor(mem, -1, 0x4080_0000)
+                play_hand_signal_anim_ctor(mem, -1i32 as u32, f32::from_bits(0x4080_0000))
             }
         } else {
             return sub();
@@ -573,9 +554,9 @@ pub fn gang_leader_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     }
     let mi = i32::from(rd::<i16>(held, 0x22));
     if mi == i32::from(g::<u16>(MI_GANG_DRINK).read()) {
-        ped_say(ped, 0x17, 0, 0x3E4C_CCCD, 0, 0, 0);
+        ped_say(ped, 0x17, 0, f32::from_bits(0x3E4C_CCCD), 0, 0, 0);
     } else if mi == i32::from(g::<u16>(MI_GANG_SMOKE).read()) {
-        ped_say(ped, 0xC8, 0, 0x3E4C_CCCD, 0, 0, 0);
+        ped_say(ped, 0xC8, 0, f32::from_bits(0x3E4C_CCCD), 0, 0, 0);
     }
     if !tm_find_active_task_by_type(rd::<GPtr<u8>>(ped, 0x47C).byte_add(4), 0x4BB).is_null() {
         return sub();
@@ -593,9 +574,9 @@ pub fn gang_leader_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     }
     let mi = i32::from(rd::<i16>(held, 0x22));
     if mi == i32::from(g::<u16>(MI_GANG_DRINK).read()) {
-        ped_say(to, 0x18, 0, 0x3F80_0000, 0, 0, 0);
+        ped_say(to, 0x18, 0, f32::from_bits(0x3F80_0000), 0, 0, 0);
     } else if mi == i32::from(g::<u16>(MI_GANG_SMOKE).read()) {
-        ped_say(to, 0xC9, 0, 0x3F80_0000, 0, 0, 0);
+        ped_say(to, 0xC9, 0, f32::from_bits(0x3F80_0000), 0, 0, 0);
     }
     pass_object_to(ped, to)
 }
@@ -612,7 +593,7 @@ const FOLLOWER_SAY: [u32; 10] = [0x2D, 0x2D, 0x2D, 0xA6, 0xA6, 0xA6, 0xA6, 0xA6,
 fn follower_chatter(ped: GPtr<u8>) {
     let r = general_random_int_in_range(0, 0xA) as u32;
     if r <= 9 {
-        ped_say(ped, FOLLOWER_SAY[r as usize], 0, 0x3F80_0000, 0, 0, 0);
+        ped_say(ped, FOLLOWER_SAY[r as usize], 0, f32::from_bits(0x3F80_0000), 0, 0, 0);
     }
 }
 
@@ -694,14 +675,14 @@ pub fn gang_follower_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8>
                     );
                     let along = st0(vector_dot_product(ent_pos(ped), lm.byte_add(0x10))).fadd_m(neg);
                     if !along.fcom(x(c(0x858B50))).test_parity(5) {
-                        let m = st0(vector_squared_magnitude(dp));
+                        let m = st0(vector_squared_magnitude(dp.cast::<f32>()));
                         let r = x(rd::<f32>(t384, 0x18));
                         let lim = x(c(0x858624)).fadd(r).fmul(r.fadd_m(c(0x858624)));
                         if !m.fcom(lim).test_parity(0x41) {
                             let lm = rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0x10), 0x14);
                             let mut fwd = [0u32; 3];
                             let fp = slot(&mut fwd);
-                            vector_scale(fp, lm.byte_add(0x10), 0x4000_0000);
+                            vector_scale(fp, lm.byte_add(0x10), f32::from_bits(0x4000_0000));
                             vector_add_assign(tp, fp);
                             if !idle.is_null() {
                                 let s = f32_of(x(rd::<f32>(idle, 0x24)).fsub_m(c(0x85A5C4)));
@@ -713,7 +694,7 @@ pub fn gang_follower_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8>
                             let old = rd::<f32>(idle, 0x24);
                             ped_set_move_anim_speed(ped, idle);
                             let new = rd::<f32>(idle, 0x24);
-                            if approx_equal(old.to_bits(), new.to_bits(), 0x3C54_FDF4) & 0xFF != 0 {
+                            if approx_equal(f32::from_bits(old.to_bits()), f32::from_bits(new.to_bits()), f32::from_bits(0x3C54_FDF4)) as u32 & 0xFF != 0 {
                                 wr::<f32>(idle, 0x24, old);
                             } else if x(old).fcom(x(new)).test_any(0x41) {
                                 wr::<f32>(idle, 0x24, f32_of(x(old).fadd_m(c(0x85A5C4))));
@@ -724,7 +705,7 @@ pub fn gang_follower_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8>
                         }
                     }
                 }
-                goto_point_update_point(t384, tp, g::<u32>(0x86FC78).read(), 0);
+                goto_point_update_point(t384, tp, f32::from_bits(g::<u32>(0x86FC78).read()), 0);
             }
             if v274
                 && !x(d2).fcom(x(c(0x86F82C))).test_parity(5)
@@ -737,7 +718,7 @@ pub fn gang_follower_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8>
                 if mem.is_null() {
                     return GPtr::NULL;
                 }
-                return stand_still_ctor(mem, 0x1F4, 0, 0, 0x4100_0000);
+                return stand_still_ctor(mem, 0x1F4, 0, 0, f32::from_bits(0x4100_0000));
             }
         }
     }
@@ -745,7 +726,7 @@ pub fn gang_follower_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8>
     wr::<u32>(ped, 0x478, (f & !0x1_0000) | (u32::from(flag) << 16));
     if rd::<u8>(this, 0x3D) & 1 == 0 {
         if should_load_gang_anims() != 0 {
-            let idx = anim_get_block_index(STR_GANGS);
+            let idx = anim_get_block_index(GPtr::from_addr(STR_GANGS as usize));
             if g::<u8>((idx as u32).wrapping_shl(5).wrapping_add(ANIM_BLOCK_LOADED) as usize).read() == 1 {
                 anim_add_block_ref(idx);
                 wr::<u8>(this, 0x3D, rd::<u8>(this, 0x3D) | 1);
@@ -754,7 +735,7 @@ pub fn gang_follower_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8>
             }
         }
     } else if should_load_gang_anims() == 0 {
-        anim_remove_block_ref(anim_get_block_index(STR_GANGS));
+        anim_remove_block_ref(anim_get_block_index(GPtr::from_addr(STR_GANGS as usize)) as u32);
         wr::<u8>(this, 0x3D, rd::<u8>(this, 0x3D) & 0xFE);
     }
     let grp = rd::<GPtr<u8>>(this, 0xC);
@@ -799,7 +780,7 @@ pub fn gang_follower_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8>
                 GPtr::NULL
             } else {
                 let i = rand_scaled(0x66333C, 0x859000);
-                run_anim_ctor(mem, 0x34, i.wrapping_add(0x117), 0x4080_0000, 0)
+                run_anim_ctor(mem, 0x34, i.wrapping_add(0x117) as u32, f32::from_bits(0x4080_0000), 0)
             };
             tm_set_task_secondary(rd::<GPtr<u8>>(ped, 0x47C).byte_add(4), t, 4);
             if rd::<i32>(ped, 0x534) == 1 {
@@ -810,7 +791,7 @@ pub fn gang_follower_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8>
             let t = if mem.is_null() {
                 GPtr::NULL
             } else {
-                play_hand_signal_anim_ctor(mem, -1, 0x4080_0000)
+                play_hand_signal_anim_ctor(mem, -1i32 as u32, f32::from_bits(0x4080_0000))
             };
             tm_set_task_secondary(rd::<GPtr<u8>>(ped, 0x47C).byte_add(4), t, 4);
             follower_chatter(ped);
@@ -846,9 +827,9 @@ pub fn gang_follower_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8>
     };
     if let Some((req, give)) = ids {
         if general_random_int_in_range(0, 0x1F4) < 0xFA {
-            ped_say(to, req, 0, 0x3F80_0000, 0, 0, 0);
+            ped_say(to, req, 0, f32::from_bits(0x3F80_0000), 0, 0, 0);
         } else {
-            ped_say(ped, give, 0x5DC, 0x3F80_0000, 0, 0, 0);
+            ped_say(ped, give, 0x5DC, f32::from_bits(0x3F80_0000), 0, 0, 0);
         }
     }
     pass_object_to(ped, to)
@@ -894,14 +875,14 @@ pub fn gang_follower_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr
         if say {
             let l = rd::<GPtr<u8>>(this, 0x10);
             if !l.is_null() && ped_is_player(l) != 0 {
-                ped_say(ped, 0x5A, 0, 0x3E99_999A, 0, 0, 0);
+                ped_say(ped, 0x5A, 0, f32::from_bits(0x3E99_999A), 0, 0, 0);
             }
         }
         let mem = task_new(0x20);
         if mem.is_null() {
             return GPtr::NULL;
         }
-        stand_still_ctor(mem, 0x1F4, 0, 0, 0x4100_0000)
+        stand_still_ctor(mem, 0x1F4, 0, 0, f32::from_bits(0x4100_0000))
     };
     if v || (v_task_type(sub()) == 0x38B && rd::<i32>(rd::<GPtr<u8>>(this, 0x10), 0x534) < 4) {
         return stand_still(true);
@@ -912,7 +893,7 @@ pub fn gang_follower_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr
             if mem.is_null() {
                 return GPtr::NULL;
             }
-            return signal_at_ped_ctor_orig(mem, rd::<GPtr<u8>>(this, 0x10), -1, 0);
+            return signal_at_ped_ctor_orig(mem, rd::<GPtr<u8>>(this, 0x10), -1i32 as u32, 0);
         }
         if general_random_int_in_range(0, 0x1E) == 0x14 {
             let n = membership_count_members(rd::<GPtr<u8>>(this, 0xC).byte_add(8));
@@ -1007,15 +988,15 @@ pub fn gang_hassle_vehicle_dtor(this: GPtr<u8>) {
         }
         let v = rd::<GPtr<u8>>(this, 0x10);
         if !v.is_null() {
-            entity_clean_up_old_reference(v, this.byte_add(0x10));
+            entity_clean_up_old_reference(v, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x10)));
         }
     }
     let p = rd::<GPtr<u8>>(this, 0x34);
     if !p.is_null() {
-        entity_clean_up_old_reference(p, this.byte_add(0x34));
+        entity_clean_up_old_reference(p, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x34)));
     }
     if rd::<u8>(this, 0x30) != 0 {
-        anim_remove_block_ref(anim_get_block_index(STR_GANGS));
+        anim_remove_block_ref(anim_get_block_index(GPtr::from_addr(STR_GANGS as usize)) as u32);
         wr::<u8>(this, 0x30, 0);
     }
     task_complex_dtor(this);
@@ -1041,7 +1022,7 @@ pub fn gang_hassle_vehicle_create_next_sub_task(this: GPtr<u8>, _ped: GPtr<u8>) 
         let f = g::<u32>(0xC18CF0).read();
         let b = g::<u32>(0x86F678).read();
         let a = g::<u32>(0x86F674).read();
-        return smart_flee_entity_ctor(mem, rd::<GPtr<u8>>(this, 0x10), 0, 0x41F0_0000, a, b, f);
+        return smart_flee_entity_ctor(mem, rd::<GPtr<u8>>(this, 0x10), 0, f32::from_bits(0x41F0_0000), a, b, f);
     }
     if (!sub().is_null() && v_task_type(sub()) == 0x4BC) || (!sub().is_null() && v_task_type(sub()) == 0x39D) {
         return GPtr::NULL;
@@ -1080,8 +1061,8 @@ pub fn gang_hassle_vehicle_get_target_heading(this: GPtr<u8>, _ped: GPtr<u8>) ->
         5 => (neg(fx), neg(fy)),
         _ => (rx, ry),
     };
-    let a = f32_of(st0(general_radian_angle_between_points(vx.to_bits(), vy.to_bits(), 0, 0)));
-    st0(general_limit_radian_angle(a.to_bits()))
+    let a = f32_of(st0(general_radian_angle_between_points(f32::from_bits(vx.to_bits()), f32::from_bits(vy.to_bits()), f32::from_bits(0), f32::from_bits(0))));
+    st0(general_limit_radian_angle(f32::from_bits(a.to_bits())))
 }
 
 /// `CTaskGangHassleVehicle::CalcTargetOffset()` (0x6641A0). +0x24..+0x2C = 0, then from the vehicle model's
@@ -1186,10 +1167,10 @@ pub fn gang_hassle_ped_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x86FA00);
     let t = rd::<GPtr<u8>>(this, 0xC);
     if !t.is_null() {
-        entity_clean_up_old_reference(t, this.byte_add(0xC));
+        entity_clean_up_old_reference(t, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0xC)));
     }
     if rd::<u8>(this, 0x1C) != 0 {
-        anim_remove_block_ref(anim_get_block_index(STR_GANGS));
+        anim_remove_block_ref(anim_get_block_index(GPtr::from_addr(STR_GANGS as usize)) as u32);
         wr::<u8>(this, 0x1C, 0);
     }
     task_complex_dtor(this);
@@ -1219,12 +1200,12 @@ pub fn signal_at_ped_ctor(this: GPtr<u8>, target: GPtr<u8>, _a: i32, b: u32) -> 
 pub fn signal_at_ped_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x86FA8C);
     if rd::<u8>(this, 0x15) != 0 {
-        anim_remove_block_ref(anim_get_block_index(STR_GANGS));
+        anim_remove_block_ref(anim_get_block_index(GPtr::from_addr(STR_GANGS as usize)) as u32);
         wr::<u8>(this, 0x15, 0);
     }
     let t = rd::<GPtr<u8>>(this, 0xC);
     if !t.is_null() {
-        entity_clean_up_old_reference(t, this.byte_add(0xC));
+        entity_clean_up_old_reference(t, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0xC)));
     }
     task_complex_dtor(this);
 }
@@ -1263,7 +1244,7 @@ pub fn leave_car_and_wander_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x86E880);
     let v = rd::<GPtr<u8>>(this, 0xC);
     if !v.is_null() {
-        entity_clean_up_old_reference(v, this.byte_add(0xC));
+        entity_clean_up_old_reference(v, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0xC)));
     }
     task_complex_dtor(this);
 }
@@ -1297,8 +1278,8 @@ pub fn leave_car_and_wander_create_sub_task(this: GPtr<u8>, ty: i32) -> GPtr<u8>
             leave_car_ctor(
                 mem,
                 rd::<GPtr<u8>>(this, 0xC),
-                rd::<u32>(this, 0x10),
-                rd::<u32>(this, 0x14),
+                rd::<u32>(this, 0x10) as i32,
+                rd::<u32>(this, 0x14) as i32,
                 u32::from(rd::<u8>(this, 0x18)),
                 0,
             )

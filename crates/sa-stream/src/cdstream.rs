@@ -130,6 +130,9 @@ pub const MSG_PREFIX: u32 = 0x858AC8;
 /// `CdStreamThread` (thread entry passed to CreateThread)
 pub const THREAD_ENTRY: u32 = 0x406560;
 
+pub use crate::bindings::cd_stream_open as cd_stream_open_call;
+pub use crate::bindings::cd_stream_read as cd_stream_read_call;
+pub use crate::bindings::cd_stream_sync as cd_stream_sync_call;
 orig! {
     /// KERNEL32 `CloseHandle` (IAT 0x858078)
     pub fn close_handle(h: GPtr<u8>) -> i32 = stdcall cell 0x858078 => unported;
@@ -175,12 +178,6 @@ orig! {
     pub fn malloc_align(size: u32, align: u32, hint: u32) -> GPtr<u8> = cdecl 0x72F4C0 => unported;
     /// `CMemoryMgr::FreeAlign(p)` (0x72F4F0)
     pub fn free_align(p: GPtr<u8>) = cdecl 0x72F4F0 => unported;
-    /// `CdStreamSync(id)` (0x406460)
-    pub fn cd_stream_sync_call(id: i32) -> u32 = cdecl 0x406460 => cd_stream_sync;
-    /// `CdStreamOpen(name, unused)` (0x4067B0; the caller in CdStreamInit pushes a second 0)
-    pub fn cd_stream_open_call(name: GPtr<u8>, unused: i32) -> u32 = cdecl 0x4067B0 => cd_stream_open_2;
-    /// `CdStreamRead(id, buf, pos, sectors)` (0x406A20)
-    pub fn cd_stream_read_call(id: i32, buf: GPtr<u8>, pos: u32, sectors: u32) -> i32 = cdecl 0x406A20 => cd_stream_read;
     /// `CdStreamRemoveImages()` (0x406690)
     pub fn cd_stream_remove_images_call() = cdecl 0x406690 => cd_stream_remove_images;
     /// `CdStreamInitThread()` (0x4068F0)

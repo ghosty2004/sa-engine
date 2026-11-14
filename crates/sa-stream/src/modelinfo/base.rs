@@ -48,21 +48,18 @@ sa_core::globals! {
     pub static G2D_EFFECT_PLUGIN_OFFSET @ 0xC3A1E0: u32 = 0;
 }
 
-pub use crate::bindings::add_txd_slot as txd_add_txd_slot;
+pub use sa_core::bindings::add_txd_slot as txd_add_txd_slot;
 pub use crate::bindings::col_model_dtor as col_model_destructor;
-pub use crate::bindings::find_txd_slot as txd_find_txd_slot;
+pub use sa_core::bindings::find_txd_slot as txd_find_txd_slot;
 pub use sa_core::bindings::crt_free_8214bd as operator_delete;
+pub use crate::bindings::get_2d_effect_store as get_2d_effect_store_call;
+pub use crate::bindings::txd_store_remove_ref as txd_remove_ref;
+pub use sa_core::bindings::txd_add_ref;
 orig! {
-    /// `CTxdStore::AddRef` (0x731A00)
-    pub fn txd_add_ref(index: i32) = cdecl 0x731A00 => crate::txdstore::add_ref;
-    /// `CTxdStore::RemoveRef` (0x731A30)
-    pub fn txd_remove_ref(index: i32) = cdecl 0x731A30 => crate::txdstore::remove_ref;
     /// `CColModel::operator delete` (0x40FC40)
     pub fn col_model_operator_delete(col: GPtr<u8>) = cdecl 0x40FC40 => unported;
     /// `RwHelper::Get2DEffectAtomic` (0x734880)
     pub fn get_2d_effect_atomic(clump: GPtr<u8>) -> GPtr<u8> = cdecl 0x734880 => unported;
-    /// `CModelInfo::Get2dEffectStore` (0x4C5A60)
-    pub fn get_2d_effect_store_call() -> GPtr<u8> = cdecl 0x4C5A60 => super::model_info::get_2d_effect_store;
     /// virtual `GetTimeInfo` (slot 5)
     pub fn vcall_get_time_info(this: MiPtr) -> GPtr<u8> = thiscall vslot 0x14 => unported;
     /// virtual `DeleteRwObject` (slot 8)

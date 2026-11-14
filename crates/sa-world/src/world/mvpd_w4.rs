@@ -29,27 +29,23 @@ use sa_core::bindings::references_remove_references_to_player;
 use sa_core::bindings::text_get;
 use sa_core::bindings::tm_get_simplest_active_task as task_manager_get_simplest_active_task;
 use sa_core::bindings::vector_normalise;
+use crate::bindings::camera_set_motion_blur;
+use crate::bindings::ee_get_position_relative_to_outside_world as entry_exit_get_position_relative_to_outside_world;
+use crate::bindings::ped_say;
+use crate::bindings::player_info_get_pos;
+use sa_core::bindings::clear_exciting_stuff_from_area as world_clear_exciting_stuff_from_area;
+use sa_core::bindings::hud_set_help_message;
 orig! {
     /// `CStats::UpdateSexAppealStat()` (0x55BF20, cdecl)
     fn stats_update_sex_appeal_stat() = cdecl 0x55BF20 => unported;
     /// `CGameLogic::UpdateSkip()` (0x442480, cdecl)
     fn game_logic_update_skip() = cdecl 0x442480 => crate::world::mvpd_w2::game_logic_update_skip;
-    /// `CHud::SetHelpMessage(const char*, bool quick, bool permanent, bool addToBrief)` (0x588BE0, cdecl)
-    fn hud_set_help_message(s: GPtr<u8>, a: u32, b: u32, c: u32) = cdecl 0x588BE0 => unported;
     /// `CPlayerInfo::KillPlayer()` (0x56E580)
     fn player_info_kill_player(i: GPtr<u8>) = thiscall 0x56E580 => unported;
     /// `CPlayerInfo::ArrestPlayer()` (0x56E5D0)
     fn player_info_arrest_player(i: GPtr<u8>) = thiscall 0x56E5D0 => unported;
-    /// `CPed::Say(uint16, uint32, float, bool, bool, bool)` (0x5EFFE0, `ret 0x18`)
-    fn ped_say(p: GPtr<u8>, id: u32, off: u32, vol: f32, a: u32, b: u32, c: u32) -> u32 = thiscall 0x5EFFE0 => unported;
     /// `CWeaponEffects::ClearCrossHairs()` (0x742C80, cdecl)
     fn weapon_effects_clear_cross_hairs() = cdecl 0x742C80 => unported;
-    /// `CPlayerInfo::GetPos(CVector* out)` (0x56DFB0, `ret 4`); returns `out`
-    fn player_info_get_pos(i: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall 0x56DFB0 => unported;
-    /// `CWorld::ClearExcitingStuffFromArea(const CVector&, float, bool)` (0x56A0D0, cdecl)
-    fn world_clear_exciting_stuff_from_area(p: GPtr<u8>, r: f32, b: u8) = cdecl 0x56A0D0 => crate::world::mvpd_w3::world_clear_exciting_stuff_from_area;
-    /// `CEntryExit::GetPositionRelativeToOutsideWorld(CVector&)` (0x43EA00, `ret 4`)
-    fn entry_exit_get_position_relative_to_outside_world(ee: GPtr<u8>, p: GPtr<u8>) = thiscall 0x43EA00 => unported;
     /// `CRestart::FindClosestHospitalRestartPoint(CVector, CVector* out, float* heading)` (0x460850, cdecl)
     fn restart_find_closest_hospital(x: f32, y: f32, z: f32, out: GPtr<u8>, h: GPtr<u8>) = cdecl 0x460850 => unported;
     /// `CRestart::FindClosestPoliceRestartPoint(CVector, CVector* out, float* heading)` (0x460A50, cdecl)
@@ -62,8 +58,6 @@ orig! {
     fn game_logic_restore_player_stuff(p: GPtr<u8>, x: f32, y: f32, z: f32, h: f32) = cdecl 0x442060 => unported;
     /// `CGameLogic::SortOutStreamingAndMemory(const CVector&, float)` (0x441440, cdecl)
     fn game_logic_sort_out_streaming_and_memory(p: GPtr<u8>, h: f32) = cdecl 0x441440 => unported;
-    /// `CCamera::SetMotionBlur(int32 r, g, b, a, type)` (0x50BF40, `ret 0x14`)
-    fn camera_set_motion_blur(c: GPtr<u8>, r: u32, g: u32, b: u32, a: u32, t: u32) = thiscall 0x50BF40 => unported;
     /// `CPad::StopShaking(int16)` (0x53FB50, `ret 4`)
     fn pad_stop_shaking(p: GPtr<u8>, n: u32) = thiscall 0x53FB50 => unported;
     /// `CGameLogic::StopPlayerMovingFromDirection(int32, CVector)` (0x441290, cdecl)
@@ -107,7 +101,7 @@ fn take_player_out_of_vehicle() {
         return;
     }
     if !drv.is_null() {
-        entity_clean_up_old_reference(drv, veh.byte_add(0x460));
+        entity_clean_up_old_reference(drv, GPtr::<u8>::cast::<GPtr<u8>>(veh.byte_add(0x460)));
     }
     let p0 = g::<GPtr<u8>>(0xB7CD98).read();
     wr::<u32>(rd::<GPtr<u8>>(p0, 0x58C), 0x460, 0);
@@ -126,14 +120,14 @@ fn take_player_out_of_vehicle() {
 /// shaking stopped, references removed, 0x9690C0 / 0xC0EC23 = 10 and the current pad's +0x10E cleared.
 fn resurrect(hospital: bool, pass_time: bool, clear_144: bool) {
     let mut tmp = [0f32; 3];
-    let pos = player_info_get_pos(GPtr::from_addr(0xB7CD98), GPtr::from_raw(&mut tmp).cast());
+    let pos = GPtr::<u32>::cast::<u8>(player_info_get_pos(GPtr::from_addr(0xB7CD98), GPtr::<u8>::cast::<u32>(GPtr::from_raw(&mut tmp).cast())));
     world_clear_exciting_stuff_from_area(pos, 4000.0, 1);
     let p0 = g::<GPtr<u8>>(0xB7CD98).read();
     let pp = ent_pos(p0);
     let mut v = [rd::<f32>(pp, 0), rd::<f32>(pp, 4), rd::<f32>(pp, 8)];
     let ee = rd::<GPtr<u8>>(p0, 0x78C);
     if !ee.is_null() {
-        entry_exit_get_position_relative_to_outside_world(ee, GPtr::from_raw(&mut v).cast());
+        entry_exit_get_position_relative_to_outside_world(ee, GPtr::<u8>::cast::<f32>(GPtr::from_raw(&mut v).cast()));
     }
     let mut r = [0f32; 3];
     let mut heading = 0f32;
@@ -170,7 +164,7 @@ fn resurrect(hospital: bool, pass_time: bool, clear_144: bool) {
     references_remove_references_to_player();
     g::<u8>(0x9690C0).write(10);
     g::<u8>(0xC0EC23).write(10);
-    let pad = pad_get_pad(g::<u8>(0xB7CD74).read() as i32);
+    let pad = pad_get_pad((g::<u8>(0xB7CD74).read() as i32) as u32);
     wr::<u16>(pad, 0x10E, 0);
 }
 

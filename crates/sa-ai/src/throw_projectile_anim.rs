@@ -3,6 +3,7 @@
 //! call to another catalogued function goes through `orig!` at the original address.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -13,25 +14,19 @@ const THROW_CB: u32 = 0x61F890;
 /// The near-throw distance² (0x858628)
 const K_NEAR_SQ: usize = 0x858628;
 
-use crate::bindings::anim_blend_animation;
-use crate::bindings::assoc_set_finish_callback;
+use sa_world::bindings::anim_blend_animation;
+use sa_core::bindings::assoc_set_finish_callback;
 use sa_core::bindings::get_weapon_info as weapon_info_get;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::vector_ne;
+use crate::bindings::weapon_fire;
+use sa_core::bindings::get_anim_hierarchy_from_skin_clump;
+use sa_core::bindings::rp_hanim_hierarchy_get_matrix_array as hanim_hierarchy_get_matrix_array;
+use sa_core::bindings::rp_hanim_id_get_index as hanim_id_get_index;
+use sa_core::bindings::rw_v3d_transform_points;
 orig! {
     /// `CTaskSimpleThrowProjectile::StartAnim(CPed*)` (0x6259E0, `ret 4`)
     fn o_start_anim(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x6259E0 => unported;
-    /// `GetAnimHierarchyFromSkinClump(RpClump*)` (0x734A40, cdecl)
-    fn get_anim_hierarchy_from_skin_clump(clump: u32) -> u32 = cdecl 0x734A40 => unported;
-    /// `RpHAnimIDGetIndex(RpHAnimHierarchy*, int32)` (0x7C51A0, cdecl)
-    fn hanim_id_get_index(h: u32, id: u32) -> u32 = cdecl 0x7C51A0 => unported;
-    /// `RpHAnimHierarchyGetMatrixArray(RpHAnimHierarchy*)` (0x7C5120, cdecl)
-    fn hanim_hierarchy_get_matrix_array(h: u32) -> u32 = cdecl 0x7C5120 => unported;
-    /// `RwV3dTransformPoints(RwV3d* out, const RwV3d* in, int32 n, const RwMatrix*)` (0x7EDD90, cdecl)
-    fn rw_v3d_transform_points(out: GPtr<u8>, inp: GPtr<u8>, n: u32, m: u32) -> u32 = cdecl 0x7EDD90 => unported;
-    /// `CWeapon::Fire(CEntity* owner, CVector* posn, CVector* effectPosn, CEntity* target, CVector* targetPosn,
-    /// CVector* driveByPosn)` (0x742300, `ret 0x18`)
-    fn weapon_fire(w: GPtr<u8>, owner: GPtr<u8>, pos: GPtr<u8>, fx: GPtr<u8>, target: u32, tpos: u32, db: u32) -> u8 = thiscall 0x742300 => unported;
 }
 
 use sa_world::world::common::entity_pos;
@@ -54,9 +49,9 @@ fn far(a: GPtr<u8>, b: GPtr<u8>) -> bool {
        unverified = "ai7-12", route = "L2", hazards = "heap-writes", recs = "weapon-combat")]
 pub fn throw_projectile_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
     let cur = |p: GPtr<u8>| rd::<u32>(p, rd::<u8>(p, 0x718) as i8 as isize * 0x1C + 0x5A0);
-    let info = weapon_info_get(cur(ped), 1);
+    let info = weapon_info_get(cur(ped) as i32, 1);
     let a = if rd::<u8>(this, 9) == 0 {
-        anim_blend_animation(rd::<u32>(ped, 0x18), rd::<u32>(info, 0x1C), 0xE4, 0x4180_0000)
+        anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), rd::<u32>(info, 0x1C), 0xE4, f32::from_bits(0x4180_0000))
     } else {
         let target = rd::<GPtr<u8>>(this, 0x10);
         let mut anim = 0;
@@ -74,10 +69,10 @@ pub fn throw_projectile_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
         if anim == 0 {
             anim = if rd::<u8>(this, 0xA) != 0 || cur(ped) == 0x27 { 0xE5 } else { 0xE6 };
         }
-        anim_blend_animation(rd::<u32>(ped, 0x18), rd::<u32>(info, 0x1C), anim, 0x447A_0000)
+        anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), rd::<u32>(info, 0x1C), anim, f32::from_bits(0x447A_0000))
     };
     wr::<GPtr<u8>>(this, 0xC, a);
-    assoc_set_finish_callback(a, THROW_CB, this.addr() as u32);
+    assoc_set_finish_callback(a, THROW_CB, GPtr::from_addr((this.addr() as u32) as usize));
 }
 
 /// `CTaskSimpleThrowProjectile::ProcessPed(CPed*)` (0x62AF50, `ret 4`): done (AL = 1) when finished (+8) or when the
@@ -93,7 +88,7 @@ pub fn throw_projectile_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
        unverified = "ai7-12", route = "L2", hazards = "ax-al-return,heap-writes", recs = "weapon-combat")]
 pub fn throw_projectile_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     let slot = rd::<u8>(ped, 0x718) as i8 as isize * 0x1C + 0x5A0;
-    let info = weapon_info_get(rd::<u32>(ped, slot), 1);
+    let info = weapon_info_get(rd::<u32>(ped, slot) as i32, 1);
     if rd::<u8>(this, 8) != 0 || (rd::<u32>(info, 0x18) >> 8) & 1 == 0 {
         return 1;
     }
@@ -136,17 +131,17 @@ pub fn throw_projectile_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     }
     let mut vec = [rd::<u32>(info, 0x24), rd::<u32>(info, 0x28), rd::<u32>(info, 0x2C)];
     let vp: GPtr<u8> = GPtr::from_raw(vec.as_mut_ptr()).cast();
-    let hier = get_anim_hierarchy_from_skin_clump(rd::<u32>(ped, 0x18));
-    let idx = hanim_id_get_index(hier, rd::<u32>(rd::<GPtr<u8>>(ped, 0x4A0), 0x14));
-    let mats = hanim_hierarchy_get_matrix_array(hier);
-    rw_v3d_transform_points(vp, vp, 1, mats.wrapping_add(idx << 6));
+    let hier = GPtr::<u8>::addr(get_anim_hierarchy_from_skin_clump(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize))) as u32;
+    let idx = hanim_id_get_index(GPtr::from_addr(hier as usize), rd::<u32>(rd::<GPtr<u8>>(ped, 0x4A0), 0x14)) as u32;
+    let mats = GPtr::<u8>::addr(hanim_hierarchy_get_matrix_array(GPtr::from_addr(hier as usize))) as u32;
+    rw_v3d_transform_points(vp.cast::<f32>(), vp.cast::<f32>(), 1, GPtr::from_addr(mats.wrapping_add(idx << 6) as usize));
     let mut zero = [0u32; 3];
     let z: GPtr<u8> = GPtr::from_raw(zero.as_mut_ptr()).cast();
     let point = this.byte_add(0x14);
     let has_point = vector_ne(point, z) != 0;
     let weapon = ped.byte_add(rd::<u8>(ped, 0x718) as i8 as isize * 0x1C + 0x5A0);
     let tpos = if has_point { point.addr() as u32 } else { 0 };
-    weapon_fire(weapon, ped, vp, vp, 0, tpos, 0);
+    weapon_fire(weapon, ped, vp, vp, GPtr::NULL, GPtr::from_addr(tpos as usize), GPtr::NULL);
     0
 }
 

@@ -3,6 +3,7 @@
 //! the native and web builds. Ported from the 1.0 US bytes; gta-reversed as a reading aid (the bytes win). x87
 //! arithmetic follows the original's instruction order on the `sa_math::x87::X87` model.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -12,11 +13,9 @@ use sa_world::bindings::find_ground_z_for_3d_coord as world_find_ground_z_for_3d
 use sa_world::bindings::groups_is_in_players_group;
 use sa_world::bindings::is_shallow_water as surface_is_shallow_water;
 use sa_world::bindings::vector_mul_scalar;
+use sa_world::bindings::vec_mul_assign as vector_mul_assign;
+use sa_world::bindings::vector_add_assign;
 orig! {
-    /// `CVector::operator+=(const CVector&)` (0x411A00)
-    fn vector_add_assign(v: GPtr<u8>, o: GPtr<u8>) -> GPtr<u8> = thiscall 0x411A00 => unported;
-    /// `CVector::operator*=(float)` (0x40FEF0)
-    fn vector_mul_assign(v: GPtr<u8>, s: f32) -> GPtr<u8> = thiscall 0x40FEF0 => unported;
     /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, bool x7)` (0x56A490)
     #[allow(clippy::too_many_arguments)]
     fn world_get_is_line_of_sight_clear(a: GPtr<u8>, b: GPtr<u8>, bu: u32, ve: u32, pe: u32, ob: u32, du: u32, st: u32, ig: u32) -> u8 = cdecl 0x56A490 => unported;

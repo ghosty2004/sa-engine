@@ -16,20 +16,16 @@ use sa_pop::bindings::pad_get_look_right;
 use sa_world::bindings::get_pad_from_player;
 use sa_world::bindings::get_player_info;
 use sa_world::bindings::pad_get_car_gun_fired;
+use sa_core::bindings::clump_get_association;
+use sa_world::bindings::anim_blend_animation as blend_animation;
+use sa_world::bindings::ped_do_gun_flash;
+use sa_world::bindings::weapon_update;
 orig! {
     /// virtual `CVehicle::GetRideAnimData()` (vtable +0xBC)
     fn v_get_ride_anim_data(v: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0xBC => unported;
-    /// `CWeapon::Update(CPed* owner)` (0x73DB40)
-    fn weapon_update(w: GPtr<u8>, owner: u32) = thiscall 0x73DB40 => unported;
-    /// `RpAnimBlendClumpGetAssociation(RpClump*, uint32 animId)` (0x4D68B0)
-    fn clump_get_association(c: GPtr<u8>, id: u32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
-    /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float)` (0x4D4610)
-    fn blend_animation(c: GPtr<u8>, group: u32, id: u32, delta: f32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
     /// `CWeapon::FireFromCar(CVehicle*, bool left, bool right)` (0x73FA20); the flags as the dwords
     /// the original pushes
     fn weapon_fire_from_car(w: GPtr<u8>, v: GPtr<u8>, left: u32, right: u32) -> u8 = thiscall 0x73FA20 => unported;
-    /// `CPed::DoGunFlash(int32, bool)` (0x5DF340)
-    fn ped_do_gun_flash(p: GPtr<u8>, time: i32, right: u32) = thiscall 0x5DF340 => unported;
 }
 
 /// `CVehicle::DoDriveByShootings()` (0x741FD0): a player driver allowed to drive-by (player info
@@ -62,7 +58,7 @@ pub fn vehicle_do_drive_by_shootings(this: GPtr<u8>) {
     }
     let slot = i32::from(rd::<i8>(driver, 0x718));
     let weapon = driver.byte_add(0x5A0 + 0x1C * slot as isize);
-    if rd::<u32>(get_weapon_info(rd::<u32>(weapon, 0), 1), 0x14) != 4 {
+    if rd::<u32>(get_weapon_info(rd::<u32>(weapon, 0) as i32, 1), 0x14) != 4 {
         return;
     }
     let fire = if rd::<u32>(this, 0x594) == 10 {
@@ -80,7 +76,7 @@ pub fn vehicle_do_drive_by_shootings(this: GPtr<u8>) {
     } else {
         (0x4A, 0x4B, 0xBF)
     };
-    weapon_update(weapon, 0);
+    weapon_update(weapon, GPtr::NULL);
     let cam = 0xB6_F1A8 + 0x238 * usize::from(g::<u8>(0xB6_F081).read());
     let mode = g::<u16>(cam).read();
     let (left, right) = if mode == 1 || g::<u8>(0xB6_F057).read() != 0 || mode == 0x31 {
@@ -127,7 +123,7 @@ pub fn vehicle_do_drive_by_shootings(this: GPtr<u8>) {
         return;
     }
     if rd::<u32>(weapon, 0xC) != 0 {
-        let clip = rd::<i16>(get_weapon_info(rd::<u32>(weapon, 0), 1), 0x20) as i32 as u32;
+        let clip = rd::<i16>(get_weapon_info(rd::<u32>(weapon, 0) as i32, 1), 0x20) as i32 as u32;
         let total = rd::<u32>(weapon, 0xC);
         wr::<u32>(weapon, 8, if total >= clip { clip } else { total });
     }

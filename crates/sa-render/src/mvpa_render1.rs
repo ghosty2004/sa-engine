@@ -24,33 +24,26 @@ pub use sa_core::bindings::rw_d3d9_get_caps;
 pub use sa_core::bindings::rw_im2d_render_primitive;
 pub use sa_core::bindings::rw_raster_destroy;
 pub use sa_core::bindings::world_remove;
-pub use sa_stream::bindings::find_txd_slot;
-pub use sa_stream::bindings::rw_texture_destroy;
-pub use sa_stream::bindings::rw_texture_read;
+pub use sa_core::bindings::find_txd_slot;
+pub use sa_core::bindings::rw_texture_destroy;
+pub use sa_core::bindings::rw_texture_read;
 pub use sa_world::bindings::escalator_switch_off;
+pub use crate::bindings::set_vertices_d3d9;
+pub use crate::bindings::shadow_camera_destroy;
+pub use sa_core::bindings::get_model_info as get_model_info_full;
+pub use sa_core::bindings::load_plants_dat;
+pub use sa_core::bindings::pop_current_txd;
+pub use sa_core::bindings::push_current_txd;
+pub use sa_core::bindings::rw_raster_lock;
+pub use sa_core::bindings::set_current_txd;
+pub use sa_pop::bindings::rope_remove as rope_remove_call;
+pub use sa_world::bindings::render_vertex_buffer;
+pub use sa_world::bindings::set_vertices_rect;
 orig! {
-    /// `CTxdStore::PushCurrentTxd()` (0x7316A0)
-    pub fn push_current_txd() = cdecl 0x7316A0 => sa_stream::txdstore::push_current_txd;
-    /// `CTxdStore::PopCurrentTxd()` (0x7316B0)
-    pub fn pop_current_txd() = cdecl 0x7316B0 => sa_stream::txdstore::pop_current_txd;
-    /// `CTxdStore::SetCurrentTxd(int)` (0x7319C0)
-    pub fn set_current_txd(slot: i32) = cdecl 0x7319C0 => sa_stream::txdstore::set_current_txd;
-    /// `RwRasterLock(RwRaster*, RwUInt8 level, RwInt32 lockMode)` (0x7FB2D0)
-    pub fn rw_raster_lock(r: GPtr<u8>, level: u32, mode: u32) -> GPtr<u8> = cdecl 0x7FB2D0 => unported;
     /// `RwRenderStateSet(state, value)`: `RwEngineInstance->dOpenDevice.fpRenderStateSet` (slot +0x20)
     pub fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
     /// `operator new(size_t)` (0x82119A)
     pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
-    /// `CSprite2d::SetVertices(RwD3D9Vertex*, const CRect&, const CRGBA& c1..c4, float u1, v1 .. u4, v4)`
-    /// (0x727A00)
-    pub fn set_vertices_d3d9(v: GPtr<u8>, r: GPtr<u8>, c1: GPtr<u8>, c2: GPtr<u8>, c3: GPtr<u8>, c4: GPtr<u8>,
-        u1: u32, v1: u32, u2: u32, v2: u32, u3: u32, v3: u32, u4: u32, v4: u32) = cdecl 0x727A00 => crate::sprite2d::set_vertices_d3d9;
-    /// `CSprite2d::SetVertices(const CRect&, const CRGBA& c1..c4)` (0x727420)
-    pub fn set_vertices_rect(r: GPtr<u8>, c1: GPtr<u8>, c2: GPtr<u8>, c3: GPtr<u8>, c4: GPtr<u8>) = cdecl 0x727420 => crate::sprite2d::set_vertices_rect;
-    /// `CSprite2d::RenderVertexBuffer()` (0x7273D0)
-    pub fn render_vertex_buffer() = cdecl 0x7273D0 => crate::sprite2d::render_vertex_buffer;
-    /// `CPlantSurfPropMgr::LoadPlantsDat(const char*)` (0x5DD3B0)
-    pub fn load_plants_dat(name: GPtr<u8>) -> u8 = cdecl 0x5DD3B0 => unported;
     /// `C3dMarkers::Shutdown()` (0x722710)
     pub fn markers_shutdown() = cdecl 0x722710 => crate::markers::shutdown;
     /// `CPointLights::Init()` (0x6FFB40)
@@ -69,14 +62,8 @@ orig! {
     pub fn proc_object_man_load_data_file(this: GPtr<u8>) = thiscall 0x5A3140 => unported;
     /// `ProcSurfaceInfo_c::Exit()` (0x5A3270)
     pub fn proc_surface_info_exit_call(this: GPtr<u8>) = thiscall 0x5A3270 => proc_surface_info_exit;
-    /// `CModelInfo::GetModelInfo(const char* name, int* index)` (0x4C5940)
-    pub fn get_model_info_full(name: GPtr<u8>, index: GPtr<u8>) -> GPtr<u8> = cdecl 0x4C5940 => unported;
-    /// `CRope::Remove()` (0x556780)
-    pub fn rope_remove_call(this: GPtr<u8>) = thiscall 0x556780 => rope_remove;
     /// `CRealTimeShadow::~CRealTimeShadow()` (0x706440)
     pub fn real_time_shadow_destructor(this: GPtr<u8>) = thiscall 0x706440 => unported;
-    /// `CShadowCamera::Destroy()` (0x705400)
-    pub fn shadow_camera_destroy(this: GPtr<u8>) = thiscall 0x705400 => unported;
     /// `CClock::NormaliseGameClock()` (0x52CDE0)
     pub fn normalise_game_clock_call() = cdecl 0x52CDE0 => normalise_game_clock;
 }
@@ -294,7 +281,7 @@ pub fn plant_surf_prop_mgr_initialise() -> u8 {
         }
         e += 0x7C;
     }
-    u8::from(load_plants_dat(GPtr::from_addr(0x86BF88)) != 0)
+    u8::from(load_plants_dat(GPtr::<u8>::addr(GPtr::from_addr(0x86BF88)) as u32) != 0)
 }
 
 /// `CPlantSurfPropMgr::GetSurfProperties(uint16 id)` (0x6F9DE0, cdecl): `m_SurfPropPtrTab[id]` (0xC38070)

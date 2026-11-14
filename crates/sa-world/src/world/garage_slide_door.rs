@@ -4,15 +4,12 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use super::common::{g, rd, wr, x};
 
 use crate::bindings::door_audio_add_event;
-orig! {
-    /// `CGarage::FindDoorsWithGarage(CObject** door1, CObject** door2)` (0x449FF0)
-    fn find_doors_c(gar: GPtr<u8>, d1: GPtr<u8>, d2: GPtr<u8>) = thiscall 0x449FF0 => find_doors_with_garage;
-}
+use crate::bindings::find_doors_with_garage as find_doors_c;
 
 /// `CGarages::aGarages` (0x96C048, 0xD8 bytes each)
 const GARAGES: u32 = 0x96_C048;

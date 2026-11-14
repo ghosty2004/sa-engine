@@ -33,6 +33,9 @@ const HINT_STRIP: u32 = 0x30502;
 const MATERIAL_COMPARE: u32 = 0x759640;
 
 use crate::bindings::crt_qsort;
+use crate::bindings::free_list_create;
+use crate::bindings::free_list_destroy;
+use crate::bindings::mesh_header_alloc;
 orig! {
     /// The generator `(buildMesh, winding, joinParity)` (0x7591D0)
     fn generate_tristrip_call(bm: GPtr<u8>, winding: u32, join_parity: u32) -> GPtr<u8> = cdecl 0x7591D0 => generate_tristrip;
@@ -48,12 +51,6 @@ orig! {
     fn extend_strip_call(s: GPtr<u8>, edge: GPtr<u8>, buckets: GPtr<u8>, tris: GPtr<u8>, pass: u32) -> u32 = cdecl 0x75A370 => extend_strip;
     /// Joins a strip list into one strip `(&list, joinParity)` (0x75A660)
     fn join_strips_call(list: GPtr<u8>, join_parity: u32) -> u32 = cdecl 0x75A660 => join_strips;
-    /// `_rwFreeListCreate(entrySize, entriesPerBlock, alignment, hint)` (0x801980)
-    fn free_list_create(size: u32, per_block: u32, align: u32, hint: u32) -> GPtr<u8> = cdecl 0x801980 => crate::memory::rw_freelist_create;
-    /// `RwFreeListDestroy(fl)` (0x801B80)
-    fn free_list_destroy(fl: GPtr<u8>) -> u32 = cdecl 0x801B80 => crate::memory::rw_freelist_destroy;
-    /// The mesh header allocation `RwMalloc(size, 0x30502)` (0x758920)
-    fn mesh_header_alloc(size: u32) -> GPtr<u8> = cdecl 0x758920 => unported;
 }
 
 /// A pointer field.

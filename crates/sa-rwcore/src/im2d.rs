@@ -36,9 +36,13 @@ pub use crate::bindings::delete_vertex_declaration;
 pub use crate::bindings::dynamic_vertex_buffer_lock as dyn_lock;
 pub use crate::bindings::flush_cache;
 pub use crate::bindings::get_current_texture;
-pub use crate::bindings::set_render_state;
+pub use sa_core::bindings::set_render_state;
 pub use crate::bindings::set_stream_source;
-pub use crate::bindings::set_tss;
+pub use sa_core::bindings::set_tss;
+pub use sa_core::bindings::set_indices;
+pub use sa_core::bindings::set_pixel_shader;
+pub use sa_core::bindings::set_vertex_declaration;
+pub use sa_core::bindings::set_vertex_shader;
 orig! {
     /// `IDirect3DDevice9::GetAvailableTextureMem` (+0x10)
     pub fn dev_get_available_texture_mem(dev: GPtr<u8>) -> u32 = stdcall vslot 0x10 => unported;
@@ -56,14 +60,6 @@ orig! {
     pub fn buf_unlock(buf: GPtr<u8>) -> i32 = stdcall vslot 0x30 => unported;
     /// `IUnknown::Release` (+8)
     pub fn com_release(obj: GPtr<u8>) -> u32 = stdcall vslot 0x8 => unported;
-    /// `_rwD3D9SetVertexDeclaration(decl)` (0x7F9F70)
-    pub fn set_vertex_declaration(decl: u32) = cdecl 0x7F9F70 => crate::d3d9dev::set_vertex_declaration;
-    /// `_rwD3D9SetVertexShader(vs)` (0x7F9FB0)
-    pub fn set_vertex_shader(vs: u32) = cdecl 0x7F9FB0 => crate::d3d9dev::set_vertex_shader;
-    /// `_rwD3D9SetPixelShader(ps)` (0x7F9FF0)
-    pub fn set_pixel_shader(ps: u32) = cdecl 0x7F9FF0 => crate::d3d9dev::set_pixel_shader;
-    /// `_rwD3D9SetIndices(ib)` (0x7FA1C0)
-    pub fn set_indices(ib: u32) = cdecl 0x7FA1C0 => crate::d3d9dev::set_indices;
     /// `_rwD3D9Im2DSetRenderStates()` (0x7FB810)
     pub fn set_render_states_call() = cdecl 0x7FB810 => im2d_set_render_states;
     /// `RwRasterGetCurrentContext()` (0x7FAE60)

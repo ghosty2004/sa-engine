@@ -438,6 +438,9 @@ sa_core::globals! {
 // ---- original callees shared by several modules ----------------------------------------------
 
 pub use sa_stream::bindings::rand;
+pub use crate::bindings::entity_get_col_model as get_col_model;
+pub use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+pub use sa_core::bindings::entity_register_reference as register_reference;
 orig! {
     /// `Multiply3x3(CVector* out, const CMatrix& m, const CVector& v)` (0x59C790, cdecl, returns out)
     pub fn multiply3x3(out: GPtr<CVector>, m: Ent, v: GPtr<CVector>) -> GPtr<CVector>
@@ -445,12 +448,6 @@ orig! {
     /// `CVector::CrossProduct(CVector* out, const CVector* a, const CVector* b)` (0x59C730)
     pub fn cross_product(out: GPtr<CVector>, a: GPtr<CVector>, b: GPtr<CVector>) -> GPtr<CVector>
         = cdecl 0x59C730 => crate::collision::data::cross_product_port;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00, thiscall)
-    pub fn clean_up_old_reference(e: Ent, r: GPtr<Ent>) = thiscall 0x571A00 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70, thiscall)
-    pub fn register_reference(e: Ent, r: GPtr<Ent>) = thiscall 0x571B70 => unported;
-    /// `CEntity::GetColModel()` (0x535300, thiscall)
-    pub fn get_col_model(e: Ent) -> Ent = thiscall 0x535300 => unported;
 }
 
 /// Phases B/C side of `Multiply3x3` 0x59C790 (sa-math's port of the same sum order).

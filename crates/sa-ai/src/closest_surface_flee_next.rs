@@ -2,22 +2,20 @@
 //! CVector&)` (0x5F3B70) and `CTaskComplexSmartFleeEntity::CreateNextSubTask` (0x65C680), reached when peds walk
 //! round / flee from the player on the native and web builds. Ported from the 1.0 US bytes.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::bbox_corners_uncached;
+use crate::bindings::flee_entity_create_sub_task as smart_flee_entity_create_sub_task;
 orig! {
-    /// `CPedGeometryAnalyser::ComputeEntityBoundingBoxCornersUncached(float z, CEntity&, CVector* corners)`
-    /// (0x5F1FA0, cdecl)
-    fn bbox_corners_uncached(z: f32, e: GPtr<u8>, corners: GPtr<u8>) = cdecl 0x5F1FA0 => unported;
     /// `CPedGeometryAnalyser::ComputeClosestSurfacePoint(const CVector&, const CVector corners[4], CVector&)`
     /// (0x5F2C10, cdecl, AL)
     fn closest_surface_point_rect(pos: GPtr<u8>, corners: GPtr<u8>, out: GPtr<u8>) -> u32 = cdecl 0x5F2C10 => unported;
     /// `CTask::GetTaskType()` (vtable slot 0x10)
     fn task_get_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CTaskComplexSmartFleeEntity::CreateSubTask(int32)` (0x65C530)
-    fn smart_flee_entity_create_sub_task(t: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x65C530 => unported;
 }
 
 /// `CPedGeometryAnalyser::ComputeClosestSurfacePoint(const CPed& ped, CEntity& entity, CVector& out)` (0x5F3B70,

@@ -13,13 +13,12 @@ pub use sa_core::bindings::list_add_item;
 pub use sa_core::bindings::rw_matrix_create;
 pub use sa_core::bindings::rw_matrix_multiply;
 pub use sa_core::bindings::rw_v3d_transform_points;
+pub use crate::bindings::frustum_is_collision as fx_frustum_is_collision;
 orig! {
     /// `FxMemoryPool_c::Init()` (0x4A9C30)
     pub fn fx_memory_pool_init(this: GPtr<u8>) -> u8 = thiscall 0x4A9C30 => unported;
     /// `FxEmitterPrt_c::operator new[](size_t)` (0x4A18B0)
     pub fn fx_emitter_prt_new_array(size: u32) -> GPtr<u8> = cdecl 0x4A18B0 => unported;
-    /// `FxFrustumInfo_c::IsCollision(FxSphere_c*)` (0x4AA030)
-    pub fn fx_frustum_is_collision(this: GPtr<u8>, s: GPtr<u8>) -> u32 = thiscall 0x4AA030 => crate::mvpa_render3::fx_frustum_is_collision;
 }
 
 /// `FxManager_c::Init()` (0x4A98E0, thiscall): the FX memory pool (+0xAC) `Init()`; the matrix stack
@@ -85,7 +84,7 @@ pub fn fx_manager_should_create(this: GPtr<u8>, bp: GPtr<u8>, local: GPtr<u8>, p
     let mut sphere = [0u32; 6];
     let s = GPtr::<u32>::from_raw(sphere.as_mut_ptr()).cast::<u8>();
     fx_sphere_ctor(s);
-    rw_v3d_transform_points(s, rd::<GPtr<u8>>(bp, 0x20), 1, m);
+    rw_v3d_transform_points(s.cast::<f32>(), GPtr::<u8>::cast::<f32>(rd::<GPtr<u8>>(bp, 0x20)), 1, m);
     wr::<u32>(s, 0xC, rd::<u32>(rd::<GPtr<u8>>(bp, 0x20), 0xC));
     let idx = g::<i32>(0xA9AF08).read();
     g::<i32>(0xA9AF08).write(idx.wrapping_sub(1));

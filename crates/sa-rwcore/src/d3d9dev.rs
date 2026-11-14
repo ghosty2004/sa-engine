@@ -65,6 +65,7 @@ const RASTER_EXT_OFFSET: usize = 0xB4E9E0;
 
 pub use crate::bindings::flush_cache as flush_cache_call;
 pub use crate::bindings::free_list_create;
+pub use crate::bindings::free_list_purge;
 orig! {
     /// `IDirect3DDevice9::SetFVF` (+0x164)
     pub fn dev_set_fvf(dev: GPtr<u8>, fvf: u32) -> i32 = stdcall vslot 0x164 => unported;
@@ -124,8 +125,6 @@ orig! {
     pub fn d3d_check_multisample(d3d: GPtr<u8>, adapter: u32, dev_type: u32, fmt: u32, windowed: u32, ty: u32, quality: u32) -> i32 = stdcall vslot 0x2C => unported;
     /// `_rwD3D9LightCompare(a, b)` (0x7FA8B0)
     pub fn light_compare_call(a: GPtr<u8>, b: GPtr<u8>) -> u32 = cdecl 0x7FA8B0 => light_compare;
-    /// `RwFreeListPurge(fl)` (0x801E00)
-    pub fn free_list_purge(fl: GPtr<u8>) -> u32 = cdecl 0x801E00 => unported;
 }
 
 use sa_core::field::gr32 as gu;

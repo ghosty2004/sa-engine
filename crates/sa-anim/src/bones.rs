@@ -83,13 +83,10 @@ pub use sa_core::bindings::list_remove_all as tlist_remove_all;
 pub use sa_core::bindings::list_remove_head as tlist_remove_head;
 pub use sa_core::bindings::list_remove_item as tlist_remove_item;
 pub use sa_core::bindings::rw_matrix_multiply;
+pub use crate::bindings::bone_calc_wld_mat as call_calc_wld_mat;
+pub use sa_core::bindings::list_ctor as tlist_ctor;
+pub use sa_core::bindings::rt_quat_setup_slerp_cache;
 orig! {
-    /// `TList_c::TList_c` (0x4A8DD0): head = tail = count = 0, returns this
-    pub fn tlist_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4A8DD0 => unported;
-    /// `RtQuatSetupSlerpCache(from, to, cache)` (0x7EC220)
-    pub fn rt_quat_setup_slerp_cache(from: GPtr<f32>, to: GPtr<f32>, cache: GPtr<f32>) = cdecl 0x7EC220 => unported;
-    /// `BoneNode_c::CalcWldMat(parentMatrix)` (0x616CD0)
-    pub fn call_calc_wld_mat(this: GPtr<u8>, parent: GPtr<u8>) = thiscall 0x616CD0 => calc_wld_mat;
     /// `BoneNode_c::QuatToEuler(quat, out)` (0x617080)
     pub fn call_quat_to_euler(q: GPtr<f32>, out: GPtr<f32>) = cdecl 0x617080 => quat_to_euler;
     /// `BoneNode_c::EulerToQuat(in, quat)` (0x6171F0)
@@ -351,9 +348,9 @@ pub fn blend_keyframe(this: GPtr<u8>, blend: f32) {
     // cache: raFrom (4), raTo (4), omega, nearlyZeroOm
     let mut cache = [0u32; 10];
     rt_quat_setup_slerp_cache(
-        GPtr::from_raw(from.as_mut_ptr()).cast(),
-        GPtr::from_raw(to.as_mut_ptr()).cast(),
-        GPtr::from_raw(cache.as_mut_ptr()).cast(),
+        GPtr::<f32>::cast::<u8>(GPtr::from_raw(from.as_mut_ptr()).cast()),
+        GPtr::<f32>::cast::<u8>(GPtr::from_raw(to.as_mut_ptr()).cast()),
+        GPtr::<f32>::cast::<u8>(GPtr::from_raw(cache.as_mut_ptr()).cast()),
     );
     // test ah, 0x41 / jp: blend <= 0 → from (unreachable here, kept)
     if matches!(b.fcom(x(ZERO)), Cmp::Less | Cmp::Equal) {
@@ -599,7 +596,7 @@ pub fn manager_return_bone_node(this: GPtr<u8>, node: GPtr<u8>) {
 /// `BoneNodeManager_c::GetNumBoneNodesLeft()` (0x617480): tail-jump `GetNumItems` of the free list.
 #[hook(addr = 0x617480, conv = thiscall, name = "BoneNodeManager_c::GetNumBoneNodesLeft", expect = "81 C1 00 4C 00 00", this = "BoneNodeManager_c")]
 pub fn manager_get_num_bone_nodes_left(this: GPtr<u8>) -> i32 {
-    tlist_get_num_items(this.byte_add(0x4C00))
+    tlist_get_num_items(this.byte_add(0x4C00)) as i32
 }
 
 pub const HOOKS: &[HookReg] = &[

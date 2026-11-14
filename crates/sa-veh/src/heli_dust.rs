@@ -3,7 +3,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::Cmp;
 
 use crate::common::{f32_of, g, jne_mask, jp5, rd, wr, x};
@@ -19,15 +19,9 @@ use sa_world::bindings::fx_set_local_particles;
 use sa_world::bindings::fx_set_offset_pos;
 use sa_world::bindings::get_event_global_group;
 use sa_world::bindings::surface_is_sand;
-orig! {
-    /// `CWorld::ProcessVerticalLine(const CVector&, float, CColPoint&, CEntity*&, bool buildings,
-    /// bool vehicles, bool peds, bool objects, bool dummies, bool seeThrough, CStoredCollPoly*)` (0x5674E0, AL)
-    fn process_vertical_line(p: GPtr<u8>, z: f32, cp: GPtr<u8>, ent: GPtr<u8>, b0: u32, b1: u32, b2: u32, b3: u32, b4: u32, b5: u32, poly: u32) -> u8 = cdecl 0x5674E0 => unported;
-    /// `CWaterLevel::GetWaterLevel(float, float, float, float*, bool, CVector*)` (0x6EB690, AL)
-    fn water_get_level(x: f32, y: f32, z: f32, level: GPtr<u8>, touching: u32, normal: u32) -> u8 = cdecl 0x6EB690 => unported;
-    /// `FxManager_c::CreateFxSystem(const char*, RwV3d*, RwMatrix*, bool)` (0x4A9BE0) on `g_fxMan` (0xA9AE80)
-    fn create_fx_system(mgr: GPtr<u8>, name: u32, pos: GPtr<u8>, m: u32, ignore_bbox: u32) -> GPtr<u8> = thiscall 0x4A9BE0 => unported;
-}
+use sa_world::bindings::fx_create_system as create_fx_system;
+use sa_world::bindings::get_water_level as water_get_level;
+use sa_world::bindings::world_process_vertical_line as process_vertical_line;
 
 use sa_core::field::ptr_of as buf;
 
@@ -64,14 +58,14 @@ pub fn automobile_do_heli_dust_effect(this: GPtr<u8>, strength: f32, height: f32
     }
     let mut cp = [0u32; 11];
     let mut ent = [0u32; 1];
-    process_vertical_line(pos_ptr(this), -1000.0, buf(&mut cp), buf(&mut ent), 1, 0, 0, 0, 0, 0, 0);
+    process_vertical_line(pos_ptr(this), -1000.0, buf(&mut cp), buf(&mut ent), 1, 0, 0, 0, 0, 0, GPtr::NULL);
     let surface = (cp[8] >> 24) & 0xFF;
     let mut ground = f32::from_bits(cp[2]);
     let sand = surface_is_sand(GPtr::from_addr(0xB7_9538), surface) != 0;
     let mut water = false;
     let p = pos_ptr(this);
     let mut level = [0u32; 1];
-    if water_get_level(rd::<f32>(p, 0), rd::<f32>(p, 4), rd::<f32>(p, 8), buf(&mut level), 0, 0) != 0
+    if water_get_level(rd::<f32>(p, 0), rd::<f32>(p, 4), rd::<f32>(p, 8), buf(&mut level), 0, GPtr::NULL) != 0
         && !jne_mask(x(f32::from_bits(level[0])), x(ground), 0x41)
     {
         ground = f32::from_bits(level[0]);
@@ -104,7 +98,7 @@ pub fn automobile_do_heli_dust_effect(this: GPtr<u8>, strength: f32, height: f32
     }
     if rd::<u32>(this, 0x580) == 0 {
         let mut zero = [0u32; 3];
-        let fx = create_fx_system(GPtr::from_addr(0xA9_AE80), 0x85_AA04, buf(&mut zero), 0, 1);
+        let fx = create_fx_system(GPtr::from_addr(0xA9_AE80), GPtr::from_addr(0x85_AA04), buf(&mut zero), GPtr::NULL, 1);
         wr::<GPtr<u8>>(this, 0x580, fx);
         if !fx.is_null() {
             fx_set_local_particles(fx, 1);

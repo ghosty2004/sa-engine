@@ -8,6 +8,7 @@
 //! pick-up offset (CVector2D used).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -24,7 +25,8 @@ use sa_world::bindings::hold_entity_drop_entity as hold_drop_entity;
 use sa_world::bindings::pad_exit_vehicle_just_down;
 use sa_world::bindings::physical_add_to_moving_list;
 use sa_world::bindings::placeable_get_matrix;
-use sa_world::bindings::vector_sub;
+use sa_core::bindings::vector_sub;
+use sa_world::bindings::event_script_command_ctor;
 orig! {
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
@@ -40,8 +42,6 @@ orig! {
     fn hold_start_anim(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x692FF0 => unported;
     /// `CTaskSimplePutDownEntity::CTaskSimplePutDownEntity()` (0x691990)
     fn put_down_entity_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x691990 => unported;
-    /// `CEventScriptCommand::CEventScriptCommand(int32 primaryTaskIndex, CTask*, bool)` (0x4B0A00, `ret 0xC`)
-    fn event_script_command_ctor(e: GPtr<u8>, idx: i32, task: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4B0A00 => unported;
 }
 
 /// `CTimer::ms_fTimeStep` (0xB7CB5C)
@@ -168,7 +168,7 @@ pub fn hold_entity_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
                 let e: GPtr<u8> = GPtr::from_raw(ev.as_mut_ptr()).cast();
                 event_script_command_ctor(e, 3, task, 0);
                 event_group_add(rd::<GPtr<u8>>(ped, 0x47C).byte_add(0x68), e, 0);
-                event_script_command_dtor(e);
+                event_script_command_dtor(e.cast::<u32>());
             }
         }
         0x134 => {
@@ -183,7 +183,7 @@ pub fn hold_entity_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
             }
             let mut p = [0f32; 3];
             let pp: GPtr<u8> = GPtr::from_raw(p.as_mut_ptr()).cast();
-            matrix_mul_vec(pp, placeable_get_matrix(entity), this.byte_add(0x40));
+            matrix_mul_vec(pp.cast::<f32>(), placeable_get_matrix(entity), this.byte_add(0x40));
             let pm = rd::<GPtr<u8>>(ped, 0x14);
             let pos = if pm.is_null() { ped.byte_add(4) } else { pm.byte_add(0x30) };
             p[0] = x(p[0]).fsub_m(rd::<f32>(pos, 0)).to_f32();

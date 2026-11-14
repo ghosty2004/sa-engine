@@ -15,9 +15,9 @@ use crate::common::{ftol32, g, rand_at, rd, wr, x, xi};
 use crate::bindings::audio_service;
 use crate::bindings::automobile_is_in_air as is_in_air;
 use crate::bindings::calculate_drive_acceleration;
-use crate::bindings::get_boat_pointer;
+use sa_pop::bindings::get_boat_pointer;
 use crate::bindings::get_car_gun_left_right;
-use crate::bindings::get_wheel_status;
+use sa_world::bindings::get_wheel_status;
 use crate::bindings::process_car_alarm;
 use crate::bindings::process_siren_and_horn;
 use crate::bindings::reset_player_breath;
@@ -36,20 +36,24 @@ use sa_world::bindings::get_skidmark_type;
 use sa_world::bindings::nitrous_control;
 use sa_world::bindings::pad_start_shake as start_shake;
 use sa_world::bindings::physical_process_control;
-use sa_world::bindings::vector_magnitude_sqr;
+use sa_core::bindings::vector_magnitude_sqr;
+use crate::bindings::area_check_stub;
+use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+use sa_core::bindings::entity_register_reference as register_reference;
+use sa_core::bindings::vector_sub;
+use sa_world::bindings::entity_get_col_model as get_col_model;
+use sa_world::bindings::multiply3x3;
+use sa_world::bindings::physical_add_to_moving_list as add_to_moving_list;
+use sa_world::bindings::remove_from_moving_list;
+use sa_world::bindings::skip_physics;
+use sa_world::bindings::update_moving_collision;
+use sa_world::bindings::uses_siren;
+use sa_world::bindings::vehicle_is_upside_down as is_upside_down;
 orig! {
-    /// `CEntity::GetColModel()` (0x535300)
-    fn get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => sa_world::world::entity::get_col_model;
     /// `CAutomobile::ProcessAutoBusDoors()` (0x6A38A0)
     fn process_auto_bus_doors(v: GPtr<u8>) = thiscall 0x6A38A0 => unported;
     /// `CVehicle::UpdatePassengerList()` (0x6D29E0)
     fn update_passenger_list(v: GPtr<u8>) = thiscall 0x6D29E0 => crate::vehicle2::update_passenger_list;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    fn register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => sa_world::world::entity::register_reference;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
-    fn clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => sa_world::world::entity::clean_up_old_reference;
-    /// `CVehicle::IsUpsideDown()` (0x6D1D90)
-    fn is_upside_down(v: GPtr<u8>) -> u8 = thiscall 0x6D1D90 => crate::vehicle2::is_upside_down;
     /// `CVehicle::CanPedEnterCar()` (0x6D1E80)
     fn can_ped_enter_car(v: GPtr<u8>) -> u8 = thiscall 0x6D1E80 => unported;
     /// `CAutomobile::ProcessAI(uint32&)` (vtable +0x108; 0x6B4800 for CAutomobile)
@@ -64,10 +68,6 @@ orig! {
     fn v_process_suspension(v: GPtr<u8>) = thiscall vslot 0x118 => unported;
     /// `CAutomobile::BreakTowLink()` (vtable +0xF8)
     fn v_break_tow_link(v: GPtr<u8>) -> u8 = thiscall vslot 0xF8 => unported;
-    /// `VectorSub(CVector*, const CVector*, const CVector*)` (0x40FE60): `out = a - b`
-    fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => sa_world::world::mvpa_math::vector_sub;
-    /// `FUN_00424100(float x, float y)` (0x424100): `xor al, al; ret` (a stubbed area check)
-    fn area_check_stub(px: u32, py: u32) -> u8 = cdecl 0x424100 => unported;
     /// `CAutomobile::FireTruckControl(CFire*)` (0x729B60)
     fn fire_truck_control(v: GPtr<u8>, fire: u32) = thiscall 0x729B60 => unported;
     /// `CAutomobile::HydraulicControl()` (0x6A07A0)
@@ -76,18 +76,12 @@ orig! {
     fn boost_jump_control(v: GPtr<u8>) = thiscall 0x6A3A60 => unported;
     /// `CAutomobile::TowTruckControl()` (0x6A40F0)
     fn tow_truck_control(v: GPtr<u8>) = thiscall 0x6A40F0 => unported;
-    /// `CAutomobile::UpdateMovingCollision(float)` (0x6A1460), the float as bits
-    fn update_moving_collision(v: GPtr<u8>, angle: u32) -> u8 = thiscall 0x6A1460 => unported;
     /// `CAutomobile::TankControl()` (0x6AE850)
     fn tank_control(v: GPtr<u8>) = thiscall 0x6AE850 => unported;
-    /// `CPhysical::SkipPhysics()` (0x5433B0)
-    fn skip_physics(v: GPtr<u8>) = thiscall 0x5433B0 => sa_world::physical::base::skip_physics;
     /// `CVehicle::ProcessBoatControl(tBoatHandlingData*, float*, bool, bool)` (0x6DBCE0)
     fn process_boat_control(v: GPtr<u8>, h: GPtr<u8>, res: GPtr<u8>, hit_wall: u32, post_collision: u32) = thiscall 0x6DBCE0 => unported;
     /// `CAutomobile::ProcessBuoyancy()` (0x6A8C00)
     fn process_buoyancy(v: GPtr<u8>) = thiscall 0x6A8C00 => crate::mvpd_v5::automobile_process_buoyancy;
-    /// `Multiply3x3(CVector*, const CMatrix*, const CVector*)` (0x59C790)
-    fn multiply3x3(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C790 => sa_world::world::mvpa_math::multiply3x3;
     /// `CPhysical::GetSpeed(CVector)` (0x542CE0), result through the hidden pointer
     fn get_speed(e: GPtr<u8>, out: GPtr<CVector>, point: CVector) -> GPtr<CVector> = thiscall 0x542CE0 => sa_world::physical::forces::get_speed;
     /// `CPhysical::ApplyTurnForce(CVector, CVector)` (0x542A50)
@@ -96,18 +90,12 @@ orig! {
     fn process_car_wheel_pair(v: GPtr<u8>, left: u32, right: u32, steer: u32, speeds: GPtr<u8>, points: GPtr<u8>, traction: u32, accel: u32, brake: u32, front: u32) = thiscall 0x6A4EC0 => unported;
     /// `CAutomobile::ProcessCarOnFireAndExplode(bool)` (0x6A7090)
     fn process_car_on_fire_and_explode(v: GPtr<u8>, explode: u32) = thiscall 0x6A7090 => crate::mvpd_v2::automobile_process_car_on_fire_and_explode;
-    /// `CVehicle::UsesSiren()` (0x6D8470)
-    fn uses_siren(v: GPtr<u8>) -> u8 = thiscall 0x6D8470 => crate::vehicle2::uses_siren;
     /// `CCarAI::MakeWayForCarWithSiren(CVehicle*)` (0x41D660)
     fn make_way_for_car_with_siren(v: GPtr<u8>) = cdecl 0x41D660 => sa_pop::carctrl4::make_way_for_car_with_siren;
     /// `CVehicle::UpdateTractorLink(bool, bool)` (0x6E0050)
     fn update_tractor_link(v: GPtr<u8>, a: u32, b: u32) = thiscall 0x6E0050 => unported;
     /// `CVehicle::UpdateTrailerLink(bool, bool)` (0x6DFC50)
     fn update_trailer_link(v: GPtr<u8>, a: u32, b: u32) = thiscall 0x6DFC50 => unported;
-    /// `CPhysical::RemoveFromMovingList()` (0x542860)
-    fn remove_from_moving_list(v: GPtr<u8>) = thiscall 0x542860 => sa_world::physical::base::remove_from_moving_list;
-    /// `CPhysical::AddToMovingList()` (0x542800)
-    fn add_to_moving_list(v: GPtr<u8>) = thiscall 0x542800 => sa_world::physical::base::add_to_moving_list;
     /// `CAutomobile::ProcessHarvester()` (0x6A9680)
     fn process_harvester(v: GPtr<u8>) = thiscall 0x6A9680 => unported;
 }
@@ -339,7 +327,7 @@ pub fn automobile_process_control(this: GPtr<u8>) {
                 } else if (g::<u8>(CHEAT_PERFECT_HANDLING).read() != 0 || extra & 0x10 != 0)
                     && status(this) == 0
                     && !le(
-                        X87::from_f64_exact(vector_magnitude_sqr(this.byte_add(0x44))),
+                        X87::from_f64_exact(vector_magnitude_sqr(GPtr::<u8>::cast::<f32>(this.byte_add(0x44)))),
                         c(0x3D23_D70B),
                     )
                 {
@@ -359,7 +347,7 @@ pub fn automobile_process_control(this: GPtr<u8>) {
             }
         }
     }
-    if find_player_vehicle(-1, 0) == this && car_gun_just_down(get_pad(0)) & 0xFFFF != 0 {
+    if find_player_vehicle(-1, 0) == this && car_gun_just_down(get_pad(0)) as u32 & 0xFFFF != 0 {
         let b = rd::<u8>(this, 0x4A8);
         match b & 7 {
             1 => {
@@ -498,7 +486,7 @@ fn abandoned_fake_physics(this: GPtr<u8>, st_now: u8, skip: &mut bool) {
             };
             let mut d = CVector::default();
             let r = vector_sub(GPtr::from_raw(&mut d).cast(), pos_ptr(this), cam);
-            if !ge(X87::from_f64_exact(vector_magnitude_sqr(r)), c(0x451C_4000)) {
+            if !ge(X87::from_f64_exact(vector_magnitude_sqr(r.cast::<f32>())), c(0x451C_4000)) {
                 break 'r false;
             }
         }
@@ -552,7 +540,7 @@ fn physics(this: GPtr<u8>, col_data: GPtr<u8>, extra: u32) {
     if rd::<u16>(this, 0x22) == 0x1CC {
         let mi = g::<GPtr<u8>>(0xA9_B7F8).read();
         let id = rd::<i16>(mi, 0x4A) as i32 as u32;
-        let h = get_boat_pointer(GPtr::from_addr(HANDLING_MGR), id);
+        let h = get_boat_pointer(GPtr::from_addr(HANDLING_MGR), id as u8);
         process_boat_control(this, h, this.byte_add(0x94C), hit_wall, u32::from(post_collision));
         let f = rd::<u32>(this, 0x40);
         wr::<u32>(
@@ -924,7 +912,7 @@ fn shake_and_wheel_spin(this: GPtr<u8>, extra: u32) {
         let comp = 0x7D4 + 4 * i;
         let change = ld(this, comp + 0x10).fsub_m(rd::<f32>(this, comp)).to_f32();
         if !le(x(change), c(0x3E99_999A)) && extra & 8 == 0 && !le(x(ms2), c(0x3D23_D70B)) {
-            get_wheel_status(this.byte_add(0x5A0), i as i32);
+            get_wheel_status(this.byte_add(0x5A0), (i as i32) as u32);
             if !le(x(change), x(susp)) {
                 susp = change;
             }
@@ -1050,7 +1038,7 @@ fn hydraulic_roll(this: GPtr<u8>) {
         if le(xi(i32::from(lr)).fabs(), c(0x4248_0000)) {
             return;
         }
-        let ud = get_car_gun_up_down(pad) as u16 as i16;
+        let ud = (get_car_gun_up_down(pad) as u32) as u16 as i16;
         if ge(xi(i32::from(ud)).fabs(), c(0x4248_0000)) {
             return;
         }
@@ -1128,7 +1116,7 @@ fn tow_links(this: GPtr<u8>) {
         return;
     }
     if rd::<u8>(trailer, 0x36) & 0xF8 != 0x50 {
-        clean_up_old_reference(trailer, this.byte_add(0x4C8));
+        clean_up_old_reference(trailer, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x4C8)));
         wr::<u32>(this, 0x4C8, 0);
     } else if rd::<GPtr<u8>>(trailer, 0x4C4) == this {
         remove_from_moving_list(this);

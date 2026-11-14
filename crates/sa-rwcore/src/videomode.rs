@@ -4,7 +4,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::{GPtr, GlobalDesc};
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::rw_globals;
 
@@ -15,11 +15,7 @@ const GET_MODE_INFO: i32 = 6;
 /// `rwDEVICESYSTEMGETMODE`
 const GET_MODE: i32 = 0xA;
 
-orig! {
-    /// `_rwDeviceSystemRequest(RwDevice*, RwInt32 requestID, void* pOut, void* pInOut, RwInt32 nIn)`
-    /// (0x7F2AB0): calls `device->fpSystem(requestID, pOut, pInOut, nIn)`
-    pub fn device_system_request(device: GPtr<u8>, request: i32, out: GPtr<u8>, inout: GPtr<u8>, n_in: i32) -> i32 = cdecl 0x7F2AB0 => unported;
-}
+pub use crate::bindings::device_system_request;
 
 /// `RwEngineGetVideoModeInfo(RwVideoMode* modeinfo, RwInt32 modeIndex)` (0x7F2CF0, cdecl):
 /// `_rwDeviceSystemRequest(G + 0x10, 6, modeinfo, NULL, modeIndex)`; returns `modeinfo` when the

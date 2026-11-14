@@ -12,13 +12,12 @@ pub use crate::bindings::fx_rw_matrix_create;
 pub use crate::bindings::fx_rw_matrix_destroy;
 pub use sa_core::bindings::rw_matrix_multiply;
 pub use sa_core::bindings::rw_matrix_update;
+pub use crate::bindings::create_particle;
 orig! {
     /// `FxInfoManager_c::ProcessEmissionInfo(currTime, timeStep, totalTime, useConst, out)` (0x4A4960)
     pub fn process_emission_info(this: GPtr<u8>, curr: u32, step: u32, total: u32, use_const: u32, out: GPtr<u8>) = thiscall 0x4A4960 => crate::mvpc_fx1::info_manager_process_emission_info;
     /// `FxPrimBP_c::GetRWMatrix(RwMatrix* out)` (0x4A9DC0)
     pub fn prim_bp_get_rw_matrix(this: GPtr<u8>, out: GPtr<u8>) = thiscall 0x4A9DC0 => unported;
-    /// `FxEmitter_c::CreateParticle(EmissionInfo_t*, RwMatrix*, a2, a3, a4, a6, a7)` (0x4A2580)
-    pub fn create_particle(this: GPtr<u8>, ei: GPtr<u8>, m: GPtr<u8>, a2: u32, a3: u32, a4: u32, a6: u32, a7: u32) -> GPtr<u8> = thiscall 0x4A2580 => unported;
 }
 
 /// `g_fxMan` (FxManager_c, 0xA9AE80).
@@ -82,7 +81,7 @@ pub fn emitter_add_particle(this: GPtr<u8>, pos: GPtr<u8>, a2: u32, a3: u32, a4:
     prim_bp_get_rw_matrix(rd::<GPtr<u8>>(this, 4), m4);
     rw_matrix_multiply(m1, m4, m2);
     mdestroy(m4);
-    let p = create_particle(this, eip, m1, a2, a3, a4, a6, a7);
+    let p = create_particle(this, eip, m1, GPtr::from_addr(a2 as usize), a3, GPtr::from_addr(a4 as usize), a6, a7);
     if !p.is_null() {
         let b = X87::from_f32(f32::from_bits(brightness));
         if !b.fcom(X87::zero()).test_any(1) {
@@ -96,7 +95,7 @@ pub fn emitter_add_particle(this: GPtr<u8>, pos: GPtr<u8>, a2: u32, a3: u32, a4:
 
 pub use crate::bindings::update_particle;
 pub use sa_core::bindings::list_add_item;
-pub use sa_world::bindings::rw_v3d_normalize;
+pub use sa_core::bindings::rw_v3d_normalize;
 pub use sa_world::bindings::rw_v3d_transform_vectors;
 orig! {
     /// `FxManager_c::GetParticle(bool)` (0x4A93C0)
@@ -263,10 +262,7 @@ pub fn emitter_create_particle(this: GPtr<u8>, ei: GPtr<u8>, m: GPtr<u8>, vel: G
 }
 
 pub use crate::bindings::fx_prt_mult_default_ctor as prt_mult_ctor;
-orig! {
-    /// `FxEmitter_c::CreateParticle(...)` (0x4A2580)
-    pub fn create_particle_call(this: GPtr<u8>, ei: GPtr<u8>, m: GPtr<u8>, vel: GPtr<u8>, time: u32, mult: GPtr<u8>, brightness: u32, local: u32) -> GPtr<u8> = thiscall 0x4A2580 => emitter_create_particle;
-}
+pub use crate::bindings::create_particle as create_particle_call;
 
 /// `FxEmitter_c::CreateParticles(float currTime, float timeStep)` (0x4A41E0, thiscall, `ret 8`):
 /// `ProcessEmissionInfo(currTime, timeStep, bp.length, sys.byte52, &ei)`. LOD factor from the system's
@@ -331,7 +327,7 @@ pub fn emitter_create_particles(this: GPtr<u8>, curr: u32, step: u32) {
     while i < ftol32(xf(rd::<f32>(this, 0x10))) {
         let mut mult = [0u32; 7];
         let mp = GPtr::from_raw(mult.as_mut_ptr()).cast::<u8>();
-        prt_mult_ctor(mp);
+        prt_mult_ctor(mp.addr() as u32);
         let t = X87::from_i32(i).fdiv_m(rd::<f32>(this, 0x10)).fmul_m(f32::from_bits(step)).to_f32();
         let local = u32::from((rd::<u8>(rd::<GPtr<u8>>(this, 8), 0x62) >> 1) & 1);
         create_particle_call(this, eip, m1, GPtr::NULL, t.to_bits(), mp, 0x3F99_999A, local);
@@ -393,7 +389,7 @@ pub fn emitter_bp_update_particle(this: GPtr<u8>, time: u32, p: GPtr<u8>) -> u8 
     let (f0, f1) = (flags as u8, (flags >> 8) as u8);
     if f0 != 0 || f1 != 0 {
         let mut level = 0f32;
-        let water = get_water_level(rd::<u32>(p, 0x10), rd::<u32>(p, 0x14), rd::<u32>(p, 0x18), GPtr::from_raw(&mut level as *mut f32).cast(), 1, 0);
+        let water = get_water_level(f32::from_bits(rd::<u32>(p, 0x10)), f32::from_bits(rd::<u32>(p, 0x14)), f32::from_bits(rd::<u32>(p, 0x18)), GPtr::from_raw(&mut level as *mut f32).cast(), 1, GPtr::NULL);
         if f0 != 0 && water != 0 && !crate::common::jp(xf(rd::<f32>(p, 0x18)), xf(level), 5) {
             wr::<f32>(p, 0x18, level);
         }
@@ -432,12 +428,8 @@ pub fn emitter_bp_update_particle(this: GPtr<u8>, time: u32, p: GPtr<u8>) -> u8 
 }
 
 pub use sa_world::bindings::rw_im3d_end;
-orig! {
-    /// `RwIm3DTransform(verts, n, ltm, flags)` (0x7EF450)
-    pub fn rw_im3d_transform(v: GPtr<u8>, n: i32, ltm: u32, flags: u32) -> GPtr<u8> = cdecl 0x7EF450 => unported;
-    /// `RwIm3DRenderPrimitive(type)` (0x7EF6B0)
-    pub fn rw_im3d_render_primitive(ty: i32) -> i32 = cdecl 0x7EF6B0 => unported;
-}
+pub use crate::bindings::rw_im3d_render_primitive;
+pub use sa_world::bindings::rw_im3d_transform;
 
 use sa_core::field::g as gp;
 
@@ -488,7 +480,7 @@ pub fn fx_render_add_tri(
     tris.write(tris.read().wrapping_add(1));
     if cnt.read() >= 0x7FD || tris.read() >= 0xFFF {
         let n = tris.read().wrapping_mul(3);
-        if !rw_im3d_transform(gp(0xC4D958), n, gp::<u32>(0xA9AE68).read(), gp::<u32>(0xA9AE60).read()).is_null() {
+        if !rw_im3d_transform(gp(0xC4D958), n as u32, GPtr::from_addr((gp::<u32>(0xA9AE68).read()) as usize), gp::<u32>(0xA9AE60).read()).is_null() {
             rw_im3d_render_primitive(3);
             rw_im3d_end();
         }

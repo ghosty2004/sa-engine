@@ -174,6 +174,8 @@ const RESTORE_CB: usize = 0xC980B0;
 const MODE_WIDTH: usize = 0xC9BEE4;
 
 use crate::bindings::im2d_render_open;
+use crate::bindings::d3d9_im3d_render_open_call as im3d_render_open;
+use crate::bindings::set_present_parameters;
 orig! {
     /// `IDirect3DDevice9::TestCooperativeLevel()` (+0xC)
     fn dev_test_cooperative_level(dev: GPtr<u8>) -> i32 = stdcall vslot 0xC => unported;
@@ -190,16 +192,12 @@ orig! {
 
     /// Releases the default-pool driver objects before a reset (0x7F7F70)
     fn release_video_memory() = cdecl 0x7F7F70 => unported;
-    /// Fills the present parameters from a video mode `(mode, flags, createFlags)` (0x7F6CB0)
-    fn set_present_parameters(mode: u32, flags: u32, create_flags: u32) = cdecl 0x7F6CB0 => unported;
     /// Re-creates the VM rasters after a reset (0x4CC970)
     fn restore_video_memory_rasters() -> u32 = cdecl 0x4CC970 => unported;
     /// `_rwD3D9DynamicVertexBufferRestore()` (0x7F58D0)
     fn dynamic_vertex_buffer_restore() -> u32 = cdecl 0x7F58D0 => crate::d3d9vb::dynamic_vertex_buffer_restore;
     /// `_rwD3D9RenderStateReset()` (0x7FD100)
     fn render_state_reset() = cdecl 0x7FD100 => unported;
-    /// `_rwD3D9Im3DRenderOpen()` (0x80E020)
-    fn im3d_render_open() -> u32 = cdecl 0x80E020 => unported;
     /// The device restore callback through its pointer
     fn call_restore_cb(f: u32) = cdecl dyn => unported;
 
@@ -382,6 +380,11 @@ const D3DERR_DEVICELOST: i32 = 0x8876_0868u32 as i32;
 const D3DERR_DEVICENOTRESET: i32 = 0x8876_0869u32 as i32;
 const D3DERR_INVALIDCALL: i32 = 0x8876_086Cu32 as i32;
 
+use sa_core::bindings::frame_get_ltm;
+use sa_core::bindings::rw_matrix_invert as matrix_invert;
+use sa_core::bindings::rw_raster_create as raster_create;
+use sa_core::bindings::rw_raster_destroy as raster_destroy;
+use sa_core::bindings::set_transform;
 orig! {
     /// `IDirect3DDevice9::SetRenderTarget(index, surface)` (+0x94)
     fn dev_set_render_target(dev: GPtr<u8>, index: u32, surface: u32) -> i32 = stdcall vslot 0x94 => unported;
@@ -408,16 +411,6 @@ orig! {
     fn is_iconic(hwnd: u32) -> u32 = stdcall cell 0x85825C => unported;
     /// `_rwProcessorForceSinglePrecision()` (0x857432)
     fn force_single_precision() = cdecl 0x857432 => crate::d3d9sys::processor_force_single_precision;
-    /// `RwFrameGetLTM(frame)` (0x7F0990)
-    fn frame_get_ltm(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0990 => crate::frame::get_ltm;
-    /// `RwMatrixInvert(dst, src)` (0x7F2070)
-    fn matrix_invert(dst: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F2070 => crate::matrix::rw_matrix_invert;
-    /// `RwD3D9SetTransform(state, matrix)` (0x7FA390)
-    fn set_transform(state: u32, m: GPtr<u8>) -> u32 = cdecl 0x7FA390 => crate::d3d9dev::set_transform;
-    /// `RwRasterDestroy(raster)` (0x7FB020)
-    fn raster_destroy(r: GPtr<u8>) -> u32 = cdecl 0x7FB020 => crate::raster::rw_raster_destroy;
-    /// `RwRasterCreate(width, height, depth, flags)` (0x7FB230)
-    fn raster_create(w: i32, h: i32, depth: i32, flags: u32) -> GPtr<u8> = cdecl 0x7FB230 => crate::raster::rw_raster_create;
     /// `RwD3D9CameraAttachWindow(camera, hwnd)` (0x7F8D70)
     fn camera_attach_window(camera: GPtr<u8>, hwnd: u32) -> u32 = cdecl 0x7F8D70 => unported;
     /// `FUN_007f5800()`: the dynamic vertex buffers' frame advance

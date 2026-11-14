@@ -10,9 +10,8 @@ use crate::common::{g, rd, wr, x};
 
 use crate::bindings::automobile_process_control;
 use sa_world::bindings::ped_say;
+use crate::bindings::call_extend_suspension as monster_truck_extend_suspension;
 orig! {
-    /// `CMonsterTruck::ExtendSuspension()` (0x6C7D80)
-    fn monster_truck_extend_suspension(a: GPtr<u8>) = thiscall 0x6C7D80 => crate::vehicle_suspension_nodes::monster_truck_extend_suspension_port;
     /// `min(float, float)` (0x404330), ST0
     fn min_f(a: f32, b: f32) -> f64 = cdecl 0x404330 => crate::train_control::min_native;
 }
@@ -131,13 +130,13 @@ pub fn bike_play_car_horn(this: GPtr<u8>) {
     }
     if v < 4 {
         if !driver.is_null() && rd::<u8>(this, 0x3DB) & 1 != 0 {
-            ped_say(driver, 0x16, 0, 0x3F80_0000, 0, 0, 0);
+            ped_say(driver, 0x16, 0, f32::from_bits(0x3F80_0000), 0, 0, 0);
         }
         wr::<u32>(this, 0x514, 0x2D);
         return;
     }
     if !driver.is_null() {
-        ped_say(driver, 0x16, 0, 0x3F80_0000, 0, 0, 0);
+        ped_say(driver, 0x16, 0, f32::from_bits(0x3F80_0000), 0, 0, 0);
     }
 }
 

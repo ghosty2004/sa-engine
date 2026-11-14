@@ -15,13 +15,10 @@ sa_core::orig! {
     pub fn interp_load(this: GPtr<u8>, file: u32) = thiscall vslot 0x4 => unported;
 }
 
+pub use crate::bindings::interp_32_get_val as getval_4a89c0;
+pub use crate::bindings::interp_float_get_val as getval_4a8470;
+pub use crate::bindings::interp_u255_get_val as getval_4a8800;
 sa_core::orig! {
-    /// The interp `GetVal(float* out, float time)` at 0x4A8470; the time as a raw dword
-    pub fn getval_4a8470(this: GPtr<u8>, out: GPtr<f32>, time: u32) = thiscall 0x4A8470 => unported;
-    /// The interp `GetVal(float* out, float time)` at 0x4A8800; the time as a raw dword
-    pub fn getval_4a8800(this: GPtr<u8>, out: GPtr<f32>, time: u32) = thiscall 0x4A8800 => unported;
-    /// The interp `GetVal(float* out, float time)` at 0x4A89C0; the time as a raw dword
-    pub fn getval_4a89c0(this: GPtr<u8>, out: GPtr<f32>, time: u32) = thiscall 0x4A89C0 => unported;
     /// The destructor at 0x4A6A90 (called at its address, so its hook toggle decides)
     pub fn dtor_4a6a90(this: GPtr<u8>) = thiscall 0x4A6A90 => unported;
     /// The destructor at 0x4A6B00 (called at its address, so its hook toggle decides)
@@ -126,7 +123,7 @@ pub fn fx_4a4cb0(
     let mut o = [0u32; 16];
     getval_4a89c0(
         this.byte_add(8),
-        GPtr::<u32>::from_raw(o.as_mut_ptr()).cast(),
+        GPtr::<f32>::cast::<u8>(GPtr::<u32>::from_raw(o.as_mut_ptr()).cast()),
         time,
     );
     wr::<f32>(info, 0x4, quiet(f32::from_bits(o[0])));
@@ -162,7 +159,7 @@ pub fn fx_4a4d90(
     let mut o = [0u32; 16];
     getval_4a89c0(
         this.byte_add(8),
-        GPtr::<u32>::from_raw(o.as_mut_ptr()).cast(),
+        GPtr::<f32>::cast::<u8>(GPtr::<u32>::from_raw(o.as_mut_ptr()).cast()),
         time,
     );
     wr::<f32>(info, 0x20, quiet(f32::from_bits(o[0])));
@@ -193,7 +190,7 @@ pub fn fx_4a4e50(
     let mut o = [0u32; 16];
     getval_4a89c0(
         this.byte_add(8),
-        GPtr::<u32>::from_raw(o.as_mut_ptr()).cast(),
+        GPtr::<f32>::cast::<u8>(GPtr::<u32>::from_raw(o.as_mut_ptr()).cast()),
         time,
     );
     wr::<f32>(info, 0x28, quiet(f32::from_bits(o[0])));
@@ -225,7 +222,7 @@ pub fn fx_4a4f20(
     let mut o = [0u32; 16];
     getval_4a8470(
         this.byte_add(8),
-        GPtr::<u32>::from_raw(o.as_mut_ptr()).cast(),
+        GPtr::<f32>::cast::<u8>(GPtr::<u32>::from_raw(o.as_mut_ptr()).cast()),
         time,
     );
     wr::<f32>(info, 0x34, quiet(f32::from_bits(o[0])));
@@ -256,7 +253,7 @@ pub fn fx_4a4fe0(
     let mut o = [0u32; 16];
     getval_4a8800(
         this.byte_add(8),
-        GPtr::<u32>::from_raw(o.as_mut_ptr()).cast(),
+        GPtr::<f32>::cast::<u8>(GPtr::<u32>::from_raw(o.as_mut_ptr()).cast()),
         time,
     );
     wr::<f32>(info, 0x3c, quiet(f32::from_bits(o[0])));
@@ -294,7 +291,7 @@ pub fn fx_4a5170(
     let mut o = [0u32; 16];
     getval_4a8470(
         this.byte_add(8),
-        GPtr::<u32>::from_raw(o.as_mut_ptr()).cast(),
+        GPtr::<f32>::cast::<u8>(GPtr::<u32>::from_raw(o.as_mut_ptr()).cast()),
         time,
     );
     wr::<f32>(info, 0x58, quiet(f32::from_bits(o[0])));
@@ -327,7 +324,7 @@ pub fn fx_4a5240(
     let mut o = [0u32; 16];
     getval_4a8470(
         this.byte_add(8),
-        GPtr::<u32>::from_raw(o.as_mut_ptr()).cast(),
+        GPtr::<f32>::cast::<u8>(GPtr::<u32>::from_raw(o.as_mut_ptr()).cast()),
         time,
     );
     wr::<f32>(info, 0x50, quiet(f32::from_bits(o[0])));
@@ -540,7 +537,7 @@ pub fn fx_4a50a0(
     let mut o = [0u32; 16];
     getval_4a8470(
         this.byte_add(8),
-        GPtr::<u32>::from_raw(o.as_mut_ptr()).cast(),
+        GPtr::<f32>::cast::<u8>(GPtr::<u32>::from_raw(o.as_mut_ptr()).cast()),
         time,
     );
     wr::<f32>(info, 0x44, quiet(f32::from_bits(o[0])));

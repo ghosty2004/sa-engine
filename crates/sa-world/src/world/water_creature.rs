@@ -14,16 +14,15 @@ use sa_math::x87::{Cmp, X87};
 
 use super::common::{f32_of, g, rd, wr, x, xi};
 
-use crate::bindings::object_ctor;
+use sa_core::bindings::object_ctor_5a1d70 as object_ctor;
 use crate::bindings::placeable_set_posn;
 use crate::bindings::simple_transform_update_rw_matrix;
 use sa_core::bindings::entity_update_rw_frame;
 use sa_core::bindings::matrix_update_rw_matrix;
 use sa_core::bindings::object_new;
 use sa_core::bindings::world_add;
+use sa_core::bindings::matrix_set_rotate_z_only;
 orig! {
-    /// `CMatrix::SetRotateZOnly(float)` (0x59B020)
-    fn matrix_set_rotate_z_only(m: GPtr<u8>, angle: f32) = thiscall 0x59B020 => unported;
     /// virtual `CEntity::SetIsStatic(bool)` (vtable +0x10)
     fn v_set_is_static(e: GPtr<u8>, s: u32) = thiscall vslot 0x10 => unported;
 }
@@ -78,7 +77,7 @@ pub fn water_creature_init(this: GPtr<u8>, kind: i32, pos: GPtr<u8>, parent: GPt
     let model_ptr = rd::<GPtr<u16>>(info, 0);
     wr::<u8>(g::<GPtr<u8>>(0xB7_449C).read(), 0x11, 1);
     let mem = object_new(0x17C);
-    let obj = if mem.is_null() { mem } else { object_ctor(mem, u32::from(model_ptr.read()), 0) };
+    let obj = if mem.is_null() { mem } else { object_ctor(mem, u32::from(model_ptr.read()) as i32, 0) };
     wr::<GPtr<u8>>(this, 8, obj);
     wr::<u8>(g::<GPtr<u8>>(0xB7_449C).read(), 0x11, 0);
     let obj = rd::<GPtr<u8>>(this, 8);
@@ -116,7 +115,7 @@ pub fn water_creature_init(this: GPtr<u8>, kind: i32, pos: GPtr<u8>, parent: GPt
             let d = f32_of(x(rd::<f32>(pos, o)).fsub_m(f32::from_bits(np[k])));
             wr::<f32>(this, 0x20 + o, d);
         }
-        placeable_set_posn(rd::<GPtr<u8>>(this, 8), GPtr::from_raw(&mut np as *mut [u32; 3]).cast());
+        placeable_set_posn(rd::<GPtr<u8>>(this, 8), GPtr::<u8>::cast::<f32>(GPtr::from_raw(&mut np as *mut [u32; 3]).cast()));
         let pobj = rd::<GPtr<u8>>(parent, 8);
         let m = rd::<GPtr<u8>>(pobj, 0x14);
         let heading = if m.is_null() {
@@ -132,7 +131,7 @@ pub fn water_creature_init(this: GPtr<u8>, kind: i32, pos: GPtr<u8>, parent: GPt
         wr::<u32>(this, 0x28, 0);
         wr::<u32>(this, 0x24, 0);
         wr::<u32>(this, 0x20, 0);
-        placeable_set_posn(rd::<GPtr<u8>>(this, 8), pos);
+        placeable_set_posn(rd::<GPtr<u8>>(this, 8), pos.cast::<f32>());
         let h = rand_unit(0x6E_4442).fmul_m(f32::from_bits(0x40C9_0FDB)).fsub_m(f32::from_bits(0x4049_0FDB));
         wr::<f32>(this, 0x2C, f32_of(h));
         let u = rand_unit(0x6E_4464);
@@ -174,13 +173,10 @@ use sa_core::bindings::general_random_int_in_range as random_in_range_i;
 use sa_core::bindings::random_float_in_range as random_in_range_f;
 use sa_core::bindings::vector_normalise_and_mag;
 use sa_core::bindings::world_remove;
+use crate::bindings::get_water_level as water_get_level;
+use sa_core::bindings::general_get_radian_angle_between_points as radian_angle_between_points;
+use sa_core::bindings::general_limit_radian_angle as limit_radian_angle;
 orig! {
-    /// `CGeneral::GetRadianAngleBetweenPoints(float, float, float, float)` (0x53CBE0): ST0
-    fn radian_angle_between_points(x1: f32, y1: f32, x2: f32, y2: f32) -> f64 = cdecl 0x53CBE0 => unported;
-    /// `CGeneral::LimitRadianAngle(float)` (0x53CB50): ST0
-    fn limit_radian_angle(a: f32) -> f64 = cdecl 0x53CB50 => unported;
-    /// `CWaterLevel::GetWaterLevel(float x, float y, float z, float* level, bool touching, CVector* normal)` (0x6EB690, AL)
-    fn water_get_level(x: f32, y: f32, z: f32, level: GPtr<u8>, touching: u32, normal: u32) -> u8 = cdecl 0x6EB690 => unported;
     /// `WaterCreatureManager_c::TryToExitGroup(WaterCreature_c*)` (0x6E45B0) on `g_waterCreatureMan` (0xC1DF30)
     fn try_to_exit_group(m: GPtr<u8>, c: GPtr<u8>) = thiscall 0x6E45B0 => unported;
 }
@@ -311,7 +307,7 @@ pub fn water_creature_update(this: GPtr<u8>, ts: f32) {
         let p = pos_ptr(obj);
         let (px, py, pz) = (rd::<f32>(p, 0), rd::<f32>(p, 4), rd::<f32>(p, 8));
         let mut level = [0u32; 1];
-        if water_get_level(px, py, pz, buf(&mut level), 1, 0) != 0 {
+        if water_get_level(px, py, pz, buf(&mut level), 1, GPtr::NULL) != 0 {
             let obj = rd::<GPtr<u8>>(this, 8);
             let z = f32_of(x(f32::from_bits(level[0])).fsub_m(f32::from_bits(0x3E4C_CCCD)));
             let m = rd::<GPtr<u8>>(obj, 0x14);
@@ -375,7 +371,7 @@ fn leader_update(this: GPtr<u8>, info: GPtr<u8>, ts: f32) {
         let pct = super::common::ftol32(frac.fmul_m(100.0));
         if xi(pct).fcom(x(10.0)) == Cmp::Less || turned || rd::<u8>(this, 0x30) != 0 {
             let mut fwd = [0u32; 3];
-            let f = placeable_get_forward(rd::<GPtr<u8>>(this, 8), buf(&mut fwd));
+            let f = GPtr::<f32>::cast::<u8>(placeable_get_forward(rd::<GPtr<u8>>(this, 8), GPtr::<u8>::cast::<f32>(buf(&mut fwd))));
             let sx = f32_of(x(look).fmul_m(rd::<f32>(f, 0)));
             let sy = f32_of(x(look).fmul_m(rd::<f32>(f, 4)));
             let szx = x(look).fmul_m(rd::<f32>(f, 8));

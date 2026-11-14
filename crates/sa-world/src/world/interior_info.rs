@@ -4,22 +4,18 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use super::common::{g, rd, wr, x, xi};
 
 use crate::bindings::get_tile_centre as interior_get_tile_centre;
 use crate::bindings::ig_get_entity;
-use crate::bindings::rw_matrix_rotate;
-use crate::bindings::rw_matrix_translate;
+use sa_core::bindings::rw_matrix_rotate;
+use sa_core::bindings::rw_matrix_translate;
 use crate::bindings::rw_v3d_transform_vectors;
 use sa_core::bindings::rw_matrix_multiply;
-orig! {
-    /// `Interior_c::IsPtInside(const CVector&, float, float, float)` (0x5913E0)
-    fn interior_is_pt_inside(i: GPtr<u8>, p: GPtr<u8>, bx: u32, by: u32, bz: u32) -> u8 = thiscall 0x5913E0 => unported;
-    /// `Interior_c::GetTileStatus(int32, int32)` (0x5918E0)
-    fn interior_get_tile_status(i: GPtr<u8>, tx: i32, ty: i32) -> i32 = thiscall 0x5918E0 => unported;
-}
+use crate::bindings::get_tile_status as interior_get_tile_status;
+use crate::bindings::is_pt_inside as interior_is_pt_inside;
 
 /// `Interior_c::CalcMatrix(const CVector* pos)` (0x5914D0): the interior's RwMatrix (+0x18) is set to
 /// identity (flags | 0x20003), rotated about z by the info's angle (+0x14 -> +0x20, replace),
@@ -40,7 +36,7 @@ pub fn interior_calc_matrix(this: GPtr<u8>, pos: GPtr<u8>) {
     wr::<u32>(this, 0x24, flags);
     let mut axis = [0u32, 0, 0x3F80_0000];
     let m = this.byte_add(0x18);
-    rw_matrix_rotate(m, GPtr::from_raw(&mut axis as *mut [u32; 3]).cast(), rd::<u32>(rd::<GPtr<u8>>(this, 0x14), 0x20), 0);
+    rw_matrix_rotate(m, GPtr::from_raw(&mut axis as *mut [u32; 3]).cast(), f32::from_bits(rd::<u32>(rd::<GPtr<u8>>(this, 0x14), 0x20)), 0);
     rw_matrix_translate(m, pos, 2);
     let obj = rd::<GPtr<u8>>(ig_get_entity(rd::<GPtr<u8>>(this, 0xC)), 0x18);
     let b = if obj.is_null() { GPtr::from_addr(0) } else { rd::<GPtr<u8>>(obj, 4).byte_add(0x10) };
@@ -56,7 +52,7 @@ pub fn interior_is_visible(this: GPtr<u8>) -> u8 {
     let cm = g::<GPtr<u8>>(0xB6_F03C).read();
     let cp = if cm.is_null() { GPtr::from_addr(0xB6_F02C) } else { cm.byte_add(0x30) };
     let mut cam = [rd::<u32>(cp, 0), rd::<u32>(cp, 4), rd::<u32>(cp, 8)];
-    if interior_is_pt_inside(this, GPtr::from_raw(&mut cam as *mut [u32; 3]).cast(), 0x40A0_0000, 0x40A0_0000, 0) != 0 {
+    if interior_is_pt_inside(this, GPtr::<u8>::cast::<f32>(GPtr::from_raw(&mut cam as *mut [u32; 3]).cast()), f32::from_bits(0x40A0_0000), f32::from_bits(0x40A0_0000), f32::from_bits(0)) != 0 {
         return 1;
     }
     if rd::<i8>(rd::<GPtr<u8>>(this, 0x14), 5) <= 0 {
@@ -86,7 +82,7 @@ pub fn interior_add_goto_pt(this: GPtr<u8>, tx: i32, ty: i32, dx: f32, dy: f32) 
     }
     let info = rd::<GPtr<u8>>(this, 0x14);
     let inside = tx < i32::from(rd::<u8>(info, 2)) && ty < i32::from(rd::<u8>(info, 3)) && tx >= 0 && ty >= 0;
-    if !(inside && tile(this, tx, ty).read() == 3) && interior_get_tile_status(this, tx, ty) != 7 {
+    if !(inside && tile(this, tx, ty).read() == 3) && interior_get_tile_status(this, tx, ty) as i32 != 7 {
         return;
     }
     let mut p = [0u32; 3];

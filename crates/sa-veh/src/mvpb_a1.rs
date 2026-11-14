@@ -11,7 +11,7 @@ use crate::common::{f32_of, g, model_info, rand_at, rd, wr, x};
 
 use crate::bindings::audio_set_radio_bass_setting;
 use sa_core::bindings::task_new;
-use sa_pop::bindings::add_ped_in_car;
+use sa_world::bindings::add_ped_in_car;
 use sa_world::bindings::car_drive_ctor;
 use sa_world::bindings::get_ped_flag as ped_type_get_ped_flag;
 use sa_world::bindings::set_ped_in_as_driver_ctor as set_in_as_driver_ctor;
@@ -21,35 +21,25 @@ use sa_world::bindings::set_ped_in_as_passenger_ctor as set_in_as_passenger_ctor
 use sa_world::bindings::set_ped_in_as_passenger_dtor as set_in_as_passenger_dtor;
 use sa_world::bindings::set_ped_in_as_passenger_process_ped as set_in_as_passenger_process_ped;
 use sa_world::bindings::tm_set_task;
+use sa_stream::bindings::find_other_upgrade;
+use sa_world::bindings::car_drive_wander_ctor;
+use sa_world::bindings::car_enter_exit_compute_passenger_index_from_car_door as compute_passenger_index_from_car_door;
+use sa_world::bindings::get_replacement_upgrade;
+use sa_world::bindings::get_upgrade;
+use sa_world::bindings::nitrous_control;
+use sa_world::bindings::ped_say;
+use sa_world::bindings::population_remove_ped as remove_ped;
+use sa_world::bindings::set_as_acquaintance as acquaintance_set;
+use sa_world::bindings::vehicle_remove_passenger as remove_passenger;
 orig! {
-    /// `CTaskComplexCarDriveWander::CTaskComplexCarDriveWander(CVehicle*, int32, float)` (0x63CB10)
-    fn car_drive_wander_ctor(t: GPtr<u8>, veh: GPtr<u8>, style: i32, speed: f32) -> GPtr<u8> = thiscall 0x63CB10 => unported;
-    /// `CCarEnterExit::ComputePassengerIndexFromCarDoor(const CVehicle*, int32)` (0x64F1E0)
-    fn compute_passenger_index_from_car_door(veh: GPtr<u8>, door: i32) -> i32 = cdecl 0x64F1E0 => crate::enterexit::compute_passenger_index_from_car_door;
-    /// `CAcquaintance::SetAsAcquaintance(int32, uint32)` (0x608DA0)
-    fn acquaintance_set(a: GPtr<u8>, kind: i32, bits: u32) = thiscall 0x608DA0 => unported;
     /// `CPhysical::ApplyTurnForce(CVector force, CVector point)` (0x542A50)
     fn apply_turn_force(p: GPtr<u8>, force: CVector, point: CVector) = thiscall 0x542A50 => sa_world::physical::forces::apply_turn_force;
-    /// `CVehicle::RemovePassenger(CPed*)` (0x6D1610, called directly)
-    fn remove_passenger(v: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x6D1610 => crate::vehicle2::remove_passenger;
-    /// `CPopulation::RemovePed(CPed*)` (0x610F20)
-    fn remove_ped(ped: GPtr<u8>) = cdecl 0x610F20 => sa_pop::population::remove_ped;
-    /// `CLinkedUpgradeList::FindOtherUpgrade(int16)` (0x4C74D0) on `CVehicleModelInfo::ms_linkedUpgrades`
-    fn find_other_upgrade(list: GPtr<u8>, upgrade: i16) -> u32 = thiscall 0x4C74D0 => sa_stream::modelinfo::vehicle::find_other_upgrade;
-    /// `CVehicle::GetReplacementUpgrade(int32 node)` (0x6D3A50)
-    fn get_replacement_upgrade(v: GPtr<u8>, node: u32) -> i32 = thiscall 0x6D3A50 => crate::vehicle2::get_replacement_upgrade;
     /// `CVehicle::AddReplacementUpgrade(int32 model, int32 node)` (0x6D3830)
     fn add_replacement_upgrade(v: GPtr<u8>, model: i32, node: u32) = thiscall 0x6D3830 => unported;
-    /// `CVehicle::GetUpgrade(int32 node)` (0x6D3650)
-    fn get_upgrade(v: GPtr<u8>, node: u32) -> i32 = thiscall 0x6D3650 => unported;
     /// `CVehicle::AddUpgrade(int32 model, int32 node)` (0x6DFA20)
     fn add_upgrade(v: GPtr<u8>, model: i32, node: u32) = thiscall 0x6DFA20 => unported;
     /// `CVehicle::SetVehicleUpgradeFlags(int32, int32, int32&)` (0x6D30E0)
     fn set_vehicle_upgrade_flags_call(v: GPtr<u8>, model: i32, kind: u32, out: GPtr<i32>) -> u8 = thiscall 0x6D30E0 => set_vehicle_upgrade_flags;
-    /// `CAutomobile::NitrousControl(int8)` (0x6A3EA0)
-    fn nitrous_control(a: GPtr<u8>, v: i32) = thiscall 0x6A3EA0 => unported;
-    /// `CPed::Say(uint16, uint32, float, bool, bool, bool)` (0x5EFFE0), the float as its bits
-    fn ped_say(p: GPtr<u8>, id: u32, delay: u32, prob: u32, a4: u32, a5: u32, a6: u32) = thiscall 0x5EFFE0 => unported;
     /// `CAutomobile::HasCarStoppedBecauseOfLight()` (0x44D520)
     fn has_car_stopped_because_of_light_call(a: GPtr<u8>) -> u8 = thiscall 0x44D520 => has_car_stopped_because_of_light;
     /// `CVehicle::PlayCarHorn()` (virtual, vtable +0xD8)
@@ -67,7 +57,7 @@ fn task_manager(ped: GPtr<u8>) -> GPtr<u8> {
 /// flag of `with`'s ped type (+0x598), on its acquaintance at +0x4E0.
 fn set_respect(of: GPtr<u8>, with: GPtr<u8>) {
     if rd::<u8>(of, 0x484) != 2 {
-        let bits = ped_type_get_ped_flag(rd::<u32>(with, 0x598));
+        let bits = ped_type_get_ped_flag(rd::<u32>(with, 0x598) as i32);
         acquaintance_set(of.byte_add(0x4E0), 0, bits);
     }
 }
@@ -96,17 +86,17 @@ pub fn set_ped_in_car_direct(ped: GPtr<u8>, veh: GPtr<u8>, door: i32, as_driver:
         if !wander.is_null() {
             let speed = rd::<u8>(veh, 0x3D0) as f32;
             let style = rd::<i8>(veh, 0x3B9) as i32;
-            wander = car_drive_wander_ctor(wander, veh, style, speed);
+            wander = car_drive_wander_ctor(wander, veh, style as u32, speed);
         }
         wr::<u8>(wander, 0x1C, 1);
         tm_set_task(task_manager(ped), wander, 3, 0);
         set_in_as_driver_dtor(t);
         return 1;
     }
-    let index = compute_passenger_index_from_car_door(veh, door);
+    let index = compute_passenger_index_from_car_door(veh, door as u32);
     let mut task = [0u32; 8];
     let t = GPtr::from_raw(task.as_mut_ptr()).cast::<u8>();
-    set_in_as_passenger_ctor(t, veh, door, GPtr::NULL);
+    set_in_as_passenger_ctor(t, veh, door as u32, GPtr::NULL);
     wr::<u8>(t, 0x1C, 1);
     set_in_as_passenger_process_ped(t, ped);
     if rd::<u32>(veh, 0x590) == 9 {
@@ -169,7 +159,7 @@ pub fn setup_passenger(this: GPtr<u8>, seat: i32, gang: i32, male: u8, criminal:
         remove_passenger(this, rd::<GPtr<u8>>(this, 0x464));
         return GPtr::NULL;
     }
-    let mut ped = add_ped_in_car(this, 0, gang, seat, male, criminal);
+    let mut ped = add_ped_in_car(this, 0, gang, seat as u32, male as u32, criminal as u32);
     let model = rd::<i16>(ped, 0x22) as i32;
     let pt = rd::<i32>(ped, 0x598);
     if pt == 0x12 || pt == 0x13 || pt == 6 || (7..=0x10).contains(&pt) || (pt == 0x14 && (0xE..=0x17).contains(&gang)) {
@@ -255,7 +245,7 @@ pub fn add_vehicle_upgrade(this: GPtr<u8>, model: i32) -> i32 {
         let linked = find_other_upgrade(g::<u8>(0xB4E6D8), model as i16) as u16 as i16 as i32;
         let (node, repl) = upgrade_node(mi);
         if repl {
-            rp.write(get_replacement_upgrade(this, node));
+            rp.write(get_replacement_upgrade(this, node) as i32);
             add_replacement_upgrade(this, model, node);
             if node == 2 {
                 let own = model_info(rd::<i16>(this, 0x22) as i32);
@@ -272,7 +262,7 @@ pub fn add_vehicle_upgrade(this: GPtr<u8>, model: i32) -> i32 {
                 }
             }
         } else {
-            rp.write(get_upgrade(this, node));
+            rp.write(get_upgrade(this, node) as i32);
             add_upgrade(this, model, node);
         }
         if linked != -1 {
@@ -498,11 +488,11 @@ pub fn play_car_horn(this: GPtr<u8>) {
         wr::<u32>(this, 0x514, 0x2D);
     } else if r < 4 {
         if !driver.is_null() && rd::<u8>(this, 0x3DB) & 1 != 0 {
-            ped_say(driver, 0x16, 0, 0x3F80_0000, 0, 0, 0);
+            ped_say(driver, 0x16, 0, f32::from_bits(0x3F80_0000), 0, 0, 0);
         }
         wr::<u32>(this, 0x514, 0x2D);
     } else if !driver.is_null() {
-        ped_say(driver, 0x16, 0, 0x3F80_0000, 0, 0, 0);
+        ped_say(driver, 0x16, 0, f32::from_bits(0x3F80_0000), 0, 0, 0);
     }
 }
 

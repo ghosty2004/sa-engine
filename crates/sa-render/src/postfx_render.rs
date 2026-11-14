@@ -20,19 +20,20 @@ use sa_core::bindings::vector_dot_product as dot_product;
 use sa_core::bindings::vector_magnitude;
 use sa_world::bindings::find_player_speed;
 use sa_world::bindings::get_lighting_from_col;
+use crate::bindings::rw_raster_pop_context;
+use sa_core::bindings::file_set_dir_my_documents as set_dir_my_documents;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::find_player_vehicle;
+use sa_core::bindings::rs_camera_begin_update;
+use sa_core::bindings::timer_resume;
+use sa_core::bindings::timer_suspend;
+use sa_world::bindings::cam_no_rain;
+use sa_world::bindings::player_no_rain;
 orig! {
     /// `RwRenderStateSet(state, value)` (`RwGlobals` +0x20)
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xc97b24 0x20 => unported;
-    /// `RwRasterPopContext()` (0x7fb110)
-    fn rw_raster_pop_context() -> u32 = cdecl 0x7fb110 => unported;
-    /// `RsCameraBeginUpdate(camera)` (0x619450)
-    fn rs_camera_begin_update(cam: GPtr<u8>) -> i32 = cdecl 0x619450 => sa_core::platform::rs_camera_begin_update;
     /// `CPostEffects::Fog()` (0x704150)
     fn post_fog() = cdecl 0x704150 => unported;
-    /// `FindPlayerPed(int)` (0x56e210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56e210 => sa_world::world::cworld::find_player_ped;
-    /// `FindPlayerVehicle(int, bool)` (0x56e0d0)
-    fn find_player_vehicle(id: i32, include_remote: u8) -> GPtr<u8> = cdecl 0x56e0d0 => sa_world::world::cworld::find_player_vehicle;
     /// `CPostEffects::ColourFilter(RwRGBA pass1, RwRGBA pass2)` (0x703650)
     fn colour_filter(pass1: u32, pass2: u32) = cdecl 0x703650 => crate::mvpd_r3::colour_filter;
     /// `CPostEffects::DarknessFilter(int alpha)` (0x702f00)
@@ -49,10 +50,6 @@ orig! {
     fn grain(strength: u32, update: u32) = cdecl 0x7037c0 => unported;
     /// `CPostEffects::InfraredVision(RwRGBA, RwRGBA)` (0x703f80)
     fn infrared_vision(c1: u32, c2: u32) = cdecl 0x703f80 => unported;
-    /// `CCullZones::CamNoRain()` (0x72ddb0)
-    fn cam_no_rain() -> u8 = cdecl 0x72ddb0 => crate::cullzones::cam_no_rain;
-    /// `CCullZones::PlayerNoRain()` (0x72ddc0)
-    fn player_no_rain() -> u8 = cdecl 0x72ddc0 => crate::cullzones::player_no_rain;
     /// `CPostEffects::HeatHazeFX(float intensity, bool alwaysOn)` (0x701780; the float as a raw dword)
     fn heat_haze_fx(intensity: u32, always: u32) = cdecl 0x701780 => unported;
     /// `CPostEffects::UnderWaterRipple(RwRGBA, float xo, float yo, int strength, float speed, float freq)`
@@ -60,12 +57,6 @@ orig! {
     fn under_water_ripple(col: u32, xo: u32, yo: u32, strength: u32, speed: u32, freq: u32) = cdecl 0x7039c0 => unported;
     /// `CPostEffects::CCTV()` (0x702f40)
     fn cctv() = cdecl 0x702f40 => unported;
-    /// `CTimer::Suspend()` (0x5619d0)
-    fn timer_suspend() = cdecl 0x5619d0 => sa_core::timer::suspend;
-    /// `CTimer::Resume()` (0x561a00)
-    fn timer_resume() = cdecl 0x561a00 => sa_core::timer::resume;
-    /// `CFileMgr::SetDirMyDocuments()` (0x538860)
-    fn set_dir_my_documents() -> i32 = cdecl 0x538860 => sa_core::filemgr::set_dir_my_documents;
     /// CRT `sprintf(buf, fmt, int)` (0x821bb5)
     fn sprintf1(buf: GPtr<u8>, fmt: GPtr<u8>, v: u32) -> i32 = cdecl 0x821bb5 => unported;
     /// CRT `fopen` (0x8232d8)
@@ -356,7 +347,7 @@ fn speed_fx_block() {
         }
     }
     if gb(CUTSCENE_RUNNING) == 0 && any {
-        let m = X87::from_f64_exact(vector_magnitude(find_player_speed(-1)));
+        let m = X87::from_f64_exact(vector_magnitude(GPtr::<u8>::cast::<u32>(find_player_speed(-1))));
         speed_fx(m.to_f32().to_bits());
     }
 }

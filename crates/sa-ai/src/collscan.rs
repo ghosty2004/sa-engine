@@ -11,6 +11,7 @@
 //! multiplied with the impact velocity), +0x46C bit 0 bIsStanding.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::orig;
 
@@ -39,7 +40,7 @@ sa_core::globals! {
 /// `CTimer::m_snTimeInMilliseconds` (owned by CTimer).
 const TIME_MS: usize = 0xB7CB84;
 
-use crate::bindings::acquaintance_get;
+use sa_world::bindings::acquaintance_get;
 use crate::bindings::acquaintance_ped_hate_ctor;
 use crate::bindings::building_collision_dtor;
 use crate::bindings::dtor_4aca70 as ped_collision_dtor;
@@ -68,15 +69,21 @@ use sa_world::bindings::event_sound_quiet_dtor as sound_quiet_dtor;
 use sa_world::bindings::get_event_global_group;
 use sa_world::bindings::get_ped_flag as ped_type_get_ped_flag;
 use sa_world::bindings::placeable_get_heading;
-use sa_world::bindings::vector_magnitude_sqr as vector_squared_magnitude;
-use sa_world::bindings::vector_sub;
+use sa_core::bindings::vector_magnitude_sqr as vector_squared_magnitude;
+use sa_core::bindings::vector_sub;
+use crate::bindings::building_collision_ctor;
+use crate::bindings::object_collision_ctor;
+use crate::bindings::ped_collision_ctor as ped_collision_with_ped_ctor;
+use sa_world::bindings::event_sound_quiet_ctor as sound_quiet_ctor;
+use sa_world::bindings::generate_damage_event as weapon_generate_damage_event;
+use sa_world::bindings::get_local_direction as ped_get_local_direction;
+use sa_world::bindings::mental_state_increment_anger as increment_anger;
+use sa_world::bindings::ped_say;
+use sa_world::bindings::vector_div;
+use sa_world::bindings::vector_scale;
 orig! {
     /// `CPed::KillPedWithCar(CVehicle*, float, bool)` (0x5F0360, `ret 0xC`)
     fn ped_kill_ped_with_car(p: GPtr<u8>, veh: GPtr<u8>, impulse: u32, b: u32) = thiscall 0x5F0360 => unported;
-    /// `FUN_004119d0(CVector* out, const CVector* v, float k)` (0x4119D0, cdecl): out = v * (1.0f / k)
-    fn vector_div(out: GPtr<u8>, v: GPtr<u8>, k: u32) -> GPtr<u8> = cdecl 0x4119D0 => unported;
-    /// `FUN_0040fe90(CVector* out, float k, const CVector* v)` (0x40FE90, cdecl): out = k * v
-    fn vector_scale(out: GPtr<u8>, k: u32, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE90 => unported;
     /// `CPedGeometryAnalyser::ComputePedHitSide(const CPed&, const CPhysical&)` (0x5F3640, cdecl)
     fn compute_ped_hit_side(ped: GPtr<u8>, other: GPtr<u8>) -> u32 = cdecl 0x5F3640 => unported;
     /// `CEventVehicleCollision::CEventVehicleCollision(int16 piece, float, CVehicle*, const CVector*, const CVector*,
@@ -89,27 +96,8 @@ orig! {
     fn player_collision_with_ped_ctor(e: GPtr<u8>, piece: u32, dmg: u32, ped: GPtr<u8>, vel: GPtr<u8>, pos: GPtr<u8>, ms: u32, oms: u32) -> GPtr<u8> = thiscall 0x5FEE40 => unported;
     /// `CEventPedCollisionWithPlayer::CEventPedCollisionWithPlayer(...)` (0x5FED40, `ret 0x1C`)
     fn ped_collision_with_player_ctor(e: GPtr<u8>, piece: u32, dmg: u32, ped: GPtr<u8>, vel: GPtr<u8>, pos: GPtr<u8>, ms: u32, oms: u32) -> GPtr<u8> = thiscall 0x5FED40 => unported;
-    /// `CEventPedCollisionWithPed::CEventPedCollisionWithPed(...)` (0x4AC990, `ret 0x1C`)
-    fn ped_collision_with_ped_ctor(e: GPtr<u8>, piece: u32, dmg: u32, ped: GPtr<u8>, vel: GPtr<u8>, pos: GPtr<u8>, ms: u32, oms: u32) -> GPtr<u8> = thiscall 0x4AC990 => unported;
-    /// `CEventObjectCollision::CEventObjectCollision(int16, float, CObject*, const CVector*, const CVector*, int32)`
-    /// (0x4ACCF0, `ret 0x18`)
-    fn object_collision_ctor(e: GPtr<u8>, piece: u32, dmg: u32, obj: GPtr<u8>, vel: GPtr<u8>, pos: GPtr<u8>, ms: u32) -> GPtr<u8> = thiscall 0x4ACCF0 => unported;
-    /// `CEventBuildingCollision::CEventBuildingCollision(int16, float, CBuilding*, const CVector*, const CVector*,
-    /// int32)` (0x4ACF00, `ret 0x18`)
-    fn building_collision_ctor(e: GPtr<u8>, piece: u32, dmg: u32, b: GPtr<u8>, vel: GPtr<u8>, pos: GPtr<u8>, ms: u32) -> GPtr<u8> = thiscall 0x4ACF00 => unported;
-    /// `CEventSoundQuiet::CEventSoundQuiet(CEntity*, float, uint32, const CVector*)` (0x5E05B0, `ret 0x10`)
-    fn sound_quiet_ctor(e: GPtr<u8>, ent: GPtr<u8>, range: u32, time: u32, pos: GPtr<u8>) -> GPtr<u8> = thiscall 0x5E05B0 => unported;
-    /// `CPed::Say(uint16, uint32, float, bool, bool, bool)` (0x5EFFE0, `ret 0x18`)
-    fn ped_say(p: GPtr<u8>, id: u32, off: u32, prob: u32, a: u32, b: u32, c: u32) = thiscall 0x5EFFE0 => unported;
-    /// `CMentalState::IncrementAnger(int32)` (0x421050, `ret 4`, a `.HOODLUM` stub), called on `m_pIntelligence`
-    fn increment_anger(i: GPtr<u8>, n: u32) = thiscall 0x421050 => unported;
     /// `FUN_00420800(float a, float b)` (0x420800, cdecl, ST0): `a > b ? a : b`
     fn float_max(a: u32, b: u32) -> f64 = cdecl 0x420800 => unported;
-    /// `CPed::GetLocalDirection(const CVector2D&)` (0x5DEF60, `ret 4`)
-    fn ped_get_local_direction(p: GPtr<u8>, dir: GPtr<u8>) -> u32 = thiscall 0x5DEF60 => unported;
-    /// `CWeapon::GenerateDamageEvent(CPed*, CEntity*, eWeaponType, int32 damage, ePedPieceTypes, int32 direction)`
-    /// (0x73A530, cdecl)
-    fn weapon_generate_damage_event(ped: GPtr<u8>, src: GPtr<u8>, wt: u32, dmg: i32, piece: u32, dir: u32) = cdecl 0x73A530 => unported;
 }
 
 use sa_core::field::gx as cf;
@@ -153,7 +141,7 @@ fn standing_push(v: GPtr<u8>, d: f32) -> Option<X87> {
 fn attached_damage(v: GPtr<u8>, other: GPtr<u8>) {
     let side = compute_ped_hit_side(v, other);
     let mut calc = [0u32; 5];
-    calc_ctor(local(&mut calc), other, rd::<u32>(v, 0xD8), 0x31, 3, 0);
+    calc_ctor(local(&mut calc), other, f32::from_bits(rd::<u32>(v, 0xD8)), 0x31, 3, 0);
     let in_veh = (rd::<u32>(v, 0x46C) >> 8) & 0xFFFF_FF01;
     let mut ev = [0u32; 0x11];
     damage_ctor(local(&mut ev), other, now(), 0x31, 3, side, 0, in_veh);
@@ -189,16 +177,16 @@ fn vehicle_hits_player(v: GPtr<u8>, other: GPtr<u8>, sp: f32, d: f32) {
     let cx = f32_of(x(bmin[0]).fadd_m(bmax[0]));
     let mut c = [cx.to_bits(), cy.to_bits(), cz.to_bits()];
     let mut half = [0u32; 3];
-    vector_div(local(&mut half), local(&mut c), 0x4000_0000);
+    vector_div(local(&mut half), local(&mut c), f32::from_bits(0x4000_0000));
     let mut cw = [0u32; 3];
-    let r = matrix_mul_vector(local(&mut cw), rd::<GPtr<u8>>(other, 0x14), local(&mut half));
+    let r = GPtr::<f32>::cast::<u8>(matrix_mul_vector(GPtr::<u8>::cast::<f32>(local(&mut cw)), rd::<GPtr<u8>>(other, 0x14), local(&mut half)));
     let mut cwc = [rd::<u32>(r, 0), rd::<u32>(r, 4), rd::<u32>(r, 8)];
     let mut tmp = [0u32; 3];
     let rel = vector_sub(local(&mut tmp), local(&mut cwc), pos(v));
     let (rx, ry) = (rd::<f32>(rel, 0), rd::<f32>(rel, 4));
     let a = x(rx).fchs().fpatan(x(ry));
     let arg = f32_of(x(h).fsub(a));
-    let diff = f32_of(X87::from_f64_exact(general_limit_radian_angle(arg.to_bits())));
+    let diff = f32_of(X87::from_f64_exact(general_limit_radian_angle(f32::from_bits(arg.to_bits()))));
     let dyb = x(bmax[1]).fsub_m(bmin[1]);
     let dxb = x(bmax[0]).fsub_m(bmin[0]);
     let box_ang = f32_of(dxb.fpatan(dyb));
@@ -216,7 +204,7 @@ fn vehicle_hits_player(v: GPtr<u8>, other: GPtr<u8>, sp: f32, d: f32) {
             .fadd(x(fv(&dir, 0)).fmul_m(rd::<f32>(mv, 0)))
     } else if !x(diff).fcom(cf(0x858B50)).test_any(0x41) {
         let mut s = [0u32; 3];
-        let r = vector_scale(local(&mut s), 0xBF80_0000, rd::<GPtr<u8>>(other, 0x14));
+        let r = vector_scale(local(&mut s), f32::from_bits(0xBF80_0000), rd::<GPtr<u8>>(other, 0x14));
         X87::from_f64_exact(vector_dot_product(r, mv))
     } else {
         let right = rd::<GPtr<u8>>(other, 0x14);
@@ -241,7 +229,7 @@ fn vehicle_collision(this: GPtr<u8>, v: GPtr<u8>, other: GPtr<u8>, group: GPtr<u
     if rd::<u8>(this, 0) != 0 {
         return;
     }
-    let sp = f32_of(X87::from_f64_exact(vector_squared_magnitude(other.byte_add(0x44))));
+    let sp = f32_of(X87::from_f64_exact(vector_squared_magnitude(GPtr::<u8>::cast::<f32>(other.byte_add(0x44)))));
     let thr = if rd::<u32>(other, 0x4C4) != 0 { fm(0x86C924) } else { fm(0x86C920) };
     if rd::<i32>(other, 0x594) == 6
         && rd::<u8>(other, 0x40) & 4 != 0
@@ -275,7 +263,7 @@ fn vehicle_collision(this: GPtr<u8>, v: GPtr<u8>, other: GPtr<u8>, group: GPtr<u
     if ped_is_player(v) != 0 {
         return;
     }
-    let ms = intel_get_move_state_from_go_to_task(rd::<GPtr<u8>>(v, 0x47C));
+    let ms = intel_get_move_state_from_go_to_task(rd::<GPtr<u8>>(v, 0x47C)) as u32;
     let mut ev = [0u32; 0xD];
     vehicle_collision_ctor(local(&mut ev), piece(v), rd::<u32>(v, 0xD8), rd::<GPtr<u8>>(v, 0xDC), v.byte_add(0xE0), v.byte_add(0xEC), ms, 0);
     event_group_add(group, local(&mut ev), 0);
@@ -298,7 +286,7 @@ fn ped_event(kind: PedEv, group: GPtr<u8>, pc: u32, dmg: u32, ped: GPtr<u8>, vel
     match kind {
         PedEv::PlayerWithPed => player_collision_with_ped_ctor(e, pc, dmg, ped, vel, cpos, ms, oms),
         PedEv::PedWithPlayer => ped_collision_with_player_ctor(e, pc, dmg, ped, vel, cpos, ms, oms),
-        PedEv::PedWithPed => ped_collision_with_ped_ctor(e, pc, dmg, ped, vel, cpos, ms, oms),
+        PedEv::PedWithPed => ped_collision_with_ped_ctor(e, pc, dmg, ped, vel, cpos, ms as u16, oms as u16),
     };
     event_group_add(group, e, 0);
     ev
@@ -317,29 +305,29 @@ fn ped_event_dtor(kind: PedEv, ev: &mut [u32; 0xD]) {
 /// ped-type flag (0x604C7D / 0x604E7B; destructor: vtable 0x858E68, then 0x4AF890).
 fn hate_if_hated(hater: GPtr<u8>, target: GPtr<u8>, group_of: impl Fn() -> GPtr<u8>) {
     let a = acquaintance_get(hater.byte_add(0x4E0), 4);
-    if a & ped_type_get_ped_flag(rd::<u32>(target, 0x598)) == 0 {
+    if a & ped_type_get_ped_flag(rd::<u32>(target, 0x598) as i32) == 0 {
         return;
     }
     let mut ev = [0u32; 6];
-    acquaintance_ped_hate_ctor(local(&mut ev), target);
+    acquaintance_ped_hate_ctor(GPtr::<u8>::addr(local(&mut ev)) as u32, target.addr() as u32);
     event_group_add(group_of(), local(&mut ev), 0);
     ev[0] = 0x858E68;
-    acquaintance_dtor(local(&mut ev));
+    acquaintance_dtor(GPtr::<u8>::cast::<u32>(local(&mut ev)));
 }
 
 /// Ped collision (0x604B56) and its mirror on the other ped (0x604D3E).
 fn ped_collision(v: GPtr<u8>, other: GPtr<u8>, group: GPtr<u8>, ms: u32) {
-    let oms = intel_get_move_state_from_go_to_task(rd::<GPtr<u8>>(other, 0x47C));
+    let oms = intel_get_move_state_from_go_to_task(rd::<GPtr<u8>>(other, 0x47C)) as u32;
     let vel = v.byte_add(0xE0);
     let cpos = v.byte_add(0xEC);
     if ped_is_player(v) != 0 {
         let mut ev = ped_event(PedEv::PlayerWithPed, group, piece(v), rd::<u32>(v, 0xD8), rd::<GPtr<u8>>(v, 0xDC), vel, cpos, ms, oms);
-        ped_say(other, 0x1C, 0, 0x3F80_0000, 0, 0, 0);
+        ped_say(other, 0x1C, 0, f32::from_bits(0x3F80_0000), 0, 0, 0);
         ped_event_dtor(PedEv::PlayerWithPed, &mut ev);
     } else if ped_is_player(other) != 0 {
         let mut ev = ped_event(PedEv::PedWithPlayer, group, piece(v), rd::<u32>(v, 0xD8), rd::<GPtr<u8>>(v, 0xDC), vel, cpos, ms, oms);
         increment_anger(rd::<GPtr<u8>>(v, 0x47C), 1);
-        ped_say(v, 0x1C, 0, 0x3F80_0000, 0, 0, 0);
+        ped_say(v, 0x1C, 0, f32::from_bits(0x3F80_0000), 0, 0, 0);
         hate_if_hated(v, other, || group);
         ped_event_dtor(PedEv::PedWithPlayer, &mut ev);
     } else {
@@ -402,13 +390,13 @@ fn object_collision(v: GPtr<u8>, other: GPtr<u8>, group: GPtr<u8>, ms: u32) {
         let ix = rd::<f32>(v, 0xE0);
         dir2[0] = f32_of(x(ix).fchs()).to_bits();
         dir2[1] = f32_of(x(rd::<f32>(v, 0xE4)).fchs()).to_bits();
-        let ld = ped_get_local_direction(v, local(&mut dir2));
+        let ld = ped_get_local_direction(v, local(&mut dir2)) as u32;
         weapon_generate_damage_event(v, rd::<GPtr<u8>>(v, 0xDC), 0x36, ftol32(x(dmg)), 3, ld);
         wr::<u32>(v, 0x128, rd::<u32>(v, 0xDC));
         return;
     }
     let mut ev = [0u32; 0xC];
-    object_collision_ctor(local(&mut ev), piece(v), rd::<u32>(v, 0xD8), other, v.byte_add(0xE0), v.byte_add(0xEC), ms);
+    object_collision_ctor(local(&mut ev), piece(v), rd::<u32>(v, 0xD8), other, v.byte_add(0xE0), v.byte_add(0xEC), ms as u16);
     event_group_add(group, local(&mut ev), 0);
     object_collision_dtor(local(&mut ev));
 }
@@ -430,7 +418,7 @@ fn balaclava_sound(v: GPtr<u8>) {
     }
     let e = rd::<GPtr<u8>>(v, 0xDC);
     let range: u32;
-    if entity_get_is_type_physical(e) != 0 && rd::<u8>(e, 0x40) & 0x20 != 0 {
+    if entity_get_is_type_physical(e) as u8 != 0 && rd::<u8>(e, 0x40) & 0x20 != 0 {
         let tz = x(f32::from_bits(rd::<u32>(e, 0x58) & 0x7FFF_FFFF));
         if tz.fcom(x(SCAN_MIN_TURN_SPEED.get())).test_any(0x41) {
             return;
@@ -462,7 +450,7 @@ fn balaclava_sound(v: GPtr<u8>) {
     }
     let mut zero = [0u32; 3];
     let mut ev = [0u32; 0xB];
-    sound_quiet_ctor(local(&mut ev), v, range, 0xFFFF_FFFF, local(&mut zero));
+    sound_quiet_ctor(local(&mut ev), v, f32::from_bits(range), 0xFFFF_FFFF, local(&mut zero));
     event_group_add(get_event_global_group(), local(&mut ev), 0);
     sound_quiet_dtor(local(&mut ev));
 }
@@ -494,7 +482,7 @@ pub fn scan_for_collision_events(this: GPtr<u8>, v: GPtr<u8>, group: GPtr<u8>) {
         match etype(other) {
             1 => {
                 let mut ev = [0u32; 0xC];
-                building_collision_ctor(local(&mut ev), piece(v), rd::<u32>(v, 0xD8), other, v.byte_add(0xE0), v.byte_add(0xEC), ms);
+                building_collision_ctor(local(&mut ev), piece(v), rd::<u32>(v, 0xD8), other, v.byte_add(0xE0), v.byte_add(0xEC), ms as u16);
                 event_group_add(group, local(&mut ev), 0);
                 building_collision_dtor(local(&mut ev));
             }

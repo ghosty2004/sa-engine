@@ -32,23 +32,19 @@ pub const CLUMP_OFFSET: usize = 0xB5F878;
 
 pub use sa_core::bindings::mem_free_align;
 pub use sa_core::bindings::mem_malloc_align;
+pub use crate::bindings::anim_blend_node_find_key_frame as node_find_key_frame;
+pub use sa_core::bindings::anim_add_block_ref as add_anim_block_ref;
+pub use sa_core::bindings::assoc_set_current_time as call_set_current_time;
+pub use sa_core::bindings::uncompress_animation;
 orig! {
     /// `CAnimBlendNode::Init()` (0x4CFB70)
     pub fn node_init(this: GPtr<u8>) = thiscall 0x4CFB70 => crate::node::init;
     /// `CAnimBlendNode::SetupKeyFrameCompressed()` (0x4D0650)
     pub fn node_setup_key_frame_compressed(this: GPtr<u8>) -> u8 = thiscall 0x4D0650 => crate::node::setup_key_frame_compressed;
-    /// `CAnimBlendNode::FindKeyFrame(float)` (0x4D0240)
-    pub fn node_find_key_frame(this: GPtr<u8>, t: f32) -> u8 = thiscall 0x4D0240 => crate::node::find_key_frame;
-    /// `CAnimManager::AddAnimBlockRef(int32)` (0x4D3FB0)
-    pub fn add_anim_block_ref(i: i32) = cdecl 0x4D3FB0 => crate::manager::add_anim_block_ref;
-    /// `CAnimManager::UncompressAnimation(CAnimBlendHierarchy*)` (0x4D41C0)
-    pub fn uncompress_animation(h: GPtr<u8>) = cdecl 0x4D41C0 => crate::manager::uncompress_animation;
     /// `RpAnimBlendClumpFindBone(RpClump*, uint32 boneTag)` (0x4D6400)
     pub fn clump_find_bone(clump: GPtr<u8>, tag: i32) -> GPtr<u8> = cdecl 0x4D6400 => unported;
     /// `RpAnimBlendClumpFindFrameFromHashKey(RpClump*, uint32 key)` (0x4D6370)
     pub fn clump_find_frame_from_hash_key(clump: GPtr<u8>, key: u32) -> GPtr<u8> = cdecl 0x4D6370 => unported;
-    /// `CAnimBlendAssociation::SetCurrentTime(float)` (0x4CEA80)
-    pub fn call_set_current_time(this: GPtr<u8>, t: f32) = thiscall 0x4CEA80 => set_current_time;
     /// `CAnimBlendAssociation::AllocateAnimBlendNodeArray(int32)` (0x4CE9F0)
     pub fn call_allocate_anim_blend_node_array(this: GPtr<u8>, n: i32) = thiscall 0x4CE9F0 => allocate_anim_blend_node_array;
     /// `CAnimBlendAssociation::Init(RpClump*, CAnimBlendHierarchy*)` (0x4CED50)
@@ -480,13 +476,11 @@ pub fn static_deleting_dtor(this: GPtr<u8>, fl: u8) -> GPtr<u8> {
 /// The default callback `CDefaultAnimCallback::DefaultAnimCB` (0x4D1390) the callbacks are reset to.
 pub const DEFAULT_ANIM_CB: u32 = 0x4D1390;
 
+pub use sa_core::bindings::anim_set_delete_callback as call_set_delete_callback;
+pub use sa_core::bindings::assoc_set_finish_callback as call_set_finish_callback;
 orig! {
     /// an association callback `void (*)(CAnimBlendAssociation*, void*)` (cdecl)
     pub fn call_assoc_callback(f: u32, a: GPtr<u8>, data: u32) = cdecl dyn => unported;
-    /// `CAnimBlendAssociation::SetFinishCallback` (0x4CEBE0)
-    pub fn call_set_finish_callback(this: GPtr<u8>, f: u32, data: u32) = thiscall 0x4CEBE0 => set_finish_callback;
-    /// `CAnimBlendAssociation::SetDeleteCallback` (0x4CEBC0)
-    pub fn call_set_delete_callback(this: GPtr<u8>, f: u32, data: u32) = thiscall 0x4CEBC0 => set_delete_callback;
     /// the association's virtual deleting destructor (vtable slot 0)
     pub fn assoc_vdelete(this: GPtr<u8>, fl: u32) -> GPtr<u8> = thiscall vslot 0x0 => unported;
 }
@@ -539,7 +533,7 @@ pub fn update_time(this: GPtr<u8>, _a: f32, _b: f32) -> u8 {
     if rd::<u32>(this, 0x30) == 1 {
         wr::<u32>(this, 0x30, 0);
         call_assoc_callback(rd::<u32>(this, 0x34), this, rd::<u32>(this, 0x38));
-        call_set_finish_callback(this, DEFAULT_ANIM_CB, 0);
+        call_set_finish_callback(this, DEFAULT_ANIM_CB, GPtr::NULL);
     }
     1
 }
@@ -564,9 +558,9 @@ pub fn update_blend(this: GPtr<u8>, mult: f32) -> u8 {
             if ty == 2 || ty == 1 {
                 call_assoc_callback(rd::<u32>(this, 0x34), this, rd::<u32>(this, 0x38));
                 if rd::<u32>(this, 0x30) == 2 {
-                    call_set_delete_callback(this, DEFAULT_ANIM_CB, 0);
+                    call_set_delete_callback(this, DEFAULT_ANIM_CB, GPtr::NULL);
                 } else {
-                    call_set_finish_callback(this, DEFAULT_ANIM_CB, 0);
+                    call_set_finish_callback(this, DEFAULT_ANIM_CB, GPtr::NULL);
                 }
             }
             assoc_vdelete(this, 1);

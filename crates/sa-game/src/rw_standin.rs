@@ -20,10 +20,6 @@ fn wr(a: u32, v: u32) {
 }
 
 sa_core::orig! {
-    /// `_rwPluginRegistryAddPlugin(reg, size, id, ctor, dtor, copy)` (0x8084A0)
-    fn registry_add_plugin(reg: GPtr<u8>, size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x8084A0 => unported;
-    /// `RwRasterRegisterPlugin(size, id, ctor, dtor, copy)` (0x7FB0B0)
-    fn raster_register_plugin(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x7FB0B0 => unported;
     /// `G->memoryFuncs.rwmalloc` (+0x134)
     fn rw_malloc(size: u32, hint: u32) -> GPtr<u8> = cdecl table 0xC97B24 0x134 => unported;
     /// `G->memoryFuncs.rwrealloc` (+0x13C)
@@ -41,22 +37,13 @@ sa_core::orig! {
     fn memory_alloc(fl: GPtr<u8>, hint: u32) -> GPtr<u8> = cdecl table 0xC97B24 0x144 => unported;
     /// `G->memoryFree(freelist, p)` (+0x148)
     fn memory_free(fl: GPtr<u8>, p: GPtr<u8>) -> GPtr<u8> = cdecl table 0xC97B24 0x148 => unported;
-    /// `RwFreeListCreateAndPreallocateSpace(...)` (0x801B70)
-    fn freelist_create(size: u32, per_block: u32, align: u32, n: u32, space: GPtr<u8>, hint: u32) -> GPtr<u8> = cdecl 0x801B70 => unported;
-    /// `_rwPluginRegistryInitObject(reg, obj)` (0x8086E0)
-    fn registry_init_object(reg: GPtr<u8>, obj: GPtr<u8>) -> GPtr<u8> = cdecl 0x8086E0 => unported;
-    /// `_rwPluginRegistryDeInitObject(reg, obj)` (0x808740)
-    fn registry_deinit_object(reg: GPtr<u8>, obj: GPtr<u8>) -> GPtr<u8> = cdecl 0x808740 => unported;
     /// `G->stdFunc[i](pOut, pInOut, nI)` (standard functions, `G + 0x48 + 4i`)
     fn std_func(f: u32, out: GPtr<u8>, inout: GPtr<u8>, n: i32) -> i32 = cdecl dyn => unported;
-    /// `RwStreamFindChunk(stream, type, &len, &ver)` (0x7ED2D0)
-    fn stream_find_chunk(s: GPtr<u8>, ty: u32, len: GPtr<u32>, ver: GPtr<u32>) -> i32 = cdecl 0x7ED2D0 => unported;
 }
 
 // ------------------------------------------------------------------ render states, Im2D ------
 
 // ------------------------------------------------------------------ world pipelines ----------
-
 
 // ------------------------------------------------------------------ RpSkin, RpMatFX, RpAnisot -
 

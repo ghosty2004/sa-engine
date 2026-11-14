@@ -8,6 +8,7 @@
 //! +0x484 passenger count, +0x488 maximum passengers, +0x590 vehicle type.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::orig::at_site;
 use sa_core::{hook, orig};
@@ -34,24 +35,17 @@ use sa_world::bindings::intel_find_task_by_type;
 use sa_world::bindings::ped_set_current_weapon;
 use sa_world::bindings::set_ped_decision_maker_type as intel_set_ped_decision_maker_type;
 use sa_world::bindings::simple_car_drive_ctor;
+use sa_core::bindings::ped_give_weapon;
+use sa_world::bindings::car_drive_mission_ctor;
+use sa_world::bindings::cop_add_criminal_to_kill;
+use sa_world::bindings::interesting_events_add;
+use sa_world::bindings::kill_ped_on_foot_ctor;
+use sa_world::bindings::leave_car_ctor;
 orig! {
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CCopPed::AddCriminalToKill(CPed*)` (0x5DDEB0, `ret 4`)
-    fn cop_add_criminal_to_kill(cop: GPtr<u8>, c: GPtr<u8>) = thiscall 0x5DDEB0 => unported;
     /// `CCopPed::SetPartner(CCopPed*)` (0x5DDE80, `ret 4`)
     fn cop_set_partner(cop: GPtr<u8>, p: GPtr<u8>) = thiscall 0x5DDE80 => unported;
-    /// `CTaskComplexLeaveCar` constructor `(CVehicle*, int32, int32, bool, bool)` (0x63B8C0, `ret 0x14`)
-    fn leave_car_ctor(t: GPtr<u8>, v: GPtr<u8>, a: i32, b: i32, c: u32, d: u32) -> GPtr<u8> = thiscall 0x63B8C0 => unported;
-    /// `CTaskComplexCarDriveMission::Constructor(CVehicle*, CEntity*, int32 mission, int32 style, float speed)`
-    /// (0x63CC30, `ret 0x14`)
-    fn car_drive_mission_ctor(t: GPtr<u8>, v: GPtr<u8>, e: GPtr<u8>, mission: i32, style: i32, speed: u32) -> GPtr<u8> = thiscall 0x63CC30 => unported;
-    /// `CTaskComplexKillPedOnFoot::Constructor(CPed*, int32, uint32, uint32, int32, bool)` (0x620E30, `ret 0x18`)
-    fn kill_ped_on_foot_ctor(t: GPtr<u8>, p: GPtr<u8>, a: i32, b: u32, c: u32, d: i32, e: u32) -> GPtr<u8> = thiscall 0x620E30 => unported;
-    /// `CPed::GiveWeapon(eWeaponType, uint32 ammo, bool)` (0x5E6080, `ret 0xC`)
-    fn ped_give_weapon(p: GPtr<u8>, w: i32, ammo: u32, b: u32) -> u32 = thiscall 0x5E6080 => unported;
-    /// `CInterestingEvents::Add(int32 type, CEntity*)` (0x602590, `ret 8`)
-    fn interesting_events_add(ie: GPtr<u8>, ty: i32, e: GPtr<u8>) = thiscall 0x602590 => unported;
 }
 
 fn sub_task(this: GPtr<u8>) -> GPtr<u8> {
@@ -86,12 +80,12 @@ fn in_vehicle(p: GPtr<u8>) -> bool {
 fn send_hate(about: GPtr<u8>, target_intel: impl FnOnce() -> GPtr<u8>, task: u16) {
     let mut ev = [0u32; 8];
     let e: GPtr<u8> = GPtr::from_raw(&mut ev as *mut [u32; 8]).cast();
-    event_ped_hate_ctor(e, about);
+    event_ped_hate_ctor(e.addr() as u32, about.addr() as u32);
     wr::<u16>(e, 0xE, task);
     let intel = target_intel();
     event_group_add(intel.byte_add(0x68), e, 0);
     wr::<u32>(e, 0, EVENT_BASE_VTBL);
-    event_base_dtor(e);
+    event_base_dtor(e.cast::<u32>());
 }
 
 /// `GiveWeapon(22, 1000, true)` then `SetCurrentWeapon(22)`, the target re-read for the second call.
@@ -297,7 +291,7 @@ fn step7(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
                 mem,
                 rd::<GPtr<u8>>(ped, 0x58C),
                 cv,
-                mission,
+                mission as u32,
                 2,
                 f32_of(speed).to_bits(),
             )
@@ -307,14 +301,7 @@ fn step7(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
             if mem.is_null() {
                 return GPtr::NULL;
             }
-            car_drive_mission_ctor(
-                mem,
-                rd::<GPtr<u8>>(ped, 0x58C),
-                criminal(this),
-                0x37,
-                2,
-                0x41A0_0000,
-            )
+            car_drive_mission_ctor(mem, rd::<GPtr<u8>>(ped, 0x58C), criminal(this), 0x37, 2, 0x41A0_0000)
         }
     } else {
         let r = reuse(this, 0x2C5);
@@ -325,7 +312,7 @@ fn step7(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
         if mem.is_null() {
             return GPtr::NULL;
         }
-        simple_car_drive_ctor(mem, rd::<GPtr<u8>>(ped, 0x58C), 0, 0)
+        simple_car_drive_ctor(mem, rd::<GPtr<u8>>(ped, 0x58C), GPtr::NULL, 0)
     }
 }
 

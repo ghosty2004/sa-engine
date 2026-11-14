@@ -37,6 +37,7 @@ pub const MODE_A: u32 = 0x863A2C;
 /// `RwEngineInstance` (0xC97B24); the file functions start at +0xC4.
 pub const RW_ENGINE_INSTANCE: u32 = 0xC97B24;
 
+pub use crate::bindings::init_user_directories;
 orig! {
     /// CRT `fopen` (0x8232D8)
     pub fn fopen(path: GPtr<u8>, mode: GPtr<u8>) -> GPtr<u8> = cdecl 0x8232D8 => unported;
@@ -54,8 +55,6 @@ orig! {
     pub fn getcwd(buf: GPtr<u8>, n: i32) -> GPtr<u8> = cdecl 0x836E91 => unported;
     /// CRT `_chdir` (0x836F1E)
     pub fn chdir(path: GPtr<u8>) -> i32 = cdecl 0x836F1E => unported;
-    /// `InitUserDirectories` (0x744FB0, CFileMgr::InitUserDirectories in the catalogue)
-    pub fn init_user_directories() -> GPtr<u8> = cdecl 0x744FB0 => unported;
     /// `RwOsGetFileInterface` (0x804130): `RwEngineInstance + 0xC4`
     pub fn rw_os_get_file_interface() -> GPtr<u8> = cdecl 0x804130 => unported;
     /// `RwEngineInstance->fileFuncs.rwftell` (interface +0x28)

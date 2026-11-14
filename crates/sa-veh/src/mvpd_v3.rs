@@ -68,7 +68,7 @@ fn occupant_in_water(this: GPtr<u8>, ped: GPtr<u8>, is_driver: bool) {
             0x35,
             0,
             0,
-            0,
+            GPtr::NULL,
             u32::from(is_driver),
             0,
         );
@@ -84,7 +84,7 @@ fn occupant_in_water(this: GPtr<u8>, ped: GPtr<u8>, is_driver: bool) {
     }
     let mut calc = [0u32; 8];
     let cp = GPtr::from_raw(calc.as_mut_ptr()).cast::<u8>();
-    damage_calc_ctor(cp, this, g::<u32>(TIME_STEP).read(), 0x35, 3, 0);
+    damage_calc_ctor(cp, this, f32::from_bits(g::<u32>(TIME_STEP).read()), 0x35, 3, 0);
     let mut ev = [0u32; 0x20];
     let evp = GPtr::from_raw(ev.as_mut_ptr()).cast::<u8>();
     event_damage_ctor(evp, this, g::<u32>(0xB7_CB84).read(), 0x35, 3, 0, 0, 1);
@@ -121,9 +121,9 @@ pub fn bike_process_buoyancy(this: GPtr<u8>) {
     let ok = buoyancy_process(
         GPtr::from_addr(0xC1_C890),
         this,
-        rd::<u32>(this, 0xA0),
-        GPtr::from_raw(&mut centre).cast(),
-        GPtr::from_raw(&mut force).cast(),
+        f32::from_bits(rd::<u32>(this, 0xA0)),
+        GPtr::<u8>::cast::<sa_math::vector::CVector>(GPtr::from_raw(&mut centre).cast()),
+        GPtr::<u8>::cast::<sa_math::vector::CVector>(GPtr::from_raw(&mut force).cast()),
     );
     if ok == 0 {
         wr::<u8>(this, 0x42B, rd::<u8>(this, 0x42B) & 0xBF);

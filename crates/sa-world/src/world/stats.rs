@@ -31,15 +31,12 @@ const RATING_FLAG_96918C: usize = 0x96918C;
 pub use crate::bindings::german_game;
 pub use sa_core::bindings::sprintf1 as sprintf_i;
 pub use sa_core::bindings::stats_check_for_stats_message as check_for_stats_message;
+pub use crate::bindings::update_fat_and_muscle_stats;
+pub use sa_core::bindings::display_script_stat_update_message;
+pub use sa_core::bindings::stats_increment_stat as increment_stat_call;
 orig! {
-    /// `CStats::IncrementStat(uint16, float)` (0x55C180)
-    pub fn increment_stat_call(id: u32, v: u32) = cdecl 0x55C180 => unported;
     /// `CStats::DecrementStat(uint16, float)` (0x559FA0)
     pub fn decrement_stat_call(id: u32, v: u32) = cdecl 0x559FA0 => decrement_stat_port;
-    /// `CStats::DisplayScriptStatUpdateMessage(uint8, uint32, float)` (0x55B980)
-    pub fn display_script_stat_update_message(state: u32, stat: u32, v: u32) = cdecl 0x55B980 => unported;
-    /// `CStats::UpdateFatAndMuscleStats(uint32)` (0x55C470)
-    pub fn update_fat_and_muscle_stats(v: i32) = cdecl 0x55C470 => update_fat_and_muscle_stats_host;
 }
 
 fn int_stat(id: u32) -> i32 {
@@ -296,7 +293,7 @@ pub fn set_stat_value(id: u16, v: f32) {
 #[hook(addr = 0x55D090, conv = cdecl, name = "CStats::ModifyStat", expect = "D9 44 24 08 D8 1D 50 8B 85 00")]
 pub fn modify_stat(id: u32, v: u32) {
     if !x(f32::from_bits(v)).fcom(X87::zero()).test_any(0x01) {
-        increment_stat_call(id, v);
+        increment_stat_call(id, f32::from_bits(v));
         return;
     }
     decrement_stat_call(id, x(f32::from_bits(v)).fchs().to_f32().to_bits());
@@ -327,7 +324,7 @@ pub fn process_reaction_stats_on_increment(id: u8) {
         0xA5 => {
             let i = xi(int_stat(0xA5));
             if !i.fcom(x(1000.0)).test_any(0x41) {
-                increment_stat_call(0x15, i.fsub_m(1000.0).to_f32().to_bits());
+                increment_stat_call(0x15, f32::from_bits(i.fsub_m(1000.0).to_f32().to_bits()));
             }
         }
         _ => {}
@@ -374,8 +371,8 @@ fn update_counter(reaction_fat: usize, counter: usize, threshold: usize, amount:
     if !lim.fcom(cf).test_parity(0x05) {
         g::<u32>(counter).write(0);
         let a = g::<u32>(amount).read();
-        increment_stat_call(0x16, a);
-        display_script_stat_update_message(1, 0x16, g::<u32>(amount).read());
+        increment_stat_call(0x16, f32::from_bits(a));
+        display_script_stat_update_message(1, 0x16, f32::from_bits(g::<u32>(amount).read()));
         return;
     }
     let step = g::<f32>(0xB7CB5C).read();
@@ -411,8 +408,8 @@ pub fn update_stats_add_to_health(add: u32) {
     let c = g::<u32>(0xB79510).read().wrapping_add(add);
     g::<u32>(0xB79510).write(c);
     if !u32_as_x87(c).fcom(x(reaction(58))).test_any(0x41) {
-        increment_stat_call(0x18, g::<u32>(0xB78F3C).read());
-        display_script_stat_update_message(1, 0x18, g::<u32>(0xB78F3C).read());
+        increment_stat_call(0x18, f32::from_bits(g::<u32>(0xB78F3C).read()));
+        display_script_stat_update_message(1, 0x18, f32::from_bits(g::<u32>(0xB78F3C).read()));
         g::<u32>(0xB79510).write(0);
     }
 }
@@ -493,18 +490,18 @@ pub fn update_fat_and_muscle_stats_port(fat_burned: u32) {
         g::<u32>(FAT_UNITS).write(0);
         if matches!(x(fat).fcom(X87::zero()), Cmp::Greater) {
             decrease(STAT_FAT, 0xB78F6C);
-            increment_stat_call(0x17, g::<u32>(0xB78F34).read());
+            increment_stat_call(0x17, f32::from_bits(g::<u32>(0xB78F34).read()));
             if g::<u8>(FAT_MESSAGE_TOGGLE).read() == 1 {
                 g::<u8>(FAT_MESSAGE_TOGGLE).write(2);
-                display_script_stat_update_message(1, 0x17, g::<u32>(0xB78F34).read());
+                display_script_stat_update_message(1, 0x17, f32::from_bits(g::<u32>(0xB78F34).read()));
             } else {
                 g::<u8>(FAT_MESSAGE_TOGGLE).write(1);
-                display_script_stat_update_message(0, 0x15, g::<u32>(0xB78F6C).read());
+                display_script_stat_update_message(0, 0x15, f32::from_bits(g::<u32>(0xB78F6C).read()));
             }
         } else {
             decrease(STAT_MUSCLE, 0xB78F70);
             g::<u8>(FAT_MESSAGE_TOGGLE).write(3);
-            display_script_stat_update_message(0, 0x17, g::<u32>(0xB78F70).read());
+            display_script_stat_update_message(0, 0x17, f32::from_bits(g::<u32>(0xB78F70).read()));
         }
     } else {
         let n = (step_ms() as u32).wrapping_mul(fat_burned) / 10;
@@ -513,8 +510,8 @@ pub fn update_fat_and_muscle_stats_port(fat_burned: u32) {
     }
     let thr = x(gf(0xB78FC4)).fmul_m(1000.0);
     if matches!(thr.fcom(units(MUSCLE_UNITS)), Cmp::Less) {
-        increment_stat_call(0x18, g::<u32>(0xB78F3C).read());
-        display_script_stat_update_message(1, 0x18, g::<u32>(0xB78F3C).read());
+        increment_stat_call(0x18, f32::from_bits(g::<u32>(0xB78F3C).read()));
+        display_script_stat_update_message(1, 0x18, f32::from_bits(g::<u32>(0xB78F3C).read()));
         g::<u32>(MUSCLE_UNITS).write(0);
     } else {
         let u = g::<u32>(MUSCLE_UNITS);

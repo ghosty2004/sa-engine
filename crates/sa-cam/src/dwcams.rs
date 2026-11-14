@@ -62,7 +62,7 @@ pub use sa_world::bindings::entity_get_col_model as get_col_model;
 pub use sa_world::bindings::find_objects_in_range;
 pub use sa_world::bindings::multiply3x3_vm;
 pub use sa_world::bindings::process_line_of_sight;
-pub use sa_world::bindings::world_get_is_line_of_sight_clear as get_is_line_of_sight_clear;
+pub use sa_core::bindings::world_get_is_line_of_sight_clear as get_is_line_of_sight_clear;
 orig! {
     /// `CCam::CacheLastSettingsDWCineyCam()` (0x50D7A0)
     pub fn cache_last_settings_dw_ciney_cam(cam: GPtr<u8>) = thiscall 0x50D7A0 => crate::cam::cache_last_settings_dw_ciney_cam;
@@ -138,10 +138,10 @@ pub fn finalise_dw_ciney_cams(
     vector_normalise(front);
     orient(this, src, f32::from_bits(roll));
     wr::<u32>(this, 0xB4, fov);
-    rw_camera_set_near_clip_plane(g::<GPtr<u8>>(SCENE_CAMERA).read(), K_NEAR_CLIP);
+    rw_camera_set_near_clip_plane(g::<GPtr<u8>>(SCENE_CAMERA).read(), f32::from_bits(K_NEAR_CLIP));
     cache_last_settings_dw_ciney_cam(this);
     DW_LAST_FRAME_PROCESSED.set(FRAME_COUNTER.get());
-    hand_shaker_process(GPtr::from_addr(HAND_SHAKER), shake);
+    hand_shaker_process(GPtr::from_addr(HAND_SHAKER), f32::from_bits(shake));
     let roll2 = f32_of(x(g::<f32>(HAND_SHAKER + 8).read()).fmul_m(f32::from_bits(shake)));
     let mut t: [f32; 3] = [0.0; 3];
     multiply3x3_vm(vp(&mut t), front, GPtr::from_addr(HAND_SHAKER + 0x3C));
@@ -235,7 +235,7 @@ pub fn get_core_data_for_dw_ciney_cam_mode(
     let radius = rd::<u32>(rd::<GPtr<u8>>(mi, 0x14), 0x24);
     let mut c: [f32; 3] = [0.0; 3];
     let cp = get_bound_centre(e, vp(&mut c));
-    col_sphere_set(sphere, radius, cp, 0, 0, 0xFF);
+    col_sphere_set(sphere, f32::from_bits(radius), cp, 0, 0, 0xFF);
 }
 
 /// `CCam::IsTimeToExitThisDWCineyCamMode(int32 mode, const CVector* src, const CVector* dst, float t,
@@ -321,7 +321,7 @@ pub fn get_look_from_lamp_post_pos(
     let mut ents = [0u32; 16];
     find_objects_in_range(
         tp,
-        K_30,
+        f32::from_bits(K_30),
         1,
         GPtr::<i16>::from_raw(count.as_mut_ptr()).cast::<u8>(),
         0xF,
@@ -374,7 +374,7 @@ pub fn get_look_from_lamp_post_pos(
             copy3(vp(&mut top), cm.byte_add(0xC));
             ensure_matrix(e);
             let mut t: [f32; 3] = [0.0; 3];
-            let r = matrix_mul_vec(vp(&mut t), rd::<GPtr<u8>>(e, 0x14), vp(&mut top));
+            let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(vp(&mut t)), rd::<GPtr<u8>>(e, 0x14), vp(&mut top)));
             copy3(vp(&mut top), r);
             let mut dir: [f32; 3] = [0.0; 3];
             for (j, v) in dir.iter_mut().enumerate() {
@@ -400,6 +400,7 @@ pub fn get_look_from_lamp_post_pos(
     u8::from(winner != 0)
 }
 
+pub use crate::bindings::get_rough_distance_to_ground;
 orig! {
     /// `CCam::GetCoreDataForDWCineyCamMode(...)` (0x517130)
     pub fn get_core_data_call(cam: GPtr<u8>, e: GPtr<u8>, v: GPtr<u8>, dest: GPtr<u8>, src: GPtr<u8>, up: GPtr<u8>, right: GPtr<u8>, fwd: GPtr<u8>, vel: GPtr<u8>, speed: GPtr<u8>, ang_vel: GPtr<u8>, ang_speed: GPtr<u8>, sphere: GPtr<u8>) = thiscall 0x517130 => get_core_data_for_dw_ciney_cam_mode;
@@ -407,8 +408,6 @@ orig! {
     pub fn is_time_to_exit_call(cam: GPtr<u8>, mode: i32, src: GPtr<u8>, dst: GPtr<u8>, t: u32, los: u32) -> u8 = thiscall 0x517400 => is_time_to_exit_this_dw_ciney_cam_mode;
     /// `CCam::Finalise_DW_CineyCams(...)` (0x50DD70)
     pub fn finalise_call(cam: GPtr<u8>, src: GPtr<u8>, dest: GPtr<u8>, roll: u32, fov: u32, near: u32, shake: u32) = thiscall 0x50DD70 => finalise_dw_ciney_cams;
-    /// `CCamera::GetRoughDistanceToGround()` (0x516B00, ST0)
-    pub fn get_rough_distance_to_ground(cam: GPtr<u8>) -> f64 = thiscall 0x516B00 => unported;
 }
 
 /// `TheCamera` +0x31 (cleared by every DW processor on entry).
@@ -1428,9 +1427,8 @@ pub fn process_dw_plane_spotter_cam(this: GPtr<u8>, _arg: u32) -> u8 {
 }
 
 pub use sa_world::bindings::placeable_get_matrix as get_matrix;
+pub use crate::bindings::hand_shaker_reset;
 orig! {
-    /// `CHandShaker::Reset()` (0x50D860)
-    pub fn hand_shaker_reset(hs: GPtr<u8>) = thiscall 0x50D860 => crate::handshaker::hand_shaker_reset;
     /// `a > b ? a : b` (0x420800, cdecl floats as dwords, ST0)
     pub fn max_f(a: u32, b: u32) -> f64 = cdecl 0x420800 => unported;
 }
@@ -1535,7 +1533,7 @@ pub fn process_dw_cam_man_cam(this: GPtr<u8>, _arg: u32) -> u8 {
         st(b, 0x74, f.fstp());
         find_objects_in_range(
             b.byte_add(0x6C),
-            r,
+            f32::from_bits(r),
             1,
             b.byte_add(0x10),
             0xF,
@@ -1605,7 +1603,7 @@ pub fn process_dw_cam_man_cam(this: GPtr<u8>, _arg: u32) -> u8 {
                 stu(b, 0x40, rd::<u32>(cm, 0x10));
                 stu(b, 0x44, rd::<u32>(cm, 0x14));
                 let mx = get_matrix(rd::<GPtr<u8>>(slot, 0));
-                let o = matrix_mul_vec(b.byte_add(0x80), mx, b.byte_add(0x3C));
+                let o = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(b.byte_add(0x80)), mx, b.byte_add(0x3C)));
                 let (ox, oy, oz) = (rd::<u32>(o, 0), rd::<u32>(o, 4), rd::<u32>(o, 8));
                 stu(b, 0x3C, ox);
                 stu(b, 0x40, oy);

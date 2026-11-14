@@ -6,13 +6,14 @@
 //! Unverified (docs/verify/HOWTO.md).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
 use crate::common::*;
 
-use crate::bindings::anim_blend_animation;
-use crate::bindings::assoc_set_finish_callback as anim_set_finish_callback;
+use sa_world::bindings::anim_blend_animation;
+use sa_core::bindings::assoc_set_finish_callback as anim_set_finish_callback;
 use crate::bindings::ik_is_arm_pointing;
 use crate::bindings::play_hand_signal_anim_ctor;
 use crate::bindings::task_complex_dtor;
@@ -21,21 +22,20 @@ use sa_core::bindings::object_new;
 use sa_core::bindings::streaming_remove_model;
 use sa_core::bindings::streaming_request_model;
 use sa_core::bindings::world_add;
-use sa_stream::bindings::anim_add_block_ref;
+use sa_core::bindings::anim_add_block_ref;
 use sa_stream::bindings::anim_remove_block_ref;
 use sa_stream::bindings::get_animation_block_index as anim_get_block_index;
 use sa_stream::bindings::model_info_add_ref;
 use sa_stream::bindings::model_info_remove_ref;
-use sa_world::bindings::anim_get_anim_association;
+use sa_core::bindings::anim_get_anim_association;
 use sa_world::bindings::ped_get_held_entity;
 use sa_world::bindings::sequence_add_task;
 use sa_world::bindings::sequence_ctor;
+use crate::bindings::create_sub_task_o;
+use sa_world::bindings::stand_still_ctor;
 orig! {
-    /// `CTaskSimpleStandStill(int ms, bool looped, bool useAnimIdle, float blend)` (0x62F310, `ret 0x10`)
-    fn stand_still_ctor(t: GPtr<u8>, ms: i32, looped: u32, idle: u32, blend: u32) -> GPtr<u8> = thiscall 0x62F310 => unported;
     /// `CTask::GetTaskType()` (vtable slot 0x10)
     fn task_get_type(t: GPtr<u8>) -> u32 = thiscall vslot 0x10 => unported;
-    fn create_sub_task_o(t: GPtr<u8>, ty: u32) -> GPtr<u8> = thiscall 0x61B2F0 => hand_signal_create_sub_task;
     /// `CHandObject::CHandObject(int32 model, CPed*, bool left)` (0x59EEB0, `ret 0xC`)
     fn hand_object_ctor(o: GPtr<u8>, model: u32, ped: GPtr<u8>, left: u32) -> GPtr<u8> = thiscall 0x59EEB0 => unported;
     /// `CAnimManager::AddAnimation(RpClump*, CAnimBlendHierarchy*, int flags)` (0x4D4330)
@@ -71,7 +71,7 @@ pub fn hand_signal_create_sub_task(this: GPtr<u8>, ty: u32) -> GPtr<u8> {
     match ty {
         0xCB => {
             let t = task_new(0x20);
-            if t.is_null() { GPtr::NULL } else { stand_still_ctor(t, 0, 1, 0, 0x4100_0000) }
+            if t.is_null() { GPtr::NULL } else { stand_still_ctor(t, 0, 1, 0, f32::from_bits(0x4100_0000)) }
         }
         0x1A9 => {
             let t = task_new(0x40);
@@ -81,7 +81,7 @@ pub fn hand_signal_create_sub_task(this: GPtr<u8>, ty: u32) -> GPtr<u8> {
                 GPtr::NULL
             } else {
                 let ms = random_int(0, 1500);
-                stand_still_ctor(t, ms, 0, 0, 0x4100_0000)
+                stand_still_ctor(t, ms, 0, 0, f32::from_bits(0x4100_0000))
             };
             sequence_add_task(seq, ss);
             let t = task_new(0x24);
@@ -172,7 +172,7 @@ pub fn hand_signal_dtor(this: GPtr<u8>) {
     }
     let f = rd::<u8>(this, 0x14);
     if f & 4 != 0 {
-        anim_remove_block_ref(g::<i32>(ANIM_BLOCK).read());
+        anim_remove_block_ref((g::<i32>(ANIM_BLOCK).read()) as u32);
     } else {
         let (l, r) = if f & 8 != 0 { (0xA9B6F8, 0xA9B6FC) } else { (0xA9B6F0, 0xA9B6F4) };
         let both_used = rd::<u16>(mi(l), 8) != 0 && rd::<u16>(mi(r), 8) != 0;
@@ -197,7 +197,7 @@ fn hand_object(this: GPtr<u8>, ped: GPtr<u8>, model: u32, left: u32, group: u32,
         return false;
     }
     world_add(o);
-    let a = anim_get_anim_association(group, rd::<u32>(this, 0x10));
+    let a = anim_get_anim_association(group as i32, rd::<u32>(this, 0x10) as i32);
     anim_add_animation(rd::<u32>(rd::<GPtr<u8>>(this, slot), 0x18), rd::<u32>(a, 0x10), 0);
     let n = g::<u16>(NO_TEMP_OBJECTS);
     n.write(n.read().wrapping_add(1));
@@ -223,9 +223,9 @@ pub fn play_hand_signal_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
             rd::<u32>(ped, (slot.wrapping_mul(0x1C) + 0x5A0) as isize) != 0
         };
     let group = if one_hand { 0x4E } else { 0x4D };
-    let a = anim_blend_animation(rd::<u32>(ped, 0x18), group, anim as u32, rd::<u32>(this, 0x14));
+    let a = anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), group, anim as u32, f32::from_bits(rd::<u32>(this, 0x14)));
     wr::<GPtr<u8>>(this, 8, a);
-    anim_set_finish_callback(a, FINISH_RUN_ANIM_CB, this.addr() as u32);
+    anim_set_finish_callback(a, FINISH_RUN_ANIM_CB, GPtr::from_addr((this.addr() as u32) as usize));
     if rd::<i32>(this, 0x10) == -1 {
         return;
     }

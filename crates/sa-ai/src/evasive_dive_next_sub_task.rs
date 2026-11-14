@@ -2,6 +2,7 @@
 //! intro cutscene). Ported from the 1.0 US bytes; gta-reversed `TaskComplexEvasiveDiveAndGetUp.cpp` as a reading aid.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -29,7 +30,7 @@ pub fn evasive_dive_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<
         0x1F7 => create_sub_task(this, 0xCA),
         0xCD => create_sub_task(this, 0x516),
         0xCA => {
-            let a = X87::from_f64_exact(general_limit_radian_angle(rd::<u32>(ped, 0x558)))
+            let a = X87::from_f64_exact(general_limit_radian_angle(f32::from_bits(rd::<u32>(ped, 0x558))))
                 .fsub(X87::from_f64_exact(f64::from_bits(0x3FF9_21FB_6000_0000)))
                 .to_f32();
             wr::<f32>(ped, 0x558, a);

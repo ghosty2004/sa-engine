@@ -3,8 +3,9 @@
 //! (gta-reversed as a reading aid; the bytes win). Unverified (docs/verify/HOWTO.md).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
@@ -15,13 +16,9 @@ use crate::bindings::task_is_go_to_task;
 use sa_core::bindings::tm_get_simplest_active_task;
 use sa_world::bindings::entity_get_col_model;
 use sa_world::bindings::event_group_add;
-use sa_world::bindings::vector_magnitude_sqr as vector_squared_magnitude;
-orig! {
-    /// `CVector::FromMultiply(const CMatrix&, const CVector&)` (0x59C670, `ret 8`)
-    fn vector_from_multiply(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) = thiscall 0x59C670 => unported;
-    /// `CEventPotentialWalkIntoVehicle::CEventPotentialWalkIntoVehicle(CVehicle*, int32 moveState)` (0x4AE320, `ret 8`)
-    fn event_walk_into_vehicle_ctor(e: GPtr<u8>, v: GPtr<u8>, ms: u32) -> GPtr<u8> = thiscall 0x4AE320 => unported;
-}
+use sa_core::bindings::vector_magnitude_sqr as vector_squared_magnitude;
+use crate::bindings::event_walk_into_vehicle_ctor;
+use sa_core::bindings::vector_from_multiply;
 
 /// `CTimer::m_snTimeInMilliseconds` (0xB7CB84)
 const TIMER_TIME_MS: usize = 0xB7CB84;
@@ -100,7 +97,7 @@ pub fn vehicle_scanner_scan_for_potential_collision_events(this: GPtr<u8>, ped: 
         return;
     }
     if rd::<u8>(ped, 0x474) & 8 == 0 {
-        let m2v = X87::from_f64_exact(vector_squared_magnitude(GPtr::from_raw(d.as_mut_ptr()).cast()));
+        let m2v = X87::from_f64_exact(vector_squared_magnitude(GPtr::<u8>::cast::<f32>(GPtr::from_raw(d.as_mut_ptr()).cast())));
         if x(r).fmul_m(r).fcom(m2v).test_any(0x41) {
             return;
         }
@@ -112,7 +109,7 @@ pub fn vehicle_scanner_scan_for_potential_collision_events(this: GPtr<u8>, ped: 
     if x(dist).fcom(x(k(0x86C8E0))).test_any(0x41) {
         return;
     }
-    let ms = intel_get_move_state_from_go_to_task(rd::<GPtr<u8>>(ped, 0x47C));
+    let ms = intel_get_move_state_from_go_to_task(rd::<GPtr<u8>>(ped, 0x47C)) as u32;
     let mut ev = [0u32; 0x10];
     let ev_p: GPtr<u8> = GPtr::from_raw(ev.as_mut_ptr()).cast();
     event_walk_into_vehicle_ctor(ev_p, veh, ms);

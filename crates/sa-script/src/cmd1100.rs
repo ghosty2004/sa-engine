@@ -74,7 +74,7 @@ use sa_world::bindings::dettach_ped_from_entity;
 use sa_world::bindings::disable_ped_speech;
 use sa_world::bindings::enable_ped_speech;
 use sa_world::bindings::find_ground_z_for_coord;
-use sa_world::bindings::generate_new_one;
+use sa_stream::bindings::generate_new_one;
 use sa_world::bindings::get_actual_pickup_index;
 use sa_world::bindings::get_engine_status;
 use sa_world::bindings::get_pad_from_player;
@@ -84,24 +84,19 @@ use sa_world::bindings::pad_get_target;
 use sa_world::bindings::ped_groups_get_peds_group as get_peds_group;
 use sa_world::bindings::pickup_get_posn;
 use sa_world::bindings::update_rw_matrix;
+use sa_core::bindings::vector_magnitude;
+use sa_world::bindings::count_members_excluding_leader;
+use sa_world::bindings::create_dead_ped_pickup_coors;
+use sa_world::bindings::get_wheel_status;
+use sa_world::bindings::set_orientation;
 orig! {
     /// `CCamera::SetParametersForScriptInterpolation(float stopMoving, float catchUp, uint32 time)` (0x50C030);
     /// the floats as raw dwords
     fn set_parameters_for_script_interpolation(cam: GPtr<u8>, stop: u32, catch_up: u32, time: u32) = thiscall 0x50C030 => unported;
     /// `CRunningScript::LocateCharObjectCommand(int32 command)` (0x487720)
     fn locate_char_object_command(s: Scr, command: u32) = thiscall 0x487720 => unported;
-    /// `CPlaceable::SetOrientation(float x, float y, float z)` (0x439A80)
-    fn set_orientation(e: GPtr<u8>, x: f32, y: f32, z: f32) = thiscall 0x439A80 => unported;
-    /// `CPedGroupMembership::CountMembersExcludingLeader()` (0x5F6AA0), AL
-    fn count_members_excluding_leader(m: GPtr<u8>) -> u8 = thiscall 0x5F6AA0 => unported;
     /// `CRemote::GivePlayerRemoteControlledCar(float x, float y, float z, float angle, uint16 model)` (0x45AB10)
     fn give_player_remote_controlled_car(x: u32, y: u32, z: u32, angle: u32, model: u32) = cdecl 0x45AB10 => unported;
-    /// `CVector::Magnitude()` (0x4082C0), ST0 (an FSQRT result under PC=24: exact as f64)
-    fn vector_magnitude(v: GPtr<u32>) -> f64 = thiscall 0x4082C0 => unported;
-    /// `CDamageManager::GetWheelStatus(int32)` (0x6C21B0)
-    fn get_wheel_status(dm: GPtr<u8>, w: u32) -> u32 = thiscall 0x6C21B0 => unported;
-    /// `CPed::CreateDeadPedPickupCoors(float&, float&, float&)` (0x459180)
-    fn create_dead_ped_pickup_coors(p: GPtr<u8>, x: GPtr<u32>, y: GPtr<u32>, z: GPtr<u32>) = thiscall 0x459180 => unported;
 }
 
 /// The two DISPLAY_TEXT_WITH_*NUMBER* cases (0x48A5B5 / 0x48A660): CollectParameters(2) (x, y);
@@ -142,7 +137,7 @@ fn pickup_z(x: u32, y: u32, z: u32) -> u32 {
     if X87::from_f32(f(z)).fcom(X87::constant(K_MINUS_100)).test_parity(0x41) {
         fld_fst(f(z)).to_bits()
     } else {
-        X87::from_f64_exact(find_ground_z_for_coord(x, y)).fadd_m(f(K_HALF)).to_f32().to_bits()
+        X87::from_f64_exact(find_ground_z_for_coord(f32::from_bits(x), f32::from_bits(y))).fadd_m(f(K_HALF)).to_f32().to_bits()
     }
 }
 
@@ -264,7 +259,7 @@ pub fn process_commands_1100_to_1199(s: Scr, command: u32) -> i8 {
             let h = if v.is_null() {
                 -1
             } else {
-                vehicle_pool_ref_424160(pool(VEHICLE_POOL), v)
+                vehicle_pool_ref_424160(pool(VEHICLE_POOL), v) as i32
             };
             set_sp(0, h as u32);
             store(s, 1);
@@ -324,7 +319,7 @@ pub fn process_commands_1100_to_1199(s: Scr, command: u32) -> i8 {
                 5
             };
             let b = ped.byte_add(0x46C).cast::<u32>().read() & 0x100 != 0
-                && get_vehicle_appearance(ped.byte_add(0x58C).cast::<GPtr<u8>>().read()) == want;
+                && get_vehicle_appearance(ped.byte_add(0x58C).cast::<GPtr<u8>>().read()) as i32 == want;
             set_flag(s, b);
         }
         // 04AD IS_CHAR_IN_WATER (0x48B365): flag = ped != null && `m_nPhysicalFlags` (+0x40) bit 8.
@@ -404,8 +399,8 @@ pub fn process_commands_1100_to_1199(s: Scr, command: u32) -> i8 {
                     i += 1;
                 };
                 if equal {
-                    crate::cmd0::remove_script_from_list(sc, crate::cmd0::ACTIVE_SCRIPTS.ptr());
-                    crate::cmd0::add_script_to_list(sc, crate::cmd0::IDLE_SCRIPTS.ptr());
+                    crate::cmd0::remove_script_from_list(sc, GPtr::<GPtr<u8>>::cast::<u8>(crate::cmd0::ACTIVE_SCRIPTS.ptr()));
+                    crate::cmd0::add_script_to_list(sc, GPtr::<GPtr<u8>>::cast::<u8>(crate::cmd0::IDLE_SCRIPTS.ptr()));
                     crate::cmd0::shutdown_this_script(sc);
                 }
                 sc = next;
@@ -422,14 +417,14 @@ pub fn process_commands_1100_to_1199(s: Scr, command: u32) -> i8 {
             let veh = vehicle_at_ref(pool(VEHICLE_POOL), spi(1));
             let (x, y) = (fld_fst(spf(2)).to_bits(), fld_fst(spf(3)).to_bits());
             let a = deg2rad(sp(6)).to_bits();
-            attach_ped_to_entity(ped, veh, x, y, sp(4), sp(5) & 0xFFFF, a, sp(7));
+            attach_ped_to_entity(ped, veh, f32::from_bits(x), f32::from_bits(y), f32::from_bits(sp(4)), sp(5) & 0xFFFF, f32::from_bits(a), sp(7));
         }
         // 046C GET_DRIVER_OF_CAR (0x48A974, gr: unregistered): no null check; P0 = m_pDriver (+0x460) ?
         // PedPool->GetRef(it) : -1; StoreParameters(1).
         0x046C => {
             collect(s, 1);
             let d = vehicle_at_ref(pool(VEHICLE_POOL), spi(0)).byte_add(0x460).cast::<GPtr<u8>>().read();
-            let h = if d.is_null() { -1 } else { ped_get_ref(pool(PED_POOL), d) };
+            let h = if d.is_null() { -1 } else { ped_get_ref(pool(PED_POOL), d) as i32 };
             set_sp(0, h as u32);
             store(s, 1);
         }
@@ -441,7 +436,7 @@ pub fn process_commands_1100_to_1199(s: Scr, command: u32) -> i8 {
             let g = get_peds_group(ped);
             let mut n = 0u8;
             if !g.is_null() && membership_is_leader(g.byte_add(8), ped) != 0 {
-                n = count_members_excluding_leader(g.byte_add(8));
+                n = count_members_excluding_leader(g.byte_add(8)) as u8;
             }
             set_sp(0, u32::from(n));
             store(s, 1);
@@ -456,7 +451,7 @@ pub fn process_commands_1100_to_1199(s: Scr, command: u32) -> i8 {
             let z = if st.fcom(X87::constant(K_MINUS_100)).test_parity(0x41) {
                 st.to_f32().to_bits()
             } else {
-                X87::from_f64_exact(find_ground_z_for_coord(x, y)).to_f32().to_bits()
+                X87::from_f64_exact(find_ground_z_for_coord(f32::from_bits(x), f32::from_bits(y))).to_f32().to_bits()
             };
             let a = deg2rad(sp(4)).to_bits();
             give_player_remote_controlled_car(x, y, z, a, sp(5) & 0xFFFF);
@@ -466,7 +461,7 @@ pub fn process_commands_1100_to_1199(s: Scr, command: u32) -> i8 {
         0x047A => {
             collect(s, 1);
             let v = vehicle_if_in_one(ped_at_ref(pool(PED_POOL), spi(0)));
-            let b = !v.is_null() && get_vehicle_appearance(v) == 2;
+            let b = !v.is_null() && get_vehicle_appearance(v) as i32 == 2;
             set_flag(s, b);
         }
         // 0480 CAN_CHAR_SEE_DEAD_CHAR (0x48ABDA): CollectParameters(2), P1 unused; no null check; for the 16
@@ -518,7 +513,7 @@ pub fn process_commands_1100_to_1199(s: Scr, command: u32) -> i8 {
                     continue;
                 }
                 let mut out = [0u32; 3];
-                let q = pickup_get_posn(p, GPtr::from_raw(out.as_mut_ptr()));
+                let q = GPtr::<f32>::cast::<u32>(pickup_get_posn(p, GPtr::<u32>::cast::<f32>(GPtr::from_raw(out.as_mut_ptr()))));
                 let d = |k: i32, m: f32| X87::from_f32(f(q.wrapping_index(k).read())).fsub_m(m).to_f32().to_bits();
                 let dv = [d(0, x), d(1, y), d(2, z)];
                 let m = X87::from_f64_exact(vector_magnitude(GPtr::from_raw(dv.as_ptr().cast_mut())));
@@ -532,7 +527,7 @@ pub fn process_commands_1100_to_1199(s: Scr, command: u32) -> i8 {
         // P0..P3 = the four int16 at pad +0/+2/+4/+6 (`movsx`); StoreParameters(4).
         0x0494 => {
             collect(s, 1);
-            let pad = get_pad(spi(0)).cast::<u16>();
+            let pad = get_pad(spi(0) as u32).cast::<u16>();
             for i in 0..4 {
                 set_sp(i, i32::from(pad.wrapping_index(i).read() as i16) as u32);
             }
@@ -605,7 +600,7 @@ pub fn process_commands_1100_to_1199(s: Scr, command: u32) -> i8 {
             let mut o = [0u32; 3];
             let ped = ped_at_ref(pool(PED_POOL), spi(0));
             let p = GPtr::from_raw(o.as_mut_ptr());
-            create_dead_ped_pickup_coors(ped, p, p.wrapping_index(1), p.wrapping_index(2));
+            create_dead_ped_pickup_coors(ped, p.cast::<u8>(), GPtr::<u32>::cast::<u8>(p.wrapping_index(1)), GPtr::<u32>::cast::<u8>(p.wrapping_index(2)));
             set_sp(0, o[0]);
             set_sp(1, o[1]);
             set_sp(2, o[2]);
@@ -620,7 +615,7 @@ pub fn process_commands_1100_to_1199(s: Scr, command: u32) -> i8 {
             let z = pickup_z(x, y, sp(2));
             get_actual_pickup_index(collect_next_parameter_without_increasing_pc(s));
             let model = u32::from(GPtr::<u16>::from_addr(MI_PROTECTION_PICKUP).read());
-            let h = generate_new_one(x, y, z, model, 0x10, sp(3), sp(4), 0, 0);
+            let h = generate_new_one(f32::from_bits(x), f32::from_bits(y), f32::from_bits(z), model, 0x10, sp(3), sp(4), 0, GPtr::NULL);
             set_sp(0, h as u32);
             store(s, 1);
         }

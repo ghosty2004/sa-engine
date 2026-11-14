@@ -4,16 +4,13 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 
 use crate::common::{ftol32, g, rd, x, xi};
 
 use crate::bindings::get_atomic_id;
-orig! {
-    /// `RpClumpForAllAtomics(RpClump*, RpAtomicCallBack, void*)` (0x749B70)
-    fn clump_for_all_atomics(c: GPtr<u8>, cb: u32, data: GPtr<u8>) -> GPtr<u8> = cdecl 0x749B70 => unported;
-}
+use sa_core::bindings::rp_clump_for_all_atomics as clump_for_all_atomics;
 
 /// The weapon-upgrade fire-rate factor: `level / 16` of the plane (+0x9D8, type 4) or heli (+0xA10,
 /// type 3) weapon level, else 1.

@@ -11,11 +11,10 @@ use crate::common::{f32_of, g, rd, wr, x, xi};
 
 use crate::bindings::vehicle_render;
 use sa_core::bindings::matrix_mul_vec;
+use sa_world::bindings::register_corona;
 orig! {
     /// `CVector::NormaliseAndMag()` (0x59C970, ST0)
     fn normalise_and_mag(v: GPtr<u8>) -> f32 = thiscall 0x59C970 => unported;
-    /// `CCoronas::RegisterCorona(...)` (0x6FC580, 21 arguments)
-    fn register_corona(id: u32, e: u32, r: u32, g: u32, b: u32, a: u32, pos: GPtr<u8>, radius: f32, far: f32, ty: u32, flare: u32, refl: u32, los: u32, unused: u32, angle: f32, long_distance: u32, near_clip: f32, fade_state: u32, fade_speed: f32, below: u32, delay: u32) = cdecl 0x6FC580 => unported;
 }
 
 use sa_math::fpu::gt;
@@ -252,7 +251,7 @@ pub fn do_head_light_effect(this: GPtr<u8>, id: i32, mat: GPtr<u8>, right: u8, f
     let cam = sa_world::world::common::cam_pos();
     let mut wv = [0f32; 3];
     let qptr = GPtr::from_raw(q.as_mut_ptr()).cast::<u8>();
-    let w = matrix_mul_vec(GPtr::from_raw(wv.as_mut_ptr()).cast(), mat, qptr);
+    let w = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::from_raw(wv.as_mut_ptr()).cast()), mat, qptr));
     let dz = f32_of(x(cam.wrapping_index(2).read()).fsub_m(rd::<f32>(w, 8)));
     let dy = f32_of(x(cam.wrapping_index(1).read()).fsub_m(rd::<f32>(w, 4)));
     let dx = f32_of(x(cam.read()).fsub_m(rd::<f32>(w, 0)));
@@ -284,7 +283,7 @@ pub fn do_head_light_effect(this: GPtr<u8>, id: i32, mat: GPtr<u8>, right: u8, f
         let (rg, b) = if blue() { (0x96, 0xC3) } else { (0xA0, 0x8C) };
         let size = if trailer() { f32::from_bits(0x3E99_999A) } else { f32::from_bits(0x3D99_999A) };
         let far = f32_of(x(g::<f32>(0xB6F118).read()).fmul_m(150.0));
-        register_corona(base.wrapping_add(4), this.addr() as u32, rg, rg, b, 0xFF, qptr, size, far, 4, 0, 0, 0, 0, sdot, 0,
+        register_corona(base.wrapping_add(4), GPtr::from_addr((this.addr() as u32) as usize), rg, rg, b, 0xFF, qptr, size, far, 4, 0, 0, 0, 0, sdot, 0,
             f32::from_bits(0x3E99_999A), 0, 15.0, 0, 0);
     }
     let mut a = x(sdot).fmul_m(0.5).fadd_m(f32::from_bits(0x3E99_999A));
@@ -308,14 +307,16 @@ pub fn do_head_light_effect(this: GPtr<u8>, id: i32, mat: GPtr<u8>, right: u8, f
         (crate::common::ftol32(x(210.0).fmul(a)) as u32, crate::common::ftol32(a.fmul_m(195.0)) as u32)
     };
     let far = f32_of(x(g::<f32>(0xB6F118).read()).fmul_m(150.0));
-    register_corona(base, this.addr() as u32, rg, rg, b, 0x80, qptr, size, far, 1, 0, 1, 0, 0, sdot, 0, 0.5, 0, 15.0, 0, 0);
+    register_corona(base, GPtr::from_addr((this.addr() as u32) as usize), rg, rg, b, 0x80, qptr, size, far, 1, 0, 1, 0, 0, sdot, 0, 0.5, 0, 15.0, 0, 0);
     1
 }
 
 use sa_core::bindings::rw_frame_update_objects;
 use sa_stream::bindings::get_first_object;
 use sa_world::bindings::entity_get_col_model as get_col_model;
-use sa_world::bindings::rw_matrix_translate;
+use sa_core::bindings::rw_matrix_translate;
+use crate::bindings::do_head_light_beam;
+use sa_world::bindings::get_vehicle_appearance;
 orig! {
     /// `RwEngineInstance->fpRenderStateGet(state, void*)` (`[0xC97B24] + 0x24`)
     fn rw_render_state_get(state: u32, out: GPtr<u32>) -> u32 = cdecl table 0xC97B24 0x24 => unported;
@@ -323,10 +324,6 @@ orig! {
     fn rw_render_state_set(state: u32, v: u32) -> u32 = cdecl table 0xC97B24 0x20 => unported;
     /// `atomic->renderCallBack(atomic)` (the pointer at RpAtomic +0x48)
     fn atomic_render_callback(f: u32, a: GPtr<u8>) -> GPtr<u8> = cdecl dyn => unported;
-    /// `CVehicle::GetVehicleAppearance()` (0x6D1080)
-    fn get_vehicle_appearance(v: GPtr<u8>) -> u32 = thiscall 0x6D1080 => unported;
-    /// `CVehicle::DoHeadLightBeam(int32 lightId, CMatrix&, bool isRight)` (0x6E0E20)
-    fn do_head_light_beam(v: GPtr<u8>, id: i32, m: GPtr<u8>, right: u32) = thiscall 0x6E0E20 => unported;
 }
 
 /// `GetFirstObject(frame)` twice (callback from the first, argument from the second) and

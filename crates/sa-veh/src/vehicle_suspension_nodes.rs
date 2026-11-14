@@ -12,15 +12,13 @@ use crate::common::{b, g, rd, wr, x};
 use crate::bindings::vehicle_set_model_index;
 use sa_core::bindings::frame_get_ltm as rw_frame_get_ltm;
 use sa_stream::bindings::fill_frame_array;
+use crate::bindings::automobile_reset_suspension;
+use crate::bindings::call_extend_suspension;
 orig! {
     /// CRT `printf` (0x821982) with two int arguments (the missing-node debug message)
     fn printf2(fmt: u32, a: i32, c: i32) -> i32 = cdecl 0x821982 => unported;
-    /// `CAutomobile::ResetSuspension()` (0x6A2AE0, called directly)
-    fn automobile_reset_suspension(car: GPtr<u8>) = thiscall 0x6A2AE0 => crate::automobile::reset_suspension;
     /// `CAutomobile::ProcessControlCollisionCheck(bool)` (0x6A29C0, called directly)
     fn automobile_pccc(car: GPtr<u8>, apply_speed: u32) = thiscall 0x6A29C0 => crate::automobile2::process_control_collision_check;
-    /// `CMonsterTruck::ExtendSuspension()` (0x6C7D80)
-    fn call_extend_suspension(car: GPtr<u8>) = thiscall 0x6C7D80 => monster_truck_extend_suspension_port;
 }
 
 /// `fcomp` + `fnstsw ax` + `test ah, mask` + `jp` taken.

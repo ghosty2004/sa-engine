@@ -4,8 +4,9 @@
 //! call to another catalogued function goes through `orig!` at the original address.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
@@ -14,9 +15,9 @@ const TIME_MS: usize = 0xB7CB84;
 /// 0.0f
 const K_ZERO: usize = 0x858B50;
 
-use crate::bindings::anim_blend_animation;
+use sa_world::bindings::anim_blend_animation;
 use crate::bindings::area_codes_dtor as event_area_codes_dtor;
-use crate::bindings::clump_get_association;
+use sa_core::bindings::clump_get_association;
 use crate::bindings::go_to_point_ctor;
 use crate::bindings::point_route_new;
 use sa_core::bindings::get_pad as pad_get_pad;
@@ -25,18 +26,10 @@ use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::area_codes_ctor as event_area_codes_ctor;
 use sa_world::bindings::event_group_add;
 use sa_world::bindings::get_event_global_group;
-orig! {
-    /// `CAnimManager::AddAnimation(RpClump*, AssocGroupId, AnimationId)` (0x4D3AA0, cdecl)
-    fn anim_add_animation(clump: u32, group: u32, anim: u32) -> GPtr<u8> = cdecl 0x4D3AA0 => unported;
-    /// `CPedGeometryAnalyser::ComputeEntityHitSide(const CVector&, CEntity&)` (0x5F3AC0, cdecl)
-    fn geom_compute_entity_hit_side(p: GPtr<u8>, e: u32) -> i32 = cdecl 0x5F3AC0 => unported;
-    /// `CPedGeometryAnalyser::ComputeEntityBoundingBoxPlanes(float z, CEntity&, CVector (*planes)[4], float* ds)`
-    /// (0x5F3660, cdecl)
-    fn geom_compute_entity_bbox_planes(z: u32, e: u32, planes: GPtr<u8>, ds: GPtr<u8>) = cdecl 0x5F3660 => unported;
-    /// `CPedGeometryAnalyser::ComputeRouteRoundEntityBoundingBox(const CPed&, const CVector& start, CEntity&,
-    /// const CVector& target, CPointRoute&, int32)` (0x5F3DD0, cdecl)
-    fn geom_compute_route_round_entity_bbox(ped: GPtr<u8>, start: GPtr<u8>, e: u32, target: GPtr<u8>, route: GPtr<u8>, n: u32) -> u8 = cdecl 0x5F3DD0 => unported;
-}
+use crate::bindings::bbox_planes as geom_compute_entity_bbox_planes;
+use crate::bindings::compute_entity_hit_side as geom_compute_entity_hit_side;
+use crate::bindings::geom_compute_route_round_entity_bbox;
+use sa_world::bindings::add_animation as anim_add_animation;
 
 use sa_core::field::ptr_of as local;
 
@@ -126,8 +119,8 @@ pub fn goto_door_and_open_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -
             let d2 = rd::<GPtr<u8>>(this, 0xC);
             wr::<u32>(d2, 0x40, rd::<u32>(d2, 0x40) & 0xFFFF_FFFB);
         }
-        if !clump_get_association(rd::<u32>(ped, 0x18), 2).is_null() {
-            anim_blend_animation(rd::<u32>(ped, 0x18), rd::<u32>(ped, 0x4D4), 0, 0x447A_0000);
+        if !clump_get_association(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 2).is_null() {
+            anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), rd::<u32>(ped, 0x4D4), 0, f32::from_bits(0x447A_0000));
         }
         let t = task_new_o(0x30);
         if t.is_null() { GPtr::NULL } else { go_to_point_ctor(t, 4, this.byte_add(0x10), 0x3EB3_3333, 0, 0) }
@@ -166,12 +159,12 @@ pub fn go_to_car_door_compute_route_to_door(this: GPtr<u8>, ped: GPtr<u8>) {
     }
     wr::<u32>(rd::<GPtr<u8>>(this, 0x4C), 0, 0);
     let veh = rd::<u32>(this, 0xC);
-    let side1 = geom_compute_entity_hit_side(pos_of(ped), veh);
+    let side1 = geom_compute_entity_hit_side(pos_of(ped), GPtr::from_addr(veh as usize)) as i32;
     let target = this.byte_add(0x38);
-    let side2 = geom_compute_entity_hit_side(target, rd::<u32>(this, 0xC));
+    let side2 = geom_compute_entity_hit_side(target, GPtr::from_addr(rd::<u32>(this, 0xC) as usize)) as i32;
     let mut ds = [0u32; 4];
     let mut planes = [0u32; 12];
-    geom_compute_entity_bbox_planes(rd::<u32>(pos_of(ped), 8), rd::<u32>(this, 0xC), local(&mut planes), local(&mut ds));
+    geom_compute_entity_bbox_planes(rd::<u32>(pos_of(ped), 8), GPtr::from_addr(rd::<u32>(this, 0xC) as usize), local(&mut planes), local(&mut ds));
     let n = |s: i32, i: usize| f32::from_bits(planes[s as usize * 3 + i]);
     let d = |s: i32| f32::from_bits(ds[s as usize]);
     let p = pos_of(ped);
@@ -206,7 +199,7 @@ pub fn go_to_car_door_compute_route_to_door(this: GPtr<u8>, ped: GPtr<u8>) {
         f32_of(x(v2y).fadd_m(t(1))).to_bits(),
         f32_of(x(v2z).fadd_m(t(2))).to_bits(),
     ];
-    geom_compute_route_round_entity_bbox(ped, local(&mut start), rd::<u32>(this, 0xC), local(&mut end), local(&mut local_route), 0);
+    geom_compute_route_round_entity_bbox(ped, local(&mut start), GPtr::from_addr(rd::<u32>(this, 0xC) as usize), local(&mut end), local(&mut local_route), 0);
     route_add(rd::<GPtr<u8>>(this, 0x4C), start);
     let cnt = local_route[0] as i32;
     for i in 0..cnt.max(0) as usize {
@@ -226,10 +219,10 @@ pub fn go_to_car_door_compute_route_to_door(this: GPtr<u8>, ped: GPtr<u8>) {
        unverified = "ai8-2", route = "L2", hazards = "heap-writes", recs = "weapon-combat")]
 pub fn fight_blend_strafe_anims(this: GPtr<u8>, ped: GPtr<u8>) {
     let clump = || rd::<u32>(ped, 0x18);
-    let mut a29 = clump_get_association(clump(), 0x29);
-    let mut a2a = clump_get_association(clump(), 0x2A);
-    let mut a2b = clump_get_association(clump(), 0x2B);
-    let mut a2c = clump_get_association(clump(), 0x2C);
+    let mut a29 = clump_get_association(GPtr::from_addr(clump() as usize), 0x29);
+    let mut a2a = clump_get_association(GPtr::from_addr(clump() as usize), 0x2A);
+    let mut a2b = clump_get_association(GPtr::from_addr(clump() as usize), 0x2B);
+    let mut a2c = clump_get_association(GPtr::from_addr(clump() as usize), 0x2C);
     let mut moving = false;
     let pd = rd::<GPtr<u8>>(ped, 0x480);
     if rd::<u8>(this, 0x26) != 0 || rd::<u8>(this, 0x24) != 0 {
@@ -258,7 +251,7 @@ pub fn fight_blend_strafe_anims(this: GPtr<u8>, ped: GPtr<u8>) {
             wr::<u32>(a2a, 0x18, 0);
         }
         if a2c.is_null() {
-            a2c = anim_add_animation(clump(), 0, 0x2C);
+            a2c = anim_add_animation(GPtr::from_addr(clump() as usize), 0, 0x2C);
         }
         wr::<f32>(a2c, 0x18, nx);
     } else if !x(nx).fcom(zero).test_parity(0x05) {
@@ -266,7 +259,7 @@ pub fn fight_blend_strafe_anims(this: GPtr<u8>, ped: GPtr<u8>) {
             wr::<u32>(a2c, 0x18, 0);
         }
         if a2a.is_null() {
-            a2a = anim_add_animation(clump(), 0, 0x2A);
+            a2a = anim_add_animation(GPtr::from_addr(clump() as usize), 0, 0x2A);
         }
         wr::<f32>(a2a, 0x18, f32_of(x(nx).fchs()));
     }
@@ -275,7 +268,7 @@ pub fn fight_blend_strafe_anims(this: GPtr<u8>, ped: GPtr<u8>) {
             wr::<u32>(a2b, 0x18, 0);
         }
         if a29.is_null() {
-            a29 = anim_add_animation(clump(), 0, 0x29);
+            a29 = anim_add_animation(GPtr::from_addr(clump() as usize), 0, 0x29);
         }
         wr::<f32>(a29, 0x18, f32_of(x(ny).fchs()));
     } else if !x(ny).fcom(zero).test_any(0x41) {
@@ -283,7 +276,7 @@ pub fn fight_blend_strafe_anims(this: GPtr<u8>, ped: GPtr<u8>) {
             wr::<u32>(a29, 0x18, 0);
         }
         if a2b.is_null() {
-            a2b = anim_add_animation(clump(), 0, 0x2B);
+            a2b = anim_add_animation(GPtr::from_addr(clump() as usize), 0, 0x2B);
         }
         wr::<f32>(a2b, 0x18, ny);
     }

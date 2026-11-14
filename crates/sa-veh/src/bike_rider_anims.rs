@@ -11,7 +11,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 
 use crate::common::{f32_of, g, rand_at, rd, wr, x, xi};
@@ -22,16 +22,10 @@ use sa_world::bindings::add_animation;
 use sa_world::bindings::event_group_add;
 use sa_world::bindings::kob_ctor;
 use sa_world::bindings::kob_dtor;
-orig! {
-    /// `RpAnimBlendClumpGetAssociation(RpClump*, AnimationId)` (0x4D68B0)
-    fn clump_get_association(clump: GPtr<u8>, id: u32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
-    /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float delta)` (0x4D4610)
-    fn blend_animation(clump: GPtr<u8>, group: u32, id: u32, delta: u32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
-    /// `CAnimBlendAssociation::SetCurrentTime(float)` (0x4CEA80, `ret 4`)
-    fn assoc_set_current_time(a: GPtr<u8>, t: u32) = thiscall 0x4CEA80 => unported;
-    /// `RtQuatRotate(RtQuat*, const RwV3d* axis, RwReal angle, RwOpCombineType)` (0x7EB7C0)
-    fn rt_quat_rotate(q: GPtr<u8>, axis: u32, angle: u32, combine: u32) -> GPtr<u8> = cdecl 0x7EB7C0 => unported;
-}
+use sa_core::bindings::assoc_set_current_time;
+use sa_core::bindings::clump_get_association;
+use sa_core::bindings::rt_quat_rotate;
+use sa_world::bindings::anim_blend_animation as blend_animation;
 
 /// `CTimer::ms_fTimeStep`
 const TIME_STEP: usize = 0xB7CB5C;
@@ -82,7 +76,7 @@ fn knock_off(rider: GPtr<u8>, veh: GPtr<u8>) {
         0x36,
         2,
         0,
-        0,
+        GPtr::NULL,
         1,
         0,
     );
@@ -102,7 +96,7 @@ fn knock_off(rider: GPtr<u8>, veh: GPtr<u8>) {
             0x36,
             2,
             0,
-            0,
+            GPtr::NULL,
             0,
             0,
         );
@@ -121,7 +115,7 @@ fn blend_in(assoc: GPtr<u8>, clump: GPtr<u8>, group: u32, id: u32, delta: f32) -
     if !assoc.is_null() && (jp(rf(assoc, 0x18), 1.0, 0x05) || jp(rf(assoc, 0x1C), 0.0, 0x41)) {
         return assoc;
     }
-    blend_animation(clump, group, id, delta.to_bits())
+    blend_animation(clump, group, id, f32::from_bits(delta.to_bits()))
 }
 
 /// `blend = f32(blend - min(timeStepNC * 0.02 * delta + amount, blend))` (the register value is replaced by `blend`
@@ -146,7 +140,7 @@ fn set_pair(pos: GPtr<u8>, neg: GPtr<u8>, v: f32, amount: f32) {
         (pos, neg, x(rf(rd::<GPtr<u8>>(pos, 0x14), 0x10)).fmul_m(v))
     };
     wr::<f32>(on, 0x18, amount);
-    assoc_set_current_time(on, f32_of(t).to_bits());
+    assoc_set_current_time(on, f32::from_bits(f32_of(t).to_bits()));
     wr::<u8>(on, 0x2E, rd::<u8>(on, 0x2E) & 0xFE);
     wr::<u32>(off, 0x18, 0);
 }
@@ -449,7 +443,7 @@ pub fn bike_process_rider_anims(
             let lo = hi.fchs().to_f32();
             let r = xi(rand_at(site)).fmul_m(f32::from_bits(0x3800_0100));
             let angle = x(hi_f).fsub_m(lo).fmul(r).fadd_m(lo).to_f32();
-            rt_quat_rotate(q, axis, angle.to_bits(), 2);
+            rt_quat_rotate(q, GPtr::from_addr(axis as usize), f32::from_bits(angle.to_bits()), 2);
         }
         wr::<u32>(rider, 0x470, rd::<u32>(rider, 0x470) | 0x4000);
     }

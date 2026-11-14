@@ -4,30 +4,26 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::{rd, wr, x};
 
 use crate::bindings::audio_add_event_entity;
-use crate::bindings::dm_get_panel_status;
+use sa_world::bindings::dm_get_panel_status;
 use crate::bindings::dm_reset_damage_status;
-use crate::bindings::dm_set_door_status;
+use sa_world::bindings::dm_set_door_status;
 use crate::bindings::dm_set_panel_status;
-use crate::bindings::dm_set_wheel_status;
-use crate::bindings::door_open;
+use sa_pop::bindings::dm_set_wheel_status;
+use sa_world::bindings::door_open;
 use crate::bindings::set_component_visibility;
 use crate::bindings::spawn_flying_component;
 use sa_core::bindings::matrix_dtor;
 use sa_core::bindings::matrix_set_translate;
 use sa_core::bindings::matrix_update_rw;
 use sa_core::bindings::rp_clump_for_all_atomics;
-use sa_world::bindings::matrix_ctor_rw;
-orig! {
-    /// `CDamageManager::GetDoorStatus(eDoors)` (0x6C2230)
-    fn dm_get_door_status(dm: GPtr<u8>, door: i32) -> u32 = thiscall 0x6C2230 => crate::damage::get_door_status;
-    /// `CMatrix::SetRotate(float, float, float)` (0x59B120)
-    fn matrix_set_rotate(m: GPtr<u8>, rx: u32, ry: u32, rz: u32) = thiscall 0x59B120 => unported;
-}
+use sa_core::bindings::matrix_ctor_rw;
+use sa_core::bindings::matrix_set_rotate;
+use sa_world::bindings::damage_get_door_status as dm_get_door_status;
 
 const DM: isize = 0x5A0;
 
@@ -83,7 +79,7 @@ pub fn automobile_pop_door(this: GPtr<u8>, n: i32, door: i32, effect: u8) {
             }
         }
     }
-    dm_set_door_status(dm, door, 4);
+    dm_set_door_status(dm, door as u32, 4);
     set_component_visibility(this, node(this, n), 0);
 }
 
@@ -93,7 +89,7 @@ fn reset_node_rotation(frame: GPtr<u8>) {
     let mut buf = [0u32; 0x12];
     let m: GPtr<u8> = GPtr::from_raw(&mut buf as *mut [u32; 0x12]).cast();
     matrix_ctor_rw(m, frame.byte_add(0x10), 0);
-    matrix_set_translate(m, rd::<u32>(m, 0x30), rd::<u32>(m, 0x34), rd::<u32>(m, 0x38));
+    matrix_set_translate(m, f32::from_bits(rd::<u32>(m, 0x30)), f32::from_bits(rd::<u32>(m, 0x34)), f32::from_bits(rd::<u32>(m, 0x38)));
     matrix_update_rw(m);
     matrix_dtor(m);
 }
@@ -110,7 +106,7 @@ pub fn automobile_fix_door(this: GPtr<u8>, n: i32, door: i32) {
         return;
     }
     door_open(this.byte_add(0x5B8 + (door as isize) * 0x18), 0.0);
-    dm_set_door_status(this.byte_add(DM), door, 0);
+    dm_set_door_status(this.byte_add(DM), door as u32, 0);
     let f = node(this, n);
     if f.is_null() {
         return;
@@ -159,7 +155,7 @@ fn set_boot_angle(this: GPtr<u8>, angle_off: isize) {
         loc[axis] = rd::<u32>(this, 0x5DC);
     }
     loc[5] = rd::<u32>(m, 0x38);
-    matrix_set_rotate(m, loc[0], loc[1], loc[2]);
+    matrix_set_rotate(m, f32::from_bits(loc[0]), f32::from_bits(loc[1]), f32::from_bits(loc[2]));
     for k in 0..3usize {
         let o = 0x30 + 4 * k as isize;
         wr::<f32>(m, o, x(rd::<f32>(m, o)).fadd_m(f32::from_bits(loc[3 + k])).to_f32());
@@ -228,7 +224,7 @@ pub fn plane_fix(this: GPtr<u8>) {
     dm_reset_damage_status(dm);
     if rd::<u32>(rd::<GPtr<u8>>(this, 0x384), 0xCC) & 0x100 != 0 {
         for d in 2..6 {
-            dm_set_door_status(dm, d, 4);
+            dm_set_door_status(dm, d as u32, 4);
         }
     }
     wr::<u8>(this, 0x42A, rd::<u8>(this, 0x42A) & 0xFE);
@@ -245,10 +241,10 @@ pub fn quad_bike_fix(this: GPtr<u8>) {
     let dm = this.byte_add(DM);
     dm_reset_damage_status(dm);
     for d in 2..6 {
-        dm_set_door_status(dm, d, 4);
+        dm_set_door_status(dm, d as u32, 4);
     }
     wr::<u8>(this, 0x42A, rd::<u8>(this, 0x42A) & 0xFE);
-    rp_clump_for_all_atomics(rd::<GPtr<u8>>(this, 0x18), 0x004C_7790, 2);
+    rp_clump_for_all_atomics(rd::<GPtr<u8>>(this, 0x18), 0x004C_7790, GPtr::from_addr(2));
     for w in 0..4 {
         dm_set_wheel_status(dm, w, 0);
     }

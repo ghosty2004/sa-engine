@@ -23,14 +23,22 @@ pub use sa_stream::bindings::ped_is_player;
 pub use sa_world::bindings::apply_move_speed;
 pub use sa_world::bindings::apply_turn_speed;
 pub use sa_world::bindings::audio_terminate;
-pub use sa_world::bindings::bike_ctor as bike_constructor_call;
+pub use sa_core::bindings::bike_ctor as bike_constructor_call;
 pub use sa_world::bindings::check_collision;
 pub use sa_world::bindings::entity_get_col_model;
 pub use sa_world::bindings::get_pad_from_player;
 pub use sa_world::bindings::skip_physics;
+pub use crate::bindings::do_head_light_beam;
+pub use crate::bindings::vehicle_delete;
+pub use crate::bindings::vehicle_render;
+pub use sa_core::bindings::assoc_set_finish_callback;
+pub use sa_core::bindings::clump_get_association;
+pub use sa_core::bindings::matrix_assign;
+pub use sa_core::bindings::rw_matrix_transform;
+pub use sa_world::bindings::anim_blend_animation as blend_animation;
+pub use sa_world::bindings::bike_calculate_lean_matrix as calculate_lean_matrix_call;
+pub use sa_world::bindings::matrix_copy_ctor;
 orig! {
-    /// `CVehicle::operator delete(void*)` (0x6E2D90, catalogue `delete`)
-    pub fn vehicle_delete(p: GPtr<u8>) = cdecl 0x6E2D90 => unported;
     /// `CBike::Destructor()` (0x6B57A0)
     pub fn bike_destructor_call(bk: GPtr<u8>) = thiscall 0x6B57A0 => destructor;
     /// `CBmx::~CBmx()` (0x6BF9D0)
@@ -43,28 +51,10 @@ orig! {
     pub fn rw_render_state_get(state: u32, out: GPtr<u32>) -> i32 = cdecl table 0xC97B24 0x24 => unported;
     /// `RwRenderStateSet` (RwEngineInstance +0x20)
     pub fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `CVehicle::Render()` (0x6D0E60)
-    pub fn vehicle_render(v: GPtr<u8>) = thiscall 0x6D0E60 => unported;
-    /// `CBike::CalculateLeanMatrix()` (0x6B7150)
-    pub fn calculate_lean_matrix_call(bk: GPtr<u8>) = thiscall 0x6B7150 => calculate_lean_matrix;
-    /// `CVehicle::DoHeadLightBeam(int32, CMatrix&, bool)` (0x6E0E20)
-    pub fn do_head_light_beam(v: GPtr<u8>, kind: u32, m: GPtr<u8>, right: u32) = thiscall 0x6E0E20 => unported;
-    /// `CMatrix::operator=(const CMatrix&)` (0x59BBC0)
-    pub fn matrix_assign(m: GPtr<u8>, src: GPtr<u8>) = thiscall 0x59BBC0 => unported;
-    /// `CMatrix::CMatrix(const CMatrix&)` (0x59BCF0)
-    pub fn matrix_copy_ctor(m: GPtr<u8>, src: GPtr<u8>) = thiscall 0x59BCF0 => unported;
     /// `CBike::ProcessControl()` (0x6B9250)
     pub fn bike_process_control(bk: GPtr<u8>) = thiscall 0x6B9250 => unported;
-    /// `RpAnimBlendClumpGetAssociation(RpClump*, AnimationId)` (0x4D68B0)
-    pub fn clump_get_association(clump: GPtr<u8>, id: u32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
     /// virtual `CBaseModelInfo` slot +0x38 (the vehicle model's anim file / group index)
     pub fn mi_vslot_38(mi: GPtr<u8>) -> i32 = thiscall vslot 0x38 => unported;
-    /// `RwMatrixTransform(RwMatrix*, const RwMatrix*, RwOpCombineType)` (0x7F25A0)
-    pub fn rw_matrix_transform(m: GPtr<u8>, t: GPtr<u8>, op: u32) -> GPtr<u8> = cdecl 0x7F25A0 => unported;
-    /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float)` (0x4D4610)
-    pub fn blend_animation(clump: GPtr<u8>, group: u32, id: u32, delta: f32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
-    /// `CAnimBlendAssociation::SetFinishCallback(void (*)(CAnimBlendAssociation*, void*), void*)` (0x4CEBE0)
-    pub fn assoc_set_finish_callback(a: GPtr<u8>, cb: u32, data: GPtr<u8>) = thiscall 0x4CEBE0 => unported;
 }
 
 /// A stack `CMatrix` (0x48 bytes) as the inlined default constructor leaves it: only the attach

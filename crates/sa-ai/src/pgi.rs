@@ -8,6 +8,7 @@
 //! +0x1EC (default), +0x28C default task allocator, +0x290 primary allocator, +0x294 event response allocator.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 

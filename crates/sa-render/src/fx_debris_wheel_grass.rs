@@ -58,7 +58,7 @@ pub fn fx_add_debris(_this: GPtr<u8>, pos: GPtr<f32>, colour: GPtr<u8>, scale: f
     }
     let mut mult = [0u32; 8];
     let mp: GPtr<u8> = GPtr::from_raw(mult.as_mut_ptr()).cast();
-    fx_prt_mult_default_ctor(mp);
+    fx_prt_mult_default_ctor(mp.addr() as u32);
     let k255 = gf(0x859A3C);
     let c = |i: isize| i32::from(colour.byte_add(i).read());
     let mf = |o: isize, v: f32| mp.byte_add(o).cast::<f32>().write(v);

@@ -118,7 +118,7 @@ pub fn undo_building_swaps() {
         let e = BUILDING_SWAPS + i * 0xC;
         let b = ga::<GPtr<u8>>(e).read();
         if !b.is_null() {
-            building_replace_with_new_model(b, ga::<u32>(e + 8).read());
+            building_replace_with_new_model(b, (ga::<u32>(e + 8).read()) as u16);
             ga::<u32>(e).write(0);
             ga::<i32>(e + 4).write(-1);
             ga::<i32>(e + 8).write(-1);

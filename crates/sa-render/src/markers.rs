@@ -95,7 +95,7 @@ const K_0_65: u32 = 0x3F26_6666;
 /// 0.8 (0x858C98)
 const K_0_8: u32 = 0x3F4C_CCCD;
 
-pub use crate::bindings::camera_is_sphere_visible_m as is_sphere_visible;
+pub use sa_world::bindings::camera_is_sphere_visible_m as is_sphere_visible;
 pub use sa_core::bindings::activate_directional;
 pub use sa_core::bindings::atexit;
 pub use sa_core::bindings::cross_product;
@@ -126,25 +126,29 @@ pub use sa_core::bindings::set_current_txd;
 pub use sa_core::bindings::streaming_request_model as request_model;
 pub use sa_core::bindings::vector_normalise;
 pub use sa_stream::bindings::has_collision_loaded;
-pub use sa_stream::bindings::load_data_from_work_buffer;
+pub use sa_core::bindings::load_data_from_work_buffer;
 pub use sa_stream::bindings::model_info_add_ref as model_add_ref;
-pub use sa_stream::bindings::rp_clump_add_atomic;
-pub use sa_stream::bindings::save_data_to_work_buffer;
+pub use sa_core::bindings::rp_clump_add_atomic;
+pub use sa_core::bindings::save_data_to_work_buffer;
 pub use sa_stream::bindings::set_atomic_render_callback;
 pub use sa_world::bindings::get_water_level_no_waves;
-pub use sa_world::bindings::matrix_ctor_rw;
+pub use sa_core::bindings::matrix_ctor_rw;
 pub use sa_world::bindings::process_line_of_sight;
 pub use sa_world::bindings::rp_clump_render;
 pub use sa_world::bindings::rw_frame_set_identity;
+pub use sa_core::bindings::change_dir;
+pub use sa_core::bindings::find_txd_slot;
+pub use sa_core::bindings::get_model_info;
+pub use sa_core::bindings::rp_clump_for_all_atomics;
+pub use sa_stream::bindings::hud_colours_get_rgb as hud_get_rgb;
+pub use sa_world::bindings::find_ground_z_for_3d_coord as find_ground_z_for_3d_coord_st0;
+pub use sa_world::bindings::find_player_centre_of_world;
+pub use sa_world::bindings::rw_frame_translate;
 orig! {
-    /// `RpClumpForAllAtomics(RpClump*, callback, void* data)` (0x749B70)
-    pub fn rp_clump_for_all_atomics(c: GPtr<u8>, cb: u32, data: GPtr<u8>) -> GPtr<u8> = cdecl 0x749B70 => unported;
     /// `RwRenderStateSet` (`RwEngineInstance` slot 0x20)
     pub fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
     /// `RwRenderStateGet` (`RwEngineInstance` slot 0x24)
     pub fn rw_render_state_get(state: u32, out: GPtr<u8>) -> i32 = cdecl table 0xC97B24 0x24 => unported;
-    /// `RwFrameTranslate(RwFrame*, const RwV3d*, RwOpCombineType)` (0x7F0E30)
-    pub fn rw_frame_translate(f: GPtr<u8>, v: GPtr<u8>, combine: u32) -> GPtr<u8> = cdecl 0x7F0E30 => unported;
     /// `CMatrix` per-axis scale `(x, y, z)` (0x5A2E60, unnamed in the catalogue)
     pub fn matrix_scale_xyz(m: GPtr<u8>, sx: u32, sy: u32, sz: u32) = thiscall 0x5A2E60 => unported;
     /// `Light::SetBrightMarkerColours(float)` (0x735BD0)
@@ -153,16 +157,10 @@ orig! {
     pub fn reset_ambient_and_directional_colours() = cdecl 0x735C40 => unported;
     /// `atomic->renderCallBack(atomic)` (the pointer at RpAtomic +0x48)
     pub fn atomic_render_callback(f: u32, a: GPtr<u8>) -> GPtr<u8> = cdecl dyn => unported;
-    /// `CWorld::FindPlayerCentreOfWorld(int32)` (0x56E250, returns a CVector*)
-    pub fn find_player_centre_of_world(id: i32) -> GPtr<u8> = cdecl 0x56E250 => unported;
     /// `C3dMarker::UpdateZCoordinate(CVector, float)` (0x724D40)
     pub fn update_z_coordinate_call(m: GPtr<u8>, x: u32, y: u32, z: u32, d: u32) = thiscall 0x724D40 => unported;
     /// `C3dMarker::AddMarker(...)` (0x722230)
     pub fn add_marker_call(m: GPtr<u8>, id: u32, ty: u32, size: u32, r: u32, g: u32, b: u32, a: u32, pp: u32, pf: u32, rr: u32) -> u8 = thiscall 0x722230 => unported;
-    /// `CWorld::FindGroundZFor3DCoord(float x, float y, float z, bool* found, CEntity** out)` (0x5696C0, ST0)
-    pub fn find_ground_z_for_3d_coord_st0(x: u32, y: u32, z: f32, found: GPtr<u8>, out: u32) -> f64 = cdecl 0x5696C0 => unported;
-    /// `CHudColours::GetRGB(CRGBA* ret, eHudColours)` (0x58FEA0, struct returned through `ret`)
-    pub fn hud_get_rgb(this: GPtr<u8>, ret: GPtr<u8>, colour: u32) -> GPtr<u8> = thiscall 0x58FEA0 => unported;
     /// `Light::SetAmbientColours(RwRGBAReal*)` (0x735D50)
     pub fn set_ambient_colours(c: u32) = cdecl 0x735D50 => unported;
     /// `Light::SetDirectionalColours(RwRGBAReal*)` (0x735D70)
@@ -176,12 +174,6 @@ orig! {
     /// `C3dMarkers::PlaceMarker(id, type, CVector& pos, size, r, g, b, a, pulsePeriod, pulseFraction,
     /// rotateRate, nrm x, nrm y, nrm z, zCheck)` (0x725120)
     pub fn place_marker_call(id: u32, ty: u32, pos: u32, size: u32, r: u32, g: u32, b: u32, a: u32, pp: u32, pf: u32, rr: u32, nx: u32, ny: u32, nz: u32, zc: u32) -> GPtr<u8> = cdecl 0x725120 => unported;
-    /// `CTxdStore::FindTxdSlot(const char*)` (0x731850)
-    pub fn find_txd_slot(name: u32) -> i32 = cdecl 0x731850 => unported;
-    /// `CFileMgr::ChangeDir(const char*)` (0x538730)
-    pub fn change_dir(d: u32) = cdecl 0x538730 => unported;
-    /// `CModelInfo::GetModelInfo(const char*, int32* index)` (0x4C5940)
-    pub fn get_model_info(name: u32, idx: GPtr<i32>) -> GPtr<u8> = cdecl 0x4C5940 => unported;
     /// `CBaseModelInfo::CreateInstance()` (virtual, slot 0x2C)
     pub fn model_create_instance(mi: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x2C => unported;
 }
@@ -327,17 +319,17 @@ pub fn update_z_coordinate(this: GPtr<u8>, px: u32, py: u32, _pz: u32, z_dist: u
     if jp(s, x(k(K_10000)), 0x05) {
         return;
     }
-    if has_collision_loaded(this.byte_add(0x30).cast(), 0) == 0 {
+    if has_collision_loaded(GPtr::<f32>::cast::<u8>(this.byte_add(0x30).cast()), 0) == 0 {
         return;
     }
     let z1 = f32_of(x(rd::<f32>(this, 0x38)).fadd_m(k(K_ONE)));
     let mut found = 0u32;
     let gz = X87::from_f64_exact(find_ground_z_for_3d_coord_st0(
-        rd::<u32>(this, 0x30),
-        rd::<u32>(this, 0x34),
+        f32::from_bits(rd::<u32>(this, 0x30)),
+        f32::from_bits(rd::<u32>(this, 0x34)),
         z1,
         GPtr::from_raw(&mut found).cast(),
-        0,
+        GPtr::NULL,
     ));
     if found as u8 != 0 {
         let v = x(f32::from_bits(z_dist)).fmul_m(k(K_0_05));
@@ -384,13 +376,13 @@ pub fn init() {
     CLUMP_ARRAY.set([0; 7]);
     NUM_ACTIVE_MARKERS.set(0);
     ANGLE_DIAMOND.set(0.0);
-    let slot = find_txd_slot(0x85C648);
+    let slot = find_txd_slot(GPtr::from_addr(0x85C648));
     push_current_txd();
     set_current_txd(slot);
-    change_dir(0x859F7C);
+    change_dir(GPtr::from_addr(0x859F7C));
     let mk = |name: u32| -> GPtr<u8> {
         let mut idx = 0i32;
-        let mi = get_model_info(name, GPtr::from_raw(&mut idx));
+        let mi = get_model_info(GPtr::from_addr(name as usize), GPtr::<i32>::cast::<u8>(GPtr::from_raw(&mut idx)));
         request_model(idx, 2);
         load_all_requested_models(0);
         let atomic = model_create_instance(mi);
@@ -481,7 +473,7 @@ pub fn render() {
         if rd::<u8>(m, 0x53) != 0 {
             let near = !jp(x(rd::<f32>(m, 0x74)), x(k(K_150)), 0x05);
             if (near || IGNORE_RENDER_LIMIT.get() != 0 || rd::<u16>(m, 0x50) == 4)
-                && is_sphere_visible(GPtr::from_addr(THE_CAMERA), m.byte_add(0x30), 0x4000_0000, CAM_SPHERE_MATRIX) != 0
+                && is_sphere_visible(GPtr::from_addr(THE_CAMERA), m.byte_add(0x30), f32::from_bits(0x4000_0000), GPtr::from_addr(CAM_SPHERE_MATRIX as usize)) != 0
             {
                 marker_render_call(m);
             }
@@ -545,12 +537,12 @@ fn place_alpha(m: GPtr<u8>, t: u16, dist: f32, size: u32, a: u8) {
 fn place_water(m: GPtr<u8>, pc: [u32; 3], size: u32) {
     let mut out = 0u32;
     let found = get_water_level_no_waves(
-        rd::<u32>(m, 0x30),
-        rd::<u32>(m, 0x34),
-        rd::<u32>(m, 0x38),
+        f32::from_bits(rd::<u32>(m, 0x30)),
+        f32::from_bits(rd::<u32>(m, 0x34)),
+        f32::from_bits(rd::<u32>(m, 0x38)),
         GPtr::from_raw(&mut out).cast(),
-        0,
-        0,
+        GPtr::NULL,
+        GPtr::NULL,
     );
     if found != 0 && !jne(x(f32::from_bits(out)), x(rd::<f32>(m, 0x38)), 0x01) {
         wr::<u32>(m, 0x38, out);
@@ -700,7 +692,7 @@ pub fn place_marker(
                 crate::common::xi(i32::from(rate)).fmul_m(g::<f32>(TIME_STEP).read()).fmul_m(k(K_DEG2RAD)),
             );
             let sv = [rd::<u32>(m, 0x30), rd::<u32>(m, 0x34), rd::<u32>(m, 0x38)];
-            matrix_rotate_z(m, ang.to_bits());
+            matrix_rotate_z(m, f32::from_bits(ang.to_bits()));
             wr::<u32>(m, 0x30, sv[0]);
             wr::<u32>(m, 0x34, sv[1]);
             if !(ftol32(x(f32::from_bits(sv[0]))) as u16 == rd::<u16>(m, 0x84)
@@ -754,7 +746,7 @@ pub fn place_marker(
             pw(2).write(f32_of(s.fmul_m(k(K_0_3)).fadd_m(pw(2).read())));
         }
         let pr = pos.cast::<u32>();
-        matrix_set_translate(m, pr.read(), pr.wrapping_index(1).read(), pr.wrapping_index(2).read());
+        matrix_set_translate(m, f32::from_bits(pr.read()), f32::from_bits(pr.wrapping_index(1).read()), f32::from_bits(pr.wrapping_index(2).read()));
         add_marker_call(m, id, ty, size, r, gg, b, a, pp, pf, rr);
         if t == 1 {
             place_water(m, pc, size);
@@ -1191,5 +1183,5 @@ pub const HOOKS: &[HookReg] = &[
 
 /// `find_ground_z_for_3d_coord_st0` with its ST0 result as `X87` (orig! returns stay register-sized).
 pub fn find_ground_z_for_3d_coord(x: u32, y: u32, z: f32, found: GPtr<u8>, out: u32) -> X87 {
-    X87::from_f64_exact(find_ground_z_for_3d_coord_st0(x, y, z, found, out))
+    X87::from_f64_exact(find_ground_z_for_3d_coord_st0(f32::from_bits(x), f32::from_bits(y), z, found, GPtr::from_addr(out as usize)))
 }

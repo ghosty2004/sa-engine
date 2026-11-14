@@ -207,7 +207,7 @@ pub fn setup_shop_peds(this: GPtr<u8>) {
         get_tile_centre(it, xi(tx).to_f32(), xi(ty).to_f32(), p(&mut pos));
         pos[2] = x(pos[2]).fadd_m(1.0).to_f32();
         let n = isize::from(rd::<i8>(this, 0x36));
-        let ped = add_ped(ped_type, model, p(&mut pos), 0);
+        let ped = add_ped(ped_type, model as u32, GPtr::<u8>::cast::<f32>(p(&mut pos)), 0);
         wr::<GPtr<u8>>(this, 0x38 + n * 4, ped);
         if !ped.is_null() {
             wr::<u8>(this, 0x36, rd::<u8>(this, 0x36).wrapping_add(1));

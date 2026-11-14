@@ -16,9 +16,9 @@ const THE_PATHS: usize = 0x96F050;
 /// `TheCamera` (0xB6F028).
 const THE_CAMERA: usize = 0xB6F028;
 
-use crate::bindings::camera_is_sphere_visible;
+use sa_world::bindings::camera_is_sphere_visible;
 use crate::bindings::cull_zones_fewer_peds as fewer_peds;
-use crate::bindings::is_sunbather;
+use sa_world::bindings::is_sunbather;
 use sa_core::bindings::entity_update_rw_frame as update_rw_frame;
 use sa_core::bindings::object_new;
 use sa_core::bindings::random_float_in_range as grn_f;
@@ -38,21 +38,34 @@ use sa_world::bindings::set_ped_decision_maker_type;
 use sa_world::bindings::set_posn;
 use sa_world::bindings::update_rw_matrix;
 use sa_world::bindings::wander_get_wander_task_by_ped_type as get_wander_task_by_ped_type;
+use crate::bindings::dont_create_civilians;
+use crate::bindings::generate_peds_at_attractors;
+use sa_core::bindings::general_random_int_in_range as grn_i;
+use sa_core::bindings::get_weapon_info;
+use sa_core::bindings::load_all_requested_models;
+use sa_core::bindings::object_ctor_5a1d70 as object_ctor;
+use sa_stream::bindings::col_load_collision as load_collision;
+use sa_world::bindings::add_ped;
+use sa_world::bindings::frenzy_on_going;
+use sa_world::bindings::gang_war_fighting_going_on;
+use sa_world::bindings::hold_entity_ctor;
+use sa_world::bindings::is_position_clear_for_ped;
+use sa_world::bindings::placeable_set_heading as set_heading;
+use sa_world::bindings::population_remove_ped as remove_ped;
+use sa_world::bindings::sunbathe_ctor;
+use sa_world::bindings::task_wander_criminal_ctor as wander_criminal_ctor;
+use sa_world::bindings::tm_set_task as set_task;
+use sa_world::bindings::vector_add as vec_add;
+use sa_world::bindings::vector_add_assign as vec_add_assign;
+use sa_world::bindings::vector_mul_scalar as vec_mul;
+use sa_world::bindings::world_process_vertical_line as process_vertical_line;
 orig! {
-    /// `CGangWars::DontCreateCivilians()` (0x4439C0)
-    fn dont_create_civilians() -> u8 = cdecl 0x4439C0 => crate::gangs::dont_create_civilians;
-    /// `CGangWars::GangWarFightingGoingOn()` (0x443AC0)
-    fn gang_war_fighting_going_on() -> u8 = cdecl 0x443AC0 => crate::gangs::gang_war_fighting_going_on;
     /// `CWorld::FindPlayerPed(int32)` (0x56E210)
     fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
     /// `CPopulation::PedCreationDistMultiplier()` (0x6116C0, ST0)
     fn pdm_call() -> f64 = cdecl 0x6116C0 => pdm_abi;
-    /// `CDarkel::FrenzyOnGoing()` (0x43D1F0)
-    fn frenzy_on_going() -> u8 = cdecl 0x43D1F0 => crate::misc::frenzy_on_going;
     /// `CPopCycle::FindNewPedType(ePedType*, int32*, bool, bool)` (0x60FBD0)
     fn find_new_ped_type(t: GPtr<i32>, m: GPtr<i32>, no_gangs: u8, no_cops: u8) -> u8 = cdecl 0x60FBD0 => crate::population2::find_new_ped_type;
-    /// `CGeneral::GetRandomNumberInRange(int32, int32)` (0x407180)
-    fn grn_i(lo: i32, hi: i32) -> i32 = cdecl 0x407180 => sa_core::general::get_random_number_in_range_i32;
     /// `CPopulation::ChooseCivilianCoupleOccupations(int32&, int32&)` (0x613180)
     fn choose_civilian_couple_occupations(h: GPtr<i32>, w: GPtr<i32>) = cdecl 0x613180 => crate::population2::choose_civilian_couple_occupations;
     /// `FUN_00610DB0` (0x610DB0): a random gang size
@@ -63,56 +76,22 @@ orig! {
     fn add_wander_offset_between_nodes(this: GPtr<u8>, a: u32, b: u32, seed: u32, ox: GPtr<f32>, oy: GPtr<f32>) = thiscall 0x44DA30 => crate::pathfind::add_wander_offset_between_nodes;
     /// `CPopulation::PlaceGangMembers(ePedType, int32, const CVector&)` (0x6117D0)
     fn place_gang_members(t: i32, n: i32, pos: GPtr<f32>) -> u8 = cdecl 0x6117D0 => crate::population::place_gang_members;
-    /// `CPedPlacement::IsPositionClearForPed(const CVector&, float, int32, CEntity**, bool, bool, bool)` (0x616860)
-    fn is_position_clear_for_ped(pos: GPtr<f32>, r: f32, max: i32, ents: GPtr<u32>, a: u8, b: u8, c: u8) -> u8 = cdecl 0x616860 => unported;
-    /// `CPopulation::AddPed(ePedType, uint32, const CVector&, bool)` (0x612710)
-    fn add_ped(t: u32, m: u32, pos: GPtr<f32>, wander: u8) -> GPtr<u8> = cdecl 0x612710 => crate::population3::add_ped;
     /// `CPed::GetWalkAnimSpeed()` (0x5E04B0, thiscall, ST0)
     fn get_walk_anim_speed(p: GPtr<u8>) -> f64 = thiscall 0x5E04B0 => unported;
     /// `CTaskComplexBeInCouple::CTaskComplexBeInCouple(CPed*, bool, bool, bool, float)` (0x6836F0)
     fn be_in_couple_ctor(this: GPtr<u8>, partner: GPtr<u8>, leader: u8, a: u8, b: u8, dist: f32) -> GPtr<u8> = thiscall 0x6836F0 => unported;
-    /// `CTaskManager::SetTask(CTask*, int32, bool)` (0x681AF0)
-    fn set_task(mgr: GPtr<u8>, task: GPtr<u8>, slot: i32, b: u8) = thiscall 0x681AF0 => unported;
-    /// `FUN_0040FE30(CVector* out, const CVector*, const CVector*)` (0x40FE30): `*out = a + b`
-    fn vec_add(out: GPtr<f32>, a: GPtr<f32>, b: GPtr<f32>) -> GPtr<f32> = cdecl 0x40FE30 => unported;
-    /// `FUN_0040FEC0(CVector* out, const CVector*, float)` (0x40FEC0): `*out = v * f`
-    fn vec_mul(out: GPtr<f32>, v: GPtr<f32>, f: f32) -> GPtr<f32> = cdecl 0x40FEC0 => unported;
-    /// `FUN_00411A00(const CVector*)` (0x411A00, thiscall, `ret 4`): `*this += *v`
-    fn vec_add_assign(this: GPtr<f32>, v: GPtr<f32>) = thiscall 0x411A00 => unported;
-    /// `CPopulation::RemovePed(CPed*)` (0x610F20)
-    fn remove_ped(p: GPtr<u8>) = cdecl 0x610F20 => crate::population::remove_ped;
-    /// `CWeaponInfo::GetWeaponInfo(eWeaponType, eWeaponSkill)` (0x743C60)
-    fn get_weapon_info(w: i32, skill: i32) -> GPtr<u8> = cdecl 0x743C60 => unported;
     /// `CPopulation::IsSkateable(const CVector&)` (0x6114C0)
     fn is_skateable(pos: GPtr<f32>) -> u8 = cdecl 0x6114C0 => crate::population2::is_skateable;
     /// `CPopulation::FindDistanceToNearestPedOfType(ePedType, CVector)` (0x6143E0, ST0)
     fn find_distance_to_nearest_ped_of_type(t: i32, px: f32, py: f32, pz: f32) -> f64 = cdecl 0x6143E0 => fdtnpot_abi;
-    /// `CWorld::ProcessVerticalLine(const CVector&, float, CColPoint&, CEntity*&, bool x6, CStoredCollPoly*)` (0x5674E0)
-    fn process_vertical_line(o: GPtr<f32>, z: f32, cp: GPtr<u32>, ent: GPtr<u32>, b: u32, v: u32, p: u32, ob: u32, d: u32, see: u32, poly: u32) -> u8 = cdecl 0x5674E0 => unported;
     /// `SurfaceInfos_c::IsBeach(uint32)` (0x55E750, thiscall on `g_surfaceInfos` 0xB79538)
     fn is_beach(this: GPtr<u8>, surface: u32) -> u8 = thiscall 0x55E750 => unported;
     /// `CTaskComplexSunbathe::CanSunbathe()` (0x632140)
     fn can_sunbathe() -> u8 = cdecl 0x632140 => unported;
-    /// `CPlaceable::SetHeading(float)` (0x43E0C0)
-    fn set_heading(e: GPtr<u8>, h: f32) = thiscall 0x43E0C0 => unported;
     /// `CWaterLevel::CreateBeachToy(const CVector&, eBeachToy)` (0x6EABA0)
     fn create_beach_toy(pos: GPtr<f32>, toy: i32) -> GPtr<u8> = cdecl 0x6EABA0 => crate::misc4::create_beach_toy;
     /// `CVector::CrossProduct(CVector* out, const CVector*, const CVector*)` (0x59C730)
     fn cross_product(out: GPtr<f32>, a: GPtr<f32>, b: GPtr<f32>) -> GPtr<f32> = cdecl 0x59C730 => unported;
-    /// `CTaskComplexSunbathe::CTaskComplexSunbathe(CObject* towel, bool)` (0x631F80)
-    fn sunbathe_ctor(this: GPtr<u8>, towel: GPtr<u8>, b: u8) -> GPtr<u8> = thiscall 0x631F80 => unported;
-    /// `CTaskComplexWanderCriminal::CTaskComplexWanderCriminal(int32, uint8, bool)` (0x48E610)
-    fn wander_criminal_ctor(this: GPtr<u8>, move_state: i32, dir: i32, b: u8) -> GPtr<u8> = thiscall 0x48E610 => unported;
-    /// `CObject::CObject(int32, bool)` (0x5A1D70)
-    fn object_ctor(this: GPtr<u8>, model: i32, b: u8) -> GPtr<u8> = thiscall 0x5A1D70 => unported;
-    /// `CTaskSimpleHoldEntity::CTaskSimpleHoldEntity(CEntity*, const CVector*, uint8, uint8, AnimationId, AssocGroupId, bool)` (0x6913A0)
-    fn hold_entity_ctor(this: GPtr<u8>, e: GPtr<u8>, pos: GPtr<f32>, bone: u8, flags: u8, anim: i32, group: i32, b: u8) -> GPtr<u8> = thiscall 0x6913A0 => unported;
-    /// `CColStore::LoadCollision(CVector, bool)` (0x410860, CVector by value)
-    fn load_collision(px: f32, py: f32, pz: f32, b: u8) = cdecl 0x410860 => unported;
-    /// `CStreaming::LoadAllRequestedModels(bool)` (0x40EA10)
-    fn load_all_requested_models(b: u8) = cdecl 0x40EA10 => unported;
-    /// `CPopulation::GeneratePedsAtAttractors(CVector, float, float, float, float, int32, int32)` (0x615970)
-    fn generate_peds_at_attractors(px: f32, py: f32, pz: f32, min: f32, max: f32, min_close: f32, max_close: f32, dm: i32, n: i32) -> i32 = cdecl 0x615970 => unported;
     /// `CPathFind::GeneratePedCreationCoors_Interior(float, float, CVector*, CNodeAddress*, CNodeAddress*, float*)` (0x44ECA0)
     fn generate_ped_creation_coors_interior(this: GPtr<u8>, px: f32, py: f32, out: GPtr<f32>, a: GPtr<u32>, b: GPtr<u32>, orient: GPtr<f32>) -> u8 = thiscall 0x44ECA0 => crate::pathfind::generate_ped_creation_coors_interior;
 }
@@ -235,7 +214,7 @@ fn add_to_population_body(r1: f32, r2: f32, r3: f32, r4: f32, s: &mut Slots, tou
     if dont_create_civilians() != 0 || g::<u8>(0x96917A).read() != 0 {
         return 0;
     }
-    let c = find_player_centre_of_world(i32::from(pif));
+    let c = GPtr::<u8>::cast::<f32>(find_player_centre_of_world(i32::from(pif)));
     let ctr = [c.read(), c.wrapping_index(1).read(), c.wrapping_index(2).read()];
     let ped = || g::<GPtr<u8>>(player).read();
     let wanted = || {
@@ -456,7 +435,7 @@ fn add_to_population_body(r1: f32, r2: f32, r3: f32, r4: f32, s: &mut Slots, tou
                 cpos[1] = bx.fadd_m(entity_pos(leader).wrapping_index(1).read()).to_f32();
             }
         }
-        if is_position_clear_for_ped(cp, -1.0, -1, GPtr::NULL, 1, 1, 1) == 0 {
+        if is_position_clear_for_ped(cp.cast::<u8>(), -1.0, -1, GPtr::<u32>::cast::<u8>(GPtr::NULL), 1, 1, 1) == 0 {
             return room;
         }
         let next = i.wrapping_add(1);
@@ -478,7 +457,7 @@ fn add_to_population_body(r1: f32, r2: f32, r3: f32, r4: f32, s: &mut Slots, tou
             }
         }
         let mut ok = 1u8;
-        let visible = camera_is_sphere_visible(g::<u8>(THE_CAMERA), cp, 2.0) != 0;
+        let visible = camera_is_sphere_visible(g::<u8>(THE_CAMERA), cp.cast::<u8>(), 2.0) != 0;
         if visible
             && !jne_mask(
                 pdm().fmul_m(42.5),
@@ -540,14 +519,14 @@ fn add_couple(husband: i32, wife: i32, mut q: [f32; 3]) {
         return;
     }
     let qp = GPtr::from_raw(q.as_mut_ptr());
-    if camera_is_sphere_visible(g::<u8>(THE_CAMERA), qp, 1.5) != 0 {
+    if camera_is_sphere_visible(g::<u8>(THE_CAMERA), qp.cast::<u8>(), 1.5) != 0 {
         let pp = entity_pos(find_player_ped(-1));
         let d = dist2d(q[0], q[1], pp.read(), pp.wrapping_index(1).read());
         if !jne_mask(pdm().fmul_m(42.5), x(d), 0x41) {
             return;
         }
     }
-    if is_position_clear_for_ped(qp, col_radius(husband), -1, GPtr::NULL, 1, 1, 1) == 0 {
+    if is_position_clear_for_ped(qp.cast::<u8>(), col_radius(husband), -1, GPtr::<u32>::cast::<u8>(GPtr::NULL), 1, 1, 1) == 0 {
         return;
     }
     let mut found = [0u8];
@@ -615,9 +594,9 @@ fn add_couple(husband: i32, wife: i32, mut q: [f32; 3]) {
     ];
     let mut wp = [0f32; 3];
     vec_add(
-        GPtr::from_raw(wp.as_mut_ptr()),
-        entity_pos(h),
-        GPtr::from_raw(off.as_mut_ptr()),
+        GPtr::<f32>::cast::<u8>(GPtr::from_raw(wp.as_mut_ptr())),
+        GPtr::<f32>::cast::<u8>(entity_pos(h)),
+        GPtr::<f32>::cast::<u8>(GPtr::from_raw(off.as_mut_ptr())),
     );
     let mut found = [0u8];
     let gz = X87::from_f64_exact(find_ground_z_for_3d_coord(
@@ -641,10 +620,10 @@ fn add_couple(husband: i32, wife: i32, mut q: [f32; 3]) {
     set_posn(w, wp[0], wp[1], z);
     let mut ents = [0u32; 3];
     is_position_clear_for_ped(
-        GPtr::from_raw(wp.as_mut_ptr()),
+        GPtr::<f32>::cast::<u8>(GPtr::from_raw(wp.as_mut_ptr())),
         col_radius(wife),
         3,
-        GPtr::from_raw(ents.as_mut_ptr()),
+        GPtr::<u32>::cast::<u8>(GPtr::from_raw(ents.as_mut_ptr())),
         1,
         1,
         1,
@@ -668,17 +647,17 @@ fn sunbathe(ped: GPtr<u8>, cpos: &mut [f32; 3]) -> bool {
     let mut cp = [0u32; 11];
     let mut ent = [0u32];
     process_vertical_line(
-        GPtr::from_raw(line.as_mut_ptr()),
+        GPtr::<f32>::cast::<u8>(GPtr::from_raw(line.as_mut_ptr())),
         zlow,
-        GPtr::from_raw(cp.as_mut_ptr()),
-        GPtr::from_raw(ent.as_mut_ptr()),
+        GPtr::<u32>::cast::<u8>(GPtr::from_raw(cp.as_mut_ptr())),
+        GPtr::<u32>::cast::<u8>(GPtr::from_raw(ent.as_mut_ptr())),
         1,
         0,
         0,
         0,
         0,
         0,
-        0,
+        GPtr::NULL,
     );
     if ent[0] == 0 {
         return false;
@@ -695,10 +674,10 @@ fn sunbathe(ped: GPtr<u8>, cpos: &mut [f32; 3]) -> bool {
     let mut ents = [0u32; 2];
     let mut ok = true;
     if is_position_clear_for_ped(
-        GPtr::from_raw(cpos.as_mut_ptr()),
+        GPtr::<f32>::cast::<u8>(GPtr::from_raw(cpos.as_mut_ptr())),
         3.0,
         2,
-        GPtr::from_raw(ents.as_mut_ptr()),
+        GPtr::<u32>::cast::<u8>(GPtr::from_raw(ents.as_mut_ptr())),
         1,
         1,
         1,
@@ -724,17 +703,17 @@ fn sunbathe(ped: GPtr<u8>, cpos: &mut [f32; 3]) -> bool {
     let mut cp2 = [0f32; 11];
     let mut ent2 = [0u32];
     if process_vertical_line(
-        GPtr::from_raw(line2.as_mut_ptr()),
+        GPtr::<f32>::cast::<u8>(GPtr::from_raw(line2.as_mut_ptr())),
         -10.0,
-        GPtr::from_raw(cp2.as_mut_ptr()).cast(),
-        GPtr::from_raw(ent2.as_mut_ptr()),
+        GPtr::<u32>::cast::<u8>(GPtr::from_raw(cp2.as_mut_ptr()).cast()),
+        GPtr::<u32>::cast::<u8>(GPtr::from_raw(ent2.as_mut_ptr())),
         1,
         0,
         0,
         0,
         1,
         0,
-        0,
+        GPtr::NULL,
     ) == 0
     {
         return true;
@@ -786,13 +765,13 @@ fn sunbathe(ped: GPtr<u8>, cpos: &mut [f32; 3]) -> bool {
                 let m: GPtr<f32> = rd::<GPtr<u8>>(toy, 0x14).cast();
                 let r = rnd_f(-0.5, 0.5);
                 let mut t1 = [0f32; 3];
-                let o1 = vec_mul(GPtr::from_raw(t1.as_mut_ptr()), m, r);
-                vec_add_assign(bp, o1);
+                let o1 = GPtr::<u8>::cast::<f32>(vec_mul(GPtr::<f32>::cast::<u8>(GPtr::from_raw(t1.as_mut_ptr())), m.cast::<u8>(), r));
+                vec_add_assign(bp.cast::<u8>(), o1.cast::<u8>());
                 let m: GPtr<f32> = rd::<GPtr<u8>>(toy, 0x14).cast();
                 let r = rnd_f(-1.0, 1.0);
                 let mut t2 = [0f32; 3];
-                let o2 = vec_mul(GPtr::from_raw(t2.as_mut_ptr()), m.wrapping_index(4), r);
-                vec_add_assign(bp, o2);
+                let o2 = GPtr::<u8>::cast::<f32>(vec_mul(GPtr::<f32>::cast::<u8>(GPtr::from_raw(t2.as_mut_ptr())), GPtr::<f32>::cast::<u8>(m.wrapping_index(4)), r));
+                vec_add_assign(bp.cast::<u8>(), o2.cast::<u8>());
                 create_beach_toy(bp, 6);
             }
         }
@@ -820,7 +799,7 @@ fn others(ped: GPtr<u8>, pt: i32) {
             GPtr::NULL
         } else {
             let dir = grn_i(0, 8);
-            wander_criminal_ctor(t, 6, dir, 1)
+            wander_criminal_ctor(t, 6, dir as u32, 1)
         };
         set_task(rd::<GPtr<u8>>(ped, 0x47C).byte_add(4), t, 4, 0);
         return;
@@ -853,7 +832,7 @@ fn others(ped: GPtr<u8>, pt: i32) {
 fn find_anim_group(name: usize) -> (i32, bool) {
     let mut i = 0;
     while i < g::<i32>(0xB4EA28).read() {
-        if stricmp(get_anim_group_name(i), g::<u8>(name)) == 0 {
+        if stricmp(get_anim_group_name(i as u32), g::<u8>(name)) == 0 {
             return (i, true);
         }
         i += 1;
@@ -950,33 +929,22 @@ use sa_world::bindings::ped_set_current_weapon as set_current_weapon;
 use sa_world::bindings::simple_transform_update_rw_matrix;
 use sa_world::bindings::uses_siren;
 use sa_world::bindings::vehicle_new;
+use sa_core::bindings::automobile_ctor;
+use sa_core::bindings::matrix_set_rotate_z_only;
+use sa_core::bindings::ped_give_weapon as give_weapon;
+use sa_core::bindings::world_get_is_line_of_sight_clear as get_is_line_of_sight_clear;
+use sa_stream::bindings::get_default_cop_car_model;
+use sa_world::bindings::cop_ped_ctor;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::event_script_command_ctor;
+use sa_world::bindings::event_script_command_dtor;
+use sa_world::bindings::find_nth_node_closest_to_coors;
+use sa_world::bindings::find_objects_in_range;
 orig! {
-    /// `CStreaming::GetDefaultCopCarModel(int32)` (0x407C50)
-    fn get_default_cop_car_model(ignore_lv: i32) -> i32 = cdecl 0x407C50 => unported;
-    /// `CPathFind::FindNthNodeClosestToCoors(CNodeAddress* out, CVector, ...)` (0x44F8C0, thiscall, hidden return)
-    fn find_nth_node_closest_to_coors(this: GPtr<u8>, out: GPtr<u32>, px: f32, py: f32, pz: f32, node_type: u32, max_dist: f32, low: u32, unkn: u32, nth: i32, boats: u32, ignore_interior: u32, out_node: GPtr<u32>) -> GPtr<u32> = thiscall 0x44F8C0 => crate::pathfind::find_nth_node_closest_to_coors;
-    /// `CAutomobile::CAutomobile(int32 model, eVehicleCreatedBy, bool)` (0x6B0A90)
-    fn automobile_ctor(this: GPtr<u8>, model: i32, by: u32, b: u8) -> GPtr<u8> = thiscall 0x6B0A90 => unported;
     /// `CVector::Normalise()` (0x59C910)
     fn vector_normalise(v: GPtr<f32>) = thiscall 0x59C910 => unported;
     /// virtual slot 0x10 of a `CEntity`: `SetIsStatic(bool)`
     fn entity_set_is_static(e: GPtr<u8>, b: u8) = thiscall vslot 0x10 => unported;
-    /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, bool x7)` (0x56A490)
-    fn get_is_line_of_sight_clear(a: GPtr<f32>, b: GPtr<f32>, bld: u8, veh: u8, ped: u8, obj: u8, dum: u8, see: u8, cam: u8) -> u8 = cdecl 0x56A490 => unported;
-    /// `CWorld::FindObjectsInRange(const CVector&, float, bool, int16*, int16, CEntity**, bool x5)` (0x564A20)
-    fn find_objects_in_range(c: GPtr<f32>, r: f32, b2d: u8, count: GPtr<i16>, max: i16, out: GPtr<u32>, bld: u8, veh: u8, ped: u8, obj: u8, dum: u8) = cdecl 0x564A20 => unported;
-    /// `CCopPed::CCopPed(eCopType)` (0x5DDC60)
-    fn cop_ped_ctor(this: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x5DDC60 => unported;
-    /// `CMatrix::SetRotateZOnly(float)` (0x59B020)
-    fn matrix_set_rotate_z_only(m: GPtr<u8>, a: f32) = thiscall 0x59B020 => unported;
-    /// `CPed::GiveWeapon(eWeaponType, uint32, bool)` (0x5E6080)
-    fn give_weapon(p: GPtr<u8>, w: i32, ammo: u32, b: u8) -> i32 = thiscall 0x5E6080 => unported;
-    /// `CEventScriptCommand::CEventScriptCommand(int32, CTask*, bool)` (0x4B0A00)
-    fn event_script_command_ctor(this: GPtr<u32>, prio: i32, task: GPtr<u8>, b: u8) -> GPtr<u8> = thiscall 0x4B0A00 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420)
-    fn event_group_add(this: GPtr<u8>, ev: GPtr<u32>, b: u8) -> GPtr<u8> = thiscall 0x4AB420 => unported;
-    /// `CEventScriptCommand::~CEventScriptCommand()` (0x4B0A50)
-    fn event_script_command_dtor(this: GPtr<u32>) = thiscall 0x4B0A50 => unported;
 }
 
 /// The cars of `CreateWaitingCoppers` (0x613499..0x6136C4): `n` police cars (model `GetDefaultCopCarModel(1)`,
@@ -1115,16 +1083,16 @@ pub fn create_waiting_coppers(px: f32, py: f32, pz: f32, angle: f32) {
                 za,
             ];
             let pp = GPtr::from_raw(p.as_mut_ptr());
-            if get_is_line_of_sight_clear(GPtr::from_raw(arg.as_mut_ptr()), pp, 1, 1, 0, 1, 0, 0, 0) != 0 {
+            if get_is_line_of_sight_clear(GPtr::<f32>::cast::<u8>(GPtr::from_raw(arg.as_mut_ptr())), pp.cast::<u8>(), 1, 1, 0, 1, 0, 0, 0) != 0 {
                 let mut cnt = [0i16; 2];
                 let mut ents = [0u32];
                 find_objects_in_range(
-                    pp,
+                    pp.cast::<u8>(),
                     1.0,
                     1,
-                    GPtr::from_raw(cnt.as_mut_ptr()),
+                    GPtr::<i16>::cast::<u8>(GPtr::from_raw(cnt.as_mut_ptr())),
                     1,
-                    GPtr::from_raw(ents.as_mut_ptr()),
+                    GPtr::<u32>::cast::<u8>(GPtr::from_raw(ents.as_mut_ptr())),
                     0,
                     1,
                     1,
@@ -1208,8 +1176,8 @@ fn spawn_waiting_cop(p: &[f32; 3], px: f32, py: f32, pz: f32) {
     wr::<u8>(t, 0xC, rd::<u8>(t, 0xC) | 0x30);
     let mut ev = [0u32; 8];
     let evp = GPtr::from_raw(ev.as_mut_ptr());
-    event_script_command_ctor(evp, 3, t, 0);
-    event_group_add(rd::<GPtr<u8>>(cop, 0x47C).byte_add(0x68), evp, 0);
+    event_script_command_ctor(evp.cast::<u8>(), 3, t, 0);
+    event_group_add(rd::<GPtr<u8>>(cop, 0x47C).byte_add(0x68), evp.cast::<u8>(), 0);
     intel_process(rd(cop, 0x47C));
     event_script_command_dtor(evp);
 }
@@ -1231,13 +1199,10 @@ pub fn place_couple(t1: i32, m1: i32, t2: i32, m2: i32, px: f32, py: f32, pz: f3
 use sa_core::bindings::entity_register_reference as register_reference;
 use sa_core::bindings::world_remove;
 use sa_world::bindings::entity_get_col_model;
+use sa_world::bindings::camera_is_sphere_visible_m;
+use sa_world::bindings::die_ctor as task_die_ctor;
+use sa_world::bindings::process_col_models;
 orig! {
-    /// `CCamera::IsSphereVisible(const CVector&, float, RwMatrix*)` (0x420C40)
-    fn camera_is_sphere_visible_m(cam: GPtr<u8>, c: GPtr<f32>, r: f32, m: GPtr<u8>) -> u8 = thiscall 0x420C40 => unported;
-    /// `CTaskComplexDie::CTaskComplexDie(eWeaponType, AssocGroupId, AnimationId, float, float, bool, bool, int32, bool)` (0x630040)
-    fn task_die_ctor(this: GPtr<u8>, w: i32, group: i32, anim: i32, blend: f32, speed: f32, stealth: u8, falling: u8, ev: i32, rail: u8) -> GPtr<u8> = thiscall 0x630040 => unported;
-    /// `CCollision::ProcessColModels(const CMatrix&, CColModel&, const CMatrix&, CColModel&, CColPoint*, CColPoint*, float*, bool)` (0x4185C0)
-    fn process_col_models(ma: GPtr<u8>, ca: GPtr<u8>, mb: GPtr<u8>, cb: GPtr<u8>, pts: GPtr<u32>, lpts: GPtr<u8>, ld: GPtr<u8>, b: u8) -> i32 = cdecl 0x4185C0 => unported;
     /// virtual slot 0 of a `CEntity`: the deleting destructor
     fn entity_delete(e: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
 }
@@ -1256,9 +1221,9 @@ orig! {
        note = "car-crash accidents (CAccidentManager); creates a dead ped; fsqrt distance")]
 pub fn add_dead_ped_in_front_of_car(pos: GPtr<f32>, vehicle: GPtr<u8>) -> GPtr<u8> {
     let cam = g::<u8>(THE_CAMERA);
-    let visible = camera_is_sphere_visible_m(cam, pos, 2.0, g::<u8>(0xB6FA74)) != 0
+    let visible = camera_is_sphere_visible_m(cam, pos.cast::<u8>(), 2.0, g::<u8>(0xB6FA74)) != 0
         || (g::<u8>(0xB6F998).read() != 0
-            && camera_is_sphere_visible_m(cam, pos, 2.0, g::<u8>(0xB6FABC)) != 0);
+            && camera_is_sphere_visible_m(cam, pos.cast::<u8>(), 2.0, g::<u8>(0xB6FABC)) != 0);
     if visible {
         let pp = entity_pos(find_player_ped(-1));
         let d = dist2d(
@@ -1302,14 +1267,14 @@ pub fn add_dead_ped_in_front_of_car(pos: GPtr<f32>, vehicle: GPtr<u8>) -> GPtr<u
     };
     let mut ev = [0u32; 8];
     let evp = GPtr::from_raw(ev.as_mut_ptr());
-    event_script_command_ctor(evp, 4, t, 0);
-    event_group_add(rd::<GPtr<u8>>(ped, 0x47C).byte_add(0x68), evp, 0);
+    event_script_command_ctor(evp.cast::<u8>(), 4, t, 0);
+    event_group_add(rd::<GPtr<u8>>(ped, 0x47C).byte_add(0x68), evp.cast::<u8>(), 0);
     wr::<u16>(ped, 0x756, 0);
     wr::<u32>(ped, 0x470, rd::<u32>(ped, 0x470) | 0x40_0000);
     wr::<GPtr<u8>>(ped, 0x590, vehicle);
     register_reference(vehicle, ped.byte_add(0x590));
     let mut ents = [0u32; 3];
-    if is_position_clear_for_ped(pos, 2.0, 3, GPtr::from_raw(ents.as_mut_ptr()), 1, 1, 1) == 0 {
+    if is_position_clear_for_ped(pos.cast::<u8>(), 2.0, 3, GPtr::<u32>::cast::<u8>(GPtr::from_raw(ents.as_mut_ptr())), 1, 1, 1) == 0 {
         for &e in &ents {
             if e != 0 && e != vehicle.addr() as u32 && e != ped.addr() as u32 {
                 remove_ped(ped);
@@ -1328,7 +1293,7 @@ pub fn add_dead_ped_in_front_of_car(pos: GPtr<f32>, vehicle: GPtr<u8>) -> GPtr<u
         veh_col,
         ped_m,
         ped_col,
-        GPtr::from_raw(pts.as_mut_ptr()),
+        GPtr::<u32>::cast::<u8>(GPtr::from_raw(pts.as_mut_ptr())),
         GPtr::NULL,
         GPtr::NULL,
         0,

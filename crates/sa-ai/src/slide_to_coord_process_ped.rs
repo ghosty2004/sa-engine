@@ -5,6 +5,7 @@
 //! Layout used: +0x64 the slide target, +0x70 the aimed heading, +0x74 the speed, +0x78 flags (0x1 first time, 0x2
 //! running the named anim), +0x7C the end time (-1 until started).
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -50,7 +51,7 @@ pub fn slide_to_coord_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     if rd::<u8>(this, 0x78) & 1 != 0 {
         let mut local = [0u32; 8];
         let lp = GPtr::from_raw(local.as_mut_ptr()).cast::<u8>();
-        stand_still_ctor(lp, g::<u32>(0x86DB24).read(), 0, 0, 0x4100_0000);
+        stand_still_ctor(lp, (g::<u32>(0x86DB24).read()) as i32, 0, 0, f32::from_bits(0x4100_0000));
         stand_still_process_ped(lp, ped);
         if ped_is_player(ped) != 0 {
             let t = rd::<GPtr<u8>>(rd::<GPtr<u8>>(ped, 0x47C), 0x14);
@@ -102,7 +103,7 @@ pub fn slide_to_coord_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         return 0;
     }
     let d = x(rd::<f32>(ped, 0x558)).fsub_m(rd::<f32>(ped, 0x55C)).to_f32();
-    let a = X87::from_f64_exact(limit_radian_angle(d.to_bits())).fabs();
+    let a = X87::from_f64_exact(limit_radian_angle(f32::from_bits(d.to_bits()))).fabs();
     u8::from(!a.fcom(x(g::<f32>(0x86FD14).read())).test_parity(0x05))
 }
 

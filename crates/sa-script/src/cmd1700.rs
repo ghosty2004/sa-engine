@@ -37,22 +37,14 @@ use sa_stream::bindings::has_vehicle_upgrade_loaded;
 use sa_stream::bindings::request_vehicle_upgrade;
 use sa_world::bindings::get_actual_script_thing_index;
 use sa_world::bindings::set_remap;
+use crate::bindings::collect_next;
+use crate::bindings::vehicle_get_ref as vehicle_get_ref_;
+use sa_core::bindings::world_get_is_line_of_sight_clear as get_is_line_of_sight_clear;
+use sa_world::bindings::add_vehicle_upgrade;
+use sa_world::bindings::create_mission_train;
 orig! {
-    /// `CTrain::CreateMissionTrain(CVector, bool clockwise, uint32 type, CTrain** first, CTrain** last, int32
-    /// node, int32 track, bool missionTrain)` (0x6F7550), 10 dwords; the vector as raw dwords
-    fn create_mission_train(
-        x: u32, y: u32, z: u32, dir: u32, ty: u32, first: GPtr<u32>, last: GPtr<u32>, node: i32, track: i32, mission: u32
-    ) = cdecl 0x6F7550 => unported;
-    /// `CPool<CVehicle>::GetRef(CVehicle*)` (0x424160), ECX = the vehicle pool
-    fn vehicle_get_ref_(pool: GPtr<u8>, v: u32) -> i32 = thiscall 0x424160 => unported;
-    /// `CRunningScript::CollectNextParameterWithoutIncreasingPC()` (0x464250)
-    fn collect_next(s: Scr) -> i32 = thiscall 0x464250 => crate::vm::collect_next_parameter_without_increasing_pc;
-    /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, bool x7)` (0x56A490), AL
-    fn get_is_line_of_sight_clear(a: GPtr<u32>, b: GPtr<u32>, buildings: u32, vehicles: u32, peds: u32, objects: u32, dummies: u32, see_through: u32, ignore_some: u32) -> u8 = cdecl 0x56A490 => unported;
     /// `CTheScripts::AddScriptCheckpoint(CVector at, CVector pointTo, float radius, int32 type)` (0x4935A0)
     fn add_script_checkpoint(x: u32, y: u32, z: u32, px: u32, py: u32, pz: u32, radius: u32, ty: u32) -> i32 = cdecl 0x4935A0 => unported;
-    /// `CVehicle::AddVehicleUpgrade(int32 modelId)` (0x6E3290), EAX
-    fn add_vehicle_upgrade(v: GPtr<u8>, m: i32) -> i32 = thiscall 0x6E3290 => unported;
     /// `CTrain::RemoveMissionTrains()` (0x6F6A20)
     fn remove_mission_trains() = cdecl 0x6F6A20 => unported;
     /// `CTrain::RemoveAllTrains()` (0x6F6AA0)
@@ -63,13 +55,13 @@ orig! {
     fn start_cooperative_cam_mode(cam: GPtr<u8>) = thiscall 0x50C260 => unported;
 }
 
-use crate::bindings::find_node_coors_for_script;
-use crate::bindings::find_node_orientation_for_car_placement;
-use crate::bindings::find_nth_node_closest_to_coors;
+use sa_world::bindings::find_node_coors_for_script;
+use sa_world::bindings::find_node_orientation_for_car_placement;
+use sa_world::bindings::find_nth_node_closest_to_coors;
 use crate::bindings::get_actual_blip_array_index as blip_index;
 use crate::bindings::start_playback_recorded_car;
 use crate::bindings::task_drive_point_route_ctor;
-use crate::bindings::vehicle_41bdd0;
+use sa_world::bindings::vehicle_41bdd0;
 use sa_core::bindings::ped_group_process;
 use sa_core::bindings::set_mission_doesnt_require_model;
 use sa_core::bindings::task_new;
@@ -87,36 +79,39 @@ use sa_world::bindings::ped_groups_get_peds_group as get_peds_group;
 use sa_world::bindings::run_anim_ctor as task_run_anim_ctor;
 use sa_world::bindings::seek_entity_standard_ctor as task_seek_entity_ctor;
 use sa_world::bindings::sequence_add_task;
+use crate::bindings::give_ped_scripted_task as give;
+use crate::bindings::go_to_point_aiming_ctor as task_go_to_point_aiming_ctor;
+use crate::bindings::remove_script_search_light;
+use crate::bindings::task_trigger_look_at_ctor;
+use sa_core::bindings::vector_magnitude_sqr as vector_squared_magnitude;
+use sa_stream::bindings::find_other_upgrade;
+use sa_world::bindings::car_drive_mission_ctor as task_car_drive_mission_ctor;
+use sa_world::bindings::change_blip_scale;
+use sa_world::bindings::dm_load_enum as load_decision_maker;
+use sa_world::bindings::get_new_unique_script_thing_index;
+use sa_world::bindings::get_num_fires_in_range;
+use sa_world::bindings::ik_look_at;
+use sa_world::bindings::join_car_with_road_system_goto_coors;
+use sa_world::bindings::ped_pool_get_at;
+use sa_world::bindings::ped_remove_weapon_when_entering_vehicle as remove_weapon_when_entering_vehicle;
+use sa_world::bindings::set_entity_blip;
+use sa_world::bindings::set_train_speed;
+use sa_world::bindings::sit_ctor_o as task_sit_down_ctor;
+use sa_world::bindings::task_turn_to_face_ctor;
 orig! {
-    /// `CRunningScript::GivePedScriptedTask(int32 pedHandle, CTask*, int32 opcode)` (0x465C20)
-    fn give(s: Scr, ped: u32, task: GPtr<u8>, command: u32) = thiscall 0x465C20 => unported;
     /// `CPed::AttachPedToBike(CEntity*, CVector offset, uint16 pos, float, float, eWeaponType)` (0x5E7E60), 8 dwords
     fn attach_ped_to_bike(p: GPtr<u8>, v: GPtr<u8>, x: u32, y: u32, z: u32, pos: u32, a: u32, b: u32, w: u32) = thiscall 0x5E7E60 => unported;
     /// `CTaskComplexSeekEntityRadiusAngleOffset::CTaskComplexSeekEntityRadiusAngleOffset(CEntity*, int32 time,
     /// int32 period, float, float, float, bool, bool)` (0x493730)
     fn task_seek_radius_angle_ctor(t: GPtr<u8>, e: GPtr<u8>, time: u32, period: u32, a: u32, b: u32, c: u32, d: u32, f: u32) -> GPtr<u8> = thiscall 0x493730 => unported;
-    /// `CIKChainManager_c::LookAt(...)` (0x618970) on `g_ikChainMan` 0xC15448
-    fn ik_look_at(m: GPtr<u8>, name: u32, ped: GPtr<u8>, target: u32, time: u32, bone: u32, pos: GPtr<u32>, b: u32, speed: u32, blend: u32, prio: u32, c: u32) = thiscall 0x618970 => unported;
-    /// unnamed task ctor 0x634440 (`CTaskSimpleTriggerLookAt`), 10 dwords
-    fn task_trigger_look_at_ctor(t: GPtr<u8>, e: u32, time: u32, bone: u32, x: u32, y: u32, z: u32, b: u32, speed: u32, blend: u32, prio: u32) -> GPtr<u8> = thiscall 0x634440 => unported;
     /// `CPed::ReplaceWeaponForScriptedCutscene()` (0x5E6530)
     fn replace_weapon_for_scripted_cutscene(p: GPtr<u8>) = thiscall 0x5E6530 => unported;
     /// `CPed::RemoveWeaponForScriptedCutscene()` (0x5E6550)
     fn remove_weapon_for_scripted_cutscene(p: GPtr<u8>) = thiscall 0x5E6550 => unported;
-    /// `CPed::RemoveWeaponWhenEnteringVehicle(int32)` (0x5E6370)
-    fn remove_weapon_when_entering_vehicle(p: GPtr<u8>, a: u32) = thiscall 0x5E6370 => unported;
     /// `CDecisionMakerTypesFileLoader::GetGrpDMName(int32, char*)` (0x600880)
     fn get_grp_dm_name(i: u32, buf: GPtr<u8>) = cdecl 0x600880 => unported;
-    /// `CDecisionMakerTypesFileLoader::LoadDecisionMaker(const char*, int32 type, bool mission)` (0x607D30)
-    fn load_decision_maker(name: GPtr<u8>, ty: u32, mission: u32) -> i32 = cdecl 0x607D30 => unported;
-    /// `CTheScripts::GetNewUniqueScriptThingIndex(int32, uint8)` (0x483720)
-    fn get_new_unique_script_thing_index(i: i32, ty: u32) -> i32 = cdecl 0x483720 => unported;
-    /// `CTaskComplexSitDownThenIdleThenStandUp::CTaskComplexSitDownThenIdleThenStandUp(int32, bool, bool)` (0x631460)
-    fn task_sit_down_ctor(t: GPtr<u8>, time: u32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x631460 => unported;
     /// `CTheScripts::AddScriptSearchLight(CVector start, CEntity*, CVector target, float, float)` (0x493000), 9 dwords
     fn add_script_search_light(x: u32, y: u32, z: u32, e: GPtr<u8>, tx: u32, ty: u32, tz: u32, r1: u32, r2: u32) -> i32 = cdecl 0x493000 => unported;
-    /// `CTheScripts::RemoveScriptSearchLight(int32)` (0x493160)
-    fn remove_script_search_light(h: u32) = cdecl 0x493160 => unported;
     /// `CTheScripts::MoveSearchLightBetweenTwoPoints(int32, CVector, CVector, float)` (0x493360), 8 dwords
     fn move_search_light_between_two_points(h: u32, a: u32, b: u32, c: u32, d: u32, e: u32, f: u32, g: u32) = cdecl 0x493360 => unported;
     /// `CTheScripts::MoveSearchLightToPointAndStop(int32, CVector, float)` (0x493480), 5 dwords
@@ -125,54 +120,30 @@ orig! {
     fn move_search_light_to_entity(h: u32, e: GPtr<u8>, k: u32) = cdecl 0x493420 => unported;
     /// `CTheScripts::IsEntityWithinSearchLight(int32, CEntity*)` (0x493900), AL
     fn is_entity_within_search_light(h: u32, e: GPtr<u8>) -> u8 = cdecl 0x493900 => unported;
-    /// `CTaskComplexTurnToFaceEntityOrCoord` ctor (0x66B910; the coordinate form by its arguments: `const CVector&,
-    /// float, float`)
-    fn task_turn_to_face_ctor(t: GPtr<u8>, p: GPtr<u32>, a: u32, b: u32) -> GPtr<u8> = thiscall 0x66B910 => unported;
     /// `CWeapon::FireOneInstantHitRound(CVector*, CVector*, int32)` (0x73AF00)
     fn fire_one_instant_hit_round(a: GPtr<u32>, b: GPtr<u32>, dmg: u32) = cdecl 0x73AF00 => unported;
     /// `CAutomobile::GetCarRoll()` (0x6A6010), ST0 (read as f64)
     fn get_car_roll(v: GPtr<u8>) -> f64 = thiscall 0x6A6010 => unported;
-    /// `CTaskComplexGoToPointAiming::CTaskComplexGoToPointAiming(int32 moveState, const CVector&, CEntity*, CVector,
-    /// float, float)` (0x668790), 9 dwords
-    fn task_go_to_point_aiming_ctor(t: GPtr<u8>, ms: u32, p: GPtr<u32>, aim: GPtr<u8>, x: u32, y: u32, z: u32, r: u32, d: u32) -> GPtr<u8> = thiscall 0x668790 => unported;
-    /// `CFireManager::GetNumFiresInRange(const CVector&, float)` (0x5397F0) on `gFireManager` 0xB71F80
-    fn get_num_fires_in_range(m: GPtr<u8>, p: GPtr<u32>, r: u32) -> i32 = thiscall 0x5397F0 => unported;
-    /// `CRadar::SetEntityBlip(eBlipType, int32, uint32, eBlipDisplay, char*)` (0x5839A0)
-    fn set_entity_blip(ty: u32, h: u32, colour: u32, display: u32, name: GPtr<u8>) -> i32 = cdecl 0x5839A0 => unported;
-    /// `CRadar::ChangeBlipScale(int32, int32)` (0x583CC0)
-    fn change_blip_scale(b: i32, scale: u32) = cdecl 0x583CC0 => unported;
     /// `CVehicleRecording::SkipToEndAndStopPlaybackRecordedCar(CVehicle*)` (0x45A4A0)
     fn skip_to_end_and_stop_playback(v: GPtr<u8>) = cdecl 0x45A4A0 => unported;
     /// `CTaskSimpleCarSetTempAction::CTaskSimpleCarSetTempAction(CVehicle*, int32, int32)` (0x63D6F0)
     fn task_car_temp_action_ctor(t: GPtr<u8>, v: GPtr<u8>, a: u32, time: u32) -> GPtr<u8> = thiscall 0x63D6F0 => unported;
     /// `CTheScripts::AttachSearchlightToSearchlightObject(int32, CObject*, CObject*, CObject*, CVector)` (0x4934F0)
     fn attach_searchlight(h: u32, a: GPtr<u8>, b: GPtr<u8>, c: GPtr<u8>, x: u32, y: u32, z: u32) = cdecl 0x4934F0 => unported;
-    /// `CTrain::SetTrainSpeed(CTrain*, float)` (0x6F5E20)
-    fn set_train_speed(v: GPtr<u8>, k: u32) = cdecl 0x6F5E20 => unported;
     /// `CTrain::SetTrainCruiseSpeed(CTrain*, float)` (0x6F5E50)
     fn set_train_cruise_speed(v: GPtr<u8>, k: u32) = cdecl 0x6F5E50 => unported;
     /// `CTrain::FindCaboose(CTrain*)` (0x6F5E70)
     fn find_caboose(v: GPtr<u8>) -> u32 = cdecl 0x6F5E70 => unported;
-    /// `CTaskComplexCarDriveMission::CTaskComplexCarDriveMission(CVehicle*, CEntity*, int32, int32, float)` (0x63CC30)
-    fn task_car_drive_mission_ctor(t: GPtr<u8>, v: GPtr<u8>, target: GPtr<u8>, mission: u32, style: u32, speed: u32) -> GPtr<u8> = thiscall 0x63CC30 => unported;
-    /// `CLinkedUpgradeList::FindOtherUpgrade(int16)` (0x4C74D0) on `CVehicleModelInfo::ms_linkedUpgrades` 0xB4E6D8, AX
-    fn find_other_upgrade(l: GPtr<u8>, m: i32) -> u16 = thiscall 0x4C74D0 => unported;
     /// `CFireManager::GetScriptFireCoords(int32)` (0x5397E0), returns a `CVector*`
     fn get_script_fire_coords(m: GPtr<u8>, i: i32) -> GPtr<u32> = thiscall 0x5397E0 => unported;
     /// `CStuckCarCheck::IsCarInStuckCarArray(int32)` (0x463C70) on `CTheScripts::StuckCars` 0xA90AB0, AL
     fn is_car_in_stuck_car_array(sc: GPtr<u8>, h: u32) -> u8 = thiscall 0x463C70 => unported;
     /// `CVehicleRecording::SetPlaybackSpeed(CVehicle*, float)` (0x459660)
     fn set_playback_speed(v: GPtr<u8>, k: u32) = cdecl 0x459660 => unported;
-    /// `CPool<CPed>::GetAt(int32 index)` (0x4082A0), ECX = the ped pool
-    fn ped_pool_get_at(pool: GPtr<u8>, i: u32) -> GPtr<u8> = thiscall 0x4082A0 => unported;
-    /// `CVector::SquaredMagnitude()` (0x406DA0), ST0 (exact as f64)
-    fn vector_squared_magnitude(v: GPtr<u32>) -> f64 = thiscall 0x406DA0 => unported;
     /// `CTagManager::GetPercentageTaggedInArea(CRect*)` (0x49D0B0)
     fn get_percentage_tagged_in_area(r: GPtr<u32>) -> i32 = cdecl 0x49D0B0 => unported;
     /// `CTagManager::SetAlphaInArea(CRect*, uint8)` (0x49CFE0)
     fn set_alpha_in_area(r: GPtr<u32>, a: u32) = cdecl 0x49CFE0 => unported;
-    /// `CCarCtrl::JoinCarWithRoadSystemGotoCoors(CVehicle*, const CVector&, bool, bool)` (0x42F870), AL
-    fn join_car_with_road_system_goto_coors(v: GPtr<u8>, pos: GPtr<u32>, a: u32, b: u32) -> u8 = cdecl 0x42F870 => unported;
     /// `CVehicleRecording::SkipForwardInRecording(CVehicle*, float)` (0x459D10)
     fn skip_forward_in_recording(v: GPtr<u8>, k: u32) = cdecl 0x459D10 => unported;
 }
@@ -221,7 +192,7 @@ fn ground_rule(x: u32, y: u32, z: u32) -> u32 {
     let st = if st.fcom(X87::constant(K_MINUS_100)).test_parity(0x41) {
         st
     } else {
-        X87::from_f64_exact(find_ground_z(x, y))
+        X87::from_f64_exact(find_ground_z(f32::from_bits(x), f32::from_bits(y)))
     };
     st.to_f32().to_bits()
 }
@@ -356,10 +327,10 @@ pub fn process_commands_1700_to_1799(s: Scr, command: u32) -> i8 {
             let dir = (sp(3) & 0xFFFF_FF00) | u32::from(sp(4) != 0);
             let mut first = [0u32; 1];
             create_mission_train(
-                sp(1),
-                sp(2),
-                sp(3),
-                dir,
+                f32::from_bits(sp(1)),
+                f32::from_bits(sp(2)),
+                f32::from_bits(sp(3)),
+                dir as u8,
                 sp(0),
                 GPtr::from_raw(first.as_mut_ptr()),
                 GPtr::NULL,
@@ -367,7 +338,7 @@ pub fn process_commands_1700_to_1799(s: Scr, command: u32) -> i8 {
                 -1,
                 1,
             );
-            let h = vehicle_get_ref_(pool(VEHICLE_POOL), first[0]);
+            let h = vehicle_get_ref_(pool(VEHICLE_POOL), GPtr::from_addr((first[0]) as usize)) as i32;
             set_sp(0, h as u32);
             store(s, 1);
         }
@@ -443,7 +414,7 @@ pub fn process_commands_1700_to_1799(s: Scr, command: u32) -> i8 {
             collect(s, 2);
             let (p, a) = (sp(0), sp(1));
             let t = new_task(0x24, |t| task_dive_ctor(t, a));
-            give(s, p, t, command);
+            give(s, p as i32, t, command);
         }
         // 06A7 ATTACH_CHAR_TO_BIKE (0x496EBB): `ped(SP0)->AttachPedToBike(veh(SP1), (SP2,SP3,SP4), (u16)SP5,
         // SP6 * 0.017453292, SP7 * 0.017453292, SP8)` (the radians f32; the vehicle looked up first; no null checks).
@@ -473,7 +444,7 @@ pub fn process_commands_1700_to_1799(s: Scr, command: u32) -> i8 {
             let g = GPtr::<u32>::from_addr(0x8D237C);
             t.byte_add(0x4C).cast::<u32>().write(g.read());
             g.write(6);
-            give(s, p, t, command);
+            give(s, p as i32, t, command);
         }
         // 06A9 TASK_LOOK_AT_COORD (0x49707D): `time = SP4 == -1 ? 20000 : SP4 == -2 ? 999999 : SP4`; SP0 != -1:
         // `g_ikChainMan.LookAt("COMMAND_TASK_LOOK_AT_COO.." 0x85A3F0, ped(SP0), null, time, -1, &(SP1,SP2,SP3), false,
@@ -491,12 +462,12 @@ pub fn process_commands_1700_to_1799(s: Scr, command: u32) -> i8 {
                 let p = ped(sp(0));
                 ik_look_at(
                     GPtr::from_addr(0xC15448),
-                    0x85A3F0,
+                    GPtr::from_addr(0x85A3F0),
                     p,
-                    0,
+                    GPtr::NULL,
                     time,
                     u32::MAX,
-                    GPtr::from_raw(pos.as_mut_ptr()),
+                    GPtr::<u32>::cast::<u8>(GPtr::from_raw(pos.as_mut_ptr())),
                     0,
                     0x3E80_0000,
                     0x1F4,
@@ -505,7 +476,7 @@ pub fn process_commands_1700_to_1799(s: Scr, command: u32) -> i8 {
                 );
             } else {
                 let t = new_task(0x30, |t| {
-                    task_trigger_look_at_ctor(t, 0, time, u32::MAX, pos[0], pos[1], pos[2], 1, 0x3E80_0000, 0x3E8, 3)
+                    task_trigger_look_at_ctor(t, GPtr::NULL, time, u32::MAX, pos[0], pos[1], pos[2], 1, 0x3E80_0000, 0x3E8, 3)
                 });
                 let i = rd(0x8D2E98);
                 sequence_add_task(GPtr::from_addr(0xC178F0u32.wrapping_add(i << 6) as usize), t);
@@ -537,7 +508,7 @@ pub fn process_commands_1700_to_1799(s: Scr, command: u32) -> i8 {
             } else {
                 p
             };
-            let m = X87::from_f64_exact(vector_magnitude(e.byte_add(0x44)));
+            let m = X87::from_f64_exact(vector_magnitude(GPtr::<u8>::cast::<u32>(e.byte_add(0x44))));
             set_sp(0, m.fmul_m(f(K_50)).to_f32().to_bits());
             store(s, 1);
         }
@@ -545,9 +516,9 @@ pub fn process_commands_1700_to_1799(s: Scr, command: u32) -> i8 {
         // -1 ? -1 : GetActualScriptThingIndex(SP1, 7)`; `ms_groups[g].m_groupIntelligence.SetGroupDecisionMakerType(dm)`.
         0x06AD => {
             collect(s, 2);
-            let g = get_actual_script_thing_index(spi(0), 8);
+            let g = get_actual_script_thing_index(spi(0) as u32, 8);
             if (0..8).contains(&g) {
-                let dm = if spi(1) == -1 { -1 } else { get_actual_script_thing_index(spi(1), 7) };
+                let dm = if spi(1) == -1 { -1 } else { get_actual_script_thing_index(spi(1) as u32, 7) };
                 set_group_decision_maker_type(GPtr::from_addr((0xC09950 + g * 0x2D4) as usize), dm);
             }
         }
@@ -560,9 +531,9 @@ pub fn process_commands_1700_to_1799(s: Scr, command: u32) -> i8 {
             let mut buf = [0u8; 256];
             let b = GPtr::from_raw(buf.as_mut_ptr());
             get_grp_dm_name(sp(0), b);
-            get_actual_script_thing_index(collect_next(s), 7);
+            get_actual_script_thing_index(collect_next(s) as u32, 7);
             let mission = s.byte_add(crate::vm::USES_MISSION_CLEANUP).read();
-            let i = load_decision_maker(b, 1, u32::from(mission));
+            let i = load_decision_maker(b, 1, u32::from(mission)) as i32;
             set_sp(0, get_new_unique_script_thing_index(i, 7) as u32);
             store(s, 1);
             if uses_mission_cleanup(s) {
@@ -585,20 +556,20 @@ pub fn process_commands_1700_to_1799(s: Scr, command: u32) -> i8 {
                 let time = if time as i32 == -1 { rd(0x86DB28) } else { time };
                 task_sit_down_ctor(t, time, 0, 0)
             });
-            give(s, p, t, command);
+            give(s, p as i32, t, command);
         }
         // 06B1 CREATE_SEARCHLIGHT (0x497444): the discarded `GetActualScriptThingIndex(CollectNext..(), 2)`; `h =
         // AddScriptSearchLight((SP0,SP1,SP2), null, (SP3,SP4,SP5), SP6, SP7)`; tail 0x4974D5.
         0x06B1 => {
             collect(s, 8);
-            get_actual_script_thing_index(collect_next(s), 2);
+            get_actual_script_thing_index(collect_next(s) as u32, 2);
             let h = add_script_search_light(sp(0), sp(1), sp(2), GPtr::NULL, sp(3), sp(4), sp(5), sp(6), sp(7));
             searchlight_tail(s, h);
         }
         // 06C1 CREATE_SEARCHLIGHT_ON_VEHICLE (0x4979B4): as 06B1 with `veh(SP0)` and the light at (SP1..SP3).
         0x06C1 => {
             collect(s, 9);
-            get_actual_script_thing_index(collect_next(s), 2);
+            get_actual_script_thing_index(collect_next(s) as u32, 2);
             let v = veh(sp(0));
             let h = add_script_search_light(sp(1), sp(2), sp(3), v, sp(4), sp(5), sp(6), sp(7), sp(8));
             searchlight_tail(s, h);
@@ -607,7 +578,7 @@ pub fn process_commands_1700_to_1799(s: Scr, command: u32) -> i8 {
         // mission cleanup -> `RemoveEntityFromList(SP0, 0xB)`.
         0x06B2 => {
             collect(s, 1);
-            if get_actual_script_thing_index(spi(0), 2) >= 0 {
+            if get_actual_script_thing_index(spi(0) as u32, 2) >= 0 {
                 remove_script_search_light(sp(0));
                 if uses_mission_cleanup(s) {
                     mission_cleanup_remove(GPtr::from_addr(MISSION_CLEANUP), spi(0), 0xB);
@@ -617,7 +588,7 @@ pub fn process_commands_1700_to_1799(s: Scr, command: u32) -> i8 {
         // 06B3 DOES_SEARCHLIGHT_EXIST (0x49755D): flag = `GetActualScriptThingIndex(SP0, 2) >= 0`.
         0x06B3 => {
             collect(s, 1);
-            let b = get_actual_script_thing_index(spi(0), 2) >= 0;
+            let b = get_actual_script_thing_index(spi(0) as u32, 2) >= 0;
             set_flag(s, b);
         }
         // 06B4 MOVE_SEARCHLIGHT_BETWEEN_COORDS (0x497598): `MoveSearchLightBetweenTwoPoints(SP0..SP7)`.
@@ -652,9 +623,9 @@ pub fn process_commands_1700_to_1799(s: Scr, command: u32) -> i8 {
             collect(s, 4);
             let mut pos = [sp(1), sp(2), sp(3)];
             let t = new_task(0x28, |t| {
-                task_turn_to_face_ctor(t, GPtr::from_raw(pos.as_mut_ptr()), rd(0x86FC7C), rd(0x86FC80))
+                task_turn_to_face_ctor(t, GPtr::<u32>::cast::<u8>(GPtr::from_raw(pos.as_mut_ptr())), rd(0x86FC7C), rd(0x86FC80))
             });
-            give(s, sp(0), t, command);
+            give(s, sp(0) as i32, t, command);
         }
         // 06BB TASK_DRIVE_POINT_ROUTE (0x49776F): `v = SP1 < 0 ? null : veh(SP1)`; `new(0x2C)
         // CTaskComplexDrivePointRoute(v, route 0xC18D50, SP2, 2, -1, -1.0, 0)`; give.
@@ -666,7 +637,7 @@ pub fn process_commands_1700_to_1799(s: Scr, command: u32) -> i8 {
             let t = new_task(0x2C, |t| {
                 task_drive_point_route_ctor(t, v, 0xC18D50, speed, 2, u32::MAX, 0xBF80_0000, 0)
             });
-            give(s, p, t, command);
+            give(s, p as i32, t, command);
         }
         // 06BC FIRE_SINGLE_BULLET (0x4977E3): `CWeapon::FireOneInstantHitRound(&(SP0,SP1,SP2), &(SP3,SP4,SP5), SP6)`.
         0x06BC => {
@@ -694,14 +665,14 @@ pub fn process_commands_1700_to_1799(s: Scr, command: u32) -> i8 {
             let t = new_task(0x38, |t| {
                 task_go_to_point_aiming_ctor(t, ms, GPtr::from_raw(target.as_mut_ptr()), aim, x, y, z, r, d)
             });
-            give(s, p, t, command);
+            give(s, p as i32, t, command);
         }
         // 06C3 GET_NUMBER_OF_FIRES_IN_RANGE (0x497B75): `SP0 = gFireManager.GetNumFiresInRange(&(SP0,SP1,SP2), SP3)`;
         // protected store.
         0x06C3 => {
             collect(s, 4);
             let mut pos = [sp(0), sp(1), sp(2)];
-            let n = get_num_fires_in_range(GPtr::from_addr(0xB71F80), GPtr::from_raw(pos.as_mut_ptr()), sp(3));
+            let n = get_num_fires_in_range(GPtr::from_addr(0xB71F80), GPtr::<u32>::cast::<u8>(GPtr::from_raw(pos.as_mut_ptr())), f32::from_bits(sp(3))) as i32;
             set_sp(0, n as u32);
             store(s, 1);
         }
@@ -710,10 +681,10 @@ pub fn process_commands_1700_to_1799(s: Scr, command: u32) -> i8 {
         // `ChangeBlipScale(b, 3)`; `SP0 = b`; StoreParameters(1).
         0x06C4 => {
             collect(s, 1);
-            get_actual_script_thing_index(spi(0), 2);
+            get_actual_script_thing_index(spi(0) as u32, 2);
             blip_index(collect_next(s));
             let b = set_entity_blip(6, sp(0), 0, 3, s.byte_add(8));
-            change_blip_scale(b, 3);
+            change_blip_scale(b as u32, 3);
             set_sp(0, b as u32);
             store(s, 1);
         }
@@ -730,7 +701,7 @@ pub fn process_commands_1700_to_1799(s: Scr, command: u32) -> i8 {
             let v = if spi(1) == -1 { GPtr::NULL } else { veh(sp(1)) };
             let (a, time) = (sp(2), sp(3));
             let t = new_task(0x68, |t| task_car_temp_action_ctor(t, v, a, time));
-            give(s, p, t, command);
+            give(s, p as i32, t, command);
         }
         // 06C9 REMOVE_CHAR_FROM_GROUP (0x497CFB): `g = CPedGroups::GetPedsGroup(ped)`; g and not the leader:
         // `g->m_groupMembership.RemoveMember(ped)`, `g->Process()`.
@@ -771,7 +742,7 @@ pub fn process_commands_1700_to_1799(s: Scr, command: u32) -> i8 {
             collect(s, 2);
             let v = veh(sp(0));
             if command == 0x06DC {
-                set_train_speed(v, sp(1));
+                set_train_speed(v, f32::from_bits(sp(1)));
             } else {
                 set_train_cruise_speed(v, sp(1));
             }
@@ -780,7 +751,7 @@ pub fn process_commands_1700_to_1799(s: Scr, command: u32) -> i8 {
         0x06DE => {
             collect(s, 1);
             let c = find_caboose(veh(sp(0)));
-            let h = vehicle_get_ref_(pool(VEHICLE_POOL), c);
+            let h = vehicle_get_ref_(pool(VEHICLE_POOL), GPtr::from_addr(c as usize)) as i32;
             set_sp(0, h as u32);
             store(s, 1);
         }
@@ -793,7 +764,7 @@ pub fn process_commands_1700_to_1799(s: Scr, command: u32) -> i8 {
             let target = if spi(2) < 0 { GPtr::NULL } else { veh(sp(2)) };
             let (mission, speed, style) = (sp(3), sp(4), sp(5));
             let t = new_task(0x2C, |t| task_car_drive_mission_ctor(t, v, target, mission, style, speed));
-            give(s, p, t, command);
+            give(s, p as i32, t, command);
         }
         // 06E2 TASK_GO_TO_OBJECT (0x4981BE): `new(0x4C) CTaskComplexSeekEntity<Standard>(obj(SP1), SP2, 1000, SP3,
         // [0x859E30], [0x859E34], true, true)`; give.
@@ -805,15 +776,15 @@ pub fn process_commands_1700_to_1799(s: Scr, command: u32) -> i8 {
             let t = new_task(0x4C, |t| {
                 task_seek_entity_ctor(t, o, time, 0x3E8, radius, rd(0x859E30), rd(0x859E34), 1, 1)
             });
-            give(s, p, t, command);
+            give(s, p as i32, t, command);
         }
         // 06E3 TASK_WEAPON_ROLL (0x498259): `new(0x20) CTaskSimpleRunAnim(0, SP1 != 0 ? 0x3B : 0x39, 4.0, false)`; give.
         0x06E3 => {
             collect(s, 2);
             let p = sp(0);
             let anim = if sp(1) != 0 { 0x3B } else { 0x39 };
-            let t = new_task(0x20, |t| task_run_anim_ctor(t, 0, anim, 0x4080_0000, 0));
-            give(s, p, t, command);
+            let t = new_task(0x20, |t| task_run_anim_ctor(t, 0, anim, f32::from_bits(0x4080_0000), 0));
+            give(s, p as i32, t, command);
         }
         // 06E4 TASK_CHAR_ARREST_CHAR (0x4982EF): `new(0x24) CTaskComplexArrestPed(ped(SP1))`; give.
         0x06E4 => {
@@ -821,7 +792,7 @@ pub fn process_commands_1700_to_1799(s: Scr, command: u32) -> i8 {
             let p = sp(0);
             let target = ped(sp(1));
             let t = new_task(0x24, |t| task_arrest_ped_ctor(t, target));
-            give(s, p, t, command);
+            give(s, p as i32, t, command);
         }
         // 06E5 GET_AVAILABLE_VEHICLE_MOD (0x498340): `mi = ms_modelInfoPtrs[veh(SP0)->m_nModelIndex]`; `SP0 =
         // (int16) mi[+0x2D6 + SP1*2]` (no bounds check); StoreParameters(1).
@@ -849,7 +820,7 @@ pub fn process_commands_1700_to_1799(s: Scr, command: u32) -> i8 {
             collect(s, 1);
             let m = model_id(spi(0));
             set_mission_doesnt_require_model(m);
-            let o = i32::from(find_other_upgrade(GPtr::from_addr(0xB4E6D8), m) as i16);
+            let o = i32::from((find_other_upgrade(GPtr::from_addr(0xB4E6D8), m as i16) as u16) as i16);
             if o != -1 {
                 set_mission_doesnt_require_model(o);
             }
@@ -869,7 +840,7 @@ pub fn process_commands_1700_to_1799(s: Scr, command: u32) -> i8 {
         0x06EE | 0x06EF => {
             collect(s, 2);
             let p = ped(sp(0));
-            let g = get_actual_script_thing_index(spi(1), 8);
+            let g = get_actual_script_thing_index(spi(1) as u32, 8);
             let mut b = false;
             if (0..8).contains(&g) {
                 let m = GPtr::<u8>::from_addr((0xC09928 + g * 0x2D4) as usize);
@@ -887,7 +858,7 @@ pub fn process_commands_1700_to_1799(s: Scr, command: u32) -> i8 {
         // `[0xC0994C + g*0x2D4] = SP1` (raw).
         0x06F0 => {
             collect(s, 2);
-            let g = get_actual_script_thing_index(spi(0), 8);
+            let g = get_actual_script_thing_index(spi(0) as u32, 8);
             if (0..8).contains(&g) {
                 GPtr::<u32>::from_addr((0xC0994C + g * 0x2D4) as usize).write(sp(1));
             }
@@ -896,7 +867,7 @@ pub fn process_commands_1700_to_1799(s: Scr, command: u32) -> i8 {
         // `*gFireManager.GetScriptFireCoords(i)`, else 0; StoreParameters(3).
         0x06F5 => {
             collect(s, 1);
-            let i = get_actual_script_thing_index(spi(0), 5);
+            let i = get_actual_script_thing_index(spi(0) as u32, 5);
             let v = if (0..0x3C).contains(&i) {
                 let p = get_script_fire_coords(GPtr::from_addr(0xB71F80), i);
                 [p.read(), p.wrapping_index(1).read(), p.wrapping_index(2).read()]
@@ -921,22 +892,22 @@ pub fn process_commands_1700_to_1799(s: Scr, command: u32) -> i8 {
             let node = find_nth_node_closest_to_coors(
                 paths,
                 GPtr::from_raw(ret.as_mut_ptr()),
-                x,
-                y,
-                z,
+                f32::from_bits(x),
+                f32::from_bits(y),
+                f32::from_bits(z),
                 0,
-                0x4974_23FE,
+                f32::from_bits(0x4974_23FE),
                 0,
                 1,
                 sp(3).wrapping_sub(1),
                 0,
                 0,
-                0,
+                GPtr::NULL,
             )
             .read();
             let mut out = [0u32; 3];
             let mut found = [0u8; 1];
-            find_node_coors_for_script(paths, GPtr::from_raw(out.as_mut_ptr()), node, GPtr::from_raw(found.as_mut_ptr()));
+            find_node_coors_for_script(paths, GPtr::<u32>::cast::<u8>(GPtr::from_raw(out.as_mut_ptr())), node, GPtr::from_raw(found.as_mut_ptr()));
             let ok = found[0] != 0;
             if ok {
                 set_sp(2, out[2]);
@@ -989,7 +960,7 @@ pub fn process_commands_1700_to_1799(s: Scr, command: u32) -> i8 {
                     for k in 0..3 {
                         d[k] = X87::from_f32(f(ep[k])).fsub_m(f(pos[k])).to_f32().to_bits();
                     }
-                    let m = X87::from_f64_exact(vector_squared_magnitude(GPtr::from_raw(d.as_mut_ptr())));
+                    let m = X87::from_f64_exact(vector_squared_magnitude(GPtr::<u32>::cast::<f32>(GPtr::from_raw(d.as_mut_ptr()))));
                     if m.fcom(X87::from_f32(r2)) == sa_math::x87::Cmp::Less {
                         found = true;
                     }
@@ -1064,8 +1035,8 @@ fn is_line_of_sight_clear(s: Scr) {
     let b = [sp(3), sp(4), sp(5)];
     let nz = |i| u32::from(sp(i) != 0);
     let r = get_is_line_of_sight_clear(
-        GPtr::from_raw(a.as_ptr().cast_mut()),
-        GPtr::from_raw(b.as_ptr().cast_mut()),
+        GPtr::<u32>::cast::<u8>(GPtr::from_raw(a.as_ptr().cast_mut())),
+        GPtr::<u32>::cast::<u8>(GPtr::from_raw(b.as_ptr().cast_mut())),
         nz(6),
         nz(7),
         nz(8),
@@ -1083,7 +1054,7 @@ fn is_line_of_sight_clear(s: Scr) {
 fn create_checkpoint(s: Scr) {
     collect(s, 8);
     let n = collect_next(s);
-    get_actual_script_thing_index(n, 3);
+    get_actual_script_thing_index(n as u32, 3);
     let h = add_script_checkpoint(sp(1), sp(2), sp(3), sp(4), sp(5), sp(6), sp(7), sp(0));
     set_sp(0, h as u32);
     if uses_mission_cleanup(s) {
@@ -1096,7 +1067,7 @@ fn create_checkpoint(s: Scr) {
 /// `RemoveScriptCheckpoint(SP0)` (the handle, not the index) and, with mission cleanup, `RemoveEntityFromList(SP0, 0xC)`.
 fn delete_checkpoint(s: Scr) {
     collect(s, 1);
-    if get_actual_script_thing_index(spi(0), 3) < 0 {
+    if get_actual_script_thing_index(spi(0) as u32, 3) < 0 {
         return;
     }
     remove_script_checkpoint(spi(0));

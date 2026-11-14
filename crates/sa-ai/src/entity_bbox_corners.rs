@@ -5,6 +5,7 @@
 //! (docs/verify/HOWTO.md).
 #![allow(clippy::unreadable_literal, clippy::many_single_char_names, clippy::similar_names, clippy::needless_range_loop)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 

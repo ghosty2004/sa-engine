@@ -49,22 +49,16 @@ use crate::bindings::plugin_init_object;
 use crate::bindings::plugin_read_data_chunks;
 use crate::bindings::read_int32 as rw_stream_read_int32_call;
 use crate::bindings::registry_copy_object as plugin_copy_object;
-use crate::bindings::rw_stream_find_chunk_call;
+use sa_core::bindings::rw_stream_find_chunk_call;
 use crate::bindings::rw_texture_stream_read_call;
+use crate::bindings::plugin_invoke_rights;
+use sa_core::bindings::material_list_append_call;
+use sa_core::bindings::rp_material_destroy as rp_material_destroy_call;
+use sa_core::bindings::rw_texture_destroy as rw_texture_destroy_call;
+use sa_core::bindings::stream_read as rw_stream_read_call;
 orig! {
-    /// `_rwPluginRegistryInvokeRights(reg, id, obj, extra)` (0x808AB0)
-    fn plugin_invoke_rights(reg: GPtr<u8>, id: u32, obj: GPtr<u8>, extra: u32) -> GPtr<u8> = cdecl 0x808AB0 => crate::plugin::registry_invoke_rights;
-
-    /// `RwTextureDestroy(texture)` (0x7F3820)
-    fn rw_texture_destroy_call(t: GPtr<u8>) -> u32 = cdecl 0x7F3820 => crate::texture::rw_texture_destroy;
-    /// `RwStreamRead(stream, buf, len)` (0x7EC9D0)
-    fn rw_stream_read_call(s: GPtr<u8>, buf: GPtr<u8>, len: u32) -> u32 = cdecl 0x7EC9D0 => crate::stream::rw_stream_read;
-    /// `RpMaterialDestroy(material)` (0x74DA20)
-    fn rp_material_destroy_call(m: GPtr<u8>) -> u32 = cdecl 0x74DA20 => rp_material_destroy;
     /// `RpMaterialStreamRead(stream)` (0x74DD30)
     fn rp_material_stream_read_call(s: GPtr<u8>) -> GPtr<u8> = cdecl 0x74DD30 => rp_material_stream_read;
-    /// `_rpMaterialListAppendMaterial(list, material)` (0x74E350)
-    fn material_list_append_call(l: GPtr<u8>, m: GPtr<u8>) -> i32 = cdecl 0x74E350 => material_list_append_material;
 }
 
 /// `RwErrorSet({2, _rwerror(code)})`.
@@ -262,7 +256,7 @@ pub fn rp_material_stream_read(stream: GPtr<u8>) -> GPtr<u8> {
     let ver_p = fp.cast::<u32>();
     let len_p = fp.byte_add(4).cast::<u32>();
     let sp = fp.byte_add(0x10);
-    if rw_stream_find_chunk_call(stream, 1, len_p, ver_p) == 0 {
+    if rw_stream_find_chunk_call(stream, 1, len_p, ver_p) as u32 == 0 {
         return GPtr::NULL;
     }
     let v = ver_p.read();
@@ -286,7 +280,7 @@ pub fn rp_material_stream_read(stream: GPtr<u8>) -> GPtr<u8> {
     wr::<u32>(m, 0x14, rd::<u32>(sp, 0x18));
     wr::<u32>(m, 0, 0);
     if rd::<u32>(sp, 0xC) != 0 {
-        if rw_stream_find_chunk_call(stream, 6, GPtr::NULL, ver_p) == 0 {
+        if rw_stream_find_chunk_call(stream, 6, GPtr::NULL, ver_p) as u32 == 0 {
             material_destroy(m);
             return GPtr::NULL;
         }
@@ -434,7 +428,7 @@ pub fn material_list_stream_read(stream: GPtr<u8>, l: GPtr<u8>) -> GPtr<u8> {
         GPtr::from_raw(&mut ver),
         GPtr::from_raw(&mut len),
     );
-    if rw_stream_find_chunk_call(stream, 1, lp, vp) == 0 {
+    if rw_stream_find_chunk_call(stream, 1, lp, vp) as u32 == 0 {
         return GPtr::NULL;
     }
     let v = vp.read();
@@ -478,7 +472,7 @@ pub fn material_list_stream_read(stream: GPtr<u8>, l: GPtr<u8>) -> GPtr<u8> {
                 wr::<i16>(m, 0x18, rd::<i16>(m, 0x18).wrapping_add(1));
                 m
             } else {
-                if rw_stream_find_chunk_call(stream, 7, GPtr::NULL, vp) == 0 {
+                if rw_stream_find_chunk_call(stream, 7, GPtr::NULL, vp) as u32 == 0 {
                     rw_free(idx);
                     list_cleanup(l);
                     return GPtr::NULL;

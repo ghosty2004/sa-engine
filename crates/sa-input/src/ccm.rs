@@ -93,23 +93,22 @@ pub use sa_core::bindings::get_mouse_set_up;
 pub use sa_core::bindings::insert_number_in_string;
 pub use sa_core::bindings::strncmp;
 pub use sa_core::bindings::text_get;
+pub use crate::bindings::call_init_default;
+pub use crate::bindings::call_init_mouse;
+pub use crate::bindings::call_make_blank;
+pub use sa_core::bindings::call_clear_settings;
+pub use sa_core::bindings::call_init_joypad;
+pub use sa_core::bindings::call_set_key;
+pub use sa_core::bindings::file_mgr_seek as file_seek;
+pub use sa_core::bindings::file_read;
+pub use sa_core::bindings::file_write;
+pub use sa_core::bindings::find_player_vehicle;
+pub use sa_core::bindings::get_pad;
+pub use sa_core::bindings::get_string_length_call as get_string_length;
+pub use sa_core::bindings::messages_string_copy as string_copy;
 orig! {
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    pub fn get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => crate::pad::get_pad;
-    /// `FindPlayerVehicle(int32 playerId, bool bIncludeRemote)` (0x56E0D0)
-    pub fn find_player_vehicle(id: i32, remote: u8) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
-    /// `CMessages::StringCopy(dst, src, len)` (0x69DB70)
-    pub fn string_copy(dst: GPtr<u8>, src: GPtr<u8>, len: i32) = cdecl 0x69DB70 => unported;
-    /// `CMessages::GetStringLength(s)` (0x69DB50)
-    pub fn get_string_length(s: GPtr<u8>) -> i32 = cdecl 0x69DB50 => unported;
     /// unnamed 0x719360: the font character of a key (`c >= 0x80` through the table at 0x8D5AD8)
     pub fn key_char(c: u32) -> u8 = cdecl 0x719360 => unported;
-    /// `CFileMgr::Read(file, buf, size)` (0x538950)
-    pub fn file_read(file: i32, buf: GPtr<u8>, size: i32) -> i32 = cdecl 0x538950 => unported;
-    /// `CFileMgr::Write(file, buf, size)` (0x538970)
-    pub fn file_write(file: i32, buf: GPtr<u8>, size: i32) -> i32 = cdecl 0x538970 => unported;
-    /// `CFileMgr::Seek(file, offset, origin)` (0x538990, AL)
-    pub fn file_seek(file: i32, offset: i32, origin: i32) -> u8 = cdecl 0x538990 => unported;
     /// `GTATranslateShiftKey(RsKeyCodes*)` (0x747CD0; the result is not used)
     pub fn gta_translate_shift_key(ck: GPtr<i32>) = cdecl 0x747CD0 => unported;
     /// `IDirectInputDevice8A::GetCapabilities(caps)`
@@ -118,22 +117,10 @@ orig! {
     // this class (hooked here: each call obeys the callee's toggle)
     /// `ResetSettingOrder(action)` (0x52F5F0)
     pub fn call_reset_setting_order(this: GPtr<u8>, action: i32) = thiscall 0x52F5F0 => reset_setting_order;
-    /// `ClearSettingsAssociatedWithAction(action, type)` (0x52FD70)
-    pub fn call_clear_settings(this: GPtr<u8>, action: i32, kind: i32) = thiscall 0x52FD70 => clear_settings_associated_with_action;
-    /// `SetControllerKeyAssociatedWithAction(action, key, type)` (0x530490)
-    pub fn call_set_key(this: GPtr<u8>, action: i32, key: u32, kind: i32) = thiscall 0x530490 => set_controller_key_associated_with_action;
     /// `SetMouseButtonAssociatedWithAction(action, button)` (0x52F590)
     pub fn call_set_mouse_button(this: GPtr<u8>, action: i32, button: u32) = thiscall 0x52F590 => set_mouse_button_associated_with_action;
-    /// `MakeControllerActionsBlank()` (0x530500)
-    pub fn call_make_blank(this: GPtr<u8>) = thiscall 0x530500 => make_controller_actions_blank;
-    /// `InitDefaultControlConfiguration()` (0x530640)
-    pub fn call_init_default(this: GPtr<u8>) = thiscall 0x530640 => init_default_control_configuration;
     /// `InitialiseControllerActionNameArray()` (0x52D260)
     pub fn call_init_names(this: GPtr<u8>) = thiscall 0x52D260 => initialise_controller_action_name_array;
-    /// `InitDefaultControlConfigMouse(setUp, mouseControls)` (0x52F6F0)
-    pub fn call_init_mouse(this: GPtr<u8>, set_up: GPtr<u8>, controls: u32) = thiscall 0x52F6F0 => init_default_control_config_mouse;
-    /// `InitDefaultControlConfigJoyPad(buttons)` (0x530B00)
-    pub fn call_init_joypad(this: GPtr<u8>, buttons: u32) = thiscall 0x530B00 => init_default_control_config_joy_pad;
     /// `GetIsKeyboardKeyDown(key)` (0x52DDB0, AL)
     pub fn call_key_down(this: GPtr<u8>, key: u32) -> u8 = thiscall 0x52DDB0 => get_is_keyboard_key_down;
     /// `GetIsMouseButtonDown(button)` (0x52EF30, AL)
@@ -309,7 +296,7 @@ fn update_joy_in_config_menus(button: i32, pad_number: i32, v: i16) {
     if button == 0 {
         return;
     }
-    let pad = get_pad(pad_number);
+    let pad = get_pad(pad_number as u32);
     if pad.is_null() {
         return;
     }
@@ -1095,8 +1082,8 @@ pub fn get_gxt_string_of_command_keys(this: GPtr<u8>, action: u16, out: GPtr<u8>
             }
         }
     }
-    let n = get_string_length(s);
-    string_copy(out, s, len.wrapping_sub(n));
+    let n = get_string_length(s) as i32;
+    string_copy(out, s, len.wrapping_sub(n) as u16);
 }
 
 /// `SetControllerKeyAssociatedWithAction(action, key, type)` (0x530490): `ResetSettingOrder(action)`,
@@ -1115,7 +1102,7 @@ pub fn set_controller_key_associated_with_action(this: GPtr<u8>, action: i32, k:
 pub fn make_controller_actions_blank(this: GPtr<u8>) {
     for t in 0..4 {
         for a in 0..NUM_ACTIONS {
-            call_clear_settings(this, a, t);
+            call_clear_settings(this, a as u32, t as u32);
         }
     }
 }
@@ -1132,33 +1119,33 @@ pub fn load_settings(_this: GPtr<u8>, file: i32) -> u8 {
     }
     let mut hdr = [0u8; 0x20];
     let hp = GPtr::from_raw(hdr.as_mut_ptr());
-    file_read(file, hp, 0x1D);
+    file_read(GPtr::from_addr(file as usize), hp, 0x1D);
     if strncmp(hp, GPtr::from_addr(0x8D2BE4), 0x1A) == 0 {
         return 1;
     }
-    file_seek(file, 0, 0);
+    file_seek(GPtr::from_addr(file as usize), 0, 0);
     let mut v = [0i32; 1];
     let vp = GPtr::<i32>::from_raw(v.as_mut_ptr());
-    file_read(file, vp.cast(), 4);
+    file_read(GPtr::from_addr(file as usize), vp.cast(), 4);
     if vp.read() < 6 {
         return 1;
     }
     for _t in 0..4 {
         for a in 0..NUM_ACTIONS {
-            file_read(file, vp.cast(), 4);
+            file_read(GPtr::from_addr(file as usize), vp.cast(), 4);
             if vp.read() != a {
                 return 0;
             }
-            file_seek(file, 8, 1);
+            file_seek(GPtr::from_addr(file as usize), 8, 1);
         }
     }
-    file_seek(file, 4, 0);
+    file_seek(GPtr::from_addr(file as usize), 4, 0);
     let cm: GPtr<u8> = GPtr::from_addr(CONTROLS_MANAGER);
     call_make_blank(cm);
     for t in 0..4 {
         for a in 0..NUM_ACTIONS {
-            file_seek(file, 4, 1);
-            file_read(file, key_ptr(cm, a, t).cast(), 8);
+            file_seek(GPtr::from_addr(file as usize), 4, 1);
+            file_read(GPtr::from_addr(file as usize), key_ptr(cm, a, t).cast(), 8);
         }
     }
     1
@@ -1178,8 +1165,8 @@ pub fn save_settings(_this: GPtr<u8>, file: i32) {
     for t in 0..4 {
         for a in 0..NUM_ACTIONS {
             vp.write(a);
-            file_write(file, vp.cast(), 4);
-            file_write(file, key_ptr(cm, a, t).cast(), 8);
+            file_write(GPtr::from_addr(file as usize), vp.cast(), 4);
+            file_write(GPtr::from_addr(file as usize), key_ptr(cm, a, t).cast(), 8);
         }
     }
 }
@@ -1332,7 +1319,7 @@ const DEFAULT_KEYS_B: [(i32, u32, i32); 25] = [
 /// keyboard look-behind / mouse-look (gta-reversed FixBugs differs).
 #[hook(addr = 0x530640, conv = thiscall, name = "CControllerConfigManager::InitDefaultControlConfiguration", expect = "53 56 33 DB 53", this = "CControllerConfigManager")]
 pub fn init_default_control_configuration(this: GPtr<u8>) {
-    let set = |a: i32, k: u32, t: i32| call_set_key(this, a, k, t);
+    let set = |a: i32, k: u32, t: i32| call_set_key(this, a as u32, k, t as u32);
     let fwd = prot_go_forward_key();
     set(4, fwd, 0);
     set(5, 0x3FC, 0);
@@ -1408,7 +1395,7 @@ pub fn init_default_control_config_joy_pad(this: GPtr<u8>, buttons: u32) {
     let list: &[(i32, u32)] = if special { &JOYPAD_SPECIAL } else { &JOYPAD_DEFAULT };
     for &(a, b) in list {
         if b <= n {
-            call_set_key(this, a, b, 3);
+            call_set_key(this, a as u32, b, 3);
         }
     }
 }
@@ -1604,7 +1591,7 @@ fn del_blank(key: u32, kind: i32) -> Option<bool> {
 fn clear_matching(this: GPtr<u8>, k: u32, kind: i32, actions: &[i32]) {
     for &a in actions {
         if key(this, a, kind) == k {
-            call_clear_settings(this, a, kind);
+            call_clear_settings(this, a as u32, kind as u32);
         }
     }
 }
@@ -1630,7 +1617,7 @@ pub fn delete_matching_3rd_person_controls(this: GPtr<u8>, action: i32, k: u32, 
     if key(this, 0x10, kind) == k {
         let m = control_method();
         if (action != 1 && m == 1) || m == 0 {
-            call_clear_settings(this, 0x10, kind);
+            call_clear_settings(this, 0x10, kind as u32);
         }
     }
     clear_matching(this, k, kind, &[0x11]);
@@ -1649,7 +1636,7 @@ pub fn delete_matching_1rst_3rd_person_controls(this: GPtr<u8>, action: i32, k: 
     if key(this, 1, kind) == k {
         let m = control_method();
         if (action != 0x10 && m == 1) || m == 0 {
-            call_clear_settings(this, 1, kind);
+            call_clear_settings(this, 1, kind as u32);
         }
     }
     clear_matching(this, k, kind, &[0, 0x2D, 4, 5]);
@@ -1796,7 +1783,7 @@ pub fn reinit_controls() {
     let cm: GPtr<u8> = GPtr::from_addr(CONTROLS_MANAGER);
     for t in 0..4 {
         for a in 0..NUM_ACTIONS {
-            call_clear_settings(cm, a, t);
+            call_clear_settings(cm, a as u32, t as u32);
         }
     }
     call_init_default(cm);

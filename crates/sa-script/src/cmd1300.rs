@@ -48,7 +48,7 @@ const HUNTER_GUN_OFFSET: usize = 0x8D3394;
 const TIME_STEP: usize = 0xB7CB5C;
 
 pub use sa_world::bindings::clear_drunk_blur;
-use crate::bindings::add_explosion;
+use sa_world::bindings::add_explosion;
 use crate::bindings::physical_45afb0;
 use crate::bindings::set_ammo;
 use crate::bindings::vehicle_get_ref;
@@ -64,36 +64,21 @@ use sa_world::bindings::is_within_area;
 use sa_world::bindings::set_velocity;
 use sa_world::bindings::skip_physics;
 use sa_world::bindings::vehicle_can_be_deleted as can_be_deleted;
+use sa_core::bindings::matrix_mul_vec as matrix_mul_vector;
+use sa_core::bindings::ped_give_weapon as give_weapon;
+use sa_stream::bindings::generate_new_one;
+use sa_world::bindings::add_gunshell;
+use sa_world::bindings::add_ped_in_car;
+use sa_world::bindings::fire_instant_hit;
+use sa_world::bindings::load_mission_text;
+use sa_world::bindings::ped_set_current_weapon as set_current_weapon;
+use sa_world::bindings::report_weapon_event;
+use sa_world::bindings::vector_add;
+use sa_world::bindings::vector_mul_scalar as vector_mul_float;
+use sa_world::bindings::weapon_ctor;
 orig! {
-    /// `CText::LoadMissionText(const char*)` (0x69FBF0)
-    fn load_mission_text(t: GPtr<u8>, name: GPtr<u8>) = thiscall 0x69FBF0 => unported;
-    /// `CPickups::GenerateNewOne(CVector, uint32 model, ePickupType, uint32 ammo, uint32 moneyPerDay,
-    /// bool isEmpty, const char* message)` (0x456F20)
-    fn generate_new_one(x: u32, y: u32, z: u32, model: u32, ty: u32, ammo: u32, money: u32, empty: u32, msg: GPtr<u8>) -> i32 = cdecl 0x456F20 => unported;
     /// `CPed::ClearWeapon(eWeaponType)` (0x5E62B0)
     fn clear_weapon(p: GPtr<u8>, ty: u32) = thiscall 0x5E62B0 => unported;
-    /// `CPopulation::AddPedInCar(CVehicle*, bool driver, int32, int32 seat, bool, bool)` (0x613A00)
-    fn add_ped_in_car(v: GPtr<u8>, driver: u32, a: i32, seat: u32, b: u32, c: u32) -> GPtr<u8> = cdecl 0x613A00 => unported;
-    /// `CPed::GiveWeapon(eWeaponType, uint32 ammo, bool)` (0x5E6080), the slot returned is discarded
-    fn give_weapon(p: GPtr<u8>, ty: u32, ammo: u32, flag: u32) -> i32 = thiscall 0x5E6080 => unported;
-    /// `CPed::SetCurrentWeapon(eWeaponType)` (0x5E6280)
-    fn set_current_weapon(p: GPtr<u8>, ty: u32) = thiscall 0x5E6280 => unported;
-    /// `CWeapon::CWeapon(eWeaponType, int32 ammo)` (0x73B430)
-    fn weapon_ctor(w: GPtr<u8>, ty: u32, ammo: u32) -> GPtr<u8> = thiscall 0x73B430 => unported;
-    /// Unnamed `CVector operator*(const CVector&, float)` (0x40FEC0; hidden-pointer result), the float as
-    /// its raw dword
-    fn vector_mul_float(out: GPtr<u32>, v: GPtr<u8>, k: u32) -> GPtr<u32> = cdecl 0x40FEC0 => unported;
-    /// `CMatrix::operator*(const CMatrix&, const CVector&)` (0x59C890; hidden-pointer result)
-    fn matrix_mul_vector(out: GPtr<u32>, m: GPtr<u8>, v: GPtr<u32>) -> GPtr<u32> = cdecl 0x59C890 => unported;
-    /// Unnamed `CVector operator+(const CVector&, const CVector&)` (0x40FE30; hidden-pointer result)
-    fn vector_add(out: GPtr<u32>, a: GPtr<u32>, b: GPtr<u32>) -> GPtr<u32> = cdecl 0x40FE30 => unported;
-    /// `CWeapon::FireInstantHit(CEntity* firer, CVector* origin, CVector* muzzle, CEntity* target,
-    /// CVector* targetPos, CVector* originForDriveBy, bool, bool)` (0x73FB10), AL (discarded)
-    fn fire_instant_hit(w: GPtr<u8>, firer: GPtr<u8>, origin: GPtr<u32>, muzzle: GPtr<u32>, a: u32, b: u32, c: u32, d: u32, e: u32) -> u8 = thiscall 0x73FB10 => unported;
-    /// `CWeapon::AddGunshell(CEntity*, const CVector&, const CVector2D&, float size)` (0x73A3E0)
-    fn add_gunshell(w: GPtr<u8>, e: GPtr<u8>, pos: GPtr<u32>, dir: GPtr<u32>, size: u32) = thiscall 0x73A3E0 => unported;
-    /// `CAudioEngine::ReportWeaponEvent(int32 event, eWeaponType, CPhysical*)` (0x506F40)
-    fn report_weapon_event(a: GPtr<u8>, ev: u32, ty: u32, e: GPtr<u8>) = thiscall 0x506F40 => unported;
 }
 
 /// 0541 FIRE_HUNTER_GUN (0x48D3AA, gr: unregistered): no null check. Nothing when
@@ -117,16 +102,16 @@ fn fire_hunter_gun(s: Scr) {
     let mat = veh.byte_add(0x14).cast::<GPtr<u8>>().read();
     let step = GPtr::<u32>::from_addr(TIME_STEP).read();
     let mut t1 = [0u32; 3];
-    let a = vector_mul_float(GPtr::from_raw(t1.as_mut_ptr()), veh.byte_add(0x44), step);
+    let a = GPtr::<u8>::cast::<u32>(vector_mul_float(GPtr::<u32>::cast::<u8>(GPtr::from_raw(t1.as_mut_ptr())), veh.byte_add(0x44), f32::from_bits(step)));
     let mut t2 = [0u32; 3];
-    let b = matrix_mul_vector(GPtr::from_raw(t2.as_mut_ptr()), mat, GPtr::from_raw(ofs.as_ptr().cast_mut()));
+    let b = GPtr::<f32>::cast::<u32>(matrix_mul_vector(GPtr::<u32>::cast::<f32>(GPtr::from_raw(t2.as_mut_ptr())), mat, GPtr::<u32>::cast::<u8>(GPtr::from_raw(ofs.as_ptr().cast_mut()))));
     let mut t3 = [0u32; 3];
-    let r = vector_add(GPtr::from_raw(t3.as_mut_ptr()), b, a);
+    let r = GPtr::<u8>::cast::<u32>(vector_add(GPtr::<u32>::cast::<u8>(GPtr::from_raw(t3.as_mut_ptr())), b.cast::<u8>(), a.cast::<u8>()));
     let pos = [r.read(), r.wrapping_index(1).read(), r.wrapping_index(2).read()];
     let pp = GPtr::from_raw(pos.as_ptr().cast_mut());
-    fire_instant_hit(w, veh, pp, pp, 0, 0, 0, 0, 1);
+    fire_instant_hit(w, veh, pp.cast::<u8>(), pp.cast::<u8>(), GPtr::NULL, GPtr::NULL, GPtr::NULL, 0, 1);
     let dir = [0u32, 0x3DCC_CCCD];
-    add_gunshell(w, veh, pp, GPtr::from_raw(dir.as_ptr().cast_mut()), 0x3CCC_CCCD);
+    add_gunshell(w, veh, pp.cast::<u8>(), GPtr::from_raw(dir.as_ptr().cast_mut()), f32::from_bits(0x3CCC_CCCD));
     report_weapon_event(GPtr::from_addr(AUDIO_ENGINE), 0x95, 0x26, veh);
     veh.byte_add(0x4D4).cast::<u32>().write(sa_core::timer::TIME_MS.get());
 }
@@ -137,7 +122,7 @@ fn pickup_z(x: u32, y: u32, z: u32) -> u32 {
     if X87::from_f32(f(z)).fcom(X87::constant(K_MINUS_100)).test_parity(0x41) {
         fld_fst(f(z)).to_bits()
     } else {
-        X87::from_f64_exact(find_ground_z_for_coord(x, y)).fadd_m(f(K_HALF)).to_f32().to_bits()
+        X87::from_f64_exact(find_ground_z_for_coord(f32::from_bits(x), f32::from_bits(y))).fadd_m(f(K_HALF)).to_f32().to_bits()
     }
 }
 
@@ -162,7 +147,7 @@ fn property_pickup(s: Scr, forsale: bool) {
         (MI_PROPERTY_LOCKED, 0x11, 0)
     };
     let model = u32::from(GPtr::<u16>::from_addr(mi).read());
-    let h = generate_new_one(x, y, z, model, ty, ammo, 0, 0, l);
+    let h = generate_new_one(f32::from_bits(x), f32::from_bits(y), f32::from_bits(z), model, ty, ammo, 0, 0, l);
     set_sp(0, h as u32);
     store(s, 1);
 }
@@ -249,14 +234,14 @@ fn random_car_no_save(s: Scr) {
         if v.is_null() {
             continue;
         }
-        if get_vehicle_appearance(v) != 1 && get_vehicle_appearance(v) != 2 {
+        if get_vehicle_appearance(v) as i32 != 1 && get_vehicle_appearance(v) as i32 != 2 {
             continue;
         }
         let m = i32::from(v.byte_add(0x22).cast::<u16>().read() as i16);
         if (m != spi(4) && spi(4) >= 0) || can_be_deleted(v) == 0 || is_within_area(v, sp(0), sp(1), sp(2), sp(3)) == 0 {
             continue;
         }
-        h = vehicle_get_ref(pool(VEHICLE_POOL), v);
+        h = vehicle_get_ref(pool(VEHICLE_POOL), v) as i32;
         let fl = v.byte_add(0x42A);
         fl.write(fl.read() | 2);
     }
@@ -401,7 +386,7 @@ pub fn process_commands_1300_to_1399(s: Scr, command: u32) -> i8 {
         // 051E GET_RADIO_CHANNEL (0x48D1C6, gr: unregistered): no operands; P0 =
         // (int8)AudioEngine.GetCurrentRadioStationID() - 1; StoreParameters(1).
         0x051E => {
-            let r = i32::from(get_current_radio_station_id(GPtr::from_addr(AUDIO_ENGINE)) as i8) - 1;
+            let r = i32::from((get_current_radio_station_id(GPtr::from_addr(AUDIO_ENGINE)) as u8) as i8) - 1;
             set_sp(0, r as u32);
             store(s, 1);
             0
@@ -550,7 +535,7 @@ pub fn process_commands_1300_to_1399(s: Scr, command: u32) -> i8 {
         // 0, 0, -1.0f, 0).
         0x0565 => {
             collect(s, 4);
-            add_explosion(0, 0, sp(3), sp(0), sp(1), sp(2), 0, 0, 0xBF80_0000, 0);
+            add_explosion(GPtr::NULL, GPtr::NULL, sp(3), f32::from_bits(sp(0)), f32::from_bits(sp(1)), f32::from_bits(sp(2)), 0, 0, f32::from_bits(0xBF80_0000), 0);
             0
         }
         // 0566 SET_OBJECT_AREA_VISIBLE (0x48D9B2, gr: unregistered): no null check; byte +0x2F = (u8)P1.

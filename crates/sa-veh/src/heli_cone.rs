@@ -11,23 +11,17 @@ use sa_math::x87::X87;
 use crate::common::{f32_of, ftol32, g, x, xi};
 
 use sa_pop::bindings::store_shadow_to_be_rendered;
+use sa_world::bindings::process_line_of_sight;
+use sa_world::bindings::register_corona;
+use sa_world::bindings::rw_im3d_end;
+use sa_world::bindings::rw_im3d_render_indexed_primitive;
+use sa_world::bindings::rw_im3d_transform;
 orig! {
     /// `CVector::Normalise()` (0x59C910)
     fn normalise(v: GPtr<CVector>) = thiscall 0x59C910 => sa_world::collision::data::normalise_port;
     /// `CrossProduct(CVector*, const CVector&, const CVector&)` (0x59C730)
     fn cross_product(out: GPtr<CVector>, a: GPtr<CVector>, b: GPtr<CVector>) -> GPtr<CVector>
         = cdecl 0x59C730 => sa_world::collision::data::cross_product_port;
-    /// `CWorld::ProcessLineOfSight(...)` (0x56BA00)
-    fn process_line_of_sight(o: GPtr<u8>, t: GPtr<u8>, cp: GPtr<u8>, out: GPtr<u8>, b: u8, v: u8, p: u8, ob: u8, d: u8, see: u8, cam: u8, shoot: u8) -> u8
-        = cdecl 0x56BA00 => sa_world::world::mvpc_world1::process_line_of_sight;
-    /// `CCoronas::RegisterCorona(...)` (0x6FC580), 21 argument words
-    fn register_corona(id: u32, attach: u32, r: u32, gg: u32, b: u32, a: u32, pos: GPtr<u8>, size: u32, range: u32, kind: u32, flare: u32, refl: u32, los: u32, trail: u32, angle: u32, neon: u32, pull: u32, bright: u32, fade: u32, below: u32, delay: u32) = cdecl 0x6FC580 => unported;
-    /// `RwIm3DTransform` (0x7EF450)
-    fn rw_im3d_transform(verts: GPtr<u8>, num: u32, m: u32, flags: u32) -> u32 = cdecl 0x7EF450 => unported;
-    /// `RwIm3DRenderIndexedPrimitive` (0x7EF550)
-    fn rw_im3d_render_indexed_primitive(prim: u32, indices: GPtr<u8>, num: i32) -> u32 = cdecl 0x7EF550 => unported;
-    /// `RwIm3DEnd` (0x7EF520)
-    fn rw_im3d_end() -> u32 = cdecl 0x7EF520 => unported;
 }
 
 /// `TempBufferVerticesStored` / `TempBufferIndicesStored`.
@@ -113,8 +107,8 @@ pub fn search_light_cone(id: u32, ox: f32, oy: f32, oz: f32, tx: f32, ty: f32, t
     let d6 = dot.fmul(d5);
     let size = f32_of(x(20.0).fmul(d6));
     let alpha = ftol32(d6.fmul_m(255.0)) as u32;
-    register_corona(id, 0, 0xC8, 0xC8, 0xFF, alpha, p8(&mut o), size.to_bits(), 100f32.to_bits(), 0, 0, 1, 0, 0, 0,
-                    0, 1.5f32.to_bits(), 0, 15f32.to_bits(), 0, 0);
+    register_corona(id, GPtr::NULL, 0xC8, 0xC8, 0xFF, alpha, p8(&mut o), f32::from_bits(size.to_bits()), f32::from_bits(100f32.to_bits()), 0, 0, 1, 0, 0, f32::from_bits(0),
+                    0, f32::from_bits(1.5f32.to_bits()), 0, f32::from_bits(15f32.to_bits()), 0, 0);
 
     let mut maxv = 0f32;
     let nv_g = g::<u32>(NUM_VERTS);
@@ -252,7 +246,7 @@ pub fn search_light_cone(id: u32, ox: f32, oy: f32, oz: f32, tx: f32, ty: f32, t
             GPtr::<u32>::from_addr(VERT_BUF + j * 0x24 + 0x18).write((((r << 8) | r) << 8) | a);
         }
     }
-    if ni as i32 > 0 && rw_im3d_transform(GPtr::from_addr(VERT_BUF), nv as u32, 0, 0x18) != 0 {
+    if ni as i32 > 0 && GPtr::<u8>::addr(rw_im3d_transform(GPtr::from_addr(VERT_BUF), nv as u32, GPtr::NULL, 0x18)) as u32 != 0 {
         rw_im3d_render_indexed_primitive(3, GPtr::from_addr(IDX_BUF), ni_g.read() as i32);
         rw_im3d_end();
     }
@@ -298,8 +292,8 @@ fn shadow_part(t: [f32; 3], s1: [f32; 3], s2: [f32; 3], power: f32) {
     let r = (ftol32(x(200.0).fmul(v)) as u32) & 0xFF;
     let blue = ftol32(x(255.0).fmul(v)) as u32;
     let intensity = ftol32(v.fmul_m(128.0)) as u32;
-    store_shadow_to_be_rendered(2, g::<u32>(0xC403F4).read(), p8(&mut pos), bx.to_bits(), by.to_bits(), cx.to_bits(),
-                                cy.to_bits(), intensity, r, r, blue, 15f32.to_bits(), 1, 1f32.to_bits(), 0, 0);
+    store_shadow_to_be_rendered(2, GPtr::from_addr((g::<u32>(0xC403F4).read()) as usize), p8(&mut pos), bx.to_bits(), by.to_bits(), cx.to_bits(),
+                                cy.to_bits(), intensity, r, r, blue, 15f32.to_bits(), 1, 1f32.to_bits(), GPtr::NULL, 0);
 }
 
 /// Hooks of this module.

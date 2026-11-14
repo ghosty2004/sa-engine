@@ -2,15 +2,16 @@
 //! the 1.0 US bytes (gta-reversed as a reading aid; the bytes win). Unverified (docs/verify/HOWTO.md).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::orig::at_site;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
 use crate::bindings::handler_is_kill_task_appropriate;
 use crate::bindings::kill_criminal_ctor;
-use crate::bindings::pause_ctor;
+use sa_world::bindings::pause_ctor;
 use crate::bindings::steal_car_ctor;
 use sa_core::bindings::general_get_radian_angle_between_points;
 use sa_core::bindings::general_limit_radian_angle;
@@ -26,10 +27,8 @@ use sa_world::bindings::sequence_add_task;
 use sa_world::bindings::sequence_ctor;
 use sa_world::bindings::shake_fist_ctor;
 use sa_world::bindings::smart_flee_entity_ctor;
-orig! {
-    fn leave_car_ctor(t: GPtr<u8>, veh: GPtr<u8>, a: i32, b: i32, c: u32, d: u32) -> GPtr<u8> = thiscall 0x63B8C0 => unported;
-    fn drag_ped_from_car_ctor(t: GPtr<u8>, ped: GPtr<u8>, a: u32) -> GPtr<u8> = thiscall 0x640430 => unported;
-}
+use crate::bindings::drag_ped_from_car_ctor;
+use sa_world::bindings::leave_car_ctor;
 
 const FLEE_SAFE_DIST: usize = 0xC18CEC;
 const FLEE_TIME: usize = 0x86F674;
@@ -65,14 +64,14 @@ fn react(this: GPtr<u8>, seq: GPtr<u8>, dragger: GPtr<u8>, ret_site: u32) {
         let pp = pos_ptr(ped(this));
         let dp = pos_ptr(dragger);
         let a = f32_of(X87::from_f64_exact(general_get_radian_angle_between_points(
-            rd::<u32>(dp, 0), rd::<u32>(dp, 4), rd::<u32>(pp, 0), rd::<u32>(pp, 4),
+            f32::from_bits(rd::<u32>(dp, 0)), f32::from_bits(rd::<u32>(dp, 4)), f32::from_bits(rd::<u32>(pp, 0)), f32::from_bits(rd::<u32>(pp, 4)),
         )));
-        let heading = f32_of(X87::from_f64_exact(general_limit_radian_angle(a.to_bits())));
-        let t = new_task(0x18, |t| achieve_heading_ctor(t, heading.to_bits(), gu(HEADING_A), gu(HEADING_B)));
+        let heading = f32_of(X87::from_f64_exact(general_limit_radian_angle(f32::from_bits(a.to_bits()))));
+        let t = new_task(0x18, |t| achieve_heading_ctor(t, f32::from_bits(heading.to_bits()), gu(HEADING_A), gu(HEADING_B)));
         sequence_add_task(seq, t);
         sequence_add_task(seq, new_task(0x10, shake_fist_ctor));
     } else {
-        let t = new_task(0x18, |t| pause_ctor(t, general_random_int_in_range(500, 1500)));
+        let t = new_task(0x18, |t| pause_ctor(t, general_random_int_in_range(500, 1500) as u32));
         sequence_add_task(seq, t);
     }
 }
@@ -112,7 +111,7 @@ pub fn handler_compute_dragged_out_car_response(this: GPtr<u8>, e: GPtr<u8>, _ac
     }
     if rd::<u8>(rd::<GPtr<u8>>(veh, 0x384), 0xDE) == 0xF {
         set(this, new_task(0x40, |t| {
-            smart_flee_entity_ctor(t, dragger, 0, gu(FLEE_SAFE_DIST), gu(FLEE_TIME), gu(FLEE_PERIOD), gu(FLEE_SHIFT))
+            smart_flee_entity_ctor(t, dragger, 0, f32::from_bits(gu(FLEE_SAFE_DIST)), gu(FLEE_TIME), gu(FLEE_PERIOD), gu(FLEE_SHIFT))
         }));
         return;
     }
@@ -125,13 +124,13 @@ pub fn handler_compute_dragged_out_car_response(this: GPtr<u8>, e: GPtr<u8>, _ac
     set(this, GPtr::NULL);
     let flee = |this: GPtr<u8>| {
         set(this, new_task(0x40, |t| {
-            smart_flee_entity_ctor(t, dragger, 0, gu(FLEE_SAFE_DIST), gu(FLEE_TIME), gu(FLEE_PERIOD), gu(FLEE_SHIFT))
+            smart_flee_entity_ctor(t, dragger, 0, f32::from_bits(gu(FLEE_SAFE_DIST)), gu(FLEE_TIME), gu(FLEE_PERIOD), gu(FLEE_SHIFT))
         }));
     };
     let say = |this: GPtr<u8>| {
         let p = ped(this);
         if !p.is_null() {
-            ped_say(p, 0x78, 0, 0x3F80_0000, 0, 0, 0);
+            ped_say(p, 0x78, 0, f32::from_bits(0x3F80_0000), 0, 0, 0);
         }
     };
     match ty {

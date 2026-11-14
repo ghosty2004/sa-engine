@@ -44,76 +44,48 @@ use sa_core::bindings::vector_magnitude as magnitude;
 use sa_core::bindings::world_clear_scan_codes as clear_scan_codes;
 use sa_stream::bindings::ped_is_player;
 use sa_stream::bindings::simple_transform_update_matrix;
+use crate::bindings::calculate_col_point_inside_box;
+use crate::bindings::col_line_ctor;
+use crate::bindings::does_not_collide_with_flyers;
+use crate::bindings::entity_get_bound_centre as get_bound_centre;
+use crate::bindings::entity_get_col_model as get_col_model;
+use crate::bindings::intel_get_task_hold as get_task_hold;
+use crate::bindings::is_this_vehicle_sitting_on_me;
+use crate::bindings::sphere_cast_versus_vs_poly;
+use crate::bindings::sphere_cast_vs_bbox;
+use crate::bindings::sphere_cast_vs_entity;
+use crate::bindings::sphere_cast_vs_sphere;
+use crate::bindings::test_sphere_box;
+use crate::bindings::test_sphere_sphere;
+use crate::bindings::test_sphere_triangle as test_sphere_triangle_call;
+use crate::bindings::uncompress_vector;
+use crate::bindings::vector_add;
+use crate::bindings::vector_mul_scalar as vector_scale;
+use sa_core::bindings::col_sphere_set;
+use sa_core::bindings::entity_register_reference as register_reference;
+use sa_core::bindings::find_player_ped;
+use sa_core::bindings::find_player_vehicle;
+use sa_core::bindings::vector_sub;
+use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
 orig! {
-    /// `VectorSub(CVector* out, const CVector* a, const CVector* b)` (0x40FE60): `out = a - b`
-    fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => crate::world::mvpa_math::vector_sub;
-    /// `operator+(const CVector&, const CVector&)` (0x40FE30, out first)
-    fn vector_add(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE30 => crate::world::mvpa_math::vector_add;
-    /// `operator*(const CVector&, float)` (0x40FEC0, out first)
-    fn vector_scale(out: GPtr<u8>, v: GPtr<u8>, s: f32) -> GPtr<u8> = cdecl 0x40FEC0 => crate::world::mvpa_math::vector_mul_scalar;
     /// `CVector::CrossProduct(CVector* out, const CVector* a, const CVector* b)` (0x59C730)
     fn cross_product(out: GPtr<CVector>, a: GPtr<CVector>, b: GPtr<CVector>) -> GPtr<CVector>
         = cdecl 0x59C730 => super::data::cross_product_port;
     /// `CVector::Normalise` (0x59C910, thiscall)
     fn normalise(v: GPtr<CVector>) = thiscall 0x59C910 => super::data::normalise_port;
-    /// `CompressedVector` -> `CVector` (0x411590, cdecl `(CVector* out, const CompressedVector*)`)
-    fn uncompress_vector(out: GPtr<u8>, v: GPtr<u8>) -> i32 = cdecl 0x411590 => crate::world::mvpa_math::uncompress_vector;
-    /// `CCollision::CalculateColPointInsideBox(const CBox&, const CVector&, CColPoint&)` (0x411EC0)
-    fn calculate_col_point_inside_box(bx: GPtr<f32>, p: GPtr<f32>, cp: GPtr<f32>)
-        = cdecl 0x411EC0 => super::prim::calculate_col_point_inside_box;
-    /// `CEntity::GetBoundCentre(CVector& out)` (0x534250, thiscall, returns `&out`)
-    fn get_bound_centre(e: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall 0x534250 => crate::world::entity::get_bound_centre_vec;
     /// `FUN_0050D590(CPed*)` (cdecl, ST0; animates the skinned ped col model and returns a height)
     fn ped_col_fn_50d590(ped: GPtr<u8>) -> f64 = cdecl 0x50D590 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70, thiscall)
-    fn register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => crate::world::entity::register_reference;
-    /// `CPedIntelligence::GetTaskHold(bool)` (0x600FF0, thiscall; ported in sa-ai)
-    fn get_task_hold(intel: GPtr<u8>, ignore: u8) -> GPtr<u8> = thiscall 0x600FF0 => unported;
-    /// `CWorld::FindPlayerVehicle(int32, bool)` (0x56E0D0)
-    fn find_player_vehicle(id: i32, remote: u8) -> GPtr<u8> = cdecl 0x56E0D0 => crate::world::cworld::find_player_vehicle;
-    /// `CEntity::DoesNotCollideWithFlyers` (0x532D40, thiscall, AL)
-    fn does_not_collide_with_flyers(e: GPtr<u8>) -> u8 = thiscall 0x532D40 => crate::world::entity::does_not_collide_with_flyers;
-    /// `CColSphere::Set(float radius, const CVector& centre, uint8 material, uint8 piece, uint8 light)`
-    /// (0x40FD10, thiscall, `ret 0x14`)
-    fn col_sphere_set(sp: GPtr<u8>, radius: f32, centre: GPtr<u8>, material: u8, piece: u8, light: u8) = thiscall 0x40FD10 => unported;
-    /// `CCollision::SphereCastVsEntity(const CColSphere&, const CColSphere&, CEntity*)` (0x419F00, AL)
-    fn sphere_cast_vs_entity(a: GPtr<u8>, b: GPtr<u8>, e: GPtr<u8>) -> u8 = cdecl 0x419F00 => super::sphere_cast::sphere_cast_vs_entity;
-    /// `CCollision::IsThisVehicleSittingOnMe(CVehicle*, CVehicle*)` (0x4152C0, AL)
-    fn is_this_vehicle_sitting_on_me(veh: GPtr<u8>, on_me: GPtr<u8>) -> u8 = cdecl 0x4152C0 => super::prim::is_this_vehicle_sitting_on_me;
-    /// `CCollision::TestSphereSphere(const CColSphere&, const CColSphere&)` (0x411E70, AL)
-    fn test_sphere_sphere(a: GPtr<f32>, b: GPtr<f32>) -> u32 = cdecl 0x411E70 => super::prim::test_sphere_sphere;
     /// `CCollision::GetBoundingBoxFromTwoSpheres(CColBox*, const CColSphere&, const CColSphere&)` (0x415230)
     fn get_bounding_box_from_two_spheres(out: GPtr<f32>, a: GPtr<f32>, b: GPtr<f32>)
         = cdecl 0x415230 => super::prim::get_bounding_box_from_two_spheres;
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210)
-    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => crate::world::cworld::find_player_ped;
     /// `CTaskComplexEnterCar::GetCameraAvoidVehicle` (0x63A690, thiscall)
     fn get_camera_avoid_vehicle(task: GPtr<u8>) -> GPtr<u8> = thiscall 0x63A690 => unported;
     /// `CCollision::SphereCastVsCaches(CColSphere*, CVector*, int32, CColCacheEntry*, int32*,
     /// CColCacheEntry*)` (0x4181B0, AL)
     fn sphere_cast_vs_caches_call(sp: GPtr<u8>, v: GPtr<u8>, n: i32, cache: GPtr<u8>, n_out: GPtr<u8>, out: GPtr<u8>) -> u8
         = cdecl 0x4181B0 => sphere_cast_vs_caches;
-    /// `CPlaceable::AllocateMatrix` (0x54F560, thiscall)
-    fn allocate_matrix(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x54F560 => crate::world::entity::allocate_matrix;
-    /// `CEntity::GetColModel` (0x535300, thiscall)
-    fn get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => crate::world::entity::get_col_model;
-    /// `CCollision::TestSphereBox(const CColSphere&, const CBox&)` (0x4120C0, AL)
-    fn test_sphere_box(s: GPtr<f32>, bx: GPtr<f32>) -> u8 = cdecl 0x4120C0 => super::prim::test_sphere_box;
     /// `CCollision::CalculateTrianglePlanes(CCollisionData*)` (0x416330)
     fn calculate_triangle_planes(cd: super::data::CdPtr) = cdecl 0x416330 => super::data::calculate_triangle_planes_col_data;
-    /// `CCollision::TestSphereTriangle` (0x4165B0, AL)
-    fn test_sphere_triangle_call(sp: GPtr<u8>, verts: GPtr<u8>, tri: GPtr<u8>, plane: GPtr<u8>) -> u8
-        = cdecl 0x4165B0 => test_sphere_triangle;
-    /// `CColLine::CColLine(const CVector& start, const CVector& end)` (0x40EF50, `ret 8`)
-    fn col_line_ctor(l: GPtr<u8>, start: GPtr<u8>, end: GPtr<u8>) -> GPtr<u8> = thiscall 0x40EF50 => crate::world::mvpa_math::col_line_ctor;
-    /// `CCollision::SphereCastVsBBox(CColSphere*, CColSphere*, CColBox*)` (0x415590, AL)
-    fn sphere_cast_vs_bbox(a: GPtr<f32>, b: GPtr<f32>, bx: GPtr<f32>) -> u8 = cdecl 0x415590 => super::prim::sphere_cast_vs_bbox;
-    /// `CCollision::SphereCastVsSphere(CColSphere*, CColSphere*, CColSphere*)` (0x417F20, AL)
-    fn sphere_cast_vs_sphere(a: GPtr<f32>, b: GPtr<f32>, s: GPtr<f32>) -> u8 = cdecl 0x417F20 => super::prim::sphere_cast_vs_sphere;
-    /// `CCollision::SphereCastVersusVsPoly(CColSphere*, CColSphere*, CColTriangle*, CColTrianglePlane*,
-    /// CompressedVector*)` (0x415CF0, AL)
-    fn sphere_cast_versus_vs_poly(a: GPtr<u8>, b: GPtr<u8>, tri: GPtr<u8>, plane: GPtr<u8>, verts: GPtr<u8>) -> u8
-        = cdecl 0x415CF0 => super::sphere_cast::sphere_cast_versus_vs_poly;
 }
 
 use sa_core::field::gfu as kf;
@@ -148,7 +120,7 @@ fn dist_to(sphere: GPtr<u8>, v: [f32; 3]) -> X87 {
     let vp = vec_local(&mut vb, v);
     let mut ob = [0u32; 3];
     let r = vector_sub(local(&mut ob), sphere, vp);
-    X87::from_f64_exact(magnitude(r))
+    X87::from_f64_exact(magnitude(r.cast::<u32>()))
 }
 
 /// The common front of `TestSphereTriangle` / `ProcessSphereTriangle` after the plane test: edge
@@ -1716,9 +1688,9 @@ pub fn sphere_cast_vs_caches(sp: GPtr<u8>, dir: GPtr<u8>, count: i32, cache: GPt
                     let l = local(&mut lb);
                     col_line_ctor(l, local(&mut s1m), local(&mut s2m));
                     let mut eb = [0u32; 3];
-                    let pe = matrix_mul_vec(local(&mut eb), inv, l.byte_add(0x10));
+                    let pe = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(local(&mut eb)), inv, l.byte_add(0x10)));
                     let mut sb = [0u32; 3];
-                    let ps = matrix_mul_vec(local(&mut sb), inv, l);
+                    let ps = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(local(&mut sb)), inv, l));
                     let mut l2b = [0u32; 8];
                     let l2 = local(&mut l2b);
                     col_line_ctor(l2, ps, pe);

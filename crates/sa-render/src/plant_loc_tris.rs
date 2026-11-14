@@ -13,19 +13,16 @@ use sa_world::collision::surface::SiPtr;
 
 use crate::common::{ftol32, g, jp, k, rd, wr, x, xi};
 
-use crate::bindings::get_surf_properties;
+use sa_core::bindings::get_surf_properties;
 use crate::bindings::loc_tri_release;
 use crate::bindings::proc_object_process_triangle_added as process_triangle_added;
 use crate::bindings::transform_points;
+use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
+use sa_stream::bindings::simple_transform_update_matrix;
+use sa_world::bindings::entity_get_col_model as get_col_model;
 orig! {
-    /// `CEntity::GetColModel()` (0x535300)
-    fn get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => sa_world::world::entity::get_col_model;
     /// `CCollisionData::GetTrianglePoint(CVector&, int)` (0x40f5e0)
     fn get_triangle_point(cd: CdPtr, out: GPtr<CVector>, idx: i32) = thiscall 0x40f5e0 => sa_world::collision::data::get_triangle_point;
-    /// `CPlaceable::AllocateMatrix()` (0x54f560)
-    fn allocate_matrix(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x54f560 => sa_world::world::entity::allocate_matrix;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*) const` (0x54f1b0)
-    fn simple_transform_update_matrix(this: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54f1b0 => crate::mvpd_unk::simple_transform_update_matrix;
     /// `SurfaceInfos_c::CreatesPlants(id)` (0x55e9d0)
     fn creates_plants(si: SiPtr, id: u32) -> u32 = thiscall 0x55e9d0 => sa_world::collision::surface::creates_plants;
     /// `SurfaceInfos_c::CreatesObjects(id)` (0x55e9f0)

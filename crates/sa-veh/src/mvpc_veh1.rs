@@ -80,7 +80,7 @@ pub fn read_and_interpret_track_file(filename: GPtr<u8>, nodes: GPtr<u8>, count:
         let n = rd::<i32>(count, 0);
         let p = crt_new((n.wrapping_mul(10)) as u32);
         if !p.is_null() {
-            vector_ctor_iterator(p, 10, n, 0x6F5370);
+            vector_ctor_iterator(p, 10, n as u32, 0x6F5370);
         }
         wr::<GPtr<u8>>(nodes, 0, p);
         let mut station = GPtr::<u8>::from_addr(0x8D48F8);

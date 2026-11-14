@@ -14,28 +14,24 @@ use sa_math::x87::X87;
 
 use crate::common::{ftol32, g, jp, k, rd, wr, x, xi};
 
-use crate::bindings::rw_im3d_render_indexed_primitive;
-use crate::bindings::rw_im3d_transform;
+use sa_world::bindings::rw_im3d_render_indexed_primitive;
+use sa_world::bindings::rw_im3d_transform;
 use sa_core::bindings::world_clear_scan_codes as clear_scan_codes;
+use crate::bindings::render_buffer_stop_storing as stop_storing_call;
+use crate::bindings::set_render_mode_for_shadow_type;
+use sa_world::bindings::get_water_level_no_waves;
+use sa_world::bindings::rw_im3d_end;
 orig! {
     /// `RwRenderStateSet(state, value)` (`RwGlobals` +0x20)
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xc97b24 0x20 => unported;
-    /// `CShadows::SetRenderModeForShadowType(uint8)` (0x707460; the dword the original pushes)
-    fn set_render_mode_for_shadow_type(ty: u32) = cdecl 0x707460 => crate::shadows::set_render_mode_for_shadow_type;
     /// `CShadows::CastRealTimeShadowSectorList(list, ...)` (0x70a7e0, 19 dwords)
     fn cast_real_time_shadow_sector_list(list: GPtr<u8>, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, a8: u32, a9: u32, a10: u32, a11: u32, a12: u32, a13: u32, a14: u32, a15: u32, a16: u32, a17: u32, a18: u32, a19: u32) = cdecl 0x70a7e0 => crate::mvpd_r1::cast_real_time_shadow_sector_list;
     /// `CShadows::CastShadowSectorList(list, ...)` (0x70a630, 19 dwords)
     fn cast_shadow_sector_list(list: GPtr<u8>, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, a8: u32, a9: u32, a10: u32, a11: u32, a12: u32, a13: u32, a14: u32, a15: u32, a16: u32, a17: u32, a18: u32, a19: u32) = cdecl 0x70a630 => crate::mvpd_r1::cast_shadow_sector_list;
     /// `CShadows::CastPlayerShadowSectorList(list, ...)` (0x70a470, 19 dwords)
     fn cast_player_shadow_sector_list(list: GPtr<u8>, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, a8: u32, a9: u32, a10: u32, a11: u32, a12: u32, a13: u32, a14: u32, a15: u32, a16: u32, a17: u32, a18: u32, a19: u32) = cdecl 0x70a470 => crate::mvpd_r1::cast_player_shadow_sector_list;
-    /// `CWaterLevel::GetWaterLevelNoWaves(x, y, z, float* level, float* big, float* small)` (0x6e8580)
-    fn get_water_level_no_waves(px: u32, py: u32, pz: u32, level: GPtr<f32>, big: GPtr<f32>, small: GPtr<f32>) -> u8 = cdecl 0x6e8580 => crate::waterlevel::get_water_level_no_waves;
     /// `FUN_006e8550(int x, int y, float* inout, float big, float small)` (0x6e8550): the waves at a point
     fn waves_for_coordinate(px: i32, py: i32, out: GPtr<f32>, big: u32, small: u32) = cdecl 0x6e8550 => crate::waterlevel::waves_for_coordinate;
-    /// `RwIm3DEnd()` (0x7ef520)
-    fn rw_im3d_end() -> u32 = cdecl 0x7ef520 => unported;
-    /// `RenderBuffer::StopStoring()` (0x7077a0)
-    fn stop_storing_call() = cdecl 0x7077a0 => self::render_buffer_stop_storing;
 }
 
 /// `TempBufferVerticesStored`, `TempBufferIndicesStored`, `aTempBufferIndices`, `TempBufferRenderVertices`.
@@ -81,8 +77,8 @@ pub fn render_buffer_stop_storing() {
 /// zeroed.
 fn render_stuff_in_buffer() {
     let nv = g::<u32>(TEMP_VERTICES_STORED).read();
-    if nv != 0 && !rw_im3d_transform(TEMP_RENDER_VERTICES as u32, nv, 0, 1).is_null() {
-        rw_im3d_render_indexed_primitive(3, TEMP_BUFFER_INDICES as u32, g::<u32>(TEMP_INDICES_STORED).read());
+    if nv != 0 && !rw_im3d_transform(GPtr::from_addr((TEMP_RENDER_VERTICES as u32) as usize), nv, GPtr::NULL, 1).is_null() {
+        rw_im3d_render_indexed_primitive(3, GPtr::from_addr((TEMP_BUFFER_INDICES as u32) as usize), (g::<u32>(TEMP_INDICES_STORED).read()) as i32);
         rw_im3d_end();
     }
     g::<u32>(TEMP_INDICES_STORED).write(0);
@@ -279,7 +275,7 @@ fn water_pass(os: GPtr<u8>, pos_copy: &[u32; 3]) {
     let mut level = 0f32;
     let mut big = 0f32;
     let mut small = 0f32;
-    if get_water_level_no_waves(pos_copy[0], pos_copy[1], pos_copy[2], GPtr::from_raw(&mut level), GPtr::from_raw(&mut big), GPtr::from_raw(&mut small)) == 0 {
+    if get_water_level_no_waves(f32::from_bits(pos_copy[0]), f32::from_bits(pos_copy[1]), f32::from_bits(pos_copy[2]), GPtr::<f32>::cast::<u8>(GPtr::from_raw(&mut level)), GPtr::from_raw(&mut big), GPtr::from_raw(&mut small)) == 0 {
         return;
     }
     if jp(x(level), x(rd::<f32>(os, 8)), 0x5) {

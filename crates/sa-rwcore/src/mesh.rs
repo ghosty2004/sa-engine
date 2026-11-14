@@ -30,11 +30,9 @@ const FLAG_NATIVE: u32 = 0x0100_0000;
 
 use crate::bindings::material_list_get_material_call;
 use crate::bindings::read_int32 as rw_stream_read_int32_call;
+use crate::bindings::free_list_create as rw_free_list_create;
+use crate::bindings::free_list_destroy as rw_free_list_destroy;
 orig! {
-    /// `_rwFreeListCreate(entrySize, entriesPerBlock, alignment, hint)` (0x801980)
-    fn rw_free_list_create(size: u32, per_block: u32, align: u32, hint: u32) -> GPtr<u8> = cdecl 0x801980 => crate::memory::rw_freelist_create;
-    /// `RwFreeListDestroy(fl)` (0x801B80)
-    fn rw_free_list_destroy(fl: GPtr<u8>) -> u32 = cdecl 0x801B80 => crate::memory::rw_freelist_destroy;
     /// `_rpMeshRead(stream, object, matList)` (0x758EC0)
     fn rp_mesh_read_call(s: GPtr<u8>, obj: GPtr<u8>, ml: GPtr<u8>) -> GPtr<u8> = cdecl 0x758EC0 => rp_mesh_read;
     /// A mesh callback `cb(mesh, header, data)` (`_rpMeshHeaderForAllMeshes`)

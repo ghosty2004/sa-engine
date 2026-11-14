@@ -31,15 +31,13 @@ pub const SCRATCH_PAD_HEAP: u32 = 0xC87BD0;
 /// `PC_Scratch` / `s_MemoryHeapBuffer` (16 KiB).
 pub const SCRATCH_PAD: u32 = 0xC8E0C8;
 
+pub use crate::bindings::calloc;
+pub use crate::bindings::crt_realloc as realloc;
 orig! {
     /// CRT `malloc` (0x824257)
     pub fn malloc(size: u32) -> GPtr<u8> = cdecl 0x824257 => unported;
     /// CRT `free` (0x82413F)
     pub fn free(p: GPtr<u8>) = cdecl 0x82413F => unported;
-    /// CRT `realloc` (0x824269)
-    pub fn realloc(p: GPtr<u8>, size: u32) -> GPtr<u8> = cdecl 0x824269 => unported;
-    /// CRT `calloc` (0x824416)
-    pub fn calloc(n: u32, size: u32) -> GPtr<u8> = cdecl 0x824416 => unported;
     /// `CMemoryHeap::Malloc` (0x72ED80, thiscall)
     pub fn heap_malloc(heap: GPtr<u8>, size: u32) -> GPtr<u8> = thiscall 0x72ED80 => unported;
     /// `CMemoryHeap::Init` (0x72F180, thiscall), as `InitScratchPad` calls it

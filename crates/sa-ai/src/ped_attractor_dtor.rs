@@ -3,15 +3,15 @@
 //! `std13-ai-1`). Ported from the 1.0 US bytes. Unverified (docs/verify/HOWTO.md).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
 use crate::common::*;
 
 use sa_core::bindings::entity_clean_up_old_reference;
+use sa_core::bindings::crt_free_8214bd as operator_delete;
 orig! {
-    /// `operator delete(void*)` (0x8214BD)
-    fn operator_delete(p: u32) = cdecl 0x8214BD => unported;
     fn destructor_o(this: GPtr<u8>) = thiscall 0x5EC410 => destructor;
 }
 
@@ -25,12 +25,12 @@ pub fn destructor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x86C538);
     let e = rd::<GPtr<u8>>(this, 8);
     if !e.is_null() {
-        entity_clean_up_old_reference(e, this.byte_add(8));
+        entity_clean_up_old_reference(e, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(8)));
     }
     for v in [0x30, 0x20, 0x10] {
         let p = rd::<u32>(this, v);
         if p != 0 {
-            operator_delete(p);
+            operator_delete(GPtr::from_addr(p as usize));
         }
         wr::<u32>(this, v, 0);
         wr::<u32>(this, v + 4, 0);

@@ -3,6 +3,7 @@
 //! bytes. Every call to another catalogued function goes through `orig!` at the original address.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -18,11 +19,11 @@ use sa_world::bindings::membership_get_leader;
 use sa_world::bindings::membership_get_member;
 use sa_world::bindings::sequence_ctor;
 use sa_world::bindings::task_simple_ctor;
+use crate::bindings::event_get_sound_level;
+use crate::bindings::slow_drag_ped_out_compute_anim_id;
+use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::tm_find_active_task_by_type;
 orig! {
-    /// `CTaskManager::FindActiveTaskByType(int32)` (0x681740, `ret 4`)
-    fn tm_find_active_task_by_type(tm: GPtr<u8>, ty: i32) -> u32 = thiscall 0x681740 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70, `ret 4`)
-    fn entity_register_reference(e: GPtr<u8>, r: GPtr<u8>) -> u32 = thiscall 0x571B70 => unported;
     /// the scalar deleting destructor (vtable +0, `ret 4`)
     fn v_delete(t: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
     /// `CTask::Clone` (vtable +4)
@@ -33,12 +34,8 @@ orig! {
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
     /// `CEvent::GetSourceEntity` (vtable +0x28)
     fn v_source_entity(e: GPtr<u8>) -> u32 = thiscall vslot 0x28 => unported;
-    /// `CEvent::GetSoundLevel(const CEntity*, CVector&)` (0x4B2850, `ret 8`, ST0)
-    fn event_get_sound_level(e: GPtr<u8>, ent: u32, pos: u32) -> f64 = thiscall 0x4B2850 => unported;
     /// `CEvent::CalcSoundLevelIncrement(float level, float increment)` (0x4AC050, cdecl, ST0)
     fn event_calc_sound_level_increment(a: u32, b: u32) -> f64 = cdecl 0x4AC050 => unported;
-    /// `CTaskSimpleCarSlowDragPedOut::ComputeAnimID_Wrapper(int32& group, int32& anim)` (0x648100, `ret 8`)
-    fn slow_drag_ped_out_compute_anim_id(t: GPtr<u8>, g: GPtr<u8>, a: GPtr<u8>) = thiscall 0x648100 => unported;
     /// the vehicle's door-anim virtual (vtable +0x70: `(CPed*, int32 door, int32 group, int32 anim, float)`,
     /// `ret 0x14`)
     fn v_vehicle_door_anim(v: GPtr<u8>, ped: u32, door: u32, group: u32, anim: u32, f: u32) = thiscall vslot 0x70 => unported;
@@ -64,7 +61,7 @@ pub fn leader_entered_car_as_driver_affects_ped_group(this: GPtr<u8>, group: GPt
         if rd::<u32>(p, 0x46C) & 0x100 == 0 || rd::<u32>(p, 0x58C) != rd::<u32>(this, 0x14) {
             return 1;
         }
-        if tm_find_active_task_by_type(rd::<GPtr<u8>>(p, 0x47C).byte_add(4), 0x2C0) != 0 {
+        if GPtr::<u8>::addr(tm_find_active_task_by_type(rd::<GPtr<u8>>(p, 0x47C).byte_add(4), 0x2C0)) as u32 != 0 {
             return 1;
         }
     }
@@ -365,7 +362,7 @@ pub fn event_global_group_get_sound_level(this: GPtr<u8>, ent: u32, pos: u32) ->
     while i < rd::<i32>(this, 8) {
         let ev = rd::<GPtr<u8>>(this, 0xC + 4 * i as isize);
         if v_source_entity(ev) == ent || ent == 0 {
-            let lvl = f32_of(X87::from_f64_exact(event_get_sound_level(rd::<GPtr<u8>>(this, 0xC + 4 * i as isize), ent, pos)));
+            let lvl = f32_of(X87::from_f64_exact(event_get_sound_level(rd::<GPtr<u8>>(this, 0xC + 4 * i as isize), GPtr::from_addr(ent as usize), GPtr::from_addr(pos as usize))));
             if !x(lvl).fcom(x(g::<f32>(0x858B50).read())).test_any(0x41) {
                 let inc = X87::from_f64_exact(event_calc_sound_level_increment(sum.to_bits(), lvl.to_bits()));
                 sum = f32_of(inc.fadd_m(lvl));
@@ -565,7 +562,7 @@ fn brain_store_empty(e: usize) {
     let ped = g::<GPtr<u8>>(e).read();
     g::<u32>(e + 0xC).write(0);
     if !ped.is_null() {
-        entity_clean_up_old_reference(ped, g(e));
+        entity_clean_up_old_reference(ped, GPtr::<u8>::cast::<GPtr<u8>>(g(e)));
         g::<u32>(e).write(0);
     }
 }

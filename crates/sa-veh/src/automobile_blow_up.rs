@@ -13,26 +13,23 @@ use sa_core::bindings::find_player_ped;
 use sa_core::bindings::find_player_vehicle;
 use sa_core::bindings::stats_increment_stat;
 use sa_pop::bindings::darkel_register_car_blown_up;
-use sa_stream::bindings::frame_for_all_objects;
+use sa_core::bindings::frame_for_all_objects;
 use sa_world::bindings::cam_shake;
 use sa_world::bindings::entity_get_col_model;
 use sa_world::bindings::set_door_damage;
 use sa_world::bindings::start_fire_on as start_fire;
 use sa_world::bindings::vehicle_change_law_enforcer_state as change_law_enforcer_state;
+use crate::bindings::spawn_flying_component;
+use sa_world::bindings::add_explosion;
 orig! {
     /// `FUN_007322f0(RpClump*, uint32)` (0x7322F0, the clump's atomic flags)
     fn clump_set_flags_7322f0(clump: GPtr<u8>, flags: u32) = cdecl 0x7322F0 => unported;
     /// `CDamageManager::FuckCarCompletely(bool)` (0x6C25D0)
     fn damage_fuck_car_completely(d: GPtr<u8>, b: u32) = thiscall 0x6C25D0 => unported;
-    /// `CAutomobile::SpawnFlyingComponent(int32, uint32)` (0x6A8580)
-    fn spawn_flying_component(v: GPtr<u8>, node: i32, kind: u32) -> GPtr<u8> = thiscall 0x6A8580 => crate::automobile_flying_component::automobile_spawn_flying_component;
     /// `CVehicle::KillPedsInVehicle()` (0x6D1C80)
     fn kill_peds_in_vehicle(v: GPtr<u8>) = thiscall 0x6D1C80 => unported;
     /// `CVehicle::KillPedsGettingInVehicle()` (0x6D82F0)
     fn kill_peds_getting_in_vehicle(v: GPtr<u8>) = thiscall 0x6D82F0 => unported;
-    /// `CExplosion::AddExplosion(CEntity* victim, CEntity* creator, eExplosionType, CVector, uint32
-    /// lifetime, bool makeSound, float camShake, bool invisible)` (0x736A50)
-    fn add_explosion(victim: GPtr<u8>, creator: GPtr<u8>, ty: u32, x: u32, y: u32, z: u32, life: u32, sound: u32, shake: u32, invisible: u32) -> u8 = cdecl 0x736A50 => unported;
 }
 
 /// `rand()` as the original call returning to `site` calls it, times 1/RAND_MAX (0x858C7C).
@@ -103,7 +100,7 @@ pub fn automobile_blow_up_car(this: GPtr<u8>, damager: GPtr<u8>, hide: u32) {
         if m.is_null() { this.byte_add(4) } else { m.byte_add(0x30) }
     };
     let p = pos();
-    cam_shake(GPtr::from_addr(0xB6_F028), f32::from_bits(0x3ECC_CCCD), rd::<u32>(p, 0), rd::<u32>(p, 4), rd::<u32>(p, 8));
+    cam_shake(GPtr::from_addr(0xB6_F028), f32::from_bits(0x3ECC_CCCD), f32::from_bits(rd::<u32>(p, 0)), f32::from_bits(rd::<u32>(p, 4)), f32::from_bits(rd::<u32>(p, 8)));
     kill_peds_in_vehicle(this);
     kill_peds_getting_in_vehicle(this);
     wr::<u8>(this, 0x4A8, rd::<u8>(this, 0x4A8) & 0xE7);
@@ -150,7 +147,7 @@ pub fn automobile_blow_up_car(this: GPtr<u8>, damager: GPtr<u8>, hide: u32) {
     let col = entity_get_col_model(this);
     pz = f32_of(x(fz).fadd_m(pz).fsub(x(u3).fadd_m(0.5).fmul_m(rd::<f32>(col, 0x14))));
     let ty = if rc { 5 } else { 4 };
-    add_explosion(this, damager, ty, px.to_bits(), py.to_bits(), pz.to_bits(), 0, 1, 0xBF80_0000, hide);
+    add_explosion(this, damager, ty, f32::from_bits(px.to_bits()), f32::from_bits(py.to_bits()), f32::from_bits(pz.to_bits()), 0, 1, f32::from_bits(0xBF80_0000), hide);
 }
 
 /// This module's registrations.

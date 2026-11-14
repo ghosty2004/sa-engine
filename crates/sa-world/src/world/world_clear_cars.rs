@@ -63,7 +63,7 @@ pub fn clear_cars_from_area(x0: f32, y0: f32, z0: f32, x1: f32, y1: f32, z1: f32
             remove_ped(drv);
             let d = rd::<GPtr<u8>>(veh, 0x460);
             if !d.is_null() {
-                clean_up_old_reference(d, veh.byte_add(0x460));
+                clean_up_old_reference(d, GPtr::<u8>::cast::<GPtr<u8>>(veh.byte_add(0x460)));
             }
             wr::<u32>(veh, 0x460, 0);
         }

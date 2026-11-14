@@ -27,15 +27,13 @@ use sa_world::bindings::event_script_command_dtor;
 use sa_world::bindings::group_intel_set_script_command_task;
 use sa_world::bindings::ped_groups_get_peds_group as get_peds_group;
 use sa_world::bindings::sequence_add_task;
+use crate::bindings::get_vacant_slot;
+use sa_world::bindings::group_intel_get_task_script_command;
 orig! {
-    /// `CPedScriptedTaskRecord::GetVacantSlot()` (0x608540)
-    fn get_vacant_slot() -> i32 = cdecl 0x608540 => unported;
     /// `CPedScriptedTaskRecordData::SetAsAttractorScriptTask(CPed*, int32 opcode, CTask*)` (0x608440)
     fn record_set_as_attractor_script_task(rec: GPtr<u8>, ped: GPtr<u8>, opcode: u32, task: GPtr<u8>) = thiscall 0x608440 => unported;
     /// `CPedScriptedTaskRecordData::SetAsGroupTask(CPed*, int32 opcode, CTask*)` (0x6084A0)
     fn record_set_as_group_task(rec: GPtr<u8>, ped: GPtr<u8>, opcode: u32, task: GPtr<u8>) = thiscall 0x6084A0 => unported;
-    /// `CPedGroupIntelligence::GetTaskScriptCommand(CPed*)` (0x5F8690)
-    fn group_intel_get_task_script_command(gi: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x5F8690 => unported;
     /// The task's virtual slot 0 (scalar deleting destructor), `ecx` = task, flag 1.
     fn task_delete_virtual(task: GPtr<u8>, flag: u32) -> GPtr<u8> = thiscall vslot 0x00 => unported;
 }
@@ -58,7 +56,7 @@ fn ped_at(h: i32) -> GPtr<u8> {
 
 /// The record `CPedScriptedTaskRecord::GetVacantSlot()` names (`ms_scriptedTasks + slot * 0x14`).
 fn vacant_record() -> GPtr<u8> {
-    let slot = get_vacant_slot();
+    let slot = get_vacant_slot() as i32;
     GPtr::from_addr((SCRIPTED_TASKS as u32).wrapping_add((slot as u32).wrapping_mul(0x14)) as usize)
 }
 
@@ -126,7 +124,7 @@ pub fn give_ped_scripted_task(this: GPtr<u8>, ped_handle: i32, task: GPtr<u8>, o
     if !copy.is_null() {
         record_set_event(vacant_record(), ped, opcode, copy);
     }
-    event_script_command_dtor(ev);
+    event_script_command_dtor(ev.cast::<u32>());
 }
 
 pub const HOOKS: &[HookReg] = &[HOOK_GIVE_PED_SCRIPTED_TASK];

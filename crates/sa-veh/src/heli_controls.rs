@@ -81,9 +81,9 @@ fn stabiliser(this: GPtr<u8>, a: &[u32; 3], k: isize) -> f32 {
        note = "pow(0.98, timeStep) through orig::x87_binary(0x822130), FSQRT of the speed; the pad pointer is re-fetched per use, as the original")]
 pub fn heli_process_control_inputs(this: GPtr<u8>, ped_type: u32) {
     let id = i32::from(ped_type as u8);
-    let pad = pad_get_pad(id);
-    let acc = i32::from(pad_get_accelerate(pad));
-    let brk = i32::from(pad_get_brake(pad));
+    let pad = pad_get_pad(id as u32);
+    let acc = i32::from(pad_get_accelerate(pad) as i16);
+    let brk = i32::from(pad_get_brake(pad) as i16);
     wr::<f32>(this, 0x998, f32_of(xi(acc - brk).fmul_m(f32::from_bits(0x3B80_8081))));
     let state = g::<i32>(0xC1_CC04);
     let stick = |this: GPtr<u8>| {
@@ -94,10 +94,10 @@ pub fn heli_process_control_inputs(this: GPtr<u8>, ped_type: u32) {
         wr::<f32>(this, 0x994, f32_of(xi(-i32::from(lr)).fmul_m(f32::from_bits(0x3C00_0000))));
     };
     if g::<u8>(0xB6_EC2E).read() != 0 && g::<u8>(0xC1_CC03).read() != 0 {
-        pad_get_pad(id);
+        pad_get_pad(id as u32);
         let mut mouse = x(g::<f32>(0xB7_3424).read()).fcom(x(0.0)).test_parity(0x44);
         if !mouse {
-            pad_get_pad(id);
+            pad_get_pad(id as u32);
             mouse = x(g::<f32>(0xB7_3428).read()).fcom(x(0.0)).test_parity(0x44);
         }
         if !mouse {
@@ -105,19 +105,19 @@ pub fn heli_process_control_inputs(this: GPtr<u8>, ped_type: u32) {
                 || !jne_mask(x(rd::<f32>(this, 0x990)).fabs(), x(0.0), 0x41);
             if moving
                 && state.read() == 2
-                && pad_get_steering_left_right(pad_get_pad(id)) == 0
-                && pad_get_steering_up_down(pad_get_pad(id)) == 0
+                && pad_get_steering_left_right(pad_get_pad(id as u32)) == 0
+                && pad_get_steering_up_down(pad_get_pad(id as u32)) == 0
             {
                 mouse = true;
             }
         }
         if mouse {
             state.write(2);
-            if rd::<u16>(pad_get_pad(id), 0x2C) == 0 {
-                pad_get_pad(id);
+            if rd::<u16>(pad_get_pad(id as u32), 0x2C) == 0 {
+                pad_get_pad(id as u32);
                 let k = g::<f32>(0x87_1674).read();
                 wr::<f32>(this, 0x994, f32_of(x(g::<f32>(0xB7_3424).read()).fmul_m(k).fsubr_m(rd::<f32>(this, 0x994))));
-                pad_get_pad(id);
+                pad_get_pad(id as u32);
                 wr::<f32>(this, 0x990, f32_of(x(g::<f32>(0xB7_3428).read()).fmul_m(k).fadd_m(rd::<f32>(this, 0x990))));
             }
             let lim = x(g::<f32>(0x87_1678).read());

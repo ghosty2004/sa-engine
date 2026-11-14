@@ -26,9 +26,8 @@ use sa_world::bindings::find_ground_z_for_coord;
 use sa_world::bindings::get_actual_script_thing_index;
 use sa_world::bindings::heli_search_light_cone;
 use sa_world::bindings::multiply3x3;
+use sa_world::bindings::get_new_unique_script_thing_index;
 orig! {
-    /// `CTheScripts::GetNewUniqueScriptThingIndex(int32 index, uint8 type)` (0x483720, cdecl)
-    fn get_new_unique_script_thing_index(index: i32, ty: u32) -> i32 = cdecl 0x483720 => crate::script_things::get_new_unique_script_thing_index;
     /// `CCheckpoints::DeleteCP(uint32 id, uint16 type)` (0x722FC0, cdecl)
     fn checkpoints_delete_cp(id: u32, ty: u32) = cdecl 0x722FC0 => unported;
     /// `CCheckpoints::PlaceMarker(uint32 id, uint16 type, CVector& pos, CVector& dir, float size, uint8 r, g, b, a,
@@ -77,7 +76,7 @@ fn set_ref(p: GPtr<u8>, off: usize, e: GPtr<u8>, reg: bool) {
     let slot = p.byte_add(off as isize);
     let old = rd::<GPtr<u8>>(p, off);
     if !old.is_null() {
-        clean_up_old_reference(old, slot);
+        clean_up_old_reference(old, slot.cast::<GPtr<u8>>());
     }
     wr(p, off, e);
     if reg && !e.is_null() {
@@ -101,7 +100,7 @@ pub fn highlight_important_area(id: u32, x1: f32, y1: f32, x2: f32, y2: f32, z: 
     let cz = if xf(z).fcom(xf(kf(K_MINUS_100))).test_parity(0x41) {
         z
     } else {
-        X87::from_f64_exact(find_ground_z_for_coord(cx.to_bits(), cy.to_bits())).fadd_m(kf(K_TWO)).to_f32()
+        X87::from_f64_exact(find_ground_z_for_coord(f32::from_bits(cx.to_bits()), f32::from_bits(cy.to_bits()))).fadd_m(kf(K_TWO)).to_f32()
     };
     let mut c = [cx.to_bits(), cy.to_bits(), cz.to_bits()];
     let side_y = xf(cy).fsub_m(max_y).to_f32();
@@ -150,7 +149,7 @@ pub fn add_script_search_light(px: u32, py: u32, pz: u32, entity: GPtr<u8>, tx: 
     set_ref(l, 0x50, GPtr::NULL, false);
     let bulb = rd::<GPtr<u8>>(l, 0x54);
     if !bulb.is_null() {
-        clean_up_old_reference(bulb, l.byte_add(0x54));
+        clean_up_old_reference(bulb, GPtr::<u8>::cast::<GPtr<u8>>(l.byte_add(0x54)));
     }
     let n = gp::<u16>(NUM_SEARCH_LIGHTS);
     n.write(n.read().wrapping_add(1));
@@ -168,7 +167,7 @@ pub fn add_script_search_light(px: u32, py: u32, pz: u32, entity: GPtr<u8>, tx: 
        note = "body in .HOODLUM at 0x1565770")]
 pub fn attach_searchlight_to_searchlight_object(handle: i32, tower: GPtr<u8>, housing: GPtr<u8>, bulb: GPtr<u8>,
     ox: u32, oy: u32, oz: u32) {
-    let i = get_actual_script_thing_index(handle, 2);
+    let i = get_actual_script_thing_index(handle as u32, 2);
     if i < 0 {
         return;
     }
@@ -231,7 +230,7 @@ pub fn add_script_checkpoint(x: u32, y: u32, z: u32, dx: u32, dy: u32, dz: u32, 
        unverified = "samp-script-1", route = "L2", hazards = "heap-writes", recs = "world-cheats",
        note = "body in .HOODLUM at 0x156B9F0")]
 pub fn remove_script_checkpoint(handle: i32) {
-    let i = get_actual_script_thing_index(handle, 3);
+    let i = get_actual_script_thing_index(handle as u32, 3);
     if i == -1 {
         return;
     }

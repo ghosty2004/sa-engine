@@ -6,7 +6,7 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
-use crate::bindings::load_anim_file;
+use sa_core::bindings::load_anim_file;
 use crate::bindings::wanted_clear_qd_crimes;
 use sa_core::bindings::clear_this_print_big_now as messages_clear_this_print_big_now;
 use sa_core::bindings::directory_find_item;
@@ -17,20 +17,17 @@ use sa_core::bindings::rw_stream_skip;
 use sa_core::bindings::streaming_i_have_used_streaming_memory;
 use sa_core::bindings::streaming_im_gonna_use_streaming_memory;
 use sa_core::bindings::streaming_make_space_for;
+use sa_core::bindings::file_close as file_mgr_close_file;
+use sa_core::bindings::file_mgr_seek;
+use sa_core::bindings::open_file as file_mgr_open_file;
 orig! {
     /// CRT `sprintf(buf, fmt, const char*)` (0x821BB5)
     fn sprintf_s(buf: GPtr<u8>, fmt: GPtr<u8>, s: GPtr<u8>) -> i32 = cdecl 0x821BB5 => unported;
     /// `CAnimBlendAssocGroup::CreateAssociations(const char* block, const char (*)[32], const char (*)[32], int32)`
     /// (0x4CE3B0, `ret 0x10`)
     fn group_create_associations_3(g: GPtr<u8>, block: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, n: i32) = thiscall 0x4CE3B0 => unported;
-    /// `CFileMgr::OpenFile(const char*, const char*)` (0x538900)
-    fn file_mgr_open_file(name: GPtr<u8>, mode: GPtr<u8>) -> u32 = cdecl 0x538900 => unported;
-    /// `CFileMgr::Seek(FILESTREAM, int32, int32)` (0x538990)
-    fn file_mgr_seek(f: u32, off: u32, origin: u32) -> i32 = cdecl 0x538990 => unported;
     /// `CCamera::LoadPathSplines(FILESTREAM)` (0x5B24D0, `ret 4`)
     fn camera_load_path_splines(cam: GPtr<u8>, f: u32) = thiscall 0x5B24D0 => unported;
-    /// `CFileMgr::CloseFile(FILESTREAM)` (0x5389D0)
-    fn file_mgr_close_file(f: u32) -> i32 = cdecl 0x5389D0 => unported;
 }
 
 use sa_core::field::p8 as ga;
@@ -73,19 +70,19 @@ pub fn cutscene_load_data_postload() {
     } else {
         ga(0xB5F850).write(0);
     }
-    rw_stream_close(stream, 0);
-    let f = file_mgr_open_file(ga(0x85EEB0), ga(0x859C6C));
+    rw_stream_close(stream, GPtr::NULL);
+    let f = GPtr::<u8>::addr(file_mgr_open_file(ga(0x85EEB0), ga(0x859C6C))) as u32;
     sprintf_s(name, ga(0x8689A4), ga(0xBC3F0C));
     if directory_find_item(dir(), name, po, ps) != 0 {
         streaming_im_gonna_use_streaming_memory();
-        file_mgr_seek(f, offset << 11, 0);
+        file_mgr_seek(GPtr::from_addr(f as usize), (offset << 11) as i32, 0);
         camera_load_path_splines(ga(0xB6F028), f);
         streaming_i_have_used_streaming_memory();
         ga(0xBC4006).write(1);
     } else {
         ga(0xBC4006).write(0);
     }
-    file_mgr_close_file(f);
+    file_mgr_close_file(GPtr::from_addr(f as usize));
     ga(0xB5F84C).cast::<u32>().write(2);
     ga(0xBC3F08).cast::<u32>().write(0);
     let pd = find_player_ped(-1).byte_add(0x480).cast::<GPtr<u8>>().read();

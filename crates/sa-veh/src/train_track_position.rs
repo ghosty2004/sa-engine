@@ -6,15 +6,12 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::{Cmp, X87};
 
 use crate::common::{f32_of, g, jne_mask, jp5, model_info, rd, wr, x, xi};
 
-orig! {
-    /// `CTrainNode::GetLightingFromCollision()` (0x6F5F80, AL)
-    fn train_node_get_lighting(node: GPtr<u8>) -> u8 = thiscall 0x6F5F80 => unported;
-}
+use crate::bindings::get_lighting_from_collision as train_node_get_lighting;
 
 /// `NumTrackNodes[track]` (0xC38014).
 fn num_nodes(track: usize) -> i32 {

@@ -11,6 +11,7 @@
 //! index of the current beat (-1 none); the caller's `tBeatInfo` receives +0xF64..+0x1010 (0x2B dwords).
 //! `tTrackInfo` (0x1F84 bytes): 1000 `{time, key}` beats at +0, read from the stream file's head.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::filemgr::{strcat, strcpy, strlen};
 use sa_core::{hook, orig};
@@ -30,25 +31,18 @@ const TRACK_INFO_SIZE: u32 = 0x1F84;
 /// "AUDIO\STREAMS\" in .rdata
 const STREAMS_DIR: u32 = 0x85F1BC;
 
+use crate::bindings::data_stream_ctor;
+use crate::bindings::data_stream_destructor_call as data_stream_dtor;
+use crate::bindings::data_stream_fill_buffer;
+use crate::bindings::data_stream_initialise;
+use crate::bindings::stream_get_active_track_id as stream_thread_get_active_track_id;
+use crate::bindings::stream_get_track_play_time as stream_thread_get_track_play_time;
+use sa_core::bindings::crt_free_8214bd as operator_delete;
 orig! {
-    /// `CAEStreamThread::GetActiveTrackID()` (0x4F1560)
-    fn stream_thread_get_active_track_id(this: u32) -> u32 = thiscall 0x4F1560 => unported;
-    /// `CAEStreamThread::GetTrackPlayTime()` (0x4F1530)
-    fn stream_thread_get_track_play_time(this: u32) -> u32 = thiscall 0x4F1530 => unported;
     /// `CAEMP3TrackLoader::GetTrackInfo(uint32)` (0x4E0A70)
     fn track_loader_get_track_info(this: u32, track: u32) -> u32 = thiscall 0x4E0A70 => unported;
     /// CRT `operator new` (0x82119A)
     fn operator_new(size: u32) -> u32 = cdecl 0x82119A => unported;
-    /// CRT `operator delete` / `free` (0x8214BD)
-    fn operator_delete(p: u32) = cdecl 0x8214BD => unported;
-    /// `CAEDataStream::CAEDataStream(int32 track, char* name, uint32 start, uint32 length, bool encrypted)` (0x4DC620)
-    fn data_stream_ctor(this: u32, track: u32, name: u32, start: u32, length: u32, encrypted: u32) -> u32 = thiscall 0x4DC620 => unported;
-    /// `CAEDataStream::Initialise()` (0x4DC2B0)
-    fn data_stream_initialise(this: u32) -> u8 = thiscall 0x4DC2B0 => unported;
-    /// `CAEDataStream::FillBuffer(void*, uint32)` (0x4DC1C0)
-    fn data_stream_fill_buffer(this: u32, dest: u32, size: u32) -> u32 = thiscall 0x4DC1C0 => unported;
-    /// `CAEDataStream::~CAEDataStream()` (0x4DC490)
-    fn data_stream_dtor(this: u32) = thiscall 0x4DC490 => unported;
 }
 
 fn zero_window(this: u32) {
@@ -78,14 +72,14 @@ fn put_before(this: u32, beats: u32, i: i32, base: u32) {
        unverified = "batch", route = "L2", hazards = "heap-writes", recs = "grove-walk", note = "the corpus may not reach it: a recording with an active beat track (dance / lowrider) verifies it")]
 pub fn hw_get_beat_info(this: u32, out: u32) {
     let thread = this + STREAM_THREAD;
-    if stream_thread_get_active_track_id(thread) as i32 == -1 {
+    if stream_thread_get_active_track_id(GPtr::from_addr(thread as usize)) as i32 == -1 {
         w32(this + BEAT_PRESENT, 0);
         zero_window(this);
         return;
     }
-    let track = stream_thread_get_active_track_id(thread);
+    let track = stream_thread_get_active_track_id(GPtr::from_addr(thread as usize));
     let beats = track_loader_get_track_info(r32(this + TRACK_LOADER), track);
-    let mut base = stream_thread_get_track_play_time(thread);
+    let mut base = stream_thread_get_track_play_time(GPtr::from_addr(thread as usize));
     if (base as i32) < 0 || (r32(beats) as i32) < 0 {
         if base as i32 != -7 {
             w32(this + BEAT_PRESENT, 0);
@@ -130,7 +124,7 @@ pub fn hw_get_beat_info(this: u32, out: u32) {
     for k in 0..0x2B {
         w32(out + 4 * k, r32(this + BEAT_WINDOW + 4 * k));
     }
-    operator_delete(beats);
+    operator_delete(GPtr::from_addr(beats as usize));
 }
 
 use sa_core::field::p8 as cstr;
@@ -171,15 +165,15 @@ pub fn track_loader_get_track_info_port(this: u32, track: u32) -> u32 {
     let mem = operator_new(0x28);
     let stream = if mem != 0 {
         let lookup = r32(this + 0xC) + 12 * track;
-        data_stream_ctor(mem, track, path, r32(lookup + 4), r32(lookup + 8), 1)
+        GPtr::<u8>::addr(data_stream_ctor(GPtr::from_addr(mem as usize), track as i32, GPtr::from_addr(path as usize), r32(lookup + 4), r32(lookup + 8), 1)) as u32
     } else {
         0
     };
-    data_stream_initialise(stream);
-    data_stream_fill_buffer(stream, info, TRACK_INFO_SIZE);
+    data_stream_initialise(GPtr::from_addr(stream as usize));
+    data_stream_fill_buffer(GPtr::from_addr(stream as usize), GPtr::from_addr(info as usize), TRACK_INFO_SIZE);
     if stream != 0 {
-        data_stream_dtor(stream);
-        operator_delete(stream);
+        data_stream_dtor(GPtr::from_addr(stream as usize));
+        operator_delete(GPtr::from_addr(stream as usize));
     }
     info
 }

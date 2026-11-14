@@ -3,29 +3,29 @@
 //! frame-limiter toggle shifted the timing). Ported from the 1.0 US bytes; gta-reversed has no bodies for them
 //! (`gr-unreversed`).
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
 use crate::common::*;
 
-use crate::bindings::anim_blend_animation;
-use crate::bindings::anim_set_delete_callback as assoc_set_delete_callback;
-use crate::bindings::assoc_set_finish_callback;
-use crate::bindings::clump_get_association;
+use sa_world::bindings::anim_blend_animation;
+use sa_core::bindings::anim_set_delete_callback as assoc_set_delete_callback;
+use sa_core::bindings::assoc_set_finish_callback;
+use sa_core::bindings::clump_get_association;
 use crate::bindings::go_to_vehicle_and_lean_do_tidy_up;
-use crate::bindings::ped_set_move_state;
+use sa_world::bindings::ped_set_move_state;
 use crate::bindings::task_timer_is_out_of_time;
 use sa_core::bindings::general_get_radian_angle_between_points;
 use sa_core::bindings::general_limit_radian_angle;
 use sa_world::bindings::achieve_heading_ctor;
 use sa_world::bindings::stand_still_ctor;
+use sa_core::bindings::task_new;
 orig! {
     /// `CTask::GetTaskType()` (vtable slot 0x10)
     fn task_get_type(t: GPtr<u8>) -> u32 = thiscall vslot 0x10 => unported;
     /// `CTask::MakeAbortable(CPed*, eAbortPriority, const CEvent*)` (vtable slot 0x18)
     fn task_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, prio: i32, ev: u32) -> u8 = thiscall vslot 0x18 => unported;
-    /// `CTask::operator new(uint32)` (0x61A5A0)
-    fn task_new(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => crate::mvpa_ai1::task_operator_new;
     /// `CTaskLeanOnVehicle(CEntity* vehicle, int32 leanAnimDuration, uint8)` (0x660F90)
     fn lean_on_vehicle_ctor(t: GPtr<u8>, veh: GPtr<u8>, duration: u32, a: u32) -> GPtr<u8> = thiscall 0x660F90 => unported;
 }
@@ -76,13 +76,13 @@ pub fn go_to_vehicle_and_lean_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>
             vx = x(vx).fchs().to_f32();
             vy = x(vy).fchs().to_f32();
         }
-        let heading = general_get_radian_angle_between_points(vx.to_bits(), vy.to_bits(), 0, 0) as f32;
-        general_limit_radian_angle(heading.to_bits());
+        let heading = general_get_radian_angle_between_points(f32::from_bits(vx.to_bits()), f32::from_bits(vy.to_bits()), f32::from_bits(0), f32::from_bits(0)) as f32;
+        general_limit_radian_angle(f32::from_bits(heading.to_bits()));
         let t = task_new(0x18);
         if t.is_null() {
             return GPtr::NULL;
         }
-        return achieve_heading_ctor(t, heading.to_bits(), g::<u32>(0x86FC7C).read(), g::<u32>(0x86FC80).read());
+        return achieve_heading_ctor(t, f32::from_bits(heading.to_bits()), g::<u32>(0x86FC7C).read(), g::<u32>(0x86FC80).read());
     }
     let ty = task_get_type(rd::<GPtr<u8>>(this, 8));
     if ty != 0x386 && task_get_type(rd::<GPtr<u8>>(this, 8)) != 0xCB {
@@ -100,7 +100,7 @@ pub fn go_to_vehicle_and_lean_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>
     if t.is_null() {
         return GPtr::NULL;
     }
-    stand_still_ctor(t, 500, 0, 0, 0x4100_0000)
+    stand_still_ctor(t, 500, 0, 0, f32::from_bits(0x4100_0000))
 }
 
 /// `CTaskLeanOnVehicle::ProcessPed(CPed* ped)` (0x6648C0, thiscall, `ret 4`). Fields: +8 the vehicle, +0xC the lean
@@ -134,20 +134,20 @@ pub fn lean_on_vehicle_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         return finish(ped);
     }
     ped_set_move_state(ped, 1);
-    if rd::<u8>(this, 0x28) != 0 && clump_get_association(rd::<u32>(ped, 0x18), ANIM_LEAN_OUT as u32).is_null() {
+    if rd::<u8>(this, 0x28) != 0 && clump_get_association(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), ANIM_LEAN_OUT as u32).is_null() {
         return finish(ped);
     }
     let blend = |this: GPtr<u8>, ped: GPtr<u8>, anim: i32, delta: u32| {
-        let a = anim_blend_animation(rd::<u32>(ped, 0x18), 0x34, anim as u32, delta);
+        let a = anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0x34, anim as u32, f32::from_bits(delta));
         wr::<GPtr<u8>>(this, 0x14, a);
-        assoc_set_finish_callback(a, LEAN_FINISH_ANIM_CB, this.addr() as u32);
+        assoc_set_finish_callback(a, LEAN_FINISH_ANIM_CB, GPtr::from_addr((this.addr() as u32) as usize));
         0
     };
     if rd::<u8>(this, 0x29) != 0 {
         if id == ANIM_LEAN_IN {
             wr::<u32>(rd::<GPtr<u8>>(this, 0x14), 0x1C, F_MINUS_8);
         } else if id == ANIM_LEAN_LOOP {
-            assoc_set_delete_callback(rd::<GPtr<u8>>(this, 0x14), DEFAULT_ANIM_CB, 0);
+            assoc_set_delete_callback(rd::<GPtr<u8>>(this, 0x14), DEFAULT_ANIM_CB, GPtr::NULL);
             return blend(this, ped, ANIM_LEAN_OUT, F_1000);
         } else if id == ANIM_LEAN_OUT {
             wr::<u32>(rd::<GPtr<u8>>(this, 0x14), 0x24, F_3);
@@ -174,7 +174,7 @@ pub fn lean_on_vehicle_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         && task_timer_is_out_of_time(this.byte_add(0x1C)) != 0
         && rd::<i16>(rd::<GPtr<u8>>(this, 0x14), 0x2C) != ANIM_LEAN_OUT as i16
     {
-        assoc_set_delete_callback(rd::<GPtr<u8>>(this, 0x14), DEFAULT_ANIM_CB, 0);
+        assoc_set_delete_callback(rd::<GPtr<u8>>(this, 0x14), DEFAULT_ANIM_CB, GPtr::NULL);
         return blend(this, ped, ANIM_LEAN_OUT, F_1000);
     }
     0

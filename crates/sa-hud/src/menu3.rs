@@ -4,7 +4,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::{GPtr, GlobalDesc};
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::{f32_of, ftol32, g, rd, wr, x, xi};
 use sa_math::x87::X87;
@@ -31,7 +31,7 @@ use sa_math::fpu::fbits as k;
 
 use crate::bindings::analogue_pad_left as pad_analogue_left;
 use crate::bindings::analogue_pad_right as pad_analogue_right;
-use crate::bindings::draw_window_call;
+use sa_world::bindings::draw_window_call;
 use sa_core::bindings::eh_vector_ctor;
 use sa_core::bindings::eh_vector_dtor;
 use sa_core::bindings::rgba_ctor;
@@ -66,7 +66,7 @@ pub fn input_grid_menu(menu: u32) {
         wr::<u8>(p, 0x416, 0x9D);
     }
     let dpad = |n: isize, o: isize| rd::<u8>(panel(menu), 0x3F9) != 0 && just(n, o);
-    if pad_analogue_up(get_pad(0)) != 0 || dpad(0x10, 0x40) {
+    if pad_analogue_up() != 0 || dpad(0x10, 0x40) {
         let p = panel(menu);
         let a = rd::<u8>(p, 0x415);
         let cols = rd::<u8>(p, 0x3F7);
@@ -74,7 +74,7 @@ pub fn input_grid_menu(menu: u32) {
             wr::<u8>(p, 0x415, a.wrapping_sub(cols));
         }
     }
-    if pad_analogue_down(get_pad(0)) != 0 || dpad(0x12, 0x42) {
+    if pad_analogue_down() != 0 || dpad(0x12, 0x42) {
         let p = panel(menu);
         let cols = rd::<u8>(p, 0x3F7);
         let rows = rd::<u8>(p, 0x3F6);
@@ -195,7 +195,7 @@ pub fn display_grid_menu(menu: u32, bright: u32) {
                     let mut rect = [f32_of(d1), f32_of(a), f32_of(b1), f32_of(c1)];
                     let mut t = [0u8; 4];
                     let cp = rgba_in(&mut t, 0xE1, 0xE1, 0xE1, 0xFF);
-                    sprite_draw_rect(local(&mut rect).cast(), cp);
+                    sprite_draw_rect(GPtr::<u8>::cast::<f32>(local(&mut rect).cast()), cp);
                 }
                 let p = panel(menu);
                 let (w, px, py) = (rd::<f32>(p, 0x3FC), rd::<f32>(p, 0x40C), rd::<f32>(p, 0x410));
@@ -210,7 +210,7 @@ pub fn display_grid_menu(menu: u32, bright: u32) {
                 let mut rect = [f32_of(h1), f32_of(e1), f32_of(f1), f32_of(g1)];
                 let mut t = [0u8; 4];
                 let cp = rgba_in(&mut t, col, col >> 8, col >> 16, 0xFF);
-                sprite_draw_rect(local(&mut rect).cast(), cp);
+                sprite_draw_rect(GPtr::<u8>::cast::<f32>(local(&mut rect).cast()), cp);
                 idx = idx.wrapping_add(1);
                 c = c.wrapping_add(1);
                 if c >= rd::<u8>(panel(menu), 0x3F7) {
@@ -225,25 +225,17 @@ pub fn display_grid_menu(menu: u32, bright: u32) {
     }
 }
 
-use crate::bindings::font_set_drop_color;
-use crate::bindings::font_set_drop_shadow_position;
-use crate::bindings::font_set_scale;
-use crate::bindings::msg_insert_player_control_keys as insert_player_control_keys;
+use sa_core::bindings::font_set_drop_color;
+use sa_core::bindings::font_set_drop_shadow_position;
+use sa_core::bindings::font_set_scale;
+use sa_world::bindings::msg_insert_player_control_keys as insert_player_control_keys;
 use sa_world::bindings::font_get_string_width_st0;
-orig! {
-    /// `CFont::SetFontStyle(eFontStyle)` (0x719490)
-    fn font_set_font_style(v: u32) = cdecl 0x719490 => crate::font::set_font_style;
-    /// `CFont::SetOrientation(eFontAlignment)` (0x719610)
-    fn font_set_orientation(v: u32) = cdecl 0x719610 => crate::font::set_orientation;
-    /// `CFont::SetColor(CRGBA)` (0x719430)
-    fn font_set_color(c: u32) = cdecl 0x719430 => crate::font::set_color;
-    /// `CFont::PrintString(float x, float y, const GxtChar*)` (0x71A700)
-    fn font_print_string(px: f32, py: f32, text: GPtr<u8>) = cdecl 0x71A700 => crate::font_print::print_string;
-    /// `CText::Get(const char*)` (0x6A0050)
-    fn text_get(this: GPtr<u8>, key: GPtr<u8>) -> GPtr<u8> = thiscall 0x6A0050 => crate::text::text_get;
-    /// `CMessages::InsertNumberInString(text, n1..n6, out)` (0x69DE90)
-    fn insert_number_in_string(text: GPtr<u8>, n1: i32, n2: i32, n3: i32, n4: i32, n5: i32, n6: i32, out: GPtr<u8>) = cdecl 0x69DE90 => crate::messages::insert_number_in_string;
-}
+use sa_core::bindings::font_print_string;
+use sa_core::bindings::font_set_color;
+use sa_core::bindings::font_set_font_style;
+use sa_core::bindings::font_set_orientation;
+use sa_core::bindings::insert_number_in_string;
+use sa_core::bindings::text_get;
 
 /// `TheText`
 const THE_TEXT: usize = 0xC1B340;
@@ -345,7 +337,7 @@ pub fn display_standard_menu(menu: u32, bright: u32) {
     font_set_font_style(1);
     let sh = f32_of(xi(g::<i32>(RS_MAX_HEIGHT).read()).fmul_m(k(K_1_448)));
     let sw = f32_of(xi(g::<i32>(RS_MAX_WIDTH).read()).fmul_m(k(K_1_640)).fmul_m(k(K_052)));
-    font_set_scale(sw.to_bits(), sh.to_bits());
+    font_set_scale(f32::from_bits(sw.to_bits()), f32::from_bits(sh.to_bits()));
     font_set_drop_shadow_position(2);
     let mut t = [0u8; 4];
     font_set_drop_color(rgba_in(&mut t, 0, 0, 0, 0xFF).cast::<u32>().read());
@@ -428,7 +420,7 @@ fn row_text(menu: u32, p: GPtr<u8>, c: u8, cell: isize, yoff: u32) {
     let mut sc = k(K_052);
     let sh = f32_of(xi(g::<i32>(RS_MAX_HEIGHT).read()).fmul_m(k(K_1_448)));
     let sw = f32_of(xi(g::<i32>(RS_MAX_WIDTH).read()).fmul_m(k(K_1_640)).fmul_m(k(K_052)));
-    font_set_scale(sw.to_bits(), sh.to_bits());
+    font_set_scale(f32::from_bits(sw.to_bits()), f32::from_bits(sh.to_bits()));
     let fits = |bp: GPtr<u8>| {
         let w = X87::from_f64_exact(font_get_string_width_st0(bp, 1, 0));
         w.fcom(x(rd::<f32>(panel(menu), 0x3FC + ci * 4))).test_any(0x41)
@@ -438,7 +430,7 @@ fn row_text(menu: u32, p: GPtr<u8>, c: u8, cell: isize, yoff: u32) {
             sc = f32_of(x(sc).fsub_m(k(K_005)));
             let sh = f32_of(xi(g::<i32>(RS_MAX_HEIGHT).read()).fmul_m(k(K_1_448)));
             let sw = f32_of(xi(g::<i32>(RS_MAX_WIDTH).read()).fmul_m(k(K_1_640)).fmul_m(sc));
-            font_set_scale(sw.to_bits(), sh.to_bits());
+            font_set_scale(f32::from_bits(sw.to_bits()), f32::from_bits(sh.to_bits()));
             if fits(bp) {
                 break;
             }

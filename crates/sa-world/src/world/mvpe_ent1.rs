@@ -27,6 +27,9 @@ const K_RAD_TO_DEG: usize = 0x859878;
 use crate::bindings::rw_frame_set_identity;
 use sa_core::bindings::rw_frame_update_objects;
 use sa_stream::bindings::get_2d_effect;
+use crate::bindings::rw_frame_rotate;
+use crate::bindings::rw_frame_translate;
+use crate::bindings::transform_from_object_space as transform_ref;
 orig! {
     /// `CScriptsForBrains::RequestAttractorScriptBrainWithThisName(const char*)` (0x46AA80, `ret 4`)
     fn request_attractor_brain(b: u32, name: GPtr<u8>) = thiscall 0x46aa80 => unported;
@@ -43,12 +46,6 @@ orig! {
     #[allow(clippy::too_many_arguments)]
     fn create_roadsign_atomic(sx: u32, sy: u32, lines: u32, l1: GPtr<u8>, l2: GPtr<u8>, l3: GPtr<u8>, l4: GPtr<u8>,
         letters: u32, pal: u32) -> GPtr<u8> = cdecl 0x6ff2d0 => unported;
-    /// `RwFrameRotate(RwFrame*, const RwV3d* axis, RwReal angle, RwOpCombineType)` (0x7F1010)
-    fn rw_frame_rotate(f: GPtr<u8>, axis: GPtr<u8>, angle: u32, op: i32) -> GPtr<u8> = cdecl 0x7f1010 => unported;
-    /// `RwFrameTranslate(RwFrame*, const RwV3d*, RwOpCombineType)` (0x7F0E30)
-    fn rw_frame_translate(f: GPtr<u8>, v: GPtr<u8>, op: i32) -> GPtr<u8> = cdecl 0x7f0e30 => unported;
-    /// `CEntity::TransformFromObjectSpace(CVector& out, const CVector& offset)` (0x5334F0, `ret 8`)
-    fn transform_ref(e: GPtr<u8>, out: GPtr<u8>, off: GPtr<u8>) -> GPtr<u8> = thiscall 0x5334f0 => super::entity::transform_from_object_space_ref;
     /// `CEntity::TransformFromObjectSpace(const CVector&)` (0x533560, hidden result pointer, `ret 8`)
     fn transform_ptr(e: GPtr<u8>, out: GPtr<u8>, off: GPtr<u8>) -> GPtr<u8> = thiscall 0x533560 => super::entity::transform_from_object_space_ptr;
     /// CRT `srand(uint32)` (0x821B11)
@@ -253,7 +250,15 @@ fn create_roadsign(this: GPtr<u8>, eff: GPtr<u8>) {
 }
 
 use crate::bindings::physical_process_control;
-use crate::bindings::vector_magnitude_sqr as vector_sq_mag;
+use sa_core::bindings::vector_magnitude_sqr as vector_sq_mag;
+use crate::bindings::attach_entity_to_entity_quat as attach_quat;
+use crate::bindings::buoyancy_process as process_buoyancy;
+use crate::bindings::object_damage;
+use crate::bindings::object_lock_door;
+use crate::bindings::set_velocity;
+use crate::bindings::vector_add;
+use crate::bindings::vector_div;
+use sa_core::bindings::vector_sub;
 orig! {
     /// `CBaseModelInfo::GetModelType()` (vtable +0x24)
     fn v_model_type(mi: GPtr<u8>) -> u32 = thiscall vslot 0x24 => unported;
@@ -265,31 +270,14 @@ orig! {
     fn model_check_59f050(model: i32) -> u8 = cdecl 0x59f050 => unported;
     /// `CRopes::IsCarriedByRope(CPhysical*)` (0x555F80, cdecl, AL)
     fn ropes_is_carried_by_rope(e: GPtr<u8>) -> u8 = cdecl 0x555f80 => unported;
-    /// `CObject::ObjectDamage(float damage, CVector* fxOrigin, CVector* fxDirection, CEntity* damager,
-    /// eWeaponType)` (0x5A0D90, `ret 0x14`)
-    fn object_damage(o: GPtr<u8>, dmg: u32, origin: GPtr<u8>, dir: GPtr<u8>, damager: GPtr<u8>, weapon: u32) = thiscall 0x5a0d90 => unported;
-    /// `VectorSub(CVector* out, const CVector* a, const CVector* b)` (0x40FE60, cdecl): `a - b`
-    fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40fe60 => super::mvpa_math::vector_sub;
-    /// `operator+(const CVector&, const CVector&)` (0x40FE30, cdecl, out first)
-    fn vector_add(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40fe30 => super::mvpa_math::vector_add;
-    /// `operator/(const CVector&, float)` (0x4119D0, cdecl, out first)
-    fn vector_div(out: GPtr<u8>, v: GPtr<u8>, s: f32) -> GPtr<u8> = cdecl 0x4119d0 => super::mvpa_math::vector_div_scalar;
     /// `CPhysical::GetSpeed(CVector point)` (0x542CE0, hidden result pointer, `ret 0x10`)
     fn physical_get_speed(e: GPtr<u8>, out: GPtr<CVector>, point: CVector) -> GPtr<CVector> = thiscall 0x542ce0 => crate::physical::forces::get_speed;
-    /// `CPhysical::AttachEntityToEntity(CPhysical*, CVector* offset, RtQuat* rotation)` (0x54D690, `ret 0xC`)
-    fn attach_quat(e: GPtr<u8>, to: GPtr<u8>, off: GPtr<u8>, rot: GPtr<u8>) -> GPtr<u8> = thiscall 0x54d690 => crate::physical::attach::attach_entity_to_entity_quat;
-    /// `cBuoyancy::ProcessBuoyancy(CPhysical*, float, CVector* turnPoint, CVector* force)` (0x6C3EF0, `ret 0x10`, AL)
-    fn process_buoyancy(b: GPtr<u8>, e: GPtr<u8>, buoy: f32, turn: GPtr<CVector>, force: GPtr<CVector>) -> u8 = thiscall 0x6c3ef0 => crate::physical::buoyancy::process_buoyancy;
     /// `CPhysical::ApplyMoveForce(CVector)` (0x5429F0, `ret 0xC`)
     fn apply_move_force(e: GPtr<u8>, f: CVector) = thiscall 0x5429f0 => crate::physical::forces::apply_move_force;
     /// `CPhysical::ApplyTurnForce(CVector force, CVector point)` (0x542A50, `ret 0x18`)
     fn apply_turn_force(e: GPtr<u8>, f: CVector, p: CVector) = thiscall 0x542a50 => crate::physical::forces::apply_turn_force;
-    /// `CPhysical::SetVelocity(CVector)` (0x441130, `ret 0xC`)
-    fn set_velocity(e: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x441130 => crate::physical::base::set_velocity;
     /// `CAudioEngine::ReportDoorMovement(CPhysical*)` (0x506F50, `ret 4`)
     fn report_door_movement(a: u32, e: GPtr<u8>) = thiscall 0x506f50 => unported;
-    /// `CObject::LockDoor()` (0x59F5C0)
-    fn object_lock_door(o: GPtr<u8>) = thiscall 0x59f5c0 => super::object::lock_door;
 }
 
 /// CRT `_CIpow` (0x822130): `st1 ^ st0`.
@@ -371,7 +359,7 @@ pub fn object_process_control(this: GPtr<u8>) {
         }
         let t = f32_of(x(g::<f32>(TIME_STEP).read()).fmul_m(g::<f32>(0x859CD8).read()));
         let below = |v: GPtr<u8>| {
-            let m = X87::from_f64_exact(vector_sq_mag(v));
+            let m = X87::from_f64_exact(vector_sq_mag(v.cast::<f32>()));
             gt(x(t).fmul_m(t), m)
         };
         if below(this.byte_add(0x74)) && below(this.byte_add(0x80)) {
@@ -490,7 +478,7 @@ fn attach_to_damager(this: GPtr<u8>, zero: f32) {
         return;
     }
     if rd::<u8>(this, 0x144) != 0 && gt(x(rd::<f32>(this, 0xD8)), x(g::<f32>(0x858C80).read())) {
-        object_damage(this, rd::<u32>(this, 0xD8), this.byte_add(0xEC), this.byte_add(0xE0), rd::<GPtr<u8>>(this, 0xDC), 0x31);
+        object_damage(this, f32::from_bits(rd::<u32>(this, 0xD8)), this.byte_add(0xEC), this.byte_add(0xE0), rd::<GPtr<u8>>(this, 0xDC), 0x31);
     }
     if !gt(x(rd::<f32>(this, 0xE8)), x(g::<f32>(0x858C24).read())) {
         return;
@@ -503,10 +491,10 @@ fn attach_to_damager(this: GPtr<u8>, zero: f32) {
     let mut sp = [0u32; 3];
     let s = physical_get_speed(d, local(&mut sp).cast(), cv(rp));
     vector_sub(rp, this.byte_add(0x44), s.cast());
-    if X87::from_f64_exact(vector_sq_mag(rp)).fcom(x(g::<f32>(0x866F50).read())).test_parity(5) {
+    if X87::from_f64_exact(vector_sq_mag(rp.cast::<f32>())).fcom(x(g::<f32>(0x866F50).read())).test_parity(5) {
         return;
     }
-    if X87::from_f64_exact(vector_sq_mag(this.byte_add(0x50))).fcom(x(g::<f32>(0x866F54).read())).test_parity(5) {
+    if X87::from_f64_exact(vector_sq_mag(GPtr::<u8>::cast::<f32>(this.byte_add(0x50)))).fcom(x(g::<f32>(0x866F54).read())).test_parity(5) {
         return;
     }
     attach_quat(this, d, GPtr::NULL, GPtr::NULL);

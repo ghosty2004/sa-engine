@@ -77,11 +77,11 @@ const FRONT_END_MENU_MANAGER: u32 = 0xBA6748;
 
 pub use crate::bindings::col_accel_is_cache_loading;
 pub use crate::bindings::load_object_instance_bin;
-pub use crate::bindings::menu_message_screen as message_screen;
-pub use crate::bindings::quad_ctor;
+pub use sa_core::bindings::menu_message_screen as message_screen;
+pub use sa_core::bindings::quad_ctor;
 pub use crate::bindings::quad_dtor;
 pub use crate::bindings::quad_operator_delete;
-pub use crate::bindings::quad_operator_new;
+pub use sa_core::bindings::quad_operator_new;
 pub use crate::bindings::strchr;
 pub use crate::bindings::strnicmp;
 pub use crate::bindings::strrchr;
@@ -93,6 +93,25 @@ pub use sa_core::bindings::stricmp;
 pub use sa_core::bindings::strncmp;
 pub use sa_core::bindings::world_add;
 pub use sa_core::bindings::world_remove;
+pub use crate::bindings::add_ipl_slot_call;
+pub use crate::bindings::include_entity_call;
+pub use crate::bindings::ipl_remove_ipl as remove_ipl_call;
+pub use crate::bindings::load_car_generator;
+pub use crate::bindings::load_object_instance_line_call as load_object_instance_text;
+pub use crate::bindings::remove_ipl_and_ignore as remove_ipl_and_ignore_call;
+pub use crate::bindings::request_ipl_and_ignore as request_ipl_and_ignore_call;
+pub use sa_core::bindings::add_item as quad_add_item;
+pub use sa_core::bindings::find_player_vehicle;
+pub use sa_core::bindings::load_all_requested_models;
+pub use sa_core::bindings::load_data_from_work_buffer;
+pub use sa_core::bindings::quad_for_all_matching;
+pub use sa_core::bindings::quad_tree_delete_item as quad_delete_item;
+pub use sa_core::bindings::rect_restrict;
+pub use sa_core::bindings::save_data_to_work_buffer;
+pub use sa_core::bindings::streaming_remove_model as remove_model;
+pub use sa_core::bindings::streaming_request_model as request_model;
+pub use sa_core::bindings::timer_resume;
+pub use sa_core::bindings::timer_suspend;
 orig! {
     /// `CIplPool::New()` (0x4059B0, UNK-game)
     pub fn ipl_pool_new(p: GPtr<CPool<IplDef>>) -> GPtr<IplDef> = thiscall 0x4059B0 => pool::pool_new;
@@ -100,26 +119,6 @@ orig! {
     pub fn ipl_pool_ctor(p: GPtr<u8>, size: i32, name: GPtr<u8>) -> GPtr<u8> = thiscall 0x405900 => unported;
     /// `CRect::IsPointInside(const CVector2D&, float tolerance)` (0x4042D0, AL)
     pub fn rect_is_point_inside_tol(r: GPtr<u8>, p: GPtr<u8>, tol: f32) -> u8 = thiscall 0x4042D0 => unported;
-    /// `CRect::Restrict(const CRect&)` (0x404200)
-    pub fn rect_restrict(r: GPtr<u8>, o: GPtr<u8>) = thiscall 0x404200 => unported;
-    /// `CQuadTreeNode::ForAllMatching(const CVector2D&, cb)` (0x5529F0)
-    pub fn quad_for_all_matching(node: GPtr<u8>, v: GPtr<u8>, cb: u32) = thiscall 0x5529F0 => sa_core::quadtree::for_all_matching_vec;
-    /// `CQuadTreeNode::AddItem(item, rect)` (0x552CD0)
-    pub fn quad_add_item(node: GPtr<u8>, item: GPtr<u8>, r: GPtr<u8>) = thiscall 0x552CD0 => sa_core::quadtree::add_item;
-    /// `CQuadTreeNode::DeleteItem(item)` (0x552A40)
-    pub fn quad_delete_item(node: GPtr<u8>, item: GPtr<u8>) = thiscall 0x552A40 => sa_core::quadtree::delete_item;
-    /// `FindPlayerVehicle(int, bool)` (0x56E0D0)
-    pub fn find_player_vehicle(n: i32, include_remote: u8) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
-    /// `CStreaming::RequestModel(id, flags)` (0x4087E0)
-    pub fn request_model(id: i32, flags: i32) = cdecl 0x4087E0 => crate::streaming::request_model;
-    /// `CStreaming::RemoveModel(id)` (0x4089A0)
-    pub fn remove_model(id: i32) = cdecl 0x4089A0 => crate::streaming::remove_model;
-    /// `CStreaming::LoadAllRequestedModels(bool)` (0x40EA10)
-    pub fn load_all_requested_models(only_priority: u8) = cdecl 0x40EA10 => crate::streaming::load_all_requested_models;
-    /// `CTimer::Suspend()` (0x5619D0)
-    pub fn timer_suspend() = cdecl 0x5619D0 => sa_core::timer::suspend;
-    /// `CTimer::Resume()` (0x561A00)
-    pub fn timer_resume() = cdecl 0x561A00 => sa_core::timer::resume;
     /// entity `vtbl[0]`: the virtual deleting destructor (`delete` flag 1)
     pub fn entity_delete(e: GPtr<u8>, flags: i32) -> GPtr<u8> = thiscall vslot 0x00 => unported;
     /// entity `vtbl[2]`: `CEntity::Add()`
@@ -134,27 +133,14 @@ orig! {
     pub fn col_accel_set_ipl_def(slot: i32, def: IplDef) = cdecl 0x5B2ED0 => unported;
     /// `CFileLoader::LoadLine(char*& data, int32& size)` (0x536FE0)
     pub fn load_line(data: GPtr<GPtr<u8>>, size: GPtr<i32>) -> GPtr<u8> = cdecl 0x536FE0 => crate::fileloader::load_line_buffer;
-    /// `CFileLoader::LoadObjectInstance(const char* line)` (0x538690)
-    pub fn load_object_instance_text(line: GPtr<u8>) -> GPtr<u8> = cdecl 0x538690 => crate::fileloader::load_object_instance_line;
-    /// `CFileLoader::LoadCarGenerator(CFileCarGenerator*, int ipl)` (0x537990)
-    pub fn load_car_generator(cg: GPtr<u8>, ipl: i32) = cdecl 0x537990 => crate::fileloader::load_car_generator_struct;
-    /// `CGenericGameStorage::SaveDataToWorkBuffer(void*, int)` (0x5D1270)
-    pub fn save_data_to_work_buffer(p: GPtr<u8>, n: i32) = cdecl 0x5D1270 => unported;
-    /// `CGenericGameStorage::LoadDataFromWorkBuffer(void*, int)` (0x5D1300)
-    pub fn load_data_from_work_buffer(p: GPtr<u8>, n: i32) = cdecl 0x5D1300 => unported;
     /// CRT `operator new` (0x82119A), `operator new[]` (0x821195), `operator delete[]` (0x8213AE), `free` (0x8214BD)
     pub fn operator_new(n: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
     pub fn operator_new_array(n: u32) -> GPtr<u8> = cdecl 0x821195 => unported;
     /// Rust-internal calls through the hook table
     pub fn set_ipls_required_call(posn: GPtr<f32>, area: i32) = cdecl 0x404700 => set_ipls_required;
-    pub fn include_entity_call(slot: i32, e: GPtr<u8>) = cdecl 0x404C90 => include_entity;
-    pub fn remove_ipl_call(slot: i32) = cdecl 0x404B20 => remove_ipl;
-    pub fn add_ipl_slot_call(name: GPtr<u8>) -> i32 = cdecl 0x405AC0 => add_ipl_slot;
     pub fn remove_ipl_slot_call(slot: i32) = cdecl 0x405B60 => remove_ipl_slot;
     pub fn remove_all_ipls_call() = cdecl 0x405720 => remove_all_ipls;
     pub fn load_ipl_bounding_box_call(slot: i32, data: GPtr<u8>, size: i32) -> u8 = cdecl 0x405C00 => load_ipl_bounding_box;
-    pub fn request_ipl_and_ignore_call(slot: i32) = cdecl 0x405850 => request_ipl_and_ignore;
-    pub fn remove_ipl_and_ignore_call(slot: i32) = cdecl 0x405890 => remove_ipl_and_ignore;
 }
 
 const NAME: isize = 0x10;
@@ -687,7 +673,7 @@ pub fn ensure_ipls_are_in_memory(posn: GPtr<f32>) {
             && info(i + RESOURCE_ID_IPL).read().load_state != 1
         {
             request_model(i + RESOURCE_ID_IPL, 0x18);
-            if get_screen_fade_status(image(THE_CAMERA)) == 0 {
+            if get_screen_fade_status(image(THE_CAMERA)) as i32 == 0 {
                 message_screen(image(FRONT_END_MENU_MANAGER), image(STR_LOADCOL), 0, 0);
             }
             timer_suspend();

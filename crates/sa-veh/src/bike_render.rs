@@ -16,7 +16,7 @@ use crate::bindings::add_exhaust_particles;
 use crate::bindings::add_single_wheel_particles;
 use crate::bindings::do_vehicle_lights;
 use crate::bindings::process_wheel_rotation;
-use crate::bindings::register_corona;
+use sa_world::bindings::register_corona;
 use crate::bindings::store_shadow_for_vehicle;
 use sa_core::bindings::matrix_assign;
 use sa_core::bindings::matrix_attach;
@@ -30,25 +30,19 @@ use sa_core::bindings::matrix_update;
 use sa_core::bindings::matrix_update_rw;
 use sa_core::bindings::quat_get as quaternion_get;
 use sa_world::bindings::add_light;
+use crate::bindings::vehicle_pre_render;
+use sa_core::bindings::matrix_mul_assign;
+use sa_core::bindings::matrix_set_translate;
+use sa_world::bindings::bike_calculate_lean_matrix as calculate_lean_matrix;
+use sa_world::bindings::entity_get_col_model as get_col_model;
+use sa_world::bindings::multiply3x3;
 orig! {
-    /// `CVehicle::PreRender()` (0x6D6480)
-    fn vehicle_pre_render(v: GPtr<u8>) = thiscall 0x6D6480 => crate::vehicle2::pre_render;
-    /// `CEntity::GetColModel()` (0x535300)
-    fn get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => sa_world::world::entity::get_col_model;
-    /// `CBike::CalculateLeanMatrix()` (0x6B7150)
-    fn calculate_lean_matrix(v: GPtr<u8>) = thiscall 0x6B7150 => crate::bike2::calculate_lean_matrix;
-    /// `Multiply3x3(CVector*, const CMatrix*, const CVector*)` (0x59C790)
-    fn multiply3x3(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C790 => sa_world::world::mvpa_math::multiply3x3;
     /// `CPhysical::GetSpeed(CVector)` (0x542CE0)
     fn get_speed(e: GPtr<u8>, out: GPtr<CVector>, point: CVector) -> GPtr<CVector> = thiscall 0x542CE0 => sa_world::physical::forces::get_speed;
     /// `CVector::Normalise()` (0x59C910)
     fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => crate::train_control::normalise_native;
     /// `CQuaternion::Set(RwV3d*, float)` (0x59C600)
     fn quaternion_set(q: GPtr<u8>, axis: GPtr<u8>, angle: f32) = thiscall 0x59C600 => unported;
-    /// `CMatrix::SetTranslate(float, float, float)` (0x59AF40)
-    fn matrix_set_translate(m: GPtr<u8>, px: f32, py: f32, pz: f32) = thiscall 0x59AF40 => unported;
-    /// `CMatrix::operator*=(const CMatrix&)` (0x411A80)
-    fn matrix_mul_assign(m: GPtr<u8>, o: GPtr<u8>) -> GPtr<u8> = thiscall 0x411A80 => unported;
     /// `CBike::DoBurstAndSoftGroundRatios()` (vtable +0xD0)
     fn v_do_burst_and_soft_ground_ratios(v: GPtr<u8>) = thiscall vslot 0xD0 => unported;
 }
@@ -375,18 +369,18 @@ fn police_lights(this: GPtr<u8>) {
             0,
             0xFF,
             gp(&mut left_lamp),
-            0x3ECC_CCCD,
-            0x4220_0000,
+            f32::from_bits(0x3ECC_CCCD),
+            f32::from_bits(0x4220_0000),
             0,
             0,
             0,
             0,
             0,
+            f32::from_bits(0),
             0,
+            f32::from_bits(0x3FC0_0000),
             0,
-            0x3FC0_0000,
-            0,
-            0x41F0_0000,
+            f32::from_bits(0x41F0_0000),
             0,
             1,
         );
@@ -401,18 +395,18 @@ fn police_lights(this: GPtr<u8>) {
             b,
             0xFF,
             gp(&mut right_lamp),
-            0x3ECC_CCCD,
-            0x4220_0000,
+            f32::from_bits(0x3ECC_CCCD),
+            f32::from_bits(0x4220_0000),
             0,
             0,
             0,
             0,
             0,
+            f32::from_bits(0),
             0,
+            f32::from_bits(0x3FC0_0000),
             0,
-            0x3FC0_0000,
-            0,
-            0x41F0_0000,
+            f32::from_bits(0x41F0_0000),
             0,
             1,
         );
@@ -433,19 +427,19 @@ fn police_lights(this: GPtr<u8>) {
     let k = f32::from_bits(0x3A80_0000);
     add_light(
         0,
-        x(xx).fadd_m(ux).to_f32().to_bits(),
-        x(y).fadd_m(uy).to_f32().to_bits(),
-        z.to_bits(),
-        0,
-        0,
-        0,
-        0x4120_0000,
-        xi(i32::from(l1a5)).fmul_m(k).to_f32().to_bits(),
-        0,
-        xi(i32::from(bl)).fmul_m(k).to_f32().to_bits(),
+        f32::from_bits(x(xx).fadd_m(ux).to_f32().to_bits()),
+        f32::from_bits(x(y).fadd_m(uy).to_f32().to_bits()),
+        f32::from_bits(z.to_bits()),
+        f32::from_bits(0),
+        f32::from_bits(0),
+        f32::from_bits(0),
+        f32::from_bits(0x4120_0000),
+        f32::from_bits(xi(i32::from(l1a5)).fmul_m(k).to_f32().to_bits()),
+        f32::from_bits(0),
+        f32::from_bits(xi(i32::from(bl)).fmul_m(k).to_f32().to_bits()),
         0,
         1,
-        0,
+        GPtr::NULL,
     );
 }
 

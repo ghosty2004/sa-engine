@@ -910,6 +910,10 @@ pub fn process_collision_sector_list_simple_car(this: Ent, sector: Ent) -> u8 {
     0
 }
 
+pub use crate::bindings::vector_add_assign;
+pub use crate::bindings::vector_div as vector_div_scalar;
+pub use sa_core::bindings::find_player_ped;
+pub use sa_core::bindings::vector_sub;
 orig! {
     /// `CPhysical::ApplySoftCollision(CPhysical*, CColPoint&, float&, float&)` (0x54A2C0, AL)
     pub fn apply_soft_collision_2(e: Ent, other: Ent, cp: Ent, d1: GPtr<f32>, d2: GPtr<f32>) -> u8 = thiscall 0x54A2C0 => crate::physical::pair_collision::apply_soft_collision_2;
@@ -929,14 +933,6 @@ orig! {
     pub fn kill_ped_with_car(ped: Ent, veh: Ent, impulse: f32, b: u32) = thiscall 0x5F0360 => unported;
     /// `CObject::ObjectDamage(float, const CVector*, const CVector*, CEntity*, eWeaponType)` (0x5A0D90)
     pub fn object_damage(obj: Ent, damage: f32, pt: Ent, normal: Ent, by: Ent, weapon: u32) = thiscall 0x5A0D90 => unported;
-    /// `VectorSub(CVector* out, const CVector*, const CVector*)` (0x40FE60)
-    pub fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => crate::world::mvpa_math::vector_sub;
-    /// `CVector operator/(const CVector&, float)` (0x4119D0, hidden return pointer)
-    pub fn vector_div_scalar(out: GPtr<u8>, v: GPtr<u8>, s: f32) -> GPtr<u8> = cdecl 0x4119D0 => crate::world::mvpa_math::vector_div_scalar;
-    /// `CVector::operator+=(const CVector&)` (0x411A00)
-    pub fn vector_add_assign(v: GPtr<u8>, o: GPtr<u8>) -> GPtr<u8> = thiscall 0x411A00 => crate::world::mvpa_math::vector_add_assign;
-    /// `CWorld::FindPlayerPed(int32)` (0x56E210)
-    pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => crate::world::cworld::find_player_ped;
     /// `SurfaceInfos_c::GetAdhesionGroup(uint32)` (0x55E5C0, thiscall on `g_surfaceInfos`)
     pub fn get_adhesion_group_call(si: Ent, id: u32) -> u32 = thiscall 0x55E5C0 => get_adhesion_group_port;
     /// `Invert(const CMatrix& src, CMatrix& dst)` (0x59B920, returns dst)

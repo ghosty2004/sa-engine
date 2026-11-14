@@ -2,7 +2,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 
 use crate::common::{g, k, rd};
@@ -14,11 +14,8 @@ use sa_world::bindings::fx_copy_parent_matrix as fx_system_copy_parent_matrix;
 use sa_world::bindings::fx_create_system;
 use sa_world::bindings::fx_play_and_kill as fx_system_play_and_kill;
 use sa_world::bindings::multiply3x3_vm as multiply3x3_transposed;
-orig! {
-    /// `FxManager_c::FxRwMatrixCreate()` (0x4A9440) / `FxRwMatrixDestroy(RwMatrix*)` (0x4A9460)
-    fn fx_rw_matrix_create(fx: GPtr<u8>) -> GPtr<u8> = thiscall 0x4A9440 => unported;
-    fn fx_rw_matrix_destroy(fx: GPtr<u8>, m: GPtr<u8>) = thiscall 0x4A9460 => unported;
-}
+use crate::bindings::fx_rw_matrix_create;
+use crate::bindings::fx_rw_matrix_destroy;
 
 /// `g_fxMan` (0xA9AE80); the effect names "gunflash" (0x85A728) and "gunsmoke" (0x85A71C).
 const FX_MAN: usize = 0xA9_AE80;
@@ -72,7 +69,7 @@ pub fn fx_trigger_gunshot(this: GPtr<u8>, entity: GPtr<u8>, origin: GPtr<u8>, ta
         }
         rd::<GPtr<u8>>(rw, 4).byte_add(0x10)
     } else {
-        created = fx_rw_matrix_create(fx);
+        created = GPtr::from_addr(fx_rw_matrix_create(fx) as usize);
         fx_create_mat_from_vec(this, created, origin, target);
         created
     };
@@ -80,7 +77,7 @@ pub fn fx_trigger_gunshot(this: GPtr<u8>, entity: GPtr<u8>, origin: GPtr<u8>, ta
         let pp = GPtr::from_raw(point.as_mut_ptr()).cast::<u8>();
         let names: &[u32] = if gunflash as u8 != 0 { &[GUNFLASH, GUNSMOKE] } else { &[GUNSMOKE] };
         for &name in names {
-            let s = fx_create_system(fx, name, pp, parent, 0);
+            let s = fx_create_system(fx, GPtr::from_addr(name as usize), pp, parent, 0);
             if !s.is_null() {
                 if entity.is_null() {
                     fx_system_copy_parent_matrix(s);
@@ -90,7 +87,7 @@ pub fn fx_trigger_gunshot(this: GPtr<u8>, entity: GPtr<u8>, origin: GPtr<u8>, ta
         }
     }
     if !created.is_null() {
-        fx_rw_matrix_destroy(fx, created);
+        fx_rw_matrix_destroy(fx, created.addr() as u32);
     }
 }
 

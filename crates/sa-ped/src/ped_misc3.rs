@@ -2,6 +2,7 @@
 //! flag, destroy flag. Ported from the 1.0 US bytes (addresses cited); specs in docs/re/specs/PED/, gta-reversed as a
 //! reading aid (original bugs kept).
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 use sa_math::x87::Cmp;
@@ -21,9 +22,12 @@ use sa_world::bindings::ped_set_current_weapon_slot;
 use sa_world::bindings::vehicle_is_pointer_valid;
 use sa_world::bindings::vehicle_remove_passenger;
 use sa_world::bindings::weapon_is_type_melee;
+use sa_core::bindings::anim_get_anim_association;
+use sa_world::bindings::create_dead_ped_pickup_coors as create_dead_ped_pickup_coors_call;
+use sa_world::bindings::get_weapon_skill_type_call as ped_get_weapon_skill_type;
+use sa_world::bindings::give_delayed_weapon as ped_give_delayed_weapon;
+use sa_world::bindings::weapon_audio_initialise;
 orig! {
-    /// `CAEWeaponAudioEntity::Initialise()` (0x503450)
-    fn weapon_audio_initialise(a: GPtr<u8>) = thiscall 0x503450 => unported;
     /// `CAEWeaponAudioEntity::PlayFlameThrowerIdleGasLoop(CPhysical*)` (0x503870)
     fn weapon_audio_play_flame_thrower_idle_gas_loop(a: GPtr<u8>, p: GPtr<u8>) = thiscall 0x503870 => unported;
     /// `CAEWeaponAudioEntity::StopFlameThrowerIdleGasLoop()` (0x5034E0)
@@ -32,16 +36,8 @@ orig! {
     fn speech_v1(s: GPtr<u8>, id: u32, a: u32, b: u32, c: u32, d: u32) -> u32 = thiscall vslot 0x4 => unported;
     /// `CAEPedSpeechAudioEntity::AddSayEvent(int32, int16, uint32, float, uint8, uint8, uint8)` (0x4E6550)
     fn speech_add_say_event(s: GPtr<u8>, ev: u32, ctx: u32, off: u32, vol: u32, a: u32, b: u32, c: u32) -> u32 = thiscall 0x4E6550 => unported;
-    /// `CAnimManager::GetAnimAssociation(AssocGroupId, AnimationId)` (0x4D3A60)
-    fn anim_get_anim_association(group: i32, id: i32) -> GPtr<u8> = cdecl 0x4D3A60 => unported;
-    /// `CPed::GetWeaponSkill(eWeaponType)` (0x5E3B60; EAX pushed whole)
-    fn ped_get_weapon_skill_type(p: GPtr<u8>, ty: i32) -> i32 = thiscall 0x5E3B60 => unported;
-    /// `CPed::GiveDelayedWeapon(eWeaponType, uint32)` (0x5E89B0)
-    fn ped_give_delayed_weapon(p: GPtr<u8>, ty: i32, ammo: i32) = thiscall 0x5E89B0 => unported;
     /// `CPickups::CreatePickupCoorsCloseToCoors(float, float, float, float*, float*, float*)` (0x458A80)
     fn pickups_create_pickup_coors_close_to_coors(x: u32, y: u32, z: u32, ox: GPtr<u8>, oy: GPtr<u8>, oz: GPtr<u8>) = cdecl 0x458A80 => unported;
-    /// `CPed::CreateDeadPedPickupCoors(float*, float*, float*)` (0x459180)
-    fn create_dead_ped_pickup_coors_call(p: GPtr<u8>, x: GPtr<u8>, y: GPtr<u8>, z: GPtr<u8>) = thiscall 0x459180 => unported;
     /// `CPickups::TryToMerge_WeaponType(CVector, eWeaponType, ePickupType, uint32, bool)` (0x4555A0, AL)
     fn pickups_try_to_merge_weapon_type(x: u32, y: u32, z: u32, ty: i32, pt: i32, ammo: i32, b: u32) -> u8 = cdecl 0x4555A0 => unported;
     /// `CPickups::GenerateNewOne_WeaponType(CVector, eWeaponType, ePickupType, uint32, bool, char*)` (0x457380)
@@ -137,7 +133,7 @@ pub fn set_aim_flag_heading(this: GPtr<u8>, heading: u32) {
     wr::<u32>(this, 0x46C, (f1 & 0xFFFF_FFDF) | 0x10);
     wr::<u32>(this, 0x748, 0);
     if !e.is_null() {
-        clean_up_old_reference(e, slot);
+        clean_up_old_reference(e, slot.cast::<GPtr<u8>>());
     }
     if rd::<u32>(this, 0x46C) & 0x0400_0000 != 0 {
         wr::<u32>(this, 0x528, rd::<u32>(this, 0x528) & 0xFFFF_FFFB);
@@ -145,7 +141,7 @@ pub fn set_aim_flag_heading(this: GPtr<u8>, heading: u32) {
     wr::<u32>(slot, 0, 0);
     let ty = rd::<i32>(this, (i32::from(rd::<i8>(this, 0x718)) * 0x1C + 0x5A0) as isize);
     let skill = ped_get_weapon_skill_type(this, ty);
-    let info = get_weapon_info(ty, skill);
+    let info = get_weapon_info(ty, skill as u8);
     let ik = rd::<u32>(this, 0x528);
     if (rd::<u32>(info, 0x18) >> 1) & 1 != 0 {
         wr::<u32>(this, 0x528, ik | 4);
@@ -173,7 +169,7 @@ pub fn flag_to_destroy_when_next_processed(this: GPtr<u8>) {
     let drv = rd::<GPtr<u8>>(veh, 0x460);
     if drv == this {
         if !drv.is_null() {
-            clean_up_old_reference(drv, veh.byte_add(0x460));
+            clean_up_old_reference(drv, GPtr::<u8>::cast::<GPtr<u8>>(veh.byte_add(0x460)));
         }
         let veh = rd::<GPtr<u8>>(vslot, 0);
         wr::<u32>(veh, 0x460, 0);
@@ -191,7 +187,7 @@ pub fn flag_to_destroy_when_next_processed(this: GPtr<u8>) {
     if vehicle_is_pointer_valid(rd::<GPtr<u8>>(vslot, 0)) != 0 {
         let v = rd::<GPtr<u8>>(vslot, 0);
         if !v.is_null() {
-            clean_up_old_reference(v, vslot);
+            clean_up_old_reference(v, vslot.cast::<GPtr<u8>>());
         }
     }
     wr::<u32>(vslot, 0, 0);
@@ -216,8 +212,8 @@ pub fn flag_to_destroy_when_next_processed(this: GPtr<u8>) {
 
 /// `GiveDelayedWeapon(type, 50)` then `SetCurrentWeapon(GetWeaponInfo(type, 1)->m_nSlot)` (the pair of 0x5E8B16..).
 fn give_and_select(this: GPtr<u8>, ty: i32, ammo: i32) {
-    ped_give_delayed_weapon(this, ty, ammo);
-    ped_set_current_weapon_slot(this, rd::<i32>(get_weapon_info(ty, 1), 0x14));
+    ped_give_delayed_weapon(this, ty, ammo as u32);
+    ped_set_current_weapon_slot(this, rd::<i32>(get_weapon_info(ty, 1), 0x14) as u32);
 }
 
 /// `CPed::GiveWeaponAtStartOfFight()` (0x5E8AB0): not for mission peds or peds holding a weapon; by ped type

@@ -6,12 +6,10 @@ use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 use sa_world::world::common::{f32_of, g, rd, x, xi};
 
+use sa_world::bindings::cr_render_one_xlu_sprite_rotate_aspect as render_one_xlu_sprite_rotate_aspect;
 orig! {
     /// `RwEngineInstance->dOpenDevice.fpRenderStateSet(RwRenderState, void*)` (`[0xC97B24] + 0x20`)
     fn rw_render_state_set(state: u32, v: u32) -> u32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `CSprite::RenderOneXLUSprite_Rotate_Aspect(float x, float y, float z, float w, float h, uint8 r,
-    /// uint8 g, uint8 b, int16 intensity, float rz, float rotation, uint8 alpha)` (0x70D490)
-    fn render_one_xlu_sprite_rotate_aspect(px: f32, py: f32, pz: f32, w: f32, h: f32, r: u32, gg: u32, b: u32, intensity: u32, rz: f32, rotation: u32, alpha: u32) = cdecl 0x70D490 => unported;
 }
 
 /// History tables of the crosshair trail (`[2][5]` each, row stride 0x14).
@@ -92,7 +90,7 @@ pub fn crosshair_trail_render(this: GPtr<u8>, idx: i32) {
                     .fmul_m(pulse)
                     .fadd(x(g::<f32>(ent.wrapping_add(HIST_X)).read()).fadd_m(1.0).fmul(w).fmul_m(0.5));
                 let px = f32_of(px);
-                render_one_xlu_sprite_rotate_aspect(px, py, 100.0, 15.0, 15.0, r, gg, b, 0xFF, f32::from_bits(0x3C23_D70A), 0, 0xFF);
+                render_one_xlu_sprite_rotate_aspect(px, py, 100.0, 15.0, 15.0, r, gg, b, 0xFF, f32::from_bits(0x3C23_D70A), f32::from_bits(0), 0xFF);
             }
         }
         b >>= 1;

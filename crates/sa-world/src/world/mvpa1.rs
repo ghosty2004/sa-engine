@@ -24,7 +24,7 @@ const SKIP_STATE: usize = 0x96A8A0;
 
 use crate::bindings::brains_check_if_new_entity_needs_script;
 use crate::bindings::clear_blip_for_entity as pickups_clear_blip_for_entity;
-use crate::bindings::clump_get_first_association;
+use sa_core::bindings::clump_get_first_association;
 use crate::bindings::crt_ceil;
 use crate::bindings::cutscene_delete_cutscene_data;
 use crate::bindings::double_node_add_to_list as link_insert;
@@ -57,20 +57,25 @@ use sa_core::bindings::open_file as file_open;
 use sa_core::bindings::quad_tree_delete_item;
 use sa_core::bindings::stats_check_for_stats_message;
 use sa_core::bindings::world_remove;
-use sa_stream::bindings::load_line;
+use sa_core::bindings::load_line;
 use sa_stream::bindings::model_info_add_ref as mi_add_ref;
 use sa_stream::bindings::streaming_add_entity;
 use sa_stream::bindings::strnicmp;
 use sa_stream::bindings::vmi_set_vehicle_colour;
+use crate::bindings::break_object_exit;
+use crate::bindings::dn_pre_render_update;
+use crate::bindings::furniture_group_init;
+use crate::bindings::furniture_load_furniture;
+use crate::bindings::get_entry_exit_index as get_entry_exit_index_call;
+use crate::bindings::mark_everything_as_new as replay_mark_everything_as_new;
+use crate::bindings::stats_populate_favorite_radio_station_list;
+use sa_core::bindings::camera_fade;
+use sa_stream::bindings::is_cbpc_pipeline_attached;
 orig! {
     /// `CShopping::LoadStats()` (0x49B6A0)
     fn shopping_load_stats() = cdecl 0x49B6A0 => unported;
-    /// `BreakObject_c::Exit()` (0x59DDD0)
-    fn break_object_exit(o: GPtr<u8>) = thiscall 0x59DDD0 => unported;
     /// `FurnitureManager_c::Exit()` (0x5911A0)
     fn furniture_manager_exit(m: GPtr<u8>) = thiscall 0x5911A0 => furniture_manager_exit_port;
-    /// `CCamera::Fade(float duration, eFadeFlag)` (0x50AC20, `ret 8`)
-    fn camera_fade(c: GPtr<u8>, t: u32, dir: u32) = thiscall 0x50AC20 => unported;
     /// `CObject::Create(CDummyObject*)` (0x5A2070)
     fn object_create_from_dummy(d: GPtr<u8>) -> GPtr<u8> = cdecl 0x5A2070 => unported;
     /// virtual `CEntity::~CEntity` deleting destructor (vtable +0)
@@ -81,28 +86,14 @@ orig! {
     fn v_set_is_static(e: GPtr<u8>, b: u32) = thiscall vslot 0x10 => unported;
     /// `CTagManager` user-value setter (0x49CD50; no catalogue name)
     fn tag_set_user_value(e: GPtr<u8>) = cdecl 0x49CD50 => tag_manager_setup_atomic;
-    /// `CCustomBuildingDNPipeline::PreRenderUpdate(RpAtomic*, bool)` (0x5D7200)
-    fn dn_pre_render_update(a: GPtr<u8>, b: u32) = cdecl 0x5D7200 => unported;
-    /// `CCustomBuildingRenderer::IsCBPCPipelineAttached(RpAtomic*)` (0x5D7F40, AL)
-    fn is_cbpc_pipeline_attached(a: GPtr<u8>) -> u8 = cdecl 0x5D7F40 => unported;
-    /// `CReplay::MarkEverythingAsNew()` (0x45D430)
-    fn replay_mark_everything_as_new() = cdecl 0x45D430 => mark_everything_as_new;
-    /// `CEntryExitManager::GetEntryExitIndex(const char*, uint16, uint16)` (0x43EFD0)
-    fn get_entry_exit_index_call(name: GPtr<u8>, en: u32, dis: u32) -> i32 = cdecl 0x43EFD0 => get_entry_exit_index;
     /// CRT `sscanf` (0x8220AD) with three targets
     fn sscanf3(s: GPtr<u8>, fmt: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, c: GPtr<u8>) -> i32 = cdecl 0x8220AD => unported;
-    /// `CStats::PopulateFavoriteRadioStationList()` (0x558EC0)
-    fn stats_populate_favorite_radio_station_list() -> u8 = cdecl 0x558EC0 => crate::world::misc2::populate_favorite_radio_station_list;
     /// `CStats::LoadActionReactionStats()` (0x5599B0)
     fn stats_load_action_reaction_stats() = cdecl 0x5599B0 => load_action_reaction_stats;
     /// `CStats::LoadStatUpdateConditions()` (0x559860)
     fn stats_load_stat_update_conditions() = cdecl 0x559860 => load_stat_update_conditions;
     /// CRT `sscanf` (0x8220AD) with five targets
     fn sscanf5(s: GPtr<u8>, fmt: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, c: GPtr<u8>, d: GPtr<u8>, e: GPtr<u8>) -> i32 = cdecl 0x8220AD => unported;
-    /// `FurnitureGroup_c::Init()` (0x5910A0)
-    fn furniture_group_init(gr: GPtr<u8>) -> u8 = thiscall 0x5910A0 => unported;
-    /// `FurnitureManager_c::LoadFurniture()` (0x5C0280)
-    fn furniture_load_furniture(m: GPtr<u8>) -> u8 = thiscall 0x5C0280 => unported;
     /// `CObject::DeleteAllTempObjects()` (0x5A18B0)
     fn object_delete_all_temp_objects() = cdecl 0x5A18B0 => unported;
     /// `CObject::DeleteAllMissionObjects()` (0x5A1910)
@@ -321,7 +312,7 @@ pub fn clear_skip(after_mission: u32) {
     }
     if state == 2 {
         camera_set_fade_colour(g::<u8>(THE_CAMERA), 0, 0, 0);
-        camera_fade(g::<u8>(THE_CAMERA), 0x3F00_0000, 1);
+        camera_fade(g::<u8>(THE_CAMERA), f32::from_bits(0x3F00_0000), 1);
     }
     g::<u32>(SKIP_STATE).write(0);
     let pad = get_pad(0);
@@ -559,7 +550,7 @@ pub fn entity_create_rw_object(this: GPtr<u8>) {
     if rd::<u8>(rw, 0) != 1 {
         rw = get_first_atomic(rw);
     }
-    if is_cbpc_pipeline_attached(rw) == 0 {
+    if is_cbpc_pipeline_attached(rw) as u8 == 0 {
         wr::<u32>(this, 0x1C, rd::<u32>(this, 0x1C) | 0x1000_0000);
     }
 }

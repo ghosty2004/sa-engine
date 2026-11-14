@@ -13,6 +13,7 @@
 //! 0x8..0x14 (`CPedTriggerScriptAttractor`, 0x86C5B4, overrides them).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::orig::at_site;
 use sa_core::{hook, orig};
@@ -31,23 +32,20 @@ use sa_stream::bindings::simple_transform_update_matrix;
 use sa_world::bindings::multiply3x3;
 use sa_world::bindings::sequence_add_task;
 use sa_world::bindings::sequence_ctor;
+use crate::bindings::fill_n_t_o as tasks_fill_n;
+use crate::bindings::insert_n_t_o as tasks_insert_n;
+use crate::bindings::set_task_for_ped as set_task_for_ped_o;
+use sa_core::bindings::matrix_assign;
+use sa_world::bindings::stand_still_ctor;
 orig! {
-    /// `CMatrix::operator=(const CMatrix&)` (0x59BBC0)
-    fn matrix_assign(dst: GPtr<u8>, src: GPtr<u8>) = thiscall 0x59BBC0 => unported;
     /// CRT `sprintf(buf, fmt)` (0x821BB5; the script name is the format)
     fn crt_sprintf(buf: GPtr<u8>, fmt: GPtr<u8>) -> i32 = cdecl 0x821BB5 => unported;
     /// `std::vector<CTask*>::push_back` (0x5EE300, `ret 4`)
     fn tasks_push_back(v: GPtr<u8>, val: GPtr<u8>) = thiscall 0x5EE300 => crate::attractor_ptr_vectors::push_back_t;
-    /// `uninitialized_fill_n<CTask**>` (0x5EB310)
-    fn tasks_fill_n(dest: u32, n: u32, val: GPtr<u8>) -> u32 = cdecl 0x5EB310 => crate::attractor_ptr_vectors::fill_n_t;
-    /// `std::vector<CTask*>::_Insert_n` (0x5ED4B0, `ret 0xC`)
-    fn tasks_insert_n(v: GPtr<u8>, at: u32, n: u32, val: GPtr<u8>) = thiscall 0x5ED4B0 => crate::attractor_ptr_vectors::insert_n_t;
     /// `std::vector<CPedTaskPair>::push_back` (0x5EE270, `ret 4`)
     fn pairs_push_back(v: GPtr<u8>, val: GPtr<u8>) = thiscall 0x5EE270 => crate::attractor_task_pair_vector::push_back;
     /// `std::copy<CPedTaskPair*>` (0x5EAB80, result through the first argument)
     fn pairs_copy(out: GPtr<u8>, first: u32, last: u32, dest: u32) -> GPtr<u8> = cdecl 0x5EAB80 => crate::attractor_task_pair_vector::copy;
-    /// `CTaskSimpleStandStill(int ms, bool looped, bool useAnimIdle, float blend)` (0x62F310, `ret 0x10`)
-    fn stand_still_ctor(t: GPtr<u8>, ms: i32, looped: u32, idle: u32, blend: u32) -> GPtr<u8> = thiscall 0x62F310 => unported;
     /// `CPedAttractor::ComputeAttractPos(int, CVector&)` (vtable slot 0xC, `ret 8`)
     fn compute_attract_pos_v(a: GPtr<u8>, slot: i32, out: GPtr<u8>) = thiscall vslot 0xC => unported;
     /// `CPedAttractor::ComputeAttractHeading(int, float&)` (vtable slot 0x10, `ret 8`)
@@ -56,7 +54,6 @@ orig! {
     fn broadcast_departure_v(a: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall vslot 0x14 => unported;
     /// `CTask`'s deleting destructor (vtable slot 0, `ret 4`)
     fn task_delete_v(t: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
-    fn set_task_for_ped_o(a: GPtr<u8>, ped: GPtr<u8>, task: GPtr<u8>) = thiscall 0x5EECA0 => set_task_for_ped;
     // ST0 results: declared f64 (phase A returns at most a register pair); the ports' X87 values convert exactly
     fn compute_delta_pos_o(a: GPtr<u8>) -> f64 = thiscall 0x5E9600 => compute_delta_pos_st0;
     fn compute_delta_heading_o(a: GPtr<u8>) -> f64 = thiscall 0x5E9640 => compute_delta_heading_st0;
@@ -147,7 +144,7 @@ pub fn ped_attractor_ctor(
     let mut mat = [0u32; 0x48 / 4];
     let e = rd::<GPtr<u8>>(this, 8);
     if e.is_null() {
-        matrix_set_scale(pa(&mut mat), 1.0f32.to_bits());
+        matrix_set_scale(pa(&mut mat), f32::from_bits(1.0f32.to_bits()));
     } else {
         if rd::<u32>(e, 0x14) == 0 {
             placeable_allocate_matrix(e);
@@ -358,7 +355,7 @@ pub fn compute_attract_heading(this: GPtr<u8>, queue: i32, out: GPtr<u8>) {
         return;
     }
     let dir = if queue != 0 { 0x68 } else { 0x74 };
-    let h = radian_angle_between_points(rd::<u32>(this, dir), rd::<u32>(this, dir + 4), 0, 0);
+    let h = radian_angle_between_points(f32::from_bits(rd::<u32>(this, dir)), f32::from_bits(rd::<u32>(this, dir + 4)), f32::from_bits(0), f32::from_bits(0));
     wr::<f32>(out, 0, X87::from_f64_exact(h).to_f32());
     if queue != 0 {
         let v = X87::from_f64_exact(compute_delta_heading_o(this)).fadd_m(rd::<f32>(out, 0)).to_f32();
@@ -391,7 +388,7 @@ pub fn broadcast_departure(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         let t = task_new(0x40);
         let seq = if t.is_null() { GPtr::NULL } else { sequence_ctor(t) };
         let t = task_new(0x20);
-        let stand = if t.is_null() { GPtr::NULL } else { stand_still_ctor(t, 2000 * i, 0, 0, 0x4100_0000) };
+        let stand = if t.is_null() { GPtr::NULL } else { stand_still_ctor(t, 2000 * i, 0, 0, f32::from_bits(0x4100_0000)) };
         sequence_add_task(seq, stand);
         let t = task_new(0x2C);
         let go = if t.is_null() {

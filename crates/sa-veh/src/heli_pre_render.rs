@@ -16,16 +16,15 @@ use sa_core::bindings::matrix_set_rotate_x;
 use sa_core::bindings::matrix_set_rotate_z;
 use sa_core::bindings::matrix_update_rw;
 use sa_stream::bindings::get_wheel_posn;
-use sa_world::bindings::clock_get_is_time_in_range;
+use sa_stream::bindings::clock_get_is_time_in_range;
 use sa_world::bindings::entity_get_col_model;
+use crate::bindings::update_wheel_matrix;
 orig! {
     /// `CHeli::AddHeliSearchLight(const CVector& origin, const CVector& target, float targetRadius,
     /// float power, uint32 coronaIndex, uint8, uint8 drawShadow)` (0x6C45B0)
     fn add_heli_search_light(origin: GPtr<u8>, target: GPtr<u8>, radius: f32, power: u32, corona: u32, a: u32, shadow: u32) = cdecl 0x6C45B0 => unported;
     /// virtual (vtable +0xD0) of `CAutomobile`: the burst/soft-ground suspension ratios
     fn v_slot_d0(v: GPtr<u8>) = thiscall vslot 0xD0 => unported;
-    /// `CAutomobile::UpdateWheelMatrix(int32 node, int32 flags)` (0x6AA290)
-    fn update_wheel_matrix(v: GPtr<u8>, node: i32, flags: u32) = thiscall 0x6AA290 => unported;
     /// `CAutomobile::DoHeliDustEffect(float, float)` (0x6B0690)
     fn do_heli_dust_effect(v: GPtr<u8>, a: f32, b: f32) = thiscall 0x6B0690 => unported;
 }
@@ -77,7 +76,7 @@ pub fn heli_pre_render(this: GPtr<u8>) {
         let mut target = [rd::<u32>(this, 0x9F4), rd::<u32>(this, 0x9F8), rd::<u32>(this, 0x9FC)];
         let mut offset = [0u32, 0x4060_0000, 0xBE99_999A];
         let mut out = [0u32; 3];
-        let r = matrix_mul_vec(buf(&mut out), rd::<GPtr<u8>>(this, 0x14), buf(&mut offset));
+        let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(buf(&mut out)), rd::<GPtr<u8>>(this, 0x14), buf(&mut offset)));
         add_heli_search_light(r, buf(&mut target), 20.0, rd::<u32>(this, 0xA00), (this.addr() as u32).wrapping_add(0xB), 1, 1);
     }
     entity_get_col_model(this);

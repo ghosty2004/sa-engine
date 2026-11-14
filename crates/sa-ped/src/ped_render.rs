@@ -3,6 +3,7 @@
 //! `GiveDelayedWeapon`, `RequestDelayedWeapon`, `RemoveWeaponAnims`). RenderWare and FX calls stay calls
 //! into the original (`orig!`). Ported from the 1.0 US bytes (gta-reversed `Ped.cpp` as a reading aid).
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -31,7 +32,7 @@ use sa_core::bindings::rp_clump_for_all_atomics;
 use sa_core::bindings::rp_hanim_hierarchy_get_matrix_array;
 use sa_core::bindings::rp_hanim_id_get_index;
 use sa_core::bindings::rp_skin_geometry_get_skin;
-use sa_stream::bindings::clump_get_frame_from_name as get_frame_from_name;
+use sa_core::bindings::clump_get_frame_from_name as get_frame_from_name;
 use sa_stream::bindings::model_info_add_ref;
 use sa_stream::bindings::model_info_remove_ref;
 use sa_world::bindings::fx_copy_parent_matrix;
@@ -41,27 +42,19 @@ use sa_world::bindings::ped_drop_held_entity as drop_entity_that_this_ped_is_hol
 use sa_world::bindings::ped_pre_render_after_test as pre_render_after_test;
 use sa_world::bindings::renderer_setup_lighting_for_entity as setup_lighting_for_entity;
 use sa_world::bindings::weapon_reload;
+use crate::bindings::add_weapon_model as add_weapon_model_call;
+use crate::bindings::remove_goggles_model;
+use crate::bindings::request_delayed_weapon as request_delayed_weapon_call;
+use sa_core::bindings::clump_get_association;
+use sa_core::bindings::ped_give_weapon as give_weapon_call;
+use sa_world::bindings::anim_blend_animation as blend_animation;
+use sa_world::bindings::fx_create_system;
+use sa_world::bindings::ped_remove_weapon_model as remove_weapon_model_call;
 orig! {
-    /// `FxManager_c::CreateFxSystem(const char*, CVector*, RwMatrix*, bool)` (0x4A9BE0)
-    fn fx_create_system(m: GPtr<u8>, name: u32, pos: GPtr<f32>, mat: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4A9BE0 => unported;
     /// model info vtable slot 0x2C (`CreateInstance`)
     fn model_info_create_instance(mi: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x2C => unported;
-    /// `CPed::RemoveWeaponModel(int32)` (0x5E3990)
-    fn remove_weapon_model_call(p: GPtr<u8>, model: i32) = thiscall 0x5E3990 => remove_weapon_model;
-    /// `CPed::AddWeaponModel(int32)` (0x5E5ED0)
-    fn add_weapon_model_call(p: GPtr<u8>, model: i32) = thiscall 0x5E5ED0 => add_weapon_model;
-    /// `CPed::RemoveGogglesModel()` (0x5DF170)
-    fn remove_goggles_model(p: GPtr<u8>) = thiscall 0x5DF170 => unported;
     /// `CWeapon::Initialise(eWeaponType, int32, CPed*)` (0x73B4A0)
     fn weapon_initialise(w: GPtr<u8>, ty: u32, ammo: u32, ped: GPtr<u8>) = thiscall 0x73B4A0 => unported;
-    /// `CPed::GiveWeapon(eWeaponType, uint32, bool)` (0x5E6080)
-    fn give_weapon_call(p: GPtr<u8>, ty: u32, ammo: u32, b: u32) -> u32 = thiscall 0x5E6080 => give_weapon;
-    /// `CPed::RequestDelayedWeapon()` (0x5E8910)
-    fn request_delayed_weapon_call(p: GPtr<u8>) = thiscall 0x5E8910 => request_delayed_weapon;
-    /// `RpAnimBlendClumpGetAssociation(RpClump*, uint32 animId)` (0x4D68B0)
-    fn clump_get_association(c: GPtr<u8>, id: u32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
-    /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float)` (0x4D4610)
-    fn blend_animation(c: GPtr<u8>, g: u32, id: u32, delta: f32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
 }
 
 fn weapon_info(ty: u32) -> GPtr<u8> {
@@ -110,7 +103,7 @@ pub fn remove_weapon_model(this: GPtr<u8>, model: i32) {
             model_info_remove_ref(get_clump_model_info(rd::<GPtr<u8>>(p, 0x4F4)));
             let atomic = get_first_atomic(rd::<GPtr<u8>>(p, 0x4F4));
             if !atomic.is_null() && !rp_skin_geometry_get_skin(rd::<GPtr<u8>>(atomic, 0x18)).is_null() {
-                rp_clump_for_all_atomics(rd::<GPtr<u8>>(p, 0x4F4), 0x734B90, 0);
+                rp_clump_for_all_atomics(rd::<GPtr<u8>>(p, 0x4F4), 0x734B90, GPtr::NULL);
             }
             rp_clump_destroy(rd::<GPtr<u8>>(p, 0x4F4));
             wr::<u32>(p, 0x4F4, 0);
@@ -147,7 +140,7 @@ pub fn add_weapon_model(this: GPtr<u8>, model: i32) {
     if inst.is_null() {
         wr::<u32>(p, 0x4F8, 0);
     } else {
-        wr::<GPtr<u8>>(p, 0x4F8, get_frame_from_name(inst, GUNFLASH_NAME));
+        wr::<GPtr<u8>>(p, 0x4F8, get_frame_from_name(inst, GPtr::from_addr(GUNFLASH_NAME as usize)));
     }
     model_info_add_ref(mi);
     wr::<i32>(p, 0x740, model);
@@ -165,8 +158,8 @@ pub fn add_weapon_model(this: GPtr<u8>, model: i32) {
     let mut pos = [0f32; 3];
     let fx = fx_create_system(
         g::<u8>(FX_MAN),
-        PARACHUTE_FX_NAME,
-        lp(&mut pos).cast(),
+        GPtr::from_addr(PARACHUTE_FX_NAME as usize),
+        GPtr::<f32>::cast::<u8>(lp(&mut pos).cast()),
         mats.byte_add((idx.wrapping_shl(6)) as isize),
         0,
     );
@@ -256,7 +249,7 @@ pub fn request_delayed_weapon(this: GPtr<u8>) {
     if m2 != -1 && !loaded(m2) {
         return;
     }
-    give_weapon_call(p, rd::<u32>(p, 0x710), rd::<u32>(p, 0x714), 1);
+    give_weapon_call(p, rd::<u32>(p, 0x710) as i32, rd::<u32>(p, 0x714), 1);
     wr::<u32>(p, 0x710, 0x37);
 }
 

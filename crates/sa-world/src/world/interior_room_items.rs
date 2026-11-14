@@ -12,23 +12,19 @@ use super::common::{ftol32, rd, wr, x, xi};
 
 use crate::bindings::get_furniture;
 use crate::bindings::set_tiles_status;
+use crate::bindings::add_goto_pt;
+use crate::bindings::add_interior_info;
+use crate::bindings::get_random_id;
+use crate::bindings::place_furniture;
 orig! {
     /// `Interior_c::PlaceObject(bool, Furniture_c*, float x, float y, float z, float rot)` (0x5934E0)
     fn place_object(this: GPtr<u8>, a: u32, f: GPtr<u8>, px: f32, py: f32, pz: f32, rot: f32) -> GPtr<u8> = thiscall 0x5934E0 => unported;
-    /// `Interior_c::AddInteriorInfo(int32 type, float x, float y, int32 dir, CEntity*)` (0x591E40)
-    fn add_interior_info(this: GPtr<u8>, ty: i32, px: f32, py: f32, dir: i32, e: i32) = thiscall 0x591E40 => unported;
-    /// `Interior_c::AddGotoPt(int32 x, int32 y, float dx, float dy)` (0x591D20)
-    fn add_goto_pt(this: GPtr<u8>, tx: i32, ty: i32, dx: f32, dy: f32) = thiscall 0x591D20 => unported;
-    /// `FurnitureManager_c::GetRandomId(int32 group, int32 subGroup, uint8 wealth)` (0x591220)
-    fn get_random_id(man: GPtr<u8>, group: i32, sub: u32, wealth: u32) -> i32 = thiscall 0x591220 => unported;
     /// `Interior_c::Kitchen_FurnishEdges()` (0x596930)
     fn kitchen_furnish_edges(this: GPtr<u8>) = thiscall 0x596930 => unported;
     /// `Interior_c::Office_PlaceEdgeDesks(int32 id, int32 x, int32 y, int32 dir, int32)` (0x5995B0)
     fn office_place_edge_desks(this: GPtr<u8>, id: i32, tx: i32, ty: i32, dir: i32, a4: i32) -> i32 = thiscall 0x5995B0 => unported;
     /// `Interior_c::Office_PlaceEdgeFillers(int32 id, int32 x, int32 y, int32 dir, int32)` (0x599210)
     fn office_place_edge_fillers(this: GPtr<u8>, id: i32, tx: i32, ty: i32, dir: i32, a4: i32) -> i32 = thiscall 0x599210 => super::interior_wall_fillers::office_place_edge_fillers;
-    /// `Interior_c::PlaceFurniture(...)` (0x592AA0)
-    fn place_furniture(this: GPtr<u8>, f: GPtr<u8>, x: i32, y: i32, h: u32, mode: i32, rot: i32, ow: GPtr<u8>, od: GPtr<u8>, a9: u32) -> GPtr<u8> = thiscall 0x592AA0 => unported;
 }
 
 /// `0.5` (0x858B8C), `90` (0x85991C).
@@ -90,14 +86,14 @@ pub fn lounge_add_chair_info(this: GPtr<u8>, dir: i32, pos: i32, entity: i32) {
     match dir {
         0 => {
             let y = xi(i32::from(rd::<u8>(info(), 3)) - 1).fsub_m(1.0).to_f32();
-            add_interior_info(this, 1, along(), y, d, entity);
+            add_interior_info(this, 1, along(), y, d as u32, entity as u32);
         }
-        2 => add_interior_info(this, 1, along(), 1.0, d, entity),
-        1 => add_interior_info(this, 1, 1.0, along(), d, entity),
+        2 => { add_interior_info(this, 1, along(), 1.0, d as u32, entity as u32); },
+        1 => { add_interior_info(this, 1, 1.0, along(), d as u32, entity as u32); },
         3 => {
             let a = along();
             let px = xi(i32::from(rd::<u8>(info(), 2)) - 1).fsub_m(1.0).to_f32();
-            add_interior_info(this, 1, px, a, d, entity);
+            add_interior_info(this, 1, px, a, d as u32, entity as u32);
         }
         _ => {}
     }

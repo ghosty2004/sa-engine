@@ -165,15 +165,14 @@ use sa_core::bindings::atof as hd_atof;
 use sa_core::bindings::atol as hd_atol;
 use sa_core::bindings::sscanf1 as hd_sscanf_x;
 use sa_core::bindings::strtok as hd_strtok;
+use sa_core::bindings::file_close as hd_close_file;
+use sa_core::bindings::file_set_dir as hd_set_dir;
+use sa_core::bindings::load_line as hd_load_line;
+use sa_core::bindings::open_file as hd_open_file;
+use sa_pop::bindings::get_boat_pointer as hd_get_boat_pointer;
 orig! {
-    fn hd_set_dir(dir: GPtr<u8>) = cdecl 0x5387D0 => unported;
-    fn hd_open_file(path: GPtr<u8>, mode: GPtr<u8>) -> u32 = cdecl 0x538900 => unported;
-    fn hd_close_file(file: u32) -> i32 = cdecl 0x5389D0 => unported;
-    /// `CFileLoader::LoadLine(FILE*)` (0x536F80)
-    fn hd_load_line(file: u32) -> GPtr<u8> = cdecl 0x536F80 => unported;
     /// `cHandlingDataMgr::FindExactWord(word, names, nameLen, count)` (0x6F4F30)
     fn hd_find_exact_word(mgr: GPtr<u8>, word: GPtr<u8>, names: GPtr<u8>, len: u32, count: u32) -> u32 = thiscall 0x6F4F30 => unported;
-    fn hd_get_boat_pointer(mgr: GPtr<u8>, id: u32) -> GPtr<u8> = thiscall 0x6F5300 => unported;
     fn hd_convert_bike_data(mgr: GPtr<u8>, bike: GPtr<u8>) = thiscall 0x6F5290 => unported;
     fn hd_convert_data(mgr: GPtr<u8>, h: GPtr<u8>) = thiscall 0x6F5080 => unported;
     /// `CVehicleAnimGroup::CVehicleAnimGroup()` (0x5BD420)
@@ -213,7 +212,7 @@ fn atof32(s: GPtr<u8>) -> f32 {
        route = "L2", hazards = "uninit-locals", recs = "boot")]
 pub fn load_handling_data_port(this: GPtr<u8>) {
     hd_set_dir(g::<u8>(0x86A784));
-    let file = hd_open_file(g::<u8>(0x86A964), g::<u8>(0x859C6C));
+    let file = GPtr::<u8>::addr(hd_open_file(g::<u8>(0x86A964), g::<u8>(0x859C6C))) as u32;
     hd_set_dir(g::<u8>(0x858B54));
     let mut bike = GPtr::<u8>::NULL;
     let mut flying = GPtr::<u8>::NULL;
@@ -225,7 +224,7 @@ pub fn load_handling_data_port(this: GPtr<u8>) {
     let fp = |o: usize| GPtr::<u8>::from_raw(fb.wrapping_add(o));
     let names = g::<u8>(VEHICLE_NAMES);
     loop {
-        let line = hd_load_line(file);
+        let line = hd_load_line(GPtr::from_addr(file as usize));
         if line.is_null() {
             break;
         }
@@ -280,7 +279,7 @@ pub fn load_handling_data_port(this: GPtr<u8>) {
                     match k.wrapping_sub(1) {
                         0 => {
                             let id = hd_find_exact_word(this, tok, names, 0xE, 0xD2);
-                            boat = hd_get_boat_pointer(this, id);
+                            boat = hd_get_boat_pointer(this, id as u8);
                             wr::<u32>(boat, 0, id);
                         }
                         n @ 1..=7 => wr::<f32>(boat, 4 * n as isize, atof32(tok)),
@@ -373,7 +372,7 @@ pub fn load_handling_data_port(this: GPtr<u8>) {
             }
         }
     }
-    hd_close_file(file);
+    hd_close_file(GPtr::from_addr(file as usize));
 }
 
 pub const HOOKS: &[HookReg] = &[

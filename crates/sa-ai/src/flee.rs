@@ -2,6 +2,7 @@
 //! Ported from the 1.0 US bytes (gta-reversed and `docs/re/specs/AI` as reading aids only).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -12,7 +13,7 @@ const TIME_MS: usize = 0xB7CB84;
 /// `g_ikChainMan` (`IKChainManager_c`)
 const IK_CHAIN_MAN: usize = 0xC15448;
 
-use crate::bindings::smart_flee_point_ctor as flee_point_ctor;
+use sa_world::bindings::smart_flee_point_ctor as flee_point_ctor;
 use crate::bindings::task_timer_is_out_of_time;
 use sa_core::bindings::general_random_int_in_range as general_get_random_number_in_range;
 use sa_world::bindings::event_group_add;
@@ -27,6 +28,10 @@ use sa_world::bindings::stand_still_ctor;
 use sa_world::bindings::task_complex_ctor;
 use sa_world::bindings::tired_ctor;
 use sa_world::bindings::wander_ctor;
+use crate::bindings::flee_entity_create_sub_task;
+use sa_core::bindings::general_get_node_heading_from_vector;
+use sa_core::bindings::ik_abort_look_at;
+use sa_world::bindings::ik_look_at;
 orig! {
     /// `CTask::GetTaskType()` (vtable +0x10)
     fn v_get_task_type(t: GPtr<u8>) -> u32 = thiscall vslot 0x10 => unported;
@@ -36,21 +41,10 @@ orig! {
     fn flee_point_set_default_task_wander_dir(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x65BE00 => unported;
     /// `CTaskComplexSmartFleePoint::CreateSubTask(int32, CPed*)` (0x65BE80, `ret 8`)
     fn flee_point_create_sub_task(t: GPtr<u8>, ty: u32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x65BE80 => unported;
-    /// `CGeneral::GetNodeHeadingFromVector(float, float)` (0x53CDC0, AL)
-    fn general_get_node_heading_from_vector(x: f32, y: f32) -> u8 = cdecl 0x53CDC0 => unported;
     /// `CTaskComplexSmartFleePoint::ComputeFleeDir(CPed*)` (0x65BE40, `ret 4`, AL)
     fn flee_point_compute_flee_dir(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x65BE40 => unported;
     /// `FUN_00669d30`: the wander task's direction setter (thiscall, `ret 4`)
     fn wander_set_dir(t: GPtr<u8>, dir: u32) = thiscall 0x669D30 => unported;
-    /// `IKChainManager_c::AbortLookAt(CPed*, int32)` (0x618280, `ret 8`)
-    fn ik_abort_look_at(this: GPtr<u8>, ped: GPtr<u8>, time: u32) = thiscall 0x618280 => unported;
-    /// `IKChainManager_c::LookAt(...)` (0x618970, `ret 0x2C`)
-    fn ik_look_at(
-        this: GPtr<u8>, purpose: u32, ped: GPtr<u8>, target: u32, time: u32, bone: u32, posn: GPtr<u8>,
-        torso: u32, speed: u32, blend: u32, prio: u32, force: u32
-    ) -> u32 = thiscall 0x618970 => unported;
-    /// `CTaskComplexSmartFleeEntity::CreateSubTask(int32)` (0x65C530, `ret 4`)
-    fn flee_entity_create_sub_task(t: GPtr<u8>, ty: u32) -> GPtr<u8> = thiscall 0x65C530 => unported;
     /// `CTaskComplexSmartFleePoint::SetFleePosition(const CVector&, float, bool)` (0x65C3C0, `ret 0xC`)
     fn flee_point_set_flee_position(t: GPtr<u8>, pos: GPtr<u8>, radius: u32, scream: u32) = thiscall 0x65C3C0 => unported;
     /// `CEventSeenPanickedPed::CEventSeenPanickedPed(CPed*)` (0x4B2080, `ret 4`)
@@ -93,7 +87,7 @@ pub fn flee_point_create_sub_task_port(this: GPtr<u8>, ty: i32, ped: GPtr<u8>) -
         0xCB => {
             flee_point_set_default_task_wander_dir(this, ped);
             let t = task_new(0x20);
-            if t.is_null() { GPtr::NULL } else { stand_still_ctor(t, 0, 0, 0, 0x4100_0000) }
+            if t.is_null() { GPtr::NULL } else { stand_still_ctor(t, 0, 0, 0, f32::from_bits(0x4100_0000)) }
         }
         0xF4 => {
             if rd::<u32>(this, 0x30) != 6 {
@@ -102,7 +96,7 @@ pub fn flee_point_create_sub_task_port(this: GPtr<u8>, ty: i32, ped: GPtr<u8>) -
             let s = task_new(0x40);
             let s = if s.is_null() { GPtr::NULL } else { sequence_ctor(s) };
             let a = task_new(0x20);
-            let a = if a.is_null() { GPtr::NULL } else { run_anim_ctor(a, 0, 0xA5, 0x4080_0000, 0) };
+            let a = if a.is_null() { GPtr::NULL } else { run_anim_ctor(a, 0, 0xA5, f32::from_bits(0x4080_0000), 0) };
             sequence_add_task(s, a);
             let t = task_new(0x1C);
             let t = if t.is_null() { GPtr::NULL } else { tired_ctor(t, 0x7D0) };
@@ -174,7 +168,7 @@ pub fn flee_point_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
         return rd::<GPtr<u8>>(this, 8);
     }
     if rd::<u8>(this, 0x24) != 0 {
-        ped_say(ped, 0x15B, 0, 0x3DCC_CCCD, 0, 0, 0);
+        ped_say(ped, 0x15B, 0, f32::from_bits(0x3DCC_CCCD), 0, 0, 0);
     }
     let sub = rd::<GPtr<u8>>(this, 8);
     wr::<u32>(sub, 0xC, rd::<u32>(this, 0x30));
@@ -206,7 +200,7 @@ pub fn flee_point_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
         }
     }
     if rd::<u32>(this, 0x30) == 6 && ik_is_looking(ik(), ped) == 0 && general_get_random_number_in_range(0, 0x64) <= 5 {
-        ik_look_at(ik(), 0x86F770, ped, 0, 0x7D0, 0xFFFF_FFFF, this.byte_add(0x18), 0, 0x3E80_0000, 0x1F4, 3, 0);
+        ik_look_at(ik(), GPtr::from_addr(0x86F770), ped, GPtr::NULL, 0x7D0, 0xFFFF_FFFF, this.byte_add(0x18), 0, 0x3E80_0000, 0x1F4, 3, 0);
     }
     res
 }
@@ -228,7 +222,7 @@ pub fn flee_entity_create_sub_task_port(this: GPtr<u8>, ty: u32) -> GPtr<u8> {
             }
             let r = sa_core::orig::at_site(0x65C637, rand) & 0xFFFF;
             let ms = ftol32(xi(r).fmul_m(g::<f32>(0x858B14).read()).fmul_m(g::<f32>(0x858B40).read()));
-            stand_still_ctor(t, ms as u32, 0, 0, 0x4100_0000)
+            stand_still_ctor(t, (ms as u32) as i32, 0, 0, f32::from_bits(0x4100_0000))
         }
         0x38E => {
             let t = rd::<u32>(this, 0x28);
@@ -262,7 +256,7 @@ pub fn flee_entity_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<
     if rd::<u32>(ped, 0x46C) & 0x100 == 0 && ik_is_looking(ik(), ped) == 0 {
         let e = rd::<GPtr<u8>>(this, 0xC);
         let bone = if rd::<u8>(e, 0x36) & 7 == 3 { 5 } else { 0xFFFF_FFFF };
-        ik_look_at(ik(), 0x86F7B0, ped, e.addr() as u32, 0xBB8, bone, GPtr::NULL, 1, 0x3E80_0000, 0x1F4, 3, 0);
+        ik_look_at(ik(), GPtr::from_addr(0x86F7B0), ped, GPtr::from_addr((e.addr() as u32) as usize), 0xBB8, bone, GPtr::NULL, 1, 0x3E80_0000, 0x1F4, 3, 0);
     }
     flee_entity_create_sub_task(this, 0x38E)
 }

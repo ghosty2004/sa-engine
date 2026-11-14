@@ -2,15 +2,16 @@
 //! Ported from the 1.0 US bytes (gta-reversed as a reading aid; the bytes win). Unverified (docs/verify/HOWTO.md).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
 use crate::common::*;
 
 use crate::bindings::compute_entity_hit_side_ped as geometry_compute_entity_hit_side;
-use crate::bindings::fall_and_get_up_ctor2;
+use sa_world::bindings::fall_and_get_up_ctor2;
 use crate::bindings::hit_response_ctor;
-use crate::bindings::say_ctor;
+use sa_world::bindings::say_ctor;
 use sa_core::bindings::tm_get_active_task;
 use sa_world::bindings::ik_look_at;
 use sa_world::bindings::player_ped_annoy_player_ped;
@@ -42,12 +43,12 @@ fn new_task(size: u32, ctor: impl FnOnce(GPtr<u8>) -> GPtr<u8>) -> GPtr<u8> {
 }
 
 fn look_at(p: GPtr<u8>, other: GPtr<u8>, time: i32) {
-    ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), S_PLAYER_COLL_PED, p, other, time, 5, 0, 1, 0x3E80_0000, 500, 3, 0);
+    ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), GPtr::from_addr(S_PLAYER_COLL_PED as usize), p, other, time as u32, 5, GPtr::NULL, 1, 0x3E80_0000, 500, 3, 0);
 }
 
 /// The say task (`CTaskSimpleSay(0x1C, -1)`) stored in +0x2C.
 fn say(this: GPtr<u8>) {
-    wr::<GPtr<u8>>(this, 0x2C, new_task(0x1C, |t| say_ctor(t, 0x1C, -1)));
+    wr::<GPtr<u8>>(this, 0x2C, new_task(0x1C, |t| say_ctor(t, 0x1C, -1i32 as u32)));
 }
 
 /// Both stats (+0x59C, `CPedStat` +0x2C) above 1.5 → the higher one knocks over; else the player's above 1.5 (x87,
@@ -143,7 +144,7 @@ pub fn handler_compute_player_collision_with_ped_response(this: GPtr<u8>, e: GPt
             }
             if theirs != 4 && knocks_over(ped(this), other) {
                 let side = geometry_compute_entity_hit_side(other, ped(this));
-                result = new_task(0x18, |t| fall_and_get_up_ctor2(t, side, 0));
+                result = new_task(0x18, |t| fall_and_get_up_ctor2(t, side as u32, 0));
                 break 'body true;
             }
             say(this);

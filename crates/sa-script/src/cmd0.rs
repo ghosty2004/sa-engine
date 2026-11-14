@@ -53,33 +53,23 @@ pub use sa_world::bindings::cam_shake_no_pos;
 pub use sa_world::bindings::get_distance_from_centre_of_mass_to_base_of_model;
 pub use sa_world::bindings::player_on_foot_ctor as task_simple_player_on_foot_ctor;
 pub use sa_world::bindings::set_posn;
+pub use crate::bindings::add_script_to_list;
+pub use crate::bindings::remove_script_from_list;
+pub use crate::bindings::shutdown_this_script;
+pub use crate::bindings::start_new_script;
+pub use sa_core::bindings::load_all_requested_models;
+pub use sa_core::bindings::request_special_model;
+pub use sa_world::bindings::clear_space_for_mission_entity;
+pub use sa_world::bindings::find_ground_z_for_coord;
+pub use sa_world::bindings::set_char_created_by;
+pub use sa_world::bindings::tm_set_task as task_manager_set_task;
 orig! {
-    /// `CTheScripts::StartNewScript(uint8* ip)` (0x464C20)
-    pub fn start_new_script(ip: GPtr<u8>) -> Scr = cdecl 0x464C20 => crate::script_brains::start_new_script;
-    /// `CRunningScript::RemoveScriptFromList(CRunningScript**)` (0x464BD0)
-    pub fn remove_script_from_list(s: Scr, list: GPtr<GPtr<u8>>) = thiscall 0x464BD0 => unported;
-    /// `CRunningScript::AddScriptToList(CRunningScript**)` (0x464C00)
-    pub fn add_script_to_list(s: Scr, list: GPtr<GPtr<u8>>) = thiscall 0x464C00 => unported;
-    /// `CRunningScript::ShutdownThisScript()` (0x465AA0)
-    pub fn shutdown_this_script(s: Scr) = thiscall 0x465AA0 => unported;
-    /// `CStreaming::RequestSpecialModel(int32 slot, const char* name, int32 flags)` (0x409D10)
-    pub fn request_special_model(slot: i32, name: GPtr<u8>, flags: i32) = cdecl 0x409D10 => unported;
-    /// `CStreaming::LoadAllRequestedModels(bool)` (0x40EA10)
-    pub fn load_all_requested_models(only_priority: i32) = cdecl 0x40EA10 => unported;
     /// `CPlayerPed::SetupPlayerPed(int32)` (0x60D790)
     pub fn setup_player_ped(idx: i32) = cdecl 0x60D790 => unported;
-    /// `CPed::SetCharCreatedBy(uint8)` (0x5E47E0)
-    pub fn set_char_created_by(ped: GPtr<u8>, by: i32) = thiscall 0x5E47E0 => unported;
     /// `CPlayerPed::DeactivatePlayerPed(int32)` (0x609520)
     pub fn deactivate_player_ped(idx: i32) = cdecl 0x609520 => unported;
     /// `CPlayerPed::ReactivatePlayerPed(int32)` (0x609540)
     pub fn reactivate_player_ped(idx: i32) = cdecl 0x609540 => unported;
-    /// `CWorld::FindGroundZForCoord(float, float)` (0x569660), ST0 (read as f64: exact)
-    pub fn find_ground_z_for_coord(x: f32, y: f32) -> f64 = cdecl 0x569660 => unported;
-    /// `CTheScripts::ClearSpaceForMissionEntity(const CVector&, CEntity*)` (0x486B00)
-    pub fn clear_space_for_mission_entity(pos: GPtr<f32>, e: GPtr<u8>) = cdecl 0x486B00 => unported;
-    /// `CTaskManager::SetTask(CTask*, int32 slot, bool)` (0x681AF0)
-    pub fn task_manager_set_task(m: GPtr<u8>, task: GPtr<u8>, slot: i32, force: i32) = thiscall 0x681AF0 => unported;
 }
 
 #[inline]
@@ -322,8 +312,8 @@ pub fn process_commands_0_to_99(s: Scr, command: u32) -> i8 {
             if s.byte_add(vm::IS_MISSION).read() != 0 {
                 ALREADY_RUNNING_A_MISSION_SCRIPT.set(0);
             }
-            remove_script_from_list(s, ACTIVE_SCRIPTS.ptr());
-            add_script_to_list(s, IDLE_SCRIPTS.ptr());
+            remove_script_from_list(s, GPtr::<GPtr<u8>>::cast::<u8>(ACTIVE_SCRIPTS.ptr()));
+            add_script_to_list(s, GPtr::<GPtr<u8>>::cast::<u8>(IDLE_SCRIPTS.ptr()));
             shutdown_this_script(s);
             return 1;
         }
@@ -447,7 +437,7 @@ fn create_player(s: Scr) {
     let z = d.fadd_m(z).to_f32();
     set_posn(slot.read(), f(x), f(y), z);
     let pos = [f(x), f(y), z];
-    clear_space_for_mission_entity(GPtr::from_raw(pos.as_ptr().cast_mut()), slot.read());
+    clear_space_for_mission_entity(GPtr::<f32>::cast::<u8>(GPtr::from_raw(pos.as_ptr().cast_mut())), slot.read());
     reactivate_player_ped(idx);
     param(0).write(idx as u32);
     store_parameters_call(s, 1);

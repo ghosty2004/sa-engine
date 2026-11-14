@@ -10,8 +10,9 @@
     clippy::needless_range_loop
 )]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
@@ -22,15 +23,9 @@ use sa_core::bindings::vector_normalise;
 use sa_stream::bindings::placeable_allocate_matrix;
 use sa_stream::bindings::simple_transform_update_matrix;
 use sa_world::bindings::process_line_of_sight;
-orig! {
-    /// `CPedGeometryAnalyser::ComputeEntityBoundingBoxCornersUncached(float z, CEntity&, CVector* corners)` (0x5F1FA0)
-    fn corners_uncached(z: u32, e: GPtr<u8>, corners: GPtr<u8>) -> u8 = cdecl 0x5F1FA0 => unported;
-    /// `CPedGeometryAnalyser::ComputeEntityBoundingBoxSegmentPlanesUncached(const CVector* corners, CVector& centre,
-    /// CVector* normals, float* ds)` (0x5F1750)
-    fn segment_planes_uncached(corners: GPtr<u8>, centre: GPtr<u8>, normals: GPtr<u8>, ds: GPtr<u8>) = cdecl 0x5F1750 => unported;
-    /// `CPedGeometryAnalyser::ComputeEntityHitSide(const CVector&, const CVector* normals, const float* ds)` (0x5F1450)
-    fn hit_side(pos: GPtr<u8>, normals: GPtr<u8>, ds: GPtr<u8>) -> i32 = cdecl 0x5F1450 => unported;
-}
+use crate::bindings::bbox_corners_uncached as corners_uncached;
+use crate::bindings::bbox_segment_planes_uncached as segment_planes_uncached;
+use crate::bindings::entity_hit_side_2 as hit_side;
 
 /// `CPedGeometryAnalyser::ms_fPedNominalRadius`
 const PED_NOMINAL_RADIUS: usize = 0x8D22B0;
@@ -91,12 +86,12 @@ fn hit_centre(c: &[f32; 12], z: f32) -> V3 {
 fn hit_side_at(pos: GPtr<u8>, e: GPtr<u8>) -> i32 {
     let z = rd::<f32>(pos, 8);
     let mut c = [0f32; 12];
-    corners_uncached(z.to_bits(), e, pa(&mut c));
+    corners_uncached(f32::from_bits(z.to_bits()), e, pa(&mut c));
     let mut centre = hit_centre(&c, z);
     let mut n = [0f32; 12];
     let mut d = [0f32; 4];
     segment_planes_uncached(pa(&mut c), p3(&mut centre), pa(&mut n), pa(&mut d));
-    hit_side(pos, pa(&mut n), pa(&mut d))
+    hit_side(pos, pa(&mut n), pa(&mut d)) as i32
 }
 
 /// One candidate route checked for blockers (the `force == 0` loops 0x5F50C0 / 0x5F5390). Returns (clear, last
@@ -138,20 +133,7 @@ fn check_route(pts: &[V3; 8], count: i32, centre: V3, ped: GPtr<u8>, e: GPtr<u8>
             x(off[2]).fadd_m(cur[2]).to_f32(),
         ];
         let entp: GPtr<u8> = GPtr::from_raw(&raw mut ent).cast();
-        let hit = process_line_of_sight(
-            p3(&mut prev),
-            p3(&mut cur),
-            pa(&mut cp),
-            entp,
-            1,
-            1,
-            1,
-            1,
-            0,
-            0,
-            0,
-            0,
-        ) != 0
+        let hit = process_line_of_sight(p3(&mut prev), p3(&mut cur), pa(&mut cp), entp, 1, 1, 1, 1, 0, 0, 0, 0) != 0
             || process_line_of_sight(p3(&mut a), p3(&mut b), pa(&mut cp), entp, 1, 1, 1, 1, 0, 0, 0, 0) != 0;
         if hit {
             let h: GPtr<u8> = GPtr::from_addr(ent as usize);
@@ -255,10 +237,10 @@ pub fn compute_route_round_entity_bounding_box(
     };
     let pz = rd::<f32>(ped_pos(), 8);
     let mut ca = [0f32; 12];
-    corners_uncached(x(pz).to_f32().to_bits(), e, pa(&mut ca));
+    corners_uncached(f32::from_bits(x(pz).to_f32().to_bits()), e, pa(&mut ca));
     let z = rd::<u32>(ped_pos(), 8);
     let mut cb = [0f32; 12];
-    corners_uncached(z, e, pa(&mut cb));
+    corners_uncached(f32::from_bits(z), e, pa(&mut cb));
     let mut normals = [0f32; 12];
     let mut ds = [0f32; 4];
     planes_uncached(z, pa(&mut cb), pa(&mut normals), pa(&mut ds));
@@ -283,20 +265,20 @@ pub fn compute_route_round_entity_bounding_box(
 
     let z = rd::<u32>(ped_pos(), 8);
     let mut cc = [0f32; 12];
-    corners_uncached(z, e, pa(&mut cc));
+    corners_uncached(f32::from_bits(z), e, pa(&mut cc));
     let mut centre = hit_centre(&cc, f32::from_bits(z));
     let mut sn = [0f32; 12];
     let mut sd = [0f32; 4];
     segment_planes_uncached(pa(&mut cc), p3(&mut centre), pa(&mut sn), pa(&mut sd));
-    let side_from = hit_side(from, pa(&mut sn), pa(&mut sd));
-    if side_from == hit_side(to, pa(&mut sn), pa(&mut sd)) {
+    let side_from = hit_side(from, pa(&mut sn), pa(&mut sd)) as i32;
+    if side_from == hit_side(to, pa(&mut sn), pa(&mut sd)) as i32 {
         return 0;
     }
 
     let pz = rd::<f32>(ped_pos(), 8);
-    corners_uncached(x(pz).to_f32().to_bits(), e, pa(&mut ca));
+    corners_uncached(f32::from_bits(x(pz).to_f32().to_bits()), e, pa(&mut ca));
     let z = rd::<u32>(ped_pos(), 8);
-    corners_uncached(z, e, pa(&mut cb));
+    corners_uncached(f32::from_bits(z), e, pa(&mut cb));
     planes_uncached(z, pa(&mut cb), pa(&mut normals), pa(&mut ds));
 
     // Pass 1.

@@ -33,7 +33,7 @@ const TIME_MS: usize = 0xB7CB84;
 /// 1.0f as bits
 const ONE: u32 = 0x3F80_0000;
 
-use crate::bindings::ae_random_int;
+use sa_world::bindings::ae_random_int;
 use crate::bindings::hw_is_sound_bank_loaded as is_sound_bank_loaded;
 use crate::bindings::just_wrecked_vehicle;
 use crate::bindings::sm_request_new_sound;
@@ -47,11 +47,13 @@ use crate::bindings::twin_update;
 use sa_world::bindings::surface_55ea50;
 use sa_world::bindings::surface_55ea90;
 use sa_world::bindings::surface_55ead0;
+use crate::bindings::play_skid_sound_call;
+use crate::bindings::sound_set_flags;
+use sa_world::bindings::audio_stop_radio as engine_stop_radio;
+use sa_world::bindings::get_wheel_status;
+use sa_world::bindings::surface_55ea70;
+use sa_world::bindings::surface_55eb10;
 orig! {
-    /// `CAudioEngine::StopRadio(tVehicleAudioSettings*, bool)` (0x506F70)
-    fn engine_stop_radio(engine: GPtr<u8>, settings: GPtr<u8>, duck: u32) = thiscall 0x506F70 => unported;
-    /// `CAESound::SetFlags(uint16 flags, uint16 enabled)` (0x4EF2B0)
-    fn sound_set_flags(sound: GPtr<u8>, flags: u32, enabled: u32) = thiscall 0x4EF2B0 => crate::sound::set_flags;
     /// `CAEVehicleAudioEntity::GetSirenState(bool&, bool&, cVehicleParams&)` (0x4F62A0)
     fn get_siren_state(this: GPtr<u8>, siren: GPtr<u8>, fast: GPtr<u8>, params: GPtr<u8>) = thiscall 0x4F62A0 => crate::vehicle::get_siren_state;
     /// `CAEVehicleAudioEntity::GetHornState(bool*, cVehicleParams&)` (0x4F61E0)
@@ -78,10 +80,6 @@ orig! {
     fn pa_process_ai_heli(this: GPtr<u8>, params: GPtr<u8>) = thiscall 0x4FEE20 => process_ai_heli;
     /// `CAEVehicleAudioEntity::ProcessDummyHeli(cVehicleParams&)` (0x4FE940)
     fn pa_process_dummy_heli(this: GPtr<u8>, params: GPtr<u8>) = thiscall 0x4FE940 => process_dummy_heli;
-    /// `CDamageManager::GetWheelStatus(int32)` (0x6C21B0)
-    fn get_wheel_status(dm: GPtr<u8>, wheel: u32) -> u32 = thiscall 0x6C21B0 => unported;
-    fn surface_55eb10(infos: GPtr<u8>, s: u32) -> u8 = thiscall 0x55EB10 => unported;
-    fn surface_55ea70(infos: GPtr<u8>, s: u32) -> u8 = thiscall 0x55EA70 => unported;
     /// `CAEVehicleAudioEntity::GetVehicleDriveWheelSkidValue(CVehicle*, tWheelState, float, cTransmission&, float)` (0x4F5F30), ST0
     fn drive_wheel_skid_value_st0(this: GPtr<u8>, veh: u32, state: u32, gas: u32, tr: u32, vel: u32) -> f64 = thiscall 0x4F5F30 => unported;
     /// `CAEVehicleAudioEntity::GetVehicleNonDriveWheelSkidValue(CVehicle*, tWheelState, cTransmission&, float)` (0x4F6000), ST0
@@ -90,8 +88,6 @@ orig! {
     fn play_flat_tyre_sound_call(this: GPtr<u8>, sfx: u32, speed: u32, volume: u32) = thiscall 0x4F8650 => play_flat_tyre_sound;
     /// `CAEVehicleAudioEntity::PlayRoadNoiseSound` (0x4F84D0)
     fn play_road_noise_sound_call(this: GPtr<u8>, sfx: u32, speed: u32, volume: u32) = thiscall 0x4F84D0 => play_road_noise_sound;
-    /// `CAEVehicleAudioEntity::PlaySkidSound` (0x4F8360)
-    fn play_skid_sound_call(this: GPtr<u8>, sfx: u32, speed: u32, volume: u32) = thiscall 0x4F8360 => play_skid_sound;
     /// `CAESound::SetPosition(CVector)` (0x4EF880)
     fn sound_set_position(sound: GPtr<u8>, px: u32, py: u32, pz: u32) = thiscall 0x4EF880 => crate::sound::set_position;
     /// `CAEVehicleAudioEntity::GetAircraftNearPosition(CVector* out)` (0x4F96A0): returns `out`
@@ -396,7 +392,7 @@ pub fn add_audio_event_physical(this: GPtr<u8>, event: u32, phys: GPtr<u8>) {
     wr::<u16>(this, 0x5E, 0x84);
     sound_register_with_physical_entity(snd, phys);
     wr::<u32>(this, 0x14, 0x5D);
-    sm_request_new_sound(g(SM), snd);
+    sm_request_new_sound(GPtr::<u8>::addr(g(SM)) as u32, snd.addr() as u32);
 }
 
 /// `g_surfaceInfos`
@@ -755,7 +751,7 @@ pub fn process_rain_on_vehicle(this: GPtr<u8>, _params: GPtr<u8>) {
     wr::<u32>(this, 0x28, 0x3DCC_CCCD);
     wr::<u32>(this, 0x20, ONE);
     wr::<u32>(this, 0x14, 0x8E);
-    sm_request_new_sound(g(SM), snd);
+    sm_request_new_sound(GPtr::<u8>::addr(g(SM)) as u32, snd.addr() as u32);
 }
 
 /// `CAEVehicleAudioEntity::UpdateBoatSound(int16 type, int16 bankSlot, int16 sfx, float speed, float
@@ -815,7 +811,7 @@ pub fn update_boat_sound(this: GPtr<u8>, ty: u32, slot: u32, sfx: u32, speed: u3
     wr::<u32>(this, 0x20, g::<u32>(dist).read());
     wr::<u32>(this, 0x24, speed);
     wr::<u16>(this, 0x5E, 4);
-    let got = sm_request_new_sound(g(SM), snd);
+    let got = sm_request_new_sound(GPtr::<u8>::addr(g(SM)) as u32, snd.addr() as u32);
     wr::<u32>(this, 0xE8 + idx * 8, got);
 }
 
@@ -870,7 +866,7 @@ pub fn update_generic_vehicle_sound(
     wr::<u32>(this, 0x20, dist);
     wr::<u32>(this, 0x1C, vol);
     wr::<u16>(this, 0x5E, 4);
-    let got = sm_request_new_sound(g(SM), snd);
+    let got = sm_request_new_sound(GPtr::<u8>::addr(g(SM)) as u32, snd.addr() as u32);
     wr::<u32>(this, 0xE8 + idx * 8, got);
 }
 
@@ -1020,7 +1016,7 @@ fn play_twin_loop(this: GPtr<u8>, bank_slot: u32, dist: usize, sfx: u32, speed: 
         0xFFFF_FFFF,
     );
     let p = veh_pos(this);
-    twin_play(twin, p[0], p[1], p[2], vol, speed, g::<u32>(dist).read(), ONE, 0);
+    twin_play(twin.addr() as u32, p[0], p[1], p[2], vol, speed, g::<u32>(dist).read(), ONE, 0);
 }
 
 /// `CAEVehicleAudioEntity::PlayTrainBrakeSound(int16 sfx, float speed, float volume)` (0x4FA630): nothing
@@ -1104,7 +1100,7 @@ fn play_simple_sound(
         wr::<u32>(local, 0x1C, speed);
         wr::<u16>(local, 0x56, 4);
     }
-    let got = sm_request_new_sound(g(SM), local);
+    let got = sm_request_new_sound(GPtr::<u8>::addr(g(SM)) as u32, local.addr() as u32);
     wr::<u32>(this, slot, got);
 }
 
@@ -1176,7 +1172,7 @@ pub fn start_vehicle_engine_sound(this: GPtr<u8>, ty: u32, speed: u32, volume: u
     wr::<u32>(local, 0x18, dist);
     wr::<u32>(local, 0x1C, speed);
     wr::<u16>(local, 0x56, 4);
-    let got = sm_request_new_sound(g(SM), local);
+    let got = sm_request_new_sound(GPtr::<u8>::addr(g(SM)) as u32, local.addr() as u32);
     wr::<u32>(this, 0xE8 + idx * 8, got);
 }
 
@@ -1424,7 +1420,7 @@ pub fn play_horn_or_siren(this: GPtr<u8>, horn: u32, siren: u32, fast: u32, para
         wr::<u32>(this, 0x58, g::<u32>(0x8CBEC4).read());
         wr::<u16>(this, 0x5E, 4);
         wr::<u32>(this, 0x20, 0x4020_0000);
-        let got = sm_request_new_sound(g(SM), this.byte_add(8));
+        let got = sm_request_new_sound(GPtr::<u8>::addr(g(SM)) as u32, GPtr::<u8>::addr(this.byte_add(8)) as u32);
         wr::<u32>(this, 0x178, got);
     }
     let sv = siren_vol.to_bits();
@@ -1448,7 +1444,7 @@ pub fn play_horn_or_siren(this: GPtr<u8>, horn: u32, siren: u32, fast: u32, para
             wr::<u32>(this, 0x24, ONE);
             wr::<u16>(this, 0x5E, 4);
             wr::<u32>(this, 0x20, 0x4040_0000);
-            let got = sm_request_new_sound(g(SM), this.byte_add(8));
+            let got = sm_request_new_sound(GPtr::<u8>::addr(g(SM)) as u32, GPtr::<u8>::addr(this.byte_add(8)) as u32);
             wr::<u32>(this, 0x17C, got);
         }
     } else if prev {
@@ -1464,17 +1460,14 @@ pub fn play_horn_or_siren(this: GPtr<u8>, horn: u32, siren: u32, fast: u32, para
         wr::<u32>(this, 0x24, ONE);
         wr::<u16>(this, 0x5E, 4);
         wr::<u32>(this, 0x20, 0x4040_0000);
-        let got = sm_request_new_sound(g(SM), this.byte_add(8));
+        let got = sm_request_new_sound(GPtr::<u8>::addr(g(SM)) as u32, GPtr::<u8>::addr(this.byte_add(8)) as u32);
         wr::<u32>(this, 0x180, got);
     } else if was_fast {
         forget(this, 0x180);
     }
 }
 
-orig! {
-    /// `CAEVehicleAudioEntity::UpdateGenericVehicleSound` (0x4FAD40)
-    fn update_generic_vehicle_sound_call(this: GPtr<u8>, ty: u32, slot: u32, bank: u32, sfx: u32, speed: u32, volume: u32, dist: u32) = thiscall 0x4FAD40 => update_generic_vehicle_sound;
-}
+use crate::bindings::update_generic_vehicle_sound_call;
 
 /// `CAEVehicleAudioEntity::ProcessMovingParts(cVehicleParams&)` (0x4FB260): models 443, 486, 406, 524,
 /// 592, 530 only. `t = (u16 +0x86C - u16 +0x86E) / [0x8CC050]`; `a = min(|t|, 1)`; +0x238 moves towards
@@ -1674,11 +1667,13 @@ pub fn request_new_player_car_engine_sound(
         }
         _ => {}
     }
-    let got = sm_request_new_sound(g(SM), local);
+    let got = sm_request_new_sound(GPtr::<u8>::addr(g(SM)) as u32, local.addr() as u32);
     wr::<u32>(this, e, got);
     sa_core::abi::Ax(0)
 }
 
+use crate::bindings::update_vehicle_engine_sound;
+use sa_world::bindings::audio_add_event as add_audio_event_volume;
 orig! {
     /// `CAEVehicleAudioEntity::GetVolumeForDummyIdle(float, float)` (0x4F51F0), ST0
     fn vol_dummy_idle_st0(this: GPtr<u8>, ratio: u32, fwd: u32) -> f64 = thiscall 0x4F51F0 => unported;
@@ -1688,12 +1683,8 @@ orig! {
     fn vol_dummy_rev_st0(this: GPtr<u8>, ratio: u32, fwd: u32) -> f64 = thiscall 0x4F53D0 => unported;
     /// `CAEVehicleAudioEntity::GetFrequencyForDummyRev(float, float)` (0x4F54F0), ST0
     fn freq_dummy_rev_st0(this: GPtr<u8>, ratio: u32, fwd: u32) -> f64 = thiscall 0x4F54F0 => unported;
-    /// `CAEVehicleAudioEntity::UpdateVehicleEngineSound(int16, float, float)` (0x4F56D0)
-    fn update_vehicle_engine_sound(this: GPtr<u8>, ty: u32, speed: u32, volume: u32) = thiscall 0x4F56D0 => unported;
     /// `CAEVehicleAudioEntity::StartVehicleEngineSound(int16, float, float)` (0x4F7F20)
     fn start_vehicle_engine_sound_call(this: GPtr<u8>, ty: u32, speed: u32, volume: u32) = thiscall 0x4F7F20 => start_vehicle_engine_sound;
-    /// `CAEVehicleAudioEntity::AddAudioEvent(eAudioEvents, float)` (0x4F6420, protection entry: not hooked)
-    fn add_audio_event_volume(this: GPtr<u8>, event: u32, volume: u32) = thiscall 0x4F6420 => unported;
 }
 
 use sa_math::fpu::st0;
@@ -1821,7 +1812,7 @@ pub fn process_dummy_state_transition(this: GPtr<u8>, new_state: u32, ratio: u32
         cur @ (0 | 10) => match ns {
             1 | 2 => {
                 if cur == 0 {
-                    add_audio_event_volume(this, 0x67, 0);
+                    add_audio_event_volume(this, 0x67, f32::from_bits(0));
                 }
                 wr::<u8>(this, 0xA9, ns as u8);
                 wr::<u32>(this, 0x240, ONE);
@@ -1908,7 +1899,7 @@ pub fn play_aircraft_sound(this: GPtr<u8>, ty: u32, slot: u32, sfx: u32, volume:
     wr::<u32>(local, 0x14, volume);
     wr::<u32>(local, 0x1C, speed);
     wr::<u16>(local, 0x56, 4);
-    let got = sm_request_new_sound(g(SM), local);
+    let got = sm_request_new_sound(GPtr::<u8>::addr(g(SM)) as u32, local.addr() as u32);
     wr::<u32>(this, 0xE8 + idx * 8, got);
 }
 
@@ -1967,7 +1958,7 @@ pub fn play_bicycle_sound(this: GPtr<u8>, ty: u32, slot: u32, sfx: u32, volume: 
         wr::<u32>(local, 0x1C, speed);
         wr::<u16>(local, 0x56, 0x24);
         wr::<u16>(local, 0x5C, pick_pos);
-        let got = sm_request_new_sound(g(SM), local);
+        let got = sm_request_new_sound(GPtr::<u8>::addr(g(SM)) as u32, local.addr() as u32);
         wr::<u32>(this, 0x100, got);
         return;
     }
@@ -2005,7 +1996,7 @@ pub fn play_bicycle_sound(this: GPtr<u8>, ty: u32, slot: u32, sfx: u32, volume: 
     wr::<u32>(local, 0x1C, speed);
     wr::<u32>(local, 0x14, volume);
     wr::<u16>(local, 0x56, 4);
-    let got = sm_request_new_sound(g(SM), local);
+    let got = sm_request_new_sound(GPtr::<u8>::addr(g(SM)) as u32, local.addr() as u32);
     wr::<u32>(this, 0xE8 + idx * 8, got);
 }
 
@@ -2093,9 +2084,8 @@ pub fn process_dummy_sea_plane(this: GPtr<u8>, params: GPtr<u8>) {
 }
 
 use crate::bindings::request_bank_slot;
+use crate::bindings::get_piecewise_linear;
 orig! {
-    /// `CAEAudioUtility::GetPiecewiseLinear(float, int16, const float (*)[2])` (0x4D9D90)
-    fn get_piecewise_linear(v: u32, n: u32, table: u32) -> f32 = cdecl 0x4D9D90 => unported;
     /// `CAEVehicleAudioEntity::ProcessGenericJet(bool, cVehicleParams&, float, float, float, float, float)` (0x4FF900)
     fn process_generic_jet_call(this: GPtr<u8>, on: u32, params: GPtr<u8>, f: u32, accel: u32, brake: u32, a: u32, b: u32) = thiscall 0x4FF900 => process_generic_jet;
 }
@@ -2162,8 +2152,8 @@ pub fn process_dummy_rc_car(this: GPtr<u8>, params: GPtr<u8>) {
     }
     let tr: GPtr<u8> = g(rd::<u32>(params, 0x14) as usize);
     let t = clamp01_x(x(rd::<f32>(params, 0x1C)).fdiv_m(rd::<f32>(tr, 0x58)).fabs()).to_f32();
-    let vol = get_piecewise_linear(t.to_bits(), 4, 0x8CC0A4);
-    let speed = get_piecewise_linear(t.to_bits(), 4, 0x8CBF8C);
+    let vol = get_piecewise_linear(t.to_bits(), 4, GPtr::from_addr(0x8CC0A4)) as f32;
+    let speed = get_piecewise_linear(t.to_bits(), 4, GPtr::from_addr(0x8CBF8C)) as f32;
     let slot = rd::<u16>(this, 0xE0) as u32;
     let bank = rd::<u16>(this, 0xDC) as u32;
     update_generic_vehicle_sound_call(this, 2, slot, bank, 0, speed.to_bits(), vol.to_bits(), ONE);
@@ -2254,7 +2244,7 @@ pub fn process_dummy_golf_cart(this: GPtr<u8>, params: GPtr<u8>) {
         stop_engine_sound(this, 0xF0);
         return;
     }
-    let p = get_piecewise_linear(t.to_bits(), 4, 0x8CBFD8);
+    let p = get_piecewise_linear(t.to_bits(), 4, GPtr::from_addr(0x8CBFD8)) as f32;
     let vol = crate::utility::audio_log10(p)
         .fmul_m(gf(FLT_20))
         .fadd_m(gf(0x8CBFCC))
@@ -2406,16 +2396,10 @@ pub fn process_train_track_sound(this: GPtr<u8>, params: GPtr<u8>) {
     );
 }
 
-orig! {
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    fn pad_get_pad(n: u32) -> u32 = cdecl 0x53FB70 => unported;
-    /// `CPad::GetAccelerate()` (0x5403F0)
-    fn pad_get_accelerate(pad: u32) -> u32 = thiscall 0x5403F0 => unported;
-    /// `CPad::GetBrake()` (0x540080)
-    fn pad_get_brake(pad: u32) -> u32 = thiscall 0x540080 => unported;
-    /// `CAEVehicleAudioEntity::PlayTrainBrakeSound` (0x4FA630)
-    fn play_train_brake_sound_call(this: GPtr<u8>, sfx: u32, speed: u32, volume: u32) = thiscall 0x4FA630 => play_train_brake_sound;
-}
+use crate::bindings::play_train_brake_sound as play_train_brake_sound_call;
+use sa_core::bindings::get_pad as pad_get_pad;
+use sa_world::bindings::pad_get_accelerate;
+use sa_world::bindings::pad_get_brake;
 
 /// `CAEVehicleAudioEntity::ProcessPlayerTrainBrakes(cVehicleParams&)` (0x500AB0): pad 0; `v` = train
 /// speed (+0x5A4; 0 when derailed, +0x5B9 bit 0), negated unless +0x5B8 bit 0x40; `t = min(|v|, 1)`
@@ -2428,7 +2412,7 @@ orig! {
 #[hook(addr = 0x500AB0, conv = thiscall, name = "CAEVehicleAudioEntity::ProcessPlayerTrainBrakes", expect = "83 EC 08 55 56", peek = 8)]
 pub fn process_player_train_brakes(this: GPtr<u8>, params: GPtr<u8>) {
     let mut pedal = f32::from_bits(sa_core::abi::peek_stack(0x500AB0, -8).unwrap_or(0));
-    let pad = pad_get_pad(0);
+    let pad = GPtr::<u8>::addr(pad_get_pad(0)) as u32;
     let veh: GPtr<u8> = g(rd::<u32>(params, 0x10) as usize);
     let mut v = if rd::<u8>(veh, 0x5B9) & 1 != 0 {
         x(gf(FLT_0))
@@ -2462,15 +2446,15 @@ pub fn process_player_train_brakes(this: GPtr<u8>, params: GPtr<u8>) {
     if rd::<u8>(veh, 0x36) & 0xF8 == 0 {
         if !abs(v).fcom(x(gf(0x858CDC))).test_parity(0x05) {
             pedal = 0.0;
-            pad_get_accelerate(pad);
-            pad_get_brake(pad);
+            pad_get_accelerate(GPtr::from_addr(pad as usize));
+            pad_get_brake(GPtr::from_addr(pad as usize));
         } else if !v.fcom(zero()).test_any(0x41) {
-            let b = pad_get_brake(pad) as u16 as i16;
+            let b = pad_get_brake(GPtr::from_addr(pad as usize)) as u16 as i16;
             pedal = X87::from_i32(b as i32).to_f32();
-            pad_get_accelerate(pad);
+            pad_get_accelerate(GPtr::from_addr(pad as usize));
         } else {
-            pad_get_brake(pad);
-            let a = pad_get_accelerate(pad) as u16 as i16;
+            pad_get_brake(GPtr::from_addr(pad as usize));
+            let a = pad_get_accelerate(GPtr::from_addr(pad as usize)) as u16 as i16;
             pedal = X87::from_i32(a as i32).to_f32();
         }
     }
@@ -2479,7 +2463,7 @@ pub fn process_player_train_brakes(this: GPtr<u8>, params: GPtr<u8>) {
         return;
     }
     let speed = x(gf(0xB6BA88)).fmul_m(t).fadd_m(gf(0x8CBF44)).to_f32();
-    let p = x(get_piecewise_linear(t.to_bits(), 4, 0x8CC1E8));
+    let p = x(get_piecewise_linear(t.to_bits(), 4, GPtr::from_addr(0x8CC1E8)) as f32);
     let r = p.fmul(x(pedal).fmul_m(gf(0x859A3C))).to_f32();
     if !x(r).fcom(x(gf(FLT_M100))).test_parity(0x05) {
         play_train_brake_sound_call(this, 0xFFFF_FFFF, speed.to_bits(), 0xC2C8_0000);
@@ -2505,7 +2489,7 @@ pub fn process_player_train_brakes(this: GPtr<u8>, params: GPtr<u8>) {
 /// volume)`.
 #[hook(addr = 0x500710, conv = thiscall, name = "CAEVehicleAudioEntity::ProcessDummyTrainEngine", expect = "83 EC 14 53 56")]
 pub fn process_dummy_train_engine(this: GPtr<u8>, params: GPtr<u8>) {
-    let pad = pad_get_pad(0);
+    let pad = GPtr::<u8>::addr(pad_get_pad(0)) as u32;
     if !dummy_engine_bank_ready_ex(this, false) {
         return;
     }
@@ -2571,13 +2555,13 @@ pub fn process_dummy_train_engine(this: GPtr<u8>, params: GPtr<u8>) {
     }
     if rd::<u8>(veh, 0x36) & 0xF8 == 0 {
         let d = if !abs().fcom(x(gf(0x858CDC))).test_parity(0x05) {
-            let a = pad_get_accelerate(pad) as u16 as i16 as i32;
-            let b = pad_get_brake(pad) as u16 as i16 as i32;
+            let a = pad_get_accelerate(GPtr::from_addr(pad as usize)) as u16 as i16 as i32;
+            let b = pad_get_brake(GPtr::from_addr(pad as usize)) as u16 as i16 as i32;
             a.wrapping_sub(b)
         } else if !x(v).fcom(zero()).test_any(0x41) {
-            pad_get_accelerate(pad) as u16 as i16 as i32
+            pad_get_accelerate(GPtr::from_addr(pad as usize)) as u16 as i16 as i32
         } else {
-            (pad_get_brake(pad) as u16 as i16 as i32).wrapping_neg()
+            (pad_get_brake(GPtr::from_addr(pad as usize)) as u16 as i16 as i32).wrapping_neg()
         };
         vol = X87::from_i32(d)
             .fmul_m(gf(0x859A3C))
@@ -2720,10 +2704,7 @@ pub fn process_player_bicycle(this: GPtr<u8>, params: GPtr<u8>) {
     g::<u32>(0xB6BAD0).write(rd::<u32>(veh, 0x820));
 }
 
-orig! {
-    /// `CAEVehicleAudioEntity::GetAccelAndBrake(cVehicleParams&)` (0x4F5080)
-    fn get_accel_and_brake(this: GPtr<u8>, params: GPtr<u8>) = thiscall 0x4F5080 => crate::vehicle::get_accel_and_brake;
-}
+use crate::bindings::get_accel_and_brake;
 
 /// The throttle ratio of the dummy aircraft: `p > 1 -> 1`, `p < 0.2 -> 0` (stored directly), else
 /// `(p - 0.2) * 1.25`; then at least `[0x862D08]` (double).
@@ -2898,10 +2879,7 @@ pub fn process_dummy_rc_heli(this: GPtr<u8>, params: GPtr<u8>) {
     rc_finish(this, s, vol);
 }
 
-orig! {
-    /// `CAEVehicleAudioEntity::UpdateBoatSound` (0x4F9E90)
-    fn update_boat_sound_call(this: GPtr<u8>, ty: u32, slot: u32, sfx: u32, speed: u32, volume: u32) = thiscall 0x4F9E90 => update_boat_sound;
-}
+use crate::bindings::update_boat_sound as update_boat_sound_call;
 
 /// `CAEVehicleAudioEntity::ProcessBoatEngine(cVehicleParams&)` (0x5003A0): the dummy bank must be
 /// ready (without resetting +0xA9). Engine off (vehicle +0x428 bit 0x10) or wrecked: engine sounds
@@ -3029,7 +3007,7 @@ fn min_abs_one(v: X87) -> f32 {
 /// `UpdateGenericVehicleSound(1, +0xE0, +0xDC, 0, speed, volume, 3.5)`.
 #[hook(addr = 0x500F50, conv = thiscall, name = "CAEVehicleAudioEntity::ProcessDummyHovercraft", expect = "51 53 56 6A 00")]
 pub fn process_dummy_hovercraft(this: GPtr<u8>, params: GPtr<u8>) {
-    let pad = pad_get_pad(0);
+    let pad = GPtr::<u8>::addr(pad_get_pad(0)) as u32;
     if !dummy_engine_bank_ready(this) {
         return;
     }
@@ -3043,12 +3021,12 @@ pub fn process_dummy_hovercraft(this: GPtr<u8>, params: GPtr<u8>) {
     let t = min_abs_one(x(rd::<f32>(veh, 0x988)).fmul_m(gf(0x862D68)));
     let (accel, brake): (i16, i16) = if rd::<u8>(veh, 0x36) & 0xF8 == 0 {
         if !x(rd::<f32>(params, 0x1C)).fcom(x(gf(0x858CDC))).test_parity(0x05) {
-            let a = pad_get_accelerate(pad) as u16;
-            let b = pad_get_brake(pad) as u16;
+            let a = pad_get_accelerate(GPtr::from_addr(pad as usize)) as u16;
+            let b = pad_get_brake(GPtr::from_addr(pad as usize)) as u16;
             (a.wrapping_sub(b) as i16, 0)
         } else {
-            let b = pad_get_brake(pad) as u16 as i16;
-            let a = pad_get_accelerate(pad) as u16 as i16;
+            let b = pad_get_brake(GPtr::from_addr(pad as usize)) as u16 as i16;
+            let a = pad_get_accelerate(GPtr::from_addr(pad as usize)) as u16 as i16;
             (a, b)
         }
     } else {
@@ -3305,7 +3283,7 @@ pub fn process_player_jet(this: GPtr<u8>, params: GPtr<u8>) {
                 wr::<u8>(this, 0xBC, 1);
                 (0x8CBDCC, (0x8CBDB4, 0x8CBDB8), (0x8CBDBC, 0x8CBDC0))
             };
-            let r = resolve_probability(g::<u32>(prob).read());
+            let r = resolve_probability(f32::from_bits(g::<u32>(prob).read()));
             let base = g::<u32>(TIME_MS).read();
             let (lo, hi) = if r as u8 != 0 { yes } else { no };
             let n = ae_random_int(g::<i32>(lo).read(), g::<i32>(hi).read());
@@ -3333,10 +3311,7 @@ pub fn process_player_jet(this: GPtr<u8>, params: GPtr<u8>) {
     );
 }
 
-orig! {
-    /// `CAEAudioUtility::ResolveProbability(float)` (0x4D9C80)
-    fn resolve_probability(p: u32) -> u8 = cdecl 0x4D9C80 => unported;
-}
+use crate::bindings::ae_resolve_probability as resolve_probability;
 
 /// [`aircraft_throttle`] on an x87 value: `f > 1 -> 1`, `f < 0.2 -> 0` (direct), else `(f - 0.2) *
 /// 1.25`; then at least 0.2 (double).
@@ -3397,7 +3372,7 @@ pub fn process_ai_prop(this: GPtr<u8>, params: GPtr<u8>) {
         x(rd::<f32>(veh, 0x9C4)).fmul_m(gf(0x862D18))
     };
     let f = clamp01_f32(f.to_f32());
-    let p = get_piecewise_linear(f.to_bits(), 3, 0x8CBE00);
+    let p = get_piecewise_linear(f.to_bits(), 3, GPtr::from_addr(0x8CBE00)) as f32;
     let mtx: GPtr<u8> = g(rd::<u32>(g::<u8>(rd::<u32>(params, 0x10) as usize), 0x14) as usize);
     let pitch = x(rd::<f32>(mtx, 0x14))
         .fadd_m(rd::<f32>(mtx, 0x10))
@@ -3464,10 +3439,7 @@ pub fn process_ai_prop(this: GPtr<u8>, params: GPtr<u8>) {
     play_aircraft_sound_call(this, 1, slot(), 0, vol2.to_bits(), ONE);
 }
 
-orig! {
-    /// `CAEAudioUtility::GetRandomNumberInRange(float, float)` (0x4D9C50), ST0
-    fn ae_random_float_st0(min: u32, max: u32) -> f64 = cdecl 0x4D9C50 => unported;
-}
+use crate::bindings::ae_random_float as ae_random_float_st0;
 
 /// The camera-to-vehicle distance volume of the AI aircraft: `d >= 128` (or NaN) -> `f32(l + 8)`,
 /// `d >= 48` -> `f32(l + f32(AudioLog10(f32((d - 48) * 0.0125)) * 20) + 8)`, else -100; `l =
@@ -3541,8 +3513,8 @@ pub fn process_ai_heli(this: GPtr<u8>, params: GPtr<u8>) {
     }
     let veh = || -> GPtr<u8> { g(rd::<u32>(params, 0x10) as usize) };
     let t0 = clamp01_f32(x(rd::<f32>(veh(), 0x84C)).fmul_m(gf(0x862D1C)).to_f32());
-    let p1 = get_piecewise_linear(t0.to_bits(), 5, 0x8CBE40);
-    let p2 = get_piecewise_linear(t0.to_bits(), 5, 0x8CBE18);
+    let p1 = get_piecewise_linear(t0.to_bits(), 5, GPtr::from_addr(0x8CBE40)) as f32;
+    let p2 = get_piecewise_linear(t0.to_bits(), 5, GPtr::from_addr(0x8CBE18)) as f32;
     let cm = g::<u32>(0xB6F03C).read();
     let cam: GPtr<u8> = if cm != 0 {
         g(cm as usize + 0x30)
@@ -3589,7 +3561,7 @@ pub fn process_ai_heli(this: GPtr<u8>, params: GPtr<u8>) {
     if !x(rd::<f32>(veh(), 0x4C0)).fcom(x(gf(0x862D28))).test_parity(0x05) {
         let fc = gf(0x8CBDFC);
         let lo = x(fc).fmul_m(gf(0x858C1C)).to_f32();
-        let r = X87::from_f64_exact(ae_random_float_st0(lo.to_bits(), fc.to_bits()));
+        let r = X87::from_f64_exact(f64::from(ae_random_float_st0(f32::from_bits(lo.to_bits()), f32::from_bits(fc.to_bits()))));
         sp = r.fadd_m(gf(0x8CBDF8)).fmul_m(sp).to_f32();
     }
     let sp = smooth_22c(this, sp);
@@ -3639,8 +3611,8 @@ pub fn process_dummy_heli(this: GPtr<u8>, params: GPtr<u8>) {
     }
     let veh = || -> GPtr<u8> { g(rd::<u32>(params, 0x10) as usize) };
     let mut t = clamp01_f32(x(rd::<f32>(veh(), 0x84C)).fmul_m(gf(0x862D1C)).to_f32());
-    let a = get_piecewise_linear(t.to_bits(), 5, 0x8CBE40);
-    let b = get_piecewise_linear(t.to_bits(), 5, 0x8CBE18);
+    let a = get_piecewise_linear(t.to_bits(), 5, GPtr::from_addr(0x8CBE40)) as f32;
+    let b = get_piecewise_linear(t.to_bits(), 5, GPtr::from_addr(0x8CBE18)) as f32;
     let cm = g::<u32>(0xB6F03C).read();
     let cam: GPtr<u8> = if cm != 0 {
         g(cm as usize + 0x30)
@@ -3690,7 +3662,7 @@ pub fn process_dummy_heli(this: GPtr<u8>, params: GPtr<u8>) {
     if !x(rd::<f32>(veh(), 0x4C0)).fcom(x(gf(0x862D28))).test_parity(0x05) {
         let fc = gf(0x8CBDFC);
         let lo = x(fc).fmul_m(gf(0x858C1C)).to_f32();
-        let r = X87::from_f64_exact(ae_random_float_st0(lo.to_bits(), fc.to_bits()));
+        let r = X87::from_f64_exact(f64::from(ae_random_float_st0(f32::from_bits(lo.to_bits()), f32::from_bits(fc.to_bits()))));
         sp = r.fadd_m(gf(0x8CBDF8)).fmul_m(sp).to_f32();
     }
     if !x(rd::<f32>(this, 0x22C)).fcom(x(gf(FLT_0))).test_parity(0x05) {

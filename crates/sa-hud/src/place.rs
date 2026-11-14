@@ -20,17 +20,13 @@ const PLAYERS_PED: usize = 0xB7CD98;
 /// `CGame::currArea`
 const CURR_AREA: usize = 0xB72914;
 
+pub use sa_core::bindings::text_get;
+pub use sa_world::bindings::eem_get_position_relative_to_outside_world as position_relative_to_outside_world;
+pub use sa_world::bindings::find_smallest_zone_for_position;
+pub use sa_world::bindings::hud_set_zone_name as set_zone_name;
 orig! {
-    /// `CText::Get(const char*)` (0x6A0050)
-    pub fn text_get(this: GPtr<u8>, key: GPtr<u8>) -> GPtr<u8> = thiscall 0x6A0050 => crate::text::text_get;
-    /// `CEntryExitManager::GetPositionRelativeToOutsideWorld(CVector&)` (0x43F150)
-    pub fn position_relative_to_outside_world(pos: GPtr<u8>) = cdecl 0x43F150 => unported;
-    /// `CTheZones::FindSmallestZoneForPosition(const CVector&, bool)` (0x572360)
-    pub fn find_smallest_zone_for_position(pos: GPtr<u8>, info: u32) -> GPtr<u8> = cdecl 0x572360 => unported;
     /// `CZone::GetTranslatedName()` (0x5720C0)
     pub fn get_translated_name_call(zone: GPtr<u8>) -> GPtr<u8> = thiscall 0x5720C0 => get_translated_name;
-    /// `CHud::SetZoneName(const GxtChar*, bool)` (0x588BB0)
-    pub fn set_zone_name(name: u32, force: u32) = cdecl 0x588BB0 => unported;
 }
 
 /// `CZone::GetTranslatedName()` (0x5720C0): `TheText.Get(m_szTextKey)` (the key at +8).
@@ -62,7 +58,7 @@ fn player_position() -> [u32; 3] {
 pub fn get_for_map(px: u32, py: u32) -> GPtr<u8> {
     let p = player_position();
     let mut v = [px, py, p[2]];
-    let zone = find_smallest_zone_for_position(GPtr::from_raw(v.as_mut_ptr()).cast(), 0);
+    let zone = find_smallest_zone_for_position(GPtr::<u8>::cast::<f32>(GPtr::from_raw(v.as_mut_ptr()).cast()), 0);
     get_translated_name_call(zone)
 }
 
@@ -79,7 +75,7 @@ pub fn get_for_map(px: u32, py: u32) -> GPtr<u8> {
 #[hook(addr = 0x571F20, conv = thiscall, name = "CPlaceName::Process", expect = "0F B6 05 74 CD B7 00", peek = 0x10)]
 pub fn process(this: GPtr<u8>) {
     let mut v = player_position();
-    let zone = find_smallest_zone_for_position(GPtr::from_raw(v.as_mut_ptr()).cast(), 0);
+    let zone = find_smallest_zone_for_position(GPtr::<u8>::cast::<f32>(GPtr::from_raw(v.as_mut_ptr()).cast()), 0);
     if zone.is_null() {
         wr::<u32>(this, 0, 0);
         wr::<u16>(this, 4, 0);
@@ -108,10 +104,10 @@ pub fn process(this: GPtr<u8>) {
     }
     let z: GPtr<u8> = rd(this, 0);
     if z.is_null() {
-        set_zone_name(sa_core::abi::peek_stack(0x571F20, -0x10).unwrap_or(0), 0);
+        set_zone_name(GPtr::from_addr((sa_core::abi::peek_stack(0x571F20, -0x10).unwrap_or(0)) as usize), 0);
     } else {
         let name = get_translated_name_call(z);
-        set_zone_name(name.addr() as u32, 0);
+        set_zone_name(GPtr::from_addr((name.addr() as u32) as usize), 0);
     }
 }
 

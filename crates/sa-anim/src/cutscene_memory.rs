@@ -6,9 +6,9 @@
 
 use sa_core::abi::{HookReg, NativeReg};
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
-use crate::bindings::streaming_remove_current_zones_models;
+use sa_core::bindings::streaming_remove_current_zones_models;
 use sa_core::bindings::clear_exciting_stuff_from_area;
 use sa_core::bindings::col_store_remove_all_collision;
 use sa_core::bindings::find_player_coors;
@@ -25,10 +25,7 @@ use sa_core::bindings::set_model_txd_is_deletable as streaming_set_model_txd_is_
 use sa_core::bindings::streaming_load_initial_peds;
 use sa_core::bindings::streaming_load_initial_weapons;
 use sa_core::bindings::streaming_request_model;
-orig! {
-    /// `CStreaming::RemoveLoadedVehicle()` (0x40C020, bool in AL)
-    fn streaming_remove_loaded_vehicle() -> u8 = cdecl 0x40C020 => unported;
-}
+use sa_core::bindings::call_remove_loaded_vehicle as streaming_remove_loaded_vehicle;
 
 /// `CCutsceneMgr::ms_hasFileInfo`-like flag 0xB5F85C: set while everything is removed
 const EVERYTHING_REMOVED: usize = 0xB5F85C;
@@ -65,7 +62,7 @@ pub fn cutscene_remove_everything() {
         return;
     }
     let mut pos = [0u32; 3];
-    let pos = find_player_coors(GPtr::from_raw(pos.as_mut_ptr()).cast(), -1);
+    let pos = GPtr::<f32>::cast::<u8>(find_player_coors(GPtr::<u8>::cast::<f32>(GPtr::from_raw(pos.as_mut_ptr()).cast()), -1));
     clear_exciting_stuff_from_area(pos, 120.0, 1);
     col_store_remove_all_collision();
     gb(STREAMING_FLAG).write(1);
@@ -115,19 +112,19 @@ pub fn cutscene_load_everything() {
     }
     loop {
         let ty = || gu(WEAPON_TYPES + 4 * i).read();
-        let model = rd32(weapon_info_get(ty(), 1), 0xC) as i32;
+        let model = rd32(weapon_info_get(ty() as i32, 1), 0xC) as i32;
         let flags = gb(STREAMING_INFO + 0x14 * (model as usize) + 6).read();
         streaming_request_model(model, 2);
         streaming_load_all_requested_models(0);
-        if rd32(weapon_info_get(ty(), 1), 0x10) as i32 != -1 {
-            let m2 = rd32(weapon_info_get(ty(), 1), 0x10) as i32;
+        if rd32(weapon_info_get(ty() as i32, 1), 0x10) as i32 != -1 {
+            let m2 = rd32(weapon_info_get(ty() as i32, 1), 0x10) as i32;
             streaming_request_model(m2, 0);
             streaming_load_all_requested_models(0);
         }
         if flags & 2 == 0 {
             streaming_set_model_is_deletable(model);
         }
-        ped_give_weapon(player, ty(), gu(WEAPON_AMMO + 4 * i).read(), 1);
+        ped_give_weapon(player, ty() as i32, gu(WEAPON_AMMO + 4 * i).read(), 1);
         i += 1;
         if i as i32 >= gu(NUM_WEAPONS).read() as i32 {
             break;

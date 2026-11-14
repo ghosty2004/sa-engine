@@ -4,6 +4,7 @@
 //! function goes through `orig!` at the original address.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -18,12 +19,12 @@ const PICK_UP_BIKE_CB: u32 = 0x6462F0;
 /// 0.0f
 const K_ZERO: usize = 0x858B50;
 
-use crate::bindings::anim_blend_animation;
-use crate::bindings::assoc_set_finish_callback;
-use crate::bindings::clump_get_association;
+use sa_world::bindings::anim_blend_animation;
+use sa_core::bindings::assoc_set_finish_callback;
+use sa_core::bindings::clump_get_association;
 use crate::bindings::go_to_point_ctor;
 use crate::bindings::ik_chain_update_target;
-use crate::bindings::vehicle_anim_group_get_group as veh_anim_group_get_group;
+use sa_core::bindings::vehicle_anim_group_get_group as veh_anim_group_get_group;
 use sa_core::bindings::entity_clean_up_old_reference;
 use sa_core::bindings::entity_register_reference;
 use sa_core::bindings::fx_play as fx_system_play;
@@ -41,6 +42,9 @@ use sa_world::bindings::ped_restore_heading_rate;
 use sa_world::bindings::run_anim_ctor;
 use sa_world::bindings::task_simple_ctor;
 use sa_world::bindings::task_simple_dtor;
+use sa_world::bindings::fx_create_system as fx_manager_create_fx_system;
+use sa_world::bindings::is_sunbather as population_is_sunbather;
+use sa_world::bindings::swim_ctor;
 orig! {
     /// `CTask::MakeAbortable(CPed*, int32 priority, const CEvent*)` (vtable +0x18, `ret 0xC`)
     fn v_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, prio: i32, ev: u32) -> u8 = thiscall vslot 0x18 => unported;
@@ -50,18 +54,12 @@ orig! {
     fn v_event_type(e: GPtr<u8>) -> i32 = thiscall vslot 0x4 => unported;
     /// `CEvent::GetEventPriority` (vtable +8)
     fn v_event_priority(e: GPtr<u8>) -> i32 = thiscall vslot 0x8 => unported;
-    /// `FxManager_c::CreateFxSystem(char* name, RwV3d* pos, RwMatrix* parent, bool)` (0x4A9BE0, `ret 0x10`)
-    fn fx_manager_create_fx_system(m: GPtr<u8>, name: u32, pos: GPtr<u8>, parent: u32, b: u32) -> GPtr<u8> = thiscall 0x4A9BE0 => unported;
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
     /// `IKChain_c::UpdateEntity(CEntity*)` (0x617E00, `ret 4`)
     fn ik_chain_update_entity(c: GPtr<u8>, e: u32) = thiscall 0x617E00 => unported;
     /// `IKChain_c::UpdateOffset(int32 bone, CVector offset)` (0x617E20, `ret 0x10`; the vector by value)
     fn ik_chain_update_offset(c: GPtr<u8>, bone: u32, x: u32, y: u32, z: u32) = thiscall 0x617E20 => unported;
-    /// `CPopulation::IsSunbather(int32 modelIndex)` (0x611760, cdecl; AL)
-    fn population_is_sunbather(mi: i32) -> u8 = cdecl 0x611760 => unported;
-    /// `CTaskSimpleSwim::CTaskSimpleSwim(const CVector* pos, CPed* ped)` (0x688930, `ret 8`)
-    fn swim_ctor(t: GPtr<u8>, pos: u32, ped: u32) -> GPtr<u8> = thiscall 0x688930 => unported;
     /// `CTaskComplexDie::CTaskComplexDie(eWeaponType, AssocGroupId, AnimationId, float delta, float speed, bool,
     /// bool, eFallDir, bool)` (0x630040, `ret 0x24`)
     #[allow(clippy::too_many_arguments)]
@@ -87,10 +85,10 @@ pub fn pick_up_bike_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
     };
     let id = u32::from(rd::<u8>(rd::<GPtr<u8>>(veh, 0x384), 0xDE));
     let ag: GPtr<u8> = GPtr::from_addr(id.wrapping_mul(0x94).wrapping_add(VEH_ANIM_GROUPS) as usize);
-    let group = veh_anim_group_get_group(ag, anim);
-    let a = anim_blend_animation(rd::<u32>(ped, 0x18), group, anim, 0x4100_0000);
+    let group = veh_anim_group_get_group(ag, anim as i32) as u32;
+    let a = anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), group, anim, f32::from_bits(0x4100_0000));
     wr::<GPtr<u8>>(this, 0xC, a);
-    assoc_set_finish_callback(a, PICK_UP_BIKE_CB, this.addr() as u32);
+    assoc_set_finish_callback(a, PICK_UP_BIKE_CB, GPtr::from_addr((this.addr() as u32) as usize));
 }
 
 /// `CTaskSimplePickUpBike::ProcessPed(CPed*)` (0x64D910, `ret 4`): done (AL = 1) when finished (+8) or without a
@@ -160,13 +158,13 @@ pub fn swim_dtor(this: GPtr<u8>) {
     if rd::<u8>(this, 9) != 0 {
         let p = g::<GPtr<u8>>(0xB4EA34).read();
         let idx = (rd::<u32>(p, 0x58C).wrapping_sub(0xB5D4A0) as i32) >> 5;
-        anim_remove_anim_block_ref(idx);
+        anim_remove_anim_block_ref(idx as u32);
     }
     for off in [0x38, 0x20] {
         let slot = this.byte_add(off);
         let e = rd::<GPtr<u8>>(slot, 0);
         if !e.is_null() {
-            entity_clean_up_old_reference(e, slot);
+            entity_clean_up_old_reference(e, slot.cast::<GPtr<u8>>());
         }
     }
     task_simple_dtor(this);
@@ -180,12 +178,12 @@ pub fn swim_dtor(this: GPtr<u8>) {
        unverified = "ai7-12", route = "L2", hazards = "ax-al-return,heap-writes", recs = "air-water")]
 pub fn swim_make_abortable(this: GPtr<u8>, ped: GPtr<u8>, priority: i32, event: GPtr<u8>) -> u8 {
     if priority == 2 {
-        anim_blend_animation(rd::<u32>(ped, 0x18), rd::<u32>(ped, 0x4D4), 3, 0x447A_0000);
+        anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), rd::<u32>(ped, 0x4D4), 3, f32::from_bits(0x447A_0000));
         wr::<u32>(ped, 0x534, 1);
         wr::<u32>(ped, 0x538, 1);
         let anim = rd::<u32>(this, 0xC);
         if anim != 0xBF {
-            let a = clump_get_association(rd::<u32>(ped, 0x18), anim);
+            let a = clump_get_association(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), anim);
             if !a.is_null() {
                 wr::<f32>(a, 0x1C, -1000.0);
             }
@@ -217,7 +215,7 @@ pub fn swim_make_abortable(this: GPtr<u8>, ped: GPtr<u8>, priority: i32, event: 
 pub fn swim_create_fx_system(this: GPtr<u8>, _ped: GPtr<u8>, matrix: u32) {
     let mut v = [0u32; 3];
     let vp: GPtr<u8> = GPtr::from_raw(v.as_mut_ptr()).cast();
-    let fx = fx_manager_create_fx_system(GPtr::from_addr(0xA9AE80), 0x870954, vp, matrix, 0);
+    let fx = fx_manager_create_fx_system(GPtr::from_addr(0xA9AE80), GPtr::from_addr(0x870954), vp, GPtr::from_addr(matrix as usize), 0);
     wr::<GPtr<u8>>(this, 0x5C, fx);
     if !fx.is_null() {
         fx_system_copy_parent_matrix(fx);
@@ -270,7 +268,7 @@ pub fn goto_door_and_open_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>) ->
     }
     if tm_get_task_secondary(rd::<GPtr<u8>>(ped, 0x47C).byte_add(4), 4).is_null() {
         let t = task_new(0x20);
-        let r = if t.is_null() { t } else { run_anim_ctor(t, 0, 0x99, 0x4100_0000, 0) };
+        let r = if t.is_null() { t } else { run_anim_ctor(t, 0, 0x99, f32::from_bits(0x4100_0000), 0) };
         tm_set_task_secondary(rd::<GPtr<u8>>(ped, 0x47C).byte_add(4), r, 4);
     }
     let t = task_new(0x30);
@@ -292,7 +290,7 @@ pub fn ik_look_at_update_look_at_info(this: GPtr<u8>, _name: u32, _ped: u32, tar
     let slot = this.byte_add(0x28);
     let old = rd::<GPtr<u8>>(slot, 0);
     if !old.is_null() {
-        entity_clean_up_old_reference(old, slot);
+        entity_clean_up_old_reference(old, slot.cast::<GPtr<u8>>());
     }
     wr::<GPtr<u8>>(slot, 0, target);
     if !target.is_null() {
@@ -333,7 +331,7 @@ pub fn ik_look_at_update_look_at_info(this: GPtr<u8>, _name: u32, _ped: u32, tar
 pub fn in_water_create_first_sub_task(_this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     if ped_is_player(ped) != 0 || population_is_sunbather(i32::from(rd::<u16>(ped, 0x22) as i16)) != 0 {
         let t = task_new(0x64);
-        return if t.is_null() { t } else { swim_ctor(t, 0, 0) };
+        return if t.is_null() { t } else { swim_ctor(t, GPtr::NULL, 0) };
     }
     if rd::<u32>(ped, 0x470) & 0x10_0000 != 0 {
         let t = task_new(0x28);
@@ -348,7 +346,7 @@ pub fn in_water_create_first_sub_task(_this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8
                 return t;
             }
             let leader = membership_get_leader(ms);
-            return swim_ctor(t, 0, leader.addr() as u32);
+            return swim_ctor(t, GPtr::NULL, leader.addr() as u32);
         }
     }
     if rd::<u8>(ped, 0x484) == 2 && !intel_find_task_by_type(rd::<GPtr<u8>>(ped, 0x47C), 0x384).is_null() {
@@ -359,10 +357,10 @@ pub fn in_water_create_first_sub_task(_this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8
             return t;
         }
         let vp: GPtr<u8> = GPtr::from_raw(v.as_mut_ptr()).cast();
-        return swim_ctor(t, vp.addr() as u32, 0);
+        return swim_ctor(t, GPtr::from_addr((vp.addr() as u32) as usize), 0);
     }
     let t = task_new(0x20);
-    if t.is_null() { t } else { run_anim_ctor(t, 0, 0xE, 0x4100_0000, 0) }
+    if t.is_null() { t } else { run_anim_ctor(t, 0, 0xE, f32::from_bits(0x4100_0000), 0) }
 }
 
 /// Every hook of this module.

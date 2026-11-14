@@ -5,6 +5,7 @@
 //! the original leaves a defined value.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -16,17 +17,13 @@ use sa_world::bindings::intel_find_task_by_type;
 use sa_world::bindings::membership_get_leader;
 use sa_world::bindings::task_complex_ctor;
 use sa_world::bindings::weapon_is_type_melee;
+use crate::bindings::membership_add_member;
+use crate::bindings::membership_remove_member;
+use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::membership_get_member;
 orig! {
-    /// `CPedGroupMembership::RemoveMember(int32 memberIndex)` (0x5F80D0, `ret 4`)
-    fn membership_remove_member(m: GPtr<u8>, i: i32) -> u32 = thiscall 0x5F80D0 => unported;
-    /// `CPedGroupMembership::AddMember(CPed*, int32 memberIndex)` (0x5F6AE0, `ret 8`)
-    fn membership_add_member(m: GPtr<u8>, ped: u32, i: i32) -> u32 = thiscall 0x5F6AE0 => unported;
-    /// `CPedGroupMembership::GetMember(int32)` (0x5F69B0, `ret 4`)
-    fn membership_get_member(m: GPtr<u8>, i: i32) -> u32 = thiscall 0x5F69B0 => unported;
     /// `CPedList::FillUpHoles` (0x699E20)
     fn ped_list_fill_up_holes(l: GPtr<u8>) -> u32 = thiscall 0x699E20 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70, `ret 4`)
-    fn entity_register_reference(e: GPtr<u8>, r: GPtr<u8>) -> u32 = thiscall 0x571B70 => unported;
     /// `CPedIntelligence::IsInACarOrEnteringOne` (0x601CC0)
     fn intel_is_in_a_car_or_entering_one(i: GPtr<u8>) -> u32 = thiscall 0x601CC0 => unported;
     /// `CTask::MakeAbortable(CPed*, int32 priority, const CEvent*)` (vtable +0x18, `ret 0xC`)
@@ -82,7 +79,7 @@ pub fn membership_remove_all_members(this: GPtr<u8>) {
 pub fn membership_from(this: GPtr<u8>, other: GPtr<u8>) -> u32 {
     let mut r = 0;
     for i in 0..8 {
-        r = membership_add_member(this, rd::<u32>(other, 4 + 4 * i as isize), i);
+        r = membership_add_member(this, GPtr::from_addr(rd::<u32>(other, 4 + 4 * i as isize) as usize), i);
     }
     wr::<u32>(this, 0, rd::<u32>(other, 0));
     wr::<u32>(this, 0x24, rd::<u32>(other, 0x24));
@@ -132,7 +129,7 @@ pub fn membership_appoint_new_leader(this: GPtr<u8>) -> u32 {
         let m = rd::<u32>(this, 4 + 4 * i as isize);
         if m != 0 {
             membership_remove_member(this, i);
-            return membership_add_member(this, m, 7);
+            return membership_add_member(this, GPtr::from_addr(m as usize), 7);
         }
     }
     7
@@ -210,8 +207,8 @@ pub fn ped_list_extract_peds_with_guns(this: GPtr<u8>, from: GPtr<u8>) -> u32 {
 pub fn ped_list_build_list_from_group_no_leader(this: GPtr<u8>, m: GPtr<u8>) -> u32 {
     wr::<u32>(this, 0, 0);
     for i in 0..7 {
-        if membership_get_member(m, i) != 0 {
-            let p = membership_get_member(m, i);
+        if GPtr::<u8>::addr(membership_get_member(m, i)) as u32 != 0 {
+            let p = GPtr::<u8>::addr(membership_get_member(m, i)) as u32;
             let n = rd::<i32>(this, 0);
             wr::<u32>(this, 4 + 4 * n as isize, p);
             wr::<i32>(this, 0, n.wrapping_add(1));
@@ -300,7 +297,7 @@ pub fn cover_point_release_cover_point_for_ped(this: GPtr<u8>, ped: GPtr<u8>) {
         let v = rd::<GPtr<u8>>(slot, 0);
         if v == ped {
             if !v.is_null() {
-                entity_clean_up_old_reference(v, slot);
+                entity_clean_up_old_reference(v, slot.cast::<GPtr<u8>>());
             }
             wr::<u32>(slot, 0, 0);
         }
@@ -379,7 +376,7 @@ pub fn player_command_to_group_affects_ped_group(_this: GPtr<u8>, group: GPtr<u8
         return 0;
     }
     for i in 0..7 {
-        let p = membership_get_member(m, i);
+        let p = GPtr::<u8>::addr(membership_get_member(m, i)) as u32;
         if p != 0 && rd::<u8>(GPtr::from_addr(p as usize), 0x2F) != rd::<u8>(leader, 0x2F) {
             return 0;
         }
@@ -394,9 +391,9 @@ pub fn player_command_to_group_affects_ped_group(_this: GPtr<u8>, group: GPtr<u8
 pub fn ped_list_build_list_from_group_not_in_car_no_leader(this: GPtr<u8>, m: GPtr<u8>) -> u32 {
     wr::<u32>(this, 0, 0);
     for i in 0..7 {
-        let p = membership_get_member(m, i);
+        let p = GPtr::<u8>::addr(membership_get_member(m, i)) as u32;
         if p != 0 && intel_is_in_a_car_or_entering_one(rd::<GPtr<u8>>(GPtr::from_addr(p as usize), 0x47C)) == 0 {
-            let p = membership_get_member(m, i);
+            let p = GPtr::<u8>::addr(membership_get_member(m, i)) as u32;
             let n = rd::<i32>(this, 0);
             if n < 0x1E {
                 wr::<u32>(this, 4 + 4 * n as isize, p);

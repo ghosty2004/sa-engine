@@ -87,8 +87,8 @@ pub const RW_ID_TEXTURENATIVE: u32 = 0x15;
 pub const RW_ID_GEOMETRYLIST: u32 = 0x1A;
 
 pub use crate::bindings::fx_get_fx_quality;
-pub use crate::bindings::rp_clump_add_atomic;
-pub use crate::bindings::rw_tex_dictionary_create;
+pub use sa_core::bindings::rp_clump_add_atomic;
+pub use sa_core::bindings::rw_tex_dictionary_create;
 pub use crate::bindings::rw_tex_dictionary_destroy;
 pub use sa_core::bindings::geometry_stream_read as rp_geometry_stream_read;
 pub use sa_core::bindings::get_current_time_in_cycles;
@@ -105,11 +105,9 @@ pub use sa_core::bindings::rw_stream_skip;
 pub use sa_core::bindings::rw_tex_dictionary_add_texture;
 pub use sa_core::bindings::rw_tex_dictionary_for_all_textures;
 pub use sa_core::bindings::stream_read as rw_stream_read;
+pub use sa_core::bindings::rp_geometry_destroy;
+pub use sa_core::bindings::rw_stream_find_chunk_call as rw_stream_find_chunk;
 orig! {
-    /// `RwStreamFindChunk(stream, type, lengthOut, versionOut)` (0x7ED2D0)
-    pub fn rw_stream_find_chunk(stream: GPtr<u8>, ty: u32, len: GPtr<u32>, ver: GPtr<u32>) -> i32 = cdecl 0x7ED2D0 => unported;
-    /// `RpGeometryDestroy(geometry)` (0x74CCC0)
-    pub fn rp_geometry_destroy(g: GPtr<u8>) -> i32 = cdecl 0x74CCC0 => unported;
     /// `_rwFrameListStreamRead(stream, frameList)` (0x807970)
     pub fn rw_frame_list_stream_read(stream: GPtr<u8>, fl: GPtr<PtrList>) -> GPtr<PtrList> = cdecl 0x807970 => unported;
     /// `_rwFrameListDeinitialize(frameList)` (0x807720)
@@ -410,7 +408,7 @@ pub fn rw_texture_gta_stream_read(stream: GPtr<u8>) -> GPtr<u8> {
     }
     if ANISOTROPY_SUPPORTED.get() != 0
         && rp_anisot_texture_get_max_anisotropy(tex) >= 1
-        && fx_get_fx_quality(image(G_FX)) >= 2
+        && fx_get_fx_quality(image(G_FX)) as i32 >= 2
     {
         let m = rp_anisot_get_max_supported_max_anisotropy();
         rp_anisot_texture_set_max_anisotropy(tex, m);

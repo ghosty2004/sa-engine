@@ -13,11 +13,10 @@ use crate::bindings::path_set_links_bridge_lights;
 use crate::bindings::simple_transform_update_rw_matrix;
 use sa_core::bindings::entity_update_rw_frame;
 use sa_core::bindings::matrix_update_rw_matrix;
+use sa_stream::bindings::set_matrix_for_train_crossing;
 orig! {
     /// `CTrain::FindNearestTrain(CVector pos, bool enginesOnly)` (0x6F7090, cdecl, by value)
     fn find_nearest_train(px: f32, py: f32, pz: f32, engines_only: u32) -> GPtr<u8> = cdecl 0x6F7090 => unported;
-    /// `CObject::SetMatrixForTrainCrossing(CMatrix*, float)` (0x59F200, cdecl)
-    fn set_matrix_for_train_crossing(m: GPtr<u8>, angle: f32) = cdecl 0x59F200 => super::object::set_matrix_for_train_crossing;
 }
 
 /// `ThePaths` (0x96F050)

@@ -4,6 +4,7 @@
 //! Layout used: +8 sub-task, +0xC vehicle, +0x14 as driver, +0x18 move state, +0x34 target door, +0x38 target
 //! position, +0x44 the target door fixed (no new nearest-door search).
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -11,20 +12,19 @@ use crate::common::*;
 
 use crate::bindings::car_door_create_sub_task as create_sub_task;
 use crate::bindings::car_door_is_vehicle_in_range as is_vehicle_in_range;
-use crate::bindings::car_enter_exit_get_position_to_open_car_door as get_position_to_open_car_door;
+use sa_world::bindings::car_enter_exit_get_position_to_open_car_door as get_position_to_open_car_door;
 use crate::bindings::go_to_point_update_point;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::get_nearest_car_door;
 use sa_world::bindings::path_to_door_blocked;
-use sa_world::bindings::vector_magnitude_sqr as vector_magnitude;
-use sa_world::bindings::vector_sub;
+use sa_core::bindings::vector_magnitude_sqr as vector_magnitude;
+use sa_core::bindings::vector_sub;
+use crate::bindings::get_nearest_car_passenger_door;
 orig! {
     /// `CTaskComplex::CreateFirstSubTask` (vtable +0x24)
     fn v_create_first_sub_task(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x24 => unported;
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CCarEnterExit::GetNearestCarPassengerDoor(ped, veh, out, door, occupiedTandem, enterable, roomToGetIn)` (0x650BB0)
-    fn get_nearest_car_passenger_door(ped: GPtr<u8>, v: GPtr<u8>, out: GPtr<u8>, door: GPtr<u8>, a: u32, b: u32, c: u32) -> u8 = cdecl 0x650BB0 => unported;
 }
 
 fn vp(v: &mut [u32; 3]) -> GPtr<u8> {
@@ -88,7 +88,7 @@ pub fn control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
             }
             let mut d = [0u32; 3];
             vector_sub(vp(&mut d), this.byte_add(0x38), vp(&mut p));
-            let len = X87::from_f64_exact(vector_magnitude(vp(&mut d)));
+            let len = X87::from_f64_exact(vector_magnitude(GPtr::<u8>::cast::<f32>(vp(&mut d))));
             if len.fcom(x(g::<f32>(0x86EC40).read())).test_any(0x41) {
                 return rd::<GPtr<u8>>(this, 8);
             }
@@ -116,7 +116,7 @@ fn go_to_point_control(this: GPtr<u8>, ped: GPtr<u8>, p: [u32; 3]) -> GPtr<u8> {
         let p2 = door_pos(this);
         set_target(this, p2);
         let st = rd::<GPtr<u8>>(this, 8);
-        go_to_point_update_point(st, this.byte_add(0x38), rd::<u32>(this, 0x18), 0);
+        go_to_point_update_point(st, this.byte_add(0x38), f32::from_bits(rd::<u32>(this, 0x18)), 0);
         return rd::<GPtr<u8>>(this, 8);
     }
     let mut out = p;
@@ -132,7 +132,7 @@ fn go_to_point_control(this: GPtr<u8>, ped: GPtr<u8>, p: [u32; 3]) -> GPtr<u8> {
         let st = rd::<GPtr<u8>>(this, 8);
         set_target(this, out);
         wr::<u32>(this, 0x34, door);
-        go_to_point_update_point(st, this.byte_add(0x38), rd::<u32>(this, 0x18), 0);
+        go_to_point_update_point(st, this.byte_add(0x38), f32::from_bits(rd::<u32>(this, 0x18)), 0);
         return st;
     }
     if driver {

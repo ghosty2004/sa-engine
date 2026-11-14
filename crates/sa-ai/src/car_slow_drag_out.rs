@@ -11,6 +11,7 @@
 //! - `CTaskComplexCarSlowBeDraggedOutAndStandUp`: +8 sub-task, +0xC vehicle, +0x10 door.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::orig::at_site;
 use sa_core::{hook, orig};
@@ -18,27 +19,27 @@ use sa_math::x87::Cmp;
 
 use crate::common::*;
 
-use crate::bindings::anim_blend_animation;
-use crate::bindings::assoc_set_finish_callback as anim_set_finish_callback;
+use sa_world::bindings::anim_blend_animation;
+use sa_core::bindings::assoc_set_finish_callback as anim_set_finish_callback;
 use crate::bindings::car_enter_exit_compute_door_flag;
-use crate::bindings::car_enter_exit_compute_passenger_index_from_car_door as compute_passenger_index_from_car_door;
-use crate::bindings::car_enter_exit_is_room_for_ped_to_leave_car;
+use sa_world::bindings::car_enter_exit_compute_passenger_index_from_car_door as compute_passenger_index_from_car_door;
+use sa_world::bindings::car_enter_exit_is_room_for_ped_to_leave_car;
 use crate::bindings::car_enter_exit_remove_car_sit_anim;
-use crate::bindings::clump_get_association as rp_anim_blend_clump_get_association;
+use sa_core::bindings::clump_get_association as rp_anim_blend_clump_get_association;
 use crate::bindings::damage_get_door_status_component as damage_manager_get_door_status;
 use crate::bindings::damage_manager_set_door_status;
 use crate::bindings::line_up_ped_with_car_ctor as line_up_ctor;
-use crate::bindings::ped_placement_find_z_coor_for_ped;
+use sa_world::bindings::ped_placement_find_z_coor_for_ped;
 use crate::bindings::ped_position_ped_out_of_collision;
 use crate::bindings::ped_replace_weapon_when_exiting_vehicle;
 use crate::bindings::ped_set_radio_station;
 use crate::bindings::ped_update_stat_leaving_vehicle;
 use crate::bindings::say_jacked;
 use crate::bindings::slow_be_dragged_out_compute_anim_id;
-use crate::bindings::vehicle_anim_group_get_group;
+use sa_core::bindings::vehicle_anim_group_get_group;
 use sa_core::bindings::find_player_ped;
 use sa_stream::bindings::ped_is_player;
-use sa_world::bindings::anim_door_offsets as vehicle_anim_group_compute_anim_door_offsets;
+use sa_core::bindings::anim_door_offsets as vehicle_anim_group_compute_anim_door_offsets;
 use sa_world::bindings::get_vehicle_type_for_audio as vehicle_audio_get_vehicle_type_for_audio;
 use sa_world::bindings::is_law_enforcement_vehicle as vehicle_is_law_enforcement_vehicle;
 use sa_world::bindings::multiply3x3;
@@ -52,6 +53,10 @@ use sa_world::bindings::vehicle_change_law_enforcer_state;
 use sa_world::bindings::vehicle_remove_driver;
 use sa_world::bindings::vehicle_remove_passenger;
 use sa_world::bindings::wander_get_wander_task_by_ped_type;
+use crate::bindings::say_jacking_o;
+use crate::bindings::slow_drag_ped_out_compute_anim_id as slow_drag_ped_out_compute_anim_id_o;
+use sa_core::bindings::car_set_ped_out_ctor;
+use sa_world::bindings::tm_set_task as task_manager_set_task;
 orig! {
     /// `CTask::MakeAbortable(CPed*, int32 priority, const CEvent*)` (vtable +0x18)
     fn v_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, priority: i32, event: GPtr<u8>) -> u8 = thiscall vslot 0x18 => unported;
@@ -63,19 +68,13 @@ orig! {
     fn v_ped_set_move_anim(p: GPtr<u8>) = thiscall vslot 0x5C => unported;
     /// `CTaskSimpleCarSlowDragPedOut::StartAnim(const CPed*)` (0x64C010, `ret 4`)
     fn slow_drag_ped_out_start_anim(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x64C010 => unported;
-    /// `CTaskSimpleCarSlowDragPedOut::ComputeAnimID_Wrapper(int32* group, int32* anim)` (0x648100, `ret 8`)
-    fn slow_drag_ped_out_compute_anim_id_o(t: GPtr<u8>, group: GPtr<u8>, anim: GPtr<u8>) = thiscall 0x648100 => slow_drag_ped_out_compute_anim_id;
     /// `CTaskSimpleCarSlowBeDraggedOut::StartAnim(const CPed*)` (0x64C190, `ret 4`)
     fn slow_be_dragged_out_start_anim_o(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x64C190 => slow_be_dragged_out_start_anim;
-    /// `SayJacking(CPed* jacker, CPed* jacked, CVehicle*, uint32 offset)` (0x6497F0, cdecl)
-    fn say_jacking_o(jacker: GPtr<u8>, jacked: GPtr<u8>, v: GPtr<u8>, offset: u32) -> u8 = cdecl 0x6497F0 => say_jacking;
     /// `CAEPedSpeechAudioEntity` vtable +0x1C (the jacked ped's speech entity, a bool)
     fn v_speech_1c(s: GPtr<u8>) -> u8 = thiscall vslot 0x1C => unported;
 
     /// `CTaskSimpleCarSlowBeDraggedOut::Constructor(veh, door, lineUp, flag)` (0x648230, `ret 0x10`)
     fn slow_be_dragged_out_ctor(t: GPtr<u8>, veh: u32, door: u32, line_up: u32, flag: u32) -> GPtr<u8> = thiscall 0x648230 => unported;
-    /// `CTaskSimpleCarSetPedOut::Constructor(veh, door, switchOffEngine)` (0x6478B0, `ret 0xC`)
-    fn car_set_ped_out_ctor(t: GPtr<u8>, veh: u32, door: u32, b: u32) -> GPtr<u8> = thiscall 0x6478B0 => unported;
     /// `CTaskSimpleCarSetPedSlowDraggedOut::Constructor(veh, door)` (0x6483B0, `ret 8`)
     fn set_ped_slow_dragged_out_ctor(t: GPtr<u8>, veh: u32, door: u32) -> GPtr<u8> = thiscall 0x6483B0 => unported;
     /// `CTaskSimpleCarFallOut::Constructor(veh, door, lineUp)` (0x648D60, `ret 0xC`)
@@ -88,8 +87,6 @@ orig! {
     fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
     /// `CPed::CalculateNewOrientation` (0x5E52E0)
     fn ped_calculate_new_orientation(p: GPtr<u8>) = thiscall 0x5E52E0 => unported;
-    /// `CTaskManager::SetTask(CTask*, int32 slot, bool)` (0x681AF0, `ret 0xC`)
-    fn task_manager_set_task(tm: GPtr<u8>, t: GPtr<u8>, slot: u32, b: u32) = thiscall 0x681AF0 => unported;
 }
 
 /// `CVehicleAnimGroup` array (`CVehicleAnimGroupData::m_vehicleAnimGroups`, 0x94 bytes each).
@@ -134,7 +131,7 @@ pub fn slow_drag_ped_out_compute_anim_id(this: GPtr<u8>, group: GPtr<u8>, anim: 
         _ => {}
     }
     let veh = rd::<GPtr<u8>>(this, 0x10);
-    let gid = vehicle_anim_group_get_group(anim_group(veh), rd::<u32>(anim, 0));
+    let gid = vehicle_anim_group_get_group(anim_group(veh), rd::<u32>(anim, 0) as i32) as u32;
     wr::<u32>(group, 0, gid);
 }
 
@@ -231,7 +228,7 @@ pub fn say_jacking(jacker: GPtr<u8>, jacked: GPtr<u8>, veh: GPtr<u8>, offset: u3
     } else {
         0x7C
     };
-    u8::from(ped_say(jacker, id, offset, 0x3F80_0000, 0, 0, 0) as u16 != 0xFFFF)
+    u8::from((ped_say(jacker, id, offset, f32::from_bits(0x3F80_0000), 0, 0, 0) as u32) as u16 != 0xFFFF)
 }
 
 /// `CTaskSimpleCarSlowBeDraggedOut::StartAnim(const CPed*)` (0x64C190): `RemoveCarSitAnim(ped)`; `ComputeAnimID(&group,
@@ -244,9 +241,9 @@ pub fn slow_be_dragged_out_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
     let mut l = [this.addr() as u32, ped.addr() as u32];
     let p = buf(&mut l);
     slow_be_dragged_out_compute_anim_id(this, p, p.byte_add(4));
-    let a = anim_blend_animation(rd::<u32>(ped, 0x18), l[0], l[1], 0x447A_0000);
+    let a = anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), l[0], l[1], f32::from_bits(0x447A_0000));
     wr::<GPtr<u8>>(this, 0xC, a);
-    anim_set_finish_callback(a, 0x6483A0, this.addr() as u32);
+    anim_set_finish_callback(a, 0x6483A0, GPtr::from_addr((this.addr() as u32) as usize));
     let f = rd::<u16>(rd::<GPtr<u8>>(this, 0xC), 0x2E);
     wr::<u8>(this, 0x19, ((f >> 11) & 1) as u8);
 }
@@ -264,13 +261,13 @@ pub fn slow_be_dragged_out_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         return 1;
     }
     if rd::<u8>(this, 8) != 0 {
-        if !rp_anim_blend_clump_get_association(rd::<u32>(ped, 0x18), 0x27).is_null()
-            || !rp_anim_blend_clump_get_association(rd::<u32>(ped, 0x18), 0x24).is_null()
+        if !rp_anim_blend_clump_get_association(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0x27).is_null()
+            || !rp_anim_blend_clump_get_association(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0x24).is_null()
         {
             return 1;
         }
         let id = if rd::<u8>(this, 0x19) != 0 { 0x27 } else { 0x24 };
-        anim_blend_animation(rd::<u32>(ped, 0x18), 0, id, 0x447A_0000);
+        anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0, id, f32::from_bits(0x447A_0000));
         return 0;
     }
     let a = rd::<GPtr<u8>>(this, 0xC);
@@ -348,7 +345,7 @@ pub fn set_ped_slow_dragged_out_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8
         (t, rd::<GPtr<u8>>(ped, 0x47C))
     } else if rd::<u8>(ped, 0x484) == 2 {
         let t = task_new(0x20);
-        let t = if t.is_null() { t } else { stand_still_ctor(t, 999_999, 1, 0, 0x4100_0000) };
+        let t = if t.is_null() { t } else { stand_still_ctor(t, 999_999, 1, 0, f32::from_bits(0x4100_0000)) };
         (t, rd::<GPtr<u8>>(ped, 0x47C))
     } else {
         let intel = rd::<GPtr<u8>>(ped, 0x47C);
@@ -460,7 +457,7 @@ pub fn complex_slow_be_dragged_out_create_sub_task(this: GPtr<u8>, ty: u32) -> G
         0x335 => alloc(0x20, &|t| {
             slow_be_dragged_out_ctor(t, veh, door, rd::<u32>(this, 0x18), u32::from(rd::<u8>(this, 0x14)))
         }),
-        0x330 => alloc(0x18, &|t| car_set_ped_out_ctor(t, veh, door, u32::from(rd::<u8>(this, 0x14) == 0))),
+        0x330 => alloc(0x18, &|t| car_set_ped_out_ctor(t, GPtr::from_addr(veh as usize), door, u32::from(rd::<u8>(this, 0x14) == 0))),
         0x336 => alloc(0x10, &|t| set_ped_slow_dragged_out_ctor(t, veh, door)),
         0x342 => alloc(0x1C, &|t| car_fall_out_ctor(t, veh, door, rd::<u32>(this, 0x18))),
         _ => GPtr::NULL,
@@ -531,7 +528,7 @@ pub fn stand_up_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8>
         _ => None,
     };
     if let Some(ev) = ev {
-        ped_audio_add_audio_event(ped.byte_add(0x138), ev, 0, 0x3F80_0000, 0, 0, 0, 0);
+        ped_audio_add_audio_event(ped.byte_add(0x138), ev, f32::from_bits(0), f32::from_bits(0x3F80_0000), GPtr::NULL, 0, 0, 0);
     }
     stand_up_create_sub_task(this, 0x337, ped)
 }

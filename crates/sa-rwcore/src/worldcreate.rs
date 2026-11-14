@@ -46,11 +46,14 @@ const TRILIST_GENERATE: u32 = 0x75D530;
 use crate::bindings::build_mesh_add_triangle;
 use crate::bindings::build_mesh_create;
 use crate::bindings::build_mesh_destroy;
-use crate::bindings::material_list_deinitialize;
+use sa_core::bindings::material_list_deinitialize;
 use crate::bindings::material_list_initialize;
 use crate::bindings::mesh_destroy;
 use crate::bindings::plugin_deinit_object;
 use crate::bindings::plugin_init_object;
+use crate::bindings::mesh_optimise_call;
+use sa_core::bindings::frame_get_ltm;
+use sa_core::bindings::rw_frame_update_objects as frame_update_objects;
 orig! {
     /// `RpWorldUnlock(world)` (0x74F210)
     fn world_unlock_call(w: GPtr<u8>) -> GPtr<u8> = cdecl 0x74F210 => rp_world_unlock;
@@ -58,14 +61,8 @@ orig! {
     fn sector_deinstance_all(s: GPtr<u8>) = cdecl 0x74ECA0 => unported;
     /// `_rpWorldSectorDestroyRecurse(sector)` (0x74ED50)
     fn sector_destroy_recurse(s: GPtr<u8>) = cdecl 0x74ED50 => unported;
-    /// `_rpMeshOptimise(buildMesh, flags)` (0x75D970)
-    fn mesh_optimise_call(bm: GPtr<u8>, flags: u32) -> GPtr<u8> = cdecl 0x75D970 => rp_mesh_optimise;
     /// A mesh generator `gen(buildMesh, data)` (`_rpTriListMeshGenerate` or the tri-strip method)
     fn call_mesh_generator(f: u32, bm: GPtr<u8>, data: u32) -> GPtr<u8> = cdecl dyn => unported;
-    /// `RwFrameUpdateObjects(frame)` (0x7F0910)
-    fn frame_update_objects(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0910 => crate::frame::update_objects;
-    /// `RwFrameGetLTM(frame)` (0x7F0990)
-    fn frame_get_ltm(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0990 => crate::frame::get_ltm;
     /// A light's saved frame-sync callback `cb(light)`
     fn call_light_sync(f: u32, light: GPtr<u8>) -> GPtr<u8> = cdecl dyn => unported;
 }

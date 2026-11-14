@@ -17,18 +17,16 @@ use sa_pop::bindings::cam_stairs_for_player as cull_zones_cam_stairs_for_player;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::event_group_add;
 use sa_world::bindings::get_local_direction as ped_get_local_direction;
+use sa_pop::bindings::cull_zones_find_zone_with_stairs_for_player;
+use sa_world::bindings::kob_dtor as event_knock_off_bike_dtor;
 orig! {
     /// `CTask::GetTaskType()` (vtable slot 0x10)
     fn task_get_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CCullZones::FindZoneWithStairsAttributeForPlayer()` (0x72DAD0)
-    fn cull_zones_find_zone_with_stairs_for_player() -> u32 = cdecl 0x72DAD0 => unported;
     /// `CEventKnockOffBike::CEventKnockOffBike(CVehicle*, CVector* moveSpeed, CVector* impactVelocity, float
     /// damageIntensity, float height, uint8 type, uint8 direction, int32 time, CPed*, bool isVictimDriver, bool
     /// forceKnockOff)` (0x4AFCF0)
     #[allow(clippy::too_many_arguments)]
     fn event_knock_off_bike_ctor(e: GPtr<u8>, veh: GPtr<u8>, move_speed: GPtr<u8>, impact: GPtr<u8>, damage: u32, height: f32, kind: u32, dir: u32, time: u32, ped: u32, driver: u32, force: u32) -> GPtr<u8> = thiscall 0x4AFCF0 => unported;
-    /// `CEventKnockOffBike::~CEventKnockOffBike()` (0x4AFE70)
-    fn event_knock_off_bike_dtor(e: GPtr<u8>) = thiscall 0x4AFE70 => event_knock_off_bike_destructor;
 }
 
 use sa_math::fpu::fbits as c;
@@ -145,7 +143,7 @@ pub fn damage_knock_off_rider(
     let s3 = s2.fsub(min_u.fmul_m(bw));
     force = s3.fmul_m(force).to_f32();
     let driver = rd::<GPtr<u8>>(veh, 0x460);
-    if ped_is_player(driver) != 0 && cull_zones_cam_stairs_for_player() != 0 && cull_zones_find_zone_with_stairs_for_player() != 0 {
+    if ped_is_player(driver) != 0 && cull_zones_cam_stairs_for_player() != 0 && GPtr::<u8>::addr(cull_zones_find_zone_with_stairs_for_player()) as u32 != 0 {
         force = 0.0;
     }
     if x(force).fcom(x(75.0)).test_any(0x41) {
@@ -204,11 +202,11 @@ pub fn event_knock_off_bike_destructor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x85_B2E0);
     let p = rd::<GPtr<u8>>(this, 0x38);
     if !p.is_null() {
-        entity_clean_up_old_reference(p, this.byte_add(0x38));
+        entity_clean_up_old_reference(p, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x38)));
     }
     let v = rd::<GPtr<u8>>(this, 0x30);
     if !v.is_null() {
-        entity_clean_up_old_reference(v, this.byte_add(0x30));
+        entity_clean_up_old_reference(v, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x30)));
     }
     wr::<u32>(this, 0, 0x85_AB38);
 }

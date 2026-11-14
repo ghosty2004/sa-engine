@@ -11,25 +11,21 @@ use crate::common::{RwError, f32_of, g, p8, rd, rw_memory_alloc, wr, x};
 
 use crate::bindings::read_int32;
 use crate::bindings::read_real;
-use crate::bindings::rw_stream_find_chunk_call as find_chunk;
+use sa_core::bindings::rw_stream_find_chunk_call as find_chunk;
 use crate::bindings::rw_texture_stream_read_call as texture_stream_read;
+use crate::bindings::matfx_setup_dual_state as setup_dual_state;
+use crate::bindings::set_bump_map_texture;
+use sa_core::bindings::rp_mat_fx_material_set_effects as set_effects;
+use sa_core::bindings::rw_texture_destroy as texture_destroy;
 orig! {
     /// `RwErrorGet(out)` (0x808880)
     fn error_get(out: GPtr<RwError>) -> GPtr<RwError> = cdecl 0x808880 => crate::engine::rw_error_get;
     /// `RwErrorSet(err)` (0x808820)
     fn error_set(e: GPtr<RwError>) -> GPtr<RwError> = cdecl 0x808820 => unported;
-    /// `RwTextureDestroy(tex)` (0x7F3820)
-    fn texture_destroy(t: GPtr<u8>) -> u32 = cdecl 0x7F3820 => crate::texture::rw_texture_destroy;
-    /// `RpMatFXMaterialSetEffects(material, flags)` (0x811C80)
-    fn set_effects(m: GPtr<u8>, flags: u32) -> GPtr<u8> = cdecl 0x811C80 => crate::matfx::rp_matfx_material_set_effects;
     /// `_rpMatFXMaterialFindEffect(material, type)` (0x811150)
     fn find_effect(m: GPtr<u8>, ty: u32) -> GPtr<u8> = cdecl 0x811150 => crate::matfx::rp_matfx_material_find_effect;
-    /// `_rpMatFXSetupDualRenderState(slot, state)` (0x816280)
-    fn setup_dual_state(slot: GPtr<u8>, state: u32) -> u32 = cdecl 0x816280 => matfx_setup_dual_render_state;
     /// `RpMatFXMaterialSetDualBlendModes(material, src, dst)` (0x8128C0)
     fn set_dual_blend_modes(m: GPtr<u8>, src: u32, dst: u32) -> GPtr<u8> = cdecl 0x8128C0 => crate::matfx::rp_matfx_material_set_dual_blend_modes;
-    /// `RpMatFXMaterialSetBumpMapTexture(material, tex)` (0x812160)
-    fn set_bump_map_texture(m: GPtr<u8>, t: GPtr<u8>) -> GPtr<u8> = cdecl 0x812160 => crate::matfx::rp_matfx_material_set_bump_map_texture;
 }
 
 /// Material plugin offset (`[0xC9AB74]`) and the `MatFXData` freelist (`[0xC9AB80]`).
@@ -56,7 +52,7 @@ fn slot_of_type(m: GPtr<u8>, ty: u32) -> GPtr<u8> {
 /// `RwTextureStreamRead`; a NULL texture whose `RwErrorGet` code is neither 0x80000000 nor 0x16 sets
 /// the error again and fails. `Err(())` = the original returns NULL.
 fn read_texture(s: GPtr<u8>) -> Result<GPtr<u8>, ()> {
-    if find_chunk(s, 6, GPtr::NULL, GPtr::NULL) == 0 {
+    if find_chunk(s, 6, GPtr::NULL, GPtr::NULL) as u32 == 0 {
         return Err(());
     }
     let mut e = RwError::default();

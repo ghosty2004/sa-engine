@@ -47,7 +47,7 @@ sa_core::globals! {
     pub static ANIM_CACHE_LIST @ 0xB5EB20: [u32; 13] = [0; 13];
 }
 
-pub use crate::bindings::load_anim_file;
+pub use sa_core::bindings::load_anim_file;
 pub use sa_core::bindings::crt_strncpy as strncpy;
 pub use sa_core::bindings::get_first_atomic;
 pub use sa_core::bindings::rp_anim_blend_clump_init;
@@ -57,45 +57,38 @@ pub use sa_core::bindings::rp_skin_geometry_get_skin;
 pub use sa_core::bindings::rw_stream_close;
 pub use sa_core::bindings::sscanf1;
 pub use sa_core::bindings::streaming_remove_model;
+pub use crate::bindings::assoc_group_destroy_associations as group_destroy_associations;
+pub use crate::bindings::assoc_group_get_animation as group_get_animation_name;
+pub use crate::bindings::call_calc_total_time_compressed as hier_calc_total_time_compressed;
+pub use crate::bindings::call_get_first_assoc_group;
+pub use crate::bindings::call_remove_uncompressed_data as hier_remove_uncompressed_data;
+pub use crate::bindings::call_shutdown as hier_shutdown;
+pub use crate::bindings::call_uncompress as hier_uncompress;
+pub use sa_core::bindings::anim_create_anim_assoc_groups as call_create_anim_assoc_groups;
+pub use sa_core::bindings::anim_register_anim_block as call_register_anim_block;
+pub use sa_core::bindings::assoc_group_get_animation as group_get_animation_id;
+pub use sa_core::bindings::assoc_start;
+pub use sa_core::bindings::file_close;
+pub use sa_core::bindings::file_set_dir;
+pub use sa_core::bindings::get_animation_block as call_get_animation_block;
+pub use sa_core::bindings::load_line;
+pub use sa_core::bindings::open_file as file_open;
+pub use sa_core::bindings::rw_stream_open;
 orig! {
     /// `CLinkList<CAnimBlendHierarchy*>::Insert` (0x4D40C0)
     pub fn call_link_insert(this: GPtr<u8>, data: GPtr<u32>) -> GPtr<u8> = thiscall 0x4D40C0 => link_insert;
-    /// `CAnimManager::GetAnimationBlock(const char*)` (0x4D3940)
-    pub fn call_get_animation_block(name: GPtr<u8>) -> GPtr<u8> = cdecl 0x4D3940 => get_animation_block;
-    /// `CAnimManager::GetFirstAssocGroup(const char*)` (0x4D39B0)
-    pub fn call_get_first_assoc_group(name: GPtr<u8>) -> i32 = cdecl 0x4D39B0 => get_first_assoc_group;
     /// `CAnimManager::AddAnimationAndSync` (0x4D3B30)
     pub fn call_add_animation_and_sync(clump: GPtr<u8>, sync: GPtr<u8>, group: i32, anim: i32) -> GPtr<u8> = cdecl 0x4D3B30 => add_animation_and_sync;
-    /// `CAnimManager::CreateAnimAssocGroups()` (0x4D3CC0)
-    pub fn call_create_anim_assoc_groups() = cdecl 0x4D3CC0 => create_anim_assoc_groups;
     /// `CAnimManager::ReadAnimAssociationDefinitions()` (0x5BC910)
     pub fn call_read_anim_association_definitions() = cdecl 0x5BC910 => read_anim_association_definitions;
-    /// `CAnimManager::RegisterAnimBlock(const char*)` (0x4D3E50)
-    pub fn call_register_anim_block(name: GPtr<u8>) -> i32 = cdecl 0x4D3E50 => register_anim_block;
     /// `CAnimManager::AddAnimAssocDefinition` (0x4D3BA0)
     pub fn call_add_anim_assoc_definition(g: GPtr<u8>, b: GPtr<u8>, model: u32, n: u32, descr: u32) -> GPtr<u8> = cdecl 0x4D3BA0 => add_anim_assoc_definition;
     /// `CAnimManager::AddAnimToAssocDefinition` (0x4D3C80)
     pub fn call_add_anim_to_assoc_definition(def: GPtr<u8>, name: GPtr<u8>) = cdecl 0x4D3C80 => add_anim_to_assoc_definition;
-    /// `CAnimBlendHierarchy::Shutdown()` (0x4CF980)
-    pub fn hier_shutdown(this: GPtr<u8>) = thiscall 0x4CF980 => crate::hierarchy::shutdown;
-    /// `CAnimBlendHierarchy::RemoveUncompressedData()` (0x4CF760)
-    pub fn hier_remove_uncompressed_data(this: GPtr<u8>) = thiscall 0x4CF760 => crate::hierarchy::remove_uncompressed_data;
-    /// `CAnimBlendHierarchy::Uncompress()` (0x4CF5F0)
-    pub fn hier_uncompress(this: GPtr<u8>) = thiscall 0x4CF5F0 => crate::hierarchy::uncompress;
-    /// `CAnimBlendHierarchy::CalcTotalTimeCompressed()` (0x4CF3E0)
-    pub fn hier_calc_total_time_compressed(this: GPtr<u8>) = thiscall 0x4CF3E0 => crate::hierarchy::calc_total_time_compressed;
     /// `CAnimBlendAssocGroup::CopyAnimation(int32)` (0x4CE130)
     pub fn group_copy_animation_id(this: GPtr<u8>, id: i32) -> GPtr<u8> = thiscall 0x4CE130 => crate::group::copy_animation_id;
-    /// `CAnimBlendAssocGroup::GetAnimation(int32)` (0x4CE090)
-    pub fn group_get_animation_id(this: GPtr<u8>, id: i32) -> GPtr<u8> = thiscall 0x4CE090 => crate::group::get_animation_id;
-    /// `CAnimBlendAssocGroup::GetAnimation(const char*)` (0x4CE040)
-    pub fn group_get_animation_name(this: GPtr<u8>, name: GPtr<u8>) -> GPtr<u8> = thiscall 0x4CE040 => crate::group::get_animation_name;
-    /// `CAnimBlendAssocGroup::DestroyAssociations()` (0x4CDFF0)
-    pub fn group_destroy_associations(this: GPtr<u8>) = thiscall 0x4CDFF0 => crate::group::destroy_associations;
     /// `CAnimBlendAssocGroup::CreateAssociations(const char*, RpClump*, char**, int32)` (0x4CE6E0)
     pub fn group_create_associations_2(this: GPtr<u8>, block: GPtr<u8>, clump: GPtr<u8>, names: GPtr<u8>, n: i32) = thiscall 0x4CE6E0 => crate::group::create_associations_2;
-    /// `CAnimBlendAssociation::Start(float)` (0x4CEB70)
-    pub fn assoc_start(this: GPtr<u8>, t: f32) = thiscall 0x4CEB70 => crate::assoc::start;
     /// `CAnimBlendAssociation::SyncAnimation(CAnimBlendAssociation*)` (0x4CEB40)
     pub fn assoc_sync_animation(this: GPtr<u8>, other: GPtr<u8>) = thiscall 0x4CEB40 => crate::assoc::sync_animation;
     /// `CAnimBlendAssociation::ReferenceAnimBlock()` (0x4CEA50)
@@ -104,20 +97,10 @@ orig! {
     pub fn assoc_constructor1(this: GPtr<u8>, clump: GPtr<u8>, h: GPtr<u8>) -> GPtr<u8> = thiscall 0x4CEFC0 => crate::assoc::constructor1;
     /// `CBaseModelInfo::CreateInstance()` (vtable +0x2C)
     pub fn model_create_instance(mi: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x2C => unported;
-    /// `RwStreamOpen(type, access, data)` (0x7ECEF0)
-    pub fn rw_stream_open(ty: i32, access: i32, data: GPtr<u8>) -> GPtr<u8> = cdecl 0x7ECEF0 => unported;
     /// CRT `sprintf` (0x821BB5) with one argument
     pub fn sprintf1(buf: GPtr<u8>, fmt: GPtr<u8>, a: GPtr<u8>) -> i32 = cdecl 0x821BB5 => unported;
     /// CRT `sscanf` (0x8220AD) with four targets
     pub fn sscanf4(s: GPtr<u8>, fmt: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, c: GPtr<u8>, d: GPtr<u8>) -> i32 = cdecl 0x8220AD => unported;
-    /// `CFileMgr::SetDir(const char*)` (0x5387D0)
-    pub fn file_set_dir(dir: GPtr<u8>) = cdecl 0x5387D0 => unported;
-    /// `CFileMgr::OpenFile(const char*, const char*)` (0x538900)
-    pub fn file_open(name: GPtr<u8>, mode: GPtr<u8>) -> i32 = cdecl 0x538900 => unported;
-    /// `CFileMgr::CloseFile(int32)` (0x5389D0)
-    pub fn file_close(f: i32) -> i32 = cdecl 0x5389D0 => unported;
-    /// `CFileLoader::LoadLine(FILESTREAM)` (0x536F80)
-    pub fn load_line(f: i32) -> GPtr<u8> = cdecl 0x536F80 => unported;
 }
 
 #[inline]
@@ -251,7 +234,7 @@ pub fn create_anim_association(grp: i32, id: i32) -> GPtr<u8> {
 /// `CAnimManager::GetAnimAssociation(group, int32 anim)` (0x4D3A60).
 #[hook(addr = 0x4D3A60, conv = cdecl, name = "CAnimManager::GetAnimAssociation-by-id", expect = "8B 44 24 08 8B 15 34 EA B4 00")]
 pub fn get_anim_association_id(grp: i32, id: i32) -> GPtr<u8> {
-    group_get_animation_id(group(grp), id)
+    group_get_animation_id(group(grp), id as u32)
 }
 
 /// `CAnimManager::GetAnimAssociation(group, const char*)` (0x4D3A80).
@@ -383,7 +366,7 @@ pub fn add_anim_to_assoc_definition(d: GPtr<u8>, name: GPtr<u8>) {
 pub fn destroy_temp_clump(clump: GPtr<u8>) {
     let a = get_first_atomic(clump);
     if !a.is_null() && !rp_skin_geometry_get_skin(rd::<GPtr<u8>>(a, 0x18)).is_null() {
-        rp_clump_for_all_atomics(clump, 0x734B90, 0);
+        rp_clump_for_all_atomics(clump, 0x734B90, GPtr::NULL);
     }
     rp_clump_destroy(clump);
 }
@@ -420,7 +403,7 @@ pub fn create_anim_assoc_groups() {
             let mut k = 0u32;
             while k < rd::<u32>(group(i), 8) {
                 let ds = descr.byte_add(k as isize * 8);
-                let s = group_get_animation_id(group(i), rd::<i32>(ds, 0));
+                let s = group_get_animation_id(group(i), rd::<i32>(ds, 0) as u32);
                 wr::<u16>(s, 0xA, rd::<u16>(s, 0xA) | rd::<u16>(ds, 4));
                 k += 1;
             }
@@ -617,10 +600,7 @@ pub fn add_animation_hier(clump: GPtr<u8>, h: GPtr<u8>, fl: i32) -> GPtr<u8> {
     a
 }
 
-orig! {
-    /// `CAnimManager::UncompressAnimation` (0x4D41C0)
-    pub fn uncompress_animation_call(h: GPtr<u8>) = cdecl 0x4D41C0 => uncompress_animation;
-}
+pub use sa_core::bindings::uncompress_animation as uncompress_animation_call;
 
 /// The found-association tail of both `BlendAnimation`s.
 fn blend_found(a: GPtr<u8>, d: f32) -> GPtr<u8> {
@@ -703,9 +683,9 @@ pub fn blend_animation_hier(clump: GPtr<u8>, h: GPtr<u8>, fl: i32, d: f32) -> GP
 #[hook(addr = 0x4D4610, conv = cdecl, name = "CAnimManager::BlendAnimation-id", expect = "83 EC 14 8B 4C 24 18")]
 pub fn blend_animation_id(clump: GPtr<u8>, grp: i32, id: i32, d: f32) -> GPtr<u8> {
     let cd = clump_data(clump);
-    let moving = rd::<u8>(group_get_animation_id(group(grp), id), 0xA) >> 5 & 1;
-    let partial = rd::<u8>(group_get_animation_id(group(grp), id), 0xA) >> 4 & 1;
-    let hi = (rd::<u16>(group_get_animation_id(group(grp), id), 0xA) >> 15) as u8 & 1;
+    let moving = rd::<u8>(group_get_animation_id(group(grp), id as u32), 0xA) >> 5 & 1;
+    let partial = rd::<u8>(group_get_animation_id(group(grp), id as u32), 0xA) >> 4 & 1;
+    let hi = (rd::<u16>(group_get_animation_id(group(grp), id as u32), 0xA) >> 15) as u8 & 1;
     let mut sync = GPtr::NULL;
     let mut found = GPtr::NULL;
     let mut fading = false;
@@ -759,7 +739,7 @@ pub fn load_anim_files() {
     sprintf1(b, g(0x85C714), g(0x85C718));
     let s = rw_stream_open(2, 1, b);
     load_anim_file(s, 1, GPtr::NULL);
-    rw_stream_close(s, 0);
+    rw_stream_close(s, GPtr::NULL);
     let n = NUM_ANIM_ASSOC_DEFINITIONS.get() as u32;
     let p = operator_new(n.wrapping_mul(0x14).wrapping_add(4));
     let arr = if p.is_null() {
@@ -782,10 +762,10 @@ pub fn read_anim_association_definitions() {
     let mut fr = [0u8; 0x80];
     let f = GPtr::from_raw(fr.as_mut_ptr());
     file_set_dir(g(0x858B54));
-    let fd = file_open(g(0x86A7F4), g(0x859C6C));
+    let fd = GPtr::<u8>::addr(file_open(g(0x86A7F4), g(0x859C6C))) as i32;
     let mut in_def = false;
     let mut d = GPtr::NULL;
-    let mut line = load_line(fd);
+    let mut line = load_line(GPtr::from_addr(fd as usize));
     while !line.is_null() {
         let c = rd::<u8>(line, 0);
         if c != b'#' && c != 0 {
@@ -801,9 +781,9 @@ pub fn read_anim_association_definitions() {
                 }
             }
         }
-        line = load_line(fd);
+        line = load_line(GPtr::from_addr(fd as usize));
     }
-    file_close(fd);
+    file_close(GPtr::from_addr(fd as usize));
 }
 
 /// `CAnimManager::Initialise()` (0x5BF6B0): counters reset (118 fixed definitions), the cache's 50

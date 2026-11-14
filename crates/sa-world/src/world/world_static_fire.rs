@@ -8,7 +8,7 @@ use sa_core::{hook, orig};
 use super::common::{rd, x};
 
 use crate::bindings::flush_single;
-use crate::bindings::ptr_list_double_link_flush as flush_double;
+use sa_core::bindings::ptr_list_double_link_flush as flush_double;
 use crate::bindings::remove_from_moving_list;
 use crate::bindings::start_fire_on;
 orig! {

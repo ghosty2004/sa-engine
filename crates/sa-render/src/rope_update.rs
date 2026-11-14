@@ -31,23 +31,18 @@ use sa_world::bindings::max_f;
 use sa_world::bindings::physical_add_to_moving_list;
 use sa_world::bindings::placeable_set_posn;
 use sa_world::bindings::rope_release_picked_up_object;
+use sa_core::bindings::matrix_assign;
+use sa_core::bindings::matrix_mul_vec;
+use sa_world::bindings::find_ground_z_for_3d_coord;
+use sa_world::bindings::matrix_copy_ctor;
+use sa_world::bindings::physical_get_speed;
 orig! {
-    /// `CWorld::FindGroundZFor3DCoord(x, y, z, bool*, CEntity**)` (0x5696C0, ST0)
-    fn find_ground_z_for_3d_coord(px: f32, py: f32, pz: f32, found: u32, entity: u32) -> f64 = cdecl 0x5696C0 => unported;
     /// `CAudioEngine::ReportMissionAudioEvent(int32 event, CPhysical*, float, float)` (0x5073B0)
     fn report_mission_audio_event(engine: GPtr<u8>, event: u32, physical: u32, a3: u32, a4: u32) = thiscall 0x5073B0 => unported;
     /// `CRope::UpdateWeightInRope(CVector pos, float, CVector* out)` (0x5561B0, AL)
     fn rope_update_weight_call(rope: GPtr<u8>, px: u32, py: u32, pz: u32, a5: u32, out: GPtr<u8>) -> u8 = thiscall 0x5561B0 => rope_update_weight;
-    /// `CPhysical::GetSpeed(CVector* out, CVector point)` (0x542CE0, returns `out`)
-    fn physical_get_speed(e: GPtr<u8>, out: GPtr<u8>, px: u32, py: u32, pz: u32) -> u32 = thiscall 0x542CE0 => unported;
-    /// `CMatrix::CMatrix(const CMatrix&)` (0x59BCF0)
-    fn matrix_copy_ctor(this: GPtr<u8>, src: GPtr<u8>) -> u32 = thiscall 0x59BCF0 => unported;
     /// `CMatrix::ForceUpVector(CVector up)` (0x59B7E0)
     fn matrix_force_up_vector(m: GPtr<u8>, ux: u32, uy: u32, uz: u32) = thiscall 0x59B7E0 => unported;
-    /// `CMatrix::operator=(const CMatrix&)` (0x59BBC0)
-    fn matrix_assign(m: GPtr<u8>, src: GPtr<u8>) -> u32 = thiscall 0x59BBC0 => unported;
-    /// `operator*(const CMatrix&, const CVector&)` (0x59C890, the hidden `out` first)
-    fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> u32 = cdecl 0x59C890 => unported;
     /// `CEntity::SetIsStatic(bool)` (virtual slot 4)
     fn entity_set_is_static(e: GPtr<u8>, v: u32) = thiscall vslot 0x10 => unported;
 }
@@ -161,7 +156,7 @@ fn pickup_point(fr: &mut Frame, e: GPtr<u8>, v: usize, out: usize, vec: [u32; 3]
     }
     let pv = fr.p(v);
     let po = fr.p(out);
-    matrix_mul_vec(po, rd::<GPtr<u8>>(e, 0x14), pv);
+    matrix_mul_vec(po.cast::<f32>(), rd::<GPtr<u8>>(e, 0x14), pv);
     po
 }
 
@@ -221,7 +216,7 @@ pub fn rope_update(rope: GPtr<u8>) {
         wr::<f32>(rope, 8, f32_of(vz.fadd_m(rd::<f32>(rope, 8))));
     }
     if flags & 4 != 0 && g::<u32>(FRAME_COUNTER).read() & 7 == 2 {
-        let z = find_ground_z_for_3d_coord(rd(rope, 0), rd(rope, 4), rd(rope, 8), 0, 0);
+        let z = find_ground_z_for_3d_coord(rd(rope, 0), rd(rope, 4), rd(rope, 8), GPtr::NULL, GPtr::NULL);
         wr::<f32>(rope, 0x304, f32_of(X87::from_f64_exact(z)));
     }
     if rd::<u8>(rope, 0x327) & 4 != 0 {
@@ -365,7 +360,7 @@ fn controls(rope: GPtr<u8>, fr: &mut Frame, ts: f32) {
     let ty = rd::<u8>(rope, 0x325);
     if controls_apply(ty) {
         if matches!(ty, 1..=3) {
-            let ax = pad_car_gun_up_down(pad_get(0)) as u16 as i16;
+            let ax = (pad_car_gun_up_down(pad_get(0)) as u32) as u16 as i16;
             let apply = if ax < 0 { g::<u8>(CRANE_UP).read() != 0 } else { ax > 0 && g::<u8>(CRANE_DOWN).read() != 0 };
             if apply {
                 fr.setd(0x30, i32::from(ax) as u32);
@@ -426,7 +421,7 @@ fn hanging(rope: GPtr<u8>, fr: &mut Frame) {
             fr.setd(0x18, ry.to_bits());
             fr.setd(0x1C, rz.to_bits());
             let o = fr.p(0x54);
-            physical_get_speed(holder, o, rx.to_bits(), ry.to_bits(), rz.to_bits());
+            physical_get_speed(holder, o, f32::from_bits(rx.to_bits()), f32::from_bits(ry.to_bits()), f32::from_bits(rz.to_bits()));
             if matches!(rd::<u8>(rope, 0x325), 4..=7) {
                 for i in 0..3 {
                     fr.setd(0x14 + 4 * i, 0);
@@ -535,7 +530,7 @@ fn pickup(rope: GPtr<u8>, fr: &mut Frame) {
     if rd::<u32>(att_cell, 0) != 0 {
         if controls_apply(rd::<u8>(rope, 0x325))
             && g::<u8>(CRANE_RELEASE).read() != 0
-            && pad_car_gun_just_down(pad_get(0)) as u16 != 0
+            && (pad_car_gun_just_down(pad_get(0)) as u32) as u16 != 0
         {
             rope_release_picked_up_object(rope);
         }
@@ -720,7 +715,7 @@ fn object_search(rope: GPtr<u8>, fr: &mut Frame) {
         let hook = rd::<GPtr<u8>>(rope, 0x314);
         let z = model_max_z(o);
         let pp = pickup_point(fr, o, 0x74, 0x98, [0, 0, f32_of(x(z)).to_bits()]);
-        placeable_set_posn(hook, pp);
+        placeable_set_posn(hook, pp.cast::<f32>());
         wr::<u32>(hook, 0x1C, rd::<u32>(hook, 0x1C) & 0xFFFF_FFFE);
         let a = rd::<GPtr<u8>>(g::<u8>(fr.d(0x60) as usize), 0);
         let fl = rd::<u32>(a, 0x1C);
@@ -775,7 +770,7 @@ fn ped_search(rope: GPtr<u8>, fr: &mut Frame) {
         take(fr, p);
         let z = model_max_z(p);
         let pp = pickup_point(fr, p, 0x14, 0x68, [0, 0, f32_of(x(z)).to_bits()]);
-        placeable_set_posn(rd::<GPtr<u8>>(rope, 0x314), pp);
+        placeable_set_posn(rd::<GPtr<u8>>(rope, 0x314), pp.cast::<f32>());
         let dzz = fr.x(0x48).fsub_m(fr.f(0x2C));
         let hook = rd::<GPtr<u8>>(rope, 0x314);
         wr::<u32>(hook, 0x1C, rd::<u32>(hook, 0x1C) & 0xFFFF_FFFE);

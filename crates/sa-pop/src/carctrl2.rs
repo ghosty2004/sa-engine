@@ -246,13 +246,11 @@ use sa_world::bindings::car_ctrl_possibly_remove_vehicle as possibly_remove_vehi
 use sa_world::bindings::find_player_centre_of_world;
 use sa_world::bindings::is_law_enforcement_vehicle;
 use sa_world::bindings::la_riots_active_here;
+use crate::bindings::dm_set_wheel_status as damage_set_wheel_status;
+use crate::bindings::dont_create_civilians;
 orig! {
-    /// `CDamageManager::SetWheelStatus(int32, eCarWheelStatus)` (0x6C21A0, `ret 8`)
-    fn damage_set_wheel_status(this: GPtr<u8>, wheel: i32, status: i32) = thiscall 0x6C21A0 => unported;
     /// `CRoadBlocks::GenerateRoadBlockPedsForCar(CVehicle*, int32, ePedType)` (0x461170)
     fn generate_road_block_peds_for_car(v: GPtr<u8>, n: i32, pt: i32) = cdecl 0x461170 => unported;
-    /// `CGangWars::DontCreateCivilians()` (0x4439C0)
-    fn dont_create_civilians() -> u8 = cdecl 0x4439C0 => unported;
     /// `CCarCtrl::GenerateOneRandomCar()` (0x430050)
     fn generate_one_random_car() = cdecl 0x430050 => unported;
     /// `CTrain::DoTrainGenerationAndRemoval()` (0x6F7900)
@@ -317,7 +315,7 @@ pub fn switch_between_physics_and_ghost(veh: GPtr<u8>) {
     }
     let st = rd::<u8>(veh, 0x36) >> 3;
     if st == 3 {
-        if has_collision_loaded(entity_pos(veh), 0) != 0 {
+        if has_collision_loaded(GPtr::<f32>::cast::<u8>(entity_pos(veh)), 0) != 0 {
             return;
         }
         wr::<u8>(veh, 0x36, (rd::<u8>(veh, 0x36) & 7) | 0x60);
@@ -329,7 +327,7 @@ pub fn switch_between_physics_and_ghost(veh: GPtr<u8>) {
             damage_set_wheel_status(dm, i, 0);
         }
     } else if st == 12 {
-        if has_collision_loaded(entity_pos(veh), 0) == 0 {
+        if has_collision_loaded(GPtr::<f32>::cast::<u8>(entity_pos(veh)), 0) == 0 {
             return;
         }
         wr::<u8>(veh, 0x36, (rd::<u8>(veh, 0x36) & 7) | 0x18);
@@ -362,7 +360,7 @@ pub fn remove_distant_cars() {
         if rd::<u8>(veh, 0x42A) & 0x10 == 0 {
             continue;
         }
-        let c = find_player_centre_of_world(i32::from(g::<u8>(0xB7CD74).read()));
+        let c = GPtr::<u8>::cast::<f32>(find_player_centre_of_world(i32::from(g::<u8>(0xB7CD74).read())));
         let (cx, cy) = (c.read(), c.wrapping_index(1).read());
         let p = entity_pos(veh);
         let dy = x(p.wrapping_index(1).read()).fsub_m(cy);
@@ -450,7 +448,7 @@ pub fn choose_police_car_model(ignore_lvpd: u32) -> i32 {
         if random_int_in_range(0, 3) == 2 {
             return 0x1AB;
         }
-        return get_default_cop_car_model(ignore_lvpd);
+        return get_default_cop_car_model(ignore_lvpd as i32);
     }
     if are_fbi_required(find_player_wanted(-1)) != 0 && loaded(0x8E7318) && loaded(0x8E6328) {
         return 0x1EA;
@@ -458,7 +456,7 @@ pub fn choose_police_car_model(ignore_lvpd: u32) -> i32 {
     if are_army_required(find_player_wanted(-1)) != 0 && loaded(0x8E6E90) && loaded(0x8E6EA4) && loaded(0x8E633C) {
         return 0x1B0 + i32::from(rand_at(0x421A1E) < 0x3FFF);
     }
-    get_default_cop_car_model(ignore_lvpd)
+    get_default_cop_car_model(ignore_lvpd as i32)
 }
 
 use crate::bindings::set_up_driver as vehicle_set_up_driver;
@@ -468,13 +466,11 @@ use sa_world::bindings::is_this_car_being_targetted_by_any_crane;
 use sa_world::bindings::ped_give_object_to_hold;
 use sa_world::bindings::ped_update_stat_entering_vehicle;
 use sa_world::bindings::vehicle_can_be_deleted;
+use sa_stream::bindings::get_animation_block_index;
+use sa_stream::bindings::is_car_model;
 orig! {
     /// vtable slot 0 (scalar deleting destructor, `ret 4`)
     fn delete_entity(e: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
-    /// `CModelInfo::IsCarModel(int32)` (0x4C5AA0)
-    fn is_car_model(mi: i32) -> u8 = cdecl 0x4C5AA0 => unported;
-    /// `CAnimManager::GetAnimationBlockIndex(const char*)` (0x4D3990)
-    fn get_animation_block_index(name: u32) -> i32 = cdecl 0x4D3990 => unported;
     /// `CBaseModelInfo` vtable +0x38 (`GetAnimFileIndex`)
     fn model_info_anim_file_index(mi: GPtr<u8>) -> i32 = thiscall vslot 0x38 => unported;
 }
@@ -590,8 +586,8 @@ pub fn set_up_driver_and_passengers_for_vehicle(veh: GPtr<u8>, pt: i32, min: i32
         n = lim;
     }
     let model = i32::from(rd::<i16>(veh, 0x22));
-    if is_car_model(model) != 0 {
-        let blk = get_animation_block_index(0x858EE0);
+    if is_car_model(model as u32) != 0 {
+        let blk = get_animation_block_index(GPtr::from_addr(0x858EE0));
         if model_info_anim_file_index(crate::common::model_info(model)) == blk && n >= 1 {
             n = 1;
         }
@@ -612,17 +608,14 @@ use crate::bindings::auto_pilot_modify_speed;
 use sa_core::bindings::find_player_ped;
 use sa_world::bindings::accident_manager_get_instance;
 use sa_world::bindings::gang_war_fighting_going_on;
+use crate::bindings::car_has_reason_to_stop;
+use crate::bindings::find_maximum_speed_call as find_maximum_speed_for_this_car_in_traffic;
+use crate::bindings::generate_one_emergency_services_car;
+use crate::bindings::should_car_stop_for_bridge;
+use crate::bindings::should_car_stop_for_light;
+use sa_core::bindings::find_player_coors;
+use sa_world::bindings::fire_find_nearest_fire;
 orig! {
-    /// `CTrafficLights::ShouldCarStopForLight(CVehicle*, bool)` (0x49D610)
-    fn should_car_stop_for_light(v: GPtr<u8>, b: u32) -> u8 = cdecl 0x49D610 => unported;
-    /// `CTrafficLights::ShouldCarStopForBridge(CVehicle*)` (0x49D420)
-    fn should_car_stop_for_bridge(v: GPtr<u8>) -> u8 = cdecl 0x49D420 => unported;
-    /// `CCarAI::CarHasReasonToStop(CVehicle*)` (0x41C050)
-    fn car_has_reason_to_stop(v: GPtr<u8>) = cdecl 0x41C050 => unported;
-    /// `CCarCtrl::FindMaximumSpeedForThisCarInTraffic(CVehicle*)` (0x434400, ST0)
-    fn find_maximum_speed_for_this_car_in_traffic(v: GPtr<u8>) -> f64 = cdecl 0x434400 => unported;
-    /// `CWorld::FindPlayerCoors(CVector* out, int32)` (0x56E010)
-    fn find_player_coors(out: GPtr<f32>, id: i32) -> GPtr<f32> = cdecl 0x56E010 => unported;
     /// `CAccidentManager::GetNumberOfFreeAccidents()` (0x56CEE0)
     fn accident_get_number_of_free_accidents(m: GPtr<u8>) -> i32 = thiscall 0x56CEE0 => unported;
     /// `CAccidentManager::GetNearestFreeAccident(CVector&, bool)` (0x56D050, `ret 8`)
@@ -635,12 +628,8 @@ orig! {
     fn ambulance_model() -> i32 = cdecl 0x407D30 => unported;
     /// `thunk_FUN_0156ce80` (0x407DC0): the level's fire engine model
     fn fire_engine_model() -> i32 = cdecl 0x407DC0 => unported;
-    /// `CCarCtrl::GenerateOneEmergencyServicesCar(uint32 model, CVector)` (0x42B7D0; the vector by value)
-    fn generate_one_emergency_services_car(model: i32, x: f32, y: f32, z: f32) -> u32 = cdecl 0x42B7D0 => unported;
     /// `CFireManager::GetNumOfNonScriptFires()` (0x538F10)
     fn fire_get_num_of_non_script_fires(fm: GPtr<u8>) -> u32 = thiscall 0x538F10 => unported;
-    /// `CFireManager::FindNearestFire(const CVector&, bool, bool)` (0x538F40; callee-cleaned, 3 arguments)
-    fn fire_find_nearest_fire(fm: GPtr<u8>, pos: GPtr<f32>, a: u32, b: u32) -> GPtr<u8> = thiscall 0x538F40 => unported;
 }
 
 /// `CCarCtrl::SlowCarOnRailsDownForTrafficAndLights(CVehicle*)` (0x434790): every 4th frame (by +0x20 +
@@ -737,7 +726,7 @@ pub fn generate_emergency_services_car() {
                 let p = entity_pos(rd::<GPtr<u8>>(acc, 0));
                 let (px, py, pz) = (p.read(), p.wrapping_index(1).read(), p.wrapping_index(2).read());
                 let m = ambulance_model();
-                if generate_one_emergency_services_car(m, px, py, pz) != 0 {
+                if GPtr::<u8>::addr(generate_one_emergency_services_car(m, px, py, pz)) as u32 != 0 {
                     g::<u32>(0x9690B0).write(g::<u32>(0xB7CB84).read());
                 }
             }
@@ -751,7 +740,7 @@ pub fn generate_emergency_services_car() {
         return;
     }
     let pos = find_player_coors(GPtr::from_raw(v.as_mut_ptr()), -1);
-    let fire = fire_find_nearest_fire(g(0xB71F80), pos, 1, 1);
+    let fire = fire_find_nearest_fire(g(0xB71F80), pos.cast::<u8>(), 1, 1);
     if fire.is_null() || stream_fire_engine_and_fireman(1) == 0 {
         return;
     }
@@ -761,7 +750,7 @@ pub fn generate_emergency_services_car() {
     let p = fire.byte_add(4).cast::<f32>();
     let (px, py, pz) = (p.read(), p.wrapping_index(1).read(), p.wrapping_index(2).read());
     let m = fire_engine_model();
-    if generate_one_emergency_services_car(m, px, py, pz) != 0 {
+    if GPtr::<u8>::addr(generate_one_emergency_services_car(m, px, py, pz)) as u32 != 0 {
         g::<u32>(0x9690B4).write(g::<u32>(0xB7CB84).read());
     }
 }

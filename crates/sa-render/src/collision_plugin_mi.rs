@@ -10,17 +10,12 @@ use sa_core::bindings::base_model_info_set_col_model as set_col_model;
 use sa_core::bindings::stream_read;
 use sa_stream::bindings::col_model_ctor;
 use sa_stream::bindings::col_model_new;
+use sa_stream::bindings::load_col_v1_call as load_collision_model;
+use sa_stream::bindings::load_col_v2_call as load_collision_model_ver2;
+use sa_stream::bindings::load_col_v3_call as load_collision_model_ver3;
+use sa_stream::bindings::lock_scratch_pad;
+use sa_stream::bindings::release_scratch_pad;
 orig! {
-    /// `CMemoryMgr::LockScratchPad` (0x72F4A0)
-    fn lock_scratch_pad() = cdecl 0x72F4A0 => lock_scratch_pad_port;
-    /// `CMemoryMgr::ReleaseScratchPad` (0x72F4B0)
-    fn release_scratch_pad() = cdecl 0x72F4B0 => release_scratch_pad_port;
-    /// `CFileLoader::LoadCollisionModel(data, colModel, name)` (0x537580)
-    fn load_collision_model(data: GPtr<u8>, cm: GPtr<u8>, name: u32) = cdecl 0x537580 => unported;
-    /// `CFileLoader::LoadCollisionModelVer2(data, size, colModel, name)` (0x537EE0)
-    fn load_collision_model_ver2(data: GPtr<u8>, size: u32, cm: GPtr<u8>, name: u32) = cdecl 0x537EE0 => unported;
-    /// `CFileLoader::LoadCollisionModelVer3(data, size, colModel, name)` (0x537CE0)
-    fn load_collision_model_ver3(data: GPtr<u8>, size: u32, cm: GPtr<u8>, name: u32) = cdecl 0x537CE0 => unported;
     /// `CColModel::MakeMultipleAlloc()` (0x40F740)
     fn make_multiple_alloc(this: GPtr<u8>) = thiscall 0x40F740 => unported;
 }
@@ -71,10 +66,10 @@ pub fn collision_clump_stream_read(s: GPtr<u8>, len: u32, _clump: GPtr<u8>, _off
     let data = buf.byte_add(0x20);
     let size = buf.byte_add(4).cast::<u32>().read().wrapping_sub(0x18);
     match ver {
-        1 => load_collision_model(data, cm, 0),
-        2 => load_collision_model_ver2(data, size, cm, 0),
-        3 => load_collision_model_ver3(data, size, cm, 0),
-        _ => load_collision_model(buf, cm, 0),
+        1 => load_collision_model(data, cm, GPtr::NULL),
+        2 => load_collision_model_ver2(data, size, cm, GPtr::NULL),
+        3 => load_collision_model_ver3(data, size, cm, GPtr::NULL),
+        _ => load_collision_model(buf, cm, GPtr::NULL),
     }
     make_multiple_alloc(cm);
     let mi = GPtr::<u8>::from_addr(GPtr::<u32>::from_addr(CURRENT_MODEL).read() as usize);

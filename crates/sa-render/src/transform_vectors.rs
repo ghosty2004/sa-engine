@@ -11,7 +11,7 @@ const WORK_RW_MATRIX: usize = 0xB72920;
 
 use sa_core::bindings::matrix_copy_to_rw_matrix;
 use sa_core::bindings::rw_matrix_update;
-use sa_world::bindings::rw_v3d_transform_vector;
+use sa_core::bindings::rw_v3d_transform_vector;
 
 fn work_matrix() -> GPtr<u8> {
     GPtr::<GPtr<u8>>::from_addr(WORK_RW_MATRIX).read()

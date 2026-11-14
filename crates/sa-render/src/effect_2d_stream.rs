@@ -7,7 +7,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use sa_core::bindings::crt_strncpy;
 use sa_core::bindings::memory_malloc as mgr_malloc;
@@ -16,13 +16,8 @@ use sa_core::bindings::push_current_txd;
 use sa_core::bindings::rw_stream_skip as stream_skip;
 use sa_core::bindings::set_current_txd;
 use sa_core::bindings::stream_read;
-orig! {
-    /// `CTxdStore::FindTxdSlot(name)` (0x731850), `PushCurrentTxd` (0x7316A0), `SetCurrentTxd` (0x7319C0),
-    /// `PopCurrentTxd` (0x7316B0)
-    fn find_txd_slot(name: GPtr<u8>) -> i32 = cdecl 0x731850 => unported;
-    /// `RwTextureRead(name, mask)` (0x7F3AC0)
-    fn texture_read(name: GPtr<u8>, mask: u32) -> u32 = cdecl 0x7F3AC0 => unported;
-}
+use sa_core::bindings::find_txd_slot;
+use sa_core::bindings::rw_texture_read as texture_read;
 
 /// `C2dEffect::ms_nTxdSlot` (.data, -1) and the geometry plugin offset.
 const TXD_SLOT: usize = 0x8D4948;
@@ -102,8 +97,8 @@ pub fn effect_2d_stream_read(s: GPtr<u8>, _len: i32, geom: GPtr<u8>, _offset: i3
                     }
                     push_current_txd();
                     set_current_txd(GPtr::<i32>::from_addr(TXD_SLOT).read());
-                    w32(obj, 0x30, texture_read(GPtr::from_raw(rec[0x19..].as_mut_ptr()), 0));
-                    w32(obj, 0x34, texture_read(GPtr::from_raw(rec[0x31..].as_mut_ptr()), 0));
+                    w32(obj, 0x30, GPtr::<u8>::addr(texture_read(GPtr::from_raw(rec[0x19..].as_mut_ptr()), GPtr::NULL)) as u32);
+                    w32(obj, 0x34, GPtr::<u8>::addr(texture_read(GPtr::from_raw(rec[0x31..].as_mut_ptr()), GPtr::NULL)) as u32);
                     pop_current_txd();
                 } else {
                     skip = true;

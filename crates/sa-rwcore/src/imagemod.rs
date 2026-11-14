@@ -9,7 +9,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::{GPtr, GlobalDesc};
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 
 use crate::common::{f32_of, g, p8, rd, rw_free, rw_globals, rw_malloc, rw_memory_free, wr, x};
@@ -46,12 +46,8 @@ const K_HALF: u32 = 0x3F00_0000;
 
 use crate::bindings::free_list_create_prealloc;
 use sa_core::bindings::crt_pow;
-orig! {
-    /// `RwFreeListDestroy(fl)` (0x801B80)
-    fn free_list_destroy(fl: GPtr<u8>) -> u32 = cdecl 0x801B80 => crate::memory::rw_freelist_destroy;
-    /// `RwImageSetGamma(gamma)` (0x803FE0)
-    fn image_set_gamma_call(gamma: f32) -> i32 = cdecl 0x803FE0 => rw_image_set_gamma;
-}
+use crate::bindings::free_list_destroy;
+use crate::bindings::image_set_gamma as image_set_gamma_call;
 
 /// `M = G + [0xC9A65C]`, recomputed on every access as the original reloads both globals.
 fn imod() -> GPtr<u8> {

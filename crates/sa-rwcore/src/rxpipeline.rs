@@ -40,21 +40,17 @@ sa_core::globals! {
 }
 
 use crate::bindings::free_list_create_prealloc;
+use crate::bindings::free_list_destroy;
+use crate::bindings::heap_add_block as heap_add_block_call;
+use crate::bindings::heap_new_entry as heap_new_entry_call;
+use crate::bindings::node_destroy_call as pipeline_node_destroy_recurse;
 orig! {
-    /// `RwFreeListDestroy(fl)` (0x801B80)
-    fn free_list_destroy(fl: GPtr<u8>) -> u32 = cdecl 0x801B80 => crate::memory::rw_freelist_destroy;
     /// `RxHeapCreate(size)` (0x809F90)
     fn rx_heap_create_call(size: u32) -> GPtr<u8> = cdecl 0x809F90 => rx_heap_create;
     /// `RxHeapDestroy(heap)` (0x809F30)
     fn rx_heap_destroy_call(heap: GPtr<u8>) = cdecl 0x809F30 => rx_heap_destroy;
-    /// `_rxHeapAddBlock(block, prevBlock, heap)` (0x809BF0)
-    fn heap_add_block_call(block: GPtr<u8>, prev: GPtr<u8>, heap: GPtr<u8>) -> i32 = cdecl 0x809BF0 => rx_heap_add_block;
-    /// `_rxHeapGetEntry(heap)` (0x8099F0)
-    fn heap_new_entry_call(heap: GPtr<u8>) -> GPtr<u8> = cdecl 0x8099F0 => rx_heap_new_entry;
     /// `RxRenderStateVectorSetDefaultRenderStateVector(rsvp)` (0x80EA40)
     fn rsv_set_default_call(rsvp: GPtr<u8>) -> GPtr<u8> = cdecl 0x80EA40 => rx_render_state_vector_set_default;
-    /// `_rxPipelineNodeDestroyRecurse(node, pipeline)` (0x8050C0)
-    fn pipeline_node_destroy_recurse(node: GPtr<u8>, p: GPtr<u8>) = cdecl 0x8050C0 => unported;
 }
 
 use sa_core::field::addr32 as a32;
@@ -383,7 +379,7 @@ pub fn rx_pipeline_destroy(p: GPtr<u8>) {
     let mut node = rd::<u32>(p, 8);
     let mut k = n;
     while k != 0 {
-        pipeline_node_destroy_recurse(p8(node), p);
+        pipeline_node_destroy_recurse(GPtr::<u8>::addr(p8(node)) as u32, p.addr() as u32);
         node = node.wrapping_add(0x28);
         k -= 1;
     }

@@ -5,6 +5,7 @@
 //! hate bit masks) allocated by `Initialise`; `CPedStats::ms_apPedStats` (0xC0BBEC): `CPedStat[43]`
 //! (0x34 each: +0 id, +4 name[24], ...).
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -25,10 +26,7 @@ const NUM_PED_STATS: u32 = 43;
 
 pub use sa_core::bindings::crt_free;
 pub use sa_core::bindings::eh_vector_dtor as eh_vector_destructor_iterator;
-orig! {
-    /// `CAcquaintance::SetAsAcquaintance(AcquaintanceId, uint32 mask)` (0x608DA0)
-    pub fn acquaintance_set_as_acquaintance(this: GPtr<u8>, id: i32, mask: u32) = thiscall 0x608DA0 => unported;
-}
+pub use sa_world::bindings::set_as_acquaintance as acquaintance_set_as_acquaintance;
 
 /// `strcmp(a, b) == 0` as the inlined MSVC loop compares (bytes, stops at the first difference or NUL).
 pub fn str_eq(a: GPtr<u8>, b: GPtr<u8>) -> bool {
@@ -166,13 +164,10 @@ pub fn ped_type_shutdown() {
 }
 
 use sa_stream::bindings::crt_new as ps_operator_new;
+use sa_core::bindings::file_close as ps_close_file;
+use sa_core::bindings::load_line as ps_load_line;
+use sa_core::bindings::open_file as ps_open_file;
 orig! {
-    /// `CFileMgr::OpenFile(path, mode)` (0x538900)
-    fn ps_open_file(path: GPtr<u8>, mode: GPtr<u8>) -> u32 = cdecl 0x538900 => unported;
-    /// `CFileMgr::CloseFile(file)` (0x5389D0)
-    fn ps_close_file(file: u32) -> i32 = cdecl 0x5389D0 => unported;
-    /// `CFileLoader::LoadLine(FILE*)` (0x536F80)
-    fn ps_load_line(file: u32) -> GPtr<u8> = cdecl 0x536F80 => unported;
     /// CRT `sscanf(line, "%s %f %f %d %d %d %d %f %f %d %d", ...)` (0x8220AD)
     fn ps_sscanf(line: GPtr<u8>, fmt: GPtr<u8>, name: GPtr<u8>, a: GPtr<u32>, b: GPtr<u32>, c: GPtr<u32>, d: GPtr<u32>, e: GPtr<u32>, f: GPtr<u32>, gg: GPtr<u32>, h: GPtr<u32>, i: GPtr<u32>, j: GPtr<u32>) -> i32 = cdecl 0x8220AD => unported;
     /// `CDecisionMakerTypesFileLoader::LoadDefaultDecisionMaker()` (0x5BF400)
@@ -217,13 +212,13 @@ pub fn ped_stats_initialise() {
 #[hook(addr = 0x5BB890, conv = cdecl, name = "CPedStats::LoadPedStats", expect = "83 EC 48 53 57",
        route = "L2", hazards = "uninit-locals", recs = "boot")]
 pub fn load_ped_stats() {
-    let f = ps_open_file(g::<u8>(0x86A698), g::<u8>(0x85A53C));
+    let f = GPtr::<u8>::addr(ps_open_file(g::<u8>(0x86A698), g::<u8>(0x85A53C))) as u32;
     let mut v = [0u32; 10];
     let mut name = [0u8; 0x20];
     let mut index = 0u32;
     let mut off = 0isize;
     loop {
-        let line = ps_load_line(f);
+        let line = ps_load_line(GPtr::from_addr(f as usize));
         if line.is_null() {
             break;
         }
@@ -263,7 +258,7 @@ pub fn load_ped_stats() {
         wr::<u8>(e, 0x32, v[9] as u8);
         off += 0x34;
     }
-    ps_close_file(f);
+    ps_close_file(GPtr::from_addr(f as usize));
 }
 
 // --- hook list (generated) ---

@@ -4,18 +4,15 @@
 //! `ComputeMoveDirToAvoidEntity` (0x5F3730) and `ComputeEntityBoundingBoxCentreUncachedAll` (0x5F3B40). Ported from
 //! the 1.0 US bytes. Unverified (docs/verify/HOWTO.md).
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
 use crate::bindings::bbox_planes_uncached;
-orig! {
-    /// `CPedGeometryAnalyser::ComputeEntityBoundingBoxCornersUncached(float z, CEntity&, CVector* corners)` (0x5F1FA0, cdecl)
-    fn bbox_corners_uncached(z: u32, e: GPtr<u8>, corners: GPtr<u8>) -> u8 = cdecl 0x5F1FA0 => unported;
-    /// `CPedGeometryAnalyser::ComputeEntityBoundingBoxCentreUncached(float z, const CVector* corners, CVector& out)` (0x5F1600, cdecl)
-    fn bbox_centre_uncached(z: u32, corners: GPtr<u8>, out: GPtr<u8>) = cdecl 0x5F1600 => unported;
-}
+use crate::bindings::bbox_centre_uncached;
+use crate::bindings::bbox_corners_uncached;
 
 /// `CPedGeometryAnalyser::ComputeEntityBoundingBoxPlanesUncachedAll(float z, CEntity&, CVector* normals, float* ds)`
 /// (0x5F2B80, cdecl): the four corners on the stack (0x30 bytes), then the planes through them.
@@ -24,7 +21,7 @@ orig! {
 pub fn bbox_planes_uncached_all(z: u32, e: GPtr<u8>, normals: GPtr<u8>, ds: GPtr<u8>) {
     let mut corners = [0u32; 12];
     let cp: GPtr<u8> = GPtr::from_raw(corners.as_mut_ptr()).cast();
-    bbox_corners_uncached(z, e, cp);
+    bbox_corners_uncached(f32::from_bits(z), e, cp);
     bbox_planes_uncached(z, cp, normals, ds);
 }
 
@@ -35,7 +32,7 @@ pub fn bbox_planes_uncached_all(z: u32, e: GPtr<u8>, normals: GPtr<u8>, ds: GPtr
 pub fn bbox_centre_uncached_all(z: u32, e: GPtr<u8>, out: GPtr<u8>) {
     let mut corners = [0u32; 12];
     let cp: GPtr<u8> = GPtr::from_raw(corners.as_mut_ptr()).cast();
-    bbox_corners_uncached(z, e, cp);
+    bbox_corners_uncached(f32::from_bits(z), e, cp);
     bbox_centre_uncached(z, cp, out);
 }
 
@@ -63,7 +60,7 @@ pub fn compute_move_dir_to_avoid_entity(ped: GPtr<u8>, e: GPtr<u8>, out: GPtr<u8
     let np: GPtr<u8> = GPtr::from_raw(normals.as_mut_ptr()).cast();
     let mut ds = [0f32; 4];
     let dp: GPtr<u8> = GPtr::from_raw(ds.as_mut_ptr()).cast();
-    bbox_corners_uncached(z, e, cp);
+    bbox_corners_uncached(f32::from_bits(z), e, cp);
     bbox_planes_uncached(z, cp, np, dp);
     let plane = |i: isize| {
         let p = pos();

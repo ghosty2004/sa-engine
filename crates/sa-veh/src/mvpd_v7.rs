@@ -13,7 +13,7 @@ use crate::common::{f32_of, g, jp5, rand_at, rd, wr, x, xi};
 use crate::bindings::audio_initialise;
 use crate::bindings::bouncing_panel_set_panel;
 use crate::bindings::dm_reset_damage_status as reset_damage_status;
-use crate::bindings::dm_set_door_status as set_door_status;
+use sa_world::bindings::dm_set_door_status as set_door_status;
 use crate::bindings::event_danger_ctor;
 use crate::bindings::event_danger_dtor;
 use crate::bindings::find_maximum_speed_to_stop_at_stations;
@@ -38,18 +38,27 @@ use sa_world::bindings::is_law_enforcement_vehicle;
 use sa_world::bindings::is_player_on_a_mission;
 use sa_world::bindings::join_car_with_road_system;
 use sa_world::bindings::la_riots_active_here;
-use sa_world::bindings::matrix_ctor_rw;
+use sa_core::bindings::matrix_ctor_rw;
 use sa_world::bindings::ped_groups_get_peds_group as get_peds_group;
 use sa_world::bindings::player_get_wanted_level as get_wanted_level;
+use sa_core::bindings::heli_ctor;
+use sa_core::bindings::plane_ctor;
+use sa_core::bindings::world_add;
+use sa_pop::bindings::find_tunnel_attributes_for_coors;
+use sa_world::bindings::add_vehicle_upgrade;
+use sa_world::bindings::create_mission_train;
+use sa_world::bindings::get_vehicle_appearance;
+use sa_world::bindings::group_intelligence_add_event as pgi_add_event;
+use sa_world::bindings::placeable_set_posn as set_posn;
+use sa_world::bindings::plane_set_gear_up as set_gear_up;
+use sa_world::bindings::set_train_speed;
+use sa_world::bindings::set_velocity;
+use sa_world::bindings::vehicle_41bdd0 as set_engine_on;
+use sa_world::bindings::vehicle_new;
+use sa_world::bindings::vehicle_pool_get_at;
 orig! {
     /// Virtual slot 0 (`scalar deleting destructor`)
     fn entity_vdelete(e: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
-    /// `CTrain::CreateMissionTrain(CVector, bool, uint32, CTrain**, CTrain**, int32, int32, bool)` (0x6F7550)
-    fn create_mission_train(px: f32, py: f32, pz: f32, clockwise: u8, kind: u32, out_first: GPtr<GPtr<u8>>, out_last: GPtr<GPtr<u8>>, node: i32, track: i32, mission: u8) = cdecl 0x6F7550 => crate::mvpb_a5::create_mission_train;
-    /// `CTrain::SetTrainSpeed(CTrain*, float)` (0x6F5E20)
-    fn set_train_speed(t: GPtr<u8>, speed: f32) = cdecl 0x6F5E20 => crate::train::set_train_speed;
-    /// `CCullZones::FindTunnelAttributesForCoors(CVector)` (0x72D9F0)
-    fn find_tunnel_attributes_for_coors(px: f32, py: f32, pz: f32) -> u32 = cdecl 0x72D9F0 => unported;
     /// `CPlane::CountPlanesAndHelis()` (0x6CCA50)
     fn count_planes_and_helis() -> i32 = cdecl 0x6CCA50 => crate::heli::count_planes_and_helis;
     /// `CPlane::AreWeInNoPlaneZone()` (0x6CCAA0)
@@ -59,38 +68,14 @@ orig! {
     /// `CPlane::FindPlaneCreationCoors(CVector*, CVector*, float*, float*, bool)` (0x6CD090); the bool
     /// is pushed as a whole stack dword
     fn find_plane_creation_coors(coors: GPtr<f32>, target: GPtr<f32>, orientation: GPtr<f32>, height: GPtr<f32>, big: u32) = cdecl 0x6CD090 => unported;
-    /// `CVehicle::operator new(uint32)` (0x6E2D50)
-    fn vehicle_new(size: u32) -> GPtr<u8> = cdecl 0x6E2D50 => crate::vehicle2::operator_new;
-    /// `CHeli::CHeli(int32, eVehicleCreatedBy)` (0x6C4190)
-    fn heli_ctor(h: GPtr<u8>, mi: i32, created_by: u32) -> GPtr<u8> = thiscall 0x6C4190 => crate::air2::heli_ctor;
-    /// `CPlane::CPlane(int32, eVehicleCreatedBy)` (0x6C8E20)
-    fn plane_ctor(p: GPtr<u8>, mi: i32, created_by: u32) -> GPtr<u8> = thiscall 0x6C8E20 => crate::air2::plane_ctor;
-    /// `CPlaceable::SetPosn(const CVector&)` (0x4241C0)
-    fn set_posn(e: GPtr<u8>, v: GPtr<f32>) = thiscall 0x4241C0 => sa_world::world::entity::set_posn_vector;
     /// `0x6C4130`: the matrix of a heading (`sin`/`cos` of the argument, no roll or pitch)
     fn set_heading_matrix(v: GPtr<u8>, heading: f32) = thiscall 0x6C4130 => unported;
-    /// `CWorld::Add(CEntity*)` (0x563220)
-    fn world_add(e: GPtr<u8>) = cdecl 0x563220 => sa_world::world::cworld2::add;
-    /// `CPhysical::SetVelocity(CVector)` (0x441130, the vector by value as bits)
-    fn set_velocity(p: GPtr<u8>, vx: u32, vy: u32, vz: u32) = thiscall 0x441130 => sa_world::physical::base::set_velocity;
-    /// `thunk_FUN_01567620` (0x41BDD0): the engine-on flag setter (+0x428 bit 4)
-    fn set_engine_on(v: GPtr<u8>, on: u32) = thiscall 0x41BDD0 => crate::vehicle2::set_flag_428_bit4;
-    /// `CPlane::SetGearUp()` (0x6CAC20)
-    fn set_gear_up(p: GPtr<u8>) = thiscall 0x6CAC20 => crate::heli::set_gear_up;
     /// `CWorld::FindUnsuspectingTargetPed(CVector, CVector)` (0x566DA0)
     fn find_unsuspecting_target_ped(px: f32, py: f32, pz: f32, qx: f32, qy: f32, qz: f32) -> GPtr<u8> = cdecl 0x566DA0 => unported;
     /// `CWorld::FindUnsuspectingTargetCar(CVector, CVector)` (0x566C90)
     fn find_unsuspecting_target_car(px: f32, py: f32, pz: f32, qx: f32, qy: f32, qz: f32) -> GPtr<u8> = cdecl 0x566C90 => sa_world::world::cworld2::find_unsuspecting_target_car;
-    /// `CPedGroupIntelligence::AddEvent(CEvent*)` (0x5F7470)
-    fn pgi_add_event(i: GPtr<u8>, ev: GPtr<u8>) -> u8 = thiscall 0x5F7470 => unported;
     /// `FindPlayerPed(int32)` (0x56E210)
     fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
-    /// `CPool<CVehicle>::GetAt(int32)` (0x41CC10)
-    fn vehicle_pool_get_at(pool: GPtr<u8>, i: i32) -> GPtr<u8> = thiscall 0x41CC10 => unported;
-    /// `CVehicle::GetVehicleAppearance()` (0x6D1080)
-    fn get_vehicle_appearance(v: GPtr<u8>) -> u32 = thiscall 0x6D1080 => crate::vehicle2::get_vehicle_appearance;
-    /// `CVehicle::AddVehicleUpgrade(int32)` (0x6E3290)
-    fn add_vehicle_upgrade(v: GPtr<u8>, model: u32) = thiscall 0x6E3290 => unported;
     /// `CAutomobile::SetupSuspensionLines()` (0x6A65D0)
     fn setup_suspension_lines(a: GPtr<u8>) = thiscall 0x6A65D0 => crate::mvpb_a5::setup_suspension_lines;
 }
@@ -288,7 +273,7 @@ fn gen_status_1() {
     if !le(dy.fmul(dy).fadd(x(dx).fmul_m(dx)).fsqrt(), x(60.0)) {
         let mut first = [GPtr::<u8>::NULL];
         let dir = g::<u8>(GEN_DIRECTION).read();
-        create_mission_train(0.0, 0.0, 0.0, dir, cfg as u32, GPtr::from_raw(first.as_mut_ptr()), GPtr::NULL, node_idx, track, 0);
+        create_mission_train(0.0, 0.0, 0.0, dir, cfg as u32, GPtr::<GPtr<u8>>::cast::<u32>(GPtr::from_raw(first.as_mut_ptr())), GPtr::<GPtr<u8>>::cast::<u32>(GPtr::NULL), node_idx, track, 0);
         let speed = if g::<i32>(GEN_TRACK).read() == 0 {
             let mut s = rand_at(0x6F_7C46) % 30;
             let n = track_nodes(g::<i32>(GEN_TRACK).read()).byte_add(10 * g::<i32>(GEN_NODE).read() as isize);
@@ -637,7 +622,7 @@ fn plane_gen_status_0(count: i32) {
         let mut hydras = 0;
         while i != 0 {
             i -= 1;
-            let v = vehicle_pool_get_at(pool, i);
+            let v = vehicle_pool_get_at(pool, i as u32);
             if !v.is_null() && rd::<u8>(v, 0x3BA) == 0x3B {
                 hydras += 1;
             }
@@ -754,7 +739,7 @@ pub fn automobile_constructor(this: GPtr<u8>, mi: u32, created_by: u32, setup_su
     let hf = rd::<u32>(hd, 0xD0);
     wr::<u32>(this, 0x38C, hf);
     if hf & 0x1_0000 != 0 && rand_at(0x6B_0BC9) & 3 == 0 {
-        add_vehicle_upgrade(this, u32::from(g::<u16>(0x8C_D76C).read()));
+        add_vehicle_upgrade(this, u32::from(g::<u16>(0x8C_D76C).read()) as i32);
     }
     let fp = get_flying_pointer(GPtr::from_addr(0xC2_B9C8), hid as u32);
     wr::<GPtr<u8>>(this, 0x388, fp);
@@ -847,7 +832,7 @@ pub fn automobile_constructor(this: GPtr<u8>, mi: u32, created_by: u32, setup_su
     if rd::<u32>(rd::<GPtr<u8>>(this, 0x384), 0xCC) & 0x100 != 0 {
         let dm = this.byte_add(0x5A0);
         for door in 2..6 {
-            set_door_status(dm, door, 4);
+            set_door_status(dm, door as u32, 4);
         }
     }
     for k in 0..6isize {
@@ -961,7 +946,7 @@ pub fn automobile_constructor(this: GPtr<u8>, mi: u32, created_by: u32, setup_su
             matrix_attach(p1, rd::<GPtr<u8>>(this, 0x650).byte_add(0x10), 0);
             matrix_ctor_rw(p2, rd::<GPtr<u8>>(this, 0x65C).byte_add(0x10), 0);
             let px = f32_of(x(rd::<f32>(p2, 0x30)).fadd_m(0.1));
-            matrix_set_translate(p1, px.to_bits(), 0, rd::<u32>(p2, 0x38));
+            matrix_set_translate(p1, f32::from_bits(px.to_bits()), f32::from_bits(0), f32::from_bits(rd::<u32>(p2, 0x38)));
             matrix_update_rw(p1);
             matrix_dtor(p2);
             matrix_dtor(p1);

@@ -148,7 +148,7 @@ pub fn toggle_edge(edges: GPtr<u8>, count: GPtr<u16>, a: u16, b: u16) {
 #[allow(clippy::needless_range_loop)] // vertex k of three parallel arrays, as the original
 pub fn shadow_render_triangle_cb(normal: GPtr<u8>, tri: GPtr<u8>, param: GPtr<u8>) -> GPtr<u8> {
     let mut w = [[0f32; 3]; 3];
-    rw_v3d_transform_points(GPtr::from_raw(w.as_mut_ptr()).cast(), tri, 3, param.byte_add(0x58));
+    rw_v3d_transform_points(GPtr::<u8>::cast::<f32>(GPtr::from_raw(w.as_mut_ptr()).cast()), tri.cast::<f32>(), 3, param.byte_add(0x58));
     let at = v3(param);
     let n = v3(normal);
     let d = x(at[1]).fmul_m(n[1]).fadd(x(at[2]).fmul_m(n[2])).fadd(x(at[0]).fmul_m(n[0]));
@@ -157,8 +157,8 @@ pub fn shadow_render_triangle_cb(normal: GPtr<u8>, tri: GPtr<u8>, param: GPtr<u8
     }
     let mut s = [[0f32; 3]; 3];
     rw_v3d_transform_points(
-        GPtr::from_raw(s.as_mut_ptr()).cast(),
-        GPtr::from_raw(w.as_mut_ptr()).cast(),
+        GPtr::<u8>::cast::<f32>(GPtr::from_raw(s.as_mut_ptr()).cast()),
+        GPtr::<u8>::cast::<f32>(GPtr::from_raw(w.as_mut_ptr()).cast()),
         3,
         param.byte_add(0xC),
     );

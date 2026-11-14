@@ -1,6 +1,7 @@
 //! WRITER-NATIVE (batch `native-6`): the non-virtual `CEventDamage` destructor body (0x4AD960), reached by
 //! every on-stack damage event (weapon impacts, car hits, script damage) on the native walk.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::hook;
 
@@ -17,7 +18,7 @@ pub fn event_damage_destructor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x85_AD78);
     let src = rd::<GPtr<u8>>(this, 0x14);
     if !src.is_null() {
-        entity_clean_up_old_reference(src, this.byte_add(0x14));
+        entity_clean_up_old_reference(src, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x14)));
     }
     wr::<u32>(this, 0, 0x85_AB38);
 }

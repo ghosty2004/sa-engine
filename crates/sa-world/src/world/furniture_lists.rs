@@ -14,11 +14,9 @@ use super::common::{ftol32, g, rd, wr, xi};
 use sa_core::bindings::list_add_item;
 use sa_core::bindings::list_remove_item;
 use sa_core::bindings::world_remove;
+use crate::bindings::furniture_group_init;
+use crate::bindings::furniture_load_furniture as load_furniture;
 orig! {
-    /// `FurnitureGroup_c::Init()` (0x5910A0)
-    fn furniture_group_init(grp: GPtr<u8>) -> i32 = thiscall 0x5910A0 => unported;
-    /// `FurnitureManager_c::LoadFurniture()` (0x5C0280)
-    fn load_furniture(man: GPtr<u8>) = thiscall 0x5C0280 => unported;
     /// the deleting destructor (vtable +0)
     fn v_delete(e: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
 }

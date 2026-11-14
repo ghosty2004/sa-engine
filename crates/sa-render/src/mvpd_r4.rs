@@ -17,9 +17,8 @@ use sa_core::bindings::tm_get_simplest_active_task as task_manager_simplest_acti
 use sa_world::bindings::cam_no_rain;
 use sa_world::bindings::pad_start_shake;
 use sa_world::bindings::player_no_rain;
+use crate::bindings::update_weather_region;
 orig! {
-    /// `CWeather::UpdateWeatherRegion(CVector*)` (0x72A640)
-    fn update_weather_region(pos: u32) = cdecl 0x72A640 => unported;
     /// `CWeather::FindWeatherTypesList()` (0x72A520)
     fn find_weather_types_list() -> GPtr<u8> = cdecl 0x72A520 => unported;
     /// `CAEWeatherAudioEntity::AddAudioEvent(eAudioEvents)` (0x506800)
@@ -112,7 +111,7 @@ use sa_core::crt::rand_at;
        note = "FCOS wind waves; rand sites 0x72B9E0, 0x72BA5A, 0x72BA8D, 0x72C0BE")]
 pub fn weather_update() {
     if g::<u8>(FRAME).read() & 0xF == 0 {
-        update_weather_region(0);
+        update_weather_region(GPtr::NULL);
     }
     if g::<u8>(0xA43088).read() != 1 {
         let sec = X87::from_i32(i32::from(g::<u8>(0xB70150).read()));
@@ -122,7 +121,7 @@ pub fn weather_update() {
         if jp(fv, x(interp()), 5) {
             g::<f32>(INTERP).write(f);
         } else {
-            update_weather_region(0);
+            update_weather_region(GPtr::NULL);
             let new = g::<i16>(NEW).read();
             let forced = g::<i16>(0xC81318).read();
             g::<i16>(OLD).write(new);
@@ -463,7 +462,7 @@ fn neg_abs(v: X87) -> X87 {
        route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn checkpoints_update() {
     let mut p = [0f32; 3];
-    find_player_coors(GPtr::from_raw(p.as_mut_ptr()).cast(), -1);
+    find_player_coors(GPtr::<u8>::cast::<f32>(GPtr::from_raw(p.as_mut_ptr()).cast()), -1);
     for i in 0..32isize {
         let c = g::<u8>(0xC7F158).byte_add(i * 0x38);
         let ty = c.cast::<u16>();
@@ -525,11 +524,10 @@ pub fn checkpoints_update() {
     }
 }
 
-use crate::bindings::camera_is_sphere_visible_m;
-use crate::bindings::get_surf_properties as plant_get_surf_properties;
+use sa_world::bindings::camera_is_sphere_visible_m;
+use sa_core::bindings::get_surf_properties as plant_get_surf_properties;
+use sa_stream::bindings::fx_get_fx_quality;
 orig! {
-    /// `Fx_c::GetFxQuality()` (0x49EA50)
-    fn fx_get_fx_quality(this: GPtr<u8>) -> u32 = thiscall 0x49EA50 => unported;
     /// `RwRenderStateSet` (`RwEngineInstance` slot 0x20)
     fn rs(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
     /// `CGrassRenderer::AddTriPlant(PPTriPlant*, uint32)` (0x5DB1D0)
@@ -572,8 +570,8 @@ pub fn plant_mgr_render() {
                     let slot = sp.byte_add(0x14 + j * 0x28);
                     let r = rd::<u32>(t, 0x30);
                     let centre = t.byte_add(0x24);
-                    if camera_is_sphere_visible_m(g(0xB6F028), centre, r, 0xB6FA74) == 0
-                        && (g::<u8>(0xB6F998).read() == 0 || camera_is_sphere_visible_m(g(0xB6F028), centre, r, 0xB6FABC) == 0)
+                    if camera_is_sphere_visible_m(g(0xB6F028), centre, f32::from_bits(r), GPtr::from_addr(0xB6FA74)) == 0
+                        && (g::<u8>(0xB6F998).read() == 0 || camera_is_sphere_visible_m(g(0xB6F028), centre, f32::from_bits(r), GPtr::from_addr(0xB6FABC)) == 0)
                     {
                         continue;
                     }

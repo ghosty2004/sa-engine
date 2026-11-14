@@ -2,19 +2,15 @@
 //! walking ped bumps into (Grove Street's ambient peds). Ported from the 1.0 US bytes. Unverified
 //! (docs/verify/HOWTO.md).
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
 use crate::bindings::bbox_planes;
-orig! {
-    /// `CPedGeometryAnalyser::ComputeRouteRoundEntityBoundingBox(CPed*, CEntity*, CVector& target, CPointRoute*,
-    /// int32)` (0x5F6110)
-    fn route_round_entity_bbox(ped: GPtr<u8>, e: GPtr<u8>, target: GPtr<u8>, route: GPtr<u8>, flag: u32) -> u32 = cdecl 0x5F6110 => unported;
-    /// `CPedGeometryAnalyser::ComputeEntityHitSide(const CVector&, CEntity*)` (0x5F3AC0)
-    fn hit_side(p: GPtr<u8>, e: GPtr<u8>) -> u32 = cdecl 0x5F3AC0 => unported;
-}
+use crate::bindings::compute_entity_hit_side as hit_side;
+use crate::bindings::geometry_compute_route_round_entity_bbox as route_round_entity_bbox;
 
 /// The bounding-box route expansion global (`[0x8D22B0]`, set to 0.7 for this one call).
 const ROUTE_EXPAND: usize = 0x8D22B0;

@@ -28,25 +28,18 @@ use crate::bindings::remove_cars_blocking_door_not_inside;
 use crate::bindings::stunt_jump_pool_new;
 use sa_core::bindings::restart_initialise;
 use sa_core::bindings::stats_increment_stat;
+use crate::bindings::garages_close_hide_out_garages_before_save as close_hide_out_garages_before_save_call;
+use crate::bindings::get_stat_value as stats_get_stat_value;
+use crate::bindings::set_stat_value as stats_set_stat_value;
+use crate::bindings::stats_populate_favorite_radio_station_list;
+use crate::bindings::store_and_remove_cars as store_and_remove_cars_for_this_hide_out;
+use sa_core::bindings::load_data_from_work_buffer as load_data;
+use sa_core::bindings::save_data_to_work_buffer as save_data;
 orig! {
-    /// `CGenericGameStorage::SaveDataToWorkBuffer(void*, int32)` (0x5D1270)
-    fn save_data(p: GPtr<u8>, n: i32) -> u8 = cdecl 0x5D1270 => sa_core::save::save_data_to_work_buffer;
-    /// `CGenericGameStorage::LoadDataFromWorkBuffer(void*, int32)` (0x5D1300)
-    fn load_data(p: GPtr<u8>, n: i32) -> u8 = cdecl 0x5D1300 => sa_core::save::load_data_from_work_buffer;
-    /// `CGarages::CloseHideOutGaragesBeforeSave()` (0x44A170)
-    fn close_hide_out_garages_before_save_call() = cdecl 0x44A170 => close_hide_out_garages_before_save;
-    /// `CGarage::StoreAndRemoveCarsForThisHideOut(CStoredCar*, int32)` (0x449900)
-    fn store_and_remove_cars_for_this_hide_out(garage: GPtr<u8>, cars: GPtr<u8>, max: i32) = thiscall 0x449900 => unported;
     /// `CSaveGarage::CopyGarageIntoSaveGarage(const CGarage&)` (0x5D3020)
     fn copy_garage_into_save_garage(s: GPtr<u8>, garage: GPtr<u8>) = thiscall 0x5D3020 => super::misc2::copy_garage_into_save_garage;
     /// `CSaveGarage::CopyGarageOutOfSaveGarage(CGarage&)` (0x5D30C0)
     fn copy_garage_out_of_save_garage(s: GPtr<u8>, garage: GPtr<u8>) = thiscall 0x5D30C0 => super::misc2::copy_garage_out_of_save_garage;
-    /// `CStats::GetStatValue(uint16)` (0x558E40, ST0)
-    fn stats_get_stat_value(stat: u32) -> f32 = cdecl 0x558E40 => unported;
-    /// `CStats::SetStatValue(uint16, float)` (0x55A070)
-    fn stats_set_stat_value(stat: u32, value: f32) = cdecl 0x55A070 => unported;
-    /// `CStats::PopulateFavoriteRadioStationList()` (0x558EC0)
-    fn stats_populate_favorite_radio_station_list() = cdecl 0x558EC0 => unported;
 }
 
 // ------------------------------------------------------------------------------- CGarages -------
@@ -153,7 +146,7 @@ pub fn close_hide_out_garages_before_save() {
             continue;
         }
         garage.byte_add(0x4D).write(0);
-        let idx = find_safe_house_index_for_garage_type(u32::from(ty));
+        let idx = find_safe_house_index_for_garage_type(u32::from(ty) as i32);
         let cars = g::<u8>((idx as u32).wrapping_shl(8).wrapping_add(CARS_IN_SAFE_HOUSE as u32) as usize);
         store_and_remove_cars_for_this_hide_out(garage, cars, 4);
         remove_cars_blocking_door_not_inside(garage);
@@ -306,7 +299,7 @@ const STATS_ARRAYS: [(usize, i32); 6] =
 #[hook(addr = 0x5D3B40, conv = cdecl, name = "CStats::Save", expect = "56 57 68 B0 00 00 00",
        route = "split", hazards = "none", recs = "save-load")]
 pub fn stats_save() -> u8 {
-    let v = stats_get_stat_value(0xB0);
+    let v = stats_get_stat_value(0xB0) as f32;
     stats_increment_stat(0xB1, v);
     stats_set_stat_value(0xB0, 0.0);
     for (k, (a, n)) in STATS_ARRAYS.into_iter().enumerate() {

@@ -7,7 +7,7 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 /// `FrontEndMenuManager.m_nPrefsLanguage` (0xBA67CC, sa-core)
 use sa_core::platform::PREFS_LANGUAGE;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 
 use crate::common::{ftol32, rd, wr, x, xi};
@@ -74,14 +74,9 @@ fn d_wr<T: sa_core::mem::GameData>(off: isize, v: T) {
     wr(details(), off, v)
 }
 
-orig! {
-    /// `CSprite::InitSpriteBuffer()` (0x70CFB0)
-    pub fn init_sprite_buffer() = cdecl 0x70CFB0 => unported;
-    /// `CFont::FindSubFontCharacter(uint8 c, uint8 style)` (0x7192C0)
-    pub fn find_sub_font_character_call(c: u32, style: u32) -> u8 = cdecl 0x7192C0 => find_sub_font_character_abi;
-    /// `CFont::ProcessCurrentString(bool print, float x, float y, const GxtChar* text)` (0x71A220)
-    pub fn process_current_string(print: u32, x: f32, y: f32, text: GPtr<u8>) -> u32 = cdecl 0x71A220 => unported;
-}
+pub use crate::bindings::find_sub_font_character_call;
+pub use crate::bindings::process_current_string;
+pub use sa_world::bindings::init_sprite_buffer;
 
 pub fn find_sub_font_character_abi(c: u32, style: u32) -> u8 {
     find_sub_font_character(c as u8, style as u8)
@@ -374,7 +369,7 @@ pub fn get_character_size(c: u32) -> X87 {
 /// `ProcessCurrentString(false, x, y, text)`.
 #[hook(addr = 0x71A5E0, conv = cdecl, name = "CFont::GetNumberLines", expect = "8B 44 24 0C 8B 4C 24 08")]
 pub fn get_number_lines(px: f32, py: f32, text: GPtr<u8>) -> u32 {
-    process_current_string(0, px, py, text)
+    process_current_string(0, px, py, text) as u32
 }
 
 /// `CFontChar::Set(const CFontChar&)` (0x718E50, thiscall): copies the fields (0x00..0x2A, 0x2C..0x2E;

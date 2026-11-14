@@ -56,37 +56,26 @@ const UV_SCHEME_A: u32 = 0x8DED84;
 const UV_SCHEME_B: u32 = 0x8DEDB4;
 
 use crate::bindings::free_list_create_prealloc;
+use crate::bindings::animation_destroy;
+use crate::bindings::free_list_destroy;
+use crate::bindings::hanim_hierarchy_create;
+use crate::bindings::interpolator_destroy;
+use crate::bindings::rw_engine_register_plugin as engine_register_plugin;
+use sa_core::bindings::frame_register_plugin;
+use sa_core::bindings::frame_register_plugin_stream;
+use sa_core::bindings::register_scheme_call;
+use sa_core::bindings::rp_material_register_plugin as material_register_plugin;
+use sa_core::bindings::rp_material_register_plugin_stream as material_register_plugin_stream;
+use sa_core::bindings::rw_matrix_destroy as matrix_destroy;
 orig! {
-    /// `RwEngineRegisterPlugin(size, id, open, close)` (0x7F2BB0)
-    fn engine_register_plugin(size: i32, id: u32, open: u32, close: u32) -> i32 = cdecl 0x7F2BB0 => crate::plugin::engine_register_plugin;
-    /// `RwFrameRegisterPlugin` (0x7F1260)
-    fn frame_register_plugin(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x7F1260 => crate::frame::register_plugin;
-    /// `RwFrameRegisterPluginStream` (0x807580)
-    fn frame_register_plugin_stream(id: u32, read: u32, write: u32, get_size: u32) -> i32 = cdecl 0x807580 => crate::frame::register_plugin_stream;
-    /// `RpMaterialRegisterPlugin` (0x74DBF0)
-    fn material_register_plugin(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x74DBF0 => crate::material::rp_material_register_plugin;
-    /// `RpMaterialRegisterPluginStream` (0x74DC20)
-    fn material_register_plugin_stream(id: u32, read: u32, write: u32, get_size: u32) -> i32 = cdecl 0x74DC20 => crate::material::rp_material_register_plugin_stream;
-    /// `RwFreeListDestroy(fl)` (0x801B80)
-    fn free_list_destroy(fl: GPtr<u8>) -> u32 = cdecl 0x801B80 => crate::memory::rw_freelist_destroy;
-    /// `RwMatrixDestroy(m)` (0x7F2A20)
-    fn matrix_destroy(m: GPtr<u8>) -> u32 = cdecl 0x7F2A20 => crate::matrix::rw_matrix_destroy;
     /// `_rwSListCreate(entrySize, hint)` (0x809160)
     fn slist_create(size: u32, hint: u32) -> GPtr<u8> = cdecl 0x809160 => crate::rxpipeline::rw_slist_create;
     /// `_rwSListDestroy(list)` (0x809440)
     fn slist_destroy(s: GPtr<u8>) -> i32 = cdecl 0x809440 => crate::rxpipeline::rw_slist_destroy;
-    /// `RtAnimRegisterInterpolationScheme(info)` (0x7CCD40)
-    fn register_scheme_call(info: GPtr<u8>) -> i32 = cdecl 0x7CCD40 => rt_anim_register_interpolation_scheme;
     /// `RtDictSchemaInit(schema)` (0x7CED40)
     fn dict_schema_init_call(schema: GPtr<u8>) -> GPtr<u8> = cdecl 0x7CED40 => rt_dict_schema_init;
     /// `RtDictSchemaDestruct(schema)` (0x7CED70)
     fn dict_schema_destruct_call(schema: GPtr<u8>) -> i32 = cdecl 0x7CED70 => rt_dict_schema_destruct;
-    /// `RtAnimInterpolatorDestroy(interp)` (0x7CD590)
-    fn interpolator_destroy(i: GPtr<u8>) = cdecl 0x7CD590 => unported;
-    /// `RtAnimAnimationDestroy(anim)` (0x7CCF10)
-    fn animation_destroy(a: GPtr<u8>) -> i32 = cdecl 0x7CCF10 => unported;
-    /// `RpHAnimHierarchyCreate(numNodes, nodeFlags, nodeIDs, flags, maxKeyFrameSize)` (0x7C4C30)
-    fn hanim_hierarchy_create(n: i32, node_flags: u32, node_ids: u32, flags: u32, key_size: i32) -> GPtr<u8> = cdecl 0x7C4C30 => unported;
 }
 
 use sa_core::field::addr32 as a32;
@@ -304,7 +293,7 @@ pub fn hanim_frame_copy(dst: GPtr<u8>, src: GPtr<u8>, _offset: i32, _size: i32) 
         return dst;
     }
     let key = rd::<i32>(p8(rd::<u32>(sh, 0x20)), 0x20);
-    let h = hanim_hierarchy_create(rd::<i32>(sh, 4), 0, 0, flags, key);
+    let h = hanim_hierarchy_create(rd::<i32>(sh, 4), GPtr::NULL, GPtr::NULL, flags, key);
     let mut i: i32 = 0;
     if rd::<i32>(h, 4) > 0 {
         loop {

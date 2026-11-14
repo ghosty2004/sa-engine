@@ -74,12 +74,12 @@ const NAV_ZONE_INFO_INDEX: u32 = 0xBA37B4;
 
 use crate::bindings::clean_up_this_object;
 use crate::bindings::clear_all_script_fire_flags;
-use crate::bindings::create_new_menu;
-use crate::bindings::get_new_unique_script_thing_index;
+use sa_world::bindings::create_new_menu;
+use sa_world::bindings::get_new_unique_script_thing_index;
 use crate::bindings::path_find_unmark_all_road_nodes_as_dont_wander as unmark_all_road_nodes_as_dont_wander;
 use crate::bindings::report_mission_audio_event as report_mission_audio_event_pos;
 use crate::bindings::set_up_conversation_node;
-use crate::bindings::vehicle_pool_get_at;
+use sa_world::bindings::vehicle_pool_get_at;
 use sa_core::bindings::get_uppercase_key;
 use sa_core::bindings::rp_clump_for_all_atomics;
 use sa_core::bindings::stats_increment_stat as increment_stat;
@@ -90,7 +90,7 @@ use sa_world::bindings::damage_get_door_status as get_door_status;
 use sa_world::bindings::decision_maker_types_get_instance;
 use sa_world::bindings::facial_set_request;
 use sa_world::bindings::find_ground_z_for_coord as find_ground_z_raw;
-use sa_world::bindings::find_objects_of_type_in_range;
+use sa_core::bindings::find_objects_of_type_in_range;
 use sa_world::bindings::find_zone_by_label;
 use sa_world::bindings::get_task_swim;
 use sa_world::bindings::hold_entity_drop_entity;
@@ -99,89 +99,65 @@ use sa_world::bindings::pick_random_passenger;
 use sa_world::bindings::set_up_skip;
 use sa_world::bindings::task_facial_stop_all as facial_stop_all;
 use sa_world::bindings::vehicle_can_be_deleted as can_be_deleted;
+use crate::bindings::add_to_resource_manager;
+use crate::bindings::brains_is_object_within_range as is_object_within_brain_activation_range;
+use crate::bindings::copy_decision_maker_6070f0;
+use crate::bindings::give_ped_scripted_task;
+use crate::bindings::remove_script_effect_system;
+use crate::bindings::script_task_pick_up_object;
+use crate::bindings::set_char_coordinates;
+use crate::bindings::vehicle_get_ref;
+use sa_core::bindings::destroy_fx_system;
+use sa_core::bindings::get_pad;
+use sa_core::bindings::tm_get_task_secondary as get_task_secondary;
+use sa_core::bindings::vector_magnitude;
+use sa_world::bindings::find_nearest_entry_exit;
+use sa_world::bindings::find_player_centre_of_world;
+use sa_world::bindings::fire_extinguish_point as extinguish_point;
+use sa_world::bindings::fx_add_blood;
+use sa_world::bindings::get_actual_script_thing_index;
+use sa_world::bindings::get_remap_index;
+use sa_world::bindings::get_replacement_upgrade;
+use sa_world::bindings::get_upgrade;
+use sa_world::bindings::get_vehicle_appearance;
+use sa_world::bindings::ped_say;
+use sa_world::bindings::set_entry_exit_flag;
+use sa_world::bindings::set_stat_value;
 orig! {
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    fn get_pad(n: u32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CTaskManager::GetTaskSecondary(int32)` (0x681810)
-    fn get_task_secondary(tm: GPtr<u8>, slot: u32) -> GPtr<u8> = thiscall 0x681810 => unported;
     /// `CHeli::SwitchPoliceHelis(bool)` (0x6C4800)
     fn switch_police_helis(on: u32) = cdecl 0x6C4800 => unported;
     /// `CShopping::StoreVehicleMods()` (0x49B280) / `RestoreVehicleMods()` (0x49B3C0)
     fn store_vehicle_mods() = cdecl 0x49B280 => unported;
     fn restore_vehicle_mods() = cdecl 0x49B3C0 => unported;
-    /// `CVehicle::GetUpgrade(int32)` (0x6D3650) / `GetReplacementUpgrade(int32)` (0x6D3A50)
-    fn get_upgrade(v: GPtr<u8>, slot: u32) -> u32 = thiscall 0x6D3650 => unported;
-    fn get_replacement_upgrade(v: GPtr<u8>, node: u32) -> u32 = thiscall 0x6D3A50 => unported;
     /// `CGameLogic::ForceDeathRestart()` (0x441240) / `ResetStuffUponResurrection()` (0x442980)
     fn force_death_restart() = cdecl 0x441240 => unported;
     fn reset_stuff_upon_resurrection() = cdecl 0x442980 => unported;
     /// 0x6E76E0 (cdecl, no arguments; gr `CWaterLevel::SyncWater`)
     fn sync_water_6e76e0() = cdecl 0x6E76E0 => unported;
-    /// `CRunningScript::SetCharCoordinates(CPed*, float x, y, z, bool warp, bool offset)` (0x464DC0); raw floats
-    fn set_char_coordinates(s: Scr, p: GPtr<u8>, x: u32, y: u32, z: u32, warp: u32, offset: u32) = thiscall 0x464DC0 => unported;
-    /// `CTheScripts::GetActualScriptThingIndex(int32 ref, uint8 type)` (0x4839A0)
-    fn get_actual_script_thing_index(r: u32, ty: u32) -> i32 = cdecl 0x4839A0 => unported;
-    /// `FxManager_c::DestroyFxSystem(FxSystem_c*)` (0x4A9810)
-    fn destroy_fx_system(m: GPtr<u8>, fx: u32) = thiscall 0x4A9810 => unported;
-    /// `CTheScripts::RemoveScriptEffectSystem(int32)` (0x492FD0)
-    fn remove_script_effect_system(h: u32) = cdecl 0x492FD0 => unported;
-    /// `CWorld::FindPlayerCentreOfWorld(int32)` (0x56E250): a pointer to the position
-    fn find_player_centre_of_world(id: u32) -> GPtr<u32> = cdecl 0x56E250 => unported;
-    /// `CScriptsForBrains::IsObjectWithinBrainActivationRange(CObject*, const CVector&)` (0x46B3D0), AL
-    fn is_object_within_brain_activation_range(b: GPtr<u8>, o: GPtr<u8>, pos: GPtr<u32>) -> u8 = thiscall 0x46B3D0 => unported;
-    /// 0x6070F0 (thiscall on the `CDecisionMakerTypes` instance, 3 dwords `(int32 src, int32 0, bool cleanup)`, returns
-    /// the new decision maker index; gr `CDecisionMakerTypes::CopyDecisionMaker`)
-    fn copy_decision_maker_6070f0(t: GPtr<u8>, src: u32, ty: u32, cleanup: u32) -> u32 = thiscall 0x6070F0 => unported;
-    /// `CScriptResourceManager::AddToResourceManager(int32, uint32 type, CRunningScript*)` (0x4704B0)
-    fn add_to_resource_manager(m: GPtr<u8>, id: u32, ty: u32, s: Scr) = thiscall 0x4704B0 => unported;
     /// `CAudioEngine::ReportMissionAudioEvent(uint16, CObject*)` (0x507350)
     fn report_mission_audio_event_obj(a: GPtr<u8>, ev: u32, o: GPtr<u8>) = thiscall 0x507350 => unported;
     /// `CAudioEngine::AttachMissionAudioToObject(uint8 slot, CObject*)` (0x507320)
     fn attach_mission_audio_to_object(a: GPtr<u8>, slot: u32, o: GPtr<u8>) = thiscall 0x507320 => unported;
-    /// `CFireManager::ExtinguishPoint(CVector, float)` (0x539450); the vector by value, raw
-    fn extinguish_point(m: GPtr<u8>, x: u32, y: u32, z: u32, r: u32) = thiscall 0x539450 => unported;
-    /// `CVector::Magnitude()` (0x4082C0), ST0 (an `fsqrt` result under PC=24: exact as f64)
-    fn vector_magnitude(v: GPtr<u32>) -> f64 = thiscall 0x4082C0 => unported;
-    /// `CPool<CVehicle>::GetRef(CVehicle*)` (0x424160), ECX = the vehicle pool
-    fn vehicle_get_ref(pool: GPtr<u8>, v: GPtr<u8>) -> u32 = thiscall 0x424160 => unported;
-    /// `CVehicle::GetRemapIndex()` (0x6D0B70)
-    fn get_remap_index(v: GPtr<u8>) -> u32 = thiscall 0x6D0B70 => unported;
     /// `CAutomobile::GetMovingCollisionOffset()` (0x6A2150), ST0 (a loaded float: exact as f64)
     fn get_moving_collision_offset(v: GPtr<u8>) -> f64 = thiscall 0x6A2150 => unported;
-    /// `CEntryExitManager::SetEntryExitFlag(const char*, uint32, bool)` (0x43EF20)
-    fn set_entry_exit_flag(name: GPtr<u8>, flag: u32, on: u32) = cdecl 0x43EF20 => unported;
     /// `CAudioEngine::PauseBeatTrack(bool)` (0x507200)
     fn pause_beat_track(a: GPtr<u8>, b: u32) = thiscall 0x507200 => unported;
     /// `CPathFind::MarkRoadNodeAsDontWander(float, float, float)` (0x450560); raw floats
     fn mark_road_node_as_dont_wander(p: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x450560 => unported;
     /// `CCheckpoints::SetHeading(uint32 id, float)` (0x722970); raw float
     fn checkpoints_set_heading(id: u32, h: u32) = cdecl 0x722970 => unported;
-    /// `CStats::SetStatValue(uint16, float)` (0x55A070) / `IncrementStat(uint16, float)` (0x55C180)
-    fn set_stat_value(stat: u32, v: f32) = cdecl 0x55A070 => unported;
     /// `CVehicleRecording::ChangeCarPlaybackToUseAI(CVehicle*)` (0x45A360)
     fn change_car_playback_to_use_ai(v: GPtr<u8>) = cdecl 0x45A360 => unported;
     /// `CCamera::AddShakeSimple(float, int32, float)` (0x50D240); the three operand dwords raw
     fn add_shake_simple(c: GPtr<u8>, a: u32, b: u32, d: u32) = thiscall 0x50D240 => unported;
     /// `CTaskSimpleSetCharIgnoreWeaponRangeFlag::CTaskSimpleSetCharIgnoreWeaponRangeFlag(bool)` (0x474620)
     fn task_ignore_weapon_range_ctor(t: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x474620 => unported;
-    /// `CRunningScript::GivePedScriptedTask(int32 ped, CTask*, int32 command)` (0x465C20)
-    fn give_ped_scripted_task(s: Scr, ped: u32, task: GPtr<u8>, command: u32) = thiscall 0x465C20 => unported;
-    /// `CRunningScript::ScriptTaskPickUpObject(int32 command)` (0x46AF50; reads its own parameters)
-    fn script_task_pick_up_object(s: Scr, command: u32) = thiscall 0x46AF50 => unported;
     /// `CTask` virtual slot 4 (+0x10, `GetTaskType()`)
     fn task_get_type(t: GPtr<u8>) -> u32 = thiscall vslot 0x10 => unported;
     /// `CTask` virtual slot 6 (+0x18, `MakeAbortable(CPed*, eAbortPriority, const CEvent*)`), AL (discarded)
     fn task_make_abortable(t: GPtr<u8>, p: GPtr<u8>, prio: u32, ev: u32) -> u8 = thiscall vslot 0x18 => unported;
-    /// `CPed::Say(uint16, uint32, float, uint8, uint8, uint8)` (0x5EFFE0), AX (discarded); the float raw
-    fn ped_say(p: GPtr<u8>, id: u32, a: u32, vol: u32, b: u32, c: u32, d: u32) -> u16 = thiscall 0x5EFFE0 => unported;
-    /// `CEntryExitManager::FindNearestEntryExit(const CVector2D&, float range, int32 ignore)` (0x43F4B0)
-    fn find_nearest_entry_exit(pos: GPtr<u32>, range: u32, ignore: i32) -> u32 = cdecl 0x43F4B0 => unported;
     /// 0x43EF90 (cdecl `(int32 index, uint32 flag, bool on)`; gr `CEntryExitManager::SetEntryExitFlagWithIndex`)
     fn set_entry_exit_flag_with_index_43ef90(i: u32, flag: u32, on: u32) = cdecl 0x43EF90 => unported;
-    /// `Fx_c::AddBlood(CVector& pos, CVector& dir, int32 amount, float lightMult)` (0x49EB00); the float raw
-    fn fx_add_blood(fx: GPtr<u8>, pos: GPtr<u32>, dir: GPtr<u32>, amount: u32, light: u32) = thiscall 0x49EB00 => unported;
-    /// `CVehicle::GetVehicleAppearance()` (0x6D1080)
-    fn get_vehicle_appearance(v: GPtr<u8>) -> u32 = thiscall 0x6D1080 => unported;
     /// 0x477DA0 (cdecl `(const CVector* pos, float x1, float y1, float x2, float y2, float width)`, AL: the angled
     /// area test; unnamed in the catalogue)
     fn is_in_angled_area_477da0(pos: GPtr<u8>, x1: u32, y1: u32, x2: u32, y2: u32, w: u32) -> u8 = cdecl 0x477DA0 => unported;
@@ -268,7 +244,7 @@ fn create_menu_grid(s: Scr) {
         .fmul_m(spf(1))
         .to_f32()
         .to_bits();
-    let id = create_new_menu(1, GPtr::from_raw(title.as_mut_ptr()), x, y, w, sp(3), sp(4), sp(5), sp(6));
+    let id = create_new_menu(1, GPtr::from_raw(title.as_mut_ptr()), f32::from_bits(x), f32::from_bits(y), f32::from_bits(w), sp(3), sp(4), sp(5), sp(6));
     set_sp(0, u32::from(id));
     store(s, 1);
 }
@@ -323,7 +299,7 @@ fn kill_fx_system_now(s: Scr) {
     if fx == 0 {
         return;
     }
-    destroy_fx_system(GPtr::from_addr(FX_MANAGER), fx);
+    destroy_fx_system(GPtr::from_addr(FX_MANAGER), GPtr::from_addr(fx as usize));
     remove_script_effect_system(h);
     if uses_mission_cleanup(s) {
         mission_cleanup_remove(GPtr::from_addr(MISSION_CLEANUP), h as i32, 4);
@@ -339,9 +315,9 @@ fn is_object_within_brain_activation_range_case(s: Scr) {
     let i = u32::from(GPtr::<u8>::from_addr(PLAYER_IN_FOCUS).read());
     let mut b = false;
     if player_info(i).cast::<u32>().read() != 0 && !o.is_null() {
-        let c = find_player_centre_of_world(i);
+        let c = GPtr::<u8>::cast::<u32>(find_player_centre_of_world(i as i32));
         let mut pos = [c.read(), c.byte_add(4).read(), c.byte_add(8).read()];
-        b = is_object_within_brain_activation_range(GPtr::from_addr(SCRIPTS_FOR_BRAINS), o, GPtr::from_raw(pos.as_mut_ptr())) != 0;
+        b = is_object_within_brain_activation_range(GPtr::from_addr(SCRIPTS_FOR_BRAINS), o, GPtr::<u32>::cast::<u8>(GPtr::from_raw(pos.as_mut_ptr()))) != 0;
     }
     set_flag(s, b);
 }
@@ -364,7 +340,7 @@ fn copy_shared_char_decision_maker(s: Scr) {
         let cleanup = u32::from(s.byte_add(crate::vm::USES_MISSION_CLEANUP).read());
         let inst = decision_maker_types_get_instance();
         let dm = copy_decision_maker_6070f0(inst, src, 0, cleanup);
-        let n = get_new_unique_script_thing_index(dm, 7);
+        let n = get_new_unique_script_thing_index(dm as i32, 7) as u32;
         set_sp(0, n);
         if uses_mission_cleanup(s) {
             mission_cleanup_add(GPtr::from_addr(MISSION_CLEANUP), n as i32, 9);
@@ -373,7 +349,7 @@ fn copy_shared_char_decision_maker(s: Scr) {
             n
         }
     };
-    add_to_resource_manager(GPtr::from_addr(SCRIPT_RESOURCE_MANAGER), r, 3, s);
+    add_to_resource_manager(GPtr::from_addr(SCRIPT_RESOURCE_MANAGER), r as i32, 3, s);
     store(s, 1);
 }
 
@@ -388,7 +364,7 @@ fn set_char_uses_collision_closest_object_of_type(s: Scr) {
     let (x, y) = (sp(0), sp(1));
     let mut z = sp(2);
     if f(z) <= f(K_MINUS_100) {
-        z = X87::from_f64_exact(find_ground_z_raw(x, y)).to_f32().to_bits();
+        z = X87::from_f64_exact(find_ground_z_raw(f32::from_bits(x), f32::from_bits(y))).to_f32().to_bits();
     }
     let radius = sp(3);
     let mut best = X87::from_f32(f(radius)).fdouble().to_f32();
@@ -402,9 +378,9 @@ fn set_char_uses_collision_closest_object_of_type(s: Scr) {
     find_objects_of_type_in_range(
         model,
         GPtr::from_raw(pos.as_mut_ptr()),
-        radius,
+        f32::from_bits(radius),
         1,
-        GPtr::from_raw(n.as_mut_ptr()),
+        GPtr::<u16>::cast::<i16>(GPtr::from_raw(n.as_mut_ptr())),
         16,
         GPtr::from_raw(list.as_mut_ptr()),
         1,
@@ -497,7 +473,7 @@ fn task_set_ignore_weapon_range_flag(s: Scr, command: u32) {
     }
     let t = task_new(0xC);
     let t = if t.is_null() { GPtr::NULL } else { task_ignore_weapon_range_ctor(t, sp(1) & 0xFF) };
-    give_ped_scripted_task(s, u32::MAX, t, command);
+    give_ped_scripted_task(s, u32::MAX as i32, t, command);
 }
 
 /// 09A1 DROP_SECOND_OBJECT (0x47906B): `p = PED(SP0)`; `tm = &p->m_pIntelligence->m_TaskMgr (+4)`; with a secondary
@@ -539,7 +515,7 @@ fn get_random_car_model_in_memory(s: Scr) {
 fn set_closest_entry_exit_flag(s: Scr) {
     collect(s, 5);
     let mut pos = [sp(0), sp(1)];
-    let i = find_nearest_entry_exit(GPtr::from_raw(pos.as_mut_ptr()), sp(2), -1);
+    let i = find_nearest_entry_exit(GPtr::from_raw(pos.as_mut_ptr()), sp(2), -1) as u32;
     set_entry_exit_flag_with_index_43ef90(i, sp(3), u32::from(sp(4) != 0));
 }
 
@@ -551,7 +527,7 @@ fn add_blood(s: Scr) {
     let mut dir = [sp(3), sp(4), sp(5)];
     let p = ped(sp(7));
     let light = p.byte_add(0x12C).cast::<u32>().read();
-    fx_add_blood(GPtr::from_addr(FX), GPtr::from_raw(pos.as_mut_ptr()), GPtr::from_raw(dir.as_mut_ptr()), sp(6), light);
+    fx_add_blood(GPtr::from_addr(FX), GPtr::<u32>::cast::<u8>(GPtr::from_raw(pos.as_mut_ptr())), GPtr::<u32>::cast::<u8>(GPtr::from_raw(dir.as_mut_ptr())), sp(6) as i32, f32::from_bits(light));
 }
 
 /// 09C0 GET_RANDOM_CAR_OF_TYPE_IN_ANGLED_AREA_NO_SAVE (0x479831): `CollectParameters(6)` (x1, y1, x2, y2, width,
@@ -759,7 +735,7 @@ pub fn process_commands_2400_to_2499(s: Scr, command: u32) -> i8 {
         // 0980 EXTINGUISH_FIRE_AT_POINT (0x4788FB): `gFireManager.ExtinguishPoint(CVector(SP0, SP1, SP2), SP3)`
         0x0980 => {
             collect(s, 4);
-            extinguish_point(GPtr::from_addr(FIRE_MANAGER), sp(0), sp(1), sp(2), sp(3));
+            extinguish_point(GPtr::from_addr(FIRE_MANAGER), f32::from_bits(sp(0)), f32::from_bits(sp(1)), f32::from_bits(sp(2)), f32::from_bits(sp(3)));
         }
         // 0981 HAS_TRAIN_DERAILED (0x478952): pushes `(u8)VEH(SP0)->+0x5B9 & 0xFFFFFF01` (exact dword)
         0x0981 => {
@@ -919,7 +895,7 @@ pub fn process_commands_2400_to_2499(s: Scr, command: u32) -> i8 {
             if !o.is_null() {
                 let rw = o.byte_add(0x18).cast::<GPtr<u8>>().read();
                 if !rw.is_null() {
-                    rp_clump_for_all_atomics(rw, SET_ATOMIC_RENDERER_CB, RENDER_FADING_CLUMP_CB);
+                    rp_clump_for_all_atomics(rw, SET_ATOMIC_RENDERER_CB, GPtr::from_addr(RENDER_FADING_CLUMP_CB as usize));
                 }
                 let fl = o.byte_add(0x140).cast::<u32>();
                 fl.write(fl.read() | 0x40_0000);
@@ -990,7 +966,7 @@ pub fn process_commands_2400_to_2499(s: Scr, command: u32) -> i8 {
             collect(s, 2);
             let p = pick_random_passenger(veh(sp(0)));
             if !p.is_null() {
-                ped_say(p, sp(1) & 0xFFFF, 0, 0x3F80_0000, 0, 0, 0);
+                ped_say(p, sp(1) & 0xFFFF, 0, f32::from_bits(0x3F80_0000), 0, 0, 0);
             }
         }
         // 09AD SET_PLAYER_IN_CAR_CAMERA_MODE (0x47938D): SP0 != 4: dword [0xB6F0DC] = SP0
@@ -1013,7 +989,7 @@ pub fn process_commands_2400_to_2499(s: Scr, command: u32) -> i8 {
         // false)`
         0x09AF => {
             collect(s, 4);
-            set_up_skip(sp(0), sp(1), sp(2), sp(3), 1, 0, 0);
+            set_up_skip(sp(0), sp(1), sp(2), sp(3), 1, GPtr::NULL, 0);
         }
         // 09B0 SET_VEHICLE_IS_CONSIDERED_BY_PLAYER (0x47945B): `VEH(SP0)` byte +0x42E bit 5 = SP1 != 0
         0x09B0 => {
@@ -1064,7 +1040,7 @@ pub fn process_commands_2400_to_2499(s: Scr, command: u32) -> i8 {
         0x09BB => {
             collect(s, 2);
             let v = veh(sp(0));
-            set_flag(s, get_door_status(v.byte_add(0x5A0), sp(1)) != 0);
+            set_flag(s, get_door_status(v.byte_add(0x5A0), sp(1) as i32) != 0);
         }
         // 09BC SET_CHAR_COORDINATES_DONT_WARP_GANG_NO_OFFSET (0x479774): `SetCharCoordinates(PED(SP0), SP1, SP2, SP3,
         // false, false)`

@@ -7,7 +7,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 
 use crate::common::{rd, wr, x};
@@ -17,11 +17,8 @@ use sa_core::bindings::matrix_set_rotate_z_only;
 use sa_core::bindings::matrix_set_translate;
 use sa_core::bindings::rp_atomic_clone;
 use sa_core::bindings::rw_tex_dictionary_for_all_textures;
-use sa_stream::bindings::rp_clump_add_atomic;
-orig! {
-    /// `RpAtomicSetFrame(RpAtomic*, RwFrame*)` (0x74BF20)
-    fn rp_atomic_set_frame(a: GPtr<u8>, f: u32) -> GPtr<u8> = cdecl 0x74BF20 => unported;
-}
+use sa_core::bindings::rp_clump_add_atomic;
+use sa_core::bindings::rp_atomic_set_frame;
 
 /// `CMatrix::CMatrix(RwMatrix*, bool owns)` (0x59C050, thiscall, `ret 8`): `m_pAttachMatrix` (+0x40) =
 /// NULL, then `Attach(m, owns)`. Returns `this`.
@@ -30,7 +27,7 @@ orig! {
        note = "the matrix is usually a heap or stack object; Attach copies the RwMatrix")]
 pub fn matrix_ctor_rw(this: GPtr<u8>, m: GPtr<u8>, owns: u32) -> GPtr<u8> {
     wr::<u32>(this, 0x40, 0);
-    matrix_attach(this, m, owns);
+    matrix_attach(this, m, owns as u8);
     this
 }
 
@@ -53,8 +50,8 @@ pub fn matrix_ctor_copy(this: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> {
 #[hook(addr = 0x54F1B0, conv = thiscall, name = "CSimpleTransform::UpdateMatrix", this = "CSimpleTransform", expect = "56 8B F1 8B 46 08",
        unverified = "mvpd-unk-1", route = "L2", hazards = "heap-writes", note = "writes the entity matrix (heap)")]
 pub fn simple_transform_update_matrix(this: GPtr<u8>, m: GPtr<u8>) {
-    matrix_set_translate(m, rd::<u32>(this, 0), rd::<u32>(this, 4), rd::<u32>(this, 8));
-    matrix_set_rotate_z_only(m, rd::<u32>(this, 0xC));
+    matrix_set_translate(m, f32::from_bits(rd::<u32>(this, 0)), f32::from_bits(rd::<u32>(this, 4)), f32::from_bits(rd::<u32>(this, 8)));
+    matrix_set_rotate_z_only(m, f32::from_bits(rd::<u32>(this, 0xC)));
 }
 
 /// `lerp` (0x6E5280, cdecl, the result through a hidden pointer): two 16-byte values by value (three
@@ -89,7 +86,7 @@ pub fn get_first_texture(dict: GPtr<u8>) -> u32 {
        unverified = "mvpd-unk-1", route = "L2", hazards = "heap-writes", note = "clones an RpAtomic (RW heap)")]
 pub fn clone_atomic_to_clump_cb(atomic: GPtr<u8>, clump: GPtr<u8>) -> GPtr<u8> {
     let c = rp_atomic_clone(atomic);
-    rp_atomic_set_frame(c, rd::<u32>(rd::<GPtr<u8>>(atomic, 4), 0xA0));
+    rp_atomic_set_frame(c, GPtr::from_addr(rd::<u32>(rd::<GPtr<u8>>(atomic, 4), 0xA0) as usize));
     rp_clump_add_atomic(clump, c);
     atomic
 }

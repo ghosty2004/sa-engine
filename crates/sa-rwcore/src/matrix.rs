@@ -36,13 +36,12 @@ const E_RW_BADPARAM: u32 = 0x8000_0003;
 /// MATRIXMODULE instance counter.
 const MATRIX_INSTANCES: usize = 0xC979C0;
 
+pub use crate::bindings::free_list_create_prealloc as freelist_create_prealloc;
+pub use crate::bindings::matrix_normal_error as normal_error_call;
+pub use crate::bindings::matrix_orthogonal_error as orthogonal_error_call;
 orig! {
     /// `M->multiply(dst, a, b)` (stored pointer)
     pub fn call_multiply(f: u32, dst: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) = cdecl dyn => unported;
-    /// `_rwMatrixNormalError(m)` (0x7F1500)
-    pub fn normal_error_call(m: GPtr<u8>) -> f64 = cdecl 0x7F1500 => normal_error_f64;
-    /// `_rwMatrixOrthogonalError(m)` (0x7F14A0)
-    pub fn orthogonal_error_call(m: GPtr<u8>) -> f64 = cdecl 0x7F14A0 => orthogonal_error_f64;
     /// `_rwMatrixIdentityError(m)` (0x7F1590, not ported)
     pub fn identity_error_call(m: GPtr<u8>) -> f64 = cdecl 0x7F1590 => unported;
     /// `_rwInvSqrt(x)` (0x7EDB90)
@@ -51,16 +50,14 @@ orig! {
     pub fn rotate_omcs_call(m: GPtr<u8>, axis: GPtr<RwV3d>, omc: f32, sin: f32, op: i32) -> GPtr<u8> = cdecl 0x7F1D00 => rw_matrix_rotate_one_minus_cosine_sine;
     /// `_rwMatrixInvertOrthoNormalizedOrGeneral(dst, src)` (0x7F2160)
     pub fn invert_general_call(dst: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F2160 => rw_matrix_invert_general;
-    /// `RwFreeListCreateAndPreallocateSpace(entrySize, entriesPerBlock, alignment, numBlocks, space, hint)` (0x801B70)
-    pub fn freelist_create_prealloc(size: u32, per_block: u32, align: u32, n: u32, space: GPtr<u8>, hint: u32) -> GPtr<u8> = cdecl 0x801B70 => unported;
 }
 
 #[cfg_attr(sa_phase_a, allow(dead_code))]
-fn normal_error_f64(m: GPtr<u8>) -> f64 {
+pub(crate) fn normal_error_f64(m: GPtr<u8>) -> f64 {
     rw_matrix_normal_error(m).to_f64()
 }
 #[cfg_attr(sa_phase_a, allow(dead_code))]
-fn orthogonal_error_f64(m: GPtr<u8>) -> f64 {
+pub(crate) fn orthogonal_error_f64(m: GPtr<u8>) -> f64 {
     rw_matrix_orthogonal_error(m).to_f64()
 }
 #[cfg_attr(sa_phase_a, allow(dead_code))]

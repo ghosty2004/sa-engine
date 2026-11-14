@@ -1,6 +1,7 @@
 //! Small `CPlayerInfo` / `CPlayerPedData` / `CCopPed` / `CPlayerSkin` / `CPedPlacement` helpers and the
 //! PED static initialiser of `PlayerClothes` (PORT-WEAPON-PED). Ported from the 1.0 US bytes.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -24,32 +25,24 @@ pub use sa_core::bindings::end_gang_war;
 pub use sa_core::bindings::txd_add_ref;
 pub use sa_core::bindings::txd_create;
 pub use sa_world::bindings::take_remote_controlled_car_from_player;
+pub use sa_core::bindings::add_big_message;
+pub use sa_core::bindings::add_txd_slot as txd_add_slot;
+pub use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+pub use sa_core::bindings::entity_register_reference as register_reference;
+pub use sa_core::bindings::ped_give_weapon;
+pub use sa_core::bindings::text_get;
+pub use sa_stream::bindings::remove_txd_slot as txd_remove_slot;
+pub use sa_world::bindings::world_test_sphere_against_world as test_sphere_against_world;
 orig! {
     /// `CDarkel::ResetOnPlayerDeath` (0x43DC10)
     pub fn darkel_reset_on_player_death() = cdecl 0x43DC10 => unported;
-    /// `CText::Get(const char*)` (0x6A0050) on `TheText` (0xC1B340)
-    pub fn text_get(text: u32, key: u32) -> u32 = thiscall 0x6A0050 => unported;
-    /// `CMessages::AddBigMessage(const char*, uint32, eMessageStyle)` (0x69F2B0)
-    pub fn add_big_message(text: u32, time: u32, style: u32) = cdecl 0x69F2B0 => unported;
     /// `CVehicle::BlowUpCar(CEntity*, bool)` (vtable slot 0xA4)
     pub fn vehicle_blow_up_car(v: GPtr<u8>, by: GPtr<u8>, b: u32) = thiscall vslot 0xA4 => unported;
-    /// `CPed::GiveWeapon(eWeaponType, uint32 ammo, bool)` (0x5E6080)
-    pub fn ped_give_weapon(p: GPtr<u8>, ty: i32, ammo: u32, b: u32) -> i32 = thiscall 0x5E6080 => unported;
     /// the police-scanner destructor of a `CWanted` (0x56F200: `this + 0x21C`, then
     /// `CAEPoliceScannerAudioEntity::~CAEPoliceScannerAudioEntity`)
     pub fn wanted_scanner_destructor(w: GPtr<u8>) = thiscall 0x56F200 => unported;
     /// `CPlayerPedData::~CPlayerPedData` (0x571840)
     pub fn ped_data_destructor_call(d: GPtr<u8>) = thiscall 0x571840 => ped_data_destructor;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
-    pub fn clean_up_old_reference(e: GPtr<u8>, r: GPtr<GPtr<u8>>) = thiscall 0x571A00 => unported;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
-    pub fn register_reference(e: GPtr<u8>, r: GPtr<GPtr<u8>>) = thiscall 0x571B70 => unported;
-    /// `CTxdStore::AddTxdSlot(const char*)` (0x731C80)
-    pub fn txd_add_slot(name: u32) -> i32 = cdecl 0x731C80 => unported;
-    /// `CTxdStore::RemoveTxdSlot(int32)` (0x731CD0)
-    pub fn txd_remove_slot(slot: i32) = cdecl 0x731CD0 => unported;
-    /// `CWorld::TestSphereAgainstWorld(CVector, float, CEntity*, bool x6)` (0x569E20)
-    pub fn test_sphere_against_world(x: u32, y: u32, z: u32, r: u32, ignore: u32, b: u32, v: u32, p: u32, o: u32, d: u32, s: u32) -> GPtr<u8> = cdecl 0x569E20 => unported;
 }
 
 /// `CPlayerInfo::KillPlayer` (0x56E580): once (state 0 → 1): `CDarkel::ResetOnPlayerDeath`, the "DEAD"
@@ -61,7 +54,7 @@ pub fn kill_player(this: GPtr<u8>) {
     }
     wr::<u8>(this, 0xDC, 1);
     darkel_reset_on_player_death();
-    add_big_message(text_get(0xC1B340, 0x865020), 0xFA0, 2);
+    add_big_message(GPtr::from_addr((GPtr::<u8>::addr(text_get(GPtr::from_addr(0xC1B340), GPtr::from_addr(0x865020))) as u32) as usize), 0xFA0, 2);
     increment_stat(0x87, 1.0);
     end_gang_war(0);
 }
@@ -206,14 +199,14 @@ pub fn set_partner(this: GPtr<u8>, p: GPtr<u8>) {
     }
     r.write(p);
     if !p.is_null() {
-        register_reference(p, r);
+        register_reference(p, r.cast::<u8>());
     }
 }
 
 /// `CPlayerSkin::Initialise` (0x6FF8A0): a "skin" TXD slot, created and referenced.
 #[hook(addr = 0x6FF8A0, conv = cdecl, name = "CPlayerSkin::Initialise", expect = "68 BC 25 87 00")]
 pub fn skin_initialise() {
-    let s = txd_add_slot(0x8725BC);
+    let s = txd_add_slot(GPtr::from_addr(0x8725BC));
     SKIN_TXD_SLOT.set(s);
     txd_create(s);
     txd_add_ref(SKIN_TXD_SLOT.get());
@@ -230,11 +223,11 @@ pub fn skin_shutdown() {
 #[hook(addr = 0x6168E0, conv = cdecl, name = "CPedPlacement::IsPositionClearOfCars-Pos", expect = "8B 44 24 04 8B 10")]
 pub fn is_position_clear_of_cars_pos(pos: GPtr<u32>) -> GPtr<u8> {
     test_sphere_against_world(
-        pos.read(),
-        pos.wrapping_index(1).read(),
-        pos.wrapping_index(2).read(),
-        0x3E80_0000,
-        0,
+        f32::from_bits(pos.read()),
+        f32::from_bits(pos.wrapping_index(1).read()),
+        f32::from_bits(pos.wrapping_index(2).read()),
+        f32::from_bits(0x3E80_0000),
+        GPtr::NULL,
         0,
         1,
         0,

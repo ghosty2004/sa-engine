@@ -30,7 +30,7 @@ sa_core::globals! {
 }
 
 pub use crate::bindings::audio_report_bullet_hit;
-pub use crate::bindings::col_lighting_get_current;
+pub use sa_world::bindings::col_lighting_get_current;
 pub use crate::bindings::extinguish_point_with_water;
 pub use crate::bindings::fx_add_tyre_burst;
 pub use sa_core::bindings::assoc_set_current_time;
@@ -46,42 +46,29 @@ pub use sa_world::bindings::ped_is_pointer_valid;
 pub use sa_world::bindings::physical_add_to_moving_list;
 pub use sa_world::bindings::report_crime;
 pub use sa_world::bindings::vector_scale;
-pub use sa_world::bindings::vector_sub;
+pub use sa_core::bindings::vector_sub;
 pub use sa_world::bindings::vehicle_inflict_damage;
+pub use crate::bindings::check_for_shooting_vehicle_occupant;
+pub use crate::bindings::fx_add_bullet_impact;
+pub use crate::bindings::glass_was_hit_by_bullet;
+pub use sa_core::bindings::audio_report_frontend_event as report_frontend_audio_event;
+pub use sa_world::bindings::anim_blend_animation as blend_animation;
+pub use sa_world::bindings::camera_is_sphere_visible;
+pub use sa_world::bindings::object_damage;
+pub use sa_world::bindings::physical_apply_move_force_5429f0 as physical_apply_move_force;
+pub use sa_world::bindings::process_line_of_sight;
+pub use sa_world::bindings::set_cars_on_fire;
+pub use sa_world::bindings::set_world_on_fire;
+pub use sa_world::bindings::start_fire_on as start_fire_target;
 orig! {
-    /// `CFireManager::StartFire(CEntity* target, CEntity* creator, float, uint8, uint32 time, int8 gens)` (0x53A050, thiscall)
-    pub fn start_fire_target(man: GPtr<u8>, target: GPtr<u8>, creator: GPtr<u8>, size: f32, unk: u8, time: u32, gens: i8) -> GPtr<u8> = thiscall 0x53A050 => unported;
     /// `CWorld::SprayPaintWorld(CVector&, CVector&, float, bool)` (0x565B70)
     pub fn spray_paint_world(pos: GPtr<u8>, out: GPtr<u8>, range: f32, b: u8) -> i32 = cdecl 0x565B70 => unported;
     /// `FindPlayerPed(int32)` (0x56E210)
     pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
-    /// `CAudioEngine::ReportFrontendAudioEvent(eAudioEvents, float volumeChange, float speed)` (0x506EA0, thiscall)
-    pub fn report_frontend_audio_event(ae: GPtr<u8>, ev: i32, vol: f32, speed: f32) = thiscall 0x506EA0 => unported;
-    /// `CWorld::SetCarsOnFire(float x, y, z, float radius, CEntity*)` (0x5659F0)
-    pub fn set_cars_on_fire(x: f32, y: f32, z: f32, r: f32, e: GPtr<u8>) = cdecl 0x5659F0 => unported;
-    /// `CWorld::SetWorldOnFire(float x, y, z, float radius, CEntity*)` (0x56B910)
-    pub fn set_world_on_fire(x: f32, y: f32, z: f32, r: f32, e: GPtr<u8>) = cdecl 0x56B910 => unported;
-    /// `CWorld::ProcessLineOfSight(start, end, colPoint, entity, buildings, vehicles, peds, objects, dummies,
-    /// seeThrough, camera, shootThrough)` (0x56BA00)
-    pub fn process_line_of_sight(a: GPtr<u8>, b: GPtr<u8>, cp: GPtr<u8>, e: GPtr<u8>, bd: u8, vh: u8, pd: u8, ob: u8, du: u8, st: u8, cam: u8, sh: u8) -> u8 = cdecl 0x56BA00 => unported;
-    /// `CWeapon::CheckForShootingVehicleOccupant(CEntity**, CColPoint*, eWeaponType, const CVector&, const CVector&)` (0x73F480)
-    pub fn check_for_shooting_vehicle_occupant(e: GPtr<u8>, cp: GPtr<u8>, ty: i32, a: GPtr<u8>, b: GPtr<u8>) = cdecl 0x73F480 => unported;
-    /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float delta)` (0x4D4610)
-    pub fn blend_animation(clump: GPtr<u8>, group: i32, id: i32, delta: f32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
     /// `CVehicle::BurstTyre(uint8 component, bool)` (vtable +0xB0, thiscall; the dword holding the piece byte is pushed)
     pub fn vehicle_burst_tyre(veh: GPtr<u8>, piece: u32, b: u8) = thiscall vslot 0xB0 => unported;
-    /// `CCamera::IsSphereVisible(const CVector& center, float radius)` (0x420D40, thiscall)
-    pub fn camera_is_sphere_visible(cam: GPtr<u8>, c: GPtr<u8>, r: f32) -> u8 = thiscall 0x420D40 => unported;
-    /// `Fx_c::AddBulletImpact(CVector& pos, CVector& dir, int32 surface, int32 count, float brightness)` (0x49F3D0, thiscall)
-    pub fn fx_add_bullet_impact(fx: GPtr<u8>, pos: GPtr<u8>, dir: GPtr<u8>, surface: u32, n: i32, b: f32) = thiscall 0x49F3D0 => unported;
-    /// `CObject::ObjectDamage(float, const CVector* pos, const CVector* dir, CEntity*, eWeaponType)` (0x5A0D90, thiscall)
-    pub fn object_damage(obj: GPtr<u8>, dmg: f32, pos: GPtr<u8>, dir: GPtr<u8>, by: GPtr<u8>, ty: i32) = thiscall 0x5A0D90 => unported;
     /// `CEntity::SetIsStatic(bool)` (vtable +0x10, thiscall)
     pub fn entity_set_is_static(e: GPtr<u8>, b: u8) = thiscall vslot 0x10 => unported;
-    /// `CPhysical::ApplyMoveForce(CVector force)` (0x5429F0, thiscall)
-    pub fn physical_apply_move_force(e: GPtr<u8>, x: f32, y: f32, z: f32) = thiscall 0x5429F0 => unported;
-    /// `CGlass::WasGlassHitByBullet(CEntity*, CVector)` (0x71C0D0)
-    pub fn glass_was_hit_by_bullet(e: GPtr<u8>, x: f32, y: f32, z: f32) = cdecl 0x71C0D0 => unported;
     /// `CHeli::TestSniperCollision(CVector* start, CVector* end)` (0x6C6890)
     pub fn heli_test_sniper_collision(a: GPtr<u8>, b: GPtr<u8>) = cdecl 0x6C6890 => unported;
 }
@@ -403,7 +390,7 @@ fn shot_hit_peds(s: GPtr<u8>, info: GPtr<u8>) {
         let mut v = [x(rf(cp, 0)).fsub_m(rf(pp, 0)).to_f32(), x(rf(cp, 4)).fsub_m(rf(pp, 4)).to_f32()];
         let dir = ped_get_local_direction(p, lp(&mut v).cast());
         let dmg = i32::from(rh(info, 0x22) as i16);
-        generate_damage_event(p, rp(s, 0x20), ru(s, 0) as i32, dmg, 3, dir);
+        generate_damage_event(p, rp(s, 0x20), ru(s, 0) as i32, dmg, 3, dir as u32);
         wb(s, 0x29, 1);
     }
 }
@@ -526,7 +513,7 @@ fn bullet_hit(b: GPtr<u8>, ty: i32, hit: &mut GPtr<u8>, cpp: GPtr<u8>, oldp: GPt
     let e = *hit;
     let impact = || {
         if camera_is_sphere_visible(g(THE_CAMERA), cpp, 1.0) != 0 {
-            let l = st0(col_lighting_get_current(ru(cpp, 0x25), 0.5)).to_f32();
+            let l = st0(col_lighting_get_current(ru(cpp, 0x25) as u8, 0.5)).to_f32();
             fx_add_bullet_impact(fx, cpp, normal, u32::from(rb(cpp, 0x23)), 8, l);
         }
     };
@@ -546,7 +533,7 @@ fn bullet_hit(b: GPtr<u8>, ty: i32, hit: &mut GPtr<u8>, cpp: GPtr<u8>, oldp: GPt
                 let mut d2 = [d[0], d[1]];
                 let dir = ped_get_local_direction(e, lp(&mut d2).cast());
                 let dmg = i32::from(rh(b, 0x28) as i16);
-                generate_damage_event(e, rp(b, 4), ty, dmg, i32::from(rb(cpp, 0x24)), i32::from(dir as u8));
+                generate_damage_event(e, rp(b, 4), ty, dmg, i32::from(rb(cpp, 0x24)), i32::from(dir as u8) as u32);
                 let crime = if ru(e, 0x598) == 6 { 5 } else { 4 };
                 report_crime(crime, *hit, rp(b, 4));
                 set_new_to_point();
@@ -555,7 +542,7 @@ fn bullet_hit(b: GPtr<u8>, ty: i32, hit: &mut GPtr<u8>, cpp: GPtr<u8>, oldp: GPt
                 fx_add_blood(fx, cpp, normal, 8, rf(e, 0x12C));
                 if ru(e, 0x530) == 0x37 {
                     let id = if clump_get_first_association(rp(e, 0x18), 0x800).is_null() { 0x24 } else { 0x27 };
-                    let assoc = blend_animation(rp(e, 0x18), 0, id, 8.0);
+                    let assoc = blend_animation(rp(e, 0x18), 0, id as u32, 8.0);
                     if !assoc.is_null() {
                         assoc_set_current_time(assoc, 0.0);
                         wh(assoc, 0x2E, (rh(assoc, 0x2E) & 0xFFF7) | 1);
@@ -626,11 +613,11 @@ fn object_hit(b: GPtr<u8>, o: GPtr<u8>, creator: GPtr<u8>, cpp: GPtr<u8>, normal
     if rb(o, 0x144) >= 200 {
         let info = rp(o, 0x160);
         match ru(info, 0x48) {
-            1 => object_damage(o, 151.0, cpp, normal, creator, ty),
-            2 => object_damage(o, x(rf(info, 0x34)).fmul_m(cf(0x4317_0000)).to_f32(), cpp, normal, creator, ty),
+            1 => object_damage(o, 151.0, cpp, normal, creator, ty as u32),
+            2 => object_damage(o, x(rf(info, 0x34)).fmul_m(cf(0x4317_0000)).to_f32(), cpp, normal, creator, ty as u32),
             _ => {}
         }
-        object_damage(o, 50.0, cpp, normal, rp(b, 4), ru(b, 0) as i32);
+        object_damage(o, 50.0, cpp, normal, rp(b, 4), (ru(b, 0) as i32) as u32);
         return;
     }
     if rb(o, 0x40) & 4 == 0 {
@@ -649,11 +636,11 @@ fn object_hit(b: GPtr<u8>, o: GPtr<u8>, creator: GPtr<u8>, cpp: GPtr<u8>, normal
                 vector_scale(lp(&mut f).cast(), cf(0xC0F0_0000), normal);
                 physical_apply_move_force(o, f[0], f[1], f[2]);
             }
-            object_damage(o, 50.0, cpp, normal, rp(b, 4), ru(b, 0) as i32);
+            object_damage(o, 50.0, cpp, normal, rp(b, 4), (ru(b, 0) as i32) as u32);
             return;
         }
     }
-    object_damage(o, 50.0, cpp, normal, creator, ty);
+    object_damage(o, 50.0, cpp, normal, creator, ty as u32);
 }
 
 pub const HOOKS: &[HookReg] = &[

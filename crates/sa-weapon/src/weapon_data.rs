@@ -3,6 +3,7 @@
 //! US bytes (gta-reversed `WeaponInfo.cpp` a reading aid only). Unverified (docs/verify/HOWTO.md).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -36,16 +37,14 @@ use sa_core::bindings::open_file as file_open;
 use sa_core::bindings::sscanf1;
 use sa_core::bindings::strncmp;
 use sa_stream::bindings::get_anim_group_name;
-use sa_stream::bindings::load_line;
+use sa_core::bindings::load_line;
+use sa_world::bindings::crt_floor as floor;
+use sa_world::bindings::find_weapon_type;
 orig! {
-    /// `CWeaponInfo::FindWeaponType(const char*)` (0x743d10)
-    fn find_weapon_type(name: GPtr<u8>) -> i32 = cdecl 0x743d10 => crate::weapon_info::find_weapon_type;
     /// `CWeaponInfo::FindWeaponFireType(const char*)` (0x5bcf30)
     fn find_weapon_fire_type(s: GPtr<u8>) -> u32 = cdecl 0x5bcf30 => crate::weapon_info::find_weapon_fire_type;
     /// `FUN_0061db30` (0x61db30): the melee anim group of a name
     fn melee_anim_group(s: GPtr<u8>) -> u32 = cdecl 0x61db30 => crate::weapon_info::melee_anim_group;
-    /// CRT `floor(double)` (0x8219f0, ST0)
-    fn floor(v: f64) -> f64 = cdecl 0x8219f0 => sa_world::physical::base::floor_f64;
     /// CRT `_sscanf` (0x8220ad), ten targets
     #[allow(clippy::too_many_arguments)]
     fn sscanf10(s: GPtr<u8>, fmt: GPtr<u8>, a1: GPtr<u8>, a2: GPtr<u8>, a3: GPtr<u8>, a4: GPtr<u8>, a5: GPtr<u8>,
@@ -89,7 +88,7 @@ fn find_anim_group(name: GPtr<u8>) -> (i32, bool) {
         return (0, false);
     }
     loop {
-        let n = get_anim_group_name(i);
+        let n = get_anim_group_name(i as u32);
         if str_eq(name, n) {
             return (i, true);
         }
@@ -153,7 +152,7 @@ pub fn load_weapon_data() {
                 0xA3 => {
                     sscanf12(line, ga(F_MELEE), s(0x98), s(0xC0), s(0xE0), s(0x10), s(0x14), s(0x1C), s(0x24), s(0x28),
                         s(0x100), s(0x64), s(0x20), s(0xA0));
-                    let ty = find_weapon_type(s(0xC0));
+                    let ty = find_weapon_type(s(0xC0)) as i32;
                     let info = g::<u8>(WEAPON_INFOS).byte_add((ty as isize).wrapping_mul(0x70));
                     let ft = find_weapon_fire_type(s(0xE0));
                     wu(info, 4, ru(base, 0x10));
@@ -182,7 +181,7 @@ pub fn load_weapon_data() {
                     sscanf30(line, ga(F_GUN), s(0x98), s(0xC0), s(0xE0), s(0x10), s(0x14), s(0x1C), s(0x24), s(0x28),
                         s(0xA0), s(0x90), s(0x54), s(0x30), s(0x34), s(0x38), s(0x2C), s(0x8C), s(0x5C), s(0x94), s(0x4C),
                         s(0x88), s(0x6C), s(0x80), s(0x74), s(0x84), s(0x7C), s(0x20), s(0x3C), s(0x48), s(0x44), s(0x40));
-                    let ty = find_weapon_type(s(0xC0));
+                    let ty = find_weapon_type(s(0xC0)) as i32;
                     wu(base, 0x70, ty as u32);
                     let mut skill = si(0x2C);
                     if (0x16..=0x20).contains(&ty) {

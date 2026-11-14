@@ -54,13 +54,12 @@ const RS_VERTEXALPHAENABLE: u32 = 0xC;
 
 pub use crate::bindings::rw_im2d_render_indexed_primitive;
 pub use sa_core::bindings::rw_im2d_render_primitive;
-pub use sa_stream::bindings::rw_texture_destroy;
-pub use sa_stream::bindings::rw_texture_read;
+pub use sa_core::bindings::rw_texture_destroy;
+pub use sa_core::bindings::rw_texture_read;
+pub use sa_world::bindings::set_vertices_rect as set_vertices_rect_call;
 orig! {
     /// `RwRenderStateSet(state, value)` through `RwEngineInstance` +0x20
     pub fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `CSprite2d::SetVertices(const CRect&, const CRGBA&, x4)` (0x727420)
-    pub fn set_vertices_rect_call(r: GPtr<u8>, c1: GPtr<u8>, c2: GPtr<u8>, c3: GPtr<u8>, c4: GPtr<u8>) = cdecl 0x727420 => set_vertices_rect;
     /// `CSprite2d::SetVertices(x1, y1, .. y4, const CRGBA&, x4)` (0x727590)
     pub fn set_vertices_quad_call(x1: u32, y1: u32, x2: u32, y2: u32, x3: u32, y3: u32, x4: u32, y4: u32, c1: GPtr<u8>, c2: GPtr<u8>, c3: GPtr<u8>, c4: GPtr<u8>) = cdecl 0x727590 => set_vertices_quad;
 }
@@ -214,9 +213,9 @@ pub fn render_vertex_buffer() {
     rw_im2d_render_indexed_primitive(
         3,
         GPtr::from_addr(RADIOSITY_VERTEX_BUFFER as usize),
-        nv,
-        GPtr::from_addr(TEMP_BUFFER_INDICES as usize),
-        ni,
+        nv as u32,
+        GPtr::<u16>::cast::<u8>(GPtr::from_addr(TEMP_BUFFER_INDICES as usize)),
+        ni as u32,
     );
     NEXT_BUFFER_VERTEX.set(0);
     NEXT_BUFFER_INDEX.set(0);
@@ -489,12 +488,8 @@ pub fn draw_any_rect(
     rw_im2d_render_primitive(5, GPtr::from_addr(VERTICES), 4);
 }
 
-orig! {
-    /// `CSprite2d::SetVertices(RwD3D9Vertex*, const CRect&, const CRGBA& x4, u1, v1, .. u4, v4)` (0x727A00)
-    pub fn set_vertices_d3d9_call(v: GPtr<u8>, r: GPtr<u8>, c1: GPtr<u8>, c2: GPtr<u8>, c3: GPtr<u8>, c4: GPtr<u8>, u1: u32, v1: u32, u2: u32, v2: u32, u3: u32, v3: u32, u4: u32, v4: u32) = cdecl 0x727A00 => set_vertices_d3d9;
-    /// `CSprite2d::RenderVertexBuffer()` (0x7273D0)
-    pub fn render_vertex_buffer_call() = cdecl 0x7273D0 => render_vertex_buffer;
-}
+pub use crate::bindings::set_vertices_d3d9 as set_vertices_d3d9_call;
+pub use sa_world::bindings::render_vertex_buffer as render_vertex_buffer_call;
 
 /// `CSprite2d::Draw(const CRect& r, const CRGBA& c)` (0x728350, thiscall, `ret 8`): the quad in
 /// colour c (`SetVertices(r, c, c, c, c)`), texture raster = `texture ? texture->raster : NULL` (the
@@ -551,11 +546,9 @@ use sa_core::bindings::font_set_orientation as bc_font_set_orientation;
 use sa_core::bindings::rgba_ctor as bc_rgba;
 use sa_core::bindings::sprintf1 as bc_sprintf;
 use sa_core::bindings::sprite_draw_rect as bc_draw_rect;
-sa_core::orig! {
-    fn bc_font_set_wrapx(x: f32) = cdecl 0x7194D0 => unported;
-    fn bc_font_set_right_justify_wrap(x: f32) = cdecl 0x7194F0 => unported;
-    fn bc_font_set_scale(w: f32, h: f32) = cdecl 0x719380 => unported;
-}
+use sa_core::bindings::font_set_right_justify_wrap as bc_font_set_right_justify_wrap;
+use sa_core::bindings::font_set_scale as bc_font_set_scale;
+use sa_core::bindings::font_set_wrapx as bc_font_set_wrapx;
 
 /// `CSprite2d::DrawBarChart(float x, float y, uint16 width, uint8 height, float progress, int8 progressAdd,
 /// uint8 drawPercentage, uint8 drawBlackBorder, CRGBA color, CRGBA addColor)` (0x728640, cdecl). Texture raster
@@ -598,7 +591,7 @@ pub fn draw_bar_chart(x: f32, y: f32, width: u32, height: u32, progress: f32, pr
     let [cr, cg, cb, ca] = color.to_le_bytes();
     let mut colour = color;
     set([x, bottom, end, y]);
-    bc_draw_rect(rp(), GPtr::from_raw(&raw mut colour).cast());
+    bc_draw_rect(GPtr::<u8>::cast::<f32>(rp()), GPtr::from_raw(&raw mut colour).cast());
     // the remainder in the halved colour
     let end2 = if X87::from_f32(fill).fcom(X87::from_f32(right)).test_parity(5) { right } else { fill };
     set([end2, bottom, right, y]);
@@ -608,7 +601,7 @@ pub fn draw_bar_chart(x: f32, y: f32, width: u32, height: u32, progress: f32, pr
     let ob = GPtr::<u8>::from_raw(obj.as_mut_ptr());
     let op = || ob;
     bc_rgba(op(), hr, hg, hb, u32::from(ca));
-    bc_draw_rect(rp(), op());
+    bc_draw_rect(GPtr::<u8>::cast::<f32>(rp()), op());
     let pa = progress_add as u8 as i8;
     if pa != 0 {
         let a = if X87::from_f32(fill).fcom(X87::from_f32(right)).test_parity(5) { right } else { fill };
@@ -620,29 +613,29 @@ pub fn draw_bar_chart(x: f32, y: f32, width: u32, height: u32, progress: f32, pr
         set([left, bottom, a, y]);
         let [ar, ag, ab, _] = add_color.to_le_bytes();
         bc_rgba(op(), u32::from(ar), u32::from(ag), u32::from(ab), u32::from(ca));
-        bc_draw_rect(rp(), op());
+        bc_draw_rect(GPtr::<u8>::cast::<f32>(rp()), op());
     }
     if draw_black_border as u8 != 0 {
         let sh = X87::from_i32(GPtr::<i32>::from_addr(0xC17048).read()).fmul_m(f32::from_bits(0x3B12_4925));
         let sh2 = sh.fadd(sh);
         set([x, sh2.fadd_m(y).to_f32(), right, y]);
         bc_rgba(op(), 0, 0, 0, u32::from(ca));
-        bc_draw_rect(rp(), op());
+        bc_draw_rect(GPtr::<u8>::cast::<f32>(rp()), op());
         let sh = X87::from_i32(GPtr::<i32>::from_addr(0xC17048).read()).fmul_m(f32::from_bits(0x3B12_4925));
         let sh2 = sh.fadd(sh);
         set([x, sh2.fsubr_m(bottom).to_f32(), right, bottom]);
         bc_rgba(op(), 0, 0, 0, u32::from(ca));
-        bc_draw_rect(rp(), op());
+        bc_draw_rect(GPtr::<u8>::cast::<f32>(rp()), op());
         let sw = X87::from_i32(GPtr::<i32>::from_addr(0xC17044).read()).fmul_m(f32::from_bits(0x3ACC_CCCD));
         let sw2 = sw.fadd(sw);
         set([x, bottom, sw2.fadd_m(x).to_f32(), y]);
         bc_rgba(op(), 0, 0, 0, u32::from(ca));
-        bc_draw_rect(rp(), op());
+        bc_draw_rect(GPtr::<u8>::cast::<f32>(rp()), op());
         let sw = X87::from_i32(GPtr::<i32>::from_addr(0xC17044).read()).fmul_m(f32::from_bits(0x3ACC_CCCD));
         let sw2 = sw.fadd(sw);
         set([right, bottom, sw2.fsubr_m(right).to_f32(), y]);
         bc_rgba(op(), 0, 0, 0, u32::from(ca));
-        bc_draw_rect(rp(), op());
+        bc_draw_rect(GPtr::<u8>::cast::<f32>(rp()), op());
     }
     if draw_percentage as u8 != 0 {
         let mut buf = [0u8; 16];

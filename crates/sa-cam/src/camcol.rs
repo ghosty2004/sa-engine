@@ -98,20 +98,15 @@ pub use sa_world::bindings::entity_get_col_model as get_col_model;
 pub use sa_world::bindings::get_task_jet_pack;
 pub use sa_world::bindings::get_task_swim;
 pub use sa_world::bindings::get_using_parachute;
-pub use sa_world::bindings::vector_sub;
+pub use sa_core::bindings::vector_sub;
+pub use crate::bindings::cone_cast_collision_resolve as cone_cast_collision_resolve_raw;
+pub use crate::bindings::get_rough_distance_to_ground;
+pub use sa_world::bindings::get_water_level as get_water_level_raw;
 orig! {
-    /// `CCamera::GetRoughDistanceToGround()` (0x516B00, ST0)
-    pub fn get_rough_distance_to_ground(this: GPtr<u8>) -> f64 = thiscall 0x516B00 => get_rough_distance_to_ground_st0;
-    /// `CWaterLevel::GetWaterLevel(float x, float y, float z, float* level, bool waves, CVector* normal)`
-    /// (0x6EB690, cdecl, AL); the coordinates are pushed as dwords
-    pub fn get_water_level_raw(x: u32, y: u32, z: u32, level: GPtr<f32>, waves: u32, normal: GPtr<u8>) -> u8 = cdecl 0x6EB690 => unported;
     /// `std::min<float>(a, b)` instance (0x404330, ST0): `b` unless `a < b`
     pub fn min_f(a: f32, b: f32) -> f64 = cdecl 0x404330 => min_f_port;
     /// `CCollision::CheckPeds(const CVector& pos, const CVector& dir, float& t)` (0x4154A0, AL)
     pub fn check_peds(pos: GPtr<f32>, dir: GPtr<f32>, t: GPtr<f32>) -> u8 = cdecl 0x4154A0 => sa_world::collision::misc::check_peds;
-    /// `CCamera::ConeCastCollisionResolve(CVector* source, CVector* target, CVector* out, float radius,
-    /// float angle, float* dist)` (0x51A5D0), radius and angle pushed as dwords
-    pub fn cone_cast_collision_resolve_raw(this: GPtr<u8>, source: GPtr<u8>, target: GPtr<u8>, out: GPtr<u8>, radius: u32, angle: u32, dist: GPtr<u8>) -> u8 = thiscall 0x51A5D0 => cone_cast_collision_resolve_bits;
 }
 
 /// Phase B path of `get_rough_distance_to_ground` (ST0 as f64).
@@ -201,7 +196,7 @@ pub fn improve_near_clip(this: GPtr<u8>, veh: GPtr<u8>, ped: GPtr<u8>, source: G
         let cam = SCENE_CAMERA.get();
         let near = x(rd::<f32>(cam, RW_CAM_NEAR));
         if !jne(l, near, 0x41) {
-            set_near_clip_raw(cam, l32.to_bits());
+            set_near_clip_raw(cam, f32::from_bits(l32.to_bits()));
         }
     }
     if !veh.is_null() {
@@ -221,12 +216,12 @@ pub fn improve_near_clip(this: GPtr<u8>, veh: GPtr<u8>, ped: GPtr<u8>, source: G
                         l = m.to_f32();
                     }
                     if !jne(x(l), near, 0x41) {
-                        set_near_clip_raw(cam, l.to_bits());
+                        set_near_clip_raw(cam, f32::from_bits(l.to_bits()));
                     }
                 }
             } else if kind == 3 {
                 let v = bits(&INC_HELI_NEAR);
-                set_near_clip_raw(SCENE_CAMERA.get(), v);
+                set_near_clip_raw(SCENE_CAMERA.get(), f32::from_bits(v));
             }
         }
     } else if !ped.is_null() {
@@ -250,10 +245,10 @@ fn ped_not_standing(this: GPtr<u8>, ped: GPtr<u8>, source: GPtr<u8>, target: GPt
         let deep = rd::<u16>(swim, 0xA) == 4;
         let mut lvl = [0.0f32];
         let found = get_water_level_raw(
-            rd::<u32>(source, 0),
-            rd::<u32>(source, 4),
-            rd::<u32>(source, 8),
-            GPtr::from_raw(lvl.as_mut_ptr()),
+            f32::from_bits(rd::<u32>(source, 0)),
+            f32::from_bits(rd::<u32>(source, 4)),
+            f32::from_bits(rd::<u32>(source, 8)),
+            GPtr::<f32>::cast::<u8>(GPtr::from_raw(lvl.as_mut_ptr())),
             0,
             GPtr::NULL,
         );
@@ -265,10 +260,10 @@ fn ped_not_standing(this: GPtr<u8>, ped: GPtr<u8>, source: GPtr<u8>, target: GPt
         let close = !f.jp(0x05);
         if found != 0 && close {
             let v = bits(&INC_SWIM_SURFACE_NEAR);
-            set_near_clip_raw(SCENE_CAMERA.get(), v);
+            set_near_clip_raw(SCENE_CAMERA.get(), f32::from_bits(v));
         } else if deep && rd::<i32>(the_camera(), PED_ZOOM) == 1 {
             let v = bits(&INC_SWIM_DEEP_NEAR);
-            set_near_clip_raw(SCENE_CAMERA.get(), v);
+            set_near_clip_raw(SCENE_CAMERA.get(), f32::from_bits(v));
         }
         return;
     }
@@ -284,7 +279,7 @@ fn ped_not_standing(this: GPtr<u8>, ped: GPtr<u8>, source: GPtr<u8>, target: GPt
         .to_f32();
     let mut tmp = [0u32; 3];
     let d = vector_sub(GPtr::from_raw(tmp.as_mut_ptr()).cast(), source, target);
-    let a = X87::from_f64_exact(vector_magnitude(d))
+    let a = X87::from_f64_exact(vector_magnitude(d.cast::<u32>()))
         .fmul_m(INC_JETPACK_DIST_SCALE.get())
         .to_f32();
     let l = X87::from_f64_exact(min_f(a, b));
@@ -292,7 +287,7 @@ fn ped_not_standing(this: GPtr<u8>, ped: GPtr<u8>, source: GPtr<u8>, target: GPt
     let cam = SCENE_CAMERA.get();
     let near = x(rd::<f32>(cam, RW_CAM_NEAR));
     if !jne(l, near, 0x41) {
-        set_near_clip_raw(cam, l32.to_bits());
+        set_near_clip_raw(cam, f32::from_bits(l32.to_bits()));
     }
 }
 
@@ -369,7 +364,7 @@ fn ped_standing(this: GPtr<u8>, ped: GPtr<u8>) {
     }
     let cm = ftol32(mn.fmul_m(k(0x42C8_0000))); // 100.0 [0x858628]
     let v = xi(cm).fmul_m(k(0x3C23_D70A)).to_f32(); // 0.01 [0x858C58]
-    set_near_clip_raw(SCENE_CAMERA.get(), v.to_bits());
+    set_near_clip_raw(SCENE_CAMERA.get(), f32::from_bits(v.to_bits()));
 }
 
 /// `CCamera::CameraColDetAndReact(CVector* source, const CVector* target)` (0x520190, `ret 8`, AL).
@@ -562,7 +557,7 @@ pub fn camera_col_det_and_react(source: GPtr<u8>, target: GPtr<u8>) -> u8 {
         if !jp(xb(dist[0]), x(rd::<f32>(cvn, 0xC)), 0x41) {
             let (near, cam) = (rd::<u32>(cvn, 0x10), SCENE_CAMERA.get());
             near_clip = Some((near, cam.addr() as u32, 0x5204F3));
-            set_near_clip_raw(cam, near);
+            set_near_clip_raw(cam, f32::from_bits(near));
         }
         1
     } else {
@@ -614,7 +609,7 @@ pub fn camera_col_det_and_react(source: GPtr<u8>, target: GPtr<u8>) -> u8 {
         let v = bits(&CCDR_BIKE_NEAR);
         let cam = SCENE_CAMERA.get();
         near_clip = Some((v, cam.addr() as u32, 0x520681));
-        set_near_clip_raw(cam, v);
+        set_near_clip_raw(cam, f32::from_bits(v));
     }
     let src_slot = (source.addr() as u32 & !0xFF) | u32::from(bike);
     stack_footprint(&[

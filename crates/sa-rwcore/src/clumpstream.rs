@@ -30,26 +30,26 @@ use sa_core::bindings::rp_clump_for_all_atomics as clump_for_all_atomics;
 use sa_core::bindings::rw_error1 as rw_error;
 use sa_core::bindings::rw_frame_update_objects as frame_update_objects;
 use sa_core::bindings::stream_read;
+use crate::bindings::atomic_get_world;
+use crate::bindings::atomic_stream_read_call;
+use crate::bindings::clump_for_all_cameras;
+use crate::bindings::frame_destroy_hierarchy;
+use crate::bindings::object_release_frame as object_has_frame_release_frame;
+use crate::bindings::plugin_deinit_object as registry_deinit_object;
+use crate::bindings::plugin_invoke_rights as registry_invoke_rights;
+use crate::bindings::plugin_read_data_chunks as registry_read_data_chunks;
+use crate::bindings::read_int32 as stream_read_int32;
+use sa_core::bindings::rp_geometry_destroy as geometry_destroy;
+use sa_core::bindings::rw_stream_find_chunk_call as stream_find_chunk;
 orig! {
-    fn stream_find_chunk(s: GPtr<u8>, ty: u32, len: GPtr<u32>, ver: GPtr<u32>) -> i32 = cdecl 0x7ED2D0 => unported;
-    fn stream_read_int32(s: GPtr<u8>, buf: GPtr<u8>, len: u32) -> GPtr<u8> = cdecl 0x7ED540 => unported;
     fn rw_error2(code: u32, a: u32) -> u32 = cdecl 0x8088D0 => unported;
     fn rw_error_set(e: GPtr<RwError>) -> GPtr<RwError> = cdecl 0x808820 => unported;
-    fn atomic_get_world(a: GPtr<u8>) -> GPtr<u8> = cdecl 0x751050 => unported;
-    fn registry_deinit_object(reg: u32, obj: GPtr<u8>) -> GPtr<u8> = cdecl 0x808740 => unported;
-    fn registry_read_data_chunks(reg: u32, s: GPtr<u8>, obj: GPtr<u8>) -> GPtr<u8> = cdecl 0x808980 => unported;
-    fn registry_invoke_rights(reg: u32, id: u32, obj: GPtr<u8>, data: u32) -> i32 = cdecl 0x808AB0 => unported;
     fn frame_list_stream_read(s: GPtr<u8>, fl: GPtr<u8>) -> GPtr<u8> = cdecl 0x807970 => unported;
     fn frame_list_deinitialize(fl: GPtr<u8>) -> GPtr<u8> = cdecl 0x807720 => unported;
-    fn frame_destroy_hierarchy(f: GPtr<u8>) -> i32 = cdecl 0x7F08A0 => unported;
-    fn object_has_frame_release_frame(o: GPtr<u8>) -> GPtr<u8> = cdecl 0x804F40 => unported;
-    fn geometry_destroy(g: GPtr<u8>) -> i32 = cdecl 0x74CCC0 => unported;
     fn geometry_list_destroy(l: GPtr<u8>) -> GPtr<u8> = cdecl 0x74AE50 => unported;
     fn light_stream_read(s: GPtr<u8>) -> GPtr<u8> = cdecl 0x751F00 => unported;
     fn camera_stream_read(s: GPtr<u8>) -> GPtr<u8> = cdecl 0x808DE0 => unported;
     fn clump_for_all_lights(c: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> = cdecl 0x749C00 => unported;
-    fn clump_for_all_cameras(c: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> = cdecl 0x749BB0 => unported;
-    fn atomic_stream_read_call(s: GPtr<u8>, fl: GPtr<u8>, gl: GPtr<u8>) -> GPtr<u8> = cdecl 0x74B060 => atomic_stream_read;
 }
 
 /// `RwErrorSet({2, _rwerror(code)})` as these functions build it.
@@ -66,7 +66,7 @@ fn ok_version(v: u32) -> bool {
 /// The inline `RpAtomicDestroy` of the atomic reader's failure paths: plugin data, the resource
 /// entry, the geometry (frame update when in a world), the frame, the atomic freelist.
 fn destroy_atomic_inline(a: GPtr<u8>) {
-    registry_deinit_object(ATOMIC_REGISTRY, a);
+    registry_deinit_object(GPtr::from_addr(ATOMIC_REGISTRY as usize), a);
     let res = rd::<u32>(a, 0x14);
     if res != 0 {
         resources_free_res_entry(p8(res));
@@ -190,13 +190,13 @@ pub fn atomic_stream_read(s: GPtr<u8>, fl: GPtr<u8>, gl: GPtr<u8>) -> GPtr<u8> {
     }
     g::<u32>(0xC924A8).write(0);
     g::<u32>(0xC92480).write(0);
-    if registry_read_data_chunks(ATOMIC_REGISTRY, s, a).is_null() {
+    if registry_read_data_chunks(GPtr::from_addr(ATOMIC_REGISTRY as usize), s, a).is_null() {
         error(E_READ);
         return GPtr::NULL;
     }
     let rights = g::<u32>(0xC924A8).read();
     if rights != 0 {
-        registry_invoke_rights(ATOMIC_REGISTRY, rights, a, g::<u32>(0xC92480).read());
+        registry_invoke_rights(GPtr::from_addr(ATOMIC_REGISTRY as usize), rights, a, g::<u32>(0xC92480).read());
     }
     a
 }
@@ -205,7 +205,7 @@ pub fn atomic_stream_read(s: GPtr<u8>, fl: GPtr<u8>, gl: GPtr<u8>) -> GPtr<u8> {
 /// atomic (`RpAtomicDestroy`, stopping at a NULL atomic pointer), lights and cameras (remove and
 /// destroy callbacks), the frame hierarchy, the clump freelist (+4).
 fn destroy_clump_c1(c: GPtr<u8>) {
-    registry_deinit_object(CLUMP_REGISTRY, c);
+    registry_deinit_object(GPtr::from_addr(CLUMP_REGISTRY as usize), c);
     let head = c.addr() as u32 + 8;
     let mut l = rd::<u32>(c, 8);
     while l != head {
@@ -287,8 +287,8 @@ pub fn clump_stream_read(s: GPtr<u8>) -> GPtr<u8> {
     // C2: frame list, plugin data, atomics (callback 0x74BCC0), lights, cameras, hierarchy, freelist
     let c2 = |c: GPtr<u8>, flp: GPtr<u8>| {
         frame_list_deinitialize(flp);
-        registry_deinit_object(CLUMP_REGISTRY, c);
-        clump_for_all_atomics(c, 0x74BCC0, 0);
+        registry_deinit_object(GPtr::from_addr(CLUMP_REGISTRY as usize), c);
+        clump_for_all_atomics(c, 0x74BCC0, GPtr::NULL);
         destroy_clump_tail(c);
     };
     // C3: the list's geometries destroyed and the array freed, then C2
@@ -409,7 +409,7 @@ pub fn clump_stream_read(s: GPtr<u8>) -> GPtr<u8> {
         rw_free(p8(gl[0]));
     }
     frame_list_deinitialize(flp);
-    if registry_read_data_chunks(CLUMP_REGISTRY, s, c).is_null() {
+    if registry_read_data_chunks(GPtr::from_addr(CLUMP_REGISTRY as usize), s, c).is_null() {
         clump_destroy(c);
         error(E_READ);
         return GPtr::NULL;
@@ -439,9 +439,9 @@ pub fn force_linear_filtering_cb(m: GPtr<u8>, filter: u32) -> GPtr<u8> {
 }
 
 use crate::bindings::engine_get_plugin_offset;
+use crate::bindings::atomic_set_pipeline as skin_atomic_set_pipeline;
 orig! {
     fn atomic_get_plugin_offset(id: u32) -> i32 = cdecl 0x74BEC0 => unported;
-    fn skin_atomic_set_pipeline(a: GPtr<u8>, ty: u32) -> GPtr<u8> = cdecl 0x7C89B0 => unported;
 }
 
 /// The RpSkin atomic "always" stream callback (0x7C6AE0, `RpAtomicSetStreamAlwaysCallBack`): the

@@ -6,7 +6,7 @@
 #![allow(clippy::unreadable_literal)]
 
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::{GPtr, X87, ae_resolve_probability, f32_of, g, rd, wr, x, xi};
 
@@ -16,20 +16,12 @@ use sa_core::bindings::vector_magnitude;
 use sa_core::bindings::vector_normalise;
 use sa_world::bindings::entity_get_is_type_physical as entity_is_physical;
 use sa_world::bindings::process_line_of_sight as world_process_line_of_sight;
-orig! {
-    /// `operator==(const CVector&, const CVector&)` (0x4DC670, AL)
-    fn vector_equal(a: GPtr<u8>, b: GPtr<u8>) -> u8 = cdecl 0x4DC670 => unported;
-    /// `CPlaceable::GetRightDirection(CVector* out)` (0x41CC70, returns `out`)
-    fn placeable_get_right(this: GPtr<u8>, out: GPtr<u8>) -> u32 = thiscall 0x41CC70 => unported;
-    /// `CPlaceable::GetTopDirection(CVector* out)` (0x41CCB0, returns `out`)
-    fn placeable_get_top(this: GPtr<u8>, out: GPtr<u8>) -> u32 = thiscall 0x41CCB0 => unported;
-    /// `operator*(float, const CVector&)` (0x40FE90, returns the hidden `out`)
-    fn scalar_mul_vector(out: GPtr<u8>, s: u32, v: GPtr<u8>) -> u32 = cdecl 0x40FE90 => unported;
-    /// `operator-(const CVector&, const CVector&)` (0x40FE60, returns the hidden `out`)
-    fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> u32 = cdecl 0x40FE60 => unported;
-    /// `CAEAudioUtility::GetPiecewiseLinear(float, int16, const float (*)[2])` (0x4D9D90, ST0)
-    fn get_piecewise_linear(v: u32, n: u32, table: u32) -> f64 = cdecl 0x4D9D90 => unported;
-}
+use crate::bindings::get_piecewise_linear;
+use crate::bindings::vector_equal;
+use sa_core::bindings::vector_sub;
+use sa_world::bindings::get_right_direction as placeable_get_right;
+use sa_world::bindings::placeable_get_top_direction as placeable_get_top;
+use sa_world::bindings::vector_scale as scalar_mul_vector;
 
 /// `CWeather::LightningDuration` (uint32), `CWeather::WindClipped`, `CGame::currArea`
 const LIGHTNING_DURATION: usize = 0xC812C4;
@@ -176,21 +168,21 @@ fn city_noise_side(
         }
         let he = g::<u8>(hit as usize);
         let mut hvel = [0f32; 3];
-        if entity_is_physical(he) != 0 {
+        if entity_is_physical(he) as u8 != 0 {
             hvel = [rd(he, 0x44), rd(he, 0x48), rd(he, 0x4C)];
         }
         let mut fwd = [0f32; 3];
-        placeable_get_top(g(THE_CAMERA), vp(&mut fwd));
+        placeable_get_top(g(THE_CAMERA), GPtr::<u8>::cast::<f32>(vp(&mut fwd)));
         vector_normalise(vp(&mut fwd));
         let d1 = f32_of(x(fwd[2]).fmul_m(vel[2]).fadd(x(fwd[1]).fmul_m(vel[1])).fadd(x(fwd[0]).fmul_m(vel[0])));
         let d2 = f32_of(x(fwd[2]).fmul_m(hvel[2]).fadd(x(fwd[1]).fmul_m(hvel[1])).fadd(x(fwd[0]).fmul_m(hvel[0])));
         let mut a = [0f32; 3];
         let mut b = [0f32; 3];
         let mut diff = [0f32; 3];
-        scalar_mul_vector(vp(&mut b), d2.to_bits(), vp(&mut fwd));
-        scalar_mul_vector(vp(&mut a), d1.to_bits(), vp(&mut fwd));
+        scalar_mul_vector(vp(&mut b), f32::from_bits(d2.to_bits()), vp(&mut fwd));
+        scalar_mul_vector(vp(&mut a), f32::from_bits(d1.to_bits()), vp(&mut fwd));
         vector_sub(vp(&mut diff), vp(&mut a), vp(&mut b));
-        let force = X87::from_f64_exact(vector_magnitude(vp(&mut diff)));
+        let force = X87::from_f64_exact(vector_magnitude(GPtr::<u8>::cast::<u32>(vp(&mut diff))));
         if force.fcom(x(c(0x858F9C))).test_any(0x41) {
             break 'hit;
         }
@@ -203,7 +195,7 @@ fn city_noise_side(
             f32_of(py.fsub_m(f32::from_bits(cp[1]))),
             f32_of(x(pz).fsub_m(f32::from_bits(cp[2]))),
         ];
-        let m = X87::from_f64_exact(vector_magnitude(vp(&mut d)));
+        let m = X87::from_f64_exact(vector_magnitude(GPtr::<u8>::cast::<u32>(vp(&mut d))));
         let t = m.fmul_m(c(0x85F0A0)).fsubr_m(c(0x858624)).fmul_m(s);
         add = f32_of(log10(t).fmul_m(c(0x858BA4)).fadd_m(c(0x858CA4)));
         speed = x(s).fmul_m(c(0x862E2C)).fadd_m(c(0x862E2C));
@@ -280,12 +272,12 @@ fn city_noise(sound: GPtr<u8>) {
         pov[2] = rd::<f32>(pp, 8);
     }
     let mut right = [0f32; 3];
-    placeable_get_right(g(THE_CAMERA), vp(&mut right));
+    placeable_get_right(g(THE_CAMERA), GPtr::<u8>::cast::<f32>(vp(&mut right)));
     vector_normalise(vp(&mut right));
     let k4 = c(0x858B90);
     let r4 = [f32_of(x(right[0]).fmul_m(k4)), f32_of(x(right[1]).fmul_m(k4)), f32_of(x(right[2]).fmul_m(k4))];
     let mut default_pos = [f32::from_bits(0xBF67EF9E), f32::from_bits(0x3ED89375), 0.0];
-    if vector_equal(sound.byte_add(0x24), vp(&mut default_pos)) != 0 {
+    if vector_equal(sound.byte_add(0x24), vp(&mut default_pos)) as u8 != 0 {
         let target = [
             f32_of(x(r4[0]).fadd_m(pov[0])),
             f32_of(x(pov[1]).fadd_m(r4[1])),
@@ -328,8 +320,8 @@ fn wind(sound: GPtr<u8>) {
     } else {
         1.0
     };
-    let pw1 = f32_of(X87::from_f64_exact(get_piecewise_linear(zf.to_bits(), 3, 0x8CC2D0)));
-    let pw2 = X87::from_f64_exact(get_piecewise_linear(zf.to_bits(), 3, 0x8CC2E8));
+    let pw1 = f32_of(X87::from_f64_exact(get_piecewise_linear(zf.to_bits(), 3, GPtr::from_addr(0x8CC2D0))));
+    let pw2 = X87::from_f64_exact(get_piecewise_linear(zf.to_bits(), 3, GPtr::from_addr(0x8CC2E8)));
     let wc = c(WIND_CLIPPED);
     let wcl = if !x(c(0x858624)).fcom(x(wc)).test_parity(0x05) {
         x(c(0x858624))

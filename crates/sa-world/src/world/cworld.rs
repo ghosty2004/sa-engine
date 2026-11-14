@@ -319,12 +319,8 @@ pub fn find_player_centre_of_world_no_sniper_shift(id: i32) -> GPtr<u8> {
     pos_ptr(raw)
 }
 
-sa_core::orig! {
-    /// `CWorld::FindPlayerCentreOfWorld(int32)` (0x56E250)
-    pub fn find_player_centre_of_world_call(id: i32) -> GPtr<u8> = cdecl 0x56E250 => find_player_centre_of_world;
-    /// `CEntryExitManager::GetPositionRelativeToOutsideWorld(CVector&)` (0x43F150)
-    pub fn eem_get_position_relative_to_outside_world(v: GPtr<f32>) = cdecl 0x43F150 => unported;
-}
+pub use crate::bindings::eem_get_position_relative_to_outside_world;
+pub use crate::bindings::find_player_centre_of_world as find_player_centre_of_world_call;
 
 /// `FindPlayerCentreOfWorldForMap(CVector* out, int32 id)` (0x56E400): copies
 /// `FindPlayerCentreOfWorld(id)` to a local, `CEntryExitManager::GetPositionRelativeToOutsideWorld` on
@@ -334,7 +330,7 @@ pub fn find_player_centre_of_world_for_map(out: GPtr<f32>, id: i32) -> GPtr<f32>
     let c = find_player_centre_of_world_call(id);
     let mut v = [rd::<u32>(c, 0), rd::<u32>(c, 4), rd::<u32>(c, 8)];
     let vp = GPtr::from_raw(v.as_mut_ptr());
-    eem_get_position_relative_to_outside_world(vp.cast());
+    eem_get_position_relative_to_outside_world(GPtr::<f32>::cast::<u8>(vp.cast()));
     let o = out.cast::<u8>();
     wr::<u32>(o, 0, v[0]);
     wr::<u32>(o, 4, v[1]);

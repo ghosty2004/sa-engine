@@ -37,5 +37,5 @@ pub fn sound_manager() -> GPtr<u8> {
     g(AE_SOUND_MANAGER)
 }
 
-pub use crate::bindings::ae_random_int;
+pub use sa_world::bindings::ae_random_int;
 pub use crate::bindings::ae_resolve_probability;

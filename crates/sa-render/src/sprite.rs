@@ -48,9 +48,8 @@ const HORIZON_DIST: u32 = 0x453B_8000;
 const RS_ZTESTENABLE: u32 = 6;
 
 pub use crate::bindings::rw_im2d_render_indexed_primitive;
+pub use sa_core::bindings::matrix_mul_vec;
 orig! {
-    /// `operator*(const CMatrix&, const CVector&)` (0x59C890, result by hidden pointer)
-    pub fn matrix_mul_vec(out: GPtr<f32>, m: GPtr<u8>, v: GPtr<f32>) -> GPtr<f32> = cdecl 0x59C890 => unported;
     /// `RwRenderStateSet(state, value)` through `RwEngineInstance` +0x20
     pub fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
 }
@@ -113,7 +112,7 @@ pub fn calc_screen_coors(
     let r = matrix_mul_vec(
         GPtr::from_raw(t.as_mut_ptr().cast()),
         GPtr::from_addr(VIEW_MATRIX),
-        input,
+        input.cast::<u8>(),
     );
     let mut f = Fpu::new();
     f.fld(near);
@@ -169,9 +168,9 @@ pub fn flush_sprite_buffer() {
         rw_im2d_render_indexed_primitive(
             3,
             GPtr::from_addr(RADIOSITY_VERTEX_BUFFER),
-            n.wrapping_mul(4),
-            GPtr::from_addr(TEMP_BUFFER_INDICES),
-            n.wrapping_mul(6),
+            n.wrapping_mul(4) as u32,
+            GPtr::<u16>::cast::<u8>(GPtr::from_addr(TEMP_BUFFER_INDICES)),
+            n.wrapping_mul(6) as u32,
         );
     };
     if FLUSH_SWITCH_Z_TEST.get() != 0 {
@@ -275,7 +274,7 @@ pub fn calc_horizon_coors() -> X87 {
     let r = matrix_mul_vec(
         GPtr::from_raw(t.as_mut_ptr().cast()),
         GPtr::from_addr(VIEW_MATRIX),
-        GPtr::from_raw(local.as_mut_ptr()),
+        GPtr::<f32>::cast::<u8>(GPtr::from_raw(local.as_mut_ptr())),
     );
     let (vy, vz) = (r.wrapping_index(1).read(), r.wrapping_index(2).read());
     let mut f = Fpu::new();

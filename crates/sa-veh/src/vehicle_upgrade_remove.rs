@@ -40,7 +40,7 @@ fn remove_parts(this: GPtr<u8>, t: u32, replacement: bool) -> bool {
         remove_replacement_upgrade(this, t);
         true
     } else {
-        rp_clump_for_all_atomics(rd::<GPtr<u8>>(this, 0x18), REMOVE_UPGRADE_CB, t);
+        rp_clump_for_all_atomics(rd::<GPtr<u8>>(this, 0x18), REMOVE_UPGRADE_CB, GPtr::from_addr(t as usize));
         false
     }
 }
@@ -60,7 +60,7 @@ pub fn remove_vehicle_upgrade(this: GPtr<u8>, model: i32) {
     if clear_vehicle_upgrade_flags(this, model as u32, t) != 0 {
         return;
     }
-    let other = i32::from(find_other_upgrade(GPtr::from_addr(0xB4_E6D8), model));
+    let other = i32::from(find_other_upgrade(GPtr::from_addr(0xB4_E6D8), model as i16) as i16);
     let (t, repl) = upgrade_kind(mi);
     if remove_parts(this, t, repl) && t == 2 {
         wr::<u32>(this, 0x458, 0x3F80_0000);

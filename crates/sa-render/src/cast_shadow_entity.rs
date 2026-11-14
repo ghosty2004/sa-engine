@@ -14,20 +14,16 @@ use sa_core::bindings::matrix_copy_to_rw_matrix as copy_to_rw_matrix;
 use sa_core::bindings::rw_matrix_invert;
 use sa_core::bindings::rw_v3d_transform_points;
 use sa_world::bindings::calculate_triangle_planes;
-use sa_world::bindings::rw_matrix_scale;
-use sa_world::bindings::rw_matrix_translate;
+use sa_core::bindings::rw_matrix_scale;
+use sa_core::bindings::rw_matrix_translate;
 use sa_world::bindings::test_sphere_triangle;
+use sa_core::bindings::col_sphere_set;
+use sa_core::bindings::rw_matrix_rotate;
+use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
+use sa_stream::bindings::simple_transform_update_matrix;
 orig! {
     /// `CRealTimeShadow::GetShadowCamera()` (0x7059E0)
     fn get_shadow_camera(rt: GPtr<u8>) -> GPtr<u8> = thiscall 0x7059E0 => unported;
-    /// `RwMatrixRotate(RwMatrix*, const RwV3d* axis, float angle, RwOpCombineType)` (0x7F1FD0)
-    fn rw_matrix_rotate(m: GPtr<u8>, axis: GPtr<u8>, angle: f32, op: u32) -> GPtr<u8> = cdecl 0x7F1FD0 => unported;
-    /// `CPlaceable::AllocateMatrix()` (0x54F560)
-    fn allocate_matrix(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x54F560 => sa_world::world::entity::allocate_matrix;
-    /// `CSimpleTransform::UpdateMatrix(CMatrix*) const` (0x54F1B0)
-    fn simple_transform_update_matrix(t: GPtr<u8>, m: GPtr<u8>) = thiscall 0x54F1B0 => crate::mvpd_unk::simple_transform_update_matrix;
-    /// `CColSphere::Set(float radius, const CVector& centre, uint8 material, uint8 piece, uint8 lighting)` (0x40FD10)
-    fn col_sphere_set(s: GPtr<u8>, radius: u32, centre: GPtr<u32>, material: u32, piece: u32, light: u32) = thiscall 0x40FD10 => sa_world::collision::misc::col_sphere_set;
     /// `CCollisionData::GetTrianglePoint(CVector&, int)` (0x40F5E0)
     fn get_triangle_point(cd: CdPtr, out: GPtr<sa_math::vector::CVector>, idx: i32) = thiscall 0x40F5E0 => sa_world::collision::data::get_triangle_point;
     /// `ShadowRenderTriangleCB` (0x709CF0): EAX = normal, EBX = triangle, EDI = projection param; returns EBX
@@ -142,11 +138,11 @@ pub fn cast_shadow_entity_xyz(
         x(rd::<f32>(rt, 0x44)).fsub_m(k(HALF)).to_f32(),
     ];
     let mut l = [0f32; 3];
-    rw_v3d_transform_points(GPtr::from_raw(l.as_mut_ptr()).cast(), GPtr::from_raw(c.as_mut_ptr()).cast(), 1, eip);
+    rw_v3d_transform_points(GPtr::<u8>::cast::<f32>(GPtr::from_raw(l.as_mut_ptr()).cast()), GPtr::<u8>::cast::<f32>(GPtr::from_raw(c.as_mut_ptr()).cast()), 1, eip);
     let mut centre = [l[0].to_bits(), l[1].to_bits(), l[2].to_bits()];
     let mut sphere = [0u32; 0x14 / 4];
     let sp: GPtr<u8> = GPtr::from_raw(sphere.as_mut_ptr()).cast();
-    col_sphere_set(sp, 0x4000_0000, GPtr::from_raw(centre.as_mut_ptr()), 0, 0, 0xFF);
+    col_sphere_set(sp, f32::from_bits(0x4000_0000), GPtr::<u32>::cast::<u8>(GPtr::from_raw(centre.as_mut_ptr())), 0, 0, 0xFF);
 
     let cdp = CdPtr::from_addr(cd.addr());
     let mut i: i32 = 0;

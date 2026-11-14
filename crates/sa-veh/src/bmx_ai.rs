@@ -23,45 +23,35 @@ use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::get_button_sprint_results;
 use sa_world::bindings::get_pad_from_player;
 use sa_world::bindings::physical_process_control;
+use crate::bindings::activate_bomb;
+use sa_core::bindings::clump_get_association as get_association;
+use sa_core::bindings::prune_references;
+use sa_world::bindings::handle_sprint_energy;
+use sa_world::bindings::pad_get_accelerate as get_accelerate;
+use sa_world::bindings::pad_get_steering_left_right as get_steering_left_right;
+use sa_world::bindings::player_control_button_sprint as control_button_sprint;
+use sa_world::bindings::stats_get_fat_and_muscle_modifier as get_fat_and_muscle_modifier;
+use sa_world::bindings::vector_add;
+use sa_world::bindings::vector_scale as scalar_mul_vector;
 orig! {
-    /// `VectorAdd(CVector*, const CVector*, const CVector*)` (0x40FE30)
-    fn vector_add(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE30 => sa_world::world::mvpa_math::vector_add;
-    /// `operator*(float, const CVector&)` (0x40FE90, cdecl, hidden return pointer)
-    fn scalar_mul_vector(out: GPtr<u8>, s: f32, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE90 => sa_world::world::mvpa_math::scalar_mul_vector;
     /// `CPhysical::ApplyTurnForce(CVector, CVector)` (0x542A50)
     fn apply_turn_force(e: GPtr<u8>, force: CVector, point: CVector) = thiscall 0x542A50 => sa_world::physical::forces::apply_turn_force;
     /// `CPhysical::ApplyMoveForce(CVector)` (0x5429F0)
     fn apply_move_force(e: GPtr<u8>, force: CVector) = thiscall 0x5429F0 => sa_world::physical::forces::apply_move_force;
-    /// `CEntity::PruneReferences()` (0x571A90)
-    fn prune_references(e: GPtr<u8>) = thiscall 0x571A90 => sa_world::world::entity::prune_references;
     /// `DotProduct(const RwV3d*, const RwV3d*)` (0x40FDB0), ST0
     fn dot_product(a: GPtr<u8>, b: GPtr<u8>) -> f64 = cdecl 0x40FDB0 => dot_native;
-    /// `CPad::GetSteeringLeftRight()` (0x53FB80): int16 in AX
-    fn get_steering_left_right(pad: GPtr<u8>) -> u32 = thiscall 0x53FB80 => unported;
     /// `CBmx::ProcessBunnyHop()` (0x6C0590)
     fn process_bunny_hop(v: GPtr<u8>) = thiscall 0x6C0590 => crate::bike2::bmx_process_bunny_hop;
-    /// `RpAnimBlendClumpGetAssociation(RpClump*, AnimationId)` (0x4D68B0)
-    fn get_association(clump: GPtr<u8>, id: u32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
-    /// `CPlayerPed::ControlButtonSprint(eSprintType)` (0x60A610), ST0
-    fn control_button_sprint(p: GPtr<u8>, ty: i32) -> f64 = thiscall 0x60A610 => unported;
-    /// `CPad::GetAccelerate()` (0x5403F0): int16 in AX
-    fn get_accelerate(pad: GPtr<u8>) -> u32 = thiscall 0x5403F0 => unported;
     /// `max(float, float)` (0x420800), ST0
     fn max_f(a: f32, b: f32) -> f64 = cdecl 0x420800 => max_native;
-    /// `CPlayerPed::HandleSprintEnergy(bool, float)` (0x60A550)
-    fn handle_sprint_energy(p: GPtr<u8>, sprint: u32, rate: f32) -> u8 = thiscall 0x60A550 => unported;
     /// `CPad::GetAccelerateJustDown()` (0x540440): bool in AL
     fn get_accelerate_just_down(pad: GPtr<u8>) -> u32 = thiscall 0x540440 => unported;
     /// `CStats::UpdateStatsWhenCycling(bool, CBmx*)` (0x55C780)
     fn update_stats_when_cycling(sprint: u32, v: GPtr<u8>) = cdecl 0x55C780 => unported;
-    /// `CVehicle::ActivateBomb()` (0x6D24F0)
-    fn activate_bomb(v: GPtr<u8>) = thiscall 0x6D24F0 => crate::vehicle2::activate_bomb;
     /// `CBike::PlayHornIfNecessary()` (0x6B7130)
     fn play_horn_if_necessary(v: GPtr<u8>) = thiscall 0x6B7130 => crate::bike::play_horn_if_necessary;
     /// `CBike::ReduceHornCounter()` (0x6B5F90)
     fn reduce_horn_counter(v: GPtr<u8>) = thiscall 0x6B5F90 => crate::bike::reduce_horn_counter;
-    /// `CStats::GetFatAndMuscleModifier(eStatModAbilities)` (0x559AF0), ST0
-    fn get_fat_and_muscle_modifier(ability: u32) -> f64 = cdecl 0x559AF0 => unported;
     /// `CBike::ProcessControlInputs(uint8)` (vtable +0x60)
     fn v_process_control_inputs(v: GPtr<u8>, player: u32) = thiscall vslot 0x60 => unported;
 }
@@ -282,10 +272,10 @@ fn player(this: GPtr<u8>, flags: GPtr<u32>) {
     let h = rd::<GPtr<u8>>(this, 0x384);
     let lean = rd::<f32>(this, 0x650);
     let min_speed = |this: GPtr<u8>| {
-        if !le(st0(vector_magnitude(this.byte_add(0x44))), c(0x3DCC_CCCD)) {
+        if !le(st0(vector_magnitude(GPtr::<u8>::cast::<u32>(this.byte_add(0x44)))), c(0x3DCC_CCCD)) {
             c(0x3DCC_CCCD)
         } else {
-            st0(vector_magnitude(this.byte_add(0x44)))
+            st0(vector_magnitude(GPtr::<u8>::cast::<u32>(this.byte_add(0x44))))
         }
     };
     // the pedal / brake lean torque
@@ -367,7 +357,7 @@ fn player(this: GPtr<u8>, flags: GPtr<u32>) {
         let m = rd::<GPtr<u8>>(this, 0x14);
         let d = st0(dot_product(this.byte_add(0x50), m.byte_add(0x20))).to_f32();
         let lim = c(0x3D23_D70A);
-        let lr0 = || i32::from(get_steering_left_right(pad) as u16 as i16);
+        let lr0 = || i32::from((get_steering_left_right(pad) as u32) as u16 as i16);
         let wants = if !ge(x(d), lim) && !ge(xi(lr0()), X87::zero()) {
             true
         } else {
@@ -424,7 +414,7 @@ fn player(this: GPtr<u8>, flags: GPtr<u32>) {
         }
     }
     update_stats_when_cycling(u32::from((rd::<u8>(this, 0x614) >> 5) & 1), this);
-    if car_gun_just_down(pad) & 0xFFFF != 0 {
+    if car_gun_just_down(pad) as u32 & 0xFFFF != 0 {
         activate_bomb(this);
     }
 }

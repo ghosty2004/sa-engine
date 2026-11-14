@@ -13,17 +13,13 @@ use crate::bindings::placeable_get_matrix;
 use sa_core::bindings::matrix_mul_vec;
 use sa_stream::bindings::placeable_allocate_matrix;
 use sa_stream::bindings::simple_transform_update_matrix;
+use crate::bindings::call_is_point_behind_occluder as occluder_is_point_behind;
+use crate::bindings::call_is_point_within_occlusion_area as occluder_is_point_within_area;
+use crate::bindings::entity_get_bound_centre_534290 as entity_get_bound_centre;
+use sa_core::bindings::calc_screen_coors_71da00 as calc_screen_coors_wh;
 orig! {
-    /// `CEntity::GetBoundCentre(CVector&)` (0x534290, `ret 4`)
-    fn entity_get_bound_centre(e: GPtr<u8>, out: GPtr<u8>) = thiscall 0x534290 => unported;
-    /// `CalcScreenCoors(const CVector&, CVector*, float*, float*)` (0x71DA00, cdecl)
-    fn calc_screen_coors_wh(i: GPtr<u8>, o: GPtr<u8>, w: GPtr<u8>, h: GPtr<u8>) -> u8 = cdecl 0x71DA00 => unported;
     /// `CalcScreenCoors(const CVector&, CVector*)` (0x71DAB0, cdecl)
     fn calc_screen_coors(i: GPtr<u8>, o: GPtr<u8>) -> u8 = cdecl 0x71DAB0 => unported;
-    /// `CActiveOccluder::IsPointWithinOcclusionArea(float, float, float)` (0x71E580, `ret 0xC`)
-    fn occluder_is_point_within_area(o: GPtr<u8>, x: f32, y: f32, r: f32) -> u8 = thiscall 0x71E580 => unported;
-    /// `CActiveOccluder::IsPointBehindOccluder(CVector, float)` (0x71FA40, `ret 0x10`)
-    fn occluder_is_point_behind(o: GPtr<u8>, x: f32, y: f32, z: f32, r: f32) -> u8 = thiscall 0x71FA40 => unported;
 }
 
 /// The model's collision model (`CModelInfo::ms_modelInfoPtrs[model]` +0x14).
@@ -56,7 +52,7 @@ fn corner_hidden(occ: GPtr<u8>, p: &mut [f32; 3]) -> bool {
 /// `matrix * v` into a fresh vector.
 fn transform(m: GPtr<u8>, mut v: [f32; 3]) -> [f32; 3] {
     let mut out = [0f32; 3];
-    let r = matrix_mul_vec(GPtr::from_raw(&mut out).cast(), m, GPtr::from_raw(&mut v).cast());
+    let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::from_raw(&mut out).cast()), m, GPtr::from_raw(&mut v).cast()));
     [rd::<f32>(r, 0), rd::<f32>(r, 4), rd::<f32>(r, 8)]
 }
 
@@ -79,12 +75,12 @@ pub fn entity_is_entity_occluded(this: GPtr<u8>) -> u8 {
     }
     let mut s = [0f32; 3];
     let (mut w, mut h) = (0f32, 0f32);
-    if calc_screen_coors_wh(
-        GPtr::from_raw(&mut c).cast(),
-        GPtr::from_raw(&mut s).cast(),
-        GPtr::from_raw(&mut w).cast(),
-        GPtr::from_raw(&mut h).cast(),
-    ) == 0
+    if u8::from(calc_screen_coors_wh(
+        GPtr::<u8>::cast::<[f32;3]>(GPtr::from_raw(&mut c).cast()),
+        GPtr::<u8>::cast::<[f32;3]>(GPtr::from_raw(&mut s).cast()),
+        GPtr::<u8>::cast::<f32>(GPtr::from_raw(&mut w).cast()),
+        GPtr::<u8>::cast::<f32>(GPtr::from_raw(&mut h).cast()),
+    )) == 0
     {
         return 0;
     }
@@ -155,15 +151,13 @@ use crate::bindings::vehicle_remove_passenger;
 use sa_core::bindings::entity_clean_up_old_reference;
 use sa_core::bindings::find_player_ped;
 use sa_stream::bindings::ped_is_player;
+use crate::bindings::garages_is_point_within_hide_out_garage;
+use crate::bindings::remove_from_moving_list;
 orig! {
-    /// `CGarages::IsPointWithinHideOutGarage(const CVector&)` (0x448900, cdecl)
-    fn garages_is_point_within_hide_out_garage(p: GPtr<u8>) -> u8 = cdecl 0x448900 => unported;
     /// entity virtual +0xC (`Remove`)
     fn v_remove(e: GPtr<u8>) = thiscall vslot 0xC => unported;
     /// entity virtual +0x0 (scalar deleting destructor)
     fn v_delete(e: GPtr<u8>, flags: u32) -> GPtr<u8> = thiscall vslot 0x0 => unported;
-    /// `CPhysical::RemoveFromMovingList()` (0x542860)
-    fn remove_from_moving_list(e: GPtr<u8>) = thiscall 0x542860 => crate::physical::base::remove_from_moving_list;
     /// `CObject::DeleteAllTempObjectsInArea(CVector, float)` (0x5A1980, cdecl)
     fn object_delete_all_temp_objects_in_area(x: f32, y: f32, z: f32, r: f32) = cdecl 0x5A1980 => unported;
     /// `CShadows::TidyUpShadows()` (0x707770, cdecl)
@@ -242,7 +236,7 @@ pub fn world_clear_exciting_stuff_from_area(point: GPtr<u8>, r: f32, projectiles
             population_remove_ped(driver);
             let d = rd::<GPtr<u8>>(v, 0x460);
             if !d.is_null() {
-                entity_clean_up_old_reference(d, v.byte_add(0x460));
+                entity_clean_up_old_reference(d, GPtr::<u8>::cast::<GPtr<u8>>(v.byte_add(0x460)));
             }
             wr::<u32>(v, 0x460, 0);
         }
@@ -281,19 +275,16 @@ pub fn world_clear_exciting_stuff_from_area(point: GPtr<u8>, r: f32, projectiles
     pickups_remove_unnecessary_pickups(point, r);
 }
 
-use crate::bindings::clock_get_is_time_in_range;
+use sa_stream::bindings::clock_get_is_time_in_range;
 use crate::bindings::flush_single as single_list_flush;
 use crate::bindings::is_coop_game_going_on as game_logic_is_coop_game_going_on;
 use sa_core::bindings::get_pad as pad_get_pad;
 use sa_core::bindings::quad_tree_get_all_matching_rect;
+use crate::bindings::camera_is_sphere_visible_m as camera_is_sphere_visible;
+use crate::bindings::markers_place_marker_cone;
 orig! {
     /// `CQuadTreeNode::GetAllMatching(const CVector2D&, CPtrListSingleLink&)` (0x552930, `ret 8`)
     fn quad_tree_get_all_matching_vec(t: GPtr<u8>, v: GPtr<u8>, l: GPtr<u8>) = thiscall 0x552930 => unported;
-    /// `CCamera::IsSphereVisible(const CVector&, float, const CMatrix*)` (0x420C40, `ret 0xC`)
-    fn camera_is_sphere_visible(c: GPtr<u8>, p: GPtr<u8>, r: f32, m: GPtr<u8>) -> u8 = thiscall 0x420C40 => unported;
-    /// `C3dMarkers::PlaceMarkerCone(uint32 id, const CVector&, float size, uint8 r, g, b, a, uint16 period,
-    /// float fraction, int16 type, bool rotate)` (0x726D40, cdecl)
-    fn markers_place_marker_cone(id: GPtr<u8>, p: GPtr<u8>, size: f32, r: u32, g: u32, b: u32, a: u32, period: u32, frac: f32, ty: u32, rot: u32) = cdecl 0x726D40 => unported;
     /// `CEntryExit::TransitionFinished(CPed*)` (0x4404A0, `ret 4`)
     fn entry_exit_transition_finished(ee: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x4404A0 => unported;
     /// `CEntryExit::IsInArea(const CVector&)` (0x43E460, `ret 4`)
@@ -424,23 +415,17 @@ use sa_core::bindings::find_player_vehicle;
 use sa_core::bindings::stats_increment_stat;
 use sa_core::bindings::text_get;
 use sa_core::bindings::vector_magnitude;
+use crate::bindings::add_big_message_with_number as messages_add_big_message_with_number;
+use crate::bindings::camera_take_control;
+use crate::bindings::get_vehicle_appearance as vehicle_get_vehicle_appearance;
+use crate::bindings::ped_say;
+use sa_core::bindings::audio_report_frontend_event as audio_report_frontend_audio_event;
+use sa_core::bindings::hud_set_help_message;
 orig! {
-    /// `CAudioEngine::ReportFrontendAudioEvent(eAudioEvents, float volume, float speed)` (0x506EA0, `ret 0xC`)
-    fn audio_report_frontend_audio_event(a: GPtr<u8>, ev: u32, vol: f32, speed: f32) = thiscall 0x506EA0 => unported;
-    /// `CHud::SetHelpMessage(const char*, bool, bool, bool)` (0x588BE0, cdecl)
-    fn hud_set_help_message(s: GPtr<u8>, a: u32, b: u32, c: u32) = cdecl 0x588BE0 => unported;
-    /// `CMessages::AddBigMessageWithNumber(const char*, uint32, eMessageStyle, int32 x6)` (0x69E5F0, cdecl)
-    fn messages_add_big_message_with_number(s: GPtr<u8>, t: u32, style: u32, n1: i32, n2: i32, n3: i32, n4: i32, n5: i32, n6: i32) = cdecl 0x69E5F0 => unported;
-    /// `CVehicle::GetVehicleAppearance()` (0x6D1080)
-    fn vehicle_get_vehicle_appearance(v: GPtr<u8>) -> u32 = thiscall 0x6D1080 => unported;
     /// `thunk_FUN_0156acc0(int32)` (0x49C3B0, `ret 4`): the stunt-jump pool's slot `i`
     fn stunt_jump_pool_at(pool: GPtr<u8>, i: i32) -> GPtr<u8> = thiscall 0x49C3B0 => unported;
     /// `CBoundingBox::IsPointWithin(const CVector&)` (0x49C300, `ret 4`)
     fn bounding_box_is_point_within(b: GPtr<u8>, p: GPtr<u8>) -> u8 = thiscall 0x49C300 => unported;
-    /// `CCamera::TakeControl(CEntity*, eCamMode, eSwitchType, int32)` (0x50C7C0, `ret 0x10`)
-    fn camera_take_control(c: GPtr<u8>, e: GPtr<u8>, mode: u32, sw: u32, who: u32) = thiscall 0x50C7C0 => unported;
-    /// `CPed::Say(uint16, uint32, float, bool, bool, bool)` (0x5EFFE0, `ret 0x18`)
-    fn ped_say(p: GPtr<u8>, id: u32, off: u32, vol: f32, a: u32, b: u32, c: u32) -> u32 = thiscall 0x5EFFE0 => unported;
 }
 
 /// `CStuntJumpManager` statics: pool 0xA9A888, active jump 0xA9A88C, active flag 0xA9A890, hit-reward flag
@@ -492,7 +477,7 @@ pub fn stunt_jump_manager_update() {
             {
                 return;
             }
-            let sp = X87::from_f64_exact(vector_magnitude(veh.byte_add(0x44))).fmul_m(g::<f32>(0x858B40).read());
+            let sp = X87::from_f64_exact(vector_magnitude(GPtr::<u8>::cast::<u32>(veh.byte_add(0x44)))).fmul_m(g::<f32>(0x858B40).read());
             if !sp.fcom(x(g::<f32>(0x858BA4).read())).test_parity(5) {
                 return;
             }
@@ -586,7 +571,7 @@ pub fn stunt_jump_manager_update() {
                 }
                 let s = text_get(text, GPtr::from_addr(0x85A56C));
                 if !s.is_null() {
-                    messages_add_big_message_with_number(s, 0x1770, 5, reward, -1, -1, -1, -1, -1);
+                    messages_add_big_message_with_number(s, 0x1770, 5, reward as u32, -1i32 as u32, -1i32 as u32, -1i32 as u32, -1i32 as u32, -1i32 as u32);
                 }
             }
             state.write(0);
@@ -746,7 +731,7 @@ pub fn interior_manager_prune_visible_effects(_this: GPtr<u8>, fx: GPtr<u8>, n: 
                 simple_transform_update_matrix(ent.byte_add(4), rd::<GPtr<u8>>(ent, 0x14));
             }
             let mut out = [0f32; 3];
-            let r = matrix_mul_vec(GPtr::from_raw(&mut out).cast(), rd::<GPtr<u8>>(ent, 0x14), rd::<GPtr<u8>>(ek, 8 + 4 * i as isize));
+            let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::from_raw(&mut out).cast()), rd::<GPtr<u8>>(ent, 0x14), rd::<GPtr<u8>>(ek, 8 + 4 * i as isize)));
             let (px, py) = (rd::<f32>(r, 0), rd::<f32>(r, 4));
             let cp = cam_position();
             let a = x(rd::<f32>(cp, 0)).fsub_m(px);
@@ -785,9 +770,8 @@ use sa_core::bindings::general_random_int_in_range as general_get_random_number_
 use sa_core::bindings::list_get_num_items;
 use sa_core::bindings::vector_normalise;
 use sa_core::bindings::world_remove;
+use crate::bindings::camera_is_sphere_visible as camera_is_sphere_visible_r;
 orig! {
-    /// `CCamera::IsSphereVisible(const CVector&, float)` (0x420D40, `ret 8`)
-    fn camera_is_sphere_visible_r(c: GPtr<u8>, p: GPtr<u8>, r: f32) -> u8 = thiscall 0x420D40 => unported;
     /// `CWaterLevel::GetWaterDepth(const CVector&, float* depth, float* level, float* bed)` (0x6EA960, cdecl)
     fn water_level_get_water_depth(p: GPtr<u8>, depth: GPtr<u8>, level: GPtr<u8>, bed: GPtr<u8>) -> u8 = cdecl 0x6EA960 => unported;
     /// `WaterCreatureManager_c::GetRandomWaterCreatureId()` (0x6E4040)
@@ -826,7 +810,7 @@ pub fn water_creature_manager_update(this: GPtr<u8>, dt: f32) {
             break 'spawn;
         }
         let now = g::<i32>(0xB7CB84).read();
-        if now.wrapping_sub(rd::<i32>(this, 0x1A18)) <= 1000 || list_get_num_items(free) <= 0 {
+        if now.wrapping_sub(rd::<i32>(this, 0x1A18)) <= 1000 || (list_get_num_items(free) as i32) <= 0 {
             break 'spawn;
         }
         wr::<i32>(this, 0x1A18, now);
@@ -862,8 +846,8 @@ pub fn water_creature_manager_update(this: GPtr<u8>, dt: f32) {
         }
         let info = GPtr::<u8>::from_addr((0x8D3698 + 0x2C * id as isize) as usize);
         let mut num = general_get_random_number_in_range_int(rd::<u8>(info, 4) as i32, rd::<u8>(info, 5) as i32);
-        if list_get_num_items(free) < num {
-            num = list_get_num_items(free);
+        if (list_get_num_items(free) as i32) < num {
+            num = list_get_num_items(free) as i32;
         }
         let mut leader = GPtr::<u8>::NULL;
         let mut i = 0;
@@ -917,15 +901,9 @@ use sa_core::bindings::matrix_dtor;
 use sa_core::bindings::rp_hanim_hierarchy_get_matrix_array as rp_h_anim_hierarchy_get_matrix_array;
 use sa_core::bindings::rp_skin_geometry_get_skin;
 use sa_stream::bindings::get_anim_hierarchy_from_clump;
-orig! {
-    /// `CPhysical::ProcessControl()` (0x5485E0)
-    fn physical_process_control(p: GPtr<u8>) = thiscall 0x5485E0 => unported;
-    /// `CMatrix::CMatrix(RwMatrix*, bool)` (0x59C050, `ret 8`)
-    fn matrix_ctor_rw(m: GPtr<u8>, rw: GPtr<u8>, owns: u32) = thiscall 0x59C050 => unported;
-    /// `CWorld::ProcessVerticalLine(const CVector&, float, CColPoint&, CEntity*&, bool x7, CStoredCollPoly*)`
-    /// (0x5674E0, cdecl)
-    fn world_process_vertical_line(o: GPtr<u8>, z: f32, cp: GPtr<u8>, ent: GPtr<u8>, b: u32, v: u32, p: u32, ob: u32, d: u32, s: u32, poly: u32) -> u8 = cdecl 0x5674E0 => unported;
-}
+use crate::bindings::physical_process_control;
+use crate::bindings::world_process_vertical_line;
+use sa_core::bindings::matrix_ctor_rw;
 
 /// The attached cutscene object's matrix (`+0x17C` bone index on the `+0x180` entity's hierarchy, or `+0x17C`
 /// as an RW frame whose LTM is used), assigned through a temporary `CMatrix(RwMatrix*, false)`.
@@ -1052,7 +1030,7 @@ pub fn cutscene_object_pre_render(this: GPtr<u8>) {
     let mut cp = [0u8; 0x2C];
     let mut hit = 0u32;
     let cpp = GPtr::from_raw(&mut cp).cast::<u8>();
-    if world_process_vertical_line(GPtr::from_raw(&mut o).cast(), z, cpp, GPtr::from_raw(&mut hit).cast(), 1, 0, 0, 0, 0, 0, 0) == 0 {
+    if world_process_vertical_line(GPtr::from_raw(&mut o).cast(), z, cpp, GPtr::from_raw(&mut hit).cast(), 1, 0, 0, 0, 0, 0, GPtr::NULL) == 0 {
         return;
     }
     let l = rd::<u8>(cpp, 0x25);

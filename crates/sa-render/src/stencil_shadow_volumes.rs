@@ -21,13 +21,11 @@ use sa_core::bindings::matrix_mul_vec;
 use sa_stream::bindings::simple_transform_update_matrix;
 use sa_world::bindings::bike_calculate_lean_matrix;
 use sa_world::bindings::entity_get_col_model;
+use crate::bindings::transform_points;
+use sa_stream::bindings::placeable_allocate_matrix;
 orig! {
-    /// `CPlaceable::AllocateMatrix()` (0x54F560)
-    fn placeable_allocate_matrix(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x54F560 => unported;
     /// `CCollisionData::GetShadTrianglePoint(CVector& out, int32 i)` (0x40F640, `ret 8`)
     fn col_data_get_shad_triangle_point(cd: GPtr<u8>, out: GPtr<u8>, i: i32) = thiscall 0x40F640 => unported;
-    /// `TransformPoints(RwV3d* out, int32 n, const CMatrix&, const RwV3d* in)` (0x54EEF0, cdecl)
-    fn transform_points(out: GPtr<u8>, n: i32, m: GPtr<u8>, inp: GPtr<u8>) = cdecl 0x54EEF0 => unported;
     /// `ToggleEdge` (0x70FA70): edges in ECX, the u16 count pointer in EDX, vertex a in DI, vertex b on the stack
     fn toggle_edge(edges: GPtr<u8>, count: GPtr<u16>, a: u16, b: u16) = reg("args = ecx edx di stack; keep = ecx edx") 0x70FA70 => crate::harness5::toggle_edge;
 }
@@ -76,9 +74,9 @@ fn build_volume(obj: GPtr<u8>, len: f32, bike: bool) -> u8 {
     let mut sunv = sun;
     let mut o = [0f32; 3];
     let mut s = [0f32; 3];
-    let op = matrix_mul_vec(GPtr::from_raw(o.as_mut_ptr()).cast(), invp, GPtr::from_raw(zero.as_mut_ptr()).cast());
+    let op = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::from_raw(o.as_mut_ptr()).cast()), invp, GPtr::from_raw(zero.as_mut_ptr()).cast()));
     let o = v3(op);
-    let sp = matrix_mul_vec(GPtr::from_raw(s.as_mut_ptr()).cast(), invp, GPtr::from_raw(sunv.as_mut_ptr()).cast());
+    let sp = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(GPtr::from_raw(s.as_mut_ptr()).cast()), invp, GPtr::from_raw(sunv.as_mut_ptr()).cast()));
     let s = v3(sp);
     wr::<u32>(obj, 0xC, 0);
     let dz = x(s[2]).fsub_m(o[2]).to_f32();
@@ -93,7 +91,7 @@ fn build_volume(obj: GPtr<u8>, len: f32, bike: bool) -> u8 {
     for i in 0..nv {
         col_data_get_shad_triangle_point(cd, GPtr::from_addr(pts.wrapping_add((i as u32).wrapping_mul(12)) as usize), i);
     }
-    transform_points(GPtr::from_addr(tpts as usize), nv, m, GPtr::from_addr(pts as usize));
+    transform_points(GPtr::from_addr(tpts as usize), nv as u32, m, GPtr::from_addr(pts as usize));
     let faces = i32::from(rd::<i16>(obj, 4));
     let ext = |l: f32| [x(sun[0]).fmul_m(l), x(sun[1]).fmul_m(l), x(sun[2]).fmul_m(l)];
     let append = |vs: &[[f32; 3]]| -> bool {

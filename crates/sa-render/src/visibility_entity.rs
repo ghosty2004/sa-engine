@@ -10,6 +10,8 @@ use sa_core::{hook, orig};
 use crate::common::{ftol32, g, rd, wr, x, xi};
 
 use crate::bindings::render_atomic_with_alpha;
+use crate::bindings::render_one_non_road;
+use sa_core::bindings::rp_clump_for_all_atomics as clump_for_all_atomics;
 orig! {
     /// `G->dOpenDevice.fpRenderStateSet(state, value)` (`[G] + 0x20`)
     fn rw_render_state_set(state: u32, value: u32) -> u32 = cdecl table 0xC97B24 0x20 => unported;
@@ -19,10 +21,6 @@ orig! {
     fn render_fading_atomic_call(mi: GPtr<u8>, a: GPtr<u8>, alpha: i32) = cdecl 0x732610 => render_fading_atomic;
     /// `CVisibilityPlugins::RenderFadingClump(CBaseModelInfo*, RpClump*, int32 alpha)` (0x732680)
     fn render_fading_clump_call(mi: GPtr<u8>, c: GPtr<u8>, alpha: i32) = cdecl 0x732680 => render_fading_clump;
-    /// `RpClumpForAllAtomics(clump, cb, data)` (0x749B70)
-    fn clump_for_all_atomics(c: GPtr<u8>, cb: u32, data: GPtr<u8>) -> GPtr<u8> = cdecl 0x749B70 => unported;
-    /// `CRenderer::RenderOneNonRoad(CEntity*)` (0x553260)
-    fn render_one_non_road(e: GPtr<u8>) = cdecl 0x553260 => unported;
     /// `CEntity::SetupLighting()` (vtable +0x4C, AL) / `RemoveLighting(bool)` (+0x50)
     fn entity_setup_lighting(e: GPtr<u8>) -> u8 = thiscall vslot 0x4C => unported;
     fn entity_remove_lighting(e: GPtr<u8>, b: u32) = thiscall vslot 0x50 => unported;

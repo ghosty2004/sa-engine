@@ -257,19 +257,13 @@ const K_DEFAULT_BRAIN_RADIUS: usize = 0x859D9C;
 /// `CTheScripts::ScriptSpace` (0xA49960)
 const SCRIPT_SPACE: usize = 0xA49960;
 
-use crate::bindings::effect_2d_init as scripted_2d_effect_reset;
+use sa_world::bindings::effect_2d_init as scripted_2d_effect_reset;
 use sa_core::bindings::streaming_request_model;
 use sa_core::bindings::stricmp as crt_stricmp;
-orig! {
-    /// `CWorld::FindPlayerCentreOfWorld(int32)` (0x56E250)
-    fn find_player_centre_of_world(id: i32) -> GPtr<u8> = cdecl 0x56E250 => unported;
-    /// `CScriptsForBrains::StartNewStreamedScriptBrain(uint8, CEntity*, bool)` (0x46B270, `ret 0xC`)
-    fn brains_start_new_streamed_script_brain(t: GPtr<u8>, idx: u32, e: GPtr<u8>, b: u32) = thiscall 0x46B270 => unported;
-    /// `CScriptsForBrains::StartOrRequestNewStreamedScriptBrain(uint8, CEntity*, int8, bool)` (0x46CD80, `ret 0x10`)
-    fn brains_start_or_request(t: GPtr<u8>, idx: u32, e: GPtr<u8>, attach: u32, b: u32) = thiscall 0x46CD80 => unported;
-    /// `CScriptsForBrains::IsObjectWithinBrainActivationRange(CObject*, const CVector&)` (0x46B3D0, `ret 8`)
-    fn brains_is_object_within_range(t: GPtr<u8>, o: GPtr<u8>, p: GPtr<u8>) -> u8 = thiscall 0x46B3D0 => unported;
-}
+use crate::bindings::brains_is_object_within_range;
+use crate::bindings::brains_start_new_streamed_script_brain;
+use crate::bindings::brains_start_or_request;
+use sa_world::bindings::find_player_centre_of_world;
 
 /// `CScripted2dEffects::Init()` (0x6FA6F0): for each of the 0x40 entries: byte B = 0, word = 1, int = -1, the
 /// 0x24-byte record's eight dwords = -1 and its +0x20 byte = 0, `FUN_006F9EB0` on the 0x94-byte effect (the
@@ -429,15 +423,13 @@ use sa_world::bindings::get_distance_from_centre_of_mass_to_base_of_model as ent
 use sa_world::bindings::membership_is_leader;
 use sa_world::bindings::ped_groups_get_peds_group as get_peds_group;
 use sa_world::bindings::physical_add_to_moving_list;
+use sa_stream::bindings::has_collision_loaded as col_store_has_collision_loaded;
+use sa_world::bindings::clear_space_for_mission_entity;
 orig! {
     /// `CEntity::Teleport(CVector, bool)` (vtable +0x38, `ret 0x10`)
     fn v_entity_teleport(e: GPtr<u8>, x: u32, y: u32, z: u32, b: u32) = thiscall vslot 0x38 => unported;
-    /// `CTheScripts::ClearSpaceForMissionEntity(const CVector&, CEntity*)` (0x486B00)
-    fn clear_space_for_mission_entity(pos: GPtr<u8>, e: GPtr<u8>) = cdecl 0x486B00 => unported;
     /// `CPedGroup::Teleport(const CVector&)` (0x5F7AD0, `ret 4`)
     fn group_teleport(g: GPtr<u8>, pos: GPtr<u8>) = thiscall 0x5F7AD0 => unported;
-    /// `CColStore::HasCollisionLoaded(const CVector&, int32 area)` (0x410CE0)
-    fn col_store_has_collision_loaded(pos: GPtr<u8>, area: u32) -> u8 = cdecl 0x410CE0 => unported;
     /// `CIplStore::HaveIplsLoaded(const CVector&, int32 area)` (0x405600)
     fn ipl_store_have_ipls_loaded(pos: GPtr<u8>, area: u32) -> u8 = cdecl 0x405600 => unported;
 }
@@ -462,7 +454,7 @@ pub fn running_script_set_char_coordinates(_this: GPtr<u8>, ped: GPtr<u8>, px: f
     };
     let mut z = pz;
     if !X87::from_f32(z).fcom(X87::from_f32(ga::<f32>(K_GROUND_Z_SENTINEL).read())).test_parity(0x41) {
-        z = X87::from_f64_exact(find_ground_z_for_coord(px.to_bits(), py.to_bits())).to_f32();
+        z = X87::from_f64_exact(find_ground_z_for_coord(f32::from_bits(px.to_bits()), f32::from_bits(py.to_bits()))).to_f32();
     }
     if !veh.is_null() {
         z = X87::from_f64_exact(entity_distance_to_base(veh)).fadd_m(z).to_f32();

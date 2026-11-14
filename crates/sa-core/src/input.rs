@@ -72,6 +72,8 @@ pub const CAMERA_CAM0_MODE: u32 = 0xB6F1A8;
 
 pub use crate::bindings::get_pad;
 pub use crate::bindings::is_video_mode_exclusive;
+pub use crate::bindings::call_init_joypad as ccm_init_default_control_config_joy_pad;
+pub use crate::bindings::di_mouse_init as call_di_mouse_init;
 orig! {
     /// `RsKeyboardEventHandler(event, param)` (0x619560)
     pub fn rs_keyboard_event_handler(event: i32, param: GPtr<i32>) -> i32 = cdecl 0x619560 => unported;
@@ -91,10 +93,6 @@ orig! {
     pub fn ccm_affect_controller_state_on_button_up(this: GPtr<u8>, button: i32, kind: i32) = thiscall 0x531070 => unported;
     /// `CControllerConfigManager::UpdateJoyInConfigMenus_ButtonUp(button, pad)` (0x52DC20)
     pub fn ccm_update_joy_in_config_menus_button_up(this: GPtr<u8>, button: i32, pad: i32) = thiscall 0x52DC20 => unported;
-    /// `CControllerConfigManager::InitDefaultControlConfigJoyPad(buttons)` (0x530B00)
-    pub fn ccm_init_default_control_config_joy_pad(this: GPtr<u8>, buttons: u32) = thiscall 0x530B00 => unported;
-    /// `Input::diMouseInit(exclusive)` (0x7469A0)
-    pub fn call_di_mouse_init(exclusive: u32) -> i32 = cdecl 0x7469A0 => di_mouse_init;
     /// `FUN_007477C0`: `EnumDevices(GAMECTRL, EnumDevicesCallback)` + `diPadSetRanges` for both pads
     pub fn di_enum_pads() -> i32 = cdecl 0x7477C0 => unported;
     /// `RwRenderStateSet(state, value)` (`RwEngineInstance->dOpenDevice.fpRenderStateSet`, +0x20)
@@ -286,7 +284,7 @@ pub fn keyboard_handler(event: i32, param: GPtr<i32>) -> i32 {
 /// `padID`); every button 1..16 is reported, with button 0 for buttons that are not down
 /// (gta-reversed skips them).
 pub fn handle_pad_button_down(status: GPtr<i32>) -> i32 {
-    let _ = get_pad(status.read());
+    let _ = get_pad(status.read() as u32);
     let two = PAD_NUMBER.get() != 0;
     let pad = two as i32;
     ccm_update_joy_button_state(ccm(), pad);
@@ -310,7 +308,7 @@ pub fn handle_pad_button_down(status: GPtr<i32>) -> i32 {
 /// 2..16; button 0 is reported for buttons still down. Camera modes 0x11/0xF of the active camera
 /// route to the config-menu handler.
 pub fn handle_pad_button_up(status: GPtr<i32>) -> i32 {
-    let _ = get_pad(status.read());
+    let _ = get_pad(status.read() as u32);
     let two = PAD_NUMBER.get() != 0;
     let pad = two as i32;
     let active = CAMERA_ACTIVE_CAM.get() as usize;
@@ -732,6 +730,8 @@ pub fn defined_state_2d() {
 use crate::bindings::pad_clear as wp_pad_clear;
 use crate::bindings::rw_d3d9_get_current_d3d_device as wp_rw_d3d9_get_current_d3d_device;
 use crate::bindings::setup_back_buffer_vertex as wp_setup_back_buffer_vertex;
+use crate::bindings::rs_event_handler as wp_rs_event_handler;
+use crate::bindings::update_window as wp_video_update_window;
 orig! {
     // __MainWndProc's imports, through its own call sites
     fn wp_release_capture() -> i32 = stdcall site 0x747F52 => unported;
@@ -747,8 +747,6 @@ orig! {
     fn wp_set_window_pos(hwnd: u32, after: u32, x: i32, y: i32, cx: i32, cy: i32, flags: u32) -> i32 = stdcall site 0x7482E5 => unported;
     fn wp_set_capture(hwnd: u32) -> u32 = stdcall site 0x748301 => unported;
     fn wp_def_window_proc_a(hwnd: u32, msg: u32, wparam: u32, lparam: u32) -> i32 = stdcall site 0x748452 => unported;
-    /// `RsEventHandler(event, param)` (0x619B60)
-    fn wp_rs_event_handler(event: i32, param: u32) -> i32 = cdecl 0x619B60 => unported;
     fn wp_pause_all_sounds(this: GPtr<u8>) = thiscall 0x507430 => unported;
     fn wp_resume_all_sounds(this: GPtr<u8>) = thiscall 0x507440 => unported;
     /// `WinInput` shutdown (0x747000)
@@ -763,7 +761,6 @@ orig! {
     /// `IMediaControl::Run()` (+0x1C)
     fn wp_mc_run(mc: GPtr<u8>) -> i32 = stdcall vslot 0x1C => unported;
     fn wp_video_wait_state(state: i32) = cdecl 0x745F90 => unported;
-    fn wp_video_update_window() = cdecl 0x7466D0 => unported;
     fn wp_video_on_graph_notify() = cdecl 0x745FB0 => unported;
     fn wp_is_streaming_from_dvd(this: GPtr<u8>) -> u8 = thiscall 0x4D95C0 => unported;
     fn wp_get_dvd_drive_letter(this: GPtr<u8>) -> u8 = thiscall 0x4D95D0 => unported;
@@ -829,7 +826,7 @@ pub fn main_wnd_proc(hwnd: u32, msg: u32, wparam: u32, lparam: u32) -> i32 {
                 return 0;
             }
             let mut rect = [0u32, 0, w, h];
-            wp_rs_event_handler(0, GPtr::<u32>::from_raw(rect.as_mut_ptr()).addr() as u32);
+            wp_rs_event_handler(0, GPtr::from_addr((GPtr::<u32>::from_raw(rect.as_mut_ptr()).addr() as u32) as usize));
             if rect[2] == w || rect[3] == h {
                 g32(0xC9246C).write(0);
                 return 0;
@@ -851,12 +848,12 @@ pub fn main_wnd_proc(hwnd: u32, msg: u32, wparam: u32, lparam: u32) -> i32 {
                 let limit = GPtr::<i32>::from_addr(0xC1704C).read();
                 let elapse = sa_math::x87::X87::from_i32(limit).fdivr_m(1000.0).ftol() as u32;
                 wp_set_timer(hwnd, 1, elapse, 0);
-                wp_rs_event_handler(0x26, 0);
+                wp_rs_event_handler(0x26, GPtr::NULL);
                 false
             } else {
                 wp_resume_all_sounds(audio);
                 wp_show_cursor(0);
-                wp_rs_event_handler(0x26, 1);
+                wp_rs_event_handler(0x26, GPtr::from_addr(1));
                 true
             };
             if active {
@@ -877,7 +874,7 @@ pub fn main_wnd_proc(hwnd: u32, msg: u32, wparam: u32, lparam: u32) -> i32 {
         0x1C => {
             let activating = wparam != 0;
             if GPtr::<u8>::from_addr(0xC920C8).read() != 0 {
-                let dev = wp_rw_d3d9_get_current_d3d_device();
+                let dev = GPtr::<u32>::addr(wp_rw_d3d9_get_current_d3d_device()) as u32;
                 if dev != 0 {
                     let ramp = if activating { 0xC8DAC8 } else { 0xC8D4C8 };
                     wp_dev_set_gamma_ramp(GPtr::from_addr(dev as usize), 0, 1, ramp);
@@ -952,7 +949,7 @@ pub fn main_wnd_proc(hwnd: u32, msg: u32, wparam: u32, lparam: u32) -> i32 {
         }
         0x214 => {
             if g32(RW_INITIALIZED).read() != 0 && g32(GAME_STATE).read() == 9 {
-                wp_rs_event_handler(0x1A, 1);
+                wp_rs_event_handler(0x1A, GPtr::from_addr(1));
             }
             let r: GPtr<i32> = GPtr::from_addr(lparam as usize);
             let (l, t, rr, b) = (r.read(), r.byte_add(4).read(), r.byte_add(8).read(), r.byte_add(0xC).read());

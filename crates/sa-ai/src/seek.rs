@@ -4,14 +4,15 @@
 //! (`docs/re/specs/AI/CTaskComplexSeekEntity*.md` as reading aid); the exe wins over gta-reversed.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
 use crate::common::*;
 
 use crate::bindings::fnr_set_target_orig as follow_node_route_set_target;
-use crate::bindings::ped_placement_find_z_coor_for_ped;
-use crate::bindings::ped_set_move_state;
+use sa_world::bindings::ped_placement_find_z_coor_for_ped;
+use sa_world::bindings::ped_set_move_state;
 use crate::bindings::stand_still_dtor;
 use crate::bindings::stand_still_process_ped;
 use crate::bindings::task_timer_is_out_of_time;
@@ -34,19 +35,13 @@ use sa_world::bindings::sequence_ctor;
 use sa_world::bindings::stand_still_ctor;
 use sa_world::bindings::task_complex_ctor;
 use sa_world::bindings::tired_ctor;
+use sa_core::bindings::general_get_radian_angle_between_points as general_get_radian_angle_between_points_st0;
+use sa_core::bindings::general_limit_radian_angle as general_limit_radian_angle_st0;
+use sa_world::bindings::follow_node_route_ctor;
+use sa_world::bindings::leave_car_ctor;
+use sa_world::bindings::simple_car_drive_ctor as car_drive_simple_ctor;
+use sa_world::bindings::turn_to_face_entity_ctor as turn_to_face_ctor;
 orig! {
-    /// `CTaskComplexTurnToFaceEntityOrCoord::Constructor(CEntity*, float, float)` (0x66B890)
-    fn turn_to_face_ctor(t: GPtr<u8>, e: u32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x66B890 => unported;
-    /// `CTaskComplexLeaveCar::CTaskComplexLeaveCar(CVehicle*, int, int, bool, bool)` (0x63B8C0)
-    fn leave_car_ctor(t: GPtr<u8>, v: u32, a: u32, b: u32, c: u32, d: u32) -> GPtr<u8> = thiscall 0x63B8C0 => unported;
-    /// `CTaskSimpleCarDrive::Constructor(CVehicle*, CTaskUtilityLineUpPedWithCar*, bool)` (0x63C340)
-    fn car_drive_simple_ctor(t: GPtr<u8>, v: u32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x63C340 => unported;
-    /// `CTaskComplexFollowNodeRoute::Constructor(int, const CVector&, float, float, float, bool, int, bool)` (0x66EA30)
-    fn follow_node_route_ctor(t: GPtr<u8>, ms: u32, pos: GPtr<u8>, r: u32, a: u32, b: u32, c: u32, d: u32, e: u32) -> GPtr<u8> = thiscall 0x66EA30 => unported;
-    /// `CGeneral::GetRadianAngleBetweenPoints(float, float, float, float)` (0x53CBE0, cdecl, ST0)
-    fn general_get_radian_angle_between_points_st0(x1: f32, y1: f32, x2: f32, y2: f32) -> f64 = cdecl 0x53CBE0 => unported;
-    /// `CGeneral::LimitRadianAngle(float)` (0x53CB50, cdecl, ST0)
-    fn general_limit_radian_angle_st0(a: f32) -> f64 = cdecl 0x53CB50 => unported;
     /// `FUN_0046fee0` (0x46FEE0, `ret 8`): the seek position into `out`; returns `out`
     fn std_seek_pos(this: GPtr<u8>, out: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x46FEE0 => unported;
     /// `FUN_00665dc0` (0x665DC0, `ret 8`): the XYOffset instance's seek position into `out`
@@ -209,7 +204,7 @@ fn seek_create_next_sub_task(
         0xDB => {
             let mut l = [0u32; 8];
             let st = buf(&mut l);
-            stand_still_ctor(st, 0xFFFF_FFFF, 0, 0, 0x4100_0000);
+            stand_still_ctor(st, 0xFFFF_FFFFu32 as i32, 0, 0, f32::from_bits(0x4100_0000));
             stand_still_process_ped(st, ped);
             stand_still_dtor(st);
             create(this, 0x516, ped)
@@ -321,7 +316,7 @@ fn seek_create_sub_task(this: GPtr<u8>, ty: i32, ped: GPtr<u8>, flags: isize) ->
         }
         0xCB => {
             let e = task_new(0x20);
-            if e.is_null() { GPtr::NULL } else { stand_still_ctor(e, 0x7D0, 0, 0, 0x4100_0000) }
+            if e.is_null() { GPtr::NULL } else { stand_still_ctor(e, 0x7D0, 0, 0, f32::from_bits(0x4100_0000)) }
         }
         0xF4 => {
             let s = task_new(0x40);
@@ -332,12 +327,12 @@ fn seek_create_sub_task(this: GPtr<u8>, ty: i32, ped: GPtr<u8>, flags: isize) ->
                     GPtr::NULL
                 } else {
                     let (a, b) = (g::<u32>(0x86FC80).read(), g::<u32>(0x86FC7C).read());
-                    turn_to_face_ctor(t, rd::<u32>(this, 0xC), b, a)
+                    turn_to_face_ctor(t, GPtr::from_addr(rd::<u32>(this, 0xC) as usize), b, a)
                 };
                 sequence_add_task(s, t);
             }
             let t = task_new(0x20);
-            let t = if t.is_null() { GPtr::NULL } else { stand_still_ctor(t, 0x64, 0, 0, 0x4100_0000) };
+            let t = if t.is_null() { GPtr::NULL } else { stand_still_ctor(t, 0x64, 0, 0, f32::from_bits(0x4100_0000)) };
             sequence_add_task(s, t);
             s
         }
@@ -346,7 +341,7 @@ fn seek_create_sub_task(this: GPtr<u8>, ty: i32, ped: GPtr<u8>, flags: isize) ->
             if e.is_null() {
                 GPtr::NULL
             } else {
-                leave_car_ctor(e, rd::<u32>(ped, 0x58C), 0, 0, 1, 0)
+                leave_car_ctor(e, GPtr::from_addr(rd::<u32>(ped, 0x58C) as usize), 0, 0, 1, 0)
             }
         }
         0x2CF => {
@@ -354,7 +349,7 @@ fn seek_create_sub_task(this: GPtr<u8>, ty: i32, ped: GPtr<u8>, flags: isize) ->
             if e.is_null() {
                 return GPtr::NULL;
             }
-            car_drive_simple_ctor(e, rd::<u32>(ped, 0x58C), 0, 0);
+            car_drive_simple_ctor(e, GPtr::from_addr(rd::<u32>(ped, 0x58C) as usize), GPtr::NULL, 0);
             wr::<u32>(e, 0, 0x859E50);
             wr::<u32>(e, 0x60, 0x7D0);
             wr::<u32>(e, 0x64, 0);
@@ -375,9 +370,9 @@ fn seek_create_sub_task(this: GPtr<u8>, ty: i32, ped: GPtr<u8>, flags: isize) ->
                 go_to_point_and_stand_still_ctor(
                     e,
                     rd::<u32>(this, flags - 4),
-                    lp.byte_add(0xC),
-                    rd::<u32>(this, 0x18),
-                    rd::<u32>(this, 0x1C),
+                    GPtr::<u8>::cast::<u32>(lp.byte_add(0xC)),
+                    f32::from_bits(rd::<u32>(this, 0x18)),
+                    f32::from_bits(rd::<u32>(this, 0x1C)),
                     0,
                     0,
                 )
@@ -413,7 +408,7 @@ fn seek_create_sub_task(this: GPtr<u8>, ty: i32, ped: GPtr<u8>, flags: isize) ->
                 GPtr::NULL
             } else {
                 let (a, b) = (g::<u32>(0x86FC80).read(), g::<u32>(0x86FC7C).read());
-                turn_to_face_ctor(e, rd::<u32>(this, 0xC), b, a)
+                turn_to_face_ctor(e, GPtr::from_addr(rd::<u32>(this, 0xC) as usize), b, a)
             }
         }
         _ => GPtr::NULL,
@@ -486,9 +481,9 @@ fn attach_to_boat(ped: GPtr<u8>, boat: GPtr<u8>, xy: bool) -> GPtr<u8> {
     let slot = i32::from(rd::<i8>(ped, 0x718));
     let w = rd::<u32>(ped, 0x5A0 + slot as isize * 0x1C);
     let dir = ftol32(lim) as u32;
-    ped_attach_to_entity(ped, boat, rd::<u32>(o, 0), rd::<u32>(o, 4), rd::<u32>(o, 8), dir, 0x3E4C_CCCD, w);
+    ped_attach_to_entity(ped, boat, f32::from_bits(rd::<u32>(o, 0)), f32::from_bits(rd::<u32>(o, 4)), f32::from_bits(rd::<u32>(o, 8)), dir, f32::from_bits(0x3E4C_CCCD), w);
     let t = task_new(0x20);
-    let t = if t.is_null() { GPtr::NULL } else { stand_still_ctor(t, 0x7D0, 0, 0, 0x4100_0000) };
+    let t = if t.is_null() { GPtr::NULL } else { stand_still_ctor(t, 0x7D0, 0, 0, f32::from_bits(0x4100_0000)) };
     matrix_dtor(m);
     t
 }
@@ -679,7 +674,7 @@ fn seek_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>, xy: bool) -> GPtr<u8> {
             if (5..=7).contains(&ms)
                 && u32::from(rd::<u16>(ped, 0x20)).wrapping_add(g::<u32>(0xB7CB4C).read()) & 0x3FFF == 0
             {
-                ped_say(ped, 0x5B, 0, 0x3F80_0000, 0, 0, 0);
+                ped_say(ped, 0x5B, 0, f32::from_bits(0x3F80_0000), 0, 0, 0);
             }
         }
     }

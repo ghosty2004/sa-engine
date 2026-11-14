@@ -14,9 +14,10 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::attractor_is_registered_with_ped_o;
+use crate::bindings::scripted_2d_effects_get_index as scripted_2d_effects_get_index_o;
+use sa_world::bindings::is_ped_registered_with_effect as is_ped_registered_with_effect_ped_o;
 orig! {
-    /// `CPedAttractor::IsRegisteredWithPed(CPed*)` (0x5EB4C0, `ret 4`)
-    fn attractor_is_registered_with_ped_o(a: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x5EB4C0 => attractor_is_registered_with_ped;
     /// `CPedAttractorManager::IsPedRegistered<CPedAttractor>(CPed*, SArray&)` (0x5EB640, `ret 8`)
     fn is_ped_registered_o(m: GPtr<u8>, ped: GPtr<u8>, arr: GPtr<u8>) -> u8 = thiscall 0x5EB640 => is_ped_registered;
     /// `CPedAttractorManager::IsPedRegisteredWithEffect<CPedAttractor>(CPed*, const C2dEffect*, const CEntity*,
@@ -26,8 +27,6 @@ orig! {
     fn get_relevant_attractor_t_o(m: GPtr<u8>, ped: GPtr<u8>, fx: GPtr<u8>, e: GPtr<u8>, arr: GPtr<u8>) -> GPtr<u8> = thiscall 0x5EB7B0 => get_relevant_attractor_t;
     /// `CPedAttractorManager::IsPedRegisteredWithEffect(CPed*, const C2dEffect*, const CEntity*)` (0x5EBD70, `ret 0xC`)
     fn is_ped_registered_with_effect_o(m: GPtr<u8>, ped: GPtr<u8>, fx: GPtr<u8>, e: GPtr<u8>) -> u8 = thiscall 0x5EBD70 => is_ped_registered_with_effect;
-    /// `CPedAttractorManager::IsPedRegisteredWithEffect(CPed*)` (0x5EBCB0, `ret 4`)
-    fn is_ped_registered_with_effect_ped_o(m: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x5EBCB0 => is_ped_registered_with_effect_ped;
     /// `CPedAttractorManager::DeRegisterPed<CPedAttractor>(CPed*, CPedAttractor*, SArray&)` (0x5EC740, `ret 0xC`)
     fn deregister_ped_t_o(m: GPtr<u8>, ped: GPtr<u8>, a: GPtr<u8>, arr: GPtr<u8>) -> u8 = thiscall 0x5EC740 => deregister_ped_t;
     /// `CPedAttractorManager::RegisterPed<CPedAttractor>(CPed*, C2dEffect*, CEntity*, eMoveState, SArray&)` (0x5EF980,
@@ -39,8 +38,6 @@ orig! {
     fn attractor_get_type(a: GPtr<u8>) -> u32 = thiscall vslot 0x0 => unported;
     /// `CPedAttractor` scalar deleting destructor (vtable slot 4)
     fn attractor_delete(a: GPtr<u8>, flags: u32) = thiscall vslot 0x4 => unported;
-    /// `CScripted2dEffects::GetIndex(const C2dEffect*)` (0x6F9F60)
-    fn scripted_2d_effects_get_index_o(fx: GPtr<u8>) -> i32 = cdecl 0x6F9F60 => scripted_2d_effects_get_index;
     /// `CEventAttractor::IsEffectActive(CEntity*, const C2dEffectPedAttractor*)` (0x4AF460)
     fn event_attractor_is_effect_active(e: GPtr<u8>, fx: GPtr<u8>) -> u8 = cdecl 0x4AF460 => unported;
 }

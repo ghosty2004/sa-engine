@@ -27,13 +27,12 @@ const TRIANGLE_COMPARE: u32 = 0x7567A0;
 use crate::bindings::allocate_res_entry;
 use crate::bindings::crt_qsort as qsort;
 use crate::bindings::index_buffer_create;
+use crate::bindings::resources_free_res_entry as free_res_entry;
 orig! {
     /// `G->memoryFuncs.rwmalloc(size, hint)` (+0x134)
     fn rw_malloc(size: u32, hint: u32) -> GPtr<u8> = cdecl table 0xC97B24 0x134 => unported;
     /// `G->memoryFuncs.rwfree(p)` (+0x138)
     fn rw_free(p: GPtr<u8>) = cdecl table 0xC97B24 0x138 => unported;
-    /// `RwResourcesFreeResEntry(entry)` (0x807DE0)
-    fn free_res_entry(e: GPtr<u8>) -> u32 = cdecl 0x807DE0 => crate::memory::rw_resources_free_res_entry;
     /// `IDirect3DIndexBuffer9::Lock` / `Unlock`
     fn ib_lock(ib: GPtr<u8>, offset: u32, size: u32, data: GPtr<u32>, flags: u32) -> i32 = stdcall vslot 0x2C => unported;
     fn ib_unlock(ib: GPtr<u8>) -> i32 = stdcall vslot 0x30 => unported;

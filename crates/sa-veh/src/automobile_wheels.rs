@@ -16,31 +16,27 @@ use sa_math::x87::X87;
 
 use crate::common::{g, rd, wr, x};
 
-use crate::bindings::get_wheel_status;
+use sa_world::bindings::get_wheel_status;
 use sa_world::bindings::get_adhesion_group;
 use sa_world::bindings::get_adhesive_limit;
 use sa_world::bindings::get_wet_multiplier;
+use sa_core::bindings::vector_sub;
+use sa_world::bindings::vector_add;
+use sa_world::bindings::vector_scale as scalar_mul_vector;
+use sa_world::bindings::vector_sub_assign;
 orig! {
     /// `cHandlingDataMgr::HasFrontWheelDrive(uint8)` (0x6A0480)
     fn has_front_wheel_drive(mgr: GPtr<u8>, id: u32) -> u32 = thiscall 0x6A0480 => crate::handling::has_front_wheel_drive;
     /// `cHandlingDataMgr::HasRearWheelDrive(uint8)` (0x6A04B0)
     fn has_rear_wheel_drive(mgr: GPtr<u8>, id: u32) -> u32 = thiscall 0x6A04B0 => crate::handling::has_rear_wheel_drive;
-    /// `operator*(float, const CVector&)` (0x40FE90, cdecl, hidden return pointer)
-    fn scalar_mul_vector(out: GPtr<u8>, s: f32, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE90 => sa_world::world::mvpa_math::scalar_mul_vector;
     /// `CPhysical::ApplyTurnForce(CVector, CVector)` (0x542A50)
     fn apply_turn_force(e: GPtr<u8>, force: CVector, point: CVector) = thiscall 0x542A50 => sa_world::physical::forces::apply_turn_force;
     /// `DotProduct(const RwV3d*, const RwV3d*)` (0x40FDB0), ST0
     fn dot_product(a: GPtr<u8>, b: GPtr<u8>) -> f64 = cdecl 0x40FDB0 => dot_product_native;
-    /// `CVector::operator-=(const CVector&)` (0x406D70)
-    fn vector_sub_assign(v: GPtr<u8>, o: GPtr<u8>) -> GPtr<u8> = thiscall 0x406D70 => sa_world::world::mvpa_math::vector_sub_assign;
     /// `CVector::Normalise()` (0x59C910)
     fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => normalise_native;
     /// `CrossProduct(CVector*, const CVector*, const CVector*)` (0x59C730)
     fn cross_product(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C730 => cross_product_native;
-    /// `VectorSub(CVector*, const CVector*, const CVector*)` (0x40FE60)
-    fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => sa_world::world::mvpa_math::vector_sub;
-    /// `VectorAdd(CVector*, const CVector*, const CVector*)` (0x40FE30)
-    fn vector_add(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE30 => sa_world::world::mvpa_math::vector_add;
     /// `CEntity::TreatAsPlayerForCollisions()` (0x541F70)
     fn treat_as_player_for_collisions(e: GPtr<u8>) -> u8 = thiscall 0x541F70 => sa_world::world::entity::treat_as_player_for_collisions;
     /// `CVehicle::ProcessWheel(...)` (0x6D6C00)
@@ -202,7 +198,7 @@ fn wheel(
     }
     // V34: the wheel state ProcessWheel updates
     let mut state = rd::<i32>(this, 0x968 + 4 * ii);
-    let burst = get_wheel_status(this.byte_add(0x5A0), i) == 1;
+    let burst = get_wheel_status(this.byte_add(0x5A0), i as u32) == 1;
     let adhesion = if burst {
         x(adh)
             .fmul_m(rd::<f32>(this, 0x5A0))

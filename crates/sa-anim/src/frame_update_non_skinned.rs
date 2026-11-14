@@ -22,9 +22,8 @@ use crate::bindings::node_update;
 use crate::bindings::node_update_compressed;
 use sa_core::bindings::quat_get;
 use sa_core::bindings::rw_matrix_update;
+use crate::bindings::quat_normalise;
 orig! {
-    /// `CQuaternion::Normalise()` (0x4D1610)
-    fn quat_normalise(q: GPtr<u8>) = thiscall 0x4D1610 => crate::frame_update::quaternion_normalise;
     /// `FrameUpdateCallBackNonSkinnedWithVelocityExtraction(data, fd)` (0x4D2100, `data` in EAX) and the 3D variant
     /// (0x4D2450)
     fn non_skinned_with_velocity(data: GPtr<u8>, fd: GPtr<u8>) = reg("args = eax stack") 0x4D2100 => frame_update_non_skinned_with_velocity;

@@ -13,9 +13,8 @@ use super::common::{f32_of, x, xi};
 
 use crate::bindings::find_ground_z_for_3d_coord;
 use sa_core::bindings::get_weapon_info;
+use sa_core::bindings::find_player_coors;
 orig! {
-    /// `FindPlayerCoors(CVector* out, int32 playerId)` (0x56E010); returns `out`
-    fn find_player_coors(out: GPtr<f32>, id: i32) -> GPtr<f32> = cdecl 0x56E010 => unported;
     /// `CPickups::TestForPickupsInBubble(CVector, float)` (0x456450)
     fn test_for_pickups_in_bubble(px: f32, py: f32, pz: f32, radius: f32) -> u8 = cdecl 0x456450 => unported;
     /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, bool buildings, bool vehicles, bool peds,
@@ -39,7 +38,7 @@ orig! {
        unverified = "pedhit-1", route = "L2", hazards = "heap-writes", recs = "weapon-combat")]
 #[allow(clippy::too_many_arguments)]
 pub fn pickups_generate_new_one_weapon_type(px: u32, py: u32, pz: u32, weapon: u32, ty: u32, ammo: u32, empty: u32, msg: u32) -> i32 {
-    let model = super::common::rd::<u32>(get_weapon_info(weapon, 1), 0xC);
+    let model = super::common::rd::<u32>(get_weapon_info(weapon as i32, 1), 0xC);
     generate_new_one(px, py, pz, model, ty, ammo, 0, empty, msg)
 }
 

@@ -15,6 +15,7 @@ use crate::common::{g, rd, wr, x};
 pub use sa_world::bindings::can_ped_open_locks;
 pub use sa_world::bindings::clump_get_first_association_4d6a70 as clump_get_first_association;
 pub use sa_world::bindings::get_next_association;
+pub use sa_world::bindings::anim_blend_animation as blend_animation;
 orig! {
     /// `CVehicle::IsDoorReady(uint32)` (vtable slot 0x7C)
     pub fn veh_is_door_ready(veh: GPtr<u8>, door: u32) -> u8 = thiscall vslot 0x7C => unported;
@@ -24,8 +25,6 @@ orig! {
     pub fn veh_is_door_closed(veh: GPtr<u8>, door: u32) -> u8 = thiscall vslot 0x8C => unported;
     /// `CVehicle::IsDoorMissing(uint32)` (vtable slot 0x94)
     pub fn veh_is_door_missing(veh: GPtr<u8>, door: u32) -> u8 = thiscall vslot 0x94 => unported;
-    /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float)` (0x4D4610)
-    pub fn blend_animation(clump: GPtr<u8>, group: u32, anim: u32, delta: f32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
 }
 
 /// `subclass == 9 (bike) || handling flags bit 9`: the test every door helper starts with.

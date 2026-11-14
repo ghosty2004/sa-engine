@@ -107,9 +107,9 @@ pub const SPRITE_DTOR: u32 = 0x7281E0;
 /// `__dtor_CLoadingScreen__m_aSplashes` (registered with `_atexit`)
 pub const DTOR_SPLASHES: u32 = 0x8565E0;
 
-pub use crate::bindings::add_txd_slot;
-pub use crate::bindings::find_txd_slot;
-pub use crate::bindings::load_txd;
+pub use sa_core::bindings::add_txd_slot;
+pub use sa_core::bindings::find_txd_slot;
+pub use sa_core::bindings::load_txd;
 pub use crate::bindings::remove_txd_slot;
 pub use crate::bindings::sprite2d_delete as sprite_delete;
 pub use crate::bindings::sprite2d_draw_bar_chart as sprite_draw_bar_chart;
@@ -128,27 +128,25 @@ pub use sa_core::bindings::sprite2d_draw as sprite_draw;
 pub use sa_core::bindings::sprite2d_init_per_frame as sprite_init_per_frame;
 pub use sa_core::bindings::sprite2d_set_texture as sprite_set_texture;
 pub use sa_core::bindings::sprite_draw_rect;
+pub use crate::bindings::hud_colours_get_rgb as hud_get_rgb;
+pub use crate::bindings::load_splashes as load_splashes_call;
+pub use crate::bindings::remove_txd;
+pub use sa_core::bindings::loading_screen_new_chunk_loaded as new_chunk_loaded_call;
+pub use sa_core::bindings::loading_screen_set_loading_bar_msg as set_loading_bar_msg_call;
+pub use sa_core::bindings::pop_current_txd;
+pub use sa_core::bindings::push_current_txd;
+pub use sa_core::bindings::set_current_txd;
+pub use sa_core::bindings::txd_add_ref;
 orig! {
     /// `RwRenderStateSet(state, value)` (`RwEngineInstance` +0x20)
     pub fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `CHudColours::GetRGB(CRGBA* out, uint8 colour)` (0x58FEA0, returns `out`)
-    pub fn hud_get_rgb(h: GPtr<u8>, out: GPtr<u8>, colour: u32) -> GPtr<u8> = thiscall 0x58FEA0 => unported;
     /// `CAudioEngine::ServiceLoadingTune(float)` (0x5078A0)
     pub fn service_loading_tune(a: GPtr<u8>, amp: f32) = thiscall 0x5078A0 => unported;
-    pub fn txd_add_ref(slot: i32) = cdecl 0x731A00 => crate::txdstore::add_ref;
-    pub fn push_current_txd() = cdecl 0x7316A0 => crate::txdstore::push_current_txd;
-    pub fn pop_current_txd() = cdecl 0x7316B0 => crate::txdstore::pop_current_txd;
-    pub fn set_current_txd(slot: i32) = cdecl 0x7319C0 => crate::txdstore::set_current_txd;
-    pub fn remove_txd(slot: i32) = cdecl 0x731E90 => crate::txdstore::remove_txd;
     /// KERNEL32 `QueryPerformanceCounter` (IAT 0x8580C8)
     pub fn query_performance_counter(out: GPtr<u64>) -> i32 = stdcall site 0x5900FF => unported;
     /// CRT `sprintf(buf, fmt)` / `sprintf(buf, fmt, int)` (0x821BB5)
     pub fn sprintf0(buf: GPtr<u8>, fmt: GPtr<u8>) -> i32 = cdecl 0x821BB5 => unported;
     pub fn sprintf1(buf: GPtr<u8>, fmt: GPtr<u8>, v: u32) -> i32 = cdecl 0x821BB5 => unported;
-    /// internal calls through the hook table
-    pub fn set_loading_bar_msg_call(m1: GPtr<u8>, m2: GPtr<u8>) = cdecl 0x590240 => set_loading_bar_msg;
-    pub fn new_chunk_loaded_call() = cdecl 0x590D00 => new_chunk_loaded;
-    pub fn load_splashes_call(use_id: u8, id: u8) = cdecl 0x5900B0 => load_splashes;
     pub fn render_splash_call() = cdecl 0x58FF60 => render_splash;
     pub fn render_loading_bar_call() = cdecl 0x590370 => render_loading_bar;
     pub fn display_next_splash_call() = cdecl 0x5904D0 => display_next_splash;
@@ -223,15 +221,15 @@ pub fn render_splash() {
     let curr = CURR_DISPLAYED_SPLASH.get();
     if FADING.get() == 0 {
         if READY_TO_DELETE.get() == 0 {
-            sprite_draw(splash(curr), r, c);
+            sprite_draw(splash(curr), r.cast::<f32>(), c);
         }
         return;
     }
-    sprite_draw(splash(curr), r, c);
+    sprite_draw(splash(curr), r.cast::<f32>(), c);
     let fade_in = FADE_IN_FROM_BLACK.get() != 0;
     if !fade_in && FADE_OUT_TO_BLACK.get() == 0 {
         c.byte_add(3).write(255u8.wrapping_sub(FADE_ALPHA.get()));
-        sprite_draw(splash(CURR_DISPLAYED_SPLASH.get() - 1), r, c);
+        sprite_draw(splash(CURR_DISPLAYED_SPLASH.get() - 1), r.cast::<f32>(), c);
         return;
     }
     c.write(0);
@@ -240,7 +238,7 @@ pub fn render_splash() {
     c.byte_add(3).write(if fade_in { 255u8.wrapping_sub(FADE_ALPHA.get()) } else { FADE_ALPHA.get() });
     // 0x590099: samp NOPs this call (no black fade over its splash; docs/samp/startup.md).
     if !sa_core::samp::toggled(sa_core::samp::toggle::SAMP_STARTUP) {
-        sprite_draw_rect(r, c);
+        sprite_draw_rect(r.cast::<f32>(), c);
     }
 }
 

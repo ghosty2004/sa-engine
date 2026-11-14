@@ -13,6 +13,7 @@
 //! char[8], +8 i16 node yes, +0xA i16 node no, +0xC speech, +0x10 speech yes, +0x14 speech no).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::orig::at_site;
 use sa_core::{hook, orig};
@@ -92,15 +93,15 @@ use sa_world::bindings::player_get_wanted_level;
 use sa_world::bindings::sequence_add_task;
 use sa_world::bindings::sequence_ctor;
 use sa_world::bindings::stand_still_ctor;
-use sa_world::bindings::vector_sub;
+use sa_core::bindings::vector_sub;
+use crate::bindings::conv_is_player_in_position;
+use sa_core::bindings::ik_abort_look_at;
+use sa_world::bindings::clothes_has_visible_new_hair_cut;
+use sa_world::bindings::kill_ped_on_foot_ctor;
+use sa_world::bindings::ped_say;
 orig! {
-    /// `CPed::Say(uint16 phrase, uint32 offset, float probability, bool overrideSilence, bool forceAudible,
-    /// bool frontEnd)` (0x5EFFE0, `ret 0x18`)
-    fn ped_say(p: GPtr<u8>, id: u32, off: u32, prob: u32, a: u32, b: u32, c: u32) = thiscall 0x5EFFE0 => unported;
     /// `CPed::PedIsReadyForConversation(bool)` (0x43ABA0, `ret 4`)
     fn ped_is_ready_for_conversation(p: GPtr<u8>, random: u32) -> u8 = thiscall 0x43ABA0 => unported;
-    /// `CConversationForPed::IsPlayerInPositionForConversation(bool)` (0x43AC40, `ret 4`)
-    fn conv_is_player_in_position(c: GPtr<u8>, random: u32) -> u8 = thiscall 0x43AC40 => unported;
     /// `CConversations::AwkwardSay(int32 sample, CPed*)` (0x43A810)
     fn awkward_say(sample: i32, ped: GPtr<u8>) = cdecl 0x43A810 => unported;
     /// `CAEPedSpeechAudioEntity::ReleasePlayerConversation()` (0x4E3960)
@@ -111,19 +112,12 @@ orig! {
     fn v_will_ped_chat_about_topic(s: GPtr<u8>, topic: i32) -> u8 = thiscall vslot 0x14 => unported;
     /// `CConversations::IsConversationGoingOn()` (0x43AAC0)
     fn conversations_is_going_on() -> u8 = cdecl 0x43AAC0 => unported;
-    /// `CPedClothesDesc::HasVisibleNewHairCut(int32)` (0x5A7970, `ret 4`)
-    fn clothes_has_visible_new_hair_cut(c: GPtr<u8>, a: u32) -> u8 = thiscall 0x5A7970 => unported;
     /// `CPedClothesDesc::HasVisibleTattoo` (0x5A79D0)
     fn clothes_has_visible_tattoo(c: GPtr<u8>) -> u8 = thiscall 0x5A79D0 => unported;
     /// `IKChainManager_c::LookAt(const char* purpose, CPed*, CEntity* target, int32 time, ePedBones, CVector* pos,
     /// bool useTorso, float speed, int32 blendTime, int32 priority, bool)` (0x618970, `ret 0x2C`)
     #[allow(clippy::too_many_arguments)]
     fn ik_look_at(m: GPtr<u8>, purpose: u32, ped: GPtr<u8>, target: GPtr<u8>, time: u32, bone: u32, pos: u32, torso: u32, speed: u32, blend: u32, prio: u32, a: u32) = thiscall 0x618970 => unported;
-    /// `IKChainManager_c::AbortLookAt(CPed*, int32 blendOutTime)` (0x618280, `ret 8`)
-    fn ik_abort_look_at(m: GPtr<u8>, ped: GPtr<u8>, t: u32) = thiscall 0x618280 => unported;
-    /// `CTaskComplexKillPedOnFoot::CTaskComplexKillPedOnFoot(CPed*, int32, uint32, uint32, uint32, int8)` (0x620E30,
-    /// `ret 0x18`)
-    fn kill_ped_on_foot_ctor(t: GPtr<u8>, target: GPtr<u8>, time: u32, a: u32, b: u32, c: u32, d: u32) -> GPtr<u8> = thiscall 0x620E30 => unported;
     /// `CPedToPlayerConversations::EndConversation()` (0x43AB10)
     fn p2p_end_conversation() = cdecl 0x43AB10 => unported;
 }
@@ -168,7 +162,7 @@ pub fn p2p_clear() {
 pub fn conv_is_player_in_position_for_conversation(this: GPtr<u8>, random: u32) -> u8 {
     let p = pos(rd::<GPtr<u8>>(this, 8));
     let mut buf = [0u32; 3];
-    let c = find_player_coors(local(&mut buf), -1);
+    let c = GPtr::<f32>::cast::<u8>(find_player_coors(GPtr::<u8>::cast::<f32>(local(&mut buf)), -1));
     let dx = x(rd::<f32>(c, 0)).fsub_m(rd::<f32>(p, 0));
     let dy = x(rd::<f32>(c, 4)).fsub_m(rd::<f32>(p, 4));
     let dz = x(rd::<f32>(c, 8)).fsub_m(rd::<f32>(p, 8));
@@ -199,7 +193,7 @@ pub fn conv_is_player_in_position_for_conversation(this: GPtr<u8>, random: u32) 
     if random as u8 != 0 {
         let grp = rd::<i32>(rd::<GPtr<u8>>(find_player_ped(-1), 0x480), 0x38);
         let membership = g::<u8>(0xC09928).byte_add(grp.wrapping_mul(0x2D4) as isize);
-        if membership_count_excluding_leader(membership) >= 1 {
+        if membership_count_excluding_leader(membership) as i32 >= 1 {
             return 0;
         }
     }
@@ -266,7 +260,7 @@ pub fn conv_for_ped_update(this: GPtr<u8>) {
         let speech = rd::<i32>(node(rd::<i32>(this, 4)), 0xC);
         if speech > 0 {
             let id = rd::<u16>(node(rd::<i32>(this, 4)), 0xC) as u32;
-            ped_say(rd::<GPtr<u8>>(this, 8), id, 0, ONE_F, 0, 0, 0);
+            ped_say(rd::<GPtr<u8>>(this, 8), id, 0, f32::from_bits(ONE_F), 0, 0, 0);
         }
         let speech = rd::<i32>(node(rd::<i32>(this, 4)), 0xC);
         if speech < 0 {
@@ -305,7 +299,7 @@ fn conv_answer(this: GPtr<u8>) {
     }
     let speech = rd::<i32>(node(rd::<i32>(this, 4)), speech_off);
     if speech > 0 {
-        ped_say(find_player_ped(-1), speech as u16 as u32, 0, ONE_F, 0, 0, 0);
+        ped_say(find_player_ped(-1), speech as u16 as u32, 0, f32::from_bits(ONE_F), 0, 0, 0);
     }
     if rd::<i32>(node(rd::<i32>(this, 4)), speech_off) < 0 {
         let pl = find_player_ped(-1);
@@ -349,21 +343,21 @@ fn p2p_aggro(player: GPtr<u8>) {
     let t = if mem.is_null() {
         GPtr::NULL
     } else {
-        stand_still_ctor(mem, 2000, 0, 0, 0x4100_0000)
+        stand_still_ctor(mem, 2000, 0, 0, f32::from_bits(0x4100_0000))
     };
     sequence_add_task(seq, t);
     let mem = task_new(0x38);
     let t = if mem.is_null() {
         GPtr::NULL
     } else {
-        kill_ped_on_foot_ctor(mem, player, 0xFFFF_FFFF, 0, 0, 0, 0)
+        kill_ped_on_foot_ctor(mem, player, 0xFFFF_FFFFu32 as i32, 0, 0, 0, 0)
     };
     sequence_add_task(seq, t);
     let mut ev = [0u32; 6];
     event_script_command_ctor(local(&mut ev), 3, seq, 0);
     let group = rd::<GPtr<u8>>(P2P_PED.get(), 0x47C).byte_add(0x68);
     event_group_add(group, local(&mut ev), 0);
-    event_script_command_dtor(local(&mut ev));
+    event_script_command_dtor(GPtr::<u8>::cast::<u32>(local(&mut ev)));
 }
 
 /// Result of a candidate's topic (state 0).
@@ -381,13 +375,13 @@ fn p2p_open(ped: GPtr<u8>, positive: u8, phrase: u32) -> Opening {
         return Opening::Skip;
     }
     P2P_POSITIVE_OPENING.set(positive);
-    ped_say(ped, phrase, 0, ONE_F, 1, 0, 0);
+    ped_say(ped, phrase, 0, f32::from_bits(ONE_F), 1, 0, 0);
     Opening::Start
 }
 
 /// `_ftol(GetStatValue(stat) + (int32)extra - [sub])` (`fiadd` then `fsub dword`).
 fn stat_score(stat: u32, extra: u32, sub: usize) -> i32 {
-    ftol32(X87::from_f64_exact(stats_get_stat_value(stat)).fadd(xi(extra as i32)).fsub_m(g::<f32>(sub).read()))
+    ftol32(X87::from_f64_exact(stats_get_stat_value(stat as u16)).fadd(xi(extra as i32)).fsub_m(g::<f32>(sub).read()))
 }
 
 /// The player's `CPedClothesDesc` (`m_pPlayerData` +0x480 -> +4), through a fresh `FindPlayerPed(-1)`.
@@ -517,7 +511,7 @@ fn p2p_topic_opening(ped: GPtr<u8>) -> Opening {
             if request_player_conversation(ped) == 0 {
                 return Opening::Skip;
             }
-            ped_say(ped, if t == 8 { 0xFB } else { 0xFC }, 0, ONE_F, 1, 0, 0);
+            ped_say(ped, if t == 8 { 0xFB } else { 0xFC }, 0, f32::from_bits(ONE_F), 1, 0, 0);
             P2P_POSITIVE_OPENING.set(1);
             Opening::Start
         }
@@ -538,21 +532,21 @@ fn p2p_is_candidate(ped: GPtr<u8>, player: GPtr<u8>) -> bool {
     }
     let (mut sub, mut top) = ([0u32; 3], [0u32; 3]);
     let d = vector_sub(local(&mut sub), pos(player), pos(ped));
-    let up = placeable_get_top_direction(ped, local(&mut top));
+    let up = GPtr::<f32>::cast::<u8>(placeable_get_top_direction(ped, GPtr::<u8>::cast::<f32>(local(&mut top))));
     if X87::from_f64_exact(vector_dot_product(up, d)).fcom(cf(0x858B50)).test_any(0x41) {
         return false;
     }
     let (mut sub, mut top) = ([0u32; 3], [0u32; 3]);
     let d = vector_sub(local(&mut sub), pos(ped), pos(player));
-    let up = placeable_get_top_direction(player, local(&mut top));
+    let up = GPtr::<f32>::cast::<u8>(placeable_get_top_direction(player, GPtr::<u8>::cast::<f32>(local(&mut top))));
     if X87::from_f64_exact(vector_dot_product(up, d)).fcom(cf(0x858B50)).test_any(0x41) {
         return false;
     }
     let pp = pos(ped);
     let (mut coors, mut sub) = ([0u32; 3], [0u32; 3]);
-    let c = find_player_coors(local(&mut coors), -1);
+    let c = GPtr::<f32>::cast::<u8>(find_player_coors(GPtr::<u8>::cast::<f32>(local(&mut coors)), -1));
     let d = vector_sub(local(&mut sub), pp, c);
-    !X87::from_f64_exact(vector_magnitude(d)).fcom(cf(0x858F48)).test_parity(5)
+    !X87::from_f64_exact(vector_magnitude(d.cast::<u32>())).fcom(cf(0x858F48)).test_parity(5)
 }
 
 /// State 0 (0x43B15E): look for a ped that opens a conversation with the player.
@@ -581,7 +575,7 @@ fn p2p_state_inactive(player: GPtr<u8>) {
             idx = 0;
             P2P_SCAN_INDEX.set(0);
         }
-        let ped = ped_pool_get_at(pool, idx);
+        let ped = ped_pool_get_at(pool, idx as u32);
         if !p2p_is_candidate(ped, player) {
             continue;
         }
@@ -610,7 +604,7 @@ fn p2p_state_inactive(player: GPtr<u8>) {
             }
             Opening::Skip => {
                 if at_site(0x43B953, rand) & 0xFFF == 3 {
-                    ped_say(ped, 0x58, 0, ONE_F, 0, 0, 0);
+                    ped_say(ped, 0x58, 0, f32::from_bits(ONE_F), 0, 0, 0);
                     return;
                 }
             }
@@ -621,7 +615,7 @@ fn p2p_state_inactive(player: GPtr<u8>) {
 /// The player's reply chosen by the ped's sex (`IsFemalePedType(m_pPed->m_nPedType)`): `female` / `male`.
 fn p2p_say_by_sex(player: GPtr<u8>, female: u32, male: u32) {
     let f = is_female_ped_type(rd::<u32>(P2P_PED.get(), 0x598));
-    ped_say(player, if f != 0 { female } else { male }, 0, ONE_F, 1, 0, 0);
+    ped_say(player, if f != 0 { female } else { male }, 0, f32::from_bits(ONE_F), 1, 0, 0);
 }
 
 /// The player's "yes" to the positive opening of topics 0..7 (jump table 0x43C15C).
@@ -643,7 +637,7 @@ fn p2p_state_opened(player: GPtr<u8>) {
         if ik_is_looking(g(IK_CHAIN_MAN), P2P_PED.get()) != 0 {
             ik_abort_look_at(g(IK_CHAIN_MAN), P2P_PED.get(), 250);
             if P2P_POSITIVE_OPENING.get() != 0 {
-                ped_say(P2P_PED.get(), 0x38, 0, ONE_F, 0, 0, 0);
+                ped_say(P2P_PED.get(), 0x38, 0, f32::from_bits(ONE_F), 0, 0, 0);
             }
         }
         return;
@@ -656,11 +650,11 @@ fn p2p_state_opened(player: GPtr<u8>) {
         }
         match P2P_TOPIC.get() as u32 {
             t @ 0..=7 => {
-                ped_say(player, YES_PHRASES[t as usize], 0, ONE_F, 1, 0, 0);
+                ped_say(player, YES_PHRASES[t as usize], 0, f32::from_bits(ONE_F), 1, 0, 0);
                 p2p_wait_to_finish();
             }
             t @ (8 | 9) => {
-                ped_say(player, if t == 8 { 0xEC } else { 0x6B }, 0, ONE_F, 1, 0, 0);
+                ped_say(player, if t == 8 { 0xEC } else { 0x6B }, 0, f32::from_bits(ONE_F), 1, 0, 0);
                 if general_random_int_in_range(0, 100) < 75 {
                     p2p_aggro(player);
                 }
@@ -676,11 +670,11 @@ fn p2p_state_opened(player: GPtr<u8>) {
     if P2P_POSITIVE_OPENING.get() != 0 {
         match P2P_TOPIC.get() {
             8 => {
-                ped_say(player, 0xEB, 0, ONE_F, 1, 0, 0);
+                ped_say(player, 0xEB, 0, f32::from_bits(ONE_F), 1, 0, 0);
                 p2p_end_conversation();
             }
             9 => {
-                ped_say(player, 0x6A, 0, ONE_F, 1, 0, 0);
+                ped_say(player, 0x6A, 0, f32::from_bits(ONE_F), 1, 0, 0);
                 p2p_end_conversation();
             }
             _ => {
@@ -733,7 +727,7 @@ pub fn p2p_update() {
             if now() <= P2P_START_TIME.get().wrapping_add(3000) || ped_get_ped_talking(p) != 0 {
                 return;
             }
-            ped_say(P2P_PED.get(), 0x85, 0, ONE_F, 1, 0, 0);
+            ped_say(P2P_PED.get(), 0x85, 0, f32::from_bits(ONE_F), 1, 0, 0);
             p2p_wait_to_finish();
         }
         3 if now() > P2P_START_TIME.get().wrapping_add(2500) || P2P_PED.get().is_null() => {
@@ -754,10 +748,7 @@ const TEMP_NODES: usize = 0x969360;
 
 use sa_core::bindings::crt_strncpy;
 use sa_core::bindings::make_upper_case;
-orig! {
-    /// `CConversationForPed::IsPlayerInPositionForConversation(bool)` (0x43AC40, `ret 4`; EAX passed through)
-    fn conv_is_player_in_position_eax(c: GPtr<u8>, random: u32) -> u32 = thiscall 0x43AC40 => unported;
-}
+use crate::bindings::conv_is_player_in_position as conv_is_player_in_position_eax;
 
 /// `CConversations::IsPlayerInPositionForConversation(CPed*, bool)` (stub 0x43B0B0 → 0x1563250, cdecl): the
 /// `CConversationForPed` of `m_aPedsTalking` whose ped (+8) is this one (first of 14), else a null `this`
@@ -773,7 +764,7 @@ pub fn conversations_is_player_in_position(ped: GPtr<u8>, random: u32) -> u32 {
             break;
         }
     }
-    conv_is_player_in_position_eax(c, random)
+    conv_is_player_in_position_eax(c, random) as u32
 }
 
 /// `CConversations::SetUpConversationNode(const char* name, const char* yes, const char* no, int32 speech,

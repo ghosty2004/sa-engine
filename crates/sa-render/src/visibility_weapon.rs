@@ -19,8 +19,8 @@ use sa_core::bindings::rw_frame_update_objects;
 use sa_world::bindings::ped_get_weapon_skill;
 use sa_world::bindings::ped_reset_gun_flash_alpha;
 use sa_world::bindings::rp_clump_render;
-use sa_world::bindings::rw_matrix_rotate;
-use sa_world::bindings::rw_matrix_translate;
+use sa_core::bindings::rw_matrix_rotate;
+use sa_core::bindings::rw_matrix_translate;
 orig! {
     /// `RwRenderStateSet` (`RwEngineInstance->dOpenDevice.fpRenderStateSet`, +0x20)
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
@@ -70,7 +70,7 @@ pub fn render_weapon_peds_for_pc() {
             ped_setup_lighting(ped);
             let bone = if active_weapon_type(ped) == 0x2E { 3 } else { 0x18 };
             let hier = get_anim_hierarchy_from_skin_clump(rd::<GPtr<u8>>(ped, 0x18));
-            let idx = rp_hanim_id_get_index(hier, bone);
+            let idx = rp_hanim_id_get_index(hier, bone as u32);
             let mut src = rp_hanim_hierarchy_get_matrix_array(hier).byte_add((idx << 6) as isize);
             if bone == 0 {
                 let c = rd::<GPtr<u8>>(ped, 0x18);
@@ -81,18 +81,18 @@ pub fn render_weapon_peds_for_pc() {
             copy_matrix(m, src);
             if active_weapon_type(ped) == 0x2E {
                 rw_matrix_translate(m, GPtr::from_addr(0x8D60B0), 1);
-                rw_matrix_rotate(m, GPtr::from_addr(0x8D2338), 0x42B4_0000, 1);
+                rw_matrix_rotate(m, GPtr::from_addr(0x8D2338), f32::from_bits(0x42B4_0000), 1);
             }
             ped_set_gun_flash_alpha(ped, 0);
             rw_frame_update_objects(frame);
             rp_clump_render(rd::<GPtr<u8>>(ped, 0x4F4));
             let ty = active_weapon_type(ped);
-            let info = get_weapon_info(ty, ped_get_weapon_skill(ped));
+            let info = get_weapon_info(ty as i32, (ped_get_weapon_skill(ped) as i32) as u8);
             if (rd::<u32>(info, 0x18) >> 11) & 1 != 0 {
                 let idx = rp_hanim_id_get_index(hier, 0x22);
                 let src = rp_hanim_hierarchy_get_matrix_array(hier).byte_add((idx << 6) as isize);
                 copy_matrix(m, src);
-                rw_matrix_rotate(m, GPtr::from_addr(0x8D60A4), 0x4334_0000, 1);
+                rw_matrix_rotate(m, GPtr::from_addr(0x8D60A4), f32::from_bits(0x4334_0000), 1);
                 rw_matrix_translate(m, GPtr::from_addr(0x8D6098), 1);
                 ped_set_gun_flash_alpha(ped, 1);
                 rw_frame_update_objects(frame);

@@ -20,21 +20,16 @@ use sa_core::bindings::load_all_requested_models;
 use sa_core::bindings::streaming_request_model as request_model;
 use sa_core::bindings::task_new;
 use sa_stream::bindings::stream_peds_into_random_slots;
+use crate::bindings::beach_party_cheat;
+use crate::bindings::countryside_invasion_cheat;
+use crate::bindings::funhouse_cheat;
+use crate::bindings::give_delayed_weapon as ped_give_delayed_weapon;
+use sa_core::bindings::ped_give_weapon;
 orig! {
     /// `CCheat::HealthCheat()` (0x438D60)
     fn health_cheat() = cdecl 0x438D60 => unported;
-    /// `CPed::GiveWeapon(eWeaponType, uint32 ammo, bool likeUnlimited)` (0x5E6080)
-    fn ped_give_weapon(ped: GPtr<u8>, ty: i32, ammo: u32, unlimited: u32) -> i32 = thiscall 0x5E6080 => unported;
-    /// `CPed::GiveDelayedWeapon(eWeaponType, uint32 ammo)` (0x5E89B0)
-    fn ped_give_delayed_weapon(ped: GPtr<u8>, ty: i32, ammo: u32) = thiscall 0x5E89B0 => unported;
     /// virtual slot +0xA4 (`CVehicle::BlowUpCar(CEntity*, bool)`)
     fn v_blow_up_car(v: GPtr<u8>, culprit: u32, in_cutscene: u32) = thiscall vslot 0xA4 => unported;
-    /// `CCheat::BeachPartyCheat()` (0x439230)
-    fn beach_party_cheat() = cdecl 0x439230 => unported;
-    /// `CCheat::FunhouseCheat()` (0x439720)
-    fn funhouse_cheat() = cdecl 0x439720 => unported;
-    /// `CCheat::CountrysideInvasionCheat()` (0x439F60)
-    fn countryside_invasion_cheat() = cdecl 0x439F60 => unported;
     /// `CCheat::EverybodyAttacksPlayerCheat()` (0x439C70)
     fn everybody_attacks_player_cheat() = cdecl 0x439C70 => unported;
 }
@@ -190,7 +185,7 @@ pub fn jetpack_cheat() {
     event_script_command_ctor(ep, 3, task, 0);
     let intel = rd::<GPtr<u8>>(find_player_ped(-1), 0x47C);
     event_group_add(intel.byte_add(0x68), ep, 0);
-    event_script_command_dtor(ep);
+    event_script_command_dtor(ep.cast::<u32>());
 }
 
 /// This module's registrations.

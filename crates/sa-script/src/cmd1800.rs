@@ -48,17 +48,17 @@ const NONE_STR: usize = 0x859E38;
 /// The 9999.9f immediate (0x461C3F9A) of the random car/char searches.
 const K_9999_9: u32 = 0x461C_3F9A;
 
-use crate::bindings::clump_is_initialized as rp_anim_blend_clump_is_initialized;
+use sa_core::bindings::clump_is_initialized as rp_anim_blend_clump_is_initialized;
 use crate::bindings::conversations_done_setting_up_conversation as done_setting_up_conversation;
 use crate::bindings::object_has_been_damaged as object_is_damaged;
 use crate::bindings::phone_task_stop;
-use crate::bindings::rgba_set_463370;
-use crate::bindings::task_gun_control_ctor;
-use crate::bindings::task_use_effect_ctor;
+use sa_world::bindings::rgba_set_463370;
+use sa_world::bindings::task_gun_control_ctor;
+use sa_world::bindings::task_use_effect_ctor;
 use crate::bindings::tell_heli_to_go_to_coors;
-use crate::bindings::vehicle_41bdd0 as set_engine_on;
+use sa_world::bindings::vehicle_41bdd0 as set_engine_on;
 use crate::bindings::vehicle_get_ref;
-use crate::bindings::vehicle_pool_get_at;
+use sa_world::bindings::vehicle_pool_get_at;
 use sa_core::bindings::clothes_rebuild_player as rebuild_player;
 use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
 use sa_core::bindings::entity_register_reference as register_reference;
@@ -68,12 +68,12 @@ use sa_core::bindings::rp_anim_blend_clump_init;
 use sa_core::bindings::streaming_disable_cop_bikes as disable_cop_bikes;
 use sa_core::bindings::task_new;
 use sa_stream::bindings::is_object_glass;
-use sa_world::bindings::anim_get_animation as get_animation;
+use sa_core::bindings::anim_get_animation as get_animation;
 use sa_world::bindings::decision_maker_types_get_instance as dm_types_instance;
 use sa_world::bindings::entity_get_is_static as get_is_static;
 use sa_world::bindings::find_ground_z_for_coord as find_ground_z;
 use sa_world::bindings::find_zone_by_label;
-use sa_world::bindings::get_animation_block;
+use sa_core::bindings::get_animation_block;
 use sa_world::bindings::get_ped_flag;
 use sa_world::bindings::get_vehicle_appearance;
 use sa_world::bindings::hold_entity_drop_entity as drop_entity;
@@ -85,26 +85,33 @@ use sa_world::bindings::remove_from_moving_list;
 use sa_world::bindings::set_char_created_by;
 use sa_world::bindings::vehicle_can_be_deleted as can_be_deleted;
 use sa_world::bindings::window_responds_to_collision;
+use crate::bindings::add_car_to_check;
+use crate::bindings::clear_ped_type_as_acquaintance;
+use crate::bindings::give_ped_scripted_task;
+use crate::bindings::is_ped_dead as script_is_ped_dead;
+use crate::bindings::read_label;
+use crate::bindings::script_task_pick_up_object;
+use crate::bindings::this_is_a_valid_random_ped;
+use sa_core::bindings::matrix_rotate_y;
+use sa_core::bindings::matrix_set_rotate_z;
+use sa_core::bindings::vector_magnitude;
+use sa_stream::bindings::anim_blend_animation_hier as blend_animation;
+use sa_world::bindings::apply_damage;
+use sa_world::bindings::break_manager_add;
+use sa_world::bindings::compute_target_door_to_enter_as_passenger as compute_target_door_as_passenger;
+use sa_world::bindings::gang_drive_by_ctor as task_drive_by_ctor;
+use sa_world::bindings::get_actual_script_thing_index;
+use sa_world::bindings::matrix_add_pos;
+use sa_world::bindings::ped_pool_get_at;
+use sa_world::bindings::set_ped_in_as_driver_ctor as task_set_ped_in_as_driver_ctor;
+use sa_world::bindings::set_ped_in_as_passenger_ctor as task_set_ped_in_as_passenger_ctor;
+use sa_world::bindings::tm_find_task_by_type as find_task_by_type;
+use sa_world::bindings::vehicle_set_created_by as set_vehicle_created_by;
 orig! {
-    /// `CRunningScript::ReadTextLabelFromScript(char*, uint8)` (0x463D50)
-    fn read_label(s: Scr, buf: GPtr<u8>, len: u32) = thiscall 0x463D50 => crate::vm::read_text_label_from_script;
-    /// `CAnimManager::BlendAnimation(RpClump*, CAnimBlendHierarchy*, int32 flags, float blendDelta)` (0x4D4410)
-    fn blend_animation(clump: GPtr<u8>, anim: GPtr<u8>, flags: u32, delta: u32) -> GPtr<u8> = cdecl 0x4D4410 => unported;
-    /// `CRunningScript::ScriptTaskPickUpObject(int32 command)` (0x46AF50; reads its own parameters)
-    fn script_task_pick_up_object(s: Scr, command: u32) = thiscall 0x46AF50 => unported;
-    /// `CRunningScript::GivePedScriptedTask(int32 pedHandle, CTask*, int32 opcode)` (0x465C20)
-    fn give_ped_scripted_task(s: Scr, ped: u32, task: GPtr<u8>, command: u32) = thiscall 0x465C20 => unported;
     /// A virtual `CTask` method without arguments returning EAX (`GetTaskType`, vtable +0x10), read at run time
     fn vcall_task_type(f: u32, this: GPtr<u8>) -> u32 = thiscall dyn => unported;
-    /// The drive-by task constructor 0x6217D0 (`CTaskSimpleGangDriveBy`: target entity, `const CVector*` target
-    /// coords, abort range, frequency, style, seat RHS), returns this
-    fn task_drive_by_ctor(t: GPtr<u8>, target: GPtr<u8>, pos: GPtr<u32>, range: u32, freq: u32, style: u32, rhs: u32) -> GPtr<u8> = thiscall 0x6217D0 => unported;
     /// The mobile phone task constructor 0x6348A0 (`CTaskComplexUseMobilePhone(int32 duration)`), returns this
     fn task_use_mobile_phone_ctor(t: GPtr<u8>, duration: u32) -> GPtr<u8> = thiscall 0x6348A0 => unported;
-    /// `CTaskManager::FindTaskByType(int32 slot, int32 type)` (0x6817D0)
-    fn find_task_by_type(tm: GPtr<u8>, slot: u32, ty: u32) -> GPtr<u8> = thiscall 0x6817D0 => unported;
-    /// `CTheScripts::GetActualScriptThingIndex(int32 ref, uint8 type)` (0x4839A0)
-    fn get_actual_script_thing_index(r: u32, ty: u32) -> i32 = cdecl 0x4839A0 => unported;
     /// `CDecisionMakerTypes::FlushDecisionMakerEventResponse(int32 dm, int32 event)` (0x604490)
     fn flush_dm_event_response(t: GPtr<u8>, i: i32, ev: u32) = thiscall 0x604490 => unported;
     /// `CDecisionMakerTypes::AddEventResponse(int32 dm, eEventType, eTaskType, float* chances, int32* flags)`
@@ -121,29 +128,10 @@ orig! {
     fn start_setting_up_conversation(p: GPtr<u8>) = cdecl 0x43A840 => unported;
     /// `CConversations::IsConversationAtNode(char*, CPed*)` (0x43B000), AL
     fn is_conversation_at_node(label: GPtr<u8>, p: GPtr<u8>) -> u8 = cdecl 0x43B000 => unported;
-    /// `BreakManager_c::Add(CObject*, RwV3d*, float, bool)` (0x59E9B0), ECX = g_breakMan 0xBB4240; float raw
-    fn break_manager_add(m: GPtr<u8>, o: GPtr<u8>, v: GPtr<u32>, f: u32, b: u32) = thiscall 0x59E9B0 => unported;
     /// `CEntity` virtual slot 0x20 without arguments (called on the broken object)
     fn entity_vslot_20(o: GPtr<u8>) = thiscall vslot 0x20 => unported;
-    /// 0x6470E0 (thiscall; the 0x1C-byte warp-as-driver task constructor `(CVehicle*, CTaskUtilityLineUpPedWithCar*)`)
-    fn task_set_ped_in_as_driver_ctor(t: GPtr<u8>, v: GPtr<u8>, u: u32) -> GPtr<u8> = thiscall 0x6470E0 => unported;
-    /// `CCarEnterExit::ComputeTargetDoorToEnterAsPassenger(const CVehicle*, int32)` (0x64F190)
-    fn compute_target_door_as_passenger(v: GPtr<u8>, seat: u32) -> u32 = cdecl 0x64F190 => unported;
-    /// 0x646FE0 (thiscall; the 0x20-byte warp-as-passenger task constructor `(CVehicle*, int32 door,
-    /// CTaskUtilityLineUpPedWithCar*)`)
-    fn task_set_ped_in_as_passenger_ctor(t: GPtr<u8>, v: GPtr<u8>, door: u32, u: u32) -> GPtr<u8> = thiscall 0x646FE0 => unported;
     /// `CRunningScript::FlameInAngledAreaCheckCommand(int32)` (0x488780)
     fn flame_in_angled_area_check_command(s: Scr, command: u32) = thiscall 0x488780 => unported;
-    /// `CStuckCarCheck::AddCarToCheck(int32, float, uint32, bool, bool, bool, bool, int8)` (0x465970), ECX =
-    /// `CTheScripts::StuckCars` 0xA90AB0; float raw
-    fn add_car_to_check(m: GPtr<u8>, h: u32, dist: u32, time: u32, a: u32, b: u32, c: u32, d: u32, e: u32) = thiscall 0x465970 => unported;
-    /// `CDamageManager::ApplyDamage(CAutomobile*, tComponent, float, float)` (0x6C24B0); floats raw
-    fn apply_damage(dm: GPtr<u8>, v: GPtr<u8>, comp: u32, intensity: u32, mult: u32) = thiscall 0x6C24B0 => unported;
-    /// `CMatrix::SetRotateZ(float)` (0x59B0E0) / `CMatrix::RotateY(float)` (0x59B2C0); raw floats
-    fn matrix_set_rotate_z(m: GPtr<u8>, a: u32) = thiscall 0x59B0E0 => unported;
-    fn matrix_rotate_y(m: GPtr<u8>, a: u32) = thiscall 0x59B2C0 => unported;
-    /// 0x46AE00 (thiscall on a `CMatrix`, `const CVector*`; adds the vector to the position +0x30..+0x38)
-    fn matrix_add_pos(m: GPtr<u8>, v: GPtr<u32>) = thiscall 0x46AE00 => unported;
     /// 0x46B1A0 (cdecl, model: adds it to `CTheScripts::SuppressedVehicleModels`)
     fn suppress_car_model(m: u32) = cdecl 0x46B1A0 => unported;
     /// 0x46A7E0 (cdecl, model; a `.HOODLUM` stub: removes it from the suppressed models)
@@ -152,22 +140,13 @@ orig! {
     /// PS2-keyboard key queries
     fn ps2_key_pressed(m: GPtr<u8>, key: u32, one: u32, s: GPtr<u8>) -> u8 = thiscall 0x571980 => unported;
     fn ps2_key_just_pressed(m: GPtr<u8>, key: u32, one: u32, s: GPtr<u8>) -> u8 = thiscall 0x571970 => unported;
-    /// `CPool<CPed>` slot accessor 0x4082A0 (thiscall on the pool, slot index; a `.HOODLUM` stub)
-    fn ped_pool_get_at(pool: GPtr<u8>, i: u32) -> GPtr<u8> = thiscall 0x4082A0 => unported;
     /// `CTaskSimpleHoldEntity` virtual slot 0x20 `(CPed*)`, AL
     fn task_vslot_20(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall vslot 0x20 => unported;
-    /// `CVector::Magnitude()` (0x4082C0), ST0 (an `fsqrt` result under PC=24: exact as f64)
-    fn vector_magnitude(v: GPtr<u32>) -> f64 = thiscall 0x4082C0 => unported;
-    /// `CRunningScript::IsPedDead(CPed*)` (0x464D70), AL
-    fn script_is_ped_dead(s: Scr, p: GPtr<u8>) -> u8 = thiscall 0x464D70 => unported;
-    /// `CRunningScript::ThisIsAValidRandomPed(ePedType, bool civ, bool gang, bool criminal)` (0x489490), AL
-    fn this_is_a_valid_random_ped(s: Scr, ty: u32, civ: u32, gang: u32, crim: u32) -> u8 = thiscall 0x489490 => unported;
     /// `CPlane::IsAlreadyFlying()` (0x6CAB90), AL (ignored)
     fn plane_is_already_flying(v: GPtr<u8>) -> u8 = thiscall 0x6CAB90 => unported;
     /// `CPedType::SetPedTypeAsAcquaintance(int32, ePedType, int32)` (0x608E20) / `ClearPedTypeAsAcquaintance`
     /// (0x6089F0)
     fn set_ped_type_as_acquaintance(a: u32, t: u32, f: u32) = cdecl 0x608E20 => unported;
-    fn clear_ped_type_as_acquaintance(a: u32, t: u32, f: u32) = cdecl 0x6089F0 => unported;
     /// `CPedIntelligence::IsRespondingToEvent(eEventType)` (0x600DB0), AL
     fn is_responding_to_event(intel: GPtr<u8>, ev: u32) -> u8 = thiscall 0x600DB0 => unported;
     /// `CTaskComplexFleeAnyMeans::CTaskComplexFleeAnyMeans(CEntity*, bool, float, int32, int32, float, float,
@@ -188,8 +167,6 @@ orig! {
     /// eFallDir, bool)` (0x630040); floats raw
     #[allow(clippy::too_many_arguments)]
     fn task_die_ctor(t: GPtr<u8>, a: u32, b: u32, c: u32, d: u32, e: u32, f: u32, g: u32, h: u32, i: u32) -> GPtr<u8> = thiscall 0x630040 => unported;
-    /// `CVehicle::SetVehicleCreatedBy(int32)` (0x6D5D70)
-    fn set_vehicle_created_by(v: GPtr<u8>, by: u32) = thiscall 0x6D5D70 => unported;
 }
 
 /// `VEH(h)` (`CPool<CVehicle>::GetAtRef`, no null check by the callers).
@@ -393,9 +370,9 @@ pub fn process_commands_1800_to_1899(s: Scr, command: u32) -> i8 {
             collect(s, 2);
             let p0 = sp(0);
             let v = veh(sp(1));
-            let t = new_task(0x1C, |t| task_set_ped_in_as_driver_ctor(t, v, 0));
+            let t = new_task(0x1C, |t| task_set_ped_in_as_driver_ctor(t, v, GPtr::NULL));
             t.byte_add(0x18).write(1);
-            give_ped_scripted_task(s, p0, t, command);
+            give_ped_scripted_task(s, p0 as i32, t, command);
         }
         // 072B TASK_WARP_CHAR_INTO_CAR_AS_PASSENGER (0x46DB5D): `v = VEH(P1)`; `door = P2 >= 0 ?
         // ComputeTargetDoorToEnterAsPassenger(v, P2) : 0`; task (0x20) 0x646FE0(v, door, nullptr); `task+0x1C = 1`
@@ -409,9 +386,9 @@ pub fn process_commands_1800_to_1899(s: Scr, command: u32) -> i8 {
             } else {
                 0
             };
-            let t = new_task(0x20, |t| task_set_ped_in_as_passenger_ctor(t, v, door, 0));
+            let t = new_task(0x20, |t| task_set_ped_in_as_passenger_ctor(t, v, door, GPtr::NULL));
             t.byte_add(0x1C).write(1);
-            give_ped_scripted_task(s, p0, t, command);
+            give_ped_scripted_task(s, p0 as i32, t, command);
         }
         // 072C SWITCH_COPS_ON_BIKES (0x46DBE9): `CStreaming::DisableCopBikes(P0 == 0)`.
         0x072C => {
@@ -448,7 +425,7 @@ pub fn process_commands_1800_to_1899(s: Scr, command: u32) -> i8 {
             let v = veh(sp(0));
             let intensity = GPtr::<u32>::from_addr(0x871640).read();
             let comp = sp(1).wrapping_add(if command == 0x0730 { 11 } else { 5 });
-            apply_damage(v.byte_add(0x5A0), v, comp, intensity, 0x3F80_0000);
+            apply_damage(v.byte_add(0x5A0), v, comp, f32::from_bits(intensity), f32::from_bits(0x3F80_0000));
         }
         // 0731 SET_CAR_ROLL (0x46DCF0): `v = VEH(P0)`; `p` = the entity position (copied); `m_matrix->
         // SetRotateZ((float)GetHeading())`; `m_matrix->RotateY(P1 * 0.017453292)`; `0x46AE00(m_matrix, &p)`.
@@ -459,12 +436,12 @@ pub fn process_commands_1800_to_1899(s: Scr, command: u32) -> i8 {
             let pp = ent_pos(v);
             let mut p = [pp.read(), pp.byte_add(4).read(), pp.byte_add(8).read()];
             let h = X87::from_f64_exact(get_heading(v)).to_f32();
-            matrix_set_rotate_z(v.byte_add(0x14).cast::<GPtr<u8>>().read(), h.to_bits());
+            matrix_set_rotate_z(v.byte_add(0x14).cast::<GPtr<u8>>().read(), f32::from_bits(h.to_bits()));
             let a = X87::from_f32(p1).fmul_m(f(K_DEG2RAD)).to_f32();
-            matrix_rotate_y(v.byte_add(0x14).cast::<GPtr<u8>>().read(), a.to_bits());
+            matrix_rotate_y(v.byte_add(0x14).cast::<GPtr<u8>>().read(), f32::from_bits(a.to_bits()));
             matrix_add_pos(
                 v.byte_add(0x14).cast::<GPtr<u8>>().read(),
-                GPtr::from_raw(p.as_mut_ptr()),
+                GPtr::<u32>::cast::<u8>(GPtr::from_raw(p.as_mut_ptr())),
             );
         }
         // 0732 SUPPRESS_CAR_MODEL (0x46DD76) / 0733 DONT_SUPPRESS_CAR_MODEL (0x46DD95): `0x46B1A0(P0)` /
@@ -538,7 +515,7 @@ pub fn process_commands_1800_to_1899(s: Scr, command: u32) -> i8 {
         0x0746 | 0x0747 => {
             collect(s, 3);
             let (a, t) = (sp(0), sp(1));
-            let fl = get_ped_flag(sp(2));
+            let fl = get_ped_flag(sp(2) as i32);
             if command == 0x0746 {
                 set_ped_type_as_acquaintance(a, t, fl);
             } else {
@@ -555,8 +532,8 @@ pub fn process_commands_1800_to_1899(s: Scr, command: u32) -> i8 {
             let i = get_actual_script_thing_index(sp(1), 6);
             if (0..64).contains(&i) {
                 let e = 0xC3AB00u32.wrapping_add((i as u32) << 6);
-                let t = new_task(0x24, |t| task_use_effect_ctor(t, e, 0));
-                give_ped_scripted_task(s, p0, t, command);
+                let t = new_task(0x24, |t| task_use_effect_ctor(t, GPtr::from_addr(e as usize), GPtr::NULL));
+                give_ped_scripted_task(s, p0 as i32, t, command);
             }
         }
         // 074D TASK_SHOOT_AT_CHAR (0x46E6FF): `target = PED(P1)`; task (0x3C) `CTaskSimpleGunControl(target,
@@ -565,8 +542,8 @@ pub fn process_commands_1800_to_1899(s: Scr, command: u32) -> i8 {
             collect(s, 3);
             let (p0, p2) = (sp(0), sp(2));
             let target = ped(sp(1));
-            let t = new_task(0x3C, |t| task_gun_control_ctor(t, target, 0, 0, 3, 1, p2));
-            give_ped_scripted_task(s, p0, t, command);
+            let t = new_task(0x3C, |t| task_gun_control_ctor(t, target, GPtr::NULL, 0, 3, 1, p2));
+            give_ped_scripted_task(s, p0 as i32, t, command);
         }
         // 074E SET_INFORM_RESPECTED_FRIENDS (0x46E77C): `intel = PED(P0)->m_pIntelligence`; intel+0xC8 = P1,
         // intel+0xC4 = P2 (raw).
@@ -650,14 +627,14 @@ pub fn process_commands_1800_to_1899(s: Scr, command: u32) -> i8 {
         0x0762 => {
             collect(s, 1);
             let t = new_task(0x28, |t| task_die_ctor(t, 0, 0, 0xF, 0x4080_0000, 0, 0, 0, 0, 0));
-            give_ped_scripted_task(s, sp(0), t, command);
+            give_ped_scripted_task(s, sp(0) as i32, t, command);
         }
         // 0763 SET_CAR_AS_MISSION_CAR (0x46EC43): `v = VEH(P0)`, `h = GetRef(v)`; if the script uses the mission
         // cleanup and `v->m_nCreatedBy (+0x4A4)` is 1 or 3: `SetVehicleCreatedBy(2)`, cleanup add (h, 1).
         0x0763 => {
             collect(s, 1);
             let v = veh(sp(0));
-            let h = vehicle_get_ref(pool(VEHICLE_POOL), v);
+            let h = vehicle_get_ref(pool(VEHICLE_POOL), v) as i32;
             if uses_mission_cleanup(s) {
                 let by = v.byte_add(0x4A4).read();
                 if by == 1 || by == 3 {
@@ -718,7 +695,7 @@ fn follow_entity(s: Scr, mission: u8, plane: bool) {
     let field = v.byte_add(0x41C);
     let old = field.cast::<GPtr<u8>>().read();
     if !old.is_null() {
-        clean_up_old_reference(old, field);
+        clean_up_old_reference(old, field.cast::<GPtr<u8>>());
     }
     field.cast::<GPtr<u8>>().write(t);
     register_reference(t, field);
@@ -787,7 +764,7 @@ fn task_drive_by(s: Scr, command: u32) {
         )
     };
     t.byte_add(0xE).write(1);
-    give_ped_scripted_task(s, ped, t, command);
+    give_ped_scripted_task(s, ped as i32, t, command);
 }
 
 /// 0716 IS_CLOSEST_OBJECT_OF_TYPE_SMASHED_OR_DAMAGED (0x46D56F): `CollectParameters(7)`: pos P0..P2, radius P3,
@@ -804,7 +781,7 @@ fn closest_object_smashed_or_damaged(s: Scr) {
     {
         fld_fst(spf(2))
     } else {
-        X87::from_f64_exact(find_ground_z(x, y)).to_f32()
+        X87::from_f64_exact(find_ground_z(f32::from_bits(x), f32::from_bits(y))).to_f32()
     };
     let radius = sp(3);
     let model = model_operand(sp(4));
@@ -850,7 +827,7 @@ fn break_object(s: Scr) {
     break_manager_add(
         GPtr::from_addr(0xBB4240),
         o,
-        GPtr::from_raw(v.as_mut_ptr()),
+        GPtr::<u32>::cast::<u8>(GPtr::from_raw(v.as_mut_ptr())),
         f44,
         b,
     );
@@ -885,7 +862,7 @@ fn task_use_mobile_phone(s: Scr, command: u32) {
         } else {
             task_use_mobile_phone_ctor(t, u32::MAX)
         };
-        give_ped_scripted_task(s, ped, t, command);
+        give_ped_scripted_task(s, ped as i32, t, command);
         return;
     }
     let p = ped_at_ref(pool(PED_POOL), ped as i32);
@@ -965,7 +942,7 @@ fn random_car_in_sphere_no_save(s: Scr) {
         if v.is_null() {
             continue;
         }
-        if get_vehicle_appearance(v) != 1 && get_vehicle_appearance(v) != 2 {
+        if get_vehicle_appearance(v) as i32 != 1 && get_vehicle_appearance(v) as i32 != 2 {
             continue;
         }
         if v.byte_add(0x428).read() & 1 != 0 {
@@ -992,7 +969,7 @@ fn random_car_in_sphere_no_save(s: Scr) {
         if X87::from_f32(dist).fcom(X87::from_f32(best)) != Cmp::Less {
             continue;
         }
-        res = vehicle_get_ref(pool(VEHICLE_POOL), v);
+        res = vehicle_get_ref(pool(VEHICLE_POOL), v) as i32;
         best = dist;
     }
     set_sp(0, res as u32);
@@ -1042,7 +1019,7 @@ fn random_char_in_sphere(s: Scr) {
         if X87::from_f32(dist).fcom(X87::from_f32(best)) != Cmp::Less {
             continue;
         }
-        handle = ped_get_ref(pool(PED_POOL), p);
+        handle = ped_get_ref(pool(PED_POOL), p) as i32;
         best = dist;
     }
     if handle >= 0 {
@@ -1115,7 +1092,7 @@ fn task_flee_char_any_means(s: Scr, command: u32) {
         let scream = (p6 & 0xFFFF_FF00) | u32::from(p4 != 0);
         task_flee_any_means_ctor(t, target, scream, p2, p3, p5, p6, p7, b, a)
     });
-    give_ped_scripted_task(s, p0, t, command);
+    give_ped_scripted_task(s, p0 as i32, t, command);
 }
 
 /// 0755 EXTEND_PATROL_ROUTE (0x46E93B): `CollectParameters(3)` pos; 24-byte anim label, 16-byte block label
@@ -1183,7 +1160,7 @@ fn play_object_anim(s: Scr) {
     if rp_anim_blend_clump_is_initialized(rw.read()) == 0 {
         rp_anim_blend_clump_init(rw.read());
     }
-    blend_animation(rw.read(), a, flags, delta);
+    blend_animation(rw.read(), a, flags, f32::from_bits(delta));
     set_flag(s, true);
 }
 

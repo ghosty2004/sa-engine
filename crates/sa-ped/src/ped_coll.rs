@@ -6,6 +6,7 @@
 //! weapon and gun-flash objects (RwFrame), +0x504 / +0x506 left-hand gun-flash alpha / step, +0x508 /
 //! +0x50A right hand, +0x530 ped state.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::crt::rand;
 use sa_core::orig::at_site;
@@ -36,30 +37,22 @@ use sa_stream::bindings::set_component_atomic_alpha;
 use sa_world::bindings::hold_entity_drop_entity as hold_drop_entity;
 use sa_world::bindings::process_col_models;
 use sa_world::bindings::tm_find_active_task_by_type as find_active_task_by_type;
+use sa_core::bindings::matrix_mul_vec;
+use sa_core::bindings::rw_matrix_rotate;
+use sa_core::bindings::rw_v3d_transform_points;
+use sa_world::bindings::find_objects_kinda_colliding;
+use sa_world::bindings::world_process_vertical_line as process_vertical_line;
+use sa_world::bindings::world_test_sphere_against_world as test_sphere_against_world;
 orig! {
     /// `CEntity::DeleteRwObject` (vtable slot 0x20)
     fn entity_delete_rw_object(e: GPtr<u8>) = thiscall vslot 0x20 => unported;
     /// scalar deleting destructor (vtable slot 0)
     fn entity_vdelete(e: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
-    /// `RwV3dTransformPoints(out, in, n, matrix)` (0x7EDD90)
-    fn rw_v3d_transform_points(out: GPtr<f32>, inp: GPtr<f32>, n: i32, m: GPtr<u8>) -> GPtr<f32> = cdecl 0x7EDD90 => unported;
-    /// `operator*(const CMatrix&, const CVector&)` (0x59C890, cdecl, hidden return pointer)
-    fn matrix_mul_vec(out: GPtr<f32>, m: GPtr<u8>, v: GPtr<f32>) -> GPtr<f32> = cdecl 0x59C890 => unported;
-    /// `RwMatrixRotate(RwMatrix*, const RwV3d* axis, float angle, RwOpCombineType)` (0x7F1FD0)
-    fn rw_matrix_rotate(m: GPtr<u8>, axis: u32, angle: u32, combine: u32) -> GPtr<u8> = cdecl 0x7F1FD0 => unported;
-    /// `CWorld::FindObjectsKindaColliding(const CVector&, float, bool, int16*, int16, CEntity**, bool x5)`
-    /// (0x568B80)
-    fn find_objects_kinda_colliding(p: GPtr<f32>, r: u32, b2d: u32, n: GPtr<i16>, max: u32, out: GPtr<u8>, b: u32, v: u32, pe: u32, o: u32, d: u32) = cdecl 0x568B80 => unported;
-    /// `CWorld::TestSphereAgainstWorld(CVector, float, const CEntity*, bool x5, bool)` (0x569E20)
-    fn test_sphere_against_world(x: u32, y: u32, z: u32, r: u32, ignore: u32, b: u32, v: u32, pe: u32, o: u32, d: u32, cam: u32) -> GPtr<u8> = cdecl 0x569E20 => unported;
-    /// `CWorld::ProcessVerticalLine(const CVector&, float, CColPoint&, CEntity*&, bool x6, CStoredCollPoly*)`
-    /// (0x5674E0, AL)
-    fn process_vertical_line(pos: GPtr<f32>, z: u32, cp: GPtr<u8>, ent: GPtr<u8>, b1: u32, b2: u32, b3: u32, b4: u32, b5: u32, b6: u32, poly: u32) -> u8 = cdecl 0x5674E0 => unported;
 }
 
 /// The bone's matrix in the skin hierarchy of `ped` (`RpHAnimIDGetIndex` then the matrix array).
 fn bone_matrix(hier: GPtr<u8>, bone: i32) -> GPtr<u8> {
-    let idx = rp_hanim_id_get_index(hier, bone);
+    let idx = rp_hanim_id_get_index(hier, bone as u32);
     rp_hanim_get_matrix_array(hier).byte_add((idx as isize).wrapping_shl(6))
 }
 
@@ -134,7 +127,7 @@ pub fn get_transformed_bone_position(this: GPtr<u8>, v: GPtr<f32>, bone: i32, up
     } else if fl & 0x400 == 0 {
         let mut out = [0.0f32; 3];
         let off = GPtr::<f32>::from_addr(PED_BONE_OFFSETS.wrapping_add((bone as usize).wrapping_mul(12)));
-        let r = matrix_mul_vec(lp(&mut out).cast(), rd::<GPtr<u8>>(this, 0x14), off);
+        let r = matrix_mul_vec(lp(&mut out).cast(), rd::<GPtr<u8>>(this, 0x14), off.cast::<u8>());
         copy3(v.cast(), r.cast());
         return;
     }
@@ -157,7 +150,7 @@ pub fn get_bone_position(this: GPtr<u8>, out: GPtr<f32>, bone: i32, update: u32)
     } else if fl & 0x400 == 0 {
         let mut tmp = [0.0f32; 3];
         let off = GPtr::<f32>::from_addr(PED_BONE_OFFSETS.wrapping_add((bone as usize).wrapping_mul(12)));
-        let r = matrix_mul_vec(lp(&mut tmp).cast(), rd::<GPtr<u8>>(this, 0x14), off);
+        let r = matrix_mul_vec(lp(&mut tmp).cast(), rd::<GPtr<u8>>(this, 0x14), off.cast::<u8>());
         copy3(out.cast(), r.cast());
         return;
     }
@@ -209,7 +202,7 @@ pub fn do_gun_flash(this: GPtr<u8>, lifetime: i32, right: u32) -> u8 {
         .fsub_m(f32::from_bits(0x43B4_0000))
         .to_f32();
     let frame = rd::<GPtr<u8>>(this, 0x4F8).byte_add(0x10);
-    rw_matrix_rotate(frame, GUN_FLASH_AXIS, angle.to_bits(), 1);
+    rw_matrix_rotate(frame, GPtr::from_addr(GUN_FLASH_AXIS as usize), f32::from_bits(angle.to_bits()), 1);
     1
 }
 
@@ -241,7 +234,7 @@ pub fn set_gun_flash_alpha(this: GPtr<u8>, right: u32) {
         if a <= 0 {
             alpha = 0;
         }
-        set_component_atomic_alpha(atomic, alpha);
+        set_component_atomic_alpha(atomic, alpha as u32);
         wr::<u8>(atomic, 2, 4);
     }
     if rd::<i16>(this, off) == 0 {
@@ -263,10 +256,10 @@ pub fn is_position_clear_for_ped(pos: GPtr<f32>, radius: f32, max: i32, out: GPt
     let mut n: i16 = 0;
     find_objects_kinda_colliding(
         pos,
-        r.to_bits(),
+        f32::from_bits(r.to_bits()),
         1,
         lp(&mut n).cast(),
-        max as u32,
+        (max as u32) as i32,
         out,
         0,
         (veh & 0xFF != 0) as u32,
@@ -285,7 +278,7 @@ pub fn is_position_clear_for_ped(pos: GPtr<f32>, radius: f32, max: i32, out: GPt
 pub fn is_position_clear_of_cars(ped: GPtr<u8>) -> GPtr<u8> {
     let p = ent_pos(ped);
     let pos = [p.read(), p.wrapping_index(1).read(), p.wrapping_index(2).read()];
-    let veh = test_sphere_against_world(pos[0].to_bits(), pos[1].to_bits(), pos[2].to_bits(), 0x3E80_0000, 0, 0, 1, 0, 0, 0, 0);
+    let veh = test_sphere_against_world(f32::from_bits(pos[0].to_bits()), f32::from_bits(pos[1].to_bits()), f32::from_bits(pos[2].to_bits()), f32::from_bits(0x3E80_0000), GPtr::NULL, 0, 1, 0, 0, 0, 0);
     if veh.is_null() {
         return GPtr::from_addr(0);
     }
@@ -295,7 +288,7 @@ pub fn is_position_clear_of_cars(ped: GPtr<u8>) -> GPtr<u8> {
     let mi = |e: GPtr<u8>| g::<GPtr<u8>>(MODEL_INFO_PTRS).wrapping_index(i32::from(rd::<i16>(e, 0x22))).read();
     let vcol = rd::<GPtr<u8>>(mi(veh), 0x14);
     let pcol = rd::<GPtr<u8>>(mi(ped), 0x14);
-    let n = process_col_models(rd::<GPtr<u8>>(ped, 0x14), pcol, rd::<GPtr<u8>>(veh, 0x14), vcol, TEMP_COL_PTS, 0, 0, 0);
+    let n = process_col_models(rd::<GPtr<u8>>(ped, 0x14), pcol, rd::<GPtr<u8>>(veh, 0x14), vcol, GPtr::from_addr(TEMP_COL_PTS as usize), GPtr::NULL, GPtr::NULL, 0);
     if n != 0 { veh } else { GPtr::from_addr(0) }
 }
 
@@ -313,12 +306,12 @@ pub fn find_z_coor_for_ped(pos: GPtr<f32>) -> u8 {
     let end = || x(rd::<f32>(p, 8)).fsub_m(100.0).to_f32().to_bits();
     let cpp = lp(&mut cp).cast::<u8>();
     let entp = lp(&mut ent).cast::<u8>();
-    if process_vertical_line(lp(&mut v).cast(), end(), cpp, entp, 1, 1, 0, 0, 1, 0, 0) != 0 {
+    if process_vertical_line(GPtr::<f32>::cast::<u8>(lp(&mut v).cast()), f32::from_bits(end()), cpp, entp, 1, 1, 0, 0, 1, 0, GPtr::NULL) != 0 {
         z1 = rd::<f32>(cpp, 8);
     }
     v[0] = x(v[0]).fadd_m(f32::from_bits(0x3DCC_CCCD)).to_f32();
     v[1] = x(v[1]).fadd_m(f32::from_bits(0x3DCC_CCCD)).to_f32();
-    let z2 = if process_vertical_line(lp(&mut v).cast(), end(), cpp, entp, 1, 1, 0, 0, 1, 0, 0) != 0 {
+    let z2 = if process_vertical_line(GPtr::<f32>::cast::<u8>(lp(&mut v).cast()), f32::from_bits(end()), cpp, entp, 1, 1, 0, 0, 1, 0, GPtr::NULL) != 0 {
         rd::<f32>(cpp, 8)
     } else {
         z2_miss
@@ -350,28 +343,18 @@ use sa_world::bindings::ped_get_held_entity as get_entity_that_this_ped_is_holdi
 use sa_world::bindings::ped_set_current_weapon_slot as set_current_weapon_slot;
 use sa_world::bindings::physical_apply_move_force_5429f0 as apply_move_force;
 use sa_world::bindings::player_clear_weapon_target;
+use sa_core::bindings::get_weapon_info;
+use sa_core::bindings::object_ctor_5a1d70 as object_ctor;
+use sa_core::bindings::ped_give_weapon as give_weapon;
+use sa_world::bindings::anim_blend_animation as blend_animation;
+use sa_world::bindings::attach_ped_to_entity as attach_ped_to_entity_call;
+use sa_world::bindings::hold_entity_ctor as task_hold_entity_ctor;
+use sa_world::bindings::ped_drop_held_entity as drop_entity_call;
+use sa_world::bindings::ped_position_attached_ped as position_attached_ped_call;
+use sa_world::bindings::process_line_of_sight;
 orig! {
-    /// `CPed::AttachPedToEntity(CEntity*, CVector, uint16, float, eWeaponType)` (0x5E7CB0, `ret 0x1C`)
-    fn attach_ped_to_entity_call(ped: GPtr<u8>, e: GPtr<u8>, ox: u32, oy: u32, oz: u32, angle: u32, range: u32, weapon: i32) -> GPtr<u8> = thiscall 0x5E7CB0 => attach_ped_to_entity;
-    /// `CPed::PositionAttachedPed()` (0x5DFDF0)
-    fn position_attached_ped_call(ped: GPtr<u8>) = thiscall 0x5DFDF0 => position_attached_ped;
-    /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float)` (0x4D4610)
-    fn blend_animation(c: GPtr<u8>, group: i32, id: i32, delta: u32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
-    /// `CWeaponInfo::GetWeaponInfo(eWeaponType, eWeaponSkill)` (0x743C60)
-    fn get_weapon_info(ty: i32, skill: i32) -> GPtr<u8> = cdecl 0x743C60 => unported;
-    /// `CPed::GiveWeapon(eWeaponType, uint32 ammo, bool)` (0x5E6080, `ret 0xC`)
-    fn give_weapon(ped: GPtr<u8>, ty: i32, ammo: u32, b: u32) -> i32 = thiscall 0x5E6080 => unported;
-    /// `CPed::DropEntityThatThisPedIsHolding(bool)` (0x5E0360)
-    fn drop_entity_call(ped: GPtr<u8>, delete: u32) = thiscall 0x5E0360 => drop_entity_that_this_ped_is_holding;
-    /// `CObject::CObject(int32 model, bool created)` (0x5A1D70, `ret 8`)
-    fn object_ctor(o: GPtr<u8>, model: i32, created: u32) -> GPtr<u8> = thiscall 0x5A1D70 => unported;
-    /// `CTaskSimpleHoldEntity::CTaskSimpleHoldEntity(CEntity*, const CVector*, uint8 boneFrameId,
-    /// uint8 boneFlags, AnimationId, AssocGroupId, bool)` (0x6913A0)
-    fn task_hold_entity_ctor(t: GPtr<u8>, e: GPtr<u8>, off: GPtr<f32>, bone: u32, flags: u32, anim: i32, group: i32, b: u32) -> GPtr<u8> = thiscall 0x6913A0 => unported;
     /// `CPed::SortPeds(CPed**, int32, int32)` (0x5E17E0)
     fn sort_peds_call(ped: GPtr<u8>, list: GPtr<GPtr<u8>>, min: i32, max: i32) = thiscall 0x5E17E0 => sort_peds;
-    /// `CWorld::ProcessLineOfSight(const CVector&, const CVector&, CColPoint&, CEntity*&, bool x8)` (0x56BA00, AL)
-    fn process_line_of_sight(a: GPtr<f32>, b: GPtr<f32>, cp: GPtr<u8>, ent: GPtr<u8>, b1: u32, b2: u32, b3: u32, b4: u32, b5: u32, b6: u32, b7: u32, b8: u32) -> u8 = cdecl 0x56BA00 => unported;
 }
 
 /// The ped's weapon slot `slot` (0x1C bytes each from +0x5A0).
@@ -385,7 +368,7 @@ fn weapon_at(ped: GPtr<u8>, slot: i8) -> GPtr<u8> {
 #[hook(addr = 0x5E7E60, conv = thiscall, name = "CPed::AttachPedToBike", expect = "8B 44 24 20 8B 54 24 14", this = "CPed")]
 #[allow(clippy::too_many_arguments)]
 pub fn attach_ped_to_bike(this: GPtr<u8>, e: GPtr<u8>, ox: u32, oy: u32, oz: u32, angle: u32, range: u32, range2: u32, weapon: i32) -> GPtr<u8> {
-    let r = attach_ped_to_entity_call(this, e, ox, oy, oz, angle, range, weapon);
+    let r = attach_ped_to_entity_call(this, e, f32::from_bits(ox), f32::from_bits(oy), f32::from_bits(oz), angle, f32::from_bits(range), weapon as u32);
     if r.is_null() {
         return r;
     }
@@ -430,7 +413,7 @@ pub fn attach_ped_to_entity(this: GPtr<u8>, e: GPtr<u8>, ox: u32, oy: u32, oz: u
     if !player {
         give_weapon(this, weapon, 30000, 1);
         let slot = rd::<i32>(get_weapon_info(weapon, 1), 0x14);
-        set_current_weapon_slot(this, slot);
+        set_current_weapon_slot(this, slot as u32);
         position_attached_ped_call(this);
         return e;
     }
@@ -477,20 +460,20 @@ pub fn dettach_ped_from_entity(this: GPtr<u8>) {
         let fy = x(rd::<f32>(f, 4)).fmul_m(m4).to_f32();
         let fz = x(rd::<f32>(f, 8)).fmul_m(m4).to_f32();
         let fz = x(fz).fadd_m(4.0).to_f32();
-        apply_move_force(this, fx.to_bits(), fy.to_bits(), fz.to_bits());
+        apply_move_force(this, f32::from_bits(fx.to_bits()), f32::from_bits(fy.to_bits()), f32::from_bits(fz.to_bits()));
         wr::<u32>(this, 0x46C, rd::<u32>(this, 0x46C) & !1);
         return;
     }
     if st == 0x37 {
         return;
     }
-    blend_animation(rd::<GPtr<u8>>(this, 0x18), rd::<i32>(this, 0x4D4), 3, 0x447A_0000);
+    blend_animation(rd::<GPtr<u8>>(this, 0x18), rd::<i32>(this, 0x4D4) as u32, 3, f32::from_bits(0x447A_0000));
     wr::<u32>(this, 0x1C, rd::<u32>(this, 0x1C) | 1);
     if rd::<i32>(this, 0x70C) != 0x37 {
         wr::<u32>(weapon_at(this, rd::<i8>(this, 0x718)), 8, 0);
         wr::<u32>(weapon_at(this, rd::<i8>(this, 0x718)), 0xC, 0);
         let slot = rd::<i32>(get_weapon_info(rd::<i32>(this, 0x70C), 1), 0x14);
-        set_current_weapon_slot(this, slot);
+        set_current_weapon_slot(this, slot as u32);
         wr::<u32>(weapon_at(this, rd::<i8>(this, 0x718)), 0xC, rd::<u32>(this, 0x784));
         wr::<u32>(this, 0x70C, 0x37);
     }
@@ -639,14 +622,9 @@ use sa_core::bindings::matrix_detach;
 use sa_core::bindings::matrix_dtor;
 use sa_core::bindings::matrix_mul_assign;
 use sa_world::bindings::placeable_set_matrix;
-orig! {
-    /// `CMatrix::operator=(const CMatrix&)` (0x59BBC0)
-    fn matrix_assign(dst: GPtr<u8>, src: GPtr<u8>) = thiscall 0x59BBC0 => unported;
-    /// `Multiply3x3(CVector* out, const CMatrix&, const CVector&)` (0x59C790, cdecl, returns out)
-    fn multiply_3x3(out: GPtr<f32>, m: GPtr<u8>, v: GPtr<f32>) -> GPtr<f32> = cdecl 0x59C790 => unported;
-    /// `CMatrix::SetRotateZ(float)` (0x59B0E0)
-    fn matrix_set_rotate_z(m: GPtr<u8>, a: u32) = thiscall 0x59B0E0 => unported;
-}
+use sa_core::bindings::matrix_assign;
+use sa_core::bindings::matrix_set_rotate_z;
+use sa_world::bindings::multiply3x3 as multiply_3x3;
 
 /// `CPed::PositionAttachedPed()` (0x5DFDF0), spec `CPed.md`: the attach entity's matrix (FIRELA 0x220 with
 /// a ladder frame (+0x69C) and offset z < -900: the frame's LTM, offset z + 1000) moved by
@@ -683,7 +661,7 @@ pub fn position_attached_ped(this: GPtr<u8>) {
         off = [rd::<u32>(this, 0x76C), rd::<u32>(this, 0x770), rd::<u32>(this, 0x774)];
     }
     let mut tmp = [0.0f32; 3];
-    let w = multiply_3x3(lp(&mut tmp).cast(), m, lp(&mut off).cast());
+    let w = GPtr::<u8>::cast::<f32>(multiply_3x3(GPtr::<f32>::cast::<u8>(lp(&mut tmp).cast()), m, GPtr::<f32>::cast::<u8>(lp(&mut off).cast())));
     let nz = x(rd::<f32>(m, 0x38)).fadd_m(w.wrapping_index(2).read()).to_f32();
     let ny = x(rd::<f32>(m, 0x34)).fadd_m(w.wrapping_index(1).read()).to_f32();
     let nx = x(rd::<f32>(m, 0x30)).fadd_m(w.read()).to_f32();
@@ -703,8 +681,8 @@ pub fn position_attached_ped(this: GPtr<u8>) {
             3 => x(h).fsub_m(HALF_PI).to_f32(),
             _ => h,
         };
-        let t = X87::from_f64_exact(limit_radian_angle(t.to_bits())).to_f32();
-        let cur = X87::from_f64_exact(limit_radian_angle(rd::<u32>(this, 0x558)));
+        let t = X87::from_f64_exact(limit_radian_angle(f32::from_bits(t.to_bits()))).to_f32();
+        let cur = X87::from_f64_exact(limit_radian_angle(f32::from_bits(rd::<u32>(this, 0x558))));
         wr::<f32>(this, 0x558, cur.to_f32());
         let mut d = cur.fsub_m(t);
         if !d.fcom(x(PI)).test_any(0x41) {
@@ -718,11 +696,11 @@ pub fn position_attached_ped(this: GPtr<u8>) {
         } else if !d.fcom(x(lim).fchs()).test_parity(5) {
             wr::<f32>(this, 0x558, x(t).fsub_m(lim).to_f32());
         }
-        let v = X87::from_f64_exact(limit_radian_angle(rd::<u32>(this, 0x558))).to_f32();
+        let v = X87::from_f64_exact(limit_radian_angle(f32::from_bits(rd::<u32>(this, 0x558)))).to_f32();
         wr::<f32>(this, 0x558, v);
     }
     let a = x(rd::<f32>(this, 0x558)).fsub_m(h).to_f32();
-    matrix_set_rotate_z(r, a.to_bits());
+    matrix_set_rotate_z(r, f32::from_bits(a.to_bits()));
     matrix_mul_assign(m, r);
     placeable_set_matrix(this, m);
     let att = rd::<GPtr<u8>>(this, 0xFC);
@@ -743,7 +721,7 @@ const HALF_SHOULDER_ROTATION: usize = 0x8D21E0;
 use sa_core::bindings::matrix_invert_59bdd0 as matrix_invert;
 use sa_core::bindings::matrix_mul;
 use sa_core::bindings::matrix_update_rw;
-use sa_world::bindings::matrix_ctor_rw;
+use sa_core::bindings::matrix_ctor_rw;
 orig! {
     /// `CMatrix::ConvertToEulerAngles(float*, float*, float*, uint32)` (0x59A840)
     fn matrix_to_euler(m: GPtr<u8>, a: GPtr<f32>, b: GPtr<f32>, c: GPtr<f32>, flags: u32) = thiscall 0x59A840 => unported;
@@ -884,10 +862,7 @@ pub fn dead_ped_makes_tyres_bloody(this: GPtr<u8>) {
 }
 
 use sa_world::bindings::entity_get_col_model;
-orig! {
-    /// `CPedPlacement::FindZCoorForPed(CVector&)` (0x616920, AL)
-    fn find_z_coor_for_ped_call(pos: GPtr<f32>) -> u8 = cdecl 0x616920 => find_z_coor_for_ped;
-}
+use sa_world::bindings::ped_placement_find_z_coor_for_ped as find_z_coor_for_ped_call;
 
 /// Writes `v` (raw dwords) as the entity position (matrix +0x30 or placement +4).
 fn set_pos_raw(e: GPtr<u8>, v: [u32; 3]) {
@@ -928,16 +903,16 @@ pub fn position_any_ped_out_of_collision(this: GPtr<u8>) -> u8 {
     for _ in 0..15 {
         c[0] = x(ent_pos(this).read()).fsub_m(off).to_f32();
         for _ in 0..15 {
-            find_z_coor_for_ped_call(lp(&mut c).cast());
+            find_z_coor_for_ped_call(GPtr::<f32>::cast::<u8>(lp(&mut c).cast()));
             let (cx, cy, cz) = (c[0].to_bits(), c[1].to_bits(), c[2].to_bits());
-            let blocked = test_sphere_against_world(cx, cy, cz, 0x3F19_999A, this.addr() as u32, 1, 0, 0, 1, 0, 0);
+            let blocked = test_sphere_against_world(f32::from_bits(cx), f32::from_bits(cy), f32::from_bits(cz), f32::from_bits(0x3F19_999A), GPtr::from_addr((this.addr() as u32) as usize), 1, 0, 0, 1, 0, 0);
             if blocked.is_null() {
                 let p = ent_pos(this);
                 let dx = x(c[0]).fsub_m(p.read());
                 let dy = x(c[1]).fsub_m(p.wrapping_index(1).read());
                 let dz = x(c[2]).fsub_m(p.wrapping_index(2).read());
                 let d2 = dz.fmul(dz).fadd(dy.fmul(dy)).fadd(dx.fmul(dx)).to_f32();
-                last_veh = test_sphere_against_world(cx, cy, cz, 0x3F19_999A, this.addr() as u32, 0, 1, 0, 0, 0, 0);
+                last_veh = test_sphere_against_world(f32::from_bits(cx), f32::from_bits(cy), f32::from_bits(cz), f32::from_bits(0x3F19_999A), GPtr::from_addr((this.addr() as u32) as usize), 0, 1, 0, 0, 0, 0);
                 let (best, found, pos) = if last_veh.is_null() {
                     (&mut best_free, &mut found_free, &mut free_pos)
                 } else {
@@ -976,21 +951,12 @@ const PATH_NODES: usize = 0x96F854;
 use sa_core::bindings::matrix_set_rotate_z_only;
 use sa_world::bindings::check_collision as physical_check_collision;
 use sa_world::bindings::vehicle_is_on_its_side;
-orig! {
-    /// `CPlaceable::SetPosn(const CVector&)` (0x4241C0)
-    fn placeable_set_posn(e: GPtr<u8>, v: GPtr<u32>) = thiscall 0x4241C0 => unported;
-    /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, bool x7)` (0x56A490, AL)
-    fn get_is_line_of_sight_clear(a: GPtr<f32>, b: GPtr<u32>, bb: u32, v: u32, p: u32, o: u32, d: u32, s: u32, c: u32) -> u8 = cdecl 0x56A490 => unported;
-    /// `CCarEnterExit::GetPositionToOpenCarDoor(CVector* out, CVehicle*, int32 door)` (0x64E740, cdecl)
-    fn get_position_to_open_car_door(out: GPtr<u32>, veh: GPtr<u8>, door: i32) -> GPtr<u32> = cdecl 0x64E740 => unported;
-    /// `CPathFind::FindNodeClosestToCoors(CNodeAddress* out, CVector, int32 type, float, bool x5)` (0x44F460,
-    /// `ret 0x2C`)
-    fn find_node_closest_to_coors(pf: GPtr<u8>, out: GPtr<u32>, x: u32, y: u32, z: u32, ty: i32, dist: u32, a: u32, b: u32, c: u32, d: u32, e: u32) -> GPtr<u32> = thiscall 0x44F460 => unported;
-    /// `CPathNode::GetPosition(CVector* out)` (0x420A10, `ret 4`)
-    fn path_node_get_position(n: GPtr<u8>, out: GPtr<f32>) -> GPtr<f32> = thiscall 0x420A10 => unported;
-    /// `operator-(const CVector&, const CVector&)` (0x40FE60, cdecl, hidden return pointer)
-    fn vector_sub(out: GPtr<f32>, a: GPtr<f32>, b: GPtr<f32>) -> GPtr<f32> = cdecl 0x40FE60 => unported;
-}
+use sa_core::bindings::vector_sub;
+use sa_core::bindings::world_get_is_line_of_sight_clear as get_is_line_of_sight_clear;
+use sa_world::bindings::car_enter_exit_get_position_to_open_car_door as get_position_to_open_car_door;
+use sa_world::bindings::find_node_closest_to_coors;
+use sa_world::bindings::get_position as path_node_get_position;
+use sa_world::bindings::placeable_set_posn;
 
 /// The path node of a `CNodeAddress` dword (area low word, node high word): `m_pPathNodes[area] + node * 0x1C`.
 fn path_node(addr: u32) -> GPtr<u8> {
@@ -1042,10 +1008,10 @@ pub fn position_ped_out_of_collision(this: GPtr<u8>, exit_door: i32, veh: GPtr<u
     // CheckCollision then the line of sight from V to c
     let test = |this: GPtr<u8>, v: &mut [u32; 3], c: &mut [u32; 3]| -> bool {
         physical_check_collision(this) == 0
-            && get_is_line_of_sight_clear(lp(v).cast(), lp(c).cast(), 1, 0, 0, 1, 0, 0, 0) != 0
+            && get_is_line_of_sight_clear(GPtr::<f32>::cast::<u8>(lp(v).cast()), GPtr::<u32>::cast::<u8>(lp(c).cast()), 1, 0, 0, 1, 0, 0, 0) != 0
     };
     let try_posn = |this: GPtr<u8>, v: &mut [u32; 3], c: &mut [u32; 3]| -> bool {
-        placeable_set_posn(this, lp(c).cast());
+        placeable_set_posn(this, GPtr::<u32>::cast::<f32>(lp(c).cast()));
         test(this, v, c)
     };
     let try_direct = |this: GPtr<u8>, v: &mut [u32; 3], c: &mut [u32; 3]| -> bool {
@@ -1059,12 +1025,12 @@ pub fn position_ped_out_of_collision(this: GPtr<u8>, exit_door: i32, veh: GPtr<u
         found = try_posn(this, &mut v, &mut c);
     } else if exit_door != 0 {
         let mut tmp = [0u32; 3];
-        let r = get_position_to_open_car_door(lp(&mut tmp).cast(), veh, exit_door);
+        let r = GPtr::<u8>::cast::<u32>(get_position_to_open_car_door(GPtr::<u32>::cast::<u8>(lp(&mut tmp).cast()), veh, exit_door as u32));
         c = [r.read(), r.wrapping_index(1).read(), r.wrapping_index(2).read()];
         found = try_posn(this, &mut v, &mut c);
         if !found && rd::<i32>(veh, 0x590) == 9 && (exit_door == 10 || exit_door == 11) {
             let door = if exit_door == 11 { 9 } else { 8 };
-            let r = get_position_to_open_car_door(lp(&mut tmp).cast(), veh, door);
+            let r = GPtr::<u8>::cast::<u32>(get_position_to_open_car_door(GPtr::<u32>::cast::<u8>(lp(&mut tmp).cast()), veh, door as u32));
             c = [r.read(), r.wrapping_index(1).read(), r.wrapping_index(2).read()];
             found = try_posn(this, &mut v, &mut c);
         }
@@ -1198,8 +1164,8 @@ pub fn position_ped_out_of_collision(this: GPtr<u8>, exit_door: i32, veh: GPtr<u
     let paths = GPtr::<u8>::from_addr(THE_PATHS as usize);
     let mut n1 = 0u32;
     let mut n2 = 0u32;
-    find_node_closest_to_coors(paths, lp(&mut n1).cast(), v[0], v[1], v[2], 1, 0x4974_23FE, 0, 0, 0, 0, 0);
-    find_node_closest_to_coors(paths, lp(&mut n2).cast(), v[0], v[1], v[2], 0, 0x4974_23FE, 0, 0, 0, 0, 0);
+    find_node_closest_to_coors(paths, lp(&mut n1).cast(), f32::from_bits(v[0]), f32::from_bits(v[1]), f32::from_bits(v[2]), 1, f32::from_bits(0x4974_23FE), 0, 0, 0, 0, 0);
+    find_node_closest_to_coors(paths, lp(&mut n2).cast(), f32::from_bits(v[0]), f32::from_bits(v[1]), f32::from_bits(v[2]), 0, f32::from_bits(0x4974_23FE), 0, 0, 0, 0, 0);
     let mut have = false;
     let mut tmp = [0.0f32; 3];
     if n1 & 0xFFFF != 0xFFFF {
@@ -1211,7 +1177,7 @@ pub fn position_ped_out_of_collision(this: GPtr<u8>, exit_door: i32, veh: GPtr<u
         let node = path_node(n2);
         let p2 = path_node_get_position(node, lp(&mut tmp).cast());
         let mut d = [0.0f32; 3];
-        let dd = vector_sub(lp(&mut d).cast(), p2, lp(&mut v).cast());
+        let dd = GPtr::<u8>::cast::<f32>(vector_sub(GPtr::<f32>::cast::<u8>(lp(&mut d).cast()), p2.cast::<u8>(), GPtr::<f32>::cast::<u8>(lp(&mut v).cast())));
         let c1x = x(f32::from_bits(c[0])).fsub_m(vf(&v, 0));
         let c1y = x(f32::from_bits(c[1])).fsub_m(vf(&v, 1));
         let d2x = x(dd.read());
@@ -1225,8 +1191,8 @@ pub fn position_ped_out_of_collision(this: GPtr<u8>, exit_door: i32, veh: GPtr<u
     } else if !have {
         return 0;
     }
-    find_z_coor_for_ped_call(lp(&mut c).cast());
-    placeable_set_posn(this, lp(&mut c).cast());
+    find_z_coor_for_ped_call(GPtr::<f32>::cast::<u8>(lp(&mut c).cast()));
+    placeable_set_posn(this, GPtr::<u32>::cast::<f32>(lp(&mut c).cast()));
     let vm = rd::<GPtr<u8>>(veh, 0x14);
     let heading = if vm.is_null() {
         rd::<u32>(veh, 0x10)
@@ -1237,7 +1203,7 @@ pub fn position_ped_out_of_collision(this: GPtr<u8>, exit_door: i32, veh: GPtr<u
     if pm.is_null() {
         wr::<u32>(this, 0x10, heading);
     } else {
-        matrix_set_rotate_z_only(pm, heading);
+        matrix_set_rotate_z_only(pm, f32::from_bits(heading));
     }
     wr::<u32>(this, 0x474, rd::<u32>(this, 0x474) | 1);
     for i in 0..6 {

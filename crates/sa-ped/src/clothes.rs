@@ -4,6 +4,7 @@
 //! `CPedClothesDesc` (0x78): +0 model keys[10], +0x28 texture keys[18], +0x70 fat stat, +0x74 muscle stat.
 //! `PlayerClothes` (0xBC1C78) is the CPedClothesDesc the player was last built with.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -34,26 +35,21 @@ pub use sa_core::bindings::timer_resume;
 pub use sa_core::bindings::timer_suspend;
 pub use sa_core::bindings::tm_get_task_secondary as get_task_secondary;
 pub use sa_core::bindings::world_remove;
-pub use sa_stream::bindings::load_line;
+pub use sa_core::bindings::load_line;
+pub use sa_core::bindings::clothes_rebuild_player as rebuild_player_call;
+pub use sa_core::bindings::file_close;
+pub use sa_core::bindings::get_uppercase_key;
+pub use sa_core::bindings::open_file as file_open;
+pub use sa_stream::bindings::add_image_to_list;
+pub use sa_stream::bindings::get_animation_block_index;
+pub use sa_world::bindings::get_texture_dependency as get_texture_dependency_call;
 orig! {
-    /// `CKeyGen::GetUppercaseKey(const char*)` (0x53CF30)
-    pub fn get_uppercase_key(s: u32) -> u32 = cdecl 0x53CF30 => unported;
-    /// `CClothes::GetTextureDependency(int32)` (0x5A7EA0)
-    pub fn get_texture_dependency_call(t: i32) -> i32 = cdecl 0x5A7EA0 => get_texture_dependency;
-    /// `CStreaming::AddImageToList(const char*, bool)` (0x407610)
-    pub fn add_image_to_list(name: u32, cd: u32) -> i32 = cdecl 0x407610 => unported;
     /// `CClothes::LoadClothesFile` (0x5A7B30)
     pub fn load_clothes_file() = cdecl 0x5A7B30 => load_clothes_file_port;
-    /// `CFileMgr::OpenFile(path, mode)` (0x538900)
-    pub fn file_open(path: GPtr<u8>, mode: GPtr<u8>) -> GPtr<u8> = cdecl 0x538900 => unported;
-    /// `CFileMgr::CloseFile(FILE*)` (0x5389D0)
-    pub fn file_close(f: GPtr<u8>) -> i32 = cdecl 0x5389D0 => unported;
     /// `GetClothesModelFromName(const char*)` (0x5A7A20)
     pub fn clothes_model_from_name(name: GPtr<u8>) -> i32 = cdecl 0x5A7A20 => get_clothes_model_from_name;
     /// `CClothes::GetPlayerMotionGroupToLoad` (0x5A7FB0)
     pub fn get_player_motion_group_to_load_call() -> i32 = cdecl 0x5A7FB0 => get_player_motion_group_to_load;
-    /// `CAnimManager::GetAnimationBlockIndex(const char*)` (0x4D3990)
-    pub fn get_animation_block_index(name: u32) -> i32 = cdecl 0x4D3990 => unported;
     /// `CClothesBuilder::CreateSkinnedClump(RpClump*, RwTexDictionary*, CPedClothesDesc&, const CPedClothesDesc*, bool)` (0x5A69D0)
     pub fn create_skinned_clump(c: GPtr<u8>, txd: GPtr<u8>, d: GPtr<u8>, old: GPtr<u8>, cut: u32) -> GPtr<u8> = cdecl 0x5A69D0 => unported;
     /// `CClothes::RequestMotionGroupAnims` (0x5A8120)
@@ -68,8 +64,6 @@ orig! {
     pub fn mi_set_clump(mi: GPtr<u8>, c: GPtr<u8>) = thiscall vslot 0x40 => unported;
     /// `CClothes::ConstructPedModel(uint32, CPedClothesDesc&, const CPedClothesDesc*, bool)` (0x5A81E0)
     pub fn construct_ped_model_call(model: u32, d: GPtr<u8>, old: GPtr<u8>, cut: u32) = cdecl 0x5A81E0 => construct_ped_model;
-    /// `CClothes::RebuildPlayer(CPlayerPed*, bool)` (0x5A82C0)
-    pub fn rebuild_player_call(p: GPtr<u8>, ignore: u32) = cdecl 0x5A82C0 => rebuild_player;
     /// `RpAnimBlendClumpExtractAssociations(RpClump*)` (0x4D6BE0)
     pub fn clump_extract_associations(c: GPtr<u8>) -> GPtr<u8> = cdecl 0x4D6BE0 => unported;
     /// `RpAnimBlendClumpGiveAssociations(RpClump*, CAnimBlendAssociation*)` (0x4D6C30)
@@ -107,7 +101,7 @@ pub fn set_model_hash(this: GPtr<u8>, key: u32, part: i32) {
 /// name, 0 for null.
 #[hook(addr = 0x5A7920, conv = thiscall, name = "CPedClothesDesc::SetModel-modelName", expect = "8B 44 24 04 56", this = "CPedClothesDesc")]
 pub fn set_model_name(this: GPtr<u8>, name: u32, part: i32) {
-    let k = if name == 0 { 0 } else { get_uppercase_key(name) };
+    let k = if name == 0 { 0 } else { get_uppercase_key(GPtr::from_addr(name as usize)) };
     wr::<u32>(this, (part as isize).wrapping_mul(4), k);
 }
 
@@ -177,10 +171,10 @@ pub fn get_dependent_texture(m: i32) -> i32 {
 /// `arg == 1` only with the "afro" head.
 #[hook(addr = 0x5A7970, conv = thiscall, name = "CPedClothesDesc::HasVisibleNewHairCut", expect = "56 57 8B F1 8B 7E 24", this = "CPedClothesDesc")]
 pub fn has_visible_new_hair_cut(this: GPtr<u8>, arg: i32) -> u8 {
-    if rd::<u32>(this, 0x24) == get_uppercase_key(0x86718C) {
+    if rd::<u32>(this, 0x24) == get_uppercase_key(GPtr::from_addr(0x86718C)) {
         return 0;
     }
-    if rd::<u32>(this, 4) == get_uppercase_key(0x8590E8) {
+    if rd::<u32>(this, 4) == get_uppercase_key(GPtr::from_addr(0x8590E8)) {
         return 0;
     }
     if rd::<u32>(this, 0x20) != 0 {
@@ -189,11 +183,11 @@ pub fn has_visible_new_hair_cut(this: GPtr<u8>, arg: i32) -> u8 {
     if arg != 1 {
         return 1;
     }
-    (rd::<u32>(this, 4) == get_uppercase_key(0x867198)) as u8
+    (rd::<u32>(this, 4) == get_uppercase_key(GPtr::from_addr(0x867198))) as u8
 }
 
 fn stat(i: u32) -> X87 {
-    X87::from_f64_exact(get_stat_value(i))
+    X87::from_f64_exact(get_stat_value(i as u16))
 }
 
 /// `CClothes::GetPlayerMotionGroupToLoad` (0x5A7FB0): 0x37 (fat) when fat > 500 and fat > muscle
@@ -213,7 +207,7 @@ pub fn get_player_motion_group_to_load() -> i32 {
 /// `ret 0xC`): texture key set; the dependent model part (if any) gets the model key.
 #[hook(addr = 0x5A8050, conv = thiscall, name = "CPedClothesDesc::SetTextureAndModel-hash", expect = "8B 54 24 0C 56", this = "CPedClothesDesc")]
 pub fn set_texture_and_model_hash(this: GPtr<u8>, tex: u32, model: u32, part: i32) {
-    let dep = get_texture_dependency_call(part);
+    let dep = get_texture_dependency_call(part as u32);
     wr::<u32>(this, 0x28 + (part as isize).wrapping_mul(4), tex);
     if dep != 10 {
         wr::<u32>(this, (dep as isize).wrapping_mul(4), model);
@@ -224,9 +218,9 @@ pub fn set_texture_and_model_hash(this: GPtr<u8>, tex: u32, model: u32, part: i3
 /// (0x5A8080, `ret 0xC`): as the key version with upper-case keys (0 for null names).
 #[hook(addr = 0x5A8080, conv = thiscall, name = "CPedClothesDesc::SetTextureAndModel-name", expect = "8B 44 24 04 53", this = "CPedClothesDesc")]
 pub fn set_texture_and_model_name(this: GPtr<u8>, tex: u32, model: u32, part: i32) {
-    let tk = if tex == 0 { 0 } else { get_uppercase_key(tex) };
-    let mk = if model == 0 { 0 } else { get_uppercase_key(model) };
-    let dep = get_texture_dependency_call(part);
+    let tk = if tex == 0 { 0 } else { get_uppercase_key(GPtr::from_addr(tex as usize)) };
+    let mk = if model == 0 { 0 } else { get_uppercase_key(GPtr::from_addr(model as usize)) };
+    let dep = get_texture_dependency_call(part as u32);
     wr::<u32>(this, 0x28 + (part as isize).wrapping_mul(4), tk);
     if dep != 10 {
         wr::<u32>(this, (dep as isize).wrapping_mul(4), mk);
@@ -240,14 +234,14 @@ pub fn set_texture_and_model_name(this: GPtr<u8>, tex: u32, model: u32, part: i3
 pub fn init() {
     let pc = PLAYER_CLOTHES.ptr().cast::<u8>();
     for i in 0..0x12 {
-        let dep = get_texture_dependency_call(i);
+        let dep = get_texture_dependency_call(i as u32);
         wr::<i32>(pc, 0x28 + 4 * i as isize, -1);
         if dep != 10 {
             wr::<i32>(pc, 4 * dep as isize, -1);
         }
     }
     NUM_RULE_TAGS.set(0);
-    CLOTHES_IMAGE_ID.set(add_image_to_list(0x86713C, 0));
+    CLOTHES_IMAGE_ID.set(add_image_to_list(GPtr::from_addr(0x86713C), 0));
     load_clothes_file();
 }
 
@@ -262,7 +256,7 @@ fn add_rule(v: u32) {
 
 /// `"-"` compared with its NUL (`repe cmpsb`, 2 bytes): `0` for a dash, else the token's key.
 fn key_or_dash(t: GPtr<u8>) -> u32 {
-    if t.read() == b'-' && t.byte_add(1).read() == 0 { 0 } else { get_uppercase_key(t.addr() as u32) }
+    if t.read() == b'-' && t.byte_add(1).read() == 0 { 0 } else { get_uppercase_key(GPtr::from_addr((t.addr() as u32) as usize)) }
 }
 
 /// `CClothes::LoadClothesFile` (0x5A7B30): `ms_numRuleTags` = 0, then "DATA\\CLOTHES.DAT" (0x8671F8,
@@ -321,22 +315,22 @@ pub fn load_clothes_file_port() {
                 let a2 = crt_strtok(GPtr::NULL, dl);
                 match tag {
                     0 | 2 => {
-                        add_rule(get_uppercase_key(a1.addr() as u32));
-                        add_rule(get_uppercase_key(a2.addr() as u32));
+                        add_rule(get_uppercase_key(GPtr::from_addr((a1.addr() as u32) as usize)));
+                        add_rule(get_uppercase_key(GPtr::from_addr((a2.addr() as u32) as usize)));
                     }
                     1 => {
                         let a3 = crt_strtok(GPtr::NULL, dl);
                         let a4 = crt_strtok(GPtr::NULL, dl);
-                        add_rule(get_uppercase_key(a1.addr() as u32));
+                        add_rule(get_uppercase_key(GPtr::from_addr((a1.addr() as u32) as usize)));
                         add_rule(clothes_model_from_name(a2) as u32);
                         add_rule(key_or_dash(a3));
                         add_rule(key_or_dash(a4));
                     }
                     3 => {
-                        add_rule(get_uppercase_key(a1.addr() as u32));
+                        add_rule(get_uppercase_key(GPtr::from_addr((a1.addr() as u32) as usize)));
                         add_rule(clothes_model_from_name(a2) as u32);
                     }
-                    4..=7 => add_rule(get_uppercase_key(a1.addr() as u32)),
+                    4..=7 => add_rule(get_uppercase_key(GPtr::from_addr((a1.addr() as u32) as usize))),
                     _ => {}
                 }
             }
@@ -352,8 +346,8 @@ pub fn load_clothes_file_port() {
 #[hook(addr = 0x5A8120, conv = cdecl, name = "CClothes::RequestMotionGroupAnims", expect = "53 56 57 E8 88 FE FF FF")]
 pub fn request_motion_group_anims() {
     let g = get_player_motion_group_to_load_call();
-    let fat = get_animation_block_index(0x85A508);
-    let mus = get_animation_block_index(0x86720C);
+    let fat = get_animation_block_index(GPtr::from_addr(0x85A508));
+    let mus = get_animation_block_index(GPtr::from_addr(0x86720C));
     if g == 0x37 {
         request_model(fat.wrapping_add(0x63E7), 0x12);
         set_model_is_deletable(mus.wrapping_add(0x63E7));
@@ -458,12 +452,8 @@ pub fn rebuild_player_if_needed(p: GPtr<u8>) {
 
 // --- hook list (generated) ---
 
-orig! {
-    /// `NodeNamePlugin::GetFrameNodeName(RwFrame*)` (0x72FB30)
-    fn get_frame_node_name(f: GPtr<u8>) -> u32 = cdecl 0x72FB30 => unported;
-    /// CRT `_stricmp` (0x8229B6)
-    fn stricmp(a: u32, b: u32) -> i32 = cdecl 0x8229B6 => unported;
-}
+use sa_core::bindings::get_frame_node_name;
+use sa_core::bindings::stricmp;
 
 /// The "balaclava" model name (`.rdata` 0x86718C).
 const BALACLAVA_NAME: u32 = 0x86718C;
@@ -476,7 +466,7 @@ const BALACLAVA_NAME: u32 = 0x86718C;
        note = "0x407E2C reads entry bytes +5 (keycells)")]
 pub fn get_is_wearing_balaclava(this: GPtr<u8>) -> u32 {
     let mine = rd::<u32>(this, 0x24);
-    let key = get_uppercase_key(BALACLAVA_NAME);
+    let key = get_uppercase_key(GPtr::from_addr(BALACLAVA_NAME as usize));
     (key & 0xFFFF_FF00) | u32::from(mine == key)
 }
 
@@ -506,8 +496,8 @@ pub fn get_default_player_motion_group() -> i32 {
 #[hook(addr = 0x5a47e0, conv = cdecl, name = "FUN_005a47e0", expect = "56 8B 74 24 08",
        unverified = "mvpi-ped-1", route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn get_atomic_with_name_cb(atomic: GPtr<u8>, data: GPtr<u8>) -> GPtr<u8> {
-    let name = get_frame_node_name(rd::<GPtr<u8>>(atomic, 4));
-    if stricmp(rd::<u32>(data, 0), name) == 0 {
+    let name = GPtr::<u8>::addr(get_frame_node_name(rd::<GPtr<u8>>(atomic, 4))) as u32;
+    if stricmp(GPtr::from_addr(rd::<u32>(data, 0) as usize), GPtr::from_addr(name as usize)) == 0 {
         wr::<GPtr<u8>>(data, 4, atomic);
         return GPtr::NULL;
     }

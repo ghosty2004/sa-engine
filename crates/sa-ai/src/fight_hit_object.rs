@@ -1,6 +1,7 @@
 //! WRITER-NATIVE (batch `native-34`): 0x61D400, `CTaskSimpleFight`'s hit on an object (unnamed), reached when a
 //! punch lands on street furniture. Ported from the 1.0 US bytes.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -9,9 +10,8 @@ use crate::common::*;
 use sa_world::bindings::object_damage;
 use sa_world::bindings::ped_weapon_audio_add_audio_event as ped_weapon_audio_event;
 use sa_world::bindings::physical_add_to_moving_list;
+use crate::bindings::fight_strike_damage_c;
 orig! {
-    /// The fight strike damage (0x61C740, ST0)
-    fn fight_strike_damage_c(t: GPtr<u8>, ped: GPtr<u8>) -> f64 = thiscall 0x61C740 => unported;
     /// `CEntity::SetIsStatic(bool)` (vtable slot 0x10)
     fn entity_set_is_static(e: GPtr<u8>, b: u32) = thiscall vslot 0x10 => unported;
     /// `CPhysical::ApplyForce(CVector force, CVector point, bool)` (0x542B50)

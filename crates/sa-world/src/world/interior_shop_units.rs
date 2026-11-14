@@ -9,6 +9,7 @@ use sa_core::{hook, orig};
 use super::common::{ftol32, rd, wr, xi};
 
 use crate::bindings::set_tiles_status as interior_set_tiles_status;
+use crate::bindings::add_interior_info as interior_add_interior_info;
 orig! {
     /// `Interior_c::Shop_PlaceCounter(bool)` (0x599EF0)
     fn shop_place_counter(i: GPtr<u8>, left: u32) -> i32 = thiscall 0x599EF0 => unported;
@@ -16,8 +17,6 @@ orig! {
     fn shop_furnish_edges(i: GPtr<u8>) = thiscall 0x59A1B0 => unported;
     /// `Interior_c::Shop_FurnishAisles()` (0x59A590)
     fn shop_furnish_aisles(i: GPtr<u8>) = thiscall 0x59A590 => unported;
-    /// `Interior_c::AddInteriorInfo(int32, float, float, int32, CEntity*)` (0x591E40)
-    fn interior_add_interior_info(i: GPtr<u8>, kind: u32, x: u32, y: u32, dir: u32, ent: u32) -> u8 = thiscall 0x591E40 => unported;
     /// `Interior_c::Shop_PlaceFixedUnits()` (0x59A030)
     fn call_shop_place_fixed_units(i: GPtr<u8>) = thiscall 0x59A030 => interior_shop_place_fixed_units;
 }
@@ -64,8 +63,8 @@ pub fn interior_shop_place_fixed_units(this: GPtr<u8>) {
         slot = shop_place_counter(this, a) as u32;
     }
     let f = xi(slot as i32).to_f32().to_bits();
-    interior_add_interior_info(this, 9, f, 0x4000_0000, 0, 0);
-    interior_add_interior_info(this, 10, f, 0, 2, 0);
+    interior_add_interior_info(this, 9, f32::from_bits(f), f32::from_bits(0x4000_0000), 0, 0);
+    interior_add_interior_info(this, 10, f32::from_bits(f), f32::from_bits(0), 2, 0);
 }
 
 /// `Interior_c::FurnishShop(int32 kind)` (0x59A790): stores the kind byte (+0x790); unless both sides

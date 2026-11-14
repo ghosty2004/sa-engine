@@ -21,6 +21,7 @@ sa_core::globals! {
 
 pub use sa_core::bindings::rw_camera_begin_update;
 pub use sa_core::bindings::rw_camera_end_update;
+pub use crate::bindings::shadow_camera_create;
 orig! {
     /// `RwRenderStateSet` (`RwEngineInstance` slot 0x20)
     pub fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
@@ -28,8 +29,6 @@ orig! {
     pub fn operator_new(n: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
     /// `CRealTimeShadow::Create(bool isBlurred, int32 blurPasses, bool drawMoreBlur)` (0x706460)
     pub fn real_time_shadow_create(this: GPtr<u8>, blurred: u32, passes: i32, more_blur: u32) -> u8 = thiscall 0x706460 => unported;
-    /// `CShadowCamera::Create(int32 rasterSizePower)` (0x705B60)
-    pub fn shadow_camera_create(this: GPtr<u8>, size_power: i32) -> GPtr<u8> = thiscall 0x705B60 => unported;
     /// `RwIm2DRenderLine(verts, numVerts, vert1, vert2)` (`RwEngineInstance` slot 0x28; the thunk
     /// 0x734EC0 jumps there)
     pub fn rw_im2d_render_line(verts: GPtr<u8>, n: i32, v1: i32, v2: i32) -> i32 = cdecl table 0xC97B24 0x28 => unported;

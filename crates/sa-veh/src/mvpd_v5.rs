@@ -67,10 +67,10 @@ fn occupant(this: GPtr<u8>, ped: GPtr<u8>, is_driver: bool) {
             f32_of(x(rd::<f32>(this, 0x4C)).fchs()),
         );
         normalise(GPtr::from_raw(&mut v));
-        let f = f32_of(X87::from_f64_exact(vector_magnitude(this.byte_add(0x44))).fmul_m(rd::<f32>(this, 0x8C)));
+        let f = f32_of(X87::from_f64_exact(vector_magnitude(GPtr::<u8>::cast::<u32>(this.byte_add(0x44)))).fmul_m(rd::<f32>(this, 0x8C)));
         let mut ev = [0u32; 0x20];
         let evp = GPtr::from_raw(ev.as_mut_ptr()).cast::<u8>();
-        kob_ctor(evp, this, this.byte_add(0x44), GPtr::from_raw(&mut v).cast(), f.to_bits(), 0, 0x35, 0, 0, 0, 0, 0);
+        kob_ctor(evp, this, this.byte_add(0x44), GPtr::from_raw(&mut v).cast(), f.to_bits(), 0, 0x35, 0, 0, GPtr::NULL, 0, 0);
         event_group_add(group(ped), evp, 0);
         if ped_is_player(ped) != 0 {
             player_handle_breath(ped, 1, 0x3F80_0000);
@@ -87,7 +87,7 @@ fn occupant(this: GPtr<u8>, ped: GPtr<u8>, is_driver: bool) {
     }
     let mut calc = [0u32; 8];
     let cp = GPtr::from_raw(calc.as_mut_ptr()).cast::<u8>();
-    damage_calc_ctor(cp, this, g::<u32>(TIME_STEP).read(), 0x35, 3, 0);
+    damage_calc_ctor(cp, this, f32::from_bits(g::<u32>(TIME_STEP).read()), 0x35, 3, 0);
     let mut ev = [0u32; 0x20];
     let evp = GPtr::from_raw(ev.as_mut_ptr()).cast::<u8>();
     event_damage_ctor(evp, this, g::<u32>(0xB7_CB84).read(), 0x35, 3, 0, 0, 1);
@@ -137,9 +137,9 @@ pub fn automobile_process_buoyancy(this: GPtr<u8>) {
     let ok = buoyancy_process(
         GPtr::from_addr(0xC1_C890),
         this,
-        rd::<u32>(this, 0xA0),
-        GPtr::from_raw(&mut centre).cast(),
-        GPtr::from_raw(&mut force).cast(),
+        f32::from_bits(rd::<u32>(this, 0xA0)),
+        GPtr::<u8>::cast::<sa_math::vector::CVector>(GPtr::from_raw(&mut centre).cast()),
+        GPtr::<u8>::cast::<sa_math::vector::CVector>(GPtr::from_raw(&mut force).cast()),
     );
     if ok == 0 {
         wr::<u8>(this, 0x42B, rd::<u8>(this, 0x42B) & 0xBF);
@@ -292,25 +292,19 @@ use sa_world::bindings::max_f;
 use sa_world::bindings::min_f;
 use sa_world::bindings::stats_get_fat_and_muscle_modifier as get_fat_and_muscle_modifier;
 use sa_world::bindings::vector_add;
-use sa_world::bindings::vector_magnitude_sqr;
+use sa_core::bindings::vector_magnitude_sqr;
 use sa_world::bindings::vector_scale;
+use crate::bindings::activate_bomb;
+use crate::bindings::calculate_gear_for_simple_car;
+use sa_pop::bindings::steer_ai_car_with_physics;
+use sa_pop::bindings::update_car_ai;
+use sa_pop::bindings::update_car_on_rails;
+use sa_world::bindings::physical_process_control;
 orig! {
     /// `CVehicle::ProcessControlInputs(uint8 pad)` (virtual, vtable +0x60)
     fn process_control_inputs_virtual(v: GPtr<u8>, pad: u32) = thiscall vslot 0x60 => unported;
-    /// `CVehicle::ActivateBomb()` (0x6D24F0)
-    fn activate_bomb(v: GPtr<u8>) = thiscall 0x6D24F0 => unported;
-    /// `CCarAI::UpdateCarAI(CVehicle*)` (0x41DA30)
-    fn update_car_ai(v: GPtr<u8>) = cdecl 0x41DA30 => unported;
-    /// `CPhysical::ProcessControl()` (0x5485E0)
-    fn physical_process_control(p: GPtr<u8>) = thiscall 0x5485E0 => unported;
-    /// `CCarCtrl::UpdateCarOnRails(CVehicle*)` (0x436540)
-    fn update_car_on_rails(v: GPtr<u8>) = cdecl 0x436540 => unported;
-    /// `cTransmission::CalculateGearForSimpleCar(float speed, uint8& gear)` (0x6D0530)
-    fn calculate_gear_for_simple_car(t: GPtr<u8>, speed: f32, gear: GPtr<u8>) = thiscall 0x6D0530 => unported;
     /// `CVehicle` virtual +0xD8 (`PlayCarHorn`)
     fn play_car_horn_virtual(v: GPtr<u8>) = thiscall vslot 0xD8 => unported;
-    /// `CCarCtrl::SteerAICarWithPhysics(CVehicle*)` (0x437C20)
-    fn steer_ai_car_with_physics(v: GPtr<u8>) = cdecl 0x437C20 => unported;
 }
 
 /// `CBike::ProcessAI(uint32& extraHandlingFlags)` (0x6BC930, `ret 4`).
@@ -356,7 +350,7 @@ pub fn bike_process_ai(this: GPtr<u8>, flags: GPtr<u32>) -> u8 {
             if w != 0x3D && w2 != 0x3A {
                 player_ai(this, flags);
             }
-            if car_gun_just_down(get_pad(0)) as u16 != 0 {
+            if (car_gun_just_down(get_pad(0)) as u32) as u16 != 0 {
                 activate_bomb(this);
             }
             1
@@ -413,7 +407,7 @@ pub fn bike_process_ai(this: GPtr<u8>, flags: GPtr<u32>) -> u8 {
         }
         4 => {
             wr::<u32>(this, 0x4A0, 0);
-            let still = !X87::from_f64_exact(vector_magnitude_sqr(this.byte_add(0x44))).fcom(x(0.01)).test_parity(0x05);
+            let still = !X87::from_f64_exact(vector_magnitude_sqr(GPtr::<u8>::cast::<f32>(this.byte_add(0x44)))).fcom(x(0.01)).test_parity(0x05);
             let hb = if still || rd::<u8>(this, 0x614) & 0x10 != 0 { rd::<u8>(this, 0x428) | 0x20 } else { rd::<u8>(this, 0x428) & 0xDF };
             wr::<u8>(this, 0x428, hb);
             wr::<u32>(this, 0x49C, 0);
@@ -433,7 +427,7 @@ pub fn bike_process_ai(this: GPtr<u8>, flags: GPtr<u32>) -> u8 {
             1
         }
         9 => {
-            if !X87::from_f64_exact(vector_magnitude_sqr(this.byte_add(0x44))).fcom(x(0.01)).test_parity(0x05) {
+            if !X87::from_f64_exact(vector_magnitude_sqr(GPtr::<u8>::cast::<f32>(this.byte_add(0x44)))).fcom(x(0.01)).test_parity(0x05) {
                 wr::<u8>(this, 0x428, rd::<u8>(this, 0x428) | 0x20);
                 wr::<u32>(this, 0x4A0, 0x3F80_0000);
             } else {
@@ -487,7 +481,7 @@ fn player_ai(this: GPtr<u8>, flags: GPtr<u32>) {
     };
     if !(skip_check && rd::<u8>(this, 0x804) != 0) {
         let tenth = f32::from_bits(0x3DCC_CCCD);
-        let m = f32_of(X87::from_f64_exact(vector_magnitude(this.byte_add(0x44))));
+        let m = f32_of(X87::from_f64_exact(vector_magnitude(GPtr::<u8>::cast::<u32>(this.byte_add(0x44)))));
         let mn = f32_of(X87::from_f64_exact(min_f(tenth, m)));
         let ctl = rd::<f32>(this, ctl_off);
         let r = f32_of(x(mn).fdiv_m(tenth));

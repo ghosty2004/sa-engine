@@ -29,42 +29,35 @@ use sa_core::bindings::rw_raster_destroy;
 use sa_core::bindings::rw_v3d_transform_points;
 use sa_core::bindings::vector_normalise;
 use sa_pop::bindings::rw_frame_ortho_normalize;
-use sa_world::bindings::ped_get_bone_position;
+use sa_core::bindings::ped_get_bone_position;
+use crate::bindings::rw_im2d_render_indexed_primitive as im2d_render_indexed_primitive;
+use crate::bindings::shadow_camera_set_light;
+use sa_core::bindings::rw_camera_clear;
+use sa_core::bindings::rw_raster_create;
+use sa_world::bindings::camera_is_sphere_visible;
+use sa_world::bindings::rw_frame_rotate;
 orig! {
     /// `RwRenderStateSet` (`RwEngineInstance` slot 0x20)
     fn rs(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `RwFrameRotate(RwFrame*, const RwV3d* axis, RwReal angle, RwOpCombineType)` (0x7F1010)
-    fn rw_frame_rotate(f: GPtr<u8>, axis: GPtr<u8>, angle: u32, combine: u32) -> GPtr<u8> = cdecl 0x7F1010 => unported;
-    /// `RwCameraClear(RwCamera*, RwRGBA*, RwInt32 mode)` (0x7EE340)
-    fn rw_camera_clear(cam: GPtr<u8>, colour: GPtr<u8>, mode: u32) -> GPtr<u8> = cdecl 0x7EE340 => unported;
-    /// `RwIm2DRenderIndexedPrimitive(type, verts, nv, indices, ni)` (0x734EA0)
-    fn im2d_render_indexed_primitive(prim: u32, verts: GPtr<u8>, nv: i32, idx: GPtr<u8>, ni: i32) -> i32 = cdecl 0x734EA0 => unported;
-    /// `CShadowCamera::SetLight(RpLight*)` (0x705520)
-    fn shadow_camera_set_light(this: GPtr<u8>, light: GPtr<u8>) -> GPtr<u8> = thiscall 0x705520 => unported;
     /// `CShadowCamera::Update(RpAtomic*)` (0x705C80)
     fn shadow_camera_update_atomic(this: GPtr<u8>, atomic: GPtr<u8>) -> GPtr<u8> = thiscall 0x705C80 => unported;
     /// `CRealTimeShadowManager::ReInit()` (0x706870)
     fn rts_manager_reinit(this: GPtr<u8>) = thiscall 0x706870 => crate::mvpd_r1::rts_manager_reinit_port;
-    /// `RwRasterCreate(int32 w, int32 h, int32 depth, int32 flags)` (0x7FB230)
-    fn rw_raster_create(w: u32, h: u32, depth: u32, flags: u32) -> GPtr<u8> = cdecl 0x7FB230 => unported;
     /// `CShadowCamera::MakeGradientRaster()` (0x705D20)
     fn shadow_camera_make_gradient_raster(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x705D20 => unported;
-    /// `CCamera::IsSphereVisible(const CVector&, float)` (0x420D40, bool in AL)
-    fn camera_is_sphere_visible(this: GPtr<u8>, c: GPtr<u8>, r: u32) -> u8 = thiscall 0x420D40 => unported;
     /// `CShadows::CalcPedShadowValues(CVector sun, float& dx, float& dy, float& fx, float& fy, float& sx,
     /// float& sy)` (0x7076C0; the vector by value, three dwords)
     #[allow(clippy::too_many_arguments)]
     fn calc_ped_shadow_values(sx: u32, sy: u32, sz: u32, a: GPtr<u8>, b: GPtr<u8>, c: GPtr<u8>, d: GPtr<u8>, e: GPtr<u8>, f: GPtr<u8>) = cdecl 0x7076C0 => unported;
 }
 
+use crate::bindings::set_center_o;
 orig! {
     /// `CShadowCamera::Im2DRenderQuad` (0x705A20)
     #[allow(clippy::too_many_arguments)]
     fn im2d_render_quad_o(x1: u32, y1: u32, x2: u32, y2: u32, z: u32, recip_z: u32, uv: u32) -> u32 = cdecl 0x705A20 => crate::mvpd_r1::im2d_render_quad;
     /// `CShadowCamera::DrawOutlineBorder(const CRGBA&)` (0x705790)
     fn draw_outline_border_o(this: GPtr<u8>, colour: GPtr<u8>) -> GPtr<u8> = thiscall 0x705790 => crate::mvpd_r1::draw_outline_border;
-    /// `CShadowCamera::SetCenter(RwV3d*)` (0x705590)
-    fn set_center_o(this: GPtr<u8>, c: GPtr<u8>) -> GPtr<u8> = thiscall 0x705590 => crate::mvpd_r1::set_center;
     /// `CShadowCamera::InvertRaster()` (0x705660)
     fn invert_raster_o(this: GPtr<u8>) = thiscall 0x705660 => crate::mvpd_r1::invert_raster;
     /// `CShadowCamera::Update(RpClump*)` (0x705BF0)
@@ -286,7 +279,7 @@ pub fn update_clump(this: GPtr<u8>, clump: GPtr<u8>) -> GPtr<u8> {
         let geom = rd::<GPtr<u8>>(atomic, 0x18);
         let flags = rd::<u32>(geom, 8);
         wr::<u32>(geom, 8, flags & 0xFFFF_FF13);
-        rp_clump_for_all_atomics(clump, 0x705620, 0);
+        rp_clump_for_all_atomics(clump, 0x705620, GPtr::NULL);
         wr::<u32>(geom, 8, flags);
         invert_raster_o(this);
         rw_camera_end_update(rd::<GPtr<u8>>(this, 0));
@@ -425,7 +418,7 @@ pub fn rts_update(this: GPtr<u8>) -> GPtr<u8> {
     if ty == 1 || ty == 2 {
         let obj = rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0), 0x18);
         let frame = rd::<GPtr<u8>>(obj, 4);
-        rw_v3d_transform_points(this.byte_add(0x3C), this.byte_add(0x2C), 1, frame.byte_add(0x10));
+        rw_v3d_transform_points(GPtr::<u8>::cast::<f32>(this.byte_add(0x3C)), GPtr::<u8>::cast::<f32>(this.byte_add(0x2C)), 1, frame.byte_add(0x10));
     }
     let camera = this.byte_add(8);
     set_center_o(camera, this.byte_add(0x3C));
@@ -515,7 +508,7 @@ fn shadow_camera_reinit_inline(cam: GPtr<u8>) {
     let w = rd::<u32>(raster, 0xC);
     wr::<u32>(camera, 0x60, 0);
     rw_raster_destroy(raster);
-    let r = rw_raster_create(w, w, 0, 5);
+    let r = rw_raster_create(w as i32, w as i32, 0, 5);
     wr::<GPtr<u8>>(rd::<GPtr<u8>>(cam, 0), 0x60, r);
     rw_texture_set_raster(rd::<GPtr<u8>>(cam, 4), r);
 }
@@ -618,7 +611,7 @@ pub fn store_real_time_shadow(e: GPtr<u8>, a2: u32, a3: u32, a4: u32, a5: u32, a
     if jp(d2, x(g::<f32>(0xC4B6B0).read()), 5) {
         return;
     }
-    if e != find_player_ped(-1) && camera_is_sphere_visible(g::<u8>(0xB6F028), lp(&mut pos), 0x4000_0000) == 0 {
+    if e != find_player_ped(-1) && camera_is_sphere_visible(g::<u8>(0xB6F028), lp(&mut pos), f32::from_bits(0x4000_0000)) == 0 {
         return;
     }
     let d = x(d2f).fsqrt();
@@ -1209,16 +1202,13 @@ pub fn store_car_light_shadow(veh: GPtr<u8>, id: u32, tex: u32, pos: GPtr<u8>, f
 
 use crate::bindings::render_buffer_stop_storing;
 use sa_world::bindings::rw_im3d_end;
+use crate::bindings::set_render_mode_for_shadow_type;
+use sa_world::bindings::rw_im3d_render_indexed_primitive;
+use sa_world::bindings::rw_im3d_transform;
 orig! {
-    /// `CShadows::SetRenderModeForShadowType(uint8)` (0x707460; pushed as a dword)
-    fn set_render_mode_for_shadow_type(ty: u32) = cdecl 0x707460 => unported;
     /// `CShadows::AffectColourWithLighting(type, lightByte, r, g, b, uint8* rOut, gOut, bOut)` (0x707850)
     #[allow(clippy::too_many_arguments)]
     fn affect_colour_with_lighting(ty: u32, light: u32, r: u32, gg: u32, b: u32, ro: GPtr<u8>, go: GPtr<u8>, bo: GPtr<u8>) = cdecl 0x707850 => unported;
-    /// `RwIm3DTransform(verts, n, ltm, flags)` (0x7EF450)
-    fn rw_im3d_transform(verts: GPtr<u8>, n: u32, ltm: u32, flags: u32) -> GPtr<u8> = cdecl 0x7EF450 => unported;
-    /// `RwIm3DRenderIndexedPrimitive(type, indices, n)` (0x7EF550)
-    fn rw_im3d_render_indexed_primitive(ty: u32, idx: GPtr<u8>, n: u32) -> i32 = cdecl 0x7EF550 => unported;
 }
 
 /// `TempBufferVerticesStored` / `TempBufferIndicesStored` / index list / `TempVertexBuffer`.
@@ -1231,8 +1221,8 @@ const TB_VERTEX_BUF: usize = 0xC4D958;
 /// 1)` and on success `RwIm3DRenderIndexedPrimitive(TRILIST, indices, ni)` + `RwIm3DEnd`; both counts 0.
 fn flush_temp_buffer() {
     let nv = g::<u32>(TB_VERTS).read();
-    if nv != 0 && !rw_im3d_transform(g(TB_VERTEX_BUF), nv, 0, 1).is_null() {
-        rw_im3d_render_indexed_primitive(3, g(TB_INDEX_LIST), g::<u32>(TB_INDICES).read());
+    if nv != 0 && !rw_im3d_transform(g(TB_VERTEX_BUF), nv, GPtr::NULL, 1).is_null() {
+        rw_im3d_render_indexed_primitive(3, g(TB_INDEX_LIST), (g::<u32>(TB_INDICES).read()) as i32);
         rw_im3d_end();
     }
     g::<u32>(TB_INDICES).write(0);
@@ -1337,12 +1327,8 @@ use sa_core::bindings::find_player_coors;
 use sa_core::bindings::vector_magnitude;
 use sa_world::bindings::entity_get_col_model as get_col_model;
 use sa_world::bindings::get_vehicle_appearance;
-orig! {
-    /// `VectorSub(CVector* out, const CVector* a, const CVector* b)` (0x40FE60): out = a - b
-    fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) = cdecl 0x40FE60 => unported;
-    /// `CVector::operator*=(float)` (0x40FEF0)
-    fn vector_mul_assign(v: GPtr<u8>, s: u32) = thiscall 0x40FEF0 => unported;
-}
+use sa_core::bindings::vector_sub;
+use sa_world::bindings::vec_mul_assign as vector_mul_assign;
 
 /// `CShadows::RenderExtraPlayerShadows()` (0x707FA0): with a non-zero time-cycle light shadow
 /// strength (i16 0xB7C4EA) and a player vehicle that is not the RC bandit (0x1B9), not a bike
@@ -1360,7 +1346,7 @@ pub fn render_extra_player_shadows() {
         return;
     }
     let veh = find_player_vehicle(-1, 0);
-    if veh.is_null() || rd::<u16>(veh, 0x22) == 0x1B9 || get_vehicle_appearance(veh) == 2 {
+    if veh.is_null() || rd::<u16>(veh, 0x22) == 0x1B9 || get_vehicle_appearance(veh) as i32 == 2 {
         return;
     }
     let sub = rd::<u32>(veh, 0x590);
@@ -1383,9 +1369,9 @@ pub fn render_extra_player_shadows() {
         }
         let mut tmp = [0u32; 3];
         let mut dir = [0f32; 3];
-        let pc = find_player_coors(lp(&mut tmp), -1);
+        let pc = GPtr::<f32>::cast::<u8>(find_player_coors(GPtr::<u8>::cast::<f32>(lp(&mut tmp)), -1));
         vector_sub(lp(&mut dir), l, pc);
-        let mag = X87::from_f64_exact(vector_magnitude(lp(&mut dir)));
+        let mag = X87::from_f64_exact(vector_magnitude(GPtr::<u8>::cast::<u32>(lp(&mut dir))));
         let radius = rd::<f32>(l, 0x18);
         if jp(mag, x(radius), 5) {
             continue;
@@ -1397,7 +1383,7 @@ pub fn render_extra_player_shadows() {
         } else {
             mag.fadd(mag).fsub_m(radius).fdiv_m(radius).fsubr_m(k(K_ONE)).fmul(X87::from_i32(s58)).ftol() as u32 as i32
         };
-        vector_mul_assign(lp(&mut dir), x(k(K_ONE)).fdiv(mag).to_f32().to_bits());
+        vector_mul_assign(lp(&mut dir), f32::from_bits(x(k(K_ONE)).fdiv(mag).to_f32().to_bits()));
         let pv = find_player_vehicle(-1, 0);
         let m = rd::<GPtr<u8>>(pv, 0x14);
         let src = if m.is_null() { pv.byte_add(4) } else { m.byte_add(0x30) };

@@ -44,13 +44,11 @@ const FOG_COLOUR: usize = 0xB7C4CA;
 
 pub use sa_world::bindings::rw_im3d_end;
 pub use sa_world::bindings::window_responds_to_collision;
+pub use sa_world::bindings::rw_im3d_render_indexed_primitive;
+pub use sa_world::bindings::rw_im3d_transform;
 orig! {
     /// `RwRenderStateSet` (`RwEngineInstance` slot 0x20)
     pub fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `RwIm3DTransform(RxObjSpace3DVertex*, uint32 count, RwMatrix* ltm, uint32 flags)` (0x7EF450)
-    pub fn rw_im3d_transform(verts: GPtr<u8>, count: u32, ltm: GPtr<u8>, flags: u32) -> GPtr<u8> = cdecl 0x7EF450 => unported;
-    /// `RwIm3DRenderIndexedPrimitive(RwPrimitiveType, RwImVertexIndex*, int32)` (0x7EF550)
-    pub fn rw_im3d_render_indexed_primitive(ty: u32, indices: GPtr<u8>, count: i32) -> i32 = cdecl 0x7EF550 => unported;
     /// `CBaseModelInfo::AsAtomicModelInfoPtr()` (vtable +4)
     pub fn mi_as_atomic_model_info_ptr(mi: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x4 => unported;
     /// `CFallingGlassPane::Update()` (0x71AA10)

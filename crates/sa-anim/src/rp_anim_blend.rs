@@ -13,8 +13,8 @@ use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 use sa_math::x87::X87;
 
-use crate::bindings::convert_ped_node_2_bone_tag;
-use crate::bindings::rp_skin_get_num_bones as skin_get_num_bones;
+use sa_core::bindings::convert_ped_node_2_bone_tag;
+use sa_core::bindings::rp_skin_get_num_bones as skin_get_num_bones;
 use sa_core::bindings::crt_free_8214bd as operator_delete;
 use sa_core::bindings::crt_strncpy;
 use sa_core::bindings::frame_for_all_children;
@@ -32,33 +32,23 @@ use sa_core::bindings::rw_error_set;
 use sa_core::bindings::rw_matrix_invert as matrix_invert;
 use sa_core::bindings::rw_v3d_transform_points as v3d_transform_points;
 use sa_core::bindings::stricmp as crt_stricmp;
+use crate::bindings::allocate_data_call;
+use crate::bindings::clump_data_for_all_frames;
+use crate::bindings::clump_data_set_number_of_bones;
+use crate::bindings::convert_bone_tag_2_bone_name;
+use crate::bindings::skin_get_bone_positions_to_table as skin_get_bone_positions_to_table_call;
+use sa_core::bindings::anim_blend_clump_data_dtor as clump_data_dtor;
+use sa_core::bindings::assoc_start;
+use sa_core::bindings::clump_is_initialized as is_initialized_call;
 orig! {
     /// `CAnimBlendClumpData::CAnimBlendClumpData()` (0x4CF0E0)
     fn clump_data_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4CF0E0 => crate::clumpdata::constructor;
-    /// `CAnimBlendClumpData::~CAnimBlendClumpData()` (0x4CF100)
-    fn clump_data_dtor(this: GPtr<u8>) = thiscall 0x4CF100 => crate::clumpdata::destructor;
-    /// `CAnimBlendClumpData::SetNumberOfBones(n)` (0x4CF140)
-    fn clump_data_set_number_of_bones(this: GPtr<u8>, n: i32) = thiscall 0x4CF140 => crate::clumpdata::set_number_of_bones;
-    /// `CAnimBlendClumpData::ForAllFrames(cb, data)` (0x4CF190)
-    fn clump_data_for_all_frames(this: GPtr<u8>, cb: u32, data: u32) = thiscall 0x4CF190 => crate::clumpdata::for_all_frames;
-    /// `CAnimBlendAssociation::Start(t)` (0x4CEB70)
-    fn assoc_start(this: GPtr<u8>, t: f32) = thiscall 0x4CEB70 => crate::assoc::start;
     /// The association's virtual destructor (vtable slot 0, `deleting` flag)
     fn assoc_vdtor(this: GPtr<u8>, flags: u32) = thiscall vslot 0 => unported;
     /// `operator new(size)` (0x82119A), `operator delete(p)` (0x8214BD)
     fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
     /// `NodeNamePlugin::SetFrameNodeName(frame, name)` (0x72FB00)
     fn set_frame_node_name_call(f: GPtr<u8>, name: GPtr<u8>) = cdecl 0x72FB00 => set_frame_node_name;
-    /// `ConvertBoneTag2BoneName(tag)` (0x4D56F0)
-    fn convert_bone_tag_2_bone_name(tag: i32) -> GPtr<u8> = cdecl 0x4D56F0 => unported;
-    /// `RpAnimBlendAllocateData(clump)` (0x4D5F50)
-    fn allocate_data_call(c: GPtr<u8>) = cdecl 0x4D5F50 => rp_anim_blend_allocate_data;
-    /// `RpAnimBlendClumpIsInitialized(clump)` (0x4D6760)
-    fn is_initialized_call(c: GPtr<u8>) -> u32 = cdecl 0x4D6760 => rp_anim_blend_clump_is_initialized;
-    /// `RpAnimBlendClumpRemoveAllAssociations(clump)` (0x4D6C00)
-    fn remove_all_associations_call(c: GPtr<u8>) = cdecl 0x4D6C00 => rp_anim_blend_clump_remove_all_associations;
-    /// `SkinGetBonePositionsToTable(clump, table)` (0x735360)
-    fn skin_get_bone_positions_to_table_call(c: GPtr<u8>, t: GPtr<u8>) = cdecl 0x735360 => skin_get_bone_positions_to_table;
     /// `RtAnimAnimationCreate(typeID, numFrames, flags, duration)` (0x7CCE40)
     fn animation_create_call(ty: u32, n: i32, flags: u32, duration: f32) -> GPtr<u8> = cdecl 0x7CCE40 => rt_anim_animation_create;
     /// `G->rwmalloc(size, hint)` (`RwGlobals` +0x134)
@@ -116,7 +106,7 @@ fn has_skin(clump: GPtr<u8>) -> bool {
 #[sa_core::native(addr = 0x4D15E0, conv = cdecl, name = "RpAnimBlend::RpAnimBlendClumpGetFirstAssociation-")]
 pub fn rp_anim_blend_clump_get_first_association(clump: GPtr<u8>) -> u32 {
     let d = clump_data(clump);
-    if is_initialized_call(clump) & 0xFF == 0 {
+    if is_initialized_call(clump) as u32 & 0xFF == 0 {
         return 0;
     }
     let l = rd::<u32>(d, 0);
@@ -273,7 +263,7 @@ pub fn rp_anim_blend_create_animation_for_hierarchy(h: GPtr<u8>) -> GPtr<u8> {
 #[hook(addr = 0x4D6240, conv = cdecl, name = "ForAllFramesF", expect = "56 8B 74 24 08 8B 46 14 50",
        unverified = "std6-anim-1", route = "L2", hazards = "none")]
 pub fn find_frame_by_bone_name_cb(f: GPtr<u8>, name: GPtr<u8>) {
-    let bn = convert_bone_tag_2_bone_name(rd::<i32>(f, 0x14));
+    let bn = GPtr::from_addr(convert_bone_tag_2_bone_name(rd::<i32>(f, 0x14)) as usize);
     if !bn.is_null() && crt_stricmp(name, bn) == 0 {
         g::<u32>(FOUND_FRAME).write(a32(f));
     }
@@ -350,7 +340,7 @@ pub fn rp_anim_blend_clump_fill_frame_array(clump: GPtr<u8>, array: GPtr<u32>) {
     if has_skin(clump) {
         let h = get_anim_hierarchy_from_skin_clump(clump);
         for i in 1..0x13 {
-            let idx = hanim_id_get_index(h, convert_ped_node_2_bone_tag(i));
+            let idx = hanim_id_get_index(h, convert_ped_node_2_bone_tag(i) as u32);
             array.byte_add(i as isize * 4).write(rd::<u32>(d, 0x10).wrapping_add((idx as u32).wrapping_mul(0x18)));
         }
     } else {
@@ -375,14 +365,14 @@ pub fn skin_get_bone_positions_to_table(clump: GPtr<u8>, table: GPtr<u8>) {
         return;
     }
     let mut atomic = 0u32;
-    clump_for_all_atomics(clump, 0x734810, GPtr::from_raw(&mut atomic as *mut u32).addr() as u32);
+    clump_for_all_atomics(clump, 0x734810, GPtr::from_addr((GPtr::from_raw(&mut atomic as *mut u32).addr() as u32) as usize));
     let skin = skin_geometry_get_skin(p8(rd::<u32>(p8(atomic), 0x18)));
     let mut hier = 0u32;
-    clump_for_all_atomics(clump, 0x734A20, GPtr::from_raw(&mut hier as *mut u32).addr() as u32);
+    clump_for_all_atomics(clump, 0x734A20, GPtr::from_addr((GPtr::from_raw(&mut hier as *mut u32).addr() as u32) as usize));
     for o in [0, 4, 8] {
         wr::<u32>(table, o, 0);
     }
-    let n = skin_get_num_bones(skin);
+    let n = skin_get_num_bones(skin) as i32;
     let mut parent = 0i32;
     let mut stack = [0i32; 64];
     let mut sp = 0usize;
@@ -400,7 +390,7 @@ pub fn skin_get_bone_positions_to_table(clump: GPtr<u8>, table: GPtr<u8>) {
         for (k, v) in c.iter_mut().enumerate() {
             *v = rd::<u8>(mats, parent as isize * 0x40 + k as isize);
         }
-        v3d_transform_points(table.byte_add(i as isize * 0xC), bp.byte_add(0x30), 1, cp);
+        v3d_transform_points(GPtr::<u8>::cast::<f32>(table.byte_add(i as isize * 0xC)), GPtr::<u8>::cast::<f32>(bp.byte_add(0x30)), 1, cp);
         let flags = rd::<u32>(p8(rd::<u32>(p8(hier), 0x10)), i as isize * 0x10 + 8);
         if flags & 2 != 0 {
             sp = (sp + 1).min(stack.len() - 1);
@@ -423,7 +413,7 @@ fn clump_init_skinned(clump: GPtr<u8>) {
     let d = clump_data(clump);
     let atomic = get_first_atomic(clump);
     let skin = skin_geometry_get_skin(p8(rd::<u32>(atomic, 0x18)));
-    let n = skin_get_num_bones(skin);
+    let n = skin_get_num_bones(skin) as i32;
     clump_data_set_number_of_bones(d, n);
     let h = get_anim_hierarchy_from_skin_clump(clump);
     let mut table = [0u8; 0x300];
@@ -451,7 +441,7 @@ fn clump_init_skinned(clump: GPtr<u8>) {
        unverified = "std6-anim-1", route = "L2", hazards = "none")]
 pub fn count_frames_cb(frame: GPtr<u8>, count: GPtr<i32>) -> GPtr<u8> {
     count.write(count.read() + 1);
-    frame_for_all_children(frame, 0x4D6610, count.addr() as u32);
+    frame_for_all_children(frame, 0x4D6610, GPtr::from_addr((count.addr() as u32) as usize));
     frame
 }
 
@@ -475,7 +465,7 @@ pub fn init_frame_not_skinned_cb(f: GPtr<u8>, _data: u32) {
 pub fn bind_frames_cb(frame: GPtr<u8>, cursor: GPtr<u32>) -> GPtr<u8> {
     wr::<u32>(p8(cursor.read()), 0x10, a32(frame));
     cursor.write(cursor.read() + 0x18);
-    frame_for_all_children(frame, 0x4D6670, cursor.addr() as u32);
+    frame_for_all_children(frame, 0x4D6670, GPtr::from_addr((cursor.addr() as u32) as usize));
     frame
 }
 
@@ -488,10 +478,10 @@ fn clump_init_not_skinned(clump: GPtr<u8>) {
     let d = clump_data(clump);
     let frame = p8(rd::<u32>(clump, 4));
     let cp = GPtr::from_raw(&mut cell as *mut u32);
-    frame_for_all_children(frame, 0x4D6610, cp.addr() as u32);
+    frame_for_all_children(frame, 0x4D6610, GPtr::from_addr((cp.addr() as u32) as usize));
     clump_data_set_number_of_bones(d, cp.read() as i32);
     cp.write(rd::<u32>(d, 0x10));
-    frame_for_all_children(frame, 0x4D6670, cp.addr() as u32);
+    frame_for_all_children(frame, 0x4D6670, GPtr::from_addr((cp.addr() as u32) as usize));
     clump_data_for_all_frames(d, 0x4D6640, 0);
     let f0 = p8(rd::<u32>(d, 0x10));
     wr::<u8>(f0, 0, rd::<u8>(f0, 0) | 8);

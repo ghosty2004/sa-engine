@@ -12,10 +12,8 @@ use sa_math::x87::X87;
 
 use super::common::x;
 
+use crate::bindings::world_process_vertical_line as process_vertical_line;
 orig! {
-    /// `CWorld::ProcessVerticalLine(const CVector&, float, CColPoint&, CEntity*&, bool buildings, bool
-    /// vehicles, bool peds, bool objects, bool dummies, bool seeThrough, CStoredCollPoly*)` (0x5674E0)
-    fn process_vertical_line(pos: GPtr<u8>, len: f32, cp: GPtr<u8>, ent: GPtr<u8>, b: u32, v: u32, p: u32, o: u32, d: u32, s: u32, poly: u32) -> u8 = cdecl 0x5674E0 => unported;
     /// The CRT `printf`-style debug print (0x821982), the doubles as dword pairs
     #[allow(clippy::too_many_arguments)]
     fn debug_print(fmt: u32, x0: u32, x1: u32, y0: u32, y1: u32, z0: u32, z1: u32) = cdecl 0x821982 => unported;
@@ -31,7 +29,7 @@ fn vertical_hit(pos: [f32; 3], len: f32) -> Option<f32> {
         len,
         GPtr::from_raw(&mut cp as *mut [f32; 11]).cast(),
         GPtr::from_raw(&mut ent as *mut u32).cast(),
-        1, 0, 0, 0, 1, 0, 0,
+        1, 0, 0, 0, 1, 0, GPtr::NULL,
     );
     if hit == 0 { None } else { Some(cp[2]) }
 }
@@ -91,7 +89,7 @@ pub fn find_ground_z_for_coord(px: f32, py: f32) -> X87 {
         f32::from_bits(0xC47A_0000),
         GPtr::from_raw(&mut cp as *mut [f32; 11]).cast(),
         GPtr::from_raw(&mut ent as *mut u32).cast(),
-        1, 0, 0, 0, 1, 0, 0,
+        1, 0, 0, 0, 1, 0, GPtr::NULL,
     );
     if hit == 0 {
         x(20.0)

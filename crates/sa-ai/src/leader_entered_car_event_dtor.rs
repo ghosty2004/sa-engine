@@ -1,6 +1,7 @@
 //! `CEventLeaderEnteredCarAsDriver`'s complete destructor 0x48E220 (batch `std14-ai-2`), reached when CJ, as his
 //! group's leader, enters a car. Ported from the 1.0 US bytes. Unverified (docs/verify/HOWTO.md).
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::hook;
 
@@ -18,7 +19,7 @@ pub fn leader_entered_car_as_driver_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x85A198);
     let v = rd::<GPtr<u8>>(this, 0x14);
     if !v.is_null() {
-        entity_clean_up_old_reference(v, this.byte_add(0x14));
+        entity_clean_up_old_reference(v, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x14)));
     }
     event_dtor(this);
 }

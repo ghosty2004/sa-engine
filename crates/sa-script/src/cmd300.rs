@@ -55,11 +55,11 @@ const CAR_GENERATORS: usize = 0xC27AD0;
 const SCRIPT_HAS_FADED_OUT: usize = 0xA4448A;
 
 use crate::bindings::add_clock;
-use crate::bindings::camera_restore;
+use sa_world::bindings::camera_restore;
 use crate::bindings::get_actual_blip_array_index;
 use crate::bindings::report_mission_audio_event;
 use crate::bindings::set_ammo;
-use crate::bindings::set_coord_blip;
+use sa_world::bindings::set_coord_blip;
 use sa_core::bindings::camera_set_fade_colour as set_fade_colour;
 use sa_core::bindings::entity_update_rw_frame as update_rw_frame;
 use sa_core::bindings::get_pad;
@@ -74,19 +74,17 @@ use sa_world::bindings::get_has_collided_with;
 use sa_world::bindings::pad_start_shake as start_shake;
 use sa_world::bindings::placeable_get_heading as get_heading;
 use sa_world::bindings::update_rw_matrix;
+use crate::bindings::collect_next;
+use crate::bindings::global_index;
+use sa_core::bindings::camera_fade;
+use sa_stream::bindings::create_car_generator;
+use sa_world::bindings::camera_set_cam_position_for_fixed_mode as set_cam_position_for_fixed_mode;
+use sa_world::bindings::camera_take_control as take_control;
+use sa_world::bindings::clear_blip_call as clear_blip;
+use sa_world::bindings::placeable_set_heading as set_heading;
+use sa_world::bindings::set_entity_blip;
+use sa_world::bindings::take_control_no_entity;
 orig! {
-    /// `CRunningScript::CollectNextParameterWithoutIncreasingPC()` (0x464250)
-    fn collect_next(s: Scr) -> i32 = thiscall 0x464250 => crate::vm::collect_next_parameter_without_increasing_pc;
-    /// `CCamera::TakeControl(CEntity*, eCamMode, eSwitchType, int32 whoIsInControl)` (0x50C7C0)
-    fn take_control(cam: GPtr<u8>, e: GPtr<u8>, mode: u32, switch: u32, who: i32) = thiscall 0x50C7C0 => unported;
-    /// `CCamera::TakeControlNoEntity(const CVector&, eSwitchType, int32 whoIsInControl)` (0x50C8B0)
-    fn take_control_no_entity(cam: GPtr<u8>, pos: GPtr<u32>, switch: u32, who: i32) = thiscall 0x50C8B0 => unported;
-    /// `CCamera::SetCamPositionForFixedMode(const CVector&, const CVector&)` (0x50BEC0)
-    fn set_cam_position_for_fixed_mode(cam: GPtr<u8>, pos: GPtr<u32>, up: GPtr<u32>) = thiscall 0x50BEC0 => unported;
-    /// `CRadar::SetEntityBlip(eBlipType, int32 handle, uint32 colour, eBlipDisplay, const char* scriptName)` (0x5839A0)
-    fn set_entity_blip(ty: i32, h: i32, colour: u32, display: u32, name: GPtr<u8>) -> i32 = cdecl 0x5839A0 => unported;
-    /// `CRadar::ClearBlip(int32)` (0x587CE0)
-    fn clear_blip(h: i32) = cdecl 0x587CE0 => unported;
     /// `CRadar::ChangeBlipDisplay(int32, eBlipDisplay)` (0x583D20)
     fn change_blip_display(h: i32, d: u32) = cdecl 0x583D20 => unported;
     /// `CRestart::AddHospitalRestartPoint(const CVector&, float, int32 town)` (0x460730)
@@ -95,27 +93,17 @@ orig! {
     fn add_police_restart_point(pos: GPtr<u32>, angle: u32, town: i32) = cdecl 0x460780 => unported;
     /// `CRestart::OverrideNextRestart(const CVector&, float)` (0x4607D0)
     fn override_next_restart(pos: GPtr<u32>, angle: u32) = cdecl 0x4607D0 => unported;
-    /// `CPlaceable::SetHeading(float)` (0x43E0C0)
-    fn set_heading(e: GPtr<u8>, h: f32) = thiscall 0x43E0C0 => unported;
-    /// `CRunningScript::GetIndexOfGlobalVariable()` (0x464700), AX
-    fn global_index(s: Scr) -> u16 = thiscall 0x464700 => crate::vm::get_index_of_global_variable;
     /// `COnscreenTimer::ClearClock(uint32 varId)` (0x44CE60)
     fn clear_clock(t: GPtr<u8>, var: u32) = thiscall 0x44CE60 => unported;
     /// `COnscreenTimer::ClearCounter(uint32 varId)` (0x44CE80)
     fn clear_counter(t: GPtr<u8>, var: u32) = thiscall 0x44CE80 => unported;
     /// `CUpsideDownCarCheck::HasCarBeenUpsideDownForAWhile(int32)` (0x463940), AL
     fn has_car_been_upside_down_for_a_while(c: GPtr<u8>, h: i32) -> u8 = thiscall 0x463940 => unported;
-    /// `CTheCarGenerators::CreateCarGenerator(CVector, float angle, int32 model, int16 colour1, int16
-    /// colour2, uint8 forceSpawn, uint8 alarm, uint8 doorLock, uint16 minDelay, uint16 maxDelay, uint8
-    /// iplId, bool owned)` (0x6F31A0); the vector and floats as raw dwords, narrow values zero-extended
-    fn create_car_generator(x: u32, y: u32, z: u32, angle: u32, model: u32, c1: u32, c2: u32, force: u32, alarm: u32, lock: u32, min_delay: u32, max_delay: u32, ipl: u32, owned: u32) -> i32 = cdecl 0x6F31A0 => unported;
     /// `CCarGenerator::SwitchOff()` (0x6F2E30)
     fn car_generator_switch_off(g: GPtr<u8>) = thiscall 0x6F2E30 => unported;
     /// Unnamed thiscall on a `CCarGenerator` taking the count (0x47C0E0, a `.HOODLUM` stub; gr's
     /// `SwitchOn(); m_nGenerateCount = count`)
     fn car_generator_47c0e0(g: GPtr<u8>, count: u32) = thiscall 0x47C0E0 => unported;
-    /// `CCamera::Fade(float time, int16 direction)` (0x50AC20), the float as its raw dword
-    fn camera_fade(cam: GPtr<u8>, time: u32, dir: u32) = thiscall 0x50AC20 => unported;
     /// `CShadows::StoreShadowToBeRendered(uint8 type, CVector* pos, float frontX, float frontY, float
     /// sideX, float sideY, int16 intensity, uint8 r, uint8 g, uint8 b)` (0x707930); floats as raw dwords
     fn store_shadow_to_be_rendered(ty: u32, pos: GPtr<u32>, fx: u32, fy: u32, sx: u32, sy: u32, intensity: u32, r: u32, g: u32, b: u32) = cdecl 0x707930 => unported;
@@ -172,7 +160,7 @@ fn ground_rule(x: u32, y: u32, z: u32) -> u32 {
     let st = if st.fcom(X87::constant(K_MINUS_100)).test_parity(0x41) {
         st
     } else {
-        X87::from_f64_exact(find_ground_z_for_coord(x, y))
+        X87::from_f64_exact(find_ground_z_for_coord(f32::from_bits(x), f32::from_bits(y)))
     };
     st.to_f32().to_bits()
 }
@@ -230,7 +218,7 @@ pub fn process_commands_300_to_399(s: Scr, command: u32) -> i8 {
         // zero-extended; GetPad's `add esp,4` leaves the other three pushes as StartShake's arguments).
         0x015B => {
             collect(s, 3);
-            let pad = get_pad(spi(0));
+            let pad = get_pad(spi(0) as u32);
             start_shake(pad, sp(1) & 0xFFFF, sp(2) & 0xFF, 0);
         }
         // 0158 POINT_CAMERA_AT_CAR (0x47C3F9): null vehicle -> nothing; TakeControl(veh, (u16)P1,
@@ -239,13 +227,7 @@ pub fn process_commands_300_to_399(s: Scr, command: u32) -> i8 {
             collect(s, 3);
             let veh = vehicle_at_ref(pool(VEHICLE_POOL), spi(0));
             if !veh.is_null() {
-                take_control(
-                    GPtr::from_addr(THE_CAMERA),
-                    veh,
-                    sp(1) & 0xFFFF,
-                    sp(2) & 0xFFFF,
-                    1,
-                );
+                take_control(GPtr::from_addr(THE_CAMERA), veh, sp(1) & 0xFFFF, sp(2) & 0xFFFF, 1);
             }
         }
         // 0159 POINT_CAMERA_AT_CHAR (0x47C446): null ped -> nothing; a player ped is replaced by
@@ -268,7 +250,7 @@ pub fn process_commands_300_to_399(s: Scr, command: u32) -> i8 {
             collect(s, 6);
             let up = [sp(3), sp(4), sp(5)];
             let pos = [sp(0), sp(1), sp(2)];
-            set_cam_position_for_fixed_mode(GPtr::from_addr(THE_CAMERA), vec_ptr(&pos), vec_ptr(&up));
+            set_cam_position_for_fixed_mode(GPtr::from_addr(THE_CAMERA), GPtr::<u32>::cast::<u8>(vec_ptr(&pos)), GPtr::<u32>::cast::<u8>(vec_ptr(&up)));
         }
         // 0160 POINT_CAMERA_AT_POINT (0x47C598): -100 ground rule on z; TakeControlNoEntity(&(x,y,z),
         // (u16)P3, 1).
@@ -277,14 +259,14 @@ pub fn process_commands_300_to_399(s: Scr, command: u32) -> i8 {
             let (x, y) = (sp(0), sp(1));
             let z = ground_rule(x, y, sp(2));
             let pos = [x, y, z];
-            take_control_no_entity(GPtr::from_addr(THE_CAMERA), vec_ptr(&pos), sp(3) & 0xFFFF, 1);
+            take_control_no_entity(GPtr::from_addr(THE_CAMERA), GPtr::<u32>::cast::<u8>(vec_ptr(&pos)), sp(3) & 0xFFFF, 1);
         }
         // 0161 ADD_BLIP_FOR_CAR_OLD (0x47C610): discarded GetActualBlipArrayIndex of the output operand;
         // SetEntityBlip(1 CAR, P0, P1, P2, m_szName); no scale call.
         0x0161 => {
             collect(s, 3);
             get_actual_blip_array_index(collect_next(s));
-            let h = set_entity_blip(1, spi(0), sp(1), sp(2), s.byte_add(8));
+            let h = set_entity_blip(1, spi(0) as u32, sp(1), sp(2), s.byte_add(8));
             set_sp(0, h as u32);
             store(s, 1);
         }
@@ -301,7 +283,7 @@ pub fn process_commands_300_to_399(s: Scr, command: u32) -> i8 {
         // 0168 CHANGE_BLIP_SCALE (0x47C764)
         0x0168 => {
             collect(s, 2);
-            change_blip_scale(spi(0), spi(1));
+            change_blip_scale(spi(0) as u32, spi(1) as u32);
         }
         // 0169 SET_FADING_COLOUR (0x47C78C): TheCamera.SetFadeColour((u8)P0, (u8)P1, (u8)P2).
         0x0169 => {
@@ -409,8 +391,8 @@ pub fn process_commands_300_to_399(s: Scr, command: u32) -> i8 {
             collect(s, 1);
             get_actual_blip_array_index(collect_next(s));
             let (ty, colour) = [(1, 0), (2, 1), (3, 6)][(command - 0x0186) as usize];
-            let h = set_entity_blip(ty, spi(0), colour, 3, s.byte_add(8));
-            change_blip_scale(h, 3);
+            let h = set_entity_blip(ty as u32, spi(0) as u32, colour, 3, s.byte_add(8));
+            change_blip_scale(h as u32, 3);
             set_sp(0, h as u32);
             store(s, 1);
         }
@@ -423,8 +405,8 @@ pub fn process_commands_300_to_399(s: Scr, command: u32) -> i8 {
             let (x, y) = (sp(0), sp(1));
             let z = ground_rule(x, y, sp(2));
             get_actual_blip_array_index(collect_next(s));
-            let h = set_coord_blip(4, x, y, z, 5, 3, s.byte_add(8));
-            change_blip_scale(h, 3);
+            let h = set_coord_blip(4, f32::from_bits(x), f32::from_bits(y), f32::from_bits(z), 5, 3, s.byte_add(8));
+            change_blip_scale(h as u32, 3);
             set_sp(0, h as u32);
             store(s, 1);
         }
@@ -465,10 +447,10 @@ pub fn process_commands_300_to_399(s: Scr, command: u32) -> i8 {
                 z = X87::from_f32(f(z)).fadd_m(f(K_0_015)).to_f32().to_bits();
             }
             let h = create_car_generator(
-                x,
-                y,
-                z,
-                sp(3),
+                f32::from_bits(x),
+                f32::from_bits(y),
+                f32::from_bits(z),
+                f32::from_bits(sp(3)),
                 sp(4),
                 sp(5) & 0xFFFF,
                 sp(6) & 0xFFFF,
@@ -536,7 +518,7 @@ pub fn process_commands_300_to_399(s: Scr, command: u32) -> i8 {
             let (x, y) = (sp(0), sp(1));
             let z = ground_rule(x, y, sp(2));
             get_actual_blip_array_index(collect_next(s));
-            let h = set_coord_blip(4, x, y, z, sp(3), sp(4), s.byte_add(8));
+            let h = set_coord_blip(4, f32::from_bits(x), f32::from_bits(y), f32::from_bits(z), sp(3), sp(4) as i8, s.byte_add(8));
             set_sp(0, h as u32);
             store(s, 1);
         }
@@ -545,7 +527,7 @@ pub fn process_commands_300_to_399(s: Scr, command: u32) -> i8 {
         0x016A => {
             collect(s, 2);
             let t = X87::from_i32(spi(0)).fmul_m(f(K_0_001)).to_f32().to_bits();
-            camera_fade(GPtr::from_addr(THE_CAMERA), t, sp(1) & 0xFFFF);
+            camera_fade(GPtr::from_addr(THE_CAMERA), f32::from_bits(t), sp(1) & 0xFFFF);
             if uses_mission_cleanup(s) {
                 GPtr::<u8>::from_addr(SCRIPT_HAS_FADED_OUT).write(u8::from(sp(1) != 1));
             }

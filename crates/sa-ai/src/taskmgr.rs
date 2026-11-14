@@ -9,6 +9,7 @@
 //! `ControlSubTask(ped)`.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 

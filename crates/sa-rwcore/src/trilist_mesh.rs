@@ -8,16 +8,13 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::{RwError, module, p8, rd, rw_error_set, rw_error2, rw_free, rw_malloc, wr};
 
 use crate::bindings::crt_qsort;
 use crate::bindings::mesh_header_for_all_meshes;
-orig! {
-    /// `_rpMeshHeaderCreate(size)` (0x758920)
-    fn mesh_header_create(size: u32) -> GPtr<u8> = cdecl 0x758920 => crate::mesh::rp_mesh_header_create;
-}
+use crate::bindings::mesh_header_alloc as mesh_header_create;
 
 /// MESHMODULE offset global (+0 u16: the next mesh header serial number).
 const MESH_MODULE: usize = 0xC9B8C0;

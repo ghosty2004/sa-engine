@@ -18,21 +18,18 @@ use sa_core::bindings::rp_geometry_destroy;
 use sa_core::bindings::rp_geometry_triangle_set_material;
 use sa_core::bindings::rp_geometry_unlock;
 use sa_core::bindings::rw_frame_create;
-use sa_stream::bindings::rp_material_set_texture;
-use sa_world::bindings::rp_geometry_create;
+use sa_core::bindings::rp_material_set_texture;
+use sa_core::bindings::rp_geometry_create;
 use sa_world::bindings::rp_material_create;
-use sa_world::bindings::rp_material_destroy;
+use sa_core::bindings::rp_material_destroy;
 use sa_world::bindings::rp_morph_target_calc_bounding_sphere;
 use sa_world::bindings::rw_frame_set_identity;
+use sa_core::bindings::rp_atomic_destroy;
+use sa_core::bindings::rw_texture_destroy;
+use sa_world::bindings::rp_geometry_triangle_set_vertex_indices;
 orig! {
-    /// `RwTextureDestroy(RwTexture*)` (0x7F3820)
-    fn rw_texture_destroy(t: GPtr<u8>) -> u32 = cdecl 0x7F3820 => unported;
     /// `CCustomRoadsignMgr::CreateRoadsignTexture(const char*, int32)` (0x6FECA0)
     fn create_roadsign_texture(text: GPtr<u8>, n: i32) -> GPtr<u8> = cdecl 0x6FECA0 => crate::mvpc_render1::roadsign_create_texture;
-    /// `RpGeometryTriangleSetVertexIndices(geo, tri, v0, v1, v2)` (0x74C690)
-    fn rp_geometry_triangle_set_vertex_indices(geo: GPtr<u8>, tri: GPtr<u8>, a: i32, b: i32, c: i32) -> GPtr<u8> = cdecl 0x74C690 => unported;
-    /// `RpAtomicDestroy(RpAtomic*)` (0x749DC0)
-    fn rp_atomic_destroy(a: GPtr<u8>) -> u32 = cdecl 0x749DC0 => unported;
 }
 
 /// 0.95f (0x858EF0), 0.0f (0x858B50), -0.5f (0x858F40), -2.0f (0x858B18), 0.5f (0x858B8C), -1.0f (0x858C1C),
@@ -171,10 +168,10 @@ pub fn create_roadsign_atomic_a(width: f32, height: f32, n: i32, l1: GPtr<u8>, l
         for i in 0..n {
             let t = tris.byte_add(i as isize * 0x10);
             let v = i * 4;
-            rp_geometry_triangle_set_vertex_indices(geo, t, v, v + 1, v + 2);
+            rp_geometry_triangle_set_vertex_indices(geo, t, v as u16, (v + 1) as u16, (v + 2) as u16);
             let m = mats[i as usize];
             rp_geometry_triangle_set_material(geo, t, m);
-            rp_geometry_triangle_set_vertex_indices(geo, t.byte_add(8), v, v + 2, v + 3);
+            rp_geometry_triangle_set_vertex_indices(geo, t.byte_add(8), v as u16, (v + 2) as u16, (v + 3) as u16);
             rp_geometry_triangle_set_material(geo, t.byte_add(8), m);
             rp_material_destroy(m);
             mats[i as usize] = GPtr::NULL;

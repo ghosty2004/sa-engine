@@ -57,7 +57,13 @@ use crate::bindings::plugin_deinit_object;
 use crate::bindings::plugin_init_object;
 use crate::bindings::plugin_read_data_chunks;
 use crate::bindings::registry_get_plugin_offset as plugin_get_offset;
-use crate::bindings::rw_stream_find_chunk_call;
+use sa_core::bindings::rw_stream_find_chunk_call;
+use sa_core::bindings::rw_raster_destroy;
+use sa_core::bindings::rw_tex_dictionary_create as rw_tex_dictionary_create_call;
+use sa_core::bindings::rw_texture_read as rw_texture_read_call;
+use sa_core::bindings::rw_texture_set_auto_mipmapping as set_auto_mipmapping_call;
+use sa_core::bindings::rw_texture_set_mipmapping as set_mipmapping_call;
+use sa_core::bindings::stream_read as rw_stream_read_call;
 orig! {
     /// `_rwerror(code, a, b)` (0x8088D0, varargs; three arguments)
     fn rw_error3(code: u32, a: u32, b: u32) -> u32 = cdecl 0x8088D0 => unported;
@@ -65,8 +71,6 @@ orig! {
     fn rw_error5(code: u32, a: u32, b: u32, c: u32, d: i32) -> u32 = cdecl 0x8088D0 => unported;
     /// `_rwPluginRegistrySkipDataChunks(reg, stream)` (0x808C10)
     fn plugin_skip_data_chunks(reg: GPtr<u8>, s: GPtr<u8>) -> GPtr<u8> = cdecl 0x808C10 => crate::plugin::registry_skip_data_chunks;
-    /// `RwRasterDestroy(raster)` (0x7FB020)
-    fn rw_raster_destroy(r: GPtr<u8>) -> u32 = cdecl 0x7FB020 => unported;
     /// `G->stringFuncs.rwstrncpy(dst, src, n)` (G+0xFC)
     fn rw_strncpy(dst: GPtr<u8>, src: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl table 0xC97B24 0xFC => unported;
     /// `G->stringFuncs.rwstrlen(s)` (G+0x120)
@@ -84,22 +88,12 @@ orig! {
 
     /// `RwTextureDestroy(texture)` as `RwTexDictionaryDestroy` calls it (an extra 0 argument pushed)
     fn rw_texture_destroy_call(t: GPtr<u8>, extra: u32) -> u32 = cdecl 0x7F3820 => texture_destroy_extra;
-    /// `RwTexDictionaryCreate()` (0x7F3600)
-    fn rw_tex_dictionary_create_call() -> GPtr<u8> = cdecl 0x7F3600 => rw_tex_dictionary_create;
     /// `RwTextureGetMipmapping()` (0x7F3550)
     fn get_mipmapping_call() -> u32 = cdecl 0x7F3550 => rw_texture_get_mipmapping;
-    /// `RwTextureSetMipmapping(enable)` (0x7F3530)
-    fn set_mipmapping_call(v: u32) -> u32 = cdecl 0x7F3530 => rw_texture_set_mipmapping;
     /// `RwTextureGetAutoMipmapping()` (0x7F3580)
     fn get_auto_mipmapping_call() -> u32 = cdecl 0x7F3580 => rw_texture_get_auto_mipmapping;
-    /// `RwTextureSetAutoMipmapping(enable)` (0x7F3560)
-    fn set_auto_mipmapping_call(v: u32) -> u32 = cdecl 0x7F3560 => rw_texture_set_auto_mipmapping;
-    /// `RwStreamRead(stream, buf, len)` (0x7EC9D0)
-    fn rw_stream_read_call(s: GPtr<u8>, buf: GPtr<u8>, len: u32) -> u32 = cdecl 0x7EC9D0 => crate::stream::rw_stream_read;
     /// `_rwStringStreamFindAndRead(string, stream)` (0x80A510)
     fn string_find_and_read_call(string: GPtr<u8>, s: GPtr<u8>) -> GPtr<u8> = cdecl 0x80A510 => crate::stream::string_stream_find_and_read;
-    /// `RwTextureRead(name, mask)` (0x7F3AC0)
-    fn rw_texture_read_call(name: GPtr<u8>, mask: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F3AC0 => rw_texture_read;
 }
 
 /// The phase B/C path of `rw_texture_destroy_call` (the extra argument is ignored).
@@ -585,7 +579,7 @@ pub fn rw_texture_stream_read(s: GPtr<u8>) -> GPtr<u8> {
     let version_p = fp.byte_add(0xC).cast::<u32>();
     let mask_p = fp.byte_add(0x10);
     let name_p = fp.byte_add(0x90);
-    if rw_stream_find_chunk_call(s, 1, length_p, version_p) == 0 {
+    if rw_stream_find_chunk_call(s, 1, length_p, version_p) as u32 == 0 {
         return GPtr::NULL;
     }
     let v = version_p.read();

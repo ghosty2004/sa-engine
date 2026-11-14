@@ -3,6 +3,7 @@
 //! (docs/verify/HOWTO.md).
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::hook;
 
@@ -12,7 +13,7 @@ use sa_core::bindings::entity_clean_up_old_reference;
 use sa_core::bindings::entity_register_reference;
 use sa_core::bindings::find_player_ped;
 use sa_core::bindings::vector_normalise_and_mag;
-use sa_world::bindings::world_get_is_line_of_sight_clear;
+use sa_core::bindings::world_get_is_line_of_sight_clear;
 
 /// `TheCamera.ActiveCam` (byte)
 const ACTIVE_CAM: usize = 0xB6F081;
@@ -133,7 +134,7 @@ pub fn interesting_events_add(this: GPtr<u8>, ty: i32, entity: GPtr<u8>) {
         }
         let old = rd::<GPtr<u8>>(slot, 8);
         if !old.is_null() {
-            entity_clean_up_old_reference(old, slot.byte_add(8));
+            entity_clean_up_old_reference(old, GPtr::<u8>::cast::<GPtr<u8>>(slot.byte_add(8)));
         }
         wr::<i32>(slot, 0, ty);
         wr::<GPtr<u8>>(slot, 8, entity);

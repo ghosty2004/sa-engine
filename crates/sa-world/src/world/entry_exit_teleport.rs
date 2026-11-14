@@ -3,23 +3,20 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 
 use super::common::{g, rd, wr, x, xi};
 
-use crate::bindings::world_get_is_line_of_sight_clear as get_is_line_of_sight_clear;
-orig! {
-    /// `CWorld::TestSphereAgainstWorld(CVector, float, CEntity*, bool x5, bool)` (0x569E20)
-    fn test_sphere_against_world(px: u32, py: u32, pz: u32, r: u32, ignore: u32, b0: u32, b1: u32, b2: u32, b3: u32, b4: u32, b5: u32) -> GPtr<u8> = cdecl 0x569E20 => unported;
-}
+use sa_core::bindings::world_get_is_line_of_sight_clear as get_is_line_of_sight_clear;
+use crate::bindings::world_test_sphere_against_world as test_sphere_against_world;
 
 /// 0.35 (0x3EB33333): the test sphere radius.
 const RADIUS: u32 = 0x3EB3_3333;
 
 /// A sphere of radius 0.35 at `p` touches buildings, vehicles, peds, objects or dummies.
 fn blocked(p: [u32; 3]) -> bool {
-    !test_sphere_against_world(p[0], p[1], p[2], RADIUS, 0, 1, 1, 1, 1, 1, 0).is_null()
+    !test_sphere_against_world(f32::from_bits(p[0]), f32::from_bits(p[1]), f32::from_bits(p[2]), f32::from_bits(RADIUS), GPtr::NULL, 1, 1, 1, 1, 1, 0).is_null()
 }
 
 /// `CEntryExit::FindValidTeleportPoint(CVector* out)` (0x43EAF0): `out` = the exit position of the

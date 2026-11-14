@@ -3,6 +3,7 @@
 //! (`Blood` 0x56D230, `KickingWhenDown` 0x56D270; 3-byte bodies, registered for phases B/C only). Ported from the
 //! 1.0 US bytes; x87 arithmetic follows the original's instruction order on the `sa_math::x87::X87` model.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -12,12 +13,11 @@ use sa_core::bindings::ped_is_alive;
 use sa_core::bindings::tm_get_simplest_active_task;
 use sa_core::bindings::vector_dot_product as dot_product;
 use sa_stream::bindings::ped_is_player;
-use sa_world::bindings::ped_get_bone_position;
+use sa_core::bindings::ped_get_bone_position;
 use sa_world::bindings::placeable_get_matrix;
-use sa_world::bindings::vector_sub;
+use sa_core::bindings::vector_sub;
+use sa_world::bindings::localisation_kicking_when_down;
 orig! {
-    /// `CLocalisation::KickingWhenDown()` (0x56D270)
-    fn localisation_kicking_when_down() -> u8 = cdecl 0x56D270 => localisation_kicking_when_down_native;
     /// `CTask::GetTaskType()` (vtable slot 0x10)
     fn task_get_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
 }

@@ -13,11 +13,10 @@ use sa_math::x87::X87;
 use crate::common::{f32_of, g, p8, rd, wr};
 
 use crate::bindings::frame_dirty;
+use sa_core::bindings::frame_get_ltm;
+use sa_core::bindings::rw_frame_update_objects as frame_update_objects;
+use sa_core::bindings::rw_matrix_multiply as matrix_multiply;
 orig! {
-    fn frame_get_ltm(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0990 => crate::frame::get_ltm;
-    fn frame_update_objects(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0910 => crate::frame::update_objects;
-    /// `RwMatrixMultiply(out, a, b)` (0x7F18B0)
-    fn matrix_multiply(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F18B0 => crate::matrix::rw_matrix_multiply;
     /// A key-frame apply callback `cb(matrix, keyFrame)`
     fn call_apply_cb(f: u32, m: GPtr<u8>, kf: GPtr<u8>) = cdecl dyn => unported;
 }

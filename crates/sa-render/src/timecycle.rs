@@ -147,6 +147,10 @@ pub use sa_core::bindings::vector_normalise;
 pub use sa_world::bindings::cam_no_rain;
 pub use sa_world::bindings::is_vision_fx_active;
 pub use sa_world::bindings::player_no_rain;
+pub use sa_core::bindings::file_close as file_mgr_close_file;
+pub use sa_core::bindings::file_set_dir as file_mgr_set_dir;
+pub use sa_core::bindings::load_line;
+pub use sa_core::bindings::open_file as file_mgr_open_file;
 orig! {
     /// `CTimeCycle::CalcColoursForPoint(CVector point, CColourSet* out)` (0x5603D0; the CVector by value)
     pub fn calc_colours_for_point(px: u32, py: u32, pz: u32, out: GPtr<u8>) = cdecl 0x5603D0 => unported;
@@ -160,14 +164,6 @@ orig! {
     pub fn calc_ped_shadow_values(x: u32, y: u32, z: u32, fx: GPtr<u8>, fy: GPtr<u8>, sx: GPtr<u8>, sy: GPtr<u8>, dx: GPtr<u8>, dy: GPtr<u8>) = cdecl 0x7076C0 => unported;
     /// `CTimeCycle::SetConstantParametersForPostFX()` (0x560210)
     pub fn set_constant_parameters_for_post_fx_call() = cdecl 0x560210 => unported;
-    /// `CFileMgr::SetDir(const char*)` (0x5387D0)
-    pub fn file_mgr_set_dir(d: u32) = cdecl 0x5387D0 => unported;
-    /// `CFileMgr::OpenFile(const char* name, const char* mode)` (0x538900)
-    pub fn file_mgr_open_file(name: u32, mode: u32) -> u32 = cdecl 0x538900 => unported;
-    /// `CFileMgr::CloseFile(FILE*)` (0x5389D0)
-    pub fn file_mgr_close_file(f: u32) -> i32 = cdecl 0x5389D0 => unported;
-    /// `CFileLoader::LoadLine(FILE*)` (0x536F80)
-    pub fn load_line(f: u32) -> GPtr<u8> = cdecl 0x536F80 => unported;
     /// CRT `sscanf(line, fmt, ...)` (0x8220AD) with the 52 pointers `CTimeCycle::Initialise` passes
     pub fn sscanf_52(line: GPtr<u8>, fmt: u32, p0: u32, p1: u32, p2: u32, p3: u32, p4: u32, p5: u32, p6: u32, p7: u32, p8: u32, p9: u32, p10: u32, p11: u32, p12: u32, p13: u32, p14: u32, p15: u32, p16: u32, p17: u32, p18: u32, p19: u32, p20: u32, p21: u32, p22: u32, p23: u32, p24: u32, p25: u32, p26: u32, p27: u32, p28: u32, p29: u32, p30: u32, p31: u32, p32: u32, p33: u32, p34: u32, p35: u32, p36: u32, p37: u32, p38: u32, p39: u32, p40: u32, p41: u32, p42: u32, p43: u32, p44: u32, p45: u32, p46: u32, p47: u32, p48: u32, p49: u32, p50: u32, p51: u32) -> i32 = cdecl 0x8220AD => unported;
 }
@@ -878,21 +874,21 @@ fn tc_ftol(v: u32) -> i32 {
 /// 0x86A6D0, sa-math's f64 model), fog reduction 0, extra colour off.
 #[hook(addr = 0x5BBAC0, conv = cdecl, name = "CTimeCycle::Initialise", expect = "81 EC E0 00 00 00")]
 pub fn initialise() {
-    file_mgr_set_dir(0x86A784);
-    let f = file_mgr_open_file(0x86A778, 0x859C6C);
-    file_mgr_set_dir(0x858B54);
+    file_mgr_set_dir(GPtr::from_addr(0x86A784));
+    let f = GPtr::<u8>::addr(file_mgr_open_file(GPtr::from_addr(0x86A778), GPtr::from_addr(0x859C6C))) as u32;
+    file_mgr_set_dir(GPtr::from_addr(0x858B54));
     let mut v = [0u32; 52];
     let vp = GPtr::<u32>::from_raw(v.as_mut_ptr());
     for w in 0..23u32 {
         for h in 0..8u32 {
             let i = h * 23 + w;
-            let mut line = load_line(f);
+            let mut line = load_line(GPtr::from_addr(f as usize));
             while !line.is_null() {
                 let c = line.read();
                 if c != b'/' && c != 0 {
                     break;
                 }
-                line = load_line(f);
+                line = load_line(GPtr::from_addr(f as usize));
             }
             let a = |n: i32| vp.wrapping_index(n).addr() as u32;
             sscanf_52(
@@ -964,7 +960,7 @@ pub fn initialise() {
             b(0xB79FD8, ftol32(xi(i32::from(d)).fmul_m(k(K_100))) as u8);
         }
     }
-    file_mgr_close_file(f);
+    file_mgr_close_file(GPtr::from_addr(f as usize));
     let a1 = X87::from_f64_exact(f64::from_bits(0x3FE9_21FB_6000_0000));
     let a2 = X87::from_f64_exact(f64::from_bits(0xC002_D97C_8000_0000));
     let c1 = a1.fcos();

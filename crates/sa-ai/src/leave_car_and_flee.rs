@@ -4,6 +4,7 @@
 //! car to slow down.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -12,13 +13,12 @@ use crate::common::*;
 use sa_core::bindings::entity_register_reference;
 use sa_world::bindings::task_complex_ctor;
 use sa_world::bindings::wander_get_wander_task_by_ped_type;
+use sa_world::bindings::tm_set_task as task_manager_set_task;
 orig! {
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_get_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
     /// `CTaskComplexLeaveCarAndFlee::CreateSubTask(int32)` (0x63C0A0, `ret 4`)
     fn leave_car_and_flee_create_sub_task(t: GPtr<u8>, ty: u32) -> GPtr<u8> = thiscall 0x63C0A0 => unported;
-    /// `CTaskManager::SetTask(CTask*, int32 slot, bool)` (0x681AF0, `ret 0xC`)
-    fn task_manager_set_task(tm: GPtr<u8>, t: GPtr<u8>, slot: u32, b: u32) = thiscall 0x681AF0 => unported;
 }
 
 /// `CModelInfo::ms_modelInfoPtrs`

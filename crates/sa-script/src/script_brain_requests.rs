@@ -24,25 +24,19 @@ const MISSION_LOCALS: usize = 0xA48960;
 
 use crate::bindings::brain_task_store_set_task;
 use sa_core::bindings::task_new;
+use crate::bindings::brains_start_new_streamed_script_brain as start_new_streamed_script_brain;
+use crate::bindings::brains_start_or_request as start_or_request_call;
+use crate::bindings::start_new_streamed_script;
+use sa_core::bindings::streaming_request_model as request_model;
+use sa_world::bindings::remove_from_waiting_for_script_brain_array;
 orig! {
     /// `CTheScripts::AddToWaitingForScriptBrainArray(CEntity*, int16 brainIndex)` (0x46AB60, cdecl)
     fn add_to_waiting_for_script_brain_array(e: GPtr<u8>, index: u32) = cdecl 0x46AB60 => unported;
-    /// `CScriptsForBrains::StartNewStreamedScriptBrain(uint8 index, CEntity*, bool)` (0x46B270)
-    fn start_new_streamed_script_brain(this: GPtr<u8>, index: u32, e: GPtr<u8>, b: u32) = thiscall 0x46B270 => start_new_streamed_script_brain_port;
-    /// `CStreamedScripts::StartNewStreamedScript(int32 index)` (0x470890)
-    fn start_new_streamed_script(this: GPtr<u8>, index: i32) -> GPtr<u8> = thiscall 0x470890 => crate::script_brains::start_new_streamed_script;
     /// `CStreamedScripts::GetStreamedScriptWithThisStartAddress(uint8* ip)` (0x470910)
     fn get_streamed_script_with_this_start_address(this: GPtr<u8>, ip: u32) -> i32 = thiscall 0x470910 => crate::script_tables::get_streamed_script_with_this_start_address_host;
-    /// `CTheScripts::RemoveFromWaitingForScriptBrainArray(CEntity*, int16)` (0x46ABC0)
-    fn remove_from_waiting_for_script_brain_array(e: GPtr<u8>, index: u32) = cdecl 0x46ABC0 => crate::script_brains::remove_from_waiting_for_script_brain_array;
     /// `thunk_FUN_0156f250` (0x463640): the 8-byte task constructor `ShutdownThisScript` hands to the
     /// brain task store; returns `this`
     fn brain_finish_task_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x463640 => unported;
-    /// `CStreaming::RequestModel(int32 model, int32 flags)` (0x4087E0): EAX is kept (its upper half is
-    /// pushed again below)
-    fn request_model(model: i32, flags: u32) -> u32 = cdecl 0x4087E0 => unported;
-    /// `CScriptsForBrains::StartOrRequestNewStreamedScriptBrain(...)` (0x46CD80)
-    fn start_or_request_call(this: GPtr<u8>, index: u32, e: GPtr<u8>, attach: u32, add: u32) = thiscall 0x46CD80 => start_or_request_new_streamed_script_brain;
 }
 
 use sa_core::field::at;

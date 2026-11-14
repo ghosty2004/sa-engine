@@ -64,22 +64,16 @@ const DISABLE_STREAMING: usize = 0x9654B0;
 /// `"radar%02d"` (.rdata)
 const RADAR_TXD_FMT: usize = 0x866B98;
 
-pub use sa_stream::bindings::find_txd_slot;
+pub use sa_core::bindings::find_txd_slot;
 pub use sa_world::bindings::crt_ceil;
 pub use sa_world::bindings::crt_floor;
+pub use crate::bindings::clear_actual_blip_call;
+pub use crate::bindings::stream_radar_sections_xy_call;
+pub use sa_core::bindings::streaming_remove_model as remove_model;
+pub use sa_core::bindings::streaming_request_model as request_model;
+pub use sa_world::bindings::set_coord_blip as set_coord_blip_call;
+pub use sa_world::bindings::zone_locked_or_unlocked;
 orig! {
-    /// `CRadar::ClearActualBlip(int32)` (0x587C10)
-    pub fn clear_actual_blip_call(i: i32) = cdecl 0x587C10 => clear_actual_blip;
-    /// `CRadar::SetCoordBlip(eBlipType, CVector, eBlipColour, eBlipDisplay, const char*)` (0x583820)
-    pub fn set_coord_blip_call(t: i32, px: f32, py: f32, pz: f32, colour: i32, display: i32, name: GPtr<u8>) -> i32 = cdecl 0x583820 => set_coord_blip;
-    /// `CRadar::StreamRadarSections(int32, int32)` (0x584C50)
-    pub fn stream_radar_sections_xy_call(x: i32, y: i32) = cdecl 0x584C50 => stream_radar_sections_xy;
-    /// `CTheZones::GetCurrentZoneLockedOrUnlocked(CVector2D)` (0x572130)
-    pub fn zone_locked_or_unlocked(x: f32, y: f32) -> u8 = cdecl 0x572130 => sa_world::world::zones::get_current_zone_locked_or_unlocked;
-    /// `CStreaming::RequestModel(int32, int32)` (0x4087E0)
-    pub fn request_model(id: i32, flags: i32) = cdecl 0x4087E0 => sa_stream::streaming::request_model;
-    /// `CStreaming::RemoveModel(int32)` (0x4089A0)
-    pub fn remove_model(id: i32) = cdecl 0x4089A0 => sa_stream::streaming::remove_model;
     /// `FindPlayerPed(int32)` (0x56E210)
     pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
 }
@@ -571,7 +565,7 @@ pub fn set_short_range_coord_blip(
     display: i32,
     name: GPtr<u8>,
 ) -> i32 {
-    let h = set_coord_blip_call(blip_type, px, py, pz, colour, display, name);
+    let h = set_coord_blip_call(blip_type, px, py, pz, colour as u32, display as i8, name);
     if h == -1 {
         return h;
     }

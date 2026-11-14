@@ -3,7 +3,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::{g, rd};
 
@@ -22,10 +22,7 @@ const FX: usize = 0xA9AE00;
 
 pub use sa_core::bindings::rw_raster_create;
 pub use sa_core::bindings::rw_raster_destroy;
-orig! {
-    /// `Fx_c::GetFxQuality()` (0x49EA50)
-    pub fn get_fx_quality(this: GPtr<u8>) -> u32 = thiscall 0x49EA50 => crate::fx::fx_get_fx_quality;
-}
+pub use sa_stream::bindings::fx_get_fx_quality as get_fx_quality;
 
 /// `CMirrors::CreateBuffer()` (0x7230A0): once (`pBuffer` null), with the frame buffer's depth
 /// (`Scene.m_pRwCamera->frameBuffer->depth`): at FX quality >= 1 a 1024x512 camera raster (type 5) and

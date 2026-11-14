@@ -11,13 +11,11 @@ use sa_math::x87::X87;
 
 use sa_core::bindings::world_add;
 use sa_core::bindings::world_remove;
+use crate::bindings::find_text_index_for_string;
+use crate::bindings::is_visible;
 orig! {
     /// virtual scalar deleting destructor (+0)
     fn delete_entity(e: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
-    /// `CPickup::FindTextIndexForString(const char*)` (0x455500)
-    fn find_text_index_for_string(s: GPtr<u8>) -> u8 = cdecl 0x455500 => unported;
-    /// `CPickup::IsVisible()` (0x454C70)
-    fn is_visible(p: GPtr<u8>) -> u8 = thiscall 0x454C70 => unported;
     /// `CPickup::GiveUsAPickUpObject(CObject**, int32 slot)` (0x4567E0)
     fn give_us_a_pickup_object_call(p: GPtr<u8>, out: GPtr<u8>, slot: i32) = thiscall 0x4567E0 => give_us_a_pickup_object;
 }
@@ -97,14 +95,14 @@ pub fn generate_new_one(x: f32, y: f32, z: f32, model: u32, kind: u32, ammo: u32
         }
     }
     p.byte_add(0x18).cast::<u16>().write(model as u16);
-    let text = find_text_index_for_string(message);
+    let text = find_text_index_for_string(message) as u8;
     let f = p.byte_add(0x1D).read();
     p.byte_add(0x1D).write(f ^ ((text << 4 ^ f) & 0x70));
     let eight = GPtr::<f32>::from_addr(0x859000).read();
     for (k, v) in [x, y, z].into_iter().enumerate() {
         p.byte_add(0x10 + 2 * k as isize).cast::<u16>().write(X87::from_f32(v).fmul_m(eight).ftol() as u16);
     }
-    let vis = is_visible(p);
+    let vis = is_visible(p) as u8;
     let f = p.byte_add(0x1D).read();
     let f = f ^ ((vis << 3 ^ f) & 8);
     p.byte_add(0x1D).write(f);
@@ -123,7 +121,7 @@ pub fn generate_new_one(x: f32, y: f32, z: f32, model: u32, kind: u32, ammo: u32
     ((u32::from(n) << 16) | i) as i32
 }
 
-use crate::bindings::object_ctor;
+use sa_core::bindings::object_ctor_5a1d70 as object_ctor;
 use crate::bindings::pick_up_should_be_invisible;
 use crate::bindings::set_orientation;
 use crate::bindings::simple_transform_update_rw_matrix as transform_update_rw_matrix;
@@ -132,15 +130,12 @@ use sa_core::bindings::entity_update_rw_frame as update_rw_frame;
 use sa_core::bindings::get_weapon_info;
 use sa_core::bindings::make_sure_slot_in_object_pool_is_empty;
 use sa_core::bindings::object_new_at;
+use crate::bindings::object_create;
+use crate::bindings::pickup_get_posn;
+use sa_core::bindings::matrix_update_rw_matrix;
 orig! {
     /// virtual `CBaseModelInfo::GetModelType()` (+0x10, AL)
     fn model_type(mi: GPtr<u8>) -> u8 = thiscall vslot 0x10 => unported;
-    /// `CObject::Create(int32 model, bool)` (0x5A1F60)
-    fn object_create(model: u32, b: u32) -> GPtr<u8> = cdecl 0x5A1F60 => unported;
-    /// `CPickup::GetPosn()` (0x4549A0, the CVector through the hidden pointer)
-    fn pickup_get_posn(this: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall 0x4549A0 => unported;
-    /// `CMatrix::UpdateRwMatrix(RwMatrix*)` (0x59AD70)
-    fn matrix_update_rw_matrix(m: GPtr<u8>, rw: GPtr<u8>) -> GPtr<u8> = thiscall 0x59AD70 => unported;
 }
 
 use sa_core::field::rd32;
@@ -167,7 +162,7 @@ pub fn give_us_a_pickup_object(this: GPtr<u8>, out: GPtr<u8>, pool_slot: i32) {
     let model = u32::from(this.byte_add(0x18).cast::<u16>().read());
     let mi = |m: u32| GPtr::<u8>::from_addr(GPtr::<u32>::from_addr(0xA9B0C8 + 4 * m as usize).read() as usize);
     if model_type(mi(model)) == 4 {
-        get_weapon_info(rd32(mi(model), 0x24), 1);
+        get_weapon_info(rd32(mi(model), 0x24) as i32, 1);
     }
     let obj = if pool_slot >= 0 {
         make_sure_slot_in_object_pool_is_empty(pool_slot);
@@ -176,7 +171,7 @@ pub fn give_us_a_pickup_object(this: GPtr<u8>, out: GPtr<u8>, pool_slot: i32) {
             GPtr::from_addr(cur as usize)
         } else {
             let p = object_new_at(0x17C, pool_slot << 8);
-            if p.is_null() { p } else { object_ctor(p, model, 0) }
+            if p.is_null() { p } else { object_ctor(p, model as i32, 0) }
         }
     } else {
         object_create(model, 0)
@@ -190,7 +185,7 @@ pub fn give_us_a_pickup_object(this: GPtr<u8>, out: GPtr<u8>, pool_slot: i32) {
     let obj = GPtr::<u8>::from_addr(rd32(out, 0) as usize);
     obj.byte_add(0x13C).write(5);
     let mut pos = [0f32; 3];
-    let pp = pickup_get_posn(this, GPtr::from_raw(pos.as_mut_ptr()).cast());
+    let pp = GPtr::<f32>::cast::<u8>(pickup_get_posn(this, GPtr::<u8>::cast::<f32>(GPtr::from_raw(pos.as_mut_ptr()).cast())));
     let dst = if rd32(obj, 0x14) != 0 { GPtr::<u8>::from_addr(rd32(obj, 0x14) as usize).byte_add(0x30) } else { obj.byte_add(4) };
     for k in 0..3isize {
         dst.byte_add(4 * k).cast::<f32>().write(X87::from_f32(pp.byte_add(4 * k).cast::<f32>().read()).to_f32());
@@ -198,7 +193,7 @@ pub fn give_us_a_pickup_object(this: GPtr<u8>, out: GPtr<u8>, pool_slot: i32) {
     if i32::from(obj.byte_add(0x22).cast::<i16>().read()) == i32::from(GPtr::<u16>::from_addr(0x8CD750).read()) {
         or32(obj, 0x1C, 0x10_0000);
     }
-    set_orientation(obj, 0, 0, 0xBFC9_0FDB);
+    set_orientation(obj, f32::from_bits(0), f32::from_bits(0), f32::from_bits(0xBFC9_0FDB));
     let rw = rd32(obj, 0x18);
     if rw != 0 {
         let frame_matrix = GPtr::<u8>::from_addr(rd32(GPtr::from_addr(rw as usize), 4) as usize + 0x10);

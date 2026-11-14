@@ -31,11 +31,10 @@ const FREELIST_PREALLOC: usize = 0x8E266C;
 /// RESOURCESMODULE instance counter.
 const RESOURCES_INSTANCES: usize = 0xC9BC5C;
 
+pub use crate::bindings::free_list_purge as freelist_purge_call;
 orig! {
     /// `_rwFreeListCreateInternal(...)` (0x8019B0)
     pub fn freelist_create_internal_call(size: u32, per_block: u32, align: u32, n: u32, space: GPtr<u8>, hint: u32) -> GPtr<u8> = cdecl 0x8019B0 => rw_freelist_create_internal;
-    /// `RwFreeListPurge(fl)` (0x801E00)
-    pub fn freelist_purge_call(fl: GPtr<u8>) -> i32 = cdecl 0x801E00 => rw_freelist_purge;
     /// `RwFreeListCreateAndPreallocateSpace(...)` (0x801B70)
     pub fn freelist_create_prealloc_call(size: u32, per_block: u32, align: u32, n: u32, space: GPtr<u8>, hint: u32) -> GPtr<u8> = cdecl 0x801B70 => rw_freelist_create_internal;
     /// `_rwResourcesArenaInit(mem, size)` (0x80FFE0)

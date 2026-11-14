@@ -18,7 +18,7 @@ use sa_core::bindings::rp_hanim_id_get_index;
        unverified = "std12-render-1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn fx_system_attach_to_bone(this: GPtr<u8>, e: GPtr<u8>, bone: i32) {
     let h = get_anim_hierarchy_from_skin_clump(rd::<GPtr<u8>>(e, 0x18));
-    let i = rp_hanim_id_get_index(h, bone);
+    let i = rp_hanim_id_get_index(h, bone as u32);
     let m = rp_hanim_hierarchy_get_matrix_array(h).byte_add((i << 6) as isize);
     wr::<u32>(this, 0xC, m.addr() as u32);
 }

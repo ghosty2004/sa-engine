@@ -16,7 +16,7 @@ pub use sa_core::bindings::cross_product;
 pub use sa_core::bindings::matrix_dtor;
 pub use sa_core::bindings::matrix_update_rw;
 pub use sa_world::bindings::matrix_copy_ctor;
-pub use sa_world::bindings::matrix_ctor_rw;
+pub use sa_core::bindings::matrix_ctor_rw;
 pub use sa_world::bindings::multiply3x3 as multiply3x3_mv;
 pub use sa_world::bindings::multiply3x3_vm;
 pub use sa_world::bindings::physical_get_speed;
@@ -59,9 +59,9 @@ pub fn process_impact(
     physical_get_speed(
         veh,
         vec_ptr(&mut vel),
-        rd::<u32>(offset, 0),
-        rd::<u32>(offset, 4),
-        rd::<u32>(offset, 8),
+        f32::from_bits(rd::<u32>(offset, 0)),
+        f32::from_bits(rd::<u32>(offset, 4)),
+        f32::from_bits(rd::<u32>(offset, 8)),
     );
     let mut c = [0f32; 3];
     let cp = cross_product(vec_ptr(&mut c), old_turn, offset);
@@ -156,9 +156,9 @@ pub fn process(
     physical_get_speed(
         veh,
         vec_ptr(&mut vel),
-        rd::<u32>(offset, 0),
-        rd::<u32>(offset, 4),
-        rd::<u32>(offset, 8),
+        f32::from_bits(rd::<u32>(offset, 0)),
+        f32::from_bits(rd::<u32>(offset, 4)),
+        f32::from_bits(rd::<u32>(offset, 8)),
     );
     let mut c = [0f32; 3];
     let cp = cross_product(vec_ptr(&mut c), old_turn, offset);
@@ -371,9 +371,9 @@ pub fn process_panel(
     physical_get_speed(
         veh,
         vec_ptr(&mut vel),
-        cp[0].to_bits(),
-        cp[1].to_bits(),
-        cp[2].to_bits(),
+        f32::from_bits(cp[0].to_bits()),
+        f32::from_bits(cp[1].to_bits()),
+        f32::from_bits(cp[2].to_bits()),
     );
     let mut turn = [tx, ty, tz];
     let mut xo = [0f32; 3];

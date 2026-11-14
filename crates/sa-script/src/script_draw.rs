@@ -11,11 +11,10 @@ use sa_math::x87::X87;
 use sa_core::bindings::sprite2d_draw;
 use sa_core::bindings::sprite_draw_rect as sprite2d_draw_rect;
 use sa_world::bindings::sprite2d_draw_quad;
+use sa_world::bindings::draw_window_call as draw_window;
 orig! {
     /// `CMenuManager::DrawWindowedText(float x, float y, float wrap, const char* title, const char* text, eFontAlignment)` (0x578F50)
     fn draw_windowed_text(this: GPtr<u8>, x: u32, y: u32, wrap: u32, title: GPtr<u8>, text: GPtr<u8>, align: u32) = thiscall 0x578F50 => unported;
-    /// `CMenuManager::DrawWindow(const CRect&, const char* key, uint8 fadeState, CRGBA titleColour, bool, bool drawBox)` (0x573EE0)
-    fn draw_window(this: GPtr<u8>, rect: GPtr<u8>, key: GPtr<u8>, fade: u32, colour: u32, unused: u32, draw_box: u32) = thiscall 0x573EE0 => unported;
 }
 
 /// `CTheScripts::IntroRectangles` (0xA92D68): 0x80 entries of 0x3C bytes.
@@ -93,11 +92,11 @@ pub fn draw_script_sprites_and_rectangles(before_fade: u32) {
             }
             3 => {
                 let mut rect = rect_of(e);
-                sprite2d_draw_rect(GPtr::from_raw(rect.as_mut_ptr()).cast(), colour);
+                sprite2d_draw_rect(GPtr::<u8>::cast::<f32>(GPtr::from_raw(rect.as_mut_ptr()).cast()), colour);
             }
             4 => {
                 let mut rect = rect_of(e);
-                sprite2d_draw(sprite(), GPtr::from_raw(rect.as_mut_ptr()).cast(), colour);
+                sprite2d_draw(sprite(), GPtr::<u8>::cast::<f32>(GPtr::from_raw(rect.as_mut_ptr()).cast()), colour);
             }
             5 => draw_rotated(e, sprite(), colour),
             _ => {}

@@ -57,34 +57,31 @@ pub const FMT_S: u32 = 0x85C714;
 /// `rwID_TEXDICTIONARY`
 pub const RW_ID_TEXDICTIONARY: u32 = 0x16;
 
-pub use crate::bindings::rw_tex_dictionary_create;
+pub use sa_core::bindings::rw_tex_dictionary_create;
 pub use crate::bindings::rw_tex_dictionary_destroy;
 pub use crate::bindings::rw_tex_dictionary_gta_stream_read;
 pub use crate::bindings::rw_tex_dictionary_remove_texture;
 pub use crate::bindings::rw_tex_dictionary_set_current;
-pub use crate::bindings::rw_texture_destroy;
+pub use sa_core::bindings::rw_texture_destroy;
 pub use sa_core::bindings::crt_free_8214bd as free;
 pub use sa_core::bindings::rw_stream_open;
 pub use sa_core::bindings::rw_tex_dictionary_find_named_texture;
 pub use sa_core::bindings::rw_tex_dictionary_for_all_textures;
 pub use sa_core::bindings::rw_tex_dictionary_get_current;
+pub use crate::bindings::load_txd_stream_call;
+pub use crate::bindings::remove_txd_slot as remove_txd_slot_call;
+pub use crate::bindings::rw_texture_set_find_call_back;
+pub use sa_core::bindings::get_uppercase_key;
+pub use sa_core::bindings::rw_stream_close;
+pub use sa_core::bindings::rw_stream_find_chunk_call as rw_stream_find_chunk;
+pub use sa_core::bindings::streaming_remove_model as remove_model;
 orig! {
-    /// `RwStreamFindChunk(stream, type, lengthOut, versionOut)` (0x7ED2D0)
-    pub fn rw_stream_find_chunk(stream: GPtr<u8>, ty: u32, len: GPtr<u32>, ver: GPtr<u32>) -> i32 = cdecl 0x7ED2D0 => unported;
-    /// `RwTextureSetFindCallBack(cb)` (0x7F34D0)
-    pub fn rw_texture_set_find_call_back(cb: u32) -> i32 = cdecl 0x7F34D0 => unported;
     /// `RwTextureSetReadCallBack(cb)` (0x7F3500)
     pub fn rw_texture_set_read_call_back(cb: u32) -> i32 = cdecl 0x7F3500 => unported;
-    /// `RwStreamClose(stream, data)` (0x7ECE20)
-    pub fn rw_stream_close(stream: GPtr<u8>, data: GPtr<u8>) -> i32 = cdecl 0x7ECE20 => unported;
     /// CRT `sprintf(buf, fmt, s)` (0x821BB5)
     pub fn sprintf_s(buf: GPtr<u8>, fmt: GPtr<u8>, s: GPtr<u8>) -> i32 = cdecl 0x821BB5 => unported;
     /// CRT `operator new` (0x82119A)
     pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
-    /// `CKeyGen::GetUppercaseKey(name)` (0x53CF30)
-    pub fn get_uppercase_key(name: GPtr<u8>) -> u32 = cdecl 0x53CF30 => sa_core::keygen::get_uppercase_key;
-    /// `CStreaming::RemoveModel(id)` (0x4089A0)
-    pub fn remove_model(id: i32) = cdecl 0x4089A0 => crate::streaming::remove_model;
     /// `RwTexDictionaryGtaStreamRead1(stream)` (0x731070)
     pub fn rw_tex_dictionary_gta_stream_read1(stream: GPtr<u8>) -> GPtr<u8> = cdecl 0x731070 => crate::rw_gta_stream::rw_tex_dictionary_gta_stream_read1;
     /// `RwTexDictionaryGtaStreamRead2(stream, dict)` (0x731150)
@@ -93,12 +90,8 @@ orig! {
     pub fn txd_pool_new(p: GPtr<TxdPool>) -> GPtr<TxdDef> = thiscall 0x731B80 => crate::misc::txd_pool_new;
     /// `CPool<TxdDef>::CPool(size, name)` (0x731AD0)
     pub fn txd_pool_ctor(p: GPtr<TxdPool>, size: i32, name: GPtr<u8>) -> GPtr<TxdPool> = thiscall 0x731AD0 => crate::misc::txd_pool_ctor;
-    /// `CTxdStore::RemoveTxdSlot(i)` (0x731CD0)
-    pub fn remove_txd_slot_call(i: i32) = cdecl 0x731CD0 => remove_txd_slot;
     /// `CTxdStore::SetupTxdParent(i)` (0x731D50)
     pub fn setup_txd_parent_call(i: i32) = cdecl 0x731D50 => setup_txd_parent;
-    /// `CTxdStore::LoadTxd(i, stream)` (0x731DD0)
-    pub fn load_txd_stream_call(i: i32, stream: GPtr<u8>) -> u8 = cdecl 0x731DD0 => load_txd_stream;
 }
 
 /// `ms_pTxdPool->GetAt(i)`: the slot, or null when its map byte has bit 7 set (no bounds check).

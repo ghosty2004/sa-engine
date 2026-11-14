@@ -46,41 +46,31 @@ pub use sa_world::bindings::matrix_copy_ctor;
 pub use sa_world::bindings::physical_remove_and_add as remove_and_add;
 pub use sa_world::bindings::rw_im3d_end;
 pub use sa_world::bindings::update_rw_matrix;
+pub use crate::bindings::set_recording_to_point_closest_to_coors as set_recording_to_point_closest_to_coors_o;
+pub use sa_core::bindings::rw_stream_close;
+pub use sa_pop::bindings::stop_playback_with_index as stop_playback_with_index_o;
+pub use sa_world::bindings::camera_is_sphere_visible;
+pub use sa_world::bindings::find_node_coors_for_script as find_node_coors_linked;
+pub use sa_world::bindings::find_node_orientation_for_car_placement;
+pub use sa_world::bindings::find_nth_node_closest_to_coors;
+pub use sa_world::bindings::rw_im3d_render_indexed_primitive;
+pub use sa_world::bindings::rw_im3d_transform;
+pub use sa_world::bindings::stop_playback_recorded_car as stop_playback_recorded_car_o;
 orig! {
     /// CRT `sscanf` with one output (0x8220AD)
     pub fn sscanf(s: GPtr<u8>, fmt: u32, out: GPtr<u8>) -> i32 = cdecl 0x8220AD => unported;
-    /// `RwStreamClose(RwStream*, void*)` (0x7ECE20)
-    pub fn rw_stream_close(st: GPtr<u8>, data: GPtr<u8>) -> i32 = cdecl 0x7ECE20 => unported;
-    /// `RwIm3DTransform(RwIm3DVertex*, uint32, RwMatrix*, uint32)` (0x7EF450)
-    pub fn rw_im3d_transform(verts: u32, n: i32, m: u32, flags: u32) -> GPtr<u8> = cdecl 0x7EF450 => unported;
-    /// `RwIm3DRenderIndexedPrimitive(RwPrimitiveType, uint16*, int32)` (0x7EF550)
-    pub fn rw_im3d_render_indexed_primitive(ty: u32, idx: u32, n: i32) -> i32 = cdecl 0x7EF550 => unported;
     /// `CVehicleRecording::SmoothRecording(int32)` (0x45A0F0)
     pub fn smooth_recording_o(idx: i32) = cdecl 0x45A0F0 => crate::checks2::smooth_recording;
     /// `CVehicleRecording::RestoreInfoForMatrix(CMatrix&, CVehicleStateEachFrame*)` (0x459960)
     pub fn restore_info_for_matrix_o(m: GPtr<u8>, f: GPtr<u8>) = cdecl 0x459960 => crate::checks2::restore_info_for_matrix;
-    /// `CVehicleRecording::SetRecordingToPointClosestToCoors(int32, CVector)` (0x45A1E0)
-    pub fn set_recording_to_point_closest_to_coors_o(i: i32, x: f32, y: f32, z: f32) = cdecl 0x45A1E0 => crate::checks2::set_recording_to_point_closest_to_coors;
     /// `operator+(const CMatrix&, const CMatrix&)` (0x59BFA0), hidden return pointer first
     pub fn matrix_add(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x59BFA0 => unported;
     /// `CStuckCarCheck::ResetArrayElement(uint16)` (0x463970)
     pub fn stuck_reset_array_element(c: GPtr<u8>, i: u32) = thiscall 0x463970 => unported;
     /// `CStuckCarCheck::AttemptToWarpVehicle(CVehicle*, CVector*, float)` (0x463A60)
     pub fn stuck_attempt_to_warp_vehicle(c: GPtr<u8>, v: GPtr<u8>, pos: GPtr<u8>, angle: f32) -> u8 = thiscall 0x463A60 => unported;
-    /// `CCamera::IsSphereVisible(const CVector&, float)` (0x420D40)
-    pub fn camera_is_sphere_visible(cam: GPtr<u8>, c: GPtr<u8>, r: u32) -> u8 = thiscall 0x420D40 => unported;
     /// `CPathFind::FindNodeCoorsForScript(CNodeAddress, CNodeAddress, float*, bool*)` (0x450780)
     pub fn find_node_coors_two(pf: GPtr<u8>, out: GPtr<u8>, a: u32, b: u32, angle: GPtr<u8>, found: GPtr<u8>) -> GPtr<u8> = thiscall 0x450780 => unported;
-    /// `CPathFind::FindNthNodeClosestToCoors(CVector, uint8, float, bool, bool, int32, bool, bool, CNodeAddress*)` (0x44F8C0)
-    pub fn find_nth_node_closest_to_coors(pf: GPtr<u8>, out: GPtr<u8>, x: u32, y: u32, z: u32, ty: u32, dist: u32, a: u32, b: u32, n: u32, c: u32, d: u32, e: u32) -> GPtr<u8> = thiscall 0x44F8C0 => unported;
-    /// `CPathFind::FindNodeCoorsForScript(CNodeAddress, bool*)` (0x4505E0)
-    pub fn find_node_coors_linked(pf: GPtr<u8>, out: GPtr<u8>, node: u32, found: GPtr<u8>) -> GPtr<u8> = thiscall 0x4505E0 => unported;
-    /// `CPathFind::FindNodeOrientationForCarPlacement(CNodeAddress)` (0x450320)
-    pub fn find_node_orientation_for_car_placement(pf: GPtr<u8>, node: u32) -> f32 = thiscall 0x450320 => unported;
-    /// `CVehicleRecording::StopPlaybackWithIndex(int32)` (0x459440)
-    pub fn stop_playback_with_index_o(i: i32) = cdecl 0x459440 => crate::checks2::stop_playback_with_index;
-    /// `CVehicleRecording::StopPlaybackRecordedCar(CVehicle*)` (0x45A280)
-    pub fn stop_playback_recorded_car_o(v: GPtr<u8>) = cdecl 0x45A280 => crate::checks2::stop_playback_recorded_car;
     /// `CVehicleRecording::RestoreInfoForCar(CVehicle*, CVehicleStateEachFrame*, bool)` (0x459A30)
     pub fn restore_info_for_car_o(v: GPtr<u8>, f: GPtr<u8>, force: u32) = cdecl 0x459A30 => crate::checks2::restore_info_for_car;
     /// `CVehicleRecording::InterpolateInfoForCar(CVehicle*, CVehicleStateEachFrame*, float)` (0x459B30)
@@ -274,10 +264,10 @@ pub fn save_or_retrieve_data_for_this_frame() {
             m.byte_add(0x30)
         };
         mark_surrounding_entities_for_collision_with_train(
-            rd::<u32>(pos, 0),
-            rd::<u32>(pos, 4),
-            rd::<u32>(pos, 8),
-            0x40A0_0000,
+            f32::from_bits(rd::<u32>(pos, 0)),
+            f32::from_bits(rd::<u32>(pos, 4)),
+            f32::from_bits(rd::<u32>(pos, 8)),
+            f32::from_bits(0x40A0_0000),
             v,
             1,
         );
@@ -783,8 +773,8 @@ pub fn render_line_segment(n: GPtr<i32>) {
                 }
             }
         }
-        if !rw_im3d_transform(0xC4D958, n.read(), 0, 0).is_null() {
-            rw_im3d_render_indexed_primitive(1, 0xC4B958, n.read().wrapping_mul(2).wrapping_sub(2));
+        if !rw_im3d_transform(GPtr::from_addr(0xC4D958), n.read() as u32, GPtr::NULL, 0).is_null() {
+            rw_im3d_render_indexed_primitive(1, GPtr::from_addr(0xC4B958), n.read().wrapping_mul(2).wrapping_sub(2));
             rw_im3d_end();
         }
     }
@@ -866,7 +856,7 @@ pub fn stuck_car_check_process(c: GPtr<u8>) {
         let radius = rd::<u32>(rd::<GPtr<u8>>(mi, 0x14), 0x24);
         let mut centre = [0u32; 3];
         let cp = get_bound_centre(v, GPtr::from_raw(&raw mut centre).cast());
-        if camera_is_sphere_visible(GPtr::from_addr(0xB6F028), cp, radius) != 0 {
+        if camera_is_sphere_visible(GPtr::from_addr(0xB6F028), cp, f32::from_bits(radius)) != 0 {
             continue;
         }
         let nodes = rd::<i8>(e, 0x21);
@@ -902,27 +892,27 @@ pub fn stuck_car_check_process(c: GPtr<u8>) {
                 m.byte_add(0x30)
             };
             let mut na = 0u32;
-            let r = find_nth_node_closest_to_coors(
+            let r = GPtr::<u32>::cast::<u8>(find_nth_node_closest_to_coors(
                 paths,
-                GPtr::from_raw(&raw mut na).cast(),
-                rd::<u32>(p, 0),
-                rd::<u32>(p, 4),
-                rd::<u32>(p, 8),
+                GPtr::<u8>::cast::<u32>(GPtr::from_raw(&raw mut na).cast()),
+                f32::from_bits(rd::<u32>(p, 0)),
+                f32::from_bits(rd::<u32>(p, 4)),
+                f32::from_bits(rd::<u32>(p, 8)),
                 0,
-                0x4974_23FE,
+                f32::from_bits(0x4974_23FE),
                 0,
                 1,
                 u32::from(n),
                 0,
                 0,
-                0,
-            );
+                GPtr::NULL,
+            ));
             let node = rd::<u32>(r, 0);
             let mut found = 0u8;
             let r = find_node_coors_linked(paths, op, node, GPtr::from_raw(&raw mut found).cast());
             let mut wp = [rd::<u32>(r, 0), rd::<u32>(r, 4), rd::<u32>(r, 8)];
             if found != 0 {
-                let angle = find_node_orientation_for_car_placement(paths, node);
+                let angle = find_node_orientation_for_car_placement(paths, node) as f32;
                 if stuck_attempt_to_warp_vehicle(c, v, GPtr::from_raw(&raw mut wp).cast(), angle) != 0 {
                     done = true;
                     continue;

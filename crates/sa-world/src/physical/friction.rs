@@ -14,15 +14,13 @@ use super::forces::{apply_friction_force_call, get_speed_call};
 use super::shared::*;
 use crate::collision::fpu::Fpu;
 
+pub use crate::bindings::vector_add_assign;
+pub use crate::bindings::vector_scale as scale_vector;
 orig! {
     /// `SurfaceInfos_c::GetFrictionEffect(uint32 surface)` (0x55E650, thiscall on `g_surfaceInfos`)
     pub fn get_friction_effect(si: Ent, surface: u32) -> i32 = thiscall 0x55E650 => unported;
     /// `CVector::DotProduct(const CVector*, const CVector*)` (0x40FDB0, ST0)
     pub fn dot_product(a: Ent, b: Ent) -> f64 = cdecl 0x40FDB0 => unported;
-    /// `operator*(CVector* out, float s, const CVector& v)` (0x40FE90, cdecl): `out = s*v`
-    pub fn scale_vector(out: GPtr<CVector>, s: f32, v: GPtr<CVector>) -> GPtr<CVector> = cdecl 0x40FE90 => unported;
-    /// `CVector::operator+=(const CVector&)` (0x411A00, thiscall)
-    pub fn vector_add_assign(v: GPtr<CVector>, o: GPtr<CVector>) -> GPtr<CVector> = thiscall 0x411A00 => unported;
     /// `CVector::Normalise()` (0x59C910)
     pub fn normalise(v: GPtr<CVector>) = thiscall 0x59C910 => crate::collision::data::normalise_port;
     /// `Fx_c::AddSparks(CVector& origin, CVector& dir, float force, int32 amount, CVector across,
@@ -265,14 +263,14 @@ pub fn apply_friction(this: Ent, friction: f32, cp: Ent) -> u8 {
     f.fmul_m(cf(k::K_858C84));
     let s4 = f.fstp();
     let mut across = CVector::new(0.0, 0.0, 0.0);
-    scale_vector(lp(&mut across), s4, lp(&mut w));
+    scale_vector(GPtr::<sa_math::vector::CVector>::cast::<u8>(lp(&mut across)), s4, GPtr::<sa_math::vector::CVector>::cast::<u8>(lp(&mut w)));
     f.fld(speed);
     f.fmul_m(cf(k::K_86321C));
     let force = f.fstp();
     let mut dir = w;
     let mut tn = CVector::new(0.0, 0.0, 0.0);
-    let tnp = scale_vector(lp(&mut tn), cf(k::K_858B1C), n.cast());
-    vector_add_assign(lp(&mut dir), tnp);
+    let tnp = GPtr::<u8>::cast::<sa_math::vector::CVector>(scale_vector(GPtr::<sa_math::vector::CVector>::cast::<u8>(lp(&mut tn)), cf(k::K_858B1C), GPtr::<sa_math::vector::CVector>::cast::<u8>(n.cast())));
+    vector_add_assign(GPtr::<sa_math::vector::CVector>::cast::<u8>(lp(&mut dir)), tnp.cast::<u8>());
     let mut cr = CVector::new(0.0, 0.0, 0.0);
     cross_product(lp(&mut cr), n.cast(), this.byte_add(MOVE_SPEED).cast());
     normalise(lp(&mut cr));

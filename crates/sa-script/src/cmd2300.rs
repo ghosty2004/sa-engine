@@ -82,17 +82,17 @@ const MSG_FORMAT_WIDTH: usize = 0xA44B64;
 const MSG_FORMAT_FLAG: usize = 0xA44B66;
 const MSG_FORMAT_X: usize = 0xA44B60;
 
-use crate::bindings::add_explosion;
-use crate::bindings::camera_initialise_scriptable_components as initialise_scriptable_components;
+use sa_world::bindings::add_explosion;
+use sa_world::bindings::camera_initialise_scriptable_components as initialise_scriptable_components;
 use crate::bindings::find_closest_attractor;
 use crate::bindings::get_proper_index_from_index_used_by_script;
 use crate::bindings::plane_switch_ambient_planes as switch_ambient_planes;
 use crate::bindings::play_preloaded_beat_track;
 use crate::bindings::preload_beat_track;
-use crate::bindings::rgba_set_463370;
+use sa_world::bindings::rgba_set_463370;
 use crate::bindings::switch_ped_roads_off_in_area;
-use crate::bindings::switch_roads_off_in_area;
-use crate::bindings::vehicle_41bdd0;
+use sa_world::bindings::switch_roads_off_in_area;
+use sa_world::bindings::vehicle_41bdd0;
 use sa_core::bindings::clear_skip;
 use sa_core::bindings::clear_specific_zones_to_trigger_gang_war;
 use sa_core::bindings::rgba_ctor;
@@ -109,6 +109,26 @@ use sa_world::bindings::hud_help_message_displayed as help_message_displayed;
 use sa_world::bindings::ped_get_ped_talking as get_ped_talking;
 use sa_world::bindings::set_door_damage;
 use sa_world::bindings::set_up_skip;
+use crate::bindings::add_new_script_brain;
+use crate::bindings::start_new_streamed_script;
+use sa_core::bindings::get_pad;
+use sa_core::bindings::stats_increment_stat as increment_stat;
+use sa_stream::bindings::generate_new_one;
+use sa_stream::bindings::hud_colours_get_rgb as hud_get_rgb;
+use sa_world::bindings::attach_entity_to_entity;
+use sa_world::bindings::check_damaged_weapon_type;
+use sa_world::bindings::dm_set_door_status as set_door_status;
+use sa_world::bindings::door_open;
+use sa_world::bindings::fx_add_particle;
+use sa_world::bindings::fx_prt_mult_ctor;
+use sa_world::bindings::get_actual_script_thing_index;
+use sa_world::bindings::get_water_level;
+use sa_world::bindings::get_water_level_no_waves;
+use sa_world::bindings::membership_get_member as group_get_member;
+use sa_world::bindings::object_lock_door;
+use sa_world::bindings::ped_say;
+use sa_world::bindings::set_active_menu_item;
+use sa_world::bindings::stats_find_max_number_of_group_members as find_max_number_of_group_members;
 orig! {
     /// `CCamera::VectorTrackLinear(CVector& to, CVector& from, float duration, bool ease)` (0x50D1D0)
     fn vector_track_linear(cam: GPtr<u8>, to: GPtr<u32>, from: GPtr<u32>, duration: f32, ease: u32) = thiscall 0x50D1D0 => unported;
@@ -116,26 +136,14 @@ orig! {
     fn vector_move_linear(cam: GPtr<u8>, to: GPtr<u32>, from: GPtr<u32>, duration: f32, ease: u32) = thiscall 0x50D160 => unported;
     /// `CPostEffects::ScriptHeatHazeFXSwitch(bool)` (0x701160)
     fn script_heat_haze_fx_switch(on: u32) = cdecl 0x701160 => unported;
-    /// `CDarkel::CheckDamagedWeaponType(int32 damageWeaponId, int32 expectedDamageWeaponId)` (0x43D9E0), AL
-    fn check_damaged_weapon_type(got: i32, want: u32) -> u8 = cdecl 0x43D9E0 => unported;
-    /// `CPad::GetPad(int32)` (0x53FB70)
-    fn get_pad(n: u32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
-    /// `CHudColours::GetRGB(uint8)` (0x58FEA0): the CRGBA through the hidden result pointer
-    fn hud_get_rgb(h: GPtr<u8>, out: GPtr<u8>, idx: u32) -> GPtr<u8> = thiscall 0x58FEA0 => unported;
-    /// `CObject::LockDoor()` (0x59F5C0)
-    fn object_lock_door(o: GPtr<u8>) = thiscall 0x59F5C0 => unported;
     /// `CEntity` virtual slot 4 (+0x10, `SetIsStatic(bool)`)
     fn entity_set_is_static(e: GPtr<u8>, b: u32) = thiscall vslot 0x10 => unported;
     /// `CGangWars::SetSpecificZoneToTriggerGangWar(int32)` (0x444010)
     fn set_specific_zone_to_trigger_gang_war(z: i32) = cdecl 0x444010 => unported;
-    /// `CMenuSystem::SetActiveMenuItem(uint8, uint8)` (0x5820C0)
-    fn set_active_menu_item(menu: u32, item: u32) = cdecl 0x5820C0 => unported;
     /// 0x4700E0 (cdecl (index); tail jump to `CStreaming::SetMissionDoesntRequireModel(index + 0x6676)`)
     fn set_mission_doesnt_require_streamed_script(i: i32) = cdecl 0x4700E0 => unported;
     /// 0x40C1C0 (cdecl (index); tail jump to `CStreaming::RemoveModel(index + 0x6676)`)
     fn remove_streamed_script(i: i32) = cdecl 0x40C1C0 => unported;
-    /// `CStreamedScripts::StartNewStreamedScript(int32)` (0x470890)
-    fn start_new_streamed_script(m: GPtr<u8>, i: i32) -> Scr = thiscall 0x470890 => unported;
     /// `CWeather::SetWeatherToAppropriateTypeNow()` (0x72A790)
     fn set_weather_to_appropriate_type_now() = cdecl 0x72A790 => unported;
     /// `CAudioZones::SwitchAudioZone(char*, bool)` (0x508320)
@@ -144,29 +152,13 @@ orig! {
     fn lerp_fov(cam: GPtr<u8>, from: u32, to: u32, duration: f32, ease: u32) = thiscall 0x50D280 => unported;
     /// `CPostEffects::ScriptDarknessFilterSwitch(bool, int32)` (0x701170)
     fn script_darkness_filter_switch(on: u32, alpha: u32) = cdecl 0x701170 => unported;
-    /// `CScriptsForBrains::AddNewScriptBrain(int16 index, int16 model, uint16 priority, int8 attachType, int8
-    /// type, float radius)` (0x46A930); the radius raw
-    fn add_new_script_brain(b: GPtr<u8>, i: i32, model: u32, priority: u32, attach: u32, ty: u32, radius: u32) = thiscall 0x46A930 => unported;
-    /// `CTheScripts::GetActualScriptThingIndex(int32 ref, uint8 type)` (0x4839A0)
-    fn get_actual_script_thing_index(r: u32, ty: u32) -> i32 = cdecl 0x4839A0 => unported;
-    /// `CPedGroupMembership::GetMember(int32)` (0x5F69B0)
-    fn group_get_member(m: GPtr<u8>, i: u32) -> GPtr<u8> = thiscall 0x5F69B0 => unported;
-    /// `CWaterLevel::GetWaterLevel(float x, float y, float z, float* level, bool touching, CVector* normal)`
-    /// (0x6EB690), AL; floats raw
-    fn get_water_level(x: u32, y: u32, z: u32, level: GPtr<u32>, touching: u32, normal: u32) -> u8 = cdecl 0x6EB690 => unported;
-    /// `CWaterLevel::GetWaterLevelNoWaves(float x, float y, float z, float* level, float*, float*)` (0x6E8580), AL
-    fn get_water_level_no_waves(x: u32, y: u32, z: u32, level: GPtr<u32>, a: u32, b: u32) -> u8 = cdecl 0x6E8580 => unported;
     /// `CCamera::VectorMoveRunning()` (0x4748A0) / `VectorTrackRunning()` (0x474870); the whole EAX is pushed
     fn vector_move_running(cam: GPtr<u8>) -> u32 = thiscall 0x4748A0 => unported;
     fn vector_track_running(cam: GPtr<u8>) -> u32 = thiscall 0x474870 => unported;
-    /// `CPhysical::AttachEntityToEntity(CEntity*, CVector offset, CVector rotation)` (0x54D570); vectors by value
-    fn attach_entity_to_entity(p: GPtr<u8>, e: GPtr<u8>, ox: u32, oy: u32, oz: u32, rx: u32, ry: u32, rz: u32) = thiscall 0x54D570 => unported;
     /// `CShopping::HasPlayerBought(uint32)` (0x49B5E0); the whole EAX is pushed
     fn has_player_bought(item: u32) -> u32 = cdecl 0x49B5E0 => unported;
     /// `CCamera::SetCameraDirectlyInFrontForFollowPed_ForAPed_CamOnAString(CPed*)` (0x50BE30)
     fn set_camera_directly_in_front(cam: GPtr<u8>, p: GPtr<u8>) = thiscall 0x50BE30 => unported;
-    /// `CPed::Say(uint16, uint32, float, uint8, uint8, uint8)` (0x5EFFE0), AX; the float raw
-    fn ped_say(p: GPtr<u8>, id: u32, a: u32, vol: u32, b: u32, c: u32, d: u32) -> u16 = thiscall 0x5EFFE0 => unported;
     /// `CAudioEngine::AttachMissionAudioToPed(uint8 slot, CPed*)` (0x507310)
     fn attach_mission_audio_to_ped(a: GPtr<u8>, slot: u32, p: GPtr<u8>) = thiscall 0x507310 => unported;
     /// `CPickups::UpdateMoneyPerDay(int32 handle, uint16 money)` (0x455680)
@@ -176,22 +168,6 @@ orig! {
     /// `CAudioEngine::GetBeatTrackStatus()` (0x507170), AL
     fn get_beat_track_status(a: GPtr<u8>) -> u8 = thiscall 0x507170 => unported;
     fn stop_beat_track(a: GPtr<u8>) = thiscall 0x5071A0 => unported;
-    /// `CStats::FindMaxNumberOfGroupMembers()` (0x559A50)
-    fn find_max_number_of_group_members() -> u32 = cdecl 0x559A50 => unported;
-    /// `CStats::IncrementStat(uint16 stat, float value)` (0x55C180); the float raw
-    fn increment_stat(stat: u32, value: u32) = cdecl 0x55C180 => unported;
-    /// `CPickups::GenerateNewOne(CVector, uint32 model, uint8 type, uint32 ammo, uint32 money, bool empty, const
-    /// char* msg)` (0x456F20); the vector by value
-    fn generate_new_one(x: u32, y: u32, z: u32, model: u32, ty: u32, ammo: u32, money: u32, empty: u32, msg: u32) -> u32 = cdecl 0x456F20 => unported;
-    /// `FxPrtMult_c::FxPrtMult_c(float r, g, b, a, size, angle, life)` (0x4AB290); raw floats
-    fn fx_prt_mult_ctor(p: GPtr<u8>, r: u32, g: u32, b: u32, a: u32, size: u32, angle: u32, life: u32) = thiscall 0x4AB290 => unported;
-    /// `FxSystem_c::AddParticle(CVector* pos, CVector* vel, float time, FxPrtMult_c*, float, float, float, bool)`
-    /// (0x4AA440); raw floats
-    fn fx_add_particle(fx: GPtr<u8>, pos: GPtr<u32>, vel: GPtr<u32>, time: u32, prt: GPtr<u8>, a: u32, b: u32, c: u32, d: u32) = thiscall 0x4AA440 => unported;
-    /// `CDoor::Open(float ratio)` (0x6F4790); raw
-    fn door_open(d: GPtr<u8>, ratio: u32) = thiscall 0x6F4790 => unported;
-    /// `CDamageManager::SetDoorStatus(eDoors, uint32)` (0x6C21C0)
-    fn set_door_status(dm: GPtr<u8>, door: u32, status: u32) = thiscall 0x6C21C0 => unported;
 }
 
 /// The VECTOR_TRACK / VECTOR_MOVE argument shape (0920 0x476BDE, 0936 0x476F9D): `CollectParameters(8)`; `from =
@@ -260,7 +236,7 @@ fn has_object_been_damaged_by_weapon(s: Scr) {
     if !o.is_null() {
         let w = sp(1);
         let last = i32::from(o.byte_add(0x148).read() as i8);
-        b = if w == 0x38 || w == 0x39 { check_damaged_weapon_type(last, w) != 0 } else { last as u32 == w };
+        b = if w == 0x38 || w == 0x39 { check_damaged_weapon_type(last, w as i32) != 0 } else { last as u32 == w };
     }
     set_flag(s, b);
 }
@@ -315,7 +291,7 @@ fn get_user_of_closest_map_attractor(s: Scr) {
     set_sp(0, u32::MAX);
     if effect[0] != 0 {
         let m = get_ped_attractor_manager();
-        let p = get_ped_using_effect(m, effect[0], entity[0]);
+        let p = get_ped_using_effect(m, GPtr::from_addr((effect[0]) as usize), entity[0]);
         if !p.is_null() {
             set_sp(0, ped_get_ref(pool(PED_POOL), p) as u32);
         }
@@ -386,7 +362,7 @@ fn attach_car_to_object(s: Scr) {
     let o = object_at_ref(pool(OBJECT_POOL), spi(1));
     let rot = |i| X87::from_f32(spf(i)).fmul_m(f(K_DEG_TO_RAD)).to_f32().to_bits();
     let (rx, ry, rz) = (rot(5), rot(6), rot(7));
-    attach_entity_to_entity(v, o, sp(2), sp(3), sp(4), rx, ry, rz);
+    attach_entity_to_entity(v, o, sp(2), sp(3), sp(4), f32::from_bits(rx), f32::from_bits(ry), f32::from_bits(rz));
 }
 
 /// 094C GET_POSITION_OF_ENTRY_EXIT_CHAR_USED (0x47760C): `ee = PED(SP0)->m_pEnex (+0x78C)`; pos and heading start
@@ -433,11 +409,11 @@ fn create_collectable_pickup(s: Scr, command: u32) {
         1 => (GPtr::<u16>::from_addr(MI_HORSESHOE).read(), 3, 0xF2),
         _ => (GPtr::<u16>::from_addr(MI_OYSTER).read(), 3, 0xF4),
     };
-    increment_stat(stat, 0x3F80_0000);
+    increment_stat(stat, f32::from_bits(0x3F80_0000));
     if f(z) <= f(K_MINUS_100) {
-        z = X87::from_f64_exact(find_ground_z_raw(x, y)).fadd_m(f(K_HALF)).to_f32().to_bits();
+        z = X87::from_f64_exact(find_ground_z_raw(f32::from_bits(x), f32::from_bits(y))).fadd_m(f(K_HALF)).to_f32().to_bits();
     }
-    let h = generate_new_one(x, y, z, u32::from(model), ty, 0, 0, 0, 0);
+    let h = generate_new_one(f32::from_bits(x), f32::from_bits(y), f32::from_bits(z), u32::from(model), ty, 0, 0, 0, GPtr::NULL) as u32;
     set_sp(0, h);
     store(s, 1);
 }
@@ -451,17 +427,17 @@ fn add_smoke_particle(s: Scr) {
     let mut vel = [sp(3), sp(4), sp(5)];
     let mut prt = [0u32; 8];
     let pp = GPtr::from_raw(prt.as_mut_ptr()).cast::<u8>();
-    fx_prt_mult_ctor(pp, sp(6), sp(7), sp(8), sp(9), sp(10), 0x3F80_0000, sp(11));
+    fx_prt_mult_ctor(pp, f32::from_bits(sp(6)), f32::from_bits(sp(7)), f32::from_bits(sp(8)), f32::from_bits(sp(9)), f32::from_bits(sp(10)), f32::from_bits(0x3F80_0000), f32::from_bits(sp(11)));
     let fx = GPtr::<GPtr<u8>>::from_addr(SMOKE_FX_SYSTEM).read();
     fx_add_particle(
         fx,
-        GPtr::from_raw(pos.as_mut_ptr()),
-        GPtr::from_raw(vel.as_mut_ptr()),
-        0,
+        GPtr::<u32>::cast::<u8>(GPtr::from_raw(pos.as_mut_ptr())),
+        GPtr::<u32>::cast::<u8>(GPtr::from_raw(vel.as_mut_ptr())),
+        f32::from_bits(0),
         pp,
-        0xBF80_0000,
-        0x3F99_999A,
-        0x3F19_999A,
+        f32::from_bits(0xBF80_0000),
+        f32::from_bits(0x3F99_999A),
+        f32::from_bits(0x3F19_999A),
         0,
     );
 }
@@ -479,13 +455,13 @@ fn control_car_door(s: Scr) {
     let door = sp(1);
     if (door as i32) < 6 {
         if open {
-            door_open(v.byte_add(0x5B8 + 0x18 * door as i32 as isize), ratio);
+            door_open(v.byte_add(0x5B8 + 0x18 * door as i32 as isize), f32::from_bits(ratio));
         }
         set_door_status(v.byte_add(0x5A0), door, sp(2));
         set_door_damage(v, door, 0);
     } else {
         if open {
-            door_open(v.byte_add(0x70C), ratio);
+            door_open(v.byte_add(0x70C), f32::from_bits(ratio));
         }
         v.byte_add(0x717).write(sp(2) as u8);
     }
@@ -647,7 +623,7 @@ pub fn process_commands_2300_to_2399(s: Scr, command: u32) -> i8 {
             let (x1, x2) = order(sp(0), sp(3));
             let (y1, y2) = order(sp(1), sp(4));
             let (z1, z2) = order(sp(2), sp(5));
-            switch_roads_off_in_area(GPtr::from_addr(THE_PATHS), x1, x2, y1, y2, z1, z2, 0, 1, 1);
+            switch_roads_off_in_area(GPtr::from_addr(THE_PATHS), f32::from_bits(x1), f32::from_bits(x2), f32::from_bits(y1), f32::from_bits(y2), f32::from_bits(z1), f32::from_bits(z2), 0, 1, 1);
         }
         // 091E SWITCH_PED_ROADS_BACK_TO_ORIGINAL (0x476ACB): `ThePaths.SwitchPedRoadsOffInArea(x1, x2, y1, y2, z1,
         // z2, false, true)`
@@ -706,7 +682,7 @@ pub fn process_commands_2300_to_2399(s: Scr, command: u32) -> i8 {
             collect(s, 3);
             let i = streamed_index();
             set_sp(0, i as u32);
-            add_new_script_brain(GPtr::from_addr(SCRIPTS_FOR_BRAINS), i, sp(1) & 0xFFFF, sp(2) & 0xFFFF, 0, u32::MAX, 0xBF80_0000);
+            add_new_script_brain(GPtr::from_addr(SCRIPTS_FOR_BRAINS), i as u32, sp(1) & 0xFFFF, sp(2) & 0xFFFF, 0, u32::MAX, 0xBF80_0000);
         }
         // 0929 ALLOCATE_STREAMED_SCRIPT_TO_OBJECT (0x476D99): `SP0 = i`; model rule on SP1; `AddNewScriptBrain(i, m,
         // (u16)SP2, 1, (u8)SP4, SP3)`
@@ -715,7 +691,7 @@ pub fn process_commands_2300_to_2399(s: Scr, command: u32) -> i8 {
             let i = streamed_index();
             set_sp(0, i as u32);
             let m = model_operand(sp(1));
-            add_new_script_brain(GPtr::from_addr(SCRIPTS_FOR_BRAINS), i, m, sp(2) & 0xFFFF, 1, sp(4) & 0xFF, sp(3));
+            add_new_script_brain(GPtr::from_addr(SCRIPTS_FOR_BRAINS), i as u32, m, sp(2) & 0xFFFF, 1, sp(4) & 0xFF, sp(3));
         }
         // 092B GET_GROUP_MEMBER (0x476E09): `m = ms_groups[GetActualScriptThingIndex(SP0, 8)].m_groupMembership
         // .GetMember(SP1)` (no range check); SP0 = m ? PEDREF(m) : -1
@@ -723,7 +699,7 @@ pub fn process_commands_2300_to_2399(s: Scr, command: u32) -> i8 {
             collect(s, 2);
             let g = get_actual_script_thing_index(sp(0), 8);
             let mship = GPtr::<u8>::from_addr(PED_GROUPS.wrapping_add(4).wrapping_add((g as u32).wrapping_mul(0x2D4)) as usize);
-            let m = group_get_member(mship, sp(1));
+            let m = group_get_member(mship, sp(1) as i32);
             let h = if m.is_null() { u32::MAX } else { ped_get_ref(pool(PED_POOL), m) as u32 };
             set_sp(0, h);
             store(s, 1);
@@ -736,9 +712,9 @@ pub fn process_commands_2300_to_2399(s: Scr, command: u32) -> i8 {
             let mut h = [0u32; 1];
             let hp = GPtr::from_raw(h.as_mut_ptr());
             let ok = if sp(2) != 0 {
-                get_water_level(x, y, 0, hp, 1, 0)
+                get_water_level(f32::from_bits(x), f32::from_bits(y), f32::from_bits(0), hp.cast::<u8>(), 1, GPtr::NULL)
             } else {
-                get_water_level_no_waves(x, y, 0, hp, 0, 0)
+                get_water_level_no_waves(f32::from_bits(x), f32::from_bits(y), f32::from_bits(0), hp.cast::<u8>(), GPtr::NULL, GPtr::NULL)
             };
             if ok == 0 {
                 h[0] = 0xC47A_0000;
@@ -785,7 +761,7 @@ pub fn process_commands_2300_to_2399(s: Scr, command: u32) -> i8 {
             let lp = GPtr::from_raw(label.as_mut_ptr());
             read_text_label(s, lp, 8);
             collect(s, 1);
-            let g = i32::from(get_garage_number_by_name(lp) as i16);
+            let g = i32::from((get_garage_number_by_name(lp) as u16) as i16);
             if g >= 0 {
                 let b = GPtr::<u8>::from_addr(GARAGE_FLAGS.wrapping_add((g as u32) * 0xD8) as usize);
                 set_byte_bit(b, 0x80, sp(0) != 0);
@@ -841,14 +817,14 @@ pub fn process_commands_2300_to_2399(s: Scr, command: u32) -> i8 {
         0x0947 => {
             collect(s, 2);
             let p = ped_at_ref(pool(PED_POOL), spi(0));
-            let r = ped_say(p, sp(1) & 0xFFFF, 0, 0x3F80_0000, 0, 0, 0);
+            let r = ped_say(p, sp(1) & 0xFFFF, 0, f32::from_bits(0x3F80_0000), 0, 0, 0) as u16;
             store_sp0(s, i32::from(r as i16) as u32);
         }
         // 0948 ADD_EXPLOSION_VARIABLE_SHAKE (0x4774DA): `AddExplosion(null, null, SP3, CVector(SP0, SP1, SP2), 0,
         // true, SP4 (raw f32), false)`
         0x0948 => {
             collect(s, 5);
-            add_explosion(0, 0, sp(3), sp(0), sp(1), sp(2), 0, 1, sp(4), 0);
+            add_explosion(GPtr::NULL, GPtr::NULL, sp(3), f32::from_bits(sp(0)), f32::from_bits(sp(1)), f32::from_bits(sp(2)), 0, 1, f32::from_bits(sp(4)), 0);
         }
         // 0949 ATTACH_MISSION_AUDIO_TO_CHAR (0x477545): `AudioEngine.AttachMissionAudioToPed((u8)(SP0 - 1), PED(SP1))`
         0x0949 => {
@@ -905,7 +881,7 @@ pub fn process_commands_2300_to_2399(s: Scr, command: u32) -> i8 {
         // 0950 SET_UP_SKIP (0x47776C): `CGameLogic::SetUpSkip(CVector(SP0, SP1, SP2), SP3, 0, null, 0)`
         0x0950 => {
             collect(s, 4);
-            set_up_skip(sp(0), sp(1), sp(2), sp(3), 0, 0, 0);
+            set_up_skip(sp(0), sp(1), sp(2), sp(3), 0, GPtr::NULL, 0);
         }
         // 0951 CLEAR_SKIP (0x4777CE): `CGameLogic::ClearSkip(false)`
         0x0951 => clear_skip(0),

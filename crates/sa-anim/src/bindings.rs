@@ -9,8 +9,58 @@ use sa_core::mem::{GBool, GPtr};
 use sa_core::orig;
 
 orig! {
-    /// `CStreaming::RemoveCurrentZonesModels` (0x40B080)
-    pub fn streaming_remove_current_zones_models() = cdecl 0x40B080 => unported;
+    /// `CAnimBlendAssocGroup::DestroyAssociations` (0x4CDFF0)
+    pub fn assoc_group_destroy_associations(g: GPtr<u8>) = thiscall 0x4CDFF0 => crate::group::destroy_associations;
+}
+
+orig! {
+    /// `CAnimBlendAssocGroup::GetAnimation-Name` (0x4CE040)
+    pub fn assoc_group_get_animation(gr: GPtr<u8>, name: GPtr<u8>) -> GPtr<u8> = thiscall 0x4CE040 => crate::group::get_animation_name;
+}
+
+orig! {
+    /// `CAnimBlendClumpData::SetNumberOfBones` (0x4CF140)
+    pub fn clump_data_set_number_of_bones(d: GPtr<u8>, n: i32) = thiscall 0x4CF140 => crate::clumpdata::set_number_of_bones;
+}
+
+orig! {
+    /// `CAnimBlendClumpData::ForAllFrames` (0x4CF190)
+    pub fn clump_data_for_all_frames(d: GPtr<u8>, cb: u32, data: u32) = thiscall 0x4CF190 => crate::clumpdata::for_all_frames;
+}
+
+orig! {
+    /// `CAnimBlendHierarchy::SetName` (0x4CF2D0)
+    pub fn call_set_name(h: GPtr<u8>, name: GPtr<u8>) = thiscall 0x4CF2D0 => crate::hierarchy::set_name;
+}
+
+orig! {
+    /// `CAnimBlendHierarchy::CalcTotalTime` (0x4CF2F0)
+    pub fn call_calc_total_time(h: GPtr<u8>) = thiscall 0x4CF2F0 => crate::hierarchy::calc_total_time;
+}
+
+orig! {
+    /// `CAnimBlendHierarchy::CalcTotalTimeCompressed` (0x4CF3E0)
+    pub fn call_calc_total_time_compressed(this: GPtr<u8>) = thiscall 0x4CF3E0 => crate::hierarchy::calc_total_time_compressed;
+}
+
+orig! {
+    /// `CAnimBlendHierarchy::RemoveQuaternionFlips` (0x4CF4E0)
+    pub fn call_remove_quaternion_flips(h: GPtr<u8>) = thiscall 0x4CF4E0 => crate::hierarchy::remove_quaternion_flips;
+}
+
+orig! {
+    /// `CAnimBlendHierarchy::Uncompress` (0x4CF5F0)
+    pub fn call_uncompress(this: GPtr<u8>) = thiscall 0x4CF5F0 => crate::hierarchy::uncompress;
+}
+
+orig! {
+    /// `CAnimBlendHierarchy::RemoveUncompressedData` (0x4CF760)
+    pub fn call_remove_uncompressed_data(this: GPtr<u8>) = thiscall 0x4CF760 => crate::hierarchy::remove_uncompressed_data;
+}
+
+orig! {
+    /// `CAnimBlendHierarchy::Shutdown` (0x4CF980)
+    pub fn call_shutdown(this: GPtr<u8>) = thiscall 0x4CF980 => crate::hierarchy::shutdown;
 }
 
 orig! {
@@ -34,6 +84,11 @@ orig! {
 }
 
 orig! {
+    /// `CAnimBlendNode::FindKeyFrame` (0x4D0240)
+    pub fn anim_blend_node_find_key_frame(this: GPtr<u8>, t: f32) -> u8 = thiscall 0x4D0240 => crate::node::find_key_frame;
+}
+
+orig! {
     /// `CAnimBlendNode::Update` (0x4D06C0)
     pub fn node_update(n: GPtr<u8>, t: GPtr<u8>, q: GPtr<u8>, w: f32) -> u8 = thiscall 0x4D06C0 => unported;
 }
@@ -44,13 +99,23 @@ orig! {
 }
 
 orig! {
-    /// `CAnimManager::LoadAnimFile` (0x4D47F0)
-    pub fn load_anim_file(s: GPtr<u8>, compressed: u32, names: GPtr<u8>) = cdecl 0x4D47F0 => crate::anim_file_load::load_anim_file;
+    /// `CQuaternion::Normalise` (0x4D1610)
+    pub fn quat_normalise(q: GPtr<u8>) = thiscall 0x4D1610 => crate::frame_update::quaternion_normalise;
 }
 
 orig! {
-    /// `ConvertPedNode2BoneTag` (0x4D58A0)
-    pub fn convert_ped_node_2_bone_tag(n: i32) -> i32 = cdecl 0x4D58A0 => unported;
+    /// `CAnimManager::GetFirstAssocGroup` (0x4D39B0)
+    pub fn call_get_first_assoc_group(name: GPtr<u8>) -> i32 = cdecl 0x4D39B0 => crate::manager::get_first_assoc_group;
+}
+
+orig! {
+    /// `ConvertBoneTag2BoneName` (0x4D56F0)
+    pub fn convert_bone_tag_2_bone_name(t: i32) -> u32 = cdecl 0x4D56F0 => crate::mvpb_anim::convert_bone_tag_2_bone_name;
+}
+
+orig! {
+    /// `RpAnimBlend::RpAnimBlendAllocateData` (0x4D5F50)
+    pub fn allocate_data_call(c: GPtr<u8>) = cdecl 0x4D5F50 => crate::rp_anim_blend::rp_anim_blend_allocate_data;
 }
 
 orig! {
@@ -69,11 +134,21 @@ orig! {
 }
 
 orig! {
+    /// `CCutsceneMgr::UpdateCutsceneObjectBoundingBox` (0x5B01E0)
+    pub fn cutscene_update_object_bounding_box(clump: GPtr<u8>, model: i32) = cdecl 0x5B01E0 => unported;
+}
+
+orig! {
     /// `CCutsceneMgr::FinishCutscene` (0x5B04D0)
     pub fn cutscene_finish_cutscene() = cdecl 0x5B04D0 => unported;
 }
 
 orig! {
-    /// `RpSkinGetNumBones` (0x7C77E0)
-    pub fn rp_skin_get_num_bones(s: GPtr<u8>) -> i32 = cdecl 0x7C77E0 => unported;
+    /// `BoneNode_c::CalcWldMat` (0x616CD0)
+    pub fn bone_calc_wld_mat(this: GPtr<u8>, parent: GPtr<u8>) = thiscall 0x616CD0 => crate::bones::calc_wld_mat;
+}
+
+orig! {
+    /// `SkinGetBonePositionsToTable` (0x735360)
+    pub fn skin_get_bone_positions_to_table(c: GPtr<u8>, t: GPtr<u8>) = cdecl 0x735360 => crate::rp_anim_blend::skin_get_bone_positions_to_table;
 }

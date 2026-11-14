@@ -71,7 +71,7 @@ const TWO_POW_32: u32 = 0x4F80_0000;
 const VC_MAX_DIST: u32 = 0x4416_0000;
 const MF_WIND_INIT: u32 = 0x3D75_C28F;
 
-pub use sa_stream::bindings::rw_texture_destroy;
+pub use sa_core::bindings::rw_texture_destroy;
 
 /// `CClouds::Shutdown()` (0x712FA0): destroys gpCloudTex, gpCloudMaskTex and `ms_vc.texture` (no null
 /// checks) and clears the three pointers.

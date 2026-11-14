@@ -33,10 +33,10 @@ const SCRIPT_RESOURCE_MANAGER: usize = 0xA485A8;
 /// `.rdata` 0x859014: -100.0f
 const K_MINUS_100: u32 = 0xC2C8_0000;
 
-use crate::bindings::clear_space_for_mission_entity;
+use sa_world::bindings::clear_space_for_mission_entity;
 use crate::bindings::get_actual_blip_array_index;
 use crate::bindings::is_ped_stopped;
-use crate::bindings::set_coord_blip;
+use sa_world::bindings::set_coord_blip;
 use sa_core::bindings::camera_set_wide_screen_off as set_wide_screen_off;
 use sa_core::bindings::camera_set_wide_screen_on as set_wide_screen_on;
 use sa_core::bindings::entity_update_rw_frame as update_rw_frame;
@@ -48,21 +48,18 @@ use sa_world::bindings::object_create;
 use sa_world::bindings::set_blip_sprite;
 use sa_world::bindings::set_orientation;
 use sa_world::bindings::update_rw_matrix;
+use crate::bindings::collect_next;
+use crate::bindings::remove_from_resource_manager;
+use sa_world::bindings::set_posn;
 orig! {
-    /// `CScriptResourceManager::RemoveFromResourceManager(int32, uint32 type, CRunningScript*)` (0x470510), AL
-    fn remove_from_resource_manager(m: GPtr<u8>, model: i32, ty: u32, s: Scr) -> u8 = thiscall 0x470510 => unported;
     /// `CDarkel::ResetModelsKilledByPlayer(int32 player)` (0x43D6A0)
     fn reset_models_killed_by_player(player: i32) = cdecl 0x43D6A0 => unported;
     /// `CDarkel::QueryModelsKilledByPlayer(int32 model, int32 player)` (0x43D6C0), AX
     fn query_models_killed_by_player(model: i32, player: i32) -> u16 = cdecl 0x43D6C0 => unported;
-    /// `CRunningScript::CollectNextParameterWithoutIncreasingPC()` (0x464250)
-    fn collect_next(s: Scr) -> i32 = thiscall 0x464250 => crate::vm::collect_next_parameter_without_increasing_pc;
     /// `CGarages::ActivateGarage(int16)` (0x447CD0)
     fn activate_garage(n: i32) = cdecl 0x447CD0 => unported;
     /// `CGarages::DeActivateGarage(int16)` (0x447CB0)
     fn deactivate_garage(n: i32) = cdecl 0x447CB0 => unported;
-    /// `CPlaceable::SetPosn(float, float, float)` (0x420B80), floats as raw dwords
-    fn set_posn(e: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x420B80 => unported;
     /// `CBaseModelInfo` virtual slot 3 (+0x0C, `AsLodAtomicModelInfoPtr`)
     fn model_info_vslot_0c(mi: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x0C => unported;
 }
@@ -73,7 +70,7 @@ fn garage_by_name(s: Scr, activate: bool) {
     let mut buf = [0u8; 16];
     let b = GPtr::from_raw(buf.as_mut_ptr());
     read_text_label(s, b, 8);
-    let n = i32::from(get_garage_number_by_name(b) as i16);
+    let n = i32::from((get_garage_number_by_name(b) as u16) as i16);
     if n >= 0 {
         if activate {
             activate_garage(n);
@@ -102,7 +99,7 @@ fn create_object_no_offset(s: Scr) {
         GPtr::<GPtr<u8>>::from_addr(MODEL_INFO_PTRS.wrapping_add((model as u32).wrapping_mul(4) as usize))
             .read();
     mi.byte_add(0x0C).write(0xFF);
-    let obj = object_create(model, 0);
+    let obj = object_create(model as u32, 0);
     let ty = if s.byte_add(0xC7).read() == 0 && s.byte_add(0xC9).read() == 0xFF {
         2
     } else {
@@ -113,19 +110,19 @@ fn create_object_no_offset(s: Scr) {
     let (x, y) = (sp(1), sp(2));
     let mut z = st.to_f32().to_bits();
     if !st.fcom(X87::constant(K_MINUS_100)).test_parity(0x41) {
-        z = X87::from_f64_exact(find_ground_z_for_coord(x, y))
+        z = X87::from_f64_exact(find_ground_z_for_coord(f32::from_bits(x), f32::from_bits(y)))
             .to_f32()
             .to_bits();
     }
-    set_posn(obj, x, y, z);
-    set_orientation(obj, 0, 0, 0);
+    set_posn(obj, f32::from_bits(x), f32::from_bits(y), f32::from_bits(z));
+    set_orientation(obj, f32::from_bits(0), f32::from_bits(0), f32::from_bits(0));
     update_rw_matrix(obj);
     update_rw_frame(obj);
     if !model_info_vslot_0c(mi).is_null() {
         setup_big_building(obj);
     }
     let mut pos = [x, y, z];
-    clear_space_for_mission_entity(GPtr::from_raw(pos.as_mut_ptr()), obj);
+    clear_space_for_mission_entity(GPtr::<u32>::cast::<u8>(GPtr::from_raw(pos.as_mut_ptr())), obj);
     world_add(obj);
     let h = object_get_ref(pool(OBJECT_POOL), obj);
     set_sp(0, h as u32);
@@ -145,12 +142,12 @@ fn sprite_blip_for_coord(s: Scr, ty: i32, colour: u32) {
     let st = X87::from_f32(f(sp(2)));
     let mut z = st.to_f32().to_bits();
     if !st.fcom(X87::constant(K_MINUS_100)).test_parity(0x41) {
-        z = X87::from_f64_exact(find_ground_z_for_coord(x, y))
+        z = X87::from_f64_exact(find_ground_z_for_coord(f32::from_bits(x), f32::from_bits(y)))
             .to_f32()
             .to_bits();
     }
     get_actual_blip_array_index(collect_next(s));
-    let h = set_coord_blip(ty, x, y, z, colour, 3, s.byte_add(8));
+    let h = set_coord_blip(ty, f32::from_bits(x), f32::from_bits(y), f32::from_bits(z), colour, 3, s.byte_add(8));
     set_blip_sprite(h, spi(3));
     set_sp(0, h as u32);
     store(s, 1);

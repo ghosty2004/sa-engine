@@ -8,6 +8,7 @@
 //! (i16). A failed task allocation writes NULL where the original writes the response.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -15,12 +16,12 @@ use crate::common::*;
 
 use crate::bindings::car_drive_mission_flee_scene_ctor;
 use crate::bindings::compute_knock_off_bike_response;
-use crate::bindings::duck_ctor;
-use crate::bindings::fall_and_get_up_ctor2;
-use crate::bindings::flee_point_ctor;
+use sa_world::bindings::duck_ctor;
+use sa_world::bindings::fall_and_get_up_ctor2;
+use sa_world::bindings::flee_point_ctor;
 use crate::bindings::get_up_and_stand_still_ctor;
 use crate::bindings::police_pursuit_ctor;
-use crate::bindings::smart_flee_point_ctor;
+use sa_world::bindings::smart_flee_point_ctor;
 use crate::bindings::steal_car_ctor;
 use crate::bindings::task_is_go_to_task;
 use crate::bindings::use_attractor_ctor;
@@ -50,6 +51,14 @@ use sa_world::bindings::task_simple_ctor;
 use sa_world::bindings::tm_set_task;
 use sa_world::bindings::wander_get_wander_task_by_ped_type;
 use sa_world::bindings::weapon_is_type_melee;
+use crate::bindings::gang_join_respond_ctor;
+use crate::bindings::pass_object_ctor;
+use crate::bindings::wait_area_ctor as wait_until_area_codes_match_ctor;
+use sa_world::bindings::leave_car_ctor;
+use sa_world::bindings::physical_apply_move_force_5429f0 as physical_apply_move_force;
+use sa_world::bindings::stand_still_ctor;
+use sa_world::bindings::task_use_effect_ctor as use_effect_ctor;
+use sa_world::bindings::wanted_set_wanted_level_no_drop;
 orig! {
     /// `CEvent::GetEventType` (vtable +4)
     fn v_event_type(e: GPtr<u8>) -> i32 = thiscall vslot 0x4 => unported;
@@ -57,8 +66,6 @@ orig! {
     fn v_event_source(e: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x28 => unported;
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CPhysical::ApplyMoveForce(CVector)` (0x5429F0, `ret 0xC`; the vector by value)
-    fn physical_apply_move_force(p: GPtr<u8>, x: f32, y: f32, z: f32) = thiscall 0x5429F0 => unported;
     /// `CPedGeometryAnalyser::ComputePedHitSide(const CPed&, const CVector&)` (0x5F1E70, cdecl)
     fn geometry_compute_ped_hit_side(ped: GPtr<u8>, pos: GPtr<u8>) -> i32 = cdecl 0x5F1E70 => unported;
     /// `CDarkel::RegisterKillNotByPlayer(const CPed*, eWeaponType)` (0x43D210, cdecl)
@@ -66,27 +73,19 @@ orig! {
     /// `CPedGroups::RegisterKillByPlayer(CPed*, CPlayerPed*)` (0x5F7E30, cdecl; reached by a tail jump with the
     /// caller's own arguments)
     fn ped_groups_register_kill_by_player(ped: GPtr<u8>, killer: GPtr<u8>, w: u32, head: u32) = cdecl 0x5F7E30 => unported;
-    /// `CWanted::SetWantedLevelNoDrop(int32)` (0x562570, `ret 4`)
-    fn wanted_set_wanted_level_no_drop(w: GPtr<u8>, l: i32) = thiscall 0x562570 => unported;
     /// `CTaskSimpleDuck::RestartTask(CPed*)` (0x692390, `ret 4`)
     fn duck_restart_task(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x692390 => unported;
     /// `FUN_004ace80(CPed*)` (thiscall on the event, `ret 4`; result unused here)
     fn object_collision_4ace80(e: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x4ACE80 => unported;
     fn simple_dead_ctor(t: GPtr<u8>, time: u32, b: u32) -> GPtr<u8> = thiscall 0x630590 => unported;
-    fn stand_still_ctor(t: GPtr<u8>, time: i32, a: u32, b: u32, f: u32) -> GPtr<u8> = thiscall 0x62F310 => unported;
-    fn use_effect_ctor(t: GPtr<u8>, effect: GPtr<u8>, entity: GPtr<u8>) -> GPtr<u8> = thiscall 0x6321F0 => unported;
     fn investigate_disturbance_ctor(t: GPtr<u8>, pos: GPtr<u8>, e: GPtr<u8>) -> GPtr<u8> = thiscall 0x66C720 => unported;
     fn prostitute_solicit_ctor(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x661A60 => unported;
     fn player_on_fire_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x633560 => unported;
     fn complex_on_fire_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x633390 => unported;
     fn in_water_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x6350D0 => unported;
     fn interior_use_info_ctor(t: GPtr<u8>, a: u32, b: u32, c: u32, d: u32) -> GPtr<u8> = thiscall 0x675A50 => unported;
-    fn pass_object_ctor(t: GPtr<u8>, e: u32, b: u32) -> GPtr<u8> = thiscall 0x6611B0 => unported;
-    fn leave_car_ctor(t: GPtr<u8>, veh: GPtr<u8>, a: i32, b: i32, c: u32, d: u32) -> GPtr<u8> = thiscall 0x63B8C0 => unported;
     fn walk_round_fire_ctor(t: GPtr<u8>, ms: i32, pos: GPtr<u8>, radius: u32, target: GPtr<u8>) -> GPtr<u8> = thiscall 0x655720 => unported;
-    fn wait_until_area_codes_match_ctor(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x635540 => unported;
     fn extinguish_fires_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x6975C0 => unported;
-    fn gang_join_respond_ctor(t: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x6616F0 => unported;
 }
 
 /// `g_ikChainMan`
@@ -154,7 +153,7 @@ fn set(this: GPtr<u8>, t: GPtr<u8>) {
 }
 
 fn smart_flee_default(other: GPtr<u8>) -> GPtr<u8> {
-    new_task(0x40, |t| smart_flee_entity_ctor(t, other, 0, gu(FLEE_SAFE_DIST), gu(FLEE_TIME), gu(FLEE_PERIOD), gu(FLEE_SHIFT)))
+    new_task(0x40, |t| smart_flee_entity_ctor(t, other, 0, f32::from_bits(gu(FLEE_SAFE_DIST)), gu(FLEE_TIME), gu(FLEE_PERIOD), gu(FLEE_SHIFT)))
 }
 
 fn kill_on_foot(other: GPtr<u8>) -> GPtr<u8> {
@@ -271,8 +270,8 @@ pub fn handler_compute_sexy_vehicle_response(this: GPtr<u8>, e: GPtr<u8>, _activ
         return;
     }
     interesting_events_add(GPtr::from_addr(INTERESTING_EVENTS), 8, veh);
-    set(this, new_task(0x20, |t| stand_still_ctor(t, 5000, 0, 0, 0x4100_0000)));
-    ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), S_SEXY_VEHICLE, ped(this), veh, 5000, -1, 0, 1, 0x3E80_0000, 500, 3, 0);
+    set(this, new_task(0x20, |t| stand_still_ctor(t, 5000, 0, 0, f32::from_bits(0x4100_0000))));
+    ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), GPtr::from_addr(S_SEXY_VEHICLE as usize), ped(this), veh, 5000, -1i32 as u32, GPtr::NULL, 1, 0x3E80_0000, 500, 3, 0);
 }
 
 /// `CEventHandler::ComputePedToFleeResponse` (0x4B9B50): with the ped (+0xC): `CPed::Say(0x45, 0, 1.0, 0, 0, 0)`,
@@ -284,8 +283,8 @@ pub fn handler_compute_ped_to_flee_response(this: GPtr<u8>, e: GPtr<u8>, _active
     if other.is_null() {
         return;
     }
-    ped_say(ped(this), 0x45, 0, 0x3F80_0000, 0, 0, 0);
-    set(this, new_task(0x40, |t| smart_flee_entity_ctor(t, other, 1, 0x42C8_0000, u32::MAX, gu(FLEE_PERIOD), gu(FLEE_SHIFT))));
+    ped_say(ped(this), 0x45, 0, f32::from_bits(0x3F80_0000), 0, 0, 0);
+    set(this, new_task(0x40, |t| smart_flee_entity_ctor(t, other, 1, f32::from_bits(0x42C8_0000), u32::MAX, gu(FLEE_PERIOD), gu(FLEE_SHIFT))));
 }
 
 /// `CEventHandler::ComputeAttractorResponse` (0x4B9BE0): event +0x14 the effect, +0x18 the entity. An event of type
@@ -415,7 +414,7 @@ pub fn handler_compute_vehicle_died_response(this: GPtr<u8>, e: GPtr<u8>, active
             return;
         }
     }
-    set(this, new_task(0x28, |t| die_ctor(t, 0x33, 0, 0xF, 0x4080_0000, 0, 0, 0, 0, 0)));
+    set(this, new_task(0x28, |t| die_ctor(t, 0x33, 0, 0xF, f32::from_bits(0x4080_0000), f32::from_bits(0), 0, 0, 0, 0)));
 }
 
 fn health_response(this: GPtr<u8>, e: GPtr<u8>) {
@@ -444,10 +443,10 @@ pub fn handler_compute_really_low_health_response(this: GPtr<u8>, e: GPtr<u8>, _
 fn anger_response(this: GPtr<u8>, e: GPtr<u8>) {
     match task_type(e) {
         200 => set(this, GPtr::NULL),
-        0x1AB => set(this, new_task(0x28, |t| duck_ctor(t, 0, 0xE0FF, -1))),
+        0x1AB => set(this, new_task(0x28, |t| duck_ctor(t, 0, 0xE0FF, -1i32 as u32))),
         0x38F => set(this, new_task(0x40, |t| {
             let player = find_player_ped(-1);
-            smart_flee_entity_ctor(t, player, 0, gu(FLEE_SAFE_DIST), gu(FLEE_TIME), gu(FLEE_PERIOD), gu(FLEE_SHIFT))
+            smart_flee_entity_ctor(t, player, 0, f32::from_bits(gu(FLEE_SAFE_DIST)), gu(FLEE_TIME), gu(FLEE_PERIOD), gu(FLEE_SHIFT))
         })),
         0x3E8 => set(this, new_task(0x38, |t| {
             let player = find_player_ped(-1);
@@ -497,9 +496,9 @@ pub fn handler_compute_on_fire_response(this: GPtr<u8>, _e: GPtr<u8>, _active: G
        this = "CEventHandler", unverified = "intro-ai-2", route = "L2", hazards = "x87-transcendental", recs = "grove-walk")]
 pub fn handler_compute_water_cannon_response(this: GPtr<u8>, e: GPtr<u8>, _active: GPtr<u8>, _simplest: GPtr<u8>) {
     let dir = e.byte_add(0x18);
-    ped_say(ped(this), 0x158, 0, 0x3F80_0000, 0, 0, 0);
+    ped_say(ped(this), 0x158, 0, f32::from_bits(0x3F80_0000), 0, 0, 0);
     let side = geometry_compute_ped_hit_side(ped(this), dir);
-    set(this, new_task(0x18, |t| fall_and_get_up_ctor2(t, side, 0)));
+    set(this, new_task(0x18, |t| fall_and_get_up_ctor2(t, side as u32, 0)));
     let ts = x(g::<f32>(TIME_STEP).read());
     physical_apply_move_force(ped(this), 0.0, 0.0, f32_of(ts.fadd(ts)));
     let k = g::<f32>(K_CANNON_SPEED).read();
@@ -543,7 +542,7 @@ pub fn handler_compute_interior_use_info_response(this: GPtr<u8>, e: GPtr<u8>, _
 #[hook(addr = 0x4bb0c0, conv = thiscall, name = "CEventHandler::ComputePassObjectResponse", expect = "6A FF 68 2B AD 83 00",
        this = "CEventHandler", unverified = "intro-ai-2", route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn handler_compute_pass_object_response(this: GPtr<u8>, e: GPtr<u8>, _active: GPtr<u8>, _simplest: GPtr<u8>) {
-    set(this, new_task(0x30, |t| pass_object_ctor(t, rd::<u32>(e, 0xC), u32::from(rd::<u8>(e, 0x10)))));
+    set(this, new_task(0x30, |t| pass_object_ctor(t, GPtr::from_addr(rd::<u32>(e, 0xC) as usize), u32::from(rd::<u8>(e, 0x10)))));
 }
 
 /// `CEventHandler::ComputePlayerWantedLevelResponse` (0x4BB280): +0x24 = `CTaskComplexPolicePursuit`.
@@ -721,7 +720,7 @@ pub fn handler_compute_seen_cop_response(this: GPtr<u8>, e: GPtr<u8>, _active: G
 pub fn handler_compute_on_escalator_response(this: GPtr<u8>, _e: GPtr<u8>, _active: GPtr<u8>, _simplest: GPtr<u8>) {
     let t = task_new(0x20);
     if !t.is_null() {
-        stand_still_ctor(t, 0, 1, 0, 0x4100_0000);
+        stand_still_ctor(t, 0, 1, 0, f32::from_bits(0x4100_0000));
         wr::<u32>(t, 0, VT_STAND_STILL_ESCALATOR);
     }
     set(this, t);
@@ -744,7 +743,7 @@ pub fn handler_compute_danger_response(this: GPtr<u8>, e: GPtr<u8>, _active: GPt
     if src.is_null() {
         return;
     }
-    let flee = || new_task(0x40, |t| smart_flee_entity_ctor(t, src, 1, 0x47C3_5000, gu(FLEE_TIME), gu(FLEE_PERIOD), gu(FLEE_SHIFT)));
+    let flee = || new_task(0x40, |t| smart_flee_entity_ctor(t, src, 1, f32::from_bits(0x47C3_5000), gu(FLEE_TIME), gu(FLEE_PERIOD), gu(FLEE_SHIFT)));
     match task_type(e) {
         0x2D6 => {
             let p = ped(this);

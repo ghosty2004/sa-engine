@@ -62,23 +62,21 @@ pub use sa_core::bindings::task_new;
 pub use sa_core::bindings::tm_get_task_secondary as task_manager_get_task_secondary;
 pub use sa_core::bindings::tm_set_task_secondary as task_manager_set_task_secondary;
 pub use sa_core::bindings::world_clear_scan_codes;
+pub use crate::bindings::bone_calc_wld_mat;
+pub use sa_core::bindings::clump_get_association as rp_anim_blend_clump_get_association;
+pub use sa_core::bindings::ik_abort_look_at as call_abort_look_at;
+pub use sa_core::bindings::ped_get_bone_position;
+pub use sa_core::bindings::rt_quat_convert_from_matrix;
+pub use sa_core::bindings::rt_quat_rotate;
+pub use sa_core::bindings::rw_v3d_length;
+pub use sa_core::bindings::rw_v3d_normalize;
+pub use sa_core::bindings::rw_v3d_transform_point;
+pub use sa_core::bindings::rw_v3d_transform_vector;
+pub use sa_core::bindings::vector_magnitude_sqr;
+pub use sa_core::bindings::vector_sub;
 orig! {
-    /// `RwV3dTransformVector(out, in, matrix)` (0x7EDDC0)
-    pub fn rw_v3d_transform_vector(out: GPtr<f32>, inp: GPtr<f32>, m: GPtr<u8>) -> GPtr<f32> = cdecl 0x7EDDC0 => unported;
-    /// `RwV3dTransformPoint(out, in, matrix)` (0x7EDD60)
-    pub fn rw_v3d_transform_point(out: GPtr<f32>, inp: GPtr<f32>, m: GPtr<u8>) -> GPtr<f32> = cdecl 0x7EDD60 => unported;
-    /// `RwV3dNormalize(out, in)` (0x7ED9B0): the length in ST0
-    pub fn rw_v3d_normalize(out: GPtr<f32>, inp: GPtr<f32>) -> f64 = cdecl 0x7ED9B0 => unported;
-    /// `RwV3dLength(in)` (0x7EDAC0): ST0
-    pub fn rw_v3d_length(inp: GPtr<f32>) -> f64 = cdecl 0x7EDAC0 => unported;
-    /// `RtQuatConvertFromMatrix(quat, matrix)` (0x7EB5C0)
-    pub fn rt_quat_convert_from_matrix(q: GPtr<f32>, m: GPtr<u8>) -> u32 = cdecl 0x7EB5C0 => unported;
     /// `RtQuatTransformVectors(out, in, n, quat)` (0x7EBBB0)
     pub fn rt_quat_transform_vectors(out: GPtr<f32>, inp: GPtr<f32>, n: i32, q: GPtr<f32>) -> GPtr<f32> = cdecl 0x7EBBB0 => unported;
-    /// `RtQuatRotate(quat, axis, angle, combineOp)` (0x7EB7C0)
-    pub fn rt_quat_rotate(q: GPtr<f32>, axis: GPtr<f32>, angle: f32, op: i32) -> GPtr<f32> = cdecl 0x7EB7C0 => unported;
-    /// `CPed::GetBonePosition(RwV3d& out, boneTag, bool updateSkin)` (0x5E4280)
-    pub fn ped_get_bone_position(ped: GPtr<u8>, out: GPtr<f32>, bone: i32, update: u32) = thiscall 0x5E4280 => unported;
     /// `operator new` (0x821195)
     pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x821195 => unported;
     /// `BoneNodeManager_c::GetBoneNode()` (0x617460)
@@ -91,8 +89,6 @@ orig! {
     pub fn bone_add_child(this: GPtr<u8>, child: GPtr<u8>) = thiscall 0x616BD0 => crate::bones::add_child;
     /// `BoneNode_c::GetIdFromBoneTag(tag)` (0x617050)
     pub fn bone_get_id_from_bone_tag(tag: i32) -> i32 = cdecl 0x617050 => crate::bones::get_id_from_bone_tag;
-    /// `BoneNode_c::CalcWldMat(parent)` (0x616CD0)
-    pub fn bone_calc_wld_mat(this: GPtr<u8>, parent: GPtr<u8>) = thiscall 0x616CD0 => crate::bones::calc_wld_mat;
     /// `BoneNode_c::BlendKeyframe(blend)` (0x616E30)
     pub fn bone_blend_keyframe(this: GPtr<u8>, blend: f32) = thiscall 0x616E30 => crate::bones::blend_keyframe;
     /// `BoneNode_c::Limit(blend)` (0x617650)
@@ -125,8 +121,6 @@ orig! {
     pub fn call_manager_exit(this: GPtr<u8>) = thiscall 0x6180D0 => manager_exit;
     /// `IKChainManager_c::CanAccept(ped, range)` (0x618800)
     pub fn call_can_accept(this: GPtr<u8>, ped: GPtr<u8>, range: f32) -> u8 = thiscall 0x618800 => can_accept;
-    /// `IKChainManager_c::AbortLookAt(ped, blendTime)` (0x618280)
-    pub fn call_abort_look_at(this: GPtr<u8>, ped: GPtr<u8>, time: i32) = thiscall 0x618280 => abort_look_at;
     /// `CTaskSimpleIKManager::GetTaskAtSlot(slot)` (0x6339B0)
     pub fn ik_manager_task_get_task_at_slot(t: GPtr<u8>, slot: i32) -> GPtr<u8> = thiscall 0x6339B0 => unported;
     /// `CTaskSimpleIKLookAt::GetLookAtEntity()` (0x634120)
@@ -135,12 +129,6 @@ orig! {
     pub fn look_at_task_get_offset(t: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall 0x634130 => unported;
     /// `CTaskSimpleIKChain::GetIKChain()` (0x633C70)
     pub fn ik_chain_task_get_ik_chain(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x633C70 => unported;
-    /// `VectorSub(CVector* out, const CVector* a, const CVector* b)` (0x40FE60): out = a - b
-    pub fn vector_sub(out: GPtr<f32>, a: GPtr<f32>, b: GPtr<f32>) -> GPtr<f32> = cdecl 0x40FE60 => unported;
-    /// `CVector::MagnitudeSqr()` (0x406DA0): ST0
-    pub fn vector_magnitude_sqr(v: GPtr<f32>) -> f64 = thiscall 0x406DA0 => unported;
-    /// `RpAnimBlendClumpGetAssociation(clump, animId)` (0x4D68B0)
-    pub fn rp_anim_blend_clump_get_association(clump: GPtr<u8>, anim: i32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
     /// `IKChainManager_c::CanAcceptLookAt(ped)` (0x6188B0, AL)
     pub fn call_can_accept_look_at(this: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x6188B0 => can_accept_look_at;
     /// `CTaskSimpleIKManager::CTaskSimpleIKManager()` (0x6337F0): returns `this`
@@ -245,7 +233,7 @@ pub fn get_bone_node_from_tag(this: GPtr<u8>, tag: i32) -> GPtr<u8> {
 pub fn setup_bones(this: GPtr<u8>, effector: i32, _ex: u32, _ey: u32, _ez: u32, pivot: i32, frames: GPtr<u8>) {
     wr::<i32>(this, 0xC, 0);
     let h = get_anim_hierarchy_from_skin_clump(rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 8), 0x18));
-    let pi = rp_hanim_id_get_index(h, pivot);
+    let pi = rp_hanim_id_get_index(h, pivot as u32);
     let m = rp_hanim_hierarchy_get_matrix_array(h);
     wr::<u32>(this, 0x14, m.addr().wrapping_add((pi << 6) as u32 as usize) as u32);
     wr::<u16>(this, 0x2C, pivot as u16);
@@ -253,7 +241,7 @@ pub fn setup_bones(this: GPtr<u8>, effector: i32, _ex: u32, _ey: u32, _ez: u32, 
     let mut tag = effector;
     while tag != pivot {
         let node = get_bone_node(bone_node_man());
-        let idx = rp_hanim_id_get_index(h, tag);
+        let idx = rp_hanim_id_get_index(h, tag as u32);
         let kf = rd::<GPtr<u8>>(frames, (idx.wrapping_mul(0x18) + 0x10) as isize);
         bone_init(node, tag, kf);
         let n = rd::<i32>(this, 0xC);
@@ -308,17 +296,17 @@ pub fn move_bones_to_target(this: GPtr<u8>) {
             let mat = if obj.is_null() { GPtr::NULL } else { rd::<GPtr<u8>>(obj, 4).byte_add(0x10) };
             let tag = rd::<i32>(this, 0x34);
             if tag != -1 {
-                ped_get_bone_position(ent, target, tag, 0);
+                ped_get_bone_position(ent, target.cast::<u8>(), tag, 0);
                 if !mat.is_null() {
                     let mut t = [0f32; 3];
-                    rw_v3d_transform_vector(GPtr::from_raw(t.as_mut_ptr()), at(this, 0x38), mat);
+                    rw_v3d_transform_vector(GPtr::<f32>::cast::<u8>(GPtr::from_raw(t.as_mut_ptr())), GPtr::<f32>::cast::<u8>(at(this, 0x38)), mat);
                     for (k, v) in t.iter().enumerate() {
                         let k = k as isize;
                         wr::<f32>(this, 0x48 + 4 * k, x(*v).fadd_m(tf(k)).to_f32());
                     }
                 }
             } else if !mat.is_null() {
-                rw_v3d_transform_point(target, at(this, 0x38), mat);
+                rw_v3d_transform_point(target.cast::<u8>(), GPtr::<f32>::cast::<u8>(at(this, 0x38)), mat);
             }
         }
     }
@@ -328,29 +316,29 @@ pub fn move_bones_to_target(this: GPtr<u8>) {
         let bp = [rd::<f32>(b, 0x6C), rd::<f32>(b, 0x70), rd::<f32>(b, 0x74)];
         let p0 = [rd::<f32>(b0, 0x6C), rd::<f32>(b0, 0x70), rd::<f32>(b0, 0x74)];
         let mut t = [0f32; 3];
-        rw_v3d_transform_vector(GPtr::from_raw(t.as_mut_ptr()), at(this, 0x20), b0.byte_add(0x3C));
+        rw_v3d_transform_vector(GPtr::<f32>::cast::<u8>(GPtr::from_raw(t.as_mut_ptr())), GPtr::<f32>::cast::<u8>(at(this, 0x20)), b0.byte_add(0x3C));
         let ea = x(t[0]).fadd_m(p0[0]);
         let eb = x(t[1]).fadd_m(p0[1]);
         let ec = x(t[2]).fadd_m(p0[2]).to_f32();
         let mut d1 = [ea.fsub_m(bp[0]).to_f32(), eb.fsub_m(bp[1]).to_f32(), x(ec).fsub_m(bp[2]).to_f32()];
         let skip = |len: f64| X87::from_f64_exact(len).fcom(x(TINY)) != Cmp::Greater;
-        if skip(rw_v3d_length(GPtr::from_raw(d1.as_mut_ptr()))) {
+        if skip(rw_v3d_length(GPtr::<f32>::cast::<u8>(GPtr::from_raw(d1.as_mut_ptr())))) {
             i += 1;
             continue;
         }
         let d1p = GPtr::from_raw(d1.as_mut_ptr());
-        rw_v3d_normalize(d1p, d1p);
+        rw_v3d_normalize(d1p.cast::<u8>(), d1p.cast::<u8>());
         let mut d2 = [
             x(tf(0)).fsub_m(bp[0]).to_f32(),
             x(tf(1)).fsub_m(bp[1]).to_f32(),
             x(tf(2)).fsub_m(bp[2]).to_f32(),
         ];
-        if skip(rw_v3d_length(GPtr::from_raw(d2.as_mut_ptr()))) {
+        if skip(rw_v3d_length(GPtr::<f32>::cast::<u8>(GPtr::from_raw(d2.as_mut_ptr())))) {
             i += 1;
             continue;
         }
         let d2p = GPtr::from_raw(d2.as_mut_ptr());
-        rw_v3d_normalize(d2p, d2p);
+        rw_v3d_normalize(d2p.cast::<u8>(), d2p.cast::<u8>());
         let dot = x(d2[1])
             .fmul_m(d1[1])
             .fadd(x(d2[0]).fmul_m(d1[0]))
@@ -372,7 +360,7 @@ pub fn move_bones_to_target(this: GPtr<u8>) {
         let parent = rd::<GPtr<u8>>(b, 0x2C);
         let pm = if parent.is_null() { rd::<GPtr<u8>>(this, 0x14) } else { parent.byte_add(0x3C) };
         let mut q = [0f32; 4];
-        rt_quat_convert_from_matrix(GPtr::from_raw(q.as_mut_ptr()), pm);
+        rt_quat_convert_from_matrix(GPtr::<f32>::cast::<u8>(GPtr::from_raw(q.as_mut_ptr())), pm);
         let n = x(q[1])
             .fmul_m(q[1])
             .fadd(x(q[0]).fmul_m(q[0]))
@@ -394,7 +382,7 @@ pub fn move_bones_to_target(this: GPtr<u8>) {
             1,
             GPtr::from_raw(qi.as_mut_ptr()),
         );
-        rt_quat_rotate(at(b, 0x10), GPtr::from_raw(axis2.as_mut_ptr()), angle, 2);
+        rt_quat_rotate(GPtr::<f32>::cast::<u8>(at(b, 0x10)), GPtr::<f32>::cast::<u8>(GPtr::from_raw(axis2.as_mut_ptr())), angle, 2);
         if limit_flag() != 0 {
             bone_limit(b, rd::<f32>(this, 0x18));
         }
@@ -437,8 +425,8 @@ fn effector_dir(this: GPtr<u8>) -> ([f32; 3], [f32; 3]) {
     let pos = [rd::<f32>(b0, 0x6C), rd::<f32>(b0, 0x70), rd::<f32>(b0, 0x74)];
     let mut dir = [0f32; 3];
     let dp = GPtr::from_raw(dir.as_mut_ptr());
-    rw_v3d_transform_vector(dp, at(this, 0x20), b0.byte_add(0x3C));
-    rw_v3d_normalize(dp, dp);
+    rw_v3d_transform_vector(dp.cast::<u8>(), GPtr::<f32>::cast::<u8>(at(this, 0x20)), b0.byte_add(0x3C));
+    rw_v3d_normalize(dp.cast::<u8>(), dp.cast::<u8>());
     (pos, dir)
 }
 
@@ -454,7 +442,7 @@ pub fn is_facing_target(this: GPtr<u8>) -> u8 {
         x(tf(2)).fsub_m(pos[2]).to_f32(),
     ];
     let dp = GPtr::from_raw(d.as_mut_ptr());
-    rw_v3d_normalize(dp, dp);
+    rw_v3d_normalize(dp.cast::<u8>(), dp.cast::<u8>());
     let dot = x(dir[1]).fmul_m(d[1]).fadd(x(dir[0]).fmul_m(d[0])).fadd(x(dir[2]).fmul_m(d[2]));
     if matches!(dot.fcom(x(FACING)), Cmp::Less | Cmp::Unordered) {
         return 0;
@@ -473,7 +461,7 @@ pub fn is_at_target(this: GPtr<u8>, range: f32, out: GPtr<f32>) -> u8 {
         x(tf(1)).fsub_m(rd::<f32>(b0, 0x70)).to_f32(),
         x(tf(2)).fsub_m(rd::<f32>(b0, 0x74)).to_f32(),
     ];
-    let len = X87::from_f64_exact(rw_v3d_length(GPtr::from_raw(d.as_mut_ptr())));
+    let len = X87::from_f64_exact(rw_v3d_length(GPtr::<f32>::cast::<u8>(GPtr::from_raw(d.as_mut_ptr()))));
     if !out.is_null() {
         out.write(len.to_f32());
     }
@@ -519,7 +507,7 @@ pub fn init(
         return 0;
     }
     let h = get_anim_hierarchy_from_skin_clump(clump);
-    let idx = rp_hanim_id_get_index(h, effector);
+    let idx = rp_hanim_id_get_index(h, effector as u32);
     let kf = rd::<GPtr<u8>>(frames, (idx.wrapping_mul(0x18) + 0x10) as isize);
     let nonzero = |o: isize| x(rd::<f32>(kf, o)).fcom(x(0.0)) != Cmp::Equal;
     if !(nonzero(0x10) || nonzero(0x14) || nonzero(0x18)) {
@@ -553,7 +541,7 @@ pub fn init(
 #[hook(addr = 0x6184B0, conv = thiscall, name = "IKChain_c::Update", expect = "53 56 8B F1 8B 46 08", this = "IKChain_c")]
 pub fn update(this: GPtr<u8>, _dt: f32) {
     let h = get_anim_hierarchy_from_skin_clump(rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 8), 0x18));
-    let pi = rp_hanim_id_get_index(h, i32::from(rd::<i16>(this, 0x2C)));
+    let pi = rp_hanim_id_get_index(h, i32::from(rd::<i16>(this, 0x2C)) as u32);
     let m = rp_hanim_hierarchy_get_matrix_array(h);
     let pm = m.byte_add((pi << 6) as isize);
     wr::<u32>(this, 0x14, pm.addr() as u32);
@@ -849,7 +837,7 @@ pub fn can_accept(_this: GPtr<u8>, ped: GPtr<u8>, range: f32) -> u8 {
     let pm = rd::<GPtr<u8>>(ped, 0x14);
     let pp: GPtr<f32> = if pm.is_null() { ped.byte_add(4).cast() } else { pm.byte_add(0x30).cast() };
     let mut d = [0f32; 3];
-    let r = vector_sub(GPtr::from_raw(d.as_mut_ptr()), pp, cam);
+    let r = GPtr::<u8>::cast::<f32>(vector_sub(GPtr::<f32>::cast::<u8>(GPtr::from_raw(d.as_mut_ptr())), pp.cast::<u8>(), cam.cast::<u8>()));
     let msq = X87::from_f64_exact(vector_magnitude_sqr(r));
     let r2 = x(range).fmul_m(range);
     u8::from(!matches!(r2.fcom(msq), Cmp::Less))
@@ -874,7 +862,7 @@ pub fn can_accept_look_at(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         return 0;
     }
     for anim in 0x12B..=0x12D {
-        if !rp_anim_blend_clump_get_association(rd::<GPtr<u8>>(ped, 0x18), anim).is_null() {
+        if !rp_anim_blend_clump_get_association(rd::<GPtr<u8>>(ped, 0x18), anim as u32).is_null() {
             return 0;
         }
     }

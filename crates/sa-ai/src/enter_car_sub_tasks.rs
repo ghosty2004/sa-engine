@@ -11,6 +11,7 @@
 //! ped (a registered reference), +0x44 door flags set, +0x48 cruise speed, +0x4C start time.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::orig::at_site;
 use sa_core::{hook, orig};
@@ -51,8 +52,25 @@ use sa_world::bindings::ped_groups_are_in_same_group;
 use sa_world::bindings::ped_groups_get_peds_group;
 use sa_world::bindings::player_set_real_move_anim as player_ped_set_real_move_anim;
 use sa_world::bindings::stand_still_ctor as t_stand_still;
+use crate::bindings::car_drive_timed_ctor as t_drive_timed;
+use crate::bindings::car_enter_exit_car_has_door_to_close as car_has_door_to_close;
+use crate::bindings::car_enter_exit_car_has_door_to_open as car_has_door_to_open;
+use crate::bindings::car_enter_exit_car_has_openable_door as car_has_openable_door;
+use crate::bindings::car_set_ped_out_position_ped_out_of_collision as position_ped_out_of_collision;
+use crate::bindings::car_wait_for_door_ctor as t_wait_for_door;
+use crate::bindings::close_door_from_outside_ctor as t_close_door_outside;
+use crate::bindings::create_sub_task_o_63e040 as create_sub_task_o;
+use crate::bindings::damage_get_door_status_component as damage_get_door_status;
+use crate::bindings::damage_manager_set_door_status as damage_set_door_status;
+use crate::bindings::dragged_out_car_ctor as event_dragged_out_car_ctor;
+use crate::bindings::fall_and_get_up_ctor as t_fall_and_get_up;
+use sa_core::bindings::text_get;
+use sa_world::bindings::car_enter_exit_compute_passenger_index_from_car_door as compute_passenger_index_from_car_door;
+use sa_world::bindings::ik_look_at as ped_chat_say;
+use sa_world::bindings::ped_set_move_state;
+use sa_world::bindings::set_ped_in_as_driver_ctor as t_set_in_driver;
+use sa_world::bindings::set_ped_in_as_passenger_ctor as t_set_in_passenger;
 orig! {
-    fn create_sub_task_o(t: GPtr<u8>, ty: u32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x63E040 => create_sub_task;
     /// `CTaskComplex::CreateFirstSubTask` (vtable +0x24)
     fn v_create_first_sub_task(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x24 => unported;
     /// `CTaskComplexEnterCar::CreateNextSubTask_AfterSimpleCarAlign` (vtable +0x2C)
@@ -65,49 +83,32 @@ orig! {
     fn v_ped_set_move_anim(ped: GPtr<u8>) = thiscall vslot 0x5C => unported;
     /// `CVehicle` vtable +0x94 (door missing, door argument)
     fn v_veh_slot_94(v: GPtr<u8>, door: u32) -> u8 = thiscall vslot 0x94 => unported;
-    fn ped_set_move_state(ped: GPtr<u8>, s: i32) = thiscall 0x5DEC00 => unported;
     fn player_info_set_last_target_vehicle(pi: GPtr<u8>, v: GPtr<u8>) = thiscall 0x56DA80 => unported;
     fn is_ped_healthy(p: GPtr<u8>) -> u8 = cdecl 0x64EEE0 => unported;
     fn compute_slow_jacked_ped(v: GPtr<u8>, door: i32) -> GPtr<u8> = cdecl 0x64F070 => unported;
     fn is_car_slow_jack_required(v: GPtr<u8>, door: i32, ped: GPtr<u8>) -> u8 = cdecl 0x64EF70 => unported;
     fn is_car_quick_jack_possible(v: GPtr<u8>, door: i32, ped: GPtr<u8>) -> u8 = cdecl 0x64EF00 => unported;
-    fn car_has_door_to_close(v: GPtr<u8>, door: i32) -> u8 = cdecl 0x64EE10 => unported;
-    fn car_has_door_to_open(v: GPtr<u8>, door: i32) -> u8 = cdecl 0x64EDD0 => unported;
-    fn car_has_openable_door(v: GPtr<u8>, door: i32, ped: GPtr<u8>) -> u8 = cdecl 0x64EE50 => unported;
     fn car_has_partially_open_door(v: GPtr<u8>, door: i32) -> u8 = cdecl 0x64EE70 => unported;
     fn is_car_door_ready(v: GPtr<u8>, door: i32) -> u8 = cdecl 0x64ED90 => unported;
     fn is_car_door_in_use(v: GPtr<u8>, a: i32, b: i32) -> u8 = cdecl 0x64EC90 => unported;
-    fn compute_passenger_index_from_car_door(v: GPtr<u8>, door: i32) -> i32 = cdecl 0x64F1E0 => unported;
     fn make_undragged_passenger_peds_leave_car(v: GPtr<u8>, dragged: GPtr<u8>, ped: GPtr<u8>) = cdecl 0x64F540 => unported;
-    fn position_ped_out_of_collision(ped: GPtr<u8>, v: GPtr<u8>, door: i32) = cdecl 0x6479B0 => unported;
-    fn damage_get_door_status(d: GPtr<u8>, door: i32) -> u32 = thiscall 0x6C2250 => unported;
-    fn damage_set_door_status(d: GPtr<u8>, door: i32, st: u32) = thiscall 0x6C21E0 => unported;
     fn set_vehicle_flags(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x63AB90 => unported;
     fn prepare_vehicle_for_ped_enter(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x63AC10 => unported;
     fn prepare_ped_for_vehicle_enter(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x63AC80 => unported;
     fn create_line_up_utility(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x63ACC0 => unported;
-    fn text_get(text: GPtr<u8>, key: u32) -> u32 = thiscall 0x6A0050 => unported;
     fn intelligence_add_task_primary_maybe_in_group(i: GPtr<u8>, t: GPtr<u8>, b: u32) = thiscall 0x600E20 => unported;
-    fn ped_chat_say(store: GPtr<u8>, name: u32, a: GPtr<u8>, b: GPtr<u8>, delay: i32, c: u32, d: u32, e: u32, f: u32, g: u32, h: u32, i: u32) = thiscall 0x618970 => unported;
     fn ped_groups_is_group_leader(ped: GPtr<u8>) -> u8 = cdecl 0x5F7E40 => unported;
     fn event_leader_quit_entering_car_ctor(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x63A110 => unported;
-    fn event_dragged_out_car_ctor(e: GPtr<u8>, veh: GPtr<u8>, ped: GPtr<u8>, driver: u32) -> GPtr<u8> = thiscall 0x4AD250 => unported;
-    fn t_fall_and_get_up(t: GPtr<u8>, anim: u32, group: u32, ms: u32) -> GPtr<u8> = thiscall 0x6786C0 => unported;
     fn t_enter_boat_as_driver(t: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = thiscall 0x63B5E0 => unported;
     fn t_leave_car_3(t: GPtr<u8>, v: GPtr<u8>, door: u32, delay: u32) -> GPtr<u8> = thiscall 0x62F1A0 => unported;
-    fn t_drive_timed(t: GPtr<u8>, v: GPtr<u8>, ms: i32) -> GPtr<u8> = thiscall 0x5FF940 => unported;
     fn t_go_to_car_door(t: GPtr<u8>, v: GPtr<u8>, ms: u32, driver: u32, seat: u32, a: u32, b: u32, c: u32, d: u32) -> GPtr<u8> = thiscall 0x645780 => unported;
     fn t_car_align(t: GPtr<u8>, v: GPtr<u8>, pos: GPtr<u8>, door: u32, lu: u32) -> GPtr<u8> = thiscall 0x645B40 => unported;
     fn t_open_door_outside(t: GPtr<u8>, v: GPtr<u8>, door: u32, lu: u32, quit: u32) -> GPtr<u8> = thiscall 0x645E50 => unported;
     fn t_veh_door_lu(t: GPtr<u8>, v: GPtr<u8>, door: u32, lu: u32) -> GPtr<u8> = thiscall 0x646070 => unported;
     fn t_bike_pick_up(t: GPtr<u8>, v: GPtr<u8>, door: u32, lu: u32) -> GPtr<u8> = thiscall 0x6461B0 => unported;
     fn t_close_door_inside(t: GPtr<u8>, v: GPtr<u8>, door: u32, lu: u32) -> GPtr<u8> = thiscall 0x646300 => unported;
-    fn t_close_door_outside(t: GPtr<u8>, v: GPtr<u8>, door: u32, lu: u32) -> GPtr<u8> = thiscall 0x6464F0 => unported;
     fn t_get_in(t: GPtr<u8>, v: GPtr<u8>, door: u32, lu: u32) -> GPtr<u8> = thiscall 0x646690 => unported;
     fn t_shuffle(t: GPtr<u8>, v: GPtr<u8>, door: u32, lu: u32) -> GPtr<u8> = thiscall 0x646810 => unported;
-    fn t_wait_for_door(t: GPtr<u8>, v: GPtr<u8>, door: u32, opp: u32) -> GPtr<u8> = thiscall 0x646B70 => unported;
-    fn t_set_in_passenger(t: GPtr<u8>, v: GPtr<u8>, door: u32, lu: u32) -> GPtr<u8> = thiscall 0x646FE0 => unported;
-    fn t_set_in_driver(t: GPtr<u8>, v: GPtr<u8>, lu: u32) -> GPtr<u8> = thiscall 0x6470E0 => unported;
     fn t_slow_drag_ped_out(t: GPtr<u8>, v: GPtr<u8>, door: u32, lu: u32, quit: u32) -> GPtr<u8> = thiscall 0x647FE0 => unported;
     fn t_wait_until_ped_out(t: GPtr<u8>, ped: u32, dir: GPtr<u8>) -> GPtr<u8> = thiscall 0x649450 => unported;
     fn t_slow_be_dragged_out(t: GPtr<u8>, v: GPtr<u8>, door: u32) -> GPtr<u8> = thiscall 0x648620 => unported;
@@ -173,10 +174,10 @@ fn bump_door_status(v: GPtr<u8>, d: i32) {
         return;
     }
     let dm = v.byte_add(0x5A0);
-    let st = damage_get_door_status(dm, d);
-    if st == 0 || damage_get_door_status(dm, d) == 2 {
-        let s = damage_get_door_status(dm, d);
-        damage_set_door_status(dm, d, s.wrapping_add(1));
+    let st = damage_get_door_status(dm, d as u32);
+    if st == 0 || damage_get_door_status(dm, d as u32) == 2 {
+        let s = damage_get_door_status(dm, d as u32);
+        damage_set_door_status(dm, d as u32, s.wrapping_add(1));
     }
 }
 
@@ -348,7 +349,7 @@ pub fn create_sub_task(this: GPtr<u8>, ty: u32, ped: GPtr<u8>) -> GPtr<u8> {
     let v = veh(this);
     let d = door(this) as u32;
     match ty {
-        0xCB => new_task(0x20, |t| t_stand_still(t, 0, 0, 0, 0x4100_0000)),
+        0xCB => new_task(0x20, |t| t_stand_still(t, 0, 0, 0, f32::from_bits(0x4100_0000))),
         0xC8 => new_task(8, t_none),
         0xD0 => {
             let anim = if door(this) == 10 || door(this) == 11 {
@@ -368,7 +369,7 @@ pub fn create_sub_task(this: GPtr<u8>, ty: u32, ped: GPtr<u8>) -> GPtr<u8> {
                 wr::<u32>(ped, 0x1C, rd::<u32>(ped, 0x1C) | 1);
             }
             if !veh(this).is_null() {
-                position_ped_out_of_collision(ped, veh(this), door(this));
+                position_ped_out_of_collision(ped, veh(this), door(this) as u32);
             }
             let v = veh(this);
             if v.is_null() {
@@ -385,7 +386,7 @@ pub fn create_sub_task(this: GPtr<u8>, ty: u32, ped: GPtr<u8>) -> GPtr<u8> {
         }
         0x2C0 => new_task(0x34, |t| t_leave_car_5(t, rd::<GPtr<u8>>(ped, 0x58C), 0, 0, 1, 0)),
         0x2CB => new_task(0x10, |t| t_enter_boat_as_driver(t, v)),
-        0x2CF => new_task(0x70, |t| t_drive_timed(t, v, -1)),
+        0x2CF => new_task(0x70, |t| t_drive_timed(t, v, -1i32 as u32)),
         0x320 => new_task(0x50, |t| {
             let k = |a: usize| g::<u32>(a).read();
             t_go_to_car_door(
@@ -411,14 +412,14 @@ pub fn create_sub_task(this: GPtr<u8>, ty: u32, ped: GPtr<u8>) -> GPtr<u8> {
         0x327 => new_task(0x24, |t| t_get_in(t, v, d, lu(this))),
         0x328 => new_task(0x1C, |t| t_shuffle(t, v, d, lu(this))),
         0x32A => new_task(0x14, |t| t_wait_for_door(t, v, d, rd::<u32>(this, 0x18))),
-        0x32B => new_task(0x20, |t| t_set_in_passenger(t, v, d, lu(this))),
-        0x32C => new_task(0x1C, |t| t_set_in_driver(t, v, lu(this))),
+        0x32B => new_task(0x20, |t| t_set_in_passenger(t, v, d, GPtr::from_addr(lu(this) as usize))),
+        0x32C => new_task(0x1C, |t| t_set_in_driver(t, v, GPtr::from_addr(lu(this) as usize))),
         0x330 => new_task(0x18, |t| t_set_ped_out(t, v, d, 1)),
         0x334 => {
             if !ped.is_null() && ped_is_player(ped) != 0 && g::<u8>(0xC0BC15).read() == 0 {
                 g::<u8>(0xC0BC15).write(1);
-                let s = text_get(GPtr::from_addr(0xC1B340), 0x86EA90);
-                hud_set_help_message(s, 0, 0, 0);
+                let s = GPtr::<u8>::addr(text_get(GPtr::from_addr(0xC1B340), GPtr::from_addr(0x86EA90))) as u32;
+                hud_set_help_message(GPtr::from_addr(s as usize), 0, 0, 0);
             }
             new_task(0x20, |t| {
                 t_slow_drag_ped_out(t, v, d, lu(this), u32::from((flags(this) >> 2) & 1))
@@ -452,7 +453,7 @@ fn finished_side_effects(this: GPtr<u8>, ped: GPtr<u8>) {
     if !in_vehicle(ped) && rd::<u8>(ped, 0x1C) & 1 == 0 {
         wr::<u32>(ped, 0x1C, rd::<u32>(ped, 0x1C) | 1);
         if !veh(this).is_null() && door(this) != 0 {
-            position_ped_out_of_collision(ped, veh(this), door(this));
+            position_ped_out_of_collision(ped, veh(this), door(this) as u32);
         }
     }
     if ped_is_player(ped) != 0
@@ -516,9 +517,9 @@ fn drag_driver_out(this: GPtr<u8>, ped: GPtr<u8>, alive_long: impl FnOnce(GPtr<u
         t
     } else {
         let v = veh(this);
-        let d = compute_target_door_to_exit(v, rd::<GPtr<u8>>(v, 0x460));
+        let d = compute_target_door_to_exit(v, rd::<GPtr<u8>>(v, 0x460)) as u32;
         if long {
-            t_leave_car_5(t, veh(this), d, 0, 0, 1)
+            t_leave_car_5(t, veh(this), d as i32, 0, 0, 1)
         } else {
             t_leave_car_3(t, veh(this), d, 0)
         }
@@ -572,13 +573,13 @@ fn slow_jack(this: GPtr<u8>, ped: GPtr<u8>, align: bool) -> GPtr<u8> {
             false
         } else {
             let v = veh(this);
-            let idx = compute_passenger_index_from_car_door(v, door(this));
+            let idx = compute_passenger_index_from_car_door(v, door(this) as u32);
             rd::<GPtr<u8>>(this, 0x40) == rd::<GPtr<u8>>(v, 0x464 + 4 * idx as isize)
         };
         if !keep {
             return sub(this, 0x327, ped);
         }
-        return if car_has_door_to_close(veh(this), door(this)) != 0 {
+        return if car_has_door_to_close(veh(this), door(this) as u32) != 0 {
             sub(this, 0x326, ped)
         } else {
             sub(this, FINISHED, ped)
@@ -806,21 +807,21 @@ fn get_in_next(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     {
         let pad = GPtr::<u8>::from_addr(PAD0);
         let full = kf(0x859AAC);
-        let floored = !xi(i32::from(pad_get_accelerate(pad))).fcom(x(full)).c0()
-            || !xi(i32::from(pad_get_brake(pad))).fcom(x(full)).c0();
+        let floored = !xi(i32::from(pad_get_accelerate(pad) as i16)).fcom(x(full)).c0()
+            || !xi(i32::from(pad_get_brake(pad) as i16)).fcom(x(full)).c0();
         if floored {
             let dm = veh(this).byte_add(0x5A0);
-            let st = damage_get_door_status(dm, door(this));
-            if (st == 0 || damage_get_door_status(dm, door(this)) == 2)
-                && car_has_door_to_close(veh(this), door(this)) != 0
+            let st = damage_get_door_status(dm, door(this) as u32);
+            if (st == 0 || damage_get_door_status(dm, door(this) as u32) == 2)
+                && car_has_door_to_close(veh(this), door(this) as u32) != 0
             {
-                let s = damage_get_door_status(dm, door(this));
-                damage_set_door_status(dm, door(this), s.wrapping_add(1));
+                let s = damage_get_door_status(dm, door(this) as u32);
+                damage_set_door_status(dm, door(this) as u32, s.wrapping_add(1));
             }
             keep_open = true;
         }
     }
-    if car_has_door_to_close(veh(this), door(this)) != 0 && !keep_open {
+    if car_has_door_to_close(veh(this), door(this) as u32) != 0 && !keep_open {
         return sub(this, 0x325, ped);
     }
     if flags(this) & 1 == 0 {
@@ -872,8 +873,8 @@ fn after_align(this: GPtr<u8>, ped: GPtr<u8>) -> (GPtr<u8>, bool) {
         );
     }
     if flags(this) & 2 != 0 {
-        if car_has_door_to_open(veh(this), door(this)) != 0 {
-            let ty = if car_has_openable_door(veh(this), door(this), ped) != 0 {
+        if car_has_door_to_open(veh(this), door(this) as u32) != 0 {
+            let ty = if car_has_openable_door(veh(this), door(this) as u32, ped) != 0 {
                 0x322
             } else {
                 0x323
@@ -890,8 +891,8 @@ fn after_align(this: GPtr<u8>, ped: GPtr<u8>) -> (GPtr<u8>, bool) {
     if rd::<u32>(v, 0x590) == 9 || rd::<u32>(v, 0x594) == 2 {
         return bike_next(this, ped);
     }
-    let r = if car_has_door_to_open(veh(this), door(this)) != 0 {
-        if car_has_openable_door(veh(this), door(this), ped) != 0 {
+    let r = if car_has_door_to_open(veh(this), door(this) as u32) != 0 {
+        if car_has_openable_door(veh(this), door(this) as u32, ped) != 0 {
             let v = veh(this);
             let grp = rd::<u8>(rd::<GPtr<u8>>(v, 0x384), 0xDE);
             if flags(this) & 6 == 0
@@ -1008,12 +1009,12 @@ fn chat_reactions(this: GPtr<u8>, ped: GPtr<u8>) {
         let v = ftol32(xi(r).fmul_m(kf(0x858B14)).fmul_m(kf(k)));
         ped_chat_say(
             GPtr::from_addr(0xC15448),
-            0x86EA98,
+            GPtr::from_addr(0x86EA98),
             p,
             ped,
-            base - v,
+            (base - v) as u32,
             5,
-            0,
+            GPtr::NULL,
             0,
             0x3F00_0000,
             0x15E,

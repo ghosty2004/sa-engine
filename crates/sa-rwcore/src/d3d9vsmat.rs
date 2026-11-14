@@ -73,6 +73,8 @@ const HALF_BITS: u32 = 0x3F00_0000;
 use crate::bindings::matrix_ortho_normalize as rw_matrix_ortho_normalize;
 use sa_core::bindings::frame_get_ltm as rw_frame_get_ltm;
 use sa_core::bindings::get_render_state as rw_d3d9_get_render_state;
+use sa_core::bindings::rw_matrix_invert;
+use sa_core::bindings::rw_matrix_multiply;
 orig! {
     /// `D3DXMatrixMultiply(out, a, b)` (0x7672E1)
     pub fn d3dx_matrix_multiply(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = stdcall 0x7672E1 => unported;
@@ -84,10 +86,6 @@ orig! {
     pub fn d3dx_vec3_transform_normal(out: GPtr<u8>, v: GPtr<u8>, m: GPtr<u8>) -> u32 = stdcall 0x766AB7 => unported;
     /// `D3DXVec3TransformCoord(out, v, m)` (0x766A32)
     pub fn d3dx_vec3_transform_coord(out: GPtr<u8>, v: GPtr<u8>, m: GPtr<u8>) -> u32 = stdcall 0x766A32 => unported;
-    /// `RwMatrixMultiply(dst, a, b)` (0x7F18B0)
-    fn rw_matrix_multiply(dst: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F18B0 => crate::matrix::rw_matrix_multiply;
-    /// `RwMatrixInvert(dst, src)` (0x7F2070)
-    fn rw_matrix_invert(dst: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F2070 => crate::matrix::rw_matrix_invert;
     /// `_rwInvSqrt(x)` (0x7EDB90), result in ST0
     fn rw_inv_sqrt(v: f32) -> f64 = cdecl 0x7EDB90 => unported;
     /// `IDirect3DDevice9::SetVertexShaderConstantF(reg, data, count)` (vtable +0x178)

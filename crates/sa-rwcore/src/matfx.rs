@@ -54,16 +54,16 @@ const MATFX_ID: u32 = 0x120;
 /// 1.0f (0x858624).
 const ONE: f32 = 1.0;
 
-use crate::bindings::node_def_atomic as node_def_d3d9_atomic_all_in_one;
+use sa_core::bindings::node_def_atomic as node_def_d3d9_atomic_all_in_one;
 use crate::bindings::node_def_d3d9_sector_all_in_one;
 use crate::bindings::rp_world_sector_register_plugin;
 use crate::bindings::rp_world_sector_register_plugin_stream;
 use crate::bindings::rw_engine_register_plugin;
-use crate::bindings::rx_locked_pipe_add_fragment;
-use crate::bindings::rx_locked_pipe_unlock;
-use crate::bindings::rx_pipeline_create;
-use crate::bindings::rx_pipeline_destroy;
-use crate::bindings::rx_pipeline_lock;
+use sa_core::bindings::rx_locked_pipe_add_fragment;
+use sa_core::bindings::rx_locked_pipe_unlock;
+use sa_core::bindings::rx_pipeline_create;
+use sa_core::bindings::rx_pipeline_destroy;
+use sa_core::bindings::rx_pipeline_lock;
 use sa_core::bindings::atomic_geometry_set_usage_flags;
 use sa_core::bindings::enable_clipping_if_needed as d3d9_enable_clipping_if_needed;
 use sa_core::bindings::get_render_state as rw_d3d9_get_render_state;
@@ -77,44 +77,37 @@ use sa_core::bindings::rw_tex_dictionary_find_named_texture;
 use sa_core::bindings::rw_tex_dictionary_get_current;
 use sa_core::bindings::set_streams as d3d9_set_streams;
 use sa_core::bindings::vertex_alpha_enable as d3d9_vertex_alpha_enable;
+use crate::bindings::atomic_set_pipeline_call;
+use crate::bindings::destroy_effects_call;
+use crate::bindings::geometry_get_usage_flags as atomic_geometry_get_usage_flags;
+use crate::bindings::matfx_setup_dual_state;
+use crate::bindings::matfx_world_sector_set_pipeline as sector_set_pipeline_call;
+use crate::bindings::set_bump_map_texture as set_bump_map_texture_call;
+use sa_core::bindings::all_in_one_get_instance_cb;
+use sa_core::bindings::all_in_one_set_instance_cb;
+use sa_core::bindings::all_in_one_set_render_cb;
+use sa_core::bindings::rw_texture_destroy;
+use sa_core::bindings::rx_pipeline_find_node_by_name;
+use sa_core::bindings::set_render_state as rw_d3d9_set_render_state;
+use sa_core::bindings::set_surface_properties as rw_d3d9_set_surface_properties;
+use sa_core::bindings::set_texture as rw_d3d9_set_texture;
+use sa_core::bindings::set_tss as rw_d3d9_set_texture_stage_state;
 orig! {
-    /// `RwTextureDestroy(texture)` (0x7F3820)
-    fn rw_texture_destroy(t: GPtr<u8>) -> u32 = cdecl 0x7F3820 => unported;
     /// Bumped-texture builder (0x816290): (baseTexture, bumpTexture)
     fn matfx_create_bumped_texture(base: GPtr<u8>, bump: GPtr<u8>) -> GPtr<u8> = cdecl 0x816290 => unported;
-    /// Dual-texture render-state setup stub (0x816280): (slot, state), returns 1
-    fn matfx_setup_dual_state(slot: GPtr<u8>, state: u32) -> u32 = cdecl 0x816280 => unported;
-    /// `RxPipelineFindNodeByName(pipeline, name, start, index)` (0x806B30)
-    fn rx_pipeline_find_node_by_name(p: GPtr<u8>, name: u32, start: u32, index: u32) -> GPtr<u8> = cdecl 0x806B30 => unported;
-    /// `RxD3D9AllInOneGetInstanceCallBack(node)` (0x757390)
-    fn all_in_one_get_instance_cb(n: GPtr<u8>) -> u32 = cdecl 0x757390 => unported;
-    /// `RxD3D9AllInOneSetInstanceCallBack(node, cb)` (0x757380)
-    fn all_in_one_set_instance_cb(n: GPtr<u8>, cb: u32) = cdecl 0x757380 => unported;
-    /// `RxD3D9AllInOneSetRenderCallBack(node, cb)` (0x7573E0)
-    fn all_in_one_set_render_cb(n: GPtr<u8>, cb: u32) = cdecl 0x7573E0 => unported;
     /// `RwD3D9CreatePixelShader(function, &shader)` (0x7FACC0)
     fn rw_d3d9_create_pixel_shader(code: u32, out: u32) -> i32 = cdecl 0x7FACC0 => unported;
     /// `RwD3D9DeletePixelShader(shader)` (0x7FACF0)
     fn rw_d3d9_delete_pixel_shader(s: u32) = cdecl 0x7FACF0 => unported;
-    /// Atomic geometry usage flags get (0x7588D0) / set (0x7588B0)
-    fn atomic_geometry_get_usage_flags(geom: GPtr<u8>) -> u32 = cdecl 0x7588D0 => unported;
     /// World-sector usage flags get (0x758900) / set (0x7588E0)
     fn sector_get_usage_flags(s: GPtr<u8>) -> u32 = cdecl 0x758900 => unported;
     fn sector_set_usage_flags(s: GPtr<u8>, flags: u32) = cdecl 0x7588E0 => unported;
     /// A stored instance callback `(object, header, reinstance)`
     fn call_instance_cb(f: u32, object: GPtr<u8>, header: GPtr<u8>, reinstance: u32) -> u32 = cdecl dyn => unported;
-    /// `RwD3D9SetRenderState(state, value)` (0x7FC2D0)
-    fn rw_d3d9_set_render_state(state: u32, value: u32) -> i32 = cdecl 0x7FC2D0 => unported;
-    /// `RwD3D9SetTextureStageState(stage, type, value)` (0x7FC340)
-    fn rw_d3d9_set_texture_stage_state(stage: u32, ty: u32, value: u32) -> i32 = cdecl 0x7FC340 => unported;
-    /// `RwD3D9SetTexture(texture, stage)` (0x7FDE70)
-    fn rw_d3d9_set_texture(t: u32, stage: u32) -> i32 = cdecl 0x7FDE70 => unported;
     /// `IDirect3DDevice9::SetIndices(ib)` (vtable +0x1A0)
     fn device_set_indices(dev: GPtr<u8>, ib: u32) -> i32 = stdcall vslot 0x1A0 => unported;
     /// `IDirect3DDevice9::SetVertexDeclaration(decl)` (vtable +0x15C)
     fn device_set_vertex_declaration(dev: GPtr<u8>, decl: u32) -> i32 = stdcall vslot 0x15C => unported;
-    /// `RwD3D9SetSurfaceProperties(surfaceProps, color, flags)` (0x7FC4D0)
-    fn rw_d3d9_set_surface_properties(sp: GPtr<u8>, color: GPtr<u8>, flags: u32) -> i32 = cdecl 0x7FC4D0 => unported;
     /// MatFX D3D9 effect renderers: no-lighting (0x812C90), default (0x812AC0), dual (0x812D40), env
     /// (0x813A10), bump / bump-env (0x814460)
     fn matfx_render_black(header: GPtr<u8>, inst: GPtr<u8>) = cdecl 0x812C90 => unported;
@@ -122,15 +115,6 @@ orig! {
     fn matfx_render_dual(header: GPtr<u8>, inst: GPtr<u8>, flags: u32, tex: u32, dual: u32) = cdecl 0x812D40 => unported;
     fn matfx_render_env(header: GPtr<u8>, inst: GPtr<u8>, flags: u32, bump: u32, tex: u32, env: u32) = cdecl 0x813A10 => unported;
     fn matfx_render_bump(header: GPtr<u8>, inst: GPtr<u8>, flags: u32, tex: u32, bumped: u32, env: u32) = cdecl 0x814460 => unported;
-
-    /// `_rpMatFXMaterialDataDestroyEffects(data)` (0x810CA0)
-    fn destroy_effects_call(d: GPtr<u8>) -> GPtr<u8> = cdecl 0x810CA0 => rp_matfx_material_data_destroy_effects;
-    /// `_rpMatFXAtomicSetPipeline(atomic)` (0x816260)
-    fn atomic_set_pipeline_call(a: GPtr<u8>) -> GPtr<u8> = cdecl 0x816260 => rp_matfx_atomic_set_pipeline;
-    /// `_rpMatFXWorldSectorSetPipeline(sector)` (0x816270)
-    fn sector_set_pipeline_call(s: GPtr<u8>) -> GPtr<u8> = cdecl 0x816270 => rp_matfx_world_sector_set_pipeline;
-    /// `RpMatFXMaterialSetBumpMapTexture(material, texture)` (0x812160)
-    fn set_bump_map_texture_call(m: GPtr<u8>, t: GPtr<u8>) -> GPtr<u8> = cdecl 0x812160 => rp_matfx_material_set_bump_map_texture;
 }
 
 fn ext_of(m: GPtr<u8>) -> GPtr<u8> {
@@ -661,7 +645,7 @@ pub fn rp_matfx_d3d9_atomic_render_callback(header: GPtr<u8>, object: GPtr<u8>, 
     rw_d3d9_get_render_state(0x89, GPtr::from_raw(&mut lighting));
     let black = lighting == 0 && flags & 8 == 0;
     if black {
-        rw_d3d9_set_texture(0, 0);
+        rw_d3d9_set_texture(GPtr::NULL, 0);
         rw_d3d9_set_render_state(0x3C, 0xFF00_0000);
         rw_d3d9_set_texture_stage_state(0, 1, 3);
         rw_d3d9_set_texture_stage_state(0, 3, 3);

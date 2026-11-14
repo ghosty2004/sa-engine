@@ -23,15 +23,13 @@ sa_core::globals! {
     pub static NUM_ENTITIES_SET_INVISIBLE @ 0x9655DC: i32 = 0;
 }
 
+pub use sa_core::bindings::entity_clean_up_old_reference as clean_up_old_reference;
+pub use sa_stream::bindings::col_model_remove_collision_volumes;
 orig! {
     /// `CCollision::CheckCameraCollisionPeds(int32 x, int32 y, const CVector& pos, const CVector& dir,
     /// float& t)` (0x415320)
     pub fn check_camera_collision_peds(x: i32, y: i32, pos: GPtr<f32>, dir: GPtr<f32>, t: GPtr<f32>) -> u8
         = cdecl 0x415320 => unported;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
-    pub fn clean_up_old_reference(e: GPtr<u8>, r: GPtr<GPtr<u8>>) = thiscall 0x571A00 => unported;
-    /// `CColModel::RemoveCollisionVolumes` (0x40F9E0)
-    pub fn col_model_remove_collision_volumes(cm: GPtr<u8>) = thiscall 0x40F9E0 => col_model_rcv_port;
 }
 
 pub fn col_model_rcv_port(cm: GPtr<u8>) {
@@ -106,19 +104,11 @@ pub fn temp_col_models_shutdown() {
 
 use sa_core::field::pa as temp_model;
 
-pub use crate::bindings::col_model_allocate_data as col_model_allocate_data_call;
-orig! {
-    /// `CSphere::Set(float radius, const CVector& center)` (stub 0x40FCF0, `ret 8`)
-    pub fn sphere_set_call(s: GPtr<u8>, radius: u32, center: GPtr<u32>) = thiscall 0x40FCF0 => sphere_set;
-    /// `CBox::Set(const CVector& min, const CVector& max)` (stub 0x40EDE0, `ret 8`)
-    pub fn box_set_call(b: GPtr<u8>, min: GPtr<u32>, max: GPtr<u32>) = thiscall 0x40EDE0 => box_set;
-    /// `CColSphere::Set(float radius, const CVector& center, uint8 material, uint8 piece, uint8 lighting)`
-    /// (0x40FD10, `ret 0x14`; the bytes pushed as dwords)
-    pub fn col_sphere_set_call(s: GPtr<u8>, radius: u32, center: GPtr<u32>, material: u32, piece: u32, light: u32)
-        = thiscall 0x40FD10 => col_sphere_set;
-    /// `CColLine::Set(const CVector& start, const CVector& end)` (stub 0x40EF10, `ret 8`)
-    pub fn col_line_set_call(l: GPtr<u8>, start: GPtr<u32>, end: GPtr<u32>) = thiscall 0x40EF10 => col_line_set;
-}
+pub use sa_stream::bindings::col_model_allocate_data as col_model_allocate_data_call;
+pub use crate::bindings::col_line_set as col_line_set_call;
+pub use sa_core::bindings::box_set as box_set_call;
+pub use sa_core::bindings::col_sphere_set as col_sphere_set_call;
+pub use sa_core::bindings::sphere_set as sphere_set_call;
 
 fn copy3(dst: GPtr<u8>, src: GPtr<u32>) {
     for i in 0..3 {
@@ -206,13 +196,13 @@ pub fn temp_col_models_initialise() {
         GPtr::from_raw(v.as_ptr().cast_mut())
     }
     fn sphere_set(s: GPtr<u8>, r: u32, c: [u32; 3]) {
-        sphere_set_call(s, r, p(&c));
+        sphere_set_call(s, r, GPtr::<u32>::cast::<u8>(p(&c)));
     }
     fn box_set(b: GPtr<u8>, min: [u32; 3], max: [u32; 3]) {
-        box_set_call(b, p(&min), p(&max));
+        box_set_call(b, GPtr::<u32>::cast::<u8>(p(&min)), GPtr::<u32>::cast::<u8>(p(&max)));
     }
     fn col_sphere_set(s: GPtr<u8>, r: u32, c: [u32; 3], m: u32, pc: u32, l: u32) {
-        col_sphere_set_call(s, r, p(&c), m, pc, l);
+        col_sphere_set_call(s, f32::from_bits(r), GPtr::<u32>::cast::<u8>(p(&c)), m as u8, pc as u8, l as u8);
     }
     fn col_line_set(l: GPtr<u8>, a: [u32; 3], b: [u32; 3]) {
         col_line_set_call(l, p(&a), p(&b));

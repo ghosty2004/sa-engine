@@ -41,17 +41,14 @@ pub mod k {
 }
 
 pub use crate::bindings::rw_image_create;
+pub use crate::bindings::image_allocate_pixels as rw_image_allocate_pixels;
+pub use crate::bindings::image_destroy as rw_image_destroy;
+pub use crate::bindings::matrix_mul_vec as matrix_mul_vector;
 orig! {
-    /// `operator*(const CMatrix&, const CVector&)` (0x59C890, cdecl, hidden return pointer)
-    pub fn matrix_mul_vector(out: GPtr<[f32; 3]>, m: GPtr<u8>, v: GPtr<[f32; 3]>) -> GPtr<[f32; 3]> = cdecl 0x59C890 => unported;
-    /// `RwImageAllocatePixels` (0x8027A0)
-    pub fn rw_image_allocate_pixels(img: GPtr<u8>) -> GPtr<u8> = cdecl 0x8027A0 => unported;
     /// `RwImageSetFromRaster` (0x804250)
     pub fn rw_image_set_from_raster(img: GPtr<u8>, raster: GPtr<u8>) -> GPtr<u8> = cdecl 0x804250 => unported;
     /// `RtPNGImageWrite` (0x7CF600)
     pub fn rt_png_image_write(img: GPtr<u8>, filename: GPtr<u8>) -> GPtr<u8> = cdecl 0x7CF600 => unported;
-    /// `RwImageDestroy` (0x802740)
-    pub fn rw_image_destroy(img: GPtr<u8>) -> i32 = cdecl 0x802740 => unported;
     /// 0x71DB30 (gta-reversed `DoesInfiniteLineCrossFiniteLine`)
     pub fn does_infinite_line_cross_finite_line_call(ax: f32, ay: f32, bx: f32, by: f32, ox: f32, oy: f32, dx: f32, dy: f32) -> i32 = cdecl 0x71DB30 => does_infinite_line_cross_finite_line;
 }
@@ -149,11 +146,11 @@ pub fn calc_screen_coors(input: GPtr<[f32; 3]>, out: GPtr<[f32; 3]>) -> bool {
 /// The common part of both `CalcScreenCoors`: returns `1/z` (still on the x87 stack) on success.
 fn project(input: GPtr<[f32; 3]>, out: GPtr<[f32; 3]>) -> Option<X87> {
     let mut tmp = [0f32; 3];
-    let t = matrix_mul_vector(
-        GPtr::from_raw(tmp.as_mut_ptr().cast()),
+    let t = GPtr::<f32>::cast::<[f32;3]>(matrix_mul_vector(
+        GPtr::<[f32;3]>::cast::<f32>(GPtr::from_raw(tmp.as_mut_ptr().cast())),
         GPtr::from_addr(CAMERA_VIEW_MATRIX as usize),
-        input,
-    );
+        input.cast::<u8>(),
+    ));
     // three dword moves through the returned pointer
     let r = t.cast::<[u32; 3]>().read();
     out.cast::<[u32; 3]>().write(r);

@@ -115,7 +115,7 @@ pub fn place_furniture_on_wall(this: GPtr<u8>, group: i32, sub: i32, id: i32, he
             };
         }
         let (mut oa, mut ob) = (0i32, 0i32);
-        let r = place_furniture(this, f, tx, ty, height, a5, wall_slot, p(&mut oa), p(&mut ob), 0);
+        let r = GPtr::<u8>::addr(place_furniture(this, f, tx, ty, height, a5, wall_slot, p(&mut oa), p(&mut ob), 0)) as i32;
         if r != 0 {
             if !out_wall.is_null() {
                 out_wall.write(wall_slot);
@@ -177,7 +177,7 @@ pub fn office_place_edge_fillers(this: GPtr<u8>, furniture_id: i32, tx: i32, ty:
     } else if r > 90 && g::<u8>(OFFICE_LATCH).read() == 0 {
         f = get_furniture(g(FURNITURE_MAN), 1, 2, -1, wealth());
         if !f.is_null() {
-            add_interior_info(this, 7, xi(nx).to_f32(), xi(ny).to_f32(), (dir - 2) & 3, 0);
+            add_interior_info(this, 7, xi(nx).to_f32(), xi(ny).to_f32(), ((dir - 2) & 3) as u32, 0);
         }
         g::<u8>(OFFICE_LATCH).write(1);
     } else if r > 75 {
@@ -186,7 +186,7 @@ pub fn office_place_edge_fillers(this: GPtr<u8>, furniture_id: i32, tx: i32, ty:
     } else if r > 25 {
         f = get_furniture(g(FURNITURE_MAN), 1, 3, -1, wealth());
         if !f.is_null() {
-            add_interior_info(this, 7, xi(nx).to_f32(), xi(ny).to_f32(), (dir - 2) & 3, 0);
+            add_interior_info(this, 7, xi(nx).to_f32(), xi(ny).to_f32(), ((dir - 2) & 3) as u32, 0);
         }
     } else {
         return 1;

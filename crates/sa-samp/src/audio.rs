@@ -17,10 +17,7 @@ const PROCESS_MISSION_AUDIO_EVENT: usize = 0x4ECCF0;
 /// `AudioEngine` (`CAudioEngine`).
 const AUDIO_ENGINE: usize = 0xB6BC90;
 
-sa_core::orig! {
-    /// `CAudioEngine::ReportFrontendAudioEvent(eAudioEvents, float volumeChange, float speed)` (0x506EA0).
-    fn report_frontend_audio_event(this: GPtr<u8>, event: u32, volume_change: f32, speed: f32) = thiscall 0x506EA0 => unported;
-}
+use sa_core::bindings::audio_report_frontend_event as report_frontend_audio_event;
 
 /// The cases of `ProcessMissionAudioEvent` (0x4ECCF0, the original's switch on `event & 0xFFFF`) whose whole body
 /// is `AudioEngine.ReportFrontendAudioEvent(frontend, 0.0, speed)`: (mission event, frontend event, speed). The

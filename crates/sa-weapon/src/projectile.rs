@@ -5,6 +5,7 @@
 //! +0x10 active, +0x14 last position, +0x20 `FxSystem_c*`. `CProjectileInfo::ms_apProjectile[32]`
 //! (`CProjectile*`) at 0xC89110. Projectile objects live in the object pool (0x19C each).
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -28,18 +29,15 @@ sa_core::globals! {
 pub use sa_core::bindings::destroy_fx_system;
 pub use sa_core::bindings::world_remove;
 pub use sa_world::bindings::clear_blip_for_entity;
+pub use sa_world::bindings::add_explosion;
+pub use sa_world::bindings::object_get_ref_ as object_pool_get_ref;
 orig! {
     /// `CEntity` scalar deleting destructor (vtable slot 0)
     pub fn entity_vdelete(e: GPtr<u8>, flag: i32) = thiscall vslot 0x0 => unported;
-    /// `CExplosion::AddExplosion(CEntity* victim, CEntity* creator, eExplosionType, CVector pos,
-    /// uint32 lifetime, bool makeSound, float camShake, bool invisible)` (0x736A50)
-    /// `CPool<CObject>::GetRef(CObject*)` (thunk 0x465070, thiscall)
-    pub fn object_pool_get_ref(pool: GPtr<u8>, obj: GPtr<u8>) -> i32 = thiscall 0x465070 => unported;
     /// `CProjectile` destructor (0x5A40E0, thiscall)
     pub fn projectile_dtor(this: GPtr<u8>) = thiscall 0x5A40E0 => unported;
     /// `CObject::operator delete(void*)` (0x5A1F20)
     pub fn object_delete(p: GPtr<u8>) = cdecl 0x5A1F20 => unported;
-    pub fn add_explosion(victim: GPtr<u8>, creator: GPtr<u8>, ty: i32, x: f32, y: f32, z: f32, life: u32, sound: u8, shake: f32, invisible: u8) -> u8 = cdecl 0x736A50 => crate::explosion::add_explosion;
 }
 
 pub fn info(i: usize) -> GPtr<u8> {
@@ -147,7 +145,7 @@ pub fn remove_not_add(creator: GPtr<u8>, ty: i32, px: f32, py: f32, pz: f32) {
         0x13 | 0x14 => 2,
         _ => return,
     };
-    add_explosion(GPtr::NULL, creator, ex, px, py, pz, 0, 1, -1.0, 0);
+    add_explosion(GPtr::NULL, creator, ex as u32, px, py, pz, 0, 1, -1.0, 0);
 }
 
 /// `CProjectileInfo::RemoveIfThisIsAProjectile(CObject*)` (0x739A40): the active info whose
@@ -256,13 +254,12 @@ pub use sa_stream::bindings::ped_is_player;
 pub use sa_world::bindings::audio_report_object_destruction;
 pub use sa_world::bindings::ped_get_weapon_slot;
 pub use sa_world::bindings::ped_is_pointer_valid;
+pub use sa_core::bindings::audio_report_frontend_event;
+pub use sa_core::bindings::find_player_vehicle;
+pub use sa_world::bindings::attach_entity_to_entity_quat;
 orig! {
     /// `FindPlayerPed(int32)` (0x56E210)
     pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
-    /// `FindPlayerVehicle(int32, bool)` (0x56E0D0)
-    pub fn find_player_vehicle(id: i32, b: u8) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
-    /// `CAudioEngine::ReportFrontendAudioEvent(eAudioEvents, float volume, float speed)` (0x506EA0, thiscall)
-    pub fn audio_report_frontend_event(ae: GPtr<u8>, ev: i32, vol: f32, speed: f32) = thiscall 0x506EA0 => unported;
     /// `CProjectileInfo::RemoveProjectile(CProjectileInfo*, CProjectile*)` (0x7388F0)
     pub fn remove_projectile_call(info: GPtr<u8>, obj: GPtr<u8>) = cdecl 0x7388F0 => remove_projectile;
     /// `CWorld::SetPedsChoking(float x, y, z, float radius, CEntity*)` (0x565800); raw position words
@@ -271,8 +268,6 @@ orig! {
     /// objects, dummies, seeThrough, ignoreSomeObjects)` (0x56A490)
     #[allow(clippy::too_many_arguments)]
     pub fn get_is_line_of_sight_clear(a: GPtr<u8>, b: GPtr<u8>, bd: u8, v: u8, p: u8, o: u8, d: u8, s: u8, i: u8) -> u8 = cdecl 0x56A490 => unported;
-    /// `CPhysical::AttachEntityToEntity(CEntity*, CVector* offset, RtQuat*)` (quat overload, 0x54D690, thiscall)
-    pub fn attach_entity_to_entity_quat(this: GPtr<u8>, e: GPtr<u8>, off: GPtr<u8>, q: GPtr<u8>) = thiscall 0x54D690 => unported;
 }
 
 /// `CReplay::Mode`
@@ -302,7 +297,7 @@ pub fn remove_projectile(info: GPtr<u8>, obj: GPtr<u8>) {
     };
     let boom = |by: GPtr<u8>, ty: i32| {
         let p = pos(obj);
-        add_explosion(GPtr::NULL, by, ty, p[0], p[1], p[2], 0, 1, -1.0, 0);
+        add_explosion(GPtr::NULL, by, ty as u32, p[0], p[1], p[2], 0, 1, -1.0, 0);
     };
     match ru(info, 0) {
         0x10 | 0x15 => boom(c, 0),

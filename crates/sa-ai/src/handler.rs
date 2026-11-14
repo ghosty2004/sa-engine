@@ -9,13 +9,14 @@
 //! +0x34 anim speed, +0x38 / +0x3C two floats added for the hit task time, +0x40 u8.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
 use crate::common::*;
 
-use crate::bindings::anim_blend_animation;
-use crate::bindings::clump_get_association;
+use sa_world::bindings::anim_blend_animation;
+use sa_core::bindings::clump_get_association;
 use crate::bindings::compute_knock_off_bike_response;
 use crate::bindings::damage_4abca0;
 use crate::bindings::dragged_out_car_dtor;
@@ -28,7 +29,7 @@ use sa_core::bindings::intel_get_task_use_gun;
 use sa_core::bindings::ped_is_alive;
 use sa_core::bindings::tm_get_active_task;
 use sa_stream::bindings::ped_is_player;
-use sa_world::bindings::anim_get_anim_association;
+use sa_core::bindings::anim_get_anim_association;
 use sa_world::bindings::damage_calc_compute_damage_response as calc_compute_damage_response;
 use sa_world::bindings::damage_calc_dtor as calc_dtor;
 use sa_world::bindings::die_ctor;
@@ -47,6 +48,20 @@ use sa_world::bindings::ped_groups_get_peds_group;
 use sa_world::bindings::sequence_add_task;
 use sa_world::bindings::sequence_ctor;
 use sa_world::bindings::tm_find_active_task_by_type;
+use crate::bindings::dragged_out_car_ctor;
+use crate::bindings::handler_is_temporary_event;
+use sa_core::bindings::assoc_set_current_time as anim_set_current_time;
+use sa_world::bindings::add_animation as anim_add_animation;
+use sa_world::bindings::clump_get_first_association_4d6a70 as clump_get_first_association_flags;
+use sa_world::bindings::damage_calc_ctor as calc_ctor;
+use sa_world::bindings::damage_compute_damage_anim;
+use sa_world::bindings::damage_compute_death_anim;
+use sa_world::bindings::enter_car_as_passenger_ctor;
+use sa_world::bindings::event_damage_ctor as damage_ctor;
+use sa_world::bindings::fx_add_blood;
+use sa_world::bindings::interesting_events_add;
+use sa_world::bindings::ped_set_ped_state;
+use sa_world::bindings::vector_scale;
 orig! {
     /// `CEvent::GetEventType` (vtable +4)
     fn v_event_type(e: GPtr<u8>) -> i32 = thiscall vslot 0x4 => unported;
@@ -60,16 +75,8 @@ orig! {
     fn compute_personality_response_to_damage(h: GPtr<u8>, e: GPtr<u8>, src: GPtr<u8>) = thiscall 0x4BF9B0 => unported;
     /// `CEventDamage::ProcessDamage(CPed*)` (0x4B3A20, `ret 4`)
     fn damage_process_damage(e: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x4B3A20 => unported;
-    /// `CEventDamage::ComputeDamageAnim(CPed*, bool)` (0x4B3FC0, `ret 8`)
-    fn damage_compute_damage_anim(e: GPtr<u8>, ped: GPtr<u8>, b: u32) = thiscall 0x4B3FC0 => unported;
-    /// `CEventDamage::ComputeDeathAnim(CPed*, bool)` (0x4B3A60, `ret 8`)
-    fn damage_compute_death_anim(e: GPtr<u8>, ped: GPtr<u8>, b: u32) = thiscall 0x4B3A60 => unported;
     /// `CEventDamage::WasHeadShot(bool* out)` (0x4ADD60, `ret 4`)
     fn damage_was_head_shot(e: GPtr<u8>, out: GPtr<u8>) = thiscall 0x4ADD60 => unported;
-    /// `CInterestingEvents::Add(int32 type, CEntity*)` (0x602590, `ret 8`, on g_InterestingEvents 0xC0B058)
-    fn interesting_events_add(ie: GPtr<u8>, ty: i32, e: GPtr<u8>) = thiscall 0x602590 => unported;
-    /// `CPed::SetPedState(int32)` (0x5E4500, `ret 4`)
-    fn ped_set_ped_state(p: GPtr<u8>, s: i32) = thiscall 0x5E4500 => unported;
     /// `CTaskSimpleBeHit::Constructor(CPed*, int32, uint8, int32)` (0x620780, `ret 0x10`)
     fn be_hit_ctor(t: GPtr<u8>, src: u32, a: u32, piece: u32, time: i32) -> GPtr<u8> = thiscall 0x620780 => unported;
     /// `CTaskSimpleChoking::Constructor(CPed*, bool)` (0x6202C0, `ret 8`)
@@ -80,16 +87,8 @@ orig! {
     fn fall_to_death_calc_fall(ped: GPtr<u8>, dir: GPtr<u8>, rail: GPtr<u8>) -> u8 = cdecl 0x6796C0 => unported;
     /// `CEventHandler::RegisterKill(CPed*, CEntity*, eWeaponType, bool)` (0x4B9340, static)
     fn register_kill(ped: GPtr<u8>, src: GPtr<u8>, wt: u32, head: u32) = cdecl 0x4B9340 => unported;
-    /// `RpAnimBlendClumpGetFirstAssociation(RpClump*, uint32 flags)` (0x4D6A70)
-    fn clump_get_first_association_flags(clump: u32, flags: u32) -> GPtr<u8> = cdecl 0x4D6A70 => unported;
-    /// `CAnimManager::AddAnimation(RpClump*, group, id)` (0x4D3AA0)
-    fn anim_add_animation(clump: u32, group: u32, id: u32) -> GPtr<u8> = cdecl 0x4D3AA0 => unported;
-    /// `CAnimBlendAssociation::SetCurrentTime(float)` (0x4CEA80, `ret 4`)
-    fn anim_set_current_time(a: GPtr<u8>, t: u32) = thiscall 0x4CEA80 => unported;
     /// `CGeneral::GetRandomNumberInRange<float>(min, max)` (0x41BD90; draws its own rand, ST0)
     fn general_random_float_in_range(min: u32, max: u32) -> f64 = cdecl 0x41BD90 => unported;
-    /// `Fx_c::AddBlood(CVector* pos, CVector* dir, int32 count, float light)` (0x49EB00, `ret 0x10`)
-    fn fx_add_blood(fx: GPtr<u8>, pos: GPtr<u8>, dir: GPtr<u8>, n: i32, light: u32) = thiscall 0x49EB00 => unported;
     /// `CEventGotKnockedOverByCar::CEventGotKnockedOverByCar(CVehicle*)` (0x4B1B60, `ret 4`)
     fn knocked_over_by_car_ctor(e: GPtr<u8>, veh: GPtr<u8>) -> GPtr<u8> = thiscall 0x4B1B60 => unported;
     /// `CEventGotKnockedOverByCar` destructor (0x4B1C10)
@@ -100,8 +99,6 @@ orig! {
     fn v_event_clone(e: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x10 => unported;
     /// `CEvent::TakesPriorityOver(const CEvent&)` (vtable +0x2C)
     fn v_event_takes_priority_over(e: GPtr<u8>, o: GPtr<u8>) -> u8 = thiscall vslot 0x2C => unported;
-    /// `CEventHandler::IsTemporaryEvent(const CEvent&)` (0x4BC370, static)
-    fn handler_is_temporary_event(e: GPtr<u8>) -> u32 = cdecl 0x4BC370 => unported;
     /// `CEventHandlerHistory::StoreActiveEvent` (0x4B8BF0)
     fn history_store_active_event(h: GPtr<u8>) = thiscall 0x4B8BF0 => unported;
     /// `CEventKnockOffBike::CEventKnockOffBike()` (0x4AFC70, default)
@@ -114,16 +111,6 @@ orig! {
     fn kob_set_ped_out_car(e: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x4AFF60 => unported;
     /// `CEventKnockOffBike::CalcForcesAndAnims(CPed*)` (0x4B0020, `ret 4`; returns the anim id)
     fn kob_calc_forces_and_anims(e: GPtr<u8>, ped: GPtr<u8>) -> u32 = thiscall 0x4B0020 => unported;
-    /// `CEventDamage::CEventDamage(CEntity*, uint32 time, weapon, piece, direction, bool, bool)` (0x4AD830, `ret 0x1C`)
-    fn damage_ctor(e: GPtr<u8>, src: u32, time: u32, wt: u32, piece: u32, dir: u32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x4AD830 => unported;
-    /// `CPedDamageResponseCalculator::CPedDamageResponseCalculator(CEntity*, float, weapon, piece, bool)` (0x4AD3F0, `ret 0x14`)
-    fn calc_ctor(c: GPtr<u8>, src: u32, dmg: u32, wt: u32, piece: u32, b: u32) -> GPtr<u8> = thiscall 0x4AD3F0 => unported;
-    /// `operator*(CVector* out, float, const CVector&)` (0x40FE90, cdecl)
-    fn vector_scale(out: GPtr<u8>, f: u32, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE90 => unported;
-    /// `CTaskComplexEnterCarAsPassenger::CTaskComplexEnterCarAsPassenger(CVehicle*, int32 seat, bool)` (0x640340, `ret 0xC`)
-    fn enter_car_as_passenger_ctor(t: GPtr<u8>, veh: u32, seat: u32, b: u32) -> GPtr<u8> = thiscall 0x640340 => unported;
-    /// `CEventDraggedOutCar::CEventDraggedOutCar(CVehicle*, CPed*, bool)` (0x4AD250, `ret 0xC`)
-    fn dragged_out_car_ctor(e: GPtr<u8>, veh: GPtr<u8>, ped: u32, b: u32) -> GPtr<u8> = thiscall 0x4AD250 => unported;
 }
 
 /// `g_InterestingEvents`
@@ -278,12 +265,12 @@ pub fn event_handler_compute_damage_response(
                 wt as u32,
                 rd::<u32>(ev, 0x28),
                 rd::<u32>(ev, 0x2C),
-                rd::<u32>(ev, 0x30),
-                rd::<u32>(ev, 0x34),
-                stealth,
-                falling[0],
+                f32::from_bits(rd::<u32>(ev, 0x30)),
+                f32::from_bits(rd::<u32>(ev, 0x34)),
+                stealth as u8,
+                (falling[0]) as u8,
                 dir[0],
-                rail[0],
+                (rail[0]) as u8,
             )
         };
         wr::<GPtr<u8>>(this, 0x24, t);
@@ -316,7 +303,7 @@ pub fn event_handler_compute_damage_response(
             t
         } else {
             let time = if rd::<u32>(ped, 0x480) != 0 { 500 } else { 1000 };
-            fall_and_get_up_ctor(t, rd::<u32>(ev, 0x2C), rd::<u32>(ev, 0x28), time)
+            fall_and_get_up_ctor(t, rd::<u32>(ev, 0x2C), rd::<u32>(ev, 0x28), time as u32)
         };
         wr::<GPtr<u8>>(this, 0x20, t);
         let veh = match ped_type(src) {
@@ -362,7 +349,7 @@ fn death_anim_from_simplest(ped: GPtr<u8>, ev: GPtr<u8>, t: GPtr<u8>) {
         return;
     }
     let pick_by_flags = || {
-        if clump_get_first_association_flags(rd::<u32>(ped, 0x18), 0x800).is_null() {
+        if clump_get_first_association_flags(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0x800).is_null() {
             0x24
         } else {
             0x27
@@ -393,7 +380,7 @@ fn death_anim_from_simplest(ped: GPtr<u8>, ev: GPtr<u8>, t: GPtr<u8>) {
                     GPtr::from_raw(&mut pos as *mut [u32; 3]).cast(),
                     GPtr::from_raw(&mut dirv as *mut [u32; 3]).cast(),
                     10,
-                    rd::<u32>(ped, 0x12C),
+                    f32::from_bits(rd::<u32>(ped, 0x12C)),
                 );
             }
         }
@@ -503,7 +490,7 @@ fn alive_response(this: GPtr<u8>, ped: GPtr<u8>, ev: GPtr<u8>, src: GPtr<u8>, wt
             let v = xi(rd::<u8>(ped, 0x719) as i32)
                 .fmul_m(g::<f32>(0x859038).read())
                 .fdivr_m(g::<f32>(0x858C4C).read());
-            fall_and_get_up_ctor(t, rd::<u32>(ev, 0x2C), rd::<u32>(ev, 0x28), ftol32(v))
+            fall_and_get_up_ctor(t, rd::<u32>(ev, 0x2C), rd::<u32>(ev, 0x28), ftol32(v) as u32)
         };
         wr::<GPtr<u8>>(this, 0x20, t);
         return false;
@@ -512,7 +499,7 @@ fn alive_response(this: GPtr<u8>, ped: GPtr<u8>, ev: GPtr<u8>, src: GPtr<u8>, wt
     if aid == 0xBF || aid == 0xC0 {
         return false;
     }
-    let def = anim_get_anim_association(rd::<u32>(ev, 0x28), aid as u32);
+    let def = anim_get_anim_association(rd::<u32>(ev, 0x28) as i32, (aid as u32) as i32);
     if (rd::<u16>(def, 0xA) as u32 >> 10) & 1 != 0 {
         if rd::<u8>(ev, 0x25) & 4 != 0 {
             return false;
@@ -520,18 +507,18 @@ fn alive_response(this: GPtr<u8>, ped: GPtr<u8>, ev: GPtr<u8>, src: GPtr<u8>, wt
         let aid = rd::<i32>(ev, 0x2C);
         let clump = rd::<u32>(ped, 0x18);
         if (0x1C..=0x1F).contains(&aid) {
-            let mut a = clump_get_association(clump, aid as u32);
+            let mut a = clump_get_association(GPtr::from_addr(clump as usize), aid as u32);
             if a.is_null() {
-                a = anim_add_animation(rd::<u32>(ped, 0x18), rd::<u32>(ev, 0x28), rd::<u32>(ev, 0x2C));
+                a = anim_add_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), rd::<u32>(ev, 0x28), rd::<u32>(ev, 0x2C));
             }
             wr::<u32>(a, 0x18, 0);
             wr::<u32>(a, 0x1C, rd::<u32>(ev, 0x30));
             wr::<u32>(a, 0x24, rd::<u32>(ev, 0x34));
-            anim_set_current_time(a, 0);
+            anim_set_current_time(a, f32::from_bits(0));
         } else {
-            let a = anim_blend_animation(clump, rd::<u32>(ev, 0x28), aid as u32, rd::<u32>(ev, 0x30));
+            let a = anim_blend_animation(GPtr::from_addr(clump as usize), rd::<u32>(ev, 0x28), aid as u32, f32::from_bits(rd::<u32>(ev, 0x30)));
             wr::<u32>(a, 0x24, rd::<u32>(ev, 0x34));
-            anim_set_current_time(a, 0);
+            anim_set_current_time(a, f32::from_bits(0));
         }
         wr::<u8>(ev, 0x25, rd::<u8>(ev, 0x25) | 4);
         return false;
@@ -570,7 +557,7 @@ fn kob_direction(m: GPtr<u8>, dir: u32) -> [u32; 3] {
         }
         _ => {
             let mut tmp = [0u32; 3];
-            let r = vector_scale(GPtr::from_raw(&mut tmp as *mut [u32; 3]).cast(), 0xBF80_0000, m);
+            let r = vector_scale(GPtr::from_raw(&mut tmp as *mut [u32; 3]).cast(), f32::from_bits(0xBF80_0000), m);
             for (i, o) in out.iter_mut().enumerate() {
                 *o = rd::<u32>(r, i as isize * 4);
             }
@@ -605,7 +592,7 @@ fn kob_build(this: GPtr<u8>, evp: GPtr<u8>, mut speed: [u32; 3], mut dirv: [u32;
         weapon,
         dir,
         0,
-        0,
+        GPtr::NULL,
         0,
         0,
     );
@@ -646,7 +633,7 @@ pub fn event_handler_compute_knock_off_bike_response(
         let dp: GPtr<u8> = GPtr::from_raw(&mut dmg as *mut [u32; 0x14]).cast();
         damage_ctor(
             dp,
-            rd::<u32>(ev, 0x38),
+            GPtr::from_addr(rd::<u32>(ev, 0x38) as usize),
             g::<u32>(0xB7CB84).read(),
             0x36,
             3,
@@ -657,7 +644,7 @@ pub fn event_handler_compute_knock_off_bike_response(
         if damage_affects_ped(dp, rd::<GPtr<u8>>(this, 0)) != 0 {
             let mut calc = [0u32; 0x10];
             let cp: GPtr<u8> = GPtr::from_raw(&mut calc as *mut [u32; 0x10]).cast();
-            calc_ctor(cp, rd::<u32>(ev, 0x38), rd::<u32>(ev, 0x28), 0x36, 3, 1);
+            calc_ctor(cp, GPtr::from_addr(rd::<u32>(ev, 0x38) as usize), f32::from_bits(rd::<u32>(ev, 0x28)), 0x36, 3, 1);
             calc_compute_damage_response(cp, rd::<GPtr<u8>>(this, 0), dp.byte_add(0x38), 1);
             calc_dtor(cp);
         }
@@ -740,8 +727,8 @@ fn kob_respond(this: GPtr<u8>, kob: GPtr<u8>) {
                     rd::<i8>(kob, 0x36) as i32 as u32,
                     0,
                     anim,
-                    0x4080_0000,
-                    0,
+                    f32::from_bits(0x4080_0000),
+                    f32::from_bits(0),
                     0,
                     0,
                     0,
@@ -769,8 +756,8 @@ fn kob_respond(this: GPtr<u8>, kob: GPtr<u8>) {
                 rd::<i8>(kob, 0x36) as i32 as u32,
                 0,
                 anim,
-                0x4080_0000,
-                0,
+                f32::from_bits(0x4080_0000),
+                f32::from_bits(0),
                 0,
                 0,
                 0,
@@ -788,7 +775,7 @@ fn kob_respond(this: GPtr<u8>, kob: GPtr<u8>) {
         let t = if t.is_null() {
             t
         } else {
-            fall_and_get_up_ctor(t, anim, 0, time as i32)
+            fall_and_get_up_ctor(t, anim, 0, (time as i32) as u32)
         };
         wr::<GPtr<u8>>(this, 0x24, t);
         let group = ped_groups_get_peds_group(rd::<GPtr<u8>>(this, 0));
@@ -808,7 +795,7 @@ fn kob_respond(this: GPtr<u8>, kob: GPtr<u8>) {
                     let e = if e.is_null() {
                         e
                     } else {
-                        enter_car_as_passenger_ctor(e, veh.addr() as u32, 0, 1)
+                        enter_car_as_passenger_ctor(e, GPtr::from_addr((veh.addr() as u32) as usize), 0, 1)
                     };
                     sequence_add_task(s, e);
                     wr::<GPtr<u8>>(this, 0x24, s);
@@ -834,7 +821,7 @@ fn kob_respond(this: GPtr<u8>, kob: GPtr<u8>) {
     }
     let mut dr = [0u32; 0x10];
     let dp: GPtr<u8> = GPtr::from_raw(&mut dr as *mut [u32; 0x10]).cast();
-    dragged_out_car_ctor(dp, veh, dragger, (rd::<u8>(kob, 0x35) & 1) as u32);
+    dragged_out_car_ctor(dp, veh, GPtr::from_addr(dragger as usize), (rd::<u8>(kob, 0x35) & 1) as u32);
     event_group_add(
         rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0), 0x47C).byte_add(0x68),
         dp,
@@ -1151,6 +1138,8 @@ use sa_world::bindings::groups_is_in_players_group as ped_groups_is_in_players_g
 use sa_world::bindings::ik_is_looking;
 use sa_world::bindings::ik_look_at;
 use sa_world::bindings::intel_find_task_by_type;
+use crate::bindings::climb_ctor;
+use sa_core::bindings::tm_get_task_secondary;
 orig! {
     /// `CEventBuildingCollision::IsHeadOnCollision(CPed*)` (0x4AD1E0, `ret 4`)
     fn building_collision_is_head_on(e: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x4AD1E0 => unported;
@@ -1169,11 +1158,6 @@ orig! {
     fn walk_round_building_ctor_entity(t: GPtr<u8>, ms: i32, e: GPtr<u8>, off: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, head_on: u32) -> GPtr<u8> = thiscall 0x654840 => unported;
     /// `CTaskComplexMoveBackAndJump::CTaskComplexMoveBackAndJump()` (0x655340)
     fn move_back_and_jump_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x655340 => unported;
-    /// `CTaskSimpleClimb::CTaskSimpleClimb(CEntity*, const CVector&, float, uint8, eClimbHeights, bool)` (0x67A110,
-    /// `ret 0x18`; the surface and height go as whole dwords)
-    fn climb_ctor(t: GPtr<u8>, e: GPtr<u8>, pos: GPtr<u8>, heading: u32, surf: u32, height: u32, force: u32) -> GPtr<u8> = thiscall 0x67A110 => unported;
-    /// `CTaskManager::GetTaskSecondary(int32)` (0x681810, `ret 4`)
-    fn tm_get_task_secondary(tm: GPtr<u8>, i: u32) -> GPtr<u8> = thiscall 0x681810 => unported;
 }
 
 /// `g_ikChainMan` (0xC15448)
@@ -1373,7 +1357,7 @@ pub fn event_handler_compute_building_collision_response(this: GPtr<u8>, e: GPtr
     if rd::<u8>(ent, 0x36) & 7 == 3 {
         let ped = rd::<GPtr<u8>>(this, 0);
         if ik_is_looking(GPtr::from_addr(IK_CHAIN_MANAGER), ped) == 0 {
-            ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), S_COMP_BLDG_COLL_RESP, rd::<GPtr<u8>>(this, 0), ent, 3000, 5, 0, 1,
+            ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), GPtr::from_addr(S_COMP_BLDG_COLL_RESP as usize), rd::<GPtr<u8>>(this, 0), ent, 3000, 5, GPtr::NULL, 1,
                        0x3E80_0000, 500, 3, 0);
         }
         tm_get_task_secondary(rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0), 0x47C).byte_add(4), 2);

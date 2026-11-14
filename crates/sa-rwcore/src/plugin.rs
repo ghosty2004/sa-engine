@@ -33,15 +33,14 @@ sa_core::globals! {
 }
 
 pub use sa_core::bindings::rw_stream_skip as stream_skip;
+pub use crate::bindings::plugin_add as add_plugin_call;
+pub use crate::bindings::read_chunk_header_call as stream_read_chunk_header;
+pub use crate::bindings::registry_get_plugin_offset as get_plugin_offset_call;
+pub use crate::bindings::stream_write_chunk_header as stream_write_versioned_chunk_header;
+pub use sa_core::bindings::rw_stream_find_chunk_call as stream_find_chunk;
 orig! {
     /// `_rwGetNumEngineInstances()` (0x7F2B90, uncatalogued name)
     pub fn get_num_engine_instances() -> u32 = cdecl 0x7F2B90 => unported;
-    /// `RwStreamFindChunk(stream, type, lengthOut, versionOut)` (0x7ED2D0)
-    pub fn stream_find_chunk(s: GPtr<u8>, ty: u32, len: GPtr<u32>, ver: GPtr<u32>) -> i32 = cdecl 0x7ED2D0 => unported;
-    /// `_rwStreamReadChunkHeader(stream, type, length, version, buildNum)` (0x7ED0F0)
-    pub fn stream_read_chunk_header(s: GPtr<u8>, ty: GPtr<u32>, len: GPtr<u32>, ver: GPtr<u32>, build: GPtr<u32>) -> i32 = cdecl 0x7ED0F0 => unported;
-    /// `_rwStreamWriteVersionedChunkHeader(stream, type, size, version, buildNum)` (0x7ED270)
-    pub fn stream_write_versioned_chunk_header(s: GPtr<u8>, ty: u32, size: i32, ver: u32, build: u32) -> GPtr<u8> = cdecl 0x7ED270 => unported;
 
     /// `constructCB` / `destructCB` / `alwaysCB` / `getSizeCB`: `cb(obj, offset, size)`
     pub fn call_obj_cb(f: u32, obj: GPtr<u8>, offset: i32, size: i32) -> u32 = cdecl dyn => unported;
@@ -51,11 +50,6 @@ orig! {
     pub fn call_stream_cb(f: u32, s: GPtr<u8>, len: i32, obj: GPtr<u8>, offset: i32, size: i32) -> u32 = cdecl dyn => unported;
     /// `rightsCB(obj, offset, size, extraData)`
     pub fn call_rights_cb(f: u32, obj: GPtr<u8>, offset: i32, size: i32, extra: u32) -> u32 = cdecl dyn => unported;
-
-    /// `_rwPluginRegistryAddPlugin` (0x8084A0)
-    pub fn add_plugin_call(reg: GPtr<u8>, size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 = cdecl 0x8084A0 => registry_add_plugin;
-    /// `_rwPluginRegistryGetPluginOffset` (0x808470)
-    pub fn get_plugin_offset_call(reg: GPtr<u8>, id: u32) -> i32 = cdecl 0x808470 => registry_get_plugin_offset;
 }
 
 use sa_core::field::addr32 as a32;
@@ -305,7 +299,7 @@ pub fn registry_read_data_chunks(reg: GPtr<u8>, s: GPtr<u8>, obj: GPtr<u8>) -> G
             GPtr::from_raw(clen.as_mut_ptr()),
             GPtr::NULL,
             GPtr::NULL,
-        ) == 0
+        ) as i32 == 0
         {
             return GPtr::NULL;
         }
@@ -384,7 +378,7 @@ pub fn registry_write_data_chunks(reg: GPtr<u8>, s: GPtr<u8>, obj: GPtr<u8>) -> 
         }
         e = p8(rd::<u32>(e, 0x30));
     }
-    if stream_write_versioned_chunk_header(s, 3, n, 0x36003, 0xFFFF).is_null() {
+    if stream_write_versioned_chunk_header(s, 3, n as u32, 0x36003, 0xFFFF).is_null() {
         return GPtr::NULL;
     }
     let mut e = p8(rd::<u32>(reg, 0x10));
@@ -393,7 +387,7 @@ pub fn registry_write_data_chunks(reg: GPtr<u8>, s: GPtr<u8>, obj: GPtr<u8>) -> 
         if cb != 0 && rd::<u32>(e, 0x10) != 0 {
             let r = call_obj_cb(cb, obj, e_offset(e), e_size(e)) as i32;
             if r > 0 {
-                if stream_write_versioned_chunk_header(s, rd::<u32>(e, 8), r, 0x36003, 0xFFFF).is_null() {
+                if stream_write_versioned_chunk_header(s, rd::<u32>(e, 8), r as u32, 0x36003, 0xFFFF).is_null() {
                     return GPtr::NULL;
                 }
                 if call_stream_cb(rd::<u32>(e, 0x10), s, r, obj, e_offset(e), e_size(e)) == 0 {
@@ -416,13 +410,7 @@ pub fn registry_skip_data_chunks(reg: GPtr<u8>, s: GPtr<u8>) -> GPtr<u8> {
     let mut clen = [0u32; 1];
     let mut len = length[0];
     while len != 0 {
-        if stream_read_chunk_header(
-            s,
-            GPtr::NULL,
-            GPtr::from_raw(clen.as_mut_ptr()),
-            GPtr::NULL,
-            GPtr::NULL,
-        ) == 0
+        if stream_read_chunk_header(s, GPtr::NULL, GPtr::from_raw(clen.as_mut_ptr()), GPtr::NULL, GPtr::NULL) as i32 == 0
         {
             return GPtr::NULL;
         }

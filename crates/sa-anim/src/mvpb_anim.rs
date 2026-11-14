@@ -19,8 +19,8 @@ const CLUMP_DATA_OFFSET: usize = 0xB5F878;
 const FOUND_FRAME: usize = 0xB5F87C;
 
 use crate::bindings::camera_get_cut_scene_finish_time;
-use crate::bindings::convert_ped_node_2_bone_tag;
-use crate::bindings::rp_skin_get_num_bones;
+use sa_core::bindings::convert_ped_node_2_bone_tag;
+use sa_core::bindings::rp_skin_get_num_bones;
 use sa_core::bindings::base_model_info_set_col_model;
 use sa_core::bindings::entity_register_reference as register_reference;
 use sa_core::bindings::find_player_ped;
@@ -35,31 +35,20 @@ use sa_core::bindings::rp_hanim_id_get_index;
 use sa_core::bindings::rp_skin_geometry_get_skin;
 use sa_core::bindings::streaming_i_have_used_streaming_memory as i_have_used_streaming_memory;
 use sa_core::bindings::streaming_im_gonna_use_streaming_memory as im_gonna_use_streaming_memory;
+use crate::bindings::allocate_data_call as rp_anim_blend_allocate_data;
+use crate::bindings::anim_blend_node_find_key_frame;
+use crate::bindings::clump_data_for_all_frames;
+use crate::bindings::clump_data_set_number_of_bones;
+use crate::bindings::convert_bone_tag_2_bone_name as convert_bone_tag_2_bone_name_o;
+use crate::bindings::cutscene_update_object_bounding_box as update_cutscene_object_bounding_box;
+use crate::bindings::skin_get_bone_positions_to_table;
+use sa_core::bindings::find_objects_of_type_in_range as world_find_objects_of_type_in_range;
+use sa_core::bindings::frame_for_all_children as rw_frame_for_all_children;
+use sa_core::bindings::get_frame_node_name;
+use sa_core::bindings::get_uppercase_key;
 orig! {
-    /// `RpAnimBlendAllocateData(RpClump*)` (0x4D5F50, cdecl)
-    fn rp_anim_blend_allocate_data(c: GPtr<u8>) = cdecl 0x4D5F50 => unported;
-    /// `CAnimBlendClumpData::SetNumberOfBones(int32)` (0x4CF140, `ret 4`)
-    fn clump_data_set_number_of_bones(d: GPtr<u8>, n: i32) = thiscall 0x4CF140 => unported;
-    /// `CAnimBlendClumpData::ForAllFrames(cb, data)` (0x4CF190, `ret 8`)
-    fn clump_data_for_all_frames(d: GPtr<u8>, cb: u32, data: u32) = thiscall 0x4CF190 => unported;
-    /// `SkinGetBonePositionsToTable(RpClump*, RwV3d*)` (0x735360, cdecl)
-    fn skin_get_bone_positions_to_table(c: GPtr<u8>, t: GPtr<u8>) = cdecl 0x735360 => unported;
-    /// `RwFrameForAllChildren(RwFrame*, cb, void*)` (0x7F0DC0, cdecl)
-    fn rw_frame_for_all_children(f: GPtr<u8>, cb: u32, data: GPtr<u32>) -> GPtr<u8> = cdecl 0x7F0DC0 => unported;
-    /// `ConvertBoneTag2BoneName(int32)` (0x4D56F0, cdecl)
-    fn convert_bone_tag_2_bone_name_o(t: i32) -> u32 = cdecl 0x4D56F0 => crate::mvpb_anim::convert_bone_tag_2_bone_name;
-    /// `CKeyGen::GetUppercaseKey(const char*)` (0x53CF30, cdecl)
-    fn get_uppercase_key(s: u32) -> u32 = cdecl 0x53CF30 => unported;
-    /// `GetFrameNodeName(RwFrame*)` (0x72FB30, cdecl)
-    fn get_frame_node_name(f: GPtr<u8>) -> u32 = cdecl 0x72FB30 => unported;
-    /// `CAnimBlendNode::FindKeyFrame(float)` (0x4D0240, `ret 4`)
-    fn anim_blend_node_find_key_frame(n: GPtr<u8>, t: f32) -> u8 = thiscall 0x4D0240 => unported;
     /// `CCamera::FinishCutscene` (0x514950)
     fn camera_finish_cutscene(c: GPtr<u8>) = thiscall 0x514950 => unported;
-    /// `CWorld::FindObjectsOfTypeInRange(...)` (0x564C70, cdecl, 12 arguments)
-    fn world_find_objects_of_type_in_range(mi: i32, pos: GPtr<f32>, r: f32, b2d: u32, n: GPtr<i16>, max: i16, out: GPtr<u32>, b: u32, v: u32, p: u32, o: u32, d: u32) = cdecl 0x564C70 => unported;
-    /// `CCutsceneMgr::UpdateCutsceneObjectBoundingBox(RpClump*, int32)` (0x5B01E0, cdecl)
-    fn update_cutscene_object_bounding_box(c: GPtr<u8>, id: i32) = cdecl 0x5B01E0 => unported;
     /// `CCutsceneObject::CCutsceneObject` (0x5B19D0)
     fn cutscene_object_ctor_o(o: GPtr<u8>) -> GPtr<u8> = thiscall 0x5B19D0 => crate::mvpb_anim::cutscene_object_ctor;
     /// `CEntity::SetModelIndex(uint32)` (vtable +0x14)
@@ -84,7 +73,7 @@ pub fn rp_anim_blend_clump_init_skinned() {
     let data = clump_data(clump);
     let atomic = get_first_atomic(clump);
     let skin = rp_skin_geometry_get_skin(rd::<GPtr<u8>>(atomic, 0x18));
-    let n = rp_skin_get_num_bones(skin);
+    let n = rp_skin_get_num_bones(skin) as i32;
     clump_data_set_number_of_bones(data, n);
     let hier = get_anim_hierarchy_from_skin_clump(clump);
     let mut table = [0u32; 0xC0];
@@ -119,10 +108,10 @@ pub fn rp_anim_blend_clump_init_unskinned() {
     let data = clump_data(clump);
     let frame = rd::<GPtr<u8>>(clump, 4);
     let mut cnt = 0u32;
-    rw_frame_for_all_children(frame, 0x4D6610, GPtr::from_raw(&mut cnt));
+    rw_frame_for_all_children(frame, 0x4D6610, GPtr::<u32>::cast::<u8>(GPtr::from_raw(&mut cnt)));
     clump_data_set_number_of_bones(data, cnt as i32);
     let mut cursor = rd::<u32>(data, 0x10);
-    rw_frame_for_all_children(frame, 0x4D6670, GPtr::from_raw(&mut cursor));
+    rw_frame_for_all_children(frame, 0x4D6670, GPtr::<u32>::cast::<u8>(GPtr::from_raw(&mut cursor)));
     clump_data_for_all_frames(data, 0x4D6640, 0);
     let f0 = rd::<GPtr<u8>>(data, 0x10);
     wr::<u8>(f0, 0, rd::<u8>(f0, 0) | 8);
@@ -139,7 +128,7 @@ pub fn clump_fill_frame_array_skinned(out: GPtr<u32>) {
     let h = get_anim_hierarchy_from_skin_clump(clump);
     for i in 1..0x13 {
         let tag = convert_ped_node_2_bone_tag(i);
-        let idx = rp_hanim_id_get_index(h, tag);
+        let idx = rp_hanim_id_get_index(h, tag as u32);
         let v = rd::<u32>(data, 0x10).wrapping_add((idx.wrapping_mul(0x18)) as u32);
         out.wrapping_index(i).write(v);
     }
@@ -177,7 +166,7 @@ pub fn rp_anim_blend_node_update_key_frames(frames: GPtr<u8>, n: i32) {
        route = "L2", hazards = "none")]
 pub fn for_all_frames_find_bone_name(fd: GPtr<u8>, key: u32) {
     let name = convert_bone_tag_2_bone_name_o(rd::<i32>(fd, 0x14));
-    if name != 0 && get_uppercase_key(name) == key {
+    if name != 0 && get_uppercase_key(GPtr::from_addr(name as usize)) == key {
         g::<GPtr<u8>>(FOUND_FRAME).write(fd);
     }
 }
@@ -187,8 +176,8 @@ pub fn for_all_frames_find_bone_name(fd: GPtr<u8>, key: u32) {
 #[hook(addr = 0x4D6340, conv = cdecl, name = "ForAllFramesF", expect = "56 8B 74 24 08",
        route = "L2", hazards = "none")]
 pub fn for_all_frames_find_node_name(fd: GPtr<u8>, key: u32) {
-    let name = get_frame_node_name(rd::<GPtr<u8>>(fd, 0x10));
-    if get_uppercase_key(name) == key {
+    let name = GPtr::<u8>::addr(get_frame_node_name(rd::<GPtr<u8>>(fd, 0x10))) as u32;
+    if get_uppercase_key(GPtr::from_addr(name as usize)) == key {
         g::<GPtr<u8>>(FOUND_FRAME).write(fd);
     }
 }
@@ -270,7 +259,7 @@ pub fn cutscene_mgr_hide_requested_objects() {
     for k in 0..n.max(0) {
         let e: GPtr<u8> = GPtr::from_addr(0xBC20D0 + 0x2C * k as usize);
         let mut mi = 0i32;
-        if model_info_get_model_info(e.byte_add(0xC), GPtr::from_raw(&mut mi)).is_null() {
+        if model_info_get_model_info(e.byte_add(0xC), GPtr::<i32>::cast::<u8>(GPtr::from_raw(&mut mi))).is_null() {
             continue;
         }
         let mut pos = [
@@ -281,8 +270,8 @@ pub fn cutscene_mgr_hide_requested_objects() {
         let mut cnt = 0i16;
         let mut objs = [0u32; 32];
         world_find_objects_of_type_in_range(
-            mi,
-            GPtr::from_raw(pos.as_mut_ptr()),
+            mi as u32,
+            GPtr::<f32>::cast::<u32>(GPtr::from_raw(pos.as_mut_ptr())),
             1.5,
             1,
             GPtr::from_raw(&mut cnt),

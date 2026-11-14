@@ -3,6 +3,7 @@
 //! +0x8 anim played, +0xC the first anim, +0x10 the second anim id (0xBF = none), +0x14 the vehicle, +0x18 the door,
 //! +0x1C the time, +0x20 the jacker, +0x24 victim-is-driver, +0x28 the line-up utility.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::hook;
 use sa_core::orig::at_site;

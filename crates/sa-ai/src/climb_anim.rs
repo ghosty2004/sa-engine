@@ -4,18 +4,17 @@
 //! Task fields: +9 change-anim flag, +0xA change-position flag, +0xD height for the anim, +0xE height for the
 //! position, +0x2C the current anim.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
 use crate::common::*;
 
-use crate::bindings::ped_set_move_state;
+use sa_world::bindings::ped_set_move_state;
 use sa_world::bindings::stats_get_fat_and_muscle_modifier;
+use sa_core::bindings::anim_set_delete_callback as assoc_set_delete_callback;
+use sa_world::bindings::anim_blend_animation;
 orig! {
-    /// `CAnimBlendAssociation::SetDeleteCallback(void (*)(CAnimBlendAssociation*, void*), void*)` (0x4CEBC0)
-    fn assoc_set_delete_callback(a: GPtr<u8>, cb: u32, data: GPtr<u8>) = thiscall 0x4CEBC0 => unported;
-    /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float)` (0x4D4610)
-    fn anim_blend_animation(clump: u32, group: u32, id: u32, delta: f32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
     /// `CPed::SetMoveAnim()` (vtable slot 0x5C)
     fn ped_set_move_anim(p: GPtr<u8>) = thiscall vslot 0x5C => unported;
 }
@@ -58,9 +57,9 @@ pub fn climb_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
         1 => {
             let a = if rd::<u32>(this, 0x2C) != 0 {
                 release(this);
-                anim_blend_animation(clump, 0, 0x81, 4.0)
+                anim_blend_animation(GPtr::from_addr(clump as usize), 0, 0x81, 4.0)
             } else {
-                anim_blend_animation(clump, 0, 0x80, 8.0)
+                anim_blend_animation(GPtr::from_addr(clump as usize), 0, 0x80, 8.0)
             };
             wr::<u8>(this, 0xE, 1);
             set(a, 0);
@@ -69,14 +68,14 @@ pub fn climb_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
             if rd::<u8>(this, 0xE) == 0 {
                 wr::<u8>(this, 0xD, 3);
                 wr::<u8>(this, 0xE, 3);
-                let a = anim_blend_animation(rd::<u32>(ped, 0x18), 0, 0x83, 4.0);
+                let a = anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0, 0x83, 4.0);
                 wr::<GPtr<u8>>(this, 0x2C, a);
                 wr::<u8>(a, 0x2E, rd::<u8>(a, 0x2E) & 0xFE);
                 wr::<u8>(this, 0xA, 0);
                 wr::<u8>(this, 9, 0);
             } else {
                 release(this);
-                let a = anim_blend_animation(rd::<u32>(ped, 0x18), 0, 0x82, 1000.0);
+                let a = anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0, 0x82, 1000.0);
                 wr::<GPtr<u8>>(this, 0x2C, a);
                 wr::<u8>(this, 0xE, 2);
                 wr::<u8>(this, 0xA, 0);
@@ -85,16 +84,16 @@ pub fn climb_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
         }
         3 => {
             release(this);
-            set(anim_blend_animation(rd::<u32>(ped, 0x18), 0, 0x83, 1000.0), 1);
+            set(anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0, 0x83, 1000.0), 1);
         }
         5 => {
             release(this);
             let a = rd::<GPtr<u8>>(this, 0x2C);
             let delta = if !a.is_null() && rd::<u16>(a, 0x2C) == 0x83 { 16.0 } else { 1000.0 };
-            set(anim_blend_animation(rd::<u32>(ped, 0x18), 0, 0x85, delta), 1);
+            set(anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0, 0x85, delta), 1);
         }
         4 | 6 => {
-            anim_blend_animation(rd::<u32>(ped, 0x18), rd::<u32>(ped, 0x4D4), 3, 1000.0);
+            anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), rd::<u32>(ped, 0x4D4), 3, 1000.0);
             ped_set_move_state(ped, 1);
             ped_set_move_anim(ped);
             let pd = rd::<GPtr<u8>>(ped, 0x480);
@@ -103,7 +102,7 @@ pub fn climb_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
             }
             release(this);
             let id = if rd::<u8>(this, 0xD) == 6 { 0x86 } else { 0x84 };
-            set(anim_blend_animation(rd::<u32>(ped, 0x18), 0, id, 1000.0), 1);
+            set(anim_blend_animation(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0, id, 1000.0), 1);
         }
         _ => {}
     }

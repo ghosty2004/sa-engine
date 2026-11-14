@@ -17,12 +17,15 @@ const TEXDICT_TK_LIST: u32 = 0x8E23E4;
 const TEXTURE_TK_LIST: u32 = 0x8E23CC;
 const FRAME_TK_LIST: u32 = 0x8E2270;
 
-use crate::bindings::rw_stream_find_chunk_call as stream_find_chunk;
+use sa_core::bindings::rw_stream_find_chunk_call as stream_find_chunk;
 use sa_core::bindings::rp_geometry_destroy as geometry_destroy;
 use sa_core::bindings::rw_tex_dictionary_for_all_textures as tex_dictionary_for_all_textures;
+use crate::bindings::atomic_stream_read_call as clump_atomic_stream_read;
+use crate::bindings::plugin_get_size;
+use crate::bindings::rw_stream_write_int32 as stream_write_int32;
+use sa_core::bindings::rw_stream_write as stream_write;
+use sa_core::bindings::stream_read;
 orig! {
-    /// `_rwPluginRegistryGetSize(registry, object)` (0x808B00)
-    fn plugin_get_size(reg: u32, obj: GPtr<u8>) -> i32 = cdecl 0x808B00 => unported;
     /// `RpGeometryStreamGetSize(geometry)` (0x74CE20)
     fn geometry_stream_get_size(g: GPtr<u8>) -> u32 = cdecl 0x74CE20 => geometry_stream_get_size_port;
     /// The geometry struct-chunk size (0x74CE60)
@@ -33,18 +36,10 @@ orig! {
     fn material_stream_get_size(m: GPtr<u8>) -> u32 = cdecl 0x74E010 => unported;
     /// `_rpAtomicStreamWrite(atomic, info)` (0x74A880)
     fn atomic_stream_write_internal(a: GPtr<u8>, info: GPtr<u8>) -> GPtr<u8> = cdecl 0x74A880 => unported;
-    /// `_rpClumpAtomicStreamRead(stream, geometryList, frameList)` (0x74B060)
-    fn clump_atomic_stream_read(s: GPtr<u8>, geos: GPtr<u8>, frames: GPtr<u8>) -> GPtr<u8> = cdecl 0x74B060 => unported;
     /// `RpLightStreamGetSize(light)` (0x751E10)
     fn light_stream_get_size(l: GPtr<u8>) -> u32 = cdecl 0x751E10 => unported;
     /// `RwCameraStreamGetSize(camera)` (0x808CE0)
     fn camera_stream_get_size(c: GPtr<u8>) -> u32 = cdecl 0x808CE0 => unported;
-    /// `RwStreamRead(stream, buffer, length)` (0x7EC9D0)
-    fn stream_read(s: GPtr<u8>, buf: GPtr<u8>, len: u32) -> u32 = cdecl 0x7EC9D0 => crate::stream::rw_stream_read;
-    /// `RwStreamWrite(stream, buffer, length)` (0x7ECB30)
-    fn stream_write(s: GPtr<u8>, buf: GPtr<u8>, len: u32) -> GPtr<u8> = cdecl 0x7ECB30 => crate::stream::rw_stream_write;
-    /// `RwStreamWriteInt32(stream, ints, numBytes)` (0x7ED460)
-    fn stream_write_int32(s: GPtr<u8>, ints: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x7ED460 => unported;
     /// The native texture size query through `RwGlobals` +0xAC `(out, texture, 0)`
     fn native_texture_get_size(out: GPtr<u32>, t: GPtr<u8>, z: u32) -> u32 = cdecl table 0xC97B24 0xAC => unported;
     /// `_rwFrameListFlattenRecurse(cursor, frame)` (0x8076A0)
@@ -69,7 +64,7 @@ pub fn stream_write_versioned_chunk_header(s: GPtr<u8>, ty: u32, size: u32, vers
        unverified = "rw5-core-1", route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn atomic_stream_get_size(a: GPtr<u8>) -> u32 {
     let s = geometry_stream_get_size(p8(rd::<u32>(a, 0x18))).wrapping_add(0x28);
-    (plugin_get_size(ATOMIC_TK_LIST, a) as u32).wrapping_add(s).wrapping_add(0xC)
+    ((plugin_get_size(GPtr::from_addr(ATOMIC_TK_LIST as usize), a) as i32) as u32).wrapping_add(s).wrapping_add(0xC)
 }
 
 /// `RpAtomicStreamWrite(atomic, stream)` (0x74A850): `_rpAtomicStreamWrite(atomic, &info)` with the
@@ -132,7 +127,7 @@ pub fn clump_camera_stream_get_size_cb(camera: GPtr<u8>, size: GPtr<u32>) -> GPt
        note = "adds to the caller's size (stack)")]
 pub fn clump_atomic_stream_get_size_cb(a: GPtr<u8>, size: GPtr<u32>) -> GPtr<u8> {
     size.write(size.read().wrapping_add(0x28));
-    let n = (plugin_get_size(ATOMIC_TK_LIST, a) as u32).wrapping_add(0xC);
+    let n = ((plugin_get_size(GPtr::from_addr(ATOMIC_TK_LIST as usize), a) as i32) as u32).wrapping_add(0xC);
     size.write(size.read().wrapping_add(n));
     a
 }
@@ -158,7 +153,7 @@ pub fn atomic_stream_read(s: GPtr<u8>) -> GPtr<u8> {
 pub fn clump_chunk_info_read(s: GPtr<u8>, info: GPtr<u8>, len_out: GPtr<u32>) -> GPtr<u8> {
     let mut len: u32 = s.addr() as u32;
     let mut ver: u32 = 0;
-    if stream_find_chunk(s, 1, GPtr::from_raw(&mut len), GPtr::from_raw(&mut ver)) == 0 {
+    if stream_find_chunk(s, 1, GPtr::from_raw(&mut len), GPtr::from_raw(&mut ver)) as u32 == 0 {
         return GPtr::NULL;
     }
     if stream_read(s, info, 0xC) != 0xC {
@@ -175,7 +170,7 @@ pub fn clump_chunk_info_read(s: GPtr<u8>, info: GPtr<u8>, len_out: GPtr<u32>) ->
 pub fn geometry_stream_get_size_port(g: GPtr<u8>) -> u32 {
     let s = geometry_struct_get_size(g).wrapping_add(0xC);
     let s = material_list_stream_get_size(g.byte_add(0x20)).wrapping_add(s).wrapping_add(0xC);
-    (plugin_get_size(GEOMETRY_TK_LIST, g) as u32).wrapping_add(s).wrapping_add(0xC)
+    ((plugin_get_size(GPtr::from_addr(GEOMETRY_TK_LIST as usize), g) as i32) as u32).wrapping_add(s).wrapping_add(0xC)
 }
 
 /// `cb_RIGHTTORENDER_RpAtomic_StreamWrite(stream, length, atomic, offset, size)` (0x749160): the two
@@ -244,7 +239,7 @@ pub fn tex_dictionary_stream_get_size(d: GPtr<u8>) -> u32 {
     if acc[1] == 0 {
         return 0;
     }
-    acc[0].wrapping_add(plugin_get_size(TEXDICT_TK_LIST, d) as u32).wrapping_add(0xC)
+    acc[0].wrapping_add((plugin_get_size(GPtr::from_addr(TEXDICT_TK_LIST as usize), d) as i32) as u32).wrapping_add(0xC)
 }
 
 /// `_rwTexDictionaryTextureGetSizeCB(texture, acc)` (0x804990): the native texture size (`RwGlobals`
@@ -262,7 +257,7 @@ pub fn tex_dictionary_texture_get_size_cb(t: GPtr<u8>, acc: GPtr<u32>) -> GPtr<u
         return GPtr::NULL;
     }
     acc.write(acc.read().wrapping_add(size.wrapping_add(0xC)));
-    let n = (plugin_get_size(TEXTURE_TK_LIST, t) as u32).wrapping_add(0xC);
+    let n = ((plugin_get_size(GPtr::from_addr(TEXTURE_TK_LIST as usize), t) as i32) as u32).wrapping_add(0xC);
     acc.write(acc.read().wrapping_add(n));
     t
 }
@@ -308,7 +303,7 @@ pub fn frame_list_stream_get_size(l: GPtr<u8>) -> u32 {
     let mut i: i32 = 0;
     while i < rd::<i32>(l, 4) {
         let f = p8(rd::<u32>(p8(rd::<u32>(l, 0)), (i * 4) as isize));
-        size = size.wrapping_add(plugin_get_size(FRAME_TK_LIST, f) as u32).wrapping_add(0xC);
+        size = size.wrapping_add((plugin_get_size(GPtr::from_addr(FRAME_TK_LIST as usize), f) as i32) as u32).wrapping_add(0xC);
         i += 1;
     }
     size
@@ -433,17 +428,13 @@ const MATFX_ATOMIC_OFFSET: usize = 0xC9AB84;
 const MATFX_SECTOR_OFFSET: usize = 0xC9AB88;
 
 use crate::bindings::free_list_destroy;
+use crate::bindings::atomic_set_pipeline_call as matfx_atomic_set_pipeline;
+use crate::bindings::destroy_effects_call as matfx_material_data_destroy_effects;
+use crate::bindings::matfx_world_sector_set_pipeline;
+use crate::bindings::read_int32 as stream_read_int32;
 orig! {
-    /// `RwStreamReadInt32(stream, ints, numBytes)` (0x7ED540)
-    fn stream_read_int32(s: GPtr<u8>, ints: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x7ED540 => unported;
     /// `_rpMatFXPipelinesDestroy()` (0x816190)
     fn matfx_pipelines_destroy() -> u32 = cdecl 0x816190 => unported;
-    /// `MaterialDataDestroyEffects(data)` (0x810CA0)
-    fn matfx_material_data_destroy_effects(d: GPtr<u8>) -> GPtr<u8> = cdecl 0x810CA0 => unported;
-    /// `_rpMatFXAtomicSetPipeline(atomic)` (0x816260)
-    fn matfx_atomic_set_pipeline(a: GPtr<u8>) -> GPtr<u8> = cdecl 0x816260 => unported;
-    /// `_rpMatFXWorldSectorSetPipeline(sector)` (0x816270)
-    fn matfx_world_sector_set_pipeline(s: GPtr<u8>) -> GPtr<u8> = cdecl 0x816270 => unported;
 }
 
 fn gu(addr: usize) -> u32 {
@@ -691,21 +682,16 @@ pub fn mesh_size(h: GPtr<u8>, obj: GPtr<u8>) -> u32 {
     }
 }
 
+use crate::bindings::destroy_render_pipelines_call as immediate_close_a;
+use crate::bindings::destroy_transform_pipeline_call as immediate_close_b;
+use crate::bindings::device_system_request;
+use sa_core::bindings::calloc as crt_calloc;
+use sa_core::bindings::crt_realloc;
 orig! {
-    /// `_rwDeviceSystemRequest(device, request, out, in, number)` (0x7F2AB0)
-    fn device_system_request(dev: GPtr<u8>, req: u32, out: GPtr<u32>, inp: u32, num: u32) -> u32 = cdecl 0x7F2AB0 => unported;
     /// The device's camera clear through `RwGlobals` +0x9C `(camera, color, mode)`
     fn device_camera_clear(c: GPtr<u8>, color: u32, mode: u32) -> u32 = cdecl table 0xC97B24 0x9C => unported;
-    /// Immediate-module teardown helper (0x80A140)
-    fn immediate_close_a(p: GPtr<u8>) = cdecl 0x80A140 => unported;
-    /// Immediate-module teardown helper (0x80A110)
-    fn immediate_close_b(p: GPtr<u8>) = cdecl 0x80A110 => unported;
     /// CRT `malloc(size)` (0x824257)
     fn crt_malloc(size: u32) -> u32 = cdecl 0x824257 => unported;
-    /// CRT `realloc(p, size)` (0x824269)
-    fn crt_realloc(p: u32, size: u32) -> u32 = cdecl 0x824269 => unported;
-    /// CRT `calloc(n, size)` (0x824416)
-    fn crt_calloc(n: u32, size: u32) -> u32 = cdecl 0x824416 => unported;
 }
 
 /// A module close callback's freelist step: the freelist at `RwGlobals + [offset_global]` destroyed and
@@ -768,7 +754,7 @@ pub fn camera_clear(c: GPtr<u8>, color: u32, mode: u32) -> GPtr<u8> {
 /// slot is uninitialised before the request (port: 0).
 fn engine_query(req: u32) -> i32 {
     let mut v: u32 = 0;
-    if device_system_request(crate::common::rw_globals().byte_add(0x10), req, GPtr::from_raw(&mut v), 0, 0) != 0 {
+    if device_system_request(crate::common::rw_globals().byte_add(0x10), req as i32, GPtr::<u32>::cast::<u8>(GPtr::from_raw(&mut v)), GPtr::NULL, 0) as u32 != 0 {
         v as i32
     } else {
         -1
@@ -794,7 +780,7 @@ pub fn engine_get_max_texture_size() -> i32 {
        unverified = "rw5-core-2", route = "L3-only", hazards = "none", recs = "grove-walk",
        note = "device focus change (OS effects)")]
 pub fn engine_set_focus(enable: u32) -> u32 {
-    (device_system_request(crate::common::rw_globals().byte_add(0x10), 8, GPtr::NULL, 0, enable) != 0) as u32
+    (device_system_request(crate::common::rw_globals().byte_add(0x10), 8, GPtr::<u32>::cast::<u8>(GPtr::NULL), GPtr::NULL, enable as i32) as u32 != 0) as u32
 }
 
 /// `_rwMemoryDefaultMalloc(size)` (0x8020A0): CRT `malloc`.
@@ -810,7 +796,7 @@ pub fn memory_default_malloc(size: u32) -> u32 {
        unverified = "rw5-core-2", route = "L3-only", hazards = "none", recs = "grove-walk",
        note = "CRT heap allocation (addresses differ per run)")]
 pub fn memory_default_realloc(p: u32, size: u32) -> u32 {
-    crt_realloc(p, size)
+    GPtr::<u8>::addr(crt_realloc(GPtr::from_addr(p as usize), size)) as u32
 }
 
 /// `_rwMemoryDefaultCalloc(n, size)` (0x8020D0): CRT `calloc`.
@@ -818,7 +804,7 @@ pub fn memory_default_realloc(p: u32, size: u32) -> u32 {
        unverified = "rw5-core-2", route = "L3-only", hazards = "none", recs = "grove-walk",
        note = "CRT heap allocation (addresses differ per run)")]
 pub fn memory_default_calloc(n: u32, size: u32) -> u32 {
-    crt_calloc(n, size)
+    GPtr::<u8>::addr(crt_calloc(n, size)) as u32
 }
 
 /// Every `#[hook]` of this module.

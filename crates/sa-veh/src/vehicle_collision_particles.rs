@@ -13,11 +13,9 @@ use crate::common::{ftol32, g, rd, x, xi};
 use sa_core::bindings::entity_get_is_on_screen;
 use sa_core::bindings::vector_normalise_and_mag;
 use sa_world::bindings::fx_prt_mult_ctor;
+use sa_world::bindings::fx_add_particle;
+use sa_world::bindings::fx_add_sparks;
 orig! {
-    /// `Fx_c::AddSparks(CVector&, CVector&, float, int32, CVector, eSparkType, float, float)` (0x49F040) on `g_fx` (0xA9AE00)
-    fn fx_add_sparks(fx: GPtr<u8>, origin: GPtr<u8>, dir: GPtr<u8>, force: f32, amount: i32, across: CVector, kind: u32, spread: f32, life: f32) = thiscall 0x49F040 => unported;
-    /// `FxSystem_c::AddParticle(RwV3d*, RwV3d*, float, FxPrtMult_c*, float, float, float, uint8)` (0x4AA440)
-    fn fx_add_particle(fx: GPtr<u8>, pos: GPtr<u8>, vel: GPtr<u8>, time: f32, mult: GPtr<u8>, rot: f32, bright: f32, cam: f32, local: u32) = thiscall 0x4AA440 => unported;
     /// `Fx_c::AddDebris(CVector&, RwRGBA&, float, int32)` (0x49F750) on `g_fx`
     fn fx_add_debris(fx: GPtr<u8>, pos: GPtr<u8>, col: GPtr<u8>, scale: f32, amount: i32) = thiscall 0x49F750 => unported;
 }

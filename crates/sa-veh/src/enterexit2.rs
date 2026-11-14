@@ -16,13 +16,11 @@ pub use sa_world::bindings::event_dtor_4aeb90;
 pub use sa_world::bindings::event_group_add;
 pub use sa_world::bindings::ped_stop_non_partial_anims as stop_non_partial_anims;
 pub use sa_world::bindings::test_line_sphere;
+pub use sa_world::bindings::anim_blend_animation as blend_animation;
+pub use sa_world::bindings::compute_target_door_to_exit;
 orig! {
     /// `CVehicle` virtual slot 0xBC (`GetRideAnimData()`)
     pub fn get_ride_anim_data(v: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0xBC => unported;
-    /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float)` (0x4D4610)
-    pub fn blend_animation(clump: GPtr<u8>, group: u32, id: u32, delta: u32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
-    /// `CCarEnterExit::ComputeTargetDoorToExit(const CVehicle*, const CPed*)` (0x64F110)
-    pub fn compute_target_door_to_exit(v: GPtr<u8>, ped: GPtr<u8>) -> i32 = cdecl 0x64F110 => unported;
 }
 
 /// 1000.0f, the blend delta of every AddInCarAnim call.
@@ -55,7 +53,7 @@ pub fn add_in_car_anim(veh: GPtr<u8>, ped: GPtr<u8>, as_driver: u32) {
     } else {
         (0, if rd::<u8>(veh, 0x429) & 8 != 0 { 0x41 } else { 0x40 })
     };
-    blend_animation(rd::<GPtr<u8>>(ped, 0x18), group, id, BLEND_1000);
+    blend_animation(rd::<GPtr<u8>>(ped, 0x18), group, id, f32::from_bits(BLEND_1000));
     stop_non_partial_anims(ped);
 }
 
@@ -118,7 +116,7 @@ pub fn is_path_to_door_blocked_by_vehicle_collision_model(
         let sp = rd::<GPtr<u8>>(cd, 8).byte_add(0x14 * i as isize);
         let mut sphere = [rd::<u32>(sp, 0), rd::<u32>(sp, 4), a[2], 0, 0];
         sphere[3] = crate::common::x(rd::<f32>(sp, 0xC)).to_f32().to_bits();
-        if test_line_sphere(lp, GPtr::from_raw(&raw mut sphere).cast()) != 0 {
+        if test_line_sphere(lp.cast::<f32>(), GPtr::<u8>::cast::<f32>(GPtr::from_raw(&raw mut sphere).cast())) != 0 {
             break;
         }
         i += 1;

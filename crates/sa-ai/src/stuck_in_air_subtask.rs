@@ -2,6 +2,7 @@
 //! when a ped is stuck in the air / bumps an object while walking (batch `std11-ai-1`). Ported from the 1.0 US bytes;
 //! unverified (docs/verify/HOWTO.md).
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::orig::at_site;
 use sa_core::{hook, orig};
@@ -9,13 +10,17 @@ use sa_core::{hook, orig};
 use crate::common::*;
 
 use crate::bindings::fall_and_get_up_ctor;
-use crate::bindings::flee_point_ctor as go_to_point_ctor;
+use sa_world::bindings::flee_point_ctor as go_to_point_ctor;
 use crate::bindings::pad_jump_just_down;
 use sa_core::bindings::entity_clean_up_old_reference;
 use sa_core::bindings::general_get_radian_angle_between_points;
 use sa_world::bindings::get_pad_from_player;
 use sa_world::bindings::stand_still_ctor;
 use sa_world::bindings::task_complex_ctor;
+use sa_core::bindings::clump_get_association;
+use sa_core::bindings::general_limit_radian_angle;
+use sa_world::bindings::pad_get_ped_walk_left_right;
+use sa_world::bindings::pad_get_ped_walk_up_down;
 orig! {
     /// `CTask::GetSubTask()` (vtable slot 8)
     fn task_get_sub_task(t: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x8 => unported;
@@ -23,14 +28,6 @@ orig! {
     fn task_get_type(t: GPtr<u8>) -> u32 = thiscall vslot 0x10 => unported;
     /// `CTask::MakeAbortable(CPed*, eAbortPriority, const CEvent*)` (vtable slot 0x18)
     fn task_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, prio: i32, ev: u32) -> u8 = thiscall vslot 0x18 => unported;
-    /// `CPad::GetPedWalkLeftRight()` (0x53FC90)
-    fn pad_get_ped_walk_left_right(p: GPtr<u8>) -> u16 = thiscall 0x53FC90 => unported;
-    /// `CPad::GetPedWalkUpDown()` (0x53FD30)
-    fn pad_get_ped_walk_up_down(p: GPtr<u8>) -> u16 = thiscall 0x53FD30 => unported;
-    /// `CGeneral::LimitRadianAngle(float)` (0x53CB50, ST0)
-    fn general_limit_radian_angle(a: f32) -> f64 = cdecl 0x53CB50 => unported;
-    /// `RpAnimBlendClumpGetAssociation(RpClump*, AnimationId)` (0x4D68B0)
-    fn clump_get_association(clump: GPtr<u8>, anim: i32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
 }
 
 /// `CEventObjectCollision::~CEventObjectCollision` (0x4ACDD0, thiscall; entry `push -1` then the protection chunk
@@ -42,7 +39,7 @@ pub fn event_object_collision_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x85ACA8);
     let o = rd::<GPtr<u8>>(this, 0x14);
     if !o.is_null() {
-        entity_clean_up_old_reference(o, this.byte_add(0x14));
+        entity_clean_up_old_reference(o, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x14)));
     }
     wr::<u32>(this, 0, 0x85AB38);
 }
@@ -73,7 +70,7 @@ pub fn task_complex_stuck_in_air_create_sub_task(_this: GPtr<u8>, ty: i32, ped: 
         0xCB => {
             standing();
             let t = task_new(0x20);
-            if t.is_null() { t } else { stand_still_ctor(t, 5000, 0, 0, 0x4100_0000) }
+            if t.is_null() { t } else { stand_still_ctor(t, 5000, 0, 0, f32::from_bits(0x4100_0000)) }
         }
         0xD3 => {
             standing();
@@ -156,13 +153,13 @@ pub fn task_complex_stuck_in_air_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>)
             } else {
                 if rd::<u32>(ped, 0x480) != 0 {
                     let pad = get_pad_from_player(ped);
-                    let lr = f32_of(X87::from_i32(i32::from(pad_get_ped_walk_left_right(pad) as i16)));
-                    let ud = f32_of(X87::from_i32(i32::from(pad_get_ped_walk_up_down(pad) as i16)));
+                    let lr = f32_of(X87::from_i32(i32::from((pad_get_ped_walk_left_right(pad) as u16) as i16)));
+                    let ud = f32_of(X87::from_i32(i32::from((pad_get_ped_walk_up_down(pad) as u16) as i16)));
                     let z = x(g::<f32>(0x858B50).read());
                     let moved = !x(lr).fabs().fcom(z).test_any(0x41) || !x(ud).fabs().fcom(z).test_any(0x41);
                     if moved {
                         let neg_lr = f32_of(x(lr).fchs());
-                        let a = general_get_radian_angle_between_points(0, 0, neg_lr.to_bits(), ud.to_bits());
+                        let a = general_get_radian_angle_between_points(f32::from_bits(0), f32::from_bits(0), f32::from_bits(neg_lr.to_bits()), f32::from_bits(ud.to_bits()));
                         let a = f32_of(X87::from_f64_exact(a).fsub_m(g::<f32>(0xB6F178).read()));
                         let r = general_limit_radian_angle(a);
                         wr::<f32>(ped, 0x55C, f32_of(X87::from_f64_exact(r)));
@@ -173,7 +170,7 @@ pub fn task_complex_stuck_in_air_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>)
                 }
                 wr::<u32>(ped, 0x46C, (rd::<u32>(ped, 0x46C) & 0xFFFF_FDFF) | 1);
                 for id in 0x74..=0x79 {
-                    let a = clump_get_association(rd::<GPtr<u8>>(ped, 0x18), id);
+                    let a = clump_get_association(rd::<GPtr<u8>>(ped, 0x18), id as u32);
                     if a.is_null() {
                         continue;
                     }

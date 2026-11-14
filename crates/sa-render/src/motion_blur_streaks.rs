@@ -9,19 +9,15 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 
 use crate::common::{ftol32, k, rd, wr};
 
-use crate::bindings::rw_im3d_render_indexed_primitive;
+use sa_world::bindings::rw_im3d_render_indexed_primitive;
 use sa_core::bindings::little_test;
-orig! {
-    /// `RwIm3DTransform(RwIm3DVertex*, uint32 count, RwMatrix*, uint32 flags)` (0x7EF450)
-    fn rw_im3d_transform(v: u32, n: u32, m: u32, flags: u32) -> u32 = cdecl 0x7EF450 => unported;
-    /// `RwIm3DEnd()` (0x7EF520)
-    fn rw_im3d_end() -> u32 = cdecl 0x7EF520 => unported;
-}
+use sa_world::bindings::rw_im3d_end;
+use sa_world::bindings::rw_im3d_transform;
 
 const STREAKS: usize = 0xC7_CA08;
 const STREAKS_END: usize = 0xC7_CB58;
@@ -130,8 +126,8 @@ pub fn registered_motion_blur_streak_render(this: GPtr<u8>) {
                 }
             }
             little_test();
-            if rw_im3d_transform(VERTS as u32, 4, 0, 1) != 0 {
-                rw_im3d_render_indexed_primitive(3, INDICES, 0xC);
+            if GPtr::<u8>::addr(rw_im3d_transform(GPtr::from_addr((VERTS as u32) as usize), 4, GPtr::NULL, 1)) as u32 != 0 {
+                rw_im3d_render_indexed_primitive(3, GPtr::from_addr(INDICES as usize), 0xC);
                 rw_im3d_end();
             }
         }

@@ -74,6 +74,9 @@ pub use sa_core::bindings::rp_anim_blend_clump_init;
 pub use sa_core::bindings::rp_clump_destroy;
 pub use sa_core::bindings::rp_skin_geometry_get_skin;
 pub use sa_core::bindings::stricmp;
+pub use crate::bindings::anim_blend_animation_hier as blend_animation;
+pub use crate::bindings::rp_skin_get_vertex_bone_weights;
+pub use sa_core::bindings::frame_for_all_children as rw_frame_for_all_children;
 orig! {
     /// `CBaseModelInfo::Init` (0x4C4B10)
     pub fn base_init(this: MiPtr) = thiscall 0x4C4B10 => super::base::init;
@@ -85,20 +88,14 @@ orig! {
     pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
     /// `CAnimManager::GetAnimation(uint32 key, CAnimBlock*)` (0x4D39F0)
     pub fn get_animation(key: u32, block: GPtr<u8>) -> GPtr<u8> = cdecl 0x4D39F0 => unported;
-    /// `CAnimManager::BlendAnimation(RpClump*, CAnimBlendHierarchy*, int, float)` (0x4D4410)
-    pub fn blend_animation(clump: GPtr<u8>, hier: GPtr<u8>, flags: i32, delta: f32) -> GPtr<u8> = cdecl 0x4D4410 => unported;
     /// `CCarFXRenderer::CustomCarPipeAtomicSetup` (0x5D5B20)
     pub fn custom_car_pipe_atomic_setup(atomic: GPtr<u8>) -> i32 = cdecl 0x5D5B20 => unported;
     /// `CVisibilityPlugins::SetClumpModelInfo` (0x733750)
     pub fn set_clump_model_info(clump: GPtr<u8>, mi: MiPtr) = cdecl 0x733750 => unported;
     /// `CVisibilityPlugins::SetFrameHierarchyId` (0x732A00)
     pub fn set_frame_hierarchy_id(frame: GPtr<u8>, id: i32) = cdecl 0x732A00 => unported;
-    /// `RwFrameForAllChildren` (0x7F0DC0)
-    pub fn rw_frame_for_all_children(frame: GPtr<u8>, cb: u32, data: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F0DC0 => unported;
     /// `RwHelper::GetAnimHierarchyFromFrame` (0x734AB0)
     pub fn get_anim_hierarchy_from_frame(frame: GPtr<u8>) -> GPtr<u8> = cdecl 0x734AB0 => unported;
-    /// `RpSkinGetVertexBoneWeights` (0x7C77F0)
-    pub fn rp_skin_get_vertex_bone_weights(skin: GPtr<u8>) -> GPtr<f32> = cdecl 0x7C77F0 => unported;
     /// `RpClumpClone` (0x749F70)
     pub fn rp_clump_clone(clump: GPtr<u8>) -> GPtr<u8> = cdecl 0x749F70 => unported;
     /// `RpAnimBlend::RpAnimBlendCreateAnimationForHierarchy` (0x4D60E0)
@@ -204,7 +201,7 @@ pub fn delete_rw_object(this: MiPtr) {
     f::<u32>(this, mi::RW_OBJECT).write(0);
     remove_tex_dictionary_ref(this);
     if vcall_get_anim_file_index(this) != -1 {
-        remove_anim_block_ref(vcall_get_anim_file_index(this));
+        remove_anim_block_ref(vcall_get_anim_file_index(this) as u32);
     }
     if f::<u8>(this, 0x13).read() & 8 != 0 {
         delete_collision_model(this);
@@ -226,7 +223,7 @@ pub fn set_hierarchy_for_skin_atomic(atomic: GPtr<u8>, data: GPtr<u8>) -> GPtr<u
 /// `CClumpModelInfo::AtomicSetupLightingCB(RpAtomic*, void*)` (0x4C4F30, cdecl).
 #[hook(addr = 0x4C4F30, conv = cdecl, name = "CClumpModelInfo::AtomicSetupLightingCB", expect = "56 8B 74 24 08")]
 pub fn atomic_setup_lighting_cb(atomic: GPtr<u8>, _data: GPtr<u8>) -> GPtr<u8> {
-    if is_cbpc_pipeline_attached(atomic) != 0 {
+    if is_cbpc_pipeline_attached(atomic) as i32 != 0 {
         custom_building_atomic_setup(atomic);
     } else if is_ccpc_pipeline_attached(atomic) != 0 {
         custom_car_pipe_atomic_setup(atomic);
@@ -269,7 +266,7 @@ pub fn set_clump(this: MiPtr, clump: GPtr<u8>) {
     if vcall_get_anim_file_index(this) != -1 {
         add_anim_block_ref(vcall_get_anim_file_index(this));
     }
-    rp_clump_for_all_atomics(clump, ATOMIC_SETUP_LIGHTING_CB, this.addr() as u32);
+    rp_clump_for_all_atomics(clump, ATOMIC_SETUP_LIGHTING_CB, GPtr::from_addr((this.addr() as u32) as usize));
     let first = get_first_atomic(clump);
     if first.is_null() {
         return;
@@ -278,7 +275,7 @@ pub fn set_clump(this: MiPtr, clump: GPtr<u8>) {
         return;
     }
     if f::<u8>(this, 0x13).read() & 2 != 0 {
-        rp_clump_for_all_atomics(clump, SET_HIERARCHY_FOR_SKIN_ATOMIC, 0);
+        rp_clump_for_all_atomics(clump, SET_HIERARCHY_FOR_SKIN_ATOMIC, GPtr::NULL);
         return;
     }
     let a = get_first_atomic(clump);
@@ -287,13 +284,13 @@ pub fn set_clump(this: MiPtr, clump: GPtr<u8>) {
     let radius = morph.byte_add(0x10);
     radius.write(X87::from_f32(radius.read()).fmul_m(f32::from_bits(K_1_2)).to_f32());
     let hier = get_anim_hierarchy_from_clump(clump);
-    rp_clump_for_all_atomics(clump, SET_HIERARCHY_FOR_SKIN_ATOMIC, hier.addr() as u32);
+    rp_clump_for_all_atomics(clump, SET_HIERARCHY_FOR_SKIN_ATOMIC, GPtr::from_addr((hier.addr() as u32) as usize));
     let a = get_first_atomic(clump);
     let skin = rp_skin_geometry_get_skin(a.byte_add(0x18).cast::<GPtr<u8>>().read());
     let geometry = a.byte_add(0x18).cast::<GPtr<u8>>().read();
     let mut i = 0i32;
     while i < geometry.byte_add(0x14).cast::<i32>().read() {
-        let w = rp_skin_get_vertex_bone_weights(skin).byte_add(16 * i as isize).cast::<[f32; 4]>();
+        let w = GPtr::<u8>::cast::<f32>(rp_skin_get_vertex_bone_weights(skin)).byte_add(16 * i as isize).cast::<[f32; 4]>();
         w.write(normalise_weights(w.read()));
         i += 1;
     }
@@ -325,7 +322,7 @@ pub fn create_instance_void(this: MiPtr) -> GPtr<u8> {
         && f::<u8>(this, 0x13).read() & 2 == 0
     {
         let hier = get_anim_hierarchy_from_clump(clone);
-        rp_clump_for_all_atomics(clone, SET_HIERARCHY_FOR_SKIN_ATOMIC, hier.addr() as u32);
+        rp_clump_for_all_atomics(clone, SET_HIERARCHY_FOR_SKIN_ATOMIC, GPtr::from_addr((hier.addr() as u32) as usize));
         let anim = rp_anim_blend_create_animation_for_hierarchy(hier);
         rt_anim_interpolator_set_current_anim(hier.byte_add(0x20).cast::<GPtr<u8>>().read(), anim);
         hier.cast::<u32>().write(0x3000);

@@ -3,7 +3,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::checks::{NUM_PLAYBACK_FILES, PLAYBACK_BUFFER, PLAYBACK_GOING_ON, PLAYBACK_PAUSED, STREAMING_ARRAY, VEHICLE_FOR_PLAYBACK};
 use crate::checks2::{
@@ -13,10 +13,7 @@ use crate::checks2::{
 use crate::common::{rd, wr};
 
 use sa_core::bindings::entity_register_reference;
-orig! {
-    /// `CVehicleRecording::SetRecordingToPointClosestToCoors(int32, CVector)` (0x45A1E0)
-    fn set_recording_to_point_closest_to_coors(i: i32, x: u32, y: u32, z: u32) = cdecl 0x45A1E0 => unported;
-}
+use crate::bindings::set_recording_to_point_closest_to_coors;
 
 /// The `ebx += 7` step of the unrolled free-slot search: the original adds the value of the no-CD VM 0xCB73E0
 /// (descriptor 0x155FF74, return 0x155FF74 pushed as its second argument). Evaluated on the exe image (unicorn, 464
@@ -85,7 +82,7 @@ pub fn start_playback_recorded_car(veh: GPtr<u8>, file: i32, use_car_ai: u32, lo
         wr::<u8>(v, 0x3BA, 0x22);
         let m = rd::<GPtr<u8>>(veh, 0x14);
         let pos = if m.is_null() { veh.byte_add(4) } else { m.byte_add(0x30) };
-        set_recording_to_point_closest_to_coors(slot, rd::<u32>(pos, 0), rd::<u32>(pos, 4), rd::<u32>(pos, 8));
+        set_recording_to_point_closest_to_coors(slot, f32::from_bits(rd::<u32>(pos, 0)), f32::from_bits(rd::<u32>(pos, 4)), f32::from_bits(rd::<u32>(pos, 8)));
     } else {
         wr::<u32>(v, 0x40, rd::<u32>(v, 0x40) | 4);
         let v = vslot.read();

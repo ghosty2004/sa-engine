@@ -4,6 +4,7 @@
 //! `CWeapon` (0x1C): +0 type, +4 state, +8 ammo in clip, +0xC total ammo, +0x10 time for next shot,
 //! +0x14 / +0x15 bytes, +0x18 `FxSystem_c*`.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -39,11 +40,18 @@ pub use sa_world::bindings::fx_copy_parent_matrix;
 pub use sa_world::bindings::fx_prt_mult_ctor as fx_prt_mult;
 pub use sa_world::bindings::fx_system_set_matrix as fx_set_matrix;
 pub use sa_world::bindings::get_percentage_progress as stats_get_percentage_progress;
+pub use sa_core::bindings::clump_get_association;
+pub use sa_world::bindings::can_be_used_for_2_player as can_be_used_for_2_player_call;
+pub use sa_world::bindings::dist_to_line;
+pub use sa_world::bindings::fx_add_particle;
+pub use sa_world::bindings::fx_create_system as create_fx_system;
+pub use sa_world::bindings::fx_set_const_time;
+pub use sa_world::bindings::get_crouch_reload_animation_id_call;
+pub use sa_world::bindings::get_weapon_skill_type_call as ped_get_weapon_skill;
+pub use sa_world::bindings::ped_weapon_audio_add_audio_event as ped_weapon_audio_add_event;
+pub use sa_world::bindings::process_line_of_sight as world_process_line_of_sight;
+pub use sa_world::bindings::weapon_reload as reload_call;
 orig! {
-    /// `CPed::GetWeaponSkill(eWeaponType)` (0x5E3B60, thiscall)
-    pub fn ped_get_weapon_skill(ped: GPtr<u8>, ty: i32) -> u8 = thiscall 0x5E3B60 => unported;
-    /// `CWeapon::CanBeUsedFor2Player(eWeaponType)` (0x73B240)
-    pub fn can_be_used_for_2_player_call(ty: i32) -> u8 = cdecl 0x73B240 => can_be_used_for_2_player;
     /// `CWeaponInfo::Initialise()` (0x5BF750)
     pub fn weapon_info_initialise() = cdecl 0x5BF750 => crate::weapon_info::initialise;
     /// `CShotInfo::Initialise()` (0x739B60)
@@ -76,32 +84,14 @@ orig! {
     pub fn birds_handle_gun_shot(a: GPtr<u8>, b: GPtr<u8>) = cdecl 0x712E40 => unported;
     /// `CShadows::GunShotSetsOilOnFire(const CVector*, const CVector*)` (0x707550)
     pub fn shadows_gun_shot_sets_oil_on_fire(a: GPtr<u8>, b: GPtr<u8>) = cdecl 0x707550 => unported;
-    /// `CWorld::ProcessLineOfSight(const CVector&, const CVector&, CColPoint&, CEntity*&, bool x8, CStoredCollPoly*, bool, bool)` (0x56BA00)
-    pub fn world_process_line_of_sight(a: GPtr<u8>, b: GPtr<u8>, cp: GPtr<u8>, e: GPtr<u8>, bd: u8, vh: u8, pd: u8, ob: u8, du: u8, st: u8, cam: u8, sh: u8) -> u8 = cdecl 0x56BA00 => unported;
-    /// `CCollision::DistToLine(const CVector*, const CVector*, const CVector*)` (0x417610, ST0)
-    pub fn dist_to_line(a: GPtr<u8>, b: GPtr<u8>, p: GPtr<u8>) -> f64 = cdecl 0x417610 => unported;
-    /// `FxSystem_c::AddParticle(CVector*, CVector*, float, FxPrtMult_c*, float, float, float, uint8)` (0x4AA440)
-    pub fn fx_add_particle(fx: GPtr<u8>, pos: GPtr<u8>, vel: GPtr<u8>, t: f32, mult: GPtr<u8>, a: f32, b: f32, c: f32, d: u8) = thiscall 0x4AA440 => unported;
-    /// `FxManager_c::CreateFxSystem(const char*, CVector*, RwMatrix*, bool)` (0x4A9BE0, thiscall)
-    pub fn create_fx_system(man: GPtr<u8>, name: GPtr<u8>, pos: GPtr<u8>, m: GPtr<u8>, flag: u8) -> GPtr<u8> = thiscall 0x4A9BE0 => unported;
     /// `FxSystem_c::SetMustCreatePrts(bool)` (0x4AAC70, thiscall)
     pub fn fx_set_must_create_prts(fx: GPtr<u8>, b: u8) = thiscall 0x4AAC70 => unported;
-    /// `FxSystem_c::SetConstTime(bool, float)` (0x4AA6C0, thiscall)
-    pub fn fx_set_const_time(fx: GPtr<u8>, b: u8, t: f32) = thiscall 0x4AA6C0 => unported;
     /// `CWeapon::FireInstantHitFromCar(CVehicle*, bool left, bool right)` (0x73EC40, thiscall)
     pub fn fire_instant_hit_from_car(this: GPtr<u8>, veh: GPtr<u8>, left: u8, right: u8) -> u8 = thiscall 0x73EC40 => crate::weapon_fire::fire_instant_hit_from_car;
-    /// `CAEPedWeaponAudioEntity::AddAudioEvent(int32)` (0x4E69F0, thiscall)
-    pub fn ped_weapon_audio_add_event(ae: GPtr<u8>, ev: i32) = thiscall 0x4E69F0 => unported;
-    /// `RpAnimBlendClumpGetAssociation(RpClump*, uint32 animId)` (0x4D68B0)
-    pub fn clump_get_association(clump: GPtr<u8>, id: u32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
-    /// `CWeaponInfo::GetCrouchReloadAnimationID()` (0x685700, thiscall)
-    pub fn get_crouch_reload_animation_id_call(info: GPtr<u8>) -> u32 = thiscall 0x685700 => crate::weapon_info::get_crouch_reload_animation_id;
     /// `FUN_0073a280` (0x73A280, thiscall): reload loop time A of the info's anim group
     pub fn reload_loop_time_a_call(info: GPtr<u8>, flag: u32) -> u32 = thiscall 0x73A280 => reload_loop_time_a_port;
     /// `FUN_0073a2b0` (0x73A2B0, thiscall): reload loop time B
     pub fn reload_loop_time_b_call(info: GPtr<u8>, flag: u32) -> u32 = thiscall 0x73A2B0 => reload_loop_time_b_port;
-    /// `CWeapon::Reload(CPed*)` (0x73AEB0, thiscall)
-    pub fn reload_call(this: GPtr<u8>, owner: GPtr<u8>) = thiscall 0x73AEB0 => reload;
     /// `CWeapon::EvaluateTargetForHeatSeekingMissile(...)` (0x73E560, ST0)
     pub fn evaluate_target_call(t: GPtr<u8>, origin: GPtr<u8>, dir: GPtr<u8>, mult: f32, planes: u8, last: GPtr<u8>) -> f64 = cdecl 0x73E560 => evaluate_target_st0;
 }
@@ -214,7 +204,7 @@ fn refill(this: GPtr<u8>, owner: GPtr<u8>) {
     let info = if owner.is_null() {
         get_weapon_info(ty, 1)
     } else {
-        let s = ped_get_weapon_skill(owner, ty);
+        let s = ped_get_weapon_skill(owner, ty) as u8;
         get_weapon_info(ru(this, 0) as i32, s)
     };
     let clip = i32::from(rh(info, 0x20) as i16) as u32;
@@ -662,7 +652,7 @@ pub fn update(this: GPtr<u8>, ped: GPtr<u8>) {
     let info = if ped.is_null() {
         get_weapon_info(ty, 1)
     } else {
-        let sk = ped_get_weapon_skill(ped, ty);
+        let sk = ped_get_weapon_skill(ped, ty) as u8;
         get_weapon_info(ru(this, 0) as i32, sk)
     };
     match ru(this, 4) {

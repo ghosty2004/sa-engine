@@ -27,11 +27,10 @@ const B6FEC0_DTOR: u32 = 0x50E080;
 
 pub use sa_core::bindings::atexit;
 pub use sa_core::bindings::eh_vector_ctor;
+pub use crate::bindings::idle_cam_init_call;
 orig! {
     /// `CCamera::Constructor()` (0x51A450)
     pub fn camera_constructor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x51A450 => unported;
-    /// `CIdleCam::Init()` (0x50E6D0)
-    pub fn idle_cam_init_call(this: GPtr<u8>) = thiscall 0x50E6D0 => crate::idlecam::idle_cam_init;
 }
 
 /// `__init_gHandShaker` (0x84D6D0): `eh vector constructor iterator(gHandShaker, 0x94, 6,

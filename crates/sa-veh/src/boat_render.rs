@@ -9,15 +9,12 @@ use crate::common::{g, rd, wr};
 
 use sa_core::bindings::matrix_update_rw_matrix;
 use sa_world::bindings::rw_im3d_end;
+use crate::bindings::vehicle_render;
+use sa_world::bindings::rw_im3d_render_indexed_primitive;
+use sa_world::bindings::rw_im3d_transform;
 orig! {
-    /// `CVehicle::Render()` (0x6D0E60)
-    fn vehicle_render(v: GPtr<u8>) = thiscall 0x6D0E60 => unported;
     /// `RwRenderStateSet(RwRenderState, void*)` through `RwEngineInstance` (0xC97B24) +0x20
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
-    /// `RwIm3DTransform(RwIm3DVertex*, uint32, RwMatrix*, uint32)` (0x7EF450)
-    fn rw_im3d_transform(verts: GPtr<u8>, n: u32, ltm: GPtr<u8>, flags: u32) -> GPtr<u8> = cdecl 0x7EF450 => unported;
-    /// `RwIm3DRenderIndexedPrimitive(RwPrimitiveType, RwImVertexIndex*, int32)` (0x7EF550)
-    fn rw_im3d_render_indexed_primitive(prim: u32, idx: GPtr<u8>, n: i32) -> i32 = cdecl 0x7EF550 => unported;
 }
 
 /// The boat's water-mask quad (`RwIm3DVertex` x4, 0x24 bytes each) at 0xC278F8.

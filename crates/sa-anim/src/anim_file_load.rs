@@ -18,17 +18,12 @@ use sa_core::bindings::get_uppercase_key;
 use sa_core::bindings::memory_malloc as mgr_malloc;
 use sa_core::bindings::stream_read;
 use sa_core::bindings::strncmp as crt_strncmp;
+use crate::bindings::call_calc_total_time as hier_calc_total_time;
+use crate::bindings::call_get_first_assoc_group as get_first_assoc_group;
+use crate::bindings::call_remove_quaternion_flips as hier_remove_quaternion_flips;
+use crate::bindings::call_set_name as hier_set_name;
+use sa_core::bindings::get_animation_block;
 orig! {
-    /// `CAnimManager::GetAnimationBlock(name)` (0x4D3940)
-    fn get_animation_block(name: GPtr<u8>) -> GPtr<u8> = cdecl 0x4D3940 => crate::manager::get_animation_block;
-    /// `CAnimManager::GetFirstAssocGroup(name)` (0x4D39B0)
-    fn get_first_assoc_group(name: GPtr<u8>) -> i32 = cdecl 0x4D39B0 => crate::manager::get_first_assoc_group;
-    /// `CAnimBlendHierarchy::SetName(name)` (0x4CF2D0)
-    fn hier_set_name(h: GPtr<u8>, name: GPtr<u8>) = thiscall 0x4CF2D0 => crate::hierarchy::set_name;
-    /// `CAnimBlendHierarchy::RemoveQuaternionFlips()` (0x4CF4E0)
-    fn hier_remove_quaternion_flips(h: GPtr<u8>) = thiscall 0x4CF4E0 => crate::hierarchy::remove_quaternion_flips;
-    /// `CAnimBlendHierarchy::CalcTotalTime()` (0x4CF2F0)
-    fn hier_calc_total_time(h: GPtr<u8>) = thiscall 0x4CF2F0 => crate::hierarchy::calc_total_time;
     /// `CAnimBlendSequence::SetName(name)` (0x4D0C50)
     fn seq_set_name(s: GPtr<u8>, name: GPtr<u8>) = thiscall 0x4D0C50 => crate::sequence::set_name;
     /// `CAnimBlendSequence::SetBoneTag(tag)` (0x4D0C70)

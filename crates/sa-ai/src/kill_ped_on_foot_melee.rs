@@ -6,6 +6,7 @@
 //! Fields: +8 sub-task, +0xC target, +0x10 the search position, +0x1C the arrive range, +0x20 the attack range,
 //! +0x24 the attack angle, +0x31 "new target", +0x34 the pause timer (-1 = not started).
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 use sa_world::world::common::entity_pos;
@@ -18,6 +19,9 @@ use sa_world::bindings::seek_entity_standard_ctor;
 use sa_world::bindings::sequence_ctor;
 use sa_world::bindings::shake_fist_ctor;
 use sa_world::bindings::turn_to_face_entity_ctor;
+use sa_world::bindings::pause_ctor;
+use sa_world::bindings::sequence_add_task;
+use sa_world::bindings::stand_still_ctor;
 orig! {
     /// `CTaskComplexKillPedOnFootMelee::CreateSubTask(eTaskType, CPed*)` (0x626AC0)
     fn create_sub_task(t: GPtr<u8>, ty: u32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x626AC0 => kill_ped_on_foot_melee_create_sub_task;
@@ -27,12 +31,6 @@ orig! {
     fn task_create_first_sub_task(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x24 => unported;
     /// `CTaskSimpleFightingControl::CTaskSimpleFightingControl(CEntity*, float angle, float range)` (0x61DC10)
     fn fighting_control_ctor(t: GPtr<u8>, target: GPtr<u8>, angle: u32, range: u32) -> GPtr<u8> = thiscall 0x61DC10 => fighting_control_ctor_61dc10;
-    /// `CTaskSimpleStandStill::CTaskSimpleStandStill(int32 time, bool looped, bool useAnimIdleStance, float delta)` (0x62F310)
-    fn stand_still_ctor(t: GPtr<u8>, time: u32, looped: u32, idle: u32, delta: f32) -> GPtr<u8> = thiscall 0x62F310 => unported;
-    /// `CTaskSimplePause::CTaskSimplePause(int32 time)` (0x48E750)
-    fn pause_ctor(t: GPtr<u8>, time: u32) -> GPtr<u8> = thiscall 0x48E750 => unported;
-    /// `CTaskComplexSequence::AddTask(CTask*)` (0x632D10)
-    fn sequence_add_task(t: GPtr<u8>, task: GPtr<u8>) -> u8 = thiscall 0x632D10 => unported;
 }
 
 /// `CTaskSimpleFightingControl::CTaskSimpleFightingControl(CEntity* target, float angle, float range)` (0x61DC10,

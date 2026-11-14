@@ -17,11 +17,10 @@ const ATOMIC_WORLD_OFFSET: usize = 0xC925A8;
 /// WORLDOBJMODULE (+0 the atomic-tie freelist).
 const WORLDOBJ_MODULE: usize = 0xC9259C;
 
+use crate::bindings::atomic_get_world_bounding_sphere as world_bounding_sphere;
 orig! {
     /// The atomic's saved frame-sync callback `cb(atomic)`
     fn call_saved_sync(f: u32, atomic: GPtr<u8>) -> GPtr<u8> = cdecl dyn => unported;
-    /// `RpAtomicGetWorldBoundingSphere(atomic)` (0x749330)
-    fn world_bounding_sphere(atomic: GPtr<u8>) -> GPtr<u8> = cdecl 0x749330 => crate::atomic::get_world_bounding_sphere;
 }
 
 /// Unlinks a two-pointer link (`next` +0, `prev` +4).

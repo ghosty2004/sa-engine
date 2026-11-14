@@ -53,13 +53,10 @@ const CB_COPY: u32 = 0x755CE0;
 use crate::bindings::light_register_plugin as rp_light_register_plugin;
 use sa_core::bindings::frame_get_ltm as rw_frame_get_ltm;
 use sa_core::bindings::rw_d3d9_get_caps;
+use sa_core::bindings::enable_light as rw_d3d9_enable_light;
+use sa_core::bindings::rw_d3d9_set_light;
+use sa_core::bindings::set_render_state as rw_d3d9_set_render_state;
 orig! {
-    /// `RwD3D9SetLight(index, light)` (0x7FA660)
-    fn rw_d3d9_set_light(index: i32, light: GPtr<u8>) -> i32 = cdecl 0x7FA660 => unported;
-    /// `RwD3D9EnableLight(index, enable)` (0x7FA860)
-    fn rw_d3d9_enable_light(index: i32, enable: i32) -> i32 = cdecl 0x7FA860 => unported;
-    /// `RwD3D9SetRenderState(state, value)` (0x7FC2D0)
-    fn rw_d3d9_set_render_state(state: u32, value: u32) -> i32 = cdecl 0x7FC2D0 => unported;
     /// `RpLightGetConeAngle(light)` (0x751AE0), result in ST0
     fn rp_light_get_cone_angle(l: GPtr<u8>) -> f64 = cdecl 0x751AE0 => unported;
 }
@@ -123,7 +120,7 @@ fn directional(l: GPtr<u8>) {
     wr::<u32>(t, 0x40, rd::<u32>(ltm, 0x20));
     wr::<u32>(t, 0x44, rd::<u32>(ltm, 0x24));
     wr::<u32>(t, 0x48, rd::<u32>(ltm, 0x28));
-    rw_d3d9_set_light(rd::<i32>(e, 0), t);
+    rw_d3d9_set_light(rd::<i32>(e, 0) as u32, t);
     append_current(rd::<u32>(e, 0));
 }
 
@@ -366,7 +363,7 @@ pub fn rw_d3d9_light_local_enable(l: GPtr<u8>) -> u32 {
         }
         _ => return 0,
     }
-    rw_d3d9_set_light(rd::<i32>(e, 0), t);
+    rw_d3d9_set_light(rd::<i32>(e, 0) as u32, t);
     append_current(rd::<u32>(e, 0));
     1
 }
@@ -378,7 +375,7 @@ pub fn rw_d3d9_light_local_enable(l: GPtr<u8>) -> u32 {
 #[hook(addr = 0x756600, conv = cdecl, name = "_rwD3D9LightsEnable", expect = "8B 44 24 04 85 C0")]
 pub fn rw_d3d9_lights_enable(enable: u32, _unused: u32) -> i32 {
     if enable == 0 {
-        return rw_d3d9_set_render_state(0x89, 0);
+        return rw_d3d9_set_render_state(0x89, 0) as i32;
     }
     let mut count = g::<u32>(CUR_COUNT).read();
     let max = g::<u32>(MAX_ACTIVE).read();
@@ -396,7 +393,7 @@ pub fn rw_d3d9_lights_enable(enable: u32, _unused: u32) -> i32 {
                 k += 1;
             }
             if k >= count {
-                rw_d3d9_enable_light(idx as i32, 0);
+                rw_d3d9_enable_light((idx as i32) as u32, 0);
                 count = g::<u32>(CUR_COUNT).read();
             }
             i += 1;
@@ -409,7 +406,7 @@ pub fn rw_d3d9_lights_enable(enable: u32, _unused: u32) -> i32 {
         let mut i = 0u32;
         while i < count {
             let idx = rd::<u32>(p8(g::<u32>(CUR_ARRAY).read()), i as isize * 4);
-            rw_d3d9_enable_light(idx as i32, 1);
+            rw_d3d9_enable_light((idx as i32) as u32, 1);
             count = g::<u32>(CUR_COUNT).read();
             i += 1;
         }
@@ -425,7 +422,7 @@ pub fn rw_d3d9_lights_enable(enable: u32, _unused: u32) -> i32 {
         g::<u32>(PREV_COUNT).write(0);
     }
     g::<u32>(CUR_COUNT).write(0);
-    rw_d3d9_set_render_state(0x89, 1)
+    rw_d3d9_set_render_state(0x89, 1) as i32
 }
 
 /// Every `#[hook]` of this module.

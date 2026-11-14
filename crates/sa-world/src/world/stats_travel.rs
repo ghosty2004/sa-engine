@@ -6,20 +6,15 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::x87::X87;
 
 use super::common::{ftol32, g, rd, x, xi};
 
 use crate::bindings::crt_ceil;
-orig! {
-    /// `CStats::IncrementStat(uint16, float)` (0x55C180)
-    fn stats_increment_stat(stat: u32, v: u32) = cdecl 0x55C180 => unported;
-    /// `CStats::DisplayScriptStatUpdateMessage(uint8, uint32, float)` (0x55B980)
-    fn display_script_stat_update_message(state: u32, stat: u32, v: u32) = cdecl 0x55B980 => unported;
-    /// `CStats::UpdateFatAndMuscleStats(uint32)` (0x55C470)
-    fn update_fat_and_muscle_stats(v: i32) = cdecl 0x55C470 => unported;
-}
+use crate::bindings::update_fat_and_muscle_stats;
+use sa_core::bindings::display_script_stat_update_message;
+use sa_core::bindings::stats_increment_stat;
 
 /// `fild` of an unsigned dword (`+ 2^32` when the sign bit is set, 0x858C54).
 fn u2f(v: u32) -> X87 {
@@ -44,8 +39,8 @@ fn due(counter: X87, threshold: usize) -> bool {
 /// Raise `stat` by the float at `amount` and show the message (the counter is cleared first).
 fn raise(counter: usize, stat: u32, amount: usize) {
     g::<u32>(counter).write(0);
-    stats_increment_stat(stat, g::<u32>(amount).read());
-    display_script_stat_update_message(1, stat, g::<u32>(amount).read());
+    stats_increment_stat(stat, f32::from_bits(g::<u32>(amount).read()));
+    display_script_stat_update_message(1, stat, f32::from_bits(g::<u32>(amount).read()));
 }
 
 /// `|move speed|^2` as the original sums it: `(x^2 + y^2) + z^2`.

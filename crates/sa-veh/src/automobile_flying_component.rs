@@ -20,27 +20,25 @@ use sa_core::bindings::vector_dot_product as dot_product;
 use sa_core::bindings::vector_normalise;
 use sa_core::bindings::world_add;
 use sa_stream::bindings::entity_is_visible;
-use sa_stream::bindings::frame_for_all_objects;
+use sa_core::bindings::frame_for_all_objects;
 use sa_stream::bindings::set_atomic_render_callback;
 use sa_world::bindings::entity_attach_to_rw_object;
 use sa_world::bindings::entity_get_col_model;
-use sa_world::bindings::matrix_ctor_rw;
+use sa_core::bindings::matrix_ctor_rw;
 use sa_world::bindings::process_col_models;
 use sa_world::bindings::vector_scale as scalar_mul_vec;
-use sa_world::bindings::vector_sub as vec_sub;
+use sa_core::bindings::vector_sub as vec_sub;
+use sa_world::bindings::matrix_add_pos;
+use sa_world::bindings::object_set_centre_of_mass as object_set_centre_offset;
 orig! {
     /// virtual `CEntity::SetModelIndexNoCreate(uint32)` (vtable +0x18)
     fn v_set_model_index_no_create(e: GPtr<u8>, mi: u32) = thiscall vslot 0x18 => unported;
     /// virtual `CEntity::SetIsStatic(bool)` (vtable +0x10)
     fn v_set_is_static(e: GPtr<u8>, s: u32) = thiscall vslot 0x10 => unported;
-    /// `CObject::SetObjectCentreOfMass`-style offset setter `FUN_005a2cb0(float, float, float)` (0x5A2CB0)
-    fn object_set_centre_offset(o: GPtr<u8>, x: f32, y: f32, z: f32) = thiscall 0x5A2CB0 => unported;
     /// `CObject::RefModelInfo(int32)` (0x59F330)
     fn object_ref_model_info(o: GPtr<u8>, mi: i32) = thiscall 0x59F330 => unported;
     /// `CObject::SetRemapTexture(RwTexture*, int16 txd)` (0x59F350)
     fn object_set_remap_texture(o: GPtr<u8>, tex: u32, txd: i32) = thiscall 0x59F350 => unported;
-    /// `CMatrix::operator+=(const CVector&)` (0x46AE00): adds to the position
-    fn matrix_add_pos(m: GPtr<u8>, v: GPtr<u8>) = thiscall 0x46AE00 => unported;
     /// `CPhysical::ApplyMoveForce(CVector)` (0x5429F0)
     fn apply_move_force(e: GPtr<u8>, force: CVector) = thiscall 0x5429F0 => unported;
 }
@@ -241,7 +239,7 @@ pub fn automobile_spawn_flying_component(this: GPtr<u8>, node: i32, kind: u32) -
     let om = rd::<GPtr<u8>>(obj, 0x14);
     let vm = rd::<GPtr<u8>>(this, 0x14);
     let vcol = entity_get_col_model(this);
-    if process_col_models(om, ocol, vm, vcol, 0xB9_ACD0, 0, 0, 0) > 0 {
+    if process_col_models(om, ocol, vm, vcol, GPtr::from_addr(0xB9_ACD0), GPtr::NULL, GPtr::NULL, 0) > 0 {
         wr::<GPtr<u8>>(obj, 0x128, this);
     }
     if rd::<u32>(this, 0x40) & 0x2000_0000 != 0 {

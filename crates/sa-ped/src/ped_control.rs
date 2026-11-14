@@ -10,6 +10,7 @@
 //! object, +0x504.. gun flash alpha/progress, +0x530 ped state, +0x534 move state, +0x568 standing-on entity,
 //! +0x588 ground-z probe, +0x58C vehicle, +0x598 ped type, +0x5A0 weapons (0x1C each), +0x718 active slot.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::crt::rand;
 use sa_core::orig::at_site;
@@ -107,7 +108,7 @@ const CHASE_SAVED: usize = 0xB9B994;
 const CHASE_MOVED: usize = 0x8CDF21;
 const CHASE_NEAR_NODE: usize = 0x8CDF20;
 
-use crate::bindings::population_update_ped_count as update_ped_count;
+use sa_world::bindings::population_update_ped_count as update_ped_count;
 use sa_core::bindings::camera_process;
 use sa_core::bindings::camera_restore_with_jump_cut;
 use sa_core::bindings::camera_set_fade_colour;
@@ -135,18 +136,18 @@ use sa_core::bindings::tm_get_active_task as task_mgr_get_active_task;
 use sa_core::bindings::tm_get_simplest_active_task as task_mgr_get_simplest_active_task;
 use sa_core::bindings::vector_magnitude;
 use sa_stream::bindings::animate_ped_col_model_skinned_world as ped_mi_animate_ped_col_model_skinned_world;
-use sa_stream::bindings::clump_get_frame_from_name;
+use sa_core::bindings::clump_get_frame_from_name;
 use sa_stream::bindings::fx_get_fx_quality;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::add_permanent_shadow;
 use sa_world::bindings::anim_get_next_association as get_next_association;
-use sa_world::bindings::audio_report_frontend_event;
+use sa_core::bindings::audio_report_frontend_event;
 use sa_world::bindings::cam_no_rain;
 use sa_world::bindings::camera_get_game_cam_position;
 use sa_world::bindings::camera_using_1st_person_weapon_mode;
 use sa_world::bindings::clear_drunk_blur as mblur_clear_drunk_blur;
 use sa_world::bindings::clothes_get_is_wearing_balaclava as get_is_wearing_balaclava;
-use sa_world::bindings::clump_get_first_association;
+use sa_core::bindings::clump_get_first_association;
 use sa_world::bindings::count_members_excluding_leader as group_count_members_excluding_leader;
 use sa_world::bindings::cull_zones_no_police;
 use sa_world::bindings::enter_car_as_driver_ctor as task_enter_car_as_driver_ctor;
@@ -199,8 +200,8 @@ use sa_world::bindings::process_col_models;
 use sa_world::bindings::process_line_of_sight;
 use sa_world::bindings::realtime_shadow_do_shadow_this_frame;
 use sa_world::bindings::rp_clump_render;
-use sa_world::bindings::rw_matrix_rotate;
-use sa_world::bindings::rw_matrix_scale;
+use sa_core::bindings::rw_matrix_rotate;
+use sa_core::bindings::rw_matrix_scale;
 use sa_world::bindings::set_clump_alpha;
 use sa_world::bindings::set_engine_status as damage_manager_set_engine_status;
 use sa_world::bindings::set_new_record_stat as stats_set_new_record_stat;
@@ -214,14 +215,41 @@ use sa_world::bindings::tm_find_active_task_by_type as task_mgr_find_active_task
 use sa_world::bindings::tm_set_task as task_mgr_set_task;
 use sa_world::bindings::vector_add;
 use sa_world::bindings::vector_add_assign;
-use sa_world::bindings::vector_magnitude_sqr as magnitude_sqr;
+use sa_core::bindings::vector_magnitude_sqr as magnitude_sqr;
 use sa_world::bindings::vector_mul_scalar;
 use sa_world::bindings::vector_scale as scalar_mul_vector;
-use sa_world::bindings::vector_sub;
+use sa_core::bindings::vector_sub;
 use sa_world::bindings::vehicle_can_be_driven;
+use crate::bindings::ped_clear_look_flag;
+use crate::bindings::request_delayed_weapon;
+use sa_core::bindings::camera_fade;
+use sa_core::bindings::clump_get_association;
+use sa_core::bindings::general_limit_radian_angle as limit_radian_angle;
+use sa_core::bindings::get_uppercase_key as keygen_get_uppercase_key;
+use sa_core::bindings::ped_get_bone_position as get_bone_position;
+use sa_core::bindings::stats_increment_stat;
+use sa_world::bindings::call_request_objects_in_frustum as renderer_request_objects_in_frustum;
+use sa_world::bindings::cop_add_criminal_to_kill as cop_add_criminal_to_kill_call;
+use sa_world::bindings::event_script_command_ctor;
+use sa_world::bindings::event_sound_quiet_ctor;
+use sa_world::bindings::find_node_closest_to_coors as paths_find_node_closest_to_coors;
+use sa_world::bindings::find_player_speed;
+use sa_world::bindings::fx_add_blood;
+use sa_world::bindings::fx_prt_mult_ctor;
+use sa_world::bindings::get_adhesion_group;
+use sa_world::bindings::group_find_distance_to_nearest_member;
+use sa_world::bindings::handle_sprint_energy;
+use sa_world::bindings::pad_get_accelerate;
+use sa_world::bindings::pad_get_ped_walk_left_right;
+use sa_world::bindings::pad_get_weapon;
+use sa_world::bindings::ped_get_transformed_bone_position as get_transformed_bone_position;
+use sa_world::bindings::ped_get_weapon_skill;
+use sa_world::bindings::ped_say;
+use sa_world::bindings::physical_process_control;
+use sa_world::bindings::weapon_effects_mark_target;
+use sa_world::bindings::weapon_update;
+use sa_world::bindings::wind_find_wind_modifier;
 orig! {
-    /// `CStats::IncrementStat(uint16, float)` (0x55C180)
-    fn stats_increment_stat(stat: u32, v: u32) = cdecl 0x55C180 => unported;
     /// `CPlayerInfo::WorkOutEnergyFromHunger()` (0x56E610)
     fn player_info_work_out_energy_from_hunger(p: GPtr<u8>) = thiscall 0x56E610 => unported;
     /// `CPlayerInfo::StreamParachuteWeapon(bool)` (0x56EB30)
@@ -240,30 +268,18 @@ orig! {
     fn bridge_this_is_a_bridge_object_moving_up(m: i32) -> u8 = cdecl 0x41BCB0 => unported;
     /// `CPlayerInfo::FindObjectToSteal(CPed*)` (0x56DBD0)
     fn player_info_find_object_to_steal(p: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x56DBD0 => unported;
-    /// `CEventScriptCommand::CEventScriptCommand(int32, CTask*, bool)` (0x4B0A00)
-    fn event_script_command_ctor(ev: GPtr<u8>, slot: i32, t: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4B0A00 => unported;
     /// `CWorld::GetRepeatSector(int32, int32)` (0x4072A0)
     fn world_get_repeat_sector(x: i32, y: i32) -> GPtr<u8> = cdecl 0x4072A0 => unported;
     /// `CPlayerInfo::FindClosestCarSectorList(CPtrList&, CPed*, float x4, float*, CVehicle**)` (0x56F4E0)
     fn player_info_find_closest_car_sector_list(p: GPtr<u8>, list: GPtr<u8>, ped: GPtr<u8>, a: u32, b: u32, c: u32, d: u32, dist: GPtr<u8>, veh: GPtr<u8>) = thiscall 0x56F4E0 => unported;
     /// `CTaskSimpleJetPack::DropJetPack(CPed*)` (0x67B660)
     fn jet_pack_drop_jet_pack(t: GPtr<u8>, p: GPtr<u8>) = thiscall 0x67B660 => unported;
-    /// `CCamera::Fade(float, int16)` (0x50AC20)
-    fn camera_fade(c: GPtr<u8>, t: u32, dir: u32) = thiscall 0x50AC20 => unported;
-    /// `CRenderer::RequestObjectsInFrustum(...)` (0x555960, two dword arguments here)
-    fn renderer_request_objects_in_frustum(a: u32, b: u32) = cdecl 0x555960 => unported;
     /// `CStats::UpdateStatsWhenFlying(CVehicle*)` (0x55CC00)
     fn stats_update_when_flying(v: GPtr<u8>) = cdecl 0x55CC00 => unported;
     /// `CStats::UpdateStatsWhenOnMotorBike(CBike*)` (0x55CD60)
     fn stats_update_when_on_motor_bike(v: GPtr<u8>) = cdecl 0x55CD60 => unported;
     /// `CStats::UpdateStatsWhenDriving(CVehicle*)` (0x55CAC0)
     fn stats_update_when_driving(v: GPtr<u8>) = cdecl 0x55CAC0 => unported;
-    /// `CPad::GetPedWalkLeftRight()` (0x53FC90, AX)
-    fn pad_get_ped_walk_left_right(pad: GPtr<u8>) -> u32 = thiscall 0x53FC90 => unported;
-    /// `CPad::GetAccelerate()` (0x5403F0, AX)
-    fn pad_get_accelerate(pad: GPtr<u8>) -> u32 = thiscall 0x5403F0 => unported;
-    /// `CPathFind::FindNodeClosestToCoors(CVector, uint8, float, bool x5)` (0x44F460, hidden return pointer)
-    fn paths_find_node_closest_to_coors(pf: GPtr<u8>, out: GPtr<u8>, x: u32, y: u32, z: u32, ty: u32, dist: u32, a: u32, b: u32, c: u32, d: u32, e: u32) -> GPtr<u8> = thiscall 0x44F460 => unported;
     /// `CCullZones::PoliceAbandonCars()` (0x72DD60, AL)
     fn cull_zones_police_abandon_cars() -> u8 = cdecl 0x72DD60 => unported;
     /// 0x56EC80 (proposed `CPlayerCrossHair::Process(int32, CPad*)`)
@@ -278,20 +294,10 @@ orig! {
     fn task_in_air_678e80(t: GPtr<u8>, p: GPtr<u8>) = thiscall 0x678E80 => unported;
     /// `CPedIK::PitchForSlope()` (0x5FE0E0)
     fn ped_ik_pitch_for_slope(ik: GPtr<u8>) = thiscall 0x5FE0E0 => unported;
-    /// `CWindModifiers::FindWindModifier(CVector, float*, float*)` (0x72C950, AL)
-    fn wind_find_wind_modifier(x: u32, y: u32, z: u32, a: GPtr<u8>, b: GPtr<u8>) -> u8 = cdecl 0x72C950 => unported;
     /// `CVehicle::IsOpenTopCar()` (virtual, vtable +0x9C, AL)
     fn vehicle_is_open_top_car(v: GPtr<u8>) -> u8 = thiscall vslot 0x9C => unported;
-    /// `CKeyGen::GetUppercaseKey(const char*)` (0x53CF30)
-    fn keygen_get_uppercase_key(s: u32) -> u32 = cdecl 0x53CF30 => unported;
-    /// `Fx_c::AddBlood(CVector&, CVector&, int32, float)` (0x49EB00)
-    fn fx_add_blood(fx: GPtr<u8>, p: GPtr<u8>, d: GPtr<u8>, n: i32, bright: u32) = thiscall 0x49EB00 => unported;
-    /// `CWorld::FindPlayerSpeed(int32)` (0x56E090)
-    fn find_player_speed(id: i32) -> GPtr<u8> = cdecl 0x56E090 => unported;
     /// `CPed::IsPedHeadAbovePos(float)` (0x5F02C0, AL)
     fn ped_is_ped_head_above_pos(p: GPtr<u8>, z: u32) -> u8 = thiscall 0x5F02C0 => unported;
-    /// `RpAnimBlendClumpGetAssociation(RpClump*, AnimationId)` (0x4D68B0)
-    fn clump_get_association(c: GPtr<u8>, id: i32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
     /// `RwEngineInstance->dOpenDevice.fpRenderStateGet` (`*(0xC97B24) + 0x24`)
     fn rw_render_state_get(state: u32, value: GPtr<u8>) -> i32 = cdecl table 0xC97B24 0x24 => unported;
     /// `RwEngineInstance->dOpenDevice.fpRenderStateSet` (`*(0xC97B24) + 0x20`)
@@ -308,18 +314,8 @@ orig! {
     fn mblur_set_drunk_blur(f: f32) = cdecl 0x71D730 => unported;
     /// `CWanted::Update()` (0x562C90)
     fn wanted_update(w: GPtr<u8>) = thiscall 0x562C90 => unported;
-    /// `CPad::GetWeapon(CPed*)` (0x540180, EAX tested whole)
-    fn pad_get_weapon(pad: GPtr<u8>, ped: GPtr<u8>) -> i32 = thiscall 0x540180 => unported;
-    /// `CPed::GetWeaponSkill()` (0x5E6580; EAX pushed whole to GetWeaponInfo)
-    fn ped_get_weapon_skill(p: GPtr<u8>) -> i32 = thiscall 0x5E6580 => unported;
     /// `CWeaponInfo::GetTargetHeadRange()` (0x743D50, ST0)
     fn weapon_info_get_target_head_range(i: GPtr<u8>) -> f64 = thiscall 0x743D50 => unported;
-    /// `CPed::GetTransformedBonePosition(RwV3d&, ePedBones, bool)` (0x5E01C0)
-    fn get_transformed_bone_position(p: GPtr<u8>, v: GPtr<u8>, bone: i32, update: u32) = thiscall 0x5E01C0 => unported;
-    /// `CWeaponEffects::MarkTarget(int32, CVector, uint8 r, g, b, a, float size, uint8)` (0x742BF0; colours read as bytes)
-    fn weapon_effects_mark_target(idx: u32, x: u32, y: u32, z: u32, r: u32, g: u32, b: u32, a: u32, size: u32, flag: u32) = cdecl 0x742BF0 => unported;
-    /// `CPlayerPed::HandleSprintEnergy(bool, float)` (0x60A550, AL)
-    fn handle_sprint_energy(p: GPtr<u8>, b: u32, f: u32) -> u8 = thiscall 0x60A550 => unported;
     /// `CPed::IsPedShootable()` (0x5DEFD0, AL)
     fn ped_is_ped_shootable(p: GPtr<u8>) -> u8 = thiscall 0x5DEFD0 => unported;
     /// `CPlayerPed::ProcessWeaponSwitch(CPad*)` (0x60D850)
@@ -330,32 +326,20 @@ orig! {
     fn ped_set_look_flag(p: GPtr<u8>, dir: u32, a: u32, b: u32) = thiscall 0x5DEDC0 => unported;
     /// `CPed::SetLookTimer(uint32)` (0x5DF8D0)
     fn ped_set_look_timer(p: GPtr<u8>, t: u32) = thiscall 0x5DF8D0 => unported;
-    /// `CPed::ClearLookFlag()` (0x5E1950)
-    fn ped_clear_look_flag(p: GPtr<u8>) = thiscall 0x5E1950 => unported;
     /// `CPlayerPed::ProcessGroupBehaviour(CPad*)` (0x60D350)
     fn player_process_group_behaviour(p: GPtr<u8>, pad: GPtr<u8>) = thiscall 0x60D350 => unported;
     /// `CCarCtrl::RegisterVehicleOfInterest(CVehicle*)` (0x423DE0)
     fn car_ctrl_register_vehicle_of_interest(v: GPtr<u8>) = cdecl 0x423DE0 => unported;
     /// `CPad::IsDPadUpPressed()` (0x53EE60, AL)
     fn pad_is_dpad_up_pressed(pad: GPtr<u8>) -> u8 = thiscall 0x53EE60 => unported;
-    /// `CPedGroup::FindDistanceToNearestMember(CPed**)` (0x5FB0A0, ST0)
-    fn group_find_distance_to_nearest_member(g: GPtr<u8>, out: u32) -> f64 = thiscall 0x5FB0A0 => unported;
     /// `CEntryExitManager::WeAreInInteriorTransition()` (0x43E400, AL)
     fn entry_exit_we_are_in_interior_transition() -> u8 = cdecl 0x43E400 => unported;
-    /// `FxPrtMult_c::FxPrtMult_c(float r, g, b, a, size, unk, life)` (0x4AB290, `ret 0x1C`)
-    fn fx_prt_mult_ctor(m: GPtr<u8>, r: u32, g: u32, b: u32, a: u32, size: u32, unk: u32, life: u32) = thiscall 0x4AB290 => unported;
     /// `SurfaceInfos_c::ProducesFootDust(uint32)` (0x55E8B0, AL)
     fn produces_foot_dust(si: GPtr<u8>, s: u32) -> u8 = thiscall 0x55E8B0 => unported;
     /// `SurfaceInfos_c::LeavesFootsteps(uint32)` (0x55E890, AL)
     fn leaves_footsteps(si: GPtr<u8>, s: u32) -> u8 = thiscall 0x55E890 => unported;
-    /// `SurfaceInfos_c::GetAdhesionGroup(uint32)` (0x55E5C0)
-    fn get_adhesion_group(si: GPtr<u8>, s: u32) -> i32 = thiscall 0x55E5C0 => unported;
-    /// `CPed::GetBonePosition(RwV3d& out, ePedBones, bool)` (0x5E4280, `ret 0xC`)
-    fn get_bone_position(p: GPtr<u8>, out: GPtr<u8>, bone: i32, update: u32) = thiscall 0x5E4280 => unported;
     /// `Fx_c::TriggerFootSplash(CVector&)` (0x4A1150)
     fn fx_trigger_foot_splash(fx: GPtr<u8>, pos: GPtr<u8>) = thiscall 0x4A1150 => unported;
-    /// `CEventSoundQuiet::CEventSoundQuiet(CEntity*, float, uint32, const CVector&)` (0x5E05B0, `ret 0x10`)
-    fn event_sound_quiet_ctor(ev: GPtr<u8>, e: GPtr<u8>, vol: u32, t: u32, pos: GPtr<u8>) = thiscall 0x5E05B0 => unported;
     /// `CPed::DoFootLanded(bool, uint8)` (0x5E5380, `ret 8`)
     fn do_foot_landed_call(p: GPtr<u8>, left: u32, wobble: u32) = thiscall 0x5E5380 => unported;
     /// `CTask::GetTaskType()` (vtable +0x10)
@@ -364,8 +348,6 @@ orig! {
     fn task_land_right_foot_landed(t: GPtr<u8>) -> u8 = thiscall 0x678FE0 => unported;
     /// `CTaskSimpleLand::LeftFootLanded()` (0x679010, AL)
     fn task_land_left_foot_landed(t: GPtr<u8>) -> u8 = thiscall 0x679010 => unported;
-    /// `CGeneral::LimitRadianAngle(float)` (0x53CB50, ST0)
-    fn limit_radian_angle(a: f32) -> f64 = cdecl 0x53CB50 => unported;
     /// `SurfaceInfos_c::IsStairs(uint32)` (0x55E7B0, AL)
     fn is_stairs(si: GPtr<u8>, surface: u32) -> u8 = thiscall 0x55E7B0 => unported;
     /// `CAEPedAudioEntity::Service()` (0x4E2EE0)
@@ -374,10 +356,6 @@ orig! {
     fn process_buoyancy(p: GPtr<u8>) = thiscall 0x5E1FA0 => unported;
     /// `CPedIntelligence::ProcessFirst()` (0x6073A0)
     fn intel_process_first(i: GPtr<u8>) = thiscall 0x6073A0 => unported;
-    /// `CPhysical::ProcessControl()` (0x5485E0)
-    fn physical_process_control(p: GPtr<u8>) = thiscall 0x5485E0 => unported;
-    /// `CPed::RequestDelayedWeapon()` (0x5E8910)
-    fn request_delayed_weapon(p: GPtr<u8>) = thiscall 0x5E8910 => unported;
     /// `CPed::PlayFootSteps()` (0x5E57F0)
     fn play_foot_steps_call(p: GPtr<u8>) = thiscall 0x5E57F0 => unported;
     /// `CPed::CalculateNewVelocity()` (0x5E4C50)
@@ -388,16 +366,10 @@ orig! {
     fn v_set_move_anim(p: GPtr<u8>) = thiscall vslot 0x5C => unported;
     /// `CEntity::FlagToDestroyWhenNextProcessed()` (virtual, vtable +0x54)
     fn v_flag_to_destroy(p: GPtr<u8>) = thiscall vslot 0x54 => unported;
-    /// `CPed::Say(uint16, uint32, float, uint8, uint8, uint8)` (0x5EFFE0, `ret 0x18`)
-    fn ped_say(p: GPtr<u8>, id: u32, offset: u32, vol: u32, a: u32, b: u32, c: u32) = thiscall 0x5EFFE0 => unported;
     /// `CAEPedWeaponAudioEntity::Service()` (0x4E6AE0)
     fn weapon_audio_service(a: GPtr<u8>) = thiscall 0x4E6AE0 => unported;
     /// `CPed::ProcessControl()` (0x5E8CD0)
     fn ped_process_control_call(p: GPtr<u8>) = thiscall 0x5E8CD0 => unported;
-    /// `CWeapon::Update(CPed* owner)` (0x73DB40)
-    fn weapon_update(w: GPtr<u8>, owner: GPtr<u8>) = thiscall 0x73DB40 => unported;
-    /// `CCopPed::AddCriminalToKill(CPed*)` (0x5DDEB0, `ret 4`)
-    fn cop_add_criminal_to_kill_call(cop: GPtr<u8>, criminal: GPtr<u8>) -> i32 = thiscall 0x5DDEB0 => unported;
 }
 
 /// The entity position pointer `m_matrix ? &m_matrix->pos : &m_placement.pos`.
@@ -464,7 +436,7 @@ pub fn process_control(this: GPtr<u8>) {
                 let arr = hanim_get_matrix_array(h);
                 let m = arr.byte_add((idx << 6) as isize);
                 let mut zero = [0u32; 3];
-                let fx = fx_create_system(g::<u8>(G_FX_MAN), MOLOTOV_FLAME, lp(&mut zero).cast(), m, 0);
+                let fx = fx_create_system(g::<u8>(G_FX_MAN), GPtr::from_addr(MOLOTOV_FLAME as usize), lp(&mut zero).cast(), m, 0);
                 wr::<GPtr<u8>>(w, 0x18, fx);
                 if !fx.is_null() {
                     fx_set_local_particles(fx, 1);
@@ -521,7 +493,7 @@ pub fn process_control(this: GPtr<u8>) {
         && rd::<u32>(this, 0x588) == NO_GROUND_Z
     {
         // fcomp 0.01f; test ah, 5; jp skip: go on Less only
-        let m = X87::from_f64_exact(magnitude_sqr(this.byte_add(0x44)));
+        let m = X87::from_f64_exact(magnitude_sqr(GPtr::<u8>::cast::<f32>(this.byte_add(0x44))));
         if !m.fcom(x(f32c(0x3C23_D70A))).test_parity(5) {
             let veh = rd::<GPtr<u8>>(this, 0x58C);
             if !veh.is_null() {
@@ -530,7 +502,7 @@ pub fn process_control(this: GPtr<u8>) {
                 let vmat = rd::<GPtr<u8>>(veh, 0x14);
                 let pcol = rd::<GPtr<u8>>(mis.wrapping_index(i32::from(rd::<i16>(this, 0x22))).read(), 0x14);
                 let pmat = rd::<GPtr<u8>>(this, 0x14);
-                if process_col_models(pmat, pcol, vmat, vcol, COL_POINTS, 0, 0, 0) == 0 {
+                if process_col_models(pmat, pcol, vmat, vcol, GPtr::from_addr(COL_POINTS as usize), GPtr::NULL, GPtr::NULL, 0) == 0 {
                     wr::<u32>(this, 0x470, rd::<u32>(this, 0x470) & 0x7FFF_FFFF);
                     wr::<u32>(this, 0x128, 0);
                 }
@@ -679,7 +651,7 @@ pub fn process_control(this: GPtr<u8>) {
             let cpos = if cm.is_null() { cam.byte_add(4) } else { cm.byte_add(0x30) };
             let mut d = [0u32; 3];
             let dv = vector_sub(lp(&mut d).cast(), pos_ptr(this), cpos);
-            let m2 = X87::from_f64_exact(magnitude_sqr(dv));
+            let m2 = X87::from_f64_exact(magnitude_sqr(dv.cast::<f32>()));
             // fcomp 2500.0f; test ah, 5; jp skip: go on Less only
             if !m2.fcom(x(2500.0)).test_parity(5) {
                 let r = at_site(0x5E93B1, rand) & 0x7F;
@@ -730,7 +702,7 @@ pub fn process_control(this: GPtr<u8>) {
     // 22. drugged speech
     let fc = g::<u32>(FRAME_COUNTER).read();
     if (u32::from(rd::<u16>(this, 0x20)).wrapping_add(fc)) & 0x3FFF == 0 && rd::<u32>(this, 0x478) & 0x400 != 0 {
-        ped_say(this, 0x51, 0, 0x3F80_0000, 0, 0, 0);
+        ped_say(this, 0x51, 0, f32::from_bits(0x3F80_0000), 0, 0, 0);
     }
 
     // 23. chainsaw
@@ -780,7 +752,7 @@ pub fn cop_process_control(this: GPtr<u8>) {
         return;
     }
     if rd::<u32>(this, 0x71C) != 0 {
-        ped_say(this, 0xDC, 0, 0x3F80_0000, 0, 0, 0);
+        ped_say(this, 0xDC, 0, f32::from_bits(0x3F80_0000), 0, 0, 0);
     }
     if rd::<u8>(this, 0x79D) == 0 {
         return;
@@ -847,7 +819,7 @@ pub fn cop_add_criminal_to_kill(this: GPtr<u8>, criminal: GPtr<u8>) -> i32 {
         let c = rd::<GPtr<u8>>(slot, 0);
         // fcomp 0; test ah, 0x41; jp keep: keep when health > 0 or NaN
         if !c.is_null() && !x(rd::<f32>(c, 0x540)).fcom(X87::zero()).test_parity(0x41) {
-            clean_up_old_reference(c, slot);
+            clean_up_old_reference(c, slot.cast::<GPtr<u8>>());
             wr::<u32>(slot, 0, 0);
         }
     }
@@ -1094,7 +1066,7 @@ fn foot_fx_visible(ped: GPtr<u8>, pos: GPtr<f32>) -> bool {
 
 /// `FxPrtMult_c(1, 1, 1, 0.1f, 0.15f, 0, 0.15f)` (0x4AB290) on a local.
 fn foot_fx_mult(mult: &mut [u32; 8]) {
-    fx_prt_mult_ctor(lp(mult).cast(), 0x3F80_0000, 0x3F80_0000, 0x3F80_0000, 0x3DCC_CCCD, 0x3E19_999A, 0, 0x3E19_999A);
+    fx_prt_mult_ctor(lp(mult).cast(), f32::from_bits(0x3F80_0000), f32::from_bits(0x3F80_0000), f32::from_bits(0x3F80_0000), f32::from_bits(0x3DCC_CCCD), f32::from_bits(0x3E19_999A), f32::from_bits(0), f32::from_bits(0x3E19_999A));
 }
 
 /// `(float)rand() * 3.0518509e-05f * k + base` (fild, two fmul, fadd), the x87 value.
@@ -1133,8 +1105,8 @@ pub fn foot_splash_particles(ped: GPtr<u8>, pos: GPtr<f32>, count: i32, _unused:
             f32_of(x(rd::<f32>(m, 0x14)).fmul_m(1.5)),
             f32_of(x(rd::<f32>(m, 0x18)).fmul_m(1.5)),
         ];
-        fx_add_particle(g::<GPtr<u8>>(FX_SPLASH).read(), lp(&mut p).cast(), lp(&mut v0).cast(), 0, lp(&mut mult).cast(), 0xBF80_0000, 0x3F99_999A, 0x3F19_999A, 0);
-        fx_add_particle(g::<GPtr<u8>>(FX_SPLASH).read(), lp(&mut p).cast(), lp(&mut v1).cast(), 0, lp(&mut mult).cast(), 0xBF80_0000, 0x3F99_999A, 0x3F19_999A, 0);
+        fx_add_particle(g::<GPtr<u8>>(FX_SPLASH).read(), lp(&mut p).cast(), lp(&mut v0).cast(), f32::from_bits(0), lp(&mut mult).cast(), f32::from_bits(0xBF80_0000), f32::from_bits(0x3F99_999A), f32::from_bits(0x3F19_999A), 0);
+        fx_add_particle(g::<GPtr<u8>>(FX_SPLASH).read(), lp(&mut p).cast(), lp(&mut v1).cast(), f32::from_bits(0), lp(&mut mult).cast(), f32::from_bits(0xBF80_0000), f32::from_bits(0x3F99_999A), f32::from_bits(0x3F19_999A), 0);
         n -= 1;
         if n == 0 {
             break;
@@ -1171,7 +1143,7 @@ pub fn foot_dust_particles(ped: GPtr<u8>, pos: GPtr<f32>, count: i32, _unused: u
         let vy = f32_of(rand_scaled(0x5E38EC, f32c(0x3E99_999A)).fsub_m(f32c(0x3E19_999A)));
         let mut v = [vx, vy, 0.0];
         if g::<u8>(NO_FOOT_DUST).read() == 0 {
-            fx_add_particle(g::<GPtr<u8>>(FX_SMOKE_II3_EXPAND).read(), lp(&mut p).cast(), lp(&mut v).cast(), 0, lp(&mut mult).cast(), 0xBF80_0000, 0x3F99_999A, 0x3F19_999A, 0);
+            fx_add_particle(g::<GPtr<u8>>(FX_SMOKE_II3_EXPAND).read(), lp(&mut p).cast(), lp(&mut v).cast(), f32::from_bits(0), lp(&mut mult).cast(), f32::from_bits(0xBF80_0000), f32::from_bits(0x3F99_999A), f32::from_bits(0x3F19_999A), 0);
         }
         n -= 1;
         if n == 0 {
@@ -1282,7 +1254,7 @@ pub fn do_foot_landed(this: GPtr<u8>, left_foot: u8, make_wobble: u8) {
         let pos = ent_pos(this);
         let (px, py, pz) = (pos.read(), pos.wrapping_index(1).read(), pos.wrapping_index(2).read());
         let mut w = [0f32; 1];
-        get_water_level(px.to_bits(), py.to_bits(), f32_of(x(pz).fadd_m(1.5)).to_bits(), lp(&mut w).cast(), 1, 0);
+        get_water_level(f32::from_bits(px.to_bits()), f32::from_bits(py.to_bits()), f32::from_bits(f32_of(x(pz).fadd_m(1.5)).to_bits()), lp(&mut w).cast(), 1, GPtr::NULL);
         let ts = g::<f32>(TIME_STEP).read();
         let ax = f32_of(x(ts).fmul_m(rd::<f32>(this, 0x44)).fdouble());
         let ay = x(ts).fmul_m(rd::<f32>(this, 0x48)).fdouble();
@@ -1301,7 +1273,7 @@ pub fn do_foot_landed(this: GPtr<u8>, left_foot: u8, make_wobble: u8) {
         s[1] = p[1];
         s[2] = f32_of(x(g::<f32>(SHALLOW_SPLASH_Z).read()).fadd_m(p[2]));
         let mut top = [0f32; 3];
-        let t = get_top_direction(this, lp(&mut top).cast()).cast::<f32>();
+        let t = GPtr::<f32>::cast::<u8>(get_top_direction(this, GPtr::<u8>::cast::<f32>(lp(&mut top).cast()))).cast::<f32>();
         let k = g::<f32>(SHALLOW_SPLASH_K);
         let a = x(k.read()).fmul_m(t.read());
         let b2 = x(k.read()).fmul_m(t.wrapping_index(1).read());
@@ -1311,7 +1283,7 @@ pub fn do_foot_landed(this: GPtr<u8>, left_foot: u8, make_wobble: u8) {
         s[2] = f32_of(x(c2).fadd_m(s[2]));
     }
     fx_trigger_foot_splash(g::<u8>(G_FX), lp(&mut s).cast());
-    ped_audio_add_event(this.byte_add(0x138), 0x36, 0, 0x3F80_0000, 0, 0x27, 0, 0);
+    ped_audio_add_event(this.byte_add(0x138), 0x36, f32::from_bits(0), f32::from_bits(0x3F80_0000), GPtr::NULL, 0x27, 0, 0);
 }
 
 /// `20 * log10(mult)` as `fldlg2; fld mult; fyl2x; fmul 20.0f`, stored as f32. `mult` is 0.5f or 1.0f here: FYL2X is
@@ -1410,7 +1382,7 @@ pub fn play_foot_steps(this: GPtr<u8>) {
 
         if skater {
             let k = if rd::<i16>(walk, 0x2C) == 0 { f32c(0x3F08_8889) } else { f32c(0x3EAA_AAAB) };
-            let mult = match get_adhesion_group(g::<u8>(SURFACE_INFOS), u32::from(rd::<u8>(this, 0xBA))) {
+            let mult = match get_adhesion_group(g::<u8>(SURFACE_INFOS), u32::from(rd::<u8>(this, 0xBA))) as i32 {
                 3 => {
                     if at_site(0x5E5A15, rand) & 0x7F != 0 {
                         wr::<f32>(this, 0x4D8, f32_of(x(rd::<f32>(this, 0x4D8)).fmul_m(0.5)));
@@ -1438,7 +1410,7 @@ pub fn play_foot_steps(this: GPtr<u8>) {
                 // ct - dt <= 0 (Less / Equal) plays event 56
                 if matches!(ct_dt().fcom(X87::zero()), Cmp::Less | Cmp::Equal) {
                     if rd::<u8>(this, 0x1B4) != 0 {
-                        ped_audio_add_event(this.byte_add(0x138), 0x38, skate_volume(mult), spd, 0, 0, 0, 0);
+                        ped_audio_add_event(this.byte_add(0x138), 0x38, f32::from_bits(skate_volume(mult)), f32::from_bits(spd), GPtr::NULL, 0, 0, 0);
                     }
                     break 'landing;
                 }
@@ -1449,7 +1421,7 @@ pub fn play_foot_steps(this: GPtr<u8>) {
                 && rd::<u8>(this, 0x1B4) != 0
             {
                 let spd = if rd::<i16>(walk, 0x2C) != 0 { 0x3F80_0000 } else { 0x3F40_0000 };
-                ped_audio_add_event(this.byte_add(0x138), 0x39, skate_volume(mult), spd, 0, 0, 0, 0);
+                ped_audio_add_event(this.byte_add(0x138), 0x39, f32::from_bits(skate_volume(mult)), f32::from_bits(spd), GPtr::NULL, 0, 0, 0);
             }
             break 'landing;
         }
@@ -1491,14 +1463,14 @@ pub fn play_foot_steps(this: GPtr<u8>) {
                     let mut zero = [0u32; 3];
                     let mut ev = [0u32; 16];
                     let evp: GPtr<u8> = lp(&mut ev).cast();
-                    event_sound_quiet_ctor(evp, this, vol.to_bits(), 0xFFFF_FFFF, lp(&mut zero).cast());
+                    event_sound_quiet_ctor(evp, this, f32::from_bits(vol.to_bits()), 0xFFFF_FFFF, lp(&mut zero).cast());
                     event_group_add(get_event_global_group(), evp, 0);
                     event_sound_quiet_dtor(evp);
                 }
             }
             let (vol, spd) = step_sound(this, ducking);
             if rd::<u8>(this, 0x1B4) != 0 {
-                ped_audio_add_event(this.byte_add(0x138), 0x36, vol.to_bits(), spd.to_bits(), 0, 0, 0, 0);
+                ped_audio_add_event(this.byte_add(0x138), 0x36, f32::from_bits(vol.to_bits()), f32::from_bits(spd.to_bits()), GPtr::NULL, 0, 0, 0);
             }
             do_foot_landed_call(this, 1, wrs);
             break 'landing;
@@ -1510,7 +1482,7 @@ pub fn play_foot_steps(this: GPtr<u8>) {
             if d.fcom(x(max_t)) == Cmp::Less {
                 let (vol, spd) = step_sound(this, ducking);
                 if rd::<u8>(this, 0x1B4) != 0 {
-                    ped_audio_add_event(this.byte_add(0x138), 0x37, vol.to_bits(), spd.to_bits(), 0, 0, 0, 0);
+                    ped_audio_add_event(this.byte_add(0x138), 0x37, f32::from_bits(vol.to_bits()), f32::from_bits(spd.to_bits()), GPtr::NULL, 0, 0, 0);
                 }
                 do_foot_landed_call(this, 0, wrs);
             }
@@ -1616,10 +1588,10 @@ pub fn player_process_control(this: GPtr<u8>) {
                         wr::<u32>(p, 0x64, 0x3EE6_6666);
                     }
                 }
-                let fire = pad_get_weapon(pad, this) != 0
+                let fire = pad_get_weapon(pad, this) as i32 != 0
                     && rd::<i32>(active_weapon(this), 0xC) > 0
                     && !x(rd::<f32>(anim, 0x20)).fcom(x(rd::<f32>(info, 0x40))).c0();
-                weapon_audio_add_event(this.byte_add(0x394), if fire { 0x96 } else { 0x97 });
+                weapon_audio_add_event(this.byte_add(0x394), (if fire { 0x96 } else { 0x97 }) as i32);
             }
         }
         if !spun_up {
@@ -1643,7 +1615,7 @@ pub fn player_process_control(this: GPtr<u8>) {
         let slot = this.byte_add(0x79C);
         let old = rd::<GPtr<u8>>(slot, 0);
         if !old.is_null() {
-            clean_up_old_reference(old, slot);
+            clean_up_old_reference(old, slot.cast::<GPtr<u8>>());
             wr::<u32>(slot, 0, 0);
         }
         let target = rd::<GPtr<u8>>(this, 0x71C);
@@ -1653,16 +1625,16 @@ pub fn player_process_control(this: GPtr<u8>) {
         let mut clamp = true;
         if ty == 3 {
             let wt = rd::<i32>(active_weapon(this), 0);
-            let skill = ped_get_weapon_skill(this);
-            let info = get_weapon_info(wt, skill);
+            let skill = ped_get_weapon_skill(this) as i32;
+            let info = get_weapon_info(wt, skill as u8);
             let t = rd::<GPtr<u8>>(this, 0x71C);
             c = f32_of(x(rd::<f32>(t, 0x540)).fdiv_m(rd::<f32>(t, 0x544)));
             let range = X87::from_f64_exact(weapon_info_get_target_head_range(info)).to_f32();
             let mut head = false;
-            if ped_is_alive(t) & 0xFF != 0 && rd::<i32>(get_weapon_info(rd::<i32>(active_weapon(this), 0), 1), 0) == 1 {
+            if ped_is_alive(t) != 0 && rd::<i32>(get_weapon_info(rd::<i32>(active_weapon(this), 0), 1), 0) == 1 {
                 let mut tmp = [0u32; 3];
                 let dv = vector_sub(lp(&mut tmp).cast(), pos_ptr(t), pos_ptr(this));
-                let m2 = X87::from_f64_exact(magnitude_sqr(dv));
+                let m2 = X87::from_f64_exact(magnitude_sqr(dv.cast::<f32>()));
                 if x(range).fmul_m(range).fcom(m2) == Cmp::Greater {
                     head = true;
                 }
@@ -1677,7 +1649,7 @@ pub fn player_process_control(this: GPtr<u8>) {
             }
             let p = pd();
             eff = [rd::<f32>(p, 0x74), rd::<f32>(p, 0x78), rd::<f32>(p, 0x7C)];
-            get_transformed_bone_position(t, lp(&mut eff).cast(), rd::<i32>(p, 0x70), 0);
+            get_transformed_bone_position(t, lp(&mut eff).cast(), rd::<i32>(p, 0x70) as u32, 0);
             let in_veh = rd::<u32>(t, 0x46C) & 0x100 != 0;
             let moving = x(c).fcom(X87::zero()) == Cmp::Greater && !in_veh && rd::<i32>(t, 0x534) != 1;
             if moving {
@@ -1761,7 +1733,7 @@ pub fn player_process_control(this: GPtr<u8>) {
             if rd::<u32>(this, 0x46C) & 0x100 != 0 {
                 let veh = rd::<GPtr<u8>>(this, 0x58C);
                 if !veh.is_null() && rd::<i32>(veh, 0x594) != 0xA {
-                    handle_sprint_energy(this, 0, 0x3F80_0000);
+                    handle_sprint_energy(this, 0, f32::from_bits(0x3F80_0000));
                 }
             }
         }
@@ -1775,7 +1747,7 @@ pub fn player_process_control(this: GPtr<u8>) {
         }
         7 => {}
         _ => {
-            handle_sprint_energy(this, 0, 0x3F80_0000);
+            handle_sprint_energy(this, 0, f32::from_bits(0x3F80_0000));
         }
     }
 
@@ -1787,20 +1759,20 @@ pub fn player_process_control(this: GPtr<u8>) {
     }
 
     if !pad.is_null() {
-        if pad_weapon_just_down(pad, this) != 0 {
+        if pad_weapon_just_down(pad, this) as u8 != 0 {
             let wt = rd::<i32>(active_weapon(this), 0);
             if (camera_using_1st_person_weapon_mode(g::<u8>(THE_CAMERA)) == 0 || rd::<i32>(active_weapon(this), 4) == 3)
                 && get_task_swim(rd::<GPtr<u8>>(this, 0x47C)).is_null()
             {
                 if wt == 0x22 {
-                    audio_report_frontend_event(g::<u8>(AUDIO_ENGINE), 0x29, 0, 0x3F80_0000);
+                    audio_report_frontend_event(g::<u8>(AUDIO_ENGINE), 0x29, f32::from_bits(0), f32::from_bits(0x3F80_0000));
                 } else if wt == 0x23 || wt == 0x24 {
-                    audio_report_frontend_event(g::<u8>(AUDIO_ENGINE), 0x2A, 0, 0x3F80_0000);
+                    audio_report_frontend_event(g::<u8>(AUDIO_ENGINE), 0x2A, f32::from_bits(0), f32::from_bits(0x3F80_0000));
                 }
             }
         }
         if ped_is_ped_shootable(this) != 0 && rd::<i32>(this, 0x530) != 0x24 {
-            let slot = find_player_slot_with_ped_pointer(this);
+            let slot = find_player_slot_with_ped_pointer(this) as i32;
             if g::<u32>(PLAYERS + 0xB0).byte_add((slot.wrapping_mul(0x190)) as isize).read() == 0 {
                 player_process_weapon_switch(this, pad);
             }
@@ -1899,7 +1871,7 @@ pub fn player_process_control(this: GPtr<u8>) {
         let pos = pos_ptr(this).cast::<f32>();
         let (px, py, pz) = (pos.read(), pos.wrapping_index(1).read(), pos.wrapping_index(2).read());
         let lvl = pd().byte_add(0x90);
-        if get_water_level(px.to_bits(), py.to_bits(), f32_of(x(pz).fadd_m(1.5)).to_bits(), lvl, 1, 0) != 0 {
+        if get_water_level(f32::from_bits(px.to_bits()), f32::from_bits(py.to_bits()), f32::from_bits(f32_of(x(pz).fadd_m(1.5)).to_bits()), lvl, 1, GPtr::NULL) != 0 {
             let min_z = f32_of(x(pz).fadd_m(rd::<f32>(entity_get_col_model(this), 8)));
             let max_z = f32_of(x(pz).fadd_m(rd::<f32>(entity_get_col_model(this), 0x14)));
             let p = pd();
@@ -1923,20 +1895,20 @@ pub fn player_process_control(this: GPtr<u8>) {
     if g::<u8>(FRAME_COUNTER).read() & 0x7F == 0 && find_player_vehicle(-1, 0).is_null() {
         let grp = |this: GPtr<u8>| g::<u8>(PED_GROUPS).byte_add(rd::<i32>(rd::<GPtr<u8>>(this, 0x480), 0x38).wrapping_mul(0x2D4) as isize);
         if rd::<u8>(grp(this), 4) != 0 {
-            let n = group_count_members_excluding_leader(grp(this).byte_add(8));
+            let n = group_count_members_excluding_leader(grp(this).byte_add(8)) as i32;
             if n > 0
-                && X87::from_f64_exact(group_find_distance_to_nearest_member(grp(this), 0)).fcom(x(20.0)) == Cmp::Greater
-                && X87::from_f64_exact(group_find_distance_to_nearest_member(grp(this), 0)).fcom(x(100.0)) == Cmp::Less
+                && X87::from_f64_exact(group_find_distance_to_nearest_member(grp(this), GPtr::NULL)).fcom(x(20.0)) == Cmp::Greater
+                && X87::from_f64_exact(group_find_distance_to_nearest_member(grp(this), GPtr::NULL)).fcom(x(100.0)) == Cmp::Less
                 && g::<i32>(CURR_AREA).read() == 0
             {
-                ped_say(this, if n == 1 { 0x9E } else { 0x9D }, 0, 0x3F80_0000, 0, 0, 0);
+                ped_say(this, if n == 1 { 0x9E } else { 0x9D }, 0, f32::from_bits(0x3F80_0000), 0, 0, 0);
                 for i in 0..7 {
                     let m = group_get_member(grp(this).byte_add(8), i);
                     if !m.is_null()
                         && X87::from_f64_exact(general_get_random_number_in_range_f(0.0, 1.0)).fcom(x(0.5)) == Cmp::Less
                     {
                         let off = general_get_random_number_in_range_i(0xBB8, 0x1194);
-                        ped_say(m, 0x5C, off as u32, 0x3F80_0000, 0, 0, 0);
+                        ped_say(m, 0x5C, off as u32, f32::from_bits(0x3F80_0000), 0, 0, 0);
                     }
                 }
             }
@@ -1947,7 +1919,7 @@ pub fn player_process_control(this: GPtr<u8>) {
         && !X87::from_f64_exact(physical_get_lighting_total(this)).fcom(x(f32c(0x3D4C_CCCD))).test_parity(0x41)
         && entry_exit_we_are_in_interior_transition() == 0
     {
-        ped_say(this, 0x152, 0, 0x3F80_0000, 0, 0, 0);
+        ped_say(this, 0x152, 0, f32::from_bits(0x3F80_0000), 0, 0, 0);
     }
 }
 
@@ -1987,7 +1959,7 @@ pub fn render(this: GPtr<u8>) {
         if vt != 9 && rd::<i32>(veh, 0x594) != 2 && ped_is_player(this) == 0 {
             let mut tmp = [0u32; 3];
             let dv = vector_sub(lp(&mut tmp).cast(), pos_ptr(this), camera_pos().cast());
-            let d2 = X87::from_f64_exact(magnitude_sqr(dv));
+            let d2 = X87::from_f64_exact(magnitude_sqr(dv.cast::<f32>()));
             let k = if vt == 5 { 40.0 } else { 25.0 };
             let lk = x(g::<f32>(0xB6F118).read()).fmul_m(k);
             if d2.fcom(lk.fmul(lk)) == Cmp::Greater {
@@ -2025,7 +1997,7 @@ pub fn render(this: GPtr<u8>) {
         }
         let mut v = [0u32, 0x3DAC_0831, 0];
         let vp: GPtr<u8> = lp(&mut v).cast();
-        rw_v3d_transform_points(vp, vp, 1, m);
+        rw_v3d_transform_points(vp.cast::<f32>(), vp.cast::<f32>(), 1, m);
         wr::<u32>(frame, 0x40, v[0]);
         wr::<u32>(frame, 0x44, v[1]);
         wr::<u32>(frame, 0x48, v[2]);
@@ -2044,7 +2016,7 @@ pub fn render(this: GPtr<u8>) {
 /// The matrix of bone `id` in the hierarchy `h`: `RpHAnimHierarchyGetMatrixArray(h) + RpHAnimIDGetIndex(h, id) * 64`
 /// (index first, as the bytes call them).
 fn bone_matrix(h: GPtr<u8>, id: i32) -> GPtr<u8> {
-    let idx = hanim_id_get_index(h, id);
+    let idx = hanim_id_get_index(h, id as u32);
     hanim_get_matrix_array(h).byte_add((idx << 6) as isize)
 }
 
@@ -2105,10 +2077,10 @@ pub fn pre_render_after_test(this: GPtr<u8>) {
     if g::<u8>(SKIP_PROCESS_THIS_FRAME).read() == 0 {
         let obj = rd::<GPtr<u8>>(this, 0x4F4);
         if !obj.is_null() && !rd::<GPtr<u8>>(this, 0x480).is_null() && rd::<i32>(active_weapon(this), 0) == 0x26 {
-            let f = clump_get_frame_from_name(obj, MINIGUN2);
+            let f = clump_get_frame_from_name(obj, GPtr::from_addr(MINIGUN2 as usize));
             if !f.is_null() {
                 let a = x(g::<f32>(TIME_STEP).read()).fmul_m(rd::<f32>(rd::<GPtr<u8>>(this, 0x480), 0x64)).fmul_m(f32c(0x4265_2EE0));
-                rw_matrix_rotate(f.byte_add(0x10), g::<u8>(XAXIS_IK), f32_of(a).to_bits(), 1);
+                rw_matrix_rotate(f.byte_add(0x10), g::<u8>(XAXIS_IK), f32::from_bits(f32_of(a).to_bits()), 1);
             }
         }
     }
@@ -2127,8 +2099,8 @@ pub fn pre_render_after_test(this: GPtr<u8>) {
         } else {
             enter_task = task_mgr_find_active_task_by_type(tm, 0x2BD);
         }
-        let hq = fx_get_fx_quality(g::<u8>(G_FX)) == 3
-            || (fx_get_fx_quality(g::<u8>(G_FX)) == 2 && rd::<i32>(this, 0x598) == 0);
+        let hq = fx_get_fx_quality(g::<u8>(G_FX)) as i32 == 3
+            || (fx_get_fx_quality(g::<u8>(G_FX)) as i32 == 2 && rd::<i32>(this, 0x598) == 0);
         let mut dummy = !hq;
         if hq {
             let mut b = [0f32; 3];
@@ -2153,7 +2125,7 @@ pub fn pre_render_after_test(this: GPtr<u8>) {
                 }
                 let mut bs = [0f32; 3];
                 get_bone_position(this, lp(&mut bs).cast(), 3, 0);
-                let draw = if ped_is_alive(this) & 0xFF != 0
+                let draw = if ped_is_alive(this) != 0
                     && x(pos_ptr(this).cast::<f32>().wrapping_index(2).read()).fsub_m(f32c(0x3E4C_CCCD)).fcom(x(bs[2])) != Cmp::Greater
                 {
                     ok
@@ -2204,8 +2176,8 @@ pub fn pre_render_after_test(this: GPtr<u8>) {
     }
     let pd = rd::<GPtr<u8>>(this, 0x480);
     let clothed = !pd.is_null()
-        && (rd::<u32>(rd::<GPtr<u8>>(pd, 4), 0) == keygen_get_uppercase_key(STR_VEST)
-            || rd::<u32>(rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0x480), 4), 0) == keygen_get_uppercase_key(STR_TORSO));
+        && (rd::<u32>(rd::<GPtr<u8>>(pd, 4), 0) == keygen_get_uppercase_key(GPtr::from_addr(STR_VEST as usize))
+            || rd::<u32>(rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0x480), 4), 0) == keygen_get_uppercase_key(GPtr::from_addr(STR_TORSO as usize)));
     if !clothed && (rain || driving_open) {
         let mut speed = 0f32;
         if driving_open {
@@ -2250,10 +2222,10 @@ pub fn pre_render_after_test(this: GPtr<u8>) {
         wr::<f32>(this, 0x758, f32_of(w));
         let ty = rd::<i32>(this, 0x598);
         if ty != 0 && ty != 1 {
-            rw_matrix_rotate(bone_matrix(h, 0x12E), lp(&mut axis).cast(), angle, 1);
-            rw_matrix_rotate(bone_matrix(h, 0x12D), lp(&mut axis).cast(), angle, 1);
+            rw_matrix_rotate(bone_matrix(h, 0x12E), lp(&mut axis).cast(), f32::from_bits(angle), 1);
+            rw_matrix_rotate(bone_matrix(h, 0x12D), lp(&mut axis).cast(), f32::from_bits(angle), 1);
         }
-        rw_matrix_rotate(bone_matrix(h, 0xC9), lp(&mut axis).cast(), angle, 1);
+        rw_matrix_rotate(bone_matrix(h, 0xC9), lp(&mut axis).cast(), f32::from_bits(angle), 1);
     }
 
     // earthquake
@@ -2262,7 +2234,7 @@ pub fn pre_render_after_test(this: GPtr<u8>) {
         let lo = x(q).fchs().to_f32();
         let angle = f32_of(rand_range(0x5E6FC7, lo, q).fmul_m(f32c(0x3B23_D70A))).to_bits();
         for id in [0x2A, 0x34, 0x21, 0x17, 0x20, 0x16, 0x2B, 0x35, 0x22, 0x18, 5] {
-            rw_matrix_rotate(bone_matrix(h, id), lp(&mut axis).cast(), angle, 2);
+            rw_matrix_rotate(bone_matrix(h, id), lp(&mut axis).cast(), f32::from_bits(angle), 2);
         }
     }
 
@@ -2278,7 +2250,7 @@ pub fn pre_render_after_test(this: GPtr<u8>) {
         let mut p = [rd::<u32>(m, 0x30), rd::<u32>(m, 0x34), rd::<u32>(m, 0x38)];
         let mut d = [0u32; 3];
         scalar_mul_vector(lp(&mut d).cast(), f32c(0x3F19_999A), rd::<GPtr<u8>>(this, 0x14).byte_add(0x20));
-        fx_add_blood(g::<u8>(G_FX), lp(&mut p).cast(), lp(&mut d).cast(), 0x10, rd::<u32>(this, 0x12C));
+        fx_add_blood(g::<u8>(G_FX), lp(&mut p).cast(), lp(&mut d).cast(), 0x10, f32::from_bits(rd::<u32>(this, 0x12C)));
     }
 
     // rain splashes on the ped's col spheres
@@ -2291,7 +2263,7 @@ pub fn pre_render_after_test(this: GPtr<u8>) {
     {
         let mut t = [0u32; 3];
         let dv = vector_sub(lp(&mut t).cast(), camera_pos().cast(), pos_ptr(this));
-        if X87::from_f64_exact(vector_magnitude(dv)).fcom(x(25.0)) == Cmp::Less {
+        if X87::from_f64_exact(vector_magnitude(dv.cast::<u32>())).fcom(x(25.0)) == Cmp::Less {
             let mi = g::<GPtr<u8>>(MODEL_INFO_PTRS).wrapping_index(i32::from(rd::<i16>(this, 0x22))).read();
             ped_mi_animate_ped_col_model_skinned_world(mi, rd::<GPtr<u8>>(this, 0x18));
             let col = rd::<GPtr<u8>>(mi, 0x34);
@@ -2319,13 +2291,13 @@ pub fn pre_render_after_test(this: GPtr<u8>) {
                         continue;
                     }
                     let mut mult = [0u32; 8];
-                    fx_prt_mult_ctor(lp(&mut mult).cast(), 0x3F80_0000, 0x3F80_0000, 0x3F80_0000, 0x3EB3_3333, 0x3C23_D70A, 0, 0x3CF5_C28F);
+                    fx_prt_mult_ctor(lp(&mut mult).cast(), f32::from_bits(0x3F80_0000), f32::from_bits(0x3F80_0000), f32::from_bits(0x3F80_0000), f32::from_bits(0x3EB3_3333), f32::from_bits(0x3C23_D70A), f32::from_bits(0), f32::from_bits(0x3CF5_C28F));
                     let mut p = [rd::<f32>(sph, 0), rd::<f32>(sph, 4), rd::<f32>(sph, 8)];
                     p[0] = f32_of(X87::from_f64_exact(general_get_random_number_in_range_f(f32c(0xBDA3_D70A), f32c(0x3DA3_D70A))).fadd_m(p[0]));
                     p[1] = f32_of(X87::from_f64_exact(general_get_random_number_in_range_f(f32c(0xBDA3_D70A), f32c(0x3DA3_D70A))).fadd_m(p[1]));
                     p[2] = f32_of(x(rd::<f32>(sph, 0xC)).fmul_m(0.75).fadd_m(p[2]));
                     let mut v = [f32_of(x(s[0]).fmul_m(50.0)), f32_of(x(s[1]).fmul_m(50.0)), f32_of(x(s[2]).fmul_m(50.0))];
-                    fx_add_particle(g::<GPtr<u8>>(FX_SPLASH).read(), lp(&mut p).cast(), lp(&mut v).cast(), 0, lp(&mut mult).cast(), 0xBF80_0000, 0x3F99_999A, 0x3F19_999A, 0);
+                    fx_add_particle(g::<GPtr<u8>>(FX_SPLASH).read(), lp(&mut p).cast(), lp(&mut v).cast(), f32::from_bits(0), lp(&mut mult).cast(), f32::from_bits(0xBF80_0000), f32::from_bits(0x3F99_999A), f32::from_bits(0x3F19_999A), 0);
                 }
             }
         }
@@ -2335,7 +2307,7 @@ pub fn pre_render_after_test(this: GPtr<u8>) {
     let pd = rd::<GPtr<u8>>(this, 0x480);
     if !pd.is_null() && rd::<i8>(pd, 0x8C) > 0 && rd::<u8>(pd, 0x8E) < 0x1E {
         let mut mult = [0u32; 8];
-        fx_prt_mult_ctor(lp(&mut mult).cast(), 0x3F80_0000, 0x3F80_0000, 0x3F80_0000, 0x3E4C_CCCD, 0x3E19_999A, 0, 0x3DCC_CCCD);
+        fx_prt_mult_ctor(lp(&mut mult).cast(), f32::from_bits(0x3F80_0000), f32::from_bits(0x3F80_0000), f32::from_bits(0x3F80_0000), f32::from_bits(0x3E4C_CCCD), f32::from_bits(0x3E19_999A), f32::from_bits(0), f32::from_bits(0x3DCC_CCCD));
         let pp = pos_ptr(this).cast::<f32>();
         let mut p = [pp.read(), pp.wrapping_index(1).read(), pp.wrapping_index(2).read()];
         p[0] = f32_of(rand_scaled(0x5E7570, f32c(0x3F19_999A)).fadd_m(p[0]).fsub_m(f32c(0x3E99_999A)));
@@ -2345,7 +2317,7 @@ pub fn pre_render_after_test(this: GPtr<u8>) {
         let wet = i32::from(rd::<i8>(rd::<GPtr<u8>>(this, 0x480), 0x8C));
         let alpha = f32::from_bits(mult[3]);
         mult[3] = f32_of(xi(wet).fmul_m(alpha).fmul_m(f32c(0x3C23_D70A))).to_bits();
-        fx_add_particle(g::<GPtr<u8>>(FX_WATER_SPLASH).read(), lp(&mut p).cast(), lp(&mut v).cast(), 0, lp(&mut mult).cast(), 0xBF80_0000, 0x3F99_999A, 0x3F19_999A, 0);
+        fx_add_particle(g::<GPtr<u8>>(FX_WATER_SPLASH).read(), lp(&mut p).cast(), lp(&mut v).cast(), f32::from_bits(0), lp(&mut mult).cast(), f32::from_bits(0xBF80_0000), f32::from_bits(0x3F99_999A), f32::from_bits(0x3F19_999A), 0);
     }
 
     if rd::<u32>(this, 0x46C) & 0x100 != 0 {
@@ -2404,8 +2376,8 @@ fn stunt_record(this: GPtr<u8>, time_off: isize, dist_off: isize, best_time: isi
     wr::<u32>(this, best_dist, rd::<u32>(this, dist_off));
     let secs = f32_of(xi((t / 1000) as i32));
     wr::<u32>(this, best_time, t);
-    stats_set_new_record_stat(stat_t, secs.to_bits());
-    stats_set_new_record_stat(stat_d, rd::<u32>(this, dist_off));
+    stats_set_new_record_stat(stat_t, f32::from_bits(secs.to_bits()));
+    stats_set_new_record_stat(stat_d, f32::from_bits(rd::<u32>(this, dist_off)));
 }
 
 /// Block 1 of `CPlayerInfo::Process` (0x56F9A2-0x5700EE): two-wheel / wheelie / stoppie counters.
@@ -2666,7 +2638,7 @@ fn leave_or_enter(this: GPtr<u8>, pad: GPtr<u8>, player_index: i32) -> bool {
         event_script_command_ctor(evp, 3, task, 0);
         let pif = pif_ped();
         event_group_add(rd::<GPtr<u8>>(pif, 0x47C).byte_add(0x68), evp, 0);
-        event_script_command_dtor(evp);
+        event_script_command_dtor(evp.cast::<u32>());
         return true;
     }
 
@@ -2813,7 +2785,7 @@ pub fn player_info_process(this: GPtr<u8>, player_index: i32) {
     if g::<u8>(REPLAY_MODE).read() == 1 {
         return;
     }
-    let pad = pad_get_pad(player_index);
+    let pad = pad_get_pad(player_index as u32);
     let now = || g::<u32>(TIME_MS).read();
 
     // block 0: taxi fare
@@ -2905,16 +2877,16 @@ pub fn player_info_process(this: GPtr<u8>, player_index: i32) {
         let cam = g::<u8>(THE_CAMERA);
         if ep < 1000 && en >= 1000 && rd::<u8>(this, 0xDC) == 0 && rd::<u8>(this, 0xDF) != 0 {
             camera_set_fade_colour(cam, 0, 0, 0);
-            camera_fade(cam, 0x3F80_0000, 0);
+            camera_fade(cam, f32::from_bits(0x3F80_0000), 0);
         }
         if en > 2000 {
             if rd::<u8>(this, 0xDC) == 0 && rd::<u8>(this, 0xDF) != 0 {
                 camera_restore_with_jump_cut(cam);
                 camera_set_fade_colour(cam, 0, 0, 0);
-                camera_fade(cam, 0x3F80_0000, 1);
+                camera_fade(cam, f32::from_bits(0x3F80_0000), 1);
                 camera_process(cam);
                 timer_stop();
-                renderer_request_objects_in_frustum(0, 0);
+                renderer_request_objects_in_frustum(GPtr::NULL, 0);
                 streaming_load_all_requested_models(0);
                 timer_update();
             }
@@ -2939,7 +2911,7 @@ pub fn player_info_process(this: GPtr<u8>, player_index: i32) {
         let ok = !fpv().is_null()
             && rd::<u32>(rd::<GPtr<u8>>(this, 0), 0x46C) & 0x100 != 0
             && x(rd::<f32>(rd::<GPtr<u8>>(fpv(), 0x14), 0x28)).fcom(X87::zero()) == Cmp::Less
-            && X87::from_f64_exact(vector_magnitude(fpv().byte_add(0x44))).fcom(x(f32c(0x3D4C_CCCD))) == Cmp::Less
+            && X87::from_f64_exact(vector_magnitude(GPtr::<u8>::cast::<u32>(fpv().byte_add(0x44)))).fcom(x(f32c(0x3D4C_CCCD))) == Cmp::Less
             && (rd::<i32>(fpv(), 0x590) == 0 || rd::<i32>(fpv(), 0x590) == 5)
             && rd::<u32>(fpv(), 0x40) & 0x100 == 0;
         if ok {
@@ -2963,26 +2935,26 @@ pub fn player_info_process(this: GPtr<u8>, player_index: i32) {
     if !fpv().is_null() {
         let speed = || rd::<u32>(fpv(), 0xD4);
         if rd::<u16>(fpv(), 0x22) == 0x1C9 {
-            stats_increment_stat(7, speed());
+            stats_increment_stat(7, f32::from_bits(speed()));
         } else if rd::<i32>(fpv(), 0x594) == 0xA {
-            stats_increment_stat(0x1B, speed());
+            stats_increment_stat(0x1B, f32::from_bits(speed()));
         } else {
             for (a, stat) in [(3, 8), (5, 9), (1, 4), (2, 5), (4, 6)] {
-                if vehicle_get_vehicle_appearance(fpv()) == a {
-                    stats_increment_stat(stat, speed());
+                if vehicle_get_vehicle_appearance(fpv()) as i32 == a {
+                    stats_increment_stat(stat, f32::from_bits(speed()));
                 }
             }
-            if (vehicle_get_vehicle_appearance(fpv()) == 5 || vehicle_get_vehicle_appearance(fpv()) == 3)
-                && X87::from_f64_exact(vector_magnitude(fpv().byte_add(0x44))).fcom(x(f32c(0x3E4C_CCCD))) == Cmp::Greater
+            if (vehicle_get_vehicle_appearance(fpv()) as i32 == 5 || vehicle_get_vehicle_appearance(fpv()) as i32 == 3)
+                && X87::from_f64_exact(vector_magnitude(GPtr::<u8>::cast::<u32>(fpv().byte_add(0x44)))).fcom(x(f32c(0x3E4C_CCCD))) == Cmp::Greater
             {
-                stats_increment_stat(0xA9, f32_of(x(g::<f32>(TIME_STEP).read()).fmul_m(16.0)).to_bits());
+                stats_increment_stat(0xA9, f32::from_bits(f32_of(x(g::<f32>(TIME_STEP).read()).fmul_m(16.0)).to_bits()));
             }
         }
         if find_player_train(-1).is_null() {
             let v = fpv();
             let (vx, vy, vz) = (x(rd::<f32>(v, 0x44)), x(rd::<f32>(v, 0x48)), x(rd::<f32>(v, 0x4C)));
             if vx.fmul(vx).fadd(vy.fmul(vy)).fadd(vz.fmul(vz)).fcom(X87::zero()) == Cmp::Greater {
-                match vehicle_get_vehicle_appearance(fpv()) {
+                match vehicle_get_vehicle_appearance(fpv()) as i32 {
                     2 => {
                         if rd::<i32>(fpv(), 0x594) != 0xA {
                             stats_update_when_on_motor_bike(fpv());
@@ -2999,13 +2971,13 @@ pub fn player_info_process(this: GPtr<u8>, player_index: i32) {
         if x(rd::<f32>(p, 0xD4)).fcom(X87::zero()) == Cmp::Greater {
             let intel = rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0), 0x47C);
             if !get_task_swim(intel).is_null() {
-                if pad_get_ped_walk_left_right(pad_get_pad(0)) as i16 != 0 || pad_get_accelerate(pad_get_pad(0)) as i16 != 0 {
-                    stats_increment_stat(0x1A, rd::<u32>(pif_ped(), 0xD4));
+                if (pad_get_ped_walk_left_right(pad_get_pad(0)) as u32) as i16 != 0 || pad_get_accelerate(pad_get_pad(0)) as i16 != 0 {
+                    stats_increment_stat(0x1A, f32::from_bits(rd::<u32>(pif_ped(), 0xD4)));
                 }
             } else if !get_task_jet_pack(rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0), 0x47C)).is_null() {
-                stats_increment_stat(0xAD, f32_of(x(g::<f32>(TIME_STEP).read()).fmul_m(16.0)).to_bits());
+                stats_increment_stat(0xAD, f32::from_bits(f32_of(x(g::<f32>(TIME_STEP).read()).fmul_m(16.0)).to_bits()));
             } else {
-                stats_increment_stat(3, rd::<u32>(pif_ped(), 0xD4));
+                stats_increment_stat(3, f32::from_bits(rd::<u32>(pif_ped(), 0xD4)));
             }
         }
     }
@@ -3044,12 +3016,12 @@ pub fn player_info_process(this: GPtr<u8>, player_index: i32) {
             let mut node = [0u16; 2];
             paths_find_node_closest_to_coors(
                 g::<u8>(THE_PATHS),
-                lp(&mut node).cast(),
-                p.read(),
-                p.wrapping_index(1).read(),
-                p.wrapping_index(2).read(),
+                GPtr::<u8>::cast::<u32>(lp(&mut node).cast()),
+                f32::from_bits(p.read()),
+                f32::from_bits(p.wrapping_index(1).read()),
+                f32::from_bits(p.wrapping_index(2).read()),
                 0,
-                0x4270_0000,
+                f32::from_bits(0x4270_0000),
                 1,
                 0,
                 0,

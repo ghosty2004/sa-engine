@@ -18,13 +18,10 @@ use sa_core::bindings::matrix_dtor;
 use sa_core::bindings::matrix_set_rotate_z;
 use sa_stream::bindings::placeable_allocate_matrix as allocate_matrix;
 use sa_stream::bindings::simple_transform_update_matrix;
+use crate::bindings::garage_is_point_inside_r;
+use crate::bindings::tm_find_active_task_by_type as task_manager_find_active_task_by_type;
+use sa_core::bindings::matrix_mul_vec;
 orig! {
-    /// `operator*(CVector* out, const CMatrix*, const CVector*)` (0x59C890, cdecl)
-    fn matrix_mul_vec(out: GPtr<f32>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<f32> = cdecl 0x59C890 => unported;
-    /// `CGarage::IsPointInsideGarage(CVector, float)` (0x4487D0, `ret 0x10`)
-    fn garage_is_point_inside_r(g: GPtr<u8>, x: f32, y: f32, z: f32, r: f32) -> u8 = thiscall 0x4487D0 => unported;
-    /// `CTaskManager::FindActiveTaskByType(int32)` (0x681740, `ret 4`)
-    fn task_manager_find_active_task_by_type(tm: GPtr<u8>, ty: u32) -> GPtr<u8> = thiscall 0x681740 => unported;
     /// `CrossProduct(CVector* out, const CVector*, const CVector*)` (0x59C730, cdecl)
     fn cross_product(out: GPtr<f32>, a: GPtr<u8>, b: GPtr<f32>) -> GPtr<f32> = cdecl 0x59C730 => unported;
 }

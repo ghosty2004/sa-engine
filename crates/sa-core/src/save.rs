@@ -122,6 +122,7 @@ pub mod call {
     pub use crate::bindings::init_user_directories;
     pub use crate::bindings::open_file;
     pub use crate::bindings::strncmp;
+    pub use crate::bindings::get_key;
     orig! {
         /// CRT `sprintf(buf, fmt, char*, int, char*)` (0x821BB5)
         pub fn sprintf_sis(buf: GPtr<u8>, fmt: GPtr<u8>, a: GPtr<u8>, n: i32, b: GPtr<u8>) -> i32 = cdecl 0x821BB5 => unported;
@@ -133,14 +134,15 @@ pub mod call {
         pub fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x821195 => unported;
         /// `CFileMgr::GetErrorReadWrite` (0x538A50)
         pub fn get_error_read_write(f: GPtr<u8>) -> u32 = cdecl 0x538A50 => crate::filemgr::get_error_read_write;
-        /// `CKeyGen::GetKey(const char*)` (0x53CF00)
-        pub fn get_key(s: GPtr<u8>) -> u32 = cdecl 0x53CF00 => crate::keygen::get_key;
         /// KERNEL32 `DeleteFileA` at 0x619103 (C_PcSave::DeleteSlot)
         pub fn delete_file_a(path: GPtr<u8>) -> i32 = stdcall site 0x619103 => unported;
         /// KERNEL32 `GetLocalTime` at 0x5D1E54 (determinism mode redirects this site to the virtual clock)
         pub fn get_local_time(out: GPtr<u8>) = stdcall site 0x5D1E54 => unported;
     }
     pub use crate::bindings::pad_update_pads as update_pads;
+    pub use crate::bindings::check_data_not_corrupt;
+    pub use crate::bindings::load_data_from_work_buffer as load_data;
+    pub use crate::bindings::save_data_to_work_buffer as save_data;
     orig! {
         /// `CGenericGameStorage::OpenFileForReading(name, slot)` (0x5D0D20)
         pub fn open_file_for_reading(name: GPtr<u8>, slot: i32) -> u8 = cdecl 0x5D0D20 => super::open_file_for_reading;
@@ -156,12 +158,6 @@ pub mod call {
         pub fn save_work_buffer(checksum: u32) -> u8 = cdecl 0x5D0F80 => super::save_work_buffer;
         /// `CGenericGameStorage::LoadWorkBuffer()` (0x5D10B0)
         pub fn load_work_buffer() -> u8 = cdecl 0x5D10B0 => super::load_work_buffer;
-        /// `CGenericGameStorage::CheckDataNotCorrupt(slot, name)` (0x5D1170)
-        pub fn check_data_not_corrupt(slot: i32, name: GPtr<u8>) -> u8 = cdecl 0x5D1170 => super::check_data_not_corrupt;
-        /// `CGenericGameStorage::SaveDataToWorkBuffer(void*, int32)` (0x5D1270)
-        pub fn save_data(p: GPtr<u8>, n: i32) -> u8 = cdecl 0x5D1270 => super::save_data_to_work_buffer;
-        /// `CGenericGameStorage::LoadDataFromWorkBuffer(void*, int32)` (0x5D1300)
-        pub fn load_data(p: GPtr<u8>, n: i32) -> u8 = cdecl 0x5D1300 => super::load_data_from_work_buffer;
         /// `CGenericGameStorage::GenericSave()` (0x5D13E0)
         pub fn generic_save() -> u8 = cdecl 0x5D13E0 => super::generic_save;
         /// `CGenericGameStorage::ReportError(block, error)` (0x5D08C0)
@@ -183,9 +179,9 @@ pub mod call {
     }
     // GenericSave / GenericLoad block functions (eBlocks order), and the steps around them.
     pub use crate::bindings::cheat_reset_cheats;
+    pub use crate::bindings::call_delete_all_rw_objects as streaming_delete_all_rw_objects;
+    pub use crate::bindings::script_connect_lods as script_connect_lods_function;
     orig! {
-        pub fn script_connect_lods_function(a: i32, b: i32) = cdecl 0x470A20 => unported;
-        pub fn streaming_delete_all_rw_objects() = cdecl 0x4090A0 => unported;
         pub fn scripts_save() -> u8 = cdecl 0x5D4C40 => unported;
         pub fn scripts_load() -> u8 = cdecl 0x5D4FD0 => unported;
         pub fn pools_save() -> u8 = cdecl 0x5D0880 => crate::pools::save;
@@ -264,10 +260,10 @@ pub mod call {
     // CSimpleVariablesSaveStructure
     pub use crate::bindings::get_pad;
     pub use crate::bindings::text_get;
+    pub use crate::bindings::ascii_to_gxt_char;
+    pub use crate::bindings::gxt_char_strlen;
+    pub use crate::bindings::matrix_set_translate;
     orig! {
-        pub fn ascii_to_gxt_char(src: GPtr<u8>, dst: GPtr<u8>) = cdecl 0x718600 => crate::common::ascii_to_gxt_char;
-        pub fn gxt_char_strlen(s: GPtr<u8>) -> i32 = cdecl 0x718690 => unported;
-        pub fn matrix_set_translate(m: GPtr<u8>, x: f32, y: f32, z: f32) = thiscall 0x59AF40 => unported;
         /// the cheat function `CCheat::m_aCheatFunctions` entry at 0x8A5CC4 (+0x135 of the structure)
         pub fn cheat_fn_8a5cc4() = cdecl cell 0x8A5CC4 => unported;
         /// the cheat function entry at 0x8A5CC0 (+0x136 of the structure)
@@ -1016,7 +1012,7 @@ pub fn simple_vars_construct(this: GPtr<u8>) {
     call::ascii_to_gxt_char(GPtr::from_raw(ascii.as_mut_ptr()), dp);
     dp.byte_add(3).write(0);
     call::text_copy(this.byte_add(4), name);
-    let len = call::gxt_char_strlen(this.byte_add(4));
+    let len = call::gxt_char_strlen(this.byte_add(4)) as i32;
     this.byte_add(4 + len as isize).write(0);
     if len > 0x16 {
         call::text_copy(this.byte_add(0x16), dp);
@@ -1194,7 +1190,7 @@ pub fn do_game_specific_stuff_after_success_load() {
     call::text_load(g(THE_TEXT), 0);
     call::collision_sort_out_collision_after_load();
     call::streaming_load_scene_collision(camera_position());
-    call::streaming_load_scene(camera_position());
+    call::streaming_load_scene(GPtr::<u8>::cast::<u32>(camera_position()));
     call::streaming_load_all_requested_models(0);
     call::game_tidy_up_memory(1, 0);
     g::<u8>(JUST_LOADED_DONT_FADE_IN_YET).write(1);
@@ -1318,7 +1314,7 @@ pub fn do_script_setup_after_pools_have_loaded() {
         if b == -1 {
             continue;
         }
-        call::script_connect_lods_function(a, b);
+        call::script_connect_lods_function(a as u32, b as u32);
     }
 }
 

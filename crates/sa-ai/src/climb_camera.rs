@@ -3,6 +3,7 @@
 //! (`TaskSimpleClimb.cpp`) as a reading aid (its stick modifier reads the climb entity where the original reads the
 //! entity argument). x87 values stay in registers where the original keeps them there.
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
@@ -54,7 +55,7 @@ fn handhold(this: GPtr<u8>) -> ([u32; 3], X87) {
         simple_transform_update_matrix(e.byte_add(4), rd::<GPtr<u8>>(e, 0x14));
     }
     let mut out = [0u32; 3];
-    let r = matrix_mul_vec(buf(&mut out), rd::<GPtr<u8>>(e, 0x14), buf(&mut pos));
+    let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(buf(&mut out)), rd::<GPtr<u8>>(e, 0x14), buf(&mut pos)));
     pos = [rd::<u32>(r, 0), rd::<u32>(r, 4), rd::<u32>(r, 8)];
     let e = rd::<GPtr<u8>>(this, 0x24);
     let m = rd::<GPtr<u8>>(e, 0x14);
@@ -202,7 +203,7 @@ fn handhold_for_vault(this: GPtr<u8>) -> ([u32; 3], X87) {
     }
     let gm = placeable_get_matrix(e);
     let mut out = [0u32; 3];
-    let r = matrix_mul_vec(buf(&mut out), gm, buf(&mut pos));
+    let r = GPtr::<f32>::cast::<u8>(matrix_mul_vec(GPtr::<u8>::cast::<f32>(buf(&mut out)), gm, buf(&mut pos)));
     pos = [rd::<u32>(r, 0), rd::<u32>(r, 4), rd::<u32>(r, 8)];
     let e = rd::<GPtr<u8>>(this, 0x24);
     let m = rd::<GPtr<u8>>(e, 0x14);

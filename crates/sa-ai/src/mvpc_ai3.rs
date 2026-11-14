@@ -5,6 +5,7 @@
 //! another catalogued function goes through `orig!` at the original address.
 #![allow(clippy::unreadable_literal)]
 
+use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::orig::at_site;
 use sa_core::{hook, orig};
@@ -13,45 +14,33 @@ use crate::common::*;
 
 use crate::bindings::bbox_centre_uncached;
 use crate::bindings::bbox_corners_uncached;
-use crate::bindings::dtor_4aeea0 as event_sexy_ped_dtor;
+use sa_world::bindings::dtor_4aeea0 as event_sexy_ped_dtor;
 use crate::bindings::ik_manager_remove_ik_chain;
-use crate::bindings::rt_quat_rotate;
+use sa_core::bindings::rt_quat_rotate;
 use sa_core::bindings::general_random_int_in_range as random_int_in_range;
 use sa_stream::bindings::rand;
 use sa_world::bindings::interesting_events_add;
 use sa_world::bindings::ped_say;
 use sa_world::bindings::task_simple_dtor;
+use crate::bindings::car_drive_start_bopping as start_bopping_o;
+use crate::bindings::point_route_new;
+use sa_core::bindings::col_sphere_set;
+use sa_core::bindings::entity_clean_up_old_reference;
+use sa_core::bindings::entity_register_reference;
+use sa_core::bindings::task_new as task_new_o;
+use sa_world::bindings::ctor_4aedf0 as event_sexy_ped_ctor;
+use sa_world::bindings::event_group_add;
+use sa_world::bindings::task_complex_ctor;
+use sa_world::bindings::task_simple_ctor;
+use sa_world::bindings::tm_find_active_task_by_type;
 orig! {
-    /// `CTaskComplex::CTaskComplex` (0x61A3B0)
-    fn task_complex_ctor(t: u32) -> u32 = thiscall 0x61A3B0 => crate::gen_ctors::g_ctask_complex_61a3b0;
-    /// `CTaskSimple::CTaskSimple` (0x61A390)
-    fn task_simple_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A390 => crate::mvpa_ai1::task_simple_ctor;
-    /// `CTask::operator new(uint32)` (0x61A5A0)
-    fn task_new_o(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => crate::mvpa_ai1::task_operator_new;
-    /// `CEntity::RegisterReference(CEntity**)` (0x571B70, `ret 4`)
-    fn entity_register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => sa_world::world::entity::register_reference;
-    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00, `ret 4`)
-    fn entity_clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => sa_world::world::entity::clean_up_old_reference;
-    /// `CPointRoute::operator new(uint32)` (0x41B7C0, cdecl)
-    fn point_route_new(size: u32) -> GPtr<u8> = cdecl 0x41B7C0 => sa_world::world::mvpa2::point_route_new;
     /// `CTask::Clone` (vtable +4)
     fn v_clone(t: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x4 => unported;
-    /// `CTaskManager::FindActiveTaskByType(int32)` (0x681740, `ret 4`)
-    fn tm_find_active_task_by_type(tm: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x681740 => crate::tasks::task_manager_find_active_task_by_type;
     /// `CGeneral::GetRandomNumberInRange<float>(float, float)` (0x41BD90, cdecl, ST0)
     fn random_float_in_range(lo: u32, hi: u32) -> f64 = cdecl 0x41BD90 => unported;
-    /// `CTaskSimpleCarDrive::StartBopping(CPed*)` (0x642760, `ret 4`)
-    fn start_bopping_o(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x642760 => crate::mvpc_ai3::car_drive_start_bopping;
     /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, bool x7)` (0x56A490, cdecl; AL)
     #[allow(clippy::too_many_arguments)]
     fn world_los_clear(a: GPtr<u8>, b: GPtr<u8>, bld: u32, veh: u32, peds: u32, obj: u32, dum: u32, see: u32, cam: u32) -> u32 = cdecl 0x56A490 => unported;
-    /// `CEventSexyPed::CEventSexyPed(CPed*)` (0x4AEDF0, `ret 4`)
-    fn event_sexy_ped_ctor(e: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x4AEDF0 => unported;
-    /// `CEventGroup::Add(CEvent*, bool)` (0x4AB420, `ret 8`)
-    fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, valid: u8) -> GPtr<u8> = thiscall 0x4AB420 => crate::group::event_group_add;
-    /// `CColSphere::Set(float radius, const CVector& centre, uint8 material, uint8 flags, uint8 lighting)` (0x40FD10,
-    /// `ret 0x14`)
-    fn col_sphere_set(s: GPtr<u8>, r: f32, c: GPtr<u8>, m: u32, f: u32, l: u32) = thiscall 0x40FD10 => unported;
 }
 
 /// `CTimer::m_snTimeInMilliseconds`
@@ -66,7 +55,7 @@ const TIME_MS: usize = 0xB7CB84;
 #[hook(addr = 0x6541B0, conv = thiscall, name = "CTaskComplexWalkRoundCar::Constructor", expect = "6A FF E9 F1 CE DA FF",
        unverified = "mvpc-ai-3", route = "L2", hazards = "heap-writes,entry-protection-read", recs = "grove-walk")]
 pub fn walk_round_car_ctor(this: GPtr<u8>, ms: u32, target: GPtr<u8>, veh: GPtr<u8>, door: u32, flags: u32) -> GPtr<u8> {
-    task_complex_ctor(this.addr() as u32);
+    task_complex_ctor(GPtr::from_addr((this.addr() as u32) as usize));
     let b0d = rd::<u8>(this, 0xD);
     wr::<u8>(this, 0xC, ms as u8);
     let b0e = rd::<u8>(this, 0xE);
@@ -100,7 +89,7 @@ pub fn walk_round_car_ctor(this: GPtr<u8>, ms: u32, target: GPtr<u8>, veh: GPtr<
 #[hook(addr = 0x63C940, conv = thiscall, name = "CTaskComplexCarDrive::Constructor_1", expect = "6A FF E9 BE 74 DC FF",
        unverified = "mvpc-ai-3", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn car_drive_ctor(this: GPtr<u8>, veh: GPtr<u8>, speed: u32, model: u32, style: u32) -> GPtr<u8> {
-    task_complex_ctor(this.addr() as u32);
+    task_complex_ctor(GPtr::from_addr((this.addr() as u32) as usize));
     wr::<u32>(this, 0x10, speed);
     wr::<u32>(this, 0x14, model);
     wr::<u32>(this, 0, 0x86E934);
@@ -127,7 +116,7 @@ pub fn ik_chain_dtor(this: GPtr<u8>) {
     }
     let e = rd::<GPtr<u8>>(this, 0x28);
     if !e.is_null() {
-        entity_clean_up_old_reference(e, this.byte_add(0x28));
+        entity_clean_up_old_reference(e, GPtr::<u8>::cast::<GPtr<u8>>(this.byte_add(0x28)));
     }
     task_simple_dtor(this);
 }
@@ -170,7 +159,7 @@ pub fn say_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         wr::<u32>(this, 0x14, iv);
         wr::<u8>(this, 0x18, 1);
     }
-    ped_say(ped, rd::<u16>(this, 8) as u32, 0, 0x3F80_0000, 0, 0, 0);
+    ped_say(ped, rd::<u16>(this, 8) as u32, 0, f32::from_bits(0x3F80_0000), 0, 0, 0);
     if rd::<u8>(this, 0x18) == 0 {
         return 0;
     }
@@ -295,9 +284,9 @@ pub fn compute_entity_bounding_sphere(ped: GPtr<u8>, e: GPtr<u8>, sphere: GPtr<u
     let p1 = local(&mut c1);
     let p2 = local(&mut c2);
     let pc = local(&mut ctr);
-    bbox_corners_uncached(f32_of(x(rd::<f32>(pos(ped), 8))).to_bits(), e, p1);
+    bbox_corners_uncached(f32::from_bits(f32_of(x(rd::<f32>(pos(ped), 8))).to_bits()), e, p1);
     let z = rd::<u32>(pos(ped), 8);
-    bbox_corners_uncached(z, e, p2);
+    bbox_corners_uncached(f32::from_bits(z), e, p2);
     bbox_centre_uncached(z, p2, pc);
     let thr = x(g::<f32>(0x858B50).read());
     let mut best = thr;
@@ -392,10 +381,10 @@ pub fn car_drive_process_head_bopping(this: GPtr<u8>, ped: GPtr<u8>, bop: u32, d
     let q = rd::<GPtr<u8>>(rd::<GPtr<u8>>(ped, 0x490), 0x10);
     if rd::<i32>(this, 0x38) >= 1 {
         let ang = if rd::<u32>(this, 0x30) == 0 { a } else { f32_of(x(a).fchs()) };
-        rt_quat_rotate(q, 0x86EBD4, ang, 1);
+        rt_quat_rotate(q, GPtr::from_addr(0x86EBD4), ang, 1);
     }
     let ang = if rd::<i32>(this, 0x38) == 2 { a } else { f32_of(x(a).fchs()) };
-    rt_quat_rotate(q, 0x86EBC8, ang, 1);
+    rt_quat_rotate(q, GPtr::from_addr(0x86EBC8), ang, 1);
     wr::<u32>(ped, 0x470, rd::<u32>(ped, 0x470) | 0x4000);
 }
 

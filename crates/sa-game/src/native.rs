@@ -116,7 +116,6 @@ const GLOBAL_LISTS: &[&[&[sa_core::mem::GlobalDesc]]] = &[
     sa_render::hooks::GLOBALS,
 ];
 
-
 /// Checks that every `globals!` declaration inside the arena starts with the exe image's value
 /// (the arena now holds the one copy). Returns `(checked, mismatches)`.
 pub fn check_globals() -> (usize, Vec<String>) {
@@ -327,10 +326,7 @@ pub fn set_start_in_world() {
     println!("sa-game: --start-in-world: main.scm's START_MISSION 2 (the intro) is skipped; the screen is faded in");
 }
 
-sa_core::orig! {
-    /// `CCamera::Fade(float time, int16 direction)` (0x50AC20, `ret 8`), the float as its raw dword
-    fn camera_fade(cam: sa_core::mem::GPtr<u8>, time: u32, direction: u32) = thiscall 0x50AC20 => unported;
-}
+use sa_core::bindings::camera_fade;
 
 /// The script VM's per-command callback (installed for `SA_GAME_SCRIPT_TRACE` and `--start-in-world`), called with
 /// the script and the command word before the command is dispatched.
@@ -349,7 +345,7 @@ fn before_command(s: sa_script::vm::Scr, w: u32) {
         // not cleared: a New Game from the pause menu (CGame::ShutDownForRestart + InitialiseWhenRestarting) runs
         // MAIN again from its start, and its START_MISSION 2 is skipped again
         ip_cell.write(ip + 4);
-        camera_fade(sa_core::mem::GPtr::from_addr(0xB6F028), 0, 1);
+        camera_fade(sa_core::mem::GPtr::from_addr(0xB6F028), f32::from_bits(0), 1);
         println!("sa-game: --start-in-world: skipped START_MISSION 2 at main.scm {:#x}", ip.wrapping_sub(0xA49960));
     }
 }

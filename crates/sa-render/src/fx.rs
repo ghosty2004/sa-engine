@@ -88,6 +88,18 @@ pub use sa_core::bindings::rw_matrix_multiply;
 pub use sa_core::bindings::rw_matrix_update;
 pub use sa_core::bindings::rw_v3d_transform_points;
 pub use sa_world::bindings::sound_dtor as ae_sound_dtor;
+pub use crate::bindings::frustum_is_collision;
+pub use crate::bindings::fx_rw_matrix_create;
+pub use crate::bindings::fx_rw_matrix_destroy;
+pub use crate::bindings::init_static_systems;
+pub use crate::bindings::pool_get_mem;
+pub use sa_core::bindings::fx_play as system_play;
+pub use sa_core::bindings::fx_stop as system_stop;
+pub use sa_world::bindings::create_fx_system_bp;
+pub use sa_world::bindings::find_fx_system_bp;
+pub use sa_world::bindings::fx_create_system as create_fx_system_name;
+pub use sa_world::bindings::fx_kill as system_kill;
+pub use sa_world::bindings::fx_play_and_kill as system_play_and_kill;
 orig! {
     /// `List_c::List_c()` (0x4A8DD0): head, tail, count = 0
     pub fn list_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4A8DD0 => list_ctor_port;
@@ -95,24 +107,12 @@ orig! {
     pub fn list_item_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4A8DB0 => list_item_ctor_port;
     /// `FxManager_c::Update(RwCamera*, float)` (0x4A9A80)
     pub fn fx_manager_update(this: GPtr<u8>, cam: GPtr<u8>, dt: u32) = thiscall 0x4A9A80 => fx_manager_update_port;
-    /// `FxManager_c::FindFxSystemBP(const char*)` (0x4A9360)
-    pub fn find_fx_system_bp(this: GPtr<u8>, name: GPtr<u8>) -> GPtr<u8> = thiscall 0x4A9360 => fx_manager_find_fx_system_bp;
-    /// `FxManager_c::CreateFxSystem(FxSystemBP_c*, RwMatrix*, RwMatrix*, bool)` (0x4A96B0)
-    pub fn create_fx_system_bp(this: GPtr<u8>, bp: GPtr<u8>, m: GPtr<u8>, parent: GPtr<u8>, ignore_bounds: u32) -> GPtr<u8> = thiscall 0x4A96B0 => crate::mvpc_fx1::create_fx_system_bp;
     /// `FxManager_c::GetFrustumInfo()` (0x4A9130)
     pub fn get_frustum_info(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4A9130 => fx_manager_get_frustum_info;
-    /// `FxMemoryPool_c::GetMem(int32 size, int32 align)` (0x4A9CA0)
-    pub fn pool_get_mem(this: GPtr<u8>, size: u32, align: u32) -> GPtr<u8> = thiscall 0x4A9CA0 => fx_memory_pool_get_mem;
     /// `FxPrim_c::Enable(bool)` (0x4A9F50)
     pub fn prim_enable(this: GPtr<u8>, on: u32) = thiscall 0x4A9F50 => fx_prim_enable;
     /// `FxPrimBP_c::FxPrimBP_c()` (0x4A9CF0)
     pub fn prim_bp_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4A9CF0 => fx_prim_bp_constructor;
-    /// `FxFrustumInfo_c::IsCollision(FxSphere_c*)` (0x4AA030)
-    pub fn frustum_is_collision(this: GPtr<u8>, s: GPtr<u8>) -> u32 = thiscall 0x4AA030 => unported;
-    /// `FxSystem_c::Play()` (0x4AA2F0)
-    pub fn system_play(this: GPtr<u8>) = thiscall 0x4AA2F0 => fx_system_play;
-    /// `FxSystem_c::Stop()` (0x4AA390)
-    pub fn system_stop(this: GPtr<u8>) = thiscall 0x4AA390 => fx_system_stop;
     /// `FxSystem_c::GetBoundingSphereWld(FxSphere_c*)` (0x4AAAD0)
     pub fn system_get_bounding_sphere_wld(this: GPtr<u8>, out: GPtr<u8>) -> u8 = thiscall 0x4AAAD0 => fx_system_get_bounding_sphere_wld;
     /// `FxPrim_c` virtual slot 0x10: `Update(float)` (as `FxSystemBP_c::Update` calls it)
@@ -143,24 +143,12 @@ orig! {
     pub fn set_wind_data(this: GPtr<u8>, dir: u32, strength: u32) = thiscall 0x4A93E0 => fx_manager_set_wind_data;
     /// `FxManager_c::CalcFrustumInfo(RwCamera*)` (0x4A9140)
     pub fn calc_frustum_info(this: GPtr<u8>, cam: GPtr<u8>) = thiscall 0x4A9140 => unported;
-    /// `FxManager_c::CreateFxSystem(const char*, ...)` (0x4A9BE0)
-    pub fn create_fx_system_name(this: GPtr<u8>, name: GPtr<u8>, m: GPtr<u8>, parent: GPtr<u8>, ignore_bounds: u32) -> GPtr<u8> = thiscall 0x4A9BE0 => fx_manager_create_fx_system_name;
-    /// `FxManager_c::FxRwMatrixCreate()` (0x4A9440)
-    pub fn fx_rw_matrix_create(this: GPtr<u8>) -> u32 = thiscall 0x4A9440 => fx_manager_fx_rw_matrix_create;
-    /// `FxManager_c::FxRwMatrixDestroy(RwMatrix*)` (0x4A9460)
-    pub fn fx_rw_matrix_destroy(this: GPtr<u8>, m: u32) = thiscall 0x4A9460 => fx_manager_fx_rw_matrix_destroy;
     /// `FxManager_c::ReturnParticle(FxEmitterPrt_c*)` (0x4A93B0)
     pub fn return_particle(this: GPtr<u8>, prt: GPtr<u8>) = thiscall 0x4A93B0 => fx_manager_return_particle;
-    /// `Fx_c::InitStaticSystems()` (0x49E660)
-    pub fn init_static_systems(this: GPtr<u8>) = thiscall 0x49E660 => crate::mvpc_fx1::fx_init_static_systems;
     /// `FxSystemBP_c::Update(float)` (0x4AA130)
     pub fn system_bp_update(this: GPtr<u8>, dt: u32) -> u32 = thiscall 0x4AA130 => fx_system_bp_update;
     /// `FxSystem_c::Update(RwCamera*, float)` (0x4AAF70)
     pub fn system_update(this: GPtr<u8>, cam: GPtr<u8>, dt: u32) -> u8 = thiscall 0x4AAF70 => unported;
-    /// `FxSystem_c::Kill()` (0x4AA3F0)
-    pub fn system_kill(this: GPtr<u8>) = thiscall 0x4AA3F0 => fx_system_kill;
-    /// `FxSystem_c::PlayAndKill()` (0x4AA3D0)
-    pub fn system_play_and_kill(this: GPtr<u8>) = thiscall 0x4AA3D0 => fx_system_play_and_kill;
     /// `CAEFireAudioEntity::Terminate()` (0x4DCF40)
     pub fn fire_audio_terminate(this: GPtr<u8>) = thiscall 0x4DCF40 => unported;
     /// `FxPrimBP_c` virtual slot 0x14 (render) as `FxSystemBP_c::Render` calls it: `(a1, 0, a2, a3)`
@@ -700,7 +688,7 @@ pub fn fx_emitter_bp_create_instance(_this: GPtr<u8>) -> GPtr<u8> {
 #[hook(addr = 0x4A2BC0, conv = thiscall, name = "FxEmitterBP_c::Update", expect = "51 53 8B D9 55", this = "FxEmitterBP_c")]
 pub fn fx_emitter_bp_update(this: GPtr<u8>, dt: u32) -> i32 {
     let list = this.byte_add(0x20);
-    let n = list_get_num_items(list);
+    let n = list_get_num_items(list) as i32;
     if n == 0 {
         return 0;
     }
@@ -949,7 +937,7 @@ pub fn fx_system_get_bounding_sphere_wld(this: GPtr<u8>, out: GPtr<u8>) -> u8 {
     } else {
         rw_matrix_multiply(mp, this.byte_add(0x10), parent);
     }
-    rw_v3d_transform_points(out, rd(this, 0x74), 1, mp);
+    rw_v3d_transform_points(out.cast::<f32>(), GPtr::<u8>::cast::<f32>(rd(this, 0x74)), 1, mp);
     let s: GPtr<u8> = rd(this, 0x74);
     wr(out, 0xC, rd::<u32>(s, 0xC));
     fx_rw_matrix_destroy(g(FX_MAN), m);

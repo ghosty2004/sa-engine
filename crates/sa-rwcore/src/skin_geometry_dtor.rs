@@ -3,15 +3,12 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::{g, p8, rd, rw_free, rw_memory_free, wr};
 
 use crate::bindings::skin_deinitialize;
-orig! {
-    /// `_rpSkinSplitDataDestroy(skin)` (0x7C8B10)
-    fn skin_split_data_destroy(skin: GPtr<u8>) -> u32 = cdecl 0x7C8B10 => crate::skin::rp_skin_split_data_destroy;
-}
+use crate::bindings::skin_split_data_destroy;
 
 /// The skin geometry extension offset global (0xC978A8) and the skin freelist (0xC978B8).
 const SKIN_GEOMETRY_OFFSET: usize = 0xC978A8;

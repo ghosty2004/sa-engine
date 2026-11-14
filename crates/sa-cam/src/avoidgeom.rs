@@ -130,9 +130,9 @@ pub fn avoid_the_geometry(this: GPtr<u8>, from: GPtr<u8>, target: GPtr<u8>, out:
         f.jp(0x44)
     };
     let beta = if use_xy {
-        get_atan_of_xy_bits(rd::<u32>(b, 0x30), rd::<u32>(b, 0x34))
+        get_atan_of_xy_bits(f32::from_bits(rd::<u32>(b, 0x30)), f32::from_bits(rd::<u32>(b, 0x34)))
     } else {
-        get_atan_of_xy_bits(rd::<u32>(this, 0x984), rd::<u32>(this, 0x988))
+        get_atan_of_xy_bits(f32::from_bits(rd::<u32>(this, 0x984)), f32::from_bits(rd::<u32>(this, 0x988)))
     };
     push_st0(f, beta);
     wr::<f32>(b, 0x10, f.fstp());
@@ -144,7 +144,7 @@ pub fn avoid_the_geometry(this: GPtr<u8>, from: GPtr<u8>, target: GPtr<u8>, out:
         f.jp(0x44)
     };
     if use_hz {
-        let a = get_atan_of_xy_bits(rd::<u32>(b, 0x18), rd::<u32>(b, 0x38));
+        let a = get_atan_of_xy_bits(f32::from_bits(rd::<u32>(b, 0x18)), f32::from_bits(rd::<u32>(b, 0x38)));
         push_st0(f, a);
     } else {
         f.fld(rd(b, 0x20));
@@ -238,12 +238,12 @@ pub fn avoid_the_geometry(this: GPtr<u8>, from: GPtr<u8>, target: GPtr<u8>, out:
             f.fcom_m(d(NEAR_MIN));
             if !f.jne(0x41) {
                 wr::<f32>(b, 0x18, f.fstp());
-                set_near_clip_raw(cam, rd::<u32>(b, 0x18));
+                set_near_clip_raw(cam, f32::from_bits(rd::<u32>(b, 0x18)));
             } else {
                 let m = g::<u32>(NEAR_MIN).read();
                 f.fstp_st(0);
                 wr::<u32>(b, 0x18, m);
-                set_near_clip_raw(cam, m);
+                set_near_clip_raw(cam, f32::from_bits(m));
             }
         }
     }
@@ -282,10 +282,10 @@ pub fn avoid_the_geometry(this: GPtr<u8>, from: GPtr<u8>, target: GPtr<u8>, out:
     f.fadd_m(rd(out, 8));
     wr::<f32>(b, 0x2C, f.fstp());
     let hit = test_sphere_against_world(
-        rd::<u32>(b, 0x24),
-        rd::<u32>(b, 0x28),
-        rd::<u32>(b, 0x2C),
-        radius,
+        f32::from_bits(rd::<u32>(b, 0x24)),
+        f32::from_bits(rd::<u32>(b, 0x28)),
+        f32::from_bits(rd::<u32>(b, 0x2C)),
+        f32::from_bits(radius),
         GPtr::NULL,
         1,
         0,
@@ -305,11 +305,11 @@ pub fn avoid_the_geometry(this: GPtr<u8>, from: GPtr<u8>, target: GPtr<u8>, out:
     f.fmul_m(rd(this, 0x164));
     wr::<f32>(this, 0x164, f.fstp());
     well_buffer_me(
-        target_v,
-        GPtr::from_addr(AVOID_VALUE as usize),
-        GPtr::from_addr(AVOID_SPEED as usize),
-        0x3E4C_CCCD,
-        0x3D4C_CCCD,
+        f32::from_bits(target_v),
+        GPtr::<u8>::cast::<f32>(GPtr::from_addr(AVOID_VALUE as usize)),
+        GPtr::<u8>::cast::<f32>(GPtr::from_addr(AVOID_SPEED as usize)),
+        f32::from_bits(0x3E4C_CCCD),
+        f32::from_bits(0x3D4C_CCCD),
         0,
     );
     let mut out3 = [0u32; 3];
@@ -358,12 +358,12 @@ fn sphere_push(this: GPtr<u8>, b: GPtr<u8>, out: GPtr<u8>, f: &mut Fpu) {
         f.fxch(1);
         f.fcompp();
         if !f.jp(0x5) {
-            set_near_clip_raw(cam, rd::<u32>(b, 0x20));
+            set_near_clip_raw(cam, f32::from_bits(rd::<u32>(b, 0x20)));
         }
     } else {
         f.fcomp_m(d(NEAR_MIN));
         if !f.jp(0x5) {
-            set_near_clip_raw(cam, g::<u32>(NEAR_MIN).read());
+            set_near_clip_raw(cam, f32::from_bits(g::<u32>(NEAR_MIN).read()));
         }
     }
     // s = r - |c|; c normalised; n = contact normal, normalised
