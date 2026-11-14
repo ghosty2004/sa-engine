@@ -252,6 +252,8 @@ orig! {
 }
 
 #[allow(clippy::too_many_arguments)]
+// reached only through `draw_quad_call` in phases B/C (phase A calls the original address)
+#[cfg_attr(sa_phase_a, allow(dead_code))]
 fn draw_quad_bits(px: u32, py: u32, w: u32, h: u32, r: u32, g: u32, b: u32, a: u32, raster: u32) {
     draw_quad(
         f32::from_bits(px),

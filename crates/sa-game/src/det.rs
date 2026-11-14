@@ -56,7 +56,8 @@ pub fn set_fixed_step(ms: f64) {
     STEP_US.store((ms * 1000.0).round().max(1.0) as u64, Ordering::SeqCst);
     let _ = MAIN.set(std::thread::current().id());
     // the cooperative audio stream thread is stepped inside the original's busy-wait loops on it (bind::coop)
-    #[cfg(not(target_arch = "wasm32"))]
+    // (32-bit targets: the arena and the handler cell exist only there; a 64-bit host build is a check build)
+    #[cfg(all(not(target_arch = "wasm32"), target_pointer_width = "32"))]
     sa_core::orig::set_busy_wait_handler(crate::bind::coop::service_stream_now);
 }
 

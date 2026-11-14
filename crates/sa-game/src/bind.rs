@@ -602,6 +602,7 @@ pub(crate) mod coop {
     /// (`PreloadCutsceneTrack` services the hardware until the track is loaded), which a pass per iteration alone
     /// would never end. Not reentrant; main thread only.
     #[cfg(not(target_arch = "wasm32"))]
+    #[cfg_attr(not(target_pointer_width = "32"), allow(dead_code))]
     pub fn service_stream_now() {
         static BUSY: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
         if !crate::det::on() || !crate::det::on_main_thread() || BUSY.swap(true, Ordering::SeqCst) {

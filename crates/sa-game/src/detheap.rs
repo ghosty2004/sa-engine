@@ -159,7 +159,7 @@ mod tests {
             5_000_000,
         ] {
             let c = class(n);
-            assert!(c >= n + 16 && c % 16 == 0, "{n} -> {c}");
+            assert!(c >= n + 16 && c.is_multiple_of(16), "{n} -> {c}");
         }
         assert_eq!(class(1000), class(1001));
     }

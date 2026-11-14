@@ -577,6 +577,7 @@ macro_rules! ent {
 }
 
 /// Calls the registry entry `e` (an element constructor / destructor, thiscall) with `this`.
+#[cfg_attr(not(target_pointer_width = "32"), allow(dead_code))]
 fn call_this(e: &sa_core::orig::registry::Entry, this: u32) -> u32 {
     #[cfg(target_arch = "x86")]
     {
@@ -598,6 +599,7 @@ fn call_this(e: &sa_core::orig::registry::Entry, this: u32) -> u32 {
 }
 
 /// Calls the registry entry `e` (a cdecl `int cmp(const void*, const void*)`).
+#[cfg_attr(not(target_pointer_width = "32"), allow(dead_code))]
 fn call_cmp(e: &sa_core::orig::registry::Entry, a: u32, b: u32) -> i32 {
     #[cfg(target_arch = "x86")]
     {
