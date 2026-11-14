@@ -1,0 +1,51 @@
+#!/bin/sh
+# FRONTIER-1 scenarios: native sa-game runs (deterministic, --fixed-step 40, offscreen) that reach the blockers the
+# user hit. Each must end with an empty blocker list in OUT/report.md and no crash.
+#
+#   tools/e2e/scenarios/frontier.sh pausemenu|solicit|crossing|melee OUTDIR [FRAMES]
+#
+# pausemenu (400)  Esc, down x3, Enter (pause-menu item 4: Stats), down, Enter, Enter: the Stats pages draw
+#                  (was a SIGSEGV at iteration ~171: CStats::GetStatValue's X87 result dispatched as cdecl)
+# solicit  (4000)  PEDHIT's car run without leaving the car: the prostitutes' CTaskComplexProstituteSolicit
+#                  (ControlSubTask 0x6669D0) and IsEntityBlockingTarget 0x5F3970 run
+# crossing (1200)  the Greenwood taken to the level crossing south of Grove Street (2200, -1895; traincross1/2) and
+#                  driven over the tracks: CObject::ProcessTrainCrossingBehaviour 0x5A0B50 for the barriers
+# melee    (3000)  on foot at Grove Street, CJ walks into the peds punching (LMB): fist fights
+#                  (CTaskComplexKillPedOnFootMelee, CTaskSimpleFightingControl)
+# Env: SA_ROOT (checkout holding wine/gta-sa; default ~/sa-engine), SA_GAME (binary; default this checkout's
+# i686-unknown-linux-gnu release build), plus any SA_GAME_* (SA_GAME_PRESENT_GAME=1 + PRESENT_DIR for frames).
+set -eu
+HERE=$(cd "$(dirname "$0")/../../.." && pwd)
+NAME=$1; OUT=$2
+B=${SA_GAME:-$HERE/target/i686-unknown-linux-gnu/release/sa-game}
+GAME=${SA_ROOT:-$HOME/sa-engine}/wine/gta-sa
+mkdir -p "$OUT"
+export GLIBC_TUNABLES=glibc.malloc.mmap_max=0
+run() { # run FRAMES [args]
+    n=$1; shift
+    if [ -n "${PRESENT_DIR:-}" ]; then set -- "$@" --present-dir "$PRESENT_DIR"; fi
+    exec systemd-run --user --scope -q -p MemoryMax=6G setarch i686 -R "$B" --game "$GAME" --fixed-step 40 \
+        --frames "$n" --report "$OUT/report.md" "$@" > "$OUT/stdout.txt" 2> "$OUT/stderr.txt"
+}
+case $NAME in
+pausemenu)
+    export SA_GAME_SCRIPT_SKIP=1
+    export SA_GAME_KEYS="esc:100:102,down:130:132,down:136:138,down:142:144,enter:170:172,down:200:202,enter:210:212,enter:240:242"
+    run "${3:-400}" --start-in-world ;;
+solicit)
+    export SA_GAME_TELEPORT="60:2505.0:-1666.4:13.4;300:2470.0:-1665.0:13.6:-2.246;400:2470.0:-1665.0:13.6:-2.364;530:2497.35:-1678.6:13.6:3.1416"
+    export SA_GAME_KEYS=f:100:103,w:301:360,w:401:450,w:531:553
+    run "${3:-4000}" --start-in-world ;;
+crossing)
+    export SA_GAME_TELEPORT="60:2505.0:-1666.4:13.4;300:2200.6:-1850.0:13.6:3.1416"
+    export SA_GAME_KEYS=f:100:103,w:330:420,s:520:560
+    run "${3:-1200}" --start-in-world ;;
+melee)
+    export SA_GAME_SCRIPT_SKIP=1 SA_GAME_KEYS="w:100:1300"
+    export SA_GAME_LMB="${SA_GAME_LMB:-200:204,260:264,320:324,380:384,440:444,500:504,560:564,620:624,680:684,740:744,800:804,860:864,920:924,980:984,1040:1044,1100:1104,1160:1164,1220:1224,1280:1284}"
+    export SA_GAME_MOUSE="15:0:200:400,-20:3:500:700,25:-2:800:1000"
+    run "${3:-3000}" --start-in-world --system-heap ;;
+*)
+    echo "usage: $0 pausemenu|solicit|crossing|melee OUTDIR [FRAMES]" >&2
+    exit 2 ;;
+esac

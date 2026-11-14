@@ -595,6 +595,27 @@ pub fn compute_clear_target(ped: GPtr<u8>, target: GPtr<f32>, out: GPtr<f32>) {
     }
 }
 
+/// `CPedGeometryAnalyser::ComputePedShotSide(CPed& ped, const CVector& pos)` (0x5F13F0, cdecl; batch
+/// `frontier-1-2`): `ftol((atan2(-(pos.x - ped.x), pos.y - ped.y) - heading (+0x558) + [0x859AB0], plus [0x858CBC]
+/// when below 0) * [0x858FB8])` (the side 0..3 the shot comes from; x87 FPATAN, the tail call into `_ftol`).
+#[hook(addr = 0x5F13F0, conv = cdecl, name = "CPedGeometryAnalyser::ComputePedShotSide",
+       expect = "8B 54 24 04 8B 42 14",
+       unverified = "frontier-1-2", route = "L2", hazards = "x87-transcendental",
+       note = "FPATAN modelled (sa_math::x87)")]
+pub fn compute_ped_shot_side(ped: GPtr<u8>, pos: GPtr<u8>) -> i32 {
+    let p = entity_pos(ped);
+    let y = x(rd::<f32>(pos, 0)).fsub_m(rd::<f32>(p, 0)).fchs();
+    let xx = x(rd::<f32>(pos, 4)).fsub_m(rd::<f32>(p, 4));
+    let mut a = y
+        .fpatan(xx)
+        .fsub_m(rd::<f32>(ped, 0x558))
+        .fadd_m(g::<f32>(0x85_9AB0).read());
+    if !a.fcom(x(g::<f32>(0x85_8B50).read())).test_parity(0x05) {
+        a = a.fadd_m(g::<f32>(0x85_8CBC).read());
+    }
+    ftol32(a.fmul_m(g::<f32>(0x85_8FB8).read()))
+}
+
 pub const HOOKS: &[HookReg] = &[
     HOOK_IS_IN_AIR,
     HOOK_LIES_INSIDE_BOUNDING_BOX,
@@ -603,4 +624,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_GET_IS_LINE_OF_SIGHT_CLEAR_PED,
     HOOK_COMPUTE_CLEAR_TARGET,
     HOOK_IS_ENTITY_BLOCKING_TARGET,
+    HOOK_COMPUTE_PED_SHOT_SIDE,
 ];
