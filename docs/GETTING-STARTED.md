@@ -235,28 +235,30 @@ crates/
   sa-launcher    phase A launcher (starts gta_sa.exe suspended, injects sa-hook)
   sa-game        phase B/C executable: boot (WinMain), legacy arena, platform shims (CRT, Win32, DirectInput,
                  DirectSound, D3D9 device), deterministic mode, SA:MP host, and the front end (frontend.rs: one
-                 input pipeline and main-loop driver, pointer rule) with two backends: the native window
-                 (game_window.rs) and the browser worker (web.rs)
+                 input pipeline and main-loop driver, pointer rule) with its platform backends in platform/: the
+                 native executable (native_main.rs, game_window.rs, screen.rs) and the browser worker (web.rs)
   sa-platform    files, time, input, threads for phase B/C
-  sa-rw-wgpu     the D3D9 → wgpu seam (WebGPU / Vulkan / WebGL2)
-  sa-rw, sa-rwcore   RenderWare
+  sa-rw-wgpu     the D3D9 → wgpu seam (WebGPU / Vulkan / WebGL2), shader-model translation, DXT decoding
+  sa-rwcore      RenderWare (ported)
   sa-math        vectors, matrices, x87 models (bit-exact FSIN/FCOS/FPATAN…)
   sa-stream, sa-world, sa-ped, sa-veh, sa-ai, sa-anim, sa-cam, sa-hud, sa-audio, sa-render, sa-pop,
-  sa-script, sa-weapon, sa-input, sa-formats   the game subsystems (one crate each)
+  sa-script, sa-weapon, sa-input   the game subsystems (one crate each)
   sa-ports       links every port crate into one registry
   sa-oracle, sa-oracle-format   the oracle (L1 specs, recordings, satool)
   sa-samp-api, sa-samp, sa-net, sa-udp-proxy   SA:MP (§1)
-  sa-viewer      model/texture viewer
 samp-rs/         the SA:MP client (own Cargo workspace: samp-proto, samp-client, the samp.dll replacement, …)
 catalog/         the function catalogue (generated + state.csv, verify-queue.csv)
 docs/            PLAN, ROADMAP, WORKLOG, CONTINUE, arch/ (design + per-lane notes), verify/, samp/, re/, e2e/
 tools/
   catalog/       catalogue builders (run_all.sh)
   e2e/           game runs: lib.sh, record/replay, port-l2.sh, l3.sh, verify-all.sh, l2-extras.txt, programs/
-  verify/        writer-gate.sh, queue.py, bisect-batch.sh, static checks (dupes.py: duplicated helpers;
-                 state_check.py: state.csv claims vs registered ports)
+  verify/        writer-gate.sh, queue.py, bisect-batch.sh, static checks (dupes.py: copies across crates,
+                 with dupes-allow.txt; state_check.py: state.csv claims vs registered ports; cfg_check.py:
+                 platform cfgs outside backends, with cfg-baseline.txt; crate_layers.py: crate dependency order)
   gen/           code generators (patterns.py, ai_patterns.py, bindings.py: the orig! bindings, …) — their
                  output is never edited by hand
+  lib/           what the generators and checks share: exe.py (the exe and the catalogue, callee facts), abi.py
+                 (a function's signature as the original shows it), layers.py (the crate layers)
   native/        phase B gap lists (mvp_gaps.py, samp_unported.py, static_inits.py)
   web/           browser build, dev server, headless driver (integration branch)
   wine-env.sh    the Wine environment

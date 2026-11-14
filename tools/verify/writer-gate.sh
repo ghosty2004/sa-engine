@@ -8,10 +8,14 @@
 #   hooks    every hook added since BASE is `#[hook(unverified = "BATCH", route = ..., hazards = ...)]`,
 #            its batch has at most 60 hooks (tools/verify/queue.py gate)
 #   queue    catalog/verify-queue.csv and docs/verify/QUEUE.md are regenerated (tools/verify/queue.py)
-#   bindings the generated `orig!` bindings (crates/*/src/bindings.rs) match catalog/bindings.csv, and no
-#            module re-declares a bound function with the binding's exact signature (tools/gen/bindings.py --check)
+#   bindings the generated `orig!` bindings (crates/*/src/bindings.rs) match catalog/bindings.csv, no module
+#            declares a bound address again, and no address is declared in two modules without a binding (C
+#            varargs excepted, bindings.VARARGS) (tools/gen/bindings.py --check)
 #   state    catalog/state.csv claims implemented/L1/L2/L3 only for registered or documented Rust ports
 #            (tools/verify/state_check.py)
+#   dupes    no cross-crate copy of a function beyond tools/verify/dupes-allow.txt (tools/verify/dupes.py --check)
+#   cfg      platform cfgs only in backends / the binding layer beyond tools/verify/cfg-baseline.txt (cfg_check.py)
+#   layers   crate dependencies follow ADR-003 §3.4's layers (tools/lib/layers.py, tools/verify/crate_layers.py)
 #   clippy   cargo clippy --workspace --all-targets -- -D warnings (host build of every crate and test)
 #   i686     cargo build --release --target i686-pc-windows-gnu -p sa-launcher -p sa-hook (the in-process
 #            DLL, every port's naked entry) + clippy -D warnings of sa-hook for that target
@@ -73,6 +77,14 @@ res bindings "$([ $? = 0 ] && echo 1)" "$(grep -m1 '^bindings:' "$OUT/bindings.l
 # catalog/state.csv claims a port only where one exists
 python3 -I "$HERE/state_check.py" > "$OUT/state.log" 2>&1
 res state "$([ $? = 0 ] && echo 1)" "$(head -1 "$OUT/state.log")"
+# ADR-003 §4: no new cross-crate copies (dupes.py's allow-list only shrinks), platform cfgs only in backends
+# (cfg-baseline.txt only shrinks), crate dependencies in layer order (tools/lib/layers.py)
+python3 -I "$HERE/dupes.py" --check > "$OUT/dupes.log" 2>&1
+res dupes "$([ $? = 0 ] && echo 1)" "$(head -1 "$OUT/dupes.log")$(grep -m1 '^FAIL' "$OUT/dupes.log" | cut -c1-160 | sed 's/^/; /')"
+python3 -I "$HERE/cfg_check.py" > "$OUT/cfg.log" 2>&1
+res cfg "$([ $? = 0 ] && echo 1)" "$(head -1 "$OUT/cfg.log")$(grep -m1 '^FAIL' "$OUT/cfg.log" | sed 's/^/; /')"
+python3 -I "$HERE/crate_layers.py" > "$OUT/layers.log" 2>&1
+res layers "$([ $? = 0 ] && echo 1)" "$(head -1 "$OUT/layers.log")$(grep -m1 '^FAIL' "$OUT/layers.log" | sed 's/^/; /')"
 
 # ---- builds and tests ----------------------------------------------------------------------------
 cargo_step clippy "host clippy -D warnings, all targets" clippy "$J" --workspace --all-targets -- -D warnings

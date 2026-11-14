@@ -2094,6 +2094,7 @@ dependencies = [
  "sa-rwcore",
  "sa-script",
  "sa-stream",
+ "sa-testkit",
  "sa-weapon",
  "sa-world",
 ]
@@ -2107,6 +2108,7 @@ dependencies = [
  "sa-macros",
  "sa-math",
  "sa-stream",
+ "sa-testkit",
  "sa-world",
 ]
 
@@ -2127,6 +2129,7 @@ dependencies = [
  "sa-render",
  "sa-script",
  "sa-stream",
+ "sa-testkit",
  "sa-veh",
  "sa-weapon",
  "sa-world",
@@ -2143,6 +2146,7 @@ dependencies = [
  "sa-pop",
  "sa-rwcore",
  "sa-stream",
+ "sa-testkit",
  "sa-world",
 ]
 
@@ -2235,6 +2239,7 @@ dependencies = [
  "sa-rwcore",
  "sa-script",
  "sa-stream",
+ "sa-testkit",
  "sa-veh",
  "sa-weapon",
  "sa-world",
@@ -2248,6 +2253,7 @@ dependencies = [
  "sa-macros",
  "sa-math",
  "sa-stream",
+ "sa-testkit",
  "sa-world",
 ]
 
@@ -2329,6 +2335,7 @@ dependencies = [
  "sa-pop",
  "sa-rwcore",
  "sa-stream",
+ "sa-testkit",
  "sa-weapon",
  "sa-world",
 ]
@@ -2352,6 +2359,7 @@ dependencies = [
  "sa-math",
  "sa-rwcore",
  "sa-stream",
+ "sa-testkit",
  "sa-world",
 ]
 
@@ -2389,6 +2397,7 @@ dependencies = [
  "sa-pop",
  "sa-rwcore",
  "sa-stream",
+ "sa-testkit",
  "sa-world",
 ]
 
@@ -2416,6 +2425,7 @@ dependencies = [
  "sa-pop",
  "sa-script",
  "sa-stream",
+ "sa-testkit",
  "sa-veh",
  "sa-weapon",
  "sa-world",
@@ -2455,6 +2465,7 @@ dependencies = [
  "sa-render",
  "sa-rwcore",
  "sa-stream",
+ "sa-testkit",
  "sa-veh",
  "sa-weapon",
  "sa-world",
@@ -2467,6 +2478,14 @@ dependencies = [
  "sa-core",
  "sa-macros",
  "sa-math",
+ "sa-testkit",
+]
+
+[[package]]
+name = "sa-testkit"
+version = "0.1.0"
+dependencies = [
+ "sa-core",
 ]
 
 [[package]]
@@ -2492,6 +2511,7 @@ dependencies = [
  "sa-pop",
  "sa-rwcore",
  "sa-stream",
+ "sa-testkit",
  "sa-world",
 ]
 
@@ -2507,6 +2527,7 @@ dependencies = [
  "sa-pop",
  "sa-rwcore",
  "sa-stream",
+ "sa-testkit",
  "sa-world",
 ]
 
@@ -2521,6 +2542,7 @@ dependencies = [
  "sa-math",
  "sa-rwcore",
  "sa-stream",
+ "sa-testkit",
 ]
 
 [[package]]

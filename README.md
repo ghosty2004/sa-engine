@@ -129,10 +129,11 @@ flowchart LR
 ## Development
 
 ```sh
-make check        # the writer gate: clippy (host, i686, wasm32), builds, hook registration tests, L1, queue, bindings, state.csv
+make check        # the writer gate: clippy (host, i686, wasm32), builds, hook registration tests, L1, queue, bindings, state.csv, structure
 make test         # fast tests: hook registration checks and core crates
 make verify TAG=mytag LANES=1,2,3   # verify-all: every recording replayed with the ports on (Wine lanes)
 make frontier     # functions that ported code calls but that are not ported yet
+make structure    # ADR-003 checks: one binding per original address, no new copies across crates, platform cfgs only in backends, crate layers
 make dupes        # functions defined in more than one crate (ADR-003: one definition, in its owning crate)
 make bindings     # regenerate the one-per-address orig! bindings (crates/*/src/bindings.rs) from catalog/bindings.csv
 ```

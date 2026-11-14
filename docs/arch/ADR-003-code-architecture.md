@@ -80,10 +80,14 @@ stays legal for fields the layout table does not know yet (then the field is add
 
 ### 3.4 Layers with one-way dependencies
 
-`sa-core` → `sa-math` → `sa-rwcore` / `sa-stream` → `sa-world` → `sa-ped` / `sa-veh` / `sa-anim` / `sa-cam`
-→ `sa-ai` / `sa-pop` / `sa-weapon` → `sa-script` / `sa-hud` / `sa-audio` → `sa-game` (and the platform crates
-beside them). A helper lives in the lowest layer that owns its concept. No cycles. A check in the writer gate
-keeps the dependency graph to this order.
+`sa-math` → `sa-core` → `sa-rwcore` / `sa-stream` / `sa-anim` / `sa-input` → `sa-world` → `sa-pop` →
+`sa-ped` / `sa-veh` / `sa-cam` / `sa-ai` / `sa-weapon` / `sa-render` → `sa-script` / `sa-hud` / `sa-audio` →
+`sa-samp` / `sa-ports` → `sa-rw-wgpu` / `sa-hook` → `sa-game` / `sa-oracle` (the leaf crates `sa-macros`,
+`sa-platform`, `sa-net`, `sa-samp-api`, `sa-oracle-format`, `sa-launcher`, `sa-udp-proxy` at the bottom). This is
+the order the code has (measured 2026-11-14; `sa-pop` sits below the vehicle, camera and render crates, which call
+its car-control code). A helper lives in the lowest layer that owns its concept. No cycles. `tools/lib/layers.py`
+holds the order; the writer gate's `layers` step (`tools/verify/crate_layers.py`) fails a dependency on a crate of
+the same or a higher layer.
 
 ### 3.5 Generation over copying
 
@@ -112,12 +116,16 @@ stay pending until a frame sees them) shared by every backend.
 
 ## 4. Enforcement
 
-- Writer gate checks (DEDUP-1 adds them): duplicate helper definitions across crates; an address declared by
-  more than one binding; platform `cfg`s outside backends / the binding layer; dependency order (3.4).
+- Writer gate checks (DEDUP-1 pass 2): `bindings` (`tools/gen/bindings.py --check`: the generated modules match
+  `catalog/bindings.csv`; no module declares a bound address again; no address is declared in two modules without
+  a binding; C varargs, `bindings.VARARGS`, are the one exception: each caller passes its own argument list),
+  `dupes` (`tools/verify/dupes.py --check`: no cross-crate copy beyond `tools/verify/dupes-allow.txt`, each line
+  with its reason; the list only shrinks), `cfg` (`tools/verify/cfg_check.py`: platform `cfg`s outside the
+  backends / binding layer only up to `tools/verify/cfg-baseline.txt`, which only shrinks), `layers` (3.4).
 - Every agent brief states this ADR's rules: search and reuse before writing; shared logic in the shared place;
   never port an address another branch already registers (`tools/gen/inflight.py`).
 - Integration reviews structure as well as behaviour.
-- After DEDUP-1, PLAN.md §1 gets a code-quality criterion next to F1–F13.
+- PLAN.md §1 F14 is the code-quality criterion (these checks with empty allow-lists).
 
 ## 5. Migration (DEDUP-1)
 
@@ -132,3 +140,29 @@ In this order, each step with builds, tests, the writer gate and verify-all IDEN
 7. the enforcement checks (§4) and the PLAN.md criterion.
 
 SAMP-UI-DEDUP covers the SA:MP UI part of 3.1 / 3.2 in parallel.
+
+### 5.1 Binding rules (DEDUP-1 pass 2)
+
+- **The signature comes from the original.** Where the declarations of an address disagreed, `bindings.py
+  --resolve` took the convention and the stack arguments from the bytes (`tools/lib/abi.py`: the callee's `ret N`,
+  whether it reads ECX, `add esp, N` at its call sites), a pointer where any caller passes one, `f32` where any
+  passes a float, integers as wide as the callee reads them, and the result as the original's callers use it (AL,
+  AX sign- or zero-extended, EAX, ST0). A binding that targets a port has the port's own signature.
+- **Callers convert at the call expression** (`GPtr::from_addr(x as usize)`, `p.addr() as u32`, `f32::from_bits`,
+  `x as u8`, `.cast()`, `.to_f64()`), never inside the port's logic.
+- **`X87` results.** A `cdecl` / `stdcall` / `thiscall` binding returning `X87` (all 80 bits of ST0) is rendered
+  as the equivalent `reg("args = …")` form, so ports returning `X87` are bound directly; the per-crate phase B
+  adapters that rounded them to `f64` are gone.
+- **Ported twins.** A binding sits in the lowest crate its callers share. When that crate is below the crate of
+  the address's registered port (a lower caller reaches the port through the phase B registry), the CSV names the
+  port (`port` column) and the generator also writes the binding into the port's crate with the port as target;
+  callers that may depend on that crate import the twin, so phases B/C and host tests call the port directly.
+  Both are generated from one CSV row.
+- **Shared build script.** The port crates share `crates/phase_a_build.rs` (`build = "../phase_a_build.rs"`).
+
+### 5.2 Step 4: the viewer stack (decided in DEDUP-1 pass 2)
+
+Only the NATIVE-DEMO viewer used `sa-viewer`, `sa-formats` (its parsers), `sa-rw` (its RenderWare loader) and
+`sa-rw-wgpu`'s world `Renderer`; nothing else depended on them. They are retired. `sa-rw-wgpu` keeps the D3D9 seam
+(`d3d9`, `sm`) sa-game uses and the software DXT decoder (`dxt`, moved from `sa-rw`). The ported RenderWare
+(`sa-rwcore`) renders the world through the seam.

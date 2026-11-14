@@ -12,7 +12,7 @@ TAG    ?= local
 LANES  ?= 1,2,3
 
 .DEFAULT_GOAL := help
-.PHONY: help build build-samp run run-world run-samp web web-samp serve check test clippy verify frontier dupes bindings queue catalog progress
+.PHONY: help build build-samp run run-world run-samp web web-samp serve check test clippy verify frontier dupes structure bindings queue catalog progress
 
 help: ## List the targets
 	@awk 'BEGIN {FS = ":.*## "} /^[a-z0-9-]+:.*## / {printf "  \033[1m%-12s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -41,7 +41,7 @@ web-samp: ## Browser build with the SA:MP client
 serve: ## Serve the browser build on localhost:8642 (GAME=/path/to/gta-sa)
 	tools/web/serve.sh --game $(GAME)
 
-check: ## The writer gate: clippy (host, i686, wasm32), builds, hook tests, L1, queue, bindings, state.csv
+check: ## The writer gate: clippy (host, i686, wasm32), builds, hook tests, L1, queue, bindings, state.csv, structure
 	tools/verify/writer-gate.sh
 
 test: ## Fast tests: hook registration checks, core and SA:MP crates
@@ -61,6 +61,12 @@ frontier: ## Functions that ported code calls but that are not ported yet
 
 dupes: ## Functions defined in more than one crate (names, identical and renamed bodies)
 	python3 -I tools/verify/dupes.py --bodies --renamed --summary
+
+structure: ## The ADR-003 checks alone: bindings, copies across crates, platform cfgs, crate layers
+	python3 -I tools/gen/bindings.py --check
+	python3 -I tools/verify/dupes.py --check
+	python3 -I tools/verify/cfg_check.py
+	python3 -I tools/verify/crate_layers.py
 
 bindings: ## Regenerate the orig! binding modules from catalog/bindings.csv (--check: BINDINGS_ARGS=--check)
 	python3 -I tools/gen/bindings.py $(BINDINGS_ARGS)

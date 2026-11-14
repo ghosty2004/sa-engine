@@ -2,7 +2,7 @@
 """Crate dependency order (ADR-003 §3.4): every crate under crates/ depends only on crates of a lower layer
 (`tools/lib/layers.py`), and every crate has a layer.
 
-Usage: python3 -I tools/verify/layers.py      (exit 1 on a violation; the writer gate's `layers` step)
+Usage: python3 -I tools/verify/crate_layers.py      (exit 1 on a violation; the writer gate's `layers` step)
 """
 import os
 import re
