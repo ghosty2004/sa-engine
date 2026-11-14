@@ -33,7 +33,17 @@ the same x87 rounding, the same calls. That is what L1/L2/L3 verify. So:
 - no refactoring of port bodies for style (extracting methods, reordering, "cleaner" control flow);
 - no OOP hierarchies or ECS over the game's classes: the vtables are the original ones in `.rdata`.
 
-The idiomatic rewrite of the game logic belongs to the clean build flavour (STD-3), after everything is verified.
+The idiomatic rewrite of the game logic, if ever, comes after everything is verified.
+
+### 2.1 Build flavours and memory (decision 2026-11-14)
+
+- **compat (32-bit x86):** a real 32-bit process with the game's memory at the original addresses; it keeps
+  binary compatibility with existing mods and the original samp.dll (MOD-1).
+- **portable (x86_64, ARM, wasm32): pointer compression.** All game memory lives in one reserved 4 GiB arena;
+  game pointers stay 32-bit offsets into it (the original addresses become offsets, e.g. `base + 0xB7CD98`), so
+  every layout, offset and port body is unchanged and the corpus replays with the same hashes. Only the memory
+  access layer (`sa-core::mem`: `GPtr`, `globals!`, the `field` accessors) adds the arena base. wasm32 already
+  works this way (its linear memory is the arena). Details and the remaining work: ROADMAP STD-3.
 
 ## 3. Patterns
 
