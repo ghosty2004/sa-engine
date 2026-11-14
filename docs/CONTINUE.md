@@ -1,4 +1,14 @@
-# Where to continue (state at 2026-11-12 ~15:00)
+# Where to continue (state at 2026-11-14)
+
+**Newest tree = branch `worktree-agent-ab80f5d4fe8147e79` (INTRO-2, docs/verify/integration-intro2.md): master
+`e52b9fcf` + AUDIO-STREAM + INTRO-1 + SCRIPT-5 + the intro ports up to the BMX ride; master fast-forwards to it.**
+New Game now runs the intro natively (no `--start-in-world`, no `SA_GAME_SCRIPT_SKIP`, no stubs) through the airport
+cutscene, the police-car ride and the drop-off in Jefferson ("Get on the bike."), 0 blocked to frame 6000; with keys
+CJ rides the BMX into East Los Santos until the bike hits a ped (`CPed::KillPedWithCar` 0x5F0360, next blocker).
+`--fixed-step` runs are deterministic again (the audio threads run cooperatively natively). Queue: 2395 unverified
+hooks in 374 batches.
+
+Previous state (2026-11-12 ~15:00):
 
 **Integrated tree = branch `worktree-agent-a623a7f9d5dd59528` (INTEGRATE-10, docs/verify/integration-10.md), verified
 IDENTICAL on all 13 recordings; master fast-forwards to it.** It is master `d60bbee9` (INTEGRATE-9) plus SAMP-FX:
@@ -45,16 +55,19 @@ Added after 11:45:
 |---|---|---|
 | ab013435f0f3841aa (SAMP-FX) **in INTEGRATE-10** | e6e0528e | on WEB-3 421ba072: SA:MP files served to the browser (serve.py --samp-dir), skin change / class skins, animations, 17 frontend sounds, hands up, give-weapon + HUD icon, HUD clock toggle, samp's main.scm default (no "Fat +" box; includes HELI-CONE c47670e6 and WRITER-SAMP's search lights). Serves 127.0.0.1:8644 with open.mp 7813 + proxy 7781. The newest SA:MP tree. |
 | a6df07424cbb59315 (HELI-CONE) **in INTEGRATE-10** | c47670e6 | CHeli::SearchLightCone 0x6C58E0 (in SAMP-FX's tree) |
-| acc62cadcdbd3be53 (AUDIO-STREAM) | 22e226f8 | CAEDataStream + lewton vorbisfile replacement, GetStreamID, 16-tap sinc mixer, native WAV tap; streams decode but the game holds the stream buffer at -10000 (open); web streams off by default (hang) |
-| a43f6b653f2e96d67 (SCRIPT-5) | 17a4881f | 31 callees of the first missions' opcodes (LOCATE helpers, CleanUpThisPed, AddPassenger …); per-mission remaining list in its hand-back (05EB StartPlaybackRecordedCar, 070A, 0637, 0723, 07F5 …) |
-| newgame-1 (NEWGAME) | 5752d60e | New Game from the pause menu (CMenuSystem::Initialise native, CTaskComplexWaitForPed); its CAEDataStream port duplicates AUDIO-STREAM's — keep AUDIO-STREAM's |
-| a2c16c35b48eab431 (INTRO-1) | a87cf585 | New Game runs the real intro cutscene natively (no --start-in-world, no SCRIPT_SKIP); stops at the police-car ride: StartPlaybackRecordedCar 0x45A980, CleanUpThisPed (SCRIPT-5 has it), CTaskComplexDriveToPoint::IsTargetBlocked 0x6452C0 |
+| acc62cadcdbd3be53 (AUDIO-STREAM) **in INTRO-2** | 22e226f8 | CAEDataStream + lewton vorbisfile replacement, GetStreamID, 16-tap sinc mixer, native WAV tap; streams decode but the game holds the stream buffer at -10000 (open); web streams off by default (hang) |
+| a43f6b653f2e96d67 (SCRIPT-5) **in INTRO-2** | 17a4881f | 31 callees of the first missions' opcodes (LOCATE helpers, CleanUpThisPed, AddPassenger …); per-mission remaining list in its hand-back (05EB StartPlaybackRecordedCar, 070A, 0637, 0723, 07F5 …) |
+| newgame-1 (NEWGAME) (not in INTRO-2) | 5752d60e | New Game from the pause menu (CMenuSystem::Initialise native, CTaskComplexWaitForPed); its CAEDataStream port duplicates AUDIO-STREAM's — keep AUDIO-STREAM's |
+| a2c16c35b48eab431 (INTRO-1) **in INTRO-2** | a87cf585 | New Game runs the real intro cutscene natively (no --start-in-world, no SCRIPT_SKIP); stops at the police-car ride: StartPlaybackRecordedCar 0x45A980, CleanUpThisPed (SCRIPT-5 has it), CTaskComplexDriveToPoint::IsTargetBlocked 0x6452C0 |
 | ac8a20a070c956b08 (INTEGRATE-8) **in INTEGRATE-9** | f94f1ee3 | WEB-3's whole tree on b239e888; combined with master in INTEGRATE-9 |
 
 Next steps, in order:
-1. Fast-forward master to INTEGRATE-10. Then integrate, on top of it: INTRO-1, SCRIPT-5, AUDIO-STREAM, NEWGAME
-   (prefer AUDIO-STREAM's CAEDataStream), WRITER-WORLD-2, WRITER-SAMP-2 (FireInstantHit needs detwin to skip its
-   scrub); verify-all 13/13; record promotions.
+1. Fast-forward master to INTRO-2 (`worktree-agent-ab80f5d4fe8147e79`). Then integrate NEWGAME (without its
+   CAEDataStream copy), WRITER-WORLD-2, WRITER-SAMP-2 (FireInstantHit needs detwin to skip its scrub; it also ports
+   0x6E91D0, which INTRO-2 has: keep one); verify-all 13/13; record promotions.
+1b. Intro: port `CPed::KillPedWithCar` 0x5F0360, script the BMX ride east to Grove Street (follow the CJ icon), then
+   the arrival cutscene and free roam with the Big Smoke marker (integration-intro2.md §2 / §4; the run script and
+   key timings are there).
 2. SA:MP: adapter steps 5b–12 in `samp-rs/`, sa-samp write side (non-frontend sounds through
    ProcessMissionAudioEvent, money, trains, proofs, bones for attached objects), unapplied RPCs (e.g. 60), audio streams (CAEDataStream 0x4DC620 +
    a Rust Vorbis decoder), the ~200 SA:MP-executed functions still unported (docs/samp/native-unported.csv),
