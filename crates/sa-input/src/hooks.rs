@@ -10,7 +10,7 @@ use crate::statics;
 
 /// Every module's registrations, in this order (PORT-ANIM-INPUT, INPUT).
 pub const MODULES: &[&[HookReg]] =
-    &[pad::HOOKS, ccm::HOOKS, statics::HOOKS, crate::generated::HOOKS, crate::pad_mouse_steer::HOOKS];
+    &[pad::HOOKS, ccm::HOOKS, statics::HOOKS, crate::generated::HOOKS, crate::pad_mouse_steer::HOOKS, crate::key_char::HOOKS];
 
 /// Every `#[native]` registration of this crate.
 pub const NATIVES: &[sa_core::abi::NativeReg] = ccm::NATIVES;
