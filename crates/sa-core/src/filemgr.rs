@@ -64,7 +64,8 @@ orig! {
     pub fn rwfseek(f: GPtr<u8>, offset: i32, whence: i32) -> i32 = cdecl table 0xC97B24 0xE4 => unported;
 }
 
-fn strlen(s: GPtr<u8>) -> i32 {
+/// `strlen(s)`.
+pub fn strlen(s: GPtr<u8>) -> i32 {
     let mut n = 0;
     while s.wrapping_index(n).read() != 0 {
         n += 1;

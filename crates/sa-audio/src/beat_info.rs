@@ -12,6 +12,8 @@
 //! `tTrackInfo` (0x1F84 bytes): 1000 `{time, key}` beats at +0, read from the stream file's head.
 
 use sa_core::abi::HookReg;
+use sa_core::filemgr::{strcat, strcpy, strlen};
+use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
 use crate::port4_hw::{r8, r32, w32};
@@ -132,28 +134,9 @@ pub fn hw_get_beat_info(this: u32, out: u32) {
     operator_delete(beats);
 }
 
-fn strlen(mut p: u32) -> u32 {
-    let start = p;
-    while r8(p) != 0 {
-        p += 1;
-    }
-    p - start
-}
-
-fn strcpy(mut d: u32, mut s: u32) {
-    loop {
-        let c = r8(s);
-        crate::port4_hw::w8(d, c);
-        if c == 0 {
-            return;
-        }
-        d += 1;
-        s += 1;
-    }
-}
-
-fn strcat(d: u32, s: u32) {
-    strcpy(d + strlen(d), s);
+/// A C string at `a` as `sa_core::filemgr`'s string helpers take it.
+fn cstr(a: u32) -> GPtr<u8> {
+    GPtr::from_addr(a as usize)
 }
 
 /// `CAEMP3TrackLoader::GetTrackInfo(uint32)` (0x4E0A70): the track's beat table (a new `tTrackInfo`, the
@@ -174,20 +157,20 @@ pub fn track_loader_get_track_info_port(this: u32, track: u32) -> u32 {
     let dvd = r8(this + 0x14) != 0;
     let name = r32(this + 0x10) + 16 * pack;
     let length = if dvd {
-        strlen(name) + strlen(r32(this + 0x18)) + 0x15
+        (strlen(cstr(name)) + strlen(cstr(r32(this + 0x18))) + 0x15) as u32
     } else {
-        strlen(name) + 0x15
+        (strlen(cstr(name)) + 0x15) as u32
     };
     let path = operator_new(length);
     if dvd {
-        strcpy(path, r32(this + 0x18));
-        strcat(path, STREAMS_DIR);
+        strcpy(cstr(path), cstr(r32(this + 0x18)));
+        strcat(cstr(path), cstr(STREAMS_DIR));
     } else {
-        strcpy(path, STREAMS_DIR);
+        strcpy(cstr(path), cstr(STREAMS_DIR));
     }
     // the original re-reads the pack id from the lookup here
     let name = r32(this + 0x10) + 16 * u32::from(r8(r32(this + 0xC) + 12 * track));
-    strcat(path, name);
+    strcat(cstr(path), cstr(name));
     let info = operator_new(TRACK_INFO_SIZE);
     let mem = operator_new(0x28);
     let stream = if mem != 0 {
