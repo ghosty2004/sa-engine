@@ -1311,3 +1311,8 @@
   `<<` → class 2. Not done: browser run, D3D call-stream diff on the original exe.
 - Lines: sa-samp-ui 4,894 → 0; samp-ui 6,066 → 6,344; samp-client ui 8,645 → 9,329; sa-samp overlay 847 → 1,876;
   sa-samp-api ui 373 → 350; sa-game samp_net / demo / scene 1,897 → 1,638. Total 22,722 → 19,537 (incl. new tests).
+
+## 2026-11-14 — SAMP-UI-DEDUP on master (main session)
+- Fast-forwarded master to 7e2da8b9: one SA:MP UI, samp-rs's own, drawn through `sa_samp_api::ui::UiBackend` (API v5): samp-client's pass (`ui::render`, `ui::session`, `ui::host`) generic over the trait, its D3D9/DXUT code the original-exe backend, `sa-samp`'s overlay the engine backend; shared geometry moved into samp-ui (dxut, classpanel, scoreboard/deathwindow layout); `crates/sa-samp-ui` deleted (22,722 → 19,537 lines incl. new tests). Behaviour differences resolved by samp-rs/spec, listed in overlay.md section 10.4.
+- Main session: the browser build panicked at start-up (`std::time::SystemTime` in the UI core; wasm32 has no std clock) → web_time; GETTING-STARTED and the Makefile `test` target updated. Checks: samp-rs workspace tests green, sa-samp 30, sa-samp-api; browser (headless Brave, GPU) joins the local open.mp server, class-panel Spawn click → spawned, 0 blocked.
+- Not re-measured: the D3D9 call stream on the original exe (builds and clippy clean).
