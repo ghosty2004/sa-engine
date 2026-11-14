@@ -40,6 +40,10 @@ orig! {
     fn enter_car_create_first_sub_task(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x643A60 => unported;
     /// `CTaskComplexEnterCar::CreateSubTask(int32, CPed*)` (0x63E040, `ret 8`)
     fn enter_car_create_sub_task(t: GPtr<u8>, ty: u32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x63E040 => unported;
+    /// `CPed::GetWeaponSkill()` (0x5E6580)
+    fn ped_get_weapon_skill(p: GPtr<u8>) -> u32 = thiscall 0x5E6580 => unported;
+    /// `CWeaponInfo::GetWeaponInfo(eWeaponType, eWeaponSkill)` (0x743C60, cdecl)
+    fn weapon_info_get(ty: u32, skill: u32) -> GPtr<u8> = cdecl 0x743C60 => unported;
     /// `CTaskComplex::CTaskComplex()` (0x61A3B0)
     fn task_complex_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A3B0 => unported;
     /// `CTheScripts::IsPlayerOnAMission()` (0x464D50)
@@ -228,8 +232,49 @@ pub fn scream_in_car_then_leave_create_sub_task(this: GPtr<u8>, ty: u32, ped: GP
     }
 }
 
+/// `CTaskComplexDestroyCarArmed::CalculateSearchPositionAndRanges(CPed*)` (0x628C80, `ret 4`): +0x14 the ped's position,
+/// +0x20 the vehicle's (+0x10), +0x2C their difference (vehicle − ped, floats), +0x48 its length (x² + y² + z² in x87
+/// order, rounded once); `info = CWeaponInfo::GetWeaponInfo(current weapon type, GetWeaponSkill())`, `r = range (+8) *
+/// [0x858B8C]` stored in +0x38, +0x40 = `max(r (x87) * [0x858C20], [0x858C98])` (`fcomp`, the constant wins only
+/// when strictly above), then +0x38 = `+0x38 * [0x858F14]`.
+#[hook(addr = 0x628C80, conv = thiscall, name = "CTaskComplexDestroyCarArmed::CalculateSearchPositionAndRanges",
+       expect = "83 EC 0C 56 8B F1", unverified = "carjack-1", route = "L2", hazards = "heap-writes", recs = "carjack")]
+pub fn destroy_car_armed_calculate_search_position_and_ranges(this: GPtr<u8>, ped: GPtr<u8>) {
+    let pos = |e: GPtr<u8>| {
+        let m = rd::<GPtr<u8>>(e, 0x14);
+        if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
+    };
+    let pp = pos(ped);
+    for k in 0..3isize {
+        wr::<u32>(this, 0x14 + 4 * k, rd::<u32>(pp, 4 * k));
+    }
+    let vp = pos(rd::<GPtr<u8>>(this, 0x10));
+    for k in 0..3isize {
+        wr::<u32>(this, 0x20 + 4 * k, rd::<u32>(vp, 4 * k));
+    }
+    for k in 0..3isize {
+        let d = f32_of(x(rd::<f32>(this, 0x20 + 4 * k)).fsub_m(rd::<f32>(this, 0x14 + 4 * k)));
+        wr::<f32>(this, 0x2C + 4 * k, d);
+    }
+    let (dx, dy, dz) = (rd::<f32>(this, 0x2C), rd::<f32>(this, 0x30), rd::<f32>(this, 0x34));
+    let len = x(dx).fmul_m(dx).fadd(x(dy).fmul_m(dy)).fadd(x(dz).fmul_m(dz)).fsqrt();
+    wr::<f32>(this, 0x48, f32_of(len));
+    let slot = isize::from(rd::<i8>(ped, 0x718));
+    let ty = rd::<u32>(ped, 0x5A0 + slot * 0x1C);
+    let skill = ped_get_weapon_skill(ped);
+    let info = weapon_info_get(ty, skill);
+    let r = x(rd::<f32>(info, 8)).fmul_m(g::<f32>(0x858B8C).read());
+    wr::<f32>(this, 0x38, f32_of(r));
+    let v = r.fmul_m(g::<f32>(0x858C20).read());
+    let c = x(g::<f32>(0x858C98).read());
+    let v = if c.fcom(v) == Cmp::Greater { c } else { v };
+    wr::<f32>(this, 0x40, f32_of(v));
+    wr::<f32>(this, 0x38, f32_of(x(rd::<f32>(this, 0x38)).fmul_m(g::<f32>(0x858F14).read())));
+}
+
 /// Every hook of this module.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_DESTROY_CAR_ARMED_CALCULATE_SEARCH_POSITION_AND_RANGES,
     HOOK_DESTROY_CAR_CONTROL_SUB_TASK,
     HOOK_DRAG_PED_FROM_CAR_CREATE_FIRST_SUB_TASK,
     HOOK_DESTROY_CAR_ARMED_CTOR,
