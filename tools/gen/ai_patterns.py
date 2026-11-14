@@ -152,8 +152,18 @@ def already_ported():
             for m in re.finditer(r'#\[(?:sa_core::)?(?:hook|native)\(\s*addr\s*=\s*0x([0-9A-Fa-f]+)', s):
                 done.add(int(m.group(1), 16))
             if os.sep + 'sa-ai' + os.sep in dirpath + os.sep:
-                for m in re.finditer(r'^/// `[^`]*` \(0x([0-9A-Fa-f]+)', s, re.M):
-                    done.add(int(m.group(1), 16))
+                # an unhookable port: a doc comment naming the function, then (after more doc / attribute lines)
+                # its `fn`; a doc comment on a `const` holding a callback address is not a port
+                lines = s.split('\n')
+                for i, line in enumerate(lines):
+                    m = re.match(r'/// `[^`]*` \(0x([0-9A-Fa-f]+)', line)
+                    if not m:
+                        continue
+                    j = i + 1
+                    while j < len(lines) and lines[j].lstrip().startswith(('///', '#[')):
+                        j += 1
+                    if j < len(lines) and re.match(r'\s*(pub(\([a-z]+\))? )?(unsafe )?(extern "[^"]+" )?fn ', lines[j]):
+                        done.add(int(m.group(1), 16))
     return done
 
 
