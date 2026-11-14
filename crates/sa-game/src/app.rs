@@ -205,7 +205,10 @@ fn install_samp(o: &SampOptions) -> Result<Option<crate::samp::Target>, String> 
         None => None,
     };
     if o.ui_demo {
+        #[cfg(feature = "samp")]
         crate::samp_ui_demo::install(&o.game)?;
+        #[cfg(not(feature = "samp"))]
+        return Err("--samp-ui-demo draws samp-rs's UI: build with --features samp".into());
     }
     Ok(target)
 }
@@ -486,6 +489,7 @@ impl Session {
             self.stopped = true;
             return false;
         }
+        #[cfg(feature = "samp")]
         crate::samp_ui_demo::take_input(&mut input);
         crate::samp_input::filter(&mut input);
         let n = self.n;
@@ -606,6 +610,7 @@ impl Session {
         if let Some(t) = &self.samp {
             crate::samp::report(&mut md, t);
         }
+        #[cfg(feature = "samp")]
         if self.samp_ui_demo {
             crate::samp_ui_demo::report(&mut md);
         }

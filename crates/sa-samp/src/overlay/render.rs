@@ -10,10 +10,11 @@
 use sa_core::mem::GPtr;
 use sa_core::orig;
 use sa_samp_api::Vec3;
-use sa_samp_api::hud::{FontStyle, TextAlign};
-use sa_samp_ui::font::FontAtlas;
-use sa_samp_ui::textdraw::SpriteSource;
-use sa_samp_ui::{Cmd, DrawList};
+use sa_samp_api::ui::TextdrawFont;
+
+use super::draw::{Cmd, DrawList};
+use super::font::FontAtlas;
+use super::skin;
 
 orig! {
     /// `CSprite2d::Draw(const CRect&, const CRGBA&)` (0x728350, thiscall)
@@ -89,8 +90,6 @@ orig! {
     fn font_print_string(x: f32, y: f32, text: GPtr<u8>) = cdecl 0x71A700 => unported;
     /// `CFont::DrawFonts()` (0x71A210)
     fn font_draw_fonts() = cdecl 0x71A210 => unported;
-    /// `CMessages::AddBigMessage(const GxtChar*, uint32 time, uint16 style)` (0x69F2B0)
-    fn add_big_message(text: GPtr<u8>, time: u32, style: u32) = cdecl 0x69F2B0 => unported;
 }
 
 /// RenderWare render states.
@@ -173,7 +172,7 @@ pub fn upload_atlas(atlas: &FontAtlas) -> Option<u32> {
 }
 
 /// Creates a `w × h` texture raster from RGBA8 pixels; with `mipmaps` also its full mip chain, filled with
-/// [`sa_samp_ui::skin::mip_chain`] (D3DX's box filter). `None` when RW refuses the raster.
+/// [`skin::mip_chain`] (D3DX's box filter). `None` when RW refuses the raster.
 pub fn upload_rgba(w: u32, h: u32, rgba: &[u8], mipmaps: bool) -> Option<u32> {
     if rgba.len() < (w * h * 4) as usize {
         return None;
@@ -184,7 +183,7 @@ pub fn upload_rgba(w: u32, h: u32, rgba: &[u8], mipmaps: bool) -> Option<u32> {
         return None;
     }
     let levels = if mipmaps {
-        sa_samp_ui::skin::mip_chain(w, h, rgba)
+        skin::mip_chain(w, h, rgba)
     } else {
         vec![(w, h, rgba[..(w * h * 4) as usize].to_vec())]
     };
@@ -303,49 +302,38 @@ fn crgba(argb: u32) -> u32 {
     r | g << 8 | b << 16 | a << 24
 }
 
-fn rgba_of(c: sa_samp_api::Rgba) -> u32 {
-    u32::from(c.r) | u32::from(c.g) << 8 | u32::from(c.b) << 16 | u32::from(c.a) << 24
-}
-
-/// Game text for `CFont`: Latin-1 bytes, NUL-terminated; characters outside become `?`.
-pub fn gxt_bytes(text: &str) -> Vec<u8> {
-    let mut v: Vec<u8> = text
-        .chars()
-        .map(|c| u8::try_from(u32::from(c)).unwrap_or(b'?'))
-        .collect();
+/// A NUL-terminated copy.
+fn cstr(s: &[u8]) -> Vec<u8> {
+    let mut v = s.to_vec();
     v.push(0);
     v
 }
 
-/// The `CFont` state of a textdraw, in samp's setter order, then `PrintString` and `DrawFonts`.
-fn game_font(style: &FontStyle, x: f32, y: f32, text: &str) {
-    font_set_scale(style.scale.x, style.scale.y);
-    font_set_color(rgba_of(style.colour));
+/// The `CFont` calls of a text textdraw in samp's setter order, then `PrintString` and `SetEdge(0)`.
+pub fn game_font(f: &TextdrawFont, text: &[u8]) {
+    font_set_scale(f.scale.0, f.scale.1);
+    font_set_color(f.colour);
     font_set_justify(0);
-    font_set_orientation(match style.align {
-        TextAlign::Centre => 0,
-        TextAlign::Left => 1,
-        TextAlign::Right => 2,
-    });
-    font_set_wrapx(style.wrap_x);
-    font_set_centre_size(style.centre_size);
-    font_set_background(u32::from(style.background), 0);
-    font_set_background_color(rgba_of(style.background_colour));
-    font_set_proportional(u32::from(style.proportional));
-    font_set_drop_color(rgba_of(style.drop_colour));
-    if style.edge != 0 {
-        font_set_edge(style.edge as u8 as u32);
+    font_set_orientation(u32::from(f.orientation));
+    font_set_wrapx(f.wrap_x);
+    font_set_centre_size(f.centre_size);
+    font_set_background(u32::from(f.background), 0);
+    font_set_background_color(f.background_colour);
+    font_set_proportional(u32::from(f.proportional));
+    font_set_drop_color(f.drop_colour);
+    if f.outline != 0 {
+        font_set_edge(u32::from(f.outline));
     } else {
-        font_set_drop_shadow_position(style.shadow as u8 as u32);
+        font_set_drop_shadow_position(u32::from(f.shadow));
     }
-    font_set_font_style(u32::from(style.font));
-    let mut buf = gxt_bytes(text);
-    font_print_string(x, y, GPtr::from_raw(buf.as_mut_ptr()));
+    font_set_font_style(u32::from(f.font));
+    let mut buf = cstr(text);
+    font_print_string(f.x, f.y, GPtr::from_raw(buf.as_mut_ptr()));
     font_set_edge(0);
 }
 
 /// Draws `list`. `raster` is the uploaded atlas (0 = none: UI text then goes through `CFont` font 1);
-/// `skin` the skin texture raster ([`sa_samp_ui::skin`]; 0 = none, the UI then draws flat controls).
+/// `skin` the skin texture raster ([`skin`]; 0 = none: the backend drew flat controls).
 ///
 /// `flush_fonts`: draw `CFont`'s buffer after each game-font text (the `Present` pass, after `Game::Idle`'s
 /// own `DrawFonts`); without it (the `After2d` pass) the textdraws' text stays in the buffer with the HUD's,
@@ -355,7 +343,6 @@ pub fn draw(
     atlas: &FontAtlas,
     raster: u32,
     skin: u32,
-    sprites: &mut Sprites,
     flush_fonts: bool,
 ) {
     let z = GPtr::<f32>::from_addr(NEAR_SCREEN_Z).read();
@@ -384,10 +371,7 @@ pub fn draw(
         z,
         rhw,
     };
-    let (sw, sh) = (
-        sa_samp_ui::skin::TEXTURE_W as f32,
-        sa_samp_ui::skin::TEXTURE_H as f32,
-    );
+    let (sw, sh) = (skin::TEXTURE_W as f32, skin::TEXTURE_H as f32);
     let (aw, ah) = (atlas.width as f32, atlas.height as f32);
     for cmd in &list.cmds {
         match cmd {
@@ -411,7 +395,7 @@ pub fn draw(
             Cmd::Text {
                 x,
                 y,
-                font,
+                slot,
                 colour,
                 text,
                 outline,
@@ -420,32 +404,28 @@ pub fn draw(
                 skins.flush();
                 if raster == 0 {
                     glyphs.flush();
-                    let h = atlas.heights()[font.index()] as f32;
-                    let style = FontStyle {
-                        scale: sa_samp_api::Point2 {
-                            x: h / 36.0,
-                            y: h / 18.0,
-                        },
-                        colour: sa_samp_api::Rgba::from_argb_u32(*colour),
-                        font: 1,
+                    let h = atlas.heights()[*slot] as f32;
+                    let f = TextdrawFont {
+                        scale: (h / 36.0, h / 18.0),
+                        colour: crgba(*colour),
+                        orientation: 1,
                         wrap_x: 4000.0,
                         centre_size: 4000.0,
-                        drop_colour: sa_samp_api::Rgba::default(),
-                        shadow: 0,
-                        edge: *outline as i8,
+                        outline: *outline,
+                        font: 1,
                         proportional: true,
-                        background: false,
-                        background_colour: sa_samp_api::Rgba::default(),
-                        align: TextAlign::Left,
+                        x: *x,
+                        y: *y,
+                        ..TextdrawFont::default()
                     };
-                    game_font(&style, *x, *y, text);
+                    game_font(&f, text);
                     font_draw_fonts();
                     continue;
                 }
                 let mut pen = x.round();
                 let top = y.round();
-                for ch in text.chars() {
-                    let g = atlas.glyph_variant(*font, *outline, ch);
+                for &b in text {
+                    let g = atlas.glyph(*slot, *outline, b);
                     if g.rect[2] > 0 {
                         let gx = pen + g.offset.0.round() - 0.5;
                         let gy = top + g.offset.1.round() - 0.5;
@@ -471,26 +451,26 @@ pub fn draw(
                     *colour,
                 );
             }
-            Cmd::GameFont { style, x, y, text } => {
+            Cmd::GameFont { font, text } => {
                 glyphs.flush();
                 solid.flush();
                 skins.flush();
-                game_font(style, *x, *y, text);
+                game_font(font, text);
                 if flush_fonts {
                     font_draw_fonts();
                 }
             }
-            Cmd::Sprite { source, rect, colour } => {
+            Cmd::Sprite { tex, rect, colour } => {
                 glyphs.flush();
                 solid.flush();
                 skins.flush();
-                let tex = sprites.get(source);
+                let tex = *tex;
                 if tex != 0 {
                     // samp: bilinear filter, then `CSprite2d::Draw(CRect{l, b, r, t}, colour)`.
                     rw_render_state_set(rs::TEXTUREFILTER, 2);
                     let mut sprite = tex;
                     let mut r = [rect[0], rect[3], rect[2], rect[1]];
-                    let mut c = crgba(*colour);
+                    let mut c = *colour;
                     sprite2d_draw(
                         GPtr::from_raw(&mut sprite).cast(),
                         GPtr::from_raw(r.as_mut_ptr().cast::<u8>()),
@@ -505,43 +485,11 @@ pub fn draw(
     skins.flush();
 }
 
-/// Sprite textdraw textures (`RwTexture*` by `txd:name`; 0 = not available), loaded on first use.
-#[derive(Default)]
-pub struct Sprites {
-    loaded: std::collections::HashMap<(String, String), u32>,
-}
-
-impl Sprites {
-    /// The texture of `source`, loading its TXD like samp (find the slot by name, else add one and load the
-    /// file when it exists), then `CSprite2d::SetTexture` with the slot current.
-    pub fn get(&mut self, source: &SpriteSource) -> u32 {
-        let key = (source.slot.clone(), source.texture.clone());
-        if let Some(&t) = self.loaded.get(&key) {
-            return t;
-        }
-        let t = load_sprite(source);
-        self.loaded.insert(key, t);
-        t
-    }
-
-    /// Textures loaded (non-zero).
-    pub fn count(&self) -> usize {
-        self.loaded.values().filter(|&&t| t != 0).count()
-    }
-}
-
-/// A NUL-terminated copy.
-fn cstr(s: &str) -> Vec<u8> {
-    let mut v = s.as_bytes().to_vec();
-    v.push(0);
-    v
-}
-
 /// Whether the game's file layer can open `path` (`CFileMgr::OpenFile` / `CloseFile`): `LoadTxd` retries
 /// forever on a missing file, as the original does.
-fn file_exists(path: &str) -> bool {
+fn file_exists(path: &[u8]) -> bool {
     let mut p = cstr(path);
-    let mut mode = cstr("rb");
+    let mut mode = cstr(b"rb");
     let f = file_open(GPtr::from_raw(p.as_mut_ptr()), GPtr::from_raw(mode.as_mut_ptr()));
     if f.is_null() {
         return false;
@@ -550,57 +498,31 @@ fn file_exists(path: &str) -> bool {
     true
 }
 
-fn load_sprite(source: &SpriteSource) -> u32 {
-    let mut slot_name = cstr(&source.slot);
+/// The texture of a sprite textdraw's `txd:name` (0 when unavailable), loaded as samp does
+/// (`samp_ui::textdraw::sprite_source`): the slot by name, else a new slot (added also when the file is missing)
+/// with the TXD loaded and referenced, then `CSprite2d::SetTexture` with the slot current. Mirrors samp.dll
+/// 0x100B2D10 / 0x100B2BD0.
+pub fn load_sprite(text: &[u8]) -> u32 {
+    let Some(src) = samp_ui::textdraw::sprite_source(text) else { return 0 };
+    let mut slot_name = cstr(&src.slot);
     let mut slot = txd_find_slot(GPtr::from_raw(slot_name.as_mut_ptr()));
     if slot == -1 {
-        let Some(file) = &source.file else { return 0 };
-        if !file_exists(file) {
+        let Some(path) = src.path() else { return 0 };
+        slot = txd_add_slot(GPtr::from_raw(slot_name.as_mut_ptr()));
+        if !file_exists(&path) {
             return 0;
         }
-        slot = txd_add_slot(GPtr::from_raw(slot_name.as_mut_ptr()));
-        let mut f = cstr(file);
+        let mut f = cstr(&path);
         txd_load(slot, GPtr::from_raw(f.as_mut_ptr()));
         txd_add_ref(slot);
     }
     let mut sprite: u32 = 0;
-    let mut name = cstr(&source.texture);
+    let mut name = cstr(&src.texture);
     txd_push_current();
     txd_set_current(slot);
-    sprite2d_set_texture(
-        GPtr::from_raw(&mut sprite).cast(),
-        GPtr::from_raw(name.as_mut_ptr()),
-    );
+    sprite2d_set_texture(GPtr::from_raw(&mut sprite).cast(), GPtr::from_raw(name.as_mut_ptr()));
     txd_pop_current();
     sprite
-}
-
-/// Big-message buffers: `AddBigMessage` keeps the pointer (samp copies into a static buffer per call).
-pub struct BigMessages {
-    /// Seven buffers, one per style; the vector is never resized, so the pointers stay valid.
-    bufs: Vec<[u8; 512]>,
-}
-
-impl Default for BigMessages {
-    fn default() -> Self {
-        Self {
-            bufs: vec![[0u8; 512]; 7],
-        }
-    }
-}
-
-impl BigMessages {
-    /// `CMessages::AddBigMessage(text, time, style)` with a buffer that lives as long as the overlay.
-    pub fn show(&mut self, text: &str, time_ms: u32, style: u8) {
-        let Some(buf) = self.bufs.get_mut(usize::from(style)) else {
-            return;
-        };
-        let b = gxt_bytes(text);
-        let n = b.len().min(511);
-        buf[..n].copy_from_slice(&b[..n]);
-        buf[n] = 0;
-        add_big_message(GPtr::from_raw(buf.as_mut_ptr()), time_ms, u32::from(style));
-    }
 }
 
 #[cfg(test)]
@@ -610,7 +532,7 @@ mod tests {
     #[test]
     fn colour_and_text_conversions() {
         assert_eq!(crgba(0x8011_2233), 0x8033_2211);
-        assert_eq!(gxt_bytes("Hé€"), vec![b'H', 0xE9, b'?', 0]);
+        assert_eq!(cstr(b"ab"), b"ab\0");
         assert_eq!(std::mem::size_of::<Vertex>(), 0x1C);
     }
 }

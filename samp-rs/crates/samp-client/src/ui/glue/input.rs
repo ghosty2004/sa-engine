@@ -101,11 +101,12 @@ fn clipboard_requests(st: &mut State) {
 /// (`crate::ui::session`); a panel click is left for the session tick.
 fn mouse_up(st: &mut State, x: i32, y: i32) -> bool {
     use samp_ui::classpanel::ClassButton;
+    use sa_samp_api::ui::UiBackend as _;
     let Some(r) = st.renderer.as_ref() else { return false };
     // SAFETY: plain Win32 query.
     let dbl = unsafe { windows_sys::Win32::UI::Input::KeyboardAndMouse::GetDoubleClickTime() };
     let now = u64::from(crate::ui::core::tick_ms());
-    let consumed = st.session.mouse_up(&mut st.core, r, x, y, now, dbl);
+    let consumed = st.session.mouse_up(&mut st.core, r.metrics().gui1_h, x, y, now, dbl);
     if let Some(c) = st.session.take_class_click() {
         let i = match c {
             ClassButton::Previous => 1,

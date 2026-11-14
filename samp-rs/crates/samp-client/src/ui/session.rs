@@ -53,7 +53,7 @@ pub struct UiSession {
     class_buttons: Option<[samp_ui::Rect; 3]>,
     /// The class-selection panel was made visible. samp's class-selection step shows it on the first frame without
     /// an open dialog and keeps it until the spawn.
-    pub class_panel_shown: bool,
+    class_panel_shown: bool,
     class_click: Option<ClassButton>,
     /// Last click on a dialog list row (row, time in ms; double-click detection).
     last_list_click: Option<(usize, u64)>,
@@ -67,14 +67,20 @@ impl UiSession {
         Self::default()
     }
 
-    /// Fonts were rebuilt: the dialog layout is measured again.
-    pub fn fonts_changed(&mut self) {
-        self.dialog_layout = None;
-    }
-
-    /// The dialog layout once per open, the list's page size, the chat input's first visible character (DXUT
-    /// `PlaceCaret` on caret moves) and the click rects of the input and the scoreboard.
-    pub fn update_layouts(&mut self, core: &mut UiCore, b: &dyn UiBackend) {
+    /// The fonts for samp's settings (`fontface`, `fontweight`, `/fontsize`; rebuilt when `/fontsize` asked or the
+    /// video mode changed, which drops the dialog layout), then the dialog layout once per open, the list's page
+    /// size, the chat input's first visible character (DXUT `PlaceCaret` on caret moves) and the click rects of
+    /// the input and the scoreboard.
+    pub fn update_layouts(&mut self, core: &mut UiCore, b: &mut dyn UiBackend) {
+        let s = &core.settings;
+        let face = s.font_face.clone().unwrap_or_else(|| samp_ui::fonts::DEFAULT_FACE.into()).into_bytes();
+        let weight = samp_ui::fonts::weight(s.font_weight);
+        let size = s.font_size;
+        let force = std::mem::take(&mut core.requests.rebuild_fonts);
+        if b.fonts(&face, weight, size, force) {
+            self.dialog_layout = None;
+        }
+        let b: &dyn UiBackend = b;
         let serial = core.dialog_serial;
         if let Some(d) = core.dialogs.current() {
             if self.dialog_layout.as_ref().is_none_or(|(s, _)| *s != serial) {
@@ -173,18 +179,31 @@ impl UiSession {
             || core.input.is_open()
     }
 
+    /// samp's class-selection step, every game frame: while class selection runs the panel becomes visible on the
+    /// first frame without an open dialog and stays visible when a dialog opens later; it goes with the class
+    /// selection (the spawn).
+    pub fn class_selection_frame(&mut self, core: &UiCore) {
+        if !core.class_selection {
+            self.class_panel_shown = false;
+            self.class_click = None;
+        } else if !core.dialogs.is_open() {
+            self.class_panel_shown = true;
+        }
+    }
+
     /// Takes the pending class-selection panel click (the class-selection tick).
     pub fn take_class_click(&mut self) -> Option<ClassButton> {
         self.class_click.take()
     }
 
     /// Left button released at `(x, y)` over a hovered textdraw, the scoreboard, the class-selection panel or a
-    /// dialog control (the GUI dialogs' `MsgProc`, the selection handler). `now_ms` is a millisecond clock,
-    /// `double_click_ms` the system double-click time. Returns whether the click was consumed.
+    /// dialog control (the GUI dialogs' `MsgProc`, the selection handler). `row_h` is the GUI font 1 line height
+    /// (list rows), `now_ms` a millisecond clock, `double_click_ms` the system double-click time. Returns whether
+    /// the click was consumed.
     pub fn mouse_up(
         &mut self,
         core: &mut UiCore,
-        b: &dyn UiBackend,
+        row_h: i32,
         x: i32,
         y: i32,
         now_ms: u64,
@@ -198,7 +217,7 @@ impl UiSession {
             return true;
         }
         if core.scoreboard.is_open() {
-            return self.scoreboard_click(core, b, x, y, now_ms, double_click_ms);
+            return self.scoreboard_click(core, row_h, x, y, now_ms, double_click_ms);
         }
         if let Some(rects) = &self.class_buttons
             && let Some(c) = classpanel::hit(rects, x, y)
@@ -245,7 +264,7 @@ impl UiSession {
     fn scoreboard_click(
         &mut self,
         core: &mut UiCore,
-        b: &dyn UiBackend,
+        row_h: i32,
         x: i32,
         y: i32,
         now_ms: u64,
@@ -255,7 +274,6 @@ impl UiSession {
         if !r.contains(x, y) {
             return false;
         }
-        let row_h = b.metrics().gui1_h;
         let list = samp_ui::Rect::new(r.left, r.top + 60, r.right, r.bottom);
         let sel = samp_ui::dialog::list_selection_rect(&list);
         let text = samp_ui::dialog::list_text_rect(&list);

@@ -116,11 +116,7 @@ fn frame_entry_inner(debug_mode: bool) {
     }
     // While a dialog is open the class-selection step does nothing; otherwise its first frame makes the panel
     // visible. It stays visible when a dialog opens later and goes away with the class selection.
-    if !st.core.class_selection {
-        st.session.class_panel_shown = false;
-    } else if !st.core.dialogs.is_open() {
-        st.session.class_panel_shown = true;
-    }
+    st.session.class_selection_frame(&st.core);
     menu_work(st);
     // Scoreboard: rows rebuilt on open and when the player count changes; RPC 155 on the opening frame, then
     // every 3000 ms (docs/re/subsystems/ui-rendering.md, "15.3 Behaviour").

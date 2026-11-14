@@ -115,15 +115,12 @@ fn present_pass() {
         pause_menu_map_click(st);
         return;
     }
-    let face = st.core.settings.font_face.clone().unwrap_or_else(|| samp_ui::fonts::DEFAULT_FACE.into()).into_bytes();
-    let weight = samp_ui::fonts::weight(st.core.settings.font_weight);
-    let fs = st.core.settings.font_size;
     run_cursor_requests(st);
     let input = gather(st);
     if st.renderer.is_none() {
         return;
     }
-    update_layouts(st, &face, weight, fs);
+    update_layouts(st);
     let cursor = render::cursor_pos();
     draw_frame(st, &input, cursor);
     after_frame(st, input.sb_open, cursor);
@@ -204,12 +201,8 @@ fn net_stats_text(st: &mut State) -> Vec<u8> {
 
 /// Font rebuild when asked or when the size changed, then the session's layouts (dialog, chat input, click
 /// rects).
-fn update_layouts(st: &mut State, face: &[u8], weight: u32, fs: i32) {
+fn update_layouts(st: &mut State) {
     let Some(r) = st.renderer.as_mut() else { return };
-    if std::mem::take(&mut st.core.requests.rebuild_fonts) || r.needs_rebuild(fs) {
-        r.rebuild_fonts(face, weight, fs);
-        st.session.fonts_changed();
-    }
     st.session.update_layouts(&mut st.core, r);
 }
 

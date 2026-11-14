@@ -9,7 +9,11 @@ publish.workspace = true
 [dependencies]
 sa-core = { path = "../sa-core" }
 sa-samp-api = { path = "../sa-samp-api" }
-sa-samp-ui = { path = "../sa-samp-ui" }
+# samp-rs's renderer-independent UI logic (the engine backend uses its geometry, colour codes and font sizes).
+samp-ui = { path = "../../samp-rs/crates/samp-ui" }
+# Rasterises the UI fonts into the glyph atlas (the committed Liberation Sans Bold, the user's Arial Bold,
+# gtaweap3.ttf, sampaux3.ttf): pure Rust, builds for i686 and wasm32.
+ab_glyph = "0.2"
 
 [lints.rust]
 missing_docs = "warn"

@@ -5,8 +5,9 @@
 //! `sa_samp_api` writes and sends on-foot and stats sync from `ped_snapshot`.
 //!
 //! This stands in for samp-rs's full client until its game logic is linkable here (migration step 10); remote
-//! players, vehicles, objects and the UI come with it. Everything runs on the game thread inside the frame
-//! callback; RakNet's update thread is samp-rs's own.
+//! players, vehicles and objects come with it. The UI is samp-rs's own ([`UiHost`]: `UiCore` fed with the RPCs,
+//! drawn through the engine backend). Everything runs on the game thread inside the frame callback; RakNet's
+//! update thread is samp-rs's own.
 
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -24,17 +25,20 @@ use samp_client::classsel::{self, ClassSelection};
 use samp_client::footsync::{self, FootSender, KeyContext, LocalSample, Rotation};
 use samp_client::lifecycle::{self, NetGame};
 use samp_client::netclient::{Event, NetClient, NetPacket};
+use samp_client::ui::host::UiHost;
+use samp_ui::classpanel::ClassButton;
+use samp_ui::text::NoExpansion;
 use samp_proto::auth::AuthTable;
 use samp_proto::raknet::Reliability;
-use samp_proto::rpcs::{Incoming, player, remote, ui, vehicle};
+use samp_proto::rpcs::{Incoming, player, vehicle};
 use samp_proto::sync::player::StatsSync;
 
 use sa_samp_api::camera::CameraCut;
 use sa_samp_api::hooks::{FramePhase, GameHooks};
+use sa_samp_api::input::{EventResult, WindowEvent};
 use sa_samp_api::peds::{AnimRequest, PedTask};
-use sa_samp_api::ui::{ChatKind, ChatMessage, ClassButton, DialogSpec, DialogStyle, UiEvent};
 use sa_samp_api::vehicles::VehicleSpawn;
-use sa_samp_api::{AreaCode, GameAdapter, ModelId, Rgba, Vec3, VehicleRef, WeaponType};
+use sa_samp_api::{AreaCode, GameAdapter, ModelId, Vec3, VehicleRef, WeaponType};
 
 use crate::samp::Target;
 
@@ -59,8 +63,6 @@ pub struct NetHooks {
     vehicles: HashMap<u16, VehicleRef>,
     last_car_sync: Option<Instant>,
     car_rotation: Option<samp_proto::types::Quat>,
-    /// Remote players' names (RPC 137), for player chat lines.
-    names: HashMap<u16, String>,
     /// samp's netgame state and connect timer (`Connecting to` 3 s after `Started`).
     netgame: NetGame,
     /// The local player uses the mobile phone (special action 11 until 0 / 13).
@@ -72,18 +74,12 @@ pub struct NetHooks {
     /// Synthetic Shift for headless runs (`SA_SAMP_AUTO_SPAWN=1`): the offscreen mode has no keyboard.
     auto_spawn: bool,
     netgame_created: bool,
-    /// A samp dialog is open (shown by RPC 61, until answered or hidden): class selection waits meanwhile.
-    dialog_open: bool,
-    /// The class-selection panel is visible (samp-rs `class_panel_shown`).
-    class_panel_shown: bool,
-    /// A class-panel click not yet taken by the class-selection tick (samp-rs `take_class_click`).
-    class_click: Option<ClassButton>,
+    /// Our player name (the netgame's).
+    name: String,
+    /// samp-rs's UI: chat, dialogs, textdraws, game text, scoreboard, class-selection panel.
+    ui: UiHost,
 }
 
-/// samp's debug chat colour (`Started`, `Connecting to`, `Connected. Joining the game...`, `Connected to`).
-const DEBUG_COLOUR: u32 = 0xA9C4_E4FF;
-/// samp's `Started` line (samp-rs `ui::core::msg::STARTED`).
-const STARTED: &str = "{FFFFFF}SA-MP {B9C9BF}0.3.7-R4 {FFFFFF}Started";
 /// `CKeyboardState` offsets of the keys class selection polls (NewKeyState 0xB73190): left, right, and the
 /// shift words (lshift, rshift, shift); samp asks for VK_SHIFT, which is either Shift key.
 const KEY_LEFT: u16 = 0x22A;
@@ -193,16 +189,14 @@ impl NetHooks {
             vehicles: HashMap::new(),
             last_car_sync: None,
             car_rotation: None,
-            names: HashMap::new(),
             netgame: NetGame::new(0),
             phone: false,
             class_sel: ClassSelection::new(now),
             server_text: (target.host.clone(), target.port),
             auto_spawn: crate::env::var("SA_SAMP_AUTO_SPAWN").is_ok_and(|v| v == "1"),
             netgame_created: false,
-            dialog_open: false,
-            class_panel_shown: false,
-            class_click: None,
+            name: target.name.clone(),
+            ui: UiHost::new(None),
         })
     }
 
@@ -223,11 +217,13 @@ impl NetHooks {
             // samp creates its netgame (and prints `Started`) once the game runs; the connect tick counts from here.
             self.netgame_created = true;
             self.netgame = NetGame::new(now_ms);
-            self.debug_line(game, STARTED);
+            let (host, port) = self.server_text.clone();
+            self.ui.core.on_netgame_start(&host, port, self.name.as_bytes());
+            self.note(format!("chat (debug): {}", samp_client::ui::core::msg::STARTED));
         }
         if self.netgame.connect_due(now_ms) {
             let line = lifecycle::msg::connecting(&self.server_text.0, self.server_text.1);
-            self.debug_line(game, &line);
+            self.debug_line(&line);
             match self.net.connect() {
                 Ok(()) => self.note(format!("{line} (connect tick)")),
                 Err(e) => self.note(format!("connect: {e}")),
@@ -243,8 +239,8 @@ impl NetHooks {
         } else if self.class_sel.is_active() {
             self.class_selection_tick(game, now);
         }
-        self.ui_events(game);
-        self.class_panel(game);
+        self.ui.core.class_selection = self.class_sel.is_active();
+        self.ui_events();
         if self.spawned {
             self.sync(game, now);
         }
@@ -308,14 +304,15 @@ impl NetHooks {
                 report(self, "set_gravity", game.set_gravity(g.gravity));
                 report(self, "set_zone_names", game.set_zone_names(false));
                 self.netgame.on_init_game();
-                self.debug_line(game, &format!("Connected to {{B9C9BF}}{}", g.server_name));
+                self.note(format!("chat (debug): Connected to {{B9C9BF}}{}", g.server_name));
+                self.ui.core.on_init_game(&g);
                 // samp enters class selection on InitGame; its first tick sends RPC 128 for class 0.
                 self.enter_class_selection(game, g.spawns_available);
             }
             Event::Packet(p) => {
                 self.note(format!("packet {p:?}"));
                 if p == NetPacket::Accepted {
-                    self.debug_line(game, lifecycle::msg::JOINING);
+                    self.debug_line(lifecycle::msg::JOINING);
                 }
                 if matches!(
                     p,
@@ -325,13 +322,17 @@ impl NetHooks {
                 }
             }
             Event::Rejected(r) => self.note(format!("connection rejected: {r}")),
-            Event::Rpc(Incoming::Player(p)) => self.on_player_rpc(p, game),
-            Event::Rpc(Incoming::Vehicle(v)) => self.on_vehicle_rpc(v, game),
-            Event::Rpc(Incoming::Ui(u)) => self.on_ui_rpc(u, game),
-            Event::Rpc(Incoming::Remote(remote::Incoming::PlayerJoin(j))) => {
-                self.names.insert(j.player_id, text(&j.name));
+            Event::Rpc(rpc) => {
+                // The UI takes what is its (chat, dialogs, game text, textdraws, names, scores, bubbles, ...).
+                self.ui.core.on_rpc(&rpc, &NoExpansion);
+                match rpc {
+                    Incoming::Player(p) => self.on_player_rpc(p, game),
+                    Incoming::Vehicle(v) => self.on_vehicle_rpc(v, game),
+                    Incoming::Ui(u) => self.note(format!("ui rpc {}", u.id())),
+                    Incoming::Remote(_) => {}
+                    other => self.note(format!("rpc {} (not applied natively yet)", other_id(&other))),
+                }
             }
-            Event::Rpc(other) => self.note(format!("rpc {} (not applied natively yet)", other_id(&other))),
             Event::Sync(_) => {}
         }
     }
@@ -516,111 +517,11 @@ impl NetHooks {
         }
     }
 
-    /// The chat, dialog and game-text RPCs through the engine-drawn UI (`GameAdapter::ui`, docs/samp/overlay.md §5).
-    fn on_ui_rpc(&mut self, rpc: ui::Incoming, game: &mut dyn GameAdapter) {
-        use ui::Incoming as U;
-        let note = match &rpc {
-            U::SendClientMessage(m) => format!("chat: {}", text(&m.message)),
-            U::PlayerChatMessage(m) => format!("chat {}: {}", m.player_id, text(&m.message)),
-            U::ShowDialog(d) => format!("dialog {} \"{}\"", d.dialog_id, text(&d.title)),
-            U::SendGameText(t) => format!("game text \"{}\"", text(&t.text)),
-            other => format!("ui rpc {} (not shown natively yet)", other.id()),
-        };
-        self.note(note);
-        let Some(ui) = game.ui() else { return };
-        let msg = |kind, name: String, name_colour, text: String, colour| ChatMessage {
-            kind,
-            name,
-            name_colour,
-            text,
-            colour,
-            time: clock_now(),
-        };
-        match rpc {
-            U::SendClientMessage(m) => ui.chat_add(&msg(
-                ChatKind::Info,
-                String::new(),
-                Rgba::from_rgba_u32(m.colour),
-                text(&m.message),
-                Rgba::from_rgba_u32(m.colour),
-            )),
-            U::PlayerChatMessage(m) => {
-                let name = self
-                    .names
-                    .get(&m.player_id)
-                    .cloned()
-                    .unwrap_or_else(|| format!("Player{}", m.player_id));
-                let white = Rgba::from_rgba_u32(0xFFFF_FFFF);
-                ui.chat_add(&msg(ChatKind::Player, name, white, text(&m.message), white));
-            }
-            U::ShowDialog(d) => {
-                self.dialog_open = d.dialog_id >= 0;
-                if d.dialog_id < 0 {
-                    ui.show_dialog(None);
-                } else {
-                    ui.show_dialog(Some(&DialogSpec {
-                        id: d.dialog_id,
-                        style: DialogStyle::from_byte(d.style),
-                        title: text(&d.title),
-                        body: text(&d.body),
-                        button1: text(&d.button1),
-                        button2: text(&d.button2),
-                    }));
-                }
-            }
-            U::SendGameText(t) => ui.game_text(&text(&t.text), t.time_ms, t.style as u8),
-            _ => {}
-        }
-    }
-
-    /// What the player did in the UI: chat lines and commands (RPC 101 / 50) and dialog answers (RPC 62).
-    fn ui_events(&mut self, game: &mut dyn GameAdapter) {
-        let Some(ui) = game.ui() else { return };
-        for e in ui.poll_events() {
-            match e {
-                UiEvent::ChatSubmit(line) => {
-                    let bytes = line
-                        .chars()
-                        .map(|c| u8::try_from(u32::from(c)).unwrap_or(b'?'))
-                        .collect::<Vec<_>>();
-                    if line.starts_with('/') {
-                        self.net.send_rpc(
-                            &ui::PlayerRequestCommandMessage { command: bytes },
-                            Reliability::Reliable,
-                        );
-                    } else {
-                        self.net.send_rpc(
-                            &ui::PlayerRequestChatMessage { message: bytes },
-                            Reliability::Reliable,
-                        );
-                    }
-                    self.note(format!("sent chat line \"{line}\""));
-                }
-                UiEvent::DialogResponse {
-                    id,
-                    button,
-                    list_item,
-                    text,
-                } => {
-                    let r = ui::OnPlayerDialogResponse {
-                        dialog_id: id as u16,
-                        response: button,
-                        list_item,
-                        text: text
-                            .chars()
-                            .map(|c| u8::try_from(u32::from(c)).unwrap_or(b'?'))
-                            .collect(),
-                    };
-                    self.net.send_rpc(&r, Reliability::ReliableOrdered);
-                    self.dialog_open = false;
-                    self.note(format!("dialog {id} answered with button {button}"));
-                }
-                UiEvent::ClassPanelClicked(b) => {
-                    self.note(format!("class panel: {b:?} clicked"));
-                    self.class_click = Some(b);
-                }
-                _ => {}
-            }
+    /// What the player did in the UI, sent like samp does (chat lines and commands, dialog answers, clicks).
+    fn ui_events(&mut self) {
+        for o in self.ui.core.take_outgoing() {
+            self.note(format!("ui: {o:?}"));
+            samp_client::ui::core::send_outgoing(&mut self.net, o);
         }
     }
 
@@ -778,6 +679,8 @@ impl NetHooks {
         );
         self.set_skin(game, s.skin as i32);
         self.spawned = true;
+        // The spawn ends class selection: its mode-0 request restores input only after 10 frames.
+        self.ui.spawn_release = true;
         self.sender.reset();
         self.net
             .send_rpc(&player::PlayerSpawn, Reliability::ReliableOrdered);
@@ -788,18 +691,9 @@ impl NetHooks {
     }
 
     /// A type-8 (debug) chat line, as samp prints its connection lines.
-    fn debug_line(&self, game: &mut dyn GameAdapter, line: &str) {
+    fn debug_line(&mut self, line: &str) {
         self.note(format!("chat (debug): {line}"));
-        if let Some(ui) = game.ui() {
-            ui.chat_add(&ChatMessage {
-                kind: ChatKind::Debug,
-                name: String::new(),
-                name_colour: Rgba::from_rgba_u32(DEBUG_COLOUR),
-                text: line.to_string(),
-                colour: Rgba::from_rgba_u32(DEBUG_COLOUR),
-                time: clock_now(),
-            });
-        }
+        self.ui.core.print_debug(line.as_bytes());
     }
 
     /// The class / spawn skin on the local ped (samp's `CPlayerPed::SetModelIndex`: the adapter loads the
@@ -843,26 +737,6 @@ impl NetHooks {
         self.class_sel.enter(Instant::now(), count);
     }
 
-    /// The class-selection panel (samp-rs `frame` / `after_frame`, samp.dll's class-selection step 0x10006100):
-    /// made visible on the first class-selection frame without an open dialog, kept while a later dialog is
-    /// open, hidden when class selection ends (the spawn).
-    fn class_panel(&mut self, game: &mut dyn GameAdapter) {
-        let shown = if !self.class_sel.is_active() {
-            false
-        } else {
-            self.class_panel_shown || !self.dialog_open
-        };
-        if shown != self.class_panel_shown {
-            self.class_panel_shown = shown;
-            if !shown {
-                self.class_click = None;
-            }
-            if let Some(ui) = game.ui() {
-                ui.show_class_panel(shown);
-            }
-        }
-    }
-
     /// One frame of class selection (samp-rs `class_selection_tick`): HUD off while no menu is open, the panel's
     /// clicks taken, nothing more while a dialog is open (it holds back even the first RPC 128), then the
     /// arrows (previous / next class with samp's sounds) and Shift (spawn request); a panel click acts as its
@@ -871,13 +745,15 @@ impl NetHooks {
         if !game.menu_active() {
             report(self, "set_hud_visible", game.set_hud_visible(false));
         }
-        let click = self.class_click.take();
-        if self.dialog_open {
+        let click = self.ui.session.take_class_click();
+        if click.is_some() {
+            self.note(format!("class panel: {click:?} clicked"));
+        }
+        if self.ui.core.dialogs.is_open() {
             return;
         }
-        // Shift does nothing while the chat input is open (samp-rs `class_selection_keys`); the input takes the
-        // keyboard together with a dialog, which returned above.
-        let chat_open = game.ui().is_some_and(|ui| ui.wants_keyboard());
+        // Shift does nothing while the chat input is open (samp-rs `class_selection_keys`).
+        let chat_open = self.ui.core.input.is_open();
         let keys = classsel::Keys {
             left: click == Some(ClassButton::Previous) || game.game_key_down(KEY_LEFT),
             right: click == Some(ClassButton::Next) || game.game_key_down(KEY_RIGHT),
@@ -1026,14 +902,6 @@ fn text(b: &[u8]) -> String {
     b.iter().map(|&c| char::from(c)).collect()
 }
 
-/// The local wall-clock time (UTC hour, minute, second) for chat timestamps.
-fn clock_now() -> [u8; 3] {
-    let s = web_time::SystemTime::now()
-        .duration_since(web_time::UNIX_EPOCH)
-        .map_or(0, |d| d.as_secs());
-    [((s / 3600) % 24) as u8, ((s / 60) % 60) as u8, (s % 60) as u8]
-}
-
 fn other_id(i: &Incoming) -> String {
     match i {
         Incoming::Remote(r) => format!("{} (remote)", r.id()),
@@ -1059,6 +927,11 @@ impl GameHooks for NetHooks {
         if phase == FramePhase::BeforeGameProcess {
             self.tick(game);
         }
+        self.ui.frame(phase, game);
+    }
+
+    fn window_event(&mut self, event: WindowEvent, game: &dyn GameAdapter) -> EventResult {
+        self.ui.window_event(event, game)
     }
 
     fn shutdown(&mut self, _game: &mut dyn GameAdapter) {

@@ -1,7 +1,8 @@
 //! SA:MP's own UI files, read at run time from the user's install (never shipped): the GUI skin
-//! `sampgui.png` and the cursor `mouse.png` (both in the GTA folder of a SA:MP install), and the UI font
-//! "Arial" Bold from the user's system. The engine-drawn UI (`sa-samp-ui`) falls back to flat controls and
-//! the committed Liberation Sans Bold without them.
+//! `sampgui.png` and the cursor `mouse.png` (both in the GTA folder of a SA:MP install), the symbol fonts
+//! `gtaweap3.ttf` (GTA folder) and `sampaux3.ttf` (SA:MP install), and the UI font "Arial" Bold from the user's
+//! system. The engine backend of samp-rs's UI (`sa_samp::overlay`) falls back to flat controls, no icon glyphs
+//! and the committed Liberation Sans Bold without them.
 //!
 //! Search order: the game folder, then `SA_SAMP_DIR` (a folder holding the SA:MP client files). The font:
 //! `SA_SAMP_UI_FONT` (a TTF path), then the usual places of Microsoft's Arial Bold (`arialbd.ttf`) on Linux,
@@ -9,7 +10,7 @@
 
 use std::path::{Path, PathBuf};
 
-use sa_samp_ui::skin::{TEXTURE_H, TEXTURE_W};
+use sa_samp::overlay::skin::{TEXTURE_H, TEXTURE_W};
 
 /// Decodes a PNG into RGBA8 (`None` for anything else than 8-bit RGB / RGBA / grey).
 fn decode_png(data: &[u8]) -> Option<(u32, u32, Vec<u8>)> {
@@ -54,7 +55,7 @@ fn find(game: &Path, name: &'static str) -> Option<Vec<u8>> {
         .and_then(|p| std::fs::read(p).ok())
 }
 
-/// The combined skin texture ([`sa_samp_ui::skin`]): `sampgui.png` at the top, `mouse.png` at (0, 512).
+/// The combined skin texture ([`sa_samp::overlay::skin`]): `sampgui.png` at the top, `mouse.png` at (0, 512).
 /// `None` when `sampgui.png` is missing or not 512 × 512; a missing `mouse.png` leaves its area empty.
 pub fn skin(game: &Path) -> Option<Vec<u8>> {
     let (w, h, gui) = decode_png(&find(game, "sampgui.png")?)?;
@@ -104,7 +105,7 @@ pub fn arial_bold(game: &Path) -> Option<(PathBuf, Vec<u8>)> {
     }
     c.into_iter()
         .filter(|p| p.is_file())
-        .find_map(|p| std::fs::read(&p).ok().filter(|b| sa_samp_ui::font::parses(b)).map(|b| (p, b)))
+        .find_map(|p| std::fs::read(&p).ok().filter(|b| sa_samp::overlay::font::parses(b)).map(|b| (p, b)))
 }
 
 /// Hands the files to the overlay and reports what was found.
@@ -125,4 +126,11 @@ pub fn install(game: &Path, overlay: &mut sa_samp::overlay::Overlay) {
         }
         None => println!("sa-game: SA:MP UI font: no Arial Bold found; Liberation Sans Bold"),
     }
+    let (weapon, aux) = (find(game, "gtaweap3.ttf"), find(game, "sampaux3.ttf"));
+    println!(
+        "sa-game: SA:MP UI symbol fonts: gtaweap3.ttf {}, sampaux3.ttf {}",
+        if weapon.is_some() { "found" } else { "missing (no death-window icons)" },
+        if aux.is_some() { "found" } else { "missing (no AFK icon)" }
+    );
+    overlay.set_symbol_fonts(weapon, aux);
 }

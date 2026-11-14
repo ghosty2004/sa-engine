@@ -11,6 +11,7 @@
 //! Spec: docs/re/subsystems/ui-rendering.md and ui-chat-audio.md; notes in docs/phase3/m4-notes.md.
 
 pub mod colours;
+pub mod host;
 pub mod core;
 pub mod inputlock;
 pub mod render;

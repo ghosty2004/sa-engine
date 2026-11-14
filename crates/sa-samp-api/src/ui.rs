@@ -209,6 +209,11 @@ pub trait UiBackend {
     /// The mouse position in client coordinates.
     fn cursor_pos(&self) -> (i32, i32);
 
+    /// Makes the fonts match samp's settings (`fontface`, `fontweight`, `/fontsize`) and the video mode: rebuilds
+    /// them when they were built for another size or `force` (`/fontsize` asks for it). Returns whether they were
+    /// rebuilt (layouts measured with the old fonts are stale).
+    fn fonts(&mut self, face: &[u8], weight: u32, size: i32, force: bool) -> bool;
+
     /// samp's font metrics for the current fonts.
     fn metrics(&self) -> UiMetrics;
 

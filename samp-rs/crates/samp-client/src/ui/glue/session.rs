@@ -3,19 +3,11 @@
 
 use std::sync::Mutex;
 
-use samp_proto::raknet::Reliability;
 use samp_proto::rpcs::Incoming;
-use samp_proto::rpcs::session::OnPlayerRequestScoresAndPings;
-use samp_proto::rpcs::ui::{
-    OnPlayerExitedMenu, OnPlayerSelectTextDraw, OnPlayerSelectedMenuRow, PlayerRequestChatMessage,
-    PlayerRequestCommandMessage,
-};
-use samp_proto::sync::rcon::RconCommand;
 
 use super::adapters::GameExpander;
 use super::{State, try_with_ui, with_ui};
 use crate::netclient::NetClient;
-use crate::ui::core::Outgoing;
 
 /// The netgame is created (Client::start).
 pub fn on_netgame_start(host: &str, port: u16, name: &str) {
@@ -157,7 +149,7 @@ pub fn chat_input_open() -> bool {
 pub fn send_outgoing(net: &mut NetClient) {
     let out = with_ui(|st| st.core.take_outgoing()).unwrap_or_default();
     for o in out {
-        send_one(net, o);
+        crate::ui::core::send_outgoing(net, o);
     }
 }
 
@@ -183,56 +175,4 @@ pub fn net_tick(net: &mut NetClient) {
         s.duplicate_acks_received = l.duplicate_acks_received as u32;
     });
     send_outgoing(net);
-}
-
-fn send_one(net: &mut NetClient, o: Outgoing) {
-    match o {
-        Outgoing::Chat(message) => {
-            crate::log!("ui: RPC 101 {:?}", String::from_utf8_lossy(&message));
-            net.send_rpc(&PlayerRequestChatMessage { message }, Reliability::Reliable);
-        }
-        Outgoing::Command(command) => {
-            crate::log!("ui: RPC 50 {:?}", String::from_utf8_lossy(&command));
-            net.send_rpc(&PlayerRequestCommandMessage { command }, Reliability::Reliable);
-        }
-        Outgoing::Rcon(command) => net.send_sync(&RconCommand { command }),
-        Outgoing::DialogResponse(r) => {
-            crate::log!(
-                "ui: RPC 62 id={} response={} listitem={} text={:?}",
-                r.dialog_id,
-                r.response,
-                r.list_item,
-                String::from_utf8_lossy(&r.text)
-            );
-            net.send_rpc(&r, Reliability::ReliableOrdered);
-        }
-        Outgoing::SelectTextDraw(textdraw_id) => {
-            crate::log!("ui: RPC 83 textdraw {textdraw_id:#x}");
-            net.send_rpc(&OnPlayerSelectTextDraw { textdraw_id }, Reliability::ReliableOrdered);
-        }
-        Outgoing::MenuRow(row) => {
-            crate::log!("ui: RPC 132 row {row}");
-            net.send_rpc(&OnPlayerSelectedMenuRow { row }, Reliability::Reliable);
-        }
-        Outgoing::MenuExit => {
-            crate::log!("ui: RPC 140");
-            net.send_rpc(&OnPlayerExitedMenu, Reliability::Reliable);
-        }
-        Outgoing::ScoresRequest => net.send_rpc(&OnPlayerRequestScoresAndPings, Reliability::Reliable),
-        Outgoing::ClickPlayer(player_id) => {
-            crate::log!("ui: RPC 23 player {player_id}");
-            let p = samp_proto::rpcs::session::OnPlayerClickPlayer {
-                player_id,
-                source: samp_proto::rpcs::session::OnPlayerClickPlayer::SOURCE_SCOREBOARD,
-            };
-            net.send_rpc(&p, Reliability::ReliableOrdered);
-        }
-        Outgoing::ClickMap(pos) => {
-            crate::log!("ui: RPC 119 {pos:?}");
-            let p = samp_proto::rpcs::session::OnPlayerClickMap {
-                pos: samp_proto::types::Vec3 { x: pos[0], y: pos[1], z: pos[2] },
-            };
-            net.send_rpc(&p, Reliability::Reliable);
-        }
-    }
 }

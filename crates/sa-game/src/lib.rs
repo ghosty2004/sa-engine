@@ -62,7 +62,9 @@ pub mod samp_net;
 #[cfg(feature = "samp")]
 pub mod samp_saa;
 pub mod samp_input;
+#[cfg(feature = "samp")]
 pub mod samp_ui_demo;
+#[cfg(feature = "samp")]
 pub mod samp_ui_scene;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod screen;

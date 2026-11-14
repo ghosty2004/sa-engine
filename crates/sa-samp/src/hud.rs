@@ -33,10 +33,12 @@ impl<V: View> Hud for NativeGame<V> {
     }
 
     fn big_message(&mut self, text: &str, time_ms: u32, style: u16) -> GameResult<()> {
-        // GTA keeps the pointer, so the text lives in the adapter until the next message.
-        let n = text.len().min(self.big_message.len() - 1);
+        // GTA keeps the pointer, so the text lives in the adapter until the next message (one buffer, as samp's).
+        // GXT text is one byte per character: Latin-1, anything else `?`.
+        let bytes: Vec<u8> = text.chars().map(|c| u8::try_from(u32::from(c)).unwrap_or(b'?')).collect();
+        let n = bytes.len().min(self.big_message.len() - 1);
         self.big_message.fill(0);
-        self.big_message[..n].copy_from_slice(&text.as_bytes()[..n]);
+        self.big_message[..n].copy_from_slice(&bytes[..n]);
         add_big_message(
             GPtr::from_raw(self.big_message.as_mut_ptr()),
             time_ms,

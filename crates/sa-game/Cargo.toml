@@ -12,7 +12,7 @@ gamepad = ["native", "sa-platform/gamepad"]
 native = ["sa-platform/native"]
 audio = ["sa-platform/audio"]
 # `--samp` joins SA:MP / open.mp servers with samp-rs's network core (docs/samp/native-plan.md).
-samp = ["dep:samp-client", "dep:samp-proto", "dep:samp-saa"]
+samp = ["dep:samp-client", "dep:samp-proto", "dep:samp-saa", "dep:samp-ui"]
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -39,7 +39,6 @@ sa-platform = { path = "../sa-platform", default-features = false }
 sa-rw-wgpu = { path = "../sa-rw-wgpu" }
 sa-samp = { path = "../sa-samp" }
 sa-samp-api = { path = "../sa-samp-api" }
-sa-samp-ui = { path = "../sa-samp-ui" }
 wgpu = "29"
 png = "0.18"
 web-time = "1.1"
@@ -50,6 +49,7 @@ lewton = "0.10"
 samp-client = { path = "../../samp-rs/crates/samp-client", optional = true }
 samp-proto = { path = "../../samp-rs/crates/samp-proto", optional = true }
 samp-saa = { path = "../../samp-rs/crates/samp-saa", optional = true }
+samp-ui = { path = "../../samp-rs/crates/samp-ui", optional = true }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 libc = "0.2"

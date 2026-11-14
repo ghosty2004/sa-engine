@@ -76,19 +76,6 @@ fn wheel_lines() -> u32 {
     n
 }
 
-/// Edit-box keys handled on key-down by the DXUT edit box while it has focus.
-fn edit_key(vk: u32) -> Option<EditKey> {
-    Some(match vk {
-        0x25 => EditKey::Left,
-        0x27 => EditKey::Right,
-        0x24 => EditKey::Home,
-        0x23 => EditKey::End,
-        0x2E => EditKey::Delete,
-        0x2D => EditKey::Insert,
-        _ => return None,
-    })
-}
-
 /// Returns true if the UI consumed the message.
 fn translate(msg: u32, w: WPARAM, l: LPARAM) -> bool {
     let route = |ev| super::glue::on_window_event(ev, 0);
@@ -99,7 +86,7 @@ fn translate(msg: u32, w: WPARAM, l: LPARAM) -> bool {
     match msg {
         WM_CHAR => route(Event::Char(w as u8)),
         WM_KEYDOWN => {
-            if let Some(k) = edit_key(w as u32) {
+            if let Some(k) = EditKey::from_vk(w as u32) {
                 let mods = Mods { shift: key_down(0x10), ctrl: key_down(0x11) };
                 // Not known whether samp also passes these keys on to GTA; we consume them when handled.
                 if super::glue::on_edit_key(k, mods) {

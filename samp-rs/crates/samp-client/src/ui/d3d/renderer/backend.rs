@@ -111,6 +111,14 @@ impl UiBackend for Renderer {
         cursor_pos()
     }
 
+    fn fonts(&mut self, face: &[u8], weight: u32, size: i32, force: bool) -> bool {
+        if force || self.needs_rebuild(size) {
+            self.rebuild_fonts(face, weight, size);
+            return true;
+        }
+        false
+    }
+
     fn metrics(&self) -> UiMetrics {
         let f = &self.fonts;
         UiMetrics {

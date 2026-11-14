@@ -177,8 +177,8 @@ impl<V: View> GameAdapter for NativeGame<V> {
         self.view.write_u32(addr::RS_QUIT, 1);
     }
 
-    fn ui(&mut self) -> Option<&mut dyn sa_samp_api::ui::SampUi> {
-        Some(&mut self.overlay.ui)
+    fn ui(&mut self) -> Option<&mut dyn sa_samp_api::ui::UiBackend> {
+        Some(&mut self.overlay)
     }
 }
 

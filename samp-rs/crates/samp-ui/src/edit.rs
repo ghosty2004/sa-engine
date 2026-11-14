@@ -16,6 +16,22 @@ pub enum EditKey {
     Insert,
 }
 
+impl EditKey {
+    /// The edit key of a Windows virtual-key code (`VK_LEFT`, `VK_RIGHT`, `VK_HOME`, `VK_END`, `VK_DELETE`,
+    /// `VK_INSERT`), handled on key-down while an edit box has focus.
+    pub fn from_vk(vk: u32) -> Option<Self> {
+        Some(match vk {
+            0x25 => Self::Left,
+            0x27 => Self::Right,
+            0x24 => Self::Home,
+            0x23 => Self::End,
+            0x2E => Self::Delete,
+            0x2D => Self::Insert,
+            _ => return None,
+        })
+    }
+}
+
 /// Modifier state.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Mods {
@@ -312,6 +328,13 @@ mod tests {
         assert_eq!(e.text(), b"Qy");
         assert_eq!(e.char(0x0D), CharResult::Enter);
         assert_eq!(e.char(0x1B), CharResult::Ignored);
+    }
+
+    #[test]
+    fn edit_keys_from_vk() {
+        assert_eq!(EditKey::from_vk(0x25), Some(EditKey::Left));
+        assert_eq!(EditKey::from_vk(0x2D), Some(EditKey::Insert));
+        assert_eq!(EditKey::from_vk(0x41), None);
     }
 
     #[test]

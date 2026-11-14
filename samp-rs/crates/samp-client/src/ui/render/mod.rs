@@ -15,6 +15,8 @@ use samp_ui::scoreboard::Row;
 
 pub mod chat;
 mod gui;
+#[cfg(test)]
+mod tests;
 mod panels;
 pub mod text;
 pub mod textdraws;
