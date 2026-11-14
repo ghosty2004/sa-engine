@@ -43,7 +43,6 @@ pub struct Args {
     pub samp_ui_demo: bool,
 }
 
-#[cfg(not(target_arch = "wasm32"))]
 /// The current main-loop iteration (the numbering of `SA_GAME_KEYS` / `SA_GAME_TELEPORT`), for exploration output.
 static ITERATION: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
 
@@ -52,6 +51,7 @@ pub(crate) fn iteration() -> u32 {
     ITERATION.load(std::sync::atomic::Ordering::Relaxed)
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 fn parse_args() -> Result<Args, String> {
     let mut a = Args {
         game: PathBuf::new(),
