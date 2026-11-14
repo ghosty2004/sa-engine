@@ -771,7 +771,6 @@ fn keys_spec() -> Vec<(Key, u32, Option<u32>)> {
                 "down" => Key::Down,
                 "left" => Key::Left,
                 "right" => Key::Right,
-                "esc" => Key::Escape,
                 n if n.len() == 1 && n.as_bytes()[0].is_ascii_lowercase() => letter_key(n.as_bytes()[0]),
                 _ => return None,
             };
