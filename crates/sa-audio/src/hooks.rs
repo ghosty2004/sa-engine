@@ -43,6 +43,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::player_vehicle_engine::HOOKS,
     // WRITER-NATIVE
     crate::weapon_gun_sounds::HOOKS,
+    crate::cj_mood::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).

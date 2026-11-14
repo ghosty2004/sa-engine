@@ -472,6 +472,7 @@ impl Session {
             println!("frame {n}:");
         }
         teleport_player(n);
+        teleport_in_front_of_driven_car(n);
         let state = winmain::game_state();
         self.iter_state = state;
         let frame = winmain::frame_step();
@@ -790,6 +791,72 @@ fn lmb_spec() -> Vec<(u32, u32)> {
 
 sa_core::orig! {
     fn entity_teleport(e: sa_core::mem::GPtr<u8>, x: u32, y: u32, z: u32, reset_rotation: u32) = thiscall vslot 0x38 => unported;
+}
+
+/// `SA_GAME_JACK=ITER[:DIST[:SIDE]],...` (exploration only, car-jacking runs): at main-loop iteration ITER the player
+/// ped (on foot) is moved DIST units (default 7) in front of the nearest vehicle that has a driver other than the
+/// player, SIDE units (default 0) along the vehicle's right axis, facing the vehicle, through its `Teleport` virtual.
+/// A driver usually stops for a ped in its path; a scripted F press (SA_GAME_KEYS) then jacks it.
+fn teleport_in_front_of_driven_car(n: u32) {
+    use sa_core::mem::GPtr;
+    let Ok(v) = crate::env::var("SA_GAME_JACK") else { return };
+    let Some(f) = v.split(',').find_map(|e| {
+        let f: Vec<f32> = e.split(':').filter_map(|x| x.trim().parse().ok()).collect();
+        (f.first().map(|i| *i as u32) == Some(n)).then_some(f)
+    }) else {
+        return;
+    };
+    let (dist, side) = (f.get(1).copied().unwrap_or(7.0), f.get(2).copied().unwrap_or(0.0));
+    let rd = |a: u32| GPtr::<u32>::from_addr(a as usize).read();
+    let rf = |a: u32| f32::from_bits(rd(a));
+    let ped = rd(0xB7CD98);
+    if ped < 0x1000 || rd(ped + 0x58C) >= 0x1000 && (rd(ped + 0x46C) >> 8) & 1 != 0 {
+        println!("jack-teleport {n}: no player ped on foot");
+        return;
+    }
+    let pm = rd(ped + 0x14);
+    let (px, py) = if pm >= 0x1000 { (rf(pm + 0x30), rf(pm + 0x34)) } else { (rf(ped + 4), rf(ped + 8)) };
+    let pool = rd(0xB74494);
+    if pool < 0x1000 {
+        return;
+    }
+    let (objs, map, size) = (rd(pool), rd(pool + 4), rd(pool + 8) as i32);
+    let mut best: Option<(f32, u32)> = None;
+    for i in 0..size.max(0) as u32 {
+        if GPtr::<u8>::from_addr((map + i) as usize).read() & 0x80 != 0 {
+            continue;
+        }
+        let v = objs + i * 0xA18;
+        let (m, driver) = (rd(v + 0x14), rd(v + 0x460));
+        // a car (vehicle type 0 = automobile) with a driver that is not the player
+        if m < 0x1000 || driver < 0x1000 || driver == ped || rd(v + 0x590) != 0 {
+            continue;
+        }
+        let d = (rf(m + 0x30) - px).hypot(rf(m + 0x34) - py);
+        if best.is_none_or(|(bd, _)| d < bd) {
+            best = Some((d, v));
+        }
+    }
+    let Some((d, v)) = best else {
+        println!("jack-teleport {n}: no driven car");
+        return;
+    };
+    let m = rd(v + 0x14);
+    let (fx, fy) = (rf(m + 0x10), rf(m + 0x14));
+    let (rx, ry) = (rf(m), rf(m + 4));
+    let (cx, cy, cz) = (rf(m + 0x30), rf(m + 0x34), rf(m + 0x38));
+    let (x, y) = (cx + fx * dist + rx * side, cy + fy * dist + ry * side);
+    let h = (-(cx - x)).atan2(cy - y);
+    let ped_ptr = GPtr::<u8>::from_addr(ped as usize);
+    entity_teleport(ped_ptr, x.to_bits(), y.to_bits(), (cz + 0.5).to_bits(), 0);
+    for off in [0x558, 0x55C] {
+        GPtr::<f32>::from_addr((ped + off) as usize).write(h);
+    }
+    println!(
+        "jack-teleport {n}: car {v:#x} model {} driver {:#x} at ({cx:.2}, {cy:.2}, {cz:.2}) {d:.1} away; player to ({x:.2}, {y:.2})",
+        GPtr::<u16>::from_addr((v + 0x22) as usize).read(),
+        rd(v + 0x460)
+    );
 }
 
 /// `SA_GAME_TELEPORT=ITER:X:Y:Z[:HEADING]` (exploration only): at main-loop iteration ITER the player ped is moved
