@@ -1138,3 +1138,31 @@
 - Fast-forwarded master to INTRO-2's head cf15f334 (44 commits on 58a1c75b): AUDIO-STREAM (5), INTRO-1 (12, without its AUDIO-STREAM copies), SCRIPT-5 (13), intro ports batches intro3-1..16 (StartPlaybackRecordedCar 0x45A980, IsTargetBlocked ×2, FrameUpdateCallBackNonSkinnedWithVelocityExtraction, JoinCarWithRoadSystemGotoCoors, CreateDeadPedMoney, CastShadowSectorList, …), native --fixed-step cooperative audio threads (determinism), wasm build fix.
 - Evidence from the agent: verify-all intro2b 4,5 IDENTICAL 13/13 at 1fa2bd6c (later commit docs only); lib tests, i686/wasm builds clean; intro runs 0 blocked through the police-car ride and the Jefferson drop-off; BMX ride blocks at CPed::KillPedWithCar 0x5F0360. Details: docs/verify/integration-intro2.md.
 - Next for the intro: KillPedWithCar, the route east to Grove Street, arrival cutscene, Big Smoke marker. Integration notes: FRAMELIMIT also carries the CAEDataStream ctor 0x4DC620 (keep one), WRITER-SAMP-2 also ports 0x6E91D0.
+
+## 2026-11-14 FRAMELIMIT: the Display Setup frame-limiter toggle natively (agent a1c6b8a6b0d220dec)
+- Why the user's play build stopped on `hw_get_beat_info`: when the limiter is OFF, WinMain (0x748D62) calls
+  `AudioEngine.IsBeatInfoPresent` -> `CAEAudioHardware::GetBeatInfo` in every iteration. 63b156bd ports GetBeatInfo and
+  GetTrackInfo. With INTRO-2's working stream thread, a track is active from boot, so the path runs `GetTrackInfo` ->
+  the `CAEDataStream` constructor (master's, from AUDIO-STREAM) in every iteration: 2,283 calls in the repro, 0 blocked.
+- The toggle itself: `psCameraShowRaster` (0x745240) passes the vsync flag from `m_bPrefsFrameLimiter`, so every toggle
+  resets the D3D9 device (`_rwD3D9RasterShowRaster`). The restore callback 0x5BA120 sets
+  `g_realTimeShadowMan.m_bNeedsReinit`, and the next `CRealTimeShadowManager::Update` reached the unported `ReInit`.
+- Ported from the 1.0 US bytes (all unverified): `CRealTimeShadowManager::ReInit` 0x706870 (framelimit-render). Then
+  the world blockers the shifted timing reaches on the Grove Street walk (framelimit-ai): `CEventVehicleToSteal`
+  dtor body 0x4AF700, `CTaskSimpleSetPedAsAutoDriver::ProcessPed` 0x649020,
+  `CTaskGoToVehicleAndLean::CreateNextSubTask` 0x664590, `CTaskLeanOnVehicle::ProcessPed` 0x6648C0,
+  `CEventVehicleCollision` dtor body 0x4AC920. Also `CEventVehicleCollision::AffectsPed` 0x4B2EE0, taken unchanged
+  from CARJACK (worktree-agent-a271da3abdc02b710, 66be0e6c, batch carjack-1) except for a clippy allow. CARJACK also
+  registers 0x4AC920 (jack_events.rs), so keep one of each when integrating. sa-game: `SA_GAME_KEYS` accepts `esc`.
+- Repro (offscreen, deterministic; scripts in target/framelimit/scripts/run.sh): `--start-in-world --fixed-step 40
+  --frames 2600`, `SA_GAME_SCRIPT_SKIP=1`, SA_GAME_KEYS = esc 100, down x5, enter 160, down x2, enter 192, down x6,
+  enter 246, down 270, enter 280/300/320 (ON->OFF->ON->OFF), esc 360/380/400/420, w 450-900 and 1500-1800.
+  Result: 2616 iterations, 0 blocked. gta_sa.set byte 0xB35 (`m_bPrefsFrameLimiter`) is saved as 0. Window run
+  (headless gamescope + xdotool, same path, target/framelimit/scripts/win.sh): 0 blocked. The limiter ON runs at 25 fps
+  (median 39-41 ms). OFF runs at 60-115 fps in the menu and 33-40 fps on the walk. A fresh run that loads the saved
+  OFF setting runs at 39 fps (median 22.7 ms). In a car with the radio on (`SA_GAME_TELEPORT=60:2456.5:-1761.7:13.6`,
+  F), the toggle and GetTrackInfo cause 0 blocks. That drive later hits `ProcessTrainCrossingBehaviour` 0x5A0B50,
+  which it also hits without the menu. Evidence (not committed): target/framelimit/.
+- Gate: sa-hook lib tests 58/58, i686-windows DLL, wasm32 sa-ports, queue regenerated. The clippy -D warnings
+  failures are already on master: sa-pop carctrl4.rs doc lists, sa-game crt.rs/detheap.rs, sa-render
+  postfx_speed_fx.rs.
