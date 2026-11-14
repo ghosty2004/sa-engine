@@ -41,13 +41,8 @@ orig! {
     fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
 }
 
-fn k(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
-fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_core::field::gf as k;
+use sa_world::world::common::entity_pos;
 
 /// `FUN_00606580(CPed* ped, int32 enabled)` (thiscall, `ret 8`; `this` unused). Nothing when `enabled` is 0, the ped
 /// lacks flag +0x1C bit 0, its simplest active task is no go-to task, or the go-to move state is 1. `target` = that

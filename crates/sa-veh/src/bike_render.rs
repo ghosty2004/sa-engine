@@ -86,27 +86,17 @@ fn wv(p: GPtr<u8>, off: isize, v: CVector) {
     wr::<f32>(p, off + 8, v.z);
 }
 
-fn ld(p: GPtr<u8>, off: isize) -> X87 {
-    x(rd::<f32>(p, off))
-}
+use sa_core::field::ldx as ld;
 
-fn c(bits: u32) -> X87 {
-    X87::constant(bits)
-}
+use sa_math::fpu::xc as c;
 
 fn ts() -> f32 {
     g::<f32>(TIME_STEP).read()
 }
 
-/// `fcomp` + `test ah, 0x41` + `jne` taken: `a <= b` or unordered.
-fn le(a: X87, b: X87) -> bool {
-    a.fcom(b).test_any(0x41)
-}
+use sa_math::fpu::le_or_nan as le;
 
-/// `fcomp` + `test ah, 5` + `jp` taken: `a >= b` or unordered.
-fn ge(a: X87, b: X87) -> bool {
-    a.fcom(b).test_parity(0x05)
-}
+use sa_math::fpu::ge_or_nan as ge;
 
 fn gp<T>(v: &mut T) -> GPtr<u8> {
     GPtr::from_raw(v).cast()
@@ -116,9 +106,7 @@ fn mat(this: GPtr<u8>) -> GPtr<u8> {
     rd::<GPtr<u8>>(this, 0x14)
 }
 
-fn frame_at(this: GPtr<u8>, off: isize) -> GPtr<u8> {
-    rd::<GPtr<u8>>(this, off)
-}
+use sa_core::field::rdp as frame_at;
 
 /// A stack `CMatrix` (0x48 bytes) with the inline constructor (attach / owns zero).
 struct StackMatrix([u32; 0x12]);

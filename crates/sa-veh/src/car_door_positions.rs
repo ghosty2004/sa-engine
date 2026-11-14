@@ -53,17 +53,11 @@ const ANIM_GROUPS: usize = 0xC1CDC0;
 /// `CCarEnterExit::ms_vecPedQuickDraggedOutCarAnimOffset`
 const QUICK_DRAGGED_OUT_OFFSET: usize = 0xC18C48;
 
-fn kf(a: u32) -> f32 {
-    sa_core::mem::GPtr::<f32>::from_addr(a as usize).read()
-}
+use sa_core::field::gfu as kf;
 
-fn vp(v: &mut [f32; 3]) -> GPtr<u8> {
-    GPtr::from_raw(v.as_mut_ptr()).cast()
-}
+use sa_core::field::ptr_of as vp;
 
-fn read3(p: GPtr<u8>) -> [f32; 3] {
-    [rd::<f32>(p, 0), rd::<f32>(p, 4), rd::<f32>(p, 8)]
-}
+use sa_core::field::rd3f as read3;
 
 fn write3(p: GPtr<u8>, v: [f32; 3]) {
     for (i, c) in v.iter().enumerate() {
@@ -71,15 +65,7 @@ fn write3(p: GPtr<u8>, v: [f32; 3]) {
     }
 }
 
-/// The entity's position (`m_matrix` +0x30, or the placement +4 without a matrix).
-fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() {
-        e.byte_add(4)
-    } else {
-        m.byte_add(0x30)
-    }
-}
+use sa_world::world::common::entity_pos;
 
 /// The front seat dummy (dummy 0 for a boat model, else dummy 4).
 fn front_dummy(mi: GPtr<u8>) -> [f32; 3] {

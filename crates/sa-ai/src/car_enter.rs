@@ -176,10 +176,7 @@ fn veh_anim_group(veh: GPtr<u8>) -> GPtr<u8> {
     GPtr::from_addr((grp.wrapping_mul(0x94)).wrapping_add(0xC1CDC0) as usize)
 }
 
-/// A pointer to a Rust local standing in for a slot of the original's stack frame.
-fn slot<T>(v: &mut T) -> GPtr<u8> {
-    GPtr::from_raw(v as *mut T).cast()
-}
+use sa_core::field::ptr_of as slot;
 
 /// The shared `ComputeAnimID` body: `*anim` by door (+0x14) 8/9/10/11 (other doors leave `*anim`),
 /// `*group = vehicle anim group.GetGroup(*anim)`.

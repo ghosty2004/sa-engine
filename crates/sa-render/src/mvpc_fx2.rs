@@ -115,13 +115,9 @@ orig! {
     pub fn list_add_item(this: GPtr<u8>, item: GPtr<u8>) = thiscall 0x4A8DF0 => unported;
 }
 
-fn xf(v: f32) -> X87 {
-    X87::from_f32(v)
-}
+use sa_math::fpu::x as xf;
 
-fn kf(bits: u32) -> f32 {
-    f32::from_bits(bits)
-}
+use sa_math::fpu::fbits as kf;
 
 /// `rand() % 10000` (`cdq; idiv`), the call attributed to its original return address.
 fn r10k(ret: u32) -> i32 {
@@ -454,11 +450,7 @@ orig! {
     pub fn rw_im3d_end() -> i32 = cdecl 0x7EF520 => unported;
 }
 
-/// The FX triangle batch: vertex cursor 0xA9AE6C into the 0x24-byte `RwIm3DVertex` buffer 0xC4D958,
-/// vertex count 0xA9AE58, triangle count 0xA9AE5C, use-UV flag 0xA9AE64, LTM 0xA9AE68, flags 0xA9AE60.
-fn gp<T: Copy>(a: usize) -> GPtr<T> {
-    GPtr::from_addr(a)
-}
+use sa_core::field::g as gp;
 
 /// `Fx_c::RenderAddTri_(x0, y0, z0, x1, y1, z1, x2, y2, z2, u0, v0, u1, v1, u2, v2, r0, g0, b0, a0,
 /// r1, g1, b1, a1, r2, g2, b2, a2)` (0x4A1410, cdecl): appends three vertices at the cursor (position

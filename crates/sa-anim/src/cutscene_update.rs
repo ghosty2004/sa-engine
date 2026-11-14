@@ -133,9 +133,7 @@ const SKIP_B: usize = 0xB5F854;
 fn gu32(a: usize) -> GPtr<u32> {
     GPtr::from_addr(a)
 }
-fn gu8(a: usize) -> GPtr<u8> {
-    GPtr::from_addr(a)
-}
+use sa_core::field::pa as gu8;
 
 /// `CCutsceneMgr::Update_overlay()` (0x5B1720, cdecl).
 ///

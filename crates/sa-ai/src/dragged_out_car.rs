@@ -47,18 +47,13 @@ const FLEE_SHIFT: usize = 0xC18CF0;
 const HEADING_A: usize = 0x86FC7C;
 const HEADING_B: usize = 0x86FC80;
 
-fn gu(a: usize) -> u32 {
-    g::<u32>(a).read()
-}
+use sa_core::field::gr32 as gu;
 
 fn ped(this: GPtr<u8>) -> GPtr<u8> {
     rd::<GPtr<u8>>(this, 0)
 }
 
-fn pos_ptr(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos as pos_ptr;
 
 fn new_task(size: u32, ctor: impl FnOnce(GPtr<u8>) -> GPtr<u8>) -> GPtr<u8> {
     let t = task_new(size);

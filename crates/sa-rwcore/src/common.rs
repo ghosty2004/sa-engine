@@ -3,52 +3,23 @@
 
 use sa_core::mem::{GPtr, GameData};
 use sa_core::orig;
-use sa_math::x87::X87;
 
 /// `RwEngineInstance` (the `RwGlobals*`, `G` in the specs).
 pub const RW_ENGINE_INSTANCE: usize = 0xC97B24;
 
-/// Field `T` at byte offset `off` of `p`.
-#[inline]
-pub fn at<T: GameData>(p: GPtr<u8>, off: isize) -> GPtr<T> {
-    p.byte_add(off).cast()
-}
+pub use sa_core::field::at;
 
-/// Reads field `T` at byte offset `off`.
-#[inline]
-pub fn rd<T: GameData>(p: GPtr<u8>, off: isize) -> T {
-    at::<T>(p, off).read()
-}
+pub use sa_core::field::rd;
 
-/// Writes field `T` at byte offset `off`.
-#[inline]
-pub fn wr<T: GameData>(p: GPtr<u8>, off: isize, v: T) {
-    at::<T>(p, off).write(v)
-}
+pub use sa_core::field::wr;
 
-/// A game global addressed directly.
-#[inline]
-pub fn g<T: GameData>(addr: usize) -> GPtr<T> {
-    GPtr::from_addr(addr)
-}
+pub use sa_core::field::g;
 
-/// A pointer from a 32-bit game address.
-#[inline]
-pub fn p8(addr: u32) -> GPtr<u8> {
-    GPtr::from_addr(addr as usize)
-}
+pub use sa_core::field::p8;
 
-/// `fld dword` of an f32.
-#[inline]
-pub fn x(v: f32) -> X87 {
-    X87::from_f32(v)
-}
+pub use sa_math::fpu::x;
 
-/// The f32 a `fstp dword` stores.
-#[inline]
-pub fn f32_of(v: X87) -> f32 {
-    v.to_f32()
-}
+pub use sa_math::fpu::f32_of;
 
 /// `G` = `[0xC97B24]`.
 #[inline]

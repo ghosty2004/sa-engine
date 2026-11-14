@@ -58,9 +58,7 @@ orig! {
     fn pipeline_node_destroy_recurse(node: GPtr<u8>, p: GPtr<u8>) = cdecl 0x8050C0 => unported;
 }
 
-fn a32(p: GPtr<u8>) -> u32 {
-    p.addr() as u32
-}
+use sa_core::field::addr32 as a32;
 
 /// `P = G + [0xC9BC60]`, recomputed on every access as the original reloads both globals.
 fn pmod() -> GPtr<u8> {

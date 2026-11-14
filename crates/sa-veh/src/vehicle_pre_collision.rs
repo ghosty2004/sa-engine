@@ -7,7 +7,7 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
-use crate::common::{g, rd, wr, x};
+use crate::common::{rd, wr, x};
 
 orig! {
     /// `CEntity::DoesNotCollideWithFlyers()` (0x532D40)
@@ -28,22 +28,15 @@ orig! {
     fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
 }
 
-fn k(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
-fn ty(e: GPtr<u8>) -> u8 {
-    rd::<u8>(e, 0x36) & 7
-}
+use sa_core::field::gf as k;
+use sa_world::world::common::entity_type as ty;
 fn recording(e: GPtr<u8>) -> bool {
     (rd::<u32>(e, 0x1C) >> 4) & 1 != 0
 }
 fn set(p: GPtr<u8>) {
     p.write(1);
 }
-fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos;
 fn special_model(m: u16) -> bool {
     matches!(m, 0x1B9 | 0x234 | 0x252)
 }

@@ -50,9 +50,7 @@ orig! {
     fn register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
 }
 
-fn ldf(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
+use sa_core::field::gf as ldf;
 
 /// `|v|` of the vector at `p` (x87: `x*x + y*y + z*z`, `fsqrt`).
 fn speed(p: GPtr<u8>) -> X87 {

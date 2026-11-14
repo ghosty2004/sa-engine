@@ -38,9 +38,7 @@ orig! {
     fn entity_clean_up_old_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571A00 => unported;
 }
 
-fn c(bits: u32) -> f32 {
-    f32::from_bits(bits)
-}
+use sa_math::fpu::fbits as c;
 
 /// `CPed::CantBeKnockedOffBike` (+0x474 bits 27..28).
 fn knock_off_class(p: GPtr<u8>) -> u32 {

@@ -66,13 +66,9 @@ orig! {
     fn flush_cache() = cdecl 0x7FC200 => crate::d3d9state::flush_cache;
 }
 
-fn gu(a: usize) -> u32 {
-    g::<u32>(a).read()
-}
+use sa_core::field::gr32 as gu;
 
-fn su(a: usize, v: u32) {
-    g::<u32>(a).write(v)
-}
+use sa_core::field::gw32 as su;
 
 /// The primitive count of `n` vertices / indices for a D3D primitive type; other types keep `prev` (the original's
 /// uninitialised local).

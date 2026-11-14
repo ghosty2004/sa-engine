@@ -192,11 +192,7 @@ orig! {
     fn pickups_remove_unnecessary_pickups(p: GPtr<u8>, r: f32) = cdecl 0x4563A0 => unported;
 }
 
-/// The entity's position (matrix +0x30 or the simple transform at +4).
-fn ent_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use crate::world::common::entity_pos as ent_pos;
 
 /// `r * r > dx * dx + dy * dy` in the original order (`(pos.x - p.x)^2 + (pos.y - p.y)^2` summed as `x + y`
 /// after squaring y first); NaN is outside.

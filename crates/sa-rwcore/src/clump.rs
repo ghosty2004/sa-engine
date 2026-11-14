@@ -104,9 +104,7 @@ orig! {
     pub fn registry_get_plugin_offset(reg: GPtr<u8>, id: u32) -> i32 = cdecl 0x808470 => crate::plugin::registry_get_plugin_offset;
 }
 
-fn a32(p: GPtr<u8>) -> u32 {
-    p.addr() as u32
-}
+use sa_core::field::addr32 as a32;
 
 /// The clump registry (`0x8D6264`).
 pub fn clump_registry() -> GPtr<u8> {

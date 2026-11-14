@@ -90,9 +90,7 @@ orig! {
     fn hanim_hierarchy_create(n: i32, node_flags: u32, node_ids: u32, flags: u32, key_size: i32) -> GPtr<u8> = cdecl 0x7C4C30 => unported;
 }
 
-fn a32(p: GPtr<u8>) -> u32 {
-    p.addr() as u32
-}
+use sa_core::field::addr32 as a32;
 
 /// `RwErrorSet({0x1B7, _rwerror(code)})` (the RtAnim toolkit's plugin id).
 fn anim_error(code: u32) {

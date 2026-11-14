@@ -74,12 +74,8 @@ const MODEL_INFOS: u32 = 0xA9B0C8;
 const GROUPS: u32 = 0xC09920;
 const RANDOM_ALLOCATOR: u32 = 0xC09918;
 
-fn kf(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
-fn vp(v: &mut [f32; 3]) -> GPtr<u8> {
-    GPtr::from_raw(v.as_mut_ptr()).cast()
-}
+use sa_core::field::gf as kf;
+use sa_core::field::ptr_of as vp;
 
 /// `CPedGroupPlacer::PlaceRandomGroup(ePedType, uint32 numOfPeds, const CVector& origin, ePedGroupDefaultTaskAllocatorType)`
 /// (0x5FD330, thiscall, `ret 0x10`; `this` unused), AL.

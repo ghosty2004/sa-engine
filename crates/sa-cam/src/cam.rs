@@ -75,12 +75,7 @@ orig! {
     pub fn cross_product(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C730 => unported;
 }
 
-/// Dword copy of a 3-word vector (`mov` pairs, component by component).
-fn copy3(dst: GPtr<u8>, src: GPtr<u8>) {
-    for o in [0, 4, 8] {
-        wr::<u32>(dst, o, rd::<u32>(src, o));
-    }
-}
+use sa_core::field::copy3;
 
 fn gv(v: &sa_core::mem::Global<[u32; 3]>) -> GPtr<u8> {
     v.ptr().cast()

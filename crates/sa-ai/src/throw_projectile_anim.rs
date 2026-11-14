@@ -39,11 +39,7 @@ orig! {
     fn weapon_fire(w: GPtr<u8>, owner: GPtr<u8>, pos: GPtr<u8>, fx: GPtr<u8>, target: u32, tpos: u32, db: u32) -> u8 = thiscall 0x742300 => unported;
 }
 
-/// The entity's position: the matrix translation (+0x30 of the matrix at +0x14) or the placement (+4).
-fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos;
 
 /// `(dz·dz + dy·dy) + dx·dx` of `a - b` on the x87 (each difference `fld; fsub` of the f32 coordinates), compared
 /// with [0x858628]: true when above (`test ah, 0x41; je`).

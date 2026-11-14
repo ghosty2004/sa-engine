@@ -23,9 +23,7 @@ const _: () = {
     assert!(core::mem::offset_of!(CRect, bottom) == 0xC);
 };
 
-fn ld(v: f32) -> X87 {
-    X87::from_f32(v)
-}
+use crate::fpu::x as ld;
 
 /// `fld a; fcomp b; fnstsw; test ah, mask` then `je` (`!test_any`) / `jne` / `jp` / `jnp`.
 fn cmp(a: X87, b: f32) -> crate::x87::Cmp {

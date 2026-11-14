@@ -53,9 +53,7 @@ pub mod call {
     }
 }
 
-fn at<U>(p: GPtr<u8>, off: isize) -> GPtr<U> {
-    p.byte_add(off).cast()
-}
+use crate::field::at;
 
 fn rect_at(p: GPtr<u8>) -> [f32; 4] {
     core::array::from_fn(|k| at::<f32>(p, 4 * k as isize).read())

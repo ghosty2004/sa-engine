@@ -80,15 +80,9 @@ orig! {
 
 use sa_stream::modelinfo::vehicle::sscanf_n;
 
-/// A `.rdata` string of the exe (format strings, file names, literals).
-fn s(addr: u32) -> GPtr<u8> {
-    GPtr::from_addr(addr as usize)
-}
+use sa_core::field::p8 as s;
 
-/// A pointer to a local (sscanf target).
-fn lp<T>(v: &mut T) -> GPtr<u8> {
-    GPtr::from_raw(v as *mut T).cast()
-}
+use sa_core::field::ptr_of as lp;
 
 /// `this + id*12 + off` (the original's `lea eax,[id+id*2]` then `[ecx+eax*4+off]`, 32-bit wrapping).
 fn entry<T>(this: SiPtr, id: u32, off: u32) -> GPtr<T> {

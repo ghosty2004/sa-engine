@@ -57,9 +57,7 @@ const K_1: u32 = 0x3F80_0000;
 const K_25: u32 = 0x41C8_0000;
 const K_END: u32 = 0xC120_0000;
 
-fn k(bits: u32) -> f32 {
-    f32::from_bits(bits)
-}
+use sa_math::fpu::fbits as k;
 
 /// `fild dword` of an unsigned value: `+ 2^32` when the dword is negative (`test; jge; fadd`).
 fn fild_u32(v: u32) -> X87 {

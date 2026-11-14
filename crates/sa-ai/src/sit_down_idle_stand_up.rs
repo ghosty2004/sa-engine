@@ -83,11 +83,7 @@ fn ik() -> GPtr<u8> {
     GPtr::from_addr(IK_CHAIN_MAN)
 }
 
-/// The placeable's position: the matrix's (+0x14) +0x30, else the simple transform's +4.
-fn pos_of(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos as pos_of;
 
 // ---------------------------------------------------------------------------------------------------------------
 // CTaskComplexSitDownThenIdleThenStandUp

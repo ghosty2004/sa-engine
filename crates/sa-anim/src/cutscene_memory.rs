@@ -62,13 +62,9 @@ fn gu(a: usize) -> GPtr<u32> {
     GPtr::from_addr(a)
 }
 
-fn gb(a: usize) -> GPtr<u8> {
-    GPtr::from_addr(a)
-}
+use sa_core::field::pa as gb;
 
-fn rd32(p: GPtr<u8>, o: isize) -> u32 {
-    p.byte_add(o).cast::<u32>().read()
-}
+use sa_core::field::rd32;
 
 /// `CCutsceneMgr::RemoveEverythingBecauseCutsceneDoesntFitInMemory()` (0x4D5AF0, cdecl). Already removed (flag
 /// 0xB5F85C): `CGame::DrasticTidyUpMemory(true)` only. Else: `ClearExcitingStuffFromArea(FindPlayerCoors(-1), 120.0,

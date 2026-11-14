@@ -64,11 +64,7 @@ pub fn train_render(this: GPtr<u8>) {
     vehicle_render(this);
 }
 
-/// The entity position: `m_matrix->pos` (+0x14, +0x30) or the placement position (+4).
-fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos;
 
 /// `CVehicle::DoHeadLightReflectionTwin(CMatrix& m)` (0x6E1600, `ret 4`): with `P` = the vehicle
 /// struct's first dummy (model info +0x5C, +0/+4/+8), `n` = the matrix forward xy normalised (`inv =

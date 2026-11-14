@@ -138,10 +138,7 @@ const BE_DRAGGED_OUT_LINE_UP_TIME: usize = 0x859B58;
 const DOOR_DRIVER: u32 = 10;
 const DOOR_FRONT_RIGHT: u32 = 8;
 
-/// Pointer to a Rust stack buffer (stands in for an object the original builds on its own stack).
-fn buf<const N: usize>(b: &mut [u32; N]) -> GPtr<u8> {
-    GPtr::from_raw(b as *mut [u32; N]).cast()
-}
+use sa_core::field::ptr_of as buf;
 
 /// The vehicle's anim group byte: handling (+0x384) +0xDE.
 fn anim_group_byte(veh: GPtr<u8>) -> u32 {

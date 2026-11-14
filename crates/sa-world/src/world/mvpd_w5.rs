@@ -386,11 +386,7 @@ fn mi_g(addr: usize) -> i32 {
     i32::from(g::<u16>(addr).read())
 }
 
-/// The entity position (matrix +0x30 or the simple transform +4).
-fn ent_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use crate::world::common::entity_pos as ent_pos;
 
 /// The pickup coordinate at `off` (`int16 * [0x858C48]`, stored as a float).
 fn pk_coord(pk: GPtr<u8>, off: isize) -> f32 {

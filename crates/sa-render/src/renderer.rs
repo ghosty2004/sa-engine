@@ -215,11 +215,7 @@ pub fn setup_map_entity_visibility_b(e: GPtr<u8>, mi: GPtr<u8>, dist: u32, t: u8
     setup_map_entity_visibility(e, mi, f32::from_bits(dist), t)
 }
 
-/// Entity type (`+0x36 & 7`).
-#[inline]
-fn etype(e: GPtr<u8>) -> u8 {
-    rd::<u8>(e, 0x36) & 7
-}
+use sa_world::world::common::entity_type as etype;
 
 /// `CModelInfo::ms_modelInfoPtrs[e->m_nModelIndex]` (movsx of the int16 index).
 #[inline]
@@ -733,11 +729,7 @@ pub fn render_first_person_vehicle() {
 /// `CRenderer::m_pFirstPersonVehicle` (CVehicle*).
 pub const FIRST_PERSON_VEHICLE: usize = 0xB745D4;
 
-/// `ST0` result of an original call (exact in f64 at PC=24) as an x87 value.
-#[inline]
-fn st0(v: f64) -> X87 {
-    X87::from_f64_exact(v)
-}
+use sa_math::fpu::st0;
 
 /// `CRenderer::SetupLightingForEntity(CPhysical*)` (0x553E40). The entry jumps into the protection chunk
 /// 0x401FC0, which pushes `[0x1560700] + [0x4E9CA6]` = 0x3F800000 (1.0f) as the argument of
@@ -771,22 +763,9 @@ pub fn setup_lighting_for_entity(e: GPtr<u8>) -> u8 {
     1
 }
 
-/// `fcom` + `fnstsw` + `test ah, 5` + `jnp` taken: exactly one of C0/C2 set (`a < b`, ordered).
-#[inline]
-fn jnp5(a: X87, b: X87) -> bool {
-    !a.fcom(b).test_parity(5)
-}
+use sa_math::fpu::lt as jnp5;
 
-/// Position of an entity: `m_matrix ? &m_matrix->pos : &m_placement.pos`.
-#[inline]
-fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() {
-        e.byte_add(4)
-    } else {
-        m.byte_add(0x30)
-    }
-}
+use sa_world::world::common::entity_pos;
 
 /// The "not on screen or occluded" exit of the visibility functions: the model info's alpha is reset
 /// to 255 unless bit 0 of `+0x12` is set, then that bit is cleared.

@@ -28,9 +28,7 @@ orig! {
     fn vector_ctor_iterator(p: GPtr<u8>, size: u32, count: i32, ctor: u32) = stdcall 0x403D60 => unported;
 }
 
-fn local<const N: usize>(b: &mut [u32; N]) -> GPtr<u8> {
-    GPtr::from_raw(b as *mut [u32; N]).cast()
-}
+use sa_core::field::ptr_of as local;
 
 /// Copies the bytes from `buf + pos` up to the next `'\n'` into the line buffer (no terminator) and
 /// returns the position after the `'\n'`.

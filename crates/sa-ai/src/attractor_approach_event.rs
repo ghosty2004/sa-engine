@@ -22,15 +22,9 @@ orig! {
     fn entity_register_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571B70 => unported;
 }
 
-/// The entity's position: `m_matrix->pos` (+0x14 -> +0x30) with a matrix, else the placement (+4).
-fn pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos as pos;
 
-fn vp(v: &mut [f32; 3]) -> GPtr<u8> {
-    GPtr::from_raw(v.as_mut_ptr()).cast()
-}
+use sa_core::field::ptr_of as vp;
 
 /// `CPedAttractorManager::IsApproachable(C2dEffectPedAttractor* fx, const CMatrix& mat, int32 slot, CPed* ped)`
 /// (0x5EA220, cdecl). A shelter attractor (type +0x34 == 4): `CWorld::GetIsLineOfSightClear(ped position, mat * fx

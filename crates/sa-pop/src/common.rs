@@ -7,12 +7,7 @@ use sa_math::x87::X87;
 
 pub use sa_world::world::common::{at, f32_of, find_player_coors, find_player_ped, ftol32, g, rd, wr, x, xi};
 
-/// `rand()` as the original call whose return address is `site` calls it (determinism mode hashes
-/// `(caller, value)`).
-#[inline]
-pub fn rand_at(site: u32) -> i32 {
-    sa_core::orig::at_site(site, sa_core::crt::rand)
-}
+pub use sa_core::crt::rand_at;
 
 /// `fild` of `(rand() & 0xFFFF)` times 3.0517578e-05 (0x858B14, 1/32768): the `[0, 2)` fraction the
 /// inlined `CGeneral::GetRandomNumberInRange` sequences compute.
@@ -21,17 +16,9 @@ pub fn rand_frac(r: i32) -> X87 {
     xi(r & 0xFFFF).fmul_m(f32::from_bits(0x3800_0000))
 }
 
-/// `fcomp` + `fnstsw ax` + `test ah, 5` + `jp` taken: `a >= b` (or unordered never: C2|C0 both set).
-#[inline]
-pub fn jp5(a: X87, b: X87) -> bool {
-    a.fcom(b).test_parity(0x05)
-}
+pub use sa_math::fpu::ge_or_nan as jp5;
 
-/// `fcomp` + `fnstsw ax` + `test ah, mask` + `jne` taken.
-#[inline]
-pub fn jne_mask(a: X87, b: X87, mask: u8) -> bool {
-    a.fcom(b).test_any(mask)
-}
+pub use sa_math::fpu::fcom_any as jne_mask;
 
 /// `CModelInfo::ms_modelInfoPtrs[mi]`.
 #[inline]

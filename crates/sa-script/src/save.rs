@@ -29,9 +29,7 @@ const OBJECT_POOL: usize = 0xB7449C;
 const DUMMY_POOL: usize = 0xB744A0;
 const WINDOW: u32 = 0x1000;
 
-fn g<T>(a: usize) -> GPtr<T> {
-    GPtr::from_addr(a)
-}
+use sa_core::field::g;
 
 orig! {
     /// `CGenericGameStorage::SaveDataToWorkBuffer(void*, int32)` (0x5D1270)

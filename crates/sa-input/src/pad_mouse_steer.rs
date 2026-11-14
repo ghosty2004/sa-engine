@@ -13,9 +13,7 @@ orig! {
     fn cam_using_3rd_person_mouse_cam(cam: GPtr<u8>) -> u8 = thiscall 0x50A850 => unported;
 }
 
-fn gf(a: usize) -> f32 {
-    GPtr::<f32>::from_addr(a).read()
-}
+use sa_core::field::gf;
 
 /// `CPad` 0x540E80 (thiscall, EAX from `_ftol`; callers read AX). v = the mouse x delta (int16 0xB7345C) as f32.
 /// With |v| > 100 and neither +0x10E nor +0x26 set: `_ftol(v - 100 + 50)` (v > 0) or `_ftol(v + 100 - 50)`.

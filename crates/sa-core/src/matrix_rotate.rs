@@ -14,9 +14,7 @@ use crate::mem::GPtr;
 fn st(m: GPtr<u8>, o: isize, v: X87) {
     m.byte_add(o).cast::<f32>().write(v.to_f32())
 }
-fn ld(p: GPtr<u8>, o: isize) -> f32 {
-    p.byte_add(o).cast::<f32>().read()
-}
+use crate::field::rdf as ld;
 
 /// `CMatrix::SetRotateZOnly(float angle)` (0x59B020): +8, +0x18, +0x20, +0x24 = 0, +0x28 = 1.0; right =
 /// (cos, sin), forward = (-sin, cos) (`fsin` / `fcos` of the argument).

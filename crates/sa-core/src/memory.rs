@@ -115,9 +115,7 @@ pub fn free_align(p: GPtr<u8>) {
     free(GPtr::from_addr(raw as usize))
 }
 
-fn w32(base: GPtr<u8>, off: isize, v: u32) {
-    base.byte_add(off).cast::<u32>().write(v)
-}
+use crate::field::wr32 as w32;
 
 /// `CommonSize::Init(size)` as inlined (unrolled x8) in `CMemoryHeap::Init`: `+0x10 = this + 0x18`,
 /// `+0x2C = this`, `+0x30 = size`, `+0x34 = 0`, `+0x38 = 0`.

@@ -138,9 +138,7 @@ fn door(t: GPtr<u8>) -> i32 {
 fn lu(t: GPtr<u8>) -> u32 {
     rd::<u32>(t, 0x38)
 }
-fn kf(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
+use sa_core::field::gf as kf;
 fn in_vehicle(ped: GPtr<u8>) -> bool {
     rd::<u32>(ped, 0x46C) & 0x100 != 0
 }

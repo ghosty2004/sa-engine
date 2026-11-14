@@ -57,11 +57,7 @@ fn counter(addr: usize) -> GPtr<u32> {
     PED_COUNTS.ptr().cast::<u8>().byte_add((addr - 0xC0EC24) as isize).cast()
 }
 
-/// `CPlaceable::GetPosition()`: matrix +0x30 when the entity has a matrix, else the placement at +4.
-fn ent_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m: GPtr<u8> = rd(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos as ent_pos;
 
 fn sub3(a: GPtr<u8>, b: GPtr<u8>) -> (X87, X87, X87) {
     (
@@ -77,10 +73,7 @@ fn dist_zyx(a: GPtr<u8>, b: GPtr<u8>) -> X87 {
     dz.fmul(dz).fadd(dy.fmul(dy)).fadd(dx.fmul(dx)).fsqrt()
 }
 
-/// The pool header pointer stored at `cell` (`CPools::ms_p*Pool`).
-fn pool_at(cell: usize) -> GPtr<u8> {
-    g::<GPtr<u8>>(cell).read()
-}
+use sa_core::field::grp as pool_at;
 
 const PED_POOL: usize = 0xB74490;
 const OBJECT_POOL: usize = 0xB7449C;
@@ -786,10 +779,7 @@ pub fn load_specific_driver_models_for_car(car: i32) {
     }
 }
 
-/// A string of the exe's `.rdata` (pushed as an immediate address by the original).
-fn s(addr: usize) -> GPtr<u8> {
-    GPtr::from_addr(addr)
-}
+use sa_core::field::pa as s;
 
 orig! {
     /// `CFileMgr::ChangeDir(const char*)` (0x538730)

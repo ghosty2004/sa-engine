@@ -74,6 +74,26 @@ pub fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
     if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
 }
 
+/// [`entity_pos`] as a pointer to the three f32.
+pub fn entity_pos_f(e: GPtr<u8>) -> GPtr<f32> {
+    entity_pos(e).cast()
+}
+
+/// [`entity_pos`] as a pointer to the three dwords (bit copies).
+pub fn entity_pos_u(e: GPtr<u8>) -> GPtr<u32> {
+    entity_pos(e).cast()
+}
+
+/// The entity's position vector, read (three f32).
+pub fn entity_pos3(e: GPtr<u8>) -> [f32; 3] {
+    sa_core::field::rd3f(entity_pos(e))
+}
+
+/// `CEntity::m_nType` (the low 3 bits of +0x36).
+pub fn entity_type(e: GPtr<u8>) -> u8 {
+    rd::<u8>(e, 0x36) & 7
+}
+
 /// The camera position the original reads: `[0xB6F03C] + 0x30` when set, else the vector at 0xB6F02C.
 pub fn cam_pos() -> GPtr<f32> {
     let e = CAM_ENTITY.get();

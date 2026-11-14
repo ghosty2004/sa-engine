@@ -4,7 +4,7 @@
 //! `TheScripts.cpp` and `sa-formats/src/scm` (segment layout) as reading aids.
 
 use sa_core::abi::HookReg;
-use sa_core::mem::{GPtr, GameData};
+use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
 orig! {
@@ -68,9 +68,7 @@ const MISSION_PACK: usize = 0xB72910;
 /// `RsGlobal.maximumWidth`
 const MAXIMUM_WIDTH: usize = 0xC17044;
 
-fn g<T: GameData>(a: usize) -> GPtr<T> {
-    GPtr::from_addr(a)
-}
+use sa_core::field::g;
 
 fn w8(a: usize, v: u8) {
     g::<u8>(a).write(v)
@@ -80,9 +78,7 @@ fn w16(a: usize, v: u16) {
     g::<u16>(a).write(v)
 }
 
-fn w32(a: usize, v: u32) {
-    g::<u32>(a).write(v)
-}
+use sa_core::field::gw32 as w32;
 
 fn zero_dwords(a: usize, n: usize) {
     for i in 0..n {

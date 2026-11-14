@@ -68,25 +68,16 @@ orig! {
     fn fx_render_add_tri(x1: u32, y1: u32, z1: u32, x2: u32, y2: u32, z2: u32, x3: u32, y3: u32, z3: u32, u1: u32, v1: u32, u2: u32, v2: u32, u3: u32, v3: u32, r1: u32, g1: u32, b1: u32, a1: u32, r2: u32, g2: u32, b2: u32, a2: u32, r3: u32, g3: u32, b3: u32, a3: u32) = cdecl 0x4A1410 => unported;
 }
 
-/// `rand()` as the original call returning to `site` calls it.
-fn rand_at(site: u32) -> i32 {
-    sa_core::orig::at_site(site, sa_core::crt::rand)
-}
+use sa_core::crt::rand_at;
 
 /// `fild` of a `rand()` result times 1/RAND_MAX (0x858C7C, 3.0518509e-05).
 fn rand_unit(site: u32) -> X87 {
     xi(rand_at(site)).fmul_m(f32::from_bits(0x3800_0100))
 }
 
-/// `fcomp` + `fnstsw ax` + `test ah, mask` + `jp` taken.
-fn jp(a: X87, b: X87, mask: u8) -> bool {
-    a.fcom(b).test_parity(mask)
-}
+use sa_math::fpu::fcom_parity as jp;
 
-/// A stack buffer of `N` dwords as a game pointer.
-fn buf<const N: usize>(b: &mut [u32; N]) -> GPtr<u8> {
-    GPtr::from_raw(b as *mut [u32; N]).cast()
-}
+use sa_core::field::ptr_of as buf;
 
 /// Group `i` of the array at +8 (re-read, as the original does on every access).
 fn group(this: GPtr<u8>, i: i32) -> GPtr<u8> {

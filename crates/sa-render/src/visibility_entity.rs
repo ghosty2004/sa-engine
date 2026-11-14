@@ -37,9 +37,7 @@ const FADE_OFFSET: usize = 0xB76848;
 /// `CVisibilityPlugins::RenderAtomicWithAlphaCB` (0x732660)
 const RENDER_ATOMIC_WITH_ALPHA_CB: u32 = 0x732660;
 
-fn c(addr: usize) -> f32 {
-    g::<f32>(addr).read()
-}
+use sa_core::field::gf as c;
 
 /// `CVisibilityPlugins::CalculateFadingAtomicAlpha(CBaseModelInfo* mi, CEntity* e, float dist)` (0x732500, cdecl):
 /// `a = min'(colModel radius + [0xB76848], LOD multiplier * lodDistance)`; without a LOD entity (+0x30) and with

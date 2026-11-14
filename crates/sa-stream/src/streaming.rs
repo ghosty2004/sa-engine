@@ -310,15 +310,9 @@ const F_INV_32768: u32 = 0x3800_0000; // 0x858B14
 const F_M2: u32 = 0xC000_0000; // 0x858B18
 const F_6: u32 = 0x40C0_0000; // 0x858B44
 
-fn g<T: GameData>(addr: usize) -> GPtr<T> {
-    GPtr::from_addr(addr)
-}
-fn k(bits: u32) -> f32 {
-    f32::from_bits(bits)
-}
-fn x(v: f32) -> X87 {
-    X87::from_f32(v)
-}
+use sa_core::field::g;
+use sa_math::fpu::fbits as k;
+use sa_math::fpu::x;
 
 orig! {
     // --- CdStream (owner M)
@@ -839,14 +833,7 @@ fn for_each_in_list(list: GPtr<u8>, mut f: impl FnMut(GPtr<u8>)) {
     }
 }
 
-/// `floor` as the CRT computes it on a double (exact for every double).
-fn floor_f64(v: f64) -> f64 {
-    if v.is_nan() || v.is_infinite() || v.abs() >= 4_503_599_627_370_496.0 {
-        return v;
-    }
-    let t = v as i64 as f64;
-    if t > v { t - 1.0 } else { t }
-}
+use sa_math::fpu::floor_f64;
 /// `_ftol(floor(v * 0.02 + 60))` with PC=24 (`CWorld::GetSectorX/Y`).
 fn sector_of(v: X87) -> i32 {
     let s = v.fmul_m(k(F_0_02)).fadd_m(k(F_60));

@@ -34,9 +34,7 @@ const _: () = {
     assert!(core::mem::offset_of!(CVector2D, y) == 4);
 };
 
-fn ld(v: f32) -> X87 {
-    X87::from_f32(v)
-}
+use crate::fpu::x as ld;
 
 /// `fld a; fmul b` (b a memory operand).
 fn mul(a: f32, b: f32) -> X87 {

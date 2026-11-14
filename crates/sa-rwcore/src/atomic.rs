@@ -85,9 +85,7 @@ orig! {
     pub fn get_world_call(a: GPtr<u8>) -> GPtr<u8> = cdecl 0x751050 => get_world;
 }
 
-fn a32(p: GPtr<u8>) -> u32 {
-    p.addr() as u32
-}
+use sa_core::field::addr32 as a32;
 
 /// The atomic registry (`0x8D624C`).
 pub fn atomic_registry() -> GPtr<u8> {

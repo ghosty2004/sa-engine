@@ -229,9 +229,7 @@ pub fn update_sex_appeal_stat() {
     check_for_stats_message_o();
 }
 
-fn kf(bits: u32) -> f32 {
-    f32::from_bits(bits)
-}
+use sa_math::fpu::fbits as kf;
 
 /// `CStats::UpdateRespectStat(uint8 reset)` (0x55BC50, cdecl): `reset` sets the last/shown respect (0x8CDEC8 /
 /// 0x8CDEC4) to -99. Otherwise respect = gang/weapon/mission/tag/... terms (x87 PC24, see the original's operand

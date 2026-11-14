@@ -306,11 +306,7 @@ pub fn nonnull<T>(p: GPtr<T>, what: &'static str) -> GPtr<T> {
     p
 }
 
-/// A pointer to a constant or code address in the original image (callbacks passed by address,
-/// `.rdata` strings). Phases B/C need owned replacements where these are dereferenced.
-pub fn image<T>(addr: u32) -> GPtr<T> {
-    GPtr::from_addr(addr as usize)
-}
+pub use sa_core::field::gu as image;
 
 /// `HOOKS` placeholder so `shared` fits the per-module pattern (no ports here).
 pub const HOOKS: &[sa_core::abi::HookReg] = &[];

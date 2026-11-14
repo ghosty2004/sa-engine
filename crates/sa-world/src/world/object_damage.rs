@@ -57,20 +57,9 @@ const F_150: f32 = 150.0;
 const F_30: f32 = 30.0;
 const F_M500: f32 = -500.0;
 
-/// A Rust local passed by address to an original callee.
-fn p<T>(v: &mut T) -> GPtr<u8> {
-    GPtr::from_raw(v as *mut T).cast()
-}
+use sa_core::field::ptr_of as p;
 
-/// `GetPosition()`.
-fn ent_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() {
-        e.byte_add(4)
-    } else {
-        m.byte_add(0x30)
-    }
-}
+use crate::world::common::entity_pos as ent_pos;
 
 /// The smash sequence of effects 20 / 21 / 200 / 202: no collision, invisible (+0x1C bits 0 and 7
 /// cleared), off the moving list unless static, static (+0x1C bit 2), explosion proof (+0x40 bit

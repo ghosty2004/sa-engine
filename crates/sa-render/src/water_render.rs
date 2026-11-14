@@ -250,9 +250,7 @@ fn rw_rs(state: u32, value: u32) {
     rw_render_state_set(state, value);
 }
 
-fn rw_rand_at(site: u32) -> i32 {
-    sa_core::orig::at_site(site, sa_core::crt::rand)
-}
+use sa_core::crt::rand_at as rw_rand_at;
 
 /// A water vertex: (x, y, the four CRenPar dwords).
 fn rw_vertex(i: i16) -> (i32, i32, [u32; 4]) {

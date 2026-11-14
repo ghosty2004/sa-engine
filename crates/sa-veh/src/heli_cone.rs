@@ -42,9 +42,7 @@ fn v3(p: &mut [f32; 3]) -> GPtr<CVector> {
     GPtr::from_raw(p.as_mut_ptr()).cast()
 }
 
-fn p8(p: &mut [f32; 3]) -> GPtr<u8> {
-    GPtr::from_raw(p.as_mut_ptr()).cast()
-}
+use sa_core::field::ptr_of as p8;
 
 /// `TheCamera.GetPosition()`.
 fn cam_pos() -> GPtr<f32> {

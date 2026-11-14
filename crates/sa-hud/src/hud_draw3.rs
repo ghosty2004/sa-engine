@@ -162,13 +162,9 @@ const ONE_BITS: u32 = 0x3F80_0000;
 /// `40.0` stored by `mov dword` (the stats window's left edge)
 const FORTY_BITS: u32 = 0x4220_0000;
 
-fn k(bits: u32) -> f32 {
-    f32::from_bits(bits)
-}
+use sa_math::fpu::fbits as k;
 
-fn b(addr: usize) -> u8 {
-    g::<u8>(addr).read()
-}
+use sa_core::field::gr8 as b;
 
 fn max_w() -> X87 {
     xi(g::<i32>(RS_MAX_WIDTH).read())

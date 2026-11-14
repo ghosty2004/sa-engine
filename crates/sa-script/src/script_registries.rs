@@ -40,9 +40,7 @@ orig! {
     fn decision_maker_types_add(t: GPtr<u8>, dm: GPtr<u8>, ty: u32, mission: u32) -> u32 = thiscall 0x607050 => unported;
 }
 
-fn ga<T: sa_core::mem::GameData>(addr: usize) -> GPtr<T> {
-    GPtr::from_addr(addr)
-}
+use sa_core::field::g as ga;
 
 /// `CTheScripts::WipeLocalVariableMemoryForMissionScript()` (stub 0x464BB0 → 0x1569F10): the 0x400 mission local
 /// variables zeroed (`rep stosd`).
@@ -502,11 +500,7 @@ pub fn running_script_set_char_coordinates(_this: GPtr<u8>, ped: GPtr<u8>, px: f
     v_entity_teleport(ped, px.to_bits(), py.to_bits(), z.to_bits(), 0);
 }
 
-/// An entity's position (matrix +0x30, else the placement +4).
-fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = e.byte_add(0x14).cast::<GPtr<u8>>().read();
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos;
 
 /// The pool slot of `handle` (index = handle >> 8, its flags byte must equal the handle's low byte), else NULL.
 fn pool_at(pool: usize, size: isize, handle: i32) -> GPtr<u8> {

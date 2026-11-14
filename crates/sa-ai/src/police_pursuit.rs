@@ -87,11 +87,7 @@ orig! {
     fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
 }
 
-/// The entity's position: the matrix translation (+0x30 of the matrix at +0x14) or the placement (+4).
-fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos;
 
 /// The weapon type of the ped's current weapon slot (`m_aWeapons[m_nActiveWeaponSlot].m_eWeaponType`).
 fn current_weapon_type(ped: GPtr<u8>) -> u32 {

@@ -98,10 +98,7 @@ fn for_pool_desc(pool_cell: usize, size: u32, mut f: impl FnMut(GPtr<u8>)) {
     }
 }
 
-fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use crate::world::common::entity_pos;
 
 /// `CWorld::ProcessAttachedEntities` (0x5647F0, static): every attached vehicle (+0xFC; pool walked from the end)
 /// gets +0x128 = the entity it is attached to, `PositionAttachedEntity` and its RW matrix/frame updated; every

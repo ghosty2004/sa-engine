@@ -4,7 +4,7 @@
 //! order, none of which are in the 1.0 US bytes).
 
 use crate::abi::HookReg;
-use crate::mem::{GPtr, GameData, GlobalDesc};
+use crate::mem::{GPtr, GlobalDesc};
 use crate::platform::{RS_MAXIMUM_HEIGHT, RS_MAXIMUM_WIDTH};
 use crate::{hook, orig};
 use sa_math::x87::X87;
@@ -25,9 +25,7 @@ const RASTER_HEIGHT: isize = 0x10;
 const RECT_W: isize = 8;
 const RECT_H: isize = 0xC;
 
-fn at<T: GameData>(p: GPtr<u8>, off: isize) -> GPtr<T> {
-    p.byte_add(off).cast()
-}
+use crate::field::at;
 
 /// Calls into other functions (original or Rust, decided by their hooks).
 pub mod call {

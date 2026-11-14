@@ -98,11 +98,7 @@ const GAME_STATE: usize = 0x96A8B0;
 /// `CGameLogic::TimeOfLastEvent` (0x96A8AC)
 const LAST_EVENT: usize = 0x96A8AC;
 
-/// The entity position (matrix +0x30 or simple transform +4).
-fn ent_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use crate::world::common::entity_pos as ent_pos;
 
 /// The fade-out the three resurrection states start 3 s after the event, while the previous frame was still
 /// within those 3 s (`CTimer::m_snPreviousTimeInMilliseconds` 0xB7CB78).

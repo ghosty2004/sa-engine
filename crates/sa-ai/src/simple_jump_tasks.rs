@@ -184,11 +184,7 @@ pub fn simple_jump_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     1
 }
 
-/// The ped's position: `m_matrix` +0x30, else the placement position +4.
-fn pos_ptr(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos as pos_ptr;
 
 /// Sets every collision sphere radius (+0xC of the 0x14-byte spheres at `colData +8`, count word +0).
 fn set_sphere_radii(col: GPtr<u8>, r: u32) {

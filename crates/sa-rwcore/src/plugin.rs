@@ -59,9 +59,7 @@ orig! {
     pub fn get_plugin_offset_call(reg: GPtr<u8>, id: u32) -> i32 = cdecl 0x808470 => registry_get_plugin_offset;
 }
 
-fn a32(p: GPtr<u8>) -> u32 {
-    p.addr() as u32
-}
+use sa_core::field::addr32 as a32;
 
 /// The engine registry (`0x8E2298`).
 pub fn engine_registry() -> GPtr<u8> {

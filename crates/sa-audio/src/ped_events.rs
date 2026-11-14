@@ -41,12 +41,7 @@ orig! {
     fn ae_random_int(min: i32, max: i32) -> i32 = cdecl 0x4D9C10 => crate::utility::get_random_number_in_range_int;
 }
 
-/// The placement position of `e`: its matrix's position (+0x30) when it has a matrix (+0x14), else the
-/// placement (+4).
-fn entity_pos(e: GPtr<u8>) -> GPtr<u32> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4).cast() } else { m.byte_add(0x30).cast() }
-}
+use sa_world::world::common::entity_pos_u as entity_pos;
 
 /// One of the two event-0x77 sounds: `Initialise(2, sfx, this, pos, volume, 1, 1, 1, 0, 0, 0, 0)`,
 /// +0x1C = `speed`, +0x20 = 0.06, +0x18 = 1.5, event +0xC = `event`, `RequestNewSound`.

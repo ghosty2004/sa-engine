@@ -184,15 +184,11 @@ const S_FFFS: usize = 0x8689C8;
 const S_COMMA: usize = 0x8689C4;
 const S_CSPLAY: usize = 0x8689BC;
 
-fn gp(a: usize) -> GPtr<u8> {
-    GPtr::from_addr(a)
-}
+use sa_core::field::pa as gp;
 fn gu32(a: usize) -> GPtr<u32> {
     g::<u32>(a)
 }
-fn lp<const N: usize>(b: &mut [u32; N]) -> GPtr<u8> {
-    GPtr::from_raw(b.as_mut_ptr()).cast()
-}
+use sa_core::field::ptr_of as lp;
 fn lb<const N: usize>(b: &mut [u8; N]) -> GPtr<u8> {
     GPtr::from_raw(b.as_mut_ptr())
 }

@@ -42,13 +42,9 @@ const K_QUARTER: usize = 0x858C84;
 const K_TWO_HALF: usize = 0x858FA0;
 const K_EPS: usize = 0x858FC4;
 
-fn k(addr: usize) -> f32 {
-    g::<f32>(addr).read()
-}
+use sa_core::field::gf as k;
 
-fn x(v: f32) -> X87 {
-    X87::from_f32(v)
-}
+use sa_math::fpu::x;
 
 /// `(m.y * d.y + m.x * d.x) + m.z * d.z` of the matrix row at `off` (x87).
 fn dot_row(car: GPtr<u8>, off: isize, d: [f32; 3]) -> X87 {

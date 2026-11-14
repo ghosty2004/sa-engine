@@ -20,15 +20,7 @@ orig! {
     fn intel_can_see_entity_with_lights(i: GPtr<u8>, e: GPtr<u8>, b: u32) -> f64 = thiscall 0x605550 => unported;
 }
 
-/// The position of an entity: the matrix's (+0x14) translation (+0x30) when it has one, else the placement (+4).
-fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() {
-        e.byte_add(4)
-    } else {
-        m.byte_add(0x30)
-    }
-}
+use sa_world::world::common::entity_pos;
 
 /// `CEventDamage::AffectsPedGroup(CPedGroup*)` (0x4B38D0, thiscall, `ret 4`; vtable slot +0x18).
 ///

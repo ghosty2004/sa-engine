@@ -298,9 +298,7 @@ fn raster_of(slot: usize) -> u32 {
     rd::<u32>(g::<GPtr<u8>>(slot).read(), 0)
 }
 
-fn rand_at(site: u32) -> i32 {
-    sa_core::orig::at_site(site, sa_core::crt::rand)
-}
+use sa_core::crt::rand_at;
 
 /// `fld [a]; fcomp [b]; fnstsw ax; test ah, 41h; jne` → `[b]`, else `[a]`: `[a]` when it is larger;
 /// ties and unordered give `[b]`.

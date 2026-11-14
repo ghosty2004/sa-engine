@@ -69,9 +69,7 @@ const _: () = {
     assert!(offset_of!(CMatrix, owns_attached_matrix) == 0x44);
 };
 
-fn ld(v: f32) -> X87 {
-    X87::from_f32(v)
-}
+use crate::fpu::x as ld;
 
 /// `fld a; fmul b` (b a memory operand).
 fn mul(a: f32, b: f32) -> X87 {

@@ -70,28 +70,13 @@ orig! {
     fn entity_clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
 }
 
-/// A dword-aligned stack object of `N` dwords, as a game pointer.
-fn local<const N: usize>(b: &mut [u32; N]) -> GPtr<u8> {
-    GPtr::from_raw(b as *mut [u32; N]).cast()
-}
+use sa_core::field::ptr_of as local;
 
-/// The f32 constant at `a`.
-fn k(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
+use sa_core::field::gf as k;
 
-/// An entity's position: its matrix +0x30, or the placement at +4 without a matrix.
-fn pos_of(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos as pos_of;
 
-/// Copies the vector at `src` to `dst` (three dwords).
-fn copy3(dst: GPtr<u8>, src: GPtr<u8>) {
-    for i in 0..3 {
-        wr::<u32>(dst, 4 * i, rd::<u32>(src, 4 * i));
-    }
-}
+use sa_core::field::copy3;
 
 /// `|v|^2` of the vector at `v` in the original's order (`x x + y y + z z`).
 fn mag_sq(v: GPtr<u8>) -> X87 {

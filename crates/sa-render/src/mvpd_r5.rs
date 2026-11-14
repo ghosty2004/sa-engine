@@ -167,9 +167,7 @@ pub fn plant_process_entry_collision_data_sections(entry: GPtr<u8>, center: GPtr
     1
 }
 
-fn lp<T>(v: &mut T) -> GPtr<u8> {
-    GPtr::from_raw(v as *mut T).cast()
-}
+use sa_core::field::ptr_of as lp;
 
 orig! {
     /// `ProcObjectMan_c::ProcessTriangleAdded(CPlantLocTri*)` (0x5A3F20, bool in AL)

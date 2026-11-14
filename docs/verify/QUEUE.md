@@ -53,8 +53,8 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | clump-1 | 4 | RW | da9de7f1 | master | 0 | 0 | 0 | 4 | 0 | L2 3, split 1 |
 | framelimit-ai | 5 | AI, UNK-game | 4b8a01b9 | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
 | framelimit-render | 1 | RENDER | 4b8a01b9 | master | 1 | 0 | 0 | 0 | 0 | L3-only 1 |
-| frontier-1-1 | 15 | AI, UNK-game, VEH, WORLD | 21ae2faf | worktree-agent-adab96e32a9742efe | 15 | 0 | 0 | 0 | 0 | L2 15 |
-| frontier-1-2 | 5 | AI, RENDER, UNK-game | b6de5b5a | worktree-agent-adab96e32a9742efe | 5 | 0 | 0 | 0 | 0 | L2 5 |
+| frontier-1-1 | 15 | AI, UNK-game, VEH, WORLD | 8c92bd74 | master | 15 | 0 | 0 | 0 | 0 | L2 15 |
+| frontier-1-2 | 5 | AI, RENDER, UNK-game | 4e5ce171 | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
 | gen2-anim-1 | 1 | UNK-game | ed288e85 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | gen2-coll-1 | 20 | UNK-game | ed288e85 | master | 0 | 0 | 0 | 20 | 0 | L2 8, split 12 |
 | gen2-core-1 | 4 | UNK-game | ed288e85 | master | 0 | 0 | 0 | 4 | 0 | L2 4 |
@@ -269,11 +269,11 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | samp-rw-2 | 2 | RW | 87822502 | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
 | samp-script-1 | 6 | SCRIPT | 87822502 | master | 6 | 0 | 0 | 0 | 0 | L2 6 |
 | samp-unk-1 | 14 | UNK-game | 87822502 | master | 14 | 0 | 0 | 0 | 0 | L2 14 |
-| samp2-fx-1 | 2 | RENDER | 1d5463e2 | worktree-agent-adab96e32a9742efe | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| samp2-phys-1 | 2 | PHYS | 45da4209 | worktree-agent-adab96e32a9742efe | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| samp2-fx-1 | 2 | RENDER | 4c5c83ca | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| samp2-phys-1 | 2 | PHYS | 4a9d857f | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
 | samp2-render-1 | 3 | RENDER | 572a1369 | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| samp2-water-1 | 4 | RENDER, WEAPON | 1d5463e2 | worktree-agent-adab96e32a9742efe | 4 | 0 | 0 | 0 | 0 | L2 1, L3-only 3 |
-| samp2-weapon-1 | 3 | WEAPON | 1d5463e2 | worktree-agent-adab96e32a9742efe | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| samp2-water-1 | 4 | RENDER, WEAPON | 4c5c83ca | master | 4 | 0 | 0 | 0 | 0 | L2 1, L3-only 3 |
+| samp2-weapon-1 | 3 | WEAPON | 4c5c83ca | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
 | save-core-1 | 3 | SAVE | 9b1fb21c | master | 3 | 0 | 0 | 0 | 0 | L3-only 1, split 2 |
 | save-veh-1 | 5 | VEH | 9b1fb21c | master | 5 | 0 | 0 | 0 | 0 | L2 1, split 4 |
 | script5-1 | 6 | SCRIPT | 7ff4d4e0 | master | 6 | 0 | 0 | 0 | 0 | L2 6 |
@@ -388,8 +388,8 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | world6-1 | 10 | WORLD | 88a72154 | master | 10 | 0 | 0 | 0 | 0 | L2 10 |
 | world6-2 | 15 | WORLD | ecb128cf | master | 15 | 0 | 0 | 0 | 0 | L2 15 |
 | world6-3 | 34 | WORLD | 9a4a4418 | master | 34 | 0 | 0 | 0 | 0 | L2 33, split 1 |
-| world6-4 | 11 | WORLD | 2d637c0d | worktree-agent-adab96e32a9742efe | 11 | 0 | 0 | 0 | 0 | L2 10, split 1 |
-| world6-5 | 4 | WORLD | dbc51762 | worktree-agent-adab96e32a9742efe | 4 | 0 | 0 | 0 | 0 | L2 4 |
+| world6-4 | 11 | WORLD | 51f76194 | master | 11 | 0 | 0 | 0 | 0 | L2 10, split 1 |
+| world6-5 | 4 | WORLD | 8e228924 | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
 | writerq-ai-1 | 3 | AI | ddda169b | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
 | writerq-ai-2 | 11 | AI, SCRIPT | 9b393bba | master | 11 | 0 | 0 | 0 | 0 | L2 11 |
 | writerq-ai-3 | 11 | AI, UNK-game | 5626d260 | master | 11 | 0 | 0 | 0 | 0 | L2 11 |

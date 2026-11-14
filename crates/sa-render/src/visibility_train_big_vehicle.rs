@@ -42,9 +42,7 @@ const K_ANGLE: usize = 0x85_8CC4;
 /// `CVisibilityPlugins::RenderAtomic` (0x732B30), the render function stored in the alpha list entries.
 const RENDER_ATOMIC: u32 = 0x73_2B30;
 
-fn k(addr: usize) -> X87 {
-    X87::from_f32(g::<f32>(addr).read())
-}
+use sa_core::field::gx as k;
 
 fn dist() -> X87 {
     k(DISTANCE_FROM_CAMERA)

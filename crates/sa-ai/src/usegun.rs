@@ -166,19 +166,9 @@ fn ik() -> GPtr<u8> {
     GPtr::<u8>::from_addr(IK_CHAIN_MAN)
 }
 
-fn cf(addr: usize) -> X87 {
-    x(g::<f32>(addr).read())
-}
+use sa_core::field::gx as cf;
 
-/// The entity's position: `m_matrix->pos` (+0x30) when it has a matrix, else the placement (+4).
-fn ent_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() {
-        e.byte_add(4)
-    } else {
-        m.byte_add(0x30)
-    }
-}
+use sa_world::world::common::entity_pos as ent_pos;
 
 /// Bit 26 of `ped+0x46C` (`bIsDucking`) as 0/1.
 fn ducking(ped: GPtr<u8>) -> u32 {

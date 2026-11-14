@@ -53,9 +53,7 @@ const ASPECT: usize = 0xC3EFA4;
 /// The ray length (0x858A48)
 const K_RANGE: usize = 0x858A48;
 
-fn kf(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
+use sa_core::field::gf as kf;
 fn tan(v: X87) -> X87 {
     v.fptan().map_or(v, |(t, _)| t)
 }

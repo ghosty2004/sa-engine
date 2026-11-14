@@ -154,9 +154,7 @@ fn gu32(a: usize) -> GPtr<u32> {
 fn gu8(a: usize) -> GPtr<u8> {
     g::<u8>(a)
 }
-fn p(a: usize) -> GPtr<u8> {
-    GPtr::from_addr(a)
-}
+use sa_core::field::pa as p;
 
 /// `CCutsceneMgr::DeleteCutsceneData_overlay()` (0x5AFD60, cdecl).
 ///

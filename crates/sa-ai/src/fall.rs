@@ -126,10 +126,7 @@ orig! {
     fn ped_set_ped_state(p: GPtr<u8>, s: u32) = thiscall 0x5E4500 => unported;
 }
 
-/// Pointer to a Rust stack buffer (stands in for an object the original builds on its own stack).
-fn buf<const N: usize>(b: &mut [u32; N]) -> GPtr<u8> {
-    GPtr::from_raw(b as *mut [u32; N]).cast()
-}
+use sa_core::field::ptr_of as buf;
 
 fn time_ms() -> u32 {
     g::<u32>(TIME_MS).read()
@@ -140,10 +137,7 @@ fn gf(addr: usize) -> X87 {
     x(gm(addr))
 }
 
-/// A float memory operand (`fmul dword [addr]` ...).
-fn gm(addr: usize) -> f32 {
-    g::<f32>(addr).read()
-}
+use sa_core::field::gf as gm;
 
 // ---- constructors and leaves ----------------------------------------------------------------------------
 

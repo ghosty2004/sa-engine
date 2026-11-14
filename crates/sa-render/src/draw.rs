@@ -14,9 +14,7 @@ const CAMERA_WIDESCREEN: usize = 0xB6F065;
 /// `CDraw::ms_fAspectRatio`.
 const ASPECT_RATIO: usize = 0xC3EFA4;
 
-fn rdf(a: usize) -> f32 {
-    GPtr::<f32>::from_addr(a).read()
-}
+use sa_core::field::gf as rdf;
 fn wrf(a: usize, v: f32) {
     GPtr::<f32>::from_addr(a).write(v);
 }

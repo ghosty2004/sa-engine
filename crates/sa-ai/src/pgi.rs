@@ -43,9 +43,7 @@ orig! {
     fn pgi_add_event(i: GPtr<u8>, e: GPtr<u8>) = thiscall 0x5F7470 => unported;
 }
 
-fn p(this: GPtr<u8>, off: isize) -> GPtr<u8> {
-    rd::<GPtr<u8>>(this, off)
-}
+use sa_core::field::rdp as p;
 
 /// Deletes `this+off` when set and clears it.
 fn delete_field(this: GPtr<u8>, off: isize) {

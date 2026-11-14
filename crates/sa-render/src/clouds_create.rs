@@ -25,9 +25,7 @@ const MAX_ALPHA: usize = 0xc6_bcf8;
 const CAMERA_MATRIX: usize = 0xb6_f03c;
 const CAMERA_PLACEMENT_POS: usize = 0xb6_f02c;
 
-fn rand_at(ret: u32) -> i32 {
-    sa_core::orig::at_site(ret, sa_core::crt::rand)
-}
+use sa_core::crt::rand_at;
 
 /// `rand() * (1 / 32767)` (0x858C7C) as the x87 value.
 fn rand_unit(ret: u32) -> X87 {

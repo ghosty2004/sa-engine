@@ -165,15 +165,9 @@ orig! {
     fn prostitute_solicit_is_task_valid(a: GPtr<u8>, b: GPtr<u8>) -> u8 = cdecl 0x661BB0 => unported;
 }
 
-/// An f32 of the image (`.rdata` constant or `.data` tunable), read when the original reads it.
-fn c(addr: usize) -> f32 {
-    g::<f32>(addr).read()
-}
+use sa_core::field::gf as c;
 
-/// A dword of the image.
-fn d(addr: usize) -> u32 {
-    g::<u32>(addr).read()
-}
+use sa_core::field::gr32 as d;
 
 fn now() -> u32 {
     d(TIME_MS)
@@ -183,20 +177,9 @@ fn ik_man() -> GPtr<u8> {
     GPtr::from_addr(IK_CHAIN_MAN)
 }
 
-/// A pointer to a Rust local standing in for a slot of the original's stack frame.
-fn slot<T>(v: &mut T) -> GPtr<u8> {
-    GPtr::from_raw(v as *mut T).cast()
-}
+use sa_core::field::ptr_of as slot;
 
-/// Entity position: matrix +0x30, else the placement at +4.
-fn ent_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() {
-        e.byte_add(4)
-    } else {
-        m.byte_add(0x30)
-    }
-}
+use sa_world::world::common::entity_pos as ent_pos;
 
 /// The ped's `CTaskManager` (`m_pIntelligence` +4).
 fn task_mgr(ped: GPtr<u8>) -> GPtr<u8> {

@@ -64,3 +64,10 @@ mod tests {
         assert_eq!(v, [41, 18467, 6334, 26500, 19169]);
     }
 }
+
+/// `rand()` as the original call whose return address is `site` calls it (determinism mode hashes
+/// `(caller, value)`; ADR-001 caller attribution). Shared by every port crate.
+#[inline]
+pub fn rand_at(site: u32) -> i32 {
+    crate::orig::at_site(site, rand)
+}

@@ -6,12 +6,8 @@ use sa_core::abi::HookReg;
 use sa_core::hook;
 use sa_core::mem::GPtr;
 
-fn rd<T: sa_core::mem::GameData>(p: GPtr<u8>, off: isize) -> T {
-    p.byte_add(off).cast::<T>().read()
-}
-fn wr<T: sa_core::mem::GameData>(p: GPtr<u8>, off: isize, v: T) {
-    p.byte_add(off).cast::<T>().write(v)
-}
+use sa_core::field::rd;
+use sa_core::field::wr;
 
 /// The shared body (thiscall; objects +0, flags +4, size +8, firstFree +0xC). `firstFree` advances, stored at each
 /// step, to the next slot whose flag has bit 7 (free) set; reaching `size` (read once at entry) the first time stores

@@ -161,15 +161,7 @@ fn rnd_f(lo: f32, hi: f32) -> f32 {
     X87::from_f64_exact(grn_f(lo, hi)).to_f32()
 }
 
-/// `m_matrix ? &m_matrix->pos : &placement.pos`.
-fn entity_pos(e: GPtr<u8>) -> GPtr<f32> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() {
-        e.byte_add(4).cast()
-    } else {
-        m.byte_add(0x30).cast()
-    }
-}
+use sa_world::world::common::entity_pos_f as entity_pos;
 
 /// `fcomp` + `fnstsw ax` + `test ah, mask` + `jnp` taken.
 fn jnp(a: X87, b: X87, mask: u8) -> bool {

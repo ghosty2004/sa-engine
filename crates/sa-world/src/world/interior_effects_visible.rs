@@ -30,10 +30,7 @@ orig! {
 const MODEL_INFOS: usize = 0xA9_B0C8;
 const CURR_AREA: usize = 0xB7_2914;
 
-/// A Rust local passed by address to an original callee.
-fn p<T>(v: &mut T) -> GPtr<u8> {
-    GPtr::from_raw(v as *mut T).cast()
-}
+use sa_core::field::ptr_of as p;
 
 fn model_info(e: GPtr<u8>) -> GPtr<u8> {
     g::<GPtr<u8>>((MODEL_INFOS as isize + isize::from(rd::<i16>(e, 0x22)) * 4) as usize).read()
@@ -45,9 +42,7 @@ fn inside(v: [f32; 3], mn: &[f32; 3], mx: &[f32; 3]) -> bool {
     (0..3).all(|k| !x(v[k]).fcom(x(mn[k])).test_any(0x01) && !x(v[k]).fcom(x(mx[k])).test_parity(0x41))
 }
 
-fn read3(p: GPtr<u8>) -> [f32; 3] {
-    [rd::<f32>(p, 0), rd::<f32>(p, 4), rd::<f32>(p, 8)]
-}
+use sa_core::field::rd3f as read3;
 
 /// The position of a ped: its matrix position, else its placement.
 fn ped_pos(ped: GPtr<u8>) -> [f32; 3] {

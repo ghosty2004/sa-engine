@@ -65,16 +65,9 @@ orig! {
     fn world_add(e: GPtr<u8>) = cdecl 0x563220 => unported;
 }
 
-/// A stack buffer of `N` dwords as a game pointer.
-fn buf<const N: usize>(b: &mut [u32; N]) -> GPtr<u8> {
-    GPtr::from_raw(b as *mut [u32; N]).cast()
-}
+use sa_core::field::ptr_of as buf;
 
-/// The position of an entity: its matrix's (+0x30) or its placement's (+4).
-fn pos_ptr(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos as pos_ptr;
 
 /// `CAutomobile::SpawnFlyingComponent(int32 nodeIndex, uint32 type)` (0x6A8580).
 ///

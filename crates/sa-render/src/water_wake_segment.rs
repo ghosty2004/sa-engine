@@ -34,13 +34,9 @@ const UV_SHIFT_X: usize = 0xC2_28D4;
 const UV_SHIFT_Y: usize = 0xC2_28D8;
 const WIND_CLIPPED: usize = 0xC8_12EC;
 
-fn gf(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
+use sa_core::field::gf;
 
-fn rf(p: GPtr<u8>, off: isize) -> f32 {
-    p.byte_add(off).cast::<f32>().read()
-}
+use sa_core::field::rdf as rf;
 
 /// `fstp qword; call floor` (CRT 0x8219F0, exact).
 fn floor_x(v: X87) -> X87 {

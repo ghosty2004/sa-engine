@@ -113,10 +113,7 @@ pub fn is_in_air(ped: GPtr<u8>) -> u32 {
     u32::from(!hit)
 }
 
-fn ent_pos(e: GPtr<u8>) -> GPtr<f32> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4).cast() } else { m.byte_add(0x30).cast() }
-}
+use sa_world::world::common::entity_pos_f as ent_pos;
 
 /// `CPedGeometryAnalyser::LiesInsideBoundingBox(const CPed& ped, const CVector& pos, CEntity& entity)`
 /// (0x5F3880, cdecl). x87: outside the entity's bounding sphere (colmodel +0x24 radius; `r*r` not
@@ -188,9 +185,7 @@ orig! {
     fn col_sphere_intersect_ray(s: GPtr<u8>, start: GPtr<u8>, dir: GPtr<u8>, p1: GPtr<u8>, p2: GPtr<u8>) -> u8 = thiscall 0x40FF20 => unported;
 }
 
-fn fp<T>(v: &mut T) -> GPtr<u8> {
-    GPtr::from_raw(v as *mut T).cast()
-}
+use sa_core::field::ptr_of as fp;
 
 /// `CPedGeometryAnalyser::ComputeClosestSurfacePoint(const CVector& pos, const CVector corners[4], CVector& out)`
 /// (0x5F2C10, cdecl). x87, best = `FLT_MAX` (kept in a register; f32 after the first update). For each edge

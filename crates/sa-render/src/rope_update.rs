@@ -88,21 +88,14 @@ const OBJECT_POOL: usize = 0xB7449C;
 /// `CRT _CIpow`
 const CI_POW: usize = 0x822130;
 
-/// An f32 of the exe's data.
-fn c(addr: usize) -> f32 {
-    g::<f32>(addr).read()
-}
+use sa_core::field::gf as c;
 
 /// The u16 model index stored at `addr` (`ModelIndices`).
 fn mi(addr: usize) -> i32 {
     i32::from(g::<u16>(addr).read())
 }
 
-/// An entity's position (matrix +0x30, else the placement +4).
-fn pos_ptr(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos as pos_ptr;
 
 /// The bounding box's max z of an entity's model (`ms_modelInfoPtrs[model]->m_pColModel->m_boundBox.m_vecMax.z`).
 fn model_max_z(e: GPtr<u8>) -> f32 {

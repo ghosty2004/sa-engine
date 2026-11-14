@@ -57,9 +57,7 @@ orig! {
     pub fn does_infinite_line_cross_finite_line_call(ax: f32, ay: f32, bx: f32, by: f32, ox: f32, oy: f32, dx: f32, dy: f32) -> i32 = cdecl 0x71DB30 => does_infinite_line_cross_finite_line;
 }
 
-fn ld(v: f32) -> X87 {
-    X87::from_f32(v)
-}
+use sa_math::fpu::x as ld;
 
 /// 0x532240 (cdecl; gta-reversed `CDebug::DebugInitTextBuffer`, called from `CGame::Init1` where gr
 /// calls it): clears the `uint16` count at 0xB71508 (gr reserves a `std::vector` instead).

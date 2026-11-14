@@ -38,17 +38,11 @@ const K_HALF: usize = 0x858B8C;
 /// 0.0
 const K_ZERO: usize = 0x858B50;
 
-fn gf(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
+use sa_core::field::gf;
 
-fn v3(p: GPtr<u8>) -> [f32; 3] {
-    [rd::<f32>(p, 0), rd::<f32>(p, 4), rd::<f32>(p, 8)]
-}
+use sa_core::field::rd3f as v3;
 
-fn ptr(v: &mut [f32; 3]) -> GPtr<u8> {
-    GPtr::from_raw(v.as_mut_ptr()).cast()
-}
+use sa_core::field::ptr_of as ptr;
 
 /// x87 `min` as the loops do it: `fld cand; fld cur; fcomp st(1)`, `test ah, 5` / `jp` keeps the candidate unless
 /// the current value is below it; the kept register value is stored as f32.

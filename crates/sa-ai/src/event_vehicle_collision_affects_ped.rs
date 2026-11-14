@@ -38,14 +38,9 @@ orig! {
 const FACING_MIN: usize = 0x858F9C;
 const ZERO: usize = 0x858B50;
 
-fn buf<const N: usize>(b: &mut [u32; N]) -> GPtr<u8> {
-    GPtr::from_raw(b as *mut [u32; N]).cast()
-}
+use sa_core::field::ptr_of as buf;
 
-fn pos_ptr(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos as pos_ptr;
 
 /// `DotProduct(a, b) + d < 0.0` (x87: the ST0 dot plus the float, `fcomp` C0 alone).
 fn behind(a: GPtr<u8>, b: GPtr<u8>, d: u32) -> bool {

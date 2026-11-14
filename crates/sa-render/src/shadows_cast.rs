@@ -61,9 +61,7 @@ const FAN_INDICES: usize = 0xc4_03a8;
 /// `CShadows::pEmptyBunchList`.
 const EMPTY_BUNCH_LIST: usize = 0xc4_03d8;
 
-fn gf(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
+use sa_core::field::gf;
 
 /// The inlined `CPlaceable::GetMatrix()`: allocate and fill the matrix when the entity has none.
 fn get_matrix(e: GPtr<u8>) -> GPtr<u8> {
@@ -74,11 +72,7 @@ fn get_matrix(e: GPtr<u8>) -> GPtr<u8> {
     rd::<GPtr<u8>>(e, 0x14)
 }
 
-/// The entity position (`m_matrix ? &m_matrix->pos : &m_placement.pos`), no allocation.
-fn ent_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos as ent_pos;
 
 /// `max(a, b)` as the original's `fcomp; test ah, 0x41; jne` picks it (b when `a <= b` or unordered).
 fn pick_max(a: f32, b: f32) -> f32 {

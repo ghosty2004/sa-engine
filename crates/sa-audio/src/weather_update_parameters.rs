@@ -61,10 +61,7 @@ const WIND_OLD_FREQ: usize = 0x8CC2C4;
 /// `CRT _CIpow` (0x822130)
 const CI_POW: usize = 0x822130;
 
-/// An f32 of the exe's data (`.rdata` constants and the `.data` floats the function reads as constants).
-fn c(addr: usize) -> f32 {
-    g::<f32>(addr).read()
-}
+use sa_core::field::gf as c;
 
 /// `fild dword` of an unsigned value: the signed load plus 2^32 ([0x858C54]) when the sign bit is set.
 fn fild_u32(v: u32) -> X87 {
@@ -89,10 +86,7 @@ fn event_volume(off: usize) -> i32 {
     rd::<i8>(g(p as usize), off as isize) as i32
 }
 
-/// A local `CVector` as a pointer.
-fn vp(v: &mut [f32; 3]) -> GPtr<u8> {
-    GPtr::from_raw(v.as_mut_ptr()).cast()
-}
+use sa_core::field::ptr_of as vp;
 
 /// Fade-out (0x5067B0): volume `<= -50` or NaN stops the sound (`StopSoundAndForget`); otherwise volume = `max'(volume
 /// - 0.6, -50)` (-50 unless the step is above it).

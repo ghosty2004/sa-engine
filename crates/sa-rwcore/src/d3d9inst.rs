@@ -110,10 +110,7 @@ fn decl_size(ty: u32) -> u32 {
     g::<u32>(DECL_TYPE_SIZES.wrapping_add(ty.wrapping_mul(4)) as usize).read()
 }
 
-#[inline]
-fn kf(bits: u32) -> f32 {
-    f32::from_bits(bits)
-}
+use sa_math::fpu::fbits as kf;
 
 /// `fld dword` of an f32, then `fistp dword` (RC = nearest even, the game's control word): NaN, ±inf and
 /// results outside the i32 range give the integer indefinite 0x80000000.

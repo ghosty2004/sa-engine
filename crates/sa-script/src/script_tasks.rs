@@ -49,13 +49,9 @@ orig! {
     fn task_delete_virtual(task: GPtr<u8>, flag: u32) -> GPtr<u8> = thiscall vslot 0x00 => unported;
 }
 
-fn at<T: sa_core::mem::GameData>(p: GPtr<u8>, off: isize) -> GPtr<T> {
-    p.byte_add(off).cast::<T>()
-}
+use sa_core::field::at;
 
-fn ga<T: sa_core::mem::GameData>(addr: usize) -> GPtr<T> {
-    GPtr::from_addr(addr)
-}
+use sa_core::field::g as ga;
 
 /// The ped of pool handle `h` (`h >> 8` arithmetic, its flag byte equal to `h`'s low byte), else null.
 fn ped_at(h: i32) -> GPtr<u8> {

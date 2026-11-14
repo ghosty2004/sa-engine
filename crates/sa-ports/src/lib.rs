@@ -27,14 +27,7 @@ pub const CRATES: &[&[HookReg]] = &[
     sa_render::hooks::ALL,
 ];
 
-const fn total(parts: &[&[HookReg]]) -> usize {
-    let (mut n, mut i) = (0, 0);
-    while i < parts.len() {
-        n += parts[i].len();
-        i += 1;
-    }
-    n
-}
+use sa_core::hooks::total;
 
 /// Number of port registrations over all crates.
 pub const COUNT: usize = total(CRATES);

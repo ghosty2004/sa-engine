@@ -533,11 +533,7 @@ fn blend_delta() -> u32 {
     g::<u32>(K_DUCK_BLEND_DELTA).read()
 }
 
-/// An entity's position (matrix +0x30, else the placement +4).
-fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos;
 
 /// `CTaskSimplePlayerOnFoot::PlayerControlDucked(CPlayerPed*)` (0x687F30, thiscall, `ret 4`; `this` unused). x87.
 ///

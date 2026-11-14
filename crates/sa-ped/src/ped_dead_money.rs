@@ -12,9 +12,7 @@ orig! {
     fn pickups_create_some_money(px: u32, py: u32, pz: u32, amount: u32) = cdecl 0x458970 => unported;
 }
 
-fn rd<T: sa_core::mem::GameData>(p: GPtr<u8>, off: isize) -> T {
-    p.byte_add(off).cast::<T>().read()
-}
+use sa_core::field::rd;
 
 /// `CPed::CreateDeadPedMoney()` (stub 0x4590F0 → 0x1564140, thiscall).
 ///

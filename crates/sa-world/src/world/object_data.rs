@@ -41,15 +41,9 @@ fn at(i: u32) -> GPtr<u8> {
 fn f(p: GPtr<u8>, o: isize) -> f32 {
     p.byte_add(o).cast::<f32>().read()
 }
-fn b(p: GPtr<u8>, o: isize) -> u8 {
-    p.byte_add(o).read()
-}
-fn w32(p: GPtr<u8>, o: isize, v: u32) {
-    p.byte_add(o).cast::<u32>().write(v)
-}
-fn ptr(p: GPtr<u8>) -> u32 {
-    p.addr() as u32
-}
+use sa_core::field::rd8 as b;
+use sa_core::field::wr32 as w32;
+use sa_core::field::addr32 as ptr;
 
 /// The field-by-field comparison of the duplicate search (f32 `==` for the floats, NaN unequal).
 fn same(a: GPtr<u8>, c: GPtr<u8>) -> bool {

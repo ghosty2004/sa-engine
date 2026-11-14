@@ -29,45 +29,17 @@ pub const HOOKS: &[HookReg] = &[
 // ---------------------------------------------------------------------------------------------------------
 // Shorthands
 
-/// An f32 constant of the exe by its bits.
-#[inline]
-fn k(bits: u32) -> f32 {
-    f32::from_bits(bits)
-}
+use sa_math::fpu::fbits as k;
 
-/// `fld dword`.
-#[inline]
-fn x_(v: f32) -> X87 {
-    X87::from_f32(v)
-}
+use sa_math::fpu::x as x_;
 
-/// `fild dword`.
-#[inline]
-fn xi_(v: i32) -> X87 {
-    X87::from_i32(v)
-}
+use sa_math::fpu::xi as xi_;
 
-/// `fcomp; fnstsw ax; test ah, 5; jp` taken: `a >= b` or unordered.
-#[inline]
-fn ge5(a: X87, b: X87) -> bool {
-    a.fcom(b).test_parity(0x05)
-}
+use sa_math::fpu::ge_or_nan as ge5;
 
-/// `fcomp; fnstsw ax; test ah, 0x41; jne` taken: `a <= b` or unordered.
-#[inline]
-fn le41(a: X87, b: X87) -> bool {
-    a.fcom(b).test_any(0x41)
-}
+use sa_math::fpu::le_or_nan as le41;
 
-/// `CEntity::GetPosition()` inlined: the matrix position (+0x14 → +0x30) or the placement (+4).
-fn entity_pos(e: GPtr<u8>) -> GPtr<f32> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() {
-        e.byte_add(4).cast()
-    } else {
-        m.byte_add(0x30).cast()
-    }
-}
+use sa_world::world::common::entity_pos_f as entity_pos;
 
 #[inline]
 fn vx(p: GPtr<f32>, i: usize) -> f32 {

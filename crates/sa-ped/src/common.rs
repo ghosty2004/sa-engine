@@ -23,11 +23,7 @@ pub const PLAYERS: usize = 0xB7CD98;
 pub const PLAYER_INFO_SIZE: usize = 0x190;
 pub const PLAYER_IN_FOCUS: usize = 0xB7CD74;
 
-/// The position an entity's placement gives: `m_matrix ? &m_matrix->pos (+0x30) : &m_placement.pos (+4)`.
-pub fn ent_pos(e: GPtr<u8>) -> GPtr<f32> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4).cast() } else { m.byte_add(0x30).cast() }
-}
+pub use sa_world::world::common::entity_pos_f as ent_pos;
 
 /// Reads a vector (3 f32).
 pub fn vec3(p: GPtr<f32>) -> [f32; 3] {

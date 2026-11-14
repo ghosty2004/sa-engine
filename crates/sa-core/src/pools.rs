@@ -225,10 +225,7 @@ macro_rules! off {
     };
 }
 
-/// A field of a game object at byte offset `off`.
-fn at<U>(obj: GPtr<u8>, off: isize) -> GPtr<U> {
-    obj.byte_add(off).cast()
-}
+use crate::field::at;
 
 /// The pool constructors: `CPool<T>::CPool(int32 size, const char* name)` as the original compiles
 /// it. `alloc` is the allocator the instantiation calls (`new[]` 0x821195, or `new` 0x82119A for the
@@ -755,9 +752,7 @@ pub fn load() -> u8 {
     call::load_object_pool()
 }
 
-fn local<T>(v: &mut T) -> GPtr<u8> {
-    GPtr::from_raw(v as *mut T).cast()
-}
+use crate::field::ptr_of as local;
 
 /// The "is this vehicle saved" test of `SaveVehiclePool` (+0x4A4 == 2, no non-zero dword among the 8
 /// at +0x464 — the scan stops at the first one —, and +0x460 == 0).

@@ -27,35 +27,11 @@ pub mod generated_leaves;
 #[path = "generated_small.rs"]
 pub mod generated_small;
 
-/// A 32-bit game address as a pointer.
-#[allow(dead_code)]
-fn p(a: u32) -> GPtr<u8> {
-    GPtr::from_addr(a as usize)
-}
-
-/// Reads field `T` at byte offset `off`.
-#[allow(dead_code)]
-fn rd<T: GameData>(p: GPtr<u8>, off: isize) -> T {
-    p.byte_add(off).cast::<T>().read()
-}
-
-/// Writes field `T` at byte offset `off`.
-#[allow(dead_code)]
-fn wr<T: GameData>(p: GPtr<u8>, off: isize, v: T) {
-    p.byte_add(off).cast::<T>().write(v)
-}
-
-/// A game global, addressed directly.
-#[allow(dead_code)]
-fn g<T: GameData>(addr: usize) -> GPtr<T> {
-    GPtr::from_addr(addr)
-}
-
-/// `fld dword` of an f32.
-#[allow(dead_code)]
-fn x(v: f32) -> X87 {
-    X87::from_f32(v)
-}
+// The shared field / global / x87 helpers (ADR-003 §3.2), named as the generated bodies use them.
+#[allow(unused_imports)]
+use sa_core::field::{g, p8 as p, rd, wr};
+#[allow(unused_imports)]
+use sa_math::fpu::x;
 
 /// A generated body: (address, FNV-1a of the matched bytes, matched spans `(va, len)`).
 pub type Body = (u32, u64, &'static [(u32, u32)]);

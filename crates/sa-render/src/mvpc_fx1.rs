@@ -96,13 +96,9 @@ const FMT_S_D: usize = 0x86A6AC;
 /// `"%s %f"` (0x86AA68).
 const FMT_S_F: usize = 0x86AA68;
 
-fn s(a: usize) -> GPtr<u8> {
-    GPtr::from_addr(a)
-}
+use sa_core::field::pa as s;
 
-fn lp<T>(v: &mut T) -> GPtr<u8> {
-    GPtr::from_raw(v as *mut T).cast()
-}
+use sa_core::field::ptr_of as lp;
 
 fn bp(b: &mut [u8]) -> GPtr<u8> {
     GPtr::from_raw(b.as_mut_ptr())
@@ -919,9 +915,7 @@ orig! {
     pub fn fx_rw_matrix_destroy(this: GPtr<u8>, m: u32) = thiscall 0x4A9460 => crate::fx::fx_manager_fx_rw_matrix_destroy;
 }
 
-fn xf(v: f32) -> X87 {
-    X87::from_f32(v)
-}
+use sa_math::fpu::x as xf;
 
 /// `(f32)(a * b - c * d)`: `fld a; fmul b; fld c; fmul d; fsubp st(1); fstp dword`.
 fn cross1(a: f32, b: f32, c: f32, d: f32) -> f32 {

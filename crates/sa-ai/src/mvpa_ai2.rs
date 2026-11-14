@@ -105,23 +105,11 @@ const TIME_MS: usize = 0xB7CB84;
 /// `CTaskSimpleAnim::FinishRunAnimCB` (0x61A8A0)
 const FINISH_RUN_ANIM_CB: u32 = 0x61A8A0;
 
-fn cf(addr: usize) -> X87 {
-    x(g::<f32>(addr).read())
-}
+use sa_core::field::gx as cf;
 
-fn local<const N: usize>(b: &mut [u32; N]) -> GPtr<u8> {
-    GPtr::from_raw(b as *mut [u32; N]).cast()
-}
+use sa_core::field::ptr_of as local;
 
-/// The entity's position: `m_matrix->pos` (+0x14 -> +0x30) when it has a matrix, else the placement (+4).
-fn pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() {
-        e.byte_add(4)
-    } else {
-        m.byte_add(0x30)
-    }
-}
+use sa_world::world::common::entity_pos as pos;
 
 /// The f32 an `fstp dword` stores of an ST0 result.
 fn st0_f32(v: f64) -> f32 {

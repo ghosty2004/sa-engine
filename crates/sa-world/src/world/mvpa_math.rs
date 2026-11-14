@@ -30,10 +30,7 @@ orig! {
     fn eh_vector_constructor_iterator(p: GPtr<u8>, size: u32, count: i32, ctor: u32, dtor: u32) = stdcall 0x821D30 => unported;
 }
 
-/// The three components of the vector at `p` (x, y, z).
-fn v3(p: GPtr<u8>) -> [f32; 3] {
-    [rd::<f32>(p, 0), rd::<f32>(p, 4), rd::<f32>(p, 8)]
-}
+use sa_core::field::rd3f as v3;
 
 fn store3(out: GPtr<u8>, v: [X87; 3]) {
     wr::<f32>(out, 0, v[0].to_f32());

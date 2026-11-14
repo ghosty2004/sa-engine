@@ -110,13 +110,9 @@ const K_DEG2RAD: u32 = 0x3C8E_FA35;
 /// `5.0` stored by `mov dword` (radius reset)
 const FIVE_BITS: u32 = 0x40A0_0000;
 
-fn k(bits: u32) -> f32 {
-    f32::from_bits(bits)
-}
+use sa_math::fpu::fbits as k;
 
-fn b(addr: usize) -> u8 {
-    g::<u8>(addr).read()
-}
+use sa_core::field::gr8 as b;
 
 fn max_w() -> X87 {
     xi(g::<i32>(RS_MAX_WIDTH).read())
@@ -126,11 +122,7 @@ fn max_h() -> X87 {
     xi(g::<i32>(RS_MAX_HEIGHT).read())
 }
 
-/// A float from its dword (the ports keep copied positions as dwords so no value passes through an x87
-/// load/store that the original only `mov`s).
-fn fb(v: u32) -> f32 {
-    f32::from_bits(v)
-}
+use sa_math::fpu::fbits as fb;
 
 /// A local buffer as a game pointer (the original's stack temporaries).
 fn local<T, const N: usize>(buf: &mut [T; N]) -> GPtr<T> {
@@ -418,17 +410,9 @@ pub fn draw_legend(px: i32, py: i32, sprite: i32) {
     }
 }
 
-/// The entity position the original copies: `m_matrix->pos` (+0x30) when the matrix exists, else the
-/// placement position (+4).
-fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos;
 
-/// Three dwords at `p` (a `CVector` copied with `mov`).
-fn vec3(p: GPtr<u8>) -> [u32; 3] {
-    [rd::<u32>(p, 0), rd::<u32>(p, 4), rd::<u32>(p, 8)]
-}
+use sa_core::field::rd3u as vec3;
 
 /// `(i16)ftol(-airstrip.+0xC)`: the arrow's start offset.
 fn airstrip_start(a: GPtr<u8>) -> i16 {

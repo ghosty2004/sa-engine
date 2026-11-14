@@ -80,32 +80,15 @@ pub fn wv(p: GPtr<u8>, v: CVector) {
     wr::<f32>(p, 8, v.z);
 }
 
-fn ld(p: GPtr<u8>, off: isize) -> X87 {
-    x(rd::<f32>(p, off))
-}
+use sa_core::field::ldx as ld;
 
-fn c(bits: u32) -> X87 {
-    X87::constant(bits)
-}
+use sa_math::fpu::xc as c;
 
-/// `fcomp` + `test ah, 0x41` + `jne` taken: `a <= b` or unordered.
-fn le(a: X87, b: X87) -> bool {
-    a.fcom(b).test_any(0x41)
-}
+use sa_math::fpu::le_or_nan as le;
 
-/// `fcomp` + `test ah, 5` + `jp` taken: `a >= b` or unordered.
-fn ge(a: X87, b: X87) -> bool {
-    a.fcom(b).test_parity(0x05)
-}
+use sa_math::fpu::ge_or_nan as ge;
 
-fn pos_ptr(this: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(this, 0x14);
-    if m.is_null() {
-        this.byte_add(4)
-    } else {
-        m.byte_add(0x30)
-    }
-}
+use sa_world::world::common::entity_pos as pos_ptr;
 
 fn cam_pos() -> GPtr<u8> {
     let m = g::<GPtr<u8>>(0xB6_F03C).read();

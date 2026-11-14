@@ -114,15 +114,9 @@ pub fn strncpy_port(dst: GPtr<u8>, src: GPtr<u8>, n: u32) -> GPtr<u8> {
     dst
 }
 
-#[inline]
-fn rd<T: GameData>(p: GPtr<u8>, off: isize) -> T {
-    p.byte_add(off).cast::<T>().read()
-}
+use sa_core::field::rd;
 
-#[inline]
-fn wr<T: GameData>(p: GPtr<u8>, off: isize, v: T) {
-    p.byte_add(off).cast::<T>().write(v)
-}
+use sa_core::field::wr;
 
 /// `m_IP`
 #[inline]

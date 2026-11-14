@@ -71,19 +71,13 @@ orig! {
 /// `CTimer::ms_fTimeStep` (0xB7CB5C)
 const TIME_STEP: usize = 0xB7_CB5C;
 
-fn c(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
+use sa_core::field::gf as c;
 
 fn buf(v: &mut [u32]) -> GPtr<u8> {
     GPtr::from_raw(v.as_mut_ptr()).cast()
 }
 
-fn copy3(dst: GPtr<u8>, src: GPtr<u8>) {
-    for k in 0..3 {
-        wr::<u32>(dst, 4 * k, rd::<u32>(src, 4 * k));
-    }
-}
+use sa_core::field::copy3;
 
 /// `blend == 1.0` as `test ah, 0x44; jp`: equal only.
 fn blend_is_one(a: GPtr<u8>) -> bool {

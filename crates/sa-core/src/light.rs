@@ -160,9 +160,7 @@ pub mod k {
     pub const M1260: u32 = 0x449D_8000;
 }
 
-fn kf(bits: u32) -> f32 {
-    f32::from_bits(bits)
-}
+use sa_math::fpu::fbits as kf;
 
 orig! {
     /// `RpLightSetColor` (0x751A90)

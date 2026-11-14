@@ -94,9 +94,7 @@ fn fild_u32(v: u32) -> X87 {
     if (v as i32) < 0 { r.fadd_m(k(0x4F80_0000)) } else { r }
 }
 
-fn rand_at(site: u32) -> i32 {
-    sa_core::orig::at_site(site, sa_core::crt::rand)
-}
+use sa_core::crt::rand_at;
 
 /// `CWeather::Update()` (0x72B850). Every 16th frame `UpdateWeatherRegion(NULL)`. Outside replay
 /// playback (0xA43088 != 1) the interpolation becomes `(seconds / 60 + minutes) / 60`; when it wraps,

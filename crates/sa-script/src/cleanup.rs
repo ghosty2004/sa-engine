@@ -246,9 +246,7 @@ fn w16(a: usize, v: u16) {
 fn w32(a: usize, v: u32) {
     GPtr::<u32>::from_addr(a).write(v);
 }
-fn r8(a: usize) -> u8 {
-    GPtr::<u8>::from_addr(a).read()
-}
+use sa_core::field::gr8 as r8;
 fn player_ped() -> GPtr<u8> {
     GPtr::<GPtr<u8>>::from_addr(PLAYERS).read()
 }

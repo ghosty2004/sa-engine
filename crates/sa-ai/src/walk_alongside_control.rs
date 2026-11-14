@@ -65,13 +65,8 @@ const SPEED_EPS: f32 = f32::from_bits(0x3C54FDF4);
 /// `bMoveAnimSpeedHasBeenSetByTask` (CPed +0x478 bit 16)
 const MOVE_ANIM_SPEED_SET: u32 = 0x10000;
 
-fn kf(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
-fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_core::field::gf as kf;
+use sa_world::world::common::entity_pos;
 fn set_move_anim_speed_flag(ped: GPtr<u8>, on: bool) {
     let f = rd::<u32>(ped, 0x478);
     wr::<u32>(ped, 0x478, (f & !MOVE_ANIM_SPEED_SET) | if on { MOVE_ANIM_SPEED_SET } else { 0 });

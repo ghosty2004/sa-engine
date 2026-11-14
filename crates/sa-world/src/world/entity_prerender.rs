@@ -160,10 +160,7 @@ fn bits(v: X87) -> u32 {
     v.to_f32().to_bits()
 }
 
-/// The three dwords at `p`.
-fn v3(p: GPtr<u8>) -> [u32; 3] {
-    [rd::<u32>(p, 0), rd::<u32>(p, 4), rd::<u32>(p, 8)]
-}
+use sa_core::field::rd3u as v3;
 
 /// The camera position the original reads: `[0xB6F03C] + 0x30`, else 0xB6F02C.
 fn cam() -> GPtr<u8> {

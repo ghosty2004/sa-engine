@@ -80,27 +80,15 @@ pub fn dot_product_native(a: GPtr<u8>, b: GPtr<u8>) -> f64 {
 /// `CTimer::ms_fTimeStep`
 const TIME_STEP: usize = 0xB7_CB5C;
 
-fn ld(p: GPtr<u8>, off: isize) -> X87 {
-    x(rd::<f32>(p, off))
-}
+use sa_core::field::ldx as ld;
 
-fn c(bits: u32) -> X87 {
-    X87::constant(bits)
-}
+use sa_math::fpu::xc as c;
 
-fn gf(addr: usize) -> X87 {
-    x(g::<f32>(addr).read())
-}
+use sa_core::field::gx as gf;
 
-/// `fcomp` + `test ah, 0x41` + `jne` taken: `a <= b` or unordered.
-fn le(a: X87, b: X87) -> bool {
-    a.fcom(b).test_any(0x41)
-}
+use sa_math::fpu::le_or_nan as le;
 
-/// `fcomp` + `test ah, 5` + `jp` taken: `a >= b` or unordered.
-fn ge(a: X87, b: X87) -> bool {
-    a.fcom(b).test_parity(0x05)
-}
+use sa_math::fpu::ge_or_nan as ge;
 
 /// `(a.z*b.z + a.y*b.y) + a.x*b.x` with `a` at `p + off` (the inlined dot products).
 fn dot_at(p: GPtr<u8>, off: isize, v: GPtr<u8>) -> X87 {
@@ -110,9 +98,7 @@ fn dot_at(p: GPtr<u8>, off: isize, v: GPtr<u8>) -> X87 {
         .fadd(ld(p, off).fmul_m(rd::<f32>(v, 0)))
 }
 
-fn etype(e: GPtr<u8>) -> u8 {
-    rd::<u8>(e, 0x36) & 7
-}
+use sa_world::world::common::entity_type as etype;
 
 /// `CAutomobile::VehicleDamage(float damageIntensity, eVehicleCollisionComponent component,
 /// CEntity* damager, CVector* coors, CVector* dir, eWeaponType weapon)` (0x6A7650, `ret 0x18`).

@@ -22,9 +22,7 @@ orig! {
     fn world_process_vertical_line(o: GPtr<u8>, z: f32, cp: GPtr<u8>, ent: GPtr<u8>, b: u32, v: u32, p: u32, ob: u32, d: u32, see: u32, poly: u32) -> u8 = cdecl 0x5674E0 => unported;
 }
 
-fn c(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
+use sa_core::field::gf as c;
 
 fn buf(v: &mut [u32]) -> GPtr<u8> {
     GPtr::from_raw(v.as_mut_ptr()).cast()

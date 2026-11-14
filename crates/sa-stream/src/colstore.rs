@@ -19,7 +19,6 @@ use sa_core::abi::HookReg;
 use sa_core::mem::{GBool, GPtr};
 use sa_core::pool::CPool;
 use sa_core::{hook, orig};
-use sa_math::x87::X87;
 
 use crate::shared::{field, info, model_info, ColDef, ColPool, COL_POOL, RESOURCE_ID_COL};
 
@@ -190,20 +189,10 @@ fn f_at(p: GPtr<ColDef>, off: isize) -> f32 {
     field::<f32, ColDef>(p, off).read()
 }
 
-/// `fld a; fcomp b; fnstsw; test ah, 5; jnp skip`: proceed when `a >= b` or unordered.
-fn ge_or_nan(a: X87, b: X87) -> bool {
-    a.fcom(b).test_parity(0x05)
-}
-/// `fld a; fcomp b; fnstsw; test ah, 0x41; je skip`: proceed when `a <= b` or unordered.
-fn le_or_nan(a: X87, b: X87) -> bool {
-    a.fcom(b).test_any(0x41)
-}
-fn x(v: f32) -> X87 {
-    X87::from_f32(v)
-}
-fn k(bits: u32) -> f32 {
-    f32::from_bits(bits)
-}
+use sa_math::fpu::ge_or_nan;
+use sa_math::fpu::le_or_nan;
+use sa_math::fpu::x;
+use sa_math::fpu::fbits as k;
 
 /// `CColStore::FindColSlot(const char*)` (0x410390): `or eax, -1; ret` (the name is never read).
 /// Not hookable: `or eax,-1; ret` is 4 bytes.

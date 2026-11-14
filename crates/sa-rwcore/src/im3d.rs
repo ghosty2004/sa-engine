@@ -86,9 +86,7 @@ orig! {
     pub fn d3d9_im3d_render_close_call() = cdecl 0x80DFB0 => d3d9_im3d_render_close;
 }
 
-fn a32(p: GPtr<u8>) -> u32 {
-    p.addr() as u32
-}
+use sa_core::field::addr32 as a32;
 
 /// `M = G + [0xC9C078]`.
 fn module() -> GPtr<u8> {

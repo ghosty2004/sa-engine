@@ -32,9 +32,7 @@ fn node(h: GPtr<u8>, i: i32) -> GPtr<u8> {
     p8(rd::<u32>(h, 0x10)).byte_add(i as isize * 0x10)
 }
 
-fn a32(p: GPtr<u8>) -> u32 {
-    p.addr() as u32
-}
+use sa_core::field::addr32 as a32;
 
 /// `RpHAnimHierarchyCreate(numNodes, nodeFlags, nodeIDs, flags, maxKeyFrameSize)` (0x7C4C30): from the
 /// freelist (not zeroed, not checked); +0x20 a new interpolator, +0 flags, +4 numNodes, +0x14 0;

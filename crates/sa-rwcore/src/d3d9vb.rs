@@ -53,24 +53,16 @@ orig! {
     pub fn manager_close_call() = cdecl 0x7F5D20 => vertex_buffer_manager_close;
 }
 
-#[inline]
-fn gu(addr: usize) -> u32 {
-    g::<u32>(addr).read()
-}
+use sa_core::field::gr32 as gu;
 
-#[inline]
-fn su(addr: usize, v: u32) {
-    g::<u32>(addr).write(v)
-}
+use sa_core::field::gw32 as su;
 
 #[inline]
 fn im(base: u32, i: u32) -> GPtr<u32> {
     g::<u32>(base.wrapping_add(i.wrapping_mul(4)) as usize)
 }
 
-fn a(p: GPtr<u8>) -> u32 {
-    p.addr() as u32
-}
+use sa_core::field::addr32 as a;
 
 fn hwtl() -> bool {
     gu(DEV_CAPS) & 0x1_0000 != 0

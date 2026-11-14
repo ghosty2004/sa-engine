@@ -165,10 +165,7 @@ const K_JETPACK_PITCH: u32 = 0xBEB2_B8C3; // -0.34906587 [0x862F40]
 const K_3_70: u32 = 0x3D2F_8AF9; // 3/70 [0x8631AC]
 const K_M2_5: u32 = 0xC020_0000; // [0x8631B0]
 
-/// A `.data` f32 read by address, as the bytes do (tweakable values).
-pub(crate) fn d(addr: usize) -> f32 {
-    g::<f32>(addr).read()
-}
+pub(crate) use sa_core::field::gf as d;
 
 /// `fsin` / `fcos` / `fpatan` on the machine (sa-math's f64 models).
 pub(crate) fn fsin(f: &mut Fpu) {
@@ -282,22 +279,9 @@ pub(crate) fn heading(f: &mut Fpu, e: GPtr<u8>) {
     }
 }
 
-/// The entity position (`matrix + 0x30`, else the placement `+4`).
-pub(crate) fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() {
-        e.byte_add(4)
-    } else {
-        m.byte_add(0x30)
-    }
-}
+pub(crate) use sa_world::world::common::entity_pos;
 
-/// Dword copy of 3 words.
-pub(crate) fn copy3(dst: GPtr<u8>, src: GPtr<u8>) {
-    for o in [0, 4, 8] {
-        wr::<u32>(dst, o, rd::<u32>(src, o));
-    }
-}
+pub(crate) use sa_core::field::copy3;
 
 /// `source.x/y/z = FUN_0050a0a0(source.x/y/z, 4)` (each pushed as a dword, stored with `fstp dword`).
 fn round_source(src: GPtr<u8>) {

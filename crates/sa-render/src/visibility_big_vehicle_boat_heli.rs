@@ -51,13 +51,9 @@ const K_TINY: usize = 0x85_8FC4;
 const RENDER_ATOMIC: u32 = 0x73_2B30;
 const RENDER_ENTITY: u32 = 0x73_2B40;
 
-fn k(addr: usize) -> X87 {
-    X87::from_f32(g::<f32>(addr).read())
-}
+use sa_core::field::gx as k;
 
-fn kf(addr: usize) -> f32 {
-    g::<f32>(addr).read()
-}
+use sa_core::field::gf as kf;
 
 fn dist() -> X87 {
     k(DISTANCE_FROM_CAMERA)

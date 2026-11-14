@@ -81,15 +81,7 @@ fn member(m: GPtr<u8>, i: i32) -> GPtr<u8> {
     rd::<GPtr<u8>>(m, 4 + 4 * i as isize)
 }
 
-/// A placeable's position (`m_matrix->pos` or the simple transform).
-fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() {
-        e.byte_add(4)
-    } else {
-        m.byte_add(0x30)
-    }
-}
+use sa_world::world::common::entity_pos;
 
 /// The tail shared by `SetLeader` and `AddFollower`: an unarmed ped of a non-mission group may get an object to hold.
 fn maybe_give_object(this: GPtr<u8>, ped: GPtr<u8>) {

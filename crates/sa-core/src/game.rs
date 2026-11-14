@@ -114,9 +114,7 @@ pub const AUDIO_ENGINE: u32 = 0xB6BC90;
 /// `gammaTable`-style ramp passed to `IDirect3DDevice9::SetGammaRamp` by `Game::RwTerminate`.
 pub const SAVED_GAMMA_RAMP: u32 = 0xC8D4C8;
 
-fn at<T>(a: u32) -> GPtr<T> {
-    GPtr::from_addr(a as usize)
-}
+use crate::field::gu as at;
 
 /// Typed calls the ports make (all into other subsystems or not yet ported).
 pub mod call {

@@ -65,15 +65,9 @@ orig! {
     pub fn raster_show_raster(r: GPtr<u8>, dev: u32, flags: u32) -> u32 = cdecl 0x7FB1A0 => unported;
 }
 
-#[inline]
-fn gu(addr: usize) -> u32 {
-    g::<u32>(addr).read()
-}
+use sa_core::field::gr32 as gu;
 
-#[inline]
-fn su(addr: usize, v: u32) {
-    g::<u32>(addr).write(v)
-}
+use sa_core::field::gw32 as su;
 
 fn world_module() -> GPtr<u8> {
     rw_globals().byte_add(gu(WORLD_MODULE_OFFSET) as i32 as isize)

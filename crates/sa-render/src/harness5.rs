@@ -28,10 +28,7 @@ const ONE: u32 = 0x3F80_0000;
 const MINUS_ONE: u32 = 0xBF80_0000;
 const SHADOW_Z_LIFT: u32 = 0x3D75_C28F;
 
-/// A CVector of three f32 read from game memory.
-fn v3(p: GPtr<u8>) -> [f32; 3] {
-    [rd::<f32>(p, 0), rd::<f32>(p, 4), rd::<f32>(p, 8)]
-}
+use sa_core::field::rd3f as v3;
 
 /// `sqrt((dz*dz + dy*dy) + dx*dx)` with `d = P - W` loaded `fld P; fsub W` per component (the x87
 /// order of 0x5DBE5D.. / 0x71117D..).

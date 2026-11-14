@@ -242,12 +242,7 @@ orig! {
     fn set_velocity(e: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x441130 => unported;
 }
 
-/// An entity's position: `m_matrix (+0x14) ? &m_matrix->pos (+0x30) : &placement.pos (+0x04)`.
-#[inline]
-fn entity_pos(e: GPtr<u8>) -> GPtr<u32> {
-    let m = e.byte_add(0x14).cast::<GPtr<u8>>().read();
-    if m.is_null() { e.byte_add(0x4).cast() } else { m.byte_add(0x30).cast() }
-}
+use sa_world::world::common::entity_pos_u as entity_pos;
 
 /// `(b < a) ? b : a`, then the same against c and d (`fcomp; test ah,5; jp`: ordered `<`, ties and NaN keep
 /// the earlier value); the values are raw dwords (`mov`), only the compares load them.

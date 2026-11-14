@@ -170,10 +170,7 @@ orig! {
     fn hud_set_zone_name(name: GPtr<u8>, force: u32) = cdecl 0x588BB0 => unported;
 }
 
-/// A stack buffer of `N` dwords as a game pointer.
-fn buf<const N: usize>(b: &mut [u32; N]) -> GPtr<u8> {
-    GPtr::from_raw(b as *mut [u32; N]).cast()
-}
+use sa_core::field::ptr_of as buf;
 
 /// `CEntryExit::ms_spawnPoint` (0x96A7C0).
 fn spawn_point() -> GPtr<GPtr<u8>> {

@@ -38,10 +38,7 @@ orig! {
     fn cross_product(out: GPtr<f32>, a: GPtr<u8>, b: GPtr<f32>) -> GPtr<f32> = cdecl 0x59C730 => unported;
 }
 
-fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use crate::world::common::entity_pos;
 
 /// `CGarage::IsEntityEntirelyInside3D(CEntity*, float margin)` (0x448BE0, `ret 8`): AL = 0 when the entity's
 /// position is outside the box shrunk by the margin on any axis (x87: `min - m > p` or `max + m < p`, x/y/z with

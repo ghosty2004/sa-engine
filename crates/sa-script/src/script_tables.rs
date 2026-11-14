@@ -31,9 +31,7 @@ orig! {
 /// The script spheres (16 of 0x18: active byte +0, marker id +4, position +8, radius +0x14)
 const SCRIPT_SPHERES: usize = 0xA91268;
 
-fn ga<T: sa_core::mem::GameData>(addr: usize) -> GPtr<T> {
-    GPtr::from_addr(addr)
-}
+use sa_core::field::g as ga;
 
 /// `CStreamedScripts::GetStreamedScriptWithThisStartAddress(uint8* ip)` (0x470910, thiscall, `ret 4`):
 /// the first of the 0x52 streamed scripts (0x20 bytes, data pointer +0) whose data is `ip`, else 0x52.

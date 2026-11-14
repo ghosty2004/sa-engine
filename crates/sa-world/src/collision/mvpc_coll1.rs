@@ -79,22 +79,11 @@ orig! {
     fn uncompress_vector(out: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x411590 => unported;
 }
 
-/// A zeroed Rust local of `N` dwords, addressed as game memory.
-pub(crate) fn local<const N: usize>(b: &mut [u32; N]) -> GPtr<u8> {
-    GPtr::from_raw(b as *mut [u32; N]).cast()
-}
+pub(crate) use sa_core::field::ptr_of as local;
 
-/// Copies the three dwords at `src` to `dst` (the original's `mov` triple after a vector call).
-pub(crate) fn copy3(dst: GPtr<u8>, src: GPtr<u8>) {
-    for i in 0..3 {
-        wr::<u32>(dst, 4 * i, rd::<u32>(src, 4 * i));
-    }
-}
+pub(crate) use sa_core::field::copy3;
 
-/// f32 constant at `addr`.
-fn kf(addr: u32) -> f32 {
-    g::<f32>(addr as usize).read()
-}
+use sa_core::field::gfu as kf;
 
 /// First-call initialiser of a function-static `CMatrix` (guard bit 0 of the dword at `guard`):
 /// sets the bit, clears the matrix's `m_pAttachMatrix` (+0x40) / `m_bOwnsAttachedMemory` (+0x44) and

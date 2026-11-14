@@ -72,9 +72,7 @@ const RS_HEIGHT: usize = 0xc1_7048;
 const CAMERA_SKIP: usize = 0xb6_f065;
 const ACTIVE_CAM: usize = 0xb6_f081;
 
-fn gf(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
+use sa_core::field::gf;
 
 fn rs(s: u32, v: u32) {
     rw_render_state_set(s, v);

@@ -76,21 +76,11 @@ orig! {
     fn shadows_add_permanent_shadow(ty: u32, tex: u32, pos: GPtr<u8>, fx: u32, fy: u32, sx: u32, sy: u32, i: u32, r: u32, g: u32, b: u32, zd: u32, t: u32, sc: u32) = cdecl 0x706F60 => unported;
 }
 
-/// A dword-aligned stack object of `N` dwords, as a game pointer.
-fn local<const N: usize>(b: &mut [u32; N]) -> GPtr<u8> {
-    GPtr::from_raw(b as *mut [u32; N]).cast()
-}
+use sa_core::field::ptr_of as local;
 
-/// The f32 constant at `a`.
-fn k(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
+use sa_core::field::gf as k;
 
-/// The ped's position: its matrix +0x30, or the placement at +4 without a matrix.
-fn pos_of(ped: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(ped, 0x14);
-    if m.is_null() { ped.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos as pos_of;
 
 /// MSVC's u32 → x87: `fild dword` and + 2^32 (0x858C54) when the sign bit is set.
 fn x_of_u32(v: u32) -> X87 {

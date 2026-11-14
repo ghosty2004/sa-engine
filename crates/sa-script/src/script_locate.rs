@@ -29,12 +29,8 @@ orig! {
     fn draw_debug_square(x1: u32, y1: u32, x2: u32, y2: u32) = cdecl 0x486840 => unported;
 }
 
-fn rd<T: sa_core::mem::GameData>(p: GPtr<u8>, off: isize) -> T {
-    p.byte_add(off).cast::<T>().read()
-}
-fn x(v: f32) -> X87 {
-    X87::from_f32(v)
-}
+use sa_core::field::rd;
+use sa_math::fpu::x;
 fn param_u32(i: usize) -> u32 {
     GPtr::<u32>::from_addr(SCRIPT_PARAMS + 4 * i).read()
 }
@@ -50,11 +46,7 @@ fn pool_at(cell: usize, size: i32, handle: i32) -> GPtr<u8> {
     }
     rd::<GPtr<u8>>(p, 0).byte_add(idx.wrapping_mul(size) as isize)
 }
-/// An entity's position (matrix +0x30, else the placement +4).
-fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos;
 /// `c - r <= p` and `r + c >= p` with the original's compares (`test ah, 0x41` / `jp` and `test ah, 1`; NaN fails).
 fn within(c: f32, r: f32, p: f32) -> bool {
     !x(c).fsub_m(r).fcom(x(p)).test_parity(0x41) && !x(r).fadd_m(c).fcom(x(p)).c0()

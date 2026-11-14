@@ -73,9 +73,7 @@ fn lt(a: X87, b: f32) -> bool {
 fn gt(a: X87, b: f32) -> bool {
     a.fcom(x(b)) == Cmp::Greater
 }
-fn fabs(a: X87) -> X87 {
-    X87::from_f64_exact(a.to_f64().abs())
-}
+use sa_math::fpu::fabs;
 
 /// `CPedIK::MoveLimb(LimbOrientation& limb, float yaw, float pitch, LimbMovementInfo& info)`
 /// (0x5FDA60, stdcall): step yaw and pitch toward the target by the steps (a target closer than a
@@ -256,9 +254,7 @@ const CLUMP_DATA_OFFSET: usize = 0xB5F878;
 /// The "use the absolute bone slope" switch (0xC0AFC0, byte)
 const SLOPE_ABS_SWITCH: usize = 0xC0AFC0;
 
-fn kf(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
+use sa_core::field::gf as kf;
 /// Outside the dead zone (-0.01, 0.01): above 0.01 (`test ah, 0x41`), else below -0.01 (`test ah, 5`).
 fn outside_dead_zone(v: f32) -> bool {
     !x(v).fcom(x(kf(0x858C58))).test_any(0x41) || !x(v).fcom(x(kf(0x86C310))).test_parity(5)

@@ -10,9 +10,7 @@ orig! {
     fn crt_strncpy(d: GPtr<u8>, s: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x821F40 => unported;
 }
 
-fn at(p: GPtr<u8>, i: isize) -> u8 {
-    p.byte_add(i).read()
-}
+use sa_core::field::rd8 as at;
 
 /// `RwHelper::GetNameAndDamage(nodeName, outName, outDamage)` (0x5370A0): a name ending in "_dam"
 /// (lower case) is a damaged part: `*outDamage = 1`, the name without the suffix; one ending in "_L0" /

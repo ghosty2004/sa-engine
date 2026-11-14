@@ -94,10 +94,7 @@ const CONTROL_CODE_LIST: usize = 0xB9ACCC;
 /// `g_LoadMonitor` (0xB72978)
 const LOAD_MONITOR: usize = 0xB72978;
 
-/// The entity type (`+0x36 & 7`).
-fn ent_type(e: GPtr<u8>) -> u8 {
-    rd::<u8>(e, 0x36) & 7
-}
+use crate::world::common::entity_type as ent_type;
 
 /// The inlined `CEntity::UpdateRwMatrix` (0x446F90) followed by `CEntity::UpdateRwFrame` (0x532B00): with an
 /// RW object, its frame matrix (`rw+4 -> +0x10`) from the entity matrix (+0x14) or the simple transform (+4).

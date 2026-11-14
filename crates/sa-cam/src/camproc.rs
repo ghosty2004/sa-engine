@@ -293,12 +293,7 @@ pub fn dtor_the_camera() {
     camera_dtor_call(the_camera());
 }
 
-/// The three-dword CVector copy.
-fn copy3(dst: GPtr<u8>, src: GPtr<u8>) {
-    for i in 0..3 {
-        wr::<u32>(dst, 4 * i, rd::<u32>(src, 4 * i));
-    }
-}
+use sa_core::field::copy3;
 
 /// `CCam::Process_Fixed(const CVector& target, float, float, float)` (0x51D470, `ret 0x10`).
 ///
@@ -428,10 +423,7 @@ pub fn get_boat_look_lr_behind_cam_height(this: GPtr<u8>, out: GPtr<u8>) -> u8 {
     1
 }
 
-/// An `.rdata` f32 (constant tables and literals read by address, as the bytes do).
-fn rc(addr: usize) -> f32 {
-    g::<f32>(addr).read()
-}
+use sa_core::field::gf as rc;
 
 /// `FUN_0063a380` (0x63A380, thiscall on a CTaskComplexEnterCarAsDriver, `ret 0x18`): the camera stick
 /// modifier while the player gets into a car (only caller `CCam::Process_FollowPed_SA`).
@@ -757,15 +749,7 @@ fn entity_matrix(e: GPtr<u8>) -> GPtr<u8> {
     rd::<GPtr<u8>>(e, 0x14)
 }
 
-/// The entity position (`matrix + 0x30`, else the placement `+4`).
-fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() {
-        e.byte_add(4)
-    } else {
-        m.byte_add(0x30)
-    }
-}
+use sa_world::world::common::entity_pos;
 
 /// `CCam::Process`' orientation of the target entity (`slot` = `&m_pCamTargetEntity`), re-reading the
 /// entity and its matrix (inlined `GetMatrix`) at every use as the bytes do: 0 when the forward vector's

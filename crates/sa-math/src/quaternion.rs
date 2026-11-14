@@ -20,9 +20,7 @@ const _: () = {
     assert!(core::mem::offset_of!(CQuaternion, w) == 0xC);
 };
 
-fn ld(v: f32) -> X87 {
-    X87::from_f32(v)
-}
+use crate::fpu::x as ld;
 
 fn mul(a: f32, b: f32) -> X87 {
     ld(a).fmul_m(b)

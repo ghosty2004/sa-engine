@@ -47,10 +47,7 @@ orig! {
     fn tm_get_last_task_of_task(task: GPtr<u8>) -> GPtr<u8> = cdecl 0x681970 => unported;
 }
 
-/// `this[i]` for a slot offset (primary `i*4`, secondary `0x14 + i*4`).
-fn slot(this: GPtr<u8>, off: isize) -> GPtr<u8> {
-    rd::<GPtr<u8>>(this, off)
-}
+use sa_core::field::rdp as slot;
 
 fn ped_of(this: GPtr<u8>) -> GPtr<u8> {
     rd::<GPtr<u8>>(this, 0x2C)

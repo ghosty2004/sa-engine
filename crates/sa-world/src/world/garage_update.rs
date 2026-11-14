@@ -141,32 +141,17 @@ const RESPRAYS_FREE: usize = 0x96_C009;
 const BOMBS_FREE: usize = 0x96_C00A;
 const NO_RESPRAYS: usize = 0x96_C008;
 
-/// `fcomp` + `test ah, 0x41` + `jne` taken: `a <= b` or unordered.
-fn le(a: X87, b: X87) -> bool {
-    a.fcom(b).test_any(0x41)
-}
+use sa_math::fpu::le_or_nan as le;
 
-/// `fcomp` + `test ah, 5` + `jp` taken: `a >= b` or unordered.
-fn ge(a: X87, b: X87) -> bool {
-    a.fcom(b).test_parity(0x05)
-}
+use sa_math::fpu::ge_or_nan as ge;
 
-fn c(bits: u32) -> X87 {
-    X87::constant(bits)
-}
+use sa_math::fpu::xc as c;
 
 fn now() -> u32 {
     g::<u32>(TIME_MS).read()
 }
 
-fn pos_ptr(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() {
-        e.byte_add(4)
-    } else {
-        m.byte_add(0x30)
-    }
-}
+use crate::world::common::entity_pos as pos_ptr;
 
 fn player_vehicle() -> GPtr<u8> {
     find_player_vehicle(-1, 0)
@@ -259,9 +244,7 @@ fn centre_dist_sq(gp: GPtr<u8>) -> X87 {
     yy.fadd(xa.fmul(xb))
 }
 
-fn ld(p: GPtr<u8>, off: isize) -> X87 {
-    x(rd::<f32>(p, off))
-}
+use sa_core::field::ldx as ld;
 
 /// The squared box distance of the player vehicle (two position reads: x of the second, y of the
 /// first).

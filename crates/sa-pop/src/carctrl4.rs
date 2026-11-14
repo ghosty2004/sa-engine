@@ -135,15 +135,7 @@ pub fn find_path_direction(a: u32, b: u32, c: u32, sharp: GPtr<u8>) -> u8 {
     }
 }
 
-/// `CPlaceable::GetPosition`: the matrix translation (+0x14 → +0x30) or the simple placement (+4).
-fn entity_pos(e: GPtr<u8>) -> GPtr<f32> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() {
-        e.byte_add(4).cast()
-    } else {
-        m.byte_add(0x30).cast()
-    }
-}
+use sa_world::world::common::entity_pos_f as entity_pos;
 
 fn lp(v: &mut [f32; 3]) -> GPtr<f32> {
     GPtr::from_raw(v.as_mut_ptr())
@@ -755,10 +747,7 @@ fn the_paths() -> GPtr<u8> {
     g::<u8>(0x96F050)
 }
 
-/// The f32 constant at `a` in the image.
-fn kf(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
+use sa_core::field::gf as kf;
 
 /// `CWeather::WeatherRegion` is countryside (0) or desert (4).
 fn countryside() -> bool {

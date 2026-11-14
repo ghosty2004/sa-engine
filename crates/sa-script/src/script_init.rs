@@ -16,13 +16,9 @@ orig! {
     fn get_model_info(name: GPtr<u8>, index: GPtr<i32>) -> GPtr<u8> = cdecl 0x4c5940 => unported;
 }
 
-fn at<T: sa_core::mem::GameData>(p: GPtr<u8>, off: isize) -> GPtr<T> {
-    p.byte_add(off).cast::<T>()
-}
+use sa_core::field::at;
 
-fn ga<T: sa_core::mem::GameData>(addr: usize) -> GPtr<T> {
-    GPtr::from_addr(addr)
-}
+use sa_core::field::g as ga;
 
 /// `CStreamedScripts::RemoveStreamedScriptFromMemory(int32 index)` (stub 0x4708E0 → 0x156F710, `ret 4`):
 /// `free(m_aScripts[index].data)` (entry `index << 5`, data +0), then the pointer is cleared.

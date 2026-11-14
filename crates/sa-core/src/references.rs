@@ -36,9 +36,7 @@ pub mod call {
     }
 }
 
-fn at<U>(p: GPtr<u8>, off: isize) -> GPtr<U> {
-    p.byte_add(off).cast()
-}
+use crate::field::at;
 
 /// `CReferences::Init` (0x5719B0): `pEmptyList = &aRefs[0]`; every entry (all 3000, including the
 /// last, which first points one past the array, i.e. at `pEmptyList`) gets `next = &entry[i + 1]`,

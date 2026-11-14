@@ -86,10 +86,7 @@ const F_9: f32 = 9.0;
 const F_3: f32 = 3.0;
 const F_1E9: f32 = f32::from_bits(0x4E6E_6B28);
 
-/// A Rust local passed by address to an original callee.
-fn p<T>(v: &mut T) -> GPtr<u8> {
-    GPtr::from_raw(v as *mut T).cast()
-}
+use sa_core::field::ptr_of as p;
 
 fn paths() -> GPtr<u8> {
     g(THE_PATHS)

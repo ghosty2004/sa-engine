@@ -14,11 +14,7 @@ orig! {
 /// `CModelInfo::ms_modelInfoPtrs` (0xA9B0C8)
 const MODEL_INFO_PTRS: usize = 0xA9_B0C8;
 
-/// The entity's position (`m_matrix` +0x30, else the placement position +4).
-fn pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos as pos;
 
 /// `CVector CTaskGoToVehicleAndLean::<lean point>(CPed* ped)` (0x664770, thiscall with the result pointer first,
 /// `ret 8`).

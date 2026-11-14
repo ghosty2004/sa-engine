@@ -19,10 +19,7 @@ use crate::mem::{GPtr, GameData, Global};
 use crate::{globals, hook, orig};
 use sa_math::x87::X87;
 
-/// A pointer to a constant in the original image (`.rdata` string, IID, ...).
-pub fn rdata<T>(addr: u32) -> GPtr<T> {
-    GPtr::from_addr(addr as usize)
-}
+pub use crate::field::gu as rdata;
 
 /// `RsInputDevice` (skeleton.h): +0 type, +4 used, +8 handler. 12 bytes.
 #[repr(C)]

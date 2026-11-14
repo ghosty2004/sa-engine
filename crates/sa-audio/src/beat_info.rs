@@ -13,7 +13,6 @@
 
 use sa_core::abi::HookReg;
 use sa_core::filemgr::{strcat, strcpy, strlen};
-use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
 use crate::port4_hw::{r8, r32, w32};
@@ -134,10 +133,7 @@ pub fn hw_get_beat_info(this: u32, out: u32) {
     operator_delete(beats);
 }
 
-/// A C string at `a` as `sa_core::filemgr`'s string helpers take it.
-fn cstr(a: u32) -> GPtr<u8> {
-    GPtr::from_addr(a as usize)
-}
+use sa_core::field::p8 as cstr;
 
 /// `CAEMP3TrackLoader::GetTrackInfo(uint32)` (0x4E0A70): the track's beat table (a new `tTrackInfo`, the
 /// caller deletes it) read from the head of its stream, or null for an unknown track / pack. Loader layout:

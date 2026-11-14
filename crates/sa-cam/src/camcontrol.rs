@@ -156,23 +156,11 @@ const K_PI: u32 = 0x4049_0FDB; // [0x858CB8]
 const K_2PI: u32 = 0x40C9_0FDB; // [0x858CBC]
 const K_HALF_PI: u32 = 0x3FC9_0FDB; // [0x858FE4]
 
-fn kd(addr: usize) -> f32 {
-    g::<f32>(addr).read()
-}
+use sa_core::field::gf as kd;
 
-/// `e->m_matrix ? &m_matrix->pos : &placement.pos`
-fn pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() {
-        e.byte_add(4)
-    } else {
-        m.byte_add(0x30)
-    }
-}
+use sa_world::world::common::entity_pos as pos;
 
-fn etype(e: GPtr<u8>) -> u8 {
-    rd::<u8>(e, 0x36) & 7
-}
+use sa_world::world::common::entity_type as etype;
 
 /// `m_aCams[m_nActiveCam]` (index re-read at every use).
 fn cam(this: GPtr<u8>) -> GPtr<u8> {
@@ -216,34 +204,20 @@ fn tgt(this: GPtr<u8>) -> GPtr<u8> {
     rd::<GPtr<u8>>(this, 0x958)
 }
 
-fn vbuf<const N: usize>(b: &mut [u32; N]) -> GPtr<u8> {
-    GPtr::from_raw(b.as_mut_ptr()).cast()
-}
+use sa_core::field::ptr_of as vbuf;
 
-fn copy3(dst: GPtr<u8>, src: GPtr<u8>) {
-    for i in 0..3 {
-        wr::<u32>(dst, 4 * i, rd::<u32>(src, 4 * i));
-    }
-}
+use sa_core::field::copy3;
 
-/// `test ah, m; jp` after `fcom(p) a, b`: taken.
-fn tjp(a: X87, b: X87, m: u8) -> bool {
-    a.fcom(b).test_parity(m)
-}
+use sa_math::fpu::fcom_parity as tjp;
 
-/// `test ah, m; jne` after `fcom(p) a, b`: taken.
-fn tjne(a: X87, b: X87, m: u8) -> bool {
-    a.fcom(b).test_any(m)
-}
+use sa_math::fpu::fcom_any as tjne;
 
 /// `test ah, m; jnp`: taken.
 fn tjnp(a: X87, b: X87, m: u8) -> bool {
     !a.fcom(b).test_parity(m)
 }
 
-fn st0(v: f64) -> X87 {
-    X87::from_f64_exact(v)
-}
+use sa_math::fpu::st0;
 
 /// `(float)(uint32)v`: `fild dword` plus 2^32 when the sign bit is set.
 fn fild_u32(v: u32) -> X87 {
@@ -352,9 +326,7 @@ fn door_mid(a: [u32; 3], b: [u32; 3]) -> [u32; 3] {
     [rx.to_bits(), ry.to_bits(), rz.to_bits()]
 }
 
-fn read3(p: GPtr<u8>) -> [u32; 3] {
-    [rd::<u32>(p, 0), rd::<u32>(p, 4), rd::<u32>(p, 8)]
-}
+use sa_core::field::rd3u as read3;
 
 /// The fixed camera from the garage doors (2d 0x528800 / 3d 0x52990C): `first` / `second` door
 /// objects; `l88` = pos(T) as captured; `l50` the base used for the no-door direction; `back` the

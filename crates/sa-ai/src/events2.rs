@@ -233,37 +233,18 @@ fn event_pool() -> GPtr<u8> {
     g::<GPtr<u8>>(EVENT_POOL).read()
 }
 
-/// `fld dword [addr]` of a float constant/global.
-fn gf(addr: usize) -> X87 {
-    x(g::<f32>(addr).read())
-}
+use sa_core::field::gx as gf;
 
-/// Pointer to a Rust stack buffer (stands in for an object the original builds on its own stack).
-fn buf<const N: usize>(b: &mut [u32; N]) -> GPtr<u8> {
-    GPtr::from_raw(b as *mut [u32; N]).cast()
-}
+use sa_core::field::ptr_of as buf;
 
 /// The ped's intelligence (`+0x47C`).
 fn intel(ped: GPtr<u8>) -> GPtr<u8> {
     rd::<GPtr<u8>>(ped, 0x47C)
 }
 
-/// Entity position: matrix +0x30, else the placement at +4.
-fn ent_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() {
-        e.byte_add(4)
-    } else {
-        m.byte_add(0x30)
-    }
-}
+use sa_world::world::common::entity_pos as ent_pos;
 
-/// Copies a 12-byte vector dword by dword.
-fn copy_vec(dst: GPtr<u8>, src: GPtr<u8>) {
-    for o in [0, 4, 8] {
-        wr::<u32>(dst, o, rd::<u32>(src, o));
-    }
-}
+use sa_core::field::copy3 as copy_vec;
 
 // ---- informers ----------------------------------------------------------------------------------
 

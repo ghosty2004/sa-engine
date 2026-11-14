@@ -8,9 +8,7 @@ use sa_core::abi::HookReg;
 use sa_core::hook;
 use sa_core::mem::GPtr;
 
-fn at<T: sa_core::mem::GameData>(p: GPtr<u8>, off: isize) -> GPtr<T> {
-    p.byte_add(off).cast::<T>()
-}
+use sa_core::field::at;
 
 /// `CScriptResourceManager::RemoveFromResourceManager(int32 id, uint16 type, CRunningScript* owner)`
 /// (stub 0x470510 → 0x156B210, thiscall, `ret 0xC`): over the 0x4B entries, every one with this id and

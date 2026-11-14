@@ -51,10 +51,7 @@ orig! {
     fn v_blow_up_car(v: GPtr<u8>, damager: GPtr<u8>, hide: u32) = thiscall vslot 0xA4 => unported;
 }
 
-/// A stack buffer of `N` dwords as a game pointer.
-fn buf<const N: usize>(b: &mut [u32; N]) -> GPtr<u8> {
-    GPtr::from_raw(b as *mut [u32; N]).cast()
-}
+use sa_core::field::ptr_of as buf;
 
 /// `CPlane::VehicleDamage(float intensity, eVehicleCollisionComponent, CEntity* damager, CVector*
 /// coors, CVector* direction, eWeaponType weapon)` (0x6CC4B0).
@@ -236,10 +233,7 @@ pub fn plane_vehicle_damage(this: GPtr<u8>, intensity: f32, comp: u32, damager: 
     wr::<i32>(this, 0x9FC, random_in_range_i(2000, 4000));
 }
 
-/// `fcomp` + `fnstsw ax` + `test ah, mask` + `jp` taken.
-fn jp(a: X87, b: X87, mask: u8) -> bool {
-    a.fcom(b).test_parity(mask)
-}
+use sa_math::fpu::fcom_parity as jp;
 
 /// This module's registrations.
 pub const HOOKS: &[HookReg] = &[HOOK_PLANE_VEHICLE_DAMAGE];

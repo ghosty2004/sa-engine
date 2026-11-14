@@ -17,15 +17,11 @@ orig! {
 /// `CReplay` "player vehicle recorded without its siren" byte (0xB6EC20)
 const PLAYER_VEHICLE_FLAG: usize = 0xB6EC20;
 
-fn kf(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
+use sa_core::field::gf as kf;
 fn byte_of(v: X87) -> u8 {
     v.ftol() as u8
 }
-fn less(a: X87, b: X87) -> bool {
-    !a.fcom(b).test_parity(5)
-}
+use sa_math::fpu::lt as less;
 
 /// A move-speed component clamped as the original branches: `!(hi < c) && lo > c` → `lo`, else `hi < c` → `hi`, else
 /// `c`; then `_ftol(v * 127)` (0x859C38) as a byte.

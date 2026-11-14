@@ -26,9 +26,7 @@ orig! {
     fn test_line_sphere(line: GPtr<u8>, sphere: GPtr<u8>) -> u8 = cdecl 0x417470 => unported;
 }
 
-fn gp<T: sa_core::mem::GameData>(a: usize) -> GPtr<T> {
-    GPtr::from_addr(a)
-}
+use sa_core::field::g as gp;
 
 /// `CShadows::RenderIndicatorShadow(uint32 id, uint8 type, RwTexture*, CVector* pos, float frontX, float frontY,
 /// float sideX, float sideY, int16 intensity)` (0x70CCB0, cdecl): `m = frontX` when `frontX > -sideY` (ordered), else

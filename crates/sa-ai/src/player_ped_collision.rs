@@ -33,18 +33,13 @@ const K_ZERO: usize = 0x858B50;
 /// 1.5, the stat (+0x2C of `CPedStat`) above which a ped knocks another over
 const K_SHOVE_STAT: usize = 0x85AAE0;
 
-fn gf(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
+use sa_core::field::gf;
 
 fn ped(this: GPtr<u8>) -> GPtr<u8> {
     rd::<GPtr<u8>>(this, 0)
 }
 
-fn pos_ptr(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos as pos_ptr;
 
 fn new_task(size: u32, ctor: impl FnOnce(GPtr<u8>) -> GPtr<u8>) -> GPtr<u8> {
     let t = task_new(size);

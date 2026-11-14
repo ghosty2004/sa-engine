@@ -43,14 +43,9 @@ orig! {
 /// `CTimer::m_snTimeInMilliseconds`
 const TIME_MS: usize = 0xB7CB84;
 
-fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos;
 
-fn kf(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
+use sa_core::field::gf as kf;
 
 /// `K * K` against `v`: `fld K; fmul K; fcomp v; fnstsw`.
 fn sq_cmp(k: f32, v: X87) -> sa_math::x87::Cmp {

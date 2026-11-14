@@ -201,30 +201,9 @@ pub const GLOBALS: &[&[GlobalDesc]] = &[
     world::misc2::GLOBALS,
 ];
 
-const fn total(parts: &[&[HookReg]]) -> usize {
-    let (mut n, mut i) = (0, 0);
-    while i < parts.len() {
-        n += parts[i].len();
-        i += 1;
-    }
-    n
-}
+use sa_core::hooks::total;
 
-const fn concat<const N: usize>(parts: &[&[HookReg]]) -> [HookReg; N] {
-    let mut out = [sa_core::hooks::ALL[0]; N];
-    let (mut k, mut i) = (0, 0);
-    while i < parts.len() {
-        let mut j = 0;
-        while j < parts[i].len() {
-            out[k] = parts[i][j];
-            k += 1;
-            j += 1;
-        }
-        i += 1;
-    }
-    assert!(k == N);
-    out
-}
+use sa_core::hooks::concat;
 
 #[allow(clippy::large_const_arrays)]
 const ALL_ARRAY: [HookReg; total(MODULES)] = concat(MODULES);

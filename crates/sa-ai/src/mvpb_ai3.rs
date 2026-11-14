@@ -361,10 +361,7 @@ pub fn walk_alongside_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GP
     }
 }
 
-fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos;
 
 /// `CTaskGoToVehicleAndLean::CreateFirstSubTask(CPed*)` (0x664D40, `ret 4`): with a vehicle (+0xC) not yet leaned on
 /// (flag 1 of +0x42E, set now; an already set flag is cleared and nothing created), stores the lean target (+0x18)

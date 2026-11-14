@@ -56,10 +56,7 @@ orig! {
     fn do_boat_splashes(v: GPtr<u8>, speed: f32) = thiscall 0x6DD130 => unported;
 }
 
-/// A stack buffer of `N` dwords as a game pointer.
-fn buf<const N: usize>(b: &mut [u32; N]) -> GPtr<u8> {
-    GPtr::from_raw(b as *mut [u32; N]).cast()
-}
+use sa_core::field::ptr_of as buf;
 
 /// `|v|` of the three floats at `p` as the original sums them (`(x*x + y*y) + z*z`, FSQRT).
 fn length(p: GPtr<u8>) -> f32 {

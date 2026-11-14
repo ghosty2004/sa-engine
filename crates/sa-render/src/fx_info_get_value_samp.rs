@@ -36,9 +36,7 @@ orig! {
         o: u32, d: u32, see: u32, poly: u32) -> u8 = cdecl 0x5674E0 => unported;
 }
 
-fn xf(v: f32) -> X87 {
-    X87::from_f32(v)
-}
+use sa_math::fpu::x as xf;
 
 /// The key time: `mult` with byte +6 set, else `(float)(currTime / totalTime)`.
 fn key_time(this: GPtr<u8>, curr: u32, mult: u32, total: u32) -> u32 {

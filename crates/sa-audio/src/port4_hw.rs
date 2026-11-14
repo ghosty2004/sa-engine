@@ -48,51 +48,24 @@ const USER_RADIO: u32 = 0xB6B970;
 
 // ------------------------------------------------------------------ raw access --------------------
 
-#[inline]
-pub(crate) fn r32(a: u32) -> u32 {
-    g::<u32>(a as usize).read()
-}
-#[inline]
-pub(crate) fn w32(a: u32, v: u32) {
-    g::<u32>(a as usize).write(v)
-}
-#[inline]
-pub(crate) fn r16(a: u32) -> u16 {
-    g::<u16>(a as usize).read()
-}
-#[inline]
-pub(crate) fn w16(a: u32, v: u16) {
-    g::<u16>(a as usize).write(v)
-}
-#[inline]
-pub(crate) fn r8(a: u32) -> u8 {
-    g::<u8>(a as usize).read()
-}
-#[inline]
-pub(crate) fn w8(a: u32, v: u8) {
-    g::<u8>(a as usize).write(v)
-}
+pub(crate) use sa_core::field::gr32u as r32;
+pub(crate) use sa_core::field::gw32u as w32;
+pub(crate) use sa_core::field::gr16u as r16;
+pub(crate) use sa_core::field::gw16u as w16;
+pub(crate) use sa_core::field::gr8u as r8;
+pub(crate) use sa_core::field::gw8u as w8;
 #[inline]
 pub(crate) fn rf(a: u32) -> f32 {
     f32::from_bits(r32(a))
 }
-#[inline]
-pub(crate) fn p(a: u32) -> GPtr<u8> {
-    GPtr::from_addr(a as usize)
-}
+pub(crate) use sa_core::field::p8 as p;
 /// `fild dword` of an unsigned value with the compiler's `jge; fadd 2^32` fix: the exact value.
 #[inline]
 pub(crate) fn xu(v: u32) -> X87 {
     X87::from_f64_exact(v as f64)
 }
-#[inline]
-pub(crate) fn xi(v: i32) -> X87 {
-    X87::from_i32(v)
-}
-#[inline]
-pub(crate) fn xf(v: f32) -> X87 {
-    X87::from_f32(v)
-}
+pub(crate) use sa_math::fpu::xi;
+pub(crate) use sa_math::fpu::x as xf;
 /// `_ftol` (0x821B40) of ST0, low dword.
 #[inline]
 pub(crate) fn ftol(v: X87) -> u32 {
@@ -103,16 +76,8 @@ pub(crate) fn ftol(v: X87) -> u32 {
 pub(crate) fn feq(a: X87, b: X87) -> bool {
     !a.fcom(b).test_parity(0x44)
 }
-/// `fcomp` + `test ah, 5` + `jnp` (taken when below).
-#[inline]
-pub(crate) fn fbelow(a: X87, b: X87) -> bool {
-    !a.fcom(b).test_parity(0x05)
-}
-/// `fcomp` + `test ah, 0x41` + `jne` (taken when below or equal).
-#[inline]
-pub(crate) fn fbelow_eq(a: X87, b: X87) -> bool {
-    a.fcom(b).test_any(0x41)
-}
+pub(crate) use sa_math::fpu::lt as fbelow;
+pub(crate) use sa_math::fpu::le_or_nan as fbelow_eq;
 
 /// `_CIpow` (0x822130): `base ^ exp`. Phase A calls the CRT intrinsic; phase B uses the host's
 /// `pow` on f64 (the CRT computes in double precision as well; recorded as the phase B

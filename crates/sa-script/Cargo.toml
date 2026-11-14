@@ -10,10 +10,10 @@ publish.workspace = true
 sa-core = { path = "../sa-core" }
 sa-macros = { path = "../sa-macros" }
 sa-math = { path = "../sa-math" }
+sa-world = { path = "../sa-world" }
 
 [dev-dependencies]
 sa-stream = { path = "../sa-stream" }
-sa-world = { path = "../sa-world" }
 
 [features]
 # Phase A: run inside gta_sa.exe 1.0 US (sa-hook). Forwards to sa-core (whose `globals!`/`orig!`

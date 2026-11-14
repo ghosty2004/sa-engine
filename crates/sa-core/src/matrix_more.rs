@@ -13,18 +13,12 @@ use crate::abi::HookReg;
 use crate::hook;
 use crate::mem::GPtr;
 
-fn ld(p: GPtr<u8>, o: isize) -> X87 {
-    X87::from_f32(p.byte_add(o).cast::<f32>().read())
-}
-fn ldf(p: GPtr<u8>, o: isize) -> f32 {
-    p.byte_add(o).cast::<f32>().read()
-}
+use crate::field::ldx as ld;
+use crate::field::rdf as ldf;
 fn st(p: GPtr<u8>, o: isize, v: X87) {
     p.byte_add(o).cast::<f32>().write(v.to_f32())
 }
-fn stu(p: GPtr<u8>, o: isize, v: u32) {
-    p.byte_add(o).cast::<u32>().write(v)
-}
+use crate::field::wr32 as stu;
 
 const ONE: u32 = 0x3F80_0000;
 

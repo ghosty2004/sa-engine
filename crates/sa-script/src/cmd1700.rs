@@ -216,11 +216,7 @@ const MODEL_INFO_PTRS: u32 = 0xA9B0C8;
 const K_DEG2RAD: u32 = 0x3C8E_FA35;
 const K_50: u32 = 0x4248_0000;
 
-/// The dword at `a` (`.rdata` constants pushed as raw dwords, read at run time as the original does).
-#[inline]
-fn rd(a: usize) -> u32 {
-    GPtr::<u32>::from_addr(a).read()
-}
+use sa_core::field::gr32 as rd;
 
 /// `t = CTask::operator new(size)`; null -> null, else the constructor's result (EAX).
 #[inline]

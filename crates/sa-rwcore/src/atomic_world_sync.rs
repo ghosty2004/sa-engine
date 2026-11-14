@@ -31,9 +31,7 @@ fn unlink(l: GPtr<u8>) {
     wr::<u32>(next, 4, addr(prev));
 }
 
-fn addr(p: GPtr<u8>) -> u32 {
-    p.addr() as u32
-}
+use sa_core::field::addr32 as addr;
 
 /// `_rpWorldObjAtomicSync(atomic)` (0x7507E0): the saved sync callback first (NULL → NULL). With a
 /// world: every tie of the atomic whose atomic and sector are set is unlinked from both lists and freed;

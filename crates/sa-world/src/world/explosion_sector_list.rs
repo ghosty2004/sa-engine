@@ -117,20 +117,9 @@ const F_0_2: f32 = f32::from_bits(0x3E4C_CCCD);
 const F_0_1: f32 = f32::from_bits(0x3DCC_CCCD);
 const F_0_01: f32 = f32::from_bits(0x3C23_D70A);
 
-/// A Rust local passed by address to an original callee.
-fn p<T>(v: &mut T) -> GPtr<u8> {
-    GPtr::from_raw(v as *mut T).cast()
-}
+use sa_core::field::ptr_of as p;
 
-/// `GetPosition()`: the matrix position when the entity has a matrix, else the placement's.
-fn ent_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() {
-        e.byte_add(4)
-    } else {
-        m.byte_add(0x30)
-    }
-}
+use crate::world::common::entity_pos as ent_pos;
 
 /// `fld; fchs; fstp` of an f32.
 fn neg(v: f32) -> f32 {

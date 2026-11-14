@@ -47,15 +47,7 @@ fn station_dist(k: i32) -> f32 {
     g::<f32>(STATION_DIST + 4 * k as usize).read()
 }
 
-/// The entity's position (`m_matrix` row 3, or the placeable's `+4` without a matrix).
-fn pos_ptr(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() {
-        e.byte_add(4)
-    } else {
-        m.byte_add(0x30)
-    }
-}
+use sa_world::world::common::entity_pos as pos_ptr;
 
 /// Every vehicle of the pool, from the last slot down (the original loops), as `f(vehicle)`.
 fn for_each_vehicle_rev(mut f: impl FnMut(GPtr<u8>)) {

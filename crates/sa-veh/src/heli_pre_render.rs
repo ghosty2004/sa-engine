@@ -41,10 +41,7 @@ orig! {
     fn store_shadow_for_vehicle(v: GPtr<u8>, kind: u32) = cdecl 0x70BDA0 => unported;
 }
 
-/// A stack buffer of `N` dwords as a game pointer.
-fn buf<const N: usize>(b: &mut [u32; N]) -> GPtr<u8> {
-    GPtr::from_raw(b as *mut [u32; N]).cast()
-}
+use sa_core::field::ptr_of as buf;
 
 /// Rotates a rotor frame through the shared `CMatrix`: attached to the frame's matrix, the rotation
 /// replaced (`SetRotateZ` for the main rotor, `SetRotateX` for the tail), the position kept.

@@ -48,10 +48,7 @@ const ANIM_BLOCK_LOADED: usize = 0xB5_D4B0;
 /// The "office edge filler placed" latch (0xBB3DC8).
 const OFFICE_LATCH: usize = 0xBB_3DC8;
 
-/// A Rust local passed by address to an original callee.
-fn p<T>(v: &mut T) -> GPtr<u8> {
-    GPtr::from_raw(v as *mut T).cast()
-}
+use sa_core::field::ptr_of as p;
 
 /// `ftol((rand() & 0xFFFF) * (1/32768) * k)` with `k` from memory (`fmul m32`).
 fn rand_scaled(site: u32, k: f32) -> i32 {

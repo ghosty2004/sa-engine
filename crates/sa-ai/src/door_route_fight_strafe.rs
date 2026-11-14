@@ -50,21 +50,11 @@ orig! {
     fn geom_compute_route_round_entity_bbox(ped: GPtr<u8>, start: GPtr<u8>, e: u32, target: GPtr<u8>, route: GPtr<u8>, n: u32) -> u8 = cdecl 0x5F3DD0 => unported;
 }
 
-/// A dword-aligned stack object of `N` dwords, as a game pointer.
-fn local<const N: usize>(b: &mut [u32; N]) -> GPtr<u8> {
-    GPtr::from_raw(b as *mut [u32; N]).cast()
-}
+use sa_core::field::ptr_of as local;
 
-/// The f32 constant at `a`.
-fn k(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
+use sa_core::field::gf as k;
 
-/// An entity's position: its matrix +0x30, or the placement at +4 without a matrix.
-fn pos_of(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos as pos_of;
 
 /// `CTaskComplexGotoDoorAndOpen::CreateFirstSubTask(CPed*)` (0x66BD40, `ret 4`): a player's pad 0 gets bit 3 of
 /// +0x10E and the task flag byte +0x34 bit 3; an area-codes event for the ped (a stack `CEventAreaCodes`) is added

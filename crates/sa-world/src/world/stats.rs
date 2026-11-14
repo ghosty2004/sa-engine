@@ -446,9 +446,7 @@ const FAT_MESSAGE_TOGGLE: usize = 0xB79534;
 const STAT_FAT: usize = 0xB793D4;
 const STAT_MUSCLE: usize = 0xB793DC;
 
-fn gf(addr: usize) -> f32 {
-    g::<f32>(addr).read()
-}
+use sa_core::field::gf;
 
 /// `fild dword` of an accumulator, plus 2^32 when negative (the unsigned conversion).
 fn units(addr: usize) -> X87 {

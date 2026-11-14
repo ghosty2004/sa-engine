@@ -7,15 +7,11 @@ use crate::abi::HookReg;
 use crate::hook;
 use crate::mem::GPtr;
 
-fn ld(p: GPtr<u8>, o: isize) -> f32 {
-    p.byte_add(o).cast::<f32>().read()
-}
+use crate::field::rdf as ld;
 fn st(p: GPtr<u8>, o: isize, v: X87) {
     p.byte_add(o).cast::<f32>().write(v.to_f32())
 }
-fn x(v: f32) -> X87 {
-    X87::from_f32(v)
-}
+use sa_math::fpu::x;
 
 /// `(x * x + y * y) + z * z` of the vector at `p` (register operands).
 fn square_sum(p: GPtr<u8>) -> X87 {

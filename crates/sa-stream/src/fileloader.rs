@@ -43,9 +43,7 @@ sa_core::globals! {
     pub static G_STRING @ 0xB71670: [u8; 352] = [0; 352];
 }
 
-fn s(addr: u32) -> GPtr<u8> {
-    GPtr::from_addr(addr as usize)
-}
+use sa_core::field::p8 as s;
 fn rd8(p: GPtr<u8>, off: isize) -> u8 {
     field::<u8, u8>(p, off).read()
 }
@@ -58,9 +56,7 @@ fn rd16(p: GPtr<u8>, off: isize) -> i16 {
 fn wr16(p: GPtr<u8>, off: isize, v: i16) {
     field::<i16, u8>(p, off).write(v)
 }
-fn rd32(p: GPtr<u8>, off: isize) -> u32 {
-    field::<u32, u8>(p, off).read()
-}
+use sa_core::field::rd32;
 fn wr32(p: GPtr<u8>, off: isize, v: u32) {
     field::<u32, u8>(p, off).write(v)
 }
@@ -70,10 +66,7 @@ fn rdp(p: GPtr<u8>, off: isize) -> GPtr<u8> {
 fn wrp(p: GPtr<u8>, off: isize, v: GPtr<u8>) {
     field::<GPtr<u8>, u8>(p, off).write(v)
 }
-/// A pointer to a local (sscanf target / out parameter).
-fn lp<T>(v: &mut T) -> GPtr<u8> {
-    GPtr::from_raw(v as *mut T).cast()
-}
+use sa_core::field::ptr_of as lp;
 fn f(v: u32) -> f32 {
     f32::from_bits(v)
 }

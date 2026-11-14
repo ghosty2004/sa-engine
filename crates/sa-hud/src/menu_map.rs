@@ -114,13 +114,9 @@ const IMM_10: u32 = 0x4120_0000;
 const IMM_0_3: u32 = 0x3E99_999A;
 const IMM_0_55: u32 = 0x3F0C_CCCD;
 
-fn k(bits: u32) -> f32 {
-    f32::from_bits(bits)
-}
+use sa_math::fpu::fbits as k;
 
-fn b(addr: usize) -> u8 {
-    g::<u8>(addr).read()
-}
+use sa_core::field::gr8 as b;
 
 fn w() -> i32 {
     g::<i32>(RS_MAX_WIDTH).read()

@@ -154,9 +154,7 @@ orig! {
     fn register_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571B70 => unported;
 }
 
-fn rd32(p: GPtr<u8>, o: isize) -> u32 {
-    p.byte_add(o).cast::<u32>().read()
-}
+use sa_core::field::rd32;
 fn or32(p: GPtr<u8>, o: isize, v: u32) {
     p.byte_add(o).cast::<u32>().write(rd32(p, o) | v)
 }

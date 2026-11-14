@@ -47,9 +47,7 @@ const SUN: usize = 0x8D5244;
 /// 60.0f (0x858B34): the object extrusion length
 const K_OBJECT_LEN: usize = 0x858B34;
 
-fn v3(p: GPtr<u8>) -> [f32; 3] {
-    [rd::<f32>(p, 0), rd::<f32>(p, 4), rd::<f32>(p, 8)]
-}
+use sa_core::field::rd3f as v3;
 fn put(dst: GPtr<u8>, v: [f32; 3]) {
     for (k, c) in v.iter().enumerate() {
         wr::<u32>(dst, 4 * k as isize, c.to_bits());

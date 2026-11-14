@@ -97,12 +97,7 @@ impl V3 {
     }
 }
 
-/// Dword copy of 3 words.
-fn copy3(dst: GPtr<u8>, src: GPtr<u8>) {
-    for o in [0, 4, 8] {
-        wr::<u32>(dst, o, rd::<u32>(src, o));
-    }
-}
+use sa_core::field::copy3;
 
 /// The inlined "right vector of the target": `R = cross(M(t)->forward, (0,0,1))` (the matrix allocated and
 /// updated from the placement first when missing), `R.z = 0`, `R.Normalise()`.
@@ -292,15 +287,7 @@ pub fn process_peds_dead_baby(this: GPtr<u8>) {
     g::<u8>(CAMERA_MOVE_CAM_TO_AVOID_GEOM).write(0);
 }
 
-/// `&pos(e)`: the matrix position (+0x30) when the entity has a matrix (+0x14), else the placement (+4).
-fn pos_of(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() {
-        e.byte_add(4)
-    } else {
-        m.byte_add(0x30)
-    }
-}
+use sa_world::world::common::entity_pos as pos_of;
 
 /// `CCam::Process_SpecialFixedForSyphon(const CVector& target, float, float, float)` (0x517500,
 /// thiscall, `ret 0x10`; only `target` is read).

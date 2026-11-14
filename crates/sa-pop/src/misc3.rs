@@ -50,15 +50,7 @@ orig! {
     fn find_objects_kinda_colliding(pos: GPtr<f32>, r: f32, b2d: u32, cnt: GPtr<i16>, max: i32, out: GPtr<u32>, bld: u32, veh: u32, ped: u32, obj: u32, dum: u32) = cdecl 0x568B80 => unported;
 }
 
-/// `m_matrix ? &m_matrix->pos : &placement.pos`.
-fn entity_pos(e: GPtr<u8>) -> GPtr<f32> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() {
-        e.byte_add(4).cast()
-    } else {
-        m.byte_add(0x30).cast()
-    }
-}
+use sa_world::world::common::entity_pos_f as entity_pos;
 
 /// `(float)(int16)p[off] * 0.125f` (`fild` + `fmul [0x858C48]`).
 fn ncoord(p: GPtr<u8>, off: isize) -> X87 {

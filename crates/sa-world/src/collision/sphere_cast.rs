@@ -27,14 +27,9 @@ const K_1_128: usize = 0x858B88;
 /// `0.0f` (0x858B50)
 const K_0: usize = 0x858B50;
 
-/// f32 constant at `addr`.
-fn kf(addr: usize) -> f32 {
-    g::<f32>(addr).read()
-}
+use sa_core::field::gf as kf;
 
-fn v3(p: GPtr<u8>) -> [f32; 3] {
-    [rd::<f32>(p, 0), rd::<f32>(p, 4), rd::<f32>(p, 8)]
-}
+use sa_core::field::rd3f as v3;
 
 fn bits3(v: [f32; 3]) -> [u32; 3] {
     [v[0].to_bits(), v[1].to_bits(), v[2].to_bits()]

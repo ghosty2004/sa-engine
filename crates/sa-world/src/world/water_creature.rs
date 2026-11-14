@@ -200,11 +200,7 @@ orig! {
     fn try_to_exit_group(m: GPtr<u8>, c: GPtr<u8>) = thiscall 0x6E45B0 => unported;
 }
 
-/// The position of an entity: its matrix's (+0x30) or its placement's (+4).
-fn pos_ptr(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use crate::world::common::entity_pos as pos_ptr;
 
 /// The inlined `CPlaceable::SetHeading`: `SetRotateZOnly` on the matrix, or the placement heading.
 fn set_heading(e: GPtr<u8>, h: f32) {
@@ -222,10 +218,7 @@ fn heading_of(x0: f32, y0: f32) -> X87 {
     X87::from_f64_exact(limit_radian_angle(a))
 }
 
-/// A stack buffer of `N` dwords as a game pointer.
-fn buf<const N: usize>(b: &mut [u32; N]) -> GPtr<u8> {
-    GPtr::from_raw(b as *mut [u32; N]).cast()
-}
+use sa_core::field::ptr_of as buf;
 
 /// `WaterCreature_c::Update(float timeStep)` (0x6E4670).
 ///

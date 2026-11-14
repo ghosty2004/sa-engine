@@ -58,9 +58,7 @@ const TEMP_RENDER_VERTICES: u32 = 0xC4_D958;
 /// 1 / 32767 (0x858C7C).
 const RAND_SCALE: u32 = 0x3800_0100;
 
-fn rand_at(site: u32) -> i32 {
-    sa_core::orig::at_site(site, sa_core::crt::rand)
-}
+use sa_core::crt::rand_at;
 
 fn cam_pos() -> GPtr<f32> {
     let cm = g::<GPtr<u8>>(CAM_MATRIX).read();

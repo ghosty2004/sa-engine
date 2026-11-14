@@ -103,9 +103,7 @@ pub(crate) fn write_cstr(dst: GPtr<u8>, s: &str, cap: usize) -> bool {
     true
 }
 
-pub(crate) fn handle(p: GPtr<u8>) -> u32 {
-    p.addr() as u32
-}
+pub(crate) use sa_core::field::addr32 as handle;
 
 // ------------------------------------------------------------------------------- timers ---
 
@@ -466,9 +464,7 @@ pub(crate) fn get_disk_free_space_a(
     total.write(0x0200_0000);
     1
 }
-pub(crate) fn h32(h: GPtr<u8>) -> u32 {
-    h.addr() as u32
-}
+pub(crate) use sa_core::field::addr32 as h32;
 pub(crate) fn cd_create_file_a(
     name: GPtr<u8>,
     access: u32,

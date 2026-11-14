@@ -518,9 +518,7 @@ fn pos_ptr(e: GPtr<u8>) -> GPtr<u8> {
     ent_pos(e).cast()
 }
 
-fn f32c(bits: u32) -> f32 {
-    f32::from_bits(bits)
-}
+use sa_math::fpu::fbits as f32c;
 
 /// The active weapon slot `&m_aWeapons[(int8)m_nActiveWeaponSlot]`.
 fn active_weapon(p: GPtr<u8>) -> GPtr<u8> {
@@ -1002,10 +1000,7 @@ pub fn cop_add_criminal_to_kill(this: GPtr<u8>, criminal: GPtr<u8>) -> i32 {
     free
 }
 
-/// x87 `FABS`.
-fn fabs(v: X87) -> X87 {
-    X87::from_f64_exact(v.to_f64().abs())
-}
+use sa_math::fpu::fabs;
 
 /// `_CIpow` (0x822130) of `0.9f ^ ts` (`fld 0.9f; fld ts; call`), the ST0 result.
 fn pow_09_ts() -> X87 {

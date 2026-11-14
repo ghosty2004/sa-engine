@@ -5,7 +5,6 @@
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
-use sa_math::x87::X87;
 
 
 orig! {
@@ -16,9 +15,7 @@ orig! {
     fn vector_add(out: GPtr<f32>, a: GPtr<f32>, b: GPtr<f32>) -> GPtr<f32> = cdecl 0x40FE30 => unported;
 }
 
-fn x(v: f32) -> X87 {
-    X87::from_f32(v)
-}
+use sa_math::fpu::x;
 
 /// `(a - b)` rounded to f32 (`fld a; fsub b; fstp`).
 fn sub(a: f32, b: f32) -> f32 {

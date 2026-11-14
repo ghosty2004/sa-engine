@@ -87,17 +87,9 @@ orig! {
     pub fn get_is_line_of_sight_clear(a: GPtr<u8>, b: GPtr<u8>, bu: u32, ve: u32, pe: u32, ob: u32, du: u32, st: u32, ig: u32) -> u8 = cdecl 0x56A490 => unported;
 }
 
-/// A frame-local CVector and its game pointer.
-fn vp(v: &mut [f32; 3]) -> GPtr<u8> {
-    GPtr::<f32>::from_raw(v.as_mut_ptr()).cast::<u8>()
-}
+use sa_core::field::ptr_of as vp;
 
-/// Dword copy of a 3-word vector.
-fn copy3(dst: GPtr<u8>, src: GPtr<u8>) {
-    for o in [0, 4, 8] {
-        wr::<u32>(dst, o, rd::<u32>(src, o));
-    }
-}
+use sa_core::field::copy3;
 
 /// The inlined `GetMatrix()`: allocates the matrix from the placement when missing.
 fn ensure_matrix(e: GPtr<u8>) {
@@ -466,19 +458,12 @@ impl Frame {
     }
 }
 
-/// `fld dword [B + off]` operand / store helpers.
-fn m(b: GPtr<u8>, off: isize) -> f32 {
-    rd::<f32>(b, off)
-}
+use sa_core::field::rdf as m;
 fn st(b: GPtr<u8>, off: isize, v: f32) {
     wr::<f32>(b, off, v)
 }
-fn mu(b: GPtr<u8>, off: isize) -> u32 {
-    rd::<u32>(b, off)
-}
-fn stu(b: GPtr<u8>, off: isize, v: u32) {
-    wr::<u32>(b, off, v)
-}
+use sa_core::field::rd32 as mu;
+use sa_core::field::wr32 as stu;
 
 /// `fsin` / `fcos` / `fidiv dword [m]` on the [`Fpu`] stack top.
 fn fsin(f: &mut Fpu) {

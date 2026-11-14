@@ -63,10 +63,7 @@ const K_TENTH: usize = 0x870A64;
 /// 0.0f (0x858B50)
 const K_ZERO: usize = 0x858B50;
 
-fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos;
 fn secondary(ped: GPtr<u8>) -> GPtr<u8> {
     tm_get_task_secondary(rd::<GPtr<u8>>(ped, 0x47C).byte_add(4), 4)
 }

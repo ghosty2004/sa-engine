@@ -205,10 +205,7 @@ fn order(this: GPtr<u8>, a: i32, t: i32) -> u32 {
 fn flag(this: GPtr<u8>, base: i32, t: i32) -> GPtr<u8> {
     this.byte_add(base.wrapping_add(t) as isize)
 }
-#[inline]
-fn byte_at(addr: u32) -> GPtr<u8> {
-    GPtr::from_addr(addr as usize)
-}
+use sa_core::field::p8 as byte_at;
 #[inline]
 fn word_at(addr: u32) -> GPtr<i16> {
     GPtr::from_addr(addr as usize)

@@ -72,11 +72,7 @@ fn mmod() -> GPtr<u8> {
     module(MATRIX)
 }
 
-/// `fld dword [m + off]`.
-#[inline]
-fn ld(m: GPtr<u8>, off: isize) -> X87 {
-    x(rd::<f32>(m, off))
-}
+use sa_core::field::ldx as ld;
 
 /// `fstp dword [m + off]`.
 #[inline]
@@ -84,10 +80,7 @@ fn st(m: GPtr<u8>, off: isize, v: X87) {
     wr::<f32>(m, off, f32_of(v));
 }
 
-#[inline]
-fn fm(m: GPtr<u8>, off: isize) -> f32 {
-    rd::<f32>(m, off)
-}
+use sa_core::field::rdf as fm;
 
 /// 16 dwords from `src` to `dst` (`rep movsd`).
 fn copy16(dst: GPtr<u8>, src: GPtr<u8>) {
@@ -697,9 +690,7 @@ fn sse_vector(v: [f32; 3], m: GPtr<u8>) -> [f32; 3] {
     o
 }
 
-fn rd3(p: GPtr<u8>) -> [f32; 3] {
-    [rd::<f32>(p, 0), rd::<f32>(p, 4), rd::<f32>(p, 8)]
-}
+use sa_core::field::rd3f as rd3;
 
 fn wr3(p: GPtr<u8>, v: [f32; 3]) {
     for (k, c) in v.iter().enumerate() {

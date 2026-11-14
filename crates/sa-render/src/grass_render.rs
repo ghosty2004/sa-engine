@@ -39,13 +39,9 @@ const RENDER_GRASS_TEXTURE: usize = 0xc0_2dc0;
 const G_FX: usize = 0xa9_ae00;
 const SET_GRASS_MATERIAL_CB: u32 = 0x5d_ac10;
 
-fn gf(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
+use sa_core::field::gf;
 
-fn rand_at(ret: u32) -> i32 {
-    sa_core::orig::at_site(ret, sa_core::crt::rand)
-}
+use sa_core::crt::rand_at;
 
 /// `rand() * (1 / 32767)` (0x858C7C).
 fn rand_unit(ret: u32) -> X87 {

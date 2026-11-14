@@ -149,10 +149,7 @@ const CHEAT_CARS_ON_WATER: usize = 0x96_9152;
 const CHEAT_ALL_CARS_NITRO: usize = 0x96_9165;
 const CHEAT_ALL_TAXIS_NITRO: usize = 0x96_918B;
 
-/// `fld dword [p + off]`
-fn ld(p: GPtr<u8>, off: isize) -> X87 {
-    x(rd::<f32>(p, off))
-}
+use sa_core::field::ldx as ld;
 
 /// The vector at `p + off`.
 fn rv(p: GPtr<u8>, off: isize) -> CVector {
@@ -164,25 +161,13 @@ fn st(p: GPtr<u8>, off: isize, v: X87) {
     wr::<f32>(p, off, v.to_f32());
 }
 
-/// A `.rdata` constant.
-fn c(bits: u32) -> X87 {
-    X87::constant(bits)
-}
+use sa_math::fpu::xc as c;
 
-/// `fld dword [addr]` of a `.data` global.
-fn gf(addr: usize) -> X87 {
-    x(g::<f32>(addr).read())
-}
+use sa_core::field::gx as gf;
 
-/// `fcomp` + `test ah, 0x41` + `jne` taken: `a <= b` or unordered.
-fn le(a: X87, b: X87) -> bool {
-    a.fcom(b).test_any(0x41)
-}
+use sa_math::fpu::le_or_nan as le;
 
-/// `fcomp` + `test ah, 5` + `jp` taken: `a >= b` or unordered.
-fn ge(a: X87, b: X87) -> bool {
-    a.fcom(b).test_parity(0x05)
-}
+use sa_math::fpu::ge_or_nan as ge;
 
 /// `fcomp` + `test ah, 0x44` + `jp` taken: `a != b` or unordered.
 fn ne(a: X87, b: X87) -> bool {
@@ -200,16 +185,7 @@ fn sq3(p: GPtr<u8>, off: isize) -> X87 {
     vx.fmul(vx).fadd(vy.fmul(vy)).fadd(vz.fmul(vz))
 }
 
-/// `CPlaceable::GetPosition()` inlined: the matrix position when there is a matrix, else the
-/// placement's.
-fn pos_ptr(this: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(this, 0x14);
-    if m.is_null() {
-        this.byte_add(4)
-    } else {
-        m.byte_add(0x30)
-    }
-}
+use sa_world::world::common::entity_pos as pos_ptr;
 
 /// The status (`+0x36 >> 3`).
 fn status(this: GPtr<u8>) -> u8 {

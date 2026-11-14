@@ -45,9 +45,7 @@ orig! {
     fn atomic_render_cb(cb: u32, atomic: GPtr<u8>) -> GPtr<u8> = cdecl dyn => unported;
 }
 
-fn lp<T>(v: &mut T) -> GPtr<u8> {
-    GPtr::from_raw(v as *mut T).cast()
-}
+use sa_core::field::ptr_of as lp;
 
 const THE_CAMERA: usize = 0xB6F028;
 const TEMP_VERTS: usize = 0xC4D958;

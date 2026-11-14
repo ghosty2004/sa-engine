@@ -84,9 +84,7 @@ orig! {
         min: GPtr<u8>, poly: GPtr<u8>) -> u8 = cdecl 0x4140f0 => super::mvpc_coll1::process_line_triangle;
 }
 
-fn p(addr: usize) -> GPtr<u8> {
-    GPtr::from_addr(addr)
-}
+use sa_core::field::pa as p;
 
 fn idx(base: usize, i: i32) -> i32 {
     g::<i32>(base + (i as isize as usize).wrapping_mul(4)).read()
@@ -101,12 +99,7 @@ fn sph(base: usize, i: i32) -> GPtr<u8> {
     p(base).byte_add(i as isize * 0x14)
 }
 
-/// Copies 3 dwords.
-fn copy3(dst: GPtr<u8>, src: GPtr<u8>) {
-    for k in 0..3 {
-        wr::<u32>(dst, 4 * k, rd::<u32>(src, 4 * k));
-    }
-}
+use sa_core::field::copy3;
 
 /// Copies the 3 surface bytes (word + byte).
 fn copy_surf(dst: GPtr<u8>, src: GPtr<u8>) {
@@ -158,9 +151,7 @@ fn sphere_box_inline(c: [f32; 3], r: f32, bx: GPtr<u8>) -> bool {
     true
 }
 
-fn v3(p: GPtr<u8>) -> [f32; 3] {
-    [rd::<f32>(p, 0), rd::<f32>(p, 4), rd::<f32>(p, 8)]
-}
+use sa_core::field::rd3f as v3;
 
 /// `normal = normal * [0x858C1C]` per component through f32 stores (x, y, z), written back after all
 /// three are computed (the original stores x and y before computing z, which reads only z).

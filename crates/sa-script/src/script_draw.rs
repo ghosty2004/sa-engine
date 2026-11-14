@@ -30,9 +30,7 @@ const MENU_MANAGER: usize = 0xBA6748;
 /// 0.5f (0x858B8C).
 const HALF: usize = 0x858B8C;
 
-fn at<T: sa_core::mem::GameData>(p: GPtr<u8>, off: isize) -> GPtr<T> {
-    p.byte_add(off).cast::<T>()
-}
+use sa_core::field::at;
 
 /// `fld m32; fstp m32` of a field: a signalling NaN comes out quiet.
 fn reload(p: GPtr<u8>, off: isize) -> f32 {

@@ -5,7 +5,7 @@
 //! +8 the balance the prelit colours (+0x30) were last blended with.
 
 use sa_core::abi::HookReg;
-use sa_core::mem::{GPtr, GameData};
+use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 use sa_math::x87::{Cmp, X87};
 
@@ -31,13 +31,9 @@ const DN_PIPE: usize = 0xC02C1C;
 const UPDATE_SLOT: usize = 0xC02C14;
 const UPDATE_ALL: usize = 0xC02C18;
 
-fn g<T: GameData>(a: usize) -> GPtr<T> {
-    GPtr::from_addr(a)
-}
+use sa_core::field::g;
 
-fn rd<T: GameData>(p: GPtr<u8>, o: isize) -> T {
-    p.byte_add(o).cast::<T>().read()
-}
+use sa_core::field::rd;
 
 /// The frame-slot advance (0x5D6830): slot = (slot + 1) & 15, "update all" = the argument.
 #[hook(addr = 0x5D6830, conv = cdecl, name = "FUN_005d6830", expect = "A1 14 2C C0 00 8B 4C 24 04",

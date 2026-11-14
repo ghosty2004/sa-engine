@@ -52,9 +52,7 @@ const NUM_TEX_BUFFERS: usize = 0xC87C60;
 const IDX_BUCKETS: usize = 0xC87E48;
 const IDX_LARGE: usize = 0xC87FC8;
 
-fn lp<T>(v: &mut T) -> GPtr<u8> {
-    GPtr::from_raw(v as *mut T).cast()
-}
+use sa_core::field::ptr_of as lp;
 
 /// `D3DTextureBuffer::Setup(format, size, levels, capacity)` (0x72FE80, thiscall, `ret 0x10`): +0
 /// format, +4 size, +8 levels; array (+0x18) = `operator new(capacity * 4)`, +0xC capacity, +0x14 and

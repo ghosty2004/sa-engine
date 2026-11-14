@@ -35,10 +35,7 @@ orig! {
     fn keep_area_around_player_clear(p: GPtr<u8>) = thiscall 0x60C1E0 => unported;
 }
 
-/// A stack buffer of `N` dwords as a game pointer.
-fn buf<const N: usize>(b: &mut [u32; N]) -> GPtr<u8> {
-    GPtr::from_raw(b as *mut [u32; N]).cast()
-}
+use sa_core::field::ptr_of as buf;
 
 /// `pow(0.98, timeStep)` (`_CIpow`).
 fn decay() -> X87 {

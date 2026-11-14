@@ -71,19 +71,9 @@ const F_ZERO: usize = 0x858B50;
 const F_PI: usize = 0x858CB8;
 const F_TWO_PI: usize = 0x858CBC;
 
-fn gf(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
+use sa_core::field::gf;
 
-/// The entity's position: its matrix's +0x30 when it has one, else the placeable's +4.
-fn pos_of(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() {
-        e.byte_add(4)
-    } else {
-        m.byte_add(0x30)
-    }
-}
+use sa_world::world::common::entity_pos as pos_of;
 
 fn anim_group(veh: GPtr<u8>) -> u32 {
     u32::from(rd::<u8>(rd::<GPtr<u8>>(veh, 0x384), 0xDE))

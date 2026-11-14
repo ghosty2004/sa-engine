@@ -1169,10 +1169,7 @@ mod pc {
     pub const K_0_00055: f32 = f32::from_bits(0x3A10_2DE0);
 }
 
-/// `fcomp` + `test ah, 5` + `jnp` taken: `a < b` (ordered).
-fn below(a: X87, b: X87) -> bool {
-    !a.fcom(b).test_parity(0x05)
-}
+use sa_math::fpu::lt as below;
 
 /// `CFont::PrintChar(float x, float y, uint8 c)` (0x718A10): nothing off screen (`y < 0`,
 /// `maxHeight < y`, `x < 0`, `maxWidth < x`). A button symbol draws `ButtonSprite[PS2Symbol]` at

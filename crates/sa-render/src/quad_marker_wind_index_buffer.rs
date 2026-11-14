@@ -19,9 +19,7 @@ orig! {
     fn com_release(obj: GPtr<u8>) -> u32 = stdcall vslot 0x8 => unported;
 }
 
-fn gp<T: sa_core::mem::GameData>(a: usize) -> GPtr<T> {
-    GPtr::from_addr(a)
-}
+use sa_core::field::g as gp;
 
 /// `CCheckpoints::m_aCheckPtArray[32]` (0x38 each) at 0xC7F158: +0 type (word), +2 active flag, +4 id.
 const CHECKPOINTS: usize = 0xC7_F158;

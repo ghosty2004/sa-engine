@@ -84,9 +84,7 @@ const FMT_S_I_DOT_B: usize = 0x86D2F4; // "%s%i.b"
 const MODE_RB: usize = 0x859C6C; // "rb"
 const MODE_WB: usize = 0x860ADC; // "wb"
 
-fn g<T>(a: usize) -> GPtr<T> {
-    GPtr::from_addr(a)
-}
+use crate::field::g;
 
 fn set_error(e: u32) {
     g::<u32>(PC_SAVE_HELPER).write(e);
@@ -1001,9 +999,7 @@ fn wr<T: crate::mem::GameData>(p: GPtr<u8>, off: isize, v: T) {
     p.byte_add(off).cast::<T>().write(v);
 }
 
-fn rd<T: crate::mem::GameData>(p: GPtr<u8>, off: isize) -> T {
-    p.byte_add(off).cast::<T>().read()
-}
+use crate::field::rd;
 
 /// `CSimpleVariablesSaveStructure::Construct()` (0x5D1B80, thiscall): +4 the save name (`TheText.Get` of the
 /// last mission's key 0xB78A00, or "MPACKID" in a mission pack, else "ITBEG"), cut at 0x16 characters with

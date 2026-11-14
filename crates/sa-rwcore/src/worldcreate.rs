@@ -78,9 +78,7 @@ orig! {
     fn call_light_sync(f: u32, light: GPtr<u8>) -> GPtr<u8> = cdecl dyn => unported;
 }
 
-fn a32(p: GPtr<u8>) -> u32 {
-    p.addr() as u32
-}
+use sa_core::field::addr32 as a32;
 
 /// `G + [offset global]`, recomputed on every access as the originals reload both globals.
 fn module(offset_global: usize) -> GPtr<u8> {

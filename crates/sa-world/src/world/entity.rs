@@ -204,11 +204,7 @@ orig! {
     pub fn attractor_has_empty_slot(m: GPtr<u8>, e: GPtr<u8>, ent: GPtr<u8>) -> u8 = thiscall 0x5EBB00 => unported;
 }
 
-/// `CPlaceable::GetPosition()`: matrix + 0x30 when there is a matrix, else +4.
-pub fn pos_ptr(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+pub use crate::world::common::entity_pos as pos_ptr;
 
 /// The `CColModel*` `CEntity::GetColModel` returns (inlined in several callers).
 pub fn col_model_of(this: GPtr<u8>) -> GPtr<u8> {

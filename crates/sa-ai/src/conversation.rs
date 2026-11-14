@@ -166,28 +166,16 @@ fn now() -> u32 {
     g::<u32>(TIME_MS).read()
 }
 
-fn cf(addr: usize) -> X87 {
-    x(g::<f32>(addr).read())
-}
+use sa_core::field::gx as cf;
 
-/// The entity's position: `m_matrix->pos` (+0x14 -> +0x30) when it has a matrix, else the placement (+4).
-fn pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() {
-        e.byte_add(4)
-    } else {
-        m.byte_add(0x30)
-    }
-}
+use sa_world::world::common::entity_pos as pos;
 
 /// `CConversations::m_Nodes[i]`
 fn node(i: i32) -> GPtr<u8> {
     g::<u8>(NODES).byte_add(i.wrapping_mul(0x18) as isize)
 }
 
-fn local<const N: usize>(b: &mut [u32; N]) -> GPtr<u8> {
-    GPtr::from_raw(b as *mut [u32; N]).cast()
-}
+use sa_core::field::ptr_of as local;
 
 /// `CPedToPlayerConversations::Clear` (0x43AAE0, a `.HOODLUM` stub; body 0x15635E0): a non-zero state releases the
 /// player conversation and becomes 0; the ped and the time of the last conversation are cleared (the ped's

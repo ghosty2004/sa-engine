@@ -597,15 +597,7 @@ orig! {
     fn entity_vdelete(e: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
 }
 
-/// `m_matrix ? &m_matrix->pos : &placement.pos`.
-fn entity_pos(e: GPtr<u8>) -> GPtr<f32> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() {
-        e.byte_add(4).cast()
-    } else {
-        m.byte_add(0x30).cast()
-    }
-}
+use sa_world::world::common::entity_pos_f as entity_pos;
 
 /// `CWorld::Remove(veh); delete veh`.
 fn kill(veh: GPtr<u8>) {

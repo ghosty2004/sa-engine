@@ -260,15 +260,7 @@ pub fn add_ped(ty: u32, model: u32, pos: GPtr<f32>, make_wander: u8) -> GPtr<u8>
     ped
 }
 
-/// `m_matrix ? &m_matrix->pos : &placement.pos`.
-fn ped_pos(e: GPtr<u8>) -> GPtr<f32> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() {
-        e.byte_add(4).cast()
-    } else {
-        m.byte_add(0x30).cast()
-    }
-}
+use sa_world::world::common::entity_pos_f as ped_pos;
 
 orig! {
     /// `rand()` call sites go through `crate::common::rand_at`; `CWorld::FindPlayerPed(int32)` (0x56E210)

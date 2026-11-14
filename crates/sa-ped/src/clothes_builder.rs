@@ -220,15 +220,9 @@ fn local<T>(v: &mut T) -> GPtr<u8> {
     GPtr::from_raw(core::ptr::from_mut(v)).cast()
 }
 
-/// The `const char*` stored at `addr` (the name tables in `.data`).
-fn name_at(addr: usize) -> GPtr<u8> {
-    g::<GPtr<u8>>(addr).read()
-}
+use sa_core::field::grp as name_at;
 
-/// A `.rdata` string literal.
-fn rdata(addr: usize) -> GPtr<u8> {
-    GPtr::from_addr(addr)
-}
+use sa_core::field::pa as rdata;
 
 /// The `RwTexDictionary*` of TXD slot `id` as the inlined `CPool::GetAt` reads it: a free slot gives a
 /// null `TxdDef*`, whose first dword the original then reads (address 0, a crash).

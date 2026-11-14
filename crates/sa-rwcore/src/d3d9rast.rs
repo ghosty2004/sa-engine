@@ -99,9 +99,7 @@ orig! {
     fn set_texture_internal(r: GPtr<u8>, stage: u32) -> u32 = cdecl 0x7FDCD0 => crate::d3d9state::set_texture_internal;
 }
 
-fn u(a: usize) -> u32 {
-    g::<u32>(a).read()
-}
+use sa_core::field::gr32 as u;
 fn device() -> GPtr<u8> {
     p8(u(DEVICE))
 }

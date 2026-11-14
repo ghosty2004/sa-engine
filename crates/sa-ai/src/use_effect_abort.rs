@@ -47,11 +47,7 @@ pub fn car_drive_subclass_dtor(this: GPtr<u8>) {
 /// 2.25f (0x86E104)
 const K_RANGE: usize = 0x86E104;
 
-/// The entity's position: its matrix (+0x14) +0x30 when it has one, else the placement +4.
-fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos;
 
 /// `CTaskComplexUseEffect::MakeAbortable(CPed* ped, eAbortPriority priority, const CEvent* event)` (0x6322F0,
 /// thiscall, `ret 0xC`), AL. The sub-task (+8) `MakeAbortable(ped, priority, event)` false -> 0. Else

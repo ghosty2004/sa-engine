@@ -62,9 +62,7 @@ fn ptr(p: GPtr<u8>, off: isize) -> GPtr<u8> {
     p8(rd::<u32>(p, off))
 }
 
-fn addr(p: GPtr<u8>) -> u32 {
-    p.addr() as u32
-}
+use sa_core::field::addr32 as addr;
 
 /// The temporary strip freelist (MESHMODULE +4), re-read at every use as the original does.
 fn strip_free_list() -> GPtr<u8> {

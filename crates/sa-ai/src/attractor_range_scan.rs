@@ -52,13 +52,8 @@ const K_RADIUS: usize = 0x86C52C;
 const K_SECTOR_SCALE: usize = 0x858B38;
 const K_SECTOR_OFFSET: usize = 0x858B34;
 
-fn k(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
-fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_core::field::gf as k;
+use sa_world::world::common::entity_pos;
 
 /// `_ftol(floor(v))` of the register value stored as a double (CRT `floor` 0x8219F0, `_ftol` 0x821B40).
 fn floor_ftol(v: X87) -> i32 {

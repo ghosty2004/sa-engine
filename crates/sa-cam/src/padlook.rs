@@ -33,9 +33,7 @@ fn mouse_cam() -> bool {
     crate::camproc::using_3rd_person_mouse_cam(GPtr::from_addr(CAM0)) != 0
 }
 
-fn gf(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
+use sa_core::field::gf;
 
 /// `FUN_00540E80`: the look left/right value (float compares, as the original).
 pub fn pad_look_x(pad: GPtr<u8>) -> i16 {

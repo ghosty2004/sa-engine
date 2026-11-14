@@ -75,16 +75,9 @@ orig! {
     fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, flag: u32) -> GPtr<u8> = thiscall 0x4AB420 => unported;
 }
 
-/// Pointer to a Rust stack buffer (stands in for an object the original builds on its own stack).
-fn buf<const N: usize>(b: &mut [u32; N]) -> GPtr<u8> {
-    GPtr::from_raw(b as *mut [u32; N]).cast()
-}
+use sa_core::field::ptr_of as buf;
 
-/// Entity position: matrix +0x30, else the placement at +4.
-fn ent_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos as ent_pos;
 
 fn ik() -> GPtr<u8> {
     GPtr::from_addr(IK_CHAIN_MAN)

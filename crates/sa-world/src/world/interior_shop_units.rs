@@ -23,10 +23,7 @@ orig! {
     fn call_shop_place_fixed_units(i: GPtr<u8>) = thiscall 0x59A030 => interior_shop_place_fixed_units;
 }
 
-/// `rand()` as called from `site`.
-fn rand_at(site: u32) -> i32 {
-    sa_core::orig::at_site(site, sa_core::crt::rand)
-}
+use sa_core::crt::rand_at;
 
 /// `Interior_c::Shop_PlaceFixedUnits()` (0x59A030): unless the info's door column (+5) is -1, the
 /// door tiles are reserved (`SetTilesStatus(door - 1, 0, 2, 1, 7, 0)`), a counter is placed when

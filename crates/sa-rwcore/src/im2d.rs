@@ -79,15 +79,9 @@ orig! {
     pub fn raster_get_current_context() -> GPtr<u8> = cdecl 0x7FAE60 => unported;
 }
 
-#[inline]
-fn gu(addr: usize) -> u32 {
-    g::<u32>(addr).read()
-}
+use sa_core::field::gr32 as gu;
 
-#[inline]
-fn su(addr: usize, v: u32) {
-    g::<u32>(addr).write(v)
-}
+use sa_core::field::gw32 as su;
 
 fn vb() -> GPtr<u8> {
     p8(gu(VB))

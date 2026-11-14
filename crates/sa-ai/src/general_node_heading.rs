@@ -13,9 +13,7 @@ orig! {
     fn crt_floor(v: f64) -> f64 = cdecl 0x8219F0 => unported;
 }
 
-fn k(addr: usize) -> f32 {
-    g::<f32>(addr).read()
-}
+use sa_core::field::gf as k;
 
 /// `CGeneral::GetNodeHeadingFromVector(float x, float y)` (0x53CDC0, cdecl), x87: a = `GetRadianAngleBetweenPoints(x,
 /// y, 0, 0)`; below 0 → a + T (T = [0x858CBC]); a = T - a + [0x859F50]; not below T → a - T; then `_ftol(floor(double(a

@@ -157,9 +157,7 @@ fn word(addr: usize) -> u16 {
     g::<u16>(addr).read()
 }
 
-fn byte(addr: usize) -> u8 {
-    g::<u8>(addr).read()
-}
+use sa_core::field::gr8 as byte;
 
 /// `(u32)(CTimer::m_snTimeInMillisecondsPauseMode - lastActionTime) > 20`
 fn step_due() -> bool {

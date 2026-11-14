@@ -21,10 +21,7 @@ orig! {
 /// The bounding-box route expansion global (`[0x8D22B0]`, set to 0.7 for this one call).
 const ROUTE_EXPAND: usize = 0x8D22B0;
 
-fn pos_of(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos as pos_of;
 
 /// `CTaskComplexWalkRoundObject::ComputeRoute(CPed* ped)` (0x6551D0, thiscall, `ret 4`, ST0). With [0x8D22B0]
 /// temporarily 0.7: `ComputeRouteRoundEntityBoundingBox(ped, object (+0x1C), &target (+0x10), route (+0x20), 0)`.

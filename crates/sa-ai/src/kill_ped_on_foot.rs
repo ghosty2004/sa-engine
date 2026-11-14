@@ -118,14 +118,9 @@ fn now() -> u32 {
     g::<u32>(TIME_MS).read()
 }
 
-fn buf<const N: usize>(b: &mut [u32; N]) -> GPtr<u8> {
-    GPtr::from_raw(b as *mut [u32; N]).cast()
-}
+use sa_core::field::ptr_of as buf;
 
-fn pos_ptr(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos as pos_ptr;
 
 fn target(this: GPtr<u8>) -> GPtr<u8> {
     rd::<GPtr<u8>>(this, 0x10)

@@ -41,15 +41,9 @@ fn mi(addr: usize) -> i32 {
     i32::from(g::<u16>(addr).read())
 }
 
-fn k(addr: usize) -> f32 {
-    g::<f32>(addr).read()
-}
+use sa_core::field::gf as k;
 
-/// The entity's position: the matrix position, or the simple transform's.
-fn pos_of(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use crate::world::common::entity_pos as pos_of;
 
 /// `if (!m_matrix) { AllocateMatrix(); m_placement.UpdateMatrix(m_matrix); }` before each matrix store.
 fn ensure_matrix(e: GPtr<u8>) -> GPtr<u8> {

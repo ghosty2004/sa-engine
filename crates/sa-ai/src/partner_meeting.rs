@@ -21,20 +21,9 @@ const PUSH_BASE: u32 = 0x858F34;
 /// `0.5f` (0x858B8C)
 const HALF: u32 = 0x858B8C;
 
-fn kf(a: u32) -> f32 {
-    GPtr::<f32>::from_addr(a as usize).read()
-}
+use sa_core::field::gfu as kf;
 
-/// The entity's position: its matrix's (+0x14, +0x30) or the placement's (+4).
-fn pos_of(e: GPtr<u8>) -> [f32; 3] {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    let p = if m.is_null() {
-        e.byte_add(4)
-    } else {
-        m.byte_add(0x30)
-    };
-    [rd::<f32>(p, 0), rd::<f32>(p, 4), rd::<f32>(p, 8)]
-}
+use sa_world::world::common::entity_pos3 as pos_of;
 
 /// `sqrt(dx*dx + dy*dy)` of the x87 values `m - p` (`fsub m32`), as the loop computes it.
 fn dist2d(mx: X87, my: X87, px: f32, py: f32) -> X87 {

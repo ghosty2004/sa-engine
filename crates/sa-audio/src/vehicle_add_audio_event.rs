@@ -47,10 +47,7 @@ orig! {
     fn sound_dtor(sound: GPtr<u8>) = thiscall 0x4EF660 => unported;
 }
 
-/// A `.rdata` / `.data` float.
-fn gf(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
+use sa_core::field::gf;
 
 /// `(float)(int8)[[0xBD00F8] + event]` (`movsx; fild; fstp dword`), exact in f32.
 fn event_volume(event: u32) -> f32 {

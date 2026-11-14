@@ -307,10 +307,7 @@ fn active_weapon(p: GPtr<u8>) -> GPtr<u8> {
     p.byte_add(0x5A0 + rd::<i8>(p, 0x718) as isize * 0x1C)
 }
 
-/// Entity type bits (`[+0x36] & 7`).
-fn ent_type(e: GPtr<u8>) -> u8 {
-    rd::<u8>(e, 0x36) & 7
-}
+use sa_world::world::common::entity_type as ent_type;
 
 /// `sqrt((dz*dz + dy*dy) + dx*dx)` of `t - s` (memory operands; the inlined CVector::Magnitude).
 fn dist3(t: GPtr<f32>, s: GPtr<f32>) -> X87 {

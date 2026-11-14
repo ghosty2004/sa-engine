@@ -104,11 +104,7 @@ pub fn lp<T>(v: &mut T) -> GPtr<T> {
     GPtr::from_raw(v as *mut T)
 }
 
-/// `f32` from `.rdata` bits.
-#[inline]
-pub fn cf(bits: u32) -> f32 {
-    f32::from_bits(bits)
-}
+pub use sa_math::fpu::fbits as cf;
 
 // ---- CEntity / CPhysical field offsets -------------------------------------------------------
 

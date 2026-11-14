@@ -9,7 +9,6 @@
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
-use sa_math::x87::X87;
 
 use crate::common::{k, rd, wr};
 
@@ -29,9 +28,7 @@ fn cp(i: usize) -> GPtr<u8> {
     GPtr::from_addr(CHECKPOINTS + SIZE * i)
 }
 
-fn xf(v: f32) -> X87 {
-    X87::from_f32(v)
-}
+use sa_math::fpu::x as xf;
 
 /// `CCheckpoints::PlaceMarker(uint32 id, uint16 type, CVector& pos, CVector& dir, float size, uint8 r, uint8 g,
 /// uint8 b, uint8 a, uint16 pulsePeriod, float pulseFraction, int16 rotateRate)` (0x722C40, cdecl): `dist` = the 2D

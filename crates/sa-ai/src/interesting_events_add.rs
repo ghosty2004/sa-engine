@@ -30,14 +30,7 @@ const FRAME_COUNTER: usize = 0xB7CB4C;
 /// `CTimer::m_snTimeInMilliseconds`
 const TIME_MS: usize = 0xB7CB84;
 
-fn pos_of(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() {
-        e.byte_add(4)
-    } else {
-        m.byte_add(0x30)
-    }
-}
+use sa_world::world::common::entity_pos as pos_of;
 
 /// `CInterestingEvents::Add(EType type, CEntity* entity)` (0x602590, thiscall, `ret 8`). x87. Nothing when disabled
 /// (+0x12C bit 0 clear) or without an entity. cam = the active camera's source. Once per frame (+0x130 vs

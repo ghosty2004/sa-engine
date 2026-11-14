@@ -9,12 +9,8 @@ use crate::abi::{HookReg, NativeReg};
 use crate::mem::{GPtr, GlobalDesc};
 use crate::{hook, orig};
 
-fn g<T: crate::mem::GameData>(a: usize) -> GPtr<T> {
-    GPtr::from_addr(a)
-}
-fn p8(a: u32) -> GPtr<u8> {
-    GPtr::from_addr(a as usize)
-}
+use crate::field::g;
+use crate::field::p8;
 
 /// "Loading the Game" (0x863A6C), the loading-screen title of every stage.
 const LOADING_THE_GAME: u32 = 0x863A6C;

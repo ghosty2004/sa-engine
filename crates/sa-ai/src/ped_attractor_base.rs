@@ -82,9 +82,7 @@ const INV_RAND_MAX: usize = 0x858C7C;
 /// `PEDMOVE_WALK`
 const MOVE_WALK: u32 = 4;
 
-fn pa<const N: usize>(v: &mut [u32; N]) -> GPtr<u8> {
-    GPtr::from_raw(v.as_mut_ptr()).cast()
-}
+use sa_core::field::ptr_of as pa;
 
 /// Element count of a pointer vector whose first / last are at `+first` / `+first + 4` (0 without storage).
 fn count4(a: GPtr<u8>, first: isize) -> i32 {

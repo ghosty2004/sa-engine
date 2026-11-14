@@ -70,9 +70,7 @@ orig! {
         a27: GPtr<u8>, a28: GPtr<u8>, a29: GPtr<u8>, a30: GPtr<u8>) -> i32 = cdecl 0x8220ad => unported;
 }
 
-fn ga(addr: u32) -> GPtr<u8> {
-    GPtr::from_addr(addr as usize)
-}
+use sa_core::field::p8 as ga;
 
 /// The inlined `strcmp(a, b) == 0` (two bytes per step, stops at the first difference or NUL).
 fn str_eq(a: GPtr<u8>, b: GPtr<u8>) -> bool {

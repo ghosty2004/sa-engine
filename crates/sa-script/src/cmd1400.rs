@@ -193,11 +193,7 @@ orig! {
     fn task_flee_entity_ctor(t: GPtr<u8>, e: GPtr<u8>, b: u32, dist: u32, time: u32, period: u32, k: u32) -> GPtr<u8> = thiscall 0x65B930 => unported;
 }
 
-/// The dword at `a` (`.rdata` constants pushed as raw dwords, read at run time as the original does).
-#[inline]
-fn rd(a: usize) -> u32 {
-    GPtr::<u32>::from_addr(a).read()
-}
+use sa_core::field::gr32 as rd;
 
 /// `t = CTask::operator new(size)`; null -> null, else the constructor's result (EAX).
 #[inline]

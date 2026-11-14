@@ -18,15 +18,13 @@
 //! Every callee goes through `orig!`; the view window `tan(FOV * pi/360)` is FPTAN on the x87 (model
 //! `sa_math::x87::X87::fptan`), rounded to f32 when stored as the `CameraSize` argument.
 
-use crate::mem::{GPtr, GameData};
+use crate::mem::GPtr;
 use crate::pool;
 use crate::pools::{PoolPtr, Slot};
 use crate::{hook, orig};
 use sa_math::x87::X87;
 
-fn g<T: GameData>(a: u32) -> GPtr<T> {
-    GPtr::from_addr(a as usize)
-}
+use crate::field::gu as g;
 
 /// `Scene.m_pRwCamera` (0xC1703C).
 const SCENE_CAMERA: u32 = 0xC1703C;

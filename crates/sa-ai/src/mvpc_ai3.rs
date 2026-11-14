@@ -285,19 +285,9 @@ pub fn car_drive_start_bopping(this: GPtr<u8>, ped: GPtr<u8>) {
     wr::<i32>(this, 0x30, q % 2);
 }
 
-fn local<const N: usize>(b: &mut [u32; N]) -> GPtr<u8> {
-    GPtr::from_raw(b as *mut [u32; N]).cast()
-}
+use sa_core::field::ptr_of as local;
 
-/// The entity's position: `m_matrix->pos` (+0x14 -> +0x30) when it has a matrix, else the placement (+4).
-fn pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() {
-        e.byte_add(4)
-    } else {
-        m.byte_add(0x30)
-    }
-}
+use sa_world::world::common::entity_pos as pos;
 
 /// `CPedGeometryAnalyser::ComputeEntityBoundingSphere(const CPed&, CEntity&, CColSphere&)` (0x5F3C20, cdecl): the
 /// entity's box corners at the ped's z (computed twice: once from the f32-reloaded z, once from the z dword, which

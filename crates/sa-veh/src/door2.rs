@@ -37,10 +37,7 @@ fn time_step() -> f32 {
     g::<f32>(0xB7CB5C).read()
 }
 
-/// `fld dword [addr]` of a `.rdata` constant.
-fn k(addr: usize) -> f32 {
-    g::<f32>(addr).read()
-}
+use sa_core::field::gf as k;
 
 /// `fabs`: clears the sign bit (of a NaN too).
 fn fabs(v: X87) -> X87 {

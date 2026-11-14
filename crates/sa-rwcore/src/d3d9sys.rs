@@ -168,12 +168,8 @@ orig! {
     fn processor_release_call() = cdecl 0x85742B => processor_release;
 }
 
-fn u(a: usize) -> u32 {
-    g::<u32>(a).read()
-}
-fn set(a: usize, v: u32) {
-    g::<u32>(a).write(v)
-}
+use sa_core::field::gr32 as u;
+use sa_core::field::gw32 as set;
 fn d3d9() -> GPtr<u8> {
     p8(u(D3D9))
 }

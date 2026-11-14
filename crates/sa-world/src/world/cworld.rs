@@ -60,11 +60,7 @@ fn ped_of(id: i32) -> GPtr<u8> {
     rd::<GPtr<u8>>(player(id), 0)
 }
 
-/// `CPlaceable::GetPosition()`: matrix + 0x30 when there is a matrix, else +4.
-fn pos_ptr(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use crate::world::common::entity_pos as pos_ptr;
 
 fn in_vehicle(ped: GPtr<u8>) -> bool {
     rd::<u32>(ped, 0x46C) & 0x100 != 0

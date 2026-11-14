@@ -145,31 +145,17 @@ orig! {
     fn clothes_get_is_wearing_balaclava(c: GPtr<u8>) -> u8 = thiscall 0x5A7950 => unported;
 }
 
-fn cf(addr: usize) -> X87 {
-    x(g::<f32>(addr).read())
-}
+use sa_core::field::gx as cf;
 
-fn fm(addr: usize) -> f32 {
-    g::<f32>(addr).read()
-}
+use sa_core::field::gf as fm;
 
 fn now() -> u32 {
     g::<u32>(TIME_MS).read()
 }
 
-/// The entity's position: `m_matrix->pos` (+0x14 -> +0x30) when it has a matrix, else the placement (+4).
-fn pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() {
-        e.byte_add(4)
-    } else {
-        m.byte_add(0x30)
-    }
-}
+use sa_world::world::common::entity_pos as pos;
 
-fn local<const N: usize>(b: &mut [u32; N]) -> GPtr<u8> {
-    GPtr::from_raw(b as *mut [u32; N]).cast()
-}
+use sa_core::field::ptr_of as local;
 
 fn fv(b: &[u32], i: usize) -> f32 {
     f32::from_bits(b[i])
@@ -180,10 +166,7 @@ fn piece(v: GPtr<u8>) -> u32 {
     rd::<u16>(v, 0xF8) as u32
 }
 
-/// The entity type (`+0x36 & 7`).
-fn etype(e: GPtr<u8>) -> u8 {
-    rd::<u8>(e, 0x36) & 7
-}
+use sa_world::world::common::entity_type as etype;
 
 /// `t = impactVel.x * v550 + impactVel.y * v554` (0x60464A / 0x604F90); `Some(t * mass + d)` when `t < 0`.
 fn standing_push(v: GPtr<u8>, d: f32) -> Option<X87> {

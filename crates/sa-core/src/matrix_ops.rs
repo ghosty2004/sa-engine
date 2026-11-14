@@ -12,12 +12,8 @@ orig! {
     fn update_rw_matrix_call(this: GPtr<u8>, rw: GPtr<u8>) -> GPtr<u8> = thiscall 0x59AD70 => update_rw_matrix;
 }
 
-fn w(p: GPtr<u8>, o: isize, v: u32) {
-    p.byte_add(o).cast::<u32>().write(v)
-}
-fn r(p: GPtr<u8>, o: isize) -> u32 {
-    p.byte_add(o).cast::<u32>().read()
-}
+use crate::field::wr32 as w;
+use crate::field::rd32 as r;
 /// The twelve vector words (right, forward, up, position; not the +0xC/+0x1C/+0x2C/+0x3C words).
 const VEC_WORDS: [isize; 12] = [0, 4, 8, 0x10, 0x14, 0x18, 0x20, 0x24, 0x28, 0x30, 0x34, 0x38];
 const ONE: u32 = 0x3F80_0000;

@@ -52,20 +52,9 @@ const MODEL_INFOS: usize = 0xA9_B0C8;
 const TIME_STEP: usize = 0xB7_CB5C;
 const VEHICLE_POOL: usize = 0xB7_4494;
 
-/// A Rust local passed by address to an original callee.
-fn p<T>(v: &mut T) -> GPtr<u8> {
-    GPtr::from_raw(v as *mut T).cast()
-}
+use sa_core::field::ptr_of as p;
 
-/// `GetPosition()`.
-fn ent_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() {
-        e.byte_add(4)
-    } else {
-        m.byte_add(0x30)
-    }
-}
+use crate::world::common::entity_pos as ent_pos;
 
 /// `CWorld::FindObjectsIntersectingAngledCollisionBoxSectorList(CPtrListDoubleLink& list, const
 /// CColBox& box, const CMatrix& transform, const CVector& point, int16* count, int16 maxCount,

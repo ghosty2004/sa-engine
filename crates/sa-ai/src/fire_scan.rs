@@ -36,13 +36,8 @@ orig! {
 const FIRE_MANAGER: usize = 0xB71F80;
 const TIMER_TIME_MS: usize = 0xB7CB84;
 
-fn k(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
-fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_core::field::gf as k;
+use sa_world::world::common::entity_pos;
 
 /// `FUN_00603E70` (thiscall, `ret 4`; the nearby-fire scanner of `CEventScanner`, timer +0 start, +4 period, +8 set, +9
 /// reset): unset → (now, 0), set; reset → start = now; not `now >= start + period` (unsigned) → nothing; else (now, 100).

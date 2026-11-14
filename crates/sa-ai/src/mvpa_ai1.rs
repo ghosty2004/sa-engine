@@ -69,23 +69,11 @@ orig! {
 /// `CPools::ms_pPedPool`
 const PED_POOL: usize = 0xB74490;
 
-fn cf(addr: usize) -> X87 {
-    x(g::<f32>(addr).read())
-}
+use sa_core::field::gx as cf;
 
-fn local<const N: usize>(b: &mut [u32; N]) -> GPtr<u8> {
-    GPtr::from_raw(b as *mut [u32; N]).cast()
-}
+use sa_core::field::ptr_of as local;
 
-/// The entity's position: `m_matrix->pos` (+0x14 -> +0x30) when it has a matrix, else the placement (+4).
-fn pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() {
-        e.byte_add(4)
-    } else {
-        m.byte_add(0x30)
-    }
-}
+use sa_world::world::common::entity_pos as pos;
 
 /// `CPedIntelligence::SetPedDecisionMakerType(int32)` (0x600B50, `ret 4`): with no current type (+0xB4 == 0) the
 /// argument goes to the saved type (+0xB8); else a non-zero argument replaces +0xB4 and 0 moves +0xB4 to +0xB8 and

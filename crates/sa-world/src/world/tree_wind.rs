@@ -30,9 +30,7 @@ const TREE_SWAY_TABLE: usize = 0x8CCF30;
 /// `CModelInfo::ms_modelInfoPtrs` (0xA9B0C8)
 const MODEL_INFOS: usize = 0xA9B0C8;
 
-fn k(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
+use sa_core::field::gf as k;
 
 /// `fild` of a dword, + 2^32 when negative (the unsigned conversion the original emits).
 fn fild_unsigned(v: u32) -> X87 {

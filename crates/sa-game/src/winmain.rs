@@ -140,9 +140,7 @@ fn wr<T: sa_core::mem::GameData>(a: usize, v: T) {
 fn ps() -> GPtr<u32> {
     rd::<GPtr<u32>>(RS_PS)
 }
-fn rdata(a: usize) -> GPtr<u8> {
-    GPtr::from_addr(a)
-}
+use sa_core::field::pa as rdata;
 
 /// `hInstance` and `nCmdShow` WinMain receives.
 const INSTANCE: u32 = 0x0040_0000;

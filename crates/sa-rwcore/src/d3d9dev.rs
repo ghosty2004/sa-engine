@@ -8,7 +8,6 @@
 use sa_core::abi::HookReg;
 use sa_core::mem::{GPtr, GlobalDesc};
 use sa_core::{hook, orig};
-use sa_math::x87::X87;
 
 use crate::common::{g, p8, rd, rw_free, rw_malloc, rw_memory_alloc, rw_memory_free, rw_realloc, wr, x};
 use crate::d3d9state::device;
@@ -132,15 +131,9 @@ orig! {
     pub fn free_list_purge(fl: GPtr<u8>) -> u32 = cdecl 0x801E00 => unported;
 }
 
-#[inline]
-fn gu(addr: usize) -> u32 {
-    g::<u32>(addr).read()
-}
+use sa_core::field::gr32 as gu;
 
-#[inline]
-fn su(addr: usize, v: u32) {
-    g::<u32>(addr).write(v)
-}
+use sa_core::field::gw32 as su;
 
 #[inline]
 fn at(base: u32, off: u32) -> GPtr<u32> {
@@ -811,10 +804,7 @@ pub fn get_caps() -> u32 {
     CAPS
 }
 
-/// `fcomp` then `and eax, 0x4100; je`: the plane test fails (return 0) when `v > o` (no C3/C0).
-fn above(v: X87, o: X87) -> bool {
-    !v.fcom(o).test_any(0x41)
-}
+use sa_math::fpu::gt as above;
 
 /// `RwD3D9CameraIsSphereFullyInsideFrustum` (0x7FAD30): for the 6 frustum planes at camera +0x94
 /// (stride 0x14), `((n.y*c.y + n.x*c.x) + n.z*c.z) - d` must not be above `-radius` (x87, PC 24;

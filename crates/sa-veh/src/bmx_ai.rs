@@ -101,31 +101,19 @@ fn rv(p: GPtr<u8>, off: isize) -> CVector {
     CVector::new(rd::<f32>(p, off), rd::<f32>(p, off + 4), rd::<f32>(p, off + 8))
 }
 
-fn ld(p: GPtr<u8>, off: isize) -> X87 {
-    x(rd::<f32>(p, off))
-}
+use sa_core::field::ldx as ld;
 
-fn c(bits: u32) -> X87 {
-    X87::constant(bits)
-}
+use sa_math::fpu::xc as c;
 
-fn st0(v: f64) -> X87 {
-    X87::from_f64_exact(v)
-}
+use sa_math::fpu::st0;
 
 fn ts() -> f32 {
     g::<f32>(TIME_STEP).read()
 }
 
-/// `fcomp` + `test ah, 0x41` + `jne` taken: `a <= b` or unordered.
-fn le(a: X87, b: X87) -> bool {
-    a.fcom(b).test_any(0x41)
-}
+use sa_math::fpu::le_or_nan as le;
 
-/// `fcomp` + `test ah, 5` + `jp` taken: `a >= b` or unordered.
-fn ge(a: X87, b: X87) -> bool {
-    a.fcom(b).test_parity(0x05)
-}
+use sa_math::fpu::ge_or_nan as ge;
 
 fn sq3(p: GPtr<u8>, off: isize) -> X87 {
     let (a, b, cc) = (ld(p, off), ld(p, off + 4), ld(p, off + 8));

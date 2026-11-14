@@ -41,9 +41,7 @@ const RAND_SITE: u32 = 0x43FA82;
 fn f(p: GPtr<u8>, o: isize) -> GPtr<f32> {
     p.byte_add(o).cast()
 }
-fn c(a: usize) -> f32 {
-    GPtr::<f32>::from_addr(a).read()
-}
+use sa_core::field::gf as c;
 
 /// `CEntryExitManager::AddOne(centre x, y, z, angle, range x, y, z, exit x, y, z, exit angle, area,
 /// flags, sky colour, time on, time off, peds, name)` (0x43FA00): 0 without a free pool slot. Flag

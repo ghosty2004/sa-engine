@@ -11,9 +11,7 @@
 
 use sa_core::mem::GPtr;
 
-fn g<T: sa_core::mem::GameData>(a: u32) -> GPtr<T> {
-    GPtr::from_addr(a as usize)
-}
+use sa_core::field::gu as g;
 fn rd(a: u32) -> u32 {
     g::<u32>(a).read()
 }

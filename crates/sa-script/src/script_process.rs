@@ -67,9 +67,7 @@ pub fn rgba_ctor_host(c: GPtr<u8>, r: u32, g: u32, b: u32, a: u32) -> GPtr<u8> {
     c
 }
 
-fn ga<T: sa_core::mem::GameData>(addr: usize) -> GPtr<T> {
-    GPtr::from_addr(addr)
-}
+use sa_core::field::g as ga;
 
 /// `CRGBA(r, g, b, a)` into a stack temporary, its four bytes copied to `dst`.
 fn put_rgba(dst: GPtr<u8>, r: u32, g: u32, b: u32, a: u32) {

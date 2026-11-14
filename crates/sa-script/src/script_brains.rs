@@ -32,13 +32,9 @@ orig! {
     fn set_mission_doesnt_require_model(model: i32) = cdecl 0x409c90 => unported;
 }
 
-fn at<T: sa_core::mem::GameData>(p: GPtr<u8>, off: isize) -> GPtr<T> {
-    p.byte_add(off).cast::<T>()
-}
+use sa_core::field::at;
 
-fn ga<T: sa_core::mem::GameData>(addr: usize) -> GPtr<T> {
-    GPtr::from_addr(addr)
-}
+use sa_core::field::g as ga;
 
 /// `CTheScripts::StartNewScript(uint8* ip)` (stub 0x464C20 → 0x156A2A0, cdecl): takes the head of
 /// the idle list (no null check), unlinks it (`prev->next = next` when prev, `pIdleScripts = next`,

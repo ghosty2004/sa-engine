@@ -36,23 +36,15 @@ const K_MASS_RATIO: usize = 0x85862C;
 const K_ONE: usize = 0x858624;
 const K_ZERO: usize = 0x858B50;
 
-fn k(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
-fn ty(e: GPtr<u8>) -> u8 {
-    rd::<u8>(e, 0x36) & 7
-}
+use sa_core::field::gf as k;
+use crate::world::common::entity_type as ty;
 fn uses_collision_recording(e: GPtr<u8>) -> bool {
     (rd::<u32>(e, 0x1C) >> 4) & 1 != 0
 }
 fn set(p: GPtr<u8>) {
     p.write(1);
 }
-/// An entity's position (matrix +0x30, else the placement +4).
-fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use crate::world::common::entity_pos;
 
 /// `CObject::SpecialEntityPreCollisionStuff(CPhysical* other, bool ignoreStuck, bool& disabled, bool& ignored, bool&
 /// unableToMove, bool& stuck)` (0x59FEE0, thiscall, `ret 0x18`). x87 compares.

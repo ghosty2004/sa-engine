@@ -123,13 +123,9 @@ const FLEE_ANY_C: usize = 0x86F68C;
 const TURN_A: usize = 0x86FC7C;
 const TURN_B: usize = 0x86FC80;
 
-fn gu(a: usize) -> u32 {
-    g::<u32>(a).read()
-}
+use sa_core::field::gr32 as gu;
 
-fn gf(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
+use sa_core::field::gf;
 
 fn ped(this: GPtr<u8>) -> GPtr<u8> {
     rd::<GPtr<u8>>(this, 0)

@@ -200,10 +200,7 @@ orig! {
     pub fn improve_near_clip(cam: GPtr<u8>, veh: GPtr<u8>, ped: GPtr<u8>, source: GPtr<u8>, target: GPtr<u8>) = thiscall 0x516B20 => crate::camcol::improve_near_clip;
 }
 
-/// `fld dword` of a `.data` float.
-fn d(addr: usize) -> f32 {
-    g::<f32>(addr).read()
-}
+use sa_core::field::gf as d;
 
 /// Row `vt`, column `i` of [`CAR_CAM_SETTINGS`] (`[ebx + 0x8CC600 + 4i]`, `ebx = vt * 0x3C`).
 fn c(vt: i32, i: usize) -> f32 {
@@ -234,10 +231,7 @@ fn task_manager(ped: GPtr<u8>) -> GPtr<u8> {
     rd::<GPtr<u8>>(ped, 0x47C).byte_add(4)
 }
 
-/// A frame-local CVector and its game pointer.
-fn vp(v: &mut [f32; 3]) -> GPtr<u8> {
-    GPtr::<f32>::from_raw(v.as_mut_ptr()).cast::<u8>()
-}
+use sa_core::field::ptr_of as vp;
 
 /// `v->x/y/z = FUN_0050a0a0(v->x/y/z, 4)` (each pushed as a dword, stored with `fstp dword`).
 fn round_source(src: GPtr<u8>) {
@@ -1188,15 +1182,7 @@ const PED_ZOOM_SMOOTHED: usize = 0xB6F0FC;
 /// `TheCamera.m_pExtraEntity[]` (after the count 0xB6FC70)
 const EXTRA_ENTITIES: usize = 0xB6FC74;
 
-/// The entity position: `&matrix->pos` (+0x30) or `&placement.pos` (+4).
-fn pos_of(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() {
-        e.byte_add(4)
-    } else {
-        m.byte_add(0x30)
-    }
-}
+use sa_world::world::common::entity_pos as pos_of;
 
 /// The inlined `GetMatrix()`: allocates the matrix from the placement when missing.
 fn ensure_matrix(e: GPtr<u8>) {
@@ -1206,12 +1192,7 @@ fn ensure_matrix(e: GPtr<u8>) {
     }
 }
 
-/// Dword copy of a 3-word vector.
-fn copy3(dst: GPtr<u8>, src: GPtr<u8>) {
-    for o in [0, 4, 8] {
-        wr::<u32>(dst, o, rd::<u32>(src, o));
-    }
-}
+use sa_core::field::copy3;
 
 /// `v[i] = f32(a[i] - b[i])` for x, y, z (each `fld; fsub; fstp` through a local).
 fn sub3(v: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) {

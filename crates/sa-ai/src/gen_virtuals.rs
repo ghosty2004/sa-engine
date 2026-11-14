@@ -14,11 +14,8 @@ use sa_core::{hook, orig};
 #[allow(unused_imports)]
 use crate::common::*;
 
-/// A 32-bit game address as a pointer.
-#[allow(dead_code)]
-fn p(a: u32) -> GPtr<u8> {
-    GPtr::from_addr(a as usize)
-}
+#[allow(unused_imports)]
+use sa_core::field::p8 as p;
 
 /// A generated body: (address, FNV-1a of the matched bytes, matched spans `(va, len)`).
 pub type Body = (u32, u64, &'static [(u32, u32)]);

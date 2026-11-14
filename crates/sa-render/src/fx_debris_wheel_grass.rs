@@ -3,25 +3,16 @@
 //! gta-reversed; ported from the 1.0 US bytes, `rand()` at its original call sites. Unverified (docs/verify/HOWTO.md).
 
 use sa_core::abi::HookReg;
-use sa_core::mem::{GPtr, GameData};
+use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
-use sa_math::x87::X87;
 
-fn g<T: GameData>(a: u32) -> GPtr<T> {
-    GPtr::from_addr(a as usize)
-}
+use sa_core::field::gu as g;
 fn gf(a: u32) -> f32 {
     g::<f32>(a).read()
 }
-fn x(v: f32) -> X87 {
-    X87::from_f32(v)
-}
-fn xi(v: i32) -> X87 {
-    X87::from_i32(v)
-}
-fn rand_at(ret: u32) -> i32 {
-    sa_core::orig::at_site(ret, sa_core::crt::rand)
-}
+use sa_math::fpu::x;
+use sa_math::fpu::xi;
+use sa_core::crt::rand_at;
 
 orig! {
     /// `FxPrtMult_c::FxPrtMult_c()` (0x4AB270)

@@ -420,9 +420,7 @@ const FLT_1: usize = 0x858624;
 const FLT_20: usize = 0x858BA4;
 const FLT_M100: usize = 0x859014;
 
-fn gf(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
+use sa_core::field::gf;
 
 /// A `.rdata` double as an x87 operand.
 fn gd(a: usize) -> X87 {
@@ -1717,10 +1715,7 @@ orig! {
     fn add_audio_event_volume(this: GPtr<u8>, event: u32, volume: u32) = thiscall 0x4F6420 => unported;
 }
 
-/// The x87 value returned in ST0 by an original `_st0` call.
-fn st0(v: f64) -> X87 {
-    X87::from_f64_exact(v)
-}
+use sa_math::fpu::st0;
 
 /// `f = min(step + cur, 1.0)` as the dummy transitions compute it (`fcom 1.0; test ah, 5; jnp`), f32.
 fn step_to_one(step: usize, cur: f32) -> f32 {

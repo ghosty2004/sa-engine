@@ -51,10 +51,7 @@ fn each_area_ped(mut f: impl FnMut(GPtr<u8>)) {
     }
 }
 
-fn ped_pos(ped: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(ped, 0x14);
-    if m.is_null() { ped.byte_add(4) } else { m.byte_add(0x30) }
-}
+use crate::world::common::entity_pos as ped_pos;
 
 /// `CWorld::SetPedsChoking(float x, float y, float z, float radius, CEntity* creator)` (0x565800):
 /// every area ped (see `each_area_ped`) that is not of type 2 (+0x484) and lies within 5 vertically

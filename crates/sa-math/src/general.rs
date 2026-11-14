@@ -14,15 +14,9 @@ use crate::consts as k;
 use crate::x87::Cmp;
 use crate::x87::X87;
 
-/// A constant as a register value (`fld m32`).
-fn c(bits: u32) -> X87 {
-    X87::constant(bits)
-}
+use crate::fpu::xc as c;
 
-/// A constant as a memory operand.
-fn m(bits: u32) -> f32 {
-    f32::from_bits(bits)
-}
+use crate::fpu::fbits as m;
 
 /// `CGeneral::LimitAngle` (0x53CB00), degrees into [-180, 180). Returns `None` exactly when the original
 /// never returns: the loop step `a - 360` (or `a + 360`) rounds back to `a` (|a| >= 2^33 under PC=24,

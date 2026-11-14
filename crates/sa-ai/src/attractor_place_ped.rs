@@ -33,9 +33,7 @@ orig! {
     fn matrix_set_rotate_z_only(m: GPtr<u8>, a: u32) = thiscall 0x59B020 => unported;
 }
 
-fn pa<const N: usize>(v: &mut [u32; N]) -> GPtr<u8> {
-    GPtr::from_raw(v.as_mut_ptr()).cast()
-}
+use sa_core::field::ptr_of as pa;
 
 /// `LimitRadianAngle(f32(GetRadianAngleBetweenPoints(x, y, 0, 0)))` stored as f32.
 fn use_angle(dx: u32, dy: u32) -> f32 {

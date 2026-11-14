@@ -9,7 +9,7 @@
 //! bit 0 playing, bit 4 partial). The list walks below use the link (association + 4).
 
 use sa_core::abi::HookReg;
-use sa_core::mem::{GPtr, GameData};
+use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 use sa_math::x87::X87;
 
@@ -90,25 +90,15 @@ const NODE_NAME_OFFSET: usize = 0xC87C5C;
 const SCHEMES: u32 = 0xC9B920;
 const SCHEME_COUNT: usize = 0xC97900;
 
-fn g<T: GameData>(a: usize) -> GPtr<T> {
-    GPtr::from_addr(a)
-}
+use sa_core::field::g;
 
-fn rd<T: GameData>(p: GPtr<u8>, off: isize) -> T {
-    p.byte_add(off).cast::<T>().read()
-}
+use sa_core::field::rd;
 
-fn wr<T: GameData>(p: GPtr<u8>, off: isize, v: T) {
-    p.byte_add(off).cast::<T>().write(v)
-}
+use sa_core::field::wr;
 
-fn p8(a: u32) -> GPtr<u8> {
-    GPtr::from_addr(a as usize)
-}
+use sa_core::field::p8;
 
-fn a32(p: GPtr<u8>) -> u32 {
-    p.addr() as u32
-}
+use sa_core::field::addr32 as a32;
 
 fn clump_data(clump: GPtr<u8>) -> GPtr<u8> {
     p8(rd::<u32>(clump, g::<i32>(CLUMP_OFFSET).read() as isize))

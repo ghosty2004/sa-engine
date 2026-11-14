@@ -54,15 +54,9 @@ const MODEL_INFO_PTRS: usize = 0xA9B0C8;
 /// `_CIacos`.
 const CI_ACOS: usize = 0x822380;
 
-fn rd32(p: GPtr<u8>, o: isize) -> u32 {
-    p.byte_add(o).cast::<u32>().read()
-}
-fn rdf(p: GPtr<u8>, o: isize) -> f32 {
-    p.byte_add(o).cast::<f32>().read()
-}
-fn wr32(p: GPtr<u8>, o: isize, v: u32) {
-    p.byte_add(o).cast::<u32>().write(v)
-}
+use sa_core::field::rd32;
+use sa_core::field::rdf;
+use sa_core::field::wr32;
 fn or_flags(e: GPtr<u8>, bits: u32) {
     wr32(e, 0x1C, rd32(e, 0x1C) | bits);
 }

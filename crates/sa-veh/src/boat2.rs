@@ -248,15 +248,7 @@ pub fn constructor(b: Boat, mi: u32, created_by: u32) -> Boat {
     b
 }
 
-/// `CEntity::GetPosition()`: the matrix position, or the placement `+4` without a matrix.
-fn pos_of(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() {
-        e.byte_add(4)
-    } else {
-        m.byte_add(0x30)
-    }
-}
+use sa_world::world::common::entity_pos as pos_of;
 
 /// `CBoat::FillBoatList()` (0x6F2710): clears the four wake-generating boats, then walks the vehicle pool
 /// from the top. A boat (`+0x590 == 5`) with wake points whose offset from the camera (x stored as f32,

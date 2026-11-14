@@ -20,15 +20,9 @@ orig! {
     fn register_corona(id: u32, e: u32, r: u32, g: u32, b: u32, a: u32, pos: GPtr<u8>, radius: f32, far: f32, ty: u32, flare: u32, refl: u32, los: u32, unused: u32, angle: f32, long_distance: u32, near_clip: f32, fade_state: u32, fade_speed: f32, below: u32, delay: u32) = cdecl 0x6FC580 => unported;
 }
 
-/// `fcom` + `test ah, 0x41` + `jne` not taken: `a > b` (false for NaN).
-fn gt(a: X87, b: X87) -> bool {
-    !a.fcom(b).test_any(0x41)
-}
+use sa_math::fpu::gt;
 
-/// `fcom` + `test ah, 5` + `jp` not taken: `a < b` (false for NaN).
-fn lt(a: X87, b: X87) -> bool {
-    !a.fcom(b).test_parity(0x05)
-}
+use sa_math::fpu::lt;
 
 /// The transmission statics: velocity 0xC1CB40, cheat multiplier 0xC1CB3C, last acceleration 0xC1CB38.
 const VEL: usize = 0xC1CB40;

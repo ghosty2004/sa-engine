@@ -18,11 +18,7 @@ orig! {
     fn event_base_dtor(e: GPtr<u8>) = thiscall 0x4AF890 => unported;
 }
 
-/// The position of an entity: its matrix's (+0x30) or its placeable's (+4).
-fn pos_of(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos as pos_of;
 
 /// `CPedIntelligence::FindRespectedFriendInInformRange()` (0x600CF0, thiscall). mask = the ped's respect
 /// acquaintances (`GetAcquaintances(0)` of ped +0x4E0); over the scanned peds (+0x130, count +0xC4, at most 16) the

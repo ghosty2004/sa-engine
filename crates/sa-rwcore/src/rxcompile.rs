@@ -89,19 +89,11 @@ orig! {
     fn sort_call(base: u32, count: u32, stride: u32, key: u32, min: u32, max: u32) = cdecl 0x8103D0 => radix_sort;
 }
 
-#[inline]
-fn r(a: u32) -> u32 {
-    g::<u32>(a as usize).read()
-}
+use sa_core::field::gr32u as r;
 
-#[inline]
-fn w(a: u32, v: u32) {
-    g::<u32>(a as usize).write(v)
-}
+use sa_core::field::gw32u as w;
 
-fn a32(p: GPtr<u8>) -> u32 {
-    p.addr() as u32
-}
+use sa_core::field::addr32 as a32;
 
 /// `P+0x38` (max nodes per pipeline), both globals reloaded as the original does.
 fn max_nodes() -> u32 {

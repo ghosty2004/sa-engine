@@ -170,11 +170,7 @@ pub fn find_player_heading(id: i32) -> X87 {
     heading(rd::<GPtr<u8>>(player(id), 0))
 }
 
-/// `CPlaceable::GetPosition()`: matrix + 0x30 when there is a matrix, else +4.
-fn pos_ptr(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use crate::world::common::entity_pos as pos_ptr;
 
 /// The squared distance as the range scans compute it: 2D `dx² + dy²`, 3D `(dx² + dz²) + dy²`.
 fn dist_sq(p: GPtr<u8>, e: GPtr<u8>, two_d: u8) -> X87 {

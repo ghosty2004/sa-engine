@@ -43,13 +43,9 @@ const TIME_STEP: usize = 0xB7_CB5C;
 /// `gHandlingDataMgr.fWheelFriction` (0xC2B9CC).
 const WHEEL_FRICTION: usize = 0xC2_B9CC;
 
-fn gf(addr: usize) -> f32 {
-    g::<f32>(addr).read()
-}
+use sa_core::field::gf;
 
-fn gb(addr: usize) -> u8 {
-    g::<u8>(addr).read()
-}
+use sa_core::field::gr8 as gb;
 
 fn sb(addr: usize, v: u8) {
     g::<u8>(addr).write(v)
@@ -563,10 +559,7 @@ fn read_vec(p: GPtr<u8>) -> CVector {
     CVector::new(vf(p, 0), vf(p, 1), vf(p, 2))
 }
 
-/// `a < b` (`test ah, 5; jp` not taken).
-fn lt(a: X87, b: X87) -> bool {
-    !a.fcom(b).test_parity(0x05)
-}
+use sa_math::fpu::lt;
 
 /// `CAutomobile::ProcessSuspension()` (0x6AFB10).
 ///

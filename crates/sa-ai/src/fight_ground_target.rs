@@ -44,11 +44,7 @@ pub fn localisation_kicking_when_down_native() -> u8 {
 /// This module's phase-B registrations.
 pub const NATIVES: &[sa_core::abi::NativeReg] = &[NATIVE_LOCALISATION_BLOOD_NATIVE, NATIVE_LOCALISATION_KICKING_WHEN_DOWN_NATIVE];
 
-/// The entity's position (`m_matrix` +0x30, else the placement position +4).
-fn pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos as pos;
 
 const PI: u32 = 0x4049_0FDB;
 const TWO_PI: u32 = 0x40C9_0FDB;

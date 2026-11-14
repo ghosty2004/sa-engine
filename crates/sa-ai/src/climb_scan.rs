@@ -75,20 +75,11 @@ const SCAN_CODE: usize = 0xB7_CD78;
 const SECTORS: usize = 0xB7_D0B8;
 const REPEAT_SECTORS: usize = 0xB9_92B8;
 
-fn c(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
+use sa_core::field::gf as c;
 
-fn pos_ptr(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos as pos_ptr;
 
-fn copy3(dst: GPtr<u8>, src: GPtr<u8>) {
-    for k in 0..3 {
-        wr::<u32>(dst, 4 * k, rd::<u32>(src, 4 * k));
-    }
-}
+use sa_core::field::copy3;
 
 fn buf(v: &mut [u32]) -> GPtr<u8> {
     GPtr::from_raw(v.as_mut_ptr()).cast()

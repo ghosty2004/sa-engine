@@ -10,7 +10,6 @@
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
-use sa_math::x87::X87;
 
 /// `CTheScripts::ScriptSearchLightArray` (0xA94D68, 8 of 0x7C)
 const SEARCH_LIGHTS: usize = 0xA94D68;
@@ -30,20 +29,10 @@ orig! {
     fn entity_update_rw_frame(e: GPtr<u8>) = thiscall 0x532B00 => unported;
 }
 
-fn rd<T: sa_core::mem::GameData>(p: GPtr<u8>, off: isize) -> T {
-    p.byte_add(off).cast::<T>().read()
-}
-fn wr<T: sa_core::mem::GameData>(p: GPtr<u8>, off: isize, v: T) {
-    p.byte_add(off).cast::<T>().write(v)
-}
-fn x(v: f32) -> X87 {
-    X87::from_f32(v)
-}
-/// An entity's position (matrix +0x30, else the placement +4).
-fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_core::field::rd;
+use sa_core::field::wr;
+use sa_math::fpu::x;
+use sa_world::world::common::entity_pos;
 
 /// One light's movement toward `target` (read at `t`); returns true when it arrived (the distance not above the
 /// speed: the current point = the target, re-read).

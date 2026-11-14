@@ -121,12 +121,8 @@ orig! {
     fn pad_get_pad(id: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
 }
 
-fn gp(a: usize) -> GPtr<u8> {
-    GPtr::from_addr(a)
-}
-fn g8(a: usize) -> GPtr<u8> {
-    GPtr::from_addr(a)
-}
+use sa_core::field::pa as gp;
+use sa_core::field::pa as g8;
 fn g32(a: usize) -> GPtr<u32> {
     GPtr::from_addr(a)
 }
@@ -170,15 +166,9 @@ fn random_char_in_area(s: Scr) -> u32 {
     u32::MAX
 }
 
-fn rd_u32(p: GPtr<u8>, off: isize) -> u32 {
-    p.byte_add(off).cast::<u32>().read()
-}
-fn rd_u8(p: GPtr<u8>, off: isize) -> u8 {
-    p.byte_add(off).read()
-}
-fn rd_f32(p: GPtr<u8>, off: isize) -> f32 {
-    p.byte_add(off).cast::<f32>().read()
-}
+use sa_core::field::rd32 as rd_u32;
+use sa_core::field::rd8 as rd_u8;
+use sa_core::field::rdf as rd_f32;
 
 /// `CRunningScript::ProcessCommands2600To2699(int32 command)` (0x479DA0, thiscall, `ret 4`): AL = 0 continue, -1
 /// unknown (every case returns 0).

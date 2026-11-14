@@ -29,10 +29,7 @@ const SURFACE_ROWS: usize = 0x8AD908;
 /// `CTimer::m_snTimeInMilliseconds`
 const TIME_MS: usize = 0xB7CB84;
 
-/// An f32 constant of the exe (`.rdata`).
-fn c(addr: usize) -> f32 {
-    g::<f32>(addr).read()
-}
+use sa_core::field::gf as c;
 
 /// `v * v` (`fld st(k); fmul st(k+1)`: both register operands).
 fn sq(v: X87) -> X87 {
@@ -128,10 +125,7 @@ fn dsub(a: GPtr<u8>, b: GPtr<u8>, off: isize) -> X87 {
     x(rd::<f32>(a, off)).fsub_m(rd::<f32>(b, off))
 }
 
-/// `fld [e+off]`
-fn fl(e: GPtr<u8>, off: isize) -> X87 {
-    x(rd::<f32>(e, off))
-}
+use sa_core::field::ldx as fl;
 
 /// The "own speed" magnitude of entity `e` (both looping functions, same bytes): loads +0x4C, +0x48,
 /// +0x44, +0x58, +0x54 and the dword +0x50 through a stack slot; move speed (+0x44) or turn speed (+0x50).

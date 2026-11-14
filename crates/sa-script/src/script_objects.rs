@@ -24,13 +24,9 @@ orig! {
     fn setup_big_building(e: GPtr<u8>) = thiscall 0x533150 => unported;
 }
 
-fn at<T: sa_core::mem::GameData>(p: GPtr<u8>, off: isize) -> GPtr<T> {
-    p.byte_add(off).cast::<T>()
-}
+use sa_core::field::at;
 
-fn ga<T: sa_core::mem::GameData>(addr: usize) -> GPtr<T> {
-    GPtr::from_addr(addr)
-}
+use sa_core::field::g as ga;
 
 /// `CTheScripts::CleanUpThisObject(CObject*)` (stub 0x4866C0 → 0x156B890, cdecl): a non-null object
 /// created by a mission (+0x13C 2) or as a mission brain object (6) becomes temporary (3), its

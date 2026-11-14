@@ -37,13 +37,9 @@ fn hyd(this: GPtr<u8>) -> GPtr<u8> {
     GPtr::from_addr((0xC1_CB60 + 0x28 * idx) as u32 as usize)
 }
 
-fn lt(a: X87, b: X87) -> bool {
-    !a.fcom(b).test_parity(0x05)
-}
+use sa_math::fpu::lt;
 
-fn gt(a: X87, b: X87) -> bool {
-    !a.fcom(b).test_any(0x41)
-}
+use sa_math::fpu::gt;
 
 /// One wheel of the hydraulic suspension lines (the shared loop body of the raised and lowered
 /// passes, 0x6A0F60 / 0x6A1180): returns the new signed max end delta.

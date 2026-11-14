@@ -29,25 +29,11 @@ const MI_GANG_SMOKE: usize = 0x8CD72C;
 /// `CModelInfo::ms_modelInfoPtrs`
 const MODEL_INFO_PTRS: u32 = 0xA9B0C8;
 
-/// An f32 of the image (`.rdata` constant or `.data` tunable), read when the original reads it.
-fn c(addr: usize) -> f32 {
-    g::<f32>(addr).read()
-}
+use sa_core::field::gf as c;
 
-/// Entity position: matrix +0x30, else the placement at +4.
-fn ent_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() {
-        e.byte_add(4)
-    } else {
-        m.byte_add(0x30)
-    }
-}
+use sa_world::world::common::entity_pos as ent_pos;
 
-/// A Rust local passed where the original passes the address of a stack object.
-fn slot<T>(v: &mut T) -> GPtr<u8> {
-    GPtr::from_raw(v as *mut T).cast()
-}
+use sa_core::field::ptr_of as slot;
 
 /// `(float)(rand() & 0xFFFF) * 3.0517578e-05f [0x858B14] * k` (fild, fmul, fmul) then `_ftol`.
 fn rand_scaled(site: u32, k_addr: usize) -> i32 {
@@ -55,10 +41,7 @@ fn rand_scaled(site: u32, k_addr: usize) -> i32 {
     ftol32(xi(r).fmul_m(c(0x858B14)).fmul_m(c(k_addr)))
 }
 
-/// `fstp dword` of an f64 an original callee returned in ST0.
-fn st0(v: f64) -> X87 {
-    X87::from_f64_exact(v)
-}
+use sa_math::fpu::st0;
 
 /// The inlined `CTaskTimer::IsOutOfTime` tail of a timer at `this + off` (start, interval, started +8,
 /// reset +9) once `started` was tested: a pending reset restarts it at now; true when `now >= start +

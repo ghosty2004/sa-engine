@@ -70,10 +70,7 @@ const INV_32768: f32 = f32::from_bits(0x3800_0000);
 /// The shop's shelf-type roll (0xBB3DE4), set by the shop furnishing code.
 const SHOP_ROLL: usize = 0xBB_3DE4;
 
-/// A Rust local passed by address to an original callee.
-fn p<T>(v: &mut T) -> GPtr<u8> {
-    GPtr::from_raw(v as *mut T).cast()
-}
+use sa_core::field::ptr_of as p;
 
 fn wealth(this: GPtr<u8>) -> u32 {
     u32::from(rd::<u8>(rd::<GPtr<u8>>(this, 0x14), 0x1F))

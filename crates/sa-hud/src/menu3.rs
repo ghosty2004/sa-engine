@@ -27,9 +27,7 @@ const K_3: u32 = 0x4040_0000;
 const K_1_640: u32 = 0x3ACC_CCCD;
 const K_1_448: u32 = 0x3B12_4925;
 
-fn k(bits: u32) -> f32 {
-    f32::from_bits(bits)
-}
+use sa_math::fpu::fbits as k;
 
 orig! {
     /// `CPad::GetAnaloguePadLeft()` (0x5409B0, AL)

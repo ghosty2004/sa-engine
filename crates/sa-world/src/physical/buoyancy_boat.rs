@@ -28,9 +28,7 @@ const VOL_SAIL: usize = 0x8D_3314;
 const VOL_DEFAULT: usize = 0x8D_32CC;
 const NORMAL_BIAS: usize = 0x8D_3384;
 
-fn gf(a: usize) -> f32 {
-    GPtr::<f32>::from_addr(a).read()
-}
+use sa_core::field::gf;
 
 fn cv(p: GPtr<CVector>) -> CVector {
     let a: [f32; 3] = p.cast::<[f32; 3]>().read();

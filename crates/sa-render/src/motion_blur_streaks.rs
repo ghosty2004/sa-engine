@@ -31,9 +31,7 @@ const STREAK_SIZE: usize = 0x54;
 const VERTS: usize = 0xC7_C628;
 const INDICES: u32 = 0xC7_C6B8;
 
-fn gp<T: sa_core::mem::GameData>(a: usize) -> GPtr<T> {
-    GPtr::from_addr(a)
-}
+use sa_core::field::g as gp;
 
 /// The record fields `RegisterStreak` writes: colour bytes +4..+7, start point +8, end point +0x2C, valid[0] = 1.
 fn fill(s: GPtr<u8>, rgba: [u8; 4], start: [u32; 3], end: [u32; 3]) {

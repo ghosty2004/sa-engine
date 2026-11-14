@@ -111,9 +111,7 @@ fn near_screen_z() -> u32 {
     g::<GPtr<u8>>(0xC97B24).read().byte_add(0x18).cast::<u32>().read()
 }
 
-fn lp<T>(v: &mut T) -> GPtr<u8> {
-    GPtr::from_raw(v as *mut T).cast()
-}
+use sa_core::field::ptr_of as lp;
 
 /// 1.0 (0x858624)
 const K_ONE: u32 = 0x3F80_0000;
@@ -733,10 +731,7 @@ fn sector_bounds_ok(e: GPtr<u8>, a: &[u32; 20]) -> bool {
     !jp(x(rd::<f32>(col, 8)).fadd_m(rd::<f32>(epos, 8)), x(rd::<f32>(pos, 8)), 5)
 }
 
-/// `fcom` + `test ah, 0x41` + `jne` taken (below or equal, or unordered).
-fn jne_(a: X87, b: X87) -> bool {
-    a.fcom(b).test_any(0x41)
-}
+use sa_math::fpu::le_or_nan as jne_;
 
 /// `CShadows::CastPlayerShadowSectorList(CPtrListSingleLink&, float minX, minY, maxX, maxY, CVector*
 /// pos, 13 more dwords)` (0x70A470, cdecl): for each entity of the list passing the sector filter

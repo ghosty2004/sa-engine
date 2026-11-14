@@ -33,6 +33,7 @@ pub mod cmdline;
 pub mod common;
 pub mod crt;
 pub mod directory;
+pub mod field;
 pub mod filemgr;
 pub mod game;
 pub mod gameinit;

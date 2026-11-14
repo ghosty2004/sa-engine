@@ -23,9 +23,7 @@ fn mark(i: usize) -> usize {
     MARKS + i * 0x158
 }
 
-fn fv(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
+use sa_core::field::gf as fv;
 
 fn now() -> u32 {
     sa_core::timer::TIME_MS.get()

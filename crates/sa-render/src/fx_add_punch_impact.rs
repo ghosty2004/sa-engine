@@ -2,17 +2,12 @@
 //! Unreversed in gta-reversed; ported from the 1.0 US bytes.
 
 use sa_core::abi::HookReg;
-use sa_core::mem::{GPtr, GameData};
+use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
-use sa_math::x87::X87;
 
-fn g<T: GameData>(a: u32) -> GPtr<T> {
-    GPtr::from_addr(a as usize)
-}
+use sa_core::field::gu as g;
 
-fn x(v: f32) -> X87 {
-    X87::from_f32(v)
-}
+use sa_math::fpu::x;
 
 orig! {
     /// `FxPrtMult_c::FxPrtMult_c(r, g, b, a, size, spin, life)` (0x4AB290)

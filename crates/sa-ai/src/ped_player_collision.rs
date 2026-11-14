@@ -60,9 +60,7 @@ const K_FOLLOW_DIST: usize = 0x86F828;
 const K_ROUTE_RADIUS: usize = 0x86FC98;
 const K_ROUTE_SLOW: usize = 0x86FC9C;
 
-fn gf(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
+use sa_core::field::gf;
 
 fn ped(this: GPtr<u8>) -> GPtr<u8> {
     rd::<GPtr<u8>>(this, 0)
@@ -72,10 +70,7 @@ fn intel(p: GPtr<u8>) -> GPtr<u8> {
     rd::<GPtr<u8>>(p, 0x47C)
 }
 
-fn pos_ptr(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos as pos_ptr;
 
 fn new_task(size: u32, ctor: impl FnOnce(GPtr<u8>) -> GPtr<u8>) -> GPtr<u8> {
     let t = task_new(size);

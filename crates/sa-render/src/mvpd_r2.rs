@@ -34,13 +34,9 @@ orig! {
 const BIRDS: usize = 0xC6A8B0;
 const NUM_BIRDS: usize = 0xC6A8A4;
 
-fn lp<T>(v: &mut T) -> GPtr<u8> {
-    GPtr::from_raw(v as *mut T).cast()
-}
+use sa_core::field::ptr_of as lp;
 
-fn rand_at(site: u32) -> i32 {
-    sa_core::orig::at_site(site, sa_core::crt::rand)
-}
+use sa_core::crt::rand_at;
 
 /// `CBirds::CreateNumberOfBirds(CVector start, CVector target, int32 count, eBirdsBiome type, bool
 /// checkObstacles)` (0x711EF0, cdecl). Max distance by type (0: 45, 1: 80, else 40). For each of

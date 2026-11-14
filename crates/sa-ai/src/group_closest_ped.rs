@@ -6,11 +6,7 @@ use sa_core::hook;
 
 use crate::common::*;
 
-/// The entity's position (`m_matrix` +0x30, else the placement position +4).
-fn pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos as pos;
 
 /// `CPedGroup::GetClosestGroupPed(CPed* ped, float* outDistSq)` (0x5FACD0, `ret 8`).
 ///

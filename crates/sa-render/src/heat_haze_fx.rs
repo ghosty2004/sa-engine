@@ -58,9 +58,7 @@ fn rs(s: u32, v: u32) {
     rw_render_state_set(s, v);
 }
 
-fn k(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
+use sa_core::field::gf as k;
 
 fn gi(a: usize) -> i32 {
     g::<i32>(a).read()

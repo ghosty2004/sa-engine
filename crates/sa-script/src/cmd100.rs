@@ -134,12 +134,7 @@ const CLOCK_MINUTES: usize = 0xB70152;
 const K_HALF: u32 = 0x3F00_0000;
 const K_60: u32 = 0x4270_0000;
 
-/// `m_matrix ? &m_matrix->pos : &m_placement.pos` of an entity.
-#[inline]
-fn entity_pos(e: GPtr<u8>) -> GPtr<u32> {
-    let m = e.byte_add(0x14).cast::<GPtr<u8>>().read();
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }.cast::<u32>()
-}
+use sa_world::world::common::entity_pos_u as entity_pos;
 
 /// The ped itself, or its vehicle when "in vehicle" (+0x46C bit 8) and `m_pVehicle` (+0x58C) is set.
 #[inline]

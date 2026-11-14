@@ -28,13 +28,9 @@ const CALCULATED: usize = 0xC18C20;
 const GET_UP: usize = 0xC18C3C;
 const QUICK_DRAGGED: usize = 0xC18C48;
 
-fn rd<T: sa_core::mem::GameData>(p: GPtr<u8>, off: isize) -> T {
-    p.byte_add(off).cast::<T>().read()
-}
+use sa_core::field::rd;
 
-fn g<T: sa_core::mem::GameData>(a: usize) -> GPtr<T> {
-    GPtr::from_addr(a)
-}
+use sa_core::field::g;
 
 /// The first sequence of the static association's hierarchy (uncompressed first).
 fn first_sequence(group: i32, anim: i32) -> GPtr<u8> {

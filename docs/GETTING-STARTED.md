@@ -295,6 +295,12 @@ Key documents:
 
    - game memory through `globals!`/`GPtr` and `catalog/layouts.csv` (ADR-001);
    - calls to other original functions through `orig!` (ADR-001), never raw addresses;
+   - shared helpers, never local copies (ADR-003 §3.2): raw field / global access in `sa_core::field` (`rd`, `wr`,
+     `at`, `g`, `gf`, `rd3f`, `ptr_of`, ...), x87 shorthands in `sa_math::fpu` (`x`, `xi`, `xc`, `st0`, `f32_of`,
+     `ftol32`, the `fcom` tests `lt` / `gt` / `le_or_nan` / `ge_or_nan`), entity position / type in
+     `sa_world::world::common` (`entity_pos`, `entity_type`), `rand()` with caller attribution in
+     `sa_core::crt::rand_at`; import them (`use sa_core::field::gf as k;` keeps a local name).
+     `make dupes` (`tools/verify/dupes.py`) lists functions defined in more than one crate;
    - **keep the original's bugs**; byte-faithful x87 order (`X87`/`sa_math::x87` for full-width values;
      `orig!` ST0 results are read as `f64`);
    - direct `rand()`/`srand()` calls go through `sa_core::orig::at_site(<return address>, …)` so determinism

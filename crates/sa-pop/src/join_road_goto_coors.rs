@@ -34,15 +34,7 @@ const THE_PATHS_FROM_VM: usize = 0x96F050;
 /// `CNodeAddress` "empty" (0x8A5F44, 0xFFFF in the image)
 const EMPTY_NODE_ADDRESS: usize = 0x8A5F44;
 
-/// The position of an entity: the matrix's (+0x14) translation (+0x30) when it has one, else the placement (+4).
-fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() {
-        e.byte_add(4)
-    } else {
-        m.byte_add(0x30)
-    }
-}
+use sa_world::world::common::entity_pos;
 
 /// `CPathFind::RemoveBadStartNode(CVector pos, CNodeAddress* nodes, int16* count)` (0x44E4F0, thiscall, `ret 0x14`;
 /// not in the catalogue: its only caller is 0x156A596 below, with `this` from the VM).

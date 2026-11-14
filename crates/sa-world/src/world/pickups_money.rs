@@ -25,10 +25,7 @@ const ANGLE_STEP: u32 = 0x3CC9_0FDB;
 const SCATTER: u32 = 0x3FC0_0000;
 const LIFT: u32 = 0x3F00_0000;
 
-/// `rand()` called from the original at `site` (the return address).
-fn rand_at(site: u32) -> i32 {
-    sa_core::orig::at_site(site, sa_core::crt::rand)
-}
+use sa_core::crt::rand_at;
 
 /// `CPickups::CreateSomeMoney(CVector pos, int32 amount)` (0x458970, cdecl).
 ///

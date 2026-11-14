@@ -83,9 +83,7 @@ orig! {
     pub fn begin_update_hook_call(c: GPtr<u8>) = cdecl 0x807C80 => begin_update_hook;
 }
 
-fn a32(p: GPtr<u8>) -> u32 {
-    p.addr() as u32
-}
+use sa_core::field::addr32 as a32;
 
 /// The camera registry (`0x8E222C`).
 pub fn camera_registry() -> GPtr<u8> {

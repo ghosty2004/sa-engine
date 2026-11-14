@@ -8,9 +8,7 @@ use crate::abi::HookReg;
 use crate::hook;
 use crate::mem::GPtr;
 
-fn ldf(p: GPtr<u8>, o: isize) -> f32 {
-    p.byte_add(o).cast::<f32>().read()
-}
+use crate::field::rdf as ldf;
 fn st(p: GPtr<u8>, o: isize, v: X87) {
     p.byte_add(o).cast::<f32>().write(v.to_f32())
 }

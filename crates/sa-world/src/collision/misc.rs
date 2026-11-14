@@ -104,11 +104,7 @@ pub fn temp_col_models_shutdown() {
     }
 }
 
-/// A `CTempColModels` static col model (fixed address in phase A; phases B/C need the module's own
-/// storage, which comes with `CTempColModels::Initialise`).
-fn temp_model(addr: usize) -> GPtr<u8> {
-    GPtr::from_addr(addr)
-}
+use sa_core::field::pa as temp_model;
 
 orig! {
     /// `CSphere::Set(float radius, const CVector& center)` (stub 0x40FCF0, `ret 8`)
@@ -198,15 +194,11 @@ pub fn col_line_set(this: GPtr<u8>, start: GPtr<u32>, end: GPtr<u32>) {
 ///
 /// Not registered: 0x5BA8C0 is hooked by sa-world mvpe_tempcol.rs (duplicate port left unregistered when STD-5 merged both).
 pub fn temp_col_models_initialise() {
-    fn at(a: usize) -> GPtr<u8> {
-        GPtr::from_addr(a)
-    }
+    use sa_core::field::pa as at;
     fn v3(v: [u32; 3]) -> [u32; 3] {
         v
     }
-    fn rd32(a: u32) -> u32 {
-        GPtr::<u32>::from_addr(a as usize).read()
-    }
+    use sa_core::field::gr32u as rd32;
     fn wr32(a: u32, v: u32) {
         GPtr::<u32>::from_addr(a as usize).write(v);
     }

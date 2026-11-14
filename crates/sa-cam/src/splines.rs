@@ -433,9 +433,7 @@ fn roll_up(this: GPtr<u8>, roll: f32) {
     wr::<f32>(this, 0x1BC, a.fsin().to_f32());
 }
 
-fn spline_at(addr: usize) -> GPtr<u8> {
-    g::<GPtr<u8>>(addr).read()
-}
+use sa_core::field::grp as spline_at;
 
 /// `CCam::Process_FlyBy(const CVector&, float, float, float)` (0x5B25F0, thiscall, `ret 0x10`; the
 /// arguments are unused). Nothing when the cut scene finished (TheCamera +0x1D). Up = (0, 0, 1). The

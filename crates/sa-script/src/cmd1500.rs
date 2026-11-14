@@ -279,11 +279,7 @@ fn veh(h: u32) -> GPtr<u8> {
     vehicle_at_ref(pool(VEHICLE_POOL), h as i32)
 }
 
-/// A dword read from the image's data at run time.
-#[inline]
-fn dword(a: usize) -> u32 {
-    GPtr::<u32>::from_addr(a).read()
-}
+use sa_core::field::gr32 as dword;
 
 /// `new(size)` then the constructor when non-null (EAX = the task, null when `new` fails).
 #[inline]
@@ -292,12 +288,7 @@ fn new_task(size: u32, ctor: impl FnOnce(GPtr<u8>) -> GPtr<u8>) -> GPtr<u8> {
     if t.is_null() { GPtr::NULL } else { ctor(t) }
 }
 
-/// An entity's position: `m_matrix (+0x14) ? &m_matrix->pos (+0x30) : &m_placement.pos (+4)`.
-#[inline]
-fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = e.byte_add(0x14).cast::<GPtr<u8>>().read();
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos;
 
 /// `p->m_pIntelligence` (+0x47C).
 #[inline]

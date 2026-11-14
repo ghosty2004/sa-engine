@@ -11,12 +11,8 @@ use crate::abi::{HookReg, NativeReg};
 use crate::mem::GPtr;
 use crate::{hook, orig};
 
-fn wr<T: crate::mem::GameData>(p: GPtr<u8>, off: isize, v: T) {
-    p.byte_add(off).cast::<T>().write(v)
-}
-fn rd<T: crate::mem::GameData>(p: GPtr<u8>, off: isize) -> T {
-    p.byte_add(off).cast::<T>().read()
-}
+use crate::field::wr;
+use crate::field::rd;
 
 orig! {
     /// `CBaseModelInfo::CBaseModelInfo()` (0x4C4A60)

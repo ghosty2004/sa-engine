@@ -171,17 +171,11 @@ const MODE_RB: usize = 0x85_a53c;
 const EMPTY_STR: usize = 0x85_8b54;
 const WEAPON_PEDS_FOR_PC: usize = 0xc8_8224;
 
-fn gf(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
+use sa_core::field::gf;
 
-fn gb(a: usize) -> u8 {
-    g::<u8>(a).read()
-}
+use sa_core::field::gr8 as gb;
 
-fn gd(a: usize) -> u32 {
-    g::<u32>(a).read()
-}
+use sa_core::field::gr32 as gd;
 
 /// The inlined byte clamp: 255 when `v >= 255` or unordered, 0 when `v <= 0`, otherwise `v`.
 fn clamp255(v: X87) -> X87 {

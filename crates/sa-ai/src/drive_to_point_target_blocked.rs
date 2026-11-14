@@ -18,15 +18,7 @@ orig! {
 /// `CModelInfo::ms_modelInfoPtrs`
 const MODEL_INFO_PTRS: usize = 0xA9B0C8;
 
-/// The position of an entity: the matrix's (+0x14) translation (+0x30) when it has one, else the placement (+4).
-fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() {
-        e.byte_add(4)
-    } else {
-        m.byte_add(0x30)
-    }
-}
+use sa_world::world::common::entity_pos;
 
 /// The bounding-sphere radius of an entity's model: `ms_modelInfoPtrs[+0x22]` → collision model (+0x14) → +0x24.
 fn bound_radius(e: GPtr<u8>) -> f32 {

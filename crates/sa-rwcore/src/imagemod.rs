@@ -61,9 +61,7 @@ fn imod() -> GPtr<u8> {
     rw_globals().byte_add(off as isize)
 }
 
-fn a32(p: GPtr<u8>) -> u32 {
-    p.addr() as u32
-}
+use sa_core::field::addr32 as a32;
 
 /// `cb_IMAGEMODULE_RwEngine_Open(instance, offset, size)` (0x802280): image freelist (entry size from
 /// the registry, hint 0x40018), file-format freelist (entry 0x34, hint 0x40406; quirk kept: its

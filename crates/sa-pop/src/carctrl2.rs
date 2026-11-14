@@ -283,11 +283,7 @@ orig! {
     fn get_default_cop_car_model(ignore_lvpd: u32) -> i32 = cdecl 0x407C50 => unported;
 }
 
-/// The entity position: the matrix position or the placement's.
-fn entity_pos(e: GPtr<u8>) -> GPtr<f32> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4).cast() } else { m.byte_add(0x30).cast() }
-}
+use sa_world::world::common::entity_pos_f as entity_pos;
 
 /// `CCarCtrl::FindSpeedMultiplier(float angle, float minAngle, float maxAngle, float coef)` (0x4224E0): the
 /// angle wrapped into [-π, π] by repeated ±2π, `v = max(|a| - min, 0)`; `v <= max - min` →

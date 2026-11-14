@@ -60,9 +60,7 @@ fn quat_matrix(m: GPtr<u8>, q: GPtr<u8>) {
     }
 }
 
-fn x(v: f32) -> X87 {
-    X87::from_f32(v)
-}
+use sa_math::fpu::x;
 
 /// `RpHAnimKeyFrameApply(matrix, keyFrame)` (0x7C5B80): the matrix of the key frame's quaternion (+8)
 /// and translation (+0x18), flags 3.

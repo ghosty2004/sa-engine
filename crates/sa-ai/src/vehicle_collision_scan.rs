@@ -34,13 +34,8 @@ orig! {
 /// `CTimer::m_snTimeInMilliseconds` (0xB7CB84)
 const TIMER_TIME_MS: usize = 0xB7CB84;
 
-fn k(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
-fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_core::field::gf as k;
+use sa_world::world::common::entity_pos;
 
 /// `CVehiclePotentialCollisionScanner::ScanForVehiclePotentialCollisionEvents(const CPed&, CEntity**, int32)` (0x603720,
 /// thiscall, `ret 0xC`; only the ped is used). x87 compares. The task timer (+0 start, +4 period, +8 set, +9 reset):

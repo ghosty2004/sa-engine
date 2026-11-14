@@ -48,9 +48,7 @@ const WHEEL_SPIN_THRESHOLD: usize = 0x8CBC54;
 /// `int16` cruise count limit
 const CRZ_COUNT_LIMIT: usize = 0x8CBC8C;
 
-fn gf(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
+use sa_core::field::gf;
 
 struct Ctx {
     this: GPtr<u8>,

@@ -16,18 +16,10 @@ orig! {
     fn add_to_list2_call(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x54EA10 => add_to_list2;
 }
 
-fn rd(p: GPtr<u8>, o: isize) -> u32 {
-    p.byte_add(o).cast::<u32>().read()
-}
-fn wr(p: GPtr<u8>, o: isize, v: u32) {
-    p.byte_add(o).cast::<u32>().write(v)
-}
-fn p8(a: u32) -> GPtr<u8> {
-    GPtr::from_addr(a as usize)
-}
-fn addr(p: GPtr<u8>) -> u32 {
-    p.addr() as u32
-}
+use sa_core::field::rd32 as rd;
+use sa_core::field::wr32 as wr;
+use sa_core::field::p8;
+use sa_core::field::addr32 as addr;
 
 /// Unlinks `node` and inserts it after `head`.
 fn move_after(node: GPtr<u8>, head: GPtr<u8>) {

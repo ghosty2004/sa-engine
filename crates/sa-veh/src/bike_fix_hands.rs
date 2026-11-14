@@ -7,7 +7,7 @@ use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 use sa_math::x87::X87;
 
-use crate::common::{g, model_info, rd, wr, x};
+use crate::common::{model_info, rd, wr, x};
 
 orig! {
     /// `CMatrix::Attach(RwMatrix*, bool owns)` (0x59BD10)
@@ -35,9 +35,7 @@ orig! {
     fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
 }
 
-fn k(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
+use sa_core::field::gf as k;
 
 /// A local `CMatrix` (0x48 bytes) with its attach pointer and owner flag zeroed (as the original's constructor-less
 /// stack matrices start).
@@ -52,9 +50,7 @@ impl Mat {
     }
 }
 
-fn vp(v: &mut [f32; 3]) -> GPtr<u8> {
-    GPtr::from_raw(v.as_mut_ptr()).cast()
-}
+use sa_core::field::ptr_of as vp;
 
 /// The bone's matrix position (`&RpHAnimHierarchyGetMatrixArray(h)[RpHAnimIDGetIndex(h, id)].pos`).
 fn bone_pos(h: GPtr<u8>, id: i32) -> GPtr<u8> {

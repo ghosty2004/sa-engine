@@ -96,25 +96,11 @@ orig! {
 /// `CTimer::m_snTimeInMilliseconds`
 const TIME_MS: usize = 0xB7CB84;
 
-/// Pointer to a Rust stack buffer (stands in for an object the original builds on its own stack).
-fn buf<const N: usize>(b: &mut [u32; N]) -> GPtr<u8> {
-    GPtr::from_raw(b as *mut [u32; N]).cast()
-}
+use sa_core::field::ptr_of as buf;
 
-/// Entity position: matrix +0x30, else the placement at +4.
-fn ent_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() {
-        e.byte_add(4)
-    } else {
-        m.byte_add(0x30)
-    }
-}
+use sa_world::world::common::entity_pos as ent_pos;
 
-/// `fld dword [addr]`.
-fn gf(addr: usize) -> X87 {
-    x(g::<f32>(addr).read())
-}
+use sa_core::field::gx as gf;
 
 /// The shared constructor body (both instances; `ret 0x20`): `CTaskComplex` ctor, `+0xC = entity`,
 /// `+0x10..+0x1C`, `vtbl`, `+0x20 = 0`, `+0x24`, both task timers cleared (`+0x28..+0x3D`), the
@@ -459,12 +445,7 @@ fn seek_create_sub_task(this: GPtr<u8>, ty: i32, ped: GPtr<u8>, flags: isize) ->
     }
 }
 
-/// Copies a 12-byte vector dword by dword.
-fn copy3(dst: GPtr<u8>, src: GPtr<u8>) {
-    for o in [0, 4, 8] {
-        wr::<u32>(dst, o, rd::<u32>(src, o));
-    }
-}
+use sa_core::field::copy3;
 
 /// A boat (`+0x590 == 5`) entity `v` the ped stands on / touches (`ped +0x568` or `+0x584`).
 fn boat_under(ped: GPtr<u8>, v: GPtr<u8>) -> Option<bool> {

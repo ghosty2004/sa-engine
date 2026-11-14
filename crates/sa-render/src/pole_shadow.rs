@@ -32,9 +32,7 @@ const SHADOW_SIDE_Y: usize = 0xB79F10;
 /// `gpPostShadowTex` (0xC4040C)
 const POST_SHADOW_TEX: usize = 0xC4040C;
 
-fn kf(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
+use sa_core::field::gf as kf;
 
 /// The entity matrix, allocated from the placement first when missing (the inlined `CPlaceable::GetMatrix`).
 fn matrix_of(e: GPtr<u8>) -> GPtr<u8> {

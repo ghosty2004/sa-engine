@@ -48,10 +48,7 @@ orig! {
     fn apply_turn_force(p: GPtr<u8>, force: CVector, point: CVector) = thiscall 0x542A50 => sa_world::physical::forces::apply_turn_force;
 }
 
-/// A local `[f32; 3]` as a `GPtr<u8>`.
-fn vp(v: &mut [f32; 3]) -> GPtr<u8> {
-    GPtr::from_raw(v.as_mut_ptr()).cast()
-}
+use sa_core::field::ptr_of as vp;
 
 fn vec_at(p: GPtr<u8>) -> CVector {
     CVector { x: rd::<f32>(p, 0), y: rd::<f32>(p, 4), z: rd::<f32>(p, 8) }

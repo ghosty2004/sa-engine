@@ -3,11 +3,8 @@
 
 use sa_core::abi::HookReg;
 use sa_core::hook;
-use sa_core::mem::{GPtr, GameData};
 
-fn g<T: GameData>(a: usize) -> GPtr<T> {
-    GPtr::from_addr(a)
-}
+use sa_core::field::g;
 
 const MS_PER_MINUTE: usize = 0xB7015C;
 const LAST_TICK: usize = 0xB70158;

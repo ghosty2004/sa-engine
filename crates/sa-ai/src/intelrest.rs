@@ -218,16 +218,7 @@ fn lm() -> GPtr<u8> {
     GPtr::from_addr(LOAD_MONITOR)
 }
 
-/// A placeable's position: `m_matrix->pos` (+0x14 -> +0x30) when it has a matrix, else the simple transform
-/// (+4).
-fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() {
-        e.byte_add(4)
-    } else {
-        m.byte_add(0x30)
-    }
-}
+use sa_world::world::common::entity_pos;
 
 /// `CPedIntelligence::operator new(uint32)` (0x6074A0): `CPedIntelligencePool::New` on `CPools::ms_pPedIntelligencePool`
 /// (0xB744C0; tail jump, the size is not used).

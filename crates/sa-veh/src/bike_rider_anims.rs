@@ -47,9 +47,7 @@ const TIME_STEP_NC: usize = 0xB7CB58;
 /// `CTimer::m_snTimeInMilliseconds`
 const TIME_MS: usize = 0xB7CB84;
 
-fn rf(p: GPtr<u8>, off: isize) -> f32 {
-    rd::<f32>(p, off)
-}
+use sa_core::field::rdf as rf;
 
 fn z0() -> X87 {
     X87::zero()

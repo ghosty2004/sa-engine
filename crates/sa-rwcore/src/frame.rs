@@ -121,9 +121,7 @@ orig! {
 
 // ---- field helpers ----
 
-fn a32(p: GPtr<u8>) -> u32 {
-    p.addr() as u32
-}
+use sa_core::field::addr32 as a32;
 fn flags(f: GPtr<u8>) -> u8 {
     rd::<u8>(f, 3)
 }

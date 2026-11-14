@@ -87,15 +87,9 @@ orig! {
     pub fn call_render_cb(f: u32, e: u32, obj: u32, ty: u32, flags: u32) = cdecl dyn => unported;
 }
 
-#[inline]
-fn gu(addr: usize) -> u32 {
-    g::<u32>(addr).read()
-}
+use sa_core::field::gr32 as gu;
 
-#[inline]
-fn su(addr: usize, v: u32) {
-    g::<u32>(addr).write(v)
-}
+use sa_core::field::gw32 as su;
 
 /// The current camera (`RwGlobals` +0).
 fn current_camera() -> GPtr<u8> {

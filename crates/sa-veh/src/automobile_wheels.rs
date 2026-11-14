@@ -88,27 +88,17 @@ pub fn wv(p: GPtr<u8>, v: CVector) {
     wr::<f32>(p, 8, v.z);
 }
 
-fn ld(p: GPtr<u8>, off: isize) -> X87 {
-    x(rd::<f32>(p, off))
-}
+use sa_core::field::ldx as ld;
 
-fn c(bits: u32) -> X87 {
-    X87::constant(bits)
-}
+use sa_math::fpu::xc as c;
 
 fn ts() -> f32 {
     g::<f32>(TIME_STEP).read()
 }
 
-/// `fcomp` + `test ah, 0x41` + `jne` taken: `a <= b` or unordered.
-fn le(a: X87, b: X87) -> bool {
-    a.fcom(b).test_any(0x41)
-}
+use sa_math::fpu::le_or_nan as le;
 
-/// `fcomp` + `test ah, 5` + `jp` taken: `a >= b` or unordered.
-fn ge(a: X87, b: X87) -> bool {
-    a.fcom(b).test_parity(0x05)
-}
+use sa_math::fpu::ge_or_nan as ge;
 
 /// `min(a, b)` (0x404330): `a` when `a < b`, else `b` (ties and unordered give `b`).
 fn min_f(a: f32, b: f32) -> f32 {

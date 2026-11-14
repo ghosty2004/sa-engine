@@ -46,19 +46,14 @@ const DELETE_ANIM_CB: u32 = 0x678E60;
 /// `CDefaultAnimCallback::DefaultAnimCB`
 const DEFAULT_ANIM_CB: u32 = 0x4D1390;
 
-fn kf(addr: usize) -> X87 {
-    x(g::<f32>(addr).read())
-}
+use sa_core::field::gx as kf;
 
 /// `fcomp; fnstsw; test ah, 0x41; jp skip`: true when v <= c (ordered).
 fn le(v: X87, c: X87) -> bool {
     !v.fcom(c).test_parity(0x41)
 }
 
-/// `fcomp; fnstsw; test ah, 5; jp skip`: true when v < c (ordered).
-fn lt(v: X87, c: X87) -> bool {
-    !v.fcom(c).test_parity(0x05)
-}
+use sa_math::fpu::lt;
 
 /// `CTaskSimpleInAir::ProcessPed(CPed*)` (0x680600, thiscall, `ret 4`).
 ///

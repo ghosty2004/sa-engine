@@ -60,16 +60,9 @@ orig! {
     fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
 }
 
-/// A local buffer's address as a `GPtr` (the original's stack object).
-fn buf<const N: usize>(b: &mut [u32; N]) -> GPtr<u8> {
-    GPtr::from_raw(b as *mut [u32; N]).cast()
-}
+use sa_core::field::ptr_of as buf;
 
-/// Entity position: matrix +0x30 when the matrix pointer (+0x14) is set, else the placement at +4.
-fn ent_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos as ent_pos;
 
 /// The shared body of the two `CreateRouteTask`s: null for an empty route (+0x20), else a
 /// `CTaskComplexFollowPointRoute(ms, route, 0, [0x86FC98], 0, true, false, false)`.
@@ -750,11 +743,7 @@ orig! {
     fn world_process_line_of_sight(s: GPtr<u8>, e: GPtr<u8>, cp: GPtr<u8>, ent: GPtr<u8>, b: u32, v: u32, p: u32, o: u32, d: u32, st: u32, c: u32, sh: u32) -> u8 = cdecl 0x56BA00 => unported;
 }
 
-/// An entity's position (matrix +0x30, else the placement +4).
-fn entity_pos_ptr(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos as entity_pos_ptr;
 
 /// 1/32767 (0x858C7C): the `rand()` scale
 const K_RAND_SCALE: usize = 0x858C7C;

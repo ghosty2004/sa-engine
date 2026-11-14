@@ -81,9 +81,7 @@ const THE_TEXT: usize = 0xC1B340;
 /// `CTimer::m_snTimeInMilliseconds`
 const TIME_MS: usize = 0xB7CB84;
 
-fn gp(addr: usize) -> GPtr<u8> {
-    GPtr::from_addr(addr)
-}
+use sa_core::field::pa as gp;
 
 /// `rand() * (1/32767.5) * 0.9 * 1080000 + 648000`, `_ftol`, stored back as an unsigned int converted to
 /// float (`fild; jge; fadd 2^32; fstp`) into `TimeTillNextAttack` (the inlined `CalculateTimeTillNextAttack`).

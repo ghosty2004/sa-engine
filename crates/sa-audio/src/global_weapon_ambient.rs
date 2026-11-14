@@ -67,23 +67,15 @@ orig! {
     fn ae_random_int(min: i32, max: i32) -> i32 = cdecl 0x4D9C10 => crate::utility::get_random_number_in_range_int;
 }
 
-fn r32(a: usize) -> u32 {
-    g::<u32>(a).read()
-}
+use sa_core::field::gr32 as r32;
 
 fn w32(a: usize, v: u32) {
     g::<u32>(a).write(v);
 }
 
-fn gp(a: usize) -> GPtr<u8> {
-    GPtr::from_addr(a)
-}
+use sa_core::field::pa as gp;
 
-/// The position an entity's coordinates live at: its matrix's +0x30 when it has one (+0x14), else +4.
-fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos;
 
 /// `TheCamera`'s position (matrix +0x30, or the placement position without a matrix).
 fn camera_pos() -> GPtr<u8> {

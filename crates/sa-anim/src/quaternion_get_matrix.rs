@@ -6,9 +6,7 @@ use sa_core::hook;
 use sa_core::mem::GPtr;
 use sa_math::x87::X87;
 
-fn rf(p: GPtr<u8>, off: isize) -> f32 {
-    p.byte_add(off).cast::<f32>().read()
-}
+use sa_core::field::rdf as rf;
 
 fn wf(p: GPtr<u8>, off: isize, v: X87) {
     p.byte_add(off).cast::<f32>().write(v.to_f32());

@@ -62,13 +62,9 @@ orig! {
 
 const TIME_STEP: usize = 0xB7_CB5C;
 
-fn lt(a: X87, b: X87) -> bool {
-    !a.fcom(b).test_parity(0x05)
-}
+use sa_math::fpu::lt;
 
-fn gt(a: X87, b: X87) -> bool {
-    !a.fcom(b).test_any(0x41)
-}
+use sa_math::fpu::gt;
 
 /// All four `m_fWheelsSuspensionCompression` (+0x7D4..) are exactly 1.0 (`test ah, 0x44; jp`).
 fn all_extended(this: GPtr<u8>) -> bool {

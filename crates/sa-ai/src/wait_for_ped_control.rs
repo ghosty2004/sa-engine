@@ -34,11 +34,7 @@ orig! {
     fn limit_radian_angle(a: u32) -> f64 = cdecl 0x53CB50 => unported;
 }
 
-/// `CPlaceable::GetPosition()`: the matrix's position (+0x14 matrix, +0x30) or the simple transform's (+4).
-fn pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos as pos;
 
 /// `CTaskComplexWaitForPed::ControlSubTask(CPed* ped)` (0x6834E0, thiscall, `ret 4`):
 /// - no ped to wait for → null;

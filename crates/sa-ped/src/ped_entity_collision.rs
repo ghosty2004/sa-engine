@@ -82,10 +82,7 @@ const STATIC_PED_COL_MODEL: usize = 0x968E20;
 const FALL_SPEED_XY: usize = 0x86C290;
 const FALL_SPEED_Z: usize = 0x86C294;
 
-/// An f32 of the exe image (constants and tweakables, read where the original reads them).
-fn kf(a: usize) -> f32 {
-    GPtr::<f32>::from_addr(a).read()
-}
+use sa_core::field::gf as kf;
 
 fn ensure_matrix(e: Ent) {
     if matrix(e).is_null() {

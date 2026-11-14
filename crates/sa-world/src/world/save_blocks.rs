@@ -13,9 +13,7 @@ use sa_core::abi::{HookReg, footprint_residue_u8};
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
-fn g<T>(a: usize) -> GPtr<T> {
-    GPtr::from_addr(a)
-}
+use sa_core::field::g;
 
 fn save(a: usize, n: i32) {
     save_data(g(a), n);

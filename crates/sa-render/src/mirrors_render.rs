@@ -43,9 +43,7 @@ const TEMP_RENDER_VERTICES: u32 = 0xC4_D958;
 const SCENE_CAMERA: usize = 0xC1_703C;
 const CAM_MATRIX: usize = 0xB6_F03C;
 
-fn gw(addr: u32, v: u32) {
-    g::<u32>(addr as usize).write(v)
-}
+use sa_core::field::gw32u as gw;
 
 /// Copies the six quad indices into `aTempBufferIndices`, sets the four vertex colours to white and
 /// the UVs (0,0) (1,0) (1,1) (0,1), the counts 6 / 4, and draws the temp buffer as an indexed

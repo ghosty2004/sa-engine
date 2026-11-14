@@ -217,26 +217,16 @@ orig! {
     fn entity_update_rw_frame(e: GPtr<u8>) = thiscall 0x532B00 => unported;
 }
 
-/// A dword-aligned stack object of `N` dwords, as a game pointer.
-fn local<const N: usize>(b: &mut [u32; N]) -> GPtr<u8> {
-    GPtr::from_raw(b as *mut [u32; N]).cast()
-}
+use sa_core::field::ptr_of as local;
 
-/// The f32 constant at `a`.
-fn k(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
+use sa_core::field::gf as k;
 
 /// The f32 bits of an x87 value as `fstp dword` stores them.
 fn bits(v: X87) -> u32 {
     f32_of(v).to_bits()
 }
 
-/// The ped's position: its matrix +0x30, or the placement at +4 without a matrix.
-fn pos_of(ped: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(ped, 0x14);
-    if m.is_null() { ped.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos as pos_of;
 
 /// MSVC's clamp of a register value: `fld hi; fcomp st(1)` taken (`hi < v`) gives `hi`, else `fld lo; fcomp
 /// st(1)` with `lo > v` gives `lo`, else `v` (a NaN stays).

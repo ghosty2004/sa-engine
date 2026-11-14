@@ -10,9 +10,7 @@ use sa_math::x87::X87;
 use super::shared::*;
 use crate::world::common::{ftol32, x};
 
-fn st0(v: f64) -> X87 {
-    X87::from_f64_exact(v)
-}
+use sa_math::fpu::st0;
 
 orig! {
     /// `CMatrix * CVector` (0x59C890, `out = m * v`)
@@ -41,13 +39,9 @@ orig! {
 /// The speed cap 0.1 (0x8D3388, `.data`).
 const SPEED_CAP: usize = 0x8D_3388;
 
-fn gf(a: usize) -> f32 {
-    GPtr::<f32>::from_addr(a).read()
-}
+use sa_core::field::gf;
 
-fn p3(v: &mut [f32; 3]) -> GPtr<u8> {
-    GPtr::from_raw(v.as_mut_ptr()).cast()
-}
+use sa_core::field::ptr_of as p3;
 
 /// `cBuoyancy::AddSplashParticles(CPhysical* e, CVector from, CVector to, CVector dir, uint8 reduce)` (0x6C34E0,
 /// thiscall `ret 0x2C`; `this` unused; entry `nop; jmp` into the chunk 0x401C83, which does the `sub esp,

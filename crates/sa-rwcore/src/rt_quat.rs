@@ -11,7 +11,7 @@ use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 use sa_math::x87::X87;
 
-use crate::common::{RwError, g, rd, rw_error_set, rw_error1, rw_error2, wr, x};
+use crate::common::{RwError, rd, rw_error_set, rw_error1, rw_error2, wr, x};
 
 /// 0.0f, 1.0f, 0.5f (`.rdata`); the RtQuatRotate angle scale (degrees to half radians) at 0x8631D4.
 const C_ZERO: usize = 0x858B50;
@@ -37,9 +37,7 @@ pub fn normalize_f64(out: GPtr<u8>, inp: GPtr<u8>) -> f64 {
     crate::vector::rw_v3d_normalize(out.cast(), inp.cast()).to_f64()
 }
 
-fn gf(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
+use sa_core::field::gf;
 
 fn f(p: GPtr<u8>, o: isize) -> f32 {
     rd::<f32>(p, o)

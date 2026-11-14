@@ -67,9 +67,7 @@ orig! {
     fn escalators_add_one(a: u32, b: u32, c: u32, d: u32, down: u32, e: u32) = cdecl 0x717c90 => super::escalators::add_one;
 }
 
-fn local<const N: usize>(b: &mut [u32; N]) -> GPtr<u8> {
-    GPtr::from_raw(b as *mut [u32; N]).cast()
-}
+use sa_core::field::ptr_of as local;
 
 /// A CVector copied with `fld dword` / `fstp dword` (bit-exact except that a signalling NaN is quietened).
 fn fcopy3(dst: GPtr<u8>, src: GPtr<u8>) {
@@ -307,11 +305,7 @@ fn ci_pow(base: X87, exp: f32) -> X87 {
 /// `CTimer::ms_fTimeStep`
 const TIME_STEP: usize = 0xB7CB5C;
 
-/// The entity position: matrix +0x30 when it has one (+0x14), else the placement (+4).
-fn epos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use crate::world::common::entity_pos as epos;
 
 fn zero3(p: GPtr<u8>) {
     for o in [0, 4, 8] {
@@ -323,10 +317,7 @@ fn cv(p: GPtr<u8>) -> CVector {
     CVector { x: rd::<f32>(p, 0), y: rd::<f32>(p, 4), z: rd::<f32>(p, 8) }
 }
 
-/// `fcom; fnstsw; test ah, 0x41; jne` not taken: `a > b` (ordered).
-fn gt(a: X87, b: X87) -> bool {
-    !a.fcom(b).test_any(0x41)
-}
+use sa_math::fpu::gt;
 
 /// `fcom; fnstsw; test ah, 5; jnp` taken: exactly C0 of C0/C2, `a < b` (ordered).
 fn lt(a: X87, b: X87) -> bool {

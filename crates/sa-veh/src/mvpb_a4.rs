@@ -28,19 +28,11 @@ orig! {
     fn ped_say(p: GPtr<u8>, id: u32, delay: u32, prob: u32, a4: u32, a5: u32, a6: u32) = thiscall 0x5EFFE0 => unported;
 }
 
-fn st0(v: f64) -> X87 {
-    X87::from_f64_exact(v)
-}
+use sa_math::fpu::st0;
 
-/// `a > b` (`test ah, 0x41` + `jne` not taken).
-fn gt(a: X87, b: X87) -> bool {
-    !a.fcom(b).test_any(0x41)
-}
+use sa_math::fpu::gt;
 
-/// `a < b` (`test ah, 5` + `jp` not taken).
-fn lt(a: X87, b: X87) -> bool {
-    !a.fcom(b).test_parity(0x05)
-}
+use sa_math::fpu::lt;
 
 fn fpv() -> GPtr<u8> {
     sa_world::world::common::find_player_vehicle(-1, 0)

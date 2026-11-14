@@ -54,13 +54,8 @@ const K_CHAT_RANGE: usize = 0x86FCD4;
 /// 0.0 (0x858B50)
 const K_ZERO: usize = 0x858B50;
 
-fn k(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
-fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_core::field::gf as k;
+use sa_world::world::common::entity_pos;
 /// `(d.y*F.y + d.z*F.z) + d.x*F.x` with `F` = the matrix forward row (+0x10).
 fn forward_dot(d: GPtr<u8>, m: GPtr<u8>) -> X87 {
     x(rd::<f32>(d, 4))

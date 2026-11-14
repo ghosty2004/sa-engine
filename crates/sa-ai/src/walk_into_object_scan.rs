@@ -54,13 +54,8 @@ const K_MIN_DIST: usize = 0x86C900;
 /// 1.0 (0x858624): the ped's height band half-width
 const K_ONE: usize = 0x858624;
 
-fn k(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
-fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_core::field::gf as k;
+use sa_world::world::common::entity_pos;
 
 /// `FUN_00606890(CPed* ped)` (thiscall, `ret 4`; `this` = a task timer: +0 start, +4 period, +8 set, +9 reset): unset →
 /// start = now, set, period 500 (the set byte is re-read: 0 → nothing); reset → start = now, cleared; not `now >= start +

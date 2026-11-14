@@ -21,11 +21,7 @@ orig! {
 const ENTER_CAR_AS_DRIVER_VT: u32 = 0x86_EAAC;
 const FALLBACK_VT: u32 = 0x85_9CFC;
 
-/// The position an entity's placement gives (`m_matrix ? &m_matrix->pos : &m_placement.pos`).
-fn pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos as pos;
 
 /// A `CTaskComplexEnterCarAsDriver` for `v`: `CTaskComplexEnterCar(v, true, false, false, false)`, then its vtable.
 fn enter_as_driver(v: GPtr<u8>) -> GPtr<u8> {

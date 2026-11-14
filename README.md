@@ -133,6 +133,7 @@ make check        # the writer gate: clippy (host, i686, wasm32), builds, hook r
 make test         # fast tests: hook registration checks and core crates
 make verify TAG=mytag LANES=1,2,3   # verify-all: every recording replayed with the ports on (Wine lanes)
 make frontier     # functions that ported code calls but that are not ported yet
+make dupes        # functions defined in more than one crate (ADR-003: one definition, in its owning crate)
 ```
 
 How a function is ported, verified and promoted: the getting-started guide, [how a function gets ported](docs/GETTING-STARTED.md#7-how-a-function-gets-ported) and [how ports are verified](docs/GETTING-STARTED.md#8-how-ports-are-verified).

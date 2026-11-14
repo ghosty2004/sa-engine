@@ -80,14 +80,7 @@ impl Frame {
     }
 }
 
-/// CRT `floor` (0x8219F0) on a double: exact.
-fn floor_d(v: f64) -> f64 {
-    if v.is_nan() || v.is_infinite() || v.abs() >= 4_503_599_627_370_496.0 {
-        return v;
-    }
-    let t = v as i64 as f64;
-    if t > v { t - 1.0 } else { t }
-}
+use sa_math::fpu::floor_f64 as floor_d;
 /// CRT `ceil` (0x823820) on a double: exact.
 fn ceil_d(v: f64) -> f64 {
     if v.is_nan() || v.is_infinite() || v.abs() >= 4_503_599_627_370_496.0 {
@@ -107,24 +100,14 @@ fn floor_i(v: X87) -> i32 {
 fn floor_f(v: f32) -> i32 {
     floor_i(X87::from_f32(v))
 }
-fn xf(v: f32) -> X87 {
-    X87::from_f32(v)
-}
-fn k(a: usize) -> f32 {
-    GPtr::<f32>::from_addr(a).read()
-}
-/// `fcom` C0 alone (`test ah, 5; jp` falls through): `a < b`, ordered.
-fn less(a: X87, b: X87) -> bool {
-    !a.fcom(b).test_parity(5)
-}
+use sa_math::fpu::x as xf;
+use sa_core::field::gf as k;
+use sa_math::fpu::lt as less;
 /// `test ah, 1` set: `a < b` or unordered.
 fn c0(a: X87, b: X87) -> bool {
     a.fcom(b).test_any(1)
 }
-/// `test ah, 0x41` clear: `a > b`, ordered.
-fn greater(a: X87, b: X87) -> bool {
-    !a.fcom(b).test_any(0x41)
-}
+use sa_math::fpu::gt as greater;
 
 /// The extra-rectangle list search after `scan(x, row)` (0x72D10B-0x72D1A5): the first entry equal to (x, row)
 /// is removed (both lists shift down with `rep movsd`), the count drops by one and the search stops (ECX = 4 then

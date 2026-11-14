@@ -20,9 +20,7 @@ orig! {
     fn get_in_out_timings(group: u32, mode: u32, a: GPtr<u8>, b: GPtr<u8>) = cdecl 0x645630 => unported;
 }
 
-fn kf(a: usize) -> f32 {
-    GPtr::<f32>::from_addr(a).read()
-}
+use sa_core::field::gf as kf;
 
 /// The animation-group cases that use the fixed timings (`group - 0x58` in the byte tables 0x6D5C8C / 0x6D5CB0 /
 /// 0x6D5CD4).

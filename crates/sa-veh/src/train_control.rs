@@ -173,17 +173,11 @@ fn rv(p: GPtr<u8>, off: isize) -> CVector {
     CVector::new(rd::<f32>(p, off), rd::<f32>(p, off + 4), rd::<f32>(p, off + 8))
 }
 
-fn ld(p: GPtr<u8>, off: isize) -> X87 {
-    x(rd::<f32>(p, off))
-}
+use sa_core::field::ldx as ld;
 
-fn c(bits: u32) -> X87 {
-    X87::constant(bits)
-}
+use sa_math::fpu::xc as c;
 
-fn st0(v: f64) -> X87 {
-    X87::from_f64_exact(v)
-}
+use sa_math::fpu::st0;
 
 fn ts() -> f32 {
     g::<f32>(TIME_STEP).read()
@@ -193,29 +187,16 @@ fn pow(base: X87, e: X87) -> X87 {
     st0(sa_core::orig::x87_binary(0x82_2130, base.to_f64(), e.to_f64()))
 }
 
-/// `fcomp` + `test ah, 0x41` + `jne` taken: `a <= b` or unordered.
-fn le(a: X87, b: X87) -> bool {
-    a.fcom(b).test_any(0x41)
-}
+use sa_math::fpu::le_or_nan as le;
 
-/// `fcomp` + `test ah, 5` + `jp` taken: `a >= b` or unordered.
-fn ge(a: X87, b: X87) -> bool {
-    a.fcom(b).test_parity(0x05)
-}
+use sa_math::fpu::ge_or_nan as ge;
 
 /// `|v|` as the `fcomp 0; test ah, 5; jp; fchs` sequences compute it.
 fn absx(v: X87) -> X87 {
     if ge(v, X87::zero()) { v } else { v.fchs() }
 }
 
-fn pos_ptr(this: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(this, 0x14);
-    if m.is_null() {
-        this.byte_add(4)
-    } else {
-        m.byte_add(0x30)
-    }
-}
+use sa_world::world::common::entity_pos as pos_ptr;
 
 /// `GetHeading()` inlined: `atan2(-forward.x, forward.y)` (FPATAN) with a matrix, else +0x10.
 fn heading(this: GPtr<u8>) -> X87 {

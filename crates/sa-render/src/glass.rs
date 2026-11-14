@@ -353,15 +353,7 @@ pub fn window_responds_to_soft_collision(e: GPtr<u8>, force: f32) {
 /// `CWorld::ms_nCurrentScanCode` (uint16).
 const CURRENT_SCAN_CODE: usize = 0xB7CD78;
 
-/// The entity's position: the matrix position when it has a matrix, else the placement position.
-fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() {
-        e.byte_add(4)
-    } else {
-        m.byte_add(0x30)
-    }
-}
+use sa_world::world::common::entity_pos;
 
 /// `CGlass::FindWindowSectorList(CPtrListSingleLink& list, float* minDist, CEntity** out, float x,
 /// float y, float z)` (0x71AFC0): every glass object of the list not yet scanned this pass (the scan

@@ -29,15 +29,7 @@ orig! {
     pub fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
 }
 
-/// The entity position: `&matrix->pos` or `&placement.pos`.
-fn pos_of(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() {
-        e.byte_add(4)
-    } else {
-        m.byte_add(0x30)
-    }
-}
+use sa_world::world::common::entity_pos as pos_of;
 
 /// `FUN_00513220(CVector point)` (0x513220, `ret 0xC`, AL; the vector by value; the entry fragment
 /// 0x40110D loads `ECX = Players[0].m_pPed`, so the caller's ECX is never read). `gCurCamColVars = 5`

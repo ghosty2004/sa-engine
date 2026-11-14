@@ -18,10 +18,7 @@ orig! {
 /// CRT `_CIasin` (0x821E70): operand and result in ST0.
 const CI_ASIN: usize = 0x821E70;
 
-/// `fld dword [addr]` of a `.rdata` constant.
-fn k(addr: usize) -> f32 {
-    g::<f32>(addr).read()
-}
+use sa_core::field::gf as k;
 
 /// `fld qword [addr]` of a `.rdata` double constant.
 fn kq(addr: usize) -> X87 {

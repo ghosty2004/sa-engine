@@ -47,9 +47,7 @@ orig! {
     fn start_or_request_call(this: GPtr<u8>, index: u32, e: GPtr<u8>, attach: u32, add: u32) = thiscall 0x46CD80 => start_or_request_new_streamed_script_brain;
 }
 
-fn at<T: sa_core::mem::GameData>(p: GPtr<u8>, off: isize) -> GPtr<T> {
-    p.byte_add(off).cast::<T>()
-}
+use sa_core::field::at;
 
 fn brain(this: GPtr<u8>, i: u8) -> GPtr<u8> {
     this.byte_add(isize::from(i) * 0x14)

@@ -258,9 +258,7 @@ pub fn player_arrested_or_died(this: GPtr<u8>) {
     }
 }
 
-fn gf(gp: GPtr<u8>, o: isize) -> f32 {
-    rd::<f32>(gp, o)
-}
+use sa_core::field::rdf as gf;
 
 /// `CGarage::IsPointInsideGarage(CVector)` (0x448740, thiscall, by value, `ret 0xC`).
 #[hook(addr = 0x448740, conv = thiscall, name = "CGarage::IsPointInsideGarage-CVector", preserve = "edx", expect = "51 D9 44 24 10", this = "CGarage")]

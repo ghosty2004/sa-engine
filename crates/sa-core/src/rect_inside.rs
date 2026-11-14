@@ -7,9 +7,7 @@ use crate::abi::HookReg;
 use crate::hook;
 use crate::mem::GPtr;
 
-fn ld(p: GPtr<u8>, o: isize) -> f32 {
-    p.byte_add(o).cast::<f32>().read()
-}
+use crate::field::rdf as ld;
 
 /// `CRect::IsPointInside(const CVector2D& p, float tolerance)` (0x4042D0, thiscall, `ret 8`; CRect: left
 /// +0, bottom +4, right +8, top +0xC): false when `left - tol > p.x`, `tol + right < p.x`, `top - tol >

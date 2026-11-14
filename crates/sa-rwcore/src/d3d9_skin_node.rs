@@ -145,9 +145,7 @@ fn ptr_of<T>(v: &mut T) -> GPtr<u32> {
     GPtr::from_raw(v as *mut T).cast()
 }
 
-fn addr(p: GPtr<u8>) -> u32 {
-    p.addr() as u32
-}
+use sa_core::field::addr32 as addr;
 
 /// `_rwResourcesUseResEntry` inlined: a linked entry moves to the head of the used-resources list.
 fn use_res_entry(e: GPtr<u8>) {

@@ -14,9 +14,7 @@ orig! {
     fn go_to_point_fine_base_ratio(ms: u32) -> f64 = cdecl 0x65EF30 => unported;
 }
 
-fn c(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
+use sa_core::field::gf as c;
 
 /// `|a - b|^2` as the original sums it: `(dz^2 + dy^2) + dx^2`, unrounded.
 fn dist_sq(a: GPtr<u8>, b: GPtr<u8>) -> X87 {

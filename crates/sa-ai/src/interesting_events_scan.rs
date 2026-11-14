@@ -31,11 +31,7 @@ fn sector_of(v: X87) -> i32 {
     ftol32(X87::from_f64_exact(floor(v.fmul_m(k).fadd_m(b).to_f64())))
 }
 
-/// The entity's position (`m_matrix` +0x30, else the placement position +4).
-fn pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos as pos;
 
 /// The next scan code (`ClearScanCodes` and 1 after 0xFFFF), stored.
 fn next_scan_code() -> u16 {

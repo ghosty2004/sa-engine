@@ -441,9 +441,7 @@ fn cr_rs(state: u32, value: u32) {
     rw_render_state_set(state, value);
 }
 
-fn cr_rand_at(site: u32) -> i32 {
-    sa_core::orig::at_site(site, sa_core::crt::rand)
-}
+use sa_core::crt::rand_at as cr_rand_at;
 
 /// `CCoronas::Render()` (0x6FAEC0). Half the camera raster's size (signed `/ 2`) is kept; ZWRITE 0,
 /// ZTEST 1, SRCBLEND/DESTBLEND ONE, VERTEXALPHA 1; a local z-test state starts at 1. For each of the 64

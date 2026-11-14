@@ -252,14 +252,7 @@ pub fn sector_of(v: f32) -> i32 {
     X87::from_f64_exact(floor_f64(s.to_f64())).ftol() as u32 as i32
 }
 
-/// CRT `floor` on a double (exact).
-pub fn floor_f64(v: f64) -> f64 {
-    if v.is_nan() || v.is_infinite() || v.abs() >= 4_503_599_627_370_496.0 {
-        return v;
-    }
-    let t = v as i64 as f64;
-    if t > v { t - 1.0 } else { t }
-}
+pub use sa_math::fpu::floor_f64;
 
 /// The sector rect of `this->GetBoundRect()` in the original order: x0 (left), y0 (bottom), x1
 /// (right), y1 (top).

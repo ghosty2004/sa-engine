@@ -124,7 +124,8 @@ pub const GLOBALS: &[&[GlobalDesc]] = &[
     crate::cmdline::GLOBALS,
 ];
 
-const fn total(parts: &[&[HookReg]]) -> usize {
+/// The number of registrations in `parts` (the length of a crate's `ALL`; shared by every crate's `hooks`).
+pub const fn total(parts: &[&[HookReg]]) -> usize {
     let (mut n, mut i) = (0, 0);
     while i < parts.len() {
         n += parts[i].len();
@@ -133,7 +134,9 @@ const fn total(parts: &[&[HookReg]]) -> usize {
     n
 }
 
-const fn concat<const N: usize>(parts: &[&[HookReg]]) -> [HookReg; N] {
+/// `parts` concatenated into one array of `N = total(parts)` registrations (a crate's `ALL`, built in const
+/// evaluation; shared by every crate's `hooks`).
+pub const fn concat<const N: usize>(parts: &[&[HookReg]]) -> [HookReg; N] {
     let mut out = [general::HOOKS[0]; N];
     let (mut k, mut i) = (0, 0);
     while i < parts.len() {

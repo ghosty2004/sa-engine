@@ -304,16 +304,9 @@ orig! {
     fn goto_point_update_point_ws(t: GPtr<u8>, p: GPtr<u8>, r: u32, force: u32) = thiscall 0x645700 => unported;
 }
 
-/// A local buffer's address as a `GPtr` (the original's stack object).
-fn buf<const N: usize>(b: &mut [u32; N]) -> GPtr<u8> {
-    GPtr::from_raw(b as *mut [u32; N]).cast()
-}
+use sa_core::field::ptr_of as buf;
 
-/// Entity position: matrix +0x30 when the matrix pointer (+0x14) is set, else the placement at +4.
-fn ent_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos as ent_pos;
 
 /// `fcomp` + `fnstsw` + `test ah, 0x41` + `jne` (taken unless ST0 > m).
 fn gt(a: X87, b: X87) -> bool {
@@ -2384,11 +2377,7 @@ const K_AVOID_SPHERE_MARGIN: usize = 0x86FCC0;
 const K_AVOID_ONE: usize = 0x858624;
 const K_AVOID_ZERO: usize = 0x858B50;
 
-/// An entity's position (matrix +0x30, else the placement +4).
-fn avoid_entity_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos as avoid_entity_pos;
 
 /// `CTaskComplexAvoidOtherPedWhileWandering::ComputeSphere(CColSphere& out, CPed** peds)` (0x66A320, thiscall, `ret 8`;
 /// `this` unused). x87. Over the 16 entries of `peds`: the centre is the f32 running sum of the present peds'

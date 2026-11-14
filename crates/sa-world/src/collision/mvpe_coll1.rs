@@ -128,10 +128,7 @@ orig! {
         = cdecl 0x415CF0 => super::sphere_cast::sphere_cast_versus_vs_poly;
 }
 
-/// f32 constant at `addr`.
-fn kf(addr: u32) -> f32 {
-    g::<f32>(addr as usize).read()
-}
+use sa_core::field::gfu as kf;
 
 /// `fild word-as-dword; fmul [k]; fstp` of the i16 at `p + o`.
 fn scaled(f: &mut Fpu, p: GPtr<u8>, o: isize, k: f32) -> f32 {
@@ -154,9 +151,7 @@ fn vec_local(b: &mut [u32; 3], v: [f32; 3]) -> GPtr<u8> {
     local(b)
 }
 
-fn v3(p: GPtr<u8>) -> [f32; 3] {
-    [rd::<f32>(p, 0), rd::<f32>(p, 4), rd::<f32>(p, 8)]
-}
+use sa_core::field::rd3f as v3;
 
 /// `Magnitude(VectorSub(tmp, sphere, v))`: the distance from the sphere centre to a vertex, as the
 /// original computes it in its switch arms (the stack temporary it subtracts into is not reproduced).

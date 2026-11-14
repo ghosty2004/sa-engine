@@ -7,22 +7,16 @@
 use sa_core::abi::HookReg;
 use sa_core::hook;
 
-use crate::common::{g, x};
+use crate::common::g;
 
-/// `fld dword [a]`.
-fn ld(a: usize) -> sa_math::x87::X87 {
-    x(g::<f32>(a).read())
-}
+use sa_core::field::gx as ld;
 
 /// `fstp dword [a]`.
 fn st(a: usize, v: sa_math::x87::X87) {
     g::<f32>(a).write(v.to_f32());
 }
 
-/// The f32 at `a` (an `m32` operand).
-fn m(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
+use sa_core::field::gf as m;
 
 /// `__init_g_97d648` (0x84A240): `[0x97D648] = [0x859AF8] * [0x858620]`.
 #[hook(addr = 0x84A240, conv = cdecl, name = "__init_g_97d648", expect = "D9 05 F8 9A 85 00")]

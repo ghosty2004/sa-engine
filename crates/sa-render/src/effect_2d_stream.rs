@@ -39,9 +39,7 @@ fn w16(p: GPtr<u8>, o: isize, v: u16) {
     p.byte_add(o).cast::<u16>().write(v)
 }
 
-fn w32(p: GPtr<u8>, o: isize, v: u32) {
-    p.byte_add(o).cast::<u32>().write(v)
-}
+use sa_core::field::wr32 as w32;
 
 fn d32(b: &[u8], o: usize) -> u32 {
     u32::from_le_bytes([b[o], b[o + 1], b[o + 2], b[o + 3]])

@@ -213,16 +213,7 @@ fn obj(h: u32) -> GPtr<u8> {
     object_at_ref(pool(OBJECT_POOL), h as i32)
 }
 
-/// The entity position: `m_matrix (+0x14) ? m_matrix + 0x30 : this + 4`.
-fn ent_pos(e: GPtr<u8>) -> GPtr<u32> {
-    let m = e.byte_add(0x14).cast::<GPtr<u8>>().read();
-    if m.is_null() {
-        e.byte_add(4)
-    } else {
-        m.byte_add(0x30)
-    }
-    .cast::<u32>()
-}
+use sa_world::world::common::entity_pos_u as ent_pos;
 
 /// `task` or null when `operator new` failed (the constructor runs only on a non-null block).
 #[inline]

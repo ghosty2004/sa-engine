@@ -2520,11 +2520,8 @@ def render(fname, recs, report):
             'use sa_core::{hook%s};\n\n'
             '#[allow(unused_imports)]\n'
             'use crate::common::*;\n\n'
-            '/// A 32-bit game address as a pointer.\n'
-            '#[allow(dead_code)]\n'
-            'fn p(a: u32) -> GPtr<u8> {\n'
-            '    GPtr::from_addr(a as usize)\n'
-            '}\n\n'
+            '#[allow(unused_imports)]\n'
+            'use sa_core::field::p8 as p;\n\n'
             '/// A generated body: (address, FNV-1a of the matched bytes, matched spans `(va, len)`).\n'
             'pub type Body = (u32, u64, &\'static [(u32, u32)]);\n\n') % (FILE_DOC[fname], ', orig' if callees else '')
     s = head

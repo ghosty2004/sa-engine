@@ -21,13 +21,9 @@ orig! {
     fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
 }
 
-fn p3(v: &mut [f32; 3]) -> GPtr<u8> {
-    GPtr::from_raw(v.as_mut_ptr()).cast()
-}
+use sa_core::field::ptr_of as p3;
 
-fn v3(p: GPtr<u8>) -> [f32; 3] {
-    [rd::<f32>(p, 0), rd::<f32>(p, 4), rd::<f32>(p, 8)]
-}
+use sa_core::field::rd3f as v3;
 
 fn put(p: GPtr<u8>, v: [f32; 3]) {
     for (i, c) in v.iter().enumerate() {

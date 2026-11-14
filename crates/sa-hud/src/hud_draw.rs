@@ -419,13 +419,9 @@ const K_1_950: u32 = 0x3A89_F874;
 /// `1.0` (pushed as an immediate)
 const ONE: u32 = 0x3F80_0000;
 
-fn k(bits: u32) -> f32 {
-    f32::from_bits(bits)
-}
+use sa_math::fpu::fbits as k;
 
-fn b(addr: usize) -> u8 {
-    g::<u8>(addr).read()
-}
+use sa_core::field::gr8 as b;
 
 fn max_w() -> X87 {
     xi(g::<i32>(RS_MAX_WIDTH).read())

@@ -159,15 +159,9 @@ fn cell(base: u32, index: u32, scale: u32) -> GPtr<u32> {
     g::<u32>(base.wrapping_add(index.wrapping_mul(scale)) as usize)
 }
 
-#[inline]
-fn gu(addr: usize) -> u32 {
-    g::<u32>(addr).read()
-}
+use sa_core::field::gr32 as gu;
 
-#[inline]
-fn su(addr: usize, v: u32) {
-    g::<u32>(addr).write(v)
-}
+use sa_core::field::gw32 as su;
 
 /// `rs[s].value`.
 pub fn rs_value(s: u32) -> GPtr<u32> {

@@ -26,9 +26,7 @@ orig! {
     fn floor(v: f64) -> f64 = cdecl 0x8219F0 => unported;
 }
 
-fn ldf(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
+use sa_core::field::gf as ldf;
 
 /// `ftol(floor(double((c ± r) * k + b)))` (k `[0x858B38]`, b `[0x858B34]`; x87, the double of the register).
 fn sector_of(v: X87) -> i32 {

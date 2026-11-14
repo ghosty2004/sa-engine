@@ -1655,10 +1655,7 @@ pub fn interior_get_random_tile(this: GPtr<u8>, status: i32, out_x: GPtr<i32>, o
     }
 }
 
-/// x87 `fabs` (clears the sign bit, NaN included).
-fn fabs(a: X87) -> X87 {
-    X87::from_f64_exact(a.to_f64().abs())
-}
+use sa_math::fpu::fabs;
 
 /// `Interior_c::IsPtInside(const CVector* pt, CVector margin)` (0x5913E0, thiscall, `ret 0x10`): the point
 /// relative to the centre (+0x48, each component stored as f32) projected on the three matrix axes

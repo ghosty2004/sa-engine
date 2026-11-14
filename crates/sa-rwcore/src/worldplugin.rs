@@ -151,9 +151,7 @@ orig! {
     fn world_add_clump(w: GPtr<u8>, c: GPtr<u8>) -> GPtr<u8> = cdecl 0x751300 => unported;
 }
 
-fn a32(p: GPtr<u8>) -> u32 {
-    p.addr() as u32
-}
+use sa_core::field::addr32 as a32;
 
 /// `G + [offset global]`, recomputed on every access as the originals reload both globals.
 fn module(offset_global: usize) -> GPtr<u8> {

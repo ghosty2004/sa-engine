@@ -150,9 +150,7 @@ const VT_STAND_STILL_ESCALATOR: u32 = 0x85B8DC;
 /// "CompSexyVehResp"-style look-at names
 const S_SEXY_VEHICLE: u32 = 0x85BA14;
 
-fn gu(a: usize) -> u32 {
-    g::<u32>(a).read()
-}
+use sa_core::field::gr32 as gu;
 
 fn ped(this: GPtr<u8>) -> GPtr<u8> {
     rd::<GPtr<u8>>(this, 0)

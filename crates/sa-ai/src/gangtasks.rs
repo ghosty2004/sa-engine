@@ -21,20 +21,9 @@ const STR_GANGS: u32 = 0x86F92C;
 /// `CAnimManager::ms_aAnimBlocks` +0x10 (`bLoaded`), stride 0x20.
 const ANIM_BLOCK_LOADED: u32 = 0xB5D4B0;
 
-/// An f32 of the image (`.rdata` constant or `.data` tunable), read when the original reads it.
-fn c(addr: usize) -> f32 {
-    g::<f32>(addr).read()
-}
+use sa_core::field::gf as c;
 
-/// Entity position: matrix +0x30, else the placement at +4.
-fn ent_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() {
-        e.byte_add(4)
-    } else {
-        m.byte_add(0x30)
-    }
-}
+use sa_world::world::common::entity_pos as ent_pos;
 
 /// `(float)(rand() & 0xFFFF) * 3.0517578e-05f [0x858B14] * k` (fild, fmul, fmul) then `_ftol`.
 fn rand_scaled(site: u32, k_addr: usize) -> i32 {

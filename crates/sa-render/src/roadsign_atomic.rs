@@ -58,9 +58,7 @@ const K_HALF: usize = 0x858B8C;
 const K_NEG_ONE: usize = 0x858C1C;
 const K_NEG_ONE_HALF_D: usize = 0x8725A0;
 
-fn kf(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
+use sa_core::field::gf as kf;
 
 /// Destroys every non-null material of the four slots (the original's cleanup loops).
 fn destroy_materials(mats: &[GPtr<u8>; 4]) {

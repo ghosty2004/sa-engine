@@ -50,9 +50,7 @@ orig! {
     fn rw_v3d_transform_points(out: GPtr<u8>, inp: GPtr<u8>, n: i32, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EDD90 => unported;
 }
 
-fn vp(v: &mut [f32; 3]) -> GPtr<u8> {
-    GPtr::from_raw(v.as_mut_ptr()).cast()
-}
+use sa_core::field::ptr_of as vp;
 
 /// The matrix of the ped's bone frame `this+0x18` (`RpHAnimHierarchyGetMatrixArray` + index * 0x40).
 fn bone_matrix(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {

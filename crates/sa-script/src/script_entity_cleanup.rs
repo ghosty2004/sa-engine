@@ -67,9 +67,7 @@ orig! {
 /// `CPopulation::ms_nTotalMissionPeds` (0xC0EC24, int32)
 const TOTAL_MISSION_PEDS: usize = 0xC0EC24;
 
-fn rd32(p: GPtr<u8>, off: isize) -> u32 {
-    p.byte_add(off).cast::<u32>().read()
-}
+use sa_core::field::rd32;
 fn rdp(p: GPtr<u8>, off: isize) -> GPtr<u8> {
     p.byte_add(off).cast::<GPtr<u8>>().read()
 }

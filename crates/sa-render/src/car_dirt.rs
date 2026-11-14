@@ -37,9 +37,7 @@ const DIRT_NAME: u32 = 0x86BB28;
 /// `CCarFXRenderer::ms_aDirtTextures` (0xC02BD0, 16).
 const DIRT_TEXTURES: usize = 0xC02BD0;
 
-fn rd32(p: GPtr<u8>, o: isize) -> u32 {
-    p.byte_add(o).cast::<u32>().read()
-}
+use sa_core::field::rd32;
 
 /// `CCarFXRenderer::InitialiseDirtTexture()` (0x5D5BC0): in the "vehicle" TXD, reads the grunge texture
 /// (filter mode 2) and makes 16 copies; copy `i` (named like the source) has every pixel's three

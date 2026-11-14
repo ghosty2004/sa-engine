@@ -45,10 +45,7 @@ pub fn pickups_generate_new_one_weapon_type(px: u32, py: u32, pz: u32, weapon: u
     generate_new_one(px, py, pz, model, ty, ammo, 0, empty, msg)
 }
 
-/// A local `CVector` passed by address.
-fn vp(v: &mut [f32; 3]) -> GPtr<u8> {
-    GPtr::from_raw(v.as_mut_ptr()).cast()
-}
+use sa_core::field::ptr_of as vp;
 
 /// `CPickups::CreatePickupCoorsCloseToCoors(float inX, float inY, float inZ, float* outX, float* outY, float* outZ)`
 /// (0x458A80, cdecl). Up to 32 tries `i`: an angle `a = (rand() & 0xFF) * 0.024543693f`, the candidate

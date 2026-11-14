@@ -10,12 +10,9 @@ use crate::automobile2::{
     dm_get_door_status, dm_get_panel_status, dm_set_door_status, node_from_door_call, node_from_panel_call,
     set_component_visibility,
 };
-use crate::common::{ftol32, g, model_info, rand_at, rand_frac, rd, xi};
+use crate::common::{ftol32, model_info, rand_at, rand_frac, rd, xi};
 
-/// `fmul dword [addr]` operand: a `.rdata` constant.
-fn k(addr: usize) -> f32 {
-    g::<f32>(addr).read()
-}
+use sa_core::field::gf as k;
 
 orig! {
     /// `CDamageManager::SetPanelStatus(ePanels, ePanelDamageState)` (0x6C2150)

@@ -17,9 +17,7 @@ orig! {
     fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
 }
 
-fn buf<const N: usize>(b: &mut [u32; N]) -> GPtr<u8> {
-    GPtr::from_raw(b as *mut [u32; N]).cast()
-}
+use sa_core::field::ptr_of as buf;
 
 /// `CTaskSimpleCarOpenDoorFromOutside::MakeAbortable(CPed*, int32 priority, const CEvent*)` (0x64AD00, `ret 0xC`).
 /// Priority 2 only (else false): the assoc (+0xC), if any, gets blend delta -1000.0; with a vehicle (+0x10)

@@ -249,12 +249,7 @@ pub fn idle_cam_process_fov_zoom(this: GPtr<u8>, slerp_time: f32) {
     wr::<u32>(rd::<GPtr<u8>>(this, 0x98), 0xB4, rd::<u32>(this, 0x70));
 }
 
-/// Copies three dwords.
-fn copy3(dst: GPtr<u8>, src: GPtr<u8>) {
-    for o in [0, 4, 8] {
-        wr::<u32>(dst, o, rd::<u32>(src, o));
-    }
-}
+use sa_core::field::copy3;
 
 /// `front.x = front.y = 0.0001` when both are exactly 0 (`fcomp 0; test ah, 0x44; jp`).
 fn nudge_vertical_front(front: GPtr<u8>) {

@@ -70,9 +70,7 @@ const F_20: u32 = 0x41A0_0000; // 0x858BA4
 const F_10: u32 = 0x4120_0000; // 0x85862C
 const F_FADE_RATE: u32 = 0x3A6B_F405; // 0x872538 (0.0009)
 
-fn cf(bits: u32) -> f32 {
-    f32::from_bits(bits)
-}
+use sa_math::fpu::fbits as cf;
 
 orig! {
     /// `Light::GetDayNightBalance()` (0x6FAB30, ST0)

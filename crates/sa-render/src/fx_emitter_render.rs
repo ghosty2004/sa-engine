@@ -79,9 +79,7 @@ orig! {
     fn rotate_vec_about_vec(out: GPtr<u8>, inp: GPtr<u8>, axis: GPtr<u8>, angle: u32) = cdecl 0x4A1780 => crate::mvpc_fx1::fx_rotate_vec_about_vec;
 }
 
-fn gf(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
+use sa_core::field::gf;
 
 fn fv(p: GPtr<u8>, off: isize) -> [f32; 3] {
     [rd::<f32>(p, off), rd::<f32>(p, off + 4), rd::<f32>(p, off + 8)]

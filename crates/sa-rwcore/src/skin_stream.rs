@@ -39,9 +39,7 @@ const SKIN_GEOMETRY_OFFSET: usize = 0xC978A8;
 const SKIN_FREELIST: usize = 0xC978B8;
 const HINT: u32 = 0x30116;
 
-fn a32(p: GPtr<u8>) -> u32 {
-    p.addr() as u32
-}
+use sa_core::field::addr32 as a32;
 
 /// `_rpSkinGetBonesUsed(skin, indices, weights, list, count, numVertices)` (0x7C70C0): `*count = 0`;
 /// for every vertex and each of its `skin->maxWeights` (+0x10) weights that is non-zero (as a dword),

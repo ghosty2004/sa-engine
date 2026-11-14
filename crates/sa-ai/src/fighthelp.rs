@@ -39,15 +39,9 @@ const MAX_CHAIN: usize = 0x8D2E48;
 /// `.data` tunable read by 0x624710: facing search range (initial value 2.0).
 const FACE_RANGE: usize = 0x8D2E8C;
 
-/// An f32 constant of `.rdata`.
-fn c(addr: usize) -> f32 {
-    g::<f32>(addr).read()
-}
+use sa_core::field::gf as c;
 
-/// `fabs` of an x87 value (clears the sign bit, NaN payload kept).
-fn fabs(v: X87) -> X87 {
-    X87::from_f64_exact(v.to_f64().abs())
-}
+use sa_math::fpu::fabs;
 
 /// Address of `m_aComboData[set - 4] + off` (`movsx; sub 4; imul 0x88`, 32-bit wrapping).
 fn combo(set: i8, off: u32) -> usize {
@@ -71,20 +65,9 @@ fn combo_flags(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     f
 }
 
-/// Entity position: matrix +0x30, else the placement at +4.
-fn ent_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() {
-        e.byte_add(4)
-    } else {
-        m.byte_add(0x30)
-    }
-}
+use sa_world::world::common::entity_pos as ent_pos;
 
-/// Pointer to a Rust stack buffer (stands in for an object the original builds on its own stack).
-fn buf<const N: usize>(b: &mut [u32; N]) -> GPtr<u8> {
-    GPtr::from_raw(b as *mut [u32; N]).cast()
-}
+use sa_core::field::ptr_of as buf;
 
 orig! {
     // ---- CTaskSimpleFight (unnamed) ----

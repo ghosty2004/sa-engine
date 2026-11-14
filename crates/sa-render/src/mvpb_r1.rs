@@ -8,13 +8,11 @@
 //! arithmetic follows the original's instruction order on the `sa_math::x87::X87` model.
 
 use sa_core::abi::HookReg;
-use sa_core::mem::{GPtr, GameData};
+use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 use sa_math::x87::X87;
 
-fn g<T: GameData>(a: u32) -> GPtr<T> {
-    GPtr::from_addr(a as usize)
-}
+use sa_core::field::gu as g;
 
 fn f(bits: u32) -> f32 {
     f32::from_bits(bits)

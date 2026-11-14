@@ -237,9 +237,7 @@ orig! {
 /// `CTimer::m_snTimeInMilliseconds`
 const TIME_MS: usize = 0xB7CB84;
 
-fn local<const N: usize>(b: &mut [u32; N]) -> GPtr<u8> {
-    GPtr::from_raw(b as *mut [u32; N]).cast()
-}
+use sa_core::field::ptr_of as local;
 
 /// `CEventHandler::ComputeEventResponseTask(CEvent*, CTask*)` (0x4C3870, `ret 8`; the entry is `nop` + a protection
 /// fragment that loads the SEH head): the five response slots +0x20..+0x30 are cleared; `active` = the task manager's

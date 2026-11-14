@@ -15,7 +15,7 @@ use sa_core::abi::NativeReg;
 use sa_core::mem::GPtr;
 use sa_core::{native, orig};
 
-use crate::common::{g, p8, rd};
+use crate::common::{p8, rd};
 
 /// The raster extension offset.
 const EXT_OFFSET: usize = 0xB4E9E0;
@@ -57,9 +57,7 @@ struct Rect {
 #[allow(unsafe_code)]
 unsafe impl sa_core::mem::GameData for Rect {}
 
-fn u(a: usize) -> u32 {
-    g::<u32>(a).read()
-}
+use sa_core::field::gr32 as u;
 
 /// The top parent: follow +0 until it points at itself (the walk starts at the raster itself).
 fn top_of(r: GPtr<u8>) -> GPtr<u8> {

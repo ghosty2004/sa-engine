@@ -247,12 +247,7 @@ fn obj(h: u32) -> GPtr<u8> {
     object_at_ref(pool(OBJECT_POOL), h as i32)
 }
 
-/// An entity's position: `m_matrix (+0x14) ? &m_matrix->pos (+0x30) : &m_placement.pos (+4)`.
-#[inline]
-fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = e.byte_add(0x14).cast::<GPtr<u8>>().read();
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos;
 
 /// `p` byte bit `mask` set to `on`.
 #[inline]

@@ -65,9 +65,7 @@ const K_MINUS_100: usize = 0x85_9014;
 const K_TWO: usize = 0x85_8CA0;
 const ONE: u32 = 0x3F80_0000;
 
-fn gp<T: sa_core::mem::GameData>(a: usize) -> GPtr<T> {
-    GPtr::from_addr(a)
-}
+use sa_core::field::g as gp;
 
 fn light(i: usize) -> GPtr<u8> {
     gp(SEARCH_LIGHTS + i * SEARCH_LIGHT_SIZE)

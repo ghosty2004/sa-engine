@@ -44,9 +44,7 @@ orig! {
     fn wanted_clear_qd_crimes(w: GPtr<u8>) = thiscall 0x561FE0 => unported;
 }
 
-fn ga(a: u32) -> GPtr<u8> {
-    GPtr::from_addr(a as usize)
-}
+use sa_core::field::p8 as ga;
 
 /// `CCutsceneMgr::LoadCutsceneData_postload()` (0x5AFBC0, cdecl). `ClearThisPrintBigNow(0)`; dwords 0x8D2530 and
 /// 0x8A5B20 and the byte 0x9654B0 cleared; `RwStreamOpen(rwSTREAMFILENAME, rwSTREAMREAD, "ANIM\\CUTS.IMG" 0x85EEB0)`;

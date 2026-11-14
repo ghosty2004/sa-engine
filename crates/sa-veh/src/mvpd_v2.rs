@@ -196,9 +196,7 @@ fn frame_matrix(frame: GPtr<u8>, stop: GPtr<u8>, out: &mut [u32; 16]) {
     }
 }
 
-fn lt(a: X87, b: X87) -> bool {
-    !a.fcom(b).test_parity(0x05)
-}
+use sa_math::fpu::lt;
 
 /// `sqrt(x^2 + y^2 + z^2)` of three f32s at `p` as the inlined `CVector::Magnitude` sums them
 /// (x*x + y*y, + z*z).
@@ -386,14 +384,7 @@ fn step_ms() -> X87 {
     }
 }
 
-fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() {
-        e.byte_add(4)
-    } else {
-        m.byte_add(0x30)
-    }
-}
+use sa_world::world::common::entity_pos;
 
 /// The RC models 0x1D0, 0x1D1, 0x1F5, 0x1B9, 0x234.
 fn is_rc(this: GPtr<u8>) -> bool {

@@ -20,21 +20,13 @@ orig! {
     fn rw_im2d_render_primitive(ty: u32, verts: GPtr<u8>, n: i32) -> i32 = cdecl 0x734E90 => unported;
 }
 
-fn gu(a: usize) -> u32 {
-    GPtr::<u32>::from_addr(a).read()
-}
-fn gf(a: usize) -> f32 {
-    GPtr::<f32>::from_addr(a).read()
-}
-fn su(a: usize, v: u32) {
-    GPtr::<u32>::from_addr(a).write(v)
-}
+use sa_core::field::gr32 as gu;
+use sa_core::field::gf;
+use sa_core::field::gw32 as su;
 fn sf(a: usize, v: f32) {
     GPtr::<f32>::from_addr(a).write(v)
 }
-fn x(v: f32) -> X87 {
-    X87::from_f32(v)
-}
+use sa_math::fpu::x;
 
 /// The quad's four `RwIm2DVertex`es (0x1C bytes each) at 0xC401D8.
 const VERTS: usize = 0xC401D8;

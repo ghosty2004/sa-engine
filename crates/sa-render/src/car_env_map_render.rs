@@ -107,17 +107,13 @@ const K_24: usize = 0x85_F114;
 /// `RwEngineInstance` (`G`); `G + 8` is the render frame word.
 const RW_ENGINE_INSTANCE: usize = 0xC9_7B24;
 
-fn k(addr: usize) -> f32 {
-    g::<f32>(addr).read()
-}
+use sa_core::field::gf as k;
 
 fn kx(addr: usize) -> X87 {
     x(k(addr))
 }
 
-fn ptr<T>(v: &mut T) -> GPtr<u8> {
-    GPtr::from_raw(v as *mut T).cast()
-}
+use sa_core::field::ptr_of as ptr;
 
 /// An int8 field times 0.125 times 50 (`fild; fmul [0x858C48]; fmul [0x858B40]; fstp dword`).
 fn scaled_i8(p: GPtr<u8>, off: isize) -> f32 {

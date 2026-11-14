@@ -94,9 +94,7 @@ const K_MS_PER_S: f64 = 1000.0;
 const K_TWO_32: usize = 0x858C54;
 const K_S_PER_MS: usize = 0x858CDC;
 
-fn k(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
+use sa_core::field::gf as k;
 
 /// `CAEDataStream::FillBuffer(void* dest, uint32 size)` (0x4DC1C0, thiscall, `ret 8`). `n = min(size, cur - length -
 /// start)` (unsigned, as the original computes it); `ReadFile(handle, dest, n, &read, NULL)` with `read` in the

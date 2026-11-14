@@ -3,21 +3,14 @@
 //! arithmetic follows the original's instruction order on the `sa_math::x87::X87` model.
 
 use sa_core::abi::HookReg;
-use sa_core::mem::{GPtr, GameData};
+use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
-use sa_math::x87::X87;
 
-fn g<T: GameData>(a: u32) -> GPtr<T> {
-    GPtr::from_addr(a as usize)
-}
+use sa_core::field::gu as g;
 
-fn x(v: f32) -> X87 {
-    X87::from_f32(v)
-}
+use sa_math::fpu::x;
 
-fn xi(v: i32) -> X87 {
-    X87::from_i32(v)
-}
+use sa_math::fpu::xi;
 
 orig! {
     /// `FxPrtMult_c::FxPrtMult_c(r, g, b, a, size, spin, life)` (0x4AB290)

@@ -126,10 +126,7 @@ orig! {
     fn audio_initialise(a: GPtr<u8>, e: GPtr<u8>) = thiscall 0x4F7670 => unported;
 }
 
-/// `fcomp` + `test ah, 0x41` + `jne` taken (C0 or C3: `a <= b` or unordered).
-fn le(a: X87, b: X87) -> bool {
-    a.fcom(b).test_any(0x41)
-}
+use sa_math::fpu::le_or_nan as le;
 
 /// `sqrt(a*a + b*b)` in the operand order the original adds them (`a*a` first on the stack).
 fn hyp(a: X87, b: X87) -> X87 {
@@ -476,11 +473,7 @@ fn player_in_air_appearance() -> bool {
     get_vehicle_appearance(find_player_vehicle(-1, 0)) == 3 || get_vehicle_appearance(find_player_vehicle(-1, 0)) == 5
 }
 
-/// The position the generation code reads: the matrix position when the matrix exists, else +4.
-fn ent_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos as ent_pos;
 
 /// `CPlane::DoPlaneGenerationAndRemoval()` (0x6CD2F0).
 ///

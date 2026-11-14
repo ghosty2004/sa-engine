@@ -166,9 +166,7 @@ const INTERESTING_EVENTS: usize = 0xC0B058;
 /// `g_fx` (`Fx_c`)
 const G_FX: usize = 0xA9AE00;
 
-fn ped_type(e: GPtr<u8>) -> u8 {
-    rd::<u8>(e, 0x36) & 7
-}
+use sa_world::world::common::entity_type as ped_type;
 
 /// The inlined "is this the same damage event as the handler's current one" test: the current event (+0xC,
 /// else +8; each read twice as the original does) has type 9 (EVENT_DAMAGE) and `IsSameEventForAI` agrees.
@@ -1240,11 +1238,7 @@ const CLIMB_MIN_FOR_STRETCH_GRAB: usize = 0x8D2F34;
 /// `CTaskComplexGangFollower::ms_bUseClimbing` (0x8D2EDC, dword)
 const GANG_FOLLOWER_USE_CLIMBING: usize = 0x8D2EDC;
 
-/// An entity's position (matrix +0x30, else the placement +4).
-fn entity_pos_ptr(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos as entity_pos_ptr;
 
 /// `CEventHandler::ComputeBuildingCollisionResponse(CEventBuildingCollision*, CTask* active, CTask* simplest)` (0x4BF2B0,
 /// thiscall, `ret 0xC`). Writes the response task to this +0x24 only where stated.

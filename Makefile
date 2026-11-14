@@ -12,7 +12,7 @@ TAG    ?= local
 LANES  ?= 1,2,3
 
 .DEFAULT_GOAL := help
-.PHONY: help build build-samp run run-world run-samp web web-samp serve check test clippy verify frontier queue catalog progress
+.PHONY: help build build-samp run run-world run-samp web web-samp serve check test clippy verify frontier dupes queue catalog progress
 
 help: ## List the targets
 	@awk 'BEGIN {FS = ":.*## "} /^[a-z0-9-]+:.*## / {printf "  \033[1m%-12s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -58,6 +58,9 @@ verify: ## Replay every recording with the ports on (TAG=name LANES=1,2,3; Wine 
 frontier: ## Functions that ported code calls but that are not ported yet
 	@test -f tools/verify/frontier.py || { echo "tools/verify/frontier.py is not on this branch yet"; exit 1; }
 	python3 -I tools/verify/frontier.py
+
+dupes: ## Functions defined in more than one crate (names, identical and renamed bodies)
+	python3 -I tools/verify/dupes.py --bodies --renamed --summary
 
 queue: ## Regenerate the verification queue
 	python3 -I tools/verify/queue.py

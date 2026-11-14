@@ -11,11 +11,7 @@ pub use sa_world::world::common::{ftol32, g, x, xi};
 
 use sa_core::orig;
 
-/// `f32` from `.rdata` bits.
-#[inline]
-pub fn cf(bits: u32) -> f32 {
-    f32::from_bits(bits)
-}
+pub use sa_math::fpu::fbits as cf;
 
 /// `CTimer::m_snTimeInMilliseconds` (0xB7CB84), owned by sa-core.
 #[inline]
@@ -72,8 +68,4 @@ pub fn random_float_port(min: f32, max: f32) -> f64 {
     sa_core::general::get_random_number_in_range_f32(min, max).to_f64()
 }
 
-/// ST0 of an `orig!` call returning `f64`, as an x87 value (exact).
-#[inline]
-pub fn st0(v: f64) -> X87 {
-    X87::from_f64_exact(v)
-}
+pub use sa_math::fpu::st0;

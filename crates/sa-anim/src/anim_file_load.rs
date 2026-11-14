@@ -55,13 +55,9 @@ fn g32(a: usize) -> GPtr<i32> {
     GPtr::from_addr(a)
 }
 
-fn rd<T: sa_core::mem::GameData>(p: GPtr<u8>, off: isize) -> T {
-    p.byte_add(off).cast::<T>().read()
-}
+use sa_core::field::rd;
 
-fn wr<T: sa_core::mem::GameData>(p: GPtr<u8>, off: isize, v: T) {
-    p.byte_add(off).cast::<T>().write(v)
-}
+use sa_core::field::wr;
 
 fn read_i32(s: GPtr<u8>) -> i32 {
     let mut v = 0i32;

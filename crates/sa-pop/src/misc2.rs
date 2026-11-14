@@ -799,11 +799,7 @@ fn tag(i: i32) -> GPtr<u8> {
     TAG_DESC.ptr().cast::<u8>().byte_add((i as isize).wrapping_mul(8))
 }
 
-/// The entity position the tag loops use: the matrix position, or the placement's.
-fn entity_pos(e: GPtr<u8>) -> GPtr<f32> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4).cast() } else { m.byte_add(0x30).cast() }
-}
+use sa_world::world::common::entity_pos_f as entity_pos;
 
 /// `CTagManager::FindTagDesc(CEntity*)` (0x49CCB0): searched from the last entry down.
 #[hook(addr = 0x49CCB0, conv = cdecl, name = "CTagManager::FindTagDesc", expect = "A1 70 AD A9 00")]

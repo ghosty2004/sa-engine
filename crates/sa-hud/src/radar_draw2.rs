@@ -168,13 +168,9 @@ const K_1_4: u32 = 0x3FB3_3333;
 /// `0.5` (0x858B8C)
 const K_HALF: u32 = 0x3F00_0000;
 
-fn k(bits: u32) -> f32 {
-    f32::from_bits(bits)
-}
+use sa_math::fpu::fbits as k;
 
-fn b(addr: usize) -> u8 {
-    g::<u8>(addr).read()
-}
+use sa_core::field::gr8 as b;
 
 /// `fild dword` of an unsigned value, as MSVC converts it (`+ 2^32` when the sign bit is set).
 fn fild_u32(v: u32) -> X87 {
@@ -445,12 +441,7 @@ pub fn draw_coord_blip(index: i32, is_sprite: u8) {
     add_blip_to_legend_list_call(1, index);
 }
 
-/// The entity position `DrawMap` reads: `m_matrix->pos` (+0x30) when the matrix exists, else the
-/// placement position (+4).
-fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
+use sa_world::world::common::entity_pos;
 
 /// The (x, y) of a `CVector*` result.
 fn xy(p: GPtr<f32>) -> (X87, X87) {
@@ -944,12 +935,7 @@ fn pool_at(pool_ptr: usize, h: i32, size: i32) -> GPtr<u8> {
     }
 }
 
-/// The entity position (`m_matrix->pos` or the placement position) as three f32.
-fn ent_pos(e: GPtr<u8>) -> [f32; 3] {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    let p = if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) };
-    [rd::<f32>(p, 0), rd::<f32>(p, 4), rd::<f32>(p, 8)]
-}
+use sa_world::world::common::entity_pos3 as ent_pos;
 
 /// `CRadar::Draw3dMarkers()` (0x585BF0): for every used blip with display 1 or 3, a 3D marker: contact
 /// points (type 5, not on a mission; with an entry/exit only inside, without one only outside) a marker

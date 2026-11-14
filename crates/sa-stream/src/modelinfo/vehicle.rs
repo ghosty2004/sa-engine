@@ -392,9 +392,7 @@ pub mod call {
 }
 use call::*;
 
-fn s(addr: u32) -> GPtr<u8> {
-    GPtr::from_addr(addr as usize)
-}
+use sa_core::field::p8 as s;
 fn rd8(p: GPtr<u8>, off: isize) -> u8 {
     field::<u8, u8>(p, off).read()
 }
@@ -407,9 +405,7 @@ fn rd16(p: GPtr<u8>, off: isize) -> i16 {
 fn wr16(p: GPtr<u8>, off: isize, v: i16) {
     field::<i16, u8>(p, off).write(v)
 }
-fn rd32(p: GPtr<u8>, off: isize) -> u32 {
-    field::<u32, u8>(p, off).read()
-}
+use sa_core::field::rd32;
 fn wr32(p: GPtr<u8>, off: isize, v: u32) {
     field::<u32, u8>(p, off).write(v)
 }
@@ -419,9 +415,7 @@ fn rdp(p: GPtr<u8>, off: isize) -> GPtr<u8> {
 fn wrp(p: GPtr<u8>, off: isize, v: GPtr<u8>) {
     field::<GPtr<u8>, u8>(p, off).write(v)
 }
-fn rdf(p: GPtr<u8>, off: isize) -> f32 {
-    field::<f32, u8>(p, off).read()
-}
+use sa_core::field::rdf;
 
 /// `repe cmpsb` with `ecx = lit.len()` (the literal includes its NUL): equal iff the first `len`
 /// bytes match, comparing byte by byte and stopping at the first difference.
@@ -434,10 +428,7 @@ fn cmpsb_eq(p: GPtr<u8>, lit: &[u8]) -> bool {
     true
 }
 
-/// `_ftol` of an x87 value: truncation toward zero, low dword.
-fn ftol(v: X87) -> i32 {
-    v.ftol() as u32 as i32
-}
+use sa_math::fpu::ftol32 as ftol;
 
 // ------------------------------------------------------------------------------- the class ---
 

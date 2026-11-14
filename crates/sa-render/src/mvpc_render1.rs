@@ -19,9 +19,7 @@ orig! {
     pub fn effect_pairs_reset_call(this: GPtr<u8>) -> u32 = thiscall 0x6F9EB0 => effect_pairs_reset;
 }
 
-fn g<T: Copy>(a: usize) -> GPtr<T> {
-    GPtr::from_addr(a)
-}
+use sa_core::field::g;
 
 /// `CDraw::SetFOV(float)` (0x6FF410, cdecl): `CDraw::ms_fFOV` (0x8D5038) = fov. The store sits in a
 /// SecuROM fragment (0x401025, the target address de-obfuscated from `[0x15605DC] ^ [0x419F03]`);
@@ -379,9 +377,7 @@ pub fn shiny_texts_register_one(
     g::<i32>(0xC7C6F8).write(n + 1);
 }
 
-fn kf(bits: u32) -> f32 {
-    f32::from_bits(bits)
-}
+use sa_math::fpu::fbits as kf;
 
 /// `CWindModifiers::FindWindModifier(CVector pos, float* outX, float* outY)` (0x72C950, cdecl, bool in
 /// AL; pos by value). Over the `[0xC81450]` modifiers (0x14 bytes from 0xC81458: x, y, z, int type,

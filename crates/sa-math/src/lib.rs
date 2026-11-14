@@ -11,6 +11,7 @@ pub use libm;
 pub mod col;
 pub mod compressed;
 pub mod consts;
+pub mod fpu;
 pub mod general;
 pub mod maths;
 pub mod matrix;

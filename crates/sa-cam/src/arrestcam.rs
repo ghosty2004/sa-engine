@@ -71,28 +71,14 @@ impl Frame {
     }
 }
 
-fn m(b: GPtr<u8>, o: isize) -> f32 {
-    rd::<f32>(b, o)
-}
+use sa_core::field::rdf as m;
 fn st(b: GPtr<u8>, o: isize, v: f32) {
     wr::<f32>(b, o, v)
 }
-fn mu(b: GPtr<u8>, o: isize) -> u32 {
-    rd::<u32>(b, o)
-}
-fn stu(b: GPtr<u8>, o: isize, v: u32) {
-    wr::<u32>(b, o, v)
-}
+use sa_core::field::rd32 as mu;
+use sa_core::field::wr32 as stu;
 
-/// The entity position: `&matrix->pos` or `&placement.pos`.
-fn pos_of(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() {
-        e.byte_add(4)
-    } else {
-        m.byte_add(0x30)
-    }
-}
+use sa_world::world::common::entity_pos as pos_of;
 
 /// `FUN_00512ef0(CPed* ped, bool check)` (0x512EF0, thiscall on a CCam, `ret 8`, AL): the arrest
 /// camera looking from the target ped's position at the cop's head (bone 5) lowered by `0.5 * t`.

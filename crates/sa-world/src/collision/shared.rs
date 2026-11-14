@@ -25,10 +25,7 @@ pub mod k {
     pub const SMALL: u32 = 0x3727_C5AC;
 }
 
-/// `f32` from a `.rdata` constant.
-pub fn cf(bits: u32) -> f32 {
-    f32::from_bits(bits)
-}
+pub use sa_math::fpu::fbits as cf;
 
 /// A byte pointer to field `$f` of the struct `$T` that `$p` points at (`.cast::<F>()` it).
 #[macro_export]
