@@ -25,6 +25,7 @@ sa-math = { path = "../sa-math" }
 sa-world = { path = "../sa-world" }
 
 [dev-dependencies]
+sa-testkit = { path = "../sa-testkit" }
 sa-stream = { path = "../sa-stream" }
 
 [features]

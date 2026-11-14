@@ -21,6 +21,7 @@ sa-world = { path = "../sa-world" }
 libm = "=0.2.16"
 
 [dev-dependencies]
+sa-testkit = { path = "../sa-testkit" }
 sa-pop = { path = "../sa-pop" }
 sa-script = { path = "../sa-script" }
 sa-weapon = { path = "../sa-weapon" }

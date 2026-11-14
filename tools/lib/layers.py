@@ -8,9 +8,9 @@ The order is the one the code has (measured 2026-11-14): `sa-pop` sits below `sa
 LAYERS = [
     # leaves: no engine dependency
     ['sa-macros', 'sa-math', 'sa-platform', 'sa-oracle-format', 'sa-samp-api', 'sa-net',
-     'sa-launcher', 'sa-udp-proxy', 'sa-build'],
+     'sa-launcher', 'sa-udp-proxy'],
     ['sa-core'],
-    ['sa-rwcore', 'sa-stream', 'sa-input', 'sa-anim'],
+    ['sa-rwcore', 'sa-stream', 'sa-input', 'sa-anim', 'sa-testkit'],
     ['sa-world'],
     ['sa-pop'],
     ['sa-ped', 'sa-veh', 'sa-cam', 'sa-ai', 'sa-weapon', 'sa-render'],

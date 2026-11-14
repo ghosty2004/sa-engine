@@ -27,6 +27,7 @@ in-process = ["sa-core/in-process", "sa-world/in-process"]
 unexpected_cfgs = { level = "warn", check-cfg = ["cfg(sa_phase_a)"] }
 
 [dev-dependencies]
+sa-testkit = { path = "../sa-testkit" }
 # the cross-crate hook/global uniqueness tests
 sa-stream = { path = "../sa-stream" }
 sa-weapon = { path = "../sa-weapon" }

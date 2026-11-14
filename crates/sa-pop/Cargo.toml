@@ -22,3 +22,6 @@ in-process = ["sa-core/in-process", "sa-stream/in-process", "sa-world/in-process
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ["cfg(sa_phase_a)"] }
+
+[dev-dependencies]
+sa-testkit = { path = "../sa-testkit" }

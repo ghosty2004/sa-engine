@@ -1,0 +1,10 @@
+[package]
+name = "sa-testkit"
+version = "0.1.0"
+description = "Test support shared by the port crates' registration tests (ADR-003 §3.2: one definition): the exe image of a global, the hook count of a crate's sources, the initial-values check. A dev-dependency only."
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+sa-core = { path = "../sa-core" }

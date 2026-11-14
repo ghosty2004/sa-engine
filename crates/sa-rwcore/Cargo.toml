@@ -13,6 +13,7 @@ sa-math = { path = "../sa-math" }
 sa-macros = { path = "../sa-macros" }
 
 [dev-dependencies]
+sa-testkit = { path = "../sa-testkit" }
 sa-stream = { path = "../sa-stream" }
 sa-world = { path = "../sa-world" }
 sa-pop = { path = "../sa-pop" }

@@ -20,6 +20,7 @@ sa-macros = { path = "../sa-macros" }
 sa-world = { path = "../sa-world" }
 
 [dev-dependencies]
+sa-testkit = { path = "../sa-testkit" }
 # the cross-crate "declared once" / "hooked once" tests
 sa-stream = { path = "../sa-stream" }
 sa-pop = { path = "../sa-pop" }

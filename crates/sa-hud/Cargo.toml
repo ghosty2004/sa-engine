@@ -22,6 +22,7 @@ sa-stream = { path = "../sa-stream" }
 sa-world = { path = "../sa-world" }
 
 [dev-dependencies]
+sa-testkit = { path = "../sa-testkit" }
 sa-pop = { path = "../sa-pop" }
 sa-script = { path = "../sa-script" }
 
