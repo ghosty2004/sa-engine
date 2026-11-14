@@ -200,6 +200,9 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::decision_maker_index::HOOKS,
     crate::evasive_dive_next_sub_task::HOOKS,
     crate::conversation_setup_done::HOOKS,
+    crate::hassle_vehicle_track_entity::HOOKS,
+    crate::event_ped_to_flee_dtor::HOOKS,
+    crate::follow_ped_footsteps_control::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
