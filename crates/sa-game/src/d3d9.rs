@@ -544,11 +544,35 @@ fn vehicle_list() {
     }
     let (px, py, pz) = pos(ped);
     eprintln!(
-        "sa-game: veh-list present {n}: player {ped:#x} at ({px:.2}, {py:.2}, {pz:.2}) state {} vehicle {:#x} in-vehicle {}",
+        "sa-game: veh-list present {n} iteration {}: player {ped:#x} at ({px:.2}, {py:.2}, {pz:.2}) state {} vehicle {:#x} in-vehicle {}",
+        crate::app::iteration(),
         rd(ped + 0x530),
         rd(ped + 0x58C),
         (rd(ped + 0x46C) >> 8) & 1
     );
+    // SA_GAME_VEHLIST_PEDS=R: also every ped of the pool within R units (model, position, state, health)
+    if let Some(r) = std::env::var("SA_GAME_VEHLIST_PEDS").ok().and_then(|v| v.parse::<f32>().ok()) {
+        let pool = rd(0xB74490);
+        if pool >= 0x1000 {
+            let (objs, map, size) = (rd(pool), rd(pool + 4), rd(pool + 8) as i32);
+            for i in 0..size.max(0) as u32 {
+                if GPtr::<u8>::from_addr((map + i) as usize).read() & 0x80 != 0 {
+                    continue;
+                }
+                let p = objs + i * 0x7C4;
+                let (x, y, z) = pos(p);
+                if p != ped && (x - px).hypot(y - py) < r {
+                    eprintln!(
+                        "sa-game: veh-list   ped [{i}] {p:#x} model {} at ({x:.2}, {y:.2}, {z:.2}) state {} health {:.1} vehicle {:#x}",
+                        GPtr::<u16>::from_addr((p + 0x22) as usize).read(),
+                        rd(p + 0x530),
+                        rf(p + 0x540),
+                        rd(p + 0x58C)
+                    );
+                }
+            }
+        }
+    }
     let pool = rd(0xB74494);
     if pool < 0x1000 {
         return;
@@ -562,12 +586,15 @@ fn vehicle_list() {
         let (x, y, z) = pos(v);
         if (x - px).hypot(y - py) < 150.0 || GPtr::<u8>::from_addr((v + 0x3BA) as usize).read() > 1 {
             eprintln!(
-                "sa-game: veh-list   [{i}] {v:#x} model {} at ({x:.2}, {y:.2}, {z:.2}) driver {:#x} status {:#x} mission {} law {}",
+                "sa-game: veh-list   [{i}] {v:#x} model {} at ({x:.2}, {y:.2}, {z:.2}) driver {:#x} status {:#x} mission {} law {} fwd ({:.2}, {:.2}) speed {:.3}",
                 GPtr::<u16>::from_addr((v + 0x22) as usize).read(),
                 rd(v + 0x460),
                 GPtr::<u8>::from_addr((v + 0x36) as usize).read(),
                 GPtr::<u8>::from_addr((v + 0x3BA) as usize).read(),
-                GPtr::<u8>::from_addr((v + 0x428) as usize).read() & 1
+                GPtr::<u8>::from_addr((v + 0x428) as usize).read() & 1,
+                if rd(v + 0x14) >= 0x1000 { rf(rd(v + 0x14) + 0x10) } else { 0.0 },
+                if rd(v + 0x14) >= 0x1000 { rf(rd(v + 0x14) + 0x14) } else { 0.0 },
+                rf(v + 0x44).hypot(rf(v + 0x48))
             );
         }
     }
