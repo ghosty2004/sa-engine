@@ -110,10 +110,13 @@ struct GameWindow<'a> {
     captured: bool,
 }
 
-/// The menus (front end, or the pause menu over the game): the game draws its own cursor at the `WM_MOUSEMOVE`
-/// position, so the pointer is not captured there (as the web page does).
+/// The menus (front end, or the pause menu over the game), or the SA:MP UI showing its cursor (dialogs, scoreboard,
+/// class-selection panel): the game / the UI draws its own cursor at the `WM_MOUSEMOVE` position, so the pointer is
+/// not captured there (as the web page does).
 fn in_menu() -> bool {
-    crate::winmain::game_state() != crate::winmain::STATE_IDLE || sa_core::game::MENU_ACTIVE.get().get()
+    crate::winmain::game_state() != crate::winmain::STATE_IDLE
+        || sa_core::game::MENU_ACTIVE.get().get()
+        || crate::samp::ui_cursor_visible()
 }
 
 impl WindowApp for GameWindow<'_> {
