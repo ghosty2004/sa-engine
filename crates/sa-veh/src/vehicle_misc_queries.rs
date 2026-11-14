@@ -1,5 +1,5 @@
 //! PORT-VEH-4 (batch `veh4-4`): `CVehicle::FindTyreNearestPoint`, `CAutomobile::GetMovingCollisionOffset`
-//! and `CVehicle::CanVehicleBeDamaged`. Ported from the 1.0 US bytes; gta-reversed as a reading aid
+//! and `CVehicle::CanVehicleBeDamaged`; FRONTIER-1 (`frontier-1-1`): `CVehicle::IsSphereTouchingVehicle`. Ported from the 1.0 US bytes; gta-reversed as a reading aid
 //! (the bytes win).
 
 use sa_core::abi::HookReg;
@@ -7,7 +7,8 @@ use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 use sa_math::x87::{Cmp, X87};
 
-use crate::common::{f32_of, rd, wr, x, xi};
+use crate::common::{entity_get_col_model, f32_of, rd, wr, x, xi};
+use sa_world::world::common::entity_pos;
 
 orig! {
     /// `CWorld::FindPlayerPed(int32)` (0x56E210)
@@ -122,9 +123,45 @@ pub fn vehicle_can_vehicle_be_damaged(this: GPtr<u8>, damager: GPtr<u8>, weapon:
     1
 }
 
+/// `CVehicle::IsSphereTouchingVehicle(float x, float y, float z, float radius)` (0x6D84D0, thiscall, `ret 0x10`).
+/// `d = sphere - position` (each stored as f32); for the matrix's right, forward and up rows in turn, the
+/// projection `(d.z r.z + d.y r.y) + d.x r.x` must not lie below `min - radius` nor above `radius + max` of the col
+/// model's bounding box on that axis (`fcompp` / `test ah, 5` and `test ah, 0x41`; NaN passes). The axes are read
+/// from the matrix even when the position fell back to the placement (kept).
+#[hook(addr = 0x6D84D0, conv = thiscall, name = "CVehicle::IsSphereTouchingVehicle", this = "CVehicle",
+       expect = "83 EC 0C 56 8B F1",
+       unverified = "frontier-1-1", route = "L2", hazards = "none")]
+pub fn vehicle_is_sphere_touching_vehicle(this: GPtr<u8>, sx: f32, sy: f32, sz: f32, radius: f32) -> u8 {
+    let p = entity_pos(this);
+    let d = [
+        x(sx).fsub_m(rd::<f32>(p, 0)).to_f32(),
+        x(sy).fsub_m(rd::<f32>(p, 4)).to_f32(),
+        x(sz).fsub_m(rd::<f32>(p, 8)).to_f32(),
+    ];
+    let col = entity_get_col_model(this);
+    let m = rd::<GPtr<u8>>(this, 0x14);
+    for axis in 0..3isize {
+        let row = 0x10 * axis;
+        let v = x(d[2])
+            .fmul_m(rd::<f32>(m, row + 8))
+            .fadd(x(d[1]).fmul_m(rd::<f32>(m, row + 4)))
+            .fadd(x(d[0]).fmul_m(rd::<f32>(m, row)));
+        let lo = x(rd::<f32>(col, 4 * axis)).fsub_m(radius);
+        if !v.fcom(lo).test_parity(0x05) {
+            return 0;
+        }
+        let hi = x(radius).fadd_m(rd::<f32>(col, 0xC + 4 * axis));
+        if !v.fcom(hi).test_any(0x41) {
+            return 0;
+        }
+    }
+    1
+}
+
 /// This module's registrations.
 pub const HOOKS: &[HookReg] = &[
     HOOK_VEHICLE_FIND_TYRE_NEAREST_POINT,
     HOOK_AUTOMOBILE_GET_MOVING_COLLISION_OFFSET,
     HOOK_VEHICLE_CAN_VEHICLE_BE_DAMAGED,
+    HOOK_VEHICLE_IS_SPHERE_TOUCHING_VEHICLE,
 ];

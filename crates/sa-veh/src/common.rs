@@ -47,3 +47,8 @@ pub fn model_info(mi: i32) -> GPtr<u8> {
 pub fn b(v: bool) -> u8 {
     u8::from(v)
 }
+
+sa_core::orig! {
+    /// `CEntity::GetColModel()` (0x535300)
+    pub fn entity_get_col_model(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x535300 => unported;
+}

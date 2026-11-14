@@ -240,3 +240,4 @@ pub mod follow_ped_footsteps_control;
 // FRONTIER-1
 pub mod bike_jacked;
 pub mod go_to_point_fine;
+pub mod kill_ped_on_foot_melee;
