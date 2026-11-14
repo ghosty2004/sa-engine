@@ -794,8 +794,8 @@ sa_core::orig! {
 }
 
 /// `SA_GAME_JACK=ITER[:DIST[:SIDE]],...` (exploration only, car-jacking runs): at main-loop iteration ITER the player
-/// ped (on foot) is moved DIST units (default 7) in front of the nearest vehicle that has a driver other than the
-/// player, SIDE units (default 0) along the vehicle's right axis, facing the vehicle, through its `Teleport` virtual.
+/// ped (on foot) is moved DIST units (default 7) in front of the nearest car (no law enforcer) that has a driver other
+/// than the player, SIDE units (default 0) along the vehicle's right axis, facing the vehicle, through its `Teleport` virtual.
 /// A driver usually stops for a ped in its path; a scripted F press (SA_GAME_KEYS) then jacks it.
 fn teleport_in_front_of_driven_car(n: u32) {
     use sa_core::mem::GPtr;
@@ -828,8 +828,9 @@ fn teleport_in_front_of_driven_car(n: u32) {
         }
         let v = objs + i * 0xA18;
         let (m, driver) = (rd(v + 0x14), rd(v + 0x460));
-        // a car (vehicle type 0 = automobile) with a driver that is not the player
-        if m < 0x1000 || driver < 0x1000 || driver == ped || rd(v + 0x590) != 0 {
+        // a car (vehicle type 0 = automobile) with a driver that is not the player; no law enforcer (+0x428 bit 0:
+        // a jacked police car raises the wanted level, whose police AI is not ported yet)
+        if m < 0x1000 || driver < 0x1000 || driver == ped || rd(v + 0x590) != 0 || rd(v + 0x428) & 1 != 0 {
             continue;
         }
         let d = (rf(m + 0x30) - px).hypot(rf(m + 0x34) - py);
