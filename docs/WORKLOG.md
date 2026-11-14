@@ -1176,7 +1176,7 @@
 - CARJACK registers 0x4AC920 and 0x4B2EE0 too: keep master's when it lands. Driving later hits ProcessTrainCrossingBehaviour 0x5A0B50 (independent of the menu).
 ## 2026-11-14 — CARJACK: pulling drivers out of their cars natively (agent, branch worktree-agent-a271da3abdc02b710)
 - Blocker from the play build: `calls unported v_task_make_abortable (0x6486f0)` right after a drag-out. Ported from
-  the bytes (batch `carjack-1`, 28 hooks + 1 native, all unverified; rebased on master 2ab733fe, whose FRAMELIMIT
+  the bytes (batch `carjack-1`, 32 hooks + 1 native, all unverified; rebased on master 2ab733fe, whose FRAMELIMIT
   registrations of 0x4AC920 and 0x4B2EE0 — the same bodies — replaced CARJACK's): the slow drag-out family
   (`crates/sa-ai/src/car_slow_drag_out.rs`: 0x648100, 0x648180, 0x64E060, SayJacking 0x6497F0, 0x64C190, 0x64E180,
   0x64C220, 0x648520, 0x6485A0, 0x64C6A0 (+ keycells reader 0x402265), 0x64C810, 0x6486F0, 0x648A10), jack events
@@ -1185,17 +1185,26 @@
   callback 0x63C840, CTaskComplexLeaveCarAndFlee ctor/CreateNextSubTask 0x63BF90/0x642390, the retaliation tasks
   (`kill_ped_on_foot.rs`: CTaskComplexKillPedOnFoot dtor 0x620EF0, CreateSubTask 0x625E70, ControlSubTask 0x626260,
   CreateNextSubTask 0x62B150, CreateFirstSubTask 0x62B490, taunt 0x65E9A0; `retaliation_car_tasks.rs`:
-  CTaskComplexDestroyCar::ControlSubTask 0x6288C0, CTaskComplexDragPedFromCar::CreateFirstSubTask 0x643D00),
+  CTaskComplexDestroyCar::ControlSubTask 0x6288C0, CTaskComplexDragPedFromCar::CreateFirstSubTask 0x643D00,
+  CTaskComplexDestroyCarArmed ctor 0x621F50 (the original registers its vehicle reference at its own argument slot;
+  the port uses a static cell — see the doc comment) and CalculateSearchPositionAndRanges 0x628C80,
+  CTaskComplexScreamInCarThenLeave::CreateSubTask 0x642510 (+ keycells reader 0x40837C),
+  CTaskSimpleCarOpenDoorFromOutside::MakeAbortable 0x64AD00),
   CAEPedSpeechAudioEntity::GetCurrentCJMood 0x4E53B0 (sa-audio `cj_mood.rs`), CPed::UpdateStatLeavingVehicle 0x5E01B0
   (lone `ret`, native). sa-ai's std7 NATIVES now lists 16 generated `#[native]`s no list carried (0x655E00 was a
   blocker). Dropped in the rebase: 0x485B10 / 0x719360 (INTRO-2 ported them).
 - `SA_GAME_JACK=ITER[:DIST[:SIDE]],...` (exploration): teleports CJ in front of the nearest non-police driven car
   (drivers stop for a ped in their path) and prints the jacked driver's state for 400 iterations.
-- Evidence: `SA_GAME_SCRIPT_SKIP=1 sa-game --start-in-world --fixed-step 40 --frames 4000` with
-  `SA_GAME_JACK=1250:7,1650:7,2050:7,2450:7,2850:7` and F/W keys per jack (target/carjack/jack-summary.txt):
-  4 drivers jacked (models 475, 600, 439, 475), each dragged out (state 50 → 0 → 1, out of the vehicle, walks away),
-  CJ drives off each time; 4000 iterations, blocker list empty. Contact sheets + MP4 in target/carjack/.
-- Other routes still stop on: KillPedOnFootMelee::CreateSubTask 0x626AC0 (+ its ControlSubTask 0x626D90 /
+- Evidence on master 555c616a: `SA_GAME_SCRIPT_SKIP=1 sa-game --start-in-world --fixed-step 40 --frames 4000` with
+  `SA_GAME_JACK=1250:7,1650:7,2050:7,2450:7,2850:7` and F/W keys per jack (target/carjack/jack-summary.txt): 4 drivers
+  jacked (models 475, 600, 439, 475), each dragged out (state 50 → 0 → 1, out of the vehicle, walks away), CJ drives
+  off each time; 4000 iterations, blocker list empty. On the rebased head (FRAMELIMIT changed the traffic, so the route
+  changed): `SA_GAME_JACK=1600:7,2000:7,2400:7,2800:7`, keys `f:T+30:T+34,w:T+200:T+300,f:T+340:T+344` per jack T,
+  `--frames 3600`: 3 drivers jacked (492, 401, 517), 0 blocked (target/carjack/rebased-jack-summary.txt; at 4500
+  frames ProstituteSolicit::IsTaskValid 0x661BB0 blocks at 3709). Contact sheets + MP4 in target/carjack/.
+- Other routes still stop on: CTaskSimpleGunControl::ProcessPed 0x625270, ProstituteSolicit::IsTaskValid 0x661BB0,
+  KillCriminal::ControlSubTask 0x68E950, WaitForPed ctor 0x683340, GenerateOneEmergencyServicesCar 0x42B7D0,
+  KillPedOnFootMelee::CreateSubTask 0x626AC0 (+ its ControlSubTask 0x626D90 /
   CreateNextSubTask 0x62BC10), CTaskSimpleGoToPointFine::ProcessPed 0x663540 (+ SetBlendedMoveAnim 0x65EF80),
   CVehicle::IsSphereTouchingVehicle 0x6D84D0, UpdateCarAI's law-enforcer/wanted path (police after a jack),
   MakeTyresMuddySectorList 0x6AE0D0, 0x649550, 0x6DF3D0, IsEntityBlockingTarget 0x5F3970, 0x661BB0, the walk-into-fire
