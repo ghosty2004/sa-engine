@@ -1,0 +1,23 @@
+name: Port or verify a function
+description: Track the port or the verification of one original function or class
+labels: [port]
+body:
+  - type: input
+    id: address
+    attributes:
+      label: Address and name
+      placeholder: 0x6669D0 CTaskComplexProstituteSolicit::ControlSubTask
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Work
+      options: [Port, Verify (L1/L2/L3), Fix a divergence]
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Callers, the scenario that reaches it, protection reads, register conventions.

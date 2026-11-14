@@ -1,0 +1,31 @@
+name: Native or web build stops
+description: The native or browser build stopped on an unported function, crashed, or behaved differently from the original
+labels: [blocker]
+body:
+  - type: dropdown
+    id: build
+    attributes:
+      label: Build
+      options: [Native (Linux), Browser (WebGPU), Browser (WebGL2), Native SA:MP, Browser SA:MP]
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What you were doing
+      description: The action in the game right before it happened (e.g. sprinting and jumping, pulling a driver out, opening the pause menu).
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Last lines of the log
+      description: The `blocked`, `blocker list` and `summary` lines (native terminal, or the page's status / console).
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: original
+    attributes:
+      label: What the original does
+      description: Optional. How gta_sa.exe 1.0 US behaves in the same situation.
