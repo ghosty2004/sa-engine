@@ -1371,3 +1371,8 @@
   (ProcessTrainCrossingBehaviour 1944 calls; blocked on UpdateMovingCollision / CTrailer::SetupSuspensionLines);
   melee 2600 (FightHitPed 7 hits; blocked on HandlePedHit 0x4E1CC0 and ComputeDamageAnim 0x4B3FC0). The bike-jack,
   GoToPointFine and KillPedOnFootMelee ports have no scripted route yet (no call in these runs).
+
+## 2026-11-14 — FRONTIER-1 on master (main session)
+- Fast-forwarded master to 606b1434 (rebased on 27d89952): WRITER-WORLD-2 and WRITER-SAMP-2 integrated (master's copies kept on duplicates), `tools/verify/frontier.py` (723 unported callees left: 512 direct + 211 virtual), the native `reg(...)` call path fixed (register frame + 16-byte stack alignment; root cause of the pause-menu SIGSEGV), 20 user-hit ports (frontier-1-1/2: ProstituteSolicit::ControlSubTask, ProcessTrainCrossingBehaviour, BikeJacked, GoToPointFine, KillPedOnFootMelee, FightHitPed, …).
+- Agent: verify-all frontier2 IDENTICAL 13/13 with all the new batches on. Main session: sa-hook lib 58/58, i686 and wasm (samp) builds, pausemenu scenario 0 blocked (416 steps); play package refreshed.
+- Still open (FRONTIER-2): GunControl 0x625270, police path, burning car, melee HandlePedHit 0x4E1CC0 / ComputeDamageAnim 0x4B3FC0, crossing 0x6A1460 / 0x6CF1A0.
