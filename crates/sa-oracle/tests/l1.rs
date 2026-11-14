@@ -498,6 +498,11 @@ const PRESERVE_SPECS_PENDING: &[u32] = &[
     // WRITER-NATIVE batch native-21 (preserve edx, added on WEB-3's tree):
     // CPlayerPed::GetButtonSprintResults; spec queued.
     0x60A820,
+    // INTRO-2 batch intro3-2: CTaskComplexDriveToPoint::IsTargetBlocked, both overloads (preserve ecx: 0x6454EC
+    // and 0x6452C0 itself call on with ECX still the task); specs queued.
+    0x6432A0, 0x6452C0,
+    // SCRIPT-5 batch script5-1 (integrated by INTRO-2): CTheScripts::IsVehicleStopped (preserve 0x1); spec queued.
+    0x4861F0,
 ];
 
 /// Preserved registers (VER-2, verifier finding V-9): every spec that declares them names a port

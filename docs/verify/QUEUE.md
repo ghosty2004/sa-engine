@@ -74,6 +74,21 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | intro-ai-4 | 4 | AI | 5e0f61bf | master | 0 | 0 | 0 | 4 | 0 | L2 4 |
 | intro-anim-1 | 2 | ANIM | 5e0f61bf | master | 0 | 0 | 0 | 2 | 0 | L2 2 |
 | intro2-1 | 10 | AI, ANIM, PED, RW, UNK-game | 0eb10920 | worktree-agent-ab80f5d4fe8147e79 | 9 | 0 | 0 | 1 | 0 | L2 9, split 1 |
+| intro3-1 | 1 | VEH | 755ca585 | worktree-agent-ab80f5d4fe8147e79 | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| intro3-10 | 1 | AI | 03ce2d36 | worktree-agent-ab80f5d4fe8147e79 | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| intro3-11 | 2 | PED, WORLD | d2e7ac5c | worktree-agent-ab80f5d4fe8147e79 | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| intro3-12 | 1 | AI | 03ce2d36 | worktree-agent-ab80f5d4fe8147e79 | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| intro3-13 | 1 | AI | 0da50556 | worktree-agent-ab80f5d4fe8147e79 | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| intro3-14 | 1 | AI | 0da50556 | worktree-agent-ab80f5d4fe8147e79 | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| intro3-15 | 1 | AI | 0da50556 | worktree-agent-ab80f5d4fe8147e79 | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| intro3-2 | 2 | AI | 03ce2d36 | worktree-agent-ab80f5d4fe8147e79 | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| intro3-3 | 1 | RW | 72764d32 | worktree-agent-ab80f5d4fe8147e79 | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| intro3-4 | 1 | MATH | 5f0ce95a | worktree-agent-ab80f5d4fe8147e79 | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| intro3-5 | 1 | POP | 5f0ce95a | worktree-agent-ab80f5d4fe8147e79 | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| intro3-6 | 1 | AI | 03ce2d36 | worktree-agent-ab80f5d4fe8147e79 | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| intro3-7 | 1 | RENDER | b14a18d1 | worktree-agent-ab80f5d4fe8147e79 | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| intro3-8 | 1 | AI | 03ce2d36 | worktree-agent-ab80f5d4fe8147e79 | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| intro3-9 | 1 | RENDER | b14a18d1 | worktree-agent-ab80f5d4fe8147e79 | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | menu-1 | 1 | HUD | da9de7f1 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | menu-2 | 1 | HUD | da9de7f1 | master | 1 | 0 | 0 | 0 | 0 | split 1 |
 | menu-3 | 4 | HUD | da9de7f1 | master | 4 | 0 | 0 | 0 | 0 | L2 1, split 3 |
@@ -2445,6 +2460,233 @@ SA_UNVERIFIED=intro2-1 LANE=$LANE tools/e2e/port-l2.sh batch:intro2-1 $SA_ROOT/t
 | 0x60A530 | `CPlayerPed::ResetSprintEnergy` | written | split | none |
 | 0x6322F0 | `CTaskComplexUseEffect::MakeAbortable` | written | L2 | heap-writes |
 | 0x63CE70 | `FUN_0063ce70` | written | L2 | heap-writes |
+
+## intro3-1
+
+1 hooks in sa-veh; hazards: heap-writes (1); recordings calling them: intro (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh intro3-1 $SA_ROOT/target/e2e/corpus/intro.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=intro3-1 LANE=$LANE tools/e2e/port-l2.sh batch:intro3-1 $SA_ROOT/target/e2e/corpus/intro.sarec --runs "plain l2 rust" --tag intro3-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x45A980 | `CVehicleRecording::StartPlaybackRecordedCar` | written | L2 | heap-writes |
+
+## intro3-10
+
+1 hooks in sa-ai; hazards: heap-writes (1); recordings calling them: intro (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh intro3-10 $SA_ROOT/target/e2e/corpus/intro.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=intro3-10 LANE=$LANE tools/e2e/port-l2.sh batch:intro3-10 $SA_ROOT/target/e2e/corpus/intro.sarec --runs "plain l2 rust" --tag intro3-10
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x656000 | `CTaskComplexEvasiveDiveAndGetUp::CreateNextSubTask` | written | L2 | heap-writes |
+
+## intro3-11
+
+2 hooks in sa-ped, sa-world; hazards: heap-writes (2); recordings calling them: intro (2).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh intro3-11 $SA_ROOT/target/e2e/corpus/intro.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=intro3-11 LANE=$LANE tools/e2e/port-l2.sh batch:intro3-11 $SA_ROOT/target/e2e/corpus/intro.sarec --runs "plain l2 rust" --tag intro3-11
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x458970 | `CPickups::CreateSomeMoney` | written | L2 | heap-writes |
+| 0x4590F0 | `CPed::CreateDeadPedMoney` | written | L2 | heap-writes |
+
+## intro3-12
+
+1 hooks in sa-ai; hazards: heap-writes (1); recordings calling them: intro (1), pause-restart (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh intro3-12 $SA_ROOT/target/e2e/corpus/intro.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=intro3-12 LANE=$LANE tools/e2e/port-l2.sh batch:intro3-12 $SA_ROOT/target/e2e/corpus/intro.sarec --runs "plain l2 rust" --tag intro3-12
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x43ADB0 | `CConversations::DoneSettingUpConversation` | written | L2 | heap-writes |
+
+## intro3-13
+
+1 hooks in sa-ai; hazards: heap-writes (1); recordings calling them: intro (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh intro3-13 $SA_ROOT/target/e2e/corpus/intro.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=intro3-13 LANE=$LANE tools/e2e/port-l2.sh batch:intro3-13 $SA_ROOT/target/e2e/corpus/intro.sarec --runs "plain l2 rust" --tag intro3-13
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x65F700 | `CTaskComplexTrackEntity::CreateFirstSubTask` | written | L2 | heap-writes |
+
+## intro3-14
+
+1 hooks in sa-ai; hazards: heap-writes (1); recordings calling them: intro (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh intro3-14 $SA_ROOT/target/e2e/corpus/intro.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=intro3-14 LANE=$LANE tools/e2e/port-l2.sh batch:intro3-14 $SA_ROOT/target/e2e/corpus/intro.sarec --runs "plain l2 rust" --tag intro3-14
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x4AF2D0 | `CEventPedToFlee::~CEventPedToFlee` | written | L2 | heap-writes |
+
+## intro3-15
+
+1 hooks in sa-ai; hazards: heap-writes (1); recordings calling them: intro (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh intro3-15 $SA_ROOT/target/e2e/corpus/intro.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=intro3-15 LANE=$LANE tools/e2e/port-l2.sh batch:intro3-15 $SA_ROOT/target/e2e/corpus/intro.sarec --runs "plain l2 rust" --tag intro3-15
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x695090 | `CTaskComplexFollowPedFootsteps::ControlSubTask` | written | L2 | heap-writes |
+
+## intro3-2
+
+2 hooks in sa-ai; hazards: none; recordings calling them: intro (2).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh intro3-2 $SA_ROOT/target/e2e/corpus/intro.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=intro3-2 LANE=$LANE tools/e2e/port-l2.sh batch:intro3-2 $SA_ROOT/target/e2e/corpus/intro.sarec --runs "plain l2 rust" --tag intro3-2
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x6432A0 | `CTaskComplexDriveToPoint::IsTargetBlocked` | written | L2 | none |
+| 0x6452C0 | `CTaskComplexDriveToPoint::IsTargetBlocked` | written | L2 | none |
+
+## intro3-3
+
+1 hooks in sa-anim; hazards: heap-writes (1); recordings calling them: intro (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh intro3-3 $SA_ROOT/target/e2e/corpus/intro.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=intro3-3 LANE=$LANE tools/e2e/port-l2.sh batch:intro3-3 $SA_ROOT/target/e2e/corpus/intro.sarec --runs "plain l2 rust" --tag intro3-3
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x4D2100 | `RpAnimBlend::FrameUpdateCallBackNonSkinnedWithVelocityExtraction` | written | L2 | heap-writes |
+
+## intro3-4
+
+1 hooks in sa-world; hazards: none; recordings calling them: intro (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh intro3-4 $SA_ROOT/target/e2e/corpus/intro.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=intro3-4 LANE=$LANE tools/e2e/port-l2.sh batch:intro3-4 $SA_ROOT/target/e2e/corpus/intro.sarec --runs "plain l2 rust" --tag intro3-4
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x54E9D0 | `CMatrixLinkList::AddToList1` | written | L2 | none |
+
+## intro3-5
+
+1 hooks in sa-pop; hazards: heap-writes (1); recordings calling them: intro (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh intro3-5 $SA_ROOT/target/e2e/corpus/intro.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=intro3-5 LANE=$LANE tools/e2e/port-l2.sh batch:intro3-5 $SA_ROOT/target/e2e/corpus/intro.sarec --runs "plain l2 rust" --tag intro3-5
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x42F870 | `CCarCtrl::JoinCarWithRoadSystemGotoCoors` | written | L2 | heap-writes |
+
+## intro3-6
+
+1 hooks in sa-ai; hazards: none; recordings calling them: intro (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh intro3-6 $SA_ROOT/target/e2e/corpus/intro.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=intro3-6 LANE=$LANE tools/e2e/port-l2.sh batch:intro3-6 $SA_ROOT/target/e2e/corpus/intro.sarec --runs "plain l2 rust" --tag intro3-6
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x4B38D0 | `CEventDamage::AffectsPedGroup` | written | L2 | none |
+
+## intro3-7
+
+1 hooks in sa-render; hazards: heap-writes (1), stack-residue (1); recordings calling them: intro (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh intro3-7 $SA_ROOT/target/e2e/corpus/intro.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=intro3-7 LANE=$LANE tools/e2e/port-l2.sh batch:intro3-7 $SA_ROOT/target/e2e/corpus/intro.sarec --runs "plain l2 rust" --tag intro3-7
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x70A630 | `CShadows::CastShadowSectorList<CPtrListSingleLink<CPhysical*>>` | written | L2 | stack-residue,heap-writes |
+
+## intro3-8
+
+1 hooks in sa-ai; hazards: none; recordings calling them: intro (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh intro3-8 $SA_ROOT/target/e2e/corpus/intro.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=intro3-8 LANE=$LANE tools/e2e/port-l2.sh batch:intro3-8 $SA_ROOT/target/e2e/corpus/intro.sarec --runs "plain l2 rust" --tag intro3-8
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x606060 | `FUN_00606060` | written | L2 | none |
+
+## intro3-9
+
+1 hooks in sa-render; hazards: heap-writes (1); recordings calling them: intro (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh intro3-9 $SA_ROOT/target/e2e/corpus/intro.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=intro3-9 LANE=$LANE tools/e2e/port-l2.sh batch:intro3-9 $SA_ROOT/target/e2e/corpus/intro.sarec --runs "plain l2 rust" --tag intro3-9
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x6E91D0 | `FUN_006e91d0` | written | L2 | heap-writes |
 
 ## menu-1
 

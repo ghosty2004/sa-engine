@@ -70,7 +70,6 @@
 0x6C34E0  # worktree-agent-aa6be1d1b3cc0f218
 0x6E3E60  # worktree-agent-a33f0e44a9994a468
 0x6E61B0  # worktree-agent-aa6be1d1b3cc0f218
-0x6E91D0  # worktree-agent-aa6be1d1b3cc0f218
 0x6EA260  # worktree-agent-aa6be1d1b3cc0f218
 0x6ECF00  # worktree-agent-aa6be1d1b3cc0f218
 0x7039C0  # worktree-agent-aa6be1d1b3cc0f218
