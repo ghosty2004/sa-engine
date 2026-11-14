@@ -207,6 +207,23 @@ pub fn event_dtor_4af890(this: GPtr<u8>) {
     ref_dtor(this, 0x85B250, 0x14, 0x85AB38);
 }
 
+/// `CEventVehicleToSteal::~CEventVehicleToSteal` (0x4AF700, the non-deleting body): vtable 0x85B210, releases the vehicle at +0xC, base
+/// vtable 0x85AB38 (reached when a ped's car-steal event is deleted, e.g. near parked cars at Grove Street).
+#[hook(addr = 0x4AF700, conv = thiscall, name = "FUN_004af700", expect = "6A FF 68 A8 9E 83 00",
+       unverified = "framelimit-ai", route = "L2", hazards = "heap-writes")]
+pub fn event_vehicle_to_steal_dtor(this: GPtr<u8>) {
+    ref_dtor(this, 0x85B210, 0xC, 0x85AB38);
+}
+
+/// `CEventVehicleCollision::~CEventVehicleCollision` (0x4AC920, the non-deleting body, SEH frame): vtable 0x85AC28,
+/// releases the vehicle at +0x14, base vtable 0x85AB38. The CARJACK branch ports the same body (jack_events.rs); keep
+/// one registration when integrating.
+#[hook(addr = 0x4AC920, conv = thiscall, name = "FUN_004ac920", expect = "6A FF 68 A8 99 83 00",
+       unverified = "framelimit-ai", route = "L2", hazards = "heap-writes")]
+pub fn event_vehicle_collision_dtor(this: GPtr<u8>) {
+    ref_dtor(this, 0x85AC28, 0x14, 0x85AB38);
+}
+
 /// `FUN_005dea00` (0x5DEA00): `CEventSoundQuiet` destructor: vtable 0x86C2B0, releases the entity at +0x14, then
 /// `CEventEditableResponse::~CEventEditableResponse`.
 #[hook(addr = 0x5DEA00, conv = thiscall, name = "FUN_005dea00", expect = "6A FF 68 08 D8 83 00",
@@ -553,6 +570,8 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_COVER_FIND_POINTS_FOR_BUILDING,
     HOOK_TASK_COMPLEX_FACIAL_CTOR,
     HOOK_EVENT_DTOR_4AF890,
+    HOOK_EVENT_VEHICLE_TO_STEAL_DTOR,
+    HOOK_EVENT_VEHICLE_COLLISION_DTOR,
     HOOK_EVENT_DTOR_5DEA00,
     HOOK_EVENT_CTOR_4AEDF0,
     HOOK_EVENT_DTOR_4AEEA0,
