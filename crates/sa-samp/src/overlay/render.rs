@@ -107,6 +107,10 @@ mod rs {
 const TRILIST: u32 = 3;
 /// `rwRASTERTYPETEXTURE | rwRASTERFORMAT8888`.
 const RASTER_TEXTURE_8888: u32 = 0x0504;
+/// `rwRASTERFORMATMIPMAP`: a raster with its full mip chain (each level written by the caller).
+const RASTER_MIPMAP: u32 = 0x8000;
+/// `rwFILTERLINEARMIPLINEAR`.
+const FILTER_TRILINEAR: u32 = 6;
 /// `rwRASTERLOCKWRITE`.
 const LOCK_WRITE: u32 = 1;
 /// `CSprite2d::NearScreenZ` / `RecipNearClipPlane` (the z / rhw every 2D vertex of the game carries).
@@ -165,42 +169,51 @@ pub fn destroy_raster(r: u32) {
 
 /// Creates the atlas raster and fills it (white, alpha = coverage). `None` when RW refuses the raster.
 pub fn upload_atlas(atlas: &FontAtlas) -> Option<u32> {
-    upload_rgba(atlas.width, atlas.height, &atlas.rgba())
+    upload_rgba(atlas.width, atlas.height, &atlas.rgba(), false)
 }
 
-/// Creates a `w × h` texture raster from RGBA8 pixels. `None` when RW refuses the raster.
-pub fn upload_rgba(w: u32, h: u32, rgba: &[u8]) -> Option<u32> {
+/// Creates a `w × h` texture raster from RGBA8 pixels; with `mipmaps` also its full mip chain, filled with
+/// [`sa_samp_ui::skin::mip_chain`] (D3DX's box filter). `None` when RW refuses the raster.
+pub fn upload_rgba(w: u32, h: u32, rgba: &[u8], mipmaps: bool) -> Option<u32> {
     if rgba.len() < (w * h * 4) as usize {
         return None;
     }
-    let r = rw_raster_create(w as i32, h as i32, 32, RASTER_TEXTURE_8888);
+    let flags = RASTER_TEXTURE_8888 | if mipmaps { RASTER_MIPMAP } else { 0 };
+    let r = rw_raster_create(w as i32, h as i32, 32, flags);
     if r.is_null() {
         return None;
     }
-    let px = rw_raster_lock(r, 0, LOCK_WRITE);
-    if px == 0 {
-        return None;
-    }
-    let stride = GPtr::<i32>::from_addr(r.addr() + 0x18)
-        .read()
-        .max(w as i32 * 4) as usize;
-    for y in 0..h as usize {
-        let row = GPtr::<u8>::from_addr(px as usize + y * stride);
-        for x in 0..w as usize {
-            let i = 4 * (y * w as usize + x);
-            let (r8, g8, b8, a8) = (
-                u32::from(rgba[i]),
-                u32::from(rgba[i + 1]),
-                u32::from(rgba[i + 2]),
-                u32::from(rgba[i + 3]),
-            );
-            // D3DFMT_A8R8G8B8 in memory: B, G, R, A.
-            row.byte_add(4 * x as isize)
-                .cast::<u32>()
-                .write(a8 << 24 | r8 << 16 | g8 << 8 | b8);
+    let levels = if mipmaps {
+        sa_samp_ui::skin::mip_chain(w, h, rgba)
+    } else {
+        vec![(w, h, rgba[..(w * h * 4) as usize].to_vec())]
+    };
+    for (level, (lw, lh, pixels)) in levels.iter().enumerate() {
+        let px = rw_raster_lock(r, level as u32, LOCK_WRITE);
+        if px == 0 {
+            return if level == 0 { None } else { Some(r.addr() as u32) };
         }
+        let stride = GPtr::<i32>::from_addr(r.addr() + 0x18)
+            .read()
+            .max(*lw as i32 * 4) as usize;
+        for y in 0..*lh as usize {
+            let row = GPtr::<u8>::from_addr(px as usize + y * stride);
+            for x in 0..*lw as usize {
+                let i = 4 * (y * *lw as usize + x);
+                let (r8, g8, b8, a8) = (
+                    u32::from(pixels[i]),
+                    u32::from(pixels[i + 1]),
+                    u32::from(pixels[i + 2]),
+                    u32::from(pixels[i + 3]),
+                );
+                // D3DFMT_A8R8G8B8 in memory: B, G, R, A.
+                row.byte_add(4 * x as isize)
+                    .cast::<u32>()
+                    .write(a8 << 24 | r8 << 16 | g8 << 8 | b8);
+            }
+        }
+        rw_raster_unlock(r);
     }
-    rw_raster_unlock(r);
     Some(r.addr() as u32)
 }
 
@@ -361,10 +374,12 @@ pub fn draw(
         z,
         rhw,
     };
-    // D3DX sprites of samp's GUI sample the skin bilinearly.
+    // samp's GUI skin is a D3DX texture with its full mip chain (`D3DXCreateTextureFromFileEx`, D3DX_DEFAULT
+    // levels, box filter) and `ID3DXSprite::Begin` sets MIN / MAG / MIP filter LINEAR: scaled controls
+    // (buttons 136 × 54 → 90 × 30) are sampled trilinearly. The skin raster carries the same box-filtered chain.
     let mut skins = Batch {
         raster: skin,
-        filter: 2,
+        filter: FILTER_TRILINEAR,
         verts: Vec::new(),
         z,
         rhw,

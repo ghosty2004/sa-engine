@@ -95,6 +95,10 @@ pub struct Ui {
     measure_cache: Option<Box<dyn MeasureSnapshot>>,
     options: UiOptions,
     skin: bool,
+    /// The class-selection panel is visible (samp-rs shows it during class selection).
+    class_panel: bool,
+    /// The panel button the left button went down on (DXUT's pressed state), until the button comes up.
+    class_pressed: Option<usize>,
 }
 
 /// Metrics kept between frames for mouse hit tests (dialog and scoreboard geometry).
@@ -168,18 +172,23 @@ impl Ui {
         self.cursor
     }
 
-    /// Whether the cursor is drawn: a dialog, the scoreboard, textdraw selection or a cursor mode.
+    /// Whether the cursor is drawn: a dialog, the scoreboard, textdraw selection, the class-selection panel
+    /// (samp's cursor mode 2 during class selection) or a cursor mode.
     pub fn cursor_visible(&self) -> bool {
         self.dialog.is_some()
+            || self.class_panel
             || self.scoreboard.is_some()
             || self.textdraws.selecting.is_some()
             || self.cursor_mode != CursorMode::Off
     }
 
     /// Whether the mouse belongs to the UI (the camera must not turn): a dialog, the scoreboard, textdraw
-    /// selection or the locked cursor mode. The free cursor mode leaves the mouse to the game.
+    /// selection, the class-selection panel or the locked cursor mode. The free cursor mode leaves the mouse to
+    /// the game. (Class selection's mode 2 also cuts GTA's keyboard-to-pad path, but samp reads the class
+    /// keys itself, so the keyboard stays with the game here.)
     pub fn locks_mouse(&self) -> bool {
         self.dialog.is_some()
+            || self.class_panel
             || self.scoreboard.is_some()
             || self.textdraws.selecting.is_some()
             || self.cursor_mode == CursorMode::Locked
@@ -194,6 +203,12 @@ impl Ui {
     /// controls and the cursor are then drawn from it.
     pub fn set_skin(&mut self, loaded: bool) {
         self.skin = loaded;
+    }
+
+    /// Whether the class-selection panel is drawn and takes clicks: shown and the scoreboard closed (samp-rs
+    /// skips it while the scoreboard is open).
+    pub fn class_panel_active(&self) -> bool {
+        self.class_panel && self.scoreboard.is_none()
     }
 
     /// Big messages queued for the engine since the last call.
@@ -338,9 +353,13 @@ impl Ui {
             {
                 dl.draw(m, w, h, cursor, time_ms, &mut d);
             }
-            // The chat / input GUI dialog renders after samp's dialog: the scrollbar, then the edit box.
+            // The chat / input GUI dialog renders after samp's dialog: the scrollbar, then the edit box; then the
+            // class-selection GUI dialog (samp's Present step 12).
             self.chat.draw_scrollbar(m, self.input.is_open(), &mut d);
             self.input.draw(m, w as u32, bottom, time_ms, &mut d);
+            if self.class_panel {
+                crate::classpanel::draw(m, w, h, cursor, &mut d);
+            }
         }
         if let Some((x, y)) = cursor {
             d.cursor(x, y);
@@ -454,6 +473,13 @@ impl SampUi for Ui {
         self.textdraws.selecting = hover;
     }
 
+    fn show_class_panel(&mut self, shown: bool) {
+        self.class_panel = shown;
+        if !shown {
+            self.class_pressed = None;
+        }
+    }
+
     fn wants_keyboard(&self) -> bool {
         self.dialog.is_some() || self.input.is_open()
     }
@@ -469,7 +495,30 @@ impl SampUi for Ui {
                 button: 0,
                 down: true,
             } if self.cursor_visible() => {
+                // The class panel's GUI dialog gets the message before samp's dialog (samp's window procedure).
+                self.class_pressed = None;
+                if self.class_panel_active() {
+                    let (x, y) = self.cursor;
+                    self.class_pressed = crate::classpanel::hit(self.screen.0, self.screen.1, x, y);
+                    if self.class_pressed.is_some() {
+                        return Consumed;
+                    }
+                }
                 self.click();
+                Consumed
+            }
+            WindowEvent::MouseButton {
+                button: 0,
+                down: false,
+            } if self.class_pressed.is_some() => {
+                // DXUT: a pressed button fires when the mouse comes up over it.
+                let (x, y) = self.cursor;
+                if let Some(i) = self.class_pressed.take()
+                    && self.class_panel_active()
+                    && crate::classpanel::hit(self.screen.0, self.screen.1, x, y) == Some(i)
+                {
+                    self.events.push(UiEvent::ClassPanelClicked(crate::classpanel::BUTTONS[i]));
+                }
                 Consumed
             }
             WindowEvent::Wheel(delta) => {
@@ -766,5 +815,58 @@ mod tests {
         key(&mut ui, vk::F7);
         let d = ui.build(&M, &NoWorld, 1280.0, 720.0, 0);
         assert!(!d.texts().contains(&"chat"));
+    }
+
+    #[test]
+    fn class_panel_shows_cursor_and_clicks_like_dxut() {
+        use sa_samp_api::ui::ClassButton;
+        let mut ui = Ui::new();
+        assert!(!ui.cursor_visible());
+        let d = ui.build(&M, &NoWorld, 800.0, 600.0, 0);
+        assert!(!d.texts().contains(&"Spawn"));
+        ui.show_class_panel(true);
+        assert!(ui.cursor_visible() && ui.locks_mouse() && !ui.wants_keyboard());
+        let d = ui.build(&M, &NoWorld, 800.0, 600.0, 0);
+        assert!(d.texts().contains(&"Spawn"));
+        let b = crate::classpanel::buttons(800.0, 600.0);
+        let click = |ui: &mut Ui, x: f32, y: f32| {
+            ui.handle_event(WindowEvent::MouseMove { x: x as i32, y: y as i32 });
+            let down = ui.handle_event(WindowEvent::MouseButton { button: 0, down: true });
+            let up = ui.handle_event(WindowEvent::MouseButton { button: 0, down: false });
+            (down, up)
+        };
+        assert_eq!(
+            click(&mut ui, b[1][0] + 5.0, b[1][1] + 5.0),
+            (EventResult::Consumed, EventResult::Consumed)
+        );
+        click(&mut ui, b[0][0] + 5.0, b[0][1] + 5.0);
+        click(&mut ui, b[2][2] - 1.0, b[2][3] - 1.0);
+        assert_eq!(
+            ui.poll_events(),
+            vec![
+                UiEvent::ClassPanelClicked(ClassButton::Next),
+                UiEvent::ClassPanelClicked(ClassButton::Previous),
+                UiEvent::ClassPanelClicked(ClassButton::Spawn),
+            ]
+        );
+        // Pressed on `<<`, released over `>>`: no click (DXUT). Outside the buttons: nothing, the up passes.
+        ui.handle_event(WindowEvent::MouseMove { x: b[0][0] as i32 + 3, y: b[0][1] as i32 + 3 });
+        ui.handle_event(WindowEvent::MouseButton { button: 0, down: true });
+        ui.handle_event(WindowEvent::MouseMove { x: b[1][0] as i32 + 3, y: b[1][1] as i32 + 3 });
+        ui.handle_event(WindowEvent::MouseButton { button: 0, down: false });
+        assert_eq!(click(&mut ui, 10.0, 10.0), (EventResult::Consumed, EventResult::PassToGame));
+        assert!(ui.poll_events().is_empty());
+        // The scoreboard hides the panel and takes the clicks.
+        ui.set_scoreboard(Some(("srv", &[])));
+        let d = ui.build(&M, &NoWorld, 800.0, 600.0, 0);
+        assert!(!d.texts().contains(&"Spawn"));
+        click(&mut ui, b[2][0] + 5.0, b[2][1] + 5.0);
+        assert!(ui.poll_events().is_empty());
+        ui.set_scoreboard(None);
+        // Hidden: no cursor, no clicks.
+        ui.show_class_panel(false);
+        assert!(!ui.cursor_visible());
+        assert_eq!(click(&mut ui, b[2][0] + 5.0, b[2][1] + 5.0), (EventResult::PassToGame, EventResult::PassToGame));
+        assert!(ui.poll_events().is_empty());
     }
 }

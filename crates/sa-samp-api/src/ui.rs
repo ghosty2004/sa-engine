@@ -11,7 +11,8 @@
 //! interpreted where samp interprets them (chat, dialogs, labels, nametags' text is plain). Colours are
 //! [`Rgba`] (samp's wire colours are `0xRRGGBBAA`: see [`Rgba::from_rgba_u32`]).
 //!
-//! Added at API v1 (additive: a default method on `GameAdapter`, new types only).
+//! Added at API v1 (additive: a default method on `GameAdapter`, new types only). v4: the class-selection
+//! panel ([`SampUi::show_class_panel`], [`UiEvent::ClassPanelClicked`]).
 
 use crate::input::{EventResult, WindowEvent};
 use crate::{PedRef, Rgba, Vec3};
@@ -307,6 +308,20 @@ pub enum UiEvent {
     TextDrawClicked(u16),
     /// A scoreboard row was clicked.
     ScoreboardClicked(u16),
+    /// A class-selection panel button was clicked (DXUT: pressed and released over the button). samp-rs
+    /// treats it as the matching key: `<<` = Left, `>>` = Right, `Spawn` = Shift. Added at API v4.
+    ClassPanelClicked(ClassButton),
+}
+
+/// The buttons of samp's class-selection panel (samp.dll's GUI dialog 0x1026eaa4, control ids 6, 5, 4).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ClassButton {
+    /// `<<`: the previous class (control id 6).
+    Previous,
+    /// `>>`: the next class (control id 5).
+    Next,
+    /// `Spawn` (control id 4).
+    Spawn,
 }
 
 /// The engine-drawn SA:MP UI. Methods are called from frame callbacks on the game thread.
@@ -344,6 +359,10 @@ pub trait SampUi {
     fn select_textdraws(&mut self, hover: Option<Rgba>);
     /// Display options (page size, timestamps, font size, nametag rules).
     fn set_options(&mut self, options: &UiOptions);
+    /// Shows or hides the class-selection panel (`<<` `>>` `Spawn`). samp-rs shows it during class selection
+    /// once no dialog is open and hides it at the spawn; the UI does not draw it while the scoreboard is open.
+    /// Added at API v4.
+    fn show_class_panel(&mut self, shown: bool);
     /// Whether the chat input or a dialog has the keyboard (samp's input lock).
     fn wants_keyboard(&self) -> bool;
     /// A window event, before the game sees it. Native backends call this themselves before

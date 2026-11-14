@@ -150,7 +150,7 @@ impl<V: View> NativeGame<V> {
             && let Some(img) = &ov.skin_image
         {
             use sa_samp_ui::skin::{TEXTURE_H, TEXTURE_W};
-            match render::upload_rgba(TEXTURE_W, TEXTURE_H, img) {
+            match render::upload_rgba(TEXTURE_W, TEXTURE_H, img, true) {
                 Some(r) => ov.skin_raster = r,
                 None => ov.skin_failed = true,
             }
@@ -190,6 +190,12 @@ impl<V: View> NativeGame<V> {
         use sa_samp_api::ui::SampUi as _;
         let keyboard = self.overlay.ui.wants_keyboard();
         (keyboard, keyboard || self.overlay.ui.locks_mouse())
+    }
+
+    /// Whether the SA:MP UI shows its cursor (a dialog, the scoreboard, textdraw selection, the class-selection
+    /// panel or a cursor mode): the host then gives the pointer back to the UI (absolute moves and clicks).
+    pub fn ui_cursor_visible(&self) -> bool {
+        self.overlay.ui.cursor_visible()
     }
 
     /// Live peds within `radius` of `centre` (pool order), for nametag demos and tests.
