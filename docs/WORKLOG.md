@@ -1359,3 +1359,14 @@
   0x4DCBE0. New blockers the scenarios reach: CAEPedAudioEntity::HandlePedHit 0x4E1CC0 (melee, 2 iterations; nested
   jump tables and a protection fragment), CAutomobile::UpdateMovingCollision 0x6A1460 and
   CTrailer::SetupSuspensionLines 0x6CF1A0 (crossing run).
+- Gates: writer gate on the ad76c2bd-based head: hooks / queue / clippy / i686 / i686clip / wasm32 / hooktest / l1
+  PASS; l1test 17/18 then 18/18 after queuing 0x4B1F00's preserved-ECX spec (the only failing test, rerun).
+  sa-hook lib 58/58, generators `--check` clean, queue 2544 unverified hooks in 391 batches.
+- verify-all (lanes 4-7): `frontier1` with frontier-1-1 + the integrated batches (samp2-*, world5-1, world6-1/3/4/5)
+  IDENTICAL 13/13; `frontier2` with frontier-1-2 added, IDENTICAL 13/13 (17 subsystems each).
+- Repros (`tools/e2e/scenarios/frontier.sh NAME OUT`, `--fixed-step 40`; call counts with
+  `WRAP="gdb -q -batch -x tools/e2e/scenarios/frontier-counts.gdb --args"`): pausemenu 400 iterations, 0 blocked;
+  solicit 4000, 0 blocked (ControlSubTask 0x6669D0 479 calls, IsEntityBlockingTarget 1); crossing 1200
+  (ProcessTrainCrossingBehaviour 1944 calls; blocked on UpdateMovingCollision / CTrailer::SetupSuspensionLines);
+  melee 2600 (FightHitPed 7 hits; blocked on HandlePedHit 0x4E1CC0 and ComputeDamageAnim 0x4B3FC0). The bike-jack,
+  GoToPointFine and KillPedOnFootMelee ports have no scripted route yet (no call in these runs).
