@@ -212,6 +212,9 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::conversation_setup_done::HOOKS,
     crate::hassle_vehicle_track_entity::HOOKS,
     crate::event_ped_to_flee_dtor::HOOKS,
+    crate::event_vehicle_dtors::HOOKS,
+    crate::prostitute_solicit::HOOKS,
+    crate::enter_any_car_as_driver::HOOKS,
     crate::follow_ped_footsteps_control::HOOKS,
 ];
 

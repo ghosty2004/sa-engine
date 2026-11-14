@@ -78,6 +78,7 @@ pub const NATIVES: &[&[&[sa_core::abi::NativeReg]]] = &[
     &[sa_anim::std6_natives::NATIVES],
     &[sa_audio::std6_natives::NATIVES],
     &[sa_cam::std6_natives::NATIVES],
+    &[sa_cam::idlecam_set_target::NATIVES],
     &[sa_core::std6_natives::NATIVES],
     &[sa_core::std7_natives::NATIVES],
     &[sa_core::std7_natives::LONE_RET_NATIVES],

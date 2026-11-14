@@ -61,6 +61,8 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::mvpd_r5::HOOKS,
     crate::quaternion::HOOKS,
     crate::fx_info_get_value_samp::HOOKS,
+    crate::fx_info_dir_value::HOOKS,
+    crate::shadows_permanent::HOOKS,
     crate::motion_blur_streaks::HOOKS,
     crate::quad_marker_wind_index_buffer::HOOKS,
     crate::visibility_big_vehicle_boat_heli::HOOKS,
@@ -203,7 +205,7 @@ pub const ALL: &[HookReg] = &ALL_ARRAY;
 /// Every module's `#[native]` registrations (phase B entries of ports that cannot be hooked in
 /// phase A); `sa_ports::NATIVES` lists each of these.
 pub const NATIVE_MODULES: &[&[sa_core::abi::NativeReg]] =
-    &[sprite2d::NATIVES, rwplugins::NATIVES, draw::NATIVES, crate::custompipes::NATIVES, crate::fx_alloc::NATIVES, crate::car_dirt::NATIVES, crate::visibility_access::NATIVES, crate::frame_node_name::NATIVES, crate::collision_plugin_mi::NATIVES, crate::mvpb_r1::NATIVES, crate::car_pipe_setup::NATIVES, crate::short_leaf_natives::NATIVES, crate::cullzones::NATIVES, crate::renderer::NATIVES];
+    &[sprite2d::NATIVES, rwplugins::NATIVES, draw::NATIVES, crate::custompipes::NATIVES, crate::fx_alloc::NATIVES, crate::car_dirt::NATIVES, crate::visibility_access::NATIVES, crate::frame_node_name::NATIVES, crate::collision_plugin_mi::NATIVES, crate::mvpb_r1::NATIVES, crate::car_pipe_setup::NATIVES, crate::short_leaf_natives::NATIVES, crate::cullzones::NATIVES, crate::renderer::NATIVES, crate::fx_trigger_water_hydrant::NATIVES];
 
 pub const COUNT: usize = ALL.len();
 
