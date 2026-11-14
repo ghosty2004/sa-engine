@@ -106,6 +106,14 @@ struct GameWindow<'a> {
     start: Instant,
     /// in-game presents shown in the title so far
     titled: usize,
+    /// the pointer is captured (relative mode, as DirectInput's exclusive mode in game); released in the menus
+    captured: bool,
+}
+
+/// The menus (front end, or the pause menu over the game): the game draws its own cursor at the `WM_MOUSEMOVE`
+/// position, so the pointer is not captured there (as the web page does).
+fn in_menu() -> bool {
+    crate::winmain::game_state() != crate::winmain::STATE_IDLE || sa_core::game::MENU_ACTIVE.get().get()
 }
 
 impl WindowApp for GameWindow<'_> {
@@ -122,8 +130,8 @@ impl WindowApp for GameWindow<'_> {
             Ok(s) => self.session = Some(s),
             Err(e) => self.error = Some(e),
         }
-        // DirectInput exclusive mode: the game owns the pointer
-        let _ = set_pointer_capture(&window, true);
+        // DirectInput exclusive mode: the game owns the pointer (released in the menus, see `frame`)
+        self.captured = set_pointer_capture(&window, true);
         self.window = Some(window);
         self.start = Instant::now();
     }
@@ -140,10 +148,30 @@ impl WindowApp for GameWindow<'_> {
         {
             return false;
         }
+        let mut input = input.clone();
+        if let Some(w) = &self.window {
+            let menu = in_menu();
+            if menu && self.captured {
+                set_pointer_capture(w, false);
+                // the menu draws its own cursor
+                w.set_cursor_visible(false);
+                self.captured = false;
+            } else if !menu && !self.captured {
+                self.captured = set_pointer_capture(w, true);
+            }
+            // window pixels → the game's client pixels (the back buffer is stretched over the window)
+            let size = w.inner_size();
+            for e in &mut input.events {
+                if let InputEvent::MouseMove { x, y } = e {
+                    *x = (*x as i64 * WIDTH as i64 / size.width.max(1) as i64) as i32;
+                    *y = (*y as i64 * HEIGHT as i64 / size.height.max(1) as i64) as i32;
+                }
+            }
+        }
         let input = if self.args.auto_input {
-            merge_input(input, &synthetic_input(s.n))
+            merge_input(&input, &synthetic_input(s.n))
         } else {
-            input.clone()
+            input
         };
         let go_on = s.iterate(input);
         let presents = d3d9::frame_times();
@@ -172,6 +200,7 @@ pub fn run(args: &Args) -> Result<Session, String> {
         window: None,
         start: Instant::now(),
         titled: 0,
+        captured: false,
     };
     let mut cfg = WindowConfig::new("sa-game", WIDTH, HEIGHT);
     cfg.click_to_capture = false;
