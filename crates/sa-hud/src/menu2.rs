@@ -59,19 +59,7 @@ fn in_use_s(i: u32) -> u8 {
     g::<u8>(MENU_IN_USE.wrapping_add(i as u8 as i8 as isize as usize)).read()
 }
 
-/// Unbounded `strcpy` (the inlined byte loop, NUL included).
-fn copy_str(dst: GPtr<u8>, src: GPtr<u8>) {
-    let mut k = 0isize;
-    loop {
-        let c = src.byte_add(k).read();
-        dst.byte_add(k).write(c);
-        if c == 0 {
-            break;
-        }
-        k += 1;
-    }
-}
-
+use sa_core::field::copy_c_string as copy_str;
 /// `src` copied to `dst`, or `dst[0] = 0` for a null `src`.
 fn set_text(dst: GPtr<u8>, src: GPtr<u8>) {
     if src.is_null() {

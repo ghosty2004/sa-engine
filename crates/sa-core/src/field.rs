@@ -255,3 +255,38 @@ pub fn vec_ptr(v: &[u32; 3]) -> GPtr<u32> {
     GPtr::from_raw(v.as_ptr().cast_mut())
 }
 
+pub fn copy_c_string(dst: GPtr<u8>, src: GPtr<u8>) {
+    let mut i = 0isize;
+    loop {
+        let c = src.byte_add(i).read();
+        dst.byte_add(i).write(c);
+        if c == 0 {
+            break;
+        }
+        i += 1;
+    }
+}
+
+
+pub fn write3(p: GPtr<u8>, v: [f32; 3]) {
+    for (i, c) in v.iter().enumerate() {
+        wr::<f32>(p, 4 * i as isize, *c);
+    }
+}
+
+
+pub fn vec3(p: GPtr<u8>, off: isize) -> [f32; 3] {
+    [rd::<f32>(p, off), rd::<f32>(p, off + 4), rd::<f32>(p, off + 8)]
+}
+
+
+pub fn copy_dwords(dst: GPtr<u8>, src: GPtr<u8>, n: isize) {
+    for i in 0..n {
+        wr::<u32>(dst, i * 4, rd::<u32>(src, i * 4));
+    }
+}
+
+/// The `1.0f` constant the original loads from `.rdata` (0x858624).
+pub fn rdata_one() -> f32 {
+    g::<f32>(0x858624).read()
+}

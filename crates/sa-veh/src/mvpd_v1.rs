@@ -30,7 +30,7 @@ use sa_core::field::gf;
 
 use sa_core::field::gr8 as gb;
 
-fn sb(addr: usize, v: u8) {
+pub fn sb(addr: usize, v: u8) {
     g::<u8>(addr).write(v)
 }
 

@@ -139,9 +139,7 @@ orig! {
     pub fn set_cursor_pos(px: i32, py: i32) -> i32 = stdcall cell 0x858300 => unported;
 }
 
-fn local<T>(v: &mut T) -> GPtr<u8> {
-    GPtr::from_raw(core::ptr::from_mut(v)).cast()
-}
+use sa_core::field::ptr_of as local;
 
 fn b8(p: GPtr<u8>, off: isize) -> u8 {
     rd(p, off)

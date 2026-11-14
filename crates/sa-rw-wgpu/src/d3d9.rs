@@ -824,7 +824,7 @@ fn depth_texture(device: &wgpu::Device, w: u32, h: u32) -> wgpu::Texture {
 
 /// Minimal executor for wgpu's futures (they complete without an external reactor natively).
 #[cfg(not(target_arch = "wasm32"))]
-pub(crate) fn block_on<F: std::future::Future>(f: F) -> F::Output {
+pub fn block_on<F: std::future::Future>(f: F) -> F::Output {
     use std::task::{Context, Poll, Wake, Waker};
     struct W(std::thread::Thread);
     impl Wake for W {

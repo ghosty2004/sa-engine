@@ -547,7 +547,6 @@ pub fn generate_car_creation_coors2(
 use crate::bindings::should_car_stop_for_bridge;
 use crate::bindings::should_car_stop_for_light;
 use sa_world::bindings::entity_get_is_on_screen;
-use sa_world::bindings::world_remove;
 use sa_world::bindings::camera_get_look_direction;
 use sa_world::bindings::get_clump_alpha;
 use sa_world::bindings::is_this_car_being_targetted_by_any_crane;
@@ -565,11 +564,7 @@ orig! {
 
 use sa_world::world::common::entity_pos_f as entity_pos;
 
-/// `CWorld::Remove(veh); delete veh`.
-fn kill(veh: GPtr<u8>) {
-    world_remove(veh);
-    entity_vdelete(veh, 1);
-}
+use sa_world::world::object::remove_and_delete as kill;
 
 /// `IsPointWithinHideOutGarage` on a local copy of the position (as the original).
 fn in_hideout(veh: GPtr<u8>) -> bool {

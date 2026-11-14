@@ -1888,11 +1888,7 @@ fn c01() -> f32 {
 pub use sa_world::bindings::multiply3x3 as multiply_3x3;
 pub use sa_world::bindings::multiply3x3_vm as multiply_3x3_vec_mat;
 
-/// CRT `_CIpow` (0x822130): `st1 ^ st0`.
-fn ci_pow(base: X87, exp: f32) -> X87 {
-    X87::from_f64_exact(sa_core::orig::x87_binary(0x822130, base.to_f64(), f64::from(exp)))
-}
-
+use sa_world::world::mvpe_ent1::ci_pow;
 /// `CVehicle::ApplyBoatWaterResistance(tBoatHandlingData*, float depth)` (0x6D2740): `F = depth *
 /// handling+0xAC * depth * mass * 0.001` (x30 for the skimmer), `k = 1 / |F * (d*d + 0.05) + 1|` with d
 /// the forward speed; `p = pow(k * res, timeStep * 0.5)` per axis (CRT `_CIpow`); the move speed in

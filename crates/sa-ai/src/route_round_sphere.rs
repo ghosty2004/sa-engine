@@ -24,12 +24,7 @@ use sa_core::field::ptr_of as p3;
 
 use sa_core::field::rd3f as v3;
 
-fn put(p: GPtr<u8>, v: [f32; 3]) {
-    for (i, c) in v.iter().enumerate() {
-        wr::<f32>(p, 4 * i as isize, *c);
-    }
-}
-
+use sa_core::field::write3 as put;
 /// `CPedGeometryAnalyser::ComputeRouteRoundSphere(const CPed& ped, const CColSphere& sphere, const CVector& start,
 /// const CVector& target, CVector& newTarget, CVector& detour)` (0x5F1890, cdecl). x87. P = the ped's position.
 ///

@@ -140,13 +140,7 @@ fn d3d9() -> GPtr<u8> {
     p8(gu(D3D9))
 }
 
-/// Copies `n` dwords.
-fn copy_dwords(dst: GPtr<u8>, src: GPtr<u8>, n: isize) {
-    for i in 0..n {
-        wr::<u32>(dst, i * 4, rd::<u32>(src, i * 4));
-    }
-}
-
+use sa_core::field::copy_dwords;
 fn dwords_equal(a: GPtr<u8>, b: GPtr<u8>, n: isize) -> bool {
     (0..n).all(|i| rd::<u32>(a, i * 4) == rd::<u32>(b, i * 4))
 }

@@ -152,9 +152,7 @@ fn gu32(a: usize) -> GPtr<u32> {
     g::<u32>(a)
 }
 use sa_core::field::ptr_of as lp;
-fn lb<const N: usize>(b: &mut [u8; N]) -> GPtr<u8> {
-    GPtr::from_raw(b.as_mut_ptr())
-}
+use sa_core::field::buf_ptr as lb;
 /// `strcpy(dst, src)` as the original's inline byte loop.
 fn copy_str(dst: GPtr<u8>, src: GPtr<u8>) {
     let mut k = 0isize;

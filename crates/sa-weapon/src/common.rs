@@ -11,12 +11,7 @@ pub use sa_world::world::common::{ftol32, g, x, xi};
 
 pub use sa_math::fpu::fbits as cf;
 
-/// `CTimer::m_snTimeInMilliseconds` (0xB7CB84), owned by sa-core.
-#[inline]
-pub fn time_ms() -> u32 {
-    sa_core::timer::TIME_MS.get()
-}
-
+pub use sa_pop::population2::time_ms;
 /// `CTimer::ms_fTimeStep` (0xB7CB5C), owned by sa-core.
 #[inline]
 pub fn time_step() -> f32 {

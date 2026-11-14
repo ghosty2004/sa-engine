@@ -1562,19 +1562,7 @@ fn copy_bytes(dst: GPtr<u8>, src: GPtr<u8>, n: usize) {
     }
 }
 
-/// Inlined `strcpy` (byte loop up to and including the terminator).
-fn copy_c_string(dst: GPtr<u8>, src: GPtr<u8>) {
-    let mut i = 0isize;
-    loop {
-        let c = src.byte_add(i).read();
-        dst.byte_add(i).write(c);
-        if c == 0 {
-            break;
-        }
-        i += 1;
-    }
-}
-
+use crate::field::copy_c_string;
 /// Inlined `strcat` of an `n`-byte literal (terminator included) at the end of `dst`.
 fn append(dst: GPtr<u8>, lit: GPtr<u8>, n: usize) {
     let mut end = 0isize;

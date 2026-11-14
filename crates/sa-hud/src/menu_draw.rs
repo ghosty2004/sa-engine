@@ -148,9 +148,7 @@ fn b8(p: GPtr<u8>, off: isize) -> u8 {
     rd(p, off)
 }
 
-fn local<T>(v: &mut T) -> GPtr<u8> {
-    GPtr::from_raw(core::ptr::from_mut(v)).cast()
-}
+use sa_core::field::ptr_of as local;
 
 fn w() -> i32 {
     g::<i32>(RS_MAX_WIDTH).read()

@@ -163,10 +163,7 @@ orig! {
     fn construct_geometry_and_skin_arrays_call(h: GPtr<u8>, geo: GPtr<u8>, weights: GPtr<u8>, indices: GPtr<u8>, n: u32, geos: GPtr<u8>, mats: GPtr<u8>) = cdecl 0x5A6530 => construct_geometry_and_skin_arrays;
 }
 
-/// The address of a Rust local the original keeps on its stack (passed to game code as a pointer).
-fn local<T>(v: &mut T) -> GPtr<u8> {
-    GPtr::from_raw(core::ptr::from_mut(v)).cast()
-}
+use sa_core::field::ptr_of as local;
 
 use sa_core::field::grp as name_at;
 

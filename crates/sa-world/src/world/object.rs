@@ -501,7 +501,7 @@ fn for_each_object(mut f: impl FnMut(GPtr<u8>)) {
 }
 
 /// `CWorld::Remove` then the scalar deleting destructor (vtable slot 0, flag 1).
-fn remove_and_delete(o: GPtr<u8>) {
+pub fn remove_and_delete(o: GPtr<u8>) {
     world_remove(o);
     entity_vdelete(o, 1);
 }

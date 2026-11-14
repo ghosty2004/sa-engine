@@ -28,7 +28,7 @@ orig! {
 }
 
 /// `rand()` as the original call returning to `site` calls it, times 1/RAND_MAX (0x858C7C).
-fn rand_unit(site: u32) -> X87 {
+pub fn rand_unit(site: u32) -> X87 {
     xi(sa_core::orig::at_site(site, sa_core::crt::rand)).fmul_m(f32::from_bits(0x3800_0100))
 }
 

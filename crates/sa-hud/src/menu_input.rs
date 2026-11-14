@@ -367,9 +367,7 @@ fn lr_steps(a: u8) -> bool {
     a == 0x15 || is_slider(a)
 }
 
-fn local<T>(v: &mut T) -> GPtr<u8> {
-    GPtr::from_raw(core::ptr::from_mut(v)).cast()
-}
+use sa_core::field::ptr_of as local;
 
 /// Step 5 of [`user_input`] for every screen but 0x26 (0x580076..0x5803CF).
 fn menu_navigation(this: GPtr<u8>, accept: &mut [u8; 4], back: &mut [u8; 4], up: &mut [u8; 4], down: &mut [u8; 4]) {

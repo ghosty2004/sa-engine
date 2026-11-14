@@ -237,10 +237,7 @@ fn lerp_trans(out: GPtr<f32>, prev: [f32; 3], cur: [f32; 3], t: X87, b: X87, rou
     }
 }
 
-fn vec3(p: GPtr<u8>, off: isize) -> [f32; 3] {
-    [rd::<f32>(p, off), rd::<f32>(p, off + 4), rd::<f32>(p, off + 8)]
-}
-
+use sa_core::field::vec3;
 fn zero3(out: GPtr<f32>) {
     for k in 0..3 {
         out.byte_add(4 * k).write(0.0);

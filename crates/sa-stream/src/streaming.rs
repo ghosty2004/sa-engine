@@ -237,7 +237,7 @@ const CAMERA: usize = 0xB6F028;
 /// `CTheZones::m_CurrLevel` (0xBA6718)
 const ZONES_CURR_LEVEL: usize = 0xBA6718;
 /// `CGame::currArea` (0xB72914)
-fn curr_area() -> i32 {
+pub fn curr_area() -> i32 {
     sa_core::game::CURR_AREA.get()
 }
 /// `CWorld::ms_nCurrentScanCode` (0xB7CD78)

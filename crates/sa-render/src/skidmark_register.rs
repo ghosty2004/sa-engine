@@ -22,10 +22,7 @@ fn mark(i: usize) -> usize {
 
 use sa_core::field::gf as fv;
 
-fn now() -> u32 {
-    sa_core::timer::TIME_MS.get()
-}
-
+use sa_pop::population2::time_ms as now;
 /// `(x, y) / |(x, y)|` as the original keeps it: with a positive (or NaN) length `(y_mem * inv, x_reg *
 /// inv)` where `inv = (f32)(1 / len)`; otherwise `(1.0, x_reg)` (not normalised).
 fn unit(xr: X87, ym: f32) -> (X87, X87) {

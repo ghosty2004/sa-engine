@@ -1149,7 +1149,7 @@ orig! {
 
 /// CRT `_CIasin` (0x821E70; operand and result in ST0) on an f32 operand: exact through
 /// [`sa_core::orig::x87_unary`] under the game's 24-bit precision (see sa-weapon `bullet_shot.rs`).
-fn ci_asin(v: f32) -> X87 {
+pub fn ci_asin(v: f32) -> X87 {
     X87::from_f64_exact(sa_core::orig::x87_unary(0x821E70, f64::from(v)))
 }
 

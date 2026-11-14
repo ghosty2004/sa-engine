@@ -213,14 +213,7 @@ fn active_weapon(p: GPtr<u8>) -> GPtr<u8> {
 
 use sa_world::world::common::entity_type as ent_type;
 
-/// `sqrt((dz*dz + dy*dy) + dx*dx)` of `t - s` (memory operands; the inlined CVector::Magnitude).
-fn dist3(t: GPtr<f32>, s: GPtr<f32>) -> X87 {
-    let dx = x(t.read()).fsub_m(s.read());
-    let dy = x(t.wrapping_index(1).read()).fsub_m(s.wrapping_index(1).read());
-    let dz = x(t.wrapping_index(2).read()).fsub_m(s.wrapping_index(2).read());
-    dz.fmul(dz).fadd(dy.fmul(dy)).fadd(dx.fmul(dx)).fsqrt()
-}
-
+use sa_pop::carctrl4::dist3;
 /// The two inlined `while (a > pi) a -= 2pi; while (a < -pi) a += 2pi;` loops (memory constants).
 fn wrap_pi(mut a: X87) -> X87 {
     while !a.fcom(x(PI)).test_any(0x41) {

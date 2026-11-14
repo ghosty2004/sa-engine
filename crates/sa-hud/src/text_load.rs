@@ -78,9 +78,7 @@ orig! {
     pub fn load_mission_pack_text_call(this: GPtr<u8>) = thiscall 0x69F9A0 => load_mission_pack_text;
 }
 
-fn local<T>(v: &mut T) -> GPtr<u8> {
-    GPtr::from_raw(core::ptr::from_mut(v)).cast()
-}
+use sa_core::field::ptr_of as local;
 
 fn inc_u32(p: GPtr<u8>) {
     wr(p, 0, rd::<u32>(p, 0).wrapping_add(1));

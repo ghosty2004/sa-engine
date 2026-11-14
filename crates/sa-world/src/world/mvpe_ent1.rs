@@ -273,7 +273,7 @@ orig! {
 }
 
 /// CRT `_CIpow` (0x822130): `st1 ^ st0`.
-fn ci_pow(base: X87, exp: f32) -> X87 {
+pub fn ci_pow(base: X87, exp: f32) -> X87 {
     X87::from_f64_exact(sa_core::orig::x87_binary(0x822130, base.to_f64(), f64::from(exp)))
 }
 

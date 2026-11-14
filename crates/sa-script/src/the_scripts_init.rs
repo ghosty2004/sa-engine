@@ -56,10 +56,7 @@ const MAXIMUM_WIDTH: usize = 0xC17044;
 
 use sa_core::field::g;
 
-fn w8(a: usize, v: u8) {
-    g::<u8>(a).write(v)
-}
-
+use sa_veh::mvpd_v1::sb as w8;
 fn w16(a: usize, v: u16) {
     g::<u16>(a).write(v)
 }

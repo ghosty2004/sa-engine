@@ -19,19 +19,7 @@ use sa_anim::bindings::anim_get_animation;
 use sa_anim::bindings::get_animation_block as anim_get_animation_block;
 use crate::bindings::task_simple_ctor;
 
-/// The byte loop the compiler emits for `strcpy(dst, src)` (the terminating NUL included).
-fn copy_str(dst: GPtr<u8>, src: GPtr<u8>) {
-    let mut i = 0isize;
-    loop {
-        let c = src.byte_add(i).read();
-        dst.byte_add(i).write(c);
-        if c == 0 {
-            break;
-        }
-        i += 1;
-    }
-}
-
+use sa_core::field::copy_c_string as copy_str;
 /// `CTaskSimpleRunNamedAnim::CTaskSimpleRunNamedAnim(const char* animName, const char* groupName, int32
 /// flags, float blendDelta, int32 endTime, bool dontInterrupt, bool runInSequence, bool offsetPed, bool
 /// holdLastFrame)` (0x61A990, thiscall, `ret 0x24`): `CTaskSimple` constructor; anim +8 = 0, flags byte

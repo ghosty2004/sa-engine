@@ -32,10 +32,7 @@ orig! {
     fn non_skinned_with_3d_velocity(data: GPtr<u8>, fd: GPtr<u8>) = reg("args = eax stack") 0x4D2450 => frame_update_non_skinned_with_3d_velocity;
 }
 
-fn one() -> f32 {
-    g::<f32>(0x858624).read()
-}
-
+use sa_core::field::rdata_one as one;
 /// `FrameUpdateCallBackNonSkinned(AnimBlendFrameData* fd, void* data)` (0x4D30A0, cdecl). With frame flag bit 3
 /// and the clump's ped position (`gpAnimBlendClump` +0xC): the 3D (flag bit 4, 0x4D2450) or planar (0x4D2100)
 /// velocity-extraction variant (`data` in EAX). Otherwise, with the frame's matrix `m` = `fd->frame + 0x10`: when

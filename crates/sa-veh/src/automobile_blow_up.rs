@@ -4,7 +4,6 @@
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
-use sa_math::x87::X87;
 
 use crate::common::{f32_of, g, rd, wr, x, xi};
 
@@ -32,11 +31,7 @@ orig! {
     fn kill_peds_getting_in_vehicle(v: GPtr<u8>) = thiscall 0x6D82F0 => unported;
 }
 
-/// `rand()` as the original call returning to `site` calls it, times 1/RAND_MAX (0x858C7C).
-fn rand_unit(site: u32) -> X87 {
-    xi(sa_core::orig::at_site(site, sa_core::crt::rand)).fmul_m(f32::from_bits(0x3800_0100))
-}
-
+use sa_world::world::water_creature::rand_unit;
 /// `CAutomobile::BlowUpCar(CEntity* damager, bool hideExplosion)` (0x6B3780).
 ///
 /// Only when the car can be damaged (+0x42A bit 5). Blown up by the player (ped or vehicle): +20 to the

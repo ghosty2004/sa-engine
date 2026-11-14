@@ -9,7 +9,6 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::hook;
 use sa_math::x87::X87;
-use sa_world::world::common::{CAM_ENTITY, CAM_VECTOR};
 
 use crate::common::{Fpu, k, wr};
 
@@ -48,15 +47,7 @@ fn light(i: i32) -> GPtr<u8> {
     GPtr::from_addr(LIGHTS_BASE).byte_add(i as isize * 0x30)
 }
 
-/// The camera position the original reads: `[0xB6F03C] + 0x30` when set, else TheCamera +0x4.
-fn cam_pos() -> GPtr<f32> {
-    let m = CAM_ENTITY.get();
-    if m.is_null() {
-        CAM_VECTOR.ptr().cast()
-    } else {
-        m.byte_add(0x30).cast()
-    }
-}
+use sa_world::world::common::cam_pos;
 
 /// `CPointLights::Init()` (0x6FFB40): cached reads 0, `NextCachedValue = 0`, every cached point (0, 0, 0).
 #[hook(addr = 0x6FFB40, conv = cdecl, name = "CPointLights::Init", expect = "83 EC 0C 56 57")]

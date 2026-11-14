@@ -70,10 +70,7 @@ orig! {
 
 use sa_core::field::gf;
 
-fn fv(p: GPtr<u8>, off: isize) -> [f32; 3] {
-    [rd::<f32>(p, off), rd::<f32>(p, off + 4), rd::<f32>(p, off + 8)]
-}
-
+use sa_core::field::vec3 as fv;
 fn ptr(v: &mut [f32; 3]) -> GPtr<u8> {
     GPtr::from_raw(v.as_mut_ptr().cast::<u8>())
 }

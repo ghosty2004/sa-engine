@@ -554,10 +554,7 @@ orig! {
     fn sprintf2(buf: GPtr<u8>, fmt: GPtr<u8>, a: i32, bb: i32) -> i32 = cdecl 0x821BB5 => unported;
 }
 
-/// A local buffer as a game pointer (the original's stack temporaries).
-fn local<const N: usize>(buf: &mut [u8; N]) -> GPtr<u8> {
-    GPtr::from_raw(buf.as_mut_ptr())
-}
+use sa_core::field::buf_ptr as local;
 
 /// A `CRect` {left, bottom, right, top} as the original lays it out on its stack.
 fn rect_bytes(l: f32, bt: f32, r: f32, t: f32) -> [u8; 16] {
@@ -569,10 +566,7 @@ fn rect_bytes(l: f32, bt: f32, r: f32, t: f32) -> [u8; 16] {
     o
 }
 
-fn fpv() -> GPtr<u8> {
-    sa_world::world::common::find_player_vehicle(-1, 0)
-}
-
+use sa_veh::mvpb_a4::fpv;
 /// The ped's active `CWeapon` (`ped + 0x5A0 + m_nActiveWeaponSlot * 0x1C`, slot = signed byte +0x718).
 fn active_weapon(ped: GPtr<u8>) -> GPtr<u8> {
     let slot = i32::from(rd::<i8>(ped, 0x718));

@@ -37,10 +37,7 @@ fn zero() -> X87 {
     x(g::<f32>(0x858B50).read())
 }
 
-fn one() -> f32 {
-    g::<f32>(0x858624).read()
-}
-
+use sa_core::field::rdata_one as one;
 /// `CQuaternion::Normalise()` (0x4D1610, thiscall): `s = ((x² + y²) + z²) + w²` (x87); `s == 0` → `w = 1`;
 /// else each component `*= 1 / sqrt(s)` (the reciprocal kept in ST0).
 #[hook(addr = 0x4D1610, conv = thiscall, name = "CQuaternion::Normalise", expect = "D9 41 0C D9 41 08 D9 41 04",

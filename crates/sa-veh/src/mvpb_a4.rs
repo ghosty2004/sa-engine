@@ -24,7 +24,7 @@ use sa_math::fpu::gt;
 
 use sa_math::fpu::lt;
 
-fn fpv() -> GPtr<u8> {
+pub fn fpv() -> GPtr<u8> {
     sa_world::world::common::find_player_vehicle(-1, 0)
 }
 

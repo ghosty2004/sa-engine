@@ -1286,7 +1286,7 @@ pub fn back_to_cruising_if_no_wanted_level(veh: GPtr<u8>) {
 }
 
 /// `sqrt((dz^2 + dy^2) + dx^2)` of `a - b` (x87).
-fn dist3(a: GPtr<f32>, b: GPtr<f32>) -> X87 {
+pub fn dist3(a: GPtr<f32>, b: GPtr<f32>) -> X87 {
     let dx = x(a.read()).fsub_m(b.read());
     let dy = x(a.wrapping_index(1).read()).fsub_m(b.wrapping_index(1).read());
     let dz = x(a.wrapping_index(2).read()).fsub_m(b.wrapping_index(2).read());

@@ -44,11 +44,7 @@ orig! {
 
 use sa_core::field::gx as cf;
 
-/// `fadd` / `fsub` / `fmul` operand 1.0f [0x858624].
-fn one() -> f32 {
-    g::<f32>(0x858624).read()
-}
-
+use sa_core::field::rdata_one as one;
 use sa_world::world::common::entity_pos as pos;
 
 use sa_core::field::ptr_of as local;

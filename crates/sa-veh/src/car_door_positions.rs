@@ -48,12 +48,7 @@ use sa_core::field::ptr_of as vp;
 
 use sa_core::field::rd3f as read3;
 
-fn write3(p: GPtr<u8>, v: [f32; 3]) {
-    for (i, c) in v.iter().enumerate() {
-        wr::<f32>(p, 4 * i as isize, *c);
-    }
-}
-
+use sa_core::field::write3;
 use sa_world::world::common::entity_pos;
 
 /// The front seat dummy (dummy 0 for a boat model, else dummy 4).

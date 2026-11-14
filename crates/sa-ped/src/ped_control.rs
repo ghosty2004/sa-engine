@@ -877,11 +877,7 @@ fn clamp1(v: f32) -> f32 {
     }
 }
 
-/// `_CIasin` (0x821E70) of an f32, the ST0 result.
-fn asin(v: f32) -> X87 {
-    X87::from_f64_exact(sa_core::orig::x87_unary(0x821E70, f64::from(v)))
-}
-
+use sa_pop::carctrl6::ci_asin as asin;
 /// `CPed::CalculateNewVelocity` (0x5E4C50). Spec `CPed.md` 0x5E4C50, re-read against the bytes. Part 1 (heading turn,
 /// skipped in the air / landing / states 54, 55, 63): `S = rate * DEG2RAD * ts` (f32), `cur = LimitRadianAngle(cur)`
 /// stored, the goal kept unrounded on the x87 stack and wrapped by 2pi, `D = g - cur` (f32); the turn accumulator

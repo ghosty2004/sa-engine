@@ -1,34 +1,11 @@
 //! Helpers shared by the PORT-WORLD modules (zones, pickups, garages, ...): raw field access at byte
 //! offsets, x87 shorthands and the `orig!` declarations several modules call.
 
-use sa_core::mem::{GPtr, GameData};
+use sa_core::mem::GPtr;
 use sa_math::x87::X87;
 
-/// Field `T` at byte offset `off` of the object `p` points at.
-#[inline]
-pub fn at<T: GameData>(p: GPtr<u8>, off: isize) -> GPtr<T> {
-    p.byte_add(off).cast()
-}
-
-/// Reads field `T` at byte offset `off`.
-#[inline]
-pub fn rd<T: GameData>(p: GPtr<u8>, off: isize) -> T {
-    at::<T>(p, off).read()
-}
-
-/// Writes field `T` at byte offset `off`.
-#[inline]
-pub fn wr<T: GameData>(p: GPtr<u8>, off: isize, v: T) {
-    at::<T>(p, off).write(v)
-}
-
-/// A game global owned by another subsystem, addressed directly (as sa-stream does; its phase B
-/// storage comes with that subsystem's port).
-#[inline]
-pub fn g<T: GameData>(addr: usize) -> GPtr<T> {
-    GPtr::from_addr(addr)
-}
-
+/// Raw field and global access (ADR-003 §3.2: one definition, in sa-core).
+pub use sa_core::field::{at, g, rd, wr};
 pub use sa_math::fpu::x;
 pub use sa_math::fpu::xi;
 pub use sa_math::fpu::ftol32;

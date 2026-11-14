@@ -368,7 +368,7 @@ orig! {
     fn water_level_pre_render_water() = cdecl 0x6EB710 => unported;
 }
 
-fn camera() -> GPtr<u8> {
+pub fn camera() -> GPtr<u8> {
     g::<GPtr<u8>>(SCENE_CAMERA).read()
 }
 

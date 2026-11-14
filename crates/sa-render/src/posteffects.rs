@@ -51,8 +51,6 @@ sa_core::globals! {
     pub static HP_X @ 0xC3FE08: [i32; 180] = [0; 180];
 }
 
-/// `Scene.camera` (RwCamera*: +0x60 frame buffer raster, +0x80 near plane).
-const SCENE_CAMERA: usize = 0xC1703C;
 /// `RwEngineInstance` (+0x18: the Im2D near screen z).
 const RW_ENGINE_INSTANCE: usize = 0xC97B24;
 /// `RsGlobal.maximumWidth` / `maximumHeight`.
@@ -184,9 +182,7 @@ fn log2_plus_one(v: i32, div: X87) -> i32 {
     ftol32(X87::ln2().fyl2x(xi(v)).fdiv(div)).wrapping_add(1)
 }
 
-fn camera() -> GPtr<u8> {
-    g::<GPtr<u8>>(SCENE_CAMERA).read()
-}
+use sa_core::mvpb_app::camera;
 
 /// `1.0 / Scene.camera->nearPlane` (`fld 1.0; fdiv dword [camera+0x80]`).
 fn recip_near() -> X87 {

@@ -156,12 +156,7 @@ orig! {
     pub fn info_vget_value(this: GPtr<u8>, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32) = thiscall vslot 0x8 => unported;
 }
 
-fn copy_dwords(dst: GPtr<u8>, src: GPtr<u8>, n: isize) {
-    for i in 0..n {
-        wr::<u32>(dst, i * 4, rd::<u32>(src, i * 4));
-    }
-}
-
+use sa_core::field::copy_dwords;
 // ---------------------------------------------------------------------------------------------
 // Fx_c
 

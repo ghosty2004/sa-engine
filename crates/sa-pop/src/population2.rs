@@ -28,7 +28,7 @@ sa_core::globals! {
 }
 
 /// `CTimer::m_snTimeInMilliseconds`
-fn time_ms() -> u32 {
+pub fn time_ms() -> u32 {
     sa_core::timer::TIME_MS.get()
 }
 
@@ -37,11 +37,7 @@ fn player_in_focus() -> i32 {
     i32::from(sa_world::world::cworld::PLAYER_IN_FOCUS.get())
 }
 
-/// `CGame::currArea` (0xB72914)
-fn curr_area() -> i32 {
-    sa_core::game::CURR_AREA.get()
-}
-
+use sa_stream::streaming::curr_area;
 /// `TheCamera.m_fGenerationDistMultiplier` (0xB6F11C)
 fn cam_gen_dist_multiplier() -> f32 {
     g::<f32>(0xB6F11C).read()

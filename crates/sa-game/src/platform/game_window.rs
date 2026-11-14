@@ -24,24 +24,7 @@ use crate::app::{Args, Session};
 use crate::d3d9;
 use crate::frontend::{CLIENT_HEIGHT as HEIGHT, CLIENT_WIDTH as WIDTH, FrontEnd, in_menu, to_client};
 
-fn block_on<F: std::future::Future>(f: F) -> F::Output {
-    use std::task::{Context, Poll, Wake, Waker};
-    struct W(std::thread::Thread);
-    impl Wake for W {
-        fn wake(self: Arc<Self>) {
-            self.0.unpark();
-        }
-    }
-    let waker = Waker::from(Arc::new(W(std::thread::current())));
-    let mut cx = Context::from_waker(&waker);
-    let mut f = std::pin::pin!(f);
-    loop {
-        if let Poll::Ready(v) = f.as_mut().poll(&mut cx) {
-            return v;
-        }
-        std::thread::park();
-    }
-}
+use sa_rw_wgpu::d3d9::block_on;
 
 /// The window's surface and a GPU device that can present to it.
 fn window_target(window: Arc<Window>) -> Result<d3d9::WindowTarget, String> {
