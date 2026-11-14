@@ -235,6 +235,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | native-7 | 2 | UNK-game | ba6c9352 | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
 | native-8 | 3 | AI, VEH | f3cf72bb | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
 | native-9 | 2 | AI, UNK-game | e3ccdd9b | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| newgame-1 | 2 | AI, UNK-game | 10a5f212 | newgame-int | 2 | 0 | 0 | 0 | 0 | L2 2 |
 | pedhit-1 | 13 | AI, PED, RENDER, UNK-game, WORLD | dc80ac3a | master | 13 | 0 | 0 | 0 | 0 | L2 13 |
 | popw4-drive-1 | 9 | POP | 09ffb626 | master | 0 | 0 | 0 | 9 | 0 | L2 9 |
 | popw4-frame-1 | 1 | POP | 09ffb626 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
@@ -5221,6 +5222,22 @@ SA_UNVERIFIED=native-9 LANE=$LANE tools/e2e/port-l2.sh batch:native-9 $SA_ROOT/t
 |---|---|---|---|---|
 | 0x6220A0 | `CTaskComplexRoadRage::Constructor` | written | L2 | heap-writes |
 | 0x6A0650 | `FUN_006a0650` | written | L2 | heap-writes |
+
+## newgame-1
+
+2 hooks in sa-ai; hazards: heap-writes (2), x87-transcendental (1); recordings calling them: pause-restart (2).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh newgame-1 $SA_ROOT/target/e2e/corpus/pause-restart.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=newgame-1 LANE=$LANE tools/e2e/port-l2.sh batch:newgame-1 $SA_ROOT/target/e2e/corpus/pause-restart.sarec --runs "plain l2 rust" --tag newgame-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x683340 | `FUN_00683340` | written | L2 | heap-writes |
+| 0x6834E0 | `vt_8706f8::ControlSubTask` | written | L2 | x87-transcendental,heap-writes |
 
 ## pedhit-1
 
