@@ -713,7 +713,7 @@ pub fn main() {
 }
 
 /// `SA_GAME_KEYS=KEY:DOWN[:UP],...` (evidence runs): `KEY` (a letter, `space`, `enter`, `shift`, `ctrl`, `up`,
-/// `down`, `left`, `right`) is pressed at main-loop iteration DOWN and released at UP (held to the end without UP).
+/// `down`, `left`, `right`, `esc`) is pressed at main-loop iteration DOWN and released at UP (held to the end without UP).
 /// The synthetic Enter stops 8 iterations before the first press.
 fn keys_spec() -> Vec<(Key, u32, Option<u32>)> {
     let Ok(v) = crate::env::var("SA_GAME_KEYS") else {
@@ -732,6 +732,7 @@ fn keys_spec() -> Vec<(Key, u32, Option<u32>)> {
                 "down" => Key::Down,
                 "left" => Key::Left,
                 "right" => Key::Right,
+                "esc" => Key::Escape,
                 n if n.len() == 1 && n.as_bytes()[0].is_ascii_lowercase() => letter_key(n.as_bytes()[0]),
                 _ => return None,
             };

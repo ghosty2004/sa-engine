@@ -48,7 +48,15 @@ orig! {
     /// `CShadowCamera::Update(RpAtomic*)` (0x705C80)
     fn shadow_camera_update_atomic(this: GPtr<u8>, atomic: GPtr<u8>) -> GPtr<u8> = thiscall 0x705C80 => unported;
     /// `CRealTimeShadowManager::ReInit()` (0x706870)
-    fn rts_manager_reinit(this: GPtr<u8>) = thiscall 0x706870 => unported;
+    fn rts_manager_reinit(this: GPtr<u8>) = thiscall 0x706870 => crate::mvpd_r1::rts_manager_reinit_port;
+    /// `RwRasterDestroy(RwRaster*)` (0x7FB020)
+    fn rw_raster_destroy(r: GPtr<u8>) -> i32 = cdecl 0x7FB020 => unported;
+    /// `RwRasterCreate(int32 w, int32 h, int32 depth, int32 flags)` (0x7FB230)
+    fn rw_raster_create(w: u32, h: u32, depth: u32, flags: u32) -> GPtr<u8> = cdecl 0x7FB230 => unported;
+    /// `RwTextureSetRaster(RwTexture*, RwRaster*)` (0x7F35D0)
+    fn rw_texture_set_raster(t: GPtr<u8>, r: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F35D0 => unported;
+    /// `CShadowCamera::MakeGradientRaster()` (0x705D20)
+    fn shadow_camera_make_gradient_raster(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x705D20 => unported;
     /// `CPed::GetBonePosition(RwV3d& out, uint32 bone, bool updateSkin)` (0x5E4280)
     fn ped_get_bone_position(this: GPtr<u8>, out: GPtr<u8>, bone: u32, update: u32) = thiscall 0x5E4280 => unported;
     /// `FindPlayerPed(int32)` (0x56E210)
@@ -511,6 +519,41 @@ pub fn rts_manager_update(this: GPtr<u8>) {
         let s = this.byte_add(4 + i * 4).cast::<GPtr<u8>>().read();
         wr::<u8>(s, 4, 0);
     }
+}
+
+/// `CShadowCamera::ReInit()` as `CRealTimeShadowManager::ReInit` inlines it for the `CShadowCamera` at `cam`
+/// (`{RwCamera* +0, RwTexture* +4}`): `w` = the camera raster's (+0x60) width (+0xC); the camera's raster cleared,
+/// the old raster destroyed (`RwRasterDestroy`), `RwRasterCreate(w, w, 0, rwRASTERTYPECAMERATEXTURE)` stored as the
+/// camera's raster (the camera pointer read again) and set on the texture (`RwTextureSetRaster`).
+fn shadow_camera_reinit_inline(cam: GPtr<u8>) {
+    let camera = rd::<GPtr<u8>>(cam, 0);
+    let raster = rd::<GPtr<u8>>(camera, 0x60);
+    let w = rd::<u32>(raster, 0xC);
+    wr::<u32>(camera, 0x60, 0);
+    rw_raster_destroy(raster);
+    let r = rw_raster_create(w, w, 0, 5);
+    wr::<GPtr<u8>>(rd::<GPtr<u8>>(cam, 0), 0x60, r);
+    rw_texture_set_raster(rd::<GPtr<u8>>(cam, 4), r);
+}
+
+/// `CRealTimeShadowManager::ReInit()` (0x706870, thiscall), run by `Update` after a D3D device restore (the
+/// restore callback 0x5BA120 sets +1, e.g. when the frame limiter toggles the present interval): for each of the 16
+/// shadows (+4, no NULL check) its `m_camera` (+8) and `m_blurCamera` (+0x14), then the manager's `m_BlurCamera`
+/// (+0x44) and `m_GradientCamera` (+0x4C) get new square rasters of their old width
+/// ([`shadow_camera_reinit_inline`]); finally the tail jump into `m_GradientCamera.MakeGradientRaster()` (0x705D20).
+#[hook(addr = 0x706870, conv = thiscall, name = "CRealTimeShadowManager::ReInit", this = "CRealTimeShadowManager", expect = "83 EC 08 53 55 56 57",
+       unverified = "framelimit-render", route = "L3-only", hazards = "heap-writes",
+       note = "recreates RW rasters after a device reset (frame limiter toggle in the display menu); no recording reaches it yet")]
+pub fn rts_manager_reinit_port(this: GPtr<u8>) {
+    for i in 0..16isize {
+        let s = this.byte_add(4 + i * 4).cast::<GPtr<u8>>().read();
+        shadow_camera_reinit_inline(s.byte_add(8));
+        let s = this.byte_add(4 + i * 4).cast::<GPtr<u8>>().read();
+        shadow_camera_reinit_inline(s.byte_add(0x14));
+    }
+    shadow_camera_reinit_inline(this.byte_add(0x44));
+    shadow_camera_reinit_inline(this.byte_add(0x4C));
+    shadow_camera_make_gradient_raster(this.byte_add(0x4C));
 }
 
 // ------------------------------------------------------------------ CShadows ----------------------
@@ -1440,6 +1483,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_DRAW_BLURRY_RASTER2,
     HOOK_RTS_UPDATE,
     HOOK_RTS_MANAGER_UPDATE,
+    HOOK_RTS_MANAGER_REINIT_PORT,
     HOOK_STORE_SHADOW_TO_BE_RENDERED_TEX,
     HOOK_STORE_REAL_TIME_SHADOW,
 ];
