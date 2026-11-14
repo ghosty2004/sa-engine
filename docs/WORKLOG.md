@@ -1213,3 +1213,8 @@
   writer gate PASS hooks/queue/i686/wasm32/hooktest (l1test/l1 skipped: no L1-pure hook); host clippy fails only on
   master's sa-game det.rs `set_busy_wait_handler`, i686 clippy only on master's `draw_quad_bits` (clippy of sa-ai,
   sa-audio, sa-core and the Linux sa-game target clean). verify-all carjack2 (lanes 4,5,7): IDENTICAL on all 13.
+
+## 2026-11-14 — CARJACK on master (main session)
+- Rebased CARJACK (03471585, 10 commits) onto 87c1b470 in a temporary worktree (queue conflicts resolved by regeneration: 2438 unverified hooks, 380 batches) and fast-forwarded master. 32 hooks + 1 native, batch carjack-1: the CTaskComplexCarSlowBeDraggedOutAndStandUp / CarSlowDragPedOut / CarSlowBeDraggedOut family (0x6486F0 was the user's blocker), CEventPedEnteredMyVehicle, KillPedOnFoot base, DestroyCar / DestroyCarArmed / DragPedFromCar / ScreamInCarThenLeave, LeaveCarAndFlee, GetCurrentCJMood, 16 previously unlisted generated natives; `SA_GAME_JACK` exploration knob.
+- Agent evidence: verify-all carjack2 IDENTICAL 13/13; 3 drivers jacked, 0 blocked over 3600 iterations. Main session on the rebased head: sa-hook lib 58/58, ai_patterns --check clean, i686 build, the jack repro 0 blocked over 3600 iterations; play package refreshed. Ledger entry for 0x621F50 (reference cell).
+- Frontier the agent saw: jacked peds fighting back (GunControl 0x625270, KillPedOnFootMelee), police after a jack (UpdateCarAI law-enforcer path), GoToPointFine::ProcessPed 0x663540, ProstituteSolicit::IsTaskValid 0x661BB0, IsSphereTouchingVehicle 0x6D84D0, burning car 0x4DCBE0.

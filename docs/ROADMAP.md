@@ -205,6 +205,7 @@ Function counts come from `catalog/subsystems.md` (regenerate with `tools/catalo
 Sections: *pending* (blocks "done") · *original UB, not reproducible* · *accepted (user-approved)*.
 
 *pending*
+- AI (CARJACK): `CTaskComplexDestroyCarArmed` ctor 0x621F50 registers its vehicle reference (CEntity::RegisterReference) at its own argument stack slot in the original; the port registers a private static cell, so the later clear-on-delete write lands there instead of in a dead stack slot (no observed state difference; verify-all IDENTICAL 13/13).
 - PHYS: ApplyFriction() (bDisableZ path), ApplySpeed (bounded-door path) and ApplyScriptCollision pass a local CColPoint whose other fields are stack garbage in the original; the ports pass 0 (not reached in the corpus).
 - FSIN/FCOS/FPATAN modelled at 53 bits vs the CPU's 64 (sa_math::x87): every stored/product result matched on the 17 CPU-decided specs; the authority is one Intel CPU (an AMD CPU may differ) (MATH-2).
 - Aliased output pointers are not modelled for IntersectRay, IntersectEdge, CRect::GetCenter, ConvertToEulerAngles and matrix ops whose result aliases an operand; explicit in-place variants exist; L2 must confirm the call sites (MATH-2).
