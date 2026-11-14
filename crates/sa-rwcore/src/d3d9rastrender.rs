@@ -20,7 +20,7 @@ const CONTEXT: usize = 0xB4E9E4;
 orig! {
     /// `FUN_004caae0` (0x4CAAE0, proposed `_rwD3D9RasterCopy`): EAX = source raster, stack `(rect,
     /// scaled)` (caller pops), result in EAX
-    fn raster_copy(src: GPtr<u8>, rect: GPtr<u8>, scaled: u32) -> u32 = reg("args = eax stack stack") 0x4CAAE0 => unported;
+    fn raster_copy(src: GPtr<u8>, rect: GPtr<u8>, scaled: u32) -> u32 = reg("args = eax stack stack") 0x4CAAE0 => crate::raster_copy::raster_copy_to_context;
     /// `FUN_004ca5a0` (0x4CA5A0, proposed `_rwD3D9RasterRenderQuad`): ESI = source raster, EBX =
     /// scaled flag, stack `(rect, blend)` (caller pops); its EAX is not used
     fn raster_render_quad(src: GPtr<u8>, scaled: u32, rect: GPtr<u8>, blend: u32) = reg("args = esi ebx stack stack") 0x4CA5A0 => unported;

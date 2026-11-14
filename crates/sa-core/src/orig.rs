@@ -863,7 +863,8 @@ macro_rules! __orig_body {
         $imp($($a),*)
     }};
     (unported $name:path, reg($spec:literal), ($addr:expr), ($($a:ident : $t:ty),*) $(-> $r:ty)?) => {{
-        const _: $crate::regconv::RegConv = $crate::regconv::RegConv::parse($spec);
+        const SPEC: $crate::regconv::RegConv = $crate::regconv::RegConv::parse($spec);
+        $crate::__orig_reg_dispatch!(SPEC, ($addr), ($($a: $t),*) $(-> $r)?);
         $crate::__orig_body!(unported $name, cdecl, ($addr), ($($a: $t),*) $(-> $r)?)
     }};
     (ported $imp:path, $conv:ident, ($addr:expr), ($($a:ident : $t:ty),*) $(-> $r:ty)?) => {
@@ -888,6 +889,39 @@ macro_rules! __orig_body {
             $crate::orig::registry::describe(__sa_callee)
         ))
     }};
+}
+
+/// Phase B on 32-bit x86, register convention: a registered entry has the original's convention
+/// (registers, ST0 for an `X87`/`f32` result), so it is called through a `RegFrame` like the
+/// original in phase A. (Dispatching it as `cdecl` returned an `X87` through a hidden pointer the
+/// entry does not take: the pause menu's Stats page jumped into the host table.)
+#[cfg(all(not(sa_phase_a), target_arch = "x86"))]
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __orig_reg_dispatch {
+    ($spec:ident, ($addr:expr), ($($a:ident : $t:ty),*) $(-> $r:ty)?) => {
+        if let Some(e) = $crate::orig::registry::lookup(($addr) as usize) {
+            let mut fr = $crate::regconv::RegFrame::new(e.entry as u32);
+            #[allow(unused_mut, unused_variables)]
+            let mut _i = 0usize;
+            $( fr.arg(&$spec, _i, $a); _i += 1; )*
+            fr.want_st0 = <$crate::__orig_ret_ty!($($r)?) as $crate::regconv::FromRegFrame>::ST0 as u8;
+            // SAFETY: the registered entry has the original's register convention (the declaration's spec).
+            #[allow(unsafe_code)]
+            unsafe { $crate::regconv::call_regs(&mut fr) };
+            return <$crate::__orig_ret_ty!($($r)?) as $crate::regconv::FromRegFrame>::from_frame(&fr);
+        }
+    };
+}
+
+/// Other phase B/C targets: the `cdecl` dispatch below (type-erased on wasm32).
+#[cfg(all(not(sa_phase_a), not(target_arch = "x86")))]
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __orig_reg_dispatch {
+    ($spec:ident, ($addr:expr), ($($a:ident : $t:ty),*) $(-> $r:ty)?) => {
+        let _ = &$spec;
+    };
 }
 
 /// Phase B on 32-bit x86: call the native implementation registered for the callee address

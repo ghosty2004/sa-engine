@@ -714,8 +714,8 @@ impl FromRegFrame for f32 {
     }
 }
 
-/// Calls `f.target` with the frame's registers and stack words, and stores EAX..EDI (and, with
-/// `want_st0`, ST0 as 80 bits, popped) back into the frame. EBX/ESI/EDI/EBP of the Rust caller are
+/// Calls `f.target` with the frame's registers and stack words (ESP 16-byte aligned at the call), and
+/// stores EAX..EDI (and, with `want_st0`, ST0 as 80 bits, popped) back into the frame. EBX/ESI/EDI/EBP of the Rust caller are
 /// saved around the call; the callee's stack cleanup (if any) does not matter (ESP is restored from
 /// EBP, which every MSVC function preserves).
 ///
@@ -735,6 +735,15 @@ pub unsafe fn call_regs(f: &mut RegFrame) {
             "mov ebp, esp",
             "push eax",
             "push dword ptr [eax]",
+            // [ebp - 12]: ESP before the stack words, aligned so that ESP is 16-byte aligned at the
+            // `call` (a Rust entry, e.g. a phase B `#[hook]` shim, may use aligned SSE stores)
+            "push 0",
+            "mov ecx, dword ptr [eax + 32]",
+            "shl ecx, 2",
+            "sub esp, ecx",
+            "and esp, -16",
+            "add esp, ecx",
+            "mov dword ptr [ebp - 12], esp",
             "mov ecx, dword ptr [eax + 32]",
             "2:",
             "test ecx, ecx",
@@ -753,7 +762,7 @@ pub unsafe fn call_regs(f: &mut RegFrame) {
             "xchg eax, dword ptr [ebp - 4]",
             "mov dword ptr [eax + 104], ecx",
             "mov dword ptr [eax + 136], esp",
-            "lea ecx, [ebp - 8]",
+            "mov ecx, dword ptr [ebp - 12]",
             "sub dword ptr [eax + 136], ecx",
             "mov dword ptr [eax + 108], edx",
             "mov dword ptr [eax + 112], ebx",
