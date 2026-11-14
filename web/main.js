@@ -173,7 +173,7 @@ async function start(files) {
       $('ministatus').textContent = m.error ? `error: ${m.error}` : m.blocked ? `${m.blocked} blocked` : '';
       // the SA:MP UI's cursor (dialogs, scoreboard, class-selection panel) takes the pointer like the menus
       inMenu = m.state !== 9 || !!m.uiCursor;
-      if (m.uiCursor && document.pointerLockElement === canvas) document.exitPointerLock?.();
+      if (m.uiCursor && document.pointerLockElement === canvas) { selfRelease = true; document.exitPointerLock?.(); }
       canvas.classList.toggle('menu', inMenu && document.pointerLockElement !== canvas);
       $('blocked').textContent = m.blocked ? `blocked iterations: ${m.blocked}, last: ${m.lastBlocked} (not ported yet)` : '';
     }
@@ -250,6 +250,8 @@ window.addEventListener('blur', () => worker?.postMessage({ type: 'blur' }));
 
 // full window (?full=1) and fullscreen: CSS scales the canvas (the game keeps its video mode, letterboxed at 4:3)
 let inMenu = true;
+// the page released the pointer lock itself (the SA:MP UI shows its cursor), not the user's Esc
+let selfRelease = false;
 function setFull(on) {
   document.body.classList.toggle('full', on);
   $('unfull').textContent = document.fullscreenElement ? 'Exit fullscreen' : 'Exit full window';
@@ -259,6 +261,9 @@ $('fullwin').onclick = () => setFull(true);
 $('unfull').onclick = () => (document.fullscreenElement ? document.exitFullscreen() : setFull(false));
 $('fullscreen').onclick = () => $('stage').requestFullscreen?.().then(() => setFull(false)).catch((e) => log(`fullscreen: ${e}`, 'error'));
 document.addEventListener('fullscreenchange', () => {
+  // in fullscreen Chromium lets the page keep Esc (Keyboard Lock API): it then reaches the game like any key
+  if (document.fullscreenElement) navigator.keyboard?.lock?.(['Escape']).catch(() => {});
+  else navigator.keyboard?.unlock?.();
   $('unfull').textContent = document.fullscreenElement ? 'Exit fullscreen' : 'Exit full window';
   canvas.focus();
 });
@@ -297,8 +302,18 @@ canvas.addEventListener('mousedown', (e) => {
   worker.postMessage({ type: 'button', button: e.button, down: true });
 });
 // the capture indicator (pointer lock comes and goes with clicks, Esc and focus changes)
+// Esc while the pointer is locked never reaches the page: the browser uses it to release the lock. When the lock goes
+// away in game (not released by the page, the page still focused), that was the user's Esc: pass it to the game, which
+// opens the pause menu as the original does on Esc.
+let lockWasOn = false;
 document.addEventListener('pointerlockchange', () => {
   const on = document.pointerLockElement === canvas;
+  if (lockWasOn && !on && !selfRelease && !inMenu && worker && document.hasFocus()) {
+    worker.postMessage({ type: 'key', code: 'Escape', down: true, repeat: false, text: '' });
+    setTimeout(() => worker?.postMessage({ type: 'key', code: 'Escape', down: false, repeat: false, text: '' }), 80);
+  }
+  lockWasOn = on;
+  selfRelease = false;
   $('mouse').textContent = `mouse captured: ${on ? 'yes' : 'no'}`;
   $('mouse').className = on ? 'on' : 'off';
   window.saGame.mouseCaptured = on;
