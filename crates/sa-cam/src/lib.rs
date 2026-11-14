@@ -55,3 +55,4 @@ pub mod camera_process;
 pub mod generated;
 pub mod idle_cam_slerp;
 pub mod std6_natives;
+pub mod idlecam_set_target;

@@ -70,6 +70,13 @@ pub fn x87_sin(a: u32) -> f64 {
     sa_math::x87::X87::from_f32(f32::from_bits(a)).fsin().to_f64()
 }
 
+/// `FxSystem_c::GetPlayStatus()` (0x4AA900, thiscall): `movsx eax, byte [ecx+0x50]; ret` (PEDHIT: the hydrant's
+/// water fountain).
+#[native(addr = 0x4AA900, conv = thiscall, name = "FxSystem_c::GetPlayStatus")]
+pub fn fx_system_get_play_status(this: GPtr<u8>) -> i32 {
+    crate::fx::fx_system_get_play_status(this)
+}
+
 /// Every `#[native]` of this module.
 pub const NATIVES: &[NativeReg] = &[
     NATIVE_LIST_GET_NUM_ITEMS,
@@ -82,4 +89,5 @@ pub const NATIVES: &[NativeReg] = &[
     NATIVE_VEHICLE_GET_RIDE_ANIM_DATA,
     NATIVE_MOVING_THINGS_RENDER_BEFORE_CLOUDS,
     NATIVE_X87_SIN,
+    NATIVE_FX_SYSTEM_GET_PLAY_STATUS,
 ];

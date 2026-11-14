@@ -232,4 +232,7 @@ pub mod evasive_dive_next_sub_task;
 pub mod conversation_setup_done;
 pub mod hassle_vehicle_track_entity;
 pub mod event_ped_to_flee_dtor;
+pub mod event_vehicle_dtors;
+pub mod prostitute_solicit;
+pub mod enter_any_car_as_driver;
 pub mod follow_ped_footsteps_control;

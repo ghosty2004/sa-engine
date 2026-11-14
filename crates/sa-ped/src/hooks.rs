@@ -35,6 +35,8 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::ped_pointer_valid::HOOKS,
     crate::player_sprint_results::HOOKS,
     crate::ped_dead_money::HOOKS,
+    crate::ped_kill_with_car::HOOKS,
+    crate::ped_tyres_bloody::HOOKS,
     crate::save_blocks::HOOKS,
     crate::ped_is_pointer_valid::HOOKS,
 ];

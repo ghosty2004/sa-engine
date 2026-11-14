@@ -49,3 +49,5 @@ pub mod player_sprint_results;
 pub mod save_blocks;
 pub mod ped_is_pointer_valid;
 pub mod ped_dead_money;
+pub mod ped_kill_with_car;
+pub mod ped_tyres_bloody;
