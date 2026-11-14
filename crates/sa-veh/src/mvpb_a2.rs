@@ -7,6 +7,7 @@ use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
 use crate::common::{f32_of, g, rd, wr, x};
+use sa_math::x87::X87;
 
 orig! {
     /// `CVehicle::Render()` (0x6D0E60)
@@ -101,6 +102,74 @@ pub fn do_head_light_reflection_twin(this: GPtr<u8>, mat: GPtr<u8>) {
     let front_y = f32_of(x(w).fmul(ny));
     let front_x = f32_of(x(w).fmul_m(nx));
     let tex = g::<GPtr<u8>>(0xC403F8).read();
+    store_car_light_shadow(
+        this,
+        this.addr() as u32 + 0x16,
+        tex,
+        GPtr::from_raw(pos.as_mut_ptr()).cast(),
+        front_x,
+        front_y,
+        side_x,
+        side_y,
+        0x2D,
+        0x2D,
+        0x2D,
+        7.0,
+    );
+}
+
+/// `1 / sqrt(y² + x²)` of a matrix row as the original computes it (the zero sum itself when it is 0).
+fn inv_len_xy(xm: f32, y: X87) -> X87 {
+    let s = y.fmul(y).fadd(x(xm).fmul_m(xm));
+    if !s.fcom(x(0.0)).test_parity(0x44) { s } else { s.fsqrt().fdivr_m(1.0) }
+}
+
+/// `CVehicle::DoHeadLightReflectionSingle(CMatrix& m, bool isRight)` (0x6E1440, `ret 8`): with `P` = the vehicle
+/// struct's first dummy (model info +0x5C), `P.x` negated (f32) for the left light; `f` = the matrix forward xy and
+/// `r` = its right xy, each normalised as in the twin version and stored as f32; `a = |P.x| * 4` (x87), or 1.25 for
+/// bikes (+0x594 == 9) and model 0x1D7; `b = a + a`, `o = 1 + b + P.y`: the light position is the entity position +
+/// `(f.x * o + r.x * P.x, f.y * o + r.y * P.x, +2)` (each sum stored as f32 in the original's order) and
+/// `CShadows::StoreCarLightShadow(this, this + 0x16, [0xC403FC], &pos, b * f.x, f.y * b, a * f.y, -(a * f.x), 45, 45,
+/// 45, 7.0)`.
+#[hook(addr = 0x6E1440, conv = thiscall, name = "CVehicle::DoHeadLightReflectionSingle", this = "CVehicle", expect = "83 EC 20 56 66 8B 71 22",
+       unverified = "veh-lights-1", route = "L2", hazards = "x87-transcendental", recs = "driving",
+       note = "the original stores f.x / r.x into its own argument slots (entry esp+8 / esp+4); the port does not")]
+pub fn do_head_light_reflection_single(this: GPtr<u8>, mat: GPtr<u8>, right: u8) {
+    let model = rd::<i16>(this, 0x22);
+    let vs = rd::<GPtr<u8>>(crate::common::model_info(model as i32), 0x5C);
+    let mut px = rd::<f32>(vs, 0);
+    let py = rd::<f32>(vs, 4);
+    if right == 0 {
+        px = f32_of(x(px).fchs());
+    }
+    let src = entity_pos(this);
+    let mut pos = [rd::<f32>(src, 0), rd::<f32>(src, 4), rd::<f32>(src, 8)];
+    let fxm = rd::<f32>(mat, 0x10);
+    let fy = x(rd::<f32>(mat, 0x14));
+    let inv = inv_len_xy(fxm, fy);
+    let fnx = f32_of(x(fxm).fmul(inv));
+    let fny = f32_of(inv.fmul(fy));
+    let rxm = rd::<f32>(mat, 0);
+    let ry = x(rd::<f32>(mat, 4));
+    let inv2 = inv_len_xy(rxm, ry);
+    let rnx = f32_of(x(rxm).fmul(inv2));
+    let rny = f32_of(ry.fmul(inv2));
+    let mut a = x(px).fabs().fmul_m(4.0);
+    if rd::<u32>(this, 0x594) == 9 || model == 0x1D7 {
+        a = x(1.25);
+    }
+    let b = a.fadd(a);
+    let o = x(1.0).fadd(b).fadd_m(py);
+    let x_front = x(fnx).fmul(o).fadd_m(pos[0]);
+    pos[1] = f32_of(o.fmul_m(fny).fadd_m(pos[1]));
+    pos[2] = f32_of(x(pos[2]).fadd_m(2.0));
+    pos[0] = f32_of(x(rnx).fmul_m(px).fadd(x_front));
+    pos[1] = f32_of(x(rny).fmul_m(px).fadd_m(pos[1]));
+    let side_y = f32_of(a.fmul_m(fnx).fchs());
+    let side_x = f32_of(a.fmul_m(fny));
+    let front_y = f32_of(x(fny).fmul(b));
+    let front_x = f32_of(b.fmul_m(fnx));
+    let tex = g::<GPtr<u8>>(0xC403FC).read();
     store_car_light_shadow(
         this,
         this.addr() as u32 + 0x16,
@@ -278,6 +347,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_CALCULATE_GEAR_FOR_SIMPLE_CAR,
     HOOK_TRAIN_RENDER,
     HOOK_DO_HEAD_LIGHT_REFLECTION_TWIN,
+    HOOK_DO_HEAD_LIGHT_REFLECTION_SINGLE,
     HOOK_SCAN_FOR_CRIMES,
     HOOK_SET_TRANSMISSION_ROTATION,
 ];
