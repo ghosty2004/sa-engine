@@ -1316,6 +1316,7 @@
 - Fast-forwarded master to 7e2da8b9: one SA:MP UI, samp-rs's own, drawn through `sa_samp_api::ui::UiBackend` (API v5): samp-client's pass (`ui::render`, `ui::session`, `ui::host`) generic over the trait, its D3D9/DXUT code the original-exe backend, `sa-samp`'s overlay the engine backend; shared geometry moved into samp-ui (dxut, classpanel, scoreboard/deathwindow layout); `crates/sa-samp-ui` deleted (22,722 → 19,537 lines incl. new tests). Behaviour differences resolved by samp-rs/spec, listed in overlay.md section 10.4.
 - Main session: the browser build panicked at start-up (`std::time::SystemTime` in the UI core; wasm32 has no std clock) → web_time; GETTING-STARTED and the Makefile `test` target updated. Checks: samp-rs workspace tests green, sa-samp 30, sa-samp-api; browser (headless Brave, GPU) joins the local open.mp server, class-panel Spawn click → spawned, 0 blocked.
 - Not re-measured: the D3D9 call stream on the original exe (builds and clippy clean).
+
 ## 2026-11-14 FRONTIER-1: the phase B frontier, the user-hit blockers and the pause-menu crash (agent adab96e32a9742efe)
 - Integration (step 0): WRITER-WORLD-2's own commits world6-1/3/4/5 cherry-picked (world3/5/6-2 were on master
   already); its BreakObject_c::DoCollision 0x59E1F0 (world5-1) moved into master's BreakObject_c port (master's file
