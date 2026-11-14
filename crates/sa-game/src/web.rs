@@ -1,7 +1,8 @@
-//! The web front end (wasm32, WEB-1): the same boot and main loop as the native `--window` mode, driven by the
-//! page's worker (`web/worker.js`): the game folder is the user's own install ([`crate::webfs`]), the device draws
-//! into an `OffscreenCanvas` through wgpu (WebGPU, else WebGL2), and the page's keyboard / mouse events become the
-//! platform input (window messages and DirectInput state), exactly as the winit window's do natively.
+//! The web backend (wasm32, WEB-1) of the shared front end ([`crate::frontend`]): the same boot and main loop as the
+//! native `--window` mode, driven by the page's worker (`web/worker.js`): the game folder is the user's own install
+//! ([`crate::webfs`]), the device draws into an `OffscreenCanvas` through wgpu (WebGPU, else WebGL2), and the page's
+//! keyboard / mouse events go through the front end's input pipeline (window messages and DirectInput state), exactly
+//! as the winit window's do natively.
 //!
 //! The legacy address arena lives in the low linear memory at the original addresses (the module is linked above
 //! [`crate::arena::WASM_LOW_END`]), and `orig!`'s registry dispatches through type-erased entries
@@ -11,10 +12,11 @@
 use std::cell::RefCell;
 
 use sa_platform::fs::MemFs;
-use sa_platform::input::{InputState, Key, MouseButton};
+use sa_platform::input::{Key, MouseButton};
 use wasm_bindgen::prelude::*;
 
-use crate::app::{Session, merge_input, synthetic_input};
+use crate::app::Session;
+use crate::frontend::FrontEnd;
 
 /// A console line (the crate's `println!` / `eprintln!`).
 pub fn log_line(s: String) {
@@ -27,7 +29,9 @@ thread_local! {
     static SESSION: std::cell::Cell<*mut Session> = const { std::cell::Cell::new(std::ptr::null_mut()) };
     /// The message of the unported callee that left the current iteration (see [`recover`]).
     static BLOCKED: RefCell<Option<String>> = const { RefCell::new(None) };
-    static INPUT: RefCell<InputState> = RefCell::new(InputState::default());
+    /// The shared front end's input pipeline (borrowed only briefly: never across an iteration, which may leave
+    /// through a JS exception).
+    static FRONT: RefCell<FrontEnd> = RefCell::new(FrontEnd::new(false));
 }
 
 #[wasm_bindgen]
@@ -206,6 +210,8 @@ pub fn boot() -> Result<(), JsValue> {
     )
     .map_err(|e| JsValue::from_str(&e))?;
     SESSION.with(|c| c.set(Box::into_raw(Box::new(s))));
+    // `SA_WEB_AUTO_INPUT=1`: the offscreen mode's synthetic input is added (unattended evidence runs)
+    FRONT.with(|f| *f.borrow_mut() = FrontEnd::new(crate::env::var_os("SA_WEB_AUTO_INPUT").is_some()));
     // from now on an unported callee leaves the main-loop iteration instead of aborting the module
     if crate::env::var_os("SA_WEB_NO_RECOVER").is_none() {
         sa_core::orig::set_unported_handler(unported);
@@ -236,56 +242,13 @@ pub fn frame() -> bool {
             }
         }
     }
-    use std::sync::atomic::Ordering;
-    let presents = crate::d3d9::PRESENTS.load(Ordering::Relaxed);
-    // Most main-loop iterations do not run a game frame: the page runs the loop without the frame limiter's sleep,
-    // so between two frames there are many iterations that only peek messages. The game reads its input
-    // (DirectInput state, CPad) in the iterations that run a frame, which are the ones that present. So the keys
-    // pressed since the last frame stay pending until an iteration presents (the mouse motion and the wheel are kept by
-    // `Session::iterate` until `GetDeviceState` reads them; natively
-    // the limiter sleeps and nearly every iteration is a frame). Window-message events go to the queue once.
-    // A key released before any frame saw it held is released after the next frame instead (a quick tap, or one
-    // shorter than a slow frame, still reaches CPad).
-    let input = INPUT.with(|i| {
-        let mut i = i.borrow_mut();
-        DEFERRED_UP.with(|d| {
-            d.borrow_mut().retain(|&(k, at)| {
-                if presents > at {
-                    i.key_up(k);
-                    false
-                } else {
-                    true
-                }
-            })
-        });
-        let out = i.clone();
-        i.events.clear();
-        // the mouse motion and the wheel are handed over once: `Session::iterate` keeps them until the game's
-        // `GetDeviceState` reads them (DirectInput semantics), so passing the pending sum again would count it twice
-        i.mouse_delta = (0.0, 0.0);
-        i.wheel = 0.0;
-        out
-    });
-    let more = with_session(|s| {
-        let input = if crate::env::var_os("SA_WEB_AUTO_INPUT").is_some() {
-            merge_input(&input, &synthetic_input(s.n))
-        } else {
-            input
-        };
-        s.iterate(input)
-    })
-    .unwrap_or(false);
-    if crate::d3d9::PRESENTS.load(Ordering::Relaxed) != presents {
-        INPUT.with(|i| i.borrow_mut().end_frame());
-    }
+    // the front end's input pipeline (crate::frontend): keys pending until a frame, motion handed over once
+    let Some((input, before)) = with_session(|s| s.n).map(|n| FRONT.with(|f| f.borrow_mut().take(n))) else {
+        return false;
+    };
+    let more = with_session(|s| s.iterate(input)).unwrap_or(false);
+    FRONT.with(|f| f.borrow_mut().after(before));
     more
-}
-
-thread_local! {
-    /// Keys released before a frame saw them held, with the present count at their key-down (see [`frame`]).
-    static DEFERRED_UP: RefCell<Vec<(Key, u32)>> = const { RefCell::new(Vec::new()) };
-    /// The present count when each held key went down.
-    static DOWN_AT: RefCell<Vec<(Key, u32)>> = const { RefCell::new(Vec::new()) };
 }
 
 /// `f` with the session, if the boot made one.
@@ -429,48 +392,27 @@ pub fn presents() -> u32 {
     crate::d3d9::PRESENTS.load(std::sync::atomic::Ordering::Relaxed)
 }
 
+/// Whether the pointer belongs to the menus or the SA:MP UI (absolute positions and clicks, no pointer lock) rather
+/// than the game (pointer lock, relative motion): [`crate::frontend::in_menu`], the rule the native window uses.
+#[wasm_bindgen]
+pub fn in_menu() -> bool {
+    crate::frontend::in_menu()
+}
+
 /// A DOM `KeyboardEvent.code` going down (`repeat`: auto-repeat) or up.
 #[wasm_bindgen]
 pub fn key(code: &str, down: bool, repeat: bool) {
     let Some(k) = key_of(code) else { return };
-    let now = crate::d3d9::PRESENTS.load(std::sync::atomic::Ordering::Relaxed);
-    INPUT.with(|i| {
-        let mut i = i.borrow_mut();
-        match (down, repeat) {
-            (true, false) => {
-                DEFERRED_UP.with(|d| d.borrow_mut().retain(|&(x, _)| x != k));
-                DOWN_AT.with(|d| {
-                    let mut d = d.borrow_mut();
-                    d.retain(|&(x, _)| x != k);
-                    d.push((k, now));
-                });
-                i.key_down(k)
-            }
-            (true, true) => i.key_repeat(k),
-            (false, _) => {
-                let at = DOWN_AT.with(|d| {
-                    let mut d = d.borrow_mut();
-                    let at = d.iter().find(|&&(x, _)| x == k).map(|&(_, a)| a);
-                    d.retain(|&(x, _)| x != k);
-                    at
-                });
-                // no frame since the key went down: release it after the next one
-                match at {
-                    Some(at) if at >= now && i.held.contains(&k) => DEFERRED_UP.with(|d| d.borrow_mut().push((k, at))),
-                    _ => i.key_up(k),
-                }
-            }
-        }
-    });
+    FRONT.with(|f| f.borrow_mut().key(k, down, repeat));
 }
 
 /// Text the layout produced (`WM_CHAR`).
 #[wasm_bindgen]
 pub fn text(s: &str) {
-    INPUT.with(|i| {
-        let mut i = i.borrow_mut();
+    FRONT.with(|f| {
+        let mut f = f.borrow_mut();
         for c in s.chars() {
-            i.events.push(sa_platform::input::InputEvent::Char(c));
+            f.text(c);
         }
     });
 }
@@ -478,18 +420,14 @@ pub fn text(s: &str) {
 /// Relative pointer motion (pointer-lock `movementX/Y`).
 #[wasm_bindgen]
 pub fn mouse_move(dx: f64, dy: f64) {
-    INPUT.with(|i| {
-        let mut i = i.borrow_mut();
-        i.mouse_delta.0 += dx;
-        i.mouse_delta.1 += dy;
-    });
+    FRONT.with(|f| f.borrow_mut().mouse_motion(dx, dy));
 }
 
 /// Absolute pointer position in the game's client pixels (the page scales the canvas position to the video mode):
 /// `WM_MOUSEMOVE`, which the menus read for their cursor (no pointer lock in the menus).
 #[wasm_bindgen]
 pub fn mouse_pos(x: i32, y: i32) {
-    INPUT.with(|i| i.borrow_mut().events.push(sa_platform::input::InputEvent::MouseMove { x, y }));
+    FRONT.with(|f| f.borrow_mut().mouse_pos(x, y));
 }
 
 /// A DOM mouse button (0 left, 1 middle, 2 right, 3 back, 4 forward) going down or up.
@@ -503,28 +441,19 @@ pub fn mouse_button(button: u32, down: bool) {
         4 => MouseButton::X2,
         _ => return,
     };
-    INPUT.with(|i| {
-        let mut i = i.borrow_mut();
-        if down { i.mouse_down(b) } else { i.mouse_up(b) }
-    });
+    FRONT.with(|f| f.borrow_mut().mouse_button(b, down));
 }
 
 /// Wheel lines (positive = away from the user).
 #[wasm_bindgen]
 pub fn wheel(lines: f32) {
-    INPUT.with(|i| {
-        let mut i = i.borrow_mut();
-        i.wheel += lines;
-        i.events.push(sa_platform::input::InputEvent::Wheel(lines));
-    });
+    FRONT.with(|f| f.borrow_mut().wheel(lines));
 }
 
 /// Focus lost: every held key and button is released.
 #[wasm_bindgen]
 pub fn blur() {
-    DEFERRED_UP.with(|d| d.borrow_mut().clear());
-    DOWN_AT.with(|d| d.borrow_mut().clear());
-    INPUT.with(|i| i.borrow_mut().release_all());
+    FRONT.with(|f| f.borrow_mut().blur());
 }
 
 /// The platform key of a DOM `KeyboardEvent.code` (layout-independent physical keys, as winit's `KeyCode`).

@@ -1,12 +1,13 @@
-//! `--window`: the game in a native window.
+//! `--window`: the game in a native window, the native backend of the shared front end ([`crate::frontend`]).
 //!
 //! The window exists before the boot, as in the original (`WinMain` creates the window before RW starts): its GPU
 //! device and surface are handed to the D3D9 seam ([`d3d9::set_window`]), so the device `IDirect3D9::CreateDevice`
 //! creates draws on the window's GPU device and every `Present` draws the back buffer into the window surface. Then
 //! the boot runs, and every redraw of the event loop runs one main-loop iteration (`WinMain`'s loop body: one window
-//! message, or one step of the `gGameState` machine) with the window's input: its keyboard and mouse events become
-//! window messages (the window procedure feeds `CPad`), its held keys and buttons and relative mouse motion the
-//! DirectInput state. Frame pacing is the original's: the in-game frame runs only when the frame limiter's interval
+//! message, or one step of the `gGameState` machine) through [`FrontEnd::iterate`]: the window's keyboard and mouse
+//! events go through the front end's input pipeline (window messages for the window procedure, which feeds `CPad`;
+//! held keys and buttons and relative mouse motion as the DirectInput state). The pointer is captured in game and
+//! free in the menus ([`in_menu`]). Frame pacing is the original's: the in-game frame runs only when the frame limiter's interval
 //! has passed (`winmain.rs`, state 9), the iterations between wait out the rest of the interval.
 //!
 //! The probes that run boot steps in a forked child first are off in this mode (the window's GPU device and display
@@ -19,12 +20,9 @@ use sa_platform::input::{InputEvent, InputState};
 use sa_platform::native::{Window, WindowApp, WindowConfig, run_windowed, set_pointer_capture};
 use sa_rw_wgpu::d3d9::WgpuDevice;
 
-use crate::app::{Args, Session, merge_input, synthetic_input};
+use crate::app::{Args, Session};
 use crate::d3d9;
-
-/// The window's size (the game's default video mode, 800 x 600).
-const WIDTH: u32 = 800;
-const HEIGHT: u32 = 600;
+use crate::frontend::{CLIENT_HEIGHT as HEIGHT, CLIENT_WIDTH as WIDTH, FrontEnd, in_menu, to_client};
 
 fn block_on<F: std::future::Future>(f: F) -> F::Output {
     use std::task::{Context, Poll, Wake, Waker};
@@ -108,15 +106,32 @@ struct GameWindow<'a> {
     titled: usize,
     /// the pointer is captured (relative mode, as DirectInput's exclusive mode in game); released in the menus
     captured: bool,
+    /// the shared front end's input pipeline
+    front: FrontEnd,
 }
 
-/// The menus (front end, or the pause menu over the game), or the SA:MP UI showing its cursor (dialogs, scoreboard,
-/// class-selection panel): the game / the UI draws its own cursor at the `WM_MOUSEMOVE` position, so the pointer is
-/// not captured there (as the web page does).
-fn in_menu() -> bool {
-    crate::winmain::game_state() != crate::winmain::STATE_IDLE
-        || sa_core::game::MENU_ACTIVE.get().get()
-        || crate::samp::ui_cursor_visible()
+impl GameWindow<'_> {
+    /// The window's events since the last redraw into the front end (positions in client pixels).
+    fn feed(&mut self, input: &InputState, size: (u32, u32)) {
+        let f = &mut self.front;
+        for e in &input.events {
+            match *e {
+                InputEvent::KeyDown { key, repeat } => f.key(key, true, repeat),
+                InputEvent::KeyUp { key } => f.key(key, false, false),
+                InputEvent::Char(c) => f.text(c),
+                InputEvent::MouseDown(b) => f.mouse_button(b, true),
+                InputEvent::MouseUp(b) => f.mouse_button(b, false),
+                InputEvent::MouseMove { x, y } => {
+                    let (x, y) = to_client(x, y, size);
+                    f.mouse_pos(x, y)
+                }
+                InputEvent::Wheel(lines) => f.wheel(lines),
+                e => f.event(e),
+            }
+        }
+        f.mouse_motion(input.mouse_delta.0, input.mouse_delta.1);
+        f.set_pads(input.pads.clone());
+    }
 }
 
 impl WindowApp for GameWindow<'_> {
@@ -151,7 +166,7 @@ impl WindowApp for GameWindow<'_> {
         {
             return false;
         }
-        let mut input = input.clone();
+        let mut size = (WIDTH, HEIGHT);
         if let Some(w) = &self.window {
             let menu = in_menu();
             if menu && self.captured {
@@ -162,21 +177,12 @@ impl WindowApp for GameWindow<'_> {
             } else if !menu && !self.captured {
                 self.captured = set_pointer_capture(w, true);
             }
-            // window pixels → the game's client pixels (the back buffer is stretched over the window)
-            let size = w.inner_size();
-            for e in &mut input.events {
-                if let InputEvent::MouseMove { x, y } = e {
-                    *x = (*x as i64 * WIDTH as i64 / size.width.max(1) as i64) as i32;
-                    *y = (*y as i64 * HEIGHT as i64 / size.height.max(1) as i64) as i32;
-                }
-            }
+            let s = w.inner_size();
+            size = (s.width, s.height);
         }
-        let input = if self.args.auto_input {
-            merge_input(&input, &synthetic_input(s.n))
-        } else {
-            input
-        };
-        let go_on = s.iterate(input);
+        self.feed(input, size);
+        let Some(s) = &mut self.session else { return false };
+        let go_on = self.front.iterate(s);
         let presents = d3d9::frame_times();
         if presents.len() >= self.titled + 60
             && let (Some(w), Some(first)) = (&self.window, presents.first())
@@ -204,6 +210,7 @@ pub fn run(args: &Args) -> Result<Session, String> {
         start: Instant::now(),
         titled: 0,
         captured: false,
+        front: FrontEnd::new(args.auto_input),
     };
     let mut cfg = WindowConfig::new("sa-game", WIDTH, HEIGHT);
     cfg.click_to_capture = false;

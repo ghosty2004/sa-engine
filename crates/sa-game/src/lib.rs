@@ -50,6 +50,7 @@ pub mod det;
 pub mod detheap;
 pub mod dsound;
 pub mod dx;
+pub mod frontend;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod game_window;
 pub mod imports;

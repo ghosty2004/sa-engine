@@ -234,7 +234,9 @@ crates/
   sa-hook        phase A DLL: installer, hook table, determinism, the registration tests (run them!)
   sa-launcher    phase A launcher (starts gta_sa.exe suspended, injects sa-hook)
   sa-game        phase B/C executable: boot (WinMain), legacy arena, platform shims (CRT, Win32, DirectInput,
-                 DirectSound, D3D9 device), window loop, deterministic mode, SA:MP host, web front end
+                 DirectSound, D3D9 device), deterministic mode, SA:MP host, and the front end (frontend.rs: one
+                 input pipeline and main-loop driver, pointer rule) with two backends: the native window
+                 (game_window.rs) and the browser worker (web.rs)
   sa-platform    files, time, input, threads for phase B/C
   sa-rw-wgpu     the D3D9 → wgpu seam (WebGPU / Vulkan / WebGL2)
   sa-rw, sa-rwcore   RenderWare

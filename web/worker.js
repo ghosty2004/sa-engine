@@ -208,6 +208,8 @@ function status(extra) {
     state: sa.game_state(),
     uiCursor: sa.ui_cursor?.() ?? false,
     menuActive: sa.menu_active?.() ?? false,
+    // the front end's pointer rule (crate::frontend::in_menu), the same as the native window's
+    inMenu: sa.in_menu?.(),
     presents: sa.in_game_presents(),
     allPresents: sa.presents(),
     mib: Math.round(bytesRead / 1048576),

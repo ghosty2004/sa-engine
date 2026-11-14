@@ -48,7 +48,7 @@ The same engine runs:
 |---|---|
 | Native Linux build | Boots to the main menu, New Game, free roam at Grove Street: walking, sprinting, jumping, fighting, vehicles (enter, drive, exit, jacking), traffic and pedestrians, audio |
 | Story | The opening mission runs natively through the airport cutscene, the police-car ride and the drop-off; missions are being brought up one by one |
-| Browser build | Same engine in a web worker (OffscreenCanvas, WebGPU / WebGL2, AudioWorklet), full-window and fullscreen |
+| Browser build | Same engine in a web worker (OffscreenCanvas, WebGPU / WebGL2, AudioWorklet), full-window and fullscreen; the native window and the page are two backends of one front end (`sa-game` `frontend.rs`: one input pipeline) |
 | SA:MP | Joins 0.3.7-R4 / open.mp servers natively and in the browser: original loading screen, class selection (`<<` `>>` `Spawn`), chat, dialogs, scoreboard, textdraws, nametags |
 | Verification | Every recording of the corpus replays bit-identical (17 subsystem hashes per frame) with the ports on |
 
