@@ -436,6 +436,7 @@ pub const READERS: [Reader; 50] = [
         disp_off: 2,
         key: 0x642511,
         value: 0xDBFD_76E9,
+    },
     // Batch world6-1: InteriorGroup_c::FindInteriorInfo entry 0x594970 (`nop; jmp 0x4075A5`):
     // `sbb edx, [0x594972]` at 0x401249 (the jmp's rel32).
     Reader {
@@ -453,6 +454,7 @@ pub const READERS: [Reader; 50] = [
         disp_off: 2,
         key: 0x499692,
         value: 0xF682_A8E9,
+    },
     // Batch samp2-weapon-1: CProjectileInfo::AddProjectile entry 0x737C80 (`push -1; jmp 0x401C3D`): the chunk
     // code at 0x407827 reads the dword at 0x737C82 (the jmp opcode and three rel32 bytes) as a key
     Reader {

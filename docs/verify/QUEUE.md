@@ -267,7 +267,11 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | samp-rw-2 | 2 | RW | 87822502 | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
 | samp-script-1 | 6 | SCRIPT | 87822502 | master | 6 | 0 | 0 | 0 | 0 | L2 6 |
 | samp-unk-1 | 14 | UNK-game | 87822502 | master | 14 | 0 | 0 | 0 | 0 | L2 14 |
-| samp2-render-1 | 1 | RENDER | 572a1369 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| samp2-fx-1 | 2 | RENDER | 4ee147b1 | worktree-agent-adab96e32a9742efe | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| samp2-phys-1 | 2 | PHYS | 4042b7f5 | worktree-agent-adab96e32a9742efe | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| samp2-render-1 | 3 | RENDER | 572a1369 | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| samp2-water-1 | 4 | RENDER, WEAPON | 4ee147b1 | worktree-agent-adab96e32a9742efe | 4 | 0 | 0 | 0 | 0 | L2 1, L3-only 3 |
+| samp2-weapon-1 | 3 | WEAPON | 4ee147b1 | worktree-agent-adab96e32a9742efe | 3 | 0 | 0 | 0 | 0 | L2 3 |
 | save-core-1 | 3 | SAVE | 9b1fb21c | master | 3 | 0 | 0 | 0 | 0 | L3-only 1, split 2 |
 | save-veh-1 | 5 | VEH | 9b1fb21c | master | 5 | 0 | 0 | 0 | 0 | L2 1, split 4 |
 | script5-1 | 6 | SCRIPT | 7ff4d4e0 | master | 6 | 0 | 0 | 0 | 0 | L2 6 |
@@ -378,9 +382,11 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | world4-1 | 9 | WORLD | 64663f15 | master | 9 | 0 | 0 | 0 | 0 | L2 9 |
 | world4-2 | 4 | WORLD | 419315e3 | master | 4 | 0 | 0 | 0 | 0 | L2 3, L3-only 1 |
 | world5-2 | 11 | WORLD | 1212c39d | master | 11 | 0 | 0 | 0 | 0 | L2 8, split 3 |
-| world6-1 | 1 | WORLD | 88a72154 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| world6-1 | 10 | WORLD | 88a72154 | master | 10 | 0 | 0 | 0 | 0 | L2 10 |
 | world6-2 | 15 | WORLD | ecb128cf | master | 15 | 0 | 0 | 0 | 0 | L2 15 |
-| world6-3 | 1 | WORLD | 9a4a4418 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| world6-3 | 34 | WORLD | 9a4a4418 | master | 34 | 0 | 0 | 0 | 0 | L2 33, split 1 |
+| world6-4 | 11 | WORLD | cff5d372 | worktree-agent-adab96e32a9742efe | 11 | 0 | 0 | 0 | 0 | L2 10, split 1 |
+| world6-5 | 4 | WORLD | 88f90241 | worktree-agent-adab96e32a9742efe | 4 | 0 | 0 | 0 | 0 | L2 4 |
 | writerq-ai-1 | 3 | AI | ddda169b | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
 | writerq-ai-2 | 11 | AI, SCRIPT | 9b393bba | master | 11 | 0 | 0 | 0 | 0 | L2 11 |
 | writerq-ai-3 | 11 | AI, UNK-game | 5626d260 | master | 11 | 0 | 0 | 0 | 0 | L2 11 |
@@ -5866,20 +5872,89 @@ SA_UNVERIFIED=samp-unk-1 LANE=$LANE tools/e2e/port-l2.sh batch:samp-unk-1 $SA_RO
 | 0x647710 | `FUN_00647710` | written | L2 | heap-writes |
 | 0x647790 | `FUN_00647790` | written | L2 | heap-writes |
 
-## samp2-render-1
+## samp2-fx-1
 
-1 hooks in sa-render; hazards: none; recordings calling them: driving (1).
+2 hooks in sa-render; hazards: heap-writes (1), stack-residue (1), x87-transcendental (1); recordings calling them: weapon-combat (2).
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh samp2-render-1 $SA_ROOT/target/e2e/corpus/driving.sarec $LANE
+tools/verify/bisect-batch.sh samp2-fx-1 $SA_ROOT/target/e2e/corpus/weapon-combat.sarec $LANE
 # L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=samp2-render-1 LANE=$LANE tools/e2e/port-l2.sh batch:samp2-render-1 $SA_ROOT/target/e2e/corpus/driving.sarec --runs "plain l2 rust" --tag samp2-render-1
+SA_UNVERIFIED=samp2-fx-1 LANE=$LANE tools/e2e/port-l2.sh batch:samp2-fx-1 $SA_ROOT/target/e2e/corpus/weapon-combat.sarec --runs "plain l2 rust" --tag samp2-fx-1
 ```
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
+| 0x49F3D0 | `Fx_c::AddBulletImpact` | written | L2 | heap-writes |
+| 0x723750 | `CBulletTraces::AddTrace-` | written | L2 | x87-transcendental,stack-residue |
+
+## samp2-phys-1
+
+2 hooks in sa-world; hazards: heap-writes (2), x87-transcendental (1); recordings calling them: boat (2).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh samp2-phys-1 $SA_ROOT/target/e2e/corpus/boat.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=samp2-phys-1 LANE=$LANE tools/e2e/port-l2.sh batch:samp2-phys-1 $SA_ROOT/target/e2e/corpus/boat.sarec --runs "plain l2 rust" --tag samp2-phys-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x6C3030 | `cBuoyancy::ProcessBuoyancyBoat` | written | L2 | heap-writes |
+| 0x6C34E0 | `cBuoyancy::AddSplashParticles` | written | L2 | heap-writes,x87-transcendental |
+
+## samp2-render-1
+
+3 hooks in sa-render; hazards: heap-writes (1), uninit-locals (1); recordings calling them: driving (1), grove-walk (1), weapon-combat (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh samp2-render-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=samp2-render-1 LANE=$LANE tools/e2e/port-l2.sh batch:samp2-render-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag samp2-render-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x71CF50 | `CGlass::BreakGlassPhysically` | written | L2 | heap-writes |
 | 0x720930 | `CSkidmarks::RegisterOne-` | written | L2 | none |
+| 0x725C00 | `CCheckpoint::Render` | written | L2 | uninit-locals |
+
+## samp2-water-1
+
+4 hooks in sa-render; hazards: uninit-locals (1), x87-transcendental (2); recordings calling them: boat (2), swim (1), weapon-combat (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh samp2-water-1 $SA_ROOT/target/e2e/corpus/boat.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=samp2-water-1 LANE=$LANE tools/e2e/port-l2.sh batch:samp2-water-1 $SA_ROOT/target/e2e/corpus/boat.sarec --runs "plain l2 rust" --tag samp2-water-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x6E61B0 | `FUN_006e61b0` | written | L2 | none |
+| 0x6EA260 | `CWaterLevel::RenderWakeSegment` | written | L3-only | x87-transcendental |
+| 0x6ECF00 | `CWaterLevel::SplitWaterTriangleAlongXLine` | written | L3-only | uninit-locals |
+| 0x7039C0 | `CPostEffects::UnderWaterRipple` | written | L3-only | x87-transcendental |
+
+## samp2-weapon-1
+
+3 hooks in sa-weapon; hazards: entry-protection-read (1), heap-writes (3), stack-residue (1), uninit-locals (2), x87-transcendental (2); recordings calling them: weapon-combat (3).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh samp2-weapon-1 $SA_ROOT/target/e2e/corpus/weapon-combat.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=samp2-weapon-1 LANE=$LANE tools/e2e/port-l2.sh batch:samp2-weapon-1 $SA_ROOT/target/e2e/corpus/weapon-combat.sarec --runs "plain l2 rust" --tag samp2-weapon-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x737C80 | `CProjectileInfo::AddProjectile` | written | L2 | x87-transcendental,heap-writes,uninit-locals,entry-protection-read |
+| 0x73FB10 | `CWeapon::FireInstantHit` | written | L2 | x87-transcendental,uninit-locals,heap-writes |
+| 0x741360 | `CWeapon::FireProjectile` | written | L2 | heap-writes,stack-residue |
 
 ## save-core-1
 
@@ -8020,7 +8095,7 @@ SA_UNVERIFIED=world5-2 LANE=$LANE tools/e2e/port-l2.sh batch:world5-2 $SA_ROOT/t
 
 ## world6-1
 
-1 hooks in sa-world; hazards: heap-writes (1), uninit-locals (1); recordings calling them: driving (1), weapon-combat (1).
+10 hooks in sa-world; hazards: entry-protection-read (2), heap-writes (6), uninit-locals (4), x87-transcendental (1); recordings calling them: driving (1), police-gang (1), weapon-combat (2), world-cheats (1).
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
@@ -8031,6 +8106,15 @@ SA_UNVERIFIED=world6-1 LANE=$LANE tools/e2e/port-l2.sh batch:world6-1 $SA_ROOT/t
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
+| 0x449220 | `FUN_00449220` | written | L2 | heap-writes |
+| 0x499690 | `CSetPiece::TryToGenerateCopPed` | written | L2 | entry-protection-read,heap-writes |
+| 0x565200 | `CWorld::FindObjectsIntersectingAngledCollisionBoxSectorList<CPtrListDoubleLink<CPhysical*>>` | written | L2 | none |
+| 0x567750 | `CWorld::TriggerExplosionSectorList<CPtrListDoubleLink<CPhysical*>>` | written | L2 | x87-transcendental,uninit-locals,heap-writes |
+| 0x569660 | `CWorld::FindGroundZForCoord` | written | L2 | none |
+| 0x593120 | `Interior_c::PlaceFurnitureOnWall` | written | L2 | uninit-locals,heap-writes |
+| 0x594970 | `InteriorGroup_c::FindInteriorInfo` | written | L2 | entry-protection-read |
+| 0x5980F0 | `InteriorManager_c::AreAnimsLoaded` | written | L2 | none |
+| 0x599210 | `Interior_c::Office_PlaceEdgeFillers` | written | L2 | uninit-locals,heap-writes |
 | 0x5A0D90 | `CObject::ObjectDamage` | written | L2 | uninit-locals,heap-writes |
 
 ## world6-2
@@ -8064,7 +8148,7 @@ SA_UNVERIFIED=world6-2 LANE=$LANE tools/e2e/port-l2.sh batch:world6-2 $SA_ROOT/t
 
 ## world6-3
 
-1 hooks in sa-world; hazards: heap-writes (1); recordings calling them: no coverage data.
+34 hooks in sa-world; hazards: heap-writes (22), uninit-locals (2); recordings calling them: no coverage data.
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
@@ -8076,6 +8160,82 @@ SA_UNVERIFIED=world6-3 LANE=$LANE tools/e2e/port-l2.sh batch:world6-3 $SA_ROOT/t
 | address | name | status | route | hazards |
 |---|---|---|---|---|
 | 0x43E8B0 | `CEntryExit::GenerateAmbientPeds` | written | L2 | heap-writes |
+| 0x449050 | `CGarage::EntityHasASphereWayOutsideGarage` | written | L2 | heap-writes |
+| 0x449690 | `CGarage::RemoveCarsBlockingDoorNotInside` | written | L2 | heap-writes |
+| 0x44A9C0 | `CGarage::IsGarageEmpty` | written | L2 | uninit-locals |
+| 0x533050 | `CEntity::LivesInThisNonOverlapSector` | written | L2 | none |
+| 0x55A0B0 | `CStats::RegisterFastestTime` | written | L2 | none |
+| 0x55A160 | `CStats::RegisterBestPosition` | written | L2 | none |
+| 0x5633D0 | `CWorld::ProcessForAnimViewer` | written | L2 | heap-writes |
+| 0x563A10 | `CWorld::RemoveEntityInsteadOfProcessingIt` | written | L2 | heap-writes |
+| 0x5660B0 | `CWorld::UseDetonator` | written | L2 | heap-writes |
+| 0x5664A0 | `CWorld::TestForBuildingsOnTopOfEachOther-Void` | written | L2 | none |
+| 0x569750 | `CWorld::FindRoofZFor3DCoord` | written | L2 | none |
+| 0x5697F0 | `CWorld::FindLowestZForCoord` | written | L2 | none |
+| 0x56B910 | `CWorld::SetWorldOnFire` | written | L2 | heap-writes |
+| 0x56B9C0 | `CWorld::RepositionCertainDynamicObjects` | written | L2 | heap-writes |
+| 0x590FD0 | `FurnitureSubGroup_c::GetRandomId` | written | L2 | none |
+| 0x591590 | `Interior_c::Furnish` | written | L2 | heap-writes |
+| 0x5915D0 | `Interior_c::Unfurnish` | written | L2 | heap-writes |
+| 0x591C50 | `Interior_c::FindEmptyTiles` | written | L2 | none |
+| 0x592230 | `Interior_c::Exit` | written | L2 | heap-writes |
+| 0x593340 | `Interior_c::PlaceFurnitureInCorner` | written | L2 | heap-writes |
+| 0x593F10 | `Interior_c::Bedroom_AddTableItem` | written | L2 | heap-writes |
+| 0x5970B0 | `Interior_c::FurnishKitchen` | written | L2 | uninit-locals,heap-writes |
+| 0x597430 | `Interior_c::Lounge_AddHifi` | written | L2 | heap-writes |
+| 0x5974E0 | `Interior_c::Lounge_AddChairInfo` | written | L2 | heap-writes |
+| 0x598090 | `InteriorManager_c::GetBoundingBox` | written | L2 | none |
+| 0x5983D0 | `InteriorManager_c::GetVectorsInterior` | written | L2 | none |
+| 0x598620 | `InteriorManager_c::GetPedsInterior` | written | L2 | none |
+| 0x599770 | `Interior_c::Office_FurnishEdges` | written | L2 | heap-writes |
+| 0x599960 | `Interior_c::Office_PlaceDeskQuad` | written | L2 | heap-writes |
+| 0x599A30 | `Interior_c::Office_FurnishCenter` | written | L2 | heap-writes |
+| 0x599AF0 | `Interior_c::FurnishOffice` | written | L2 | heap-writes |
+| 0x5C04A0 | `FurnitureManager_c::Init` | written | split | heap-writes |
+| 0x6E3E60 | `WaterCreature_c::Exit` | written | L2 | heap-writes |
+
+## world6-4
+
+11 hooks in sa-world; hazards: heap-writes (8); recordings calling them: world-cheats (3).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh world6-4 $SA_ROOT/target/e2e/corpus/world-cheats.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=world6-4 LANE=$LANE tools/e2e/port-l2.sh batch:world6-4 $SA_ROOT/target/e2e/corpus/world-cheats.sarec --runs "plain l2 rust" --tag world6-4
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x438FF0 | `CCheat::SuicideCheat` | written | L2 | heap-writes |
+| 0x4393F0 | `CCheat::LoveConquersAllCheat` | written | L2 | heap-writes |
+| 0x439E50 | `CCheat::NinjaCheat` | written | L2 | heap-writes |
+| 0x4552D0 | `CPickups::PickedUpOyster` | written | L2 | heap-writes |
+| 0x455390 | `CPickups::PickedUpHorseShoe` | written | L2 | heap-writes |
+| 0x563840 | `CWorld::RemoveStaticObjects` | written | split | heap-writes |
+| 0x5659F0 | `CWorld::SetCarsOnFire` | written | L2 | heap-writes |
+| 0x5917C0 | `Interior_c::SetCornerTiles` | written | L2 | none |
+| 0x593DB0 | `Interior_c::GetBoundingBox` | written | L2 | none |
+| 0x594A50 | `InteriorGroup_c::FindClosestInteriorInfo` | written | L2 | none |
+| 0x5995B0 | `Interior_c::Office_PlaceEdgeDesks` | written | L2 | heap-writes |
+
+## world6-5
+
+4 hooks in sa-world; hazards: heap-writes (3), x87-transcendental (1); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh world6-5 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=world6-5 LANE=$LANE tools/e2e/port-l2.sh batch:world6-5 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag world6-5
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x565610 | `CWorld::SetPedsOnFire` | written | L2 | heap-writes |
+| 0x565800 | `CWorld::SetPedsChoking` | written | L2 | heap-writes |
+| 0x566610 | `CWorld::ClearCarsFromArea` | written | L2 | heap-writes |
+| 0x566DA0 | `CWorld::FindUnsuspectingTargetPed` | written | L2 | x87-transcendental |
 
 ## writerq-ai-1
 

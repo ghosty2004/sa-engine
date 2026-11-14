@@ -264,7 +264,7 @@ fn shoot_line(from: GPtr<u8>, e: GPtr<u8>, cp: GPtr<u8>, hit: GPtr<u8>) {
        expect = "6A FF 68 BB 8E 84 00",
        unverified = "samp2-weapon-1", route = "L2", hazards = "x87-transcendental,uninit-locals,heap-writes",
        recs = "weapon-combat",
-       note = "rand at 0x740254/0x74026B/0x740282 and 0x74090E/0x740925/0x74093C; fsin/fcos of the sway; sa-hook's determinism scrub (detwin.rs) patches this entry before ports install, so the hook's expect fails while it is active: disable the scrub when this port is selected")]
+       note = "rand at 0x740254/0x74026B/0x740282 and 0x74090E/0x740925/0x74093C; fsin/fcos of the sway; sa-hook's determinism scrub (detwin.rs) redirects this entry before ports install; the installer then takes the scrub stub as the original (win.rs install_one)")]
 #[allow(clippy::too_many_arguments)]
 pub fn fire_instant_hit(
     this: GPtr<u8>,

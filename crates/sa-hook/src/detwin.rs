@@ -586,6 +586,17 @@ unsafe extern "C" fn fire_instant_hit_scrub() {
     )
 }
 
+/// The scrub's stub when [`patch_fire_instant_hit_scrub`] has patched 0x73FB10 (0 otherwise).
+static FIH_SCRUB: AtomicU32 = AtomicU32::new(0);
+
+/// An entry this module has redirected to a stub that does the entry's work and then continues the
+/// original body: `(stub, patched length)`. A port hook at that address takes the stub as its
+/// "original", so the original path keeps the scrub (the hook installer calls this).
+pub fn redirected_entry(addr: u32) -> Option<(u32, usize)> {
+    let stub = FIH_SCRUB.load(Ordering::Relaxed);
+    (addr == 0x73FB10 && stub != 0).then_some((stub, FIH_ENTRY.len()))
+}
+
 fn patch_fire_instant_hit_scrub() -> Result<(), String> {
     let site = 0x73FB10u32;
     let cur = win::read(site, 7).ok_or_else(|| format!("{site:#x} not readable"))?;
@@ -598,6 +609,7 @@ fn patch_fire_instant_hit_scrub() -> Result<(), String> {
     b.extend_from_slice(&rel.to_le_bytes());
     b.extend_from_slice(&[0x90, 0x90]);
     win::patch(site, &b)?;
+    FIH_SCRUB.store(target, Ordering::Relaxed);
     log("oracle: CWeapon::FireInstantHit 0x73FB10 entry -> frame zeroed (uninitialised gunshell direction)");
     Ok(())
 }

@@ -175,12 +175,33 @@ fn thunk(slot: u32, i: usize, boundary: bool) -> Vec<u8> {
 
 fn install_one(i: usize, slot: u32, mode: Mode) -> Result<String, String> {
     let h = &HOOKS[i];
+    let code = thunk(slot, i, h.frame_boundary);
+    assert!(code.len() <= TRAMP_OFF);
+    if let Some((stub, len)) = crate::detwin::redirected_entry(h.addr) {
+        // Determinism mode already sent this entry to a stub that does the entry's work and continues
+        // the original body (detwin.rs): the stub is the original, the hook takes over the jump.
+        // SAFETY: the slot lies in our RWX block.
+        unsafe { std::ptr::copy_nonoverlapping(code.as_ptr(), slot as usize as *mut u8, code.len()) };
+        if h.sig.is_some() {
+            let at = slot + L2_OFF as u32;
+            let l2 = crate::l2win::stub_bytes(at, i);
+            // SAFETY: the slot lies in our RWX block.
+            unsafe { std::ptr::copy_nonoverlapping(l2.as_ptr(), at as usize as *mut u8, l2.len()) };
+            table::set_l2_stub(i, at);
+        }
+        table::set_installed(i, stub, mode);
+        let mut p = x86::jmp_rel32(h.addr, slot).to_vec();
+        p.resize(len, 0x90);
+        patch(h.addr, &p)?;
+        return Ok(format!(
+            "entry redirected by determinism mode, original {stub:#x}; thunk {slot:#x}; mode {}",
+            mode.name()
+        ));
+    }
     let cur = read(h.addr, h.expect.len()).ok_or("entry not readable")?;
     if cur != h.expect {
         return Err(format!("unexpected entry bytes {}", control::hex(&cur)));
     }
-    let code = thunk(slot, i, h.frame_boundary);
-    assert!(code.len() <= TRAMP_OFF);
     let (original, entry_patch, what) = match h.kind {
         Kind::HoodlumStub => {
             let insn = x86::decode(&cur).map_err(|e| e.to_string())?;
