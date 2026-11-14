@@ -1283,3 +1283,9 @@
 - verify-all pedhit 1,2,3,6 with `SA_UNVERIFIED=pedhit-1` on the ba14f5d7-based head: IDENTICAL on all 13
   recordings (17 subsystems each). The 90a18dff rebase brings only sa-game / SA:MP UI changes (no game-function
   ports, nothing in the phase A DLL); hooktest, queue and the three scenarios were rerun there with the same results.
+
+## 2026-11-14 — PEDHIT, clippy clean-up and NEWGAME on master (main session)
+- PEDHIT (4776d188, batch pedhit-1, 13 hooks + 3 natives: CPed::KillPedWithCar 0x5F0360, MakeTyresMuddySectorList, the CEventPedCollisionWithPlayer / GotKnockedOverByCar dtors, pickups/money/weapon drop, blood pool, hydrant water, ProstituteSolicit::IsTaskValid/CreateSubTask, EnterAnyCarAsDriver::CreateFirstSubTask) fast-forwarded. Agent: verify-all IDENTICAL 13/13 with pedhit-1 on; car / foot / intro-BMX scenarios 0 blocked (`tools/e2e/scenarios/pedhit.sh`). Main session: car scenario 0 blocked over 2916 steps on master.
+- Clippy: workspace host clippy and i686-pc-windows sa-hook clippy clean again (64-bit check build gates the busy-wait handler and registry callers; phase A dead `draw_quad_bits`; `is_multiple_of`); writer gate all PASS after the queue regeneration (4f558734).
+- NEWGAME's last two commits (CMenuSystem::Initialise 0x5822D0 as a phase B native, CTaskComplexWaitForPed ctor/ControlSubTask, --start-in-world on every new game) cherry-picked; its CAEDataStream / CAEStreamingDecoder constructors and stream-thread fix dropped (master has them); duplicate `esc` arm removed. sa-hook lib 58/58, i686 build. Not re-proven by a scripted pause-menu run (menu position not found); the user's report is the check.
+- Found while scripting the pause menu: Enter on pause-menu item 4 (down ×3) SIGSEGVs in a Rust port (host pointer 0x58dc4f9c) — queued for the frontier agent.
