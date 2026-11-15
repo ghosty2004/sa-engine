@@ -1696,3 +1696,40 @@
   dates identical and parents mapped 766/766, original messages kept 766/766, `commit_lint.py --range master --all`
   0 bad of 759, 3,280 cited ids updated in 29 files, 0 ambiguous, 6 decimal-only ids (all real citations), 34 refs
   moved, two unmerged branches rebased with identical trees. Clone removed. Procedure: docs/history/README.md.
+## 2026-11-15 — PORT-EAX and VERIFY-PROMOTE-1 (agent, lanes 4-5, 6-7 for spot runs)
+
+- PORT-EAX (commit 5eee5336): from the bytes, the EAX on every path. `CEntity::RegisterReference` 0x571B70: the
+  node it found or linked, 0 when pruning frees nothing, the caller's EAX with AL = [this+0x2E] (0) for a plain
+  building (`entry_eax`, read before any call). `CStreaming::RequestModel` 0x4087E0: the load state over the
+  caller's EAX on the exits that only read it, `prev * 5` or the last `GetModelType` EAX (all eight are `mov al, N;
+  ret`: vtable pointer's upper bytes) on the loaded path, `AddToList`'s EAX on the list tails.
+  `CStreamingInfo::AddToList` 0x407480 leaves `movsx eax, word [this]` and now returns it (L1 spec compares EAX:
+  native 1,002,000 cases 0 mismatches). `bindings.py --twin`: twins in sa-stream / sa-world, 149 callers moved.
+  port-l2 `eax-pr` (pause-restart) and `eax-drv` (driving), plain l2 l2all rust: 1000 cases each, 0 mismatches,
+  0 undeclared (AddToList with the streaming-info array declared), (b)/(c) IDENTICAL. sa-hook lib 59 passed.
+- VERIFY-PROMOTE-1: `tools/verify/batch-l2.py` (plan / run / report / promote / record / setkind / forget / reparse;
+  HOWTO §5). In-process L2 lists of 30-150 hooks either crashed at boot (a double-run creator) or timed out at
+  1500 s (the static window is snapshotted per case), so every L2 row was moved to split runs (SPLIT_PER_FRAME 20,
+  SPLIT_STACKFILL 4096); L3-only rows by `l3.sh --rust LIST --fixed verified --hookoff all` on pause-restart (61
+  hooks: L3 MATCH, every hook-off MATCH; 8 never called in the INF-10 coverage). Swept: pause-restart, grove-walk,
+  driving (old split rows), car-ai, weapon-combat, police-gang, save-load, menus-map-controls, menus-hud, c-bug,
+  air-water; world-cheats and anim-input partly; stopped on the coordinator's request.
+- Verdicts over 1,324 hooks: 234 L2 (split PASS / PASS-FP, 0 mismatches, 0 undeclared), 51 L3, 8 without calls, 3
+  mismatches, 1,028 open (831 not run on every recording yet, 167 with undeclared writes, 30 split pairing
+  artefacts). 47 hooks whose only finding was static-memory undeclared writes got the .data/.bss D range in
+  l2-extras (not re-run yet). Queue statuses recorded for all hooks with evidence.
+- Port fixes (37c559e5): pluginEnvMatStreamReadCB 0x5D9660 returned the material (the original returns the
+  stream: split EAX mismatch on 120 cases; after the fix 200 cases 0 mismatches), InteriorManager_c ctor 0x5984C0
+  missed the stores +0x4740 / +0x474C = 1e6 and +0x4748 / +0x4744 = -1e6 (after the fix 0 mismatches),
+  CanPedTargetPoint / CanPedTargetPed 0x5F1B70 / 0x5F1C40 now return AL (callers test AL only; the full-EAX
+  compare showed upper-byte residue the u8 line-of-sight binding cannot carry; split PASS 200 cases each).
+  Mismatches left open: CCamera::Process 0x52B730, FrameUpdateCallBackSkinnedWithVelocityExtraction 0x4D1680,
+  CShopping::LoadStats 0x49B6A0 (calls FindSection / GetNextSection directly instead of through their hooks).
+- Promoted (d2f5e811): 30 batches, 48 hooks (28 L2, 20 L3) — see the ROADMAP row VERIFY-PROMOTE-1.
+- Checks: writer gate (base d09c620a) PASS on hooks, bindings, state, dupes, cfg, layers, clippy, i686, i686clip,
+  wasm32, hooktest, l1test, l1; queue FAILed once because `batch-l2.py record` was rewriting the status file
+  while the gate ran, `queue.py --check` afterwards: up to date. verify-all `bl2-promote` (default set, DLL
+  33b96aa6…) IDENTICAL 13/13 (save-load: residue only, SAVE-1).
+- verify-all `bl2-promote-u` (`SA_UNVERIFIED=all`, same DLL) IDENTICAL 13/13 (save-load: residue only, SAVE-1).
+  The commit-msg hook of the shared config runs tools/verify/commit_lint.py from the worktree, which this branch
+  (based on d09c620a) lacks: master's copy was placed there untracked so the check ran on these commits.
