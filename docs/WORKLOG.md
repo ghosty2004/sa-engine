@@ -2144,3 +2144,24 @@
   (POP), CGangWars::Update's active-war path and CCollision::ProcessColModels' disk cases (not reached), the task
   allocators 0x69BCA0 / 0x69CC30 / 0x69D460 / 0x69C4D0, EndConversation 0x43AB10 (obfuscated booleans), the
   transcendental bodies (CalcSoundLevelIncrement, GetDisplacement, CalcBlendRatio), the rest of the AI frontier.
+
+## 2026-11-15 — FRONTIER-2 turn 2, lanes A, B and C on master (main session)
+- Fast-forwarded master to 54dd163d: lane B (b5..b9, 9 commits), lane C (tooling + c5/c6, 6 commits) and lane A (a1..a4,
+  10 commits) rebased in that order onto 1f765b2a (the cpal 0.18 fix), plus two main-session commits: 44f39ff6 drops the
+  four binding rows (0x4342A0, 0x6C2150, 0x6C21A0, 0x6DF930) that lane B moved down and lane C's catalogue regeneration
+  kept, and 54dd163d regenerates the verify queue (2905 unverified hooks in 390 batches; lane B's own queue was stale).
+  Conflicts: queue files (regenerated), sa-ports NATIVES and sa-rwcore module lists (union), the FRONTIER-2 ROADMAP row
+  (each lane's appended clause kept), WORKLOG (both entries).
+- Verification on the merged tree: writer gate base d05f6e24 all PASS except `gen`, which needs the main checkout's
+  .venv (patterns / ai_patterns / audio_patterns --check run by hand with it and SA_ROOT: no difference; without SA_ROOT a
+  worktree outside .claude/worktrees reads no coverage and drops the `recs` hints, an environment effect only).
+  verify-all int3-u (SA_UNVERIFIED = the 28 frontier2 batches) IDENTICAL 13/13; int3-def (default set) 12/13: the
+  air-water Rust run stopped 0.6 s after start with no trace (Wine start-up), its re-run int3-def2 IDENTICAL over 5800
+  frames. Scenarios on the merged i686 sa-game: pausemenu, solicit, crossing, crossing-long, melee, sniper, shootcar,
+  shootdriver 0 blocked; roadblocks 291 ok / 1725 blocked (GangDriveBy::ProcessPed 0x62D3B0, lane A turn 3;
+  CHeli::GenerateHeli 0x6C6520, lane B turn 3).
+- frontier.py --no-branches: 456 → 311 to port (direct 183, virtual 117, partial 11) + 48 stays original.
+- User-hit on samp.rss-ro.com (web build): CQuadBike::ProcessControl 0x6CDCC0 (vtable 0x871AE8 slot +0x28), handed to
+  lane B turn 3 as its first item.
+- Play package: target/play/sa-game is now built with `--features audio` and play.sh sets SA_GAME_AUDIO=cpal (the user
+  confirmed sound after 1f765b2a); SA_GAME_AUDIO=null mutes it.
