@@ -2165,3 +2165,44 @@
   lane B turn 3 as its first item.
 - Play package: target/play/sa-game is now built with `--features audio` and play.sh sets SA_GAME_AUDIO=cpal (the user
   confirmed sound after 1f765b2a); SA_GAME_AUDIO=null mutes it.
+
+## 2026-11-15 — FRONTIER-2 turn 3 lane C: state.csv guard, X87 binding, batches c7 / c8 (agent, branch worktree-agent-a04a02581f061bd35)
+- Base: lane C turn 2 head a7d67339 (branch worktree-agent-afdd623e21965992f). Every port address checked against
+  `tools/gen/inflight.py` first (none in flight).
+- Tooling (item 4), state.csv never lowered: the ~75 rows run_all reset were (a) the 51 rows `state_check.py --fix` had
+  demoted (evidence `state_check: no Rust port (was ...)`), whose evidence and date `progress.py merge` rewrote on every
+  run, one of them (0x43E0E0, unnamed) falling from specified to unknown, and (b) 23 legitimate updates (CAT-17 names
+  that earlier lanes had reverted by restoring state.csv by hand). merge now keeps a row whose evidence is such a hand
+  note while the derived state is not above it; new `progress.py guard OLD NEW [--allow-hand]` fails on any lowered
+  row; run_all.sh runs it around the merge (step `state_guard`), the writer gate's `state` step against the base commit
+  (state_check demotions allowed). Two run_all runs give the same state.csv; the guard reports 0 rows lowered.
+- Binding layer (item 2, 0x422F80): `CGeneral::GetRadianAngleBetweenPoints` 0x53CBE0 is bound with its full ST0
+  (`sa_math::x87::X87`; its phase B native returns the sa-math X87 model); the 29 existing callers convert with
+  `.to_f64()` at the call (behaviour unchanged). 0x422F80 is bound to its port with an X87 result (carctrl6's f64
+  `orig!` removed).
+- Batch frontier2-c7 (6 hooks): CRunningScript::CharInAngledAreaCheckCommand 0x487F60 (new sa-script angled_area.rs:
+  the corner / projection x87 data flow followed store by store), FindClosestPtOnLine 0x4A4880, the plane route
+  planner's probes 0x422E10 / 0x422F80 (new sa-pop frontier_c.rs), the group route-round 0x66FD30 (sa-ai), the D3D9
+  format check by raster type 0x4CC0C0 (args in EAX / ECX / EDX; regconv test passes). New bindings: 0x422E10,
+  0x422F80, 0x66F6C0, 0x485EF0, 0x486990, 0x4CBE20 (d3d9rast's local declaration merged by `--resolve`), 0x4CBF20.
+- Batch frontier2-c8 (10 hooks, item 3): the turn-1 natives whose bodies the CAT-12 tail-target split made catalogue
+  rows: the nine model-info store destructor bodies 0x4C5840..0x4C6390 (CAT-17 names `CModelInfo::ms_*Store::~CStore`,
+  sa-hook's table test wants the catalogue name) and CCheat::HealthCheat 0x438D60. Left natives: 0x454200, 0x506B90,
+  0x58FD90 (catalogued, not converted for time; 0x506B90's neighbour 0x506B20 has its entry read as data, check the
+  keycells first), 0x6E76E0 and 0x4C9570 (still not catalogue rows).
+- Not ported (the angled-area Object / Flame variants 0x4883F0 / 0x488780 have a different x87 data flow from Char's:
+  dx and the squared length stay 80-bit, the second side length comes from the f32 stores, so they need their own
+  bodies, not the Char helpers): ProcessMissionAudioEvent, the four aircraft engine audio functions, the weather thunder
+  event 0x506800, ExtractVehicleUpdateData 0x45BA90 / 0x45DEF0, the D3D9 raster helpers 0x4CA5A0 / 0x4CD050 / 0x4CC1D0,
+  the protection-fragment bodies 0x72EC80 / 0x66D4B0 / 0x603AF0, 0x61D0B0 / 0x61FF40 / 0x66AB40 / 0x65A110, 0x477DA0.
+- Gates: writer gate (base a7d67339, on cc15a52c) all PASS: hooks (16 new, all unverified; notes: c7 spans CALLED-ONLY /
+  SCRIPT / UNK-game, c8 STREAM / WORLD) / queue / bindings / state (state guard 0 rows lowered) / dupes / cfg / gen /
+  layers / commits / clippy / i686 / i686clip / wasm32 / hooktest 59/59 / l1test / l1 (no L1-pure hook). The first
+  hooktest run caught the c8 names (the catalogue name is required) and HealthCheat's 8-byte steal; the first
+  verify-all run caught `#[sa_core::hook(` (hook-names.py / queue.py only match `#[hook(`).
+- Scenarios (`frontier.sh`, i686 native sa-game of cc15a52c, default lengths; target/lc3/scen): pausemenu 416 / 0 blocked,
+  solicit 4016 / 0, crossing 1216 / 0, melee 2616 / 0, sniper 1216 / 0, shootcar 1216 / 0, shootdriver 1216 / 0; no crash.
+- verify-all (lanes 6-7, shared with two other sessions, so ~70 min a run): `lanec3-c78b` (SA_UNVERIFIED=frontier2-c7,
+  frontier2-c8) IDENTICAL 13/13; `lanec3-default` (default set) IDENTICAL 13/13 (DLL of cc15a52c).
+- frontier.py: whole frontier to port 302 → 288 (direct 175 → 168, virtual 115 → 108); lane C subsystems 38 → 36 rows
+  (0x485EF0 HighlightImportantAngledArea, 0x486990 DrawDebugAngledSquare and 0x66F6C0 are new callees of the ports).
