@@ -30,7 +30,13 @@ use crate::bindings::flee_entity_create_sub_task;
 use sa_core::bindings::general_get_node_heading_from_vector;
 use sa_anim::bindings::ik_abort_look_at;
 use sa_world::bindings::ik_look_at;
+use crate::bindings::{go_to_point_shooting_ctor, steal_car_ctor};
+use sa_world::bindings::car_drive_mission_ctor;
 orig! {
+    /// `CTaskComplexFleeShooting::CTaskComplexFleeShooting(CEntity*, bool, float, int32, int32, int32, int32, float)`
+    /// (0x65C900, `ret 0x20`)
+    fn flee_shooting_ctor(t: GPtr<u8>, e: u32, scream: u32, safe: u32, time: u32, shoot: u32, recover: u32, period: u32,
+        tolerance: u32) -> GPtr<u8> = thiscall 0x65C900 => unported;
     /// `CTask::GetTaskType()` (vtable +0x10)
     fn v_get_task_type(t: GPtr<u8>) -> u32 = thiscall vslot 0x10 => unported;
     /// `CTask::MakeAbortable(CPed*, int32, const CEvent*)` (vtable +0x18)
@@ -310,8 +316,67 @@ pub fn flee_entity_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     rd::<GPtr<u8>>(this, 8)
 }
 
+/// `CTaskComplexFleeAnyMeans::CreateSubTask(eTaskType, CPed*)` (0x65D2E0, `ret 8`; the entry `nop; jmp` runs its
+/// first instruction in the no-CD chunk 0x402333; FRONTIER-2 part 4, crossing 4000):
+/// - 0x3A0 `CTaskComplexFleeShooting(+0xC, byte +0x24, +0x20, +0x1C, +0x44, +0x48, +0x28, +0x2C)`;
+/// - 0x390 a `CTaskComplexWander(7, dir, 0, [0x86FCB0])` turned into the wander-flee (vtable 0x86F690), `dir` = the
+///   task-type argument's word with its low byte replaced by `GetRandomNumberInRange(0, 8)` (the original writes the
+///   byte over that argument slot);
+/// - 0x2BE `CTaskComplexStealCar(+0x50)`; 0x2D4 `CTaskComplexCarDriveMission(ped's vehicle, null, 1, 3, 40.0)`;
+/// - 0x385 `CTaskComplexGoToPointShooting(6, &vehicle pos, vehicle (+0x50), (0, 0, 0), bound radius + 0.35,
+///   [0x86FC94])`;
+/// - 0x516 and anything else: null (also when the pool is full).
+#[hook(addr = 0x65D2E0, conv = thiscall, name = "CTaskComplexFleeAnyMeans::CreateSubTask", expect = "90 E9 4D 50 DA FF",
+       unverified = "frontier2-8", route = "L2", hazards = "heap-writes")]
+pub fn flee_any_means_create_sub_task(this: GPtr<u8>, ty: u32, ped: GPtr<u8>) -> GPtr<u8> {
+    let new_task = |size: u32| task_new(size);
+    match ty {
+        0x3A0 => {
+            let t = new_task(0x54);
+            if t.is_null() {
+                return GPtr::NULL;
+            }
+            flee_shooting_ctor(t, rd::<u32>(this, 0xC), u32::from(rd::<u8>(this, 0x24)), rd::<u32>(this, 0x20),
+                rd::<u32>(this, 0x1C), rd::<u32>(this, 0x44), rd::<u32>(this, 0x48), rd::<u32>(this, 0x28), rd::<u32>(this, 0x2C))
+        }
+        0x390 => {
+            let t = new_task(0x28);
+            if t.is_null() {
+                return GPtr::NULL;
+            }
+            let r = general_get_random_number_in_range(0, 8) as u32;
+            let dir = (ty & 0xFFFF_FF00) | (r & 0xFF);
+            wander_ctor(t, 7, dir, 0, g::<u32>(0x86_FCB0).read());
+            wr::<u32>(t, 0, 0x86_F690);
+            t
+        }
+        0x2BE => {
+            let t = new_task(0x20);
+            if t.is_null() { GPtr::NULL } else { steal_car_ctor(t, rd::<GPtr<u8>>(this, 0x50)) }
+        }
+        0x2D4 => {
+            let t = new_task(0x2C);
+            if t.is_null() { GPtr::NULL } else { car_drive_mission_ctor(t, rd::<GPtr<u8>>(ped, 0x58C), GPtr::NULL, 1, 3, 0x4220_0000) }
+        }
+        0x385 => {
+            let t = new_task(0x38);
+            if t.is_null() {
+                return GPtr::NULL;
+            }
+            let veh = rd::<GPtr<u8>>(this, 0x50);
+            let mi = g::<GPtr<u8>>(0xA9_B0C8usize.wrapping_add((4 * i32::from(rd::<i16>(veh, 0x22))) as isize as usize)).read();
+            let col = rd::<GPtr<u8>>(mi, 0x14);
+            let radius = x(rd::<f32>(col, 0x24)).fadd_m(sa_core::field::gf(0x85_8F9C)).to_f32();
+            go_to_point_shooting_ctor(t, 6, ent_pos(veh).cast(), veh, 0, 0, 0, radius.to_bits(), g::<u32>(0x86_FC94).read())
+        }
+        _ => GPtr::NULL,
+    }
+}
+
+
 /// This module's registrations.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_FLEE_ANY_MEANS_CREATE_SUB_TASK,
     HOOK_FLEE_POINT_CREATE_SUB_TASK_PORT,
     HOOK_FLEE_POINT_CREATE_FIRST_SUB_TASK,
     HOOK_FLEE_POINT_CONTROL_SUB_TASK,

@@ -252,7 +252,7 @@ pub(crate) fn pool_delete_inline(pool_ptr: usize, p: GPtr<u8>, size: i32) {
     }
 }
 
-fn sdd_inline(this: GPtr<u8>, flags: u32, dtor: fn(GPtr<u8>)) -> GPtr<u8> {
+pub(crate) fn sdd_inline(this: GPtr<u8>, flags: u32, dtor: fn(GPtr<u8>)) -> GPtr<u8> {
     dtor(this);
     if flags & 1 != 0 {
         pool_delete_inline(EVENT_POOL, this, 0x44);

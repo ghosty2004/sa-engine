@@ -14,6 +14,7 @@ use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
 use crate::common::*;
+use crate::bindings::intel_clear_task_duck_secondary;
 
 /// `CTimer::m_FrameCounter` (0xB7CB4C)
 const TIMER_FRAME_COUNTER: usize = 0xB7CB4C;
@@ -472,8 +473,6 @@ use sa_world::bindings::vector_sub;
 use sa_world::bindings::weapon_is_type_melee;
 use crate::bindings::use_gun_control_gun_move;
 orig! {
-    /// `CPedIntelligence::ClearTaskDuckSecondary()` (0x601390)
-    fn intel_clear_task_duck_secondary(i: GPtr<u8>) = thiscall 0x601390 => unported;
 }
 
 /// `CAnimManager` blend delta used by the duck/gun/stand-up blends (0x8D2FF0, 4.0)

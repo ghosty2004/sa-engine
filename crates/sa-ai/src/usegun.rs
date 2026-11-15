@@ -11,6 +11,7 @@
 
 use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
+use sa_anim::bindings::{pedik_point_gun_at_position as ug_pedik_point_gun_at_position, pedik_point_gun_in_direction as ug_pedik_point_gun_in_direction};
 use sa_core::{hook, orig};
 
 use crate::common::*;
@@ -94,10 +95,6 @@ orig! {
     fn ug_duck_stop_fire_gun(d: GPtr<u8>) -> u8 = thiscall 0x61C420 => unported;
     /// `CPedIK::RotateTorsoForArm(const CVector&)` (0x5FDF90)
     fn ug_pedik_rotate_torso_for_arm(ik: GPtr<u8>, v: GPtr<u8>) = thiscall 0x5FDF90 => unported;
-    /// `CPedIK::PointGunAtPosition(const CVector&, float)` (0x5FDE20)
-    fn ug_pedik_point_gun_at_position(ik: GPtr<u8>, v: GPtr<u8>, amount: u32) -> u8 = thiscall 0x5FDE20 => unported;
-    /// `CPedIK::PointGunInDirection(zAngle, angle2, bool, float)` (0x5FDC00)
-    fn ug_pedik_point_gun_in_direction(ik: GPtr<u8>, a: u32, b: u32, c: u32, amount: u32) -> u8 = thiscall 0x5FDC00 => unported;
     // This class's own methods (called through their original addresses).
     /// `CTaskSimpleUseGun::Destructor` (0x61DF30)
     fn ug_destructor_orig(t: GPtr<u8>) = thiscall 0x61DF30 => unported;

@@ -214,6 +214,16 @@ orig! {
 }
 
 orig! {
+    /// `CPedIK::PointGunInDirection` (0x5FDC00)
+    pub fn pedik_point_gun_in_direction(ik: GPtr<u8>, z_angle: u32, distance: u32, flag: u32, normalize: u32) -> u8 = thiscall 0x5FDC00 => unported;
+}
+
+orig! {
+    /// `CPedIK::PointGunAtPosition` (0x5FDE20)
+    pub fn pedik_point_gun_at_position(ik: GPtr<u8>, at: GPtr<u8>, normalize: u32) -> u8 = thiscall 0x5FDE20 => unported;
+}
+
+orig! {
     /// `BoneNode_c::CalcWldMat` (0x616CD0)
     pub fn bone_calc_wld_mat(this: GPtr<u8>, parent: GPtr<u8>) = thiscall 0x616CD0 => crate::bones::calc_wld_mat;
 }

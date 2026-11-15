@@ -1174,6 +1174,11 @@ orig! {
 }
 
 orig! {
+    /// `FUN_004b2470` (0x4B2470)
+    pub fn event_player_command_to_group_dtor(e: GPtr<u8>) = thiscall 0x4B2470 => unported;
+}
+
+orig! {
     /// `CEventDamage::AffectsPed` (0x4B35A0)
     pub fn event_damage_affects_ped(e: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x4B35A0 => unported;
 }

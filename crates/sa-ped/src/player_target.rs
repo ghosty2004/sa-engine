@@ -35,7 +35,7 @@ const NEIGHBOUR_MAX_ANGLE: f32 = f32::from_bits(0x3F5F_66F3);
 const RAD_TO_DEG: f32 = f32::from_bits(0x4265_2EE0);
 
 pub use crate::bindings::event_player_command_to_group_ctor;
-pub use crate::bindings::event_player_command_to_group_dtor;
+pub use sa_world::bindings::event_player_command_to_group_dtor;
 pub use crate::bindings::get_default_player_motion_group;
 pub use crate::bindings::get_weapon_skill_type_call as ped_get_weapon_skill_type;
 pub use sa_anim::bindings::assoc_set_current_time;

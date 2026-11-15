@@ -1,0 +1,43 @@
+# gdb command file for tools/e2e/scenarios/frontier.sh (WRAP="gdb -q -batch -x THIS --args"): counts the calls of the
+# FRONTIER-2 part 4 ports (their registered phase B entries) and prints the hit counts at the end (`info breakpoints`).
+set pagination off
+set breakpoint pending on
+handle SIGSEGV stop nopass
+handle SIGUSR1 nostop noprint pass
+handle SIGUSR2 nostop noprint pass
+handle SIGPIPE nostop noprint pass
+rbreak __sa_hook_native_event_vehicle_damage_weapon_dtor$
+rbreak __sa_hook_native_event_vehicle_died_dtor$
+rbreak __sa_hook_native_event_revive_dtor$
+rbreak __sa_hook_native_event_sexy_vehicle_dtor$
+rbreak __sa_hook_native_event_vehicle_threat_dtor$
+rbreak __sa_hook_native_event_vehicle_hit_and_run_dtor$
+rbreak __sa_hook_native_event_dont_join_player_group_dtor$
+rbreak __sa_hook_native_event_scripted_attractor_dtor$
+rbreak __sa_hook_native_event_acquaintance_ped_hate_badly_lit_dtor$
+rbreak __sa_hook_native_event_health_really_low_dtor$
+rbreak __sa_hook_native_event_low_anger_at_player_dtor$
+rbreak __sa_hook_native_event_health_low_dtor$
+rbreak __sa_hook_native_event_on_fire_dtor$
+rbreak __sa_hook_native_event_player_command_to_group_attack_dtor$
+rbreak __sa_hook_native_event_interior_use_info_dtor$
+rbreak __sa_hook_native_event_escalator_dtor$
+rbreak __sa_hook_native_event_hit_by_water_cannon_dtor$
+rbreak __sa_hook_native_event_special_dtor$
+rbreak __sa_hook_native_event_editable_response_sdd$
+rbreak __sa_hook_native_event_revive_sdd$
+rbreak __sa_hook_native_event_hit_by_water_cannon_sdd$
+rbreak __sa_hook_native_event_special_sdd$
+rbreak __sa_hook_native_event_fire_nearby_sdd$
+rbreak __sa_hook_native_point_list_empty$
+rbreak __sa_hook_native_does_cover_point_still_provide_cover$
+rbreak __sa_hook_native_find_and_reserve_cover_point$
+rbreak __sa_hook_native_find_coordinates_cover_point$
+rbreak __sa_hook_native_find_cover_points_behind_box$
+rbreak __sa_hook_native_ped_ik_point_gun_at_position$
+commands 1-29
+silent
+continue
+end
+run
+info breakpoints

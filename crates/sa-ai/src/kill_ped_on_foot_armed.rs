@@ -26,7 +26,9 @@ use sa_core::bindings::get_weapon_info;
 use sa_core::bindings::vector_normalise;
 use sa_core::bindings::{intel_get_task_use_gun, vector_difference, vector_dot_product, vector_magnitude};
 use crate::bindings::{duck_control_duck_move, use_gun_control_gun_move};
-use sa_world::bindings::{membership_get_leader, vec_mul_assign, vector_add_assign, vector_magnitude_sqr, vector_sub};
+use sa_world::bindings::{membership_get_leader, vec_mul_assign, vector_add_assign, vector_magnitude_sqr, vector_mul_scalar, vector_sub};
+use crate::bindings::{intel_clear_task_duck_secondary, tm_get_task_secondary};
+use sa_math::x87::X87;
 use sa_world::bindings::{
     duck_ctor, go_to_point_and_stand_still_ctor, pause_ctor, ped_get_transformed_bone_position, ped_get_weapon_skill,
     ped_say, seek_entity_standard_ctor, stand_still_ctor, task_gun_control_ctor, weapon_is_type_melee,
@@ -52,6 +54,10 @@ orig! {
     fn v_create_first_sub_task(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x24 => unported;
     /// `CTaskSimpleDuck::SetDuckTimer(uint16)` (0x692530, `ret 4`)
     fn duck_set_duck_timer(d: GPtr<u8>, t: u32) = thiscall 0x692530 => unported;
+    /// `CTask::GetTaskType()` (vtable +0x10)
+    fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
+    /// `CCover::DoesCoverPointStillProvideCover(CCoverPoint*, CVector)` (0x698DD0, the vector by value)
+    fn cover_still_provides(cp: GPtr<u8>, x: u32, y: u32, z: u32) -> u8 = cdecl 0x698DD0 => unported;
 }
 
 
@@ -592,7 +598,321 @@ pub fn armed_is_ped_in_leader_firing_line(_this: GPtr<u8>, ped: GPtr<u8>) -> u8 
     1
 }
 
+/// The ped's cover point (`CPed::m_pCoverPoint`, +0x788).
+fn cover_point(ped: GPtr<u8>) -> GPtr<u8> {
+    rd::<GPtr<u8>>(ped, 0x788)
+}
+
+/// `CTaskComplexKillPedOnFootArmed::CreateNextSubTask(CPed*)` (0x62C190, `ret 4`; the epilogue passes through the
+/// island 0x401EAE; FRONTIER-2 part 4, crossing 4000 and the shoot-a-driver run). Unreversed in gta-reversed; from the
+/// bytes. Null without a target. `notMelee` = the target's weapon is not melee, `wi` / `range` = the ped's weapon info
+/// and its target range (+4), `dist` = `sqrt((dx² + dy²) + dz²)` (target - ped, rounded to a float). By the finished
+/// sub-task's type:
+/// - 0x19F duck: gun control (0x3FC) when the line of sight is clear, else pause (0xCA); clears ped +0x46C bit 26;
+/// - 0xCA / 0xCB: a ped that may not move (+0x46C & 0x600000) takes gun control when `range² > |target - ped|²` and the
+///   line is clear, else pause; any other says 0x90 and seeks (0x38B), starting the move-in-closer time (+0x58) if unset;
+/// - 0x384: gun control when the line is clear, else pause; 0x387 / 0x38B: gun control when the line is clear, else
+///   pause through the seek tail (starts +0x58);
+/// - 0x516 and any other type: null; every path above clears +0x58 except the ones through the seek tail;
+/// - 0x385, 0x3FC, 0x3FD (the attack, [`attack_next`] then [`attack_tail`]).
+#[hook(addr = 0x62C190, conv = thiscall, name = "CTaskComplexKillPedOnFootArmed::CreateNextSubTask", expect = "6A FF 64 A1 00 00 00 00",
+       unverified = "frontier2-8", route = "L2", hazards = "heap-writes",
+       note = "rand sites 0x62C6F6, 0x62C777, 0x62C876, 0x62C9FF, 0x62CAE4, 0x62CAF5, 0x62CC19, 0x62CC22, 0x62CC71; crossing 4000")]
+pub fn armed_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    let tg = target(this);
+    if tg.is_null() {
+        return GPtr::NULL;
+    }
+    let tslot = isize::from(rd::<i8>(tg, 0x718));
+    let not_melee = weapon_is_type_melee(tg.byte_add(0x5A0 + tslot * 0x1C)) == 0;
+    let wi = current_weapon_info(ped);
+    let range = rd::<f32>(wi, 4);
+    let (o, t) = (pos3(ped), pos3(tg));
+    let dz = x(t[2]).fsub_m(o[2]);
+    let dy = x(t[1]).fsub_m(o[1]);
+    let dx = x(t[0]).fsub_m(o[0]);
+    let dist = f32_of(dx.fmul(dx).fadd(dy.fmul(dy)).fadd(dz.fmul(dz)).fsqrt());
+    let clear_58 = |r: GPtr<u8>| {
+        wr::<u32>(this, 0x58, 0);
+        r
+    };
+    match v_task_type(rd::<GPtr<u8>>(this, 8)) {
+        0x19F => {
+            let ty = if los_clear_for_attack_o(this, ped) != 0 { 0x3FC } else { 0xCA };
+            let r = create_sub_task_o(this, ty, ped);
+            wr::<u32>(ped, 0x46C, rd::<u32>(ped, 0x46C) & 0xFBFF_FFFF);
+            clear_58(r)
+        }
+        0xCA | 0xCB => {
+            if rd::<u32>(ped, 0x46C) & 0x600000 != 0 {
+                let wi2 = current_weapon_info(ped);
+                let mut d = [0f32; 3];
+                let dp: GPtr<u8> = GPtr::from_raw(d.as_mut_ptr()).cast();
+                vector_sub(dp, entity_pos(target(this)), entity_pos(ped));
+                let r2 = rd::<f32>(wi2, 4);
+                let m = vector_magnitude_sqr(dp);
+                let ty = if gt(x(r2).fmul_m(r2), m) && los_clear_for_attack_o(this, ped) != 0 { 0x3FC } else { 0xCA };
+                clear_58(create_sub_task_o(this, ty, ped))
+            } else {
+                say(ped, 0x90, 0);
+                seek_tail(this, create_sub_task_o(this, 0x38B, ped))
+            }
+        }
+        0x384 => {
+            let ty = if los_clear_for_attack_o(this, ped) != 0 { 0x3FC } else { 0xCA };
+            clear_58(create_sub_task_o(this, ty, ped))
+        }
+        0x387 | 0x38B => {
+            if los_clear_for_attack_o(this, ped) != 0 {
+                clear_58(create_sub_task_o(this, 0x3FC, ped))
+            } else {
+                seek_tail(this, create_sub_task_o(this, 0xCA, ped))
+            }
+        }
+        0x385 | 0x3FC | 0x3FD => {
+            let r = attack_next(this, ped, wi, range, dist, not_melee);
+            attack_tail(this, ped, r)
+        }
+        _ => clear_58(GPtr::NULL),
+    }
+}
+
+/// 0x62C310: the result, starting the move-in-closer time (+0x58) when it is not set.
+fn seek_tail(this: GPtr<u8>, r: GPtr<u8>) -> GPtr<u8> {
+    if rd::<u32>(this, 0x58) == 0 {
+        wr::<u32>(this, 0x58, now());
+    }
+    r
+}
+
+/// The strafe timer: +0x2C = now + 2000, +0x32 = 0.
+fn strafe_timer(this: GPtr<u8>) {
+    wr::<u32>(this, 0x2C, now().wrapping_add(2000));
+    wr::<u8>(this, 0x32, 0);
+}
+
+/// 0x62CC55: pause (0xCA), +0x14 = now.
+fn pause_now(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    let r = create_sub_task_o(this, 0xCA, ped);
+    wr::<u32>(this, 0x14, now());
+    r
+}
+
+/// 0x62CC42: gun control, pause when it fails.
+fn gun_or_pause(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    let r = create_sub_task_o(this, 0x3FC, ped);
+    if r.is_null() { pause_now(this, ped) } else { r }
+}
+
+/// 2D length `sqrt(x² + y²)` of a vector (x87, not rounded).
+fn len2d(v: GPtr<u8>) -> X87 {
+    let (vy, vx) = (x(rd::<f32>(v, 4)), x(rd::<f32>(v, 0)));
+    vx.fmul(vx).fadd(vy.fmul(vy)).fsqrt()
+}
+
+/// The attack case of [`armed_create_next_sub_task`] (0x62C411), up to the tail: pause when the ped stays in place
+/// (+0x46C bit 21); gun control (pause when it fails) closer than 3; beyond `min(range * 0.8, 23)` a ped that may move
+/// seeks with radius `min(range * 0.6, 20)` (pause otherwise or when it fails). Else:
+/// 1. a finished gun control with its +0x39 flag (and a ped that may move) says 0x90 and seeks with radius 2; otherwise,
+///    with a non-melee target and a cover point that still covers and whose coordinates lie within 0.75 (2D) of the ped:
+///    a crouching point (+1 == 0) closer than 12, the ped not ducking, `rand() & 3 == 0` and no secondary task says 0x55
+///    and ducks (2500 ms); a standing point, on `rand() & 1 == 0` and a weapon that is not thrown, gets a gun control
+///    (command 3, burst 5) aiming at once (+0x35, cleared) with the strafe timers (+0x10 now + 5000, +0x14 now, +0x2C
+///    now + 2500, +0x31 1 (0 for type 1), +0x32 1) and clears the duck secondary task; failures release the cover point;
+/// 2. competence > 0, dist > 6, a non-melee target and `rand() & 1`: a new cover point (`FindAndReserveCoverPoint(ped,
+///    target, competence == 2)`, its coordinates' z + 1) within `range * 0.75` (2D) of the target and in sight of the
+///    ped: a group member says 0x41, a duck secondary task (6000) and a run to it; else it is released;
+/// 3. beyond 10, `rand() & 3`: 0 says 0x90 and seeks with radius `dist - 4`, 1 starts a strafe (+0x31 = 2) — both only
+///    for a ped that may move;
+/// 4. beyond 5 and `rand() & 3 == 0`: a strafe side (+0x31 = `rand() & 1`) checked with a line of sight from the ped to
+///    2.5 m along its right axis (side 1 to the right, else to the left; a blocked side switches), the strafe timer;
+/// 5. without a result: gun control when the line is clear (pause when it fails); else on `rand() & 3 == 0` a random
+///    strafe side (`rand() < 0x3FFF`) and the timer; then pause, with +0x14 = now.
+fn attack_next(this: GPtr<u8>, ped: GPtr<u8>, wi: GPtr<u8>, range: f32, dist: f32, not_melee: bool) -> GPtr<u8> {
+    let flags = rd::<u32>(ped, 0x46C);
+    if flags & 0x200000 != 0 {
+        return pause_now(this, ped);
+    }
+    if lt(x(dist), x(fc(0x858B3C))) {
+        return gun_or_pause(this, ped);
+    }
+    let mut lim = x(range).fmul_m(fc(0x858C98));
+    if !lt(lim, x(fc(0x858F84))) {
+        lim = x(fc(0x858F84));
+    }
+    if gt(x(dist), lim) {
+        if flags & 0x400000 != 0 {
+            return pause_now(this, ped);
+        }
+        let l2 = x(range).fmul_m(fc(0x858CC8));
+        let radius = if lt(l2, x(fc(0x858BA4))) { f32_of(l2) } else { 20.0 };
+        let r = seek(this, radius);
+        return if r.is_null() { pause_now(this, ped) } else { r };
+    }
+    // 1. the current cover point
+    'cover: {
+        let sub = rd::<GPtr<u8>>(this, 8);
+        if v_task_type(sub) == 0x3FC && rd::<u8>(rd::<GPtr<u8>>(this, 8), 0x39) != 0 && rd::<u32>(ped, 0x46C) & 0x600000 == 0 {
+            say(ped, 0x90, 0);
+            let r = seek(this, 2.0);
+            if !r.is_null() {
+                return r;
+            }
+            break 'cover;
+        }
+        let cp = cover_point(ped);
+        if !not_melee || cp.is_null() {
+            break 'cover;
+        }
+        let tp = entity_pos(target(this));
+        if cover_still_provides(cp, rd::<u32>(tp, 0), rd::<u32>(tp, 4), rd::<u32>(tp, 8)) == 0 {
+            break 'cover;
+        }
+        let mut cov = [0f32; 3];
+        let cv: GPtr<u8> = GPtr::from_raw(cov.as_mut_ptr()).cast();
+        if find_coordinates_cover_point(cover_point(ped), ped, entity_pos(target(this)), cv) == 0 {
+            break 'cover;
+        }
+        let mut d = [0f32; 3];
+        let dp: GPtr<u8> = GPtr::from_raw(d.as_mut_ptr()).cast();
+        let near = lt(len2d(vector_sub(dp, entity_pos(ped), cv)), x(fc(0x858F34)));
+        let task = 'pick: {
+            if !near {
+                break 'pick GPtr::NULL;
+            }
+            if rd::<u8>(cover_point(ped), 1) == 0 {
+                if !lt(x(dist), x(fc(0x858CCC))) || rd::<u8>(ped, 0x46F) & 1 != 0 || rand_at(0x62C6F6) & 3 != 0 {
+                    break 'pick GPtr::NULL;
+                }
+                if !tm_get_task_secondary(rd::<GPtr<u8>>(ped, 0x47C).byte_add(4), 1).is_null() {
+                    break 'pick GPtr::NULL;
+                }
+                say(ped, 0x55, 0);
+                let t = task_new(0x28);
+                if t.is_null() { GPtr::NULL } else { duck_ctor(t, 0, 0x9C4, 0xFFFF_FFFF) }
+            } else {
+                if rand_at(0x62C777) & 1 != 0 || (rd::<u32>(wi, 0x18) >> 8) & 1 != 0 {
+                    break 'pick GPtr::NULL;
+                }
+                let t = task_new(0x3C);
+                let t = if t.is_null() { GPtr::NULL } else { task_gun_control_ctor(t, target(this), GPtr::NULL, 0, 3, 5, 0xFFFF_FFFF) };
+                wr::<u8>(t, 0x3A, u8::from(rd::<u8>(this, 0x35) != 0));
+                wr::<u8>(this, 0x35, 0);
+                wr::<u32>(this, 0x10, now().wrapping_add(5000));
+                wr::<u32>(this, 0x14, now());
+                wr::<u32>(this, 0x2C, now().wrapping_add(2500));
+                wr::<u8>(this, 0x31, 1);
+                wr::<u8>(this, 0x32, 1);
+                if rd::<u8>(cover_point(ped), 1) == 1 {
+                    wr::<u8>(this, 0x31, 0);
+                }
+                intel_clear_task_duck_secondary(rd::<GPtr<u8>>(ped, 0x47C));
+                t
+            }
+        };
+        if !task.is_null() {
+            return task;
+        }
+        release_cover_point(ped);
+    }
+    // 2. a new cover point (0x62C849)
+    if rd::<i8>(this, 0x30) > 0 && gt(x(dist), x(fc(0x858B44))) && not_melee && rand_at(0x62C876) & 1 != 0 {
+        release_cover_point(ped);
+        let cp = find_and_reserve_cover_point(ped, entity_pos(target(this)), u32::from(rd::<u8>(this, 0x30) == 2));
+        wr::<GPtr<u8>>(ped, 0x788, cp);
+        if !cp.is_null() {
+            let mut cov = [0f32; 3];
+            let cv: GPtr<u8> = GPtr::from_raw(cov.as_mut_ptr()).cast();
+            find_coordinates_cover_point(cp, ped, entity_pos(target(this)), cv);
+            wr::<f32>(cv, 8, f32_of(x(rd::<f32>(cv, 8)).fadd_m(fc(0x858624))));
+            let mut d = [0f32; 3];
+            let dp: GPtr<u8> = GPtr::from_raw(d.as_mut_ptr()).cast();
+            let len = len2d(vector_sub(dp, cv, entity_pos(target(this))));
+            if gt(x(range).fmul_m(fc(0x858F34)), len) && world_get_is_line_of_sight_clear(cv, entity_pos(ped), 1, 1, 0, 0, 0, 0, 0) != 0 {
+                if peds_group(ped.addr() as u32) != 0 {
+                    say(ped, 0x41, 0);
+                }
+                intel_set_task_duck_secondary(rd::<GPtr<u8>>(ped, 0x47C), 6000);
+                let t = task_new(0x30);
+                let t = if t.is_null() { GPtr::NULL } else { crate::bindings::go_to_point_ctor(t, 6, cv, 0x3F00_0000, 1, 0) };
+                if !t.is_null() {
+                    return t;
+                }
+            } else {
+                release_cover_point(ped);
+            }
+        }
+    }
+    // 3. (0x62C9E5)
+    let mut res = GPtr::NULL;
+    if gt(x(dist), x(fc(0x85862C))) {
+        match rand_at(0x62C9FF) & 3 {
+            0 if rd::<u32>(ped, 0x46C) & 0x400000 == 0 => {
+                let radius = f32_of(x(dist).fsub_m(fc(0x858B90)));
+                say(ped, 0x90, 0);
+                res = seek(this, radius);
+            }
+            1 if rd::<u32>(ped, 0x46C) & 0x400000 == 0 => {
+                wr::<u8>(this, 0x31, 2);
+                strafe_timer(this);
+            }
+            _ => {}
+        }
+    }
+    // 4. (0x62CACA)
+    if gt(x(dist), x(fc(0x858C80))) && rand_at(0x62CAE4) & 3 == 0 {
+        wr::<u8>(this, 0x31, 0);
+        if rand_at(0x62CAF5) & 1 != 0 {
+            wr::<u8>(this, 0x31, 1);
+        }
+        let mut p = [0f32; 3];
+        let pp: GPtr<u8> = GPtr::from_raw(p.as_mut_ptr()).cast();
+        let src = entity_pos(ped);
+        for i in 0..3 {
+            wr::<u32>(pp, 4 * i, rd::<u32>(src, 4 * i));
+        }
+        let mut side = [0f32; 3];
+        let sp: GPtr<u8> = GPtr::from_raw(side.as_mut_ptr()).cast();
+        vector_mul_scalar(sp, rd::<GPtr<u8>>(ped, 0x14), 2.5);
+        let right = rd::<u8>(this, 0x31) == 1;
+        for i in 0..3 {
+            let (a, b) = (rd::<f32>(sp, 4 * i), rd::<f32>(pp, 4 * i));
+            wr::<f32>(sp, 4 * i, f32_of(if right { x(a).fadd_m(b) } else { x(b).fsub_m(a) }));
+        }
+        if world_get_is_line_of_sight_clear(pp, sp, 1, 1, 0, 1, 0, 0, 0) == 0 {
+            wr::<u8>(this, 0x31, u8::from(!right));
+        }
+        strafe_timer(this);
+    }
+    // 5. (0x62CC04)
+    if !res.is_null() {
+        return res;
+    }
+    if los_clear_for_attack_o(this, ped) != 0 {
+        return gun_or_pause(this, ped);
+    }
+    if rand_at(0x62CC19) & 3 == 0 {
+        wr::<u8>(this, 0x31, u8::from(rand_at(0x62CC22) < 0x3FFF));
+        strafe_timer(this);
+    }
+    pause_now(this, ped)
+}
+
+/// 0x62CC6C: the attack case's tail. On `rand() & 1`, competence > 0, a ped not ducking (+0x46F bit 0) and no cover
+/// point of type 1 or 2: a duck secondary task (6000). +0x58 = 0.
+fn attack_tail(this: GPtr<u8>, ped: GPtr<u8>, r: GPtr<u8>) -> GPtr<u8> {
+    if rand_at(0x62CC71) & 1 != 0 && rd::<i8>(this, 0x30) > 0 && rd::<u8>(ped, 0x46F) & 1 == 0 {
+        let cp = cover_point(ped);
+        if cp.is_null() || !matches!(rd::<u8>(cp, 1), 1 | 2) {
+            intel_set_task_duck_secondary(rd::<GPtr<u8>>(ped, 0x47C), 6000);
+        }
+    }
+    wr::<u32>(this, 0x58, 0);
+    r
+}
+
 pub const HOOKS: &[HookReg] = &[
+    HOOK_ARMED_CREATE_NEXT_SUB_TASK,
     HOOK_ARMED_CONTROL_SUB_TASK,
     HOOK_ARMED_IS_PED_IN_LEADER_FIRING_LINE,
     HOOK_ARMED_CREATE_FIRST_SUB_TASK,

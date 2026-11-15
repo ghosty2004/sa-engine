@@ -24,7 +24,7 @@ const CLOCK_HOURS: usize = 0xB70153;
 const MI_PARACHUTE: i32 = 0x173;
 
 pub use crate::bindings::event_player_command_to_group_ctor;
-pub use crate::bindings::event_player_command_to_group_dtor;
+pub use sa_world::bindings::event_player_command_to_group_dtor;
 pub use crate::bindings::get_clump_model_info;
 pub use crate::bindings::get_default_player_motion_group;
 pub use crate::bindings::task_complex_facial_ctor;

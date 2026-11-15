@@ -53,5 +53,19 @@ pub fn smart_flee_entity_create_next_sub_task(this: GPtr<u8>, _ped: GPtr<u8>) ->
     GPtr::NULL
 }
 
+/// `CPedGeometryAnalyser::ComputeClosestSurfacePoint(const CVector& pos, CEntity& entity, CVector& out)` (0x5F36F0,
+/// cdecl, AL; FRONTIER-2 part 4, the big car route of the crossing run): the entity's bounding-box corners at `pos.z`,
+/// then `ComputeClosestSurfacePoint(pos, corners, out)`; returns its EAX.
+#[hook(addr = 0x5F36F0, conv = cdecl, name = "CPedGeometryAnalyser::ComputeClosestSurfacePoint-pos",
+       expect = "8B 4C 24 08 83 EC 30",
+       unverified = "frontier2-8", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+pub fn compute_closest_surface_point_pos(pos: GPtr<u8>, e: GPtr<u8>, out: GPtr<u8>) -> u32 {
+    let mut corners = [0f32; 12];
+    let cp: GPtr<u8> = GPtr::from_raw(corners.as_mut_ptr()).cast();
+    bbox_corners_uncached(x(rd::<f32>(pos, 8)).to_f32(), e, cp);
+    closest_surface_point_rect(pos, cp, out)
+}
+
+
 /// This module's registrations.
-pub const HOOKS: &[HookReg] = &[HOOK_COMPUTE_CLOSEST_SURFACE_POINT_PED, HOOK_SMART_FLEE_ENTITY_CREATE_NEXT_SUB_TASK];
+pub const HOOKS: &[HookReg] = &[HOOK_COMPUTE_CLOSEST_SURFACE_POINT_PED, HOOK_SMART_FLEE_ENTITY_CREATE_NEXT_SUB_TASK, HOOK_COMPUTE_CLOSEST_SURFACE_POINT_POS];

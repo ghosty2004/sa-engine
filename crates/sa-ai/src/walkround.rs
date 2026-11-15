@@ -791,6 +791,8 @@ pub fn building_attempt_compute_crap_route(this: GPtr<u8>, ped: GPtr<u8>) {
 }
 
 use crate::bindings::point_route_assign;
+use crate::door_route_fight_strafe::route_add;
+use sa_core::field::rd3u as vec3;
 use sa_core::bindings::world_get_is_line_of_sight_clear;
 orig! {
     /// `CTaskComplexWalkRoundBuildingAttempt::ComputeMoveDir(CPed*, CVector* out)` (0x654B80, `ret 8`)
@@ -929,8 +931,80 @@ pub fn building_attempt_compute_route(this: GPtr<u8>, ped: GPtr<u8>) {
     }
 }
 
+/// Writes the three words of a vector.
+fn set_vec3(p: GPtr<u8>, v: [u32; 3]) {
+    for (i, w) in v.iter().enumerate() {
+        wr::<u32>(p, 4 * i as isize, *w);
+    }
+}
+
+/// `ComputeClosestSurfacePoint(pos, vehicle, out)` (0x5F36F0) with the nominal radius [0x8D22B0] set to 0.7 for the call.
+fn closest_from_pos(pos: GPtr<u8>, veh: GPtr<u8>) -> [u32; 3] {
+    let saved = g::<u32>(0x8D_22B0).read();
+    g::<u32>(0x8D_22B0).write(0x3F33_3333);
+    let mut out = [0u32; 3];
+    compute_closest_surface_point_pos(pos, veh, GPtr::from_raw(out.as_mut_ptr()).cast());
+    g::<u32>(0x8D_22B0).write(saved);
+    out
+}
+
+/// `CTaskComplexWalkRoundCar::ComputeRouteRoundBigCar(CPed*)` (0x656BB0, thiscall, `ret 4`, ST0 = 0; FRONTIER-2 part 4,
+/// crossing 4000). Unreversed in gta-reversed; from the bytes. Vehicle +0x1C, target +0x10, route +0x20. With the
+/// nominal radius [0x8D22B0] at 0.7 around each pair of calls: when the ped (0x5F3BC0) and the target (0x5F3AC0) are on
+/// the same side of the vehicle, the route gets the closest surface points to the ped (0x5F3B70) and to the target
+/// (0x5F36F0). Otherwise, with `c` / `d` those points: the ped is moved to `c` and the target to `d` (words), the small
+/// car route computed (its result dropped), both restored; the route becomes `c` followed by the small car route, and
+/// the closest surface point to the target (recomputed) is appended. Each append only while the route has room (8).
+#[hook(addr = 0x656BB0, conv = thiscall, name = "CTaskComplexWalkRoundCar::ComputeRouteRoundBigCar", expect = "81 EC 9C 00 00 00 53",
+       unverified = "frontier2-8", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+pub fn car_compute_route_round_big_car_port(this: GPtr<u8>, ped: GPtr<u8>) -> X87 {
+    let veh = rd::<GPtr<u8>>(this, 0x1C);
+    let target = this.byte_add(0x10);
+    let s1 = compute_entity_hit_side_ped(ped, veh);
+    let s2 = compute_entity_hit_side(target, rd::<GPtr<u8>>(this, 0x1C)) as i32;
+    let last = if s1 == s2 {
+        let saved = g::<u32>(0x8D_22B0).read();
+        g::<u32>(0x8D_22B0).write(0x3F33_3333);
+        let mut a = [0u32; 3];
+        let mut b = [0u32; 3];
+        compute_closest_surface_point_ped(ped, rd::<GPtr<u8>>(this, 0x1C), GPtr::from_raw(a.as_mut_ptr()).cast());
+        compute_closest_surface_point_pos(target, rd::<GPtr<u8>>(this, 0x1C), GPtr::from_raw(b.as_mut_ptr()).cast());
+        g::<u32>(0x8D_22B0).write(saved);
+        route_add(rd::<GPtr<u8>>(this, 0x20), a);
+        b
+    } else {
+        let saved = g::<u32>(0x8D_22B0).read();
+        g::<u32>(0x8D_22B0).write(0x3F33_3333);
+        let mut c = [0u32; 3];
+        let mut d = [0u32; 3];
+        compute_closest_surface_point_ped(ped, rd::<GPtr<u8>>(this, 0x1C), GPtr::from_raw(c.as_mut_ptr()).cast());
+        compute_closest_surface_point_pos(target, rd::<GPtr<u8>>(this, 0x1C), GPtr::from_raw(d.as_mut_ptr()).cast());
+        g::<u32>(0x8D_22B0).write(saved);
+        let ped_pos = vec3(ent_pos(ped));
+        set_vec3(ent_pos(ped), c);
+        let old_target = vec3(target);
+        set_vec3(target, d);
+        car_compute_route_round_small_car_st0(this, ped);
+        set_vec3(target, old_target);
+        set_vec3(ent_pos(ped), ped_pos);
+        let route = rd::<GPtr<u8>>(this, 0x20);
+        let mut tmp = [0u32; 0x64 / 4];
+        let tp: GPtr<u8> = GPtr::from_raw(tmp.as_mut_ptr()).cast();
+        point_route_assign(tp, route);
+        wr::<u32>(route, 0, 0);
+        route_add(rd::<GPtr<u8>>(this, 0x20), c);
+        for i in 0..rd::<i32>(tp, 0).max(0) as isize {
+            route_add(rd::<GPtr<u8>>(this, 0x20), vec3(tp.byte_add(4 + 12 * i)));
+        }
+        closest_from_pos(target, rd::<GPtr<u8>>(this, 0x1C))
+    };
+    route_add(rd::<GPtr<u8>>(this, 0x20), last);
+    X87::zero()
+}
+
 /// This module's registrations.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_CAR_COMPUTE_ROUTE_ROUND_BIG_CAR_PORT,
     HOOK_BUILDING_ATTEMPT_COMPUTE_ROUTE,
     HOOK_BUILDING_ATTEMPT_COMPUTE_CRAP_ROUTE,
     HOOK_OBJECT_CONTROL_SUB_TASK,

@@ -234,6 +234,11 @@ orig! {
 }
 
 orig! {
+    /// `CEventHitByWaterCannon::Destructor` (0x4B1320)
+    pub fn event_hit_by_water_cannon_dtor(e: GPtr<u8>) = thiscall 0x4B1320 => crate::event_dtors::event_hit_by_water_cannon_dtor;
+}
+
+orig! {
     /// `CEventCopCarBeingStolen::Constructor` (0x4B1740)
     pub fn event_cop_car_being_stolen_ctor(e: GPtr<u8>, ped: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = thiscall 0x4B1740 => unported;
 }
@@ -254,8 +259,18 @@ orig! {
 }
 
 orig! {
+    /// `CEventFireNearby::~CEventFireNearby` (0x4B1F80)
+    pub fn event_fire_nearby_dtor(e: GPtr<u8>) = thiscall 0x4B1F80 => unported;
+}
+
+orig! {
     /// `FUN_004b2210` (0x4B2210)
     pub fn area_codes_dtor(e: GPtr<u8>) = thiscall 0x4B2210 => unported;
+}
+
+orig! {
+    /// `FUN_004b2470` (0x4B2470)
+    pub fn event_player_command_to_group_dtor(e: GPtr<u8>) = thiscall 0x4B2470 => crate::mvpa_ai2::event_player_command_to_group_dtor;
 }
 
 orig! {
@@ -494,6 +509,11 @@ orig! {
 }
 
 orig! {
+    /// `CPedGeometryAnalyser::ComputePedHitSide-physical` (0x5F3640)
+    pub fn compute_ped_hit_side(ped: GPtr<u8>, other: GPtr<u8>) -> u32 = cdecl 0x5F3640 => unported;
+}
+
+orig! {
     /// `CPedGeometryAnalyser::ComputeEntityBoundingBoxCorners` (0x5F3650)
     pub fn compute_entity_bounding_box_corners(z: u32, e: GPtr<u8>, corners: GPtr<u8>) = cdecl 0x5F3650 => unported;
 }
@@ -671,6 +691,11 @@ orig! {
 orig! {
     /// `CPedIntelligence::SetTaskDuckSecondary` (0x601230)
     pub fn intel_set_task_duck_secondary(i: GPtr<u8>, t: u32) = thiscall 0x601230 => crate::intelrest::intel_set_task_duck_secondary;
+}
+
+orig! {
+    /// `CPedIntelligence::ClearTaskDuckSecondary` (0x601390)
+    pub fn intel_clear_task_duck_secondary(intel: GPtr<u8>) = thiscall 0x601390 => crate::intelrest::intel_clear_task_duck_secondary;
 }
 
 orig! {
@@ -1271,6 +1296,11 @@ orig! {
 orig! {
     /// `CTaskSimpleGoToPoint::Constructor` (0x667CD0)
     pub fn go_to_point_ctor(t: GPtr<u8>, ms: u32, pos: GPtr<u8>, radius: u32, a: u8, b: u8) -> GPtr<u8> = thiscall 0x667CD0 => crate::walk::goto_point_ctor;
+}
+
+orig! {
+    /// `CTaskComplexGoToPointShooting::Constructor` (0x668C70)
+    pub fn go_to_point_shooting_ctor(t: GPtr<u8>, mode: u32, pos: GPtr<u32>, e: GPtr<u8>, ox: u32, oy: u32, oz: u32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x668C70 => unported;
 }
 
 orig! {

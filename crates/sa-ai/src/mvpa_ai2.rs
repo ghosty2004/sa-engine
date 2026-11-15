@@ -419,7 +419,7 @@ pub fn run_timed_anim_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
 
 /// The event destructors of shape `vtbl = V; if (ref) CleanUpOldReference(&ref); vtbl = CEvent` (the SEH frame has
 /// no other effect).
-fn event_dtor_with_ref(this: GPtr<u8>, vt: u32, off: isize) {
+pub(crate) fn event_dtor_with_ref(this: GPtr<u8>, vt: u32, off: isize) {
     wr::<u32>(this, 0, vt);
     let e = rd::<GPtr<u8>>(this, off);
     if !e.is_null() {

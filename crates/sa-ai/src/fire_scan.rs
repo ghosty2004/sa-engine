@@ -13,6 +13,7 @@ use crate::bindings::task_is_go_to_task;
 use sa_core::bindings::tm_get_active_task;
 use sa_core::bindings::tm_get_simplest_active_task;
 use crate::bindings::event_group_add;
+use crate::bindings::event_fire_nearby_dtor;
 use crate::bindings::dtor_4b1f00 as event_walk_into_fire_dtor;
 use sa_world::bindings::fire_find_nearest_fire;
 orig! {
@@ -20,8 +21,6 @@ orig! {
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
     /// `CEventFireNearby::CEventFireNearby(const CVector&)` (0x4B1F10, `ret 4`)
     fn event_fire_nearby_ctor(e: GPtr<u8>, pos: GPtr<u8>) -> GPtr<u8> = thiscall 0x4B1F10 => unported;
-    /// `CEventFireNearby::~CEventFireNearby()` (0x4B1F80)
-    fn event_fire_nearby_dtor(e: GPtr<u8>) = thiscall 0x4B1F80 => unported;
     /// `CEventPotentialWalkIntoFire::CEventPotentialWalkIntoFire(const CVector&, float size, int32 moveState)` (0x4B1E20,
     /// `ret 0xC`)
     fn event_walk_into_fire_ctor(e: GPtr<u8>, pos: GPtr<u8>, size: u32, ms: u32) -> GPtr<u8> = thiscall 0x4B1E20 => unported;

@@ -24,11 +24,6 @@ orig! {
 }
 
 orig! {
-    /// `FUN_004b2470` (0x4B2470)
-    pub fn event_player_command_to_group_dtor(e: GPtr<u8>) = thiscall 0x4B2470 => unported;
-}
-
-orig! {
     /// `CPedDamageResponseCalculator::ComputeDamageResponse` (0x4B5AC0)
     pub fn damage_calc_compute_damage_response(c: GPtr<u8>, ped: GPtr<u8>, resp: GPtr<u8>, b: u32) = thiscall 0x4B5AC0 => crate::damage::compute_damage_response;
 }

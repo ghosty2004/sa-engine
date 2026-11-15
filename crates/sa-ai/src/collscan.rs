@@ -16,6 +16,7 @@ use sa_core::abi::HookReg;
 use sa_core::orig;
 
 use crate::common::*;
+use crate::bindings::compute_ped_hit_side;
 
 sa_core::globals! {
     list GLOBALS;
@@ -82,8 +83,6 @@ use sa_world::bindings::vector_scale;
 use sa_world::bindings::kill_ped_with_car as ped_kill_ped_with_car;
 use sa_world::bindings::max_f as float_max;
 orig! {
-    /// `CPedGeometryAnalyser::ComputePedHitSide(const CPed&, const CPhysical&)` (0x5F3640, cdecl)
-    fn compute_ped_hit_side(ped: GPtr<u8>, other: GPtr<u8>) -> u32 = cdecl 0x5F3640 => unported;
     /// `CEventVehicleCollision::CEventVehicleCollision(int16 piece, float, CVehicle*, const CVector*, const CVector*,
     /// int8 moveState, int16)` (0x4AC840, `ret 0x1C`)
     fn vehicle_collision_ctor(e: GPtr<u8>, piece: u32, dmg: u32, veh: GPtr<u8>, vel: GPtr<u8>, pos: GPtr<u8>, ms: u32, a: u32) -> GPtr<u8> = thiscall 0x4AC840 => unported;

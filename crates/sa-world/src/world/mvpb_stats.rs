@@ -32,6 +32,7 @@ use crate::bindings::find_player_coors;
 use sa_core::bindings::hud_set_help_message;
 use crate::bindings::stats_check_for_stats_message as check_for_stats_message_o;
 use crate::bindings::stats_increment_stat as increment_stat_o;
+use crate::bindings::{get_skill_stat_index, is_coop_game_going_on};
 orig! {
     /// `CStats::ProcessReactionStatsOnIncrement(uint8)` (0x55B900, cdecl)
     fn process_reaction_stats_on_increment(id: u32) = cdecl 0x55B900 => unported;
@@ -291,5 +292,45 @@ pub fn update_respect_stat(reset: u8) {
     last.write(v.to_bits());
 }
 
+/// `CStats::UpdateStatsWhenWeaponHit(eWeaponType)` (0x55CEB0, cdecl; FRONTIER-2 part 4, reached when a shot hits): the
+/// weapon's skill stat `s = GetSkillStatIndex(type)` (its low word picks the float / int array) and its value read as a
+/// float; nothing in a co-op game or unless value < 1000 (`test ah, 5; jp`: equal and NaN return). Then
+/// `IncrementStat(s, StatReactionValue[s - 0x45])` (0xB78F40). When the last skill hit (0xB79514) is another one it
+/// becomes `s - 0x45` and the hit counter (0xB79504) restarts at 0; otherwise the counter, read as unsigned, above the
+/// threshold `[0xB78FC8 + 4 * (s - 0x45)]` shows `DisplayScriptStatUpdateMessage(1, s, counter * reaction)` and
+/// restarts it, else it is incremented.
+#[hook(addr = 0x55CEB0, conv = cdecl, name = "CStats::UpdateStatsWhenWeaponHit", expect = "51 8B 44 24 08 56 57",
+       unverified = "frontier2-7", route = "L2", hazards = "heap-writes", recs = "weapon-combat")]
+pub fn update_stats_when_weapon_hit(ty: i32) {
+    let s = get_skill_stat_index(ty as u32) as u32;
+    let lo = s & 0xFFFF;
+    let value = if lo < 0x52 {
+        g::<f32>(STATS_FLOAT + 4 * lo as usize).read()
+    } else {
+        xi(g::<i32>(STATS_INT + 4 * lo as usize).read()).to_f32()
+    };
+    if is_coop_game_going_on() != 0 || x(value).fcom(x(K1000)) != Cmp::Less {
+        return;
+    }
+    let k = s.wrapping_sub(0x45);
+    let reaction = g::<f32>(0xB78F40usize.wrapping_add(4usize.wrapping_mul(k as usize)));
+    increment_stat_o(s, reaction.read());
+    let last = g::<u32>(0xB79514);
+    let counter = g::<u32>(0xB79504);
+    if last.read() != k {
+        last.write(k);
+        counter.write(0);
+        return;
+    }
+    let c = X87::from_f64_exact(f64::from(counter.read()));
+    let threshold = g::<f32>(0xB78FC8usize.wrapping_add(4usize.wrapping_mul(k as usize))).read();
+    if c.fcom(x(threshold)) == Cmp::Greater {
+        display_script_stat_update_message(1, s, c.fmul_m(reaction.read()).to_f32());
+        counter.write(0);
+    } else {
+        counter.write(counter.read().wrapping_add(1));
+    }
+}
+
 /// Every registration of this module.
-pub const HOOKS: &[HookReg] = &[HOOK_UPDATE_RESPECT_STAT, HOOK_INCREMENT_STAT, HOOK_CHECK_FOR_STATS_MESSAGE, HOOK_UPDATE_SEX_APPEAL_STAT];
+pub const HOOKS: &[HookReg] = &[HOOK_UPDATE_RESPECT_STAT, HOOK_INCREMENT_STAT, HOOK_CHECK_FOR_STATS_MESSAGE, HOOK_UPDATE_SEX_APPEAL_STAT, HOOK_UPDATE_STATS_WHEN_WEAPON_HIT];

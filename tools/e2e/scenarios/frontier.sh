@@ -2,7 +2,7 @@
 # FRONTIER-1 scenarios: native sa-game runs (deterministic, --fixed-step 40, offscreen) that reach the blockers the
 # user hit. Each must end with an empty blocker list in OUT/report.md and no crash.
 #
-#   tools/e2e/scenarios/frontier.sh pausemenu|solicit|crossing|melee|sniper|shootcar OUTDIR [FRAMES]
+#   tools/e2e/scenarios/frontier.sh pausemenu|solicit|crossing|melee|sniper|shootcar|shootdriver OUTDIR [FRAMES]
 #
 # pausemenu (400)  Esc, down x3, Enter (pause-menu item 4: Stats), down, Enter, Enter: the Stats pages draw
 #                  (was a SIGSEGV at iteration ~171: CStats::GetStatValue's X87 result dispatched as cdecl)
@@ -23,6 +23,10 @@
 # shootcar (1200) the Greenwood left on the road at the level crossing, CJ 7 m south of it facing it, the weapon cheat
 #                  KJKSZPJ, two `e` presses (the pistol slot), aiming (right button: camera mode 0x35, the shot line includes
 #                  car tyres) and firing (left button) at it: the line of sight takes the car's tyres (CAutomobile::SetUpWheelColModel 0x6A3060, FRONTIER-2 part 3)
+# shootdriver (1200) on foot at Grove Street, the weapon cheat and the pistol, CJ put 7 m in front of the nearest car
+#                  with a driver (SA_GAME_JACK), aiming and firing at it (the user's free-roam case, FRONTIER-2 part 4): the
+#                  shots damage the car, CVehicle::InflictDamage gives its occupants a CEventVehicleDamageWeapon, and the
+#                  event group's clone is deleted later (0x61C390 -> 0x61C310 -> CEventVehicleDamage's destructor)
 # WRAP="gdb -q -batch -x tools/e2e/scenarios/frontier2-counts.gdb --args" counts the FRONTIER-2 ports' calls
 # (frontier2-3-counts.gdb: those of part 2).
 # Env: SA_ROOT (checkout holding wine/gta-sa; default ~/sa-engine), SA_GAME (binary; default this checkout's
@@ -80,7 +84,16 @@ shootcar)
     export SA_GAME_KEYS="$keys"
     export SA_GAME_RMB="${SA_GAME_RMB:-600:1150}" SA_GAME_LMB="${SA_GAME_LMB:-640:1150}"
     run "${3:-1200}" --start-in-world ;;
+shootdriver)
+    # on foot at Grove Street: the weapon cheat KJKSZPJ, two `e` presses (the pistol slot), then CJ is put 7 m in front
+    # of the nearest car with a driver (SA_GAME_JACK), aims (right button) and fires (left button) at it
+    export SA_GAME_SCRIPT_SKIP=1
+    keys=; i=150; for c in k j k s z p j; do keys="$keys${keys:+,}$c:$i:$((i + 2))"; i=$((i + 6)); done
+    keys="$keys,e:240:242,e:260:262"
+    export SA_GAME_KEYS="$keys" SA_GAME_JACK="${SA_GAME_JACK:-400:7}" SA_GAME_MOUSE="${SA_GAME_MOUSE:--3:-4:425:445}"
+    export SA_GAME_RMB="${SA_GAME_RMB:-420:1150}" SA_GAME_LMB="${SA_GAME_LMB:-450:1150}"
+    run "${3:-1200}" --start-in-world ;;
 *)
-    echo "usage: $0 pausemenu|solicit|crossing|melee|sniper|shootcar OUTDIR [FRAMES]" >&2
+    echo "usage: $0 pausemenu|solicit|crossing|melee|sniper|shootcar|shootdriver OUTDIR [FRAMES]" >&2
     exit 2 ;;
 esac

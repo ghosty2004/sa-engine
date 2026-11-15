@@ -411,6 +411,10 @@ orig! {
     fn find_next_criminal_call(this: GPtr<u8>, ped: GPtr<u8>, any: u8) -> GPtr<u8> = thiscall 0x68C3C0 => kill_criminal_find_next_criminal_to_kill;
     /// `CTaskComplexKillCriminal::ChangeTarget(CPed*)` (0x68C6E0, `ret 4`, AL)
     fn change_target_call(this: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x68C6E0 => kill_criminal_change_target;
+    /// virtual `CEvent::GetEventType()` (vtable +4)
+    fn v_event_type(e: GPtr<u8>) -> i32 = thiscall vslot 0x4 => unported;
+    /// virtual `CEvent::GetSourceEntity()` (vtable +0x28)
+    fn v_source_entity(e: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x28 => unported;
 }
 
 /// `fld health (+0x540); fcomp 0; test ah, 0x41; jp alive`: dead for health < 0 or == 0 (NaN counts as alive).
@@ -941,9 +945,58 @@ fn create_chosen(this: GPtr<u8>, ped: GPtr<u8>, chosen: i32) -> GPtr<u8> {
 }
 
 /// Registrations of this module.
+/// `CTaskComplexKillCriminal::MakeAbortable(CPed*, eAbortPriority, const CEvent*)` (0x68DAD0, `ret 0xC`, AL;
+/// FRONTIER-2 part 4, crossing 4000). With an event: its type `t` and source `s` (vtable +4 / +0x28, the source read
+/// again for every use). Coming from the criminal (`s == criminal`, criminal set), a damage-like event (9, 0x24, 0x29,
+/// 0x49, 0x1F, 0xF) is not obeyed: the event's +4 counter is incremented and false returned. From anyone else, 0x24 /
+/// 0x49 are not obeyed either; 9 / 0x29 / 0x1F / 0xF from a ped that is not the player are not obeyed and, when the cop
+/// (+0x10) adds it to its criminals to kill and the type is 9 or 0x29, the task changes target to it (without a
+/// criminal, or when the criminal is nearer than 25 to the ped: squared distance < 625). Any other event, or none: the
+/// sub-task's `MakeAbortable(ped, priority, event)`.
+#[hook(addr = 0x68DAD0, conv = thiscall, name = "CTaskComplexKillCriminal::MakeAbortable", expect = "83 EC 0C 53 55 56 8B 74 24 24",
+       unverified = "frontier2-8", route = "L2", hazards = "heap-writes")]
+pub fn kill_criminal_make_abortable(this: GPtr<u8>, ped: GPtr<u8>, prio: i32, ev: GPtr<u8>) -> u8 {
+    let sub_abort = || v_make_abortable(rd::<GPtr<u8>>(this, 8), ped, prio, ev);
+    if ev.is_null() {
+        return sub_abort();
+    }
+    let ty = v_event_type(ev);
+    let criminal = rd::<GPtr<u8>>(this, 0xC);
+    let not_obeyed = || {
+        wr::<i32>(ev, 4, rd::<i32>(ev, 4).wrapping_add(1));
+        0
+    };
+    if v_source_entity(ev) == criminal && !criminal.is_null() {
+        return if matches!(ty, 9 | 0x24 | 0x29 | 0x49 | 0x1F | 0xF) { not_obeyed() } else { sub_abort() };
+    }
+    if matches!(ty, 0x24 | 0x49) {
+        return not_obeyed();
+    }
+    if !matches!(ty, 9 | 0x29 | 0x1F | 0xF) {
+        return sub_abort();
+    }
+    'change: {
+        let s = v_source_entity(ev);
+        if s.is_null() || rd::<u8>(v_source_entity(ev), 0x36) & 7 != 3 || ped_is_player(v_source_entity(ev)) != 0 {
+            break 'change;
+        }
+        let cop = rd::<GPtr<u8>>(this, 0x10);
+        if cop.is_null() || cop_add_criminal_to_kill(cop, v_source_entity(ev)) == 0 || !matches!(ty, 9 | 0x29) {
+            break 'change;
+        }
+        let c = rd::<GPtr<u8>>(this, 0xC);
+        if !c.is_null() && !lt(sub_sq(entity_pos(c), entity_pos(ped)), x(sa_core::field::gf(0x85A6E8))) {
+            break 'change;
+        }
+        change_target_call(this, v_source_entity(ev));
+    }
+    not_obeyed()
+}
+
 pub const HOOKS: &[HookReg] = &[
     HOOK_KILL_CRIMINAL_CREATE_FIRST_SUB_TASK,
     HOOK_KILL_CRIMINAL_FIND_NEXT_CRIMINAL_TO_KILL,
     HOOK_KILL_CRIMINAL_CHANGE_TARGET,
     HOOK_KILL_CRIMINAL_CONTROL_SUB_TASK,
+    HOOK_KILL_CRIMINAL_MAKE_ABORTABLE,
 ];

@@ -11,6 +11,13 @@ use sa_world::bindings::{anim_blend_animation, intel_get_task_fighting};
 use crate::common::*;
 use crate::bindings::{compute_entity_hit_side_ped, evasive_step_ctor, fall_and_get_up_ctor, leave_group_ctor};
 use sa_math::fpu::{gt, lt};
+use crate::bindings::compute_ped_hit_side;
+use sa_core::bindings::vector_normalise;
+use sa_world::bindings::{
+    damage_calc_compute_damage_response, damage_calc_ctor, damage_calc_dtor, event_damage_affects_ped, event_damage_ctor,
+    event_damage_dtor, event_group_add, physical_apply_move_force_5429f0,
+};
+use sa_world::world::common::entity_pos;
 
 /// `CTaskSimpleBeHit::StartAnim(CPed* ped)` (0x620910, `ret 4`).
 ///
@@ -164,7 +171,69 @@ pub fn hit_ped_with_car_create_sub_task(this: GPtr<u8>, ty: i32) -> GPtr<u8> {
     }
 }
 
+/// `CTaskSimpleHurtPedWithCar::ProcessPed(CPed*)` (0x653F90, `ret 4`, AL = 1; FRONTIER-2 part 4, the crossing run).
+/// The car (+8) hits the ped: a stack `CPedDamageResponseCalculator(car, 30.0 ([0x86F134]), 0x31 rammed by car, 3
+/// torso, false)` and `CEventDamage(car, now, 0x31, 3, ComputePedHitSide(ped, car), false, (ped +0x46C >> 8) &
+/// 0xFFFFFF01)` (the in-vehicle bit with the flag word's upper bits, as pushed); when the event affects the ped its
+/// damage response is computed (`ComputeDamageResponse(ped, &event.response (+0x34), true)`); +0x10 = the response's
+/// health-zero byte (event +0x40) and then the event joins the ped's group. The ped's +0x46C bit 0 and +0x470 bit 4 are
+/// cleared, its move speed = (car.x, car.y) * 0.75 with z 0 (z * 0.75 stored first); the car gets
+/// `ApplyMoveForce(normalise(ped - car) * (min(mass / 1400, 1) * -60))` (`1.0 < k` takes 1). The event and the
+/// calculator are destroyed.
+#[hook(addr = 0x653F90, conv = thiscall, name = "CTaskSimpleHurtPedWithCar::ProcessPed", expect = "6A FF 68 A0 35 84 00",
+       unverified = "frontier2-8", route = "L2", hazards = "heap-writes")]
+pub fn hurt_ped_with_car_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
+    let car = rd::<GPtr<u8>>(this, 8);
+    let side = compute_ped_hit_side(ped, car);
+    let mut calc = [0u32; 8];
+    let cp: GPtr<u8> = GPtr::from_raw(calc.as_mut_ptr()).cast();
+    damage_calc_ctor(cp, rd::<u32>(this, 8), g::<u32>(0x86_F134).read(), 0x31, 3, 0);
+    let mut ev = [0u32; 0x14];
+    let ep: GPtr<u8> = GPtr::from_raw(ev.as_mut_ptr()).cast();
+    let in_veh = (rd::<u32>(ped, 0x46C) >> 8) & 0xFFFF_FF01;
+    event_damage_ctor(ep, rd::<GPtr<u8>>(this, 8), g::<u32>(0xB7_CB84).read(), 0x31, 3, side, 0, in_veh);
+    if event_damage_affects_ped(ep, ped) != 0 {
+        damage_calc_compute_damage_response(cp, ped, ep.byte_add(0x34), 1);
+    }
+    let kill = rd::<u8>(ep, 0x40);
+    wr::<u8>(this, 0x10, kill);
+    if kill != 0 {
+        event_group_add(rd::<GPtr<u8>>(ped, 0x47C).byte_add(0x68), ep, 0);
+    }
+    wr::<u32>(ped, 0x470, rd::<u32>(ped, 0x470) & 0xFFFF_FFEF);
+    wr::<u32>(ped, 0x46C, rd::<u32>(ped, 0x46C) & 0xFFFF_FFFE);
+    let car = rd::<GPtr<u8>>(this, 8);
+    let k75 = sa_core::field::gf(0x85_8F34);
+    let mz = x(rd::<f32>(car, 0x4C)).fmul_m(k75);
+    let my = x(rd::<f32>(car, 0x48)).fmul_m(k75);
+    let mx = x(rd::<f32>(car, 0x44)).fmul_m(k75);
+    wr::<f32>(ped, 0x44, mx.to_f32());
+    wr::<f32>(ped, 0x48, my.to_f32());
+    wr::<f32>(ped, 0x4C, mz.to_f32());
+    wr::<u32>(ped, 0x4C, 0);
+    let car = rd::<GPtr<u8>>(this, 8);
+    let (pp, cpos) = (entity_pos(ped), entity_pos(car));
+    let mut d = [0f32; 3];
+    for (i, v) in d.iter_mut().enumerate() {
+        *v = x(rd::<f32>(pp, 4 * i as isize)).fsub_m(rd::<f32>(cpos, 4 * i as isize)).to_f32();
+    }
+    vector_normalise(GPtr::from_raw(d.as_mut_ptr()).cast());
+    let car = rd::<GPtr<u8>>(this, 8);
+    let mut k = x(rd::<f32>(car, 0x8C)).fmul_m(sa_core::field::gf(0x86_4F98));
+    if lt(x(1.0), k) {
+        k = x(1.0);
+    }
+    let k = k.fmul_m(sa_core::field::gf(0x86_EBC4));
+    let f = sa_math::vector::CVector::new(x(d[0]).fmul(k).to_f32(), x(d[1]).fmul(k).to_f32(), x(d[2]).fmul(k).to_f32());
+    physical_apply_move_force_5429f0(car, f);
+    event_damage_dtor(ep);
+    damage_calc_dtor(cp);
+    1
+}
+
+
 pub const HOOKS: &[HookReg] = &[
+    HOOK_HURT_PED_WITH_CAR_PROCESS_PED,
     HOOK_HIT_PED_WITH_CAR_CREATE_SUB_TASK,
     HOOK_BE_HIT_START_ANIM,
     HOOK_HIT_PED_WITH_CAR_HIT_HURTS_PED,

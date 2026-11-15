@@ -19,6 +19,11 @@ orig! {
 }
 
 orig! {
+    /// `CEventHitByWaterCannon::Destructor` (0x4B1320)
+    pub fn event_hit_by_water_cannon_dtor(e: GPtr<u8>) = thiscall 0x4B1320 => unported;
+}
+
+orig! {
     /// `CAudioEngine::ReportBulletHit` (0x506EC0)
     pub fn audio_report_bullet_hit(ae: GPtr<u8>, e: GPtr<u8>, surface: u32, pos: GPtr<u8>, angle: f32) = thiscall 0x506EC0 => unported;
 }

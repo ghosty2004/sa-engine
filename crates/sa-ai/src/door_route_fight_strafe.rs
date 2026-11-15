@@ -130,7 +130,7 @@ pub fn goto_door_and_open_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -
 }
 
 /// Appends `v` to a `CPointRoute` (count at +0, up to 8 points from +4) when it has room.
-fn route_add(route: GPtr<u8>, v: [u32; 3]) {
+pub(crate) fn route_add(route: GPtr<u8>, v: [u32; 3]) {
     let n = rd::<i32>(route, 0);
     if n < 8 {
         let p = route.byte_add(n as isize * 12 + 4);

@@ -20,6 +20,7 @@
 use crate::cmdlib::*;
 use crate::vm::Scr;
 use sa_core::abi::HookReg;
+use sa_ai::bindings::go_to_point_shooting_ctor as task_go_to_point_shooting_ctor;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 use sa_math::x87::{Cmp, X87};
@@ -180,11 +181,6 @@ orig! {
     fn task_clone(t: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x4 => unported;
     /// `CPedGroups::RemoveAllFollowersFromGroup(int32)` (0x5FB8A0) / `RemoveGroup(int32)` (0x5FB870)
     fn remove_all_followers_from_group(g: u32) = cdecl 0x5FB8A0 => unported;
-    /// `CTaskComplexGoToPointShooting::CTaskComplexGoToPointShooting(int32, const CVector&, CEntity*, CVector, float,
-    /// float)` (0x668C70); the by-value vector and floats raw
-    fn task_go_to_point_shooting_ctor(
-        t: GPtr<u8>, mode: u32, pos: GPtr<u32>, e: GPtr<u8>, ox: u32, oy: u32, oz: u32, a: u32, b: u32
-    ) -> GPtr<u8> = thiscall 0x668C70 => unported;
     /// `CTaskSimpleSetStayInSamePlace::CTaskSimpleSetStayInSamePlace(bool)` (0x62F590) / `ProcessPed(CPed*)` (0x62F5E0)
     /// / the destructor at 0x62F5D0
     fn task_stay_in_same_place_ctor(t: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x62F590 => unported;
