@@ -121,8 +121,6 @@ orig! {
     fn add_dm_event_response(t: GPtr<u8>, i: i32, ev: u32, task: u32, chances: GPtr<u32>, flags: GPtr<u32>) = thiscall 0x6044C0 => unported;
     /// `CVehicle` virtual slot 0xA4 (`BlowUpCar(CEntity* damager, bool inCutscene)`)
     fn blow_up_car(v: GPtr<u8>, damager: u32, in_cutscene: u32) = thiscall vslot 0xA4 => unported;
-    /// 0x45AD40 (cdecl, `CVehicle*`; a `.HOODLUM` stub: takes remote control of the car)
-    fn take_remote_control(v: GPtr<u8>) = cdecl 0x45AD40 => unported;
     /// `CWorld::FindNearestObjectOfType(int32 model, const CVector&, float radius, bool 2d, bool buildings,
     /// bool vehicles, bool peds, bool objects, bool dummies)` (0x5693F0); radius raw
     fn find_nearest_object_of_type(model: u32, pos: GPtr<u32>, radius: u32, a: u32, b: u32, c: u32, d: u32, e: u32, f: u32) -> GPtr<u8> = cdecl 0x5693F0 => unported;
@@ -311,7 +309,7 @@ pub fn process_commands_1800_to_1899(s: Scr, command: u32) -> i8 {
         // 0715 TAKE_REMOTE_CONTROL_OF_CAR (0x46D545): `0x45AD40(VEH(P1))`; P0 (player) unused.
         0x0715 => {
             collect(s, 2);
-            take_remote_control(veh(sp(1)));
+            crate::bindings::take_remote_control_of_car(veh(sp(1)));
         }
         // 0716 IS_CLOSEST_OBJECT_OF_TYPE_SMASHED_OR_DAMAGED (0x46D56F)
         0x0716 => closest_object_smashed_or_damaged(s),

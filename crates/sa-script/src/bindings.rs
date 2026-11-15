@@ -59,6 +59,11 @@ orig! {
 }
 
 orig! {
+    /// `thunk_FUN_0156e620` (0x45AD40)
+    pub fn take_remote_control_of_car(veh: GPtr<u8>) = cdecl 0x45AD40 => crate::frontier_c::take_remote_control_of_car;
+}
+
+orig! {
     /// `thunk_FUN_015658a0` (0x45AFB0)
     pub fn physical_45afb0(p: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x45AFB0 => unported;
 }

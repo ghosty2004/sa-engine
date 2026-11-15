@@ -265,6 +265,18 @@ pub fn give_player_remote_controlled_car(x: f32, y: f32, z: f32, angle: f32, mod
     at::<u8>(veh, 0x36).write(at::<u8>(veh, 0x36).read() & 7 | 0x40);
     at::<u8>(veh, 0x428).write(at::<u8>(veh, 0x428).read() | 8);
     sa_pop::bindings::join_car_with_road_system(veh);
+    remote_car_state(veh);
+    sa_core::bindings::world_add(veh);
+    disable_player_vehicle();
+    let slot = focus_player().byte_add(0xB0);
+    slot.cast::<GPtr<u8>>().write(veh);
+    sa_core::bindings::entity_register_reference(veh, slot);
+    remote_car_camera(veh, 1);
+}
+
+/// The remote car's AI state shared by `GivePlayerRemoteControlledCar` / `TakeRemoteControlOfCar`: +0x3BA / +0x3BB /
+/// +0x3B9 = 0, +0x3C8 = 9.0, +0x3D0 = 9, +0x3B7 / +0x3B8 = 0, then +0x428 bit 0x10 = !(+0x42D & 2) (both read first).
+fn remote_car_state(veh: GPtr<u8>) {
     let f = at::<u8>(veh, 0x428).read();
     let no_engine = at::<u8>(veh, 0x42D).read() & 2 != 0;
     at::<u8>(veh, 0x3BA).write(0);
@@ -275,16 +287,51 @@ pub fn give_player_remote_controlled_car(x: f32, y: f32, z: f32, angle: f32, mod
     at::<u8>(veh, 0x3B7).write(0);
     at::<u8>(veh, 0x3B8).write(0);
     at::<u8>(veh, 0x428).write(if no_engine { f & 0xEF } else { f | 0x10 });
-    sa_core::bindings::world_add(veh);
+}
+
+/// The player's own vehicle (`FindPlayerVehicle(-1, false)`, called again when there is one) gets status 9.
+fn disable_player_vehicle() {
     if !sa_core::bindings::find_player_vehicle(-1, 0).is_null() {
         let pv = sa_core::bindings::find_player_vehicle(-1, 0);
         at::<u8>(pv, 0x36).write(at::<u8>(pv, 0x36).read() & 7 | 0x48);
     }
+}
+
+/// `TheCamera.TakeControl(veh, 0x12, switch, 1)` and `SetZoomValueCamStringScript(1)`.
+fn remote_car_camera(veh: GPtr<u8>, switch: u32) {
+    sa_world::bindings::camera_take_control(GPtr::from_addr(0xB6F028), veh, 0x12, switch, 1);
+    crate::bindings::set_zoom_value_cam_string_script(GPtr::from_addr(0xB6F028), 1);
+}
+
+/// `CRemote::TakeRemoteControlOfCar(CVehicle* veh)` (stub 0x45AD40 → .HOODLUM 0x156E620, cdecl; FRONTIER-2 lane C turn
+/// 5): a current remote car of the focus player (+0xB0) gets status 3, and the switch becomes 2 when it is not `veh`;
+/// `veh` gets status 8, +0x428 |= 8 and the remote AI state ([`remote_car_state`]); the player's vehicle status 9; the
+/// old reference is cleaned up (`CleanUpOldReference`), +0xB0 = `veh` registered; the camera takes control with the
+/// switch (else 1: the value the no-CD VM 0xCB73E0 pushes for descriptor 0x1560094, evaluated on the exe image).
+#[hook(addr = 0x45AD40, conv = cdecl, name = "thunk_FUN_0156e620", expect = "E9 DB 38 11 01",
+       unverified = "frontier2-c11", route = "L2", hazards = "heap-writes")]
+pub fn take_remote_control_of_car(veh: GPtr<u8>) {
+    let mut other = false;
+    let old = at::<GPtr<u8>>(focus_player(), 0xB0).read();
+    if !old.is_null() {
+        at::<u8>(old, 0x36).write(at::<u8>(old, 0x36).read() & 7 | 0x18);
+        if at::<GPtr<u8>>(focus_player(), 0xB0).read() != veh {
+            other = true;
+        }
+    }
+    at::<u8>(veh, 0x36).write(at::<u8>(veh, 0x36).read() & 7 | 0x40);
+    at::<u8>(veh, 0x428).write(at::<u8>(veh, 0x428).read() | 8);
+    remote_car_state(veh);
+    disable_player_vehicle();
+    let slot = focus_player().byte_add(0xB0);
+    let cur = slot.cast::<GPtr<u8>>().read();
+    if !cur.is_null() {
+        sa_core::bindings::entity_clean_up_old_reference(cur, slot);
+    }
     let slot = focus_player().byte_add(0xB0);
     slot.cast::<GPtr<u8>>().write(veh);
     sa_core::bindings::entity_register_reference(veh, slot);
-    sa_world::bindings::camera_take_control(GPtr::from_addr(0xB6F028), veh, 0x12, 1, 1);
-    crate::bindings::set_zoom_value_cam_string_script(GPtr::from_addr(0xB6F028), 1);
+    remote_car_camera(veh, if other { 2 } else { 1 });
 }
 
 /// `CPatrolRoute::AddRoutePoint(const CVector& pos, const record& anim)` (stub 0x46AE80 → .HOODLUM 0x15622E0, thiscall,
@@ -427,6 +474,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_START_NEW_SCRIPT_INDEXED,
     HOOK_TAKE_REMOTE_CONTROLLED_CAR_FROM_PLAYER,
     HOOK_GIVE_PLAYER_REMOTE_CONTROLLED_CAR,
+    HOOK_TAKE_REMOTE_CONTROL_OF_CAR,
     HOOK_PATROL_ROUTE_ADD_POINT,
     HOOK_PATROL_ANIM_RECORD_CTOR,
     HOOK_FIND_STREAMED_SCRIPT_QUIET,
