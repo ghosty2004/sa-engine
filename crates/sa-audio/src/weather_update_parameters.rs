@@ -128,8 +128,11 @@ fn thunder_volume() -> f32 {
 /// `Initialise`d and requested four times, at `(-+0.906, 0.423, 0)`: sfx 4 at -100 with flags 7 and event 1, then
 /// sfx 1 at `min'(volume, 0)` (0 unless below) with flags 0x407 and event 2; the left one at speed `f32(f *
 /// 0.35636)`, the right one at `f32(f * 0.4)`; max distance 1.0, time scale 1.0.
-#[hook(addr = 0x506800, conv = thiscall, name = "CAEWeatherAudioEntity::AddAudioEvent", expect = "6A FF 68 48 C5 83 00",
-       unverified = "frontier2-c10", route = "L2", hazards = "x87-transcendental")]
+///
+/// A phase B native, not a hook: the inline hook steals the 7 bytes `push -1; push 0x83C548`, and the sweep-decoded
+/// reader 0x14274C2 in the executable `.data` (`fmul qword ptr [ebx + 0x506805]`, catalog/code-data-reads.csv) points
+/// into them, which sa-hook's install test (INF-20) refuses for an indexed read it cannot redirect.
+#[sa_core::native(addr = 0x506800, conv = thiscall, name = "CAEWeatherAudioEntity::AddAudioEvent")]
 pub fn weather_add_audio_event(this: GPtr<u8>, event: i32) {
     let mut local = StackSound::new();
     if event == 0x8D
@@ -449,4 +452,7 @@ pub fn weather_update_parameters(_this: GPtr<u8>, sound: GPtr<u8>, cur_play_pos:
 }
 
 /// Every `#[hook]` of this module.
-pub const HOOKS: &[HookReg] = &[HOOK_WEATHER_UPDATE_PARAMETERS, HOOK_WEATHER_ADD_AUDIO_EVENT];
+pub const HOOKS: &[HookReg] = &[HOOK_WEATHER_UPDATE_PARAMETERS];
+
+/// This module's phase B natives.
+pub const NATIVES: &[sa_core::abi::NativeReg] = &[NATIVE_WEATHER_ADD_AUDIO_EVENT];

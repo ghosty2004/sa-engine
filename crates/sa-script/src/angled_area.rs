@@ -53,10 +53,13 @@ struct Quad {
     y4: f32,
 }
 
+/// `(x1, y1, x2, y2, width, highlight, z range)` of [`area_params`].
+type AreaParams = (u32, u32, u32, u32, u32, u32, Option<(f32, f32)>);
+
 /// The script parameters of an angled-area check whose first coordinate is `ScriptParams[b]`: `(x1, y1, x2, y2,
 /// width, highlight, z range)`. 2D: x1, y1, x2, y2, width, highlight. 3D: x1, y1, z1, x2, y2, z2, width, highlight,
 /// the z range sorted (swapped unless `z1 < z2` or equal, NaN included).
-fn area_params(b: usize, is3d: bool) -> (u32, u32, u32, u32, u32, u32, Option<(f32, f32)>) {
+fn area_params(b: usize, is3d: bool) -> AreaParams {
     let (x1, y1) = (param(b), param(b + 1));
     if is3d {
         let (mut zmin, mut zmax) = (param(b + 2), param(b + 5));
