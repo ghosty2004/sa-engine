@@ -69,6 +69,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier2-a4 | 2 | AI | 4b0ec921 | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
 | frontier2-b1 | 32 | MATH, RENDER, RW | ebd33c14 | master | 32 | 0 | 0 | 0 | 0 | L1-pure 1, L2 31 |
 | frontier2-b10 | 10 | RENDER, VEH, WORLD | 5f3e9ad4 | worktree-agent-a75c5759aead26958 | 10 | 0 | 0 | 0 | 0 | L2 10 |
+| frontier2-b11 | 3 | VEH | 22e90eda | worktree-agent-a75c5759aead26958 | 3 | 0 | 0 | 0 | 0 | L2 3 |
 | frontier2-b2 | 23 | RW | 2f47ba34 | master | 23 | 0 | 0 | 0 | 0 | L2 23 |
 | frontier2-b3 | 7 | VEH | 221f09a0 | master | 7 | 0 | 0 | 0 | 0 | L2 7 |
 | frontier2-b4 | 5 | RW, SAVE | 2f47ba34 | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
@@ -2322,6 +2323,23 @@ SA_UNVERIFIED=frontier2-b10 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-b10 
 | 0x6CCCF0 | `CPlane::BlowUpCar` | written | L2 | heap-writes,stack-residue |
 | 0x6F21B0 | `CBoat::BlowUpCar` | written | L2 | heap-writes,stack-residue |
 | 0x71BC40 | `CGlass::WindowRespondsToCollision` | written | L2 | heap-writes,stack-residue |
+
+## frontier2-b11
+
+3 hooks in sa-veh; hazards: heap-writes (1), stack-residue (1), x87-transcendental (3); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-b11 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-b11 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-b11 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-b11
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x6CDCC0 | `CQuadBike::ProcessControl` | written | L2 | x87-transcendental |
+| 0x6CE460 | `CQuadBike::ProcessAI` | written | L2 | x87-transcendental,stack-residue |
+| 0x6CEAD0 | `CQuadBike::PreRender` | written | L2 | x87-transcendental,heap-writes |
 
 ## frontier2-b2
 
