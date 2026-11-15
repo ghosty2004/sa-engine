@@ -15,11 +15,11 @@ use sa_world::bindings::{
     ped_groups_get_peds_group, sequence_add_task, sequence_ctor,
 };
 use crate::common::*;
-use sa_core::bindings::vector_difference;
+use sa_core::bindings::{get_weapon_info, ped_is_alive, vector_difference};
 use sa_core::field::vec3f_ptr;
 use sa_math::fpu::{fbits, lt, st0};
 use sa_world::bindings::{
-    car_enter_exit_is_room_for_ped_to_leave_car, ped_set_current_weapon, vector_magnitude_sqr, vehicle_is_on_its_side,
+    ped_get_weapon_skill, car_enter_exit_is_room_for_ped_to_leave_car, ped_set_current_weapon, vector_magnitude_sqr, vehicle_is_on_its_side,
     vehicle_is_upside_down, weapon_is_type_melee,
 };
 use sa_world::world::common::{entity_pos, ped_active_weapon};
@@ -30,6 +30,7 @@ use crate::bindings::kill_ped_group_on_foot_ctor;
 use crate::bindings::kill_ped_group_on_foot_dtor;
 use crate::bindings::ped_do_we_have_weapon_available;
 use crate::bindings::fpr_get_last_waypoint;
+use sa_world::bindings::can_ped_open_locks as vehicle_can_ped_open_locks;
 orig! {
     /// virtual `CTask::CreateFirstSubTask(CPed*)` of a complex task (vtable +0x24)
     fn v_create_first_sub_task(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x24 => unported;
@@ -47,6 +48,10 @@ orig! {
     fn seek_cover_ctor_ped(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x622BC0 => unported;
     /// `CTaskComplexSeekCoverUntilTargetDead::Destructor` (0x622C20)
     fn seek_cover_dtor(t: GPtr<u8>) = thiscall 0x622C20 => unported;
+    /// `CTaskComplexDestroyCarArmed::CreateSubTask(int32, CPed*)` (0x628DA0, `ret 8`)
+    fn destroy_car_armed_create_sub_task(t: GPtr<u8>, ty: i32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x628DA0 => unported;
+    /// `CTaskComplexDestroyCarArmed::CalculateSearchPositionAndRanges(CPed*)` (0x628C80, `ret 4`)
+    fn destroy_car_armed_calc_search(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x628C80 => unported;
 }
 
 /// No task (`TASK_NONE` 0xC8): the arrest control keeps its sub task.
@@ -172,15 +177,7 @@ fn arrest_choose(this: GPtr<u8>, ped: GPtr<u8>, suspect: GPtr<u8>, sub: GPtr<u8>
             let fall = tm_find_active_task_by_type(rd::<GPtr<u8>>(s, 0x47C).byte_add(4), 0xD0);
             if !fall.is_null() && fall_and_get_up_is_falling(fall) != 0 {
                 let s = rd::<GPtr<u8>>(this, 0x10);
-                let mut d = [0f32; 3];
-                vector_difference(vec3f_ptr(&mut d), entity_pos(ped), entity_pos(s));
-                let dz = x(d[2]).fabs();
-                d[2] = 0.0;
-                if !dz.fcom(x(2.0)).test_any(0x41) {
-                    return 0x38B;
-                }
-                let sq = vector_magnitude_sqr(vec3f_ptr(&mut d));
-                if !x(3.0).fmul_m(3.0).fcom(sq).test_parity(5) {
+                if !suspect_within_reach(entity_pos(ped), entity_pos(s)) {
                     return 0x38B;
                 }
                 fall_and_get_up_set_down_time(fall, 100000);
@@ -386,10 +383,165 @@ pub fn follow_point_route_calc_blend_ratio(this: GPtr<u8>, ped: GPtr<u8>, slowin
     x(v)
 }
 
+/// The arrest tasks' "falling suspect close enough" test (ControlSubTask with `ped - suspect`, CreateNextSubTask): `d = a - b` (`CVector::Difference`),
+/// false when `|d.z| > 2`; then `d.z = 0` and true unless `3 * 3 < |d|^2`.
+fn suspect_within_reach(a: GPtr<u8>, b: GPtr<u8>) -> bool {
+    let mut d = [0f32; 3];
+    vector_difference(vec3f_ptr(&mut d), a, b);
+    let dz = x(d[2]).fabs();
+    d[2] = 0.0;
+    if !dz.fcom(x(2.0)).test_any(0x41) {
+        return false;
+    }
+    let sq = vector_magnitude_sqr(vec3f_ptr(&mut d));
+    x(3.0).fmul_m(3.0).fcom(sq).test_parity(5)
+}
+
+/// `CTaskComplexDestroyCarArmed::CreateNextSubTask(CPed*)` (0x62DF20, `ret 4`). Null without the vehicle (+0x10).
+/// After a seek (0x38B) or 0x387: the gun task 0x3FC. After 0x3FC / 0x3FD: in a car (+0x46C bit 0x200000) 0xCA, else
+/// the search ranges (0x628C80) and a seek (0x38B). After 0xCA: out of a car the search and seek; in one 0x3FC when
+/// the vehicle is within the weapon's target range (info +4, `range^2 > |vehicle - ped|^2`), else 0xCA again.
+/// Finished (0x516) and other types: null.
+#[hook(addr = 0x62DF20, conv = thiscall, name = "CTaskComplexDestroyCarArmed::CreateNextSubTask", expect = "83 EC 0C 57 8B F9 8B 47",
+       unverified = "frontier2-a6", route = "L2", hazards = "heap-writes", recs = "police-gang")]
+pub fn destroy_car_armed_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    if rd::<u32>(this, 0x10) == 0 {
+        return GPtr::NULL;
+    }
+    let t = task_get_type(rd::<GPtr<u8>>(this, 8));
+    let in_car = rd::<u32>(ped, 0x46C) & 0x200000 != 0;
+    let search = |this: GPtr<u8>| {
+        destroy_car_armed_calc_search(this, ped);
+        destroy_car_armed_create_sub_task(this, 0x38B, ped)
+    };
+    match t {
+        0x38B | 0x387 => destroy_car_armed_create_sub_task(this, 0x3FC, ped),
+        0xCA => {
+            if !in_car {
+                return search(this);
+            }
+            let wt = rd::<i32>(ped_active_weapon(ped), 0);
+            let wi = get_weapon_info(wt, ped_get_weapon_skill(ped));
+            let mut d = [0f32; 3];
+            vector_sub(vec3f_ptr(&mut d), entity_pos(rd::<GPtr<u8>>(this, 0x10)), entity_pos(ped));
+            let range = x(rd::<f32>(wi, 4)).to_f32();
+            let sq = vector_magnitude_sqr(vec3f_ptr(&mut d));
+            if !x(range).fmul_m(range).fcom(sq).test_any(0x41) {
+                destroy_car_armed_create_sub_task(this, 0x3FC, ped)
+            } else {
+                destroy_car_armed_create_sub_task(this, 0xCA, ped)
+            }
+        }
+        0x3FC | 0x3FD => {
+            if in_car {
+                destroy_car_armed_create_sub_task(this, 0xCA, ped)
+            } else {
+                search(this)
+            }
+        }
+        _ => GPtr::NULL,
+    }
+}
+
+/// `CTaskComplexArrestPed::CreateNextSubTask(CPed*)` (0x690220, `ret 4`). Finished (0x516) without a suspect (+0x10).
+/// A suspect being arrested (+0x474 bit 0x40) whose arrest (0x44C) is not the sub task: after a seek (0x38B) the
+/// arrest when the seek flagged arrival (+0x48 bit 2), else a seek. By the sub task: the door tasks (0x2D2 / 0x2D8;
+/// with flag +0x10 bit 1 and the suspect's car locked to the ped, the car is remembered in +0x20) arrest a dead
+/// suspect, kill one out of its car, whose door task flagged or who is leaving (0x2C0) on foot (0x3E8), else arrest;
+/// drag out (0x2BF, +0x10 bit 2 clear) / seek (0x38B, +0x48 bit 2 set) arrest a falling suspect within reach (down
+/// time 100000), else kill on foot; wait (0x33D): kill on foot; kill on foot (0x3E8) arrests a dead suspect or a
+/// falling one within reach, seeks a falling one out of reach, else kills on foot unless the ped is no cop (+0x598
+/// != 6), the suspect is a player and its wanted (player data +0x480 -> +0 -> +0x18) is set (finished); destroy car
+/// (0x3EB) and arrest (0x44C): finished; others: null.
+#[hook(addr = 0x690220, conv = thiscall, name = "CTaskComplexArrestPed::CreateNextSubTask", expect = "83 EC 0C 56 8B F1 8B 46",
+       unverified = "frontier2-a6", route = "L2", hazards = "heap-writes", recs = "police-gang",
+       note = "a player suspect without player data reads address 0x18, as the original")]
+pub fn arrest_ped_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    let suspect = rd::<GPtr<u8>>(this, 0x10);
+    if suspect.is_null() {
+        return arrest_create_sub_task(this, 0x516, ped);
+    }
+    let sub = || rd::<GPtr<u8>>(this, 8);
+    if rd::<u8>(suspect, 0x474) & 0x40 != 0 && task_get_type(sub()) != 0x44C {
+        if task_get_type(sub()) == 0x38B {
+            let ty = if rd::<u8>(sub(), 0x48) & 4 != 0 { 0x44C } else { 0x38B };
+            return arrest_create_sub_task(this, ty, ped);
+        }
+        return arrest_create_sub_task(this, 0x38B, ped);
+    }
+    let fall_task = || {
+        let s = rd::<GPtr<u8>>(this, 0x10);
+        let f = tm_find_active_task_by_type(rd::<GPtr<u8>>(s, 0x47C).byte_add(4), 0xD0);
+        if !f.is_null() && fall_and_get_up_is_falling(f) != 0 { f } else { GPtr::NULL }
+    };
+    let ty = match task_get_type(sub()) {
+        0x2D2 | 0x2D8 => {
+            if rd::<u8>(sub(), 0x10) & 2 != 0 {
+                let v = rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0x10), 0x58C);
+                if !v.is_null() && vehicle_can_ped_open_locks(v, ped) == 0 {
+                    wr::<GPtr<u8>>(this, 0x20, rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0x10), 0x58C));
+                }
+            }
+            let s = rd::<GPtr<u8>>(this, 0x10);
+            if ped_is_alive(s) as u8 == 0 {
+                0x44C
+            } else if rd::<u32>(s, 0x46C) & 0x100 == 0
+                || rd::<u8>(sub(), 0x10) & 2 != 0
+                || !tm_find_active_task_by_type(rd::<GPtr<u8>>(s, 0x47C).byte_add(4), 0x2C0).is_null()
+            {
+                0x3E8
+            } else {
+                0x44C
+            }
+        }
+        0x2BF => {
+            let f = fall_task();
+            if !f.is_null() && rd::<u8>(sub(), 0x10) & 4 == 0 { arrest_reach(this, ped, f, 0x3E8) } else { 0x3E8 }
+        }
+        0x38B => {
+            let f = fall_task();
+            if !f.is_null() && rd::<u8>(sub(), 0x48) & 4 != 0 { arrest_reach(this, ped, f, 0x3E8) } else { 0x3E8 }
+        }
+        0x33D => 0x3E8,
+        0x3E8 => {
+            let s = rd::<GPtr<u8>>(this, 0x10);
+            if !x(rd::<f32>(s, 0x540)).fcom(x(0.0)).test_parity(0x41) {
+                0x44C
+            } else {
+                let f = fall_task();
+                if !f.is_null() {
+                    arrest_reach(this, ped, f, 0x38B)
+                } else if rd::<u32>(ped, 0x598) == 6 || ped_is_player(rd::<GPtr<u8>>(this, 0x10)) == 0 {
+                    0x3E8
+                } else {
+                    let pd = rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0x10), 0x480);
+                    let w = if pd.is_null() { GPtr::NULL } else { rd::<GPtr<u8>>(pd, 0) };
+                    if rd::<u8>(w, 0x18) == 0 { 0x3E8 } else { 0x516 }
+                }
+            }
+        }
+        0x3EB | 0x44C => 0x516,
+        _ => return GPtr::NULL,
+    };
+    arrest_create_sub_task(this, ty, ped)
+}
+
+/// A falling suspect within reach of the ped (`suspect - ped`, [`suspect_within_reach`]) gets the down time 100000 and
+/// is arrested (0x44C); else `far`.
+fn arrest_reach(this: GPtr<u8>, ped: GPtr<u8>, fall: GPtr<u8>, far: i32) -> i32 {
+    if !suspect_within_reach(entity_pos(rd::<GPtr<u8>>(this, 0x10)), entity_pos(ped)) {
+        return far;
+    }
+    fall_and_get_up_set_down_time(fall, 100000);
+    0x44C
+}
+
 /// Registrations of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_ARREST_PED_CONTROL_SUB_TASK,
     HOOK_CALC_SOUND_LEVEL_INCREMENT,
     HOOK_KILL_THREATS_RANDOM_GROUP_ALLOCATE_TASKS,
     HOOK_FOLLOW_POINT_ROUTE_CALC_BLEND_RATIO,
+    HOOK_DESTROY_CAR_ARMED_CREATE_NEXT_SUB_TASK,
+    HOOK_ARREST_PED_CREATE_NEXT_SUB_TASK,
 ];
