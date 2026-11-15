@@ -2352,3 +2352,41 @@
   `lanec4-default` (default set) IDENTICAL 13/13 (DLL of 603d48d8).
 - frontier.py: lane C subsystems 36 → 26 rows (2 of them lane A's partial switches); whole frontier 285 → 263 at the
   end (other branches' registrations included).
+
+## 2026-11-15 — FRONTIER-2 turn 4, lane B: CHeli::ProcessControl, the arrest camera, heli flying stuff (agent, branch worktree-agent-a743952821d102dbe)
+- Base: worktree-agent-a75c5759aead26958 6d34a21e (turn 3 lane B, integrated in parallel). Lane B subsystems; every port from
+  the 1.0 US bytes (gta-reversed only calls the original or has a stub), addresses checked against `inflight.py` (0
+  overlaps). Two batches, 6 hooks + 1 native:
+  - `frontier2-b12` (5 + native): CHeli::ProcessControl 0x6C7050 (priority 1, lane A's `roadblocks` police heli: gun-flash FX,
+    horn search-light toggle, light target by mission, the one-second target history and its blend, intensity by distance,
+    the police heli's shots by wanted level with the line-of-sight check and FireOneInstantHitRound, swat ropes, winch,
+    weapons, the interesting event), CHeli::SendDownSwat 0x6C69C0, CRopes::SetSpeedOfTopNode 0x555DF0 (sa-render), the phase B
+    native of the unhookable generated CHeli::FindSwatPositionRelativeToHeli 0x6C4760 (callers keep EDX);
+    CCam::ProcessArrestCamOne 0x518500 (coordinator priority: `roadblocks` blocked 1135 steps on it with lane A's arrest
+    tasks; ported from the bytes with docs/re/specs/CAM/CCam.md: reset mode search with the 0x512EF0 / 0x515D80 / 0x516010 /
+    lamp-post helpers, running modes 1 / 2 / 4..7 / 8, KEEP / APPLY tails; the reset tail reads `out` uninitialised when no
+    mode was found: hazard uninit-locals, zeros here); CHeli::ProcessFlyingCarStuff 0x6C4E60 (the new `heli` scenario blocked
+    every step on it: rotor run-down / spin-up, FlyingControl model 2 / 6, blade collision, wind modifier, chop sound);
+  - `frontier2-b13` (1): CMonsterTruck::PreRender 0x6C7DE0.
+- Bindings: 0x73AF00 CWeapon::FireOneInstantHitRound bound in sa-veh (sa-script's private declaration removed); air2's
+  ProcessWeapons and camproc's ArrestCamOne dispatch target the ports; mvpb_a1's FlyingControl declaration shared.
+- Scenarios: frontier.sh `heli` (Hunter cheat OHDUDE) and `plane` (stunt plane cheat URKQSRK) added. A `boat` scenario
+  (teleport to the Santa Maria pier, 836, -2060) hung at 100 % CPU right after the teleport (frame 109, no output; ptrace not
+  permitted to get a stack) and was left out: open.
+- frontier.py, lane B subsystems: 146 → 142 rows (0x6C7050, 0x518500, 0x6C4E60, 0x6C7DE0); no new rows revealed.
+- Scenarios (`frontier.sh`, i686 native sa-game of this branch at f0448758, default lengths): pausemenu 416 / 0 blocked,
+  solicit 4016 / 0, crossing 1216 / 0, crossing 4000 4014 / 2 (lane A's KillCriminal::CreateNextSubTask 0x68E4F0, as
+  before), melee 2616 / 0, sniper 1216 / 0, shootcar 1216 / 0, shootdriver 1216 / 0, quad 1216 / 0, heli (new) 1216 / 0,
+  plane (new) 210 / 1006 blocked on lane C's audio CAEPropellerAudioEntity path 0x4FD8F0; no crash. Lane A's `roadblocks`
+  (definition of 7f81981d copied locally, not committed; lane A's arrest tasks not in this tree): 254 / 1762 blocked, now on
+  CVehicle::FlyingControl 0x6D85F0 (1758, the police heli) and lane A's GenerateRoadBlocks fallback (4).
+- Writer gate (base 6d34a21e): first run all PASS but dupes (copies of `v3_ptr` / `time_ms`, fixed in dc4f0ce6); final run
+  on 05aa729d: hooks (6) / queue / bindings / state / dupes / cfg / layers / commits / clippy / i686 / i686clip / wasm32 /
+  hooktest / l1test / l1 all PASS, no step skipped.
+- verify-all (lanes 4-5, fresh release sa-oracle, DLL of 05aa729d): `lb4-u` (SA_UNVERIFIED=frontier2-b12,frontier2-b13)
+  IDENTICAL 13/13; default set `lb4-def` IDENTICAL 13/13.
+- Open (lane B): CVehicle::FlyingControl 0x6D85F0 (now the `roadblocks` blocker; ~10 KB body behind a `nop; jmp` protection
+  entry, continues at 0x6D85F6), ProcessBoatControl 0x6DBCE0, CBoat::ProcessControl, CPlane::PreRender /
+  ProcessFlyingCarStuff, a boat scenario (the pier teleport hang), CCamera::IsItTimeForNewcam / TryToStartNewCamMode, item 4
+  (Interior_c::PlaceObject chain, replay playback, RW leftovers, WEAPON bodies incl. FireOneInstantHitRound 0x73AF00 now
+  bound in sa-veh).
