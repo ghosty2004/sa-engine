@@ -57,8 +57,9 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier-1-2 | 5 | AI, RENDER, UNK-game | 4e5ce171 | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
 | frontier2-1 | 34 | AI, AUDIO, RENDER, UNK-game, VEH | 9b3a3095 | master | 34 | 0 | 0 | 0 | 0 | L2 34 |
 | frontier2-2 | 8 | RENDER | 23785dc8 | master | 8 | 0 | 0 | 0 | 0 | L2 8 |
-| frontier2-3 | 8 | AI, POP | uncommitted | worktree-agent-acb224bd5911fd3a7 | 8 | 0 | 0 | 0 | 0 | L2 8 |
-| frontier2-4 | 4 | CAM, WORLD | uncommitted | worktree-agent-acb224bd5911fd3a7 | 4 | 0 | 0 | 0 | 0 | L2 3, L3-only 1 |
+| frontier2-3 | 8 | AI, POP | 11e8cd0f | worktree-agent-acb224bd5911fd3a7 | 8 | 0 | 0 | 0 | 0 | L2 8 |
+| frontier2-4 | 4 | CAM, WORLD | 11e8cd0f | worktree-agent-acb224bd5911fd3a7 | 4 | 0 | 0 | 0 | 0 | L2 3, L3-only 1 |
+| frontier2-5 | 6 | AI, RENDER | 6d209fd3 | worktree-agent-acb224bd5911fd3a7 | 6 | 0 | 0 | 0 | 0 | L2 6 |
 | gen2-anim-1 | 1 | UNK-game | ed288e85 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | gen2-coll-1 | 20 | UNK-game | ed288e85 | master | 0 | 0 | 0 | 20 | 0 | L2 8, split 12 |
 | gen2-core-1 | 4 | UNK-game | ed288e85 | master | 0 | 0 | 0 | 4 | 0 | L2 4 |
@@ -2036,6 +2037,26 @@ SA_UNVERIFIED=frontier2-4 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-4 $SA_
 | 0x438890 | `CCheat::WeaponCheat2` | written | L2 | heap-writes |
 | 0x438B30 | `CCheat::WeaponCheat3` | written | L2 | heap-writes |
 | 0x5105C0 | `CCam::Process_M16_1stPerson` | written | L3-only | x87-transcendental |
+
+## frontier2-5
+
+6 hooks in sa-ai, sa-render; hazards: ax-al-return (1), heap-writes (6), stack-residue (4); recordings calling them: car-drive (4).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-5 $SA_ROOT/target/e2e/corpus/car-drive.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-5 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-5 $SA_ROOT/target/e2e/corpus/car-drive.sarec --runs "plain l2 rust" --tag frontier2-5
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x4A0170 | `Fx_c::AddWheelGravel` | written | L2 | heap-writes,stack-residue |
+| 0x4A03C0 | `Fx_c::AddWheelMud` | written | L2 | heap-writes,stack-residue |
+| 0x4A0610 | `Fx_c::AddWheelSand` | written | L2 | heap-writes,stack-residue |
+| 0x4A09C0 | `Fx_c::AddWheelDust` | written | L2 | heap-writes,stack-residue |
+| 0x6342F0 | `CTaskSimpleIKPointArm::CreateIKChain` | written | L2 | ax-al-return,heap-writes |
+| 0x634370 | `CTaskSimpleIKPointArm::UpdatePointArmInfo` | written | L2 | heap-writes |
 
 ## gen2-anim-1
 
