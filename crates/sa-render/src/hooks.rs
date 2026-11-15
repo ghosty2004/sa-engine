@@ -160,6 +160,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::posteffects_filters::HOOKS,
     // FRONTIER-2 turn 2, lane B
     crate::frontier_b2::HOOKS,
+    crate::frontier_b3::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).

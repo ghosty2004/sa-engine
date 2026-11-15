@@ -2634,7 +2634,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x717860,sa-world,escalator_switch_off,thiscall,,e:GPtr<u8>,,sa_world::world::escalators::switch_off,CEscalator::SwitchOff,
 0x718660,sa-world,gxt_char_strcpy,cdecl,,dst:GPtr<u8>;src:GPtr<u8>,GPtr<u8>,unported,GxtCharStrcpy,sa_hud::font_print::gxt_char_strcpy
 0x71A0E0,sa-world,font_get_string_width_st0,cdecl,,text:GPtr<u8>;full:u32;script:u32,f64,unported,CFont::GetStringWidth,
-0x71BC40,sa-world,window_responds_to_collision,cdecl,,e:GPtr<u8>;damage:f32;sx:f32;sy:f32;sz:f32;px:f32;py:f32;pz:f32;explosion:u32,,unported,CGlass::WindowRespondsToCollision,
+0x71BC40,sa-world,window_responds_to_collision,cdecl,,e:GPtr<u8>;damage:f32;sx:f32;sy:f32;sz:f32;px:f32;py:f32;pz:f32;explosion:u32,,unported,CGlass::WindowRespondsToCollision,sa_render::frontier_b3::glass_window_responds_to_collision
 0x71D780,sa-world,clear_drunk_blur,cdecl,,,,unported,CMBlur::ClearDrunkBlur,
 0x71E580,sa-world,call_is_point_within_occlusion_area,thiscall,,this:GPtr<u8>;px:f32;py:f32;r:f32,u8,unported,CActiveOccluder::IsPointWithinOcclusionArea,
 0x71FA40,sa-world,call_is_point_behind_occluder,thiscall,,this:GPtr<u8>;px:f32;py:f32;pz:f32;r:f32,u8,unported,CActiveOccluder::IsPointBehindOccluder,

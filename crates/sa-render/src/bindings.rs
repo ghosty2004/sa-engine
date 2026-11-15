@@ -404,6 +404,11 @@ orig! {
 }
 
 orig! {
+    /// `CGlass::WindowRespondsToCollision` (0x71BC40)
+    pub fn window_responds_to_collision(e: GPtr<u8>, damage: f32, sx: f32, sy: f32, sz: f32, px: f32, py: f32, pz: f32, explosion: u32) = cdecl 0x71BC40 => crate::frontier_b3::glass_window_responds_to_collision;
+}
+
+orig! {
     /// `CBrightLights::RenderOutGeometryBuffer` (0x722150)
     pub fn bright_lights_render_out_geometry_buffer() = cdecl 0x722150 => unported;
 }

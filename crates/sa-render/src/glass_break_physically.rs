@@ -17,7 +17,7 @@ orig! {
     /// `CGlass::GeneratePanesForWindow(ePaneType, CVector point, CVector fwd, CVector right, CVector velocity,
     /// CVector center, float dragCoeff, bool shatter, bool max1, int32 sections, bool)` (0x71B620)
     #[allow(clippy::too_many_arguments)]
-    fn generate_panes_for_window(ty: u32, px: f32, py: f32, pz: f32, fx: f32, fy: f32, fz: f32, rx: f32, ry: f32, rz: f32, vx: f32, vy: f32, vz: f32, cx: f32, cy: f32, cz: f32, drag: f32, shatter: u32, max1: u32, sections: i32, b: u32) = cdecl 0x71B620 => unported;
+    pub(crate) fn generate_panes_for_window(ty: u32, px: f32, py: f32, pz: f32, fx: f32, fy: f32, fz: f32, rx: f32, ry: f32, rz: f32, vx: f32, vy: f32, vz: f32, cx: f32, cy: f32, cz: f32, drag: f32, shatter: u32, max1: u32, sections: i32, b: u32) = cdecl 0x71B620 => unported;
 }
 
 /// `CGlass::LastColCheckMS` (0xC72FA8), `CPools::ms_pObjectPool` (0xB7449C), `ms_modelInfoPtrs` (0xA9B0C8).

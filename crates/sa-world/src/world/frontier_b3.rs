@@ -6,12 +6,19 @@ use sa_core::hook;
 use sa_core::mem::GPtr;
 use sa_math::fpu::{ge_or_nan, gt};
 
+use super::mvpb_world::{advance_scan_code, cell, sector_index};
 use super::common::{entity_pos, f32_of, find_player_ped, find_player_vehicle, g, rd, wr, x};
 use crate::bindings::{
     entity_get_col_model, event_group_add, event_script_command_ctor, event_script_command_dtor, find_player_wanted,
     membership_get_leader, ped_groups_get_peds_group, stand_still_ctor, tm_find_active_task_by_type, wanted_remove_cop,
 };
 use sa_core::bindings::{matrix_mul_vec, ped_is_alive, task_new};
+
+sa_core::orig! {
+    /// `CWorld::FindObjectsIntersectingAngledCollisionBoxSectorList(list, box, transform, point, count, maxCount, out)`
+    /// (0x565200)
+    fn list_scan(list: GPtr<u8>, bx: GPtr<u8>, transform: GPtr<u8>, point: GPtr<u8>, count: GPtr<i16>, max: i16, out: GPtr<GPtr<u8>>) = cdecl 0x565200 => super::protected_world_queries::find_objects_intersecting_angled_collision_box_sector_list;
+}
 
 /// `CWorld::ms_nCurrentScanCode`
 const SCAN_CODE: usize = 0xB7_CD78;
@@ -135,5 +142,48 @@ pub fn call_off_chase_sector_list_peds(list: GPtr<u8>, x1: f32, y1: f32, x2: f32
     }
 }
 
+/// `CWorld::FindObjectsIntersectingAngledCollisionBox(const CColBox& box, const CMatrix& transform, const CVector&
+/// point, float x1, float y1, float x2, float y2, int16* count, int16 maxCount, CEntity** out, bool buildings, bool
+/// vehicles, bool peds, bool objects, bool dummies)` (0x568FF0, cdecl): the sector rectangle of (x1, y1)-(x2, y2), the
+/// scan code advanced, the count zeroed; per cell (y outer, x inner) the sector's (clamped) building / dummy lists and
+/// the repeat sector's vehicle / ped / object lists through `FindObjectsIntersectingAngledCollisionBoxSectorList`.
+/// Kept original detail: the last x index and the loop index live in the caller's y1 / x2 argument slots (not modelled).
+#[hook(addr = 0x568FF0, conv = cdecl, name = "CWorld::FindObjectsIntersectingAngledCollisionBox", expect = "83 EC 10 D9 44 24 20 53",
+       unverified = "frontier2-b10", route = "L2", hazards = "none",
+       note = "overwrites its own (caller-owned) argument slots with loop indices")]
+#[allow(clippy::too_many_arguments)]
+pub fn world_find_objects_intersecting_angled_collision_box(bx: GPtr<u8>, transform: GPtr<u8>, point: GPtr<u8>, x1: f32, y1: f32,
+                                                            x2: f32, y2: f32, count: GPtr<i16>, max: i16, out: GPtr<GPtr<u8>>,
+                                                            b: u32, v: u32, p: u32, o: u32, d: u32) {
+    let sx0 = sector_index(x(x1));
+    let sy0 = sector_index(x(y1));
+    let sx1 = sector_index(x(x2));
+    let sy1 = sector_index(x(y2));
+    advance_scan_code();
+    count.write(0);
+    for ys in sy0..=sy1 {
+        for xs in sx0..=sx1 {
+            let (sector, rep) = cell(xs, ys);
+            if b as u8 != 0 {
+                list_scan(sector, bx, transform, point, count, max, out);
+            }
+            if v as u8 != 0 {
+                list_scan(rep, bx, transform, point, count, max, out);
+            }
+            if p as u8 != 0 {
+                list_scan(rep.byte_add(4), bx, transform, point, count, max, out);
+            }
+            if o as u8 != 0 {
+                list_scan(rep.byte_add(8), bx, transform, point, count, max, out);
+            }
+            if d as u8 != 0 {
+                list_scan(sector.byte_add(4), bx, transform, point, count, max, out);
+            }
+        }
+    }
+}
+
 /// This module's registrations.
-pub const HOOKS: &[HookReg] = &[HOOK_CALL_OFF_CHASE_SECTOR_LIST_VEHICLES, HOOK_CALL_OFF_CHASE_SECTOR_LIST_PEDS];
+pub const HOOKS: &[HookReg] = &[HOOK_CALL_OFF_CHASE_SECTOR_LIST_VEHICLES, HOOK_CALL_OFF_CHASE_SECTOR_LIST_PEDS,
+    HOOK_WORLD_FIND_OBJECTS_INTERSECTING_ANGLED_COLLISION_BOX,
+];
