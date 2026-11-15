@@ -1511,3 +1511,30 @@
   known FRONTIER-2 items; no crash.
 - Browser (headless Brave, native GPU, samp demo stack): joins the open.mp server, 0 blocked, in world at Grove Street.
 - `target/play/sa-game` and `web/pkg` refreshed.
+
+## 2026-11-15 — UNVERIFIED-WC: weapon-combat crash with every unverified batch on (agent, lanes 4-5, 6 for one spot run)
+
+- Reproduced on c372e77d: `SA_UNVERIFIED=all` port-l2 `ports` on weapon-combat, rust run stops at 1792 frames. With
+  `SA_CRASH_LOG=1` the fault (read of 0x9FC2) is in the `CAutomobile::BurstTyre` port (0x6A32B0, batch veh3-3) with
+  `this` = 0x9FA0, called from 0x6D7E92. No batch bisection was needed: CVehicle::InflictDamage 0x6D7E80 does `mov
+  ebp, [esi]; mov ecx, esi; call 0x6D7BC0; add al, 0xD; push eax; call [ebp+0xB0]`, i.e. the virtual BurstTyre call
+  takes `this` from the ECX that `CVehicle::FindTyreNearestPoint` (0x6D7BC0, batch veh4-4) returns with. The original
+  never writes ECX; the port returned with a stale one.
+- Fix: FindTyreNearestPoint declares `preserve = "ecx"` (hazards `preserved-regs`). New L1 spec
+  `VehFindTyreNearestPoint` (specs_veh.rs; +0x590 patched into the window, matrix pointer widened on the host side,
+  ECX compared) found a second difference: the forward component uses the unrounded `dy` the original keeps on the
+  x87 stack after `fst [esp+4]` (the port rounded it first; differs only near f32 overflow). Fixed; L1 native
+  1,060,000 cases 0 mismatches. port-l2 `veh4-4-0x6d7bc0-wc` (weapon-combat, plain l2 rust): 3 cases, 0
+  mismatches, (b)/(c) IDENTICAL 3500 frames; queue status L2.
+- Detection gap closed: sa-hook's callers scan ended a path at any indirect call, so this ECX use was invisible. It
+  now reports a virtual call through a register that, on the straight-line code before the hooked call, was loaded
+  as the vtable of the object the call passes in ECX (`mov r, [s]` ... `mov ecx, s`), when ECX is untouched between
+  the two calls. Over all 12,689 hooks (56,060 call sites) this finds exactly 0x6D7E84; a looser rule (any `call
+  [r+d]` after a vtable load on the path) gave 49 COM/RenderWare stdcall false reports. Negative test
+  `virtual_call_on_this_after_a_hook_is_flagged`.
+- verify-all `wc-fix-u` (`SA_UNVERIFIED=all`, lanes 4-5, DLL 4db157d2…) IDENTICAL 13/13 (save-load: residue only,
+  SAVE-1); `wc-fix` (default set, same DLL) IDENTICAL 13/13. Writer gate PASS (hooks, queue, bindings, state, dupes,
+  cfg, layers, clippy, i686, i686clip, wasm32, hooktest, l1test 18 passed / 1 ignored, l1).
+- Promotion: no batch qualifies yet under HOWTO §4.6 (no batch has L2/L1 evidence for every row; queue: 1,322
+  L3-batch, 1,218 written, 4 L2). 201 batches have every row at L3-batch or better (VERIFIER-11's union) and now
+  also pass the full union run on all 13 recordings; they need per-hook L2 runs before promotion. Nothing promoted.
