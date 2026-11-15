@@ -92,12 +92,26 @@ def main():
     print(f"{a.branch}: {note}")
     if not cmd:
         return 0
-    wt = worktree_of(repo, a.branch) or repo
-    print(f"git -C {wt} {' '.join(cmd)}")
-    if a.apply:
-        r = subprocess.run(["git", "-C", wt, *cmd])
-        return r.returncode
-    return 0
+    wt = worktree_of(repo, a.branch)
+    if wt:
+        print(f"git -C {wt} {' '.join(cmd)}")
+        if a.apply:
+            return subprocess.run(["git", "-C", wt, *cmd]).returncode
+        return 0
+    # not checked out anywhere: rebase in a temporary detached worktree, so the caller's checkout
+    # (usually master in the main worktree) never switches branches
+    tmp = os.path.join(repo, "target", "history", f"rebase-{a.branch.replace('/', '-')}")
+    print(f"git worktree add --detach {tmp} {cmd[2]} && git -C {tmp} {' '.join(cmd)} && git worktree remove {tmp}")
+    if not a.apply:
+        return 0
+    os.makedirs(os.path.dirname(tmp), exist_ok=True)
+    git(repo, "worktree", "add", "-q", "--detach", tmp, cmd[2])
+    rc = subprocess.run(["git", "-C", tmp, *cmd]).returncode
+    if rc == 0:
+        git(repo, "worktree", "remove", tmp)
+    else:
+        print(f"rebase stopped; resolve it in {tmp}, then `git worktree remove {tmp}`")
+    return rc
 
 
 if __name__ == "__main__":

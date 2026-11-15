@@ -405,10 +405,11 @@ def run(repo, tsv, branch, force, dry):
     g.run("add", HASH_MAP)
     if not tsv_rel.startswith(".."):
         g.run("add", tsv_rel)
-    body = (f"Rewrite the commit ids cited in tracked text files to the rewritten history ({total} references "
-            f"in {len(per_file)} files;\n{len(ambiguous)} ambiguous tokens left as they were). "
-            f"docs/history/hash-map.tsv maps every old commit\nto its new one; the old history stays under "
-            f"refs/archive/pre-rewrite and in the bundle\n{os.path.relpath(bundle, repo)}.\n\nRefs: GIT-1\n")
+    body = (f"Rewrite the commit ids cited in tracked text files to the rewritten history:\n"
+            f"{total} references in {len(per_file)} files, {len(ambiguous)} ambiguous tokens left as they were.\n"
+            f"docs/history/hash-map.tsv maps every old commit to its new one; the old history stays\n"
+            f"under refs/archive/pre-rewrite and in the bundle {os.path.basename(bundle)}\n"
+            f"(target/history/, not committed).\n\nRefs: GIT-1\n")
     g.run("commit", "-q", "-F", "-", input=f"{REF_COMMIT_SUBJECT}\n\n{body}".encode())
     new_tip = g.out("rev-parse", branch).strip()
     print(f"{branch}: {old_tip[:12]} -> {mapping[old_tip][:12]} (+ reference commit {new_tip[:12]})")
