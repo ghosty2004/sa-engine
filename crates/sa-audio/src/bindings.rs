@@ -254,6 +254,11 @@ orig! {
 }
 
 orig! {
+    /// `CAEPedAudioEntity::TurnOffJetPack` (0x4E2A70)
+    pub fn ped_audio_turn_off_jet_pack(a: GPtr<u8>) = thiscall 0x4E2A70 => crate::ped::ped_turn_off_jet_pack;
+}
+
+orig! {
     /// `CAEPedSpeechAudioEntity::Reset` (0x4E37B0)
     pub fn ped_speech_reset() = cdecl 0x4E37B0 => unported;
 }

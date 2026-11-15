@@ -43,11 +43,10 @@ use crate::bindings::world_add;
 use crate::bindings::world_remove;
 use sa_stream::bindings::remove_buildings_not_in_area;
 use crate::bindings::clear_space_for_mission_entity;
+use crate::bindings::ped_audio_turn_off_jet_pack;
 orig! {
     /// `CStats::UpdateStatsOnRespawn()` (0x55CFC0)
     fn stats_update_stats_on_respawn() = cdecl 0x55CFC0 => unported;
-    /// `CAEPedAudioEntity::TurnOffJetPack()` (0x4E2A70)
-    fn ped_audio_turn_off_jet_pack(a: GPtr<u8>) = thiscall 0x4E2A70 => unported;
     /// `CWanted::Reset()` (0x562400)
     fn wanted_reset(w: GPtr<u8>) = thiscall 0x562400 => unported;
     /// virtual `CEntity::Teleport(CVector, bool)` (vtable +0x38)

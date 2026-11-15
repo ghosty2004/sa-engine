@@ -81,6 +81,7 @@ use sa_world::bindings::leave_car_ctor;
 use sa_world::bindings::node_eq as node_address_eq_420920;
 use sa_world::bindings::ped_say;
 use crate::bindings::fpr_get_last_waypoint;
+use crate::bindings::go_to_point_fine_ctor_b as go_to_point_fine_ctor;
 orig! {
     // ---- virtual slots ----
     /// `CTask::GetTaskType` (vtable +0x10)
@@ -99,8 +100,6 @@ orig! {
     fn fpr_calc_blend_ratio(t: GPtr<u8>, ped: GPtr<u8>, slowing: u32) -> f64 = thiscall 0x66E710 => unported;
     /// 0x667720 (`CPointRoute` reversal, `this` = the route, `ret`)
     fn point_route_667720(r: GPtr<u8>) = thiscall 0x667720 => unported;
-    /// `CTaskSimpleGoToPointFine::Constructor(ratio, CVector by value, radius, entity)` (0x65EEB0, `ret 0x18`)
-    fn go_to_point_fine_ctor(t: GPtr<u8>, ratio: u32, vx: u32, vy: u32, vz: u32, radius: u32, a5: u32) -> GPtr<u8> = thiscall 0x65EEB0 => unported;
     /// `CTaskSimpleGoToPointFine::SetMoveRatio(float)` (0x65F3A0, `ret 4`)
     fn go_to_point_fine_set_move_ratio(t: GPtr<u8>, ratio: u32) = thiscall 0x65F3A0 => unported;
     /// `CTaskComplexWalkRoundCar::GoingForDoor()` (0x654720)

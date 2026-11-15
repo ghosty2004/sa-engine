@@ -1279,6 +1279,11 @@ orig! {
 }
 
 orig! {
+    /// `CAEPedAudioEntity::TurnOffJetPack` (0x4E2A70)
+    pub fn ped_audio_turn_off_jet_pack(a: GPtr<u8>) = thiscall 0x4E2A70 => unported;
+}
+
+orig! {
     /// `CAEPedAudioEntity::AddAudioEvent` (0x4E2BB0)
     pub fn ped_audio_add_audio_event(e: GPtr<u8>, ev: u32, vol: f32, speed: f32, a3: GPtr<u8>, a4: u32, a5: u32, a6: u32) = thiscall 0x4E2BB0 => unported;
 }

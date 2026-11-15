@@ -18,6 +18,8 @@ use crate::frontier_a_t3::{kill_then_look_about, set_response};
 use sa_core::bindings::task_new;
 use sa_core::crt::rand_at;
 use sa_math::fpu::{fbits, ftol32};
+use crate::bindings::{go_to_point_fine_ctor_b, ped_replace_weapon_when_exiting_vehicle};
+use sa_world::bindings::{follow_node_route_ctor, fx_kill, ped_audio_turn_off_jet_pack};
 use sa_core::bindings::vector_normalise;
 use crate::bindings::find_cover_points_behind_box_b;
 use sa_world::bindings::object_can_be_used_to_take_cover_behind;
@@ -688,8 +690,89 @@ fn le_or_nan_up(o: GPtr<u8>) -> bool {
     x(rd::<f32>(rd::<GPtr<u8>>(o, 0x14), 0x28)).fcom(x(fbits(0x3F733333))).test_any(0x41)
 }
 
+orig! {
+    /// event virtual +0x4 (`GetEventType`)
+    fn v_event_type(e: GPtr<u8>) -> i32 = thiscall vslot 0x4 => unported;
+    /// event virtual +0x8 (`GetEventPriority`)
+    fn v_event_priority(e: GPtr<u8>) -> i32 = thiscall vslot 0x8 => unported;
+}
+
+/// `CTaskSimpleJetPack::MakeAbortable(CPed*, int32 priority, const CEvent*)` (0x67E6E0, `ret 0xC`, AL). With an event:
+/// a damage event (type 9) while the ped's health (+0x540) is above 0 refuses, and so does one at or below 0 unless
+/// the ped is in a vehicle (+0x46C bit 0) or has +0x40 bit 8; a player's event type 0x3A is accepted at once (no
+/// clean-up); an event priority below 0x3F refuses. Otherwise (and without an event) the jet pack is taken off: a
+/// player's weapon given back when +0xC is set (+0xC = 0), +8 = 1, both effect systems (+0x64 / +0x68) killed and
+/// cleared, the jet-pack sound turned off; true.
+#[hook(addr = 0x67E6E0, conv = thiscall, name = "CTaskSimpleJetPack::MakeAbortable", expect = "55 8B 6C 24 08 56 57",
+       unverified = "frontier2-a7", route = "L2", hazards = "heap-writes,ax-al-return")]
+pub fn jet_pack_make_abortable(this: GPtr<u8>, ped: GPtr<u8>, _priority: i32, event: GPtr<u8>) -> u8 {
+    if !event.is_null() {
+        if v_event_type(event) == 9
+            && (!x(rd::<f32>(ped, 0x540)).fcom(x(0.0)).test_any(0x41)
+                || (rd::<u8>(ped, 0x46C) & 1 == 0 && rd::<u32>(ped, 0x40) & 0x100 == 0))
+        {
+            return 0;
+        }
+        if ped_is_player(ped) != 0 && v_event_type(event) == 0x3A {
+            return 1;
+        }
+        if v_event_priority(event) < 0x3F {
+            return 0;
+        }
+    }
+    if rd::<u8>(this, 0xC) != 0 && ped_is_player(ped) != 0 {
+        ped_replace_weapon_when_exiting_vehicle(ped);
+        wr::<u8>(this, 0xC, 0);
+    }
+    wr::<u8>(this, 8, 1);
+    for o in [0x64, 0x68] {
+        let f = rd::<GPtr<u8>>(this, o);
+        if !f.is_null() {
+            fx_kill(f);
+            wr::<u32>(this, o, 0);
+        }
+    }
+    ped_audio_turn_off_jet_pack(ped.byte_add(0x138));
+    1
+}
+
+/// `CTaskComplexTrackEntity::CreateNextSubTask(CPed*)` (0x65F590, `ret 4`): none without the entity (+0xC). After a
+/// `TASK_SIMPLE_GO_TO_POINT_FINE`-type sub task (0xCB): within the radius (`+0x50 < r * r`, ordered) a
+/// `CTaskSimpleGoToPointFine(+0x3C move state, +0x44, 0.25, 0)`, else a `CTaskComplexFollowNodeRoute(6, the entity's
+/// position, 0.5, 0.2, [0x86FCA8], 0, -1, true)`; after anything else (or none) a stand still of 50 ms. A failed `new`
+/// gives null.
+#[hook(addr = 0x65F590, conv = thiscall, name = "CTaskComplexTrackEntity::CreateNextSubTask", expect = "6A FF 68 C1 44 84 00",
+       unverified = "frontier2-a7", route = "L2", hazards = "heap-writes")]
+pub fn track_entity_create_next_sub_task(this: GPtr<u8>, _ped: GPtr<u8>) -> GPtr<u8> {
+    if rd::<u32>(this, 0xC) == 0 {
+        return GPtr::NULL;
+    }
+    let sub = rd::<GPtr<u8>>(this, 8);
+    if sub.is_null() || v_task_type(sub) != 0xCB {
+        let t = task_new(0x20);
+        return if t.is_null() { GPtr::NULL } else { stand_still_ctor(t, 0x32, 0, 0, 8.0) };
+    }
+    let r = x(rd::<f32>(this, 0x24));
+    if !x(rd::<f32>(this, 0x50)).fcom(r.fmul(r)).test_parity(5) {
+        let t = task_new(0x24);
+        if t.is_null() {
+            return GPtr::NULL;
+        }
+        let (px, py, pz) = (rd::<u32>(this, 0x44), rd::<u32>(this, 0x48), rd::<u32>(this, 0x4C));
+        return go_to_point_fine_ctor_b(t, rd::<u32>(this, 0x3C), px, py, pz, 0x3E80_0000, 0);
+    }
+    let t = task_new(0x60);
+    if t.is_null() {
+        return GPtr::NULL;
+    }
+    let pos = entity_pos(rd::<GPtr<u8>>(this, 0xC));
+    follow_node_route_ctor(t, 6, pos, 0x3F00_0000, 0x3E4C_CCCD, g::<u32>(0x86FCA8).read(), 0, u32::MAX, 1)
+}
+
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_JET_PACK_MAKE_ABORTABLE,
+    HOOK_TRACK_ENTITY_CREATE_NEXT_SUB_TASK,
     HOOK_FORMATION_DISTRIBUTE_DESTINATIONS_COVER_POINTS,
     HOOK_FORMATION_DISTRIBUTE_DESTINATIONS_PEDS_TO_ATTACK,
     HOOK_FORMATION_FIND_COVER_POINTS,

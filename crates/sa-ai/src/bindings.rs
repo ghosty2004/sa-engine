@@ -1279,6 +1279,11 @@ orig! {
 }
 
 orig! {
+    /// `CTaskSimpleGoToPointFine::Constructor` (0x65EEB0)
+    pub fn go_to_point_fine_ctor_b(t: GPtr<u8>, ratio: u32, vx: u32, vy: u32, vz: u32, radius: u32, a5: u32) -> GPtr<u8> = thiscall 0x65EEB0 => crate::group_scan_loops::go_to_point_fine_ctor;
+}
+
+orig! {
     /// `CTaskSimpleGoToPointFine::BaseRatio` (0x65EF30)
     pub fn go_to_point_fine_base_ratio(ms: u32) -> f64 = cdecl 0x65EF30 => unported;
 }
