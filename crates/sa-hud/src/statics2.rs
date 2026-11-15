@@ -411,6 +411,7 @@ pub fn dtor_font_button_sprite() {
 
 /// This module's registrations.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_HUD_COLOURS_DTOR_NATIVE,
     HOOK_INIT_G_B72CAC,
     HOOK_INIT_G_BA176C,
     HOOK_INIT_G_BA1770,
@@ -475,12 +476,12 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_DTOR_FONT_BUTTON_SPRITE,
 ];
 
-/// `CHudColours::~CHudColours()` (0x58FD90, thiscall; not in the catalogue: the tail of `__dtor_HudColour`'s extent,
-/// CAT-12, so a phase B native): `eh_vector_destructor_iterator(this, 4, 15, nullsub 0x43CE70)`.
-#[sa_core::native(addr = 0x58FD90, conv = thiscall, name = "CHudColours::~CHudColours")]
+/// `CHudColours::~CHudColours()` (0x58FD90, thiscall; reached by `jmp` from `__dtor_HudColour`; a phase B native until
+/// the CAT-12 tail-target split made it a catalogue row): `eh_vector_destructor_iterator(this, 4, 15, nullsub
+/// 0x43CE70)`.
+#[hook(addr = 0x58FD90, conv = thiscall, name = "CHudColours::~CHudColours", expect = "68 70 CE 43 00",
+       unverified = "frontier2-c10", route = "split", hazards = "heap-writes",
+       note = "FRONTIER-2 lane C turn 4: was a phase B native until the body became a catalogue row (CAT-12 tail target)")]
 pub fn hud_colours_dtor_native(this: GPtr<u8>) {
     sa_core::bindings::eh_vector_dtor(this, 4, 0xF, 0x43CE70);
 }
-
-/// Every `#[native]` of this module.
-pub const NATIVES: &[sa_core::abi::NativeReg] = &[NATIVE_HUD_COLOURS_DTOR_NATIVE];

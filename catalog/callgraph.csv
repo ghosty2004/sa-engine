@@ -41835,7 +41835,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x856110,0x4411a0,fnref,game,(missed by ghidra: data-code-immediate),1
 0x856130,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
 0x856130,0x447110,fnref,game,CGarage::~CGarage,1
-0x856150,0x454200,tailcall,game,(missed by ghidra: cat7-call),1
+0x856150,0x454200,tailcall,game,dtor_977be8_body,1
 0x856160,0x45b110,tailcall,game,CPlayerInfo::~CPlayerInfo,1
 0x856170,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
 0x856170,0x7281e0,fnref,game,CSprite2d::Destructor,1
@@ -41896,7 +41896,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x856590,0x7281e0,fnref,game,CSprite2d::Destructor,1
 0x8565b0,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
 0x8565b0,0x7281e0,fnref,game,CSprite2d::Destructor,1
-0x8565d0,0x58fd90,tailcall,game,CHudColours,1
+0x8565d0,0x58fd90,tailcall,game,CHudColours::~CHudColours,1
 0x8565e0,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
 0x8565e0,0x7281e0,fnref,game,CSprite2d::Destructor,1
 0x856600,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
@@ -41974,7 +41974,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x856bf0,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
 0x856bf0,0x728b30,fnref,game,CWaterCannon::~CWaterCannon,1
 0x856c10,0x72a400,tailcall,game,CAEWeatherAudioEntity::~CAEWeatherAudioEntity,1
-0x856c20,0x506b90,tailcall,game,(missed by ghidra: cat7-call),1
+0x856c20,0x506b90,tailcall,game,CAEExplosionAudioEntity::~CAEExplosionAudioEntity,1
 0x856c30,0x40f700,tailcall,game,CColModel,1
 0x856c40,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
 0x856c40,0x742aa0,fnref,game,CWeaponEffects,1

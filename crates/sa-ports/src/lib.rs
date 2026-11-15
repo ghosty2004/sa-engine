@@ -82,8 +82,6 @@ pub const NATIVES: &[&[&[sa_core::abi::NativeReg]]] = &[
     &[sa_world::std7_natives::NATIVES],
     &[sa_world::std12_natives::NATIVES],
     &[sa_world::world::frontier_c::NATIVES],
-    &[sa_weapon::statics::NATIVES],
-    &[sa_pop::frontier_c_natives::NATIVES],
     &[sa_world::world::game_logic_time::NATIVES],
     &[sa_veh::wake_locks_component_rotation::NATIVES],
     &[sa_veh::vehicle_tail_calls::NATIVES],
@@ -118,6 +116,7 @@ pub const NATIVES: &[&[&[sa_core::abi::NativeReg]]] = &[
     // FRONTIER-2 turn 2 lane A
     &[sa_ai::frontier_a::NATIVES],
     &[sa_ai::frontier_a_subtasks::NATIVES],
+    &[sa_pop::frontier_c_natives::NATIVES],
 ];
 
 /// Every `#[native]` registration of every crate.

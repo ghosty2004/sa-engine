@@ -1005,7 +1005,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x453fa0,,unknown,game,UNK-game,ghidra-created,0x453fa0,0x453fa3,3,1,0x453fa0-0x453fa3,,2,0,0,0,0,0,0
 0x453fb0,,unknown,game,UNK-game,ghidra-created,0x453fb0,0x453fb1,1,1,0x453fb0-0x453fb1,,1,0,0,0,0,0,0
 0x4541e0,,unknown,game,UNK-game,ghidra,0x4541e0,0x1568c0e,35,2,0x4541e0-0x4541e5;0x1568bf0-0x1568c0e,0x1568bf0,13,1,0,0,0,0,0
-0x454200,,unknown,game,UNK-game,ghidra-created,0x454200,0x454213,19,1,0x454200-0x454213,,7,1,0,0,0,0,0
+0x454200,dtor_977be8_body,unknown,game,UNK-game,ghidra-created,0x454200,0x454213,19,1,0x454200-0x454213,,7,1,0,0,0,0,0
 0x454920,,unknown,game,WORLD,ghidra,0x454920,0x156f74c,33,2,0x454920-0x454925;0x156f730-0x156f74c,0x156f730,12,0,0,0,0,0,0
 0x454960,CPickup::SetPosn,gr-reversed,game,WORLD,ghidra-created,0x454960,0x4549a0,64,1,0x454960-0x4549a0,,16,3,0,0,0,3,0
 0x4549a0,CPickup::GetPosn,gr-reversed,game,WORLD,ghidra,0x4549a0,0x4549e7,71,1,0x4549a0-0x4549e7,,19,0,0,0,0,3,0
@@ -3911,7 +3911,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x505a00,CAEWeatherAudioEntity::UpdateParameters,gr-reversed,game,AUDIO,ghidra-created,0x505a00,0x5067ff,3583,1,0x505a00-0x5067ff,,987,27,0,0,0,22,0
 0x506800,CAEWeatherAudioEntity::AddAudioEvent,gr-reversed,game,AUDIO,ghidra,0x506800,0x506b1c,796,1,0x506800-0x506b1c,,212,13,0,0,0,13,0
 0x506b20,,unknown,game,UNK-game,ghidra,0x401533,0x506b8c,131,2,0x401533-0x40154a;0x506b20-0x506b8c,,32,3,0,0,0,2,0
-0x506b90,,unknown,game,UNK-game,ghidra-created,0x506b90,0x506b9e,14,1,0x506b90-0x506b9e,,3,0,0,0,0,1,0
+0x506b90,CAEExplosionAudioEntity::~CAEExplosionAudioEntity,unknown,game,AUDIO,ghidra-created,0x506b90,0x506b9e,14,1,0x506b90-0x506b9e,,3,0,0,0,0,1,0
 0x506ba0,,unknown,game,UNK-game,ghidra,0x506ba0,0x506c20,128,1,0x506ba0-0x506c20,,27,3,0,0,0,4,0
 0x506c30,,unknown,game,UNK-game,ghidra,0x506c30,0x506c3e,14,1,0x506c30-0x506c3e,,3,0,0,0,0,1,0
 0x506c40,,unknown,game,UNK-game,ghidra,0x506c40,0x506c4e,14,1,0x506c40-0x506c4e,,3,0,0,0,0,1,0
@@ -5445,7 +5445,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x58fae0,CHud::Draw,gr-reversed,game,HUD,ghidra,0x58fae0,0x58fd14,564,1,0x58fae0-0x58fd14,,160,22,12,0,0,0,0
 0x58fd20,CHudColours::SetRGBAValue,gr-reversed,game,HUD,ghidra-created,0x58fd20,0x58fd46,38,1,0x58fd20-0x58fd46,,11,0,0,0,0,4,0
 0x58fd50,CHudColours::GetIntColour,gr-reversed,game,HUD,ghidra-created,0x401fa0,0x58fd82,60,2,0x401fa0-0x401faa;0x58fd50-0x58fd82,,16,0,0,0,0,0,0
-0x58fd90,CHudColours,unknown,game,UNK-game,ghidra-created,0x58fd90,0x58fda0,16,1,0x58fd90-0x58fda0,,6,1,0,0,0,0,0
+0x58fd90,CHudColours::~CHudColours,unknown,game,HUD,ghidra-created,0x58fd90,0x58fda0,16,1,0x58fd90-0x58fda0,,6,1,0,0,0,0,0
 0x58fda0,CHudColours::Constructor,gr-reversed,game,HUD,ghidra,0x58fda0,0x58fe97,247,1,0x58fda0-0x58fe97,,75,1,0,0,0,60,0
 0x58fea0,CHudColours::GetRGB,gr-reversed,game,HUD,ghidra,0x58fea0,0x58fed1,49,1,0x58fea0-0x58fed1,,21,1,0,0,0,0,0
 0x58fee0,CHudColours::GetRGBA,gr-reversed,game,HUD,ghidra,0x58fee0,0x58ff10,48,1,0x58fee0-0x58ff10,,20,1,0,0,0,0,0

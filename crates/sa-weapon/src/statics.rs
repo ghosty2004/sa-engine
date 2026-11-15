@@ -135,6 +135,7 @@ pub fn dtor_pellet_test_col() {
 }
 
 pub const HOOKS: &[HookReg] = &[
+    HOOK_EXPLOSION_AUDIO_DTOR_NATIVE,
     HOOK_INIT_WATER_CANNONS,
     HOOK_DTOR_WATER_CANNONS,
     HOOK_INIT_G_C89190,
@@ -153,14 +154,14 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_DTOR_PELLET_TEST_COL,
 ];
 
-/// The `CAEExplosionAudioEntity` destructor body (0x506B90, thiscall; not in the catalogue: the tail of its `__dtor_`
-/// stub's extent, CAT-12, so a phase B native): vtable 0x859988, then the `CAESound` member's destructor (0x4EF660) on
-/// `this + 8`.
-#[sa_core::native(addr = 0x506B90, conv = thiscall, name = "CAEExplosionAudioEntity::Destructor")]
+/// The `CAEExplosionAudioEntity` destructor body (0x506B90, thiscall; reached by `jmp` from its `__dtor_` stub; a phase
+/// B native until the CAT-12 tail-target split made it a catalogue row): vtable 0x859988, then the `CAESound` member's
+/// destructor (0x4EF660) on `this + 8` (a tail jump). No code reads its entry bytes as data (code-data-reads: only
+/// 0x506B22, inside the neighbour 0x506B20).
+#[hook(addr = 0x506B90, conv = thiscall, name = "CAEExplosionAudioEntity::~CAEExplosionAudioEntity", expect = "C7 01 88 99 85 00",
+       unverified = "frontier2-c10", route = "split", hazards = "heap-writes",
+       note = "FRONTIER-2 lane C turn 4: was a phase B native until the body became a catalogue row (CAT-12 tail target)")]
 pub fn explosion_audio_dtor_native(this: GPtr<u8>) {
     this.cast::<u32>().write(0x859988);
     sa_world::bindings::sound_dtor(this.byte_add(8));
 }
-
-/// Every `#[native]` of this module.
-pub const NATIVES: &[sa_core::abi::NativeReg] = &[NATIVE_EXPLOSION_AUDIO_DTOR_NATIVE];

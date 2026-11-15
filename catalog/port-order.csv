@@ -434,7 +434,7 @@ address,name,subsystem,level,scc_id,scc_size
 0x453fa0,,UNK-game,0,432,1
 0x453fb0,,UNK-game,0,433,1
 0x4541e0,,UNK-game,0,434,1
-0x454200,,UNK-game,0,435,1
+0x454200,dtor_977be8_body,UNK-game,0,435,1
 0x454920,,WORLD,0,436,1
 0x454960,CPickup::SetPosn,WORLD,0,437,1
 0x4549a0,CPickup::GetPosn,WORLD,0,438,1
@@ -2192,7 +2192,7 @@ address,name,subsystem,level,scc_id,scc_size
 0x58d580,CHud::DrawFadeState,HUD,0,2190,1
 0x58fd20,CHudColours::SetRGBAValue,HUD,0,2191,1
 0x58fd50,CHudColours::GetIntColour,HUD,0,2192,1
-0x58fd90,CHudColours,UNK-game,0,2193,1
+0x58fd90,CHudColours::~CHudColours,HUD,0,2193,1
 0x58fda0,CHudColours::Constructor,HUD,0,2194,1
 0x590220,CLoadingScreen::DisplayMessage,STREAM,0,2195,1
 0x590310,CLoadingScreen::Pause,STREAM,0,2196,1
@@ -9467,7 +9467,7 @@ address,name,subsystem,level,scc_id,scc_size
 0x503480,CAEWeaponAudioEntity::Terminate,AUDIO,2,9461,1
 0x503490,CAEWeaponAudioEntity::Reset,AUDIO,2,9462,1
 0x5034e0,CAEWeaponAudioEntity::StopFlameThrowerIdleGasLoop,AUDIO,2,9463,1
-0x506b90,,UNK-game,2,9464,1
+0x506b90,CAEExplosionAudioEntity::~CAEExplosionAudioEntity,AUDIO,2,9464,1
 0x506c30,,UNK-game,2,9465,1
 0x506c40,,UNK-game,2,9466,1
 0x506cc0,,UNK-game,2,9467,1

@@ -596,9 +596,12 @@ pub fn init_g_977be8() {
     atexit(0x856150);
 }
 
-/// The destructor body of the 0x977BE8 object (0x454200, thiscall; not in the catalogue: the tail of `__dtor_g_977be8`'s
-/// extent, CAT-12, so a phase B native): `eh_vector_destructor_iterator(this + 8, 0x34, 0x32, 0x453FB0)`.
-#[sa_core::native(addr = 0x454200, conv = thiscall, name = "dtor_977be8_body")]
+/// The destructor body of the 0x977BE8 object (0x454200, thiscall; reached by `jmp` from `__dtor_g_977be8`; a phase B
+/// native until the CAT-12 tail-target split made it a catalogue row): `eh_vector_destructor_iterator(this + 8, 0x34,
+/// 0x32, 0x453FB0)`.
+#[hook(addr = 0x454200, conv = thiscall, name = "dtor_977be8_body", expect = "68 B0 3F 45 00",
+       unverified = "frontier2-c10", route = "split", hazards = "heap-writes",
+       note = "FRONTIER-2 lane C turn 4: was a phase B native until the body became a catalogue row (CAT-12 tail target)")]
 pub fn dtor_977be8_body_native(this: GPtr<u8>) {
     sa_core::bindings::eh_vector_dtor(this.byte_add(8), 0x34, 0x32, 0x453FB0);
 }
@@ -3379,6 +3382,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_COMPLETE_NEW_INTERIOR,
     HOOK_FIND_NODE_COORS_FOR_SCRIPT_TWO_NODES,
     HOOK_LOAD_PATH_FIND_DATA_AREA,
+    HOOK_DTOR_977BE8_BODY_NATIVE,
 ];
 
 /// This module's phase B natives (STD-8).

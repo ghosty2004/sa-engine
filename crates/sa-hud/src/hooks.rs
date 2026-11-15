@@ -88,7 +88,7 @@ pub const ALL: &[HookReg] = &ALL_ARRAY;
 
 /// Every module's `#[native]` registrations (phase B entries of ports that cannot be hooked in
 /// phase A); `sa_ports::NATIVES` lists each of these.
-pub const NATIVE_MODULES: &[&[sa_core::abi::NativeReg]] = &[crate::font_print::NATIVES, crate::hud::NATIVES, crate::menu_system_init::NATIVES, crate::statics2::NATIVES];
+pub const NATIVE_MODULES: &[&[sa_core::abi::NativeReg]] = &[crate::font_print::NATIVES, crate::hud::NATIVES, crate::menu_system_init::NATIVES];
 
 pub const COUNT: usize = ALL.len();
 
