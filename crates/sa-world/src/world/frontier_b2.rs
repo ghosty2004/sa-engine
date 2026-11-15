@@ -42,7 +42,7 @@ orig! {
     /// `CReplay::ProcessLookAroundCam()` (0x45D760)
     fn replay_process_look_around_cam() = cdecl 0x45D760 => unported;
     /// `CReplay::StreamAllNecessaryCarsAndPeds()` (0x45D4B0)
-    fn replay_stream_all_necessary_cars_and_peds() = cdecl 0x45D4B0 => unported;
+    fn replay_stream_all_necessary_cars_and_peds() = cdecl 0x45D4B0 => crate::world::frontier_b3::replay_stream_all_necessary_cars_and_peds;
     /// `CPlayerPed::PickWeaponAllowedFor2Player()` (0x609800)
     fn player_ped_pick_weapon_allowed_for_2_player(p: GPtr<u8>) = thiscall 0x609800 => unported;
 }

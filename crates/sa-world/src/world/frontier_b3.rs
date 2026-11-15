@@ -15,6 +15,8 @@ use crate::bindings::{
 use sa_core::bindings::{matrix_mul_vec, ped_is_alive, task_new};
 
 sa_core::orig! {
+    /// `CReplay::FindSizeOfPacket(uint8)` (0x45C850)
+    fn replay_find_size_of_packet(ty: u32) -> u32 = cdecl 0x45C850 => crate::generated::replay_generated::g_creplay_find_size_of_packet_45c850;
     /// `CWorld::FindObjectsIntersectingAngledCollisionBoxSectorList(list, box, transform, point, count, maxCount, out)`
     /// (0x565200)
     fn list_scan(list: GPtr<u8>, bx: GPtr<u8>, transform: GPtr<u8>, point: GPtr<u8>, count: GPtr<i16>, max: i16, out: GPtr<GPtr<u8>>) = cdecl 0x565200 => super::protected_world_queries::find_objects_intersecting_angled_collision_box_sector_list;
@@ -183,7 +185,43 @@ pub fn world_find_objects_intersecting_angled_collision_box(bx: GPtr<u8>, transf
     }
 }
 
+/// `CReplay::StreamAllNecessaryCarsAndPeds()` (stub 0x45D4B0 → 0x156A8C0, cdecl): for each of the 8 replay buffers in
+/// use (status 0x97FB7C + i), every packet up to the end marker (type 0; sizes from `FindSizeOfPacket`) requests its
+/// model (flags 0): type 1 (vehicle) and 2 (ped) the word at +0x1A, type 3 the word at +2; then
+/// `LoadAllRequestedModels(false)`.
+#[hook(addr = 0x45D4B0, conv = cdecl, name = "CReplay::StreamAllNecessaryCarsAndPeds", expect = "E9 0B D4 10 01",
+       unverified = "frontier2-b10", route = "L2", hazards = "none",
+       note = "requests and loads models (streaming state)")]
+pub fn replay_stream_all_necessary_cars_and_peds() {
+    use sa_core::bindings::{load_all_requested_models, streaming_request_model};
+    for i in 0..8usize {
+        let buf = GPtr::<u8>::from_addr(0x97_FB88 + 100_000 * i);
+        if g::<u8>(0x97_FB7C + i).read() == 0 || rd::<u8>(buf, 0) == 0 {
+            continue;
+        }
+        let mut off = 0isize;
+        loop {
+            let ty = rd::<u8>(buf, off);
+            match ty {
+                1 | 2 => {
+                    streaming_request_model(i32::from(rd::<i16>(buf, off + 0x1A)), 0);
+                }
+                3 => {
+                    streaming_request_model(i32::from(rd::<i16>(buf, off + 2)), 0);
+                }
+                _ => {}
+            }
+            off += replay_find_size_of_packet(u32::from(ty)) as isize;
+            if rd::<u8>(buf, off) == 0 {
+                break;
+            }
+        }
+    }
+    load_all_requested_models(0);
+}
+
 /// This module's registrations.
 pub const HOOKS: &[HookReg] = &[HOOK_CALL_OFF_CHASE_SECTOR_LIST_VEHICLES, HOOK_CALL_OFF_CHASE_SECTOR_LIST_PEDS,
     HOOK_WORLD_FIND_OBJECTS_INTERSECTING_ANGLED_COLLISION_BOX,
+    HOOK_REPLAY_STREAM_ALL_NECESSARY_CARS_AND_PEDS,
 ];
