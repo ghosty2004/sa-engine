@@ -237,6 +237,18 @@ The report is copied out of the lane's `l3/run.txt` by l3.sh itself while it hol
 `port-l2.sh ports --runs "plain rust"` on every corpus recording, spread over lanes; every recording must be
 IDENTICAL. Includes unverified hooks only with `SA_UNVERIFIED`.
 
+### `tools/verify/batch-l2.py` (per-hook evidence for whole batches)
+
+`plan BATCH|@FILE...` (run kind per hook: `split` for everything with a double-run hazard and, since
+VERIFY-PROMOTE-1, for all L2 rows — a split run is faster than an in-process L2 run that snapshots the static
+window per case and does not crash on allocators; `l3` for route L3-only), `run REC LANE --kind split|l2|heap|l3
+[--chunk N] [--only 0xA,..] [--rerun]` (port-l2.sh lists of ≤ N hooks, no name twice; a list whose run stops is
+halved down to the hook that stops it; `l3` = `l3.sh --rust LIST --fixed verified --hookoff all`), `report
+[--batches]` (per-hook verdict over all recordings in `target/verify/batch-l2/verdicts.tsv`; a batch is PROMOTE
+when every row has L2/split PASS, L3 hook-off MATCH or no call on any of the 13 recordings, and no recording
+showed a mismatch or an undeclared write), `promote BATCH...` (removes `unverified` / updates the generator lists,
+`progress.py set` L2/L3), `record` (queue statuses), `setkind`, `forget` (after a port fix), `reparse`.
+
 ### `tools/verify/queue.py`
 
 `queue.py` (regenerate), `--check`, `set KEY STATUS [EVIDENCE]`, `list BATCH`, `show BATCH`, `gate BASE`.
