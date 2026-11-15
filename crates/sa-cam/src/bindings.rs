@@ -222,3 +222,8 @@ orig! {
     /// `CCamera::DeleteCutSceneCamDataMemory` (0x5B24A0)
     pub fn camera_delete_cut_scene_cam_data_memory(c: GPtr<u8>) = thiscall 0x5B24A0 => crate::camctl::delete_cut_scene_cam_data_memory;
 }
+
+orig! {
+    /// `CAutomobile::SetHeliOrientation` (0x6A2450)
+    pub fn set_heli_orientation(v: GPtr<u8>, a: u32) = thiscall 0x6A2450 => unported;
+}

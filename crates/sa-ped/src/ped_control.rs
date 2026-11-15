@@ -12,6 +12,7 @@
 
 use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
+use sa_world::bindings::cull_zones_police_abandon_cars;
 use sa_core::crt::rand;
 use sa_core::orig::at_site;
 use sa_core::{hook, orig};
@@ -280,8 +281,6 @@ orig! {
     fn stats_update_when_on_motor_bike(v: GPtr<u8>) = cdecl 0x55CD60 => unported;
     /// `CStats::UpdateStatsWhenDriving(CVehicle*)` (0x55CAC0)
     fn stats_update_when_driving(v: GPtr<u8>) = cdecl 0x55CAC0 => unported;
-    /// `CCullZones::PoliceAbandonCars()` (0x72DD60, AL)
-    fn cull_zones_police_abandon_cars() -> u8 = cdecl 0x72DD60 => unported;
     /// 0x56EC80 (proposed `CPlayerCrossHair::Process(int32, CPad*)`)
     fn player_cross_hair_process(c: GPtr<u8>, idx: i32, pad: GPtr<u8>) = thiscall 0x56EC80 => unported;
     /// `CTaskSimpleSwim::ApplyRollAndPitch(CPed*)` (0x68A8E0)

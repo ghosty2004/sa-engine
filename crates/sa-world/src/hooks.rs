@@ -149,6 +149,7 @@ pub const MODULES: &[&[HookReg]] = &[
     world::garage_checks::HOOKS,
     world::entity_sector_check::HOOKS,
     world::cheat_misc_toggles::HOOKS,
+    world::cheat_weapons::HOOKS,
     world::interior_corner_tiles::HOOKS,
     world::world_static_fire::HOOKS,
     world::interior_closest_info::HOOKS,

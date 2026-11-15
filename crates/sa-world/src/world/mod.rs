@@ -109,6 +109,7 @@ pub mod stats_records;
 pub mod garage_checks;
 pub mod entity_sector_check;
 pub mod cheat_misc_toggles;
+pub mod cheat_weapons;
 pub mod interior_corner_tiles;
 pub mod world_static_fire;
 pub mod interior_closest_info;

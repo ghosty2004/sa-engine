@@ -34,6 +34,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::avoidgeom::HOOKS,
     crate::firstperson::HOOKS,
     crate::rocket::HOOKS,
+    crate::m16::HOOKS,
     crate::pedonpc::HOOKS,
     crate::pedmouse::HOOKS,
     crate::camcontrol::HOOKS,

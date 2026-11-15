@@ -43,39 +43,6 @@ pub fn find_switch_distance_far(veh: GPtr<u8>) -> X87 {
     xi(i32::from(rd::<u8>(veh, 0x3DD))).fadd_m(5.0)
 }
 
-/// `CCarAI::FindPoliceCarSpeedForWantedLevel(CVehicle*)` (0x41CAA0): wanted 0 → random 12..16, 1 → 25,
-/// 2 → 34, 3..6 → handling +0x88 (max velocity) × 54 / 72 / 75 / 78 (`_ftol`, EAX), else 0.
-// Unhookable: protection code reads its entry bytes as data (0x14B1FBF, 0x14B351B, ...; sa-hook every_hook_installs_on_the_exe).
-pub fn find_police_car_speed_for_wanted_level(veh: GPtr<u8>) -> i32 {
-    let w = wanted_level() as u32;
-    let k = match w {
-        0 => return ftol32(X87::from_f64_exact(random_float_in_range(12.0, 16.0).to_f64())),
-        1 => return 25,
-        2 => return 34,
-        3 => 54.0,
-        4 => 72.0,
-        5 => 75.0,
-        6 => 78.0,
-        _ => return 0,
-    };
-    let h = rd::<GPtr<u8>>(veh, 0x384);
-    ftol32(x(rd::<f32>(h, 0x88)).fmul_m(k))
-}
-
-/// `CCarAI::FindPoliceCarMissionForWantedLevel()` (0x41C9D0): wanted 0, 1 and > 6 → 4 (ram); 2, 3, 4..6 →
-/// 4 or 2 (block) by `rand() & 3` < 3 / < 2 / < 1 (AL).
-// Unhookable: 0x4049D5 holds 0x41C9D5, inside the patched entry (sa-hook patch_refs test).
-pub fn find_police_car_mission_for_wanted_level() -> u8 {
-    let (site, lim) = match wanted_level() as u32 {
-        2 => (0x41C9EE, 3),
-        3 => (0x41C9FF, 2),
-        4..=6 => (0x41CA10, 1),
-        _ => return 4,
-    };
-    let r = (rand_at(site) & 3) as u8;
-    if r < lim { 4 } else { 2 }
-}
-
 /// `CCarAI::FindPoliceBoatMissionForWantedLevel()` (stub 0x41CA50 → 0x156FFB0): with wanted level 2..6, 0x15
 /// in a vehicle else 0x40; otherwise 4 in a vehicle else 0x40 (`FindPlayerVehicle(-1, false)`; the bool
 /// is pushed through an obfuscated `[0x15605D0] - [0x6D161D]` = 0 on the first path).

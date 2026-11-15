@@ -3,6 +3,8 @@
 //! instruction by instruction on [`Fpu`] (the literal register stack of sa-world's COLL ports).
 
 use sa_core::abi::HookReg;
+use crate::bindings::tell_occupants_to_leave_car;
+use sa_world::bindings::find_player_entity;
 use sa_core::mem::{GPtr, GlobalDesc};
 use sa_core::{hook, orig};
 use sa_math::x87::X87;
@@ -1270,19 +1272,80 @@ orig! {
     fn get_ai_plane_to_do_dog_fight_against_player_call(v: GPtr<u8>) = cdecl 0x42F370 => get_ai_plane_to_do_dog_fight_against_player;
 }
 
+orig! {
+    /// `CCarCtrl::SteerAICarWithPhysicsTryingToBlockTarget(CVehicle*, CEntity*, float x, float y, float vx, float vy, float*, float*, float*, bool*)` (0x4335E0)
+    #[allow(clippy::too_many_arguments)]
+    fn steer_trying_to_block_target(v: GPtr<u8>, t: GPtr<u8>, x: f32, y: f32, vx: f32, vy: f32, steer: GPtr<f32>, gas: GPtr<f32>, brake: GPtr<f32>, hb: GPtr<u8>) = cdecl 0x4335E0 => steer_ai_car_with_physics_trying_to_block_target;
+    /// `CCarCtrl::SteerAIBoatWithPhysicsCirclingPlayer(CVehicle*, float*, float*, float*, bool*)` (0x429090)
+    fn steer_boat_circling_player(v: GPtr<u8>, steer: GPtr<f32>, gas: GPtr<f32>, brake: GPtr<f32>, hb: GPtr<u8>) = cdecl 0x429090 => steer_ai_boat_with_physics_circling_player;
+    /// `CCarCtrl::SteerAICarBlockingPlayerForwardAndBack(CVehicle*, float*, float*, float*, bool*)` (0x422B20)
+    fn steer_blocking_forward_and_back(v: GPtr<u8>, steer: GPtr<f32>, gas: GPtr<f32>, brake: GPtr<f32>, hb: GPtr<u8>) = cdecl 0x422B20 => steer_ai_car_blocking_player_forward_and_back;
+    /// `CCarCtrl::SteerAICarTowardsPointInEscort(CVehicle*, CVehicle* leader, float ox, float oy, float*, float*, float*, bool*)` (0x4336D0)
+    #[allow(clippy::too_many_arguments)]
+    fn steer_towards_point_in_escort(v: GPtr<u8>, leader: GPtr<u8>, ox: f32, oy: f32, steer: GPtr<f32>, gas: GPtr<f32>, brake: GPtr<f32>, hb: GPtr<u8>) = cdecl 0x4336D0 => steer_ai_car_towards_point_in_escort;
+    /// `CCarCtrl::GetAIPlaneToAttackPlayer(CAutomobile*)` (0x429780)
+    fn get_ai_plane_to_attack_player_call(v: GPtr<u8>) = cdecl 0x429780 => get_ai_plane_to_attack_player;
+    /// `CCarCtrl::SteerAIPlaneToFollowEntity(CAutomobile*)` (0x4237F0)
+    fn steer_ai_plane_to_follow_entity_call(v: GPtr<u8>) = cdecl 0x4237F0 => steer_ai_plane_to_follow_entity;
+    /// `CCarCtrl::SteerAIPlaneToCrashAndBurn(CAutomobile*)` (0x423880)
+    fn steer_ai_plane_to_crash_and_burn_call(v: GPtr<u8>) = cdecl 0x423880 => steer_ai_plane_to_crash_and_burn;
+    /// `CCarCtrl::SteerAIHeliToCrashAndBurn(CAutomobile*)` (0x4238E0)
+    fn steer_ai_heli_to_crash_and_burn_call(v: GPtr<u8>) = cdecl 0x4238E0 => steer_ai_heli_to_crash_and_burn;
+    /// `CCarCtrl::GetAIHeliToAttackPlayer(CAutomobile*)` (0x42F3C0)
+    fn get_ai_heli_to_attack_player_call(v: GPtr<u8>) = cdecl 0x42F3C0 => get_ai_heli_to_attack_player;
+    /// `CCarCtrl::GetAIHeliToFlyInDirection(CAutomobile*)` (0x42A730)
+    fn get_ai_heli_to_fly_in_direction_call(v: GPtr<u8>) = cdecl 0x42A730 => get_ai_heli_to_fly_in_direction;
+    /// `CCarCtrl::SteerAIHeliToFollowEntity(CAutomobile*)` (0x42A750)
+    fn steer_ai_heli_to_follow_entity_call(v: GPtr<u8>) = cdecl 0x42A750 => steer_ai_heli_to_follow_entity;
+    /// `CCarCtrl::SteerAIHeliAsPoliceHeli(CAutomobile*)` (0x42AAD0)
+    fn steer_ai_heli_as_police_heli_call(v: GPtr<u8>) = cdecl 0x42AAD0 => steer_ai_heli_as_police_heli;
+    /// `CCarCtrl::SteerAIHeliFlyingAwayFromPlayer(CAutomobile*)` (0x42ACB0)
+    fn steer_ai_heli_flying_away_from_player_call(v: GPtr<u8>) = cdecl 0x42ACB0 => steer_ai_heli_flying_away_from_player;
+    /// `CCarCtrl::SteerAIHeliToLand(CAutomobile*)` (0x42AD30)
+    fn steer_ai_heli_to_land_call(v: GPtr<u8>) = cdecl 0x42AD30 => steer_ai_heli_to_land;
+    /// `CCarCtrl::SteerAIHeliToKeepEntityInView(CAutomobile*)` (0x42AEB0)
+    fn steer_ai_heli_to_keep_entity_in_view_call(v: GPtr<u8>) = cdecl 0x42AEB0 => steer_ai_heli_to_keep_entity_in_view;
+}
+use sa_core::field::gf;
+use sa_world::bindings::{ped_say, pick_random_passenger};
+
+/// `FindPlayerCoors(&tmp, -1)` into a local.
+fn player_coors(buf: &mut [f32; 3]) -> GPtr<f32> {
+    find_player_coors(GPtr::from_raw(buf.as_mut_ptr()), -1)
+}
+
+/// `fcomp k; test ah, 0x41; jne`: not taken only for `a > k` (ordered).
+fn gt_(a: X87, k: X87) -> bool {
+    !le41(a, k)
+}
+
+/// `fcomp k; test ah, 5; jp`: not taken only for `a < k` (ordered).
+fn lt_(a: X87, k: X87) -> bool {
+    !ge5(a, k)
+}
+
+fn magnitude(v: GPtr<u8>) -> X87 {
+    X87::from_f64_exact(vector_magnitude(v.cast()))
+}
+
 /// `CCarCtrl::SteerAICarWithPhysics_OnlyMission(CVehicle*, float* steer, float* gas, float* brake, bool*
-/// handbrake)` (0x436A90), partial port (ADR-002 fallback): the mission byte (+0x3BA, byte table 0x437BD4,
-/// jump table 0x437B24) selects the steering. PORTED: missions > 0x44 and 7, 0x1B, 0x1C (nothing);
-/// 0, 0xA, 0xB (stopped: steer 0, gas 0, handbrake, brake 0.5); the follow-path set (1, 2, 4, 8, 0xC, 0xF,
-/// 0x11, 0x2B, 0x34, 0x36, 0x3D, 0x41..0x44) → `SteerAICarWithPhysicsFollowPath`; 0x21 → `_Racing`;
-/// 0x22 → `FollowPreRecordedPath`; 9, 0xD → `HeadingForTarget(veh, null, +0x3EC, +0x3F0, ..)`; 0x13 →
-/// `TryingToBlockTarget_Stop` with the target entity's position and speed; 0x14 → heli towards target;
-/// 0x16 → plane towards target; 0xE → boat heading for +0x3EC/+0x3F0 (handbrake cleared); 0x15 → boat
-/// attacking the player; 0x3E / 0x3F → the dog fights. NOT PORTED (fallback to the whole original body,
-/// decided at entry from the mission byte): 3, 5, 6, 0x10, 0x12, 0x17..0x1A, 0x1D..0x20, 0x23..0x2A,
-/// 0x2C..0x33, 0x35, 0x37..0x3C, 0x40 (ram / block / escort / park / follow-car / heli and plane / boat
-/// circling / misc. missions with their own inline steering).
-#[hook(addr = 0x436A90, conv = cdecl, name = "CCarCtrl::SteerAICarWithPhysics_OnlyMission", expect = "81 EC E4 00 00 00", fallback)]
+/// handbrake)` (0x436A90): the mission byte (+0x3BA, `movsx`; above 0x44 or negative: nothing; byte table 0x437BD4,
+/// jump table 0x437B24) selects the steering. 7, 0x1B, 0x1C: nothing; 0, 0xA, 0xB: stopped (steer 0, gas 0, handbrake,
+/// brake 0.5); the follow-path set (1, 2, 4, 8, 0xC, 0xF, 0x11, 0x2B, 0x34, 0x36, 0x3D, 0x41..0x44) →
+/// `SteerAICarWithPhysicsFollowPath`; 0x21 → `_Racing`; 0x22 → `FollowPreRecordedPath`; 9, 0xD, 0x18 →
+/// `HeadingForTarget(veh, null, destination)`; 0x19 → `HeadingForTarget(veh, null, player)`; 3 → [`steer_ram_player`];
+/// 0x10, 0x37 → `HeadingForTarget(veh, target, target position)`; 0x35 → [`steer_follow_car_close`]; 0x2C →
+/// [`steer_approach_player_close`]; 5 → `TryingToBlockTarget(veh, FindPlayerEntity(-1), player, player speed)`; 0x12 →
+/// the same with the target entity; 6 / 0x13 → `TryingToBlockTarget_Stop` with the player / the target; 0x1A →
+/// `BlockingPlayerForwardAndBack`; 0x1D..0x20 → `TowardsPointInEscort(veh, target, ..)` beside / behind / ahead of the
+/// leader (`(t.col.max + own.col.max) + 2` in x for 0x1D (negated) / 0x1E, `+ 7` in y for 0x1F (negated) / 0x20);
+/// 0x3C → [`steer_circle_target`]; 0x14 / 0x16 heli / plane towards the target coordinates; 0xE boat heading for the
+/// destination (handbrake cleared); 0x15 / 0x40 boat attacking / circling the player; 0x2D / 0x31, 0x2E / 0x32 parking;
+/// the helicopter and plane missions 0x17 / 0x38, 0x23 / 0x3B, 0x24..0x2A, 0x2F / 0x30, 0x33, 0x39, 0x3A, 0x3E, 0x3F →
+/// their `CCarCtrl` entries.
+#[hook(addr = 0x436A90, conv = cdecl, name = "CCarCtrl::SteerAICarWithPhysics_OnlyMission", expect = "81 EC E4 00 00 00",
+       unverified = "frontier2-3", route = "L2", hazards = "none", recs = "driving",
+       note = "whole port (the PORT-POP partial port took the fallback for the ram / block / escort / heli / plane missions)")]
 pub fn steer_ai_car_with_physics_only_mission(
     veh: GPtr<u8>,
     steer: GPtr<f32>,
@@ -1294,6 +1357,7 @@ pub fn steer_ai_car_with_physics_only_mission(
     if !(0..=0x44).contains(&mission) {
         return;
     }
+    let target = || rd::<GPtr<u8>>(veh, 0x41C);
     match mission {
         7 | 0x1B | 0x1C => {}
         0 | 0xA | 0xB => {
@@ -1307,7 +1371,7 @@ pub fn steer_ai_car_with_physics_only_mission(
         }
         0x21 => steer_follow_path_racing(veh, steer, gas, brake, hb),
         0x22 => steer_follow_pre_recorded_path(veh, steer, gas, brake, hb),
-        9 | 0xD => steer_heading_for_target(
+        9 | 0xD | 0x18 => steer_heading_for_target(
             veh,
             GPtr::NULL,
             rd::<f32>(veh, 0x3EC),
@@ -1317,8 +1381,43 @@ pub fn steer_ai_car_with_physics_only_mission(
             brake,
             hb,
         ),
+        0x19 => {
+            let (mut a, mut b) = ([0f32; 3], [0f32; 3]);
+            let a = player_coors(&mut a);
+            let y = vx(player_coors(&mut b), 1);
+            steer_heading_for_target(veh, GPtr::NULL, vx(a, 0), y, steer, gas, brake, hb);
+        }
+        3 => steer_ram_player(veh, steer, gas, brake, hb),
+        0x10 | 0x37 => {
+            let t = target();
+            let p = entity_pos(t);
+            steer_heading_for_target(veh, t, vx(p, 0), vx(p, 1), steer, gas, brake, hb);
+        }
+        0x35 => steer_follow_car_close(veh, steer, gas, brake, hb),
+        0x2C => steer_approach_player_close(veh, steer, gas, brake, hb),
+        5 | 6 => {
+            let s1 = GPtr::<u8>::cast::<f32>(find_player_speed(-1));
+            let mut c1 = [0f32; 3];
+            let c1 = player_coors(&mut c1);
+            let s2 = GPtr::<u8>::cast::<f32>(find_player_speed(-1));
+            let (sx, sy) = (vx(s1, 0), vx(s2, 1));
+            let mut c2 = [0f32; 3];
+            let cy = vx(player_coors(&mut c2), 1);
+            if mission == 5 {
+                let e = find_player_entity(-1);
+                steer_trying_to_block_target(veh, e, vx(c1, 0), cy, sx, sy, steer, gas, brake, hb);
+            } else {
+                steer_trying_to_block_target_stop(veh, vx(c1, 0), cy, sx, sy, steer, gas, brake, hb);
+            }
+        }
+        0x12 => {
+            let t = target();
+            let p = entity_pos(t);
+            let (tvx, tvy) = (rd::<f32>(t, 0x44), rd::<f32>(t, 0x48));
+            steer_trying_to_block_target(veh, t, vx(p, 0), vx(p, 1), tvx, tvy, steer, gas, brake, hb);
+        }
         0x13 => {
-            let t = rd::<GPtr<u8>>(veh, 0x41C);
+            let t = target();
             let p = entity_pos(t);
             steer_trying_to_block_target_stop(
                 veh,
@@ -1332,6 +1431,23 @@ pub fn steer_ai_car_with_physics_only_mission(
                 hb,
             );
         }
+        0x1A => steer_blocking_forward_and_back(veh, steer, gas, brake, hb),
+        0x1D..=0x20 => {
+            let t = target();
+            let (tc, oc) = (col_model(t), col_model(veh));
+            let (off, k) = if mission >= 0x1F { (0x10, 0x858F48) } else { (0xC, 0x858CA0) };
+            let mut f = x_(rd::<f32>(tc, off)).fadd_m(rd::<f32>(oc, off)).fadd_m(gf(k));
+            if mission == 0x1D || mission == 0x1F {
+                f = f.fchs();
+            }
+            let f = f.to_f32();
+            if mission >= 0x1F {
+                steer_towards_point_in_escort(veh, t, 0.0, f, steer, gas, brake, hb);
+            } else {
+                steer_towards_point_in_escort(veh, t, f, 0.0, steer, gas, brake, hb);
+            }
+        }
+        0x3C => steer_circle_target(veh, steer, gas, brake, hb),
         0x14 => steer_ai_heli_towards_target_coors_call(veh),
         0x16 => steer_ai_plane_towards_target_coors_call(veh),
         0xE => {
@@ -1346,13 +1462,209 @@ pub fn steer_ai_car_with_physics_only_mission(
             hb.write(0);
         }
         0x15 => steer_ai_boat_attacking_player(veh, steer, gas, brake, hb),
+        0x40 => steer_boat_circling_player(veh, steer, gas, brake, hb),
         // STD-14: the parking missions (0x437939 / 0x43796D)
         0x2D | 0x31 => steer_park_perpendicular(veh, steer, gas, brake, hb),
         0x2E | 0x32 => steer_park_parallel(veh, steer, gas, brake, hb),
+        0x23 | 0x3B => get_ai_plane_to_attack_player_call(veh),
+        0x24 => fly_ai_plane_in_certain_direction(veh),
+        0x25 => steer_ai_plane_to_follow_entity_call(veh),
+        0x39 => steer_ai_plane_to_crash_and_burn_call(veh),
+        0x3A => steer_ai_heli_to_crash_and_burn_call(veh),
+        0x17 | 0x38 => get_ai_heli_to_attack_player_call(veh),
+        0x26 => get_ai_heli_to_fly_in_direction_call(veh),
+        0x27 | 0x29 => steer_ai_heli_to_follow_entity_call(veh),
+        0x28 => steer_ai_heli_as_police_heli_call(veh),
+        0x2A => steer_ai_heli_flying_away_from_player_call(veh),
+        0x2F | 0x30 => steer_ai_heli_to_land_call(veh),
+        0x33 => steer_ai_heli_to_keep_entity_in_view_call(veh),
         0x3E => get_ai_plane_to_do_dog_fight_call(veh),
         0x3F => get_ai_plane_to_do_dog_fight_against_player_call(veh),
-        _ => steer_ai_car_with_physics_only_mission_original(veh, steer, gas, brake, hb),
+        _ => {}
     }
+}
+
+/// Mission 3 (ram the player, 0x436ABF): the target T = the player's position. In a vehicle: with
+/// `fdot = DotProduct(player forward, own forward)`, a car with seed bit 0 and `fdot > 0.5` aims beside the player's
+/// vehicle (`S = (own.col.max.x + player.col.max.x) - 0.2` along the player's right vector, `+` with seed bit 1, else
+/// `-`) and, closer than `|player speed - own speed| * 12 + 2` with no temp action, turns (temp action 7 / 8 by seed
+/// bit 1) for 250 ms; otherwise T moves by `((seed & 0xFF) - 128) * 0.00625` along the right vector. `fdot < 0` adds
+/// `fdot * -0.02` times the player's speed. A law enforcer chasing a player vehicle faster than 0.4 (2D) has a random
+/// passenger of that vehicle say 0x26. Then `HeadingForTarget(veh, FindPlayerVehicle, T)`.
+fn steer_ram_player(veh: GPtr<u8>, steer: GPtr<f32>, gas: GPtr<f32>, brake: GPtr<f32>, hb: GPtr<u8>) {
+    let mut t = [0f32; 3];
+    player_coors(&mut t);
+    if !find_player_vehicle(-1, 0).is_null() {
+        let own_fwd = rd::<GPtr<u8>>(veh, 0x14).byte_add(0x10);
+        let pl_fwd = rd::<GPtr<u8>>(find_player_vehicle(-1, 0), 0x14).byte_add(0x10);
+        let fdot = dot_product(pl_fwd, own_fwd).to_f32();
+        let right = |i: isize| rd::<f32>(rd::<GPtr<u8>>(find_player_vehicle(-1, 0), 0x14), i * 4);
+        let seed = rd::<u8>(veh, 0x20);
+        if seed & 1 != 0 && gt_(x_(fdot), x_(gf(0x858B8C))) {
+            let a = rd::<f32>(col_model(find_player_vehicle(-1, 0)), 0xC);
+            let b = rd::<f32>(col_model(veh), 0xC);
+            let s = x_(b).fadd_m(a).fsub_m(gf(0x858CC4)).to_f32();
+            if seed & 2 != 0 {
+                t[0] = x_(s).fmul_m(right(0)).fadd_m(t[0]).to_f32();
+                t[1] = x_(s).fmul_m(right(1)).fadd_m(t[1]).to_f32();
+            } else {
+                t[0] = x_(s).fmul_m(right(0)).fsubr_m(t[0]).to_f32();
+                t[1] = x_(s).fmul_m(right(1)).fsubr_m(t[1]).to_f32();
+            }
+            let mut d = [0f32; 3];
+            let pv = find_player_vehicle(-1, 0);
+            let rel = vector_sub(GPtr::from_raw(d.as_mut_ptr()).cast(), pv.byte_add(0x44), veh.byte_add(0x44));
+            let r = magnitude(rel).fmul_m(gf(0x858CCC)).fadd_m(gf(0x858CA0));
+            let p = entity_pos(veh);
+            let dy = x_(vx(p, 1)).fsub_m(t[1]);
+            let dx = x_(vx(p, 0)).fsub_m(t[0]);
+            let dist = dy.fmul(dy).fadd(dx.fmul(dx)).fsqrt();
+            if lt_(dist, r) && rd::<u8>(veh, 0x3BB) == 0 {
+                wr::<u8>(veh, 0x3BB, if rd::<u8>(veh, 0x20) & 2 != 0 { 7 } else { 8 });
+                wr(veh, 0x3BC, g::<u32>(0xB7CB84).read().wrapping_add(250));
+            }
+        } else {
+            let n = xi_(i32::from(rd::<u8>(veh, 0x20)) - 0x80);
+            t[0] = n.fmul_m(right(0)).fmul_m(gf(0x859050)).fadd_m(t[0]).to_f32();
+            let n = xi_(i32::from(rd::<u8>(veh, 0x20)) - 0x80);
+            t[1] = n.fmul_m(right(1)).fmul_m(gf(0x859050)).fadd_m(t[1]).to_f32();
+        }
+        if lt_(x_(fdot), x_(0.0)) {
+            let s1 = GPtr::<u8>::cast::<f32>(find_player_speed(-1));
+            let f = x_(fdot).fmul_m(gf(0x85904C));
+            let fs = f.to_f32();
+            t[0] = f.fmul_m(vx(s1, 0)).fadd_m(t[0]).to_f32();
+            let s2 = GPtr::<u8>::cast::<f32>(find_player_speed(-1));
+            t[1] = x_(fs).fmul_m(vx(s2, 1)).fadd_m(t[1]).to_f32();
+        }
+        if rd::<u8>(veh, 0x428) & 1 != 0 {
+            let pv = find_player_vehicle(-1, 0);
+            let (svx, svy) = (x_(rd::<f32>(pv, 0x44)), x_(rd::<f32>(pv, 0x48)));
+            let sp = svx.fmul(svx).fadd(svy.fmul(svy)).fsqrt();
+            if gt_(sp, x_(gf(0x858EE8))) {
+                let psg = pick_random_passenger(find_player_vehicle(-1, 0));
+                if !psg.is_null() {
+                    ped_say(psg, 0x26, 0, 1.0, 0, 0, 0);
+                }
+            }
+        }
+    }
+    let (tx, ty) = (t[0], t[1]);
+    steer_heading_for_target(veh, find_player_vehicle(-1, 0), tx, ty, steer, gas, brake, hb);
+}
+
+/// Mission 0x35 (follow a car, close, 0x436E73): `HeadingForTarget(veh, target, target position)`; then, closer than
+/// the follow distance (+0x3DE) + 10, gas / brake from `v = (target speed2D * 60 + (d < 0 ? d * 5 : d + d)) - own
+/// speed2D * 60` with `d = distance - follow distance`: `v < 0` → gas 0, brake `min(v * -0.1, 1)`; else gas
+/// `min(v * 0.05, 1)`, brake 0.
+fn steer_follow_car_close(veh: GPtr<u8>, steer: GPtr<f32>, gas: GPtr<f32>, brake: GPtr<f32>, hb: GPtr<u8>) {
+    let t = rd::<GPtr<u8>>(veh, 0x41C);
+    let p = entity_pos(t);
+    steer_heading_for_target(veh, t, vx(p, 0), vx(p, 1), steer, gas, brake, hb);
+    let t = rd::<GPtr<u8>>(veh, 0x41C);
+    let mut d = [0f32; 3];
+    let rel = vector_sub(GPtr::from_raw(d.as_mut_ptr()).cast(), entity_pos(veh).cast(), entity_pos(t).cast());
+    let dist = magnitude(rel);
+    let distf = dist.to_f32();
+    let follow = xi_(i32::from(rd::<u8>(veh, 0x3DE))).to_f32();
+    // fild; fadd 10; fxch; fcompp; test ah, 5; jp: only dist < follow + 10
+    if !lt_(dist, x_(follow).fadd_m(gf(0x85862C))) {
+        return;
+    }
+    let speed2d = |e: GPtr<u8>| {
+        let (a, b) = (x_(rd::<f32>(e, 0x44)), x_(rd::<f32>(e, 0x48)));
+        a.fmul(a).fadd(b.fmul(b)).fsqrt().fmul_m(gf(0x858B34))
+    };
+    let ts = speed2d(t);
+    let own = speed2d(veh).to_f32();
+    let diff = x_(distf).fsub_m(follow);
+    let diff = if lt_(diff, x_(0.0)) { diff.fmul_m(gf(0x858C80)) } else { diff.fadd(diff) };
+    let v = ts.fadd(diff).fsub_m(own);
+    let one = x_(gf(0x858624));
+    // fld 1.0; fcomp st(1); test ah, 5; jp: 1.0 < v clamps to 1.0
+    if lt_(v, x_(0.0)) {
+        let v = v.fmul_m(gf(0x858EF4));
+        gas.write(0.0);
+        brake.write(if lt_(one, v) { one } else { v }.to_f32());
+    } else {
+        let v = v.fmul_m(gf(0x858C28));
+        gas.write(if lt_(one, v) { one } else { v }.to_f32());
+        brake.write(0.0);
+    }
+}
+
+/// Mission 0x2C (approach the player, close, 0x436FFD): within 10 of the player stop (steer 0, gas 0, brake 1, no
+/// handbrake). Otherwise T = the player's position; in a vehicle, when `(m.fy + m.fx) * (own pos - player).x > 0` (m =
+/// the player vehicle's matrix forward, as the bytes compute it), T = the nearer of `m × (4, 0, 0)` and `m × (-4, 0,
+/// 0)` (the second unless the first is strictly nearer). Then `HeadingForTarget(veh, FindPlayerVehicle, T)`.
+fn steer_approach_player_close(veh: GPtr<u8>, steer: GPtr<f32>, gas: GPtr<f32>, brake: GPtr<f32>, hb: GPtr<u8>) {
+    let mut c = [0f32; 3];
+    let mut d = [0f32; 3];
+    let pos = entity_pos(veh);
+    let coors = player_coors(&mut c);
+    let rel = vector_sub(GPtr::from_raw(d.as_mut_ptr()).cast(), coors.cast(), pos.cast());
+    if lt_(magnitude(rel), x_(gf(0x85862C))) {
+        steer.write(0.0);
+        gas.write(0.0);
+        brake.write(1.0);
+        hb.write(0);
+        return;
+    }
+    let mut t = [0f32; 3];
+    player_coors(&mut t);
+    if !find_player_vehicle(-1, 0).is_null() {
+        let pos = entity_pos(veh);
+        let mut c2 = [0f32; 3];
+        let coors = player_coors(&mut c2);
+        let mut dd = [0f32; 3];
+        vector_sub(GPtr::from_raw(dd.as_mut_ptr()).cast(), pos.cast(), coors.cast());
+        let m1 = rd::<GPtr<u8>>(find_player_vehicle(-1, 0), 0x14);
+        let m2 = rd::<GPtr<u8>>(find_player_vehicle(-1, 0), 0x14);
+        if gt_(x_(rd::<f32>(m2, 0x14)).fadd_m(rd::<f32>(m1, 0x10)).fmul_m(dd[0]), x_(0.0)) {
+            let mut l1 = [4.0f32, 0.0, 0.0];
+            let mut a = [0f32; 3];
+            matrix_mul_vec(GPtr::from_raw(a.as_mut_ptr()).cast(), rd::<GPtr<u8>>(find_player_vehicle(-1, 0), 0x14), GPtr::from_raw(l1.as_mut_ptr()).cast());
+            let mut l2 = [-4.0f32, 0.0, 0.0];
+            let mut b = [0f32; 3];
+            matrix_mul_vec(GPtr::from_raw(b.as_mut_ptr()).cast(), rd::<GPtr<u8>>(find_player_vehicle(-1, 0), 0x14), GPtr::from_raw(l2.as_mut_ptr()).cast());
+            let pos = entity_pos(veh);
+            let mut d1 = [0f32; 3];
+            let da = magnitude(vector_sub(GPtr::from_raw(d1.as_mut_ptr()).cast(), pos.cast(), GPtr::from_raw(a.as_mut_ptr()).cast())).to_f32();
+            let mut d2 = [0f32; 3];
+            let db = magnitude(vector_sub(GPtr::from_raw(d2.as_mut_ptr()).cast(), pos.cast(), GPtr::from_raw(b.as_mut_ptr()).cast()));
+            // fcomp da; test ah, 0x41; jne: db <= da takes the second point
+            t = if gt_(db, x_(da)) { a } else { b };
+        }
+    }
+    let (tx, ty) = (t[0], t[1]);
+    steer_heading_for_target(veh, find_player_vehicle(-1, 0), tx, ty, steer, gas, brake, hb);
+}
+
+/// Mission 0x3C (0x4379C9): no target → nothing. Otherwise V = `(t.y - p.y, p.x - t.x, 0)` normalised, times 10
+/// (each component through f32), negated for odd seeds, and `HeadingForTarget(veh, null, t + V)`.
+fn steer_circle_target(veh: GPtr<u8>, steer: GPtr<f32>, gas: GPtr<f32>, brake: GPtr<f32>, hb: GPtr<u8>) {
+    let t = rd::<GPtr<u8>>(veh, 0x41C);
+    if t.is_null() {
+        return;
+    }
+    let tp = entity_pos(t);
+    let (tx, ty) = (vx(tp, 0), vx(tp, 1));
+    let p = entity_pos(veh);
+    let a = x_(vx(p, 0)).fsub_m(tx);
+    let b = x_(ty).fsub_m(vx(p, 1));
+    let mut v = [b.to_f32(), a.to_f32(), 0.0];
+    vector_normalise(GPtr::from_raw(v.as_mut_ptr()).cast());
+    for c in v.iter_mut() {
+        *c = x_(*c).fmul_m(gf(0x85862C)).to_f32();
+    }
+    if rd::<u8>(veh, 0x20) & 1 != 0 {
+        for c in v.iter_mut() {
+            *c = x_(*c).fchs().to_f32();
+        }
+    }
+    let gx = x_(v[0]).fadd_m(tx).to_f32();
+    let gy = x_(v[1]).fadd_m(ty).to_f32();
+    steer_heading_for_target(veh, GPtr::NULL, gx, gy, steer, gas, brake, hb);
 }
 
 // ---------------------------------------------------------------------------------------------------------
@@ -1960,8 +2272,6 @@ use sa_world::bindings::vehicle_is_upside_down;
 orig! {
     /// `CTask` vtable +0x10 (`GetTaskType`)
     fn task_get_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CCarAI::TellOccupantsToLeaveCar(CVehicle*)` (0x41C760)
-    fn tell_occupants_to_leave_car(v: GPtr<u8>) = cdecl 0x41C760 => unported;
 }
 
 /// `|v|` of a 3D vector field (+0x44) as `fld z; fld y; fld x` + the squares summed x, y, then z.
@@ -2789,8 +3099,6 @@ pub fn steer_ai_heli_as_police_heli(veh: GPtr<u8>) {
 }
 
 orig! {
-    /// `CWorld::FindPlayerEntity(int32)` (0x56E120)
-    fn find_player_entity(id: i32) -> GPtr<u8> = cdecl 0x56E120 => unported;
     /// `CCarCtrl::FireHeliRocketsAtTarget(CAutomobile*, CEntity*)` (0x42B270)
     fn fire_heli_rockets_at_target_call(v: GPtr<u8>, t: GPtr<u8>) = cdecl 0x42B270 => fire_heli_rockets_at_target;
 }

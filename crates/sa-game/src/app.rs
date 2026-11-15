@@ -313,10 +313,12 @@ pub(crate) fn synthetic_input(n: u32) -> InputState {
             i.mouse_delta.1 += dy;
         }
     }
-    // SA_GAME_LMB: the left mouse button (fire / punch) held over iteration ranges
-    for (from, to) in lmb_spec() {
-        if n >= from && n < to {
-            i.mouse_held.insert(MouseButton::Left);
+    // SA_GAME_LMB / SA_GAME_RMB: the left (fire / punch) / right (aim) mouse button held over iteration ranges
+    for (button, var) in [(MouseButton::Left, "SA_GAME_LMB"), (MouseButton::Right, "SA_GAME_RMB")] {
+        for (from, to) in button_spec(var) {
+            if n >= from && n < to {
+                i.mouse_held.insert(button);
+            }
         }
     }
     // SA_GAME_POINTER: window-message pointer moves and clicks (the SA:MP UI's cursor)
@@ -634,10 +636,10 @@ fn mouse_spec() -> Vec<(f64, f64, u32, u32)> {
         .collect()
 }
 
-/// `SA_GAME_LMB=FROM:TO,...` (evidence runs): the left mouse button (DirectInput state) is held from main-loop
-/// iteration FROM up to (not including) TO.
-fn lmb_spec() -> Vec<(u32, u32)> {
-    let Ok(v) = crate::env::var("SA_GAME_LMB") else {
+/// `SA_GAME_LMB=FROM:TO,...` / `SA_GAME_RMB=...` (evidence runs): the left / right mouse button (DirectInput state)
+/// is held from main-loop iteration FROM up to (not including) TO.
+fn button_spec(var: &str) -> Vec<(u32, u32)> {
+    let Ok(v) = crate::env::var(var) else {
         return Vec::new();
     };
     v.split(',')

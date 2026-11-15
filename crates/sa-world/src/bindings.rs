@@ -2354,6 +2354,11 @@ orig! {
 }
 
 orig! {
+    /// `CWorld::FindPlayerEntity` (0x56E120)
+    pub fn find_player_entity(id: i32) -> GPtr<u8> = cdecl 0x56E120 => crate::world::cworld::find_player_entity;
+}
+
+orig! {
     /// `CWorld::FindPlayerTrain` (0x56E160)
     pub fn find_player_train(id: i32) -> GPtr<u8> = cdecl 0x56E160 => unported;
 }
@@ -4221,6 +4226,11 @@ orig! {
 orig! {
     /// `CCullZones::NoPolice` (0x72DD50)
     pub fn cull_zones_no_police() -> u8 = cdecl 0x72DD50 => unported;
+}
+
+orig! {
+    /// `CCullZones::PoliceAbandonCars` (0x72DD60)
+    pub fn cull_zones_police_abandon_cars() -> u8 = cdecl 0x72DD60 => unported;
 }
 
 orig! {

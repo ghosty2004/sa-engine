@@ -58,6 +58,7 @@ use sa_render::bindings::register_corona;
 use sa_world::bindings::speech_set_cj_mood as set_cj_mood;
 use sa_world::bindings::vector_add_assign;
 use sa_world::bindings::vector_mul_scalar as vector_mul_float;
+use sa_cam::bindings::set_heli_orientation;
 orig! {
     /// `CColStore::RequestCollision(const CVector&, int32 area)` (0x410C00)
     pub fn request_collision(pos: GPtr<f32>, area: i32) = cdecl 0x410C00 => unported;
@@ -78,8 +79,6 @@ orig! {
     fn set_pieces_add_one(ty: u32, a: u32, b: u32, c: u32, d: u32, e: u32, g: u32, h: u32, i: u32, j: u32, k: u32, l: u32, m: u32) = cdecl 0x499500 => unported;
     /// `CVehicle` virtual slot +0xB0 (`BurstTyre(uint8 tyre, bool applyEffects)`)
     fn vehicle_burst_tyre(v: GPtr<u8>, tyre: u32, fx: u32) = thiscall vslot 0xB0 => unported;
-    /// `CAutomobile::SetHeliOrientation(float)` (0x6A2450), the float as its raw dword
-    fn set_heli_orientation(v: GPtr<u8>, a: u32) = thiscall 0x6A2450 => unported;
     /// `CPathFind::FindNodePairClosestToCoors(CVector, uint8 type, CNodeAddress* n1, CNodeAddress* n2, float*
     /// orientation, float minDist, float maxDist, bool, bool, bool)` (0x44FEE0, `ret 0x30`), raw dwords
     fn find_node_pair_closest_to_coors(paths: GPtr<u8>, x: u32, y: u32, z: u32, ty: u32, n1: GPtr<u32>, n2: GPtr<u32>, orient: GPtr<u32>, min: u32, max: u32, a: u32, b: u32, c: u32) = thiscall 0x44FEE0 => unported;

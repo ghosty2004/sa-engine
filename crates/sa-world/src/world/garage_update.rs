@@ -124,7 +124,8 @@ pub fn now() -> u32 {
 
 use crate::world::common::entity_pos as pos_ptr;
 
-fn player_vehicle() -> GPtr<u8> {
+/// `FindPlayerVehicle(-1, false)`.
+pub fn player_vehicle() -> GPtr<u8> {
     find_player_vehicle(-1, 0)
 }
 

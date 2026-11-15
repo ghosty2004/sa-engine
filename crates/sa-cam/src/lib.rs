@@ -50,6 +50,7 @@ pub mod padlook;
 pub mod pedmouse;
 pub mod pedonpc;
 pub mod rocket;
+pub mod m16;
 pub mod splines;
 pub mod twoplayer;
 

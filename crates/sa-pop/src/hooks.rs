@@ -42,6 +42,8 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::weave_heading_test::HOOKS,
     crate::weave_for_ped::HOOKS,
     crate::join_road_goto_coors::HOOKS,
+    crate::update_car_ai::HOOKS,
+    crate::emergency_occupants::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
@@ -58,6 +60,8 @@ pub const GLOBALS: &[&[GlobalDesc]] = &[
     misc2::GLOBALS,
     carctrl3::GLOBALS,
     carctrl4::GLOBALS,
+    crate::update_car_ai::GLOBALS,
+    crate::emergency_occupants::GLOBALS,
     carctrl5::GLOBALS,
     population3::GLOBALS,
     misc3::GLOBALS,

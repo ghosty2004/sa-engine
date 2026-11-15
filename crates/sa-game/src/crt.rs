@@ -529,7 +529,7 @@ pub extern "C-unwind" fn strdate(buf: GPtr<u8>) -> GPtr<u8> {
 }
 
 /// Days since 1970-01-01 to (year, month, day) in the proleptic Gregorian calendar.
-fn civil_from_days(z: i64) -> (i64, i64, i64) {
+pub(crate) fn civil_from_days(z: i64) -> (i64, i64, i64) {
     let z = z + 719_468;
     let era = z.div_euclid(146_097);
     let doe = z - era * 146_097;

@@ -2,7 +2,7 @@
 # FRONTIER-1 scenarios: native sa-game runs (deterministic, --fixed-step 40, offscreen) that reach the blockers the
 # user hit. Each must end with an empty blocker list in OUT/report.md and no crash.
 #
-#   tools/e2e/scenarios/frontier.sh pausemenu|solicit|crossing|melee OUTDIR [FRAMES]
+#   tools/e2e/scenarios/frontier.sh pausemenu|solicit|crossing|melee|sniper OUTDIR [FRAMES]
 #
 # pausemenu (400)  Esc, down x3, Enter (pause-menu item 4: Stats), down, Enter, Enter: the Stats pages draw
 #                  (was a SIGSEGV at iteration ~171: CStats::GetStatValue's X87 result dispatched as cdecl)
@@ -11,12 +11,17 @@
 # crossing (1200)  the Greenwood taken to the level crossing south of Grove Street (2200, -1895; traincross1/2) and
 #                  driven over the tracks: CObject::ProcessTrainCrossingBehaviour 0x5A0B50 for the barriers; the
 #                  trailers there (CTrailer 0x6CF1A0 / 0x6CF590 / 0x6CF6A0 / 0x6CFAC0, UpdateMovingCollision 0x6A1460)
-#                  and the damage the car does (CVehicle::InflictDamage 0x6D7C90) bring the police: FRONTIER-2 stops on
-#                  `update_car_ai_original (0x0)` (CCarAI::UpdateCarAI's law-enforcer path, not ported yet)
+#                  and the damage the car does (CVehicle::InflictDamage 0x6D7C90) bring the police: CCarAI::UpdateCarAI's
+#                  law-enforcer path and CCarCtrl::SteerAICarWithPhysics_OnlyMission's chase missions (whole ports since
+#                  FRONTIER-2 part 2): 0 blocked
 # melee    (2600)  on foot at Grove Street, CJ sprints into the peds and punches (LMB): CTaskSimpleFight::FightHitPed,
 #                  the damage anim / hit sounds (0x4B3FC0, 0x4E1CC0) and the victims' fight back (0x62A0A0, 0x69D170):
 #                  0 blocked since FRONTIER-2
-# WRAP="gdb -q -batch -x tools/e2e/scenarios/frontier2-counts.gdb --args" counts the FRONTIER-2 ports' calls.
+# sniper   (1200)  on foot at Grove Street: the weapon cheat KJKSZPJ, six `e` presses (next weapon) to the sniper rifle, then
+#                  the right mouse button held with mouse motion: CCam::Process_M16_1stPerson 0x5105C0 (mode 7, the zoom, the
+#                  look input, the line-of-sight near clip)
+# WRAP="gdb -q -batch -x tools/e2e/scenarios/frontier2-counts.gdb --args" counts the FRONTIER-2 ports' calls
+# (frontier2-3-counts.gdb: those of part 2).
 # Env: SA_ROOT (checkout holding wine/gta-sa; default ~/sa-engine), SA_GAME (binary; default this checkout's
 # i686-unknown-linux-gnu release build), WRAP (a command prefix, e.g. WRAP="gdb -q -batch -x tools/e2e/scenarios/frontier-counts.gdb --args"
 # to count the ports' calls), plus any SA_GAME_* (SA_GAME_PRESENT_GAME=1 + PRESENT_DIR for frames).
@@ -55,7 +60,15 @@ melee)
     export SA_GAME_MOUSE="15:0:200:400,-20:3:500:700,25:-2:800:1000"
     export SA_GAME_LMB="${SA_GAME_LMB:-$(i=905; s=; while [ $i -lt 2400 ]; do s="$s${s:+,}$i:$((i + 4))"; i=$((i + 25)); done; echo "$s")}"
     run "${3:-2600}" --start-in-world --system-heap ;;
+sniper)
+    export SA_GAME_SCRIPT_SKIP=1
+    keys=; i=150; for c in k j k s z p j; do keys="$keys${keys:+,}$c:$i:$((i + 2))"; i=$((i + 6)); done
+    i=240; while [ $i -le 340 ]; do keys="$keys,e:$i:$((i + 2))"; i=$((i + 20)); done
+    export SA_GAME_KEYS="$keys"
+    export SA_GAME_RMB="${SA_GAME_RMB:-400:1150}"
+    export SA_GAME_MOUSE="10:0:500:600,0:-6:650:700,-12:4:750:850"
+    run "${3:-1200}" --start-in-world ;;
 *)
-    echo "usage: $0 pausemenu|solicit|crossing|melee OUTDIR [FRAMES]" >&2
+    echo "usage: $0 pausemenu|solicit|crossing|melee|sniper OUTDIR [FRAMES]" >&2
     exit 2 ;;
 esac

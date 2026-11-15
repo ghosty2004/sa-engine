@@ -1,6 +1,7 @@
 //! CCarCtrl car generation and script car helpers (PORT-POP-3, helper B). Ported from the 1.0 US bytes; gta-reversed and `docs/re/specs/POP/*.md` as reading aids.
 
 use sa_core::abi::HookReg;
+use crate::bindings::{find_police_boat_mission, find_police_car_mission, find_police_car_speed};
 use sa_core::mem::{GPtr, GlobalDesc};
 use sa_core::{hook, orig};
 use sa_math::x87::X87;
@@ -758,14 +759,8 @@ orig! {
     fn find_car_multiplier_motorway() -> f64 = cdecl 0x611B60 => unported;
     /// `CCarCtrl::ChooseModel(int32*)` (0x424CE0)
     fn choose_model_call(t: GPtr<i32>) -> i32 = cdecl 0x424CE0 => choose_model;
-    /// `CCarAI::FindPoliceBoatMissionForWantedLevel()` (0x41CA50)
-    fn find_police_boat_mission() -> u8 = cdecl 0x41CA50 => crate::carctrl2::find_police_boat_mission_for_wanted_level;
-    /// `CCarAI::FindPoliceCarSpeedForWantedLevel(CVehicle*)` (0x41CAA0; ported unhookable in carctrl2)
-    fn find_police_car_speed(veh: GPtr<u8>) -> i32 = cdecl 0x41CAA0 => unported;
     /// `CCarAI::FindPoliceBikeMissionForWantedLevel()` (0x41CA40)
     fn find_police_bike_mission() -> u8 = cdecl 0x41CA40 => unported;
-    /// `CCarAI::FindPoliceCarMissionForWantedLevel()` (0x41C9D0; ported unhookable in carctrl2)
-    fn find_police_car_mission() -> u8 = cdecl 0x41C9D0 => unported;
     /// `CVehicle` vtable slot 0xD4 `GetHeightAboveRoad()` (ST0)
     fn vehicle_get_height_above_road(v: GPtr<u8>) -> f64 = thiscall vslot 0xD4 => unported;
     /// `CAutomobile::SetRandomDamage(bool)` (0x6A2530, `ret 4`)
@@ -1843,9 +1838,9 @@ pub fn set_coords_of_script_car(veh: GPtr<u8>, px: f32, py: f32, pz: f32, reset_
 
 orig! {
     /// `CCarAI::AddAmbulanceOccupants(CVehicle*)` (0x41C4A0)
-    fn add_ambulance_occupants(v: GPtr<u8>) = cdecl 0x41C4A0 => unported;
+    fn add_ambulance_occupants(v: GPtr<u8>) = cdecl 0x41C4A0 => crate::emergency_occupants::add_ambulance_occupants;
     /// `CCarAI::AddFiretruckOccupants(CVehicle*)` (0x41C600)
-    fn add_firetruck_occupants(v: GPtr<u8>) = cdecl 0x41C600 => unported;
+    fn add_firetruck_occupants(v: GPtr<u8>) = cdecl 0x41C600 => crate::emergency_occupants::add_firetruck_occupants;
 }
 
 /// `CCarCtrl::GenerateOneEmergencyServicesCar(uint32 model, CVector target)` (0x42B7D0, entry `push -1; jmp

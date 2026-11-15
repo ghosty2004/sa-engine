@@ -138,6 +138,59 @@ natives! {
     "KERNEL32.dll!LeaveCriticalSection" => leave_critical_section: fn(cs: GPtr<u32>);
     "KERNEL32.dll!InterlockedIncrement" => interlocked_increment: fn(p: GPtr<u32>) -> u32;
     "KERNEL32.dll!InterlockedDecrement" => interlocked_decrement: fn(p: GPtr<u32>) -> u32;
+    "KERNEL32.dll!DeleteFileA" => delete_file_a: fn(name: GPtr<u8>) -> i32;
+    "KERNEL32.dll!GetLocalTime" => get_local_time: fn(out: GPtr<u16>);
+    "KERNEL32.dll!GetVolumeInformationA" => get_volume_information_a: fn(root: GPtr<u8>, name: GPtr<u8>, n: u32, serial: GPtr<u32>, max_len: GPtr<u32>, flags: GPtr<u32>, fs: GPtr<u8>, fs_n: u32) -> i32;
+    "USER32.dll!DialogBoxParamA" => dialog_box_param_a: fn(instance: u32, template: u32, parent: u32, proc_: u32, param: u32) -> i32;
+}
+
+/// `DeleteFileA` (FRONTIER-2: `C_PcSave::DeleteSlot`): removes the file through the platform VFS; nonzero on success.
+fn delete_file_a(name: GPtr<u8>) -> i32 {
+    let path = bind::cstr(name);
+    with("DeleteFileA", |p| i32::from(p.vfs.remove(&path).is_ok()))
+}
+
+/// `GetLocalTime(SYSTEMTIME*)` (FRONTIER-2: the save block's date): year, month, day of week, day, hour, minute,
+/// second, milliseconds as eight u16. Natively the host's UTC time, as `_strdate` (sa-platform has no time zone).
+fn get_local_time(out: GPtr<u16>) {
+    with("GetLocalTime", |_| ());
+    let now = web_time::SystemTime::now()
+        .duration_since(web_time::UNIX_EPOCH)
+        .unwrap_or_default();
+    let secs = now.as_secs() as i64;
+    let days = secs.div_euclid(86_400);
+    let (y, m, d) = crate::crt::civil_from_days(days);
+    let sod = secs.rem_euclid(86_400);
+    // 1970-01-01 was a Thursday (4)
+    let dow = (days + 4).rem_euclid(7);
+    let fields = [y, m, dow, d, sod / 3600, sod % 3600 / 60, sod % 60, i64::from(now.subsec_millis())];
+    for (i, v) in fields.iter().enumerate() {
+        out.wrapping_index(i as i32).write(*v as u16);
+    }
+}
+
+/// `GetVolumeInformationA` (FRONTIER-2: the audio loader's DVD search, reached only for drives of type 5, which
+/// [`get_drive_type_a`] never reports): no volume, FALSE.
+#[allow(clippy::too_many_arguments)]
+fn get_volume_information_a(
+    _root: GPtr<u8>,
+    _name: GPtr<u8>,
+    _n: u32,
+    _serial: GPtr<u32>,
+    _max_len: GPtr<u32>,
+    _flags: GPtr<u32>,
+    _fs: GPtr<u8>,
+    _fs_n: u32,
+) -> i32 {
+    with("GetVolumeInformationA", |_| ());
+    0
+}
+
+/// `DialogBoxParamA` (FRONTIER-2: `psSelectDevice`'s video-mode dialog with more than one subsystem): no dialog
+/// natively; the result is IDOK (1), i.e. the dialog closed with the current selection unchanged.
+fn dialog_box_param_a(_instance: u32, _template: u32, _parent: u32, _proc: u32, _param: u32) -> i32 {
+    with("DialogBoxParamA", |_| ());
+    1
 }
 
 /// `InterlockedIncrement(LONG*)`: the incremented value (atomic on the arena dword).

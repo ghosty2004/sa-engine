@@ -29,13 +29,33 @@ orig! {
 }
 
 orig! {
+    /// `CCarAI::TellOccupantsToLeaveCar` (0x41C760)
+    pub fn tell_occupants_to_leave_car(v: GPtr<u8>) = cdecl 0x41C760 => crate::update_car_ai::tell_occupants_to_leave_car;
+}
+
+orig! {
+    /// `CCarAI::FindPoliceCarMissionForWantedLevel` (0x41C9D0)
+    pub fn find_police_car_mission() -> u8 = cdecl 0x41C9D0 => crate::police_ai::find_police_car_mission_for_wanted_level;
+}
+
+orig! {
+    /// `CCarAI::FindPoliceBoatMissionForWantedLevel` (0x41CA50)
+    pub fn find_police_boat_mission() -> u8 = cdecl 0x41CA50 => crate::carctrl2::find_police_boat_mission_for_wanted_level;
+}
+
+orig! {
+    /// `CCarAI::FindPoliceCarSpeedForWantedLevel` (0x41CAA0)
+    pub fn find_police_car_speed(veh: GPtr<u8>) -> i32 = cdecl 0x41CAA0 => crate::police_ai::find_police_car_speed_for_wanted_level;
+}
+
+orig! {
     /// `CCarAI::GetCarToGoToCoors` (0x41CE30)
     pub fn car_ai_get_car_to_go_to_coors(v: GPtr<u8>, p: GPtr<f32>, style: u8, b: u8) -> sa_math::x87::X87 = reg("args = stack stack stack stack") 0x41CE30 => crate::carctrl4::get_car_to_go_to_coors;
 }
 
 orig! {
     /// `CCarAI::UpdateCarAI` (0x41DA30)
-    pub fn update_car_ai(v: GPtr<u8>) = cdecl 0x41DA30 => crate::carctrl4::update_car_ai;
+    pub fn update_car_ai(v: GPtr<u8>) = cdecl 0x41DA30 => crate::update_car_ai::update_car_ai;
 }
 
 orig! {

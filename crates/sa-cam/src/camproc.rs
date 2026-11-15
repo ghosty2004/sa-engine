@@ -669,7 +669,7 @@ orig! {
     /// `CCam` mode processors taking `(const CVector& target, float orientation, float speedVar,
     /// float speedVarWanted)` (the floats pushed as dwords)
     pub fn cam_follow_ped_with_mouse(c: GPtr<u8>, t: GPtr<u8>, o: u32, sv: u32, svw: u32) = thiscall 0x50F970 => unported;
-    pub fn cam_m16_1st_person(c: GPtr<u8>, t: GPtr<u8>, o: u32, sv: u32, svw: u32) = thiscall 0x5105C0 => unported;
+    pub fn cam_m16_1st_person(c: GPtr<u8>, t: GPtr<u8>, o: u32, sv: u32, svw: u32) = thiscall 0x5105C0 => crate::m16::process_m16_1st_person;
     pub fn cam_aim_weapon(c: GPtr<u8>, t: GPtr<u8>, o: u32, sv: u32, svw: u32) = thiscall 0x521500 => unported;
     pub fn cam_fixed(c: GPtr<u8>, t: GPtr<u8>, o: u32, sv: u32, svw: u32) = thiscall 0x51D470 => unported;
     pub fn cam_special_fixed_for_syphon(c: GPtr<u8>, t: GPtr<u8>, o: u32, sv: u32, svw: u32) = thiscall 0x517500 => unported;
