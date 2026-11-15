@@ -19,7 +19,7 @@ use sa_core::bindings::{get_weapon_info, ped_is_alive, vector_difference};
 use sa_core::field::vec3f_ptr;
 use sa_math::fpu::{fbits, lt, st0};
 use sa_world::bindings::{
-    ped_get_weapon_skill, car_enter_exit_is_room_for_ped_to_leave_car, ped_set_current_weapon, vector_magnitude_sqr, vehicle_is_on_its_side,
+    go_to_point_and_stand_still_ctor, ped_get_weapon_skill, car_enter_exit_is_room_for_ped_to_leave_car, ped_set_current_weapon, vector_magnitude_sqr, vehicle_is_on_its_side,
     vehicle_is_upside_down, weapon_is_type_melee,
 };
 use sa_world::world::common::{entity_pos, ped_active_weapon};
@@ -536,6 +536,34 @@ fn arrest_reach(this: GPtr<u8>, ped: GPtr<u8>, fall: GPtr<u8>, far: i32) -> i32 
     0x44C
 }
 
+/// `CTaskComplexGoToPointAndStandStillTimed::Clone()` (0x66CF30): a 0x38-byte task from the pool, built by
+/// `CTaskComplexGoToPointAndStandStill`'s constructor (move state +0xC, target +0x10, radius +0x1C and move-state radius
+/// +0x20 through the x87, false, false), then the time +0x28 copied, vtable 0x86FDD4 and the timer +0x2C..+0x35
+/// cleared; null when the pool is full.
+#[hook(addr = 0x66CF30, conv = thiscall, name = "CTaskComplexGoToPointAndStandStillTimed::Clone", expect = "6A FF 68 CB 53 84 00 64",
+       unverified = "frontier2-a6", route = "L2", hazards = "heap-writes")]
+pub fn go_to_point_and_stand_still_timed_clone(this: GPtr<u8>) -> GPtr<u8> {
+    new_task(0x38, |t| {
+        let time = rd::<u32>(this, 0x28);
+        go_to_point_and_stand_still_ctor(
+            t,
+            rd::<u32>(this, 0xC),
+            this.byte_add(0x10).cast(),
+            x(rd::<f32>(this, 0x1C)).to_f32(),
+            x(rd::<f32>(this, 0x20)).to_f32(),
+            0,
+            0,
+        );
+        wr::<u32>(t, 0x28, time);
+        wr::<u32>(t, 0, 0x86FDD4);
+        wr::<u32>(t, 0x2C, 0);
+        wr::<u32>(t, 0x30, 0);
+        wr::<u8>(t, 0x34, 0);
+        wr::<u8>(t, 0x35, 0);
+        t
+    })
+}
+
 /// Registrations of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_ARREST_PED_CONTROL_SUB_TASK,
@@ -544,4 +572,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_FOLLOW_POINT_ROUTE_CALC_BLEND_RATIO,
     HOOK_DESTROY_CAR_ARMED_CREATE_NEXT_SUB_TASK,
     HOOK_ARREST_PED_CREATE_NEXT_SUB_TASK,
+    HOOK_GO_TO_POINT_AND_STAND_STILL_TIMED_CLONE,
 ];
