@@ -1773,3 +1773,15 @@
   only swaps local helpers for the shared ones and fixes clippy findings): IDENTICAL 13/13.
 - Commit messages follow Conventional Commits (the branch was fast-forwarded to a2ac3540 so the commit-msg hook finds
   tools/verify/commit_lint.py).
+
+## 2026-11-15 — integrate PORT-EAX + promotions and FRONTIER-2 part 3 (main session)
+
+- Promotions branch (PORT-EAX, three port fixes, `tools/verify/batch-l2.py`, 30 batches / 48 hooks promoted) rebased
+  onto a2ac3540 (conflicts: the CanPedTargetPed binding row takes the agent's `u8` return and keeps master's 0x5F1E70
+  row; the verification queue regenerated; ROADMAP / WORKLOG rows merged), FRONTIER-2 part 3 stacked on top, queue
+  regenerated once more (b03d4908). Master fast-forwarded.
+- Checked: sa-hook lib 59/59, `make structure` clean, bindings `--check` (2,659), state_check 0 inconsistent, i686
+  sa-game; scenarios pausemenu / solicit / crossing / melee / sniper / shootcar 0 blocked, no crash; verify-all
+  `int3-default` (lanes 1-3) IDENTICAL 13/13; `int3-f2b` (`SA_UNVERIFIED=frontier2-1..6`) IDENTICAL 13/13 (a first
+  run `int3-f2` failed on every recording only because target/release/sa-oracle was stale and lacked the new specs;
+  rebuilt). `target/play/sa-game` and `web/pkg` refreshed.
