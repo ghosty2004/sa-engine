@@ -33,6 +33,7 @@ use crate::bindings::disable_random_trains;
 use crate::bindings::release_mission_trains;
 use crate::bindings::remove_script_checkpoint;
 use sa_world::bindings::remove_vehicle_upgrade;
+use sa_veh::bindings::weapon_fire_one_instant_hit_round as fire_one_instant_hit_round;
 use sa_stream::bindings::has_vehicle_upgrade_loaded;
 use sa_stream::bindings::request_vehicle_upgrade;
 use sa_world::bindings::get_actual_script_thing_index;
@@ -119,8 +120,6 @@ orig! {
     fn move_search_light_to_entity(h: u32, e: GPtr<u8>, k: u32) = cdecl 0x493420 => unported;
     /// `CTheScripts::IsEntityWithinSearchLight(int32, CEntity*)` (0x493900), AL
     fn is_entity_within_search_light(h: u32, e: GPtr<u8>) -> u8 = cdecl 0x493900 => unported;
-    /// `CWeapon::FireOneInstantHitRound(CVector*, CVector*, int32)` (0x73AF00)
-    fn fire_one_instant_hit_round(a: GPtr<u32>, b: GPtr<u32>, dmg: u32) = cdecl 0x73AF00 => unported;
     /// `CAutomobile::GetCarRoll()` (0x6A6010), ST0 (read as f64)
     fn get_car_roll(v: GPtr<u8>) -> f64 = thiscall 0x6A6010 => unported;
     /// `CVehicleRecording::SkipToEndAndStopPlaybackRecordedCar(CVehicle*)` (0x45A4A0)

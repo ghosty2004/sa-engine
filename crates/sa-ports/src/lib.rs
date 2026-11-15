@@ -86,6 +86,7 @@ pub const NATIVES: &[&[&[sa_core::abi::NativeReg]]] = &[
     &[sa_veh::wake_locks_component_rotation::NATIVES],
     &[sa_veh::vehicle_tail_calls::NATIVES],
     &[sa_veh::vehicle_stub_natives::NATIVES],
+    &[sa_veh::frontier_b4_heli::NATIVES],
     &[sa_script::entry_exit_flag::NATIVES],
     &[sa_pop::pathfind::NATIVES],
     &[sa_pop::car_ai_reason_to_stop::NATIVES],

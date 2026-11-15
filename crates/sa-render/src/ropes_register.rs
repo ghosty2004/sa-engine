@@ -186,4 +186,21 @@ pub fn ropes_is_carried_by_rope(e: u32) -> u8 {
     0
 }
 
-pub const HOOKS: &[HookReg] = &[HOOK_ROPES_REGISTER_ROPE, HOOK_ROPES_IS_CARRIED_BY_ROPE];
+/// `CRopes::SetSpeedOfTopNode(uint32 id, CVector speed)` (0x555DF0, cdecl, the vector by value; FRONTIER-2 turn 4
+/// lane B, reached by `CHeli::ProcessControl`): the first active rope (type byte +0x325) with id +0x300 == `id` gets the
+/// speed as its first segment speed (+0x180).
+#[hook(addr = 0x555DF0, conv = cdecl, name = "CRopes::SetSpeedOfTopNode", expect = "8B 54 24 04 33 C9 B8 B8 6B B7 00",
+       unverified = "frontier2-b12", route = "L2", hazards = "none")]
+pub fn ropes_set_speed_of_top_node(id: u32, sx: u32, sy: u32, sz: u32) {
+    for i in 0..ROPE_COUNT {
+        let r = g::<u8>(ROPES + ROPE_SIZE * i);
+        if rd::<u8>(r, 0x325) != 0 && rd::<u32>(r, 0x300) == id {
+            wr::<u32>(r, 0x180, sx);
+            wr::<u32>(r, 0x184, sy);
+            wr::<u32>(r, 0x188, sz);
+            return;
+        }
+    }
+}
+
+pub const HOOKS: &[HookReg] = &[HOOK_ROPES_REGISTER_ROPE, HOOK_ROPES_IS_CARRIED_BY_ROPE, HOOK_ROPES_SET_SPEED_OF_TOP_NODE];

@@ -60,7 +60,7 @@ orig! {
     /// `CAutomobile::OpenDoor(CPed*, int32, eDoors, float, bool)` (0x6A6AE0)
     pub fn automobile_open_door(v: GPtr<u8>, ped: GPtr<u8>, comp: i32, door: i32, ratio: f32, sound: u32) = thiscall 0x6A6AE0 => unported;
     /// `CVehicle::ProcessWeapons()` (0x6E3950)
-    pub fn process_weapons(v: GPtr<u8>) = thiscall 0x6E3950 => unported;
+    pub fn process_weapons(v: GPtr<u8>) = thiscall 0x6E3950 => crate::vehicle2::process_weapons;
 }
 
 /// `GetCurrentAtomicObjectCB` (0x6A0750), passed to `RwFrameForAllObjects` by address.

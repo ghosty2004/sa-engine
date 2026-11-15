@@ -549,6 +549,11 @@ orig! {
 }
 
 orig! {
+    /// `CWeapon::FireOneInstantHitRound` (0x73AF00)
+    pub fn weapon_fire_one_instant_hit_round(a: GPtr<u32>, b: GPtr<u32>, dmg: u32) = cdecl 0x73AF00 => unported;
+}
+
+orig! {
     /// `CVehicle::DoDriveByShootings` (0x741FD0)
     pub fn do_drive_by_shootings(v: GPtr<u8>) = thiscall 0x741FD0 => unported;
 }
