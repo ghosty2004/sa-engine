@@ -57,7 +57,7 @@ use sa_core::field::ptr_of as lp;
 /// format, +4 size, +8 levels; array (+0x18) = `operator new(capacity * 4)`, +0xC capacity, +0x14 and
 /// +0x10 zero. Returns 0 (EAX).
 #[hook(addr = 0x72FE80, conv = thiscall, name = "D3DTextureBuffer::Setup", this = "D3DTextureBuffer", expect = "8B 44 24 04 8B 54 24 0C",
-       unverified = "mvpd-d3d-1", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn tex_buffer_setup(this: GPtr<u8>, fmt: u32, size: u32, levels: u32, cap: u32) -> u32 {
     wr::<u32>(this, 0, fmt);
     wr::<u32>(this, 4, size);
@@ -76,7 +76,7 @@ pub fn tex_buffer_setup(this: GPtr<u8>, fmt: u32, size: u32, levels: u32, cap: u
 /// in its argument slot); none → NULL. The chosen one is removed (count - 1; the last entry moves into
 /// its slot unless the new count is 0 or the slot is the last) and returned.
 #[hook(addr = 0x730270, conv = thiscall, name = "D3DIndexDataBuffer::Pop", this = "D3DIndexDataBuffer", expect = "8B 44 24 04 83 EC 14",
-       unverified = "mvpd-d3d-1", route = "L2", hazards = "stack-residue,heap-writes",
+       route = "L2", hazards = "stack-residue,heap-writes",
        note = "keeps 2 * numIndices in its own argument slot; COM GetDesc")]
 pub fn idx_buffer_pop(this: GPtr<u8>, n: u32) -> GPtr<u8> {
     let need = n.wrapping_mul(2);

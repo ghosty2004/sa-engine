@@ -85,7 +85,7 @@ use crate::world::common::entity_pos;
 /// attached object is removed from the world (and the moving list when physical), positioned, updated twice,
 /// re-added, and put back on the moving list unless it is a building/dummy or static (+0x1C bits 4 / 0x40000).
 #[hook(addr = 0x5647F0, conv = cdecl, name = "CWorld::ProcessAttachedEntities", expect = "53 8B 1D 94 44 B7 00",
-       unverified = "mvpb-world-2", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn world_process_attached_entities() {
     for_pool_desc(0xB74494, 0xA18, |v| {
         let a = rd::<u32>(v, 0xFC);

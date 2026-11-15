@@ -807,7 +807,7 @@ fn clear_pads() {
 /// `0x40D` (graph notify) in states 2/4 → `VideoPlayer::OnGraphNotify`. Everything else and the
 /// fall-throughs → `DefWindowProcA`.
 #[hook(addr = 0x747EB0, conv = stdcall, name = "Win::__MainWndProc", expect = "83 EC 3C 53 55",
-       unverified = "std4-win-1", route = "L3-only", hazards = "none", recs = "boot")]
+       route = "L3-only", hazards = "none", recs = "boot")]
 pub fn main_wnd_proc(hwnd: u32, msg: u32, wparam: u32, lparam: u32) -> i32 {
     let def = || wp_def_window_proc_a(hwnd, msg, wparam, lparam);
     match msg {

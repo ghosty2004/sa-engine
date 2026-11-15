@@ -56,7 +56,7 @@ fn rect_of(e: GPtr<u8>) -> [u32; 4] {
 ///    locals, and `ScriptSprites[(int16)+6].Draw` with the four corners (x87 code below, in the
 ///    original's evaluation order; PC=24 arithmetic, FSIN/FCOS on the 80-bit argument).
 #[hook(addr = 0x464980, conv = cdecl, name = "CTheScripts::DrawScriptSpritesAndRectangles", expect = "83 EC 48 53 8A 5C 24 50",
-       unverified = "std5-script-1", route = "L3-only", hazards = "x87-transcendental", recs = "menus-hud",
+       route = "L3-only", hazards = "x87-transcendental", recs = "menus-hud",
        note = "draws through the menu manager / CSprite2d (render side effects)")]
 pub fn draw_script_sprites_and_rectangles(before_fade: u32) {
     let bl = before_fade as u8;

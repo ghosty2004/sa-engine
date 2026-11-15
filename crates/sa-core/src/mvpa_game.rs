@@ -157,7 +157,7 @@ use crate::bindings::ik_chain_manager_init;
 /// `CTheScripts::Process`, `TheCamera.Process()`, `Init3(datFile)`; returns true. The results of the
 /// three init steps are ignored, as in the original.
 #[hook(addr = 0x53BC80, conv = cdecl, name = "CGame::Initialise", expect = "56 8B 74 24 08",
-       unverified = "mvpa-core-1", route = "L3-only", hazards = "ax-al-return", recs = "grove-walk",
+       route = "L3-only", hazards = "ax-al-return", recs = "grove-walk",
        note = "the whole game load: one call per run, verify by L3 / native boot")]
 pub fn initialise(dat: GPtr<u8>) -> u8 {
     game_init1(dat);
@@ -182,7 +182,7 @@ pub fn initialise(dat: GPtr<u8>) -> u8 {
 /// (0x86AB6C) and AddRef'd, `SetCurrentTxd(gameTxdSlot)`, then the subsystem inits in the original order.
 /// Returns false when `CPlantMgr::Initialise` or `CCustomRoadsignMgr::Initialise` fails, true at the end.
 #[hook(addr = 0x5BF840, conv = cdecl, name = "CGame::Init1", expect = "E8 4B B4 FD FF",
-       unverified = "mvpa-core-1", route = "L3-only", hazards = "ax-al-return", recs = "grove-walk",
+       route = "L3-only", hazards = "ax-al-return", recs = "grove-walk",
        note = "one call per load")]
 pub fn init1(dat: GPtr<u8>) -> u8 {
     maths_init_maths_tables();
@@ -261,7 +261,7 @@ pub fn init1(dat: GPtr<u8>) -> u8 {
 /// `CCustomCarPlateMgr::Initialise` fails; else the initial models, animations, peds, renderer, radar,
 /// weapons, population, effects, scripts, clock (1000 ms per minute) and the rest, true at the end.
 #[hook(addr = 0x5BA1A0, conv = cdecl, name = "CGame::Init2", expect = "56 6A 00 68 A0 A5 86 00",
-       unverified = "mvpa-core-1", route = "L3-only", hazards = "ax-al-return", recs = "grove-walk",
+       route = "L3-only", hazards = "ax-al-return", recs = "grove-walk",
        note = "one call per load; the datFile argument is unused")]
 pub fn init2(_dat: GPtr<u8>) -> u8 {
     loading_screen(GPtr::from_addr(LS_TITLE as usize), GPtr::from_addr(0x86A5A0), GPtr::NULL);
@@ -347,7 +347,7 @@ pub fn init2(_dat: GPtr<u8>) -> u8 {
 /// true)`, `SetUseD3DResourceBuffering(true)`, a loading screen, then `g_interiorMan.Init()`,
 /// `g_procObjMan.Init()`, `g_waterCreatureMan.Init()`, `g_realTimeShadowMan.Init()`; returns true.
 #[hook(addr = 0x5BA400, conv = cdecl, name = "CGame::Init3", expect = "6A 00 68 C8 A5 86 00",
-       unverified = "mvpa-core-1", route = "L3-only", hazards = "ax-al-return", recs = "grove-walk",
+       route = "L3-only", hazards = "ax-al-return", recs = "grove-walk",
        note = "one call per load; the datFile argument is unused")]
 pub fn init3(_dat: GPtr<u8>) -> u8 {
     loading_screen(GPtr::from_addr(LS_TITLE as usize), GPtr::from_addr(0x86A5C8), GPtr::NULL);
@@ -369,7 +369,7 @@ pub fn init3(_dat: GPtr<u8>) -> u8 {
 /// (false when any fails). The result is the original's `neg al; sbb al, al; inc al` of
 /// `g_ikChainMan.Init()`: 1 when it returned 0, else 0.
 #[hook(addr = 0x5BFA90, conv = cdecl, name = "CGame::InitialiseCoreDataAfterRW", expect = "E8 2B AE FF FF",
-       unverified = "mvpa-core-1", route = "L3-only", hazards = "ax-al-return", recs = "grove-walk",
+       route = "L3-only", hazards = "ax-al-return", recs = "grove-walk",
        note = "one call per boot")]
 pub fn initialise_core_data_after_rw() -> u8 {
     temp_col_models_initialise();

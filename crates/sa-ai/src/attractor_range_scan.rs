@@ -217,7 +217,7 @@ const SCRIPTED_RADII: u32 = 0xC39EE0;
 /// matrix, 0, ped)` → +0x18 + 4t = entity, +0x68 + 4t = `f32(d2)`, +0x40 + 4t = effect. The matrix destructor runs
 /// after `HasEmptySlot` passed.
 #[hook(addr = 0x5fffd0, conv = thiscall, name = "FUN_005fffd0", expect = "64 A1 00 00 00 00",
-       unverified = "mvpl-ai-1", route = "L2", hazards = "stack-residue,heap-writes", recs = "grove-walk",
+       route = "L2", hazards = "stack-residue,heap-writes", recs = "grove-walk",
        note = "writes the ped's attractor scanner (ped object); the matrix lives on the Rust stack; the effect argument slot holds f32(d2)")]
 pub fn attractor_scanner_add_effect(this: GPtr<u8>, effect: GPtr<u8>, entity: GPtr<u8>, ped: GPtr<u8>) {
     let rain_low = || x(g::<f32>(WEATHER_RAIN).read()).fcom(x(g::<f32>(K_RAIN_LEVEL).read())).c0();

@@ -222,7 +222,7 @@ pub fn audio_hardware_update_reverb_environment(this: u32) {
 /// the length (`ftol(floor(pos * 0.01 * length))`); at most the length. With EAX, `SetNotInRoom(!(flags
 /// & 0x200))`. `Play(pos, flags, speed)`; the channel's flags (+6 + index*2) and the channel's +0x28.
 #[hook(addr = 0x4D86B0, conv = thiscall, name = "CAEAudioHardware::PlaySound", expect = "51 56 57 8B 7C 24 10",
-       unverified = "std4-audio-3", route = "L2", hazards = "none", this = "CAEAudioHardware")]
+       route = "L2", hazards = "none", this = "CAEAudioHardware")]
 #[allow(clippy::too_many_arguments)]
 pub fn audio_hardware_play_sound(this: u32, slot: u32, ch: u32, sfx: u32, bank: u32, pt: u32, flags: u32, speed: u32) {
     let s = slot as u16 as i16;

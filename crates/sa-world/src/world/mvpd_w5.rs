@@ -181,7 +181,7 @@ fn setup_cop(sp: GPtr<u8>, cop: GPtr<u8>, z_off: isize, xy_off: isize) {
 ///   the first); the second walks to target 1 at target 2's ground z.
 /// - 6/7 (wanted >= 2, in a vehicle): quick cars from spawn 1 and spawn 2 (each tested on its own).
 #[hook(addr = 0x499A80, conv = thiscall, name = "CSetPiece::Update", this = "CSetPiece", expect = "55 8B EC 83 E4 F8 6A FF",
-       unverified = "mvpd-world-5", route = "L2", hazards = "heap-writes",
+       route = "L2", hazards = "heap-writes",
        note = "creates cop cars/peds and tasks (pool allocations, writes into them); FindGroundZForCoord result stored as float")]
 pub fn set_piece_update(this: GPtr<u8>) {
     let t = rd::<u32>(this, 0);

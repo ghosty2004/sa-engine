@@ -62,7 +62,7 @@ use sa_world::world::common::entity_pos;
 /// stack `CEventPotentialWalkIntoObject(object, ms)` into the ped's event group (+0x47C → +0x68), then its destructor.
 /// The scanner's destructor (base vtable 0x86CD40, `CEntityScanner::Clear`) runs on every path after the scan.
 #[hook(addr = 0x606890, conv = thiscall, name = "FUN_00606890", expect = "64 A1 00 00 00 00",
-       unverified = "mvpl-ai-1", route = "L2", hazards = "stack-residue", recs = "grove-walk",
+       route = "L2", hazards = "stack-residue", recs = "grove-walk",
        note = "the object scanner, the event and the vectors live on the Rust stack (the scanner registers entity references to its slots until Clear)")]
 pub fn walk_into_object_scanner_scan(this: GPtr<u8>, ped: GPtr<u8>) {
     let now = || g::<u32>(TIMER_TIME_MS).read();

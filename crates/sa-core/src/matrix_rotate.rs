@@ -210,7 +210,7 @@ pub fn rotate_x(this: GPtr<u8>, angle: f32) {
 /// `CMatrix::RotateY(angle)` (0x59B2C0): every row's (x, z): `x' = s*z + c*x`, `z' = c*z - s*x` (the
 /// first row's `s*z` with the unrounded sine).
 #[hook(addr = 0x59B2C0, conv = thiscall, name = "CMatrix::RotateY", expect = "83 EC 20 D9 44 24 24 D9 FF D9 44 24 24 D9 FE D9 54",
-       unverified = "std6-math-1", route = "L2", hazards = "x87-transcendental", recs = "new-game")]
+       route = "L2", hazards = "x87-transcendental", recs = "new-game")]
 pub fn rotate_y(this: GPtr<u8>, angle: f32) {
     // (z, x) as the pair: z' = c*z - s*x, x' = s*z + c*x
     let s_ext = X87::from_f32(angle).fsin();

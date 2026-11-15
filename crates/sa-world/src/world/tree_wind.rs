@@ -46,7 +46,7 @@ fn fild_unsigned(v: u32) -> X87 {
 /// direction x (0xC813E0), at.y *= its y (f32), `CWindModifiers::FindWindModifier(position, &at.x, &at.y)` and
 /// `RwFrameUpdateObjects(frame)`.
 #[hook(addr = 0x534e90, conv = thiscall, name = "CEntity::ModifyMatrixForTreeInWind", expect = "51 A0 49 CB B7 00",
-       this = "CEntity", unverified = "mvpk-world-2", route = "L2", hazards = "x87-transcendental,heap-writes", recs = "grove-walk",
+       this = "CEntity", route = "L2", hazards = "x87-transcendental,heap-writes", recs = "grove-walk",
        note = "writes the RW frame matrix (RW heap)")]
 pub fn entity_modify_matrix_for_tree_in_wind(this: GPtr<u8>) {
     if g::<u8>(TIMER_USER_PAUSE).read() != 0 || g::<u8>(TIMER_CODE_PAUSE).read() != 0 {

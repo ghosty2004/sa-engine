@@ -405,7 +405,7 @@ fn camera_position_ptr() -> GPtr<u8> {
 /// `CFont::DrawFonts` again, `CDebug::DebugDisplayTextBuffer`, `FlushObrsPrintfs`,
 /// `RwCameraEndUpdate(cam)`, `RsCameraShowRaster(cam)`.
 #[hook(addr = 0x53E770, conv = cdecl, name = "Game::FrontendIdle", expect = "E8 AB 0C 1C 00 DD D8",
-       unverified = "mvpb-core-1", route = "L3-only", hazards = "x87-transcendental",
+       route = "L3-only", hazards = "x87-transcendental",
        recs = "grove-walk", note = "frame orchestrator: every callee is a nested call; FPTAN view window")]
 pub fn frontend_idle() {
     let _ = draw_calculate_aspect_ratio() as f32;
@@ -499,7 +499,7 @@ pub fn do_rw_stuff_start_of_frame(
 /// &gColourTop, rwCAMERACLEARZ | rwCAMERACLEARSTENCIL)`. False when `RsCameraBeginUpdate` fails; else
 /// `DefinedState`, `TheCamera.m_mViewMatrix.Update()`, `CClouds::RenderSkyPolys`, true.
 #[hook(addr = 0x53D7A0, conv = cdecl, name = "App::DoRWStuffStartOfFrame_Horizon", expect = "51 D9 05 38 50 8D 00",
-       unverified = "mvpb-core-1", route = "L3-only", hazards = "x87-transcendental",
+       route = "L3-only", hazards = "x87-transcendental",
        recs = "grove-walk", note = "bool in AL (Game::Idle tests AL only)")]
 pub fn do_rw_stuff_start_of_frame_horizon(_a: u32, _b: u32, _c: u32, _d: u32, _e: u32, _f: u32, _g: u32) -> u8 {
     let arg = X87::from_f32(g::<f32>(DRAW_FOV).read())
@@ -539,7 +539,7 @@ pub fn do_rw_stuff_start_of_frame_horizon(_a: u32, _b: u32, _c: u32, _d: u32, _e
 /// `RwCameraEndUpdate`, `RsCameraShowRaster`. SA:MP dispatch points (`crate::samp`, no-ops without a
 /// registered handler) sit where samp retargets the calls: before `CGame::Process` and around `Render2dStuff`.
 #[hook(addr = 0x53E920, conv = cdecl, name = "Game::Idle", expect = "83 EC 08 E8 58 31 02 00",
-       unverified = "mvpb-core-1", route = "L3-only", hazards = "x87-transcendental",
+       route = "L3-only", hazards = "x87-transcendental",
        recs = "grove-walk", note = "frame orchestrator (determinism mode retargets the limiter call sites 0x53E930/0x53E94F; the port calls through them)")]
 pub fn idle(param: GPtr<u8>) {
     let _ = timer_get_current_time_in_cycles();
@@ -667,7 +667,7 @@ fn now_ms() -> u32 {
 /// `g_waterCreatureMan.Update(timeStep * 0.02)`; finally `CWaterLevel::PreRenderWater` (also reached
 /// on the paused path).
 #[hook(addr = 0x53BEE0, conv = cdecl, name = "CGame::Process", expect = "83 EC 0C 53 56 57 E8 E5",
-       unverified = "mvpb-core-1", route = "L3-only", hazards = "none",
+       route = "L3-only", hazards = "none",
        recs = "grove-walk", note = "the update orchestrator; timing via the cycle timer (virtual clock in determinism mode)")]
 pub fn game_process() {
     pad_update_pads();
@@ -830,7 +830,7 @@ mod rs {
 /// `RenderBottomFromHeight`, `RenderRainStreaks`, `RenderSunReflection`; when not under water
 /// `RenderWater` between cull none/back; finally `CStencilShadows::RenderStencilShadows`.
 #[hook(addr = 0x53DF40, conv = cdecl, name = "Game::RenderScene", expect = "D9 05 2C 13 C8 00",
-       unverified = "mvpb-core-1", route = "L3-only", hazards = "none",
+       route = "L3-only", hazards = "none",
        recs = "grove-walk", note = "render orchestrator; the near-plane offset is x87 arithmetic (X87 model)")]
 pub fn render_scene() {
     let uw = X87::from_f32(g::<f32>(WEATHER_UNDERWATERNESS).read());
@@ -915,7 +915,7 @@ pub fn render_scene() {
 /// `DisablePlayerControls` (+0x10E, int16) is 0; `CSpecialFX::Render`, `CVehicleRecording::Render`,
 /// `RenderFogEffect`, `RenderFirstPersonVehicle`, `CPostEffects::Render` (tail call).
 #[hook(addr = 0x53E170, conv = cdecl, name = "Game::RenderEffects", expect = "E8 9B 46 1D 00",
-       unverified = "mvpb-core-1", route = "L3-only", hazards = "none", recs = "grove-walk")]
+       route = "L3-only", hazards = "none", recs = "grove-walk")]
 pub fn render_effects() {
     birds_render();
     skidmarks_render();
@@ -961,7 +961,7 @@ pub fn render_effects() {
 /// original's frame. The port uses 0 (unarmed) there, so the zoom box can only differ when no
 /// player exists, the residue happens to be 0x22/0x13 and the camera is in a first-person mode.
 #[hook(addr = 0x53E230, conv = cdecl, name = "Game::Render2dStuff", expect = "A1 24 7B C9 00 83 EC 18",
-       unverified = "mvpb-core-1", route = "L3-only", hazards = "uninit-locals",
+       route = "L3-only", hazards = "uninit-locals",
        recs = "grove-walk", note = "weapon type is uninitialised stack ([esp+8] at 0x53E2DB = entry ESP - 0x14) without a player ped; port uses 0")]
 pub fn render_2d_stuff() {
     rw_render_state_set(rs::ZTESTENABLE, 0);

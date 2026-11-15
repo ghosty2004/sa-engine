@@ -151,7 +151,7 @@ pub fn max_f(a: f32, b: f32) -> X87 {
 
 /// `approxEqual(float a, float b, float eps)` (0x4EEA80, cdecl): 1 when `|a - b| < eps`, else 0 (EAX).
 #[hook(addr = 0x4EEA80, conv = cdecl, name = "approxEqual", expect = "D9 44 24 04 D8 64 24 08",
-       unverified = "mvpa-math-1", route = "L2", hazards = "none", recs = "grove-walk",
+       route = "L2", hazards = "none", recs = "grove-walk",
        note = "pure, L1 spec not written")]
 pub fn approx_equal(a: f32, b: f32, eps: f32) -> u32 {
     if x(a).fsub_m(b).fabs().fcom(x(eps)).test_parity(5) { 0 } else { 1 }

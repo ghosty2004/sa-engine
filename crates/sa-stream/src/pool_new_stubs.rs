@@ -60,7 +60,7 @@ pub fn col_pool_new(this: GPtr<u8>) -> GPtr<u8> {
 /// The stunt jump pool's `New()` (stub 0x49C9E0 → 0x1566280, thiscall; `CStuntJumpManager::AddOne` / `Load`): 0x44-byte
 /// slots; see [`pool_new_bytes`].
 #[hook(addr = 0x49c9e0, conv = thiscall, name = "thunk_FUN_01566280", expect = "E9 9B 98 0C 01",
-       unverified = "mvpl-stream-1", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       route = "L2", hazards = "heap-writes", recs = "grove-walk",
        note = "writes the pool's flag array (heap)")]
 pub fn stunt_jump_pool_new(this: GPtr<u8>) -> GPtr<u8> {
     pool_new_bytes(this, 0x44)

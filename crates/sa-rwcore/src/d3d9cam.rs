@@ -277,7 +277,7 @@ fn fit_window(rect: &mut [i32; 4], flags: u32) {
 /// `SetWindowPos` flags 6), windowed sets WS_OVERLAPPEDWINDOW | WS_VISIBLE, sizes it to the back buffer
 /// (flags 0x26) and stores the client size as the engine width / height. Returns 1.
 #[hook(addr = 0x7F8640, conv = cdecl, name = "RwD3D9ChangeVideoMode", expect = "A1 38 7C C9 00",
-       unverified = "rw5-cam-1", route = "L3-only", hazards = "none", recs = "menus-hud",
+       route = "L3-only", hazards = "none", recs = "menus-hud",
        note = "device reset and window changes (OS effects); not double-runnable")]
 pub fn change_video_mode(mode: i32) -> u32 {
     if g::<u32>(VIDEO_MODES_READY).read() == 0

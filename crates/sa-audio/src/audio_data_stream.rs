@@ -201,7 +201,7 @@ pub fn streaming_decoder_destructor(this: GPtr<u8>) {
 /// `CAEStreamTransformer::TransformBuffer(void* buf, uint32 size, uint32 pos)` (0x4F17D0, thiscall, `ret 0xC`):
 /// `buf[i] ^= this[(pos + i) & 15]` for each byte.
 #[hook(addr = 0x4f17d0, conv = thiscall, name = "CAEStreamTransformer::TransformBuffer", expect = "56 8B 74 24 0C",
-       unverified = "mvpl-audio-2", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       route = "L2", hazards = "heap-writes", recs = "grove-walk",
        note = "writes the caller's stream buffer")]
 pub fn stream_transformer_transform_buffer(this: GPtr<u8>, buf: GPtr<u8>, size: u32, pos: u32) {
     for i in 0..size {
@@ -397,7 +397,7 @@ pub fn vorbis_initialise(this: GPtr<u8>) -> u8 {
 /// the chunk 0x40A1D0), +0x1D = the flag, callbacks read 0x502580 (+8), close 0x5025D0 (+0x10), seek 0x5025B0
 /// (+0xC), tell 0x5025F0 (+0x14); returns `this`.
 #[hook(addr = 0x5026b0, conv = thiscall, name = "CAEVorbisDecoder::Constructor", expect = "56 57 8B 7C 24 0C",
-       unverified = "mvpl-audio-2", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       route = "L2", hazards = "heap-writes", recs = "grove-walk",
        note = "constructs a heap decoder")]
 pub fn vorbis_constructor(this: GPtr<u8>, stream: GPtr<u8>, check: u32) -> GPtr<u8> {
     streaming_decoder_ctor(this, stream);

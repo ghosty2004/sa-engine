@@ -5,13 +5,13 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 
 | batch | hooks | subsystems | commit | branch | written | L1 | L2 | L3-batch | failed | routes |
 |---|---|---|---|---|---|---|---|---|---|---|
-| ai7-1 | 60 | AI, UNK-game | b6860a80 | master | 0 | 0 | 0 | 60 | 0 | L2 60 |
-| ai7-10 | 10 | AI | 30978c3a | master | 0 | 0 | 0 | 10 | 0 | L2 10 |
-| ai7-11 | 5 | AI | 3b3a489b | master | 0 | 0 | 0 | 5 | 0 | L2 5 |
-| ai7-12 | 12 | AI | 3b3a489b | master | 0 | 0 | 0 | 12 | 0 | L2 12 |
-| ai7-2 | 60 | AI, UNK-game | b6860a80 | master | 0 | 0 | 0 | 60 | 0 | L2 60 |
-| ai7-3 | 59 | AI | b6860a80 | master | 0 | 0 | 0 | 59 | 0 | L2 59 |
-| ai7-4 | 38 | AI | b6860a80 | master | 0 | 0 | 0 | 38 | 0 | L2 38 |
+| ai7-1 | 60 | AI, UNK-game | b6860a80 | master | 0 | 0 | 17 | 43 | 0 | L2 60 |
+| ai7-10 | 10 | AI | 30978c3a | master | 0 | 0 | 4 | 6 | 0 | L2 10 |
+| ai7-11 | 5 | AI | 3b3a489b | master | 0 | 0 | 2 | 3 | 0 | L2 5 |
+| ai7-12 | 12 | AI | 3b3a489b | master | 0 | 0 | 1 | 11 | 0 | L2 12 |
+| ai7-2 | 60 | AI, UNK-game | b6860a80 | master | 0 | 0 | 20 | 40 | 0 | L2 60 |
+| ai7-3 | 59 | AI | b6860a80 | master | 0 | 0 | 28 | 31 | 0 | L2 59 |
+| ai7-4 | 38 | AI | b6860a80 | master | 0 | 0 | 7 | 31 | 0 | L2 38 |
 | ai7-5 | 14 | AI | b6860a80 | master | 14 | 0 | 0 | 0 | 0 | L2 13, split 1 |
 | ai7-6 | 31 | AI | 30978c3a | master | 31 | 0 | 0 | 0 | 0 | L2 31 |
 | ai7-7 | 6 | AI | 30978c3a | master | 6 | 0 | 0 | 0 | 0 | L2 6 |
@@ -40,7 +40,6 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | attr-8 | 4 | AI, CALLED-ONLY, WORLD | 80046b17 | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
 | batch | 2 | AUDIO | 63b156bd | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
 | boot-render-2 | 3 | RW, UNK-game | 2077fc01 | master | 0 | 0 | 0 | 3 | 0 | L2 3 |
-| boot-rw-1 | 1 | RW | 2077fc01 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | carjack-1 | 33 | AI, AUDIO, UNK-game | 4b8a01b9 | master | 33 | 0 | 0 | 0 | 0 | L2 33 |
 | climb-1 | 4 | AI | eae25835 | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
 | climb-2 | 1 | AI | 2c460985 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
@@ -57,9 +56,9 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier-1-2 | 5 | AI, RENDER, UNK-game | 4e5ce171 | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
 | frontier2-1 | 34 | AI, AUDIO, RENDER, UNK-game, VEH | 9b3a3095 | master | 34 | 0 | 0 | 0 | 0 | L2 34 |
 | frontier2-2 | 8 | RENDER | 23785dc8 | master | 8 | 0 | 0 | 0 | 0 | L2 8 |
-| frontier2-3 | 8 | AI, POP | 11e8cd0f | worktree-agent-acb224bd5911fd3a7 | 8 | 0 | 0 | 0 | 0 | L2 8 |
-| frontier2-4 | 4 | CAM, WORLD | 11e8cd0f | worktree-agent-acb224bd5911fd3a7 | 4 | 0 | 0 | 0 | 0 | L2 3, L3-only 1 |
-| frontier2-5 | 6 | AI, RENDER | 6d209fd3 | worktree-agent-acb224bd5911fd3a7 | 6 | 0 | 0 | 0 | 0 | L2 6 |
+| frontier2-3 | 8 | AI, POP | 11e8cd0f | master | 8 | 0 | 0 | 0 | 0 | L2 8 |
+| frontier2-4 | 4 | CAM, WORLD | 11e8cd0f | master | 4 | 0 | 0 | 0 | 0 | L2 3, L3-only 1 |
+| frontier2-5 | 6 | AI, RENDER | 6d209fd3 | master | 6 | 0 | 0 | 0 | 0 | L2 6 |
 | gen2-anim-1 | 1 | UNK-game | ed288e85 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | gen2-coll-1 | 20 | UNK-game | ed288e85 | master | 0 | 0 | 0 | 20 | 0 | L2 8, split 12 |
 | gen2-core-1 | 4 | UNK-game | ed288e85 | master | 0 | 0 | 0 | 4 | 0 | L2 4 |
@@ -79,7 +78,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | gen2-world-1 | 24 | UNK-game, WORLD | ed288e85 | master | 0 | 0 | 0 | 24 | 0 | L2 17, split 7 |
 | harness5-1 | 1 | RENDER | 909b776c | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | intro-ai-1 | 1 | AI | 5e0f61bf | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| intro-ai-2 | 28 | AI | 5e0f61bf | master | 0 | 0 | 0 | 28 | 0 | L2 28 |
+| intro-ai-2 | 28 | AI | 5e0f61bf | master | 0 | 0 | 1 | 27 | 0 | L2 28 |
 | intro-ai-3 | 3 | AI | 5e0f61bf | master | 0 | 0 | 0 | 3 | 0 | L2 3 |
 | intro-ai-4 | 4 | AI | 5e0f61bf | master | 0 | 0 | 0 | 4 | 0 | L2 4 |
 | intro-anim-1 | 2 | ANIM | 5e0f61bf | master | 0 | 0 | 0 | 2 | 0 | L2 2 |
@@ -103,59 +102,50 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | menu-1 | 1 | HUD | da9de7f1 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | menu-2 | 1 | HUD | da9de7f1 | master | 1 | 0 | 0 | 0 | 0 | split 1 |
 | menu-3 | 4 | HUD | da9de7f1 | master | 4 | 0 | 0 | 0 | 0 | L2 1, split 3 |
-| mvpa-ai-1 | 18 | AI, UNK-game | 09ffb626 | master | 0 | 0 | 2 | 16 | 0 | L2 18 |
-| mvpa-ai-2 | 22 | AI, UNK-game | 09ffb626 | master | 0 | 0 | 0 | 22 | 0 | L2 22 |
-| mvpa-core-1 | 5 | CORE | 09ffb626 | master | 0 | 0 | 0 | 5 | 0 | L3-only 5 |
-| mvpa-core-2 | 3 | CORE | 09ffb626 | master | 0 | 0 | 0 | 3 | 0 | L3-only 3 |
+| mvpa-ai-1 | 18 | AI, UNK-game | 09ffb626 | master | 0 | 0 | 10 | 8 | 0 | L2 18 |
+| mvpa-ai-2 | 22 | AI, UNK-game | 09ffb626 | master | 0 | 0 | 13 | 9 | 0 | L2 22 |
 | mvpa-fx-1 | 5 | UNK-game | 09ffb626 | master | 0 | 0 | 0 | 5 | 0 | L2 5 |
-| mvpa-math-1 | 1 | UNK-game | 09ffb626 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | mvpa-render-1 | 6 | RENDER | 09ffb626 | master | 0 | 0 | 0 | 6 | 0 | L2 4, split 2 |
 | mvpa-render-2 | 1 | RENDER | 09ffb626 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
-| mvpa-render-3 | 2 | RENDER, UNK-game | 09ffb626 | master | 0 | 0 | 0 | 2 | 0 | L2 2 |
-| mvpa-world-1 | 8 | WORLD | 09ffb626 | master | 0 | 0 | 0 | 8 | 0 | L2 8 |
-| mvpa-world-2 | 2 | WORLD | 09ffb626 | master | 0 | 0 | 1 | 1 | 0 | L2 2 |
-| mvpa-world-3 | 1 | UNK-game | 09ffb626 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
-| mvpb-ai-1 | 3 | UNK-game | 09ffb626 | master | 0 | 0 | 0 | 3 | 0 | L2 3 |
+| mvpa-render-3 | 2 | RENDER, UNK-game | 09ffb626 | master | 0 | 0 | 1 | 1 | 0 | L2 2 |
+| mvpa-world-1 | 8 | WORLD | 09ffb626 | master | 0 | 0 | 3 | 5 | 0 | L2 8 |
+| mvpb-ai-1 | 3 | UNK-game | 09ffb626 | master | 0 | 0 | 2 | 1 | 0 | L2 3 |
 | mvpb-anim-1 | 2 | ANIM | 09ffb626 | master | 0 | 0 | 0 | 2 | 0 | L2 2 |
-| mvpb-core-1 | 7 | CORE | 09ffb626 | master | 0 | 0 | 0 | 7 | 0 | L3-only 7 |
-| mvpb-render-1 | 20 | RENDER | 09ffb626 | master | 0 | 0 | 0 | 20 | 0 | L2 16, L3-only 4 |
-| mvpb-veh-1 | 6 | VEH | 09ffb626 | master | 0 | 0 | 0 | 6 | 0 | L2 6 |
-| mvpb-veh-2 | 4 | VEH | 09ffb626 | master | 0 | 0 | 0 | 4 | 0 | L2 4 |
+| mvpb-render-1 | 20 | RENDER | 09ffb626 | master | 0 | 0 | 3 | 17 | 0 | L2 16, L3-only 4 |
+| mvpb-veh-1 | 6 | VEH | 09ffb626 | master | 0 | 0 | 2 | 4 | 0 | L2 6 |
+| mvpb-veh-2 | 4 | VEH | 09ffb626 | master | 0 | 0 | 1 | 3 | 0 | L2 4 |
 | mvpb-veh-3 | 2 | VEH | 09ffb626 | master | 0 | 0 | 0 | 2 | 0 | L2 2 |
 | mvpb-veh-4 | 1 | VEH | 09ffb626 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | mvpb-veh-5 | 1 | VEH | 09ffb626 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | mvpb-world-1 | 6 | WORLD | 09ffb626 | master | 0 | 0 | 0 | 6 | 0 | L2 6 |
-| mvpb-world-2 | 1 | WORLD | 09ffb626 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
-| mvpb-world-5 | 3 | WORLD | 09ffb626 | master | 0 | 0 | 0 | 3 | 0 | L2 3 |
-| mvpc-ai-1 | 14 | AI, UNK-game | 09ffb626 | master | 0 | 0 | 0 | 14 | 0 | L2 14 |
-| mvpc-ai-2 | 4 | UNK-game | 09ffb626 | master | 0 | 0 | 0 | 4 | 0 | L2 4 |
-| mvpc-ai-3 | 10 | AI, UNK-game | 09ffb626 | master | 0 | 0 | 0 | 10 | 0 | L2 10 |
-| mvpc-coll-1 | 3 | COLL | 09ffb626 | master | 0 | 0 | 0 | 3 | 0 | L2 3 |
-| mvpc-fx-1 | 14 | CALLED-ONLY, RENDER, UNK-game | 09ffb626 | master | 0 | 0 | 0 | 14 | 0 | L2 10, split 4 |
+| mvpb-world-5 | 3 | WORLD | 09ffb626 | master | 0 | 0 | 1 | 2 | 0 | L2 3 |
+| mvpc-ai-1 | 14 | AI, UNK-game | 09ffb626 | master | 0 | 0 | 4 | 10 | 0 | L2 14 |
+| mvpc-ai-2 | 4 | UNK-game | 09ffb626 | master | 0 | 0 | 1 | 3 | 0 | L2 4 |
+| mvpc-ai-3 | 10 | AI, UNK-game | 09ffb626 | master | 0 | 0 | 4 | 6 | 0 | L2 10 |
+| mvpc-coll-1 | 3 | COLL | 09ffb626 | master | 0 | 0 | 1 | 2 | 0 | L2 3 |
+| mvpc-fx-1 | 14 | CALLED-ONLY, RENDER, UNK-game | 09ffb626 | master | 0 | 0 | 3 | 11 | 0 | L2 10, split 4 |
 | mvpc-fx-2 | 4 | RENDER | 09ffb626 | master | 0 | 0 | 0 | 4 | 0 | L2 4 |
-| mvpc-render-1 | 8 | RENDER, UNK-game | 09ffb626 | master | 0 | 0 | 0 | 8 | 0 | L2 7, L3-only 1 |
+| mvpc-render-1 | 8 | RENDER, UNK-game | 09ffb626 | master | 0 | 0 | 3 | 5 | 0 | L2 7, L3-only 1 |
 | mvpc-world-1 | 9 | WORLD | 09ffb626 | master | 0 | 0 | 0 | 9 | 0 | L2 9 |
 | mvpc-world-2 | 1 | WORLD | 09ffb626 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | mvpd-ai-1 | 1 | UNK-game | 7fd59f2e | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
-| mvpd-d3d-1 | 2 | UNK-game | 7fd59f2e | master | 0 | 0 | 0 | 2 | 0 | L2 2 |
 | mvpd-render-1 | 20 | RENDER | 7fd59f2e | master | 0 | 0 | 0 | 20 | 0 | L2 20 |
-| mvpd-render-2 | 3 | RENDER | 7fd59f2e | master | 0 | 0 | 0 | 3 | 0 | L2 2, L3-only 1 |
-| mvpd-render-3 | 6 | RENDER | 7fd59f2e | master | 0 | 0 | 0 | 6 | 0 | L2 6 |
+| mvpd-render-2 | 3 | RENDER | 7fd59f2e | master | 0 | 0 | 1 | 2 | 0 | L2 2, L3-only 1 |
+| mvpd-render-3 | 6 | RENDER | 7fd59f2e | master | 0 | 0 | 2 | 4 | 0 | L2 6 |
 | mvpd-render-4 | 2 | RENDER | 7fd59f2e | master | 0 | 0 | 0 | 2 | 0 | L2 2 |
-| mvpd-render-5 | 2 | RENDER | 7fd59f2e | master | 0 | 0 | 0 | 2 | 0 | L2 2 |
-| mvpd-unk-1 | 5 | UNK-game | 7fd59f2e | master | 0 | 0 | 0 | 5 | 0 | L2 5 |
-| mvpd-unk-2 | 3 | UNK-game | 7fd59f2e | master | 0 | 0 | 0 | 3 | 0 | L2 3 |
-| mvpd-veh-2 | 2 | VEH | 7fd59f2e | master | 0 | 0 | 0 | 2 | 0 | L2 2 |
+| mvpd-render-5 | 2 | RENDER | 7fd59f2e | master | 0 | 0 | 1 | 1 | 0 | L2 2 |
+| mvpd-unk-1 | 5 | UNK-game | 7fd59f2e | master | 0 | 0 | 2 | 3 | 0 | L2 5 |
+| mvpd-unk-2 | 3 | UNK-game | 7fd59f2e | master | 0 | 0 | 1 | 2 | 0 | L2 3 |
+| mvpd-veh-2 | 2 | VEH | 7fd59f2e | master | 0 | 0 | 1 | 1 | 0 | L2 2 |
 | mvpd-veh-4 | 1 | VEH | 7fd59f2e | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | mvpd-veh-6 | 1 | VEH | 7fd59f2e | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
-| mvpd-veh-7 | 3 | VEH | 7fd59f2e | master | 0 | 0 | 0 | 3 | 0 | L2 3 |
+| mvpd-veh-7 | 3 | VEH | 7fd59f2e | master | 0 | 0 | 2 | 1 | 0 | L2 3 |
 | mvpd-world-1 | 5 | WORLD | 7fd59f2e | master | 0 | 0 | 0 | 5 | 0 | L2 4, L3-only 1 |
 | mvpd-world-2 | 2 | WORLD | 7fd59f2e | master | 0 | 0 | 0 | 2 | 0 | L2 2 |
-| mvpd-world-3 | 4 | WORLD | 7fd59f2e | master | 0 | 0 | 0 | 4 | 0 | L2 4 |
-| mvpd-world-5 | 1 | WORLD | 7fd59f2e | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
+| mvpd-world-3 | 4 | WORLD | 7fd59f2e | master | 0 | 0 | 2 | 2 | 0 | L2 4 |
 | mvpe-coll-1 | 4 | COLL | 09ffb626 | master | 0 | 0 | 0 | 4 | 0 | L2 3, split 1 |
-| mvpe-ent-1 | 2 | WORLD | 09ffb626 | master | 0 | 0 | 0 | 2 | 0 | L2 2 |
-| mvpe-phys-1 | 4 | PHYS | 09ffb626 | master | 0 | 0 | 0 | 4 | 0 | L2 4 |
+| mvpe-ent-1 | 2 | WORLD | 09ffb626 | master | 0 | 0 | 1 | 1 | 0 | L2 2 |
+| mvpe-phys-1 | 4 | PHYS | 09ffb626 | master | 0 | 0 | 1 | 3 | 0 | L2 4 |
 | mvpe-veh-1 | 3 | VEH | 09ffb626 | master | 0 | 0 | 0 | 3 | 0 | L2 3 |
 | mvpf-coll-1 | 2 | COLL, WORLD | 7fd59f2e | master | 0 | 0 | 0 | 2 | 0 | L2 2 |
 | mvpf-ent-1 | 1 | WORLD | 7fd59f2e | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
@@ -166,50 +156,38 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | mvph-phys-1 | 2 | PHYS | 309d8fec | master | 0 | 0 | 0 | 2 | 0 | L2 2 |
 | mvph-script-1 | 1 | SCRIPT | 309d8fec | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | mvph-world-1 | 1 | WORLD | 309d8fec | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
-| mvpi-ai-1 | 3 | AI | 309d8fec | master | 0 | 0 | 0 | 3 | 0 | L2 3 |
-| mvpi-anim-1 | 1 | ANIM | 309d8fec | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
+| mvpi-ai-1 | 3 | AI | 309d8fec | master | 0 | 0 | 2 | 1 | 0 | L2 3 |
 | mvpi-audio-1 | 1 | AUDIO | 309d8fec | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | mvpi-ped-1 | 1 | UNK-game | 309d8fec | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | mvpi-script-1 | 7 | SCRIPT | 309d8fec | master | 0 | 0 | 0 | 7 | 0 | L2 6, L3-only 1 |
 | mvpi-script-2 | 3 | SCRIPT | 309d8fec | master | 0 | 0 | 0 | 3 | 0 | L2 3 |
 | mvpi-world-1 | 4 | UNK-game, WORLD | 309d8fec | master | 0 | 0 | 0 | 4 | 0 | L2 4 |
-| mvpj-ai-1 | 1 | AI | 309d8fec | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
-| mvpj-ai-2 | 4 | AI | 309d8fec | master | 0 | 0 | 0 | 4 | 0 | L2 4 |
-| mvpj-ai-3 | 1 | AI | 309d8fec | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
+| mvpj-ai-2 | 4 | AI | 309d8fec | master | 0 | 0 | 1 | 3 | 0 | L2 4 |
 | mvpj-ai-4 | 5 | AI | 309d8fec | master | 0 | 0 | 0 | 5 | 0 | L2 5 |
 | mvpj-ai-5 | 1 | AI | 309d8fec | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | mvpj-ai-6 | 5 | AI | 309d8fec | master | 0 | 0 | 0 | 5 | 0 | L2 5 |
 | mvpj-script-1 | 4 | SCRIPT | 309d8fec | master | 0 | 0 | 0 | 4 | 0 | L2 4 |
-| mvpj-script-2 | 2 | SCRIPT | 309d8fec | master | 0 | 0 | 0 | 2 | 0 | L2 2 |
+| mvpj-script-2 | 2 | SCRIPT | 309d8fec | master | 0 | 0 | 1 | 1 | 0 | L2 2 |
 | mvpj-stream-1 | 1 | STREAM | 309d8fec | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | mvpj-world-1 | 3 | WORLD | 309d8fec | master | 0 | 0 | 0 | 3 | 0 | split 3 |
 | mvpk-ai-1 | 3 | AI | 69c799f9 | master | 0 | 0 | 0 | 3 | 0 | L2 3 |
 | mvpk-ai-2 | 2 | AI | 69c799f9 | master | 0 | 0 | 0 | 2 | 0 | L2 2 |
-| mvpk-ai-3 | 6 | AI | 69c799f9 | master | 0 | 0 | 0 | 6 | 0 | L2 6 |
+| mvpk-ai-3 | 6 | AI | 69c799f9 | master | 0 | 0 | 4 | 2 | 0 | L2 6 |
 | mvpk-anim-1 | 1 | ANIM | 69c799f9 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | mvpk-script-1 | 1 | SCRIPT | 69c799f9 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | mvpk-script-2 | 1 | SCRIPT | 69c799f9 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | mvpk-world-1 | 1 | WORLD | 69c799f9 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
-| mvpk-world-2 | 1 | WORLD | 69c799f9 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
-| mvpl-ai-1 | 2 | UNK-game | 69c799f9 | master | 0 | 0 | 0 | 2 | 0 | L2 2 |
 | mvpl-ai-3 | 1 | UNK-game | 69c799f9 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
-| mvpl-anim-1 | 1 | ANIM | 69c799f9 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | mvpl-anim-2 | 1 | ANIM | 69c799f9 | master | 0 | 0 | 0 | 1 | 0 | split 1 |
-| mvpl-audio-2 | 2 | AUDIO | 69c799f9 | master | 0 | 0 | 0 | 2 | 0 | L2 2 |
 | mvpl-fx-1 | 1 | UNK-game | 69c799f9 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
-| mvpl-render-1 | 1 | UNK-game | 69c799f9 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | mvpl-script-1 | 1 | SCRIPT | 69c799f9 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
-| mvpl-stream-1 | 1 | UNK-game | 69c799f9 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
-| mvpm-ai-2 | 1 | AI | 69c799f9 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | mvpm-ai-3 | 1 | AI | 69c799f9 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | mvpm-anim-2 | 3 | ANIM | 69c799f9 | master | 0 | 0 | 0 | 3 | 0 | L2 3 |
 | mvpm-coll-1 | 1 | COLL | 69c799f9 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | mvpm-render-2 | 1 | CALLED-ONLY | 69c799f9 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | mvpm-render-5 | 2 | RENDER | 69c799f9 | master | 0 | 0 | 0 | 2 | 0 | L2 2 |
-| mvpm-render-6 | 1 | RENDER | 69c799f9 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | mvpm-script-1 | 2 | SCRIPT | 69c799f9 | master | 0 | 0 | 0 | 2 | 0 | L2 2 |
 | mvpm-world-1 | 1 | UNK-game | 69c799f9 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
-| mvpn-anim-1 | 1 | ANIM | da9de7f1 | master | 0 | 0 | 0 | 1 | 0 | L3-only 1 |
 | native-1 | 1 | RENDER | 43038126 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | native-10 | 2 | AI | 4455614c | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
 | native-11 | 3 | AI | fbdea3d1 | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
@@ -250,19 +228,18 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | popw4-partial-1 | 3 | POP | 09ffb626 | master | 0 | 0 | 0 | 3 | 0 | L2 2, split 1 |
 | popw4-pop-1 | 6 | POP | 09ffb626 | master | 0 | 0 | 0 | 6 | 0 | split 6 |
 | regconv-ped-1 | 3 | PED, UNK-game | 8d70493a | master | 0 | 0 | 0 | 3 | 0 | L2 3 |
-| regconv-render-1 | 5 | RENDER | 8d70493a | master | 0 | 0 | 0 | 5 | 0 | L2 5 |
-| regconv-rw-1 | 11 | RW, UNK-game | 8d70493a | master | 0 | 0 | 0 | 11 | 0 | L2 11 |
+| regconv-render-1 | 5 | RENDER | 8d70493a | master | 0 | 0 | 2 | 3 | 0 | L2 5 |
+| regconv-rw-1 | 11 | RW, UNK-game | 8d70493a | master | 0 | 0 | 3 | 8 | 0 | L2 11 |
 | regconv-stream-1 | 2 | STREAM | 8d70493a | master | 0 | 0 | 0 | 2 | 0 | L2 2 |
 | renderbig2-3 | 1 | RENDER | 309d8fec | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | renderbig2-4 | 1 | RENDER | 309d8fec | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | renderbig2-5 | 1 | RENDER | 309d8fec | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| rw5-cam-1 | 1 | RW | f789a8ea | master | 0 | 0 | 0 | 1 | 0 | L3-only 1 |
 | rw5-core-1 | 31 | RW | f789a8ea | master | 0 | 0 | 0 | 31 | 0 | L2 21, split 10 |
 | rw5-core-2 | 17 | RW | f789a8ea | master | 0 | 0 | 0 | 17 | 0 | L2 9, L3-only 5, split 3 |
 | rw5-image-1 | 9 | RW | f789a8ea | master | 0 | 0 | 0 | 9 | 0 | L2 5, split 4 |
 | rw5-inst-1 | 8 | RW | f789a8ea | master | 0 | 0 | 0 | 8 | 0 | L2 8 |
 | rw5-native-1 | 6 | RW | f789a8ea | master | 0 | 0 | 0 | 6 | 0 | L2 2, split 4 |
-| rw5-node-1 | 4 | RW | f789a8ea | master | 0 | 0 | 0 | 4 | 0 | L2 4 |
+| rw5-node-1 | 4 | RW | f789a8ea | master | 0 | 0 | 1 | 3 | 0 | L2 4 |
 | rw5-raster | 1 | RW | f789a8ea | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | samp-anim-1 | 1 | ANIM | 87822502 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | samp-heli-1 | 1 | VEH | b729fb20 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
@@ -325,46 +302,39 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | std15-render-1 | 2 | RENDER | cd8aaddf | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
 | std15-render-2 | 3 | RENDER, WORLD | 152f9687 | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
 | std15-render-3 | 1 | UNK-game | 04faa480 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| std4-audio-1 | 19 | AUDIO | 309d8fec | master | 0 | 0 | 0 | 19 | 0 | L2 11, L3-only 8 |
+| std4-audio-1 | 19 | AUDIO | 309d8fec | master | 0 | 0 | 1 | 18 | 0 | L2 11, L3-only 8 |
 | std4-audio-2 | 18 | AUDIO | 309d8fec | master | 0 | 0 | 0 | 18 | 0 | L2 1, L3-only 17 |
-| std4-audio-3 | 1 | AUDIO | 309d8fec | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | std4-core-1 | 2 | SAVE | 309d8fec | master | 0 | 0 | 0 | 2 | 0 | L2 2 |
-| std4-d3d9-1 | 6 | RW | 309d8fec | master | 0 | 0 | 0 | 6 | 0 | L2 4, L3-only 2 |
+| std4-d3d9-1 | 6 | RW | 309d8fec | master | 0 | 0 | 2 | 4 | 0 | L2 4, L3-only 2 |
 | std4-d3d9-2 | 3 | RW, UNK-game | 309d8fec | master | 0 | 0 | 0 | 3 | 0 | L2 2, L3-only 1 |
 | std4-d3d9-3 | 2 | UNK-game | 309d8fec | master | 0 | 0 | 0 | 2 | 0 | L2 2 |
 | std4-d3d9-4 | 1 | RW | 309d8fec | master | 1 | 0 | 0 | 0 | 0 | L3-only 1 |
 | std4-data-1 | 2 | AI | 309d8fec | master | 0 | 0 | 0 | 2 | 0 | L2 2 |
 | std4-data-2 | 4 | MATH | 309d8fec | master | 4 | 0 | 0 | 0 | 0 | L1-pure 4 |
-| std4-load-1 | 2 | RW, UNK-game | 309d8fec | master | 0 | 0 | 0 | 2 | 0 | L2 2 |
-| std4-load-2 | 3 | RW | 309d8fec | master | 0 | 0 | 0 | 3 | 0 | L2 3 |
-| std4-rxpipe-1 | 10 | RW | 309d8fec | master | 0 | 0 | 0 | 10 | 0 | L2 10 |
+| std4-load-1 | 2 | RW, UNK-game | 309d8fec | master | 0 | 0 | 1 | 1 | 0 | L2 2 |
+| std4-load-2 | 3 | RW | 309d8fec | master | 0 | 0 | 1 | 2 | 0 | L2 3 |
+| std4-rxpipe-1 | 10 | RW | 309d8fec | master | 0 | 0 | 4 | 6 | 0 | L2 10 |
 | std4-rxpipe-2 | 1 | RW | 309d8fec | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | std4-rxpipe-3 | 4 | RW | 309d8fec | master | 0 | 0 | 0 | 4 | 0 | L2 4 |
-| std4-win-1 | 1 | CORE | 309d8fec | master | 0 | 0 | 0 | 1 | 0 | L3-only 1 |
-| std5-ctor-1 | 8 | RENDER, UNK-game, WORLD | 309d8fec | master | 0 | 0 | 0 | 8 | 0 | L2 8 |
-| std5-fx-1 | 2 | RENDER | 309d8fec | master | 0 | 0 | 0 | 2 | 0 | L2 2 |
+| std5-ctor-1 | 8 | RENDER, UNK-game, WORLD | 309d8fec | master | 0 | 0 | 5 | 3 | 0 | L2 8 |
+| std5-fx-1 | 2 | RENDER | 309d8fec | master | 0 | 0 | 1 | 1 | 0 | L2 2 |
 | std5-math-1 | 6 | MATH | 309d8fec | master | 6 | 0 | 0 | 0 | 0 | L2 6 |
 | std5-math-2 | 8 | MATH | 309d8fec | master | 8 | 0 | 0 | 0 | 0 | L2 8 |
 | std5-math-3 | 7 | MATH | 309d8fec | master | 7 | 0 | 0 | 0 | 0 | L2 7 |
 | std5-objdata-1 | 1 | WORLD | 309d8fec | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | std5-ped-1 | 1 | PED | 309d8fec | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
-| std5-pool-1 | 3 | UNK-game, WORLD | 309d8fec | master | 0 | 0 | 0 | 3 | 0 | L2 3 |
-| std5-script-1 | 1 | SCRIPT | 309d8fec | master | 0 | 0 | 0 | 1 | 0 | L3-only 1 |
-| std5-stream-1 | 1 | STREAM | 309d8fec | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | std5-tristrip-1 | 6 | RW | 309d8fec | master | 0 | 0 | 0 | 6 | 0 | L2 6 |
 | std5-world-1 | 3 | MATH, WORLD | 309d8fec | master | 0 | 0 | 0 | 3 | 0 | L2 3 |
 | std5-zones-1 | 1 | WORLD | 309d8fec | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
-| std6-anim-1 | 37 | CALLED-ONLY, RW, UNK-game | 309d8fec | master | 0 | 0 | 0 | 37 | 0 | L1-pure 16, L2 21 |
+| std6-anim-1 | 37 | CALLED-ONLY, RW, UNK-game | 309d8fec | master | 0 | 0 | 12 | 25 | 0 | L1-pure 16, L2 21 |
 | std6-cam-1 | 1 | CAM | 309d8fec | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
-| std6-math-1 | 1 | MATH | 309d8fec | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
-| std6-math-2 | 3 | MATH | 309d8fec | master | 0 | 0 | 0 | 3 | 0 | L2 3 |
+| std6-math-2 | 3 | MATH | 309d8fec | master | 0 | 0 | 1 | 2 | 0 | L2 3 |
 | std6-ped-1 | 1 | PED | 309d8fec | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
-| std6-render-1 | 26 | RENDER, RW, UNK-game | 309d8fec | master | 0 | 0 | 0 | 26 | 0 | L1-pure 12, L2 14 |
-| std6-render-2 | 1 | RENDER | 309d8fec | master | 0 | 0 | 0 | 1 | 0 | L3-only 1 |
-| std6-rw-1 | 37 | RW, UNK-game | 309d8fec | master | 0 | 0 | 0 | 37 | 0 | L1-pure 15, L2 22 |
-| std6-script-1 | 6 | SCRIPT | 309d8fec | master | 0 | 0 | 0 | 6 | 0 | L1-pure 3, L2 3 |
+| std6-render-1 | 26 | RENDER, RW, UNK-game | 309d8fec | master | 0 | 0 | 4 | 22 | 0 | L1-pure 12, L2 14 |
+| std6-rw-1 | 37 | RW, UNK-game | 309d8fec | master | 0 | 0 | 11 | 26 | 0 | L1-pure 15, L2 22 |
+| std6-script-1 | 6 | SCRIPT | 309d8fec | master | 0 | 0 | 2 | 4 | 0 | L1-pure 3, L2 3 |
 | std6-stream-1 | 1 | RW | 309d8fec | master | 0 | 0 | 0 | 1 | 0 | L1-pure 1 |
-| std6-world-1 | 2 | WORLD | 309d8fec | master | 0 | 0 | 0 | 2 | 0 | L1-pure 1, L2 1 |
+| std6-world-1 | 2 | WORLD | 309d8fec | master | 0 | 0 | 1 | 1 | 0 | L1-pure 1, L2 1 |
 | std7-anim-1 | 3 | RW, UNK-game | da9de7f1 | master | 0 | 0 | 0 | 3 | 0 | L2 3 |
 | std7-math-1 | 1 | MATH | da9de7f1 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | std8-ai-1 | 1 | AI | da9de7f1 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
@@ -414,26 +384,26 @@ SA_UNVERIFIED=ai7-1 LANE=$LANE tools/e2e/port-l2.sh batch:ai7-1 $SA_ROOT/target/
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
-| 0x421240 | `CTaskComplexLeaveAnyCar::GetTaskType` | L3-batch | L2 | none |
-| 0x421270 | `CTaskComplexLeaveAnyCar::Destructor` | L3-batch | L2 | heap-writes |
-| 0x46F570 | `CTaskSimpleCarDriveTimed::Clone` | L3-batch | L2 | heap-writes |
+| 0x421240 | `CTaskComplexLeaveAnyCar::GetTaskType` | L2 | L2 | none |
+| 0x421270 | `CTaskComplexLeaveAnyCar::Destructor` | L2 | L2 | heap-writes |
+| 0x46F570 | `CTaskSimpleCarDriveTimed::Clone` | L2 | L2 | heap-writes |
 | 0x4ABDA0 | `CTaskSimpleFight::GetComboAnimGroupID` | L3-batch | L2 | none |
-| 0x4B8920 | `CTaskComplexCarDriveMissionFleeScene::CTaskComplexCarDriveMissionFleeScene` | L3-batch | L2 | heap-writes |
+| 0x4B8920 | `CTaskComplexCarDriveMissionFleeScene::CTaskComplexCarDriveMissionFleeScene` | L2 | L2 | heap-writes |
 | 0x4B8950 | `CTaskComplexCarDriveMissionFleeScene::Clone` | L3-batch | L2 | heap-writes |
-| 0x4B89C0 | `CTaskComplexCarDriveMissionFleeScene::GetTaskType` | L3-batch | L2 | none |
-| 0x4B89D0 | `CTaskComplexCarDriveMissionFleeScene::~CTaskComplexCarDriveMissionFleeScene` | L3-batch | L2 | none |
-| 0x4B89F0 | `CTaskComplexCarDriveMissionFleeScene::~CTaskComplexCarDriveMissionFleeScene` | L3-batch | L2 | heap-writes |
+| 0x4B89C0 | `CTaskComplexCarDriveMissionFleeScene::GetTaskType` | L2 | L2 | none |
+| 0x4B89D0 | `CTaskComplexCarDriveMissionFleeScene::~CTaskComplexCarDriveMissionFleeScene` | L2 | L2 | none |
+| 0x4B89F0 | `CTaskComplexCarDriveMissionFleeScene::~CTaskComplexCarDriveMissionFleeScene` | L2 | L2 | heap-writes |
 | 0x4B8A00 | `CTaskComplexCarDriveMissionKillPed::CTaskComplexCarDriveMissionKillPed` | L3-batch | L2 | heap-writes |
 | 0x4B8A30 | `CTaskComplexCarDriveMissionKillPed::Clone` | L3-batch | L2 | heap-writes |
 | 0x4B8AA0 | `CTaskComplexCarDriveMissionKillPed::GetTaskType` | L3-batch | L2 | none |
 | 0x4B8AB0 | `CTaskComplexCarDriveMissionKillPed::~CTaskComplexCarDriveMissionKillPed` | L3-batch | L2 | none |
 | 0x4B8AD0 | `CTaskComplexCarDriveMissionKillPed::~CTaskComplexCarDriveMissionKillPed` | L3-batch | L2 | heap-writes |
-| 0x5FF8E0 | `vt_86cbe8::GetEventPriority` | L3-batch | L2 | none |
+| 0x5FF8E0 | `vt_86cbe8::GetEventPriority` | L2 | L2 | none |
 | 0x5FF8F0 | `vt_86cc78::GetEventPriority` | L3-batch | L2 | none |
-| 0x5FF900 | `vt_86cba0::GetEventPriority` | L3-batch | L2 | none |
+| 0x5FF900 | `vt_86cba0::GetEventPriority` | L2 | L2 | none |
 | 0x5FF910 | `vt_86cc30::GetEventPriority` | L3-batch | L2 | none |
-| 0x61DC90 | `CTaskSimpleFightingControl::GetTaskType` | L3-batch | L2 | none |
-| 0x61DCA0 | `CTaskSimpleFightingControl::Destructor` | L3-batch | L2 | heap-writes |
+| 0x61DC90 | `CTaskSimpleFightingControl::GetTaskType` | L2 | L2 | none |
+| 0x61DCA0 | `CTaskSimpleFightingControl::Destructor` | L2 | L2 | heap-writes |
 | 0x622E40 | `CTaskSimpleFight::Clone` | L3-batch | L2 | none |
 | 0x622EB0 | `CTaskSimpleFightingControl::Clone` | L3-batch | L2 | none |
 | 0x62F1A0 | `CTaskComplexLeaveCar::CTaskComplexLeaveCar` | L3-batch | L2 | heap-writes |
@@ -462,17 +432,17 @@ SA_UNVERIFIED=ai7-1 LANE=$LANE tools/e2e/port-l2.sh batch:ai7-1 $SA_ROOT/target/
 | 0x63B430 | `CTaskComplexLeaveCarAsPassengerWait::Constructor` | L3-batch | L2 | heap-writes |
 | 0x63B490 | `CTaskComplexLeaveCarAsPassengerWait::GetTaskType` | L3-batch | L2 | none |
 | 0x63B4A0 | `CTaskComplexLeaveCarAsPassengerWait::Destructor` | L3-batch | L2 | heap-writes |
-| 0x63B8C0 | `CTaskComplexLeaveCar` | L3-batch | L2 | heap-writes |
-| 0x63BCD0 | `CTaskComplexLeaveAnyCar::CreateNextSubTask` | L3-batch | L2 | none |
-| 0x63BDC0 | `CTaskComplexLeaveAnyCar::ControlSubTask` | L3-batch | L2 | none |
+| 0x63B8C0 | `CTaskComplexLeaveCar` | L2 | L2 | heap-writes |
+| 0x63BCD0 | `CTaskComplexLeaveAnyCar::CreateNextSubTask` | L2 | L2 | none |
+| 0x63BDC0 | `CTaskComplexLeaveAnyCar::ControlSubTask` | L2 | L2 | none |
 | 0x63C020 | `CTaskComplexLeaveCarAndFlee::GetTaskType` | L3-batch | L2 | none |
 | 0x63C030 | `CTaskComplexLeaveCarAndFlee::Destructor` | L3-batch | L2 | heap-writes |
 | 0x63C090 | `CTaskComplexLeaveCarAndFlee::ControlSubTask` | L3-batch | L2 | none |
 | 0x63C9C0 | `CTaskComplexCarDrive::GetTaskType` | L3-batch | L2 | none |
 | 0x63C9D0 | `CTaskComplexCarDrive::Constructor_0` | L3-batch | L2 | heap-writes |
-| 0x63CC30 | `CTaskComplexCarDriveMission::Constructor` | L3-batch | L2 | heap-writes |
-| 0x63CCB0 | `CTaskComplexCarDriveMission::GetTaskType` | L3-batch | L2 | none |
-| 0x63CCC0 | `CTaskComplexCarDriveMission::Destructor` | L3-batch | L2 | heap-writes |
+| 0x63CC30 | `CTaskComplexCarDriveMission::Constructor` | L2 | L2 | heap-writes |
+| 0x63CCB0 | `CTaskComplexCarDriveMission::GetTaskType` | L2 | L2 | none |
+| 0x63CCC0 | `CTaskComplexCarDriveMission::Destructor` | L2 | L2 | heap-writes |
 | 0x63CE00 | `CTaskComplexDriveToPoint::CTaskComplexDriveToPoint` | L3-batch | L2 | heap-writes |
 
 ## ai7-10
@@ -491,13 +461,13 @@ SA_UNVERIFIED=ai7-10 LANE=$LANE tools/e2e/port-l2.sh batch:ai7-10 $SA_ROOT/targe
 | 0x4B1420 | `vt_85b4c8::TakesPriorityOver` | L3-batch | L2 | ax-al-return |
 | 0x4B6610 | `vt_85b4c8::Destructor` | L3-batch | L2 | heap-writes |
 | 0x4B7810 | `vt_85b4c8::Clone` | L3-batch | L2 | heap-writes |
-| 0x608F00 | `FUN_00608f00` | L3-batch | L2 | none |
-| 0x608F20 | `FUN_00608f20` | L3-batch | L2 | none |
-| 0x61C150 | `FUN_0061c150` | L3-batch | L2 | none |
+| 0x608F00 | `FUN_00608f00` | L2 | L2 | none |
+| 0x608F20 | `FUN_00608f20` | L2 | L2 | none |
+| 0x61C150 | `FUN_0061c150` | L2 | L2 | none |
 | 0x61F810 | `CTaskSimpleThrowProjectile::ControlThrow` | L3-batch | L2 | ax-al-return,heap-writes |
 | 0x61F890 | `CTaskSimpleThrowProjectile::FinishAnimThrowProjectileCB` | L3-batch | L2 | heap-writes |
 | 0x630100 | `CTaskComplexDie::SayDeathSample` | L3-batch | L2 | heap-writes |
-| 0x630590 | `CTaskSimpleDead::CTaskSimpleDead` | L3-batch | L2 | heap-writes |
+| 0x630590 | `CTaskSimpleDead::CTaskSimpleDead` | L2 | L2 | heap-writes |
 
 ## ai7-11
 
@@ -514,8 +484,8 @@ SA_UNVERIFIED=ai7-11 LANE=$LANE tools/e2e/port-l2.sh batch:ai7-11 $SA_ROOT/targe
 |---|---|---|---|---|
 | 0x63AD70 | `CTaskComplexEnterCarAsDriverTimed::Constructor` | L3-batch | L2 | heap-writes |
 | 0x63BC50 | `CTaskComplexLeaveBoat::CreateSubTask` | L3-batch | L2 | heap-writes |
-| 0x63DFA0 | `CTaskComplexEnterCar::Destructor` | L3-batch | L2 | heap-writes |
-| 0x645EE0 | `CTaskSimpleCarOpenDoorFromOutside::Destructor` | L3-batch | L2 | heap-writes |
+| 0x63DFA0 | `CTaskComplexEnterCar::Destructor` | L2 | L2 | heap-writes |
+| 0x645EE0 | `CTaskSimpleCarOpenDoorFromOutside::Destructor` | L2 | L2 | heap-writes |
 | 0x66BC80 | `CTaskComplexGotoDoorAndOpen::MakeAbortable` | L3-batch | L2 | ax-al-return |
 
 ## ai7-12
@@ -533,7 +503,7 @@ SA_UNVERIFIED=ai7-12 LANE=$LANE tools/e2e/port-l2.sh batch:ai7-12 $SA_ROOT/targe
 |---|---|---|---|---|
 | 0x6259E0 | `CTaskSimpleThrowProjectile::StartAnim` | L3-batch | L2 | heap-writes |
 | 0x62AF50 | `CTaskSimpleThrowProjectile::ProcessPed` | L3-batch | L2 | ax-al-return,heap-writes |
-| 0x634050 | `CTaskSimpleIKLookAt::UpdateLookAtInfo` | L3-batch | L2 | heap-writes |
+| 0x634050 | `CTaskSimpleIKLookAt::UpdateLookAtInfo` | L2 | L2 | heap-writes |
 | 0x637520 | `CTaskSimpleDie::StartAnim` | L3-batch | L2 | heap-writes |
 | 0x6397E0 | `CTaskSimpleDie::ProcessPed` | L3-batch | L2 | ax-al-return,heap-writes |
 | 0x64AE90 | `CTaskSimplePickUpBike::StartAnim` | L3-batch | L2 | heap-writes |
@@ -561,9 +531,9 @@ SA_UNVERIFIED=ai7-2 LANE=$LANE tools/e2e/port-l2.sh batch:ai7-2 $SA_ROOT/target/
 | 0x63CF90 | `CTaskComplexDrivePointRoute::CreateNextSubTask` | L3-batch | L2 | heap-writes |
 | 0x63D030 | `CTaskComplexDrivePointRoute::CreateFirstSubTask` | L3-batch | L2 | none |
 | 0x63D0C0 | `CTaskComplexDrivePointRoute::ControlSubTask` | L3-batch | L2 | none |
-| 0x63D0F0 | `CTaskComplexEnterAnyCarAsDriver::GetTaskType` | L3-batch | L2 | none |
-| 0x63D110 | `CTaskComplexEnterAnyCarAsDriver::CreateNextSubTask` | L3-batch | L2 | none |
-| 0x63D120 | `CTaskComplexEnterAnyCarAsDriver::ControlSubTask` | L3-batch | L2 | none |
+| 0x63D0F0 | `CTaskComplexEnterAnyCarAsDriver::GetTaskType` | L2 | L2 | none |
+| 0x63D110 | `CTaskComplexEnterAnyCarAsDriver::CreateNextSubTask` | L2 | L2 | none |
+| 0x63D120 | `CTaskComplexEnterAnyCarAsDriver::ControlSubTask` | L2 | L2 | none |
 | 0x63D6F0 | `CTaskSimpleCarSetTempAction::Constructor` | L3-batch | L2 | heap-writes |
 | 0x63D720 | `CTaskSimpleCarSetTempAction::GetTaskType` | L3-batch | L2 | none |
 | 0x63D730 | `CTaskSimpleCarSetTempAction::Destructor` | L3-batch | L2 | heap-writes |
@@ -572,51 +542,51 @@ SA_UNVERIFIED=ai7-2 LANE=$LANE tools/e2e/port-l2.sh batch:ai7-2 $SA_ROOT/target/
 | 0x63D7E0 | `CTaskComplexEnterCarAsPassengerTimed::Clone` | L3-batch | L2 | heap-writes |
 | 0x63D850 | `CTaskComplexEnterCarAsPassengerWait::Clone` | L3-batch | L2 | none |
 | 0x63D8C0 | `CTaskComplexLeaveCarAsPassengerWait::Clone` | L3-batch | L2 | none |
-| 0x63D9E0 | `CTaskComplexLeaveCar::Clone` | L3-batch | L2 | none |
+| 0x63D9E0 | `CTaskComplexLeaveCar::Clone` | L2 | L2 | none |
 | 0x63DB40 | `CTaskComplexLeaveCarAndFlee::Clone` | L3-batch | L2 | none |
 | 0x63DD70 | `CTaskComplexCarDriveMission::Clone` | L3-batch | L2 | none |
 | 0x63DDE0 | `CTaskComplexDriveToPoint::Clone` | L3-batch | L2 | none |
 | 0x63DE60 | `CTaskComplexEnterAnyCarAsDriver::Clone` | L3-batch | L2 | heap-writes |
 | 0x63DF10 | `CTaskSimpleCarSetTempAction::Clone` | L3-batch | L2 | heap-writes |
-| 0x6402F0 | `CTaskComplexEnterCarAsDriver` | L3-batch | L2 | heap-writes |
+| 0x6402F0 | `CTaskComplexEnterCarAsDriver` | L2 | L2 | heap-writes |
 | 0x640340 | `CTaskComplexEnterCarAsPassenger` | L3-batch | L2 | heap-writes |
 | 0x640370 | `CTaskComplexEnterCarAsPassenger::GetTaskType` | L3-batch | L2 | none |
-| 0x640390 | `FUN_00640390` | L3-batch | L2 | heap-writes |
+| 0x640390 | `FUN_00640390` | L2 | L2 | heap-writes |
 | 0x6405B0 | `CTaskComplexEnterCarAsDriverTimed::CreateFirstSubTask` | L3-batch | L2 | heap-writes |
 | 0x640640 | `CTaskComplexEnterCarAsPassengerTimed::~CTaskComplexEnterCarAsPassengerTimed` | L3-batch | L2 | none |
 | 0x640660 | `CTaskComplexEnterCarAsPassengerTimed::CreateFirstSubTask` | L3-batch | L2 | heap-writes |
 | 0x642280 | `CTaskComplexLeaveCarAndDie::CreateFirstSubTask` | L3-batch | L2 | heap-writes |
 | 0x642F80 | `CTaskComplexCarDrive::~CTaskComplexCarDrive` | L3-batch | L2 | none |
-| 0x643260 | `CTaskComplexCarDriveMission::~CTaskComplexCarDriveMission` | L3-batch | L2 | none |
-| 0x643280 | `CTaskComplexDriveToPoint::~CTaskComplexDriveToPoint` | L3-batch | L2 | none |
+| 0x643260 | `CTaskComplexCarDriveMission::~CTaskComplexCarDriveMission` | L2 | L2 | none |
+| 0x643280 | `CTaskComplexDriveToPoint::~CTaskComplexDriveToPoint` | L2 | L2 | none |
 | 0x6433E0 | `CTaskComplexDrivePointRoute::Constructor` | L3-batch | L2 | heap-writes |
 | 0x643480 | `CTaskComplexDrivePointRoute::GetTaskType` | L3-batch | L2 | none |
 | 0x643490 | `CTaskComplexDrivePointRoute::Destructor` | L3-batch | L2 | heap-writes |
 | 0x643760 | `CTaskSimpleCarDrive::~CTaskSimpleCarDrive` | L3-batch | L2 | none |
-| 0x643780 | `CTaskComplexEnterCarAsDriver::Clone` | L3-batch | L2 | heap-writes |
+| 0x643780 | `CTaskComplexEnterCarAsDriver::Clone` | L2 | L2 | heap-writes |
 | 0x6439C0 | `CTaskComplexDrivePointRoute::Clone` | L3-batch | L2 | none |
 | 0x643A40 | `CTaskComplexEnterCar::~CTaskComplexEnterCar` | L3-batch | L2 | none |
-| 0x643C80 | `CTaskComplexEnterCarAsPassenger::~CTaskComplexEnterCarAsPassenger` | L3-batch | L2 | none |
+| 0x643C80 | `CTaskComplexEnterCarAsPassenger::~CTaskComplexEnterCarAsPassenger` | L2 | L2 | none |
 | 0x643F90 | `CTaskComplexLeaveCarAsPassengerWait::CreateNextSubTask` | L3-batch | L2 | none |
 | 0x644010 | `CTaskComplexLeaveCarAsPassengerWait::CreateFirstSubTask` | L3-batch | L2 | none |
 | 0x644050 | `CTaskComplexLeaveCarAsPassengerWait::ControlSubTask` | L3-batch | L2 | none |
-| 0x645B40 | `CTaskSimpleCarAlign::Constructor` | L3-batch | L2 | heap-writes |
-| 0x645BD0 | `CTaskSimpleCarAlign::GetTaskType` | L3-batch | L2 | none |
-| 0x645BE0 | `CTaskSimpleCarAlign::Destructor` | L3-batch | L2 | heap-writes |
+| 0x645B40 | `CTaskSimpleCarAlign::Constructor` | L2 | L2 | heap-writes |
+| 0x645BD0 | `CTaskSimpleCarAlign::GetTaskType` | L2 | L2 | none |
+| 0x645BE0 | `CTaskSimpleCarAlign::Destructor` | L2 | L2 | heap-writes |
 | 0x645C50 | `CTaskSimpleCarAlign::MakeAbortable` | L3-batch | L2 | ax-al-return,heap-writes |
-| 0x645ED0 | `CTaskSimpleCarOpenDoorFromOutside::GetTaskType` | L3-batch | L2 | none |
+| 0x645ED0 | `CTaskSimpleCarOpenDoorFromOutside::GetTaskType` | L2 | L2 | none |
 | 0x646070 | `CTaskSimpleCarOpenLockedDoorFromOutside::Constructor` | L3-batch | L2 | heap-writes |
 | 0x6460E0 | `CTaskSimpleCarOpenLockedDoorFromOutside::GetTaskType` | L3-batch | L2 | none |
 | 0x6460F0 | `CTaskSimpleCarOpenLockedDoorFromOutside::Destructor` | L3-batch | L2 | heap-writes |
 | 0x646160 | `CTaskSimpleCarOpenLockedDoorFromOutside::MakeAbortable` | L3-batch | L2 | ax-al-return,heap-writes |
 | 0x646180 | `CTaskSimpleCarOpenLockedDoorFromOutside::SetPedPosition` | L3-batch | L2 | ax-al-return |
 | 0x6461A0 | `CTaskSimpleCarOpenLockedDoorFromOutside::FinishAnimCarOpenLockedDoorFromOutsideCB` | L3-batch | L2 | heap-writes |
-| 0x646300 | `CTaskSimpleCarCloseDoorFromInside::Constructor` | L3-batch | L2 | heap-writes |
-| 0x646370 | `CTaskSimpleCarCloseDoorFromInside::GetTaskType` | L3-batch | L2 | none |
-| 0x646380 | `CTaskSimpleCarCloseDoorFromInside::Destructor` | L3-batch | L2 | heap-writes |
-| 0x646560 | `CTaskSimpleCarCloseDoorFromOutside::GetTaskType` | L3-batch | L2 | none |
-| 0x646570 | `CTaskSimpleCarCloseDoorFromOutside::Destructor` | L3-batch | L2 | heap-writes |
-| 0x646690 | `CTaskSimpleCarGetIn::Constructor` | L3-batch | L2 | heap-writes |
+| 0x646300 | `CTaskSimpleCarCloseDoorFromInside::Constructor` | L2 | L2 | heap-writes |
+| 0x646370 | `CTaskSimpleCarCloseDoorFromInside::GetTaskType` | L2 | L2 | none |
+| 0x646380 | `CTaskSimpleCarCloseDoorFromInside::Destructor` | L2 | L2 | heap-writes |
+| 0x646560 | `CTaskSimpleCarCloseDoorFromOutside::GetTaskType` | L2 | L2 | none |
+| 0x646570 | `CTaskSimpleCarCloseDoorFromOutside::Destructor` | L2 | L2 | heap-writes |
+| 0x646690 | `CTaskSimpleCarGetIn::Constructor` | L2 | L2 | heap-writes |
 
 ## ai7-3
 
@@ -631,17 +601,17 @@ SA_UNVERIFIED=ai7-3 LANE=$LANE tools/e2e/port-l2.sh batch:ai7-3 $SA_ROOT/target/
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
-| 0x646700 | `CTaskSimpleCarGetIn::GetTaskType` | L3-batch | L2 | none |
-| 0x646710 | `CTaskSimpleCarGetIn::Destructor` | L3-batch | L2 | heap-writes |
+| 0x646700 | `CTaskSimpleCarGetIn::GetTaskType` | L2 | L2 | none |
+| 0x646710 | `CTaskSimpleCarGetIn::Destructor` | L2 | L2 | heap-writes |
 | 0x646780 | `CTaskSimpleCarGetIn::MakeAbortable` | L3-batch | L2 | ax-al-return,heap-writes |
-| 0x646810 | `CTaskSimpleCarShuffle::Constructor` | L3-batch | L2 | heap-writes |
-| 0x646880 | `CTaskSimpleCarShuffle::GetTaskType` | L3-batch | L2 | none |
-| 0x646890 | `CTaskSimpleCarShuffle::Destructor` | L3-batch | L2 | heap-writes |
+| 0x646810 | `CTaskSimpleCarShuffle::Constructor` | L2 | L2 | heap-writes |
+| 0x646880 | `CTaskSimpleCarShuffle::GetTaskType` | L2 | L2 | none |
+| 0x646890 | `CTaskSimpleCarShuffle::Destructor` | L2 | L2 | heap-writes |
 | 0x646900 | `CTaskSimpleCarShuffle::MakeAbortable` | L3-batch | L2 | ax-al-return,heap-writes |
-| 0x6469F0 | `CTaskSimpleCarWaitToSlowDown::GetTaskType` | L3-batch | L2 | none |
-| 0x646A00 | `CTaskSimpleCarWaitToSlowDown::Destructor` | L3-batch | L2 | heap-writes |
-| 0x646A60 | `CTaskSimpleCarWaitToSlowDown::MakeAbortable` | L3-batch | L2 | ax-al-return,heap-writes |
-| 0x646AB0 | `CTaskSimpleCarWaitToSlowDown::SetPedPosition` | L3-batch | L2 | ax-al-return |
+| 0x6469F0 | `CTaskSimpleCarWaitToSlowDown::GetTaskType` | L2 | L2 | none |
+| 0x646A00 | `CTaskSimpleCarWaitToSlowDown::Destructor` | L2 | L2 | heap-writes |
+| 0x646A60 | `CTaskSimpleCarWaitToSlowDown::MakeAbortable` | L2 | L2 | ax-al-return,heap-writes |
+| 0x646AB0 | `CTaskSimpleCarWaitToSlowDown::SetPedPosition` | L2 | L2 | ax-al-return |
 | 0x646B70 | `CTaskSimpleCarWaitForDoorNotToBeInUse::Constructor` | L3-batch | L2 | heap-writes |
 | 0x646BE0 | `CTaskSimpleCarWaitForDoorNotToBeInUse::GetTaskType` | L3-batch | L2 | none |
 | 0x646BF0 | `CTaskSimpleCarWaitForDoorNotToBeInUse::MakeAbortable` | L3-batch | L2 | ax-al-return |
@@ -652,11 +622,11 @@ SA_UNVERIFIED=ai7-3 LANE=$LANE tools/e2e/port-l2.sh batch:ai7-3 $SA_ROOT/target/
 | 0x646EC0 | `CTaskSimpleCarGoToPointNearDoorUntilDoorNotInUse::Clone` | L3-batch | L2 | none |
 | 0x647060 | `CTaskSimpleCarSetPedInAsPassenger::GetTaskType` | L3-batch | L2 | none |
 | 0x647070 | `CTaskSimpleCarSetPedInAsPassenger::MakeAbortable` | L3-batch | L2 | ax-al-return |
-| 0x647150 | `CTaskSimpleCarSetPedInAsDriver::GetTaskType` | L3-batch | L2 | none |
+| 0x647150 | `CTaskSimpleCarSetPedInAsDriver::GetTaskType` | L2 | L2 | none |
 | 0x647160 | `CTaskSimpleCarSetPedInAsDriver::MakeAbortable` | L3-batch | L2 | ax-al-return |
-| 0x6471D0 | `CTaskSimpleCarGetOut::Constructor` | L3-batch | L2 | heap-writes |
-| 0x647250 | `CTaskSimpleCarGetOut::GetTaskType` | L3-batch | L2 | none |
-| 0x647260 | `CTaskSimpleCarGetOut::Destructor` | L3-batch | L2 | heap-writes |
+| 0x6471D0 | `CTaskSimpleCarGetOut::Constructor` | L2 | L2 | heap-writes |
+| 0x647250 | `CTaskSimpleCarGetOut::GetTaskType` | L2 | L2 | none |
+| 0x647260 | `CTaskSimpleCarGetOut::Destructor` | L2 | L2 | heap-writes |
 | 0x6472D0 | `CTaskSimpleCarGetOut::MakeAbortable` | L3-batch | L2 | ax-al-return,heap-writes |
 | 0x647490 | `CTaskSimpleCarJumpOut::Destructor` | L3-batch | L2 | heap-writes |
 | 0x647500 | `CTaskSimpleCarJumpOut::GetTaskType` | L3-batch | L2 | none |
@@ -664,23 +634,23 @@ SA_UNVERIFIED=ai7-3 LANE=$LANE tools/e2e/port-l2.sh batch:ai7-3 $SA_ROOT/target/
 | 0x647770 | `vt_86ee94::GetTaskType` | L3-batch | L2 | none |
 | 0x647780 | `vt_86ee94::MakeAbortable` | L3-batch | L2 | ax-al-return |
 | 0x647940 | `CTaskSimpleCarSetPedOut::MakeAbortable` | L3-batch | L2 | ax-al-return |
-| 0x648060 | `CTaskSimpleCarSlowDragPedOut::GetTaskType` | L3-batch | L2 | none |
-| 0x648070 | `CTaskSimpleCarSlowDragPedOut::Destructor` | L3-batch | L2 | heap-writes |
-| 0x6480E0 | `CTaskSimpleCarSlowDragPedOut::SetPedPosition` | L3-batch | L2 | ax-al-return |
-| 0x6482B0 | `CTaskSimpleCarSlowBeDraggedOut::GetTaskType` | L3-batch | L2 | none |
-| 0x6482C0 | `CTaskSimpleCarSlowBeDraggedOut::Destructor` | L3-batch | L2 | heap-writes |
-| 0x6483A0 | `CTaskSimpleCarSlowBeDraggedOut::FinishAnimCarSlowBeDraggedOutCB` | L3-batch | L2 | heap-writes |
-| 0x6483B0 | `CTaskSimpleCarSetPedSlowDraggedOut::Constructor` | L3-batch | L2 | heap-writes |
+| 0x648060 | `CTaskSimpleCarSlowDragPedOut::GetTaskType` | L2 | L2 | none |
+| 0x648070 | `CTaskSimpleCarSlowDragPedOut::Destructor` | L2 | L2 | heap-writes |
+| 0x6480E0 | `CTaskSimpleCarSlowDragPedOut::SetPedPosition` | L2 | L2 | ax-al-return |
+| 0x6482B0 | `CTaskSimpleCarSlowBeDraggedOut::GetTaskType` | L2 | L2 | none |
+| 0x6482C0 | `CTaskSimpleCarSlowBeDraggedOut::Destructor` | L2 | L2 | heap-writes |
+| 0x6483A0 | `CTaskSimpleCarSlowBeDraggedOut::FinishAnimCarSlowBeDraggedOutCB` | L2 | L2 | heap-writes |
+| 0x6483B0 | `CTaskSimpleCarSetPedSlowDraggedOut::Constructor` | L2 | L2 | heap-writes |
 | 0x648410 | `CTaskSimpleCarSetPedSlowDraggedOut::GetTaskType` | L3-batch | L2 | none |
 | 0x648420 | `CTaskSimpleCarSetPedSlowDraggedOut::MakeAbortable` | L3-batch | L2 | ax-al-return |
-| 0x648430 | `CTaskSimpleCarSetPedSlowDraggedOut::Destructor` | L3-batch | L2 | heap-writes |
-| 0x648490 | `CTaskComplexCarSlowBeDraggedOut::Constructor` | L3-batch | L2 | heap-writes |
-| 0x648500 | `CTaskComplexCarSlowBeDraggedOut::GetTaskType` | L3-batch | L2 | none |
-| 0x648510 | `CTaskComplexCarSlowBeDraggedOut::ControlSubTask` | L3-batch | L2 | none |
-| 0x648620 | `CTaskComplexCarSlowBeDraggedOutAndStandUp::0x648620` | L3-batch | L2 | heap-writes |
-| 0x648680 | `CTaskComplexCarSlowBeDraggedOutAndStandUp::GetTaskType` | L3-batch | L2 | none |
-| 0x648690 | `CTaskComplexCarSlowBeDraggedOutAndStandUp::0x648690` | L3-batch | L2 | heap-writes |
-| 0x648B80 | `CTaskComplexCarSlowBeDraggedOutAndStandUp::ControlSubTask` | L3-batch | L2 | none |
+| 0x648430 | `CTaskSimpleCarSetPedSlowDraggedOut::Destructor` | L2 | L2 | heap-writes |
+| 0x648490 | `CTaskComplexCarSlowBeDraggedOut::Constructor` | L2 | L2 | heap-writes |
+| 0x648500 | `CTaskComplexCarSlowBeDraggedOut::GetTaskType` | L2 | L2 | none |
+| 0x648510 | `CTaskComplexCarSlowBeDraggedOut::ControlSubTask` | L2 | L2 | none |
+| 0x648620 | `CTaskComplexCarSlowBeDraggedOutAndStandUp::0x648620` | L2 | L2 | heap-writes |
+| 0x648680 | `CTaskComplexCarSlowBeDraggedOutAndStandUp::GetTaskType` | L2 | L2 | none |
+| 0x648690 | `CTaskComplexCarSlowBeDraggedOutAndStandUp::0x648690` | L2 | L2 | heap-writes |
+| 0x648B80 | `CTaskComplexCarSlowBeDraggedOutAndStandUp::ControlSubTask` | L2 | L2 | none |
 | 0x648D60 | `CTaskSimpleCarFallOut::Constructor` | L3-batch | L2 | heap-writes |
 | 0x648DD0 | `CTaskSimpleCarFallOut::GetTaskType` | L3-batch | L2 | none |
 | 0x648DE0 | `CTaskSimpleCarFallOut::Destructor` | L3-batch | L2 | heap-writes |
@@ -713,19 +683,19 @@ SA_UNVERIFIED=ai7-4 LANE=$LANE tools/e2e/port-l2.sh batch:ai7-4 $SA_ROOT/target/
 | 0x64A040 | `CTaskSimpleCarSlowBeDraggedOut::Clone` | L3-batch | L2 | none |
 | 0x64A0B0 | `CTaskSimpleCarSetPedSlowDraggedOut::Clone` | L3-batch | L2 | none |
 | 0x64A120 | `CTaskComplexCarSlowBeDraggedOut::Clone` | L3-batch | L2 | none |
-| 0x64A190 | `CTaskComplexCarSlowBeDraggedOutAndStandUp::Clone` | L3-batch | L2 | none |
+| 0x64A190 | `CTaskComplexCarSlowBeDraggedOutAndStandUp::Clone` | L2 | L2 | none |
 | 0x64A280 | `CTaskSimpleCarFallOut::Clone` | L3-batch | L2 | none |
 | 0x64B5B0 | `CTaskSimpleCarSetPedInAsPassenger::~CTaskSimpleCarSetPedInAsPassenger` | L3-batch | L2 | none |
-| 0x64B930 | `CTaskSimpleCarSetPedInAsDriver::~CTaskSimpleCarSetPedInAsDriver` | L3-batch | L2 | none |
+| 0x64B930 | `CTaskSimpleCarSetPedInAsDriver::~CTaskSimpleCarSetPedInAsDriver` | L2 | L2 | none |
 | 0x64BF50 | `vt_86ee94::Destructor` | L3-batch | L2 | none |
-| 0x64BF90 | `CTaskSimpleCarSlowDragPedOut::~CTaskSimpleCarSlowDragPedOut` | L3-batch | L2 | none |
-| 0x64C930 | `CTaskComplexCarSlowBeDraggedOutAndStandUp::~CTaskComplexCarSlowBeDraggedOutAndStandUp` | L3-batch | L2 | none |
+| 0x64BF90 | `CTaskSimpleCarSlowDragPedOut::~CTaskSimpleCarSlowDragPedOut` | L2 | L2 | none |
+| 0x64C930 | `CTaskComplexCarSlowBeDraggedOutAndStandUp::~CTaskComplexCarSlowBeDraggedOutAndStandUp` | L2 | L2 | none |
 | 0x64CC40 | `CTaskSimpleCarFallOut::~CTaskSimpleCarFallOut` | L3-batch | L2 | none |
 | 0x64D220 | `CTaskSimpleCarJumpOut::Clone` | L3-batch | L2 | none |
-| 0x64E2A0 | `CTaskComplexCarSlowBeDraggedOut::~CTaskComplexCarSlowBeDraggedOut` | L3-batch | L2 | none |
+| 0x64E2A0 | `CTaskComplexCarSlowBeDraggedOut::~CTaskComplexCarSlowBeDraggedOut` | L2 | L2 | none |
 | 0x659230 | `vt_86f544::GetTaskType` | L3-batch | L2 | none |
 | 0x659390 | `CTaskComplexDriveFireTruck::GetTaskType` | L3-batch | L2 | none |
-| 0x6593A0 | `CTaskComplexDriveFireTruck::~CTaskComplexDriveFireTruck` | L3-batch | L2 | heap-writes |
+| 0x6593A0 | `CTaskComplexDriveFireTruck::~CTaskComplexDriveFireTruck` | L2 | L2 | heap-writes |
 | 0x659B60 | `vt_86f544::Clone` | L3-batch | L2 | none |
 | 0x659BC0 | `CTaskComplexDriveFireTruck::Clone` | L3-batch | L2 | none |
 | 0x65A0F0 | `vt_86f544::Destructor` | L3-batch | L2 | none |
@@ -734,7 +704,7 @@ SA_UNVERIFIED=ai7-4 LANE=$LANE tools/e2e/port-l2.sh batch:ai7-4 $SA_ROOT/target/
 | 0x65B050 | `vt_86f544::CreateFirstSubTask` | L3-batch | L2 | none |
 | 0x65B070 | `vt_86f544::ControlSubTask` | L3-batch | L2 | none |
 | 0x691A40 | `vt_870b98::GetTaskType` | L3-batch | L2 | none |
-| 0x6924B0 | `CTaskSimpleDuck::ForceStopMove` | L3-batch | L2 | heap-writes |
+| 0x6924B0 | `CTaskSimpleDuck::ForceStopMove` | L2 | L2 | heap-writes |
 | 0x6926E0 | `vt_870bec::GetTaskType` | L3-batch | L2 | none |
 | 0x692700 | `vt_870bec::MakeAbortable` | L3-batch | L2 | ax-al-return,heap-writes |
 | 0x692C80 | `vt_870b98::Clone` | L3-batch | L2 | none |
@@ -1640,21 +1610,6 @@ SA_UNVERIFIED=boot-render-2 LANE=$LANE tools/e2e/port-l2.sh batch:boot-render-2 
 | 0x5D84C0 | `FUN_005d84c0` | L3-batch | L2 | none |
 | 0x5D8590 | `FUN_005d8590` | L3-batch | L2 | heap-writes |
 | 0x5D9900 | `CCustomCarEnvMapPipeline::CustomPipeRenderCB` | L3-batch | L2 | heap-writes |
-
-## boot-rw-1
-
-1 hooks in sa-rwcore; hazards: heap-writes (1); recordings calling them: grove-walk (1), pause-restart (1).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh boot-rw-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=boot-rw-1 LANE=$LANE tools/e2e/port-l2.sh batch:boot-rw-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag boot-rw-1
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x4C9990 | `_rxD3D9DefaultDestroyInstanceCallback` | L3-batch | L2 | heap-writes |
 
 ## carjack-1
 
@@ -2637,7 +2592,7 @@ SA_UNVERIFIED=intro-ai-2 LANE=$LANE tools/e2e/port-l2.sh batch:intro-ai-2 $SA_RO
 | address | name | status | route | hazards |
 |---|---|---|---|---|
 | 0x4B97B0 | `CEventHandler::ComputeReviveResponse` | L3-batch | L2 | none |
-| 0x4B9AA0 | `CEventHandler::ComputeSexyVehicleResponse` | L3-batch | L2 | none |
+| 0x4B9AA0 | `CEventHandler::ComputeSexyVehicleResponse` | L2 | L2 | none |
 | 0x4B9C90 | `CEventHandler::ComputePedThreatBadlyLitResponse` | L3-batch | L2 | none |
 | 0x4B9D40 | `CEventHandler::ComputePedSoundQuietResponse` | L3-batch | L2 | none |
 | 0x4B9DD0 | `CEventHandler::ComputePedFriendResponse` | L3-batch | L2 | none |
@@ -3044,23 +2999,23 @@ SA_UNVERIFIED=mvpa-ai-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpa-ai-1 $SA_ROOT
 | address | name | status | route | hazards |
 |---|---|---|---|---|
 | 0x4B0D00 | `FUN_004b0d00` | L2 | L2 | heap-writes,preserved-regs |
-| 0x5E95B0 | `CPedTaskPair::Flush` | L3-batch | L2 | heap-writes |
+| 0x5E95B0 | `CPedTaskPair::Flush` | L2 | L2 | heap-writes |
 | 0x5F1750 | `CPedGeometryAnalyser::ComputeEntityBoundingBoxSegmentPlanesUncached` | L3-batch | L2 | none |
-| 0x5F1B70 | `CPedGeometryAnalyser::CanPedTargetPoint` | L3-batch | L2 | ax-al-return |
-| 0x5F1C40 | `CPedGeometryAnalyser::CanPedTargetPed` | L3-batch | L2 | none |
+| 0x5F1B70 | `CPedGeometryAnalyser::CanPedTargetPoint` | L2 | L2 | ax-al-return |
+| 0x5F1C40 | `CPedGeometryAnalyser::CanPedTargetPed` | L2 | L2 | none |
 | 0x5F3AC0 | `CPedGeometryAnalyser::ComputeEntityHitSide-3` | L3-batch | L2 | none |
 | 0x5F3BC0 | `CPedGeometryAnalyser::ComputeEntityHitSide-1` | L3-batch | L2 | none |
 | 0x5F6110 | `CPedGeometryAnalyser::ComputeRouteRoundEntityBoundingBox-Entity` | L3-batch | L2 | none |
 | 0x5F80D0 | `CPedGroupMembership::RemoveMember-ByMemIdx` | L3-batch | L2 | heap-writes |
 | 0x5FF030 | `FUN_005ff030` | L3-batch | L2 | heap-writes |
-| 0x5FF1B0 | `FUN_005ff1b0` | L3-batch | L2 | heap-writes |
+| 0x5FF1B0 | `FUN_005ff1b0` | L2 | L2 | heap-writes |
 | 0x5FF3A0 | `FUN_005ff3a0` | L3-batch | L2 | heap-writes |
 | 0x61A390 | `FUN_0061a390` | L2 | L2 | heap-writes,preserved-regs |
-| 0x61A500 | `CTaskPool::New` | L3-batch | L2 | heap-writes |
-| 0x61A5A0 | `CTask::operator new` | L3-batch | L2 | heap-writes |
-| 0x62F360 | `FUN_0062f360` | L3-batch | L2 | heap-writes |
+| 0x61A500 | `CTaskPool::New` | L2 | L2 | heap-writes |
+| 0x61A5A0 | `CTask::operator new` | L2 | L2 | heap-writes |
+| 0x62F360 | `FUN_0062f360` | L2 | L2 | heap-writes |
 | 0x633EF0 | `CTaskSimpleIKLookAt::Destructor-` | L3-batch | L2 | heap-writes |
-| 0x63CB50 | `FUN_0063cb50` | L3-batch | L2 | heap-writes |
+| 0x63CB50 | `FUN_0063cb50` | L2 | L2 | heap-writes |
 
 ## mvpa-ai-2
 
@@ -3076,63 +3031,27 @@ SA_UNVERIFIED=mvpa-ai-2 LANE=$LANE tools/e2e/port-l2.sh batch:mvpa-ai-2 $SA_ROOT
 | address | name | status | route | hazards |
 |---|---|---|---|---|
 | 0x46AF20 | `CEntitySeekPosCalculatorStandard::ComputeEntitySeekPos` | L3-batch | L2 | heap-writes |
-| 0x4ACA70 | `FUN_004aca70` | L3-batch | L2 | heap-writes |
-| 0x4ACFF0 | `FUN_004acff0` | L3-batch | L2 | heap-writes |
+| 0x4ACA70 | `FUN_004aca70` | L2 | L2 | heap-writes |
+| 0x4ACFF0 | `FUN_004acff0` | L2 | L2 | heap-writes |
 | 0x4AE3C0 | `FUN_004ae3c0` | L3-batch | L2 | heap-writes |
 | 0x4AE7A0 | `FUN_004ae7a0` | L3-batch | L2 | heap-writes |
-| 0x4B2470 | `FUN_004b2470` | L3-batch | L2 | heap-writes |
+| 0x4B2470 | `FUN_004b2470` | L2 | L2 | heap-writes |
 | 0x4B8B90 | `CEventHandlerHistory::IsRespondingToEvent` | L3-batch | L2 | ax-al-return |
-| 0x4B8CC0 | `CEventHandler::GetCurrentEventType` | L3-batch | L2 | none |
-| 0x5F1450 | `CPedGeometryAnalyser::ComputeEntityHitSide-2` | L3-batch | L2 | none |
+| 0x4B8CC0 | `CEventHandler::GetCurrentEventType` | L2 | L2 | none |
+| 0x5F1450 | `CPedGeometryAnalyser::ComputeEntityHitSide-2` | L2 | L2 | none |
 | 0x5F3660 | `CPedGeometryAnalyser::ComputeEntityBoundingBoxPlanes` | L3-batch | L2 | none |
-| 0x61A790 | `CTaskSimpleAnim::MakeAbortable` | L3-batch | L2 | heap-writes,ax-al-return |
+| 0x61A790 | `CTaskSimpleAnim::MakeAbortable` | L2 | L2 | heap-writes,ax-al-return |
 | 0x61A950 | `CTaskSimpleRunAnim::StartAnim` | L3-batch | L2 | heap-writes |
 | 0x61ABE0 | `CTaskSimpleRunTimedAnim::Constructor-2` | L3-batch | L2 | heap-writes |
 | 0x61AC50 | `CTaskSimpleRunTimedAnim::StartAnim` | L3-batch | L2 | heap-writes |
 | 0x61BBE0 | `CTaskSimpleRunTimedAnim::ProcessPed` | L3-batch | L2 | heap-writes,ax-al-return |
-| 0x63A040 | `FUN_0063a040` | L3-batch | L2 | heap-writes |
-| 0x63C340 | `CTaskSimpleCarDrive::Constructor` | L3-batch | L2 | heap-writes |
-| 0x63CA40 | `CTaskComplexCarDrive::Destructor` | L3-batch | L2 | heap-writes |
-| 0x642E70 | `CTaskSimpleCarDrive::ProcessBopping` | L3-batch | L2 | heap-writes |
-| 0x654C80 | `CTaskComplexWalkRoundBuildingAttempt::CreateSubTask` | L3-batch | L2 | heap-writes |
-| 0x669D20 | `thunk_FUN_0040387c` | L3-batch | L2 | heap-writes |
-| 0x6946A0 | `CEntitySeekPosCalculatorXYOffset::ComputeEntitySeekPos` | L3-batch | L2 | none |
-
-## mvpa-core-1
-
-5 hooks in sa-core; hazards: ax-al-return (5); recordings calling them: grove-walk (5), pause-restart (5).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh mvpa-core-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=mvpa-core-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpa-core-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpa-core-1
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x53BC80 | `CGame::Initialise` | L3-batch | L3-only | ax-al-return |
-| 0x5BA1A0 | `CGame::Init2` | L3-batch | L3-only | ax-al-return |
-| 0x5BA400 | `CGame::Init3` | L3-batch | L3-only | ax-al-return |
-| 0x5BF840 | `CGame::Init1` | L3-batch | L3-only | ax-al-return |
-| 0x5BFA90 | `CGame::InitialiseCoreDataAfterRW` | L3-batch | L3-only | ax-al-return |
-
-## mvpa-core-2
-
-3 hooks in sa-core; hazards: uninit-locals (1); recordings calling them: grove-walk (3), pause-restart (3).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh mvpa-core-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=mvpa-core-2 LANE=$LANE tools/e2e/port-l2.sh batch:mvpa-core-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpa-core-2
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x53BCF0 | `CGame::ReInitGameObjectVariables` | L3-batch | L3-only | none |
-| 0x53C550 | `CGame::ShutDownForRestart` | L3-batch | L3-only | none |
-| 0x53C680 | `CGame::InitialiseWhenRestarting` | L3-batch | L3-only | uninit-locals |
+| 0x63A040 | `FUN_0063a040` | L2 | L2 | heap-writes |
+| 0x63C340 | `CTaskSimpleCarDrive::Constructor` | L2 | L2 | heap-writes |
+| 0x63CA40 | `CTaskComplexCarDrive::Destructor` | L2 | L2 | heap-writes |
+| 0x642E70 | `CTaskSimpleCarDrive::ProcessBopping` | L2 | L2 | heap-writes |
+| 0x654C80 | `CTaskComplexWalkRoundBuildingAttempt::CreateSubTask` | L2 | L2 | heap-writes |
+| 0x669D20 | `thunk_FUN_0040387c` | L2 | L2 | heap-writes |
+| 0x6946A0 | `CEntitySeekPosCalculatorXYOffset::ComputeEntitySeekPos` | L2 | L2 | none |
 
 ## mvpa-fx-1
 
@@ -3152,21 +3071,6 @@ SA_UNVERIFIED=mvpa-fx-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpa-fx-1 $SA_ROOT
 | 0x4A5AA0 | `FxInfoWind_c::GetValue` | L3-batch | L2 | heap-writes |
 | 0x4A5F30 | `FxInfoColour_c::GetValue` | L3-batch | L2 | heap-writes |
 | 0x4A6030 | `FxInfoSize_c::GetValue` | L3-batch | L2 | heap-writes |
-
-## mvpa-math-1
-
-1 hooks in sa-world; hazards: none; recordings calling them: grove-walk (1), pause-restart (1).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh mvpa-math-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=mvpa-math-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpa-math-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpa-math-1
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x4EEA80 | `approxEqual` | L3-batch | L2 | none |
 
 ## mvpa-render-1
 
@@ -3217,7 +3121,7 @@ SA_UNVERIFIED=mvpa-render-3 LANE=$LANE tools/e2e/port-l2.sh batch:mvpa-render-3 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
 | 0x4A1600 | `Fx_c::RenderEnd` | L3-batch | L2 | none |
-| 0x5D8BE0 | `CustomEnvMapPipeMaterialData::FromBuffer` | L3-batch | L2 | heap-writes |
+| 0x5D8BE0 | `CustomEnvMapPipeMaterialData::FromBuffer` | L2 | L2 | heap-writes |
 
 ## mvpa-world-1
 
@@ -3233,44 +3137,13 @@ SA_UNVERIFIED=mvpa-world-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpa-world-1 $S
 | address | name | status | route | hazards |
 |---|---|---|---|---|
 | 0x456E60 | `CPickups::ReInit` | L3-batch | L2 | heap-writes |
-| 0x533D30 | `CEntity::CreateRwObject` | L3-batch | L2 | heap-writes |
+| 0x533D30 | `CEntity::CreateRwObject` | L2 | L2 | heap-writes |
 | 0x564360 | `CWorld::ClearForRestart` | L3-batch | L2 | heap-writes |
 | 0x5911A0 | `FurnitureManager_c::Exit` | L3-batch | L2 | heap-writes |
 | 0x598010 | `InteriorManager_c::Exit` | L3-batch | L2 | heap-writes |
-| 0x59EAC0 | `CDummyObject::CreateObject` | L3-batch | L2 | heap-writes |
-| 0x59F180 | `CObject::Render` | L3-batch | L2 | none |
+| 0x59EAC0 | `CDummyObject::CreateObject` | L2 | L2 | heap-writes |
+| 0x59F180 | `CObject::Render` | L2 | L2 | none |
 | 0x6E3FD0 | `WaterCreatureManager_c::Exit` | L3-batch | L2 | heap-writes |
-
-## mvpa-world-2
-
-2 hooks in sa-world; hazards: stack-residue (2), x87-transcendental (1); recordings calling them: grove-walk (2), pause-restart (2).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh mvpa-world-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=mvpa-world-2 LANE=$LANE tools/e2e/port-l2.sh batch:mvpa-world-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpa-world-2
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x43F4B0 | `CEntryExitManager::FindNearestEntryExit` | L2 | L2 | x87-transcendental,stack-residue |
-| 0x5696C0 | `CWorld::FindGroundZFor3DCoord` | L3-batch | L2 | stack-residue |
-
-## mvpa-world-3
-
-1 hooks in sa-world; hazards: heap-writes (1); recordings calling them: grove-walk (1), pause-restart (1).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh mvpa-world-3 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=mvpa-world-3 LANE=$LANE tools/e2e/port-l2.sh batch:mvpa-world-3 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpa-world-3
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x41B7C0 | `CPointRoute::operator new` | L3-batch | L2 | heap-writes |
 
 ## mvpb-ai-1
 
@@ -3285,8 +3158,8 @@ SA_UNVERIFIED=mvpb-ai-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpb-ai-1 $SA_ROOT
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
-| 0x4AECD0 | `FUN_004aecd0` | L3-batch | L2 | heap-writes |
-| 0x4AED60 | `FUN_004aed60` | L3-batch | L2 | heap-writes |
+| 0x4AECD0 | `FUN_004aecd0` | L2 | L2 | heap-writes |
+| 0x4AED60 | `FUN_004aed60` | L2 | L2 | heap-writes |
 | 0x683840 | `FUN_00683840` | L3-batch | L2 | none |
 
 ## mvpb-anim-1
@@ -3305,27 +3178,6 @@ SA_UNVERIFIED=mvpb-anim-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpb-anim-1 $SA_
 | 0x5B02A0 | `CCutsceneMgr::CreateCutsceneObject` | L3-batch | L2 | heap-writes |
 | 0x5B04D0 | `CCutsceneMgr::FinishCutscene` | L3-batch | L2 | heap-writes |
 
-## mvpb-core-1
-
-7 hooks in sa-core; hazards: uninit-locals (1), x87-transcendental (3); recordings calling them: grove-walk (7), pause-restart (7).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh mvpb-core-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=mvpb-core-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpb-core-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpb-core-1
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x53BEE0 | `CGame::Process` | L3-batch | L3-only | none |
-| 0x53D7A0 | `App::DoRWStuffStartOfFrame_Horizon` | L3-batch | L3-only | x87-transcendental |
-| 0x53DF40 | `Game::RenderScene` | L3-batch | L3-only | none |
-| 0x53E170 | `Game::RenderEffects` | L3-batch | L3-only | none |
-| 0x53E230 | `Game::Render2dStuff` | L3-batch | L3-only | uninit-locals |
-| 0x53E770 | `Game::FrontendIdle` | L3-batch | L3-only | x87-transcendental |
-| 0x53E920 | `Game::Idle` | L3-batch | L3-only | x87-transcendental |
-
 ## mvpb-render-1
 
 20 hooks in sa-render; hazards: heap-writes (8), x87-transcendental (2); recordings calling them: grove-walk (8), pause-restart (20).
@@ -3343,9 +3195,9 @@ SA_UNVERIFIED=mvpb-render-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpb-render-1 
 | 0x556070 | `CRope::CreateHookObjectForRope` | L3-batch | L2 | heap-writes |
 | 0x558D70 | `CRopes::Update` | L3-batch | L3-only | none |
 | 0x5DAB00 | `CGrassRenderer::GenPointInTriangle` | L3-batch | L2 | none |
-| 0x5DABB0 | `CGrassRenderer::SetCurrentScanCode` | L3-batch | L2 | none |
-| 0x5DB310 | `CPlantMgr::UpdateAmbientColor` | L3-batch | L2 | none |
-| 0x5DB3D0 | `CPlantMgr::CalculateWindBending` | L3-batch | L2 | x87-transcendental |
+| 0x5DABB0 | `CGrassRenderer::SetCurrentScanCode` | L2 | L2 | none |
+| 0x5DB310 | `CPlantMgr::UpdateAmbientColor` | L2 | L2 | none |
+| 0x5DB3D0 | `CPlantMgr::CalculateWindBending` | L2 | L2 | x87-transcendental |
 | 0x5DB650 | `CPlantMgr::SetPlantFriendlyFlagInAtomicMI` | L3-batch | L2 | heap-writes |
 | 0x5DB6D0 | `CPlantLocTri::Release` | L3-batch | L2 | heap-writes |
 | 0x5DB7D0 | `CPlantColEntEntry::AddEntry` | L3-batch | L2 | heap-writes |
@@ -3374,9 +3226,9 @@ SA_UNVERIFIED=mvpb-veh-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpb-veh-1 $SA_RO
 | address | name | status | route | hazards |
 |---|---|---|---|---|
 | 0x650280 | `CCarEnterExit::SetPedInCarDirect` | L3-batch | L2 | heap-writes,entry-protection-read |
-| 0x6CCAA0 | `CPlane::AreWeInNoPlaneZone` | L3-batch | L2 | x87-transcendental |
+| 0x6CCAA0 | `CPlane::AreWeInNoPlaneZone` | L2 | L2 | x87-transcendental |
 | 0x6D1AA0 | `CVehicle::SetupPassenger` | L3-batch | L2 | heap-writes |
-| 0x6D30E0 | `CVehicle::SetVehicleUpgradeFlags` | L3-batch | L2 | heap-writes |
+| 0x6D30E0 | `CVehicle::SetVehicleUpgradeFlags` | L2 | L2 | heap-writes |
 | 0x6F2D30 | `CSpecialPlateHandler::Find` | L3-batch | L2 | none |
 | 0x6F5BA0 | `CTrain::FindMaximumSpeedToStopAtStations` | L3-batch | L2 | none |
 
@@ -3394,7 +3246,7 @@ SA_UNVERIFIED=mvpb-veh-2 LANE=$LANE tools/e2e/port-l2.sh batch:mvpb-veh-2 $SA_RO
 | address | name | status | route | hazards |
 |---|---|---|---|---|
 | 0x6ADFF0 | `CAutomobile::ScanForCrimes` | L3-batch | L2 | none |
-| 0x6D0530 | `cTransmission::CalculateGearForSimpleCar` | L3-batch | L2 | none |
+| 0x6D0530 | `cTransmission::CalculateGearForSimpleCar` | L2 | L2 | none |
 | 0x6DBBB0 | `CVehicle::SetTransmissionRotation` | L3-batch | L2 | x87-transcendental |
 | 0x6F55C0 | `CTrain::Render` | L3-batch | L2 | none |
 
@@ -3464,21 +3316,6 @@ SA_UNVERIFIED=mvpb-world-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpb-world-1 $S
 | 0x564A20 | `CWorld::FindObjectsInRange` | L3-batch | L2 | none |
 | 0x564C70 | `CWorld::FindObjectsOfTypeInRange` | L3-batch | L2 | none |
 
-## mvpb-world-2
-
-1 hooks in sa-world; hazards: heap-writes (1); recordings calling them: pause-restart (1).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh mvpb-world-2 $SA_ROOT/target/e2e/corpus/pause-restart.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=mvpb-world-2 LANE=$LANE tools/e2e/port-l2.sh batch:mvpb-world-2 $SA_ROOT/target/e2e/corpus/pause-restart.sarec --runs "plain l2 rust" --tag mvpb-world-2
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x5647F0 | `CWorld::ProcessAttachedEntities` | L3-batch | L2 | heap-writes |
-
 ## mvpb-world-5
 
 3 hooks in sa-world; hazards: heap-writes (3), x87-transcendental (1); recordings calling them: grove-walk (1), pause-restart (3).
@@ -3493,7 +3330,7 @@ SA_UNVERIFIED=mvpb-world-5 LANE=$LANE tools/e2e/port-l2.sh batch:mvpb-world-5 $S
 | address | name | status | route | hazards |
 |---|---|---|---|---|
 | 0x55BC50 | `CStats::UpdateRespectStat` | L3-batch | L2 | heap-writes |
-| 0x55BF20 | `CStats::UpdateSexAppealStat` | L3-batch | L2 | x87-transcendental,heap-writes |
+| 0x55BF20 | `CStats::UpdateSexAppealStat` | L2 | L2 | x87-transcendental,heap-writes |
 | 0x55C180 | `CStats::IncrementStat` | L3-batch | L2 | heap-writes |
 
 ## mvpc-ai-1
@@ -3514,11 +3351,11 @@ SA_UNVERIFIED=mvpc-ai-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpc-ai-1 $SA_ROOT
 | 0x48E930 | `thunk_FUN_0061a6f0` | L3-batch | L2 | heap-writes |
 | 0x4B7CD0 | `CInformGroupEventQueue::Add` | L3-batch | L2 | heap-writes |
 | 0x4B96D0 | `CEventHandler::ComputeVehiclePotentialPassiveCollisionResponse` | L3-batch | L2 | heap-writes,stack-residue |
-| 0x4BA7C0 | `CEventHandler::ComputeScriptCommandResponse` | L3-batch | L2 | heap-writes |
-| 0x4BC600 | `CEventHandler::SetEventResponseTask` | L3-batch | L2 | heap-writes |
-| 0x4C3870 | `CEventHandler::ComputeEventResponseTask-0` | L3-batch | L2 | heap-writes |
+| 0x4BA7C0 | `CEventHandler::ComputeScriptCommandResponse` | L2 | L2 | heap-writes |
+| 0x4BC600 | `CEventHandler::SetEventResponseTask` | L2 | L2 | heap-writes |
+| 0x4C3870 | `CEventHandler::ComputeEventResponseTask-0` | L2 | L2 | heap-writes |
 | 0x4C7410 | `FUN_004c7410` | L3-batch | L2 | heap-writes |
-| 0x4C94C0 | `FUN_004c94c0` | L3-batch | L2 | heap-writes |
+| 0x4C94C0 | `FUN_004c94c0` | L2 | L2 | heap-writes |
 | 0x4CECF0 | `CAnimBlendAssociation` | L3-batch | L2 | heap-writes |
 | 0x4CEFA0 | `CAnimBlendAssociation` | L3-batch | L2 | heap-writes |
 | 0x5F3650 | `CPedGeometryAnalyser::ComputeEntityBoundingBoxCorners` | L3-batch | L2 | none |
@@ -3537,7 +3374,7 @@ SA_UNVERIFIED=mvpc-ai-2 LANE=$LANE tools/e2e/port-l2.sh batch:mvpc-ai-2 $SA_ROOT
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
-| 0x6034B0 | `FUN_006034b0` | L3-batch | L2 | heap-writes,stack-residue |
+| 0x6034B0 | `FUN_006034b0` | L2 | L2 | heap-writes,stack-residue |
 | 0x606BA0 | `FUN_00606ba0` | L3-batch | L2 | heap-writes |
 | 0x607560 | `FUN_00607560` | L3-batch | L2 | heap-writes,stack-residue |
 | 0x607A90 | `FUN_00607a90` | L3-batch | L2 | uninit-locals,heap-writes |
@@ -3557,13 +3394,13 @@ SA_UNVERIFIED=mvpc-ai-3 LANE=$LANE tools/e2e/port-l2.sh batch:mvpc-ai-3 $SA_ROOT
 |---|---|---|---|---|
 | 0x48E440 | `CTaskSimpleSay::ProcessPed` | L3-batch | L2 | heap-writes |
 | 0x5F3C20 | `CPedGeometryAnalyser::ComputeEntityBoundingSphere` | L3-batch | L2 | x87-transcendental,stack-residue |
-| 0x603BF0 | `FUN_00603bf0` | L3-batch | L2 | heap-writes,stack-residue |
+| 0x603BF0 | `FUN_00603bf0` | L2 | L2 | heap-writes,stack-residue |
 | 0x61B6D0 | `CTaskSimpleRunAnim::Clone` | L3-batch | L2 | heap-writes |
-| 0x632C70 | `CTaskComplexSequence::CreateNextSubTask-Internal` | L3-batch | L2 | heap-writes |
+| 0x632C70 | `CTaskComplexSequence::CreateNextSubTask-Internal` | L2 | L2 | heap-writes |
 | 0x633A90 | `CTaskSimpleIKChain::Destructor` | L3-batch | L2 | heap-writes,entry-protection-read |
 | 0x63C940 | `CTaskComplexCarDrive::Constructor_1` | L3-batch | L2 | heap-writes |
-| 0x642760 | `CTaskSimpleCarDrive::StartBopping` | L3-batch | L2 | heap-writes,stack-residue |
-| 0x6428C0 | `CTaskSimpleCarDrive::ProcessHeadBopping` | L3-batch | L2 | x87-transcendental,stack-residue,heap-writes |
+| 0x642760 | `CTaskSimpleCarDrive::StartBopping` | L2 | L2 | heap-writes,stack-residue |
+| 0x6428C0 | `CTaskSimpleCarDrive::ProcessHeadBopping` | L2 | L2 | x87-transcendental,stack-residue,heap-writes |
 | 0x6541B0 | `CTaskComplexWalkRoundCar::Constructor` | L3-batch | L2 | heap-writes,entry-protection-read |
 
 ## mvpc-coll-1
@@ -3580,7 +3417,7 @@ SA_UNVERIFIED=mvpc-coll-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpc-coll-1 $SA_
 | address | name | status | route | hazards |
 |---|---|---|---|---|
 | 0x4140F0 | `CCollision::ProcessLineTriangle` | L3-batch | L2 | stack-residue |
-| 0x417950 | `CCollision::ProcessLineOfSight` | L3-batch | L2 | stack-residue |
+| 0x417950 | `CCollision::ProcessLineOfSight` | L2 | L2 | stack-residue |
 | 0x417BF0 | `CCollision::ProcessVerticalLine` | L3-batch | L2 | stack-residue,uninit-locals |
 
 ## mvpc-fx-1
@@ -3602,12 +3439,12 @@ SA_UNVERIFIED=mvpc-fx-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpc-fx-1 $SA_ROOT
 | 0x4A4A80 | `FxInfoManager_c::ProcessRenderInfo` | L3-batch | L2 | heap-writes |
 | 0x4A5300 | `FxInfoNoise_c::GetValue` | L3-batch | L2 | heap-writes,stack-residue |
 | 0x4A5BB0 | `FxInfoJitter_c::GetValue` | L3-batch | L2 | heap-writes,stack-residue |
-| 0x4A7B00 | `FxInfoManager_c::AddFxInfo` | L3-batch | L2 | heap-writes |
+| 0x4A7B00 | `FxInfoManager_c::AddFxInfo` | L2 | L2 | heap-writes |
 | 0x4A8800 | `FxInterpInfoU255_c::GetVal` | L3-batch | L2 | heap-writes,stack-residue |
 | 0x4A89C0 | `FxInterpInfo32_c::GetVal` | L3-batch | L2 | heap-writes,stack-residue |
-| 0x4A96B0 | `FxManager_c::CreateFxSystem-3` | L3-batch | L2 | heap-writes |
+| 0x4A96B0 | `FxManager_c::CreateFxSystem-3` | L2 | L2 | heap-writes |
 | 0x4AB250 | `thunk_FUN_005389b0` | L3-batch | split | ax-al-return |
-| 0x5C0A30 | `FxEmitterBP_c::LoadTextures` | L3-batch | split | heap-writes,ax-al-return |
+| 0x5C0A30 | `FxEmitterBP_c::LoadTextures` | L2 | split | heap-writes,ax-al-return |
 | 0x5C2010 | `FxPrimBP_c::Load` | L3-batch | split | heap-writes,ax-al-return |
 | 0x5C25F0 | `FxEmitterBP_c::Load` | L3-batch | split | heap-writes,ax-al-return |
 
@@ -3642,9 +3479,9 @@ SA_UNVERIFIED=mvpc-render-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpc-render-1 
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
-| 0x6F9EB0 | `FUN_006f9eb0` | L3-batch | L2 | preserved-regs |
-| 0x6FECA0 | `CCustomRoadsignMgr::CreateRoadsignTexture` | L3-batch | L2 | heap-writes |
-| 0x6FFBB0 | `CPointLights::GenerateLightsAffectingObject` | L3-batch | L2 | x87-transcendental,heap-writes |
+| 0x6F9EB0 | `FUN_006f9eb0` | L2 | L2 | preserved-regs |
+| 0x6FECA0 | `CCustomRoadsignMgr::CreateRoadsignTexture` | L2 | L2 | heap-writes |
+| 0x6FFBB0 | `CPointLights::GenerateLightsAffectingObject` | L2 | L2 | x87-transcendental,heap-writes |
 | 0x707B40 | `CShadows::StoreShadowForPedObject` | L3-batch | L2 | x87-transcendental,uninit-locals |
 | 0x724B60 | `CShinyTexts::RegisterOne` | L3-batch | L2 | x87-transcendental |
 | 0x734970 | `(missed by ghidra: data-code-immediate)` | L3-batch | L2 | none |
@@ -3704,22 +3541,6 @@ SA_UNVERIFIED=mvpd-ai-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpd-ai-1 $SA_ROOT
 |---|---|---|---|---|
 | 0x43A710 | `CConversationNode::ClearRecursively` | L3-batch | L2 | preserved-regs |
 
-## mvpd-d3d-1
-
-2 hooks in sa-render; hazards: heap-writes (2), stack-residue (1); recordings calling them: grove-walk (1), pause-restart (2).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh mvpd-d3d-1 $SA_ROOT/target/e2e/corpus/pause-restart.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=mvpd-d3d-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpd-d3d-1 $SA_ROOT/target/e2e/corpus/pause-restart.sarec --runs "plain l2 rust" --tag mvpd-d3d-1
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x72FE80 | `D3DTextureBuffer::Setup` | L3-batch | L2 | heap-writes |
-| 0x730270 | `D3DIndexDataBuffer::Pop` | L3-batch | L2 | stack-residue,heap-writes |
-
 ## mvpd-render-1
 
 20 hooks in sa-render; hazards: ax-al-return (1), entry-protection-read (2), heap-writes (9), stack-residue (7), uninit-locals (3), x87-transcendental (3); recordings calling them: driving (1), grove-walk (9), pause-restart (20).
@@ -3769,7 +3590,7 @@ SA_UNVERIFIED=mvpd-render-2 LANE=$LANE tools/e2e/port-l2.sh batch:mvpd-render-2 
 |---|---|---|---|---|
 | 0x711EF0 | `CBirds::CreateNumberOfBirds` | L3-batch | L2 | x87-transcendental,stack-residue |
 | 0x727140 | `CMirrors::BeforeMainRender` | L3-batch | L3-only | none |
-| 0x72A9A0 | `CWeather::AddRain` | L3-batch | L2 | x87-transcendental,heap-writes |
+| 0x72A9A0 | `CWeather::AddRain` | L2 | L2 | x87-transcendental,heap-writes |
 
 ## mvpd-render-3
 
@@ -3784,11 +3605,11 @@ SA_UNVERIFIED=mvpd-render-3 LANE=$LANE tools/e2e/port-l2.sh batch:mvpd-render-3 
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
-| 0x4AAF70 | `FxSystem_c::Update` | L3-batch | L2 | stack-residue,heap-writes,ax-al-return |
+| 0x4AAF70 | `FxSystem_c::Update` | L2 | L2 | stack-residue,heap-writes,ax-al-return |
 | 0x556800 | `CRope::Render` | L3-batch | L2 | x87-transcendental |
 | 0x556AE0 | `CRopes::Render` | L3-batch | L2 | none |
 | 0x5DB1D0 | `CGrassRenderer::AddTriPlant` | L3-batch | L2 | none |
-| 0x6FBA20 | `thunk_FUN_004064a7` | L3-batch | L2 | x87-transcendental,stack-residue,entry-protection-read |
+| 0x6FBA20 | `thunk_FUN_004064a7` | L2 | L2 | x87-transcendental,stack-residue,entry-protection-read |
 | 0x70F440 | `CSprite::RenderBufferedOneXLUSprite2D` | L3-batch | L2 | stack-residue |
 
 ## mvpd-render-4
@@ -3820,7 +3641,7 @@ SA_UNVERIFIED=mvpd-render-5 LANE=$LANE tools/e2e/port-l2.sh batch:mvpd-render-5 
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
-| 0x5DBF20 | `CPlantMgr::_ProcessEntryCollisionDataSections_RemoveLocTris` | L3-batch | L2 | heap-writes |
+| 0x5DBF20 | `CPlantMgr::_ProcessEntryCollisionDataSections_RemoveLocTris` | L2 | L2 | heap-writes |
 | 0x5DCD80 | `CPlantMgr::_ProcessEntryCollisionDataSections` | L3-batch | L2 | heap-writes,ax-al-return |
 
 ## mvpd-unk-1
@@ -3836,8 +3657,8 @@ SA_UNVERIFIED=mvpd-unk-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpd-unk-1 $SA_RO
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
-| 0x537290 | `CloneAtomicToClumpCB` | L3-batch | L2 | heap-writes |
-| 0x54F1B0 | `CSimpleTransform::UpdateMatrix` | L3-batch | L2 | heap-writes |
+| 0x537290 | `CloneAtomicToClumpCB` | L2 | L2 | heap-writes |
+| 0x54F1B0 | `CSimpleTransform::UpdateMatrix` | L2 | L2 | heap-writes |
 | 0x59BCF0 | `CMatrix` | L3-batch | L2 | heap-writes |
 | 0x59C050 | `CMatrix` | L3-batch | L2 | heap-writes |
 | 0x6E5280 | `lerp` | L3-batch | L2 | none |
@@ -3855,7 +3676,7 @@ SA_UNVERIFIED=mvpd-unk-2 LANE=$LANE tools/e2e/port-l2.sh batch:mvpd-unk-2 $SA_RO
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
-| 0x5D9180 | `FUN_005d9180` | L3-batch | L2 | heap-writes |
+| 0x5D9180 | `FUN_005d9180` | L2 | L2 | heap-writes |
 | 0x733910 | `FUN_00733910` | L3-batch | L2 | heap-writes |
 | 0x733F40 | `FUN_00733f40` | L3-batch | L2 | heap-writes |
 
@@ -3872,7 +3693,7 @@ SA_UNVERIFIED=mvpd-veh-2 LANE=$LANE tools/e2e/port-l2.sh batch:mvpd-veh-2 $SA_RO
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
-| 0x6B89B0 | `CBike::SetupSuspensionLines` | L3-batch | L2 | heap-writes,x87-transcendental |
+| 0x6B89B0 | `CBike::SetupSuspensionLines` | L2 | L2 | heap-writes,x87-transcendental |
 | 0x6BF430 | `CBike::Constructor` | L3-batch | L2 | stack-residue,x87-transcendental,heap-writes |
 
 ## mvpd-veh-4
@@ -3919,8 +3740,8 @@ SA_UNVERIFIED=mvpd-veh-7 LANE=$LANE tools/e2e/port-l2.sh batch:mvpd-veh-7 $SA_RO
 | address | name | status | route | hazards |
 |---|---|---|---|---|
 | 0x6B0A90 | `CAutomobile::Constructor` | L3-batch | L2 | heap-writes |
-| 0x6CD2F0 | `CPlane::DoPlaneGenerationAndRemoval` | L3-batch | L2 | x87-transcendental,heap-writes |
-| 0x6F7900 | `CTrain::DoTrainGenerationAndRemoval` | L3-batch | L2 | x87-transcendental,heap-writes |
+| 0x6CD2F0 | `CPlane::DoPlaneGenerationAndRemoval` | L2 | L2 | x87-transcendental,heap-writes |
+| 0x6F7900 | `CTrain::DoTrainGenerationAndRemoval` | L2 | L2 | x87-transcendental,heap-writes |
 
 ## mvpd-world-1
 
@@ -3970,25 +3791,10 @@ SA_UNVERIFIED=mvpd-world-3 LANE=$LANE tools/e2e/port-l2.sh batch:mvpd-world-3 $S
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
-| 0x598F50 | `InteriorManager_c::Update` | L3-batch | L2 | heap-writes |
+| 0x598F50 | `InteriorManager_c::Update` | L2 | L2 | heap-writes |
 | 0x5B1B90 | `CCutsceneObject::ProcessControl` | L3-batch | L2 | heap-writes |
 | 0x5B1E00 | `CCutsceneObject::PreRender` | L3-batch | L2 | heap-writes |
-| 0x6E4F10 | `WaterCreatureManager_c::Update` | L3-batch | L2 | heap-writes |
-
-## mvpd-world-5
-
-1 hooks in sa-world; hazards: heap-writes (1); recordings calling them: pause-restart (1).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh mvpd-world-5 $SA_ROOT/target/e2e/corpus/pause-restart.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=mvpd-world-5 LANE=$LANE tools/e2e/port-l2.sh batch:mvpd-world-5 $SA_ROOT/target/e2e/corpus/pause-restart.sarec --runs "plain l2 rust" --tag mvpd-world-5
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x499A80 | `CSetPiece::Update` | L3-batch | L2 | heap-writes |
+| 0x6E4F10 | `WaterCreatureManager_c::Update` | L2 | L2 | heap-writes |
 
 ## mvpe-coll-1
 
@@ -4022,7 +3828,7 @@ SA_UNVERIFIED=mvpe-ent-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpe-ent-1 $SA_RO
 | address | name | status | route | hazards |
 |---|---|---|---|---|
 | 0x533790 | `CEntity::CreateEffects` | L3-batch | L2 | x87-transcendental,heap-writes |
-| 0x5A2130 | `CObject::ProcessControl` | L3-batch | L2 | x87-transcendental,heap-writes |
+| 0x5A2130 | `CObject::ProcessControl` | L2 | L2 | x87-transcendental,heap-writes |
 
 ## mvpe-phys-1
 
@@ -4039,7 +3845,7 @@ SA_UNVERIFIED=mvpe-phys-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpe-phys-1 $SA_
 |---|---|---|---|---|
 | 0x546670 | `CPhysical::ProcessShiftSectorList` | L3-batch | L2 | none |
 | 0x54BA60 | `CPhysical::ProcessCollisionSectorList` | L3-batch | L2 | none |
-| 0x54CFF0 | `CPhysical::ProcessCollisionSectorList_SimpleCar` | L3-batch | L2 | stack-residue |
+| 0x54CFF0 | `CPhysical::ProcessCollisionSectorList_SimpleCar` | L2 | L2 | stack-residue |
 | 0x54DFB0 | `CPhysical::ProcessCollision` | L3-batch | L2 | none |
 
 ## mvpe-veh-1
@@ -4214,24 +4020,9 @@ SA_UNVERIFIED=mvpi-ai-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpi-ai-1 $SA_ROOT
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
-| 0x5F1CB0 | `CPedGeometryAnalyser::IsInAir` | L3-batch | L2 | stack-residue,uninit-locals |
+| 0x5F1CB0 | `CPedGeometryAnalyser::IsInAir` | L2 | L2 | stack-residue,uninit-locals |
 | 0x5F3880 | `CPedGeometryAnalyser::LiesInsideBoundingBox` | L3-batch | L2 | ax-al-return |
-| 0x66EA30 | `CTaskComplexFollowNodeRoute::Constructor` | L3-batch | L2 | heap-writes |
-
-## mvpi-anim-1
-
-1 hooks in sa-anim; hazards: heap-writes (1), stack-residue (1); recordings calling them: grove-walk (1), pause-restart (1).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh mvpi-anim-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=mvpi-anim-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpi-anim-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpi-anim-1
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x618970 | `IKChainManager_c::LookAt` | L3-batch | L2 | stack-residue,heap-writes |
+| 0x66EA30 | `CTaskComplexFollowNodeRoute::Constructor` | L2 | L2 | heap-writes |
 
 ## mvpi-audio-1
 
@@ -4319,21 +4110,6 @@ SA_UNVERIFIED=mvpi-world-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpi-world-1 $S
 | 0x45F050 | `CReplay::FinishPlayback` | L3-batch | L2 | none |
 | 0x59F660 | `CObject` | L3-batch | L2 | heap-writes |
 
-## mvpj-ai-1
-
-1 hooks in sa-ai; hazards: heap-writes (1); recordings calling them: grove-walk (1), pause-restart (1).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh mvpj-ai-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=mvpj-ai-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpj-ai-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpj-ai-1
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x4C3F10 | `CEventHandler::HandleEvents` | L3-batch | L2 | heap-writes |
-
 ## mvpj-ai-2
 
 4 hooks in sa-ai; hazards: ax-al-return (2), stack-residue (1), x87-transcendental (4); recordings calling them: grove-walk (4), pause-restart (4).
@@ -4348,24 +4124,9 @@ SA_UNVERIFIED=mvpj-ai-2 LANE=$LANE tools/e2e/port-l2.sh batch:mvpj-ai-2 $SA_ROOT
 | address | name | status | route | hazards |
 |---|---|---|---|---|
 | 0x5F2C10 | `CPedGeometryAnalyser::ComputeClosestSurfacePoint-rect` | L3-batch | L2 | x87-transcendental,ax-al-return |
-| 0x5F2F70 | `CPedGeometryAnalyser::IsWanderPathClear` | L3-batch | L2 | x87-transcendental |
+| 0x5F2F70 | `CPedGeometryAnalyser::IsWanderPathClear` | L2 | L2 | x87-transcendental |
 | 0x5F5A30 | `CPedGeometryAnalyser::GetIsLineOfSightClear-ped` | L3-batch | L2 | x87-transcendental,ax-al-return |
 | 0x5F5D80 | `CPedGeometryAnalyser::ComputeClearTarget` | L3-batch | L2 | x87-transcendental,stack-residue |
-
-## mvpj-ai-3
-
-1 hooks in sa-ai; hazards: heap-writes (1); recordings calling them: grove-walk (1), pause-restart (1).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh mvpj-ai-3 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=mvpj-ai-3 LANE=$LANE tools/e2e/port-l2.sh batch:mvpj-ai-3 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpj-ai-3
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x6872C0 | `CTaskSimplePlayerOnFoot::PlayIdleAnimations` | L3-batch | L2 | heap-writes |
 
 ## mvpj-ai-4
 
@@ -4452,7 +4213,7 @@ SA_UNVERIFIED=mvpj-script-2 LANE=$LANE tools/e2e/port-l2.sh batch:mvpj-script-2 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
 | 0x464DC0 | `CRunningScript::SetCharCoordinates` | L3-batch | L2 | stack-residue,heap-writes |
-| 0x4652D0 | `CMissionCleanup::CheckIfCollisionHasLoadedForMissionObjects` | L3-batch | L2 | heap-writes |
+| 0x4652D0 | `CMissionCleanup::CheckIfCollisionHasLoadedForMissionObjects` | L2 | L2 | heap-writes |
 
 ## mvpj-stream-1
 
@@ -4532,12 +4293,12 @@ SA_UNVERIFIED=mvpk-ai-3 LANE=$LANE tools/e2e/port-l2.sh batch:mvpk-ai-3 $SA_ROOT
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
-| 0x642AE0 | `CTaskSimpleCarDrive::ProcessArmBopping` | L3-batch | L2 | stack-residue,heap-writes |
-| 0x644470 | `CTaskSimpleCarDrive::ProcessPed` | L3-batch | L2 | ax-al-return,uninit-locals,heap-writes,x87-transcendental |
+| 0x642AE0 | `CTaskSimpleCarDrive::ProcessArmBopping` | L2 | L2 | stack-residue,heap-writes |
+| 0x644470 | `CTaskSimpleCarDrive::ProcessPed` | L2 | L2 | ax-al-return,uninit-locals,heap-writes,x87-transcendental |
 | 0x657BA0 | `CTaskComplexWalkRoundBuildingAttempt::ComputeRoute` | L3-batch | L2 | heap-writes |
 | 0x66A320 | `CTaskComplexAvoidOtherPedWhileWandering::ComputeSphere` | L3-batch | L2 | x87-transcendental,stack-residue |
-| 0x66EFA0 | `CTaskComplexFollowNodeRoute::ComputePathNodes` | L3-batch | L2 | x87-transcendental,stack-residue,uninit-locals |
-| 0x6859A0 | `CTaskSimplePlayerOnFoot::ProcessPlayerWeapon` | L3-batch | L2 | x87-transcendental,uninit-locals,heap-writes |
+| 0x66EFA0 | `CTaskComplexFollowNodeRoute::ComputePathNodes` | L2 | L2 | x87-transcendental,stack-residue,uninit-locals |
+| 0x6859A0 | `CTaskSimplePlayerOnFoot::ProcessPlayerWeapon` | L2 | L2 | x87-transcendental,uninit-locals,heap-writes |
 
 ## mvpk-anim-1
 
@@ -4599,37 +4360,6 @@ SA_UNVERIFIED=mvpk-world-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpk-world-1 $S
 |---|---|---|---|---|
 | 0x442020 | `CGameLogic::IsPlayerUse2PlayerControls` | L3-batch | L2 | ax-al-return |
 
-## mvpk-world-2
-
-1 hooks in sa-world; hazards: heap-writes (1), x87-transcendental (1); recordings calling them: grove-walk (1), pause-restart (1).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh mvpk-world-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=mvpk-world-2 LANE=$LANE tools/e2e/port-l2.sh batch:mvpk-world-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpk-world-2
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x534E90 | `CEntity::ModifyMatrixForTreeInWind` | L3-batch | L2 | x87-transcendental,heap-writes |
-
-## mvpl-ai-1
-
-2 hooks in sa-ai; hazards: heap-writes (1), stack-residue (2); recordings calling them: grove-walk (2), pause-restart (2).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh mvpl-ai-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=mvpl-ai-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpl-ai-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpl-ai-1
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x5FFFD0 | `FUN_005fffd0` | L3-batch | L2 | stack-residue,heap-writes |
-| 0x606890 | `FUN_00606890` | L3-batch | L2 | stack-residue |
-
 ## mvpl-ai-3
 
 1 hooks in sa-ai; hazards: heap-writes (1); recordings calling them: grove-walk (1), pause-restart (1).
@@ -4644,21 +4374,6 @@ SA_UNVERIFIED=mvpl-ai-3 LANE=$LANE tools/e2e/port-l2.sh batch:mvpl-ai-3 $SA_ROOT
 | address | name | status | route | hazards |
 |---|---|---|---|---|
 | 0x46AD70 | `FUN_0046ad70` | L3-batch | L2 | heap-writes |
-
-## mvpl-anim-1
-
-1 hooks in sa-anim; hazards: heap-writes (1), stack-residue (1); recordings calling them: grove-walk (1), pause-restart (1).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh mvpl-anim-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=mvpl-anim-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpl-anim-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpl-anim-1
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x618B60 | `IKChainManager_c::PointArm` | L3-batch | L2 | stack-residue,heap-writes |
 
 ## mvpl-anim-2
 
@@ -4675,22 +4390,6 @@ SA_UNVERIFIED=mvpl-anim-2 LANE=$LANE tools/e2e/port-l2.sh batch:mvpl-anim-2 $SA_
 |---|---|---|---|---|
 | 0x5AFBC0 | `CCutsceneMgr::LoadCutsceneData_postload` | L3-batch | split | heap-writes |
 
-## mvpl-audio-2
-
-2 hooks in sa-audio; hazards: heap-writes (2); recordings calling them: grove-walk (2), pause-restart (2).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh mvpl-audio-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=mvpl-audio-2 LANE=$LANE tools/e2e/port-l2.sh batch:mvpl-audio-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpl-audio-2
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x4F17D0 | `CAEStreamTransformer::TransformBuffer` | L3-batch | L2 | heap-writes |
-| 0x5026B0 | `CAEVorbisDecoder::Constructor` | L3-batch | L2 | heap-writes |
-
 ## mvpl-fx-1
 
 1 hooks in sa-render; hazards: none; recordings calling them: grove-walk (1), pause-restart (1).
@@ -4706,21 +4405,6 @@ SA_UNVERIFIED=mvpl-fx-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpl-fx-1 $SA_ROOT
 |---|---|---|---|---|
 | 0x4A85C0 | `FxInterpInfoFloat_c::GetVal` | L3-batch | L2 | none |
 
-## mvpl-render-1
-
-1 hooks in sa-render; hazards: heap-writes (1); recordings calling them: grove-walk (1), pause-restart (1).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh mvpl-render-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=mvpl-render-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpl-render-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpl-render-1
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x6FE220 | `(missed by ghidra: data-code-immediate)` | L3-batch | L2 | heap-writes |
-
 ## mvpl-script-1
 
 1 hooks in sa-script; hazards: none; recordings calling them: grove-walk (1), pause-restart (1).
@@ -4735,36 +4419,6 @@ SA_UNVERIFIED=mvpl-script-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpl-script-1 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
 | 0x4839A0 | `CTheScripts::GetActualScriptThingIndex` | L3-batch | L2 | none |
-
-## mvpl-stream-1
-
-1 hooks in sa-stream; hazards: heap-writes (1); recordings calling them: grove-walk (1), pause-restart (1).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh mvpl-stream-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=mvpl-stream-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpl-stream-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpl-stream-1
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x49C9E0 | `thunk_FUN_01566280` | L3-batch | L2 | heap-writes |
-
-## mvpm-ai-2
-
-1 hooks in sa-ai; hazards: heap-writes (1), stack-residue (1), x87-transcendental (1); recordings calling them: grove-walk (1), pause-restart (1).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh mvpm-ai-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=mvpm-ai-2 LANE=$LANE tools/e2e/port-l2.sh batch:mvpm-ai-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpm-ai-2
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x693C40 | `CTaskSimpleHoldEntity::ProcessPed` | L3-batch | L2 | x87-transcendental,heap-writes,stack-residue |
 
 ## mvpm-ai-3
 
@@ -4844,21 +4498,6 @@ SA_UNVERIFIED=mvpm-render-5 LANE=$LANE tools/e2e/port-l2.sh batch:mvpm-render-5 
 | 0x70FAE0 | `CStencilShadows::RenderForVehicle` | L3-batch | L2 | ax-al-return,heap-writes |
 | 0x710310 | `CStencilShadows::RenderForObject` | L3-batch | L2 | ax-al-return,heap-writes |
 
-## mvpm-render-6
-
-1 hooks in sa-render; hazards: ax-al-return (1), heap-writes (1); recordings calling them: driving (1), pause-restart (1).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh mvpm-render-6 $SA_ROOT/target/e2e/corpus/driving.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=mvpm-render-6 LANE=$LANE tools/e2e/port-l2.sh batch:mvpm-render-6 $SA_ROOT/target/e2e/corpus/driving.sarec --runs "plain l2 rust" --tag mvpm-render-6
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x6FEB70 | `CCustomRoadsignMgr::RoadsignGenerateTextRaster` | L3-batch | L2 | ax-al-return,heap-writes |
-
 ## mvpm-script-1
 
 2 hooks in sa-script; hazards: none; recordings calling them: grove-walk (2), pause-restart (2).
@@ -4889,21 +4528,6 @@ SA_UNVERIFIED=mvpm-world-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpm-world-1 $S
 | address | name | status | route | hazards |
 |---|---|---|---|---|
 | 0x45B730 | `tReplayVehicleBlock::MakeVehicleUpdateData` | L3-batch | L2 | heap-writes |
-
-## mvpn-anim-1
-
-1 hooks in sa-anim; hazards: heap-writes (1); recordings calling them: pause-restart (1).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh mvpn-anim-1 $SA_ROOT/target/e2e/corpus/pause-restart.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=mvpn-anim-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpn-anim-1 $SA_ROOT/target/e2e/corpus/pause-restart.sarec --runs "plain l2 rust" --tag mvpn-anim-1
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x5AFD60 | `CCutsceneMgr::DeleteCutsceneData_overlay` | L3-batch | L3-only | heap-writes |
 
 ## native-1
 
@@ -5587,9 +5211,9 @@ SA_UNVERIFIED=regconv-render-1 LANE=$LANE tools/e2e/port-l2.sh batch:regconv-ren
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
-| 0x5DC210 | `CPlantLocTri::GetPlantDensity` | L3-batch | L2 | x87-transcendental |
+| 0x5DC210 | `CPlantLocTri::GetPlantDensity` | L2 | L2 | x87-transcendental |
 | 0x5DC290 | `CPlantLocTri::Add` | L3-batch | L2 | x87-transcendental,heap-writes |
-| 0x5DC510 | `CPlantMgr::_ColEntityCache_Update` | L3-batch | L2 | heap-writes,stack-residue |
+| 0x5DC510 | `CPlantMgr::_ColEntityCache_Update` | L2 | L2 | heap-writes,stack-residue |
 | 0x5DD220 | `CPlantMgr::LoadModels` | L3-batch | L2 | heap-writes |
 | 0x70A040 | `CShadows::CastShadowEntityXYZ` | L3-batch | L2 | heap-writes |
 
@@ -5612,9 +5236,9 @@ SA_UNVERIFIED=regconv-rw-1 LANE=$LANE tools/e2e/port-l2.sh batch:regconv-rw-1 $S
 | 0x4CB4E0 | `_rwD3D9RasterClear` | L3-batch | L2 | heap-writes |
 | 0x4CB560 | `_rxD3D9VideoMemoryRasterListRemove` | L3-batch | L2 | heap-writes |
 | 0x4CB7C0 | `FUN_004cb7c0` | L3-batch | L2 | heap-writes |
-| 0x4CB9C0 | `FUN_004cb9c0` | L3-batch | L2 | heap-writes |
-| 0x4CC5C0 | `FUN_004cc5c0` | L3-batch | L2 | heap-writes |
-| 0x4CCD70 | `FUN_004ccd70` | L3-batch | L2 | heap-writes |
+| 0x4CB9C0 | `FUN_004cb9c0` | L2 | L2 | heap-writes |
+| 0x4CC5C0 | `FUN_004cc5c0` | L2 | L2 | heap-writes |
+| 0x4CCD70 | `FUN_004ccd70` | L2 | L2 | heap-writes |
 | 0x4CD250 | `_rwD3D9RasterConvertToNonPalettized` | L3-batch | L2 | heap-writes |
 | 0x7590E0 | `_rpMeshGetNextSerialNumber` | L3-batch | L2 | ax-al-return |
 
@@ -5678,21 +5302,6 @@ SA_UNVERIFIED=renderbig2-5 LANE=$LANE tools/e2e/port-l2.sh batch:renderbig2-5 $S
 | address | name | status | route | hazards |
 |---|---|---|---|---|
 | 0x70D320 | `CSprite::RenderOneXLUSprite_Triangle` | written | L2 | none |
-
-## rw5-cam-1
-
-1 hooks in sa-rwcore; hazards: none; recordings calling them: grove-walk (1), menus-hud (1), pause-restart (1).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh rw5-cam-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=rw5-cam-1 LANE=$LANE tools/e2e/port-l2.sh batch:rw5-cam-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag rw5-cam-1
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x7F8640 | `RwD3D9ChangeVideoMode` | L3-batch | L3-only | none |
 
 ## rw5-core-1
 
@@ -5849,7 +5458,7 @@ SA_UNVERIFIED=rw5-node-1 LANE=$LANE tools/e2e/port-l2.sh batch:rw5-node-1 $SA_RO
 | address | name | status | route | hazards |
 |---|---|---|---|---|
 | 0x75E3F0 | `_rwD3D9WorldSectorAllInOneNode` | L3-batch | L2 | heap-writes |
-| 0x75EED0 | `_rpD3D9GetVertexShader` | L3-batch | L2 | heap-writes |
+| 0x75EED0 | `_rpD3D9GetVertexShader` | L2 | L2 | heap-writes |
 | 0x760DF0 | `_rxD3D9VertexShaderDefaultBeginCallBack` | L3-batch | L2 | heap-writes |
 | 0x7619A0 | `_rpD3DVertexShaderSetUVAnimMatrix` | L3-batch | L2 | none |
 
@@ -6994,7 +6603,7 @@ SA_UNVERIFIED=std4-audio-1 LANE=$LANE tools/e2e/port-l2.sh batch:std4-audio-1 $S
 | 0x4F1680 | `CAEStreamThread::Initialise` | L3-batch | L3-only | heap-writes |
 | 0x4F1A90 | `CAEStreamingChannel::Stop-class` | L3-batch | L2 | none |
 | 0x4F1AE0 | `CAEStreamingChannel::AddFX` | L3-batch | L2 | none |
-| 0x4F1C20 | `CAEStreamingChannel::RemoveFX` | L3-batch | L2 | none |
+| 0x4F1C20 | `CAEStreamingChannel::RemoveFX` | L2 | L2 | none |
 | 0x4F1FF0 | `CAEStreamingChannel::SetReady` | L3-batch | L2 | none |
 | 0x4F2040 | `CAEStreamingChannel::IsSoundPlaying` | L3-batch | L2 | ax-al-return |
 | 0x4F2170 | `CAEStreamingChannel::Pause` | L3-batch | L2 | none |
@@ -7031,21 +6640,6 @@ SA_UNVERIFIED=std4-audio-2 LANE=$LANE tools/e2e/port-l2.sh batch:std4-audio-2 $S
 | 0x5B9C60 | `CAudioEngine::Initialise` | L3-batch | L3-only | heap-writes |
 | 0x747300 | `getDvdGamePath` | L3-batch | L3-only | heap-writes |
 
-## std4-audio-3
-
-1 hooks in sa-audio; hazards: none; recordings calling them: grove-walk (1), pause-restart (1).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh std4-audio-3 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=std4-audio-3 LANE=$LANE tools/e2e/port-l2.sh batch:std4-audio-3 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag std4-audio-3
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x4D86B0 | `CAEAudioHardware::PlaySound` | L3-batch | L2 | none |
-
 ## std4-core-1
 
 2 hooks in sa-core; hazards: uninit-locals (1); recordings calling them: boot (2), grove-walk (1), pause-restart (1).
@@ -7078,9 +6672,9 @@ SA_UNVERIFIED=std4-d3d9-1 LANE=$LANE tools/e2e/port-l2.sh batch:std4-d3d9-1 $SA_
 | 0x7F5F70 | `D3D9System` | L3-batch | L3-only | heap-writes |
 | 0x7F7100 | `FUN_007f7100` | L3-batch | L3-only | heap-writes |
 | 0x8572A0 | `_rwX87MatrixMultiply` | L3-batch | L2 | none |
-| 0x857404 | `_rwProcessorInitialize` | L3-batch | L2 | none |
+| 0x857404 | `_rwProcessorInitialize` | L2 | L2 | none |
 | 0x85742B | `_rwProcessorRelease` | L3-batch | L2 | none |
-| 0x857432 | `_rwProcessorForceSinglePrecision` | L3-batch | L2 | none |
+| 0x857432 | `_rwProcessorForceSinglePrecision` | L2 | L2 | none |
 
 ## std4-d3d9-2
 
@@ -7177,7 +6771,7 @@ SA_UNVERIFIED=std4-load-1 LANE=$LANE tools/e2e/port-l2.sh batch:std4-load-1 $SA_
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
-| 0x552C80 | `new` | L3-batch | L2 | none |
+| 0x552C80 | `new` | L2 | L2 | none |
 | 0x5D9660 | `CCustomCarEnvMapPipeline::pluginEnvMatStreamReadCB` | L3-batch | L2 | none |
 
 ## std4-load-2
@@ -7194,7 +6788,7 @@ SA_UNVERIFIED=std4-load-2 LANE=$LANE tools/e2e/port-l2.sh batch:std4-load-2 $SA_
 | address | name | status | route | hazards |
 |---|---|---|---|---|
 | 0x734810 | `RwHelper::GetFirstAtomicCallback` | L3-batch | L2 | none |
-| 0x734D60 | `RwHelper::forceLinearFilteringMatTexturesCB` | L3-batch | L2 | none |
+| 0x734D60 | `RwHelper::forceLinearFilteringMatTexturesCB` | L2 | L2 | none |
 | 0x74B060 | `_rpClumpAtomicStreamRead` | L3-batch | L2 | heap-writes |
 
 ## std4-rxpipe-1
@@ -7211,15 +6805,15 @@ SA_UNVERIFIED=std4-rxpipe-1 LANE=$LANE tools/e2e/port-l2.sh batch:std4-rxpipe-1 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
 | 0x8050C0 | `FUN_008050c0` | L3-batch | L2 | heap-writes |
-| 0x805890 | `FUN_00805890` | L3-batch | L2 | none |
-| 0x8058F0 | `FUN_008058f0` | L3-batch | L2 | none |
+| 0x805890 | `FUN_00805890` | L2 | L2 | none |
+| 0x8058F0 | `FUN_008058f0` | L2 | L2 | none |
 | 0x8065E0 | `FUN_008065e0` | L3-batch | L2 | heap-writes |
 | 0x8067B0 | `FUN_008067b0` | L3-batch | L2 | heap-writes |
 | 0x80F4B0 | `FUN_0080f4b0` | L3-batch | L2 | heap-writes |
 | 0x80F540 | `FUN_0080f540` | L3-batch | L2 | none |
 | 0x80F570 | `FUN_0080f570` | L3-batch | L2 | heap-writes |
-| 0x80F970 | `FUN_0080f970` | L3-batch | L2 | heap-writes |
-| 0x80FBA0 | `FUN_0080fba0` | L3-batch | L2 | heap-writes |
+| 0x80F970 | `FUN_0080f970` | L2 | L2 | heap-writes |
+| 0x80FBA0 | `FUN_0080fba0` | L2 | L2 | heap-writes |
 
 ## std4-rxpipe-2
 
@@ -7254,21 +6848,6 @@ SA_UNVERIFIED=std4-rxpipe-3 LANE=$LANE tools/e2e/port-l2.sh batch:std4-rxpipe-3 
 | 0x5D7D90 | `CCustomBuildingPipeline::CreatePipe` | L3-batch | L2 | none |
 | 0x5D7EC0 | `CCustomBuildingRenderer::Initialise` | L3-batch | L2 | none |
 
-## std4-win-1
-
-1 hooks in sa-core; hazards: none; recordings calling them: boot (1), grove-walk (1), pause-restart (1).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh std4-win-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=std4-win-1 LANE=$LANE tools/e2e/port-l2.sh batch:std4-win-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag std4-win-1
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x747EB0 | `Win::__MainWndProc` | L3-batch | L3-only | none |
-
 ## std5-ctor-1
 
 8 hooks in sa-core; hazards: none; recordings calling them: boot (7), grove-walk (8), new-game (1), pause-restart (8).
@@ -7285,11 +6864,11 @@ SA_UNVERIFIED=std5-ctor-1 LANE=$LANE tools/e2e/port-l2.sh batch:std5-ctor-1 $SA_
 | 0x40FAF0 | `CBoundingBox` | L3-batch | L2 | none |
 | 0x40FB60 | `CColModel` | L3-batch | L2 | none |
 | 0x5984C0 | `InteriorManager_c::InteriorManager_c` | L3-batch | L2 | none |
-| 0x5A2E90 | `ProcSurfaceInfo_c::ProcSurfaceInfo_c` | L3-batch | L2 | none |
-| 0x5A3070 | `FUN_005a3070` | L3-batch | L2 | none |
-| 0x617850 | `FUN_00617850` | L3-batch | L2 | none |
-| 0x6FA770 | `(missed by ghidra: data-code-immediate)` | L3-batch | L2 | none |
-| 0x71A8B0 | `CFallingGlassPane::CFallingGlassPane` | L3-batch | L2 | none |
+| 0x5A2E90 | `ProcSurfaceInfo_c::ProcSurfaceInfo_c` | L2 | L2 | none |
+| 0x5A3070 | `FUN_005a3070` | L2 | L2 | none |
+| 0x617850 | `FUN_00617850` | L2 | L2 | none |
+| 0x6FA770 | `(missed by ghidra: data-code-immediate)` | L2 | L2 | none |
+| 0x71A8B0 | `CFallingGlassPane::CFallingGlassPane` | L2 | L2 | none |
 
 ## std5-fx-1
 
@@ -7305,7 +6884,7 @@ SA_UNVERIFIED=std5-fx-1 LANE=$LANE tools/e2e/port-l2.sh batch:std5-fx-1 $SA_ROOT
 | address | name | status | route | hazards |
 |---|---|---|---|---|
 | 0x49EAE0 | `Fx_c::Reset` | L3-batch | L2 | heap-writes |
-| 0x4A1900 | `FUN_004a1900` | L3-batch | L2 | heap-writes |
+| 0x4A1900 | `FUN_004a1900` | L2 | L2 | heap-writes |
 
 ## std5-math-1
 
@@ -7400,53 +6979,6 @@ SA_UNVERIFIED=std5-ped-1 LANE=$LANE tools/e2e/port-l2.sh batch:std5-ped-1 $SA_RO
 |---|---|---|---|---|
 | 0x6FFA10 | `CPlayerSkin::GetSkinTexture` | L3-batch | L2 | heap-writes |
 
-## std5-pool-1
-
-3 hooks in sa-core; hazards: heap-writes (3); recordings calling them: new-game (3), pause-restart (3).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh std5-pool-1 $SA_ROOT/target/e2e/corpus/new-game.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=std5-pool-1 LANE=$LANE tools/e2e/port-l2.sh batch:std5-pool-1 $SA_ROOT/target/e2e/corpus/new-game.sarec --runs "plain l2 rust" --tag std5-pool-1
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x43F7D0 | `thunk_FUN_015651d0` | L3-batch | L2 | heap-writes |
-| 0x552380 | `new` | L3-batch | L2 | heap-writes |
-| 0x5523C0 | `new` | L3-batch | L2 | heap-writes |
-
-## std5-script-1
-
-1 hooks in sa-script; hazards: x87-transcendental (1); recordings calling them: grove-walk (1), menus-hud (1), pause-restart (1).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh std5-script-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=std5-script-1 LANE=$LANE tools/e2e/port-l2.sh batch:std5-script-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag std5-script-1
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x464980 | `CTheScripts::DrawScriptSpritesAndRectangles` | L3-batch | L3-only | x87-transcendental |
-
-## std5-stream-1
-
-1 hooks in sa-stream; hazards: heap-writes (1), x87-transcendental (1); recordings calling them: new-game (1), pause-restart (1).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh std5-stream-1 $SA_ROOT/target/e2e/corpus/new-game.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=std5-stream-1 LANE=$LANE tools/e2e/port-l2.sh batch:std5-stream-1 $SA_ROOT/target/e2e/corpus/new-game.sarec --runs "plain l2 rust" --tag std5-stream-1
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x538090 | `CFileLoader::LoadObjectInstance-inst` | L3-batch | L2 | heap-writes,x87-transcendental |
-
 ## std5-tristrip-1
 
 6 hooks in sa-rwcore; hazards: heap-writes (6); recordings calling them: grove-walk (6), new-game (6), pause-restart (6).
@@ -7518,33 +7050,33 @@ SA_UNVERIFIED=std6-anim-1 LANE=$LANE tools/e2e/port-l2.sh batch:std6-anim-1 $SA_
 | 0x4D6240 | `ForAllFramesF` | L3-batch | L2 | none |
 | 0x4D6270 | `(missed by ghidra: data-code-immediate)` | L3-batch | L2 | none |
 | 0x4D62A0 | `RpAnimBlend::RpAnimBlendClumpFindFrame` | L3-batch | L2 | none |
-| 0x4D6370 | `RpAnimBlend::RpAnimBlendClumpFindFrameFromHashKey` | L3-batch | L2 | none |
-| 0x4D63E0 | `(missed by ghidra: data-code-immediate)` | L3-batch | L1-pure | none |
-| 0x4D6400 | `RpAnimBlend::RpAnimBlendClumpFindBone` | L3-batch | L2 | none |
+| 0x4D6370 | `RpAnimBlend::RpAnimBlendClumpFindFrameFromHashKey` | L2 | L2 | none |
+| 0x4D63E0 | `(missed by ghidra: data-code-immediate)` | L2 | L1-pure | none |
+| 0x4D6400 | `RpAnimBlend::RpAnimBlendClumpFindBone` | L2 | L2 | none |
 | 0x4D6430 | `ForAllFramesF` | L3-batch | L2 | none |
-| 0x4D6500 | `ForAllFramesF` | L3-batch | L1-pure | none |
+| 0x4D6500 | `ForAllFramesF` | L2 | L1-pure | none |
 | 0x4D6610 | `(missed by ghidra: data-code-immediate)` | L3-batch | L2 | none |
-| 0x4D6640 | `ForAllFramesF` | L3-batch | L1-pure | none |
+| 0x4D6640 | `ForAllFramesF` | L2 | L1-pure | none |
 | 0x4D6670 | `(missed by ghidra: data-code-immediate)` | L3-batch | L2 | none |
 | 0x4D6790 | `RpAnimBlend::RpAnimBlendClumpAddAssociation` | L3-batch | L2 | heap-writes |
 | 0x4D67E0 | `RpAnimBlend::RpAnimBlendClumpSetBlendDeltas` | L3-batch | L2 | none |
 | 0x4D6820 | `RpAnimBlend::RpAnimBlendClumpRemoveAssociations` | L3-batch | L2 | heap-writes |
 | 0x4D6870 | `RpAnimBlend::RpAnimBlendClumpGetAssociation-AnimName` | L3-batch | L2 | none |
-| 0x4D68B0 | `RpAnimBlend::RpAnimBlendClumpGetAssociation-AnimId` | L3-batch | L1-pure | none |
-| 0x4D68E0 | `RpAnimBlend::RpAnimBlendClumpGetAssociation-Hier` | L3-batch | L1-pure | none |
+| 0x4D68B0 | `RpAnimBlend::RpAnimBlendClumpGetAssociation-AnimId` | L2 | L1-pure | none |
+| 0x4D68E0 | `RpAnimBlend::RpAnimBlendClumpGetAssociation-Hier` | L2 | L1-pure | none |
 | 0x4D6910 | `RpAnimBlend::RpAnimBlendClumpGetMainAssociation` | L3-batch | L2 | none |
-| 0x4D69A0 | `RpAnimBlend::RpAnimBlendClumpGetMainPartialAssociation` | L3-batch | L2 | none |
+| 0x4D69A0 | `RpAnimBlend::RpAnimBlendClumpGetMainPartialAssociation` | L2 | L2 | none |
 | 0x4D69F0 | `RpAnimBlend::RpAnimBlendClumpGetMainPartialAssociation_N` | L3-batch | L1-pure | none |
 | 0x4D6A30 | `RpAnimBlend::RpAnimBlendClumpGetMainAssociation_N` | L3-batch | L1-pure | none |
-| 0x4D6A70 | `RpAnimBlend::RpAnimBlendClumpGetFirstAssociation-Flags` | L3-batch | L1-pure | none |
-| 0x4D6AB0 | `RpAnimBlend::RpAnimBlendGetNextAssociation-Any` | L3-batch | L1-pure | none |
-| 0x4D6AD0 | `RpAnimBlend::RpAnimBlendGetNextAssociation-Flags` | L3-batch | L1-pure | none |
+| 0x4D6A70 | `RpAnimBlend::RpAnimBlendClumpGetFirstAssociation-Flags` | L2 | L1-pure | none |
+| 0x4D6AB0 | `RpAnimBlend::RpAnimBlendGetNextAssociation-Any` | L2 | L1-pure | none |
+| 0x4D6AD0 | `RpAnimBlend::RpAnimBlendGetNextAssociation-Flags` | L2 | L1-pure | none |
 | 0x4D6B00 | `RpAnimBlend::RpAnimBlendClumpPauseAllAnimations` | L3-batch | L1-pure | none |
 | 0x4D6B30 | `RpAnimBlend::RpAnimBlendClumpUnPauseAllAnimations` | L3-batch | L1-pure | none |
 | 0x4D6B60 | `RpAnimBlend::RpAnimBlendClumpGetNumAssociations` | L3-batch | L1-pure | none |
 | 0x4D6B80 | `RpAnimBlend::RpAnimBlendClumpGetNumPartialAssociations` | L3-batch | L1-pure | none |
 | 0x4D6BB0 | `RpAnimBlend::RpAnimBlendClumpGetNumNonPartialAssociations` | L3-batch | L1-pure | none |
-| 0x4D6BE0 | `RpAnimBlend::RpAnimBlendClumpExtractAssociations` | L3-batch | L2 | none |
+| 0x4D6BE0 | `RpAnimBlend::RpAnimBlendClumpExtractAssociations` | L2 | L2 | none |
 | 0x4D6C00 | `RpAnimBlend::RpAnimBlendClumpRemoveAllAssociations` | L3-batch | L2 | heap-writes |
 | 0x4D6C30 | `RpAnimBlend::RpAnimBlendClumpGiveAssociations` | L3-batch | L2 | heap-writes |
 | 0x72FB00 | `NodeNamePlugin::SetFrameNodeName` | L3-batch | L1-pure | none |
@@ -7565,21 +7097,6 @@ SA_UNVERIFIED=std6-cam-1 LANE=$LANE tools/e2e/port-l2.sh batch:std6-cam-1 $SA_RO
 |---|---|---|---|---|
 | 0x52B730 | `CCamera::Process` | L3-batch | L2 | none |
 
-## std6-math-1
-
-1 hooks in sa-core; hazards: x87-transcendental (1); recordings calling them: new-game (1), pause-restart (1).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh std6-math-1 $SA_ROOT/target/e2e/corpus/new-game.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=std6-math-1 LANE=$LANE tools/e2e/port-l2.sh batch:std6-math-1 $SA_ROOT/target/e2e/corpus/new-game.sarec --runs "plain l2 rust" --tag std6-math-1
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x59B2C0 | `CMatrix::RotateY` | L3-batch | L2 | x87-transcendental |
-
 ## std6-math-2
 
 3 hooks in sa-core; hazards: x87-transcendental (3); recordings calling them: new-game (3), pause-restart (1).
@@ -7595,7 +7112,7 @@ SA_UNVERIFIED=std6-math-2 LANE=$LANE tools/e2e/port-l2.sh batch:std6-math-2 $SA_
 |---|---|---|---|---|
 | 0x59AFA0 | `CMatrix::SetRotateXOnly` | L3-batch | L2 | x87-transcendental |
 | 0x59AFE0 | `CMatrix::SetRotateYOnly` | L3-batch | L2 | x87-transcendental |
-| 0x59B060 | `CMatrix::SetRotateX` | L3-batch | L2 | x87-transcendental |
+| 0x59B060 | `CMatrix::SetRotateX` | L2 | L2 | x87-transcendental |
 
 ## std6-ped-1
 
@@ -7646,26 +7163,11 @@ SA_UNVERIFIED=std6-render-1 LANE=$LANE tools/e2e/port-l2.sh batch:std6-render-1 
 | 0x7323B0 | `CVisibilityPlugins::SetAlphaCB` | L3-batch | L1-pure | none |
 | 0x732A30 | `CVisibilityPlugins::DefaultVisibilityCB` | L3-batch | L1-pure | none |
 | 0x732A40 | `CVisibilityPlugins::FrustumSphereCB` | L3-batch | L2 | none |
-| 0x732AC0 | `CVisibilityPlugins::GetClumpModelInfo` | L3-batch | L1-pure | none |
+| 0x732AC0 | `CVisibilityPlugins::GetClumpModelInfo` | L2 | L1-pure | none |
 | 0x732AE0 | `CVisibilityPlugins::IsClumpVisible` | L3-batch | L2 | none |
-| 0x732B00 | `CVisibilityPlugins::SetClumpAlpha` | L3-batch | L1-pure | none |
-| 0x732B20 | `CVisibilityPlugins::GetClumpAlpha` | L3-batch | L1-pure | none |
-| 0x733750 | `CVisibilityPlugins::SetClumpModelInfo` | L3-batch | L2 | none |
-
-## std6-render-2
-
-1 hooks in sa-render; hazards: none; recordings calling them: new-game (1), pause-restart (1).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh std6-render-2 $SA_ROOT/target/e2e/corpus/new-game.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=std6-render-2 LANE=$LANE tools/e2e/port-l2.sh batch:std6-render-2 $SA_ROOT/target/e2e/corpus/new-game.sarec --runs "plain l2 rust" --tag std6-render-2
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x705D20 | `CShadowCamera::MakeGradientRaster` | L3-batch | L3-only | none |
+| 0x732B00 | `CVisibilityPlugins::SetClumpAlpha` | L2 | L1-pure | none |
+| 0x732B20 | `CVisibilityPlugins::GetClumpAlpha` | L2 | L1-pure | none |
+| 0x733750 | `CVisibilityPlugins::SetClumpModelInfo` | L2 | L2 | none |
 
 ## std6-rw-1
 
@@ -7680,12 +7182,12 @@ SA_UNVERIFIED=std6-rw-1 LANE=$LANE tools/e2e/port-l2.sh batch:std6-rw-1 $SA_ROOT
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
-| 0x734850 | `RwHelper::Get2DEffectAtomicCallback` | L3-batch | L2 | none |
+| 0x734850 | `RwHelper::Get2DEffectAtomicCallback` | L2 | L2 | none |
 | 0x7348B0 | `RwHelper::GetFirstObjectCallback` | L3-batch | L1-pure | none |
 | 0x7348F0 | `RwHelper::GetFirstFrameCallback` | L3-batch | L1-pure | none |
 | 0x734A20 | `RwHelper::SkinAtomicGetHAnimHierarchCB` | L3-batch | L2 | none |
 | 0x734A70 | `FUN_00734a70` | L3-batch | L2 | none |
-| 0x734AB0 | `RwHelper::GetAnimHierarchyFromFrame` | L3-batch | L2 | none |
+| 0x734AB0 | `RwHelper::GetAnimHierarchyFromFrame` | L2 | L2 | none |
 | 0x7C4A00 | `cb_HANIMPLUGIN_RwFrame_StreamRead` | L3-batch | L2 | heap-writes |
 | 0x7C4D30 | `RpHAnimHierarchyDestroy` | L3-batch | L2 | heap-writes |
 | 0x7C4F40 | `RpHAnimHierarchyAttach` | L3-batch | L2 | none |
@@ -7694,21 +7196,21 @@ SA_UNVERIFIED=std6-rw-1 LANE=$LANE tools/e2e/port-l2.sh batch:std6-rw-1 $SA_ROOT
 | 0x7C5020 | `RpHAnimHierarchyAttachFrameIndex` | L3-batch | L2 | none |
 | 0x7C50A0 | `_rpHAnimHierarchyAttachFrameIndexCB` | L3-batch | L2 | none |
 | 0x7C5100 | `RpHAnimHierarchyDetachFrameIndex` | L3-batch | L1-pure | none |
-| 0x7C5120 | `RpHAnimHierarchyGetMatrixArray` | L3-batch | L1-pure | none |
-| 0x7C5130 | `RpHAnimFrameSetHierarchy` | L3-batch | L1-pure | none |
-| 0x7C5160 | `RpHAnimFrameGetHierarchy` | L3-batch | L1-pure | none |
+| 0x7C5120 | `RpHAnimHierarchyGetMatrixArray` | L2 | L1-pure | none |
+| 0x7C5130 | `RpHAnimFrameSetHierarchy` | L2 | L1-pure | none |
+| 0x7C5160 | `RpHAnimFrameGetHierarchy` | L2 | L1-pure | none |
 | 0x7C5170 | `RpHAnimFrameSetID` | L3-batch | L1-pure | none |
 | 0x7C5190 | `RpHAnimFrameGetID` | L3-batch | L1-pure | none |
-| 0x7C51A0 | `RpHAnimIDGetIndex` | L3-batch | L1-pure | none |
-| 0x7C51D0 | `RpHAnimHierarchyUpdateMatrices` | L3-batch | L2 | none |
+| 0x7C51A0 | `RpHAnimIDGetIndex` | L2 | L1-pure | none |
+| 0x7C51D0 | `RpHAnimHierarchyUpdateMatrices` | L2 | L2 | none |
 | 0x7C5B80 | `RpHAnimKeyFrameApply` | L3-batch | L2 | none |
-| 0x7C6B70 | `FUN_007c6b70` | L3-batch | L2 | none |
+| 0x7C6B70 | `FUN_007c6b70` | L2 | L2 | none |
 | 0x7C6D20 | `cb_SKINPLUGIN_RpGeometry_StreamRead` | L3-batch | L2 | heap-writes,uninit-locals |
 | 0x7C70C0 | `FUN_007c70c0` | L3-batch | L2 | none |
-| 0x7C7190 | `FUN_007c7190` | L3-batch | L2 | heap-writes |
-| 0x7C8720 | `(missed by ghidra: data-code-immediate)` | L3-batch | L1-pure | none |
+| 0x7C7190 | `FUN_007c7190` | L2 | L2 | heap-writes |
+| 0x7C8720 | `(missed by ghidra: data-code-immediate)` | L2 | L1-pure | none |
 | 0x7C8BE0 | `FUN_007c8be0` | L3-batch | L2 | heap-writes |
-| 0x7CD5A0 | `RtAnim::RtAnimInterpolatorSetCurrentAnim` | L3-batch | L2 | none |
+| 0x7CD5A0 | `RtAnim::RtAnimInterpolatorSetCurrentAnim` | L2 | L2 | none |
 | 0x7CD660 | `RtAnimInterpolatorSetKeyFrameCallBacks` | L3-batch | L2 | none |
 | 0x7CD6F0 | `RtAnimInterpolatorSetAnimLoopCallBack` | L3-batch | L1-pure | none |
 | 0x7CD710 | `RtAnimInterpolatorSetAnimCallBack` | L3-batch | L1-pure | none |
@@ -7733,9 +7235,9 @@ SA_UNVERIFIED=std6-script-1 LANE=$LANE tools/e2e/port-l2.sh batch:std6-script-1 
 |---|---|---|---|---|
 | 0x464C00 | `CRunningScript::AddScriptToList` | L3-batch | L1-pure | none |
 | 0x464D40 | `CTheScripts::StartTestScript` | L3-batch | L2 | none |
-| 0x464D50 | `CTheScripts::IsPlayerOnAMission` | L3-batch | L1-pure | ax-al-return |
+| 0x464D50 | `CTheScripts::IsPlayerOnAMission` | L2 | L1-pure | ax-al-return |
 | 0x468D50 | `CTheScripts::Init` | L3-batch | L2 | heap-writes,entry-protection-read |
-| 0x470370 | `CTheScripts::ReinitialiseSwitchStatementData` | L3-batch | L1-pure | none |
+| 0x470370 | `CTheScripts::ReinitialiseSwitchStatementData` | L2 | L1-pure | none |
 | 0x486720 | `CTheScripts::ReadObjectNamesFromScript` | L3-batch | L2 | heap-writes |
 
 ## std6-stream-1
@@ -7766,7 +7268,7 @@ SA_UNVERIFIED=std6-world-1 LANE=$LANE tools/e2e/port-l2.sh batch:std6-world-1 $S
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
-| 0x5BFBF0 | `FurnitureManager_c::GetSubGroupId` | L3-batch | L1-pure | none |
+| 0x5BFBF0 | `FurnitureManager_c::GetSubGroupId` | L2 | L1-pure | none |
 | 0x5C00C0 | `FurnitureSubGroup_c::AddFurniture` | L3-batch | L2 | none |
 
 ## std7-anim-1

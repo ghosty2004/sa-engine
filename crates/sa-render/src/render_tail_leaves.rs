@@ -11,7 +11,7 @@ use crate::common::{rd, wr};
 /// byte of `data`; returns the material. The original assembles the new dword in its own `material` argument slot
 /// and writes it back whole.
 #[hook(addr = 0x6fe220, conv = cdecl, name = "(missed by ghidra: data-code-immediate)", expect = "8B 44 24 04 8B 48 04",
-       unverified = "mvpl-render-1", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       route = "L2", hazards = "heap-writes", recs = "grove-walk",
        note = "writes the RW material colour (RW heap); its own argument slot holds the colour")]
 pub fn roadsign_material_set_alpha_cb(material: GPtr<u8>, data: u32) -> GPtr<u8> {
     let c = rd::<u32>(material, 4);

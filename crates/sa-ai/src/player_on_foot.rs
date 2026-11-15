@@ -393,7 +393,7 @@ fn try_jump(ped: GPtr<u8>, pad: GPtr<u8>) -> bool {
 /// `SetModelIsDeletable(this+8 + 0x63E7)` and every association with flag bit 9 (+0x2E) gets blend delta
 /// (+0x1C) -8.0; the last delta = 0 (also when B is not loaded).
 #[hook(addr = 0x6872c0, conv = thiscall, name = "CTaskSimplePlayerOnFoot::PlayIdleAnimations", expect = "83 EC 20 53 55 8B 6C 24 2C",
-       unverified = "mvpj-ai-3", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       route = "L2", hazards = "heap-writes", recs = "grove-walk",
        note = "writes animation associations (RW heap)")]
 pub fn on_foot_play_idle_animations(this: GPtr<u8>, ped: GPtr<u8>) {
     let pad = player_get_pad(ped);

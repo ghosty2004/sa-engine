@@ -186,7 +186,7 @@ orig! {
 /// revealed zones, entry-exits/shopping/tags/stunt jumps, `FindPlayerPed(0)` (result unused) and byte
 /// 0xC1CC18 = 0.
 #[hook(addr = 0x53C550, conv = cdecl, name = "CGame::ShutDownForRestart", expect = "56 57 6A 00 E8 67 45 1F 00",
-       unverified = "mvpa-core-2", route = "L3-only", hazards = "none", recs = "grove-walk",
+       route = "L3-only", hazards = "none", recs = "grove-walk",
        note = "new-game / load restart path")]
 pub fn shut_down_for_restart() {
     d3d_set_use_resource_buffering(0);
@@ -243,7 +243,7 @@ pub fn shut_down_for_restart() {
 /// `SortOutCollisionAfterLoad`. Finally `CTimer::Update`, the audio engine's restart and settings from
 /// the menu bytes 0xBA6798 / 0xBA6797 / 0xBA6799 / 0xBA6795 / 0xBA679A, and resource buffering on.
 #[hook(addr = 0x53C680, conv = cdecl, name = "CGame::InitialiseWhenRestarting", expect = "83 EC 08 53 68 FF 00 00 00",
-       unverified = "mvpa-core-2", route = "L3-only", hazards = "uninit-locals", recs = "grove-walk",
+       route = "L3-only", hazards = "uninit-locals", recs = "grove-walk",
        note = "new-game / load restart path; GenericLoad's out byte starts uninitialised in the original")]
 pub fn initialise_when_restarting() {
     let mut frame = [0u8; 8];
@@ -308,7 +308,7 @@ pub fn initialise_when_restarting() {
 /// `Init`, inappropriate ped models, audio statistics; when not loading a save: cranes, the test script,
 /// `CTheScripts::Process`, `TheCamera.Process()`, trains; finally pads 0 and 1 `Clear(true, true)`.
 #[hook(addr = 0x53BCF0, conv = cdecl, name = "CGame::ReInitGameObjectVariables", expect = "53 56 57 B9 28 F0 B6 00",
-       unverified = "mvpa-core-2", route = "L3-only", hazards = "none", recs = "grove-walk",
+       route = "L3-only", hazards = "none", recs = "grove-walk",
        note = "new-game / load restart path")]
 pub fn re_init_game_object_variables() {
     camera_init(GPtr::from_addr(THE_CAMERA as usize));

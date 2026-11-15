@@ -56,7 +56,7 @@ pub fn placeable_set_matrix(this: GPtr<u8>, m: GPtr<u8>) {
 /// = false`, `*entity = null`, 0.0. The original keeps `outEntity` in its own `x` argument slot (residue
 /// in the caller's argument area); here it is a local.
 #[hook(addr = 0x5696C0, conv = cdecl, name = "CWorld::FindGroundZFor3DCoord", expect = "83 EC 38 8B 44 24 3C",
-       unverified = "mvpa-world-2", route = "L2", hazards = "stack-residue", recs = "grove-walk",
+       route = "L2", hazards = "stack-residue", recs = "grove-walk",
        note = "the original writes the hit entity over its own first argument slot")]
 pub fn find_ground_z_for_3d_coord(px: f32, py: f32, pz: f32, found: GPtr<u8>, entity: GPtr<u8>) -> X87 {
     let mut point = [px, py, pz];
@@ -199,7 +199,7 @@ pub fn switch_ambient_planes(on: u32) {
 /// `range` argument slot and compares against it, kept as a value here). Returns the winner's pool index
 /// (signed division by 0x3C) or -1; the list is flushed either way.
 #[hook(addr = 0x43F4B0, conv = cdecl, name = "CEntryExitManager::FindNearestEntryExit", expect = "6A FF 68 38 77 83 00",
-       unverified = "mvpa-world-2", route = "L2", hazards = "x87-transcendental,stack-residue", recs = "grove-walk",
+       route = "L2", hazards = "x87-transcendental,stack-residue", recs = "grove-walk",
        note = "fsqrt; the original overwrites its range argument slot with 2*range and then the best distance")]
 pub fn find_nearest_entry_exit(pos: GPtr<u8>, range: f32, ignore_area: i32) -> i32 {
     let mut list = [0u32; 1];
@@ -278,7 +278,7 @@ pub fn point_route_delete(p: GPtr<u8>) {
 /// `CPointRoute::operator new(uint32)` (0x41B7C0, cdecl): a tail call of `CPointRoutePool::New()` on
 /// `CPools::ms_pPointRoutePool` (0xB744B0, loaded in a SecuROM fragment); the size is ignored.
 #[hook(addr = 0x41B7C0, conv = cdecl, name = "CPointRoute::operator new", expect = "90 E9 27 E3 FE FF",
-       unverified = "mvpa-world-3", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+       route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn point_route_new(_size: u32) -> GPtr<u8> {
     point_route_pool_new(g::<GPtr<u8>>(0xB744B0).read())
 }

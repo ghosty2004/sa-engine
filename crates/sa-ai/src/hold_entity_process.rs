@@ -78,7 +78,7 @@ fn secondary(ped: GPtr<u8>) -> GPtr<u8> {
 /// check), and the aiming rotation (+0x55C) = `atan2(-d.x, d.y)` of `entity position - ped position` (`VectorSub`);
 /// put-down (0x135): the secondary hold task (type 0x133) gets `MakeAbortable(ped, 1, NULL)`. Returns 0.
 #[hook(addr = 0x693c40, conv = thiscall, name = "CTaskSimpleHoldEntity::ProcessPed", expect = "64 A1 00 00 00 00",
-       unverified = "mvpm-ai-2", route = "L2", hazards = "x87-transcendental,heap-writes,stack-residue", recs = "grove-walk",
+       route = "L2", hazards = "x87-transcendental,heap-writes,stack-residue", recs = "grove-walk",
        note = "two FPATANs (sa_math::x87 model); the CEventScriptCommand and the transformed vectors live on the Rust stack; AL result with the upper EAX bytes of the last callee")]
 pub fn hold_entity_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     if rd::<u8>(this, 0x35) != 0 {

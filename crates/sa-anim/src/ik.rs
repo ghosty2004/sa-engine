@@ -885,7 +885,7 @@ pub fn can_accept_look_at(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
 /// (S+0x2C) and the cleared `useTorso` byte into its slot (S+0x1C); not reproduced. `speed` is passed
 /// through as raw bits.
 #[hook(addr = 0x618970, conv = thiscall, name = "IKChainManager_c::LookAt", expect = "6A FF 68 B6 F0 83 00",
-       unverified = "mvpi-anim-1", route = "L2", hazards = "stack-residue,heap-writes", recs = "grove-walk",
+       route = "L2", hazards = "stack-residue,heap-writes", recs = "grove-walk",
        note = "allocates CTaskSimpleIKManager / CTaskSimpleIKLookAt tasks (task pool)")]
 #[allow(clippy::too_many_arguments)]
 pub fn look_at(
@@ -963,7 +963,7 @@ orig! {
 /// `AddIKChainTask(task, arm + 1)`. The original keeps `arm + 1` in its own `range` argument slot. Speed, blend time
 /// and range pass through as raw bits.
 #[hook(addr = 0x618b60, conv = thiscall, name = "IKChainManager_c::PointArm", expect = "90 E9 9D CE DE FF",
-       unverified = "mvpl-anim-1", route = "L2", hazards = "stack-residue,heap-writes", recs = "grove-walk",
+       route = "L2", hazards = "stack-residue,heap-writes", recs = "grove-walk",
        note = "allocates CTaskSimpleIKManager / CTaskSimpleIKPointArm tasks (task pool); the range argument slot holds the IK slot")]
 #[allow(clippy::too_many_arguments)]
 pub fn point_arm(

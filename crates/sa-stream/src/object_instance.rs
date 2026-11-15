@@ -76,7 +76,7 @@ fn ensure_matrix(e: GPtr<u8>) {
 /// bound rect (or clears uses-collision without volumes) and marks the entity underwater when its box
 /// bottom is below 0.
 #[hook(addr = 0x538090, conv = cdecl, name = "CFileLoader::LoadObjectInstance-inst", expect = "6A FF 68 31 C9 83 00 64 A1 00",
-       unverified = "std5-stream-1", route = "L2", hazards = "heap-writes,x87-transcendental", recs = "new-game")]
+       route = "L2", hazards = "heap-writes,x87-transcendental", recs = "new-game")]
 pub fn load_object_instance(inst: GPtr<u8>, _name: GPtr<u8>) -> GPtr<u8> {
     let id = rd32(inst, 0x1C);
     let mi = model_info(id);

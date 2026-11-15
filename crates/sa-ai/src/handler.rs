@@ -1025,7 +1025,7 @@ fn he_delete_slot(h: GPtr<u8>, off: isize) {
 /// (+0x24) is set, `SetEventResponseTask(E)`, group `Remove(E)`. Then `RemoveInvalidEvents(false)` and
 /// `Reorganise` (tail call).
 #[hook(addr = 0x4c3f10, conv = thiscall, name = "CEventHandler::HandleEvents", expect = "83 EC 1C 53 55 56 8B D9",
-       unverified = "mvpj-ai-1", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       route = "L2", hazards = "heap-writes", recs = "grove-walk",
        note = "event and task objects are pool/heap memory")]
 pub fn handler_handle_events(this: GPtr<u8>) {
     let h = this.byte_add(4);

@@ -25,7 +25,7 @@ const CHARSET_PIXELS: usize = 0xC3EF88;
 /// (both start at 1), then 16 rows of 8 pixels (dwords) from the charset at byte `(row * 64 + col) * 32` (rows advance
 /// by the charset stride) to the sign at letter * 0x20 (rows advance by the sign stride). `RwRasterUnlock(sign)`, AL = 1.
 #[hook(addr = 0x6feb70, conv = cdecl, name = "CCustomRoadsignMgr::RoadsignGenerateTextRaster", expect = "83 EC 14 56 8B 74 24 2C",
-       unverified = "mvpm-render-6", route = "L2", hazards = "ax-al-return,heap-writes", recs = "driving",
+       route = "L2", hazards = "ax-al-return,heap-writes", recs = "driving",
        note = "writes the locked sign raster; RoadsignGetLineAndRow is a register-convention callee (AL + two stack pointers)")]
 pub fn roadsign_generate_text_raster(text: GPtr<u8>, num: i32, charset: GPtr<u8>, _unused: i32, sign: GPtr<u8>) -> u8 {
     let lock = GPtr::<u8>::addr(GPtr::from_addr(rw_raster_lock(sign, 0, 5) as usize)) as u32;

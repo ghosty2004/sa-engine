@@ -31,7 +31,7 @@ orig! {
 ///    otherwise, when offset and dynamic lock are 0, `RwD3D9DynamicVertexBufferDestroy(vb)`; then the buffer pointer
 ///    is cleared. Every stream then gets offset, stride, flags word, managed and dynamic lock zeroed.
 #[hook(addr = 0x4C9990, conv = cdecl, name = "_rxD3D9DefaultDestroyInstanceCallback", expect = "53 55 56 57 8B 7C 24 14",
-       unverified = "boot-rw-1", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       route = "L2", hazards = "heap-writes", recs = "grove-walk",
        note = "frees D3D9 vertex / index buffers and declarations of a resource-arena entry; the entry's header is zeroed")]
 pub fn default_destroy_instance_callback(entry: GPtr<u8>) {
     let owner = rd::<GPtr<u8>>(entry, 0xC);

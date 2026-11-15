@@ -19,7 +19,7 @@ pub fn stunt_jump_pool_ctor(p: PoolPtr<Slot<0x44>>, size: i32, _name: GPtr<u8>) 
 /// `CPool<CEntryExit>::New()` (stub 0x43F7D0 → .HOODLUM 0x15651D0): the shared `New` algorithm, slot
 /// 0x3C (`imul eax, eax, 0x3C`).
 #[hook(addr = 0x43F7D0, conv = thiscall, name = "thunk_FUN_015651d0", expect = "E9 FB 59 12 01", this = "CPool<int32>",
-       unverified = "std5-pool-1", route = "L2", hazards = "heap-writes", recs = "new-game")]
+       route = "L2", hazards = "heap-writes", recs = "new-game")]
 pub fn entry_exit_pool_new(p: PoolPtr<Slot<0x3C>>) -> GPtr<Slot<0x3C>> {
     crate::pool::pool_new(p)
 }
@@ -33,14 +33,14 @@ orig! {
 
 /// `CPtrNodeSingleLink::operator new(size)` (0x552380): `[0xB74484]->New()` (tail jump).
 #[hook(addr = 0x552380, conv = cdecl, name = "new", expect = "8B 0D 84 44 B7 00 E9",
-       unverified = "std5-pool-1", route = "L2", hazards = "heap-writes", recs = "new-game")]
+       route = "L2", hazards = "heap-writes", recs = "new-game")]
 pub fn ptr_node_single_new(_size: u32) -> GPtr<u8> {
     ptr_node_single_pool_new(GPtr::<u32>::from_addr(0xB74484).read())
 }
 
 /// `CPtrNodeDoubleLink::operator new(size)` (0x5523C0): `[0xB74488]->New()` (tail jump).
 #[hook(addr = 0x5523C0, conv = cdecl, name = "new", expect = "8B 0D 88 44 B7 00 E9",
-       unverified = "std5-pool-1", route = "L2", hazards = "heap-writes", recs = "new-game")]
+       route = "L2", hazards = "heap-writes", recs = "new-game")]
 pub fn ptr_node_double_new(_size: u32) -> GPtr<u8> {
     ptr_node_double_pool_new(GPtr::<u32>::from_addr(0xB74488).read())
 }

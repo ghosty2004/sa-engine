@@ -55,7 +55,7 @@ const PLAYERS: usize = 0xB7CD98;
 /// states 6/1, 0xB/6, 0xA/5, 7/2 and `RwCameraEndUpdate`. Returns the raster. The vertices' u / v
 /// (uninitialised stack in the original) are 0 here; no texture is bound (STD-6).
 #[hook(addr = 0x705D20, conv = thiscall, name = "CShadowCamera::MakeGradientRaster", expect = "83 EC 54 8B 01", this = "CShadowCamera",
-       unverified = "std6-render-2", route = "L3-only", hazards = "none", recs = "new-game",
+       route = "L3-only", hazards = "none", recs = "new-game",
        note = "draws into the shadow camera raster through RwIm2D")]
 pub fn shadow_camera_make_gradient_raster(this: GPtr<u8>) -> GPtr<u8> {
     let cam: GPtr<u8> = rd(this, 0);

@@ -142,7 +142,7 @@ use sa_core::field::pa as p;
 /// did not request stop being mission models, then model 1; the zone models around the player stream and layer 1 is
 /// forced.
 #[hook(addr = 0x5afd60, conv = cdecl, name = "CCutsceneMgr::DeleteCutsceneData_overlay", expect = "A1 4C F8 B5 00",
-       unverified = "mvpn-anim-1", route = "L3-only", hazards = "heap-writes",
+       route = "L3-only", hazards = "heap-writes",
        note = "once per cutscene end; streams models, frees the cutscene objects and camera data")]
 pub fn cutscene_delete_cutscene_data_overlay() {
     if gu32(LOAD_STATUS).read() == 0 {
