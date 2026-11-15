@@ -19,9 +19,9 @@ use sa_core::mem::GPtr;
 use crate::bindings::{set_component_rotation, automobile_process_suspension, is_playback_going_on_for_car, process_car_wheel_pair};
 orig! {
     /// `CAutomobile::PreRender()` (0x6AAB50)
-    fn automobile_pre_render(v: GPtr<u8>) = thiscall 0x6AAB50 => unported;
+    pub(crate) fn automobile_pre_render(v: GPtr<u8>) = thiscall 0x6AAB50 => unported;
     /// `CAutomobile::ProcessAI(uint32& extraHandlingFlags)` (0x6B4800)
-    fn automobile_process_ai(v: GPtr<u8>, flags: GPtr<u8>) -> u8 = thiscall 0x6B4800 => unported;
+    pub(crate) fn automobile_process_ai(v: GPtr<u8>, flags: GPtr<u8>) -> u8 = thiscall 0x6B4800 => unported;
     /// `CTrailer::ScanForTowLink()` (0x6CF030)
     fn scan_for_tow_link_o(v: GPtr<u8>) = thiscall 0x6CF030 => scan_for_tow_link;
     /// virtual `CVehicle::GetTowHitchPos(CVector&, bool, CVehicle*)` (vtable +0xEC)

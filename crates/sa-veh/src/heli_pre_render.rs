@@ -31,19 +31,16 @@ orig! {
 
 use sa_core::field::ptr_of as buf;
 
-/// Rotates a rotor frame through the shared `CMatrix`: attached to the frame's matrix, the rotation
-/// replaced (`SetRotateZ` for the main rotor, `SetRotateX` for the tail), the position kept.
-fn spin(m: GPtr<u8>, frame: GPtr<u8>, angle: f32, tail: bool) {
+/// Rotates a frame through the shared `CMatrix`: attached to the frame's matrix, the rotation replaced (`rotate`:
+/// `SetRotateX` / `SetRotateY` / `SetRotateZ` with the angle), the position kept, the RW matrix updated. Shared by the
+/// heli rotors and the quad's axles.
+pub(crate) fn spin(m: GPtr<u8>, frame: GPtr<u8>, angle: f32, rotate: fn(GPtr<u8>, f32)) {
     if frame.is_null() {
         return;
     }
     matrix_attach(m, frame.byte_add(0x10), 0);
     let saved = [rd::<f32>(m, 0x30), rd::<f32>(m, 0x34), rd::<f32>(m, 0x38)];
-    if tail {
-        matrix_set_rotate_x(m, angle);
-    } else {
-        matrix_set_rotate_z(m, angle);
-    }
+    rotate(m, angle);
     for (k, o) in [(0usize, 0x30isize), (1, 0x34), (2, 0x38)] {
         wr::<f32>(m, o, f32_of(x(rd::<f32>(m, o)).fadd_m(saved[k])));
     }
@@ -140,10 +137,10 @@ pub fn heli_pre_render(this: GPtr<u8>) {
         }
         wr::<f32>(this, 0x9A4, f32_of(v));
     }
-    spin(m, rd::<GPtr<u8>>(this, 0x678), rd::<f32>(this, 0x9A0), false);
-    spin(m, rd::<GPtr<u8>>(this, 0x67C), rd::<f32>(this, 0x9A0), false);
-    spin(m, rd::<GPtr<u8>>(this, 0x680), rd::<f32>(this, 0x9A4), true);
-    spin(m, rd::<GPtr<u8>>(this, 0x684), rd::<f32>(this, 0x9A4), true);
+    spin(m, rd::<GPtr<u8>>(this, 0x678), rd::<f32>(this, 0x9A0), matrix_set_rotate_z);
+    spin(m, rd::<GPtr<u8>>(this, 0x67C), rd::<f32>(this, 0x9A0), matrix_set_rotate_z);
+    spin(m, rd::<GPtr<u8>>(this, 0x680), rd::<f32>(this, 0x9A4), matrix_set_rotate_x);
+    spin(m, rd::<GPtr<u8>>(this, 0x684), rd::<f32>(this, 0x9A4), matrix_set_rotate_x);
     store_shadow_for_vehicle(this, 2);
     matrix_dtor(m);
 }

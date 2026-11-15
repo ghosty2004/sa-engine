@@ -170,6 +170,9 @@ const DS_OK: i32 = 0;
 const E_NOINTERFACE: i32 = 0x8000_4002u32 as i32;
 const DSERR_INVALIDPARAM: i32 = 0x8007_0057u32 as i32;
 const DSERR_INVALIDCALL: i32 = 0x8878_0032u32 as i32;
+const DSERR_CONTROLUNAVAIL: i32 = 0x8878_001Eu32 as i32;
+/// `DSFXR_UNKNOWN`: an effect's `SetFX` result when it was not created.
+const DSFXR_UNKNOWN: u32 = 5;
 
 /// `DSBCAPS_PRIMARYBUFFER`, `DSBCAPS_CTRL3D`.
 const DSBCAPS_PRIMARYBUFFER: u32 = 1;
@@ -1012,6 +1015,22 @@ fn buf_restore(_this: u32) -> i32 {
     DS_OK
 }
 
+/// `IDirectSoundBuffer8::SetFX(count, desc, results)`: the mixer renders no DirectX effects, so removing them
+/// (count 0) succeeds and adding any fails as on a buffer without FX control (`DSERR_CONTROLUNAVAIL`; each result
+/// `DSFXR_UNKNOWN`). The game's callers (`CAEStreamingChannel::AddFX` 0x4F1AE0, the vehicle radio's bass EQ) then keep
+/// the channel without FX.
+fn buf_set_fx(_this: u32, n: u32, _desc: GPtr<u32>, res: GPtr<u32>) -> i32 {
+    if n == 0 {
+        return DS_OK;
+    }
+    if !res.is_null() {
+        for i in 0..n as i32 {
+            res.wrapping_index(i).write(DSFXR_UNKNOWN);
+        }
+    }
+    DSERR_CONTROLUNAVAIL
+}
+
 // --- IDirectSound3DBuffer (parameters recorded, not rendered) ---
 
 fn b3_query_interface(_this: u32, _iid: GPtr<u32>, out: GPtr<u32>) -> i32 {
@@ -1126,6 +1145,7 @@ entries! {
     trap(BUFFER, 18), "IDirectSoundBuffer8::Stop" => buf_stop: fn(this: u32) -> i32;
     trap(BUFFER, 19), "IDirectSoundBuffer8::Unlock" => buf_unlock: fn(this: u32, p1: u32, n1: u32, p2: u32, n2: u32) -> i32;
     trap(BUFFER, 20), "IDirectSoundBuffer8::Restore" => buf_restore: fn(this: u32) -> i32;
+    trap(BUFFER, 21), "IDirectSoundBuffer8::SetFX" => buf_set_fx: fn(this: u32, n: u32, desc: GPtr<u32>, res: GPtr<u32>) -> i32;
     trap(BUFFER3D, 0), "IDirectSound3DBuffer::QueryInterface" => b3_query_interface: fn(this: u32, iid: GPtr<u32>, out: GPtr<u32>) -> i32;
     trap(BUFFER3D, 1), "IDirectSound3DBuffer::AddRef" => add_ref: fn(this: u32) -> u32;
     trap(BUFFER3D, 2), "IDirectSound3DBuffer::Release" => b3_release: fn(this: u32) -> u32;

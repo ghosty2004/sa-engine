@@ -2,7 +2,7 @@
 # FRONTIER-1 scenarios: native sa-game runs (deterministic, --fixed-step 40, offscreen) that reach the blockers the
 # user hit. Each must end with an empty blocker list in OUT/report.md and no crash.
 #
-#   tools/e2e/scenarios/frontier.sh pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver OUTDIR [FRAMES]
+#   tools/e2e/scenarios/frontier.sh pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad OUTDIR [FRAMES]
 #
 # pausemenu (400)  Esc, down x3, Enter (pause-menu item 4: Stats), down, Enter, Enter: the Stats pages draw
 #                  (was a SIGSEGV at iteration ~171: CStats::GetStatValue's X87 result dispatched as cdecl)
@@ -33,6 +33,8 @@
 # roadblocks (2000) the crossing run's Greenwood near Grove Street, the wanted-level cheat OSRBLHH typed twice in it (four
 #                  stars: a road block chance), then driven: CRoadBlocks::GenerateRoadBlocks 0x4629E0's wanted-level path
 #                  (whole port since FRONTIER-2 turn 2 lane A)
+# quad (1200)     on foot at Grove Street, the quad cheat AKJJYGLC, CJ gets on the quad and drives it: the player quad's
+#                  CQuadBike::ProcessControl 0x6CDCC0 (user-hit in the SA:MP web build, FRONTIER-2 turn 3 lane B)
 # WRAP="gdb -q -batch -x tools/e2e/scenarios/frontier2-counts.gdb --args" counts the FRONTIER-2 ports' calls
 # (frontier2-3-counts.gdb: those of part 2).
 # Env: SA_ROOT (checkout holding wine/gta-sa; default ~/sa-engine), SA_GAME (binary; default this checkout's
@@ -105,7 +107,14 @@ shootdriver)
     export SA_GAME_KEYS="$keys" SA_GAME_JACK="${SA_GAME_JACK:-400:7}" SA_GAME_MOUSE="${SA_GAME_MOUSE:--3:-4:425:445}"
     export SA_GAME_RMB="${SA_GAME_RMB:-420:1150}" SA_GAME_LMB="${SA_GAME_LMB:-450:1150}"
     run "${3:-1200}" --start-in-world ;;
+quad)
+    # on foot at Grove Street: the quad cheat AKJJYGLC (CCheat::VehicleCheat puts a quad in front of CJ), CJ gets on it
+    # (`f`) and drives (w, then a left and a right turn): CQuadBike::ProcessControl 0x6CDCC0 for the player's quad
+    export SA_GAME_SCRIPT_SKIP=1
+    keys=; i=150; for c in a k j j y g l c; do keys="$keys${keys:+,}$c:$i:$((i + 2))"; i=$((i + 6)); done
+    export SA_GAME_KEYS="$keys,f:260:263,w:400:900,a:600:640,d:750:790"
+    run "${3:-1200}" --start-in-world ;;
 *)
-    echo "usage: $0 pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver OUTDIR [FRAMES]" >&2
+    echo "usage: $0 pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad OUTDIR [FRAMES]" >&2
     exit 2 ;;
 esac
