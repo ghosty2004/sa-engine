@@ -10,18 +10,9 @@ use crate::common::{f32_of, g, rd, wr, x};
 use crate::glass::report_glass_collision_event;
 use crate::glass_break_physically::generate_panes_for_window;
 use sa_core::bindings::matrix_mul_vec;
-use sa_stream::bindings::{placeable_allocate_matrix, simple_transform_update_matrix};
 use sa_world::bindings::uncompress_vector;
 use sa_world::world::common::entity_pos;
-
-/// The entity's matrix, allocated from its simple transform first when it has none (`GetMatrix`).
-fn matrix_of(e: GPtr<u8>) -> GPtr<u8> {
-    if rd::<GPtr<u8>>(e, 0x14).is_null() {
-        placeable_allocate_matrix(e);
-        simple_transform_update_matrix(e.byte_add(4), rd::<GPtr<u8>>(e, 0x14));
-    }
-    rd::<GPtr<u8>>(e, 0x14)
-}
+use sa_world::world::mvpd_w3::ensure_matrix as matrix_of;
 
 /// `CGlass::WindowRespondsToCollision(CEntity*, float damage, CVector moveSpeed, CVector point, bool max1)` (0x71BC40,
 /// cdecl). Nothing once the glass is broken altogether (+0x140 bit 5); else +0x140 bit 4 (broken). For a collision

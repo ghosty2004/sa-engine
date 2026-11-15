@@ -29,7 +29,7 @@ fn col_model(e: GPtr<u8>) -> GPtr<u8> {
 }
 
 /// The inlined `GetMatrix`: allocates and fills the matrix from the simple transform when there is none.
-fn ensure_matrix(e: GPtr<u8>) -> GPtr<u8> {
+pub fn ensure_matrix(e: GPtr<u8>) -> GPtr<u8> {
     if rd::<GPtr<u8>>(e, 0x14).is_null() {
         placeable_allocate_matrix(e);
         simple_transform_update_matrix(e.byte_add(4), rd::<GPtr<u8>>(e, 0x14));
