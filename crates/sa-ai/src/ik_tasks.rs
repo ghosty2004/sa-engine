@@ -224,4 +224,34 @@ pub fn ik_chain_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     0
 }
 
-pub const HOOKS: &[HookReg] = &[HOOK_IK_LOOK_AT_CREATE_IK_CHAIN, HOOK_IK_CHAIN_PROCESS_PED, HOOK_IK_POINT_ARM_CREATE_IK_CHAIN, HOOK_IK_LOOK_AT_CLONE, HOOK_IK_POINT_ARM_CLONE];
+pub const HOOKS: &[HookReg] = &[HOOK_IK_LOOK_AT_CREATE_IK_CHAIN, HOOK_IK_CHAIN_PROCESS_PED, HOOK_IK_POINT_ARM_CREATE_IK_CHAIN, HOOK_IK_LOOK_AT_CLONE, HOOK_IK_POINT_ARM_CLONE, HOOK_IK_CHAIN_CREATE_IK_CHAIN];
+
+/// `CTaskSimpleIKChain::CreateIKChain(CPed*)` (0x633BD0, thiscall, `ret 4`; FRONTIER-2 turn 5 lane A). Chain (+0x10) =
+/// `g_ikChainMan.AddIKChain("", 3, ped, bone +0x18, offset +0x1C, part +0x16 (sign-extended), entity +0x28, bone
+/// +0x2C, offset +0x30, speed +0x3C, priority 3)`; AL = chain != null with the chain pointer's upper bytes in EAX
+/// (`setne al`; null → 0). Unlike the look-at / point-arm overrides it neither sets the part nor clamps limits.
+#[hook(addr = 0x633BD0, conv = thiscall, name = "CTaskSimpleIKChain::CreateIKChain", expect = "56 8B F1 8B 46 3C",
+       unverified = "frontier2-a8", route = "L2", hazards = "ax-al-return,heap-writes",
+       note = "the IK chain pool is heap memory")]
+pub fn ik_chain_create_ik_chain(this: GPtr<u8>, ped: GPtr<u8>) -> u32 {
+    let c = ik_manager_add_ik_chain(
+        g::<u8>(IK_CHAIN_MAN),
+        g::<u8>(STR_EMPTY).addr() as u32,
+        3,
+        ped,
+        i32::from(rd::<i16>(this, 0x18)),
+        rd::<u32>(this, 0x1C),
+        rd::<u32>(this, 0x20),
+        rd::<u32>(this, 0x24),
+        i32::from(rd::<i16>(this, 0x16)) as u32,
+        rd::<u32>(this, 0x28),
+        rd::<u32>(this, 0x2C),
+        rd::<u32>(this, 0x30),
+        rd::<u32>(this, 0x34),
+        rd::<u32>(this, 0x38),
+        rd::<u32>(this, 0x3C),
+        3,
+    );
+    wr::<GPtr<u8>>(this, 0x10, c);
+    (c.addr() as u32 & 0xFFFF_FF00) | u32::from(!c.is_null())
+}
