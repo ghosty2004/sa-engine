@@ -33,11 +33,11 @@ use sa_world::bindings::object_set_centre_of_mass as object_set_centre_offset;
 use sa_world::bindings::physical_apply_move_force_5429f0 as apply_move_force;
 orig! {
     /// virtual `CEntity::SetModelIndexNoCreate(uint32)` (vtable +0x18)
-    fn v_set_model_index_no_create(e: GPtr<u8>, mi: u32) = thiscall vslot 0x18 => unported;
+    pub(crate) fn v_set_model_index_no_create(e: GPtr<u8>, mi: u32) = thiscall vslot 0x18 => unported;
     /// virtual `CEntity::SetIsStatic(bool)` (vtable +0x10)
-    fn v_set_is_static(e: GPtr<u8>, s: u32) = thiscall vslot 0x10 => unported;
+    pub(crate) fn v_set_is_static(e: GPtr<u8>, s: u32) = thiscall vslot 0x10 => unported;
     /// `CObject::RefModelInfo(int32)` (0x59F330)
-    fn object_ref_model_info(o: GPtr<u8>, mi: i32) = thiscall 0x59F330 => unported;
+    pub(crate) fn object_ref_model_info(o: GPtr<u8>, mi: i32) = thiscall 0x59F330 => unported;
     /// `CObject::SetRemapTexture(RwTexture*, int16 txd)` (0x59F350)
     fn object_set_remap_texture(o: GPtr<u8>, tex: u32, txd: i32) = thiscall 0x59F350 => unported;
 }

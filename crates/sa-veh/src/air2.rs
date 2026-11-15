@@ -54,7 +54,7 @@ pub use sa_world::bindings::fx_get_composite_matrix;
 pub use sa_world::bindings::fx_prt_mult_ctor;
 orig! {
     /// `CHeli::GenerateHeli(CPed*, bool)` (0x6C6520)
-    pub fn generate_heli(ped: GPtr<u8>, police: u32) -> GPtr<u8> = cdecl 0x6C6520 => unported;
+    pub fn generate_heli(ped: GPtr<u8>, police: u32) -> GPtr<u8> = cdecl 0x6C6520 => crate::frontier_b3_veh::heli_generate_heli;
     /// Virtual slot 0 (`scalar deleting destructor`)
     pub fn entity_vdelete(e: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
     /// `CAutomobile::OpenDoor(CPed*, int32, eDoors, float, bool)` (0x6A6AE0)

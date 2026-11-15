@@ -22,11 +22,11 @@ use crate::bindings::spawn_flying_component;
 use sa_world::bindings::add_explosion;
 orig! {
     /// `FUN_007322f0(RpClump*, uint32)` (0x7322F0, the clump's atomic flags)
-    fn clump_set_flags_7322f0(clump: GPtr<u8>, flags: u32) = cdecl 0x7322F0 => unported;
+    pub(crate) fn clump_set_flags_7322f0(clump: GPtr<u8>, flags: u32) = cdecl 0x7322F0 => unported;
     /// `CDamageManager::FuckCarCompletely(bool)` (0x6C25D0)
-    fn damage_fuck_car_completely(d: GPtr<u8>, b: u32) = thiscall 0x6C25D0 => unported;
+    pub(crate) fn damage_fuck_car_completely(d: GPtr<u8>, b: u32) = thiscall 0x6C25D0 => unported;
     /// `CVehicle::KillPedsInVehicle()` (0x6D1C80)
-    fn kill_peds_in_vehicle(v: GPtr<u8>) = thiscall 0x6D1C80 => unported;
+    pub(crate) fn kill_peds_in_vehicle(v: GPtr<u8>) = thiscall 0x6D1C80 => unported;
     /// `CVehicle::KillPedsGettingInVehicle()` (0x6D82F0)
     fn kill_peds_getting_in_vehicle(v: GPtr<u8>) = thiscall 0x6D82F0 => unported;
 }
