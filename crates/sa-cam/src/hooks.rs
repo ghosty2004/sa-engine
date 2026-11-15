@@ -28,6 +28,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::followcar::HOOKS,
     crate::dwcams::HOOKS,
     crate::arrestcam::HOOKS,
+    crate::frontier_b4_cam::HOOKS,
     crate::twoplayer::HOOKS,
     crate::followped::HOOKS,
     crate::aimweapon::HOOKS,

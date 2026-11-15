@@ -34,6 +34,7 @@ pub mod statics;
 
 pub mod aimweapon;
 pub mod arrestcam;
+pub mod frontier_b4_cam;
 pub mod avoidgeom;
 pub mod camcol;
 pub mod camcontrol;
