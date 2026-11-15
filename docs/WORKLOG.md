@@ -1591,4 +1591,15 @@
   ProcSurfaceInfo_c::AddObjects 0x5A3850, the rest of the batch identical. Cause: its two `srand` calls carried a Rust
   return address in the determinism rand log; they now run `at_site` the original's return addresses (0x5A3C82,
   0x5A3E00), as CGame::InitialiseRenderWare does.
+- verify-all `frontier2-2` (3719c807, lanes 1-3, SA_UNVERIFIED=frontier2-1,frontier2-2): IDENTICAL 13/13 (grove walk
+  included). Writer gate green on both commits (frontier2-1 after the expect / native / L1-route fixes the hooktest and
+  l1 steps found; frontier2-2 full). i686 sa-game with and without `samp`, `FEATURES=samp tools/web/build.sh` (with the
+  wasm-bindgen 0.2.130 of ~/sa-engine/target/tools/bin) built. Final repros: pausemenu 416 ok / 0 blocked, solicit
+  4016 / 0, melee 2616 / 0, crossing 871 ok / 345 blocked on `update_car_ai_original (0x0)` (police), no crash.
+- frontier.py before / after: direct 511 + virtual 220 = 731 → direct 480 + virtual 211 (+ imports 4, partial 14 newly
+  listed).
+- Left open: CCarAI::UpdateCarAI's remaining cases (the law-enforcer path with a wanted level and the missions the
+  partial port does not cover; ~2,500 instructions of the 3,361); CTaskComplexKillCriminal::ControlSubTask 0x68E950
+  (1,179 instructions); CCam::Process_M16_1stPerson 0x5105C0 (1,446); the other partial ports' cases; the four
+  imports; the rest of the frontier list (the ~250-function turn was not reached).
 
