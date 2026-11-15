@@ -3795,6 +3795,192 @@ pub fn process_player_sea_plane(this: GPtr<u8>, params: GPtr<u8>) {
     play_aircraft_sound_call(this, 1, 0x13, 0x10, dv.to_bits(), ONE);
 }
 
+/// `CAEVehicleAudioEntity::ProcessPlayerProp(cVehicleParams&)` (0x4FD290; FRONTIER-2 lane C turn 5): engine bank +0xDE
+/// in slot 0x28 and bank 0x8A in slot 0x13 must be loaded. Engine off (vehicle +0x428 bit 0x10): the twelve engine
+/// sounds cancelled. `f = clamp01(f32(+0x9C4 * [0x862D18]))`, `p = GetPiecewiseLinear(f, 3, 0x8CBE00)`, then
+/// `GetAccelAndBrake(params)`; the rest is [`prop_engine`].
+#[hook(addr = 0x4FD290, conv = thiscall, name = "CAEVehicleAudioEntity::ProcessPlayerProp", expect = "6A FF 68 C8 C3 83 00",
+       unverified = "frontier2-c11", route = "L2", hazards = "x87-transcendental")]
+pub fn process_player_prop(this: GPtr<u8>, params: GPtr<u8>) {
+    if is_sound_bank_loaded(g(HW), rd::<u16>(this, 0xDE) as u32, 0x28) == 0
+        || is_sound_bank_loaded(g(HW), 0x8A, 0x13) == 0
+    {
+        return;
+    }
+    let veh: GPtr<u8> = g(rd::<u32>(params, 0x10) as usize);
+    if rd::<u8>(veh, 0x428) & 0x10 == 0 {
+        for i in 0..12u32 {
+            cancel_vehicle_engine_sound(this, i);
+        }
+        return;
+    }
+    let f = clamp01_f32(x(rd::<f32>(veh, 0x9C4)).fmul_m(gf(0x862D18)).to_f32());
+    let p = get_piecewise_linear(f.to_bits(), 3, GPtr::from_addr(0x8CBE00)) as f32;
+    crate::bindings::get_accel_and_brake(this, params);
+    prop_engine(this, params, p, true);
+}
+
+/// `CAEVehicleAudioEntity::ProcessDummyProp(cVehicleParams&)` (0x4FD8F0; FRONTIER-2 lane C turn 5): bank 0x8A in slot
+/// 0x13 and engine bank +0xDE in slot 0x28 must be loaded. Engine off and not flying forward (+0x424 < 0): the twelve
+/// engine sounds cancelled. The pedals `ftol(+0x49C * 255)` / `ftol(+0x4A0 * 255)` are stored as params +0x20 / +0x22
+/// (int16); `f = clamp01(max * [0x859A3C])`, forward `f * 0.3 + 0.7`, else `+0x9C4 * [0x862D18]`, clamped again (f32);
+/// `p = GetPiecewiseLinear(f, 3, 0x8CBE00)`; the rest is [`prop_engine`].
+#[hook(addr = 0x4FD8F0, conv = thiscall, name = "CAEVehicleAudioEntity::ProcessDummyProp", expect = "6A FF 68 E8 C3 83 00",
+       unverified = "frontier2-c11", route = "L2", hazards = "x87-transcendental")]
+pub fn process_dummy_prop(this: GPtr<u8>, params: GPtr<u8>) {
+    if is_sound_bank_loaded(g(HW), 0x8A, 0x13) == 0
+        || is_sound_bank_loaded(g(HW), rd::<u16>(this, 0xDE) as u32, 0x28) == 0
+    {
+        return;
+    }
+    let veh: GPtr<u8> = g(rd::<u32>(params, 0x10) as usize);
+    let fwd = rd::<i8>(veh, 0x424) >= 0;
+    if rd::<u8>(veh, 0x428) & 0x10 == 0 && !fwd {
+        for i in 0..12u32 {
+            cancel_vehicle_engine_sound(this, i);
+        }
+        return;
+    }
+    let k255 = gf(0x859AAC);
+    let a = crate::common::ftol32(x(rd::<f32>(veh, 0x49C)).fmul_m(k255)) as i16;
+    wr::<i16>(params, 0x20, a);
+    let b = crate::common::ftol32(x(rd::<f32>(veh, 0x4A0)).fmul_m(k255)) as i16;
+    wr::<i16>(params, 0x22, b);
+    let m = if a <= b { b } else { a };
+    let f = clamp01_x(X87::from_i32(m as i32).fmul_m(gf(0x859A3C)));
+    let f = if fwd {
+        f.fmul_m(gf(0x858C24)).fadd_m(gf(0x858CB0))
+    } else {
+        x(rd::<f32>(veh, 0x9C4)).fmul_m(gf(0x862D18))
+    };
+    let f = clamp01_f32(f.to_f32());
+    let p = get_piecewise_linear(f.to_bits(), 3, GPtr::from_addr(0x8CBE00)) as f32;
+    prop_engine(this, params, p, false);
+}
+
+/// The shared body of `ProcessPlayerProp` / `ProcessDummyProp` after the piecewise-linear factor `p` (the bytes match
+/// from the camera onward). `n` = normalised (vehicle - camera), `S = f32((n . forward + 1) * 0.5)`; pitch / roll as
+/// the sea plane; accelerator `k` from params +0x20 / +0x22 as the player heli. Volumes `va = f32(AudioLog10(f32((1 -
+/// 0.67 * S) * p)) * 20 + 8)`, `vb = ...((S * 0.5 + 0.5) * p)...`, `vc = f32(AudioLog10(p) * 20 + 8)`, distance volume
+/// of `p`. Stall: +0x7C set -> +0xB4 = `[0x8CBDC4]`; factor `m` = 1 and stall volume `sv` from the first match of
+/// (player only) +0xB4 > 0 with vehicle +0x960 clear -> `[0x8CBDD0]`, landing gear +0x4C0 at most `[0x859F80]` ->
+/// `[0x8CBDD8]`, `[0x862D28]` -> `[0x8CBDE0]`, `[0x862D24]` -> `[0x8CBDE8]`, `[0x862D20]` -> `[0x8CBDF0]` (pairs m,
+/// sv); no match: `sv = 0`. On a match, past the +0xB8 time the +0xBC toggle flips and +0xB8 = now +
+/// `GetRandomNumberInRange` of the pair chosen by `ResolveProbability([0x8CBDC8] / [0x8CBDCC])`; +0xB4 counts down to
+/// 0; `sv = 0` unless +0xBC is set. Speed `f32((roll * [0x858B1C] + pitch * [0x858FCC] + k + 1) * m)` smoothed by
+/// +0x22C; sounds 2 (0x28, sfx 0, sv + va) and 4 (0x28, sfx 1, sv + vb) at the speed, 3 (0x13, sfx 0x11, sv + vc) and
+/// 1 (0x13, sfx 0x10, sv + distance) at 1.0. The stack `CMatrix` copy of the camera matrix is never read.
+fn prop_engine(this: GPtr<u8>, params: GPtr<u8>, p: f32, player: bool) {
+    let veh = || -> GPtr<u8> { g(rd::<u32>(params, 0x10) as usize) };
+    let cm = g::<u32>(0xB6F03C).read();
+    let cam: GPtr<u8> = if cm != 0 {
+        g(cm as usize + 0x30)
+    } else {
+        g(0xB6F02C)
+    };
+    let vp = veh_pos(this);
+    let d = |i: usize| {
+        x(f32::from_bits(vp[i]))
+            .fsub_m(rd::<f32>(cam, i as isize * 4))
+            .to_f32()
+    };
+    let (dz, dy, dx) = (d(2), d(1), d(0));
+    let mut n = [dx, dy, dz];
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(GPtr::from_raw(n.as_mut_ptr().cast::<u8>())));
+    let m: GPtr<u8> = g(rd::<u32>(veh(), 0x14) as usize);
+    let dot = x(n[1])
+        .fmul_m(rd::<f32>(m, 0x14))
+        .fadd(x(n[2]).fmul_m(rd::<f32>(m, 0x18)))
+        .fadd(x(n[0]).fmul_m(rd::<f32>(m, 0x10)));
+    let pitch = x(rd::<f32>(m, 0x14))
+        .fadd_m(rd::<f32>(m, 0x10))
+        .fmul_m(gf(FLT_0))
+        .fadd_m(rd::<f32>(m, 0x18))
+        .fmul(gd(0x862D10))
+        .to_f32();
+    let r = x(rd::<f32>(m, 4))
+        .fadd_m(rd::<f32>(m, 0))
+        .fmul_m(gf(FLT_0))
+        .fadd_m(rd::<f32>(m, 8));
+    let mut roll = r.to_f32();
+    if !r.fcom(x(gf(FLT_0))).test_parity(0x05) {
+        roll = x(roll).fmul(gd(0x862D10)).to_f32();
+    }
+    let s = dot.fadd_m(gf(FLT_1)).fmul_m(gf(0x858B8C)).to_f32();
+    let mut k = 0f32;
+    if rd::<i16>(params, 0x20) > 0 {
+        k = f32::from_bits(0x3DCC_CCCD);
+    }
+    if rd::<i16>(params, 0x22) > 0 {
+        k = x(k).fsub_m(gf(0x858C28)).to_f32();
+    }
+    let vol = |v: f32| {
+        crate::utility::audio_log10(v)
+            .fmul_m(gf(FLT_20))
+            .fadd_m(gf(0x859000))
+            .to_f32()
+    };
+    let va = vol(x(gf(0x8CBD98)).fmul_m(s).fsubr_m(gf(FLT_1)).fmul_m(p).to_f32());
+    let vb = vol(x(s).fmul_m(gf(0x858B8C)).fadd_m(gf(0x858B8C)).fmul_m(p).to_f32());
+    let vc = vol(p);
+    let dv = ai_distance_volume(this, p);
+    if rd::<u16>(this, 0x7C) != 0 {
+        wr::<u16>(this, 0xB4, g::<u16>(0x8CBDC4).read());
+    }
+    let pair = |a: usize| (gf(a), gf(a + 4));
+    let stall = if player && rd::<i16>(this, 0xB4) > 0 && rd::<u8>(veh(), 0x960) == 0 {
+        Some(pair(0x8CBDD0))
+    } else {
+        let gear = || x(rd::<f32>(veh(), 0x4C0));
+        if !gear().fcom(x(gf(0x859F80))).test_parity(0x05) {
+            Some(pair(0x8CBDD8))
+        } else if !gear().fcom(x(gf(0x862D28))).test_parity(0x05) {
+            Some(pair(0x8CBDE0))
+        } else if !gear().fcom(x(gf(0x862D24))).test_parity(0x05) {
+            Some(pair(0x8CBDE8))
+        } else if !gear().fcom(x(gf(0x862D20))).test_parity(0x05) {
+            Some(pair(0x8CBDF0))
+        } else {
+            None
+        }
+    };
+    let (mf, mut sv) = stall.unwrap_or((gf(FLT_1), 0.0));
+    if stall.is_some() {
+        if g::<u32>(TIME_MS).read() > rd::<u32>(this, 0xB8) {
+            let (prob, yes, no) = if rd::<u8>(this, 0xBC) != 0 {
+                wr::<u8>(this, 0xBC, 0);
+                (0x8CBDC8, 0x8CBDA4, 0x8CBDAC)
+            } else {
+                wr::<u8>(this, 0xBC, 1);
+                (0x8CBDCC, 0x8CBDB4, 0x8CBDBC)
+            };
+            let hit = crate::bindings::ae_resolve_probability(gf(prob)) != 0;
+            let now = g::<u32>(TIME_MS).read();
+            let lim = if hit { yes } else { no };
+            let r = ae_random_int(g::<i32>(lim).read(), g::<i32>(lim + 4).read());
+            wr::<u32>(this, 0xB8, (r as u32).wrapping_add(now));
+        }
+        let c = rd::<i16>(this, 0xB4) as i32 - 1;
+        wr::<i16>(this, 0xB4, if c < 0 { 0 } else { c as i16 });
+        if rd::<u8>(this, 0xBC) == 0 {
+            sv = 0.0;
+        }
+    }
+    let sp = x(roll)
+        .fmul_m(gf(0x858B1C))
+        .fadd(x(pitch).fmul_m(gf(0x858FCC)))
+        .fadd_m(k)
+        .fadd_m(gf(FLT_1))
+        .fmul_m(mf)
+        .to_f32();
+    let sp = smooth_22c(this, sp);
+    let with_sv = |v: f32| x(sv).fadd_m(v).to_f32().to_bits();
+    play_aircraft_sound_call(this, 2, 0x28, 0, with_sv(va), sp.to_bits());
+    play_aircraft_sound_call(this, 4, 0x28, 1, with_sv(vb), sp.to_bits());
+    play_aircraft_sound_call(this, 3, 0x13, 0x11, with_sv(vc), ONE);
+    play_aircraft_sound_call(this, 1, 0x13, 0x10, with_sv(dv), ONE);
+}
+
 /// This module's registrations.
 pub const HOOKS: &[HookReg] = &[
     HOOK_PLAYER_ABOUT_TO_EXIT_VEHICLE_AS_DRIVER,
@@ -3844,4 +4030,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_PROCESS_DUMMY_HELI,
     HOOK_PROCESS_PLAYER_HELI,
     HOOK_PROCESS_PLAYER_SEA_PLANE,
+    HOOK_PROCESS_PLAYER_PROP,
+    HOOK_PROCESS_DUMMY_PROP,
 ];
