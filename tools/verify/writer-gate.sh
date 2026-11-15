@@ -12,7 +12,7 @@
 #            declares a bound address again, and no address is declared in two modules without a binding (C
 #            varargs excepted, bindings.VARARGS) (tools/gen/bindings.py --check)
 #   state    catalog/state.csv claims implemented/L1/L2/L3 only for registered or documented Rust ports
-#            (tools/verify/state_check.py)
+#            (tools/verify/state_check.py) and lowers no state of BASE (progress.py guard)
 #   dupes    no cross-crate copy of a function beyond tools/verify/dupes-allow.txt (tools/verify/dupes.py --check)
 #   cfg      platform cfgs only in backends / the binding layer beyond tools/verify/cfg-baseline.txt (cfg_check.py)
 #   gen      tools/gen/{patterns,ai_patterns,audio_patterns}.py --check (generated ports match the exe + catalogue)
@@ -77,7 +77,11 @@ python3 -I "$ROOT/tools/gen/bindings.py" --check > "$OUT/bindings.log" 2>&1
 res bindings "$([ $? = 0 ] && echo 1)" "$(grep -m1 '^bindings:' "$OUT/bindings.log")$(grep -m1 '^FAIL' "$OUT/bindings.log" | sed 's/^/; /')"
 # catalog/state.csv claims a port only where one exists
 python3 -I "$HERE/state_check.py" > "$OUT/state.log" 2>&1
-res state "$([ $? = 0 ] && echo 1)" "$(head -1 "$OUT/state.log")"
+rc=$?
+# ... and the branch never lowers a state the base had (a state_check.py --fix demotion excepted)
+git show "$BASE:catalog/state.csv" > "$OUT/state-base.csv" 2>/dev/null &&
+    python3 -I "$ROOT/tools/catalog/progress.py" guard "$OUT/state-base.csv" "$ROOT/catalog/state.csv" --allow-hand >> "$OUT/state.log" 2>&1 || rc=1
+res state "$([ $rc = 0 ] && echo 1)" "$(head -1 "$OUT/state.log"); $(grep -m1 '^state guard' "$OUT/state.log")$(grep -m1 '^FAIL' "$OUT/state.log" | cut -c1-120 | sed 's/^/; /')"
 # ADR-003 §4: no new cross-crate copies (dupes.py's allow-list only shrinks), platform cfgs only in backends
 # (cfg-baseline.txt only shrinks), crate dependencies in layer order (tools/lib/layers.py)
 python3 -I "$HERE/dupes.py" --check > "$OUT/dupes.log" 2>&1

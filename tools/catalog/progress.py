@@ -22,13 +22,22 @@ static initialisers and the atexit destructor callbacks they register.
         unknown / called-only without name -> unknown
       A row whose state is above `specified` (implemented, L1, L2, L3) is never overwritten: only
       its name/subsystem are refreshed from the catalogue. Such a row whose address left the
-      catalogue is kept and reported as an orphan. `updated` changes only when the state,
-      source or evidence of a row changes (date from $SA_STATE_DATE, default today), so a
-      rerun on the same catalogue writes a byte-identical file.
+      catalogue is kept and reported as an orphan. A row whose evidence is a hand-recorded note
+      (HAND_NOTES: `state_check:` demotions) is kept the same way while the derived state is not
+      above its state (state_check.py --fix demotes to `specified` even where the catalogue alone
+      gives `unknown`). `updated` changes only when the state, source or evidence of a row
+      changes (date from $SA_STATE_DATE, default today), so a rerun on the same catalogue writes
+      a byte-identical file.
 
       `gr_deviations` (CAT-14) = number of catalog/gr-deviations.csv rows for the function whose
       `deviates` is yes or maybe (gta-reversed differs or may differ from the original there; check
       those rows before porting). Recomputed on every merge; it never changes `updated`.
+
+  progress.py guard OLD NEW [--allow-hand]
+      Fail when a row of state.csv NEW ranks lower than in OLD (unknown < specified < implemented
+      < L1 < L2 < L3). run_all.sh runs it around the merge (no lowering at all); the writer gate's
+      `state` step runs it against the base commit with --allow-hand (a state_check demotion is
+      deliberate).
 
   progress.py set ADDRESS STATE EVIDENCE [catalog-dir]
       Record a state change (for example `implemented` when a hook is registered, `L1`/`L2`/`L3`
@@ -51,6 +60,9 @@ ROOT = Path(__file__).resolve().parents[2]
 STATES = ['unknown', 'specified', 'implemented', 'L1', 'L2', 'L3', 'excluded']
 ABOVE_SPECIFIED = ('implemented', 'L1', 'L2', 'L3')
 AT_LEAST_L2 = ('L2', 'L3')
+# Evidence prefixes written by hand-run tools (state_check.py --fix); merge keeps them while the state matches.
+HAND_NOTES = ('state_check:',)
+RANK = {s: i for i, s in enumerate(STATES[:-1])}  # excluded is outside the order
 COLS = ['address', 'name', 'subsystem', 'state', 'source', 'evidence', 'updated', 'gr_deviations', 'role']
 
 
@@ -131,6 +143,10 @@ def merge(cat):
             rows[a] = {**o, 'name': r['name'] or o['name'], 'subsystem': r['subsystem'], 'role': r['role']}
             kept += 1
             continue
+        if o and o['evidence'].startswith(HAND_NOTES) and RANK.get(r['state'], 99) <= RANK.get(o['state'], -1):
+            rows[a] = {**o, 'name': r['name'] or o['name'], 'subsystem': r['subsystem'], 'role': r['role']}
+            kept += 1
+            continue
         same = o and all(o[k] == r[k] for k in ('state', 'source', 'evidence'))
         rows[a] = {**r, 'updated': o['updated'] if same else d}
         changed += 0 if same else 1
@@ -193,8 +209,34 @@ def report(cat):
     print(open(cat / 'progress.md').read())
 
 
+def lowered(old, new, allow_hand=False):
+    """Rows whose state ranks lower in NEW than in OLD (unknown < specified < implemented < L1 < L2 < L3; moves
+    to or from `excluded` and rows in one file only are not compared). With `allow_hand`, a lowering whose NEW
+    evidence is a hand-recorded note (state_check.py --fix) is deliberate and allowed."""
+    out = []
+    for a, o in sorted(old.items()):
+        n = new.get(a)
+        if n and o['state'] in RANK and n['state'] in RANK and RANK[n['state']] < RANK[o['state']]:
+            if not (allow_hand and n['evidence'].startswith(HAND_NOTES)):
+                out.append((a, o, n))
+    return out
+
+
+def guard(old_path, new_path, allow_hand):
+    def rd(p):
+        return {int(r['address'], 16): r for r in csv.DictReader(open(p))}
+    bad = lowered(rd(old_path), rd(new_path), allow_hand)
+    for a, o, n in bad:
+        print(f"FAIL {a:#08x} {n['name']}: {o['state']} -> {n['state']} ({n['evidence'][:80]})")
+    print(f'state guard: {len(bad)} rows lowered')
+    return 1 if bad else 0
+
+
 def main():
     args = sys.argv[1:]
+    if args and args[0] == 'guard':
+        # progress.py guard OLD_STATE_CSV NEW_STATE_CSV [--allow-hand]
+        return guard(args[1], args[2], '--allow-hand' in args)
     cmd = args[0] if args and args[0] in ('merge', 'report', 'set') else None
     if cmd == 'set':
         cat = Path(args[4]) if len(args) > 4 else ROOT / 'catalog'
@@ -208,4 +250,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
