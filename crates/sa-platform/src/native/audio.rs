@@ -76,7 +76,7 @@ fn open_stream(s: Arc<Shared>) -> Result<cpal::Stream, String> {
     let mut mixed = Vec::new();
     let stream = dev
         .build_output_stream(
-            &cfg.config(),
+            cfg.config(),
             move |out: &mut [f32], _| {
                 let frames = out.len() / dev_channels.max(1) as usize;
                 let mut consumed = 0u64;
