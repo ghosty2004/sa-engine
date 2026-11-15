@@ -11,7 +11,7 @@ use sa_math::fpu::{lt, st0};
 
 use crate::bindings::{
     membership_count_members, ped_groups_get_peds_group, seek_entity_xy_offset_ctor, stand_still_dtor, stand_still_process_ped,
-    use_gun_ctor,
+    event_base_dtor, event_group_add, use_gun_ctor,
 };
 use sa_core::bindings::{get_weapon_info, tm_get_task_secondary, tm_set_task_secondary};
 use crate::common::*;
@@ -20,12 +20,17 @@ use sa_world::bindings::{
     achieve_heading_ctor, enter_car_as_passenger_ctor, entity_clean_up_old_reference, entity_register_reference,
     leave_car_ctor, membership_get_leader, membership_get_member, pause_ctor,
     sequence_add_task, sequence_ctor, simple_car_drive_ctor, stand_still_ctor, turn_to_face_entity_ctor, vector_sub,
-    go_to_point_and_stand_still_ctor, ped_get_weapon_skill, weapon_is_type_melee,
+    go_to_point_and_stand_still_ctor, ik_look_at, ped_get_weapon_skill, weapon_is_type_melee,
 };
 use sa_world::world::common::{entity_pos, ped_active_weapon};
 
 use crate::bindings::task_seek_radius_angle_ctor;
 orig! {
+    /// `InteriorGroup_c::FindClosestInteriorInfo(int32 type, CVector pos, float maxDist, InteriorInfo_t**, Interior_c**,
+    /// float*)` (0x594A50, `ret 0x20`)
+    fn interior_group_find_closest_info(g: GPtr<u8>, ty: i32, x: f32, y: f32, z: f32, max: f32, info: GPtr<GPtr<u8>>, interior: GPtr<GPtr<u8>>, dist: GPtr<f32>) -> u8 = thiscall 0x594A50 => sa_world::world::interior_closest_info::find_closest_interior_info;
+    /// the interior use-info event's constructor (0x674EA0, `ret 0x10`)
+    fn event_interior_use_info_ctor(e: GPtr<u8>, info: GPtr<u8>, interior: GPtr<u8>, a: u32, b: u32) -> GPtr<u8> = thiscall 0x674EA0 => unported;
     /// `CTaskComplexGoToPointAiming::CreateSubTask(int32 type)` (0x6688D0, `ret 4`)
     fn go_to_point_aiming_create_sub_task(t: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x6688D0 => unported;
     /// `CTaskComplexSeekCoverUntilTargetDead::GetTargetPed()` (0x622CC0)
@@ -246,6 +251,62 @@ pub fn go_to_point_aiming_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -
     })
 }
 
+/// `CTaskInteriorBeInShop::ScanForStuff(CPed* ped)` (0x6754D0, `ret 4`, SEH frame). Only while scanning (+0x30): the
+/// closest free interior info of any type within 2.0 of the ped in the task's interior group (+0x28); a new one (not
+/// +0x2C) is handled by type and then remembered in +0x2C: type 8 with `GetRandomNumberInRange(0, 100) > 50` gives the
+/// ped's event group (intelligence +0x68) a stack interior use-info event for it ([`raise_use_info_event`]), else
+/// the ped looks at the interior's position for 3000 ms (`g_ikChainMan.LookAt("", ped, null, 3000, -1, &interior->pos,
+/// true, 0.25, 500, 3, false)`, the name at 0x870280); type 9 with `> 80` stops scanning (+0x30 = 0) and raises the
+/// event.
+#[hook(addr = 0x6754D0, conv = thiscall, name = "CTaskInteriorBeInShop::ScanForStuff", expect = "6A FF 68 00 5C 84 00",
+       unverified = "frontier2-a8", route = "L2", hazards = "heap-writes")]
+pub fn be_in_shop_scan_for_stuff(this: GPtr<u8>, ped: GPtr<u8>) {
+    if rd::<u8>(this, 0x30) == 0 {
+        return;
+    }
+    let (mut info, mut interior, mut dist) = (GPtr::<u8>::NULL, GPtr::<u8>::NULL, 0f32);
+    let p = entity_pos(ped).cast::<f32>();
+    let (px, py, pz) = (p.read(), p.wrapping_index(1).read(), p.wrapping_index(2).read());
+    let found = interior_group_find_closest_info(
+        rd::<GPtr<u8>>(this, 0x28), -1, px, py, pz, 2.0,
+        GPtr::from_raw(&mut info), GPtr::from_raw(&mut interior), GPtr::from_raw(&mut dist),
+    );
+    if found == 0 || rd::<GPtr<u8>>(this, 0x2C) == info {
+        return;
+    }
+    match rd::<u8>(info, 0) {
+        8 => {
+            if general_random_int_in_range(0, 0x64) > 0x32 {
+                raise_use_info_event(ped, info, interior);
+            } else {
+                ik_look_at(
+                    g::<u8>(0xC15448), g::<u8>(0x870280), ped, GPtr::NULL, 0xBB8, -1, interior.byte_add(4), 1, 0.25, 0x1F4,
+                    3, 0,
+                );
+            }
+        }
+        9 => {
+            if general_random_int_in_range(0, 0x64) > 0x50 {
+                wr::<u8>(this, 0x30, 0);
+                raise_use_info_event(ped, info, interior);
+            }
+        }
+        _ => {}
+    }
+    wr::<GPtr<u8>>(this, 0x2C, info);
+}
+
+/// A stack interior use-info event (0x674EA0: `info`, `interior`, 0, 0) added to the ped's event group
+/// (`CEventGroup::Add(event, false)`), then destroyed (vtable 0x8701A8 written back, `CEvent`'s destructor 0x4AC010).
+fn raise_use_info_event(ped: GPtr<u8>, info: GPtr<u8>, interior: GPtr<u8>) {
+    let mut ev = [0u32; 8];
+    let e = GPtr::from_raw(ev.as_mut_ptr()).cast::<u8>();
+    event_interior_use_info_ctor(e, info, interior, 0, 0);
+    event_group_add(rd::<GPtr<u8>>(ped, 0x47C).byte_add(0x68), e, 0);
+    wr::<u32>(e, 0, 0x8701A8);
+    event_base_dtor(e);
+}
+
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_FOLLOW_LEADER_IN_FORMATION_CREATE_SUB_TASK,
@@ -253,4 +314,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_SEEK_COVER_UNTIL_TARGET_DEAD_CREATE_FIRST_SUB_TASK,
     HOOK_WAIT_UNTIL_PED_IS_OUT_CAR_PROCESS_PED,
     HOOK_GO_TO_POINT_AIMING_CREATE_FIRST_SUB_TASK,
+    HOOK_BE_IN_SHOP_SCAN_FOR_STUFF,
 ];
