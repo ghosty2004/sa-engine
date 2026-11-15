@@ -62,7 +62,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier2-6 | 12 | AI, VEH | 38680f43 | master | 12 | 0 | 0 | 0 | 0 | L2 12 |
 | frontier2-7 | 21 | AI, UNK-game, WORLD | 0e036130 | worktree-agent-accfa614f52d5f0c1 | 21 | 0 | 0 | 0 | 0 | L2 21 |
 | frontier2-8 | 14 | AI, ANIM, UNK-game, WEAPON | 0e036130 | worktree-agent-accfa614f52d5f0c1 | 14 | 0 | 0 | 0 | 0 | L2 13, L3-only 1 |
-| frontier2-9 | 21 | AI | uncommitted | worktree-agent-accfa614f52d5f0c1 | 21 | 0 | 0 | 0 | 0 | L2 21 |
+| frontier2-9 | 21 | AI | a06f78e1 | worktree-agent-accfa614f52d5f0c1 | 21 | 0 | 0 | 0 | 0 | L2 21 |
 | gen2-anim-1 | 1 | UNK-game | 327954b9 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | gen2-coll-1 | 20 | UNK-game | 327954b9 | master | 0 | 0 | 0 | 20 | 0 | L2 8, split 12 |
 | gen2-core-1 | 4 | UNK-game | 327954b9 | master | 0 | 0 | 0 | 4 | 0 | L2 4 |
