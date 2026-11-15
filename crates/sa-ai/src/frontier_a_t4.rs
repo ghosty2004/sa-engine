@@ -359,8 +359,94 @@ pub fn kill_threats_driveby_allocate_tasks(this: GPtr<u8>, intel: GPtr<u8>) {
     interesting_events_add(g(INTERESTING_EVENTS), 0x18, membership_get_leader(members));
 }
 
+orig! {
+    /// `FUN_005EB340(CVector* dst, uint32 n, const CVector* val, ...)` (0x5EB340, cdecl): `n` copies of `*val`
+    /// (the vector's uninitialised fill; a null `dst` skips the copy, not the count)
+    fn vector_fill_n(dst: u32, n: u32, val: u32, vec: u32, val2: u32) = cdecl 0x5EB340 => unported;
+    /// `std::vector<CVector>::insert(iterator* ret, iterator where, const CVector& val)` (0x5EDE50, `ret 12`)
+    fn vector_insert(v: u32, ret: u32, at: u32, val: u32) -> u32 = thiscall 0x5EDE50 => crate::gen_bodies::g_fun_005ede50_5ede50;
+    /// `std::vector<CVector>::push_back(const CVector&)` (0x5EE370, `ret 4`)
+    fn vector_push_back(v: u32, val: u32) = thiscall 0x5EE370 => vector3_push_back;
+}
+
+/// `std::vector<CVector>` of the shelter displacements (0xC0986C; begin +4 = 0xC09870, end +8 = 0xC09874)
+const SHELTER_DISPLACEMENTS: u32 = 0xC0986C;
+
+/// `(end - begin) / 12` of a `std::vector<CVector>` (signed, as the `imul 0x2AAAAAAB` sequence divides).
+fn vec3_count(begin: u32, end: u32) -> i32 {
+    (end.wrapping_sub(begin) as i32) / 12
+}
+
+/// `std::vector<CVector>::push_back(const CVector& val)` (0x5EE370, `ret 4`): with storage and the size below the
+/// capacity (unsigned), `*val` is copied to the end (0x5EB340 with one element) and the end moves by 12; else
+/// `insert(end, val)` (0x5EDE50, its iterator result written to the argument slot).
+#[hook(addr = 0x5EE370, conv = thiscall, name = "std::vector<CVector>::push_back", expect = "53 56 8B F1 57",
+       unverified = "frontier2-a7", route = "L2", hazards = "heap-writes")]
+pub fn vector3_push_back(this: u32, val: u32) {
+    let v = GPtr::<u8>::from_addr(this as usize);
+    let begin = rd::<u32>(v, 4);
+    let size = if begin == 0 { 0 } else { vec3_count(begin, rd::<u32>(v, 8)) };
+    if begin != 0 && (size as u32) < vec3_count(begin, rd::<u32>(v, 0xC)) as u32 {
+        let end = rd::<u32>(v, 8);
+        vector_fill_n(end, 1, val, this, val);
+        wr::<u32>(v, 8, end.wrapping_add(0xC));
+        return;
+    }
+    let mut slot = val;
+    vector_insert(this, GPtr::from_raw(&mut slot).addr() as u32, rd::<u32>(v, 8), val);
+}
+
+/// `CPedShelterAttractor::GetDisplacement(int32 index)` (0x5EF420, cdecl): the first time (no storage, or empty) five
+/// displacements are made: a random angle `rand() * (1 / 32767) * 2pi` (stored as f32) and radius `2 * rand() *
+/// (1 / 32767)` give `(cos a * r, sin a * r, 0)` (FCOS / FSIN, each stored as f32); a candidate within 1 of an earlier
+/// one (squared `ez^2 + dy^2 + dx^2` below 1, the earlier one's z not offset) is drawn again; each is pushed onto the
+/// vector 0xC0986C. Returns `&displacements[index]`.
+#[hook(addr = 0x5EF420, conv = cdecl, name = "CPedShelterAttractor::GetDisplacement", expect = "83 EC 20 56 8B 35 70 98 C0 00",
+       unverified = "frontier2-a7", route = "L2", hazards = "x87-transcendental,heap-writes")]
+pub fn shelter_get_displacement(index: i32) -> u32 {
+    let begin = || g::<u32>(0xC09870).read();
+    let filled = begin() != 0 && vec3_count(begin(), g::<u32>(0xC09874).read()) != 0;
+    if !filled {
+        for _ in 0..5 {
+            let mut d = loop {
+                let r = rand_at(0x5EF467);
+                let a = xi(r).fmul_m(f32::from_bits(0x3800_0100)).fmul_m(f32::from_bits(0x40C9_0FDB)).to_f32();
+                let r = rand_at(0x5EF484);
+                let rad = xi(r).fmul_m(f32::from_bits(0x3800_0100));
+                let rad = rad.fadd(rad);
+                let dx = x(a).fcos().fmul(rad).to_f32();
+                let dy = x(a).fsin().fmul(rad).to_f32();
+                if !shelter_too_close(dx, dy) {
+                    break [dx, dy, 0.0];
+                }
+            };
+            vector_push_back(SHELTER_DISPLACEMENTS, GPtr::from_raw(d.as_mut_ptr()).addr() as u32);
+        }
+    }
+    begin().wrapping_add((index as u32).wrapping_mul(12))
+}
+
+/// Whether `(x, y)` lies within 1 of a displacement already stored (0x5EF4E8..0x5EF531).
+fn shelter_too_close(px: f32, py: f32) -> bool {
+    let b = g::<u32>(0xC09870).read();
+    let n = if b == 0 { 0 } else { vec3_count(b, g::<u32>(0xC09874).read()) };
+    for i in 0..n {
+        let e = GPtr::<u8>::from_addr(b.wrapping_add(i as u32 * 12) as usize);
+        let dx = x(rd::<f32>(e, 0)).fsub_m(px);
+        let dy = x(rd::<f32>(e, 4)).fsub_m(py);
+        let ez = x(rd::<f32>(e, 8));
+        let d = ez.fmul(ez).fadd(dy.fmul(dy)).fadd(dx.fmul(dx));
+        if !sa_math::fpu::ge_or_nan(d, x(1.0)) {
+            return true;
+        }
+    }
+    false
+}
+
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_VECTOR3_PUSH_BACK,
+    HOOK_SHELTER_GET_DISPLACEMENT,
     HOOK_PED_LIST_EMPTY,
     HOOK_PED_LIST_BUILD_LIST_OF_PEDS_OF_PED_TYPE,
     HOOK_KILL_ON_FOOT_ALLOCATE_TASKS,
