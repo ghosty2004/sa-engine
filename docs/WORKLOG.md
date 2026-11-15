@@ -2084,3 +2084,63 @@
 - verify-all (lanes 6-7, fresh sa-oracle, DLL of 1a07f443): `lanec2-c56` (SA_UNVERIFIED=frontier2-c5,frontier2-c6) IDENTICAL
   13/13; `lanec2-default` (default set) IDENTICAL 13/13. (A first `lanec2-c5` run was stopped after 4/13 IDENTICAL in
   favour of the combined one.)
+## 2026-11-15 — FRONTIER-2 turn 2, lane A: the crossing-4000 block, GenerateRoadBlocks, AI frontier (agent, branch worktree-agent-a3af6b88de448512f)
+- Base: master d05f6e24. Lane A of the turn-2 split (AI subsystem plus lane A's open items). Every port from the 1.0 US
+  bytes (gta-reversed read as an aid), every address checked first against `inflight.py`'s output (other branches /
+  worktrees) and against this checkout's own registrations (one address, 0x62F2D0, turned out to be a generated port
+  already: dropped).
+- Batch `frontier2-a1`: CTaskComplexKillCriminal::CreateNextSubTask 0x68E4F0 (crossing 4000's last block) and the
+  CreateSubTask 0x68C050 it calls (the ControlSubTask switch `create_chosen` reused after its reuse test). Bytes vs
+  gta-reversed: the leave-car case tests the vehicle pointer, the enter-as-driver case sets +0x1A. New scenario
+  `crossing-long` (the crossing run to 4000): 4016 ok / 0 blocked (CreateNextSubTask runs: 2 calls under gdb,
+  tools/e2e/scenarios/frontier2-a-counts.gdb).
+- L1 specs for the preserve-ecx event destructors 0x4AECA0 / 0x4B1320 / 0x4B1B50 (one shared builder in specs_ai.rs),
+  removed from PRESERVE_SPECS_PENDING; `sa-oracle l1 --backend native --cases 100000` PASS each.
+- CRoadBlocks::GenerateRoadBlocks 0x4629E0: whole port (the ADR-002 fallback removed): the wanted-level road blocks
+  (InOrOut, the per-frame sixteenth of RoadBlockNodes, NumRoadBlocks read through the protection's obfuscated pointer
+  at 0x402033, decoded to 0xA43580; rand at 0x462BE9; the width and no-width cases) and the frame's script road block.
+  Bytes vs gta-reversed in the no-width case: `fabs` on the dot product, the search stops after the first match, and
+  the block across the node itself is made whenever nothing matched. CreateRoadBlockBetween2Points 0x4619C0 stays on
+  the original (POP, open). port-l2 on police-gang: L2 4992 of 4992 calls compared, 0 mismatches / 0 undeclared; the
+  rust run IDENTICAL over 5200 frames. New scenario `roadblocks` (the wanted-level cheat OSRBLHH typed twice in the
+  Greenwood, then driven): GenerateRoadBlocks no longer blocks.
+- Batch `frontier2-a2` (23 hooks + 2 natives): constructors (CTaskSimpleJetPack 0x67B4E0, ArrestPed 0x68B990,
+  GoToPointAiming 0x668790, FollowLeaderInFormation 0x6949A0, Sunbathe 0x631F80; natives: WanderMedic 0x658770 with
+  its bare-jmp entry, the island's float read from 0x86FCB0), CanSunbathe 0x632140, CTaskAllocatorAttack::AllocateTasks
+  0x69C3F0, OnFire::ComputeFireDamage 0x6333D0, TreatAccident::ComputeHeading 0x658AF0, GangDriveBy::MakeAbortable
+  0x62D290 + its anim start 0x627B20, CreateCarAndGetIn::Destructor 0x64CEA0, the CreateSubTask switches of CopInCar
+  0x68C9E0, MedicTreatInjuredPed 0x658DB0, EvasiveCower 0x655570, ArrestPed 0x68CF80, WaitForBackup 0x6973B0,
+  ShuffleSeats 0x63D240 (+ CreateTaskUtilityLineUpPedWithCar 0x63D610), EnterCarAsPassengerWait 0x6408D0,
+  ReactToGunAimedAt 0x697B70 (native: UseSwatRope 0x659620, the protection reads its entry at 0x15694D9), the swat
+  rope anim task ctor 0x6586A0, KillPedGroupOnFoot::ComputeNearestLivingGroupPed 0x622450. Original quirks kept: the
+  null-task `+0x1C` write and the `AddTask` on a null sequence of 0x6408D0, the heading byte written over the ped
+  argument slot of 0x697B70 (passed as that dword).
+- Batch `frontier2-a3` (5): CPedAttractorManager::GetPedUsingEffect<CPedAttractor> 0x5EB740,
+  CTaskInteriorBeInOffice::GetInfoForPedToUse 0x675300, CTaskSimpleJetPack::DropJetPack 0x67B660 / ApplyRollAndPitch
+  0x67B720, CConversations::IsConversationAtNode 0x43B000 (its upper EAX bytes per path).
+- Batch `frontier2-a4` (2): CTaskComplexCopInCar::ControlSubTask 0x68FD50 (the roadblocks scenario's next block),
+  CTaskSimpleHoldEntity::ChoosePutDownHeight 0x693440.
+- Bindings (ADR-003, `tools/gen/bindings.py --resolve`): rows 0x4654B0 (moved down to sa-ai), 0x486670, 0x63B030,
+  0x63CE00, 0x646810, 0x649450, 0x458A80, 0x601390 / 0x668C70 / 0x678CD0 (restored), 0x5F3B70's result (u32);
+  `vec3f_ptr` added to sa-core field.rs (replaces a copy in route_round_entity_bbox.rs; dupes clean).
+- `new_task` (the task-pool `new` + constructor idiom) now defined once in sa-ai common.rs; seven sa-script copies import
+  it (dupes.py found the new cross-crate group).
+- Scenarios (frontier.sh, i686 native, default lengths, final tree): pausemenu 416 / 0 blocked, solicit 4016 / 0,
+  crossing 1216 / 0, melee 2616 / 0, sniper 1216 / 0, shootcar 1216 / 0, shootdriver 1216 / 0, crossing-long 4016 / 0
+  (was 2 blocked on 0x68E4F0), roadblocks 291 / 1725 blocked (CTaskSimpleGangDriveBy::ProcessPed 0x62D3B0, AI, open;
+  CHeli::GenerateHeli 0x6C6520, VEH); no crash.
+- verify-all (lanes 1-3, fresh sa-oracle): `f2a-u3` (SA_UNVERIFIED=frontier2-a1..a3) IDENTICAL 13/13; `f2a-u4`
+  (frontier2-a1..a4) IDENTICAL 13/13; `f2a-def` (default set, includes the GenerateRoadBlocks whole port)
+  IDENTICAL 13/13. save-load: save files identical except the SAVE-1 stack residue, as on master.
+- Writer gate (base d05f6e24, target dir target-gate): hooks (32 new, all unverified, batches frontier2-a1..a4) /
+  bindings / state / dupes / cfg / layers / commits / clippy / i686 / i686clip / wasm32 / hooktest (59/59) / l1test /
+  l1 PASS; queue up to date at HEAD (regenerated last). The first gate run failed dupes and i686clip only because the
+  `new_task` refactor landed mid-run.
+- Builds: i686 sa-game with and without `--features samp`, `FEATURES=samp tools/web/build.sh` (wasm-bindgen of
+  ~/sa-engine/target/tools/bin) built.
+- frontier.py: AI 143 (41 direct + 102 virtual) → 112 (14 direct + 98 virtual); partial ports 12 → 11.
+- Left open: CTaskSimpleGangDriveBy::ProcessPed 0x62D3B0 and its unported helpers 0x621960 / 0x627600 / 0x627CC0 /
+  0x628350 (FPATAN / FSIN / FCOS; the police drive-by in a wanted-level chase), CreateRoadBlockBetween2Points 0x4619C0
+  (POP), CGangWars::Update's active-war path and CCollision::ProcessColModels' disk cases (not reached), the task
+  allocators 0x69BCA0 / 0x69CC30 / 0x69D460 / 0x69C4D0, EndConversation 0x43AB10 (obfuscated booleans), the
+  transcendental bodies (CalcSoundLevelIncrement, GetDisplacement, CalcBlendRatio), the rest of the AI frontier.
