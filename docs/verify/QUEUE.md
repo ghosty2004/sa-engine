@@ -74,6 +74,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier2-c5 | 22 | AI, ANIM, AUDIO, CALLED-ONLY, MATH, SCRIPT, UNK-game, WORLD | 1a07f443 | worktree-agent-a04a02581f061bd35 | 22 | 0 | 0 | 0 | 0 | L2 21, split 1 |
 | frontier2-c6 | 12 | AI, UNK-game, WORLD | 1a07f443 | worktree-agent-a04a02581f061bd35 | 12 | 0 | 0 | 0 | 0 | L2 12 |
 | frontier2-c7 | 6 | CALLED-ONLY, SCRIPT, UNK-game | 9cc9b4e3 | worktree-agent-a04a02581f061bd35 | 6 | 0 | 0 | 0 | 0 | L2 6 |
+| frontier2-c8 | 10 | STREAM, WORLD | 9cc9b4e3 | worktree-agent-a04a02581f061bd35 | 10 | 0 | 0 | 0 | 0 | L2 1, split 9 |
 | gen2-anim-1 | 1 | UNK-game | 327954b9 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | gen2-audio-1 | 1 | AUDIO | 1a07f443 | worktree-agent-a04a02581f061bd35 | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | gen2-coll-1 | 20 | UNK-game | 327954b9 | master | 0 | 0 | 0 | 20 | 0 | L2 8, split 12 |
@@ -2514,6 +2515,30 @@ SA_UNVERIFIED=frontier2-c7 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-c7 $S
 | 0x4A4880 | `FindClosestPtOnLine` | written | L2 | stack-residue |
 | 0x4CC0C0 | `FUN_004cc0c0` | written | L2 | none |
 | 0x66FD30 | `FUN_0066fd30` | written | L2 | uninit-locals,ax-al-return |
+
+## frontier2-c8
+
+10 hooks in sa-stream, sa-world; hazards: heap-writes (10); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-c8 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-c8 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-c8 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-c8
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x438D60 | `CCheat::HealthCheat` | written | L2 | heap-writes |
+| 0x4C5840 | `CModelInfo::ms_atomicModelInfoStore::~CStore` | written | split | heap-writes |
+| 0x4C5860 | `CModelInfo::ms_damageAtomicModelInfoStore::~CStore` | written | split | heap-writes |
+| 0x4C5880 | `CModelInfo::ms_lodAtomicModelInfoStore::~CStore` | written | split | heap-writes |
+| 0x4C58A0 | `CModelInfo::ms_timeModelInfoStore::~CStore` | written | split | heap-writes |
+| 0x4C58C0 | `CModelInfo::ms_lodTimeModelInfoStore::~CStore` | written | split | heap-writes |
+| 0x4C58E0 | `CModelInfo::ms_weaponModelInfoStore::~CStore` | written | split | heap-writes |
+| 0x4C5900 | `CModelInfo::ms_clumpModelInfoStore::~CStore` | written | split | heap-writes |
+| 0x4C6370 | `CModelInfo::ms_vehicleModelInfoStore::~CStore` | written | split | heap-writes |
+| 0x4C6390 | `CModelInfo::ms_pedModelInfoStore::~CStore` | written | split | heap-writes |
 
 ## gen2-anim-1
 
