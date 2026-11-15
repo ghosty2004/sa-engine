@@ -49,7 +49,7 @@ orig! {
     fn geometry_list_destroy(l: GPtr<u8>) -> GPtr<u8> = cdecl 0x74AE50 => unported;
     fn light_stream_read(s: GPtr<u8>) -> GPtr<u8> = cdecl 0x751F00 => unported;
     fn camera_stream_read(s: GPtr<u8>) -> GPtr<u8> = cdecl 0x808DE0 => unported;
-    fn clump_for_all_lights(c: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> = cdecl 0x749C00 => unported;
+    pub fn clump_for_all_lights(c: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> = cdecl 0x749C00 => crate::clump::for_all_lights;
 }
 
 /// `RwErrorSet({2, _rwerror(code)})` as these functions build it.

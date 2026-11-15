@@ -80,6 +80,8 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::rt_quat::HOOKS,
     crate::d3d9_destroy_instance::HOOKS,
     crate::d3d9_skin_vs_begin::HOOKS,
+    // FRONTIER-2 lane B
+    crate::frontier_b::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
@@ -147,6 +149,7 @@ pub const ALL: &[HookReg] = &ALL_ARRAY;
 /// phase A); `sa_ports::NATIVES` lists each of these.
 pub const NATIVE_MODULES: &[&[sa_core::abi::NativeReg]] = &[
     engine::NATIVES,
+    crate::frontier_b::NATIVES,
     crate::worldplugin::NATIVES,
     crate::raster::NATIVES,
     crate::memory::NATIVES,

@@ -58,9 +58,9 @@ orig! {
     /// `RpWorldUnlock(world)` (0x74F210)
     fn world_unlock_call(w: GPtr<u8>) -> GPtr<u8> = cdecl 0x74F210 => rp_world_unlock;
     /// `_rpWorldSectorDeinstanceAll(sector)` (0x74ECA0)
-    fn sector_deinstance_all(s: GPtr<u8>) = cdecl 0x74ECA0 => unported;
+    pub fn sector_deinstance_all(s: GPtr<u8>) = cdecl 0x74ECA0 => crate::frontier_b::rp_world_sector_deinstance_all;
     /// `_rpWorldSectorDestroyRecurse(sector)` (0x74ED50)
-    fn sector_destroy_recurse(s: GPtr<u8>) = cdecl 0x74ED50 => unported;
+    pub fn sector_destroy_recurse(s: GPtr<u8>) = cdecl 0x74ED50 => crate::frontier_b::rp_world_sector_destroy_recurse;
     /// A mesh generator `gen(buildMesh, data)` (`_rpTriListMeshGenerate` or the tri-strip method)
     fn call_mesh_generator(f: u32, bm: GPtr<u8>, data: u32) -> GPtr<u8> = cdecl dyn => unported;
     /// A light's saved frame-sync callback `cb(light)`

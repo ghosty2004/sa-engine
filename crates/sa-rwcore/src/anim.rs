@@ -71,7 +71,7 @@ orig! {
     /// `_rwSListCreate(entrySize, hint)` (0x809160)
     fn slist_create(size: u32, hint: u32) -> GPtr<u8> = cdecl 0x809160 => crate::rxpipeline::rw_slist_create;
     /// `_rwSListDestroy(list)` (0x809440)
-    fn slist_destroy(s: GPtr<u8>) -> i32 = cdecl 0x809440 => crate::rxpipeline::rw_slist_destroy;
+    pub fn slist_destroy(s: GPtr<u8>) -> i32 = cdecl 0x809440 => crate::rxpipeline::rw_slist_destroy;
     /// `RtDictSchemaInit(schema)` (0x7CED40)
     fn dict_schema_init_call(schema: GPtr<u8>) -> GPtr<u8> = cdecl 0x7CED40 => rt_dict_schema_init;
     /// `RtDictSchemaDestruct(schema)` (0x7CED70)
