@@ -1785,3 +1785,65 @@
   `int3-default` (lanes 1-3) IDENTICAL 13/13; `int3-f2b` (`SA_UNVERIFIED=frontier2-1..6`) IDENTICAL 13/13 (a first
   run `int3-f2` failed on every recording only because target/release/sa-oracle was stale and lacked the new specs;
   rebuilt). `target/play/sa-game` and `web/pkg` refreshed.
+
+## 2026-11-15 — FRONTIER-2 part 4: user-hit event destructors, the crossing-4000 chain, partial-port cases, AI frontier (agent, branch worktree-agent-accfa614f52d5f0c1)
+- Base: master 8c9cbf77. Every port from the 1.0 US bytes (gta-reversed read as an aid), `tools/gen/inflight.py` checked
+  first. Mid-run scope change from the coordinator: two more agents took the frontier by subsystem; item 4 here is
+  limited to the AI subsystem, Wine lanes 1-3.
+- Batch `frontier2-7` (user-hit: a shot at a driven car in free roam stopped on 0x61C310):
+  CEventVehicleDamageWeapon::Destructor 0x61C310 (vtbl 0x86D640, tail into CEventVehicleDamage's 0x4B1990) and every
+  other CEvent* complete destructor that ported code reached unported (0x4B0DA0, 0x4AECA0, 0x4AF0A0, 0x4AFBF0, 0x4AEA50,
+  0x5FEF70, 0x5FF2C0, 0x5FF520, 0x5FF5E0, 0x5FF760, 0x5F63F0, 0x674ED0, 0x4B1320, 0x4B1B50; natives 0x5FF860 (bare
+  jmp), 0x609140 and 0x5FF460 (the no-CD protection reads their entry bytes: 0x1569A80 / 0x401673, sa-hook keycells
+  test); the protection-fragment entries inlined), the scalar deleting destructors with the inlined event-pool delete
+  0x4B5670 / 0x4B6080 / 0x4B65C0 / 0x4B6750 / 0x4B6940 (new sa-ai event_dtors.rs). Unnamed bodies named in
+  catalog/name-corrections.csv (+ procedures.csv / state.csv names); the classes of the unnamed vtables come from their
+  GetEventType slot (eEventType): CEventRevive, CEventSexyVehicle, CEventVehicleThreat, CEventHealthReallyLow,
+  CEventLowAngerAtPlayer, CEventHealthLow, CEventInteriorUseInfo. CStats::UpdateStatsWhenWeaponHit 0x55CEB0 (the hit
+  stops on it before the event exists).
+- Scenario `shootdriver` (frontier.sh): SA_GAME_JACK puts CJ 7 m in front of the nearest driven car, KJKSZPJ, the
+  pistol, the aim pitched down (SA_GAME_MOUSE), RMB + LMB: InflictDamage gives the driver the event, 0x61C390 -> 0x61C310
+  runs (5 calls under gdb, tools/e2e/scenarios/frontier2-p4-counts.gdb), 0 blocked. `shootcar` never creates the event:
+  its Greenwood is empty and its shots miss (the default aim passes over the car).
+- Batch `frontier2-8` (crossing 4000): CTaskComplexKillPedOnFootArmed::CreateNextSubTask 0x62C190 (unreversed in
+  gta-reversed; 9 rand sites), CPedIK::PointGunAtPosition 0x5FDE20 (in sa-ai: it needs sa-world's GetWeaponSkill,
+  above sa-anim), CTaskComplexKillCriminal::MakeAbortable 0x68DAD0, CCover FindAndReserveCoverPoint 0x6992B0 (the bytes
+  take the nearest point and return it even when both slots hold other peds; type 2 accepts a point whose second slot is
+  taken; gta-reversed takes the farthest) / FindCoordinatesCoverPoint 0x699570 / DoesCoverPointStillProvideCover
+  0x698DD0, CPointList::Empty 0x699F00, CFormation::FindCoverPointsBehindBox 0x699FF0 (the bytes measure the corners'
+  distance to the target and step towards the corner opposite the nearest; gta-reversed measures the sides),
+  CWaterCannon PushPeds 0x7295E0 (one section per ped) / Render 0x728DA0, CTaskComplexWalkRoundCar::
+  ComputeRouteRoundBigCar 0x656BB0 (unreversed), ComputeClosestSurfacePoint-pos 0x5F36F0, CTaskSimpleHurtPedWithCar::
+  ProcessPed 0x653F90, CTaskComplexFleeAnyMeans::CreateSubTask 0x65D2E0.
+- Batch `frontier2-9`: the flee chain (CTaskComplexFleeAnyMeans ControlSubTask 0x65D780 / CreateNextSubTask 0x65D540,
+  CTaskComplexFleeShooting::ControlSubTask 0x65CA90) and small AI frontier entries (0x63C320, 0x63D220, 0x6492E0 sharing
+  one urgent-only MakeAbortable body with 0x6486F0; 0x65B420, 0x632B80, 0x62F520, 0x639900, 0x640420, 0x675460, 0x661720,
+  0x632050, 0x68AA50, 0x654720, 0x600880, 0x5F13A0, 0x67C2E0, 0x67C360, 0x62FA60; new ai_frontier_p4.rs).
+- Partial ports (item 3): ProcessCommands1200To1299's 27 default-reaching opcodes are explicit `-1` cases (only 0503
+  CREATE_SWAT_ROPE stays on the fallback: it passes an uninitialised stack vector to ClearSpaceForMissionEntity, not
+  reproducible); ProcessCommands2500To2599's 5 are by design (09C6 / 09D3 SA:MP-patched table entries, 09CD / 09CE /
+  09DF default); CGangWars::Update, CRoadBlocks::GenerateRoadBlocks and CCollision::ProcessColModels' disk cases not
+  reached (time went to the crossing chain).
+- Bindings (ADR-003): rows 0x4B1F80, 0x5FDC00, 0x5FDE20, 0x601390, 0x5F3640, 0x4B1320, 0x668C70, 0x678CD0; 0x4B2470
+  moved to sa-world (sa-ai and sa-ped call it); local declarations replaced; `make structure` clean (two new copies the
+  first gate found were replaced by entity_pos / rd3u).
+- Repros (native, --fixed-step 40): crossing 4000: 1853 ok / 2163 blocked -> 4014 ok / 2 blocked (first block frame 3903,
+  CTaskComplexKillCriminal::CreateNextSubTask 0x68E4F0, 391 instructions, open); pausemenu 416 / 0, solicit 4016 / 0,
+  crossing 1216 / 0, melee 2616 / 0, sniper 1216 / 0, shootcar 1216 / 0, shootdriver 1216 / 0; no crash.
+- Gates: writer gate (base 8c9cbf77) on a06f78e1: hooks / bindings / state / dupes / cfg / layers / commits / clippy / i686 /
+  i686clip / wasm32 / hooktest / l1 PASS; queue then failed only because the queue records the writer commit (fixed by
+  fdb07b39, `queue.py --check` up to date at HEAD); l1test failed on `preserved_registers_match_the_hook_registrations`
+  (three preserve-ecx destructors without specs; queued in PRESERVE_SPECS_PENDING by 4d552c24, that test passes; the other
+  17 L1 tests passed in the gate run). First gate run (0e036130 before amending) had found two new copies (cover.rs
+  pos_of, walkround.rs vec3), a wrong `expect` (0x5FDE20: two nops) and the two protection-read entries now natives.
+- verify-all (lanes 1-3, sa-oracle rebuilt first): `f2p4-u` (SA_UNVERIFIED=frontier2-1..frontier2-8, DLL of 0e036130
+  before the native conversion) IDENTICAL 13/13; `f2p4-u2` (frontier2-1..frontier2-9, DLL ba5179…, the final code)
+  IDENTICAL 13/13; `f2p4-def` (default set, same DLL) IDENTICAL 13/13.
+- Builds: i686 sa-game with and without `samp`, `FEATURES=samp tools/web/build.sh` (wasm-bindgen of
+  ~/sa-engine/target/tools/bin) built.
+- frontier.py before / after: direct 470 + virtual 203 + imports 0 + partial 12 = 685 → direct 291 (+145 registered on the
+  other two agents' branches) + virtual 172 (+11) + imports 0 + partial 12 = 475; AI entries 164 → 143.
+- Left open: CTaskComplexKillCriminal::CreateNextSubTask 0x68E4F0 (crossing 4000's last block); 0503 CREATE_SWAT_ROPE;
+  CGangWars::Update, CRoadBlocks::GenerateRoadBlocks, CCollision::ProcessColModels' disk cases; L1 specs for
+  0x4AECA0 / 0x4B1320 / 0x4B1B50 (preserve ecx); the rest of the AI frontier (the ~250-function turn was not reached:
+  56 hooks + 3 natives this part).
