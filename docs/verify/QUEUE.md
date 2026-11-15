@@ -59,7 +59,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier2-3 | 8 | AI, POP | 11e8cd0f | master | 8 | 0 | 0 | 0 | 0 | L2 8 |
 | frontier2-4 | 4 | CAM, WORLD | 11e8cd0f | master | 4 | 0 | 0 | 0 | 0 | L2 3, L3-only 1 |
 | frontier2-5 | 6 | AI, RENDER | 6d209fd3 | master | 6 | 0 | 0 | 0 | 0 | L2 6 |
-| frontier2-6 | 12 | AI, VEH | uncommitted | HEAD | 12 | 0 | 0 | 0 | 0 | L2 12 |
+| frontier2-6 | 12 | AI, VEH | d97206e2 | (no branch, rebasing detached HEAD (null)) | 12 | 0 | 0 | 0 | 0 | L2 12 |
 | gen2-anim-1 | 1 | UNK-game | ed288e85 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | gen2-coll-1 | 20 | UNK-game | ed288e85 | master | 0 | 0 | 0 | 20 | 0 | L2 8, split 12 |
 | gen2-core-1 | 4 | UNK-game | ed288e85 | master | 0 | 0 | 0 | 4 | 0 | L2 4 |

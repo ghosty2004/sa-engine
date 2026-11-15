@@ -1733,3 +1733,43 @@
 - verify-all `bl2-promote-u` (`SA_UNVERIFIED=all`, same DLL) IDENTICAL 13/13 (save-load: residue only, SAVE-1).
   The commit-msg hook of the shared config runs tools/verify/commit_lint.py from the worktree, which this branch
   (based on d09c620a) lacks: master's copy was placed there untracked so the check ran on these commits.
+
+## 2026-11-15 — FRONTIER-2 part 3: user-hit IK point arm / plane spawning, car tyres, the fire-truck and armed-cop chain (agent, branch worktree-agent-a1fa130bdd6dc9931)
+- Base: master 11105949 (fast-forwarded to a2ac3540 before the first commit, for the commit-msg hook). Scope cut by the user mid-run to the user-hit blockers: the partial-port cases, the ~250-function
+  frontier turn and the 0xCB73E0 boolean fixes stay open. Every port from the 1.0 US bytes (gta-reversed read as an aid),
+  checked with `tools/gen/inflight.py` first; all in batch `frontier2-6` (unverified).
+- User-hit (free roam): `CTaskSimpleIKPointArm::~CTaskSimpleIKPointArm` 0x634240 and `::Clone` 0x634250 (with them every
+  slot of vtable 0x86E3A4 is ported) and the twin `CTaskSimpleIKLookAt::Clone` 0x633F00 (the point-arm clone copies
+  +0x44..+0x50 but not the part word +0x16, the look-at clone both); `CPlane::FindPlaneCreationCoors` 0x6CD090 (the
+  try loop compares the root distance, FCOS / FSIN of the angle, the orientation from the unrounded x87 sums; the box
+  argument of CheckCameraCollisionBuildings is an uninitialised local the callee never reads; a new binding 0x41A820).
+- Car tyres: `CAutomobile::SetUpWheelColModel` 0x6A3060 (tractor / combine / kart none; sphere copied before the box;
+  the middle wheels only when both frames exist) and `CBike::SetUpWheelColModel` 0x6B67E0 (wheel centres from the
+  modelling matrices combined up to the frame at +0x5A4). New scenario `shootcar` in tools/e2e/scenarios/frontier.sh:
+  the crossing Greenwood left on the road, CJ 7 m south of it, KJKSZPJ, two `e`, right button (camera mode 0x35: the
+  shot line includes car tyres) and left button: SetUpWheelColModel runs 100 times, the bike's 15, 0 blocked.
+- Crossing 4000 (the fire-truck crew and the armed police): `CAutomobile::FireTruckControl` 0x729B60 (player camera /
+  pad aim and the AI's aim at the fire, the cannon's start and direction; FPATAN / FSIN / FCOS),
+  `CTaskComplexKillPedOnFootArmed` `CreateFirstSubTask` 0x62BF00 (the bytes compare the root distance with 30 / 6,
+  gta-reversed the squares), `CreateSubTask` 0x626FC0 (unreversed in gta-reversed; the gun-control command is a byte
+  written over the ped argument's slot, so its upper bytes are the ped pointer's), `ControlSubTask` 0x62CCE0,
+  `LineOfSightClearForAttack` 0x621500 (the ducking / standing eye positions are the other way round in gta-reversed)
+  and `IsPedInLeaderFiringLine` 0x621300 (new sa-ai kill_ped_on_foot_armed.rs, new sa-veh fire_truck.rs). Blocked
+  steps 2298 → 2163, the first block moved from frame 1702 to 1837; still blocking: `CreateNextSubTask` 0x62C190
+  (~700 instructions with the cover-point logic), `CWaterCannon::PushPeds` 0x7295E0, `CPedIK::PointGunAtPosition`
+  0x5FDE20, and behind them `CCover::FindAndReserveCoverPoint` 0x6992B0 / `FindCoordinatesCoverPoint` 0x699570.
+- The 0xCB73E0 booleans (item 4, decoded before the scope cut; evaluated on the exe image with unicorn from each call
+  site, descriptor + return address): TellOccupantsToLeaveCar's driver leave-car flag = 1 (descriptor 0x155FFC8, as
+  assumed), AddFiretruckOccupants' last SetTask flag = 0 (0x155FFA4, as assumed); AddAmbulanceOccupants' evaluates to
+  0x947B2A9D + 0x3C7D482 = 0x9842FF1F (0x155FF44), but `CTaskManager::SetTask` 0x681AF0 never reads its third
+  argument, so the ports' 0 has no effect. No code change.
+- ADR-003: new bindings 0x41A820 (CheckCameraCollisionBuildings), 0x601230 (SetTaskDuckSecondary), 0x61F8B0
+  (CTaskSimpleThrowControl ctor; cmd1600.rs and player_on_foot.rs now import them).
+- frontier.py before / after: direct 471 + virtual 209 + imports 0 + partial 12 = 692 → direct 470 + virtual 203 +
+  imports 0 + partial 12 = 685.
+- Repros (native, --fixed-step 40, default lengths): pausemenu 416 / 0 blocked, solicit 4016 / 0, crossing 1216 / 0,
+  melee 2616 / 0, sniper 1216 / 0, shootcar 1216 / 0; no crash. crossing 4000: 1853 ok / 2163 blocked (see above).
+- verify-all `frontier2-p3` (lanes 1-3, SA_UNVERIFIED=frontier2-1..frontier2-6, DLL of 0a9eaa21; the following commit
+  only swaps local helpers for the shared ones and fixes clippy findings): IDENTICAL 13/13.
+- Commit messages follow Conventional Commits (the branch was fast-forwarded to a2ac3540 so the commit-msg hook finds
+  tools/verify/commit_lint.py).
