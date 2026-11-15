@@ -63,6 +63,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier2-c1 | 44 | AI, UNK-game | 1b07e010 | worktree-agent-a9ea24442dceda2e3 | 44 | 0 | 0 | 0 | 0 | L2 44 |
 | frontier2-c2 | 35 | AI, MATH, SCRIPT, UNK-game, VEH | 1b07e010 | worktree-agent-a9ea24442dceda2e3 | 35 | 0 | 0 | 0 | 0 | L2 35 |
 | frontier2-c3 | 11 | AI, SCRIPT, UNK-game | 1b07e010 | worktree-agent-a9ea24442dceda2e3 | 11 | 0 | 0 | 0 | 0 | L2 11 |
+| frontier2-c4 | 10 | AUDIO, CALLED-ONLY, SCRIPT, UNK-game | dd4cff12 | worktree-agent-a9ea24442dceda2e3 | 10 | 0 | 0 | 0 | 0 | L2 9, split 1 |
 | gen2-anim-1 | 1 | UNK-game | 327954b9 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | gen2-coll-1 | 20 | UNK-game | 327954b9 | master | 0 | 0 | 0 | 20 | 0 | L2 8, split 12 |
 | gen2-core-1 | 4 | UNK-game | 327954b9 | master | 0 | 0 | 0 | 4 | 0 | L2 4 |
@@ -2174,6 +2175,30 @@ SA_UNVERIFIED=frontier2-c3 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-c3 $S
 | 0x6919C0 | `CTaskComplexGoPickUpEntity::Constructor` | written | L2 | heap-writes |
 | 0x6FA7C0 | `CScripted2dEffects::AddScripted2DEffect` | written | L2 | none |
 | 0x6FA840 | `CScripted2dEffects::GetEffectPairs` | written | L2 | none |
+
+## frontier2-c4
+
+10 hooks in sa-ai, sa-audio, sa-core, sa-script; hazards: heap-writes (5), uninit-locals (1); recordings calling them: save-load (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-c4 $SA_ROOT/target/e2e/corpus/save-load.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-c4 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-c4 $SA_ROOT/target/e2e/corpus/save-load.sarec --runs "plain l2 rust" --tag frontier2-c4
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x45AE80 | `CRemote::TakeRemoteControlledCarFromPlayer` | written | L2 | heap-writes |
+| 0x464C90 | `CTheScripts::StartNewScript-indexed` | written | L2 | heap-writes |
+| 0x46AE80 | `thunk_FUN_015622e0` | written | L2 | none |
+| 0x493960 | `CTheScripts::IsEntityWithinAnySearchLight` | written | L2 | none |
+| 0x4E0BD0 | `CAEMP3TrackLoader::IsCurrentAudioStreamAvailable` | written | split | uninit-locals |
+| 0x5A6FC0 | `COctTree::empty` | written | L2 | heap-writes |
+| 0x5A73C0 | `FUN_005a73c0` | written | L2 | none |
+| 0x659990 | `FUN_00659990` | written | L2 | none |
+| 0x66AA20 | `FUN_0066aa20` | written | L2 | heap-writes |
+| 0x678BD0 | `FUN_00678bd0` | written | L2 | heap-writes |
 
 ## gen2-anim-1
 
