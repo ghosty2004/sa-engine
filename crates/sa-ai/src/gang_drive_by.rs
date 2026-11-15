@@ -569,7 +569,7 @@ pub fn gang_drive_by_los_clear(this: GPtr<u8>, ped: GPtr<u8>, pos: GPtr<u8>) -> 
             }
             g::<u32>(IGNORE_ENTITY).write(0);
         }
-        let r = rand() as u32 & 0xFFFF;
+        let r = sa_core::orig::at_site(0x621B99, rand) as u32 & 0xFFFF;
         let d = ftol32(xi(r as i32).fmul_m(fbits(0x38000000)).fmul_m(-500.0));
         let now = g::<u32>(TIME_MS).read();
         wr::<u32>(this, 0x18, now.wrapping_sub(d as u32).wrapping_add(1750));
