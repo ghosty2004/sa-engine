@@ -15,11 +15,12 @@ use sa_world::bindings::{
     ped_groups_get_peds_group, sequence_add_task, sequence_ctor,
 };
 use crate::common::*;
-use sa_core::bindings::{get_weapon_info, ped_is_alive, vector_difference};
+use sa_anim::bindings::pedik_point_gun_at_position;
+use sa_core::bindings::{ped_get_bone_position, ped_give_weapon, get_weapon_info, ped_is_alive, vector_difference};
 use sa_core::field::vec3f_ptr;
 use sa_math::fpu::{fbits, lt, st0};
 use sa_world::bindings::{
-    go_to_point_and_stand_still_ctor, ped_get_weapon_skill, car_enter_exit_is_room_for_ped_to_leave_car, ped_set_current_weapon, vector_magnitude_sqr, vehicle_is_on_its_side,
+    set_orientation, go_to_point_and_stand_still_ctor, ped_get_weapon_skill, car_enter_exit_is_room_for_ped_to_leave_car, ped_set_current_weapon, vector_magnitude_sqr, vehicle_is_on_its_side,
     vehicle_is_upside_down, weapon_is_type_melee,
 };
 use sa_world::world::common::{entity_pos, ped_active_weapon};
@@ -48,6 +49,8 @@ orig! {
     fn seek_cover_ctor_ped(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x622BC0 => unported;
     /// `CTaskComplexSeekCoverUntilTargetDead::Destructor` (0x622C20)
     fn seek_cover_dtor(t: GPtr<u8>) = thiscall 0x622C20 => unported;
+    /// `CTaskSimpleArrestPed::StartAnim(CPed*)` (0x68B7E0, `ret 4`)
+    fn arrest_simple_start_anim(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x68B7E0 => unported;
     /// `CTaskComplexDestroyCarArmed::CreateSubTask(int32, CPed*)` (0x628DA0, `ret 8`)
     fn destroy_car_armed_create_sub_task(t: GPtr<u8>, ty: i32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x628DA0 => unported;
     /// `CTaskComplexDestroyCarArmed::CalculateSearchPositionAndRanges(CPed*)` (0x628C80, `ret 4`)
@@ -564,6 +567,42 @@ pub fn go_to_point_and_stand_still_timed_clone(this: GPtr<u8>) -> GPtr<u8> {
     })
 }
 
+/// `CTaskSimpleArrestPed::ProcessPed(CPed*)` (0x68B8A0, `ret 4`, AL = false always). Finished (+0xC): nothing. Without
+/// the anim (+0x10): a ped with a melee weapon gets a pistol (0x16, 10 rounds) as its current weapon, then the anim
+/// starts (0x68B7E0). With it: the suspect's (+8) bone 3 (an uninitialised local without a suspect), the angle from it
+/// to the ped (`GetRadianAngleBetweenPoints`) as the ped's current / aimed rotation (+0x55C / +0x558) and its
+/// orientation (0, 0, angle), and the gun pointed at the bone with the anim's blend amount.
+#[hook(addr = 0x68B8A0, conv = thiscall, name = "CTaskSimpleArrestPed::ProcessPed", expect = "83 EC 0C 57 8B F9 8A 47",
+       unverified = "frontier2-a6", route = "L2", hazards = "heap-writes,uninit-locals,ax-al-return", recs = "police-gang",
+       note = "the bone position is an uninitialised local when the suspect is null (zero here)")]
+pub fn arrest_ped_simple_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
+    if rd::<u8>(this, 0xC) != 0 {
+        return 0;
+    }
+    let anim = rd::<GPtr<u8>>(this, 0x10);
+    if anim.is_null() {
+        if weapon_is_type_melee(ped_active_weapon(ped)) != 0 {
+            ped_give_weapon(ped, 0x16, 10, 0);
+            ped_set_current_weapon(ped, 0x16);
+        }
+        arrest_simple_start_anim(this, ped);
+        return 0;
+    }
+    let mut bone = [0f32; 3];
+    let suspect = rd::<GPtr<u8>>(this, 8);
+    if !suspect.is_null() {
+        ped_get_bone_position(suspect, vec3f_ptr(&mut bone), 3, 0);
+    }
+    let pp = entity_pos(ped);
+    let a = st0(general_get_radian_angle_between_points(bone[0], bone[1], rd::<f32>(pp, 0), rd::<f32>(pp, 4))).to_f32();
+    wr::<f32>(ped, 0x55C, a);
+    wr::<f32>(ped, 0x558, a);
+    set_orientation(ped, 0.0, 0.0, a);
+    let blend = x(rd::<f32>(rd::<GPtr<u8>>(this, 0x10), 0x18)).to_f32();
+    pedik_point_gun_at_position(ped.byte_add(0x50C), vec3f_ptr(&mut bone), blend.to_bits());
+    0
+}
+
 /// Registrations of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_ARREST_PED_CONTROL_SUB_TASK,
@@ -573,4 +612,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_DESTROY_CAR_ARMED_CREATE_NEXT_SUB_TASK,
     HOOK_ARREST_PED_CREATE_NEXT_SUB_TASK,
     HOOK_GO_TO_POINT_AND_STAND_STILL_TIMED_CLONE,
+    HOOK_ARREST_PED_SIMPLE_PROCESS_PED,
 ];
