@@ -181,8 +181,10 @@ def draft_missing(g, tsv, branch):
 
 
 def agent_worktrees(g):
+    """Linked worktrees under .claude/worktrees (the first entry is the main worktree itself)."""
     out = g.out("worktree", "list", "--porcelain")
-    return [ln[9:] for ln in out.splitlines() if ln.startswith("worktree ") and "/.claude/worktrees/" in ln]
+    paths = [ln[9:] for ln in out.splitlines() if ln.startswith("worktree ")]
+    return [p for p in paths[1:] if "/.claude/worktrees/" in p]
 
 
 def rewrite_objects(g, rows, branch):
@@ -261,7 +263,8 @@ def tracked_text_files(g):
 
 
 def update_references(g, mapping):
-    """Rewrite cited commit ids in tracked text files. Returns (replacements, per-file counts, ambiguous)."""
+    """Rewrite cited commit ids in tracked text files.
+    Returns (replacements, per-file counts, ambiguous tokens left alone, decimal-only tokens replaced)."""
     old_ids = sorted(mapping)
     all_ids = set(mapping) | set(mapping.values())
 
@@ -280,7 +283,7 @@ def update_references(g, mapping):
             n += 1
         return new[:n]
 
-    total, per_file, ambiguous = 0, {}, []
+    total, per_file, ambiguous, decimal = 0, {}, [], []
     for f in tracked_text_files(g):
         path = os.path.join(g.repo, f)
         with open(path, encoding="utf-8", newline="") as fh:
@@ -293,13 +296,14 @@ def update_references(g, mapping):
             hits = resolve(tok)
             if not hits:
                 return tok
-            if tok.isdigit():
-                ambiguous.append((f, tok, "decimal digits only, left as is"))
-                return tok
             if len(hits) > 1:
                 ambiguous.append((f, tok, f"prefix of {len(hits)} old commits, left as is"))
                 return tok
             count += 1
+            if tok.isdigit():
+                # short ids made of decimal digits only (14221138, 3933363) are real citations in the queue
+                # and the worklog; listed so the main session can glance over them
+                decimal.append((f, tok))
             return unique_prefix(mapping[hits[0]], len(tok))
 
         new_text = HEX_TOKEN.sub(sub, text)
@@ -308,13 +312,16 @@ def update_references(g, mapping):
                 fh.write(new_text)
             per_file[f] = count
             total += count
-    return total, per_file, ambiguous
+    return total, per_file, ambiguous, decimal
 
 
 def run(repo, tsv, branch, force, dry):
     g = Git(repo)
-    if g.out("status", "--porcelain", "--untracked-files=no").strip():
-        raise SystemExit("refusing: uncommitted changes in tracked files")
+    # the subjects table may carry uncommitted rows (--draft-missing, reviewed): they go into the final commit
+    tsv_rel = os.path.relpath(tsv, repo)
+    dirty = [ln for ln in g.out("status", "--porcelain", "--untracked-files=no").splitlines() if ln[3:] != tsv_rel]
+    if dirty:
+        raise SystemExit("refusing: uncommitted changes in tracked files:\n  " + "\n  ".join(dirty))
     agents = agent_worktrees(g)
     if agents and not force:
         raise SystemExit("refusing: agent worktrees are registered (agents may be working):\n  "
@@ -385,15 +392,19 @@ def run(repo, tsv, branch, force, dry):
         f.write("# old_sha\tnew_sha  (GIT-1 history rewrite; old commits kept under refs/archive/pre-rewrite)\n")
         for o in order:
             f.write(f"{o}\t{mapping[o]}\n")
-    total, per_file, ambiguous = update_references(g, mapping)
+    total, per_file, ambiguous, decimal = update_references(g, mapping)
     for f, n in sorted(per_file.items()):
         print(f"  {n:5d}  {f}")
     for f, tok, why in ambiguous:
         print(f"  AMBIGUOUS {f}: {tok} ({why})")
+    for f, tok in sorted(set(decimal)):
+        print(f"  DECIMAL-ONLY {f}: {tok} (replaced: resolves to one old commit)")
     if main_wt_branch != "refs/heads/" + branch:
         raise SystemExit(f"HEAD is not {branch}; commit the reference update by hand")
     g.run("add", "-u")
     g.run("add", HASH_MAP)
+    if not tsv_rel.startswith(".."):
+        g.run("add", tsv_rel)
     body = (f"Rewrite the commit ids cited in tracked text files to the rewritten history ({total} references "
             f"in {len(per_file)} files;\n{len(ambiguous)} ambiguous tokens left as they were). "
             f"docs/history/hash-map.tsv maps every old commit\nto its new one; the old history stays under "
