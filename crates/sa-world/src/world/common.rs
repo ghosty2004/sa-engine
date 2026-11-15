@@ -61,6 +61,17 @@ pub fn cam_pos() -> GPtr<f32> {
     if e.is_null() { CAM_VECTOR.ptr().cast() } else { e.byte_add(0x30).cast() }
 }
 
+/// `CPlaceable::GetHeading()` as the bytes inline it: `atan2(-fwd.x, fwd.y)` of the matrix (+0x14; FPATAN, the
+/// raw register value) or the placement heading (+0x10) without one.
+pub fn placeable_heading(e: GPtr<u8>) -> X87 {
+    let m = rd::<GPtr<u8>>(e, 0x14);
+    if m.is_null() {
+        x(rd::<f32>(e, 0x10))
+    } else {
+        x(rd::<f32>(m, 0x10)).fchs().fpatan(x(rd::<f32>(m, 0x14)))
+    }
+}
+
 pub use sa_core::bindings::load_data_from_work_buffer;
 pub use sa_core::bindings::save_data_to_work_buffer;
 pub use crate::bindings::find_player_coors;

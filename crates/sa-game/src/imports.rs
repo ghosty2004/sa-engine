@@ -83,6 +83,9 @@ natives! {
     "USER32.dll!ShowWindow" => show_window: fn(hwnd: u32, cmd: i32) -> i32;
     "USER32.dll!UpdateWindow" => update_window: fn(hwnd: u32) -> i32;
     "USER32.dll!SetWindowLongA" => set_window_long_a: fn(hwnd: u32, index: i32, value: i32) -> i32;
+    "USER32.dll!GetWindowLongA" => get_window_long_a: fn(hwnd: u32, index: i32) -> i32;
+    "USER32.dll!GetMenu" => get_menu: fn(hwnd: u32) -> u32;
+    "USER32.dll!AdjustWindowRectEx" => adjust_window_rect_ex: fn(rect: GPtr<[i32; 4]>, style: u32, menu: i32, ex: u32) -> i32;
     "USER32.dll!SetWindowPos" => set_window_pos: fn(hwnd: u32, after: u32, x: i32, y: i32, cx: i32, cy: i32, flags: u32) -> i32;
     "USER32.dll!DestroyWindow" => destroy_window: fn(hwnd: u32) -> i32;
     "USER32.dll!GetWindowPlacement" => get_window_placement: fn(hwnd: u32, wp: GPtr<u32>) -> i32;
@@ -181,9 +184,38 @@ fn update_window(_hwnd: u32) -> i32 {
     with("UpdateWindow", |_| ());
     1
 }
-fn set_window_long_a(_hwnd: u32, _index: i32, _value: i32) -> i32 {
+/// The window longs the game set (`SetWindowLongA`), read back by `GetWindowLongA` (FRONTIER-2: the RW D3D9
+/// camera's window fitting, `sa-rwcore` d3d9cam.rs, reads GWL_STYLE / GWL_EXSTYLE). One window: keyed by index.
+static WINDOW_LONGS: std::sync::Mutex<Vec<(i32, i32)>> = std::sync::Mutex::new(Vec::new());
+
+/// `SetWindowLongA`: stores the value; the previous one (0 when never set), as Win32 returns it.
+fn set_window_long_a(_hwnd: u32, index: i32, value: i32) -> i32 {
     with("SetWindowLongA", |_| ());
+    let mut v = WINDOW_LONGS.lock().unwrap_or_else(|e| e.into_inner());
+    match v.iter_mut().find(|(i, _)| *i == index) {
+        Some((_, old)) => std::mem::replace(old, value),
+        None => {
+            v.push((index, value));
+            0
+        }
+    }
+}
+/// `GetWindowLongA`: the value last set with `SetWindowLongA`, else 0 (no style bits and no extended style: the
+/// native window has no Win32 frame, as `AdjustWindowRect` reflects).
+fn get_window_long_a(_hwnd: u32, index: i32) -> i32 {
+    with("GetWindowLongA", |_| ());
+    let v = WINDOW_LONGS.lock().unwrap_or_else(|e| e.into_inner());
+    v.iter().find(|(i, _)| *i == index).map_or(0, |&(_, x)| x)
+}
+/// `GetMenu`: the game window has no menu.
+fn get_menu(_hwnd: u32) -> u32 {
+    with("GetMenu", |_| ());
     0
+}
+/// `AdjustWindowRectEx`: as `AdjustWindowRect` (no frame: client rect = window rect).
+fn adjust_window_rect_ex(rect: GPtr<[i32; 4]>, style: u32, menu: i32, _ex: u32) -> i32 {
+    with("AdjustWindowRectEx", |_| ());
+    bind::adjust_window_rect(rect, style, menu)
 }
 fn set_window_pos(_hwnd: u32, _after: u32, _x: i32, _y: i32, _cx: i32, _cy: i32, _flags: u32) -> i32 {
     with("SetWindowPos", |_| ());

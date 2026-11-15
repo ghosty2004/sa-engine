@@ -817,6 +817,15 @@ pub fn event_player_collision_with_ped_dtor_5fee80(this: GPtr<u8>) {
     dtor_4aca70(this);
 }
 
+/// The destructor of the event class with vtable 0x86CC78 (0x5FF6A0; FRONTIER-2, reached from the melee fight
+/// loop): `vtbl = 0x86CC78`, then a tail jump into `CEventEditableResponse`'s destructor (0x4AC480).
+#[hook(addr = 0x5FF6A0, conv = thiscall, name = "FUN_005ff6a0", expect = "C7 01 78 CC 86 00",
+       unverified = "frontier2-1", route = "L2", hazards = "heap-writes")]
+pub fn event_86cc78_dtor_5ff6a0(this: GPtr<u8>) {
+    wr::<u32>(this, 0, 0x86_CC78);
+    crate::bindings::editable_response_dtor(this);
+}
+
 /// `vt_85b0b0::AffectsPed(CPed*)` (0x4AEF00): both the ped and the source (+0x14) alive, the ped not
 /// already looking at the source (`g_ikChainMan`), and unless one of them has no 0x4B2/0x4BF/0x4B3
 /// task, their task types differ (source's type read first).
@@ -849,6 +858,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_EVENT_BASE_DTOR_4B1F00,
     HOOK_EVENT_POTENTIAL_WALK_INTO_FIRE_SDD_4B6840,
     HOOK_EVENT_PLAYER_COLLISION_WITH_PED_DTOR_5FEE80,
+    HOOK_EVENT_86CC78_DTOR_5FF6A0,
     HOOK_EVENT_OPERATOR_NEW_4B5620,
     HOOK_EVENT_OPERATOR_DELETE_4B5630,
     HOOK_VT_85AE88_GET_SOURCE_ENTITY_4AE230,

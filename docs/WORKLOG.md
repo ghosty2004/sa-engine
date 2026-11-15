@@ -1538,3 +1538,47 @@
 - Promotion: no batch qualifies yet under HOWTO §4.6 (no batch has L2/L1 evidence for every row; queue: 1,322
   L3-batch, 1,218 written, 4 L2). 201 batches have every row at L3-batch or better (VERIFIER-11's union) and now
   also pass the full union run on all 13 recordings; they need per-hook L2 runs before promotion. Nothing promoted.
+
+## 2026-11-15 — FRONTIER-2: the user-hit blockers, frontier imports / partial ports (agent, branch worktree-agent-acdd0a918985c68f5)
+- Base: master c372e77d (DEDUP-1 pass 2). Every new port is ported from the 1.0 US bytes (gta-reversed read as an aid;
+  where it differs the bytes are followed and the docs say how), registered `unverified` (batch `frontier2-1`), and
+  checked against `tools/gen/inflight.py` (only 0x4AD420 / 0x645600 are in flight elsewhere, neither touched).
+- Batch `frontier2-1` (34 hooks + 2 phase-B natives):
+  - procedural objects (user-hit walking around): ProcObjectMan_c::ProcessTriangleAdded 0x5A3F20 / ProcessTriangleRemoved
+    0x5A3F70, ProcSurfaceInfo_c::AddObjects 0x5A3850 / AddObject 0x5A32D0 / IsPtInTriangle2D 0x5A2F80, the matrix row
+    scale 0x5A2E60 (gta-reversed differs three times: the grid restarts y per column, the scale fix-up is for buildings,
+    either scale != 1);
+  - melee (scenario `melee`, now 0 blocked): CEventDamage::ComputeDamageAnim 0x4B3FC0 (knock-back normalised in 2D),
+    CTaskSimpleFight::IsComboSet 0x4ABDC0 / IsHitComboSet 0x4ABDF0 / MakeAbortable 0x6239F0,
+    CAEPedAudioEntity::HandlePedHit 0x4E1CC0 (three nested byte jump tables; the surface volume 0x4DA510 was ported
+    already), CTaskSimpleBeHit::StartAnim 0x620910, CTaskSimpleFightingControl::ProcessPed 0x62A0A0 / CalcMoveCommand
+    0x624B50 / MakeAbortable 0x61DD00, CTaskAllocatorKillThreatsBasic::ComputeClosestPeds 0x69C850 / AllocateTasks
+    0x69D170, the event destructor 0x5FF6A0, CPedGeometryAnalyser::ComputePedHitSide(CPhysical) 0x5F3640,
+    CTaskComplexHitPedWithCar::HitHurtsPed 0x653AE0 / ComputeEvasiveStepMoveDir 0x653B40 / CreateSubTask 0x6560E0,
+    CTaskAllocator::operator new 0x69D980 (`#[native]`: the no-CD chunk at 0x40A08F reads its jmp as a key and a
+    keycells redirect would move bytes 0x514B7F reads, sa-hook data_reads);
+  - crossing: CTrailer::SetupSuspensionLines 0x6CF1A0 (`|y0 + y1| * 0.5`, all four wheel positions),
+    CAutomobile::UpdateMovingCollision 0x6A1460, CVehicle::GetSpecialColModel 0x6DF3D0, the vertex compression
+    0x536E90, CTrailer::ProcessAI 0x6CF590 / ScanForTowLink 0x6CF030 / GetTowHitchPos 0x6CEEA0 / ProcessSuspension
+    0x6CF6A0 / PreRender 0x6CFAC0, CVehicle::InflictDamage 0x6D7C90 (the frontier's top direct callee);
+  - CTaskSimpleGunControl::ProcessPed 0x625270 (a burst draws `RandomInt(0, 2)` twice when the first result is >= 1;
+    the task finishes only for the listed use-gun states), the burning car's CAEExplosionAudioEntity::AddAudioEvent
+    0x4DCBE0;
+  - CCarCtrl::GenerateOneEmergencyServicesCar 0x42B7D0: ported before but unhookable (protection reads its entry), so
+    it never reached the phase B registry; now a `#[native]`.
+- Win32 imports (FRONTIER-2 (a)): sa-game's import backend implements USER32 `GetWindowLongA` (the value last set with
+  `SetWindowLongA`, which now stores and returns the previous value), `GetMenu` (none) and `AdjustWindowRectEx`.
+  `tools/verify/frontier.py` lists the imports `orig!` declarations reach (`cell` / `site` forms, named from the exe's
+  import directory) that neither the `natives!` table nor a path-bound host stand-in implements (`--imports`): 4 left
+  (DeleteFileA, GetLocalTime, GetVolumeInformationA, DialogBoxParamA).
+- Partial ports (FRONTIER-2 (d)): `frontier.py --partial` lists the 14 `#[hook(fallback)]` ports (17 when the row was
+  written; the script switches now show their unported opcode counts, 1200-1299: 28, 2500-2599: 5).
+- ADR-003: no new copies (`kf` → `sa_core::field::gf`; the CPlaceable heading helper moved to
+  `sa_world::world::common::placeable_heading` for sa-ped and sa-veh; sa-veh's magnitude reused); new bindings for
+  every address now declared by two modules (0x4ABDA0, 0x4ABDC0, 0x61C5E0, 0x5F1E70, 0x5F79C0, 0x61DE60, 0x6924B0,
+  0x61E040, 0x61E200, 0x61E0C0, 0x6A65D0, 0x6A4EC0, 0x6AFB10, 0x4594C0, 0x61C2E0, 0x6D7BC0).
+- Repros (`tools/e2e/scenarios/frontier.sh`, offscreen, --fixed-step 40): melee 2616 ok / 0 blocked (was 1688 blocked
+  from frame 912); pausemenu 0 blocked; solicit 0 blocked; crossing: the trailers, the moving collision and the damage
+  now run; it stops at frame ~855 on `update_car_ai_original (0x0)` — the damage the car does reports a crime, the
+  police come and CCarAI::UpdateCarAI's law-enforcer path is still the original's (see the ROADMAP).
+

@@ -152,11 +152,10 @@ use sa_world::bindings::task_use_effect_ctor;
 use sa_ai::bindings::tm_set_task as task_manager_set_task;
 use sa_world::bindings::use_sequence_ctor as task_use_sequence_ctor;
 use sa_core::bindings::vector_normalise;
+use sa_veh::bindings::is_playback_going_on_for_car;
 orig! {
     fn pause_playback_recorded_car(v: GPtr<u8>) = cdecl 0x459740 => unported;
     fn unpause_playback_recorded_car(v: GPtr<u8>) = cdecl 0x459850 => unported;
-    /// `CVehicleRecording::IsPlaybackGoingOnForCar(CVehicle*)` (0x4594C0), AL
-    fn is_playback_going_on_for_car(v: GPtr<u8>) -> u8 = cdecl 0x4594C0 => unported;
     /// `CRunningScript::CharInAngledAreaCheckCommand(int32 command)` (0x487F60)
     fn char_in_angled_area_check_command(s: Scr, command: u32) = thiscall 0x487F60 => unported;
     /// `CTaskComplexGoToPointAnyMeans::CTaskComplexGoToPointAnyMeans(int32, const CVector&, CVehicle*, float, int32)`

@@ -76,6 +76,7 @@ use sa_world::bindings::ped_say as ug_ped_say;
 use crate::bindings::ik_point_arm as ug_ik_point_arm;
 use sa_world::bindings::camera_find_3rd_person_cam_target_vector as ug_find_3rd_person_cam_target_vector;
 use sa_world::bindings::ik_look_at as ug_ik_look_at;
+use crate::bindings::duck_force_stop_move as ug_duck_force_stop_move;
 orig! {
     /// `IKChainManager_c::IsFacingTarget(ped, slot)` (0x618330)
     fn ug_ik_is_facing_target(m: GPtr<u8>, ped: GPtr<u8>, slot: i32) -> u8 = thiscall 0x618330 => unported;
@@ -89,8 +90,6 @@ orig! {
     fn ug_wi_loop_end(wi: GPtr<u8>, duck: u32) -> f64 = thiscall 0x608F20 => unported;
     /// `CWeaponInfo::GetAnimLoopFire(bool duck)` (0x61C150, result in ST0)
     fn ug_wi_loop_fire(wi: GPtr<u8>, duck: u32) -> f64 = thiscall 0x61C150 => unported;
-    /// `CTaskSimpleDuck::ForceStopMove()` (0x6924B0)
-    fn ug_duck_force_stop_move(d: GPtr<u8>) = thiscall 0x6924B0 => unported;
     /// `CTaskSimpleDuck::StopFireGun()` (0x61C420)
     fn ug_duck_stop_fire_gun(d: GPtr<u8>) -> u8 = thiscall 0x61C420 => unported;
     /// `CPedIK::RotateTorsoForArm(const CVector&)` (0x5FDF90)

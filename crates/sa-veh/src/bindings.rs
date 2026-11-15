@@ -29,6 +29,11 @@ orig! {
 }
 
 orig! {
+    /// `CVehicleRecording::IsPlaybackGoingOnForCar` (0x4594C0)
+    pub fn is_playback_going_on_for_car(v: GPtr<u8>) -> u8 = cdecl 0x4594C0 => unported;
+}
+
+orig! {
     /// `CVehicleRecording::SetRecordingToPointClosestToCoors` (0x45A1E0)
     pub fn set_recording_to_point_closest_to_coors(i: i32, x: f32, y: f32, z: f32) = cdecl 0x45A1E0 => crate::checks2::set_recording_to_point_closest_to_coors;
 }
@@ -144,6 +149,11 @@ orig! {
 }
 
 orig! {
+    /// `CAutomobile::ProcessCarWheelPair` (0x6A4EC0)
+    pub fn process_car_wheel_pair(v: GPtr<u8>, left: u32, right: u32, steer: u32, speeds: GPtr<u8>, points: GPtr<u8>, traction: u32, accel: u32, brake: u32, front: u32) = thiscall 0x6A4EC0 => unported;
+}
+
+orig! {
     /// `CAutomobile::IsInAir` (0x6A6140)
     pub fn automobile_is_in_air(v: GPtr<u8>) -> u8 = thiscall 0x6A6140 => unported;
 }
@@ -151,6 +161,11 @@ orig! {
 orig! {
     /// `CAutomobile::Destructor` (0x6A61E0)
     pub fn automobile_destructor(v: GPtr<u8>) = thiscall 0x6A61E0 => crate::automobile2::destructor;
+}
+
+orig! {
+    /// `CAutomobile::SetupSuspensionLines` (0x6A65D0)
+    pub fn automobile_setup_suspension_lines(a: GPtr<u8>) = thiscall 0x6A65D0 => crate::mvpb_a5::setup_suspension_lines;
 }
 
 orig! {
@@ -166,6 +181,11 @@ orig! {
 orig! {
     /// `CAutomobile::UpdateWheelMatrix` (0x6AA290)
     pub fn update_wheel_matrix(v: GPtr<u8>, node: i32, flags: u32) = thiscall 0x6AA290 => crate::mvpd_v4::automobile_update_wheel_matrix;
+}
+
+orig! {
+    /// `CAutomobile::ProcessSuspension` (0x6AFB10)
+    pub fn automobile_process_suspension(v: GPtr<u8>) = thiscall 0x6AFB10 => unported;
 }
 
 orig! {

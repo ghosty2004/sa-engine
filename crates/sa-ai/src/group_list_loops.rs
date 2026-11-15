@@ -466,6 +466,21 @@ pub fn task_allocator_pool_new(this: GPtr<u8>) -> u32 {
     (rd::<u32>(this, 0xC) << 5).wrapping_add(rd::<u32>(this, 0))
 }
 
+/// `CTaskAllocator::operator new(uint32)` (0x69D980; FRONTIER-2): the entry `nop; jmp` reaches a no-CD chunk
+/// (0x401E3E) that loads the pool as `[[0x15606F0] + [0x410860] + 1]` = `[0xB744BC]` (sa-hook keeps the code key
+/// 0x410860 readable, keycells.rs) and tail-jumps into `CTaskAllocatorPool::New` with the size argument unread.
+/// Registered for phase B only (`#[native]`): the no-CD chunk at 0x40A08F reads the entry's jmp bytes as a key, and
+/// redirecting that reader would move bytes 0x514B7F reads in turn (sa-hook data_reads).
+#[sa_core::native(addr = 0x69D980, conv = cdecl, name = "CTaskAllocator::operator new")]
+pub fn task_allocator_new(_size: u32) -> u32 {
+    task_allocator_pool_new_o(g::<GPtr<u8>>(0xB7_44BC).read())
+}
+
+orig! {
+    /// `CTaskAllocatorPool::New()` (0x69D8E0)
+    fn task_allocator_pool_new_o(pool: GPtr<u8>) -> u32 = thiscall 0x69D8E0 => task_allocator_pool_new;
+}
+
 pub const HOOKS: &[HookReg] = &[
     HOOK_USE_SCRIPTED_BRAIN_CONTROL_SUB_TASK,
     HOOK_TASK_ALLOCATOR_POOL_NEW,
@@ -490,3 +505,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_COVER_POINT_RELEASE_COVER_POINT_FOR_PED,
     HOOK_NODE_LIST_REVERSE,
 ];
+
+/// Every `#[native]` of this module.
+pub const NATIVES: &[sa_core::abi::NativeReg] = &[NATIVE_TASK_ALLOCATOR_NEW];

@@ -139,3 +139,7 @@ pub mod vehicle_misc_queries;
 pub mod stored_car_restore;
 pub mod vehicle_can_ped_enter;
 pub mod recording_start;
+pub mod trailer_susp;
+pub mod moving_collision;
+pub mod trailer_ai;
+pub mod inflict_damage;

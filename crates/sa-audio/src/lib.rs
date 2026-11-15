@@ -67,3 +67,5 @@ pub mod bicycle_tyre_volume;
 pub mod radio_queue_tracks_native;
 pub mod weapon_gun_sounds;
 pub mod cj_mood;
+pub mod ped_hit;
+pub mod explosion_audio;

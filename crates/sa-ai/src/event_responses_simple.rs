@@ -66,8 +66,6 @@ orig! {
     fn v_event_source(e: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x28 => unported;
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CPedGeometryAnalyser::ComputePedHitSide(const CPed&, const CVector&)` (0x5F1E70, cdecl)
-    fn geometry_compute_ped_hit_side(ped: GPtr<u8>, pos: GPtr<u8>) -> i32 = cdecl 0x5F1E70 => unported;
     /// `CDarkel::RegisterKillNotByPlayer(const CPed*, eWeaponType)` (0x43D210, cdecl)
     fn darkel_register_kill_not_by_player(ped: GPtr<u8>, w: u32) = cdecl 0x43D210 => unported;
     /// `CPedGroups::RegisterKillByPlayer(CPed*, CPlayerPed*)` (0x5F7E30, cdecl; reached by a tail jump with the
@@ -494,7 +492,7 @@ pub fn handler_compute_on_fire_response(this: GPtr<u8>, _e: GPtr<u8>, _active: G
 pub fn handler_compute_water_cannon_response(this: GPtr<u8>, e: GPtr<u8>, _active: GPtr<u8>, _simplest: GPtr<u8>) {
     let dir = e.byte_add(0x18);
     ped_say(ped(this), 0x158, 0, f32::from_bits(0x3F80_0000), 0, 0, 0);
-    let side = geometry_compute_ped_hit_side(ped(this), dir);
+    let side = crate::bindings::compute_ped_hit_side_pos(ped(this), dir);
     set(this, new_task(0x18, |t| fall_and_get_up_ctor2(t, side as u32, 0)));
     let ts = x(g::<f32>(TIME_STEP).read());
     physical_apply_move_force(ped(this), sa_math::vector::CVector::new(0.0, 0.0, f32_of(ts.fadd(ts))));

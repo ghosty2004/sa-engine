@@ -9,9 +9,14 @@
 # solicit  (4000)  PEDHIT's car run without leaving the car: the prostitutes' CTaskComplexProstituteSolicit
 #                  (ControlSubTask 0x6669D0) and IsEntityBlockingTarget 0x5F3970 run
 # crossing (1200)  the Greenwood taken to the level crossing south of Grove Street (2200, -1895; traincross1/2) and
-#                  driven over the tracks: CObject::ProcessTrainCrossingBehaviour 0x5A0B50 for the barriers
-# melee    (2600)  on foot at Grove Street, CJ sprints into the peds and punches (LMB): CTaskSimpleFight::FightHitPed
-#                  (not yet 0 blocked: HandlePedHit 0x4E1CC0, CEventDamage::ComputeDamageAnim 0x4B3FC0)
+#                  driven over the tracks: CObject::ProcessTrainCrossingBehaviour 0x5A0B50 for the barriers; the
+#                  trailers there (CTrailer 0x6CF1A0 / 0x6CF590 / 0x6CF6A0 / 0x6CFAC0, UpdateMovingCollision 0x6A1460)
+#                  and the damage the car does (CVehicle::InflictDamage 0x6D7C90) bring the police: FRONTIER-2 stops on
+#                  `update_car_ai_original (0x0)` (CCarAI::UpdateCarAI's law-enforcer path, not ported yet)
+# melee    (2600)  on foot at Grove Street, CJ sprints into the peds and punches (LMB): CTaskSimpleFight::FightHitPed,
+#                  the damage anim / hit sounds (0x4B3FC0, 0x4E1CC0) and the victims' fight back (0x62A0A0, 0x69D170):
+#                  0 blocked since FRONTIER-2
+# WRAP="gdb -q -batch -x tools/e2e/scenarios/frontier2-counts.gdb --args" counts the FRONTIER-2 ports' calls.
 # Env: SA_ROOT (checkout holding wine/gta-sa; default ~/sa-engine), SA_GAME (binary; default this checkout's
 # i686-unknown-linux-gnu release build), WRAP (a command prefix, e.g. WRAP="gdb -q -batch -x tools/e2e/scenarios/frontier-counts.gdb --args"
 # to count the ports' calls), plus any SA_GAME_* (SA_GAME_PRESENT_GAME=1 + PRESENT_DIR for frames).

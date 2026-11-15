@@ -26,7 +26,7 @@ orig! {
     /// `CAEPedAudioEntity::HandlePedSwing(event, animSfx, delay)` (0x4E1A40)
     fn handle_ped_swing(this: GPtr<u8>, event: u32, sfx: u32, delay: u32) = thiscall 0x4E1A40 => crate::port2_b::ped_handle_ped_swing;
     /// `CAEPedAudioEntity::HandlePedHit(event, CPhysical*, surface, volume, maxVolume)` (0x4E1CC0)
-    fn handle_ped_hit(this: GPtr<u8>, event: u32, physical: u32, surface: u32, vol: u32, max_vol: u32) = thiscall 0x4E1CC0 => unported;
+    fn handle_ped_hit(this: GPtr<u8>, event: u32, physical: u32, surface: u32, vol: u32, max_vol: u32) = thiscall 0x4E1CC0 => crate::ped_hit::handle_ped_hit;
     /// `CAEPedAudioEntity::HandlePedJacked(event)` (0x4E2350)
     fn handle_ped_jacked(this: GPtr<u8>, event: u32) = thiscall 0x4E2350 => unported;
     /// `CAEPedAudioEntity::HandleSwimSplash(event)` (0x4E26A0)

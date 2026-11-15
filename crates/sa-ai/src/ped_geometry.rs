@@ -581,8 +581,19 @@ pub fn compute_ped_shot_side(ped: GPtr<u8>, pos: GPtr<u8>) -> i32 {
     ftol32(a.fmul_m(g::<f32>(0x85_8FB8).read()))
 }
 
+/// `CPedGeometryAnalyser::ComputePedHitSide(const CPed& ped, const CPhysical& physical)` (0x5F3640, cdecl;
+/// FRONTIER-2): the argument slot is replaced by `&physical.m_vecMoveSpeed` (+0x44) and the call tail-jumps into
+/// the vector form (0x5F1E70).
+#[hook(addr = 0x5F3640, conv = cdecl, name = "CPedGeometryAnalyser::ComputePedHitSide-physical", expect = "8B 44 24 08 83 C0 44",
+       unverified = "frontier2-1", route = "L2", hazards = "stack-residue",
+       note = "the original rewrites its caller's argument slot (physical + 0x44); not reproduced")]
+pub fn compute_ped_hit_side_physical(ped: GPtr<u8>, physical: GPtr<u8>) -> i32 {
+    crate::bindings::compute_ped_hit_side_pos(ped, physical.byte_add(0x44))
+}
+
 pub const HOOKS: &[HookReg] = &[
     HOOK_IS_IN_AIR,
+    HOOK_COMPUTE_PED_HIT_SIDE_PHYSICAL,
     HOOK_LIES_INSIDE_BOUNDING_BOX,
     HOOK_COMPUTE_CLOSEST_SURFACE_POINT_RECT,
     HOOK_IS_WANDER_PATH_CLEAR,

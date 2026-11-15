@@ -88,6 +88,8 @@ pub const NATIVES: &[&[&[sa_core::abi::NativeReg]]] = &[
     &[sa_script::entry_exit_flag::NATIVES],
     &[sa_pop::pathfind::NATIVES],
     &[sa_pop::car_ai_reason_to_stop::NATIVES],
+    &[sa_pop::carctrl5::NATIVES],
+    &[sa_ai::group_list_loops::NATIVES],
     &[sa_pop::carctrl4::NATIVES],
     &[sa_ai::hassle_vehicle_track_entity::NATIVES],
     &[sa_ai::seek::NATIVES],

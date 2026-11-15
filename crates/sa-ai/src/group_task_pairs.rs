@@ -30,8 +30,6 @@ orig! {
     fn v_allocate_default_tasks(a: GPtr<u8>, group: GPtr<u8>, ped: GPtr<u8>) = thiscall vslot 0x0 => unported;
     /// `CPedGroupIntelligence::ReportAllTasksFinished(CPedTaskPair*)` (0x5F7730, `ret 4`; ECX unused)
     fn o_report_pairs(i: GPtr<u8>, pairs: GPtr<u8>) = thiscall 0x5F7730 => unported;
-    /// `CPedGroupIntelligence::FlushTasks(CPedTaskPair*, CPed*)` (0x5F79C0, `ret 8`; ECX unused)
-    fn o_flush_tasks(i: GPtr<u8>, pairs: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x5F79C0 => unported;
 }
 
 /// The task of `ped` in the 8 pairs at `pairs`, or null (the first pair whose ped matches).
@@ -182,7 +180,7 @@ pub fn pgi_report_all_bar_script_tasks_finished(this: GPtr<u8>) {
        expect = "56 57 8B 7C 24 0C", unverified = "ai7-6", route = "L2", hazards = "heap-writes",
        note = "frees and allocates tasks (task pool)")]
 pub fn pgi_compute_default_tasks(this: GPtr<u8>, ped: GPtr<u8>) {
-    o_flush_tasks(this, this.byte_add(0x1EC), ped);
+    crate::bindings::group_intel_flush_tasks(this, this.byte_add(0x1EC), ped);
     let alloc = rd::<GPtr<u8>>(this, 0x28C);
     v_allocate_default_tasks(alloc, rd::<GPtr<u8>>(this, 0), ped);
 }

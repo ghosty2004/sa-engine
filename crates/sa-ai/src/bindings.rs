@@ -74,6 +74,16 @@ orig! {
 }
 
 orig! {
+    /// `CTaskSimpleFight::GetComboAnimGroupID` (0x4ABDA0)
+    pub fn fight_get_combo_anim_group_id(t: GPtr<u8>) -> u32 = thiscall 0x4ABDA0 => unported;
+}
+
+orig! {
+    /// `CTaskSimpleFight::IsComboSet` (0x4ABDC0)
+    pub fn fight_is_combo_set(t: GPtr<u8>) -> u8 = thiscall 0x4ABDC0 => crate::event_damage_anim::fight_is_combo_set;
+}
+
+orig! {
     /// `CPedIntelligence::GetPedFOVRange` (0x4ABEA0)
     pub fn intel_get_ped_fov_range(intel: GPtr<u8>) -> f64 = thiscall 0x4ABEA0 => unported;
 }
@@ -469,6 +479,11 @@ orig! {
 }
 
 orig! {
+    /// `CPedGeometryAnalyser::ComputePedHitSide-pos` (0x5F1E70)
+    pub fn compute_ped_hit_side_pos(ped: GPtr<u8>, pos: GPtr<u8>) -> i32 = cdecl 0x5F1E70 => unported;
+}
+
+orig! {
     /// `CPedGeometryAnalyser::ComputeEntityBoundingBoxCornersUncached` (0x5F1FA0)
     pub fn bbox_corners_uncached(z: f32, e: GPtr<u8>, corners: GPtr<u8>) -> u8 = cdecl 0x5F1FA0 => unported;
 }
@@ -566,6 +581,11 @@ orig! {
 orig! {
     /// `CPedGroupIntelligence::SetTask` (0x5F7540)
     pub fn pgi_set_task(i: GPtr<u8>, ped: GPtr<u8>, task: GPtr<u8>, pairs: GPtr<u8>, slot: i32, flag: u32) = thiscall 0x5F7540 => unported;
+}
+
+orig! {
+    /// `CPedGroupIntelligence::FlushTasks` (0x5F79C0)
+    pub fn group_intel_flush_tasks(i: GPtr<u8>, pairs: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x5F79C0 => crate::group_task_pairs::pgi_flush_tasks;
 }
 
 orig! {
@@ -799,6 +819,11 @@ orig! {
 }
 
 orig! {
+    /// `CTaskSimpleFight::ControlFight` (0x61C5E0)
+    pub fn task_fight_control_fight(f: GPtr<u8>, target: GPtr<u8>, cmd: u32) -> u8 = thiscall 0x61C5E0 => crate::fight::fight_control_fight;
+}
+
+orig! {
     /// `FUN_0061c740` (0x61C740)
     pub fn fight_strike_damage_c(t: GPtr<u8>, ped: GPtr<u8>) -> sa_math::x87::X87 = reg("args = ecx stack; pop") 0x61C740 => unported;
 }
@@ -809,13 +834,33 @@ orig! {
 }
 
 orig! {
+    /// `CTaskSimpleUseGun::CTaskSimpleUseGun` (0x61DE60)
+    pub fn use_gun_ctor(t: GPtr<u8>, target: GPtr<u8>, x: u32, y: u32, z: u32, cmd: u32, burst: u32, aim: u32) -> GPtr<u8> = thiscall 0x61DE60 => unported;
+}
+
+orig! {
     /// `CTaskSimpleUseGun::AbortIK` (0x61DFA0)
     pub fn ug_abort_ik_orig(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x61DFA0 => unported;
 }
 
 orig! {
+    /// `CTaskSimpleUseGun::ControlGun` (0x61E040)
+    pub fn use_gun_control_gun(t: GPtr<u8>, ped: GPtr<u8>, target: GPtr<u8>, cmd: u32) -> u8 = thiscall 0x61E040 => unported;
+}
+
+orig! {
+    /// `CTaskSimpleUseGun::ControlGunMove` (0x61E0C0)
+    pub fn use_gun_control_gun_move(t: GPtr<u8>, v: GPtr<u8>) -> u8 = thiscall 0x61E0C0 => unported;
+}
+
+orig! {
     /// `CTaskSimpleUseGun::ClearAnim` (0x61E190)
     pub fn use_gun_clear_anim(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x61E190 => unported;
+}
+
+orig! {
+    /// `CTaskSimpleUseGun::RequirePistolWhip` (0x61E200)
+    pub fn use_gun_require_pistol_whip(ped: GPtr<u8>, target: GPtr<u8>) -> u8 = cdecl 0x61E200 => unported;
 }
 
 orig! {
@@ -1381,6 +1426,11 @@ orig! {
 orig! {
     /// `CTaskSimpleDuck::ControlDuckMove` (0x6923F0)
     pub fn duck_control_duck_move(d: GPtr<u8>, mx: f32, my: f32) = thiscall 0x6923F0 => unported;
+}
+
+orig! {
+    /// `CTaskSimpleDuck::ForceStopMove` (0x6924B0)
+    pub fn duck_force_stop_move(d: GPtr<u8>) = thiscall 0x6924B0 => unported;
 }
 
 orig! {

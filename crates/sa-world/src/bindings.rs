@@ -3404,6 +3404,11 @@ orig! {
 }
 
 orig! {
+    /// `CEventVehicleDamageWeapon::Constructor` (0x61C2E0)
+    pub fn event_vehicle_damage_weapon_ctor(ev: GPtr<u8>, veh: GPtr<u8>, e: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x61C2E0 => unported;
+}
+
+orig! {
     /// `CTaskSimpleGunControl::Constructor` (0x61F3F0)
     pub fn task_gun_control_ctor(t: GPtr<u8>, e: GPtr<u8>, a: GPtr<u32>, b: u32, c: u32, d: u32, e2: u32) -> GPtr<u8> = thiscall 0x61F3F0 => unported;
 }
@@ -3996,6 +4001,11 @@ orig! {
 orig! {
     /// `CVehicle::SetVehicleCreatedBy` (0x6D5D70)
     pub fn vehicle_set_created_by(veh: GPtr<u8>, by: u32) = thiscall 0x6D5D70 => unported;
+}
+
+orig! {
+    /// `CVehicle::FindTyreNearestPoint` (0x6D7BC0)
+    pub fn find_tyre_nearest_point(veh: GPtr<u8>, x: f32, y: f32) -> u32 = thiscall 0x6D7BC0 => unported;
 }
 
 orig! {

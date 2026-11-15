@@ -1,0 +1,50 @@
+# gdb command file for tools/e2e/scenarios/frontier.sh (WRAP="gdb -q -batch -x THIS --args"): counts the calls of the
+# FRONTIER-2 ports (their registered phase B entries) and prints the hit counts at the end (`info breakpoints`).
+set pagination off
+set breakpoint pending on
+handle SIGSEGV stop nopass
+handle SIGUSR1 nostop noprint pass
+handle SIGUSR2 nostop noprint pass
+handle SIGPIPE nostop noprint pass
+rbreak __sa_hook_native_process_triangle_added$
+rbreak __sa_hook_native_process_triangle_removed$
+rbreak __sa_hook_native_matrix_scale_xyz$
+rbreak __sa_hook_native_is_pt_in_triangle_2d$
+rbreak __sa_hook_native_add_object$
+rbreak __sa_hook_native_add_objects$
+rbreak __sa_hook_native_fight_is_combo_set$
+rbreak __sa_hook_native_fight_is_hit_combo_set$
+rbreak __sa_hook_native_compute_damage_anim$
+rbreak __sa_hook_native_surface_volume$
+rbreak __sa_hook_native_handle_ped_hit$
+rbreak __sa_hook_native_be_hit_start_anim$
+rbreak __sa_hook_native_hit_ped_with_car_hit_hurts_ped$
+rbreak __sa_hook_native_hit_ped_with_car_compute_evasive_step_move_dir$
+rbreak __sa_hook_native_hit_ped_with_car_create_sub_task$
+rbreak __sa_hook_native_calc_move_command$
+rbreak __sa_hook_native_fighting_control_process_ped$
+rbreak __sa_hook_native_fighting_control_make_abortable$
+rbreak __sa_hook_native_fight_make_abortable$
+rbreak __sa_hook_native_compute_closest_peds$
+rbreak __sa_hook_native_kill_threats_basic_allocate_tasks$
+rbreak __sa_hook_native_trailer_setup_suspension_lines$
+rbreak __sa_hook_native_compress_vector$
+rbreak __sa_hook_native_get_special_col_model$
+rbreak __sa_hook_native_update_moving_collision$
+rbreak __sa_hook_native_explosion_audio_add_event$
+rbreak __sa_hook_native_gun_control_process_ped$
+rbreak __sa_hook_native_trailer_process_ai$
+rbreak __sa_hook_native_scan_for_tow_link$
+rbreak __sa_hook_native_trailer_get_tow_hitch_pos$
+rbreak __sa_hook_native_trailer_process_suspension$
+rbreak __sa_hook_native_trailer_pre_render$
+rbreak __sa_hook_native_vehicle_inflict_damage$
+rbreak __sa_hook_native_event_86cc78_dtor_5ff6a0$
+rbreak __sa_hook_native_task_allocator_new$
+rbreak __sa_hook_native_compute_ped_hit_side_physical$
+commands 1-36
+silent
+continue
+end
+run
+info breakpoints

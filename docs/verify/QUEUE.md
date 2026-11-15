@@ -55,6 +55,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | framelimit-render | 1 | RENDER | 4b8a01b9 | master | 1 | 0 | 0 | 0 | 0 | L3-only 1 |
 | frontier-1-1 | 15 | AI, UNK-game, VEH, WORLD | 8c92bd74 | master | 15 | 0 | 0 | 0 | 0 | L2 15 |
 | frontier-1-2 | 5 | AI, RENDER, UNK-game | 4e5ce171 | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
+| frontier2-1 | 34 | AI, AUDIO, RENDER, UNK-game, VEH | uncommitted | worktree-agent-acdd0a918985c68f5 | 34 | 0 | 0 | 0 | 0 | L2 34 |
 | gen2-anim-1 | 1 | UNK-game | ed288e85 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | gen2-coll-1 | 20 | UNK-game | ed288e85 | master | 0 | 0 | 0 | 20 | 0 | L2 8, split 12 |
 | gen2-core-1 | 4 | UNK-game | ed288e85 | master | 0 | 0 | 0 | 4 | 0 | L2 4 |
@@ -1923,6 +1924,54 @@ SA_UNVERIFIED=frontier-1-2 LANE=$LANE tools/e2e/port-l2.sh batch:frontier-1-2 $S
 | 0x61C650 | `CTaskSimpleFight::BeHitWhileBlocking` | written | L2 | heap-writes |
 | 0x61CBA0 | `CTaskSimpleFight::FightHitPed` | written | L2 | heap-writes,stack-residue |
 | 0x6833D0 | `FUN_006833d0` | written | L2 | heap-writes |
+
+## frontier2-1
+
+34 hooks in sa-ai, sa-audio, sa-render, sa-veh; hazards: entry-protection-read (2), heap-writes (21), stack-residue (6), uninit-locals (3), x87-transcendental (4); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-1 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x4ABDC0 | `CTaskSimpleFight::IsComboSet` | written | L2 | none |
+| 0x4ABDF0 | `CTaskSimpleFight::IsHitComboSet` | written | L2 | none |
+| 0x4B3FC0 | `CEventDamage::ComputeDamageAnim` | written | L2 | heap-writes |
+| 0x4DCBE0 | `CAEExplosionAudioEntity::AddAudioEvent` | written | L2 | uninit-locals,entry-protection-read |
+| 0x4E1CC0 | `CAEPedAudioEntity::HandlePedHit` | written | L2 | heap-writes |
+| 0x536E90 | `FUN_00536e90` | written | L2 | none |
+| 0x5A2E60 | `FUN_005a2e60` | written | L2 | none |
+| 0x5A2F80 | `ProcSurfaceInfo_c::IsPtInTriangle2D` | written | L2 | none |
+| 0x5A32D0 | `ProcSurfaceInfo_c::AddObject` | written | L2 | heap-writes,x87-transcendental |
+| 0x5A3850 | `ProcSurfaceInfo_c::AddObjects` | written | L2 | heap-writes |
+| 0x5A3F20 | `ProcObjectMan_c::ProcessTriangleAdded` | written | L2 | heap-writes |
+| 0x5A3F70 | `ProcObjectMan_c::ProcessTriangleRemoved` | written | L2 | heap-writes |
+| 0x5F3640 | `CPedGeometryAnalyser::ComputePedHitSide-physical` | written | L2 | stack-residue |
+| 0x5FF6A0 | `FUN_005ff6a0` | written | L2 | heap-writes |
+| 0x61DD00 | `CTaskSimpleFightingControl::MakeAbortable` | written | L2 | none |
+| 0x620910 | `CTaskSimpleBeHit::StartAnim` | written | L2 | heap-writes |
+| 0x6239F0 | `CTaskSimpleFight::MakeAbortable` | written | L2 | heap-writes |
+| 0x624B50 | `CTaskSimpleFightingControl::CalcMoveCommand` | written | L2 | x87-transcendental,stack-residue |
+| 0x625270 | `CTaskSimpleGunControl::ProcessPed` | written | L2 | x87-transcendental,heap-writes,stack-residue |
+| 0x62A0A0 | `CTaskSimpleFightingControl::ProcessPed` | written | L2 | heap-writes,stack-residue |
+| 0x653AE0 | `CTaskComplexHitPedWithCar::HitHurtsPed` | written | L2 | none |
+| 0x653B40 | `CTaskComplexHitPedWithCar::ComputeEvasiveStepMoveDir` | written | L2 | uninit-locals |
+| 0x6560E0 | `CTaskComplexHitPedWithCar::CreateSubTask` | written | L2 | heap-writes |
+| 0x69C850 | `CTaskAllocatorKillThreatsBasic::ComputeClosestPeds` | written | L2 | none |
+| 0x69D170 | `CTaskAllocatorKillThreatsBasic::AllocateTasks` | written | L2 | heap-writes,stack-residue |
+| 0x6A1460 | `CAutomobile::UpdateMovingCollision` | written | L2 | heap-writes,uninit-locals |
+| 0x6CEEA0 | `CTrailer::GetTowHitchPos` | written | L2 | none |
+| 0x6CF030 | `CTrailer::ScanForTowLink` | written | L2 | heap-writes |
+| 0x6CF1A0 | `CTrailer::SetupSuspensionLines` | written | L2 | heap-writes |
+| 0x6CF590 | `CTrailer::ProcessAI` | written | L2 | x87-transcendental,heap-writes |
+| 0x6CF6A0 | `CTrailer::ProcessSuspension` | written | L2 | heap-writes |
+| 0x6CFAC0 | `CTrailer::PreRender` | written | L2 | heap-writes |
+| 0x6D7C90 | `CVehicle::InflictDamage` | written | L2 | heap-writes,stack-residue,entry-protection-read |
+| 0x6DF3D0 | `CVehicle::GetSpecialColModel` | written | L2 | heap-writes |
 
 ## gen2-anim-1
 

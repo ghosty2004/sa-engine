@@ -7,6 +7,7 @@
 //! +0x5CC bike lean matrix, +0x64C automobile chassis frame, +0x814 / +0x94C (see the functions).
 //! `CMatrix`: right +0, forward +0x10, up +0x20, pos +0x30, attach +0x40, owns +0x44 (0x48 bytes).
 
+use sa_world::world::common::placeable_heading as heading;
 use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::crt::rand;
@@ -102,17 +103,6 @@ orig! {
     fn task_get_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
     /// `CEventInWater::CEventInWater(float)` (0x4B1370, `ret 4`)
     fn event_in_water_ctor(e: GPtr<u8>, acc: u32) = thiscall 0x4B1370 => unported;
-}
-
-/// `CPlaceable::GetHeading()` as the bytes inline it: `atan2(-fwd.x, fwd.y)` of the matrix (FPATAN, the
-/// raw register value) or the placement heading (+0x10).
-fn heading(e: GPtr<u8>) -> X87 {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() {
-        x(rd::<f32>(e, 0x10))
-    } else {
-        x(rd::<f32>(m, 0x10)).fchs().fpatan(x(rd::<f32>(m, 0x14)))
-    }
 }
 
 /// `CPed::SetPedPositionInCar` (0x5DF910): nothing in replay playback. Seat offset from the vehicle model's

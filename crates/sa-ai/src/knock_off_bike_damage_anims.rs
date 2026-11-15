@@ -38,15 +38,12 @@ use sa_world::bindings::clump_get_first_association_4d6a70 as clump_get_first_as
 use sa_world::bindings::stats_get_fat_and_muscle_modifier;
 use sa_core::bindings::world_get_is_line_of_sight_clear as world_los_clear;
 use sa_core::bindings::random_float_in_range as general_random_float_in_range;
+use crate::bindings::{fight_get_combo_anim_group_id, fight_is_combo_set};
 orig! {
     /// `CTask::MakeAbortable(CPed*, int32 priority, const CEvent*)` (vtable +0x18, `ret 0xC`)
     fn v_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, prio: i32, ev: GPtr<u8>) -> u8 = thiscall vslot 0x18 => unported;
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CTaskSimpleFight::IsComboSet` (0x4ABDC0)
-    fn fight_is_combo_set(t: GPtr<u8>) -> u8 = thiscall 0x4ABDC0 => unported;
-    /// `CTaskSimpleFight::GetComboAnimGroupID` (0x4ABDA0)
-    fn fight_get_combo_anim_group_id(t: GPtr<u8>) -> u32 = thiscall 0x4ABDA0 => unported;
     /// `CPhysical::TestCollision(bool applySpeed)` (vtable +0x34, `ret 4`)
     fn v_test_collision(p: GPtr<u8>, b: u32) -> u8 = thiscall vslot 0x34 => unported;
 }

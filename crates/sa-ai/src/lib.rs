@@ -244,3 +244,8 @@ pub mod bike_jacked;
 pub mod go_to_point_fine;
 pub mod kill_ped_on_foot_melee;
 pub mod complex_task_ref_dtors;
+pub mod event_damage_anim;
+pub mod be_hit;
+pub mod fighting_control;
+pub mod kill_threats_basic;
+pub mod gun_control;

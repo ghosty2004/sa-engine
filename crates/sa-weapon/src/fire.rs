@@ -1089,11 +1089,10 @@ pub use sa_world::bindings::vehicle_inflict_damage as pf_vehicle_inflict_damage;
 pub use crate::bindings::try_to_start_fire_at_coors as try_to_start_fire_at_coors_call;
 pub use sa_world::bindings::add_light as point_lights_add_light;
 pub use crate::bindings::start_fire_on as start_fire_target_call;
+pub use sa_world::bindings::find_tyre_nearest_point;
 orig! {
     /// `CPlayerPed::DoStuffToGoOnFire()` (0x60A020, thiscall)
     pub fn do_stuff_to_go_on_fire(ped: GPtr<u8>) = thiscall 0x60A020 => unported;
-    /// `CVehicle::FindTyreNearestPoint(float x, float y)` (0x6D7BC0, thiscall; EAX)
-    pub fn find_tyre_nearest_point(veh: GPtr<u8>, x: f32, y: f32) -> u32 = thiscall 0x6D7BC0 => unported;
     /// `CVehicle::BurstTyre(uint8, bool)` (vtable +0xB0; the whole EAX dword is pushed)
     pub fn pf_burst_tyre(veh: GPtr<u8>, piece: u32, b: u32) = thiscall vslot 0xB0 => unported;
     /// `CObject::ObjectFireDamage(float, CEntity*)` (0x5A1580, thiscall)

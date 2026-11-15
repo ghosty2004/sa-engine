@@ -16,7 +16,7 @@ orig! {
     /// `CMonsterTruck::SetupSuspensionLines()` (0x6C7FB0)
     fn monster_truck_setup_suspension_lines(v: GPtr<u8>) = thiscall 0x6C7FB0 => unported;
     /// `CTrailer::SetupSuspensionLines()` (0x6CF1A0)
-    fn trailer_setup_suspension_lines(v: GPtr<u8>) = thiscall 0x6CF1A0 => unported;
+    fn trailer_setup_suspension_lines(v: GPtr<u8>) = thiscall 0x6CF1A0 => crate::trailer_susp::trailer_setup_suspension_lines;
 }
 
 /// `out = (0, y, 0.5 - +0x898)` transformed by the vehicle's matrix (`CMatrix * CVector` into a

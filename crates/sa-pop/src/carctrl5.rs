@@ -1859,7 +1859,9 @@ orig! {
 /// (407) / ambulances (416) set their on-duty flag, count and occupants, police models (427, 523, 596..599) get
 /// police occupants, and those three kinds set +0x42D bit 7.
 // Unhookable: protection code reads its entry bytes as data (`mov ecx, [0x42B7D3]` at 0x403794; sa-hook
-// every_hook_installs_on_the_exe / keycells / patch_refs).
+// every_hook_installs_on_the_exe / keycells / patch_refs). Registered for phase B only (`#[native]`, FRONTIER-2:
+// the police path's blocker natively).
+#[sa_core::native(addr = 0x42B7D0, conv = cdecl, name = "CCarCtrl::GenerateOneEmergencyServicesCar")]
 pub fn generate_one_emergency_services_car_port(model: u32, tx: f32, ty: f32, _tz: f32) -> GPtr<u8> {
     // (the original also stores `target.z - coors.z` at [E+0x40]; nothing reads it)
     let c = find_player_centre_of_world(i32::from(g::<u8>(0xB7CD74).read())).cast::<f32>();
@@ -2016,3 +2018,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_CREATE_CAR_FOR_SCRIPT,
     HOOK_SET_COORDS_OF_SCRIPT_CAR,
 ];
+
+/// Every `#[native]` of this module.
+pub const NATIVES: &[sa_core::abi::NativeReg] = &[NATIVE_GENERATE_ONE_EMERGENCY_SERVICES_CAR_PORT];

@@ -51,6 +51,7 @@ use crate::bindings::uses_siren;
 use crate::bindings::vehicle_is_upside_down as is_upside_down;
 use sa_world::bindings::physical_apply_turn_force as apply_turn_force;
 use sa_world::bindings::physical_get_speed as get_speed;
+use crate::bindings::process_car_wheel_pair;
 orig! {
     /// `CAutomobile::ProcessAutoBusDoors()` (0x6A38A0)
     fn process_auto_bus_doors(v: GPtr<u8>) = thiscall 0x6A38A0 => unported;
@@ -84,8 +85,6 @@ orig! {
     fn process_boat_control(v: GPtr<u8>, h: GPtr<u8>, res: GPtr<u8>, hit_wall: u32, post_collision: u32) = thiscall 0x6DBCE0 => unported;
     /// `CAutomobile::ProcessBuoyancy()` (0x6A8C00)
     fn process_buoyancy(v: GPtr<u8>) = thiscall 0x6A8C00 => crate::mvpd_v5::automobile_process_buoyancy;
-    /// `CAutomobile::ProcessCarWheelPair(int32, int32, float, CVector*, CVector*, float, float, float, bool)` (0x6A4EC0), floats as bits
-    fn process_car_wheel_pair(v: GPtr<u8>, left: u32, right: u32, steer: u32, speeds: GPtr<u8>, points: GPtr<u8>, traction: u32, accel: u32, brake: u32, front: u32) = thiscall 0x6A4EC0 => unported;
     /// `CAutomobile::ProcessCarOnFireAndExplode(bool)` (0x6A7090)
     fn process_car_on_fire_and_explode(v: GPtr<u8>, explode: u32) = thiscall 0x6A7090 => crate::mvpd_v2::automobile_process_car_on_fire_and_explode;
     /// `CCarAI::MakeWayForCarWithSiren(CVehicle*)` (0x41D660)

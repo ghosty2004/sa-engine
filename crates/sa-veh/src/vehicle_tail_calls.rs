@@ -10,9 +10,8 @@ use crate::common::wr;
 
 use crate::bindings::automobile_destructor as automobile_dtor;
 use crate::bindings::automobile_reset_suspension;
+use crate::bindings::automobile_process_suspension;
 orig! {
-    /// `CAutomobile::ProcessSuspension()` (0x6AFB10)
-    fn automobile_process_suspension(v: GPtr<u8>) = thiscall 0x6AFB10 => unported;
 }
 
 /// `CMonsterTruck::~CMonsterTruck()` (0x6C7D10): vtable 0x8717D8, then `CAutomobile::~CAutomobile`.

@@ -150,7 +150,7 @@ orig! {
     /// `RwRenderStateGet` (`RwEngineInstance` slot 0x24)
     pub fn rw_render_state_get(state: u32, out: GPtr<u8>) -> i32 = cdecl table 0xC97B24 0x24 => unported;
     /// `CMatrix` per-axis scale `(x, y, z)` (0x5A2E60, unnamed in the catalogue)
-    pub fn matrix_scale_xyz(m: GPtr<u8>, sx: u32, sy: u32, sz: u32) = thiscall 0x5A2E60 => unported;
+    pub fn matrix_scale_xyz(m: GPtr<u8>, sx: f32, sy: f32, sz: f32) = thiscall 0x5A2E60 => crate::proc_objects::matrix_scale_xyz;
     /// `Light::SetBrightMarkerColours(float)` (0x735BD0)
     pub fn set_bright_marker_colours(b: u32) = cdecl 0x735BD0 => unported;
     /// `Light::ReSetAmbientAndDirectionalColours()` (0x735C40)
@@ -846,7 +846,7 @@ pub fn marker_render(this: GPtr<u8>) {
     }
     matrix_scale(mp, rd::<u32>(this, 0x6C));
     if rd::<u16>(this, 0x50) == 2 {
-        matrix_scale_xyz(mp, K_ONE, K_ONE, 0x41A0_0000);
+        matrix_scale_xyz(mp, f32::from_bits(K_ONE), f32::from_bits(K_ONE), f32::from_bits(0x41A0_0000));
     }
     matrix_update_rw(mp);
     rw_frame_update_objects(rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0x48), 4));

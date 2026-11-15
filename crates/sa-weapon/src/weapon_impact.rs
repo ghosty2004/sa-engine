@@ -78,6 +78,7 @@ pub use sa_world::bindings::object_damage;
 pub use sa_world::bindings::ped_get_weapon_skill as ped_get_weapon_skill_current;
 pub use sa_world::bindings::vehicle_inflict_damage;
 pub use sa_world::bindings::find_player_ped;
+pub use sa_world::bindings::event_vehicle_damage_weapon_ctor;
 orig! {
     /// `CTask::GetTaskType()` (vtable slot 0x10, thiscall)
     pub fn task_get_type(task: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
@@ -90,8 +91,6 @@ orig! {
     pub fn vehicle_burst_tyre(veh: GPtr<u8>, component: u32, b: u8) -> u8 = thiscall vslot 0xB0 => unported;
     /// `CEntity::SetIsStatic(bool)` (vtable slot 0x10, thiscall)
     pub fn entity_set_is_static(e: GPtr<u8>, b: u8) = thiscall vslot 0x10 => unported;
-    /// `CEventVehicleDamageWeapon::CEventVehicleDamageWeapon(CVehicle*, CEntity*, eWeaponType)` (0x61C2E0, thiscall)
-    pub fn event_vehicle_damage_weapon_ctor(ev: GPtr<u8>, veh: GPtr<u8>, e: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x61C2E0 => unported;
 }
 
 /// CRT `_CIasin` (0x821E70): ST0 in, ST0 out (`sa_core::orig::x87_unary`; unported in phases B/C).

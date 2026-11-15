@@ -471,11 +471,10 @@ use sa_world::bindings::game_logic_is_player_use_2player_controls;
 use sa_world::bindings::pad_exit_vehicle_just_down;
 use sa_world::bindings::vector_sub;
 use sa_world::bindings::weapon_is_type_melee;
+use crate::bindings::use_gun_control_gun_move;
 orig! {
     /// `CPedIntelligence::ClearTaskDuckSecondary()` (0x601390)
     fn intel_clear_task_duck_secondary(i: GPtr<u8>) = thiscall 0x601390 => unported;
-    /// `CTaskSimpleUseGun::ControlGunMove(const CVector2D&)` (0x61E0C0, `ret 4`)
-    fn use_gun_control_gun_move(t: GPtr<u8>, v: GPtr<u8>) -> u8 = thiscall 0x61E0C0 => unported;
 }
 
 /// `CAnimManager` blend delta used by the duck/gun/stand-up blends (0x8D2FF0, 4.0)
@@ -730,9 +729,8 @@ const K_FIGHT_LOCK_DIST_SQ: usize = 0x87086C;
 /// -0.5 (0x858F40): the forward stick threshold of the lock-on move
 const K_FIGHT_FORWARD: usize = 0x858F40;
 
+use crate::bindings::task_fight_control_fight as fight_control_fight;
 orig! {
-    /// `CTaskSimpleFight::ControlFight(CEntity*, uint8 command)` (0x61C5E0, `ret 8`)
-    fn fight_control_fight(f: GPtr<u8>, target: GPtr<u8>, cmd: u32) -> u8 = thiscall 0x61C5E0 => unported;
     /// `CPad::GetDuck()` (0x540700)
     fn pad_get_duck(pad: GPtr<u8>) -> u8 = thiscall 0x540700 => unported;
 }
@@ -979,6 +977,9 @@ use sa_world::bindings::get_crouch_reload_animation_id_call as weapon_info_get_c
 use crate::bindings::group_intelligence_add_event as group_intel_add_event;
 use sa_world::bindings::pad_weapon_just_down;
 use sa_world::bindings::vector_add_assign;
+use crate::bindings::use_gun_ctor;
+use crate::bindings::use_gun_control_gun;
+use crate::bindings::use_gun_require_pistol_whip;
 orig! {
     /// `CPlayerPed::PlayerHasJustAttackedSomeone()` (0x60D5A0)
     fn player_has_just_attacked_someone(p: GPtr<u8>) = thiscall 0x60D5A0 => unported;
@@ -988,13 +989,6 @@ orig! {
     fn pad_get_melee_attack(pad: GPtr<u8>, b: u32) -> u8 = thiscall 0x540340 => unported;
     /// `CPedIntelligence::TestForStealthKill(CPed*, bool)` (0x601E00, `ret 8`)
     fn intel_test_for_stealth_kill(i: GPtr<u8>, target: GPtr<u8>, full: u32) -> u8 = thiscall 0x601E00 => unported;
-    /// `CTaskSimpleUseGun::ControlGun(CPed*, CEntity*, int8 command)` (0x61E040, `ret 0xC`)
-    fn use_gun_control_gun(t: GPtr<u8>, ped: GPtr<u8>, target: GPtr<u8>, cmd: u32) -> u8 = thiscall 0x61E040 => unported;
-    /// `CTaskSimpleUseGun::RequirePistolWhip(CPed*, CEntity*)` (0x61E200)
-    fn use_gun_require_pistol_whip(ped: GPtr<u8>, target: GPtr<u8>) -> u8 = cdecl 0x61E200 => unported;
-    /// `CTaskSimpleUseGun::CTaskSimpleUseGun(CEntity*, CVector, uint8 command, uint16 burst, bool aimImmediate)`
-    /// (0x61DE60, `ret 0x1C`; the command goes as a whole dword)
-    fn use_gun_ctor(t: GPtr<u8>, target: GPtr<u8>, x: u32, y: u32, z: u32, cmd: u32, burst: u32, aim: u32) -> GPtr<u8> = thiscall 0x61DE60 => unported;
     /// `CTaskSimpleThrowProjectile::ControlThrow(bool, CEntity*, CVector*)` (0x61F810, `ret 0xC`)
     fn throw_control_throw(t: GPtr<u8>, b: u32, target: GPtr<u8>, pos: GPtr<u8>) -> u8 = thiscall 0x61F810 => unported;
     /// `CTaskSimpleThrowProjectile::CTaskSimpleThrowProjectile(CEntity*, CVector)` (0x61F660, `ret 0x10`)

@@ -75,9 +75,8 @@ orig! {
     fn find_unsuspecting_target_ped(px: f32, py: f32, pz: f32, qx: f32, qy: f32, qz: f32) -> GPtr<u8> = cdecl 0x566DA0 => unported;
     /// `CWorld::FindUnsuspectingTargetCar(CVector, CVector)` (0x566C90)
     fn find_unsuspecting_target_car(px: f32, py: f32, pz: f32, qx: f32, qy: f32, qz: f32) -> GPtr<u8> = cdecl 0x566C90 => sa_world::world::cworld2::find_unsuspecting_target_car;
-    /// `CAutomobile::SetupSuspensionLines()` (0x6A65D0)
-    fn setup_suspension_lines(a: GPtr<u8>) = thiscall 0x6A65D0 => crate::mvpb_a5::setup_suspension_lines;
 }
+use crate::bindings::automobile_setup_suspension_lines as setup_suspension_lines;
 
 use sa_math::fpu::le_or_nan as le;
 

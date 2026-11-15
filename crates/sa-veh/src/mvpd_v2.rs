@@ -191,7 +191,7 @@ use sa_math::fpu::lt;
 
 /// `sqrt(x^2 + y^2 + z^2)` of three f32s at `p` as the inlined `CVector::Magnitude` sums them
 /// (x*x + y*y, + z*z).
-fn magnitude(p: GPtr<u8>) -> X87 {
+pub(crate) fn magnitude(p: GPtr<u8>) -> X87 {
     let (vx, vy, vz) = (x(rd::<f32>(p, 0)), x(rd::<f32>(p, 4)), x(rd::<f32>(p, 8)));
     vx.fmul(vx).fadd(vy.fmul(vy)).fadd(vz.fmul(vz)).fsqrt()
 }
