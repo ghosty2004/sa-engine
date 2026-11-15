@@ -69,7 +69,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier2-a4 | 2 | AI | 555a5634 | worktree-agent-a198f2e01294e8cc9 | 2 | 0 | 0 | 0 | 0 | L2 2 |
 | frontier2-a5 | 6 | AI, UNK-game | bc708147 | worktree-agent-a198f2e01294e8cc9 | 6 | 0 | 0 | 0 | 0 | L2 6 |
 | frontier2-a6 | 8 | AI | a6049c75 | worktree-agent-a198f2e01294e8cc9 | 8 | 0 | 0 | 0 | 0 | L2 8 |
-| frontier2-a7 | 10 | AI, POP | 0041ebcc | worktree-agent-a198f2e01294e8cc9 | 10 | 0 | 0 | 0 | 0 | L2 9, split 1 |
+| frontier2-a7 | 16 | AI, POP | 0041ebcc | worktree-agent-a198f2e01294e8cc9 | 16 | 0 | 0 | 0 | 0 | L2 15, split 1 |
 | frontier2-b1 | 32 | MATH, RENDER, RW | ebd33c14 | master | 32 | 0 | 0 | 0 | 0 | L1-pure 1, L2 31 |
 | frontier2-b2 | 23 | RW | 2f47ba34 | master | 23 | 0 | 0 | 0 | 0 | L2 23 |
 | frontier2-b3 | 7 | VEH | 221f09a0 | master | 7 | 0 | 0 | 0 | 0 | L2 7 |
@@ -2288,7 +2288,7 @@ SA_UNVERIFIED=frontier2-a6 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-a6 $S
 
 ## frontier2-a7
 
-10 hooks in sa-ai, sa-pop; hazards: heap-writes (8), uninit-locals (2), x87-transcendental (1); recordings calling them: pause-restart (1), police-gang (2).
+16 hooks in sa-ai, sa-pop; hazards: ax-al-return (2), heap-writes (13), uninit-locals (3), x87-transcendental (4); recordings calling them: pause-restart (1), police-gang (2).
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
@@ -2304,8 +2304,14 @@ SA_UNVERIFIED=frontier2-a7 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-a7 $S
 | 0x4619C0 | `CRoadBlocks::CreateRoadBlockBetween2Points` | written | split | heap-writes,uninit-locals |
 | 0x5EE370 | `std::vector<CVector>::push_back` | written | L2 | heap-writes |
 | 0x5EF420 | `CPedShelterAttractor::GetDisplacement` | written | L2 | x87-transcendental,heap-writes |
+| 0x601E00 | `CPedIntelligence::TestForStealthKill` | written | L2 | ax-al-return |
+| 0x65F590 | `CTaskComplexTrackEntity::CreateNextSubTask` | written | L2 | heap-writes |
+| 0x67E6E0 | `CTaskSimpleJetPack::MakeAbortable` | written | L2 | heap-writes,ax-al-return |
 | 0x699DB0 | `CPedList::Empty` | written | L2 | none |
 | 0x69A3B0 | `CPedList::BuildListOfPedsOfPedType` | written | L2 | none |
+| 0x69B5B0 | `CFormation::DistributeDestinations_CoverPoints` | written | L2 | x87-transcendental,heap-writes |
+| 0x69B700 | `CFormation::DistributeDestinations_PedsToAttack` | written | L2 | x87-transcendental,heap-writes,uninit-locals |
+| 0x69B860 | `CFormation::FindCoverPoints` | written | L2 | x87-transcendental,heap-writes |
 | 0x69BCA0 | `CTaskAllocatorKillOnFoot::AllocateTasks` | written | L2 | heap-writes |
 | 0x69C4D0 | `CTaskAllocatorPlayerCommandAttack::AllocateTasks` | written | L2 | heap-writes,uninit-locals |
 | 0x69CC30 | `CTaskAllocatorKillThreatsDriveby::AllocateTasks` | written | L2 | heap-writes |
